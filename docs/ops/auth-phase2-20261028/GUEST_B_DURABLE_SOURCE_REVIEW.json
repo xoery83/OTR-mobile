@@ -1,0 +1,47 @@
+{
+  "schemaId": "otr.auth.guest-durable-source-review/1",
+  "status": "LOCAL_PASS_PUBLICATION_CLOSED",
+  "recoveryVersion": 3,
+  "implementation": [
+    "Reuse existing immutable Guest recovery journal",
+    "Canonical semantic source, SHA256 and UTF8 byte count required only for v3",
+    "Owning contracts, Guest/Trip/Person/queue/Metadata/Core P1 rechecked on every read/write",
+    "v1/v2 remain readable without implicit source or upgrade",
+    "Publication requires server status; original Guest SQLite remains locked"
+  ],
+  "validation": {
+    "direct": {
+      "suites": 3,
+      "tests": 130,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 3,
+      "tests": 130,
+      "result": "NO_BLOCKER"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "redToGreen": "v3 cold source recovery failed on unsupported version before journal extension; passed after implementation",
+    "cases": [
+      "Actual frozen source through journal and SQLite close/reopen",
+      "No Guest database open while recovering publication status",
+      "Corrupted disk source refuses before database open and retains hold",
+      "Hash/bytes/Guest/Trip/unknown credential field/authority/Person/queue/Core/metadata/count/cover/version negatives",
+      "Empty/legacy/two Trips/People/JPY0 values preserved"
+    ]
+  },
+  "boundaries": {
+    "providerSessionInstalled": false,
+    "businessUpload": false,
+    "newSchemaRlsGrant": false,
+    "devDeployment": false,
+    "nativeRecoveryL3": false,
+    "adoptionE2e": false
+  },
+  "remaining": [
+    "Native recovery route and Provider consumer",
+    "Server-authoritative preflight/reservation/publication and receipt mappings",
+    "Real Guest to Account Adoption E2E"
+  ]
+}

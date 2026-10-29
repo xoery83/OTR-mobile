@@ -1,0 +1,56 @@
+{
+  "schemaId": "otr.auth.guest-source-projection-review/1",
+  "status": "LOCAL_PASS_PUBLICATION_CLOSED",
+  "scope": "frozen current Guest Trip/P1 domain data only",
+  "preserved": [
+    "original Trip/Person/Item/operation identities",
+    "original Create plus current metadata and ordered deferred actions",
+    "owning Person creation records and source creator display name",
+    "canonical Core intents and hashes in owning order",
+    "static cover preferences",
+    "owning Ledger initialization settings without default reset",
+    "source timestamps as provenance"
+  ],
+  "validation": {
+    "direct": {
+      "suites": 3,
+      "tests": 107,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 3,
+      "tests": 107,
+      "result": "NO_BLOCKER"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "regressions": [
+      "exact queue/Person coverage",
+      "dispatched/claimed queue rejected",
+      "linked/unrecorded Person rejected",
+      "Core hash readback mismatch rejected",
+      "different queue payload rejected",
+      "Metadata predecessor/unrecorded metadata rejected",
+      "operation ID collision rejected",
+      "same UUID formal Account rejected",
+      "source mutation between proof and final census rejected",
+      "legacy scalar destination retained",
+      "JPY0 Ledger initialization retained",
+      "Metadata dependencies remain ordered with tied timestamps"
+    ]
+  },
+  "boundaries": {
+    "cloudAuthority": false,
+    "targetAccountIncluded": false,
+    "sqliteFileCopied": false,
+    "providerCredentialIncluded": false,
+    "newSchemaRoleGrantOrDevDeployment": false
+  },
+  "remaining": [
+    "durable semantic source checkpoint",
+    "Native full recovery routing",
+    "server-authoritative preflight and atomic publication",
+    "formal Person/Creator mappings and authorized receipt readback",
+    "real Adoption E2E"
+  ]
+}

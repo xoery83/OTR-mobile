@@ -1,3 +1,4 @@
+import { readGuestTripP1Source } from "./guestTripP1Source";
 import { readGuestRegisteredFileQualification } from "./guestRegisteredFileQualification";
 import {
   createGuestAdoptionRecovery,
@@ -171,6 +172,16 @@ export function createGuestLocalWorkspaceOpener(deps: {
               const result = await readCensus(snapshot);
               await assertCurrent();
               return result;
+            },
+            readTripP1Source() {
+              return readGuestTripP1Source({
+                database,
+                scope,
+                owner: localOwner,
+                assertCurrent,
+                readCensus,
+                readCaptureInventory,
+              });
             },
             readRegisteredFileQualification() {
               return readGuestRegisteredFileQualification({

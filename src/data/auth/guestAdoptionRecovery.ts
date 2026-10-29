@@ -13,6 +13,10 @@ import {
   assertAccountRequestGeneration,
 } from "./accountRequestContext";
 import { requireCommittedGuestPrincipal } from "./authRepository";
+import {
+  guestSourceCheckpointSchema,
+  verifyGuestSourceCheckpoint,
+} from "./guestTripP1SourceSchema";
 
 const digest = z.string().regex(/^[0-9a-f]{64}$/);
 const draftEntry = z.strictObject({
@@ -25,18 +29,32 @@ const binding = z.strictObject({
   schemaId: z.enum([
     "otr.auth.guest-adoption-recovery/1",
     "otr.auth.guest-adoption-recovery/2",
+    "otr.auth.guest-adoption-recovery/3",
   ]),
   sourceKind: z.literal("GUEST"),
   sourceGuestLocalId: coreUuid,
   adoptionId: coreUuid,
   targetAccountId: coreUuid,
 });
-export const guestAdoptionPreparationSchema = binding.extend({
+const preparationFields = binding.extend({
   checkpoint: z.literal("PREPARED"),
   inventorySha256: digest,
   tripIds: z.array(coreUuid),
   drafts: z.array(draftEntry),
+  source: guestSourceCheckpointSchema.optional(),
 });
+export const guestAdoptionPreparationSchema = preparationFields.superRefine(
+  (value, context) => {
+    if (
+      (value.schemaId === "otr.auth.guest-adoption-recovery/3") !==
+      (value.source !== undefined)
+    )
+      context.addIssue({
+        code: "custom",
+        message: "GUEST_ADOPTION_RECOVERY_SOURCE_VERSION",
+      });
+  },
+);
 const transitionSchema = binding.extend({
   checkpoint: z.enum(["PUBLISH_REQUESTED", "CANCELLED"]),
   preparationSha256: digest,
@@ -67,7 +85,7 @@ export async function verifyGuestAdoptionDrafts(
     "schemaId" | "sourceGuestLocalId" | "tripIds" | "drafts"
   >,
 ) {
-  const value = guestAdoptionPreparationSchema
+  const value = preparationFields
     .pick({
       schemaId: true,
       sourceGuestLocalId: true,
@@ -148,6 +166,7 @@ export function createGuestAdoptionRecovery(deps: {
     assertBinding(binding.strip().parse(parsed), adoptionId, targetAccountId);
     const value = guestAdoptionPreparationSchema.parse(parsed);
     await verifyGuestAdoptionDrafts(value);
+    if (value.source) await verifyGuestSourceCheckpoint(value.source, value);
     if (canonical(value) !== raw) throw Error("GUEST_ADOPTION_RECOVERY_NONCANONICAL");
     return { preparation: value, preparationSha256: await sha(raw) };
   }

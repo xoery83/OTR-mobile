@@ -1,0 +1,40 @@
+{
+  "schemaId": "otr.auth.guest-source-main-integration/1",
+  "status": "SOURCE_ONLY_INTEGRATED_LOCAL_TESTS_PASS",
+  "sourceCommit": "49f0b6731730b539f97b08659a6d6bf9997929c3",
+  "joinedCommit": "6c1ec4319bf0dd1d40423f5f528ee41f0b16b662",
+  "previousMain": "11c7feaab8b3b56d100b178d5a63efb2c7966ef6",
+  "review": "GUEST_B_SOURCE_PROJECTION_REVIEW.json",
+  "validation": {
+    "joined": {
+      "suites": 4,
+      "tests": 121,
+      "result": "PASS",
+      "typecheck": "PASS"
+    },
+    "actualPrimary": {
+      "suites": 3,
+      "tests": 107,
+      "result": "PASS"
+    }
+  },
+  "primaryPreservation": {
+    "sixOriginalDirtyFiles": true,
+    "statusIdentical": true,
+    "allFileHashesIdentical": true,
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffIdentical": true
+  },
+  "boundaries": {
+    "publicationActivated": false,
+    "devDeployed": false,
+    "nativeRecoveryCertified": false,
+    "schemaRlsGrantChanged": false
+  },
+  "remaining": [
+    "durable semantic source checkpoint under separate review",
+    "Native recovery route",
+    "server preflight, atomic publication and protected authority",
+    "real Adoption E2E"
+  ]
+}
