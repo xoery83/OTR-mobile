@@ -43,7 +43,7 @@ import {
 import { recoverSettledUniversalTask } from "./universalSettledRecovery";
 import { createUniversalTaskReceiptChecks } from "./universalTaskReceipt";
 import type { UniversalPriceSchedule } from "./universalDeepSeekProvider";
-import type { z } from "zod";
+import { ZodError, type z } from "zod";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 const immutable = (value: Task | Attempt, mutable: readonly string[]) =>
@@ -372,103 +372,136 @@ export function createUniversalContinuousHost(deps: {
       taskId: string,
       claim: { operationId: string; owner: string; baseVersion: number },
     ) {
-      const state = await found(batch, taskId);
-      const q = await deps.db.getFirstAsync<{
-        status: string;
-        claim_owner: string;
-        base_version: number;
-      }>(
-        "SELECT status,claim_owner,base_version FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?",
-        claim.operationId,
-        actor,
-        trip,
-        taskId,
-      );
-      if (
-        !q ||
-        state.task.sync_operation_id !== claim.operationId ||
-        q.status !== "PROCESSING" ||
-        q.claim_owner !== claim.owner ||
-        q.base_version !== claim.baseVersion
-      )
-        throw Error("INTELLIGENCE_QUEUE_SCOPE");
-      // Existing attempts, including UNKNOWN, never get a second Provider send.
-      if (state.attempts.length) {
-        if (state.attempts.length !== 1) throw Error("UNIVERSAL_TASK_CHANGED");
-        const a = state.attempts[0];
-        if (state.task.work_disposition !== "PUBLISHED")
-          await recoverSettledUniversalTask({
-            context,
-            task: state.task,
-            attemptId: a.attempt_id,
-            callId: a.usage_correlation_id!,
-            requestMaterialByteCount: (await marker(state.task)).bytes.length,
-            repository: repository(state.task, a),
-            stores: deps.runtime.stores,
-            checks: createUniversalTaskReceiptChecks(deps.runtime.taskReceiptConnection),
-            priceSchedule: await deps.readAdmittedPrice(state.task, a),
-            assertCurrentAuth: current,
-            readSourceManifest: readManifest,
-          });
-        return readResult(batch, taskId);
+      let phase = "SOURCE_READ";
+      try {
+        const state = await found(batch, taskId);
+        phase = "QUEUE_READ";
+        const q = await deps.db.getFirstAsync<{
+          status: string;
+          claim_owner: string;
+          base_version: number;
+        }>(
+          "SELECT status,claim_owner,base_version FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?",
+          claim.operationId,
+          actor,
+          trip,
+          taskId,
+        );
+        if (
+          !q ||
+          state.task.sync_operation_id !== claim.operationId ||
+          q.status !== "PROCESSING" ||
+          q.claim_owner !== claim.owner ||
+          q.base_version !== claim.baseVersion
+        )
+          throw Error("INTELLIGENCE_QUEUE_SCOPE");
+        // Existing attempts, including UNKNOWN, never get a second Provider send.
+        if (state.attempts.length) {
+          phase = "SETTLED_RECOVERY";
+          if (state.attempts.length !== 1) throw Error("UNIVERSAL_TASK_CHANGED");
+          const a = state.attempts[0];
+          if (state.task.work_disposition !== "PUBLISHED")
+            await recoverSettledUniversalTask({
+              context,
+              task: state.task,
+              attemptId: a.attempt_id,
+              callId: a.usage_correlation_id!,
+              requestMaterialByteCount: (await marker(state.task)).bytes.length,
+              repository: repository(state.task, a),
+              stores: deps.runtime.stores,
+              checks: createUniversalTaskReceiptChecks(
+                deps.runtime.taskReceiptConnection,
+              ),
+              priceSchedule: await deps.readAdmittedPrice(state.task, a),
+              assertCurrentAuth: current,
+              readSourceManifest: readManifest,
+            });
+          return await readResult(batch, taskId);
+        }
+        phase = "MANIFEST_READ";
+        const manifest = await readManifest(state.task);
+        phase = "PROVIDER_SELECTION";
+        const selection = await deps.selectProvider();
+        phase = "TASK_DRAFT";
+        const draft = await buildUniversalRegisteredTaskDraft(
+          state.binding,
+          manifest,
+          selection,
+        );
+        if (
+          immutable(draft.task, taskMutableColumns) !==
+          immutable(state.task, taskMutableColumns)
+        )
+          throw Error("UNIVERSAL_CONFIGURATION_CHANGED");
+        phase = "DISPATCH_PREFLIGHT";
+        const dispatch = prepareUniversalDispatch(
+          actor,
+          batch,
+          { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId },
+          await readManifest(state.task),
+        );
+        const request = buildUniversalDeepSeekRequest({
+          actorId: actor,
+          accountId: actor,
+          tripId: trip,
+          batchId: batch,
+          taskId,
+          promptVersion: COMPACT_PROMPT_VERSION,
+          instruction: universalInstruction,
+          advisoryInstruction: universalAdvisoryInstruction,
+          sources: dispatch.ready.map((p, index) => ({
+            index,
+            sourceId: p.sourceId,
+            mime: p.mime,
+            modality: p.modality as "TEXT" | "IMAGE",
+            sha256: p.submittedSha256,
+            bytes: p.bytes,
+          })),
+        });
+        const stamp = new Date().toISOString(),
+          admitted = { ...draft.attempt, created_at: stamp, updated_at: stamp };
+        phase = "RUNTIME_PREPARATION";
+        const runtime = await createUniversalBackendRuntime({
+          context,
+          batchId: batch,
+          taskId,
+          attempt: admitted,
+          repository: repository(state.task, admitted),
+          requestMaterialByteCount: draft.marker.length,
+          ...deps.runtime,
+          continuousSource: true,
+          continuousProvider: {
+            priceScheduleId: draft.selection.priceScheduleId,
+            providerRequestSha256: request.requestSha256,
+          },
+          assertCurrentAuth: current,
+        });
+        if (!runtime.universalImportPort) throw Error("UNIVERSAL_PROVIDER_CLOSED");
+        phase = "PROVIDER_EXECUTION";
+        return await runtime.universalImportPort.execute(actor, batch, {
+          version: UNIVERSAL_IMPORT_VERSION,
+          tripId: trip,
+          taskId,
+        });
+      } catch (error) {
+        try {
+          console.info(
+            JSON.stringify({
+              event: "universal_execution_phase_failed",
+              phase,
+              kind:
+                error instanceof ZodError
+                  ? "SCHEMA"
+                  : error instanceof TypeError
+                    ? "TYPE"
+                    : "OTHER",
+            }),
+          );
+        } catch {
+          // Never let diagnostics replace the owning failure.
+        }
+        throw error;
       }
-      const draft = await buildUniversalRegisteredTaskDraft(
-        state.binding,
-        await readManifest(state.task),
-        await deps.selectProvider(),
-      );
-      if (
-        immutable(draft.task, taskMutableColumns) !==
-        immutable(state.task, taskMutableColumns)
-      )
-        throw Error("UNIVERSAL_CONFIGURATION_CHANGED");
-      const dispatch = prepareUniversalDispatch(
-        actor,
-        batch,
-        { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId },
-        await readManifest(state.task),
-      );
-      const request = buildUniversalDeepSeekRequest({
-        actorId: actor,
-        accountId: actor,
-        tripId: trip,
-        batchId: batch,
-        taskId,
-        promptVersion: COMPACT_PROMPT_VERSION,
-        instruction: universalInstruction,
-        advisoryInstruction: universalAdvisoryInstruction,
-        sources: dispatch.ready.map((p, index) => ({
-          index,
-          sourceId: p.sourceId,
-          mime: p.mime,
-          modality: p.modality as "TEXT" | "IMAGE",
-          sha256: p.submittedSha256,
-          bytes: p.bytes,
-        })),
-      });
-      const stamp = new Date().toISOString(),
-        admitted = { ...draft.attempt, created_at: stamp, updated_at: stamp };
-      const runtime = await createUniversalBackendRuntime({
-        context,
-        batchId: batch,
-        taskId,
-        attempt: admitted,
-        repository: repository(state.task, admitted),
-        requestMaterialByteCount: draft.marker.length,
-        ...deps.runtime,
-        continuousSource: true,
-        continuousProvider: {
-          priceScheduleId: draft.selection.priceScheduleId,
-          providerRequestSha256: request.requestSha256,
-        },
-        assertCurrentAuth: current,
-      });
-      if (!runtime.universalImportPort) throw Error("UNIVERSAL_PROVIDER_CLOSED");
-      return runtime.universalImportPort.execute(actor, batch, {
-        version: UNIVERSAL_IMPORT_VERSION,
-        tripId: trip,
-        taskId,
-      });
     },
   };
 }
