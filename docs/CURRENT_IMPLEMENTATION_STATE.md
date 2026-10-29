@@ -146,7 +146,7 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   initialization and timestamps retained. Source/canonical journal proof is local
   only, never authority. Actual-primary source107 and journal130 tests PASS;
   independent NO_BLOCKER, original six primary dirty files/full diff preserved.
-- Current default-closed Auth source candidate bdc6c44f (not yet main-integrated):
+- Reviewed default-closed Auth source bdc6c44f joined main ef5d7ea6 at26a190cf:
   checkpoint assembler b869 pins target and original freeze lease; c945 derives
   strict preflight resource facts from same source/files/drafts, not caller counts
   or unsaved Trip shells. Directed6/independent135+cancel1 and facts supplement2
@@ -175,8 +175,10 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   protected atomic publication/cancellation, Person/Creator mappings and authorized
   receipt readback remain missing. No real Adoption E2E or Phase3–6 completion.
 
-Next: finish Native normal-account Profile/Trip recovery readback; integrate only
-reviewed default-closed Auth source with fresh main/dirty-file checks. Continue
+Actual-primary9 suites273 PASS and joined types PASS; original six dirty files/
+full diff preserved. AUTH_PREPARED_MAIN_INTEGRATION.json records source-only scope.
+
+Next: finish Native normal-account Profile/Trip recovery readback. Continue
 Golden B server authority and Native recovery through unique Writers, then actual
 Guest→Account/negative/duplicate/UNKNOWN/cold E2E. Owner approval is required only
 for an exact protected execution delta, not routine coding. No Owner OTP before a

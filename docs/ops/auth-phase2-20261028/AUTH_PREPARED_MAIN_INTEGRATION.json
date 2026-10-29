@@ -1,0 +1,45 @@
+{
+  "schemaId": "otr.auth.prepared-source-main-integration/1",
+  "status": "LOCAL_PASS_MAIN_INTEGRATED_DEFAULT_CLOSED",
+  "sourceCommit": "bdc6c44f3df2ed53c72acb8ac39652da26c6b52a",
+  "previousMain": "ef5d7ea6b6e81b8b0b3a50e0afcf0f08dec78551",
+  "joinedCommit": "26a190cf9445aede2895db12bbfedf436d559c69",
+  "included": [
+    "normal-session self-profile port with explicit anonymous identity rejection",
+    "frozen source to v3 checkpoint assembler and observed preflight facts",
+    "existing-slot provisional preflight/status metadata client and CAS refresh"
+  ],
+  "excluded": [
+    "Native shared route/Startup/normalSync unpublished composition",
+    "DEV deployment or privilege changes",
+    "real Guest Adoption publication"
+  ],
+  "validation": {
+    "actualPrimary": {
+      "suites": 9,
+      "tests": 273,
+      "result": "PASS",
+      "options": "single worker; testTimeout30000"
+    },
+    "joinedTypecheck": "PASS",
+    "independentReviews": [
+      "Profile21 plus anonymous supplement1 NO_BLOCKER",
+      "checkpoint135 plus cancelled1/facts2 NO_BLOCKER",
+      "provisional transport4suites115 NO_BLOCKER"
+    ]
+  },
+  "primaryPreservation": {
+    "sixOriginalDirtyFilesIdentical": true,
+    "statusIdentical": true,
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffIdentical": true
+  },
+  "handoffResolution": "Import concise handoff preserved verbatim; Auth current checkpoint appended; total1477 words",
+  "activation": {
+    "backendMounted": false,
+    "nativeConsumerActivated": false,
+    "authDevDeployment": false,
+    "schemaRlsGrant": false,
+    "realAdoptionE2e": false
+  }
+}
