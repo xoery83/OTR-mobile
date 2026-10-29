@@ -25,3 +25,12 @@ types/lint and independent Review passed in the delivery tree. Joined-main tests
 are recorded separately. No SQL, RLS, table GRANT, role, Provider budget, DEV
 service or runtime capability is changed by this increment. Full PDF and Photo
 Source→Save E2E are not claimed.
+
+An explicit PREPARE action now transports the existing six-pin owning command
+before upload admission. Its exact parent receipt remains distinct from the upload
+receipt. The same scoped transaction invokes the existing SQL issuer; no parent is
+synthesized and no Source/Task authority is duplicated. Startup remains unbound.
+Five affected suites97 passed; six conditional SQL tests skipped. The separate
+27-check isolated owning protocol result covers reservation and synthetic local
+stage/dispatch/UNKNOWN only, not Storage execution. Independent software Review
+found no blocker.

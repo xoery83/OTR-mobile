@@ -1,3 +1,4 @@
+import { sourcePdfPrepareCommandSchema } from "../../src/domain/trip/sourcePdfPreparation";
 import {
   enterSourcePdfContinuousScope,
   type PdfSourceScopeIdentity,
@@ -470,6 +471,26 @@ function createAuthority<
   };
   return {
     ...authority,
+    async prepare(actorId: string, raw: string, generation: number) {
+      if (policy.version !== 4 || !policy.continuousSourceScope)
+        throw Error("SOURCE_CAPABILITY_CLOSED");
+      const q = sourcePdfPrepareCommandSchema.parse(JSON.parse(raw));
+      if (
+        q.actor_account_id !== actorId ||
+        (await owner.accountGeneration(actorId)) !== generation
+      )
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      return rpc<Json>(
+        "trip_source_prepare_representation",
+        ["uuid", "text"],
+        [actorId, raw],
+        {
+          actorAccountId: actorId,
+          tripId: q.trip_id,
+          sourceId: q.source_id,
+        },
+      );
+    },
     // Caller supplies an already-approved owning Source command, not a second command grammar.
     async admit(
       actorId: string,

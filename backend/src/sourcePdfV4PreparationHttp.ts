@@ -1,3 +1,7 @@
+import {
+  sourcePdfPrepareCommandSchema,
+  sourcePdfPrepareReceiptSchema,
+} from "../../src/domain/trip/sourcePdfPreparation";
 import { z } from "zod";
 import {
   createRequestBoundary,
@@ -38,7 +42,7 @@ export async function sourcePdfV4PreparationBoundary(
     reply(status, { error: { code, message: code } });
   const url = new URL(request.url);
   const route =
-    /^\/v2\/trips\/([^/]+)\/sources\/([^/]+)\/representations\/([^/]+)\/pdf-v4\/([^/]+)\/(reserve|finish|stage|dispatch|observe-retained)$/.exec(
+    /^\/v2\/trips\/([^/]+)\/sources\/([^/]+)\/representations\/([^/]+)\/pdf-v4\/([^/]+)\/(prepare|reserve|finish|stage|dispatch|observe-retained)$/.exec(
       url.pathname,
     );
   if (
@@ -54,7 +58,8 @@ export async function sourcePdfV4PreparationBoundary(
     if (!(await canReadTrip(actor, route[1]))) return fail(403, "SOURCE_ACCESS_DENIED");
     request.signal.throwIfAborted();
     if (!port) return fail(503, "SOURCE_CAPABILITY_CLOSED");
-    const commandAction = route[5] === "reserve" || route[5] === "finish";
+    const commandAction =
+      route[5] === "prepare" || route[5] === "reserve" || route[5] === "finish";
     if (commandAction && !port.reservation) return fail(503, "SOURCE_CAPABILITY_CLOSED");
     if (!commandAction && route[5] !== "stage" && request.body !== null)
       return fail(422, "INVALID_SOURCE_COMMAND");
@@ -74,7 +79,10 @@ export async function sourcePdfV4PreparationBoundary(
       let raw: string;
       try {
         raw = canonicalCoreJson(
-          sourcePdfV2UploadCommandSchema.parse(
+          (route[5] === "prepare"
+            ? sourcePdfPrepareCommandSchema
+            : sourcePdfV2UploadCommandSchema
+          ).parse(
             await readBoundedJson(new Response(request.body), 16384, boundary, (body) =>
               parseCoreJson(body, 16384),
             ),
@@ -85,7 +93,9 @@ export async function sourcePdfV4PreparationBoundary(
       }
       request.signal.throwIfAborted();
       let receipt: unknown;
-      if (route[5] === "reserve") {
+      if (route[5] === "prepare") {
+        receipt = await port.reservation!.prepare(actor, raw, identity);
+      } else if (route[5] === "reserve") {
         receipt = (await port.reservation!.reserve(actor, raw, identity)).receipt;
       } else {
         receipt = await port.reservation!.finish(actor, raw, identity);
@@ -94,10 +104,20 @@ export async function sourcePdfV4PreparationBoundary(
         sourceId: identity.sourceId,
         representationId: identity.representationId,
         operationId: identity.operationId,
-        observation: route[5] === "reserve" ? "RESERVATION_OBSERVED" : "FINISH_OBSERVED",
+        observation:
+          route[5] === "prepare"
+            ? "PREPARE_OBSERVED"
+            : route[5] === "reserve"
+              ? "RESERVATION_OBSERVED"
+              : "FINISH_OBSERVED",
         ...(receipt === undefined
           ? {}
-          : { receipt: sourcePdfUploadReceiptSchema.parse(receipt) }),
+          : {
+              receipt: (route[5] === "prepare"
+                ? sourcePdfPrepareReceiptSchema
+                : sourcePdfUploadReceiptSchema
+              ).parse(receipt),
+            }),
       });
     }
     let observation: "STAGED" | "DISPATCH_OBSERVED" | "READ_OBSERVED";
@@ -126,6 +146,7 @@ export async function sourcePdfV4PreparationBoundary(
     if (error instanceof Error && "status" in error && error.status === 401)
       return fail(401, "AUTH_REQUIRED");
     const code = error instanceof Error ? error.message : "";
+    if (code === "SOURCE_CAPABILITY_CLOSED") return fail(503, code);
     if (code === "PDF_TOO_LARGE") return fail(413, "INVALID_SOURCE_COMMAND");
     if (
       [

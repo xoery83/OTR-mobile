@@ -1,0 +1,32 @@
+{
+  "status": "DEFAULT_CLOSED_SOFTWARE_MAIN_READY",
+  "baseMain": "1f2a13de0a04bc0c233f7724cb4e2a88f4b08c66",
+  "reviewedSoftwareSource": "271198c3",
+  "curatedFiles": 12,
+  "privateHistoryMerged": false,
+  "sqlIncluded": false,
+  "tests": {
+    "suitesPassed": 5,
+    "testsPassed": 97,
+    "conditionalSqlTestsSkipped": 6,
+    "typecheck": "PASS",
+    "focusedLint": "PASS",
+    "captureBundle": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "runtimeBound": false,
+  "devChanged": false,
+  "providerCalls": 0,
+  "notClaimed": [
+    "SQL activation",
+    "Actual PDF DEV E2E",
+    "Photo E2E"
+  ],
+  "actualPrimary": {
+    "softwareCommit": "65be797d9f0dfbc3e9a55e754b6b879339ed4289",
+    "testsPassed": 97,
+    "suitesPassed": 5,
+    "captureBundle": "PASS",
+    "originalSixDirtyEntriesByteExact": true
+  }
+}

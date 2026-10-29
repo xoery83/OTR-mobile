@@ -1,3 +1,4 @@
+import { sourcePdfPrepareReceiptSchema } from "../../domain/trip/sourcePdfPreparation";
 import { z } from "zod";
 import { sourcePdfUploadReceiptSchema } from "../../domain/trip/sourcePdfUploadAuthority";
 
@@ -24,4 +25,10 @@ export const sourcePdfV4CommandObservationSchema = sourcePdfV4PreparationIdentit
   .superRefine((value, context) => {
     if (value.observation === "FINISH_OBSERVED" && !value.receipt)
       context.addIssue({ code: "custom", message: "SOURCE_RECEIPT_REQUIRED" });
+  });
+
+export const sourcePdfV4PrepareObservationSchema =
+  sourcePdfV4PreparationIdentitySchema.extend({
+    observation: z.literal("PREPARE_OBSERVED"),
+    receipt: sourcePdfPrepareReceiptSchema,
   });

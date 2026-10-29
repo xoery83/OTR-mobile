@@ -26,6 +26,14 @@ SQL/GRANT/Role/Secret activation or PDF E2E is included. See ADR
 
 ## Active delivery
 
+PDF optional software now carries the explicit frozen PREPARE parent from Native
+through normal Auth/Trip checks to the existing SQL on one scoped Source lease.
+Strict parent/upload receipts remain separate; stale identities and generations
+are rejected; no automatic retries or parent fabrication. Default closed/unbound.
+Joined main: five suites97 PASS, six conditional SQL skips, types/lint/capture
+bundle PASS and independent Review NO_BLOCKER. No SQL/Host/Provider/Secret or
+runtime activation is included. See `PDF_PREPARE_SOFTWARE_MAIN_READY.json`.
+
 Universal Import product completion is active in the stable worktree
 `/Users/xoery/.codex/worktrees/universal-product-20261028/otr-mobile-canonical`.
 The `universal-product-p2-host` checkout is an older image host (`e973ffe0`), not
@@ -201,11 +209,6 @@ binary compatibility and SQLite74. Do not copy Session/Keychain, operate Product
 or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
-
-30 October closed source candidate is integrated/pushed at main d81bc44f, with
-scratch6s182/actual-primary5s81/types PASS and independent source/range reviews.
-Original six primary dirty files/full bytes preserved; no route/authority/DEV
-activation. See ops/auth-phase2-20261028/AUTH_COMPOSITE_SOURCE_MAIN_INTEGRATION.json.
 
 Resend Inbound OTP host QA helper: first real new-user E2E PASS on source8496a994,
 one OTP send, trusted Auth read, separate host-process encrypted Session restore,
