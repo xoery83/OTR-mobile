@@ -1,0 +1,38 @@
+{
+  "status": "HEADLESS_FOREGROUND_REPAIR_PASS_NATIVE_ADOPTION_PENDING",
+  "writer": "Native explicitly delegated LocalTripWorkspace/TripBasicEditor/CreateTripV2Fields; only Workspace and its test changed",
+  "initialRed": {
+    "knownFenceClearsPresentation": 2,
+    "initialUnavailableMissingFeedback": 1
+  },
+  "directed": {
+    "suites": 3,
+    "tests": 73,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "productionScopedLint": "PASS"
+  },
+  "independentReview": {
+    "status": "NO_BLOCKER",
+    "suites": 3,
+    "tests": 91,
+    "scope": "Workspace/TripBasicEditor/P1Editor"
+  },
+  "retentionConditions": [
+    "previously successful Guest presentation",
+    "exact inventory/publication read fence",
+    "same source Guest localId after second committed principal read",
+    "same generation/current request/alive component"
+  ],
+  "failuresDoNotRetain": [
+    "different Guest",
+    "Account",
+    "ordinary read error",
+    "initial read without loaded Guest presentation"
+  ],
+  "newCopy": false,
+  "fullTripDraftCollector": false,
+  "nativeFreezeOrAdoptionE2E": false,
+  "mainIntegration": "PENDING next serial window; does not change previously verified main6d78",
+  "devOrSqlChanges": false
+}

@@ -130,6 +130,7 @@ const state = vi.hoisted(() => ({
   publish: vi.fn(),
   forceEffects: false,
   focused: true,
+  foreground: null as null | ((state: string) => void),
   finance: null as TripHomeWidget | null,
   preparation: null as any,
   personal: { selection: null as any, open: vi.fn(), select: vi.fn() },
@@ -183,7 +184,12 @@ vi.mock("react-native", () => ({
   View: (p: any) => createElement("div", null, p.children),
   Text: (p: any) => createElement("span", null, p.children),
   StyleSheet: { create: (styles: unknown) => styles },
-  AppState: { addEventListener: () => ({ remove: vi.fn() }) },
+  AppState: {
+    addEventListener: (_event: string, listener: (state: string) => void) => {
+      state.foreground = listener;
+      return { remove: vi.fn() };
+    },
+  },
 }));
 vi.mock("@/ui/controls", () => ({
   UiText: (p: any) => createElement("span", null, p.children),
@@ -1737,4 +1743,81 @@ it("Guest normal Create retains a structured local intent without borrowing an A
     syncFormatVersion: 2,
   });
   expect(state.discovery).not.toHaveBeenCalled();
+});
+
+it.each(["GUEST_INVENTORY_FROZEN", "GUEST_PUBLICATION_STATUS_REQUIRED"])(
+  "retains the same Guest Trip presentation on foreground fence %s",
+  async (code) => {
+    const principal = {
+      kind: "GUEST" as const,
+      localId: "00000000-0000-4000-8000-000000000001",
+    };
+    vi.mocked(readLocalTripPrincipal).mockResolvedValue(principal);
+    vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+    const local = trip("guest-trip", "Guest draft host");
+    state.repo.mockResolvedValue(repository([local]));
+    props.tripId = local.id;
+    render();
+    await flush();
+    render();
+    props.onKnownTrip.mockClear();
+    state.repo.mockRejectedValue(Error(code));
+    state.foreground!("active");
+    await flush();
+    render();
+    expect(state.nodes.find((node) => node.frame)?.frame.title).toBe(local.name);
+    expect(props.onKnownTrip).not.toHaveBeenCalledWith("NONE");
+  },
+);
+
+it.each(["ordinary error", "different Guest", "Account"])(
+  "does not preserve Guest presentation for %s",
+  async (scenario) => {
+    const principal = {
+      kind: "GUEST" as const,
+      localId: "00000000-0000-4000-8000-000000000001",
+    };
+    vi.mocked(readLocalTripPrincipal).mockResolvedValue(principal);
+    vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+    const local = trip("guest-trip", "Guest draft host");
+    state.repo.mockResolvedValue(repository([local]));
+    props.tripId = local.id;
+    render();
+    await flush();
+    render();
+    state.repo.mockImplementation(async () => {
+      if (scenario === "different Guest")
+        vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+          ...principal,
+          localId: "00000000-0000-4000-8000-000000000002",
+        });
+      if (scenario === "Account")
+        vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+          kind: "ACCOUNT",
+          accountId: "account-b",
+        });
+      throw Error(
+        scenario === "ordinary error" ? "READ_FAILED" : "GUEST_INVENTORY_FROZEN",
+      );
+    });
+    state.foreground!("active");
+    await flush();
+    const html = render();
+    expect(html).not.toContain(local.name);
+    expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
+  },
+);
+
+it("does not hide an initial Guest publication fence behind indefinite loading", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  state.repo.mockRejectedValue(Error("GUEST_PUBLICATION_STATUS_REQUIRED"));
+  props.mode = "CREATE";
+  render();
+  await flush();
+  expect(render()).toContain("tripCreate.unavailable");
+  expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });

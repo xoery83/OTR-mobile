@@ -98,6 +98,13 @@ exact Trip/Person/P1 intent/three queue records; cloud receipts remain zero and 
 Account DB exists. GUI returned to Native. This is existing-data regression, not
 Adoption or new Create/Edit acceptance. GUEST_B_GUESTQA64_ARTIFACT.json records limits.
 
+Native delegated LocalTripWorkspace/TripBasicEditor/CreateTripV2Fields narrow Writer
+to Auth; Enrichment remains Native-owned. Focused foreground repair retains an
+already-loaded same-Guest presentation only for exact inventory/publication fences,
+with second principal/generation check. Initial Create unavailability uses existing
+alert copy. 2 initial RED + initial-unavailable RED -> 3 suites73 PASS/types/UIguard;
+independent 3 suites91 PASS/NO_BLOCKER. Full Trip live-draft collector still absent.
+
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
 Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.
