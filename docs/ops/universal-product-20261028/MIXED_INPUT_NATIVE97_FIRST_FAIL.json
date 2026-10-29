@@ -1,0 +1,56 @@
+{
+  "recordedAt": "2026-10-29T02:43:24.743304+00:00",
+  "status": "NATIVE_SOURCE_PARTIAL_PASS_TASK_WAKE_BLOCKED",
+  "sourceCommit": "3ce503a0cb20f7b643f5d76b9b9f46c0b393f0f9",
+  "nativeBuild": 97,
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "batchId": "1f5eed5d-9043-477e-b12c-53887bdaf6bd",
+  "jobId": "1b473da8-be1c-49b7-9d84-37455989990f",
+  "taskId": "b8b7dc53-e4c0-8cda-887b-51ff69f61546",
+  "normalFilesPickerTwoInputs": true,
+  "normalAnalyzeInvocations": 1,
+  "readOnlyRecoveryCheckInvocations": 1,
+  "originals": [
+    {
+      "id": "6b124a2f-4d61-4f29-a6d8-1d757d571792",
+      "original_filename": "P1-Mixed-Text-Walk.txt",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "state": "ASSIGNED",
+      "byte_count": 50,
+      "sha256": "718addbdbe530aefb074fc11f6b825f10c78bba31bc49108030dbc8a950d757a"
+    },
+    {
+      "id": "c5fc7774-2b2b-4996-9ab1-8ecd4704c196",
+      "original_filename": "P6-Harbour-Pdf-Activity.pdf",
+      "trip_id": null,
+      "state": "INBOX",
+      "byte_count": 1700,
+      "sha256": "b180ca4bed213d11dde114fed24db81d0514288ec9c9c8eb4fa2e52d9c7c619f"
+    }
+  ],
+  "bindings": [
+    {
+      "capture_id": "6b124a2f-4d61-4f29-a6d8-1d757d571792",
+      "source_id": "fd248419-7254-44b0-ac85-f3e30f946996",
+      "representation_id": "10a857ae-5d82-4422-a5ff-70a637cb6d9d",
+      "state": "ADMITTED",
+      "source_operation_id": "c4c9beff-2147-4980-8cad-c94c550c998e"
+    }
+  ],
+  "taskSnapshot": {
+    "workDisposition": "PENDING",
+    "wakeStatus": "RETRYABLE",
+    "wakeAttemptCount": 1,
+    "wakeErrorCode": "SYNC_FAILED",
+    "taskAttempts": 0,
+    "providerCallsIndependentlyVerified": 0
+  },
+  "resultsPass": false,
+  "formalSavePass": false,
+  "pdfSourceQualification": false,
+  "oldTaskResetOrReplacement": false,
+  "guiReturned": true,
+  "permissionsChanged": false,
+  "next": "Preserve existing Task and originals; qualify exact safe wake failure; no blind paid retry."
+}

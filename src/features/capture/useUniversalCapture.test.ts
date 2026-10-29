@@ -150,7 +150,6 @@ it("resumes GET polling after hide, request completion and showing the same moun
   expect(h.start).not.toHaveBeenCalled();
 });
 
-
 it("keeps owning GET recovery alive when Results arrive before terminal Task activity", async () => {
   const result = { status: "CANDIDATES_READY" };
   h.recover.mockResolvedValueOnce(result).mockImplementationOnce(async () => {
@@ -167,3 +166,102 @@ it("keeps owning GET recovery alive when Results arrive before terminal Task act
   expect(h.recover).toHaveBeenCalledTimes(2);
   expect(h.start).not.toHaveBeenCalled();
 });
+
+it.each([
+  ["UNIVERSAL_SOURCE_PREPARATION_BLOCKED", "UNIVERSAL_SOURCE_PREPARATION_BLOCKED", false],
+  ["SOURCE_PRIVATE_ORIGINAL_NAME", "UNCLASSIFIED", false],
+  ["UNIVERSAL_SOURCE_PREPARATION_BLOCKED", "UNIVERSAL_SOURCE_PREPARATION_BLOCKED", true],
+])(
+  "retains a safe failure class for explicit Start without logging material",
+  async (message, code, loggerThrows) => {
+    h.consumer.activity = null;
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (loggerThrows) throw Error("SYNTHETIC_LOGGER_FAILURE");
+    });
+    try {
+      Harness();
+      await vi.advanceTimersByTimeAsync(0);
+      h.start.mockRejectedValueOnce(Error(message));
+      await Harness().start();
+      expect(Harness().unavailable).toBe(true);
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({ event: "universal_capture_failed", code }),
+      );
+      expect(h.start).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
+
+it("coalesces one explicit Start behind a pending GET, without overlapping or automatic starts", async () => {
+  h.consumer.activity = null;
+  let finish!: (v: null) => void;
+  h.recover.mockImplementationOnce(
+    () =>
+      new Promise((r) => {
+        finish = r;
+      }),
+  );
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(Harness().canStartDuringRead).toBe(true);
+  await Harness().start();
+  await Harness().start();
+  expect(Harness().canStartDuringRead).toBe(false);
+  expect(h.start).not.toHaveBeenCalled();
+  finish(null);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.start).toHaveBeenCalledOnce();
+});
+
+it.each(["hidden", "account", "batch"] as const)(
+  "drops deferred Start across %s boundary",
+  async (boundary) => {
+    h.consumer.activity = null;
+    let visible = true;
+    let finish!: (v: null) => void;
+    h.recover.mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          finish = r;
+        }),
+    );
+    Harness("batch-a", () => visible);
+    await vi.advanceTimersByTimeAsync(0);
+    await Harness("batch-a", () => visible).start();
+    if (boundary === "hidden") visible = false;
+    if (boundary === "account") h.generation++;
+    Harness(boundary === "batch" ? "batch-b" : "batch-a", () => visible);
+    finish(null);
+    await vi.advanceTimersByTimeAsync(0);
+    visible = true;
+    Harness("batch-a", () => visible);
+    expect(h.start).not.toHaveBeenCalled();
+  },
+);
+
+it.each(["hidden", "batch"] as const)(
+  "does not resurrect explicit Start after %s returns before GET settles",
+  async (boundary) => {
+    h.consumer.activity = null;
+    let visible = true;
+    let finish!: (v: null) => void;
+    h.recover.mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          finish = r;
+        }),
+    );
+    Harness("batch-a", () => visible);
+    await vi.advanceTimersByTimeAsync(0);
+    await Harness("batch-a", () => visible).start();
+    if (boundary === "hidden") visible = false;
+    Harness(boundary === "batch" ? "batch-b" : "batch-a", () => visible);
+    visible = true;
+    Harness("batch-a", () => visible);
+    finish(null);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(h.start).not.toHaveBeenCalled();
+  },
+);

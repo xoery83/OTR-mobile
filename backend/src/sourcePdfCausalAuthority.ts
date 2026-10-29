@@ -1,3 +1,11 @@
+import { z } from "zod";
+import {
+  PDF_UPLOAD_QPDF_V4,
+  sourcePdfV2UploadBindingSchema,
+  sourcePdfV2UploadAckSchema,
+  sourcePdfV2UploadGetSchema,
+  type SourcePdfV2UploadBinding,
+} from "../../src/domain/trip/sourcePdfV2Upload";
 import { Buffer } from "node:buffer";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
 import type {
@@ -5,7 +13,7 @@ import type {
   PdfReservedContext,
   PdfIngressIdentity,
 } from "./sourcePdfBackendPreparation";
-import type { SourcePdfStorageProducer } from "./sourcePdfStorageProducer";
+import type { SourcePdfStorageProducerFor } from "./sourcePdfStorageProducer";
 import {
   PDF_UPLOAD_CAUSAL_V3,
   sourcePdfCausalBindingSchema,
@@ -20,12 +28,28 @@ type Journal = {
   id: string;
   operation_id: string;
   phase: string;
+  last_transition: string;
   owner_run: string;
   owner_fence: number;
   pdf_binding: Json;
   pdf_dispatch_id: string | null;
+  pdf_dispatched_at?: string | null;
   pdf_beta_ack: { evidenceSha256: string } | null;
   pdf_beta_get: Json | null;
+  terminal_observed_at?: string | null;
+  staged_resource?: {
+    id: string;
+    node_id: string;
+    resource_key: string;
+    payload_sha256: string;
+    byte_count: number;
+    pdf_actor_account_id: string | null;
+    pdf_causal_profile_id: string | null;
+    pdf_sealed_at: string | null;
+    pdf_stage_evidence_sha256: string | null;
+    release_authorized_at: string | null;
+    cleaned_at: string | null;
+  };
   pdf_causal_read_permit: {
     readId: string;
     ackEvidenceSha256: string;
@@ -33,9 +57,11 @@ type Journal = {
     ownerFence: number;
   } | null;
 };
-type Observation =
-  | Awaited<ReturnType<SourcePdfStorageProducer["upload"]>>
-  | Awaited<ReturnType<SourcePdfStorageProducer["read"]>>;
+type CausalBinding = z.infer<typeof sourcePdfCausalBindingSchema>;
+type Binding = CausalBinding | SourcePdfV2UploadBinding;
+type Observation<B extends Binding> =
+  | Awaited<ReturnType<SourcePdfStorageProducerFor<B>["upload"]>>
+  | Awaited<ReturnType<SourcePdfStorageProducerFor<B>["read"]>>;
 // Internal composition only. This owning auth-lifetime port is not caller JSON.
 export type PdfCausalOwner = {
   ownerRun: string;
@@ -46,6 +72,62 @@ export type PdfCausalOwner = {
 export function createSourcePdfCausalAuthority(
   connection: CorePgConnection,
   owner: PdfCausalOwner,
+) {
+  const authority = createAuthority(connection, owner, {
+    version: 3,
+    issuer: PDF_UPLOAD_CAUSAL_V3.issuer,
+    binding: sourcePdfCausalBindingSchema,
+    ack: sourcePdfCausalAckSchema,
+    get: sourcePdfCausalGetSchema,
+    rpcPrefix: "trip_source_pdf_causal",
+    digestPrefix: "otr-source-pdf-beta",
+    digestSuffix: "v3",
+  });
+  const context = (c: PdfReservedContext) => ({
+    ...c,
+    binding: sourcePdfCausalBindingSchema.parse(c.binding),
+  });
+  return {
+    ...authority,
+    claim: (c: PdfReservedContext) => authority.claim(context(c)),
+    finish: (c: PdfReservedContext, raw: string) => authority.finish(context(c), raw),
+  };
+}
+export function createSourcePdfV2CausalAuthority(
+  connection: CorePgConnection,
+  owner: PdfCausalOwner,
+) {
+  return createAuthority(connection, owner, {
+    version: 4,
+    issuer: PDF_UPLOAD_QPDF_V4.issuer,
+    binding: sourcePdfV2UploadBindingSchema,
+    ack: sourcePdfV2UploadAckSchema,
+    get: sourcePdfV2UploadGetSchema,
+    rpcPrefix: "trip_source_pdf_upload_v4",
+    digestPrefix: "otr-source-pdf-qpdf-poppler",
+    digestSuffix: "v4",
+  });
+}
+function createAuthority<
+  B extends Binding,
+  A extends { evidenceSha256: string },
+  G extends {
+    evidenceSha256: string;
+    read: { readId: string; ackEvidenceSha256: string };
+  },
+>(
+  connection: CorePgConnection,
+  owner: PdfCausalOwner,
+  policy: {
+    version: 3 | 4;
+    issuer: string;
+    binding: z.ZodType<B>;
+    ack: z.ZodType<A>;
+    get: z.ZodType<G>;
+    rpcPrefix: "trip_source_pdf_causal" | "trip_source_pdf_upload_v4";
+    digestPrefix: "otr-source-pdf-beta" | "otr-source-pdf-qpdf-poppler";
+    digestSuffix: "v3" | "v4";
+  },
 ) {
   async function transaction<T>(work: (lease: CorePgLease) => Promise<T>) {
     return connection.withLease(async (lease) => {
@@ -92,9 +174,14 @@ export function createSourcePdfCausalAuthority(
           )
         ).rows[0]?.result as T,
     );
-  const execute = (c: PdfReservedContext, action: string, proof: Json | null = null) =>
-    rpc<Journal>(
-      "trip_source_pdf_causal_execute",
+  const execute = (
+    c: PdfReservedContext<B>,
+    action: string,
+    proof: Json | null = null,
+  ) => {
+    if (c.ownerRun !== owner.ownerRun) throw new Error("PDF_SCOPE_FORBIDDEN");
+    return rpc<Journal>(
+      `${policy.rpcPrefix}_execute`,
       ["uuid", "uuid", "bigint", "text", "jsonb"],
       [
         c.binding.attemptId,
@@ -104,12 +191,17 @@ export function createSourcePdfCausalAuthority(
         proof === null ? null : canonicalCoreJson(proof),
       ],
     );
-  function context(j: Journal, generation: number): PdfReservedContext {
-    const binding = sourcePdfCausalBindingSchema.parse(j.pdf_binding);
+  };
+  function context(
+    j: Journal,
+    generation: number,
+    allowPriorOwner = false,
+  ): PdfReservedContext<B> {
+    const binding = policy.binding.parse(j.pdf_binding);
     if (
       binding.producerId !== owner.producerId ||
       binding.providerInstanceSha256 !== owner.providerInstanceSha256 ||
-      j.owner_run !== owner.ownerRun
+      (!allowPriorOwner && j.owner_run !== owner.ownerRun)
     )
       throw new Error("PDF_SCOPE_FORBIDDEN");
     return {
@@ -125,12 +217,12 @@ export function createSourcePdfCausalAuthority(
     identity: Pick<PdfIngressIdentity, "tripId" | "sourceId">,
   ) {
     return rpc<Journal[]>(
-      "trip_source_pdf_causal_inventory",
+      `${policy.rpcPrefix}_inventory`,
       ["uuid", "uuid", "uuid"],
       [actorId, identity.tripId, identity.sourceId],
     );
   }
-  async function current(c: PdfReservedContext) {
+  async function current(c: PdfReservedContext<B>) {
     const generation = await owner.accountGeneration(c.binding.actorAccountId);
     if (generation !== c.accountGeneration) throw new Error("PDF_SCOPE_FORBIDDEN");
     const j = (await inventory(c.binding.actorAccountId, c.binding)).find(
@@ -139,6 +231,7 @@ export function createSourcePdfCausalAuthority(
     if (
       !j ||
       j.phase === "TERMINAL" ||
+      j.owner_run !== c.ownerRun ||
       j.owner_fence !== c.ownerFence ||
       canonicalCoreJson(context(j, generation).binding as unknown as Json) !==
         canonicalCoreJson(c.binding as unknown as Json)
@@ -146,10 +239,10 @@ export function createSourcePdfCausalAuthority(
       throw new Error("SOURCE_EXECUTION_FENCE_CONFLICT");
     return j;
   }
-  async function proof(c: PdfReservedContext, action: "ACK" | "GET", detail: object) {
+  async function proof(c: PdfReservedContext<B>, action: "ACK" | "GET", detail: object) {
     const body = {
-      uploadVersion: 3,
-      issuer: PDF_UPLOAD_CAUSAL_V3.issuer,
+      uploadVersion: policy.version,
+      issuer: policy.issuer,
       binding: c.binding,
       ownerRun: c.ownerRun,
       ownerFence: c.ownerFence,
@@ -160,13 +253,19 @@ export function createSourcePdfCausalAuthority(
     return {
       ...body,
       evidenceSha256: await importDigest(
-        `otr-source-pdf-beta-${action.toLowerCase()}-v3`,
+        `${policy.digestPrefix}-${action.toLowerCase()}-${policy.digestSuffix}`,
         body as unknown as Json,
         async (bytes) => pdfHash(bytes),
       ),
     };
   }
-  const authority: PdfPreparationAuthority = {
+  const authority: PdfPreparationAuthority<B> &
+    Required<
+      Pick<
+        PdfPreparationAuthority<B>,
+        "recordStage" | "prepareRead" | "canResumeSealedStage"
+      >
+    > = {
     async resolveReserved(actorId, identity) {
       const generation = await owner.accountGeneration(actorId);
       if (generation !== identity.accountGeneration)
@@ -186,8 +285,39 @@ export function createSourcePdfCausalAuthority(
     async assertCurrent(c) {
       await current(c);
     },
+    async canResumeSealedStage(c: PdfReservedContext<B>) {
+      if (policy.version !== 4) return false;
+      const j = await current(c);
+      const s = j.staged_resource;
+      return (
+        c.ownerRun === owner.ownerRun &&
+        c.ownerFence > 1 &&
+        j.phase === "STARTING" &&
+        j.last_transition === "CLAIM" &&
+        j.pdf_dispatch_id === null &&
+        j.pdf_dispatched_at === null &&
+        j.pdf_beta_ack === null &&
+        j.pdf_beta_get === null &&
+        j.pdf_causal_read_permit === null &&
+        j.terminal_observed_at === null &&
+        s?.id === c.binding.resourceId &&
+        s.node_id === c.binding.nodeId &&
+        s.resource_key === c.binding.resourceKey &&
+        s.payload_sha256 === c.binding.sha256 &&
+        s.byte_count === c.binding.byteCount &&
+        s.pdf_actor_account_id === c.binding.actorAccountId &&
+        s.pdf_causal_profile_id === "PDF_PRIVATE_UPLOAD_QPDF_POPPLER_V4" &&
+        typeof s.pdf_sealed_at === "string" &&
+        s.pdf_sealed_at.length > 0 &&
+        Number.isFinite(Date.parse(s.pdf_sealed_at)) &&
+        s.pdf_stage_evidence_sha256 ===
+          pdfHash(canonicalCoreJson(c.binding as unknown as Json)) &&
+        s.release_authorized_at === null &&
+        s.cleaned_at === null
+      );
+    },
     async recordStage(c, sealed) {
-      await current(c);
+      const j = await current(c);
       if (
         sealed.resourceId !== c.binding.resourceId ||
         sealed.resourceKey !== c.binding.resourceKey ||
@@ -196,16 +326,35 @@ export function createSourcePdfCausalAuthority(
         sealed.bindingSha256 !== pdfHash(canonicalCoreJson(c.binding as unknown as Json))
       )
         throw new Error("PDF_STAGE_PROOF_CONFLICT");
-      await execute(c, "STAGE", {
+      const stageProof = {
         sha256: sealed.sha256,
         byteCount: sealed.byteCount,
         evidenceSha256: sealed.bindingSha256,
-      });
+      };
+      if (policy.version === 4 && c.ownerFence > 1) {
+        if (j.phase !== "STARTING" || !["TAKEOVER", "CLAIM"].includes(j.last_transition))
+          throw new Error("PDF_UNDISPATCHED_STAGE_CONFLICT");
+        await rpc<Journal>(
+          "trip_source_pdf_upload_v4_restage",
+          ["uuid", "uuid", "bigint", "jsonb"],
+          [c.binding.attemptId, c.ownerRun, c.ownerFence, canonicalCoreJson(stageProof)],
+        );
+      } else await execute(c, "STAGE", stageProof);
     },
     async consumeDispatch(c) {
       const j = await current(c);
-      if (j.phase !== "STARTING" || j.pdf_dispatch_id !== null || j.owner_fence !== 1)
-        return null;
+      if (j.phase !== "STARTING" || j.pdf_dispatch_id !== null) return null;
+      if (policy.version === 4 && j.owner_fence > 1) {
+        if (j.last_transition !== "CLAIM") return null;
+        const recovered = await rpc<Journal>(
+          "trip_source_pdf_upload_v4_recover_dispatch",
+          ["uuid", "uuid", "bigint"],
+          [c.binding.attemptId, c.ownerRun, c.ownerFence],
+        );
+        if (!recovered.pdf_dispatch_id) throw new Error("DISPATCH_ID_REQUIRED");
+        return { dispatchId: recovered.pdf_dispatch_id };
+      }
+      if (j.owner_fence !== 1) return null;
       const dispatched = await execute(c, "DISPATCH");
       if (!dispatched.pdf_dispatch_id) throw new Error("DISPATCH_ID_REQUIRED");
       // Only this live successful DISPATCH call gets a grant. Restart/replay can never confirm for writing.
@@ -215,7 +364,7 @@ export function createSourcePdfCausalAuthority(
     async prepareRead(c) {
       const prior = await current(c);
       if (prior.pdf_beta_get) {
-        const retained = sourcePdfCausalGetSchema.parse(prior.pdf_beta_get);
+        const retained = policy.get.parse(prior.pdf_beta_get);
         return {
           readId: retained.read.readId,
           ackEvidenceSha256: retained.read.ackEvidenceSha256,
@@ -233,8 +382,8 @@ export function createSourcePdfCausalAuthority(
         throw new Error("PDF_CAUSAL_ACK_REQUIRED");
       return { readId: permit.readId, ackEvidenceSha256: permit.ackEvidenceSha256 };
     },
-    async recordObservation(c, observation: Observation) {
-      const binding = sourcePdfCausalBindingSchema.parse(c.binding);
+    async recordObservation(c, observation: Observation<B>) {
+      const binding = policy.binding.parse(c.binding);
       if (
         binding.producerId !== owner.producerId ||
         binding.providerInstanceSha256 !== owner.providerInstanceSha256 ||
@@ -248,7 +397,7 @@ export function createSourcePdfCausalAuthority(
       )
         throw new Error("PDF_SCOPE_FORBIDDEN");
       if (observation.kind === "COMPLETE_ACK") {
-        const p = sourcePdfCausalAckSchema.parse(
+        const p = policy.ack.parse(
           await proof(c, "ACK", {
             response: {
               status: observation.status,
@@ -275,7 +424,7 @@ export function createSourcePdfCausalAuthority(
           request.ackEvidenceSha256 !== j.pdf_beta_ack?.evidenceSha256
         )
           throw new Error("PDF_CAUSAL_GET_INVALID");
-        const p = sourcePdfCausalGetSchema.parse(
+        const p = policy.get.parse(
           await proof(c, "GET", {
             read: {
               readId: request.readId,
@@ -312,7 +461,7 @@ export function createSourcePdfCausalAuthority(
       if ((await owner.accountGeneration(actorId)) !== generation)
         throw new Error("PDF_SCOPE_FORBIDDEN");
       const reply = await rpc<{ journal?: Journal; receipt?: Json }>(
-        "trip_source_pdf_causal_begin",
+        `${policy.rpcPrefix}_begin`,
         ["uuid", "text", "uuid", "uuid", "uuid", "text", "uuid", "uuid"],
         [
           actorId,
@@ -325,22 +474,24 @@ export function createSourcePdfCausalAuthority(
           owner.ownerRun,
         ],
       );
+      // A prior reservation can be inspected for claim; current() still fences IO.
       return reply.receipt
         ? { receipt: reply.receipt }
-        : { context: context(reply.journal!, generation) };
+        : { context: context(reply.journal!, generation, true) };
     },
-    async finish(c: PdfReservedContext, raw: string) {
+    async finish(c: PdfReservedContext<B>, raw: string) {
       if (
+        c.ownerRun !== owner.ownerRun ||
         (await owner.accountGeneration(c.binding.actorAccountId)) !== c.accountGeneration
       )
         throw new Error("PDF_SCOPE_FORBIDDEN");
       return rpc<Json>(
-        "trip_source_pdf_causal_finish",
+        `${policy.rpcPrefix}_finish`,
         ["uuid", "text", "uuid", "uuid", "bigint"],
         [c.binding.actorAccountId, raw, c.binding.attemptId, c.ownerRun, c.ownerFence],
       );
     },
-    async claim(c: PdfReservedContext) {
+    async claim(c: PdfReservedContext<B>) {
       if (
         (await owner.accountGeneration(c.binding.actorAccountId)) !== c.accountGeneration
       )
@@ -350,13 +501,16 @@ export function createSourcePdfCausalAuthority(
       );
       if (
         !old ||
+        old.owner_run !== c.ownerRun ||
         old.owner_fence !== c.ownerFence ||
         canonicalCoreJson(old.pdf_binding) !==
           canonicalCoreJson(c.binding as unknown as Json)
       )
         throw new Error("SOURCE_EXECUTION_FENCE_CONFLICT");
       const j = await rpc<Journal>(
-        "trip_source_pdf_causal_claim",
+        policy.version === 4 && old.pdf_dispatch_id === null
+          ? "trip_source_pdf_upload_v4_recover_claim"
+          : `${policy.rpcPrefix}_claim`,
         ["uuid", "bigint", "uuid"],
         [c.binding.attemptId, c.ownerFence, owner.ownerRun],
       );

@@ -1,0 +1,19 @@
+{
+  "status": "LOCAL_REAL_PRODUCER_TRANSPORT_PASS",
+  "fixture": "P6-Harbour-Pdf-Activity.pdf",
+  "v1LiteralProfileRejected": true,
+  "authoredNameAndDateFound": true,
+  "submittedBatch": false,
+  "image": "sha256:d27ddd7b09410b0a3b220b2768c0f6b2b25c32da528a42041bc50ea19eefc1b7",
+  "originalSha256": "b180ca4bed213d11dde114fed24db81d0514288ec9c9c8eb4fa2e52d9c7c619f",
+  "originalBytes": 1700,
+  "originalReadCount": 2,
+  "pages": 1,
+  "textSha256": "8b3ba863dfd7cba222102be8b059ef06cb6a9b7d3a793e9a56df941bc3a6823f",
+  "textBytes": 149,
+  "elapsedMs": 2124,
+  "knownTerminationMarkerReleased": true,
+  "hostInstalled": false,
+  "sqlOrSourceAuthority": false,
+  "providerCalls": 0
+}

@@ -1,7 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
 import { runSourcePdfV2LinuxWorker } from "./sourcePdfV2LinuxWorker";
-import { createSourcePdfV2LinuxVerifier } from "./sourcePdfV2LinuxVerifier";
+import {
+  createSourcePdfV2LinuxVerifier,
+  verifySourcePdfV2LinuxBytes,
+} from "./sourcePdfV2LinuxVerifier";
 vi.mock("./sourcePdfV2LinuxWorker", () => ({
   SOURCE_PDF_V2_LINUX_IMAGE: "sha256:" + "a".repeat(64),
   runSourcePdfV2LinuxWorker: vi.fn(),
@@ -86,4 +89,18 @@ it("an explicitly composed private worker still requires both original reads and
   expect(runSourcePdfV2LinuxWorker).not.toHaveBeenCalled();
   worker.mockResolvedValueOnce({ testOnlyTransportResult: true });
   await expect(createSourcePdfV2LinuxVerifier(read, worker)(scope)).rejects.toThrow();
+});
+
+it("pins acquisition bytes before asynchronous worker work and preserves the caller original", async () => {
+  const original = new Uint8Array(bytes);
+  await expect(
+    verifySourcePdfV2LinuxBytes(original, async (owned) => {
+      owned.fill(0);
+      return {
+        ...extraction(),
+        originalSha256: createHash("sha256").update(owned).digest("hex"),
+      };
+    }),
+  ).rejects.toThrow();
+  expect(original).toEqual(bytes);
 });

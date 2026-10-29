@@ -1,3 +1,4 @@
+import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import { z } from "zod";
 import { verifyUtf8TextFile } from "@/domain/capture/utf8TextFile";
 import { validateCaptureUtf8 } from "../files/capturePayloadReader";
@@ -35,10 +36,12 @@ export async function recoverUniversalOriginalPlans(
 ) {
   await assertAccountRequestContext(context, deps.getAccountId);
   const job = await deps.submissions.reopen(jobId, context);
+  const supported = job.inputs.filter((i) => !isUnsupportedUniversalInputMetadata(i));
   if (
     !job.allInputsAccepted ||
     job.batch.accountId !== context.accountId ||
-    job.inputs.some(
+    !supported.length ||
+    supported.some(
       (i) =>
         i.kind !== "TEXT" &&
         !(i.kind === "FILE" && i.declaredContentType === "text/plain"),
@@ -46,7 +49,7 @@ export async function recoverUniversalOriginalPlans(
   )
     throw new Error("UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE");
   const plans = [];
-  for (const input of job.inputs) {
+  for (const input of supported) {
     const key = await admissionKey(job.batch.batchId, input.id, deps.hash);
     const existing = await deps.sources.readAdmissionByKey(context, key);
     if (

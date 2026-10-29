@@ -1,0 +1,29 @@
+{
+  "status": "LOCAL_REAL_PG_SELECTION_PASS",
+  "checks": [
+    "unique retained original and derived selected",
+    "wrong original identity",
+    "wrong Source identity",
+    "missing revision",
+    "multi-original revision is not silently reduced",
+    "future derived revision",
+    "wrong parent",
+    "wrong transform",
+    "multiple eligible derived rows returned for explicit ambiguity rejection",
+    "original not retained",
+    "revision not retained",
+    "wrong derived role",
+    "binary is not relabeled as derived text"
+  ],
+  "count": 13,
+  "exactSourceQuerySha256": "b65ad5da481f02cce439a82496f65ff4d503e02b2264f38d0c22d0ae6b1b360a",
+  "network": "none",
+  "memoryMiB": 256,
+  "fixture": "Dedicated disposable database; minimal typed Source selection tables only, no production/DEV connection",
+  "notClaimed": [
+    "Full Source schema/role/RLS acceptance",
+    "PDF registration/seal Authority",
+    "DEV Task/Save"
+  ],
+  "removedOwnedContainer": true
+}

@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  sourcePdfV2UploadBindingSchema,
+  type SourcePdfV2UploadBinding,
+  PDF_UPLOAD_QPDF_V4,
+} from "../../src/domain/trip/sourcePdfV2Upload";
+import { verifySourcePdfV2UploadBytes } from "./sourcePdfV2UploadValidation";
 import { sourcePdfCausalBindingSchema } from "../../src/domain/trip/sourcePdfUploadCausal";
 import { coreHash, coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { Buffer } from "node:buffer";
@@ -28,6 +34,34 @@ export type PdfReadBinding = PdfRequestBinding & {
 };
 // Internal observations only. Nothing here means WRITER_TERMINAL, VERIFIED or FINAL.
 export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
+  return createProducer(
+    config,
+    sourcePdfBackendBindingSchema,
+    async (bytes) => verifySourcePdf(bytes),
+    65536,
+  );
+}
+export function createSourcePdfV2StorageProducer(
+  config: PdfStorageConfig,
+  runWorker?: Parameters<typeof verifySourcePdfV2UploadBytes>[1],
+) {
+  return createProducer(
+    config,
+    sourcePdfV2UploadBindingSchema,
+    (bytes) => verifySourcePdfV2UploadBytes(bytes, runWorker),
+    PDF_UPLOAD_QPDF_V4.maxByteCount,
+    PDF_UPLOAD_QPDF_V4.profileId,
+  );
+}
+function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
+  config: PdfStorageConfig,
+  bindingSchema: z.ZodType<B>,
+  verify: (bytes: Uint8Array) => Promise<unknown>,
+  maxBytes: number,
+  profileId?: string,
+) {
+  type RequestBinding = { binding: B; dispatchId: string };
+  type ReadBinding = RequestBinding & { readId?: string; ackEvidenceSha256?: string };
   const origin = new URL(config.origin);
   if (
     origin.origin !== config.origin ||
@@ -58,10 +92,11 @@ export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
       credentialRef: config.credentialRef,
       bucket: "trip-source-material",
       protocol: "STANDARD_POST_NO_RETRY/1",
+      ...(profileId ? { profileId } : {}),
     }),
   );
-  function bound(raw: PdfRequestBinding) {
-    const binding = sourcePdfBackendBindingSchema.parse(raw.binding);
+  function bound(raw: RequestBinding) {
+    const binding = bindingSchema.parse(raw.binding);
     if (!coreUuid.safeParse(raw.dispatchId).success)
       throw new Error("DISPATCH_ID_REQUIRED");
     return {
@@ -125,7 +160,7 @@ export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
           let count = 0;
           r.on("data", (p: Buffer) => {
             count += p.length;
-            if (count > (method === "GET" ? 65536 : 4096)) {
+            if (count > (method === "GET" ? maxBytes : 4096)) {
               q.destroy();
               r.destroy();
               finish(null);
@@ -165,11 +200,11 @@ export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
   }
   return {
     configurationSha256,
-    async upload(raw: PdfRequestBinding, bytes: Uint8Array) {
+    async upload(raw: RequestBinding, bytes: Uint8Array) {
       const request = bound(raw);
       const b = request.binding;
       const payload = Buffer.from(bytes);
-      verifySourcePdf(payload);
+      await verify(payload);
       if (pdfHash(payload) !== b.sha256 || payload.length !== b.byteCount)
         throw new Error("STAGE_INTEGRITY_MISMATCH");
       const response = await io("POST", b.objectKey, payload);
@@ -208,8 +243,8 @@ export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
         };
       return { kind: "COMPLETE_ACK" as const, ...observation };
     },
-    async read(raw: PdfReadBinding) {
-      const causal = raw.binding.uploadVersion === 3;
+    async read(raw: ReadBinding) {
+      const causal = raw.binding.uploadVersion === 3 || raw.binding.uploadVersion === 4;
       if (
         causal &&
         (!coreUuid.safeParse(raw.readId).success ||
@@ -257,8 +292,10 @@ export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
       )
         return { kind: "MISMATCH" as const, ...observation };
       try {
-        verifySourcePdf(bytes);
+        await verify(bytes);
       } catch {
+        // A V4 worker outage cannot establish that the retained original is unsupported.
+        if (b.uploadVersion === 4) return { kind: "UNAVAILABLE" as const, request };
         return { kind: "UNSUPPORTED" as const, ...observation };
       }
       return { kind: "MATCH" as const, ...observation };
@@ -266,3 +303,7 @@ export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
   };
 }
 export type SourcePdfStorageProducer = ReturnType<typeof createSourcePdfStorageProducer>;
+
+export type SourcePdfStorageProducerFor<
+  B extends PdfBackendBinding | SourcePdfV2UploadBinding,
+> = ReturnType<typeof createProducer<B>>;

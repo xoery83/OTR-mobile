@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_PASS_UNBOUND",
+  "historicalComponentSource": "fa0144df0eb14f51e4d21f57cde0007f1d6c174e",
+  "scope": [
+    "sourcePdfBackendPreparation.ts",
+    "sourcePdfCausalAuthority.ts",
+    "sourcePdfPrivateStage.ts generic type only",
+    "sourcePdfStorageProducer.ts generic type only",
+    "sourcePdfV2BackendPreparation.test.ts"
+  ],
+  "reuses": "Existing V4 binding/profile, owning journal, current Auth/Actor/Trip/account generation/owner-fence, private Stage, single durable dispatch grant, causal fresh GET. V1\u2013V3 factories preserved.",
+  "red": {
+    "tests": 7,
+    "reason": "V4 owning preparation/causal factories absent from current main."
+  },
+  "validation": {
+    "owningAndOldRegressionsPassed": 44,
+    "optionalRealSqlChecksSkipped": 7,
+    "extendedSoftwareTestsPassed": 52,
+    "optionalWorkerFixtureSkipped": 1,
+    "typecheckSeparateExitCode": 0,
+    "scopedLintExitCode": 0,
+    "backendBuildExitCode": 0,
+    "independentReview": "NO_BLOCKER"
+  },
+  "limits": [
+    "SQL/journal doubles are not actual permission or custody acceptance.",
+    "Existing historical hardcoded V4 scope is not borrowed or enabled.",
+    "No startup caller, route, Host worker, Source SQL, RLS, GRANT, Role, budget or Secret change.",
+    "No actual PDF Source, Task, Provider call or Core Save."
+  ],
+  "next": "Bind normal Capture custody and qualified Source material only after exact scope/Host/derived evidence qualification; preserve original/derived identities."
+}

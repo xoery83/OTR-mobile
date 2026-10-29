@@ -1,0 +1,11 @@
+{
+  "fixedWorkerImagePresent": true,
+  "fixedWorkerImage": "sha256:d27ddd7b09410b0a3b220b2768c0f6b2b25c32da528a42041bc50ea19eefc1b7",
+  "imageOS": "linux",
+  "imageArchitecture": "amd64",
+  "hostNodePresent": false,
+  "hostNodeVersion": null,
+  "fixedPrefixWorkerContainerCount": 0,
+  "readOnly": true,
+  "startedOrInstalled": false
+}

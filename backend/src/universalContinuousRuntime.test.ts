@@ -163,3 +163,68 @@ it("overlapping activity and batch reads do not share an occupied Source connect
     await runtime?.close();
   }
 });
+
+it.each([
+  ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED", false],
+  ["UNIVERSAL_SOURCE_CLOSED", "UNIVERSAL_SOURCE_CLOSED", false],
+  ["UNIVERSAL_MODEL_TASK_BINDING", "UNIVERSAL_MODEL_TASK_BINDING", false],
+  ["UNIVERSAL_TASK_DEADLINE", "UNIVERSAL_TASK_DEADLINE", false],
+  ["UNIVERSAL_SCOPE_INVALID", "UNIVERSAL_SCOPE_INVALID", false],
+  ["UNIVERSAL_PRICE_UNAVAILABLE", "UNIVERSAL_PRICE_UNAVAILABLE", false],
+  [
+    "UNIVERSAL_PRICE_PRECISION_UNAVAILABLE",
+    "UNIVERSAL_PRICE_PRECISION_UNAVAILABLE",
+    false,
+  ],
+
+  ["private original contents and Bearer synthetic-token", "UNCLASSIFIED", false],
+  ["SOURCE_PRIVATE_ORIGINAL_NAME", "UNCLASSIFIED", false],
+  ["AUTH_BEARERABC123", "UNCLASSIFIED", false],
+  ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED", true],
+])(
+  "reports a safe targeted failure class without logging request material",
+  async (message, code, loggerThrows = false) => {
+    const actor = randomUUID(),
+      trip = randomUUID(),
+      batch = randomUUID(),
+      task = randomUUID();
+    const operation = {
+      id: "icw:test",
+      operationType: intelligenceWakeKind,
+      baseVersion: 1,
+    };
+    f.auth.mockResolvedValue({ id: actor });
+    f.read
+      .mockResolvedValueOnce({ sync_operation_id: operation.id })
+      .mockResolvedValue(operation);
+    const failure = Error(message);
+    f.execute.mockRejectedValue(failure);
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (loggerThrows) throw Error("SYNTHETIC_LOGGER_FAILURE");
+    });
+    const runtime = await loadDevUniversalContinuousRuntime({
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    });
+    try {
+      const ports = await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer synthetic-test-only" },
+        }),
+        actor,
+        trip,
+      );
+      await expect(ports.drainTargeted(batch, task)).rejects.toBe(failure);
+      expect(f.settle).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        expect.anything(),
+        failure,
+      );
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({ event: "universal_targeted_wake_failed", code }),
+      );
+    } finally {
+      log.mockRestore();
+      await runtime?.close();
+    }
+  },
+);

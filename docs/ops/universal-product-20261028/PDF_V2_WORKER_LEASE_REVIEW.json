@@ -1,0 +1,17 @@
+{
+  "status": "LOCAL_PASS_UNBOUND",
+  "red": "5 targeted tests failed before implementation",
+  "validation": "6 suites59PASS; typecheck/scopedlint PASS",
+  "independentReview": "NO_BLOCKER",
+  "reviewer": "p1_source_review_independent",
+  "scope": "Host-supplied persistent absolute exclusive marker; retained UNKNOWN and unexpected errors survive adapter reconstruction; no automatic stale marker removal",
+  "defaultsChanged": false,
+  "hostInstalled": false,
+  "sourceAuthorityChanged": false,
+  "notClaimed": [
+    "Actual DEV Host worker process-kill/orphan reconciliation",
+    "Private Host directory/socket ownership qualification",
+    "DEV PDF Task/Admission"
+  ],
+  "additionalValidation": "7 worker-marker tests PASS, including actual one-child SIGKILL and replacement refusal; actual frozen Docker producer through Unix IPC + two independent original reads PASS"
+}

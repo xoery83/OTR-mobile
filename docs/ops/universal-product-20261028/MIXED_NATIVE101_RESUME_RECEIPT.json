@@ -1,0 +1,54 @@
+{
+  "task": {
+    "task_id": "c2704309-b6f2-8cad-8622-e8f69b5ae6ce",
+    "import_id": "f68bc4fa-fef5-4f92-a976-e1a78cd0fbd7",
+    "created_at": "2026-10-29T04:08:57.367107Z",
+    "policy_snapshot": {
+      "budget_currency": "USD",
+      "budget_nanos": "50000000",
+      "deadline": "2026-10-29T04:18:57.367Z",
+      "max_attempts": 1,
+      "network_required": true,
+      "privacy": "REMOTE_ALLOWED",
+      "region": "CN",
+      "route": "DIRECT",
+      "version": 1
+    },
+    "work_disposition": "PENDING",
+    "current_attempt_id": null
+  },
+  "attempts": {
+    "count": 0
+  },
+  "queue": [
+    {
+      "status": "RETRYABLE",
+      "attempt_count": 2,
+      "last_error_code": "P0001",
+      "last_attempt_at": "2026-10-29T05:47:17.005Z"
+    }
+  ],
+  "status": "NATIVE_EXPLICIT_RESUME_VERIFIED_BACKEND_PRE_ATTEMPT_BLOCKED",
+  "nativeBuild": 101,
+  "sourceCommit": "d2690726",
+  "sameBatch": true,
+  "sameTask": true,
+  "newObjects": 0,
+  "independentProviderCallCount": 0,
+  "safePhase": "RUNTIME_PREPARATION",
+  "kind": "OTHER",
+  "rootCauseOfFirstUnexpiredFailure": "NOT_YET_PROVEN",
+  "pdfStatus": "RETAINED_NOT_PROCESSED",
+  "preservedBusinessTables": 33,
+  "nativeBinaryUnchanged": true,
+  "sessionOrKeychainReadOrCopied": false,
+  "staticDiagnosticRepair": {
+    "red": 6,
+    "greenTests": 15,
+    "suites": 2,
+    "typecheck": true,
+    "scopedLint": true,
+    "independentReview": "NO_BLOCKER",
+    "deployed": false
+  }
+}

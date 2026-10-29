@@ -548,3 +548,66 @@ it("shows each unresolved source and reason once without changing sealed results
   expect(html).toContain(t("capture.ai.submittedText"));
   expect(JSON.stringify(f.result)).toBe(before);
 });
+
+it("lists unprocessed originals separately without inventing a candidate or Review action", () => {
+  const f = fixture();
+  f.props.model.inputs = [
+    ...f.props.model.inputs,
+    {
+      id: randomUUID(),
+      kind: "FILE",
+      originalFilename: "Retained-only.pdf",
+      declaredContentType: "application/pdf",
+    } as CaptureJobReadModel["inputs"][number],
+  ];
+  const html = renderToStaticMarkup(createElement(UniversalResultView, f.props));
+  expect(html).toContain("Retained-only.pdf");
+  expect(html).toContain("Not processed (1)");
+  expect(f.result.sourceBindings).toHaveLength(2);
+});
+
+it("shows unsupported retained input before Results without inventing a Source or Review", () => {
+  const f = fixture();
+  const model = {
+    ...f.props.model,
+    inputs: [
+      { ...f.props.model.inputs[0], declaredContentType: "text/plain" },
+      f.props.model.inputs[1],
+      {
+        id: randomUUID(),
+        kind: "FILE",
+        originalFilename: "Retained-before-task.pdf",
+        declaredContentType: "application/pdf",
+      },
+    ],
+  } as CaptureJobReadModel;
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, { ...f.props, model, result: null, busy: true }),
+  );
+  expect(html).toContain("Not processed (1)");
+  expect(html).toContain("Retained-before-task.pdf");
+  expect(html).not.toContain(t("capture.ai.retainedUnprocessedDescription"));
+  expect(html).not.toContain("Museum walk");
+  expect(f.props.start).not.toHaveBeenCalled();
+  expect(f.result.sourceBindings).toHaveLength(2);
+});
+
+it.each([true, false])(
+  "only allows an explicit Start during a read when permitted: %s",
+  (canStartDuringRead) => {
+    const f = fixture();
+    renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        result: null,
+        canStart: true,
+        busy: true,
+        canStartDuringRead,
+      }),
+    );
+    const button = state.buttons.find((entry) => entry.label === t("capture.ai.process"));
+    expect(button).toBeDefined();
+    expect(button?.disabled).toBe(!canStartDuringRead);
+    expect(f.props.start).not.toHaveBeenCalled();
+  },
+);

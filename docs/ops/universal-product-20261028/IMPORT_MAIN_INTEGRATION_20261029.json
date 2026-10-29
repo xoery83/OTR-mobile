@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "9bcb225d97173812d7d962a1b9df0c6eb5240491",
+  "joinedMain": "ee2466584ea025ff9f4d815603a2c6b1dc20c9f7",
+  "integration": "Private merge; primary FF-only with fresh remote precheck; pending final documentation FF/push",
+  "privateChecks": {
+    "suites": 10,
+    "tests": 127,
+    "typecheck": true,
+    "uiGuard": true,
+    "additionalExistingPdfSuites": 2,
+    "additionalTests": 15
+  },
+  "actualPrimarySmoke": {
+    "suites": 5,
+    "tests": 86
+  },
+  "independentReview": "NO_BLOCKER; PG ports unchanged from main; PDF remains unbound",
+  "originalPrimaryDirtyEntries": 6,
+  "allOriginalDirtyFilesAndFullTrackedDiff": "EXACTLY_PRESERVED",
+  "devDeployment": "curated7e985 only; latest main not deployed",
+  "mixedE2E": "NOT_COMPLETE; retained success ABSTAIN but Native Results body unavailable",
+  "pendingReadOptimization": "Uncommitted local two-line candidate excluded from this integration"
+}

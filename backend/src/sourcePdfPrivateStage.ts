@@ -1,3 +1,10 @@
+import { z } from "zod";
+import {
+  sourcePdfV2UploadBindingSchema,
+  type SourcePdfV2UploadBinding,
+  PDF_UPLOAD_QPDF_V4,
+} from "../../src/domain/trip/sourcePdfV2Upload";
+import { verifySourcePdfV2UploadBytes } from "./sourcePdfV2UploadValidation";
 import { Buffer } from "node:buffer";
 import { constants } from "node:fs";
 import { mkdir, lstat, open, link, unlink } from "node:fs/promises";
@@ -12,6 +19,33 @@ import { pdfHash, verifySourcePdf } from "./sourcePdfProfile";
 
 // Payload container only. Reservations, dispatch and cleanup remain Source journal decisions.
 export function createSourcePdfPrivateStage(root: string) {
+  return createPrivateStage(
+    root,
+    sourcePdfBackendBindingSchema,
+    async (bytes) => verifySourcePdf(bytes),
+    65536,
+    "otr-pdf-stage/1",
+  );
+}
+export function createSourcePdfV2PrivateStage(
+  root: string,
+  runWorker?: Parameters<typeof verifySourcePdfV2UploadBytes>[1],
+) {
+  return createPrivateStage(
+    root,
+    sourcePdfV2UploadBindingSchema,
+    (bytes) => verifySourcePdfV2UploadBytes(bytes, runWorker),
+    PDF_UPLOAD_QPDF_V4.maxByteCount,
+    "otr-pdf-stage/4",
+  );
+}
+function createPrivateStage<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
+  root: string,
+  bindingSchema: z.ZodType<B>,
+  verify: (bytes: Uint8Array) => Promise<unknown>,
+  maxBytes: number,
+  stageVersion: string,
+) {
   if (!isAbsolute(root)) throw new Error("PRIVATE_STAGE_ROOT_REQUIRED");
   async function directory() {
     await mkdir(root, { mode: 0o700 }).catch((e: NodeJS.ErrnoException) => {
@@ -26,14 +60,14 @@ export function createSourcePdfPrivateStage(root: string) {
     )
       throw new Error("PRIVATE_STAGE_ROOT_REQUIRED");
   }
-  function layout(raw: PdfBackendBinding) {
-    const binding = sourcePdfBackendBindingSchema.parse(raw);
+  function layout(raw: B) {
+    const binding = bindingSchema.parse(raw);
     const header = Buffer.from(
-      "otr-pdf-stage/1\n" + pdfHash(canonicalCoreJson(binding)) + "\n",
+      stageVersion + "\n" + pdfHash(canonicalCoreJson(binding)) + "\n",
     );
     return { binding, header, path: join(root, binding.resourceId) };
   }
-  async function reopen(raw: PdfBackendBinding) {
+  async function reopen(raw: B) {
     await directory();
     const { binding, header, path } = layout(raw);
     const f = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -61,7 +95,7 @@ export function createSourcePdfPrivateStage(root: string) {
       if (!all.subarray(0, header.length).equals(header))
         throw new Error("STAGE_BINDING_MISMATCH");
       const bytes = all.subarray(header.length);
-      verifySourcePdf(bytes);
+      await verify(bytes);
       if (bytes.length !== binding.byteCount || pdfHash(bytes) !== binding.sha256)
         throw new Error("STAGE_INTEGRITY_MISMATCH");
       return bytes;
@@ -71,7 +105,7 @@ export function createSourcePdfPrivateStage(root: string) {
   }
   return {
     reopen,
-    async seal(raw: PdfBackendBinding, stream: AsyncIterable<Uint8Array>) {
+    async seal(raw: B, stream: AsyncIterable<Uint8Array>) {
       await directory();
       const { binding, header, path } = layout(raw);
       const temporary = join(root, ".partial-" + randomUUID());
@@ -87,7 +121,7 @@ export function createSourcePdfPrivateStage(root: string) {
         const parts: Buffer[] = [];
         for await (const chunk of stream) {
           count += chunk.byteLength;
-          if (count > 65536 || count > binding.byteCount)
+          if (count > maxBytes || count > binding.byteCount)
             throw new Error("PDF_TOO_LARGE");
           const part = Buffer.from(chunk);
           parts.push(part);
@@ -96,7 +130,7 @@ export function createSourcePdfPrivateStage(root: string) {
         const bytes = Buffer.concat(parts);
         if (count !== binding.byteCount || pdfHash(bytes) !== binding.sha256)
           throw new Error("PDF_INGRESS_INTEGRITY_MISMATCH");
-        verifySourcePdf(bytes);
+        await verify(bytes);
         await f.chmod(0o400);
         await f.sync();
         await f.close();
@@ -129,3 +163,7 @@ export function createSourcePdfPrivateStage(root: string) {
   };
 }
 export type SourcePdfPrivateStage = ReturnType<typeof createSourcePdfPrivateStage>;
+
+export type SourcePdfPrivateStageFor<
+  B extends PdfBackendBinding | SourcePdfV2UploadBinding,
+> = ReturnType<typeof createPrivateStage<B>>;

@@ -297,6 +297,38 @@ export async function loadDevUniversalContinuousRuntime(
             await queue.settle(context, operation);
             return { status: "SETTLED" as const, result };
           } catch (error) {
+            try {
+              const message = error instanceof Error ? error.message : "";
+              console.info(
+                JSON.stringify({
+                  event: "universal_targeted_wake_failed",
+                  code: [
+                    "UNIVERSAL_CONFIGURATION_CHANGED",
+                    "UNIVERSAL_TASK_CHANGED",
+                    "UNIVERSAL_PROVIDER_CLOSED",
+                    "UNIVERSAL_SOURCE_CLOSED",
+                    "UNIVERSAL_MODEL_TASK_BINDING",
+                    "UNIVERSAL_TASK_DEADLINE",
+                    "UNIVERSAL_SCOPE_INVALID",
+                    "UNIVERSAL_PRICE_UNAVAILABLE",
+                    "UNIVERSAL_PRICE_PRECISION_UNAVAILABLE",
+
+                    "UNIVERSAL_AUTH_REJECTED",
+                    "UNIVERSAL_CONTINUOUS_CLOSED",
+                    "UNIVERSAL_SOURCE_RUN_UNAVAILABLE",
+                    "UNIVERSAL_TASK_UNAVAILABLE",
+                    "CORE_CONNECTION_BUSY",
+                    "CORE_SCOPE_MISMATCH",
+                    "INTELLIGENCE_QUEUE_SCOPE",
+                    "INPUT_STALE",
+                  ].includes(message)
+                    ? message
+                    : "UNCLASSIFIED",
+                }),
+              );
+            } catch {
+              // Diagnostics must not interfere with queue settlement.
+            }
             await queue.settle(
               context,
               operation,

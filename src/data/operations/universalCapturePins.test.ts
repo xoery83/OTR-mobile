@@ -17,7 +17,7 @@ import {
   recoverUniversalOriginalPlans,
 } from "./universalOriginalBatch";
 import { UTF8_TEXT_FILE_PROFILE } from "@/domain/capture/utf8TextFile";
-async function setup(approved = false) {
+async function setup(approved = false, mixedPdf = false) {
   const f = fixture(true, 73),
     q = f.request(3),
     trip = randomUUID();
@@ -52,6 +52,19 @@ async function setup(approved = false) {
           ),
         )
       : text.map((s) => new TextEncoder().encode(s));
+  if (mixedPdf) {
+    q.inputs[0] = {
+      ...q.inputs[0],
+      originalFilename: "Retained-only.pdf",
+      declaredContentType: "application/pdf",
+    };
+    bytes[0] = readFileSync(
+      join(
+        process.cwd(),
+        "backend/src/__fixtures__/universal-product-beta/P6-Harbour-Pdf-Activity.pdf",
+      ),
+    );
+  }
   await f.submissions.submit(
     q,
     new Map(q.inputs.map((i, n) => [i.id, async () => ({ bytes: bytes[n] })])),
@@ -147,8 +160,12 @@ it("the actual bundled operator reads the same file in SQLite readOnly mode with
     directory = mkdtempSync(join(tmpdir(), "otr-pin-reader-"));
   try {
     // Match the real App migration journal; PRAGMA user_version remains zero.
-    x.f.sql.exec("CREATE TABLE schema_migrations (id INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL); INSERT INTO schema_migrations VALUES(73, 'capture_mixed_inputs_v2', '2026-10-24T00:00:00Z')");
-    expect(x.f.sql.prepare("PRAGMA user_version").get()).toMatchObject({ user_version: 0 });
+    x.f.sql.exec(
+      "CREATE TABLE schema_migrations (id INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL); INSERT INTO schema_migrations VALUES(73, 'capture_mixed_inputs_v2', '2026-10-24T00:00:00Z')",
+    );
+    expect(x.f.sql.prepare("PRAGMA user_version").get()).toMatchObject({
+      user_version: 0,
+    });
     const bundle = join(directory, "reader.mjs"),
       expectedPath = join(
         process.cwd(),
@@ -192,7 +209,9 @@ it("the actual bundled operator reads the same file in SQLite readOnly mode with
     expect(hash()).toBe(before);
     // Even a valid 2 FILE + 1 TEXT replacement whitelist cannot widen this QA CLI.
     const other = await setup();
-    other.f.sql.exec("CREATE TABLE schema_migrations (id INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL); INSERT INTO schema_migrations VALUES(73, 'capture_mixed_inputs_v2', '2026-10-24T00:00:00Z')");
+    other.f.sql.exec(
+      "CREATE TABLE schema_migrations (id INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL); INSERT INTO schema_migrations VALUES(73, 'capture_mixed_inputs_v2', '2026-10-24T00:00:00Z')",
+    );
     const otherPins = await readUniversalOriginalPins(
       other.context,
       other.q.jobId,
@@ -244,4 +263,31 @@ it("the actual bundled operator reads the same file in SQLite readOnly mode with
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+it("prepares only existing text profiles in a mixed Batch and preserves the PDF original across reopen", async () => {
+  const x = await setup(false, true);
+  const before = await x.f.submissions.reopen(x.q.jobId, x.context);
+  const pdf = before.inputs[0];
+  const original = await x.f.captures.getForSourceHandoff(pdf.captureId!);
+  const plans = await recoverUniversalOriginalPlans(x.context, x.q.jobId, x.deps);
+  expect(plans.map((p) => p.inputId)).toEqual(x.q.inputs.slice(1).map((i) => i.id));
+  const prepared = await prepareUniversalOriginalBatch(
+    x.context,
+    x.q.jobId,
+    plans,
+    x.deps,
+  );
+  expect(prepared.unhandledInputIds).toEqual([pdf.id]);
+  expect(prepared.inputs).toHaveLength(2);
+  x.f.reopen();
+  const after = await x.f.captures.getForSourceHandoff(pdf.captureId!);
+  expect(after).toEqual(original);
+  expect(after.capture.tripId).toBeNull();
+  expect((await x.f.submissions.reopen(x.q.jobId, x.context)).batch).toEqual(
+    before.batch,
+  );
+  expect(await recoverUniversalOriginalPlans(x.context, x.q.jobId, x.deps)).toEqual(
+    plans,
+  );
 });

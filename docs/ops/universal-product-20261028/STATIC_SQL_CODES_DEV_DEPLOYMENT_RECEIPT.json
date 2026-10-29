@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "7e985fdfe4af1470a3b64722ffdfd57fd8d63e8f",
+  "scope": "Original DEV software only; exact static SQL refusal classification",
+  "service": "otr-dev-backend",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "build": {
+    "sourceCommit": "7e985fdfe4af1470a3b64722ffdfd57fd8d63e8f",
+    "baselineImage": "sha256:1dc308c8c89fa8840379d23ad93540913953a351bed15eeb4f7d76a2cabb6f3a",
+    "baselineBundles": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "1e5a85d417e0411724ca74abacacb0fadddd6caeae34d894d350910208d10e66"
+    },
+    "newBundles": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "70204682527d8e114ae231f5d20e0b9fcfc8b28e173f465ee24d6bea16cacae5"
+    },
+    "onlyChangedSource": [
+      "backend/src/universalContinuousRuntime.ts"
+    ],
+    "checkedFiles": 1676,
+    "noEnvCopied": true,
+    "noDependenciesInstalled": true,
+    "deployed": false
+  },
+  "deployment": {
+    "status": "DEFAULT_CLOSED_DEPLOYED",
+    "container": "4847b7c4de8af60934e0b26b2e84558122a07f8001000150ba2f1ce84f1b8703",
+    "image": "sha256:750a459b1178d3807128973f7cfc8594d059809d8c9c1eea47bd1ad8b757f208",
+    "configSHA256": "1c9fa539b0001f538a4278980c777d32c5118cf495e7a272cf53d8a8529a04c5",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "mountFilesUnchanged": true,
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedContainer": "ea942fd2e9e10c90651645daeec0ee719ee97f17e1cacf6d292c18b3272b9365",
+    "source": "curated-1dc-source-static-codes-7e985fdf"
+  },
+  "independentVerification": {
+    "status": "INDEPENDENT_DEFAULT_CLOSED_VERIFIED",
+    "container": "4847b7c4de8af60934e0b26b2e84558122a07f8001000150ba2f1ce84f1b8703",
+    "image": "sha256:750a459b1178d3807128973f7cfc8594d059809d8c9c1eea47bd1ad8b757f208",
+    "configSHA256": "1c9fa539b0001f538a4278980c777d32c5118cf495e7a272cf53d8a8529a04c5",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "environmentUnchanged": true,
+    "mountFilesSHA256": {
+      "/run/otr/universal-runtime.json": "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+      "/run/otr/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+      "/run/otr/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+      "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5"
+    },
+    "bundles": {
+      "/app/server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "/app/server-capture.mjs": "70204682527d8e114ae231f5d20e0b9fcfc8b28e173f465ee24d6bea16cacae5"
+    },
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedOldStopped": true,
+    "noEnrichmentActivation": true
+  },
+  "privilegeDifference": "NONE",
+  "sqlOrRoleOrBudgetChanges": false,
+  "newProviderCalls": 0,
+  "rollback": "retained 1dc/ea942 exact container; no rollback required",
+  "nativeCoordination": "HANDOFF_VERIFIED; fresh default image supplied"
+}

@@ -1,0 +1,20 @@
+{
+  "mainBefore": "74c6403027e13824be020f483915526d4136c998",
+  "mainAfter": "901cf45662a3eec9e4fbfb526e2d3d822b1bc2fa",
+  "originMainVerified": "901cf45662a3eec9e4fbfb526e2d3d822b1bc2fa",
+  "normalNonForcePush": true,
+  "postMergeSmoke": "8 suites117PASS",
+  "dirtyByteIdentical": true,
+  "backendDeployed": false,
+  "sqlModified": false,
+  "pdfRoutesDefaultClosedUnbound": true,
+  "normalNative95ColdReader": "PASS",
+  "continuousSourceAuthority": "Owner-approved exact same-scope ef17 ACTIVE; unchanged by main integration",
+  "sourceBranchValidation": "8 suites117PASS, typecheck PASS, UI guard PASS",
+  "preserved": "Original six primary dirty entries, complete file hashes and binary diff unchanged; Native unmerged P2 untouched",
+  "notClaimed": [
+    "PDF/OCR interpretation",
+    "PDF Worker Host activation",
+    "Full ordinary-user Beta"
+  ]
+}

@@ -234,3 +234,64 @@ for (const mode of ["restored", "rejected", "missing", "stale"] as const) {
     expect(f.bootstrap).toHaveBeenCalledExactlyOnceWith(trip);
   });
 }
+
+it("prepares the Task only from admitted text while matching exactly the retained unsupported IDs", async () => {
+  const account = randomUUID(),
+    trip = randomUUID(),
+    batch = randomUUID(),
+    job = randomUUID();
+  const getAccountId = async () => account;
+  const context = await captureAccountRequestContext(trip, getAccountId);
+  const supported = randomUUID(),
+    retained = randomUUID(),
+    binding = randomUUID();
+  const model = {
+    batch: { batchId: batch, jobId: job },
+    inputs: [
+      { id: supported, kind: "TEXT", declaredContentType: null },
+      { id: retained, kind: "FILE", declaredContentType: "application/pdf" },
+    ],
+  } as unknown as CaptureJobReadModel;
+  const pin = { id: supported },
+    readAdmittedInputPin = vi.fn(async () => pin);
+  f.source.mockReturnValue({ readAdmittedInputPin });
+  f.native.mockResolvedValue(vi.fn());
+  f.plans.mockResolvedValue([{ inputId: supported }]);
+  const response = {
+    batchId: batch,
+    submissionSha256: "a".repeat(64),
+    unhandledInputIds: [retained],
+    inputs: [{ inputId: supported, bindingId: binding }],
+    results: [{ state: "ADMITTED" }],
+  };
+  f.run.mockResolvedValue(response);
+  const prepareTask = vi.fn();
+  await prepareDefaultUniversalCaptureSources(context, model, {
+    baseUrl: "https://api-dev.xoery.art",
+    getAccountId,
+    assertCurrent: () => {},
+    prepareTask,
+  });
+  expect(prepareTask).toHaveBeenCalledExactlyOnceWith({
+    tripId: trip,
+    batchId: batch,
+    submissionSha256: "a".repeat(64),
+    inputs: [pin],
+  });
+  expect(readAdmittedInputPin).toHaveBeenCalledExactlyOnceWith(
+    context,
+    binding,
+    supported,
+  );
+  prepareTask.mockClear();
+  f.run.mockResolvedValue({ ...response, unhandledInputIds: [supported] });
+  await expect(
+    prepareDefaultUniversalCaptureSources(context, model, {
+      baseUrl: "https://api-dev.xoery.art",
+      getAccountId,
+      assertCurrent: () => {},
+      prepareTask,
+    }),
+  ).rejects.toThrow("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");
+  expect(prepareTask).not.toHaveBeenCalled();
+});

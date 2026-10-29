@@ -1,5 +1,7 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { open, unlink } from "node:fs/promises";
+import { isAbsolute } from "node:path";
 import { promisify } from "node:util";
 import { profile } from "../../scripts/source-pdf-v2-linux/profile.mjs";
 
@@ -97,4 +99,38 @@ export async function runSourcePdfV2LinuxWorker(bytes: Uint8Array): Promise<unkn
       }
     }
   }
+}
+
+// Host composition owns a private persistent path; never clear an orphan marker automatically.
+export function createSourcePdfV2WorkerLease(
+  lockPath: string,
+  run = runSourcePdfV2LinuxWorker,
+) {
+  if (!isAbsolute(lockPath) || lockPath.includes("\0"))
+    throw Error("PDF_V2_WORKER_LOCK_INVALID");
+  return async (bytes: Uint8Array): Promise<unknown> => {
+    try {
+      const marker = await open(lockPath, "wx", 0o600);
+      await marker.close();
+    } catch {
+      throw Error("PDF_V2_WORKER_UNAVAILABLE");
+    }
+    let terminated = false;
+    try {
+      const value = await run(bytes);
+      terminated = true;
+      return value;
+    } catch (error) {
+      terminated =
+        error instanceof Error &&
+        [
+          "PDF_V2_INPUT_LIMIT",
+          "PDF_V2_WORKER_FAILED",
+          "PDF_V2_WORKER_OUTPUT_INVALID",
+        ].includes(error.message);
+      throw error;
+    } finally {
+      if (terminated) await unlink(lockPath);
+    }
+  };
 }

@@ -1,0 +1,120 @@
+{
+  "status": "SERVER_INTERPRETATION_VERIFIED_NATIVE_RESULTS_PENDING",
+  "nativeBuild": 101,
+  "sourceCommit": "d2690726",
+  "backendSource": "7e985fdf",
+  "backendImage": "sha256:750a459b1178d3807128973f7cfc8594d059809d8c9c1eea47bd1ad8b757f208",
+  "inputReceipt": {
+    "batch": {
+      "batch_id": "c31cd292-bb97-4902-857c-d5cc63c86d2c",
+      "job_id": "f72fcad4-9cfd-48a8-a092-762b1f87c7af",
+      "created_at": "2026-10-29T06:27:30.608Z"
+    },
+    "inputs": [
+      {
+        "input_id": "ce436849-74bd-4d90-a88b-7169069c8281",
+        "original_filename": "P1-Mixed-Text-Walk.txt",
+        "content_sha256": "718addbdbe530aefb074fc11f6b825f10c78bba31bc49108030dbc8a950d757a",
+        "content_byte_count": 50,
+        "acceptance_state": "ACCEPTED",
+        "capture_id": "dd2fbe5e-2781-4f2e-aa21-3e69ac51ec22"
+      },
+      {
+        "input_id": "ef04b7c3-14db-45f8-a83e-6a698fb3a3ac",
+        "original_filename": "P6-Harbour-Pdf-Activity.pdf",
+        "content_sha256": "b180ca4bed213d11dde114fed24db81d0514288ec9c9c8eb4fa2e52d9c7c619f",
+        "content_byte_count": 1700,
+        "acceptance_state": "ACCEPTED",
+        "capture_id": "b8dc92f4-d998-4606-9a5e-d5c96f159191"
+      }
+    ]
+  },
+  "owningTask": {
+    "task": {
+      "task_id": "bcff4ba9-5136-886f-a214-00b75229c745",
+      "import_id": "c31cd292-bb97-4902-857c-d5cc63c86d2c",
+      "created_at": "2026-10-29T06:28:32.344836Z",
+      "policy_snapshot": {
+        "budget_currency": "USD",
+        "budget_nanos": "50000000",
+        "deadline": "2026-10-29T06:38:32.344Z",
+        "max_attempts": 1,
+        "network_required": true,
+        "privacy": "REMOTE_ALLOWED",
+        "region": "CN",
+        "route": "DIRECT",
+        "version": 1
+      },
+      "work_disposition": "PUBLISHED",
+      "current_attempt_id": "401a0382-221c-84c9-9c05-53d678c18dc6"
+    },
+    "attempts": [
+      {
+        "attempt_id": "401a0382-221c-84c9-9c05-53d678c18dc6",
+        "execution_observation": "TERMINAL",
+        "execution_outcome": "SUCCEEDED",
+        "safe_failure_code": null,
+        "started_at": "2026-10-29T06:30:39.074Z",
+        "ended_at": null,
+        "updated_at": "2026-10-29T06:34:21.088Z"
+      }
+    ],
+    "queue": [
+      {
+        "status": "COMPLETED",
+        "attempt_count": 0,
+        "last_error_code": null,
+        "last_attempt_at": "2026-10-29T06:28:58.096Z"
+      }
+    ]
+  },
+  "result": {
+    "status": "ABSTAIN",
+    "providerOutcome": "SETTLED",
+    "candidateCount": 0,
+    "unresolved": [
+      {
+        "sourceId": "S0",
+        "reason": "No legal kind/subtype supported by source text"
+      }
+    ],
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "ce436849-74bd-4d90-a88b-7169069c8281",
+        "sourceId": "58770737-0f05-406e-9274-75fc7ac42db0",
+        "representationId": "0d669d12-5eae-424c-b0ae-78f31889ac16",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "718addbdbe530aefb074fc11f6b825f10c78bba31bc49108030dbc8a950d757a",
+        "submittedSha256": "718addbdbe530aefb074fc11f6b825f10c78bba31bc49108030dbc8a950d757a",
+        "status": "READY"
+      }
+    ],
+    "wireSchema": "PASS",
+    "providerReceipt": {
+      "requestId": "309be9f3-3e33-4bc2-bb0f-13806540fe6f",
+      "requestSha256": "f8d93cf29d5a2f0fffe6ef2cae2b5709dfb3d8f9d120335e3eb2e25a24122650",
+      "responseSha256": "8e155d178c0e7f67d9cee8adb873b7a37509f04c79b02ec1df577d458d44b350",
+      "usage": {
+        "input_tokens": 1506,
+        "output_tokens": 75,
+        "total_tokens": 1581,
+        "cached_input_tokens": 1280,
+        "reasoning_tokens": null,
+        "provider_extension": {
+          "prompt_cache_miss_tokens": 226
+        },
+        "usage_quality": "ACTUAL_REPORTED"
+      },
+      "costNanos": "165480"
+    }
+  },
+  "independentProviderCalls": 1,
+  "normalNativeActivity": "Interpretation finished observed; Results body unavailable; not Native Results PASS",
+  "newCoreItems": 0,
+  "reasonNoSave": "ABSTAIN: no legal kind/subtype supported; do not invent candidate",
+  "unsupportedPdf": "Retained, Not processed; not in SourceBindings or model",
+  "priorExpiredObjects": "Preserved unchanged; no retry or deadline reset",
+  "newAuthorityOrBudget": false
+}

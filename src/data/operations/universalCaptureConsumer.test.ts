@@ -345,3 +345,19 @@ it.each(["PENDING", "WAITING", "PROCESSING"] as const)(
     expect(f.transport.execute).not.toHaveBeenCalled();
   },
 );
+
+it("recovers the legitimate text result while a non-text file remains explicitly unprocessed", async () => {
+  const f = fixture();
+  f.model.inputs = [
+    ...f.model.inputs,
+    {
+      id: randomUUID(),
+      kind: "FILE",
+      declaredContentType: "application/pdf",
+      state: "ACCEPTED",
+      contentSha256: "b".repeat(64),
+    } as CaptureJobReadModel["inputs"][number],
+  ];
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});

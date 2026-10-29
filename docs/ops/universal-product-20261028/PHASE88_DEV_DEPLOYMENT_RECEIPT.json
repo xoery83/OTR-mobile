@@ -1,0 +1,91 @@
+{
+  "status": "DEV_DEFAULT_CLOSED_SOFTWARE_VERIFIED",
+  "commit": "88f457aa506af780a4a9ecd625911fc223522800",
+  "kind": "standing DEV software deployment; no authority change",
+  "imageBuild": {
+    "source": "exact_actual_750e_curated_copy",
+    "baseHashes": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "a49b147553ef82fe21fd9c4647459b237437dab83547d4819beb3f9588dc265c"
+    },
+    "patchedHashes": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "1e5a85d417e0411724ca74abacacb0fadddd6caeae34d894d350910208d10e66"
+    },
+    "onlyChangedProductionFiles": [
+      "backend/src/universalContinuousHost.ts"
+    ],
+    "baseFileCount": 1672,
+    "baselineReproducedExactly": true,
+    "patchCommit": "88f457aa506af780a4a9ecd625911fc223522800",
+    "baseImage": "sha256:750e633fe1000a855e6d754cd600cce91a9b2b8063a1d17f4ed301849c68b033",
+    "noEnvironmentFilesCopied": true,
+    "noDependenciesInstalled": true,
+    "builtOnlyNotDeployed": true,
+    "image": "sha256:1dc308c8c89fa8840379d23ad93540913953a351bed15eeb4f7d76a2cabb6f3a",
+    "fileHashes": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "1e5a85d417e0411724ca74abacacb0fadddd6caeae34d894d350910208d10e66",
+      "Dockerfile": "ee45deb626baa9e4b63aa4c92ee23cb6f6fc4585795636a2e615a999d86bf709"
+    }
+  },
+  "independentVerification": {
+    "status": "INDEPENDENT_DEFAULT_CLOSED_VERIFIED",
+    "container": "ea942fd2e9e10c90651645daeec0ee719ee97f17e1cacf6d292c18b3272b9365",
+    "image": "sha256:1dc308c8c89fa8840379d23ad93540913953a351bed15eeb4f7d76a2cabb6f3a",
+    "configSHA256": "46685beb3a3da7d4d32216a236448407d5f39799a2fbece02e04841091012e39",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "environmentUnchanged": true,
+    "mountFilesSHA256": {
+      "/run/otr/universal-runtime.json": "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+      "/run/otr/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+      "/run/otr/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+      "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5"
+    },
+    "bundles": {
+      "/app/server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "/app/server-capture.mjs": "1e5a85d417e0411724ca74abacacb0fadddd6caeae34d894d350910208d10e66"
+    },
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedOldStopped": true,
+    "noEnrichmentActivation": true
+  },
+  "stageHostNormalization": {
+    "candidateNotRunning": true,
+    "currentHealthy": true,
+    "onlyHostDifference": {
+      "OomKillDisable": [
+        null,
+        false
+      ]
+    },
+    "matchesPriorSuccessfulStageNormalization": true
+  },
+  "swapResult": {
+    "status": "DEFAULT_CLOSED_DEPLOYED",
+    "container": "ea942fd2e9e10c90651645daeec0ee719ee97f17e1cacf6d292c18b3272b9365",
+    "image": "sha256:1dc308c8c89fa8840379d23ad93540913953a351bed15eeb4f7d76a2cabb6f3a",
+    "configSHA256": "46685beb3a3da7d4d32216a236448407d5f39799a2fbece02e04841091012e39",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "mountFilesUnchanged": true,
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedContainer": "da051e10cb6bb05248a2982d2d76477bcc10c7b2b097a950f00412fcf9884430",
+    "source": "curated-750e-source-phase-88f457aa"
+  },
+  "independentReview": "NO_BLOCKER; stage/template and final actual candidate IDs checked separately",
+  "temporaryAuthorityOpened": false,
+  "schemaRlsGrantRoleChanged": false,
+  "providerCallsTriggered": 0,
+  "sourceContinuousAuthority": "original approved ACTIVE minimums preserved; not a new business PASS",
+  "actualTaskRootCauseFixed": false,
+  "scriptHashes": {
+    "phase88-stage.py": "7f1df827fa735cc9f9739765bc19be0a055858acbd8d17016ce02a7899547557",
+    "phase88-swap.py": "a1b86e54065f614d1e13edbc5ef7747911ebb9a0fefc5a4be20d79e4c30e58b8",
+    "phase88-verify.py": "f0a4b9ebbe64ab7d130e97c0999076619c0daa613db7ce0f3fc95f146e0fe385"
+  },
+  "rollbackState": "previous750e/da051 stopped and retained; conditional rollback was not needed",
+  "earlierPreflightStop": "archive8fb whole branch did not reproduce actual750e; no upload/deploy from that archive; actual curated copy reproduced both old bundle hashes exactly before applying one production file."
+}

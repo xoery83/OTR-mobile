@@ -24,7 +24,7 @@ fixed local worker. A transport response is never Source verification or admissi
 Prior54-test candidate received one independent resource blocker: releasing the
 slot after termination UNKNOWN. Directed RED reproduced it; quarantine repair
 and known-terminated retry regression now pass6 suites56 tests, types and scoped lint.
-Independent re-review of this fix remains required. Tests exercise real local Unix
+Independent focused re-review reports NO_BLOCKER for the current-process quarantine; Host restart/orphan cleanup is still unqualified. Tests exercise real local Unix
 sockets and TCP refusal, concurrency, actual chunked ingress and response limits,
 private errors, and owning verifier/proof/registration/HTTP regressions. Test worker
 sentinels prove transport only; no actual Docker/DEV PDF execution is claimed.
@@ -35,3 +35,33 @@ Provider use or Native PDF Task/Admission. A concrete protected deployment packe
 must first qualify the service/image/uid/private socket ownership/read-only mount,
 process-exit cleanup and rollback, plus original custody and PDF eligibility. No
 standing image/Gate authorization is inferred for that new execution boundary.
+
+Focused next safety delta: a Host-owned persistent exclusive worker marker, acquired
+before invoking the same frozen worker. Known termination releases only this marker;
+termination UNKNOWN or process loss retains it. Reconstructing the server cannot
+clear that marker. No automatic stale-lock cleanup, directory creation, listener,
+Host install or Source permission is introduced. Host-owned private-directory
+permissions and deliberate orphan reconciliation remain deployment prerequisites.
+
+Persistent-marker delta:5RED→6suites59PASS, types/scoped lint PASS, independent
+NO_BLOCKER for the unbound candidate. Actual file exclusivity across reconstructed
+instances, retained UNKNOWN/unclassified failures, known-terminated explicit retry
+and missing-directory refusal are tested. No real process-kill/orphan Host test
+is claimed; private-directory permissions and no manual in-flight marker deletion
+remain required in the protected Host deployment packet.
+
+Actual continuation: one short child-process SIGKILL leaves the marker and rejects
+a reconstructed worker (7 marker tests PASS). Separately, the real frozen Linux
+image through private Unix IPC + persistent marker + owning double-read verifier
+processed the exact retained950-byte/two-page synthetic PDF:127UTF-8 bytes,
+textSHA3b123e3e…,4676ms; known termination released the marker. No sentinels in
+this parser run, no Provider/SQL/Source registration or DEV Host installation.
+PDF_V2_REAL_PRIVATE_TRANSPORT_PASS.json. Readonly DEV preflight confirms the fixed
+image exists and zero matching worker containers, but Host Node is absent; do not
+infer an executable service binding. PDF_V2_HOST_READONLY_PREFLIGHT.json.
+
+Next unbound Source slice reuses existing V2 Core proof in its caller-held owning
+lease/catalog and Source locks. It uniquely selects retained DERIVED TEXT parented
+to the exact expected ORIGINAL, preserves both identities/hashes and seal/page-map
+proof, and keeps the current Universal4MiB original limit. No client-supplied
+derived choice, Run/Task identity, model call, endpoint or permission activation.
