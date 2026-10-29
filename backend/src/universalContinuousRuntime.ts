@@ -306,6 +306,13 @@ export async function loadDevUniversalContinuousRuntime(
                     "UNIVERSAL_CONFIGURATION_CHANGED",
                     "UNIVERSAL_TASK_CHANGED",
                     "UNIVERSAL_PROVIDER_CLOSED",
+                    "UNIVERSAL_SOURCE_CLOSED",
+                    "UNIVERSAL_MODEL_TASK_BINDING",
+                    "UNIVERSAL_TASK_DEADLINE",
+                    "UNIVERSAL_SCOPE_INVALID",
+                    "UNIVERSAL_PRICE_UNAVAILABLE",
+                    "UNIVERSAL_PRICE_PRECISION_UNAVAILABLE",
+
                     "UNIVERSAL_AUTH_REJECTED",
                     "UNIVERSAL_CONTINUOUS_CLOSED",
                     "UNIVERSAL_SOURCE_RUN_UNAVAILABLE",
