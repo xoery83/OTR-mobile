@@ -286,58 +286,63 @@ async function receiptFor(x: Awaited<ReturnType<typeof setup>>) {
   );
   return JSON.stringify(r);
 }
-it("targeted existing Source queue reconciles UNKNOWN without redispatch and cold recovery completes only after catalog", async () => {
-  const x = await setup(),
-    repository = x.repo(true),
-    c = await repository.captureContext(x.trip);
-  await repository.admit(c, x.plan);
-  // A fixture catalog installation is explicit here; the genuine PG→catalog path is a separate acceptance receipt.
-  const refreshOwningCatalog = async () => {
-    for (const t of [
-      "trip_sources",
-      "trip_source_revisions",
-      "trip_source_representations",
-    ])
-      x.f.sql.exec(
-        `UPDATE ${t} SET registration_state='REGISTERED',created_at='2026-10-24T00:00:00.000000Z'`,
-      );
-  };
-  let retained: string | null = null;
-  const acquire = vi.fn(async () => {
-    throw new Error("SIMULATED_CONNECTION_LOST");
-  });
-  const dependencies = {
-    database: x.f.db,
-    getAccountId: x.f.getAccount,
-    repository,
-    transport: { lookup: async () => retained, acquire },
-    refreshOwningCatalog,
-  };
-  await expect(
-    dispatchUniversalOriginalSource(c, x.plan.id, dependencies),
-  ).rejects.toThrow("SIMULATED_CONNECTION_LOST");
-  expect((await repository.recovery(c, x.plan.id)).binding.state).toBe("OUTCOME_UNKNOWN");
-  expect(await dispatchUniversalOriginalSource(c, x.plan.id, dependencies)).toEqual({
-    state: "OUTCOME_UNKNOWN",
-  });
-  expect(acquire).toHaveBeenCalledTimes(1);
-  retained = await receiptFor(x);
-  x.f.reopen();
-  expect(
-    await dispatchUniversalOriginalSource(c, x.plan.id, {
-      ...dependencies,
-      repository: x.repo(true),
-    }),
-  ).toEqual({ state: "ADMITTED" });
-  expect(
-    x.f.sql
-      .prepare(
-        "SELECT status FROM sync_operations WHERE operation_type='C_ADMIT_CAPTURE_SOURCE'",
-      )
-      .get()!.status,
-  ).toBe("COMPLETED");
-  expect(acquire).toHaveBeenCalledTimes(1);
-});
+it.each(["SIMULATED_CONNECTION_LOST", "SOURCE_REQUEST_UNCONFIRMED"])(
+  "targeted Source queue reconciles %s without redispatch and cold recovery completes only after catalog",
+  async (failure) => {
+    const x = await setup(),
+      repository = x.repo(true),
+      c = await repository.captureContext(x.trip);
+    await repository.admit(c, x.plan);
+    // A fixture catalog installation is explicit here; the genuine PG→catalog path is a separate acceptance receipt.
+    const refreshOwningCatalog = async () => {
+      for (const t of [
+        "trip_sources",
+        "trip_source_revisions",
+        "trip_source_representations",
+      ])
+        x.f.sql.exec(
+          `UPDATE ${t} SET registration_state='REGISTERED',created_at='2026-10-24T00:00:00.000000Z'`,
+        );
+    };
+    let retained: string | null = null;
+    const acquire = vi.fn(async () => {
+      throw new Error(failure);
+    });
+    const dependencies = {
+      database: x.f.db,
+      getAccountId: x.f.getAccount,
+      repository,
+      transport: { lookup: async () => retained, acquire },
+      refreshOwningCatalog,
+    };
+    await expect(
+      dispatchUniversalOriginalSource(c, x.plan.id, dependencies),
+    ).rejects.toThrow(failure);
+    expect((await repository.recovery(c, x.plan.id)).binding.state).toBe(
+      "OUTCOME_UNKNOWN",
+    );
+    expect(await dispatchUniversalOriginalSource(c, x.plan.id, dependencies)).toEqual({
+      state: "OUTCOME_UNKNOWN",
+    });
+    expect(acquire).toHaveBeenCalledTimes(1);
+    retained = await receiptFor(x);
+    x.f.reopen();
+    expect(
+      await dispatchUniversalOriginalSource(c, x.plan.id, {
+        ...dependencies,
+        repository: x.repo(true),
+      }),
+    ).toEqual({ state: "ADMITTED" });
+    expect(
+      x.f.sql
+        .prepare(
+          "SELECT status FROM sync_operations WHERE operation_type='C_ADMIT_CAPTURE_SOURCE'",
+        )
+        .get()!.status,
+    ).toBe("COMPLETED");
+    expect(acquire).toHaveBeenCalledTimes(1);
+  },
+);
 it("account change after result lookup cannot dispatch a Source write", async () => {
   const x = await setup(),
     repository = x.repo(true),

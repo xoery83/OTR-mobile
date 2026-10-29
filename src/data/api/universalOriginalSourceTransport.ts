@@ -1,4 +1,5 @@
 import { fetch as expoFetch } from "expo/fetch";
+import { z } from "zod";
 import { reserveNativeQaGet } from "./nativeQaReadBudget";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
 import {
@@ -70,14 +71,32 @@ export function createUniversalOriginalSourceTransport(
           body,
         }),
       );
-      if (response.status !== 200)
-        throw new Error(
-          response.status === 401
-            ? "SOURCE_AUTH_REQUIRED"
-            : response.status === 503
-              ? "SOURCE_CAPABILITY_CLOSED"
-              : "SOURCE_HTTP_REJECTED",
+      if (response.status !== 200) {
+        if (response.status === 503) {
+          let closed = false;
+          try {
+            if (
+              response.headers.get("Content-Type")?.startsWith("application/json") &&
+              !response.headers.has("Content-Encoding")
+            ) {
+              const body = await readBoundedJson(response, 4096, boundary);
+              closed = z
+                .object({
+                  error: z.object({ code: z.literal("SOURCE_CAPABILITY_CLOSED") }),
+                })
+                .safeParse(body).success;
+            }
+          } catch {
+            // An ambiguous response cannot prove that the Source write never ran.
+          }
+          void response.body?.cancel().catch(() => {});
+          throw Error(closed ? "SOURCE_CAPABILITY_CLOSED" : "SOURCE_REQUEST_UNCONFIRMED");
+        }
+        void response.body?.cancel().catch(() => {});
+        throw Error(
+          response.status === 401 ? "SOURCE_AUTH_REQUIRED" : "SOURCE_HTTP_REJECTED",
         );
+      }
       if (
         !response.headers.get("Content-Type")?.startsWith("application/json") ||
         response.headers.has("Content-Encoding")

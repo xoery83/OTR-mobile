@@ -134,7 +134,13 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    A Source-gateway catalog-only diagnostic was rejected by auto-review as a new
    credential use; no execution/bypass occurred, and exact read-only approval is
    pending while other local work continues. No actual PDF Source/Task/Save PASS.
-3. Complete the remaining input failure/offline/Account/Document permission matrix;
+3. Source uncertainty classification now preserves non-closed503 as
+   `SOURCE_REQUEST_UNCONFIRMED` rather than claiming dispatch was disabled. Only
+   an explicit bounded Backend closed code is CLOSED. Four suites76 tests/types/
+   lint and independent NO_BLOCKER; SQLite UNKNOWN/cold recovery proves one acquire,
+   same operation and receipt-only completion. `SOURCE_503_UNCERTAINTY_LOCAL_PASS.json`.
+   This is LOCAL_PASS, not a new deployed Native/Backend acceptance.
+4. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN
    calls, holds, originals and receipts; no blind replacement or automatic resend.
