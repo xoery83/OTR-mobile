@@ -1,5 +1,5 @@
 {
-  "status": "REPRESENTATIVE_NATIVE_DEV_SCENARIOS_PASS_MAIN_AND_ORDINARY_SMOKE_PENDING",
+  "status": "REPRESENTATIVE_NATIVE_DEV_AND_ORDINARY_SMOKE_PASS",
   "date": "2026-10-29",
   "base": "2c8da312",
   "mainBeforeIntegration": "901cf45662a3eec9e4fbfb526e2d3d822b1bc2fa",
@@ -128,7 +128,34 @@
       ]
     },
     "coldAcceptedDetailsEveryoneNoPending": true,
-    "preCommitAttempt": "Earlier stale draft was cancelled only after proving zero Queue rows/no loss witness; a fresh normal draft then succeeded. No UNKNOWN operation was replaced."
+    "preCommitAttempt": "Earlier stale draft was cancelled only after proving zero Queue rows/no loss witness; a fresh normal draft then succeeded. No UNKNOWN operation was replaced.",
+    "independentOwningFields": {
+      "flight": {
+        "event_id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+        "flight_number_literal": "NZ9401",
+        "qualification": "SPARSE",
+        "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7"
+      },
+      "services": 0,
+      "endpoints": [
+        {
+          "role": "DESTINATION",
+          "local_date": null,
+          "local_time": null,
+          "zone_id": null,
+          "instant": null,
+          "quality": "UNKNOWN"
+        },
+        {
+          "role": "ORIGIN",
+          "local_date": "2026-10-29",
+          "local_time": null,
+          "zone_id": null,
+          "instant": null,
+          "quality": "UNKNOWN"
+        }
+      ]
+    }
   },
   "isolation": {
     "normalLogin": "Existing verified DEV QA B via normal Email OTP; no copied Session/Token/password",
@@ -239,14 +266,31 @@
     "newSparseNumberDateRegression": "30 tests PASS including one new case",
     "privateFaultBoundaryAndWorkerAccountTests": "3 suites / 63 tests PASS",
     "independentFaultReview": "NO_BLOCKER; 13 private + 45 Worker checks",
-    "independentIsolationReview": "NO_BLOCKER after evidence-write fix; six mock checks"
+    "independentIsolationReview": "NO_BLOCKER after evidence-write fix; six mock checks",
+    "mergedNativeContracts": "14 suites / 256 tests PASS",
+    "mergedBackendContracts": "6 suites / 94 tests PASS; old codec mock aligned with existing single-snapshot Reader",
+    "mergedStatic": "typecheck, ui:guard, backend:build, scoped ESLint, diff-check PASS",
+    "independentFinalReview": "NO_BLOCKER; 4 suites / 86 tests PASS; evidence summaries independently compared"
   },
-  "productionChange": "One regression test only; runtime Queue/Worker/Core/Auth/Backend/Schema/RLS/GRANT unchanged in this closure. Private QA hooks/routes are not product files.",
+  "productionChange": "Two tests only in this closure: Sparse durable-ID regression and old Codec mock alignment. Runtime Queue/Worker/Core/Auth/Backend/Schema/RLS/GRANT unchanged by reliability closure. Earlier approved Manual feature commits integrated separately with accepted main; private QA hooks/routes excluded.",
   "remaining": [
     "No physical network outage this simulator-only round; prior physical offline Edit receipts remain separate.",
     "No deliberate duplicate POST sent to DEV; actual retry proved receipt-first no redispatch. Existing isolated Core/PG replay evidence is reused, not relabeled live duplicate POST.",
     "Shared-trip Organizer/non-Creator/selected-private participants variants outside current approved running authority were not enabled. Actual live denial is unshared B/cross-Trip.",
-    "Backend HTTP business denial verified; this is not an independent direct SQL RLS-role exercise.",
-    "Ordinary no-hook build restoration/main integration smoke still pending at this checkpoint."
-  ]
+    "Backend HTTP business denial verified; this is not an independent direct SQL RLS-role exercise."
+  ],
+  "ordinaryBuild": {
+    "source": "752241d4401fae9ff0eabc0ce7d48006de20be58",
+    "build": 96,
+    "bundleId": "com.xoery.otrmobile",
+    "jsSHA256": "7bbf49be2690b0551254f4b441c98b02b0a7cb3cb44654e99ff896833d0d1906",
+    "noPrivateFaultMarkers": true,
+    "nativeBinaryRetained": 52,
+    "note": "JS-only; no claim of newer Source Swift binary parity",
+    "sqlite": 74,
+    "manualP2Formal": true,
+    "importAdmissionFlags": "all six false",
+    "devRuntimeUnchanged": true
+  },
+  "ordinarySmoke": "ORDINARY96_SMOKE.json; actual cold original four Trips and latest P3/P2/P6 Details PASS"
 }

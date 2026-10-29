@@ -1,0 +1,73 @@
+{
+  "build": 96,
+  "source": "752241d4401fae9ff0eabc0ce7d48006de20be58",
+  "jsSHA256": "7bbf49be2690b0551254f4b441c98b02b0a7cb3cb44654e99ff896833d0d1906",
+  "nativeBinaryRetained": 52,
+  "integrity": "ok",
+  "schema": 74,
+  "accepted": [
+    {
+      "id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+      "cache_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "semantic_revision": 2,
+      "title": "NZ9401",
+      "participation_mode": "WHOLE_GROUP"
+    },
+    {
+      "id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+      "cache_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "semantic_revision": 4,
+      "title": "Forms QA Account A Pending Isolation 1029",
+      "participation_mode": "WHOLE_GROUP"
+    },
+    {
+      "id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+      "cache_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "semantic_revision": 2,
+      "title": "Forms QA Offline Create Stay 1029 Edited",
+      "participation_mode": "WHOLE_GROUP"
+    }
+  ],
+  "queue": [
+    {
+      "id": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d",
+      "entity_id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "status": "COMPLETED"
+    },
+    {
+      "id": "86db3aaa-9ee1-4241-9e58-d2605c6e7b9b",
+      "entity_id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "status": "COMPLETED"
+    },
+    {
+      "id": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4",
+      "entity_id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "status": "COMPLETED"
+    },
+    {
+      "id": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56",
+      "entity_id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "status": "COMPLETED"
+    },
+    {
+      "id": "d1602f8c-a0ad-4ad3-80b7-1bb76fc95fb3",
+      "entity_id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "status": "COMPLETED"
+    }
+  ],
+  "noFaultFlags": true,
+  "coldUi": [
+    "A original four Trips retained",
+    "normal Trip Home Reader latest P2/P3/P6",
+    "P3 latest title/date range/Everyone/noPending",
+    "P2 NZ9401/Oct29/Everyone/noPending",
+    "P6 latest isolation title/session/admission/Everyone/noPending"
+  ],
+  "noUninstallOrSessionReset": true,
+  "schemaSource": "schema_migrations MAX(id); PRAGMA user_version remains 0"
+}

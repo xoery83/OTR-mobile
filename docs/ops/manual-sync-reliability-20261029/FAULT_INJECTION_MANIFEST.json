@@ -21,5 +21,14 @@
     "noAuthContractOrPermissionsChange": true,
     "independentReview": "NO_BLOCKER; six mock tests"
   },
-  "controls": "Two new empty/text Documents flags, removed; exclusive once markers retained harmless until no-hook package installed; no database or Auth writes by fault control."
+  "controls": "Two new empty/text Documents flags, removed; exclusive once markers retained harmless until no-hook package installed; no database or Auth writes by fault control.",
+  "ordinaryRestoration": {
+    "build": 96,
+    "source": "752241d4401fae9ff0eabc0ce7d48006de20be58",
+    "jsSHA256": "7bbf49be2690b0551254f4b441c98b02b0a7cb3cb44654e99ff896833d0d1906",
+    "privateMarkersAbsent": true,
+    "actualColdSmoke": "PASS",
+    "nativeBinaryRetained": 52,
+    "schema": 74
+  }
 }
