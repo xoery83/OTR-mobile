@@ -223,6 +223,11 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   or unsaved Trip shells. Directed6/independent135+cancel1 and facts supplement2
   PASS/NO_BLOCKER. Initial two unchanged 5s old-test timeouts passed single-worker
   30s rerun. No production Native consumer or publication follows.
+- 30 October preflight/status now require trusted NORMAL_ACCOUNT after UUID
+  validation and before body/port access. Anonymous/UNKNOWN/id-only negatives
+  reproduced200 before repair and now403 without owning calls; normal missing
+  adapter stays503. Directed and independent4 suites88 PASS, types/scoped lint
+  PASS/NO_BLOCKER. Routes remain unmounted, no server authority or DEV change.
 - Provisional metadata client7365 uses the existing secure Guest verification slot
   while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
   result. 401 refresh reuses existing Supabase path with active persistence off,

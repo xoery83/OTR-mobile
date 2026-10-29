@@ -9,7 +9,7 @@ import type { GuestAdoptionStatusRequest } from "../../src/domain/auth/guestAdop
 afterEach(() => vi.useRealTimers());
 const path = "https://example.invalid/v1/auth/guest-adoptions/status";
 function fixture() {
-  const user = { id: randomUUID() };
+  const user = { id: randomUUID(), accountClass: "NORMAL_ACCOUNT" as const };
   const input: GuestAdoptionStatusRequest = {
     contractVersion: 1,
     adoptionId: randomUUID(),
@@ -220,3 +220,21 @@ it("bounds nonsettling status reads and sanitizes private failures", async () =>
   expect(failed.status).toBe(503);
   expect(await failed.text()).not.toContain("private-storage-sentinel");
 });
+
+// A valid canonical UUID alone never proves a formal adoption target.
+it.each(["ANONYMOUS", "UNKNOWN", undefined] as const)(
+  "rejects target classification %s before owning adapter access",
+  async (accountClass) => {
+    const f = fixture();
+    const response = await guestAdoptionStatusBoundary(
+      f.request(),
+      { id: f.user.id, accountClass },
+      f.port,
+    );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      error: { code: "NORMAL_ACCOUNT_REQUIRED", message: "NORMAL_ACCOUNT_REQUIRED" },
+    });
+    expect(f.readStatus).not.toHaveBeenCalled();
+  },
+);
