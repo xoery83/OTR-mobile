@@ -548,3 +548,20 @@ it("shows each unresolved source and reason once without changing sealed results
   expect(html).toContain(t("capture.ai.submittedText"));
   expect(JSON.stringify(f.result)).toBe(before);
 });
+
+it("lists unprocessed originals separately without inventing a candidate or Review action", () => {
+  const f = fixture();
+  f.props.model.inputs = [
+    ...f.props.model.inputs,
+    {
+      id: randomUUID(),
+      kind: "FILE",
+      originalFilename: "Retained-only.pdf",
+      declaredContentType: "application/pdf",
+    } as CaptureJobReadModel["inputs"][number],
+  ];
+  const html = renderToStaticMarkup(createElement(UniversalResultView, f.props));
+  expect(html).toContain("Retained-only.pdf");
+  expect(html).toContain("Not processed (1)");
+  expect(f.result.sourceBindings).toHaveLength(2);
+});

@@ -80,6 +80,11 @@ export function UniversalResultView({
       t(input?.kind === "TEXT" ? "capture.ai.submittedText" : "capture.unnamed")
     );
   };
+  const unprocessed = result
+    ? model.inputs.filter(
+        (input) => !result.sourceBindings.some((b) => b.inputId === input.id),
+      )
+    : [];
   const ready = model.allInputsAccepted && !!model.batch.context.tripPrior;
   return (
     <UiSection title={t("capture.ai.title")}>
@@ -116,6 +121,21 @@ export function UniversalResultView({
                 </View>
               );
             })}
+          {unprocessed.length ? (
+            <View style={s.group}>
+              <UiText style={s.heading}>
+                {t("capture.ai.retainedUnprocessedTitle", { count: unprocessed.length })}
+              </UiText>
+              <UiText style={s.meta}>
+                {t("capture.ai.retainedUnprocessedDescription")}
+              </UiText>
+              {unprocessed.map((input) => (
+                <UiText key={input.id} style={s.copy}>
+                  {input.originalFilename ?? t("capture.unnamed")}
+                </UiText>
+              ))}
+            </View>
+          ) : null}
           <UiText style={s.meta}>
             {t(
               result.providerOutcome === "LOCAL_FIXTURE"

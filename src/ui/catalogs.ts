@@ -136,6 +136,8 @@ export const en = {
   "capture.ai.manualNeed": "Select a valid trip to add an itinerary item.",
   "capture.ai.manualSaved": "Item saved. Check its sync status in the trip.",
   "capture.ai.originals": "Original materials",
+  "capture.ai.retainedUnprocessedTitle": "Not processed ({count})",
+  "capture.ai.retainedUnprocessedDescription": "These materials were not included in this parsing pass.",
   "capture.ai.lifecycleUnknown":
     "A change or cancellation needs a verified target before it can be applied.",
   "capture.ai.bookingWithheld":
@@ -3132,6 +3134,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.manualNeed": "请选择合法的行程以添加项目。",
   "capture.ai.manualSaved": "项目已保存，请在行程中查看其同步状态。",
   "capture.ai.originals": "原始材料",
+  "capture.ai.retainedUnprocessedTitle": "未处理（{count}）",
+  "capture.ai.retainedUnprocessedDescription": "这些资料未纳入本次解析。",
   "capture.ai.lifecycleUnknown": "修改或取消须先核实目标，才能应用。",
   "capture.ai.bookingWithheld": "预订信息的证据或关系尚未确定，因此暂未提出候选。",
   "capture.ai.unconfirmed": "这些材料不足以证明安排已经确认。",

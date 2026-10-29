@@ -1,3 +1,4 @@
+import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import { openDatabase } from "../db/database";
 import {
   captureStorageDependencies,
@@ -107,10 +108,15 @@ export async function prepareDefaultUniversalCaptureSources(
   options.assertCurrent();
   const result = await runUniversalOriginalBatch(context, model.batch.jobId, plans, deps);
   options.assertCurrent();
+  const unhandled = model.inputs
+    .filter(isUnsupportedUniversalInputMetadata)
+    .map((i) => i.id);
   if (
     result.batchId !== model.batch.batchId ||
-    result.unhandledInputIds.length ||
-    result.results.length !== model.inputs.length ||
+    result.unhandledInputIds.length !== unhandled.length ||
+    result.unhandledInputIds.some((id) => !unhandled.includes(id)) ||
+    new Set(result.unhandledInputIds).size !== result.unhandledInputIds.length ||
+    result.results.length !== model.inputs.length - unhandled.length ||
     result.results.some((r) => r.state !== "ADMITTED")
   )
     throw new Error("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");

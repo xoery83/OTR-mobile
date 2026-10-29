@@ -1,3 +1,4 @@
+import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { createUniversalImportTransport } from "../api/universalImportTransport";
@@ -21,6 +22,7 @@ export function assertUniversalCaptureResult(
   if (
     !model.allInputsAccepted ||
     !inputs.length ||
+    !result.sourceBindings.length ||
     result.sourceBindings.some(
       (b) =>
         !inputs.some(
@@ -30,7 +32,11 @@ export function assertUniversalCaptureResult(
             i.contentSha256 === b.originalSha256,
         ),
     ) ||
-    inputs.some((i) => !result.sourceBindings.some((b) => b.inputId === i.id))
+    inputs.some(
+      (i) =>
+        !isUnsupportedUniversalInputMetadata(i) &&
+        !result.sourceBindings.some((b) => b.inputId === i.id),
+    )
   )
     throw Error("UNIVERSAL_CAPTURE_ORIGINALS_MISMATCH");
 }

@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_PASS",
+  "red": "3 targeted failures: mixed Source preparation blocked; result recovery rejected; retained original filename omitted",
+  "validation": "6 suites112PASS/types/UIguard PASS; added exact Task pin/unhandled set guard:4 suites68PASS/scopedlint PASS",
+  "independentReview": "NO_BLOCKER p1_source_review_independent",
+  "scope": "Current TEXT/UTF8 FILE only; IMAGE/non-text FILE remain outside Run and are listed not processed. Zero supported inputs remain blocked; all required text hashes/coverage and Source/Admission checks retained. Full C3/originals unchanged.",
+  "actualSqlite": "Original PDF bytes/metadata/full Batch and same supported Source plans retained across cold reopen",
+  "notClaimed": [
+    "PDF/OCR interpretation",
+    "DEV mixed-input PASS",
+    "Formal save of unprocessed materials"
+  ],
+  "sourceAuthorityModified": false,
+  "providerCalls": 0
+}
