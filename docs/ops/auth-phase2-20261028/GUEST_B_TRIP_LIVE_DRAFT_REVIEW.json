@@ -45,5 +45,7 @@
     "cancelled NameEditor never reopens from late input",
     "Done reads the last synchronous editor value",
     "embedded metadata Trip pin plus durable Guest actor pin"
-  ]
+  ],
+  "sourceCommit": "5da59fa252ea6361ce7726b9a9746c1b8fbdc4e7",
+  "nativeFiniteRegression": "GuestQA65 normalCreate/Nickname/DateCancel/Stay/Discard and originalTrip/P1 cold PASS; actualEdit/freeze/checkpoint reconstruction still pending"
 }
