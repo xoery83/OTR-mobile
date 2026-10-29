@@ -1,0 +1,19 @@
+{
+  "status": "MAIN_PUSH_VERIFIED",
+  "main": "89680f071d4133869fa2003edec65e7c2c2382c7",
+  "previousMain": "f3a9a21dabb5844d6c6a8e19ff9b48956227bec0",
+  "originAndRemoteVerified": true,
+  "normalNonForcePush": true,
+  "actualPrimaryTests": {
+    "suites": 6,
+    "passed": 96
+  },
+  "actualPrimaryTypecheck": "PASS",
+  "independentReview": "NO_BLOCKER",
+  "dirtyEntriesPreserved": 6,
+  "trackedIndexUntrackedBytesExact": true,
+  "nativeGeneralAndAuthPreserved": true,
+  "actualDevDeployment": false,
+  "protectedPdfCatalogRead": "APPROVAL_PENDING_NOT_EXECUTED",
+  "sourceProviderAuthorityChanged": false
+}

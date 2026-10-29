@@ -85,7 +85,13 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Source sustained scope and Provider
   budget/expiry have not been enlarged. Fresh-check actual gates before mutations;
   no Root temporary admin or Provider window is open.
-- Latest Import software integration: main/origin/remote
+- Latest Import integration: main/origin/remote
+  `89680f071d4133869fa2003edec65e7c2c2382c7` joins accepted Native General
+  `f3a9a21d` and the reviewed Source503 repair3d5c6881. Actual-primary six suites96
+  tests/typecheck and independent NO_BLOCKER; original six dirty/full tracked/
+  index/untracked bytes exact. `SOURCE_503_MAIN_INTEGRATION.json`. No deployment,
+  Source/Provider authority change or execution of the pending catalog diagnostic.
+- Previous PDF software integration: main/origin/remote
   `37c5e08913bacb304243100e785633cb6b4c59a0` (software code c6b15be8),
   actual-primary15 suites228 tests,
   typecheck and capture bundle PASS. PDF software remains optional/default closed;
@@ -96,7 +102,7 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   typecheck PASS; original six dirty entries/full diff/untracked bytes exact.
   Missing Google Sign-In16.1.5 was restored only from the locked tarball after
   SHA512 verification, without dependency/lockfile changes. Auth owns main Writer
-  again. Source503 repair3d5c6881 remains private/local and not installed.
+  again at that checkpoint. Source503 repair is now integrated above, not installed.
 - Earlier completed Import main push: `11c7feaa`; original primary six dirty entries,
   full tracked/index diff and untracked bytes were preserved. Auth subsequently
   integrated its local-only Source/journal work through main `72331060`.
@@ -152,7 +158,9 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    an explicit bounded Backend closed code is CLOSED. Four suites76 tests/types/
    lint and independent NO_BLOCKER; SQLite UNKNOWN/cold recovery proves one acquire,
    same operation and receipt-only completion. `SOURCE_503_UNCERTAINTY_LOCAL_PASS.json`.
-   This is LOCAL_PASS, not a new deployed Native/Backend acceptance.
+   Now main-integrated on the accepted General baseline with actual-primary six
+   suites96/typecheck and independent Review. Still no new Native installation or
+   actual deployed failure/recovery acceptance.
 4. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN
