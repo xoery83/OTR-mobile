@@ -2589,7 +2589,7 @@ export function createDevBackendHandler({
               runtime?.universalImportPort ?? universalImportPort,
             );
       } else if (
-        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:reserve|finish|stage|dispatch|observe-retained)$/.test(
+        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained)$/.test(
           url.pathname,
         )
       ) {

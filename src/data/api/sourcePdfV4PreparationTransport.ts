@@ -1,3 +1,4 @@
+import { sourcePdfPrepareCommandSchema } from "../../domain/trip/sourcePdfPreparation";
 import { fetch as expoFetch } from "expo/fetch";
 import { z } from "zod";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
@@ -16,12 +17,14 @@ import { reserveNativeQaGet } from "./nativeQaReadBudget";
 import {
   sourcePdfV4PreparationIdentitySchema,
   sourcePdfV4CommandObservationSchema,
+  sourcePdfV4PrepareObservationSchema,
   sourcePdfV4PreparationObservationSchema,
   type SourcePdfV4PreparationIdentity,
 } from "./sourcePdfV4PreparationContracts";
 import { sourcePdfV2UploadCommandSchema } from "../../domain/trip/sourcePdfV2Upload";
 import { canonicalCoreJson } from "../../domain/trip/tripCoreV2Json";
 const observations = {
+  prepare: "PREPARE_OBSERVED",
   reserve: "RESERVATION_OBSERVED",
   finish: "FINISH_OBSERVED",
   stage: "STAGED",
@@ -58,9 +61,11 @@ export function createSourcePdfV4PreparationTransport(
     const identity = sourcePdfV4PreparationIdentitySchema.parse(raw);
     z.uuid().parse(context.tripId);
     const command =
-      action === "reserve" || action === "finish"
-        ? sourcePdfV2UploadCommandSchema.parse(rawCommand)
-        : undefined;
+      action === "prepare"
+        ? sourcePdfPrepareCommandSchema.parse(rawCommand)
+        : action === "reserve" || action === "finish"
+          ? sourcePdfV2UploadCommandSchema.parse(rawCommand)
+          : undefined;
     if (
       command &&
       (command.actor_account_id !== context.accountId ||
@@ -68,7 +73,7 @@ export function createSourcePdfV4PreparationTransport(
         command.source_id !== identity.sourceId ||
         command.payload.representation_id !== identity.representationId ||
         command.operation_id !== identity.operationId ||
-        command.payload.byte_count > 4194304)
+        (command.command === "UPLOAD_ORIGINAL" && command.payload.byte_count > 4194304))
     )
       throw Error("SOURCE_CAPTURE_SCOPE_INVALID");
     const commandBody = command ? canonicalCoreJson(command) : undefined;
@@ -148,9 +153,11 @@ export function createSourcePdfV4PreparationTransport(
       )
         throw Error("SOURCE_RESPONSE_INVALID");
       const result = (
-        command
-          ? sourcePdfV4CommandObservationSchema
-          : sourcePdfV4PreparationObservationSchema
+        action === "prepare"
+          ? sourcePdfV4PrepareObservationSchema
+          : command
+            ? sourcePdfV4CommandObservationSchema
+            : sourcePdfV4PreparationObservationSchema
       ).parse(await readBoundedJson(response, 4096, boundary));
       if (
         result.sourceId !== identity.sourceId ||
@@ -177,6 +184,11 @@ export function createSourcePdfV4PreparationTransport(
     }
   }
   return {
+    prepare: (
+      context: AccountRequestContext,
+      identity: SourcePdfV4PreparationIdentity,
+      command: unknown,
+    ) => request(context, identity, "prepare", undefined, command),
     reserve: (
       context: AccountRequestContext,
       identity: SourcePdfV4PreparationIdentity,

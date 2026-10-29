@@ -26,6 +26,14 @@ SQL/GRANT/Role/Secret activation or PDF E2E is included. See ADR
 
 ## Active delivery
 
+PDF optional software now carries the explicit frozen PREPARE parent from Native
+through normal Auth/Trip checks to the existing SQL on one scoped Source lease.
+Strict parent/upload receipts remain separate; stale identities and generations
+are rejected; no automatic retries or parent fabrication. Default closed/unbound.
+Joined main: five suites97 PASS, six conditional SQL skips, types/lint/capture
+bundle PASS and independent Review NO_BLOCKER. No SQL/Host/Provider/Secret or
+runtime activation is included. See `PDF_PREPARE_SOFTWARE_MAIN_READY.json`.
+
 Universal Import product completion is active in the stable worktree
 `/Users/xoery/.codex/worktrees/universal-product-20261028/otr-mobile-canonical`.
 The `universal-product-p2-host` checkout is an older image host (`e973ffe0`), not

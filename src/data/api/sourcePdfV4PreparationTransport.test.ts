@@ -417,3 +417,77 @@ it("finish requires an exact owning receipt and does not retry uncertainty", asy
   );
   expect(f.fetcher.mock.calls.length).toBe(calls + 1);
 });
+
+it("Native PREPARE roundtrip preserves the owning parent and normal App Auth boundary", async () => {
+  const f = await fixture();
+  const {
+    parent_operation_id: _parent,
+    payload_sha256: _hash,
+    byte_count: _bytes,
+    mime_type: _mime,
+    ...pins
+  } = uploadCommand(f).payload;
+  const command = {
+    ...uploadCommand(f),
+    command: "PREPARE_REPRESENTATION",
+    payload: pins,
+  };
+  const receipt = {
+    contract_version: 1,
+    command: "PREPARE_REPRESENTATION",
+    operation_id: command.operation_id,
+    operation_key: command.operation_key,
+    operation_sha256: command.operation_sha256,
+    outcome: "APPLIED",
+    error_code: null,
+    completed_at: "2026-10-30T00:00:00.000000Z",
+    source_id: command.source_id,
+    representation_id: pins.representation_id,
+    result_source_row_revision: 1,
+    result_material_revision: 1,
+    result_representation_row_revision: 1,
+    result_remote_state: "PENDING",
+    result_retention_state: "RETAINED",
+    result_action_id: null,
+    result_verified_at: null,
+    result_sha256: "c".repeat(64),
+  };
+  const { createDevBackendHandler } = await import("../../../backend/src/app");
+  const { createSourcePdfV4Reservation } =
+    await import("../../../backend/src/sourcePdfV4Reservation");
+  const prepare = vi.fn(async () => receipt);
+  const owner = { accountGeneration: async () => 37 };
+  const handler = createDevBackendHandler({
+    gateway: {
+      validateAccessToken: async () => ({ id: f.account }),
+      canReadTrip: async () => true,
+    } as never,
+    sourcePdfV4PreparationPort: {
+      owner,
+      preparation: {} as never,
+      reservation: createSourcePdfV4Reservation(
+        { prepare } as never,
+        owner,
+        randomUUID(),
+      ),
+    },
+  });
+  f.fetcher.mockImplementation(async (input, init) =>
+    handler(new Request(String(input), init)),
+  );
+  expect(await f.transport.prepare(f.context, f.identity, command)).toMatchObject({
+    observation: "PREPARE_OBSERVED",
+    receipt,
+  });
+  expect(prepare).toHaveBeenCalledExactlyOnceWith(f.account, expect.any(String), 37);
+  const before = f.fetcher.mock.calls.length;
+  await expect(
+    f.transport.prepare(f.context, f.identity, { ...command, source_id: randomUUID() }),
+  ).rejects.toThrow("SOURCE_CAPTURE_SCOPE_INVALID");
+  expect(f.fetcher.mock.calls.length).toBe(before);
+  f.fetcher.mockRejectedValue(Error("UNKNOWN"));
+  await expect(f.transport.prepare(f.context, f.identity, command)).rejects.toThrow(
+    "SOURCE_REQUEST_UNCONFIRMED",
+  );
+  expect(f.fetcher.mock.calls.length).toBe(before + 1);
+});

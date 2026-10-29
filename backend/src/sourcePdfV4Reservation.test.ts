@@ -49,6 +49,7 @@ function fixture() {
     accountGeneration: 3,
   };
   const authority = {
+    prepare: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
     admit: vi.fn(async () => ({ context })),
     resolveReserved: vi.fn(async () => context),
     finish: vi.fn(async () => ({ outcome: "APPLIED" })),
@@ -285,4 +286,95 @@ it("finish withholds a receipt after generation changes during the RPC", async (
   complete();
   await expect(pending).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
   expect(f.authority.admit).not.toHaveBeenCalled();
+});
+
+function prepareFixture() {
+  const f = fixture();
+  const {
+    parent_operation_id: _parent,
+    payload_sha256: _hash,
+    byte_count: _bytes,
+    mime_type: _mime,
+    ...pins
+  } = f.command.payload;
+  const command = { ...f.command, command: "PREPARE_REPRESENTATION", payload: pins };
+  const receipt = {
+    contract_version: 1,
+    command: "PREPARE_REPRESENTATION",
+    operation_id: command.operation_id,
+    operation_key: command.operation_key,
+    operation_sha256: command.operation_sha256,
+    outcome: "APPLIED",
+    error_code: null,
+    completed_at: "2026-10-30T00:00:00.000000Z",
+    source_id: command.source_id,
+    representation_id: pins.representation_id,
+    result_source_row_revision: 1,
+    result_material_revision: 1,
+    result_representation_row_revision: 1,
+    result_remote_state: "PENDING",
+    result_retention_state: "RETAINED",
+    result_action_id: null,
+    result_verified_at: null,
+    result_sha256: "c".repeat(64),
+  };
+  f.authority.prepare.mockResolvedValue(receipt);
+  return { ...f, command, receipt, raw: () => JSON.stringify(command) };
+}
+it("explicit PREPARE returns the same owning parent receipt without allocating upload resources", async () => {
+  const f = prepareFixture();
+  expect(await f.port.prepare(f.actor, f.raw(), f.identity)).toEqual(f.receipt);
+  expect(f.authority.prepare).toHaveBeenCalledExactlyOnceWith(f.actor, f.raw(), 3);
+  expect(f.authority.admit).not.toHaveBeenCalled();
+});
+it.each(["tripId", "sourceId", "representationId", "operationId"] as const)(
+  "PREPARE rejects route %s substitution",
+  async (field) => {
+    const f = prepareFixture();
+    await expect(
+      f.port.prepare(f.actor, f.raw(), { ...f.identity, [field]: randomUUID() }),
+    ).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+    expect(f.authority.prepare).not.toHaveBeenCalled();
+  },
+);
+it("PREPARE withholds a substituted receipt or stale generation", async () => {
+  const f = prepareFixture();
+  f.authority.prepare.mockResolvedValue({ ...f.receipt, operation_id: randomUUID() });
+  await expect(f.port.prepare(f.actor, f.raw(), f.identity)).rejects.toThrow(
+    "PDF_PREPARE_RECEIPT_CONFLICT",
+  );
+  f.authority.prepare.mockImplementation(async () => {
+    f.owner.accountGeneration.mockResolvedValue(4);
+    return f.receipt;
+  });
+  await expect(f.port.prepare(f.actor, f.raw(), f.identity)).rejects.toThrow(
+    "PDF_SCOPE_FORBIDDEN",
+  );
+});
+it("PREPARE HTTP uses the frozen tuple and rejects upload fields", async () => {
+  const f = prepareFixture();
+  const call = (body: unknown) =>
+    sourcePdfV4PreparationBoundary(
+      new Request(
+        `https://dev.example.invalid/v2/trips/${f.identity.tripId}/sources/${f.identity.sourceId}/representations/${f.identity.representationId}/pdf-v4/${f.identity.operationId}/prepare`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+      f.actor,
+      async () => true,
+      { owner: f.owner, preparation: {} as never, reservation: f.port },
+    );
+  const response = await call(f.command);
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    observation: "PREPARE_OBSERVED",
+    receipt: f.receipt,
+  });
+  expect(
+    (
+      await call({
+        ...f.command,
+        payload: { ...f.command.payload, parent_operation_id: randomUUID() },
+      })
+    ).status,
+  ).toBe(422);
 });

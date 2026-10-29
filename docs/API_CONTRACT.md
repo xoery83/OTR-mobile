@@ -1254,7 +1254,7 @@ cannot activate the protected PDF scope; no current Runtime enables it.
 ## Source PDF V4 preparation HTTP (unbound implementation candidate)
 
 Candidate POST routes use
-`/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/{reserve,finish,stage,dispatch,observe-retained}`.
+`/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/{prepare,reserve,finish,stage,dispatch,observe-retained}`.
 The enclosing Backend must authenticate bearer identity; the adapter checks current
 Trip access and uses the existing causal owner's account-generation reader, never
 an Actor/generation supplied by request JSON. Stage delegates raw PDF bytes to the
@@ -1267,8 +1267,13 @@ ports fail closed before body consumption. The parent handler authenticates and
 delegates only through this optional port; normal startup does not supply it. No
 worker service, SQL activation, budget or permission change is part of this
 candidate; those require separately qualified composition and authority.
-`operationId` is the existing durable `UPLOAD_ORIGINAL` command identity, never
-the Source acquisition ID or a transport-generated replacement. `reserve` admits
+`prepare` accepts the frozen six-pin `PREPARE_REPRESENTATION` command and returns
+its strict owning parent receipt. It requires the explicit V4 continuous-context
+option and runs the existing prepare RPC on the same Source transaction; it never
+manufactures a parent or allocates upload resources. For this action `operationId`
+is that durable PREPARE identity. For all other actions it is the existing durable
+`UPLOAD_ORIGINAL` command identity, never the Source acquisition ID or a
+transport-generated replacement. `reserve` admits
 that identity; stage/dispatch/observe-retained/finish use its reservation.
 Optional reserve/finish accept only the frozen bounded16KiB `UPLOAD_ORIGINAL`
 Source command, not caller resource/attempt/run capabilities. The existing V4

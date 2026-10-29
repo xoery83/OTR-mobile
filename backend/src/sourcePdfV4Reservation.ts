@@ -1,3 +1,7 @@
+import {
+  sourcePdfPrepareCommandSchema,
+  sourcePdfPrepareReceiptSchema,
+} from "../../src/domain/trip/sourcePdfPreparation";
 import { randomBytes, randomUUID } from "node:crypto";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { sourcePdfV2UploadCommandSchema } from "../../src/domain/trip/sourcePdfV2Upload";
@@ -9,7 +13,7 @@ import type {
 
 type Authority = Pick<
   ReturnType<typeof createSourcePdfV2CausalAuthority>,
-  "admit" | "finish" | "resolveReserved"
+  "admit" | "finish" | "resolveReserved" | "prepare"
 >;
 
 // Unbound: the parent authenticates and checks Trip access; SQL remains the issuer.
@@ -38,6 +42,36 @@ export function createSourcePdfV4Reservation(
       throw Error("PDF_SCOPE_FORBIDDEN");
   }
   return {
+    async prepare(actor: string, raw: string, identity: PdfIngressIdentity) {
+      coreUuid.parse(actor);
+      if (Buffer.byteLength(raw, "utf8") > 16384) throw Error("INVALID_SOURCE_COMMAND");
+      const q = sourcePdfPrepareCommandSchema.parse(JSON.parse(raw));
+      if (
+        q.actor_account_id !== actor ||
+        q.trip_id !== identity.tripId ||
+        q.source_id !== identity.sourceId ||
+        q.operation_id !== identity.operationId ||
+        q.payload.representation_id !== identity.representationId ||
+        !Number.isSafeInteger(identity.accountGeneration) ||
+        identity.accountGeneration < 1 ||
+        (await owner.accountGeneration(actor)) !== identity.accountGeneration
+      )
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      const receipt = sourcePdfPrepareReceiptSchema.parse(
+        await authority.prepare(actor, raw, identity.accountGeneration),
+      );
+      if ((await owner.accountGeneration(actor)) !== identity.accountGeneration)
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      if (
+        receipt.operation_id !== q.operation_id ||
+        receipt.operation_key !== q.operation_key ||
+        receipt.operation_sha256 !== q.operation_sha256 ||
+        receipt.source_id !== q.source_id ||
+        receipt.representation_id !== q.payload.representation_id
+      )
+        throw Error("PDF_PREPARE_RECEIPT_CONFLICT");
+      return receipt;
+    },
     async reserve(actor: string, raw: string, identity: PdfIngressIdentity) {
       await validate(actor, raw, identity);
       // Existing begin returns an existing journal/receipt before allocating again.
