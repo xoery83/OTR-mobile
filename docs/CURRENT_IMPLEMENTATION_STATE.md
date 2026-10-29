@@ -100,7 +100,12 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    objects and cannot be borrowed. Global PDF gate remains closed; normal scoped
    binding, legitimate ORIGINAL/DERIVED identities, exact evidence qualification
    and isolated Host execution need a precise reviewed owning packet. No evidence
-   currently justifies new Schema/RLS/GRANT.
+   currently justifies new Schema/RLS/GRANT. Existing V4 preparation now has a
+   default-closed HTTP candidate: normal parent Auth/Trip, owning generation,
+   Stage/dispatch/causal-read delegation, no internal capabilities in responses.
+   Eight suites121 tests/types/lint/bundle and independent NO_BLOCKER passed;
+   server/serverCapture do not provide its optional port. See
+   `PDF_V4_PREPARATION_HTTP_LOCAL_PASS.json`. No actual PDF Source/Task/Save PASS.
 3. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN

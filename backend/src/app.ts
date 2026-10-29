@@ -1,3 +1,4 @@
+import { sourcePdfV4PreparationBoundary } from "./sourcePdfV4PreparationHttp";
 import { sourcePdfV2Boundary } from "./sourcePdfV2Http";
 import {
   captureRemoteProcessingBoundary,
@@ -631,6 +632,7 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
+  sourcePdfV4PreparationPort?: Parameters<typeof sourcePdfV4PreparationBoundary>[3];
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   universalImportPort?: UniversalPort;
@@ -2406,6 +2408,7 @@ function reportingFilters(url: URL): ReportingFilters {
 
 export function createDevBackendHandler({
   sourcePdfV2Port,
+  sourcePdfV4PreparationPort,
   captureRemoteProcessing,
   tripPersonCloudCreatePort,
   universalImportPort,
@@ -2555,6 +2558,20 @@ export function createDevBackendHandler({
               (a, t) => gateway.canReadTrip(a, t),
               runtime?.universalImportPort ?? universalImportPort,
             );
+      } else if (
+        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:stage|dispatch|observe-retained)$/.test(
+          url.pathname,
+        )
+      ) {
+        route =
+          "/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await sourcePdfV4PreparationBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          sourcePdfV4PreparationPort,
+        );
       } else if (
         /^\/v2\/trips\/[^/]+\/sources\/pdf-v2\/(?:verify-original|register-derived|seal)$/.test(
           url.pathname,

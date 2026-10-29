@@ -1224,6 +1224,23 @@ must be installed separately before Runtime verification. The port interface and
 fixture tests do not establish that deployment or grant dispatch permission.
 
 
+## Source PDF V4 preparation HTTP (unbound implementation candidate)
+
+Candidate POST routes use
+`/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/{stage,dispatch,observe-retained}`.
+The enclosing Backend must authenticate bearer identity; the adapter checks current
+Trip access and uses the existing causal owner's account-generation reader, never
+an Actor/generation supplied by request JSON. Stage delegates raw PDF bytes to the
+existing bounded private Stage; dispatch and observe-retained accept no body and
+reuse the existing durable dispatch/causal observation ports. Responses expose only
+operation/Source identities and the completed transport step, never Stage paths,
+resource/run tokens, provider configuration, internal bindings or custody evidence.
+Transport acknowledgement is not Source verification, Admission or Save. Missing
+ports fail closed before body consumption. The parent handler authenticates and
+delegates only through this optional port; normal startup does not supply it. No
+worker service, SQL activation, budget or permission change is part of this
+candidate; those require separately qualified composition and authority.
+
 ## Universal Import — unstarted deadline recovery (implementation candidate)
 
 A status GET remains read-only and projects the persisted owning Task/revision.
