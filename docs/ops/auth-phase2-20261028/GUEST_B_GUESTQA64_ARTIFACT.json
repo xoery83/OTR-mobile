@@ -1,0 +1,28 @@
+{
+  "status": "FIXED_REVIEWED_ARTIFACT_VERIFIED_NOT_INSTALLED_NATIVE_E2E_PENDING",
+  "bundleId": "com.xoery.otrmobile.guestqa",
+  "nativeBaseVersion": 43,
+  "applicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile.guestqa",
+  "machOXMLIdentity": "PASS",
+  "machODERIdentity": "PASS",
+  "noExplicitSharedKeychainGroup": true,
+  "rootOAuthSchemesAbsent": true,
+  "allCloudAdmissionClosed": true,
+  "strictCodeSign": "PASS",
+  "nativeExecutableSHA256": "c28dfb0022ee0b7ce76e7c125bb12baae38e0c4354719720847dccf0516e498c",
+  "nativeBaseCommit": "6fe6f3c09d812b97e9594b54641ad244f372cd2f",
+  "consumerSourceCommit": "d771c7e0ea3aa5842d763d071a019553af38a347",
+  "artifactVersion": "64",
+  "embeddedJSSHA256": "cd49dc3d65b4e8b3c2ec939ae4cf65cf71409080f107d5b73954565017221b10",
+  "jsDevMode": false,
+  "nativeSections": {
+    "__entitlements": "49d2c033ae93928a0d8bc402c73cf808ab15217ea2e4e5d1e1fe8607156e35cd",
+    "__ents_der": "a2b4893cc85ce8882421e65db8490f573d052e30c3344fab5593a37bdf79cc54"
+  },
+  "consumerJS": "FIXED_REVIEWED_D771C7E0",
+  "newSimulator": false,
+  "copiedSessionOrKeychainOrDatabase": false,
+  "independentArtifactReview": "PASS; native identity/signatures/JS SHA/Hermes98 checked only",
+  "nativeRuntimeStatus": "NOT_INSTALLED_WAITING_SHARED_DEVICE_WINDOW",
+  "scope": "own GuestQA code artifact; no Session/Keychain/SQLite copied; never a Provider/Cloud/Adoption receipt"
+}
