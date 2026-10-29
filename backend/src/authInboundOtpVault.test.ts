@@ -5,6 +5,7 @@ import { afterEach, expect, it } from "vitest";
 import { createOtpTestVault } from "../../scripts/auth/otp-test-vault";
 import {
   publicConfiguration,
+  inboundKeychainArgs,
   devOrigin,
 } from "../../scripts/auth/resend-inbound-otp-e2e";
 const directories: string[] = [];
@@ -129,4 +130,17 @@ it("does not revoke a returned token whose new-account ownership was never prove
   expect(await revoker.cleanupIfUnattempted()).toBe(false);
   await expect(revoker.revokeOnce()).rejects.toThrow("NO_PROVEN_SESSION");
   expect(attempts).toBe(0);
+});
+
+it("targets only the screenshot-confirmed independent Inbound Keychain item", () => {
+  expect(inboundKeychainArgs).toEqual([
+    "find-generic-password",
+    "-s",
+    "OTR_QA_RESEND_API_KEY",
+    "-a",
+    "resend",
+    "-l",
+    "OTR-QA-Inbound",
+    "-w",
+  ]);
 });
