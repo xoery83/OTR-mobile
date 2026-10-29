@@ -1,3 +1,4 @@
+import { enterSourcePdfContinuousScope } from "./sourcePdfContinuousScope";
 import { randomUUID } from "node:crypto";
 import {
   sourcePdfVerifyCommandSchema,
@@ -28,6 +29,7 @@ export function createSourcePdfV2Registration(
   hash: ImportHash,
   readOriginal: SourcePdfCustodyReader,
   runWorker?: Parameters<typeof createSourcePdfV2LinuxVerifier>[1],
+  options: { continuousSourceScope?: true } = {},
 ) {
   const verify = createSourcePdfV2LinuxVerifier(readOriginal, runWorker);
   async function transaction<T>(work: (lease: CorePgLease) => Promise<T>) {
@@ -139,6 +141,12 @@ export function createSourcePdfV2Registration(
       if (q.actor_account_id !== accountId || q.trip_id !== tripId)
         throw new Error("SOURCE_ACCESS_DENIED");
       return transaction(async (lease) => {
+        if (options.continuousSourceScope)
+          await enterSourcePdfContinuousScope(lease, {
+            actorAccountId: accountId,
+            tripId,
+            sourceId: q.source_id,
+          });
         const attempt = randomUUID();
         const context = (
           await lease.query(
@@ -203,6 +211,12 @@ export function createSourcePdfV2Registration(
             throw new Error("REPLAY_UNAVAILABLE");
           return r;
         }
+        if (options.continuousSourceScope)
+          await enterSourcePdfContinuousScope(lease, {
+            actorAccountId: accountId,
+            tripId,
+            sourceId: request.sourceId,
+          });
         const original = (
           await lease.query(
             "SELECT public.trip_source_pdf_v2_registration_context($1::uuid,$2::uuid,$3::jsonb) AS original",

@@ -1,0 +1,33 @@
+{
+  "status": "JOINED_MAIN_LOCAL_PASS_DEFAULT_CLOSED",
+  "baseMain": "b2bbfe59576381ef267081d5cc3b283fb5b8384f",
+  "deliveryCode": "8289552a",
+  "curation": "Exact software-only diff from57117155; no private history or SQL files",
+  "validation": {
+    "suites": 9,
+    "passed": 155,
+    "conditionalWorkerSkipped": 1,
+    "typecheck": "PASS",
+    "focusedLint": "PASS",
+    "captureBuild": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "runtimeActivation": false,
+  "devDeployment": false,
+  "sqlOrPermissionChanges": false,
+  "providerCalls": 0,
+  "notClaimed": [
+    "Actual PDF full RPC/RLS/worker/custody qualification",
+    "PDF Source-to-Core or Native E2E",
+    "Photo interpretation/save"
+  ],
+  "primaryOriginalState": "PASS: exact six original status entries, full file bytes/modes, staged and working-tree binary diffs preserved after fast-forward and actual-primary Smoke",
+  "softwareCommit": "9153df3b0f77e5152d69e3aaa291c9342215dc2f",
+  "actualPrimarySmoke": {
+    "suites": 9,
+    "passed": 155,
+    "conditionalWorkerSkipped": 1,
+    "typecheck": "PASS",
+    "captureBuild": "PASS"
+  }
+}

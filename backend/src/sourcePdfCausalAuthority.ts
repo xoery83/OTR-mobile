@@ -1,3 +1,8 @@
+import {
+  enterSourcePdfContinuousScope,
+  type PdfSourceScopeIdentity,
+} from "./sourcePdfContinuousScope";
+import { sourcePdfV2UploadCommandSchema } from "../../src/domain/trip/sourcePdfV2Upload";
 import { z } from "zod";
 import {
   PDF_UPLOAD_QPDF_V4,
@@ -96,6 +101,7 @@ export function createSourcePdfCausalAuthority(
 export function createSourcePdfV2CausalAuthority(
   connection: CorePgConnection,
   owner: PdfCausalOwner,
+  options: { continuousSourceScope?: true } = {},
 ) {
   return createAuthority(connection, owner, {
     version: 4,
@@ -106,6 +112,7 @@ export function createSourcePdfV2CausalAuthority(
     rpcPrefix: "trip_source_pdf_upload_v4",
     digestPrefix: "otr-source-pdf-qpdf-poppler",
     digestSuffix: "v4",
+    continuousSourceScope: options.continuousSourceScope,
   });
 }
 function createAuthority<
@@ -127,6 +134,7 @@ function createAuthority<
     rpcPrefix: "trip_source_pdf_causal" | "trip_source_pdf_upload_v4";
     digestPrefix: "otr-source-pdf-beta" | "otr-source-pdf-qpdf-poppler";
     digestSuffix: "v3" | "v4";
+    continuousSourceScope?: true;
   },
 ) {
   async function transaction<T>(work: (lease: CorePgLease) => Promise<T>) {
@@ -164,16 +172,25 @@ function createAuthority<
       }
     });
   }
-  const rpc = async <T>(name: string, types: string[], values: readonly unknown[]) =>
-    transaction(
-      async (lease) =>
-        (
-          await lease.query(
-            `SELECT public.${name}(${types.map((t, i) => `$${i + 1}::${t}`).join(",")}) AS result`,
-            values,
-          )
-        ).rows[0]?.result as T,
-    );
+  const rpc = async <T>(
+    name: string,
+    types: string[],
+    values: readonly unknown[],
+    scope?: PdfSourceScopeIdentity,
+  ) =>
+    transaction(async (lease) => {
+      if (policy.continuousSourceScope) {
+        if (scope) await enterSourcePdfContinuousScope(lease, scope);
+        else if (name !== `${policy.rpcPrefix}_inventory`)
+          throw Error("PDF_SCOPE_IDENTITY_REQUIRED");
+      }
+      return (
+        await lease.query(
+          `SELECT public.${name}(${types.map((t, i) => `$${i + 1}::${t}`).join(",")}) AS result`,
+          values,
+        )
+      ).rows[0]?.result as T;
+    });
   const execute = (
     c: PdfReservedContext<B>,
     action: string,
@@ -190,6 +207,7 @@ function createAuthority<
         action,
         proof === null ? null : canonicalCoreJson(proof),
       ],
+      c.binding,
     );
   };
   function context(
@@ -284,6 +302,11 @@ function createAuthority<
     },
     async assertCurrent(c) {
       await current(c);
+      if (
+        policy.continuousSourceScope &&
+        !(await transaction((lease) => enterSourcePdfContinuousScope(lease, c.binding)))
+      )
+        throw Error("UNIVERSAL_PDF_SOURCE_CLOSED");
     },
     async canResumeSealedStage(c: PdfReservedContext<B>) {
       if (policy.version !== 4) return false;
@@ -338,6 +361,7 @@ function createAuthority<
           "trip_source_pdf_upload_v4_restage",
           ["uuid", "uuid", "bigint", "jsonb"],
           [c.binding.attemptId, c.ownerRun, c.ownerFence, canonicalCoreJson(stageProof)],
+          c.binding,
         );
       } else await execute(c, "STAGE", stageProof);
     },
@@ -350,6 +374,7 @@ function createAuthority<
           "trip_source_pdf_upload_v4_recover_dispatch",
           ["uuid", "uuid", "bigint"],
           [c.binding.attemptId, c.ownerRun, c.ownerFence],
+          c.binding,
         );
         if (!recovered.pdf_dispatch_id) throw new Error("DISPATCH_ID_REQUIRED");
         return { dispatchId: recovered.pdf_dispatch_id };
@@ -460,6 +485,12 @@ function createAuthority<
     ) {
       if ((await owner.accountGeneration(actorId)) !== generation)
         throw new Error("PDF_SCOPE_FORBIDDEN");
+      let scope: PdfSourceScopeIdentity | undefined;
+      if (policy.continuousSourceScope) {
+        const q = sourcePdfV2UploadCommandSchema.parse(JSON.parse(raw));
+        if (q.actor_account_id !== actorId) throw Error("PDF_SCOPE_FORBIDDEN");
+        scope = { actorAccountId: actorId, tripId: q.trip_id, sourceId: q.source_id };
+      }
       const reply = await rpc<{ journal?: Journal; receipt?: Json }>(
         `${policy.rpcPrefix}_begin`,
         ["uuid", "text", "uuid", "uuid", "uuid", "text", "uuid", "uuid"],
@@ -473,6 +504,7 @@ function createAuthority<
           resource.runToken,
           owner.ownerRun,
         ],
+        scope,
       );
       // A prior reservation can be inspected for claim; current() still fences IO.
       return reply.receipt
@@ -489,6 +521,7 @@ function createAuthority<
         `${policy.rpcPrefix}_finish`,
         ["uuid", "text", "uuid", "uuid", "bigint"],
         [c.binding.actorAccountId, raw, c.binding.attemptId, c.ownerRun, c.ownerFence],
+        c.binding,
       );
     },
     async claim(c: PdfReservedContext<B>) {
@@ -513,6 +546,7 @@ function createAuthority<
           : `${policy.rpcPrefix}_claim`,
         ["uuid", "bigint", "uuid"],
         [c.binding.attemptId, c.ownerFence, owner.ownerRun],
+        c.binding,
       );
       return context(j, await owner.accountGeneration(c.binding.actorAccountId));
     },

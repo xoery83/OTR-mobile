@@ -288,3 +288,132 @@ it("a pending dispatch times out once and never starts a replacement", async () 
     vi.useRealTimers();
   }
 });
+
+function uploadCommand(f: Awaited<ReturnType<typeof fixture>>) {
+  return {
+    contract_version: 1,
+    command: "UPLOAD_ORIGINAL",
+    operation_id: f.identity.operationId,
+    operation_key: "retained-synthetic-upload",
+    actor_account_id: f.account,
+    trip_id: f.context.tripId,
+    source_id: f.identity.sourceId,
+    operation_sha256: "a".repeat(64),
+    payload: {
+      material_revision: 1,
+      expected_source_row_revision: 1,
+      expected_source_state: { lifecycle: "ACTIVE", retention_state: "RETAINED" },
+      representation_id: f.identity.representationId,
+      expected_representation_row_revision: 1,
+      expected_representation_state: {
+        remote_state: "PENDING",
+        retention_state: "RETAINED",
+      },
+      parent_operation_id: randomUUID(),
+      payload_sha256: f.binding.sha256,
+      byte_count: f.binding.byteCount,
+      mime_type: "application/pdf",
+    },
+  };
+}
+function commandResponse(
+  f: Awaited<ReturnType<typeof fixture>>,
+  action: "reserve" | "finish",
+  receipt?: unknown,
+) {
+  return new Response(
+    JSON.stringify({
+      ...f.identity,
+      observation: action === "reserve" ? "RESERVATION_OBSERVED" : "FINISH_OBSERVED",
+      ...(receipt ? { receipt } : {}),
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+        Vary: "Authorization",
+      },
+    },
+  );
+}
+it("reserve submits only the frozen Source command using the same durable operation", async () => {
+  const f = await fixture(),
+    command = uploadCommand(f);
+  f.fetcher.mockImplementation(async () => commandResponse(f, "reserve"));
+  expect(await f.transport.reserve(f.context, f.identity, command)).toEqual({
+    ...f.identity,
+    observation: "RESERVATION_OBSERVED",
+  });
+  expect(f.fetcher).toHaveBeenCalledOnce();
+  const [url, options] = f.fetcher.mock.calls[0];
+  expect(String(url)).toContain(`/pdf-v4/${f.identity.operationId}/reserve`);
+  expect(options?.headers).toMatchObject({
+    Authorization: "Bearer synthetic",
+    "Content-Type": "application/json",
+  });
+  expect(JSON.parse(options?.body as string)).toEqual(command);
+});
+it.each(["actor", "trip", "source", "operation", "representation", "size", "resource"])(
+  "command %s drift fails before reading a token or sending",
+  async (kind) => {
+    const f = await fixture(),
+      command = uploadCommand(f);
+    if (kind === "actor") command.actor_account_id = randomUUID();
+    if (kind === "trip") command.trip_id = randomUUID();
+    if (kind === "source") command.source_id = randomUUID();
+    if (kind === "operation") command.operation_id = randomUUID();
+    if (kind === "representation") command.payload.representation_id = randomUUID();
+    if (kind === "size") command.payload.byte_count = 4194305;
+    await expect(
+      f.transport.reserve(
+        f.context,
+        f.identity,
+        kind === "resource" ? { ...command, resourceKey: "PRIVATE" } : command,
+      ),
+    ).rejects.toThrow();
+    expect(f.token).not.toHaveBeenCalled();
+    expect(f.fetcher).not.toHaveBeenCalled();
+  },
+);
+it("finish requires an exact owning receipt and does not retry uncertainty", async () => {
+  const f = await fixture(),
+    command = uploadCommand(f);
+  const receipt = {
+    contract_version: 1,
+    command: "UPLOAD_ORIGINAL",
+    operation_id: command.operation_id,
+    operation_key: command.operation_key,
+    operation_sha256: command.operation_sha256,
+    outcome: "APPLIED",
+    error_code: null,
+    completed_at: "2026-10-30T00:00:00.000000Z",
+    source_id: command.source_id,
+    representation_id: command.payload.representation_id,
+    result_source_row_revision: 2,
+    result_material_revision: 1,
+    result_representation_row_revision: 2,
+    result_remote_state: "PENDING",
+    result_retention_state: "RETAINED",
+    result_action_id: null,
+    result_verified_at: null,
+    result_sha256: "c".repeat(64),
+  };
+  f.fetcher.mockImplementation(async () => commandResponse(f, "finish", receipt));
+  expect(
+    (await f.transport.finish(f.context, f.identity, command)) as unknown,
+  ).toMatchObject({ receipt });
+  f.fetcher.mockImplementation(async () =>
+    commandResponse(f, "finish", { ...receipt, operation_id: randomUUID() }),
+  );
+  await expect(f.transport.finish(f.context, f.identity, command)).rejects.toThrow(
+    "SOURCE_RESPONSE_INVALID",
+  );
+  f.fetcher.mockImplementation(async () => commandResponse(f, "finish"));
+  await expect(f.transport.finish(f.context, f.identity, command)).rejects.toThrow();
+  f.fetcher.mockRejectedValue(Error("UNKNOWN"));
+  const calls = f.fetcher.mock.calls.length;
+  await expect(f.transport.finish(f.context, f.identity, command)).rejects.toThrow(
+    "SOURCE_REQUEST_UNCONFIRMED",
+  );
+  expect(f.fetcher.mock.calls.length).toBe(calls + 1);
+});

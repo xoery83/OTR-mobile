@@ -31,7 +31,7 @@ const output = () => ({
 beforeEach(() =>
   vi.mocked(runSourcePdfV2LinuxWorker).mockReset().mockResolvedValue(output()),
 );
-function fixture() {
+function fixture(continuousSourceScope?: true) {
   const accountId = randomUUID(),
     tripId = randomUUID();
   const request = sourcePdfV2RegistrationRequestSchema.parse({
@@ -63,6 +63,8 @@ function fixture() {
     retire: vi.fn(),
     async query(sql, args = []) {
       statements.push(sql);
+      if (sql.includes("trip_source_universal_pdf_enter"))
+        return { rows: [{ entered: true }] };
       if (sql === "ROLLBACK" && rollbackFails) throw Error("rollback failure");
       if (closed && sql.includes("trip_source_pdf_v2_"))
         throw Error("PDF_AUTHORITY_CLOSED");
@@ -175,8 +177,12 @@ function fixture() {
     read,
     statements,
     lease,
-    registration: createSourcePdfV2Registration(connection, hash, read),
-    authority: createSourcePdfV2Authority(connection, hash, read),
+    registration: createSourcePdfV2Registration(connection, hash, read, undefined, {
+      continuousSourceScope,
+    }),
+    authority: createSourcePdfV2Authority(connection, hash, read, undefined, {
+      continuousSourceScope,
+    }),
     corrupt: () => {
       corrupt = true;
     },
@@ -333,3 +339,46 @@ it.each([false, true])(
     expect(f.read).toHaveBeenCalledTimes(2);
   },
 );
+
+it.each(["register", "seal"] as const)(
+  "continuous %s enters only on the same fresh Source lease, after prior receipt lookup",
+  async (method) => {
+    const f = fixture(true);
+    const {
+      verificationOperationId: _,
+      verificationResultSha256: __,
+      ...seal
+    } = f.request;
+    if (method === "register")
+      await f.registration.registerDerived(f.accountId, f.tripId, f.request);
+    else await f.authority.seal(f.accountId, f.tripId, seal);
+    const enter = f.statements.findIndex((s) =>
+      s.includes("trip_source_universal_pdf_enter"),
+    );
+    const lookup = f.statements.findIndex((s) =>
+      s.includes(
+        method === "register" ? "registration_lookup" : "trip_source_pdf_v2_lookup",
+      ),
+    );
+    const context = f.statements.findIndex((s) =>
+      s.includes(
+        method === "register" ? "registration_context" : "trip_source_pdf_v2_context",
+      ),
+    );
+    expect(enter).toBeGreaterThan(lookup);
+    expect(context).toBeGreaterThan(enter);
+    expect(f.statements.at(-1)).toBe("COMMIT");
+  },
+);
+it("continuous registration reuses an accepted receipt without entering fresh execution scope", async () => {
+  const f = fixture(true);
+  const receipt = await f.registration.registerDerived(f.accountId, f.tripId, f.request);
+  f.prior(receipt);
+  f.statements.length = 0;
+  expect(await f.registration.registerDerived(f.accountId, f.tripId, f.request)).toEqual(
+    receipt,
+  );
+  expect(f.statements.some((s) => s.includes("trip_source_universal_pdf_enter"))).toBe(
+    false,
+  );
+});

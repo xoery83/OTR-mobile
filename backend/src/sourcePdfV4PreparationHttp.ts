@@ -1,10 +1,20 @@
 import { z } from "zod";
+import {
+  createRequestBoundary,
+  readBoundedJson,
+  RequestBoundaryError,
+} from "../../src/data/api/requestBoundary";
+import { parseCoreJson, canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
+import type { createSourcePdfV4Reservation } from "./sourcePdfV4Reservation";
+import { sourcePdfV2UploadCommandSchema } from "../../src/domain/trip/sourcePdfV2Upload";
+import { sourcePdfUploadReceiptSchema } from "../../src/domain/trip/sourcePdfUploadAuthority";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import type { createSourcePdfV2BackendPreparation } from "./sourcePdfBackendPreparation";
 import type { PdfCausalOwner } from "./sourcePdfCausalAuthority";
 
 type PreparationPort = {
   owner: Pick<PdfCausalOwner, "accountGeneration">;
+  reservation?: ReturnType<typeof createSourcePdfV4Reservation>;
   preparation: ReturnType<typeof createSourcePdfV2BackendPreparation>;
 };
 
@@ -28,7 +38,7 @@ export async function sourcePdfV4PreparationBoundary(
     reply(status, { error: { code, message: code } });
   const url = new URL(request.url);
   const route =
-    /^\/v2\/trips\/([^/]+)\/sources\/([^/]+)\/representations\/([^/]+)\/pdf-v4\/([^/]+)\/(stage|dispatch|observe-retained)$/.exec(
+    /^\/v2\/trips\/([^/]+)\/sources\/([^/]+)\/representations\/([^/]+)\/pdf-v4\/([^/]+)\/(reserve|finish|stage|dispatch|observe-retained)$/.exec(
       url.pathname,
     );
   if (
@@ -44,7 +54,9 @@ export async function sourcePdfV4PreparationBoundary(
     if (!(await canReadTrip(actor, route[1]))) return fail(403, "SOURCE_ACCESS_DENIED");
     request.signal.throwIfAborted();
     if (!port) return fail(503, "SOURCE_CAPABILITY_CLOSED");
-    if (route[5] !== "stage" && request.body !== null)
+    const commandAction = route[5] === "reserve" || route[5] === "finish";
+    if (commandAction && !port.reservation) return fail(503, "SOURCE_CAPABILITY_CLOSED");
+    if (!commandAction && route[5] !== "stage" && request.body !== null)
       return fail(422, "INVALID_SOURCE_COMMAND");
     const generation = await port.owner.accountGeneration(actor);
     request.signal.throwIfAborted();
@@ -57,6 +69,37 @@ export async function sourcePdfV4PreparationBoundary(
       operationId: route[4],
       accountGeneration: generation,
     };
+    if (commandAction) {
+      const boundary = createRequestBoundary(15000, request.signal);
+      let raw: string;
+      try {
+        raw = canonicalCoreJson(
+          sourcePdfV2UploadCommandSchema.parse(
+            await readBoundedJson(new Response(request.body), 16384, boundary, (body) =>
+              parseCoreJson(body, 16384),
+            ),
+          ),
+        );
+      } finally {
+        boundary.close();
+      }
+      request.signal.throwIfAborted();
+      let receipt: unknown;
+      if (route[5] === "reserve") {
+        receipt = (await port.reservation!.reserve(actor, raw, identity)).receipt;
+      } else {
+        receipt = await port.reservation!.finish(actor, raw, identity);
+      }
+      return reply(200, {
+        sourceId: identity.sourceId,
+        representationId: identity.representationId,
+        operationId: identity.operationId,
+        observation: route[5] === "reserve" ? "RESERVATION_OBSERVED" : "FINISH_OBSERVED",
+        ...(receipt === undefined
+          ? {}
+          : { receipt: sourcePdfUploadReceiptSchema.parse(receipt) }),
+      });
+    }
     let observation: "STAGED" | "DISPATCH_OBSERVED" | "READ_OBSERVED";
     if (route[5] === "stage") {
       await port.preparation.ingress(request, identity);
@@ -76,6 +119,9 @@ export async function sourcePdfV4PreparationBoundary(
       observation,
     });
   } catch (error) {
+    if (error instanceof RequestBoundaryError)
+      return fail(error.code === "BODY_LIMIT" ? 413 : 400, "INVALID_SOURCE_COMMAND");
+    if (error instanceof SyntaxError) return fail(422, "INVALID_SOURCE_COMMAND");
     if (error instanceof z.ZodError) return fail(422, "INVALID_SOURCE_COMMAND");
     if (error instanceof Error && "status" in error && error.status === 401)
       return fail(401, "AUTH_REQUIRED");
