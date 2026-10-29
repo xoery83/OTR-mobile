@@ -75,3 +75,8 @@ Never print the code/raw body, and never transfer a Host-created Session into a
 device. A Native test must execute its normal App verification and its own cold
 restart. The lane-facing entry checks real PASS plus source hashes before reading
 a credential; an old receipt cannot silently release changed code.
+
+The finite --e2e/--keychain execution preflight on fixed source f06beaa6 returned
+RECEIVING_CREDENTIAL_REQUIRED before any OTP/Receiving call or Account creation.
+PREFLIGHT.json records the boundary. Next required action is saving the independent
+new Keychain item; existing SMTP credentials remain untouched.

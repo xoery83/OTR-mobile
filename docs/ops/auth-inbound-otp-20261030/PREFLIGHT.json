@@ -1,0 +1,15 @@
+{
+  "status": "PENDING_LOCAL_INBOUND_CREDENTIAL",
+  "sourceCommit": "f06beaa6",
+  "runMode": "e2e/keychain",
+  "resultCode": "RECEIVING_CREDENTIAL_REQUIRED",
+  "credentialSource": "macOS Keychain service OTR-QA-Inbound/account resend",
+  "hostMetadataLookupStatus": 44,
+  "secretValueRead": false,
+  "supabaseOtpRequests": 0,
+  "receivingApiRequests": 0,
+  "accountsCreated": 0,
+  "smtpKeyAccessed": false,
+  "nativeReuseReleased": false,
+  "requiredOwnerAction": "Save the independent QA-only-team Key to the specified new Keychain item; never send the key to chat"
+}
