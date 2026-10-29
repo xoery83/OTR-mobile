@@ -141,6 +141,8 @@ foreign Guest/generation, existing Item, non-P1, EDIT v1 and publication hold re
 identity loss at transaction result rolls writes back. Directed7 suites252/types/
 scopedlint/UIguard PASS; independent4 suites159 NO_BLOCKER. No actual Native recovery
 routing/GUI/provider consumer or cloud proof. EDIT must gain owning revision first.
+Actual primary7 suites252 PASS after fixedc2a29bac integration; six original dirty
+files/full diff preserved. GUEST_B_P1_RESTORE_MAIN_INTEGRATION.json records it.
 See GUEST_B_P1_CREATE_RESTORE_REVIEW.json and ADR dated2026-10-29.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
