@@ -21,5 +21,12 @@
     "SQL activation",
     "Actual PDF DEV E2E",
     "Photo E2E"
-  ]
+  ],
+  "actualPrimary": {
+    "softwareCommit": "65be797d9f0dfbc3e9a55e754b6b879339ed4289",
+    "testsPassed": 97,
+    "suitesPassed": 5,
+    "captureBundle": "PASS",
+    "originalSixDirtyEntriesByteExact": true
+  }
 }
