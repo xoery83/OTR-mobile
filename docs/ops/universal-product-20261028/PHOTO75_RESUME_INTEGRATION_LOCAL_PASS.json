@@ -21,16 +21,16 @@
       "suites": 3,
       "passed": 30
     },
-    "typecheck": "PASS",
+    "typecheck": "PASS_FINAL_WITH_NATIVE_DIAGNOSTIC",
     "uiGuard": "PASS",
     "scopedLint": "PASS",
-    "bothBackendBuilds": "PASS_BEFORE_LOG_ONLY_DELTA_FINAL_BUILD_REQUIRED"
+    "bothBackendBuilds": "PASS_FINAL_WITH_NATIVE_DIAGNOSTIC"
   },
   "review": {
     "photo": "TWO_SLICES_NO_BLOCKER",
     "resume": "NO_BLOCKER_4bdce553",
     "nativeDiagnostic": "AUTH_SOURCE_NO_BLOCKER",
-    "joinedRegistration": "PENDING"
+    "joinedRegistration": "NO_BLOCKER_7fb387a5"
   },
   "protectedSqlIncluded": false,
   "privateHistoryIncluded": false,
