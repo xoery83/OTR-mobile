@@ -1,0 +1,13 @@
+# Builder must hold the DEV build lock and verify this local tag resolves to the
+# exact profile.baseImage ID. Never pull or accept a caller-selected base.
+FROM otr-universal-png-base:8cd9f923d90dcdf09fd37ec383d318acb42ffce2b9fd821c74a5bb4845593143
+USER root
+WORKDIR /worker
+COPY vendor/pngjs-7.0.0.tgz vendor/pngjs-7.0.0.tgz
+RUN echo 'c4b71873d48a692dd5eeb1dcb62185c7aafe40f2180c7cc7f30ec71e89a080be  vendor/pngjs-7.0.0.tgz' | sha256sum -c - && mkdir decoder && tar -xzf vendor/pngjs-7.0.0.tgz --strip-components=1 -C decoder && rm -f decoder/browser.js && chmod -R a+rX decoder
+COPY profile-amd64.mjs profile.mjs
+COPY protocol.mjs png-decode.mjs png-worker.mjs Dockerfile.amd64 ./
+HEALTHCHECK NONE
+USER 65534:65534
+ENTRYPOINT ["node", "--max-old-space-size=64", "/worker/png-worker.mjs"]
+CMD []

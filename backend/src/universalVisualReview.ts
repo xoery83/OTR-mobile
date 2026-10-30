@@ -34,7 +34,7 @@ export function projectUniversalVisualReview(
   if (new Set(wire.items.map((i) => i.id)).size !== wire.items.length) return null;
   const objects = wire.items.flatMap((item) => {
     if (
-      item.kind !== "P1" ||
+      !["P1", "P6"].includes(item.kind) ||
       item.subtype !== "ACTIVITY" ||
       new Set(item.f.map((f) => f[1])).size !== item.f.length ||
       !item.f.every((f) => f[0] === 0 && f.length === 4 && typeof f[3] === "object") ||

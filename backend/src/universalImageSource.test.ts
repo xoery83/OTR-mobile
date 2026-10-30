@@ -9,8 +9,8 @@ import {
 } from "./universalImport";
 import { importLifecycleSnapshotSchema } from "../../src/data/operations/importLifecycleProposal";
 
-async function fixture() {
-  const f = await universalP1SourceFixture();
+async function fixture(family: "P1" | "P6" = "P1") {
+  const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", family);
   const pin = flightInputSchema.parse(f.input.catalog.inputs[0]);
   f.input.catalog.inputs = [pin];
   const bytes = Buffer.from(
@@ -89,7 +89,7 @@ async function fixture() {
       items: [
         {
           id: "walk",
-          kind: "P1",
+          kind: family,
           subtype: "ACTIVITY",
           f: [
             [0, "activity.name", "Harbour Photo QA Workshop", { x: 0, y: 0, w: 1, h: 1 }],
@@ -106,7 +106,10 @@ async function fixture() {
   });
   Object.assign(f.input.selection, {
     sourceReview: {
-      version: "otr.universal.p1-source-review/1",
+      version:
+        family === "P1"
+          ? "otr.universal.p1-source-review/1"
+          : "otr.universal.p6-source-review/1",
       decision: "NEW",
       sourceRevision: 1,
       title: "Harbour Photo QA Workshop",
@@ -161,4 +164,12 @@ it.each([
   if (failure === "pending") f.input.snapshot.representations[0].remote_state = "PENDING";
   if (failure === "revision") image.pin.material_revision = 2;
   await expect(f.run()).rejects.toThrow();
+});
+
+it("preserves a lawful P6 image classification instead of coercing it into P1 or commercial rights", async () => {
+  const f = await fixture("P6"),
+    r = await f.run();
+  expect(r.body.plan.slots[0].payload).toMatchObject({ family: "P6" });
+  expect(r.body.evidence.every((e) => e.locator.kind === "REGION")).toBe(true);
+  expect(r.grantsAdmission).toBe(false);
 });

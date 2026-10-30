@@ -1,3 +1,7 @@
+import {
+  PNG_ARM_EXECUTION_PROFILE_SHA256,
+  PNG_DEV_X64_EXECUTION_PROFILE_SHA256,
+} from "./sourcePngPreparation";
 import { z } from "zod";
 import { flightInputSchema, type ImportHash } from "./flightImportReview";
 
@@ -19,9 +23,10 @@ export const importImageMaterialSchema = z.strictObject({
     operationId: z.uuid(),
     terminalEvidenceSha256: z.string().regex(/^[a-f0-9]{64}$/),
     profileId: z.literal("PNG_STATIC_RGB8_RGBA8_V1"),
-    profileSha256: z.literal(
-      "526b66b7bd63daeed309c3d2630cdeaec759a6031a9efe7ade381c06fd04ede5",
-    ),
+    profileSha256: z.enum([
+      PNG_ARM_EXECUTION_PROFILE_SHA256,
+      PNG_DEV_X64_EXECUTION_PROFILE_SHA256,
+    ]),
   }),
 });
 export type ImportImageMaterial = z.infer<typeof importImageMaterialSchema>;

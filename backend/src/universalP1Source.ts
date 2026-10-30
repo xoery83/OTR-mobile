@@ -294,7 +294,7 @@ export async function projectUniversalP1Selection(
       let locator: ImportLifecycleRequest["evidence"][number]["locator"];
       if (material.form === "IMAGE") {
         if (
-          family !== "P1" ||
+          !["P1", "P6"].includes(family) ||
           !review ||
           !("region" in field) ||
           b.mime !== "image/png" ||
@@ -448,7 +448,7 @@ export async function projectUniversalP1Selection(
       .filter((u) => {
         if (
           review &&
-          family === "P1" &&
+          ["P1", "P6"].includes(family) &&
           candidate.visualReviewRequired &&
           /^VISUAL_CANDIDATE_UNVERIFIED:(activity.name|activity.date)$/.test(u.reason)
         )
@@ -558,13 +558,16 @@ export async function qualifyUniversalP1Selection(
       actor: input.actor,
       graph: input.graph,
       snapshot: input.snapshot,
-      ...(proposal.body.sourceReview?.version === "otr.universal.p1-source-review/1"
+      ...([
+        "otr.universal.p1-source-review/1",
+        "otr.universal.p6-source-review/1",
+      ].includes(proposal.body.sourceReview?.version ?? "")
         ? {
             reviewedImageSource: {
               sourceId: proposal.body.sourceId,
               candidateId: proposal.body.candidateId,
               reviewedBy: proposal.body.reviewedBy!,
-              review: proposal.body.sourceReview,
+              review: proposal.body.sourceReview!,
             },
           }
         : {}),

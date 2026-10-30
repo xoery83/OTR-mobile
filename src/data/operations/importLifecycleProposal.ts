@@ -3,8 +3,8 @@ import {
   importImageBytes,
 } from "../../domain/trip/importImageEvidence";
 import {
-  universalP1SourceReviewSchema,
-  type UniversalP1SourceReview,
+  universalItemSourceReviewSchema,
+  type UniversalItemSourceReview,
 } from "../../domain/trip/universalP1SourceReview";
 import { z } from "zod";
 import {
@@ -133,7 +133,7 @@ export async function qualifyImportLifecycleProposals(
       sourceId: string;
       candidateId: string;
       reviewedBy: string;
-      review: UniversalP1SourceReview;
+      review: UniversalItemSourceReview;
     };
   },
   deps: {
@@ -240,7 +240,7 @@ export async function qualifyImportLifecycleProposals(
       (material.form === "IMAGE"
         ? (() => {
             const confirmed = current.reviewedImageSource;
-            const review = universalP1SourceReviewSchema.safeParse(confirmed?.review);
+            const review = universalItemSourceReviewSchema.safeParse(confirmed?.review);
             const region = e.locator.region;
             return (
               !confirmed ||
@@ -252,7 +252,9 @@ export async function qualifyImportLifecycleProposals(
               own.some(
                 (s) =>
                   s.slot.command !== "CREATE_ITEM" ||
-                  (s.slot.payload as { family?: string }).family !== "P1",
+                  !["P1", "P6"].includes((s.slot.payload as { family: string }).family) ||
+                  review.data.version !==
+                    `otr.universal.${(s.slot.payload as { family: string }).family.toLowerCase()}-source-review/1`,
               ) ||
               !["ROOT.title", "START.local_date"].includes(e.fieldKey) ||
               (e.fieldKey === "ROOT.title"
