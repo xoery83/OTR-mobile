@@ -1,5 +1,5 @@
 {
-  "status": "FIXED_NATIVE_CASE_RECOVERY_REVIEWED_RELEASED_NOT_YET_EXECUTED",
+  "status": "FIXED_CASE_RECEIVING_RECOVERY_EXECUTED_NATIVE_RESULT_PENDING",
   "caseSha256": "33a154f354d11495f909b714cad493950790ca492a958dfa44ab3ce9e4b4103c",
   "requestedAt": "2026-10-30T00:09:03.519Z",
   "entryExpiresAt": "2026-10-30T00:24:03.519Z",
@@ -23,6 +23,15 @@
     "OTP only returned in memory for Native normal input",
     "Existing four v1 source bytes unchanged"
   ],
-  "liveExecution": "NATIVE_PENDING",
+  "liveExecution": {
+    "nativeJournalPhase": "NATIVE_UI_OBSERVED_AFTER_VERIFY",
+    "receivingMessageId": "d3d1fe07-aabd-4a4a-a2ba-28c1068922ce",
+    "receivedAt": "2026-10-30T00:09:18.223Z",
+    "claimedAt": "2026-10-30T00:17:33.961Z",
+    "nativeObservedAt": "2026-10-30T00:17:52.850Z",
+    "hostSessionCreated": false,
+    "otpPrinted": false,
+    "nativeAccountAndColdRestore": "PENDING_INDEPENDENT_NATIVE_EVIDENCE"
+  },
   "keyOrOtpRecorded": false
 }
