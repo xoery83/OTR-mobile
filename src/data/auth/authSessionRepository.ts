@@ -1,3 +1,7 @@
+import {
+  assertAccountTransitionLease,
+  type AccountTransitionLease,
+} from "./accountRequestContext";
 import { createGuestVerificationSession } from "./guestVerificationSession";
 import {
   createGuestPrincipalRepository,
@@ -24,11 +28,27 @@ export type SecureSessionStorage = {
   deleteItem(key: string): Promise<void>;
 };
 
+export type EmptyGuestSessionQualification = {
+  assertCurrent(): Promise<void>;
+};
+export type EmptyGuestSessionPreparation = {
+  qualify(lease: AccountTransitionLease): Promise<EmptyGuestSessionQualification>;
+  release(): void;
+};
+export type PreparedSessionInstall = {
+  install(lease: AccountTransitionLease, signal?: AbortSignal): Promise<void>;
+  release(): void;
+};
+export type PrepareEmptyGuestSession = (
+  localId: string,
+) => Promise<EmptyGuestSessionPreparation>;
+
 export function createAuthRepository(
   storage: SecureSessionStorage,
   createGuestId: () => string = () => {
     throw new Error("Guest creation belongs to the launch boundary.");
   },
+  options: { prepareEmptyGuest?: PrepareEmptyGuestSession } = {},
 ) {
   const launch = createGuestPrincipalRepository(storage, createGuestId);
   async function readIndex(): Promise<AccountIndex> {
@@ -223,6 +243,85 @@ export function createAuthRepository(
           throw Error("GUEST_LOCAL_SCOPE_REQUIRED");
       },
     }),
+    // Preparation opens the canonical Guest workspace before the transition gate.
+    // Only the owning zero-data reader may qualify installation under that gate.
+    async prepareSessionInstall(session: LocalSession) {
+      const candidate = JSON.parse(JSON.stringify(session)) as LocalSession;
+      const principal = await launch.readStoredIdentity();
+      if (principal?.kind !== "GUEST")
+        return {
+          install: async (_lease: AccountTransitionLease, signal?: AbortSignal) => {
+            if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
+            await repository.writeLocalSession(candidate);
+            if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
+          },
+          release() {},
+        };
+      if (!options.prepareEmptyGuest || !candidate.identity)
+        throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+      const localId = principal.localId;
+      const prepared = await options.prepareEmptyGuest(localId);
+      return {
+        release: () => prepared.release(),
+        install: async (lease: AccountTransitionLease, signal?: AbortSignal) => {
+          const assertNotCanceled = () => {
+            if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
+          };
+          assertNotCanceled();
+          const assertGuest = async () => {
+            assertAccountTransitionLease(lease);
+            const current = await launch.readStoredIdentity();
+            if (
+              current?.kind !== "GUEST" ||
+              current.localId !== localId ||
+              (await storage.getItem(accountIndexStorageKey)) !== null ||
+              (await storage.getItem(legacySessionStorageKey)) !== null ||
+              (await storage.getItem(`otr.mobile.guest-verification.v1.${localId}`)) !==
+                null
+            )
+              throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+            assertAccountTransitionLease(lease);
+          };
+          await assertGuest();
+          const identity = candidate.identity!;
+          const claims = identityFromAccessToken(candidate.accessToken);
+          if (!identity.userId || (claims && claims.userId !== identity.userId))
+            throw Error("SESSION_IDENTITY_MISMATCH");
+          if ((await storage.getItem(accountSessionStorageKey(identity.userId))) !== null)
+            throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+          assertNotCanceled();
+          const qualified = await prepared.qualify(lease);
+          assertNotCanceled();
+          const sessionKey = accountSessionStorageKey(identity.userId);
+          const sessionText = JSON.stringify(candidate);
+          try {
+            await assertGuest();
+            await qualified.assertCurrent();
+            assertNotCanceled();
+            await storage.setItem(sessionKey, sessionText);
+            await assertGuest();
+            await qualified.assertCurrent();
+            assertAccountTransitionLease(lease);
+            assertNotCanceled();
+            // This index is the visibility commit. The original Guest DB/files remain intact.
+            await writeIndex({ activeUserId: identity.userId, accounts: [identity] });
+            await launch.markPreviouslySignedIn();
+          } catch (error) {
+            // Readback must independently prove no index commit and the original
+            // Guest before deleting only our exact fresh credential. Unreadable or
+            // committed outcomes remain for existing transition recovery.
+            try {
+              await assertGuest();
+              if ((await storage.getItem(sessionKey)) === sessionText)
+                await storage.deleteItem(sessionKey);
+            } catch {
+              /* UNKNOWN: retain credentials, never widen cleanup. */
+            }
+            throw error;
+          }
+        },
+      };
+    },
     async readLocalAuthSnapshot() {
       const session = await repository.readLocalSession();
       return { session, principal: await launch.readLaunchIdentity(session) };

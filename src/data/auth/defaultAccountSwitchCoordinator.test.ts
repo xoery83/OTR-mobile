@@ -10,6 +10,9 @@ const mocks = vi.hoisted(() => ({
   clear: vi.fn(),
   pause: vi.fn(),
   restart: vi.fn(),
+  prepare: vi.fn(),
+  install: vi.fn(),
+  release: vi.fn(),
   session: {
     accessToken: "access-a",
     refreshToken: "refresh-a",
@@ -28,6 +31,7 @@ vi.mock("./authRepository", () => ({
   readLocalSession: async () => mocks.session,
   selectLocalAccount: vi.fn(),
   writeLocalSession: vi.fn(),
+  prepareSessionInstall: mocks.prepare,
 }));
 vi.mock("./accountLocalState", () => ({ adoptLegacyAccountState: vi.fn() }));
 vi.mock("@/data/db/database", () => ({ openDatabase: vi.fn() }));
@@ -42,6 +46,7 @@ beforeEach(() => {
   mocks.network.mockResolvedValue({ isConnected: true, isInternetReachable: true });
   mocks.token.mockResolvedValue({ token: "fresh-own-session-token", userId: "A" });
   mocks.revoke.mockResolvedValue(undefined);
+  mocks.prepare.mockResolvedValue({ install: mocks.install, release: mocks.release });
 });
 
 describe("normal Account logout composition", () => {
@@ -90,4 +95,15 @@ describe("normal Account logout composition", () => {
     expect(mocks.revoke).not.toHaveBeenCalled();
     expect(mocks.clear).not.toHaveBeenCalled();
   });
+});
+
+it("wires the owning session preparation into normal activation", async () => {
+  const clear = vi.fn();
+  await createDefaultAccountSwitchCoordinator({
+    clearInMemoryState: clear,
+  }).activateSession(mocks.session);
+  expect(mocks.prepare).toHaveBeenCalledWith(mocks.session);
+  expect(mocks.prepare).toHaveBeenCalledBefore(clear);
+  expect(mocks.install).toHaveBeenCalledOnce();
+  expect(mocks.release).toHaveBeenCalledOnce();
 });

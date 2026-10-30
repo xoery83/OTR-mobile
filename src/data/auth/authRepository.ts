@@ -17,7 +17,17 @@ const secureStoreAdapter: SecureSessionStorage = {
   deleteItem: async (key) => (await secureStore()).deleteItemAsync(key),
 };
 
-const authRepository = createAuthRepository(secureStoreAdapter, createUuid);
+const authRepository = createAuthRepository(secureStoreAdapter, createUuid, {
+  async prepareEmptyGuest(localId) {
+    // Lazy evaluation preserves the existing Auth/workspace dependency boundary.
+    const { openGuestLocalWorkspace } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("./guestLocalWorkspace") as typeof import("./guestLocalWorkspace");
+    const workspace = await openGuestLocalWorkspace();
+    if (workspace.scope.localId !== localId) throw Error("GUEST_LOCAL_SCOPE_CHANGED");
+    return workspace.prepareEmptySessionInstall();
+  },
+});
 
 // UI account readers must not choose Guest identity or adopt legacy credentials.
 export function readCommittedLocalSession() {
@@ -47,6 +57,7 @@ export async function readLaunchIdentity() {
 export const readAdoptedLocalSession = authRepository.readAdoptedLocalSession;
 export const readLocalSession = authRepository.readLocalSession;
 export const writeLocalSession = authRepository.writeLocalSession;
+export const prepareSessionInstall = authRepository.prepareSessionInstall;
 export const clearLocalSession = authRepository.clearLocalSession;
 export const listLocalAccounts = authRepository.listAccounts;
 export const selectLocalAccount = authRepository.selectAccount;

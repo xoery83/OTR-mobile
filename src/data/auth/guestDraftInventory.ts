@@ -21,13 +21,44 @@ export function createGuestDraftInventory<
   const participants = new Set<GuestDraftParticipant<Snapshot>>();
   let revision = 0;
   let active = false;
+  let emptyFrozen = false;
   return {
     register(participant: GuestDraftParticipant<Snapshot>) {
+      if (emptyFrozen) {
+        revision++;
+        throw Error("GUEST_DRAFT_HANDOFF_ACTIVE");
+      }
       if (participants.has(participant)) throw Error("GUEST_DRAFT_DUPLICATE_PARTICIPANT");
       participants.add(participant);
       revision++;
       return () => {
         if (participants.delete(participant)) revision++;
+      };
+    },
+    freezeEmpty() {
+      if (active || participants.size !== 0)
+        throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+      active = true;
+      emptyFrozen = true;
+      const version = revision;
+      let released = false;
+      return {
+        assertCurrent() {
+          if (
+            released ||
+            !active ||
+            !emptyFrozen ||
+            revision !== version ||
+            participants.size !== 0
+          )
+            throw Error("GUEST_DRAFT_HANDOFF_CHANGED");
+        },
+        release() {
+          if (released) return;
+          released = true;
+          emptyFrozen = false;
+          active = false;
+        },
       };
     },
     async freeze(scope: GuestDraftScope) {

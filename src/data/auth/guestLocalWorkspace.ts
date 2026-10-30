@@ -1,3 +1,6 @@
+import { guestTripDraftInventory } from "./guestTripDraftInventory";
+import { guestP1DraftInventory } from "./guestP1DraftInventory";
+import type { EmptyGuestSessionPreparation } from "./authSessionRepository";
 import { readGuestTripP1Source } from "./guestTripP1Source";
 import { readGuestRegisteredFileQualification } from "./guestRegisteredFileQualification";
 import {
@@ -18,6 +21,7 @@ import type { LaunchIdentity } from "./guestPrincipalRepository";
 import { getAccountGeneration } from "./accountGeneration";
 import {
   assertAccountRequestGeneration,
+  assertAccountTransitionLease,
   withAccountApplyGate,
 } from "./accountRequestContext";
 import { requireCommittedGuestPrincipal } from "./authRepository";
@@ -25,7 +29,11 @@ import {
   createMigratedDatabaseOpener,
   serializeDatabaseTransactions,
 } from "../db/databaseConnection";
-import { runMigrations, type MigrationDatabase } from "../db/migrationRunner";
+import {
+  getSchemaVersion,
+  runMigrations,
+  type MigrationDatabase,
+} from "../db/migrationRunner";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
   createTripCoreV2Repository,
@@ -147,6 +155,90 @@ export function createGuestLocalWorkspaceOpener(deps: {
       readCensus,
       readCaptureInventory,
       inspectPublicationRequests: recovery.inspectPublicationRequests,
+      // Empty is a strict current-schema qualification, never a data cleanup/adoption.
+      async prepareEmptySessionInstall(): Promise<EmptyGuestSessionPreparation> {
+        return withAccountApplyGate(async () => {
+          await localOwner();
+          assertGuestPublicationNotRequested(localId);
+          if (inventoryFreezes.has(localId)) throw Error("GUEST_INVENTORY_FREEZE_ACTIVE");
+          const tripDrafts = guestTripDraftInventory.freezeEmpty();
+          let p1Drafts: ReturnType<typeof guestP1DraftInventory.freezeEmpty> | undefined;
+          const token = Symbol("Empty Guest Session install");
+          let released = false;
+          const release = () => {
+            if (released) return;
+            released = true;
+            p1Drafts?.release();
+            tripDrafts.release();
+            if (inventoryFreezes.get(localId)?.token === token)
+              inventoryFreezes.delete(localId);
+          };
+          async function assertEmpty() {
+            tripDrafts.assertCurrent();
+            p1Drafts?.assertCurrent();
+            assertGuestPublicationNotRequested(localId);
+            if ((await deps.recoveryFiles(localId).listAttempts()).length !== 0)
+              throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+            await database.withTransactionAsync(async () => {
+              if ((await getSchemaVersion(database)) !== 74)
+                throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+              const tables = await database.getAllAsync<{ name: string }>(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
+              );
+              for (const { name } of tables) {
+                if (name === "schema_migrations" || name === "sqlite_sequence") continue;
+                const quoted = '"' + name.replaceAll('"', '""') + '"';
+                if (
+                  (
+                    await database.getFirstAsync<{ n: number }>(
+                      `SELECT count(*) AS n FROM ${quoted}`,
+                    )
+                  )?.n !== 0
+                )
+                  throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+              }
+            });
+            tripDrafts.assertCurrent();
+            p1Drafts?.assertCurrent();
+          }
+          try {
+            p1Drafts = guestP1DraftInventory.freezeEmpty();
+            inventoryFreezes.set(localId, { token, generation });
+            await assertEmpty();
+            await localOwner();
+            return {
+              release,
+              async qualify(lease) {
+                async function assertCurrent() {
+                  assertAccountTransitionLease(lease);
+                  if (
+                    released ||
+                    lease.generation !== generation + 1 ||
+                    inventoryFreezes.get(localId)?.token !== token
+                  )
+                    throw Error("GUEST_LOCAL_SCOPE_CHANGED");
+                  const current = await deps.readPrincipal();
+                  if (current?.kind !== "GUEST" || current.localId !== localId)
+                    throw Error("GUEST_LOCAL_SCOPE_CHANGED");
+                  await assertEmpty();
+                  const after = await deps.readPrincipal();
+                  if (after?.kind !== "GUEST" || after.localId !== localId)
+                    throw Error("GUEST_LOCAL_SCOPE_CHANGED");
+                  assertGuestPublicationNotRequested(localId);
+                  assertAccountTransitionLease(lease);
+                  if (released || inventoryFreezes.get(localId)?.token !== token)
+                    throw Error("GUEST_LOCAL_SCOPE_CHANGED");
+                }
+                await assertCurrent();
+                return { assertCurrent };
+              },
+            };
+          } catch (error) {
+            release();
+            throw error;
+          }
+        });
+      },
       async freezeForInventory() {
         return withAccountApplyGate(async () => {
           await localOwner();
