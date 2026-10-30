@@ -150,4 +150,22 @@ class RetainedRuntimeTests(unittest.TestCase):
   r['runtimeMountTarget']='/tmp/arbitrary.json'
   with self.assertRaisesRegex(ValueError,'EXACT_RUNTIME_MOUNT_TARGET'):runtime.validate_runtime(p)
 
+ def test_pdf_mount_reuses_exact_retained_rollback_without_deleting_shared_stage(self):
+  p,r,files,containers,calls,patches=self.fixture()
+  r['runtimeMountTarget']='/run/otr/universal-pdf-runtime.json'
+  r['pdfSettings']={'version':'OTR_DEV_UNIVERSAL_PDF/1','actorId':'f4b059c5-8241-4ffb-aa15-37fa25474543','tripId':'825f79b2-4a9d-4535-a62e-43000ca50c4a','expiresAt':'2026-11-01T08:48:56Z','configSHA256':r['runtimeSHA256'],'socketDirectory':'/run/otr/universal-pdf-worker','stageDirectory':'/var/lib/otr/universal-pdf-stage'}
+  active=containers['b'*64]
+  for mount in active['Mounts']:
+   if mount['Destination']=='/run/otr/universal-runtime.json':mount['Destination']=r['runtimeMountTarget']
+  active['Mounts'] += [{'Source':'/run/otr/universal-pdf-worker','Destination':'/run/otr/universal-pdf-worker','RW':False},{'Source':'/var/lib/otr/universal-pdf-stage','Destination':'/var/lib/otr/universal-pdf-stage','RW':True}]
+  r['activeMountsSHA256']=runtime.service_projection(active)['mountsSHA256'];rehash(p)
+  with contextlib.ExitStack() as stack:
+   for item in patches:stack.enter_context(item)
+   self.assertTrue(runtime.remote_close(p)['verified'])
+  self.assertNotIn('b'*64,containers);self.assertTrue(containers['a'*64]['State']['Running'])
+  self.assertFalse(any('volume' in arg or '--volumes' in arg for call in calls for arg in call))
+ def test_pdf_mount_requires_exact_qa_scope_and_retained_original(self):
+  p,r,*_=self.fixture();r['runtimeMountTarget']='/run/otr/universal-pdf-runtime.json'
+  with self.assertRaisesRegex(ValueError,'PDF_RUNTIME_RETAINED_BINDING_REQUIRED'):runtime.validate_runtime(p)
+
 if __name__=='__main__':unittest.main()

@@ -3,6 +3,7 @@ import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRe
 import { universalP1Identity } from "@/domain/trip/universalImportIdentity";
 import { universalP2SourceFixture } from "../../../backend/src/__fixtures__/universalP2Source";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import {
   readUniversalP1ReviewOriginal,
@@ -806,6 +807,71 @@ it("emits each scope-checked accepted item before a later receipt GET settles", 
     release();
     await read;
   }
+  expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+});
+
+it("reviews retained PDF through the canonical original preview, never by decoding it as model text", async () => {
+  const f = await fixture("P6");
+  const bytes = new Uint8Array(
+    readFileSync(
+      new URL("../../../output/pdf/universal-p6-activity-qa.pdf", import.meta.url),
+    ),
+  );
+  const sha256 = await f.f.deps.hash(bytes),
+    payloadId = randomUUID();
+  const input = f.model.inputs[0],
+    binding = f.result.sourceBindings[0];
+  Object.assign(input, {
+    kind: "FILE",
+    declaredContentType: "application/pdf",
+    originalFilename: "retained.pdf",
+    captureId: randomUUID(),
+    payloadId,
+    contentByteCount: bytes.length,
+    contentSha256: sha256,
+  });
+  binding.mime = "text/plain";
+  binding.pdfSource = {
+    original: { representationId: randomUUID(), sha256, byteCount: bytes.length },
+    sealSha256: "a".repeat(64),
+    pageMapSha256: "b".repeat(64),
+    transformOptionsSha256: "c".repeat(64),
+  };
+  const previewOriginal = vi.fn(async () => {});
+  let active = true;
+  const deps = {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => active,
+    hash: f.f.deps.hash,
+    readCapture: async () => ({
+      capture: { accountId: f.result.accountId, payloadId },
+      bytes,
+    }),
+    previewOriginal,
+  };
+  const read = (value = deps) =>
+    readUniversalP1ReviewOriginal(f.model, f.result, f.result.candidates[0].token, value);
+  await expect(read()).resolves.toBe("retained.pdf");
+  expect(previewOriginal).toHaveBeenCalledExactlyOnceWith({
+    captureId: input.captureId,
+    payloadId,
+    sha256,
+    byteCount: bytes.length,
+  });
+  previewOriginal.mockClear();
+  const originalSha = binding.pdfSource.original.sha256;
+  binding.pdfSource.original.sha256 = "0".repeat(64);
+  await expect(read()).rejects.toThrow();
+  expect(previewOriginal).not.toHaveBeenCalled();
+  binding.pdfSource.original.sha256 = originalSha;
+  previewOriginal.mockImplementationOnce(async () => {
+    active = false;
+  });
+  await expect(read()).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+  active = true;
+  previewOriginal.mockRejectedValueOnce(Error("IMPORT_PREVIEW_UNAVAILABLE"));
+  await expect(read()).rejects.toThrow("IMPORT_PREVIEW_UNAVAILABLE");
   expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
   expect(f.core.enqueue).not.toHaveBeenCalled();
 });

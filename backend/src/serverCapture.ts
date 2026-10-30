@@ -92,6 +92,8 @@ async function main() {
     server = startDevBackend({
       ...(continuous
         ? {
+            sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
+            sourcePdfV2ForRequest: continuous.sourcePdfV2ForRequest,
             universalRuntimeForRequest: async (request, actor) => {
               const scoped = (trip: string) =>
                 continuous!.forRequest(request, actor, coreUuid.parse(trip));

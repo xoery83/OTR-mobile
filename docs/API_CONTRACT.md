@@ -1292,6 +1292,30 @@ causal observation POST consumes any existing explicit QA read allocation rather
 than bypassing it; no allocation or limit increases. A transport observation does
 not replace the owning Source operation receipt, custody verification or seal.
 
+A matching GET `.../pdf-v4/:operationId/status` reads the existing inventory under
+normal Auth/Trip access. It returns only `STATUS_OBSERVED` plus a strict status
+enum, never the journal or resource/run capabilities. `NO_ACTIVE_ATTEMPT` also
+covers cleaned terminal attempts and does not prove no historical receipt.
+`DISPATCH_RECORDED` proves a durable journal grant, not that a remote POST ran.
+ACK/GET observations do not grant custody verification, Source or Admission.
+Old owner/provider state returns `RECOVERY_REQUIRED`; UNKNOWN never dispatches.
+The Native GET consumes the existing explicit QA read budget. Startup stays closed.
+
+The optional per-request composition is created only after normal bearer Auth and
+Trip checks and is closed in the boundary's `finally`. The explicit
+`SOURCE_REQUEST_LIFETIME_V1` marker is an internal async request fence, not a
+persistent Account/Session epoch or authorization claim. It never enters SQL,
+receipts or Native JSON and cannot establish cross-request/restart continuity.
+Legacy V3/non-continuous V4 reject it. Normal Auth/Trip is independently rechecked
+around SQL and Storage IO; synchronous lifetime checks also guard queued leases,
+scope entry and owning queries. Request abort/close stops deferred work. A closed
+per-request composition never falls back to an older global port.
+
+An in-flight COMMIT or Storage POST can still complete before closure is observed;
+withholding its late result does not undo it. Existing durable operation/resource
+identity and UNKNOWN/readback rules remain mandatory; no automatic replacement
+or write retry. This composition is not supplied by normal startup yet.
+
 ## Universal Import — unstarted deadline recovery (implementation candidate)
 
 A status GET remains read-only and projects the persisted owning Task/revision.

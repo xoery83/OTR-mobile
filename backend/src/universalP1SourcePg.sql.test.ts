@@ -1,3 +1,4 @@
+import { hasAcceptedUniversalReceiptRead } from "./universalAcceptedSourceReceipt";
 import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
 import { coreHttpBoundary } from "./tripCoreV2Http";
 import { createCorePgReader } from "./tripCoreV2PgRead";
@@ -144,8 +145,18 @@ it
       import("./tripCoreV2PgStorage").CorePgLease,
       ReturnType<typeof createCoreUniversalSourceRead>
     >();
+    let acceptedRecoveryReads = 0;
     const authority = createCoreSourcePgAuthority(connection, f.deps.hash, {
       readUniversalP1: async (scope, lease) => {
+        if (
+          process.env.OTR_UNIVERSAL_ACCEPTED_RECEIPT_READ_FIXTURE === "1" &&
+          (await hasAcceptedUniversalReceiptRead(
+            lease,
+            scope.actorAccountId,
+            scope.tripId,
+          ))
+        )
+          acceptedRecoveryReads++;
         let source = readers.get(lease);
         if (!source) {
           source = createCoreUniversalSourceRead(
@@ -864,6 +875,7 @@ it
         }
         if (process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE) {
           // A committed Item must finish its exact Source journal after the Create policy closes.
+          const beforeAcceptedRead = acceptedRecoveryReads;
           expect(
             (
               await authority.finalizeUniversalP1Operation(actor, trip, {
@@ -876,6 +888,8 @@ it
               })
             ).state,
           ).toBe("COMPLETE");
+          if (process.env.OTR_UNIVERSAL_ACCEPTED_RECEIPT_READ_FIXTURE === "1")
+            expect(acceptedRecoveryReads).toBeGreaterThan(beforeAcceptedRead);
           await expect(
             authority.publishUniversalP1(actor, trip, request),
           ).rejects.toThrow("CORE_CAPABILITY_CLOSED");

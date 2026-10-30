@@ -23,6 +23,7 @@ export async function sourcePdfV2Boundary(
   actor: string,
   canReadTrip: (actor: string, trip: string) => Promise<boolean>,
   port?: PdfPort,
+  forRequest?: () => Promise<{ port: PdfPort | undefined; close(): void } | undefined>,
 ) {
   const reply = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), {
@@ -43,9 +44,17 @@ export async function sourcePdfV2Boundary(
   if (!match || !coreUuid.safeParse(match[1]).success || url.search)
     return fail(400, "INVALID_SOURCE_COMMAND");
   if (request.method !== "POST") return fail(405, "METHOD_NOT_ALLOWED");
+  let scoped: Awaited<ReturnType<NonNullable<typeof forRequest>>>;
   try {
+    request.signal.throwIfAborted();
     coreUuid.parse(actor);
     if (!(await canReadTrip(actor, match[1]))) return fail(403, "SOURCE_ACCESS_DENIED");
+    request.signal.throwIfAborted();
+    if (forRequest) {
+      scoped = await forRequest();
+      port = scoped?.port;
+      request.signal.throwIfAborted();
+    }
     if (!port) return fail(503, "SOURCE_CAPABILITY_CLOSED");
     const boundary = createRequestBoundary(15000, request.signal);
     let raw: unknown;
@@ -80,7 +89,9 @@ export async function sourcePdfV2Boundary(
       return fail(error.code === "BODY_LIMIT" ? 413 : 400, "INVALID_SOURCE_COMMAND");
     if (error instanceof z.ZodError) return fail(422, "INVALID_SOURCE_COMMAND");
     const code = error instanceof Error ? error.message : "SOURCE_IO_UNAVAILABLE";
-    if (code === "SOURCE_ACCESS_DENIED") return fail(403, code);
+    if (["SOURCE_ACCESS_DENIED", "PDF_SCOPE_FORBIDDEN"].includes(code))
+      return fail(403, "SOURCE_ACCESS_DENIED");
+    if (code === "SOURCE_CAPABILITY_CLOSED") return fail(503, code);
     if (
       [
         "OPERATION_ID_REUSED",
@@ -91,5 +102,7 @@ export async function sourcePdfV2Boundary(
     )
       return fail(409, code);
     return fail(503, "SOURCE_IO_UNAVAILABLE");
+  } finally {
+    scoped?.close();
   }
 }

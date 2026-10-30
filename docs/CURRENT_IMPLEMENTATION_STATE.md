@@ -1,3 +1,21 @@
+# Universal PDF software integration — 30 October 2026
+
+Curated software only onto main f92cb022: optional request-scoped PDF runtime,
+normal Source acquisition/prepare/upload-status continuation, verified original
+Review preview, bounded Source connection profile and reused close/rollback
+helpers. Normal Auth/Trip and owning SQL remain authoritative. PDF is default
+closed; this change neither installs SQL nor activates a Provider, custody Secret
+purpose or business authority. Photo remains the approved OCR relevance → original
+image vision design, not an implemented Image Input E2E.
+
+DEV software0aff5c91 is healthy/default closed (image34d9f63c/container3ea24ecf).
+The retained first PDF upload is UNKNOWN with no ACK/GET, original PENDING and
+no canonical Storage object at its last exact readback. No PDF Task/model call or
+Core Item exists. The fixed API-key header does not retry that operation. A
+bounded fresh-input exception is awaiting Owner approval; all old identities and
+holds remain retained. Private execution receipts and protected packages stay
+in the delivery worktree; no private history or raw catalogs are integrated.
+
 # Native General Account first-use acceptance — 30 October 2026
 
 Owner's existing normal Hosted Email OTP Account4ebd independently had no Profile/Trip at baseline. Normal phone108 Login→self-Profile bootstrap→Synthetic Trip8b0a256b then P1–P6 Manual Create/Edit automatically accepted; 14 formal APPLIED receipts with exact Actor/Trip/op/admission/canonical-intent hashes validated and six unique Item IDs independently read from DEV Supabase. Phone110 actual AppSwitcher cold launch retained Session, same Trip, six real DayFeed rows/latest fields/noPending; P4 Details retained latest return08:07 and same-place. P3 checkin17:00, P5 TRAIN08:20, P6 start08:30; P2 Sparse+authored AKL/NSN Edit, not Qualified/Booking/Ticket. No Health retry, token/Session copy, new policy/SQL/Authority/Provider call or device-network change. This is existing Account first-use, not fresh signup or a new Backend isolation/offline PASS.

@@ -15,6 +15,8 @@ const f = vi.hoisted(() => ({
   execute: vi.fn(),
   sourceConnection: vi.fn(),
   host: vi.fn(),
+  pdfConfig: vi.fn(),
+  pdfPorts: vi.fn(),
 }));
 vi.mock("node:sqlite", () => ({
   DatabaseSync: class {
@@ -33,6 +35,7 @@ vi.mock("./tripPublicationCatalogPgConnection", () => ({
 }));
 vi.mock("./tripCoreV2PgConnection", () => ({
   createSourcePgConnection: f.sourceConnection,
+  createSourcePdfPgConnection: f.sourceConnection,
   createModelTaskPgConnection: () => ({}),
 }));
 vi.mock("./supabaseGateway", () => ({
@@ -47,8 +50,9 @@ vi.mock("./universalTaskBootstrap", () => ({
 vi.mock("./universalContinuousHost", () => ({
   createUniversalContinuousHost: f.host,
 }));
-vi.mock("./universalOriginalSource", () => ({
-  createUniversalOriginalSourceConnection: () => ({}),
+vi.mock("./sourcePdfRuntime", () => ({
+  readSourcePdfRuntimeConfig: f.pdfConfig,
+  createSourcePdfRuntimePorts: f.pdfPorts,
 }));
 vi.mock("../../src/data/sync/syncOperationRepository", () => ({
   createSyncOperationRepository: () => ({ recoverInterrupted: f.recover }),
@@ -224,6 +228,92 @@ it.each([
       );
     } finally {
       log.mockRestore();
+      await runtime?.close();
+    }
+  },
+);
+
+it.each(["enabled", "closed", "invalid", "foreign", "expired"])(
+  "pending PDF original lookup follows the composed runtime capability: %s",
+  async (mode) => {
+    const actor = randomUUID(),
+      trip = randomUUID();
+    f.auth.mockResolvedValue({ id: actor });
+    const query = vi.fn(async (sql: string) => ({
+      rows: sql.startsWith("SELECT") ? [{ result: null }] : [],
+    }));
+    f.sourceConnection.mockReturnValue({
+      withLease: async (work: (lease: unknown) => Promise<unknown>) =>
+        work({ query, retire: vi.fn() }),
+    });
+    if (mode !== "closed") f.pdfConfig.mockResolvedValue({});
+    if (mode === "invalid")
+      f.pdfPorts.mockImplementation(() => {
+        throw Error("CLOSED");
+      });
+    else
+      f.pdfPorts.mockReturnValue({
+        originalMetadataAllowed: (a: string, t: string) =>
+          mode === "enabled" && a === actor && t === trip,
+        close: vi.fn(),
+      });
+    const runtime = await loadDevUniversalContinuousRuntime({
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+      OTR_DEV_UNIVERSAL_PDF_RUNTIME: "enabled",
+    });
+    try {
+      const ports = await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer synthetic-test-only" },
+        }),
+        actor,
+        trip,
+      );
+      const command = {
+        contract_version: 1,
+        command: "ACQUIRE_SOURCE",
+        operation_id: randomUUID(),
+        operation_key: randomUUID(),
+        actor_account_id: actor,
+        trip_id: trip,
+        source_id: randomUUID(),
+        operation_sha256: "a".repeat(64),
+        payload: {
+          acquisition_key: "pdf-test",
+          acquisition_sha256: "a".repeat(64),
+          source_input: {
+            source_kind: "FILE",
+            acquisition_channel: "FILES",
+            captured_at: null,
+            capture_time_basis: "UNKNOWN",
+          },
+          capture: { completeness: "AS_SUPPLIED", capture_sha256: "a".repeat(64) },
+          original: {
+            id: randomUUID(),
+            material_kind: "BINARY",
+            original_filename: "QA.pdf",
+            part_key: null,
+            mime_type: "application/pdf",
+            encoding: null,
+            payload_sha256: "b".repeat(64),
+            byte_count: 1676,
+            text_content: null,
+            locator_uri: null,
+          },
+        },
+      };
+      const lookup = ports.universalOriginalSourcePort.lookup(actor, trip, command);
+      if (mode === "enabled") {
+        await expect(lookup).resolves.toBeNull();
+        expect(query).toHaveBeenCalledWith(
+          "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+          expect.any(Array),
+        );
+      } else {
+        await expect(lookup).rejects.toThrow("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+        expect(query).not.toHaveBeenCalled();
+      }
+    } finally {
       await runtime?.close();
     }
   },

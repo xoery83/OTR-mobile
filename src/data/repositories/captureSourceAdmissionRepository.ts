@@ -1,3 +1,4 @@
+import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { z } from "zod";
 import {
   UTF8_TEXT_FILE_PROFILE,
@@ -67,6 +68,7 @@ export type CaptureSourceDependencies = {
   ): Promise<Uint8Array | null>;
   // Explicit candidate capability only. Omission keeps the original v1 path closed.
   utf8FileProfile?: typeof UTF8_TEXT_FILE_PROFILE;
+  pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
   // Existing actual-format/profile verifier, never filename/declared MIME. This
   // dependency is deliberately unwired while Capture/Source runtime gates close.
   verifyBinary?(bytes: Uint8Array): Promise<{
@@ -459,11 +461,23 @@ export function createCaptureSourceAdmissionRepository(
       if (capture.kind !== "TEXT" && fileText === null && plan.intent_kind !== "REUSE") {
         if (!dependencies.verifyBinary) fail("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
         const proof = await dependencies.verifyBinary(new Uint8Array(bytes));
+        const allowedFormat =
+          (proof.profileId === "PNG_STATIC_RGB8_RGBA8_V1" &&
+            proof.mimeType === "image/png") ||
+          (plan.intent_kind === "NEW" &&
+            dependencies.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE &&
+            proof.profileId === PDF_CAPTURE_ORIGINAL_PROFILE &&
+            proof.mimeType === "application/pdf" &&
+            capture.kind === "FILE" &&
+            capture.declaredContentType === "application/pdf" &&
+            !!capture.originalFilename &&
+            capture.originalFilename.length <= 255 &&
+            /\.pdf$/i.test(capture.originalFilename) &&
+            bytes.byteLength <= 4194304);
         if (
           proof.payloadSha256 !== materialHash ||
           proof.byteCount !== bytes.byteLength ||
-          proof.profileId !== "PNG_STATIC_RGB8_RGBA8_V1" ||
-          proof.mimeType !== "image/png"
+          !allowedFormat
         )
           fail("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
         mimeType = proof.mimeType;

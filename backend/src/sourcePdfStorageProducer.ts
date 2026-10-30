@@ -14,6 +14,11 @@ import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import { sourcePdfUploadBindingSchema } from "../../src/domain/trip/sourcePdfUploadAuthority";
 import { pdfHash, verifySourcePdf } from "./sourcePdfProfile";
 
+export type PdfSourceRequestIoGuard = {
+  signal?: AbortSignal;
+  assertRequestCurrent(): void;
+  assertCurrent(): Promise<void>;
+};
 export type PdfStorageConfig = {
   instanceId: string;
   origin: string;
@@ -50,6 +55,7 @@ export function createSourcePdfV2StorageProducer(
   config: PdfStorageConfig,
   runWorker?: Parameters<typeof verifySourcePdfV2UploadBytes>[1],
   custodyScope?: { accountId: string; tripId: string },
+  requestGuard?: PdfSourceRequestIoGuard,
 ) {
   return createProducer(
     config,
@@ -58,6 +64,7 @@ export function createSourcePdfV2StorageProducer(
     PDF_UPLOAD_QPDF_V4.maxByteCount,
     PDF_UPLOAD_QPDF_V4.profileId,
     custodyScope,
+    requestGuard,
   );
 }
 function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
@@ -67,6 +74,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
   maxBytes: number,
   profileId?: string,
   suppliedCustodyScope?: { accountId: string; tripId: string },
+  requestGuard?: PdfSourceRequestIoGuard,
 ) {
   type RequestBinding = { binding: B; dispatchId: string };
   type ReadBinding = RequestBinding & { readId?: string; ackEvidenceSha256?: string };
@@ -124,13 +132,17 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
       ),
     };
   }
-  function io(
+  async function io(
     method: "POST" | "GET",
     key: string,
     body?: Uint8Array,
     readLimit = maxBytes,
   ) {
-    return new Promise<{
+    requestGuard?.assertRequestCurrent();
+    await requestGuard?.assertCurrent();
+    requestGuard?.assertRequestCurrent();
+    requestGuard?.signal?.throwIfAborted();
+    const result = await new Promise<{
       status: number;
       headers: Record<string, string>;
       rawHeaders: string[];
@@ -163,10 +175,13 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
         {
           method,
           agent: false,
+          signal: requestGuard?.signal,
           maxHeaderSize: 16384,
           ...(origin.protocol === "https:" ? { rejectUnauthorized: true } : {}),
           headers: {
-            Authorization: "Bearer " + config.serviceToken,
+            ...(config.serviceToken.startsWith("sb_secret_")
+              ? { apikey: config.serviceToken }
+              : { Authorization: "Bearer " + config.serviceToken }),
             ...(body
               ? {
                   "content-type": "application/pdf",
@@ -218,6 +233,11 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
       q.on("error", () => finish(null));
       q.end(body);
     });
+    requestGuard?.assertRequestCurrent();
+    await requestGuard?.assertCurrent();
+    requestGuard?.assertRequestCurrent();
+    requestGuard?.signal?.throwIfAborted();
+    return result;
   }
   return {
     configurationSha256,

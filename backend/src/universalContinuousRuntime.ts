@@ -1,4 +1,8 @@
-import { serializeUniversalSourceConnection } from "./universalSourceConnection";
+import {
+  readSourcePdfRuntimeConfig,
+  createSourcePdfRuntimePorts,
+} from "./sourcePdfRuntime";
+import { serializeUniversalSourceConnections } from "./universalSourceConnection";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import type { CorePgLease } from "./tripCoreV2PgStorage";
 import { DatabaseSync } from "node:sqlite";
@@ -16,6 +20,7 @@ import { createSupabaseDevGateway } from "./supabaseGateway";
 import { createPublicationCatalogPgConnection } from "./tripPublicationCatalogPgConnection";
 import {
   createSourcePgConnection,
+  createSourcePdfPgConnection,
   createModelTaskPgConnection,
 } from "./tripCoreV2PgConnection";
 import { createFlightPrivateCustody } from "./flightPrivateCustody";
@@ -38,6 +43,7 @@ export async function loadDevUniversalContinuousRuntime(
 ) {
   const config = await readUniversalContinuousConfig(env);
   if (!config) return undefined;
+  let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
   let closed = false,
     stores: Awaited<ReturnType<typeof createFlightPrivateCustody>> | undefined,
     sql: DatabaseSync | undefined;
@@ -68,10 +74,36 @@ export async function loadDevUniversalContinuousRuntime(
       if (closed || env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST !== "enabled")
         throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     };
-    const sourceConnection = serializeUniversalSourceConnection(
-      createSourcePgConnection(config.sourcePg),
+    const [sourceConnection, pdfConnection] = serializeUniversalSourceConnections(
+      [
+        createSourcePgConnection(config.sourcePg),
+        ...(env.OTR_DEV_UNIVERSAL_PDF_RUNTIME === "enabled"
+          ? [createSourcePdfPgConnection(config.sourcePg)]
+          : []),
+      ],
       guard,
     );
+    try {
+      const pdfConfig = await readSourcePdfRuntimeConfig(env);
+      if (pdfConfig) {
+        const configSha = env.OTR_DEV_UNIVERSAL_PDF_RUNTIME_SHA256;
+        pdf = createSourcePdfRuntimePorts(pdfConfig, {
+          gateway,
+          connection: pdfConnection,
+          storageToken: env.OTR_DEV_SUPABASE_SECRET_KEY ?? "",
+          assertEnabled() {
+            guard();
+            if (
+              env.OTR_DEV_UNIVERSAL_PDF_RUNTIME !== "enabled" ||
+              env.OTR_DEV_UNIVERSAL_PDF_RUNTIME_SHA256 !== configSha
+            )
+              throw Error("SOURCE_CAPABILITY_CLOSED");
+          },
+        });
+      }
+    } catch {
+      console.info("UNIVERSAL_PDF_RUNTIME_CLOSED");
+    }
     async function host(
       actor: string,
       trip: string,
@@ -210,7 +242,9 @@ export async function loadDevUniversalContinuousRuntime(
         guard();
       };
       const scoped = await host(verifiedActor, tripId, authorize),
-        original = createUniversalOriginalSourceConnection(sourceConnection, hash);
+        original = createUniversalOriginalSourceConnection(sourceConnection, hash, {
+          pendingPdf: pdf?.originalMetadataAllowed(verifiedActor, tripId) === true,
+        });
       return {
         universalOriginalSourcePort: {
           async acquire(actor: string, trip: string, raw: unknown) {
@@ -345,6 +379,8 @@ export async function loadDevUniversalContinuousRuntime(
     >();
     return {
       catalogConnection,
+      sourcePdfV4PreparationForRequest: pdf?.sourcePdfV4PreparationForRequest,
+      sourcePdfV2ForRequest: pdf?.sourcePdfV2ForRequest,
       forRequest,
       // Called only by the existing Core Source authority after its normal Auth,
       // Actor/Trip locks and capability checks; it grants no mutation authority.
@@ -387,6 +423,7 @@ export async function loadDevUniversalContinuousRuntime(
       async close() {
         if (closed) return;
         closed = true;
+        pdf?.close();
         sql?.close();
         sql = undefined;
         await stores?.close();
@@ -395,6 +432,7 @@ export async function loadDevUniversalContinuousRuntime(
     };
   } catch (error) {
     closed = true;
+    pdf?.close();
     sql?.close();
     await stores?.close();
     await catalogConnection.close();

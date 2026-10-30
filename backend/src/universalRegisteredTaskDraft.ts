@@ -1,3 +1,4 @@
+import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { taskSchema, attemptSchema } from "../../src/domain/intelligence/persistence";
@@ -9,7 +10,11 @@ import {
   type UniversalManifest,
 } from "./universalImport";
 import { registeredUniversalModelProfile } from "./universalModelProfile";
-import { universalBatchIdentity, type UniversalRunBinding } from "./universalBatchSource";
+import {
+  universalBatchIdentity,
+  universalRunBindingSchema,
+  type UniversalRunBinding,
+} from "./universalBatchSource";
 const label = z.string().regex(/^[A-Za-z0-9._:-]{1,128}$/),
   hash = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
 // This is an owning configuration read result. HTTP caller JSON cannot select a provider.
@@ -36,6 +41,7 @@ export async function buildUniversalRegisteredTaskDraft(
   manifest: UniversalManifest,
   rawSelection: z.infer<typeof universalContinuousSelectionSchema>,
 ) {
+  binding = universalRunBindingSchema.parse(binding);
   const selection = universalContinuousSelectionSchema.parse(rawSelection);
   if (
     manifest.accountId !== binding.actorId ||
@@ -53,7 +59,9 @@ export async function buildUniversalRegisteredTaskDraft(
       rep.revision !== i.material_revision ||
       rep.originalSha256 !== i.payload_sha256 ||
       rep.bytes.length !== i.byte_count ||
-      hash(rep.bytes) !== i.payload_sha256
+      hash(rep.bytes) !== i.payload_sha256 ||
+      canonicalEventJson((i.pdfSource ?? null) as Json) !==
+        canonicalEventJson((rep.pdfSource ?? null) as Json)
     )
       throw Error("UNIVERSAL_TASK_SOURCE_BINDING");
   }

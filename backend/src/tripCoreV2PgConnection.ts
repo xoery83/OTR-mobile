@@ -31,6 +31,13 @@ export function createCorePgConnection(input: CorePgConfig): CorePgConnection {
 export function createSourcePgConnection(input: CorePgConfig): CorePgConnection {
   return createOwningPgConnection(input, "otr_trip_source_command_gateway");
 }
+// Dormant PDF-only budget: two 15s custody reads + fixed 20s worker, under Native's 90s request.
+export function createSourcePdfPgConnection(input: CorePgConfig): CorePgConnection {
+  return createOwningPgConnection(input, "otr_trip_source_command_gateway", {
+    idleMs: 65000,
+    leaseMs: 75000,
+  });
+}
 export function createTripPgConnection(input: CorePgConfig): CorePgConnection {
   return createOwningPgConnection(input, "otr_trip_create_gateway");
 }
@@ -53,6 +60,7 @@ function createOwningPgConnection(
     | "otr_trip_create_gateway"
     | "otr_trip_metadata_gateway"
     | "otr_external_integration_call_gateway",
+  budget = { idleMs: 5000, leaseMs: 30000 },
 ): CorePgConnection {
   const config = configSchema.parse(input);
   let occupied = false;
@@ -71,8 +79,7 @@ function createOwningPgConnection(
           checkServerIdentity: (_host, certificate) =>
             checkServerIdentity(config.host, certificate),
         },
-        options:
-          "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
+        options: `-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=${budget.idleMs}`,
       });
       let retired = false,
         querying = false,
@@ -91,7 +98,7 @@ function createOwningPgConnection(
           timeout = setTimeout(() => {
             retire();
             reject(new Error("CORE_CONNECTION_TIMEOUT"));
-          }, 30000);
+          }, budget.leaseMs);
         });
         const operation = async () => {
           await client.connect();

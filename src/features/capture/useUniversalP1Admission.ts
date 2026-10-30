@@ -142,6 +142,37 @@ export function useUniversalP1Admission(
         isCurrent: current,
         hash: captureStorageDependencies.sha256,
         readCapture: captures.getForSourceHandoff,
+        async previewOriginal(identity) {
+          const [
+            { captureAccountRequestContext },
+            { getDefaultImportDocumentsRepository },
+            { previewImportOriginal },
+          ] = await Promise.all([
+            import("@/data/auth/accountRequestContext"),
+            import("@/data/operations/defaultImportDocuments"),
+            import("@/native/importOriginalPreview"),
+          ]);
+          const context = await captureAccountRequestContext(
+            result.tripId,
+            requireAdoptedUserId,
+          );
+          if (!current() || context.accountId !== result.accountId)
+            throw Error("UNIVERSAL_CAPTURE_STALE");
+          const documents = await getDefaultImportDocumentsRepository();
+          const original = await documents.original(context, "TRIP", identity.captureId);
+          if (
+            !current() ||
+            original.document.payloadId !== identity.payloadId ||
+            original.document.sha256 !== identity.sha256 ||
+            original.document.byteCount !== identity.byteCount
+          )
+            throw Error("IMPORT_EVIDENCE_INVALID");
+          await previewImportOriginal(
+            original,
+            current,
+            original.document.originalFilename ?? "",
+          );
+        },
       });
     },
     async confirm(result, token, review) {

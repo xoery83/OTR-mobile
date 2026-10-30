@@ -42,7 +42,15 @@ export async function readUniversalPdfSourceMaterial(
     Number(derived.introduced_revision) > catalog.sourceRevision
   )
     throw Error("UNIVERSAL_PDF_MATERIAL_UNAVAILABLE");
-  const proof = await readSourcePdfV2CoreProof(lease, catalog, String(derived.id), hash);
+  const proof = await readSourcePdfV2CoreProof(
+    lease,
+    catalog,
+    String(derived.id),
+    hash,
+    false,
+    undefined,
+    { continuousUniversal: true },
+  );
   if (proof.originalRepresentationId !== expected.representationId)
     throw Error("UNIVERSAL_PDF_MATERIAL_UNAVAILABLE");
   const seals = (

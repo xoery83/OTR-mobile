@@ -1,4 +1,7 @@
-import { sourcePdfPrepareReceiptSchema } from "../../domain/trip/sourcePdfPreparation";
+import {
+  sourcePdfUploadStatusSchema,
+  sourcePdfPrepareReceiptSchema,
+} from "../../domain/trip/sourcePdfPreparation";
 import { z } from "zod";
 import { sourcePdfUploadReceiptSchema } from "../../domain/trip/sourcePdfUploadAuthority";
 
@@ -31,4 +34,10 @@ export const sourcePdfV4PrepareObservationSchema =
   sourcePdfV4PreparationIdentitySchema.extend({
     observation: z.literal("PREPARE_OBSERVED"),
     receipt: sourcePdfPrepareReceiptSchema,
+  });
+
+export const sourcePdfV4StatusObservationSchema =
+  sourcePdfV4PreparationIdentitySchema.extend({
+    observation: z.literal("STATUS_OBSERVED"),
+    status: sourcePdfUploadStatusSchema,
   });

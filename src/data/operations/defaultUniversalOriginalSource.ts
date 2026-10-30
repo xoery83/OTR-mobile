@@ -1,3 +1,5 @@
+import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
+import { prepareAdmittedPdfOriginal } from "./universalPdfOriginalPreparation";
 import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import { openDatabase } from "../db/database";
 import {
@@ -27,6 +29,7 @@ export async function prepareDefaultUniversalCaptureSources(
     baseUrl: string;
     getAccountId(): Promise<string>;
     assertCurrent(): void;
+    pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
     prepareTask?(
       input: import("../api/universalImportContracts").UniversalBatchPrepare,
     ): Promise<void>;
@@ -61,6 +64,14 @@ export async function prepareDefaultUniversalCaptureSources(
     handoff: captures.getForSourceHandoff,
     readSelectedMaterial: async () => null,
     utf8FileProfile: UTF8_TEXT_FILE_PROFILE,
+    ...(options.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE
+      ? {
+          pendingPdfProfile: options.pendingPdfProfile,
+          verifyBinary: (
+            await import("@/native/pendingPdfOriginal")
+          ).createPendingPdfOriginalFormatVerifier(),
+        }
+      : {}),
   });
   const deps = {
     database,
@@ -69,6 +80,7 @@ export async function prepareDefaultUniversalCaptureSources(
     sources,
     getAccountId: options.getAccountId,
     hash: sha256,
+    pendingPdfProfile: options.pendingPdfProfile,
     newId,
     transport: createUniversalOriginalSourceTransport(options.getAccountId, {
       baseUrl: options.baseUrl,
@@ -108,8 +120,13 @@ export async function prepareDefaultUniversalCaptureSources(
   options.assertCurrent();
   const result = await runUniversalOriginalBatch(context, model.batch.jobId, plans, deps);
   options.assertCurrent();
+  const singlePdf =
+    options.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE &&
+    model.inputs.length === 1 &&
+    model.inputs[0].kind === "FILE" &&
+    model.inputs[0].declaredContentType === "application/pdf";
   const unhandled = model.inputs
-    .filter(isUnsupportedUniversalInputMetadata)
+    .filter((input) => !singlePdf && isUnsupportedUniversalInputMetadata(input))
     .map((i) => i.id);
   if (
     result.batchId !== model.batch.batchId ||
@@ -120,6 +137,67 @@ export async function prepareDefaultUniversalCaptureSources(
     result.results.some((r) => r.state !== "ADMITTED")
   )
     throw new Error("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");
+  if (singlePdf) {
+    const input = model.inputs[0],
+      prepared = result.inputs[0];
+    if (!input.captureId || !prepared || prepared.inputId !== input.id)
+      throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+    const retained = await captures.getForSourceHandoff(input.captureId);
+    options.assertCurrent();
+    if (
+      retained.capture.accountId !== context.accountId ||
+      retained.capture.tripId !== context.tripId ||
+      retained.capture.payloadId !== input.payloadId ||
+      retained.capture.sha256 !== input.contentSha256 ||
+      retained.capture.byteCount !== input.contentByteCount
+    )
+      throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+    const acquisitionReceipt = await deps.transport.lookup(
+      context,
+      prepared.sourceCommand,
+    );
+    options.assertCurrent();
+    if (acquisitionReceipt === null) throw Error("PDF_SOURCE_PREPARATION_UNCONFIRMED");
+    const { createSourcePdfV4PreparationTransport } =
+      await import("../api/sourcePdfV4PreparationTransport");
+    options.assertCurrent();
+    await prepareAdmittedPdfOriginal(
+      context,
+      {
+        acquisition: prepared.sourceCommand,
+        acquisitionReceipt: JSON.parse(acquisitionReceipt),
+        binding: {
+          version: 1,
+          accountId: context.accountId,
+          batchId: result.batchId,
+          jobId: model.batch.jobId,
+          inputId: input.id,
+          inputRevision: input.revision,
+          captureId: retained.capture.id,
+          payloadId: retained.capture.payloadId,
+          captureRevision: retained.capture.revision,
+          sha256: retained.capture.sha256,
+          byteCount: retained.capture.byteCount,
+          mediaType: "application/pdf",
+        },
+        bytes: retained.bytes,
+      },
+      {
+        getAccountId: options.getAccountId,
+        hash: sha256,
+        assertCurrent: options.assertCurrent,
+        transport: createSourcePdfV4PreparationTransport(options.getAccountId, {
+          baseUrl: options.baseUrl,
+          assertRequestCurrent: options.assertCurrent,
+        }),
+      },
+    );
+    options.assertCurrent();
+    const raw = await deps.catalog.readUniversal(context);
+    options.assertCurrent();
+    await deps.imports.applyUniversalCatalogs(context, raw);
+    options.assertCurrent();
+  }
   if (options.prepareTask) {
     const inputs = [];
     for (const input of result.inputs) {

@@ -638,7 +638,18 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
+  sourcePdfV2ForRequest?: (
+    request: Request,
+    actorId: string,
+  ) => ReturnType<NonNullable<Parameters<typeof sourcePdfV2Boundary>[4]>>;
   sourcePdfV4PreparationPort?: Parameters<typeof sourcePdfV4PreparationBoundary>[3];
+  sourcePdfV4PreparationForRequest?: (
+    request: Request,
+    actorId: string,
+  ) => Promise<
+    | { port: Parameters<typeof sourcePdfV4PreparationBoundary>[3]; close(): void }
+    | undefined
+  >;
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   universalImportPort?: UniversalPort;
@@ -2429,7 +2440,9 @@ function reportingFilters(url: URL): ReportingFilters {
 
 export function createDevBackendHandler({
   sourcePdfV2Port,
+  sourcePdfV2ForRequest,
   sourcePdfV4PreparationPort,
+  sourcePdfV4PreparationForRequest,
   captureRemoteProcessing,
   tripPersonCloudCreatePort,
   universalImportPort,
@@ -2589,7 +2602,7 @@ export function createDevBackendHandler({
               runtime?.universalImportPort ?? universalImportPort,
             );
       } else if (
-        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained)$/.test(
+        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained|status)$/.test(
           url.pathname,
         )
       ) {
@@ -2601,6 +2614,9 @@ export function createDevBackendHandler({
           actor.id,
           (a, t) => gateway.canReadTrip(a, t),
           sourcePdfV4PreparationPort,
+          sourcePdfV4PreparationForRequest
+            ? () => sourcePdfV4PreparationForRequest(request, actor.id)
+            : undefined,
         );
       } else if (
         /^\/v2\/trips\/[^/]+\/sources\/pdf-v2\/(?:verify-original|register-derived|seal)$/.test(
@@ -2614,6 +2630,9 @@ export function createDevBackendHandler({
           actor.id,
           (a, t) => gateway.canReadTrip(a, t),
           sourcePdfV2Port,
+          sourcePdfV2ForRequest
+            ? () => sourcePdfV2ForRequest(request, actor.id)
+            : undefined,
         );
       } else if (
         /^\/v2\/trips\/[^/]+\/universal-source-originals\/(?:acquire|result)$/.test(

@@ -225,3 +225,57 @@ it("keeps a transient V4 worker failure distinct from unsupported original conte
     ).kind,
   ).toBe("UNAVAILABLE");
 });
+it("closed request during decode cannot subsequently send the Storage POST", async () => {
+  const f = await fixture();
+  let requests = 0,
+    closed = false,
+    release!: () => void;
+  const server = createServer((_request, response) => {
+    requests++;
+    response.setHeader("Content-Type", "application/json");
+    response.end(
+      JSON.stringify({
+        Key: "trip-source-material/" + f.binding.objectKey,
+        Id: randomUUID(),
+      }),
+    );
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  cleanup.push(() => new Promise<void>((resolve) => server.close(() => resolve())));
+  const address = server.address() as { port: number };
+  const output = await vi.mocked(runSourcePdfV2LinuxWorker).getMockImplementation()!(
+    f.bytes,
+  );
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const worker = vi.fn(async () => {
+    await gate;
+    return output;
+  });
+  const assertRequestCurrent = () => {
+    if (closed) throw Error("PDF_SCOPE_FORBIDDEN");
+  };
+  const producer = createSourcePdfV2StorageProducer(
+    {
+      instanceId: "synthetic",
+      origin: `http://127.0.0.1:${address.port}`,
+      credentialRef: "synthetic",
+      serviceToken: "synthetic",
+      timeoutMs: 500,
+      localFixture: true,
+    },
+    worker,
+    { accountId: f.binding.actorAccountId, tripId: f.binding.tripId },
+    { assertCurrent: async () => assertRequestCurrent(), assertRequestCurrent },
+  );
+  const pending = producer.upload(
+    { binding: f.binding, dispatchId: randomUUID() },
+    f.bytes,
+  );
+  await vi.waitFor(() => expect(worker).toHaveBeenCalledOnce());
+  closed = true;
+  release();
+  await expect(pending).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(requests).toBe(0);
+});

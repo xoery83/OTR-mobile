@@ -1,4 +1,5 @@
 import {
+  sourcePdfUploadStatusSchema,
   sourcePdfPrepareCommandSchema,
   sourcePdfPrepareReceiptSchema,
 } from "../../src/domain/trip/sourcePdfPreparation";
@@ -13,7 +14,7 @@ import type {
 
 type Authority = Pick<
   ReturnType<typeof createSourcePdfV2CausalAuthority>,
-  "admit" | "finish" | "resolveReserved" | "prepare"
+  "admit" | "finish" | "resolveReserved" | "prepare" | "status"
 >;
 
 // Unbound: the parent authenticates and checks Trip access; SQL remains the issuer.
@@ -42,6 +43,28 @@ export function createSourcePdfV4Reservation(
       throw Error("PDF_SCOPE_FORBIDDEN");
   }
   return {
+    async status(actor: string, identity: PdfIngressIdentity) {
+      coreUuid.parse(actor);
+      for (const id of [
+        identity.tripId,
+        identity.sourceId,
+        identity.representationId,
+        identity.operationId,
+      ])
+        coreUuid.parse(id);
+      if (
+        !Number.isSafeInteger(identity.accountGeneration) ||
+        identity.accountGeneration < 1 ||
+        (await owner.accountGeneration(actor)) !== identity.accountGeneration
+      )
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      const status = sourcePdfUploadStatusSchema.parse(
+        await authority.status(actor, identity),
+      );
+      if ((await owner.accountGeneration(actor)) !== identity.accountGeneration)
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      return status;
+    },
     async prepare(actor: string, raw: string, identity: PdfIngressIdentity) {
       coreUuid.parse(actor);
       if (Buffer.byteLength(raw, "utf8") > 16384) throw Error("INVALID_SOURCE_COMMAND");

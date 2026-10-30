@@ -491,3 +491,182 @@ it("Native PREPARE roundtrip preserves the owning parent and normal App Auth bou
   );
   expect(f.fetcher.mock.calls.length).toBe(before + 1);
 });
+it("status is a scoped GET and never dispatches or leaks private journal capabilities", async () => {
+  const f = await fixture();
+  f.fetcher.mockImplementation(
+    async () =>
+      new Response(
+        JSON.stringify({
+          ...f.identity,
+          observation: "STATUS_OBSERVED",
+          status: "UNKNOWN",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+            Vary: "Authorization",
+          },
+        },
+      ),
+  );
+  expect(await f.transport.status(f.context, f.identity)).toEqual({
+    ...f.identity,
+    observation: "STATUS_OBSERVED",
+    status: "UNKNOWN",
+  });
+  expect(f.fetcher).toHaveBeenCalledOnce();
+  const [url, init] = f.fetcher.mock.calls[0];
+  expect(String(url)).toMatch(/\/status$/);
+  expect(init?.method).toBe("GET");
+  expect(init?.body).toBeUndefined();
+  f.fetcher.mockImplementation(
+    async () =>
+      new Response(
+        JSON.stringify({
+          ...f.identity,
+          observation: "STATUS_OBSERVED",
+          status: "STAGED",
+          runToken: "PRIVATE",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "private, no-store",
+            Vary: "Authorization",
+          },
+        },
+      ),
+  );
+  await expect(f.transport.status(f.context, f.identity)).rejects.toThrow();
+});
+it("continues via the existing verify/register/seal routes under normal Auth and frozen receipts", async () => {
+  const f = await fixture();
+  const { createDevBackendHandler } = await import("../../../backend/src/app");
+  const { sourcePdfV2SealSchema, PDF_V2_OPTIONS_SHA } =
+    await import("../../domain/trip/sourcePdfV2Contracts");
+  const upload = uploadCommand(f);
+  const {
+    parent_operation_id: _parent,
+    payload_sha256: _hash,
+    byte_count: _bytes,
+    mime_type: _mime,
+    ...pins
+  } = upload.payload;
+  const verify = {
+    ...upload,
+    command: "VERIFY_REPRESENTATION",
+    operation_id: randomUUID(),
+    payload: pins,
+  };
+  const verification = {
+    contract_version: 1,
+    command: "VERIFY_REPRESENTATION",
+    operation_id: verify.operation_id,
+    operation_key: verify.operation_key,
+    operation_sha256: verify.operation_sha256,
+    outcome: "APPLIED",
+    error_code: null,
+    completed_at: "2026-10-30T00:00:00.000000Z",
+    source_id: verify.source_id,
+    representation_id: pins.representation_id,
+    result_source_row_revision: 1,
+    result_material_revision: 1,
+    result_representation_row_revision: 2,
+    result_remote_state: "VERIFIED",
+    result_retention_state: "RETAINED",
+    result_action_id: null,
+    result_verified_at: "2026-10-30T00:00:00.000000Z",
+    result_sha256: "c".repeat(64),
+  };
+  const request = {
+    derivativeVersion: 2,
+    operationId: randomUUID(),
+    sourceId: verify.source_id,
+    sourceRevision: 1,
+    sourceRowRevision: 1,
+    originalRepresentationId: pins.representation_id,
+    originalRowRevision: 2,
+    derivedRepresentationId: randomUUID(),
+  };
+  const body = (input: typeof request) =>
+    sourcePdfV2SealSchema.parse({
+      derivativeVersion: 2,
+      request: input,
+      accountId: f.account,
+      tripId: f.context.tripId,
+      requestSha256: "d".repeat(64),
+      profileId: "OTR_PDF_QPDF_POPPLER_V2",
+      profileSha256: "ca5a7b63bda8ed5c5b9018b82fbbd14c1a01f054a37b1c2ed76445152b36539c",
+      producer: "otr-source-pdf-qpdf-poppler/2",
+      originalSha256: f.binding.sha256,
+      originalByteCount: f.binding.byteCount,
+      textSha256: "e".repeat(64),
+      textByteCount: 8,
+      transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+      pageMapSha256: "f".repeat(64),
+      pages: [{ pageIndex: 0, start: 0, end: 8 }],
+    });
+  let foreign = false;
+  const port = {
+    verifyOriginal: vi.fn(async () => verification),
+    registerDerived: vi.fn(
+      async (_actor: string, _trip: string, input: typeof request) => ({
+        derivativeVersion: 2,
+        operationId: input.operationId,
+        registrationSha256: "a".repeat(64),
+        body: {
+          ...body(request),
+          request: input,
+          accountId: foreign ? randomUUID() : f.account,
+        },
+      }),
+    ),
+    seal: vi.fn(async (_actor: string, _trip: string, input: typeof request) => ({
+      derivativeVersion: 2,
+      operationId: input.operationId,
+      sealSha256: "b".repeat(64),
+      body: body(input),
+    })),
+  };
+  const handler = createDevBackendHandler({
+    gateway: {
+      validateAccessToken: async () => ({ id: f.account }),
+      canReadTrip: async () => true,
+    } as never,
+    sourcePdfV2Port: port as never,
+  });
+  f.fetcher.mockImplementation(async (input, init) =>
+    handler(new Request(String(input), init)),
+  );
+  expect(await f.transport.verifyOriginal(f.context, verify)).toEqual(verification);
+  const registration = {
+    ...request,
+    verificationOperationId: verify.operation_id,
+    verificationResultSha256: verification.result_sha256,
+  };
+  expect(
+    (await f.transport.registerDerived(f.context, registration)).body.request,
+  ).toEqual(registration);
+  expect((await f.transport.seal(f.context, request)).body.request).toEqual(request);
+  expect(f.fetcher.mock.calls.map(([url]) => String(url).split("/").at(-1))).toEqual([
+    "verify-original",
+    "register-derived",
+    "seal",
+  ]);
+  const calls = f.fetcher.mock.calls.length;
+  await expect(
+    f.transport.verifyOriginal(f.context, { ...verify, actor_account_id: randomUUID() }),
+  ).rejects.toThrow("SOURCE_CAPTURE_SCOPE_INVALID");
+  expect(f.fetcher.mock.calls.length).toBe(calls);
+  foreign = true;
+  await expect(f.transport.registerDerived(f.context, registration)).rejects.toThrow(
+    "SOURCE_RESPONSE_INVALID",
+  );
+  f.fetcher.mockRejectedValue(Error("UNKNOWN"));
+  const before = f.fetcher.mock.calls.length;
+  await expect(f.transport.seal(f.context, request)).rejects.toThrow(
+    "SOURCE_REQUEST_UNCONFIRMED",
+  );
+  expect(f.fetcher.mock.calls.length).toBe(before + 1);
+});

@@ -1,3 +1,8 @@
+import { hasCurrentPdfV2ProofAccess } from "./sourcePdfV2CoreProof";
+import { createHash } from "node:crypto";
+import { readUniversalPdfSourceMaterial } from "./universalPdfSourceMaterial";
+import { PDF_V2_OPTIONS_SHA, sourcePdfV2SealSchema } from "./sourcePdfV2Contracts";
+import type { Json } from "../../src/domain/trip/tripCoreV2Json";
 import { z } from "zod";
 import { lockCorePgActor, type CorePgLease } from "./tripCoreV2PgStorage";
 import { universalRunBindingSchema } from "./universalBatchSource";
@@ -44,6 +49,11 @@ export function createCoreUniversalSourceRead(
     // This adapter belongs to one owning lease that retains every Source lock.
     if (lockedBinding) {
       if (lockedBinding.batchId !== batch) throw Error("CORE_SCOPE_MISMATCH");
+      if (
+        lockedBinding.inputs.some((p) => p.pdfSource) &&
+        !(await hasCurrentPdfV2ProofAccess(lease, actor, trip, true))
+      )
+        throw Error("CONTRACT_UNSUPPORTED");
       return structuredClone(lockedBinding);
     }
     const find = async () =>
@@ -76,7 +86,7 @@ export function createCoreUniversalSourceRead(
     }
     const rows = (
       await lease.query(
-        "WITH actual AS MATERIALIZED (SELECT r.id,to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND capture_batch_id=$3::uuid), pins AS MATERIALIZED (SELECT i.id,to_jsonb(i)-'run_id'-'confirmation_id' AS pin,public.trip_import_input_valid(i,$1::uuid,$2::uuid,true) AS valid FROM public.trip_source_inputs i WHERE run_id=(SELECT id FROM actual) ORDER BY id LIMIT 65) SELECT actual.run,coalesce((SELECT jsonb_agg(jsonb_build_object('pin',pin,'valid',valid) ORDER BY id) FROM pins),'[]'::jsonb) AS pins,CASE WHEN (SELECT count(*) FROM pins) BETWEEN 1 AND 64 THEN public.trip_import_run_input_hash((SELECT jsonb_agg(pin ORDER BY id) FROM pins)) END AS checked_hash FROM actual",
+        "WITH actual AS MATERIALIZED (SELECT r.id,to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND capture_batch_id=$3::uuid), pins AS MATERIALIZED (SELECT i.id,to_jsonb(i)-'run_id'-'confirmation_id' AS pin,public.trip_import_input_valid(i,$1::uuid,$2::uuid,true) AS valid,rep.role AS representation_role FROM public.trip_source_inputs i JOIN public.trip_source_representations rep ON rep.id=i.representation_id AND rep.source_id=i.source_id WHERE run_id=(SELECT id FROM actual) ORDER BY id LIMIT 65) SELECT actual.run,coalesce((SELECT jsonb_agg(jsonb_build_object('pin',pin,'valid',valid,'representationRole',representation_role) ORDER BY id) FROM pins),'[]'::jsonb) AS pins,CASE WHEN (SELECT count(*) FROM pins) BETWEEN 1 AND 64 THEN public.trip_import_run_input_hash((SELECT jsonb_agg(pin ORDER BY id) FROM pins)) END AS checked_hash FROM actual",
         [actor, trip, batch],
       )
     ).rows;
@@ -93,19 +103,90 @@ export function createCoreUniversalSourceRead(
       JSON.stringify(r.scope_source_ids) !== JSON.stringify(ids)
     )
       throw Error("UNIVERSAL_SOURCE_RUN_UNAVAILABLE");
-    const pins = rows[0].pins as { pin: Record<string, unknown>; valid: boolean }[];
+    const pins = rows[0].pins as {
+      pin: Record<string, unknown>;
+      valid: boolean;
+      representationRole: string;
+    }[];
     if (
       !pins.length ||
       pins.length > 64 ||
       pins.some(
         (p) =>
           p.valid !== true ||
+          !["ORIGINAL", "DERIVED"].includes(p.representationRole) ||
           !ids.includes(String((p.pin as Record<string, unknown>).source_id)),
       )
     )
       throw Error("INPUT_STALE");
-    const inputs = pins.map((p) => p.pin);
     if (rows[0].checked_hash !== r.input_sha256) throw Error("INPUT_STALE");
+    const inputs = [];
+    for (const p of pins) {
+      if (p.representationRole === "ORIGINAL") {
+        inputs.push(p.pin);
+        continue;
+      }
+      // Existing Source locks remain held; no second gateway or Candidate-supplied proof.
+      const sealed = (
+        await lease.query(
+          "SELECT to_jsonb(s) AS source,seal.body AS pdf_body FROM public.trip_sources s JOIN public.trip_source_pdf_seals seal ON seal.source_id=s.id AND seal.account_id=$1::uuid AND seal.trip_id=$2::uuid AND seal.source_revision=$4 AND seal.derived_representation_id=$5::uuid WHERE s.id=$3::uuid AND s.trip_id=$2::uuid AND s.acquired_by=$1::uuid AND s.lifecycle='ACTIVE' AND s.retention_state='RETAINED' LIMIT 2",
+          [
+            actor,
+            trip,
+            p.pin.source_id,
+            p.pin.material_revision,
+            p.pin.representation_id,
+          ],
+        )
+      ).rows;
+      if (sealed.length !== 1) throw Error("UNIVERSAL_PDF_MATERIAL_UNAVAILABLE");
+      const source = sealed[0].source as Record<string, Json>;
+      if (
+        !source ||
+        source.id !== p.pin.source_id ||
+        source.trip_id !== trip ||
+        source.acquired_by !== actor ||
+        source.lifecycle !== "ACTIVE" ||
+        source.retention_state !== "RETAINED"
+      )
+        throw Error("UNIVERSAL_PDF_MATERIAL_UNAVAILABLE");
+      const body = sourcePdfV2SealSchema.parse(sealed[0].pdf_body);
+      const original = {
+        representationId: body.request.originalRepresentationId,
+        sha256: body.originalSha256,
+        byteCount: body.originalByteCount,
+      };
+      const material = await readUniversalPdfSourceMaterial(
+        lease,
+        {
+          actorAccountId: actor,
+          tripId: trip,
+          sourceId: String(p.pin.source_id),
+          sourceRevision: Number(p.pin.material_revision),
+          inputCatalogSha256: String(r.input_sha256),
+          source,
+          inputs: [p.pin as Json],
+          candidates: [],
+        },
+        original,
+        async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+      );
+      if (
+        material.derived.representationId !== p.pin.representation_id ||
+        material.derived.sha256 !== p.pin.payload_sha256 ||
+        material.derived.byteCount !== p.pin.byte_count
+      )
+        throw Error("UNIVERSAL_SOURCE_BINDING_INVALID");
+      inputs.push({
+        ...p.pin,
+        pdfSource: {
+          original,
+          sealSha256: material.sealSha256,
+          pageMapSha256: material.pageMapSha256,
+          transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+        },
+      });
+    }
     lockedBinding = universalRunBindingSchema.parse({
       actorId: actor,
       tripId: trip,
@@ -132,7 +213,7 @@ export function createCoreUniversalSourceRead(
         throw Error("UNIVERSAL_SOURCE_BINDING_INVALID");
       const rows = (
         await lease.query(
-          "SELECT id,source_id,material_kind,encoding,mime_type,text_content,remote_state FROM public.trip_source_representations WHERE id=ANY(SELECT (p->>'representation_id')::uuid FROM jsonb_array_elements($1::jsonb) p)",
+          "SELECT id,source_id,role,material_kind,encoding,mime_type,text_content,remote_state FROM public.trip_source_representations WHERE id=ANY(SELECT (p->>'representation_id')::uuid FROM jsonb_array_elements($1::jsonb) p)",
           [JSON.stringify(b.inputs)],
         )
       ).rows;
@@ -145,8 +226,9 @@ export function createCoreUniversalSourceRead(
         );
         if (matches.length !== 1) throw Error("UNIVERSAL_SOURCE_BINDING_INVALID");
         const rep = matches[0];
-        // This published P1 slice admits original TEXT only; binary requires its owning custody path.
+        // Only verified PDF provenance may qualify DERIVED text on this held lease.
         if (
+          (p.pdfSource ? rep?.role !== "DERIVED" : rep?.role !== "ORIGINAL") ||
           rep?.material_kind !== "TEXT" ||
           rep.encoding !== "UTF-8" ||
           rep.remote_state !== "NOT_APPLICABLE" ||
@@ -162,6 +244,7 @@ export function createCoreUniversalSourceRead(
           byteCount: p.byte_count,
           mime: "text/plain",
           text: rep.text_content,
+          ...(p.pdfSource ? { pdfSource: p.pdfSource } : {}),
         });
       }
       return {
