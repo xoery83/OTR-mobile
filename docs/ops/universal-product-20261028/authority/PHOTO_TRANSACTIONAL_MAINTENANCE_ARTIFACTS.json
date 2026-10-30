@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_CANDIDATE_NOT_APPROVED_NOT_EXECUTED",
+  "approvedInnerSHA256": "21bfcdb459ee4bd3900a572bf35cb243b683b04e6ca18534e77adf4f08d98ef1",
+  "wrappedSHA256": "484d7bce6e5a71b759bbbd67984e461e0e39a33f8c7b17c17640cd5b8081d9ec",
+  "existingRoles": [
+    "otr_trip_source_writer",
+    "otr_trip_source_execution_writer"
+  ],
+  "scope": "same DEV, same fixed Photo packet, default CLOSED",
+  "changes": [
+    "only existing postgres-grantor membership edges INHERIT/SET false\u2192true\u2192false in one transaction",
+    "schema public CREATE for the two existing owners granted/revoked in same transaction",
+    "complete membership graph and raw schema ACL equality checked before COMMIT"
+  ],
+  "newRoles": false,
+  "newMembers": false,
+  "businessWindowOpened": false,
+  "providerCalls": 0,
+  "validation": {
+    "status": "MAINTENANCE_WRAPPER_LOCAL_PG_PASS",
+    "DEV": false,
+    "wrappedSHA256": "484d7bce6e5a71b759bbbd67984e461e0e39a33f8c7b17c17640cd5b8081d9ec",
+    "successRestoresCompleteMembershipGraphAndSchemaACL": true,
+    "midInstallFailureRollsBack": true,
+    "missingRestoreAbortsAndRollsBack": true,
+    "fixtureGlobalGraphUnchanged": true,
+    "nonSuperuserEquivalentOperator": true,
+    "existingAdminEdgesAndDisabledSetInheritSimulated": true,
+    "ownerTransferBothRolesPassed": true,
+    "limitation": "Maintenance wrapper exercised with equivalent non-superuser operator and exact role-option shape (bootstrap name mapped only in test) in network-none fixture. Original full Source/Core body already separately validated; no Hosted installation or real business capability."
+  },
+  "independentReview": "NO_BLOCKER",
+  "approval": "PENDING_OWNER",
+  "privatePreservation": ".env.photo-maintenance-20261031"
+}

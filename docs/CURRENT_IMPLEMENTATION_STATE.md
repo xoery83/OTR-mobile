@@ -1,3 +1,20 @@
+# Photo approved execution checkpoint — 31 October2026
+
+Owner approved77a6febb. Fresh exact DEV/QA owner/artifact/function CAS preflight
+passed. Fixed SQL installation rejected42501 SET ROLE SourceWriter; independent
+readback confirms no new columns/helpers and original guard6c7, so no partial
+installation or business call. Exact temporary installation-maintenance extension
+is prepared in authority/PHOTO_TRANSACTIONAL_MAINTENANCE_GATE.md (wrapped484d7bce,
+inner21bfcdb4 unchanged), isolated non-superuser/restore/fault checks and independent
+Review NO_BLOCKER; pending Owner because original Gate excludes membership/schema
+maintenance changes. Fixed credential-free Host worker/closer files installed,
+inactive on initial verification; physical start-stop drill is being reconciled.
+No PNG Backend config/mount, Source upload, paid image call or Save. Default
+28dd/fb0d service unchanged; do not retry installation or open business gates while
+maintenance approval remains pending. Root holds Host/SQL deployment coordination,
+not main. main/origin42652324 now includes Auth accepted People slice; Import
+branch remains59f234db plus this checkpoint. Existing Activity UI is LOCAL_PASS.
+
 # Import Photo — default-closed checkpoint, 31 October 2026
 
 Stable Import branch retains reviewed Photo software throughaa71abec, now aligning
