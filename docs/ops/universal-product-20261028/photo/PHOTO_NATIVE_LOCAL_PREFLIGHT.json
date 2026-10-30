@@ -1,0 +1,42 @@
+{
+  "status": "NATIVE_LOCAL_PREFLIGHT_PASS",
+  "recordedAt": "2026-10-30T16:21:00Z",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "build": {
+    "build": "126.1",
+    "source": "1de43c99",
+    "bundleSHA256": "ce46ff8a8802420fcc8dd5786617a1f5e821e0d3cfd366b51efabab13423f3c7",
+    "bundleBytes": 14167685,
+    "virtualEnvAbsent": true,
+    "dataCopied": false,
+    "sourceMachOSHA256": "141bca7d8ccc6aadbaf0c8be87a901f5c4b36a33344899dffdd74ca9f0eb37ec",
+    "copiedMachOSHA256": "141bca7d8ccc6aadbaf0c8be87a901f5c4b36a33344899dffdd74ca9f0eb37ec"
+  },
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "batchId": "67842863-fe1c-4e15-8ff9-7d44e78a59b9",
+  "inputId": "babf43ec-22d7-41c3-bc6d-73bec5f643de",
+  "captureId": "b4a49eb5-4da6-4bc6-84a8-7311c663c1e4",
+  "filename": "universal-photo-activity-qa.png",
+  "kind": "IMAGE",
+  "byteCount": 42630,
+  "sha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+  "relevance": {
+    "status": "RELEVANT",
+    "reason": "TRAVEL_TEXT_CLUE"
+  },
+  "choice": "CONTINUE_WITH_AI",
+  "decisionRevision": 2,
+  "checks": [
+    "normal_Photos_picker",
+    "original_byte_count_and_SHA_independent_readback",
+    "native_local_OCR_RELEVANT",
+    "explicit_CONTINUE_WITH_AI_persisted",
+    "real_process_terminate_and_cold_launch",
+    "Recent_submissions_same_batch_reopened",
+    "OCR_and_choice_visible_after_cold_start",
+    "My_Trips_root_preserved"
+  ],
+  "providerCalls": 0,
+  "SourceStorageOrAdmissionPASS": false,
+  "limits": "Local Capture/OCR/choice recovery only. QA Trip assignment remains unconfirmed until normal Source start. No Photo Source, paid image inference, Core Item, Day Feed or formal Save result is claimed."
+}

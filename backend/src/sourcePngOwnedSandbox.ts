@@ -118,6 +118,12 @@ export function createSourcePngOwnedSandbox(
         name,
         "--label",
         "org.otr.png-owner=" + token,
+        "--label",
+        "org.otr.png-attempt=" + binding.attemptId,
+        "--label",
+        "org.otr.png-resource=" + binding.resourceId,
+        "--label",
+        "org.otr.png-operation=" + binding.operationId,
         "--platform=linux/amd64",
         "--pull=never",
         "--network=none",
@@ -284,4 +290,43 @@ export function createSourcePngOwnedSandbox(
     if (failure) throw failure;
     return { imageId: SOURCE_PNG_SANDBOX_IMAGE, terminated: true as const, result };
   };
+}
+
+// Negative-only physical cleanup for the already-owned attempt. It never writes a Source terminal.
+export async function terminateSourcePngAttempt(raw: SourcePngStorageBinding) {
+  const b = sourcePngStorageBindingSchema.parse(raw);
+  const filters = [
+    "--filter",
+    "label=org.otr.png-attempt=" + b.attemptId,
+    "--filter",
+    "label=org.otr.png-resource=" + b.resourceId,
+    "--filter",
+    "label=org.otr.png-operation=" + b.operationId,
+  ];
+  const inventory = async () =>
+    (await execute(["ps", "-a", "-q", "--no-trunc", ...filters]))
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+  const ids = await inventory();
+  if (ids.length > 1 || ids.some((id) => !/^[a-f0-9]{64}$/.test(id)))
+    throw Error("PNG_SANDBOX_TERMINATION_UNKNOWN");
+  for (const id of ids) {
+    const found = JSON.parse(await execute(["inspect", id]))[0];
+    const labels = found?.Config?.Labels,
+      token = labels?.["org.otr.png-owner"];
+    if (
+      found?.Id !== id ||
+      found?.Image !== SOURCE_PNG_SANDBOX_IMAGE ||
+      !/^[a-f0-9]{32}$/.test(token) ||
+      found?.Name !== "/otr-source-png-" + token ||
+      labels["org.otr.png-attempt"] !== b.attemptId ||
+      labels["org.otr.png-resource"] !== b.resourceId ||
+      labels["org.otr.png-operation"] !== b.operationId
+    )
+      throw Error("PNG_SANDBOX_TERMINATION_UNKNOWN");
+    await execute(["rm", "--force", id]);
+  }
+  if ((await inventory()).length) throw Error("PNG_SANDBOX_TERMINATION_UNKNOWN");
+  return { terminated: true as const };
 }

@@ -7,7 +7,10 @@ import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { createSourcePngOwnedSandbox } from "./sourcePngOwnedSandbox";
+import {
+  createSourcePngOwnedSandbox,
+  terminateSourcePngAttempt,
+} from "./sourcePngOwnedSandbox";
 import {
   sourcePngStorageBindingSchema,
   SOURCE_PNG_SANDBOX_IMAGE,
@@ -301,3 +304,51 @@ it("keeps the canonical durable PNG stage after its disposable decoder copy is r
     createSourcePdfPrivateStage(root).reopen(f.binding as never),
   ).rejects.toThrow();
 });
+
+it.each(["valid", "foreignImage", "stillPresent"] as const)(
+  "negative-only cleanup matches exact owned attempt: %s",
+  async (mode) => {
+    const f = await fixture();
+    let removed = false;
+    const token = "d".repeat(32);
+    fake.command.mockImplementation((args) => {
+      if (args[0] === "ps") return removed && mode !== "stillPresent" ? "" : cid + "\n";
+      if (args[0] === "inspect")
+        return JSON.stringify([
+          {
+            Id: cid,
+            Image:
+              mode === "foreignImage"
+                ? "sha256:" + "f".repeat(64)
+                : SOURCE_PNG_SANDBOX_IMAGE,
+            Name: "/otr-source-png-" + token,
+            Config: {
+              Labels: {
+                "org.otr.png-owner": token,
+                "org.otr.png-attempt": f.binding.attemptId,
+                "org.otr.png-resource": f.binding.resourceId,
+                "org.otr.png-operation": f.binding.operationId,
+              },
+            },
+          },
+        ]);
+      if (args[0] === "rm") {
+        removed = true;
+        return "";
+      }
+      throw Error("unexpected Docker operation");
+    });
+    if (mode === "valid")
+      expect(await terminateSourcePngAttempt(f.binding)).toEqual({ terminated: true });
+    else
+      await expect(terminateSourcePngAttempt(f.binding)).rejects.toThrow(
+        "PNG_SANDBOX_TERMINATION_UNKNOWN",
+      );
+    expect(f.owner.terminal).not.toHaveBeenCalled();
+    expect(removed).toBe(mode !== "foreignImage");
+    const list = fake.command.mock.calls.find(([args]) => args[0] === "ps")![0];
+    expect(list).toContain("label=org.otr.png-attempt=" + f.binding.attemptId);
+    expect(list).toContain("label=org.otr.png-resource=" + f.binding.resourceId);
+    expect(list).toContain("label=org.otr.png-operation=" + f.binding.operationId);
+  },
+);
