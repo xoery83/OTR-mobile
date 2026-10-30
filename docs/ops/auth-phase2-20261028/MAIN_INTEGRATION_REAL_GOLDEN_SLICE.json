@@ -1,0 +1,27 @@
+{
+  "status": "REAL_GUEST_ADOPTION_VERTICAL_SLICE_ACCEPTED_MAIN_PUSHED",
+  "mainBefore": "7e7a55efef3729259a8281a870177b914da5a07b",
+  "mainAccepted": "b197da472573aaaa8bf5fe7963a24666b4b98b3f",
+  "mergeCompatibilityCommit": "afcfe194810e5aa694fc13967823e07c5e7ff489",
+  "normalPush": true,
+  "forceOrStash": false,
+  "nativeMainPreserved": true,
+  "historicalDirtyFiles": 6,
+  "dirtyBytesModesIndexAndFullDiffUnchanged": true,
+  "validation": {
+    "focusedSuites": 7,
+    "focusedTests": 112,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "affectedLint": "PASS",
+    "independentReview": "NO_BLOCKER_FOR_BOUNDED_GOLDEN_SLICE"
+  },
+  "realEvidence": "NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json",
+  "devStatus": "default28dd/fb0d; policyfalse33417; timerinactive; Host Writer returnedRoot",
+  "remaining": [
+    "Core foreign operation receipt503 CORE_CAPABILITY_CLOSED not qualified authorization404",
+    "other Guest data domains not claimed migrated",
+    "full Phase2 broader recovery/negative coverage remains scoped work"
+  ],
+  "noProductionOrPermissionExpansion": true
+}

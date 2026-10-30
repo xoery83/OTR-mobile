@@ -65,7 +65,10 @@ foreign QA collection read returns404/NOT_VISIBLE PASS. Foreign operation receip
 returns503/CORE_CAPABILITY_CLOSED, fail-closed but not a qualified permission-denial
 PASS; unique Core Owner is handling the narrow boundary. Both Host test Sessions
 were normally revoked with refresh rejection, no mutation/retry of Adoption.
-Independent receipt/cache/cold/close Review is NO_BLOCKER; main integration is next. Other Guest domains are not claimed adopted. See
+Independent receipt/cache/cold/close Review is NO_BLOCKER. Real accepted slice
+merged latest Native7e7a and pushed mainb197da47;7 suites112/typecheck/UIguard/
+affected lint PASS. Six original main dirty bytes/modes/index/fullDiff unchanged.
+Remaining replay503 stays with unique Core Owner; no broader Phase2 PASS claim. Other Guest domains are not claimed adopted. See
 NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json. Older blocked notes below describe
 prior stages, not the latest completed core flow.
 
