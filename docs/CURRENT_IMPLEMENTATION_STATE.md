@@ -113,6 +113,13 @@ Owner425baa. Normal foreignQA71b Receipt403/PERSON_CREATE_FORBIDDEN PASS. Both
 temporary Sessions normally logged out with refresh rejected; Receiver returned
 Root. No Host/SQL/device changes or Native/cold claim. Reuse this Person for later
 downstream/cold verification, not another create. See ADOPTED_PERSON_BACKEND_REAL_E2E.json.
+That Reader continuation now passed on unchanged guestqb71: normal MyTrips ->
+adoptedTrip People shows new Person/You; own process cold72801->74816 repeats the
+same visible roster without interactive login. Add remains disabled; no authoring
+entry PASS. Native permitted window and own claim closed/returned. SQLite metadata
+JSON export was rejected by automatic approval under the no-AppData-copy rule;
+not executed/retried. Evidence is independent server readback plus Native UI/cold,
+not offline-only or SQLite equality. See ADOPTED_PERSON_NATIVE_READER_REAL_E2E.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
@@ -135,6 +142,11 @@ PrivateProfileNameFields239184db remains an unmounted controlled input fragment.
 Canonical inputs/localized10 pairs, independent split/unsplit drafts and Account/
 busy/stale callback fences: independent6/types/lint/UIguard PASS. Catalog Writer
 returned Root. No settings navigation, save, repository or cloud enablement claim.
+Existing AccountProfileRepository382a3187 now offers private read/save/receipt
+methods via its normal scoped client (no new repository/queue), frozen mutation,
+exact Actor/op/revision fences, redirect rejection and bounded64KB responses.
+Independent14/types/lint PASS, including merged near-limit JSON and true oversize
+rejection; no real PG maximum-size claim. No Native caller or local/cloud activation.
 
 31 October actual continuation: shutdown Gate installed/verified and main timeout
 fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.

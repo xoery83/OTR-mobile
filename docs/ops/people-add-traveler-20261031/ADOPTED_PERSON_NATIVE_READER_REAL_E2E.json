@@ -1,0 +1,40 @@
+{
+  "status": "REAL_ADOPTED_PERSON_NATIVE_DOWNSTREAM_AND_PROCESS_COLD_READER_PASS",
+  "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+  "personId": "39661bda-f7cd-4aa1-b462-ad8569845c79",
+  "backendEvidence": "ADOPTED_PERSON_BACKEND_REAL_E2E.json",
+  "bundleId": "com.xoery.otrmobile.guestqb",
+  "installedVersion": 71,
+  "changedArtifact": false,
+  "pidBefore": 72801,
+  "pidAfter": 74816,
+  "actualFlow": [
+    "normal launch/MyTrips/original adoptedTrip/People",
+    "new Person and original You visible",
+    "terminate only own App process",
+    "normal cold launch/MyTrips/sameTrip/People",
+    "same new Person and You visible without interactive login",
+    "own app session closed and claim returned"
+  ],
+  "uiGenerationBefore": 611635,
+  "uiGenerationAfter": 611638,
+  "uiEvidenceSHA256": {
+    "NATIVE_BEFORE_COLD.json": "ff37cced1c54bf0ddfd77aeff5d2bd7eb6b34c23c22dadb66b5b890692f4292c",
+    "NATIVE_AFTER_COLD.json": "c5303b96fda09ba9caf31fde7c60fc3fc71de1a2fb052926a1e0a44cdf96ad6c"
+  },
+  "adoptedTripAddButton": "disabled; owning UI/parent lookup remains pending",
+  "sqliteExport": "auto-review rejected record-to-JSON export under no-AppData-copy rule; not executed or retried",
+  "limits": [
+    "not Native Add-authoring PASS",
+    "not offline-only recovery or independent SQLite equality proof",
+    "no install/reset/Session copying/HostSQL mutation"
+  ],
+  "independentReview": {
+    "status": "NO_BLOCKER_READER_ONLY",
+    "reviewer": "auth_phase1_review",
+    "checks": "Two UI hashes, new process PID and same visible new name/You; disabled Add preserved; no offline or SQLite equality claim",
+    "identityQualification": "Account/Trip binding reuses accepted Backend identity and controlled same-Trip navigation; AX labels are not a separate UUID/DB proof",
+    "reruns": 0
+  }
+}
