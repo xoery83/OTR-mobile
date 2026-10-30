@@ -2158,3 +2158,97 @@ it("refuses to reuse a cancelled checkpoint as a fresh ready handoff and preserv
   expect(f.p1Resume).not.toHaveBeenCalled();
   await inventory.resumeGuestBeforePublication();
 });
+
+it("qualifies only real empty schema74 under the exact transition without nested gate", async () => {
+  const { beginAccountTransition, endAccountTransition } =
+    await import("./accountRequestContext");
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const prepared = await workspace.prepareEmptySessionInstall();
+  const lease = await beginAccountTransition();
+  try {
+    const qualified = await prepared.qualify(lease);
+    await qualified.assertCurrent();
+    f.setPrincipal({ kind: "ACCOUNT", accountId: randomUUID() });
+    prepared.release(); // Must work after identity changes.
+    await expect(qualified.assertCurrent()).rejects.toThrow();
+  } finally {
+    endAccountTransition(lease);
+    prepared.release();
+  }
+});
+it("rejects a real saved Guest Trip without modifying SQLite or source identity", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  await workspace.trips.createTrip({
+    operationId: randomUUID(),
+    tripId: randomUUID(),
+    name: "Retained Guest",
+    destination: null,
+    startDate: null,
+    endDate: null,
+  });
+  const before = f.opened[0].sql.prepare("SELECT * FROM local_trip_containers").all();
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+    "PREFLIGHT_REQUIRED",
+  );
+  expect(f.opened[0].sql.prepare("SELECT * FROM local_trip_containers").all()).toEqual(
+    before,
+  );
+});
+it("rejects an unknown nonempty family rather than treating empty Trip discovery as empty", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  f.opened[0].sql.exec(
+    "CREATE TABLE future_private_family(value TEXT);INSERT INTO future_private_family VALUES('retain');",
+  );
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+    "PREFLIGHT_REQUIRED",
+  );
+  expect(
+    f.opened[0].sql.prepare("SELECT value FROM future_private_family").get(),
+  ).toEqual({ value: "retain" });
+});
+it("rejects any retained recovery attempt and preserves its bytes", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    id = randomUUID();
+  await f.files.create(id, "prepared", "retained unknown recovery");
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+    "PREFLIGHT_REQUIRED",
+  );
+  expect(await f.files.read(id, "prepared")).toBe("retained unknown recovery");
+});
+it("detects a business row created between empty preparation and actual transition", async () => {
+  const { beginAccountTransition, endAccountTransition } =
+    await import("./accountRequestContext");
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    prepared = await workspace.prepareEmptySessionInstall();
+  f.opened[0].sql.exec(
+    "CREATE TABLE future_family(value TEXT);INSERT INTO future_family VALUES('retain');",
+  );
+  const lease = await beginAccountTransition();
+  try {
+    await expect(prepared.qualify(lease)).rejects.toThrow("PREFLIGHT_REQUIRED");
+  } finally {
+    endAccountTransition(lease);
+    prepared.release();
+  }
+});
+it("cannot replay an empty preparation after an intervening account generation", async () => {
+  const { beginAccountTransition, endAccountTransition } =
+    await import("./accountRequestContext");
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    prepared = await workspace.prepareEmptySessionInstall();
+  const old = await beginAccountTransition();
+  endAccountTransition(old);
+  const next = await beginAccountTransition();
+  try {
+    await expect(prepared.qualify(next)).rejects.toThrow("SCOPE_CHANGED");
+  } finally {
+    endAccountTransition(next);
+    prepared.release();
+  }
+});

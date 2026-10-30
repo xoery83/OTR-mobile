@@ -13,6 +13,7 @@ import {
   readLocalSession,
   selectLocalAccount,
   writeLocalSession,
+  prepareSessionInstall,
 } from "./authRepository";
 import { createAccountSwitchCoordinator } from "./accountSwitchCoordinator";
 import { assertAccountRequestGeneration } from "./accountRequestContext";
@@ -52,6 +53,7 @@ export function createDefaultAccountSwitchCoordinator(input: {
     },
     readSession: readLocalSession,
     writeSession: writeLocalSession,
+    prepareSessionInstall,
     clearSession: clearLocalSession,
     selectAccount: selectLocalAccount,
     adoptLocalState: async (userId) => {

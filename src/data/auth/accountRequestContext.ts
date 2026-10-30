@@ -70,6 +70,10 @@ export async function beginAccountTransition(
     pendingTransitions -= 1;
   }
 }
+export function assertAccountTransitionLease(lease: AccountTransitionLease) {
+  if (activeTransition?.lease !== lease || lease.generation !== getAccountGeneration())
+    throw new Error("Account transition lease is not active.");
+}
 export function endAccountTransition(lease: AccountTransitionLease) {
   if (activeTransition?.lease !== lease)
     throw new Error("Account transition lease is not active.");

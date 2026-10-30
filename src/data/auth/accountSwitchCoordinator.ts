@@ -1,3 +1,4 @@
+import type { PreparedSessionInstall } from "./authSessionRepository";
 import type { LocalSession } from "@/domain/auth/localSession";
 import { getAccountGeneration } from "./accountGeneration";
 import {
@@ -16,6 +17,7 @@ export type AccountSwitchDependencies = {
   restartSync(): Promise<unknown>;
   readSession(): Promise<LocalSession | null>;
   writeSession(session: LocalSession): Promise<void>;
+  prepareSessionInstall?(session: LocalSession): Promise<PreparedSessionInstall>;
   clearSession(): Promise<void>;
   selectAccount(userId: string): Promise<boolean>;
   adoptLocalState(userId: string): Promise<void>;
@@ -79,8 +81,10 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
   }
 
   async function activate(
-    install: () => Promise<LocalSession>,
+    install: (lease: AccountTransitionLease) => Promise<LocalSession>,
     expectedGeneration = getAccountGeneration(),
+    prepare?: () => Promise<void>,
+    releasePrepared?: () => void,
   ) {
     if (switching) throw new Error("An account transition is already in progress.");
     switching = true;
@@ -88,7 +92,14 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
     let previous: LocalSession | null = null;
     let failed: { accountId: string | null; generation: number } | null = null;
     let paused = false;
+    let preparedReleased = false;
+    const releasePreparation = () => {
+      if (preparedReleased) return;
+      preparedReleased = true;
+      releasePrepared?.();
+    };
     try {
+      await prepare?.();
       // Draining existing sync may wait for network; it must not hold the gate.
       paused = true;
       await dependencies.pauseSync();
@@ -104,13 +115,14 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
         generation: lease.generation,
       };
       await dependencies.clearInMemoryState();
-      const session = await install();
+      const session = await install(lease);
       const userId = session.identity?.userId;
       if (!userId) throw new Error("The selected account has no stable user identity.");
       failed.accountId = userId;
       await dependencies.adoptLocalState(userId);
       endAccountTransition(lease);
       lease = null;
+      releasePreparation();
       await dependencies.bootstrapAccount(session);
       await dependencies.restartSync();
       return session;
@@ -122,12 +134,17 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
         endAccountTransition(lease);
         lease = null;
       }
+      releasePreparation();
       if (failed) await recover(previous, failed).catch(() => undefined);
       else if (paused) await resumeRetainedAccount();
       throw error;
     } finally {
       if (lease) endAccountTransition(lease);
-      switching = false;
+      try {
+        releasePreparation();
+      } finally {
+        switching = false;
+      }
     }
   }
 
@@ -147,14 +164,28 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
       expectedGeneration?: number,
       signal?: AbortSignal,
     ) {
-      return activate(async () => {
-        if (signal?.aborted) throw new Error("AUTH_ACTIVATION_CANCELED");
-        await dependencies.writeSession(session);
-        const stored = await dependencies.readSession();
-        if (!stored || stored.identity?.userId !== session.identity?.userId)
-          throw new Error("The new account session could not be verified.");
-        return stored;
-      }, expectedGeneration);
+      const candidate = JSON.parse(JSON.stringify(session)) as LocalSession;
+      let prepared: PreparedSessionInstall | undefined;
+      return activate(
+        async (lease) => {
+          if (signal?.aborted) throw new Error("AUTH_ACTIVATION_CANCELED");
+          if (prepared) await prepared.install(lease, signal);
+          else await dependencies.writeSession(candidate);
+          if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
+          const stored = await dependencies.readSession();
+          if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
+          if (!stored || stored.identity?.userId !== candidate.identity?.userId)
+            throw new Error("The new account session could not be verified.");
+          return stored;
+        },
+        expectedGeneration,
+        async () => {
+          if (signal?.aborted) throw new Error("AUTH_ACTIVATION_CANCELED");
+          if (dependencies.prepareSessionInstall)
+            prepared = await dependencies.prepareSessionInstall(candidate);
+        },
+        () => prepared?.release(),
+      );
     },
     async logout() {
       if (switching) throw new Error("An account transition is already in progress.");
