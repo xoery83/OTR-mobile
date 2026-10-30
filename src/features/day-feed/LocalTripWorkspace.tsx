@@ -764,6 +764,10 @@ function LocalTripContent({
         if (!alive.current || generation !== getAccountGeneration())
           throw Error("PEOPLE_CONTEXT_CHANGED");
         const named = result.people.filter((person) => person.displayName.trim());
+        const visible = result.people.filter(
+          (person) =>
+            person.displayName.trim() || person.personId === selected!.ownerPersonId,
+        );
         setSetup((current) =>
           current?.context.accountId === origin.accountId &&
           current.context.tripId === origin.tripId &&
@@ -773,7 +777,7 @@ function LocalTripContent({
                 members: {
                   state: "AVAILABLE",
                   namedCount: named.length,
-                  people: named.map(({ personId, displayName, localState }) => ({
+                  people: visible.map(({ personId, displayName, localState }) => ({
                     personId,
                     displayName,
                     ...(localState ? { localState } : {}),

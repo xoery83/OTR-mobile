@@ -70,7 +70,10 @@ function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props)
                     </UiText>
                     {people.map((person) => (
                       <View key={person.personId} style={styles.person}>
-                        <UiText style={styles.name}>{person.displayName}</UiText>
+                        <UiText style={styles.name}>
+                          {person.displayName.trim() ||
+                            (person.isCurrentActor ? t("ui.you") : "")}
+                        </UiText>
                         {person.localState === "LOCAL_PENDING" ? (
                           <UiText style={styles.meta}>
                             {t("tripMembers.localPending")}

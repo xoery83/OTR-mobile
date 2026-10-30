@@ -1247,7 +1247,14 @@ it("opens the existing Members sheet from a scoped local menu only when real set
   expect(state.nodes.some((node) => node.membersSheet?.visible)).toBe(false);
 });
 
-it.each(["owner", "guest", "different-person", "unaccepted", "legacy"] as const)(
+it.each([
+  "owner",
+  "unnamed-owner",
+  "guest",
+  "different-person",
+  "unaccepted",
+  "legacy",
+] as const)(
   "offers existing Person authoring only with a real opening Owner lineage: %s",
   async (kind) => {
     const local: Trip = {
@@ -1276,11 +1283,11 @@ it.each(["owner", "guest", "different-person", "unaccepted", "legacy"] as const)
       currency: { state: "UNKNOWN" },
       members: {
         state: "AVAILABLE",
-        namedCount: 1,
+        namedCount: kind === "unnamed-owner" ? 0 : 1,
         people: [
           {
             personId: kind === "different-person" ? "another-person" : "owner-person",
-            displayName: "Owner",
+            displayName: kind === "unnamed-owner" ? "" : "Owner",
             isCurrentActor: true,
           },
         ],
@@ -1296,8 +1303,10 @@ it.each(["owner", "guest", "different-person", "unaccepted", "legacy"] as const)
       .members();
     render();
     const sheet = state.nodes.find((node) => node.membersSheet?.visible)!.membersSheet;
-    expect(typeof sheet.onAddTraveler === "function").toBe(kind === "owner");
-    if (kind !== "owner") return;
+    expect(typeof sheet.onAddTraveler === "function").toBe(
+      kind === "owner" || kind === "unnamed-owner",
+    );
+    if (kind !== "owner" && kind !== "unnamed-owner") return;
     const input = {
       operationId: "new-operation",
       personId: "new-person",
@@ -1306,7 +1315,10 @@ it.each(["owner", "guest", "different-person", "unaccepted", "legacy"] as const)
     state.saveTraveler.mockResolvedValue({
       request: {},
       people: [
-        { personId: "owner-person", displayName: "Owner" },
+        {
+          personId: "owner-person",
+          displayName: kind === "unnamed-owner" ? "" : "Owner",
+        },
         {
           personId: "new-person",
           displayName: input.displayName,
@@ -1319,6 +1331,13 @@ it.each(["owner", "guest", "different-person", "unaccepted", "legacy"] as const)
     render();
     const updated = state.nodes.find((node) => node.membersSheet?.visible)!.membersSheet
       .members;
+    expect(
+      updated.people.find((person: any) => person.personId === "owner-person"),
+    ).toMatchObject({
+      isCurrentActor: true,
+      displayName: kind === "unnamed-owner" ? "" : "Owner",
+    });
+    expect(updated.namedCount).toBe(kind === "unnamed-owner" ? 1 : 2);
     expect(
       updated.people.find((person: any) => person.personId === input.personId),
     ).toMatchObject({

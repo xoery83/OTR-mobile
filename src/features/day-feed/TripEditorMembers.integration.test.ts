@@ -35,20 +35,26 @@ const hooks = vi.hoisted(() => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useEffect: () => {},
+  useLayoutEffect: () => {},
+  useCallback: (callback: unknown) => callback,
   useState: (initial: any) => {
     const i = hooks.cursor++;
-    if (!(i in hooks.values)) hooks.values[i] = initial;
+    if (!(i in hooks.values))
+      hooks.values[i] = typeof initial === "function" ? initial() : initial;
     const values = hooks.values;
     return [
       values[i],
       (value: any) => {
-        values[i] = value;
+        values[i] = typeof value === "function" ? value(values[i]) : value;
       },
     ];
   },
   useRef: (initial: any) => (hooks.refs[hooks.refCursor++] ??= { current: initial }),
 }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));
+vi.mock("@/features/people/AddTravelerSheet", () => ({
+  AddTravelerSheet: "AddTravelerSheet",
+}));
 vi.mock("@/data/files/tripPhotoFileStore", () => ({
   retainTripPhoto: vi.fn(),
   resolveRetainedTripPhoto: vi.fn(),
@@ -78,6 +84,9 @@ vi.mock("@/ui/locale", () => ({
   t: (key: string, params: any = {}) => [key, ...Object.values(params)].join(":"),
   formatUiNumber: String,
 }));
+vi.mock("./CreateTripDestinations", () => ({
+  CreateTripDestinations: "CreateTripDestinations",
+}));
 vi.mock("./TripMetadataFields", () => ({ TripMetadataFields: "TripMetadataFields" }));
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: "TripCoverPicker" }));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: "TripCoverVisual" }));
@@ -94,6 +103,10 @@ function nodes(node: ReactNode): Node[] {
   return isValidElement(node)
     ? [node as Node, ...Children.toArray((node as Node).props.children).flatMap(nodes)]
     : [];
+}
+function membersBody(props: Parameters<typeof TripMembersSheet>[0]) {
+  const mounted = TripMembersSheet(props);
+  return mounted ? nodes((mounted.type as any)(mounted.props)) : [];
 }
 function remount() {
   hooks.values = [];
@@ -333,7 +346,7 @@ it("opens a real actor plus three local named people and clears the sheet on acc
   expect(sheet.props.visible).toBe(true);
   expect(sheet.props.members).toBe(setup.members);
   const close = vi.fn();
-  const body = nodes(TripMembersSheet({ ...sheet.props, onClose: close }));
+  const body = membersBody({ ...sheet.props, onClose: close });
   const labels = body.filter((n) => n.type === UiText).map((n) => n.props.children);
   expect(labels).toContain("Creator");
   expect(labels).toEqual(expect.arrayContaining(["One", "Two", "Three"]));
@@ -354,9 +367,11 @@ it("opens a real actor plus three local named people and clears the sheet on acc
   expect(sheet.props.members).toBeNull();
   const unknown = await f.setup.read(trip.id);
   expect(unknown.members.state).toBe("UNKNOWN");
-  const unknownLabels = nodes(
-    TripMembersSheet({ visible: true, members: unknown.members, onClose: close }),
-  )
+  const unknownLabels = membersBody({
+    visible: true,
+    members: unknown.members,
+    onClose: close,
+  })
     .filter((n) => n.type === UiText)
     .map((n) => n.props.children);
   expect(unknownLabels).toContain("tripForm.membersUnknown");

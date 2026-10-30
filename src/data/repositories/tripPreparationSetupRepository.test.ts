@@ -269,3 +269,19 @@ it.each(["account", "generation"])(
 it("validates Trip identity before any repository read", async () => {
   await expect(fixture().read("not-a-trip-id")).rejects.toThrow();
 });
+
+it("retains the exact unnamed current Actor without counting unnamed placeholders", async () => {
+  const f = fixture();
+  f.sql.exec("UPDATE ledger_members SET display_name='' WHERE id='owner'");
+  const setup = await f.read();
+  expect(setup.members).toMatchObject({
+    state: "AVAILABLE",
+    namedCount: 1,
+    people: [
+      { personId: "owner", displayName: "", isCurrentActor: true },
+      { personId: "named", displayName: "Tina", isCurrentActor: false },
+    ],
+  });
+  if (setup.members.state !== "AVAILABLE") throw Error("EXPECTED_ROSTER");
+  expect(setup.members.people).toHaveLength(2);
+});

@@ -93,10 +93,14 @@ export function createTripPreparationSetupRepository(
               const people = await persons.listTripPersons(tripId);
               if (people.some((person) => person.personId === actor.memberId)) {
                 const named = people.filter((person) => person.displayName.trim());
+                const visible = people.filter(
+                  (person) =>
+                    person.displayName.trim() || person.personId === actor.memberId,
+                );
                 result.members = {
                   state: "AVAILABLE",
                   namedCount: named.length,
-                  people: named.map(({ personId, displayName, localState }) => ({
+                  people: visible.map(({ personId, displayName, localState }) => ({
                     personId,
                     displayName,
                     ...(localState ? { localState } : {}),

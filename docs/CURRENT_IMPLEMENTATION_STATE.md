@@ -74,13 +74,19 @@ and do not open another Actor Gate. No broader Phase2 PASS claim. Other Guest do
 NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json. Older blocked notes below describe
 prior stages, not the latest completed core flow.
 
-Next independent People preparation: AddTravelerSheet reuses existing PersonCreate
-input and owning onSave callback;7 focused lifecycle/idempotency tests plus types,
-lint/UIguard PASS, independent NO_BLOCKER. It is not yet wired to People shell or
-cloud and is not People E2E. Native owns shared LocalTripWorkspace/TripSetupRows/
-NormalCoordinator; Auth owns the People input UI. Existing profiles SELECT RLS is
-all-authenticated, so private travel-document names/AKA must not be stored there;
-only schema/policy metadata was read, no user records or permission mutation.
+Next People slice: scoped Add Traveler is wired in5244fef9 through the existing
+Person repository/queue/normal coordinator. Only the accepted local format2 original
+Owner gets Add;99 focused repository/component tests, types/lint/UIguard and
+independent NO_BLOCKER PASS. Native delegated only two UI callback ranges; Writer
+returned after the fixed commit, Native owning review and actual Person cloud/cold
+E2E pending. Real normal UI created Tripfb2f0820/createOpccce0d3c under Account26876e;
+independent format2 receipt/Owner readback PASS. Guestqb70 fixed JS823a1af4 passed independent artifact review and ordinary install;
+original Adoption cache/Session retained. Actual People opened but Add was disabled:
+existing named-only roster dropped the unnamed Owner. Focused repair preserves the
+explicit current Actor ID with optional empty name;84 targeted tests PASS. Same
+Trip/normal UI retry pending; no Person POST yet and no full People Home/Profile PASS.
+Existing profiles SELECT RLS is all-authenticated: private travel-document names/AKA
+must not be stored there. Only policy/schema metadata was read; no new permissions.
 
 31 October actual continuation: shutdown Gate installed/verified and main timeout
 fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.
