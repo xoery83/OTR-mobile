@@ -1,0 +1,23 @@
+{
+  "status": "REVIEWED_SOURCE_COMPONENT_UNMOUNTED",
+  "uniqueWriter": "Native explicitly delegated only Person Pg source/test to Auth for held transaction seam",
+  "direct": "Person Pg + Adoption executor 2 suites / 38 PASS",
+  "independent": "Person Pg + HTTP 2 suites / 31 PASS; NO_BLOCKER",
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "fileHashes": {
+    "backend/src/tripPersonCloudCreatePg.ts": "ddfb64a5fa49454de786fc8e89c2c6e97b9558dc2d97f212949249675e9b65af",
+    "backend/src/tripPersonCloudCreatePg.test.ts": "d1133216b70ded394f19671a716f834af323dd37b3a40cbe06fdcca03a185657"
+  },
+  "behavior": [
+    "Existing standalone factory/transactions/error mapping retained",
+    "Same original SQL and schema/Actor/request/receipt validation reused",
+    "Held port emits no BEGIN/COMMIT/ROLLBACK",
+    "Pending, parallel, escaped and swallowed failures poison/retire outer lease"
+  ],
+  "limitations": [
+    "No new principal or owning SQL authority",
+    "No live consumer; existing production factory is unchanged",
+    "No real PG/DEV nonempty Adoption proof"
+  ]
+}

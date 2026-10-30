@@ -1,0 +1,62 @@
+{
+  "status": "AUTH_DEFAULT_CLOSED_ADOPTION_COMPONENTS_MAIN_INTEGRATED",
+  "main": "7a0317cb8c793efde18c166778ab030e280a0baa",
+  "sourceCommits": [
+    "e83ac129",
+    "420ad968",
+    "fbb93233",
+    "f1db7fd6",
+    "478294f4"
+  ],
+  "curatedCommits": [
+    "2a52badc",
+    "685cdf29",
+    "83d4c1b9",
+    "1f71d4bc",
+    "7a0317cb"
+  ],
+  "validation": {
+    "curated": "7 suites / 146 PASS; typecheck/scoped lint/diff PASS",
+    "actualPrimary": "7 suites / 146 PASS; typecheck PASS",
+    "independentRangeReview": "NO_BLOCKER",
+    "isolatedPG": "22 checks PASS; synthetic terminal evidence only"
+  },
+  "primaryPreservation": {
+    "phase": "verified",
+    "main": "7a0317cb8c793efde18c166778ab030e280a0baa",
+    "status": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+    ],
+    "originalFileHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "originalFileModes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "0644",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "0644",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "0644",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "0644",
+      "docs/beta/visual-acceptance/assets.zip": "0644",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "0644"
+    },
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "remoteMain": "7a0317cb8c793efde18c166778ab030e280a0baa",
+    "normalNonForcePushVerified": true
+  },
+  "noRuntimeChanges": [
+    "No Bootstrap/Core runtime source or backend build change",
+    "No DEV SQL/GRANT/Role/Host/Native device action",
+    "No actual nonempty Guest business publication or source release"
+  ],
+  "next": "Held Person port and exact reviewed cross-principal scoped authority candidate; final grant/receipt/Native recovery pending"
+}
