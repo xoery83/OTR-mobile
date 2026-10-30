@@ -56,24 +56,57 @@ function createOwningPgConnection(
 ): CorePgConnection {
   const config = configSchema.parse(input);
   let occupied = false;
+  const waiters = new Set<() => void>();
+  // The Core principal has one connection: bound contention without reusing actor sessions.
+  async function acquire() {
+    if (!occupied) {
+      occupied = true;
+      return;
+    }
+    if (principal !== "otr_trip_core_v2_gateway" || waiters.size >= 4)
+      throw new Error("CORE_CONNECTION_BUSY");
+    await new Promise<void>((resolve, reject) => {
+      const wake = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        waiters.delete(wake);
+        reject(new Error("CORE_CONNECTION_BUSY"));
+      }, 15_000);
+      waiters.add(wake);
+    });
+  }
+  function release() {
+    const next = waiters.values().next().value;
+    if (next) {
+      waiters.delete(next);
+      next();
+    } else occupied = false;
+  }
   return {
     async withLease(work) {
-      if (occupied) throw new Error("CORE_CONNECTION_BUSY");
-      occupied = true;
-      const client = new Client({
-        ...config,
-        user: principal,
-        connectionTimeoutMillis: 3000,
-        query_timeout: 5000,
-        ssl: {
-          rejectUnauthorized: true,
-          ...(config.ca ? { ca: config.ca } : {}),
-          checkServerIdentity: (_host, certificate) =>
-            checkServerIdentity(config.host, certificate),
-        },
-        options:
-          "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
-      });
+      await acquire();
+      let client: Client;
+      try {
+        client = new Client({
+          ...config,
+          user: principal,
+          connectionTimeoutMillis: 3000,
+          query_timeout: 5000,
+          ssl: {
+            rejectUnauthorized: true,
+            ...(config.ca ? { ca: config.ca } : {}),
+            checkServerIdentity: (_host, certificate) =>
+              checkServerIdentity(config.host, certificate),
+          },
+          options:
+            "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
+        });
+      } catch (error) {
+        release();
+        throw error;
+      }
       let retired = false,
         querying = false,
         finished = false;
@@ -138,7 +171,7 @@ function createOwningPgConnection(
       } finally {
         if (timeout) clearTimeout(timeout);
         retire();
-        occupied = false;
+        release();
       }
     },
   };
