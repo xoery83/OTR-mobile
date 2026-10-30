@@ -63,23 +63,25 @@ export function createSourcePngStorageProducer(
   return createOriginalStorageProducer(
     config,
     sourcePngStorageBindingSchema,
-    async (bytes) => {
-      if (!bytes.length || bytes.length > 1048576) throw Error("PNG_INPUT_LIMIT");
-      const { result } = sandboxResultSchema.parse(await runSandbox(bytes));
-      const f = result.facts;
-      if (
-        result.input_sha256 !== sha256(bytes) ||
-        result.byte_count !== bytes.length ||
-        f.pixels !== f.width * f.height ||
-        f.decoded_byte_count !== f.pixels * 4
-      )
-        throw Error("PNG_SANDBOX_IDENTITY_MISMATCH");
-      return result;
-    },
+    async (bytes) => verifySourcePngSandboxObservation(bytes, await runSandbox(bytes)),
     1048576,
     "PNG_STATIC_RGB8_RGBA8_V1",
     custodyScope,
     requestGuard,
     "image/png",
   );
+}
+
+export function verifySourcePngSandboxObservation(bytes: Uint8Array, raw: unknown) {
+  if (!bytes.length || bytes.length > 1048576) throw Error("PNG_INPUT_LIMIT");
+  const { result } = sandboxResultSchema.parse(raw);
+  const f = result.facts;
+  if (
+    result.input_sha256 !== sha256(bytes) ||
+    result.byte_count !== bytes.length ||
+    f.pixels !== f.width * f.height ||
+    f.decoded_byte_count !== f.pixels * 4
+  )
+    throw Error("PNG_SANDBOX_IDENTITY_MISMATCH");
+  return result;
 }
