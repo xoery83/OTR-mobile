@@ -96,6 +96,15 @@ export function useUniversalCapture(
           isCurrent: current,
           continuous: process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true",
           resumeTask: async (context, binding) => {
+            const { assertDefaultUniversalPhotoConsent } =
+              await import("@/data/operations/defaultUniversalPhotoConsent");
+            await assertDefaultUniversalPhotoConsent(context, model, {
+              getAccountId,
+              assertCurrent: () => {
+                if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+              },
+            });
+            if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
             await transport.resume(context, binding);
           },
           prepareSources: async (context, job) => {

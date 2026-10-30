@@ -1,3 +1,4 @@
+import { projectUniversalVisualReview } from "./universalVisualReview";
 import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
@@ -232,6 +233,11 @@ function pinManifest(
     )
   )
     throw new Error("SOURCE_BINDING_INVALID");
+  const originalPng = sources.some(
+    (s) => s.mime === "image/png" && s.prepared === undefined,
+  );
+  // Source format/custody qualification belongs to the owning reader, not A_DIRECT.
+  if (originalPng && sources.length !== 1) throw Error("UNIVERSAL_ORIGINAL_IMAGE_BOUND");
   const prepared = sources
     .map((s, index) =>
       prepare(
@@ -245,7 +251,7 @@ function pinManifest(
             ? { preparedText: new TextDecoder().decode(s.bytes) }
             : {}),
         },
-        "B_PREPARED",
+        originalPng ? "A_DIRECT" : "B_PREPARED",
         {
           mimes: ["text/plain", "text/html", "image/png", "image/jpeg"],
           modalities: ["TEXT", "IMAGE"],
@@ -371,13 +377,21 @@ export function projectUniversalResponse(
   const interpretation = envelope.success
     ? envelope.data.interpretation
     : response.output;
-  const inspection = inspectCompactEvidence(
+  let inspection = inspectCompactEvidence(
     interpretation,
     ready,
     prepared,
     [],
     base.taskId,
   );
+  const visual = projectUniversalVisualReview(interpretation, dispatch);
+  if (visual)
+    inspection = {
+      ...inspection,
+      schemaValidity: "VALID",
+      businessCandidateValidation: "ACCEPTED",
+      proposals: visual.proposals,
+    };
   const wire = compactSchema.safeParse(interpretation);
   const sourceIssues = wire.success
     ? wire.data.issues.map(([index, reason]) => ({
@@ -385,7 +399,8 @@ export function projectUniversalResponse(
         reason,
       }))
     : [];
-  const quality = projectImportQuality(interpretation, inspection, ready);
+  const quality =
+    visual?.quality ?? projectImportQuality(interpretation, inspection, ready);
   const minimumFacts = (inspection.proposals?.objects ?? []).map(
     projectUniversalMinimumFacts,
   );

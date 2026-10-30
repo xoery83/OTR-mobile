@@ -324,3 +324,66 @@ it("normal HTTP keeps a composed text-only Source port closed to pending PDF", a
   expect((await response.json()).error.code).toBe("SOURCE_CAPABILITY_CLOSED");
   expect(f.lease).not.toHaveBeenCalled();
 });
+
+async function pendingPngFixture() {
+  const f = await pendingPdfFixture();
+  f.q.payload.source_input.source_kind = "IMAGE";
+  f.q.payload.original.original_filename = "Retained.png";
+  f.q.payload.original.mime_type = "image/png";
+  return f;
+}
+it("pending PNG metadata cannot borrow the PDF capability or enable itself over HTTP", async () => {
+  const f = await pendingPngFixture();
+  const port = createUniversalOriginalSourceConnection(f.connection, hash, {
+    pendingPdf: true,
+  });
+  await expect(port.acquire(actor, trip, f.q)).rejects.toThrow(
+    "UNIVERSAL_SOURCE_SCOPE_CLOSED",
+  );
+  expect(f.lease).not.toHaveBeenCalled();
+  const closed = createUniversalOriginalSourceConnection(f.connection, hash);
+  const response = await universalOriginalSourceBoundary(
+    request("acquire", { ...f.q, pendingPng: true }),
+    actor,
+    async () => true,
+    closed,
+  );
+  expect(response.status).toBe(422);
+  expect(f.lease).not.toHaveBeenCalled();
+});
+it("explicit pending PNG uses existing Source receipts but does not claim PNG validation", async () => {
+  const f = await pendingPngFixture();
+  const port = createUniversalOriginalSourceConnection(f.connection, hash, {
+    pendingPng: true,
+  });
+  expect(await port.acquire(actor, trip, f.q)).toEqual(f.r);
+  expect(await port.lookup(actor, trip, f.q)).toEqual(f.r);
+  expect(
+    f.query.mock.calls.filter(([sql]) => sql.startsWith("SELECT")).map(([sql]) => sql),
+  ).toEqual([
+    "SELECT public.trip_source_acquire_universal_original($1::uuid,$2) AS result",
+    "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+  ]);
+});
+
+it.each(["VERIFIED", "NOT_APPLICABLE"])(
+  "pending PNG refuses a premature %s receipt",
+  async (state) => {
+    const f = await pendingPngFixture();
+    Object.assign(f.r, await result(f.q as never, state));
+    const port = createUniversalOriginalSourceConnection(f.connection, hash, {
+      pendingPng: true,
+    });
+    await expect(port.acquire(actor, trip, f.q)).rejects.toThrow("REPLAY_UNAVAILABLE");
+  },
+);
+it("pending PNG capability does not open PDF intake", async () => {
+  const f = await pendingPdfFixture();
+  const port = createUniversalOriginalSourceConnection(f.connection, hash, {
+    pendingPng: true,
+  });
+  await expect(port.acquire(actor, trip, f.q)).rejects.toThrow(
+    "UNIVERSAL_SOURCE_SCOPE_CLOSED",
+  );
+  expect(f.lease).not.toHaveBeenCalled();
+});

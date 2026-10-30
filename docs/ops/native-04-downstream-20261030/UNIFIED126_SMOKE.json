@@ -1,0 +1,40 @@
+{
+  "status": "ORDINARY_UNIFIED_SIMULATOR_SMOKE_PASS_WITH_FORMAL_REVOCATION_BLOCKED",
+  "businessSource": "249204db47860cc3b221679d4b98ba398279c970",
+  "mergedMainParent": "82d5c8b3d07ac3da596342db0e6ad1fcb6cca86f",
+  "build": 126,
+  "bundleId": "com.xoery.otrmobile",
+  "native": "FULL_NEW_ARM64_COMPILE_FROM_2d1539aa; original application-identifier XML/DER retained byte-for-byte",
+  "hashes": {
+    "executable": "141bca7d8ccc6aadbaf0c8be87a901f5c4b36a33344899dffdd74ca9f0eb37ec",
+    "nativeDebugDylib": "ef194e98f92efbe7937042206dcb01e700ec6ddaf2e6a424af0894a324dcb51b",
+    "js": "57b8fccc75ce4a8ac73a6b21bbfa556436cb6b2644e929e17e0a612b8b5aac1c"
+  },
+  "configuration": "Same ordinary production-inlined JS on both simulators; General Cloud and Manual Sparse P2 enabled; no finite QA scope/private mutation patch; existing DEV only; P1-P6 Admission false; no Provider activation",
+  "formsQA": {
+    "account": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "trip": "41886054-5c86-45c1-a3ce-cbe530532bde",
+    "tripCreateOperation": "08a4a3a1-1855-4c7c-80fc-44249bdb869a",
+    "p1": "7eb12d1c-5a41-4f7e-a216-f29ecf98a8fb",
+    "p1Operation": "a77e17fc-2f86-4bae-9bd9-26b8787d9608",
+    "p1Receipt": "9c14ad1e-b091-4913-a50b-109761e38ab9",
+    "actual": "Normal Create Trip -> V2 Queue/accepted -> normal P1 Form Oct31/Everyone -> APPLIED -> independent Supabase exact IDs/title -> canonical intent/receipt hash validation -> process cold -> same Session/Trip/Details",
+    "preservation": "All89 original sync_operations rows hash-identical; original A CONFLICT retained; schema74->75; new125 local V1 Trip/P1 remains untouched; total94 queue rows after five new smoke rows",
+    "existingDownstreamSmoke": "B external cloud Trip/P1/P3 real Home/Day/Details restored without Login; 19:00/11:00 Stay fields retained"
+  },
+  "ad5": {
+    "account": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "trip": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "acceptedPdfItem": "4b2cf335-7132-8288-aac9-c886db266d36",
+    "actual": "Original Session -> same QA Home -> real Day six accepted families and Harbour PDF QA Workshop -> process cold -> same Day; exact independent Supabase Item/Actor/Trip/title matched",
+    "evidenceReuse": "Root existing formal PDF Save/receipt/automatic accepted read evidence reused; no new Save or Provider. Unchanged complete collection16.0 need not rewrite certificate; no claim of a new changed collection apply in this smoke",
+    "preservation": "All257 queue row hashes identical;31 local payloads/53 inbox/35 Sources/35 Batches/97 Core rows retained; SQLite75",
+    "limitations": "Admission build flags false; not a new enabled Import entry/Save acceptance. Existing107 code-only rollback retained. No data/Session backup copying or uninstall"
+  },
+  "review": "Earlier focused and current-main independent NO_BLOCKER reviews reused; no product code changed during125/126 build repair",
+  "otherCoverage": "ACCOUNT_SWITCH_E2E.json, DIFFERENTIAL_COVERAGE.json, PENDING_CONFLICT_CLOSURE.json and prior Cloud/Sync receipts reused",
+  "blocked": "Formal server revocation/regrant qualification: REVOCATION_PORT_GAP.md; no fabricated authority/404 inference",
+  "notTested": "This ordinary smoke does not repeat all six Form Cloud E2Es, physical network loss, or iPad/iPhone unified126; physical iPad OTR reinstallation pending after Owner device recovery",
+  "privateEvidence": "/private/tmp/otr-downstream-final-20261030; redacted Native AX snapshots under /private/tmp/otr-ipad-native-20261030",
+  "deviceClaims": "Both Native FormsQA and AD5 sessions normally closed after smoke"
+}

@@ -875,3 +875,64 @@ it("reviews retained PDF through the canonical original preview, never by decodi
   expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
   expect(f.core.enqueue).not.toHaveBeenCalled();
 });
+
+it("opens the scoped retained original PNG instead of decoding it as text or OCR", async () => {
+  const f = await fixture();
+  const bytes = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  const digest = await f.f.deps.hash(bytes),
+    captureId = randomUUID(),
+    payloadId = randomUUID();
+  Object.assign(f.model.inputs[0], {
+    kind: "IMAGE",
+    declaredContentType: "image/png",
+    originalFilename: null,
+    captureId,
+    payloadId,
+    contentSha256: digest,
+    contentByteCount: bytes.length,
+  });
+  Object.assign(f.result.sourceBindings[0], {
+    mime: "image/png",
+    originalSha256: digest,
+    submittedSha256: digest,
+  });
+  const previewOriginal = vi.fn(async () => {});
+  const dependencies = {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => true,
+    hash: f.f.deps.hash,
+    readCapture: async () => ({
+      capture: { accountId: f.result.accountId, payloadId },
+      bytes,
+    }),
+    previewOriginal,
+  };
+  expect(
+    await readUniversalP1ReviewOriginal(f.model, f.result, "walk", dependencies),
+  ).toBe("");
+  expect(previewOriginal).toHaveBeenCalledExactlyOnceWith({
+    captureId,
+    payloadId,
+    sha256: digest,
+    byteCount: bytes.length,
+  });
+  await expect(
+    readUniversalP1ReviewOriginal(f.model, f.result, "walk", {
+      ...dependencies,
+      previewOriginal: undefined,
+    }),
+  ).rejects.toThrow("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+  await expect(
+    readUniversalP1ReviewOriginal(f.model, f.result, "walk", {
+      ...dependencies,
+      readCapture: async () => ({
+        capture: { accountId: f.result.accountId, payloadId },
+        bytes: Buffer.from("changed"),
+      }),
+    }),
+  ).rejects.toThrow("IMPORT_EVIDENCE_INVALID");
+  expect(previewOriginal).toHaveBeenCalledOnce();
+});

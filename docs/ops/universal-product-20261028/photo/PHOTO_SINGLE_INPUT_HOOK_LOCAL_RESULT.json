@@ -1,0 +1,31 @@
+{
+  "status": "LOCAL_PASS_NOT_NATIVE_E2E",
+  "base": "a9e33cbfe08ce640f3d902fbb3592ec984494126",
+  "sourceManifestSHA256": "4aa86baff81f6c6c6371b66154ae87b8ee6dd48d5ffe3d2ab06c263010396957",
+  "files": [
+    {
+      "path": "src/features/capture/useUniversalPhotoRelevance.ts",
+      "sha256": "c3324304f91240b21eee9b43713c875cecb48fdcf91d349c5ed076ce900260e8"
+    },
+    {
+      "path": "src/features/capture/useUniversalPhotoRelevance.test.ts",
+      "sha256": "7074444af545315b8828a5a5f4bf3392acd28d00f0fd6dfee0a51b69ec7847a1"
+    }
+  ],
+  "tests": {
+    "suites": 3,
+    "passed": 32,
+    "hookTests": 19,
+    "acceptedFactoryActionsTests": 13,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "changedCodeLint": "PASS"
+  },
+  "boundaries": {
+    "UIInstalled": false,
+    "ProviderCalls": 0,
+    "DEVOrDeviceOperations": 0,
+    "SharedAuthoritySchemaOrTaskChanged": false,
+    "OtherWorktreesChanged": false
+  }
+}

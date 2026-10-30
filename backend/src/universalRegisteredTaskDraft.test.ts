@@ -1,5 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
+import {
+  prepareUniversalDispatch,
+  UNIVERSAL_IMPORT_VERSION,
+  type BoundRepresentation,
+} from "./universalImport";
+import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
+import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
+import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
 import { buildUniversalRegisteredTaskDraft } from "./universalRegisteredTaskDraft";
 function fixture(n = 1) {
   const actorId = randomUUID(),
@@ -144,4 +152,155 @@ it("rejects a normalized PDF binding whose original proof differs from the ownin
   await expect(
     buildUniversalRegisteredTaskDraft(binding, f.manifest, f.selection),
   ).rejects.toThrow("SOURCE_BINDING");
+});
+
+function imageFixture() {
+  const f = fixture();
+  const r = f.manifest.representations[0];
+  const bytes = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  r.mime = "image/png";
+  r.bytes = bytes;
+  r.originalSha256 = createHash("sha256").update(bytes).digest("hex");
+  f.binding.inputs[0].payload_sha256 = r.originalSha256;
+  f.binding.inputs[0].byte_count = bytes.length;
+  return f;
+}
+
+it("pins one owning original PNG as image input without an invented extraction receipt", async () => {
+  const f = imageFixture();
+  const r = f.manifest.representations[0];
+  const bytes = r.bytes;
+  const first = await buildUniversalRegisteredTaskDraft(
+    f.binding,
+    f.manifest,
+    f.selection,
+  );
+  expect(first).toEqual(
+    await buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection),
+  );
+  expect(first.attempt.descriptor_snapshot.modalities).toEqual(["IMAGE"]);
+  expect(first.task.input_pins[0]).toMatchObject({
+    payload_sha256: r.originalSha256,
+    byte_count: bytes.length,
+    transform_sha256: null,
+  });
+  expect(JSON.parse(first.marker.toString()).sourceBindings[0]).toMatchObject({
+    mime: "image/png",
+    originalSha256: r.originalSha256,
+    submittedSha256: r.originalSha256,
+    status: "READY",
+  });
+});
+
+it("transmits the original PNG inline with its exact source alias/hash and no OCR replacement", () => {
+  const f = imageFixture();
+  const r = f.manifest.representations[0];
+  const dispatch = prepareUniversalDispatch(
+    f.binding.actorId,
+    f.binding.batchId,
+    {
+      version: UNIVERSAL_IMPORT_VERSION,
+      tripId: f.binding.tripId,
+      taskId: f.binding.taskId,
+    },
+    f.manifest,
+  );
+  expect(dispatch.ready[0]).toMatchObject({
+    operations: [],
+    bytes: r.bytes,
+    submittedSha256: r.originalSha256,
+  });
+  const request = buildUniversalDeepSeekRequest({
+    taskId: f.binding.taskId,
+    actorId: f.binding.actorId,
+    accountId: f.binding.actorId,
+    tripId: f.binding.tripId,
+    batchId: f.binding.batchId,
+    promptVersion: COMPACT_PROMPT_VERSION,
+    instruction: universalInstruction,
+    advisoryInstruction: universalAdvisoryInstruction,
+    sources: dispatch.ready.map((p, index) => ({
+      index,
+      sourceId: p.sourceId,
+      mime: p.mime,
+      modality: p.modality as "TEXT" | "IMAGE",
+      sha256: p.submittedSha256,
+      bytes: p.bytes,
+    })),
+  });
+  const body = JSON.parse(request.body);
+  expect(request.imageCount).toBe(1);
+  expect(body.messages[1].content).toEqual([
+    { type: "text", text: expect.stringContaining("pixel regions") },
+    {
+      type: "text",
+      text: `SOURCE 0 S0 MIME image/png MODALITY IMAGE SHA256 ${r.originalSha256}\n`,
+    },
+    {
+      type: "image_url",
+      image_url: { url: `data:image/png;base64,${r.bytes.toString("base64")}` },
+    },
+  ]);
+});
+
+it.each([
+  "mixed",
+  "second-image",
+  "oversize",
+  "changed-bytes",
+  "raw-jpeg",
+  "bad-prepared",
+])("rejects %s before producing a paid image Task", async (failure) => {
+  const f = imageFixture();
+  const r = f.manifest.representations[0];
+  let error = "ORIGINAL_PREFLIGHT_NOT_READY";
+  if (failure === "mixed" || failure === "second-image") {
+    const other = fixture().manifest.representations[0];
+    Object.assign(other, {
+      accountId: r.accountId,
+      tripId: r.tripId,
+      batchId: r.batchId,
+    });
+    if (failure === "second-image")
+      Object.assign(other, {
+        mime: r.mime,
+        bytes: r.bytes,
+        originalSha256: r.originalSha256,
+      });
+    f.manifest.representations.push(other);
+    f.binding.inputs.push({
+      ...f.binding.inputs[0],
+      id: other.inputId,
+      source_id: other.sourceId,
+      representation_id: other.representationId,
+      payload_sha256: other.originalSha256,
+      byte_count: other.bytes.length,
+    });
+    error = "UNIVERSAL_ORIGINAL_IMAGE_BOUND";
+  } else if (failure === "oversize") {
+    r.bytes = Buffer.alloc(4194305);
+    r.originalSha256 = createHash("sha256").update(r.bytes).digest("hex");
+    Object.assign(f.binding.inputs[0], {
+      payload_sha256: r.originalSha256,
+      byte_count: r.bytes.length,
+    });
+    error = "4194304";
+  } else if (failure === "changed-bytes") {
+    r.bytes = Buffer.from("changed");
+    error = "SOURCE_BINDING";
+  } else if (failure === "raw-jpeg") r.mime = "image/jpeg";
+  else
+    (r as BoundRepresentation).prepared = {
+      bytes: r.bytes,
+      mime: "image/jpeg",
+      originalSha256: r.originalSha256,
+      submittedSha256: "f".repeat(64),
+      operations: ["UNVERIFIED"],
+    };
+  await expect(
+    buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection),
+  ).rejects.toThrow(error);
 });

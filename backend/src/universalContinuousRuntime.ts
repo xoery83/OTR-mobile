@@ -397,7 +397,19 @@ export async function loadDevUniversalContinuousRuntime(
           t = scope.tripId;
         let source = coreSources.get(lease);
         if (!source) {
-          source = createCoreUniversalSourceRead(lease, a, t);
+          source = createCoreUniversalSourceRead(lease, a, t, async (image) => {
+            guard();
+            if (!stores || image.accountId !== a || image.tripId !== t)
+              throw Error("SOURCE_ACCESS_DENIED");
+            const bytes = await stores.custody.read({
+              accountId: a,
+              reference: image.representationId,
+              sha256: image.sha256,
+              byteCount: image.byteCount,
+            });
+            guard();
+            return bytes;
+          });
           coreSources.set(lease, source);
         }
         const currentSource = source;
@@ -415,10 +427,44 @@ export async function loadDevUniversalContinuousRuntime(
         const authorize = async () => {
           guard();
         };
-        return (await host(a, t, authorize, currentSource)).readPublished(
-          scope.batchId,
-          scope.taskId,
-        );
+        const published = await (
+          await host(a, t, authorize, currentSource)
+        ).readPublished(scope.batchId, scope.taskId);
+        if (!published) return null;
+        return {
+          ...published,
+          readBinary: async (image: {
+            accountId: string;
+            tripId: string;
+            sourceId: string;
+            representationId: string;
+            sha256: string;
+            byteCount: number;
+          }) => {
+            guard();
+            if (
+              !stores ||
+              image.accountId !== a ||
+              image.tripId !== t ||
+              !binding.inputs.some(
+                (p) =>
+                  p.source_id === image.sourceId &&
+                  p.representation_id === image.representationId &&
+                  p.payload_sha256 === image.sha256 &&
+                  p.byte_count === image.byteCount,
+              )
+            )
+              throw Error("SOURCE_ACCESS_DENIED");
+            const bytes = await stores.custody.read({
+              accountId: a,
+              reference: image.representationId,
+              sha256: image.sha256,
+              byteCount: image.byteCount,
+            });
+            guard();
+            return bytes;
+          },
+        };
       },
       async close() {
         if (closed) return;
