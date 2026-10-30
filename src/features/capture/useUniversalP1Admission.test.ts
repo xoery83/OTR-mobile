@@ -128,7 +128,7 @@ it("receipt-only cold recovery keeps the same Core request budget as explicit co
   expect(hooks.transport).toHaveBeenCalledWith(
     expect.any(Function),
     expect.any(Function),
-    { timeoutMs: 60000 },
+    { timeoutMs: 90000 },
   );
   expect(hooks.accepted).toHaveBeenCalledWith(
     expect.any(Object),

@@ -105,7 +105,7 @@ export function useUniversalP1Admission(
         getAccountId: requireAdoptedUserId,
         isCurrent: () => !canceled && current(),
         transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
-          timeoutMs: 60000,
+          timeoutMs: 90000,
         }),
         onAccepted: (token, item) => apply({ [token]: item }),
       });
@@ -205,7 +205,7 @@ export function useUniversalP1Admission(
           tripCoreSha256Hex,
         );
         const transport = createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
-          timeoutMs: 60000,
+          timeoutMs: 90000,
         });
         const consumer = createUniversalP1AdmissionConsumer({
           getAccountId: requireAdoptedUserId,
