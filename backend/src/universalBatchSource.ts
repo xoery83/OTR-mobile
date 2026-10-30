@@ -1,3 +1,5 @@
+import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
@@ -30,17 +32,41 @@ export const universalBatchInputsSchema = z
       if (new Set(v.inputs.map((i) => i[key])).size !== v.inputs.length)
         c.addIssue({ code: "custom", message: "DUPLICATE_SOURCE_PIN" });
   });
-export const universalRunBindingSchema = z.strictObject({
-  actorId: uuid,
-  tripId: uuid,
-  batchId: uuid,
-  submissionSha256: digest,
-  runId: uuid,
-  taskId: uuid,
-  generation: z.number().int().positive().safe(),
-  createdAt: z.iso.datetime({ offset: true }),
-  inputs: universalBatchInputsSchema.shape.inputs,
-});
+export const universalRunBindingSchema = z
+  .strictObject({
+    actorId: uuid,
+    tripId: uuid,
+    batchId: uuid,
+    submissionSha256: digest,
+    runId: uuid,
+    taskId: uuid,
+    generation: z.number().int().positive().safe(),
+    createdAt: z.iso.datetime({ offset: true }),
+    // Owning readback only. Capture submissions cannot declare derivative proof.
+    inputs: z
+      .array(
+        universalBatchInputsSchema.shape.inputs.element
+          .extend({
+            pdfSource: universalPdfSourceProvenanceSchema.optional(),
+          })
+          .superRefine((input, c) => {
+            if (
+              input.pdfSource &&
+              (input.pdfSource.original.representationId === input.representation_id ||
+                input.pdfSource.transformOptionsSha256 !== PDF_V2_OPTIONS_SHA ||
+                input.byte_count > 262144)
+            )
+              c.addIssue({ code: "custom", message: "INVALID_PDF_RUN_INPUT" });
+          }),
+      )
+      .min(1)
+      .max(64),
+  })
+  .superRefine((binding, c) => {
+    for (const key of ["id", "representation_id"] as const)
+      if (new Set(binding.inputs.map((i) => i[key])).size !== binding.inputs.length)
+        c.addIssue({ code: "custom", message: "DUPLICATE_SOURCE_PIN" });
+  });
 export type UniversalRunBinding = z.infer<typeof universalRunBindingSchema>;
 export function universalBatchIdentity(
   actor: string,
@@ -104,8 +130,20 @@ export function createUniversalBatchSource(deps: {
           [...v].sort((a, b) => a.id.localeCompare(b.id));
         if (
           b.submissionSha256 !== q.submissionSha256 ||
-          canonicalEventJson(order(b.inputs) as Json) !==
-            canonicalEventJson(order(q.inputs) as Json)
+          canonicalEventJson(
+            order(
+              b.inputs.map(({ pdfSource, ...input }) =>
+                pdfSource
+                  ? {
+                      ...input,
+                      representation_id: pdfSource.original.representationId,
+                      payload_sha256: pdfSource.original.sha256,
+                      byte_count: pdfSource.original.byteCount,
+                    }
+                  : input,
+              ),
+            ) as Json,
+          ) !== canonicalEventJson(order(q.inputs) as Json)
         )
           throw Error("OPERATION_KEY_REUSED");
         return b;

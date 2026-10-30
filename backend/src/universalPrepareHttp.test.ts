@@ -105,3 +105,42 @@ it("classifies malformed/duplicate JSON before any owning prepare call", async (
   }
   expect(f.prepare).not.toHaveBeenCalled();
 });
+
+it("accepts a pinned existing Task resume without accepting Source or new Task facts", async () => {
+  const f = fixture();
+  const input = {
+    version: "otr.backend.universal-resume/1",
+    tripId: f.context.tripId,
+    batchId: f.context.batchId,
+    taskId: f.context.taskId,
+  };
+  f.prepare.mockResolvedValue({ status: "EXISTING", context: f.context });
+  const request = (body: unknown = input) =>
+    new Request(f.request(body), { headers: { "Idempotency-Key": input.taskId } });
+  const r = await universalPrepareBoundary(
+    request(),
+    f.actor,
+    async () => true,
+    f.prepare,
+  );
+  expect(r.status).toBe(202);
+  expect(f.prepare).toHaveBeenCalledExactlyOnceWith(input.tripId, input);
+  expect(
+    (
+      await universalPrepareBoundary(
+        request({ ...input, inputs: [] }),
+        f.actor,
+        async () => true,
+        f.prepare,
+      )
+    ).status,
+  ).toBe(400);
+  f.prepare.mockResolvedValue({
+    ...{ status: "EXISTING" },
+    context: { ...f.context, taskId: randomUUID() },
+  });
+  expect(
+    (await universalPrepareBoundary(request(), f.actor, async () => true, f.prepare))
+      .status,
+  ).toBe(503);
+});

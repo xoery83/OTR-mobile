@@ -95,12 +95,20 @@ export function useUniversalCapture(
           transport,
           isCurrent: current,
           continuous: process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true",
+          resumeTask: async (context, binding) => {
+            await transport.resume(context, binding);
+          },
           prepareSources: async (context, job) => {
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
             const { prepareDefaultUniversalCaptureSources } =
               await import("@/data/operations/defaultUniversalOriginalSource");
             await prepareDefaultUniversalCaptureSources(context, job, {
               baseUrl,
+              ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED === "true"
+                ? {
+                    pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1" as const,
+                  }
+                : {}),
               ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true"
                 ? {
                     prepareTask: async (

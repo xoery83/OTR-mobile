@@ -28,7 +28,8 @@ Trip shell, Item, quota grant or post-Adoption restore qualification is implied.
   operation UUID. Never connect these people by name/email. The source creator
   must map explicitly to the owning Trip Create's actual linked owner Person.
 - Owning Ledger initializer preserving the source currency, scale, valuation
-  policy and source names; do not silently substitute current normal defaults.
+  policy; title/dates follow the final owning Trip. Retain the original local
+  Ledger cache row separately; do not substitute defaults or backdate server settings.
 - Every retained deferred Metadata action, in its original dependency order.
   Read and CAS the actual owning metadata revision inside the same transaction;
   no synthetic conversion of an old queued V1 revision.
@@ -140,3 +141,182 @@ composition gap on 30 October. Direct identity/plan/draft regression: 3 suites /
 50 tests PASS; independent 3 suites / 50 tests and typecheck PASS, NO_BLOCKER
 within candidate-only scope. See `IDENTITY_REVIEW.json`; final integration is
 recorded separately.
+
+## Owning transaction execution body — 30 October
+
+`guestAdoptionCompositeExecute.ts` composes the qualified saved Trip/P1 operations
+using existing TripCreate, unlinked PersonCreate, revisioned Metadata and Core
+services. It requires a future owning single-transaction adapter and remains
+unmounted/default closed. Standalone HTTP/PG factories must not be composed here.
+The owner must lock the actual server stage/grant, confirm the existing target,
+check policy and collision constraints, and supply all ports on one authorized
+lease. This body creates no principal, grant, COMMIT or terminal publication.
+
+The body requires genuinely new Trips, checks create and Person receipts against
+same-transaction readbacks, preserves original Ledger settings exactly, obtains
+Metadata CAS revisions from the owning snapshot, verifies the resulting snapshot,
+and runs the existing Core executor/receipt validator. Only FULL APPLIED or
+NO_CHANGE receipts qualify; rejection, conflict, redaction, wrong bindings,
+cancellation or expiry throws to the outer transaction. Every original queue ID
+must be represented, including deferred local action ID to actual operation ID;
+source and mapped Core hashes remain separate. Local Person names never connect
+Accounts automatically.
+
+Changed deferred covers reject before any owning I/O because their owning restore
+port does not yet exist. Other source names, timestamps and static/private cover
+preferences are retained explicitly with `localRestoreStatus:
+REQUIRED_NOT_EXECUTED`. Nonempty Drafts also reject until owning restore qualifies.
+These preserved fields cannot be treated as already applied or source-release
+permission by a future publisher.
+
+Direct execution/identity/plan/draft regression: 4 suites / 66 PASS. Independent
+execution suite: 16 PASS, NO_BLOCKER after the cover-completeness repair. Tests use
+the real Core domain executor, but their outer map snapshot is a unit transaction
+harness, not PG/RLS/Hosted atomicity proof. Actual grant issuance, cross-principal
+adapter, cancellation/final receipt storage, Native recovery and DEV Adoption
+remain pending. See `COMPOSITE_EXECUTION_REVIEW.json`.
+
+Ledger projection repair: initialize/read back only after all deferred Metadata.
+The existing bootstrap derives title/dates from public.trips and the settings
+values/timestamp from ledger_settings. A stale Guest ledger_journeys title/date
+is preserved in retainedLocalState, while the remote result must match the final
+Trip plus exact original financial settings. Invalid timestamps or changed
+settings fail the entire transaction. Directed3s63PASS, independent23PASS and
+NO_BLOCKER/types/lint; this remains component-only, with no PG/DEV publication.
+
+## Local terminal arbitration evidence — 30 October
+
+`terminal.local.sql` extends only the disposable private staging fixture. Each
+adoption has at most one immutable terminal-evidence row. Publication and
+cancellation contend on SELECT FOR UPDATE of that exact stage; its original
+Account/Guest/inventory/grant/plan tuple and exact text hash are rechecked.
+Cancellation cannot carry execution evidence; publication evidence must retain
+the separate executor text/hash and matching binding. UPDATE/DELETE/TRUNCATE
+are refused. It adds no RPC, role, runtime grant, business write or mounted reader.
+
+This table stores **authority: NONE** component evidence, not an authoritative
+publication/cancellation receipt. Its local PG publication test deliberately uses
+synthetic executor evidence without business writes, which can never release
+Guest originals or install an Account. Actual authorized owning execution, final
+dataset verification, grant/confirmation issuer, commit recovery transport and
+Native restore remain required. The terminal fixture does not replace these.
+
+The isolated network-none256MB PG run now passes22 checks, including real
+concurrent publication/cancellation with exactly one winner, outer rollback,
+Actor/plan/execution-hash mismatch, missing-stage cancellation, immutable terminal
+rows and fresh-connection readback. Existing anon/authenticated/service_role
+remain denied. The old fixture still lacks three Gateway roles, so their ACLs
+and real business principal composition are explicitly untested.
+
+## Person held transaction seam
+
+Native explicitly delegated the Person Pg source/test to Auth as sole Writer.
+`withTripPersonCloudCreateOnTransaction` now reuses the exact existing query and
+receipt checks on a caller-owned lease, without transaction control. The normal
+standalone factory still owns its original BEGIN/COMMIT/ROLLBACK. Unawaited,
+parallel, escaped and swallowed failures retire the caller lease and reject.
+Direct2s38PASS, independent Pg+HTTP2s31PASS/NO_BLOCKER, types/lint PASS. This adds
+no SQL authority and has no runtime consumer; the four-principal composition
+barrier remains. See PERSON_HELD_REVIEW.json.
+
+## Finite owning-authority candidate
+
+`authority.local.sql` and `PRINCIPAL_LOCAL_PATCH.sql` are guarded disposable-only
+candidates. They cannot install in Hosted DEV. They reuse the actual existing Core
+Gateway as the sole session principal; there is no new role, business-table grant,
+business RLS policy, service-role substitute or session-authorization switch.
+
+The private policy starts disabled. A trusted Backend caller must authenticate a
+normal Account and receive explicit target confirmation before `confirm_and_issue`.
+The server generates the grant ID and a bounded15minute operational lease; a retry
+retains both ID and expiry. This is not an allowance reset/price or commercial
+limit. Current normal Account policy revocation still wins. Only saved, fileless
+Trip/P1 with no Drafts qualifies; unsupported data blocks the whole candidate.
+No caller is mounted, and the current v1 preflight wire does not carry the missing
+confirmation action. Native confirmation and its normal authenticated boundary
+must be completed before any runtime binding.
+
+`seal_stage` requires the actual stored server grant, matching immutable
+preparation/source hashes and identity/resource facts. The existing full Backend
+plan/source codecs remain mandatory; the SQL checks do not replace those codecs.
+`begin_scope` locks the original stage and real grant, rejects existing Trips and
+terminal evidence, and binds a private context row to backend PID and transaction
+ID. GUCs carry no authority. Scope checks revalidate current policy, grant expiry,
+Account and source Trip/operation. During an Adoption transaction, the normal
+scope helpers must return that result exclusively: a failed adoption check cannot
+fall back to General Account permissions or an old exact QA gate.
+
+The generated patch retains exact preimages and modifies only the listed owning
+functions. Trip/Metadata/Person commands compare their actual request with the
+sealed source before mutation. A private operation marker, set only by those
+owner-definer commands, permits the existing Trip initializer and Person roster
+invalidation to update Core read state; it is not a client GUC. Existing Core
+command validation, actor/creator/visibility/CAS and receipt logic remain in use.
+Normal standalone Gateways retain their original path outside an Adoption scope.
+
+`guestAdoptionCompositePg.ts` loads the original plan from the authorized locked
+server scope and composes the existing held Trip/Metadata/Person ports with the
+existing Core storage. It owns no transaction boundary or terminal publication.
+Ledger is read from the actual existing initializer; mismatched source financial
+settings reject the whole transaction instead of substituting defaults. The
+internal execution evidence remains authority NONE and local restore remains
+REQUIRED_NOT_EXECUTED. Never mount this as a publisher or let it unlock Guest data.
+
+The real-PG harness uses synthetic database users, not OTP or a Hosted Session.
+It runs the actual TypeScript ports/Core executor, reads the resulting actual
+rows and receipts, and tests rollback. The recorded General Account helper
+postimage is reused, but the rest of this disposable parent is an older owning
+baseline. All actual Hosted function/owner/ACL/trigger preimages must be obtained
+and compared before preparing the precise Owner execution packet. Current local
+SQL is explicitly not that packet, and no Hosted Schema/RLS/GRANT was executed.
+
+
+## Cancellation terminal journal candidate — 30 October
+
+`receipt-journal.local.sql` adds the same journal's CANCELLED-only branch with
+server-generated receipt ID/time/digest. It does not add a publisher. All lifecycle
+entrances use the same Adoption advisory lock before stage/grant row locks.
+Cancellation refuses existing execution scopes, old component evidence or source
+Trip rows; it cannot reclassify an unresolved component commit as cancellation.
+Before/after-stage retry returns the identical immutable receipt. Status/receipt
+queries keep the exact normal Account/source/inventory binding, current Account
+revocation check and policy read lock. Expired grant and Adoption OFF permit
+recovery, not new publication. The old authority-NONE evidence is never returned
+as this terminal receipt.
+
+Actual TypeScript cancel→COMMIT→status→receipt and SQL/TS digest/binding verification
+pass within39 isolated PG checks;7 suites125 tests/typecheck/lint pass with an
+independent125 repeat and exact9+10 input hash verification. HTTP and provisional
+Guest transport remain unmounted. Cancel accepts CANCELLED only; COMMIT uncertainty
+retains UNKNOWN. No local Guest hold or Session is changed. See the limited review
+under ops/auth-phase2-20261028/CANCELLATION_TERMINAL_REVIEW.json. No Hosted write,
+formal PUBLISHED receipt, Native restore or full Adoption E2E is claimed.
+
+
+## PUBLISHED Golden Slice candidate — 30 October
+
+`publication.local.sql` reconstructs the formal journal exclusively from sealed
+source plus actual immutable owning receipts. `guestAdoptionPublicationPg.ts`
+reuses existing held Trip/Person/Metadata/Core services and one outer transaction;
+source coverage and actual terminal status are checked before COMMIT. There is
+no client-supplied success record. Exact retry locks/reads the same immutable
+outcome without re-executing writes; commit uncertainty keeps the same adoption.
+
+46 isolated real-PG checks and135 directed/independent tests qualify this
+component, including actual post-COMMIT reply loss and independent Owner/Person/
+P1 self/ACL readback. A raw post-final Writer DML hole was reproduced RED and
+closed GREEN by one exact-preimage mutation-only branch in
+`public.trip_core_guard_write()` (fourteenth function). The rest of its body,
+owner and ACL are retained; no new business-table grants/roles. The private
+predicate checks PID/xid terminal state, never GUC identity. This is not an
+executed Hosted privilege change. Existing Metadata deferred COMMIT validation
+keeps the live scope; we do not force constraints early. Further Trip/Metadata/
+Person mutation entry is blocked and Core DML has a separate finalization guard.
+
+Non-Core operation/ledger digests use exact UTF8 PG jsonb text of the projections
+in the SQL; Core digests retain their owning receipt algorithm. executionSha256
+binds final owning Trip summaries, not the authority-NONE internal executor.
+Neither publication receipt nor hashes alone authorize local source release.
+Current14 Hosted function parents were captured READ ONLY; raw definitions and
+rendered actual-parent patch remain0600 under/private/tmp. Full schema/role
+parity, protected execution Gate, mounted flow and Native restore remain open.

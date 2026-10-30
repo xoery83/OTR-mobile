@@ -1,3 +1,4 @@
+import { hasAcceptedUniversalReceiptRead } from "./universalAcceptedSourceReceipt";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import {
   sourcePdfV2SealSchema as sourcePdfSealSchema,
@@ -12,6 +13,35 @@ import type { CorePgLease } from "./tripCoreV2PgStorage";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
 const pdfHash = (bytes: Uint8Array | string) =>
   createHash("sha256").update(bytes).digest("hex");
+export async function hasCurrentPdfV2ProofAccess(
+  lease: CorePgLease,
+  actor: string,
+  trip: string,
+  continuousUniversal = false,
+) {
+  let gate = (
+    await lease.query("SELECT enabled FROM public.trip_source_pdf_gate WHERE singleton")
+  ).rows[0]?.enabled;
+  // An absent/default-closed scoped predicate never changes legacy callers.
+  if (gate !== true && continuousUniversal) {
+    const available = (
+      await lease.query(
+        "SELECT to_regprocedure('public.trip_sustained_universal_pdf_allowed(uuid,uuid)') IS NOT NULL AS available",
+      )
+    ).rows[0]?.available;
+    if (available === true)
+      gate =
+        (
+          await lease.query(
+            "SELECT public.trip_sustained_universal_pdf_allowed($1::uuid,$2::uuid) AS allowed",
+            [actor, trip],
+          )
+        ).rows[0]?.allowed === true;
+  }
+  if (gate !== true && continuousUniversal)
+    gate = await hasAcceptedUniversalReceiptRead(lease, actor, trip);
+  return gate === true;
+}
 export async function readSourcePdfV2CoreProof(
   lease: CorePgLease,
   catalog: CoreSourceCatalogV2,
@@ -19,6 +49,7 @@ export async function readSourcePdfV2CoreProof(
   hash: ImportHash,
   historical = false,
   expectedSha?: string,
+  options: { continuousUniversal?: boolean } = {},
 ) {
   if (
     !(
@@ -56,9 +87,12 @@ export async function readSourcePdfV2CoreProof(
       [representationId, catalog.sourceId],
     )
   ).rows[0]?.row as Record<string, unknown>;
-  const gate = (
-    await lease.query("SELECT enabled FROM public.trip_source_pdf_gate WHERE singleton")
-  ).rows[0]?.enabled;
+  const gate = await hasCurrentPdfV2ProofAccess(
+    lease,
+    catalog.actorAccountId,
+    catalog.tripId,
+    !historical && options.continuousUniversal === true,
+  );
   const source = catalog.source as Record<string, unknown>;
   if (
     (!historical &&

@@ -13,7 +13,8 @@ import { importDigest } from "../../src/domain/trip/flightImportReview";
 import { sourcePdfRegistrationRequestSchema } from "../../src/domain/trip/sourcePdfRegistration";
 import type { CorePgLease } from "./tripCoreV2PgStorage";
 vi.mock("./sourcePdfV2LinuxWorker", () => ({
-  SOURCE_PDF_V2_LINUX_IMAGE: "sha256:" + "a".repeat(64),
+  SOURCE_PDF_V2_LINUX_IMAGE:
+    "sha256:d27ddd7b09410b0a3b220b2768c0f6b2b25c32da528a42041bc50ea19eefc1b7",
   runSourcePdfV2LinuxWorker: vi.fn(),
 }));
 const digest = (b: Uint8Array | string) => createHash("sha256").update(b).digest("hex");

@@ -74,11 +74,15 @@ export type PdfCausalOwner = {
   producerId: string;
   providerInstanceSha256: string;
   accountGeneration(actorId: string): Promise<number>;
-};
+} & (
+  | { authScopeKind?: undefined }
+  | { authScopeKind: "SOURCE_REQUEST_LIFETIME_V1"; assertRequestCurrent(): void }
+);
 export function createSourcePdfCausalAuthority(
   connection: CorePgConnection,
   owner: PdfCausalOwner,
 ) {
+  if (owner.authScopeKind) throw Error("SOURCE_CAPABILITY_CLOSED");
   const authority = createAuthority(connection, owner, {
     version: 3,
     issuer: PDF_UPLOAD_CAUSAL_V3.issuer,
@@ -104,6 +108,8 @@ export function createSourcePdfV2CausalAuthority(
   owner: PdfCausalOwner,
   options: { continuousSourceScope?: true } = {},
 ) {
+  if (owner.authScopeKind && !options.continuousSourceScope)
+    throw Error("SOURCE_CAPABILITY_CLOSED");
   return createAuthority(connection, owner, {
     version: 4,
     issuer: PDF_UPLOAD_QPDF_V4.issuer,
@@ -138,10 +144,25 @@ function createAuthority<
     continuousSourceScope?: true;
   },
 ) {
+  const assertRequestCurrent = () => {
+    if (owner.authScopeKind) owner.assertRequestCurrent();
+  };
   async function transaction<T>(work: (lease: CorePgLease) => Promise<T>) {
     return connection.withLease(async (lease) => {
       let began = false;
+      const scopedLease: CorePgLease = owner.authScopeKind
+        ? {
+            retire: () => lease.retire(),
+            async query(sql, parameters) {
+              assertRequestCurrent();
+              const result = await lease.query(sql, parameters);
+              assertRequestCurrent();
+              return result;
+            },
+          }
+        : lease;
       try {
+        assertRequestCurrent();
         const before = (
           await lease.query(
             "SELECT session_user AS principal,current_user AS role,pg_current_xact_id()::text AS xid",
@@ -163,9 +184,12 @@ function createAuthority<
         began = true;
         await lease.query("SET LOCAL statement_timeout='5000ms'");
         await lease.query("SET LOCAL lock_timeout='1000ms'");
-        const result = await work(lease);
+        assertRequestCurrent();
+        const result = await work(scopedLease);
+        assertRequestCurrent();
         await lease.query("COMMIT");
         began = false;
+        assertRequestCurrent();
         return result;
       } catch (error) {
         if (began) await lease.query("ROLLBACK").catch(() => lease.retire());
@@ -178,8 +202,11 @@ function createAuthority<
     types: string[],
     values: readonly unknown[],
     scope?: PdfSourceScopeIdentity,
-  ) =>
-    transaction(async (lease) => {
+  ) => {
+    const actor =
+      scope?.actorAccountId ?? (typeof values[0] === "string" ? values[0] : "");
+    const fence = owner.authScopeKind ? await owner.accountGeneration(actor) : undefined;
+    const result = await transaction(async (lease) => {
       if (policy.continuousSourceScope) {
         if (scope) await enterSourcePdfContinuousScope(lease, scope);
         else if (name !== `${policy.rpcPrefix}_inventory`)
@@ -192,6 +219,10 @@ function createAuthority<
         )
       ).rows[0]?.result as T;
     });
+    if (owner.authScopeKind && (await owner.accountGeneration(actor)) !== fence)
+      throw Error("PDF_SCOPE_FORBIDDEN");
+    return result;
+  };
   const execute = (
     c: PdfReservedContext<B>,
     action: string,
@@ -308,6 +339,11 @@ function createAuthority<
         !(await transaction((lease) => enterSourcePdfContinuousScope(lease, c.binding)))
       )
         throw Error("UNIVERSAL_PDF_SOURCE_CLOSED");
+      if (
+        owner.authScopeKind &&
+        (await owner.accountGeneration(c.binding.actorAccountId)) !== c.accountGeneration
+      )
+        throw Error("PDF_SCOPE_FORBIDDEN");
     },
     async canResumeSealedStage(c: PdfReservedContext<B>) {
       if (policy.version !== 4) return false;
@@ -471,6 +507,51 @@ function createAuthority<
   };
   return {
     ...authority,
+    async status(actorId: string, identity: PdfIngressIdentity) {
+      if (policy.version !== 4 || !policy.continuousSourceScope)
+        throw Error("SOURCE_CAPABILITY_CLOSED");
+      if ((await owner.accountGeneration(actorId)) !== identity.accountGeneration)
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      const matches = (await inventory(actorId, identity)).filter(
+        (j) => j.operation_id === identity.operationId,
+      );
+      if ((await owner.accountGeneration(actorId)) !== identity.accountGeneration)
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      // Cleaned terminal attempts are absent too; this never proves no prior receipt.
+      if (!matches.length) return "NO_ACTIVE_ATTEMPT" as const;
+      if (matches.length !== 1) throw Error("PDF_UPLOAD_PLAN_CONFLICT");
+      const j = matches[0],
+        b = policy.binding.parse(j.pdf_binding);
+      if (
+        b.actorAccountId !== actorId ||
+        b.tripId !== identity.tripId ||
+        b.sourceId !== identity.sourceId ||
+        b.representationId !== identity.representationId ||
+        b.operationId !== identity.operationId
+      )
+        throw Error("PDF_SCOPE_FORBIDDEN");
+      if (
+        j.owner_run !== owner.ownerRun ||
+        b.producerId !== owner.producerId ||
+        b.providerInstanceSha256 !== owner.providerInstanceSha256
+      )
+        return "RECOVERY_REQUIRED" as const;
+      if (j.pdf_beta_get) {
+        policy.get.parse(j.pdf_beta_get);
+        return "READ_OBSERVED" as const;
+      }
+      if (j.pdf_beta_ack) {
+        policy.ack.parse(j.pdf_beta_ack);
+        return "ACK_OBSERVED" as const;
+      }
+      if (j.phase === "UNKNOWN") return "UNKNOWN" as const;
+      if (j.phase === "RUNNING" && j.pdf_dispatch_id) return "DISPATCH_RECORDED" as const;
+      if (j.phase !== "STARTING" || j.pdf_dispatch_id)
+        return "RECOVERY_REQUIRED" as const;
+      return j.staged_resource?.pdf_sealed_at
+        ? ("STAGED" as const)
+        : ("RESERVED" as const);
+    },
     async prepare(actorId: string, raw: string, generation: number) {
       if (policy.version !== 4 || !policy.continuousSourceScope)
         throw Error("SOURCE_CAPABILITY_CLOSED");

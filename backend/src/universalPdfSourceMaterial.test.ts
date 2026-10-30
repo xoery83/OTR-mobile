@@ -64,3 +64,37 @@ it.each([
   if (failure === "oversize") f.expected.byteCount = 4194305;
   await expect(f.read()).rejects.toThrow();
 });
+
+it("uses the owning continuous scope with the global PDF gate closed", async () => {
+  const f = await fixture();
+  f.close();
+  f.continuousScope();
+  expect((await f.read()).sealSha256).toBe(f.sealed.seal_sha256);
+});
+it("rejects a denied continuous scope without opening the global gate", async () => {
+  const f = await fixture();
+  f.close();
+  f.continuousScope(false);
+  await expect(f.read()).rejects.toThrow("CONTRACT_UNSUPPORTED");
+});
+it.each(["seal", "currentRow", "parent"])(
+  "retains %s checks under continuous scope",
+  async (bad) => {
+    const f = await fixture();
+    f.close();
+    f.continuousScope();
+    if (bad === "seal") f.sealed.seal_sha256 = "c".repeat(64);
+    if (bad === "currentRow") f.original.row_revision++;
+    if (bad === "parent") f.derived.parent_ids = [randomUUID()];
+    await expect(f.read()).rejects.toThrow();
+  },
+);
+it("does not opt legacy proof callers into continuous authority", async () => {
+  const f = await fixture();
+  f.close();
+  f.continuousScope();
+  const { readSourcePdfV2CoreProof } = await import("./sourcePdfV2CoreProof");
+  await expect(
+    readSourcePdfV2CoreProof(f.lease, f.catalog, f.derivedId, hash),
+  ).rejects.toThrow("CONTRACT_UNSUPPORTED");
+});

@@ -15,6 +15,9 @@ const f = vi.hoisted(() => ({
   run: vi.fn(),
   sourceTransport: vi.fn(),
   catalog: vi.fn(),
+  pdf: vi.fn(),
+  pdfTransport: vi.fn(),
+  pdfVerifier: vi.fn(),
 }));
 vi.mock("../db/database", () => ({ openDatabase: async () => f.database }));
 vi.mock("../repositories/defaultLocalCaptureInboxRepository", () => ({
@@ -45,6 +48,15 @@ vi.mock("./universalOriginalBatch", () => ({
 }));
 vi.mock("../sync/ledgerReportingCoordinator", () => ({
   revalidateJourneyLedger: f.bootstrap,
+}));
+vi.mock("./universalPdfOriginalPreparation", () => ({
+  prepareAdmittedPdfOriginal: f.pdf,
+}));
+vi.mock("../api/sourcePdfV4PreparationTransport", () => ({
+  createSourcePdfV4PreparationTransport: f.pdfTransport,
+}));
+vi.mock("@/native/pendingPdfOriginal", () => ({
+  createPendingPdfOriginalFormatVerifier: f.pdfVerifier,
 }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -295,3 +307,98 @@ it("prepares the Task only from admitted text while matching exactly the retaine
   ).rejects.toThrow("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");
   expect(prepareTask).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  "single PDF waits for actual seal before preparing a Task (unresolved=%s)",
+  async (unresolved) => {
+    const actor = randomUUID(),
+      trip = randomUUID(),
+      getAccountId = async () => actor;
+    const context = await captureAccountRequestContext(trip, getAccountId);
+    const input = {
+      id: randomUUID(),
+      captureId: randomUUID(),
+      payloadId: randomUUID(),
+      revision: 1,
+      kind: "FILE",
+      declaredContentType: "application/pdf",
+      contentSha256: "b".repeat(64),
+      contentByteCount: 7,
+    };
+    const model = {
+      batch: { batchId: randomUUID(), jobId: randomUUID() },
+      inputs: [input],
+    } as unknown as CaptureJobReadModel;
+    const prepared = {
+      inputId: input.id,
+      bindingId: randomUUID(),
+      sourceCommand: { command: "ACQUIRE_SOURCE" },
+    };
+    const pin = { inputId: input.id, representationId: randomUUID() };
+    const readPin = vi.fn(async () => pin),
+      apply = vi.fn(),
+      read = vi.fn(async () => ({}));
+    f.source.mockReturnValue({ readAdmittedInputPin: readPin });
+    f.imports.mockReturnValue({ applyUniversalCatalogs: apply });
+    f.catalog.mockReturnValue({ readUniversal: read });
+    f.sourceTransport.mockReturnValue({
+      lookup: vi.fn(async () => '{"outcome":"APPLIED"}'),
+    });
+    f.native.mockResolvedValue(vi.fn());
+    f.captures.getForSourceHandoff.mockResolvedValue({
+      capture: {
+        id: input.captureId,
+        payloadId: input.payloadId,
+        accountId: actor,
+        tripId: trip,
+        revision: 2,
+        sha256: input.contentSha256,
+        byteCount: input.contentByteCount,
+      },
+      bytes: new Uint8Array(7),
+    });
+    f.plans.mockResolvedValue([]);
+    f.run.mockResolvedValue({
+      batchId: model.batch.batchId,
+      submissionSha256: "a".repeat(64),
+      inputs: [prepared],
+      unhandledInputIds: [],
+      results: [{ state: "ADMITTED" }],
+    });
+    f.pdf.mockImplementation(async () => {
+      if (unresolved) throw Error("PDF_UPLOAD_OUTCOME_UNRESOLVED");
+    });
+    const prepareTask = vi.fn();
+    const work = prepareDefaultUniversalCaptureSources(context, model, {
+      baseUrl: "https://api-dev.xoery.art",
+      getAccountId,
+      assertCurrent() {},
+      pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1",
+      prepareTask,
+    });
+    if (unresolved) {
+      await expect(work).rejects.toThrow("PDF_UPLOAD_OUTCOME_UNRESOLVED");
+      expect(prepareTask).not.toHaveBeenCalled();
+      expect(readPin).not.toHaveBeenCalled();
+    } else {
+      await work;
+      expect(prepareTask).toHaveBeenCalledWith(
+        expect.objectContaining({ inputs: [pin] }),
+      );
+      expect(f.pdf.mock.invocationCallOrder[0]).toBeLessThan(
+        read.mock.invocationCallOrder[0],
+      );
+      expect(apply.mock.invocationCallOrder[0]).toBeLessThan(
+        readPin.mock.invocationCallOrder[0],
+      );
+    }
+    expect(f.pdf).toHaveBeenCalledWith(
+      context,
+      expect.objectContaining({
+        acquisition: prepared.sourceCommand,
+        binding: expect.objectContaining({ captureRevision: 2, inputId: input.id }),
+      }),
+      expect.anything(),
+    );
+  },
+);

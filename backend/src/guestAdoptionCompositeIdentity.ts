@@ -5,7 +5,7 @@ import { guestAdoptionPreparationSchema } from "../../src/data/auth/guestAdoptio
 import { verifyGuestSourceCheckpoint } from "../../src/data/auth/guestTripP1SourceSchema";
 import { tripCreateWireResultSchema } from "../../src/domain/trip/tripCreateWireContract";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
-import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
+import { mapGuestAdoptionCommandIdentity } from "../../src/domain/auth/guestAdoptionIdentityMapping";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import { tripCoreSha256Hex } from "../../src/data/repositories/tripCoreSha256";
 
@@ -77,25 +77,9 @@ export async function prepareGuestAdoptionCompositeIdentity(
       targets.add(mapping.targetPersonId);
     }
     const map = new Map(mappings.map((m) => [m.sourcePersonId, m.targetPersonId]));
-    const person = (id: string) => {
-      const target = map.get(id);
-      if (!target) throw Error("GUEST_ADOPTION_IDENTITY_PERSON_MISMATCH");
-      return target;
-    };
     const intents = [];
     for (const original of trip.coreIntents) {
-      const command = structuredClone(original.command);
-      const payload = command.payload as {
-        participation?: { people: string[]; selfPersonId: string | null };
-        acl?: { people: string[] };
-      };
-      if (payload.participation) {
-        payload.participation.people = payload.participation.people.map(person);
-        if (payload.participation.selfPersonId !== null)
-          payload.participation.selfPersonId = person(payload.participation.selfPersonId);
-      }
-      if (payload.acl) payload.acl.people = payload.acl.people.map(person);
-      const mapped = validateCoreCommand(command);
+      const mapped = mapGuestAdoptionCommandIdentity(original.command, map);
       intents.push({
         operationId: mapped.operationId,
         sourceIntentSha256: original.sha256,

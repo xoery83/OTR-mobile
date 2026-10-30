@@ -12,6 +12,14 @@ import {
   guestAdoptionStatusResultSchema,
   type GuestAdoptionStatusRequest,
 } from "@/domain/auth/guestAdoptionStatus";
+import {
+  guestAdoptionReceiptSchema,
+  guestAdoptionReceiptRequestSchema,
+  validateGuestAdoptionReceipt,
+  validateGuestAdoptionCancellationReceipt,
+  type GuestAdoptionReceiptRequest,
+} from "@/domain/auth/guestAdoptionReceipt";
+import { tripCoreSha256Hex } from "@/data/repositories/tripCoreSha256";
 import type { LocalSession } from "@/domain/auth/localSession";
 import { guestVerificationSession, readCommittedLocalPrincipal } from "./authRepository";
 import { refreshSupabaseDevSession } from "./devSupabaseAuth";
@@ -117,17 +125,20 @@ export function createGuestAdoptionTransport(
     }
   }
   const wire = options.fetchImplementation ?? fetch;
-  const client = createApiClient({
-    ...options,
-    maxResponseBytes: 8192,
-    assertRequestCurrent: assertGeneration,
-    accessTokenProvider: token,
-    fetchImplementation: async (input, init) => {
-      await assertGuest();
-      assertGeneration();
-      return wire(input, init);
-    },
-  });
+  const clientFor = (maxResponseBytes: number) =>
+    createApiClient({
+      ...options,
+      maxResponseBytes,
+      assertRequestCurrent: assertGeneration,
+      accessTokenProvider: token,
+      fetchImplementation: async (input, init) => {
+        await assertGuest();
+        assertGeneration();
+        return wire(input, init);
+      },
+    });
+  const client = clientFor(8192);
+  const receiptClient = clientFor(1048576);
   function assertBinding(input: z.infer<typeof bindingSchema>) {
     if (
       input.adoptionId !== binding.adoptionId ||
@@ -157,6 +168,46 @@ export function createGuestAdoptionTransport(
       )
         throw Error("GUEST_ADOPTION_RESPONSE_MISMATCH");
       return result;
+    },
+    async cancel(raw: GuestAdoptionStatusRequest) {
+      const request = guestAdoptionStatusRequestSchema.parse(raw);
+      assertBinding(request);
+      await assertGuest();
+      const result = await receiptClient.post(
+        "/v1/auth/guest-adoptions/cancel",
+        request,
+        guestAdoptionReceiptSchema,
+        { "Idempotency-Key": binding.adoptionId },
+      );
+      await assertGuest();
+      const verified = await validateGuestAdoptionCancellationReceipt(
+        result,
+        request,
+        tripCoreSha256Hex,
+      );
+      await assertGuest();
+      return verified;
+    },
+    async receipt(raw: GuestAdoptionReceiptRequest) {
+      const request = guestAdoptionReceiptRequestSchema.parse(raw);
+      assertBinding(request);
+      await assertGuest();
+      const result = await receiptClient.post(
+        "/v1/auth/guest-adoptions/receipt",
+        request,
+        guestAdoptionReceiptSchema,
+      );
+      await assertGuest();
+      const { receiptId, receiptSha256, ...expected } = request;
+      const verified = await validateGuestAdoptionReceipt(
+        result,
+        expected,
+        tripCoreSha256Hex,
+      );
+      await assertGuest();
+      if (verified.receiptId !== receiptId || verified.receiptSha256 !== receiptSha256)
+        throw Error("GUEST_ADOPTION_RESPONSE_MISMATCH");
+      return verified;
     },
     async status(raw: GuestAdoptionStatusRequest) {
       const request = guestAdoptionStatusRequestSchema.parse(raw);

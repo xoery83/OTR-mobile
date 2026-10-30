@@ -1,0 +1,33 @@
+{
+  "goldenSliceStatus": "BLOCKED_NOT_MOUNTED_IN_HOSTED",
+  "scope": "reviewed source-only PUBLISHED candidate + known fileless75 compatibility",
+  "parentMain": "1cadec86838a7741c11641b42015680557cbb610",
+  "sourceCommits": [
+    "180f3b6e",
+    "510e3840",
+    "8a68f127"
+  ],
+  "curatedCommits": [
+    "fb53165d",
+    "25cb2e12",
+    "a3b2f062"
+  ],
+  "validation": {
+    "changedInterfaceAndBaselineTests": 62,
+    "focusedSchema75Tests": 7,
+    "otherWorkspaceTestsSkippedNotPassed": 109,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS",
+    "stableEvidenceReused": {
+      "publisherAndRelatedTests": 135,
+      "isolatedPg": 46,
+      "actualCurrent14ParentReplay": 48
+    }
+  },
+  "independentReview": "source-only curated NO_BLOCKER; no production Core/Bootstrap/Photo registry change",
+  "currentStateCorrection": "fileless75 only with empty Photo/Capture; nonempty Photo and actual Native/Hosted rollout still closed",
+  "protectedGate": "No Hosted SQL/RLS/GRANT/runtime activation",
+  "rawCatalogInGit": false,
+  "sixOriginalDirtyFiles": "captured before; must match after FF and Push"
+}

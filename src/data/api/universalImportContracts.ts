@@ -53,6 +53,13 @@ export const universalContextSchema = z.strictObject({
   activity: universalTaskActivitySchema.optional(),
 });
 export type UniversalExecutionContext = z.infer<typeof universalContextSchema>;
+// Explicit wake of a server-bound Task only; no Source pins or new Task identity.
+export const universalTaskResumeSchema = z.strictObject({
+  version: z.literal("otr.backend.universal-resume/1"),
+  tripId: uuid,
+  batchId: uuid,
+  taskId: uuid,
+});
 // Observed owning Source pins only; Backend qualifies them and owns Run/Task identity.
 export const universalBatchPrepareSchema = z.strictObject({
   tripId: uuid,

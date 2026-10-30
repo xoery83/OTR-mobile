@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_PASS_NOT_DEV_VERIFIED",
+  "problem": "existing Task Start repeated Source/PDF preparation after a backend restart/window close",
+  "repair": "strict versioned resume body on existing prepare endpoint, server-bound identity check, existing targeted queue only; Native does not replay Source preparation",
+  "redTests": 2,
+  "focusedSuites": 7,
+  "tests": 88,
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "uiGuard": "PASS",
+  "readOnlyGetRemainsReadOnly": true,
+  "createsTaskOrSource": false,
+  "resetsDeadline": false,
+  "providerRetryAuthority": false,
+  "backendTaskSchema": 74,
+  "nativeOnlyMigrationExcluded": 75,
+  "devDeployed": false
+}

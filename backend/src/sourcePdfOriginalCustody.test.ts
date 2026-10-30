@@ -9,7 +9,7 @@ const closers: (() => Promise<void>)[] = [];
 afterEach(async () => {
   for (const close of closers.splice(0)) await close();
 });
-async function fixture() {
+async function fixture(serviceToken = "synthetic") {
   const bytes = Buffer.from("%PDF-synthetic-original");
   const scope = {
     accountId: randomUUID(),
@@ -27,6 +27,15 @@ async function fixture() {
   const server = createServer((request, response) => {
     count++;
     paths.push(request.url!);
+    if (
+      serviceToken.startsWith("sb_secret_") &&
+      (request.headers.apikey !== serviceToken ||
+        request.headers.authorization !== undefined)
+    ) {
+      response.writeHead(401, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ error: "INVALID_JWT_FIXTURE" }));
+      return;
+    }
     response.writeHead(status, headers);
     response.end(body);
   });
@@ -42,7 +51,7 @@ async function fixture() {
     instanceId: "synthetic-custody",
     origin: `http://127.0.0.1:${address.port}`,
     credentialRef: "synthetic",
-    serviceToken: "synthetic",
+    serviceToken,
     timeoutMs: 500,
     localFixture: true as const,
   };
@@ -128,4 +137,42 @@ it("custody scope is copied and included in the provider fingerprint", async () 
   expect(producer.configurationSha256).not.toBe(
     createSourcePdfV2StorageProducer(f.config).configurationSha256,
   );
+});
+it("request guard checks normal access around GET without changing the fixed provider identity", async () => {
+  const f = await fixture();
+  let allowed = false,
+    checks = 0;
+  const guard = {
+    assertRequestCurrent() {},
+    async assertCurrent() {
+      checks++;
+      if (!allowed) throw Error("PDF_SCOPE_FORBIDDEN");
+    },
+  };
+  const guarded = createSourcePdfV2StorageProducer(
+    f.config,
+    f.worker,
+    { accountId: f.scope.accountId, tripId: f.scope.tripId },
+    guard,
+  );
+  expect(guarded.configurationSha256).toBe(f.producer.configurationSha256);
+  await expect(guarded.readOriginal(f.scope)).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(f.count()).toBe(0);
+  allowed = true;
+  checks = 0;
+  guard.assertCurrent = async () => {
+    checks++;
+    if (checks > 1) throw Error("PDF_SCOPE_FORBIDDEN");
+  };
+  await expect(guarded.readOriginal(f.scope)).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(f.count()).toBe(1);
+  expect(checks).toBe(2);
+});
+
+it("uses the secret API key header for custody, never interprets it as a JWT", async () => {
+  const f = await fixture("sb_secret_local_fixture");
+  await expect(f.producer.readOriginal(f.scope)).resolves.toEqual(
+    new Uint8Array(f.bytes),
+  );
+  expect(f.count()).toBe(1);
 });

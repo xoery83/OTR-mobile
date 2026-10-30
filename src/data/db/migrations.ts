@@ -1,3 +1,4 @@
+import { capturePhotoImportDecisionsDefinition } from "./migrations/capturePhotoImportDecisions";
 import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
 import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
 import { tripMetadataConfirmationsMigration } from "./migrations/tripMetadataConfirmations";
@@ -1731,4 +1732,5 @@ export const migrations: Migration[] = [
   tripMetadataConfirmationsMigration,
   captureMixedInputsMigration,
   tripPersonCloudCreateMigration,
+  { ...capturePhotoImportDecisionsDefinition, id: 75 },
 ];

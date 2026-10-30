@@ -1,4 +1,5 @@
 import * as authRepository from "./authRepository";
+import { createCaptureSubmissionRepository } from "../repositories/captureSubmissionRepository";
 import { guestP1DraftSnapshotSchema } from "@/domain/auth/guestP1Draft";
 import { createGuestHandoffInventory } from "./guestHandoffInventory";
 import { createGuestTripDraftInventory } from "./guestTripDraftInventory";
@@ -29,6 +30,7 @@ import { createTripCoreV2Repository } from "../repositories/tripCoreV2Repository
 import { createTripRepository } from "../repositories/tripRepository";
 import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { runMigrations } from "../db/migrationRunner";
+import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { createGuestLocalWorkspaceOpener } from "./guestLocalWorkspace";
 import { advanceAccountGeneration, getAccountGeneration } from "./accountGeneration";
@@ -41,6 +43,14 @@ const accountOpener = vi.hoisted(() =>
     throw Error("ACCOUNT_DATABASE_FORBIDDEN");
   }),
 );
+// Existing nonempty source fixtures remain the qualified schema74, even after App migrations advance.
+vi.mock("../db/migrations", async (loadOriginal) => {
+  const actual = await loadOriginal<typeof import("../db/migrations")>();
+  return {
+    ...actual,
+    migrations: actual.migrations.filter((migration) => migration.id <= 74),
+  };
+});
 vi.mock("../db/database", () => ({
   openDatabase: accountOpener,
   readInitializedDatabase: accountOpener,
@@ -2252,3 +2262,202 @@ it("cannot replay an empty preparation after an intervening account generation",
     prepared.release();
   }
 });
+
+// Reuse the frozen Photo75 definition; Auth does not own or change its migration.
+function installPhoto75(f: ReturnType<typeof fixture>) {
+  const sql = f.opened[0].sql;
+  const source = readFileSync(
+    new URL("./__fixtures__/capturePhotoImportDecisions75.sql", import.meta.url),
+    "utf8",
+  );
+  sql.exec(source);
+  sql
+    .prepare(
+      "INSERT INTO schema_migrations(id,name,applied_at) VALUES(75,'capture_photo_import_decisions',?)",
+    )
+    .run("2026-10-30T00:00:00.000Z");
+  return source;
+}
+it("qualifies entirely empty registered Photo75 while preserving existing Session install fences", async () => {
+  const { beginAccountTransition, endAccountTransition } =
+    await import("./accountRequestContext");
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const ddl = installPhoto75(f);
+  expect(await tripCoreSha256Hex(new TextEncoder().encode(ddl))).toBe(
+    "45a7e26d82aaddd99100bcff64bb2b8591ba1365351931bfdbf0f966b2a18b1f",
+  );
+  migrations.push({ id: 75, name: "capture_photo_import_decisions", sql: ddl });
+  cleanups.push(() => {
+    migrations.pop();
+  });
+  expect(
+    (await workspace.readCensus(completeExternalInventory(workspace))).blockers,
+  ).not.toContain("SQLITE_SCHEMA_UNSUPPORTED");
+  const prepared = await workspace.prepareEmptySessionInstall();
+  const lease = await beginAccountTransition();
+  try {
+    await (await prepared.qualify(lease)).assertCurrent();
+  } finally {
+    endAccountTransition(lease);
+    prepared.release();
+  }
+});
+it.each(["wrong-name", "missing-table", "unknown76"])(
+  "rejects %s even with no business rows",
+  async (kind) => {
+    const f = fixture(),
+      workspace = await f.newOpener()();
+    if (kind !== "missing-table") installPhoto75(f);
+    else
+      f.opened[0].sql.exec(
+        "INSERT INTO schema_migrations VALUES(75,'capture_photo_import_decisions','2026-10-30T00:00:00.000Z');",
+      );
+    if (kind === "wrong-name")
+      f.opened[0].sql.exec(
+        "UPDATE schema_migrations SET name='unqualified' WHERE id=75;",
+      );
+    if (kind === "unknown76")
+      f.opened[0].sql.exec(
+        "INSERT INTO schema_migrations VALUES(76,'unqualified','2026-10-30T00:00:00.000Z');",
+      );
+    await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+      "PREFLIGHT_REQUIRED",
+    );
+  },
+);
+it("retains a real Photo75 table row and its local C3 original rather than allowing empty login", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  installPhoto75(f);
+  const db = await f.open.mock.results[0].value;
+  const repository = createCaptureSubmissionRepository(db, async () => f.guestId, {
+    sha256: tripCoreSha256Hex,
+    now: () => "2026-10-30T00:00:00.000Z",
+    newId: randomUUID,
+  });
+  const batchId = randomUUID(),
+    inputId = randomUUID(),
+    jobId = randomUUID();
+  await repository.submit(
+    {
+      formatVersion: 1,
+      manifestVersion: 1,
+      accountId: f.guestId,
+      batchId,
+      jobId,
+      submissionKey: randomUUID(),
+      createdAt: "2026-10-30T00:00:00.000Z",
+      context: {
+        id: randomUUID(),
+        version: 1,
+        accountId: f.guestId,
+        batchId,
+        observedAt: "2026-10-30T00:00:00.000Z",
+        clock: "DEVICE_WALL",
+        entrySurface: "CAPTURE",
+        tripPrior: null,
+      },
+      inputs: [
+        {
+          id: inputId,
+          itemKey: randomUUID(),
+          ordinal: 0,
+          acquisitionSource: "photos",
+          kind: "IMAGE",
+          originalFilename: null,
+          declaredContentType: "image/jpeg",
+          continuesFromInputId: null,
+        },
+      ],
+    },
+    new Map([[inputId, async () => ({ bytes: Uint8Array.of(255, 216, 255, 1, 2) })]]),
+  );
+  const accepted = (await repository.read(jobId)).inputs[0];
+  expect(accepted.state).toBe("ACCEPTED");
+  const pin = {
+    accountId: f.guestId,
+    batchId,
+    inputId,
+    ordinal: 0,
+    captureId: accepted.captureId,
+    captureRevision: accepted.captureRevision,
+    payloadId: accepted.payloadId,
+    sha256: accepted.contentSha256,
+    byteCount: accepted.contentByteCount,
+    mediaType: "image/jpeg",
+  };
+  const body = JSON.stringify({ version: 1, pin });
+  f.opened[0].sql
+    .prepare(
+      "INSERT INTO capture_photo_import_decisions VALUES(?,?,CAST(1 AS INTEGER),?,?)",
+    )
+    .run(f.guestId, inputId, body, "2026-10-30T00:00:00.000Z");
+  const before = f.opened[0].sql
+    .prepare("SELECT * FROM capture_photo_import_decisions")
+    .all();
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+    "PREFLIGHT_REQUIRED",
+  );
+  expect(
+    f.opened[0].sql.prepare("SELECT * FROM capture_photo_import_decisions").all(),
+  ).toEqual(before);
+  expect((await repository.read(jobId)).inputs[0].state).toBe("ACCEPTED");
+  expect((await workspace.readCensus()).blockers).toContain(
+    "UNSUPPORTED_TABLE:capture_photo_import_decisions",
+  );
+  const vault = await workspace.freezeForInventory();
+  await expect(vault.readTripP1Source()).rejects.toThrow("QUALIFICATION_REQUIRED");
+  await vault.release();
+});
+
+it("retains the same saved Trip/P1 source across schema75 close/reopen with an empty Photo table", async () => {
+  const f = await handoffFixture();
+  const ddl = installPhoto75(f.f);
+  migrations.push({ id: 75, name: "capture_photo_import_decisions", sql: ddl });
+  cleanups.push(() => {
+    migrations.pop();
+  });
+  const vault = await f.workspace.freezeForInventory(),
+    source = await vault.readTripP1Source();
+  const record = {
+    canonicalText: source.canonicalText,
+    sha256: source.sha256,
+    bytes: Buffer.byteLength(source.canonicalText),
+  };
+  const verified = await verifyGuestSourceCheckpoint(record, {
+    sourceGuestLocalId: f.f.guestId,
+    tripIds: [f.trip.tripId],
+  });
+  expect(verified.sqliteVersion).toBe(75);
+  expect(verified.trips[0].create.tripId).toBe(f.trip.tripId);
+  expect(verified.trips[0].coreIntents[0].command.target.id).toBe(f.saved.itemId);
+  expect(source.cloudAuthority).toBe(false);
+  await vault.release();
+  f.f.close();
+  advanceAccountGeneration();
+  const reopened = await f.f.newOpener()(),
+    again = await reopened.freezeForInventory();
+  expect((await again.readTripP1Source()).canonicalText).toBe(source.canonicalText);
+  await again.release();
+});
+it.each(["wrong-name", "missing-table", "unknown76"])(
+  "rejects saved source on %s without altering Trip/P1",
+  async (kind) => {
+    const f = await handoffFixture();
+    installPhoto75(f.f);
+    const db = f.f.opened[0].sql;
+    if (kind === "wrong-name")
+      db.exec("UPDATE schema_migrations SET name='unqualified' WHERE id=75");
+    if (kind === "missing-table") db.exec("DROP TABLE capture_photo_import_decisions");
+    if (kind === "unknown76")
+      db.exec(
+        "INSERT INTO schema_migrations VALUES(76,'unknown','2026-10-30T00:00:00Z')",
+      );
+    const before = db.prepare("SELECT * FROM local_trip_containers").all();
+    const vault = await f.workspace.freezeForInventory();
+    await expect(vault.readTripP1Source()).rejects.toThrow("QUALIFICATION_REQUIRED");
+    expect(db.prepare("SELECT * FROM local_trip_containers").all()).toEqual(before);
+    await vault.release();
+  },
+);

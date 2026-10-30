@@ -248,6 +248,28 @@ it("selects one normal Catalog, lazily binds actual method Trip and wakes only e
   await vi.waitFor(() =>
     expect(ports.drainTargeted).toHaveBeenCalledExactlyOnceWith(batch, task),
   );
+  ports.prepare.mockClear();
+  ports.drainTargeted.mockClear();
+  const resume = {
+    version: "otr.backend.universal-resume/1",
+    tripId: trip,
+    batchId: batch,
+    taskId: task,
+  };
+  expect(await bound.prepare(trip, resume)).toEqual({ status: "EXISTING", context });
+  expect(ports.prepare).not.toHaveBeenCalled();
+  expect(ports.universalImportPort.readContext).toHaveBeenCalledExactlyOnceWith(
+    actor,
+    batch,
+    trip,
+  );
+  await vi.waitFor(() =>
+    expect(ports.drainTargeted).toHaveBeenCalledExactlyOnceWith(batch, task),
+  );
+  await expect(bound.prepare(trip, { ...resume, taskId: randomUUID() })).rejects.toThrow(
+    "UNIVERSAL_CONTEXT_MISMATCH",
+  );
+  expect(ports.drainTargeted).toHaveBeenCalledOnce();
   mocks.server.once.mock.calls[0][1]();
   expect(runtime.close).toHaveBeenCalledOnce();
 });

@@ -9,11 +9,15 @@ import type { CorePgLease } from "../tripCoreV2PgStorage";
 import type { CoreSourceCatalogV2 } from "../tripCoreV2Source";
 const sha = (v: string | Uint8Array) => createHash("sha256").update(v).digest("hex");
 const hash = async (v: Uint8Array) => sha(v);
-export async function sourcePdfV2ProofFixture() {
+export async function sourcePdfV2ProofFixture(scope?: {
+  actorAccountId: string;
+  tripId: string;
+  sourceId: string;
+}) {
   const catalog: CoreSourceCatalogV2 = {
-    actorAccountId: randomUUID(),
-    tripId: randomUUID(),
-    sourceId: randomUUID(),
+    actorAccountId: scope?.actorAccountId ?? randomUUID(),
+    tripId: scope?.tripId ?? randomUUID(),
+    sourceId: scope?.sourceId ?? randomUUID(),
     sourceRevision: 1,
     inputCatalogSha256: "a".repeat(64),
     source: { row_revision: 2, current_material_revision: 1 },
@@ -85,7 +89,9 @@ export async function sourcePdfV2ProofFixture() {
     body,
     seal_sha256: await coreHashValue("otr-source-pdf-seal-v2", body, hash),
   };
-  let enabled = true;
+  let enabled = true,
+    scopeAvailable = false,
+    scopeAllowed = false;
   const selections = [{ original, derived }];
   const lease: CorePgLease = {
     retire: vi.fn(),
@@ -96,6 +102,19 @@ export async function sourcePdfV2ProofFixture() {
       if (sql.includes("to_regclass")) return { rows: [{ available: true }] };
       if (sql.includes("SELECT s.body")) return { rows: [sealed] };
       if (sql.includes("SELECT enabled")) return { rows: [{ enabled }] };
+      if (sql.includes("to_regprocedure"))
+        return { rows: [{ available: scopeAvailable }] };
+      if (sql.includes("trip_sustained_universal_pdf_allowed"))
+        return {
+          rows: [
+            {
+              allowed:
+                scopeAllowed &&
+                args[0] === catalog.actorAccountId &&
+                args[1] === catalog.tripId,
+            },
+          ],
+        };
       if (sql.includes("SELECT to_jsonb"))
         return { rows: [{ row: args[0] === originalId ? original : derived }] };
       throw Error("Unexpected synthetic SQL");
@@ -113,6 +132,10 @@ export async function sourcePdfV2ProofFixture() {
     lease,
     close: () => {
       enabled = false;
+    },
+    continuousScope: (allowed = true) => {
+      scopeAvailable = true;
+      scopeAllowed = allowed;
     },
     rehash: async () => {
       sealed.seal_sha256 = await coreHashValue("otr-source-pdf-seal-v2", body, hash);

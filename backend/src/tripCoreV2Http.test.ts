@@ -549,3 +549,32 @@ it("does not advertise authored Flight commands to older clients without explici
   }
   expect(produced.enabledCommands).toContain("SET_AUTHORED_FLIGHT_DETAILS");
 });
+
+it.each([false, true])(
+  "keeps Source Plan failure diagnostics bounded (broken logger: %s)",
+  async (brokenLog) => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (brokenLog) throw Error("logger unavailable");
+    });
+    try {
+      const response = await coreHttpBoundary(
+        request("source-plans/prepare", JSON.stringify({ captureVersion: 2 })),
+        actor,
+        async () => {
+          throw Error("CORE_CONNECTION_TIMEOUT");
+        },
+      );
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({
+        error: { code: "CORE_EXECUTION_UNAVAILABLE" },
+      });
+      if (!brokenLog)
+        expect(JSON.parse(String(log.mock.calls[0][0]))).toEqual({
+          event: "core_source_prepare_failed",
+          category: "CORE_CONNECTION_TIMEOUT",
+        });
+    } finally {
+      log.mockRestore();
+    }
+  },
+);

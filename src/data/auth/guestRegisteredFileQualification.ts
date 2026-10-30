@@ -32,7 +32,7 @@ export async function readGuestRegisteredFileQualification(deps: {
   await deps.assertCurrent();
   const census = await deps.readCensus();
   if (
-    census.sqliteVersion !== 74 ||
+    ![74, 75].includes(census.sqliteVersion) ||
     census.scope.localId !== deps.scope.localId ||
     census.scope.generation !== deps.scope.generation ||
     census.blockers.some(

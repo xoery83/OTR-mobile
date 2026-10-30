@@ -6,9 +6,17 @@ export function serializeUniversalSourceConnection(
   connection: CorePgConnection,
   assertCurrent: () => void,
 ): CorePgConnection {
+  return serializeUniversalSourceConnections([connection], assertCurrent)[0];
+}
+
+// Normal/PDF budgets share the same existing principal's FIFO and backlog quota.
+export function serializeUniversalSourceConnections(
+  connections: readonly CorePgConnection[],
+  assertCurrent: () => void,
+): CorePgConnection[] {
   let tail = Promise.resolve(),
     pending = 0;
-  return {
+  return connections.map((connection) => ({
     async withLease(work) {
       if (pending >= 4) throw Error("CORE_CONNECTION_BUSY");
       pending++;
@@ -32,5 +40,5 @@ export function serializeUniversalSourceConnection(
         });
       }
     },
-  };
+  }));
 }

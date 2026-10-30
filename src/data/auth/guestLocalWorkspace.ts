@@ -1,3 +1,4 @@
+import { isKnownGuestSqliteSchema } from "./guestSqliteSchema";
 import { guestTripDraftInventory } from "./guestTripDraftInventory";
 import { guestP1DraftInventory } from "./guestP1DraftInventory";
 import type { EmptyGuestSessionPreparation } from "./authSessionRepository";
@@ -180,7 +181,8 @@ export function createGuestLocalWorkspaceOpener(deps: {
             if ((await deps.recoveryFiles(localId).listAttempts()).length !== 0)
               throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
             await database.withTransactionAsync(async () => {
-              if ((await getSchemaVersion(database)) !== 74)
+              const version = await getSchemaVersion(database);
+              if (!(await isKnownGuestSqliteSchema(database, version)))
                 throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
               const tables = await database.getAllAsync<{ name: string }>(
                 "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",

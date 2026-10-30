@@ -1,3 +1,4 @@
+import { withAcceptedUniversalReceiptRead } from "./universalAcceptedSourceReceipt";
 import { universalItemSourceReviewSchema } from "../../src/domain/trip/universalP1SourceReview";
 import { universalP2SourceReviewSchema } from "../../src/domain/trip/universalP2SourceReview";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
@@ -1127,12 +1128,14 @@ export function createCoreSourcePgAuthority(
             try {
               current =
                 slot.p1 && options.readUniversalP1
-                  ? await readUniversalP1Catalog(
-                      lease,
-                      own,
-                      ids,
-                      hash,
-                      options.readUniversalP1,
+                  ? await withAcceptedUniversalReceiptRead(lease, own, slot, () =>
+                      readUniversalP1Catalog(
+                        lease,
+                        own,
+                        ids,
+                        hash,
+                        options.readUniversalP1!,
+                      ),
                     )
                   : await catalogForCandidates(
                       lease,

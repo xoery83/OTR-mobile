@@ -1292,6 +1292,30 @@ causal observation POST consumes any existing explicit QA read allocation rather
 than bypassing it; no allocation or limit increases. A transport observation does
 not replace the owning Source operation receipt, custody verification or seal.
 
+A matching GET `.../pdf-v4/:operationId/status` reads the existing inventory under
+normal Auth/Trip access. It returns only `STATUS_OBSERVED` plus a strict status
+enum, never the journal or resource/run capabilities. `NO_ACTIVE_ATTEMPT` also
+covers cleaned terminal attempts and does not prove no historical receipt.
+`DISPATCH_RECORDED` proves a durable journal grant, not that a remote POST ran.
+ACK/GET observations do not grant custody verification, Source or Admission.
+Old owner/provider state returns `RECOVERY_REQUIRED`; UNKNOWN never dispatches.
+The Native GET consumes the existing explicit QA read budget. Startup stays closed.
+
+The optional per-request composition is created only after normal bearer Auth and
+Trip checks and is closed in the boundary's `finally`. The explicit
+`SOURCE_REQUEST_LIFETIME_V1` marker is an internal async request fence, not a
+persistent Account/Session epoch or authorization claim. It never enters SQL,
+receipts or Native JSON and cannot establish cross-request/restart continuity.
+Legacy V3/non-continuous V4 reject it. Normal Auth/Trip is independently rechecked
+around SQL and Storage IO; synchronous lifetime checks also guard queued leases,
+scope entry and owning queries. Request abort/close stops deferred work. A closed
+per-request composition never falls back to an older global port.
+
+An in-flight COMMIT or Storage POST can still complete before closure is observed;
+withholding its late result does not undo it. Existing durable operation/resource
+identity and UNKNOWN/readback rules remain mandatory; no automatic replacement
+or write retry. This composition is not supplied by normal startup yet.
+
 ## Universal Import — unstarted deadline recovery (implementation candidate)
 
 A status GET remains read-only and projects the persisted owning Task/revision.
@@ -1304,6 +1328,15 @@ by this path. Completed/failed/canceled/stale observations do not authorize a ne
 Source preparation; Native retains read-only Results/original recovery. No wire
 state enum, Schema, GRANT or Admission authority is added. Runtime acceptance
 must be recorded separately from local tests.
+
+An explicit existing-Task resume uses the existing authenticated POST prepare
+endpoint with strict `{version:"otr.backend.universal-resume/1",tripId,batchId,taskId}`
+and Task ID idempotency header. It accepts no Source/input/provider facts. The
+Backend reads and compares the owning context, returns EXISTING/202, and wakes
+only that existing queue. Native explicit Start uses it when a Task is already
+known; reopen/status GET never wakes. Mismatched Task/context or QUEUED resume
+responses are rejected. Existing Attempts cannot get another Provider send; the
+normal expired-unstarted branch records its owning deadline failure.
 
 ## Universal Import — bounded Source P1 integration (2026-10-26)
 
@@ -1359,3 +1392,26 @@ These are partial recent processing records with no invented unread state, Save 
 `SET_AUTHORED_FLIGHT_DETAILS` is a local candidate in the existing Core finite command union, not enabled in any deployed capability or Native normal runner. It writes only the same Creator's existing SPARSE P2 Item with an exact base revision; the Backend must additionally require receipted MANUAL Create provenance before enabling it. Literal/airport/name/terminal/civil boundaries remain authored and unresolved; no Source proof, qualified Flight service, Booking/Ticket/Segment/Journey or UTC authority is created. Existing `SAVE_AUTHORED_FLIGHT_LOCAL` stays local-only. See ops/manual-cloud-e2e-20261028/P2_MANUAL_MINIMUM_PORT_20261029.md; exact Backend/SQL/Native Queue work and protected approval remain pending.
 
 The dormant authored Flight capability extension uses `X-OTR-Core-Authored-Flight: 1` only to advertise that a client can parse `SET_AUTHORED_FLIGHT_DETAILS`. GET capabilities omits that new enum for absent/unknown header values so older v2 clients keep parsing their existing P1/P3-P6 capabilities. New Native sends the header only on capabilities requests. SQL permission, command submission, Creator/provenance, Source exact-operation and receipt rules do not depend on this header. Responses retain private/no-store and vary by Authorization plus this parser-support header.
+
+### Guest Adoption terminal receipt read candidate — 30 October 2026
+
+Unmounted/default closed: normal authenticated `POST /v1/auth/guest-adoptions/receipt`
+accepts the exact v1 status binding plus its terminal `receiptId`/`receiptSha256`.
+Only an owning immutable terminal reader may supply the response. The boundary
+validates the complete receipt binding, digest and pointer; another Account,
+malformed, missing or unverified record never returns a receipt. The request is
+bounded to8KiB and receipt to1MiB; responses are private/no-store. Grant expiry
+does not invalidate an already committed terminal receipt. This read neither
+publishes/cancels nor releases Guest holds; terminal status, retained source
+coverage, owning readback and local restore remain required. No runtime mount,
+SQL installation or source-release authority is enabled by this candidate.
+
+The paired unmounted `POST /v1/auth/guest-adoptions/cancel` uses that same status
+binding and requires `Idempotency-Key: adoptionId`. Only the owning cancellation
+writer can return a verified terminal receipt. COMMIT uncertainty returns
+`GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN`; it never authorizes local cancellation
+or another attempt. Existing Guest verification Session/generation fences remain
+active for both read and cancel. The disposable SQL journal currently permits
+CANCELLED only; full publication remains closed. Existing Account authorization
+requires a policy share lock, so the PG read adapter uses a normal repeatable-read
+transaction containing only the two fixed owning read functions.

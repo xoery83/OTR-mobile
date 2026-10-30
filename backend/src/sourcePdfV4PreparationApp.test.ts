@@ -79,3 +79,61 @@ it("a supplied owning port receives the authenticated route identity, not a new 
     accountGeneration: 2,
   });
 });
+it.each([200, 503])(
+  "request-scoped composition closes on business result %s",
+  async (status) => {
+    const f = fixture(),
+      close = vi.fn();
+    if (status === 503) f.preparation.upload.mockRejectedValue(Error("UNKNOWN"));
+    const scoped = vi.fn(async () => ({
+      port: { owner: f.owner, preparation: f.preparation } as never,
+      close,
+    }));
+    const r = await createDevBackendHandler({
+      gateway: f.gateway,
+      sourcePdfV4PreparationForRequest: scoped,
+    })(f.request());
+    expect(r.status).toBe(status);
+    expect(scoped).toHaveBeenCalledExactlyOnceWith(expect.any(Request), f.actor);
+    expect(close).toHaveBeenCalledOnce();
+  },
+);
+it.each(["Auth", "Trip"])(
+  "request scope is not composed before normal %s authorization",
+  async (denied) => {
+    const f = fixture(),
+      scoped = vi.fn();
+    if (denied === "Trip") vi.mocked(f.gateway.canReadTrip).mockResolvedValue(false);
+    const r = await createDevBackendHandler({
+      gateway: f.gateway,
+      sourcePdfV4PreparationForRequest: scoped,
+    })(f.request(denied !== "Auth"));
+    expect(r.status).toBe(denied === "Auth" ? 401 : 403);
+    expect(scoped).not.toHaveBeenCalled();
+  },
+);
+it("an explicitly closed request scope never falls back to an older global port", async () => {
+  const f = fixture();
+  const r = await createDevBackendHandler({
+    gateway: f.gateway,
+    sourcePdfV4PreparationPort: { owner: f.owner, preparation: f.preparation } as never,
+    sourcePdfV4PreparationForRequest: async () => undefined,
+  })(f.request());
+  expect(r.status).toBe(503);
+  expect(f.preparation.upload).not.toHaveBeenCalled();
+});
+it("request abort during composition closes its scope before any IO", async () => {
+  const f = fixture(),
+    controller = new AbortController(),
+    close = vi.fn();
+  const request = new Request(f.request(), { signal: controller.signal });
+  await createDevBackendHandler({
+    gateway: f.gateway,
+    sourcePdfV4PreparationForRequest: async () => {
+      controller.abort();
+      return { port: { owner: f.owner, preparation: f.preparation } as never, close };
+    },
+  })(request);
+  expect(close).toHaveBeenCalledOnce();
+  expect(f.preparation.upload).not.toHaveBeenCalled();
+});

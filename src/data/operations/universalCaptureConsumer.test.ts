@@ -13,6 +13,7 @@ vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 function fixture(
   prepareSources?: Parameters<typeof createUniversalCaptureConsumer>[0]["prepareSources"],
   continuous = false,
+  resumeTask?: (context: unknown, binding: UniversalExecutionContext) => Promise<void>,
 ) {
   const accountId = randomUUID(),
     tripId = randomUUID(),
@@ -54,6 +55,7 @@ function fixture(
     isCurrent: () => active,
     transport,
     prepareSources,
+    resumeTask,
     continuous,
   });
   return {
@@ -446,3 +448,79 @@ it.each(["hash", "size", "kind", "media", "parent"])(
     expect(f.transport.execute).not.toHaveBeenCalled();
   },
 );
+
+it("explicit existing Task resume never repeats Source preparation or paid execute", async () => {
+  const prepare = vi.fn(async () => {}),
+    resume = vi.fn(async () => {});
+  const f = fixture(prepare, true, resume);
+  f.transport.result.mockRejectedValue(absent());
+  expect(await f.consumer.recover(f.model)).toBeNull();
+  expect(resume).not.toHaveBeenCalled();
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(resume).toHaveBeenCalledOnce();
+  expect(prepare).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+it("explicitly resumes the same retained running Task while passive marker recovery stays read-only", async () => {
+  const resume = vi.fn(async () => {}),
+    prepare = vi.fn(async () => {}),
+    f = fixture(prepare, true, resume),
+    binding = await f.transport.context();
+  Object.assign(f.result, {
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+  });
+  f.transport.context.mockResolvedValue({
+    ...binding,
+    activity: {
+      state: "PROCESSING",
+      recordedAt: "2026-10-30T07:48:54Z",
+      updatedAt: "2026-10-30T07:50:39Z",
+      completedAt: null,
+      rowRevision: 3,
+      attemptCount: 1,
+      waitReason: null,
+    },
+  });
+  expect(await f.consumer.recover(f.model)).toBeNull();
+  expect(resume).not.toHaveBeenCalled();
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(resume).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId: binding.accountId, tripId: binding.tripId }),
+    expect.objectContaining({ taskId: binding.taskId, batchId: binding.batchId }),
+  );
+  expect(f.consumer.queued).toBe(true);
+  expect(prepare).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+it("keeps a newly prepared processing marker pending without an extra resume", async () => {
+  const resume = vi.fn(async () => {}),
+    prepare = vi.fn(async () => {}),
+    f = fixture(prepare, true, resume),
+    binding = await f.transport.context();
+  Object.assign(f.result, {
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+  });
+  f.transport.context
+    .mockResolvedValue({
+      ...binding,
+      activity: {
+        state: "PROCESSING",
+        recordedAt: "2026-10-30T07:48:54Z",
+        updatedAt: "2026-10-30T07:50:39Z",
+        completedAt: null,
+        rowRevision: 3,
+        attemptCount: 1,
+        waitReason: null,
+      },
+    })
+    .mockRejectedValueOnce(absent());
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(f.consumer.queued).toBe(true);
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(resume).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});

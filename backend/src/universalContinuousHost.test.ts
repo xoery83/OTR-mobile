@@ -1,3 +1,4 @@
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 // Network-none composition fixture: actual Task SQLite/Repository/Queue and
 // ContinuationHost. Source/Catalog/Provider/usage-proof ports are controlled
 // synthetic fixtures, NOT DEV, real Provider, Auth or Admission acceptance.
@@ -27,7 +28,12 @@ import { persistenceDigest } from "./externalIntegrationPersistence";
 const fakeRuntime = vi.hoisted(() => vi.fn());
 vi.mock("./universalRuntime", () => ({ createUniversalBackendRuntime: fakeRuntime }));
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
-it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
+const hostCases = [
+  { expired: false, pdf: false },
+  { expired: true, pdf: false },
+  { expired: false, pdf: true },
+];
+it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
   const sql = new DatabaseSync(":memory:"),
     db = initializeUniversalTaskDatabase(sql);
   try {
@@ -45,6 +51,48 @@ it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
       run_id: runId,
     };
     const { run_id: _run, confirmation_id: _confirmation, ...pin } = input;
+    const pdfSource = pdf
+      ? {
+          original: {
+            representationId: randomUUID(),
+            sha256: "d".repeat(64),
+            byteCount: 1700,
+          },
+          sealSha256: "e".repeat(64),
+          pageMapSha256: "f".repeat(64),
+          transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+        }
+      : undefined;
+    const originalPdf = pdfSource
+      ? {
+          ...rep,
+          id: pdfSource.original.representationId,
+          role: "ORIGINAL",
+          material_kind: "BINARY",
+          encoding: null,
+          text_content: null,
+          mime_type: "application/pdf",
+          original_filename: "Fixture.pdf",
+          byte_count: pdfSource.original.byteCount,
+          payload_sha256: pdfSource.original.sha256,
+          remote_state: "VERIFIED",
+          verified_at: now.replace("Z", "000Z"),
+          storage_provider: "supabase_storage",
+          storage_bucket: "trip-source-material",
+          object_key: `v1/${trip}/${source.id}/${pdfSource.original.representationId}/payload`,
+        }
+      : undefined;
+    if (pdfSource) {
+      Object.assign(rep, {
+        role: "DERIVED",
+        parent_ids: [pdfSource.original.representationId],
+        transform_key: "otr.pdf.qpdf-poppler",
+        transform_version: "2",
+        transform_options_sha256: PDF_V2_OPTIONS_SHA,
+        regenerability: "POSSIBLE",
+      });
+      revision.original_representation_ids = [pdfSource.original.representationId];
+    }
     const inputPins = [
       {
         kind: "SOURCE",
@@ -54,7 +102,7 @@ it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
         payload_sha256: pin.payload_sha256,
         byte_count: pin.byte_count,
         input_id: pin.id,
-        transform_sha256: null,
+        transform_sha256: pdfSource?.transformOptionsSha256 ?? null,
       },
     ];
     const binding = {
@@ -66,7 +114,7 @@ it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
       taskId,
       generation: 1,
       createdAt: now,
-      inputs: [pin],
+      inputs: [{ ...pin, ...(pdfSource ? { pdfSource } : {}) }],
     };
     const manifest = {
       accountId: actor,
@@ -85,6 +133,7 @@ it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
           byteCount: pin.byte_count,
           mime: "text/plain",
           text: rep.text_content,
+          ...(pdfSource ? { pdfSource } : {}),
         },
       ],
     };
@@ -105,7 +154,7 @@ it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
       ...Object.fromEntries(Object.keys(tripImportCatalogSchemas).map((k) => [k, []])),
       trip_sources: [source],
       trip_source_revisions: [revision],
-      trip_source_representations: [rep],
+      trip_source_representations: originalPdf ? [originalPdf, rep] : [rep],
       trip_source_runs: [run],
       trip_source_inputs: [input],
     };
@@ -288,7 +337,16 @@ it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
     const prepare = {
       batchId: batch,
       submissionSha256: binding.submissionSha256,
-      inputs: [pin],
+      inputs: [
+        pdfSource
+          ? {
+              ...pin,
+              representation_id: pdfSource.original.representationId,
+              payload_sha256: pdfSource.original.sha256,
+              byte_count: pdfSource.original.byteCount,
+            }
+          : pin,
+      ],
     };
     expect((await host.prepare(prepare)).status).toBe("QUEUED");
     expect((await host.prepare(prepare)).status).toBe("EXISTING");

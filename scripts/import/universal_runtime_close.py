@@ -18,7 +18,11 @@ def sha(value):return hashlib.sha256(value).hexdigest()
 def validate_runtime(plan):
     r=plan['runtime'];activation=plan['activationId']
     target=r.get('runtimeMountTarget','/run/otr/universal-runtime.json')
-    if target not in ['/run/otr/universal-runtime.json','/run/otr/universal-recovery.json']:raise ValueError('EXACT_RUNTIME_MOUNT_TARGET')
+    if target not in ['/run/otr/universal-runtime.json','/run/otr/universal-recovery.json','/run/otr/universal-pdf-runtime.json']:raise ValueError('EXACT_RUNTIME_MOUNT_TARGET')
+    if target=='/run/otr/universal-pdf-runtime.json':
+        settings=r.get('pdfSettings')
+        expected={'version':'OTR_DEV_UNIVERSAL_PDF/1','actorId':'f4b059c5-8241-4ffb-aa15-37fa25474543','tripId':'825f79b2-4a9d-4535-a62e-43000ca50c4a','expiresAt':'2026-11-01T08:48:56Z','configSHA256':r.get('runtimeSHA256'),'socketDirectory':'/run/otr/universal-pdf-worker','stageDirectory':'/var/lib/otr/universal-pdf-stage'}
+        if settings!=expected or 'originalContainerId' not in r:raise ValueError('PDF_RUNTIME_RETAINED_BINDING_REQUIRED')
     if target=='/run/otr/universal-recovery.json':
         selection=r.get('recoverySettings')
         if not isinstance(selection,dict) or selection.get('version')!=1 or selection.get('configSHA256')!=r.get('runtimeSHA256') or selection.get('startsAt')!=plan.get('startsAt'):raise ValueError('SETTLED_RECOVERY_BINDING_REQUIRED')

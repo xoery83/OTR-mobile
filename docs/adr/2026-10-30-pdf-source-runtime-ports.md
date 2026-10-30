@@ -34,3 +34,87 @@ Five affected suites97 passed; six conditional SQL tests skipped. The separate
 27-check isolated owning protocol result covers reservation and synthetic local
 stage/dispatch/UNKNOWN only, not Storage execution. Independent software Review
 found no blocker.
+
+Normal Backend Auth exposes request revalidation, not a persistent Account/Session
+epoch. A versioned `SOURCE_REQUEST_LIFETIME_V1` Source adapter may issue a private
+in-memory request fence while retaining independent normal Auth/Trip checks.
+That fence has no authorization meaning, is never serialized into SQL/receipts,
+and cannot prove continuity across requests, workers or restarts. Abort and close
+invalidate it. Every access revalidates the same trusted Actor/Trip; SQL remains
+the final mutation authority. Pre/post checks do not promise atomic revocation.
+Legacy V3 and non-continuous V4 reject this adapter. No Auth/Session interface is
+changed, and normal startup remains unbound pending qualified composition.
+
+The request version requires a synchronous liveness guard inside the held Source
+lease, around scope/owning queries and before commit; raw rollback still runs
+after closure. Four deferred lease/enter negatives reproduced stale writes and
+passed after repair. The per-request Storage producer checks normal access and
+liveness immediately around HTTP too: a separate decode→POST race was reproduced
+and fixed. Its stable provider fingerprint excludes this ephemeral guard. A
+request already sent or committed may complete; closure cannot undo remote writes.
+Eleven affected suites180 PASS/one conditional skip, types/lint/capture bundle
+PASS; independent Review NO_BLOCKER. No Auth principal, SQL or DEV activation.
+
+Native continuation reuses the existing V2 verify/register/seal endpoints. Move
+only their frozen request/receipt schemas into the existing domain layer, without
+Node/Linux imports, and keep Backend re-exports for all current callers. The
+Backend still checks its real decoder/profile fingerprint at construction; no
+Native result issues custody or Source authority. This is contract placement,
+not a new Source/queue/verification protocol or runtime activation.
+
+The explicit single-PDF Start continuation reuses the existing Source admission
+queue and immutable acquisition receipt. Deterministic phase proposals are checked
+against the actual SQL codecs in the isolated fixture. Unknown dispatch is read
+before any continuation; only a successful owning seal and catalog refresh allow
+Task Prepare. Local PDFKit text is discarded; the Backend fixed decoder remains
+the derivative producer. The Native PDF flag is off by default.
+
+V2 verify/register/seal optionally compose the same request-lifetime fence under
+normal Auth/Trip. Lease acquisition, every SQL statement, custody reads, worker
+completion and COMMIT are guarded. BEGIN post-check failure performs raw rollback
+before the caller can set its transaction flag; rollback failure retires the
+lease. A sent COMMIT remains potentially accepted even if the response is withheld.
+
+The existing Source 5-second idle timeout is below the fixed worker's 20-second
+wall ceiling plus two bounded Storage reads. A separate, dormant PDF Source
+connection may use a 65-second idle / 75-second total lease under the same Source
+gateway, TLS, 5-second SQL query/statement and 1-second lock defaults. Ordinary
+Source/Core/Person/Trip connections retain their original limits. This is a
+bounded software profile, with no new principal or database permission and no
+startup activation. Runtime qualification must use this profile before opening
+PDF writes; Native's existing 90-second request budget stays unchanged.
+
+The optional continuous runtime now injects both timeout profiles through one
+existing Source FIFO (backlog4/wait10s), preserving rolconnlimit1. PDF does not
+construct an independent connection. The dedicated private config is hash-pinned,
+root:999/0440, exact DEV QA Actor/Trip and existing expiry; absent flag performs
+no PDF config/Secret-purpose/connection/worker access. Bad PDF config closes only
+PDF. Both request factories remain behind that off-by-default switch.
+
+Host candidate uses the existing fixed image's Node24.21.0 binary (SHA256
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c),
+not a downloaded runtime. Dedicated root:999/0750 Unix directory and0660 socket
+expose only the existing parse-only service. The Backend gets no Docker socket.
+The existing durable worker lease retains UNKNOWN across restart. Host process,
+paths, socket mount and limited original-custody Secret purpose require the
+combined protected approval; none is installed by this software change.
+
+PDF closure must not depend on retaining temporary administrator authority. The
+combined candidate therefore includes one fixed-QA SourceGateway definer port
+with only CLOSE and read-only CLOSED verification. It can set the PDF bit false
+or read it; no argument can enable it, alter other policy fields, expand scope,
+or touch retained business data. Independent readback uses a fresh READ ONLY
+transaction. This new function/EXEC purpose belongs to the same protected Gate,
+not an implicit ordinary software authorization.
+
+Explicit resume of an already server-bound Task must reuse its existing queue,
+not repeat Source acquisition or PDF upload preparation. The versioned resume
+body on the existing prepare endpoint supplies only Trip/Batch/Task IDs. Normal
+Auth/Trip and owning context must match before the existing targeted queue wake.
+GET remains read-only; an Attempt can only reconcile existing responsibility.
+An expired zero-Attempt Task follows the existing deadline branch, never a reset.
+
+Native-only Photo migration75 must not silently advance dedicated Backend Task
+SQLite or invalidate its retained healthy image. Backend Task initialization stays
+on its qualified74 baseline; a future Task storage advance requires its own
+qualified change. No App database is copied or opened by the Backend.

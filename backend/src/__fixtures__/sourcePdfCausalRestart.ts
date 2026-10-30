@@ -19,7 +19,7 @@ import { session } from "./tripCoreV2Sql";
 const input = JSON.parse(await readFile(process.argv[2], "utf8")) as {
   fixture: string;
   root: string;
-  owner: Omit<PdfCausalOwner, "accountGeneration">;
+  owner: Pick<PdfCausalOwner, "ownerRun" | "producerId" | "providerInstanceSha256">;
   context: PdfReservedContext;
   config: PdfStorageConfig;
   raw: string;
