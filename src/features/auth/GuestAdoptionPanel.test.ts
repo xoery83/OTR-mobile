@@ -176,3 +176,21 @@ it("cannot resume sign-in against a different active Account", async () => {
   expect(props.onComplete).not.toHaveBeenCalled();
   expect(s.prepare).not.toHaveBeenCalled();
 });
+
+it("identifies only the verified target for automation without exposing credentials or doing I/O", () => {
+  props.session = {
+    ...session,
+    identity: {
+      ...session.identity,
+      userId: "different-target",
+    },
+  };
+  const tree = render();
+  expect(tree.filter((n) => n.props.testID).map((n) => n.props.testID)).toEqual([
+    "auth-adoption-target-different-target",
+  ]);
+  expect(JSON.stringify(tree)).not.toContain(session.accessToken);
+  expect(s.prepare).not.toHaveBeenCalled();
+  expect(s.principal).not.toHaveBeenCalled();
+  expect(s.session).not.toHaveBeenCalled();
+});
