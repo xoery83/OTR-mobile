@@ -292,6 +292,13 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   Direct/independent identity/plan/draft3s50/types PASS, NO_BLOCKER; authority NONE. It neither proves
   caller-supplied receipts nor initializes People/Ledger, restores Drafts or publishes.
   Native reaffirmed candidate-only delegation; three-principal authority remains pending.
+- 30 October owning execution body candidate composes real Trip/Person/Metadata/Core
+  services with exact readbacks, source/mapped hashes and queue identity coverage.
+  Direct4s66/independent executor16/types/lint PASS, NO_BLOCKER after cover repair.
+  Rejects changed covers/Drafts; retained names/timestamps/private preferences are
+  REQUIRED_NOT_EXECUTED. No COMMIT/terminal receipt/Runtime/PG authority or Guest unlock.
+  Future atomic adapter must supply every port on one authorized lease; a unit
+  rollback harness is not Hosted atomicity. See composite-publication-candidate.
 - Provisional metadata client7365 uses the existing secure Guest verification slot
   while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
   result. 401 refresh reuses existing Supabase path with active persistence off,
@@ -318,7 +325,7 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
 Actual-primary9 suites273 PASS and joined types PASS; original six dirty files/
 full diff preserved. AUTH_PREPARED_MAIN_INTEGRATION.json records source-only scope.
 
-Next: finish Native normal-account Profile/Trip recovery readback. Continue
+Next: normal-account first-use/Trip/P1 cold recovery is accepted. Continue
 Golden B server authority and Native recovery through unique Writers, then actual
 Guest→Account/negative/duplicate/UNKNOWN/cold E2E. Owner approval is required only
 for an exact protected execution delta, not routine coding. No Owner OTP before a
