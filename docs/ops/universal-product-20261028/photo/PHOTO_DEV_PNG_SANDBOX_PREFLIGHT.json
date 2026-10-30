@@ -1,0 +1,46 @@
+{
+  "status": "DEV_X64_SANDBOX_PREFLIGHT_PASS_NOT_SOURCE_VERIFIED",
+  "imageId": "sha256:e2c5719ffd22cf60a68d79a53d83c01820db8384611201c68b917463c0f16b92",
+  "profileSHA256": "0e22d87a595129dbd9a3b2b00a771379f0e26d15d7a46781c76c7c08ed65a726",
+  "sourceCommit": "ca0b3dab",
+  "cases": [
+    {
+      "case": "MATCH",
+      "status": "PARSE_PASS",
+      "containerId": "5349696d49d0ee8d6852d31655edc6e1d911452a92d5542424eb0d5cc081696e",
+      "terminated": true,
+      "outputSHA256": "9549530cb31818a108504951e45ee2ecc1ba9e6698fb097205572c575371d2e2"
+    },
+    {
+      "case": "WRONG_HASH",
+      "status": "PARSER_INPUT_IDENTITY",
+      "containerId": "de570b5cc9d304c3d6b66efd8b15e6a7f72eba0110276e707a6883cc356d0a25",
+      "terminated": true,
+      "outputSHA256": "4d04b64409ba7f3f3df4c3fafee8705a62edb7b600624ab8d35ed340f33ba3af"
+    },
+    {
+      "case": "WRONG_PROFILE",
+      "status": "PARSER_PROFILE",
+      "containerId": "b78ede52ae5c7816ddff6f46dce1e6333772f9ceab1853dc261548c211b273c2",
+      "terminated": true,
+      "outputSHA256": "01eb9705e443f51ff8141ab6e39cfe2a86d4437527865ab89edfe7bce393d888"
+    }
+  ],
+  "liveServiceUnchanged": true,
+  "sourceRpcInvoked": false,
+  "storageInvoked": false,
+  "providerCalls": 0,
+  "sourceProfileRegistered": false,
+  "input": {
+    "path": "output/photo/universal-photo-activity-qa.png",
+    "sha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+    "byteCount": 42630
+  },
+  "actualFormat": {
+    "width": 1000,
+    "height": 600,
+    "channels": 4,
+    "decodedByteCount": 2400000
+  },
+  "scope": "Isolated network-none DEV x64 sandbox only. No Source/Storage/Provider invocation or profile registration."
+}
