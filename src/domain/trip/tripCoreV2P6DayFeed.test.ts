@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { expect, it, vi } from "vitest";
 import { ticketedActivityContribution } from "@/features/day-feed-lab/ticketedActivityContribution";
+// This suite exercises projection facts, not the native renderer dependency tree.
+vi.mock("@/features/day-feed/TicketedActivityRow", () => ({
+  TicketedActivityRow: () => null,
+}));
 
 vi.mock("react-native", async () => {
   const { createElement } = await import("react");

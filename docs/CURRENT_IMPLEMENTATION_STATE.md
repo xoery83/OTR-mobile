@@ -1,3 +1,11 @@
+# Native-04 Downstream — active closure, 30 October 2026
+
+Account switching REAL Native bounded PASS: FormsQA124 A3f → normal OTP B1f → online B Signout → remembered A; both Accounts cold recover. B cloud Trip/P1/P3 automatically downloaded; known foreign Details/Day IDs withheld; A original conflict and85 historical queues retained byte-for-byte, B cache preserved. Mutation dispatch remained privately scoped, so final ordinary unified smoke is still required. See `docs/ops/native-04-downstream-20261030/ACCOUNT_SWITCH_E2E.json`.
+
+Actual stale mounted list fixed295071ce using one existing refreshKey dependency. Same mounted list reflected external MetadataV3 op241fc8c8/revision2; Supabase independently verified. Earlier P3 external Create/Edit, conflict, and Backend private read-denial receipts are reused. No Session/DB copying/reset or new Queue. iPad Runner storage exhaustion: Owner chose FormsQA; phone untouched.
+
+Current Native candidate integrates main82d5c8b3, preserving its exact accepted Core HTTP/FIFO/budgets and Auth/Import code. Native full downstream remains unmerged. Next: formal revocation qualification (existing 404 is not evidence), minimal type/Import coverage, serial main and ordinary-build smoke/upstream check. Auth owns Session/Principal and separate GuestQA window; Native released GUI/own claim while doing local integration. Do not activate historical A queues or pretend a scoped build is ordinary all-account PASS. No Provider or protected Authority change.
+
 # Auth Golden Slice — current continuation, 30 October 2026
 
 Golden Slice BLOCKED: existing Guest UI Trip+P1 → normal OTP/explicit target →

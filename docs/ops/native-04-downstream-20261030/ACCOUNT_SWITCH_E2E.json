@@ -1,0 +1,53 @@
+{
+  "status": "REAL_NATIVE_A_B_SIGNOUT_A_AND_COLD_PASS_BOUNDED",
+  "accountA": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "accountB": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "device": "OTR Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundleId": "com.xoery.otrmobile",
+  "privateBuild": 124,
+  "path": "Existing A Session -> normal Add/Login another account -> genuine fresh B Email OTP -> normal Native verify -> B automatic Discovery/Core -> B process cold recovery -> normal online Sign out and confirmation -> remembered A selection -> A process cold recovery",
+  "bDownload": {
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "p1": "6ba12b97-7278-409b-8959-13fedefbaec9",
+    "p3": "fab8ec55-8ded-4c04-aba0-853e68e35f24",
+    "reader": "Actual B My Trips, Day Feed and settled P3 Details displayed B data; cold list retained latest remote Trip name"
+  },
+  "isolation": {
+    "bKnownAPrivateDetails": "Unavailable, Edit disabled, no A title/input",
+    "bKnownAPrivateDay": "Unavailable, no A title/input",
+    "aKnownBPrivateDetailsAfterCold": "Unavailable, Edit disabled, no B title",
+    "aReturn": "Original QA Trips restored; original cc954486 conflict remained and existing Check Again displayed Changed in two places",
+    "protectedLocalData": "85 historical sync_operations hashes unchanged across installation, B login, B cold, B logout, A return and A cold; original conflict canonical bytes/hash unchanged; B accepted cache still retained separately; SQLite74",
+    "oldInFlightResponse": "Existing deterministic Account generation/late-response regression; not a newly injected Native network experiment"
+  },
+  "actualRepair": "295071ce: one-line mounted Trip list refreshKey dependency after real stale list failure; separate receipt MOUNTED_TRIP_DISCOVERY_FIX.json",
+  "auth": {
+    "deviceSessionCopied": false,
+    "hostSessionManufactured": false,
+    "normalNativeOtp": true,
+    "otpAndKeysPublished": false,
+    "keyboardRecovery": "Observed Verify button occluded by number pad; normal scroll exposed same button and same code was verified; no resend of that challenge"
+  },
+  "privateEvidenceRoot": "/private/tmp/otr-ipad-native-20261030",
+  "evidence": [
+    "account123-b-identity.redacted.json",
+    "account124-live-name-result.redacted.json",
+    "account124-b-day-final.redacted.json",
+    "account124-b-own-detail-ready.redacted.json",
+    "account124-b-private-a-settled.redacted.json",
+    "account124-b-private-a-day-settled.redacted.json",
+    "account124-b-cold-visible.redacted.json",
+    "account124-after-b-signout.redacted.json",
+    "account124-a-restored.redacted.json",
+    "account124-a-conflict-restored.redacted.json",
+    "account124-a-cold-list.redacted.json",
+    "account124-a-private-b-detail.redacted.json",
+    "simulator124-account-switch/a-b-a-final-preservation.json"
+  ],
+  "limits": [
+    "Private test build restricts historical mutation dispatch; ordinary Auth and General Account downstream reads are unchanged. Final unified ordinary build smoke remains required.",
+    "No newly created A draft/cursor mutation case; existing account/generation and draft retention deterministic evidence is reused.",
+    "Actual iPad automation blocked by storage exhaustion; Owner chose Forms QA. No iPad/iPhone data deleted or copied.",
+    "Trip membership revocation is separate, not inferred from these private-object denials."
+  ]
+}

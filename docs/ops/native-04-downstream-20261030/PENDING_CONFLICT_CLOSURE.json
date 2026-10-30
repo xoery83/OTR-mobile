@@ -1,0 +1,42 @@
+{
+  "goldenSlice": "PASS_BOUNDED_SCOPED_NATIVE_CONFLICT_RECOVERY",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "18f3680f-6d3a-4e97-8b1b-898064393831",
+  "itemId": "dc279672-5838-40e2-84ab-3f6cda519e8d",
+  "originalOperationId": "cc954486-ca88-4a52-8ca6-63582b703a71",
+  "originalIntentSha256": "078c095bd990f1f78ed76e2b508ddbf6dba14618cac2e7e552dde47decd56630",
+  "originalCanonicalBytesSha256": "0f8703d5600aba69c377ac7399f1eb21011c6080697f0597dacfd89a2f54c777",
+  "server": {
+    "originalOperationOutcome": "CONFLICT",
+    "independentReadback": "PASS: three exact-operation receipts; two APPLIED and original CONFLICT; canonical intent and receipt hashes validated",
+    "singleItemCount": 1,
+    "semanticRevision": 2,
+    "remoteTitle": "Native04 Remote Conflict Stay"
+  },
+  "native": {
+    "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+    "bundleId": "com.xoery.otrmobile",
+    "privateScopedBuild": 122,
+    "retainedNativeBuild": 98,
+    "jsSha256": "f34e81cc35724e6fef4e93ff8e8de346ab2e41df9fecd630b03f38f46c1c8bf0",
+    "intentState": "CONFLICT",
+    "queueState": "COMPLETED means processed, not synced",
+    "sameInputAndOperationRetained": true,
+    "historicalQueueRowsUnchanged": 85,
+    "schema": 74,
+    "oldQaTripsRetained": 2,
+    "warmUI": "1 item needs your attention / Changed in two places; no synced claim",
+    "coldUI": "Initial persisted protected-data summary; existing Check Again restores same conflict attention",
+    "dataOrSessionReset": false
+  },
+  "repair": "Existing Data Health read projection includes completed TRIP_CORE_V2 dispatches whose exact Account/Trip/op/queue-bound durable intent is CONFLICT; existing user-action policy, no automatic retry/repair",
+  "validation": "RED actual SQLite regression, then 3 suites58 PASS; final focused test PASS; typecheck, targeted lint, UI guard and single-worker JS bundle PASS; independent Auth source review NO_BLOCKER plus six predicate isolation negatives",
+  "privateEvidenceRoot": "/private/tmp/otr-ipad-native-20261030",
+  "limits": [
+    "Controlled transport outage, not physical network disconnection",
+    "Scoped fixture retains six dispatch fences; not ordinary all-account runtime acceptance",
+    "No full latest Native binary parity or full downstream completion claim",
+    "Existing conflict attention is truthful; a new conflict resolution editor was not introduced",
+    "iPad Touch ID automation remains unavailable; no retry or bypass"
+  ]
+}

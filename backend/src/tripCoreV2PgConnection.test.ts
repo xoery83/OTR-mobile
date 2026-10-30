@@ -327,3 +327,60 @@ it("PDF total lease retires at 75s and cannot send late statements", async () =>
     vi.useRealTimers();
   }
 });
+
+it("lets a progressing owning Core transaction finish beyond 30s without relaxing query or idle limits", async () => {
+  vi.useFakeTimers();
+  try {
+    const outcome = createCorePgConnection(config)
+      .withLease(async (lease) => {
+        await lease.query("BEGIN");
+        for (let i = 0; i < 9; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+          await lease.query("SELECT 1");
+        }
+        await lease.query("COMMIT");
+      })
+      .then(
+        () => "committed",
+        (error: Error) => error.message,
+      );
+    await vi.advanceTimersByTimeAsync(36000);
+    expect(await outcome).toBe("committed");
+    expect(f.config.query_timeout).toBe(5000);
+    expect(f.config.options).toBe(
+      "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
+    );
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("retires Core at its 60s hard deadline and rejects any late COMMIT", async () => {
+  vi.useFakeTimers();
+  let release!: () => void;
+  try {
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const outcome = createCorePgConnection(config)
+      .withLease(async (lease) => {
+        await lease.query("BEGIN");
+        await blocked;
+        await lease.query("COMMIT");
+      })
+      .then(
+        () => "unexpected",
+        (error: Error) => error.message,
+      );
+    await vi.advanceTimersByTimeAsync(59999);
+    expect(f.destroy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await outcome).toBe("CORE_CONNECTION_TIMEOUT");
+    release();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.queries).not.toContain("COMMIT");
+  } finally {
+    release?.();
+    vi.useRealTimers();
+  }
+});

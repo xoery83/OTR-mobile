@@ -1,0 +1,19 @@
+{
+  "status": "PASS_BOUNDED_BACKEND_READ_ISOLATION",
+  "actorAccountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "normalLogin": "Existing synthetic QA credential via original Auth helper; user identity independently checked",
+  "readOnly": true,
+  "ownTrip": {
+    "tripId": "18f3680f-6d3a-4e97-8b1b-898064393831",
+    "result": "Core collection accepted, revision3"
+  },
+  "otherAccountPrivateTrip": {
+    "ownerAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "httpStatus": 404,
+    "code": "NOT_VISIBLE"
+  },
+  "hostSessionCleanup": "Own local revoke and refresh-invalid verified; no device Session copied or changed",
+  "privateEvidence": "/private/tmp/otr-ipad-native-20261030/downstream/formsqa-private-trip-read-after-fifo.json",
+  "limits": "This is actual Backend read denial, not Native Account-switch or authoritative revocation acceptance. Generic 404 was not converted into an access revision or cache revocation. No business writes, RLS/Schema/Authority change or Provider call."
+}

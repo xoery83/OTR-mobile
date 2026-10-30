@@ -34,6 +34,7 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { getDefaultDataHealthScheduler } from "@/data/health/defaultDataHealthScheduler";
 import * as Network from "expo-network";
 import { AppState } from "react-native";
+import { refreshAccountTripReads } from "../sync/tripDownstreamCoordinator";
 
 import type { LocalSession } from "@/domain/auth/localSession";
 import type { FoundationBootstrapDependencies } from "./bootstrapApplication";
@@ -74,6 +75,7 @@ export async function bootstrapActivatedAccount(session: LocalSession | null) {
 let syncPaused = false;
 let activeHealthTimer: ReturnType<typeof setInterval> | null = null;
 const ACTIVE_HEALTH_INTERVAL_MS = 15 * 60_000;
+const ACTIVE_TRIP_READ_INTERVAL_MS = 30_000;
 
 export function subscribeOperationalSyncLifecycle() {
   let online: boolean | null = null;
@@ -81,11 +83,16 @@ export function subscribeOperationalSyncLifecycle() {
   let removed = false;
   const updateActiveTimer = (active: boolean) => {
     if (activeHealthTimer) clearInterval(activeHealthTimer);
+    let lastHealthAt = Date.now();
     activeHealthTimer = active
-      ? setInterval(
-          () => void scheduleAutomaticDataHealth("PERIODIC").catch(() => undefined),
-          ACTIVE_HEALTH_INTERVAL_MS,
-        )
+      ? setInterval(() => {
+          if (!syncPaused && syncOnline)
+            void refreshAccountTripReads().catch(() => undefined);
+          if (Date.now() - lastHealthAt >= ACTIVE_HEALTH_INTERVAL_MS) {
+            lastHealthAt = Date.now();
+            void scheduleAutomaticDataHealth("PERIODIC").catch(() => undefined);
+          }
+        }, ACTIVE_TRIP_READ_INTERVAL_MS)
       : null;
   };
   syncActive = AppState.currentState === "active";
@@ -139,6 +146,8 @@ export function subscribeOperationalSyncLifecycle() {
 
 export function resumeOperationalSync() {
   if (syncPaused || !syncOnline || !syncActive) return Promise.resolve();
+  // Pull is independent of local mutation work and never blocks cached launch.
+  void refreshAccountTripReads().catch(() => undefined);
   const generation = getAccountGeneration();
   if (resuming?.generation === generation) return resuming.promise;
   const promise = refreshThenSync().finally(() => {

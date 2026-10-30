@@ -1,0 +1,62 @@
+{
+  "status": "REAL_DEV_REMOTE_EDIT_FOREGROUND_AUTOMATIC_DETAILS_PASS_BOUNDED",
+  "sourceCommit": "149f73aac5b5d7dc954780b2501c9670cc68471a",
+  "build": 117,
+  "itemId": "fab8ec55-8ded-4c04-aba0-853e68e35f24",
+  "semanticRevision": 4,
+  "independentVerification": {
+    "status": "SERVER_VERIFIED",
+    "receiptIds": [
+      "e9ea0f20-1868-4871-8747-0439c61a102b",
+      "79a310be-4384-4902-8823-dedff51def7f",
+      "966deca0-80c8-4887-ba06-8d31728bad64"
+    ],
+    "operationIds": [
+      "9699729f-362a-47b4-b7b0-aaf7c9fa1cb6",
+      "dd4a5cba-0974-4dd8-b194-6718b39b4a3f",
+      "ffb8ebf2-f872-4900-9a95-1e275853f1b3"
+    ],
+    "itemId": "fab8ec55-8ded-4c04-aba0-853e68e35f24",
+    "semanticRevision": 4,
+    "itemCount": 1,
+    "hashes": "PASS"
+  },
+  "title": "Native04 Remote Stay Live",
+  "checkin": "2026-10-30 19:00",
+  "checkout": "2026-10-31 11:00",
+  "hostAuth": "Separate normal existing-account OTP Session; own local-scope logout and refresh-invalid PASS",
+  "manualRefresh": false,
+  "reopenedAfterLiveMutation": false,
+  "liveCommittedAt": "2026-10-30T04:12:45.417814Z",
+  "foregroundPrecondition": "CoreDevice launch existing process immediately before normal POST; no payload/navigation or termination",
+  "observation": "Same mounted Details showed Live title after one30s pull cycle",
+  "earlierObservation": "Idle mounted page retained old fields; foreground continuity not proven. Preserve failure screenshot; do not label it fixed solely by cold launch.",
+  "coldEditRecovery": "Actual process restart showed revision3 title Edited and19:00/11:00 before later Live edit",
+  "independentReview": "Auth NO_BLOCKER149f73aa;2s14PASS source/hook only",
+  "validation": "7s63PASS/types/UIguard/scopedlint",
+  "notYetCertified": [
+    "legalSkip",
+    "physical offline/local Pending conflict",
+    "Account B or permission revocation",
+    "six-family and Import downstream",
+    "direct physical SQLite inspection"
+  ],
+  "screenshots": [
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build117/before-remote-edit.png",
+      "sha256": "3e0384f49c0e9784211010028bbb9a83dc0385b4727697813682753bf083d39e"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build117/mounted-edited.png",
+      "sha256": "5e0b13707bb26d5386b8a1edc69f2b3215247407cd07d2de03697315d5a75ae3"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build117/edit-cold.png",
+      "sha256": "ba0f6646cf01f28da19364076417a2590fd0d5d681f5f6dc1852d25ada8ec04d"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build117/live-after-remote.png",
+      "sha256": "656680f218d3e38f2541dd5e794d4c2937d3e730aee2d68f2c1daa4295076f08"
+    }
+  ]
+}
