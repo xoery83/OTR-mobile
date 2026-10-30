@@ -152,15 +152,22 @@ it("reuses no-upsert POST and separately permitted GET without changing Source s
   const f = await fixture();
   expect((await f.producer.upload(f.request, bytes)).kind).toBe("COMPLETE_ACK");
   await expect(f.producer.read(f.request)).rejects.toThrow(
-    "PDF_CAUSAL_READ_PERMIT_REQUIRED",
+    "PNG_QUALIFIED_READ_PERMIT_REQUIRED",
   );
+  await expect(
+    f.producer.read({
+      ...f.request,
+      readId: randomUUID(),
+      ackEvidenceSha256: "a".repeat(64),
+    }),
+  ).rejects.toThrow("PNG_QUALIFIED_READ_PERMIT_REQUIRED");
   expect(f.counts()).toEqual({ posts: 1, gets: 0 });
   expect(
     (
       await f.producer.read({
         ...f.request,
         readId: randomUUID(),
-        ackEvidenceSha256: "a".repeat(64),
+        terminalEvidenceSha256: "a".repeat(64),
       })
     ).kind,
   ).toBe("MATCH");
@@ -220,7 +227,7 @@ it("transient sandbox outage during readback remains unavailable, not format rej
       await f.producer.read({
         ...f.request,
         readId: randomUUID(),
-        ackEvidenceSha256: "a".repeat(64),
+        terminalEvidenceSha256: "a".repeat(64),
       })
     ).kind,
   ).toBe("UNAVAILABLE");

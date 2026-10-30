@@ -1,5 +1,5 @@
 import {
-  readUniversalPngSourceMaterial,
+  readUniversalPngSourceMaterialWithProof,
   type UniversalBinaryReader,
 } from "./universalPngSourceMaterial";
 import { hasCurrentPdfV2ProofAccess } from "./sourcePdfV2CoreProof";
@@ -238,7 +238,7 @@ export function createCoreUniversalSourceRead(
           rep.remote_state === "VERIFIED" &&
           !p.pdfSource
         ) {
-          await readUniversalPngSourceMaterial(
+          const { proof } = await readUniversalPngSourceMaterialWithProof(
             lease,
             {
               actorAccountId: actor,
@@ -259,6 +259,7 @@ export function createCoreUniversalSourceRead(
             byteCount: p.byte_count,
             mime: "image/png",
             text: null,
+            pngSource: proof,
           });
           continue;
         }

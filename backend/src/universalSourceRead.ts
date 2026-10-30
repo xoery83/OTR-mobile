@@ -1,3 +1,4 @@
+import { universalPngSourceProofSchema } from "./universalPngSourceMaterial";
 import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
@@ -37,6 +38,7 @@ const manifestSchema = z.strictObject({
         mime: z.enum(["text/plain", "text/html", "image/jpeg", "image/png"]),
         text: z.string().nullable(),
         pdfSource: universalPdfSourceProvenanceSchema.optional(),
+        pngSource: universalPngSourceProofSchema.optional(),
       }),
     )
     .min(1)
@@ -127,6 +129,25 @@ export function createUniversalSourceReader(deps: {
         pin.byte_count !== r.byteCount
       )
         throw new Error("UNIVERSAL_SOURCE_BINDING_INVALID");
+      if (r.mime === "image/png") {
+        const proof = r.pngSource;
+        if (
+          !proof ||
+          first.representations.length !== 1 ||
+          r.text !== null ||
+          r.pdfSource ||
+          pin.transform_sha256 != null ||
+          r.byteCount > 1048576 ||
+          proof.actorAccountId !== first.accountId ||
+          proof.tripId !== first.tripId ||
+          proof.sourceId !== r.sourceId ||
+          proof.representationId !== r.representationId ||
+          proof.sourceRevision !== r.revision ||
+          proof.sha256 !== r.sha256 ||
+          proof.byteCount !== r.byteCount
+        )
+          throw Error("UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED");
+      } else if (r.pngSource) throw Error("UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED");
       if (pin.transform_sha256 === PDF_V2_OPTIONS_SHA && !r.pdfSource)
         throw Error("UNIVERSAL_SOURCE_MATERIAL_INVALID");
       if (

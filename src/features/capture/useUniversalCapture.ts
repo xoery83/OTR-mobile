@@ -118,6 +118,44 @@ export function useUniversalCapture(
                     pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1" as const,
                   }
                 : {}),
+              ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED === "true"
+                ? {
+                    pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1" as const,
+                    preparePngOriginal: async (
+                      pngContext: import("@/data/auth/accountRequestContext").AccountRequestContext,
+                      input: Parameters<
+                        NonNullable<
+                          Parameters<
+                            typeof prepareDefaultUniversalCaptureSources
+                          >[2]["preparePngOriginal"]
+                        >
+                      >[1],
+                    ) => {
+                      if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                      const { prepareAdmittedPngOriginal } =
+                        await import("@/data/operations/universalPngOriginalPreparation");
+                      const { createSourcePngPreparationTransport } =
+                        await import("@/data/api/sourcePngPreparationTransport");
+                      const { captureStorageDependencies } =
+                        await import("@/data/repositories/defaultLocalCaptureInboxRepository");
+                      const assertCurrent = () => {
+                        if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                      };
+                      assertCurrent();
+                      await prepareAdmittedPngOriginal(pngContext, input, {
+                        getAccountId,
+                        hash: captureStorageDependencies.sha256,
+                        assertCurrent,
+                        signal: controller.current?.signal,
+                        port: createSourcePngPreparationTransport(getAccountId, {
+                          baseUrl,
+                          signal: controller.current?.signal,
+                          assertRequestCurrent: assertCurrent,
+                        }),
+                      });
+                    },
+                  }
+                : {}),
               ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true"
                 ? {
                     prepareTask: async (

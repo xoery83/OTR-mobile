@@ -12,6 +12,10 @@ const h = vi.hoisted(() => ({
   transport: vi.fn(),
   consent: vi.fn(),
   options: null as any,
+  sourcePreparation: vi.fn(),
+  pngPreparation: vi.fn(),
+  pngTransport: vi.fn(),
+  hash: vi.fn(),
   consumer: { activity: null as unknown, queued: true, canDispatch: true },
 }));
 vi.mock("react", () => ({
@@ -68,6 +72,18 @@ vi.mock("@/data/operations/universalCaptureConsumer", () => ({
 }));
 vi.mock("@/data/operations/defaultUniversalPhotoConsent", () => ({
   assertDefaultUniversalPhotoConsent: h.consent,
+}));
+vi.mock("@/data/operations/defaultUniversalOriginalSource", () => ({
+  prepareDefaultUniversalCaptureSources: h.sourcePreparation,
+}));
+vi.mock("@/data/operations/universalPngOriginalPreparation", () => ({
+  prepareAdmittedPngOriginal: h.pngPreparation,
+}));
+vi.mock("@/data/api/sourcePngPreparationTransport", () => ({
+  createSourcePngPreparationTransport: h.pngTransport,
+}));
+vi.mock("@/data/repositories/defaultLocalCaptureInboxRepository", () => ({
+  captureStorageDependencies: { sha256: h.hash },
 }));
 function Harness(batchId = "batch-a", current = () => true) {
   h.cursor = 0;
@@ -299,4 +315,52 @@ it("checks current Photo consent before resuming the same Task and rejects a lat
     "UNIVERSAL_CAPTURE_STALE",
   );
   expect(resume).not.toHaveBeenCalled();
+});
+
+it.each([false, true])(
+  "mounts PNG original continuation only behind explicit flag=%s",
+  async (enabled) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED", enabled ? "true" : "false");
+    Harness();
+    await vi.advanceTimersByTimeAsync(0);
+    const context = { accountId: "qa", tripId: "trip" },
+      job = { inputs: [] };
+    await h.options.prepareSources(context, job);
+    const options = h.sourcePreparation.mock.calls.at(-1)![2];
+    if (!enabled) {
+      expect(options.pendingPngProfile).toBeUndefined();
+      expect(options.preparePngOriginal).toBeUndefined();
+      expect(h.pngPreparation).not.toHaveBeenCalled();
+      return;
+    }
+    expect(options.pendingPngProfile).toBe("OTR_PNG_CAPTURE_ORIGINAL_V1");
+    const port = { lookup: vi.fn(), execute: vi.fn(), reconcile: vi.fn() };
+    h.pngTransport.mockReturnValue(port);
+    const input = {
+      bytes: Uint8Array.of(137),
+      binding: {},
+      acquisition: {},
+      acquisitionReceipt: {},
+    };
+    await options.preparePngOriginal(context, input);
+    expect(h.pngPreparation).toHaveBeenCalledExactlyOnceWith(
+      context,
+      input,
+      expect.objectContaining({ hash: h.hash, port, signal: expect.any(AbortSignal) }),
+    );
+  },
+);
+it("retained PNG callback cannot dispatch after view/account scope closes", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED", "true");
+  let visible = true;
+  Harness("batch-a", () => visible);
+  await vi.advanceTimersByTimeAsync(0);
+  await h.options.prepareSources({ accountId: "qa", tripId: "trip" }, { inputs: [] });
+  const options = h.sourcePreparation.mock.calls.at(-1)![2];
+  visible = false;
+  await expect(options.preparePngOriginal({}, {})).rejects.toThrow(
+    "UNIVERSAL_CAPTURE_STALE",
+  );
+  expect(h.pngTransport).not.toHaveBeenCalled();
+  expect(h.pngPreparation).not.toHaveBeenCalled();
 });

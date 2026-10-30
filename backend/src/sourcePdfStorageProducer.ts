@@ -85,7 +85,11 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
   mimeType: "application/pdf" | "image/png" = "application/pdf",
 ) {
   type RequestBinding = { binding: B; dispatchId: string };
-  type ReadBinding = RequestBinding & { readId?: string; ackEvidenceSha256?: string };
+  type ReadBinding = RequestBinding & {
+    readId?: string;
+    ackEvidenceSha256?: string;
+    terminalEvidenceSha256?: string;
+  };
   const custodyScope = suppliedCustodyScope
     ? Object.freeze(
         z
@@ -340,23 +344,26 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
       return Uint8Array.from(result.body);
     },
     async read(raw: ReadBinding) {
-      const causal =
-        mimeType === "image/png" ||
-        raw.binding.uploadVersion === 3 ||
-        raw.binding.uploadVersion === 4;
+      const png = mimeType === "image/png";
+      const causal = raw.binding.uploadVersion === 3 || raw.binding.uploadVersion === 4;
       if (
-        causal &&
+        (png || causal) &&
         (!coreUuid.safeParse(raw.readId).success ||
           raw.readId === raw.dispatchId ||
-          !coreHash.safeParse(raw.ackEvidenceSha256).success)
+          !coreHash.safeParse(png ? raw.terminalEvidenceSha256 : raw.ackEvidenceSha256)
+            .success)
       )
-        throw new Error("PDF_CAUSAL_READ_PERMIT_REQUIRED");
+        throw new Error(
+          png ? "PNG_QUALIFIED_READ_PERMIT_REQUIRED" : "PDF_CAUSAL_READ_PERMIT_REQUIRED",
+        );
       const request = {
           ...bound(raw),
-          ...(causal
+          ...(png || causal
             ? {
                 readId: raw.readId!,
-                ackEvidenceSha256: raw.ackEvidenceSha256!,
+                ...(png
+                  ? { terminalEvidenceSha256: raw.terminalEvidenceSha256! }
+                  : { ackEvidenceSha256: raw.ackEvidenceSha256! }),
                 cacheBypassed: true as const,
               }
             : {}),

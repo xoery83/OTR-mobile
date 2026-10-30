@@ -18,7 +18,7 @@ export type UniversalBinaryReader = (scope: {
   sha256: string;
   byteCount: number;
 }) => Promise<Uint8Array>;
-const proofSchema = z.strictObject({
+export const universalPngSourceProofSchema = z.strictObject({
   actorAccountId: z.uuid(),
   tripId: z.uuid(),
   sourceId: z.uuid(),
@@ -30,7 +30,7 @@ const proofSchema = z.strictObject({
   verification: importImageMaterialSchema.shape.verification,
 });
 // Existing owning Source locks must remain held. The protected proof RPC is default closed until its exact Gate is installed.
-export async function readUniversalPngSourceMaterial(
+export async function readUniversalPngSourceMaterialWithProof(
   lease: CorePgLease,
   catalog: Pick<
     CoreSourceCatalogV2,
@@ -48,7 +48,7 @@ export async function readUniversalPngSourceMaterial(
   )
     throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
   const readProof = async () =>
-    proofSchema.parse(
+    universalPngSourceProofSchema.parse(
       (
         await lease.query(
           "SELECT public.trip_source_read_sustained_png_proof($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::bigint) AS proof",
@@ -96,5 +96,11 @@ export async function readUniversalPngSourceMaterial(
   await importImageBytes(material, hash);
   if (JSON.stringify(await readProof()) !== JSON.stringify(proof))
     throw Error("SOURCE_INTEGRITY_FAILURE");
-  return material;
+  return { material, proof };
+}
+
+export async function readUniversalPngSourceMaterial(
+  ...args: Parameters<typeof readUniversalPngSourceMaterialWithProof>
+) {
+  return (await readUniversalPngSourceMaterialWithProof(...args)).material;
 }
