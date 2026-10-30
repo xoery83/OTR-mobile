@@ -1,6 +1,7 @@
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import {
   universalBatchPrepareSchema,
+  universalTaskResumeSchema,
   universalBatchPreparedSchema,
 } from "../../src/data/api/universalImportContracts";
 import {
@@ -39,11 +40,14 @@ export async function universalPrepareBoundary(
       if (error instanceof RequestBoundaryError) throw error;
       return failure(400, "INVALID_REQUEST");
     }
-    const input = universalBatchPrepareSchema.parse(parsed);
+    const input = z
+      .union([universalBatchPrepareSchema, universalTaskResumeSchema])
+      .parse(parsed);
+    const resume = "version" in input;
     if (
       url.pathname !== `/v2/import-batches/${input.batchId}/interpretations/prepare` ||
       url.search ||
-      request.headers.get("Idempotency-Key") !== input.batchId
+      request.headers.get("Idempotency-Key") !== (resume ? input.taskId : input.batchId)
     )
       return failure(400, "INVALID_REQUEST");
     if (!(await canReadTrip(actor, input.tripId)))
@@ -54,7 +58,8 @@ export async function universalPrepareBoundary(
       result.context.accountId !== actor ||
       result.context.actorId !== actor ||
       result.context.tripId !== input.tripId ||
-      result.context.batchId !== input.batchId
+      result.context.batchId !== input.batchId ||
+      (resume && (result.context.taskId !== input.taskId || result.status !== "EXISTING"))
     )
       return failure(503, "UNIVERSAL_CONTEXT_MISMATCH");
     return reply(202, result);

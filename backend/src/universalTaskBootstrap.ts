@@ -65,8 +65,10 @@ export function initializeUniversalTaskDatabase(sql: DatabaseSync) {
   const current = Number(
     (sql.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
   );
-  if (current > migrations.at(-1)!.id) throw Error("UNIVERSAL_TASK_DATABASE_VERSION");
-  for (const m of migrations.filter((m) => m.id > current)) {
+  // Native Photo state must not migrate Backend Task storage or break retained-image rollback.
+  const taskMigrations = migrations.filter((m) => m.id <= 74);
+  if (current > taskMigrations.at(-1)!.id) throw Error("UNIVERSAL_TASK_DATABASE_VERSION");
+  for (const m of taskMigrations.filter((m) => m.id > current)) {
     sql.exec("BEGIN");
     try {
       sql.exec(m.sql);

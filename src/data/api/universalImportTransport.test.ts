@@ -113,7 +113,9 @@ it("consumes the actual Backend contract with two sources and mixed candidates, 
   expect(binding).toEqual(f.binding);
   expect(f.interpret).not.toHaveBeenCalled();
   await expect(f.transport.result(f.context, binding)).rejects.toMatchObject({
-    kind: "http", status: 404, code: "TASK_NOT_FOUND",
+    kind: "http",
+    status: 404,
+    code: "TASK_NOT_FOUND",
   });
   expect(f.interpret).not.toHaveBeenCalled();
   const result = await f.transport.execute(f.context, binding);
@@ -187,16 +189,54 @@ it.each(["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"])(
   "preserves exact closed context code %s through the real API client",
   async (code) => {
     const f = await fixture();
-    const fetcher = vi.fn(async () => Response.json({ error: { code } }, { status: 503 }));
+    const fetcher = vi.fn(async () =>
+      Response.json({ error: { code } }, { status: 503 }),
+    );
     const transport = createUniversalImportTransport(async () => f.account, {
       baseUrl: "https://api.example",
       tokenProvider: async () => ({ userId: f.account, token: "synthetic" }),
       fetchImplementation: fetcher,
     });
     await expect(transport.context(f.context, f.batch)).rejects.toMatchObject({
-      kind: "http", status: 503, code,
+      kind: "http",
+      status: 503,
+      code,
     });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(f.interpret).not.toHaveBeenCalled();
   },
 );
+
+it("resumes only the exact server-bound Task through the real API client", async () => {
+  const f = await fixture();
+  let reply = { status: "EXISTING", context: f.binding };
+  const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+    expect(String(url)).toBe(
+      `https://api.example/v2/import-batches/${f.batch}/interpretations/prepare`,
+    );
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBe(f.binding.taskId);
+    expect(JSON.parse(String(init?.body))).toEqual({
+      version: "otr.backend.universal-resume/1",
+      tripId: f.binding.tripId,
+      batchId: f.batch,
+      taskId: f.binding.taskId,
+    });
+    return Response.json(reply, { status: 202 });
+  });
+  const transport = createUniversalImportTransport(async () => f.account, {
+    baseUrl: "https://api.example",
+    tokenProvider: async () => ({ userId: f.account, token: "synthetic" }),
+    fetchImplementation: fetcher,
+  });
+  expect((await transport.resume(f.context, f.binding)).status).toBe("EXISTING");
+  reply = { status: "QUEUED", context: f.binding };
+  await expect(transport.resume(f.context, f.binding)).rejects.toThrow(
+    "UNIVERSAL_CONTEXT_MISMATCH",
+  );
+  reply = { status: "EXISTING", context: { ...f.binding, taskId: randomUUID() } };
+  await expect(transport.resume(f.context, f.binding)).rejects.toThrow(
+    "UNIVERSAL_CONTEXT_MISMATCH",
+  );
+  expect(fetcher).toHaveBeenCalledTimes(3);
+  expect(f.interpret).not.toHaveBeenCalled();
+});

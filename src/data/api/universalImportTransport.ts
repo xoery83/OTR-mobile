@@ -8,6 +8,7 @@ import {
 } from "../auth/accountRequestContext";
 import {
   universalBatchPrepareSchema,
+  universalTaskResumeSchema,
   universalBatchPreparedSchema,
   type UniversalBatchPrepare,
   universalContextSchema,
@@ -95,6 +96,30 @@ export function createUniversalImportTransport(
         );
         const b = pin(context, result.context);
         if (b.batchId !== input.batchId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+        return result;
+      });
+    },
+    async resume(context: AccountRequestContext, raw: UniversalExecutionContext) {
+      const b = pin(context, raw);
+      return scoped(context, async (api) => {
+        const result = await api.post(
+          `${path(b.batchId)}/prepare`,
+          universalTaskResumeSchema.parse({
+            version: "otr.backend.universal-resume/1",
+            tripId: b.tripId,
+            batchId: b.batchId,
+            taskId: b.taskId,
+          }),
+          universalBatchPreparedSchema,
+          { "Idempotency-Key": b.taskId },
+        );
+        const accepted = pin(context, result.context);
+        if (
+          result.status !== "EXISTING" ||
+          accepted.batchId !== b.batchId ||
+          accepted.taskId !== b.taskId
+        )
+          throw Error("UNIVERSAL_CONTEXT_MISMATCH");
         return result;
       });
     },

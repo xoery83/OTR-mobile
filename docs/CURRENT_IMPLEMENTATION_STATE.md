@@ -1,3 +1,27 @@
+# Universal Photo75 / existing-Task resume — source integration, 30 October 2026
+
+Native registry now includes the Capture-owned Photo decision definition as75,
+SQL SHA45a7e26d…; prior1–74 are unchanged. Auth baseline662898cf includes strict
+empty75 login compatibility; nonempty75 Guest Adoption remains CLOSED. Backend
+Task SQLite stays on qualified74, preserving retained-image rollback.
+
+Photo includes conservative local OCR relevance, exact original pins, explicit
+Continue/Skip values and local decision CAS/persistence/retention. It has no UI
+caller, real Vision call or Photo Save E2E; automatic IRRELEVANT is not issued
+from insufficient OCR. Mixed-Batch delayed-image owning continuation remains open.
+
+Explicit known-Task Start now uses the existing authenticated prepare endpoint's
+strict resume body and existing targeted queue, without repeating Source/PDF
+preparation. GET stays read-only, old Attempts cannot resend, deadlines never reset.
+Native's two-file privacy-safe Core failure diagnostic is included unchanged.
+This increment is software/local qualification, not a DEV or device deployment.
+
+Latest real PDF evidence: new normal QA Source uploaded with ACK+GET, verified and
+sealed; Task created, then blocked before its first Attempt by the Provider Source
+transform-hash predicate. Zero new model calls and no PDF Core Save. DEV restored
+healthy/default CLOSED; protected single-function repair is separately pending
+Owner in the private delivery worktree. Existing UNKNOWN identities are retained.
+
 # Universal PDF software integration — 30 October 2026
 
 Curated software only onto main f92cb022: optional request-scoped PDF runtime,

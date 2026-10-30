@@ -3,7 +3,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { universalTaskDatabase } from "./universalTaskBootstrap";
+import { migrations } from "../../src/data/db/migrations";
+import {
+  initializeUniversalTaskDatabase,
+  universalTaskDatabase,
+} from "./universalTaskBootstrap";
 
 it("serializes shared Backend SQLite callers and retains committed state after reopening", async () => {
   const root = await mkdtemp(join(tmpdir(), "otr-universal-db-"));
@@ -55,5 +59,30 @@ it("rolls back failed Task transactions before another caller can commit", async
     ]);
   } finally {
     sql.close();
+  }
+});
+
+it("keeps Backend Task schema74 independent of a later Native-only migration", () => {
+  const db = new DatabaseSync(":memory:");
+  migrations.push({
+    id: migrations.at(-1)!.id + 1,
+    name: "native_photo_test",
+    sql: "CREATE TABLE fixture_native_photo(id TEXT);",
+  });
+  try {
+    initializeUniversalTaskDatabase(db);
+    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 74 });
+    expect(
+      db
+        .prepare("SELECT name FROM sqlite_master WHERE name='fixture_native_photo'")
+        .get(),
+    ).toBeUndefined();
+    db.exec("PRAGMA user_version=75");
+    expect(() => initializeUniversalTaskDatabase(db)).toThrow(
+      "UNIVERSAL_TASK_DATABASE_VERSION",
+    );
+  } finally {
+    migrations.pop();
+    db.close();
   }
 });

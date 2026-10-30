@@ -39,7 +39,7 @@ const handle = (read = true) =>
   createDevBackendHandler({
     gateway: {
       validateAccessToken: async (token: string) =>
-        token === "valid" ? { id: actor } : null,
+        token === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" } : null,
       canReadTrip: async () => read,
     } as unknown as DevBackendGateway,
   });
@@ -453,6 +453,63 @@ it.each([
         );
         expect(JSON.stringify(event)).not.toContain(actor);
         expect(JSON.stringify(event)).not.toContain(trip);
+      }
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
+
+it.each([
+  ["capabilities", "CAPABILITIES", "CORE_CONNECTION_BUSY", "OTHER", false],
+  ["commands", "COMMAND", "CORE_CONNECTION_BUSY", "OTHER", false],
+  [`operations/${operation}`, "RECEIPT", "PRIVATE_SQL_TOKEN", "53300", false],
+  ["capabilities", "CAPABILITIES", "PRIVATE_SQL_TOKEN", "PRIVATE_CODE", false],
+  [`operations/${operation}`, "RECEIPT", "CORE_CONNECTION_BUSY", "OTHER", true],
+])(
+  "bounds normal Core failure diagnostics: %s / %s / %s / %s / %s",
+  async (path, resource, message, driverCode, brokenLog) => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (brokenLog) throw Error("logger unavailable");
+    });
+    try {
+      const fail = async () => {
+        throw Object.assign(Error(message as string), { code: driverCode });
+      };
+      const response = await coreHttpBoundary(
+        request(
+          path as string,
+          path === "commands" ? JSON.stringify(command()) : undefined,
+        ),
+        actor,
+        async () => true,
+        {
+          hash,
+          read: { capabilities: fail },
+          readOperation: fail,
+          commands: { withLockedCommand: fail },
+        } as unknown as CoreHttpConnection,
+      );
+      expect(response?.status).toBe(503);
+      expect(await response?.json()).toMatchObject({
+        error: { code: "CORE_EXECUTION_UNAVAILABLE" },
+      });
+      expect(log).toHaveBeenCalledOnce();
+      if (!brokenLog) {
+        expect(JSON.parse(String(log.mock.calls[0][0]))).toEqual({
+          event: "core_execution_failed",
+          resource,
+          category: message === "CORE_CONNECTION_BUSY" ? message : "OTHER",
+          driverCode: driverCode === "53300" ? "53300" : "OTHER",
+        });
+        for (const privateValue of [
+          actor,
+          trip,
+          operation,
+          "PRIVATE_SQL_TOKEN",
+          "PRIVATE_CODE",
+        ])
+          expect(JSON.stringify(log.mock.calls)).not.toContain(privateValue);
       }
     } finally {
       log.mockRestore();

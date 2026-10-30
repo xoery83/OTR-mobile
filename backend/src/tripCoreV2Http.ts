@@ -454,6 +454,60 @@ export async function coreHttpBoundary(
       );
     }
     const code = error instanceof Error ? error.message : "INTERNAL_ERROR";
+    const executionResource =
+      path === "capabilities"
+        ? "CAPABILITIES"
+        : /^operations\/[0-9a-f-]{36}$/.test(path)
+          ? "RECEIPT"
+          : path === "commands"
+            ? "COMMAND"
+            : null;
+    if (executionResource) {
+      try {
+        const category = [
+          "CORE_CONNECTION_BUSY",
+          "CORE_CONNECTION_TIMEOUT",
+          "CORE_CONNECTION_RETIRED",
+          "CORE_PRINCIPAL_UNAVAILABLE",
+          "CORE_TRANSACTION_UNFINISHED",
+          "CORE_CAPABILITY_CLOSED",
+          "CORE_READ_UNAVAILABLE",
+          "NOT_VISIBLE",
+          "TRIP_NOT_AUTHORIZED",
+          "REVISION_CONFLICT",
+        ].includes(code)
+          ? code
+          : "OTHER";
+        const driverCode =
+          error && typeof error === "object" && "code" in error ? error.code : null;
+        console.info(
+          JSON.stringify({
+            event: "core_execution_failed",
+            resource: executionResource,
+            category,
+            driverCode: [
+              "53300",
+              "42501",
+              "57014",
+              "40001",
+              "40P01",
+              "25P02",
+              "42P01",
+              "42703",
+              "42883",
+              "28P01",
+              "08006",
+              "57P01",
+              "P0001",
+            ].includes(driverCode as string)
+              ? driverCode
+              : "OTHER",
+          }),
+        );
+      } catch {
+        // Fixed categories cannot expose request values or replace the failure response.
+      }
+    }
     if (path === "universal-p1-candidates") {
       try {
         const category = [
