@@ -1,5 +1,5 @@
 {
-  "status": "ACTUAL_DEV_FAIL_FIXED_CANDIDATE_NOT_YET_DEPLOYED",
+  "status": "MAIN_PUSHED_DEV_DEPLOYED_CONCURRENT_READ_PASS_BUSINESS_CONFLICT_PENDING",
   "candidate": "a33838e8",
   "directParent": "a46fc714",
   "files": ["backend/src/tripCoreV2PgConnection.ts", "backend/src/tripCoreV2PgConnection.test.ts"],
@@ -26,7 +26,18 @@
     "requestCancellation": "withLease has no AbortSignal contract; no new cancellation framework introduced",
     "queueKind": "Bounded ephemeral connection wait only, not another durable sync queue"
   },
-  "validation": {"beforeRepair": "Two new FIFO/failure-release tests RED on existing CORE_CONNECTION_BUSY", "afterRepair": "Two suites32PASS/types/lint/diffcheck", "independentReview": "REQUESTED_NOT_YET_RECORDED", "postFixDev": "NOT_YET_TESTED"},
+  "validation": {"beforeRepair": "Two new FIFO/failure-release tests RED on existing CORE_CONNECTION_BUSY", "afterRepair": "Two suites32PASS/types/lint/diffcheck", "independentReview": "Auth a338 NO_BLOCKER/12 independent tests; joined1cadec NO_BLOCKER/15 independent tests", "joined": "Root current-public Core+HTTP34PASS/types/lint/two bundles; existing PDF budgets retained", "postFixDev": "Same original operation, two concurrent normal authenticated reads both PASS; Root exact-time-window fixed error count0/unparsed count0"},
+  "deployedRepair": {
+    "mainAndOrigin": "1cadec86838a7741c11641b42015680557cbb610",
+    "image": "6ca91aaf76df94863aeaba006512d24582996a8bbfd830ae5813f8b0cf73615b",
+    "container": "e8b953964ede28a4bf21df51885f4d3808694cb7a152cba2506922f14fd58339",
+    "probeStartedAt": "2026-10-30T07:12:48.719Z",
+    "probeCompletedAt": "2026-10-30T07:13:02.577Z",
+    "capabilities": "200 ENABLED",
+    "receipt": "MISSING (normal404 to null); not a Mutation success",
+    "privateReceipt": "/private/tmp/otr-ipad-native-20261030/downstream/formsqa-concurrent-read-after-fifo.json",
+    "envMountsPermissions": "Original Env/six mounts/four files retained; no Core SQL, Authority or connection-limit change"
+  },
   "originalPending": "cc954486-ca88-4a52-8ca6-63582b703a71 retained; no business POST, new operation, local queue rewrite or false APPLIED",
   "privateArtifacts": "/private/tmp/otr-ipad-native-20261030/downstream/formsqa-concurrent-read-diagnostic-before-fifo.json",
   "ordinaryDeploymentOwner": "Universal Root; Native has no Host/SQL/main window",
