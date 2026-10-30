@@ -1,5 +1,6 @@
 export const en = {
-  "importDocuments.importedItems": "Saved items linked through this Import Batch: {count}",
+  "importDocuments.importedItems":
+    "Saved items linked through this Import Batch: {count}",
   "importDocuments.itemLinksUnavailable": "Related saved items could not be checked.",
   "updates.importActivity": "Recent Import activity",
   "updates.importSaved": "Saved items: {count} · Open results",
@@ -137,7 +138,8 @@ export const en = {
   "capture.ai.manualSaved": "Item saved. Check its sync status in the trip.",
   "capture.ai.originals": "Original materials",
   "capture.ai.retainedUnprocessedTitle": "Not processed ({count})",
-  "capture.ai.retainedUnprocessedDescription": "These materials were not included in this parsing pass.",
+  "capture.ai.retainedUnprocessedDescription":
+    "These materials were not included in this parsing pass.",
   "capture.ai.lifecycleUnknown":
     "A change or cancellation needs a verified target before it can be applied.",
   "capture.ai.bookingWithheld":
@@ -348,6 +350,24 @@ export const en = {
     "Local validation and document-reading events are recorded below.",
   "capture.progress.newImport": "New Import",
   "capture.progress.retryIntake": "Retry local intake",
+  "capture.photo.localTitle": "Local image check",
+  "capture.photo.localOnly":
+    "Only local checks and choices are recorded here. AI image analysis has not started.",
+  "capture.photo.notChecked": "This image has not been checked on this device.",
+  "capture.photo.relevant": "Local text suggests possible travel information.",
+  "capture.photo.uncertain":
+    "Local text cannot determine whether this image is relevant.",
+  "capture.photo.irrelevant": "Marked as unrelated; the original is kept.",
+  "capture.photo.originalChanged":
+    "The earlier choice no longer applies. Check this image and choose again.",
+  "capture.photo.unavailable":
+    "Local image state could not be checked. Your original is kept.",
+  "capture.photo.continueSelected":
+    "Your AI analysis preference is recorded on this device. Analysis has not started.",
+  "capture.photo.skipSelected": "Skipped for AI analysis; the original is kept.",
+  "capture.photo.checkLocally": "Check image locally",
+  "capture.photo.chooseAi": "Choose AI analysis",
+  "capture.photo.skipAi": "Skip AI analysis",
   "capture.voice.start": "Start voice input",
   "capture.voice.stop": "Stop voice input",
   "capture.voice.cancel": "Cancel voice input",
@@ -3327,6 +3347,19 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.localInterpretationHistory": "下方记录了本机校验和文档读取事件。",
   "capture.progress.newImport": "新建导入",
   "capture.progress.retryIntake": "重试本机接收",
+  "capture.photo.localTitle": "本机图片初筛",
+  "capture.photo.localOnly": "此处仅记录本机初筛和选择，尚未开始 AI 图片分析。",
+  "capture.photo.notChecked": "尚未在此设备上检查这张图片。",
+  "capture.photo.relevant": "本机文字初筛发现了可能的旅行信息。",
+  "capture.photo.uncertain": "本机文字初筛无法判断这张图片是否相关。",
+  "capture.photo.irrelevant": "已标记为无关，原件仍会保留。",
+  "capture.photo.originalChanged": "此前的选择已不再适用，请检查图片后重新选择。",
+  "capture.photo.unavailable": "暂时无法检查本机图片状态，原件仍会保留。",
+  "capture.photo.continueSelected": "AI 分析意向已记录在本机，尚未开始分析。",
+  "capture.photo.skipSelected": "已选择跳过 AI 分析，原件仍会保留。",
+  "capture.photo.checkLocally": "在本机检查图片",
+  "capture.photo.chooseAi": "选择 AI 分析",
+  "capture.photo.skipAi": "跳过 AI 分析",
   "capture.voice.start": "开始语音输入",
   "capture.voice.stop": "停止语音输入",
   "capture.voice.cancel": "取消语音输入",

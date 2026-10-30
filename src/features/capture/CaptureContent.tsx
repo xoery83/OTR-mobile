@@ -46,6 +46,7 @@ export function CaptureContent({
   onReopenJob?: (id: string) => void;
   accountId?: string;
 }) {
+  useUiLocale();
   const [{ staging, invocationTripName, invocationTripPrior }] = useState(() => ({
     staging: draftStaging ?? createCaptureStaging(pickCaptureMaterial, isCurrent),
     invocationTripName: tripName,
@@ -498,6 +499,21 @@ export function CaptureContent({
               />
             ) : attempted || reopening || model ? (
               <CaptureProgress
+                photoRelevanceCopy={{
+                  title: t("capture.photo.localTitle"),
+                  localOnly: t("capture.photo.localOnly"),
+                  notChecked: t("capture.photo.notChecked"),
+                  relevant: t("capture.photo.relevant"),
+                  uncertain: t("capture.photo.uncertain"),
+                  irrelevant: t("capture.photo.irrelevant"),
+                  originalChanged: t("capture.photo.originalChanged"),
+                  unavailable: t("capture.photo.unavailable"),
+                  continueSelected: t("capture.photo.continueSelected"),
+                  skipSelected: t("capture.photo.skipSelected"),
+                  screen: t("capture.photo.checkLocally"),
+                  chooseAi: t("capture.photo.chooseAi"),
+                  skip: t("capture.photo.skipAi"),
+                }}
                 readTripTargets={readTripTargets}
                 isCurrent={current}
                 model={model}
