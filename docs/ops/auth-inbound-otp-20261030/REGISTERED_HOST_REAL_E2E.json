@@ -1,0 +1,22 @@
+{
+  "status": "NORMAL_REGISTERED_QA_HOST_OTP_AND_OWN_SESSION_CLEANUP_ARTIFACT_VERIFIED",
+  "source": "420ad968",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "runId": "579aca46-56e6-46a2-a3a0-bf7b031f3a4c",
+  "otpRequestAttempts": 1,
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "receiptId": "51190be7-ac70-4a74-8dfa-06d317b82694",
+  "operationId": "eeffb4cf-13ac-4acf-950f-c250249b492f",
+  "itemId": "fab8ec55-8ded-4c04-aba0-853e68e35f24",
+  "intentHash": "PASS",
+  "receiptHash": "PASS",
+  "databaseReceiptCount": 1,
+  "databaseItemCount": 1,
+  "independentVerification": "Auth recomputed hashes and compared Native-provided independent DEV readback artifacts; no new network/Auth request",
+  "notClaimed": [
+    "Full receiving iPad downstream/cold acceptance",
+    "Guest Adoption",
+    "Cross-Account isolation from this one same-Account request"
+  ]
+}

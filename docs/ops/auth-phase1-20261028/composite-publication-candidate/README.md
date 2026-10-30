@@ -207,3 +207,14 @@ Actor/plan/execution-hash mismatch, missing-stage cancellation, immutable termin
 rows and fresh-connection readback. Existing anon/authenticated/service_role
 remain denied. The old fixture still lacks three Gateway roles, so their ACLs
 and real business principal composition are explicitly untested.
+
+## Person held transaction seam
+
+Native explicitly delegated the Person Pg source/test to Auth as sole Writer.
+`withTripPersonCloudCreateOnTransaction` now reuses the exact existing query and
+receipt checks on a caller-owned lease, without transaction control. The normal
+standalone factory still owns its original BEGIN/COMMIT/ROLLBACK. Unawaited,
+parallel, escaped and swallowed failures retire the caller lease and reject.
+Direct2s38PASS, independent Pg+HTTP2s31PASS/NO_BLOCKER, types/lint PASS. This adds
+no SQL authority and has no runtime consumer; the four-principal composition
+barrier remains. See PERSON_HELD_REVIEW.json.

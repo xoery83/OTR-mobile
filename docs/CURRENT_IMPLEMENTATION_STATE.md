@@ -219,6 +219,12 @@ Local private stage/terminal SQL now passes22 real isolated PG checks: same-stag
 publish/cancel contention, rollback, immutable records and original tuple/hash
 fences. Terminal evidence remains authority NONE/no grants or business writes;
 it cannot unlock Guest data. Gateway composition and final receipt remain pending.
+The reviewed Person held-transaction seam now reuses its existing standalone SQL/
+receipt logic without inner commits; direct38/independent31 tests, types/lint PASS.
+No live caller or protected SQL change. Auth source-only integration through
+7a0317cb is pushed main; actual primary7s146/types PASS, original six dirty files
+retained. Subsequent Person seam is private pending next serial integration.
+
 
 
 
