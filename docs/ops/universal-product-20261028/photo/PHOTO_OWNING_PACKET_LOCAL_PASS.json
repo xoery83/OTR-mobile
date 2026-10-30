@@ -1,0 +1,21 @@
+{
+  "status": "REVIEWED_SQL_CANDIDATE_NOT_APPROVED_OR_INSTALLED",
+  "date": "2026-10-31",
+  "codeCommit": "21590e11",
+  "forwardSHA256": "21bfcdb459ee4bd3900a572bf35cb243b683b04e6ca18534e77adf4f08d98ef1",
+  "preuseReverseSHA256": "ad26387d2daebfa47bf6b3ec94e5561c88e4b1f059a2ab23b1cc9dfe44c2a50e",
+  "sourceForwardSHA256": "f275e8e0acb4f753f7645ac9aeb2c09220c2edd63b7a971bcd6ff9fbe1c449e5",
+  "independentForwardReview": "NO_BLOCKER",
+  "independentInverseReview": "NO_BLOCKER",
+  "isolatedComposition": "PASS",
+  "emptySchemaPreuseRoundtrip": "PASS",
+  "sourceCoreBusinessRowsCopied": 0,
+  "retention": "Once PNG Source/execution is accepted, close only; retain compatibility, originals and receipts. Never use the pre-use inverse.",
+  "pending": [
+    "Host_entrypoint_and_compatible_image",
+    "close_watchdog_deployment_preflight",
+    "Owner_precise_protected_Gate",
+    "actual_Photo_Vision_Admission_Save_Cloud_Native_E2E"
+  ],
+  "providerPhotoCalls": 0
+}

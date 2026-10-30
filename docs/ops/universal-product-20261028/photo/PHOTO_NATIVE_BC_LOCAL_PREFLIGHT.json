@@ -1,0 +1,38 @@
+{
+  "status": "NATIVE_LOCAL_PHOTO_DECISIONS_PASS_NOT_VISION_E2E",
+  "device": "AD5",
+  "build": "126.1",
+  "batchId": "bfe075ba-2c53-497c-95c2-09009a4387c5",
+  "inputs": [
+    {
+      "input_id": "a0119ffd-892a-49f8-8f34-6582f02b77ac",
+      "original_filename": "photo-uncertain-route.png",
+      "content_sha256": "4e2e716956dbb4edbcc06cb23c6efb3479e6b6ff34cce5ce7251080d4002571f",
+      "content_byte_count": 24989,
+      "relevance": {
+        "status": "UNCERTAIN",
+        "reason": "OCR_UNAVAILABLE"
+      },
+      "choice": "CONTINUE_WITH_AI",
+      "originalBytesIndependentlyVerified": true
+    },
+    {
+      "input_id": "2260a7e4-1446-4389-a627-ee5064b64824",
+      "original_filename": "photo-unrelated-household.png",
+      "content_sha256": "5725663d75399e194ce5b6247c65721a31f627b17f544e7a883c82af7739740c",
+      "content_byte_count": 46433,
+      "relevance": {
+        "status": "UNCERTAIN",
+        "reason": "NO_CLEAR_RELEVANCE"
+      },
+      "choice": "SKIP",
+      "originalBytesIndependentlyVerified": true
+    }
+  ],
+  "providerCallsStarted": 0,
+  "limits": [
+    "B conservatively returned UNCERTAIN, not automatically IRRELEVANT; explicit Skip preserves original without model submission.",
+    "C OCR unavailable remains UNCERTAIN; explicit Continue persisted but no Analyze or model call performed.",
+    "No hosted Source, image interpretation, formal Save or cold recovery for this B/C batch is claimed."
+  ]
+}
