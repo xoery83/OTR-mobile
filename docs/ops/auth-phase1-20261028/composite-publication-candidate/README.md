@@ -183,3 +183,27 @@ is preserved in retainedLocalState, while the remote result must match the final
 Trip plus exact original financial settings. Invalid timestamps or changed
 settings fail the entire transaction. Directed3s63PASS, independent23PASS and
 NO_BLOCKER/types/lint; this remains component-only, with no PG/DEV publication.
+
+## Local terminal arbitration evidence — 30 October
+
+`terminal.local.sql` extends only the disposable private staging fixture. Each
+adoption has at most one immutable terminal-evidence row. Publication and
+cancellation contend on SELECT FOR UPDATE of that exact stage; its original
+Account/Guest/inventory/grant/plan tuple and exact text hash are rechecked.
+Cancellation cannot carry execution evidence; publication evidence must retain
+the separate executor text/hash and matching binding. UPDATE/DELETE/TRUNCATE
+are refused. It adds no RPC, role, runtime grant, business write or mounted reader.
+
+This table stores **authority: NONE** component evidence, not an authoritative
+publication/cancellation receipt. Its local PG publication test deliberately uses
+synthetic executor evidence without business writes, which can never release
+Guest originals or install an Account. Actual authorized owning execution, final
+dataset verification, grant/confirmation issuer, commit recovery transport and
+Native restore remain required. The terminal fixture does not replace these.
+
+The isolated network-none256MB PG run now passes22 checks, including real
+concurrent publication/cancellation with exactly one winner, outer rollback,
+Actor/plan/execution-hash mismatch, missing-stage cancellation, immutable terminal
+rows and fresh-connection readback. Existing anon/authenticated/service_role
+remain denied. The old fixture still lacks three Gateway roles, so their ACLs
+and real business principal composition are explicitly untested.
