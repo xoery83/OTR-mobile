@@ -12,7 +12,12 @@ independently reviewed. Normal PNG business remains CLOSED until exact approval.
 Use the reviewed compatible default-closed image after any PNG artifact exists;
 never reverse/delete accepted Source/evidence/Item or return to old incompatible4d.
 Next: approved CLOSED install/preflight, one original-image E2E, then Import UX.
-An isolated Activity-list read-only-refresh slice is being prepared meanwhile.
+Prepared UX slices remain LOCAL_PASS, not installed: Activity pending-state GET
+refresh ee0d0451 plus sheet-header dedup46f03c78 (separate child branch, reviewed,
+63 checks); accepted receipt display when Save controls are closed93b3aeb9
+(Root branch, reviewed,39 checks). Do not treat these as Native UX PASS or a new
+Photo Save. AD5 existing PDF Batch e6f789bc Results/title/date read recovered under
+newfb image without Analyze/Save; no new paid dispatch was requested.
 
 # Import Photo — runtime continuation, 31 October 2026
 
