@@ -1,3 +1,19 @@
+# Auth Golden Slice — current continuation, 30 October 2026
+
+Golden Slice BLOCKED: existing Guest UI Trip+P1 → normal OTP/explicit target →
+one owning publication → restart same Trip+P1. The current login still stops at
+GUEST_ADOPTION_PREFLIGHT_REQUIRED; Hosted nonempty Adoption is not mounted.
+The PUBLISHED candidate now passes46 isolated real-PG checks plus135 directed
+and independently repeated tests. Actual COMMIT reply loss recovers one terminal
+via fresh status/receipt and exact retry; raw post-final Writer DML is denied
+while the original deferred Metadata COMMIT guard remains valid. Fourteen current
+DEV function preimages were read with READ ONLY; raw bodies stay private0600.
+No Hosted SQL, runtime route, Guest hold release or Session install is included.
+See ops/auth-phase2-20261028/PUBLICATION_REVIEW.json. Next is minimal existing
+login/source/owning-restore wiring plus the exact protected execution Gate for
+this one fileless Trip/P1. Full People, Capture and other item types are deferred.
+Nonempty75 remains closed until its zero-Photo qualification is verified.
+
 # Auth Adoption active checkpoint — 30 October 2026
 
 Accepted source integration/main push: `662898cfdc12a98ba5f2bf1ef3f5235b637b8077`.

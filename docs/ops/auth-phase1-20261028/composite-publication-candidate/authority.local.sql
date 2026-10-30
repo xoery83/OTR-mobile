@@ -146,7 +146,8 @@ BEGIN
  OR pg_input_is_valid(t#>>'{create,tripId}','uuid') IS DISTINCT FROM true
  OR jsonb_typeof(t#>'{create,operationId}') IS DISTINCT FROM 'string'
  OR pg_input_is_valid(t#>>'{create,operationId}','uuid') IS DISTINCT FROM true
- OR t#>>'{ledgerInitialization,id}' IS DISTINCT FROM t#>>'{create,tripId}')
+ OR t#>>'{ledgerInitialization,id}' IS DISTINCT FROM t#>>'{create,tripId}'
+ OR pg_input_is_valid(t#>>'{creator,personId}','uuid') IS DISTINCT FROM true)
  OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') t,
  LATERAL jsonb_array_elements(t->'people') person_entry WHERE
  person_entry->>'tripId' IS DISTINCT FROM t#>>'{create,tripId}'
@@ -155,12 +156,37 @@ BEGIN
  OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') t,
  LATERAL jsonb_array_elements(t->'deferredMetadata') a WHERE
  a->>'tripId' IS DISTINCT FROM t#>>'{create,tripId}'
- OR pg_input_is_valid(a->>'operationId','uuid') IS DISTINCT FROM true)
+ OR pg_input_is_valid(a->>'operationId','uuid') IS DISTINCT FROM true
+ OR pg_input_is_valid(a->>'actionId','uuid') IS DISTINCT FROM true)
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') t,
+ LATERAL jsonb_array_elements(t->'queueOperationIds') queue_entry
+ WHERE jsonb_typeof(queue_entry) IS DISTINCT FROM 'string' OR pg_input_is_valid(queue_entry#>>'{}','uuid') IS DISTINCT FROM true)
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_STAGE_IDENTITY_INVALID' USING ERRCODE='23514';END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') st GROUP BY st#>>'{create,tripId}' HAVING count(*)>1)
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') st,
+  LATERAL (SELECT st#>>'{creator,personId}' AS id UNION ALL SELECT person_entry->>'personId' FROM jsonb_array_elements(st->'people') person_entry) refs
+  GROUP BY refs.id HAVING count(*)>1)
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') st,
+  LATERAL (SELECT st#>>'{create,operationId}' AS id
+   UNION ALL SELECT person_entry->>'operationId' FROM jsonb_array_elements(st->'people') person_entry
+   UNION ALL SELECT action_entry->>'operationId' FROM jsonb_array_elements(st->'deferredMetadata') action_entry
+   UNION ALL SELECT intent_entry#>>'{command,operationId}' FROM jsonb_array_elements(st->'coreIntents') intent_entry) refs
+  GROUP BY refs.id HAVING count(*)>1)
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') st,LATERAL jsonb_array_elements_text(st->'queueOperationIds') queue_ref
+  GROUP BY queue_ref HAVING count(*)>1)
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') st,LATERAL jsonb_array_elements(st->'deferredMetadata') action_entry
+  WHERE EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') other_trip,LATERAL jsonb_array_elements_text(other_trip->'queueOperationIds') queue_ref
+   WHERE queue_ref=action_entry->>'operationId'))
+ THEN RAISE EXCEPTION 'AUTH_ADOPTION_STAGE_DUPLICATE_IDENTITY' USING ERRCODE='23514';END IF;
+
  IF EXISTS(SELECT 1 FROM jsonb_array_elements(source->'trips') t,
  LATERAL jsonb_array_elements(t->'coreIntents') i WHERE i#>>'{command,tripId}' IS DISTINCT FROM t#>>'{create,tripId}'
  OR pg_input_is_valid(i#>>'{command,operationId}','uuid') IS DISTINCT FROM true
  OR i#>>'{command,admission,mode}' IS DISTINCT FROM 'MANUAL'
+ OR jsonb_typeof(i->'sha256') IS DISTINCT FROM 'string' OR i->>'sha256' !~ '^[0-9a-f]{64}$'
+ OR jsonb_typeof(i->'canonicalText') IS DISTINCT FROM 'string'
+ OR i->>'sha256' IS DISTINCT FROM encode(sha256(convert_to('otr-trip-core-intent-v2'||chr(10)||(i->>'canonicalText'),'UTF8')),'hex')
+ OR (i->>'canonicalText')::jsonb IS DISTINCT FROM i->'command'
  OR i#>>'{command,command}' IS NULL OR i#>>'{command,command}' NOT IN ('CREATE_ITEM','SET_ITEM_TEXT','SET_ITEM_SCHEDULE','SET_ITEM_PLACE','SET_ITEM_PARTICIPATION')
  OR i#>>'{command,command}'='CREATE_ITEM' AND i#>>'{command,payload,family}' IS DISTINCT FROM 'P1')
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_STAGE_FAMILY_UNSUPPORTED' USING ERRCODE='23514';END IF;
@@ -234,6 +260,15 @@ LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT 1 FROM otr_auth_guest_composite.transaction_scopes
  WHERE backend_pid=pg_backend_pid() AND transaction_id=pg_current_xact_id_if_assigned())
 $$;
+-- DML-only fence; owning deferred COMMIT validation keeps its live finite scope.
+CREATE FUNCTION otr_auth_guest_composite.mutation_allowed() RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ IF session_user<>'otr_trip_core_v2_gateway' THEN RETURN true;END IF;
+ RETURN NOT EXISTS(SELECT 1 FROM otr_auth_guest_composite.transaction_scopes scope
+ JOIN otr_auth_guest_composite.terminal_receipts terminal USING(adoption_id)
+ WHERE scope.backend_pid=pg_backend_pid() AND scope.transaction_id=pg_current_xact_id_if_assigned());
+END $$;
 CREATE FUNCTION otr_auth_guest_composite.enter_operation(actor uuid,trip uuid,operation uuid,kind text,request jsonb)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE source jsonb;t jsonb;expected jsonb;entry jsonb;
@@ -241,6 +276,10 @@ BEGIN
  IF NOT otr_auth_guest_composite.scope_allowed(actor,trip,operation,kind)
  OR kind NOT IN ('CREATE','METADATA','PERSON')
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_OPERATION_NOT_SEALED' USING ERRCODE='42501';END IF;
+ IF EXISTS(SELECT 1 FROM otr_auth_guest_composite.transaction_scopes scope
+ JOIN otr_auth_guest_composite.terminal_receipts terminal USING(adoption_id)
+ WHERE scope.backend_pid=pg_backend_pid() AND scope.transaction_id=pg_current_xact_id_if_assigned())
+ THEN RAISE EXCEPTION 'AUTH_ADOPTION_OPERATION_ALREADY_FINALIZED' USING ERRCODE='42501';END IF;
  SELECT (((s.plan_text::jsonb#>>'{preparation,canonicalText}')::jsonb)#>>'{source,canonicalText}')::jsonb INTO source
  FROM otr_auth_guest_composite.transaction_scopes scope JOIN otr_auth_guest_composite.sealed_stages s USING(adoption_id)
  WHERE scope.backend_pid=pg_backend_pid() AND scope.transaction_id=pg_current_xact_id_if_assigned();
@@ -327,5 +366,5 @@ GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.confirm_and_issue(uuid,jsonb,
  otr_auth_guest_composite.scope_allowed(uuid,uuid,uuid,text),otr_auth_guest_composite.scope_binding(uuid),
  otr_auth_guest_composite.read_scope(uuid),otr_auth_guest_composite.assert_new_trips(uuid,jsonb),
  otr_auth_guest_composite.ledger_snapshot(uuid,uuid) TO otr_trip_core_v2_gateway;
-GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.scope_allowed(uuid,uuid,uuid,text) TO otr_trip_core_v2_writer;
+GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.scope_allowed(uuid,uuid,uuid,text),otr_auth_guest_composite.mutation_allowed() TO otr_trip_core_v2_writer;
 COMMIT;

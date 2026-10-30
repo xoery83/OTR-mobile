@@ -14,6 +14,7 @@ SIGNATURES=[
  'public.trip_person_cloud_create_result(uuid,uuid,uuid)',
  'public.trip_person_create_receipt_guard()',
  'public.trip_core_finite_read_state_guard()',
+ 'public.trip_core_guard_write()',
 ]
 SCOPE='otr_auth_guest_composite.scope_allowed'
 def once(body,old,new):
@@ -51,6 +52,8 @@ def render(definitions):
     body=enter(body," IF session_user='otr_trip_core_v2_gateway' THEN PERFORM otr_auth_guest_composite.enter_operation(actor,trip,operation,'PERSON',request);END IF;")
   elif 'trip_person_create_receipt_guard' in signature:
    body=once(body,"session_user<>'otr_trip_person_command_gateway'",f"(session_user<>'otr_trip_person_command_gateway' AND NOT {SCOPE}(NEW.actor_account_id,NEW.trip_id,NEW.operation_id,'PERSON'))")
+  elif 'trip_core_guard_write' in signature:
+   body=enter(body," IF NOT otr_auth_guest_composite.mutation_allowed() THEN RAISE EXCEPTION 'AUTH_ADOPTION_MUTATION_ALREADY_FINALIZED' USING ERRCODE='42501';END IF;")
   elif 'trip_core_finite_read_state_guard' in signature:
    marker=" trip:=(to_jsonb(coalesce(new,old))->>'trip_id')::uuid;"
    extra="""
@@ -77,7 +80,7 @@ END $$;
  for signature,item in result.items():
   statements.append("DO $$ BEGIN IF md5(pg_get_functiondef('"+signature+"'::regprocedure)) IS DISTINCT FROM '"+item['beforeMd5']+"' THEN RAISE EXCEPTION 'AUTH_COMPOSITE_EXACT_PREIMAGE_REQUIRED';END IF;END $$;")
   statements.append(item['after']+';')
- granted=[s for s in SIGNATURES if not any(x in s for x in ['trip_sustained','receipt_guard','read_state_guard'])]
+ granted=[s for s in SIGNATURES if not any(x in s for x in ['trip_sustained','receipt_guard','read_state_guard','guard_write'])]
  statements.append('GRANT EXECUTE ON FUNCTION '+','.join(granted)+' TO otr_trip_core_v2_gateway;')
  statements.append('COMMIT;')
  return '\n'.join(statements),result
