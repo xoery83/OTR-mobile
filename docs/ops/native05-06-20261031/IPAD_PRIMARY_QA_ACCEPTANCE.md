@@ -131,3 +131,29 @@ Additional private evidence: `native05-b-challenge.json`,
 Recovery evidence: `p3-recovery-receipt.json`,
 `p3-after-unknown-independent.json`, `p3-create-validated.json`,
 `p3-recovery-visible.png`. The normal recovery Host Session also revoked itself.
+
+## Unified-main in-place smoke
+
+Candidate/business source `c79a9b03189d0dc4b514817f449dac66fcb1c8af` safely
+fast-forwarded main and was pushed normally; local/remote matched. Six original
+main dirty files retained exact bytes, modes, status, index and full diff hashes.
+Only the11 named Native files were committed; no private script/credential/env.
+
+Build128 installed through Apple CoreDevice over the same bundle, application
+identifier, signing profile and Keychain group. Production JS
+`2624655a227eade8edbda44a63210b668e76b11953671af6df4ea50e89fe1cd2` uses
+sourcec79a; Native compile/profile basis remains full127/source5c. This is a JS
+update, **not another full Native compile**. Schema migrations did not change.
+Actual process-cold P1 Details screenshot retained the edited title, Oct31 and
+Everyone, with enabled Edit and no login. No uninstall/reinstall/reset/session copy.
+
+The system Touch ID requirement was not bypassed or claimed resolved. A normal
+`home` request timed out/cancelled, so backgrounding was not claimed. To stop
+ordinary foreground polling during Auth's window, exact freshly launched OTR
+PID1008 received normal SIGTERM (no SIGKILL, no open form). Own automation Session
+closed; final own Session inventory empty and target Claim inventory checked.
+No further P3 Edit or paid query. Current autonomous AX/tap reconnection still
+needs the system grant; screenshots/installed App usability are separate evidence.
+Final smoke evidence: `BUILD128_IDENTITY.json`, `install128.json`,
+`smoke128-cold-launch.json`, `smoke128-p1-cold.png`, `idle128-terminate.json`,
+`final128-close.json`, `final128-sessions.json`, `final128-claims.json`.

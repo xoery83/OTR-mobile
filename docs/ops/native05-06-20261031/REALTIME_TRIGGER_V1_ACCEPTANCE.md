@@ -67,8 +67,15 @@ download problem. Current shipped polling was not represented as final V1 behavi
 | Real denied subscriber / A→B→A socket isolation | NOT TESTED; only deterministic adapter fences |
 | Lost signal / cheap reconnect fallback | Owning revision/cursor read absent |
 | Formal revocation / regrant | BLOCKED; ordinary404 is not revocation |
-| Main integration and unified smoke | Pending acceptance of this bounded candidate |
+| Main integration and unified smoke | Sourcec79a safely pushed; iPad128 same-source JS cold P1 screenshot PASS; AX/tap reconnect still needs system grant |
 
 See `REALTIME_OWNING_PORT_GAP.md` for the exact shared difference. Root/Core and
 Auth both confirmed their current deliveries do not supply these ports. This is
 the next owning decision; Native must not widen access to manufacture a PASS.
+
+Final installed JS source/main code SHA:
+`c79a9b03189d0dc4b514817f449dac66fcb1c8af`. A following receipt-only commit
+records this integration without changing that tested code. iPad128 uses127's
+Native compile/profile and retains Session/cache; iPhone untouched. Sourcec79a
+contains no runtime call constructing the new trigger and no installed subscribe
+adapter; ordinary polling is unchanged. Exact dirty-main preservation verified.

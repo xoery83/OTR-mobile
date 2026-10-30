@@ -1,7 +1,8 @@
 # Native-05/06 — iPad business slice and closed trigger, 31 October 2026
 
 Physical iPad Air5 freshly verified OS27.2/24B119, exactUDID00008103-00113914020B401E,
-Build127/source5c765fa6/full new native+production JS418879af. Normal OTP B1f,
+Build127/source5c765fa6/full new native; now in-place128/JS2624655a/sourcec79a,
+same127 native/profile. Normal OTP B1f,
 P1c877cf77 Create/Edit APPLIED/independent Supabase hashes/sameID rev2/cold Session
 and SQLite75 Pending0 PASS. External P3612d7e55 original POST became UNKNOWN,
 then same-op83b3a089 receipt a7caf546 APPLIED and independent single row/hash plus
@@ -15,7 +16,10 @@ for this candidate. No private subscribe/committed publisher/cheap revision owni
 ports exist per Core/Auth; no socket/SQL/RLS/Trigger/authority opened. Revocation
 remains BLOCKED. See ops/native05-06-20261031/{IPAD_PRIMARY_QA_ACCEPTANCE.md,
 REALTIME_TRIGGER_V1_ACCEPTANCE.md,REALTIME_OWNING_PORT_GAP.md}. Native branch safely
-FF'd to maincdf; candidate integration/unified JS smoke pending. Core capacity53300
+FF'd to maincdf, then candidatec79a safely pushed/local=remote, six original main
+dirty files exactly preserved. iPad128 cold edited P1/date/Everyone/no-login screenshot
+PASS; normal home failed at Runner so exact own App PID SIGTERM, own Session/Claim
+released. No P3 Edit while system grant pending. Core capacity53300
 cause remains unproven; no limits changed. Original operation/UNKNOWN retained.
 
 # Native-04 Downstream — ordinary unified smoke, 31 October 2026
