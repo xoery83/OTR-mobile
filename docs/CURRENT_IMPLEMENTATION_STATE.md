@@ -39,6 +39,15 @@ Owner/Root/Native. Do not claim recovered Guest data or Adoption PASS. No other
 App/device reset or data copy occurred. See GUESTQA68_UPDATE_INCIDENT.json.
 Contain old QA, formally cancel via normal QA Auth when a recovery window is ready,
 and recreate a new isolated Guest Golden Slice through UI, never from a fixture.
+New independent Guestqb69 now passed normal UI Trip9d10b9d7 + P1 Guest B Walk
+(2026-11-02) creation and real process cold33954→44128. Same container, Trip/ops/
+intent hashes retained; SQLite75 has2 DEPENDENCY_BLOCKED/attempt0, accepted_at=null.
+Normal UI Edit also saved title Auth Guest B 20261031 Edited and deferred Metadata
+op676d3e07. Ordinary install (no uninstall) relocated the iOS container but retained
+Guest/Trip/original ops/P1 intent; all3 ops remain dependency-blocked/attempt0.
+Real relaunch44128→59126 shows edited Trip and original P1 in Day, exact metadata
+except container path retained. Guest637e59f7 has not logged in; no cloud/Account
+authority. This is a new real Golden A, never restoration of old lost AppData. See GUESTQA69_GOLDEN_A_NATIVE.json.
 All future code-only updates must use install without uninstall. Root default
 CLOSED software is now28dd/fb0d (source dedb7f80 includescdf); Auth policy staysfalse.
 
