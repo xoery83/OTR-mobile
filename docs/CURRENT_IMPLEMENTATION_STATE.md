@@ -93,7 +93,9 @@ SQL currently exists. A separate negative-only candidate adds one private
 close_qa_policy(boolean) and one EXEC to the existing Core Gateway; no role,
 credential, RLS/table grant or positive authority. Local real-PG6 groups, TS14 and
 independent Python5/TS3 PASS, bounded Review NO_BLOCKER after fixing timer lock
-retry exhaustion. Owner approval remains required; not installed or activated.
+retry exhaustion. Owner explicitly approved exact e7e9351e/SQL8c6b1809 on31 October; Root has
+been asked to independently confirm the original reply and fresh-check/install.
+Auth did not install or activate; no E2E PASS. See CLOSE_HELPER_OWNER_APPROVAL.json.
 See finite-qa-window/OWNER_GATE.md, CLOSE_HELPER_GATE.json and RUNBOOK.md under
 ops/auth-phase2-20261028.
 Accepted main5c765fa6 merged into Auth b3f0d37f; closure SQL SHA and Core connection
