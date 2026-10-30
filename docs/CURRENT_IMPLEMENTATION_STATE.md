@@ -12,7 +12,9 @@ No Hosted SQL, runtime route, Guest hold release or Session install is included.
 See ops/auth-phase2-20261028/PUBLICATION_REVIEW.json. Next is minimal existing
 login/source/owning-restore wiring plus the exact protected execution Gate for
 this one fileless Trip/P1. Full People, Capture and other item types are deferred.
-Nonempty75 remains closed until its zero-Photo qualification is verified.
+Fileless75 Trip/P1 source is now qualified when the exact Photo migration/table is
+present and Photo/Capture inventories remain empty; nonempty Photo remains closed.
+Real Native/Hosted Adoption is still pending.
 
 # Auth Adoption active checkpoint — 30 October 2026
 
