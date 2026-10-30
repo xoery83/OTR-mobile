@@ -1,0 +1,29 @@
+{
+  "goldenSlice": "existing Guest Trip+P1 on current SQLite75 with no Photo/Capture data",
+  "status": "LIMITED_NO_BLOCKER",
+  "captureOwnerConsent": "reuse existing zero-row census; no new port/DTO/migration or nonempty Photo adoption",
+  "changes": [
+    "reuse exact existing74/75 layout check in empty install and census",
+    "fileless source accepts74 or75 only",
+    "nonempty unknown/Photo/Capture tables and registered files remain blocked"
+  ],
+  "validation": {
+    "directedSuites": 3,
+    "directedTests": 144,
+    "independentFocusedTests": 7,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "realSqliteEvidence": [
+    "saved Trip/P1 source remains byte-identical across75 close/reopen",
+    "wrong migration name/missing table/unknown76 reject without altering Trip",
+    "real nonempty Photo/C3 original retained and source qualification refused"
+  ],
+  "hostedWrites": 0,
+  "sessionInstalled": false,
+  "limits": [
+    "No Photo or Capture migration",
+    "No new Native/Hosted Adoption E2E"
+  ]
+}

@@ -21,7 +21,7 @@ const sourceSchema = z.strictObject({
   schemaId: z.literal("otr.auth.guest-trip-p1-source/1"),
   sourceKind: z.literal("GUEST"),
   capabilityVersion: z.literal(guestFilelessCapabilityVersion),
-  sqliteVersion: z.literal(74),
+  sqliteVersion: z.union([z.literal(74), z.literal(75)]),
   sourceGuestLocalId: coreUuid,
   sourceTablesSha256: coreHash,
   cloudAuthority: z.literal(false),

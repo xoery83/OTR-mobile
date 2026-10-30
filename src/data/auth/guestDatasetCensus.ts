@@ -1,3 +1,4 @@
+import { isKnownGuestSqliteSchema } from "./guestSqliteSchema";
 import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import { retainedDeferredTripMetadataSchema } from "@/domain/trip/tripDeferredMetadata";
 import { z } from "zod";
@@ -97,8 +98,9 @@ export function createGuestDatasetCensus(
       await database.withTransactionAsync(async () => {
         const sqliteVersion = await getSchemaVersion(database);
         const blockers: string[] = [];
-        // Saved-data adoption is qualified for schema74, independently of newer App migrations.
-        if (sqliteVersion !== 74) blockers.push("SQLITE_SCHEMA_UNSUPPORTED");
+        // Photo75 rows remain unsupported; only its empty registered table is compatible.
+        if (!(await isKnownGuestSqliteSchema(database, sqliteVersion)))
+          blockers.push("SQLITE_SCHEMA_UNSUPPORTED");
         if (!external) blockers.push("FILE_AND_LIVE_DRAFT_COLLECTORS_REQUIRED");
         const tripRows = await database.getAllAsync<{
           id: string;

@@ -2263,7 +2263,7 @@ it("cannot replay an empty preparation after an intervening account generation",
   }
 });
 
-// Frozen unregistered Photo migration candidate; this does not enroll schema75 in production.
+// Reuse the frozen Photo75 definition; Auth does not own or change its migration.
 function installPhoto75(f: ReturnType<typeof fixture>) {
   const sql = f.opened[0].sql;
   const source = readFileSync(
@@ -2278,7 +2278,7 @@ function installPhoto75(f: ReturnType<typeof fixture>) {
     .run("2026-10-30T00:00:00.000Z");
   return source;
 }
-it("qualifies only an entirely empty registered Photo75 database without changing the Adoption source contract", async () => {
+it("qualifies entirely empty registered Photo75 while preserving existing Session install fences", async () => {
   const { beginAccountTransition, endAccountTransition } =
     await import("./accountRequestContext");
   const f = fixture(),
@@ -2293,7 +2293,7 @@ it("qualifies only an entirely empty registered Photo75 database without changin
   });
   expect(
     (await workspace.readCensus(completeExternalInventory(workspace))).blockers,
-  ).toContain("SQLITE_SCHEMA_UNSUPPORTED");
+  ).not.toContain("SQLITE_SCHEMA_UNSUPPORTED");
   const prepared = await workspace.prepareEmptySessionInstall();
   const lease = await beginAccountTransition();
   try {
@@ -2403,4 +2403,61 @@ it("retains a real Photo75 table row and its local C3 original rather than allow
     f.opened[0].sql.prepare("SELECT * FROM capture_photo_import_decisions").all(),
   ).toEqual(before);
   expect((await repository.read(jobId)).inputs[0].state).toBe("ACCEPTED");
+  expect((await workspace.readCensus()).blockers).toContain(
+    "UNSUPPORTED_TABLE:capture_photo_import_decisions",
+  );
+  const vault = await workspace.freezeForInventory();
+  await expect(vault.readTripP1Source()).rejects.toThrow("QUALIFICATION_REQUIRED");
+  await vault.release();
 });
+
+it("retains the same saved Trip/P1 source across schema75 close/reopen with an empty Photo table", async () => {
+  const f = await handoffFixture();
+  const ddl = installPhoto75(f.f);
+  migrations.push({ id: 75, name: "capture_photo_import_decisions", sql: ddl });
+  cleanups.push(() => {
+    migrations.pop();
+  });
+  const vault = await f.workspace.freezeForInventory(),
+    source = await vault.readTripP1Source();
+  const record = {
+    canonicalText: source.canonicalText,
+    sha256: source.sha256,
+    bytes: Buffer.byteLength(source.canonicalText),
+  };
+  const verified = await verifyGuestSourceCheckpoint(record, {
+    sourceGuestLocalId: f.f.guestId,
+    tripIds: [f.trip.tripId],
+  });
+  expect(verified.sqliteVersion).toBe(75);
+  expect(verified.trips[0].create.tripId).toBe(f.trip.tripId);
+  expect(verified.trips[0].coreIntents[0].command.target.id).toBe(f.saved.itemId);
+  expect(source.cloudAuthority).toBe(false);
+  await vault.release();
+  f.f.close();
+  advanceAccountGeneration();
+  const reopened = await f.f.newOpener()(),
+    again = await reopened.freezeForInventory();
+  expect((await again.readTripP1Source()).canonicalText).toBe(source.canonicalText);
+  await again.release();
+});
+it.each(["wrong-name", "missing-table", "unknown76"])(
+  "rejects saved source on %s without altering Trip/P1",
+  async (kind) => {
+    const f = await handoffFixture();
+    installPhoto75(f.f);
+    const db = f.f.opened[0].sql;
+    if (kind === "wrong-name")
+      db.exec("UPDATE schema_migrations SET name='unqualified' WHERE id=75");
+    if (kind === "missing-table") db.exec("DROP TABLE capture_photo_import_decisions");
+    if (kind === "unknown76")
+      db.exec(
+        "INSERT INTO schema_migrations VALUES(76,'unknown','2026-10-30T00:00:00Z')",
+      );
+    const before = db.prepare("SELECT * FROM local_trip_containers").all();
+    const vault = await f.workspace.freezeForInventory();
+    await expect(vault.readTripP1Source()).rejects.toThrow("QUALIFICATION_REQUIRED");
+    expect(db.prepare("SELECT * FROM local_trip_containers").all()).toEqual(before);
+    await vault.release();
+  },
+);
