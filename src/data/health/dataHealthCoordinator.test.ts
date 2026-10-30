@@ -18,6 +18,45 @@ afterEach(() => {
 });
 
 describe("Data Health Phase B read-only scanner", () => {
+  it("keeps a completed Core dispatch with a conflicting receipt visible for review", async () => {
+    const fixture = createFixture();
+    insertOperation(fixture.sqlite, {
+      id: "core-conflict",
+      entityId: "stay",
+      status: "COMPLETED",
+    });
+    fixture.sqlite.exec(`
+      UPDATE sync_operations SET entity_type='TRIP_CORE_V2', operation_type='CORE_V2_COMMAND'
+        WHERE id='core-conflict';
+      INSERT INTO trip_core_pending_intents VALUES
+        ('user-a','journey-a','core-conflict',2,'{}','hash','[]',
+         'core-conflict',NULL,'CONFLICT','2026-09-24T00:00:00Z');
+    `);
+    const before = domainFingerprint(fixture.sqlite);
+    const report = await fixture.coordinator.run("MANUAL", { journeyIds: ["journey-a"] });
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({
+        targetId: "core-conflict",
+        category: "CONFLICT",
+      }),
+    );
+    expect(report.repairPlans).toContainEqual(
+      expect.objectContaining({
+        targetId: "core-conflict",
+        disposition: "USER_ACTION_REQUIRED",
+        actionId: null,
+      }),
+    );
+    expect(await fixture.coordinator.shouldRunCheapScan()).toBe(true);
+    const plan = await fixture.coordinator.planAutomaticRun({
+      trigger: "CONNECTIVITY_RESTORED",
+    });
+    expect(plan.shouldRun).toBe(true);
+    expect(domainFingerprint(fixture.sqlite)).toBe(before);
+    fixture.sqlite.exec("UPDATE trip_core_pending_intents SET state='APPLIED'");
+    expect((await fixture.coordinator.run("MANUAL")).findings).toEqual([]);
+  });
+
   it("classifies a synced cross-currency missing date as user-action-required", async () => {
     const fixture = createFixture();
     insertExpense(fixture.sqlite, {
