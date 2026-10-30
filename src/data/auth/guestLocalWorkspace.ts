@@ -1,3 +1,4 @@
+import { isKnownGuestSqliteSchema } from "./guestSqliteSchema";
 import { guestTripDraftInventory } from "./guestTripDraftInventory";
 import { guestP1DraftInventory } from "./guestP1DraftInventory";
 import type { EmptyGuestSessionPreparation } from "./authSessionRepository";
@@ -181,24 +182,11 @@ export function createGuestLocalWorkspaceOpener(deps: {
               throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
             await database.withTransactionAsync(async () => {
               const version = await getSchemaVersion(database);
-              if (
-                version !== 74 &&
-                (version !== 75 ||
-                  (
-                    await database.getFirstAsync<{ name: string }>(
-                      "SELECT name FROM schema_migrations WHERE id=75",
-                    )
-                  )?.name !== "capture_photo_import_decisions")
-              )
+              if (!(await isKnownGuestSqliteSchema(database, version)))
                 throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
               const tables = await database.getAllAsync<{ name: string }>(
                 "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
               );
-              if (
-                version === 75 &&
-                !tables.some(({ name }) => name === "capture_photo_import_decisions")
-              )
-                throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
               for (const { name } of tables) {
                 if (name === "schema_migrations" || name === "sqlite_sequence") continue;
                 const quoted = '"' + name.replaceAll('"', '""') + '"';
