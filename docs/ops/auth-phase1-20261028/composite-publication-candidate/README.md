@@ -140,3 +140,37 @@ composition gap on 30 October. Direct identity/plan/draft regression: 3 suites /
 50 tests PASS; independent 3 suites / 50 tests and typecheck PASS, NO_BLOCKER
 within candidate-only scope. See `IDENTITY_REVIEW.json`; final integration is
 recorded separately.
+
+## Owning transaction execution body — 30 October
+
+`guestAdoptionCompositeExecute.ts` composes the qualified saved Trip/P1 operations
+using existing TripCreate, unlinked PersonCreate, revisioned Metadata and Core
+services. It requires a future owning single-transaction adapter and remains
+unmounted/default closed. Standalone HTTP/PG factories must not be composed here.
+The owner must lock the actual server stage/grant, confirm the existing target,
+check policy and collision constraints, and supply all ports on one authorized
+lease. This body creates no principal, grant, COMMIT or terminal publication.
+
+The body requires genuinely new Trips, checks create and Person receipts against
+same-transaction readbacks, preserves original Ledger settings exactly, obtains
+Metadata CAS revisions from the owning snapshot, verifies the resulting snapshot,
+and runs the existing Core executor/receipt validator. Only FULL APPLIED or
+NO_CHANGE receipts qualify; rejection, conflict, redaction, wrong bindings,
+cancellation or expiry throws to the outer transaction. Every original queue ID
+must be represented, including deferred local action ID to actual operation ID;
+source and mapped Core hashes remain separate. Local Person names never connect
+Accounts automatically.
+
+Changed deferred covers reject before any owning I/O because their owning restore
+port does not yet exist. Other source names, timestamps and static/private cover
+preferences are retained explicitly with `localRestoreStatus:
+REQUIRED_NOT_EXECUTED`. Nonempty Drafts also reject until owning restore qualifies.
+These preserved fields cannot be treated as already applied or source-release
+permission by a future publisher.
+
+Direct execution/identity/plan/draft regression: 4 suites / 66 PASS. Independent
+execution suite: 16 PASS, NO_BLOCKER after the cover-completeness repair. Tests use
+the real Core domain executor, but their outer map snapshot is a unit transaction
+harness, not PG/RLS/Hosted atomicity proof. Actual grant issuance, cross-principal
+adapter, cancellation/final receipt storage, Native recovery and DEV Adoption
+remain pending. See `COMPOSITE_EXECUTION_REVIEW.json`.
