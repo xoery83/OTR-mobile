@@ -1,0 +1,42 @@
+{
+  "status": "JOINED_LOCAL_PASS_NOT_NATIVE_E2E",
+  "base": "662898cfdc12a98ba5f2bf1ef3f5235b637b8077",
+  "photoSource": "806c246c",
+  "resumeSource": "4bdce553",
+  "nativeDiagnosticSource": "e06c9c68",
+  "nativeSchema": {
+    "id": 75,
+    "name": "capture_photo_import_decisions",
+    "sqlSHA256": "45a7e26d82aaddd99100bcff64bb2b8591ba1365351931bfdbf0f966b2a18b1f",
+    "priorIdsUnchanged": true,
+    "priorSqlUnchanged": "VERIFIED_BY_REAL_MIGRATION_TEST"
+  },
+  "backendTaskSchema": 74,
+  "tests": {
+    "joined": {
+      "suites": 14,
+      "passed": 262
+    },
+    "coreDiagnosticAndNodeStartup": {
+      "suites": 3,
+      "passed": 30
+    },
+    "typecheck": "PASS_FINAL_WITH_NATIVE_DIAGNOSTIC",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "bothBackendBuilds": "PASS_FINAL_WITH_NATIVE_DIAGNOSTIC"
+  },
+  "review": {
+    "photo": "TWO_SLICES_NO_BLOCKER",
+    "resume": "NO_BLOCKER_4bdce553",
+    "nativeDiagnostic": "AUTH_SOURCE_NO_BLOCKER",
+    "joinedRegistration": "NO_BLOCKER_7fb387a5"
+  },
+  "protectedSqlIncluded": false,
+  "privateHistoryIncluded": false,
+  "runtimeActivation": false,
+  "providerCalls": 0,
+  "nativeDeviceUpgrade": false,
+  "photoVision": "NOT_IMPLEMENTED",
+  "nonempty75GuestAdoption": "CLOSED"
+}

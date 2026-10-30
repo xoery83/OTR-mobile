@@ -22,6 +22,30 @@ Next: immutable owning publication journal and actual Native restore,
 then reviewed protected DEV Gate and normal nonempty Guest→Account E2E.
 See ops/auth-phase2-20261028/RECEIPT_RECOVERY_REVIEW.json; no new full E2E PASS.
 
+# Universal Photo75 / existing-Task resume — source integration, 30 October 2026
+
+Native registry now includes the Capture-owned Photo decision definition as75,
+SQL SHA45a7e26d…; prior1–74 are unchanged. Auth baseline662898cf includes strict
+empty75 login compatibility; nonempty75 Guest Adoption remains CLOSED. Backend
+Task SQLite stays on qualified74, preserving retained-image rollback.
+
+Photo includes conservative local OCR relevance, exact original pins, explicit
+Continue/Skip values and local decision CAS/persistence/retention. It has no UI
+caller, real Vision call or Photo Save E2E; automatic IRRELEVANT is not issued
+from insufficient OCR. Mixed-Batch delayed-image owning continuation remains open.
+
+Explicit known-Task Start now uses the existing authenticated prepare endpoint's
+strict resume body and existing targeted queue, without repeating Source/PDF
+preparation. GET stays read-only, old Attempts cannot resend, deadlines never reset.
+Native's two-file privacy-safe Core failure diagnostic is included unchanged.
+This increment is software/local qualification, not a DEV or device deployment.
+
+Latest real PDF evidence: new normal QA Source uploaded with ACK+GET, verified and
+sealed; Task created, then blocked before its first Attempt by the Provider Source
+transform-hash predicate. Zero new model calls and no PDF Core Save. DEV restored
+healthy/default CLOSED; protected single-function repair is separately pending
+Owner in the private delivery worktree. Existing UNKNOWN identities are retained.
+
 # Universal PDF software integration — 30 October 2026
 
 Curated software only onto main f92cb022: optional request-scoped PDF runtime,
@@ -289,10 +313,7 @@ The reviewed Person held-transaction seam now reuses its existing standalone SQL
 receipt logic without inner commits; direct38/independent31 tests, types/lint PASS.
 No live caller or protected SQL change. Auth source-only integration through
 7a0317cb is pushed main; actual primary7s146/types PASS, original six dirty files
-retained. Person seam is now accepted/pushed main f92cb022: actual primary3s54/types
-PASS and independent rangeNO_BLOCKER. Original six dirty bytes/modes/index retained.
-The unchanged Runtime4vs5-argument mock failure reproduces on baseline7a; Root
-has accepted owning coordination, no Auth Runtime edit. Main Writer returned Root.
+retained. Subsequent Person seam is private pending next serial integration.
 
 
 

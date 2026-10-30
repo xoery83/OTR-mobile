@@ -1,5 +1,8 @@
 import { loadDevUniversalContinuousRuntime } from "./universalContinuousRuntime";
-import { universalBatchPreparedSchema } from "../../src/data/api/universalImportContracts";
+import {
+  universalBatchPreparedSchema,
+  universalTaskResumeSchema,
+} from "../../src/data/api/universalImportContracts";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { loadDevTripMetadataV2Runtime } from "./tripMetadataRuntime";
 import { loadDevCaptureCustody } from "./captureCustodyRuntime";
@@ -130,9 +133,25 @@ async function main() {
                 },
                 async prepare(trip, input) {
                   const ports = await scoped(trip),
+                    resume = universalTaskResumeSchema.safeParse(input),
                     result = universalBatchPreparedSchema.parse(
-                      await ports.prepare(trip, input),
+                      resume.success
+                        ? {
+                            status: "EXISTING",
+                            context: await ports.universalImportPort.readContext(
+                              actor,
+                              resume.data.batchId,
+                              trip,
+                            ),
+                          }
+                        : await ports.prepare(trip, input),
                     );
+                  if (
+                    resume.success &&
+                    (result.context.taskId !== resume.data.taskId ||
+                      result.context.batchId !== resume.data.batchId)
+                  )
+                    throw Error("UNIVERSAL_CONTEXT_MISMATCH");
                   if (
                     result.context.actorId !== actor ||
                     result.context.accountId !== actor ||

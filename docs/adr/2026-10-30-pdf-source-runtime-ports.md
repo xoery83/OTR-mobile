@@ -106,3 +106,15 @@ or read it; no argument can enable it, alter other policy fields, expand scope,
 or touch retained business data. Independent readback uses a fresh READ ONLY
 transaction. This new function/EXEC purpose belongs to the same protected Gate,
 not an implicit ordinary software authorization.
+
+Explicit resume of an already server-bound Task must reuse its existing queue,
+not repeat Source acquisition or PDF upload preparation. The versioned resume
+body on the existing prepare endpoint supplies only Trip/Batch/Task IDs. Normal
+Auth/Trip and owning context must match before the existing targeted queue wake.
+GET remains read-only; an Attempt can only reconcile existing responsibility.
+An expired zero-Attempt Task follows the existing deadline branch, never a reset.
+
+Native-only Photo migration75 must not silently advance dedicated Backend Task
+SQLite or invalidate its retained healthy image. Backend Task initialization stays
+on its qualified74 baseline; a future Task storage advance requires its own
+qualified change. No App database is copied or opened by the Backend.

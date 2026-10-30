@@ -13,6 +13,7 @@ vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 function fixture(
   prepareSources?: Parameters<typeof createUniversalCaptureConsumer>[0]["prepareSources"],
   continuous = false,
+  resumeTask?: (context: unknown, binding: UniversalExecutionContext) => Promise<void>,
 ) {
   const accountId = randomUUID(),
     tripId = randomUUID(),
@@ -54,6 +55,7 @@ function fixture(
     isCurrent: () => active,
     transport,
     prepareSources,
+    resumeTask,
     continuous,
   });
   return {
@@ -446,3 +448,16 @@ it.each(["hash", "size", "kind", "media", "parent"])(
     expect(f.transport.execute).not.toHaveBeenCalled();
   },
 );
+
+it("explicit existing Task resume never repeats Source preparation or paid execute", async () => {
+  const prepare = vi.fn(async () => {}),
+    resume = vi.fn(async () => {});
+  const f = fixture(prepare, true, resume);
+  f.transport.result.mockRejectedValue(absent());
+  expect(await f.consumer.recover(f.model)).toBeNull();
+  expect(resume).not.toHaveBeenCalled();
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(resume).toHaveBeenCalledOnce();
+  expect(prepare).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});

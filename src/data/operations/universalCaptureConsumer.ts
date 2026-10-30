@@ -5,6 +5,7 @@ import { createUniversalImportTransport } from "../api/universalImportTransport"
 import { ApiClientError } from "../api/client";
 import type {
   UniversalTaskActivity,
+  UniversalExecutionContext,
   UniversalImportResult,
 } from "../api/universalImportContracts";
 
@@ -56,6 +57,10 @@ export function createUniversalCaptureConsumer(dependencies: {
   >;
   continuous?: boolean;
   isCurrent(): boolean;
+  resumeTask?(
+    context: import("../auth/accountRequestContext").AccountRequestContext,
+    binding: UniversalExecutionContext,
+  ): Promise<void>;
   prepareSources?(
     context: import("../auth/accountRequestContext").AccountRequestContext,
     model: CaptureJobReadModel,
@@ -149,9 +154,10 @@ export function createUniversalCaptureConsumer(dependencies: {
           allowDispatch &&
           !terminalActivity() &&
           !preparedThisAction &&
-          dependencies.prepareSources
+          (dependencies.resumeTask || dependencies.prepareSources)
         ) {
-          await dependencies.prepareSources(context, model);
+          if (dependencies.resumeTask) await dependencies.resumeTask(context, binding);
+          else await dependencies.prepareSources!(context, model);
           current();
         }
         queued = !terminalActivity();
@@ -180,12 +186,13 @@ export function createUniversalCaptureConsumer(dependencies: {
       !terminalActivity() &&
       dependencies.continuous &&
       !preparedThisAction &&
-      dependencies.prepareSources &&
+      (dependencies.resumeTask || dependencies.prepareSources) &&
       result.status === "EXECUTION_OUTCOME_UNKNOWN" &&
       result.providerOutcome === "UNKNOWN"
     ) {
       // Existing attempts only reconcile retained receipts in the owning queue; they cannot resend.
-      await dependencies.prepareSources(context, model);
+      if (dependencies.resumeTask) await dependencies.resumeTask(context, binding);
+      else await dependencies.prepareSources!(context, model);
       current();
       const resumed = await dependencies.transport.context(context, model.batch.batchId);
       current();

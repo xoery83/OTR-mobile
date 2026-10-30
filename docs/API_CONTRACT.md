@@ -1329,6 +1329,15 @@ Source preparation; Native retains read-only Results/original recovery. No wire
 state enum, Schema, GRANT or Admission authority is added. Runtime acceptance
 must be recorded separately from local tests.
 
+An explicit existing-Task resume uses the existing authenticated POST prepare
+endpoint with strict `{version:"otr.backend.universal-resume/1",tripId,batchId,taskId}`
+and Task ID idempotency header. It accepts no Source/input/provider facts. The
+Backend reads and compares the owning context, returns EXISTING/202, and wakes
+only that existing queue. Native explicit Start uses it when a Task is already
+known; reopen/status GET never wakes. Mismatched Task/context or QUEUED resume
+responses are rejected. Existing Attempts cannot get another Provider send; the
+normal expired-unstarted branch records its owning deadline failure.
+
 ## Universal Import — bounded Source P1 integration (2026-10-26)
 
 Universal intake/results use authenticated `/v2/import-batches/{batchId}/interpretations` Context/Result/prepare routes and existing owning Source/Task repositories. Candidates and observations do not grant admission. Original text material is acquired/read only through the account/Trip-scoped original-source interface.
