@@ -1,0 +1,35 @@
+{
+  "status": "ACTUAL_DEV_FAIL_FIXED_CANDIDATE_NOT_YET_DEPLOYED",
+  "candidate": "a33838e8",
+  "directParent": "a46fc714",
+  "files": ["backend/src/tripCoreV2PgConnection.ts", "backend/src/tripCoreV2PgConnection.test.ts"],
+  "actualFailure": {
+    "deployedSource": "84fb47672732daa96045675a56fbb262ae5147b8",
+    "image": "4062b8d1df31cd7304817e66a92ee3d4c377b499a4fd990559de51e06fd030bb",
+    "container": "501f1ff8d35293841f9fcc4ab021c11d228c3cd040a34684f0985af3de6962ed",
+    "probeStartedAt": "2026-10-30T06:54:04.817Z",
+    "probeCompletedAt": "2026-10-30T06:54:12.097Z",
+    "traffic": "Exactly two normal authenticated concurrent read-only requests for original Pending cc954486; both Native App processes stopped to isolate polling",
+    "capabilities": "503 CORE_EXECUTION_UNAVAILABLE at06:54:06.846Z",
+    "receipt": "MISSING (normal404 to null) at06:54:12.097Z",
+    "rootIndependentLogProjection": {"event": "core_execution_failed", "resource": "CAPABILITIES", "category": "CORE_CONNECTION_BUSY", "driverCode": "OTHER", "countInRecentFiveMinutes": 1},
+    "logLimit": "Root projected fixed fields only in a recent-five-minute window; not an exact timestamped raw-log export",
+    "quietSequentialBaseline": "capabilities200/receiptMISSING/collection200revision3"
+  },
+  "repair": {
+    "scope": "Only Core principal contention waits FIFO; other five owning principals retain fail-fast behavior",
+    "maximumWaiters": 4,
+    "maximumWaitMs": 15000,
+    "expiredOrFull": "CORE_CONNECTION_BUSY without executing callback",
+    "holderFailure": "Releases slot; constructor failure also releases; next request creates its own Client",
+    "preserved": ["fresh TLS Client and principal verification per request", "existing transaction/Actor/finite-scope checks", "original lease/query/lock deadlines", "retire and error behavior", "connection limit and all permissions"],
+    "requestCancellation": "withLease has no AbortSignal contract; no new cancellation framework introduced",
+    "queueKind": "Bounded ephemeral connection wait only, not another durable sync queue"
+  },
+  "validation": {"beforeRepair": "Two new FIFO/failure-release tests RED on existing CORE_CONNECTION_BUSY", "afterRepair": "Two suites32PASS/types/lint/diffcheck", "independentReview": "REQUESTED_NOT_YET_RECORDED", "postFixDev": "NOT_YET_TESTED"},
+  "originalPending": "cc954486-ca88-4a52-8ca6-63582b703a71 retained; no business POST, new operation, local queue rewrite or false APPLIED",
+  "privateArtifacts": "/private/tmp/otr-ipad-native-20261030/downstream/formsqa-concurrent-read-diagnostic-before-fifo.json",
+  "ordinaryDeploymentOwner": "Universal Root; Native has no Host/SQL/main window",
+  "authorityOrSchemaChange": false,
+  "providerCalls": 0
+}
