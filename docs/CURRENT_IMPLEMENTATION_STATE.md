@@ -1,10 +1,31 @@
-# Native-04 Downstream — active closure, 30 October 2026
+# Native-04 Downstream — ordinary unified smoke, 31 October 2026
 
-Account switching REAL Native bounded PASS: FormsQA124 A3f → normal OTP B1f → online B Signout → remembered A; both Accounts cold recover. B cloud Trip/P1/P3 automatically downloaded; known foreign Details/Day IDs withheld; A original conflict and85 historical queues retained byte-for-byte, B cache preserved. Mutation dispatch remained privately scoped, so final ordinary unified smoke is still required. See `docs/ops/native-04-downstream-20261030/ACCOUNT_SWITCH_E2E.json`.
+Ordinary Build126 (business source249204db / merge2d1539aa) is installed in place
+on FormsQA and AD5, full new Native compile, production embedded JS57b8fccc.
+FormsQA normal B V2 Trip41886054 and P17eb12d1c automatically accepted; formal
+receipt9c14ad1e, independent Supabase identity/fields/intent+receipt hashes and
+process-cold Details PASS. Original89 queue rows and A conflict retained unchanged;
+schema74->75. AD5 original f4 Session, six accepted Import families and PDF4b2cf335
+Day/cold PASS; independent exact Supabase Item/title matched. All257 queue hashes,
+31payload/53inbox/35Source/35Batch/97Core counts retained. No Provider/Admission
+replay. Same JS on both devices; admission flags remain false, so this is Reader
+smoke rather than an enabled Import Save UI claim. See UNIFIED126_SMOKE.json.
+
+Build125 failures were build-only: missing simulator application-identifier fixed
+with original XML/DER identity and normal ad-hoc signing; Expo DEV virtual/env
+overrode explicit env with old QA scope, fixed by production-mode JS inlining.
+The unsent125 V1 Trip/P1 remains retained, not converted or claimed Cloud PASS.
+No Auth/Queue/Backend product change. Both automation claims released.
+Formal revocation/regrant remains BLOCKED: no authoritative issuer/read contract;
+ordinary404 is never treated as revocation. Do not claim complete Beta security.
+Physical iPad has been handed back after Owner reset/upgrade; renewed OTR install
+is not yet verified. iPhone untouched. Final docs integration/push is next.
+
+Account switching REAL Native bounded PASS: FormsQA124 A3f → normal OTP B1f → online B Signout → remembered A; both Accounts cold recover. B cloud Trip/P1/P3 automatically downloaded; known foreign Details/Day IDs withheld; A original conflict and85 historical queues retained byte-for-byte, B cache preserved. Mutation dispatch remained privately scoped in124; separate ordinary126 smoke above closes that build qualification. See `docs/ops/native-04-downstream-20261030/ACCOUNT_SWITCH_E2E.json`.
 
 Actual stale mounted list fixed295071ce using one existing refreshKey dependency. Same mounted list reflected external MetadataV3 op241fc8c8/revision2; Supabase independently verified. Earlier P3 external Create/Edit, conflict, and Backend private read-denial receipts are reused. No Session/DB copying/reset or new Queue. iPad Runner storage exhaustion: Owner chose FormsQA; phone untouched.
 
-Current Native candidate integrates main82d5c8b3, preserving its exact accepted Core HTTP/FIFO/budgets and Auth/Import code. Native full downstream remains unmerged. Next: formal revocation qualification (existing 404 is not evidence), minimal type/Import coverage, serial main and ordinary-build smoke/upstream check. Auth owns Session/Principal and separate GuestQA window; Native released GUI/own claim while doing local integration. Do not activate historical A queues or pretend a scoped build is ordinary all-account PASS. No Provider or protected Authority change.
+Current Native candidate integrates main82d5c8b3, preserving its exact accepted Core HTTP/FIFO/budgets and Auth/Import code. Ordinary126 covers the final unscoped smoke separately from124 account-switch evidence; no historical A queue was activated. Native source249204db is fast-forwarded into local main; final receipt-only commit/push pending. Auth owns Session/Principal and separate GuestQA window. No Provider or protected Authority change.
 
 # Auth Golden Slice — current continuation, 30 October 2026
 
