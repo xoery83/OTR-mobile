@@ -1,0 +1,86 @@
+{
+  "status": "SERVER_VERIFIED_CLOSED_PREPARATION_NOT_PHOTO_E2E",
+  "containerId": "dfd18e79238223373b0a7495877d40288e8c301a8cf7e5093f8d072412f5a924",
+  "retainedPreUseContainerId": "28ddc0142c1e7c9f7ea967c1469f46aa6a264027f4b71c7270fe5beb710d5636",
+  "image": "sha256:fb0db2abffe4d5d844ed829714760bf3e0294cbdcc6f74b39fe3d7d5e9a7066a",
+  "sourceCommit": "dedb7f8046cb4b30d8e3bc2047e80579f1a8cd5a",
+  "deploymentPlanSHA256": "ed2a21d36b7cdc666c482f9919217fda70bee424f6abee184a35833c65e9b211",
+  "runtimeConfigSHA256": "3d3cdff1ab33c2601ccc8f284d23ce5abf27bcb28461e69c9c74fe098162be18",
+  "runtimeControllerSHA256": "2b4ddd0c66c19ef0199e3aa3e852f8c86291e2c3603d2528b77f9532d10b9018",
+  "closePlanSHA256": "16be3638f090db80b32fa37472fe158a429e95508fa670e25ce439aa38de5fad",
+  "directCloseDrill": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "independentTimerDrill": {
+    "status": "PHOTO_INDEPENDENT_CLOSE_TIMER_REAL_PASS",
+    "unit": "otr-photo-close-drill-b3640a4ba7",
+    "serviceResult": {
+      "Result": "success",
+      "ExecMainStartTimestampMonotonic": "10587096425126",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "SubState": "exited"
+    },
+    "controller": {
+      "status": "PNG_CLOSED_VERIFIED",
+      "verified": true,
+      "steps": {
+        "sourceBefore": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "runtime": {
+          "verified": true
+        },
+        "sourceAfter": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "worker": {
+          "verified": true,
+          "activeState": "inactive",
+          "physicalCleanup": "EMPTY_VERIFIED"
+        }
+      }
+    },
+    "workerActiveState": "inactive",
+    "businessWindowOpened": false,
+    "providerCalls": 0
+  },
+  "nativeCodeOnlyUpdate": {
+    "status": "PHOTO_QA_1262_CODE_ONLY_INSTALLED",
+    "source": "c045ebaa",
+    "build": "126.2",
+    "bundleSHA256": "0a759665bacacc6eeb542a54b2275d5545a5451f54517dcab6217764dd727a4b",
+    "nativeContentExcludingUpdatedSignatureSHA256": "f50edd854213c0eb3586af0052463c0e70277bd8472d3bf762904b7622e2f455",
+    "nativeDylibsUnchanged": true,
+    "pagingEnabled": true,
+    "sameCaptureInputAndCounts": true,
+    "uninstall": false,
+    "dataOrSessionCopied": false,
+    "providerCalls": 0
+  },
+  "paidImageCalls": 0,
+  "sourceUploaded": false,
+  "businessWindowOpened": false,
+  "temporaryMaintenancePrivilegesRestored": true
+}
