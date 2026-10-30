@@ -1,3 +1,4 @@
+import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { z } from "zod";
 import {
@@ -69,8 +70,9 @@ export type CaptureSourceDependencies = {
   // Explicit candidate capability only. Omission keeps the original v1 path closed.
   utf8FileProfile?: typeof UTF8_TEXT_FILE_PROFILE;
   pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
-  // Existing actual-format/profile verifier, never filename/declared MIME. This
-  // dependency is deliberately unwired while Capture/Source runtime gates close.
+  pendingPngProfile?: typeof PNG_CAPTURE_ORIGINAL_PROFILE;
+  // Strict format profiles or explicit PENDING intake markers. PENDING never
+  // substitutes for the owning Host decoder/Source qualification. Default unwired.
   verifyBinary?(bytes: Uint8Array): Promise<{
     mimeType:
       "application/pdf" | "image/jpeg" | "image/png" | "image/heic" | "image/heif";
@@ -464,6 +466,13 @@ export function createCaptureSourceAdmissionRepository(
         const allowedFormat =
           (proof.profileId === "PNG_STATIC_RGB8_RGBA8_V1" &&
             proof.mimeType === "image/png") ||
+          (plan.intent_kind === "NEW" &&
+            dependencies.pendingPngProfile === PNG_CAPTURE_ORIGINAL_PROFILE &&
+            proof.profileId === PNG_CAPTURE_ORIGINAL_PROFILE &&
+            proof.mimeType === "image/png" &&
+            capture.kind === "IMAGE" &&
+            capture.declaredContentType === "image/png" &&
+            bytes.byteLength <= 4194304) ||
           (plan.intent_kind === "NEW" &&
             dependencies.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE &&
             proof.profileId === PDF_CAPTURE_ORIGINAL_PROFILE &&
