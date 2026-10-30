@@ -175,9 +175,10 @@ export function createUniversalCaptureConsumer(dependencies: {
       result.status === "EXECUTION_OUTCOME_UNKNOWN" &&
       result.providerOutcome === "UNKNOWN" &&
       activity &&
-      ["PENDING", "WAITING", "PROCESSING"].includes(activity.state)
+      ["PENDING", "WAITING", "PROCESSING"].includes(activity.state) &&
+      (!allowDispatch || !dependencies.resumeTask || preparedThisAction)
     ) {
-      // The retained request marker is provisional while the owning Task is running.
+      // Passive reads keep the marker pending; explicit resume may reconcile a retained call.
       queued = true;
       return null;
     }
