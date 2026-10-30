@@ -232,6 +232,11 @@ function pinManifest(
     )
   )
     throw new Error("SOURCE_BINDING_INVALID");
+  const originalPng = sources.some(
+    (s) => s.mime === "image/png" && s.prepared === undefined,
+  );
+  // Source format/custody qualification belongs to the owning reader, not A_DIRECT.
+  if (originalPng && sources.length !== 1) throw Error("UNIVERSAL_ORIGINAL_IMAGE_BOUND");
   const prepared = sources
     .map((s, index) =>
       prepare(
@@ -245,7 +250,7 @@ function pinManifest(
             ? { preparedText: new TextDecoder().decode(s.bytes) }
             : {}),
         },
-        "B_PREPARED",
+        originalPng ? "A_DIRECT" : "B_PREPARED",
         {
           mimes: ["text/plain", "text/html", "image/png", "image/jpeg"],
           modalities: ["TEXT", "IMAGE"],

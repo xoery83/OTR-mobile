@@ -219,7 +219,7 @@ export async function buildUniversalRegisteredTaskDraft(
       provider_class: "COMMERCIAL_REMOTE",
       replay_support: "UNSUPPORTED",
       capabilities: ["EXTRACT"],
-      modalities: ["TEXT"],
+      modalities: [...new Set(dispatch.ready.map((p) => p.modality))],
       network_required: true,
     },
     policy_admission: admission,
