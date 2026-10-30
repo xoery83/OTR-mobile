@@ -1,0 +1,69 @@
+{
+  "status": "BLOCKED_TRANSACTIONAL_INSTALL_MAINTENANCE_APPROVAL",
+  "ownerApprovedGate": "77a6febb",
+  "additionalGateCommit": "74530956",
+  "firstActualFailure": {
+    "sqlState": "42501",
+    "message": "must be able to SET ROLE otr_trip_source_writer",
+    "installed": false,
+    "partialInstallation": false,
+    "independentCoreGuardMD5": "6c7ef0d85cfd8893796ccc53e31f51f0",
+    "pngColumns": 0,
+    "pngHelpersInstalled": false
+  },
+  "approvedHostFiles": {
+    "status": "PHOTO_APPROVED_HOST_FILES_INSTALLED_INACTIVE",
+    "files": {
+      "universal-png-worker.mjs": "0129046f489b09a010b358f9f8a0ff5a7920a89cfe1c347dee59a3319a1461ad",
+      "negative-cleanup.mjs": "babfb1f00a65911084e132b5a1feaead9deb410854b195a13186a26539ba446f",
+      "close-control.cjs": "d25e2bd28cbc50bc209bb4a9f5ee70b26ad9584fc9aadd8ac101bec7d452b892",
+      "png_runtime_close.py": "1d58b459b3c6809abda62871c3c286dd1c60bfcbb97b3308494557e20b2ecf2e",
+      "pdf_runtime_close.py": "9d35ff25fcbc70ce5ac00539b93a6c094d71b1c4d02ddda59256a10d4734626d",
+      "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+      "otr-universal-png-worker.service": "f9450d95c9c13844515417fb5553b4b18ba50900241f6b305a2b6abf828917dd"
+    },
+    "node": {
+      "node": "v24.22.1",
+      "zlib": "1.3.2.1-motley-285e94b",
+      "arch": "x64"
+    },
+    "nodeSHA256": "e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb",
+    "workerActiveState": "inactive",
+    "liveServiceUnchanged": true,
+    "runtimeConfigInstalled": false,
+    "businessWindowOpened": false,
+    "providerCalls": 0
+  },
+  "closedHostDrill": {
+    "status": "PHOTO_HOST_START_STOP_PHYSICAL_CLOSE_PASS",
+    "workerActiveState": "inactive",
+    "socketIdentityVerified": true,
+    "independentCleanup": {
+      "status": "EMPTY_VERIFIED",
+      "terminated": true
+    },
+    "backendUnchanged": true,
+    "sqlActivation": false,
+    "sourceUpload": false,
+    "providerCalls": 0
+  },
+  "maintenanceLocalPG": {
+    "status": "MAINTENANCE_WRAPPER_LOCAL_PG_PASS",
+    "DEV": false,
+    "wrappedSHA256": "484d7bce6e5a71b759bbbd67984e461e0e39a33f8c7b17c17640cd5b8081d9ec",
+    "successRestoresCompleteMembershipGraphAndSchemaACL": true,
+    "midInstallFailureRollsBack": true,
+    "missingRestoreAbortsAndRollsBack": true,
+    "fixtureGlobalGraphUnchanged": true,
+    "nonSuperuserEquivalentOperator": true,
+    "existingAdminEdgesAndDisabledSetInheritSimulated": true,
+    "ownerTransferBothRolesPassed": true,
+    "limitation": "Maintenance wrapper exercised with equivalent non-superuser operator and exact role-option shape (bootstrap name mapped only in test) in network-none fixture. Original full Source/Core body already separately validated; no Hosted installation or real business capability."
+  },
+  "sourceUploaded": false,
+  "paidImageCalls": 0,
+  "photoSave": false,
+  "backendRuntimeConfigurationInstalled": false,
+  "hostSQLDeploymentWriter": "RETURNED_NATIVE_COORDINATION",
+  "mainChangedByThisCheckpoint": false
+}
