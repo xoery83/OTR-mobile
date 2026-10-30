@@ -28,7 +28,8 @@ Trip shell, Item, quota grant or post-Adoption restore qualification is implied.
   operation UUID. Never connect these people by name/email. The source creator
   must map explicitly to the owning Trip Create's actual linked owner Person.
 - Owning Ledger initializer preserving the source currency, scale, valuation
-  policy and source names; do not silently substitute current normal defaults.
+  policy; title/dates follow the final owning Trip. Retain the original local
+  Ledger cache row separately; do not substitute defaults or backdate server settings.
 - Every retained deferred Metadata action, in its original dependency order.
   Read and CAS the actual owning metadata revision inside the same transaction;
   no synthetic conversion of an old queued V1 revision.
@@ -174,3 +175,11 @@ the real Core domain executor, but their outer map snapshot is a unit transactio
 harness, not PG/RLS/Hosted atomicity proof. Actual grant issuance, cross-principal
 adapter, cancellation/final receipt storage, Native recovery and DEV Adoption
 remain pending. See `COMPOSITE_EXECUTION_REVIEW.json`.
+
+Ledger projection repair: initialize/read back only after all deferred Metadata.
+The existing bootstrap derives title/dates from public.trips and the settings
+values/timestamp from ledger_settings. A stale Guest ledger_journeys title/date
+is preserved in retainedLocalState, while the remote result must match the final
+Trip plus exact original financial settings. Invalid timestamps or changed
+settings fail the entire transaction. Directed3s63PASS, independent23PASS and
+NO_BLOCKER/types/lint; this remains component-only, with no PG/DEV publication.
