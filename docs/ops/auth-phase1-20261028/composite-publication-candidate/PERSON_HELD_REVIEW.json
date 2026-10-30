@@ -19,5 +19,11 @@
     "No new principal or owning SQL authority",
     "No live consumer; existing production factory is unchanged",
     "No real PG/DEV nonempty Adoption proof"
-  ]
+  ],
+  "callerRegression": {
+    "result": "55/56 PASS; one unchanged baseline assertion drift",
+    "failure": "tripCreateRuntime.test.ts:286 expects four mocked arguments; unchanged Runtime passes explicit fifth readUniversalP1 undefined",
+    "baselineReproduction": "Same exact focused failure on curated main 7a0317cb without Person changes; runtime source/test diff main is zero",
+    "owningWriterNotified": "Universal/Root; no public Runtime edit by Auth"
+  }
 }
