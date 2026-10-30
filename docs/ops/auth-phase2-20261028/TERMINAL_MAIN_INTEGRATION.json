@@ -1,0 +1,39 @@
+{
+  "status": "CURATED_VALIDATED_READY_FOR_SERIAL_FF",
+  "parentMain": "84fb47672732daa96045675a56fbb262ae5147b8",
+  "sourceCommits": [
+    "fcb90036",
+    "bf3a9008"
+  ],
+  "curatedCommits": [
+    "8ad18fb3",
+    "5ad5647b"
+  ],
+  "validation": {
+    "joinedSuites": 12,
+    "joinedTests": 304,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "backendBuild": "PASS",
+    "captureBackendBuild": "PASS",
+    "diffCheck": "PASS",
+    "componentIndependentTests": 125,
+    "isolatedPgChecks": 39
+  },
+  "onlyConflict": "CURRENT_IMPLEMENTATION_STATE top additions; both complete states preserved",
+  "retained": [
+    "Photo SQLite75 registry and strict-empty75 login",
+    "nonempty75 Adoption remains closed",
+    "Backend Task SQLite pin74",
+    "Native e06 Core failure diagnostics",
+    "all Root Task resume software"
+  ],
+  "primaryBefore": {
+    "sixOriginalDirtyFilesPreserved": true,
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a"
+  },
+  "runtimeMounted": false,
+  "hostedWrites": 0,
+  "scope": "source-only; not formal publication, Native restore or full Adoption E2E"
+}
