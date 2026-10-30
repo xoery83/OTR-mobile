@@ -13,9 +13,11 @@ Original Native branch and unmerged Enrichment remain intact.
 
 Local four suites171PASS: actual SQLite remote-only P3 Create/Edit/legalSkip, competing unsent intent preservation and SQLite close/reopen; remote-only certified P2 read without local Trip or Queue; duplicate pull unchanged refreshGeneration; coalescing/backoff/switch fencing; cold/foreground/network/periodic lifecycle and mounted Home reader. These are deterministic L2 evidence, not DEV or iPad Downstream PASS. Existing successful Manual/Import receipts are not rerun or promoted.
 
-## Next actual acceptance
+## Actual first acceptance
 
-Auth prepares a separate normal Host OTP session for the existing iPad Account, no device credential extraction. Wait for Import to explicitly return DEV business window, then external normal P3 Create/APPLIED -> iPad automatic pull/read/cold -> independent server identity, followed by Edit/Skip and controlled Pending conflict. No paid Provider calls.
+Auth helper420ad968 created a separate normal existing-account OTP Host Session, verified the original Account and revoked only itself after the action (refresh invalid independently checked). External normal Core CREATE_ITEM P3 returned FULL/APPLIED receipt51190be7, op eeffb4cf, Item fab8ec55. Exact READ ONLY Supabase row plus canonical intent/receipt hashes independently verified. No iPad Session extraction or local Create. Build116 source2daeab2f automatically displayed the remote Stay in Home, Day and exact-UUID Details (Oct30 18:00→Oct31 10:00, Everyone); actual process terminate/relaunch retained it. Navigation used existing App deep links because AX Runner was unavailable; no manual Refresh. Physical offline and mounted remote Edit are not certified by these screenshots. See `P3_REMOTE_CREATE_RECEIPT.json`.
+
+Next: same Item remote Edit/legalSkip and controlled Pending conflict. Six Details readers lacked mounted read-completion invalidation; a shared scoped hook is under directed validation, deferring refresh until an open editor closes. No paid Provider calls.
 
 ## Explicit remaining contracts
 
@@ -25,4 +27,4 @@ Generic403/404/503 is not an authoritative access-revision revocation. Existing 
 
 AD5 supplied one complete nonrevoked Core certificate for existing Trip825f79b2. The Saved summary badge alone means absent local creator container; its click/actual graph/Reader issue remains to reproduce. Do not invent a local Trip or grant Edit to remove that badge.
 
-Shared DEV Host/SQL/Source windows remain Import-owned. No Backend deployment/Schema/RLS/Role change in this candidate. Independent Auth boundary review pending; physical Native acceptance pending.
+No Backend deployment/Schema/RLS/Role change in this candidate. Auth boundary review a92d1c61 NO_BLOCKER. Native returned the short normal business window after remote Create/readback; Import currently owns the protected PDF window. Further remote writes require serial coordination; iPad ordinary reads may continue.
