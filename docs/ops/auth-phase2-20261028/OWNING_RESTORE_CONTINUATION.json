@@ -9,13 +9,15 @@
     "sessionRecovery": "3 real injected RED cases fixed; adjoining2 suites36 PASS including existing empty Guest flow",
     "isolatedPg": "48 real Gateway checks; current11 candidate and14 owning hashes match; ordinary fresh Core collection after PUBLISHED PASS",
     "typecheck": "PASS at latest transition implementation checkpoint",
-    "captureBackendBuild": "PASS; no deploy"
+    "captureBackendBuild": "PASS; no deploy",
+    "joined": "9 suites161 PASS, helper4 PASS, typecheck and both Backend builds PASS"
   },
   "reviews": {
     "httpStageVerification": "independent source NO_BLOCKER",
     "coreTransitionPort": "Native owning NO_BLOCKER; 12 independent SQLite PASS",
     "sessionMarkerFailureRepair": "independent3 suites62 PASS before published promotion extension",
-    "publishedPromotion": "pending final independent review"
+    "publishedPromotion": "independent NO_BLOCKER, 5 suites83 PASS at c6212c5f",
+    "unreviewedNextSlice": "Initial UI publication flow is separate and excluded from this fixed source."
   },
   "limits": [
     "No actual Hosted/Native Adoption E2E PASS",
@@ -34,5 +36,7 @@
     "src/data/auth/authSessionRepository.ts": "c58b23ea52f88ab0750d01791fb9df036ad2458e5f9367b979cd89106fe9b09e",
     "src/data/auth/accountSwitchCoordinator.ts": "8391ccb9dc5b8084abab37d0d8466b71e9d09df9e602e1b2a3dfe88788ca64a9",
     "src/data/auth/guestPublishedSession.ts": "0f750cbc1a4a4453e54ebfa524c21f86b8f1bb70c2168c6641450494dfff22f1"
-  }
+  },
+  "sourceCommit": "41bf461e",
+  "acceptedMainMergedInAuth": "c6212c5f"
 }

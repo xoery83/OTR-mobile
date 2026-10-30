@@ -23,7 +23,8 @@ Existing Auth Repository can then promote its canonical verified slot through th
 same Account index, with no Token copy or source release; local install8 PASS.
 Guest index commit failure recovery now retains Guest before commit or Account
 after commit, with strict marker repair for same-Account retry/refresh; ordinary
-signed-out rollback stays unchanged. Final published-path Review is pending.
+signed-out rollback stays unchanged. Final published-path independent Review is NO_BLOCKER (5 suites83 PASS).
+Fixed source41bf461e; accepted main115 merged into Auth c6212c5f.
 Isolated real Gateway48 checks include actual Stage adapter and fresh ordinary
 Core collection after PUBLISHED; all11 candidate+14 owning hashes match. Capture
 Backend build passes. These are components, not Hosted/Native Adoption E2E.
