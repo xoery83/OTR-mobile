@@ -1,0 +1,35 @@
+{
+  "reviewer": "Native owning UI Writer",
+  "date": "2026-10-31",
+  "result": "NO_BLOCKER_WITH_COMPAT_CE956750",
+  "reviewedCommits": [
+    "5244fef9",
+    "6883e3a0"
+  ],
+  "scope": [
+    "TripSetupRows MembersSummary/ScopedMembersSummary callback/context",
+    "LocalTripWorkspace members callbacks and existing repository save/roster update"
+  ],
+  "findings": [],
+  "verified": [
+    "Actor context captured and checked through existing repository, no UI SQL or HTTP",
+    "OwnerPersonId/currentActor/accepted format2 guards; no management right inferred from displayName",
+    "Account/Trip/generation fences prevent stale roster apply",
+    "Unnamed Owner preserved only as real Person, You remains display fallback",
+    "Normal Queue/Coordinator unchanged"
+  ],
+  "compatibility": {
+    "commit": "ce956750",
+    "files": [
+      "src/features/day-feed/ManualFlightForm.tsx",
+      "src/features/day-feed/ManualFlightForm.test.ts"
+    ],
+    "behavior": "Retain pre-existing named-only P2 options; no Person/participation/identity change",
+    "tests": "2 suites15 PASS; types/UIguard PASS; lint0errors/preexisting import-order warnings"
+  },
+  "limits": [
+    "Bounded UI/reference helper review, not full People security audit",
+    "Auth E2E/independent readback evidence owned by Auth; Native did not repeat it",
+    "No Realtime or Backend candidate may be merged through this compatibility commit"
+  ]
+}

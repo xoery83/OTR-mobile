@@ -89,11 +89,12 @@ worker COMPLETED/attempt0, independent Supabase exact Receipt+Person unlinked/us
 and unchanged Owner PASS. Cold5005→6556/MyTrips→sameTrip→People preserved Chinese
 name and unnamed Owner/You. Foreign normalQA71b Receipt GET403/PERSON_CREATE_FORBIDDEN
 PASS; own host Session revoked and refresh rejected. Device claim released, no Host/
-policy/Schema changes. Native two-range owning review, final evidence review and
-serial main integration pending. Direct consumer ManualFlightForm needs its existing
-named-only participant-option behavior preserved (now People retains unnamed Actor);
-precise adapter requested from Native unique Writer, no Form redesign. No full
-People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
+policy/Schema changes. Final evidence independent NO_BLOCKER (9 hashes/receipt/cold/
+foreign403); Native two-range owning review NO_BLOCKER. Native isolated compatibility
+ce956750 cherry-picked as8c859915 preserves prior named-only Flight options; no
+Realtime candidate merged. Final integrated4 suites96/typecheck PASS; serial main
+fast-forward/push pending.
+No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
 Existing profiles SELECT RLS is all-authenticated: private travel-document names/AKA
 must not be stored there. Only policy/schema metadata was read; no new permissions.
 

@@ -78,7 +78,9 @@
     "independentSourceReview": "NO_BLOCKER",
     "typecheck": "PASS",
     "uiGuard": "PASS",
-    "lint": "0 errors; existing 15 import/first warnings in Workspace test"
+    "lint": "0 errors; existing 15 import/first warnings in Workspace test",
+    "independentEvidenceReview": "NO_BLOCKER; nine private evidence hashes and exact local/server receipt/cold/foreign403 proof verified",
+    "finalFocusedIntegrationRegression": "4 suites96 PASS after isolated Flight compatibility cherry-pick; final typecheck PASS"
   },
   "safety": {
     "ordinaryInstallRetainedSameTripAndOwner": true,
@@ -90,10 +92,7 @@
     "ownQaAppClosedAndDeviceClaimReleased": true
   },
   "pending": [
-    "Native owning ManualFlightForm participant-options compatibility: preserve prior named-only options when People roster now retains unnamed Actor",
-    "Native owning two-range review",
-    "Independent final evidence review",
-    "Serial main integration"
+    "Serial main fast-forward and normal push"
   ],
   "notClaimed": [
     "Full People Home Blueprint",
@@ -128,5 +127,13 @@
     ],
     "mutations": 0,
     "ownNormalOtpSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  },
+  "nativeOwningReview": {
+    "status": "NO_BLOCKER_WITH_COMPAT_CE956750",
+    "evidence": "NATIVE_OWNING_REVIEW.json",
+    "evidenceSHA256": "f6b19f469bc4ea06ccd7c6eb5e2963fb3d8139c2c7e9d52248cebb4354ad306a",
+    "isolatedCompatibilityCommit": "ce956750d656ddafc7f04e242d3e4fb51dc1f2d2",
+    "authCherryPick": "8c859915",
+    "noRealtimeCandidateMerged": true
   }
 }
