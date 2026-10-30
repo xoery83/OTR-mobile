@@ -1,0 +1,305 @@
+{
+  "status": "REAL_GUEST_TO_ACCOUNT_GOLDEN_SLICE_PASS_CORE_REPLAY_NEGATIVE_PENDING",
+  "scope": "new normal UI Guestqb69 fileless Trip/P1 plus existing deferred Trip edit; not restoration of old lost AppData",
+  "sourceCommit": "3f6ca983560591b48e8832801e02d302021842e2",
+  "artifactVersion": 69,
+  "hermesSHA256": "17df7956be6eeccd25718847b19deefb755589dfb9d841320bf0ea8aa5c500c6",
+  "nativeOtp": {
+    "status": "NORMAL_NATIVE_OTP_TARGET_VERIFIED_PENDING_ADOPTION",
+    "bundleId": "com.xoery.otrmobile.guestqb",
+    "guestId": "637e59f7-1e67-4728-88db-8763cf857d48",
+    "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+    "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "email": "otr-qa-3f43c81b-500b-4e59-b0a8-c7ffdbd19a31@eldouzileu.resend.app",
+    "mailboxRequestAt": "2026-10-30T19:53:04.294Z",
+    "messageId": "9e59f5cd-9cff-477a-a92a-7a2d58922b20",
+    "otpSentBy": "normal Native UI once",
+    "otpInput": "released receiver exact recipient/time via stdin no-record",
+    "identityEvidence": "existing target accessibility identifier auth-adoption-target-26876e6e-a919-457d-bc00-78d76ba08043",
+    "postVerifySourceSqliteUnchanged": true,
+    "publicationSubmitted": false,
+    "receiverProcessExited": true,
+    "secretsOrOtpPersisted": false
+  },
+  "window": {
+    "windowId": "1fc2aae2-ea45-40f9-8fb4-95a1845e096d",
+    "planSHA256": "69c317b6e7ca9f1c3a91686dc8bc5d39dd10e28a501e78dc42625ae19a00ae9f",
+    "fixedExpiresAt": "2026-10-30T20:19:05Z",
+    "runtimeSHA256": "6fbbccc2d8b697dd76cfffa01507d683fbb6f24535e957be7965a9f7da8cc419",
+    "policyActiveXmin": "33386",
+    "schemaRLSGrantOrFunctionChanged": false
+  },
+  "actualFlow": [
+    "normal Native Guest create/edit Trip and P1",
+    "Guest cold persistence verified",
+    "normal Email OTP to unique QA mailbox",
+    "explicit Add to verified Account once",
+    "PUBLISHED receipt verified by existing pipeline",
+    "existing owning discovery/Core restore",
+    "normal canonical Account Session installed",
+    "default DEV policy closed and service restored",
+    "real process cold59126\u219267678",
+    "normal MyTrips\u2192same Trip\u2192OpenDay original P1 visible"
+  ],
+  "independentReceipt": {
+    "adoptionId": "db70fbb2-f2a6-40c7-91fb-bd1d349ff2b9",
+    "contractVersion": 1,
+    "executionSha256": "8a311fec1ecf0f66d554cd10cae2f6ad9e5388719bf343a67c290145e3713c1a",
+    "grantId": "13a99970-e19a-40c1-9092-b05dedd641b0",
+    "inventorySha256": "df32db9b182bde58246840754cca2b312ac3e2ca81d36dc02fbdaad8b048f3b0",
+    "outcome": "PUBLISHED",
+    "planSha256": "6d100a938d24b32493dc4a725d741bacc95b27bb653b3de2ba6e3e9a965bc7e6",
+    "policyVersion": "otr.auth.fileless-p1.unpriced/1",
+    "preparationSha256": "b6f853c9b8c70c38cd480706be50e020347912bea26c7aad7241a6c03502fd2b",
+    "receiptId": "430182c9-6dc0-427d-aab9-6884e2cb4d53",
+    "receiptSha256": "f44350ab7691064025759f2a396b6d5968278a94bf43bbee832ed1110514fe5d",
+    "recordedAt": "2026-10-30T20:03:11.412545Z",
+    "schemaId": "otr.auth.guest-adoption-receipt/1",
+    "sourceGuestLocalId": "637e59f7-1e67-4728-88db-8763cf857d48",
+    "targetAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "trips": [
+      {
+        "createOperationId": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+        "ledgerSnapshotSha256": "5c7caf2472f823275efb2e163a933f5d94868c585ebd49a648a24f002b9015c5",
+        "operations": [
+          {
+            "domainReceiptId": null,
+            "kind": "TRIP_CREATE",
+            "mappedIntentSha256": null,
+            "operationId": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+            "owningReceiptSha256": "d2c35204d19ca543f7616f249ce33c308267d314f3396663b1bd03cefb25e4a4",
+            "queueId": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+            "sourceIntentSha256": null
+          },
+          {
+            "domainReceiptId": null,
+            "kind": "TRIP_METADATA_DEFERRED",
+            "mappedIntentSha256": null,
+            "operationId": "fc88a5be-4ba3-4ebe-9de3-78fcaa077f48",
+            "owningReceiptSha256": "a3c06ed05c62ccc2744728b62f74b191a39992e126dafa495b9637334282d9e6",
+            "queueId": "676d3e07-ed74-4688-a019-b61c5783ec71",
+            "sourceIntentSha256": null
+          },
+          {
+            "domainReceiptId": "26b601d0-7e19-4676-9b48-f366921f7e1f",
+            "kind": "CORE",
+            "mappedIntentSha256": "3ae580cd81898b2e42d0e227c20eb6f46ff94724ce0339ceb596b0919653f393",
+            "operationId": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+            "owningReceiptSha256": "11246f07483311923c9927583b19e6c2075815cd1ba72bfad40c18a430b423c7",
+            "queueId": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+            "sourceIntentSha256": "3ae580cd81898b2e42d0e227c20eb6f46ff94724ce0339ceb596b0919653f393"
+          }
+        ],
+        "ownerPersonId": "425baac4-80da-4882-ac6f-6168452101d8",
+        "personMappings": [
+          {
+            "sourcePersonId": "5ff9c2f2-1ffa-4487-897f-c9ec457b6e8f",
+            "targetPersonId": "425baac4-80da-4882-ac6f-6168452101d8"
+          }
+        ],
+        "sourceCreatorPersonId": "5ff9c2f2-1ffa-4487-897f-c9ec457b6e8f",
+        "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208"
+      }
+    ]
+  },
+  "owningBusinessReadback": {
+    "item": {
+      "endLocalDate": "2026-11-02",
+      "id": "f3ca9163-1dbb-4d1b-8a0b-a06bce60c664",
+      "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "selfPersonId": null,
+      "startLocalDate": "2026-11-02",
+      "title": "Guest B Walk",
+      "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208"
+    },
+    "trip": {
+      "createdBy": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+      "name": "Auth Guest B 20261031 Edited",
+      "ownerAccountId": null,
+      "ownerId": null,
+      "ownerPersonId": null
+    }
+  },
+  "localAccountBeforeCold": {
+    "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+    "discovery": [
+      {
+        "account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "name": "Auth Guest B 20261031 Edited"
+      }
+    ],
+    "certificates": [
+      {
+        "account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "epoch": "f89e8672-1392-4344-a430-821b7e2a662b",
+        "revision": "2.0",
+        "access_revision": 1,
+        "complete": 1
+      }
+    ],
+    "personBindings": [
+      {
+        "account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "person_id": "425baac4-80da-4882-ac6f-6168452101d8",
+        "linked_account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "active": 1,
+        "participating": 1
+      }
+    ],
+    "day": [
+      {
+        "cache_account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "id": "f3ca9163-1dbb-4d1b-8a0b-a06bce60c664",
+        "owner_account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "title": "Guest B Walk",
+        "start_local_date": "2026-11-02",
+        "end_local_date": "2026-11-02",
+        "semantic_revision": 1
+      }
+    ],
+    "oldQaDiscoveryCount": 0
+  },
+  "localAccountAfterCold": {
+    "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+    "discovery": [
+      {
+        "account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "name": "Auth Guest B 20261031 Edited"
+      }
+    ],
+    "certificates": [
+      {
+        "account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "epoch": "f89e8672-1392-4344-a430-821b7e2a662b",
+        "revision": "2.0",
+        "access_revision": 1,
+        "complete": 1
+      }
+    ],
+    "personBindings": [
+      {
+        "account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "person_id": "425baac4-80da-4882-ac6f-6168452101d8",
+        "linked_account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "active": 1,
+        "participating": 1
+      }
+    ],
+    "day": [
+      {
+        "cache_account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "id": "f3ca9163-1dbb-4d1b-8a0b-a06bce60c664",
+        "owner_account_id": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "title": "Guest B Walk",
+        "start_local_date": "2026-11-02",
+        "end_local_date": "2026-11-02",
+        "semantic_revision": 1
+      }
+    ],
+    "oldQaDiscoveryCount": 0
+  },
+  "coldAccountCacheIdentical": true,
+  "close": {
+    "status": "AUTH_QA_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "policyBefore": {
+        "status": "AUTH_QA_POLICY_CLOSED",
+        "closed": true
+      },
+      "runtime": {
+        "runtimeClosed": true,
+        "containerId": "28ddc0142c1e7c9f7ea967c1469f46aa6a264027f4b71c7270fe5beb710d5636",
+        "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057"
+      },
+      "policyAfter": {
+        "status": "AUTH_QA_POLICY_CLOSED",
+        "closed": true
+      }
+    }
+  },
+  "independentCloseReadback": {
+    "allGrantsBound": true,
+    "allStagesBound": true,
+    "database": "postgres",
+    "policyClosed": true,
+    "policyXmin": "33417",
+    "sourceGuardUnchanged": true,
+    "transactionReadOnly": "on",
+    "unjoinedReceipts": false,
+    "unjoinedTerminalEvidence": false
+  },
+  "finalRuntime": {
+    "timer": "inactive",
+    "service": [
+      "Result=success",
+      "ActiveState=inactive"
+    ],
+    "runtime": {
+      "status": "RUNTIME_IDENTITY_VERIFIED",
+      "defaultClosed": true,
+      "containerId": "28ddc0142c1e7c9f7ea967c1469f46aa6a264027f4b71c7270fe5beb710d5636",
+      "policyClosed": "REQUIRES_SEPARATE_SQL_VERIFICATION"
+    }
+  },
+  "retriesOrDuplicatePublicationPosts": 0,
+  "copiedSessionKeychainOrSQLite": false,
+  "newSimulator": false,
+  "oldAttempt": "f6cb CANCELLED; original AppData remains lost, not claimed restored",
+  "pending": [
+    "Core owning operation receipt returns503 CORE_CAPABILITY_CLOSED to foreignQA; not claimed404/NOT_VISIBLE PASS",
+    "serial main integration",
+    "other Guest domains and broader failure/recovery qualification remain separately scoped"
+  ],
+  "foreignAccountNegative": {
+    "status": "COLLECTION_AUTHORIZATION_DENIAL_PASS_RECEIPT_CAPABILITY_CLOSED_PENDING",
+    "actorAccountId": "71b94800-f860-4685-a5d4-954adae38113",
+    "foreignAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "foreignTripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+    "normalOtpRequestedAt": "2026-10-30T20:20:00.738Z",
+    "messageId": "565190aa-bc9f-4313-b069-62e42038e524",
+    "trustedGetUserIdentityVerified": true,
+    "collection": {
+      "httpStatus": 404,
+      "errorCode": "NOT_VISIBLE",
+      "durationMs": 3087,
+      "result": "PASS"
+    },
+    "operationReceipt": {
+      "operationId": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+      "httpStatus": 503,
+      "errorCode": "CORE_CAPABILITY_CLOSED",
+      "durationMs": 5895,
+      "result": "FAIL_CLOSED_PERMISSION_DENIAL_NOT_QUALIFIED"
+    },
+    "fullReceiptOrDataReturned": false,
+    "mutations": 0,
+    "normalLocalLogoutAndRefreshRejection": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "processExited": true,
+    "claimsRetained": true,
+    "automaticRetry": false
+  },
+  "independentOwnerPersonReadback": {
+    "foreignQaNotMember": true,
+    "ownerPerson": {
+      "id": "425baac4-80da-4882-ac6f-6168452101d8",
+      "participationActive": true,
+      "role": "owner",
+      "status": "linked",
+      "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+      "userId": "26876e6e-a919-457d-bc00-78d76ba08043"
+    }
+  },
+  "independentReview": "NO_BLOCKER on publication/cache/cold/close and read-only script; OwnerPerson supplement/negative actual status to be reconciled"
+}

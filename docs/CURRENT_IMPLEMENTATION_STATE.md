@@ -29,6 +29,22 @@ Current Native candidate integrates main82d5c8b3, preserving its exact accepted 
 
 # Auth Golden Slice — current continuation, 30 October 2026
 
+31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
+edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →
+PUBLISHED adoptiondb70fbb2, receipt430182c9/f44350ab. Independent Supabase receipt
+and owning Trip/P1 fields/creator Account match; existing discovery/Core restored
+same target cache with Owner Person425baa. Canonical Account install and real cold
+59126→67678 MyTrips→same Trip→Day original P1 PASS. No fixture/Token/SQLite copy.
+Positive window1fc2 closed early: default28dd/fb0d restored, independent policyfalse
+xmin33417, timerinactive, original Source guard unchanged. Golden core flow PASS;
+foreign QA collection read returns404/NOT_VISIBLE PASS. Foreign operation receipt
+returns503/CORE_CAPABILITY_CLOSED, fail-closed but not a qualified permission-denial
+PASS; unique Core Owner is handling the narrow boundary. Both Host test Sessions
+were normally revoked with refresh rejection, no mutation/retry of Adoption.
+Independent receipt/cache/cold/close Review is NO_BLOCKER; main integration is next. Other Guest domains are not claimed adopted. See
+NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json. Older blocked notes below describe
+prior stages, not the latest completed core flow.
+
 31 October actual continuation: shutdown Gate installed/verified and main timeout
 fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.
 Cold recovery source3f6ca983 reviewed NO_BLOCKER, but actual GuestQA68 update used
