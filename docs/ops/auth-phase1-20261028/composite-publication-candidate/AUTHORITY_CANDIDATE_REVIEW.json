@@ -1,0 +1,28 @@
+{
+  "status": "ISOLATED_REAL_PG_OWNING_COMPOSITE_CANDIDATE_PENDING_FROZEN_REVIEW",
+  "hostedActivation": false,
+  "independentReview": "PENDING_FROZEN_REVIEW",
+  "realPg": {
+    "checks": 31,
+    "normalCoreGatewayLogin": true,
+    "normalStandaloneGatewayCompatibility": true,
+    "actualTypeScriptOwningPortsAndCoreExecutor": true,
+    "appliedReceipt": "2237253b-c394-4be1-9ae2-df880437c31d",
+    "outerRollback": "PASS",
+    "unsealedCoreNoGeneralFallback": "PASS",
+    "currentAccountRevocation": "PASS"
+  },
+  "protectedFunctions": 13,
+  "noChanges": [
+    "No new role or business table RLS/table grant",
+    "No Runtime/HTTP/Native caller",
+    "No Hosted SQL, Provider or production activity"
+  ],
+  "remaining": [
+    "Actual Hosted exact function/owner/ACL/trigger catalog preimages and Core owning review before Owner execution packet",
+    "Formal publication/cancellation receipt and exclusive recovery status service",
+    "Normal explicit target confirmation HTTP/Native flow",
+    "Local identity/name/cover/draft restore and source-release proof",
+    "Hosted Email/Google Guest Adoption E2E and Supabase readback"
+  ]
+}

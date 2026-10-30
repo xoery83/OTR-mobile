@@ -210,6 +210,18 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
+31-check isolated real-Gateway PG candidate now executes the actual held
+Trip/Metadata/Person ports plus Core P1 executor on one authorized transaction:
+APPLIED domain receipt, full rollback and fresh independent committed readback.
+Server-issued confirmed grant, immutable stage, backend-PID/xid scope and exclusive
+manifest authority prevent fallback to General Account permissions; normal
+standalone Gateways remain usable. This is disposable-only protected SQL, policy
+default OFF, no new Role/business RLS/table grant or Hosted installation. The local
+13-function parent is not the complete actual DEV preimage set. Frozen independent
+review, real DEV catalog/ACL qualification, final receipts, confirmation and Native
+restore remain pending. See composite-publication-candidate/AUTHORITY_LOCAL_PG_RESULT.json.
+
+
 30 October nonempty executor now validates Ledger after deferred Metadata against
 final Trip title/dates and exact source financial settings; the original local
 cache/timestamp remains retained. Directed3s63PASS, independent23PASS/NO_BLOCKER,

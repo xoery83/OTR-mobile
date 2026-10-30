@@ -2,21 +2,28 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import type { CorePgLease } from "../tripCoreV2PgStorage";
 import type { publicationFixture } from "./tripCoreV2CandidatePublication";
-export function session(fixture: string) {
-  if (!/^otr-(?:core-v2-test|trip-sustained)-[a-f0-9]{12}$/.test(fixture))
+export function session(fixture: string, composite?: { database: string }) {
+  const authFixture = /^otr-auth-authority-[a-f0-9]{12}$/.test(fixture);
+  if (
+    authFixture
+      ? !composite || !/^otr_auth_composite_[a-f0-9]{12}$/.test(composite.database)
+      : composite || !/^otr-(?:core-v2-test|trip-sustained)-[a-f0-9]{12}$/.test(fixture)
+  )
     throw new Error("OWNED_FIXTURE_REQUIRED");
   const proc = spawn(
     "/opt/homebrew/bin/docker",
     [
       "exec",
       "-i",
+      ...(authFixture ? ["-e", "PGPASSWORD=auth-composite-fixture-only"] : []),
       fixture,
       "psql",
       "-XqAt",
+      ...(authFixture ? ["-h", "127.0.0.1"] : []),
       "-U",
-      "supabase_admin",
+      authFixture ? "otr_trip_core_v2_gateway" : "supabase_admin",
       "-d",
-      "postgres",
+      composite?.database ?? "postgres",
       "-v",
       "ON_ERROR_STOP=1",
     ],
