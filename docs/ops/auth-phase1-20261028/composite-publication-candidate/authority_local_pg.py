@@ -6,9 +6,9 @@ from principal_patch import SIGNATURES,render
 ROOT=Path(__file__).resolve().parents[4];HERE=Path(__file__).resolve().parent
 NAME='otr-auth-authority-'+uuid.uuid4().hex[:12];DB='otr_auth_composite_'+uuid.uuid4().hex[:12]
 checks=[];created=False
-input_names=['authority.local.sql','staging.local.sql','terminal.local.sql','authority_local_pg.py','authority-fixture.mts','principal_patch.py','execute_local_pg.mts','receipt-journal.local.sql','verify-terminal-receipt.mts']
+input_names=['authority.local.sql','staging.local.sql','terminal.local.sql','authority_local_pg.py','authority-fixture.mts','principal_patch.py','execute_local_pg.mts','receipt-journal.local.sql','verify-terminal-receipt.mts','publication.local.sql','publication-local-pg.mts']
 input_bytes={name:(HERE/name).read_bytes() for name in input_names}
-owning_names=['backend/src/guestAdoptionCompositePg.ts','backend/src/guestAdoptionCompositeExecute.ts','backend/src/__fixtures__/tripCoreV2Sql.ts','backend/src/tripCoreV2PgStorage.ts','backend/src/tripCreatePgStorage.ts','backend/src/tripMetadataV2PgStorage.ts','backend/src/tripPersonCloudCreatePg.ts','docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql','backend/src/guestAdoptionTerminalPg.ts','src/domain/auth/guestAdoptionReceipt.ts']
+owning_names=['backend/src/guestAdoptionCompositePg.ts','backend/src/guestAdoptionCompositeExecute.ts','backend/src/__fixtures__/tripCoreV2Sql.ts','backend/src/tripCoreV2PgStorage.ts','backend/src/tripCreatePgStorage.ts','backend/src/tripMetadataV2PgStorage.ts','backend/src/tripPersonCloudCreatePg.ts','docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql','backend/src/guestAdoptionTerminalPg.ts','src/domain/auth/guestAdoptionReceipt.ts','backend/src/guestAdoptionPublicationPg.ts','src/data/auth/guestAdoptionReceiptQualification.ts']
 owning_bytes={name:(ROOT/name).read_bytes() for name in owning_names}
 CORE='otr_trip_core_v2_gateway';ROLES=[CORE,'otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_person_command_gateway']
 def docker(*args,input=None):
@@ -47,7 +47,7 @@ try:
   sql('SET ROLE postgres;'+read(path))
  # Accepted General Account helper: use its recorded formal postimage, not the older QA-only path.
  sql('SET ROLE postgres;'+read('docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql'))
- for name in ['staging.local.sql','terminal.local.sql','authority.local.sql','receipt-journal.local.sql']:
+ for name in ['staging.local.sql','terminal.local.sql','authority.local.sql','receipt-journal.local.sql','publication.local.sql']:
   candidate=input_bytes[name].decode()
   sql(candidate,database='postgres',error='AUTH_COMPOSITE_DISPOSABLE_FIXTURE_REQUIRED')
   sql("SET ROLE postgres;SET otr.auth.composite_fixture='LOCAL_DISPOSABLE';"+candidate)
@@ -154,6 +154,11 @@ try:
    return seal_json(body)
   for change,error in [
    (lambda source:source['trips'][0]['create'].pop('tripId'),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
+   (lambda source:source['trips'][0]['creator'].update(personId=None),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
+   (lambda source:source['trips'][0]['people'][0].update(personId=source['trips'][0]['creator']['personId']),'AUTH_ADOPTION_STAGE_DUPLICATE_IDENTITY'),
+   (lambda source:source['trips'][0]['queueOperationIds'].append(source['trips'][0]['queueOperationIds'][0]),'AUTH_ADOPTION_STAGE_DUPLICATE_IDENTITY'),
+   (lambda source:source['trips'][0]['deferredMetadata'][0].update(actionId=None),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
+   (lambda source:source['trips'][0]['queueOperationIds'].append(None),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
    (lambda source:source['trips'][0]['create'].update(tripId=None),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
    (lambda source:source['trips'][0]['create'].update(tripId='invalid'),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
    (lambda source:source['trips'][0]['create'].update(operationId=None),'AUTH_ADOPTION_STAGE_IDENTITY_INVALID'),
@@ -296,9 +301,49 @@ try:
   checks.append('turning Adoption policy off does not disable existing normally authorized Core capability reads')
 
 
+ # Complete one normal synthetic local Account's publication on one owning lease.
+ sql('SET ROLE postgres;UPDATE otr_auth_guest_composite.policy SET enabled=true;')
+ pf=node();pa=pf['user']['id'];pr=pf['request'];pb=terminal_request(pr)
+ sql('INSERT INTO auth.users(id,is_anonymous) VALUES('+q(pa)+',false);')
+ sql('INSERT INTO public.profiles(id,display_name) VALUES('+q(pa)+",'QA Publication');")
+ pg=json.loads(sql(call('confirm_and_issue',q(pa)+'::uuid',q(json.dumps(pr))+'::jsonb','true'),CORE))
+ with tempfile.TemporaryDirectory(prefix='otr-auth-publication-') as temp:
+  pp=Path(temp);(pp/'fixture.json').write_text(json.dumps(pf));(pp/'grant.json').write_text(json.dumps(pg));plan=node(pp/'fixture.json',pp/'grant.json')
+  sql(call('seal_stage',q(pa)+'::uuid',q(plan['canonicalText']),q(plan['sha256'])),CORE)
+  (pp/'material.json').write_text(json.dumps({'fixture':pf,'grant':pg,'plan':plan}))
+  source=json.loads(json.loads(pf['checkpoint']['canonicalText'])['source']['canonicalText']);pt=source['trips'][0]['create']['tripId']
+  def publication(mode):
+   r=subprocess.run(['node','--import','tsx',str(HERE/'publication-local-pg.mts'),NAME,DB,str(pp/'material.json'),mode],cwd=ROOT,capture_output=True,text=True,timeout=60)
+   assert r.returncode==0,r.stderr
+   return json.loads(r.stdout)
+  for mode in ['missing-core','rollback']:
+   outcome=publication(mode)
+   assert sql('SELECT count(*) FROM public.trips WHERE id='+q(pt)+';')=='0'
+   assert sql('SELECT count(*) FROM otr_auth_guest_composite.terminal_receipts WHERE adoption_id='+q(pb['adoptionId'])+';')=='0'
+   checks.append(mode+': incomplete owning execution or pre-COMMIT failure rolls back Trip/Person/Metadata/P1 and terminal receipt together')
+  unknown_publication=publication('unknown')
+  assert unknown_publication['actualCommit'] and unknown_publication['postFinalDenied']
+  assert sql('SELECT count(*) FROM public.trips WHERE id='+q(pt)+';')=='1'
+  assert sql('SELECT count(*) FROM otr_auth_guest_composite.terminal_receipts WHERE adoption_id='+q(pb['adoptionId'])+" AND outcome='PUBLISHED';")=='1'
+  checks.append('actual COMMIT response loss reports UNKNOWN while exactly one business dataset and PUBLISHED journal commit')
+  checks.append('post-final owning Trip/Metadata/Person mutation entry and unsealed Core op denied while original deferred Metadata COMMIT guard still passes')
+  published=publication('commit')
+  proof=json.loads(sql("SELECT jsonb_build_object('owner',(SELECT created_by FROM public.trips WHERE id="+q(pt)+"),'person',(SELECT id FROM public.journey_members WHERE trip_id="+q(pt)+" AND user_id="+q(pa)+" AND status='linked'),'items',(SELECT jsonb_agg(jsonb_build_object('owner',owner_account_id,'self',self_person_id)) FROM public.itinerary_events WHERE trip_id="+q(pt)+"),'visiblePeople',(SELECT jsonb_agg(person_id) FROM public.trip_item_visibility_people WHERE trip_id="+q(pt)+"));"))
+  assert proof['owner']==pa and proof['items']==[{'owner':pa,'self':proof['person']}] and proof['visiblePeople']==[proof['person']]
+  checks.append('fresh independent SQL verifies owning Account, linked Owner Person and P1 self/selected-person ACL use the real mapped Person')
+  assert published['outcome']=='PUBLISHED' and published['authority']=='NONE'
+  assert sql('SELECT count(*) FROM public.trip_core_command_receipts WHERE trip_id='+q(pt)+';')=='1'
+  checks.append('fresh normal Core lease status/receipt and exact publisher retry recover the same committed record; Native source qualification passes, no duplicate Core operation')
+  sql('SET ROLE postgres;UPDATE otr_auth_guest_composite.policy SET enabled=false;')
+  assert publication('commit')==published
+  sql('SET ROLE postgres;UPDATE otr_auth_guest_composite.policy SET enabled=true;')
+  wrong={**pb,'targetAccountId':actor}
+  sql(call('publication_lock',q(actor)+'::uuid',q(json.dumps(wrong))+'::jsonb',q(plan['sha256'])),CORE,error='AUTH_ADOPTION_RECOVERY_FORBIDDEN')
+  sql(call('publication_lock',q(pa)+'::uuid',q(json.dumps(pb))+'::jsonb',q('0'*64)),CORE,error='AUTH_ADOPTION_PUBLICATION_PLAN_MISMATCH')
+  checks.append('committed publication retry survives Adoption OFF, retains exact plan/account binding and cannot be converted to cancellation')
  assert all((HERE/name).read_bytes()==body for name,body in input_bytes.items()),'FIXTURE_SOURCE_CHANGED_DURING_RUN'
  assert all((ROOT/name).read_bytes()==body for name,body in owning_bytes.items()),'OWNING_SOURCE_CHANGED_DURING_RUN'
- result={'status':'ISOLATED_REAL_GATEWAY_AUTHORITY_COMPONENT_ONLY','checks':checks,'count':len(checks),'network':'none','hostedWrites':0,'providerCalls':0,'businessWrites':'isolated synthetic Trip/Metadata/Person/P1 only; no Hosted writes','authoritySqlSha256':hashlib.sha256(input_bytes['authority.local.sql']).hexdigest(),'inputHashes':{name:hashlib.sha256(body).hexdigest() for name,body in input_bytes.items()},'owningExecution':committed,'owningInputHashes':{name:hashlib.sha256(body).hexdigest() for name,body in owning_bytes.items()},'limits':['Protected patch applies only to the isolated accepted baseline, not actual Hosted DEV preimages','No mounted Auth/Native caller or final publication receipt','No actual Hosted DEV preimage/ACL verification; not an execution approval packet']}
+ result={'status':'ISOLATED_REAL_GATEWAY_AUTHORITY_COMPONENT_ONLY','checks':checks,'count':len(checks),'network':'none','hostedWrites':0,'providerCalls':0,'businessWrites':'isolated synthetic Trip/Metadata/Person/P1 only; no Hosted writes','authoritySqlSha256':hashlib.sha256(input_bytes['authority.local.sql']).hexdigest(),'inputHashes':{name:hashlib.sha256(body).hexdigest() for name,body in input_bytes.items()},'owningExecution':committed,'owningPublication':published,'owningInputHashes':{name:hashlib.sha256(body).hexdigest() for name,body in owning_bytes.items()},'limits':['Protected patch applies only to the isolated accepted baseline, not actual Hosted DEV preimages','No mounted Auth/Native caller; PUBLISHED component is isolated only, local restore not executed','No actual Hosted DEV preimage/ACL verification; not an execution approval packet']}
  (HERE/'AUTHORITY_LOCAL_PG_RESULT.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
 finally:
  if created:docker('rm','-f','-v',NAME)

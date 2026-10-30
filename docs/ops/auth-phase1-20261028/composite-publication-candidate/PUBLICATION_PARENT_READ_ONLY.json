@@ -1,0 +1,127 @@
+{
+  "status": "DEV_READ_ONLY_CURRENT_14_FUNCTION_PREIMAGES_CAPTURED",
+  "observedAt": "2026-10-30T07:53:50.156381+00:00",
+  "transactionReadOnly": true,
+  "hostedWrites": 0,
+  "catalogSha256": "060e2c44b8a21e8496877fbe291ce07f72314204812217c42a6a7cde8a69549a",
+  "functionCount": 14,
+  "functions": [
+    {
+      "signature": "public.trip_core_finite_read_state_guard()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "sha256": "abd71a273c13629460c1f9e89e0cee97fc315c1d5d773cb3bfd312363a501154",
+      "beforeMd5": "ef17d1618d87006e8379164244a7645f",
+      "afterMd5": "7385ffe1a4f4851567d8b0767ecf438c"
+    },
+    {
+      "signature": "public.trip_core_finite_scope_allowed(uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "sha256": "56a357a0cd3b393f4b501f4faaf5e1b11bb2d23d8d4bbe576b082a8131a88115",
+      "beforeMd5": "2944bd81f8bd72bbe7ecf2c94044cc34",
+      "afterMd5": "a8824ebb570b9a4fdc7fca9eb73fff9a"
+    },
+    {
+      "signature": "public.trip_core_guard_write()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "sha256": "079a42c316055c482230a192134eda5ab8dd160b0c9954b0093c6bccb83cb8dc",
+      "beforeMd5": "3c58afd4336449f895f03dd141eaab32",
+      "afterMd5": "0bbfa71f4f3554e9daffc247f5f80cdf"
+    },
+    {
+      "signature": "public.trip_create_command(uuid,uuid,uuid,jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "sha256": "caf7240a987c10a7688b1e3bdca7e833feae8cde11521e38661043cb14a190c7",
+      "beforeMd5": "4322d84a62bbc6d05f0c15d17e37c29d",
+      "afterMd5": "d2bd2a1a10ea73ebe709a1c016b02769"
+    },
+    {
+      "signature": "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "sha256": "fdf9e6f765d2bc772e4b0852c0b60e6ce02b459dc726720a0caf7d295f7fa1d0",
+      "beforeMd5": "e1f0b43c3e064797cf30f6529c9dd259",
+      "afterMd5": "2fc18c1345ab1ae7231a33893745fb52"
+    },
+    {
+      "signature": "public.trip_create_result(uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "sha256": "ac12cadd4bf2f66e52c4a731e0c354d45d2005e6b85a69c2bdf2a3826552275a",
+      "beforeMd5": "50e31c3bb0b9b385e8cf764eba5c59fa",
+      "afterMd5": "f850804dd98ebd5f33633498000e9e8a"
+    },
+    {
+      "signature": "public.trip_metadata_finite_scope_allowed(uuid,uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "sha256": "4b80ea513bbbee854cd8cf78db3cf3fb9bd6dceb31901ed6fdda8be72ba5848a",
+      "beforeMd5": "7588f600f62851a31fbc34aad99efda0",
+      "afterMd5": "8c7c155fed58eabe0f69700adbb0b756"
+    },
+    {
+      "signature": "public.trip_metadata_snapshot(uuid,uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "sha256": "54d3e8792bca37045cc9c9400d381f387494ae3c0a8b9ed1e2bfc76b1070671e",
+      "beforeMd5": "4bb7e25ff9ef1077ecd5cf955bebb331",
+      "afterMd5": "10416fb3c367b19dd14153f86b924aab"
+    },
+    {
+      "signature": "public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "sha256": "c1cd4045f010bf37ca9d420e4d6a82adaa03dca2792fba05e9ba8a2d8c89f7c3",
+      "beforeMd5": "8d9d9397b645847198be42cca5484f61",
+      "afterMd5": "02202beed95675eae199c0c384e3ea5e"
+    },
+    {
+      "signature": "public.trip_metadata_update_result(uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "sha256": "6ff491dcd28a39c726a242e222ee46cb092f68b476f0fba92f408c30efd2bef8",
+      "beforeMd5": "df4d8ff6fab2e7313d925b10bab1cff3",
+      "afterMd5": "5d3561a89e23030d9220e8f972393a64"
+    },
+    {
+      "signature": "public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_person_command_gateway=X/postgres}",
+      "sha256": "49eab1430df9c280d5f270e8ecbd1e18e8c3fdfe723585216ce3933f7d4fa25f",
+      "beforeMd5": "c7bfbffe0e2bdcb6acb365db34d576d5",
+      "afterMd5": "11911f00767fa2e88b84f2f1c38f4978"
+    },
+    {
+      "signature": "public.trip_person_cloud_create_result(uuid,uuid,uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_person_command_gateway=X/postgres}",
+      "sha256": "0541b995f6e1086af3b81f7f520df4c527cf60f33d35cab1bb7228cd6243d8e4",
+      "beforeMd5": "300baf9749d32863eb92b76d8fc9a17f",
+      "afterMd5": "5a42020945936308897884bda75b5f74"
+    },
+    {
+      "signature": "public.trip_person_create_receipt_guard()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "sha256": "b2eadc02e1952f73bf0346d5398b78dc6c3019100b227e8450991f31dafe888b",
+      "beforeMd5": "1d5ed7d68c5477647a624514a19ee847",
+      "afterMd5": "0753eece442dda50bbc63bc23abaa33f"
+    },
+    {
+      "signature": "public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "sha256": "b60851799d70f258ae0f6c509781032e874e61e996a27f014b9c5d6c2926df45",
+      "beforeMd5": "0f3b543bab2431ee35c519ad8ce01ea9",
+      "afterMd5": "44382c655dc52aecdc55ed3869ba51c2"
+    }
+  ],
+  "limits": [
+    "No business rows read or written",
+    "Private definitions and generated patch retained only in 0600 tmp files",
+    "Not a Hosted execution packet or full schema/role parity proof"
+  ]
+}

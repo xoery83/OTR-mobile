@@ -291,3 +291,32 @@ Guest transport remain unmounted. Cancel accepts CANCELLED only; COMMIT uncertai
 retains UNKNOWN. No local Guest hold or Session is changed. See the limited review
 under ops/auth-phase2-20261028/CANCELLATION_TERMINAL_REVIEW.json. No Hosted write,
 formal PUBLISHED receipt, Native restore or full Adoption E2E is claimed.
+
+
+## PUBLISHED Golden Slice candidate — 30 October
+
+`publication.local.sql` reconstructs the formal journal exclusively from sealed
+source plus actual immutable owning receipts. `guestAdoptionPublicationPg.ts`
+reuses existing held Trip/Person/Metadata/Core services and one outer transaction;
+source coverage and actual terminal status are checked before COMMIT. There is
+no client-supplied success record. Exact retry locks/reads the same immutable
+outcome without re-executing writes; commit uncertainty keeps the same adoption.
+
+46 isolated real-PG checks and135 directed/independent tests qualify this
+component, including actual post-COMMIT reply loss and independent Owner/Person/
+P1 self/ACL readback. A raw post-final Writer DML hole was reproduced RED and
+closed GREEN by one exact-preimage mutation-only branch in
+`public.trip_core_guard_write()` (fourteenth function). The rest of its body,
+owner and ACL are retained; no new business-table grants/roles. The private
+predicate checks PID/xid terminal state, never GUC identity. This is not an
+executed Hosted privilege change. Existing Metadata deferred COMMIT validation
+keeps the live scope; we do not force constraints early. Further Trip/Metadata/
+Person mutation entry is blocked and Core DML has a separate finalization guard.
+
+Non-Core operation/ledger digests use exact UTF8 PG jsonb text of the projections
+in the SQL; Core digests retain their owning receipt algorithm. executionSha256
+binds final owning Trip summaries, not the authority-NONE internal executor.
+Neither publication receipt nor hashes alone authorize local source release.
+Current14 Hosted function parents were captured READ ONLY; raw definitions and
+rendered actual-parent patch remain0600 under/private/tmp. Full schema/role
+parity, protected execution Gate, mounted flow and Native restore remain open.

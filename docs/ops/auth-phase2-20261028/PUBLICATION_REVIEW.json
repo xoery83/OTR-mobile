@@ -1,0 +1,44 @@
+{
+  "status": "LIMITED_INDEPENDENT_NO_BLOCKER",
+  "goldenSlice": "Guest UI Trip+P1 -> normal OTP/target confirmation -> one owning publication -> restart same Trip+P1",
+  "goldenSliceStatus": "BLOCKED",
+  "firstUserPathBlocker": "Existing login reports GUEST_ADOPTION_PREFLIGHT_REQUIRED; nonempty adoption is not mounted in Hosted DEV",
+  "validation": {
+    "directedSuites": 8,
+    "directedTests": 135,
+    "independentSuites": 8,
+    "independentTests": 135,
+    "isolatedPgChecks": 46,
+    "candidateInputHashesMatched": 11,
+    "owningInputHashesMatched": 12,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "realIsolatedProgress": [
+    "one transaction creates owning Trip/Person/Metadata/P1 and PUBLISHED journal",
+    "missing Core or pre-COMMIT failure rolls back all rows and terminal together",
+    "actual COMMIT succeeds then reply loss -> UNKNOWN -> fresh status/receipt -> same-ID retry without duplicate Core",
+    "independent SQL verifies Account/Owner Person/P1 self and SELECTED_PERSONS mapping",
+    "raw post-final Core Writer DML RED reproduced; DML-only private predicate plus exact existing guard branch GREEN",
+    "owning deferred Metadata COMMIT guard preserved without early constraint flush"
+  ],
+  "publicationEvidence": "../auth-phase1-20261028/composite-publication-candidate/AUTHORITY_LOCAL_PG_RESULT.json",
+  "currentHostedParentEvidence": "../auth-phase1-20261028/composite-publication-candidate/PUBLICATION_PARENT_READ_ONLY.json",
+  "protectedSqlStatus": "DISPOSABLE_CANDIDATE_ONLY_NO_HOSTED_INSTALL",
+  "remainingForGoldenSlice": [
+    "existing OTP entry/explicit confirmation and transport mount",
+    "source schema75 with zero new Photo data qualification if using latest Native",
+    "existing owning readback/local restore and Account installation",
+    "current protected SQL/ACL exact review and Owner execution gate",
+    "real Hosted/Native end-to-end and cross-Account negative"
+  ],
+  "deferred": [
+    "People/Invite product expansion",
+    "P2-P6/Documents/Capture migration",
+    "general recovery platform"
+  ],
+  "hostedWrites": 0,
+  "runtimeMounted": false,
+  "guestSourceReleased": false
+}
