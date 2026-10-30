@@ -90,6 +90,8 @@ BEGIN
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_DATASET_UNSUPPORTED' USING ERRCODE='22023';END IF;
  -- One idempotent server-issued grant. Retry never extends expiry or changes target.
  PERFORM pg_advisory_xact_lock(hashtextextended('otr-auth-adoption:'||(request->>'adoptionId'),0));
+ IF EXISTS(SELECT 1 FROM otr_auth_guest_composite.terminal_receipts WHERE adoption_id=(request->>'adoptionId')::uuid)
+ THEN RAISE EXCEPTION 'AUTH_ADOPTION_ALREADY_TERMINAL' USING ERRCODE='23505';END IF;
  SELECT * INTO r FROM otr_auth_guest_composite.grants WHERE adoption_id=(request->>'adoptionId')::uuid FOR UPDATE;
  instant:=clock_timestamp();
  IF FOUND THEN
@@ -110,6 +112,9 @@ DECLARE p jsonb:=plan_text::jsonb;g otr_auth_guest_composite.grants%rowtype;s re
 BEGIN
  IF NOT otr_auth_guest_composite.principal_allowed() OR NOT otr_auth_guest_composite.account_allowed(actor) OR NOT EXISTS(SELECT 1 FROM otr_auth_guest_composite.policy WHERE singleton AND enabled)
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_POLICY_CLOSED' USING ERRCODE='55000';END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('otr-auth-adoption:'||(p#>>'{grant,adoptionId}'),0));
+ IF EXISTS(SELECT 1 FROM otr_auth_guest_composite.terminal_receipts WHERE adoption_id=(p#>>'{grant,adoptionId}')::uuid)
+ THEN RAISE EXCEPTION 'AUTH_ADOPTION_ALREADY_TERMINAL' USING ERRCODE='23505';END IF;
  SELECT * INTO g FROM otr_auth_guest_composite.grants WHERE adoption_id=(p#>>'{grant,adoptionId}')::uuid FOR SHARE;
  IF NOT FOUND OR g.actor_account_id IS DISTINCT FROM actor OR g.grant_payload IS DISTINCT FROM p->'grant'
  OR g.expires_at<=clock_timestamp()
@@ -174,6 +179,9 @@ DECLARE s record;g record;
 BEGIN
  IF NOT otr_auth_guest_composite.principal_allowed() OR NOT otr_auth_guest_composite.account_allowed(actor) OR NOT EXISTS(SELECT 1 FROM otr_auth_guest_composite.policy WHERE singleton AND enabled)
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_POLICY_CLOSED' USING ERRCODE='55000';END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('otr-auth-adoption:'||adoption::text,0));
+ IF EXISTS(SELECT 1 FROM otr_auth_guest_composite.terminal_receipts WHERE adoption_id=adoption)
+ THEN RAISE EXCEPTION 'AUTH_ADOPTION_ALREADY_TERMINAL' USING ERRCODE='23505';END IF;
  SELECT * INTO s FROM otr_auth_guest_composite.sealed_stages WHERE adoption_id=adoption FOR UPDATE;
  IF NOT FOUND OR s.actor_account_id IS DISTINCT FROM actor OR s.plan_sha256 IS DISTINCT FROM plan_hash
  THEN RAISE EXCEPTION 'AUTH_ADOPTION_SCOPE_BINDING' USING ERRCODE='42501';END IF;

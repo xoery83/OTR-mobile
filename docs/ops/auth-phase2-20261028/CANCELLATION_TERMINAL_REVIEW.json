@@ -1,0 +1,35 @@
+{
+  "status": "LIMITED_NO_BLOCKER",
+  "scope": "Disposable cancellation journal, same adoption lock, terminal PG/HTTP/provisional Guest transport",
+  "validation": {
+    "directedSuites": 7,
+    "directedTests": 125,
+    "independentSuites": 7,
+    "independentTests": 125,
+    "isolatedPgChecks": 39,
+    "candidateInputHashesIndependentlyMatched": 9,
+    "owningInputHashesIndependentlyMatched": 10,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "evidence": "../auth-phase1-20261028/composite-publication-candidate/AUTHORITY_LOCAL_PG_RESULT.json",
+  "repairs": [
+    "Existing Account policy FOR SHARE requires normal repeatable-read transactions for fixed read functions",
+    "Cancel must reject even valid PUBLISHED receipts at all three layers"
+  ],
+  "safety": {
+    "hostedWrites": 0,
+    "providerCalls": 0,
+    "runtimeMounted": false,
+    "sourceOrSessionReleased": false,
+    "sqlCandidateDisposableOnly": true,
+    "publicationEnabled": false
+  },
+  "limits": [
+    "Protected SQL is a candidate, not an execution approval packet",
+    "Actual DEV full schema/ACL parity and terminal rollout not proven",
+    "No formal PUBLISHED journal or Native restore",
+    "No full nonempty Hosted Guest Adoption E2E"
+  ]
+}

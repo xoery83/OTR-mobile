@@ -1405,3 +1405,13 @@ does not invalidate an already committed terminal receipt. This read neither
 publishes/cancels nor releases Guest holds; terminal status, retained source
 coverage, owning readback and local restore remain required. No runtime mount,
 SQL installation or source-release authority is enabled by this candidate.
+
+The paired unmounted `POST /v1/auth/guest-adoptions/cancel` uses that same status
+binding and requires `Idempotency-Key: adoptionId`. Only the owning cancellation
+writer can return a verified terminal receipt. COMMIT uncertainty returns
+`GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN`; it never authorizes local cancellation
+or another attempt. Existing Guest verification Session/generation fences remain
+active for both read and cancel. The disposable SQL journal currently permits
+CANCELLED only; full publication remains closed. Existing Account authorization
+requires a policy share lock, so the PG read adapter uses a normal repeatable-read
+transaction containing only the two fixed owning read functions.

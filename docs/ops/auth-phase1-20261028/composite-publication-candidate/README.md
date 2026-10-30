@@ -269,3 +269,25 @@ postimage is reused, but the rest of this disposable parent is an older owning
 baseline. All actual Hosted function/owner/ACL/trigger preimages must be obtained
 and compared before preparing the precise Owner execution packet. Current local
 SQL is explicitly not that packet, and no Hosted Schema/RLS/GRANT was executed.
+
+
+## Cancellation terminal journal candidate — 30 October
+
+`receipt-journal.local.sql` adds the same journal's CANCELLED-only branch with
+server-generated receipt ID/time/digest. It does not add a publisher. All lifecycle
+entrances use the same Adoption advisory lock before stage/grant row locks.
+Cancellation refuses existing execution scopes, old component evidence or source
+Trip rows; it cannot reclassify an unresolved component commit as cancellation.
+Before/after-stage retry returns the identical immutable receipt. Status/receipt
+queries keep the exact normal Account/source/inventory binding, current Account
+revocation check and policy read lock. Expired grant and Adoption OFF permit
+recovery, not new publication. The old authority-NONE evidence is never returned
+as this terminal receipt.
+
+Actual TypeScript cancel→COMMIT→status→receipt and SQL/TS digest/binding verification
+pass within39 isolated PG checks;7 suites125 tests/typecheck/lint pass with an
+independent125 repeat and exact9+10 input hash verification. HTTP and provisional
+Guest transport remain unmounted. Cancel accepts CANCELLED only; COMMIT uncertainty
+retains UNKNOWN. No local Guest hold or Session is changed. See the limited review
+under ops/auth-phase2-20261028/CANCELLATION_TERMINAL_REVIEW.json. No Hosted write,
+formal PUBLISHED receipt, Native restore or full Adoption E2E is claimed.

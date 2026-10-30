@@ -6,9 +6,9 @@ from principal_patch import SIGNATURES,render
 ROOT=Path(__file__).resolve().parents[4];HERE=Path(__file__).resolve().parent
 NAME='otr-auth-authority-'+uuid.uuid4().hex[:12];DB='otr_auth_composite_'+uuid.uuid4().hex[:12]
 checks=[];created=False
-input_names=['authority.local.sql','staging.local.sql','terminal.local.sql','authority_local_pg.py','authority-fixture.mts','principal_patch.py','execute_local_pg.mts']
+input_names=['authority.local.sql','staging.local.sql','terminal.local.sql','authority_local_pg.py','authority-fixture.mts','principal_patch.py','execute_local_pg.mts','receipt-journal.local.sql','verify-terminal-receipt.mts']
 input_bytes={name:(HERE/name).read_bytes() for name in input_names}
-owning_names=['backend/src/guestAdoptionCompositePg.ts','backend/src/guestAdoptionCompositeExecute.ts','backend/src/__fixtures__/tripCoreV2Sql.ts','backend/src/tripCoreV2PgStorage.ts','backend/src/tripCreatePgStorage.ts','backend/src/tripMetadataV2PgStorage.ts','backend/src/tripPersonCloudCreatePg.ts','docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql']
+owning_names=['backend/src/guestAdoptionCompositePg.ts','backend/src/guestAdoptionCompositeExecute.ts','backend/src/__fixtures__/tripCoreV2Sql.ts','backend/src/tripCoreV2PgStorage.ts','backend/src/tripCreatePgStorage.ts','backend/src/tripMetadataV2PgStorage.ts','backend/src/tripPersonCloudCreatePg.ts','docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql','backend/src/guestAdoptionTerminalPg.ts','src/domain/auth/guestAdoptionReceipt.ts']
 owning_bytes={name:(ROOT/name).read_bytes() for name in owning_names}
 CORE='otr_trip_core_v2_gateway';ROLES=[CORE,'otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_person_command_gateway']
 def docker(*args,input=None):
@@ -47,11 +47,11 @@ try:
   sql('SET ROLE postgres;'+read(path))
  # Accepted General Account helper: use its recorded formal postimage, not the older QA-only path.
  sql('SET ROLE postgres;'+read('docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql'))
- for name in ['staging.local.sql','terminal.local.sql','authority.local.sql']:
+ for name in ['staging.local.sql','terminal.local.sql','authority.local.sql','receipt-journal.local.sql']:
   candidate=input_bytes[name].decode()
   sql(candidate,database='postgres',error='AUTH_COMPOSITE_DISPOSABLE_FIXTURE_REQUIRED')
   sql("SET ROLE postgres;SET otr.auth.composite_fixture='LOCAL_DISPOSABLE';"+candidate)
- checks.append('all three candidates reject Hosted-like database names; isolated baseline contains real four Gateway roles')
+ checks.append('all candidates reject Hosted-like database names; isolated baseline contains real four Gateway roles')
  f=node();actor=f['user']['id'];other=str(uuid.uuid4());request=f['request'];adoption=request['adoptionId']
  sql('INSERT INTO auth.users(id,is_anonymous) VALUES('+q(actor)+',false),('+q(other)+',false);')
  sql('INSERT INTO public.profiles(id,display_name) VALUES('+q(actor)+",'QA Owner'),("+q(other)+",'QA Other');")
@@ -68,6 +68,76 @@ try:
  checks.append('same adoption cannot cross Account or replace grant')
  sql('SET ROLE postgres;UPDATE otr_auth_guest_composite.grants SET grant_id=gen_random_uuid();',error='AUTH_COMPOSITE_STAGE_IMMUTABLE')
  checks.append('grants immutable after confirmation')
+ # Real server cancellation receipts, both before stage and after an immutable stage.
+ def terminal_request(req):return {k:v for k,v in req.items() if k!='resources'}
+ def verify_cancel(receipt,req,status):
+  with tempfile.TemporaryDirectory(prefix='otr-auth-terminal-') as temp:
+   path=Path(temp)/'material.json';path.write_text(json.dumps({'receipt':receipt,'request':req,'status':status}))
+   result=subprocess.run(['node','--import','tsx',str(HERE/'verify-terminal-receipt.mts'),str(path),NAME,DB],cwd=ROOT,capture_output=True,text=True,timeout=30)
+   assert result.returncode==0,result.stderr
+   return json.loads(result.stdout)
+ for staged in (False,True):
+  c=node();cr=c['request'];ca=cr['adoptionId'];tr=terminal_request(cr)
+  # Each source fixture has its own normal synthetic local Account.
+  sql('INSERT INTO auth.users(id,is_anonymous) VALUES('+q(c['user']['id'])+',false);')
+  sql('INSERT INTO public.profiles(id,display_name) VALUES('+q(c['user']['id'])+",'QA Cancellation');")
+  cg=json.loads(sql(call('confirm_and_issue',q(c['user']['id'])+'::uuid',q(json.dumps(cr))+'::jsonb','true'),CORE))
+  cp=None
+  if staged:
+   with tempfile.TemporaryDirectory(prefix='otr-auth-cancel-plan-') as temp:
+    path=Path(temp);(path/'fixture.json').write_text(json.dumps(c));(path/'grant.json').write_text(json.dumps(cg));cp=node(path/'fixture.json',path/'grant.json')
+   sql(call('seal_stage',q(c['user']['id'])+'::uuid',q(cp['canonicalText']),q(cp['sha256'])),CORE)
+  cancel=call('cancel',q(c['user']['id'])+'::uuid',q(json.dumps(tr))+'::jsonb')
+  cancelled=json.loads(sql(cancel,CORE));assert json.loads(sql(cancel,CORE))==cancelled
+  status=json.loads(sql(call('status',q(c['user']['id'])+'::uuid',q(json.dumps(tr))+'::jsonb'),CORE))
+  verified=verify_cancel(cancelled,tr,status);assert verified['authority']=='NONE'
+  assert cancelled['preparationSha256']==(c['checkpoint']['sha256'] if staged else None)
+  assert cancelled['planSha256']==(cp['sha256'] if staged else None)
+  read_receipt=call('receipt',q(c['user']['id'])+'::uuid',q(json.dumps(tr))+'::jsonb',q(cancelled['receiptId'])+'::uuid',q(cancelled['receiptSha256']))
+  assert json.loads(sql(read_receipt,CORE))==cancelled
+  sql(read_receipt.replace(q(cancelled['receiptSha256']),q('0'*64)),CORE,error='AUTH_ADOPTION_RECEIPT_NOT_FOUND')
+  wrong={**tr,'targetAccountId':actor}
+  sql(call('status',q(actor)+'::uuid',q(json.dumps(wrong))+'::jsonb'),CORE,error='AUTH_ADOPTION_RECOVERY_FORBIDDEN')
+  sql(call('confirm_and_issue',q(c['user']['id'])+'::uuid',q(json.dumps(cr))+'::jsonb','true'),CORE,error='AUTH_ADOPTION_ALREADY_TERMINAL')
+  if staged:
+   sql(call('seal_stage',q(c['user']['id'])+'::uuid',q(cp['canonicalText']),q(cp['sha256'])),CORE,error='AUTH_ADOPTION_ALREADY_TERMINAL')
+   sql('BEGIN;'+call('begin_scope',q(c['user']['id'])+'::uuid',q(ca)+'::uuid',q(cp['sha256'])),CORE,error='AUTH_ADOPTION_ALREADY_TERMINAL')
+  sql('SET ROLE postgres;UPDATE otr_auth_guest_composite.policy SET enabled=false;')
+  assert json.loads(sql(read_receipt,CORE))==cancelled
+  assert json.loads(sql(cancel,CORE))==cancelled
+  sql('SET ROLE postgres;UPDATE otr_auth_guest_composite.policy SET enabled=true;')
+  sql('DELETE FROM otr_auth_guest_composite.terminal_receipts WHERE adoption_id='+q(ca)+';',error='AUTH_COMPOSITE_STAGE_IMMUTABLE')
+  assert sql('SELECT count(*) FROM public.trips WHERE id='+q(json.loads(json.loads(c['checkpoint']['canonicalText'])['source']['canonicalText'])['trips'][0]['create']['tripId'])+';')=='0'
+  # An already committed terminal remains recoverable after grant expiry. Seed a
+  # separate expired grant as fixture data; never rewrite an immutable issued grant.
+  if not staged:
+   expired_request={**cr,'adoptionId':str(uuid.uuid4())};expired_binding=terminal_request(expired_request)
+   expired_grant={**cg,**expired_request,'grantId':str(uuid.uuid4()),'expiresAt':'2026-01-01T00:00:00.000Z'}
+   sql('INSERT INTO otr_auth_guest_composite.grants(adoption_id,actor_account_id,source_guest_local_id,inventory_sha256,grant_id,request_payload,grant_payload,expires_at) VALUES('+','.join([
+    q(expired_request['adoptionId']),q(c['user']['id']),q(expired_request['sourceGuestLocalId']),q(expired_request['inventorySha256']),q(expired_grant['grantId']),q(json.dumps(expired_request))+'::jsonb',q(json.dumps(expired_grant))+'::jsonb',q(expired_grant['expiresAt'])+'::timestamptz'])+');')
+   expired_cancel=json.loads(sql(call('cancel',q(c['user']['id'])+'::uuid',q(json.dumps(expired_binding))+'::jsonb'),CORE))
+   expired_status=json.loads(sql(call('status',q(c['user']['id'])+'::uuid',q(json.dumps(expired_binding))+'::jsonb'),CORE))
+   verify_cancel(expired_cancel,expired_binding,expired_status)
+   assert json.loads(sql(call('receipt',q(c['user']['id'])+'::uuid',q(json.dumps(expired_binding))+'::jsonb',q(expired_cancel['receiptId'])+'::uuid',q(expired_cancel['receiptSha256'])),CORE))==expired_cancel
+   checks.append('seeded expired local grant permits cancellation and immutable terminal recovery without granting new publication')
+  sql('INSERT INTO public.trip_sustained_dev_policy(actor_account_id,enabled,adoption_cutoff) VALUES('+q(c['user']['id'])+',false,clock_timestamp());')
+  sql(read_receipt,CORE,error='AUTH_ADOPTION_RECOVERY_FORBIDDEN')
+  sql(cancel,CORE,error='AUTH_ADOPTION_RECOVERY_FORBIDDEN')
+  checks.append('current normal Account policy revocation denies terminal reads and cancellation despite an existing server grant')
+  checks.append(('after-stage' if staged else 'before-stage')+' server cancellation is immutable/idempotent; TS hash+status pointer match, foreign Account/pointer denied, no business writes, recovery survives policy OFF, no reopen')
+ unknown={**terminal_request(request),'adoptionId':str(uuid.uuid4())}
+ assert json.loads(sql(call('status',q(actor)+'::uuid',q(json.dumps(unknown))+'::jsonb'),CORE))['status']=='NOT_FOUND'
+ sql(call('cancel',q(actor)+'::uuid',q(json.dumps(unknown))+'::jsonb'),CORE,error='AUTH_ADOPTION_REAL_GRANT_REQUIRED')
+ checks.append('unknown attempt has no terminal receipt and cannot fabricate a cancellation or release authority')
+ for role in ['anon','authenticated','service_role',*ROLES]:
+  sql('SET ROLE '+role+';SELECT * FROM otr_auth_guest_composite.terminal_receipts;',error='permission denied')
+ for role in ['anon','authenticated','service_role',*ROLES[1:]]:
+  sql('SET ROLE '+role+';'+call('cancel',q(actor)+'::uuid',q(json.dumps(terminal_request(request)))+'::jsonb'),error='permission denied')
+ for bad in [None,{}, {**terminal_request(request),'inventorySha256':None}, {**terminal_request(request),'sourceGuestLocalId':None}, {**terminal_request(request),'extra':'unsupported'}]:
+  sql(call('status',q(actor)+'::uuid',q(json.dumps(bad))+'::jsonb'),CORE,error='AUTH_ADOPTION_RECOVERY_INVALID')
+ checks.append('terminal tables remain unreadable to Auth/service/all Gateway roles; only Core Gateway function execution; null/malformed/extra-field requests rejected')
+
+
 
 
  with tempfile.TemporaryDirectory(prefix='otr-auth-authority-') as temp:
@@ -204,6 +274,8 @@ try:
   checks.append('fresh independent SQL reads committed exact Trip, unlinked Person, original financial defaults and owning Core invalidation')
   sql('BEGIN;'+begin,CORE,error='AUTH_ADOPTION_TRIP_COLLISION')
   checks.append('source Trip collision after commit cannot reopen or merge an existing Trip')
+  sql(call('cancel',q(actor)+'::uuid',q(json.dumps(terminal_request(request)))+'::jsonb'),CORE,error='AUTH_ADOPTION_CANCEL_PUBLICATION_UNRESOLVED')
+  checks.append('committed component business rows without a formal terminal cannot be reclassified as cancellation')
   # Unchanged normal Gateway paths must remain usable outside Adoption scope.
   normal_trip=str(uuid.uuid4());normal_op=str(uuid.uuid4());normal_create={**trip['create'],'tripId':normal_trip,'operationId':normal_op}
   sql('INSERT INTO public.trip_sustained_dev_policy(actor_account_id,enabled,adoption_cutoff) VALUES('+q(actor)+',true,clock_timestamp());')

@@ -145,3 +145,15 @@ export async function validateGuestAdoptionReceipt(
     throw Error("GUEST_ADOPTION_RECEIPT_HASH_MISMATCH");
   return receipt;
 }
+
+// This candidate has no publication-winner branch on its cancel endpoint.
+export async function validateGuestAdoptionCancellationReceipt(
+  input: unknown,
+  expected: z.input<typeof guestAdoptionStatusRequestSchema>,
+  hash: (bytes: Uint8Array) => Promise<string>,
+) {
+  const receipt = await validateGuestAdoptionReceipt(input, expected, hash);
+  if (receipt.outcome !== "CANCELLED")
+    throw Error("GUEST_ADOPTION_CANCELLATION_OUTCOME_INVALID");
+  return receipt;
+}

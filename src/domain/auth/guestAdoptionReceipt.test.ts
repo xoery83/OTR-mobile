@@ -4,6 +4,7 @@ import { coreHashValue } from "../trip/tripCoreV2Read";
 import type { Json } from "../trip/tripCoreV2Json";
 import {
   validateGuestAdoptionReceipt,
+  validateGuestAdoptionCancellationReceipt,
   type GuestAdoptionReceipt,
 } from "./guestAdoptionReceipt";
 const hash = async (bytes: Uint8Array) =>
@@ -198,4 +199,15 @@ it("rejects cross-Trip creator substitution even when each source and target is 
   await expect(
     validateGuestAdoptionReceipt(await seal(f.body), f.expected, hash),
   ).rejects.toThrow("REFERENCES_INVALID");
+});
+
+it("does not mistake a valid PUBLISHED receipt for successful cancellation", async () => {
+  const f = fixture(),
+    receipt = await seal(f.body);
+  await expect(validateGuestAdoptionReceipt(receipt, f.expected, hash)).resolves.toEqual(
+    receipt,
+  );
+  await expect(
+    validateGuestAdoptionCancellationReceipt(receipt, f.expected, hash),
+  ).rejects.toThrow("CANCELLATION_OUTCOME_INVALID");
 });

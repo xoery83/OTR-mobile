@@ -16,6 +16,7 @@ import {
   guestAdoptionReceiptSchema,
   guestAdoptionReceiptRequestSchema,
   validateGuestAdoptionReceipt,
+  validateGuestAdoptionCancellationReceipt,
   type GuestAdoptionReceiptRequest,
 } from "@/domain/auth/guestAdoptionReceipt";
 import { tripCoreSha256Hex } from "@/data/repositories/tripCoreSha256";
@@ -167,6 +168,25 @@ export function createGuestAdoptionTransport(
       )
         throw Error("GUEST_ADOPTION_RESPONSE_MISMATCH");
       return result;
+    },
+    async cancel(raw: GuestAdoptionStatusRequest) {
+      const request = guestAdoptionStatusRequestSchema.parse(raw);
+      assertBinding(request);
+      await assertGuest();
+      const result = await receiptClient.post(
+        "/v1/auth/guest-adoptions/cancel",
+        request,
+        guestAdoptionReceiptSchema,
+        { "Idempotency-Key": binding.adoptionId },
+      );
+      await assertGuest();
+      const verified = await validateGuestAdoptionCancellationReceipt(
+        result,
+        request,
+        tripCoreSha256Hex,
+      );
+      await assertGuest();
+      return verified;
     },
     async receipt(raw: GuestAdoptionReceiptRequest) {
       const request = guestAdoptionReceiptRequestSchema.parse(raw);
