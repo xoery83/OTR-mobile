@@ -1457,3 +1457,15 @@ original/Trip/NEW/title/date Source Review, Plan and Admission. No text offsets 
 invented. The ordinary original preview opens the verified local PNG through the
 existing preview port; missing capability fails closed. Protected SQL, runtime
 activation and actual image E2E remain separate acceptance requirements.
+
+
+The default-closed PNG continuation adapter uses authenticated
+`POST /v2/trips/:tripId/universal-source-originals/png/{result|execute|reconcile}`.
+The body contains an existing PREPARE/UPLOAD/VERIFY Source command; only execute
+UPLOAD carries originalBase64 (decoded <=1MiB, matching command hash/length).
+It accepts no execution permits, terminal proof or client VERIFIED claims. Normal
+Auth/Trip checks precede body access; no injected owning runtime returns503 CLOSED.
+Result is a read charged to the existing durable QA read allowance. Reconcile
+never carries original bytes; no transport automatically retries a write. The
+existing Source reply is identity-checked and private/no-store. This software
+adapter does not install Source qualification, profile registry or Host authority.

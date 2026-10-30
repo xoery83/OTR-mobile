@@ -15,7 +15,7 @@ type Store = {
 type Config = { version: 1; runId: string; maximum: number };
 type Entry = { ordinal: number; method: "GET" | "POST"; route: string; at: string };
 const routeWords = new Set(
-  "v1 v2 trips journeys core operations commands capabilities collection items people person-create-operations metadata metadata-operations metadata-snapshot bootstrap report review payments personal-payments expenses ledger settings currency preview commit receipts settlement-review balances settlements destinations sources batches tasks results publications snapshot universal-source-originals result representations pdf-v4 observe-retained".split(
+  "v1 v2 trips journeys core operations commands capabilities collection items people person-create-operations metadata metadata-operations metadata-snapshot bootstrap report review payments personal-payments expenses ledger settings currency preview commit receipts settlement-review balances settlements destinations sources batches tasks results publications snapshot universal-source-originals result representations pdf-v4 observe-retained png".split(
     " ",
   ),
 );
@@ -33,7 +33,7 @@ export function redactQaReadRoute(path: string) {
 function isResultRead(method: string, path: string) {
   return (
     method === "POST" &&
-    (/^\/v2\/trips\/[0-9a-f-]{36}\/universal-source-originals\/result$/.test(
+    (/^\/v2\/trips\/[0-9a-f-]{36}\/universal-source-originals\/(?:png\/)?result$/.test(
       path.split("?")[0],
     ) ||
       /^\/v2\/trips\/[0-9a-f-]{36}\/sources\/[0-9a-f-]{36}\/representations\/[0-9a-f-]{36}\/pdf-v4\/[0-9a-f-]{36}\/observe-retained$/.test(
@@ -90,6 +90,7 @@ function load(text: string, expected: Config): Entry[] {
         !(
           entry.method === "POST" &&
           (entry.route === "/v2/trips/:id/universal-source-originals/result" ||
+            entry.route === "/v2/trips/:id/universal-source-originals/png/result" ||
             entry.route ===
               "/v2/trips/:id/sources/:id/representations/:id/pdf-v4/:id/observe-retained")
         )) ||

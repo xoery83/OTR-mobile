@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   assertAccountRequestContext,
   type AccountRequestContext,
@@ -12,6 +11,7 @@ import type { ImportHash } from "@/domain/trip/flightImportReview";
 import {
   createPendingPngCommandProposals,
   sourcePngOriginalUploadCommandSchema,
+  sourcePngPendingReplySchema,
 } from "@/domain/trip/sourcePngPreparationCommands";
 import { checkBinaryOriginalResult } from "@/domain/trip/sourceBinaryOriginalCommands";
 import { sourcePdfPrepareCommandSchema } from "@/domain/trip/sourcePdfPreparation";
@@ -38,21 +38,6 @@ export type PngOriginalPreparationPort = {
     command: PngOriginalCommand,
   ): Promise<unknown>;
 };
-const pendingReply = sourcePdfVerifyCommandSchema
-  .pick({
-    contract_version: true,
-    operation_id: true,
-    operation_key: true,
-    operation_sha256: true,
-  })
-  .extend({
-    phase: z.enum(["ADMITTED", "IO_ACTIVE", "IO_UNKNOWN", "IO_QUIESCENT"]),
-    attempt_generation: z.number().int().nonnegative().safe(),
-  })
-  .refine((reply) => reply.phase === "ADMITTED" || reply.attempt_generation > 0, {
-    message: "Claimed Source operation requires a positive generation",
-    path: ["attempt_generation"],
-  });
 const cloneCommand = (q: PngOriginalCommand): PngOriginalCommand =>
   q.command === "UPLOAD_ORIGINAL"
     ? sourcePngOriginalUploadCommandSchema.parse(q)
@@ -116,7 +101,7 @@ export async function prepareAdmittedPngOriginal(
   }
   function pending(raw: unknown, q: PngOriginalCommand) {
     if (!raw || typeof raw !== "object" || !("phase" in raw)) return false;
-    const r = pendingReply.parse(raw);
+    const r = sourcePngPendingReplySchema.parse(raw);
     if (
       r.operation_id !== q.operation_id ||
       r.operation_key !== q.operation_key ||

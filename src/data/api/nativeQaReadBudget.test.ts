@@ -298,3 +298,39 @@ it("a forged PDF dispatch POST in a read ledger remains invalid", () => {
   const forged = fixture(JSON.stringify(ledger));
   expect(() => forged.reserve("GET", route, base)).toThrow("QA_READ_BUDGET_CLOSED");
 });
+
+it("PNG result POST preserves the same durable cap across cold restart; execute/reconcile are not reads", () => {
+  const f = fixture();
+  const path =
+    "/v2/trips/10000000-0000-4000-8000-000000000001/universal-source-originals/png/result";
+  f.reserve("POST", path, base);
+  expect(JSON.parse(f.read()!).entries[0]).toMatchObject({
+    method: "POST",
+    route: "/v2/trips/:id/universal-source-originals/png/result",
+  });
+  f.reserve("POST", path.replace("/result", "/execute"), base);
+  f.reserve("POST", path.replace("/result", "/reconcile"), base);
+  expect(f.writes()).toBe(1);
+  const restarted = createQaGetReservation(
+    () => raw,
+    () => f.store,
+  );
+  for (let n = 1; n < 72; n++) restarted("POST", path, base);
+  expect(() => restarted("POST", path, base)).toThrow("QA_READ_BUDGET_EXHAUSTED");
+  expect(f.read()).not.toContain("10000000");
+});
+it.each(["execute", "reconcile"])(
+  "a forged PNG %s POST is rejected by persisted read ledger",
+  (action) => {
+    const f = fixture();
+    f.reserve("GET", route, base);
+    const ledger = JSON.parse(f.read()!);
+    ledger.entries[0] = {
+      ...ledger.entries[0],
+      method: "POST",
+      route: "/v2/trips/:id/universal-source-originals/png/" + action,
+    };
+    const forged = fixture(JSON.stringify(ledger));
+    expect(() => forged.reserve("GET", route, base)).toThrow("QA_READ_BUDGET_CLOSED");
+  },
+);

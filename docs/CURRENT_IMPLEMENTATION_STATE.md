@@ -108,14 +108,19 @@ SQL SHA45a7e26d…; prior1–74 are unchanged. Auth baseline662898cf includes st
 empty75 login compatibility; nonempty75 Guest Adoption remains CLOSED. Backend
 Task SQLite stays on qualified74, preserving retained-image rollback.
 
-Photo includes conservative local OCR relevance, exact original pins, explicit
-Continue/Skip values and local decision CAS/persistence/retention. A dormant
-single-input Import hook now reuses the local factory, reads only on reopen and
-fences view/Account/input changes and explicit choice CAS;32 focused tests, types,
-UI guard and lint pass. See
-`ops/universal-product-20261028/photo/PHOTO_SINGLE_INPUT_HOOK_LOCAL_DELIVERY.md`.
-There is still no UI caller, real Vision call or Photo Save E2E; automatic IRRELEVANT is not issued
-from insufficient OCR. Mixed-Batch delayed-image owning continuation remains open.
+Photo UI now mounts the conservative local OCR relevance row with explicit
+Continue/Skip, original pins and durable decision CAS. Source intake retains PNG
+as BINARY/PENDING; it cannot borrow PDF qualification. Software includes same-ID
+PREPARE/UPLOAD/VERIFY continuation, bounded authenticated HTTP adapter, PNG
+custody IO reusing existing no-upsert POST/independent GET, and P1/P6 visual Review
+projection. PNG result reads retain existing QA budget/cold-recovery limits.
+The fixed 42,630-byte synthetic PNG passed the real DEV x64 network-none decoder
+sandbox (image e2c5719f / profile0e22d87a); wrong hash/profile rejected and workers
+terminated. Receipt: `ops/universal-product-20261028/photo/PHOTO_DEV_PNG_SANDBOX_PREFLIGHT.json`.
+This is not Source VERIFIED or Photo E2E: protected PNG Source/Host qualification
+is still default closed; no Photo Storage/DeepSeek call or formal Save occurred.
+One consolidated exact Owning Gate is being prepared. Automatic IRRELEVANT is
+never inferred from insufficient OCR; mixed/image-format expansion stays deferred.
 
 Explicit known-Task Start now uses the existing authenticated prepare endpoint's
 strict resume body and existing targeted queue, without repeating Source/PDF

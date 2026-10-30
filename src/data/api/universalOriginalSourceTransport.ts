@@ -26,6 +26,28 @@ export function createUniversalOriginalSourceTransport(
     tokenProvider?: typeof sessionAccessToken;
   },
 ): UniversalOriginalSourceTransport {
+  const request = createUniversalSourceJsonRequest(getAccountId, options);
+  return {
+    acquire: async (c, q) => {
+      const r = await request(c, q, "acquire");
+      if (r === null) throw new Error("SOURCE_RESPONSE_INVALID");
+      return r;
+    },
+    lookup: (c, q) => request(c, q, "result", true),
+  };
+}
+// Shared authenticated request boundary; this supplies no Source command authority.
+export function createUniversalSourceJsonRequest(
+  getAccountId: () => Promise<string>,
+  options: {
+    baseUrl: string;
+    fetchImplementation?: typeof fetch;
+    tokenProvider?: typeof sessionAccessToken;
+    signal?: AbortSignal;
+    assertRequestCurrent?: () => void;
+    timeoutMs?: 15000 | 90000;
+  },
+) {
   const origin = new URL(options.baseUrl);
   if (
     origin.origin !== options.baseUrl ||
@@ -35,16 +57,22 @@ export function createUniversalOriginalSourceTransport(
   )
     throw new Error("SOURCE_ORIGIN_INVALID");
   const fetcher = options.fetchImplementation ?? expoFetch;
-  async function request(
+  return async function request(
     context: AccountRequestContext,
     command: Json,
-    method: "acquire" | "result",
+    method: "acquire" | "result" | "png/result" | "png/execute" | "png/reconcile",
+    allowNull = false,
   ) {
     const body = canonicalEventJson(command);
     if (new TextEncoder().encode(body).byteLength > 2097152)
       throw new Error("INVALID_SOURCE_COMMAND");
-    const boundary = createRequestBoundary(15000, undefined, () =>
-      assertAccountRequestGeneration(context),
+    const boundary = createRequestBoundary(
+      options.timeoutMs ?? 15000,
+      options.signal,
+      () => {
+        options.assertRequestCurrent?.();
+        assertAccountRequestGeneration(context);
+      },
     );
     try {
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
@@ -107,20 +135,12 @@ export function createUniversalOriginalSourceTransport(
       );
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
       if (value === null) {
-        if (method !== "result") throw new Error("SOURCE_RESPONSE_INVALID");
+        if (!allowNull) throw new Error("SOURCE_RESPONSE_INVALID");
         return null;
       }
       return canonicalEventJson(value as Json);
     } finally {
       boundary.close();
     }
-  }
-  return {
-    acquire: async (c, q) => {
-      const r = await request(c, q, "acquire");
-      if (r === null) throw new Error("SOURCE_RESPONSE_INVALID");
-      return r;
-    },
-    lookup: (c, q) => request(c, q, "result"),
   };
 }
