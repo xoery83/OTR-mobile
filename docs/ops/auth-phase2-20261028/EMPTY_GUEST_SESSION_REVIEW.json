@@ -1,5 +1,5 @@
 {
-  "status": "STRICT_EMPTY_GUEST_SIGNIN_CANDIDATE_REVIEWED_NATIVE_PENDING",
+  "status": "STRICT_EMPTY_GUEST_SIGNIN_REVIEWED_NATIVE_FIRST_USE_PASS",
   "rootCause": "Provider verification succeeded before unconditional Guest marker rejection during local Session install",
   "scope": "Only current canonical schema74 zero-business-data Guest; not Adoption or cleanup",
   "validation": {
@@ -34,7 +34,7 @@
     "No Source/Import/Core authority changes",
     "No Provider bypass, Host Session or Native Keychain copy"
   ],
-  "next": "Native curates exact candidate onto latest main, installs Build114 in-place, same registered-email new normal challenge, Account/Session readback, first Trip/P1 and cold proof",
-  "nativeE2E": "PENDING",
+  "next": "Serial source-only main integration; full nonempty Guest Adoption remains closed",
+  "nativeE2E": "Build114 first-use PASS; see NATIVE_NEW_ACCOUNT_E2E.json",
   "guestAdoption": "NOT_READY"
 }

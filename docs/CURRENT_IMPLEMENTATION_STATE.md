@@ -219,14 +219,19 @@ item, never SMTP or Native. Reuse entry is released; every Native fresh-signup r
 needs a NEW mailbox and its own App verify/cold proof. Guest publication remains
 closed. See ops/auth-inbound-otp-20261030/{FIRST_USER_E2E,READINESS}.json.
 
-Fresh-signup P0 candidate: Provider OTP had verified normally, but unconditional
+Fresh-signup P0 accepted on Native Build114: Provider OTP had verified normally, but unconditional
 Guest-marker rejection blocked local Session installation even with no saved data.
 Strict empty-workspace qualification now freezes zero Trip/P1 registries before UI
 memory clear, checks every business table/recovery record under the exact transition,
 and installs through normal Account slots/index. Direct Guest writes/nonempty/unknown
 still reject; no Guest cleanup/publication or full Adoption PASS. Cancellation,
 index-write recovery/retry and release-before-bootstrap regressions are reviewed;
-independent8s181 PASS. Native original-email new challenge/Build114 proof pending.
+independent8s181 and direct9s217 PASS. Same registered-email normal new challenge
+installed the original Account1f3d (created00:09, confirmed00:17), followed by first
+Trip/P1 formal receipts and actual device cold recovery. Auth independently
+validated provided database/UI artifacts and Core receipt/intent hashes; no Guest
+cleanup, QA enrollment, Host Session or complete Adoption claim. See
+`ops/auth-phase2-20261028/NATIVE_NEW_ACCOUNT_E2E.json`.
 See ADR `2026-10-30-strict-empty-guest-session-install.md`.
 
 Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account

@@ -1,6 +1,7 @@
 # Strict empty Guest Session installation
 
-Status: implementation candidate reviewed; Native first-use validation pending.
+Status: reviewed; Build114 normal first-use and cold recovery passed. Full nonempty
+Guest Adoption remains closed. See ops/auth-phase2-20261028/NATIVE_NEW_ACCOUNT_E2E.json.
 
 The normal Provider flow verifies OTP before Account activation. The existing
 Guest-marker guard rejected every Guest, including a fresh installation with no
