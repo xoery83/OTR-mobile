@@ -10,6 +10,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
   createSourcePngOwnedSandbox,
   terminateSourcePngAttempt,
+  inventorySourcePngAttempts,
 } from "./sourcePngOwnedSandbox";
 import {
   sourcePngStorageBindingSchema,
@@ -352,3 +353,33 @@ it.each(["valid", "foreignImage", "stillPresent"] as const)(
     expect(list).toContain("label=org.otr.png-operation=" + f.binding.operationId);
   },
 );
+
+it.each(["", "a".repeat(64) + "\n"])(
+  "reads only the fixed PNG namespace inventory: %j",
+  async (output) => {
+    fake.command.mockReturnValue(output);
+    expect(await inventorySourcePngAttempts()).toEqual(
+      output.trim() ? [output.trim()] : [],
+    );
+    expect(fake.command).toHaveBeenCalledExactlyOnceWith(
+      [
+        "ps",
+        "-a",
+        "-q",
+        "--no-trunc",
+        "--filter",
+        "label=org.otr.png-owner",
+        "--filter",
+        "ancestor=" + SOURCE_PNG_SANDBOX_IMAGE,
+      ],
+      undefined,
+    );
+  },
+);
+it("rejects malformed inventory instead of treating it as empty", async () => {
+  fake.command.mockReturnValue("short-id\n");
+  await expect(inventorySourcePngAttempts()).rejects.toThrow(
+    "PNG_SANDBOX_INVENTORY_UNKNOWN",
+  );
+  expect(fake.events).toEqual(["ps"]);
+});

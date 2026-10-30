@@ -1,0 +1,42 @@
+{
+  "status": "LOCAL_BUILD_UNIT_PASS_NOT_HOST_EXECUTED",
+  "sourceBase": "01c6e44b",
+  "entry": "backend/src/sourcePngWorkerCleanupMain.ts",
+  "buildCommand": "npx esbuild backend/src/sourcePngWorkerCleanupMain.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --outfile=/private/tmp/otr-png-worker-entry-20261031/universal-png-cleanup.mjs --metafile=/private/tmp/otr-png-worker-entry-20261031/cleanup-metafile.json",
+  "syntaxCommand": "node --check /private/tmp/otr-png-worker-entry-20261031/universal-png-cleanup.mjs",
+  "bundleSha256": "babfb1f00a65911084e132b5a1feaead9deb410854b195a13186a26539ba446f",
+  "bundleBytes": 823195,
+  "fixedMarker": "/run/otr/universal-png-worker/active-worker",
+  "markerRequirements": [
+    "Linux root",
+    "root/gid999 0750 canonical directory",
+    "O_RDONLY/O_NOFOLLOW/O_NONBLOCK",
+    "root0600 regular single link",
+    "1..16384 bytes and stable fd/path identity",
+    "existing strict Source PNG binding schema"
+  ],
+  "effects": {
+    "markerDeleted": false,
+    "sourceTerminalWritten": false,
+    "databaseAccess": false,
+    "unboundDeletion": false,
+    "markerCleanup": "existing terminateSourcePngAttempt exact labels/image/name/inspect/rm/recheck",
+    "independentInventory": "fixed org.otr.png-owner label + fixed SOURCE_PNG_SANDBOX_IMAGE ancestor; ps only"
+  },
+  "statuses": {
+    "TERMINATED": "Marker-bound attempt terminated and fixed namespace empty",
+    "EMPTY_VERIFIED": "No marker and fixed namespace independently empty",
+    "UNVERIFIED": "Other namespace entries remain; no broad deletion",
+    "UNKNOWN": "Unsafe/changed marker or uncertain cleanup/inventory"
+  },
+  "validation": {
+    "focusedSuites": 3,
+    "tests": 38,
+    "typecheck": "PASS",
+    "eslint": "PASS_ZERO_WARNINGS",
+    "build": "PASS",
+    "syntax": "PASS",
+    "noPgSupabaseBrokerBootstrapInputs": true
+  },
+  "notExecuted": ["real Docker", "Host cleanup", "DEV", "SQL", "Provider", "deployment"]
+}

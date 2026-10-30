@@ -330,3 +330,25 @@ export async function terminateSourcePngAttempt(raw: SourcePngStorageBinding) {
   if ((await inventory()).length) throw Error("PNG_SANDBOX_TERMINATION_UNKNOWN");
   return { terminated: true as const };
 }
+
+// Read-only close proof for this fixed PNG worker namespace; never selects deletion targets.
+export async function inventorySourcePngAttempts(): Promise<readonly string[]> {
+  const ids = (
+    await execute([
+      "ps",
+      "-a",
+      "-q",
+      "--no-trunc",
+      "--filter",
+      "label=org.otr.png-owner",
+      "--filter",
+      "ancestor=" + SOURCE_PNG_SANDBOX_IMAGE,
+    ])
+  )
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (ids.some((id) => !/^[a-f0-9]{64}$/.test(id)))
+    throw Error("PNG_SANDBOX_INVENTORY_UNKNOWN");
+  return Object.freeze(ids);
+}
