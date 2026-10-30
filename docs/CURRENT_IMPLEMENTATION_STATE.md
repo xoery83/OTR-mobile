@@ -223,7 +223,10 @@ The reviewed Person held-transaction seam now reuses its existing standalone SQL
 receipt logic without inner commits; direct38/independent31 tests, types/lint PASS.
 No live caller or protected SQL change. Auth source-only integration through
 7a0317cb is pushed main; actual primary7s146/types PASS, original six dirty files
-retained. Subsequent Person seam is private pending next serial integration.
+retained. Person seam is now accepted/pushed main f92cb022: actual primary3s54/types
+PASS and independent rangeNO_BLOCKER. Original six dirty bytes/modes/index retained.
+The unchanged Runtime4vs5-argument mock failure reproduces on baseline7a; Root
+has accepted owning coordination, no Auth Runtime edit. Main Writer returned Root.
 
 
 
