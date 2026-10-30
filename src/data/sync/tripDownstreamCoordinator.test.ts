@@ -6,6 +6,7 @@ import {
 } from "../auth/accountGeneration";
 import { createTripDownstreamCoordinator } from "./tripDownstreamCoordinator";
 import type { AccountScope } from "../auth/accountRequestContext";
+vi.mock("react-native", () => ({ AppState: { currentState: "active" } }));
 
 function fixture() {
   let account = randomUUID(),

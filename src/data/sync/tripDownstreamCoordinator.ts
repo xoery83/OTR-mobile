@@ -1,4 +1,5 @@
 import { coreUuid, coreRevision } from "@/domain/trip/tripCoreV2";
+import { AppState } from "react-native";
 import {
   assertAccountRequestContext,
   type AccountScope,
@@ -137,13 +138,11 @@ async function nativeCoordinator() {
   const [
     { requireAdoptedUserId, readCommittedLocalPrincipal, readCommittedLocalSession },
     { isGeneralAccountCloudSyncEnabled },
-    { AppState },
     Network,
     { notifyLedgerReadCompletion },
   ] = await Promise.all([
     import("../auth/authRepository"),
     import("./nativeTripQaScope"),
-    import("react-native"),
     import("expo-network"),
     import("./ledgerOperationalSync"),
   ]);
