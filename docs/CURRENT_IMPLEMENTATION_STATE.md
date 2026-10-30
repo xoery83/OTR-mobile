@@ -41,14 +41,20 @@ Retry/cancel through existing ports. Local PREPARED-write UNKNOWN and initializa
 failures retain their attempt; cancel revokes provisional credentials and UNKNOWN
 retains cancel intent. 3 focused suites17 PASS, independent2 suites15 PASS/NO_BLOCKER,
 UIguard/types/lint PASS. DEV-only new-attempt flag remains off by default.
-Owner explicitly approved exact protected Gate495b6cb6 (install SHA26f036d4…);
-Root acknowledged the next serial SQL window after current Import Save. Installation,
-route mount, normal Native OTP Adoption, independent Supabase readback and actual
-cold recovery are still pending. Root holds main/Host/SQL; no Auth device lease.
-Cold pre-publication restart and actual remaining negatives are not yet accepted.
+Owner approved exact protected Gate495b6cb6 (install SHA26f036d4…). Root installed
+that exact default-CLOSED candidate in DEV and the frozen post-install checker
+returned POST_INSTALL_MATCH_DEFAULT_CLOSED. Policy remains disabled; no public
+business-table RLS/ACL drift. Root retains Host/SQL/main serialization.
+The next minimal slice mounts existing ports after normal JWT verification using
+the same raw Core PG connection, limited to one configured normal QA Account,
+original Guest and at most30-minute mutation window. Other Accounts/default
+startup remain CLOSED; bound status/receipt/cancel retain recovery after expiry.
+Bootstrap/scope passes focused5 suites68 tests; independent3 suites33 PASS/NO_BLOCKER.
+Expired-config restart retains bound recovery. Both Backend builds and focused lint pass; not deployed. Auth merged accepted main249204db into8383f1d1. No Auth device lease.
+Real Native OTP→publication→Supabase readback→cold recovery remains PENDING;
+cold pre-publication restart and remaining negatives are not yet accepted.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
-hosted-gate-candidate/OWNER_GATE.md. Current Root main is a9e33cbf; Auth UI source
-has not yet been integrated there.
+hosted-gate-candidate/OWNER_GATE.md.
 
 # Auth Adoption active checkpoint — 30 October 2026
 

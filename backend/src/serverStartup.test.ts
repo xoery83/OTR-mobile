@@ -244,3 +244,27 @@ it("supplied Document reader reaches only the existing authenticated original bo
     sha256: "a".repeat(64),
   });
 });
+
+it.each([
+  ["stage", 1048576],
+  ["status", 8192],
+] as const)(
+  "bounds Adoption %s before buffering or authentication",
+  async (resource, maximum) => {
+    const { startDevBackend } = await import("./serverStartup");
+    const url = await address(startDevBackend());
+    const response = await fetch(`${url}/v1/auth/guest-adoptions/${resource}`, {
+      method: "POST",
+      body: "x".repeat(maximum + 1),
+    });
+    expect(response.status).toBe(413);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+    const closed = await fetch(`${url}/v1/auth/guest-adoptions/status`, {
+      method: "POST",
+      headers: { Authorization: "Bearer valid" },
+      body: "{}",
+    });
+    expect(closed.status).toBe(503);
+  },
+);
