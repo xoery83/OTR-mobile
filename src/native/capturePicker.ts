@@ -63,6 +63,8 @@ export const pickCaptureMaterial: CapturePicker = async (
     mediaTypes: ["images"],
     allowsMultipleSelection: true,
     orderedSelection: true,
+    preferredAssetRepresentationMode:
+      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Current,
     quality: 1,
     base64: false,
     exif: false,

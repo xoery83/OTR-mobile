@@ -13,6 +13,7 @@ vi.mock("expo-image-picker", () => ({
   requestCameraPermissionsAsync: sdk.request,
   launchCameraAsync: sdk.camera,
   launchImageLibraryAsync: sdk.photos,
+  UIImagePickerPreferredAssetRepresentationMode: { Current: "current" },
 }));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: sdk.files }));
 const image = {
@@ -153,3 +154,27 @@ it.each(["clear", "close-resume", "account-ABA", "initial-permission"] as const)
     expect(staging.getSnapshot().items).toEqual([]);
   },
 );
+
+it("requests the current Photos file representation without edits or byte conversion options", async () => {
+  sdk.photos.mockResolvedValue({
+    canceled: false,
+    assets: [{ ...image, mimeType: "image/png", fileName: "original.png" }],
+  });
+  const selected = await pickCaptureMaterial("photos");
+  expect(sdk.photos).toHaveBeenCalledExactlyOnceWith({
+    mediaTypes: ["images"],
+    allowsMultipleSelection: true,
+    orderedSelection: true,
+    preferredAssetRepresentationMode: "current",
+    quality: 1,
+    base64: false,
+    exif: false,
+  });
+  expect(selected[0]).toMatchObject({
+    source: "photos",
+    typeHint: "image/png",
+    name: "original.png",
+  });
+  expect(sdk.camera).not.toHaveBeenCalled();
+  expect(sdk.files).not.toHaveBeenCalled();
+});
