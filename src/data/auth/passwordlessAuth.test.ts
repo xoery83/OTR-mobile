@@ -74,6 +74,21 @@ describe("passwordless DEV authentication", () => {
     expect(config.persistSession).not.toHaveBeenCalled();
   });
 
+  it("can request a normal existing-account OTP without creating a replacement identity", async () => {
+    const config = options(Response.json({}));
+    await requestSupabaseDevEmailOtp(identity.email, {
+      ...config,
+      allowRegistration: false,
+    });
+    expect(config.fetchImplementation).toHaveBeenCalledWith(
+      `${config.url}/auth/v1/otp`,
+      expect.objectContaining({
+        body: JSON.stringify({ email: identity.email, create_user: false }),
+      }),
+    );
+    expect(config.persistSession).not.toHaveBeenCalled();
+  });
+
   it("verifies an entered code and returns a provisional stable Account", async () => {
     const config = options();
     const session = await verifySupabaseDevEmailOtp(identity.email, " 123456 ", config);

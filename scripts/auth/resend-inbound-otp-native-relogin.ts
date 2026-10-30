@@ -35,14 +35,15 @@ function requireQa(value: unknown, code: string): asserts value {
 }
 
 // Same registered case only. It receives a new normal App challenge, never sends it.
-export function createNativeCaseReloginReceiver(config: {
+type ReceiverConfig = {
   key: string;
   scope: string;
   reserve(value: { email: string; requestedAt: string }): void;
   fetch?: typeof fetch;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
-}) {
+};
+function createCaseReceiver(config: ReceiverConfig, canIssue: (time: number) => boolean) {
   requireQa(config.scope === "dedicated-qa-team", "RECEIVING_SCOPE_REQUIRED");
   requireQa(/^re_[A-Za-z0-9_\-]+$/.test(config.key), "RECEIVING_CREDENTIAL_REQUIRED");
   const key = config.key;
@@ -54,10 +55,7 @@ export function createNativeCaseReloginReceiver(config: {
   return {
     createChallenge() {
       requireQa(!lease, "NATIVE_RELOGIN_CHALLENGE_ALREADY_ISSUED");
-      requireQa(
-        now() >= originalRequest + 60000 && now() < originalRequest + 6 * 3600000,
-        "NATIVE_RELOGIN_CASE_WINDOW_CLOSED",
-      );
+      requireQa(canIssue(now()), "NATIVE_RELOGIN_CASE_WINDOW_CLOSED");
       lease = Object.freeze({ email, requestedAt: new Date(now()).toISOString() });
       config.reserve(lease);
       return lease;
@@ -145,6 +143,20 @@ export function createNativeCaseReloginReceiver(config: {
       }
     },
   };
+}
+
+// The original interrupted Native case keeps its original creation window.
+export function createNativeCaseReloginReceiver(config: ReceiverConfig) {
+  return createCaseReceiver(
+    config,
+    (time) => time >= originalRequest + 60000 && time < originalRequest + 6 * 3600000,
+  );
+}
+
+// Host entry validates the already accepted canonical Account before using this
+// receiver. Only the issue window differs; recipient, matching and 120s lease do not.
+export function createAcceptedHostQaReceiver(config: ReceiverConfig) {
+  return createCaseReceiver(config, (time) => time >= originalRequest + 60000);
 }
 
 export function openRegisteredNativeReloginReceiver() {
