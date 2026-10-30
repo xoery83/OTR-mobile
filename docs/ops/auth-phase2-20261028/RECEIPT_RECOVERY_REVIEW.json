@@ -1,0 +1,27 @@
+{
+  "status": "LIMITED_NO_BLOCKER",
+  "scope": "Receipt integrity, source coverage recovery qualification, unmounted authenticated read boundary and provisional Guest transport",
+  "validation": {
+    "directedSuites": 6,
+    "directedTests": 105,
+    "independentSuites": 6,
+    "independentTests": 105,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "repairs": [
+    "snapshot all caller evidence before first await",
+    "reject cross-source Person target collisions"
+  ],
+  "authority": "NONE",
+  "runtimeMounted": false,
+  "hostedMutation": false,
+  "remaining": [
+    "immutable owning terminal publisher/cancel/status store",
+    "owning readback",
+    "Native restore and Account Session promotion",
+    "protected DEV execution gate",
+    "real nonempty Hosted Guest Adoption E2E"
+  ]
+}
