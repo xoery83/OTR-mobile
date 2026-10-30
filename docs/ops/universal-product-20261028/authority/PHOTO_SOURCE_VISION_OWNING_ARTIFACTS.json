@@ -1,0 +1,15 @@
+{
+  "status": "FIXED_ARTIFACTS_NOT_INSTALLED",
+  "sourceCommit": "4ed557cd",
+  "files": {
+    "universal-png-worker.mjs": "0129046f489b09a010b358f9f8a0ff5a7920a89cfe1c347dee59a3319a1461ad",
+    "negative-cleanup.mjs": "babfb1f00a65911084e132b5a1feaead9deb410854b195a13186a26539ba446f",
+    "close-control.cjs": "d25e2bd28cbc50bc209bb4a9f5ee70b26ad9584fc9aadd8ac101bec7d452b892",
+    "install.private.sql": "21bfcdb459ee4bd3900a572bf35cb243b683b04e6ca18534e77adf4f08d98ef1",
+    "preuse-reverse.private.sql": "ad26387d2daebfa47bf6b3ec94e5561c88e4b1f059a2ab23b1cc9dfe44c2a50e",
+    "scripts/import/png_runtime_close.py": "1d58b459b3c6809abda62871c3c286dd1c60bfcbb97b3308494557e20b2ecf2e",
+    "scripts/import/pdf_runtime_close.py": "9d35ff25fcbc70ce5ac00539b93a6c094d71b1c4d02ddda59256a10d4734626d",
+    "scripts/import/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "scripts/import/__fixtures__/png/otr-universal-png-worker.service": "f9450d95c9c13844515417fb5553b4b18ba50900241f6b305a2b6abf828917dd"
+  }
+}
