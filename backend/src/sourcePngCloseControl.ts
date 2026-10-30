@@ -30,7 +30,7 @@ export function createSourcePngCloseControl(connection: CorePgConnection) {
           ).rows[0]?.state,
         );
       },
-      false,
+      !close,
     );
   }
   return {

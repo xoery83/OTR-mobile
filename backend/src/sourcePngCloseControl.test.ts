@@ -47,6 +47,7 @@ it("closes once and independently reads the exact same QA scope", async () => {
     writeDisposition: "ACKNOWLEDGED",
   });
   expect(f.count()).toEqual({ writes: 1, reads: 1 });
+  expect(f.query).toHaveBeenCalledWith("BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY");
 });
 it("lost COMMIT is read back without repeating close", async () => {
   const f = fixture("lostCommit");

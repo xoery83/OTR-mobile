@@ -1,0 +1,26 @@
+[Unit]
+Description=OTR DEV fixed PNG Source worker
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=999
+UMask=0077
+RuntimeDirectory=otr/universal-png-worker
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+ExecStartPre=/usr/bin/install -d -o 0 -g 0 -m 0700 /run/otr/universal-png-worker/decoder-stage
+ExecStart=/usr/bin/env -i PATH=/usr/bin:/bin HOME=/nonexistent NODE_ENV=production /opt/otr/universal-png-worker/node /opt/otr/universal-png-worker/universal-png-worker.mjs
+ExecStopPost=/usr/bin/env -i PATH=/usr/bin:/bin HOME=/nonexistent NODE_ENV=production /opt/otr/universal-png-worker/node /opt/otr/universal-png-worker/negative-cleanup.mjs
+Restart=no
+RuntimeMaxSec=3000
+TimeoutStopSec=40
+KillMode=control-group
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes
+ReadWritePaths=/run/otr/universal-png-worker
