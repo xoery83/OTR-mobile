@@ -1,0 +1,132 @@
+{
+  "status": "BOUNDED_GOLDEN_SLICE_PASS_INTEGRATION_PENDING",
+  "scope": "Existing local accepted format2 original Owner; roster Add Traveler slice only",
+  "sourceCommit": "6883e3a0f76573e1db4014be1f7939e6e97282a6",
+  "bundleId": "com.xoery.otrmobile.guestqb",
+  "artifactVersion": 71,
+  "embeddedJSSHA256": "2cc5803efe8bbb9389b0b094e4bcf3f69428c72b258ec9c3feb7e963c5769b96",
+  "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "ownerPersonId": "b90c34ba-96d7-4b64-874a-b4f5525d64d8",
+  "tripCreateOperationId": "ccce0d3c-7796-47b5-85f7-d789747bbaca",
+  "request": {
+    "dataOwnership": "CLOUD_SHARED_AUTHORED",
+    "displayName": "同行人 林 20261031",
+    "operationId": "bdd061fe-4e82-441e-80f3-9d43b37cc833",
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "tripCreateOperationId": "ccce0d3c-7796-47b5-85f7-d789747bbaca",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "version": 1
+  },
+  "receipt": {
+    "acceptedAt": "2026-10-30T21:35:02.470606+00:00",
+    "actorAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "person": {
+      "displayName": "同行人 林 20261031",
+      "participationActive": true,
+      "participationRevision": 0,
+      "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+      "status": "unlinked",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+      "userId": null
+    },
+    "receiptVersion": 1,
+    "request": {
+      "dataOwnership": "CLOUD_SHARED_AUTHORED",
+      "displayName": "同行人 林 20261031",
+      "operationId": "bdd061fe-4e82-441e-80f3-9d43b37cc833",
+      "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+      "tripCreateOperationId": "ccce0d3c-7796-47b5-85f7-d789747bbaca",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+      "version": 1
+    }
+  },
+  "independentServerPerson": {
+    "displayName": "同行人 林 20261031",
+    "id": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "participationActive": true,
+    "participationRevision": 0,
+    "role": "group_member",
+    "status": "unlinked",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "userId": null
+  },
+  "independentReceiptCount": 1,
+  "independentTripPersonCount": 2,
+  "normalNativeSaveCount": 1,
+  "queueStatus": "COMPLETED",
+  "queueAttemptCount": 0,
+  "nativeCold": {
+    "beforePid": 5005,
+    "afterPid": 6556,
+    "snapshotGeneration": 427628,
+    "sameTripOpenedFromMyTrips": true,
+    "nameVisible": "同行人 林 20261031",
+    "unnamedOwnerFallback": "You",
+    "addTravelerEnabled": true,
+    "noSavedOnDevicePendingMarker": true,
+    "sessionRestoredWithoutNewLogin": true
+  },
+  "actualFirstFailure": {
+    "artifactVersion": 70,
+    "snapshotGeneration": 977664,
+    "failure": "Add disabled because named-only roster filtered unnamed current Actor",
+    "fixedBy": "Preserve explicit actor.memberId/ownerPersonId independently of optional displayName; existing ui.you display only"
+  },
+  "verification": {
+    "changedAreaTests": 84,
+    "independentSourceReview": "NO_BLOCKER",
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "lint": "0 errors; existing 15 import/first warnings in Workspace test"
+  },
+  "safety": {
+    "ordinaryInstallRetainedSameTripAndOwner": true,
+    "noSessionKeychainDatabaseCopy": true,
+    "noNewSchemaRlsGrantRole": true,
+    "noHostOrPolicyChange": true,
+    "noAccountLinkOrInvitationInferred": true,
+    "noSecondRepositoryQueueSyncEngine": true,
+    "ownQaAppClosedAndDeviceClaimReleased": true
+  },
+  "pending": [
+    "Native owning ManualFlightForm participant-options compatibility: preserve prior named-only options when People roster now retains unnamed Actor",
+    "Native owning two-range review",
+    "Independent final evidence review",
+    "Serial main integration"
+  ],
+  "notClaimed": [
+    "Full People Home Blueprint",
+    "Global Profile/AKA/Travel Document Name",
+    "Add to adopted or remote-only Trip without local create lineage",
+    "Invite/Claim/Organizer permissions",
+    "Offline/conflict cases outside this bounded normal-create slice"
+  ],
+  "privateEvidenceSHA256": {
+    "BEFORE_REPAIR_INSTALL.json": "9f07b6f0afafdd9e33e158faba51306fb0b40ac13c87d6c53a21d6749e478eb4",
+    "AFTER_REPAIR_INSTALL.json": "9f07b6f0afafdd9e33e158faba51306fb0b40ac13c87d6c53a21d6749e478eb4",
+    "AFTER_ONE_NATIVE_SAVE.json": "74435158056f1f2b46632d99cefbf82479afbb67b2e88fa1253bfb6cac68330e",
+    "AFTER_WORKER_READ.json": "2e0805db4c56e9cf1b08be4a5d204b333037f7b4ec3eb5731cbf25b9842b4c6d",
+    "AFTER_COLD.json": "14714dfdbf7777f0682b74cce7480497531de768e746e2fab077d8d9ffd15992",
+    "INDEPENDENT_HOSTED_PERSON.json": "771c50717147709d1f9ba7049e8f7f85edfc2e4a9ec1ab6f9f522feb546d30a7",
+    "FIXED_ARTIFACT_71.json": "7d91d78794f46cbb3cf973af270001fc0f84a0e041db50e2b6415b125e6ef610",
+    "negative-read-receipt.json": "998b06ed9c9e9ca9a3284b3406a22303c283c08ff9b99c7568c527985a11fabb",
+    "NATIVE_COLD_OBSERVATION.json": "f4e0319b7fd7caa31110d192dd03d550dab389391e7bc58d9145be74df95102a"
+  },
+  "foreignAccountNegative": {
+    "status": "PASS_FOREIGN_QA_PERSON_RECEIPT_403",
+    "actorAccountId": "71b94800-f860-4685-a5d4-954adae38113",
+    "foreignAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "foreignTripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "requests": [
+      {
+        "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/person-create-operations/bdd061fe-4e82-441e-80f3-9d43b37cc833",
+        "httpStatus": 403,
+        "errorCode": "PERSON_CREATE_FORBIDDEN",
+        "durationMs": 1720
+      }
+    ],
+    "mutations": 0,
+    "ownNormalOtpSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  }
+}

@@ -83,8 +83,17 @@ E2E pending. Real normal UI created Tripfb2f0820/createOpccce0d3c under Account2
 independent format2 receipt/Owner readback PASS. Guestqb70 fixed JS823a1af4 passed independent artifact review and ordinary install;
 original Adoption cache/Session retained. Actual People opened but Add was disabled:
 existing named-only roster dropped the unnamed Owner. Focused repair preserves the
-explicit current Actor ID with optional empty name;84 targeted tests PASS. Same
-Trip/normal UI retry pending; no Person POST yet and no full People Home/Profile PASS.
+explicit current Actor ID with optional empty name;6883e3a0 independent84PASS.
+SameTrip/normal Add on71/JS2cc5803e created Personbcd1d48e/opbdd061fe once; existing
+worker COMPLETED/attempt0, independent Supabase exact Receipt+Person unlinked/userIdnull
+and unchanged Owner PASS. Cold5005→6556/MyTrips→sameTrip→People preserved Chinese
+name and unnamed Owner/You. Foreign normalQA71b Receipt GET403/PERSON_CREATE_FORBIDDEN
+PASS; own host Session revoked and refresh rejected. Device claim released, no Host/
+policy/Schema changes. Native two-range owning review, final evidence review and
+serial main integration pending. Direct consumer ManualFlightForm needs its existing
+named-only participant-option behavior preserved (now People retains unnamed Actor);
+precise adapter requested from Native unique Writer, no Form redesign. No full
+People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
 Existing profiles SELECT RLS is all-authenticated: private travel-document names/AKA
 must not be stored there. Only policy/schema metadata was read; no new permissions.
 
