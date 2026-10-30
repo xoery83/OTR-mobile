@@ -1,4 +1,4 @@
-# Auth Hosted DEV protected gate — approval pending
+# Auth Hosted DEV protected gate — Owner approved, execution pending
 
 Target: Supabase DEV `tuqigdxrvrerfewsxqgm`. Root is the sole SQL/Host writer.
 
@@ -6,7 +6,7 @@ Gate `fd671463e04c095197e20faaba223ed26eb1ea99d2ad64b207bd06aaaaefde5c`.
 Install SHA256 `26f036d4ff4afca6a0580ca0f9a632da8e204dcdbca56442fafa53dac41c113e`.
 
 The concrete [installation SQL](/private/tmp/otr-auth-hosted-gate-qql2h0_n/install.private.sql)
-and [permission/parent manifest](MANIFEST.json) are ready for review. The SQL has
+and [permission/parent manifest](MANIFEST.json) are ready for review. Owner explicitly approved this exact DEV gate in the Auth chat. The SQL has
 not been executed. Raw function definitions remain private0600.
 
 The protected delta creates one private Adoption schema with6 tables, RLS and24

@@ -268,5 +268,11 @@
     "privateInstallVerified": true,
     "sourceBodiesMatchAcceptedCandidates": true,
     "executed": false
+  },
+  "ownerApproval": {
+    "status": "EXPLICITLY_APPROVED",
+    "answer": "\u6279\u51c6\u6b64\u7cbe\u786e DEV Gate",
+    "scope": "Exact default-CLOSED DEV install only; Root sole SQL writer",
+    "executed": false
   }
 }

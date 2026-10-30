@@ -1,0 +1,38 @@
+{
+  "goldenSlice": "BLOCKED_RUNTIME_NOT_INSTALLED",
+  "sourceStatus": "FIRST_UI_PUBLICATION_CALLER_READY_DEFAULT_CLOSED",
+  "entry": "Existing normal Email OTP/Google result; original coordinator first. DEV flag only on Guest preflight-required error.",
+  "flow": "Explicit target confirmation -> owning inventory/checkpoint -> normal Profile/preflight/stage -> durable publication marker -> status/receipt/publish -> existing owning restore and original Account index transition.",
+  "validation": {
+    "joinedFocusedUiAndFlow": "3 suites17 PASS",
+    "independentReview": "bounded NO_BLOCKER; independent2 suites15 PASS",
+    "uiGuard": "PASS; account root includes new panel, no baseline changes",
+    "typecheck": "PASS",
+    "lint": "PASS"
+  },
+  "fixedFindings": [
+    "Local attempt UUID/object retained before freeze/checkpoint/recovery initialization; after-write UNKNOWN retries same UUID.",
+    "Initial Cancel invokes normal provisional revoke before close; revocation UNKNOWN retains cancellation intent/attempt and cannot publish."
+  ],
+  "runtimeFlag": "EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED=true AND EXPO_PUBLIC_OTR_SYNC_TRANSPORT=dev; default false",
+  "ownerGate": {
+    "commit": "495b6cb6",
+    "gateId": "fd671463e04c095197e20faaba223ed26eb1ea99d2ad64b207bd06aaaaefde5c",
+    "approval": "EXPLICIT Owner: 批准此精确 DEV Gate",
+    "writer": "Root only",
+    "installed": false
+  },
+  "remaining": [
+    "Root serial default-CLOSED protected install/readback and runtime mount",
+    "Actual existing Guest Trip/P1 normal OTP adoption, independent Supabase readback and Native cold recovery",
+    "Cold pre-publication restart/resume and remaining actual permission/UNKNOWN negatives not claimed by this component report"
+  ],
+  "files": {
+    "src/data/auth/guestTripP1Adoption.ts": "c8fa3be3a9672fdf80ea874aace10a067206bc783ca7edc4819e1385f1e4b627",
+    "src/data/auth/guestTripP1Adoption.test.ts": "bd051591fdbbf14a7c7335501df92ce7df0079d5965870c9b137cc97c04fcc0c",
+    "src/features/auth/GuestAdoptionPanel.tsx": "54cdc10ca7dfa0bfce5fb49b55bf19a7a61658ffa1ebe784a006ddd3edf6249a",
+    "src/features/auth/GuestAdoptionPanel.test.ts": "066bf1108c882d5cdc99807ecb9f2f991b3eae529701672acce54149d4f0daa0",
+    "src/components/AccountManagementScreen.tsx": "ff9e709eb98d8d714b49f8226587c36d80016dc375450b95dbb37b2be5fe0672",
+    "src/ui/catalogs.ts": "0b145bd1665931db61840d46b16f0a9cfa1b1cc2cd45d2569998ae87fb788327"
+  }
+}

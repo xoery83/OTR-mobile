@@ -28,10 +28,19 @@ Fixed source41bf461e; accepted main115 merged into Auth c6212c5f.
 Isolated real Gateway48 checks include actual Stage adapter and fresh ordinary
 Core collection after PUBLISHED; all11 candidate+14 owning hashes match. Capture
 Backend build passes. These are components, not Hosted/Native Adoption E2E.
-Next: initial explicit-target/publication caller, then the exact protected DEV
-Gate and original Guest cold recovery. Main/Host Writer remains Root; no device
-lease, Hosted SQL, route activation or Guest hold release. See
-ops/auth-phase2-20261028/OWNING_RESTORE_CONTINUATION.json.
+First UI publication caller now has explicit Account confirmation and same-ID
+Retry/cancel through existing ports. Local PREPARED-write UNKNOWN and initialization
+failures retain their attempt; cancel revokes provisional credentials and UNKNOWN
+retains cancel intent. 3 focused suites17 PASS, independent2 suites15 PASS/NO_BLOCKER,
+UIguard/types/lint PASS. DEV-only new-attempt flag remains off by default.
+Owner explicitly approved exact protected Gate495b6cb6 (install SHA26f036d4…);
+Root acknowledged the next serial SQL window after current Import Save. Installation,
+route mount, normal Native OTP Adoption, independent Supabase readback and actual
+cold recovery are still pending. Root holds main/Host/SQL; no Auth device lease.
+Cold pre-publication restart and actual remaining negatives are not yet accepted.
+See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
+hosted-gate-candidate/OWNER_GATE.md. Current Root main is a9e33cbf; Auth UI source
+has not yet been integrated there.
 
 # Auth Adoption active checkpoint — 30 October 2026
 
