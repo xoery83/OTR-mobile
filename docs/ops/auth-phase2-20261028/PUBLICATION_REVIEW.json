@@ -13,7 +13,8 @@
     "owningInputHashesMatched": 12,
     "typecheck": "PASS",
     "scopedLint": "PASS",
-    "diffCheck": "PASS"
+    "diffCheck": "PASS",
+    "actualCurrent14ParentIsolatedPgChecks": 48
   },
   "realIsolatedProgress": [
     "one transaction creates owning Trip/Person/Metadata/P1 and PUBLISHED journal",
@@ -40,5 +41,16 @@
   ],
   "hostedWrites": 0,
   "runtimeMounted": false,
-  "guestSourceReleased": false
+  "guestSourceReleased": false,
+  "currentHostedParentReplayEvidence": "../auth-phase1-20261028/composite-publication-candidate/PUBLICATION_PARENT_REPLAY_RESULT.json",
+  "actualParentIndependentReview": {
+    "status": "LIMITED_NO_BLOCKER",
+    "candidateHashes": 11,
+    "owningHashes": 12,
+    "actualFunctions": 14,
+    "ownersAndAcls": "MATCH",
+    "privateModes": "0600",
+    "fullSchemaRoleTriggerParity": false,
+    "hostedExecutionApproved": false
+  }
 }
