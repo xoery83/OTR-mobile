@@ -301,5 +301,13 @@
       "userId": "26876e6e-a919-457d-bc00-78d76ba08043"
     }
   },
-  "independentReview": "NO_BLOCKER on publication/cache/cold/close and read-only script; OwnerPerson supplement/negative actual status to be reconciled"
+  "independentReview": {
+    "result": "NO_BLOCKER_FOR_ACCEPTED_GOLDEN_SLICE",
+    "canonicalReceiptHashAndQueueCoverage": "PASS",
+    "ownerPersonOwningReadbackAndColdAccountCache": "PASS",
+    "runtimePolicyAndTimerClosure": "PASS",
+    "foreignCollectionDenial": "PASS",
+    "foreignOperationReceiptDenial": "PENDING_503_CORE_CAPABILITY_CLOSED",
+    "scope": "read-only evidence and code review; no repeat sharedDEV/credential/device actions"
+  }
 }
