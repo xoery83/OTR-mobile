@@ -1,3 +1,7 @@
+import {
+  UniversalPhotoRelevanceRow,
+  type UniversalPhotoRelevanceCopy,
+} from "./UniversalPhotoRelevanceRow";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { lazy, Suspense, useRef } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
@@ -21,7 +25,7 @@ export function CaptureProgress({
   accountId,
   busy,
   reading,
-  error,
+  error: requestError,
   canRetry,
   onRetry,
   onRecover,
@@ -29,6 +33,7 @@ export function CaptureProgress({
   onActivity,
   onNewImport,
   isCurrent,
+  photoRelevanceCopy,
 }: {
   model: CaptureJobReadModel | null;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
@@ -43,6 +48,7 @@ export function CaptureProgress({
   onActivity: () => void;
   onNewImport: () => void;
   isCurrent?: () => boolean;
+  photoRelevanceCopy?: UniversalPhotoRelevanceCopy;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -56,6 +62,7 @@ export function CaptureProgress({
     );
     scroll.current?.scrollTo({ y: p.y, animated: false });
   };
+  let error = requestError;
   let activity: ReturnType<typeof projectCaptureActivity> | null = null;
   try {
     if (model) activity = projectCaptureActivity(model, accountId);
@@ -192,6 +199,19 @@ export function CaptureProgress({
                       : "capture.pending",
                 )}
               </UiText>
+              {photoRelevanceCopy && isCurrent && model && !reading && !error
+                ? (() => {
+                    const input = model.inputs.find((input) => input.id === item.inputId);
+                    return input?.kind === "IMAGE" && input.state === "ACCEPTED" ? (
+                      <UniversalPhotoRelevanceRow
+                        model={model}
+                        input={input}
+                        isCurrent={isCurrent}
+                        copy={photoRelevanceCopy}
+                      />
+                    ) : null;
+                  })()
+                : null}
               {item.failureCode ? (
                 <UiText style={styles.secondary}>
                   {t(`capture.failure.${item.failureCode}`)}
