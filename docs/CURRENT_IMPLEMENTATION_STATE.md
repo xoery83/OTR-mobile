@@ -235,9 +235,10 @@ Server-issued confirmed grant, immutable stage, backend-PID/xid scope and exclus
 manifest authority prevent fallback to General Account permissions; normal
 standalone Gateways remain usable. This is disposable-only protected SQL, policy
 default OFF, no new Role/business RLS/table grant or Hosted installation. The local
-13-function parent is not the complete actual DEV preimage set. Frozen independent
-review, real DEV catalog/ACL qualification, final receipts, confirmation and Native
-restore remain pending. See composite-publication-candidate/AUTHORITY_LOCAL_PG_RESULT.json.
+13-function parent is not the complete actual DEV preimage set. Independent frozen review NO_BLOCKER (5s66PASS), direct5s78/types/lint PASS.
+Real DEV catalog/ACL qualification, final receipts, confirmation and Native
+restore remain pending. Non-default Ledger initialization is not implemented;
+actual existing NZD2 settings only were proven, other mismatches safely reject. See composite-publication-candidate/AUTHORITY_LOCAL_PG_RESULT.json.
 
 
 30 October nonempty executor now validates Ledger after deferred Metadata against

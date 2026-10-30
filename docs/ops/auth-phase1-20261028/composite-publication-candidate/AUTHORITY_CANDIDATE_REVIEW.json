@@ -1,7 +1,7 @@
 {
-  "status": "ISOLATED_REAL_PG_OWNING_COMPOSITE_CANDIDATE_PENDING_FROZEN_REVIEW",
+  "status": "ISOLATED_REAL_PG_OWNING_COMPOSITE_REVIEWED_COMPONENT",
   "hostedActivation": false,
-  "independentReview": "PENDING_FROZEN_REVIEW",
+  "independentReview": "LIMITED_NO_BLOCKER; independent5 suites / 66 PASS, exact generated functions and report input hashes compared; Docker report reviewed only",
   "realPg": {
     "checks": 31,
     "normalCoreGatewayLogin": true,
@@ -23,6 +23,9 @@
     "Formal publication/cancellation receipt and exclusive recovery status service",
     "Normal explicit target confirmation HTTP/Native flow",
     "Local identity/name/cover/draft restore and source-release proof",
-    "Hosted Email/Google Guest Adoption E2E and Supabase readback"
-  ]
+    "Hosted Email/Google Guest Adoption E2E and Supabase readback",
+    "Non-default source Ledger settings are safely rejected; current adapter reads the existing initializer and only NZD2 was proven in actual PG."
+  ],
+  "fixedSource": "d655e0da6dd5f5f7f57d87739fc7af3f83630843",
+  "direct": "5 suites / 78 PASS; typecheck/scoped lint/diff PASS"
 }
