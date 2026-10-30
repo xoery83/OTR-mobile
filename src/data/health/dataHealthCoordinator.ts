@@ -792,8 +792,9 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       );
       if (!state || state.runState === "RUNNING" || !state.lastCheapScanAt) return true;
       const suspicious = await dependencies.database.getFirstAsync<{ count: number }>(
-        `SELECT COUNT(*) AS count FROM sync_operations
-         WHERE owner_user_id = ? AND status <> 'COMPLETED'`,
+        `SELECT COUNT(*) AS count FROM sync_operations operation
+         WHERE operation.owner_user_id = ? AND
+           (operation.status <> 'COMPLETED' OR ${coreReceiptConflictSql})`,
         accountId,
       );
       if ((suspicious?.count ?? 0) > 0) return true;
@@ -1621,10 +1622,19 @@ async function assertScope(
     throw new DataHealthScopeChangedError();
 }
 
+// A completed dispatch can still carry a durable Core conflict requiring user review.
+const coreReceiptConflictSql = `operation.entity_type = 'TRIP_CORE_V2' AND EXISTS (
+  SELECT 1 FROM trip_core_pending_intents core
+  WHERE core.account_id = operation.owner_user_id AND core.trip_id = operation.trip_id
+    AND core.operation_id = operation.id AND core.queue_operation_id = operation.id
+    AND core.state = 'CONFLICT'
+)`;
+
 async function readAutomaticCandidates(database: Database, accountId: string) {
   return database.getAllAsync<AutomaticCandidate>(
     `SELECT 'OPERATION' AS kind, operation.trip_id AS journeyId,
-       operation.status, operation.attempt_count AS attemptCount,
+       CASE WHEN ${coreReceiptConflictSql} THEN 'CONFLICT' ELSE operation.status END AS status,
+       operation.attempt_count AS attemptCount,
        operation.failure_category AS failureCategory,
        operation.next_attempt_at AS nextAttemptAt,
        operation.lease_expires_at AS leaseExpiresAt,
@@ -1634,7 +1644,8 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
      LEFT JOIN sync_operations dependency
        ON dependency.id = operation.dependency_operation_id
       AND dependency.owner_user_id = operation.owner_user_id
-     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
+     WHERE operation.owner_user_id = ? AND
+       (operation.status <> 'COMPLETED' OR ${coreReceiptConflictSql})
      UNION ALL
      SELECT 'ASSET', operation.journey_id, operation.status,
        operation.attempt_count, operation.failure_category,
@@ -1765,7 +1776,8 @@ async function buildManifest(
   const operations = await database.getAllAsync<Operation>(
     `SELECT operation.id, operation.trip_id AS journeyId,
        operation.entity_type AS entityType, operation.entity_id AS entityId,
-       operation.operation_type AS operationType, operation.status,
+       operation.operation_type AS operationType,
+       CASE WHEN ${coreReceiptConflictSql} THEN 'CONFLICT' ELSE operation.status END AS status,
        operation.attempt_count AS attemptCount,
        operation.failure_category AS failureCategory,
        operation.last_error_code AS errorCode,
@@ -1796,7 +1808,8 @@ async function buildManifest(
      LEFT JOIN sync_operations dependency
        ON dependency.id = operation.dependency_operation_id
       AND dependency.owner_user_id = operation.owner_user_id
-     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
+     WHERE operation.owner_user_id = ? AND
+       (operation.status <> 'COMPLETED' OR ${coreReceiptConflictSql})
        ${operationScope.clause}`,
     accountId,
     ...operationScope.values,

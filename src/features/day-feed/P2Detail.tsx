@@ -1,3 +1,4 @@
+import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
 import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
 import { useCallback, useState, useSyncExternalStore } from "react";
@@ -44,6 +45,7 @@ export function P2Detail() {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const { reportManualOutcome } = useTripView();
+  useDetailCloudRefresh(tripId, generation, editing, setRevision);
   useFocusEffect(
     useCallback(() => {
       let active = true;

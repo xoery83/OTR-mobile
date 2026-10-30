@@ -9,6 +9,7 @@ checks=[];created=False
 input_names=['authority.local.sql','staging.local.sql','terminal.local.sql','authority_local_pg.py','authority-fixture.mts','principal_patch.py','execute_local_pg.mts','receipt-journal.local.sql','verify-terminal-receipt.mts','publication.local.sql','publication-local-pg.mts']
 input_bytes={name:(HERE/name).read_bytes() for name in input_names}
 owning_names=['backend/src/guestAdoptionCompositePg.ts','backend/src/guestAdoptionCompositeExecute.ts','backend/src/__fixtures__/tripCoreV2Sql.ts','backend/src/tripCoreV2PgStorage.ts','backend/src/tripCreatePgStorage.ts','backend/src/tripMetadataV2PgStorage.ts','backend/src/tripPersonCloudCreatePg.ts','docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql','backend/src/guestAdoptionTerminalPg.ts','src/domain/auth/guestAdoptionReceipt.ts','backend/src/guestAdoptionPublicationPg.ts','src/data/auth/guestAdoptionReceiptQualification.ts']
+owning_names+=['backend/src/guestAdoptionCompositeStage.ts','backend/src/tripCoreV2PgRead.ts']
 owning_bytes={name:(ROOT/name).read_bytes() for name in owning_names}
 CORE='otr_trip_core_v2_gateway';ROLES=[CORE,'otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_person_command_gateway']
 def docker(*args,input=None):
@@ -309,13 +310,14 @@ try:
  pg=json.loads(sql(call('confirm_and_issue',q(pa)+'::uuid',q(json.dumps(pr))+'::jsonb','true'),CORE))
  with tempfile.TemporaryDirectory(prefix='otr-auth-publication-') as temp:
   pp=Path(temp);(pp/'fixture.json').write_text(json.dumps(pf));(pp/'grant.json').write_text(json.dumps(pg));plan=node(pp/'fixture.json',pp/'grant.json')
-  sql(call('seal_stage',q(pa)+'::uuid',q(plan['canonicalText']),q(plan['sha256'])),CORE)
   (pp/'material.json').write_text(json.dumps({'fixture':pf,'grant':pg,'plan':plan}))
   source=json.loads(json.loads(pf['checkpoint']['canonicalText'])['source']['canonicalText']);pt=source['trips'][0]['create']['tripId']
   def publication(mode):
    r=subprocess.run(['node','--import','tsx',str(HERE/'publication-local-pg.mts'),NAME,DB,str(pp/'material.json'),mode],cwd=ROOT,capture_output=True,text=True,timeout=60)
    assert r.returncode==0,r.stderr
    return json.loads(r.stdout)
+  assert publication('stage')['staged'] is True
+  checks.append('actual Gateway Stage adapter seals through authoritative RPC without private table access')
   for mode in ['missing-core','rollback']:
    outcome=publication(mode)
    assert sql('SELECT count(*) FROM public.trips WHERE id='+q(pt)+';')=='0'
@@ -328,6 +330,8 @@ try:
   checks.append('actual COMMIT response loss reports UNKNOWN while exactly one business dataset and PUBLISHED journal commit')
   checks.append('post-final owning Trip/Metadata/Person mutation entry and unsealed Core op denied while original deferred Metadata COMMIT guard still passes')
   published=publication('commit')
+  assert publication('read')['owningRead'] is True
+  checks.append('fresh normal Core collection reader can read the committed adopted Trip with no live Adoption transaction scope')
   proof=json.loads(sql("SELECT jsonb_build_object('owner',(SELECT created_by FROM public.trips WHERE id="+q(pt)+"),'person',(SELECT id FROM public.journey_members WHERE trip_id="+q(pt)+" AND user_id="+q(pa)+" AND status='linked'),'items',(SELECT jsonb_agg(jsonb_build_object('owner',owner_account_id,'self',self_person_id)) FROM public.itinerary_events WHERE trip_id="+q(pt)+"),'visiblePeople',(SELECT jsonb_agg(person_id) FROM public.trip_item_visibility_people WHERE trip_id="+q(pt)+"));"))
   assert proof['owner']==pa and proof['items']==[{'owner':pa,'self':proof['person']}] and proof['visiblePeople']==[proof['person']]
   checks.append('fresh independent SQL verifies owning Account, linked Owner Person and P1 self/selected-person ACL use the real mapped Person')

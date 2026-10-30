@@ -1,0 +1,278 @@
+{
+  "status": "OWNER_APPROVAL_CANDIDATE_NOT_EXECUTED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "sourceCommit": "41bf461e",
+  "policyAtInstall": "CLOSED",
+  "runtimeAtInstall": "UNMOUNTED_OR_CLOSED",
+  "sourceGuardDependency": {
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+    "md5": "6c7ef0d85cfd8893796ccc53e31f51f0",
+    "oid": "66410",
+    "owner": "postgres",
+    "signature": "public.trip_sustained_import_p1_guard(text, text, jsonb, jsonb, uuid, uuid)",
+    "source": "fresh Auth READ ONLY catalog; Root approved installed version; not patched by Auth"
+  },
+  "publicParents": [
+    {
+      "signature": "public.trip_core_finite_read_state_guard()",
+      "oid": "65713",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": false,
+      "sha256": "abd71a273c13629460c1f9e89e0cee97fc315c1d5d773cb3bfd312363a501154",
+      "beforeMd5": "ef17d1618d87006e8379164244a7645f",
+      "afterMd5": "7385ffe1a4f4851567d8b0767ecf438c"
+    },
+    {
+      "signature": "public.trip_core_finite_scope_allowed(uuid,uuid)",
+      "oid": "65712",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "56a357a0cd3b393f4b501f4faaf5e1b11bb2d23d8d4bbe576b082a8131a88115",
+      "beforeMd5": "2944bd81f8bd72bbe7ecf2c94044cc34",
+      "afterMd5": "a8824ebb570b9a4fdc7fca9eb73fff9a"
+    },
+    {
+      "signature": "public.trip_core_guard_write()",
+      "oid": "65263",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": false,
+      "sha256": "079a42c316055c482230a192134eda5ab8dd160b0c9954b0093c6bccb83cb8dc",
+      "beforeMd5": "3c58afd4336449f895f03dd141eaab32",
+      "afterMd5": "0bbfa71f4f3554e9daffc247f5f80cdf"
+    },
+    {
+      "signature": "public.trip_create_command(uuid,uuid,uuid,jsonb)",
+      "oid": "66158",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "caf7240a987c10a7688b1e3bdca7e833feae8cde11521e38661043cb14a190c7",
+      "beforeMd5": "4322d84a62bbc6d05f0c15d17e37c29d",
+      "afterMd5": "d2bd2a1a10ea73ebe709a1c016b02769"
+    },
+    {
+      "signature": "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)",
+      "oid": "66056",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "fdf9e6f765d2bc772e4b0852c0b60e6ce02b459dc726720a0caf7d295f7fa1d0",
+      "beforeMd5": "e1f0b43c3e064797cf30f6529c9dd259",
+      "afterMd5": "2fc18c1345ab1ae7231a33893745fb52"
+    },
+    {
+      "signature": "public.trip_create_result(uuid,uuid)",
+      "oid": "65709",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "ac12cadd4bf2f66e52c4a731e0c354d45d2005e6b85a69c2bdf2a3826552275a",
+      "beforeMd5": "50e31c3bb0b9b385e8cf764eba5c59fa",
+      "afterMd5": "f850804dd98ebd5f33633498000e9e8a"
+    },
+    {
+      "signature": "public.trip_metadata_finite_scope_allowed(uuid,uuid,uuid)",
+      "oid": "66143",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "4b80ea513bbbee854cd8cf78db3cf3fb9bd6dceb31901ed6fdda8be72ba5848a",
+      "beforeMd5": "7588f600f62851a31fbc34aad99efda0",
+      "afterMd5": "8c7c155fed58eabe0f69700adbb0b756"
+    },
+    {
+      "signature": "public.trip_metadata_snapshot(uuid,uuid,uuid)",
+      "oid": "66144",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "54d3e8792bca37045cc9c9400d381f387494ae3c0a8b9ed1e2bfc76b1070671e",
+      "beforeMd5": "4bb7e25ff9ef1077ecd5cf955bebb331",
+      "afterMd5": "10416fb3c367b19dd14153f86b924aab"
+    },
+    {
+      "signature": "public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)",
+      "oid": "66146",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "c1cd4045f010bf37ca9d420e4d6a82adaa03dca2792fba05e9ba8a2d8c89f7c3",
+      "beforeMd5": "8d9d9397b645847198be42cca5484f61",
+      "afterMd5": "02202beed95675eae199c0c384e3ea5e"
+    },
+    {
+      "signature": "public.trip_metadata_update_result(uuid,uuid)",
+      "oid": "66145",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "6ff491dcd28a39c726a242e222ee46cb092f68b476f0fba92f408c30efd2bef8",
+      "beforeMd5": "df4d8ff6fab2e7313d925b10bab1cff3",
+      "afterMd5": "5d3561a89e23030d9220e8f972393a64"
+    },
+    {
+      "signature": "public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb)",
+      "oid": "66199",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_person_command_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "49eab1430df9c280d5f270e8ecbd1e18e8c3fdfe723585216ce3933f7d4fa25f",
+      "beforeMd5": "c7bfbffe0e2bdcb6acb365db34d576d5",
+      "afterMd5": "11911f00767fa2e88b84f2f1c38f4978"
+    },
+    {
+      "signature": "public.trip_person_cloud_create_result(uuid,uuid,uuid)",
+      "oid": "66200",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_person_command_gateway=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "0541b995f6e1086af3b81f7f520df4c527cf60f33d35cab1bb7228cd6243d8e4",
+      "beforeMd5": "300baf9749d32863eb92b76d8fc9a17f",
+      "afterMd5": "5a42020945936308897884bda75b5f74"
+    },
+    {
+      "signature": "public.trip_person_create_receipt_guard()",
+      "oid": "66196",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": false,
+      "sha256": "b2eadc02e1952f73bf0346d5398b78dc6c3019100b227e8450991f31dafe888b",
+      "beforeMd5": "1d5ed7d68c5477647a624514a19ee847",
+      "afterMd5": "0753eece442dda50bbc63bc23abaa33f"
+    },
+    {
+      "signature": "public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)",
+      "oid": "66180",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "securityDefiner": true,
+      "sha256": "b60851799d70f258ae0f6c509781032e874e61e996a27f014b9c5d6c2926df45",
+      "beforeMd5": "0f3b543bab2431ee35c519ad8ce01ea9",
+      "afterMd5": "44382c655dc52aecdc55ed3869ba51c2"
+    }
+  ],
+  "inputs": {
+    "staging.local.sql": "d9b039f599700f562eb0e9aea91c7ab415b3a4f93354573482871627f30258e3",
+    "terminal.local.sql": "9854cef2c7afda0ebb30ac9fd2ee454b304e848c3040260c746f78cdc8231195",
+    "authority.local.sql": "b9f76b5316f05ae11d0141bc343dfdb7b1873a46440fe93f88278d2ab326e001",
+    "receipt-journal.local.sql": "d6ed6c3aca560e2a7655fb377ac444cba8a497a1aa2d7e4b5a41e42e1d5f1858",
+    "publication.local.sql": "bb2c570f74ac1f7316f20c656c73bdb627a979250f5f9863c69604faf3bfe559",
+    "principal_patch.py": "7fc977589cf240bc548c8ec9ff8da8e6cb2d7deb907f5611fc4acbf2b1039c82"
+  },
+  "rendererSha256": "922b70b2a3122ea8910f253628d6d62b518b0e6676ed5cf9b35dd687c7fee5ef",
+  "scope": "New private Adoption schema/tables/RLS/functions, exact14 existing owning function patches and enumerated EXECUTE deltas; no new roles, role membership, business table grants or production access.",
+  "activation": "NOT included. Runtime mount and finite DEV E2E activation need the exact approved execution scope; commercial enforcement stays disabled.",
+  "rollback": "Close HTTP mount and private policy; retain immutable evidence/source. No DROP or data cleanup. Public-function structural inverse requires separate exact postimage/ACL verification.",
+  "gateId": "fd671463e04c095197e20faaba223ed26eb1ea99d2ad64b207bd06aaaaefde5c",
+  "installSha256": "26f036d4ff4afca6a0580ca0f9a632da8e204dcdbca56442fafa53dac41c113e",
+  "privateTables": [
+    "otr_auth_guest_composite.sealed_stages",
+    "otr_auth_guest_composite.terminal_evidence",
+    "otr_auth_guest_composite.policy",
+    "otr_auth_guest_composite.grants",
+    "otr_auth_guest_composite.transaction_scopes",
+    "otr_auth_guest_composite.terminal_receipts"
+  ],
+  "newFunctionNames": [
+    "otr_auth_guest_composite.account_allowed",
+    "otr_auth_guest_composite.assert_new_trips",
+    "otr_auth_guest_composite.begin_scope",
+    "otr_auth_guest_composite.cancel",
+    "otr_auth_guest_composite.confirm_and_issue",
+    "otr_auth_guest_composite.enter_operation",
+    "otr_auth_guest_composite.guard_terminal_evidence",
+    "otr_auth_guest_composite.has_scope",
+    "otr_auth_guest_composite.ledger_snapshot",
+    "otr_auth_guest_composite.mapped_command",
+    "otr_auth_guest_composite.mutation_allowed",
+    "otr_auth_guest_composite.owning_digest",
+    "otr_auth_guest_composite.principal_allowed",
+    "otr_auth_guest_composite.publication_lock",
+    "otr_auth_guest_composite.publish",
+    "otr_auth_guest_composite.read_scope",
+    "otr_auth_guest_composite.read_state_allowed",
+    "otr_auth_guest_composite.receipt",
+    "otr_auth_guest_composite.receipt_request_grant",
+    "otr_auth_guest_composite.reject_stage_mutation",
+    "otr_auth_guest_composite.scope_allowed",
+    "otr_auth_guest_composite.scope_binding",
+    "otr_auth_guest_composite.seal_stage",
+    "otr_auth_guest_composite.status"
+  ],
+  "executeDeltas": [
+    "GRANT USAGE ON SCHEMA otr_auth_guest_composite TO otr_trip_core_v2_gateway,otr_trip_core_v2_writer;",
+    "GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.confirm_and_issue(uuid,jsonb,boolean),\n otr_auth_guest_composite.seal_stage(uuid,text,text),otr_auth_guest_composite.begin_scope(uuid,uuid,text),\n otr_auth_guest_composite.scope_allowed(uuid,uuid,uuid,text),otr_auth_guest_composite.scope_binding(uuid),\n otr_auth_guest_composite.read_scope(uuid),otr_auth_guest_composite.assert_new_trips(uuid,jsonb),\n otr_auth_guest_composite.ledger_snapshot(uuid,uuid) TO otr_trip_core_v2_gateway;",
+    "GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.scope_allowed(uuid,uuid,uuid,text),otr_auth_guest_composite.mutation_allowed() TO otr_trip_core_v2_writer;",
+    "GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.cancel(uuid,jsonb),otr_auth_guest_composite.status(uuid,jsonb),\n otr_auth_guest_composite.receipt(uuid,jsonb,uuid,text) TO otr_trip_core_v2_gateway;",
+    "GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.publication_lock(uuid,jsonb,text),otr_auth_guest_composite.publish(uuid,jsonb,text) TO otr_trip_core_v2_gateway;",
+    "GRANT EXECUTE ON FUNCTION public.trip_create_finite_scope_allowed(uuid,uuid,uuid),public.trip_metadata_finite_scope_allowed(uuid,uuid,uuid),public.trip_core_finite_scope_allowed(uuid,uuid),public.trip_create_command(uuid,uuid,uuid,jsonb),public.trip_create_result(uuid,uuid),public.trip_metadata_update_command(uuid,uuid,uuid,jsonb),public.trip_metadata_snapshot(uuid,uuid,uuid),public.trip_metadata_update_result(uuid,uuid),public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb),public.trip_person_cloud_create_result(uuid,uuid,uuid) TO otr_trip_core_v2_gateway;"
+  ],
+  "publicDirectExecuteAdditions": [
+    "public.trip_create_command(uuid,uuid,uuid,jsonb)",
+    "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)",
+    "public.trip_create_result(uuid,uuid)",
+    "public.trip_metadata_finite_scope_allowed(uuid,uuid,uuid)",
+    "public.trip_metadata_snapshot(uuid,uuid,uuid)",
+    "public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)",
+    "public.trip_metadata_update_result(uuid,uuid)",
+    "public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb)",
+    "public.trip_person_cloud_create_result(uuid,uuid,uuid)"
+  ],
+  "review": {
+    "status": "independent bounded NO_BLOCKER",
+    "privateInstallVerified": true,
+    "sourceBodiesMatchAcceptedCandidates": true,
+    "executed": false
+  },
+  "ownerApproval": {
+    "status": "EXPLICITLY_APPROVED",
+    "answer": "\u6279\u51c6\u6b64\u7cbe\u786e DEV Gate",
+    "scope": "Exact default-CLOSED DEV install only; Root sole SQL writer",
+    "executed": false
+  }
+}

@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { P2Detail } from "./P2Detail";
 import { lightPalette } from "@/ui/palette";
+vi.mock("./useDetailCloudRefresh", () => ({ useDetailCloudRefresh: vi.fn() }));
 const state = vi.hoisted(() => ({
   hooks: [] as any[],
   cursor: 0,

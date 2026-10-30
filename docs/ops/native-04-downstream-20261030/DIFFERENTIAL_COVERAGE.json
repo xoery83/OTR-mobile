@@ -1,0 +1,30 @@
+{
+  "joinedCandidate": "2d1539aa",
+  "mainParent": "82d5c8b3",
+  "backendDiff": "NONE; exact accepted main Core/HTTP/budgets retained",
+  "coverage": {
+    "Trip": "REAL DEV MetadataV3 receipt/CAS, independent Supabase, same mounted Native list automatic update; Account-specific normal discovery and cold recovery",
+    "P1": "REAL Native B cloud Plan Oct30 20:32 shown after P3 19:00 in Day; existing P1 Cloud/read evidence reused; accepted production Reader regression",
+    "P2": "DETERMINISTIC production accepted Sparse authenticated collection -> SQLite -> Reader/render; real dates/authored fields retained, no fabricated qualification/routes/clocks; historical Manual Cloud evidence reused",
+    "P3": "REAL DEV/iPad remote Create/Edit/cold plus scoped Native conflict/cold and normal B Day/Details 19:00/11:00; prior receipts reused",
+    "P4": "DETERMINISTIC production certified Reader/install/cold and distinct pickup/return fields/roles/identity; existing Manual Cloud evidence reused",
+    "P5": "DETERMINISTIC coherent production certified Reader/cold with existing supported Transport path and TRAIN Core fixtures; no unsupported custom subtype conversion",
+    "P6": "DETERMINISTIC production certified Activity Reader/cold, core start/end fields; no Ticket/Voucher/media scope added"
+  },
+  "checks": {
+    "adapterIdentityLifecycleReadersAndFixes": "10 suites167 PASS",
+    "upstreamSelectorsLifecycleAndMigration74To75": "3 suites57 PASS",
+    "productionMixedP1P6ReaderSparseRentalRenderAndReadFencing": "4 suites34 PASS",
+    "types": "PASS",
+    "uiGuard": "PASS",
+    "independentReview": "Auth limited final current-main difference NO_BLOCKER; independently repeated closest3 suites17 PASS; earlier focused Reviews reused",
+    "credentialScan": "No credential-file diff; no private-key/JWT patterns in33 changed files"
+  },
+  "representativeActualNative": "Normal Account-switch receipt ACCOUNT_SWITCH_E2E.json; external P3 and Trip update receipts. Not six repeated Form E2Es.",
+  "notYetPass": [
+    "Formal server membership revocation/regrant qualification",
+    "Import -> automatic Pull in final unified build",
+    "Final ordinary unified build smoke/upstream check and main publication"
+  ],
+  "noClaim": "Deterministic projection/SQLite coverage is not new real DEV E2E for every family; no physical network outage or Realtime Push claim."
+}

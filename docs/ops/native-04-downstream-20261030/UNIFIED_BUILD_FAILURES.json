@@ -1,0 +1,21 @@
+{
+  "source": "249204db47860cc3b221679d4b98ba398279c970",
+  "scope": "Final ordinary-build smoke; no product or Auth contract changes",
+  "build125Signing": {
+    "actualFailure": "Account and Trip reads unavailable before database migration",
+    "cause": "CODE_SIGNING_ALLOWED=NO omitted simulator Mach-O application-identifier XML/DER present in the installed app",
+    "repair": "Normal ad-hoc simulator signing; restore exactly U9D5C58Z94.com.xoery.otrmobile, no shared group",
+    "actualRetry": "Same B Session opened without Login; cloud Trip/P1/P3 Day/Details restored; SQLite74->75; all89 original queue row hashes unchanged",
+    "noCredentialsCopied": true
+  },
+  "build125Environment": {
+    "actualFailure": "Normal B Create produced a V1 local Trip and dependency-blocked P1 instead of dispatching",
+    "cause": "Expo57 development virtual/env loads .env.local through require.context even with EXPO_NO_DOTENV=1, overriding explicit process environment with retained QA scope",
+    "repairCandidate": "Same-source production-mode embedded JS, static public environment inlining; no dotenv HMR context or retained QA scope",
+    "retainedLocalTrip": "fccebe95-f0c2-4a9d-af8c-69b96c75ac22",
+    "retainedLocalP1": "866ca2b7-b1c5-4477-81e8-ac4db0039bf0",
+    "noClaim": "This V1 local save is not Cloud PASS; original IDs and input remain retained, not silently converted or deleted"
+  },
+  "next": "Ordinary Build126 in-place smoke, normal fresh V2 Trip/P1 upstream, then AD5 accepted Import Reader/cold recovery",
+  "privateEvidence": "/private/tmp/otr-downstream-final-20261030"
+}

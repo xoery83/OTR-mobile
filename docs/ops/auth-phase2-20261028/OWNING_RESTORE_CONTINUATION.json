@@ -1,0 +1,42 @@
+{
+  "goldenSlice": "BLOCKED",
+  "actualProgress": "Source-only normal-JWT stage/publish/recovery ports plus owning Discovery/Core restoration and canonical provisional-slot promotion through existing Auth Repository. No Hosted mount or SQL execution.",
+  "firstRemainingFailure": "Normal nonempty Guest login still requires the initial explicit-target/preflight/publication UI caller and protected DEV runtime activation.",
+  "checks": {
+    "httpTransportVerificationPublication": "independent 5 suites104 PASS before latest transition additions",
+    "sqliteRestore": "12 PASS including transition lease CAS, exact Account cache isolation and input pinning",
+    "publishedSessionInstall": "8 PASS local fixture only, not server publication evidence",
+    "sessionRecovery": "3 real injected RED cases fixed; adjoining2 suites36 PASS including existing empty Guest flow",
+    "isolatedPg": "48 real Gateway checks; current11 candidate and14 owning hashes match; ordinary fresh Core collection after PUBLISHED PASS",
+    "typecheck": "PASS at latest transition implementation checkpoint",
+    "captureBackendBuild": "PASS; no deploy",
+    "joined": "9 suites161 PASS, helper4 PASS, typecheck and both Backend builds PASS"
+  },
+  "reviews": {
+    "httpStageVerification": "independent source NO_BLOCKER",
+    "coreTransitionPort": "Native owning NO_BLOCKER; 12 independent SQLite PASS",
+    "sessionMarkerFailureRepair": "independent3 suites62 PASS before published promotion extension",
+    "publishedPromotion": "independent NO_BLOCKER, 5 suites83 PASS at c6212c5f",
+    "unreviewedNextSlice": "Initial UI publication flow is separate and excluded from this fixed source."
+  },
+  "limits": [
+    "No actual Hosted/Native Adoption E2E PASS",
+    "No new SQL/RLS/GRANT execution",
+    "No source release or Guest database cleanup",
+    "Main and Host Writer remain Root; no device lease"
+  ],
+  "files": {
+    "backend/src/guestAdoptionHttp.ts": "a3c25a39b6e11b519fa6931c3e9001e6d152d64fd21322010a495ed295a66dd4",
+    "backend/src/guestAdoptionCompositeStage.ts": "c416cf5462426394c9e64a522a469c78e088a9b5b6d2f44c88e52c68130352dd",
+    "src/data/api/guestAdoptionContracts.ts": "62fd7b354905ba696b61e90e5e37ce5a74cf4f8998f052eecfc6044414150d83",
+    "src/data/auth/guestAdoptionTransport.ts": "035d8ef2990b31277f8c688e2759fe7b42abf52bef62c81e50c79457daeb0a94",
+    "src/data/auth/guestAdoptionRestore.ts": "543de05e228a5b6ee0a2cf64f14fe4c1607254a19451f1275a11dbe62e29f84c",
+    "src/data/repositories/tripCoreTransitionQualification.ts": "ec62e595c7710fdc6f5c3faf571450aab0300b916f47ee1b8718c1a93895f05d",
+    "src/data/auth/guestVerificationSession.ts": "9e5b958ea2f0410f1ce22abce11974d07bd1ac591530b24c3925c53f5b665525",
+    "src/data/auth/authSessionRepository.ts": "c58b23ea52f88ab0750d01791fb9df036ad2458e5f9367b979cd89106fe9b09e",
+    "src/data/auth/accountSwitchCoordinator.ts": "8391ccb9dc5b8084abab37d0d8466b71e9d09df9e602e1b2a3dfe88788ca64a9",
+    "src/data/auth/guestPublishedSession.ts": "0f750cbc1a4a4453e54ebfa524c21f86b8f1bb70c2168c6641450494dfff22f1"
+  },
+  "sourceCommit": "41bf461e",
+  "acceptedMainMergedInAuth": "c6212c5f"
+}

@@ -1,3 +1,4 @@
+import { loadDevGuestAdoptionRuntime } from "./guestAdoptionRuntime";
 import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 import { createHash } from "node:crypto";
 import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
@@ -133,6 +134,11 @@ export async function loadDevTripCreateRuntime(
     await file.close();
   }
   if (config.version === 3) {
+    const rawCoreConnection = createCorePgConnection(config.corePg);
+    const guestAdoptionRuntime = loadDevGuestAdoptionRuntime(
+      environment,
+      rawCoreConnection,
+    );
     const sustained = createSustainedDevTripPorts(
       {
         create: createTripPgStorage(createTripPgConnection(config.tripPg)),
@@ -140,7 +146,7 @@ export async function loadDevTripCreateRuntime(
           createTripMetadataPgConnection(config.metadataPg),
         ),
         core: createCorePgHttpConnection(
-          createCorePgConnection(config.corePg),
+          rawCoreConnection,
           async (bytes) => createHash("sha256").update(bytes).digest("hex"),
           undefined,
           {
@@ -176,6 +182,7 @@ export async function loadDevTripCreateRuntime(
     };
     return {
       ...sustained,
+      guestAdoptionRuntime,
       tripPersonCloudCreatePort,
       async close() {
         closed = true;

@@ -1,0 +1,96 @@
+{
+  "status": "REAL_DEV_REMOTE_CREATE_IPAD_READ_AND_COLD_PASS_BOUNDED",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "itemId": "fab8ec55-8ded-4c04-aba0-853e68e35f24",
+  "operationId": "eeffb4cf-13ac-4acf-950f-c250249b492f",
+  "receiptId": "51190be7-ac70-4a74-8dfa-06d317b82694",
+  "serverOutcome": "APPLIED",
+  "independentReadback": {
+    "status": "SERVER_VERIFIED",
+    "receiptId": "51190be7-ac70-4a74-8dfa-06d317b82694",
+    "operationId": "eeffb4cf-13ac-4acf-950f-c250249b492f",
+    "itemId": "fab8ec55-8ded-4c04-aba0-853e68e35f24",
+    "outcome": "APPLIED",
+    "intentHash": "PASS",
+    "receiptHash": "PASS",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "itemCount": 1
+  },
+  "hostAuthTool": "420ad968",
+  "hostAuth": "Normal existing-account OTP; separate memory Session; verified original Account; local-scope revoke and refresh-invalid PASS",
+  "receiverBuild": {
+    "mainSource": "2daeab2f9a253c2a2edabad7820f5c9f1b6bda58",
+    "bundleId": "com.xoery.otrmobile.ipadqa",
+    "build": 116,
+    "jsSha256": "095af7c9c788d8b6deb73fbaaba6385aebe0a7c7d3c728724f0e1a6ade005b04",
+    "retainedNative": "93/60/56/54",
+    "deviceFamily": [
+      1,
+      2
+    ],
+    "minimumOs": "16.4",
+    "osTarget": "26.0.1",
+    "profileIncludesTarget": true,
+    "profileLocalProvision": true,
+    "profileExpiryUtc": "2026-11-05T20:20:57Z",
+    "strictCodesignVerify": true,
+    "installed": true,
+    "keychainAccessGroups": [
+      "U9D5C58Z94.com.xoery.otrmobile.ipadqa"
+    ],
+    "urlSchemes": [
+      "otripadqa"
+    ],
+    "googleOauth": "NOT_QUALIFIED_NEW_BUNDLE; DO_NOT_USE",
+    "authRoute": "existing DEV Synthetic password or normal Email OTP",
+    "iphoneModified": false,
+    "pilotModified": false
+  },
+  "receiverInstallDatabaseUuid": "B784E361-A63A-4CA9-8818-0C05EFCE8A57",
+  "receiverLocalCreate": false,
+  "manualRefresh": false,
+  "navigation": "Existing authorized App deep links, because AX Runner unavailable",
+  "observed": {
+    "home": "Remote Stay appears once alongside original P1",
+    "day": "Oct30 checkin18:00; Oct31 checkout10:00",
+    "exactUuidDetails": "Remote Stay; same dates/time; Everyone",
+    "cold": "Actual CoreDevice terminate-existing and relaunch exact-UUID Details; same fields"
+  },
+  "screenshots": [
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build116/first-launch.png",
+      "sha256": "866006f349f1e5f8ba3fd9627d2abef7db3d2a80f4a94f0f2f6ca0fd84d3d52e"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build116/remote-home.png",
+      "sha256": "17955944cf91c4b0b11aef52eb47ac66fa461a0c6bf18a65cc571c624279b73a"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build116/remote-day.png",
+      "sha256": "8b79f2e5c53a318f328e9f6555cde9dd3a1836ef2ef7bf2f1b681d4139e3c855"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build116/remote-detail.png",
+      "sha256": "e487e69b57431c9049efa72fb7cc8590c1ec21cf81d7543bdcbe638da98c6baa"
+    },
+    {
+      "path": "/private/tmp/otr-ipad-native-20261030/build116/remote-cold.png",
+      "sha256": "8cde463c5942541fc6bc74685fe8812238830b705a6b0d72e986cd566211c6cc"
+    }
+  ],
+  "notYetCertified": [
+    "physical offline",
+    "mounted remote Edit",
+    "real local Pending conflict",
+    "cross-account revocation",
+    "direct physical SQLite inspection",
+    "full six-type and Import downstream",
+    "consistent cross-page discovery"
+  ],
+  "deviceDataCopied": false,
+  "iphoneOrAD5Modified": false,
+  "backendConfigChanged": false,
+  "providerCalls": 0
+}

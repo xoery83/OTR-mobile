@@ -1,4 +1,5 @@
 import { localInsertionTime } from "./localInsertionTime";
+import { readCommittedLocalSession } from "@/data/auth/authRepository";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
@@ -109,6 +110,7 @@ import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
 import { acceptedHomeHeader, useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import type { TodayEntry } from "./MyTripsList";
+import { refreshTripFromCloud } from "@/data/sync/tripDownstreamCoordinator";
 import {
   resolvedWorkspaceKind,
   type WorkspaceKind,
@@ -487,10 +489,22 @@ function TripContent({
   useFocusEffect(
     useCallback(() => {
       void Promise.resolve().then(load);
+      if (requested) void refreshTripFromCloud(requested).catch(() => undefined);
       const sub = AppState.addEventListener("change", (state) => {
         if (state === "active") void load();
       });
       const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+        if (!requested && event.discoveryChanged && event.generation === generation) {
+          void readCommittedLocalSession()
+            .then((session) => {
+              if (
+                generation === getAccountGeneration() &&
+                session?.identity?.userId === event.accountId
+              )
+                setRevision((value) => value + 1);
+            })
+            .catch(() => undefined);
+        }
         if (
           event.generation === generation &&
           generation === getAccountGeneration() &&

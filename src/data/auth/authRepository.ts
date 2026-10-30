@@ -18,6 +18,12 @@ const secureStoreAdapter: SecureSessionStorage = {
 };
 
 const authRepository = createAuthRepository(secureStoreAdapter, createUuid, {
+  async preparePublishedGuest(localId, targetAccountId) {
+    const { preparePublishedGuestSession } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("./guestLocalWorkspace") as typeof import("./guestLocalWorkspace");
+    return preparePublishedGuestSession(localId, targetAccountId);
+  },
   async prepareEmptyGuest(localId) {
     // Lazy evaluation preserves the existing Auth/workspace dependency boundary.
     const { openGuestLocalWorkspace } =

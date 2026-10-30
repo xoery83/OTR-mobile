@@ -1,0 +1,37 @@
+{
+  "status": "FIXED_CASE_RECEIVING_RECOVERY_EXECUTED_NATIVE_RESULT_PENDING",
+  "caseSha256": "33a154f354d11495f909b714cad493950790ca492a958dfa44ab3ce9e4b4103c",
+  "requestedAt": "2026-10-30T00:09:03.519Z",
+  "entryExpiresAt": "2026-10-30T00:24:03.519Z",
+  "validation": {
+    "direct": "3 suites / 40 PASS",
+    "independent": "3 suites / 40 PASS",
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "review": "NO_BLOCKER_FIXED_CASE_ONLY"
+  },
+  "fileHashes": {
+    "scripts/auth/resend-inbound-otp-case-recovery.ts": "d34b11731a56d1fbb3733ba730c91d25ba8798c650adb05fe6da2ec52d37d222",
+    "backend/src/authInboundOtpCaseRecovery.test.ts": "998eed9d2c99540cd754b13ec79c8504dd50a03c624314c918258b0cbe3cfa09"
+  },
+  "scope": "Only registered interrupted native-signup case; not general relogin or reconstructed v1 lease",
+  "limits": [
+    "One durable claim before any Receiving IO; never remove on failure/UNKNOWN",
+    "At most one newest20 list and one exact detail GET",
+    "Original recipient/sender/subject and original120s delivery window pinned",
+    "No Supabase send/verify or Host Session",
+    "OTP only returned in memory for Native normal input",
+    "Existing four v1 source bytes unchanged"
+  ],
+  "liveExecution": {
+    "nativeJournalPhase": "NATIVE_UI_OBSERVED_AFTER_VERIFY",
+    "receivingMessageId": "d3d1fe07-aabd-4a4a-a2ba-28c1068922ce",
+    "receivedAt": "2026-10-30T00:09:18.223Z",
+    "claimedAt": "2026-10-30T00:17:33.961Z",
+    "nativeObservedAt": "2026-10-30T00:17:52.850Z",
+    "hostSessionCreated": false,
+    "otpPrinted": false,
+    "nativeAccountAndColdRestore": "PENDING_INDEPENDENT_NATIVE_EVIDENCE"
+  },
+  "keyOrOtpRecorded": false
+}

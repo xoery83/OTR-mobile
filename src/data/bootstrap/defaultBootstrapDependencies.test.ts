@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   selectedJourney: vi.fn(),
   refreshJourney: vi.fn(),
   scheduleHealth: vi.fn(),
+  downstream: vi.fn(),
   appStateListener: null as ((state: string) => void) | null,
   networkListener: null as
     ((state: { isConnected?: boolean; isInternetReachable?: boolean }) => void) | null,
@@ -37,6 +38,9 @@ vi.mock("@/data/auth/authRepository", () => ({
     throw Error("UNEXPECTED_GUEST_IN_ACCOUNT_BOOTSTRAP_TEST");
   },
   requireActiveUserId: async () => mocks.userId,
+}));
+vi.mock("../sync/tripDownstreamCoordinator", () => ({
+  refreshAccountTripReads: mocks.downstream,
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => ({
@@ -112,8 +116,40 @@ describe("default bootstrap sync", () => {
       expiresAt: "2000-01-01T00:00:00Z",
     });
     mocks.listJourneys.mockResolvedValue([]);
+    mocks.downstream.mockResolvedValue(undefined);
     mocks.selectedJourney.mockResolvedValue(null);
     mocks.refreshJourney.mockResolvedValue({ changed: false, incomplete: false });
+  });
+
+  it("automatically pulls on cold/foreground/network and the existing active timer without blocking launch", async () => {
+    vi.useFakeTimers();
+    try {
+      const { resumeOperationalSync, subscribeOperationalSyncLifecycle } =
+        await import("./defaultBootstrapDependencies");
+      const subscription = subscribeOperationalSyncLifecycle();
+      mocks.downstream.mockImplementation(() => new Promise(() => {}));
+      await resumeOperationalSync();
+      expect(mocks.downstream).toHaveBeenCalledTimes(1);
+      mocks.appStateListener?.("background");
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(mocks.downstream).toHaveBeenCalledTimes(1);
+      mocks.appStateListener?.("active");
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mocks.downstream).toHaveBeenCalledTimes(2);
+      mocks.networkListener?.({ isConnected: false });
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(mocks.downstream).toHaveBeenCalledTimes(2);
+      mocks.networkListener?.({ isConnected: true });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mocks.downstream).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(mocks.downstream).toHaveBeenCalledTimes(4);
+      subscription.remove();
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(mocks.downstream).toHaveBeenCalledTimes(4);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("discovers for an expired local Dev session without blocking the existing operational cycle", async () => {

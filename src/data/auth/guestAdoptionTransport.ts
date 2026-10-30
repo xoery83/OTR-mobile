@@ -20,6 +20,17 @@ import {
   type GuestAdoptionReceiptRequest,
 } from "@/domain/auth/guestAdoptionReceipt";
 import { tripCoreSha256Hex } from "@/data/repositories/tripCoreSha256";
+import {
+  guestAdoptionTargetConfirmationHeader,
+  guestAdoptionStageRequestSchema,
+  guestAdoptionStageResultSchema,
+  guestAdoptionPublicationRequestSchema,
+} from "@/data/api/guestAdoptionContracts";
+import { createAccountProfileRepository } from "./accountProfileRepository";
+import { createTripDiscoveryTransport } from "@/data/sync/tripDiscoveryTransport";
+import { createCoreV2Transport } from "@/data/api/tripCoreV2Transport";
+import { guestAdoptionPreparationSchema } from "./guestAdoptionPreparation";
+import type { AccountRequestContext } from "./accountRequestContext";
 import type { LocalSession } from "@/domain/auth/localSession";
 import { guestVerificationSession, readCommittedLocalPrincipal } from "./authRepository";
 import { refreshSupabaseDevSession } from "./devSupabaseAuth";
@@ -38,7 +49,8 @@ const bindingSchema = guestAdoptionPreflightRequestSchema.pick({
   targetAccountId: true,
 });
 
-// Metadata requests only. A grant/status response cannot activate Session or publish data.
+// Original Guest + provisional verified Account only. No method installs launch Session
+// or releases Guest data; publication and owning reads retain their normal server checks.
 export function createGuestAdoptionTransport(
   inputScope: z.input<typeof scopeSchema>,
   inputBinding: z.input<typeof bindingSchema>,
@@ -147,9 +159,85 @@ export function createGuestAdoptionTransport(
     )
       throw Error("GUEST_ADOPTION_BINDING_MISMATCH");
   }
+  const targetScope = Object.freeze({
+    accountId: binding.targetAccountId,
+    generation: scope.generation,
+  });
+  const targetAccount = async () => {
+    assertGeneration();
+    if (options.signal?.aborted) throw Error("REQUEST_CANCELED");
+    const state = await verification.readForLocalCache(binding, scope.generation);
+    assertGeneration();
+    if (state.status !== "SESSION") throw Error("GUEST_ADOPTION_VERIFICATION_REQUIRED");
+    return binding.targetAccountId;
+  };
+  const targetToken = async (
+    request: {
+      expectedUserId?: string;
+      forceRefresh?: boolean;
+      rejectedToken?: string;
+    } = {},
+  ) => {
+    if (request.expectedUserId && request.expectedUserId !== binding.targetAccountId)
+      throw Error("GUEST_ADOPTION_TARGET_MISMATCH");
+    return {
+      userId: binding.targetAccountId,
+      token: await token(request.forceRefresh ?? false, request.rejectedToken),
+    };
+  };
+  const owningOptions = {
+    ...options,
+    fetchImplementation: async (input: RequestInfo | URL, init?: RequestInit) => {
+      await assertGuest();
+      return wire(input, init);
+    },
+  };
+  const profile = createAccountProfileRepository(
+    targetAccount,
+    owningOptions,
+    targetToken,
+  );
+  const discovery = createTripDiscoveryTransport(
+    targetAccount,
+    owningOptions,
+    targetToken,
+  );
+  const core = createCoreV2Transport(
+    targetAccount,
+    tripCoreSha256Hex,
+    owningOptions,
+    targetToken,
+  );
   const canonical = (value: unknown) => canonicalCoreJson(value as Json);
   return {
-    async preflight(raw: GuestAdoptionPreflightRequest) {
+    targetReads: {
+      scope: targetScope,
+      account: targetAccount,
+      async ensureProfile() {
+        const result = await profile.ensure(targetScope);
+        await assertGuest();
+        return result;
+      },
+      discovery,
+      core: {
+        async collection(context: AccountRequestContext) {
+          if (
+            context.accountId !== targetScope.accountId ||
+            context.generation !== targetScope.generation
+          )
+            throw Error("GUEST_ADOPTION_TARGET_MISMATCH");
+          const result = await core.collection(context, 1);
+          await assertGuest();
+          return result;
+        },
+      },
+    },
+    async preflight(
+      raw: GuestAdoptionPreflightRequest,
+      confirmedTargetAccountId: string,
+    ) {
+      if (confirmedTargetAccountId !== binding.targetAccountId)
+        throw Error("GUEST_ADOPTION_TARGET_CONFIRMATION_REQUIRED");
       const request = guestAdoptionPreflightRequestSchema.parse(raw);
       assertBinding(request);
       await assertGuest();
@@ -157,7 +245,10 @@ export function createGuestAdoptionTransport(
         "/v1/auth/guest-adoptions/preflight",
         request,
         guestAdoptionPreflightGrantSchema,
-        { "Idempotency-Key": binding.adoptionId },
+        {
+          "Idempotency-Key": binding.adoptionId,
+          [guestAdoptionTargetConfirmationHeader]: confirmedTargetAccountId,
+        },
       );
       await assertGuest();
       assertBinding(result);
@@ -168,6 +259,62 @@ export function createGuestAdoptionTransport(
       )
         throw Error("GUEST_ADOPTION_RESPONSE_MISMATCH");
       return result;
+    },
+    async stage(raw: z.input<typeof guestAdoptionStageRequestSchema>) {
+      const request = guestAdoptionStageRequestSchema.parse(raw);
+      assertBinding(request.grant);
+      const preparation = guestAdoptionPreparationSchema.parse(
+        JSON.parse(request.preparation.canonicalText),
+      );
+      assertBinding(preparation);
+      if (
+        preparation.inventorySha256 !== request.grant.inventorySha256 ||
+        canonical(preparation) !== request.preparation.canonicalText ||
+        (await tripCoreSha256Hex(
+          new TextEncoder().encode(request.preparation.canonicalText),
+        )) !== request.preparation.sha256 ||
+        new TextEncoder().encode(request.preparation.canonicalText).byteLength !==
+          request.preparation.bytes
+      )
+        throw Error("GUEST_ADOPTION_PREPARATION_CORRUPT");
+      await assertGuest();
+      const result = await client.post(
+        "/v1/auth/guest-adoptions/stage",
+        request,
+        guestAdoptionStageResultSchema,
+        { "Idempotency-Key": binding.adoptionId },
+      );
+      await assertGuest();
+      assertBinding(result);
+      if (
+        result.inventorySha256 !== request.grant.inventorySha256 ||
+        result.grantId !== request.grant.grantId ||
+        result.preparationSha256 !== request.preparation.sha256
+      )
+        throw Error("GUEST_ADOPTION_RESPONSE_MISMATCH");
+      return result;
+    },
+    async publish(raw: z.input<typeof guestAdoptionPublicationRequestSchema>) {
+      const request = guestAdoptionPublicationRequestSchema.parse(raw);
+      assertBinding(request);
+      await assertGuest();
+      const result = await receiptClient.post(
+        "/v1/auth/guest-adoptions/publish",
+        request,
+        guestAdoptionReceiptSchema,
+        { "Idempotency-Key": binding.adoptionId },
+      );
+      await assertGuest();
+      const { planSha256, ...expected } = request;
+      const receipt = await validateGuestAdoptionReceipt(
+        result,
+        expected,
+        tripCoreSha256Hex,
+      );
+      await assertGuest();
+      if (receipt.outcome !== "PUBLISHED" || receipt.planSha256 !== planSha256)
+        throw Error("GUEST_ADOPTION_RESPONSE_MISMATCH");
+      return receipt;
     },
     async cancel(raw: GuestAdoptionStatusRequest) {
       const request = guestAdoptionStatusRequestSchema.parse(raw);

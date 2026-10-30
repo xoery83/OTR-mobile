@@ -2,7 +2,10 @@ import {
   assertAccountTransitionLease,
   type AccountTransitionLease,
 } from "./accountRequestContext";
-import { createGuestVerificationSession } from "./guestVerificationSession";
+import {
+  createGuestVerificationSession,
+  type GuestVerificationBinding,
+} from "./guestVerificationSession";
 import {
   createGuestPrincipalRepository,
   type LaunchIdentity,
@@ -38,17 +41,28 @@ export type EmptyGuestSessionPreparation = {
 export type PreparedSessionInstall = {
   install(lease: AccountTransitionLease, signal?: AbortSignal): Promise<void>;
   release(): void;
+  retainSessionOnFailure?: true;
 };
 export type PrepareEmptyGuestSession = (
   localId: string,
 ) => Promise<EmptyGuestSessionPreparation>;
+export type PublishedGuestSessionPreparation = {
+  binding: GuestVerificationBinding;
+  qualifyLocalCache(lease: AccountTransitionLease): Promise<void>;
+};
 
 export function createAuthRepository(
   storage: SecureSessionStorage,
   createGuestId: () => string = () => {
     throw new Error("Guest creation belongs to the launch boundary.");
   },
-  options: { prepareEmptyGuest?: PrepareEmptyGuestSession } = {},
+  options: {
+    prepareEmptyGuest?: PrepareEmptyGuestSession;
+    preparePublishedGuest?: (
+      localId: string,
+      targetAccountId: string,
+    ) => Promise<PublishedGuestSessionPreparation>;
+  } = {},
 ) {
   const launch = createGuestPrincipalRepository(storage, createGuestId);
   async function readIndex(): Promise<AccountIndex> {
@@ -106,7 +120,8 @@ export function createAuthRepository(
     const claims = identityFromAccessToken(session.accessToken);
     if (!session.identity.userId || (claims && claims.userId !== session.identity.userId))
       throw new Error("SESSION_IDENTITY_MISMATCH");
-    await launch.assertNoGuestAdoption();
+    if (!(await hasCommittedAccount(session.identity.userId)))
+      await launch.assertNoGuestAdoption();
     await launch.markPreviouslySignedIn();
     const index = await readIndex();
     const accounts = index.accounts.filter(
@@ -119,6 +134,14 @@ export function createAuthRepository(
     );
     await writeIndex({ activeUserId: session.identity.userId, accounts });
     await storage.deleteItem(legacySessionStorageKey);
+  }
+
+  async function hasCommittedAccount(userId: string) {
+    const index = await readPrincipalIndex();
+    return (
+      index?.activeUserId === userId &&
+      (await readAccountSession(userId))?.identity?.userId === userId
+    );
   }
 
   const repository = {
@@ -157,9 +180,9 @@ export function createAuthRepository(
     },
 
     async writeLocalSession(session: LocalSession) {
-      await launch.assertNoGuestAdoption();
       if (session.identity)
         return storeAccountSession({ ...session, identity: session.identity });
+      await launch.assertNoGuestAdoption();
       await storage.setItem(legacySessionStorageKey, JSON.stringify(session));
     },
 
@@ -209,6 +232,22 @@ export function createAuthRepository(
       });
     },
   };
+  const guestVerification = createGuestVerificationSession({
+    storage,
+    accountSessionKey: accountSessionStorageKey,
+    async assertGuest(localId) {
+      const index = await readPrincipalIndex();
+      const legacy = await storage.getItem(legacySessionStorageKey);
+      const principal = await launch.readStoredIdentity();
+      if (
+        index !== null ||
+        legacy !== null ||
+        principal?.kind !== "GUEST" ||
+        principal.localId !== localId
+      )
+        throw Error("GUEST_LOCAL_SCOPE_REQUIRED");
+    },
+  });
   return {
     ...repository,
     async readCommittedLocalPrincipal(): Promise<LaunchIdentity | null> {
@@ -227,28 +266,16 @@ export function createAuthRepository(
         throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
       return stored ?? (index ? { kind: "SIGNED_OUT" } : null);
     },
-    guestVerification: createGuestVerificationSession({
-      storage,
-      accountSessionKey: accountSessionStorageKey,
-      async assertGuest(localId) {
-        const index = await readPrincipalIndex();
-        const legacy = await storage.getItem(legacySessionStorageKey);
-        const principal = await launch.readStoredIdentity();
-        if (
-          index !== null ||
-          legacy !== null ||
-          principal?.kind !== "GUEST" ||
-          principal.localId !== localId
-        )
-          throw Error("GUEST_LOCAL_SCOPE_REQUIRED");
-      },
-    }),
+    guestVerification,
     // Preparation opens the canonical Guest workspace before the transition gate.
     // Only the owning zero-data reader may qualify installation under that gate.
     async prepareSessionInstall(session: LocalSession) {
       const candidate = JSON.parse(JSON.stringify(session)) as LocalSession;
       const principal = await launch.readStoredIdentity();
-      if (principal?.kind !== "GUEST")
+      if (
+        principal?.kind !== "GUEST" ||
+        (candidate.identity && (await hasCommittedAccount(candidate.identity.userId)))
+      )
         return {
           install: async (_lease: AccountTransitionLease, signal?: AbortSignal) => {
             if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
@@ -257,11 +284,52 @@ export function createAuthRepository(
           },
           release() {},
         };
-      if (!options.prepareEmptyGuest || !candidate.identity)
-        throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+      if (!candidate.identity) throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
       const localId = principal.localId;
+      if (
+        (await storage.getItem(`otr.mobile.guest-verification.v1.${localId}`)) !== null
+      ) {
+        if (!options.preparePublishedGuest)
+          throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+        const prepared = await options.preparePublishedGuest(
+          localId,
+          candidate.identity.userId,
+        );
+        const binding = { ...prepared.binding };
+        if (
+          binding.sourceGuestLocalId !== localId ||
+          binding.targetAccountId !== candidate.identity.userId
+        )
+          throw Error("GUEST_ADOPTION_TARGET_MISMATCH");
+        return {
+          retainSessionOnFailure: true as const,
+          release() {},
+          async install(lease: AccountTransitionLease, signal?: AbortSignal) {
+            const check = () => {
+              assertAccountTransitionLease(lease);
+              if (signal?.aborted) throw Error("AUTH_ACTIVATION_CANCELED");
+            };
+            check();
+            await prepared.qualifyLocalCache(lease);
+            check();
+            const verified = await guestVerification.readForTransition(binding, lease);
+            if (verified.status !== "SESSION" || !verified.session.identity)
+              throw Error("GUEST_ADOPTION_VERIFICATION_REQUIRED");
+            check();
+            // Promote the existing canonical slot; no Token/Keychain copy or source release.
+            await writeIndex({
+              activeUserId: binding.targetAccountId,
+              accounts: [verified.session.identity],
+            });
+            await launch.markPreviouslySignedIn();
+          },
+        };
+      }
+      if (!options.prepareEmptyGuest) throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
       const prepared = await options.prepareEmptyGuest(localId);
       return {
+        // A committed Guest-origin index cannot be rolled back by deleting its credential.
+        retainSessionOnFailure: true as const,
         release: () => prepared.release(),
         install: async (lease: AccountTransitionLease, signal?: AbortSignal) => {
           const assertNotCanceled = () => {

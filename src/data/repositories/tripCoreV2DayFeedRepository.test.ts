@@ -318,7 +318,7 @@ async function pull(
   const handler = createDevBackendHandler({
     gateway: {
       validateAccessToken: async (token: string) =>
-        token === "fixture" ? { id: f.account() } : null,
+        token === "fixture" ? { id: f.account(), accountClass: "NORMAL_ACCOUNT" } : null,
       canReadTrip: async (a: string, t: string) => a === who.accountId && t === trip,
     } as unknown as DevBackendGateway,
     coreConnection: {

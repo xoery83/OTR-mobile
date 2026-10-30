@@ -21,7 +21,8 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
+vi.mock("react-native", () => ({ AppState: { currentState: "active" } }));
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import {
@@ -143,6 +144,134 @@ async function collection(
   );
 }
 describe("Core SQLite54 account partition and durable offline foundation", () => {
+  it("pulls another client's P3 Create/Edit/Skip, survives SQLite reopen and preserves a competing local intent", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "otr-downstream-p3-"));
+    folders.push(folder);
+    const path = join(folder, "local.sqlite");
+    const f = fixture(path),
+      context = await f.repo.captureContext(trip);
+    const { refreshCoreDownstream } = await import("../sync/tripDownstreamCoordinator");
+    const create = {
+      ...sparse(),
+      command: "CREATE_ITEM",
+      payload: {
+        family: "P3",
+        core: { title: "Remote stay" },
+        schedule: {
+          start: coreDateBoundary("2026-12-14"),
+          end: coreDateBoundary("2026-12-17"),
+        },
+        ...coreDefaults("member"),
+      },
+    };
+    let graph = applyCoreCommand(emptyCoreGraph(), create, actor, stamp).graph;
+    const epoch = randomUUID();
+    const read = (revision: number) => ({
+      collection: async () =>
+        buildCoreActorCollection(
+          graph,
+          actor,
+          { epoch, revision, accessRevision: 1, generatedAt: stamp },
+          [
+            {
+              person_id: person,
+              account_id: account,
+              active: true,
+              participating: true,
+              revision: 1,
+            },
+          ],
+          hash,
+        ),
+    });
+    expect(await refreshCoreDownstream(f.repo, context, read(1))).toBe(true);
+    const local = {
+      ...sparse(),
+      command: "SET_ITEM_TEXT",
+      baseVector: [{ kind: "ITEM", id: item, revision: 1 }],
+      payload: { title: "Unsent local name" },
+    };
+    await f.repo.enqueue(context, local);
+    const queued = f.sql.prepare("SELECT id,payload_json FROM sync_operations").all();
+    const remote = {
+      ...local,
+      operationId: randomUUID(),
+      payload: { title: "Remote renamed stay" },
+    };
+    graph = applyCoreCommand(graph, remote, actor, stamp).graph;
+    expect(await refreshCoreDownstream(f.repo, context, read(2))).toBe(true);
+    expect(f.sql.prepare("SELECT id,payload_json FROM sync_operations").all()).toEqual(
+      queued,
+    );
+    expect((await f.repo.pending(context))[0].command.payload).toEqual(local.payload);
+    f.sql.close();
+    const cold = fixture(path, false),
+      coldContext = await cold.repo.captureContext(trip);
+    expect(
+      (await cold.repo.acceptedSnapshot(coldContext))?.graph.itinerary_events[0].title,
+    ).toBe("Remote renamed stay");
+    expect((await cold.repo.pending(coldContext))[0].command.operationId).toBe(
+      local.operationId,
+    );
+    graph = applyCoreCommand(
+      graph,
+      {
+        ...remote,
+        operationId: randomUUID(),
+        command: "SET_ITEM_STATUS",
+        baseVector: [{ kind: "ITEM", id: item, revision: 2 }],
+        payload: { status: "skipped" },
+      },
+      actor,
+      stamp,
+    ).graph;
+    expect(await refreshCoreDownstream(cold.repo, coldContext, read(3))).toBe(true);
+    const { createCoreP6DayFeedReader } = await import("./tripCoreV2P6DayFeedRepository");
+    expect((await createCoreP6DayFeedReader(cold.repo)(trip))?.projection.items).toEqual(
+      [],
+    );
+    expect((await cold.repo.pending(coldContext))[0].command.operationId).toBe(
+      local.operationId,
+    );
+    expect(
+      cold.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get(),
+    ).toEqual({ n: 0 });
+  });
+  it("reads a certified remote Trip without inventing a local Trip Create", async () => {
+    const f = fixture();
+    const context = await f.repo.captureContext(trip);
+    const bundle = await collection();
+    const { refreshCoreDownstream } = await import("../sync/tripDownstreamCoordinator");
+    expect(
+      await refreshCoreDownstream(f.repo, context, { collection: async () => bundle }),
+    ).toBe(true);
+    const { createCoreP6DayFeedReader } = await import("./tripCoreV2P6DayFeedRepository");
+    const read = await createCoreP6DayFeedReader(f.repo)(trip);
+    expect(read?.sourceStatus).toBe("CURRENTLY_MATCHES_SOURCE");
+    expect(read?.projection.items.map((row) => row.itemId)).toEqual([item]);
+    expect(
+      f.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get(),
+    ).toEqual({ n: 0 });
+    expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toEqual({
+      n: 0,
+    });
+    const generation = f.sql
+      .prepare("SELECT refresh_generation FROM trip_core_scopes")
+      .get();
+    expect((await f.repo.acceptedSnapshot(context))?.certificate).toMatchObject({
+      epoch: bundle.manifest.epoch,
+      access_revision: bundle.manifest.accessRevision,
+      roster_hash: bundle.manifest.participatingRosterHash,
+      actor_person_binding_hash: bundle.manifest.actorPersonBindingHash,
+      ordinary_order_version: bundle.manifest.ordinaryOrderVersion ?? 0,
+    });
+    expect(
+      await refreshCoreDownstream(f.repo, context, { collection: async () => bundle }),
+    ).toBe(false);
+    expect(
+      f.sql.prepare("SELECT refresh_generation FROM trip_core_scopes").get(),
+    ).toEqual(generation);
+  });
   it("redacts private Source addresses before actor-specific read hashing while retaining accepted facts", async () => {
     const graph = applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph;
     const ref = "track-c/field-evidence/" + randomUUID() + "/ORIGIN.local_date";

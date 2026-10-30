@@ -33,3 +33,12 @@ Empty-registry locks release before Account/recovery UI bootstrap and before any
 network restart, with idempotent finally cleanup for failed preparation or stale
 transitions. No database schema, role, GRANT, RLS, backend authority or native
 library changes are included.
+
+30 October failure recovery: the existing Guest-origin preparation marks recovery
+as retain-only. A failure before the visibility index keeps Guest; an index write
+that committed before an error retains its canonical Account credential. A strict
+current index plus matching canonical Account slot may complete a failed launch
+marker on ordinary same-Account retry/refresh. A different Account and an
+uncommitted Guest remain rejected. Ordinary signed-out activation rollback is
+unchanged. Three injected failure cases and the existing empty-install suite
+cover this boundary; it does not qualify nonempty Adoption.

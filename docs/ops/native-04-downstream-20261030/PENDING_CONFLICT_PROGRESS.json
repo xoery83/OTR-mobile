@@ -1,0 +1,64 @@
+{
+  "status": "REAL_PENDING_PRESERVED_SERVER_CONFLICT_RECEIPT_BLOCKED",
+  "device": "OTR Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "18f3680f-6d3a-4e97-8b1b-898064393831",
+  "itemId": "dc279672-5838-40e2-84ab-3f6cda519e8d",
+  "nativeCreate": {
+    "operationId": "856b0c73-5341-4430-9d92-556a1057cd11",
+    "receiptId": "601b2cd6-f2f7-40c2-9d3d-e665da3fc207",
+    "outcome": "APPLIED",
+    "independentCanonicalIntentAndReceiptHash": "PASS"
+  },
+  "localPending": {
+    "operationId": "cc954486-ca88-4a52-8ca6-63582b703a71",
+    "baseRevision": 1,
+    "title": "Native04 Local Pending Stay",
+    "canonicalBytesSha256": "0f8703d5600aba69c377ac7399f1eb21011c6080697f0597dacfd89a2f54c777",
+    "preservedAcross": ["save", "actual process cold restart", "peer mutation", "transport restoration", "ordinary Build120 in-place update"],
+    "state": "BLOCKED",
+    "queueStatus": "RETRYABLE",
+    "serverReceipt": "ABSENT_AT_INDEPENDENT_READBACK",
+    "appliedOrSynced": false
+  },
+  "peerEdit": {
+    "operationId": "47e90d1e-1463-4e41-a4eb-5b80c82da353",
+    "receiptId": "99067b68-36f0-4a17-9167-2ad218745765",
+    "outcome": "APPLIED",
+    "title": "Native04 Remote Conflict Stay",
+    "semanticRevision": 2,
+    "independentCanonicalIntentAndReceiptHash": "PASS",
+    "acceptedSqliteAfterRestoration": "SAME_ITEM_REMOTE_REVISION_2",
+    "serverItemCount": 1
+  },
+  "failure": {
+    "capabilities": "503 CORE_EXECUTION_UNAVAILABLE",
+    "receipt": "503 CORE_EXECUTION_UNAVAILABLE",
+    "collection": "200 revision3",
+    "diagnosticCommit": "e06c9c68",
+    "validation": "2 suites27PASS/types/lint/diffcheck",
+    "independentSourceReview": "Auth NO_BLOCKER; independent test rerun sandbox-blocked, not claimed",
+    "deployment": "NOT_YET_DEPLOYED_AT_THIS_RECEIPT",
+    "rootCause": "NOT_YET_PROVEN"
+  },
+  "testBoundary": {
+    "outage": "Scoped existing transport fault hook in private Build119; not physical network disconnection",
+    "restoration": "Build120 ordinary business source149f73aa, JS e03d903a7ddf991a26ab4fe6c6fba4db7317ecead851ddc6788299adf1b88be2; no QA runtime hook/fault flag",
+    "schema": 74,
+    "oldTripsRetained": 2,
+    "dataContainer": "OS relocated UUID during in-place install; no unchanged-container-UUID claim",
+    "sessionCopyOrDatabaseCopyOrUninstall": false,
+    "manualQueueRewriteOrNewOperationForRetry": false
+  },
+  "accountNegatives": {
+    "privateItemEdit": "Actual normal Backend 404 NOT_VISIBLE; initial helper omitted fallback code so its summary remains UNCONFIRMED",
+    "privateTripRead": "REQUEST_TIMEOUT; not PASS",
+    "crossTripTargetEdit": "503 CORE_CAPABILITY_CLOSED; not ACL PASS",
+    "independentProbeReceiptCount": 0,
+    "foreignItemRevisionUnchanged": 4,
+    "nativeAccountSwitchAndRevocation": "NOT_YET_TESTED"
+  },
+  "privateArtifacts": "/private/tmp/otr-ipad-native-20261030/downstream/",
+  "independentReadback": "/private/tmp/otr-ipad-native-20261030/independent-readback/native04-pending-conflict.json",
+  "remaining": ["formal Conflict receipt and existing Review path", "legal status owning capability", "authoritative revocation", "Account switch", "Trip/six-family/Import downstream", "main integration"]
+}

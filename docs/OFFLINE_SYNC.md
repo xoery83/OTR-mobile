@@ -18,6 +18,19 @@ Bundled cover selection remains an independent unsynced device preference.
 
 Offline-first is a product requirement, not an implementation detail. The local database is the mobile source of truth. Cloud is a sync target. Opening the app must also be offline-tolerant: a valid local session and cached SQLite data are enough to enter the app.
 
+## Native-04 automatic certified Trip reads (candidate)
+
+Normal committed Accounts reuse existing Backend discovery/complete Core collections,
+Repository accepted-mirror transactions and operational notifications. Cold activation,
+foreground/network restoration and Trip entry schedule nonblocking, serialized reads;
+the existing active timer checks them every30 seconds. Duplicate triggers coalesce,
+unchanged versions avoid SQLite writes and read failures retain local data. Local
+Pending/UNKNOWN/receipts/drafts/outbox remain separate; Pull never authors a mutation.
+Discovery summaries alone never grant Core/creator authority. A paged omission or a
+generic HTTP failure cannot revoke or delete a Trip. No new durable change cursor or
+permission expansion is claimed. Actual DEV/iPad closure is tracked in
+`ops/native-04-downstream-20261030/IMPLEMENTATION_STAGE1.md`.
+
 ## Core Flow
 
 ```text

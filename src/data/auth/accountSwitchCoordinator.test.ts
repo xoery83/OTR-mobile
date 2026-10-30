@@ -437,3 +437,105 @@ describe("Account recovery transition", () => {
     expect(active).toBeNull();
   });
 });
+
+it.each(["after-index-cancel", "launch-marker-failure", "before-index-failure"])(
+  "retains the Guest-origin visibility commit or original Guest after %s",
+  async (failure) => {
+    const entries = new Map<string, string>();
+    const guestId = "10000000-0000-4000-8000-000000000099";
+    let injecting = true;
+    entries.set(
+      "otr.mobile.launch.v1",
+      JSON.stringify({ version: 1, kind: "GUEST", localId: guestId }),
+    );
+    const cancel = new AbortController();
+    const repository = createAuthRepository(
+      {
+        getItem: async (key) => entries.get(key) ?? null,
+        setItem: async (key, value) => {
+          if (
+            injecting &&
+            key === "otr.mobile.accounts.v2" &&
+            failure === "before-index-failure"
+          )
+            throw Error("INDEX_WRITE_FAILED");
+          if (
+            injecting &&
+            key === "otr.mobile.launch.v1" &&
+            failure === "launch-marker-failure"
+          )
+            throw Error("MARKER_WRITE_FAILED");
+          entries.set(key, value);
+          if (key === "otr.mobile.accounts.v2" && failure === "after-index-cancel")
+            cancel.abort();
+        },
+        deleteItem: async (key) => {
+          entries.delete(key);
+        },
+      },
+      undefined,
+      {
+        prepareEmptyGuest: async () => ({
+          qualify: async () => ({ assertCurrent: async () => {} }),
+          release() {},
+        }),
+      },
+    );
+    const clearSession = vi.fn(repository.clearLocalSession);
+    const coordinator = createAccountSwitchCoordinator({
+      pauseSync: async () => {},
+      restartSync: async () => {},
+      readSession: repository.readAdoptedLocalSession,
+      writeSession: repository.writeLocalSession,
+      prepareSessionInstall: repository.prepareSessionInstall,
+      clearSession,
+      selectAccount: repository.selectAccount,
+      adoptLocalState: async () => {},
+      clearInMemoryState: async () => {},
+      bootstrapAccount: async () => {},
+    });
+    await expect(
+      coordinator.activateSession(
+        session("user-b"),
+        getAccountGeneration(),
+        cancel.signal,
+      ),
+    ).rejects.toThrow();
+    expect(clearSession).not.toHaveBeenCalled();
+    if (failure === "before-index-failure") {
+      expect(await repository.readCommittedLocalPrincipal()).toEqual({
+        kind: "GUEST",
+        localId: guestId,
+      });
+      expect(entries.has("otr.mobile.session.v2.user-b")).toBe(false);
+    } else {
+      expect(await repository.readCommittedLocalPrincipal()).toEqual({
+        kind: "ACCOUNT",
+        accountId: "user-b",
+      });
+      expect(
+        (
+          await createAuthRepository({
+            getItem: async (key) => entries.get(key) ?? null,
+            setItem: async () => {},
+            deleteItem: async () => {},
+          }).readAdoptedLocalSession()
+        )?.identity?.userId,
+      ).toBe("user-b");
+      injecting = false;
+      if (failure === "launch-marker-failure") {
+        await expect(repository.writeLocalSession(session("user-c"))).rejects.toThrow(
+          "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+        );
+        await repository.writeLocalSession({
+          ...session("user-b"),
+          refreshToken: "renewed",
+        });
+        expect(JSON.parse(entries.get("otr.mobile.launch.v1")!).kind).toBe("SIGNED_OUT");
+        expect((await repository.readAdoptedLocalSession())?.refreshToken).toBe(
+          "renewed",
+        );
+      }
+    }
+  },
+);

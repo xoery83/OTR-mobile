@@ -1,0 +1,24 @@
+{
+  "status": "REAL_NATIVE_MOUNTED_REMOTE_TRIP_UPDATE_PASS",
+  "actualFailure": "After normal A3f to B1f Native OTP login, B Discovery/Core rows arrived automatically but mounted My Trips remained empty. Parent incremented refreshKey; LocalTripWorkspace did not observe it for loading.",
+  "minimalFix": "Existing LocalTripWorkspace read effect also depends on existing refreshKey; existing generation/ticket/cleanup fences retained. No Auth, Queue or Backend change.",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "externalOperationId": "241fc8c8-6f38-420d-8442-56eae2928152",
+  "externalTransport": "Existing normal Metadata V3 CAS and receipt-first through fresh normal OTP Host Session; own Session local-revoke/refresh-invalid verified",
+  "metadataRevision": { "before": 1, "after": 2 },
+  "name": "iPad First Account 1030 · Remote",
+  "independentSupabaseReadback": "PASS: exact Trip ID, creator Account and name",
+  "native": {
+    "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+    "bundleId": "com.xoery.otrmobile",
+    "privateBuild": 124,
+    "jsSha256": "9afda3a3fbf967a9866d61b755c0e6ad0a5041832ba65daa00d3d74d4d7e6f07",
+    "result": "Same mounted My Trips automatically showed remote name without manual refresh or re-entry",
+    "manualRefresh": false,
+    "newQueueOrAuthority": false
+  },
+  "validation": "58 existing Workspace tests, types, targeted lint, UI guard PASS; independent Auth limited source Review NO_BLOCKER",
+  "privateEvidenceRoot": "/private/tmp/otr-ipad-native-20261030",
+  "limits": "Build124 retains reviewed historical mutation quarantine and Native98. This is not full ordinary all-queue/main deployment; A to B to A overall and cold acceptance are tracked separately."
+}

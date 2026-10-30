@@ -1,3 +1,4 @@
+import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { Alert, Linking, ScrollView, StyleSheet } from "react-native";
@@ -43,6 +44,7 @@ export function P3Detail() {
   const [failed, setFailed] = useState(false);
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
+  useDetailCloudRefresh(tripId, generation, editing, setRevision);
   useFocusEffect(
     useCallback(() => {
       let active = true;

@@ -47,6 +47,13 @@ import { createTripLocalManualReader } from "../repositories/tripLocalManualRead
 import { createTripDayFeedReader } from "../repositories/tripDayFeedRepository";
 
 type GuestDatabase = CoreDatabase & MigrationDatabase;
+export async function preparePublishedGuestSession(
+  localId: string,
+  targetAccountId: string,
+) {
+  const published = await import("./guestPublishedSession");
+  return published.preparePublishedGuestSession(localId, targetAccountId);
+}
 // One process-local fence across openers; publication recovery is a separate durable contract.
 const inventoryFreezes = new Map<string, { token: symbol; generation: number }>();
 

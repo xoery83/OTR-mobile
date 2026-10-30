@@ -27,6 +27,8 @@ import {
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
 import { authenticateDevAccount } from "@/data/auth/devAccountAuthentication";
 import { EmailOtpSignIn } from "@/features/auth/EmailOtpSignIn";
+import { GuestAdoptionPanel } from "@/features/auth/GuestAdoptionPanel";
+import type { LocalSession } from "@/domain/auth/localSession";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 
 import { UiTextInput as TextInput } from "@/ui/forms";
@@ -58,6 +60,11 @@ export function AccountManagementScreen({ authBoundary = false }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showLogin, setShowLogin] = useState(authBoundary);
+  const [adoption, setAdoption] = useState<{
+    session: LocalSession;
+    generation: number;
+    signal: AbortSignal;
+  } | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -270,13 +277,49 @@ export function AccountManagementScreen({ authBoundary = false }) {
           ) : null}
         </View>
 
-        {showLogin && !devSelector ? (
+        {adoption ? (
+          <GuestAdoptionPanel
+            onBusyChange={setBusy}
+            session={adoption.session}
+            generation={adoption.generation}
+            signal={adoption.signal}
+            onCancel={() => {
+              setAdoption(null);
+              setShowLogin(false);
+            }}
+            onComplete={(session, generation) =>
+              accountSwitch
+                .activateSession(session, generation, adoption.signal)
+                .then(() => undefined)
+            }
+            onFinished={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace(returnTo as never);
+            }}
+          />
+        ) : null}
+
+        {showLogin && !devSelector && !adoption ? (
           <EmailOtpSignIn
             onBusyChange={setBusy}
             onCancel={() => setShowLogin(false)}
             onAuthenticated={async (session, generation) => {
               const signal = screenScope.current.signal;
-              await accountSwitch.activateSession(session, generation, signal);
+              try {
+                await accountSwitch.activateSession(session, generation, signal);
+              } catch (error) {
+                if (
+                  !signal.aborted &&
+                  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
+                  process.env.EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED === "true" &&
+                  error instanceof Error &&
+                  error.message === "GUEST_ADOPTION_PREFLIGHT_REQUIRED"
+                ) {
+                  setAdoption({ session, generation, signal });
+                  return;
+                }
+                throw error;
+              }
               if (signal.aborted) return;
               if (router.canGoBack()) router.back();
               else router.replace(returnTo as never);

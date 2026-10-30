@@ -211,7 +211,7 @@ it.each(["before", "after"])(
     await expect(f.coordinator.activateSession(f.session)).rejects.toThrow(
       "INDEX_WRITE_FAILED",
     );
-    expect(f.values.has(`otr.mobile.session.v2.${f.account}`)).toBe(false);
+    expect(f.values.has(`otr.mobile.session.v2.${f.account}`)).toBe(mode === "after");
     await expect(f.coordinator.activateSession(f.session)).resolves.toMatchObject({
       identity: { userId: f.account },
     });

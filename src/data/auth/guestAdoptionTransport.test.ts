@@ -124,7 +124,9 @@ async function fixture() {
 }
 it("uses only provisional bearer for strict metadata requests while launch remains Guest", async () => {
   const f = await fixture();
-  expect((await f.transport.preflight(f.request)).targetAccountId).toBe(f.accountId);
+  expect((await f.transport.preflight(f.request, f.accountId)).targetAccountId).toBe(
+    f.accountId,
+  );
   expect(f.wire.mock.calls[0][1]!.headers).toMatchObject({
     Authorization: `Bearer ${f.initial.accessToken}`,
   });
@@ -139,7 +141,7 @@ it("uses only provisional bearer for strict metadata requests while launch remai
 it("pins constructor binding and request resources before any asynchronous work", async () => {
   const f = await fixture();
   f.binding.targetAccountId = randomUUID();
-  const pending = f.transport.preflight(f.request);
+  const pending = f.transport.preflight(f.request, f.accountId);
   f.request.resources.trips = 999;
   const result = await pending;
   expect(result.targetAccountId).toBe(f.accountId);
@@ -155,7 +157,7 @@ it.each(["binding", "secret field", "same UUID Account", "generation"])(
       Object.assign(f.request, { accessToken: "unit-forbidden" });
     if (mode === "same UUID Account") f.leave();
     if (mode === "generation") advanceAccountGeneration();
-    await expect(f.transport.preflight(f.request)).rejects.toThrow();
+    await expect(f.transport.preflight(f.request, f.accountId)).rejects.toThrow();
     expect(f.wire).not.toHaveBeenCalled();
     await f.assertGuest();
   },
@@ -195,7 +197,7 @@ it.each(["foreign target", "foreign hash", "wrong counts", "expired"])(
         ).toISOString(),
       }),
     );
-    await expect(f.transport.preflight(f.request)).rejects.toThrow();
+    await expect(f.transport.preflight(f.request, f.accountId)).rejects.toThrow();
     await f.assertGuest();
   },
 );
@@ -215,7 +217,7 @@ it("coalesces 401 refresh into the same provisional slot without installing an A
       }),
   );
   const requests = [
-    f.transport.preflight(f.request),
+    f.transport.preflight(f.request, f.accountId),
     f.transport.status(f.statusRequest),
   ];
   await vi.waitFor(() => expect(f.refresh).toHaveBeenCalledOnce());
@@ -255,7 +257,7 @@ it("keeps missing Backend authority closed with no upload or Account adoption", 
       { status: 503 },
     ),
   );
-  await expect(f.transport.preflight(f.request)).rejects.toMatchObject({
+  await expect(f.transport.preflight(f.request, f.accountId)).rejects.toMatchObject({
     kind: "http",
     status: 503,
   });
@@ -423,4 +425,74 @@ it("keeps Guest state when cancellation is UNKNOWN without creating another atte
   await expect(f.transport.cancel(f.statusRequest)).rejects.toThrow();
   expect(f.wire).toHaveBeenCalledOnce();
   await f.assertGuest();
+});
+
+it("requires explicit target confirmation before preflight network access", async () => {
+  const f = await fixture();
+  await expect(f.transport.preflight(f.request, randomUUID())).rejects.toThrow(
+    "CONFIRMATION_REQUIRED",
+  );
+  expect(f.wire).not.toHaveBeenCalled();
+  await f.assertGuest();
+});
+it("reuses normal self-Profile bootstrap with provisional credentials without installing Account", async () => {
+  const f = await fixture();
+  f.wire.mockImplementationOnce(async (url) => {
+    expect(String(url)).toBe("https://api.example.test/v1/account/profile/bootstrap");
+    return Response.json({
+      schemaId: "otr.auth.account-profile-bootstrap/1",
+      accountId: f.accountId,
+      ready: true,
+    });
+  });
+  expect((await f.transport.targetReads.ensureProfile()).accountId).toBe(f.accountId);
+  await f.assertGuest();
+});
+it("can supply the verified target getter inside the existing repository apply gate", async () => {
+  const f = await fixture();
+  const { withAccountApplyGate } = await import("./accountRequestContext");
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const result = await withAccountApplyGate(async () => {
+    try {
+      return await Promise.race([
+        f.transport.targetReads.account(),
+        new Promise<"GATE_TIMEOUT">((resolve) => {
+          timer = setTimeout(() => resolve("GATE_TIMEOUT"), 100);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  });
+  expect(result).toBe(f.accountId);
+  await f.assertGuest();
+});
+it("keeps target cache and HTTP reads fenced after the source generation changes", async () => {
+  const f = await fixture();
+  advanceAccountGeneration();
+  await expect(f.transport.targetReads.account()).rejects.toThrow();
+  await expect(f.transport.targetReads.ensureProfile()).rejects.toThrow();
+  expect(f.wire).not.toHaveBeenCalled();
+});
+
+it("rejects a preparation for another target before uploading its source", async () => {
+  const f = await fixture();
+  const { seal } =
+    await import("../../../backend/src/guestAdoptionCompositePlan.fixture");
+  const grant = await f.transport.preflight(f.request, f.accountId);
+  f.wire.mockClear();
+  const preparation = seal({
+    schemaId: "otr.auth.guest-adoption-recovery/1",
+    sourceKind: "GUEST",
+    checkpoint: "PREPARED",
+    ...f.binding,
+    targetAccountId: randomUUID(),
+    inventorySha256: f.request.inventorySha256,
+    tripIds: [],
+    drafts: [],
+  });
+  await expect(f.transport.stage({ grant, preparation })).rejects.toThrow(
+    "BINDING_MISMATCH",
+  );
+  expect(f.wire).not.toHaveBeenCalled();
 });

@@ -1,0 +1,56 @@
+{
+  "status": "INDEPENDENT_NO_BLOCKER_NOT_HOSTED_E2E",
+  "sourceBase": "8383f1d1",
+  "goldenSlice": "Existing real Guest Trip/P1 -> normal Native OTP -> explicit target -> owning publication -> normal restore -> cold recovery",
+  "scope": {
+    "project": "tuqigdxrvrerfewsxqgm",
+    "normalAccount": "one configured UUID after normal JWT validation",
+    "sourceGuestLocalId": "one configured UUID",
+    "maximumFutureMutationWindowMinutes": 30,
+    "expiredRestart": "bound status/receipt/cancel only",
+    "default": "CLOSED"
+  },
+  "changes": [
+    "reuse same raw CorePgConnection for existing wrapper and Auth ports",
+    "forward optional runtime through existing Capture startup",
+    "normal authenticated account filter before HTTP ports",
+    "existing exact Auth route body bounds before Node buffering"
+  ],
+  "validation": {
+    "runtimeRoutingHttpTripRuntime": "4 suites 58 PASS",
+    "startupLoopback": "10 PASS",
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "captureBackendBuild": "PASS",
+    "focusedEslint": "PASS"
+  },
+  "independentFinding": {
+    "expiredConfigRestart": "fixed: expired scope preserves bound recovery and cannot run preflight/stage/publish"
+  },
+  "hostedSql": {
+    "gateCommit": "495b6cb6",
+    "installSHA256": "26f036d4ff4afca6a0580ca0f9a632da8e204dcdbca56442fafa53dac41c113e",
+    "ownerApproval": "explicit exact DEV Gate",
+    "executedBy": "Root",
+    "postcheck": "POST_INSTALL_MATCH_DEFAULT_CLOSED",
+    "policyEnabled": false
+  },
+  "pending": [
+    "independent final review",
+    "Root serialized Host deploy",
+    "normal Native OTP and scoped QA window",
+    "actual publication/Supabase readback/cold/negatives"
+  ],
+  "notPerformed": [
+    "Auth Host writes",
+    "new protected SQL",
+    "device install or access",
+    "Session/Keychain/DB copy"
+  ],
+  "independentReview": {
+    "result": "NO_BLOCKER",
+    "tests": "3 suites 33 PASS",
+    "reviewer": "auth_phase1_review",
+    "artifact": "GuestQA66 bounded identity/hash/native-sections PASS; no device access"
+  }
+}

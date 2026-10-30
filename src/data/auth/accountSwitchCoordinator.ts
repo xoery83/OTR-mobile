@@ -57,15 +57,19 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
   async function recover(
     previous: LocalSession | null,
     failed: { accountId: string | null; generation: number },
+    retainInstalled = false,
   ) {
     const lease = await beginAccountTransition({
       ...failed,
       getAccountId: readAccountId,
     });
     if (!lease) return "superseded";
-    const previousUserId = previous?.identity?.userId;
+    let recoverySession = previous;
     try {
-      if (previousUserId) {
+      if (retainInstalled) {
+        recoverySession = await dependencies.readSession();
+      } else if (previous?.identity?.userId) {
+        const previousUserId = previous.identity.userId;
         if (!(await dependencies.selectAccount(previousUserId)))
           throw new Error("The previous account could not be restored.");
       } else {
@@ -75,8 +79,8 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
     } finally {
       endAccountTransition(lease);
     }
-    await dependencies.bootstrapAccount(previous);
-    if (previousUserId) await dependencies.restartSync();
+    await dependencies.bootstrapAccount(recoverySession);
+    if (recoverySession?.identity?.userId) await dependencies.restartSync();
     return "recovered";
   }
 
@@ -85,6 +89,7 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
     expectedGeneration = getAccountGeneration(),
     prepare?: () => Promise<void>,
     releasePrepared?: () => void,
+    retainInstalled?: () => boolean,
   ) {
     if (switching) throw new Error("An account transition is already in progress.");
     switching = true;
@@ -135,7 +140,10 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
         lease = null;
       }
       releasePreparation();
-      if (failed) await recover(previous, failed).catch(() => undefined);
+      if (failed)
+        await recover(previous, failed, retainInstalled?.() ?? false).catch(
+          () => undefined,
+        );
       else if (paused) await resumeRetainedAccount();
       throw error;
     } finally {
@@ -185,6 +193,7 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
             prepared = await dependencies.prepareSessionInstall(candidate);
         },
         () => prepared?.release(),
+        () => prepared?.retainSessionOnFailure === true,
       );
     },
     async logout() {
