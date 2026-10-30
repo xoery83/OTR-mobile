@@ -2,13 +2,14 @@ import { prepareGuestAdoptionCompositePlan } from "./guestAdoptionCompositePlan"
 import type { AuthenticatedAccount } from "./authAccountQualification";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 
-// Unmounted storage candidate. The caller must supply an owning locked staging binding;
-// this function neither issues grants nor makes a plan into publication authority.
+// Unmounted owning-stage adapter. SQL compares the complete server-issued grant
+// and serializes the immutable plan; a client grant/hash alone grants no authority.
 export async function stageGuestAdoptionComposite(
   connection: CorePgConnection,
   user: AuthenticatedAccount,
   owningStaging: unknown,
   preparedCheckpoint: unknown,
+  signal?: AbortSignal,
 ) {
   const plan = await prepareGuestAdoptionCompositePlan(
     user,
@@ -41,7 +42,7 @@ export async function stageGuestAdoptionComposite(
     }
   };
   const assertActive = () => {
-    if (!active) throw Error("GUEST_ADOPTION_STAGE_SCOPE_RELEASED");
+    if (!active || signal?.aborted) throw Error("GUEST_ADOPTION_STAGE_SCOPE_RELEASED");
   };
   try {
     return await connection.withLease(async (lease) => {
@@ -55,32 +56,14 @@ export async function stageGuestAdoptionComposite(
       try {
         assertActive();
         assertUnexpired();
-        await lease.query(
-          `INSERT INTO otr_auth_guest_composite.sealed_stages
-          (adoption_id,actor_account_id,source_guest_local_id,grant_id,inventory_sha256,preparation_sha256,plan_sha256,plan_text)
-         VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6,$7,$8)
-         ON CONFLICT (adoption_id) DO NOTHING`,
-          [
-            grant.adoptionId,
-            grant.targetAccountId,
-            grant.sourceGuestLocalId,
-            grant.grantId,
-            grant.inventorySha256,
-            sealed.preparation.sha256,
-            plan.sha256,
-            plan.canonicalText,
-          ],
-        );
-        assertActive();
         const row = (
           await lease.query(
-            `SELECT plan_text,plan_sha256 FROM otr_auth_guest_composite.sealed_stages
-         WHERE adoption_id=$1::uuid AND actor_account_id=$2::uuid FOR UPDATE`,
-            [grant.adoptionId, grant.targetAccountId],
+            "SELECT otr_auth_guest_composite.seal_stage($1::uuid,$2::text,$3::text) AS plan_sha256",
+            [grant.targetAccountId, plan.canonicalText, plan.sha256],
           )
         ).rows[0];
         assertActive();
-        if (row?.plan_text !== plan.canonicalText || row?.plan_sha256 !== plan.sha256)
+        if (row?.plan_sha256 !== plan.sha256)
           throw Error("GUEST_ADOPTION_STAGE_REUSE_MISMATCH");
         assertUnexpired();
         commitAttempted = true;

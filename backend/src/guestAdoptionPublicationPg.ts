@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { coreHash, coreUuid } from "../../src/domain/trip/tripCoreV2";
-import { guestAdoptionStatusRequestSchema } from "../../src/domain/auth/guestAdoptionStatus";
+import { guestAdoptionPublicationRequestSchema } from "../../src/data/api/guestAdoptionContracts";
 import { validateGuestAdoptionReceipt } from "../../src/domain/auth/guestAdoptionReceipt";
 import { qualifyGuestAdoptionReceiptForRecovery } from "../../src/data/auth/guestAdoptionReceiptQualification";
 import { tripCoreSha256Hex } from "../../src/data/repositories/tripCoreSha256";
@@ -10,9 +10,7 @@ import {
   type CorePgConnection,
 } from "./tripCoreV2PgStorage";
 import { executeGuestAdoptionCompositePgOnTransaction } from "./guestAdoptionCompositePg";
-
-export const guestAdoptionPublicationRequestSchema =
-  guestAdoptionStatusRequestSchema.extend({ planSha256: coreHash });
+export { guestAdoptionPublicationRequestSchema } from "../../src/data/api/guestAdoptionContracts";
 
 // Default closed/unmounted. Existing owning services and one outer transaction only.
 // Returning a committed receipt still does not restore local data or install Session.

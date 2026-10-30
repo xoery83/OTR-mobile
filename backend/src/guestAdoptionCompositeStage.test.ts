@@ -18,8 +18,8 @@ async function harness() {
         retire: retired,
         query: async (sql, values = []) => {
           statements.push(sql);
-          if (sql.startsWith("INSERT"))
-            row ??= { plan_text: values[7], plan_sha256: values[6] };
+          if (sql.includes(".seal_stage("))
+            row ??= { plan_text: values[1], plan_sha256: values[2] };
           if (sql.startsWith("SELECT")) return { rows: row && !wrongActor ? [row] : [] };
           if (sql === "COMMIT" && failCommit) throw Error("response lost");
           return { rows: [] };
@@ -53,11 +53,9 @@ it("persists the exact qualified plan with parameterized bindings and exact retr
   expect(first.authority).toBe("NONE");
   expect(f.statements.filter((s) => s === "BEGIN")).toHaveLength(2);
   expect(f.statements.filter((s) => s === "COMMIT")).toHaveLength(2);
-  expect(f.statements.find((s) => s.startsWith("INSERT"))).toContain(
-    "ON CONFLICT (adoption_id) DO NOTHING",
-  );
-  expect(f.statements.find((s) => s.startsWith("SELECT"))).toContain(
-    "actor_account_id=$2::uuid FOR UPDATE",
+  expect(f.statements.some((s) => s.startsWith("INSERT"))).toBe(false);
+  expect(f.statements.find((s) => s.startsWith("SELECT"))).toBe(
+    "SELECT otr_auth_guest_composite.seal_stage($1::uuid,$2::text,$3::text) AS plan_sha256",
   );
   expect(f.retired).not.toHaveBeenCalled();
 });
@@ -103,7 +101,7 @@ it("rechecks expiry when a qualified plan waits for a lease", async () => {
   expect(f.statements).toEqual(["BEGIN", "ROLLBACK"]);
 });
 
-it.each(["INSERT", "COMMIT"])(
+it.each(["SELECT", "COMMIT"])(
   "fences an outer connection deadline while %s is pending",
   async (pendingSql) => {
     const f = await harness();
@@ -124,8 +122,8 @@ it.each(["INSERT", "COMMIT"])(
           retire,
           query: async (sql, values = []) => {
             statements.push(sql);
-            if (sql.startsWith("INSERT"))
-              row = { plan_text: values[7], plan_sha256: values[6] };
+            if (sql.includes(".seal_stage("))
+              row = { plan_text: values[1], plan_sha256: values[2] };
             if (sql.startsWith(pendingSql)) {
               entered();
               await pending;
@@ -146,7 +144,7 @@ it.each(["INSERT", "COMMIT"])(
     expect(retire).toHaveBeenCalledOnce();
     finish();
     await task!.catch(() => undefined);
-    if (pendingSql === "INSERT") expect(statements).not.toContain("COMMIT");
+    if (pendingSql === "SELECT") expect(statements).not.toContain("COMMIT");
   },
 );
 it("does not let cleanup failure turn a successful COMMIT into ordinary failure", async () => {

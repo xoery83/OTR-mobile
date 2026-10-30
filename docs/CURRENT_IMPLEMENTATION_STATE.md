@@ -12,7 +12,25 @@ No Hosted SQL, runtime route, Guest hold release or Session install is included.
 See ops/auth-phase2-20261028/PUBLICATION_REVIEW.json. Next is minimal existing
 login/source/owning-restore wiring plus the exact protected execution Gate for
 this one fileless Trip/P1. Full People, Capture and other item types are deferred.
-Nonempty75 remains closed until its zero-Photo qualification is verified.
+Known schema75 now supports fileless Trip/P1 only when the exact Photo registry is present and empty; nonempty Photo remains closed.
+
+Current unmounted continuation now includes normal-JWT HTTP ports, explicit target
+confirmation and the authoritative Stage RPC. Existing Profile/Discovery/Core
+readers restore target caches while Guest remains launch principal. Real SQLite
+restore12 PASS includes lease-bound certificate/Owner Person/P1 CAS (Native owning
+NO_BLOCKER), no manufactured local Trip/queue or other-Account cache changes.
+Existing Auth Repository can then promote its canonical verified slot through the
+same Account index, with no Token copy or source release; local install8 PASS.
+Guest index commit failure recovery now retains Guest before commit or Account
+after commit, with strict marker repair for same-Account retry/refresh; ordinary
+signed-out rollback stays unchanged. Final published-path Review is pending.
+Isolated real Gateway48 checks include actual Stage adapter and fresh ordinary
+Core collection after PUBLISHED; all11 candidate+14 owning hashes match. Capture
+Backend build passes. These are components, not Hosted/Native Adoption E2E.
+Next: initial explicit-target/publication caller, then the exact protected DEV
+Gate and original Guest cold recovery. Main/Host Writer remains Root; no device
+lease, Hosted SQL, route activation or Guest hold release. See
+ops/auth-phase2-20261028/OWNING_RESTORE_CONTINUATION.json.
 
 # Auth Adoption active checkpoint — 30 October 2026
 
