@@ -29,6 +29,19 @@ Current Native candidate integrates main82d5c8b3, preserving its exact accepted 
 
 # Auth Golden Slice — current continuation, 30 October 2026
 
+31 October actual continuation: shutdown Gate installed/verified and main timeout
+fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.
+Cold recovery source3f6ca983 reviewed NO_BLOCKER, but actual GuestQA68 update used
+agent-device reinstall, which uninstalls first and replaced its AppData container.
+Original local Trip/P1/recovery directory is therefore missing; Keychain Guestd6b
+and server Stagef6cb remain. This was a wrong update-command choice, reported to
+Owner/Root/Native. Do not claim recovered Guest data or Adoption PASS. No other
+App/device reset or data copy occurred. See GUESTQA68_UPDATE_INCIDENT.json.
+Contain old QA, formally cancel via normal QA Auth when a recovery window is ready,
+and recreate a new isolated Guest Golden Slice through UI, never from a fixture.
+All future code-only updates must use install without uninstall. Root default
+CLOSED software is now28dd/fb0d (source dedb7f80 includescdf); Auth policy staysfalse.
+
 Golden Slice BLOCKED: existing Guest UI Trip+P1 → normal OTP/explicit target →
 one owning publication → restart same Trip+P1. Normal Native OTP now reaches explicit target confirmation and self UUID;
 Hosted normal-JWT Adoption routes are deployed default-CLOSED, no mutation scope.

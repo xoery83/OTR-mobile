@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { createNativeCaseReloginReceiver } from "../../scripts/auth/resend-inbound-otp-native-relogin";
+import { createAcceptedHostQaReceiver, createNativeCaseReloginReceiver } from "../../scripts/auth/resend-inbound-otp-native-relogin";
 function setup() {
   let time = Date.parse("2026-10-30T00:35:00.000Z");
   const wire = vi.fn<typeof fetch>(),
@@ -61,6 +61,21 @@ it("issues only same registered address and accepts only new challenge mail, not
   expect(f.wire.mock.calls.every(([, o]) => o?.method === "GET")).toBe(true);
   await expect(f.receiver.waitForOtp(f.lease)).rejects.toThrow("LEASE_NOT_OWNED");
   expect(() => f.receiver.createChallenge()).toThrow("ALREADY_ISSUED");
+});
+it("supports one explicit Host QA recipient without retargeting the original Native case", async () => {
+  const email = `otr-qa-${randomUUID()}@eldouzileu.resend.app`, time = Date.now();
+  const wire = vi.fn<typeof fetch>(), reserve = vi.fn();
+  const config = { key: "re_unit_only", scope: "dedicated-qa-team", email, now: () => time, fetch: wire, reserve };
+  expect(() => createNativeCaseReloginReceiver(config)).toThrow("CASE_MISMATCH");
+  expect(() => createAcceptedHostQaReceiver({ ...config, email: "owner@example.test" })).toThrow("QA_RECIPIENT_REQUIRED");
+  const receiver = createAcceptedHostQaReceiver(config), lease = receiver.createChallenge();
+  expect(lease.email).toBe(email);
+  const mail = { id: randomUUID(), to: [email], from: "OTR <noreply@auth.xoery.art>", subject: "Your OTR verification code", created_at: lease.requestedAt };
+  wire.mockResolvedValueOnce(Response.json({ data: [{ ...mail, id: randomUUID(), to: [`otr-qa-${randomUUID()}@eldouzileu.resend.app`] }, mail], has_more: false }));
+  wire.mockResolvedValueOnce(Response.json({ ...mail, text: "12345678" }));
+  expect((await receiver.waitForOtp(lease)).messageId).toBe(mail.id);
+  expect(reserve).toHaveBeenCalledOnce();
+  expect(wire).toHaveBeenCalledTimes(2);
 });
 it("does not accept copied challenge or expired lease", async () => {
   const f = setup();

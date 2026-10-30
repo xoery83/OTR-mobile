@@ -34,10 +34,11 @@ function requireQa(value: unknown, code: string): asserts value {
   if (!value) throw new OtpQaError(code);
 }
 
-// Same registered case only. It receives a new normal App challenge, never sends it.
+// One explicit QA recipient. It receives a normal challenge, never sends one.
 type ReceiverConfig = {
   key: string;
   scope: string;
+  email?: string;
   reserve(value: { email: string; requestedAt: string }): void;
   fetch?: typeof fetch;
   now?: () => number;
@@ -47,6 +48,9 @@ function createCaseReceiver(config: ReceiverConfig, canIssue: (time: number) => 
   requireQa(config.scope === "dedicated-qa-team", "RECEIVING_SCOPE_REQUIRED");
   requireQa(/^re_[A-Za-z0-9_\-]+$/.test(config.key), "RECEIVING_CREDENTIAL_REQUIRED");
   const key = config.key;
+  const recipient = config.email ?? email;
+  requireQa(/^otr-qa-[0-9a-f-]{36}@eldouzileu\.resend\.app$/.test(recipient) &&
+    z.uuid().safeParse(recipient.slice(7, 43)).success, "REGISTERED_QA_RECIPIENT_REQUIRED");
   const now = config.now ?? Date.now,
     wire = config.fetch ?? fetch,
     sleep = config.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
@@ -56,7 +60,7 @@ function createCaseReceiver(config: ReceiverConfig, canIssue: (time: number) => 
     createChallenge() {
       requireQa(!lease, "NATIVE_RELOGIN_CHALLENGE_ALREADY_ISSUED");
       requireQa(canIssue(now()), "NATIVE_RELOGIN_CASE_WINDOW_CLOSED");
-      lease = Object.freeze({ email, requestedAt: new Date(now()).toISOString() });
+      lease = Object.freeze({ email: recipient, requestedAt: new Date(now()).toISOString() });
       config.reserve(lease);
       return lease;
     },
@@ -100,7 +104,7 @@ function createCaseReceiver(config: ReceiverConfig, canIssue: (time: number) => 
           sender = (m.from.match(/<([^<>]+)>$/)?.[1] ?? m.from).toLowerCase();
         return (
           m.to.length === 1 &&
-          m.to[0].toLowerCase() === email &&
+          m.to[0].toLowerCase() === recipient &&
           !(m.cc?.length || m.bcc?.length) &&
           sender === "noreply@auth.xoery.art" &&
           m.subject === "Your OTR verification code" &&
@@ -147,6 +151,7 @@ function createCaseReceiver(config: ReceiverConfig, canIssue: (time: number) => 
 
 // The original interrupted Native case keeps its original creation window.
 export function createNativeCaseReloginReceiver(config: ReceiverConfig) {
+  requireQa(config.email === undefined || config.email === email, "NATIVE_RELOGIN_CASE_MISMATCH");
   return createCaseReceiver(
     config,
     (time) => time >= originalRequest + 60000 && time < originalRequest + 6 * 3600000,
@@ -154,7 +159,7 @@ export function createNativeCaseReloginReceiver(config: ReceiverConfig) {
 }
 
 // Host entry validates the already accepted canonical Account before using this
-// receiver. Only the issue window differs; recipient, matching and 120s lease do not.
+// receiver. An explicit QA address still requires the same exact-match120s lease.
 export function createAcceptedHostQaReceiver(config: ReceiverConfig) {
   return createCaseReceiver(config, (time) => time >= originalRequest + 60000);
 }

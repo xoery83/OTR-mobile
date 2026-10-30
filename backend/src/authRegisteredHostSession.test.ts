@@ -37,16 +37,16 @@ function setup() {
     refreshToken: "unit-host-refresh",
     expiresAt: "2026-11-01T00:00:00Z",
     identity: {
-      userId: registeredHostQa.accountId,
+      userId: String(registeredHostQa.accountId),
       displayName: "",
-      email: registeredHostQa.email,
+      email: String(registeredHostQa.email),
     },
   };
   const request = vi.fn(async (_email: string) => {}),
     verify = vi.fn(async (_email: string, _code: string) => structuredClone(session)),
     readUser = vi.fn(async () => ({
-      id: registeredHostQa.accountId,
-      email: registeredHostQa.email,
+      id: String(registeredHostQa.accountId),
+      email: String(registeredHostQa.email),
       created_at: registeredHostQa.createdAt,
       email_confirmed_at: "2026-10-30T00:17:41.921994Z",
       is_anonymous: false,
@@ -82,6 +82,38 @@ it("uses one normal OTP/verify, proves canonical existing Account and exposes on
     /unit-host-access|unit-host-refresh|12345678/,
   );
   await expect(saved!.readSession()).rejects.toThrow("SCOPE_RELEASED");
+});
+it.each(["normal", "foreign", "caller-mutation"])("binds an explicit existing QA Account: %s", async (mode) => {
+  const f = setup();
+  const qa = { accountId: randomUUID(), tripId: randomUUID(), email: `otr-qa-${randomUUID()}@eldouzileu.resend.app` };
+  const expected = { ...qa };
+  if (mode === "caller-mutation") f.request.mockImplementationOnce(async () => {
+    qa.accountId = randomUUID(); qa.tripId = randomUUID(); qa.email = `otr-qa-${randomUUID()}@eldouzileu.resend.app`;
+  });
+  f.deps.receiver = createAcceptedHostQaReceiver({ key: "re_unit_only", scope: "dedicated-qa-team", email: qa.email, reserve: () => {}, fetch: f.wire });
+  const updated = { ...f.session, identity: { ...f.session.identity, userId: qa.accountId, email: qa.email } };
+  f.verify.mockResolvedValue(updated);
+  f.readUser.mockResolvedValue({ id: mode === "foreign" ? randomUUID() : qa.accountId, email: qa.email, created_at: registeredHostQa.createdAt, email_confirmed_at: "2026-10-30T00:17:41Z", is_anonymous: false });
+  f.wire.mockReset();
+  f.wire.mockImplementation(async () => Response.json({ data: [{ id: randomUUID(), to: [qa.email], from: "OTR <noreply@auth.xoery.art>", subject: "Your OTR verification code", created_at: new Date().toISOString() }], has_more: false }));
+  // Use the exact receiver lease; receiving transport itself is covered separately.
+  const lease = { email: qa.email, requestedAt: new Date().toISOString() };
+  f.deps.receiver.createChallenge = () => lease;
+  f.deps.receiver.waitForOtp = async () => ({ code: "12345678", messageId: randomUUID(), receivedAt: lease.requestedAt });
+  const action = vi.fn(async (context: RegisteredQaHostContext) => {
+    expect(context.accountId).toBe(expected.accountId);
+    expect(context.tripId).toBe(expected.tripId);
+    expect((await context.readSession()).identity?.userId).toBe(expected.accountId);
+  });
+  if (mode === "foreign") {
+    await expect(runRegisteredQaHostSession(f.deps, action, qa)).rejects.toThrow("CLEANUP_UNRESOLVED");
+    expect(action).not.toHaveBeenCalled();
+    expect(f.revoke).not.toHaveBeenCalled();
+  } else {
+    expect(await runRegisteredQaHostSession(f.deps, action, qa)).toMatchObject({ accountId: expected.accountId, tripId: expected.tripId });
+    expect(f.request).toHaveBeenCalledWith(expected.email);
+    expect(f.revoke).toHaveBeenCalledOnce();
+  }
 });
 it.each(["id", "email", "created_at", "is_anonymous"])(
   "rejects wrong %s without revoking an unproven or iPad Session",

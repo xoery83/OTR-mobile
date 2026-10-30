@@ -1,0 +1,33 @@
+{
+  "status": "QA_DEVICE_UPDATE_INCIDENT_NO_ADOPTION_PASS",
+  "clientDate": "2026-10-31",
+  "artifact": "GuestQA68/source3f6ca983",
+  "command": "agent-device reinstall com.xoery.otrmobile.guestqa <own68.app>",
+  "actualSemantics": "replaceExisting=true -> resolve bundle -> simctl uninstall -> simctl install",
+  "wrongAssumption": "same app identity was incorrectly treated as preserving AppData",
+  "affected": "only own Synthetic GuestQA bundle on FormsQA; no main App/iPad/other device operations",
+  "readOnlyObserved": {
+    "newContainerId": "62C021A4-DD4A-4B18-9E89-44D651449AF3",
+    "createdAtEpoch": 1793384546.6959898,
+    "originalGuestId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+    "adoptionDirectoryExists": false,
+    "normalUI": "Guest empty My Trips / Accounts no retained attempt"
+  },
+  "retainedServerEvidence": {
+    "adoptionId": "f6cb81ef-0fb7-49ba-b22e-a6d4727a8a47",
+    "stageSHA256": "01b298ed8b8d0a7167beb1655d4e247ef7fd786f16ae4fc5450cffd0af6025bf",
+    "terminal": "none at last independent readback",
+    "authPolicy": "CLOSED; no new finite mutation window"
+  },
+  "containment": [
+    "no new login or business write in affected App",
+    "no SQLite/Keychain/Token backup restore/copy or forged source",
+    "server Stage/evidence and existing Keychain retained; no cleanup",
+    "Root/Native and Owner informed; Device Automation Owner coordination requested"
+  ],
+  "next": [
+    "normal authorized QA server cancellation of old attempt, preserving all evidence",
+    "new isolated QA identity and normal Guest Trip/P1 UI creation; no fixture adoption claim",
+    "use data-preserving install only, never reinstall for future code updates"
+  ]
+}
