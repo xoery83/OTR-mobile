@@ -514,7 +514,7 @@ function LocalTripContent({
       request.current += 1;
       sub.remove();
     };
-  }, [load, generation]);
+  }, [load, generation, refreshKey]);
   const save = async () => {
     if (
       busy.current ||
