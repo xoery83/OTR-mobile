@@ -47,16 +47,28 @@ const pendingPdfAcquisition = fileAcquisition.extend({
     }),
   }),
 });
+const pendingPngAcquisition = pendingPdfAcquisition.extend({
+  payload: pendingPdfAcquisition.shape.payload.extend({
+    source_input: pendingPdfAcquisition.shape.payload.shape.source_input.extend({
+      source_kind: z.literal("IMAGE"),
+    }),
+    original: pendingPdfAcquisition.shape.payload.shape.original.extend({
+      original_filename: z.string().min(1).max(255).nullable(),
+      mime_type: z.literal("image/png"),
+    }),
+  }),
+});
 export const universalOriginalAcquisitionSchema = z.union([
   flightTextAcquisitionSchema,
   fileAcquisition,
   pendingPdfAcquisition,
+  pendingPngAcquisition,
 ]);
 // Explicit optional candidate: no instance is installed by default startup.
 export function createUniversalOriginalSourceConnection(
   connection: CorePgConnection,
   hash: ImportHash,
-  options: { pendingPdf?: boolean } = {},
+  options: { pendingPdf?: boolean; pendingPng?: boolean } = {},
 ) {
   async function execute(query: string, params: unknown[]) {
     return connection.withLease(async (lease) => {
@@ -83,7 +95,11 @@ export function createUniversalOriginalSourceConnection(
     if (q.actor_account_id !== actor || q.trip_id !== trip)
       throw new Error("SOURCE_ACCESS_DENIED");
     if (q.payload.original.material_kind === "BINARY") {
-      if (options.pendingPdf !== true) throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+      const allowed =
+        q.payload.original.mime_type === "image/png"
+          ? options.pendingPng === true
+          : options.pendingPdf === true;
+      if (!allowed) throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
       // Metadata only. Actual bytes must pass the existing Stage/upload/verify/seal path.
       return q;
     }
