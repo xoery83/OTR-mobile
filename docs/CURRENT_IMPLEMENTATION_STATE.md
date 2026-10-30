@@ -7,19 +7,23 @@ source dedb7f80, config c40cfb99, PNG runtime3d3cdff1. Real independent close
 controller and timer PASS; worker inactive/EMPTY_VERIFIED. No Source upload or
 paid image call. Original hard expiry remains Nov1T08:48:56Z.
 
-First actual Photo window babef9d9 is independently CLOSED (timers stopped),
-not reusable/reset. Actual first FAIL was client UNIVERSAL_CAPTURE_NOT_QUALIFIED:
-retained Batch67842863 is Account intake with tripPrior=null. Focused repair uses
-existing Journey chooser and Capture.assign CAS/Actor/Trip checks, projects current
-assignedTripId for Results/Activity/Updates/cold recovery, never rewrites frozen
-Batch. Photo capture revision invalidates old consent. Effective Trip is part of
-Results remount and hook request scope; late callbacks cannot cross attribution.
-Focused checks, types/UI guard and independent NO_BLOCKER; actual UI still pending.
-Node captureLifecycle harness import fails at Expo __DEV__ (not counted PASS).
-Next: code-only AD5 update → same Batch normal Journey choice → fresh local image
-check/Continue → new bounded window under Standing → real Vision/Review/Save/readback/
-cold recovery/close. Keep original identities and UNKNOWN. No new Authority needed
-for this client attribution repair. See photo/PHOTO_ACCOUNT_JOURNEY_REPAIR.json.
+First Photo window babef9d9 is independently CLOSED (timers stopped), not reset.
+Fresh exact-device readback corrects earlier missing-Trip diagnosis: Batch67842863
+already has Trip825f79b2 prior; Captureb4a49eb5 is assigned there at revision2,
+Source2bf0294a/operation37d5cd82 is PREPARED. Old photo consent pinned revision1.
+AD5 126.3/source938a57f4 is installed code-only (same Native/Capture/Batch counts),
+normal local check and explicit Continue performed anew. Preserve these identities;
+do not reassign/recreate. Actual paid Photo Interpretation/Save still NOT VERIFIED.
+
+General Account-intake assignment adapter938a57f4 reuses Journey chooser and
+Capture.assign CAS, projects attribution into Results/Activity/Updates/cold recovery,
+keeps frozen intake unchanged, and fences late callbacks by effective Trip.
+Focused checks/types/UIguard + independent NO_BLOCKER. This adapter is not itself
+the demonstrated root fix for this already attributed Golden Batch. Node
+captureLifecycle harness Expo import fails (__DEV__); not counted PASS.
+Next: verify fresh decision pin2, then new bounded Photo window under Standing,
+same Source → real Vision/Review/Save/readback/cold/close. No new Authority.
+See photo/PHOTO_ACCOUNT_JOURNEY_REPAIR.json.
 
 # Import Photo — default-closed checkpoint, 31 October 2026
 

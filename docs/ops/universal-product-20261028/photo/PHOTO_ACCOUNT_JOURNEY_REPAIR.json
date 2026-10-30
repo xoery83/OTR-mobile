@@ -28,12 +28,20 @@
   "sourceUploaded": false,
   "paidImageCalls": 0,
   "reopened": false,
-  "firstFailure": "UNIVERSAL_CAPTURE_NOT_QUALIFIED",
+  "firstFailure": "Earlier recorded UNIVERSAL_CAPTURE_NOT_QUALIFIED requires same-object retry; missing-Trip explanation was not supported by fresh device readback.",
   "location": "src/data/operations/universalCaptureConsumer.ts:read",
-  "rootCause": "Account-level immutable intake had no tripPrior; existing retained Capture attribution was not available in the reader model.",
-  "repair": "Existing Journey chooser \u2192 Capture repository assign CAS \u2192 read-only assignedTripId projection; immutable Batch/input identities unchanged.",
+  "rootCause": "Earlier attribution diagnosis is superseded by independent device readback: frozen Batch already has correct Trip prior, Capture is assigned to same Trip at revision 2, existing Source operation PREPARED. Old photo decision pinned revision 1; actual device requires new local check and explicit Continue. Do not reassign or replace this Batch.",
+  "repair": "General Account-intake assignment adapter is implemented and reviewed, but it is not the required repair for this already attributed Golden Batch.",
   "review": "Independent NO_BLOCKER after effective Trip request scope and remount repair.",
   "validation": "Focused repository, consumer, photo consent, Activity, Updates, chooser and hook checks; typecheck/UI guard.",
-  "nativeStatus": "NOT_YET_VERIFIED",
-  "unverified": "captureLifecycle.test.ts cannot import Expo in its current Node harness (__DEV__ undefined); not counted as PASS."
+  "nativeStatus": "126.3 installed; same Batch reopened; prior consent shown stale; local check and explicit Continue performed through normal UI; no paid analysis yet.",
+  "unverified": "captureLifecycle.test.ts cannot import Expo in its current Node harness (__DEV__ undefined); not counted as PASS.",
+  "currentIdentity": {
+    "batchId": "67842863-fe1c-4e15-8ff9-7d44e78a59b9",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "captureRevision": 2,
+    "sourceId": "2bf0294a-47df-4176-999f-0e352e34543c",
+    "sourceOperationId": "37d5cd82-f6bf-433c-8031-47fc00f509c0",
+    "sourceState": "PREPARED"
+  }
 }
