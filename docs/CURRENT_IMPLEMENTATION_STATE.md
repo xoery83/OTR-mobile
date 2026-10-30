@@ -210,6 +210,13 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
+30 October nonempty executor now validates Ledger after deferred Metadata against
+final Trip title/dates and exact source financial settings; the original local
+cache/timestamp remains retained. Directed3s63PASS, independent23PASS/NO_BLOCKER,
+types/lint. Cross-principal transaction/grant/terminal authority stays closed;
+this is not nonempty Adoption E2E. See COMPOSITE_EXECUTION_REVIEW.json.
+
+
 Resend Inbound OTP host QA helper: first real new-user E2E PASS on source8496a994,
 one OTP send, trusted Auth read, separate host-process encrypted Session restore,
 Backend empty Discovery/foreign-Trip negative, refresh/local logout/revoked refresh.

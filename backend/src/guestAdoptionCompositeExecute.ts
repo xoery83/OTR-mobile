@@ -181,10 +181,6 @@ export async function executeGuestAdoptionComposite(
         kind: "PERSON_CREATE",
       });
     }
-    const ledgerReadback = ledger.parse(
-      await checked(() => transaction.initializeLedger(actor, trip.ledgerInitialization)),
-    );
-    if (canonical(ledgerReadback) !== canonical(trip.ledgerInitialization)) fail();
     const metadata = [];
     for (const action of trip.deferredMetadata) {
       const snapshot = tripMetadataRevisionedSnapshotSchema.parse(
@@ -237,6 +233,23 @@ export async function executeGuestAdoptionComposite(
         kind: "TRIP_METADATA_DEFERRED",
       });
     }
+    const ledgerReadback = ledger.parse(
+      await checked(() => transaction.initializeLedger(actor, trip.ledgerInitialization)),
+    );
+    // Ledger bootstrap derives title/dates from the final Trip, not its stale local cache.
+    const { updatedAt: _sourceUpdatedAt, ...sourceLedger } = trip.ledgerInitialization;
+    const { updatedAt: serverUpdatedAt, ...remoteLedger } = ledgerReadback;
+    if (
+      !Number.isFinite(Date.parse(serverUpdatedAt)) ||
+      canonical(remoteLedger) !==
+        canonical({
+          ...sourceLedger,
+          title: trip.metadata.name,
+          startDate: trip.metadata.startDate,
+          endDate: trip.metadata.endDate,
+        })
+    )
+      fail();
     const intents = [];
     const mappedTrip = mapped.find((t) => t.tripId === tripId);
     if (!mappedTrip) throw Error("GUEST_ADOPTION_EXECUTION_IDENTITY_MISSING");
@@ -287,6 +300,7 @@ export async function executeGuestAdoptionComposite(
     retainedLocalState: source.trips.map((trip) => ({
       tripId: trip.create.tripId,
       sourceTimeline: trip.sourceTimeline,
+      ledgerInitialization: trip.ledgerInitialization,
       creator: trip.creator,
       selectedCoverAssetId: trip.selectedCoverAssetId,
       personalCover: trip.personalCover,

@@ -37,6 +37,7 @@ async function harness(change?: (f: ReturnType<typeof fixture>) => void, drafts 
   };
   const flags = {
     wrongLedger: false,
+    ledgerOverride: {} as Record<string, unknown>,
     wrongPerson: false,
     wrongMetadata: false,
     wrongReadback: false,
@@ -122,7 +123,20 @@ async function harness(change?: (f: ReturnType<typeof fixture>) => void, drafts 
     },
     async initializeLedger(_a, original) {
       calls.push("LEDGER");
-      return { ...original, ...(flags.wrongLedger ? { settlementCurrency: "USD" } : {}) };
+      const metadata = state.metadata[original.id].value as {
+        name: string;
+        startDate: string | null;
+        endDate: string | null;
+      };
+      return {
+        ...original,
+        title: metadata.name,
+        startDate: metadata.startDate,
+        endDate: metadata.endDate,
+        updatedAt: "2026-10-30T01:00:00.000Z",
+        ...(flags.wrongLedger ? { settlementCurrency: "USD" } : {}),
+        ...flags.ledgerOverride,
+      };
     },
     metadata: {
       async snapshot(a, t) {
@@ -428,4 +442,32 @@ it("explicitly retains local names/timestamps/static covers without claiming the
     selectedCoverAssetId: "city",
     personalCover: { selectedCoverAssetId: "city" },
   });
+});
+
+it("checks Ledger after final Metadata and preserves the stale source cache separately", async () => {
+  const h = await harness(structuredWithDeferred);
+  const original = structuredClone(h.f.body.trips[0].ledgerInitialization);
+  const out = JSON.parse((await h.run()).canonicalText);
+  expect(out.records[0].ledger).toEqual({
+    ...original,
+    title: "Guest Edited retained",
+    updatedAt: "2026-10-30T01:00:00.000Z",
+  });
+  expect(h.calls.indexOf("LEDGER")).toBeGreaterThan(h.calls.lastIndexOf("METADATA_READ"));
+  expect(out.retainedLocalState[0].ledgerInitialization).toEqual(original);
+  expect(h.f.body.trips[0].ledgerInitialization).toEqual(original);
+});
+it.each([
+  { title: "stale original title" },
+  { startDate: "2026-10-31" },
+  { endDate: "2026-11-01" },
+  { settlementScale: 2 },
+  { valuationPolicy: "OTHER" },
+  { updatedAt: "invalid" },
+])("rejects mismatched Ledger projection/settings %j and rolls back", async (override) => {
+  const h = await harness(structuredWithDeferred);
+  h.flags.ledgerOverride = override;
+  await expect(h.run()).rejects.toThrow("READBACK_MISMATCH");
+  expect(Object.keys(h.state().trips)).toHaveLength(0);
+  expect(h.state().graph.itinerary_events).toHaveLength(0);
 });
