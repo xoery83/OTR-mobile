@@ -51,7 +51,11 @@ original Guest and at most30-minute mutation window. Other Accounts/default
 startup remain CLOSED; bound status/receipt/cancel retain recovery after expiry.
 Bootstrap/scope passes focused5 suites68 tests; independent3 suites33 PASS/NO_BLOCKER.
 Expired-config restart retains bound recovery. Both Backend builds and focused lint pass; not deployed. Auth merged accepted main249204db into8383f1d1. No Auth device lease.
-Real Native OTP→publication→Supabase readback→cold recovery remains PENDING;
+GuestQA66 now passed normal Native SendOTP→dedicated QA Receiving→App Verify
+→explicit target-email confirmation, retaining original Trip after in-place cold launch.
+No Add/freeze/publication. Short FormsQA lease returned; exact QA UUID lookup and
+Root default-CLOSED deployment next. See GUESTQA66_NORMAL_OTP_TARGET.json.
+Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
 hosted-gate-candidate/OWNER_GATE.md.

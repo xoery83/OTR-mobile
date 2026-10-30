@@ -1,0 +1,51 @@
+{
+  "status": "NORMAL_NATIVE_OTP_TO_EXPLICIT_TARGET_PASS_PUBLICATION_PENDING",
+  "clientDate": "2026-10-31",
+  "bundleId": "com.xoery.otrmobile.guestqa",
+  "artifactVersion": 66,
+  "consumerSource": "8383f1d1",
+  "runtimeCandidate": "ecad0bb7",
+  "device": "OTR Forms QA",
+  "deviceUdid": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "source": {
+    "guestLocalId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+    "tripId": "f8975f1d-fec6-43c1-bae9-2b84c908e552",
+    "tripName": "Guest A 20261029 Edited",
+    "itemName": "Guest A Walk",
+    "beforeUpdate": "normal UI Day Feed shows original Trip and P1",
+    "afterInPlaceUpdateColdLaunch": "normal My Trips shows original Trip; P1 not reopened during short window"
+  },
+  "provider": {
+    "type": "Supabase DEV Email OTP",
+    "qaEmail": "otr-qa-3ff408c8-584f-499c-9ae1-814c05bd8f95@eldouzileu.resend.app",
+    "messageId": "d1f7b2d6-e1a7-452b-8874-f4424caf3d33",
+    "challenge": "normal App Send verification code",
+    "receiving": "existing released dedicated QA receiver; exact recipient/time; OTP memory-only stdin to normal App",
+    "verification": "normal App Verify and continue",
+    "result": "Keep your trips when you sign in; Add the trips on this device to this account: exact QA email",
+    "targetAccountId": "pending exact DEV read-only ID lookup by Root"
+  },
+  "evidence": {
+    "guestDayBeforeUpdateGeneration": 192468,
+    "tripAfterUpdateGeneration": 192470,
+    "adoptionConfirmButtonGeneration": 192487,
+    "targetCaptionGeneration": 192488,
+    "deviceSession": "auth-guestqa66",
+    "close": "Closed: auth-guestqa66; claim returned to Native"
+  },
+  "notPerformed": [
+    "Add trips button",
+    "Guest inventory freeze",
+    "preflight grant",
+    "publication",
+    "Host verification",
+    "token/session/keychain/database copy",
+    "other bundle access"
+  ],
+  "remaining": [
+    "Root exact target UUID lookup",
+    "serialized default-CLOSED deployment",
+    "new coordinated device/scope window",
+    "actual owning publication/independent Supabase readback/cold recovery/negatives"
+  ]
+}
