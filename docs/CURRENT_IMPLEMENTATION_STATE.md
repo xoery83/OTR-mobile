@@ -105,6 +105,14 @@ Root delegated only these small read interfaces; no Bootstrap/Host/SQL changes.
 Fixed8079e7b9 independent NO_BLOCKER/4 suites85 PASS. Core owning review, exact
 new EXECUTE Gate and Native wiring remain pending. Native keeps its sole active
 Realtime slice and has not redelegated UI; no adopted-Trip Add Native E2E claim. Candidate under People parent-read-candidate.
+31 October shortest-path Backend L2 now PASS without new lookup/permissions:
+normal Owner268 OTP -> existing Person POST on adoptedTrip9d10 using proven parent7cf3
+created Person39661bda/op9766bee4; same-op duplicate201 and Receipt200 identical.
+Independent SQL has exactly one receipt, two Persons total and unchanged linked
+Owner425baa. Normal foreignQA71b Receipt403/PERSON_CREATE_FORBIDDEN PASS. Both
+temporary Sessions normally logged out with refresh rejected; Receiver returned
+Root. No Host/SQL/device changes or Native/cold claim. Reuse this Person for later
+downstream/cold verification, not another create. See ADOPTED_PERSON_BACKEND_REAL_E2E.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
@@ -123,6 +131,10 @@ after rejection. No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See
 ops/auth-private-profile-20261031/. AKA/other optional fields remain future scope.
+PrivateProfileNameFields239184db remains an unmounted controlled input fragment.
+Canonical inputs/localized10 pairs, independent split/unsplit drafts and Account/
+busy/stale callback fences: independent6/types/lint/UIguard PASS. Catalog Writer
+returned Root. No settings navigation, save, repository or cloud enablement claim.
 
 31 October actual continuation: shutdown Gate installed/verified and main timeout
 fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.

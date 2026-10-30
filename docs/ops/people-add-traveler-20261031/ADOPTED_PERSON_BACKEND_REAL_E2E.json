@@ -1,0 +1,80 @@
+{
+  "status": "REAL_ADOPTED_TRIP_PERSON_BACKEND_L2_PASS",
+  "entry": "Headless normal Email OTP; existing Person endpoint with already proven original TripCreate receipt",
+  "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+  "request": {
+    "version": 1,
+    "operationId": "9766bee4-a1bd-474a-a040-01796b4f5207",
+    "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+    "personId": "39661bda-f7cd-4aa1-b462-ad8569845c79",
+    "tripCreateOperationId": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+    "dataOwnership": "CLOUD_SHARED_AUTHORED",
+    "displayName": "Adopted 同行人 20261031"
+  },
+  "receipt": {
+    "receiptVersion": 1,
+    "actorAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "request": {
+      "version": 1,
+      "operationId": "9766bee4-a1bd-474a-a040-01796b4f5207",
+      "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+      "personId": "39661bda-f7cd-4aa1-b462-ad8569845c79",
+      "tripCreateOperationId": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+      "dataOwnership": "CLOUD_SHARED_AUTHORED",
+      "displayName": "Adopted 同行人 20261031"
+    },
+    "person": {
+      "personId": "39661bda-f7cd-4aa1-b462-ad8569845c79",
+      "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+      "displayName": "Adopted 同行人 20261031",
+      "status": "unlinked",
+      "userId": null,
+      "participationActive": true,
+      "participationRevision": 0
+    },
+    "acceptedAt": "2026-10-30T23:45:32.774894+00:00"
+  },
+  "postStatus": 201,
+  "duplicateStatus": 201,
+  "receiptStatus": 200,
+  "independentReadback": "Exact API receipt equals stored result_payload; one receipt, two Persons total; original linked Owner unchanged; new Person unlinked/userId null",
+  "foreignNegative": {
+    "status": "PASS_FOREIGN_QA_PERSON_RECEIPT_403",
+    "actorAccountId": "71b94800-f860-4685-a5d4-954adae38113",
+    "foreignAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "foreignTripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+    "requests": [
+      {
+        "path": "/v2/trips/9d10b9d7-6744-4355-b05d-728bf929d208/person-create-operations/9766bee4-a1bd-474a-a040-01796b4f5207",
+        "httpStatus": 403,
+        "errorCode": "PERSON_CREATE_FORBIDDEN",
+        "durationMs": 2546
+      }
+    ],
+    "mutations": 0
+  },
+  "sessionCleanup": "Both normal QA sessions local logout and refresh rejection PASS; both processes exit0; Receiver returned to Root",
+  "writes": "One new Synthetic QA Person; same operation duplicate only",
+  "hostSqlPermissionsOrDeviceChanges": false,
+  "evidenceSHA256": {
+    "person-write-readback.json": "fa8cbaa34c9c59dbfe79ae88912bb40639b25d2d318779625ac5858f170db971",
+    "INDEPENDENT_HOSTED_PERSON.json": "33b9e0d3835a5df4d2e23eeb3ab235f8599db6db1a29df7571fcfa80c3a79cac",
+    "parent-receipt-run-closed.json": "20412898507729f623fb0f22169f7ecbd71aa10cd87be0500197d141d0bfe038",
+    "cross-account-negative/negative-read-receipt.json": "d6a87284bd1c6dcc1b33d5dfc1afd3253ff190e7aeefc6d3ec6a48ea347a198f",
+    "cross-account-negative/old-f6cb-run-closed.json": "ca81eef3b9cbdff9bd6a52426fd0982bdc353729d12e8b05310be4fcb68b7323"
+  },
+  "notClaimed": [
+    "Native adoptedTrip Add UI",
+    "Native cold restoration of new Person",
+    "new parent lookup installed",
+    "Profile runtime or permissions"
+  ],
+  "next": "Unique Core parent-read review and Native owning UI window; preserve existing actual Person/receipt for downstream cold read, do not create another Person",
+  "independentReview": {
+    "status": "NO_BLOCKER_BACKEND_L2_ONLY",
+    "reviewer": "auth_phase1_review",
+    "checks": "5 evidence hashes; exact normal/duplicate/GET/independent SQL receipt; single row; Owner unchanged; foreign403; both Session closed; no Native/cold claim",
+    "newHostedOrOtpRuns": 0
+  }
+}
