@@ -116,7 +116,10 @@ vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
     read: async () => ({
       members: {
         state: "AVAILABLE",
-        people: [{ personId: "person-a", displayName: "Case A" }],
+        people: [
+          { personId: "person-a", displayName: "Case A" },
+          { personId: "unnamed-actor", displayName: "  ", isCurrentActor: true },
+        ],
       },
     }),
   }),
@@ -363,4 +366,12 @@ it("does not submit old dates while a picker has an unconfirmed selection", asyn
   node("SEGMENT_FIELDS").onPickerChange("departureDate", false);
   render();
   expect(node("tripCreate.saveItem").disabled).toBe(false);
+});
+
+it("keeps existing named-only participant choices when People retains an unnamed Actor", async () => {
+  await ready(vi.fn());
+  render();
+  expect(node("SEGMENT_FIELDS").participantOptions).toEqual([
+    { personId: "person-a", displayName: "Case A" },
+  ]);
 });

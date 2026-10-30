@@ -147,7 +147,9 @@ export function ManualFlightForm({
           .then((source) => source.read(tripId))
           .catch(() => null);
         if (active() && setup?.members.state === "AVAILABLE")
-          setParticipantOptions(setup.members.people);
+          setParticipantOptions(
+            setup.members.people.filter((person) => person.displayName.trim()),
+          );
       } catch {
         if (active()) {
           setError(new Error());
