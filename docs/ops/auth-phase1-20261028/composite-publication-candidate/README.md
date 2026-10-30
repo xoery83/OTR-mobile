@@ -218,3 +218,54 @@ parallel, escaped and swallowed failures retire the caller lease and reject.
 Direct2s38PASS, independent Pg+HTTP2s31PASS/NO_BLOCKER, types/lint PASS. This adds
 no SQL authority and has no runtime consumer; the four-principal composition
 barrier remains. See PERSON_HELD_REVIEW.json.
+
+## Finite owning-authority candidate
+
+`authority.local.sql` and `PRINCIPAL_LOCAL_PATCH.sql` are guarded disposable-only
+candidates. They cannot install in Hosted DEV. They reuse the actual existing Core
+Gateway as the sole session principal; there is no new role, business-table grant,
+business RLS policy, service-role substitute or session-authorization switch.
+
+The private policy starts disabled. A trusted Backend caller must authenticate a
+normal Account and receive explicit target confirmation before `confirm_and_issue`.
+The server generates the grant ID and a bounded15minute operational lease; a retry
+retains both ID and expiry. This is not an allowance reset/price or commercial
+limit. Current normal Account policy revocation still wins. Only saved, fileless
+Trip/P1 with no Drafts qualifies; unsupported data blocks the whole candidate.
+No caller is mounted, and the current v1 preflight wire does not carry the missing
+confirmation action. Native confirmation and its normal authenticated boundary
+must be completed before any runtime binding.
+
+`seal_stage` requires the actual stored server grant, matching immutable
+preparation/source hashes and identity/resource facts. The existing full Backend
+plan/source codecs remain mandatory; the SQL checks do not replace those codecs.
+`begin_scope` locks the original stage and real grant, rejects existing Trips and
+terminal evidence, and binds a private context row to backend PID and transaction
+ID. GUCs carry no authority. Scope checks revalidate current policy, grant expiry,
+Account and source Trip/operation. During an Adoption transaction, the normal
+scope helpers must return that result exclusively: a failed adoption check cannot
+fall back to General Account permissions or an old exact QA gate.
+
+The generated patch retains exact preimages and modifies only the listed owning
+functions. Trip/Metadata/Person commands compare their actual request with the
+sealed source before mutation. A private operation marker, set only by those
+owner-definer commands, permits the existing Trip initializer and Person roster
+invalidation to update Core read state; it is not a client GUC. Existing Core
+command validation, actor/creator/visibility/CAS and receipt logic remain in use.
+Normal standalone Gateways retain their original path outside an Adoption scope.
+
+`guestAdoptionCompositePg.ts` loads the original plan from the authorized locked
+server scope and composes the existing held Trip/Metadata/Person ports with the
+existing Core storage. It owns no transaction boundary or terminal publication.
+Ledger is read from the actual existing initializer; mismatched source financial
+settings reject the whole transaction instead of substituting defaults. The
+internal execution evidence remains authority NONE and local restore remains
+REQUIRED_NOT_EXECUTED. Never mount this as a publisher or let it unlock Guest data.
+
+The real-PG harness uses synthetic database users, not OTP or a Hosted Session.
+It runs the actual TypeScript ports/Core executor, reads the resulting actual
+rows and receipts, and tests rollback. The recorded General Account helper
+postimage is reused, but the rest of this disposable parent is an older owning
+baseline. All actual Hosted function/owner/ACL/trigger preimages must be obtained
+and compared before preparing the precise Owner execution packet. Current local
+SQL is explicitly not that packet, and no Hosted Schema/RLS/GRANT was executed.
