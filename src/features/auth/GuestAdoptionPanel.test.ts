@@ -60,7 +60,7 @@ const makeProps = () => ({
   onCancel: vi.fn(),
   onBusyChange: vi.fn(),
 });
-let props: ReturnType<typeof makeProps>;
+let props: Parameters<typeof GuestAdoptionPanel>[0];
 afterEach(() => vi.unstubAllGlobals());
 function render() {
   s.cursor = s.refCursor = 0;
@@ -155,6 +155,19 @@ it("retries an UNKNOWN publication with the retained attempt and no new OTP or p
   await vi.waitFor(() => expect(props.onComplete).toHaveBeenCalledOnce());
   expect(s.prepare).toHaveBeenCalledOnce();
   expect(publish).toHaveBeenCalledTimes(2);
+});
+it("renders cold recovery as Check status and cancels only through the recovered attempt", async () => {
+  const cancel = vi.fn(async () => {}), publish = vi.fn();
+  props.recoveredAttempt = { targetAccountId: "target", canCancel: true, cancel, publish };
+  const tree = render();
+  expect(tree.some((n) => n.props.label === "auth.adoptionRetry")).toBe(true);
+  expect(s.prepare).not.toHaveBeenCalled();
+  expect(s.prevent).toHaveBeenLastCalledWith(true, expect.any(Function));
+  press("auth.adoptionCancel");
+  await vi.waitFor(() => expect(props.onCancel).toHaveBeenCalledOnce());
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(publish).not.toHaveBeenCalled();
+  expect(s.prepare).not.toHaveBeenCalled();
 });
 it("resumes a retained same-Account Session through the ordinary coordinator without replaying Guest publication", async () => {
   const retained = { ...session, refreshToken: "refreshed-local-fixture" };

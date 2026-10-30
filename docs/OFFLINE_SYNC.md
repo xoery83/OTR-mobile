@@ -18,6 +18,13 @@ Bundled cover selection remains an independent unsynced device preference.
 
 Offline-first is a product requirement, not an implementation detail. The local database is the mobile source of truth. Cloud is a sync target. Opening the app must also be offline-tolerant: a valid local session and cached SQLite data are enough to enter the app.
 
+Native-06's unmounted change-trigger candidate accepts only an injected, formally
+qualified private subscription. It passes invalidation to the existing coordinator,
+coalesces bursts with one trailing read, and closes on Account generation changes.
+No default subscription, timer, wire protocol or SQLite writer is installed.
+Current private subscribe/revocation and cheap revision ports are absent; the
+candidate cannot be enabled or replace polling until those owning gaps close.
+
 ## Native-04 automatic certified Trip reads (candidate)
 
 Normal committed Accounts reuse existing Backend discovery/complete Core collections,

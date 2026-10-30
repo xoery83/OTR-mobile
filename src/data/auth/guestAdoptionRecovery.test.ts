@@ -20,12 +20,12 @@ import {
   type GuestRecoveryFiles,
   type GuestAdoptionPreparation,
 } from "./guestAdoptionRecovery";
-import { requireCommittedGuestPrincipal } from "./authRepository";
+import { guestVerificationSession, requireCommittedGuestPrincipal } from "./authRepository";
 import { advanceAccountGeneration, getAccountGeneration } from "./accountGeneration";
 import { createGuestRecoveryFiles } from "./guestRecoveryFiles";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 
-vi.mock("./authRepository", () => ({ requireCommittedGuestPrincipal: vi.fn() }));
+vi.mock("./authRepository", () => ({ requireCommittedGuestPrincipal: vi.fn(), guestVerificationSession: { readForLocalCache: vi.fn() } }));
 vi.mock("@/domain/localId", () => ({ createUuid: () => randomUUID() }));
 const nativeAccess = vi.hoisted(() => ({
   files: null as GuestRecoveryFiles | null,
@@ -53,6 +53,7 @@ afterEach(() => {
   nativeAccess.files = null;
   nativeAccess.created.mockClear();
   vi.mocked(requireCommittedGuestPrincipal).mockReset();
+  vi.mocked(guestVerificationSession.readForLocalCache).mockReset();
 });
 const canonical = (value: unknown) => canonicalCoreJson(value as Json);
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
@@ -243,6 +244,37 @@ it("requires authoritative server status after durable publish intent, including
     f.open().cancelBeforePublication(input.adoptionId, input.targetAccountId),
   ).rejects.toThrow("AUTHORITATIVE_STATUS_REQUIRED");
   expect(existsSync(f.path(input.adoptionId, "cancelled"))).toBe(false);
+});
+
+it("retains the publication hold across cold cancellation recovery until receipt and credential revocation are verified", async () => {
+  const f = fixture(), input = preparation(f.scope.localId), journal = f.open();
+  const prepared = (await journal.prepare(input))!;
+  await journal.requestPublication(input.adoptionId, input.targetAccountId, prepared.preparationSha256);
+  const body = {
+    contractVersion: 1, schemaId: "otr.auth.guest-adoption-receipt/1",
+    adoptionId: input.adoptionId, sourceGuestLocalId: input.sourceGuestLocalId,
+    targetAccountId: input.targetAccountId, inventorySha256: input.inventorySha256,
+    receiptId: randomUUID(), grantId: randomUUID(), policyVersion: "unit",
+    recordedAt: new Date().toISOString(), outcome: "CANCELLED",
+    preparationSha256: prepared.preparationSha256, planSha256: "b".repeat(64),
+  };
+  const sign = (value: typeof body) => ({ ...value, receiptSha256: hash("otr-auth-guest-adoption-receipt-v1\n" + canonical(value)) });
+  await expect(journal.recordServerCancellation(input.adoptionId, input.targetAccountId, sign({ ...body, preparationSha256: "c".repeat(64) }))).rejects.toThrow("CHECKPOINT_MISMATCH");
+  await expect(journal.recordServerCancellation(input.adoptionId, input.targetAccountId, { ...sign(body), receiptSha256: "d".repeat(64) })).rejects.toThrow();
+  await journal.recordServerCancellation(input.adoptionId, input.targetAccountId, sign(body));
+  expect((await f.open().inspectPublicationRequests())).toHaveLength(1);
+  vi.mocked(guestVerificationSession.readForLocalCache).mockResolvedValue({ status: "REVOCATION_PENDING" });
+  await expect(f.open().finishServerCancellation(input.adoptionId, input.targetAccountId)).rejects.toThrow("REVOCATION_PENDING");
+  expect((await f.open().read(input.adoptionId))?.nextAction).toBe("QUERY_SERVER_STATUS");
+  vi.mocked(guestVerificationSession.readForLocalCache).mockResolvedValue({ status: "REVOKED" });
+  await f.open().finishServerCancellation(input.adoptionId, input.targetAccountId);
+  expect(await f.open().inspectPublicationRequests()).toEqual([]);
+  expect((await f.open().read(input.adoptionId))?.nextAction).toBe("REMAIN_GUEST");
+  await f.open().finishServerCancellation(input.adoptionId, input.targetAccountId);
+  expect(readFileSync(f.path(input.adoptionId), "utf8")).toBe(canonical(input));
+  expect((await f.open().prepare(preparation(f.scope.localId)))?.nextAction).toBe("RESUME_PREFLIGHT");
+  writeFileSync(f.path(input.adoptionId, "cancellation-receipt"), canonical({ ...sign(body), targetAccountId: randomUUID() }));
+  await expect(f.open().read(input.adoptionId)).rejects.toThrow();
 });
 
 it("keeps originals on cancel and permits a new explicitly different target only after cancellation", async () => {

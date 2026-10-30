@@ -28,6 +28,7 @@ import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccoun
 import { authenticateDevAccount } from "@/data/auth/devAccountAuthentication";
 import { EmailOtpSignIn } from "@/features/auth/EmailOtpSignIn";
 import { GuestAdoptionPanel } from "@/features/auth/GuestAdoptionPanel";
+import { readPendingGuestAdoption } from "@/data/auth/pendingGuestAdoption";
 import type { LocalSession } from "@/domain/auth/localSession";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 
@@ -64,6 +65,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
     session: LocalSession;
     generation: number;
     signal: AbortSignal;
+    attempt?: NonNullable<Awaited<ReturnType<typeof readPendingGuestAdoption>>>["attempt"];
   } | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -88,13 +90,20 @@ export function AccountManagementScreen({ authBoundary = false }) {
   useEffect(() => {
     let active = true;
     void readAccountView()
-      .then((next) => {
+      .then(async (next) => {
         if (!active) return;
         setAccounts(next.accounts);
         setActorDisplayName(next.displayName);
         setRole(next.role);
         if (!next.accounts.some((account) => account.active) && authBoundary)
           setShowLogin(true);
+        if (
+          process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
+          process.env.EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED === "true"
+        ) {
+          const pending = await readPendingGuestAdoption(screenScope.current.signal);
+          if (active && pending) setAdoption(pending);
+        }
       })
       .catch(() => {
         if (active) setError(t("account.loadFailed"));
@@ -279,6 +288,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
 
         {adoption ? (
           <GuestAdoptionPanel
+            recoveredAttempt={adoption.attempt}
             onBusyChange={setBusy}
             session={adoption.session}
             generation={adoption.generation}

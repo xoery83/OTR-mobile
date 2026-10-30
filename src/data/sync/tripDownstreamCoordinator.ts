@@ -58,7 +58,12 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     tail = run.catch(() => undefined);
     return run;
   };
-  async function run(scope: AccountScope, id: string, work: () => Promise<void>) {
+  async function run(
+    scope: AccountScope,
+    id: string,
+    work: () => Promise<void>,
+    invalidated = false,
+  ) {
     await assertAccountRequestContext(scope, deps.account);
     const key = `${scope.generation}:${scope.accountId}:${id}`;
     for (const [prior, state] of reads)
@@ -66,7 +71,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
         reads.delete(prior);
     let state = reads.get(key);
     if (state?.running) return state.running;
-    if (state && now() < state.next) return;
+    if (state && now() < state.next && (!invalidated || state.failures > 0)) return;
     state ??= { next: 0, failures: 0 };
     reads.set(key, state);
     const current = state;
@@ -98,15 +103,32 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
       });
     return current.running;
   }
-  async function trip(scope: AccountScope, tripId: string) {
+  async function trip(scope: AccountScope, tripId: string, invalidated = false) {
     coreUuid.parse(tripId);
-    return run(scope, tripId, async () => {
-      const changed = await deps.pull(scope, tripId);
-      await assertAccountRequestContext(scope, deps.account);
-      if (changed) deps.notify(scope, [tripId], false);
-    });
+    return run(
+      scope,
+      tripId,
+      async () => {
+        const changed = await deps.pull(scope, tripId);
+        await assertAccountRequestContext(scope, deps.account);
+        if (changed) deps.notify(scope, [tripId], false);
+      },
+      invalidated,
+    );
   }
   return {
+    async invalidate(context: AccountRequestContext) {
+      await assertAccountRequestContext(context, deps.account);
+      const running = reads.get(
+        `${context.generation}:${context.accountId}:${context.tripId}`,
+      )?.running;
+      if (running) await running.catch(() => undefined);
+      await assertAccountRequestContext(context, deps.account);
+      const live = await deps.scope();
+      if (live?.accountId !== context.accountId || live.generation !== context.generation)
+        return;
+      await trip(context, context.tripId, true);
+    },
     async trip(tripId: string) {
       const scope = await deps.scope();
       if (scope) await trip(scope, tripId);
@@ -236,4 +258,9 @@ export async function refreshAccountTripReads() {
 }
 export async function refreshTripFromCloud(tripId: string) {
   await (await nativeCoordinator()).trip(tripId);
+}
+
+// Unmounted until the owning private-subscription contract is qualified.
+export async function invalidateTripFromCloud(context: AccountRequestContext) {
+  await (await nativeCoordinator()).invalidate(context);
 }

@@ -1,0 +1,38 @@
+{
+  "status": "RECOVERY_WINDOW_NOT_STARTED_AUTH_POLICY_REMAINED_CLOSED",
+  "windowId": "95e38af0-ebad-484e-88b9-b72aefe692aa",
+  "fixedExpiresAt": "2026-10-30T19:18:00Z",
+  "planSHA256": "50f9f8337a337ef21c3648e55b5b673803fb57daf43c4bc04156a015d5f4a769",
+  "candidate": "d77d92deae232562f8c2742b32ee586001858264a59f47f4e943727ba3195c45",
+  "candidateState": "CREATED_NEVER_STARTED_RETAINED_PER_ROOT",
+  "originalContainer": "28ddc0142c1e7c9f7ea967c1469f46aa6a264027f4b71c7270fe5beb710d5636",
+  "originalServiceSwitched": false,
+  "timer": "not-found/inactive; arm failed before timer creation",
+  "normalQaAuth": {
+    "otpRequests": 1,
+    "receivedMessageId": "1f1607e2-6006-44d8-836b-dd66a8f6878b",
+    "accountId": "71b94800-f860-4685-a5d4-954adae38113",
+    "normalOtpAndTrustedUser": "PASS",
+    "hostSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "backendRecoveryActions": 0
+  },
+  "armFailure": {
+    "sqlState": "53300",
+    "noRawErrorExport": true,
+    "sameImageLaterReadOnlyVerify": "PASS_AUTH_QA_POLICY_CLOSED_TRUE"
+  },
+  "connectionClassification": {
+    "clientBackends": 10,
+    "coreRoleConnectionLimit": 1,
+    "coreRoleConnections": 0,
+    "maxConnections": 60,
+    "observedAt": "2026-10-30T19:27:56.949451+00:00",
+    "totalBackends": 18
+  },
+  "limitations": [
+    "cannot infer past occupier or leak from current snapshot",
+    "oldf6cb still has no cancellation/PUBLISHED receipt; no new mutation",
+    "no role/permission/limit/serializer/retry changed or connection terminated"
+  ],
+  "writer": "returned Root; Native informed"
+}

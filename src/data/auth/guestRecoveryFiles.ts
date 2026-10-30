@@ -9,6 +9,7 @@ const checkpoints = new Set<GuestRecoveryCheckpoint>([
   "prepared",
   "publish-requested",
   "cancelled",
+  "cancellation-receipt",
 ]);
 
 export function createGuestRecoveryFiles(

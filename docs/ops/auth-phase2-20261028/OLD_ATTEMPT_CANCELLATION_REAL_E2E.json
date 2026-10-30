@@ -1,0 +1,83 @@
+{
+  "status": "OLD_ATTEMPT_NORMAL_QA_CANCELLATION_REAL_HOSTED_PASS",
+  "scope": "old f6cb server attempt only; does not restore lost Native AppData or claim new Guest Adoption",
+  "windowId": "f65075c1-00a1-4b18-ac16-bd4eeedc3935",
+  "fixedExpiresAt": "2026-10-30T20:05:33Z",
+  "planSHA256": "63d70e3a9cf6d5d7a2de2c164a8b0e421b7a9d522a0a665fa098de73f2babda8",
+  "accountId": "71b94800-f860-4685-a5d4-954adae38113",
+  "adoptionId": "f6cb81ef-0fb7-49ba-b22e-a6d4727a8a47",
+  "receiptId": "543c4f05-091e-4492-a9d0-1f22a0ffc5c8",
+  "receiptSHA256": "c01aab3d366b8a0d85237a370b812c9073566f8b107f080cdbfe553844b35e43",
+  "normalAuth": {
+    "requests": 1,
+    "trustedIdentityVerified": true,
+    "messageId": "2f12478e-b58b-42f4-954d-ed733585892f",
+    "requestedAt": "2026-10-30T19:47:55.273Z",
+    "readyAt": "2026-10-30T19:48:06.665Z",
+    "normalLocalLogoutAndRefreshRejected": true,
+    "hostProcessExited": true
+  },
+  "normalBackendFlow": [
+    "status",
+    "cancel",
+    "duplicate cancel same receipt",
+    "status CANCELLED",
+    "receipt readback and hash validation"
+  ],
+  "independentReadback": {
+    "allGrantsBound": true,
+    "allStagesBound": true,
+    "database": "postgres",
+    "policyClosed": true,
+    "policyXmin": "32584",
+    "publicationAbsent": true,
+    "receipt": {
+      "adoptionId": "f6cb81ef-0fb7-49ba-b22e-a6d4727a8a47",
+      "outcome": "CANCELLED",
+      "receiptId": "543c4f05-091e-4492-a9d0-1f22a0ffc5c8",
+      "receiptSHA256": "c01aab3d366b8a0d85237a370b812c9073566f8b107f080cdbfe553844b35e43"
+    },
+    "sourceGuardUnchanged": true,
+    "transactionReadOnly": "on",
+    "unjoinedReceipts": false,
+    "unjoinedTerminalEvidence": false
+  },
+  "close": {
+    "status": "AUTH_QA_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "policyBefore": {
+        "verified": false
+      },
+      "runtime": {
+        "runtimeClosed": true,
+        "containerId": "28ddc0142c1e7c9f7ea967c1469f46aa6a264027f4b71c7270fe5beb710d5636",
+        "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057"
+      },
+      "policyAfter": {
+        "status": "AUTH_QA_POLICY_CLOSED",
+        "closed": true
+      }
+    }
+  },
+  "finalRuntime": {
+    "timer": "inactive",
+    "service": [
+      "Result=success",
+      "ActiveState=inactive"
+    ],
+    "runtime": {
+      "status": "RUNTIME_IDENTITY_VERIFIED",
+      "defaultClosed": true,
+      "containerId": "28ddc0142c1e7c9f7ea967c1469f46aa6a264027f4b71c7270fe5beb710d5636",
+      "policyClosed": "REQUIRES_SEPARATE_SQL_VERIFICATION"
+    }
+  },
+  "positiveSQLPolicyEnabled": false,
+  "newGuestAuthorityEnabled": false,
+  "secretsOrOtpPersisted": false,
+  "limitations": [
+    "Original Guestqa local AppData remains lost from update incident",
+    "New Guestqb only Golden A PASS; positive publication/session promotion/cold remain pending"
+  ]
+}

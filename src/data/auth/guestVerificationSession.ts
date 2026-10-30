@@ -20,7 +20,7 @@ const bindingSchema = z.strictObject({
 export type GuestVerificationBinding = z.infer<typeof bindingSchema>;
 const recordSchema = bindingSchema.extend({
   version: z.literal(1),
-  phase: z.enum(["PERSISTING", "READY", "REVOKING", "REVOKED"]),
+  phase: z.enum(["PERSISTING", "READY", "REVOKING", "REFRESHING_REVOCATION", "REVOKED"]),
   credentialSha256: z.string().regex(/^[0-9a-f]{64}$/),
   previousCredentialSha256: z
     .string()
@@ -92,7 +92,7 @@ export function createGuestVerificationSession(deps: {
     const sha = await fingerprint(session);
     if (
       sha !== record.credentialSha256 &&
-      !(record.phase === "PERSISTING" && sha === record.previousCredentialSha256)
+      !(["PERSISTING", "REFRESHING_REVOCATION"].includes(record.phase) && sha === record.previousCredentialSha256)
     )
       throw Error("GUEST_VERIFICATION_CREDENTIAL_MISMATCH");
     return sha;
@@ -153,7 +153,7 @@ export function createGuestVerificationSession(deps: {
     await check();
     if (raw === null) return { status: "ABSENT" };
     const record = parseRecord(raw, binding);
-    if (record.phase === "REVOKING") return { status: "REVOCATION_PENDING" };
+    if (["REVOKING", "REFRESHING_REVOCATION"].includes(record.phase)) return { status: "REVOCATION_PENDING" };
     if (record.phase === "REVOKED") return { status: "REVOKED" };
     if (requireReady && record.phase !== "READY") return { status: "PENDING_WRITE" };
     const credential = await deps.storage.getItem(
@@ -204,7 +204,7 @@ export function createGuestVerificationSession(deps: {
           priorRecord = null;
         } else if (raw !== null) {
           parseRecord(raw, binding);
-          if (priorRecord?.phase === "REVOKING")
+          if (priorRecord && ["REVOKING", "REFRESHING_REVOCATION"].includes(priorRecord.phase))
             throw Error("GUEST_VERIFICATION_REVOCATION_PENDING");
           if (priorRecord?.phase === "REVOKED") throw Error("GUEST_VERIFICATION_REVOKED");
         }
@@ -312,6 +312,7 @@ export function createGuestVerificationSession(deps: {
     async revoke(
       input: GuestVerificationBinding,
       revokeSession: (session: LocalSession) => Promise<void>,
+      refreshSession?: (session: LocalSession) => Promise<LocalSession | null>,
     ) {
       const binding = Object.freeze(bindingSchema.parse(input));
       const key = canonicalCoreJson(binding as Json);
@@ -365,6 +366,36 @@ export function createGuestVerificationSession(deps: {
         });
         if (!staged) return;
         sameGeneration();
+        if (refreshSession && Date.parse(staged.session.expiresAt) <= Date.now() + 30000) {
+          // Keep revocation intent while rotating the canonical credential with the same CAS journal.
+          const refreshed = await refreshSession(staged.session);
+          sameGeneration();
+          if (refreshed !== null) {
+            const updated = validateSession(refreshed, binding.targetAccountId);
+            const updatedSha = await fingerprint(updated);
+            await pinned(staged.binding, async (binding, check) => {
+              sameGeneration();
+              const key = metadataKey(binding.sourceGuestLocalId);
+              const raw = await deps.storage.getItem(key);
+              await check();
+              if (raw === null) throw Error("GUEST_VERIFICATION_BINDING_MISMATCH");
+              const record = parseRecord(raw, binding);
+              if (record.phase !== "REVOKING" || record.credentialSha256 !== staged.record.credentialSha256)
+                throw Error("GUEST_VERIFICATION_REFRESH_CAS");
+              const next = { ...record, phase: "REFRESHING_REVOCATION" as const, credentialSha256: updatedSha, previousCredentialSha256: record.credentialSha256 };
+              await deps.storage.setItem(key, JSON.stringify(next));
+              await check();
+              await deps.storage.setItem(deps.accountSessionKey(binding.targetAccountId), JSON.stringify(updated));
+              await check();
+              staged.record = { ...next, phase: "REVOKING", previousCredentialSha256: null };
+              await deps.storage.setItem(key, JSON.stringify(staged.record));
+              staged.session = updated;
+            });
+          } else {
+            // The normal Provider refresh explicitly confirmed this exact refresh session invalid.
+            revokeSession = async () => undefined;
+          }
+        }
         // Network stays outside the apply gate; only this exact login is revoked.
         try {
           await revokeSession(staged.session);

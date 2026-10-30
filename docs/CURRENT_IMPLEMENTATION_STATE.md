@@ -1,44 +1,55 @@
-# Import deployment checkpoint — 31 October 2026
+# Import Photo — default-closed checkpoint, 31 October 2026
 
-Photo/Auth default-closed image fb0db2ab is actually deployed on original DEV;
-container28ddc014, source dedb7f80 includes accepted maincdf/Auth timeout fix.
-Independent healthy/401/config verification PASS: Envab5dc0e7/Hoste89fe490,
-6mount/17compose/4config unchanged. Old65b/4d retained, rollback not needed.
-Auth flag0/scope absent; PNG runtime flag absent. Native DEV was handed back.
-No Photo SQL/Host worker/custody activation, image call or Save has occurred.
-One consolidated protected Photo Gate is fixed at77a6febb and pending Owner.
-Forward21bfcdb4/preuse inversead26387d and worker/negative-close artifacts are
-independently reviewed. Normal PNG business remains CLOSED until exact approval.
-Use the reviewed compatible default-closed image after any PNG artifact exists;
-never reverse/delete accepted Source/evidence/Item or return to old incompatible4d.
-Next: approved CLOSED install/preflight, one original-image E2E, then Import UX.
-Prepared UX slices remain LOCAL_PASS, not installed: Activity pending-state GET
-refresh ee0d0451 plus sheet-header dedup46f03c78 (separate child branch, reviewed,
-63 checks); accepted receipt display when Save controls are closed93b3aeb9
-(Root branch, reviewed,39 checks). Do not treat these as Native UX PASS or a new
-Photo Save. AD5 existing PDF Batch e6f789bc Results/title/date read recovered under
-newfb image without Analyze/Save; no new paid dispatch was requested.
+Stable Import branch retains reviewed Photo software throughaa71abec, now aligning
+accepted main9be79a8a without changing main or Native/Auth worktrees. Actual DEV is
+28ddc014/imagefb0db2ab, sourcededb7f80 (including maincdf Auth timeout fix); original
+Envab5/Hoste89/6mount/17compose/4config retained, original65b/4d rollback retained.
+Auth's later windows returned that same default service/policyfalse. PNG runtime
+flag absent; no Photo SQL/Host/custody activation, paid image call or Save.
 
-# Import Photo — runtime continuation, 31 October 2026
+The one precise protected Gate77a6febb is pending Owner:
+`ops/universal-product-20261028/authority/PHOTO_SOURCE_VISION_OWNING_GATE.md`.
+Forward21bfcdb4 / pre-use inversead26387d and fixed worker/negative-close artifacts
+are reviewed with qualified Source/Core/expiry/close/composed-inverse LOCAL_PASS.
+Keep original retained PNG Batch67842863/Inputbabf43ec; its AD5 Photos-original
+SHA/OCR RELEVANT/explicit Continue/process-cold recovery passed on126.1. Trip
+assignment changes Capture revision: recheck and renew explicit consent, never
+transfer the old choice. Photo paid calls remain0; metadata/model capability and
+local fixtures are not Vision E2E. PDF and six prior family Golden Slices remain
+accepted; do not replay them. Existing PDF Results/title/date read recovered on
+newfb image without Analyze/Save. AD5 is now normally backgrounded, data retained.
 
-Photo remains LOCAL_PASS, not hosted image interpretation or formal Save PASS.
-PNG normal-Auth preparation is now composed into the existing continuous Backend
-and serialized Source connection. Hashed fixed-QA configuration is absent/closed
-by default; original PNG reads use owning Storage and current permission checks.
-Negative-only close control never activates and independently reads after UNKNOWN.
-Four focused suites40 PASS; types, scoped lint and UI guard PASS; independent
-runtime/close review NO_BLOCKER. Core REGION helper26, full READY guard6 and closer8
-checks passed in network-isolated PG including expiry with flag still true. These
-are synthetic controls, never actual Core acceptance receipts.
+Next is approved CLOSED install/preflight, same original-image interpretation,
+normal Review/Admission, independent readback and Native cold recovery. After any
+PNG artifact exists, close new writes but keep compatible image/readers, original
+and receipts; never apply the pre-use inverse or old incompatible4d image.
+Prepared UX remains LOCAL_PASS/not installed: childee0d0451+46f03c78 Activity
+pending GET refresh/sheet dedup (63 checks), Root93b3aeb9 accepted-receipt display
+when Save controls close (39 checks). Integrate/device-accept these after Photo.
 
-The retained A Batch67842863 / Inputbabf43ec has actual AD5 Photos-original SHA,
-OCR RELEVANT, explicit Continue and process-cold recovery PASS (Build126.1).
-Photo paid calls remain0. Next: fixed Host entrypoint, consolidated protected
-Source/Core/close packet and precise Owner Gate, then same PNG actual image call,
-normal Review/Admission, independent readback and Native cold recovery. Do not
-replay accepted PDF or six existing family Golden Slices. PDF stays CLOSED.
-Root retains Import source Writer; Auth temporarily owns one approved finite DEV
-Host/SQL window, so Root does only offline code/isolated PG until handback.
+# Native-05/06 — iPad business slice and closed trigger, 31 October 2026
+
+Physical iPad Air5 freshly verified OS27.2/24B119, exactUDID00008103-00113914020B401E,
+Build127/source5c765fa6/full new native; now in-place128/JS2624655a/sourcec79a,
+same127 native/profile. Normal OTP B1f,
+P1c877cf77 Create/Edit APPLIED/independent Supabase hashes/sameID rev2/cold Session
+and SQLite75 Pending0 PASS. External P3612d7e55 original POST became UNKNOWN,
+then same-op83b3a089 receipt a7caf546 APPLIED and independent single row/hash plus
+real Day18:00 screenshot PASS; no duplicate POST. Continuous latency not measured.
+OTR-only agent-device control/input/scroll passed; current Runner reconnect needs
+Owner Touch ID Enable UI Automation. iPad is primary, iPhone untouched.
+
+Native06 adapter is unmounted/default-closed. New trigger+coordinator18 and existing
+identity3 tests/types/scoped lint PASS; unique Core Writer bounded NO_BLOCKER only
+for this candidate. No private subscribe/committed publisher/cheap revision owning
+ports exist per Core/Auth; no socket/SQL/RLS/Trigger/authority opened. Revocation
+remains BLOCKED. See ops/native05-06-20261031/{IPAD_PRIMARY_QA_ACCEPTANCE.md,
+REALTIME_TRIGGER_V1_ACCEPTANCE.md,REALTIME_OWNING_PORT_GAP.md}. Native branch safely
+FF'd to maincdf, then candidatec79a safely pushed/local=remote, six original main
+dirty files exactly preserved. iPad128 cold edited P1/date/Everyone/no-login screenshot
+PASS; normal home failed at Runner so exact own App PID SIGTERM, own Session/Claim
+released. No P3 Edit while system grant pending. Core capacity53300
+cause remains unproven; no limits changed. Original operation/UNKNOWN retained.
 
 # Native-04 Downstream — ordinary unified smoke, 31 October 2026
 
@@ -60,8 +71,8 @@ The unsent125 V1 Trip/P1 remains retained, not converted or claimed Cloud PASS.
 No Auth/Queue/Backend product change. Both automation claims released.
 Formal revocation/regrant remains BLOCKED: no authoritative issuer/read contract;
 ordinary404 is never treated as revocation. Do not claim complete Beta security.
-Physical iPad has been handed back after Owner reset/upgrade; renewed OTR install
-is not yet verified. iPhone untouched. Final docs integration/push is next.
+The former pending post-reset iPad install is superseded by Native05 above.
+iPhone untouched; earlier unified smoke evidence remains reusable.
 
 Account switching REAL Native bounded PASS: FormsQA124 A3f → normal OTP B1f → online B Signout → remembered A; both Accounts cold recover. B cloud Trip/P1/P3 automatically downloaded; known foreign Details/Day IDs withheld; A original conflict and85 historical queues retained byte-for-byte, B cache preserved. Mutation dispatch remained privately scoped in124; separate ordinary126 smoke above closes that build qualification. See `docs/ops/native-04-downstream-20261030/ACCOUNT_SWITCH_E2E.json`.
 
@@ -70,6 +81,51 @@ Actual stale mounted list fixed295071ce using one existing refreshKey dependency
 Current Native candidate integrates main82d5c8b3, preserving its exact accepted Core HTTP/FIFO/budgets and Auth/Import code. Ordinary126 covers the final unscoped smoke separately from124 account-switch evidence; no historical A queue was activated. Native source249204db is fast-forwarded into local main; final receipt-only commit/push pending. Auth owns Session/Principal and separate GuestQA window. No Provider or protected Authority change.
 
 # Auth Golden Slice — current continuation, 30 October 2026
+
+31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
+edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →
+PUBLISHED adoptiondb70fbb2, receipt430182c9/f44350ab. Independent Supabase receipt
+and owning Trip/P1 fields/creator Account match; existing discovery/Core restored
+same target cache with Owner Person425baa. Canonical Account install and real cold
+59126→67678 MyTrips→same Trip→Day original P1 PASS. No fixture/Token/SQLite copy.
+Positive window1fc2 closed early: default28dd/fb0d restored, independent policyfalse
+xmin33417, timerinactive, original Source guard unchanged. Golden core flow PASS;
+foreign QA collection read returns404/NOT_VISIBLE PASS. Foreign operation receipt
+returns503/CORE_CAPABILITY_CLOSED, fail-closed but not a qualified permission-denial
+PASS; unique Core Owner is handling the narrow boundary. Both Host test Sessions
+were normally revoked with refresh rejection, no mutation/retry of Adoption.
+Independent receipt/cache/cold/close Review is NO_BLOCKER. Real accepted slice
+merged latest Native7e7a and pushed mainb197da47;7 suites112/typecheck/UIguard/
+affected lint PASS. Six original main dirty bytes/modes/index/fullDiff unchanged.
+Remaining replay503 stays with unique Core Owner; no broader Phase2 PASS claim. Other Guest domains are not claimed adopted. See
+NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json. Older blocked notes below describe
+prior stages, not the latest completed core flow.
+
+31 October actual continuation: shutdown Gate installed/verified and main timeout
+fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.
+Cold recovery source3f6ca983 reviewed NO_BLOCKER, but actual GuestQA68 update used
+agent-device reinstall, which uninstalls first and replaced its AppData container.
+Original local Trip/P1/recovery directory is therefore missing; Keychain Guestd6b
+and server Stagef6cb remain. This was a wrong update-command choice, reported to
+Owner/Root/Native. Do not claim recovered Guest data or Adoption PASS. No other
+App/device reset or data copy occurred. See GUESTQA68_UPDATE_INCIDENT.json.
+Old f6cb server attempt now formally CANCELLED via normal QA OTP/JWT: receipt
+543c4f05/c01aab3d, duplicate/status/receipt and independent Supabase readback PASS.
+Recovery-only f65075c1 closed; default28dd restored, independent policyfalse/xmin32584,
+timer inactive, own HostSession logout/refresh-invalid PASS. No original AppData
+restoration is claimed. See OLD_ATTEMPT_CANCELLATION_REAL_E2E.json. New isolated
+Guest Golden Slice is recreated only through normal UI, never from a fixture.
+New independent Guestqb69 now passed normal UI Trip9d10b9d7 + P1 Guest B Walk
+(2026-11-02) creation and real process cold33954→44128. Same container, Trip/ops/
+intent hashes retained; SQLite75 has2 DEPENDENCY_BLOCKED/attempt0, accepted_at=null.
+Normal UI Edit also saved title Auth Guest B 20261031 Edited and deferred Metadata
+op676d3e07. Ordinary install (no uninstall) relocated the iOS container but retained
+Guest/Trip/original ops/P1 intent; all3 ops remain dependency-blocked/attempt0.
+Real relaunch44128→59126 shows edited Trip and original P1 in Day, exact metadata
+except container path retained. Guest637e59f7 has not logged in; no cloud/Account
+authority. This is a new real Golden A, never restoration of old lost AppData. See GUESTQA69_GOLDEN_A_NATIVE.json.
+All future code-only updates must use install without uninstall. Root default
+CLOSED software is now28dd/fb0d (source dedb7f80 includescdf); Auth policy staysfalse.
 
 Golden Slice BLOCKED: existing Guest UI Trip+P1 → normal OTP/explicit target →
 one owning publication → restart same Trip+P1. Normal Native OTP now reaches explicit target confirmation and self UUID;
@@ -148,6 +204,16 @@ independent6 checks; original plan/runtime archived, exact deadline not extended
 Accepted main5c765fa6 remains merged in Auth b3f0d37f.
 Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
+Cold recovery candidate now reads the sole original durable publication request and
+canonical provisional credential; no fresh grant/UUID or optimistic source release.
+Existing server cancellation receipt is bound to original preparation SHA and
+stored immutably before same-Session revoke. Only confirmed REVOKED plus receipt
+can write cancelled; UNKNOWN retains hold. Normal Provider refresh during revoke
+uses the original canonical slot and a REFRESHING_REVOCATION CAS marker, never a
+launch Session. Recovery/verification/Panel4s81 PASS; UIguard/types/lint PASS.
+Independent review is NO_BLOCKER; GuestQA68 actual cold/cancel E2E remains pending. Main
+cdf64b31 timeout fix is pushed, actual primary2s55 PASS, six dirty files preserved.
+Root is building one combined default-CLOSED software image before next QA window.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
 hosted-gate-candidate/OWNER_GATE.md.
 

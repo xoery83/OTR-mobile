@@ -1,0 +1,31 @@
+{
+  "codeSourceAndPushedMain": "c79a9b03189d0dc4b514817f449dac66fcb1c8af",
+  "build": 128,
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "udid": "00008103-00113914020B401E",
+  "os": "27.2/24B119",
+  "nativeCompileSource": "5c765fa6",
+  "nativeCompileBuild": 127,
+  "fullNewNativeCompileFor128": false,
+  "jsSha256": "2624655a227eade8edbda44a63210b668e76b11953671af6df4ea50e89fe1cd2",
+  "installation": "APPLE_COREDEVICE_IN_PLACE_SAME_BUNDLE_AND_KEYCHAIN_GROUP",
+  "uninstallOrReset": false,
+  "coldP1TitleDateEveryoneAndNoLoginScreenshot": "PASS",
+  "newAxTapSmoke": "BLOCKED_SYSTEM_TOUCH_ID_GRANT",
+  "normalHome": "TIMEOUT_CANCELLED_NOT_CLAIMED_BACKGROUND",
+  "pauseForegroundReads": "NORMAL_SIGTERM_EXACT_OWN_PROCESS_1008",
+  "ownSessionsAfter": 0,
+  "targetSharedClaimsAfter": 0,
+  "sixOriginalMainDirtyFiles": "EXACT_BYTES_MODES_STATUS_INDEX_AND_FULL_DIFF_PRESERVED",
+  "mainPush": "NORMAL_NON_FORCE_LOCAL_REMOTE_MATCH",
+  "realtimeSubscriptions": 0,
+  "providerCalls": 0,
+  "newP3EditIssued": false,
+  "iphoneTouched": false,
+  "remaining": [
+    "System Touch ID required before independent Runner reconnect",
+    "Private subscribe/committed signal/cheap revision owning ports absent",
+    "Continuous foreground latency not measured",
+    "Formal revocation remains blocked"
+  ]
+}

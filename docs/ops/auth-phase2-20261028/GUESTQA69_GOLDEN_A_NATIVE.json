@@ -1,0 +1,153 @@
+{
+  "status": "NEW_GUEST_CREATE_EDIT_P1_COLD_AND_IN_PLACE_INSTALL_PASS",
+  "scope": "new isolated Guestqb69; does not restore or replace old Guestqa/f6cb incident",
+  "sourceCommit": "3f6ca983560591b48e8832801e02d302021842e2",
+  "bundleId": "com.xoery.otrmobile.guestqb",
+  "artifactVersion": 69,
+  "hermesSHA256": "17df7956be6eeccd25718847b19deefb755589dfb9d841320bf0ea8aa5c500c6",
+  "guestId": "637e59f7-1e67-4728-88db-8763cf857d48",
+  "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+  "title": "Auth Guest B 20261031",
+  "p1Title": "Guest B Walk",
+  "p1Date": "2026-11-02",
+  "actualFlow": [
+    "fresh isolated App launch with no formal login",
+    "normal Native Create Trip",
+    "normal Itinerary > Plan > date range > Save",
+    "Day Feed visible P1",
+    "process cold33954\u219244128",
+    "normal My Trips card\u2192Day Feed same Trip/P1",
+    "normal Edit Trip > change name > Save",
+    "ordinary install same reviewed artifact without uninstall",
+    "real relaunch44128\u219259126",
+    "My Trips edited title > Day original Guest B Walk visible"
+  ],
+  "sqliteReadback": {
+    "bundleId": "com.xoery.otrmobile.guestqb",
+    "containerId": "4134268F-224A-4433-AB71-1ECC0765E30C",
+    "guestId": "637e59f7-1e67-4728-88db-8763cf857d48",
+    "sqliteVersion": 75,
+    "trips": [
+      {
+        "account_id": "637e59f7-1e67-4728-88db-8763cf857d48",
+        "id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "create_operation_id": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+        "name": "Auth Guest B 20261031",
+        "start_date": null,
+        "end_date": null,
+        "owner_person_id": null,
+        "accepted_at": null
+      }
+    ],
+    "operations": [
+      {
+        "id": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "entity_type": "TRIP_CORE_V2",
+        "entity_id": "f3ca9163-1dbb-4d1b-8a0b-a06bce60c664",
+        "operation_type": "CORE_V2_COMMAND",
+        "status": "DEPENDENCY_BLOCKED",
+        "attempt_count": 0,
+        "owner_user_id": "637e59f7-1e67-4728-88db-8763cf857d48"
+      },
+      {
+        "id": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "entity_type": "TRIP",
+        "entity_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "operation_type": "CREATE_TRIP",
+        "status": "DEPENDENCY_BLOCKED",
+        "attempt_count": 0,
+        "owner_user_id": "637e59f7-1e67-4728-88db-8763cf857d48"
+      }
+    ],
+    "pendingIntents": [
+      {
+        "operation_id": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+        "queue_operation_id": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+        "intent_sha256": "3ae580cd81898b2e42d0e227c20eb6f46ff94724ce0339ceb596b0919653f393"
+      }
+    ],
+    "serverAccepted": false,
+    "source": "normal Native UI only"
+  },
+  "coldMetadataIdentical": true,
+  "normalAccountLoginOrCloudWrites": false,
+  "copiedSessionKeychainOrDatabase": false,
+  "newSimulator": false,
+  "oldQaEvidence": "GUESTQA68_UPDATE_INCIDENT.json remains unresolved; serverStage retained; do not claim old Native restoration",
+  "next": "normal OTP/explicit target and bounded legal adoption on this actual UI source; old f6cb cancellation separately via normal QA Account",
+  "editedTitle": "Auth Guest B 20261031 Edited",
+  "updateVerification": {
+    "command": "install, never reinstall",
+    "beforeContainerId": "4134268F-224A-4433-AB71-1ECC0765E30C",
+    "afterContainerId": "D6CA416E-A109-4B53-8A6A-C2648E353B92",
+    "containerPathRelocatedByIOS": true,
+    "guestTripOriginalQueueAndIntentIdentityRetained": true,
+    "metadataExceptContainerPathIdentical": true,
+    "deferredMetadataOperationId": "676d3e07-ed74-4688-a019-b61c5783ec71",
+    "operations": 3,
+    "allDependencyBlockedAttemptsZero": true,
+    "coldPid": 59126,
+    "copiedSessionKeychainOrDatabase": false
+  },
+  "editedSqliteReadback": {
+    "bundleId": "com.xoery.otrmobile.guestqb",
+    "containerId": "D6CA416E-A109-4B53-8A6A-C2648E353B92",
+    "guestId": "637e59f7-1e67-4728-88db-8763cf857d48",
+    "sqliteVersion": 75,
+    "trips": [
+      {
+        "account_id": "637e59f7-1e67-4728-88db-8763cf857d48",
+        "id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "create_operation_id": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+        "name": "Auth Guest B 20261031 Edited",
+        "start_date": null,
+        "end_date": null,
+        "owner_person_id": null,
+        "accepted_at": null
+      }
+    ],
+    "operations": [
+      {
+        "id": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "entity_type": "TRIP_CORE_V2",
+        "entity_id": "f3ca9163-1dbb-4d1b-8a0b-a06bce60c664",
+        "operation_type": "CORE_V2_COMMAND",
+        "status": "DEPENDENCY_BLOCKED",
+        "attempt_count": 0,
+        "owner_user_id": "637e59f7-1e67-4728-88db-8763cf857d48"
+      },
+      {
+        "id": "676d3e07-ed74-4688-a019-b61c5783ec71",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "entity_type": "TRIP_LOCAL_ACTION",
+        "entity_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "operation_type": "TRIP_METADATA_DEFERRED",
+        "status": "DEPENDENCY_BLOCKED",
+        "attempt_count": 0,
+        "owner_user_id": "637e59f7-1e67-4728-88db-8763cf857d48"
+      },
+      {
+        "id": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "entity_type": "TRIP",
+        "entity_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "operation_type": "CREATE_TRIP",
+        "status": "DEPENDENCY_BLOCKED",
+        "attempt_count": 0,
+        "owner_user_id": "637e59f7-1e67-4728-88db-8763cf857d48"
+      }
+    ],
+    "pendingIntents": [
+      {
+        "operation_id": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+        "queue_operation_id": "5164e31d-b585-4e9d-8c6f-b0eaa825b3a3",
+        "intent_sha256": "3ae580cd81898b2e42d0e227c20eb6f46ff94724ce0339ceb596b0919653f393"
+      }
+    ],
+    "serverAccepted": false,
+    "source": "normal Native UI only"
+  }
+}

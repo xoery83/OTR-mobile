@@ -44,6 +44,12 @@ export type RegisteredQaHostContext = Readonly<{
   tripId: string;
   readSession(): Promise<LocalSession>;
 }>;
+export type RegisteredQaHostCase = Readonly<{
+  accountId: string;
+  tripId: string;
+  email: string;
+  createdAt?: string;
+}>;
 const userSchema = z.object({
   id: z.uuid(),
   email: z.email(),
@@ -68,7 +74,13 @@ export async function runRegisteredQaHostSession(
     note(value: Record<string, unknown>): void;
   },
   action: (context: RegisteredQaHostContext) => Promise<void>,
+  inputCase: RegisteredQaHostCase = registeredHostQa,
 ) {
+  const qaCase = Object.freeze(z.strictObject({
+    accountId: z.uuid(), tripId: z.uuid(),
+    email: z.email().regex(/^otr-qa-[0-9a-f-]{36}@eldouzileu\.resend\.app$/),
+    createdAt: z.iso.datetime({ offset: true }).optional(),
+  }).parse(inputCase));
   const values = new Map<string, string>();
   const storage: SecureSessionStorage = {
     getItem: async (k) => values.get(k) ?? null,
@@ -87,7 +99,7 @@ export async function runRegisteredQaHostSession(
     completed = false,
     clean = false;
   const lease = deps.receiver.createChallenge();
-  requireQa(lease.email === registeredHostQa.email, "REGISTERED_HOST_CASE_MISMATCH");
+  requireQa(lease.email === qaCase.email, "REGISTERED_HOST_CASE_MISMATCH");
   deps.note({
     phase: "OTP_REQUEST_ATTEMPTED",
     requestedAt: lease.requestedAt,
@@ -113,11 +125,13 @@ export async function runRegisteredQaHostSession(
     const user = userSchema.safeParse(await deps.readUser(session));
     requireQa(
       user.success &&
-        user.data.id === registeredHostQa.accountId &&
-        user.data.email.toLowerCase() === registeredHostQa.email &&
-        Date.parse(user.data.created_at) === Date.parse(registeredHostQa.createdAt) &&
+        user.data.id === qaCase.accountId &&
+        user.data.email.toLowerCase() === qaCase.email &&
+        (qaCase.createdAt === undefined
+          ? Number.isFinite(Date.parse(user.data.created_at))
+          : Date.parse(user.data.created_at) === Date.parse(qaCase.createdAt)) &&
         Number.isFinite(Date.parse(user.data.email_confirmed_at)) &&
-        session.identity?.userId === registeredHostQa.accountId,
+        session.identity?.userId === qaCase.accountId,
       "REGISTERED_HOST_IDENTITY_UNPROVEN",
     );
     revoker.bindProvenToken(session.accessToken);
@@ -125,18 +139,18 @@ export async function runRegisteredQaHostSession(
     active = true;
     deps.note({
       phase: "HOST_IDENTITY_VERIFIED",
-      accountId: registeredHostQa.accountId,
-      tripId: registeredHostQa.tripId,
+      accountId: qaCase.accountId,
+      tripId: qaCase.tripId,
     });
     await action(
       Object.freeze({
-        accountId: registeredHostQa.accountId,
-        tripId: registeredHostQa.tripId,
+        accountId: qaCase.accountId,
+        tripId: qaCase.tripId,
         async readSession() {
           requireQa(active, "REGISTERED_HOST_SCOPE_RELEASED");
           const current = await repo.readAdoptedLocalSession();
           requireQa(
-            current?.identity?.userId === registeredHostQa.accountId,
+            current?.identity?.userId === qaCase.accountId,
             "REGISTERED_HOST_IDENTITY_UNPROVEN",
           );
           requireQa(active, "REGISTERED_HOST_SCOPE_RELEASED");
@@ -178,8 +192,8 @@ export async function runRegisteredQaHostSession(
   if (failed) throw new OtpQaError("REGISTERED_HOST_ACTION_FAILED");
   return Object.freeze({
     status: "PASS",
-    accountId: registeredHostQa.accountId,
-    tripId: registeredHostQa.tripId,
+    accountId: qaCase.accountId,
+    tripId: qaCase.tripId,
     ownSessionCleanup: "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
   });
 }
