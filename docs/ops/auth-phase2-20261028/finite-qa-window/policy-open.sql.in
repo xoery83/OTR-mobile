@@ -1,0 +1,24 @@
+-- Root-only exact DEV operational gate; no DDL, GRANT or business writes.
+BEGIN;
+SET LOCAL lock_timeout='3s';
+SET LOCAL statement_timeout='15s';
+SELECT pg_advisory_xact_lock(hashtextextended('otr-auth-qa-policy',0));
+DO $gate$
+DECLARE changed integer;
+BEGIN
+ IF current_database()<>'postgres'
+ OR current_setting('otr.auth.approved_project_ref',true) IS DISTINCT FROM 'tuqigdxrvrerfewsxqgm'
+ OR current_setting('otr.auth.approved_gate_id',true) IS DISTINCT FROM 'fd671463e04c095197e20faaba223ed26eb1ea99d2ad64b207bd06aaaaefde5c'
+ OR current_setting('otr.auth.qa_window',true) IS DISTINCT FROM '@WINDOW_ID@'
+ OR '@EXPIRES_AT@'::timestamptz<=clock_timestamp()
+ OR '@EXPIRES_AT@'::timestamptz>clock_timestamp()+interval '30 minutes'
+ OR NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=66410 AND md5(pg_get_functiondef(oid))='6c7ef0d85cfd8893796ccc53e31f51f0')
+ THEN RAISE EXCEPTION 'AUTH_QA_INTENT_OR_DEPENDENCY_REQUIRED';END IF;
+ UPDATE otr_auth_guest_composite.policy SET enabled=true
+ WHERE singleton AND NOT enabled AND policy_version='otr.auth.fileless-p1.unpriced/1'
+ AND xmin::text='@CLOSED_POLICY_XMIN@';
+ GET DIAGNOSTICS changed=ROW_COUNT;
+ IF changed<>1 THEN RAISE EXCEPTION 'AUTH_QA_POLICY_CAS_FAILED';END IF;
+END $gate$;
+SELECT enabled,policy_version,xmin::text AS active_policy_xmin FROM otr_auth_guest_composite.policy WHERE singleton;
+COMMIT;

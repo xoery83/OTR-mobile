@@ -1,0 +1,23 @@
+-- Negative authority only. Root supplies the actual successful activation xmin.
+BEGIN;
+SET LOCAL lock_timeout='3s';
+SET LOCAL statement_timeout='15s';
+SELECT pg_advisory_xact_lock(hashtextextended('otr-auth-qa-policy',0));
+DO $close$
+DECLARE changed integer; current_policy otr_auth_guest_composite.policy%rowtype;
+BEGIN
+ IF current_database()<>'postgres'
+ OR current_setting('otr.auth.approved_project_ref',true) IS DISTINCT FROM 'tuqigdxrvrerfewsxqgm'
+ OR current_setting('otr.auth.qa_window',true) IS DISTINCT FROM '@WINDOW_ID@'
+ THEN RAISE EXCEPTION 'AUTH_QA_CLOSE_INTENT_REQUIRED';END IF;
+ SELECT * INTO STRICT current_policy FROM otr_auth_guest_composite.policy WHERE singleton FOR UPDATE;
+ IF current_policy.policy_version<>'otr.auth.fileless-p1.unpriced/1'
+ THEN RAISE EXCEPTION 'AUTH_QA_POLICY_VERSION_DRIFT';END IF;
+ IF NOT current_policy.enabled THEN RETURN;END IF;
+ UPDATE otr_auth_guest_composite.policy SET enabled=false
+ WHERE singleton AND enabled AND policy_version='otr.auth.fileless-p1.unpriced/1'
+ AND xmin::text='@ACTIVE_POLICY_XMIN@';
+ GET DIAGNOSTICS changed=ROW_COUNT;
+ IF changed<>1 THEN RAISE EXCEPTION 'AUTH_QA_CLOSE_CAS_FAILED';END IF;
+END $close$;
+COMMIT;

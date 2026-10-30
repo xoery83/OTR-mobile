@@ -1,0 +1,32 @@
+{
+  "generatorSHA256": "482af9c7177c1e48618ec757231fbd6573fe80011a4d58d80288be339bd6daf0",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "parentGate": "fd671463e04c095197e20faaba223ed26eb1ea99d2ad64b207bd06aaaaefde5c",
+  "bodySHA256": "0776bf7e129901ed06286a450c84bb7df77e01bbef8e82072c20d00ac15db959",
+  "signature": "otr_auth_guest_composite.close_qa_policy(boolean)",
+  "grantee": "otr_trip_core_v2_gateway",
+  "policyVersion": "otr.auth.fileless-p1.unpriced/1",
+  "sourceGuardMD5": "6c7ef0d85cfd8893796ccc53e31f51f0",
+  "gateId": "e7e9351e66cd732d94d988cae1785e87905c64c25040d80e5609e9afcc410875",
+  "installSHA256": "8c6b1809668b1846f1d6bc3bc6d452f67ff356e83de375bbd33b55698f225a13",
+  "status": "OWNER_APPROVAL_REQUIRED_NOT_EXECUTED",
+  "newPrivateFunctions": 1,
+  "newDirectExecuteGrants": 1,
+  "newRolesOrCredentials": 0,
+  "newTablePrivilegesOrRlsChanges": 0,
+  "positiveAuthority": "none; only existing policy true\u2192false; future policy versions rejected",
+  "normalApiRoleExecution": false,
+  "expectedFunction": {
+    "definitionMd5": "a4230045eab12b97d3cdfd31477ea770",
+    "definitionSHA256": "8e5a14177dd5aa4d4a4c41b775e2de1b4d9eddd9b007955768bc9d2f582cb272",
+    "owner": "postgres",
+    "securityDefiner": true,
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}"
+  },
+  "existingParentFunctionsChanged": 0,
+  "policyAtInstall": "CLOSED",
+  "independentReview": "NO_BLOCKER; see REVIEW.json"
+}

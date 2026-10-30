@@ -1,0 +1,21 @@
+{
+  "CLOSE_HELPER_GATE.json": "1ed7400b6859e03fae3e8f106e9e1ca0cf752ba91de62b2202818862ae3247fa",
+  "CLOSE_HELPER_INSTALL_CANDIDATE.sql": "8c6b1809668b1846f1d6bc3bc6d452f67ff356e83de375bbd33b55698f225a13",
+  "CLOSE_HELPER_LOCAL_PG_RESULT.json": "0576f23d3d31e7c5f170fc21396f523ff63eeec22b904ecca7f46d16e24fa888",
+  "OWNER_GATE.md": "e6fc06e637a5188cf2d69dcbea040ea3f9653e103eb311c68ab9b6d0a8547ff9",
+  "REVIEW.json": "57573b33a5e9cf530dcd3e63cca5f51382aad92b27ed0bab0915c69e8e50b59a",
+  "RUNBOOK.md": "31de5225165a9b28f81fc03276452542664fd39eadcda50ec6da1542566748c1",
+  "baseline.json": "61b5def147c29a7102b653bdbdf8f4b4e19503316ae2cf0b16e248f89c856524",
+  "close-gate-postcheck.sql": "cb737f53b36b717eb91b8d1add1619edbc8a7d044899d2c5a3af93b0ab3575d6",
+  "close-helper.body.sql": "0776bf7e129901ed06286a450c84bb7df77e01bbef8e82072c20d00ac15db959",
+  "freeze.py": "fefae181e1f22e8e92241525527d68ddb85aff83d5a5337fad452c9d37adf74b",
+  "policy-close.sql.in": "ae8ed81e4b125f75949a19cb52fc26acec7f1e2d561893fb1f8442ca1b98c33f",
+  "policy-open.sql.in": "d843f696fe45b1d123e07eaca48dec09e140c7ef09d21965b929c9e41d717bbf",
+  "policy-verify.sql": "a7fbe5667ab48f7eb7011abd6a831fdbe1f6f5d12b3d22ec119379beaf159c8f",
+  "prepare_close_gate.py": "482af9c7177c1e48618ec757231fbd6573fe80011a4d58d80288be339bd6daf0",
+  "probe_close_helper.py": "20fbc5321b354605b9f8d6e175ae3811a4685e1615612ab30b4f1d5766e71767",
+  "render_close.py": "a6170c50e01fa6d7f0a1ec928ec081cdf52223897a90ba3ac23c614b6aed5617",
+  "runtime.py": "dc9b6e3db8b4d65de6d2a25e136d01c20354f5cd08f84cd6a36df2bdba16d5c1",
+  "test_runtime.py": "fbd43f8473cb110a729dcafe031eaf7eff4ed9415071b0b0a25cf864b78a23f1",
+  "verify_close_gate.py": "50138cbdf4e5db4db0fb8bfbc41cfc8729e5467fb3ba266aceb151be56701740"
+}

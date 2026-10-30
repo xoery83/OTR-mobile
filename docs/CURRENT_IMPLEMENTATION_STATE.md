@@ -67,6 +67,15 @@ No private auth.users query was executed. No Add/freeze/publication; lease retur
 After ordinary read smoke, return Host Writer to Root and coordinate the finite
 QA mutation window. See
 ops/auth-phase2-20261028/GUESTQA67_SELF_IDENTITY.json.
+The next real blocker is independent Host SQL shutdown: only Mac-side management
+SQL currently exists. A separate negative-only candidate adds one private
+close_qa_policy(boolean) and one EXEC to the existing Core Gateway; no role,
+credential, RLS/table grant or positive authority. Local real-PG6 groups, TS14 and
+independent Python5/TS3 PASS, bounded Review NO_BLOCKER after fixing timer lock
+retry exhaustion. Owner approval remains required; not installed or activated.
+See finite-qa-window/OWNER_GATE.md, CLOSE_HELPER_GATE.json and RUNBOOK.md under
+ops/auth-phase2-20261028. Same71b confirmation was restored then claim closed;
+new fresh GUI READY/expiry will be obtained only after approval and Root setup.
 Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
