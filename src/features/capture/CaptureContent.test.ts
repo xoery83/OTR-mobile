@@ -237,6 +237,8 @@ it("Activity renders real 0/1/N identities and counts, no fake progress; buttons
             onOpenJob: open,
           }),
         );
+        expect(html).toContain(t("capture.activity"));
+        expect(html).toContain(t("capture.activityHint"));
         expect(html.includes(t("capture.activityEmpty"))).toBe(n === 0);
         expect(html).toContain(uiPalette(scheme).background);
         expect(html).not.toMatch(/100%|AI thinking|Waiting for internet/);
@@ -286,9 +288,14 @@ it("Activity renders real 0/1/N identities and counts, no fake progress; buttons
         ).toBe(false);
       }
     }
-  expect(readFileSync("src/features/capture/CaptureActivity.tsx", "utf8")).not.toMatch(
-    /allowFontScaling=\{false\}|numberOfLines|height:|setTimeout|setInterval/,
+  const activitySource = readFileSync("src/features/capture/CaptureActivity.tsx", "utf8");
+  expect(activitySource).not.toMatch(
+    /allowFontScaling=\{false\}|numberOfLines|height:|setInterval/,
   );
+  // The controller may schedule owning GETs; the presenter must never simulate progress.
+  expect(
+    activitySource.slice(activitySource.indexOf("export function CaptureActivityList")),
+  ).not.toMatch(/setTimeout/);
 });
 it("derived actions govern recovery; explicit forward/reverse lineage opens the projected exact Job", () => {
   const open = vi.fn(),

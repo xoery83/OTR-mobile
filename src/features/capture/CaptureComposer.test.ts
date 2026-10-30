@@ -118,7 +118,13 @@ vi.mock("@/ui/controls", () => ({
     state.nodes.push(props);
     return createElement("span", {}, props.children);
   },
-  UiSection: (props: any) => createElement("section", {}, props.children),
+  UiSection: (props: any) =>
+    createElement(
+      "section",
+      {},
+      props.title ? createElement("h2", {}, props.title) : null,
+      props.children,
+    ),
   UiButton: (props: any) => {
     state.buttons.push(props);
     return createElement("button", {}, props.label);
@@ -330,6 +336,7 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
       onSubmit: vi.fn(),
       onActivity: vi.fn(),
       title: t("capture.progress.activeImports"),
+      contextLabel: t("capture.progress.accountScope"),
       content: createElement(CaptureActivityList, {
         jobs: [job],
         expectedAccountId: await f.getAccount(),
@@ -344,6 +351,8 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
       }),
     };
     const html = renderToStaticMarkup(createElement(CaptureComposer, props));
+    expect(html.split(t("capture.progress.activeImports"))).toHaveLength(2);
+    expect(html.split(t("capture.progress.accountScope"))).toHaveLength(2);
     expect(html).toContain(t("capture.activityRefresh"));
     expect(html).toContain(t("capture.activityReturn"));
     expect(html).not.toContain(captureJobTitle(job));

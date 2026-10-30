@@ -267,16 +267,11 @@ export function CaptureActivityList({
       style={expectedAccountId ? styles.sheetBody : styles.body}
       contentContainerStyle={styles.content}
     >
-      <UiSection
-        title={t(
-          expectedAccountId ? "capture.progress.activeImports" : "capture.activity",
-        )}
-      >
-        <Text style={styles.secondary}>
-          {t(
-            expectedAccountId ? "capture.progress.accountScope" : "capture.activityHint",
-          )}
-        </Text>
+      {/* Sheet host already owns its title and Account context. */}
+      <UiSection title={expectedAccountId ? undefined : t("capture.activity")}>
+        {!expectedAccountId ? (
+          <Text style={styles.secondary}>{t("capture.activityHint")}</Text>
+        ) : null}
         <UiButton
           label={t("capture.activityRefresh")}
           variant="text"
