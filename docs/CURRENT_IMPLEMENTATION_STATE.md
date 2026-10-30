@@ -37,8 +37,12 @@ Original local Trip/P1/recovery directory is therefore missing; Keychain Guestd6
 and server Stagef6cb remain. This was a wrong update-command choice, reported to
 Owner/Root/Native. Do not claim recovered Guest data or Adoption PASS. No other
 App/device reset or data copy occurred. See GUESTQA68_UPDATE_INCIDENT.json.
-Contain old QA, formally cancel via normal QA Auth when a recovery window is ready,
-and recreate a new isolated Guest Golden Slice through UI, never from a fixture.
+Old f6cb server attempt now formally CANCELLED via normal QA OTP/JWT: receipt
+543c4f05/c01aab3d, duplicate/status/receipt and independent Supabase readback PASS.
+Recovery-only f65075c1 closed; default28dd restored, independent policyfalse/xmin32584,
+timer inactive, own HostSession logout/refresh-invalid PASS. No original AppData
+restoration is claimed. See OLD_ATTEMPT_CANCELLATION_REAL_E2E.json. New isolated
+Guest Golden Slice is recreated only through normal UI, never from a fixture.
 New independent Guestqb69 now passed normal UI Trip9d10b9d7 + P1 Guest B Walk
 (2026-11-02) creation and real process cold33954→44128. Same container, Trip/ops/
 intent hashes retained; SQLite75 has2 DEPENDENCY_BLOCKED/attempt0, accepted_at=null.
