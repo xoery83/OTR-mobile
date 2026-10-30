@@ -18,7 +18,10 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("./UniversalCaptureResults", () => ({ UniversalCaptureResults: () => null }));
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
-// Native file-lease bootstrap is outside the CaptureTray presentation suite.
+// Native preview and file-lease bootstrap are outside this tray presentation suite.
+vi.mock("@/native/importOriginalPreview", () => ({
+  isImportOriginalPreviewAvailable: () => false,
+}));
 vi.mock("@/native/capturePicker", () => ({ pickCaptureMaterial: vi.fn() }));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: vi.fn() }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));

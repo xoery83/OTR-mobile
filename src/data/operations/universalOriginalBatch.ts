@@ -1,3 +1,4 @@
+import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import { z } from "zod";
@@ -40,6 +41,18 @@ function isSingleEnabledPdf(
     job.inputs[0].declaredContentType === "application/pdf"
   );
 }
+// Single PNG pending original only; does not open mixed/image interpretation.
+export function isSingleEnabledPng(
+  job: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+  profile: typeof PNG_CAPTURE_ORIGINAL_PROFILE | undefined,
+) {
+  return (
+    profile === PNG_CAPTURE_ORIGINAL_PROFILE &&
+    job.inputs.length === 1 &&
+    job.inputs[0].kind === "IMAGE" &&
+    job.inputs[0].declaredContentType === "image/png"
+  );
+}
 // Source command IDs are created locally once and retained by the existing owning binding.
 // Reopen derives the same key from real C3 identities; no Task/Run identity is minted.
 export async function recoverUniversalOriginalPlans(
@@ -50,8 +63,9 @@ export async function recoverUniversalOriginalPlans(
   await assertAccountRequestContext(context, deps.getAccountId);
   const job = await deps.submissions.reopen(jobId, context);
   const pdf = isSingleEnabledPdf(job, deps.pendingPdfProfile);
+  const png = isSingleEnabledPng(job, deps.pendingPngProfile);
   const supported = job.inputs.filter(
-    (i) => pdf || !isUnsupportedUniversalInputMetadata(i),
+    (i) => pdf || png || !isUnsupportedUniversalInputMetadata(i),
   );
   if (
     !job.allInputsAccepted ||
@@ -60,6 +74,7 @@ export async function recoverUniversalOriginalPlans(
     supported.some(
       (i) =>
         !pdf &&
+        !png &&
         i.kind !== "TEXT" &&
         !(i.kind === "FILE" && i.declaredContentType === "text/plain"),
     )
@@ -231,6 +246,7 @@ export async function prepareUniversalOriginalBatch(
     getAccountId(): Promise<string>;
     hash: ImportHash;
     pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
+    pendingPngProfile?: typeof PNG_CAPTURE_ORIGINAL_PROFILE;
     submissions: ReturnType<typeof createCaptureSubmissionRepository>;
     captures: ReturnType<typeof createLocalCaptureInboxRepository>;
     sources: ReturnType<typeof createCaptureSourceAdmissionRepository>;
@@ -254,6 +270,7 @@ export async function prepareUniversalOriginalBatch(
   if (job.batch.accountId !== context.accountId || !job.allInputsAccepted)
     throw new Error("UNIVERSAL_CAPTURE_BATCH_NOT_READY");
   const pdf = isSingleEnabledPdf(job, deps.pendingPdfProfile);
+  const png = isSingleEnabledPng(job, deps.pendingPngProfile);
   const selected = plans.map((p) => {
     const input = job.inputs.find((i) => i.id === p.inputId);
     if (
@@ -262,6 +279,7 @@ export async function prepareUniversalOriginalBatch(
       !input.payloadId ||
       input.state !== "ACCEPTED" ||
       (!pdf &&
+        !png &&
         input.kind !== "TEXT" &&
         !(input.kind === "FILE" && input.declaredContentType === "text/plain"))
     )

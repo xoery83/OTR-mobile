@@ -109,8 +109,12 @@ empty75 login compatibility; nonempty75 Guest Adoption remains CLOSED. Backend
 Task SQLite stays on qualified74, preserving retained-image rollback.
 
 Photo includes conservative local OCR relevance, exact original pins, explicit
-Continue/Skip values and local decision CAS/persistence/retention. It has no UI
-caller, real Vision call or Photo Save E2E; automatic IRRELEVANT is not issued
+Continue/Skip values and local decision CAS/persistence/retention. A dormant
+single-input Import hook now reuses the local factory, reads only on reopen and
+fences view/Account/input changes and explicit choice CAS;32 focused tests, types,
+UI guard and lint pass. See
+`ops/universal-product-20261028/photo/PHOTO_SINGLE_INPUT_HOOK_LOCAL_DELIVERY.md`.
+There is still no UI caller, real Vision call or Photo Save E2E; automatic IRRELEVANT is not issued
 from insufficient OCR. Mixed-Batch delayed-image owning continuation remains open.
 
 Explicit known-Task Start now uses the existing authenticated prepare endpoint's

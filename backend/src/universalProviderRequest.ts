@@ -28,7 +28,9 @@ export function buildUniversalDeepSeekRequest(input: Input) {
   )[] = [
     {
       type: "text",
-      text: "Path B_PREPARED. Interpret these source representations. Each payload starts after its SOURCE marker; offsets exclude the marker.",
+      text: images.length
+        ? "Interpret these source representations. Image evidence refers to the submitted image SHA256 and pixel regions, not OCR text offsets."
+        : "Path B_PREPARED. Interpret these source representations. Each payload starts after its SOURCE marker; offsets exclude the marker.",
     },
   ];
   for (const source of input.sources) {

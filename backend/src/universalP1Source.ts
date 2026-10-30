@@ -1,3 +1,4 @@
+import { importImageBytes } from "../../src/domain/trip/importImageEvidence";
 import { universalPreparedText } from "../../src/domain/capture/universalPreparedText";
 import { universalP1Identity } from "../../src/domain/trip/universalImportIdentity";
 import { z } from "zod";
@@ -272,7 +273,6 @@ export async function projectUniversalP1Selection(
   const evidence: ImportLifecycleRequest["evidence"] = [];
   for (const [fieldKey, fields] of selectedFacts) {
     for (const [index, field] of fields.entries()) {
-      if (!("start" in field)) throw Error("OWNING_REVIEW_REQUIRED");
       const bindings = result.sourceBindings.filter(
         (b) =>
           b.alias === field.sourceId &&
@@ -290,15 +290,57 @@ export async function projectUniversalP1Selection(
             m.pin.payload_sha256 === b.originalSha256,
         );
       if (materials.length !== 1) throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
-      const bytes = Buffer.from(materials[0].text);
-      if (
-        field.end <= field.start ||
-        field.end > bytes.length ||
-        new TextDecoder("utf-8", { fatal: true }).decode(
-          bytes.subarray(field.start, field.end),
-        ) !== field.raw
-      )
-        throw Error("IMPORT_EVIDENCE_INVALID");
+      const material = materials[0];
+      let locator: ImportLifecycleRequest["evidence"][number]["locator"];
+      if (material.form === "IMAGE") {
+        if (
+          family !== "P1" ||
+          !review ||
+          !("region" in field) ||
+          b.mime !== "image/png" ||
+          b.pdfSource ||
+          b.submittedSha256 !== b.originalSha256 ||
+          field.region.imageSha256 !== b.originalSha256
+        )
+          throw Error("OWNING_REVIEW_REQUIRED");
+        await importImageBytes(material, deps.hash);
+        locator = {
+          input_id: b.inputId,
+          kind: "REGION",
+          page: null,
+          start: null,
+          end: null,
+          region: {
+            x: field.region.x,
+            y: field.region.y,
+            width: field.region.width,
+            height: field.region.height,
+            coordinate_width: material.width,
+            coordinate_height: material.height,
+          },
+          excerpt: field.raw,
+        };
+      } else {
+        if (!("start" in field)) throw Error("OWNING_REVIEW_REQUIRED");
+        const bytes = Buffer.from(material.text);
+        if (
+          field.end <= field.start ||
+          field.end > bytes.length ||
+          new TextDecoder("utf-8", { fatal: true }).decode(
+            bytes.subarray(field.start, field.end),
+          ) !== field.raw
+        )
+          throw Error("IMPORT_EVIDENCE_INVALID");
+        locator = {
+          input_id: b.inputId,
+          kind: "TEXT_SPAN",
+          page: null,
+          start: field.start,
+          end: field.end,
+          region: null,
+          excerpt: field.raw,
+        };
+      }
       const reviewedDate =
         fieldKey === "END.local_date" && review && "endLocalDate" in review
           ? review.endLocalDate
@@ -318,15 +360,7 @@ export async function projectUniversalP1Selection(
               },
             }
           : {}),
-        locator: {
-          input_id: b.inputId,
-          kind: "TEXT_SPAN",
-          page: null,
-          start: field.start,
-          end: field.end,
-          region: null,
-          excerpt: field.raw,
-        },
+        locator,
       });
     }
   }
@@ -411,9 +445,16 @@ export async function projectUniversalP1Selection(
       : (input.owningLifecycleRelationships ?? []),
     rawIssues: result.unresolved
       .filter((u) => aliases.has(u.sourceId))
-      .filter(
-        (u) => (!review && family === "P1") || !p1UnselectedAdvisory(u.reason, family),
-      )
+      .filter((u) => {
+        if (
+          review &&
+          family === "P1" &&
+          candidate.visualReviewRequired &&
+          /^VISUAL_CANDIDATE_UNVERIFIED:(activity.name|activity.date)$/.test(u.reason)
+        )
+          return false;
+        return (!review && family === "P1") || !p1UnselectedAdvisory(u.reason, family);
+      })
       .map((u, i) => ({ id: `issue:${i}`, text: u.reason })),
     conflicts: [],
     commercialReviewRequests: [],
@@ -513,7 +554,21 @@ export async function qualifyUniversalP1Selection(
   const qualification = await qualifyImportLifecycleProposals(
     input.context,
     proposal.request,
-    { actor: input.actor, graph: input.graph, snapshot: input.snapshot },
+    {
+      actor: input.actor,
+      graph: input.graph,
+      snapshot: input.snapshot,
+      ...(proposal.body.sourceReview?.version === "otr.universal.p1-source-review/1"
+        ? {
+            reviewedImageSource: {
+              sourceId: proposal.body.sourceId,
+              candidateId: proposal.body.candidateId,
+              reviewedBy: proposal.body.reviewedBy!,
+              review: proposal.body.sourceReview,
+            },
+          }
+        : {}),
+    },
     deps,
   );
   if (

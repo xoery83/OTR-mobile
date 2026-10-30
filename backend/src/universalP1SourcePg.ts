@@ -1,3 +1,7 @@
+import {
+  readUniversalPngSourceMaterial,
+  type UniversalBinaryReader,
+} from "./universalPngSourceMaterial";
 import { readUniversalPdfSourceMaterial } from "./universalPdfSourceMaterial";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { isReviewedP1Gate } from "./tripNormalP1Policy";
@@ -45,6 +49,7 @@ export type PublishedUniversalP1Reader = (
   runId: string;
   // Interface gap: must come from an owning lifecycle qualifier, never the Interpreter.
   owningLifecycleRelationships?: ImportLifecycleRequest["relationships"];
+  readBinary?: UniversalBinaryReader;
 } | null>;
 const header = z.object({
   schemaId: z.enum([
@@ -130,6 +135,7 @@ export async function readP1SourceSnapshot(
   catalog: CoreSourceCatalogV2,
   hash: ImportHash,
   bindings: UniversalResult["sourceBindings"] = [],
+  readBinary?: UniversalBinaryReader,
 ) {
   const inputs = catalog.inputs
       .map((i) => flightInputSchema.parse(i))
@@ -152,6 +158,38 @@ export async function readP1SourceSnapshot(
     if (matches.length !== 1) throw Error("SOURCE_INTEGRITY_FAILURE");
     const raw = matches[0];
     const r = tripImportCatalogSchemas.trip_source_representations.parse(raw);
+    if (
+      r.material_kind === "BINARY" &&
+      r.role === "ORIGINAL" &&
+      r.mime_type === "image/png"
+    ) {
+      const published = bindings.filter(
+        (b) =>
+          b.inputId === pin.id &&
+          b.sourceId === pin.source_id &&
+          b.representationId === pin.representation_id &&
+          b.revision === pin.material_revision &&
+          b.originalSha256 === pin.payload_sha256 &&
+          b.submittedSha256 === pin.payload_sha256 &&
+          b.mime === "image/png" &&
+          !b.pdfSource &&
+          b.status === "READY",
+      );
+      if (
+        published.length !== 1 ||
+        r.retention_state !== "RETAINED" ||
+        r.remote_state !== "VERIFIED" ||
+        r.payload_sha256 !== pin.payload_sha256 ||
+        r.byte_count !== pin.byte_count ||
+        r.text_content !== null
+      )
+        throw Error("SOURCE_INTEGRITY_FAILURE");
+      materials.push(
+        await readUniversalPngSourceMaterial(lease, catalog, pin, hash, readBinary),
+      );
+      representations.push(r);
+      continue;
+    }
     if (
       r.material_kind !== "TEXT" ||
       r.retention_state !== "RETAINED" ||
@@ -263,6 +301,7 @@ async function project(
       catalog,
       hash,
       published.result.sourceBindings,
+      published.readBinary,
     ),
     ...published,
     selection: {

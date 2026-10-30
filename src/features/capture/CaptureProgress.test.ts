@@ -17,10 +17,17 @@ import { uiPalette } from "@/ui/palette";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   buttons: [] as any[],
+  photoRows: [] as any[],
   scrollProps: null as any,
   scrollTo: vi.fn(),
 }));
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
+vi.mock("./UniversalPhotoRelevanceRow", () => ({
+  UniversalPhotoRelevanceRow: (props: any) => {
+    state.photoRows.push(props);
+    return createElement("aside", {}, props.copy.title);
+  },
+}));
 vi.mock("react-native", async () => ({
   View: "div",
   Text: "span",
@@ -45,6 +52,7 @@ vi.mock("@/ui/controls", () => ({
 }));
 beforeEach(() => {
   state.buttons = [];
+  state.photoRows = [];
   state.scrollTo.mockClear();
   setUiLocale("en");
 });
@@ -376,5 +384,69 @@ it("offers exact-session local retry only when its owning host retains a retryab
     expect(state.buttons.some((b) => b.label === t("capture.progress.retryIntake"))).toBe(
       canRetry,
     );
+  }
+});
+
+it("accepted IMAGE rows receive local Photo controls even when another Source is not accepted", async () => {
+  const f = fixture();
+  const request = f.request(2);
+  request.inputs[0].kind = "IMAGE";
+  request.inputs[0].acquisitionSource = "photos";
+  request.inputs[0].declaredContentType = "image/jpeg";
+  request.inputs[0].originalFilename = "Retained photo.jpg";
+  const { LocalCaptureError } = await import("@/domain/capture/localCapture");
+  await f.submissions.submit(
+    request,
+    new Map(
+      request.inputs.map((input, i) => [
+        input.id,
+        async () => {
+          if (i) throw new LocalCaptureError("READER_FAILURE");
+          return { bytes: Uint8Array.of(255, 216, 255, 1, 2) };
+        },
+      ]),
+    ),
+  );
+  const model = await f.submissions.reopen(request.jobId);
+  expect(model.allInputsAccepted).toBe(false);
+  const current = () => true;
+  const copy = {
+    title: "Local photo controls",
+  } as import("./UniversalPhotoRelevanceRow").UniversalPhotoRelevanceCopy;
+  const props = {
+    model,
+    accountId: await f.getAccount(),
+    busy: false,
+    reading: false,
+    error: false,
+    canRetry: false,
+    onRetry: vi.fn(),
+    onRecover: vi.fn(),
+    onOpenJob: vi.fn(),
+    onActivity: vi.fn(),
+    onNewImport: vi.fn(),
+    isCurrent: current,
+    photoRelevanceCopy: copy,
+  };
+  const html = renderToStaticMarkup(createElement(CaptureProgress, props));
+  expect(html).toContain(copy.title);
+  expect(state.photoRows).toHaveLength(1);
+  expect(state.photoRows[0]).toMatchObject({
+    model,
+    input: model.inputs[0],
+    isCurrent: current,
+    copy,
+  });
+  expect(html).toContain(t("capture.failed"));
+  for (const update of [
+    { photoRelevanceCopy: undefined },
+    { isCurrent: undefined },
+    { reading: true },
+    { error: true },
+    { accountId: "foreign" },
+  ]) {
+    state.photoRows = [];
+    renderToStaticMarkup(createElement(CaptureProgress, { ...props, ...update }));
+    expect(state.photoRows).toHaveLength(0);
   }
 });

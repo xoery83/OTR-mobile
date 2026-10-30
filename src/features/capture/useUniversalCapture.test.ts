@@ -10,6 +10,8 @@ const h = vi.hoisted(() => ({
   recover: vi.fn(),
   start: vi.fn(),
   transport: vi.fn(),
+  consent: vi.fn(),
+  options: null as any,
   consumer: { activity: null as unknown, queued: true, canDispatch: true },
 }));
 vi.mock("react", () => ({
@@ -51,15 +53,21 @@ vi.mock("@/data/api/universalImportTransport", () => ({
   createUniversalImportTransport: h.transport,
 }));
 vi.mock("@/data/operations/universalCaptureConsumer", () => ({
-  createUniversalCaptureConsumer: () => ({
-    get activity() {
-      return h.consumer.activity;
-    },
-    queued: true,
-    canDispatch: true,
-    recover: h.recover,
-    start: h.start,
-  }),
+  createUniversalCaptureConsumer: (options: any) => {
+    h.options = options;
+    return {
+      get activity() {
+        return h.consumer.activity;
+      },
+      queued: true,
+      canDispatch: true,
+      recover: h.recover,
+      start: h.start,
+    };
+  },
+}));
+vi.mock("@/data/operations/defaultUniversalPhotoConsent", () => ({
+  assertDefaultUniversalPhotoConsent: h.consent,
 }));
 function Harness(batchId = "batch-a", current = () => true) {
   h.cursor = 0;
@@ -68,8 +76,9 @@ function Harness(batchId = "batch-a", current = () => true) {
   const output = useUniversalCapture(
     {
       allInputsAccepted: true,
+      inputs: [],
       batch: { accountId: "qa", batchId, context: { tripPrior: { id: "trip" } } },
-    } as CaptureJobReadModel,
+    } as unknown as CaptureJobReadModel,
     current,
   );
   h.layout.forEach((effect) => effect());
@@ -81,6 +90,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.slots = [];
   h.generation = 1;
+  h.consent.mockReset();
   h.consumer.activity = { state: "PROCESSING" };
   h.recover.mockResolvedValue(null);
   vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://dev.invalid");
@@ -265,3 +275,28 @@ it.each(["hidden", "batch"] as const)(
     expect(h.start).not.toHaveBeenCalled();
   },
 );
+
+it("checks current Photo consent before resuming the same Task and rejects a late hidden view", async () => {
+  const resume = vi.fn();
+  h.transport.mockReturnValue({ resume });
+  let visible = true;
+  Harness("batch-a", () => visible);
+  await vi.advanceTimersByTimeAsync(0);
+  const context = { accountId: "qa", tripId: "trip", generation: 1 },
+    binding = { taskId: "same-task" };
+  h.consent.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
+  await expect(h.options.resumeTask(context, binding)).rejects.toThrow(
+    "PHOTO_REVIEW_REQUIRED",
+  );
+  expect(resume).not.toHaveBeenCalled();
+  await h.options.resumeTask(context, binding);
+  expect(resume).toHaveBeenCalledExactlyOnceWith(context, binding);
+  resume.mockClear();
+  h.consent.mockImplementationOnce(async () => {
+    visible = false;
+  });
+  await expect(h.options.resumeTask(context, binding)).rejects.toThrow(
+    "UNIVERSAL_CAPTURE_STALE",
+  );
+  expect(resume).not.toHaveBeenCalled();
+});
