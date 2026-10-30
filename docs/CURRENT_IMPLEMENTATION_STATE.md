@@ -226,8 +226,11 @@ manifest authority prevent fallback to General Account permissions; normal
 standalone Gateways remain usable. This is disposable-only protected SQL, policy
 default OFF, no new Role/business RLS/table grant or Hosted installation. The local
 13-function parent is not the complete actual DEV preimage set. Independent frozen review NO_BLOCKER (5s66PASS), direct5s78/types/lint PASS.
-Real DEV catalog/ACL qualification, final receipts, confirmation and Native
-restore remain pending. Non-default Ledger initialization is not implemented;
+Actual DEV13 function/ACL/15 trigger metadata was acquired through normal linked
+CLI BEGIN READ ONLY; raw definitions remain private0600. Replaying the actual13
+parents and one real capability dependency in isolated PG now passes33 checks,
+independent evidence review NO_BLOCKER. This is not full DEV schema parity or an
+execution approval. Final receipts, confirmation and Native restore remain pending. Non-default Ledger initialization is not implemented;
 actual existing NZD2 settings only were proven, other mismatches safely reject. See composite-publication-candidate/AUTHORITY_LOCAL_PG_RESULT.json.
 
 
