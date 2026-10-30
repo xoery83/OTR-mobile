@@ -121,6 +121,25 @@ it("does not intercept unrelated routes", async () => {
     ),
   ).toBeNull();
 });
+it("lets publication finish beyond 15s but still stops at 60s", async () => {
+  const h = await harness();
+  vi.useFakeTimers();
+  try {
+    h.ports.publish.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+      return h.receipt;
+    });
+    const completed = guestAdoptionHttpBoundary(h.request("publish"), h.f.user, h.ports);
+    await vi.advanceTimersByTimeAsync(20000);
+    expect((await completed)!.status).toBe(200);
+    h.ports.publish.mockImplementation(() => new Promise(() => {}));
+    const timedOut = guestAdoptionHttpBoundary(h.request("publish"), h.f.user, h.ports);
+    await vi.advanceTimersByTimeAsync(60000);
+    expect((await timedOut)!.status).toBe(504);
+  } finally {
+    vi.useRealTimers();
+  }
+});
 it.each(["preflight", "stage", "publish", "status", "receipt", "cancel"])(
   "keeps %s closed without host-owned ports",
   async (route) => {

@@ -11,8 +11,36 @@ import {
 } from "./guestPublicationHold";
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
+});
+
+it("waits past the old 15s cutoff only for publication and remains bounded", async () => {
+  const f = await fixture();
+  vi.useFakeTimers();
+  f.wire.mockImplementation(async (_url, init) => {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, 20000);
+      init!.signal!.addEventListener("abort", () => {
+        clearTimeout(timer);
+        reject(Error("ABORTED"));
+      }, { once: true });
+    });
+    return Response.json({ error: { code: "GUEST_ADOPTION_UNAVAILABLE" } }, { status: 503 });
+  });
+  const request = { ...f.statusRequest, planSha256: "b".repeat(64) };
+  const completed = expect(f.transport.publish(request)).rejects.toMatchObject({ kind: "http", status: 503 });
+  await vi.advanceTimersByTimeAsync(20000);
+  await completed;
+  f.wire.mockImplementation(async (_url, init) => {
+    await new Promise((_, reject) => init!.signal!.addEventListener("abort", () => reject(Error("ABORTED")), { once: true }));
+    return Response.json(null);
+  });
+  const timedOut = expect(f.transport.publish(request)).rejects.toMatchObject({ kind: "timeout" });
+  await vi.advanceTimersByTimeAsync(65000);
+  await timedOut;
+  await f.assertGuest();
 });
 
 async function fixture() {

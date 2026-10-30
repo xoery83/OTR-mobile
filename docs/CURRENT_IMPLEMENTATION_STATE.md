@@ -51,14 +51,15 @@ Current Native candidate integrates main82d5c8b3, preserving its exact accepted 
 # Auth Golden Slice — current continuation, 30 October 2026
 
 Golden Slice BLOCKED: existing Guest UI Trip+P1 → normal OTP/explicit target →
-one owning publication → restart same Trip+P1. The current login still stops at
-GUEST_ADOPTION_PREFLIGHT_REQUIRED; Hosted nonempty Adoption is not mounted.
+one owning publication → restart same Trip+P1. Normal Native OTP now reaches explicit target confirmation and self UUID;
+Hosted normal-JWT Adoption routes are deployed default-CLOSED, no mutation scope.
 The PUBLISHED candidate now passes46 isolated real-PG checks plus135 directed
 and independently repeated tests. Actual COMMIT reply loss recovers one terminal
 via fresh status/receipt and exact retry; raw post-final Writer DML is denied
 while the original deferred Metadata COMMIT guard remains valid. Fourteen current
 DEV function preimages were read with READ ONLY; raw bodies stay private0600.
-No Hosted SQL, runtime route, Guest hold release or Session install is included.
+Those component checks did not perform Hosted publication, Guest hold release or
+Session install. Actual default-CLOSED deployment is recorded below.
 See ops/auth-phase2-20261028/PUBLICATION_REVIEW.json. Next is minimal existing
 login/source/owning-restore wiring plus the exact protected execution Gate for
 this one fileless Trip/P1. Full People, Capture and other item types are deferred.
@@ -92,8 +93,39 @@ the same raw Core PG connection, limited to one configured normal QA Account,
 original Guest and at most30-minute mutation window. Other Accounts/default
 startup remain CLOSED; bound status/receipt/cancel retain recovery after expiry.
 Bootstrap/scope passes focused5 suites68 tests; independent3 suites33 PASS/NO_BLOCKER.
-Expired-config restart retains bound recovery. Both Backend builds and focused lint pass; not deployed. Auth merged accepted main249204db into8383f1d1. No Auth device lease.
-Real Native OTP→publication→Supabase readback→cold recovery remains PENDING;
+Expired-config restart retains bound recovery. Both Backend builds and focused lint pass.
+Fixed ecad0bb7 is now deployed to DEV as65b0ce91/image4d210921, effective flag0,
+no scope. Original EnvAb5/Host/mount/config hashes unchanged;148/8cd retained for
+exact rollback. Live health/auth/hash checks PASS; Native original-B same Trip/P1 cached-UI
+read smoke PASS with queue94/original89 hashes unchanged, no login/new Mutation.
+This is not fresh Cloud or Adoption evidence. Host Writer returned to Root.
+See ops/auth-phase2-20261028/DEV_DEFAULT_CLOSED_DEPLOYMENT.json. Auth merged accepted main249204db into8383f1d1. No Auth device lease.
+GuestQA66 now passed normal Native SendOTP→dedicated QA Receiving→App Verify
+→explicit target-email confirmation, retaining original Trip after in-place cold launch.
+GuestQA67 then completed normal cancellation of that unsubmitted sign-in,
+retained the Guest Trip after cold code update, and passed a new normal OTP.
+Self App UUID identifier confirms QA71b94800-f860-4685-a5d4-954adae38113.
+No private auth.users query was executed. No Add/freeze/publication; lease returned.
+After ordinary read smoke, return Host Writer to Root and coordinate the finite
+QA mutation window. See
+ops/auth-phase2-20261028/GUESTQA67_SELF_IDENTITY.json.
+Owner-approved shutdown Gate e7e9351e/SQL8c6b1809 is now actually installed and
+independently verified in Hosted DEV. One finite runtime window cdc78f41 ran with
+an actual independent Host timer and unchanged original expiry17:56:16Z.
+Normal Native Add reached actual grant f6cb81ef and immutable Stage01b298ed;
+preflight/stage/status returned200, then publish was canceled at14986ms/499.
+No terminal Receipt exists; source remains held and Native offers Check status.
+Close restored original65b0/image4d2109/EnvAb5, then a separate READ ONLY CLI
+confirmed policy=false/xmin32584, Source guard unchanged, exact actor/guest binding
+and no orphan terminal records. Timer stopped, candidate exited; Host/SQL Writer
+returned to Root and Native notified to resume. See FINITE_WINDOW_REAL_ADD_20261031.json.
+Focused repair extends only Auth publish HTTP to60s and Native wait to65s;
+Core query/lease/FIFO remain unchanged. Direct2 suites55PASS; independent review
+and same-attempt real retry remain pending. No new OTP or payload export.
+CREATED-only Docker OomKillDisable default normalization/reconcile-stage passed
+independent6 checks; original plan/runtime archived, exact deadline not extended.
+Accepted main5c765fa6 remains merged in Auth b3f0d37f.
+Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
 hosted-gate-candidate/OWNER_GATE.md.

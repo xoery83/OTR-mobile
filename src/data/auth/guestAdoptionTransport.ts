@@ -137,9 +137,10 @@ export function createGuestAdoptionTransport(
     }
   }
   const wire = options.fetchImplementation ?? fetch;
-  const clientFor = (maxResponseBytes: number) =>
+  const clientFor = (maxResponseBytes: number, timeoutMs = options.timeoutMs) =>
     createApiClient({
       ...options,
+      timeoutMs,
       maxResponseBytes,
       assertRequestCurrent: assertGeneration,
       accessTokenProvider: token,
@@ -151,6 +152,8 @@ export function createGuestAdoptionTransport(
     });
   const client = clientFor(8192);
   const receiptClient = clientFor(1048576);
+  // Wait for the Backend's bounded 60s publication before treating the result as UNKNOWN.
+  const publicationClient = clientFor(1048576, options.timeoutMs ?? 65000);
   function assertBinding(input: z.infer<typeof bindingSchema>) {
     if (
       input.adoptionId !== binding.adoptionId ||
@@ -298,7 +301,7 @@ export function createGuestAdoptionTransport(
       const request = guestAdoptionPublicationRequestSchema.parse(raw);
       assertBinding(request);
       await assertGuest();
-      const result = await receiptClient.post(
+      const result = await publicationClient.post(
         "/v1/auth/guest-adoptions/publish",
         request,
         guestAdoptionReceiptSchema,

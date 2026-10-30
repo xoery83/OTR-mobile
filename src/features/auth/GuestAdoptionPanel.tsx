@@ -129,7 +129,11 @@ export function GuestAdoptionPanel({
   }
   return (
     <UiSection title={t("auth.adoptionTitle")}>
-      <UiText>
+      <UiText
+        testID={
+          session.identity ? `auth-adoption-target-${session.identity.userId}` : undefined
+        }
+      >
         {t("auth.adoptionTarget", {
           account: session.identity?.email ?? session.identity?.userId ?? "",
         })}

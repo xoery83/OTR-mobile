@@ -1,0 +1,24 @@
+{
+  "status": "LOCAL_DISPOSABLE_PG_PASS",
+  "checks": [
+    "install only in disposable schema; no new role/membership/login or table grant",
+    "already closed verification and idempotent close do not rewrite the policy row",
+    "real Gateway closes active policy and fresh READ ONLY verifies; read-only mode cannot mutate",
+    "API/Writer EXEC denied; Gateway direct SELECT/UPDATE and activation denied",
+    "NULL and different future policy versions cannot be used or changed",
+    "evidence and every existing role security flag remain unchanged"
+  ],
+  "function": {
+    "definitionMd5": "a4230045eab12b97d3cdfd31477ea770",
+    "definitionSHA256": "8e5a14177dd5aa4d4a4c41b775e2de1b4d9eddd9b007955768bc9d2f582cb272",
+    "owner": "postgres",
+    "securityDefiner": true,
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}"
+  },
+  "bodySHA256": "0776bf7e129901ed06286a450c84bb7df77e01bbef8e82072c20d00ac15db959",
+  "hostedWrites": 0,
+  "nativeOrProviderE2e": false
+}

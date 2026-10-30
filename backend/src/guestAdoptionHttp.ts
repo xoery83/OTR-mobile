@@ -89,7 +89,8 @@ export async function guestAdoptionHttpBoundary(
   if (url.search) return failure(400, "GUEST_ADOPTION_REQUEST_INVALID");
   if (request.method !== "POST") return failure(405, "GUEST_ADOPTION_METHOD_NOT_ALLOWED");
   if (!ports) return failure(503, "GUEST_ADOPTION_CLOSED");
-  const boundary = createRequestBoundary(15000, request.signal);
+  // Publication composes several owning operations on the existing 60s Core lease.
+  const boundary = createRequestBoundary(route === "publish" ? 60000 : 15000, request.signal);
   try {
     const raw = await readBoundedJson(new Response(request.body), maximum, boundary);
     if (route === "stage") {

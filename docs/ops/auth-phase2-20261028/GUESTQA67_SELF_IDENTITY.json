@@ -1,0 +1,45 @@
+{
+  "status": "NORMAL_NATIVE_OTP_SELF_UUID_PASS_PUBLICATION_PENDING",
+  "clientDate": "2026-10-31",
+  "sourceCommit": "49d98717",
+  "bundleId": "com.xoery.otrmobile.guestqa",
+  "artifactVersion": 67,
+  "qaEmail": "otr-qa-c9da3f53-8fdc-4c0e-ba48-787e24803c6f@eldouzileu.resend.app",
+  "targetAccountId": "71b94800-f860-4685-a5d4-954adae38113",
+  "sourceGuestLocalId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+  "sourceTripId": "f8975f1d-fec6-43c1-bae9-2b84c908e552",
+  "normalLogin": [
+    "App Send verification code",
+    "dedicated QA Receiving exact recipient/time; memory-only stdin",
+    "App Verify and continue",
+    "existing explicit target caption with self UUID automation identifier"
+  ],
+  "messageId": "b2cd5f51-da98-48be-8e44-2cc4169a951f",
+  "observedIdentifier": "auth-adoption-target-71b94800-f860-4685-a5d4-954adae38113",
+  "evidenceGeneration": 376044,
+  "normalCancellationBeforeUpdate": {
+    "priorCase": "GuestQA66 QA mailbox3ff408c8",
+    "operation": "observed Cancel sign-in normal UI",
+    "result": "completed to empty Accounts list; no pending panel",
+    "generation": 376026,
+    "serverIndependentRevocationReadback": false
+  },
+  "guestRetentionAfterCancellationAndColdUpdate": "Guest A 20261029 Edited remains in normal My Trips (generation376030); P1 not reopened in this short window",
+  "leaseRelease": "Closed: auth-guestqa67",
+  "privateAuthUsersQuery": "NOT_EXECUTED; rejected path remained unused",
+  "selfUiReadApproval": "first automatic-review timeout did not execute; one permitted retry succeeded",
+  "notPerformed": [
+    "private SQL/admin query",
+    "Session/Keychain/token read or copy",
+    "Add trips confirmation",
+    "Guest freeze",
+    "preflight/publication",
+    "DEV policy activation"
+  ],
+  "remaining": [
+    "serialized default-CLOSED Backend deploy",
+    "finite scope deadline coordinated with next QA window",
+    "actual publication/independent Supabase readback/cold/negatives"
+  ],
+  "evidenceLimit": "Self App identity observation is not independent server readback or completed Adoption."
+}
