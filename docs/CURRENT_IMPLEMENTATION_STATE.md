@@ -102,13 +102,19 @@ Owner. Local by-Trip read candidate remains unwired/default-closed: optional HTT
 PG/transport and existing PersonRepo parent-read adapter (36 tests+new cache-race1;
 3 Backend/transport suites48; types/scoped lint PASS), wrapper fixture6 checks PASS.
 Root delegated only these small read interfaces; no Bootstrap/Host/SQL changes.
-Core owning+independent review, exact new EXECUTE Gate and Native wiring remain
-pending; do not claim adopted-Trip Add E2E. Candidate under People parent-read-candidate.
+Fixed8079e7b9 independent NO_BLOCKER/4 suites85 PASS. Core owning review, exact
+new EXECUTE Gate and Native wiring remain pending. Native keeps its sole active
+Realtime slice and has not redelegated UI; no adopted-Trip Add Native E2E claim. Candidate under People parent-read-candidate.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
 Existing profiles SELECT RLS is all-authenticated: private travel-document names/AKA
 must not be stored there. Only policy/schema metadata was read; no new permissions.
+Independent private Profile field preparation only: optional display name and
+split/unsplit travel-document name codec preserves original Unicode and independent
+values, accepts empty profile, rejects credential/identity fields and unstoreable NUL.
+12 focused tests PASS; no storage, UI, registration gate, public-profile write or
+sync/permissions implementation. AKA/other optional fields remain future scope.
 
 31 October actual continuation: shutdown Gate installed/verified and main timeout
 fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.
