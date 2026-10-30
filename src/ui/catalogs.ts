@@ -171,6 +171,14 @@ export const en = {
   "tripForm.coverDraft":
     "Cover changes save with your other details when you tap Save Trip.",
   "tripMembers.currentActor": "Your trip identity",
+  "people.title": "People",
+  "people.addTraveler": "Add traveler",
+  "people.travelerName": "Name in this trip",
+  "people.addTravelerHint": "This name is shown to people on this trip.",
+  "people.saveTraveler": "Save traveler",
+  "people.retrySave": "Retry save",
+  "people.saveUnconfirmed":
+    "Could not confirm the save. The entered name is kept here. Try again.",
   "tripMembers.otherPeople": "Other named people",
   "tripMembers.localPending": "Saved on this device",
   "tripMembers.managementUnavailable":
@@ -3192,6 +3200,13 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.contentUnknown": "内容类型尚不明确",
   "tripForm.coverDraft": "点击“保存旅行”时，封面会与其他详情一起保存。",
   "tripMembers.currentActor": "你在此旅行中的身份",
+  "people.title": "同行人",
+  "people.addTraveler": "添加同行人",
+  "people.travelerName": "此旅行中的名字",
+  "people.addTravelerHint": "此名字会显示给本次旅行的同行人。",
+  "people.saveTraveler": "保存同行人",
+  "people.retrySave": "重试保存",
+  "people.saveUnconfirmed": "暂未能确认保存结果，已保留填写的名字。请重试。",
   "tripMembers.otherPeople": "其他已命名人员",
   "tripMembers.localPending": "已保存在本设备",
   "tripMembers.managementUnavailable": "成员管理和邀请功能尚未开放。",

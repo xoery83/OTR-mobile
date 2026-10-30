@@ -68,9 +68,19 @@ were normally revoked with refresh rejection, no mutation/retry of Adoption.
 Independent receipt/cache/cold/close Review is NO_BLOCKER. Real accepted slice
 merged latest Native7e7a and pushed mainb197da47;7 suites112/typecheck/UIguard/
 affected lint PASS. Six original main dirty bytes/modes/index/fullDiff unchanged.
-Remaining replay503 stays with unique Core Owner; no broader Phase2 PASS claim. Other Guest domains are not claimed adopted. See
+Replay503 was confirmed by unique Core Owner as existing fail-closed capability
+semantics, not a404 authorization qualification; preserve that evidence limitation
+and do not open another Actor Gate. No broader Phase2 PASS claim. Other Guest domains are not claimed adopted. See
 NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json. Older blocked notes below describe
 prior stages, not the latest completed core flow.
+
+Next independent People preparation: AddTravelerSheet reuses existing PersonCreate
+input and owning onSave callback;7 focused lifecycle/idempotency tests plus types,
+lint/UIguard PASS, independent NO_BLOCKER. It is not yet wired to People shell or
+cloud and is not People E2E. Native owns shared LocalTripWorkspace/TripSetupRows/
+NormalCoordinator; Auth owns the People input UI. Existing profiles SELECT RLS is
+all-authenticated, so private travel-document names/AKA must not be stored there;
+only schema/policy metadata was read, no user records or permission mutation.
 
 31 October actual continuation: shutdown Gate installed/verified and main timeout
 fix cdf64b31 pushed. Real Add got Grant+Stage then publish499 at15s, no terminal.
