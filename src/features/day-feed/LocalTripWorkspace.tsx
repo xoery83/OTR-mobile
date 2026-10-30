@@ -78,6 +78,8 @@ import { TripBasicEditor } from "./TripBasicEditor";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripMembersSummary } from "./TripSetupRows";
 import { TripMembersSheet } from "./TripMembersSheet";
+import type { AddTravelerInput } from "@/features/people/AddTravelerSheet";
+import { saveAuthoredTripTraveler } from "@/data/repositories/tripPersonCloudCreateRepository";
 import { LocalTripPhotos } from "./LocalTripPhotos";
 import { tripCoverId, tripCoverSource } from "./tripCovers";
 
@@ -741,6 +743,48 @@ function LocalTripContent({
       },
     ]);
   }, [generation, itemStart, saving, onBackToTrips]);
+  const peopleAuthoringContext =
+    guest === false &&
+    selected?.serverId === selected?.id &&
+    selected?.syncFormatVersion === 2 &&
+    setup?.context.tripId === selected.id &&
+    setup.context.generation === generation &&
+    setup.members.state === "AVAILABLE" &&
+    setup.members.people.some(
+      (person) => person.isCurrentActor && person.personId === selected.ownerPersonId,
+    )
+      ? setup.context
+      : null;
+  const addTraveler = peopleAuthoringContext
+    ? async (input: AddTravelerInput) => {
+        const origin = peopleAuthoringContext;
+        if (!alive.current || generation !== getAccountGeneration())
+          throw Error("PEOPLE_CONTEXT_CHANGED");
+        const result = await saveAuthoredTripTraveler(origin, input);
+        if (!alive.current || generation !== getAccountGeneration())
+          throw Error("PEOPLE_CONTEXT_CHANGED");
+        const named = result.people.filter((person) => person.displayName.trim());
+        setSetup((current) =>
+          current?.context.accountId === origin.accountId &&
+          current.context.tripId === origin.tripId &&
+          current.context.generation === origin.generation
+            ? {
+                ...current,
+                members: {
+                  state: "AVAILABLE",
+                  namedCount: named.length,
+                  people: named.map(({ personId, displayName, localState }) => ({
+                    personId,
+                    displayName,
+                    ...(localState ? { localState } : {}),
+                    isCurrentActor: personId === selected!.ownerPersonId,
+                  })),
+                },
+              }
+            : current,
+        );
+      }
+    : undefined;
   useFocusEffect(
     useCallback(() => {
       if (!selected || status !== "READY") return;
@@ -991,6 +1035,7 @@ function LocalTripContent({
                     tripId={selected.id}
                     generation={generation}
                     setup={setup?.context.tripId === selected.id ? setup : null}
+                    onAddTraveler={addTraveler}
                   />
                   <LocalTripPhotos
                     compact
@@ -1044,6 +1089,7 @@ function LocalTripContent({
                 : null
             }
             onClose={() => setMenuMembersTrip(null)}
+            onAddTraveler={addTraveler}
           />
           <Modal
             visible={coverOpen}

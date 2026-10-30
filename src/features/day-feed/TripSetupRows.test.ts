@@ -83,6 +83,26 @@ it("never substitutes fake currency or invitation counts for unknown facts", () 
   expect(JSON.stringify(summary(null))).toContain("tripForm.membersUnknown");
 });
 
+it("forwards Person authoring only to the matching Trip and generation", () => {
+  const save = vi.fn();
+  expect(
+    TripMembersSummary({ setup, tripId: "trip", generation: 1, onAddTraveler: save })
+      .props.onAddTraveler,
+  ).toBe(save);
+  expect(
+    TripMembersSummary({
+      setup,
+      tripId: "different-trip",
+      generation: 1,
+      onAddTraveler: save,
+    }).props.onAddTraveler,
+  ).toBeUndefined();
+  expect(
+    TripMembersSummary({ setup, tripId: "trip", generation: 2, onAddTraveler: save })
+      .props.onAddTraveler,
+  ).toBeUndefined();
+});
+
 it("offers only missing metadata setup without treating intentional one-sided dates as missing", () => {
   const complete = JSON.stringify(
     TripSetupRows({

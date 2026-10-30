@@ -132,6 +132,7 @@ const state = vi.hoisted(() => ({
   nodes: [] as Record<string, any>[],
   mount: false,
   repo: vi.fn(),
+  saveTraveler: vi.fn(),
   discovery: vi.fn(),
   serial: 0,
   alert: vi.fn(),
@@ -142,6 +143,12 @@ const state = vi.hoisted(() => ({
   finance: null as TripHomeWidget | null,
   preparation: null as any,
   personal: { selection: null as any, open: vi.fn(), select: vi.fn() },
+}));
+vi.mock("@/data/repositories/tripPersonCloudCreateRepository", async (original) => ({
+  ...(await original<
+    typeof import("@/data/repositories/tripPersonCloudCreateRepository")
+  >()),
+  saveAuthoredTripTraveler: state.saveTraveler,
 }));
 vi.mock("./useTripPersonalCover", () => ({ useTripPersonalCover: () => state.personal }));
 vi.mock("react", async (original) => ({
@@ -409,6 +416,7 @@ beforeEach(() => {
   state.forceEffects = false;
   state.focused = true;
   state.repo.mockReset();
+  state.saveTraveler.mockReset();
   state.discovery.mockReset();
   state.discovery.mockResolvedValue({
     readMerged: async () => ({ cachedAt: null, trips: [] }),
@@ -1238,6 +1246,88 @@ it("opens the existing Members sheet from a scoped local menu only when real set
   render();
   expect(state.nodes.some((node) => node.membersSheet?.visible)).toBe(false);
 });
+
+it.each(["owner", "guest", "different-person", "unaccepted", "legacy"] as const)(
+  "offers existing Person authoring only with a real opening Owner lineage: %s",
+  async (kind) => {
+    const local: Trip = {
+      ...trip("people-trip", "People"),
+      serverId: kind === "unaccepted" ? null : "people-trip",
+      ownerPersonId: "owner-person",
+      ...(kind === "legacy" ? {} : { syncFormatVersion: 2 }),
+    };
+    if (kind === "guest")
+      vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+        kind: "GUEST",
+        localId: "guest",
+      });
+    state.repo.mockResolvedValue(repository([local]));
+    props.tripId = local.id;
+    render();
+    await flush();
+    render();
+    const context = {
+      accountId: "actor",
+      tripId: local.id,
+      generation: getAccountGeneration(),
+    };
+    state.preparation.onSetup({
+      context,
+      currency: { state: "UNKNOWN" },
+      members: {
+        state: "AVAILABLE",
+        namedCount: 1,
+        people: [
+          {
+            personId: kind === "different-person" ? "another-person" : "owner-person",
+            displayName: "Owner",
+            isCurrentActor: true,
+          },
+        ],
+      },
+      invitations: "UNKNOWN",
+      connections: "UNKNOWN",
+    });
+    state.forceEffects = true;
+    render();
+    state.publish.mock.calls
+      .filter(([actions]: any[]) => actions?.members)
+      .at(-1)![0]
+      .members();
+    render();
+    const sheet = state.nodes.find((node) => node.membersSheet?.visible)!.membersSheet;
+    expect(typeof sheet.onAddTraveler === "function").toBe(kind === "owner");
+    if (kind !== "owner") return;
+    const input = {
+      operationId: "new-operation",
+      personId: "new-person",
+      displayName: "同行人 林",
+    };
+    state.saveTraveler.mockResolvedValue({
+      request: {},
+      people: [
+        { personId: "owner-person", displayName: "Owner" },
+        {
+          personId: "new-person",
+          displayName: input.displayName,
+          localState: "LOCAL_PENDING",
+        },
+      ],
+    });
+    await sheet.onAddTraveler(input);
+    expect(state.saveTraveler).toHaveBeenCalledWith(context, input);
+    render();
+    const updated = state.nodes.find((node) => node.membersSheet?.visible)!.membersSheet
+      .members;
+    expect(
+      updated.people.find((person: any) => person.personId === input.personId),
+    ).toMatchObject({
+      displayName: input.displayName,
+      localState: "LOCAL_PENDING",
+      isCurrentActor: false,
+    });
+  },
+);
 
 it("keeps the same Editor mounted beneath same-Trip Currency without saving", async () => {
   const repo = repository([trip("local-a", "Local A")]);

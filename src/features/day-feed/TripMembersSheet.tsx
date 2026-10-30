@@ -1,4 +1,5 @@
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
+import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiText } from "@/ui/controls";
@@ -8,18 +9,26 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import {
+  AddTravelerSheet,
+  type AddTravelerInput,
+} from "@/features/people/AddTravelerSheet";
 
-export function TripMembersSheet({
-  visible,
-  members,
-  onClose,
-}: {
+type Props = {
   visible: boolean;
   members: TripPreparationSetup["members"] | null;
   onClose(): void;
-}) {
+  onAddTraveler?(input: AddTravelerInput): Promise<void>;
+};
+
+export function TripMembersSheet(props: Props) {
+  return props.visible ? <VisiblePeopleSheet {...props} /> : null;
+}
+
+function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const [adding, setAdding] = useState(false);
   const roster = visible && members?.state === "AVAILABLE" ? members : null;
   return (
     <Modal
@@ -30,7 +39,16 @@ export function TripMembersSheet({
       onRequestClose={onClose}
     >
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
-        <SheetHeader title={t("tripHome.members")} safeTop={false} onLeft={onClose} />
+        <SheetHeader
+          title={t("people.title")}
+          safeTop={false}
+          onLeft={onClose}
+          rightLabel={t("people.addTraveler")}
+          rightDisabled={!roster || !onAddTraveler}
+          onRight={() => {
+            if (roster && onAddTraveler) setAdding(true);
+          }}
+        />
         <ScrollView
           keyboardShouldPersistTaps="handled"
           style={styles.sheet}
@@ -68,8 +86,14 @@ export function TripMembersSheet({
           ) : (
             <UiText style={styles.meta}>{t("tripForm.membersUnknown")}</UiText>
           )}
-          <UiText style={styles.meta}>{t("tripMembers.managementUnavailable")}</UiText>
         </ScrollView>
+        {onAddTraveler ? (
+          <AddTravelerSheet
+            visible={adding}
+            onClose={() => setAdding(false)}
+            onSave={onAddTraveler}
+          />
+        ) : null}
       </SafeAreaView>
     </Modal>
   );

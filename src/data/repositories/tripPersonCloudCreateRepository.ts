@@ -13,6 +13,7 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { requireLocalTripPersonCreator } from "./localTripPersonRepository";
+import { createTripPersonRepository } from "./tripPersonRepository";
 import {
   personCloudCreateKind,
   personCloudCreateSchema,
@@ -23,6 +24,35 @@ import {
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 const json = (v: unknown) => canonicalCoreJson(v as Json);
+
+// UI authoring stays bound to the opening Account/Trip across asynchronous DB access.
+export async function saveAuthoredTripTraveler(
+  origin: AccountRequestContext,
+  input: Readonly<Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">>,
+) {
+  const scope = Object.freeze({ ...origin });
+  const draft = Object.freeze({ ...input });
+  const { requireAdoptedUserId } = await import("../auth/authRepository");
+  const account = async () => {
+    await assertAccountRequestContext(scope, requireAdoptedUserId);
+    return scope.accountId;
+  };
+  await account();
+  const { readInitializedDatabase } = await import("../db/database");
+  const database = await readInitializedDatabase();
+  const repository = createTripPersonCloudCreateRepository(database, account);
+  const result = await repository.createAuthored({
+    ...draft,
+    tripId: scope.tripId,
+    dataOwnership: "CLOUD_SHARED_AUTHORED",
+  });
+  const people = await createTripPersonRepository(database, account).listTripPersons(
+    scope.tripId,
+  );
+  await account();
+  return { request: result, people };
+}
+
 export async function retainAuthoredCloudTravelerWithinTransaction(
   database: LedgerReadDatabase,
   scope: AccountRequestContext,

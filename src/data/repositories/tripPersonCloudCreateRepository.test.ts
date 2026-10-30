@@ -14,7 +14,12 @@ import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripRepository } from "./tripRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { createTripPersonRepository } from "./tripPersonRepository";
-import { createTripPersonCloudCreateRepository } from "./tripPersonCloudCreateRepository";
+import {
+  createTripPersonCloudCreateRepository,
+  saveAuthoredTripTraveler,
+} from "./tripPersonCloudCreateRepository";
+import { requireAdoptedUserId } from "../auth/authRepository";
+import { readInitializedDatabase } from "../db/database";
 import {
   createLocalTripPersonRepository,
   readLocalTripPersonRosterWithinTransaction,
@@ -32,9 +37,13 @@ vi.mock("expo-crypto", () => ({
   digestStringAsync: async (_a: string, v: string) =>
     createHash("sha256").update(v).digest("hex"),
 }));
+vi.mock("../auth/authRepository", () => ({ requireAdoptedUserId: vi.fn() }));
+vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const handles: DatabaseSync[] = [];
 const folders: string[] = [];
 afterEach(() => {
+  vi.mocked(requireAdoptedUserId).mockReset();
+  vi.mocked(readInitializedDatabase).mockReset();
   handles.splice(0).forEach((db) => db.close());
   folders.splice(0).forEach((p) => rmSync(p, { recursive: true }));
 });
@@ -164,6 +173,62 @@ async function fixture(
     },
   };
 }
+it("the UI adapter binds one authoring operation to its opening Account and existing Trip lineage", async () => {
+  const f = await fixture();
+  const scope = await captureAccountRequestContext(f.trip, f.readAccount);
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  const { operationId, personId, displayName } = f.authored("同行人 林");
+  const input = Object.freeze({ operationId, personId, displayName });
+  const first = await saveAuthoredTripTraveler(scope, input);
+  expect(await saveAuthoredTripTraveler(scope, input)).toEqual(first);
+  expect(first.request.tripCreateOperationId).toBe(f.create);
+  expect(first.request.tripId).toBe(f.trip);
+  expect(first.request.dataOwnership).toBe("CLOUD_SHARED_AUTHORED");
+  expect(first.people.find((person) => person.personId === personId)).toMatchObject({
+    displayName,
+    localState: "LOCAL_PENDING",
+  });
+  const row = f.sql
+    .prepare("SELECT owner_user_id,status,attempt_count FROM sync_operations WHERE id=?")
+    .get(operationId);
+  expect(row).toMatchObject({
+    owner_user_id: f.account,
+    status: "DEPENDENCY_BLOCKED",
+    attempt_count: 0,
+  });
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM ledger_members WHERE id=?").get(personId),
+  ).toMatchObject({ n: 1 });
+});
+
+it.each(["before-open", "during-open"] as const)(
+  "the UI adapter rejects a changed Account %s without creating a Person",
+  async (when) => {
+    const f = await fixture();
+    const scope = await captureAccountRequestContext(f.trip, f.readAccount);
+    vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+    const { operationId, personId, displayName } = f.authored();
+    if (when === "before-open") f.switchAccount();
+    vi.mocked(readInitializedDatabase).mockImplementation(async () => {
+      if (when === "during-open") f.switchAccount();
+      return f.db as never;
+    });
+    await expect(
+      saveAuthoredTripTraveler(scope, { operationId, personId, displayName }),
+    ).rejects.toThrow();
+    if (when === "before-open") expect(readInitializedDatabase).not.toHaveBeenCalled();
+    expect(
+      f.sql.prepare("SELECT count(*) AS n FROM ledger_members WHERE id=?").get(personId),
+    ).toMatchObject({ n: 0 });
+    expect(
+      f.sql
+        .prepare("SELECT count(*) AS n FROM sync_operations WHERE id=?")
+        .get(operationId),
+    ).toMatchObject({ n: 0 });
+  },
+);
+
 it("new Create retains explicit Cloud Traveler operations atomically without changing Trip wire", async () => {
   const slots = [
     { personId: randomUUID(), operationId: randomUUID(), displayName: "Same name" },

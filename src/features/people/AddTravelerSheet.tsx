@@ -124,6 +124,7 @@ function AddTravelerForm({ onClose, onSave }: Props) {
           </UiText>
         ) : null}
         <UiTextInput
+          testID="people-add-traveler-name"
           accessibilityLabel={t("people.travelerName")}
           placeholder={t("people.travelerName")}
           value={name}

@@ -11,6 +11,7 @@ import { visual } from "@/ui/visual";
 import { tripRangeLabel } from "./TripCalendarRangeField";
 import { TripMembersSheet } from "./TripMembersSheet";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
+import type { AddTravelerInput } from "@/features/people/AddTravelerSheet";
 
 export type TripSetupMetadata = {
   startDate: string | null;
@@ -123,10 +124,12 @@ export function TripMembersSummary({
   setup,
   tripId,
   generation,
+  onAddTraveler,
 }: {
   setup: TripPreparationSetup | null;
   tripId: string;
   generation: number;
+  onAddTraveler?(input: AddTravelerInput): Promise<void>;
 }) {
   const current =
     setup?.context.tripId === tripId && setup.context.generation === generation
@@ -136,17 +139,24 @@ export function TripMembersSummary({
     <ScopedMembersSummary
       key={JSON.stringify([tripId, generation, current?.context.accountId ?? null])}
       setup={current}
+      onAddTraveler={current ? onAddTraveler : undefined}
     />
   );
 }
-function ScopedMembersSummary({ setup }: { setup: TripPreparationSetup | null }) {
+function ScopedMembersSummary({
+  setup,
+  onAddTraveler,
+}: {
+  setup: TripPreparationSetup | null;
+  onAddTraveler?(input: AddTravelerInput): Promise<void>;
+}) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   return (
     <View style={styles.rows}>
       <UiFormRow
-        label={t("tripHome.members")}
+        label={t("people.title")}
         value={
           setup?.members.state === "AVAILABLE"
             ? t("tripForm.namedPeople", {
@@ -163,6 +173,7 @@ function ScopedMembersSummary({ setup }: { setup: TripPreparationSetup | null })
         visible={open}
         members={open ? (setup?.members ?? null) : null}
         onClose={() => setOpen(false)}
+        onAddTraveler={onAddTraveler}
       />
     </View>
   );
