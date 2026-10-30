@@ -26,7 +26,11 @@ export type CorePgConfig = z.input<typeof configSchema>;
 // Dormant until a separately accepted dedicated primary principal is provisioned.
 // Each operation owns a fresh session; no role/GUC/aborted transaction can leak to another actor.
 export function createCorePgConnection(input: CorePgConfig): CorePgConnection {
-  return createOwningPgConnection(input, "otr_trip_core_v2_gateway");
+  // Sealed Source admission revalidates evidence; the 90s Import request covers FIFO + lease.
+  return createOwningPgConnection(input, "otr_trip_core_v2_gateway", {
+    idleMs: 5000,
+    leaseMs: 60000,
+  });
 }
 export function createSourcePgConnection(input: CorePgConfig): CorePgConnection {
   return createOwningPgConnection(input, "otr_trip_source_command_gateway");
