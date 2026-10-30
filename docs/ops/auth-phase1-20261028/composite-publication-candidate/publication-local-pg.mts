@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { session } from "../../../../backend/src/__fixtures__/tripCoreV2Sql";
 import { publishGuestAdoptionPg } from "../../../../backend/src/guestAdoptionPublicationPg";
+import { stageGuestAdoptionComposite } from "../../../../backend/src/guestAdoptionCompositeStage";
+import { createCorePgReader } from "../../../../backend/src/tripCoreV2PgRead";
 import { createGuestAdoptionTerminalPg } from "../../../../backend/src/guestAdoptionTerminalPg";
 import { qualifyGuestAdoptionReceiptForRecovery } from "../../../../src/data/auth/guestAdoptionReceiptQualification";
 import { tripCoreSha256Hex } from "../../../../src/data/repositories/tripCoreSha256";
@@ -16,7 +18,7 @@ import { verifyGuestSourceCheckpoint } from "../../../../src/data/auth/guestTrip
 import { guestAdoptionPreparationSchema } from "../../../../src/data/auth/guestAdoptionPreparation";
 import { tripMetadataRevisionedSnapshotSchema } from "../../../../src/domain/trip/tripMetadataV2Contract";
 const [container, database, path, mode] = process.argv.slice(2);
-assert(["missing-core", "rollback", "unknown", "commit"].includes(mode));
+assert(["read", "stage", "missing-core", "rollback", "unknown", "commit"].includes(mode));
 const m = JSON.parse(readFileSync(path, "utf8"));
 const { resources: _resources, ...binding } = m.fixture.request;
 const request = { ...binding, planSha256: m.plan.sha256 },
@@ -31,6 +33,36 @@ const ordinary: CorePgConnection = {
     }
   },
 };
+if (mode === "stage") {
+  const staged = await stageGuestAdoptionComposite(
+    ordinary,
+    { id: binding.targetAccountId, accountClass: "NORMAL_ACCOUNT" },
+    { grant: m.grant, preparationSha256: m.fixture.checkpoint.sha256 },
+    m.fixture.checkpoint,
+    signal,
+  );
+  assert.equal(staged.sha256, m.plan.sha256);
+  console.log(JSON.stringify({ staged: true }));
+  process.exit(0);
+}
+if (mode === "read") {
+  const reader = createCorePgReader(ordinary, tripCoreSha256Hex, undefined, {
+    sustainedDev: true,
+  });
+  const source = JSON.parse(
+    JSON.parse(m.fixture.checkpoint.canonicalText).source.canonicalText,
+  );
+  for (const trip of source.trips) {
+    const result = await reader.collection(
+      binding.targetAccountId,
+      trip.create.tripId,
+      1,
+    );
+    assert.equal(result.manifest.tripId, trip.create.tripId);
+  }
+  console.log(JSON.stringify({ owningRead: true }));
+  process.exit(0);
+}
 let commitCalls = 0,
   commitCompleted = false;
 let realCommitError: unknown;

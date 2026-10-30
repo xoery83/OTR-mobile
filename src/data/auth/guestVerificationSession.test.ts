@@ -433,3 +433,67 @@ describe("Guest verification in the existing secure Account slot", () => {
     expect(f.entries.has(slot)).toBe(false);
   });
 });
+
+describe("provisional target cache getter in existing Account repository gates", () => {
+  it("uses the same verified credential reader without reacquiring the apply gate or installing Account", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    const before = new Map(f.entries);
+    const generation = (await import("./accountGeneration")).getAccountGeneration();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const state = await withAccountApplyGate(async () => {
+      try {
+        return await Promise.race([
+          f.repo.guestVerification.readForLocalCache(binding, generation),
+          new Promise<"GATE_TIMEOUT">((resolve) => {
+            timer = setTimeout(() => resolve("GATE_TIMEOUT"), 100);
+          }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    });
+    expect(state).toEqual({ status: "SESSION", session: session() });
+    expect(f.entries).toEqual(before);
+    expect(await f.repo.readAdoptedLocalSession()).toBeNull();
+  });
+  it("does not resolve a foreign target or stale generation", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    const generation = (await import("./accountGeneration")).getAccountGeneration();
+    await expect(
+      f.repo.guestVerification.readForLocalCache(
+        { ...binding, targetAccountId: other },
+        generation,
+      ),
+    ).rejects.toThrow("BINDING_MISMATCH");
+    advanceAccountGeneration();
+    await expect(
+      f.repo.guestVerification.readForLocalCache(binding, generation),
+    ).rejects.toThrow();
+  });
+  it("retains revocation state instead of authorizing local target cache work", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    const record = JSON.parse(f.entries.get(metadata)!);
+    record.phase = "REVOKING";
+    f.entries.set(metadata, JSON.stringify(record));
+    expect(
+      await f.repo.guestVerification.readForLocalCache(
+        binding,
+        (await import("./accountGeneration")).getAccountGeneration(),
+      ),
+    ).toEqual({ status: "REVOCATION_PENDING" });
+  });
+  it("rejects a tampered credential through the shared original subject/fingerprint validator", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    f.entries.set(slot, JSON.stringify(session(other)));
+    await expect(
+      f.repo.guestVerification.readForLocalCache(
+        binding,
+        (await import("./accountGeneration")).getAccountGeneration(),
+      ),
+    ).rejects.toThrow("IDENTITY_MISMATCH");
+  });
+});

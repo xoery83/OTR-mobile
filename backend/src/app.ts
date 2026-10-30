@@ -1,3 +1,5 @@
+import { guestAdoptionBodyLimit, guestAdoptionHttpBoundary } from "./guestAdoptionHttp";
+import type { GuestAdoptionDevRuntime } from "./guestAdoptionRuntime";
 import { isNormalAccount, type AuthenticatedAccount } from "./authAccountQualification";
 import {
   accountProfileBootstrapBoundary,
@@ -675,6 +677,7 @@ export type BackendDependencies = {
   tripMetadataV2Port?: TripMetadataV2Port;
   documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
+  guestAdoptionRuntime?: GuestAdoptionDevRuntime;
   flightTextSourceConnection?: FlightTextSourceConnection;
   participationGateway?: ParticipationGateway;
   gateway: DevBackendGateway;
@@ -2458,6 +2461,7 @@ export function createDevBackendHandler({
   documentOriginalReader,
   flightTextSourceConnection,
   coreConnection,
+  guestAdoptionRuntime,
   participationGateway,
   gateway,
   log,
@@ -2542,7 +2546,17 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (url.pathname === accountProfileBootstrapPath) {
+      if (guestAdoptionBodyLimit(url.pathname) !== null) {
+        route = "/v1/auth/guest-adoptions/:operation";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = (await guestAdoptionHttpBoundary(
+          request,
+          actor,
+          guestAdoptionRuntime?.scope.accountId === actor.id
+            ? guestAdoptionRuntime.ports
+            : undefined,
+        ))!;
+      } else if (url.pathname === accountProfileBootstrapPath) {
         route = accountProfileBootstrapPath;
         const actor = await authenticateNormalAccount(request, gateway);
         response = await accountProfileBootstrapBoundary(

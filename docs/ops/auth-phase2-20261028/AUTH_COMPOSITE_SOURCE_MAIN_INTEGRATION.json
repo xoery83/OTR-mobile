@@ -1,0 +1,40 @@
+{
+  "status": "DEFAULT_CLOSED_SOURCE_MAIN_INTEGRATED_NOT_ADOPTION_READY",
+  "previousMain": "ecf06003fb74252ec9aaea97b132e04ef03ab7a3",
+  "main": "d81bc44fafa7078e7deca20bae6eac9b043eab7d",
+  "sourceCommits": [
+    "528285c7",
+    "f8317bdf",
+    "64fb8526"
+  ],
+  "curatedFiles": 18,
+  "validation": {
+    "scratch": "6 suites182 PASS/typecheckPASS",
+    "actualPrimary": "5 suites81 PASS/typecheckPASS",
+    "independentSourceReviews": "plan+stage2s33/status11/draftcodec4s70 NO_BLOCKER",
+    "independentIntegrationReview": "17 source/docs bytes match Auth fixed tree; CURRENT_STATE preserves main baseline; NO_BLOCKER",
+    "localPg": "14 component checks network-none, no Hosted/business Trip writes"
+  },
+  "remoteMain": "d81bc44fafa7078e7deca20bae6eac9b043eab7d",
+  "originalSixDirtyPreserved": true,
+  "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+  "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "originalFileHashes": {
+    "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+    "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+    "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+    "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+    "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+    "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+  },
+  "runtimeActivated": false,
+  "newAuthorityExecuted": false,
+  "nativeAdoptionE2E": false,
+  "limits": [
+    "owning trusted grant/staging binding issuer missing",
+    "three principal guards unchanged; atomic publisher/Person mapping/terminal receipts remain unavailable",
+    "draft preservation is not target restore qualification",
+    "Core unique Writer review scheduled separately; no shared-file delegation",
+    "local PG fixture lacks three current gateways; not claimed tested"
+  ]
+}

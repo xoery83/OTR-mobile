@@ -41,9 +41,41 @@ No Hosted SQL, runtime route, Guest hold release or Session install is included.
 See ops/auth-phase2-20261028/PUBLICATION_REVIEW.json. Next is minimal existing
 login/source/owning-restore wiring plus the exact protected execution Gate for
 this one fileless Trip/P1. Full People, Capture and other item types are deferred.
-Fileless75 Trip/P1 source is now qualified when the exact Photo migration/table is
-present and Photo/Capture inventories remain empty; nonempty Photo remains closed.
-Real Native/Hosted Adoption is still pending.
+Known schema75 now supports fileless Trip/P1 only when the exact Photo registry is present and empty; nonempty Photo remains closed.
+
+Current unmounted continuation now includes normal-JWT HTTP ports, explicit target
+confirmation and the authoritative Stage RPC. Existing Profile/Discovery/Core
+readers restore target caches while Guest remains launch principal. Real SQLite
+restore12 PASS includes lease-bound certificate/Owner Person/P1 CAS (Native owning
+NO_BLOCKER), no manufactured local Trip/queue or other-Account cache changes.
+Existing Auth Repository can then promote its canonical verified slot through the
+same Account index, with no Token copy or source release; local install8 PASS.
+Guest index commit failure recovery now retains Guest before commit or Account
+after commit, with strict marker repair for same-Account retry/refresh; ordinary
+signed-out rollback stays unchanged. Final published-path independent Review is NO_BLOCKER (5 suites83 PASS).
+Fixed source41bf461e; accepted main115 merged into Auth c6212c5f.
+Isolated real Gateway48 checks include actual Stage adapter and fresh ordinary
+Core collection after PUBLISHED; all11 candidate+14 owning hashes match. Capture
+Backend build passes. These are components, not Hosted/Native Adoption E2E.
+First UI publication caller now has explicit Account confirmation and same-ID
+Retry/cancel through existing ports. Local PREPARED-write UNKNOWN and initialization
+failures retain their attempt; cancel revokes provisional credentials and UNKNOWN
+retains cancel intent. 3 focused suites17 PASS, independent2 suites15 PASS/NO_BLOCKER,
+UIguard/types/lint PASS. DEV-only new-attempt flag remains off by default.
+Owner approved exact protected Gate495b6cb6 (install SHA26f036d4…). Root installed
+that exact default-CLOSED candidate in DEV and the frozen post-install checker
+returned POST_INSTALL_MATCH_DEFAULT_CLOSED. Policy remains disabled; no public
+business-table RLS/ACL drift. Root retains Host/SQL/main serialization.
+The next minimal slice mounts existing ports after normal JWT verification using
+the same raw Core PG connection, limited to one configured normal QA Account,
+original Guest and at most30-minute mutation window. Other Accounts/default
+startup remain CLOSED; bound status/receipt/cancel retain recovery after expiry.
+Bootstrap/scope passes focused5 suites68 tests; independent3 suites33 PASS/NO_BLOCKER.
+Expired-config restart retains bound recovery. Both Backend builds and focused lint pass; not deployed. Auth merged accepted main249204db into8383f1d1. No Auth device lease.
+Real Native OTP→publication→Supabase readback→cold recovery remains PENDING;
+cold pre-publication restart and remaining negatives are not yet accepted.
+See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
+hosted-gate-candidate/OWNER_GATE.md.
 
 # Auth Adoption active checkpoint — 30 October 2026
 

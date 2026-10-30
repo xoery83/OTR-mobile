@@ -1415,3 +1415,22 @@ active for both read and cancel. The disposable SQL journal currently permits
 CANCELLED only; full publication remains closed. Existing Account authorization
 requires a policy share lock, so the PG read adapter uses a normal repeatable-read
 transaction containing only the two fixed owning read functions.
+
+Guest Trip/P1 Golden Slice adapter: the unmounted Auth handler reuses existing
+normal JWT middleware and the host's shared Core connection. Preflight additionally
+requires `X-OTR-Guest-Target-Confirmed: targetAccountId`; staging posts the actual
+server grant and retained v3 preparation to `/v1/auth/guest-adoptions/stage`, with
+`Idempotency-Key: adoptionId`. Its owning `seal_stage` RPC verifies the real grant;
+no direct private-table insert/grant is used. `/publish` consumes the same binding
+plus returned plan digest and idempotency key. Body limits are1MiB for stage and
+8KiB for the other five routes, enforced by both the Node host and Auth boundary
+when mounted. Without explicit host injection all paths stay closed. The adapter
+creates no driver, Sync, Profile or Session authority; normal provider verification,
+confirmation, owning readback/restore and the protected execution Gate remain.
+
+The unmounted Guest owning restore uses existing Profile, Trip Discovery and Core
+collection transports while launch remains Guest. It writes target-scoped owning
+caches only. A local transition qualification captures the accepted certificate,
+Owner Person and required P1 IDs; under the immediately following real transition
+lease it compares those same local rows without network or reentering the apply
+gate. This local check grants no cloud authority and cannot install a Session.

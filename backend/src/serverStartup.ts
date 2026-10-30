@@ -1,3 +1,4 @@
+import { guestAdoptionBodyLimit } from "./guestAdoptionHttp";
 import { createAccountProfileBootstrapPort } from "./accountProfileBootstrap";
 import { createServer } from "node:http";
 
@@ -51,6 +52,7 @@ export function startDevBackend(
     | "tripMetadataPort"
     | "tripMetadataV2Port"
     | "coreConnection"
+    | "guestAdoptionRuntime"
     | "documentOriginalReader"
     | "captureMaterialCustody"
     | "captureRemoteProcessing"
@@ -117,6 +119,7 @@ export function startDevBackend(
     tripMetadataPort: startOptions.tripMetadataPort,
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,
+    guestAdoptionRuntime: startOptions.guestAdoptionRuntime,
     documentOriginalReader: startOptions.documentOriginalReader,
     universalImportPort: startOptions.universalImportPort,
     universalRuntimeForRequest: startOptions.universalRuntimeForRequest,
@@ -155,9 +158,21 @@ export function startDevBackend(
       const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
         incoming.url ?? "",
       );
+      const adoptionLimit = guestAdoptionBodyLimit(
+        new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
+      );
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (adoptionLimit !== null && byteCount > adoptionLimit) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(
+            JSON.stringify({ error: { code: "GUEST_ADOPTION_REQUEST_INVALID" } }),
+          );
+          return;
+        }
         if (personCreateRoute && (byteCount > 8192 || incoming.method !== "POST")) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");

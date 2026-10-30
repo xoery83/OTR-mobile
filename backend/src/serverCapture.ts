@@ -171,6 +171,9 @@ async function main() {
           }
         : {}),
       tripMetadataV2Port: metadata?.tripMetadataV2Port,
+      ...(trip && "guestAdoptionRuntime" in trip
+        ? { guestAdoptionRuntime: trip.guestAdoptionRuntime }
+        : {}),
       ...(trip && "coreConnection" in trip
         ? { coreConnection: trip.coreConnection }
         : {}),

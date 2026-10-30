@@ -1,0 +1,84 @@
+{
+  "status": "NATIVE_FIRST_USE_SOURCE_MAIN_PUSH_VERIFIED",
+  "main": "2033e6c4a65431783cc4a1969dd101edb97fc5a3",
+  "baseMain": "67a81918b481c4b7e6159d0218053719a71dc246",
+  "reviewedNativeSource": "d34aed4040f5004f5756b9c07e704516af56e9b0",
+  "sourceByteIdentity": "11 code/test files exact",
+  "validation": {
+    "direct": "9 suites / 217 PASS",
+    "scratch": "9 suites / 217 PASS",
+    "actualPrimary": "9 suites / 217 PASS",
+    "independent": "8 suites / 181 PASS",
+    "independentRange": "NO_BLOCKER_2033e6c4",
+    "typecheck": "PASS",
+    "scopedLint": "PASS_NO_WARNINGS",
+    "native": "Build114 first Account/Trip/P1 and cold PASS",
+    "independentArtifacts": "PASS_RECEIPT_AND_INTENT_HASH_RECOMPUTED"
+  },
+  "before": {
+    "phase": "before",
+    "main": "67a81918b481c4b7e6159d0218053719a71dc246",
+    "status": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+    ],
+    "originalFileHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "originalFileModes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "0644",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "0644",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "0644",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "0644",
+      "docs/beta/visual-acceptance/assets.zip": "0644",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "0644"
+    },
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "verified": {
+    "phase": "verified",
+    "main": "2033e6c4a65431783cc4a1969dd101edb97fc5a3",
+    "status": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+    ],
+    "originalFileHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "originalFileModes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "0644",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "0644",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "0644",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "0644",
+      "docs/beta/visual-acceptance/assets.zip": "0644",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "0644"
+    },
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "remoteMain": "2033e6c4a65431783cc4a1969dd101edb97fc5a3",
+    "normalNonForcePushVerified": true
+  },
+  "guestCleanup": false,
+  "guestAdoption": "NOT_READY",
+  "devOrSqlChanges": false,
+  "mainWriter": "RETURNED"
+}

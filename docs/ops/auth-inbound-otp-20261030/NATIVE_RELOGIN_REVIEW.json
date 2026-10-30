@@ -1,5 +1,5 @@
 {
-  "status": "REVIEWED_REGISTERED_NATIVE_RELOGIN_RECEIVING_ONLY",
+  "status": "NATIVE_FIRST_ACCOUNT_TRIP_P1_COLD_ACCEPTED",
   "originalCaseSha256": "33a154f354d11495f909b714cad493950790ca492a958dfa44ab3ce9e4b4103c",
   "previousMessageId": "d3d1fe07-aabd-4a4a-a2ba-28c1068922ce",
   "validation": {
@@ -23,6 +23,21 @@
     "No OTP/Key/body logging or persistence",
     "Native must verify normal Account identity/creation continuity and cold restore separately"
   ],
-  "realNewChallengeE2E": "PENDING_NATIVE_AFTER_JS_FIX",
+  "realNewChallengeE2E": {
+    "build": 114,
+    "nativeSource": "main67a81918 + exact Auth d34aed40",
+    "requestedAt": "2026-10-30T00:59:36.164Z",
+    "receivingMessageId": "fa1fb385-92d0-4399-a786-94285aa4ada2",
+    "receivedAt": "2026-10-30T00:59:45.195Z",
+    "returnedToMyTrips": true,
+    "challengeStillVisible": false,
+    "guestCleanupPerformed": false,
+    "hostSessionCreated": false,
+    "otpPrinted": false,
+    "accountCreationContinuityAndFirstTripP1ColdRestore": "PASS_NATIVE_AND_AUTH_ARTIFACT_REVIEW",
+    "claimRetainedNoAutomaticResend": true,
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "sourceMain": "2033e6c4a65431783cc4a1969dd101edb97fc5a3"
+  },
   "v1FourScriptsUnchanged": true
 }

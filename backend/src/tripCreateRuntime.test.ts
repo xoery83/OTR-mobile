@@ -283,9 +283,15 @@ it("reuses the private mount for non-expiring sustained ports without minting an
   f.person.mockReturnValue(person);
   const runtime = await loadDevTripCreateRuntime(environment);
   expect(f.pg).toHaveBeenCalledTimes(4);
-  expect(f.core).toHaveBeenCalledWith(v.connection, expect.any(Function), undefined, {
-    sustainedDev: true,
-  });
+  expect(f.core).toHaveBeenCalledWith(
+    v.connection,
+    expect.any(Function),
+    undefined,
+    {
+      sustainedDev: true,
+    },
+    undefined,
+  );
   expect(runtime && "tripPersonCloudCreatePort" in runtime).toBe(true);
   if (!runtime || !("tripPersonCloudCreatePort" in runtime))
     throw Error("MISSING_PERSON_PORT");

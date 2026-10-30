@@ -2,7 +2,12 @@ import { z } from "zod";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { identityFromAccessToken, type LocalSession } from "@/domain/auth/localSession";
 import type { SecureSessionStorage } from "./authSessionRepository";
-import { withAccountApplyGate } from "./accountRequestContext";
+import {
+  withAccountApplyGate,
+  assertAccountRequestGeneration,
+  assertAccountTransitionLease,
+  type AccountTransitionLease,
+} from "./accountRequestContext";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { getAccountGeneration } from "./accountGeneration";
@@ -113,25 +118,62 @@ export function createGuestVerificationSession(deps: {
         return result;
       });
     } catch (error) {
-      const safe = new Set([
-        "GUEST_VERIFICATION_STALE",
-        "GUEST_LOCAL_SCOPE_REQUIRED",
-        "LOCAL_PRINCIPAL_RECOVERY_REQUIRED",
-        "SESSION_NOT_ADOPTED",
-        "GUEST_VERIFICATION_SESSION_INVALID",
-        "GUEST_VERIFICATION_IDENTITY_MISMATCH",
-        "GUEST_VERIFICATION_METADATA_INVALID",
-        "GUEST_VERIFICATION_BINDING_MISMATCH",
-        "GUEST_VERIFICATION_CREDENTIAL_MISMATCH",
-        "GUEST_VERIFICATION_SLOT_OCCUPIED",
-        "GUEST_VERIFICATION_REFRESH_CAS",
-        "GUEST_VERIFICATION_SESSION_MISSING",
-        "GUEST_VERIFICATION_REVOCATION_PENDING",
-        "GUEST_VERIFICATION_REVOKED",
-      ]);
-      if (error instanceof Error && safe.has(error.message)) throw Error(error.message);
-      throw Error("GUEST_VERIFICATION_STORAGE_UNAVAILABLE");
+      throw redact(error);
     }
+  }
+  type ReadState =
+    | { status: "ABSENT" | "PENDING_WRITE" | "REVOCATION_PENDING" | "REVOKED" }
+    | { status: "SESSION"; session: LocalSession };
+  function redact(error: unknown): Error {
+    const safe = new Set([
+      "GUEST_VERIFICATION_STALE",
+      "GUEST_LOCAL_SCOPE_REQUIRED",
+      "LOCAL_PRINCIPAL_RECOVERY_REQUIRED",
+      "SESSION_NOT_ADOPTED",
+      "GUEST_VERIFICATION_SESSION_INVALID",
+      "GUEST_VERIFICATION_IDENTITY_MISMATCH",
+      "GUEST_VERIFICATION_METADATA_INVALID",
+      "GUEST_VERIFICATION_BINDING_MISMATCH",
+      "GUEST_VERIFICATION_CREDENTIAL_MISMATCH",
+      "GUEST_VERIFICATION_SLOT_OCCUPIED",
+      "GUEST_VERIFICATION_REFRESH_CAS",
+      "GUEST_VERIFICATION_SESSION_MISSING",
+      "GUEST_VERIFICATION_REVOCATION_PENDING",
+      "GUEST_VERIFICATION_REVOKED",
+    ]);
+    if (error instanceof Error && safe.has(error.message)) return Error(error.message);
+    return Error("GUEST_VERIFICATION_STORAGE_UNAVAILABLE");
+  }
+  async function readValue(
+    binding: GuestVerificationBinding,
+    check: () => Promise<void>,
+    requireReady = false,
+  ): Promise<ReadState> {
+    const raw = await deps.storage.getItem(metadataKey(binding.sourceGuestLocalId));
+    await check();
+    if (raw === null) return { status: "ABSENT" };
+    const record = parseRecord(raw, binding);
+    if (record.phase === "REVOKING") return { status: "REVOCATION_PENDING" };
+    if (record.phase === "REVOKED") return { status: "REVOKED" };
+    if (requireReady && record.phase !== "READY") return { status: "PENDING_WRITE" };
+    const credential = await deps.storage.getItem(
+      deps.accountSessionKey(binding.targetAccountId),
+    );
+    await check();
+    if (credential === null) {
+      if (record.phase === "READY") throw Error("GUEST_VERIFICATION_SESSION_MISSING");
+      return { status: "PENDING_WRITE" };
+    }
+    let value: unknown;
+    try {
+      value = JSON.parse(credential);
+    } catch {
+      throw Error("GUEST_VERIFICATION_SESSION_INVALID");
+    }
+    const session = validateSession(value, binding.targetAccountId);
+    await assertCredential(record, session);
+    await check();
+    return { status: "SESSION", session };
   }
   return {
     async store(
@@ -224,32 +266,48 @@ export function createGuestVerificationSession(deps: {
       | { status: "ABSENT" | "PENDING_WRITE" | "REVOCATION_PENDING" | "REVOKED" }
       | { status: "SESSION"; session: LocalSession }
     > {
-      return pinned(input, async (binding, check) => {
-        const raw = await deps.storage.getItem(metadataKey(binding.sourceGuestLocalId));
+      return pinned(input, readValue);
+    },
+    // Internal owning-cache getter: its repositories already hold the apply gate.
+    async readForLocalCache(
+      input: GuestVerificationBinding,
+      generation: number,
+    ): Promise<ReadState> {
+      const binding = Object.freeze(bindingSchema.parse(input));
+      const check = async () => {
+        assertAccountRequestGeneration({
+          accountId: binding.sourceGuestLocalId,
+          generation,
+        });
+        await deps.assertGuest(binding.sourceGuestLocalId);
+        assertAccountRequestGeneration({
+          accountId: binding.sourceGuestLocalId,
+          generation,
+        });
+      };
+      try {
         await check();
-        if (raw === null) return { status: "ABSENT" };
-        const record = parseRecord(raw, binding);
-        if (record.phase === "REVOKING") return { status: "REVOCATION_PENDING" };
-        if (record.phase === "REVOKED") return { status: "REVOKED" };
-        const credential = await deps.storage.getItem(
-          deps.accountSessionKey(binding.targetAccountId),
-        );
+        return await readValue(binding, check);
+      } catch (error) {
+        throw redact(error);
+      }
+    },
+    async readForTransition(
+      input: GuestVerificationBinding,
+      lease: AccountTransitionLease,
+    ): Promise<ReadState> {
+      const binding = Object.freeze(bindingSchema.parse(input));
+      const check = async () => {
+        assertAccountTransitionLease(lease);
+        await deps.assertGuest(binding.sourceGuestLocalId);
+        assertAccountTransitionLease(lease);
+      };
+      try {
         await check();
-        if (credential === null) {
-          if (record.phase === "READY") throw Error("GUEST_VERIFICATION_SESSION_MISSING");
-          return { status: "PENDING_WRITE" };
-        }
-        let value: unknown;
-        try {
-          value = JSON.parse(credential);
-        } catch {
-          throw Error("GUEST_VERIFICATION_SESSION_INVALID");
-        }
-        const session = validateSession(value, binding.targetAccountId);
-        await assertCredential(record, session);
-        await check();
-        return { status: "SESSION", session };
-      });
+        return await readValue(binding, check, true);
+      } catch (error) {
+        throw redact(error);
+      }
     },
     async revoke(
       input: GuestVerificationBinding,
