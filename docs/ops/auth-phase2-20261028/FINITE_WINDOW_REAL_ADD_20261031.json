@@ -1,0 +1,86 @@
+{
+  "status": "INSTALLED_VERIFIED_REAL_ADD_STAGE_PASS_PUBLICATION_TIMEOUT",
+  "gate": "e7e9351e66cd732d94d988cae1785e87905c64c25040d80e5609e9afcc410875",
+  "candidateCommit": "09b2c7feb781aad27f626459f02f8c0be5ec0a03",
+  "installSha256": "8c6b1809668b1846f1d6bc3bc6d452f67ff356e83de375bbd33b55698f225a13",
+  "install": {
+    "status": "EXACT_NEGATIVE_CLOSE_HELPER_INSTALLED_CLOSED",
+    "newPrivateFunctions": 1,
+    "newDirectExecuteGrants": 1,
+    "otherPermissionsChanged": false,
+    "policyEnabled": false,
+    "nativeOrProviderE2e": false,
+    "externalDevProjectVerification": "ROOT_REQUIRED"
+  },
+  "windowId": "cdc78f41-826d-4e15-ada4-c0747f818ae3",
+  "expiresAt": "2026-10-30T17:56:16Z",
+  "runtimeStart": {
+    "status": "FINITE_QA_RUNTIME_HEALTHY",
+    "accountId": "71b94800-f860-4685-a5d4-954adae38113",
+    "sourceGuestLocalId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+    "expiresAt": "2026-10-30T17:56:16Z"
+  },
+  "attempt": {
+    "adoption_id": "f6cb81ef-0fb7-49ba-b22e-a6d4727a8a47",
+    "confirmed_at": "2026-10-30 17:50:59.917207+00",
+    "evidence_outcome": null,
+    "expires_at": "2026-10-30 18:05:59.917207+00",
+    "plan_sha256": "01b298ed8b8d0a7167beb1655d4e247ef7fd786f16ae4fc5450cffd0af6025bf",
+    "receipt_outcome": null,
+    "recorded_at": null,
+    "staged": true
+  },
+  "safeRequestMetadata": {
+    "exitCode": 0,
+    "adoptionRequests": [
+      {
+        "route": "/v1/auth/guest-adoptions/:operation",
+        "status": 200,
+        "durationMs": 5467
+      },
+      {
+        "route": "/v1/auth/guest-adoptions/:operation",
+        "status": 200,
+        "durationMs": 3737
+      },
+      {
+        "route": "/v1/auth/guest-adoptions/:operation",
+        "status": 200,
+        "durationMs": 3695
+      },
+      {
+        "route": "/v1/auth/guest-adoptions/:operation",
+        "status": 499,
+        "durationMs": 14986
+      }
+    ]
+  },
+  "nativeResult": "Check status and continue; source retained; Cancel disabled; same target71b; not PUBLISHED",
+  "closure": {
+    "controllerStatus": "AUTH_QA_CLOSED_VERIFIED",
+    "policyBefore": "UNCONFIRMED; no repeat assumption",
+    "originalContainerRestored": "65b0ce911653cb8893b632a0d1ef011273b06ac978e63fb330e05e50299a5d46",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "independentReadback": {
+      "allGrantsBound": true,
+      "allStagesBound": true,
+      "database": "postgres",
+      "policyClosed": true,
+      "policyXmin": "32584",
+      "sourceGuardUnchanged": true,
+      "transactionReadOnly": "on",
+      "unjoinedReceipts": false,
+      "unjoinedTerminalEvidence": false
+    },
+    "windowTimer": "stopped",
+    "closeService": "inactive/success",
+    "candidate": "exited",
+    "hostSqlWriter": "returned to Root"
+  },
+  "repair": "Auth publication HTTP60s / Native65s only; Core budgets unchanged; next real retry pending",
+  "limitations": [
+    "No PUBLISHED receipt or Account promotion/cold recovery PASS",
+    "No raw logs or Stage payload exported; service-side log filter only returned fixed route/status/duration",
+    "Guest source and immutable stage retained; no destructive cleanup or new OTP"
+  ]
+}

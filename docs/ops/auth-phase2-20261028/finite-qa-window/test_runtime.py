@@ -55,4 +55,12 @@ class Control(unittest.TestCase):
    scheduled=locked
    if not locked:break
   self.assertFalse(scheduled)
+ def test_created_oom_default_equivalence_does_not_relax_running_or_other_fields(self):
+  base={'HostConfig':{'OomKillDisable':None,'Memory':123}}
+  created={'State':{'Status':'created'},'HostConfig':{'OomKillDisable':False,'Memory':123}}
+  self.assertEqual(r.active_host_hash(created,base),r.sha(base['HostConfig']))
+  created['State']['Status']='running'
+  self.assertNotEqual(r.active_host_hash(created,base),r.sha(base['HostConfig']))
+  created['State']['Status']='created';created['HostConfig']['Memory']=124
+  self.assertNotEqual(r.active_host_hash(created,base),r.sha(base['HostConfig']))
 if __name__=='__main__':unittest.main()

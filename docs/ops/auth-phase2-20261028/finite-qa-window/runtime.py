@@ -51,10 +51,15 @@ def check_base(p,s,healthy=False):
 def active_config(p,base):
     e=env(base);e.update(OTR_DEV_AUTH_GUEST_ADOPTION='1',OTR_DEV_AUTH_GUEST_ADOPTION_SCOPE=canonical({k:p[k] for k in ['accountId','sourceGuestLocalId','expiresAt']}).decode())
     return dict(base['Config'],Env=[k+'='+v for k,v in e.items()])
+def active_host_hash(s,base):
+    h=dict(s['HostConfig'])
+    # Docker normalizes this default only while the new container is CREATED.
+    if s['State']['Status']=='created' and h.get('OomKillDisable') is False and base['HostConfig'].get('OomKillDisable') is None:h['OomKillDisable']=None
+    return sha(h)
 def check_active(p,s,state):
     base=inspect(BASE);check_base(p,base)
     assert s['Id']==state['candidateId'] and s['Image']==IMAGE and s['Config']==active_config(p,base)
-    assert sha(s['HostConfig'])==p['baseline']['hostConfigSHA256'] and sha(mounts(s))==p['baseline']['mountsSHA256']
+    assert active_host_hash(s,base)==p['baseline']['hostConfigSHA256'] and sha(mounts(s))==p['baseline']['mountsSHA256']
     return base
 class Docker(http.client.HTTPConnection):
     def connect(self):
@@ -72,6 +77,14 @@ def stage(p):
     check_active(p,candidate,state);assert candidate['State']['Status']=='created'
     save(Path(p['root'])/'state.json',state)
     return {'status':'STAGED_NOT_STARTED_SQL_UNCHANGED',**state}
+def reconcile_stage(p):
+    validate(p,starting=True);check_base(p,inspect('otr-dev-backend'),True)
+    ids=call(['docker','ps','-aq','--no-trunc','--filter','name=^/otr-auth-qa-'+p['windowId']+'$']).splitlines()
+    assert len(ids)==1,'EXACT_CREATED_CANDIDATE_REQUIRED'
+    candidate=inspect(ids[0]);state={'candidateId':candidate['Id']}
+    check_active(p,candidate,state);assert candidate['State']['Status']=='created'
+    save(Path(p['root'])/'state.json',state)
+    return {'status':'STAGED_RECONCILED_NOT_STARTED_SQL_UNCHANGED',**state}
 def health():
     import urllib.request
     assert json.load(urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=4))=={'status':'ok','environment':'development'}
@@ -155,13 +168,14 @@ def locked():
         fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB);yield
     finally:os.close(fd)
 def main():
-    a=argparse.ArgumentParser();a.add_argument('mode',choices=['stage','arm','start','close','verify']);a.add_argument('plan',type=Path);a.add_argument('sha256');args=a.parse_args()
+    a=argparse.ArgumentParser();a.add_argument('mode',choices=['stage','reconcile-stage','arm','start','close','verify']);a.add_argument('plan',type=Path);a.add_argument('sha256');args=a.parse_args()
     assert os.getuid()==0;raw=private(args.plan);assert hashlib.sha256(raw).hexdigest()==args.sha256
     p=validate(json.loads(raw));assert args.plan==Path(p['root'])/'plan.json'
     assert hashlib.sha256(private(Path(p['root'])/'runtime.py')).hexdigest()==p['runtimeSHA256']
     state_path=Path(p['root'])/'state.json'
     with locked():
         if args.mode=='stage':result=stage(p)
+        elif args.mode=='reconcile-stage':result=reconcile_stage(p)
         elif args.mode=='arm':result=arm(p,args.sha256)
         else:
             state=json.loads(private(state_path))

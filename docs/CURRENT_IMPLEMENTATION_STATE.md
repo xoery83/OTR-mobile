@@ -88,19 +88,22 @@ No private auth.users query was executed. No Add/freeze/publication; lease retur
 After ordinary read smoke, return Host Writer to Root and coordinate the finite
 QA mutation window. See
 ops/auth-phase2-20261028/GUESTQA67_SELF_IDENTITY.json.
-The next real blocker is independent Host SQL shutdown: only Mac-side management
-SQL currently exists. A separate negative-only candidate adds one private
-close_qa_policy(boolean) and one EXEC to the existing Core Gateway; no role,
-credential, RLS/table grant or positive authority. Local real-PG6 groups, TS14 and
-independent Python5/TS3 PASS, bounded Review NO_BLOCKER after fixing timer lock
-retry exhaustion. Owner explicitly approved exact e7e9351e/SQL8c6b1809 on31 October; Root has
-been asked to independently confirm the original reply and fresh-check/install.
-Auth did not install or activate; no E2E PASS. See CLOSE_HELPER_OWNER_APPROVAL.json.
-See finite-qa-window/OWNER_GATE.md, CLOSE_HELPER_GATE.json and RUNBOOK.md under
-ops/auth-phase2-20261028.
-Accepted main5c765fa6 merged into Auth b3f0d37f; closure SQL SHA and Core connection
-unchanged. Merge-focused Auth/UI21, Python5 and typecheck PASS. No Hosted writes. Same71b confirmation was restored then claim closed;
-new fresh GUI READY/expiry will be obtained only after approval and Root setup.
+Owner-approved shutdown Gate e7e9351e/SQL8c6b1809 is now actually installed and
+independently verified in Hosted DEV. One finite runtime window cdc78f41 ran with
+an actual independent Host timer and unchanged original expiry17:56:16Z.
+Normal Native Add reached actual grant f6cb81ef and immutable Stage01b298ed;
+preflight/stage/status returned200, then publish was canceled at14986ms/499.
+No terminal Receipt exists; source remains held and Native offers Check status.
+Close restored original65b0/image4d2109/EnvAb5, then a separate READ ONLY CLI
+confirmed policy=false/xmin32584, Source guard unchanged, exact actor/guest binding
+and no orphan terminal records. Timer stopped, candidate exited; Host/SQL Writer
+returned to Root and Native notified to resume. See FINITE_WINDOW_REAL_ADD_20261031.json.
+Focused repair extends only Auth publish HTTP to60s and Native wait to65s;
+Core query/lease/FIFO remain unchanged. Direct2 suites55PASS; independent review
+and same-attempt real retry remain pending. No new OTP or payload export.
+CREATED-only Docker OomKillDisable default normalization/reconcile-stage passed
+independent6 checks; original plan/runtime archived, exact deadline not extended.
+Accepted main5c765fa6 remains merged in Auth b3f0d37f.
 Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and

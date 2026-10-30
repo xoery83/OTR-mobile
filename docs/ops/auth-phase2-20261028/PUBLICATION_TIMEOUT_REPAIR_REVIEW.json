@@ -1,0 +1,14 @@
+{
+  "status": "INDEPENDENT_NO_BLOCKER_SOURCE_ONLY",
+  "actualFailure": "Three200 requests then publish499 at14986ms; Stage01b298ed present, terminal absent",
+  "scope": [
+    "publish HTTP60s",
+    "Native publicationClient65s",
+    "Core5s query/60s lease/FIFO unchanged",
+    "QA expiry/normalJWT/UNKNOWN/source hold unchanged"
+  ],
+  "tests": "direct and independent2 suites55 PASS; typecheck and focused ESLint PASS",
+  "reviewer": "auth_phase1_review",
+  "hostedRepairDeployed": false,
+  "remaining": "native durable recovery for expired same attempt before in-place code update and real retry"
+}
