@@ -92,8 +92,11 @@ PASS; own host Session revoked and refresh rejected. Device claim released, no H
 policy/Schema changes. Final evidence independent NO_BLOCKER (9 hashes/receipt/cold/
 foreign403); Native two-range owning review NO_BLOCKER. Native isolated compatibility
 ce956750 cherry-picked as8c859915 preserves prior named-only Flight options; no
-Realtime candidate merged. Final integrated4 suites96/typecheck PASS; serial main
-fast-forward/push pending.
+Realtime candidate merged. Final integrated4 suites96/typecheck PASS; accepted
+main6dede529 normal push PASS, all six historical dirty files byte/mode/index/fullDiff
+preserved. See People MAIN_INTEGRATION.json. Next approved People work remains
+current connection-status projection/private Profile and self Trip nickname through
+owning ports; no name/email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
 Existing profiles SELECT RLS is all-authenticated: private travel-document names/AKA
 must not be stored there. Only policy/schema metadata was read; no new permissions.

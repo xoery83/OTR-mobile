@@ -1,5 +1,5 @@
 {
-  "status": "BOUNDED_GOLDEN_SLICE_PASS_INTEGRATION_PENDING",
+  "status": "BOUNDED_GOLDEN_SLICE_PASS_MAIN_ACCEPTED",
   "scope": "Existing local accepted format2 original Owner; roster Add Traveler slice only",
   "sourceCommit": "6883e3a0f76573e1db4014be1f7939e6e97282a6",
   "bundleId": "com.xoery.otrmobile.guestqb",
@@ -91,9 +91,7 @@
     "noSecondRepositoryQueueSyncEngine": true,
     "ownQaAppClosedAndDeviceClaimReleased": true
   },
-  "pending": [
-    "Serial main fast-forward and normal push"
-  ],
+  "pending": [],
   "notClaimed": [
     "Full People Home Blueprint",
     "Global Profile/AKA/Travel Document Name",
@@ -135,5 +133,10 @@
     "isolatedCompatibilityCommit": "ce956750d656ddafc7f04e242d3e4fb51dc1f2d2",
     "authCherryPick": "8c859915",
     "noRealtimeCandidateMerged": true
+  },
+  "mainIntegration": {
+    "status": "PASS_NORMAL_MAIN_PUSH",
+    "acceptedMain": "6dede52932956775deb9027cf3465293a6af0f1e",
+    "receipt": "MAIN_INTEGRATION.json"
   }
 }

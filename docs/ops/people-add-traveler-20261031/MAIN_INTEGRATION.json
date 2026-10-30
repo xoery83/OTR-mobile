@@ -1,0 +1,32 @@
+{
+  "status": "PASS_NORMAL_MAIN_PUSH",
+  "baseMain": "9be79a8ad363edc91753d6664fcd8711f009d2d6",
+  "acceptedMain": "6dede52932956775deb9027cf3465293a6af0f1e",
+  "sourceCommits": [
+    "06871d27",
+    "5244fef9",
+    "6883e3a0"
+  ],
+  "isolatedNativeCompatibilityCommit": "ce956750",
+  "authCherryPick": "8c859915",
+  "owningAndIndependentReviews": "NO_BLOCKER",
+  "focusedIntegratedRegression": "4 suites96 PASS; typecheck PASS; existing UIguard/lint qualification reused",
+  "mainMethod": "Root/Native serial window; ff-only then normal push; no force/stash",
+  "historicalDirtyFilesRetained": 6,
+  "retainedChecks": [
+    "bytes",
+    "modes",
+    "porcelain status",
+    "index diff",
+    "full binary HEAD diff"
+  ],
+  "mainBeforeSnapshotSHA256": "798dea0beefc13b32fec8992e3007f818db2904bc81b0fae2990205679f1a033",
+  "mainAfterSnapshotSHA256": "262b87e7a381aa71eb46ea4c31dbad483c8f489c26f4c3faa4d1cbf22566472a",
+  "hostSqlOrPermissionMutation": false,
+  "realtimeCandidateMerged": false,
+  "limits": [
+    "Bounded original Owner local accepted format2 Add Traveler only",
+    "No full People Home/Profile/Invite claim",
+    "No new Receipt-authority qualification beyond recorded negative"
+  ]
+}
