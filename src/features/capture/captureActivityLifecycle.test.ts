@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CaptureActivity } from "./CaptureActivity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
@@ -10,6 +10,8 @@ const ui = vi.hoisted(() => ({
   effect: null as null | (() => (() => void) | void),
   cleanup: null as null | (() => void),
   list: vi.fn(),
+  activities: vi.fn(),
+  generation: 0,
   open: vi.fn(),
   hide: vi.fn(),
   back: vi.fn(),
@@ -30,9 +32,16 @@ vi.mock("react", () => ({
       },
     ];
   },
-  useEffect(effect: () => (() => void) | void) {
-    ui.effect = effect;
+  useEffect(effect: () => (() => void) | void, deps?: unknown[]) {
+    if (!deps) effect();
+    else ui.effect = effect;
   },
+}));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => ui.generation,
+}));
+vi.mock("@/data/operations/universalActivityReader", () => ({
+  readDefaultUniversalActivities: ui.activities,
 }));
 vi.mock("@/data/operations/defaultCaptureSubmission", () => ({
   listDefaultCaptureJobs: ui.list,
@@ -54,6 +63,10 @@ function render(current = () => true) {
     onReturn: ui.back,
   }).props as {
     jobs: CaptureJobReadModel[];
+    taskActivities: Record<
+      string,
+      import("@/data/api/universalImportContracts").UniversalTaskActivity
+    >;
     loading: boolean;
     error: boolean;
     hasMore: boolean;
@@ -78,6 +91,8 @@ beforeEach(() => {
   ui.effect = null;
   ui.cleanup = null;
   vi.resetAllMocks();
+  ui.generation = 0;
+  ui.activities.mockResolvedValue({});
 });
 it("loads 0/1/N real Jobs; cursor pagination, rapid taps and manual refresh reuse the read seam", async () => {
   for (const n of [0, 1, 20]) {
@@ -190,3 +205,123 @@ it.each(["onMore", "onRefresh"] as const)(
     expect(render().loading).toBe(false);
   },
 );
+
+afterEach(() => {
+  ui.cleanup?.();
+  vi.useRealTimers();
+});
+const activity = (
+  state: import("@/data/api/universalImportContracts").UniversalTaskActivity["state"],
+) => ({
+  state,
+  recordedAt: "2026-10-31T00:00:00.000Z",
+  updatedAt: "2026-10-31T00:00:01.000Z",
+  completedAt: state === "RESULTS_READY" ? "2026-10-31T00:00:01.000Z" : null,
+  rowRevision: state === "RESULTS_READY" ? 2 : 1,
+  attemptCount: 1,
+  waitReason: null,
+});
+it.each(["PENDING", "WAITING", "PROCESSING"] as const)(
+  "reads real %s→RESULTS_READY while mounted, then stops without manual refresh",
+  async (state) => {
+    vi.useFakeTimers();
+    ui.list.mockResolvedValueOnce(page(1));
+    ui.activities
+      .mockResolvedValueOnce({ "batch-0": activity(state) })
+      .mockResolvedValueOnce({ "batch-0": activity("RESULTS_READY") });
+    render();
+    ui.cleanup = ui.effect!() ?? null;
+    await vi.waitFor(() => expect(render().loading).toBe(false));
+    expect(render().taskActivities["batch-0"].state).toBe(state);
+    await vi.advanceTimersByTimeAsync(5000);
+    await vi.waitFor(() =>
+      expect(render().taskActivities["batch-0"].state).toBe("RESULTS_READY"),
+    );
+    expect(ui.activities).toHaveBeenCalledTimes(2);
+    expect(ui.list).toHaveBeenCalledTimes(1);
+    expect(render().loading).toBe(false);
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(ui.activities).toHaveBeenCalledTimes(2);
+  },
+);
+it("polling stays single-flight and a coalesced Refresh preserves known same-Batch observations", async () => {
+  vi.useFakeTimers();
+  ui.list.mockResolvedValue(page(1));
+  let finish!: (v: unknown) => void;
+  ui.activities
+    .mockResolvedValueOnce({ "batch-0": activity("PROCESSING") })
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    )
+    .mockResolvedValueOnce({});
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(ui.activities).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(ui.activities).toHaveBeenCalledTimes(2);
+  expect(render().taskActivities["batch-0"].state).toBe("PROCESSING");
+  render().onRefresh();
+  render().onRefresh();
+  expect(ui.list).toHaveBeenCalledTimes(1);
+  finish({ "batch-0": activity("RESULTS_READY") });
+  await vi.waitFor(() => expect(ui.activities).toHaveBeenCalledTimes(3));
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  expect(ui.list).toHaveBeenCalledTimes(2);
+  expect(render().taskActivities["batch-0"].state).toBe("RESULTS_READY");
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(ui.activities).toHaveBeenCalledTimes(3);
+});
+it.each(["blur", "account-generation", "scope-invalid"] as const)(
+  "discards a late poll and stops after %s",
+  async (boundary) => {
+    vi.useFakeTimers();
+    ui.list.mockResolvedValueOnce(page(1));
+    let valid = true;
+    let finish!: (v: unknown) => void;
+    ui.activities
+      .mockResolvedValueOnce({ "batch-0": activity("PROCESSING") })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+    const current = () => valid;
+    render(current);
+    ui.cleanup = ui.effect!() ?? null;
+    await vi.waitFor(() => expect(render(current).loading).toBe(false));
+    await vi.advanceTimersByTimeAsync(5000);
+    if (boundary === "blur") ui.cleanup!();
+    else if (boundary === "account-generation")
+      ui.generation += 2; // A→B→A still invalidates this lifetime.
+    else valid = false;
+    finish({ "batch-0": activity("RESULTS_READY") });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(render(current).taskActivities["batch-0"].state).toBe("PROCESSING");
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(ui.activities).toHaveBeenCalledTimes(2);
+  },
+);
+it("only pending Batch contexts are polled; terminal and unavailable rows do not start reads", async () => {
+  vi.useFakeTimers();
+  ui.list.mockResolvedValueOnce(page(3));
+  ui.activities
+    .mockResolvedValueOnce({
+      "batch-0": activity("FAILED"),
+      "batch-1": activity("PROCESSING"),
+    })
+    .mockResolvedValueOnce({ "batch-1": activity("RESULTS_READY") });
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(
+    ui.activities.mock.calls[1][0].map((job: CaptureJobReadModel) => job.batch.batchId),
+  ).toEqual(["batch-1"]);
+  expect(ui.activities.mock.calls[1]).toHaveLength(3); // No completion/Result callback, prepare or dispatch seam.
+});

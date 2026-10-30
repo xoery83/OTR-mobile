@@ -1,4 +1,5 @@
 import type { UniversalTaskActivity } from "@/data/api/universalImportContracts";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -63,57 +64,121 @@ export function CaptureActivity({
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const inventory = useRef(jobs);
+  const activities = useRef(taskActivities);
+  const accountGeneration = useRef(getAccountGeneration());
   const epoch = useRef(0);
   const active = useRef(false);
   const running = useRef(false);
+  const reloadRequested = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const refresh = useRef<() => void>(() => undefined);
-  const load = async (older = false) => {
-    if (!active.current || !isCurrent() || running.current || jobs !== inventory.current)
-      return;
+  const scopeCurrent = () =>
+    active.current && isCurrent() && accountGeneration.current === getAccountGeneration();
+  const clearPoll = () => {
+    clearTimeout(timer.current);
+    timer.current = undefined;
+  };
+  const pendingJobs = () =>
+    inventory.current.filter((job) => {
+      const state = activities.current[job.batch.batchId]?.state;
+      return state !== undefined && ["PENDING", "WAITING", "PROCESSING"].includes(state);
+    });
+  const mergeActivities = (observations: Record<string, UniversalTaskActivity>) => {
+    const batches = new Set(inventory.current.map((job) => job.batch.batchId));
+    activities.current = Object.fromEntries(
+      Object.entries({ ...activities.current, ...observations }).filter(([batchId]) =>
+        batches.has(batchId),
+      ),
+    );
+    setTaskActivities(activities.current);
+  };
+  const readActivities = async (
+    next: readonly CaptureJobReadModel[],
+    current: () => boolean,
+  ) => {
+    const reader = await import("@/data/operations/universalActivityReader");
+    if (!current()) return;
+    const observations = await reader.readDefaultUniversalActivities(
+      next,
+      current,
+      (batchId, activity) => {
+        if (current()) mergeActivities({ [batchId]: activity });
+      },
+    );
+    // Missing/offline observations do not erase the last known state for the same Batch.
+    if (current()) mergeActivities(observations);
+  };
+  const schedulePoll = () => {
+    clearPoll();
+    if (scopeCurrent() && pendingJobs().length)
+      timer.current = setTimeout(() => void poll(), 5000);
+  };
+  const settled = () => {
+    running.current = false;
+    if (!scopeCurrent()) return;
+    if (reloadRequested.current) {
+      reloadRequested.current = false;
+      refresh.current();
+    } else schedulePoll();
+  };
+  const poll = async () => {
+    timer.current = undefined;
+    if (!scopeCurrent() || running.current) return;
+    const pending = pendingJobs();
+    if (!pending.length) return;
     running.current = true;
     const request = ++epoch.current;
-    const current = () => active.current && request === epoch.current && isCurrent();
+    const current = () => scopeCurrent() && request === epoch.current;
+    try {
+      await readActivities(pending, current);
+    } catch {
+      /* Preserve known state offline. */
+    } finally {
+      if (request === epoch.current) settled();
+    }
+  };
+  const load = async (older = false, expectedInventory = jobs) => {
+    if (!scopeCurrent() || expectedInventory !== inventory.current) return;
+    if (running.current) {
+      if (!older) reloadRequested.current = true;
+      return;
+    }
+    clearPoll();
+    running.current = true;
+    const request = ++epoch.current;
+    const current = () => scopeCurrent() && request === epoch.current;
     setLoading(true);
     setError(false);
     try {
       const api = await import("@/data/operations/defaultCaptureSubmission");
       if (!current()) return;
-      const last = older ? jobs.at(-1)?.batch : undefined;
+      const last = older ? expectedInventory.at(-1)?.batch : undefined;
       const page = await api.listDefaultCaptureJobs({
         limit: pageSize,
         before: last ? { createdAt: last.createdAt, batchId: last.batchId } : undefined,
       });
       if (!current()) return;
-      const next = older ? [...jobs, ...page] : page;
+      const next = older ? [...expectedInventory, ...page] : page;
       inventory.current = next;
       setJobs(next);
-      setTaskActivities({});
-      void import("@/data/operations/universalActivityReader")
-        .then(async (reader) => {
-          if (!current()) return;
-          const observations = await reader.readDefaultUniversalActivities(
-            next,
-            current,
-            (batchId, activity) => {
-              if (current())
-                setTaskActivities((previous) => ({ ...previous, [batchId]: activity }));
-            },
-          );
-          if (current()) setTaskActivities(observations);
-        })
-        .catch(() => {});
+      mergeActivities({});
       setHasMore(page.length === pageSize);
+      try {
+        await readActivities(next, current);
+      } catch {
+        /* List remains available offline. */
+      }
     } catch {
       if (current()) setError(true);
     } finally {
       if (request === epoch.current) {
-        running.current = false;
         if (current()) setLoading(false);
+        settled();
       }
     }
   };
   useEffect(() => {
-    refresh.current = () => void load();
+    refresh.current = () => void load(false, inventory.current);
   });
   useEffect(() => {
     active.current = true;
@@ -127,6 +192,8 @@ export function CaptureActivity({
     });
     return () => {
       active.current = false;
+      clearPoll();
+      reloadRequested.current = false;
       ++requests.current;
       running.current = false;
       unsubscribe();
@@ -136,7 +203,7 @@ export function CaptureActivity({
   }, []);
   return (
     <CaptureActivityList
-      isCurrent={() => active.current && isCurrent()}
+      isCurrent={scopeCurrent}
       expectedAccountId={expectedAccountId}
       taskActivities={taskActivities}
       jobs={jobs}
@@ -146,7 +213,7 @@ export function CaptureActivity({
       onRefresh={() => void load()}
       onMore={() => void load(true)}
       onOpenJob={(id) => {
-        if (active.current && isCurrent()) onOpenJob(id);
+        if (scopeCurrent()) onOpenJob(id);
       }}
       onReturn={onReturn}
       onHide={onHide}
