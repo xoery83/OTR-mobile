@@ -556,3 +556,29 @@ it("keeps Personal Inbox and Trip Documents as separate Import menu destinations
   row("importDocuments.trip").onPress();
   expect(onDocuments).toHaveBeenLastCalledWith("TRIP");
 });
+
+it("retained Account intake can use the existing Journey chooser and return to its progress", async () => {
+  state.runEffects = true;
+  const target = vi.fn(async () => true);
+  const extra = {
+    content: createElement("span", {}, "Retained progress"),
+    canAssignContentTrip: true,
+    readTripTargets: async () => [{ id: "one", name: "QA Trip" }],
+    onTripTarget: target,
+  };
+  expect(render(empty, 0, extra).html).toContain("Retained progress");
+  button("capture.composer.contextTitle").onPress();
+  render(empty, 0, extra);
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  const picker = render(empty, 0, extra);
+  expect(picker.html).toContain("QA Trip");
+  expect(picker.html).not.toContain("Retained progress");
+  const trip = state.buttons.find((b) => b.children?.props?.children === "QA Trip");
+  trip.onPress();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(target).toHaveBeenCalledWith(
+    { id: "one", name: "QA Trip" },
+    expect.any(Function),
+  );
+  expect(render(empty, 0, extra).html).toContain("Retained progress");
+});

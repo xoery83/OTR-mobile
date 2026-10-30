@@ -21,11 +21,19 @@ vi.mock("react", () => ({
   useLayoutEffect: (effect: () => void) => hooks.layout.push(effect),
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 1 }));
-function Harness(batchId: string, current = () => true, result?: UniversalImportResult) {
+function Harness(
+  batchId: string,
+  current = () => true,
+  result?: UniversalImportResult,
+  tripId?: string,
+) {
   hooks.cursor = 0;
   hooks.layout = [];
   const actions = useUniversalP1Admission(
-    { batch: { accountId: "qa", batchId } } as CaptureJobReadModel,
+    {
+      batch: { accountId: "qa", batchId, context: { tripPrior: null } },
+      assignedTripId: tripId,
+    } as CaptureJobReadModel,
     current,
     result,
   );
@@ -134,5 +142,13 @@ it("receipt-only cold recovery keeps the same Core request budget as explicit co
     expect.any(Object),
     expect.any(Object),
     expect.objectContaining({ transport }),
+  );
+});
+
+it("rejects retained Review when attribution changes within the same Batch", async () => {
+  const retained = Harness("batch-a", () => true, undefined, "trip-a");
+  Harness("batch-a", () => true, undefined, "trip-b");
+  await expect(retained.readOriginal({} as UniversalImportResult, "i1")).rejects.toThrow(
+    "OWNING_REVIEW_REQUIRED",
   );
 });

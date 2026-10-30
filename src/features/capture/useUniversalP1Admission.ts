@@ -48,13 +48,23 @@ export function useUniversalP1Admission(
   const alive = useRef(true),
     running = useRef(false),
     generation = useRef(getAccountGeneration()),
-    initialScope = useRef(`${model.batch.accountId}:${model.batch.batchId}`),
-    scope = useRef(`${model.batch.accountId}:${model.batch.batchId}`),
+    initialScope = useRef(
+      `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`,
+    ),
+    scope = useRef(
+      `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`,
+    ),
     view = useRef(isCurrent);
   useLayoutEffect(() => {
-    scope.current = `${model.batch.accountId}:${model.batch.batchId}`;
+    scope.current = `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`;
     view.current = isCurrent;
-  }, [model.batch.accountId, model.batch.batchId, isCurrent]);
+  }, [
+    model.batch.accountId,
+    model.batch.batchId,
+    model.batch.context?.tripPrior?.id,
+    model.assignedTripId,
+    isCurrent,
+  ]);
   const current = () =>
     alive.current &&
     initialScope.current === scope.current &&

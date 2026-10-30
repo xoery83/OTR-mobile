@@ -35,6 +35,7 @@ type Props = {
   content?: ReactNode;
   title?: string;
   contextLabel?: string;
+  canAssignContentTrip?: boolean;
   errorMessage?: string;
   renderImagePaste?(enabled: boolean, input: ReactNode): ReactNode;
   readTripTargets?(): Promise<readonly { id: string; name: string }[]>;
@@ -64,6 +65,7 @@ export function CaptureComposer({
   content,
   title,
   contextLabel,
+  canAssignContentTrip = false,
   errorMessage,
   readTripTargets,
   renderImagePaste,
@@ -141,7 +143,7 @@ export function CaptureComposer({
       ? t("capture.context", { name: tripName })
       : t("capture.composer.unassigned"));
   const close = () => {
-    if (page === "composer" || content != null) {
+    if (page === "composer") {
       voice.close();
       onClose();
     } else setPage("composer");
@@ -207,9 +209,21 @@ export function CaptureComposer({
               title={header}
               onLeft={close}
             />
-            {content != null ? (
+            {content != null && page === "composer" ? (
               <>
-                <UiText style={styles.context}>{context}</UiText>
+                {canAssignContentTrip ? (
+                  <UiButton
+                    label={t("capture.composer.contextTitle")}
+                    variant="secondary"
+                    onPress={() => {
+                      setTargetBusy(true);
+                      setTargetError(false);
+                      setPage("context");
+                    }}
+                  />
+                ) : (
+                  <UiText style={styles.context}>{context}</UiText>
+                )}
                 {errorMessage ? (
                   <UiText accessibilityRole="alert" style={styles.error}>
                     {errorMessage}

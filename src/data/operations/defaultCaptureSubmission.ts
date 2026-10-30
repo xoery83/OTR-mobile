@@ -102,8 +102,24 @@ async function withLocalProcessing(
       announceCaptureProcessingActivity(context.accountId, config.jobId);
     await ensureForeground(context, processing, config.jobId);
   }
+  const { readCaptureJobAssignment } = await import("./captureJobAssignment");
+  const { getDefaultLocalCaptureInboxRepository } =
+    await import("../repositories/defaultLocalCaptureInboxRepository");
+  const captures = await getDefaultLocalCaptureInboxRepository();
   return Promise.all(
     jobs.map(async (job) => {
+      let assignedTripId: string | null = null;
+      if (!job.batch.context.tripPrior && job.allInputsAccepted) {
+        try {
+          assignedTripId = await readCaptureJobAssignment(context, job, {
+            captures,
+            getAccountId: requireActiveUserId,
+            isCurrent: () => true,
+          });
+        } catch {
+          // Missing local originals cannot assert a recovered Journey attribution.
+        }
+      }
       const processingEvents = await processing.events(context, job.batch.jobId);
       const localInterpretationEvents = await processing.localEvents(
         context,
@@ -115,6 +131,7 @@ async function withLocalProcessing(
       );
       return {
         ...job,
+        assignedTripId,
         processing: {
           ...job.processing,
           capability: processingEvents.length
@@ -198,4 +215,25 @@ export async function reopenDefaultCaptureJob(jobId: string) {
     await getDefaultCaptureSubmissionRepository()
   ).reopen(jobId, context);
   return (await withLocalProcessing(context, [job]))[0];
+}
+
+export async function assignDefaultCaptureJobTrip(
+  job: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+  tripId: string,
+  isCurrent: () => boolean,
+) {
+  const context = await captureAccountRequestContext(tripId, requireActiveUserId);
+  const { getDefaultLocalCaptureInboxRepository } =
+    await import("../repositories/defaultLocalCaptureInboxRepository");
+  const { assignCaptureJobTrip } = await import("./captureJobAssignment");
+  await assignCaptureJobTrip(context, job, {
+    captures: await getDefaultLocalCaptureInboxRepository(),
+    getAccountId: requireActiveUserId,
+    isCurrent,
+  });
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const reopened = await (
+    await getDefaultCaptureSubmissionRepository()
+  ).reopen(job.batch.jobId, context);
+  return (await withLocalProcessing(context, [reopened]))[0];
 }

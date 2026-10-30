@@ -153,7 +153,7 @@ export function CaptureProgress({
             >
               <UniversalResults
                 readTripTargets={readTripTargets}
-                key={model.batch.batchId}
+                key={`${model.batch.accountId}:${model.batch.batchId}:${model.batch.context.tripPrior?.id ?? model.assignedTripId ?? ""}`}
                 model={model}
                 isCurrent={isCurrent}
               />

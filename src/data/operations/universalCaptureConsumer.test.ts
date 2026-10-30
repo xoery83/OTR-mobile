@@ -524,3 +524,12 @@ it("keeps a newly prepared processing marker pending without an extra resume", a
   expect(resume).not.toHaveBeenCalled();
   expect(f.transport.execute).not.toHaveBeenCalled();
 });
+
+it("uses persisted Capture assignment for the same Account-level Batch without rewriting intake", async () => {
+  const x = fixture();
+  const tripId = x.result.tripId;
+  x.model.batch.context.tripPrior = null;
+  Object.assign(x.model, { assignedTripId: tripId });
+  await expect(x.consumer.recover(x.model)).resolves.toEqual(x.result);
+  expect(x.model.batch.context.tripPrior).toBeNull();
+});

@@ -85,7 +85,7 @@ vi.mock("@/data/api/sourcePngPreparationTransport", () => ({
 vi.mock("@/data/repositories/defaultLocalCaptureInboxRepository", () => ({
   captureStorageDependencies: { sha256: h.hash },
 }));
-function Harness(batchId = "batch-a", current = () => true) {
+function Harness(batchId = "batch-a", current = () => true, tripId = "trip") {
   h.cursor = 0;
   h.layout = [];
   h.effects = [];
@@ -93,7 +93,7 @@ function Harness(batchId = "batch-a", current = () => true) {
     {
       allInputsAccepted: true,
       inputs: [],
-      batch: { accountId: "qa", batchId, context: { tripPrior: { id: "trip" } } },
+      batch: { accountId: "qa", batchId, context: { tripPrior: { id: tripId } } },
     } as unknown as CaptureJobReadModel,
     current,
   );
@@ -363,4 +363,24 @@ it("retained PNG callback cannot dispatch after view/account scope closes", asyn
   );
   expect(h.pngTransport).not.toHaveBeenCalled();
   expect(h.pngPreparation).not.toHaveBeenCalled();
+});
+
+it("discards in-flight recovery and deferred Start when same Batch Journey changes", async () => {
+  h.consumer.activity = null;
+  let finish!: (v: null) => void;
+  h.recover.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  Harness("batch-a", () => true, "trip-a");
+  await vi.advanceTimersByTimeAsync(0);
+  await Harness("batch-a", () => true, "trip-a").start();
+  Harness("batch-a", () => true, "trip-b");
+  expect(h.options.isCurrent()).toBe(false);
+  finish(null);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.start).not.toHaveBeenCalled();
+  expect(Harness("batch-a", () => true, "trip-b").result).toBeNull();
 });

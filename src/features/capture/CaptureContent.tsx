@@ -413,8 +413,36 @@ export function CaptureContent({
             : undefined
         }
         onTripTarget={async (target, targetCurrent) => {
-          if (!current() || running.current || attempted || reopening || model)
-            return false;
+          if (!current() || running.current || reopening) return false;
+          if (model) {
+            if (
+              !target ||
+              !model.allInputsAccepted ||
+              model.batch.context.tripPrior ||
+              model.assignedTripId ||
+              !validateTripPrior ||
+              !(await validateTripPrior(target.id)) ||
+              !targetCurrent() ||
+              !current()
+            )
+              return false;
+            running.current = true;
+            try {
+              const { assignDefaultCaptureJobTrip } =
+                await import("@/data/operations/defaultCaptureSubmission");
+              const next = await assignDefaultCaptureJobTrip(
+                model,
+                target.id,
+                () => current() && targetCurrent(),
+              );
+              if (!current() || !targetCurrent()) return false;
+              setModel(next);
+              return true;
+            } finally {
+              running.current = false;
+            }
+          }
+          if (attempted) return false;
           if (target && (!validateTripPrior || !(await validateTripPrior(target.id))))
             return false;
           return (
@@ -451,6 +479,14 @@ export function CaptureContent({
             : accountId && (activity || attempted || reopening || model)
               ? t(activity ? "capture.progress.activeImports" : "capture.progress.title")
               : undefined
+        }
+        canAssignContentTrip={
+          !!model &&
+          !activity &&
+          !documents &&
+          model.allInputsAccepted &&
+          !model.batch.context.tripPrior &&
+          !model.assignedTripId
         }
         contextLabel={
           documents

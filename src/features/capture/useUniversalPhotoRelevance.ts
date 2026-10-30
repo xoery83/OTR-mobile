@@ -57,6 +57,7 @@ export function useUniversalPhotoRelevance(
   const key = JSON.stringify([
     accountId,
     model.batch.batchId,
+    model.assignedTripId,
     jobId,
     input.id,
     input.ordinal,

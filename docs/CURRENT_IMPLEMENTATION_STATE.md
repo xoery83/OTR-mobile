@@ -1,20 +1,25 @@
-# Photo approved execution — 31 October2026
+# Photo approved execution — 31 October 2026
 
-Owner approved77a6febb and exact maintenance extension74530956. Wrapped484d7bce
-installed once in DEV and independently verified:16 Source hashes/Owner/ACL match,
-9 existing Hosted OIDs retained, Core66410/5dd, full pg_auth_members and public
-schema ACL restored exactly; PNG/PDF CLOSED. New actual Source Gateway close and
-separate-process read PASS with credentials kept in place. Host worker start/stop
-and independent EMPTY_VERIFIED PASS; Backend still28dd/fb0d, no Source or paid call.
+Owner77a6febb + maintenance74530956 installed once; 16 Source hashes/Owner/ACL,
+9 Hosted OIDs and Core66410/5dd verified. Full role graph and public schema ACL
+restored exactly. Compatible default-closed runtime deployed: dfd18e79/fb0db2ab,
+source dedb7f80, config c40cfb99, PNG runtime3d3cdff1. Real independent close
+controller and timer PASS; worker inactive/EMPTY_VERIFIED. No Source upload or
+paid image call. Original hard expiry remains Nov1T08:48:56Z.
 
-Before business activation, fixed ordinary Controller composition: PNG persistent
-plan no longer calls unrelated finite Universal validator; it validates actual
-persistent path, baseline and compose/config hashes.11PNG+2PDF checks and independent
-Review NO_BLOCKER. Exact same-image runtime deployment is prepared with2 approved
-env keys and3 mounts (config RO/stage RW/socket RO), reviewed; not yet deployed.
-Root has resumed DEV window after Native explicitly returned its one-P3 Edit
-baseline. Do not open Photo until compatible runtime/independent closure/watchdog
-and normal QA preflight pass. Original hard expiry remains Nov1T08:48:56Z.
+First actual Photo window babef9d9 is independently CLOSED (timers stopped),
+not reusable/reset. Actual first FAIL was client UNIVERSAL_CAPTURE_NOT_QUALIFIED:
+retained Batch67842863 is Account intake with tripPrior=null. Focused repair uses
+existing Journey chooser and Capture.assign CAS/Actor/Trip checks, projects current
+assignedTripId for Results/Activity/Updates/cold recovery, never rewrites frozen
+Batch. Photo capture revision invalidates old consent. Effective Trip is part of
+Results remount and hook request scope; late callbacks cannot cross attribution.
+Focused checks, types/UI guard and independent NO_BLOCKER; actual UI still pending.
+Node captureLifecycle harness import fails at Expo __DEV__ (not counted PASS).
+Next: code-only AD5 update → same Batch normal Journey choice → fresh local image
+check/Continue → new bounded window under Standing → real Vision/Review/Save/readback/
+cold recovery/close. Keep original identities and UNKNOWN. No new Authority needed
+for this client attribution repair. See photo/PHOTO_ACCOUNT_JOURNEY_REPAIR.json.
 
 # Import Photo — default-closed checkpoint, 31 October 2026
 

@@ -134,6 +134,8 @@ export type CaptureSubmissionInput = InputDeclaration &
     continuesFromJobId: string | null;
   };
 export type CaptureJobReadModel = {
+  /** Current retained Capture attribution, separate from immutable intake context. */
+  assignedTripId?: string | null;
   batch: SubmissionRequest;
   inputs: readonly CaptureSubmissionInput[];
   counts: { selected: number; accepted: number; failed: number; pending: number };

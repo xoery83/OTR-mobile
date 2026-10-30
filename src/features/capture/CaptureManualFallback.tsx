@@ -27,7 +27,7 @@ export function CaptureManualFallback({
   const [generation] = useState(getAccountGeneration);
   const dismiss = useRef<(() => void) | null>(null),
     opening = useRef(false);
-  const trip = model.batch.context.tripPrior?.id;
+  const trip = model.batch.context.tripPrior?.id ?? model.assignedTripId;
   const current = () => isCurrent() && generation === getAccountGeneration();
   const start = async () => {
     if (!trip || !current() || opening.current) return;

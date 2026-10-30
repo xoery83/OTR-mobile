@@ -156,3 +156,14 @@ it("reads completion details only after a valid READY observation and preserves 
     onReady.mock.invocationCallOrder[0],
   );
 });
+
+it("cold activity reads use persisted original attribution without changing Account intake", async () => {
+  const f = fixture(),
+    tripId = f.jobs[0].batch.context.tripPrior!.id;
+  for (const job of f.jobs) {
+    job.batch.context.tripPrior = null;
+    job.assignedTripId = tripId;
+  }
+  expect(Object.keys(await readUniversalActivities(f.jobs, f))).toHaveLength(2);
+  expect(f.jobs.every((job) => job.batch.context.tripPrior === null)).toBe(true);
+});

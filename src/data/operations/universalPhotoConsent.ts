@@ -38,7 +38,8 @@ export async function assertSinglePngPhotoConsent(
   const input = job.inputs[0];
   if (
     job.batch.accountId !== context.accountId ||
-    job.batch.context.tripPrior?.id !== context.tripId ||
+    (job.batch.context.tripPrior != null &&
+      job.batch.context.tripPrior.id !== context.tripId) ||
     job.inputs.length !== 1 ||
     !input ||
     input.state !== "ACCEPTED" ||

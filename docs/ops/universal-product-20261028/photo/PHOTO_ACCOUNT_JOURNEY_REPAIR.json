@@ -1,0 +1,39 @@
+{
+  "status": "PHOTO_FIRST_WINDOW_CLOSED_VERIFIED",
+  "windowId": "babef9d9efca413b89bfe4816e4f51f9",
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "timersStopped": true,
+  "reason": "First actual failure: unassigned Account Batch rejected by client before Source preparation",
+  "sourceUploaded": false,
+  "paidImageCalls": 0,
+  "reopened": false,
+  "firstFailure": "UNIVERSAL_CAPTURE_NOT_QUALIFIED",
+  "location": "src/data/operations/universalCaptureConsumer.ts:read",
+  "rootCause": "Account-level immutable intake had no tripPrior; existing retained Capture attribution was not available in the reader model.",
+  "repair": "Existing Journey chooser \u2192 Capture repository assign CAS \u2192 read-only assignedTripId projection; immutable Batch/input identities unchanged.",
+  "review": "Independent NO_BLOCKER after effective Trip request scope and remount repair.",
+  "validation": "Focused repository, consumer, photo consent, Activity, Updates, chooser and hook checks; typecheck/UI guard.",
+  "nativeStatus": "NOT_YET_VERIFIED",
+  "unverified": "captureLifecycle.test.ts cannot import Expo in its current Node harness (__DEV__ undefined); not counted as PASS."
+}

@@ -30,7 +30,7 @@ export async function readUniversalActivities(
   const observed: Record<string, UniversalTaskActivity> = {};
   for (const job of jobs) {
     if (!current()) break;
-    const tripId = job.batch.context.tripPrior?.id;
+    const tripId = job.batch.context.tripPrior?.id ?? job.assignedTripId;
     if (!tripId || !job.allInputsAccepted) continue;
     try {
       const context = await captureAccountRequestContext(

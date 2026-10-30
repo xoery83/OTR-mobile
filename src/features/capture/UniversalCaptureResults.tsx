@@ -88,7 +88,9 @@ export function UniversalResultView({
         (input) => !result.sourceBindings.some((b) => b.inputId === input.id),
       )
     : model.inputs.filter(isUnsupportedUniversalInputMetadata);
-  const ready = model.allInputsAccepted && !!model.batch.context.tripPrior;
+  const ready =
+    model.allInputsAccepted &&
+    !!(model.batch.context.tripPrior?.id ?? model.assignedTripId);
   return (
     <UiSection title={t("capture.ai.title")}>
       <UiText style={s.meta}>{t("capture.ai.previewOnly")}</UiText>

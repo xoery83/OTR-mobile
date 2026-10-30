@@ -324,3 +324,15 @@ it("projects each completed saved receipt while later candidates are still readi
     readDefaultUniversalImportUpdates(f.tripId, () => true, observed),
   ).rejects.toThrow();
 });
+
+it("keeps assigned Account intake visible only in its actual Journey Updates", () => {
+  const f = fixture();
+  f.job.batch.context.tripPrior = null;
+  f.job.assignedTripId = f.tripId;
+  expect(
+    projectUniversalImportUpdates(f.accountId, f.tripId, [f.job], f.observations),
+  ).toHaveLength(1);
+  expect(
+    projectUniversalImportUpdates(f.accountId, randomUUID(), [f.job], f.observations),
+  ).toEqual([]);
+});

@@ -10,11 +10,13 @@ import { createCapturePhotoImportDecisionRepository } from "../repositories/capt
 import { createUniversalPhotoRelevanceActions } from "./universalPhotoRelevanceActions";
 import { assertSinglePngPhotoConsent } from "./universalPhotoConsent";
 
-async function setup() {
+async function setup(prior = true) {
   const f = fixture(true, 75),
     request = f.request(),
     trip = randomUUID();
-  request.context.tripPrior = { id: trip, origin: "PRIOR", observedAt: now() };
+  request.context.tripPrior = prior
+    ? { id: trip, origin: "PRIOR", observedAt: now() }
+    : null;
   Object.assign(request.inputs[0], {
     kind: "IMAGE",
     acquisitionSource: "photos",
@@ -147,4 +149,37 @@ it("rejects a newer choice or cancellation that arrives during the original read
       controller.signal,
     ),
   ).rejects.toThrow("PHOTO_IMPORT_CANCELLED");
+});
+
+it("Account intake uses actual retained Journey attribution and requires fresh consent after assignment", async () => {
+  const x = await setup(false),
+    id = x.request.inputs[0].id;
+  const before = await x.actions.screen(x.request.jobId, id);
+  await x.actions.choose(
+    x.request.jobId,
+    before.revision,
+    before.decision,
+    "CONTINUE_WITH_AI",
+  );
+  await x.f.captures.assign(x.job.inputs[0].captureId!, x.trip, 1);
+  await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
+  const after = await x.actions.screen(x.request.jobId, id);
+  expect(after.decision.pin.captureRevision).toBe(2);
+  await x.actions.choose(
+    x.request.jobId,
+    after.revision,
+    after.decision,
+    "CONTINUE_WITH_AI",
+  );
+  await expect(x.check()).resolves.toMatchObject({ captureRevision: 2 });
+  expect(
+    (await x.f.submissions.reopen(x.request.jobId, x.context)).batch.context.tripPrior,
+  ).toBeNull();
+  await expect(
+    assertSinglePngPhotoConsent(
+      { ...x.context, tripId: randomUUID() },
+      x.request.jobId,
+      x.deps,
+    ),
+  ).rejects.toThrow("UNIVERSAL_PHOTO_SCOPE_CHANGED");
 });

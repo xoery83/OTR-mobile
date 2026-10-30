@@ -28,11 +28,15 @@ export function useUniversalCapture(
   const generation = useRef(getAccountGeneration());
   const alive = useRef(true),
     running = useRef(false);
-  const initialScope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
-  const scope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
+  const initialScope = useRef(
+    `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`,
+  );
+  const scope = useRef(
+    `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`,
+  );
   const currentRef = useRef(isCurrent);
   useLayoutEffect(() => {
-    const nextScope = `${model.batch.accountId}:${model.batch.batchId}`;
+    const nextScope = `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`;
     if (
       scope.current !== nextScope ||
       !isCurrent() ||
@@ -43,7 +47,13 @@ export function useUniversalCapture(
     }
     scope.current = nextScope;
     currentRef.current = isCurrent;
-  }, [isCurrent, model.batch.accountId, model.batch.batchId]);
+  }, [
+    isCurrent,
+    model.batch.accountId,
+    model.batch.batchId,
+    model.batch.context?.tripPrior?.id,
+    model.assignedTripId,
+  ]);
   const controller = useRef<AbortController | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const scopeCurrent = () =>
@@ -243,10 +253,14 @@ export function useUniversalCapture(
     }
   }
   useEffect(() => {
-    if (model.allInputsAccepted && model.batch.context.tripPrior) void run(false);
+    if (
+      model.allInputsAccepted &&
+      (model.batch.context.tripPrior?.id ?? model.assignedTripId)
+    )
+      void run(false);
     // One read on reopen; only explicit Start may prepare or dispatch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [model.assignedTripId]);
   useEffect(() => {
     const pending = () => {
       const state = current() ? consumer.current?.activity?.state : activity?.state;

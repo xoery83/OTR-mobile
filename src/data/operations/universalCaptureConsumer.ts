@@ -16,7 +16,7 @@ export function assertUniversalCaptureResult(
   if (
     result.accountId !== model.batch.accountId ||
     result.batchId !== model.batch.batchId ||
-    result.tripId !== model.batch.context.tripPrior?.id
+    result.tripId !== (model.batch.context.tripPrior?.id ?? model.assignedTripId)
   )
     throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
   const inputs = model.inputs;
@@ -78,7 +78,7 @@ export function createUniversalCaptureConsumer(dependencies: {
   };
   async function read(model: CaptureJobReadModel, allowDispatch: boolean) {
     current();
-    const trip = model.batch.context.tripPrior?.id;
+    const trip = model.batch.context.tripPrior?.id ?? model.assignedTripId;
     if (!trip || !model.allInputsAccepted) throw Error("UNIVERSAL_CAPTURE_NOT_QUALIFIED");
     const context = await captureAccountRequestContext(trip, dependencies.getAccountId);
     current();
