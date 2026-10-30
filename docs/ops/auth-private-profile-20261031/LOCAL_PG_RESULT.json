@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_PROFILE_RLS_CAS_AND_RECOVERY_PASS",
+  "checks": [
+    "optional empty display name, independent unsplit Unicode name and exact duplicate receipt survive SQL round-trip",
+    "real RLS denies foreign profile/receipt reads; duplicate names and operation IDs do not merge Accounts",
+    "API table mutation and service-role SELECT remain denied; Guest, disabled and absent subjects cannot save",
+    "operation collision, stale revision and ambiguous/malformed values fail without overwriting the profile",
+    "receipt-insert fault rolls back both private values and revision atomically",
+    "two concurrent same-revision writes yield one commit and one conflict",
+    "explicit clear preserves independent document name; immutable receipts retain no plaintext name history",
+    "all role flags and existing public profile rows remain unchanged"
+  ],
+  "sqlSHA256": "9b4272adaef140ad3b8dd474ca3e0172b8444577b4383427cd6bc4ef3222a10e",
+  "claims": "local auth.uid/User-class fixtures only; not real OTP/JWT evidence",
+  "hostedWrites": 0,
+  "runtimeWired": false,
+  "nativeE2E": false
+}
