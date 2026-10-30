@@ -6,6 +6,7 @@ import {
 } from "../auth/accountRequestContext";
 import type { createTripCoreV2Repository } from "../repositories/tripCoreV2Repository";
 import type { CoreReadTransport } from "../api/tripCoreV2Transport";
+import { getAccountGeneration } from "../auth/accountGeneration";
 
 // A validated unchanged collection does not rewrite SQLite or disturb pending work.
 export async function refreshCoreDownstream(
@@ -134,7 +135,7 @@ let coordinator: ReturnType<typeof createTripDownstreamCoordinator> | undefined;
 async function nativeCoordinator() {
   if (coordinator) return coordinator;
   const [
-    { requireActiveUserId, readLocalAuthSnapshot },
+    { requireAdoptedUserId, readCommittedLocalPrincipal, readCommittedLocalSession },
     { isGeneralAccountCloudSyncEnabled },
     { AppState },
     Network,
@@ -147,21 +148,29 @@ async function nativeCoordinator() {
     import("./ledgerOperationalSync"),
   ]);
   coordinator ??= createTripDownstreamCoordinator({
-    account: requireActiveUserId,
+    account: requireAdoptedUserId,
     async scope() {
       if (!isGeneralAccountCloudSyncEnabled() || AppState.currentState !== "active")
         return null;
-      const { session, principal } = await readLocalAuthSnapshot();
+      const generation = getAccountGeneration();
+      let principal, session;
+      try {
+        principal = await readCommittedLocalPrincipal();
+        session = await readCommittedLocalSession();
+      } catch {
+        return null;
+      }
       if (
+        generation !== getAccountGeneration() ||
         principal?.kind !== "ACCOUNT" ||
         principal.accountId !== session?.identity?.userId
       )
         return null;
       const { captureAccountScope } = await import("../auth/accountRequestContext");
-      const scope = await captureAccountScope(requireActiveUserId);
+      const scope = await captureAccountScope(requireAdoptedUserId);
       if (scope.accountId !== principal.accountId) return null;
       const network = await Network.getNetworkStateAsync();
-      await assertAccountRequestContext(scope, requireActiveUserId);
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
       return network.isConnected === false || network.isInternetReachable === false
         ? null
         : scope;
@@ -169,18 +178,23 @@ async function nativeCoordinator() {
     async discover(scope) {
       const [
         { createTripDiscoveryTransport, refreshTripDiscovery },
-        { readLocalTripDiscoveryRepository },
+        { createTripDiscoveryRepository },
+        { readInitializedDatabase },
       ] = await Promise.all([
         import("./tripDiscoveryTransport"),
         import("../repositories/tripDiscoveryRepository"),
+        import("../db/database"),
       ]);
-      const cache = await readLocalTripDiscoveryRepository();
+      const cache = createTripDiscoveryRepository(
+        await readInitializedDatabase(),
+        requireAdoptedUserId,
+      );
       await refreshTripDiscovery(
-        requireActiveUserId,
-        createTripDiscoveryTransport(requireActiveUserId),
+        requireAdoptedUserId,
+        createTripDiscoveryTransport(requireAdoptedUserId),
         cache,
       );
-      await assertAccountRequestContext(scope, requireActiveUserId);
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
       return (await cache.readMerged()).trips
         .filter((row) => row.remoteListed)
         .map((row) => row.id);
@@ -199,14 +213,14 @@ async function nativeCoordinator() {
       ]);
       const core = createTripCoreV2Repository(
         await readInitializedDatabase(),
-        requireActiveUserId,
+        requireAdoptedUserId,
         tripCoreSha256Hex,
       );
       const context = { ...scope, tripId };
       return refreshCoreDownstream(
         core,
         context,
-        createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex, {
+        createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
           timeoutMs: 20_000,
         }),
       );
