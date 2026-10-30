@@ -172,13 +172,15 @@ export function UniversalResultView({
               </UiText>
               <UiText style={s.meta}>
                 {t(
-                  candidate.presentationTier === "HIGH_CONFIDENCE"
-                    ? "capture.ai.high"
-                    : candidate.presentationTier === "INCOMPLETE"
-                      ? "capture.ai.incomplete"
-                      : candidate.presentationTier === "ABSTAIN"
-                        ? "capture.ai.abstain"
-                        : "capture.ai.reviewable",
+                  admission?.statuses[candidate.token] === "SERVER_ACCEPTED"
+                    ? "capture.ai.p1Accepted"
+                    : candidate.presentationTier === "HIGH_CONFIDENCE"
+                      ? "capture.ai.high"
+                      : candidate.presentationTier === "INCOMPLETE"
+                        ? "capture.ai.incomplete"
+                        : candidate.presentationTier === "ABSTAIN"
+                          ? "capture.ai.abstain"
+                          : "capture.ai.reviewable",
                 )}
               </UiText>
               {candidate.fields.map((field, index) => (
@@ -218,17 +220,16 @@ export function UniversalResultView({
                                 : "capture.ai.p1Details",
                     )}
                   </UiText>
-                  {admission.statuses[candidate.token] ? (
+                  {admission.statuses[candidate.token] &&
+                  admission.statuses[candidate.token] !== "SERVER_ACCEPTED" ? (
                     <UiText style={s.meta}>
                       {t(
-                        admission.statuses[candidate.token] === "SERVER_ACCEPTED"
-                          ? "capture.ai.p1Accepted"
-                          : admission.statuses[candidate.token] === "SYNC_PENDING"
-                            ? "capture.ai.p1Pending"
-                            : admission.statuses[candidate.token] ===
-                                "OWNING_ADMISSION_PENDING"
-                              ? "capture.ai.p1Blocked"
-                              : "capture.ai.p1Unavailable",
+                        admission.statuses[candidate.token] === "SYNC_PENDING"
+                          ? "capture.ai.p1Pending"
+                          : admission.statuses[candidate.token] ===
+                              "OWNING_ADMISSION_PENDING"
+                            ? "capture.ai.p1Blocked"
+                            : "capture.ai.p1Unavailable",
                       )}
                     </UiText>
                   ) : null}

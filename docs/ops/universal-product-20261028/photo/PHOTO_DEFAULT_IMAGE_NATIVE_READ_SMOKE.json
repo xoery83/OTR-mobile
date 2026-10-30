@@ -1,0 +1,20 @@
+{
+  "status": "NATIVE_EXISTING_PDF_RESULTS_READ_SMOKE_PASS_NOT_PHOTO_E2E",
+  "date": "2026-10-31",
+  "device": "AD5",
+  "appBuild": "126.1",
+  "backendImage": "sha256:fb0db2abffe4d5d844ed829714760bf3e0294cbdcc6f74b39fe3d7d5e9a7066a",
+  "batchId": "e6f789bc-6982-463b-a36e-064ece0a8d34",
+  "originalFilename": "universal-p6-activity-qa.pdf",
+  "visibleTitle": "Harbour PDF QA Workshop",
+  "visibleRawDate": "November 2, 2026",
+  "normalUI": [
+    "Active Imports",
+    "same_Batch_View",
+    "retained_Results_recovered"
+  ],
+  "AnalyzeClicked": false,
+  "SaveClicked": false,
+  "installOrSessionCopy": false,
+  "limits": "Compatibility read only after default-closed software deployment. No new PDF save/cold test, independent Provider ledger query or Photo interpretation/save is claimed."
+}

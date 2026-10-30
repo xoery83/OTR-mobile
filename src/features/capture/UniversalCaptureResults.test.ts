@@ -611,3 +611,30 @@ it.each([true, false])(
     expect(f.props.start).not.toHaveBeenCalled();
   },
 );
+
+it("shows the owning accepted receipt even when save controls are closed, without an incomplete prompt", () => {
+  const f = fixture();
+  const result = {
+    ...f.result,
+    candidates: [{ ...f.result.candidates[0], presentationTier: "INCOMPLETE" as const }],
+  };
+  const confirm = vi.fn(async () => {});
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, {
+      ...f.props,
+      result,
+      admission: {
+        enabled: false,
+        busyToken: null,
+        statuses: { i1: "SERVER_ACCEPTED" as const },
+        completed: { i1: true },
+        confirm,
+        readOriginal: vi.fn(async () => "original"),
+      },
+    }),
+  );
+  expect(html).toContain(t("capture.ai.p1Accepted"));
+  expect(html).not.toContain(t("capture.ai.incomplete"));
+  expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
+  expect(confirm).not.toHaveBeenCalled();
+});
