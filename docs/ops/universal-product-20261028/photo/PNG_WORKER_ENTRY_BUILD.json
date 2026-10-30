@@ -1,0 +1,32 @@
+{
+  "status": "LOCAL_BUILD_AND_UNIT_PASS_NOT_HOST_INSTALLED",
+  "sourceBase": "1f9aad6a",
+  "entry": "backend/src/sourcePngWorkerHostMain.ts",
+  "entrySha256": "a4a89feb3d408f37d03412acc6209bcef76ef189445a901000b897b508262bd5",
+  "bundleSha256": "0129046f489b09a010b358f9f8a0ff5a7920a89cfe1c347dee59a3319a1461ad",
+  "bundleBytes": 834860,
+  "bundlePath": "/private/tmp/otr-png-worker-entry-20261031/universal-png-worker.mjs",
+  "buildCommand": "npx esbuild backend/src/sourcePngWorkerHostMain.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --outfile=/private/tmp/otr-png-worker-entry-20261031/universal-png-worker.mjs --metafile=/private/tmp/otr-png-worker-entry-20261031/metafile.json",
+  "syntaxCommand": "node --check /private/tmp/otr-png-worker-entry-20261031/universal-png-worker.mjs",
+  "tests": {
+    "focused": 8,
+    "typecheck": "PASS",
+    "eslint": "PASS_ZERO_WARNINGS"
+  },
+  "fixedHost": {
+    "platform": "linux",
+    "arch": "x64",
+    "directory": "/run/otr/universal-png-worker",
+    "uid": 0,
+    "socketGid": 999,
+    "shutdownDeadlineMs": 5000,
+    "activeWorkerMarker": "Never removed by entry; interrupted work remains quarantined"
+  },
+  "credentialBoundary": {
+    "noPgSupabaseBrokerBootstrapInputs": true,
+    "noEnvFileLoader": true,
+    "noPgStorageConfiguration": true,
+    "operatorLaunchRequirement": "Use an empty/whitelisted service environment; never supply PG/Storage env or env-file flags"
+  },
+  "notExecuted": ["Host socket start", "Docker", "DEV", "SQL", "Provider", "deployment"]
+}
