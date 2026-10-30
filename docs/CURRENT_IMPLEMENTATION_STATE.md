@@ -1,3 +1,20 @@
+# Auth Adoption active checkpoint — 30 October 2026
+
+Accepted source integration/main push: `662898cfdc12a98ba5f2bf1ef3f5235b637b8077`.
+Finite PG candidate qualified real owning Trip/Metadata/Person/Core on one held
+transaction; actual DEV function-parent replay passed33 isolated checks. DEV was
+read-only; no protected SQL or runtime activation. Strict-empty Photo75 is
+qualified; nonempty75 Adoption stays closed pending owning inventory qualification.
+Main Writer returned to Root; no Auth device lease.
+
+Receipt wire/hash/source-coverage qualification and unmounted authenticated receipt
+read/Guest provisional transport now pass6 suites105 tests, independently repeated.
+Review repaired pre-await evidence mutation and cross-source Person collisions.
+`authority:NONE`: no Guest hold/Session mutation or formal terminal issuance.
+Next: immutable owning publish/cancel/status journal and actual Native restore,
+then reviewed protected DEV Gate and normal nonempty Guest→Account E2E.
+See ops/auth-phase2-20261028/RECEIPT_RECOVERY_REVIEW.json; no new full E2E PASS.
+
 # Universal Photo75 / existing-Task resume — source integration, 30 October 2026
 
 Native registry now includes the Capture-owned Photo decision definition as75,

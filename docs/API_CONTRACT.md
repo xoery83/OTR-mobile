@@ -1392,3 +1392,16 @@ These are partial recent processing records with no invented unread state, Save 
 `SET_AUTHORED_FLIGHT_DETAILS` is a local candidate in the existing Core finite command union, not enabled in any deployed capability or Native normal runner. It writes only the same Creator's existing SPARSE P2 Item with an exact base revision; the Backend must additionally require receipted MANUAL Create provenance before enabling it. Literal/airport/name/terminal/civil boundaries remain authored and unresolved; no Source proof, qualified Flight service, Booking/Ticket/Segment/Journey or UTC authority is created. Existing `SAVE_AUTHORED_FLIGHT_LOCAL` stays local-only. See ops/manual-cloud-e2e-20261028/P2_MANUAL_MINIMUM_PORT_20261029.md; exact Backend/SQL/Native Queue work and protected approval remain pending.
 
 The dormant authored Flight capability extension uses `X-OTR-Core-Authored-Flight: 1` only to advertise that a client can parse `SET_AUTHORED_FLIGHT_DETAILS`. GET capabilities omits that new enum for absent/unknown header values so older v2 clients keep parsing their existing P1/P3-P6 capabilities. New Native sends the header only on capabilities requests. SQL permission, command submission, Creator/provenance, Source exact-operation and receipt rules do not depend on this header. Responses retain private/no-store and vary by Authorization plus this parser-support header.
+
+### Guest Adoption terminal receipt read candidate — 30 October 2026
+
+Unmounted/default closed: normal authenticated `POST /v1/auth/guest-adoptions/receipt`
+accepts the exact v1 status binding plus its terminal `receiptId`/`receiptSha256`.
+Only an owning immutable terminal reader may supply the response. The boundary
+validates the complete receipt binding, digest and pointer; another Account,
+malformed, missing or unverified record never returns a receipt. The request is
+bounded to8KiB and receipt to1MiB; responses are private/no-store. Grant expiry
+does not invalidate an already committed terminal receipt. This read neither
+publishes/cancels nor releases Guest holds; terminal status, retained source
+coverage, owning readback and local restore remain required. No runtime mount,
+SQL installation or source-release authority is enabled by this candidate.

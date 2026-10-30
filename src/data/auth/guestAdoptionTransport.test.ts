@@ -314,3 +314,84 @@ it("default refresh uses the existing Supabase refresh path with active Session 
   });
   await f.assertGuest();
 });
+
+async function terminalFixture() {
+  const f = await fixture();
+  const { coreHashValue } = await import("@/domain/trip/tripCoreV2Read");
+  const { tripCoreSha256Hex } = await import("@/data/repositories/tripCoreSha256");
+  const body = {
+    ...f.statusRequest,
+    schemaId: "otr.auth.guest-adoption-receipt/1" as const,
+    receiptId: randomUUID(),
+    grantId: randomUUID(),
+    policyVersion: "unit-unpriced/1",
+    recordedAt: "2026-10-01T00:00:00Z",
+    outcome: "CANCELLED" as const,
+    preparationSha256: null,
+    planSha256: null,
+  };
+  const receipt = {
+    ...body,
+    receiptSha256: await coreHashValue(
+      "otr-auth-guest-adoption-receipt-v1",
+      body,
+      tripCoreSha256Hex,
+    ),
+  };
+  const request = {
+    ...f.statusRequest,
+    receiptId: receipt.receiptId,
+    receiptSha256: receipt.receiptSha256,
+  };
+  return { ...f, receipt, receiptRequest: request };
+}
+it("reads the exact terminal receipt using provisional verification while retaining Guest launch", async () => {
+  const f = await terminalFixture();
+  f.wire.mockImplementationOnce(async (url, init) => {
+    expect(String(url)).toBe("https://api.example.test/v1/auth/guest-adoptions/receipt");
+    expect(JSON.parse(init!.body as string)).toEqual(f.receiptRequest);
+    expect(new Headers(init!.headers).get("Authorization")).toBe(
+      `Bearer ${f.initial.accessToken}`,
+    );
+    return Response.json(f.receipt);
+  });
+  expect(await f.transport.receipt(f.receiptRequest)).toEqual(f.receipt);
+  await f.assertGuest();
+});
+it.each(["receiptId", "receiptSha256", "inventorySha256"])(
+  "rejects receipt response mismatched %s",
+  async (key) => {
+    const f = await terminalFixture();
+    f.wire.mockImplementationOnce(async () => Response.json(f.receipt));
+    const request = {
+      ...f.receiptRequest,
+      [key]: key === "receiptId" ? randomUUID() : "b".repeat(64),
+    };
+    await expect(f.transport.receipt(request)).rejects.toThrow();
+    await f.assertGuest();
+  },
+);
+it("rejects tampered receipt bytes and preserves Guest state", async () => {
+  const f = await terminalFixture();
+  f.wire.mockImplementationOnce(async () =>
+    Response.json({ ...f.receipt, policyVersion: "altered" }),
+  );
+  await expect(f.transport.receipt(f.receiptRequest)).rejects.toThrow("HASH_MISMATCH");
+  await f.assertGuest();
+});
+it("does not consume a receipt after leaving the original Guest frame", async () => {
+  const f = await terminalFixture();
+  f.wire.mockImplementationOnce(async () => {
+    f.leave();
+    return Response.json(f.receipt);
+  });
+  await expect(f.transport.receipt(f.receiptRequest)).rejects.toThrow("SCOPE_MISMATCH");
+  await f.assertGuest();
+});
+it("rejects another target before any receipt request", async () => {
+  const f = await terminalFixture();
+  await expect(
+    f.transport.receipt({ ...f.receiptRequest, targetAccountId: randomUUID() }),
+  ).rejects.toThrow("BINDING_MISMATCH");
+  expect(f.wire).not.toHaveBeenCalled();
+});
