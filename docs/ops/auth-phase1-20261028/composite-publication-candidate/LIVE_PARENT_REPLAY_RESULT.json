@@ -1,0 +1,98 @@
+{
+  "checks": [
+    "all13 owning function bodies replay the actual READ ONLY Hosted DEV parent instead of older fixture definitions",
+    "one direct Source capability dependency is copied with its actual body/owner/ACL, never stubbed or granted invented authority",
+    "all three candidates reject Hosted-like database names; isolated baseline contains real four Gateway roles",
+    "normal real Gateway still denied by default-closed policy",
+    "explicit target confirmation required before grant or stage upload",
+    "normal Account gets one server grant; exact retry retains original grant ID and expiry",
+    "same adoption cannot cross Account or replace grant",
+    "grants immutable after confirmation",
+    "self-consistent hashes cannot hide null/invalid Trip or operation, missing Core command, or undercounted actual People",
+    "server stage requires real stored grant and exact immutable preparation/plan",
+    "client-made grant with self-consistent hash cannot become server stage",
+    "GUC actor/Trip/operation alone cannot forge transaction authority",
+    "real scope authorizes exact operation only within its owning transaction; rollback removes it",
+    "committed old scope never authorizes a new transaction or connection",
+    "foreign Account, unrelated Trip and unsealed operation all denied on real scoped Gateway",
+    "foreign actor cannot lock the original stage scope",
+    "Adoption cannot override an existing normal Account policy revocation",
+    "actual anon/authenticated/service and all four Gateway roles cannot read private source/grant tables",
+    "ordinary Auth/service/other Gateway roles have no grant-issuer execution permission",
+    "policy version change or disable invalidates old grant/scope, never implicitly reissues",
+    "exact preimage-guarded local principal patch installs without new role, membership or business table grant",
+    "new function EXECUTE grants alone cannot bypass normal principal or missing actual transaction scope",
+    "one real Core Gateway transaction runs owning Trip Create, Metadata CAS and unlinked Person; outer rollback removes all canonical rows and receipts",
+    "same operation UUID with changed source payload fails before any owning write",
+    "an active Adoption transaction cannot fall back to General Account authority for an unsealed Core operation",
+    "real Metadata CAS failure rolls back the preceding new Trip instead of exposing a shell",
+    "Person payload/connection cannot change from the sealed unlinked source; failure removes prior Trip/Metadata writes",
+    "real TypeScript Trip/Metadata/Person held ports plus existing Core executor produce APPLIED then outer rollback removes Trip/P1/receipts",
+    "one real Core Gateway lease commits exact original four operations and one real Core domain receipt; not a final Adoption receipt",
+    "fresh independent SQL reads committed exact Trip, unlinked Person, original financial defaults and owning Core invalidation",
+    "source Trip collision after commit cannot reopen or merge an existing Trip",
+    "existing standalone Create/Metadata/Person Gateway paths still work with normal owning policy and no Adoption scope",
+    "turning Adoption policy off does not disable existing normally authorized Core capability reads"
+  ],
+  "count": 33,
+  "network": "none",
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "businessWrites": "isolated synthetic Trip/Metadata/Person/P1 only; no Hosted writes",
+  "authoritySqlSha256": "5d92e40c255e1bb8f8c92ea80f7009513e639b9e0b211f409bf84e1e7fc45a3f",
+  "inputHashes": {
+    "authority.local.sql": "5d92e40c255e1bb8f8c92ea80f7009513e639b9e0b211f409bf84e1e7fc45a3f",
+    "staging.local.sql": "d9b039f599700f562eb0e9aea91c7ab415b3a4f93354573482871627f30258e3",
+    "terminal.local.sql": "9854cef2c7afda0ebb30ac9fd2ee454b304e848c3040260c746f78cdc8231195",
+    "authority_local_pg.py": "9f512f3be394e2be8239594e1b28a7ee417dcdd7f4d2a6b0473653816661e494",
+    "authority-fixture.mts": "2d6ce0295d94b702cbba2c57fb2fb1bb24c877ac545b6448f18311e8ebea9ff1",
+    "principal_patch.py": "a97fe157a2bc180bea1fff64312e31ac3683338af5f1c16f94d7bcaf407aa985",
+    "execute_local_pg.mts": "306add3fa406f1e94d2d0ecacedc4a9aa1cc2bb6b7bb2a75249be370f9745970"
+  },
+  "owningExecution": {
+    "status": "REAL_PG_EXECUTOR_COMPONENT_COMMIT",
+    "authority": "NONE",
+    "executionSha256": "e97ff3d3ed9e5dd184513f7e51913c12ec2b4fbf392fa4259a4f00c728fa70ba",
+    "accountId": "a9c16dba-aedf-4916-b4ca-6010d847078a",
+    "adoptionId": "b4b923ac-458a-48e5-8499-03cbf6fa8db9",
+    "tripId": "e37c9745-b07c-4bee-844a-bbcff9cf71f6",
+    "itemId": "44e65ccc-5543-4e3f-bac8-851f2b4066f8",
+    "receiptId": "67420b6e-db13-4fd4-955c-681b84724f95",
+    "coreOutcome": "APPLIED",
+    "queueMappings": 4,
+    "localRestoreStatus": "REQUIRED_NOT_EXECUTED"
+  },
+  "owningInputHashes": {
+    "backend/src/guestAdoptionCompositePg.ts": "bdaf23cccb923f3a6826be731f54d12846e88fbdca20dc1e5fdfb871d2aac28c",
+    "backend/src/guestAdoptionCompositeExecute.ts": "f7b4c743235c7a88204e6d47d5c09c669b12b447c3120ef72e78683d28945d50",
+    "backend/src/__fixtures__/tripCoreV2Sql.ts": "d2a078ab2d9277bd42c1ebee4ce6536d74f1f55e285d04462eb5f12c110c4da6",
+    "backend/src/tripCoreV2PgStorage.ts": "d8b26ca70a65b4c69d68a294b0bc98df73c2f1ff8ff476fd762be56137547d41",
+    "backend/src/tripCreatePgStorage.ts": "3c8fa4c7cac79773f3e7b40c39ad664b74a330048f6be24c11a328596af99a72",
+    "backend/src/tripMetadataV2PgStorage.ts": "b7b20f1e0b812c479d308524bed47d1755ef07dda16361c28fca3adcca72424d",
+    "backend/src/tripPersonCloudCreatePg.ts": "ddfb64a5fa49454de786fc8e89c2c6e97b9558dc2d97f212949249675e9b65af",
+    "docs/ops/general-account-cloud-sync-20261029/normal-account-candidate/after.sql": "b60851799d70f258ae0f6c509781032e874e61e996a27f014b9c5d6c2926df45"
+  },
+  "liveDependencyCatalogSha256": "45d6af63fbbeceac5bdbd29234ce3a314b18ebfdf709bea727acf0693fd18415",
+  "liveParentCatalogSha256": "d79d9a84123b0f55284a575ec7fb022e0688517229da4097a12f208f5ad5dacb",
+  "privateReplayScriptSha256": "a798b0843a259ef88f18556e5676f33eb02917612d699b00cec27795d4949645",
+  "status": "ACTUAL_DEV_FUNCTION_PARENT_REPLAY_ISOLATED_COMPONENT_PASS",
+  "limits": [
+    "Actual13 target definitions plus one direct capability dependency replayed, not full DEV schema/role-membership/other owning-guard parity.",
+    "No Hosted mutations, runtime binding, formal terminal receipt or Native Adoption E2E.",
+    "Ledger actual existing NZD2 initialization only; non-default source settings safely fail."
+  ],
+  "dependencyMetadata": [
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "oid": "66408",
+      "owner": "postgres",
+      "securityDefiner": true,
+      "sha256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
+      "signature": "public.trip_sustained_import_p1_capabilities(uuid,uuid)"
+    }
+  ],
+  "privateArtifacts": "Raw catalog, definitions, generated current-parent patch and detailed logs kept private0600, not committed/pushed."
+}

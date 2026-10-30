@@ -1,0 +1,12 @@
+{
+  "status": "READ_ONLY_PARENT_AND_PRIVATE_REPLAY_REVIEWED_COMPONENT_ONLY",
+  "source": "d655e0da6dd5f5f7f57d87739fc7af3f83630843",
+  "independentReview": "NO_BLOCKER;13 parent definitions/15 trigger metadata/5 role entries/raw and public hashes matched; private replay33 checks and direct dependency body/owner/ACL matched; no independent new CLI/Docker run",
+  "rawDefinitions": "Private0600 only, not printed or committed",
+  "hostedMutations": 0,
+  "limits": [
+    "No full DEV schema/other guard/role-membership parity",
+    "Not an Owner execution approval packet",
+    "Final terminal receipts and Native restore still pending"
+  ]
+}
