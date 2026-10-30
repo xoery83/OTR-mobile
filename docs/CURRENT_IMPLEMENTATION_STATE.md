@@ -95,7 +95,9 @@ credential, RLS/table grant or positive authority. Local real-PG6 groups, TS14 a
 independent Python5/TS3 PASS, bounded Review NO_BLOCKER after fixing timer lock
 retry exhaustion. Owner approval remains required; not installed or activated.
 See finite-qa-window/OWNER_GATE.md, CLOSE_HELPER_GATE.json and RUNBOOK.md under
-ops/auth-phase2-20261028. Same71b confirmation was restored then claim closed;
+ops/auth-phase2-20261028.
+Accepted main5c765fa6 merged into Auth b3f0d37f; closure SQL SHA and Core connection
+unchanged. Merge-focused Auth/UI21, Python5 and typecheck PASS. No Hosted writes. Same71b confirmation was restored then claim closed;
 new fresh GUI READY/expiry will be obtained only after approval and Root setup.
 Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
