@@ -1,3 +1,19 @@
+# Import deployment checkpoint — 31 October 2026
+
+Photo/Auth default-closed image fb0db2ab is actually deployed on original DEV;
+container28ddc014, source dedb7f80 includes accepted maincdf/Auth timeout fix.
+Independent healthy/401/config verification PASS: Envab5dc0e7/Hoste89fe490,
+6mount/17compose/4config unchanged. Old65b/4d retained, rollback not needed.
+Auth flag0/scope absent; PNG runtime flag absent. Native DEV was handed back.
+No Photo SQL/Host worker/custody activation, image call or Save has occurred.
+One consolidated protected Photo Gate is fixed at77a6febb and pending Owner.
+Forward21bfcdb4/preuse inversead26387d and worker/negative-close artifacts are
+independently reviewed. Normal PNG business remains CLOSED until exact approval.
+Use the reviewed compatible default-closed image after any PNG artifact exists;
+never reverse/delete accepted Source/evidence/Item or return to old incompatible4d.
+Next: approved CLOSED install/preflight, one original-image E2E, then Import UX.
+An isolated Activity-list read-only-refresh slice is being prepared meanwhile.
+
 # Import Photo — runtime continuation, 31 October 2026
 
 Photo remains LOCAL_PASS, not hosted image interpretation or formal Save PASS.
