@@ -14,12 +14,21 @@
     "fixture lacks roles (not created or claimed tested): otr_trip_create_gateway,otr_trip_metadata_gateway,otr_trip_core_v2_gateway",
     "RLS enabled with no policy; existing Gateway/Writer role attributes unchanged",
     "concurrent cross-Account same-adoption inserts retain exactly one immutable stage",
-    "version2 exact P1/Trip Create/Edit draft bytes survive independent PG read without creating a Trip shell"
+    "version2 exact P1/Trip Create/Edit draft bytes survive independent PG read without creating a Trip shell",
+    "terminal evidence rolls back with its outer transaction",
+    "terminal Actor/plan/hash mismatch and fabricated authority all reject",
+    "cancellation cannot contain execution evidence",
+    "missing stage never becomes authoritative cancellation",
+    "actual concurrent publish/cancel locks one stage and persists exactly one terminal evidence row",
+    "terminal evidence cannot be updated, deleted or truncated",
+    "all tested ordinary roles remain denied terminal evidence reads",
+    "fresh connection reads exact stored terminal evidence; no Gateway/Writer role change"
   ],
   "network": "none",
   "hostedWrites": 0,
   "providerCalls": 0,
   "businessTripWrites": 0,
   "candidateSha256": "d9b039f599700f562eb0e9aea91c7ab415b3a4f93354573482871627f30258e3",
-  "testCount": 14
+  "terminalCandidateSha256": "9854cef2c7afda0ebb30ac9fd2ee454b304e848c3040260c746f78cdc8231195",
+  "testCount": 22
 }

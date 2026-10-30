@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_TERMINAL_EVIDENCE_COMPONENT_ONLY",
+  "authority": "NONE",
+  "independentReview": "NO_BLOCKER; SQL and report read only, no independent Docker run",
+  "validation": "22 isolated real PG checks PASS; exact winning text/hash assertion added after Review and same probe rerun PASS",
+  "fileHashes": {
+    "terminal.local.sql": "9854cef2c7afda0ebb30ac9fd2ee454b304e848c3040260c746f78cdc8231195",
+    "staging_local_pg.py": "729d85a27765d701ed6af3548c18f6c3fa74063a0c02f85172c5e82e6d4e26f6"
+  },
+  "limits": [
+    "Synthetic executor evidence without business writes is deliberately accepted by this private component; cannot be a final receipt/status or source-release authority.",
+    "No runtime GRANT/RPC/Role/Host/DEV change.",
+    "Three newer Gateway roles absent in old fixture and not claimed tested."
+  ]
+}

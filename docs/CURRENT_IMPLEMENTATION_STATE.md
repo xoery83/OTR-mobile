@@ -215,6 +215,11 @@ final Trip title/dates and exact source financial settings; the original local
 cache/timestamp remains retained. Directed3s63PASS, independent23PASS/NO_BLOCKER,
 types/lint. Cross-principal transaction/grant/terminal authority stays closed;
 this is not nonempty Adoption E2E. See COMPOSITE_EXECUTION_REVIEW.json.
+Local private stage/terminal SQL now passes22 real isolated PG checks: same-stage
+publish/cancel contention, rollback, immutable records and original tuple/hash
+fences. Terminal evidence remains authority NONE/no grants or business writes;
+it cannot unlock Guest data. Gateway composition and final receipt remain pending.
+
 
 
 Resend Inbound OTP host QA helper: first real new-user E2E PASS on source8496a994,

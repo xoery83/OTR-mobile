@@ -114,9 +114,79 @@ try:
     assert json.loads(prepared['drafts'][0]['canonicalText'])['fields']['title'] == '  未提交 Å  '
     assert len(prepared['tripIds']) == 1
     checks.append('version2 exact P1/Trip Create/Edit draft bytes survive independent PG read without creating a Trip shell')
+    terminal_sql = (HERE/'terminal.local.sql').read_text()
+    sql(terminal_sql, database='postgres', error='AUTH_COMPOSITE_DISPOSABLE_FIXTURE_REQUIRED')
+    sql("SET ROLE postgres; SET otr.auth.composite_fixture='LOCAL_DISPOSABLE';" + terminal_sql)
+    terminal_materials = {}
+    def terminal(plan, outcome, change=None):
+        body = json.loads(plan['canonicalText']); g = body['grant']
+        binding = {'actorAccountId': g['targetAccountId'], 'adoptionId': g['adoptionId'],
+                   'sourceGuestLocalId': g['sourceGuestLocalId'], 'inventorySha256': g['inventorySha256'],
+                   'grantId': g['grantId'], 'planSha256': plan['sha256']}
+        execution = None
+        if outcome == 'PUBLISHED':
+            # Synthetic evidence only: deliberately no business publication or final authority.
+            text = canonical({'schemaId': 'otr.auth.guest-composite-execution/1', 'authority': 'NONE',
+                              'binding': binding, 'localRestoreStatus': 'REQUIRED_NOT_EXECUTED'})
+            execution = {'canonicalText': text, 'sha256': sha(text)}
+        evidence = {'schemaId': 'otr.auth.guest-composite-terminal-evidence/1', 'authority': 'NONE',
+                    'outcome': outcome, 'receiptId': str(uuid.uuid4()), 'binding': binding, 'execution': execution}
+        if change: change(evidence)
+        text = canonical(evidence)
+        values = [g['adoptionId'], evidence['receiptId'], outcome, text, sha(text)]
+        statement = 'INSERT INTO otr_auth_guest_composite.terminal_evidence(adoption_id,receipt_id,outcome,evidence_text,evidence_sha256) VALUES(' + ','.join(map(quote, values)) + ');'
+        terminal_materials[statement] = {'text': text, 'sha256': sha(text)}
+        return statement
+    row = json.loads(plan['canonicalText'])['grant']['adoptionId']
+    def count_outcomes(adoption):
+        return sql('SET ROLE postgres;SELECT count(*) FROM otr_auth_guest_composite.terminal_evidence WHERE adoption_id=' + quote(adoption) + '::uuid;')
+    sql('SET ROLE postgres;BEGIN;' + terminal(plan, 'PUBLISHED') + 'ROLLBACK;')
+    assert count_outcomes(row) == '0'
+    checks.append('terminal evidence rolls back with its outer transaction')
+    for change, expected in [
+        (lambda e: e['binding'].update(actorAccountId=str(uuid.uuid4())), 'AUTH_COMPOSITE_TERMINAL_BINDING'),
+        (lambda e: e['binding'].update(planSha256='e'*64), 'AUTH_COMPOSITE_TERMINAL_BINDING'),
+        (lambda e: e.update(authority='SERVER_ACCEPTED'), 'AUTH_COMPOSITE_TERMINAL_BINDING'),
+        (lambda e: e['execution'].update(sha256='f'*64), 'AUTH_COMPOSITE_EXECUTION_HASH'),
+    ]:
+        sql('SET ROLE postgres;' + terminal(plan, 'PUBLISHED', change), error=expected)
+    checks.append('terminal Actor/plan/hash mismatch and fabricated authority all reject')
+    sql('SET ROLE postgres;' + terminal(plan, 'CANCELLED', lambda e: e.update(execution={})), error='AUTH_COMPOSITE_CANCEL_EXECUTION_FORBIDDEN')
+    checks.append('cancellation cannot contain execution evidence')
+    orphan = alter(plan, adoptionId=str(uuid.uuid4()), grantId=str(uuid.uuid4()))
+    sql('SET ROLE postgres;' + terminal(orphan, 'CANCELLED'), error='AUTH_COMPOSITE_STAGE_REQUIRED')
+    checks.append('missing stage never becomes authoritative cancellation')
+    published, cancelled = terminal(plan, 'PUBLISHED'), terminal(plan, 'CANCELLED')
+    # psql sessions are genuinely concurrent; trigger locks one immutable stage row.
+    def race_terminal(statement):
+        return docker('exec','-i',NAME,'psql','-XqAt','-U','supabase_admin','-d',DATABASE,'-v','ON_ERROR_STOP=1',
+                      input='SET ROLE postgres;BEGIN;' + statement + 'SELECT pg_sleep(0.15);COMMIT;')
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(race_terminal, (published, cancelled)))
+    assert sum(r.returncode == 0 for r in results) == 1
+    assert all(r.returncode == 0 or 'duplicate key' in r.stderr for r in results)
+    assert count_outcomes(row) == '1'
+    checks.append('actual concurrent publish/cancel locks one stage and persists exactly one terminal evidence row')
+    for statement in ('UPDATE otr_auth_guest_composite.terminal_evidence SET outcome=outcome;',
+                      'DELETE FROM otr_auth_guest_composite.terminal_evidence;',
+                      'TRUNCATE otr_auth_guest_composite.terminal_evidence;'):
+        sql('SET ROLE postgres;' + statement, error='AUTH_COMPOSITE_TERMINAL_IMMUTABLE')
+    checks.append('terminal evidence cannot be updated, deleted or truncated')
+    for role in denied_roles:
+        sql('SET ROLE ' + role + ';SELECT evidence_text FROM otr_auth_guest_composite.terminal_evidence;', error='permission denied')
+    checks.append('all tested ordinary roles remain denied terminal evidence reads')
+    saved = sql('SET ROLE postgres;SELECT evidence_text FROM otr_auth_guest_composite.terminal_evidence WHERE adoption_id=' + quote(row) + '::uuid;')
+    winner = next(statement for statement, result in zip((published, cancelled), results) if result.returncode == 0)
+    assert saved == terminal_materials[winner]['text']
+    stored_hash = sql('SET ROLE postgres;SELECT evidence_sha256 FROM otr_auth_guest_composite.terminal_evidence WHERE adoption_id=' + quote(row) + '::uuid;')
+    assert stored_hash == terminal_materials[winner]['sha256'] == sha(saved)
+    assert json.loads(saved)['binding']['adoptionId'] == row
+    assert json.loads(saved)['authority'] == 'NONE'
+    assert sql(roles, database='postgres') == before
+    checks.append('fresh connection reads exact stored terminal evidence; no Gateway/Writer role change')
     result = {'status':'LOCAL_PRIVATE_STAGE_PG_PASS_NOT_AUTHORITY_OR_ADOPTION', 'checks':checks,
               'network':'none', 'hostedWrites':0, 'providerCalls':0, 'businessTripWrites':0,
-              'candidateSha256':sha(candidate), 'testCount':len(checks)}
+              'candidateSha256':sha(candidate), 'terminalCandidateSha256':sha(terminal_sql), 'testCount':len(checks)}
     (HERE/'STAGING_LOCAL_PG_RESULT.json').write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps(result))
 finally:
