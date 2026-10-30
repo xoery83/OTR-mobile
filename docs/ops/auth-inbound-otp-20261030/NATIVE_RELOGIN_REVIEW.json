@@ -1,0 +1,28 @@
+{
+  "status": "REVIEWED_REGISTERED_NATIVE_RELOGIN_RECEIVING_ONLY",
+  "originalCaseSha256": "33a154f354d11495f909b714cad493950790ca492a958dfa44ab3ce9e4b4103c",
+  "previousMessageId": "d3d1fe07-aabd-4a4a-a2ba-28c1068922ce",
+  "validation": {
+    "direct": "4 suites / 47 PASS",
+    "independent": "4 suites / 47 PASS",
+    "independentReview": "NO_BLOCKER",
+    "scopedLint": "PASS"
+  },
+  "fileHashes": {
+    "scripts/auth/resend-inbound-otp-native-relogin.ts": "ef2397435b1e90a9ff196ae6e6e3715adb51f90894544c3e750f3df3f544eeb4",
+    "backend/src/authInboundOtpNativeRelogin.test.ts": "0fc1d1d8f4c6f13e3ba862bf92ef53382231486fe8e3f7bde01bd177650a2c8f"
+  },
+  "bounds": [
+    "Only exact registered interrupted Native case and same QA email",
+    "One durable O_EXCL reservation before normal App Send",
+    "Minimum60s after original send; six-hour challenge creation window; issued lease valid120s",
+    "Only exact original in-memory challenge accepted once",
+    "Maximum12 newest20 polls; no history pages;24reads;262144body bytes",
+    "429/transport/UNKNOWN consumes lease; never automatic resend",
+    "Only Receiving GET; no Supabase send/verify or Host Session",
+    "No OTP/Key/body logging or persistence",
+    "Native must verify normal Account identity/creation continuity and cold restore separately"
+  ],
+  "realNewChallengeE2E": "PENDING_NATIVE_AFTER_JS_FIX",
+  "v1FourScriptsUnchanged": true
+}
