@@ -152,6 +152,18 @@ it.each(["CONTINUE_WITH_AI", "SKIP"])(
     ).toBe(true);
   },
 );
+it("keeps an explicit local recheck available after Continue without inheriting or repeating consent", () => {
+  h.hook.mockReturnValue(state("RELEVANT", "CONTINUE_WITH_AI"));
+  const html = render();
+  expect(html).toContain(copy.continueSelected);
+  expect(h.screen).not.toHaveBeenCalled();
+  const recheck = h.buttons.find((p) => p.label === copy.screen);
+  expect(recheck.disabled).toBe(false);
+  recheck.onPress();
+  expect(h.screen).toHaveBeenCalledOnce();
+  expect(h.choose).not.toHaveBeenCalled();
+  expect(h.read).not.toHaveBeenCalled();
+});
 it("stale persisted choices are not displayed as current or enabled until checked again", () => {
   h.hook.mockReturnValue({
     ...state("RELEVANT", "CONTINUE_WITH_AI", true, true),

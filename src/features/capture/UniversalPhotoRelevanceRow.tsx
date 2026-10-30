@@ -90,16 +90,14 @@ export function UniversalPhotoRelevanceRow({
           {choice === "CONTINUE_WITH_AI" ? copy.continueSelected : copy.skipSelected}
         </UiText>
       ) : null}
-      {!value || value.originalChanged ? (
-        <UiButton
-          label={copy.screen}
-          variant="secondary"
-          disabled={blocked || state.unavailable}
-          onPress={() => {
-            void state.screen();
-          }}
-        />
-      ) : null}
+      <UiButton
+        label={copy.screen}
+        variant="secondary"
+        disabled={blocked || state.unavailable}
+        onPress={() => {
+          void state.screen();
+        }}
+      />
       {value ? (
         <>
           <UiButton
