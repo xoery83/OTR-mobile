@@ -1,0 +1,31 @@
+{
+  "status": "REGISTERED_QA_HOST_LOGIN_SOURCE_REVIEWED_NO_LIVE_EXECUTION",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "validation": {
+    "direct": "4 suites / 83 PASS",
+    "independent": "4 suites / 80 PASS before three additional tests",
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "review": "NO_BLOCKER_SOURCE_ONLY"
+  },
+  "fileHashes": {
+    "scripts/auth/registered-qa-host-session.ts": "f41cdffa4d481da24b04a0deb7e1098163dd1ff7de59a4432e9250247e6d51ef",
+    "backend/src/authRegisteredHostSession.test.ts": "f4a1e5ef97b3b0be3b602478e925ebc756209569b3b7e01004a58ad7ce0fa487",
+    "scripts/auth/resend-inbound-otp-native-relogin.ts": "448268e9c1396871f0b7dcb9833fe0d7d92f55d0b6bc797807311c3aeb4c4e1a",
+    "src/data/auth/devSupabaseAuth.ts": "48cea14ae2932f200f8a335000b7b9c8f8a1db501f6c37e79b1683609c772fc0",
+    "src/data/auth/passwordlessAuth.test.ts": "f98678baad940b102e5fdbd54ec419a4aa607078885a25137b6ef790f17ed878"
+  },
+  "boundaries": [
+    "DEV dedicated QA team and accepted canonical case only",
+    "Business window must actually be coordinated; flag is not authority",
+    "OTP create_user:false; no duplicate Account creation",
+    "Exact trusted /user identity before binding revocation",
+    "Normal existing Session repository, memory only",
+    "One local-scope Host revoke + invalid-refresh proof",
+    "Unproven/UNKNOWN remains closed and never retries",
+    "No iPad Session/Keychain access; original Native claims untouched",
+    "No live send/Provider verify/Backend mutation by Auth during preparation"
+  ],
+  "liveE2E": "PENDING_NATIVE_AUTHORIZED_CONSUMER"
+}

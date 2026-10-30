@@ -22,6 +22,7 @@ const tokenResponseSchema = z.object({
 });
 
 export type DevAuthOptions = {
+  allowRegistration?: boolean;
   url?: string;
   publishableKey?: string;
   fetchImplementation?: typeof fetch;
@@ -211,7 +212,10 @@ export async function requestSupabaseDevEmailOtp(
 ) {
   await authRequest(
     "/otp",
-    { email: z.email().parse(email.trim()), create_user: true },
+    {
+      email: z.email().parse(email.trim()),
+      create_user: options.allowRegistration !== false,
+    },
     options,
   );
 }
