@@ -1,3 +1,11 @@
+import {
+  importImageMaterialSchema,
+  importImageBytes,
+} from "../../domain/trip/importImageEvidence";
+import {
+  universalP1SourceReviewSchema,
+  type UniversalP1SourceReview,
+} from "../../domain/trip/universalP1SourceReview";
 import { z } from "zod";
 import {
   assertAccountRequestContext,
@@ -81,7 +89,10 @@ export const importLifecycleRequestSchema = z.strictObject({
   commercialReviewRequests: z.array(sourceBookingPublishRequestSchema).max(64),
 });
 export const importLifecycleSnapshotSchema = z.strictObject({
-  materials: z.array(interpretationMaterialSchema).min(1).max(64),
+  materials: z
+    .array(z.union([interpretationMaterialSchema, importImageMaterialSchema]))
+    .min(1)
+    .max(64),
   sources: z.array(tripImportCatalogSchemas.trip_sources).min(1).max(64),
   representations: z
     .array(tripImportCatalogSchemas.trip_source_representations)
@@ -114,7 +125,17 @@ const amendments = new Set([
 export async function qualifyImportLifecycleProposals(
   context: AccountRequestContext,
   supplied: unknown,
-  current: { actor: CoreActor; graph: CoreGraph; snapshot: ImportLifecycleSnapshot },
+  current: {
+    actor: CoreActor;
+    graph: CoreGraph;
+    snapshot: ImportLifecycleSnapshot;
+    reviewedImageSource?: {
+      sourceId: string;
+      candidateId: string;
+      reviewedBy: string;
+      review: UniversalP1SourceReview;
+    };
+  },
   deps: {
     hash: ImportHash;
     getAccountId(): Promise<string>;
@@ -154,7 +175,10 @@ export async function qualifyImportLifecycleProposals(
   for (const m of q.materials) {
     const r = representations.get(m.pin.representation_id);
     const s = sources.get(m.pin.source_id),
-      b = new TextEncoder().encode(m.text);
+      b =
+        m.form === "IMAGE"
+          ? await importImageBytes(m, deps.hash)
+          : new TextEncoder().encode(m.text);
     if (
       !r ||
       r.source_id !== m.pin.source_id ||
@@ -162,7 +186,14 @@ export async function qualifyImportLifecycleProposals(
       r.payload_sha256 !== m.pin.payload_sha256 ||
       r.byte_count !== m.pin.byte_count ||
       r.retention_state !== "RETAINED" ||
-      r.text_content !== m.text ||
+      (m.form === "IMAGE"
+        ? r.material_kind !== "BINARY" ||
+          r.role !== "ORIGINAL" ||
+          r.mime_type !== m.media_type ||
+          r.remote_state !== "VERIFIED" ||
+          r.verified_at === null ||
+          r.text_content !== null
+        : r.text_content !== m.text) ||
       !s ||
       s.trip_id !== context.tripId ||
       s.acquired_by !== context.accountId ||
@@ -206,15 +237,46 @@ export async function qualifyImportLifecycleProposals(
       !material ||
       !own ||
       own.some((s) => s.plan.sourceId !== material.pin.source_id) ||
-      e.locator.kind !== "TEXT_SPAN" ||
-      e.locator.start === null ||
-      e.locator.end === null ||
-      e.locator.end <= e.locator.start ||
-      e.locator.end > b.length ||
-      new TextDecoder("utf-8", { fatal: true }).decode(
-        b.slice(e.locator.start, e.locator.end),
-      ) !== e.raw ||
-      (e.locator.excerpt !== undefined && e.locator.excerpt !== e.raw)
+      (material.form === "IMAGE"
+        ? (() => {
+            const confirmed = current.reviewedImageSource;
+            const review = universalP1SourceReviewSchema.safeParse(confirmed?.review);
+            const region = e.locator.region;
+            return (
+              !confirmed ||
+              confirmed.reviewedBy !== context.accountId ||
+              confirmed.sourceId !== material.pin.source_id ||
+              confirmed.candidateId !== e.candidateId ||
+              !review.success ||
+              review.data.sourceRevision !== material.pin.material_revision ||
+              own.some(
+                (s) =>
+                  s.slot.command !== "CREATE_ITEM" ||
+                  (s.slot.payload as { family?: string }).family !== "P1",
+              ) ||
+              !["ROOT.title", "START.local_date"].includes(e.fieldKey) ||
+              (e.fieldKey === "ROOT.title"
+                ? e.raw !== review.data.title
+                : sourceReviewCivilDate(e.raw) !== review.data.localDate) ||
+              e.locator.kind !== "REGION" ||
+              e.locator.page !== null ||
+              e.locator.start !== null ||
+              e.locator.end !== null ||
+              !region ||
+              region.coordinate_width !== material.width ||
+              region.coordinate_height !== material.height ||
+              (e.locator.excerpt !== undefined && e.locator.excerpt !== e.raw)
+            );
+          })()
+        : e.locator.kind !== "TEXT_SPAN" ||
+          e.locator.start === null ||
+          e.locator.end === null ||
+          e.locator.end <= e.locator.start ||
+          e.locator.end > b.length ||
+          new TextDecoder("utf-8", { fatal: true }).decode(
+            b.slice(e.locator.start, e.locator.end),
+          ) !== e.raw ||
+          (e.locator.excerpt !== undefined && e.locator.excerpt !== e.raw))
     )
       throw new Error("IMPORT_EVIDENCE_INVALID");
   }

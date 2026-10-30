@@ -1,3 +1,4 @@
+import { projectUniversalVisualReview } from "./universalVisualReview";
 import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
@@ -376,13 +377,21 @@ export function projectUniversalResponse(
   const interpretation = envelope.success
     ? envelope.data.interpretation
     : response.output;
-  const inspection = inspectCompactEvidence(
+  let inspection = inspectCompactEvidence(
     interpretation,
     ready,
     prepared,
     [],
     base.taskId,
   );
+  const visual = projectUniversalVisualReview(interpretation, dispatch);
+  if (visual)
+    inspection = {
+      ...inspection,
+      schemaValidity: "VALID",
+      businessCandidateValidation: "ACCEPTED",
+      proposals: visual.proposals,
+    };
   const wire = compactSchema.safeParse(interpretation);
   const sourceIssues = wire.success
     ? wire.data.issues.map(([index, reason]) => ({
@@ -390,7 +399,8 @@ export function projectUniversalResponse(
         reason,
       }))
     : [];
-  const quality = projectImportQuality(interpretation, inspection, ready);
+  const quality =
+    visual?.quality ?? projectImportQuality(interpretation, inspection, ready);
   const minimumFacts = (inspection.proposals?.objects ?? []).map(
     projectUniversalMinimumFacts,
   );

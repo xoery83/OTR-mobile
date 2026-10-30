@@ -287,7 +287,17 @@ export async function readUniversalP1ReviewOriginal(
   const source = sources[0],
     input = model.inputs.find((i) => i.id === source.inputId);
   const originalHash = source.pdfSource?.original.sha256 ?? source.originalSha256;
-  const maximum = source.pdfSource ? PDF_UPLOAD_QPDF_V4.maxByteCount : 65536;
+  const png =
+    source.mime === "image/png" &&
+    !source.pdfSource &&
+    input?.kind === "IMAGE" &&
+    input.declaredContentType === "image/png" &&
+    source.submittedSha256 === source.originalSha256;
+  const maximum = source.pdfSource
+    ? PDF_UPLOAD_QPDF_V4.maxByteCount
+    : png
+      ? 1048576
+      : 65536;
   if (
     !input?.captureId ||
     !input.payloadId ||
@@ -307,8 +317,8 @@ export async function readUniversalP1ReviewOriginal(
     originalHash !== input.contentSha256
   )
     throw Error("IMPORT_EVIDENCE_INVALID");
-  if (source.pdfSource) {
-    if (!deps.previewOriginal || !input.originalFilename)
+  if (source.pdfSource || png) {
+    if (!deps.previewOriginal || (!png && !input.originalFilename))
       throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
     await deps.previewOriginal({
       captureId: input.captureId,
@@ -317,7 +327,7 @@ export async function readUniversalP1ReviewOriginal(
       byteCount: retained.bytes.length,
     });
     await current();
-    return input.originalFilename;
+    return input.originalFilename ?? "";
   }
   const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
     retained.bytes,

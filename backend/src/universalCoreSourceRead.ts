@@ -1,3 +1,7 @@
+import {
+  readUniversalPngSourceMaterial,
+  type UniversalBinaryReader,
+} from "./universalPngSourceMaterial";
 import { hasCurrentPdfV2ProofAccess } from "./sourcePdfV2CoreProof";
 import { createHash } from "node:crypto";
 import { readUniversalPdfSourceMaterial } from "./universalPdfSourceMaterial";
@@ -16,6 +20,7 @@ export function createCoreUniversalSourceRead(
   lease: CorePgLease,
   actor: string,
   trip: string,
+  readBinary?: UniversalBinaryReader,
 ) {
   z.uuid().parse(actor);
   z.uuid().parse(trip);
@@ -226,6 +231,37 @@ export function createCoreUniversalSourceRead(
         );
         if (matches.length !== 1) throw Error("UNIVERSAL_SOURCE_BINDING_INVALID");
         const rep = matches[0];
+        if (
+          rep.role === "ORIGINAL" &&
+          rep.material_kind === "BINARY" &&
+          rep.mime_type === "image/png" &&
+          rep.remote_state === "VERIFIED" &&
+          !p.pdfSource
+        ) {
+          await readUniversalPngSourceMaterial(
+            lease,
+            {
+              actorAccountId: actor,
+              tripId: trip,
+              sourceId: p.source_id,
+              sourceRevision: p.material_revision,
+            },
+            p,
+            async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+            readBinary,
+          );
+          representations.push({
+            inputId: p.id,
+            sourceId: p.source_id,
+            representationId: p.representation_id,
+            revision: p.material_revision,
+            sha256: p.payload_sha256,
+            byteCount: p.byte_count,
+            mime: "image/png",
+            text: null,
+          });
+          continue;
+        }
         // Only verified PDF provenance may qualify DERIVED text on this held lease.
         if (
           (p.pdfSource ? rep?.role !== "DERIVED" : rep?.role !== "ORIGINAL") ||
@@ -284,8 +320,9 @@ export function createCoreUniversalSourceRead(
         },
       },
       readSnapshot,
-      readBinary: async () => {
-        throw Error("UNIVERSAL_MATERIAL_UNSUPPORTED");
+      readBinary: async (scope) => {
+        if (!readBinary) throw Error("UNIVERSAL_MATERIAL_UNSUPPORTED");
+        return readBinary(scope);
       },
     }),
   };

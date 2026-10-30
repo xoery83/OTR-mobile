@@ -1415,3 +1415,26 @@ active for both read and cancel. The disposable SQL journal currently permits
 CANCELLED only; full publication remains closed. Existing Account authorization
 requires a policy share lock, so the PG read adapter uses a normal repeatable-read
 transaction containing only the two fixed owning read functions.
+
+## Universal original PNG proposal adapter (default-closed candidate)
+
+A single original PNG may reuse A_DIRECT; text and sealed PDF text keep B_PREPARED.
+Local OCR is relevance only. The adapter reuses the existing compact schema,
+typed validator and reconciliation, retaining bounded P1 pixel-region proposals
+as REVIEWABLE with `visualReviewRequired`; it issues neither OCR corroboration,
+HIGH confidence, lifecycle authority nor Admission. Commercial/lifecycle issues,
+invalid regions and duplicate identities remain unresolved.
+
+Lifecycle materials gain an internal IMAGE branch, distinct from the unchanged
+text Interpretation schema. It carries exact original bytes (currently <=1MiB),
+Source/input pins and an owning PNG execution receipt. The held Source reader
+must read the real current receipt and custody, verify hash/size and dimensions,
+and recheck the proof before disclosure. A profile label or pending header marker
+is insufficient. The proof RPC and real PNG upload runtime are not installed or
+enabled by this software candidate.
+
+The first formal image slice is P1 only, using existing REGION locators, explicit
+original/Trip/NEW/title/date Source Review, Plan and Admission. No text offsets are
+invented. The ordinary original preview opens the verified local PNG through the
+existing preview port; missing capability fails closed. Protected SQL, runtime
+activation and actual image E2E remain separate acceptance requirements.

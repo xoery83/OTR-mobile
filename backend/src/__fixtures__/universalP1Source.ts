@@ -1,3 +1,4 @@
+import { interpretationMaterialSchema } from "../../../src/domain/intelligence/interpretation";
 import { fieldRef } from "../../../src/domain/trip/tripCoreV2CandidatePublication";
 import { createHash, randomUUID } from "node:crypto";
 import { captureAccountRequestContext } from "../../../src/data/auth/accountRequestContext";
@@ -90,12 +91,16 @@ export async function universalP1SourceFixture(
     observed_source_row_revision: 1,
     historical_selection: false,
   };
-  const snapshot = importLifecycleSnapshotSchema.parse({
+  const parsedSnapshot = importLifecycleSnapshotSchema.parse({
     sources: [source],
     representations: [representation],
     associations: [],
     materials: [{ pin, media_type: "text/plain", form: "TEXT", text }],
   });
+  const snapshot = {
+    ...parsedSnapshot,
+    materials: parsedSnapshot.materials.map((m) => interpretationMaterialSchema.parse(m)),
+  };
   const dispatch = prepareUniversalDispatch(
     accountId,
     batchId,
