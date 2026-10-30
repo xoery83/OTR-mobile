@@ -1,6 +1,7 @@
 # Authorized Trip Version V1 — bounded Native/Core contract
 
-Status: contract/DTO only; no endpoint, subscription, publisher or DEV activation.
+Status: contract/DTO and shared pure collection-token helper LOCAL_PASS; no
+endpoint, cache, subscription, publisher or DEV activation.
 Owner Native06 direction is Actor-specific visibility, then committed hints; it
 is not permission to expose raw Trip revision or invent a revocation authority.
 Delivery order remains real same-P3 Edit baseline → version read → private hint.
@@ -46,7 +47,9 @@ Read-state counters may eventually serve internal cache invalidation, never the
 public Actor version. A cheap cache is not qualified until all visibility and
 binding/order dependencies can be freshly checked; TTL alone is insufficient.
 
-The same canonical helper must derive a token from an actual validated collection
+`authorizedTripVersionFromCollection` in `src/domain/trip/tripAuthorizedVersion.ts`
+uses canonical domain `otr.core.authorized-trip-visible-state/1` and kind/id lexical
+record order. The same shared helper derives a token from an actual validated collection
 on both sides. Native remembers only the token of a successfully applied full
 collection, not the preceding check result. If version check observesV2 and the
 later collection isV3, apply/validateV3 and rememberV3. Do not storeV2 besideV3 or
