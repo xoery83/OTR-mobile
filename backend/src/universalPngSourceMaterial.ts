@@ -17,6 +17,7 @@ export type UniversalBinaryReader = (scope: {
   representationId: string;
   sha256: string;
   byteCount: number;
+  mimeType?: string;
 }) => Promise<Uint8Array>;
 export const universalPngSourceProofSchema = z.strictObject({
   actorAccountId: z.uuid(),
@@ -81,6 +82,7 @@ export async function readUniversalPngSourceMaterialWithProof(
     representationId: pin.representation_id,
     sha256: pin.payload_sha256,
     byteCount: pin.byte_count,
+    mimeType: "image/png",
   });
   if (bytes.length < 24) throw Error("SOURCE_INTEGRITY_FAILURE");
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);

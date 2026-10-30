@@ -1,3 +1,24 @@
+# Import Photo — runtime continuation, 31 October 2026
+
+Photo remains LOCAL_PASS, not hosted image interpretation or formal Save PASS.
+PNG normal-Auth preparation is now composed into the existing continuous Backend
+and serialized Source connection. Hashed fixed-QA configuration is absent/closed
+by default; original PNG reads use owning Storage and current permission checks.
+Negative-only close control never activates and independently reads after UNKNOWN.
+Four focused suites40 PASS; types, scoped lint and UI guard PASS; independent
+runtime/close review NO_BLOCKER. Core REGION helper26, full READY guard6 and closer8
+checks passed in network-isolated PG including expiry with flag still true. These
+are synthetic controls, never actual Core acceptance receipts.
+
+The retained A Batch67842863 / Inputbabf43ec has actual AD5 Photos-original SHA,
+OCR RELEVANT, explicit Continue and process-cold recovery PASS (Build126.1).
+Photo paid calls remain0. Next: fixed Host entrypoint, consolidated protected
+Source/Core/close packet and precise Owner Gate, then same PNG actual image call,
+normal Review/Admission, independent readback and Native cold recovery. Do not
+replay accepted PDF or six existing family Golden Slices. PDF stays CLOSED.
+Root retains Import source Writer; Auth temporarily owns one approved finite DEV
+Host/SQL window, so Root does only offline code/isolated PG until handback.
+
 # Native-04 Downstream — ordinary unified smoke, 31 October 2026
 
 Ordinary Build126 (business source249204db / merge2d1539aa) is installed in place

@@ -73,6 +73,7 @@ export function createUniversalSourceReader(deps: {
     representationId: string;
     sha256: string;
     byteCount: number;
+    mimeType?: string;
   }): Promise<Uint8Array>;
 }) {
   async function read(task: Readonly<UniversalSourceTask>) {
@@ -168,6 +169,7 @@ export function createUniversalSourceReader(deps: {
               representationId: r.representationId,
               sha256: r.sha256,
               byteCount: r.byteCount,
+              mimeType: r.mime,
             });
       const bytes = Buffer.from(raw);
       if (

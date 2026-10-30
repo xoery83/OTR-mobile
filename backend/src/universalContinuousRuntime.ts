@@ -1,4 +1,8 @@
 import {
+  readSourcePngRuntimeConfig,
+  createSourcePngRuntimePorts,
+} from "./sourcePngRuntime";
+import {
   readSourcePdfRuntimeConfig,
   createSourcePdfRuntimePorts,
 } from "./sourcePdfRuntime";
@@ -44,6 +48,7 @@ export async function loadDevUniversalContinuousRuntime(
   const config = await readUniversalContinuousConfig(env);
   if (!config) return undefined;
   let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
+  let png: ReturnType<typeof createSourcePngRuntimePorts> | undefined;
   let closed = false,
     stores: Awaited<ReturnType<typeof createFlightPrivateCustody>> | undefined,
     sql: DatabaseSync | undefined;
@@ -103,6 +108,27 @@ export async function loadDevUniversalContinuousRuntime(
       }
     } catch {
       console.info("UNIVERSAL_PDF_RUNTIME_CLOSED");
+    }
+    try {
+      const pngConfig = await readSourcePngRuntimeConfig(env);
+      if (pngConfig) {
+        const configSha = env.OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256;
+        png = createSourcePngRuntimePorts(pngConfig, {
+          gateway,
+          connection: sourceConnection,
+          storageToken: env.OTR_DEV_SUPABASE_SECRET_KEY ?? "",
+          assertEnabled() {
+            guard();
+            if (
+              env.OTR_DEV_UNIVERSAL_PNG_RUNTIME !== "enabled" ||
+              env.OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256 !== configSha
+            )
+              throw Error("SOURCE_CAPABILITY_CLOSED");
+          },
+        });
+      }
+    } catch {
+      console.info("UNIVERSAL_PNG_RUNTIME_CLOSED");
     }
     async function host(
       actor: string,
@@ -212,12 +238,14 @@ export async function loadDevUniversalContinuousRuntime(
           taskReceiptConnection: taskConnection,
           gateway: persistence,
           readBinary: (scope) =>
-            stores!.custody.read({
-              accountId: scope.accountId,
-              reference: scope.representationId,
-              sha256: scope.sha256,
-              byteCount: scope.byteCount,
-            }),
+            scope.mimeType === "image/png" && png
+              ? png.readOriginal(scope, assertCurrentAuth)
+              : stores!.custody.read({
+                  accountId: scope.accountId,
+                  reference: scope.representationId,
+                  sha256: scope.sha256,
+                  byteCount: scope.byteCount,
+                }),
           environment: (key) => {
             guard();
             return env[key];
@@ -244,6 +272,7 @@ export async function loadDevUniversalContinuousRuntime(
       const scoped = await host(verifiedActor, tripId, authorize),
         original = createUniversalOriginalSourceConnection(sourceConnection, hash, {
           pendingPdf: pdf?.originalMetadataAllowed(verifiedActor, tripId) === true,
+          pendingPng: png?.originalMetadataAllowed(verifiedActor, tripId) === true,
         });
       return {
         universalOriginalSourcePort: {
@@ -380,6 +409,7 @@ export async function loadDevUniversalContinuousRuntime(
     return {
       catalogConnection,
       sourcePdfV4PreparationForRequest: pdf?.sourcePdfV4PreparationForRequest,
+      sourcePngPreparationForRequest: png?.sourcePngPreparationForRequest,
       sourcePdfV2ForRequest: pdf?.sourcePdfV2ForRequest,
       forRequest,
       // Called only by the existing Core Source authority after its normal Auth,
@@ -401,12 +431,16 @@ export async function loadDevUniversalContinuousRuntime(
             guard();
             if (!stores || image.accountId !== a || image.tripId !== t)
               throw Error("SOURCE_ACCESS_DENIED");
-            const bytes = await stores.custody.read({
-              accountId: a,
-              reference: image.representationId,
-              sha256: image.sha256,
-              byteCount: image.byteCount,
-            });
+            const bytes = png
+              ? await png.readOriginal(image, async () => {
+                  guard();
+                })
+              : await stores.custody.read({
+                  accountId: a,
+                  reference: image.representationId,
+                  sha256: image.sha256,
+                  byteCount: image.byteCount,
+                });
             guard();
             return bytes;
           });
@@ -440,6 +474,7 @@ export async function loadDevUniversalContinuousRuntime(
             representationId: string;
             sha256: string;
             byteCount: number;
+            mimeType?: string;
           }) => {
             guard();
             if (
@@ -455,12 +490,17 @@ export async function loadDevUniversalContinuousRuntime(
               )
             )
               throw Error("SOURCE_ACCESS_DENIED");
-            const bytes = await stores.custody.read({
-              accountId: a,
-              reference: image.representationId,
-              sha256: image.sha256,
-              byteCount: image.byteCount,
-            });
+            const bytes =
+              image.mimeType === "image/png" && png
+                ? await png.readOriginal(image, async () => {
+                    guard();
+                  })
+                : await stores.custody.read({
+                    accountId: a,
+                    reference: image.representationId,
+                    sha256: image.sha256,
+                    byteCount: image.byteCount,
+                  });
             guard();
             return bytes;
           },
@@ -469,6 +509,7 @@ export async function loadDevUniversalContinuousRuntime(
       async close() {
         if (closed) return;
         closed = true;
+        png?.close();
         pdf?.close();
         sql?.close();
         sql = undefined;
@@ -478,6 +519,7 @@ export async function loadDevUniversalContinuousRuntime(
     };
   } catch (error) {
     closed = true;
+    png?.close();
     pdf?.close();
     sql?.close();
     await stores?.close();

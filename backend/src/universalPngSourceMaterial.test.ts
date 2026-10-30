@@ -61,6 +61,7 @@ it("binds owning proof and exact retained bytes under the same Source scope and 
     representationId: f.pin.representation_id,
     sha256: f.pin.payload_sha256,
     byteCount: f.pin.byte_count,
+    mimeType: "image/png",
   });
   expect(f.query).toHaveBeenCalledTimes(2);
 });

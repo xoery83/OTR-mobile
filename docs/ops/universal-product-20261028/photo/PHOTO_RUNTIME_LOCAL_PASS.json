@@ -1,0 +1,27 @@
+{
+  "status": "LOCAL_PASS_NOT_PHOTO_E2E",
+  "date": "2026-10-31",
+  "focusedRuntimeTests": 40,
+  "coreQualifiedHelperChecks": 26,
+  "fullCoreGuardChecks": 6,
+  "negativeCloserChecks": 8,
+  "typecheck": true,
+  "uiGuard": true,
+  "independentReview": "NO_BLOCKER",
+  "providerPhotoCalls": 0,
+  "devSQLInstalled": false,
+  "checks": [
+    "default_closed_without_config",
+    "normal_Auth_and_shared_serial_Source_connection",
+    "PNG_Storage_reader_not_PDF_custody",
+    "negative_only_close_unknown_then_read",
+    "READY_create_denied_after_close_or_expiry",
+    "accepted_only_association_recovery_retained"
+  ],
+  "remaining": [
+    "Host_entrypoint_and_deployment",
+    "protected_Owner_Gate",
+    "actual_image_input_and_formal_save",
+    "independent_cloud_readback_and_Native_cold_recovery"
+  ]
+}

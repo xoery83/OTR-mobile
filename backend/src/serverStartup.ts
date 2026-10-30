@@ -59,6 +59,7 @@ export function startDevBackend(
     | "universalImportPort"
     | "universalRuntimeForRequest"
     | "sourcePdfV4PreparationForRequest"
+    | "sourcePngPreparationForRequest"
     | "sourcePdfV2ForRequest"
     | "universalOriginalSourcePort"
   > & {
@@ -124,6 +125,7 @@ export function startDevBackend(
     universalImportPort: startOptions.universalImportPort,
     universalRuntimeForRequest: startOptions.universalRuntimeForRequest,
     sourcePdfV4PreparationForRequest: startOptions.sourcePdfV4PreparationForRequest,
+    sourcePngPreparationForRequest: startOptions.sourcePngPreparationForRequest,
     sourcePdfV2ForRequest: startOptions.sourcePdfV2ForRequest,
     universalOriginalSourcePort: startOptions.universalOriginalSourcePort,
     log(event) {

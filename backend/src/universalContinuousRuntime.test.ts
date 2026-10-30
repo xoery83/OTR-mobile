@@ -17,6 +17,8 @@ const f = vi.hoisted(() => ({
   host: vi.fn(),
   pdfConfig: vi.fn(),
   pdfPorts: vi.fn(),
+  pngConfig: vi.fn(),
+  pngPorts: vi.fn(),
 }));
 vi.mock("node:sqlite", () => ({
   DatabaseSync: class {
@@ -49,6 +51,10 @@ vi.mock("./universalTaskBootstrap", () => ({
 }));
 vi.mock("./universalContinuousHost", () => ({
   createUniversalContinuousHost: f.host,
+}));
+vi.mock("./sourcePngRuntime", () => ({
+  readSourcePngRuntimeConfig: f.pngConfig,
+  createSourcePngRuntimePorts: f.pngPorts,
 }));
 vi.mock("./sourcePdfRuntime", () => ({
   readSourcePdfRuntimeConfig: f.pdfConfig,
@@ -318,3 +324,53 @@ it.each(["enabled", "closed", "invalid", "foreign", "expired"])(
     }
   },
 );
+
+it("qualified PNG reads use the scoped PNG original reader and close it with the existing runtime", async () => {
+  const actor = randomUUID(),
+    trip = randomUUID(),
+    image = {
+      accountId: actor,
+      tripId: trip,
+      sourceId: randomUUID(),
+      representationId: randomUUID(),
+      sha256: "a".repeat(64),
+      byteCount: 10,
+      mimeType: "image/png",
+    };
+  const readOriginal = vi.fn(async () => new Uint8Array([1, 2, 3])),
+    close = vi.fn(),
+    prepare = vi.fn();
+  f.pngConfig.mockResolvedValue({ synthetic: true });
+  f.pngPorts.mockReturnValue({
+    readOriginal,
+    close,
+    sourcePngPreparationForRequest: prepare,
+    originalMetadataAllowed: () => true,
+  });
+  f.auth.mockResolvedValue({ id: actor });
+  f.host.mockImplementation(({ runtime }) => ({
+    readContext: () => runtime.readBinary(image),
+  }));
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    OTR_DEV_UNIVERSAL_PNG_RUNTIME: "enabled",
+    OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256: "b".repeat(64),
+  });
+  try {
+    const ports = await runtime!.forRequest(
+      new Request("https://example.test", {
+        headers: { Authorization: "Bearer synthetic" },
+      }),
+      actor,
+      trip,
+    );
+    expect(await ports.universalImportPort.readContext(actor, "batch", trip)).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(readOriginal).toHaveBeenCalledWith(image, expect.any(Function));
+    expect(runtime!.sourcePngPreparationForRequest).toBe(prepare);
+  } finally {
+    await runtime?.close();
+  }
+  expect(close).toHaveBeenCalledOnce();
+});
