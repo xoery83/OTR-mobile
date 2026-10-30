@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import {
   pdfPreparationFixture,
   pdfProtocolHash,
@@ -7,6 +7,15 @@ import {
   createPendingPdfCommandProposals,
   createPdfDerivativeRequests,
 } from "./sourcePdfPreparationCommands";
+
+const fixed = vi.hoisted(() => ({ next: 0 }));
+vi.mock("node:crypto", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:crypto")>()),
+  randomUUID: () => `11000000-0000-4000-8000-${String(++fixed.next).padStart(12, "0")}`,
+}));
+beforeEach(() => {
+  fixed.next = 0;
+});
 
 it("derives stable, distinct phase identities from the same actual acquisition pins", async () => {
   const f = await pdfPreparationFixture([]);
@@ -67,4 +76,17 @@ it("cannot construct a derivative request from an unverified or altered receipt"
       pdfProtocolHash,
     ),
   ).rejects.toThrow("PDF_SOURCE_RECEIPT_MISMATCH");
+});
+
+it("preserves the frozen PDF proposal bytes including all six phase identities", async () => {
+  const f = await pdfPreparationFixture([]);
+  const commands = await createPendingPdfCommandProposals(
+    { actorId: f.context.accountId, tripId: f.context.tripId },
+    f.input.acquisition,
+    f.input.acquisitionReceipt,
+    pdfProtocolHash,
+  );
+  expect(await pdfProtocolHash(new TextEncoder().encode(JSON.stringify(commands)))).toBe(
+    "a7817f27ecee69361d0355d4bfffbc730a8e0eaccc6100c3a4b20b5a99bdf801",
+  );
 });
