@@ -187,3 +187,40 @@ it("rejects late cancellation and invalid original bytes before dispatch", async
   ).rejects.toThrow("CAPTURE_CUSTODY_BYTES_INVALID");
   expect(x.port.execute).not.toHaveBeenCalled();
 });
+
+it("reconciles existing ADMITTED generation 0 without execute or a new upload", async () => {
+  const x = await fixture();
+  x.records.set(x.proposals.prepare.operation_id, await x.final(x.proposals.prepare));
+  x.records.set(x.proposals.upload.operation_id, {
+    contract_version: 1,
+    operation_id: x.proposals.upload.operation_id,
+    operation_key: x.proposals.upload.operation_key,
+    operation_sha256: x.proposals.upload.operation_sha256,
+    phase: "ADMITTED",
+    attempt_generation: 0,
+  });
+  await expect(x.run()).rejects.toThrow("PNG_UPLOAD_OUTCOME_UNRESOLVED");
+  expect(x.port.reconcile).toHaveBeenCalledExactlyOnceWith(
+    x.f.context,
+    x.proposals.upload,
+  );
+  expect(x.port.execute).not.toHaveBeenCalled();
+});
+it.each(["IO_ACTIVE", "IO_UNKNOWN", "IO_QUIESCENT"])(
+  "rejects illegal %s generation 0 without execution",
+  async (phase) => {
+    const x = await fixture();
+    x.records.set(x.proposals.prepare.operation_id, await x.final(x.proposals.prepare));
+    x.records.set(x.proposals.upload.operation_id, {
+      contract_version: 1,
+      operation_id: x.proposals.upload.operation_id,
+      operation_key: x.proposals.upload.operation_key,
+      operation_sha256: x.proposals.upload.operation_sha256,
+      phase,
+      attempt_generation: 0,
+    });
+    await expect(x.run()).rejects.toThrow();
+    expect(x.port.reconcile).not.toHaveBeenCalled();
+    expect(x.port.execute).not.toHaveBeenCalled();
+  },
+);

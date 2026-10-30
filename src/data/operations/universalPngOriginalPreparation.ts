@@ -47,7 +47,11 @@ const pendingReply = sourcePdfVerifyCommandSchema
   })
   .extend({
     phase: z.enum(["ADMITTED", "IO_ACTIVE", "IO_UNKNOWN", "IO_QUIESCENT"]),
-    attempt_generation: z.number().int().positive().safe(),
+    attempt_generation: z.number().int().nonnegative().safe(),
+  })
+  .refine((reply) => reply.phase === "ADMITTED" || reply.attempt_generation > 0, {
+    message: "Claimed Source operation requires a positive generation",
+    path: ["attempt_generation"],
   });
 const cloneCommand = (q: PngOriginalCommand): PngOriginalCommand =>
   q.command === "UPLOAD_ORIGINAL"
