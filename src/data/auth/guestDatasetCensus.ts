@@ -6,7 +6,6 @@ import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { withAccountApplyGate } from "./accountRequestContext";
 import { getSchemaVersion, type MigrationDatabase } from "../db/migrationRunner";
-import { migrations } from "../db/migrations";
 import type { CoreDatabase } from "../repositories/tripCoreV2Repository";
 import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { requireLocalTripPersonCreator } from "../repositories/localTripPersonRepository";
@@ -98,8 +97,8 @@ export function createGuestDatasetCensus(
       await database.withTransactionAsync(async () => {
         const sqliteVersion = await getSchemaVersion(database);
         const blockers: string[] = [];
-        if (sqliteVersion !== migrations.at(-1)?.id)
-          blockers.push("SQLITE_SCHEMA_UNSUPPORTED");
+        // Saved-data adoption is qualified for schema74, independently of newer App migrations.
+        if (sqliteVersion !== 74) blockers.push("SQLITE_SCHEMA_UNSUPPORTED");
         if (!external) blockers.push("FILE_AND_LIVE_DRAFT_COLLECTORS_REQUIRED");
         const tripRows = await database.getAllAsync<{
           id: string;

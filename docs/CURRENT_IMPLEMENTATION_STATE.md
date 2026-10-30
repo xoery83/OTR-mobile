@@ -210,6 +210,14 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
+Photo intended schema75 compatibility is reviewed: only exact75 migration name,
+new table present and all business rows empty can install a normal Session.
+Unknown76/nonempty Photo rows remain closed and retained; nonempty adoption census
+is explicitly schema74 rather than automatically following newer App migrations.
+Real SQLite112 + related Auth44 + independent5 tests/types/lint PASS. Migration75
+is not registered/deployed by Auth; no actual Native75 or adoption PASS is claimed.
+
+
 31-check isolated real-Gateway PG candidate now executes the actual held
 Trip/Metadata/Person ports plus Core P1 executor on one authorized transaction:
 APPLIED domain receipt, full rollback and fresh independent committed readback.

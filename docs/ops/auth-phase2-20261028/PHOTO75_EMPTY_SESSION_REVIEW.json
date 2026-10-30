@@ -1,0 +1,24 @@
+{
+  "status": "REVIEWED_STRICT_EMPTY_SCHEMA75_COMPATIBILITY_ONLY",
+  "coordination": "Root freezes intended id75/name capture_photo_import_decisions; migration still unregistered, no actual App DB75 claimed",
+  "frozenPhotoDefinitionSqlSha256": "45a7e26d82aaddd99100bcff64bb2b8591ba1365351931bfdbf0f966b2a18b1f",
+  "validation": {
+    "workspace": "112/112 PASS with actual file-backed SQLite",
+    "emptySessionAndAuthRepository": "2 suites / 44 PASS",
+    "independent": "5 targeted PASS; NO_BLOCKER",
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "behavior": [
+    "Empty install allows exact74 or75 with exact migration name/new table present/all non-bookkeeping tables empty",
+    "Photo row/local C3 original preserved on rejection; unknown76, wrong name and missing table reject",
+    "Nonempty source census explicitly74 independently of future latest migration; codec74 unchanged",
+    "No migration registration, logout/delete/cleanup change or Photo row adoption"
+  ],
+  "fileHashes": {
+    "src/data/auth/guestLocalWorkspace.ts": "30ce9926c17ad1d84548490846f4054a592dbf5e960c7b924ee5687dc60f0ed8",
+    "src/data/auth/guestDatasetCensus.ts": "c4753a14021c977da65102a1980c447ed80956ff8370b28783e005d55c339a9c",
+    "src/data/auth/guestLocalWorkspace.test.ts": "469da6b3c94ad980321725486d3c11e0454626b78e65dbd59640a710e516c7ca",
+    "src/data/auth/__fixtures__/capturePhotoImportDecisions75.sql": "45a7e26d82aaddd99100bcff64bb2b8591ba1365351931bfdbf0f966b2a18b1f"
+  }
+}
