@@ -508,7 +508,7 @@ export async function coreHttpBoundary(
         // Fixed categories cannot expose request values or replace the failure response.
       }
     }
-    if (path === "universal-p1-candidates") {
+    if (["universal-p1-candidates", "source-plans/prepare"].includes(path)) {
       try {
         const category = [
           "CORE_CONNECTION_TIMEOUT",
@@ -516,6 +516,19 @@ export async function coreHttpBoundary(
           "CORE_SCOPE_MISMATCH",
           "CONTRACT_UNSUPPORTED",
           "INPUT_STALE",
+          "PREDECESSOR_OUTCOME_UNKNOWN",
+          "INVALID_PROVENANCE",
+          "SOURCE_REVIEW_REPLAY_CONFLICT",
+          "INVALID_SOURCE_PLAN",
+          "INVALID_STORED_PLAN",
+          "UNRESOLVED_IDENTITY",
+          "OPERATION_REUSE_MISMATCH",
+          "OWNING_CAPABILITY_REQUIRED",
+          "IMPORT_SCOPE_MISMATCH",
+          "CONTINUOUS_ACCEPTED_PLAN_MISMATCH",
+          "CONTINUOUS_ACCEPTED_SLOT_MISMATCH",
+          "CONTINUOUS_SOURCE_CANDIDATE_REQUIRED",
+          "UNIVERSAL_PDF_CREATE_CLOSED",
           "UNIVERSAL_BINDING_SCOPE",
           "UNIVERSAL_SELECTION_UNAVAILABLE",
           "UNIVERSAL_SELECTION_STALE",
@@ -529,7 +542,13 @@ export async function coreHttpBoundary(
           ? code
           : "FAILED";
         console.info(
-          JSON.stringify({ event: "core_source_publication_failed", category }),
+          JSON.stringify({
+            event:
+              path === "source-plans/prepare"
+                ? "core_source_prepare_failed"
+                : "core_source_publication_failed",
+            category,
+          }),
         );
       } catch {
         // Fixed diagnostic categories cannot replace the original failure response.
