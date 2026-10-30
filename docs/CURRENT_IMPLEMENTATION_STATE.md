@@ -11,7 +11,14 @@ Receipt wire/hash/source-coverage qualification and unmounted authenticated rece
 read/Guest provisional transport now pass6 suites105 tests, independently repeated.
 Review repaired pre-await evidence mutation and cross-source Person collisions.
 `authority:NONE`: no Guest hold/Session mutation or formal terminal issuance.
-Next: immutable owning publish/cancel/status journal and actual Native restore,
+Cancellation-only immutable journal and terminal PG/HTTP/Guest transport now pass
+7 suites125 tests (independent repeat) and39 isolated PG checks with actual server
+cancel→COMMIT→status→receipt. Current Account revocation, expired local grant and
+policy-OFF recovery, idempotency, foreign pointer/Account and UNKNOWN are covered.
+Independent9 candidate/10 owning input hashes match. SQL remains disposable-only;
+no Hosted write, runtime mount, source release or Session installation.
+See ops/auth-phase2-20261028/CANCELLATION_TERMINAL_REVIEW.json.
+Next: immutable owning publication journal and actual Native restore,
 then reviewed protected DEV Gate and normal nonempty Guest→Account E2E.
 See ops/auth-phase2-20261028/RECEIPT_RECOVERY_REVIEW.json; no new full E2E PASS.
 

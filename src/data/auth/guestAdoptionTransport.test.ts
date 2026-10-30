@@ -395,3 +395,32 @@ it("rejects another target before any receipt request", async () => {
   ).rejects.toThrow("BINDING_MISMATCH");
   expect(f.wire).not.toHaveBeenCalled();
 });
+
+it("cancels only the bound attempt using its original idempotency key and retains Guest state", async () => {
+  const f = await terminalFixture();
+  f.wire.mockImplementationOnce(async (url, init) => {
+    expect(String(url)).toBe("https://api.example.test/v1/auth/guest-adoptions/cancel");
+    expect(JSON.parse(init!.body as string)).toEqual(f.statusRequest);
+    expect(new Headers(init!.headers).get("Idempotency-Key")).toBe(f.binding.adoptionId);
+    return Response.json(f.receipt);
+  });
+  expect(await f.transport.cancel(f.statusRequest)).toEqual(f.receipt);
+  await f.assertGuest();
+});
+it("keeps Guest state when cancellation is UNKNOWN without creating another attempt", async () => {
+  const f = await terminalFixture();
+  f.wire.mockImplementationOnce(async () =>
+    Response.json(
+      {
+        error: {
+          code: "GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN",
+          message: "GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN",
+        },
+      },
+      { status: 503 },
+    ),
+  );
+  await expect(f.transport.cancel(f.statusRequest)).rejects.toThrow();
+  expect(f.wire).toHaveBeenCalledOnce();
+  await f.assertGuest();
+});

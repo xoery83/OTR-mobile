@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
+import { guestAdoptionCancelBoundary } from "./guestAdoptionCancel";
 import { guestAdoptionReceiptBoundary } from "./guestAdoptionReceipt";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import { tripCoreSha256Hex } from "../../src/data/repositories/tripCoreSha256";
@@ -149,4 +150,72 @@ it("redacts owning failures", async () => {
   });
   expect(response.status).toBe(503);
   expect(await response.text()).not.toContain("private database material");
+});
+
+function cancelRequest(
+  binding: { adoptionId: string; [key: string]: unknown },
+  key = binding.adoptionId,
+) {
+  return new Request("https://example.invalid/v1/auth/guest-adoptions/cancel", {
+    method: "POST",
+    headers: { "Idempotency-Key": key },
+    body: JSON.stringify(binding),
+  });
+}
+it("normal cancellation uses exact binding/idempotency and returns only a verified server receipt", async () => {
+  const f = await fixture(),
+    cancel = vi.fn(async () => f.receipt);
+  const response = await guestAdoptionCancelBoundary(cancelRequest(f.binding), f.user, {
+    cancel,
+  });
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(f.receipt);
+  expect(cancel).toHaveBeenCalledWith(f.user.id, f.binding, expect.any(AbortSignal));
+});
+it("keeps cancellation closed without an owning writer", async () => {
+  const f = await fixture();
+  expect(
+    (await guestAdoptionCancelBoundary(cancelRequest(f.binding), f.user)).status,
+  ).toBe(503);
+});
+it("requires the same adoption idempotency key before cancellation", async () => {
+  const f = await fixture(),
+    cancel = vi.fn(async () => f.receipt);
+  expect(
+    (
+      await guestAdoptionCancelBoundary(cancelRequest(f.binding, randomUUID()), f.user, {
+        cancel,
+      })
+    ).status,
+  ).toBe(400);
+  expect(cancel).not.toHaveBeenCalled();
+});
+it("does not cancel another Account's attempt", async () => {
+  const f = await fixture(),
+    cancel = vi.fn(async () => f.receipt);
+  expect(
+    (
+      await guestAdoptionCancelBoundary(
+        cancelRequest({ ...f.binding, targetAccountId: randomUUID() }),
+        f.user,
+        { cancel },
+      )
+    ).status,
+  ).toBe(403);
+  expect(cancel).not.toHaveBeenCalled();
+});
+it("returns UNKNOWN without a receipt when cancellation COMMIT is uncertain", async () => {
+  const f = await fixture();
+  const response = await guestAdoptionCancelBoundary(cancelRequest(f.binding), f.user, {
+    cancel: async () => {
+      throw Error("GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN");
+    },
+  });
+  expect(response.status).toBe(503);
+  expect(await response.json()).toEqual({
+    error: {
+      code: "GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN",
+      message: "GUEST_ADOPTION_CANCEL_OUTCOME_UNKNOWN",
+    },
+  });
 });

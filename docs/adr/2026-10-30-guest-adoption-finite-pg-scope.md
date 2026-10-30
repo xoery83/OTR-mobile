@@ -22,3 +22,12 @@ required before runtime integration and the precise Owner execution Gate.
 See `docs/ops/auth-phase1-20261028/composite-publication-candidate/` for exact local
 candidate functions, synthetic real-PG evidence and explicit limitations. The
 internal authority-NONE executor result cannot release Guest originals.
+
+The next disposable-only candidate adds the immutable terminal journal first for
+cancellation and read recovery. Grant issuance, staging, execution and cancellation
+serialize on the same adoption advisory lock before row locks. Cancellation must
+refuse any already-created source Trip or active held execution scope. Existing
+committed outcomes can be read after the operational grant expires or Adoption is
+turned off, using the same normal/current Account binding. This preserves UNKNOWN
+recovery without granting new publication authority. Publication remains closed
+until its complete owning receipt and readback validation is implemented.
