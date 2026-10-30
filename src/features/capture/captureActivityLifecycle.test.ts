@@ -12,6 +12,9 @@ const ui = vi.hoisted(() => ({
   list: vi.fn(),
   activities: vi.fn(),
   generation: 0,
+  appState: "active",
+  appStateChange: null as null | ((state: string) => void),
+  removeAppState: vi.fn(),
   open: vi.fn(),
   hide: vi.fn(),
   back: vi.fn(),
@@ -47,6 +50,15 @@ vi.mock("@/data/operations/defaultCaptureSubmission", () => ({
   listDefaultCaptureJobs: ui.list,
 }));
 vi.mock("react-native", () => ({
+  AppState: {
+    get currentState() {
+      return ui.appState;
+    },
+    addEventListener: (_event: string, listener: (state: string) => void) => {
+      ui.appStateChange = listener;
+      return { remove: ui.removeAppState };
+    },
+  },
   Text: "span",
   ScrollView: "main",
   StyleSheet: { create: (v: unknown) => v },
@@ -92,6 +104,8 @@ beforeEach(() => {
   ui.cleanup = null;
   vi.resetAllMocks();
   ui.generation = 0;
+  ui.appState = "active";
+  ui.appStateChange = null;
   ui.activities.mockResolvedValue({});
 });
 it("loads 0/1/N real Jobs; cursor pagination, rapid taps and manual refresh reuse the read seam", async () => {
@@ -324,4 +338,81 @@ it("only pending Batch contexts are polled; terminal and unavailable rows do not
     ui.activities.mock.calls[1][0].map((job: CaptureJobReadModel) => job.batch.batchId),
   ).toEqual(["batch-1"]);
   expect(ui.activities.mock.calls[1]).toHaveLength(3); // No completion/Result callback, prepare or dispatch seam.
+});
+
+it("pauses background reads and resumes the same Batch without dispatch on foreground", async () => {
+  vi.useFakeTimers();
+  ui.list.mockResolvedValue(page(1));
+  ui.activities
+    .mockResolvedValueOnce({ "batch-0": activity("PROCESSING") })
+    .mockResolvedValueOnce({ "batch-0": activity("RESULTS_READY") });
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  expect(ui.appStateChange).not.toBeNull();
+  ui.appStateChange!("background");
+  await vi.advanceTimersByTimeAsync(30000);
+  render().onRefresh();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(ui.activities).toHaveBeenCalledTimes(1);
+  expect(ui.list).toHaveBeenCalledTimes(1);
+  ui.appStateChange!("active");
+  await vi.waitFor(() =>
+    expect(render().taskActivities["batch-0"].state).toBe("RESULTS_READY"),
+  );
+  expect(ui.activities).toHaveBeenCalledTimes(2);
+  ui.cleanup!();
+  expect(ui.removeAppState).toHaveBeenCalledOnce();
+});
+
+it("does not start Task GETs from a list that completes after backgrounding", async () => {
+  vi.useFakeTimers();
+  let finish!: (value: CaptureJobReadModel[]) => void;
+  ui.list.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.advanceTimersByTimeAsync(0);
+  ui.appStateChange!("background");
+  finish(page(1));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(ui.activities).not.toHaveBeenCalled();
+  ui.list.mockResolvedValueOnce(page(1));
+  ui.activities.mockResolvedValueOnce({ "batch-0": activity("RESULTS_READY") });
+  ui.appStateChange!("active");
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  expect(render().taskActivities["batch-0"].state).toBe("RESULTS_READY");
+});
+it("fences an in-flight poll in background and coalesces foreground refresh", async () => {
+  vi.useFakeTimers();
+  ui.list.mockResolvedValue(page(1));
+  let finish!: (value: unknown) => void;
+  ui.activities
+    .mockResolvedValueOnce({ "batch-0": activity("PROCESSING") })
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    )
+    .mockResolvedValueOnce({ "batch-0": activity("RESULTS_READY") });
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  await vi.advanceTimersByTimeAsync(5000);
+  const pollCurrent = ui.activities.mock.calls[1][1] as () => boolean;
+  ui.appStateChange!("background");
+  expect(pollCurrent()).toBe(false);
+  finish({ "batch-0": activity("RESULTS_READY") });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(render().taskActivities["batch-0"].state).toBe("PROCESSING");
+  ui.appStateChange!("active");
+  await vi.waitFor(() =>
+    expect(render().taskActivities["batch-0"].state).toBe("RESULTS_READY"),
+  );
+  expect(ui.activities).toHaveBeenCalledTimes(3);
 });

@@ -2,7 +2,7 @@ import type { UniversalTaskActivity } from "@/data/api/universalImportContracts"
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { AppState, ScrollView, StyleSheet } from "react-native";
 import {
   captureProcessingSummary,
   captureLocalInterpretationSummary,
@@ -68,6 +68,7 @@ export function CaptureActivity({
   const accountGeneration = useRef(getAccountGeneration());
   const epoch = useRef(0);
   const active = useRef(false);
+  const foreground = useRef(AppState.currentState === "active");
   const running = useRef(false);
   const reloadRequested = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -110,7 +111,7 @@ export function CaptureActivity({
   };
   const schedulePoll = () => {
     clearPoll();
-    if (scopeCurrent() && pendingJobs().length)
+    if (scopeCurrent() && foreground.current && pendingJobs().length)
       timer.current = setTimeout(() => void poll(), 5000);
   };
   const settled = () => {
@@ -123,12 +124,13 @@ export function CaptureActivity({
   };
   const poll = async () => {
     timer.current = undefined;
-    if (!scopeCurrent() || running.current) return;
+    if (!scopeCurrent() || !foreground.current || running.current) return;
     const pending = pendingJobs();
     if (!pending.length) return;
     running.current = true;
     const request = ++epoch.current;
-    const current = () => scopeCurrent() && request === epoch.current;
+    const current = () =>
+      scopeCurrent() && foreground.current && request === epoch.current;
     try {
       await readActivities(pending, current);
     } catch {
@@ -138,7 +140,8 @@ export function CaptureActivity({
     }
   };
   const load = async (older = false, expectedInventory = jobs) => {
-    if (!scopeCurrent() || expectedInventory !== inventory.current) return;
+    if (!scopeCurrent() || !foreground.current || expectedInventory !== inventory.current)
+      return;
     if (running.current) {
       if (!older) reloadRequested.current = true;
       return;
@@ -146,7 +149,8 @@ export function CaptureActivity({
     clearPoll();
     running.current = true;
     const request = ++epoch.current;
-    const current = () => scopeCurrent() && request === epoch.current;
+    const current = () =>
+      scopeCurrent() && foreground.current && request === epoch.current;
     setLoading(true);
     setError(false);
     try {
@@ -182,6 +186,13 @@ export function CaptureActivity({
   });
   useEffect(() => {
     active.current = true;
+    foreground.current = AppState.currentState === "active";
+    const appState = AppState.addEventListener("change", (state) => {
+      const wasForeground = foreground.current;
+      foreground.current = state === "active";
+      if (!foreground.current) clearPoll();
+      else if (!wasForeground && scopeCurrent()) refresh.current();
+    });
     const unsubscribe = subscribeCaptureProcessingActivity((accountId) => {
       if (!expectedAccountId || accountId === expectedAccountId) refresh.current();
     });
@@ -197,6 +208,7 @@ export function CaptureActivity({
       ++requests.current;
       running.current = false;
       unsubscribe();
+      appState.remove();
     };
     // Host remounts on Account/context/focus changes; locale and theme keep the list.
     // eslint-disable-next-line react-hooks/exhaustive-deps

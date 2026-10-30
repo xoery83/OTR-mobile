@@ -23,9 +23,22 @@ Next is approved CLOSED install/preflight, same original-image interpretation,
 normal Review/Admission, independent readback and Native cold recovery. After any
 PNG artifact exists, close new writes but keep compatible image/readers, original
 and receipts; never apply the pre-use inverse or old incompatible4d image.
-Prepared UX remains LOCAL_PASS/not installed: childee0d0451+46f03c78 Activity
-pending GET refresh/sheet dedup (63 checks), Root93b3aeb9 accepted-receipt display
-when Save controls close (39 checks). Integrate/device-accept these after Photo.
+Import-only UX is integrated locally:8d1e455e+54ea1625 mounted Activity pending
+GET refresh/sheet header dedup, plus foreground lifecycle repair. Backgrounding
+stops new reads, late list/poll results are fenced, foreground resumes the same
+Batch; single-flight/Account-generation/terminal stop are retained. Root93b3aeb9
+shows accepted receipts even when Save controls close. Latest focused Activity /
+Photo64, existing Activity/Results67 and Documents/Updates/Review47 checks PASS;
+typecheck, UI guard and scoped lint PASS. Independent review NO_BLOCKER after
+fixing late background GETs. These are LOCAL_PASS, not installed/device accepted.
+No Photo authority, model call, new Source or Save was performed. Photo remains
+blocked on the single77a6febb protected packet; existing pending request stays
+pending. Do not treat a generic continuation as approval of new Schema/EXEC.
+Core authorized-version endpoint RED tests are preserved in ignored
+.env.core-authorized-version-red-20261031, not lost or deployed. Native received
+exclusive Writer for only the agreed PG-reader method/HTTP GET/tests in its own
+worktree; Root retains final review and serial deployment. No shared Navigation,
+Sync, Session or main update in this Import UI checkpoint.
 
 # Native-05/06 — iPad business slice and closed trigger, 31 October 2026
 
