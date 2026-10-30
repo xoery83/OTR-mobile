@@ -1,0 +1,14 @@
+{
+  "status": "NO_BLOCKER_SOURCE_CANDIDATE_ONLY",
+  "reviewer": "independent auth_phase1_review",
+  "baseCommit": "f7ceb588",
+  "repair": "Unified SDK fetch rejects redirects for Auth and every private Profile call; no fallback after rejection",
+  "independentChecks": "3 suites38 PASS; diff check PASS",
+  "reusedEvidence": "LOCAL_PG_RESULT.json; SQL unchanged",
+  "notExecuted": [
+    "Hosted installation",
+    "runtime route mounting",
+    "Native Profile E2E"
+  ],
+  "permissions": "New tables/RLS/GRANT remain a future exact Owner Gate candidate"
+}

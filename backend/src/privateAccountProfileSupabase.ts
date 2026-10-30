@@ -44,7 +44,7 @@ export function createPrivateAccountProfilePort(config: {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       global: {
         headers: { Authorization: `Bearer ${scope.accessToken}` },
-        fetch: (input, init) => wire(input, { ...init, signal }),
+        fetch: (input, init) => wire(input, { ...init, signal, redirect: "error" }),
       },
     });
     const identity = await database.auth.getUser(scope.accessToken);

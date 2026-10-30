@@ -22,6 +22,7 @@ function fixture(mode = "existing") {
     expect(url.origin).toBe(origin);
     expect(request.headers.get("Authorization")).toBe("Bearer fixture-normal-session");
     expect(request.headers.get("apikey")).toBe("fixture-public-key");
+    expect(request.redirect).toBe("error");
     if (url.pathname === "/auth/v1/user")
       return Response.json({
         id: mode === "foreign identity" ? randomUUID() : accountId,
@@ -30,6 +31,7 @@ function fixture(mode = "existing") {
       });
     expect(url.pathname).not.toBe("/rest/v1/profiles");
     if (url.pathname === "/rest/v1/rpc/account_private_profile_save") {
+      if (mode === "redirect rejected") throw TypeError("fixture redirect rejected");
       if (mode === "conflict")
         return Response.json(
           { code: "40001", message: "private SQL detail" },
@@ -194,4 +196,16 @@ it("rejects a non-DEV configuration without any credential or network access", (
       publishableKey: "fixture",
     }),
   ).toThrow("PROFILE_DEV_CONFIG_REQUIRED");
+});
+
+it("does not follow a rejected private-write redirect or fall back to public profile storage", async () => {
+  const f = fixture("redirect rejected");
+  await expect(f.port.save(f.scope, f.input, f.signal)).rejects.toMatchObject({
+    status: 503,
+  });
+  expect(f.calls).toHaveLength(2);
+  expect(f.calls.map((request) => new URL(request.url).pathname)).toEqual([
+    "/auth/v1/user",
+    "/rest/v1/rpc/account_private_profile_save",
+  ]);
 });

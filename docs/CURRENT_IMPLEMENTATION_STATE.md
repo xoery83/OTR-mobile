@@ -114,10 +114,12 @@ Independent private Profile field preparation only: optional display name and
 split/unsplit travel-document name codec preserves original Unicode and independent
 values, accepts empty profile, rejects credential/identity fields and unstoreable NUL.
 12 field tests PASS. Default-unmounted Profile HTTP/normal-JWT Supabase adapter and
-private persistence SQL candidate now have37 node checks plus8 real local PG groups
+private persistence SQL candidate now have38 node checks plus8 real local PG groups
 (RLS cross-Account, CAS/concurrency, idempotency, receipt fault rollback); final types
 PASS after removing redundant SDK abortSignal calls (global fetch already binds the
-request signal). No actual Hosted private storage, permissions, UI, registration
+request signal). Independent review found a private-body redirect risk; the unified
+fetch now rejects redirects, with every Auth/PostgREST call checked and no fallback
+after rejection. No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See
 ops/auth-private-profile-20261031/. AKA/other optional fields remain future scope.
