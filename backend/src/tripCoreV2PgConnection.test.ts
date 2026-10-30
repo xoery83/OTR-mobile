@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import {
   createCorePgConnection,
   createSourcePgConnection,
+  createSourcePdfPgConnection,
   createTripPgConnection,
   createPersonPgConnection,
 } from "./tripCoreV2PgConnection";
@@ -115,4 +116,56 @@ it("Person uses only its reserved principal through the verified TLS primary dri
   await expect(
     createPersonPgConnection(config).withLease(async () => undefined),
   ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
+});
+
+it("PDF decoding gets a bounded Source-only lease while normal Source timeouts remain unchanged", async () => {
+  const pdf = createSourcePdfPgConnection;
+  f.principal = "otr_trip_source_command_gateway";
+  await pdf(config).withLease(async (lease) => {
+    await lease.query("BEGIN");
+    await lease.query("COMMIT");
+  });
+  expect(f.config.user).toBe("otr_trip_source_command_gateway");
+  expect(f.config.query_timeout).toBe(5000);
+  expect(f.config.options).toBe(
+    "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=65000",
+  );
+  await createSourcePgConnection(config).withLease(async (lease) => {
+    await lease.query("BEGIN");
+    await lease.query("COMMIT");
+  });
+  expect(f.config.options).toBe(
+    "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
+  );
+});
+
+it("PDF total lease retires at 75s and cannot send late statements", async () => {
+  vi.useFakeTimers();
+  try {
+    f.principal = "otr_trip_source_command_gateway";
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const outcome = createSourcePdfPgConnection(config)
+      .withLease(async (lease) => {
+        await lease.query("BEGIN");
+        await blocked;
+        await lease.query("COMMIT");
+      })
+      .then(
+        () => "unexpected",
+        (error: Error) => error.message,
+      );
+    await vi.advanceTimersByTimeAsync(31000);
+    expect(f.destroy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(44000);
+    expect(await outcome).toBe("CORE_CONNECTION_TIMEOUT");
+    expect(f.destroy).toHaveBeenCalled();
+    release();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.queries).not.toContain("COMMIT");
+  } finally {
+    vi.useRealTimers();
+  }
 });

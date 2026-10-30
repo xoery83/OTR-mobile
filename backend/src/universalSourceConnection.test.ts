@@ -2,7 +2,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { afterEach, expect, it, vi } from "vitest";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
-import { serializeUniversalSourceConnection } from "./universalSourceConnection";
+import {
+  serializeUniversalSourceConnection,
+  serializeUniversalSourceConnections,
+} from "./universalSourceConnection";
 
 function fixture() {
   let active = 0,
@@ -27,6 +30,7 @@ function fixture() {
   });
   const current = vi.fn();
   return {
+    connection,
     serial: serializeUniversalSourceConnection(connection, current),
     blocked,
     release,
@@ -123,10 +127,37 @@ it.skipIf(!fixtureContainer)(
         return work({} as CorePgLease);
       },
     };
-    const serial = serializeUniversalSourceConnection(connection, () => {});
+    const [normal, pdf] = serializeUniversalSourceConnections(
+      [connection, { withLease: connection.withLease }],
+      () => {},
+    );
     await expect(
-      Promise.all([serial.withLease(async () => 1), serial.withLease(async () => 2)]),
-    ).resolves.toEqual([1, 2]);
+      Promise.all([
+        pdf.withLease(async () => 1),
+        normal.withLease(async () => 2),
+        pdf.withLease(async () => 3),
+      ]),
+    ).resolves.toEqual([1, 2, 3]);
   },
   10000,
 );
+
+it("normal and PDF handles share one FIFO and one backlog under connlimit=1", async () => {
+  const f = fixture();
+  const [normal, pdf] = serializeUniversalSourceConnections(
+    [f.connection, { withLease: f.connection.withLease }],
+    f.current,
+  );
+  const first = pdf.withLease(async () => {
+    await f.blocked;
+    return "PDF";
+  });
+  const next = normal.withLease(async () => "TXT");
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(f.workStarted).toHaveBeenCalledTimes(1);
+  f.release();
+  expect(await Promise.all([first, next])).toEqual(["PDF", "TXT"]);
+  expect(f.maximum()).toBe(1);
+});

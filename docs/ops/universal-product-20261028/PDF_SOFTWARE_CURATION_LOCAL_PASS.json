@@ -1,0 +1,44 @@
+{
+  "status": "LOCAL_PASS_NOT_PDF_E2E",
+  "base": "f92cb022da31c90b52992504a7125d4e9a388baa",
+  "scope": "software-only optional PDF runtime and Native continuation; no protected SQL, raw catalog or private history",
+  "tests": {
+    "vitest": {
+      "suitesPassed": 33,
+      "suitesSkipped": 1,
+      "passed": 373,
+      "skipped": 4
+    },
+    "closeRollback": 18,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "backendBuild": "PASS",
+    "captureBuild": "PASS",
+    "realNodeStartup": "PASS_INCLUDED_IN_VITEST",
+    "changedCodeLint": {
+      "errors": 0,
+      "existingWarnings": 4
+    }
+  },
+  "review": {
+    "status": "NO_BLOCKER",
+    "reviewer": "independent p1_source_review_independent",
+    "checks": [
+      "allowlist parity",
+      "local import completeness",
+      "normal Auth/Trip compatibility",
+      "default closure",
+      "UNKNOWN no resend"
+    ]
+  },
+  "fixture": {
+    "bytes": 1676,
+    "sha256": "f58061aa535c7a5585c4c953890c5d387cf20656cca7129e36861beb82ee1758",
+    "gitBinary": true
+  },
+  "runtimeActivation": false,
+  "protectedDatabaseChange": false,
+  "providerCall": false,
+  "pdfFormalSave": "NOT_YET_VERIFIED",
+  "photoVision": "NOT_IMPLEMENTED"
+}

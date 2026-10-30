@@ -156,3 +156,46 @@ it("caps actual JSON bytes before invoking an owning mutation", async () => {
   expect(response.status).toBe(413);
   expect(f.port.seal).not.toHaveBeenCalled();
 });
+
+it("denied Trip never constructs a scoped port", async () => {
+  const f = fixture(),
+    factory = vi.fn();
+  const response = await sourcePdfV2Boundary(
+    f.request("seal", f.seal),
+    f.actor,
+    async () => false,
+    undefined,
+    factory,
+  );
+  expect(response.status).toBe(403);
+  expect(factory).not.toHaveBeenCalled();
+});
+it("a closed request composition never falls back to the legacy port", async () => {
+  const f = fixture();
+  const response = await sourcePdfV2Boundary(
+    f.request("seal", f.seal),
+    f.actor,
+    async () => true,
+    f.port as never,
+    async () => undefined,
+  );
+  expect(response.status).toBe(503);
+  expect(f.port.seal).not.toHaveBeenCalled();
+});
+it.each([false, true])(
+  "scoped port always closes after request processing (invalid=%s)",
+  async (invalid) => {
+    const f = fixture(),
+      close = vi.fn();
+    f.port.seal.mockResolvedValue({ synthetic: true });
+    const response = await sourcePdfV2Boundary(
+      f.request("seal", invalid ? {} : f.seal),
+      f.actor,
+      async () => true,
+      undefined,
+      async () => ({ port: f.port as never, close }),
+    );
+    expect(response.status).toBe(invalid ? 422 : 200);
+    expect(close).toHaveBeenCalledOnce();
+  },
+);

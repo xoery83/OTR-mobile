@@ -49,6 +49,7 @@ function fixture() {
     accountGeneration: 3,
   };
   const authority = {
+    status: vi.fn(async () => "UNKNOWN"),
     prepare: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
     admit: vi.fn(async () => ({ context })),
     resolveReserved: vi.fn(async () => context),
@@ -377,4 +378,30 @@ it("PREPARE HTTP uses the frozen tuple and rejects upload fields", async () => {
       })
     ).status,
   ).toBe(422);
+});
+
+it("status returns only a scoped read observation, never a reservation", async () => {
+  const f = fixture();
+  const call = (method: string) =>
+    sourcePdfV4PreparationBoundary(
+      new Request(
+        `https://dev.example.invalid/v2/trips/${f.identity.tripId}/sources/${f.identity.sourceId}/representations/${f.identity.representationId}/pdf-v4/${f.identity.operationId}/status`,
+        { method },
+      ),
+      f.actor,
+      async () => true,
+      { owner: f.owner, preparation: {} as never, reservation: f.port },
+    );
+  const response = await call("GET");
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({
+    sourceId: f.identity.sourceId,
+    representationId: f.identity.representationId,
+    operationId: f.identity.operationId,
+    observation: "STATUS_OBSERVED",
+    status: "UNKNOWN",
+  });
+  expect(f.authority.status).toHaveBeenCalledExactlyOnceWith(f.actor, f.identity);
+  expect(f.authority.admit).not.toHaveBeenCalled();
+  expect((await call("POST")).status).toBe(405);
 });

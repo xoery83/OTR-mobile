@@ -175,3 +175,29 @@ describe.skipIf(process.platform === "win32")(
     });
   },
 );
+it.runIf(process.env.OTR_PDF_WORKER_SMOKE === "1")(
+  "fixed real Linux decoder roundtrips the private socket without Source authority",
+  async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { createHash } = await import("node:crypto");
+    const { verifySourcePdfV2LinuxBytes } = await import("./sourcePdfV2LinuxVerifier");
+    const { createSourcePdfV2WorkerLease } = await import("./sourcePdfV2LinuxWorker");
+    const dir = await mkdtemp(join("/private/tmp", "otr-pdf-real-worker-"));
+    cleanup.push(() => rm(dir, { recursive: true, force: true }));
+    const leased = createSourcePdfV2WorkerLease(join(dir, "decoder.lock"));
+    const run = vi.fn(leased);
+    const socket = await listen(createSourcePdfV2WorkerServer(run));
+    const bytes = await readFile(
+      new URL("./__fixtures__/source-pdf/synthetic-roundtrip.pdf", import.meta.url),
+    );
+    const result = await verifySourcePdfV2LinuxBytes(bytes, socket.read);
+    expect(result.originalSha256).toBe(createHash("sha256").update(bytes).digest("hex"));
+    expect(result.originalByteCount).toBe(bytes.length);
+    expect(result.text).toContain("NZ1 AKL->CHC 2026-12-17");
+    expect(result.text).toContain("NZ2 CHC->AKL 2026-12-20");
+    expect(result.pages).toHaveLength(2);
+    expect(run).toHaveBeenCalledOnce();
+    expect(result.profileId).toBe("OTR_PDF_QPDF_POPPLER_V2");
+  },
+  45000,
+);

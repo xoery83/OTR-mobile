@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from "node:crypto";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
+import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
   createUniversalBatchSource,
@@ -102,4 +103,85 @@ it("fences permission revocation after owning readback and keeps identities scop
   expect(universalBatchIdentity(f.actor, f.trip, f.input.batchId, "task")).not.toBe(
     universalBatchIdentity(randomUUID(), f.trip, f.input.batchId, "task"),
   );
+});
+
+it("reuses a sealed PDF Run for the same immutable original without another begin", async () => {
+  const f = fixture(),
+    original = f.input.inputs[0],
+    base = await f.source.prepare(f.actor, f.trip, f.input),
+    pdfSource = {
+      original: {
+        representationId: original.representation_id,
+        sha256: original.payload_sha256,
+        byteCount: original.byte_count,
+      },
+      sealSha256: "d".repeat(64),
+      pageMapSha256: "e".repeat(64),
+      transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+    },
+    derived = {
+      ...base,
+      inputs: [
+        {
+          ...original,
+          representation_id: randomUUID(),
+          payload_sha256: "f".repeat(64),
+          byte_count: 50,
+          pdfSource,
+        },
+      ],
+    };
+  f.setBinding(derived);
+  expect(await f.source.prepare(f.actor, f.trip, f.input)).toEqual(derived);
+  expect(f.query.mock.calls.filter(([q]) => q.includes("begin_sustained"))).toHaveLength(
+    1,
+  );
+  for (const changed of [
+    { ...original, representation_id: randomUUID() },
+    { ...original, payload_sha256: "c".repeat(64) },
+    { ...original, byte_count: original.byte_count + 1 },
+  ]) {
+    await expect(
+      f.source.prepare(f.actor, f.trip, { ...f.input, inputs: [changed] }),
+    ).rejects.toThrow("REUSED");
+  }
+  await expect(
+    f.source.prepare(f.actor, f.trip, {
+      ...f.input,
+      inputs: [{ ...original, pdfSource }],
+    }),
+  ).rejects.toThrow();
+});
+
+it("rejects malformed owning PDF normalization before reuse", async () => {
+  const f = fixture(),
+    base = await f.source.prepare(f.actor, f.trip, f.input),
+    original = base.inputs[0];
+  const proof = {
+    original: {
+      representationId: original.representation_id,
+      sha256: original.payload_sha256,
+      byteCount: original.byte_count,
+    },
+    sealSha256: "d".repeat(64),
+    pageMapSha256: "e".repeat(64),
+    transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+  };
+  for (const bad of [
+    { ...original, pdfSource: proof },
+    {
+      ...original,
+      representation_id: randomUUID(),
+      byte_count: 262145,
+      pdfSource: proof,
+    },
+    {
+      ...original,
+      representation_id: randomUUID(),
+      pdfSource: { ...proof, transformOptionsSha256: "f".repeat(64) },
+    },
+  ]) {
+    f.setBinding({ ...base, inputs: [bad] });
+    await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toThrow();
+  }
 });

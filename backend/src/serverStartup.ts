@@ -56,6 +56,8 @@ export function startDevBackend(
     | "captureRemoteProcessing"
     | "universalImportPort"
     | "universalRuntimeForRequest"
+    | "sourcePdfV4PreparationForRequest"
+    | "sourcePdfV2ForRequest"
     | "universalOriginalSourcePort"
   > & {
     publicationCatalogConnection?: PublicationCatalogConnection & {
@@ -118,6 +120,8 @@ export function startDevBackend(
     documentOriginalReader: startOptions.documentOriginalReader,
     universalImportPort: startOptions.universalImportPort,
     universalRuntimeForRequest: startOptions.universalRuntimeForRequest,
+    sourcePdfV4PreparationForRequest: startOptions.sourcePdfV4PreparationForRequest,
+    sourcePdfV2ForRequest: startOptions.sourcePdfV2ForRequest,
     universalOriginalSourcePort: startOptions.universalOriginalSourcePort,
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));

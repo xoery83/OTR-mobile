@@ -1,3 +1,4 @@
+import { assertSourcePdfV2Profile } from "./sourcePdfV2Contracts";
 import { enterSourcePdfContinuousScope } from "./sourcePdfContinuousScope";
 import {
   sourcePdfV2SealRequestSchema as sourcePdfSealRequestSchema,
@@ -24,6 +25,7 @@ export function createSourcePdfV2Authority(
   runWorker?: Parameters<typeof createSourcePdfV2LinuxVerifier>[1],
   options: { continuousSourceScope?: true } = {},
 ) {
+  assertSourcePdfV2Profile();
   const verify = createSourcePdfV2LinuxVerifier(readOriginal, runWorker);
   return {
     async seal(accountId: string, tripId: string, input: SourcePdfSealRequest) {

@@ -3,3 +3,4 @@
 
 # Retained PDF custody fixtures must preserve exact bytes.
 backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf binary
+output/pdf/universal-p6-activity-qa.pdf binary

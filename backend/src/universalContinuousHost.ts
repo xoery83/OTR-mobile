@@ -296,7 +296,7 @@ export function createUniversalContinuousHost(deps: {
           payload_sha256: p.payload_sha256,
           byte_count: p.byte_count,
           input_id: p.id,
-          transform_sha256: null,
+          transform_sha256: p.pdfSource?.transformOptionsSha256 ?? null,
         })),
       });
       const draft = await buildUniversalRegisteredTaskDraft(binding, manifest, selection);

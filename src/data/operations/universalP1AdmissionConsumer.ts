@@ -1,3 +1,4 @@
+import { PDF_UPLOAD_QPDF_V4 } from "../../domain/trip/sourcePdfV2Upload";
 import { ApiClientError } from "../api/client";
 import { universalPreparedText } from "../../domain/capture/universalPreparedText";
 import { universalP1Identity } from "../../domain/trip/universalImportIdentity";
@@ -262,6 +263,12 @@ export async function readUniversalP1ReviewOriginal(
     readCapture(
       id: string,
     ): Promise<{ capture: { accountId: string; payloadId: string }; bytes: Uint8Array }>;
+    previewOriginal?(identity: {
+      captureId: string;
+      payloadId: string;
+      sha256: string;
+      byteCount: number;
+    }): Promise<void>;
   },
 ) {
   const current = async () => {
@@ -279,12 +286,14 @@ export async function readUniversalP1ReviewOriginal(
   if (sources.length !== 1) throw Error("SOURCE_RELATION_QUALIFICATION_REQUIRED");
   const source = sources[0],
     input = model.inputs.find((i) => i.id === source.inputId);
+  const originalHash = source.pdfSource?.original.sha256 ?? source.originalSha256;
+  const maximum = source.pdfSource ? PDF_UPLOAD_QPDF_V4.maxByteCount : 65536;
   if (
     !input?.captureId ||
     !input.payloadId ||
     input.state !== "ACCEPTED" ||
     input.contentByteCount === null ||
-    input.contentByteCount > 65536
+    input.contentByteCount > maximum
   )
     throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
   const retained = await deps.readCapture(input.captureId);
@@ -293,11 +302,23 @@ export async function readUniversalP1ReviewOriginal(
     retained.capture.accountId !== result.accountId ||
     retained.capture.payloadId !== input.payloadId ||
     retained.bytes.length !== input.contentByteCount ||
-    retained.bytes.length > 65536 ||
-    (await deps.hash(retained.bytes)) !== source.originalSha256 ||
-    source.originalSha256 !== input.contentSha256
+    retained.bytes.length > maximum ||
+    (await deps.hash(retained.bytes)) !== originalHash ||
+    originalHash !== input.contentSha256
   )
     throw Error("IMPORT_EVIDENCE_INVALID");
+  if (source.pdfSource) {
+    if (!deps.previewOriginal || !input.originalFilename)
+      throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+    await deps.previewOriginal({
+      captureId: input.captureId,
+      payloadId: input.payloadId,
+      sha256: originalHash,
+      byteCount: retained.bytes.length,
+    });
+    await current();
+    return input.originalFilename;
+  }
   const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
     retained.bytes,
   );

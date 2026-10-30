@@ -1,3 +1,4 @@
+import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import { z } from "zod";
 import { verifyUtf8TextFile } from "@/domain/capture/utf8TextFile";
@@ -27,6 +28,18 @@ async function admissionKey(batchId: string, inputId: string, hash: ImportHash) 
     (await hash(new TextEncoder().encode(canonicalEventJson([batchId, inputId]))))
   );
 }
+// First PDF slice is one explicit original; mixed/image routing remains unchanged.
+function isSingleEnabledPdf(
+  job: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+  profile: typeof PDF_CAPTURE_ORIGINAL_PROFILE | undefined,
+) {
+  return (
+    profile === PDF_CAPTURE_ORIGINAL_PROFILE &&
+    job.inputs.length === 1 &&
+    job.inputs[0].kind === "FILE" &&
+    job.inputs[0].declaredContentType === "application/pdf"
+  );
+}
 // Source command IDs are created locally once and retained by the existing owning binding.
 // Reopen derives the same key from real C3 identities; no Task/Run identity is minted.
 export async function recoverUniversalOriginalPlans(
@@ -36,13 +49,17 @@ export async function recoverUniversalOriginalPlans(
 ) {
   await assertAccountRequestContext(context, deps.getAccountId);
   const job = await deps.submissions.reopen(jobId, context);
-  const supported = job.inputs.filter((i) => !isUnsupportedUniversalInputMetadata(i));
+  const pdf = isSingleEnabledPdf(job, deps.pendingPdfProfile);
+  const supported = job.inputs.filter(
+    (i) => pdf || !isUnsupportedUniversalInputMetadata(i),
+  );
   if (
     !job.allInputsAccepted ||
     job.batch.accountId !== context.accountId ||
     !supported.length ||
     supported.some(
       (i) =>
+        !pdf &&
         i.kind !== "TEXT" &&
         !(i.kind === "FILE" && i.declaredContentType === "text/plain"),
     )
@@ -213,6 +230,7 @@ export async function prepareUniversalOriginalBatch(
   deps: {
     getAccountId(): Promise<string>;
     hash: ImportHash;
+    pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
     submissions: ReturnType<typeof createCaptureSubmissionRepository>;
     captures: ReturnType<typeof createLocalCaptureInboxRepository>;
     sources: ReturnType<typeof createCaptureSourceAdmissionRepository>;
@@ -235,6 +253,7 @@ export async function prepareUniversalOriginalBatch(
   await current();
   if (job.batch.accountId !== context.accountId || !job.allInputsAccepted)
     throw new Error("UNIVERSAL_CAPTURE_BATCH_NOT_READY");
+  const pdf = isSingleEnabledPdf(job, deps.pendingPdfProfile);
   const selected = plans.map((p) => {
     const input = job.inputs.find((i) => i.id === p.inputId);
     if (
@@ -242,7 +261,8 @@ export async function prepareUniversalOriginalBatch(
       !input.captureId ||
       !input.payloadId ||
       input.state !== "ACCEPTED" ||
-      (input.kind !== "TEXT" &&
+      (!pdf &&
+        input.kind !== "TEXT" &&
         !(input.kind === "FILE" && input.declaredContentType === "text/plain"))
     )
       throw new Error("UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE");

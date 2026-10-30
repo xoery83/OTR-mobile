@@ -1,3 +1,4 @@
+import { assertSourcePdfV2Profile } from "./sourcePdfV2Contracts";
 import { enterSourcePdfContinuousScope } from "./sourcePdfContinuousScope";
 import { randomUUID } from "node:crypto";
 import {
@@ -31,6 +32,7 @@ export function createSourcePdfV2Registration(
   runWorker?: Parameters<typeof createSourcePdfV2LinuxVerifier>[1],
   options: { continuousSourceScope?: true } = {},
 ) {
+  assertSourcePdfV2Profile();
   const verify = createSourcePdfV2LinuxVerifier(readOriginal, runWorker);
   async function transaction<T>(work: (lease: CorePgLease) => Promise<T>) {
     return connection.withLease(async (lease) => {
