@@ -48,6 +48,37 @@ async function fixture() {
 }
 
 describe("Guest verification in the existing secure Account slot", () => {
+  it("rejects a refreshed revocation credential belonging to another Account", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    let revoked = false;
+    await expect(f.repo.guestVerification.revoke(binding, async () => { revoked = true; }, async () => session(other))).rejects.toThrow("IDENTITY_MISMATCH");
+    expect(revoked).toBe(false);
+    expect(f.entries.get(slot)).toBe(JSON.stringify(session()));
+    expect(f.entries.has(`otr.mobile.session.v2.${other}`)).toBe(false);
+    expect((await f.repo.guestVerification.read(binding)).status).toBe("REVOCATION_PENDING");
+  });
+  it.each(["before-slot", "after-slot"])("retains revocation intent through refresh storage UNKNOWN %s", async (mode) => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    const updated = { ...session(account, "rotated-unit"), accessToken: session().accessToken + "-new", expiresAt: "2099-01-01T00:00:00Z" };
+    f.fail((key, value) => {
+      if ((mode === "before-slot" && key === slot && value.includes("rotated-unit")) ||
+          (mode === "after-slot" && key === metadata && JSON.parse(value).phase === "REVOKING" && f.entries.get(slot)?.includes("rotated-unit"))) throw Error("STORAGE_UNKNOWN");
+    });
+    let revoked = false;
+    await expect(f.repo.guestVerification.revoke(binding, async () => { revoked = true; }, async () => updated)).rejects.toThrow();
+    expect(revoked).toBe(false);
+    expect((await f.repo.guestVerification.read(binding)).status).toBe("REVOCATION_PENDING");
+    f.fail();
+    await createAuthRepository(f.storage).guestVerification.revoke(binding, async (current) => {
+      expect(current).toEqual(updated);
+      revoked = true;
+    }, async () => updated);
+    expect(revoked).toBe(true);
+    expect((await f.repo.guestVerification.read(binding)).status).toBe("REVOKED");
+    expect(await f.repo.listAccounts()).toEqual([]);
+  });
   it("survives repository restart while launch remains Guest and no active Session is installed", async () => {
     const f = await fixture();
     await f.repo.guestVerification.store(binding, session());

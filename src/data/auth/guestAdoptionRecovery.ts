@@ -10,8 +10,9 @@ import {
   withAccountApplyGate,
   assertAccountRequestGeneration,
 } from "./accountRequestContext";
-import { requireCommittedGuestPrincipal } from "./authRepository";
+import { guestVerificationSession, requireCommittedGuestPrincipal } from "./authRepository";
 import { verifyGuestSourceCheckpoint } from "./guestTripP1SourceSchema";
+import { validateGuestAdoptionCancellationReceipt } from "@/domain/auth/guestAdoptionReceipt";
 import {
   guestAdoptionBindingSchema as binding,
   guestAdoptionPreparationSchema,
@@ -29,7 +30,7 @@ const transitionSchema = binding.extend({
   checkpoint: z.enum(["PUBLISH_REQUESTED", "CANCELLED"]),
   preparationSha256: digest,
 });
-export type GuestRecoveryCheckpoint = "prepared" | "publish-requested" | "cancelled";
+export type GuestRecoveryCheckpoint = "prepared" | "publish-requested" | "cancelled" | "cancellation-receipt";
 export type GuestRecoveryFiles = {
   listAttempts(): Promise<string[]>;
   read(adoptionId: string, checkpoint: GuestRecoveryCheckpoint): Promise<string | null>;
@@ -91,13 +92,14 @@ export function createGuestAdoptionRecovery(deps: {
   async function read(adoptionId: string, targetAccountId?: string) {
     coreUuid.parse(adoptionId);
     if (targetAccountId !== undefined) coreUuid.parse(targetAccountId);
-    const [raw, publish, cancel] = await Promise.all([
+    const [raw, publish, cancel, cancellation] = await Promise.all([
       deps.files.read(adoptionId, "prepared"),
       deps.files.read(adoptionId, "publish-requested"),
       deps.files.read(adoptionId, "cancelled"),
+      deps.files.read(adoptionId, "cancellation-receipt"),
     ]);
     if (raw === null) {
-      if (publish !== null || cancel !== null)
+      if (publish !== null || cancel !== null || cancellation !== null)
         throw Error("GUEST_ADOPTION_RECOVERY_ORPHAN");
       return null;
     }
@@ -117,17 +119,38 @@ export function createGuestAdoptionRecovery(deps: {
       )
         throw Error("GUEST_ADOPTION_RECOVERY_CHECKPOINT_PIN");
     }
-    if (publish !== null && cancel !== null)
+    let cancellationReceipt;
+    if (cancellation !== null) {
+      if (publish === null) throw Error("GUEST_ADOPTION_RECOVERY_ORPHAN");
+      cancellationReceipt = await validateCancellation(JSON.parse(cancellation), prepared);
+      if (canonical(cancellationReceipt) !== cancellation)
+        throw Error("GUEST_ADOPTION_RECOVERY_NONCANONICAL");
+    }
+    if (publish !== null && cancel !== null && !cancellationReceipt)
       throw Error("GUEST_ADOPTION_RECOVERY_CONFLICT");
     return {
       ...prepared,
+      ...(cancellationReceipt ? { cancellationReceipt } : {}),
       nextAction:
-        publish !== null
-          ? ("QUERY_SERVER_STATUS" as const)
-          : cancel !== null
+        cancel !== null
             ? ("REMAIN_GUEST" as const)
-            : ("RESUME_PREFLIGHT" as const),
+            : publish !== null
+              ? ("QUERY_SERVER_STATUS" as const)
+              : ("RESUME_PREFLIGHT" as const),
     };
+  }
+  async function validateCancellation(input: unknown, prepared: Awaited<ReturnType<typeof checkedPreparation>>) {
+    const p = prepared.preparation;
+    const receipt = await validateGuestAdoptionCancellationReceipt(input, {
+      contractVersion: 1,
+      adoptionId: p.adoptionId,
+      sourceGuestLocalId: p.sourceGuestLocalId,
+      targetAccountId: p.targetAccountId,
+      inventorySha256: p.inventorySha256,
+    }, tripCoreSha256Hex);
+    if (receipt.preparationSha256 !== prepared.preparationSha256 || !receipt.planSha256)
+      throw Error("GUEST_ADOPTION_CANCELLATION_CHECKPOINT_MISMATCH");
+    return receipt;
   }
   async function immutable(
     adoptionId: string,
@@ -145,6 +168,37 @@ export function createGuestAdoptionRecovery(deps: {
       throw Error("GUEST_ADOPTION_RECOVERY_WRITE_UNVERIFIED");
   }
   return {
+    recordServerCancellation(adoptionId: string, targetAccountId: string, receipt: unknown) {
+      return pinned(async () => {
+        const prior = await read(adoptionId, targetAccountId);
+        if (!prior || prior.nextAction !== "QUERY_SERVER_STATUS")
+          throw Error("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
+        const checked = await validateCancellation(receipt, prior);
+        await immutable(adoptionId, "cancellation-receipt", canonical(checked));
+        return read(adoptionId, targetAccountId);
+      });
+    },
+    finishServerCancellation(adoptionId: string, targetAccountId: string) {
+      return pinned(async () => {
+        const prior = await read(adoptionId, targetAccountId);
+        if (!prior?.cancellationReceipt)
+          throw Error("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
+        const p = prior.preparation;
+        // This getter is already under the apply gate; do not acquire it recursively.
+        const verification = await guestVerificationSession.readForLocalCache({
+          sourceGuestLocalId: p.sourceGuestLocalId, targetAccountId,
+          adoptionId,
+        }, scope.generation);
+        if (verification.status !== "REVOKED")
+          throw Error("GUEST_VERIFICATION_REVOCATION_PENDING");
+        await immutable(adoptionId, "cancelled", canonical({
+          schemaId: p.schemaId, sourceKind: p.sourceKind,
+          sourceGuestLocalId: p.sourceGuestLocalId, adoptionId, targetAccountId,
+          checkpoint: "CANCELLED", preparationSha256: prior.preparationSha256,
+        }));
+        return read(adoptionId, targetAccountId);
+      });
+    },
     inspectPublicationRequests() {
       return pinned(async () => {
         try {

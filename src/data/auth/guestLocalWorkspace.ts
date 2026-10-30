@@ -56,6 +56,9 @@ export async function preparePublishedGuestSession(
 }
 // One process-local fence across openers; publication recovery is a separate durable contract.
 const inventoryFreezes = new Map<string, { token: symbol; generation: number }>();
+export function hasActiveGuestInventory(localId: string) {
+  return inventoryFreezes.has(localId);
+}
 
 export function createGuestLocalWorkspaceOpener(deps: {
   // Read committed state only; never call the startup principal chooser here.

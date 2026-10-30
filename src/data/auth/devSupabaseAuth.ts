@@ -37,6 +37,7 @@ export class SupabaseDevAuthError extends Error {
     public readonly kind:
       "network" | "temporary" | "invalid_session" | "invalid_code" | "rate_limited",
     public readonly status?: number,
+    public readonly invalidSessionReason?: "provider_refresh_rejected",
   ) {
     super(message);
   }
@@ -162,6 +163,9 @@ async function authRequest(
               ? "invalid_code"
               : "temporary",
         response.status,
+        refreshing && path === "/token?grant_type=refresh_token" &&
+          [400, 401, 403].includes(response.status) && rejectedRefresh
+          ? "provider_refresh_rejected" : undefined,
       );
     }
     if (response.status === 204 || path === "/logout?scope=local") return null;

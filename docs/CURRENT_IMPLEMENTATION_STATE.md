@@ -106,6 +106,16 @@ independent6 checks; original plan/runtime archived, exact deadline not extended
 Accepted main5c765fa6 remains merged in Auth b3f0d37f.
 Real publication→Supabase readback→cold recovery remains PENDING;
 cold pre-publication restart and remaining negatives are not yet accepted.
+Cold recovery candidate now reads the sole original durable publication request and
+canonical provisional credential; no fresh grant/UUID or optimistic source release.
+Existing server cancellation receipt is bound to original preparation SHA and
+stored immutably before same-Session revoke. Only confirmed REVOKED plus receipt
+can write cancelled; UNKNOWN retains hold. Normal Provider refresh during revoke
+uses the original canonical slot and a REFRESHING_REVOCATION CAS marker, never a
+launch Session. Recovery/verification/Panel4s81 PASS; UIguard/types/lint PASS.
+Independent review is NO_BLOCKER; GuestQA68 actual cold/cancel E2E remains pending. Main
+cdf64b31 timeout fix is pushed, actual primary2s55 PASS, six dirty files preserved.
+Root is building one combined default-CLOSED software image before next QA window.
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
 hosted-gate-candidate/OWNER_GATE.md.
 

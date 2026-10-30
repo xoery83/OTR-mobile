@@ -20,6 +20,7 @@ export function GuestAdoptionPanel({
   onFinished,
   onCancel,
   onBusyChange,
+  recoveredAttempt,
 }: {
   session: LocalSession;
   generation: number;
@@ -28,15 +29,16 @@ export function GuestAdoptionPanel({
   onFinished(): void;
   onCancel(): void;
   onBusyChange(busy: boolean): void;
+  recoveredAttempt?: Awaited<ReturnType<typeof prepareGuestTripP1Adoption>>;
 }) {
   useUiLocale();
   const attempt = useRef<Awaited<ReturnType<typeof prepareGuestTripP1Adoption>> | null>(
-    null,
+    recoveredAttempt ?? null,
   );
   const running = useRef(false);
   const [busy, setBusy] = useState(false);
-  const [locked, setLocked] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [locked, setLocked] = useState(!!recoveredAttempt);
+  const [failed, setFailed] = useState(!!recoveredAttempt);
   const [finished, setFinished] = useState(false);
   const [canCancel, setCanCancel] = useState(true);
   const [cancelling, setCancelling] = useState(false);
