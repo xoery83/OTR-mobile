@@ -1,0 +1,131 @@
+{
+  "status": "DEV_DEFAULT_CLOSED_DEPLOYED_EXISTING_NATIVE_READ_SMOKE_PASS",
+  "sourceCommit": "ecad0bb784dcf667d332bded8f61dd97edcf8a5e",
+  "clientDate": "2026-10-31",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "deployment": {
+    "containerId": "65b0ce911653cb8893b632a0d1ef011273b06ac978e63fb330e05e50299a5d46",
+    "image": "sha256:4d2109213ad3394d736a43301faf7cc9de9bd1da4213fbf875780f5e2e41c68d",
+    "retainedContainerId": "148168a021361c55e2d0ef2c04201adab63f55e12411a3663bce47df18339783",
+    "health": "healthy",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "mountsSHA256": "747751b496a1fc07a4ea4291a4d6fbbd01ad29d377ab9735dba2a7e92f320ad5",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7"
+  },
+  "defaultAuth": {
+    "effectiveFlag": "0",
+    "flagAbsentPreservingOriginalEnvironment": true,
+    "scopePresent": false,
+    "sqlPolicyChanged": false
+  },
+  "preservation": {
+    "allOtherEnvironmentValues": "same exact SHA",
+    "hostConfig": "same exact SHA",
+    "mountCount": 6,
+    "readOnlyRuntimeConfigFileCount": 4,
+    "allComposeFileHashesUnchanged": true,
+    "allMountedFileHashesUnchanged": true,
+    "oldContainerRollbackIdentityVerified": true
+  },
+  "imageIsolation": {
+    "health": {
+      "status": "ok",
+      "environment": "development"
+    },
+    "status": "LOCAL_CLOSED_IMAGE_PASS",
+    "routes": {
+      "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/universal-source-originals/acquire": 401,
+      "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": 401
+    },
+    "uid": 10001,
+    "runtimeVersions": {
+      "operatorPresent": false,
+      "node": "v24.22.1",
+      "zlib": "1.3.2.1-motley-285e94b",
+      "arch": "x64"
+    },
+    "sourceHead": "ecad0bb784dcf667d332bded8f61dd97edcf8a5e",
+    "imageId": "sha256:4d2109213ad3394d736a43301faf7cc9de9bd1da4213fbf875780f5e2e41c68d",
+    "bundles": {
+      "server.mjs": "31561c597208501367d3f33b3034177816310d9fc13c42498a33f8f02f27dec1",
+      "server-capture.mjs": "4918af5c38963456a9c3abcf3a62e62a99dad0a29760a73fad38fa6587436acb"
+    },
+    "network": "none",
+    "rootFilesystem": "read-only",
+    "runtimeMounts": 0,
+    "operator": {
+      "status": "ABSENT_IN_ACCEPTED_BASELINE_AND_CANDIDATE",
+      "invoked": false
+    },
+    "hostedWrites": 0,
+    "providerCalls": 0
+  },
+  "frozenGate": {
+    "reviewedBy": "Root",
+    "actualReceipt": "/private/tmp/otr-auth-default-postcheck-20261031/postinstall.json",
+    "result": "POST_INSTALL_MATCH_DEFAULT_CLOSED",
+    "policyEnabled": false,
+    "roleMembershipBusinessAclRls": "unchanged",
+    "sourceGuardOid": 66410,
+    "sourceGuardMD5": "6c7ef0d85cfd8893796ccc53e31f51f0",
+    "authUsersRead": "not performed"
+  },
+  "runtime": {
+    "hostMachine": "x86_64",
+    "dockerArchitecture": "amd64",
+    "nodeVersion": "v24.22.1",
+    "zlibVersion": "1.3.2.1-motley-285e94b"
+  },
+  "operatorReview": {
+    "deployAndRollback": "independent NO_BLOCKER; pure-memory success and failure simulations",
+    "helperChange": "obsolete missing CLI compared as absent in both parent/candidate; never claimed CLI functional PASS",
+    "hashes": {
+      "preflight.py": "4709383e9733d9bccd4633f9e2f9f8e4fbd549c02a6ccf05505be49633c9fde2",
+      "prepare.py": "686d8bd9f283d6add96403b4a215eead67a8cb2cc66d8b37fa4a9c90a264ab47",
+      "deploy.py": "fc46592bf4893ab10136881ba5097e6610e05d411bf0c207a5ff600cb82dda52",
+      "rollback.py": "09420734ef9f097f540fc7010eb5f95c01840cdb0b607dead0d36a68567801f0",
+      "check-image.py": "9ab4622950fb0051cf8dc7f33d7f069b1f8da7446873bfeefd9c86476e478b88",
+      "postcheck.py": "6ffc7d52ae4b18c8d7c4ddbea6caf51ae5ef0345f92f3293e09c3892d8dfb1d8"
+    }
+  },
+  "remaining": [
+    "Root finite scoped QA activation coordinated with device window",
+    "actual Adoption publication/independent Supabase readback/cold/negatives"
+  ],
+  "notPerformed": [
+    "Adoption activation",
+    "SQL/schema/RLS/GRANT/role changes",
+    "Provider requests",
+    "QA Session export",
+    "main writes",
+    "forced actual rollback drill"
+  ],
+  "nativeReadSmoke": {
+    "status": "PASS_EXISTING_CACHED_UI_ONLY",
+    "actor": "Native original B126 session",
+    "tripPrefix": "41886054",
+    "itemPrefix": "7eb12d1c",
+    "details": "same P1 Details and Trip Home; no login/edit/new Mutation",
+    "queueCount": 94,
+    "originalHistoricalQueues": "89 full-row hashes unchanged",
+    "receiptPath": "/private/tmp/otr-downstream-final-20261030/POST_AUTH_DEPLOY_READ_ONLY_SMOKE.json",
+    "receiptSHA256": "adb9bc03b4176820efb183bd5193a393adebc70fe7c0a0d126ad1be1652d2bf9",
+    "limit": "Not fresh cloud readback or Adoption evidence",
+    "deviceClaimRelease": "Closed: native04-formsqa"
+  },
+  "hostWriter": "RETURNED_TO_ROOT_AFTER_SMOKE",
+  "externalHttps": {
+    "/health": {
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "environment": "development"
+      }
+    },
+    "/v1/auth/guest-adoptions/status": {
+      "status": 401
+    }
+  }
+}
