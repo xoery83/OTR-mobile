@@ -1,5 +1,5 @@
 {
-  "status": "BLOCKED_TRANSACTIONAL_INSTALL_MAINTENANCE_APPROVAL",
+  "status": "DEFAULT_CLOSED_SQL_INSTALLED_AND_CLOSE_DRILL_VERIFIED",
   "ownerApprovedGate": "77a6febb",
   "additionalGateCommit": "74530956",
   "firstActualFailure": {
@@ -64,6 +64,44 @@
   "paidImageCalls": 0,
   "photoSave": false,
   "backendRuntimeConfigurationInstalled": false,
-  "hostSQLDeploymentWriter": "RETURNED_NATIVE_COORDINATION",
-  "mainChangedByThisCheckpoint": false
+  "hostSQLDeploymentWriter": "ROOT_AFTER_NATIVE_EXPLICIT_RETURN",
+  "mainChangedByThisCheckpoint": false,
+  "maintenanceOwnerApproved": true,
+  "installation": {
+    "status": "PHOTO_DEFAULT_CLOSED_INSTALL_VERIFIED",
+    "ownerApprovedGate": "74530956",
+    "wrapperSHA256": "484d7bce6e5a71b759bbbd67984e461e0e39a33f8c7b17c17640cd5b8081d9ec",
+    "sourcePostimagesMatch": 16,
+    "existingSourceOidOwnerAclPreserved": 9,
+    "coreGuardOid": "66410",
+    "coreGuardMD5": "5dd047fb82ff179c19f7ebe6da5cef6a",
+    "completeMembershipGraphAndSchemaACLRestored": true,
+    "pngClosed": true,
+    "pdfClosed": true,
+    "paidImageCalls": 0,
+    "installRetried": false
+  },
+  "sqlGatewayCloseDrill": {
+    "status": "PHOTO_REAL_SOURCE_GATEWAY_CLOSE_AND_INDEPENDENT_READ_PASS",
+    "results": [
+      {
+        "mode": "close",
+        "result": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        }
+      },
+      {
+        "mode": "verify",
+        "result": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        }
+      }
+    ],
+    "credentialCopied": false,
+    "temporaryAdminUsed": false,
+    "businessWindowOpened": false,
+    "providerCalls": 0
+  }
 }

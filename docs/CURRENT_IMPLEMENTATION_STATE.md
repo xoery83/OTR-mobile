@@ -1,19 +1,20 @@
-# Photo approved execution checkpoint — 31 October2026
+# Photo approved execution — 31 October2026
 
-Owner approved77a6febb. Fresh exact DEV/QA owner/artifact/function CAS preflight
-passed. Fixed SQL installation rejected42501 SET ROLE SourceWriter; independent
-readback confirms no new columns/helpers and original guard6c7, so no partial
-installation or business call. Exact temporary installation-maintenance extension
-is prepared in authority/PHOTO_TRANSACTIONAL_MAINTENANCE_GATE.md (wrapped484d7bce,
-inner21bfcdb4 unchanged), isolated non-superuser/restore/fault checks and independent
-Review NO_BLOCKER; pending Owner because original Gate excludes membership/schema
-maintenance changes. Fixed credential-free Host worker/closer files installed,
-inactive; actual start-stop plus independent EMPTY_VERIFIED physical cleanup PASS.
-No PNG Backend config/mount, Source upload, paid image call or Save. Default
-28dd/fb0d service unchanged; do not retry installation or open business gates while
-maintenance approval remains pending. Host/SQL deployment window safely returned to Native coordination while Owner
-maintenance approval is pending; Root holds no active main/deployment window. main/origin42652324 now includes Auth accepted People slice; Import
-branch remains59f234db plus this checkpoint. Existing Activity UI is LOCAL_PASS.
+Owner approved77a6febb and exact maintenance extension74530956. Wrapped484d7bce
+installed once in DEV and independently verified:16 Source hashes/Owner/ACL match,
+9 existing Hosted OIDs retained, Core66410/5dd, full pg_auth_members and public
+schema ACL restored exactly; PNG/PDF CLOSED. New actual Source Gateway close and
+separate-process read PASS with credentials kept in place. Host worker start/stop
+and independent EMPTY_VERIFIED PASS; Backend still28dd/fb0d, no Source or paid call.
+
+Before business activation, fixed ordinary Controller composition: PNG persistent
+plan no longer calls unrelated finite Universal validator; it validates actual
+persistent path, baseline and compose/config hashes.11PNG+2PDF checks and independent
+Review NO_BLOCKER. Exact same-image runtime deployment is prepared with2 approved
+env keys and3 mounts (config RO/stage RW/socket RO), reviewed; not yet deployed.
+Root has resumed DEV window after Native explicitly returned its one-P3 Edit
+baseline. Do not open Photo until compatible runtime/independent closure/watchdog
+and normal QA preflight pass. Original hard expiry remains Nov1T08:48:56Z.
 
 # Import Photo — default-closed checkpoint, 31 October 2026
 

@@ -1,20 +1,22 @@
 import json
 import unittest
 from types import SimpleNamespace
-from pdf_runtime_close import ACTOR, TRIP, execute, sha, close_pdf
+from pdf_runtime_close import ACTOR, TRIP, execute, sha, close_pdf, validate_png_runtime
 import universal_runtime_close as retained
 
 class PngCloseTests(unittest.TestCase):
  def fixture(self):
   trace=[];bundle=b'FIXED_SYNTHETIC_CLOSE_BUNDLE';config={'Image':'SYNTHETIC','Env':['SYNTHETIC=true'],'User':'otr','Cmd':['node','server-capture.mjs'],'Labels':{'com.docker.compose.project.config_files':'/opt/otr/dev-backend/compose.yml'}}
-  r={'container':'otr-dev-backend','runtimeMountTarget':'/run/otr/universal-runtime.json','originalContainerId':'a'*64,'stagedContainerId':'b'*64,'imageId':'sha256:'+'c'*64,'baselineConfigSHA256':sha(json.dumps(config,sort_keys=True).encode())}
+  r={'container':'otr-dev-backend','runtimeMountTarget':'/run/otr/universal-png-runtime.json','originalContainerId':'a'*64,'stagedContainerId':'b'*64,'imageId':'sha256:'+'c'*64,'baselineConfigSHA256':sha(json.dumps(config,sort_keys=True).encode())}
   snap={'Id':r['originalContainerId'],'Name':'/otr-dev-backend','Image':r['imageId'],'Config':config,'HostConfig':{'NetworkMode':'host'},'Mounts':[{'Source':'/opt/otr/dev-backend/env/universal-png-runtime.json','Destination':'/run/otr/universal-png-runtime.json','RW':False}],'State':{'Running':True,'Health':{'Status':'healthy'}}}
   projection=retained.service_projection(snap)
   r.update(baselineEnvironmentSHA256=projection['environmentSHA256'],baselineHostConfigSHA256=projection['hostConfigSHA256'],baselineMountsSHA256=projection['mountsSHA256'],baselineComposeFiles=['/opt/otr/dev-backend/compose.yml'])
+  r.update(runtimeSource='/opt/otr/dev-backend/env/universal-png-runtime.json',runtimeSHA256='d'*64,composeHashes={'/opt/otr/dev-backend/compose.yml':'e'*64})
   plan={'project':'tuqigdxrvrerfewsxqgm','actorId':ACTOR,'tripId':TRIP,'runtime':r,'pngCloseBundleSHA256':sha(bundle)}
   runtime=SimpleNamespace(validate_runtime=lambda p:None,canonical=lambda v:json.dumps(v,sort_keys=True).encode(),service_projection=retained.service_projection,remote_close=lambda p:(_ for _ in ()).throw(ValueError('UNIVERSAL_MOUNT_REMAINS')))
   def call(argv,input=None):
    trace.append(argv)
+   if argv[0]=='sha256sum':return ('d'*64 if argv[1]==r['runtimeSource'] else 'e'*64)+'  '+argv[1]+'\n'
    if argv[:2]==['docker','inspect']:return json.dumps([snap])
    if argv[:2]==['docker','exec']:
     self.assertEqual(input,bundle)
@@ -23,6 +25,22 @@ class PngCloseTests(unittest.TestCase):
    if argv[0]=='/usr/bin/env':return json.dumps({'status':'EMPTY_VERIFIED','terminated':True})
    return ''
   return plan,runtime,bundle,call,trace
+ def test_real_png_plan_has_no_unrelated_finite_universal_paths(self):
+  plan,runtime,bundle,call,trace=self.fixture()
+  validate_png_runtime(plan)
+  for key in ['runtimeSHA256','baselineConfigSHA256','baselineEnvironmentSHA256','baselineHostConfigSHA256','baselineMountsSHA256']:
+   broken=json.loads(json.dumps(plan));broken['runtime'][key]='invalid'
+   with self.assertRaises(ValueError):validate_png_runtime(broken)
+  broken=json.loads(json.dumps(plan));broken['runtime']['runtimeSource']='/other/runtime.json'
+  with self.assertRaises(ValueError):validate_png_runtime(broken)
+ def test_png_runtime_file_drift_cannot_claim_closed(self):
+  plan,runtime,bundle,call,trace=self.fixture()
+  def drift(argv,input=None):
+   if argv[0]=='sha256sum':return 'f'*64+'  '+argv[1]+'\n'
+   return call(argv,input)
+  result=execute(plan,runtime,bundle,drift,'PNG')
+  self.assertFalse(result['verified'])
+  self.assertIn(['systemctl','stop','otr-universal-png-worker.service'],trace)
  def test_png_reuses_existing_baseline_and_fresh_close_verify(self):
   plan,runtime,bundle,call,trace=self.fixture()
   result=execute(plan,runtime,bundle,call,'PNG')

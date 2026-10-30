@@ -5,6 +5,7 @@ inside the exact retained Backend and reads its existing credential in place.
 """
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 
@@ -27,6 +28,26 @@ def close_pdf(source_close, restore_runtime, stop_worker, family="PDF"):
     return {'status':family+'_CLOSED_VERIFIED' if verified else family+'_CLOSURE_UNCONFIRMED','verified':verified,'steps':outcomes}
 
 
+
+def validate_png_runtime(plan):
+    r=plan['runtime']
+    if (r.get('container')!='otr-dev-backend'
+        or r.get('runtimeMountTarget')!='/run/otr/universal-png-runtime.json'
+        or r.get('runtimeSource')!='/opt/otr/dev-backend/env/universal-png-runtime.json'
+        or not re.fullmatch('[0-9a-f]{64}',r.get('originalContainerId',''))
+        or not re.fullmatch('sha256:[0-9a-f]{64}',r.get('imageId',''))):
+        raise ValueError('PNG_PERSISTENT_RUNTIME_PLAN_REQUIRED')
+    for key in ['runtimeSHA256','baselineConfigSHA256','baselineEnvironmentSHA256','baselineHostConfigSHA256','baselineMountsSHA256']:
+        if not re.fullmatch('[0-9a-f]{64}',r.get(key,'')):
+            raise ValueError('PNG_BASELINE_HASH_REQUIRED')
+    files=r.get('baselineComposeFiles',[])
+    hashes=r.get('composeHashes',{})
+    if (not files or len(set(files))!=len(files) or set(files)!=set(hashes)
+        or any(not path.startswith('/opt/otr/dev-backend/') or '..' in Path(path).parts
+               or not re.fullmatch('[0-9a-f]{64}',value) for path,value in hashes.items())):
+        raise ValueError('PNG_COMPOSE_PINS_REQUIRED')
+
+
 def verify_png_baseline(plan, runtime, call):
     # PNG changes only SQL/worker state. Its persistent original-reader config must remain mounted.
     r=plan['runtime']
@@ -43,6 +64,9 @@ def verify_png_baseline(plan, runtime, call):
     mounts=[m for m in snapshot['Mounts'] if m['Destination']=='/run/otr/universal-png-runtime.json']
     if len(mounts)!=1 or mounts[0]['Source']!='/opt/otr/dev-backend/env/universal-png-runtime.json' or mounts[0]['RW'] is not False:
         raise ValueError('PNG_PERSISTENT_READER_MOUNT_UNCONFIRMED')
+    for path,expected in {**r['composeHashes'],r['runtimeSource']:r['runtimeSHA256']}.items():
+        if call(['sha256sum',path]).split()[0]!=expected:
+            raise ValueError('PNG_PERSISTENT_FILE_DRIFT')
     return {'verified':True}
 
 
@@ -51,9 +75,10 @@ def execute(plan, runtime, bundle, call, family="PDF"):
     prefix=family.lower()
     if plan.get('project')!='tuqigdxrvrerfewsxqgm' or plan.get('actorId')!=ACTOR or plan.get('tripId')!=TRIP:
         raise ValueError('PDF_CLOSE_EXACT_SCOPE_REQUIRED')
-    runtime.validate_runtime(plan)
+    if family=="PNG":validate_png_runtime(plan)
+    else:runtime.validate_runtime(plan)
     r=plan['runtime']
-    target='/run/otr/universal-pdf-runtime.json' if family=='PDF' else '/run/otr/universal-runtime.json'
+    target='/run/otr/universal-pdf-runtime.json' if family=='PDF' else '/run/otr/universal-png-runtime.json'
     if r.get('runtimeMountTarget')!=target or sha(bundle)!=plan[prefix+'CloseBundleSHA256']:
         raise ValueError('PDF_CLOSE_BUNDLE_BINDING')
     def source_close():
