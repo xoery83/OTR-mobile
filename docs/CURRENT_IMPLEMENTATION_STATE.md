@@ -1,3 +1,27 @@
+# Native-05/06 — iPad business slice and closed trigger, 31 October 2026
+
+Physical iPad Air5 freshly verified OS27.2/24B119, exactUDID00008103-00113914020B401E,
+Build127/source5c765fa6/full new native; now in-place128/JS2624655a/sourcec79a,
+same127 native/profile. Normal OTP B1f,
+P1c877cf77 Create/Edit APPLIED/independent Supabase hashes/sameID rev2/cold Session
+and SQLite75 Pending0 PASS. External P3612d7e55 original POST became UNKNOWN,
+then same-op83b3a089 receipt a7caf546 APPLIED and independent single row/hash plus
+real Day18:00 screenshot PASS; no duplicate POST. Continuous latency not measured.
+OTR-only agent-device control/input/scroll passed; current Runner reconnect needs
+Owner Touch ID Enable UI Automation. iPad is primary, iPhone untouched.
+
+Native06 adapter is unmounted/default-closed. New trigger+coordinator18 and existing
+identity3 tests/types/scoped lint PASS; unique Core Writer bounded NO_BLOCKER only
+for this candidate. No private subscribe/committed publisher/cheap revision owning
+ports exist per Core/Auth; no socket/SQL/RLS/Trigger/authority opened. Revocation
+remains BLOCKED. See ops/native05-06-20261031/{IPAD_PRIMARY_QA_ACCEPTANCE.md,
+REALTIME_TRIGGER_V1_ACCEPTANCE.md,REALTIME_OWNING_PORT_GAP.md}. Native branch safely
+FF'd to maincdf, then candidatec79a safely pushed/local=remote, six original main
+dirty files exactly preserved. iPad128 cold edited P1/date/Everyone/no-login screenshot
+PASS; normal home failed at Runner so exact own App PID SIGTERM, own Session/Claim
+released. No P3 Edit while system grant pending. Core capacity53300
+cause remains unproven; no limits changed. Original operation/UNKNOWN retained.
+
 # Native-04 Downstream — ordinary unified smoke, 31 October 2026
 
 Ordinary Build126 (business source249204db / merge2d1539aa) is installed in place
@@ -18,8 +42,8 @@ The unsent125 V1 Trip/P1 remains retained, not converted or claimed Cloud PASS.
 No Auth/Queue/Backend product change. Both automation claims released.
 Formal revocation/regrant remains BLOCKED: no authoritative issuer/read contract;
 ordinary404 is never treated as revocation. Do not claim complete Beta security.
-Physical iPad has been handed back after Owner reset/upgrade; renewed OTR install
-is not yet verified. iPhone untouched. Final docs integration/push is next.
+The former pending post-reset iPad install is superseded by Native05 above.
+iPhone untouched; earlier unified smoke evidence remains reusable.
 
 Account switching REAL Native bounded PASS: FormsQA124 A3f → normal OTP B1f → online B Signout → remembered A; both Accounts cold recover. B cloud Trip/P1/P3 automatically downloaded; known foreign Details/Day IDs withheld; A original conflict and85 historical queues retained byte-for-byte, B cache preserved. Mutation dispatch remained privately scoped in124; separate ordinary126 smoke above closes that build qualification. See `docs/ops/native-04-downstream-20261030/ACCOUNT_SWITCH_E2E.json`.
 

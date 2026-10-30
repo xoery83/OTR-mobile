@@ -39,6 +39,44 @@ function fixture() {
   };
 }
 
+it("a qualified invalidation bypasses successful read cooldown but preserves failure backoff", async () => {
+  const f = fixture();
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  await f.read.trip(f.first);
+  await f.read.invalidate(context);
+  expect(f.deps.pull).toHaveBeenCalledTimes(2);
+  f.deps.pull.mockRejectedValueOnce(Error("OFFLINE"));
+  await expect(f.read.invalidate(context)).rejects.toThrow("OFFLINE");
+  await f.read.invalidate(context);
+  expect(f.deps.pull).toHaveBeenCalledTimes(3);
+});
+
+it("invalidation during a normal Pull performs a trailing read", async () => {
+  const f = fixture();
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  let release!: (changed: boolean) => void;
+  f.deps.pull.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const prior = f.read.trip(f.first);
+  await vi.waitFor(() => expect(f.deps.pull).toHaveBeenCalledOnce());
+  const invalidated = f.read.invalidate(context);
+  release(false);
+  await Promise.all([prior, invalidated]);
+  expect(f.deps.pull).toHaveBeenCalledTimes(2);
+});
+
+it("never rebinds an old invalidation to the next Account", async () => {
+  const f = fixture();
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  f.switchAccount();
+  await expect(f.read.invalidate(context)).rejects.toThrow();
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
 it("coalesces duplicate Trip triggers and notifies only changed accepted content", async () => {
   const f = fixture();
   let release!: (changed: boolean) => void;
