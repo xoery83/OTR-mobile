@@ -1,6 +1,10 @@
+import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { captureAccountScope } from "../auth/accountRequestContext";
+import {
+  captureAccountScope,
+  captureAccountRequestContext,
+} from "../auth/accountRequestContext";
 import { createTripCreateTransport } from "./tripCreateTransport";
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 
@@ -127,3 +131,89 @@ it("does not return receipt-not-found after delayed error body crosses expiry", 
   release();
   await expect(pending).rejects.toThrow("CLOSED");
 });
+
+async function parentTransportFixture() {
+  const actor = randomUUID(),
+    trip = randomUUID();
+  const result = {
+    operationId: randomUUID(),
+    tripId: trip,
+    actorAccountId: actor,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    name: "原名",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    formatVersion: 2,
+    destinations: [],
+    metadataRevision: 0,
+  };
+  const wire = vi.fn(
+    async (_input: unknown, _init?: RequestInit) =>
+      new Response(JSON.stringify(result), { status: 200 }),
+  );
+  const scope = await captureAccountRequestContext(trip, async () => actor);
+  const transport = createTripCreateTransport(
+    async () => actor,
+    { baseUrl: "https://api.example.test", fetchImplementation: wire as typeof fetch },
+    async () => ({ token: "unit-only", userId: actor }),
+  );
+  return { actor, trip, result, wire, scope, transport };
+}
+it("freezes the by-Trip read context, sends normal scoped GET and preserves the original receipt metadata", async () => {
+  const f = await parentTransportFixture(),
+    context = { ...f.scope };
+  const read = f.transport.parentReceipt!(context);
+  context.tripId = randomUUID();
+  expect(await read).toEqual(f.result);
+  expect(f.wire.mock.calls[0][0]).toBe(
+    `https://api.example.test/v2/trips/${f.trip}/create-receipt`,
+  );
+  expect(f.wire.mock.calls[0][1]).toMatchObject({
+    method: "GET",
+    headers: { Authorization: "Bearer unit-only", "OTR-Trip-Create-Version": "2" },
+  });
+  expect(f.wire.mock.calls[0][1]?.body).toBeUndefined();
+});
+it.each([404, 403, 503])(
+  "does not collapse a by-Trip read failure into a missing parent: %s",
+  async (status) => {
+    const f = await parentTransportFixture();
+    f.wire.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: status === 404 ? "TRIP_CREATE_RECEIPT_NOT_FOUND" : "TRIP_CREATE_CLOSED",
+          },
+        }),
+        { status },
+      ),
+    );
+    if (status === 404) expect(await f.transport.parentReceipt!(f.scope)).toBeNull();
+    else await expect(f.transport.parentReceipt!(f.scope)).rejects.toBeDefined();
+  },
+);
+it.each(["actor", "trip", "generation"] as const)(
+  "rejects changed by-Trip response ownership or Account generation: %s",
+  async (kind) => {
+    const f = await parentTransportFixture();
+    f.wire.mockImplementationOnce(async () => {
+      if (kind === "generation") advanceAccountGeneration();
+      return new Response(
+        JSON.stringify({
+          ...f.result,
+          ...(kind === "actor"
+            ? { actorAccountId: randomUUID() }
+            : kind === "trip"
+              ? { tripId: randomUUID() }
+              : {}),
+        }),
+        { status: 200 },
+      );
+    });
+    await expect(f.transport.parentReceipt!(f.scope)).rejects.toBeDefined();
+  },
+);

@@ -1,0 +1,39 @@
+{
+  "status": "NORMAL_PARENT_RECEIPT_READ_PASS_NATIVE_ADOPTED_ADD_PENDING",
+  "goldenSlice": "Authenticated original Owner opens adopted Trip and adds an unlinked Person through existing queue/Backend; cold recovery",
+  "normalRead": {
+    "status": "NORMAL_OWNER_RECEIPT_READ_PASS",
+    "httpStatus": 200,
+    "path": "/v2/trip-create-operations/7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+    "receipt": {
+      "operationId": "7cf3fd5a-8d81-4777-9f52-fef0cf17c10f",
+      "tripId": "9d10b9d7-6744-4355-b05d-728bf929d208",
+      "actorAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "ownerPersonId": "425baac4-80da-4882-ac6f-6168452101d8",
+      "coreEpoch": "f89e8672-1392-4344-a430-821b7e2a662b",
+      "coreRevision": 2,
+      "coreAccessRevision": 1,
+      "name": "Auth Guest B 20261031",
+      "destination": null,
+      "startDate": null,
+      "endDate": null,
+      "formatVersion": 2,
+      "destinations": [],
+      "metadataRevision": 0
+    },
+    "mutations": 0,
+    "durationMs": 5333
+  },
+  "normalOtpSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "evidenceSHA256": "81ca61e584c75a3c31fffd77a301a09bad2ae9abb37953c33071ccef6b7ef9fa",
+  "firstRemainingGap": "Discovery/Core reader has no create operation locator; formal account does not retain the PUBLISHED mapping. Do not reopen Guest repository or fabricate a local CREATE_TRIP queue.",
+  "minimalCandidate": "Resolve an already-owned format2 Trip creation receipt by Actor+Trip using the same owning result function/DTO; existing Person queue consumes the true parent operation. No new cache/identity/queue.",
+  "security": "Existing ordinary read returned200, not a new write grant. Any new SQL function EXECUTE remains candidate-only pending unique Core review and exact Owner Gate. No Hosted/Host writes while Root owns Photo window.",
+  "receiptSemantics": "Original create metadata is immutable; Core epoch/revisions reflect current state. Do not compare whole read body hash to historical publication receipt hash.",
+  "notClaimed": [
+    "Native adopted-Trip Add Traveler",
+    "Any new lookup installed",
+    "Generic remote Trip authoring",
+    "Whole People Phase completed"
+  ]
+}

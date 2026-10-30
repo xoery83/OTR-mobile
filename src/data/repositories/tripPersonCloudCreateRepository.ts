@@ -23,12 +23,39 @@ import {
 } from "@/domain/trip/tripPersonCloudCreate";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
+import {
+  createTripCoreV2Repository,
+  type CoreAcceptedSnapshot,
+} from "./tripCoreV2Repository";
+import {
+  structuredTripCreateResultSchema,
+  type TripCreateWireResult,
+} from "@/domain/trip/tripCreateWireContract";
 const json = (v: unknown) => canonicalCoreJson(v as Json);
+type ParentReadEvidence = {
+  receipt: TripCreateWireResult;
+  snapshot: CoreAcceptedSnapshot;
+};
 
 // UI authoring stays bound to the opening Account/Trip across asynchronous DB access.
 export async function saveAuthoredTripTraveler(
   origin: AccountRequestContext,
   input: Readonly<Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">>,
+) {
+  return saveTripTraveler(origin, input, false);
+}
+
+export async function saveServerParentTripTraveler(
+  origin: AccountRequestContext,
+  input: Readonly<Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">>,
+) {
+  return saveTripTraveler(origin, input, true);
+}
+
+async function saveTripTraveler(
+  origin: AccountRequestContext,
+  input: Readonly<Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">>,
+  serverParent: boolean,
 ) {
   const scope = Object.freeze({ ...origin });
   const draft = Object.freeze({ ...input });
@@ -41,11 +68,21 @@ export async function saveAuthoredTripTraveler(
   const { readInitializedDatabase } = await import("../db/database");
   const database = await readInitializedDatabase();
   const repository = createTripPersonCloudCreateRepository(database, account);
-  const result = await repository.createAuthored({
+  const request = {
     ...draft,
     tripId: scope.tripId,
-    dataOwnership: "CLOUD_SHARED_AUTHORED",
-  });
+    dataOwnership: "CLOUD_SHARED_AUTHORED" as const,
+  };
+  let result: PersonCloudCreate;
+  if (serverParent) {
+    const { createTripCreateTransport } = await import("../sync/tripCreateTransport");
+    const transport = createTripCreateTransport(account);
+    if (!transport.parentReceipt) throw Error("PERSON_PARENT_READER_CLOSED");
+    const parent = await transport.parentReceipt(scope);
+    await account();
+    if (!parent) throw Error("PERSON_PARENT_RECEIPT_REQUIRED");
+    result = await repository.createAuthoredFromParentReceipt(request, parent);
+  } else result = await repository.createAuthored(request);
   const people = await createTripPersonRepository(database, account).listTripPersons(
     scope.tripId,
   );
@@ -59,20 +96,55 @@ export async function retainAuthoredCloudTravelerWithinTransaction(
   account: () => Promise<string>,
   input: Omit<PersonCloudCreate, "version" | "tripCreateOperationId">,
   clock = () => new Date().toISOString(),
+  parent?: ParentReadEvidence,
 ) {
   if (input.tripId !== scope.tripId || input.dataOwnership !== "CLOUD_SHARED_AUTHORED")
     throw Error("PERSON_EXPLICIT_AUTHORING_REQUIRED");
+  await assertAccountRequestContext(scope, account);
   if (
     !(await database.getFirstAsync(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='trip_person_cloud_create_receipts'",
     ))
   )
     throw Error("PERSON_RECEIPT_STORAGE_REQUIRED");
-  const creator = await requireLocalTripPersonCreator(database, scope, account);
-  structuredTripCreateRequestSchema.parse({
-    ...JSON.parse(creator.payload),
-    operationId: creator.operationId,
-  });
+  let creator: { operationId: string; personId: string };
+  if (parent) {
+    const receipt = structuredTripCreateResultSchema.parse(parent.receipt);
+    if (
+      receipt.actorAccountId !== scope.accountId ||
+      receipt.tripId !== scope.tripId ||
+      parent.snapshot.actor.accountId !== scope.accountId ||
+      parent.snapshot.actor.tripId !== scope.tripId ||
+      parent.snapshot.actor.personId !== receipt.ownerPersonId ||
+      parent.snapshot.certificate.epoch !== receipt.coreEpoch
+    )
+      throw Error("PERSON_PARENT_CONTEXT_MISMATCH");
+    // This is local roster continuity, not a new permission grant. The server still authorizes the mutation.
+    const current = await database.getFirstAsync(
+      `SELECT a.member_id FROM ledger_actor_context a
+       JOIN ledger_members m ON m.id=a.member_id AND m.journey_id=a.journey_id
+       JOIN trip_core_read_certificates c ON c.account_id=a.user_id AND c.trip_id=a.journey_id
+       JOIN trip_core_scopes s ON s.account_id=c.account_id AND s.trip_id=c.trip_id
+       WHERE a.user_id=? AND a.journey_id=? AND a.member_id=? AND a.role='owner'
+         AND m.role='owner' AND m.status='linked' AND c.complete=1
+         AND c.epoch=? AND c.manifest_sha256=?
+         AND s.revoked=0 AND s.access_revision=c.access_revision`,
+      scope.accountId,
+      scope.tripId,
+      receipt.ownerPersonId,
+      receipt.coreEpoch,
+      parent.snapshot.certificate.manifest_sha256,
+    );
+    if (!current) throw Error("PERSON_PARENT_CONTEXT_CHANGED");
+    creator = { operationId: receipt.operationId, personId: receipt.ownerPersonId };
+  } else {
+    const local = await requireLocalTripPersonCreator(database, scope, account);
+    structuredTripCreateRequestSchema.parse({
+      ...JSON.parse(local.payload),
+      operationId: local.operationId,
+    });
+    creator = local;
+  }
   const request = personCloudCreateSchema.parse({
     ...input,
     version: 1,
@@ -128,7 +200,7 @@ export async function retainAuthoredCloudTravelerWithinTransaction(
     now,
   );
   await database.runAsync(
-    "INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,dependency_operation_id,last_error_code,created_at,updated_at) VALUES(?,?,'TRIP_PERSON',?,?,?,?,?,'DEPENDENCY_BLOCKED',0,?,'PERSON_CREATE_DEPENDENCY',?,?)",
+    "INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,dependency_operation_id,last_error_code,created_at,updated_at) VALUES(?,?,'TRIP_PERSON',?,?,?,?,?,?,0,?,?,?,?)",
     request.operationId,
     request.tripId,
     request.personId,
@@ -136,7 +208,9 @@ export async function retainAuthoredCloudTravelerWithinTransaction(
     request.operationId,
     json(request),
     scope.accountId,
-    creator.operationId,
+    parent ? "PENDING" : "DEPENDENCY_BLOCKED",
+    parent ? null : creator.operationId,
+    parent ? null : "PERSON_CREATE_DEPENDENCY",
     now,
     now,
   );
@@ -150,6 +224,38 @@ export function createTripPersonCloudCreateRepository(
   clock = () => new Date().toISOString(),
 ) {
   return {
+    // Only an owning reader supplies this receipt. Never synthesize a local CREATE_TRIP queue or replay Create.
+    async createAuthoredFromParentReceipt(
+      rawInput: Omit<PersonCloudCreate, "version" | "tripCreateOperationId">,
+      rawParent: unknown,
+    ) {
+      const input = Object.freeze({ ...rawInput });
+      const receipt = structuredTripCreateResultSchema.parse(rawParent);
+      const scope = await captureAccountRequestContext(input.tripId, account);
+      if (receipt.actorAccountId !== scope.accountId || receipt.tripId !== scope.tripId)
+        throw Error("PERSON_PARENT_CONTEXT_MISMATCH");
+      const snapshot = await createTripCoreV2Repository(
+        database,
+        account,
+        tripCoreSha256Hex,
+      ).acceptedSnapshot(scope);
+      if (!snapshot) throw Error("PERSON_PARENT_COLLECTION_REQUIRED");
+      let request: PersonCloudCreate | undefined;
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          request = await retainAuthoredCloudTravelerWithinTransaction(
+            database,
+            scope,
+            account,
+            input,
+            clock,
+            { receipt, snapshot },
+          );
+        }),
+      );
+      announceLedgerQueueWorkAvailable();
+      return request!;
+    },
     async createAuthored(
       input: Omit<PersonCloudCreate, "version" | "tripCreateOperationId">,
     ) {

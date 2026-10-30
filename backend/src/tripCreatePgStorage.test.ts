@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 import {
   createTripPgStorage,
+  createTripParentReceiptPgReader,
   withTripPgStorageOnTransaction,
 } from "./tripCreatePgStorage";
 
@@ -417,4 +418,92 @@ it("does not dispatch later operations after a caught failure poisoned the held 
   ).rejects.toThrow("TRIP_CREATE_RESULT_MISMATCH");
   expect(f.queries).toHaveLength(2);
   expect(f.retire).toHaveBeenCalledOnce();
+});
+
+function parentReaderFixture() {
+  const actor = randomUUID(),
+    trip = randomUUID();
+  const state = {
+    result: {
+      ...input(),
+      tripId: trip,
+      actorAccountId: actor,
+      ownerPersonId: randomUUID(),
+      coreEpoch: randomUUID(),
+      coreRevision: 1,
+      coreAccessRevision: 1,
+      formatVersion: 2,
+      destinations: [],
+      metadataRevision: 0,
+    } as Record<string, unknown> | null,
+    allowed: true,
+    error: null as string | null,
+  };
+  const retire = vi.fn();
+  const query = vi.fn(async (sql: string, _parameters?: readonly unknown[]) => {
+    if (sql.includes("trip_create_parent_result")) {
+      if (state.error)
+        throw Object.assign(Error("private fixture"), { code: state.error });
+      return { rows: [{ result: state.result }] };
+    }
+    if (sql.includes("trip_create_finite_scope_allowed"))
+      return { rows: [{ allowed: state.allowed }] };
+    return { rows: [] };
+  });
+  const connection: CorePgConnection = {
+    withLease: async (work) => work({ query, retire }),
+  };
+  return {
+    actor,
+    trip,
+    state,
+    query,
+    retire,
+    connection,
+    read: createTripParentReceiptPgReader(connection),
+  };
+}
+it("leaves default storage unwired and reads the parent on one owning lease with a final scope check", async () => {
+  const f = parentReaderFixture();
+  expect(createTripPgStorage(f.connection).parentReceipt).toBeUndefined();
+  expect(f.query).not.toHaveBeenCalled();
+  expect(await f.read(f.actor, f.trip)).toEqual(f.state.result);
+  expect(f.query.mock.calls.map(([sql]) => sql)).toEqual([
+    "BEGIN",
+    expect.stringContaining("trip_create_parent_result"),
+    expect.stringContaining("trip_create_finite_scope_allowed"),
+    "COMMIT",
+  ]);
+  expect(f.query.mock.calls[1][1]).toEqual([f.actor, f.trip]);
+  expect(f.query.mock.calls[2][1]).toEqual([
+    f.actor,
+    f.trip,
+    f.state.result!.operationId,
+  ]);
+});
+it.each(["scope", "actor", "trip", "closed", "permission"] as const)(
+  "rolls back an unqualified parent read instead of returning a missing receipt: %s",
+  async (kind) => {
+    const f = parentReaderFixture();
+    if (kind === "scope") f.state.allowed = false;
+    if (kind === "actor") f.state.result!.actorAccountId = randomUUID();
+    if (kind === "trip") f.state.result!.tripId = randomUUID();
+    if (kind === "closed") f.state.error = "55000";
+    if (kind === "permission") f.state.error = "42501";
+    await expect(f.read(f.actor, f.trip)).rejects.toMatchObject({
+      status: kind === "permission" ? 403 : 503,
+    });
+    expect(f.query.mock.calls.at(-1)![0]).toBe("ROLLBACK");
+    expect(f.query.mock.calls.some(([sql]) => sql === "COMMIT")).toBe(false);
+  },
+);
+it("returns null only after an actual owning lookup returns null", async () => {
+  const f = parentReaderFixture();
+  f.state.result = null;
+  expect(await f.read(f.actor, f.trip)).toBeNull();
+  expect(f.query.mock.calls.map(([sql]) => sql)).toEqual([
+    "BEGIN",
+    expect.stringContaining("trip_create_parent_result"),
+    "COMMIT",
+  ]);
 });

@@ -95,8 +95,17 @@ ce956750 cherry-picked as8c859915 preserves prior named-only Flight options; no
 Realtime candidate merged. Final integrated4 suites96/typecheck PASS; accepted
 main6dede529 normal push PASS, all six historical dirty files byte/mode/index/fullDiff
 preserved. See People MAIN_INTEGRATION.json. Next approved People work remains
-current connection-status projection/private Profile and self Trip nickname through
-owning ports; no name/email inference or public-profile private fields.
+adopted-Trip Owner Add via the same queue. One normalQA268 OTP/read of original
+parent7cf3 returned200 and strict Actor/Trip/Owner/v2 checks PASS; cleanup refresh
+rejected. No durable formal creation-op locator exists, confirmed by unique Core
+Owner. Local by-Trip read candidate remains unwired/default-closed: optional HTTP/
+PG/transport and existing PersonRepo parent-read adapter (36 tests+new cache-race1;
+3 Backend/transport suites48; types/scoped lint PASS), wrapper fixture6 checks PASS.
+Root delegated only these small read interfaces; no Bootstrap/Host/SQL changes.
+Core owning+independent review, exact new EXECUTE Gate and Native wiring remain
+pending; do not claim adopted-Trip Add E2E. Candidate under People parent-read-candidate.
+Profile/connection-status/nickname follow afterward through owning ports; no name/
+email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
 Existing profiles SELECT RLS is all-authenticated: private travel-document names/AKA
 must not be stored there. Only policy/schema metadata was read; no new permissions.

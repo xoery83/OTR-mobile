@@ -1,0 +1,16 @@
+{
+  "status": "LOCAL_WRAPPER_PERMISSION_AND_DELEGATION_PASS",
+  "checks": [
+    "real Gateway resolves one owned format2 parent through the existing owning routine",
+    "foreign Actor cannot discover the parent; NULL binding is rejected",
+    "API roles cannot execute; Gateway gains no direct table SELECT; wrong session principal is rejected",
+    "owning capability closure propagates instead of being translated into a missing parent",
+    "two parent operations fail closed instead of choosing one",
+    "every role flag and the delegated owning function remain unchanged"
+  ],
+  "sqlSHA256": "0c6b1a284de57af8a11c3eb2ef5a20008e1c7b2f7157606366d69cad95a478f7",
+  "owningRoutine": "Local fixture stub; existing DEV owning authorization is not requalified here",
+  "hostedWrites": 0,
+  "nativeOrProviderE2E": false,
+  "runtimeWired": false
+}

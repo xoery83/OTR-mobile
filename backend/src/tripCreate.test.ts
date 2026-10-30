@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { tripCreateBoundary } from "./tripCreate";
+import { tripCreateBoundary, TripCreateError } from "./tripCreate";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
 
 const actor = randomUUID();
@@ -164,4 +164,42 @@ it("CreateV2 requires explicit version and preserves complete list in command an
   expect(result.status).toBe(201);
   expect((await result.json()).destinations).toEqual(input.destinations);
   expect(p.create).toHaveBeenCalledTimes(1);
+});
+
+it("keeps by-Trip parent reads optional, versioned and bound to the authenticated Owner", async () => {
+  const input = request(),
+    storage = port(input);
+  const value = {
+    ...storage.result,
+    destination: null,
+    formatVersion: 2 as const,
+    destinations: [],
+    metadataRevision: 0 as const,
+  };
+  const make = (version = "2") =>
+    new Request(`http://localhost/v2/trips/${input.tripId}/create-receipt`, {
+      headers: { "OTR-Trip-Create-Version": version },
+    });
+  expect((await tripCreateBoundary(make(), actor, storage)).status).toBe(503);
+  const parentReceipt = vi.fn(async () => value);
+  const live = { ...storage, parentReceipt };
+  expect((await tripCreateBoundary(make("1"), actor, live)).status).toBe(400);
+  expect(parentReceipt).not.toHaveBeenCalled();
+  const result = await tripCreateBoundary(make(), actor, live);
+  expect(result.status).toBe(200);
+  expect(await result.json()).toEqual(value);
+  expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+  expect(parentReceipt).toHaveBeenCalledWith(actor, input.tripId);
+  parentReceipt.mockResolvedValueOnce({ ...value, actorAccountId: randomUUID() });
+  expect((await tripCreateBoundary(make(), actor, live)).status).toBe(503);
+  parentReceipt.mockResolvedValueOnce({ ...value, tripId: randomUUID() });
+  expect((await tripCreateBoundary(make(), actor, live)).status).toBe(503);
+  parentReceipt.mockResolvedValueOnce(null as never);
+  expect((await tripCreateBoundary(make(), actor, live)).status).toBe(404);
+  parentReceipt.mockRejectedValueOnce(new TripCreateError(503, "TRIP_CREATE_CLOSED"));
+  const closed = await tripCreateBoundary(make(), actor, live);
+  expect(closed.status).toBe(503);
+  expect((await closed.json()).error.code).toBe("TRIP_CREATE_CLOSED");
+  expect(storage.create).not.toHaveBeenCalled();
+  expect(storage.receipt).not.toHaveBeenCalled();
 });

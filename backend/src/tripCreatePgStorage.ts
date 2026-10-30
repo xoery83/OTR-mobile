@@ -130,6 +130,52 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
   return tripStorage(query);
 }
 
+// Deliberately not attached to createTripPgStorage. Root wires this only after the exact read Gate.
+export function createTripParentReceiptPgReader(
+  connection: CorePgConnection,
+): NonNullable<TripCreatePort["parentReceipt"]> {
+  return async (actor, trip) => {
+    try {
+      return await connection.withLease(async (lease) => {
+        await lease.query("BEGIN");
+        try {
+          const raw = (
+            await lease.query(
+              "SELECT public.trip_create_parent_result($1::uuid,$2::uuid) AS result",
+              [actor, trip],
+            )
+          ).rows[0]?.result;
+          const result = raw === null ? null : tripCreateResultSchema.parse(raw);
+          if (result) {
+            if (
+              result.actorAccountId !== actor ||
+              result.tripId !== trip ||
+              !("formatVersion" in result) ||
+              result.formatVersion !== 2
+            )
+              throw new TripCreateError(503, "TRIP_CREATE_RESULT_MISMATCH");
+            const allowed = (
+              await lease.query(
+                "SELECT public.trip_create_finite_scope_allowed($1::uuid,$2::uuid,$3::uuid) AS allowed",
+                [actor, trip, result.operationId],
+              )
+            ).rows[0]?.allowed;
+            if (allowed !== true) throw new TripCreateError(503, "TRIP_CREATE_CLOSED");
+          }
+          await lease.query("COMMIT");
+          return result;
+        } catch (error) {
+          await lease.query("ROLLBACK").catch(() => lease.retire());
+          throw error;
+        }
+      });
+    } catch (error) {
+      if (error instanceof TripCreateError) throw error;
+      classify(error);
+    }
+  };
+}
+
 // Internal composition only: caller owns the running transaction and authorized principal.
 export async function withTripPgStorageOnTransaction<T>(
   lease: CorePgLease,
