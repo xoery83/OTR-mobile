@@ -204,3 +204,25 @@ it("local capability closure after COMMIT withholds the permit without replay", 
     f.query.mock.calls.filter(([sql]) => sql.includes("trip_source_png_operation")),
   ).toHaveLength(1);
 });
+
+it("does not hold a Source transaction idle during remote Auth/Trip revalidation", async () => {
+  const f = await fixture();
+  f.current.mockImplementation(async () => {
+    // A slow network check must not consume the Source principal's 5s idle budget.
+    expect(f.query.mock.calls.some(([sql]) => sql.startsWith("BEGIN"))).toBe(false);
+    expect(f.leaseSpy).not.toHaveBeenCalled();
+  });
+  await f.call(f.scope, f.q, "STATUS");
+  expect(f.current).toHaveBeenCalledOnce();
+  expect(f.query.mock.calls.at(-1)?.[0]).toBe("COMMIT");
+});
+it("denied or cancelled remote access cannot acquire a Source lease", async () => {
+  const denied = await fixture();
+  denied.current.mockRejectedValueOnce(Error("SOURCE_ACCESS_DENIED"));
+  await expect(denied.call(denied.scope, denied.q, "STATUS")).rejects.toThrow("SOURCE_ACCESS_DENIED");
+  expect(denied.leaseSpy).not.toHaveBeenCalled();
+  const cancelled = await fixture();
+  cancelled.current.mockImplementation(async () => { cancelled.controller.abort(); });
+  await expect(cancelled.call(cancelled.scope, cancelled.q, "STATUS")).rejects.toThrow();
+  expect(cancelled.leaseSpy).not.toHaveBeenCalled();
+});

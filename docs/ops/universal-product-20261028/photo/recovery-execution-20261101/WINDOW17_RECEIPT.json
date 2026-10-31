@@ -1,0 +1,36 @@
+{
+  "status": "PHOTO_WINDOW17_STOPPED_CLOSED_NOT_E2E_PASS",
+  "batchId": "d56f2cbc-43da-46c0-84d0-462c98b69689",
+  "sourceId": "03109f59-894f-4ddf-aad9-090d0920092f",
+  "representationId": "06e6bb76-f754-47d2-9475-11148147ff6f",
+  "uploadOperationId": "bb0559c5-4ab6-8f2e-bc72-6bb272fec01c",
+  "attemptId": "eb1479c3-f160-4f96-ba6f-07e0d986de33",
+  "attemptGeneration": 1,
+  "captureRevision": 2,
+  "localChoice": "CONTINUE_WITH_AI",
+  "acquire": "APPLIED_FINAL",
+  "prepare": "APPLIED_FINAL",
+  "upload": "IO_UNKNOWN",
+  "journal": "RUNNING_NO_TERMINAL",
+  "physicalCleanup": "TERMINATED",
+  "workerInactive": true,
+  "ownedInventoryEmpty": true,
+  "markerRetained": true,
+  "modelTaskCount": 0,
+  "modelAttemptCount": 0,
+  "resultsVerified": false,
+  "saveVerified": false,
+  "newObjectsAfterApprovedInput": false,
+  "softwareFix": "Fresh remote Auth/Trip validation before Source lease/BEGIN; same principal/SQL/cancellation fences retained",
+  "rootCauseStatus": "Concrete transaction idle hazard reproduced locally; window17 root cause not conclusively proven",
+  "validation": {
+    "red": {
+      "failed": 2,
+      "passed": 11
+    },
+    "focusedPass": 43,
+    "eslint": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "deployed": false
+}

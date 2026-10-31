@@ -1,55 +1,47 @@
 # Current Import Photo checkpoint — 1 November 2026
 
-Golden Slice PARTIAL: original PNG custody, SourceBinding and manifest actualPASS;
-no paid Vision, Results, formal Photo Save or Native E2E PASS.
-Owner approved5f77b84b Run Input guard; installed OID66391 MD5661c2130, independently
-verified CLOSED with Owner/ACL/full role graph (including OIDs)/schemaACL restored.
-Approved recovery eba/d868 retained. Same Batche7df/Source df39/rep9bf already has
-UPLOADd2f and VERIFY5cc APPLIED/FINAL; old077negative and old905UNKNOWN retained.
+Golden Slice BLOCKED at original PNG upload, not Vision or Save PASS. Owner approved
+7303c608: exactly one normal App replacement Batch d56f2cbc / Input73fe13fa /
+Capture9f4dd0d3, same42630B PNG SHA078de830. No extra Batch/Task/model allowance.
+Normal Trip binding bumped Capture1→2; normal Check/Choose refreshed consent at2.
+Source03109f59 / rep06e6bb76: ACQUIREf8e43db5 and PREPARE44f1700c APPLIED/FINAL.
+UPLOADbb0559c5 / attempteb1479c3 generation1 became IO_UNKNOWN; journal RUNNING,
+no terminal. Broker STATUS failed at15:50:36Z, HTTP503; no SQLSTATE was captured.
+No Task or model Attempt exists (same-image readback0/0); firstVision unused.
 
-Actual normal App window16 accepted SourceRun2179a40d-0936-8858-86ac-93001986c3ec,
-generation1/PENDING, created2026-10-31T13:37:56.642791Z, same Input69536a38. Source
-Binding, original-image manifest and Task draft passed; first actual FAIL moved to
-CATALOG503 at13:38:18Z, before Task bootstrap. Task/model0 confirmed, no firstVision
-allowance spent. SourceRun deadline +10min is now expired. Do not reset/retime/remint.
-Any accepted Run forbids the guard inverse. Original/raw/journals/markers retained.
+Window17e6e268c5 started15:29Z, independently closed early before coding: SQL before/
+after CLOSED, runtime verified, worker inactive/physicalCleanup TERMINATED, owned
+attempt inventory empty, marker retained, timers stopped. Current ac7a53f6/image
+d8b789b8/capture6d7610a3 remains compatible default; Native/Auth resources returned.
+Never reset/upload/reissue UNKNOWN or infer PARSE_PASS from physical termination.
+All older originals/markers/UNKNOWN/receipts and expired Run2179 remain intact.
 
-Window16 independently CLOSED before software diagnosis: Source before/after true,
-runtimeverified/workerinactive EMPTY_VERIFIED/timersstopped. Actualservice0cf/image67/
-capture82d7 at release; Native7603/Autha7 +actualb518/9264 preserved. No SourceHost
-lease. Auth A authorized window may now change finite config, Native722 timing image
-follows its close. Any subsequent Source deployment must fresh-CAS latest accepted
-service/config and preserve both lanes; never restore an older incompatible image.
+Focused software repair: sourcePngBroker waited for remote Auth/Trip inside BEGIN
+while Source permits5s idle. Move that same per-action validation before lease;
+principal/SQL owning guard/cancellation fences and budgets unchanged. New ordering/
+denial tests RED2 then related43 PASS, ESLint and independent NO_BLOCKER. This is
+LOCAL_PASS for a concrete idle hazard, not proof of window17 root cause or actual
+repair. Not deployed yet. Auth is assembling reviewed diagnostic software plus
+this one Source file on byte-exact6d baseline; fresh short Host CAS still required.
 
-Catalog root evidence: normal existing readonly principal query PASS5202ms including
-cold connect2082ms. Same QA projection currentV2 schemaPASS, familymax33, login/expiry
-valid. Existing aggregate5s wrongly includes3scheckout. Minimal software sets only
-aggregate8s at exact caller boundaries; SQL/query5s/lock1s/checkout3s/max1/TLS/
-principal/cancel/Auth5s/Trip5s/HTTP15s unchanged. 107 focused checks and independent
-NO_BLOCKER. Runtime now deployed in accepted Native combined package; exact same
-production loader/reader with normal catalog principal PASS5239ms/V2/retainedRun
-present,0businessMutation/Provider. This is readerSERVER_VERIFIED, not normal App
-Task/Vision/Save E2E. Full roottypes hit2GiB cap/OOM, notPASS; no
-heap escalation or concurrent rebuild. No Schema/RLS/GRANT/Authority/Provider changes.
-Receipts/review: ops/universal-product-20261028/photo/recovery-execution-20261031/.
+Recovery remains protected: current d868 function authorizes generation2 only for
+old Source df39/operationd2f/attempt077. New bb0559c5 may not borrow that authority.
+Minimal new tuple/CAS packet is prepared NOT APPROVED/NOT INSTALLED under
+.env.photo-window17-recovery-20261101; new22/legacy22 isolation checks, tuple27,
+maintenance install/inverse/fault7 and operator no-credential3 checks PASS,
+independent NO_BLOCKER. Physical negative proof retained; no PG negative journal
+or quiescence executed. No new Schema/RLS/roles/budget/expiry. Single protected
+function + exact operator credential purpose require Owner approval before use.
 
-Native diagnostics ce7700cf/725b7779 LOCAL_PASS42; Native separately accepted client
-fix as c26a48e8. AD5 remains126.8/SQLite76, same session/data/rootMyTrips; no new
-Native installation. Import622aa154 hides the false unassigned-intake label for
-assigned Capture progress;37presentation/UIguard PASS, not AD5verified. Replacement
-input Gate7303c608 fixed/pending Owner, not executed. Native combined8s+722 software
-184checksPASS, capture6d7610a3/imaged8b789b8 deployed actualCIDac7a53f6; all23files/
-9mount/env/HostConfig and server7826/b518/9264 independently match. Auth B now owns
-its finite Host/config session, Sourceclosed; do not reuse oldCID/plan during it. Rootbranch stable, main untouched.
-Originalhardexpiry remains
-2026-11-01T08:48:56Z, maxone unused realVision, <=60m/+45close/+50watchdog bounds.
-
-Next: fix/deploy catalog budget preserving currentNative/Auth after their shortCAS;
-obtain exact PHOTO_AFTER_CATALOG_REPAIR_INPUT_GATE scope rather than reset expired
-binding (candidate prepared, independent NO_BLOCKER); normal App
-new allowed input only after zero oldmodel/Task/UNKNOWN check → first actualVision
-→ Results → Review → unique PRIVATE SELF P1/P6 → independent readback/Day/cold/
-idempotence →close. Software and remaining nonprotected work continue meanwhile.
+Next: finish exact recovery Gate, ordinary compatible software deployment while
+CLOSED; after approval record negative/retain marker, same operation uniquegen2,
+normal App→actual imageVisiononce→Results→Review→one PRIVATE SELF P1/P6→independent
+readback/Day/cold/idempotence→close. FirstVision/Save still unverified. Originalhard
+expiry2026-11-01T08:48:56Z and <=60m/+45close/+50watchdog bounds unchanged. Stable
+Import branch only; main untouched. AD5 remains126.8/SQLite76/rootMyTrips; false
+unassigned label fix622aa154 local-only. Full roottypes previously hit2GiB OOM;
+not rerun or claimedPASS. Evidence: ops/universal-product-20261028/photo/
+recovery-execution-20261101 and authority/PHOTO_WINDOW17_OPERATION_RECOVERY_GATE.md.
 
 Older checkpoints below are historical and superseded by the current header.
 

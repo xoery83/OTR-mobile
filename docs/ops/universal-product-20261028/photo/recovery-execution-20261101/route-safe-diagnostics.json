@@ -1,0 +1,87 @@
+{
+  "diagnostics": [
+    {
+      "at": "2026-10-31T15:32:30.942749396Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "BINDING",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T15:32:30.942923265Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 404,
+      "durationMs": 7641
+    },
+    {
+      "at": "2026-10-31T15:32:51.834395430Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5830
+    },
+    {
+      "at": "2026-10-31T15:49:12.929750086Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "BINDING",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T15:49:12.929802886Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 404,
+      "durationMs": 8133
+    },
+    {
+      "at": "2026-10-31T15:49:27.219711923Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5932
+    },
+    {
+      "at": "2026-10-31T15:49:42.394448697Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6688
+    },
+    {
+      "at": "2026-10-31T15:49:49.373802177Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6657
+    },
+    {
+      "at": "2026-10-31T15:49:56.219440635Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6518
+    },
+    {
+      "at": "2026-10-31T15:50:36.649631153Z",
+      "event": "source_png_broker_failed",
+      "command": "UPLOAD_ORIGINAL",
+      "action": "STATUS",
+      "phase": "BROKER"
+    },
+    {
+      "at": "2026-10-31T15:50:44.390316684Z",
+      "event": "source_png_preparation_failed",
+      "action": "execute",
+      "reason": "UNCLASSIFIED",
+      "errorKind": "OTHER"
+    },
+    {
+      "at": "2026-10-31T15:50:44.390723002Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 503,
+      "durationMs": 47092
+    }
+  ],
+  "rawLogsExposed": false
+}

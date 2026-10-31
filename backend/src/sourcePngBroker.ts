@@ -54,6 +54,10 @@ export function createSourcePngBroker(
       throw Error("SOURCE_ACCESS_DENIED");
     scope.signal.throwIfAborted();
     assertRequestCurrent();
+    // Remote Auth/Trip IO must finish before BEGIN: Source permits only 5s idle.
+    await assertCurrent(scope);
+    scope.signal.throwIfAborted();
+    assertRequestCurrent();
     const result = await universalPgTransaction(
       connection,
       async (lease) => {
@@ -67,7 +71,6 @@ export function createSourcePngBroker(
         )
           throw Error("SOURCE_PRINCIPAL_UNAVAILABLE");
         scope.signal.throwIfAborted();
-        await assertCurrent(scope);
         assertRequestCurrent();
         scope.signal.throwIfAborted();
         return response.parse(
