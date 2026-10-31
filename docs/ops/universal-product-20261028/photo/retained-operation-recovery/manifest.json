@@ -1,0 +1,18 @@
+{
+  "status": "CANDIDATE_NOT_INSTALLED",
+  "function": "public.trip_source_png_operation(uuid,text,text,jsonb,jsonb)",
+  "oid": 67161,
+  "preMD5": "5d40339e0af17a04886678c6340edba9",
+  "postMD5": "d86864fbe182c596dcb4a213413b7e9d",
+  "owner": "otr_trip_source_writer",
+  "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+  "targetDigest": "a0112bab61a4cde710c918802ce77598",
+  "proofSHA256": "58fb92d9ad1d6b539932a4c29ea37f2ec0ca28949d4442556566e4d64a929a71",
+  "files": {
+    "recovery-install.private.sql": "334c9e9fed2e75daf175023e8e73d3151043e23fbe86856202c65a7360d433ba",
+    "recovery-rollback.private.sql": "51482493d3838eda195020e89f575b5b97bdc17190ac0282f24fc9329ff25bc0",
+    "png-operation-before.private.sql": "ae4b4be90d4394ec6772e480301140fed4f1fee081fefd292695787c33a06cf0",
+    "png-operation-recovery-candidate.private.sql": "88431fca8e51566bafd62706a86afd077a23f1c372cda6807e3976e547abcdf5",
+    "negative-recovery.cjs": "b0c31cfe4ceaa6414a54f5714034934e79e6d083d6af7a2505b2f903d0964c06"
+  }
+}

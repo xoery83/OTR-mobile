@@ -1,0 +1,69 @@
+--- existing-png-operation
++++ same-operation-negative-recovery
+@@ -11,13 +11,31 @@
+  st public.trip_source_staged_resources; ust public.trip_source_staged_resources; ctx jsonb; journal jsonb; binding jsonb; upload_binding jsonb; uploaded_journal jsonb;
+  fresh boolean:=false; keys text[]; next_attempt uuid; observed timestamptz; canonical_proof jsonb; scope_access text; result jsonb;
+ begin
+- if action is null or action not in ('STATUS','RECONCILE','REGISTER','BEGIN','UNKNOWN','FINALIZE','EXEC_REGISTER','EXEC_CLAIM','EXEC_ATTACH','EXEC_ADVANCE','EXEC_TERMINAL','EXEC_RELEASE','EXEC_CLEANED') or current_user<>'otr_trip_source_writer' or session_user<>'otr_trip_source_command_gateway' or actor is distinct from 'f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid or raw is null or octet_length(raw)>16384 then raise exception 'PNG_OPERATION_DENIED';end if;
++ if action is null or action not in ('STATUS','RECONCILE','QUIESCE_NEGATIVE','REGISTER','BEGIN','UNKNOWN','FINALIZE','EXEC_REGISTER','EXEC_CLAIM','EXEC_ATTACH','EXEC_ADVANCE','EXEC_TERMINAL','EXEC_RELEASE','EXEC_CLEANED') or current_user<>'otr_trip_source_writer' or session_user<>'otr_trip_source_command_gateway' or actor is distinct from 'f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid or raw is null or octet_length(raw)>16384 then raise exception 'PNG_OPERATION_DENIED';end if;
+  q:=public.trip_source_command_codec(raw);
+  if q->>'actor_account_id' is distinct from actor::text or q->>'trip_id' is distinct from '825f79b2-4a9d-4535-a62e-43000ca50c4a' or q->>'command' not in ('PREPARE_REPRESENTATION','UPLOAD_ORIGINAL','VERIFY_REPRESENTATION') then raise exception 'PNG_OPERATION_DENIED';end if;
+  select * into o from public.trip_source_operations where id=(q->>'operation_id')::uuid for update;
+  scope_access:=case when action in ('STATUS','RECONCILE') or action like 'EXEC_%' or o.phase='FINAL' or o.phase in ('IO_ACTIVE','IO_UNKNOWN','IO_QUIESCENT') and action in ('REGISTER','BEGIN') then 'READ_RECEIPT' else 'WRITE' end;
+  ctx:=public.trip_source_png_enter(actor,raw,scope_access);
+  if action in ('STATUS','RECONCILE') then null;
++ elsif action='QUIESCE_NEGATIVE' then
++  -- Negative-only same-operation recovery after trusted physical/journal cleanup; never a parse proof.
++  if not public.trip_sustained_universal_png_allowed(actor,o.trip_id) or (proof is not null and proof<>'null'::jsonb)
++   or o.id is distinct from 'd2f59e69-59c0-83bf-b745-a2c6727cb618'::uuid
++   or o.source_id is distinct from 'df39c9b2-fc19-4baa-8c7c-aafd0f04726f'::uuid
++   or o.command is distinct from 'UPLOAD_ORIGINAL' or o.phase not in ('IO_ACTIVE','IO_UNKNOWN','IO_QUIESCENT')
++   or o.attempt_id is distinct from '077c0f34-f9e2-438c-b922-42bb3283566f'::uuid or o.attempt_generation<>1
++   or jsonb_typeof(expected) is distinct from 'object'
++   or not(expected?&array['attemptId','attemptGeneration']) or (select count(*) from jsonb_object_keys(expected))<>2
++   or (expected->>'attemptId')::uuid is distinct from o.attempt_id
++   or (expected->>'attemptGeneration')::bigint is distinct from o.attempt_generation then raise exception 'PNG_NEGATIVE_QUIESCENCE_DENIED';end if;
++  select * into a from public.trip_source_execution_attempts where id=o.attempt_id and operation_id=o.id;
++  select * into st from public.trip_source_staged_resources where id=a.staged_resource_id;
++  if a.id is null or a.canonical_generation<>o.attempt_generation or a.phase is distinct from 'TERMINAL'
++   or a.termination_outstanding is distinct from false or a.terminal_result is distinct from 'PARSER_CRASH'
++   or a.terminal_evidence_sha256 is null or a.terminal_evidence_sha256 !~ '^[a-f0-9]{64}$' or a.terminal_observed_at is null
++   or st.id is null then raise exception 'PNG_NEGATIVE_TERMINAL_REQUIRED';end if;
++  if o.phase<>'IO_QUIESCENT' then perform public.trip_source_attempt_observe(o.id,o.operation_sha256,o.phase,o.attempt_generation,o.attempt_id,'DEFINITIVE_COMPLETION');end if;
+  elsif action like 'EXEC_%' then
+   if action='EXEC_REGISTER' then raise exception 'PNG_REGISTER_REQUIRES_ATOMIC_BEGIN';end if;
+   journal:=public.trip_source_png_execution(actor,raw,substring(action from 6),expected,proof);
+@@ -28,17 +46,31 @@
+    select * into o from public.trip_source_operations where id=(q->>'operation_id')::uuid for update;
+    if o.phase<>'FINAL' then ctx:=public.trip_source_png_enter(actor,raw,'WRITE');end if;
+   end if;
+-  if action='BEGIN' and o.phase='ADMITTED' and o.attempt_id is null then
++  if action='BEGIN' and (o.phase='ADMITTED' and o.attempt_id is null or o.phase='IO_QUIESCENT') then
+    if q->>'command' not in ('UPLOAD_ORIGINAL','VERIFY_REPRESENTATION') then raise exception 'PNG_BEGIN_DENIED';end if;
+    if jsonb_typeof(expected) is distinct from 'object' then raise exception 'PNG_BEGIN_EXPECTED_REQUIRED';end if;
+    keys:=case when q->>'command'='UPLOAD_ORIGINAL' then array['attemptId','resourceId','nodeId','resourceKey','runToken','ownerRun'] else array['attemptId'] end;
++   if o.phase='IO_QUIESCENT' then
++    if o.id is distinct from 'd2f59e69-59c0-83bf-b745-a2c6727cb618'::uuid
++     or o.source_id is distinct from 'df39c9b2-fc19-4baa-8c7c-aafd0f04726f'::uuid or q->>'command'<>'UPLOAD_ORIGINAL'
++     or o.attempt_id is distinct from '077c0f34-f9e2-438c-b922-42bb3283566f'::uuid or o.attempt_generation<>1
++     or (expected->>'previousAttemptId')::uuid is distinct from o.attempt_id
++     or (expected->>'previousAttemptGeneration')::bigint is distinct from o.attempt_generation then raise exception 'PNG_RETRY_CAS_DENIED';end if;
++    select * into a from public.trip_source_execution_attempts where id=o.attempt_id and operation_id=o.id;
++    select * into st from public.trip_source_staged_resources where id=a.staged_resource_id;
++    if a.id is null or a.phase is distinct from 'TERMINAL' or a.termination_outstanding is distinct from false
++     or a.terminal_result is distinct from 'PARSER_CRASH'
++     or a.terminal_evidence_sha256 is null or st.id is null then raise exception 'PNG_NEGATIVE_TERMINAL_REQUIRED';end if;
++    ctx:=public.trip_source_png_enter(actor,raw,'WRITE');
++    keys:=keys||array['previousAttemptId','previousAttemptGeneration'];
++   end if;
+    if not(expected?&keys) or (select count(*) from jsonb_object_keys(expected))<>cardinality(keys) then raise exception 'PNG_BEGIN_DENIED';end if;
+    next_attempt:=(expected->>'attemptId')::uuid;if next_attempt is null then raise exception 'PNG_BEGIN_DENIED';end if;
+    perform public.trip_source_attempt_start(actor,(q->>'trip_id')::uuid,o.source_id,o.id,o.operation_key,o.operation_sha256,o.phase,o.attempt_generation,o.attempt_id,next_attempt);
+    ctx:=public.trip_source_png_enter(actor,raw,'WRITE');
+    select * into o from public.trip_source_operations where id=(q->>'operation_id')::uuid for update;
+    if q->>'command'='UPLOAD_ORIGINAL' then
+-    journal:=public.trip_source_png_execution(actor,raw,'REGISTER',jsonb_build_object('attemptId',o.attempt_id,'ownerRun',expected->>'ownerRun','ownerFence',0),expected-'attemptId');
++    journal:=public.trip_source_png_execution(actor,raw,'REGISTER',jsonb_build_object('attemptId',o.attempt_id,'ownerRun',expected->>'ownerRun','ownerFence',0),expected-array['attemptId','previousAttemptId','previousAttemptGeneration']);
+     if journal->>'phase' is distinct from 'STARTING' then raise exception 'PNG_ATOMIC_BEGIN_NOT_FRESH';end if;
+     journal:=public.trip_source_png_execution(actor,raw,'CLAIM',jsonb_build_object('attemptId',o.attempt_id,'ownerRun',expected->>'ownerRun','ownerFence',0),null);
+    end if;

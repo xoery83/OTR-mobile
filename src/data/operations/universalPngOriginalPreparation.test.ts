@@ -227,3 +227,27 @@ it.each(["IO_ACTIVE", "IO_UNKNOWN", "IO_QUIESCENT"])(
     expect(x.port.execute).not.toHaveBeenCalled();
   },
 );
+
+it("explicitly resumes only a formally quiescent upload with the same operation and original bytes", async () => {
+  const x = await fixture(true),
+    q = x.proposals.upload;
+  x.records.set(q.operation_id, {
+    contract_version: 1,
+    operation_id: q.operation_id,
+    operation_key: q.operation_key,
+    operation_sha256: q.operation_sha256,
+    phase: "IO_QUIESCENT",
+    attempt_generation: 1,
+  });
+  await x.run();
+  expect(x.port.execute).toHaveBeenCalledWith(x.f.context, q, {
+    binding: x.input.binding,
+    bytes: x.input.bytes,
+  });
+  expect(x.port.reconcile).not.toHaveBeenCalled();
+  expect(
+    x.port.execute.mock.calls.filter(
+      ([, command]) => command.command === "UPLOAD_ORIGINAL",
+    ),
+  ).toHaveLength(1);
+});

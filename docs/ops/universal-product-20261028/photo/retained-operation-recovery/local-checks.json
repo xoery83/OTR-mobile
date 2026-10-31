@@ -1,0 +1,125 @@
+{
+  "status": "LOCAL_PASS_NOT_DEV_RECOVERY",
+  "pgCases": {
+    "RED_FROZEN_WRAPPER_REJECTS_NEGATIVE_QUIESCENCE": true,
+    "NO_TERMINAL_DENIED": true,
+    "POSITIVE_TERMINAL_CANNOT_BECOME_NEGATIVE": true,
+    "CLOSED_QUIESCENCE_DENIED": true,
+    "WRONG_ATTEMPT_DENIED": true,
+    "WRONG_GENERATION_DENIED": true,
+    "EXTRA_EXPECTED_FIELD_DENIED": true,
+    "QUIESCENCE_IS_IDEMPOTENT": true,
+    "CLOSED_RETRY_DENIED": true,
+    "WRONG_RETRY_CAS_DENIED": true,
+    "CANDIDATE_RETAINS_NEGATIVE_AND_RETRIES_SAME_OPERATION": true,
+    "LOST_BEGIN_REPLAY_NO_SECOND_ATTEMPT": true,
+    "NO_SECOND_NEGATIVE_GENERATION_AUTHORITY": true,
+    "NULL_PREVIOUS_ATTEMPT_DENIED": true,
+    "NULL_PREVIOUS_GENERATION_DENIED": true,
+    "CALLER_POSITIVE_PROOF_DENIED": true,
+    "EXPIRED_QUIESCENCE_DENIED": true,
+    "EXPIRED_RETRY_DENIED": true,
+    "OUTSTANDING_TERMINATION_DENIED": true,
+    "RECONCILE_DOES_NOT_QUIESCE_OR_RETRY": true,
+    "SAME_ATTEMPT_RETRY_DENIED": true,
+    "CANONICAL_JSON_NULL_PROOF_ALLOWED": true
+  },
+  "concurrency": {
+    "function": {
+      "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+      "owner": "otr_trip_source_writer",
+      "postMD5": "d86864fbe182c596dcb4a213413b7e9d"
+    },
+    "status": "PASS",
+    "scope": "isolated local PG clone only",
+    "concurrentFreshCounts": [
+      false,
+      true
+    ],
+    "postcondition": {
+      "attempts": 2,
+      "generation": 2,
+      "oldRetained": true,
+      "oldStageRetained": true
+    },
+    "devExecuted": false
+  },
+  "maintenance": {
+    "status": "PASS",
+    "cases": [
+      {
+        "name": "FORWARD_INVERSE",
+        "passed": true,
+        "allBaselineRestored": true
+      },
+      {
+        "name": "FAULT_BEFORE_RESTORE",
+        "passed": true,
+        "allBaselineRestored": true
+      },
+      {
+        "name": "FAULT_AFTER_RESTORE",
+        "passed": true,
+        "allBaselineRestored": true
+      },
+      {
+        "name": "WIRE_JSON_NULL_AND_ACCEPTED_NO_INVERSE",
+        "passed": true,
+        "allBaselineRestored": true
+      },
+      {
+        "name": "TARGET_CAS_DRIFT",
+        "passed": true,
+        "allBaselineRestored": true
+      },
+      {
+        "name": "POSTIMAGE_FAILURE_ROLLBACK",
+        "passed": true,
+        "allBaselineRestored": true
+      },
+      {
+        "name": "ROLE_RESTORE_FAILURE_ROLLBACK",
+        "passed": true,
+        "allBaselineRestored": true
+      }
+    ],
+    "devExecuted": false,
+    "fixtureAdjustments": [
+      "actualOID67161 resolves equivalent local signature",
+      "actual target digest replaced only by immutable per-case fixture digest because created_at differs",
+      "existing isolated superuser fixture; restricted SourceWriter maintenance recipe reused from actual approved first-lookup9bc installation, not newly claimed non-superuser validation"
+    ]
+  },
+  "operator": {
+    "status": "LOCAL_BUILD_SELF_CHECK_PASS",
+    "packetSHA256": "58fb92d9ad1d6b539932a4c29ea37f2ec0ca28949d4442556566e4d64a929a71",
+    "bundleSHA256": "b0c31cfe4ceaa6414a54f5714034934e79e6d083d6af7a2505b2f903d0964c06",
+    "checks": [
+      {
+        "name": "mode",
+        "passed": true,
+        "code": "PNG_RECOVERY_MODE_DENIED",
+        "credentialLoaded": false,
+        "devExecuted": false
+      },
+      {
+        "name": "hash",
+        "passed": true,
+        "code": "PNG_RECOVERY_PACKET_DRIFT",
+        "credentialLoaded": false,
+        "devExecuted": false
+      },
+      {
+        "name": "config",
+        "passed": true,
+        "code": "PNG_RECOVERY_CONFIG_UNAVAILABLE",
+        "credentialLoaded": false,
+        "devExecuted": false
+      }
+    ]
+  },
+  "softwareFocusedTests": 47,
+  "scopedTypecheck": "PASS",
+  "liveInstallation": false,
+  "visionCallObserved": false
+}

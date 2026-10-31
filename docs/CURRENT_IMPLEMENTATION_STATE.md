@@ -1,39 +1,41 @@
 # Current Import Photo checkpoint — 31 October 2026
 
-Photo Golden Slice BLOCKED before real Vision; no Photo Save/E2E PASS.
-Owner3175f9ad approved exactly one replacement normal-App input after preserved
-old upload UNKNOWN. New Batch e7dfba6d-fa6a-49e5-8cc7-563e9b6eff84,
-Input69536a38-8ced-4ac4-9efb-c3804f6e0901, Job3997d334, Capturecd546b0b,
-same42630-byte PNG/SHA078de830, same QA Accountf4b059c5/Trip825f79b2.
-No actual Vision call yet. Old Source2bf0294a/upload70dd21b8/attempt905cd8ec,
-UNKNOWN/journal and marker remain retained; no reset or replay. Read-only old
-Task/attempt preflight0. Never create a third replacement automatically.
+Photo Golden Slice BLOCKED before actual Vision. No Photo Save/Native E2E PASS.
+Same approved Batch e7dfba6d/Input69536a38, Source df39c9b2/rep9bf0ad08,
+Capturecd546b0b rev2 RELEVANT/explicitContinue retained;42630B PNG SHA078de830.
+Acquire4b11aa7e and PREPARE973c6368 APPLIED. Uploadd2f59e69/attempt077c0f34 gen1
+remains IO_ACTIVE/RUNNING/no terminal, Native response unconfirmed06:14:09Z.
+No automatic replacement or another paid call. Old Source2bf/upload70dd/attempt905
+UNKNOWN, marker/stage/original remain untouched. Latest read07:00:31 confirms same.
 
-First new-input FAIL was local SOURCE_PREPARE: legitimate Files PNG has immutable
-FILE/files provenance; Photo gates and SQLite75 allowed IMAGE only. Minimal shared
-Photo input predicate and native-local migration76 now support exact FILE+PNG,
-retaining input/capture/revision/hash/bytes/consent guards. Historical75 SQL hash
-unchanged.94 focused +5 migration tests, scoped production TypeScript/ESLint,
-ui:guard PASS, independent NO_BLOCKER. Full-repo tsc heap OOM is not PASS.
-Native delegated sole migration76 Writer; no Hosted schema/authority change.
-See photo/PHOTO_FILES_PNG_ADAPTER.md. AD5 code-only126.6 installed, Native binary/data and both inputs preserved; real
-SQLite76 and local OCR RELEVANT/explicitContinue verified. Normal Source Start
-assigned Capture rev2; stale rev1 consent correctly blocked before paid execution.
-Current rev2 OCR/Continue now confirmed. Source df39c9b2/rep9bf0ad08/acquire4b11aa7e
-ADMITTED; independent Supabase Source readback05:53:08Z confirms OWNER_PRIVATE,
-FILES, exact QA Actor/Trip, zero Source attempts. Next: same Source preparation,
-actual Vision at most1, Review→formal Save/readback/cold. No third replacement.
+Files provenance/SQLite76 repaira58576c7 and HTTP boundary3f860280 fixed; AD5
+code-only126.7 installed, Native binary and input/Source/current consent preserved.
+Source acknowledgement amplification repaird84dcbd1 is fixed/local-reviewed,
+41tests/full typecheck PASS; not deployed. Per-action fresh Auth/Trip retained,
+repeated groups70→8 by code count,90s unchanged; actual performance unverified.
 
-All Photo windows1–9 CLOSED independently; window9 5a68a043 scopes/runtime closed,
-worker inactive/EMPTY and timers stopped. No temporary permission active.
-Host worker IPC budget90s (3175), cleanup inspect buffer65536 (b88d), approved
-pin184156c3 and operation guard1eeccf27 installed. PREPARE/UPLOAD accepted means
-no guard inverse. Original hard expiry2026-11-01T08:48:56Z, budget unchanged.
-Auth default-closed software deployed atop76c8: CID43afbc09/image8217aba6,
-Native624/62e and Photo IPC retained. Photo controller auth43af SHAe1945d57
-passed CLOSED/timer drill. Auth now owns finite OAuth public-config switch/QA;
-fresh-read its eventual default baseline before next Photo controller activation.
-No global DEV lock; main last known8f79a421, Root has not changed main.
+All Photo windows1–10 independently CLOSED. Latest7ffab2d4 Source before/after,
+runtime verified, worker inactive/physical TERMINATED, timers stopped. Frozen
+physical negative proof58fb92d9 privately preserved; no PG terminal fabricated.
+Existing PNG wrapper lacks negative-quiescence/retry. A single protected function
+candidate5d40339e→d86864fb is prepared, NOT approved/installed; Owner/ACL/OID67161
+same, exact Source/op/oldattempt/gen1 only, onegen2. Oldstage/journal retained.
+Normal Native/Backend recovery wiring/local47tests/scoped tsc PASS;22 isolated PG
+cases + real2session concurrency(one freshgen2) +7 maintenance/inverse/fault cases
+PASS. Final independent review NO_BLOCKER. Local maintenance fixture is superuser;
+restricted recipe reuses actual first-lookup9bc install evidence, no new claim.
+See authority/PHOTO_RETAINED_OPERATION_RECOVERY_GATE.md and photo/retained-operation-recovery/.
+Full private frozen artifacts/generators durable .env.photo-files-png-20261031/.
+
+Next: exact protected Gate approval, preserve latest Auth/Native software baseline,
+finish compatible image/App/controller preflight CLOSED, trusted negative journal
+and retained-marker archive, finite same-op quiescence+normal App gen2, then actual
+original-image Vision once→Review/Admission→Core/readback/Day/cold/idempotence/close.
+Hard expiry2026-11-01T08:48:56Z, original allowance/budget unchanged. Ordinary
+coding/builds continue pending approval; do not execute private write operator yet.
+Latest Native accepted service:a6218839/imagecfc230e6 after Authce09/4781, capture
+b71d/server7826/runtimeb518/browser9264 preserved. Root must fresh-CAS that baseline,
+never restore43af or old76 image. No Root main update; main fresh-check at integration.
 
 Older checkpoints below are historical and superseded by the current header.
 

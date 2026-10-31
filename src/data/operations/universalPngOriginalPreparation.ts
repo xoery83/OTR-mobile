@@ -108,7 +108,7 @@ export async function prepareAdmittedPngOriginal(
       r.operation_sha256 !== q.operation_sha256
     )
       throw Error("PNG_SOURCE_RECEIPT_MISMATCH");
-    return true;
+    return r.phase;
   }
   async function receipt(raw: unknown, q: PngOriginalCommand) {
     if (pending(raw, q)) throw Error("PNG_UPLOAD_OUTCOME_UNRESOLVED");
@@ -148,7 +148,10 @@ export async function prepareAdmittedPngOriginal(
   }
   async function settle(q: PngOriginalCommand) {
     let raw = await step(() => port.lookup(context, cloneCommand(q)));
-    if (raw === null)
+    if (
+      raw === null ||
+      (q.command === "UPLOAD_ORIGINAL" && pending(raw, q) === "IO_QUIESCENT")
+    )
       raw = await step(() =>
         port.execute(
           context,

@@ -117,7 +117,7 @@ async function fixture() {
           operation_key: q.operation_key,
           operation_sha256: q.operation_sha256,
           phase: s.phase,
-          attempt_generation: s.attempt ? 1 : 0,
+          attempt_generation: s.attempt?.generation ?? 0,
         };
     return structuredClone({
       operation,
@@ -427,4 +427,65 @@ it("cancelled or stale request scopes never acquire a permit", async () => {
     "STALE_SCOPE",
   );
   expect(g.broker).not.toHaveBeenCalled();
+});
+
+it("a formally quiescent upload passes the retained attempt CAS to BEGIN without changing operation identity", async () => {
+  const f = await fixture(),
+    prior = { id: randomUUID(), generation: 1 };
+  f.states.set(f.proposals.upload.operation_id, {
+    phase: "IO_QUIESCENT",
+    attempt: prior,
+  });
+  const original = f.broker.getMockImplementation()!;
+  f.broker.mockImplementation(async (scope, q, action, expected, detail) => {
+    if (action === "BEGIN") throw Error("RETRY_OWNER_ACK_UNCONFIRMED");
+    return original(scope, q, action, expected, detail);
+  });
+  await expect(f.port.execute(f.scope, f.proposals.upload, f.bytes)).rejects.toThrow(
+    "RETRY_OWNER_ACK_UNCONFIRMED",
+  );
+  const begin = f.broker.mock.calls.find(([, , action]) => action === "BEGIN")!;
+  expect(begin[1]).toEqual(f.proposals.upload);
+  expect(begin[3]).toMatchObject({
+    previousAttemptId: prior.id,
+    previousAttemptGeneration: 1,
+  });
+  expect(begin[3].attemptId).not.toBe(prior.id);
+  expect(f.worker).not.toHaveBeenCalled();
+  expect(f.counts()).toEqual({ posts: 0, gets: 0 });
+});
+
+it("a lost retry BEGIN reply keeps the new actual attempt and never reissues IO", async () => {
+  const f = await fixture(),
+    prior = { id: randomUUID(), generation: 1 };
+  f.states.set(f.proposals.upload.operation_id, {
+    phase: "IO_QUIESCENT",
+    attempt: prior,
+  });
+  const original = f.broker.getMockImplementation()!;
+  let accepted: string | undefined;
+  f.broker.mockImplementation(async (scope, q, action, expected, detail) => {
+    if (action === "BEGIN") {
+      accepted = expected.attemptId;
+      f.states.set(q.operation_id, {
+        phase: "IO_ACTIVE",
+        attempt: { id: accepted, generation: 2 },
+      });
+      throw Error("COMMIT_UNKNOWN");
+    }
+    return original(scope, q, action, expected, detail);
+  });
+  await expect(f.port.execute(f.scope, f.proposals.upload, f.bytes)).rejects.toThrow(
+    "COMMIT_UNKNOWN",
+  );
+  expect(await f.port.execute(f.scope, f.proposals.upload, f.bytes)).toMatchObject({
+    phase: "IO_ACTIVE",
+    attempt_generation: 2,
+  });
+  expect(f.states.get(f.proposals.upload.operation_id).attempt.id).toBe(accepted);
+  expect(f.broker.mock.calls.filter(([, , action]) => action === "BEGIN")).toHaveLength(
+    1,
+  );
+  expect(f.worker).not.toHaveBeenCalled();
+  expect(f.counts()).toEqual({ posts: 0, gets: 0 });
 });

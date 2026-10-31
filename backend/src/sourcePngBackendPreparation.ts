@@ -214,7 +214,13 @@ export function createSourcePngBackendPreparation(
       let r = await call(scope, q, "REGISTER");
       if (!r.operation) throw Error("PNG_SOURCE_OPERATION_UNAVAILABLE");
       if (final(r) || q.command === "PREPARE_REPRESENTATION") return r.operation;
-      if (r.operation && "phase" in r.operation && r.operation.phase !== "ADMITTED")
+      const retry =
+        q.command === "UPLOAD_ORIGINAL" &&
+        "phase" in r.operation &&
+        r.operation.phase === "IO_QUIESCENT";
+      const priorAttempt = retry ? r.attempt : null;
+      if (retry && !priorAttempt) throw Error("PNG_SOURCE_PERMIT_INVALID");
+      if ("phase" in r.operation && r.operation.phase !== "ADMITTED" && !retry)
         return reconcile(scope, q);
       const bytes = supplied ? Uint8Array.from(supplied) : undefined;
       if (
@@ -238,6 +244,12 @@ export function createSourcePngBackendPreparation(
               resourceKey: randomBytes(32).toString("hex"),
               runToken: randomUUID(),
               ownerRun,
+              ...(priorAttempt
+                ? {
+                    previousAttemptId: priorAttempt.id,
+                    previousAttemptGeneration: priorAttempt.generation,
+                  }
+                : {}),
             }
           : { attemptId },
       );
