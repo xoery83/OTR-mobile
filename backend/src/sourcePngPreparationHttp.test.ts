@@ -130,26 +130,37 @@ it("normal Auth/Trip precede scope construction and CLOSED does not read image b
   expect(result.status).toBe(503);
   expect((await result.json()).error.code).toBe("SOURCE_CAPABILITY_CLOSED");
 });
-it("Native uses one scoped JSON request with original PNG bytes and no resource authority", async () => {
-  const x = await fixture();
-  expect(await x.transport.lookup(x.f.context, x.proposals.upload)).toBeNull();
-  expect(await x.transport.execute(x.f.context, x.proposals.upload, x.material)).toEqual(
-    x.pending(x.proposals.upload),
-  );
-  expect(x.fetcher).toHaveBeenCalledTimes(2);
-  expect(x.port.execute).toHaveBeenCalledExactlyOnceWith(
-    expect.objectContaining({
-      actorId: x.f.context.accountId,
-      tripId: x.f.context.tripId,
-    }),
-    x.proposals.upload,
-    bytes,
-  );
-  expect(x.close).toHaveBeenCalledTimes(2);
-  const sent = JSON.parse(String(x.fetcher.mock.calls[1][1]?.body));
-  expect(Object.keys(sent).sort()).toEqual(["command", "originalBase64"]);
-  expect(Buffer.from(sent.originalBase64, "base64")).toEqual(Buffer.from(bytes));
-});
+it.each(["photos", "files"] as const)(
+  "Native %s uses one scoped JSON request with original PNG bytes and no resource authority",
+  async (acquisitionSource) => {
+    const x = await fixture();
+    const material = {
+      ...x.material,
+      binding: {
+        ...x.material.binding,
+        acquisitionSource,
+        kind: acquisitionSource === "files" ? ("FILE" as const) : ("IMAGE" as const),
+      },
+    };
+    expect(await x.transport.lookup(x.f.context, x.proposals.upload)).toBeNull();
+    expect(await x.transport.execute(x.f.context, x.proposals.upload, material)).toEqual(
+      x.pending(x.proposals.upload),
+    );
+    expect(x.fetcher).toHaveBeenCalledTimes(2);
+    expect(x.port.execute).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        actorId: x.f.context.accountId,
+        tripId: x.f.context.tripId,
+      }),
+      x.proposals.upload,
+      bytes,
+    );
+    expect(x.close).toHaveBeenCalledTimes(2);
+    const sent = JSON.parse(String(x.fetcher.mock.calls[1][1]?.body));
+    expect(Object.keys(sent).sort()).toEqual(["command", "originalBase64"]);
+    expect(Buffer.from(sent.originalBase64, "base64")).toEqual(Buffer.from(bytes));
+  },
+);
 it("reconciles the exact existing command without uploading or executing", async () => {
   const x = await fixture();
   await x.transport.reconcile(x.f.context, x.proposals.upload);

@@ -39,7 +39,7 @@ export function createSourcePngPreparationTransport(
         command.command !== "UPLOAD_ORIGINAL" ||
         binding.accountId !== context.accountId ||
         binding.version !== 2 ||
-        binding.kind !== "IMAGE" ||
+        (binding.kind !== "IMAGE" && binding.kind !== "FILE") ||
         binding.mediaType !== "image/png" ||
         binding.byteCount > 1048576 ||
         binding.sha256 !== command.payload.payload_sha256 ||
