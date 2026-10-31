@@ -5,9 +5,11 @@ globalThis.fetch = async () => {
 };
 const resource = "https://api-dev.xoery.art/mcp";
 const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1";
+const logs = [];
 const handle = createReadRuntime({
   issuer,
   resource,
+  log: (event) => logs.push(event),
   isGrantActive: async () => false,
   bindBackend: async () => {
     throw Error("BIND_MUST_NOT_RUN_WITHOUT_AUTH");
@@ -35,11 +37,22 @@ const foreign = await handle(
   new Request(resource, { method: "POST", headers: { Origin: "https://other.invalid" } }),
 );
 assert.equal(foreign.status, 403);
+assert.deepEqual(
+  logs.map((event) => event.status),
+  [401, 403],
+);
+assert.ok(
+  logs.every((event) =>
+    Object.keys(event).every((key) =>
+      ["requestId", "status", "durationMs"].includes(key),
+    ),
+  ),
+);
 console.log(
   JSON.stringify({
     status: "COMPILED_NODE_PUBLIC_METADATA_AND_DENIAL_PASS",
     meaning:
-      "Actual frozen MCP SDK/Authorizer bridge, no token or provider calls; not OAuth E2E",
-    checks: 3,
+      "Actual reviewed MCP SDK/Authorizer bridge, no token or provider calls; not OAuth E2E",
+    checks: 4,
   }),
 );

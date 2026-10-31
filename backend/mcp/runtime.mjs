@@ -6,7 +6,7 @@ import {
 import { createRemoteJWKSet } from "jose";
 
 // Separately bundled Node target. No SDK dependency enters the Mobile TypeScript graph.
-export function createReadRuntime({ issuer, resource, isGrantActive, bindBackend }) {
+export function createReadRuntime({ issuer, resource, isGrantActive, bindBackend, log }) {
   const key = createRemoteJWKSet(new URL(issuer + "/.well-known/jwks.json"), {
     timeoutDuration: 5000,
   });
@@ -20,6 +20,7 @@ export function createReadRuntime({ issuer, resource, isGrantActive, bindBackend
   return createMcpHandler({
     resource,
     authorize,
+    log,
     oauth: protectedResourceMetadata(resource, issuer, { read: ["openid"] }),
   });
 }
