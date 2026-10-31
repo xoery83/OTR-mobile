@@ -1,0 +1,16 @@
+{
+  "status": "DIRECT_HUMAN_APPROVAL_RECEIVED_WINDOW_NOT_STARTED",
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+  "candidateCommit": "0c4651f6b647f58d71beae7f7919be6b999f034e",
+  "originalHumanAnswer": "\u6279\u51c6\u6b64\u7cbe\u786e\u65b0 QA \u7a97\u53e3",
+  "source": "Direct user reply in this Auth conversation",
+  "questionCallId": "call_80cb6c69f52d456a8dd1b721609b14ee",
+  "recordedAt": "2026-10-31T16:58:18.117444+00:00",
+  "rootPhotoMustCloseFirst": true,
+  "freshConsumerPreparedAndCasRequired": true,
+  "windowStarted": false,
+  "oldB3Reusable": false,
+  "directHumanUserMessageId": "01a192e4-f7f5-77e0-94b0-3573bdfea85b",
+  "directHumanTurnId": "01a192aa-b19b-7ef3-b369-b60415d63626",
+  "peerIndependentlyConfirmedDirectHuman": "MCP read_thread confirmation"
+}
