@@ -1,0 +1,62 @@
+{
+  "status": "PUBLIC_DEV_DISCOVERY_ONLY_NOT_OAUTH_E2E",
+  "clientDate": "2026-10-31",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "discovery": {
+    "path": "/auth/v1/.well-known/openid-configuration",
+    "httpStatus": 200,
+    "issuer": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1",
+    "authorization_endpoint": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1/oauth/authorize",
+    "token_endpoint": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1/oauth/token",
+    "jwks_uri": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1/.well-known/jwks.json",
+    "response_types_supported": [
+      "code"
+    ],
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "phone",
+      "offline_access"
+    ],
+    "code_challenge_methods_supported": [
+      "S256",
+      "plain"
+    ]
+  },
+  "otherDiscovery": {
+    "path": "/.well-known/oauth-authorization-server/auth/v1",
+    "httpStatus": 404
+  },
+  "installedSdk": {
+    "grantList": "supabase.auth.oauth.listGrants()",
+    "grantRevoke": "supabase.auth.oauth.revokeGrant({ clientId })",
+    "source": "node_modules/@supabase/auth-js/src/GoTrueClient.ts; lib/types.ts",
+    "runtimeInvoked": false
+  },
+  "direction": "Reuse existing provider grants/revocation; do not add a second grant database as a prerequisite. OTR candidate restricts PKCE to S256. Standard OIDC scopes do not authorize Trip API operations. Unexpired JWT alone is not an online active-grant proof.",
+  "sources": [
+    "https://supabase.com/docs/guides/auth/oauth-server/oauth-flows",
+    "https://supabase.com/docs/guides/auth/oauth-server/token-security"
+  ],
+  "remaining": [
+    "Read actual DEV OAuth server/client/consent configuration through authorized channels",
+    "Freeze exact client/redirect/resource audience and explicit business-permission issuance contract",
+    "Confirm supplier grant endpoint accepts the chosen resource token and binds exact normal Account/client",
+    "Validate grant revoke, refresh rejection, access-token expiry semantics and same-Account Backend binding",
+    "Independent review and exact Owner Gate for any new identity Authority or protected hook/client permissions"
+  ],
+  "boundaries": [
+    "Two public unauthenticated discovery GETs only",
+    "No Keychain/Secret/Session reads, OTP or business mutations",
+    "No OAuth settings/hook/client registration, Schema/RLS/GRANT or runtime activation",
+    "Metadata advertisement does not prove OAuth server enabled or client/grant usability",
+    "Do not forward ordinary Native Session as MCP resource token",
+    "No ChatGPT/Claude OAuth PASS"
+  ],
+  "coordination": "Keep discovery details in Auth handoff; Root owns current Photo and queued Parent8079 review. No new MCP-target messaging authorization is inferred."
+}
