@@ -1,0 +1,47 @@
+{
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "writer": "Auth after Root explicit single Writer handoff",
+  "requestedAt": "2026-10-31T05:02:39Z",
+  "readyAt": "2026-10-31T05:03:22.429081Z",
+  "acquiredAt": "2026-10-31T05:03:22.429505Z",
+  "mutationFinishedAt": "2026-10-31T05:03:28.295413Z",
+  "releasedAt": "2026-10-31T05:03:41.996097Z",
+  "sqlWriteDisposition": "ACKNOWLEDGED",
+  "hookConfigured": false,
+  "oauthEnabled": false,
+  "finiteWindowActivated": false,
+  "status": "CLOSED_FUNCTION_INSTALLED_INDEPENDENTLY_VERIFIED",
+  "postimage": {
+    "authRole": {
+      "bypassRls": false,
+      "createRole": true,
+      "name": "supabase_auth_admin",
+      "superuser": false
+    },
+    "database": "postgres",
+    "function": {
+      "acl": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "privilege": "EXECUTE"
+        },
+        {
+          "grantable": false,
+          "grantee": "supabase_auth_admin",
+          "privilege": "EXECUTE"
+        }
+      ],
+      "bodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "signature": "otr_mcp_qa_access_token(jsonb)"
+    },
+    "user": "postgres"
+  },
+  "requestedAtBasis": "Clock captured when this installation request was prepared, not Owner approval time"
+}
