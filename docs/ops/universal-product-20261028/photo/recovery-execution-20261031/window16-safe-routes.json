@@ -1,0 +1,94 @@
+{
+  "diagnostics": [
+    {
+      "at": "2026-10-31T13:36:44.377948718Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "BINDING",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T13:36:44.378018059Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 404,
+      "durationMs": 6922
+    },
+    {
+      "at": "2026-10-31T13:36:57.533916568Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5571
+    },
+    {
+      "at": "2026-10-31T13:37:12.256860564Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 7092
+    },
+    {
+      "at": "2026-10-31T13:37:19.660367858Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 7093
+    },
+    {
+      "at": "2026-10-31T13:37:26.542519585Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6550
+    },
+    {
+      "at": "2026-10-31T13:37:33.587735580Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6628
+    },
+    {
+      "at": "2026-10-31T13:37:40.132524652Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5543
+    },
+    {
+      "at": "2026-10-31T13:38:18.947381436Z",
+      "event": "universal_prepare_phase_failed",
+      "phase": "CATALOG",
+      "reason": "UNCLASSIFIED",
+      "kind": "OTHER"
+    },
+    {
+      "at": "2026-10-31T13:38:18.947855199Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 503,
+      "durationMs": 37667
+    },
+    {
+      "at": "2026-10-31T13:39:32.847106087Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "TASK",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T13:39:32.847155651Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 503,
+      "durationMs": 6889
+    },
+    {
+      "at": "2026-10-31T13:39:46.236570550Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 503,
+      "durationMs": 5719
+    }
+  ],
+  "rawLogsExposed": false
+}

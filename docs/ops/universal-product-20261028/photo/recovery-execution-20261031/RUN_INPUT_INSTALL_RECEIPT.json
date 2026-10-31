@@ -1,0 +1,12 @@
+{
+  "status": "PHOTO_RUN_INPUT_GUARD_SERVER_VERIFIED_CLOSED",
+  "approvedCommit": "5f77b84b",
+  "beforeMD5": "8ef354beae3cb950d024ce17c7f200b5",
+  "afterMD5": "661c2130343a42aaa987ecc84c95fd16",
+  "oid": "66391",
+  "completeRoleGraphRestored": true,
+  "ownerACLRestored": true,
+  "schemaACLRestored": true,
+  "writeDisposition": "ACKNOWLEDGED",
+  "closed": true
+}

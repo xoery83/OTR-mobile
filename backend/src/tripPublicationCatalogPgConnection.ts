@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 import {
   PublicationCatalogError,
+  PUBLICATION_CATALOG_READ_TIMEOUT_MS,
   type PublicationCatalogConnection,
 } from "./tripPublicationCatalogRead";
 
@@ -80,7 +81,7 @@ export function createPublicationCatalogPgConnection(
     async withLease(work, signal) {
       if (closed || occupied || signal.aborted) throw unavailable();
       occupied = true;
-      const boundary = createRequestBoundary(5000, signal);
+      const boundary = createRequestBoundary(PUBLICATION_CATALOG_READ_TIMEOUT_MS, signal);
       const checkout = createRequestBoundary(3000, boundary.signal);
       let client: PoolClient | undefined;
       let retired = false;

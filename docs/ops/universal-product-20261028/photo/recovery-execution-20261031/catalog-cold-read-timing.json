@@ -1,0 +1,55 @@
+{
+  "status": "NORMAL_CATALOG_PRINCIPAL_READ_PASS",
+  "events": [
+    {
+      "stage": "CONNECT",
+      "ms": 2082
+    },
+    {
+      "stage": "PRIMARY",
+      "ms": 293
+    },
+    {
+      "stage": "BEGIN",
+      "ms": 291
+    },
+    {
+      "stage": "STATEMENT_TIMEOUT",
+      "ms": 291
+    },
+    {
+      "stage": "LOCK_TIMEOUT",
+      "ms": 291
+    },
+    {
+      "stage": "IDENTITY",
+      "ms": 291
+    },
+    {
+      "stage": "CATALOG",
+      "ms": 1368,
+      "familyCounts": {
+        "trip_sources": 31,
+        "trip_source_runs": 22,
+        "trip_source_inputs": 29,
+        "trip_source_revisions": 31,
+        "trip_source_candidates": 0,
+        "trip_source_associations": 0,
+        "trip_source_output_slots": 0,
+        "trip_source_confirmations": 0,
+        "trip_source_representations": 33,
+        "trip_source_run_predecessors": 0,
+        "trip_source_candidate_lineage": 0,
+        "trip_source_slot_dependencies": 0,
+        "trip_source_slot_lineage_dispositions": 0
+      },
+      "projectionSHA256": "1ceec81aa638a6cae43a7a472ab9493f3877fc44e3821b181cad5100d789fdf3"
+    },
+    {
+      "stage": "COMMIT",
+      "ms": 292
+    }
+  ],
+  "totalMs": 5202,
+  "rawCredentialsOrMaterialExposed": false
+}

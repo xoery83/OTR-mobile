@@ -13,7 +13,10 @@ import {
   type Attempt,
 } from "../../src/domain/intelligence/persistence";
 import { ledgerBootstrapResponseSchema } from "../../src/data/api/ledgerReadContracts";
-import type { PublicationCatalogConnection } from "./tripPublicationCatalogRead";
+import {
+  PUBLICATION_CATALOG_READ_TIMEOUT_MS,
+  type PublicationCatalogConnection,
+} from "./tripPublicationCatalogRead";
 import {
   createUniversalBatchSource,
   universalBatchInputsSchema,
@@ -319,7 +322,7 @@ export function createUniversalContinuousHost(deps: {
         const catalog = await readUniversalCatalog(
           deps.catalogConnection,
           draft.task,
-          AbortSignal.timeout(5000),
+          AbortSignal.timeout(PUBLICATION_CATALOG_READ_TIMEOUT_MS),
         );
         phase = "LEDGER";
         const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());

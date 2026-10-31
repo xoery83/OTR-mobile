@@ -542,3 +542,19 @@ describe("explicit V2 Source-only owning projection", () => {
     expect((await unauth(request({headers:{Authorization:"Bearer invalid","X-OTR-Publication-Catalog-Version":"2"}}))).status).toBe(401);
   });
 });
+
+it("gives only the authenticated catalog phase its complete cold-read budget", async () => {
+  vi.useFakeTimers();
+  const g = gateway({
+    readPublicationImportCatalogs: vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 6000));
+      return json(fixture);
+    }),
+  });
+  const result = createDevBackendHandler({ gateway: g })(request());
+  await vi.advanceTimersByTimeAsync(6001);
+  const response = await result;
+  expect(response.status).toBe(200);
+  expect(await response.text()).toBe(json(fixture));
+  expect(g.readPublicationImportCatalogs).toHaveBeenCalledOnce();
+});

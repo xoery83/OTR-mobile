@@ -213,6 +213,26 @@ describe("dormant PostgreSQL catalog lease", () => {
       expect(fake.pool.client.release).toHaveBeenCalledExactlyOnceWith(true);
     },
   );
+  it("allows the measured cold checkout plus bounded catalog transaction without extending query limits", async () => {
+    vi.useFakeTimers();
+    const original = fake.query;
+    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    fake.checkout = async (client: unknown) => {
+      await pause(2082);
+      return client;
+    };
+    fake.query = async (sql: string) => {
+      await pause(sql.includes("trip_source_read_import_catalogs") ? 1368 : 292);
+      return original(sql);
+    };
+    const result = read();
+    const accepted = expect(result.then(JSON.parse)).resolves.toEqual(fixture);
+    await vi.advanceTimersByTimeAsync(6000);
+    await accepted;
+    expect(fake.pool.client.release).toHaveBeenCalledWith();
+    expect(fake.pool.client.connection.stream.destroy).not.toHaveBeenCalled();
+    expect(fake.pool.config).toMatchObject({ connectionTimeoutMillis: 3000 });
+  });
   it("rejects a capacity burst without entering pg's pending queue", async () => {
     const pending = deferred();
     fake.checkout = () => pending.promise;

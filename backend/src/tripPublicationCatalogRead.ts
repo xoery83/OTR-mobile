@@ -3,6 +3,9 @@ import { tripImportSnapshotSchema, universalImportSnapshotSchema } from "../../s
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 
+// Include the bounded 3s cold checkout without consuming the 5s read budget.
+export const PUBLICATION_CATALOG_READ_TIMEOUT_MS = 8000;
+
 export class PublicationCatalogError extends Error {
   constructor(
     public readonly status: number,
@@ -71,7 +74,7 @@ export async function readPublicationCatalog(
     !z.uuid().safeParse(trip).success
   )
     throw unavailable();
-  const boundary = createRequestBoundary(5000, signal);
+  const boundary = createRequestBoundary(PUBLICATION_CATALOG_READ_TIMEOUT_MS, signal);
   try {
     return await boundary.run(() =>
       connection.withLease(async (lease) => {

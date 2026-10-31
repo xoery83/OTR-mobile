@@ -1,54 +1,45 @@
-# Current Import Photo checkpoint — 31 October / 1 November 2026
+# Current Import Photo checkpoint — 1 November 2026
 
-Golden Slice FAIL before Vision; no Photo Save/Native E2E PASS.
-Approved recovery eba232fc installed d86864fb/OID67161; complete role graph,
-Owner/ACL/schema ACL restored. Same Batch e7dfba6d / Source df39c9b2 / rep9bf0ad08:
-normal App generation2 a81308ff PARSE_PASS, Uploadd2f59e69 and VERIFY5cc29190
-APPLIED/FINAL. Old077 negative journal/markers and old905 UNKNOWN retained.
-No generation3, replacement Batch, Run, Task or paid Photo model call.
+Golden Slice PARTIAL: original PNG custody, SourceBinding and manifest actualPASS;
+no paid Vision, Results, formal Photo Save or Native E2E PASS.
+Owner approved5f77b84b Run Input guard; installed OID66391 MD5661c2130, independently
+verified CLOSED with Owner/ACL/full role graph (including OIDs)/schemaACL restored.
+Approved recovery eba/d868 retained. Same Batche7df/Source df39/rep9bf already has
+UPLOADd2f and VERIFY5cc APPLIED/FINAL; old077negative and old905UNKNOWN retained.
 
-Actual service0cf269f5/image67f21d49/capture82d7cf57 includes Source72a34dc9,
-Native7603 and Autha7 loader; server/mcp/browser/env/HostConfig/9mount/18compose/
-5config unchanged. AD5 126.8/SQLite76, binary/session/data preserved, rootMyTrips.
-Compatible f68/dfc rollback retained; never return to older incompatible images.
+Actual normal App window16 accepted SourceRun2179a40d-0936-8858-86ac-93001986c3ec,
+generation1/PENDING, created2026-10-31T13:37:56.642791Z, same Input69536a38. Source
+Binding, original-image manifest and Task draft passed; first actual FAIL moved to
+CATALOG503 at13:38:18Z, before Task bootstrap. Task/model0 confirmed, no firstVision
+allowance spent. SourceRun deadline +10min is now expired. Do not reset/retime/remint.
+Any accepted Run forbids the guard inverse. Original/raw/journals/markers retained.
 
-Actual first FAIL10:39:16Z: TaskPrepare SOURCE_BINDING / INPUT_STALE / P0001.
-Real HTTP input set and all eight pin fingerprints exactly match Native reconstruction.
-Current cloud Source/material/hash/count/row/ancestry/input validator and roles agree.
-Exact root cause is Input INSERT → catalog_write_guard → run_only_row →
-trip_source_sustained_run_row: TEXT-or-PDF-only CASE sends PNG to PDF helper NULL.
-Candidate adds only PNG scope/single Source/real png_original_facts branch; TXT/PDF
-unchanged. 12 existing isolated PG body checks RED→GREEN plus scope/CAS negatives;
-independent NO_BLOCKER. Test uses rollback pg_temp execution wrapper and non-PDF
-NULL helper representation, not full Begin/PDF/maintenance install proof. Earlier
-fixture table/column DDL auto-review rejection was not retried or bypassed.
+Window16 independently CLOSED before software diagnosis: Source before/after true,
+runtimeverified/workerinactive EMPTY_VERIFIED/timersstopped. Actualservice0cf/image67/
+capture82d7 at release; Native7603/Autha7 +actualb518/9264 preserved. No SourceHost
+lease. Auth A authorized window may now change finite config, Native722 timing image
+follows its close. Any subsequent Source deployment must fresh-CAS latest accepted
+service/config and preserve both lanes; never restore an older incompatible image.
 
-New exact protected body is NOT INSTALLED: see
-ops/universal-product-20261028/authority/PHOTO_RUN_INPUT_GUARD_GATE.md.
-Function OID66391 MD5 8ef354be→661c2130; exact forward/reverse and same-transaction
-SourceWriter maintenance restoration frozen in photo/run-input-guard/. No new schema,
-role, persistent grant, budget or image required. Prior eba approval covers another
-function and does not substitute for this precise body approval.
+Catalog root evidence: normal existing readonly principal query PASS5202ms including
+cold connect2082ms. Same QA projection currentV2 schemaPASS, familymax33, login/expiry
+valid. Existing aggregate5s wrongly includes3scheckout. Minimal software sets only
+aggregate8s at exact caller boundaries; SQL/query5s/lock1s/checkout3s/max1/TLS/
+principal/cancel/Auth5s/Trip5s/HTTP15s unchanged. 107 focused checks and independent
+NO_BLOCKER, runtime not deployed yet. Full roottypes hit2GiB cap/OOM, notPASS; no
+heap escalation or concurrent rebuild. No Schema/RLS/GRANT/Authority/Provider changes.
+Receipts/review: ops/universal-product-20261028/photo/recovery-execution-20261031/.
 
-Window15 independently CLOSED: Source before/after CLOSED, runtime verified,
-worker inactive EMPTY_VERIFIED, timers stopped. Window14 firstSourceBefore was
-unconfirmed; finalSourceAfter true, do not claim its first read passed. Safe receipts
-in photo/recovery-execution-20261031/. No global DEV/QA lock held. Other lanes may
-run normal QA; actual service/config mutations coordinate a short fresh CAS.
+Native diagnostics ce7700cf/725b7779 LOCAL_PASS42; Native separately accepted client
+fix as c26a48e8. AD5 remains126.8/SQLite76, same session/data/rootMyTrips; no new
+Native installation. Rootbranch stable, main untouched. Originalhardexpiry remains
+2026-11-01T08:48:56Z, maxone unused realVision, <=60m/+45close/+50watchdog bounds.
 
-Next after exact approval: CLOSED install/readback/release → same normal App Batch
-→ Source Run/Task → first original-image Vision (max1 existing unused allowance)
-→ Results → normal Review/Admission → PRIVATE SELF minimumP1/P6 → independent
-readback/Day/cold/idempotence → close. No new fixture/call on UNKNOWN. Original
-hard expiry2026-11-01T08:48:56Z, <=60m/+45close/+50watchdog bounds unchanged.
-No Root main/push changes; main fresh HEAD must be checked before any integration.
-
-Lock-free follow-up coding fixed in ce7700cf (Import diagnostic stage moves to actual
-Task callback) and 725b7779 (one fixed bounded client error code retained). Native
-explicitly handed off and received back client.ts/client.test.ts Writer; both base
-blobs matched fresh main/origin a7. 42 affected client/hook/transport checks, lint
-and independent review PASS. Neither Native patch is installed on AD5; no Host,
-Auth, retry, permission, main or paid-call change. Protected guard remains pending.
+Next: fix/deploy catalog budget preserving currentNative/Auth after their shortCAS;
+obtain exact replacement-input scope rather than reset expired binding; normal App
+new allowed input only after zero oldmodel/Task/UNKNOWN check → first actualVision
+→ Results → Review → unique PRIVATE SELF P1/P6 → independent readback/Day/cold/
+idempotence →close. Software and remaining nonprotected work continue meanwhile.
 
 Older checkpoints below are historical and superseded by the current header.
 

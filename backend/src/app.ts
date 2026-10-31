@@ -34,6 +34,7 @@ import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCus
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
 import {
   PublicationCatalogError,
+  PUBLICATION_CATALOG_READ_TIMEOUT_MS,
   publicationCatalogBody,
   type PublicationAuthResult,
 } from "./tripPublicationCatalogRead";
@@ -1052,8 +1053,8 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
       "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
     );
   const boundary = createRequestBoundary(15000, request.signal);
-  async function phase<T>(work: (signal: AbortSignal) => Promise<T>) {
-    const phaseBoundary = createRequestBoundary(5000, boundary.signal);
+  async function phase<T>(work: (signal: AbortSignal) => Promise<T>, timeoutMs = 5000) {
+    const phaseBoundary = createRequestBoundary(timeoutMs, boundary.signal);
     try {
       return await boundary.run(() =>
         phaseBoundary.run(() => work(phaseBoundary.signal)),
@@ -1072,10 +1073,12 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
       throw new PublicationCatalogError(503, "PUBLICATION_AUTH_UNAVAILABLE");
     if (!(await phase(() => gateway.canReadTrip(auth.user.id, match[1]))))
       throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
-    const body = await phase((signal) =>
-      requestedCatalogVersion === "2"
-        ? gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal, 2)
-        : gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
+    const body = await phase(
+      (signal) =>
+        requestedCatalogVersion === "2"
+          ? gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal, 2)
+          : gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
+      PUBLICATION_CATALOG_READ_TIMEOUT_MS,
     );
     // The gateway returns canonical bounded text, never arbitrary HTTP error details.
     if (Buffer.byteLength(body, "utf8") > 4194304)
