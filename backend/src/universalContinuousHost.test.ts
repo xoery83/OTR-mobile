@@ -460,9 +460,19 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     const first = await operation();
     if (expired) {
       vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(Date.parse(now) + 599999);
+      const crossesDeadlineDuringAuth = createUniversalContinuousHost({
+        ...hostDeps,
+        assertCurrentAuth: async () => {
+          vi.setSystemTime(Date.parse(now) + 600001);
+        },
+      });
+      // Do not turn an earlier snapshot terminal using a clock after async Auth.
+      expect((await crossesDeadlineDuringAuth.readContext(batch)).activity?.state)
+        .toBe("PENDING");
       vi.setSystemTime(Date.parse(now) + 600001);
     }
-    if (expired) expect((await host.readContext(batch)).activity?.state).toBe("PENDING");
+    if (expired) expect((await host.readContext(batch)).activity?.state).toBe("FAILED");
     await expect(
       host.executeQueued(batch, taskId, {
         operationId: first.id,

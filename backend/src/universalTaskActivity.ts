@@ -2,7 +2,11 @@ import { universalTaskActivitySchema } from "../../src/data/api/universalImportC
 import type { Task } from "../../src/domain/intelligence/persistence";
 
 // Interpretation completion is distinct from Review resolution or Core Save.
-export function projectUniversalTaskActivity(task: Task, attemptCount: number) {
+export function projectUniversalTaskActivity(
+  task: Task,
+  attemptCount: number,
+  observedAt = Date.now(),
+) {
   const states = {
     PENDING: "PENDING",
     WAITING: "WAITING",
@@ -14,8 +18,14 @@ export function projectUniversalTaskActivity(task: Task, attemptCount: number) {
     STALE: "STALE",
     UNKNOWN: "UNKNOWN",
   } as const;
+  // An expired unstarted Task cannot legally dispatch; attempts/UNKNOWN still require recovery.
+  const expiredBeforeStart =
+    attemptCount === 0 &&
+    ["PENDING", "WAITING"].includes(task.work_disposition) &&
+    task.policy_snapshot.deadline !== null &&
+    Date.parse(task.policy_snapshot.deadline) <= observedAt;
   return universalTaskActivitySchema.parse({
-    state: states[task.work_disposition],
+    state: expiredBeforeStart ? "FAILED" : states[task.work_disposition],
     recordedAt: task.created_at,
     updatedAt: task.updated_at,
     completedAt: task.completed_at,

@@ -41,6 +41,14 @@ Publicreceipt: photo/recovery-execution-20261101/PHOTO_VERIFY_AND_PROVIDER_EXEC_
 Private actualdefs/fixtures: /private/tmp/otr-photo-verify-resume-20261101 and
 /private/tmp/otr-photo-provider-proof-exec-20261101; nocredentials intheseevidencefiles.
 
+Pending Gate wait did not stop independent coding: Import Activity now projects only expired
+PENDING/WAITING zero-Attempt tasks as existingFAILED (read-only; no Task/deadline changes).
+readContext captures observedAt before all async Auth/snapshot work, avoiding false terminal
+classification when execution starts while Auth crosses deadline. UNKNOWN/anyAttempt/results
+recovery unchanged. RED boundary+asyncrace→55focusedPASS, independentNO_BLOCKER. Four local
+history en/zh copy lines no longer claim the entire interpretation is unavailable;19UItests/
+UIguardPASS, Auth confirmed this exact key region free. LOCAL_PASS only, not deployed yet.
+
 Older checkpoints below are historical and superseded by the current header.
 
 # Photo approved execution — 31 October 2026

@@ -1,0 +1,26 @@
+{
+  "status": "LOCAL_PASS_NOT_DEPLOYED",
+  "scope": "Read-only Import Activity deadline projection and local-history copy",
+  "tests": {
+    "taskActivityHostConsumer": 55,
+    "captureProgressContent": 19,
+    "uiGuard": "PASS",
+    "eslint": "zero errors; existing duplicate-import warnings"
+  },
+  "review": "NO_BLOCKER after fixing async Auth clock boundary",
+  "protectedAuthorityChanged": false,
+  "taskOrDeadlineMutated": false,
+  "paidDispatchAdded": false,
+  "rule": "Only PENDING/WAITING plus zero Attempt, at/after owning Task deadline; observation time captured before async reads",
+  "preserved": [
+    "RUNNING",
+    "RESULT_PENDING",
+    "UNKNOWN",
+    "PUBLISHED",
+    "any existing Attempt"
+  ],
+  "copyKeys": [
+    "capture.progress.partialHistory",
+    "capture.progress.localValidationHistory"
+  ]
+}

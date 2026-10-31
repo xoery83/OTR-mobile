@@ -430,6 +430,7 @@ export function createUniversalContinuousHost(deps: {
       }
     },
     async readContext(batch: string) {
+      const observedAt = Date.now();
       const state = await readBoundTask(batch);
       await current();
       return {
@@ -439,7 +440,7 @@ export function createUniversalContinuousHost(deps: {
         tripId: trip,
         batchId: batch,
         taskId: state.task.task_id,
-        activity: projectUniversalTaskActivity(state.task, state.attempts.length),
+        activity: projectUniversalTaskActivity(state.task, state.attempts.length, observedAt),
       };
     },
     readResult,

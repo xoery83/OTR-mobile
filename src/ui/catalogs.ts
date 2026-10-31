@@ -336,9 +336,9 @@ export const en = {
   "capture.progress.outcomesUnavailable": "Canonical results are not available.",
   "capture.progress.history": "Recorded local intake",
   "capture.progress.partialHistory":
-    "Registration and acceptance records only; processing history is unavailable.",
+    "Submission registration and local acceptance records are listed below.",
   "capture.progress.localValidationHistory":
-    "Local validation events are recorded below. Interpretation is unavailable.",
+    "Local input validation records are listed below.",
   "capture.progress.registered": "Submission registered",
   "capture.progress.acceptanceRecorded": "Input acceptance recorded",
   "capture.processing.waitingInterpreter":
@@ -3349,8 +3349,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.noCloud": "本机接收不代表已同步至云端。",
   "capture.progress.outcomesUnavailable": "暂无正式业务结果。",
   "capture.progress.history": "本机接收记录",
-  "capture.progress.partialHistory": "仅含提交登记及接收记录，暂无处理历史。",
-  "capture.progress.localValidationHistory": "下方记录了本机校验事件；解释处理暂不可用。",
+  "capture.progress.partialHistory": "下方列出提交登记及本机接收记录。",
+  "capture.progress.localValidationHistory": "下方列出本机资料校验记录。",
   "capture.progress.registered": "已登记提交",
   "capture.progress.acceptanceRecorded": "已记录材料接收",
   "capture.processing.waitingInterpreter": "已记录本机材料校验；仍待解释处理。",
