@@ -1,9 +1,11 @@
-# OTR MCP-01
+# OTR MCP
 
-Independent read-only Streamable HTTP adapter, official SDK2.4.0. Public activation
-is closed pending Auth-owned OAuth; see `../docs/mcp/MCP_01_AUTH_DESIGN.md`.
+Standard TypeScript/Streamable HTTP module, official SDK2.4.0. Read tools reuse
+Backend discovery/Core read2. Controlled Trip/Item writes reuse formal Manual
+commands, CAS and exact receipt recovery; Nelson preview/apply has no batch-atomic
+claim. Public activation is **closed pending Auth-owned OAuth grant/binding**.
 
-From the repository root (Node24 and repository dependencies installed):
+From the repository root with Node24 and repository tooling installed:
 
 ```sh
 npm ci --prefix mcp --ignore-scripts
@@ -12,28 +14,41 @@ npm --prefix mcp run typecheck
 npm --prefix mcp run build
 ```
 
-Build emits `../dist/mcp-server.mjs` from this package (root ignored dist). No normal
-Backend startup or Mobile bundle imports this module. SDK is isolated so the
-Mobile package/lock do not change. Existing root tools supply TS/Vitest/esbuild.
+Build emits root ignored `dist/mcp/index.mjs` (importable adapter exports) and
+`dist/mcp/internal.mjs` (QA-only loopback entry). No Backend startup or Mobile
+bundle imports them. A few protocol tests open localhost; run in an environment
+that allows local listening. SDK/JWT dependencies are isolated in this package.
 
-An explicitly authorized internal test may set OTR_MCP_INTERNAL_SESSION_TEST=1,
-OTR_MCP_DEV_PUBLISHABLE_KEY to this DEV project's public publishable key and optional
-OTR_MCP_PORT (default8798), then run `npm --prefix mcp run start:internal` or the
-built root `dist/mcp-server.mjs`. No activation flag means no listener. The only
-listener is `http://127.0.0.1:8798/mcp`; Client sends its own fresh QA Session using
-the transport Authorization header, never tool parameters. Session credentials
-must stay in memory/private custody and must not be pasted into chat or logs.
-This is INTERNAL_SESSION_TEST_ONLY. Do not expose it through proxy/tunnel.
+For public DEV, the owning Backend host imports createMcpHandler, installs
+protectedResourceMetadata with approved issuer/resource, and supplies
+createOAuthAuthorizer with trusted JWKS/key, Auth isGrantActive and in-process
+bindBackend. No MCP bearer forwarding to another resource. Host also supplies
+trusted user confirmation bound to the exact fields/digest and operations.
+Absent ports deny access or return NEEDS_CONFIRMATION. Auth/Backend unique Writer,
+TLS/origin/rate control and exact deployment window are required before mounting.
+This module implements neither a new authorization server nor grant database.
 
-For a future public mount, import createMcpHandler and provide the Auth-owned
-verified resource context bound to the existing Backend read ports. Use approved
-HTTPS resource URL and issuer metadata; no Session-to-OAuth compatibility fallback.
-Host owns TLS, auth discovery, rate/concurrency limits and deployment window.
-Deploy only after actual A/B permission, token/resource/revocation, client and
-independent readback qualification. Keep the adapter unmounted until then.
+Internal-only ordinary-session validation: explicitly set
+OTR_MCP_INTERNAL_SESSION_TEST=1 and OTR_MCP_DEV_PUBLISHABLE_KEY, optional
+OTR_MCP_PORT(default8798), then run start:internal or internal.mjs. Listener binds
+127.0.0.1 only; no flag means no listener. Normal entry exposes reads only.
+Never reverse proxy/tunnel this Session harness or call it public OAuth.
 
-Operational bounds:16KiB request,30s total,10s Backend calls,25 Items per page,
-up to64MiB read2 collection. A page uses one collection plus up to25 separate owning
-detail reads. No scale/load claim; add an owning aggregate projection port only
-when measured need and owner contract justify it. No DB credentials, new schemas,
-queues, mutations, background lifecycle, auto retries or provider calls.
+Actual Golden acceptance uses `mcp/golden.ts` and the existing registered-QA normal
+OTP helper. It requires OTR_DEV_OTP_TEST=1, approved public DEV URL/key,
+OTR_QA_RESEND_SCOPE=dedicated-qa-team, OTR_QA_DEV_BUSINESS_WINDOW=HELD and
+OTR_MCP_QA_CASE=READ/P3/NELSON. Flags grant no authority: first obtain Root's actual
+window and coordinate fixed operation IDs with Native. The helper owns receiver
+locking and local logout+refresh-rejected cleanup. No copied Session/Keychain,
+credential arguments/logs or new fixture permissions. P3 and NELSON stages may
+write only their frozen synthetic cases after explicit owning coordination.
+
+Current contracts/evidence: docs/mcp/MCP_ARCHITECTURE_INVENTORY.md,
+MCP_TOOL_CONTRACT_V1.md, MCP_AUTH_CONTRACT.md, MCP_NELSON_IMPORT_PLAN.md,
+MCP_E2E_ACCEPTANCE.md. Earlier MCP_01 files are historical evidence.
+
+Bounds:16KiB request/60s total/50s Backend reads/15s mutation calls/25 Items per page,
+64MiB certified collection,12 changes per preview. Item list uses one validated
+visible collection and returns summaries; get_trip_item retrieves full typed detail. No auto retries,
+workers, sync engine, schemas or provider calls. Existing timed/qualified date
+moves require the owning temporal adapter; date-only edits are supported.

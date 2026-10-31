@@ -352,3 +352,13 @@ and typed P1–P6 Item reads through existing Backend ports. No write tools, loc
 pending-data access or additional business scope. Public Remote OAuth activation
 requires the Auth-owned resource/grant contract and actual client/permission E2E.
 See `mcp/MCP_01_ARCHITECTURE_INVENTORY.md` and `mcp/MCP_01_AUTH_DESIGN.md`.
+
+## MCP / AI Integration — Owner authorized 31 October 2026
+
+Extend the independent standard MCP adapter with controlled Trip/Manual Item
+create/edit and receipt lookup, then synthetic Nelson three-day Preview→trusted
+user confirmation→per-item Apply/recovery. Reuse formal Backend/Core and Native
+Downstream; no MCP database, parser, sync engine or domain authority. Owner's real
+Nelson plan remains preview-only until explicit target/operation confirmation.
+Public DEV OAuth and physical/client acceptance require their owning contracts
+and exact protected windows; Production and other domain mutations are excluded.

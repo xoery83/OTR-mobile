@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "existing_p3_id": "612d7e55-cfa8-4ba7-a625-5e0d622679da",
+  "create": {
+    "request_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "item": {
+      "family": "P3",
+      "title": "MCP Synthetic Nelson Stay 1031",
+      "notes": "Synthetic MCP controlled-create QA only; no real Booking or Ticket.",
+      "property_name": "Synthetic QA Lodge",
+      "dates": {
+        "start_date": "2026-10-31",
+        "end_date": "2026-11-02"
+      }
+    }
+  },
+  "edit_request_id": "d6420993-1a5d-40f0-9929-1d96d14b4990",
+  "date_edit_request_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+  "nelson_trip_request_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+  "nelson_change_request_ids": [
+    "3d2def94-00fc-4583-905f-3e47511e7427",
+    "6dc8974c-73e6-4e7f-b2b7-9dd7749f282f",
+    "b587f7dc-1d2d-4b00-9bbd-70e6f89c3a9d"
+  ],
+  "expected_item_id": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+  "foreign_write_request_id": "533bf6d0-109e-473f-9a9f-3034e9638d8d"
+}

@@ -6,6 +6,7 @@ import { createRequestBoundary, readBoundedJson } from "../src/data/api/requestB
 import {
   envelopeValue,
   itemSchema,
+  itemSummarySchema,
   listItemsInput,
   listTripsInput,
   tripInput,
@@ -40,7 +41,7 @@ export function createReadTools(
   signal?: AbortSignal,
 ) {
   async function json(path: string) {
-    const boundary = createRequestBoundary(10000, signal);
+    const boundary = createRequestBoundary(50000, signal);
     try {
       const response = await boundary.run(() => read(path, boundary.signal));
       if (!response.ok) {
@@ -141,48 +142,91 @@ export function createReadTools(
         if (c.snapshot !== snapshot) throw new ReadError("STALE_CURSOR");
         after = c.after;
       }
+      const localDates = (row: (typeof current.graph.itinerary_events)[number]) =>
+        [
+          ...new Set(
+            [
+              row.start_local_date,
+              row.end_local_date,
+              ...current.graph.itinerary_transport_endpoints
+                .filter((e) => e.event_id === row.id)
+                .map((e) => e.local_date),
+            ].filter((d): d is string => typeof d === "string"),
+          ),
+        ].sort();
       const candidates = current.graph.itinerary_events
         .filter((row) => {
           if (!q.date_from) return true;
-          const dates = [
-            row.start_local_date,
-            row.end_local_date,
-            ...current.graph.itinerary_transport_endpoints
-              .filter((e) => e.event_id === row.id)
-              .map((e) => e.local_date),
-          ]
-            .filter((d): d is string => typeof d === "string")
-            .sort();
+          const dates = localDates(row);
           return (
             dates.length > 0 &&
             dates[0] <= (q.date_to ?? q.date_from) &&
             dates[dates.length - 1] >= q.date_from
           );
         })
-        .map((r) => String(r.id))
-        .sort()
-        .filter((id) => id > after);
-      const ids = candidates.slice(0, q.limit);
-      const items = [];
-      for (const id of ids) items.push(await item(q.trip_id, id));
-      // A later detail read can observe a changed graph; do not return mixed revisions.
-      if (
-        items.some(
-          (i) =>
-            current.graph.itinerary_events.find((r) => r.id === i.itemId)
-              ?.semantic_revision !== i.itemRevision,
-        )
-      )
-        throw new ReadError("STALE_CURSOR");
+        .sort((a, b) => String(a.id).localeCompare(String(b.id)))
+        .filter((row) => String(row.id) > after);
+      const rows = candidates.slice(0, q.limit);
+      // Project only the already-validated visible snapshot; object GET repeats the entire snapshot.
+      const items = rows.map((row) => {
+        const flight = current.graph.trip_flight_intents.find(
+          (r) => r.event_id === row.id,
+        );
+        return itemSummarySchema.parse({
+          view: "SUMMARY",
+          itemId: row.id,
+          tripId: row.trip_id,
+          itemRevision: row.semantic_revision,
+          family: row.experience_family,
+          title: row.title,
+          localDates: localDates(row),
+          status: row.status,
+          hidden: row.hidden_at !== null,
+          temporalShape: row.temporal_shape,
+          ...(row.experience_family === "P2" && flight
+            ? {
+                flight: {
+                  qualification: flight.qualification,
+                  flightNumberLiteral: flight.flight_number_literal,
+                },
+              }
+            : {}),
+          ...(row.experience_family === "P5"
+            ? {
+                transportServices: current.graph.itinerary_transport_services
+                  .filter((r) => r.event_id === row.id)
+                  .sort((a, b) =>
+                    String(a.service_key).localeCompare(String(b.service_key)),
+                  )
+                  .map((r) => ({
+                    serviceKey: r.service_key,
+                    transportSubtype: r.transport_subtype,
+                    attribution: r.attribution,
+                    operatorNamespace: r.operator_namespace ?? undefined,
+                    operatorIssuer: r.operator_issuer ?? undefined,
+                    operatorValue: r.operator_value ?? undefined,
+                    operatorLiteral: r.operator_literal ?? undefined,
+                    serviceNumber: r.service_number ?? undefined,
+                    serviceLiteral: r.service_literal ?? undefined,
+                    codeshareOperatingKey: r.codeshare_operating_key ?? undefined,
+                  })),
+              }
+            : {}),
+          detail: {
+            tool: "get_trip_item",
+            arguments: { trip_id: row.trip_id, item_id: row.id },
+          },
+        });
+      });
       return {
         ...envelopeValue,
         items,
         snapshot,
         next_cursor:
           candidates.length > q.limit
-            ? Buffer.from(JSON.stringify({ snapshot, after: ids.at(-1)! })).toString(
-                "base64url",
-              )
+            ? Buffer.from(
+                JSON.stringify({ snapshot, after: String(rows.at(-1)!.id) }),
+              ).toString("base64url")
             : null,
       };
     },

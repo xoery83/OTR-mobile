@@ -1,21 +1,30 @@
-# MCP-01 Read-only Foundation — 2026-10-29 / LOCAL_PASS, activation blocked
+# MCP / AI Integration — 31 October 2026 / real Read blocked
 
-- Independent worktree `mcp-01-read-only`, base main `ee246658`; four standard
-  Streamable HTTP tools reuse Backend discovery/Core read2/detail. Isolated SDK2.4.0
-  package; no Mobile, DB/schema/ACL/Principal/Session contract or runtime mount change.
-  -14 directed tests +48 owning regressions, scoped types/lint/build/UI guard PASS;
-  independent review NO_BLOCKER for closed local foundation/internal runner.
-  Global types limited by two pre-existing missing Google Sign-In package errors.
-- Auth Owner confirms no resource-bound MCP verifier; public OAuth/client activation
-  remains BLOCKED_BY_OWNING_INTERFACE. Actual fresh A/B OTP and SDK HTTP connection PASS; A discovery/list matches
-  independent Backend, fixed Import Trip NOT_VISIBLE. Both own temporary Sessions
-  revoked; no copied Session/Keychain. Item positive E2E awaits an existing
-  accessible synthetic fixture; exact scope is in the validation report.
-- Authority/deliverables: `docs/mcp/MCP_01_ARCHITECTURE_INVENTORY.md`, tool contract,
-  auth design, read-only validation, roadmap; deployment instructions `mcp/README.md`.
-  Integration Delta owners/closure in validation report. No MCP-01 full/cloud PASS.
-  Next: complete permitted real reads, owning Auth/fixture contract, serial main
-  review/integration; preserve all parallel work and protected deployment windows.
+- Independent MCP branch rebased onto fresh accepted origin/main42652324; no
+  historical architecture base. Standard SDK2.4.0 reads, strict OAuth resource
+  verifier/PRM, Core receipt-backed Create/Edit/status and Nelson12-operation
+  preview/confirm/sequential Apply prepared. No startup mount, schema/ACL/Auth
+  setting, Native/SQLite or protected deployment changes.
+  -28 focused tests/scoped types and independent closed-code NO_BLOCKER. Repairs:
+  exact UPDATE batch recovery, complete field confirmation, timed-date protection,
+  strict independent business-field readback. Public OAuth remains
+  BLOCKED_BY_OWNING_INTERFACE; no owning active client grant/binding port yet.
+- Ordinary QA OTP/business calls were coordinated alongside Root’s exclusive
+  Photo Host/SQL/deployment work. Five fresh normal QA Read attempts ended with
+  own Session revoked/refresh rejected. Latest direct P3/schema200 and standard
+  discovery/list_trips independent hash MATCH; full Read stopped at list Items.
+  One separate bounded direct P3 probe returned200 after13.554s. No root cause
+  claim from that response. Original timeouts retained under acceptance/.
+- Focused local repair: MCP read50s/total60s are finite local budgets, not a Core
+  SLO or worst-case lease guarantee. Item list now projects typed summaries from
+  one validated actor-scoped collection, removing N+1 full snapshots; full typed
+  detail remains get_trip_item. Review/real Read after repair pending. Native
+  observer paused; original612d P3 untouched; zero business POST.
+- Current deliverables under docs/mcp/: MCP_ARCHITECTURE_INVENTORY,
+  MCP_TOOL_CONTRACT_V1, MCP_AUTH_CONTRACT, MCP_NELSON_IMPORT_PLAN,
+  MCP_E2E_ACCEPTANCE, MCP_EXTENDED_TOOLS_ROADMAP. Exact IDs/closure in acceptance.
+  Earlier MCP_01 files are historical29 October evidence only. No final main SHA
+  or MCP product PASS until actual owning gates/DEV/iPad/client evidence closes.
 
 # Native-05/06 — iPad business slice and closed trigger, 31 October 2026
 

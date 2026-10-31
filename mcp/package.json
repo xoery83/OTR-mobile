@@ -6,11 +6,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --root .. --config mcp/vitest.config.mts mcp",
-    "build": "esbuild internal.ts --bundle --platform=node --target=node24 --format=esm --outfile=../dist/mcp-server.mjs",
+    "build": "esbuild index.ts internal.ts --bundle --platform=node --target=node24 --format=esm --outdir=../dist/mcp --out-extension:.js=.mjs",
     "start:internal": "tsx internal.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.4.0",
+    "jose": "6.2.12",
     "zod": "4.6.5"
   },
   "devDependencies": {

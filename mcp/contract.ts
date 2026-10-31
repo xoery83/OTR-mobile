@@ -163,9 +163,32 @@ export const tripsOutput = z.object({
   next_cursor: uuid.nullable(),
 });
 export const tripOutput = z.object({ ...envelope, trip: tripDiscoverySummarySchema });
+export const itemSummarySchema = z
+  .object({
+    view: z.literal("SUMMARY"),
+    itemId: uuid,
+    tripId: uuid,
+    itemRevision: z.number().int().positive(),
+    family: z.enum(["P1", "P2", "P3", "P4", "P5", "P6"]),
+    title: z.string(),
+    localDates: z.array(date),
+    status: z.string(),
+    hidden: z.boolean(),
+    temporalShape: z.string(),
+    flight: z
+      .object({
+        qualification: z.enum(["SPARSE", "QUALIFIED"]),
+        flightNumberLiteral: z.string(),
+      })
+      .optional(),
+    transportServices: z.array(service).optional(),
+    detail: z.object({ tool: z.literal("get_trip_item"), arguments: itemInput }),
+  })
+  .refine((v) => v.family !== "P2" || !!v.flight)
+  .refine((v) => v.family !== "P5" || !!v.transportServices?.length);
 export const itemsOutput = z.object({
   ...envelope,
-  items: z.array(itemSchema).max(25),
+  items: z.array(itemSummarySchema).max(25),
   next_cursor: z.string().nullable(),
   snapshot: z.string(),
 });

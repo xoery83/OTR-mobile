@@ -116,7 +116,11 @@ function fixture() {
   const asActor = (account: string) => ({ ...actor, accountId: account });
   const gateway = {
     validateAccessToken: vi.fn(async (token: string) =>
-      token === "a" ? { id: a } : token === "b" ? { id: b } : null,
+      token === "a"
+        ? { id: a, accountClass: "NORMAL_ACCOUNT" }
+        : token === "b"
+          ? { id: b, accountClass: "NORMAL_ACCOUNT" }
+          : null,
     ),
     canReadTrip: vi.fn(
       async (account: string, t: string) =>
@@ -260,7 +264,23 @@ it("keeps all six typed projections, sparse flight and date-only boundaries with
   expect(new Set(result.items.map((i) => i.family))).toEqual(
     new Set(["P1", "P2", "P3", "P4", "P5", "P6"]),
   );
-  const flight = result.items.find((i) => i.family === "P2")!;
+  expect(result.items.find((i) => i.family === "P2")?.flight).toMatchObject({
+    qualification: "SPARSE",
+    flightNumberLiteral: "NZ502",
+  });
+  expect(
+    result.items.find((i) => i.family === "P5")?.transportServices?.[0],
+  ).toHaveProperty("transportSubtype", "TRAIN");
+  expect(
+    result.items.every((i) => i.view === "SUMMARY" && i.detail.tool === "get_trip_item"),
+  ).toBe(true);
+  const tools = createReadTools(a, f.read());
+  const flight = (
+    await tools.get_trip_item({
+      trip_id: trip,
+      item_id: result.items.find((i) => i.family === "P2")!.itemId,
+    })
+  ).item;
   expect(flight.details).toMatchObject({
     qualification: "SPARSE",
     flightNumberLiteral: "NZ502",
@@ -377,13 +397,38 @@ it("missing Item, malformed/foreign collection, closed Backend and timeout never
       async () => new Promise<Response>(() => {}),
     ).get_trip({ trip_id: trip });
     const assertion = expect(pending).rejects.toThrow("BACKEND_TIMEOUT");
-    await vi.advanceTimersByTimeAsync(10001);
+    await vi.advanceTimersByTimeAsync(50001);
     await assertion;
   } finally {
     vi.useRealTimers();
   }
 });
-it("empty accepted Trip, discovery pagination, changed detail revision fail closed", async () => {
+it("allows measured slow Core reads and still honors caller cancellation", async () => {
+  const f = fixture();
+  vi.useFakeTimers();
+  try {
+    const read = f.read();
+    const tools = createReadTools(a, async (path, signal) => {
+      await new Promise((resolve) => setTimeout(resolve, 13554));
+      return read(path, signal);
+    });
+    const pending = tools.get_trip_item({ trip_id: trip, item_id: f.ids[1] });
+    await vi.advanceTimersByTimeAsync(13555);
+    expect(await pending).toHaveProperty("item");
+    const controller = new AbortController();
+    const cancelled = createReadTools(
+      a,
+      async () => new Promise<Response>(() => {}),
+      controller.signal,
+    ).get_trip_item({ trip_id: trip, item_id: f.ids[1] });
+    const rejected = expect(cancelled).rejects.toThrow("BACKEND_TIMEOUT");
+    controller.abort();
+    await rejected;
+  } finally {
+    vi.useRealTimers();
+  }
+});
+it("empty accepted Trip, discovery pagination, and single-snapshot list stay bounded", async () => {
   const f = fixture(),
     tools = createReadTools(a, f.read());
   expect((await tools.list_trips({ limit: 1 })).next_cursor).not.toBeNull();
@@ -398,7 +443,8 @@ it("empty accepted Trip, discovery pagination, changed detail revision fail clos
       f2.graph.itinerary_events.forEach((item) => (item.semantic_revision = 2));
     return read(path, signal);
   });
-  await expect(r.list_trip_items({ trip_id: trip })).rejects.toThrow("STALE_CURSOR");
+  expect((await r.list_trip_items({ trip_id: trip })).items).toHaveLength(6);
+  expect(f2.seen).toEqual(["/v2/trips/" + trip + "/core/collection"]);
 });
 it("default-closed auth rejects missing/expired/wrong resource/scope, Origin and oversized input", async () => {
   const resource = "http://localhost/mcp",

@@ -1,3 +1,20 @@
+import {
+  createMutationTools,
+  type BackendMutation,
+  type ConfirmChanges,
+} from "./mutation";
+import { createBatchTools } from "./batch";
+import {
+  createItemInput,
+  updateItemInput,
+  createTripInput,
+  operationInput,
+  operationOutput,
+  mutationOutput,
+  previewChangesInput,
+  applyChangesInput,
+  batchOutput,
+} from "./mutationContract";
 import { randomUUID } from "node:crypto";
 import {
   type CallToolResult,
@@ -29,11 +46,25 @@ export type McpAuthorization = {
   scopes: readonly string[];
   expiresAt: number;
   read: BackendRead;
+  clientId?: string;
+  backend?: BackendMutation;
 };
 export type McpOptions = {
   resource: string;
   authorize?: (request: Request) => Promise<McpAuthorization | null>;
-  log?: (event: { requestId: string; status: number; durationMs: number }) => void;
+  confirm?: ConfirmChanges;
+  oauth?: {
+    metadataUrl: string;
+    challenge: string;
+    handle(request: Request): Response | null;
+  };
+  log?: (event: {
+    requestId: string;
+    status: number;
+    durationMs: number;
+    tool?: string;
+    errorCode?: string;
+  }) => void;
 };
 export function createMcpHandler(options: McpOptions) {
   const resource = new URL(options.resource);
@@ -51,9 +82,11 @@ export function createMcpHandler(options: McpOptions) {
   )
     throw Error("INVALID_MCP_RESOURCE");
   return async (request: Request): Promise<Response> => {
+    const metadata = options.oauth?.handle(request);
+    if (metadata) return metadata;
     const started = Date.now(),
       requestId = randomUUID();
-    const boundary = createRequestBoundary(30000, request.signal);
+    const boundary = createRequestBoundary(60000, request.signal);
     let status = 503;
     let invokedTool: string | undefined;
     let toolError: string | undefined;
@@ -94,7 +127,7 @@ export function createMcpHandler(options: McpOptions) {
         else {
           const bytes = await readBoundedBytes({ body: request.body }, 16384, boundary);
           const tools = createReadTools(auth.accountId, auth.read, boundary.signal);
-          const server = new McpServer({ name: "otr-read-only", version: "0.1.0" });
+          const server = new McpServer({ name: "otr", version: "0.2.0" });
           const definitions = [
             [
               "list_trips",
@@ -165,6 +198,144 @@ export function createMcpHandler(options: McpOptions) {
               },
             );
           }
+          if (auth.backend) {
+            const context = {
+              accountId: auth.accountId,
+              clientId: auth.clientId ?? "",
+              resource: options.resource,
+              backend: auth.backend,
+              read: auth.read,
+              signal: AbortSignal.any([
+                boundary.signal,
+                AbortSignal.timeout(Math.max(1, auth.expiresAt - Date.now())),
+              ]),
+              confirm: options.confirm,
+            };
+            const writes = createMutationTools(context),
+              batch = createBatchTools(context, writes, tools);
+            const definitions = [
+              [
+                "create_trip",
+                createTripInput,
+                mutationOutput,
+                "Preview or create one Trip with structured destinations.",
+                async (args: unknown) => {
+                  const q = createTripInput.parse(args);
+                  return writes.execute(writes.prepareTrip(q), q.mode, q.preview_digest);
+                },
+              ],
+              [
+                "create_trip_item",
+                createItemInput,
+                mutationOutput,
+                "Preview or create one Manual typed Item. Trusted user approval required for APPLY.",
+                async (args: unknown) => {
+                  const q = createItemInput.parse(args);
+                  return writes.execute(
+                    writes.prepareCreate(q),
+                    q.mode,
+                    q.preview_digest,
+                  );
+                },
+              ],
+              [
+                "update_trip_item",
+                updateItemInput,
+                mutationOutput,
+                "Preview or edit text OR dates at an explicit expected revision; never overwrite silently.",
+                async (args: unknown) => {
+                  const q = updateItemInput.parse(args);
+                  return writes.execute(
+                    writes.prepareUpdate(q),
+                    q.mode,
+                    q.preview_digest,
+                  );
+                },
+              ],
+              [
+                "preview_trip_changes",
+                previewChangesInput,
+                batchOutput,
+                "Preview up to12 explicit changes; identify possible duplicates. No write.",
+                batch.preview_trip_changes,
+              ],
+              [
+                "apply_trip_changes",
+                applyChangesInput,
+                batchOutput,
+                "Apply an exact preview after trusted user confirmation; report partial receipts, no batch atomicity.",
+                batch.apply_trip_changes,
+              ],
+            ] as const;
+            for (const [name, inputSchema, outputSchema, description, run] of definitions)
+              server.registerTool(
+                name,
+                {
+                  inputSchema,
+                  outputSchema,
+                  description,
+                  annotations: {
+                    readOnlyHint: name === "preview_trip_changes",
+                    destructiveHint: false,
+                    idempotentHint: true,
+                    openWorldHint: false,
+                  },
+                },
+                async (args: unknown): Promise<CallToolResult> => {
+                  invokedTool = name;
+                  try {
+                    if (
+                      !auth.clientId ||
+                      auth.expiresAt <= Date.now() ||
+                      !auth.scopes.includes("otr.trips.write")
+                    )
+                      throw Error("WRITE_SCOPE_REQUIRED");
+                    const result = await boundary.run(async () => await run(args));
+                    if (auth.expiresAt <= Date.now()) throw Error("AUTH_REQUIRED");
+                    return {
+                      content: [{ type: "text", text: JSON.stringify(result) }],
+                      structuredContent: result,
+                    };
+                  } catch {
+                    toolError = "MUTATION_UNAVAILABLE_QUERY_OPERATION";
+                    return {
+                      isError: true,
+                      content: [{ type: "text", text: toolError }],
+                    };
+                  }
+                },
+              );
+            server.registerTool(
+              "get_operation_status",
+              {
+                inputSchema: operationInput,
+                outputSchema: operationOutput,
+                description:
+                  "Read owning exact operation receipt. UNKNOWN is not failed or absent.",
+                annotations: {
+                  readOnlyHint: true,
+                  idempotentHint: true,
+                  destructiveHint: false,
+                },
+              },
+              async (args: unknown): Promise<CallToolResult> => {
+                try {
+                  const result = await boundary.run(() =>
+                    writes.get_operation_status(args),
+                  );
+                  return {
+                    content: [{ type: "text", text: JSON.stringify(result) }],
+                    structuredContent: result,
+                  };
+                } catch {
+                  return {
+                    isError: true,
+                    content: [{ type: "text", text: "OPERATION_UNAVAILABLE" }],
+                  };
+                }
+              },
+            );
+          }
           const transport = new WebStandardStreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
             enableJsonResponse: true,
@@ -196,7 +367,8 @@ export function createMcpHandler(options: McpOptions) {
       response.headers.set("Cache-Control", "private, no-store");
       response.headers.set("Vary", "Authorization");
       if (status === 405) response.headers.set("Allow", "POST");
-      if (status === 401) response.headers.set("WWW-Authenticate", "Bearer");
+      if (status === 401)
+        response.headers.set("WWW-Authenticate", options.oauth?.challenge ?? "Bearer");
       return response;
     } catch (error) {
       status =

@@ -7,6 +7,7 @@ it("internal Auth verifies only the approved DEV issuer and fixes Account from A
     url.endsWith("/auth/v1/user")
       ? Response.json({
           id: account,
+          is_anonymous: false,
           email: "private@example.invalid",
           privateMetadata: "redact",
         })
