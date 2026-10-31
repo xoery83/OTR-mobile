@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { Buffer } from "node:buffer";
 import { afterEach, expect, it, vi } from "vitest";
 import { createMcpOAuthConsentRepository } from "./mcpOAuthConsentRepository";
 const id = "1f3d7935-1bdc-4952-8d7f-0f72077368c1";
@@ -243,3 +244,55 @@ it("does not start a queued OTP after close", async () => {
   await closed;
   expect(q.auth.signInWithOtp).not.toHaveBeenCalled();
 });
+
+it.each(["close", "expiry"])(
+  "revokes a late successful verify through the actual SDK/fetch adapter on %s",
+  async (mode) => {
+    const q = fixture();
+    // Local transport fixture only: no request leaves the mocked fetch.
+    if (mode === "expiry") q.config.expiresAt = Date.now() + 1000;
+    const segment = (value: unknown) =>
+      Buffer.from(JSON.stringify(value)).toString("base64url");
+    const token = [
+      segment({ alg: "ES256", typ: "JWT" }),
+      segment({ sub: id, exp: Math.floor(Date.now() / 1000) + 3600 }),
+      segment("unit-signature-not-real"),
+    ].join(".");
+    let finish!: (response: Response) => void;
+    const wire = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const target = new URL(String(input));
+      if (target.pathname === "/auth/v1/verify")
+        return new Promise<Response>((resolve) => {
+          finish = resolve;
+        });
+      expect(target.pathname).toBe("/auth/v1/logout");
+      expect(target.searchParams.get("scope")).toBe("local");
+      expect(new Headers(init?.headers).get("Authorization")).toBe(`Bearer ${token}`);
+      return new Response(null, { status: 204 });
+    });
+    const repo = createMcpOAuthConsentRepository(q.config, "unit-authorization");
+    const pending = repo.verifyCode("unit@example.invalid", "12345678");
+    await vi.waitFor(() => expect(wire).toHaveBeenCalledOnce());
+    const closing = mode === "close" ? repo.close() : undefined;
+    if (mode === "expiry") {
+      vi.useFakeTimers();
+      vi.setSystemTime(q.config.expiresAt);
+    }
+    finish(
+      Response.json({
+        access_token: token,
+        refresh_token: "unit-refresh-not-real",
+        token_type: "bearer",
+        expires_in: 3600,
+        user: { id, is_anonymous: false },
+      }),
+    );
+    await expect(pending).rejects.toMatchObject({ code: "CLOSED" });
+    await (closing ?? repo.close());
+    expect(wire).toHaveBeenCalledTimes(2);
+    expect(wire.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual([
+      "/auth/v1/verify",
+      "/auth/v1/logout",
+    ]);
+  },
+);

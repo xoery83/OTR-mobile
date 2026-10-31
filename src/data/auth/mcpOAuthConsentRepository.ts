@@ -58,6 +58,9 @@ export function createMcpOAuthConsentRepository(
           if (target.origin !== origin || !target.pathname.startsWith("/auth/v1/"))
             throw new McpConsentError("REQUEST_CHANGED");
           const logout = target.pathname === "/auth/v1/logout";
+          const sessionResponse = ["/auth/v1/verify", "/auth/v1/token"].includes(
+            target.pathname,
+          );
           if (!logout) current();
           const boundary = createRequestBoundary(10000, lifetime.signal);
           try {
@@ -73,7 +76,8 @@ export function createMcpOAuthConsentRepository(
               response.status === 204 || response.status === 205
                 ? null
                 : await readBoundedBytes(response, 65536, boundary);
-            if (!logout) current();
+            // Let an already-sent session response reach the SDK so close can revoke it.
+            if (!logout && !sessionResponse) current();
             return new Response(bytes ? new Uint8Array(bytes).buffer : null, {
               status: response.status,
               statusText: response.statusText,
@@ -99,11 +103,13 @@ export function createMcpOAuthConsentRepository(
     try {
       return await task;
     } catch (error) {
+      if (closed || Date.now() >= config.expiresAt) throw new McpConsentError("CLOSED");
       if (error instanceof McpConsentError) throw error;
       throw new McpConsentError("UNAVAILABLE");
     } finally {
       busy = false;
       if (activeTask === task) activeTask = undefined;
+      if (!closed && Date.now() >= config.expiresAt) void close().catch(() => undefined);
     }
   }
   function redirect(raw: string) {
@@ -128,6 +134,15 @@ export function createMcpOAuthConsentRepository(
     )
       throw new McpConsentError("REQUEST_CHANGED");
     return Object.freeze({ kind: "REDIRECT" as const, url: actual.href });
+  }
+  function otpFailure(status?: number): never {
+    throw new McpConsentError(
+      status === 429
+        ? "RATE_LIMIT"
+        : status !== undefined && [400, 401, 403, 422].includes(status)
+          ? "OTP_FAILED"
+          : "UNAVAILABLE",
+    );
   }
   async function details(): Promise<McpConsentView> {
     current();
@@ -159,6 +174,24 @@ export function createMcpOAuthConsentRepository(
       clientName: z.string().min(1).max(200).parse(data.client.name),
     });
   }
+  function close() {
+    if (closeTask) return closeTask;
+    closed = true;
+    const pending = activeTask;
+    closeTask = (async () => {
+      try {
+        // verifyOtp may install the SDK session after a network response settles.
+        await pending?.catch(() => undefined);
+        const { error } = await client.auth.signOut({ scope: "local" });
+        if (error) throw new McpConsentError("UNAVAILABLE");
+      } catch {
+        throw new McpConsentError("UNAVAILABLE");
+      } finally {
+        lifetime.abort();
+      }
+    })();
+    return closeTask;
+  }
   return Object.freeze({
     requestCode(email: string) {
       return run(async () => {
@@ -166,8 +199,7 @@ export function createMcpOAuthConsentRepository(
           email: z.email().parse(email),
           options: { shouldCreateUser: false },
         });
-        if (error)
-          throw new McpConsentError(error.status === 429 ? "RATE_LIMIT" : "OTP_FAILED");
+        if (error) otpFailure(error.status);
       });
     },
     verifyCode(email: string, code: string) {
@@ -180,8 +212,7 @@ export function createMcpOAuthConsentRepository(
             .parse(code),
           type: "email",
         });
-        if (error)
-          throw new McpConsentError(error.status === 429 ? "RATE_LIMIT" : "OTP_FAILED");
+        if (error) otpFailure(error.status);
         return details();
       });
     },
@@ -201,23 +232,6 @@ export function createMcpOAuthConsentRepository(
         return redirect(data.redirect_url);
       });
     },
-    close() {
-      if (closeTask) return closeTask;
-      closed = true;
-      const pending = activeTask;
-      closeTask = (async () => {
-        try {
-          // verifyOtp may install the SDK session after a network response settles.
-          await pending?.catch(() => undefined);
-          const { error } = await client.auth.signOut({ scope: "local" });
-          if (error) throw new McpConsentError("UNAVAILABLE");
-        } catch {
-          throw new McpConsentError("UNAVAILABLE");
-        } finally {
-          lifetime.abort();
-        }
-      })();
-      return closeTask;
-    },
+    close,
   });
 }
