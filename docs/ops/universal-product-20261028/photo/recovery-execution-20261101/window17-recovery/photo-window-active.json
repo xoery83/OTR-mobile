@@ -1,0 +1,25 @@
+{
+  "status": "PHOTO_SINGLE_GOLDEN_WINDOW_ACTIVE",
+  "writeDisposition": "ACKNOWLEDGED",
+  "window": {
+    "windowId": "1e56c107971e408caced0f14356a6235",
+    "startedAt": "2026-10-31T16:56:16.842324+00:00",
+    "latestActivationAt": "2026-10-31T17:01:16.842324+00:00",
+    "expiresAt": "2026-10-31T17:55:16.842324+00:00",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "d56f2cbc-43da-46c0-84d0-462c98b69689",
+    "closePlanSHA256": "d1747c6ff314bd527019393c1e528ed251c99a32ce4de086bfc38c18dc77c492",
+    "timerUnits": [
+      "otr-photo-close-1e56c107971e408caced0f14356a6235",
+      "otr-photo-watchdog-1e56c107971e408caced0f14356a6235"
+    ]
+  },
+  "readback": {
+    "enabled": true,
+    "expiresAt": "2026-10-31T17:55:16.842324+00:00",
+    "parentPreserved": true
+  },
+  "paidImageCalls": 0,
+  "newInputObjects": 0
+}

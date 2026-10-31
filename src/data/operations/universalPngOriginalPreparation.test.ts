@@ -251,3 +251,31 @@ it("explicitly resumes only a formally quiescent upload with the same operation 
     ),
   ).toHaveLength(1);
 });
+
+it("explicitly starts the same admitted verification after a BEGIN failure without another upload", async () => {
+  const x = await fixture();
+  x.records.set(x.proposals.prepare.operation_id, await x.final(x.proposals.prepare));
+  x.records.set(x.proposals.upload.operation_id, await x.final(x.proposals.upload));
+  const q = x.proposals.verify;
+  x.records.set(q.operation_id, {
+    contract_version: 1, operation_id: q.operation_id, operation_key: q.operation_key,
+    operation_sha256: q.operation_sha256, phase: "ADMITTED", attempt_generation: 1,
+  });
+  const receipt = await x.run();
+  expect(receipt.command).toBe("VERIFY_REPRESENTATION");
+  expect(x.port.execute).toHaveBeenCalledExactlyOnceWith(x.f.context, q, undefined);
+  expect(x.port.reconcile).not.toHaveBeenCalled();
+});
+it.each(["IO_ACTIVE", "IO_UNKNOWN"])("never redispatches an already claimed verification (%s)", async (phase) => {
+  const x = await fixture();
+  x.records.set(x.proposals.prepare.operation_id, await x.final(x.proposals.prepare));
+  x.records.set(x.proposals.upload.operation_id, await x.final(x.proposals.upload));
+  const q = x.proposals.verify;
+  x.records.set(q.operation_id, {
+    contract_version: 1, operation_id: q.operation_id, operation_key: q.operation_key,
+    operation_sha256: q.operation_sha256, phase, attempt_generation: 1,
+  });
+  await expect(x.run()).rejects.toThrow("PNG_UPLOAD_OUTCOME_UNRESOLVED");
+  expect(x.port.execute).not.toHaveBeenCalled();
+  expect(x.port.reconcile).toHaveBeenCalledExactlyOnceWith(x.f.context, q);
+});

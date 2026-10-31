@@ -1,0 +1,17 @@
+{
+  "exitCode": 0,
+  "result": {
+    "status": "PNG_RECOVERY_RECORD_NEGATIVE_VERIFIED",
+    "sourceId": "03109f59-894f-4ddf-aad9-090d0920092f",
+    "operationId": "bb0559c5-4ab6-8f2e-bc72-6bb272fec01c",
+    "attemptId": "eb1479c3-f160-4f96-ba6f-07e0d986de33",
+    "generation": 1,
+    "operationPhase": "IO_UNKNOWN",
+    "journalPhase": "TERMINAL",
+    "terminalResult": "PARSER_CRASH",
+    "negativeProofMatchesPacket": true,
+    "originalAndStageRetained": true,
+    "decoderOrStorageStarted": false,
+    "providerCalls": 0
+  }
+}

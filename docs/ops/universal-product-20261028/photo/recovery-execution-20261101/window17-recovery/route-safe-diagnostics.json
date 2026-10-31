@@ -1,0 +1,122 @@
+{
+  "diagnostics": [
+    {
+      "at": "2026-10-31T16:57:40.102120328Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "BINDING",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T16:57:40.102215899Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 404,
+      "durationMs": 6976
+    },
+    {
+      "at": "2026-10-31T16:57:53.693362189Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 6125
+    },
+    {
+      "at": "2026-10-31T16:58:07.856418827Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6442
+    },
+    {
+      "at": "2026-10-31T16:58:15.269821994Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 7078
+    },
+    {
+      "at": "2026-10-31T16:59:19.542076216Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 63686
+    },
+    {
+      "at": "2026-10-31T16:59:26.356129067Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6490
+    },
+    {
+      "at": "2026-10-31T16:59:38.191306028Z",
+      "event": "source_png_broker_failed",
+      "command": "VERIFY_REPRESENTATION",
+      "action": "BEGIN",
+      "phase": "BROKER"
+    },
+    {
+      "at": "2026-10-31T16:59:38.191493531Z",
+      "event": "source_png_preparation_failed",
+      "action": "execute",
+      "reason": "UNCLASSIFIED",
+      "errorKind": "OTHER"
+    },
+    {
+      "at": "2026-10-31T16:59:38.191800092Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 503,
+      "durationMs": 11504
+    },
+    {
+      "at": "2026-10-31T17:03:59.837890464Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "BINDING",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T17:03:59.838001573Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 404,
+      "durationMs": 7728
+    },
+    {
+      "at": "2026-10-31T17:04:13.346606876Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5899
+    },
+    {
+      "at": "2026-10-31T17:04:28.120909571Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6445
+    },
+    {
+      "at": "2026-10-31T17:04:35.075228705Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6627
+    },
+    {
+      "at": "2026-10-31T17:04:41.984641108Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6573
+    },
+    {
+      "at": "2026-10-31T17:04:48.770844332Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 6458
+    }
+  ],
+  "rawLogsExposed": false
+}

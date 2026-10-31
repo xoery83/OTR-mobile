@@ -1,56 +1,56 @@
 # Current Import Photo checkpoint — 1 November 2026
 
-Golden Slice BLOCKED at original PNG upload, not Vision or Save PASS. Owner approved
-7303c608: exactly one normal App replacement Batch d56f2cbc / Input73fe13fa /
-Capture9f4dd0d3, same42630B PNG SHA078de830. No extra Batch/Task/model allowance.
-Normal Trip binding bumped Capture1→2; normal Check/Choose refreshed consent at2.
-Source03109f59 / rep06e6bb76: ACQUIREf8e43db5 and PREPARE44f1700c APPLIED/FINAL.
-UPLOADbb0559c5 / attempteb1479c3 generation1 became IO_UNKNOWN; journal RUNNING,
-no terminal. Broker STATUS failed at15:50:36Z, HTTP503; no SQLSTATE was captured.
-No Task or model Attempt exists (same-image readback0/0); firstVision unused.
+Golden Slice PARTIAL: same original PNG upload SERVER_VERIFIED; VERIFY ADMITTED,
+no Task/model/Results/Photo Save yet. Owner approved cde4f704 recovery Gate. CLOSED
+install OID67161 d868→883e and full role graph/OIDs/schemaACL/Owner/ACL restored.
+Same uploadbb0559c5 / Source03109f59 / rep06e6bb76: gen1eb1479 negative terminal,
+actual physical TERMINATED, marker original inode + durable archive preserved;
+normal App gen2 0e32676c-f2f2-41e9-bc49-e83cf3ac7abb actualPARSE_PASS and
+UPLOAD APPLIED/FINAL at16:59Z. All originals/stages/oldUNKNOWN retained. No inverse
+is permitted after accepted negative/newattempt/upload; compatible function stays.
 
-Window17e6e268c5 started15:29Z, independently closed early before coding: SQL before/
-after CLOSED, runtime verified, worker inactive/physicalCleanup TERMINATED, owned
-attempt inventory empty, marker retained, timers stopped. Current ac7a53f6/image
-d8b789b8/capture6d7610a3 remains compatible default; Native/Auth resources returned.
-Never reset/upload/reissue UNKNOWN or infer PARSE_PASS from physical termination.
-All older originals/markers/UNKNOWN/receipts and expired Run2179 remain intact.
+Batchd56f2cbc/Input73fe13fa/Capture9f4dd0d3 remain original approved7303 input,
+42630B PNG SHA078de830… Current native AI choice binds Capture2/CONTINUE_WITH_AI.
+No new objects or paid allowance used. Original expiry2026-11-01T08:48:56Z unchanged.
 
-Focused software repair: sourcePngBroker waited for remote Auth/Trip inside BEGIN
-while Source permits5s idle. Move that same per-action validation before lease;
-principal/SQL owning guard/cancellation fences and budgets unchanged. New ordering/
-denial tests RED2 then related43 PASS, ESLint and independent NO_BLOCKER. This is
-LOCAL_PASS for a concrete idle hazard, not proof of window17 root cause or actual
-repair. Ordinary software now independently SERVER_VERIFIED: actualCID0c04b40c /
-imagef0527429 / capturec0889ee7 / MCPf9c339c4; server7826/browser9264 and Native722
-unchanged. Source4090 + Auth safe diagnostics only; original baseline6d byte-exact
-assembly proof, all348 other source inputs preserved. Envb12/Hostd501/Mount14ee,
-18+5 files unchanged, health200/protected401. Host lock16:19:54→16:20:01Z released,
-original ac7/d8 retained stopped/healthy rollback. Initial independent comparison
-failed only Docker Mounts list order; complete sorted object comparison PASS.
-PNG SQL CLOSED/d868/workerinactive independently verified, zeroProvider/Authority.
+Recovery window1e56c107 started16:56Z; VERIFYb2fcc424 BEGIN failed16:59:38Z,
+Broker error UNCLASSIFIED/noSQLSTATE. Independent readback remainsADMITTED/noattempt.
+A second explicit Analyze only performed lookup/reconcile200, never retried BEGIN.
+Window closed early17:06Z: sourcebefore/after CLOSED, runtime verified, worker
+inactive/EMPTY, timersstopped. Same-image modelTask/Attempt0; firstVisionunused.
+Resources returned to Auth, which now owns its approved finite diagnostic session.
+No Source Host/config write until Auth returns actual default CLOSED baseline.
 
-Gate cde4f704 has been submitted; Owner approval pending. Recovery remains protected: current d868 function authorizes generation2 only for
-old Source df39/operationd2f/attempt077. New bb0559c5 may not borrow that authority.
-Minimal new tuple/CAS packet is prepared NOT APPROVED/NOT INSTALLED under
-.env.photo-window17-recovery-20261101; new22/legacy22 isolation checks, tuple27,
-maintenance install/inverse/fault7 and operator no-credential3 checks PASS,
-independent NO_BLOCKER. Physical negative proof retained; no PG negative journal
-or quiescence executed. No new Schema/RLS/roles/budget/expiry. Single protected
-function + exact operator credential purpose require Owner approval before use.
+Specific repair: Native settle treats every ADMITTED as reconcile-only, so an
+unstarted VERIFY can never resume. Minimal change permits explicit Analyze to
+execute the SAME VERIFY+ADMITTED; UPLOAD ADMITTED, IO_ACTIVE/UNKNOWN protections
+unchanged. RED1→50 targeted PASS+ESLint, independent focused review requested.
+No SQL/Authority/budget changes. Isolated existing Source-chain STATUS and BEGIN
+PASS using actual5functions, so this is not proof of the initial Hosted BEGIN
+exception's cause. Next retry must record exact failure category if it persists.
 
-Next: after exact recovery Gate approval and fresh baseline checks, record
-negative/retain marker, same operation uniquegen2,
-normal App→actual imageVisiononce→Results→Review→one PRIVATE SELF P1/P6→independent
-readback/Day/cold/idempotence→close. FirstVision/Save still unverified. Import UI now distinguishes the actual local
-Photo re-confirmation requirement from generic AI unavailable, using bilingual
-actionable copy; 67 focused checks/UI guard/ESLint/independent NO_BLOCKER. LOCAL_PASS
-only; no Native rebuild or device acceptance claimed. Originalhard
-expiry2026-11-01T08:48:56Z and <=60m/+45close/+50watchdog bounds unchanged. Stable
-Import branch only; main untouched. AD5 remains126.8/SQLite76/rootMyTrips; false
-unassigned label fix622aa154 local-only. Full roottypes previously hit2GiB OOM;
-not rerun or claimedPASS. Evidence: ops/universal-product-20261028/photo/
-recovery-execution-20261101 and authority/PHOTO_WINDOW17_OPERATION_RECOVERY_GATE.md.
+Actual default software0c04b40c/imagef0527429/capturec0889ee7/MCPf9c339c4; Source4090
+and Auth safe diagnostic overlay, server7826/browser9264/Native722 retained. Envb12,
+Hostd501/Mount14ee and18+5files unchanged; independenthealth200/protected401/lock
+released, ac7/d8 retained stopped rollback. Source883e function intentionally stays.
+Do not restore older incompatible images. Auth finite service may temporarily
+change config; always fresh-CAS latest handoff. Root main untouched; Native reports
+main33388e52 integrated its client-only fallback, remote not pushed.
+
+Import UI139c7425 distinguishes local Photo re-confirmation from generic AI error;
+67tests/UIguard/ESLint/independentNO_BLOCKER LOCAL_PASS only. AD5 remains126.8/SQLite76,
+same data/session/rootMyTrips. Prepare one JS-only126.9 using unchanged nativebinary,
+reviewed Import fixes and existing public config; preserve QA Capture decisions/
+counts/bindings with readonly snapshots, no Session/Keychain copying. Sourceclosed
+through all builds. Full roottypes previously hit2GiB OOM; no heap escalation.
+
+Next: review/fix Native VERIFY ADMITTED→same execute, incremental code-only AD5
+install; after Auth CLOSED, preflight same Source and unused Vision, reuse existing
+controller finitePNGwindow→sameVERIFY→Task10min/attempt1→actualVisiononce→Results→
+normalReview/Plan/Admission→one PRIVATE SELF P1/P6→independentreadback/Day/cold/
+idempotence→close. No new protected function or input Gate is currently proposed.
+If Hosted BEGIN still fails, close first and fix only that specific component.
+Evidence: ops/universal-product-20261028/photo/recovery-execution-20261101/.
 
 Older checkpoints below are historical and superseded by the current header.
 

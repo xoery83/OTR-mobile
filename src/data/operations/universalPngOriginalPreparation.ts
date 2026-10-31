@@ -150,6 +150,8 @@ export async function prepareAdmittedPngOriginal(
     let raw = await step(() => port.lookup(context, cloneCommand(q)));
     if (
       raw === null ||
+      // Explicit Analyze may start verification that never acquired an IO attempt.
+      (q.command === "VERIFY_REPRESENTATION" && pending(raw, q) === "ADMITTED") ||
       (q.command === "UPLOAD_ORIGINAL" && pending(raw, q) === "IO_QUIESCENT")
     )
       raw = await step(() =>

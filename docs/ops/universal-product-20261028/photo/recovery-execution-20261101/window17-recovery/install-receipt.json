@@ -1,0 +1,16 @@
+{
+  "status": "APPROVED_WINDOW17_RECOVERY_INSTALLED_CLOSED",
+  "approvedCommit": "cde4f704",
+  "writeDisposition": "ACKNOWLEDGED",
+  "function": {
+    "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+    "md5": "883e1eada03a5a907e726a953d375bac",
+    "oid": "67161",
+    "owner": "otr_trip_source_writer"
+  },
+  "closed": true,
+  "fullRoleGraphIncludingOIDsRestored": true,
+  "schemaACLRestored": true,
+  "newRolesOrEdges": false,
+  "sourceOrProviderExecution": false
+}
