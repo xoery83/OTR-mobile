@@ -110,9 +110,9 @@ necessary automation wrapper gets a focused test; no speculative framework now.
 | Lane | Delivery | Adoption / current difference |
 |---|---|---|
 | Import (this thread) | Received directly from Owner | ADOPTED; Photo coding/isolated PG outside lock. New protected pin body still needs exact Gate; existing Nov1 expiry unchanged. No active release lock held. |
-| Native | Chat notification sent successfully | Confirmation pending; normal Core/downstream/iPad QA does not reserve service. Publisher/subscriber/version changes retain own Writer/Authority checks. Existing outer-COMMIT candidate Writer unaffected. |
+| Native | Chat notification sent successfully | ACK / ADOPTED in chat reply; normal Core/downstream/iPad QA does not reserve service. Publisher/subscriber/version changes retain own Writer/Authority checks. Existing outer-COMMIT candidate Writer unaffected. |
 | Auth | Chat notification sent successfully | ACK / ADOPTED in reply. OTP/Adoption/Person QA parallel under existing grants; Parent8079+dc43121b remains candidate, not READY pending owning Review/new EXEC Gate. |
-| MCP | NOT SENT: automatic approval rejected direct messaging twice, including after citation of Owner attachment | Forwardable notice below. Do not claim delivered or adopted. OAuth/public access/new grants remain separately gated. |
+| MCP | Direct sending rejected by automatic approval; agent independently read the forwardable notice | ACK / ADOPTED in incoming chat reply. No rejected-send retry or indirect relay. OAuth/public access/new grants remain separately gated. |
 
 No lane was asked to stop coding, restart a passed E2E or redeploy accepted code.
 Native/Auth chat IDs remain their established coordination destinations; this
@@ -132,8 +132,7 @@ snapshot is delivery evidence, not a new authorization register.
 
 ## Acceptance and next natural example
 
-Rules/package/receipt template fixed; Import adopted, Auth acknowledged, Native
-notified, MCP has a forwardable notice. Ordinary authorized QA is no longer a
+Rules/package/receipt template fixed; Import adopted, Auth and Native acknowledged, MCP independently read the forwardable notice and acknowledged adoption. Ordinary authorized QA is no longer a
 publication-lock request. This document authorizes no additional SQL, Role,
 Provider, production access or scope extension.
 

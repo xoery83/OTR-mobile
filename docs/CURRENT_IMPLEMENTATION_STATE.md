@@ -1,3 +1,22 @@
+# Latest Import Photo / DEV delivery checkpoint — 31 October 2026
+
+V2 resource-scoped delivery adopted (Owner instruction): ordinary authorized QA
+runs without global reservation; only shared changes get short CAS/apply/smoke/
+receipt locks. Native/Auth notified and ACK; MCP direct notice was auto-review
+rejected; it independently read the forwardable notice and ACKed adoption. See ops/DEV_DELIVERY_MODEL_V2.md.
+No artificial release to demonstrate V2; live five-time receipt validation pending.
+
+Photo actual first failure is lookup-before-acquire: READ_RECEIPT pin required
+an existing Source, causing503 SOURCE_CAPABILITY_CLOSED before acquire. Prior
+missing-Trip diagnosis is superseded. Exact same-command RED→GREEN and four
+strict guard negatives PASS in isolated PG. Single-function maintenance forward/
+reverse/fault rollback checks PASS, full graph/schema ACL restored; fixture limits
+are explicit. New body needs precise protected approval, not another ordinary
+window approval. See authority/PHOTO_FIRST_LOOKUP_REPAIR_GATE.md and manifest.
+PNG remains CLOSED, no Source/paid Vision/Save PASS. Same Batch/Source/op retained;
+no new input, model call, expiry or budget authorized. Independent
+package review NO_BLOCKER; next exact approval, fresh V2 preflight/install, same Photo E2E.
+
 # Photo approved execution — 31 October 2026
 
 Owner77a6febb + maintenance74530956 installed once; 16 Source hashes/Owner/ACL,

@@ -1,0 +1,8 @@
+{
+  "status": "NO_BLOCKER",
+  "scope": "single function, strict guard negatives, maintenance install/reverse/fault restore, manifest and exact Gate hashes",
+  "installSHA256": "346519522de526aee6981a53e9d9c10a0dcba3f3e77c51357a94216a489c420a",
+  "rollbackSHA256": "0850245a978d33fd73b6d60e07007002da127abf8604a2073588bdcfcca8bfbe",
+  "devExecuted": false,
+  "notOwnerApproval": true
+}

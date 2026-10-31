@@ -1,0 +1,19 @@
+{
+  "status": "CANDIDATE_NOT_INSTALLED",
+  "function": "public.trip_source_universal_original_pin()",
+  "oid": 66243,
+  "preMD5": "d57dfe23f3b3b4b78188b34afb24323b",
+  "postMD5": "184156c3861e9f50697b88d6774f124d",
+  "files": {
+    "first-lookup-green.json": "89ad7e0f62e3f4bcb9b451c76023ce20a27d799e0cab2397dc2c19d1f2a59923",
+    "first-lookup-red.json": "f00ec57b51fb546bf5900641d0c8cc33668ffc66f2256534d9cfe008f9583ed0",
+    "install.sql": "346519522de526aee6981a53e9d9c10a0dcba3f3e77c51357a94216a489c420a",
+    "maintenance-checks.json": "cd52dc1833b0a6bfc1071016f96f56509edf99479be122b6b44795de21a5d03a",
+    "negative-checks.json": "67826ed456d271c66d15466e6583bf4b3df8aa9bb77d958df7f615ac9832173d",
+    "pin-after.sql": "488087ddec077ec4fef4c483a1b95d5ae7e3ba6e25e33a0bf25761b7d12af89b",
+    "pin-before.sql": "fdc63bd9da95c777dcce9ad10e90725659af98656a67713286476e7aee731c40",
+    "rollback.sql": "0850245a978d33fd73b6d60e07007002da127abf8604a2073588bdcfcca8bfbe",
+    "verify-negatives.py": "4f4e4be447765a33296fb27fb8f02d172f2d06195123806104b609fcd041d1e9",
+    "verify-package.py": "7130ad0efa6d05e0c4badc399b33be455b129102cc858f5eeef847a02a219746"
+  }
+}

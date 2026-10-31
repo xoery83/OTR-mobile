@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "name": "FORWARD_REVERSE",
+      "passed": true,
+      "baselineRestored": true
+    },
+    {
+      "name": "FAULT_BEFORE_RESTORE",
+      "passed": true,
+      "baselineRestored": true
+    },
+    {
+      "name": "FAULT_AFTER_RESTORE",
+      "passed": true,
+      "baselineRestored": true
+    }
+  ],
+  "fixtureAdjustments": [
+    "OID 66243\u219222614 only in local test copy",
+    "missing pre-existing membership edge supplied only inside outer rollback transaction"
+  ],
+  "fixture": "existing network-none PostgreSQL",
+  "devExecuted": false
+}

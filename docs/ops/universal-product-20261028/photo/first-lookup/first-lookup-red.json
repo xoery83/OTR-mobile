@@ -1,0 +1,9 @@
+{
+  "status": "FIRST_PNG_LOOKUP_RED_REPRODUCED",
+  "returnCode": 3,
+  "codes": [
+    "UNIVERSAL_SOURCE_SCOPE_CLOSED"
+  ],
+  "fixtureNetwork": "none",
+  "transactionRolledBack": true
+}

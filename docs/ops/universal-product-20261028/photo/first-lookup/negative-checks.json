@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "name": "CLOSED_MISSING_DENIED",
+      "passed": true
+    },
+    {
+      "name": "EXPIRED_MISSING_DENIED",
+      "passed": true
+    },
+    {
+      "name": "READ_PIN_UPDATE_DENIED",
+      "passed": true
+    },
+    {
+      "name": "READ_PIN_INSERT_DENIED",
+      "passed": true
+    }
+  ],
+  "network": "none",
+  "allTransactionsRolledBack": true
+}

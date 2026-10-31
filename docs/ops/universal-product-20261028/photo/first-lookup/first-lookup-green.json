@@ -1,0 +1,14 @@
+{
+  "status": "FIRST_PNG_LOOKUP_GREEN_PASS",
+  "returnCode": 0,
+  "codes": [],
+  "observations": [
+    "ACTIVE_MISSING_RETURNS_NULL",
+    "t",
+    "SAME_COMMAND_ACQUIRE_ACCEPTED",
+    "CLOSED_EXISTING_RECEIPT_RECOVERS",
+    "184156c3861e9f50697b88d6774f124d"
+  ],
+  "fixtureNetwork": "none",
+  "transactionRolledBack": true
+}
