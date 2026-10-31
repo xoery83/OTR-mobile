@@ -159,6 +159,15 @@ See ops/auth-mcp-oauth-20261031/OAUTH_INTERFACE_DELTA_V1.md: no second grant DB,
 separate sessionId, same-issuer online Account/grant check, read-only client
 candidate with explicit consent and resource-bound signed business permissions.
 Standard OIDC scopes are not Trip authority. No OAuth settings or mount enabled.
+Latest closed OAuth software9b0983ad adds normal OTP Consent, same-Account read
+binding, normal Business resource-token rejection and bounded Node ingress.
+Actual DEV Dashboard read: OAuth OFF, no apps/hooks, Site URL localhost:3000,
+redirect list empty. Proposed finite QA Gate9dc271f6 targets only Account1f and
+one public client with two exact callbacks; not approved or executed. New delta
+35 Consent/runtime tests and11 real Node HTTP tests/typecheck/lint PASS; prior
+hook PostgreSQL8 groups reused. Root Host coordination and independent narrow
+Review in progress. No Hosted OAuth E2E PASS. See ops/auth-mcp-oauth-20261031/
+{OWNER_GATE.md,GATE_MANIFEST.json,SOFTWARE_READINESS.json}.
 Auth request-only verifier candidate d8f8b0fa is unmounted/default-closed;
 2 focused suites52/typecheck/lint PASS, independent source Review
 NO_BLOCKER_CLOSED_CANDIDATE with separate2 suites52 PASS. It

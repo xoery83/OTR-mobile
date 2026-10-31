@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "status": "PROPOSED_NOT_AUTHORIZED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "softwareCommit": "9b0983ad",
+  "qaAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "files": {
+    "docs/ops/auth-mcp-oauth-20261031/OWNER_GATE.md": "d88c92e62fc938988e89a6e9f4b62a309a053bd6cc837e7a007f3594b5c9e34f",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341"
+  },
+  "parameters": {
+    "clientId": "Only UUID generated for the exact one approved public read client",
+    "deadline": "Execution UTC instant at most 30 minutes ahead; unchanged on stage reactivation"
+  },
+  "hostedChangesExecuted": false,
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733"
+}
