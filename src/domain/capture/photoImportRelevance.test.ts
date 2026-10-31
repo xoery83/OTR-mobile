@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isPhotoImportInput,
   photoImportDecisionSchema,
   resolvePhotoImportDecision,
   screenPhotoImportRelevance,
@@ -159,3 +160,17 @@ describe("explicit Photo decisions remain bound to the exact original", () => {
     ).toThrow();
   });
 });
+
+it.each([
+  ["IMAGE", "image/jpeg", true],
+  ["FILE", "image/png", true],
+  ["FILE", "application/pdf", false],
+  ["FILE", "text/plain", false],
+  ["FILE", "image/jpeg", false],
+  ["TEXT", "image/png", false],
+] as const)(
+  "keeps Photo metadata scope narrow: %s/%s",
+  (kind, declaredContentType, allowed) => {
+    expect(isPhotoImportInput({ kind, declaredContentType })).toBe(allowed);
+  },
+);

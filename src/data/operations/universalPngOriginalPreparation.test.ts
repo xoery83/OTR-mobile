@@ -14,7 +14,7 @@ import {
 } from "./universalPngOriginalPreparation";
 import type { CaptureMaterialBinding } from "@/domain/capture/captureCustody";
 
-async function fixture() {
+async function fixture(files = false) {
   const f = await pdfPreparationFixture([]),
     bytes = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
   const hash = await pdfProtocolHash(bytes),
@@ -33,9 +33,9 @@ async function fixture() {
       mediaType: "image/png",
       sha256: hash,
       byteCount: bytes.length,
-      kind: "IMAGE",
-      acquisitionSource: "photos",
-      originalFilename: null,
+      kind: files ? "FILE" : "IMAGE",
+      acquisitionSource: files ? "files" : "photos",
+      originalFilename: files ? "qa.png" : null,
     } as CaptureMaterialBinding,
     bytes,
   };
@@ -81,27 +81,30 @@ it("is closed without a server port and cannot create a receipt or IO", async ()
   expect(x.port.lookup).not.toHaveBeenCalled();
   expect(x.port.execute).not.toHaveBeenCalled();
 });
-it("uses only PREPARE/UPLOAD/VERIFY, original bytes, and same final receipts on recovery", async () => {
-  const x = await fixture();
-  const receipt = await x.run();
-  expect(receipt).toMatchObject({
-    command: "VERIFY_REPRESENTATION",
-    outcome: "APPLIED",
-    result_remote_state: "VERIFIED",
-  });
-  expect(x.port.execute.mock.calls.map(([, q]) => q.command)).toEqual([
-    "PREPARE_REPRESENTATION",
-    "UPLOAD_ORIGINAL",
-    "VERIFY_REPRESENTATION",
-  ]);
-  expect(x.port.execute.mock.calls[1][2]).toEqual({
-    binding: x.input.binding,
-    bytes: x.input.bytes,
-  });
-  expect(await x.run()).toEqual(receipt);
-  expect(x.port.execute).toHaveBeenCalledTimes(3);
-  expect(x.port.reconcile).not.toHaveBeenCalled();
-});
+it.each([false, true])(
+  "uses exact bytes/provenance and same receipts; Files PNG=%s",
+  async (files) => {
+    const x = await fixture(files);
+    const receipt = await x.run();
+    expect(receipt).toMatchObject({
+      command: "VERIFY_REPRESENTATION",
+      outcome: "APPLIED",
+      result_remote_state: "VERIFIED",
+    });
+    expect(x.port.execute.mock.calls.map(([, q]) => q.command)).toEqual([
+      "PREPARE_REPRESENTATION",
+      "UPLOAD_ORIGINAL",
+      "VERIFY_REPRESENTATION",
+    ]);
+    expect(x.port.execute.mock.calls[1][2]).toEqual({
+      binding: x.input.binding,
+      bytes: x.input.bytes,
+    });
+    expect(await x.run()).toEqual(receipt);
+    expect(x.port.execute).toHaveBeenCalledTimes(3);
+    expect(x.port.reconcile).not.toHaveBeenCalled();
+  },
+);
 it("UNKNOWN keeps the same operation and only reconciles; it never re-sends upload", async () => {
   const x = await fixture();
   const pending = {

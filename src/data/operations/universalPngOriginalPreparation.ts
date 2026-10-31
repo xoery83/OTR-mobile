@@ -77,7 +77,7 @@ export async function prepareAdmittedPngOriginal(
     binding.accountId !== context.accountId ||
     binding.mediaType !== "image/png" ||
     binding.version !== 2 ||
-    binding.kind !== "IMAGE"
+    (binding.kind !== "IMAGE" && binding.kind !== "FILE")
   )
     throw Error("SOURCE_CAPTURE_SCOPE_INVALID");
   assertCaptureCustodyBytes(binding, bytes);

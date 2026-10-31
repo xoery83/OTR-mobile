@@ -6,6 +6,17 @@ import {
   sha256Schema,
 } from "./localCapture";
 
+// Files retain FILE provenance while PNG uses the existing Photo relevance/consent path.
+export function isPhotoImportInput(input: {
+  kind: string;
+  declaredContentType: string | null;
+}) {
+  return (
+    input.kind === "IMAGE" ||
+    (input.kind === "FILE" && input.declaredContentType === "image/png")
+  );
+}
+
 export const photoImportPinSchema = z.strictObject({
   accountId: captureIdSchema,
   batchId: z.uuid(),

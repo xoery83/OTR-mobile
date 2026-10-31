@@ -1,3 +1,4 @@
+import { isPhotoImportInput } from "@/domain/capture/photoImportRelevance";
 import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
@@ -49,7 +50,7 @@ export function isSingleEnabledPng(
   return (
     profile === PNG_CAPTURE_ORIGINAL_PROFILE &&
     job.inputs.length === 1 &&
-    job.inputs[0].kind === "IMAGE" &&
+    isPhotoImportInput(job.inputs[0]) &&
     job.inputs[0].declaredContentType === "image/png"
   );
 }

@@ -413,117 +413,120 @@ it.each([false, true])(
   },
 );
 
-it("single PNG checks fresh consent after Source assignment and before Task, retaining pending provenance", async () => {
-  const account = randomUUID(),
-    trip = randomUUID(),
-    job = randomUUID(),
-    batch = randomUUID(),
-    inputId = randomUUID(),
-    captureId = randomUUID(),
-    payloadId = randomUUID(),
-    bindingId = randomUUID();
-  const getAccountId = async () => account,
-    context = await captureAccountRequestContext(trip, getAccountId);
-  const bytes = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
-  const hash = createHash("sha256").update(bytes).digest("hex");
-  f.photoConsent.mockResolvedValue({ captureRevision: 2 });
-  const input = {
-    id: inputId,
-    kind: "IMAGE",
-    state: "ACCEPTED",
-    declaredContentType: "image/png",
-    acquisitionSource: "photos",
-    captureId,
-    payloadId,
-    revision: 2,
-    contentSha256: hash,
-    contentByteCount: bytes.length,
-    originalFilename: null,
-  };
-  const model = {
-    batch: { accountId: account, batchId: batch, jobId: job },
-    inputs: [input],
-  } as unknown as CaptureJobReadModel;
-  const prepared = {
-    inputId,
-    bindingId,
-    sourceId: randomUUID(),
-    representationId: randomUUID(),
-    sourceCommand: { original: "pending PNG" },
-  };
-  f.native.mockResolvedValue(vi.fn());
-  f.plans.mockResolvedValue([]);
-  f.run.mockResolvedValue({
-    batchId: batch,
-    submissionSha256: "b".repeat(64),
-    unhandledInputIds: [],
-    inputs: [prepared],
-    results: [{ state: "ADMITTED" }],
-  });
-  f.source.mockReturnValue({
-    readAdmittedInputPin: vi.fn(async () => ({ id: inputId })),
-  });
-  f.captures.getForSourceHandoff.mockResolvedValue({
-    capture: {
-      id: captureId,
+it.each(["photos", "files"] as const)(
+  "single PNG keeps %s provenance and fresh consent before Task",
+  async (acquisitionSource) => {
+    const account = randomUUID(),
+      trip = randomUUID(),
+      job = randomUUID(),
+      batch = randomUUID(),
+      inputId = randomUUID(),
+      captureId = randomUUID(),
+      payloadId = randomUUID(),
+      bindingId = randomUUID();
+    const getAccountId = async () => account,
+      context = await captureAccountRequestContext(trip, getAccountId);
+    const bytes = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
+    const hash = createHash("sha256").update(bytes).digest("hex");
+    f.photoConsent.mockResolvedValue({ captureRevision: 2 });
+    const input = {
+      id: inputId,
+      kind: acquisitionSource === "files" ? "FILE" : "IMAGE",
+      state: "ACCEPTED",
+      declaredContentType: "image/png",
+      acquisitionSource,
+      captureId,
       payloadId,
-      accountId: account,
-      tripId: trip,
       revision: 2,
-      sha256: hash,
-      byteCount: bytes.length,
-    },
-    bytes,
-  });
-  f.sourceTransport.mockReturnValue({
-    lookup: vi.fn(async () => JSON.stringify({ receipt: "owning" })),
-  });
-  f.catalog.mockReturnValue({
-    readUniversal: vi.fn(async () => ({ catalog: "owning" })),
-  });
-  f.imports.mockReturnValue({ applyUniversalCatalogs: vi.fn() });
-  const preparePngOriginal = vi.fn(),
-    prepareTask = vi.fn();
-  const options = {
-    baseUrl: "https://api-dev.xoery.art",
-    getAccountId,
-    assertCurrent() {},
-    pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1" as const,
-    preparePngOriginal,
-    prepareTask,
-  };
-  f.photoConsent.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
-  await expect(
-    prepareDefaultUniversalCaptureSources(context, model, options),
-  ).rejects.toThrow("PHOTO_REVIEW_REQUIRED");
-  expect(preparePngOriginal).not.toHaveBeenCalled();
-  expect(prepareTask).not.toHaveBeenCalled();
-  await prepareDefaultUniversalCaptureSources(context, model, options);
-  expect(preparePngOriginal).toHaveBeenCalledExactlyOnceWith(
-    context,
-    expect.objectContaining({
-      acquisition: prepared.sourceCommand,
-      acquisitionReceipt: { receipt: "owning" },
-      binding: expect.objectContaining({
-        captureRevision: 2,
-        acquisitionSource: "photos",
-        kind: "IMAGE",
-        mediaType: "image/png",
-      }),
+      contentSha256: hash,
+      contentByteCount: bytes.length,
+      originalFilename: null,
+    };
+    const model = {
+      batch: { accountId: account, batchId: batch, jobId: job },
+      inputs: [input],
+    } as unknown as CaptureJobReadModel;
+    const prepared = {
+      inputId,
+      bindingId,
+      sourceId: randomUUID(),
+      representationId: randomUUID(),
+      sourceCommand: { original: "pending PNG" },
+    };
+    f.native.mockResolvedValue(vi.fn());
+    f.plans.mockResolvedValue([]);
+    f.run.mockResolvedValue({
+      batchId: batch,
+      submissionSha256: "b".repeat(64),
+      unhandledInputIds: [],
+      inputs: [prepared],
+      results: [{ state: "ADMITTED" }],
+    });
+    f.source.mockReturnValue({
+      readAdmittedInputPin: vi.fn(async () => ({ id: inputId })),
+    });
+    f.captures.getForSourceHandoff.mockResolvedValue({
+      capture: {
+        id: captureId,
+        payloadId,
+        accountId: account,
+        tripId: trip,
+        revision: 2,
+        sha256: hash,
+        byteCount: bytes.length,
+      },
       bytes,
-    }),
-  );
-  expect(prepareTask).toHaveBeenCalledOnce();
-  expect(f.photoConsent).toHaveBeenCalledTimes(3);
-  expect(f.photoConsent.mock.invocationCallOrder.at(-1)).toBeLessThan(
-    prepareTask.mock.invocationCallOrder[0],
-  );
-  prepareTask.mockClear();
-  await expect(
-    prepareDefaultUniversalCaptureSources(context, model, {
-      ...options,
-      preparePngOriginal: undefined,
-    }),
-  ).rejects.toThrow("PNG_PREPARATION_UNAVAILABLE");
-  expect(prepareTask).not.toHaveBeenCalled();
-});
+    });
+    f.sourceTransport.mockReturnValue({
+      lookup: vi.fn(async () => JSON.stringify({ receipt: "owning" })),
+    });
+    f.catalog.mockReturnValue({
+      readUniversal: vi.fn(async () => ({ catalog: "owning" })),
+    });
+    f.imports.mockReturnValue({ applyUniversalCatalogs: vi.fn() });
+    const preparePngOriginal = vi.fn(),
+      prepareTask = vi.fn();
+    const options = {
+      baseUrl: "https://api-dev.xoery.art",
+      getAccountId,
+      assertCurrent() {},
+      pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1" as const,
+      preparePngOriginal,
+      prepareTask,
+    };
+    f.photoConsent.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
+    await expect(
+      prepareDefaultUniversalCaptureSources(context, model, options),
+    ).rejects.toThrow("PHOTO_REVIEW_REQUIRED");
+    expect(preparePngOriginal).not.toHaveBeenCalled();
+    expect(prepareTask).not.toHaveBeenCalled();
+    await prepareDefaultUniversalCaptureSources(context, model, options);
+    expect(preparePngOriginal).toHaveBeenCalledExactlyOnceWith(
+      context,
+      expect.objectContaining({
+        acquisition: prepared.sourceCommand,
+        acquisitionReceipt: { receipt: "owning" },
+        binding: expect.objectContaining({
+          captureRevision: 2,
+          acquisitionSource,
+          kind: acquisitionSource === "files" ? "FILE" : "IMAGE",
+          mediaType: "image/png",
+        }),
+        bytes,
+      }),
+    );
+    expect(prepareTask).toHaveBeenCalledOnce();
+    expect(f.photoConsent).toHaveBeenCalledTimes(3);
+    expect(f.photoConsent.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      prepareTask.mock.invocationCallOrder[0],
+    );
+    prepareTask.mockClear();
+    await expect(
+      prepareDefaultUniversalCaptureSources(context, model, {
+        ...options,
+        preparePngOriginal: undefined,
+      }),
+    ).rejects.toThrow("PNG_PREPARATION_UNAVAILABLE");
+    expect(prepareTask).not.toHaveBeenCalled();
+  },
+);

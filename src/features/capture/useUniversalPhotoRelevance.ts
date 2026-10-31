@@ -1,3 +1,4 @@
+import { isPhotoImportInput } from "@/domain/capture/photoImportRelevance";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import {
@@ -75,7 +76,7 @@ export function useUniversalPhotoRelevance(
   const generation = getAccountGeneration(),
     visible = isCurrent();
   const eligible =
-    input.kind === "IMAGE" &&
+    isPhotoImportInput(input) &&
     input.state === "ACCEPTED" &&
     !!input.captureId &&
     !!input.payloadId &&

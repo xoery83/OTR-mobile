@@ -7,6 +7,7 @@ import type { createLocalCaptureInboxRepository } from "../repositories/localCap
 import type { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
 import {
   resolvePhotoImportDecision,
+  isPhotoImportInput,
   photoImportPinSchema,
 } from "@/domain/capture/photoImportRelevance";
 
@@ -43,7 +44,7 @@ export async function assertSinglePngPhotoConsent(
     job.inputs.length !== 1 ||
     !input ||
     input.state !== "ACCEPTED" ||
-    input.kind !== "IMAGE" ||
+    !isPhotoImportInput(input) ||
     input.declaredContentType !== "image/png" ||
     !input.captureId ||
     !input.payloadId
@@ -62,7 +63,7 @@ export async function assertSinglePngPhotoConsent(
     capture.payloadId !== input.payloadId ||
     capture.sha256 !== input.contentSha256 ||
     capture.byteCount !== input.contentByteCount ||
-    capture.kind !== "IMAGE" ||
+    capture.kind !== input.kind ||
     capture.declaredContentType !== "image/png"
   )
     throw Error("UNIVERSAL_PHOTO_SCOPE_CHANGED");

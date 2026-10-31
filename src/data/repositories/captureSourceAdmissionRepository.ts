@@ -1,3 +1,4 @@
+import { isPhotoImportInput } from "@/domain/capture/photoImportRelevance";
 import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { z } from "zod";
@@ -470,7 +471,7 @@ export function createCaptureSourceAdmissionRepository(
             dependencies.pendingPngProfile === PNG_CAPTURE_ORIGINAL_PROFILE &&
             proof.profileId === PNG_CAPTURE_ORIGINAL_PROFILE &&
             proof.mimeType === "image/png" &&
-            capture.kind === "IMAGE" &&
+            isPhotoImportInput(capture) &&
             capture.declaredContentType === "image/png" &&
             bytes.byteLength <= 4194304) ||
           (plan.intent_kind === "NEW" &&

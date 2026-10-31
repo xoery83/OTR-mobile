@@ -1,3 +1,4 @@
+import { isPhotoImportInput } from "@/domain/capture/photoImportRelevance";
 import {
   UniversalPhotoRelevanceRow,
   type UniversalPhotoRelevanceCopy,
@@ -202,7 +203,9 @@ export function CaptureProgress({
               {photoRelevanceCopy && isCurrent && model && !reading && !error
                 ? (() => {
                     const input = model.inputs.find((input) => input.id === item.inputId);
-                    return input?.kind === "IMAGE" && input.state === "ACCEPTED" ? (
+                    return input &&
+                      isPhotoImportInput(input) &&
+                      input.state === "ACCEPTED" ? (
                       <UniversalPhotoRelevanceRow
                         model={model}
                         input={input}

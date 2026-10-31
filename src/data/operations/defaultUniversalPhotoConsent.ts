@@ -1,3 +1,4 @@
+import { isPhotoImportInput } from "@/domain/capture/photoImportRelevance";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { openDatabase } from "../db/database";
@@ -17,7 +18,7 @@ export async function assertDefaultUniversalPhotoConsent(
 ) {
   if (
     model.inputs.length !== 1 ||
-    model.inputs[0].kind !== "IMAGE" ||
+    !isPhotoImportInput(model.inputs[0]) ||
     model.inputs[0].declaredContentType !== "image/png"
   )
     return;

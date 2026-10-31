@@ -1,40 +1,33 @@
 # Current Import Photo checkpoint — 31 October 2026
 
-Golden Slice BLOCKED at upload UNKNOWN; not Vision/Save PASS.
-Owner-approved first lookup9bc5 and operation guarddb1c actually installed and
-independently SERVER_VERIFIED CLOSED. OID58756/MD51eeccf27, same Owner/ACL/config,
-complete membership graph/public ACL unchanged. Same PNG Source2bf0294a/acquire
-37d5cd82 APPLIED; PREPARE0378792e now APPLIED. Upload70dd21b8/attempt905cd8ec remains
-IO_UNKNOWN/generation1, journal STARTING/ATTACH_IDENTITY, no decoder PARSE_PASS;
-rep27b93994 rev1/PENDING. Original batch67842863/PNG078de830/42630 bytes retained.
-No new objects, Task or paid image call. Never reverse installed guard after these
-accepted operations, erase UNKNOWN, fabricate terminal or switch operation IDs.
+Photo Golden Slice BLOCKED before real Vision; no Photo Save/E2E PASS.
+Owner3175f9ad approved exactly one replacement normal-App input after preserved
+old upload UNKNOWN. New Batch e7dfba6d-fa6a-49e5-8cc7-563e9b6eff84,
+Input69536a38-8ced-4ac4-9efb-c3804f6e0901, Job3997d334, Capturecd546b0b,
+same42630-byte PNG/SHA078de830, same QA Accountf4b059c5/Trip825f79b2.
+No actual Vision call yet. Old Source2bf0294a/upload70dd21b8/attempt905cd8ec,
+UNKNOWN/journal and marker remain retained; no reset or replay. Read-only old
+Task/attempt preflight0. Never create a third replacement automatically.
 
-Actual worker negative cleanup first failed: Docker inspect8478B exceeds8192B
-stdout cap. One-line bounded65536 fixb88dca56 has RED→GREEN3s39/scoped lint and
-independent NO_BLOCKER. Both credential-free Host bundles rebuild byte-identically
-except that numeric literal; exact CAS repair installed CLOSED and same-attempt
-negative cleanup real TERMINATED. Marker/UNKNOWN journal/durable original retained.
-Full window7 b258aa50 CLOSED verified (Source before/after, compatible runtime,
-worker inactive/physical TERMINATED), old timers stopped. See photo/inspect-buffer/
-receipts. No temporary permission left active. Full tsc at1536MiB hit heap OOM,
-not counted PASS; no concurrent heavy retry. AD5 remains126.5/2be397cf.
+First new-input FAIL was local SOURCE_PREPARE: legitimate Files PNG has immutable
+FILE/files provenance; Photo gates and SQLite75 allowed IMAGE only. Minimal shared
+Photo input predicate and native-local migration76 now support exact FILE+PNG,
+retaining input/capture/revision/hash/bytes/consent guards. Historical75 SQL hash
+unchanged.94 focused +5 migration tests, scoped production TypeScript/ESLint,
+ui:guard PASS, independent NO_BLOCKER. Full-repo tsc heap OOM is not PASS.
+Native delegated sole migration76 Writer; no Hosted schema/authority change.
+See photo/PHOTO_FILES_PNG_ADAPTER.md. Next: AD5 code-only126.6, normal OCR/explicit
+Continue on same input, then Source→actual Vision→Review→formal Save/readback/cold.
 
-Next actual missing path: current PNG reconcile only finalizes a positive terminal
-upload; it cannot quiesce/retry this negative interrupted attempt. Existing Source
-observe has IO_UNKNOWN→IO_QUIESCENT and attempt_start supports new generation, but
-PNG wrapper lacks the owning entry and Host marker must remain identity-safe.
-Bounded same-operation recovery investigation/coding continues; any new protected
-body requires exact approval, no direct admin mutation/positive proof invention.
-Transport has30s whole-IPC deadline vs90s HTTP budget; cause still to be qualified,
-not assumed from a generic503. Do not restart same UNKNOWN decoder/upload blindly.
-
-V2 adopted four lanes; no global DEV lock. Photo Host slot returned to Native after
-actual closure. Last independently read runtime624f3c53/7a77a51d/image06b19831;
-Native62e settings-only source reviewed, may deploy next with fresh CAS. Reverify
-actual before re-anchor. Latest Photo close plan b88dca56-native624, SHAef1e8c06;
-new Native CID requires new exact plan. Main8f79a421 changed serially by MCP;
-Root has not updated main. Original hard expiry2026-11-01T08:48:56Z unchanged.
+All Photo windows1–8 CLOSED independently; window8 3f23c779 scopes/runtime closed,
+worker inactive/EMPTY and timers stopped. No temporary permission active.
+Host worker IPC budget90s (3175), cleanup inspect buffer65536 (b88d), approved
+pin184156c3 and operation guard1eeccf27 installed. PREPARE/UPLOAD accepted means
+no guard inverse. Original hard expiry2026-11-01T08:48:56Z, budget unchanged.
+Latest Import healthy runtime source76c8ccfb/CIDa2608753/image144e3bfb includes
+Native624f3c53/62e2782c. Auth owns next short default-closed Host deployment;
+fresh-read its receipt before reanchoring Photo controller and opening scope.
+No global DEV lock; main last known8f79a421, Root has not changed main.
 
 Older checkpoints below are historical and superseded by the current header.
 

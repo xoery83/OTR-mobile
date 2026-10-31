@@ -271,7 +271,7 @@ export async function prepareDefaultUniversalCaptureSources(
       mediaType: "image/png",
       originalFilename: input.originalFilename,
       acquisitionSource: input.acquisitionSource,
-      kind: "IMAGE",
+      kind: input.kind,
     };
     assertCaptureCustodyBytes(binding, retained.bytes);
     await options.preparePngOriginal(context, {
