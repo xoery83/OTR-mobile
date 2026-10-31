@@ -1,0 +1,58 @@
+{
+  "status": "PASS_NORMAL_SERIAL_MAIN_PUSH",
+  "startedAt": "2026-10-31T09:38:13.811174Z",
+  "beforeMain": "4c5baacf45b4e215de7fe8e31fd355e92a0045d5",
+  "noHostSqlOrPermissionChange": true,
+  "acceptedMain": "a7d39f11011fe2e081fca60d1496850e4d2c92d1",
+  "beforeGuard": {
+    "porcelainSHA256": "eac9f30a9e4c4894c6bea7ec4ad8a4ea6a1d82380f371c72079e43aa6b382707",
+    "files": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": {
+        "mode": 420,
+        "kind": "file",
+        "sha256": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3"
+      },
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": {
+        "mode": 420,
+        "kind": "file",
+        "sha256": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4"
+      },
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": {
+        "mode": 420,
+        "kind": "file",
+        "sha256": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573"
+      },
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": {
+        "mode": 420,
+        "kind": "file",
+        "sha256": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a"
+      },
+      "docs/beta/visual-acceptance/assets.zip": {
+        "mode": 420,
+        "kind": "file",
+        "sha256": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529"
+      },
+      "scripts/dev/__pycache__/": {
+        "mode": 493,
+        "kind": "directory",
+        "children": {
+          "dev-postgres-admin-handoff.cpython-314.pyc": {
+            "mode": 420,
+            "kind": "file",
+            "sha256": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+          }
+        }
+      }
+    },
+    "selectedIndexSHA256": "a2e0b7c8f3f13a18d13d56fef5a8dc2615aba3090b59a6f35846b3030c5a4593",
+    "cachedDiffSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fullBinaryHeadDiffSHA256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a"
+  },
+  "readyAt": "2026-10-31T09:38:16.861749Z",
+  "acquiredAt": "2026-10-31T09:38:16.862228Z",
+  "mergeAcknowledgedAt": "2026-10-31T09:38:16.911301Z",
+  "dirtyGuardAfterMerge": "PASS_EXACT_BYTES_MODES_STATUS_INDEX_AND_FULL_DIFF",
+  "pushAcknowledgedAt": "2026-10-31T09:38:20.815981Z",
+  "dirtyGuardAfterPush": "PASS_EXACT_BYTES_MODES_STATUS_INDEX_AND_FULL_DIFF",
+  "releasedAt": "2026-10-31T09:38:23.793255Z"
+}

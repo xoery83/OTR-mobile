@@ -149,9 +149,9 @@ Latest Root-reported Host baseline is11952db2/image81a2d53a/sourcef956bf95,
 preserving Native versionGET45951de8 plus Source PNG diagnostic logging. Env,
 mounts, SQL and Auth Parent flags remain unchanged/closed. Future Auth software
 integration must retain both, not roll back the old default image.
-Fresh local main/origin-main now both8f79a4214d39b7f174ef61a82aa27d31b10a8156
-(MCP Git-only integration, released). Future Auth integration must retain that
-default-closed MCP code and original primary dirty/index/fullDiff, then recheck HEAD. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
+Prior MCP Git-only baseline was8f79a4214d39b7f174ef61a82aa27d31b10a8156.
+Auth integrations below retain that default-closed MCP code and all original
+primary dirty/index/fullDiff guards. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 MCP standard SDK OAuth Golden Slice PASS at 07:19Z, 31 October. Owner directly
 approved refresh-scope Gate02971807; browser49711fb1 and SDK9c399e01 are active
 only in the replacement finite QA window ending07:27:20Z (not extended). Real
@@ -190,6 +190,9 @@ d0917e06 / curated a7d39f11 admits only two exact separate profiles, not mixed
 redirects or client835 reuse. Isolated53/build/types/lint and independent new8
 tests/hash review NO_BLOCKER. Root fresh-service closed integration is required
 before presenting the final configuration Gate; no new client/window is active.
+Closed source patch now FF-integrated/pushed maina7d39f11 at09:38:20Z, exact local/
+remote and original six dirty bytes/modes/index/fullDiff PASS. Writer released;
+this proves source integration only, not fresh Host deployment or Gate approval.
 Accepted source assembled from fresh main8f into independent codex/auth-oauth-main-
 slice-20261031 at884ca8e0, without Parent/Profile candidates. 9s130/types/lint/UIguard/
 browser+runtimebuild/closedsmoke PASS; independent curated-source and Native fixed
