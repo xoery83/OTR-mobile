@@ -54,7 +54,7 @@
   },
   "rollback": "First close the new Backend reader and Native caller; under unique Writer/CAS compare installed function definition+ACL receipt before removing only this new function. Never alter existing owning routines, Gateway role flags, business tables or user data.",
   "owningReview": "Qualified independent interface review covers parent locator, normal Actor/Trip isolation, retained owning authorization and no implicit grant. Root clarified no extra personal approval Gate; Root has not independently read/endorsed the SQL.",
-  "ownerApproval": "DIRECT_CONFIRMATION_PENDING: cross-thread relay was rejected by automatic review; no execution authority inferred",
+  "ownerApproval": "APPROVED_DIRECT_USER_REPLY_IN_AUTH_CHAT: exact DEV SQL installation only; all feature entry points remain closed",
   "nativeReview": "NATIVE_OWNING_REVIEW.json: NO_BLOCKER bounded UI only",
   "candidateGateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
   "independentReview": {
@@ -70,5 +70,6 @@
     "installer": "Independent installer review plus LOCAL_INSTALLER_RESULT.json:7 CAS/ACL/rollback checks, exact live metadata baselines, no table/role/RLS changes; not Hosted authority requalification",
     "native": "NATIVE_OWNING_REVIEW.json: NO_BLOCKER bounded UI; source daa31fc7 remains default false"
   },
-  "publisherPreflight": "Unique SQL Writer must compare exact Owner-approved package/installation SHA, actual DEV target and current preimages/ACL differences immediately before short-lock apply. This is not a repeated engineering review."
+  "publisherPreflight": "Unique SQL Writer must compare exact Owner-approved package/installation SHA, actual DEV target and current preimages/ACL differences immediately before short-lock apply. This is not a repeated engineering review.",
+  "ownerApprovalRecord": "OWNER_APPROVAL_DIRECT.json"
 }

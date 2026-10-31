@@ -1,0 +1,25 @@
+{
+  "status": "EXACT_DEV_INSTALL_APPROVED_DIRECTLY_REQUEST_SENT_TO_UNIQUE_WRITER",
+  "gateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
+  "candidateCommit": "91eab4ba70b49dd7b6d174ad3877bb9cadcb0cf6",
+  "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
+  "bodySHA256": "0c6b1a284de57af8a11c3eb2ef5a20008e1c7b2f7157606366d69cad95a478f7",
+  "authorizationSource": "Direct user question reply in Auth chat",
+  "exactUserReply": "确认批准此精确 DEV 安装，保持功能关闭",
+  "approvalObservedAtUTC": "2026-10-31T01:56:16Z",
+  "priorRelay": "APPROVAL_RELAY_STATUS.json retained as historical rejected attempt; not used as authority",
+  "uniqueWriter": "Root / 01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "dispatch": "send_message_to_thread completed successfully; awaiting Writer receipt, not proof of acquisition or installation",
+  "scope": "DEV tuqigdxrvrerfewsxqgm; frozen SQL creates exactly one public.trip_create_parent_result(uuid,uuid) and grants EXECUTE only to existing otr_trip_create_gateway",
+  "excluded": [
+    "Other functions/roles/tables/RLS/business-data changes",
+    "Production",
+    "Backend reader/HTTP route/Native caller activation"
+  ],
+  "requestedAt": "UNKNOWN",
+  "readyAt": "UNKNOWN",
+  "acquiredAt": "UNKNOWN",
+  "mutationFinishedAt": "UNKNOWN",
+  "releasedAt": "UNKNOWN",
+  "state": "REQUEST_DISPATCHED_NOT_ACQUIRED_NOT_INSTALLED"
+}
