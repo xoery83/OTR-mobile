@@ -151,6 +151,42 @@ export async function sourcePngPreparationBoundary(
     const code = error instanceof Error ? error.message : "";
     if (code === "SOURCE_ACCESS_DENIED") return fail(403, code);
     if (code === "SOURCE_CAPABILITY_CLOSED") return fail(503, code);
+    // Static diagnostics only: never log a PG message, command, image, token or actor.
+    try {
+      const sqlState =
+        error && typeof error === "object" && "code" in error ? error.code : "";
+      console.info(
+        JSON.stringify({
+          event: "source_png_preparation_failed",
+          action: route[2],
+          reason: [
+            "CORE_CONNECTION_BUSY",
+            "CORE_CONNECTION_TIMEOUT",
+            "CORE_CONNECTION_RETIRED",
+            "SOURCE_PRINCIPAL_UNAVAILABLE",
+            "PNG_SCOPE_DENIED",
+            "PNG_SCOPE_CLOSED",
+            "PNG_OPERATION_DENIED",
+          ].includes(code)
+            ? code
+            : "UNCLASSIFIED",
+          sqlState: [
+            "42501",
+            "25P03",
+            "57014",
+            "53300",
+            "42703",
+            "42883",
+            "42P01",
+            "23505",
+          ].includes(String(sqlState))
+            ? String(sqlState)
+            : undefined,
+        }),
+      );
+    } catch {
+      // Diagnostics cannot change the existing error response or cleanup.
+    }
     return fail(503, "SOURCE_IO_UNAVAILABLE");
   } finally {
     scoped?.close();

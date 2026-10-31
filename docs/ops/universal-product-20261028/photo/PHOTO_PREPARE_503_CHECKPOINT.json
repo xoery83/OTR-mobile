@@ -1,0 +1,18 @@
+{
+  "status": "ACTUAL_FAIL_NOT_FIXED",
+  "stage": "PNG_ORIGINAL",
+  "httpStatus": 503,
+  "code": "SOURCE_IO_UNAVAILABLE",
+  "nativeLogAtNZDT": "2026-10-31T15:12:04.156+13:00",
+  "sameSourceAcquire": "APPLIED_FINAL",
+  "pngPrepareUploadVerifyRowsObserved": 0,
+  "originalRemoteState": "PENDING",
+  "paidVision": "NOT_REACHED",
+  "sourceReceiptPreserved": true,
+  "businessScopeClosed": true,
+  "closedWindowId": "e7bbfebabf68445ba109f307bfb4e1b9",
+  "closureStatusLabelNote": "original generator retained FOURTH text; unique windowId identifies fifth session",
+  "localStatusFixture": "query returned null; fixture older PNG operation lacked current attempt field, not proof of Hosted correctness",
+  "diagnostics": "server allowlisted event only;2s21PASS/types/lint/independentNO_BLOCKER; not deployed yet",
+  "next": "deploy ordinary compatible diagnostic software after Native short release; inspect actual same-source error before deciding repair"
+}

@@ -227,3 +227,35 @@ it("holds request lifetime through port composition and closes a late aborted sc
   expect(x.close).toHaveBeenCalledOnce();
   expect(x.port.execute).not.toHaveBeenCalled();
 });
+
+it.each(["25P03", "NOT_A_SQL_STATE"])(
+  "logs only bounded PNG failure facts (%s)",
+  async (state) => {
+    const x = await fixture(),
+      log = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      x.port.lookup.mockRejectedValueOnce(
+        Object.assign(Error("PRIVATE_ERROR_CANARY"), { code: state }),
+      );
+      const response = await x.handler(
+        x.request({ command: x.proposals.prepare }, "result"),
+      );
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual({
+        error: { code: "SOURCE_IO_UNAVAILABLE", message: "SOURCE_IO_UNAVAILABLE" },
+      });
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({
+          event: "source_png_preparation_failed",
+          action: "result",
+          reason: "UNCLASSIFIED",
+          ...(state === "25P03" ? { sqlState: state } : {}),
+        }),
+      );
+      expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_ERROR_CANARY");
+      expect(x.close).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
