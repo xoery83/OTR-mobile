@@ -201,3 +201,45 @@ it("refuses secrets/configured redirect injection", () => {
     ).toThrow();
   expect(() => createMcpOAuthConsentRepository(q.config, "../other")).toThrow();
 });
+
+it("waits for in-flight OTP settlement before logout and suppresses its late result", async () => {
+  const q = fixture();
+  let installed = false,
+    release!: () => void;
+  q.auth.verifyOtp.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = () => {
+          installed = true;
+          resolve({ error: null });
+        };
+      }),
+  );
+  q.auth.signOut.mockImplementationOnce(async () => {
+    expect(installed).toBe(true);
+    installed = false;
+    return { error: null };
+  });
+  const pending = q.repo.verifyCode("unit@example.invalid", "12345678");
+  await vi.waitFor(() => expect(q.auth.verifyOtp).toHaveBeenCalledOnce());
+  const closing = q.repo.close();
+  expect(q.auth.signOut).not.toHaveBeenCalled();
+  await expect(q.repo.load()).rejects.toMatchObject({ code: "CLOSED" });
+  release();
+  await expect(pending).rejects.toMatchObject({ code: "CLOSED" });
+  await closing;
+  await q.repo.close();
+  expect(installed).toBe(false);
+  expect(q.auth.signOut).toHaveBeenCalledOnce();
+  expect(q.auth.getUser).not.toHaveBeenCalled();
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+});
+
+it("does not start a queued OTP after close", async () => {
+  const q = fixture();
+  const pending = q.repo.requestCode("unit@example.invalid");
+  const closed = q.repo.close();
+  await expect(pending).rejects.toMatchObject({ code: "CLOSED" });
+  await closed;
+  expect(q.auth.signInWithOtp).not.toHaveBeenCalled();
+});

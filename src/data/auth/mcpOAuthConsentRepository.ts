@@ -42,6 +42,7 @@ export function createMcpOAuthConsentRepository(
   let busy = false,
     closed = false;
   let closeTask: Promise<void> | undefined;
+  let activeTask: Promise<unknown> | undefined;
   const current = () => {
     if (closed || Date.now() >= config.expiresAt) throw new McpConsentError("CLOSED");
   };
@@ -88,15 +89,21 @@ export function createMcpOAuthConsentRepository(
     current();
     if (busy) throw new McpConsentError("BUSY");
     busy = true;
-    try {
+    const task = Promise.resolve().then(async () => {
+      current();
       const result = await work();
       current();
       return result;
+    });
+    activeTask = task;
+    try {
+      return await task;
     } catch (error) {
       if (error instanceof McpConsentError) throw error;
       throw new McpConsentError("UNAVAILABLE");
     } finally {
       busy = false;
+      if (activeTask === task) activeTask = undefined;
     }
   }
   function redirect(raw: string) {
@@ -123,6 +130,7 @@ export function createMcpOAuthConsentRepository(
     return Object.freeze({ kind: "REDIRECT" as const, url: actual.href });
   }
   async function details(): Promise<McpConsentView> {
+    current();
     const { data: identity, error: identityError } = await client.auth.getUser();
     current();
     if (
@@ -196,8 +204,11 @@ export function createMcpOAuthConsentRepository(
     close() {
       if (closeTask) return closeTask;
       closed = true;
+      const pending = activeTask;
       closeTask = (async () => {
         try {
+          // verifyOtp may install the SDK session after a network response settles.
+          await pending?.catch(() => undefined);
           const { error } = await client.auth.signOut({ scope: "local" });
           if (error) throw new McpConsentError("UNAVAILABLE");
         } catch {
