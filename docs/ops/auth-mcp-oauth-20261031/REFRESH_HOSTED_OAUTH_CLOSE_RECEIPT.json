@@ -1,0 +1,13 @@
+{
+  "status": "OAUTH_OFF_HOOK_DISABLED_ORIGINAL_SITE_URL_INDEPENDENTLY_VERIFIED",
+  "observedAt": "2026-10-31T07:25:15.031919Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "oauthServerEnabled": false,
+  "hookEnabled": false,
+  "siteUrl": "http://localhost:3000",
+  "hookUriRetained": false,
+  "uriReadback": null,
+  "newGrantOrRole": false,
+  "dashboardPublicExecuteGrantCancelledNotExecuted": true,
+  "note": "This window: Hook body CAS-closed and read back; retained default runtime restored; Server/Site saved through Dashboard; sparse Hook-only disable and explicit independent projected configuration readback passed. No Dashboard hook grant operation used."
+}

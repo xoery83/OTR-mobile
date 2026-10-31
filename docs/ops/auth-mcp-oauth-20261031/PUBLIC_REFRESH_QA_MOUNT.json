@@ -1,0 +1,23 @@
+{
+  "status": "PUBLIC_QA_MOUNT_PASS_WITH_POST_401_SIGNING_STILL_CLOSED",
+  "observedAt": "2026-10-31T07:00:13.206Z",
+  "rows": [
+    {
+      "path": "/.well-known/oauth-protected-resource/mcp",
+      "status": 200
+    },
+    {
+      "path": "/oauth/consent/config",
+      "status": 200
+    },
+    {
+      "path": "/oauth/consent/app.js",
+      "status": 200,
+      "sha256": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+    },
+    {
+      "path": "/mcp",
+      "status": 401
+    }
+  ]
+}

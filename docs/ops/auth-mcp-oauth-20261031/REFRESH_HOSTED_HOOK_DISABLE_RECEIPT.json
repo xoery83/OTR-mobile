@@ -1,0 +1,31 @@
+{
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "operation": "CLI_DECLARED_HOOK_DISABLE_ONLY",
+  "startedAt": "2026-10-31T07:24:52.060838Z",
+  "declaredChanges": [
+    {
+      "path": [
+        "auth",
+        "hook",
+        "custom_access_token",
+        "enabled"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": false,
+      "remote": true
+    }
+  ],
+  "configSHA256": "7cc0c9075aa3edfafed20866af727ed62055270d01a16a9df4336a6a9d9e83cf",
+  "disposition": "ACKNOWLEDGED",
+  "oauthEnabled": false,
+  "mutationFinishedAt": "2026-10-31T07:24:55.339092Z",
+  "status": "HOOK_DISABLED_INDEPENDENT_DIFF_VERIFIED",
+  "verifiedAt": "2026-10-31T07:24:57.923388Z",
+  "unchangedOtherReportedFields": 23,
+  "undeclaredFieldsPushed": false,
+  "dashboardSchemaGrantExecuted": false,
+  "finiteWindowActivatedByThisOperation": false,
+  "addendumGateSHA256": "02971807ae94f1da94cb8d712678fdc73844417a4000b848519932938eba53f3"
+}

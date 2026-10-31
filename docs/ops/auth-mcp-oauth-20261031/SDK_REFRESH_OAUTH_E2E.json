@@ -1,0 +1,80 @@
+{
+  "status": "PASS_SDK_OAUTH_READ_REFRESH_REVOKE_GOLDEN_SLICE",
+  "startedAt": "2026-10-31T07:14:36.010Z",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "secretOrOtpRecorded": false,
+  "verifiedTokenCount": 2,
+  "phase": "CLOSE_AND_REVOKE",
+  "wires": [
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user/oauth/grants",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/oauth/token",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user/oauth/grants",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user/oauth/grants",
+      "method": "DELETE",
+      "status": 204
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/oauth/token",
+      "method": "POST",
+      "status": 400
+    }
+  ],
+  "ownReadAndForeignNotVisible": "PASS",
+  "oauthRefresh": "PASS",
+  "ordinaryBusinessTokenDenied": "PASS",
+  "primaryPhase": "SIGNED_ACTIVE_GRANT_CHECK",
+  "hookClosed": "PASS",
+  "grantRevoked": "ACKNOWLEDGED",
+  "revokedResourceDenied": "PASS",
+  "revokedOAuthRefreshDenied": "PASS",
+  "finishedAt": "2026-10-31T07:19:00.156Z"
+}

@@ -66,16 +66,25 @@ export async function checkOAuthQaReads(client: ReadClient, signal: AbortSignal)
     signal.throwIfAborted();
     const value = result.parse(await client.callTool({ name, arguments: args }));
     signal.throwIfAborted();
-    assert(!value.isError, "QA_OWN_READ_FAILED");
+    if (value.isError) {
+      const text = value.content.find(entry => entry.type === "text")?.text;
+      let code = "UNKNOWN";
+      try {
+        const parsed = z.object({ error: z.object({ code: z.enum([
+          "NOT_VISIBLE", "BACKEND_UNAVAILABLE", "AUTH_REQUIRED", "INVALID_INPUT",
+        ]) }) }).safeParse(JSON.parse(text ?? ""));
+        if (parsed.success) code = parsed.data.error.code;
+      } catch { /* Untrusted error text is never included in diagnostics. */ }
+      assert.fail(`QA_OWN_READ_FAILED_${name}_${code}`);
+    }
     assert(value.structuredContent, "QA_STRUCTURED_READ_REQUIRED");
     return value.structuredContent;
   };
-  const [trips, trip, items, item] = await Promise.all([
-    call("list_trips", {}),
-    call("get_trip", { trip_id: registeredHostQa.tripId }),
-    call("list_trip_items", { trip_id: registeredHostQa.tripId }),
-    call("get_trip_item", { trip_id: registeredHostQa.tripId, item_id: ownItem }),
-  ]);
+  // Keep ordinary reads sequential so this smoke does not become a Core load test.
+  const trips = await call("list_trips", {});
+  const trip = await call("get_trip", { trip_id: registeredHostQa.tripId });
+  const items = await call("list_trip_items", { trip_id: registeredHostQa.tripId });
+  const item = await call("get_trip_item", { trip_id: registeredHostQa.tripId, item_id: ownItem });
   const ids = z.array(z.object({ id: z.uuid() })).parse(trips.trips);
   assert(ids.some((entry) => entry.id === registeredHostQa.tripId));
   assert(!ids.some((entry) => entry.id === foreignTrip));

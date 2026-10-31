@@ -67,3 +67,18 @@ it("requires the owning NOT_VISIBLE receipt rather than an unavailable read or f
   denial = { isError: true, structuredContent: { item: "leaked" }, content: [] };
   await expect(checkOAuthQaReads(client, signal)).rejects.toThrow("QA_FOREIGN_PAYLOAD_LEAK");
 });
+
+it("preserves the failing read name without recording its payload", async () => {
+  let errorText = "sensitive-untrusted-body";
+  const callTool = vi.fn(async () => ({ isError: true, content: [{ type: "text", text: errorText }] }));
+  const client = {
+    listTools: async () => ({ tools: ["get_trip", "get_trip_item", "list_trip_items", "list_trips"].map(name => ({ name })) }),
+    callTool,
+  };
+  await expect(checkOAuthQaReads(client, new AbortController().signal))
+    .rejects.toThrow(/^QA_OWN_READ_FAILED_list_trips_UNKNOWN$/);
+  expect(callTool).toHaveBeenCalledOnce();
+  errorText = JSON.stringify({ error: { code: "BACKEND_UNAVAILABLE", detail: "sensitive-untrusted-body" } });
+  await expect(checkOAuthQaReads(client, new AbortController().signal))
+    .rejects.toThrow(/^QA_OWN_READ_FAILED_list_trips_BACKEND_UNAVAILABLE$/);
+});

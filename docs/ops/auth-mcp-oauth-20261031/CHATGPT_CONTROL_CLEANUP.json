@@ -1,0 +1,32 @@
+{
+  "status": "CHATGPT_CONTROL_CLOSED_NO_CONSUMER_PASS_CLAIM",
+  "startedAt": "2026-10-31T07:20:37.894Z",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "secretOrOtpRecorded": false,
+  "verifiedTokenCount": 0,
+  "phase": "CHATGPT_CONTROL_READY",
+  "wires": [
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user/oauth/grants",
+      "method": "DELETE",
+      "status": 404
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user/oauth/grants",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "hookClosed": "PASS",
+  "grantRevoked": "ABSENT_VERIFIED",
+  "finishedAt": "2026-10-31T07:23:48.431Z"
+}

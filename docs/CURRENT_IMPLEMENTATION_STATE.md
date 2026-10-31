@@ -152,32 +152,28 @@ integration must retain both, not roll back the old default image.
 Fresh local main/origin-main now both8f79a4214d39b7f174ef61a82aa27d31b10a8156
 (MCP Git-only integration, released). Future Auth integration must retain that
 default-closed MCP code and original primary dirty/index/fullDiff, then recheck HEAD. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
-MCP OAuth Golden Slice is FAIL before browser authorization. Real QA OTP/control
-Session and ordinary Business200 worked, but SDK2.4 automatically added
-`offline_access` for refresh. Frozen Gate9dc271f6 and harness2334 allowed only
-openid, so strict scope assertion stopped. Public-only/no-OTP probe reproduced
-it; no OAuth consent/session/token was created (independent QA/client counts0).
-Hook closedb0f7, controlSession normally revoked; DELETE404 retained as
-unqualified and reconciled by independent absence, not revoked-access PASS.
-Owner-approved parent configuration/closed software were actually installed:
-DEV tuqigdxrvrerfewsxqgm, private invoker hook+AuthAdmin EXEC, manual public
-client83504d3f-59d4-43fd-99b1-bebc54c40f7d/none/two exact callbacks, code+refresh.
-Public Consent/metadata/JS200 and MCP POST anonymous401 were qualified. Finite
-policy opened only QA1f/client,60s cap/deadline06:15:05Z; closed after first FAIL,
-never extended. Runtime0500 removed; exact retained43af/image8217 healthy/default
-restored and released06:03:35Z. Source base76c8+Auth9b, capturef18b/runtimeb518/
-browser75cb/server782692. Native/PNG/Env/HostConfig/mounts retained. Root may run
-Photo; no Auth Host/SQL/main/device lease held. AS OFF, Hook disabled/URI null,
-Site URL localhost:3000 independently verified06:12:42Z; no PUBLIC grant executed.
-Next is the precise refresh-scope addendum candidate49711fb1 + MCP9c399e01:
-strict openid or exact openid+offline_access, no other/duplicate/nonstring scope;
-33 Consent tests/types/lint/browser build, independent4 regression tests PASS.
-It requests only offline_access and one replacement≤30min window, sameQA/client/
-read authority, not extension of the old window. Owner supplemental approval
-still required; candidate is NOT deployed. Then retry real SDK Code/S256→own/
-foreign read→refresh/revoke and ChatGPT, preserving actual first-failure records.
-See ops/auth-mcp-oauth-20261031/{REFRESH_SCOPE_ADDENDUM_CANDIDATE.md,
-FIRST_QA_WINDOW_CLOSE_RECEIPT.json,FIRST_SDK_ATTEMPT_RECONCILIATION.json}.
+MCP standard SDK OAuth Golden Slice PASS at 07:19Z, 31 October. Owner directly
+approved refresh-scope Gate02971807; browser49711fb1 and SDK9c399e01 are active
+only in the replacement finite QA window ending07:27:20Z (not extended). Real
+QA1f OTP/explicit Consent/Code+S256, signed Account/client/resource/read grant plus
+online user/grants, own Trip/P3 read, foreign NOT_VISIBLE, refresh POST200 and
+second-token verification PASS. OAuth bearer ordinary Business401; grant DELETE204,
+revoked user403/refresh400; Hook CAS-closed and independently read back. No token,
+OTP or secret saved. First attempt after token verification failed during four
+parallel reads; its cancellation504 is not established as the root cause. The
+same E2E passed with sequential QA reads; runtime/budgets/permissions unchanged.
+See SDK_REFRESH_OAUTH_E2E.json and retained SDK_REFRESH_OAUTH_ATTEMPT1.json.
+ChatGPT metadata discovery PASS; draft not Created, no consumer Consent/Token.
+Its browser at-action access confirmation remains Pending in the MCP chat. The
+window was closed early rather than kept active awaiting a reply. Full Data/Storage/
+expiry qualification remains unclaimed. Runtime e8b9 was removed, exact retained
+ce09/image4781 restored healthy and released07:24:11Z (browser9264, capturef18b/
+runtimeb518/server7826 unchanged). At07:25:15Z independent config readback proved
+OAuth OFF, Hook disabled/URI null, original Site URL localhost:3000. Closed hook
+private ACL remains postgres+AuthAdmin EXEC only. Both normal control Sessions
+logged out and refresh rejected; no ChatGPT grant existed (fresh normal readback).
+No Auth Host/SQL/device lease remains; Root can resume serialized deployment.
+Parent Gate private hook/client installation remains traceable, no new RLS/role.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
