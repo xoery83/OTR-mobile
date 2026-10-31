@@ -1,0 +1,13 @@
+{
+  "stage": "READ",
+  "status": "READ_FAILED_NO_BUSINESS_WRITE",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T00:16:40.294Z",
+  "phase": "DIRECT_P3_BASELINE",
+  "directPath": "/v2/trips/:id/core/objects/ITEM/:id",
+  "failureClass": "TIMEOUT",
+  "owningRunId": "d73fc161-db7f-4075-b82b-20a4b0159181",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

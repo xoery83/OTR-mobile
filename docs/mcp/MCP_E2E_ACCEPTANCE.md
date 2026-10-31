@@ -1,17 +1,17 @@
 # MCP E2E acceptance — 31 October 2026
 
-Current: **LOCAL implementation verified; actual DEV Read blocked; public OAuth
+Current: **LOCAL implementation verified; actual internal DEV Read PASS; public OAuth
 BLOCKED_BY_OWNING_INTERFACE**. No new real-use PASS is claimed by code/tests.
 Historical 29 October normal OTP/discovery evidence remains separate.
 
-| User outcome                       | Current evidence / limit                                                                                                                                                           |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AI reads an OTR Trip/P3            | Real SDK discovery/list_trips reached DEV and list matched independent Backend. Full Read FAILED: direct existing P3 GET also timed out, bypassing MCP; see actual evidence below  |
-| AI creates/edits cloud Item        | Core-backed adapter and genuine domain/receipt tests pass; actual new P3 uses fixed operation/target IDs. Zero business POST; waiting genuine Read closure and Native ready        |
-| iPad automatically sees same Item  | Native's existing external P3 downstream is trusted infrastructure. New MCP Item is NOT_TESTED; Native agreed passive same-Account/Trip observation after fixed IDs/timing handoff |
-| Nelson Preview/Confirm/Apply       | Three-day synthetic preview/partial/replay path implemented and tested; actual DEV/new-Trip/iPad proof pending. Real Owner plan untouched                                          |
-| ChatGPT / Claude actual connection | NOT_TESTED: public OAuth grant/revocation/binding contract and approved mount absent. No paid-plan/region compatibility claim                                                      |
-| Extended domains                   | Future owning interfaces only; no new domain adapters/authority                                                                                                                    |
+| User outcome                       | Current evidence / limit                                                                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AI reads an OTR Trip/P3            | Real standard SDK4 tools, Trip list independentMATCH,3 Item summaries, P3 full detail independent hashMATCH, foreign private404; normal own Session cleanupPASS. Earlier failures retained below |
+| AI creates/edits cloud Item        | Core-backed adapter and genuine domain/receipt tests pass; actual new P3 uses fixed operation/target IDs. Zero business POST; Read now PASS; waiting Native ready                                |
+| iPad automatically sees same Item  | Native's existing external P3 downstream is trusted infrastructure. New MCP Item is NOT_TESTED; Native agreed passive same-Account/Trip observation after fixed IDs/timing handoff               |
+| Nelson Preview/Confirm/Apply       | Three-day synthetic preview/partial/replay path implemented and tested; actual DEV/new-Trip/iPad proof pending. Real Owner plan untouched                                                        |
+| ChatGPT / Claude actual connection | NOT_TESTED: public OAuth grant/revocation/binding contract and approved mount absent. No paid-plan/region compatibility claim                                                                    |
+| Extended domains                   | Future owning interfaces only; no new domain adapters/authority                                                                                                                                  |
 
 ## Source and focused verification
 
@@ -86,3 +86,14 @@ that N+1 by projecting bounded typed SUMMARY rows from the validated visible
 collection; complete detail remains get_trip_item. It preserves P2 qualification,
 P5 service identity, same-snapshot pagination and explicit detail query. Directed
 tests pass; actual repaired Read remains pending, not inferred.
+
+## Actual repaired Read — PASS, internal auth only
+
+`acceptance/READ.json`, observed2026-10-31T00:28:41.103Z through00:30:25Z:
+standard SDK four tools, Trip list independent Backend MATCH, Item list3 typed
+summaries, P3 full-detail independent hash
+6560018a5b3ac9a0120129e7234d9565ffe80bfd2461f264200be12ae82d9b32, foreign private
+Item404, own normal-session local logout and refresh rejection PASS. Initial direct
+baseline503 remains in the artifact; later actual positive and negative reads
+completed. This is INTERNAL_READ_GOLDEN_PASS, not public OAuth/consumer or SLO PASS.
+Reviewed code49a14038; continue fixed synthetic P3 Create/Edit after Native ready.

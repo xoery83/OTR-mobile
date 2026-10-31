@@ -9,17 +9,17 @@
   exact UPDATE batch recovery, complete field confirmation, timed-date protection,
   strict independent business-field readback. Public OAuth remains
   BLOCKED_BY_OWNING_INTERFACE; no owning active client grant/binding port yet.
-- Ordinary QA OTP/business calls were coordinated alongside Root’s exclusive
-  Photo Host/SQL/deployment work. Five fresh normal QA Read attempts ended with
-  own Session revoked/refresh rejected. Latest direct P3/schema200 and standard
-  discovery/list_trips independent hash MATCH; full Read stopped at list Items.
-  One separate bounded direct P3 probe returned200 after13.554s. No root cause
-  claim from that response. Original timeouts retained under acceptance/.
-- Focused local repair: MCP read50s/total60s are finite local budgets, not a Core
-  SLO or worst-case lease guarantee. Item list now projects typed summaries from
-  one validated actor-scoped collection, removing N+1 full snapshots; full typed
-  detail remains get_trip_item. Review/real Read after repair pending. Native
-  observer paused; original612d P3 untouched; zero business POST.
+- Real Read Golden Slice PASS after focused N+1 repair: standard SDK discovery,
+  list_trips independent Backend MATCH, one certified collection yields3 summaries,
+  P3 full detail independent hashMATCH, foreign private Item404. Own normal OTP
+  Session revoked/refresh rejected. Evidence acceptance/READ.json retains initial
+  baseline503 in this same successful run; do not claim service reliability/SLO.
+  Five earlier failed attempts and one13.554s direct200 probe remain retained.
+- Item list uses validated visible SUMMARY rows, preserving type/qualification/
+  service identity and explicit get_trip_item query; no fabricated Actor/ACL.
+  MCP read50s/total60s are finite local budgets, not a Core worst-case guarantee.
+  Reviewed candidate49a14038; controlled fixed new P3 Create/Edit next, Native
+  readiness requested. Original612d P3 untouched; zero business POST so far.
 - Current deliverables under docs/mcp/: MCP_ARCHITECTURE_INVENTORY,
   MCP_TOOL_CONTRACT_V1, MCP_AUTH_CONTRACT, MCP_NELSON_IMPORT_PLAN,
   MCP_E2E_ACCEPTANCE, MCP_EXTENDED_TOOLS_ROADMAP. Exact IDs/closure in acceptance.

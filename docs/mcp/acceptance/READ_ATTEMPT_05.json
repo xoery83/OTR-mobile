@@ -1,0 +1,22 @@
+{
+  "stage": "READ",
+  "status": "READ_FAILED_NO_BUSINESS_WRITE",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T00:24:07.896Z",
+  "phase": "list_trip_items",
+  "directPath": "/v2/trips?limit=20",
+  "directP3HttpStatus": 200,
+  "directP3Schema": "PASS",
+  "discovery": [
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item"
+  ],
+  "tripListIndependentHash": "MATCH",
+  "failureClass": "REQUEST_OR_PROTOCOL",
+  "owningRunId": "1c48e8ba-6fd9-414a-8fd0-6f0f8bf19144",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

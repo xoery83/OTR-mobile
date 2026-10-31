@@ -1,0 +1,10 @@
+{
+  "stage": "READ",
+  "status": "READ_FAILED_NO_BUSINESS_WRITE",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T00:14:55.525Z",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "owningRunId": "f44f5522-cc7b-4737-bcf1-42a60c8215e9"
+}

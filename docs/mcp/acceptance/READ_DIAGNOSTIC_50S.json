@@ -1,0 +1,16 @@
+{
+  "stage": "DIRECT_P3_BOUNDED_DIAGNOSTIC",
+  "status": "HTTP_RESPONSE_RECEIVED",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "itemId": "612d7e55-cfa8-4ba7-a625-5e0d622679da",
+  "timeoutMs": 50000,
+  "businessPostCount": 0,
+  "requestStartedAt": "2026-10-31T00:21:50.472Z",
+  "firstHttpAt": "2026-10-31T00:22:04.027Z",
+  "firstHttpMs": 13554,
+  "httpStatus": 200,
+  "requestEndedAt": "2026-10-31T00:22:04.029Z",
+  "elapsedMs": 13557,
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

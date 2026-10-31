@@ -1,0 +1,22 @@
+{
+  "stage": "READ",
+  "status": "INTERNAL_READ_GOLDEN_PASS",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T00:28:41.103Z",
+  "phase": "get_trip_item",
+  "directPath": "/v2/trips/:id/core/objects/ITEM/:id",
+  "directP3HttpStatus": 503,
+  "discovery": [
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item"
+  ],
+  "tripListIndependentHash": "MATCH",
+  "itemCount": 3,
+  "p3IndependentHash": "6560018a5b3ac9a0120129e7234d9565ffe80bfd2461f264200be12ae82d9b32",
+  "foreignPrivateDenied": 404,
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}
