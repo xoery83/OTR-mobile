@@ -1,0 +1,11 @@
+{
+  "status": "NO_BLOCKER_ADDENDUM_CANDIDATE_ONLY",
+  "authCommit": "49711fb1f77180251dba329132f2e0404fbb0492",
+  "gateSHA256": "02971807ae94f1da94cb8d712678fdc73844417a4000b848519932938eba53f3",
+  "mcpCandidate": "9c399e01",
+  "reviewer": "/root/auth_phase1_review",
+  "independentScopeDeltaTests": "6 exact/expanded/duplicate scope cases PASS; then4 non-string regressions PASS",
+  "authorConsentTests": "33 PASS; typecheck/scoped lint/browser build PASS",
+  "authority": "Supplemental Owner approval required before scope use or replacement finite window",
+  "hostedScopeChanged": false
+}
