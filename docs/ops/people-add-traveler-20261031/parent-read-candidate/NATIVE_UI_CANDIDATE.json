@@ -2,7 +2,7 @@
   "status": "DEFAULT_CLOSED_SOURCE_CANDIDATE_NOT_READY_OR_NATIVE_E2E",
   "goldenSlice": "Original Owner opens adopted/remote Trip People, adds one traveler, existing queue/receipt/readback/cold",
   "writer": "Native explicitly delegated only LocalTripWorkspace remoteSelected People entry/callback and adjacent tests; remaining source Auth-owned",
-  "activation": "Optional Native prop remains false/no real caller. Backend wiring now applied/tested only in Auth source; no deploy or actual flag change. Approved SQL installation requested from unique Writer; readback pending.",
+  "activation": "Exact e89 SQL installation and independent metadata readback PASS, Writer released. Backend source76fbd024 reviewed but not deployed; no actual flag or Native caller changes. Current Owner approval explicitly keeps all feature entry points closed.",
   "implementation": [
     "Read formal parent through existing authenticated TripCreate transport and Account Repository facade",
     "Reuse one OriginalOwner/Core epoch/current nonrevoked cache check for qualification and transaction-time save",
@@ -25,8 +25,7 @@
     "../ADOPTED_PERSON_NATIVE_READER_REAL_E2E.json"
   ],
   "stillRequired": [
-    "Unique SQL Writer exact-package and fresh DEV preimage/ACL publish preflight",
-    "Exact Owner Gate for new trip_create_parent_result EXECUTE",
+    "Explicit authority to activate feature after current install-only approval; default closed until then",
     "Traceable Backend deployment with all new feature flags still closed until separately authorized",
     "Traceable DEV activation and Native caller opt-in",
     "Actual normal Native Add on original adoptedTrip with existing queue and independent receipt readback"

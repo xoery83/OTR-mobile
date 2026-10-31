@@ -1,0 +1,102 @@
+{
+  "status": "EXACT_DEV_INSTALL_AND_INDEPENDENT_READBACK_PASS_DEFAULT_CLOSED",
+  "gateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
+  "ownerAuthorization": "OWNER_APPROVAL_DIRECT.json; direct user reply in Auth chat",
+  "uniqueWriterHandoff": "Root explicitly delegated this frozen installation only, confirmed no prior execution/other Parent Writer; Root did not write concurrently",
+  "installation": {
+    "gateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "writer": "Auth under explicit Root unique Writer handoff",
+    "requestedAt": "2026-10-31T02:21:55Z",
+    "requestedAtBasis": "Execution request observed after exact Writer handoff; original earlier approval/relay recorded separately",
+    "readyAt": "2026-10-31T02:22:26Z",
+    "acquiredAt": "2026-10-31T02:23:32.496742Z",
+    "mutationFinishedAt": "2026-10-31T02:23:38.867273Z",
+    "releasedAt": "2026-10-31T02:24:15.654125Z",
+    "state": "INSTALLED_INDEPENDENTLY_VERIFIED_DEFAULT_CLOSED_RELEASED",
+    "sqlWriteDisposition": "ACKNOWLEDGED",
+    "backendReaderEnabled": false,
+    "httpRouteEnabled": false,
+    "nativeCallerEnabled": false,
+    "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
+    "writerReturnedTo": "Root",
+    "installedSourceMD5": "a46e6e13183b4e228640d8774dbd00ab",
+    "independentMetadataSHA256": "ba1ecb07b0e3d03aa9613a64899f19226fdf47cd918eda18eb5372e11bd8baa5",
+    "scope": "One new function and its bounded EXECUTE only; no Host/runtime/caller changes"
+  },
+  "independentMetadata": {
+    "apiExecute": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": false
+    },
+    "gateway": {
+      "bypassRls": false,
+      "createDatabase": false,
+      "createRole": false,
+      "inherit": false,
+      "login": true,
+      "name": "otr_trip_create_gateway",
+      "replication": false,
+      "superuser": false
+    },
+    "gatewayDirectReceiptSelect": false,
+    "gatewayFiniteExecute": true,
+    "gatewayReceiptExecute": true,
+    "owningRoutines": [
+      {
+        "definitionMD5": "2fc18c1345ab1ae7231a33893745fb52",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "signature": "trip_create_finite_scope_allowed(uuid,uuid,uuid)"
+      },
+      {
+        "definitionMD5": "f850804dd98ebd5f33633498000e9e8a",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "signature": "trip_create_result(uuid,uuid)"
+      }
+    ],
+    "parent": {
+      "acl": [
+        {
+          "grantable": false,
+          "grantee": "otr_trip_create_gateway",
+          "privilege": "EXECUTE"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "privilege": "EXECUTE"
+        }
+      ],
+      "owner": "postgres",
+      "returnType": "jsonb",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "sourceMD5": "a46e6e13183b4e228640d8774dbd00ab"
+    }
+  },
+  "evidenceSHA256": {
+    "FRESH_PREFLIGHT.json": "c6e1e1622d85253637d6360c043bf508d90887d1dd916a13c35b77a088e799a0",
+    "INSTALL_INTENT.json": "87ea4b6ad4548fe8e0288c3755f2792ab9ade140577dbc75058bb109aa9083a1",
+    "INDEPENDENT_INSTALLED_METADATA.json": "ba1ecb07b0e3d03aa9613a64899f19226fdf47cd918eda18eb5372e11bd8baa5"
+  },
+  "activationEvidence": "No Host deploy, main push, runtime file/env/flag or Native caller change performed; only approved SQL executed. Backend/route wiring is local source76fbd024 only, Native prop defaults false. Native separate versionGET release preserves Env/mounts/compose/SQL and does not activate Parent.",
+  "notClaimed": [
+    "Invoking the new function as a business user",
+    "Enabled HTTP reader",
+    "Native Add Traveler E2E",
+    "Offline SQLite comparison",
+    "Complete People/Profile delivery"
+  ],
+  "independentEvidenceReview": {
+    "reviewer": "auth_phase1_review",
+    "result": "NO_BLOCKER_EXACT_SQL_INSTALL_RECEIPT_ONLY",
+    "checks": "3 private hashes; exact public/private metadata; frozen SQL and new prosrc; unchanged original owning functions/Gateway rights; least new ACL; ordered5 times and closed flags",
+    "hostedOrSqlReruns": 0,
+    "recordRepair": "Prior request-pending lines moved to explicitly historical fields and current5 times copied from actual receipt"
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "status": "EXACT_DEV_INSTALL_APPROVED_DIRECTLY_REQUEST_SENT_TO_UNIQUE_WRITER",
+  "status": "EXECUTED_ONCE_INDEPENDENTLY_VERIFIED_DEFAULT_CLOSED_RELEASED",
   "gateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
   "candidateCommit": "91eab4ba70b49dd7b6d174ad3877bb9cadcb0cf6",
   "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
@@ -8,18 +8,34 @@
   "exactUserReply": "确认批准此精确 DEV 安装，保持功能关闭",
   "approvalObservedAtUTC": "2026-10-31T01:56:16Z",
   "priorRelay": "APPROVAL_RELAY_STATUS.json retained as historical rejected attempt; not used as authority",
-  "uniqueWriter": "Root / 01a1753a-2837-7d20-89c8-d8c1476b0ed8",
-  "dispatch": "send_message_to_thread completed successfully; awaiting Writer receipt, not proof of acquisition or installation",
+  "uniqueWriter": "Root after completion and Writer return",
   "scope": "DEV tuqigdxrvrerfewsxqgm; frozen SQL creates exactly one public.trip_create_parent_result(uuid,uuid) and grants EXECUTE only to existing otr_trip_create_gateway",
   "excluded": [
     "Other functions/roles/tables/RLS/business-data changes",
     "Production",
     "Backend reader/HTTP route/Native caller activation"
   ],
-  "requestedAt": "UNKNOWN",
-  "readyAt": "UNKNOWN",
-  "acquiredAt": "UNKNOWN",
-  "mutationFinishedAt": "UNKNOWN",
-  "releasedAt": "UNKNOWN",
-  "state": "REQUEST_DISPATCHED_NOT_ACQUIRED_NOT_INSTALLED"
+  "requestedAt": "2026-10-31T02:21:55Z",
+  "readyAt": "2026-10-31T02:22:26Z",
+  "acquiredAt": "2026-10-31T02:23:32.496742Z",
+  "mutationFinishedAt": "2026-10-31T02:23:38.867273Z",
+  "releasedAt": "2026-10-31T02:24:15.654125Z",
+  "state": "INSTALLED_CLOSED_RELEASED",
+  "writer": "Auth under exact Root handoff, now returned Root",
+  "receipt": "HOSTED_INSTALL_REAL_RECEIPT.json",
+  "historicalRequestDispatch": {
+    "dispatch": "send_message_to_thread completed successfully; awaiting Writer receipt, not proof of acquisition or installation",
+    "writerAcknowledgment": "Root explicitly received e89; exact package/direct approval check pending; not READY, not ACQUIRED, not executed, not UNKNOWN; no shared resource lock held. No repeated request or SQL reapply.",
+    "originalUnrecordedTimepoints": {
+      "requestedAt": "UNKNOWN",
+      "readyAt": "UNKNOWN",
+      "acquiredAt": "UNKNOWN",
+      "mutationFinishedAt": "UNKNOWN",
+      "releasedAt": "UNKNOWN"
+    }
+  },
+  "dispatch": "Completed; Root explicitly handed exact Writer to Auth; Auth installed once, independently read back and returned Writer Root",
+  "writerAcknowledgment": "Installed/verified/closed/released; current execution evidence in HOSTED_INSTALL_REAL_RECEIPT.json",
+  "executionWriter": "Auth under explicit Root handoff",
+  "requestedAtBasis": "Execution request observed after exact Writer handoff; original earlier approval/relay recorded separately"
 }

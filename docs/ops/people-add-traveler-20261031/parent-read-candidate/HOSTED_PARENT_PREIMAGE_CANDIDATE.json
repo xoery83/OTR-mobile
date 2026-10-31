@@ -1,5 +1,5 @@
 {
-  "status": "OBSERVED_DEV_PREIMAGE_UNAPPROVED_INSTALL_CANDIDATE",
+  "status": "APPROVED_EXACT_SQL_INSTALLED_VERIFIED_DEFAULT_CLOSED",
   "metadata": {
     "candidateExists": false,
     "gateway": {
@@ -34,10 +34,10 @@
   "bodySHA256": "0c6b1a284de57af8a11c3eb2ef5a20008e1c7b2f7157606366d69cad95a478f7",
   "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
   "gateDelta": "Exactly one new function public.trip_create_parent_result(uuid,uuid), owner postgres/security-definer/search_path pg_catalog; one EXECUTE grant to existing otr_trip_create_gateway; no existing function/table/RLS/role change",
-  "preimageAcceptance": "Observed current metadata, not approval. Installer aborts if it drifts; Root owning review and exact Owner Gate still required.",
+  "preimageAcceptance": "Retained approved pre-install snapshot, not current installed state. Exact CAS passed before single apply; independent postimage in HOSTED_INSTALL_REAL_RECEIPT.json. Never reapply or auto-accept drift.",
   "localWrapperProof": "LOCAL_PG_RESULT.json (real PG wrapper/ACL tests; owning routine stub explicitly not Hosted authority requalification)",
   "installCandidateChecks": "LOCAL_INSTALLER_RESULT.json: 7 local PG CAS/ACL/rollback checks PASS; success uses only local owning-hash substitutions; not Hosted installation/authority proof",
-  "writer": "Root; Auth only created local candidate SQL",
+  "writer": "Auth under explicit exact Root handoff for this install; completed and returned Root",
   "sharedChangeLock": {
     "requestedAt": "UNKNOWN",
     "readyAt": "UNKNOWN",
@@ -71,5 +71,6 @@
     "native": "NATIVE_OWNING_REVIEW.json: NO_BLOCKER bounded UI; source daa31fc7 remains default false"
   },
   "publisherPreflight": "Unique SQL Writer must compare exact Owner-approved package/installation SHA, actual DEV target and current preimages/ACL differences immediately before short-lock apply. This is not a repeated engineering review.",
-  "ownerApprovalRecord": "OWNER_APPROVAL_DIRECT.json"
+  "ownerApprovalRecord": "OWNER_APPROVAL_DIRECT.json",
+  "installation": "HOSTED_INSTALL_REAL_RECEIPT.json: exact frozen SQL applied once, metadata readback PASS, Writer released, all feature entry points remain closed"
 }

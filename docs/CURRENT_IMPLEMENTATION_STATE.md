@@ -129,13 +129,22 @@ checks, and ServerParentTripPeople preserves drafts across equivalent setup refr
 while fencing identity ABA, unmount and late responses. Local-format2 Add unchanged.
 Optional Workspace prop defaults false; no real caller enables it. Independent
 3 suites123 plus repaired wrapper14 PASS/NO_BLOCKER; source only, not Native Add.
-Backend route/runtime remains unapplied candidate dc43121b (apply-check only).
+Backend route/runtime76fbd024 is now applied only in Auth source under Root
+exact Writer delegation, independently4 suites57/types/lint PASS; Writer returned.
+No deploy/actual flag changes. Original dc43121b remains the planning patch.
 Qualified independent interface Review satisfies engineering review after Root
 clarification; exact Owner new EXECUTE Gate and unique SQL Writer fresh publish
 preflight still required. Exact SQL install candidate e89b3d5b/install5ee9d1aa
 has observed DEV preimage/ACL and local7 CAS/rollback checks plus independent
-NO_BLOCKER; Owner approval requested, pending. No new install or activation; no
-shared lock requested/acquired. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
+NO_BLOCKER. Owner directly approved this exact closed installation in Auth chat
+after the earlier relay rejection. Root then explicitly handed the unique SQL
+Writer to Auth for this frozen action. Single apply ACK and independent metadata
+readback PASS: new prosrcMD5a46e6e13/Ownerpostgres/SECDEF/search_path/least ACL exact;
+old two routines, Gateway flags/old EXEC and no-table-SELECT unchanged. Five times
+recorded; resource released/Writer returned Root. No Host deploy or actual reader/
+HTTP/Native caller activation; current approval explicitly keeps these closed.
+See HOSTED_INSTALL_REAL_RECEIPT.json and OWNER_APPROVAL_DIRECT.json. This proves
+closed SQL installation, not native Add or new function business-user E2E. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
