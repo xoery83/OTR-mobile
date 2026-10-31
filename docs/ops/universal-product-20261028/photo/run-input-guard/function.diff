@@ -1,0 +1,16 @@
+--- before
++++ after
+@@ -28,7 +28,12 @@
+   OR (CASE WHEN rep.role='ORIGINAL' AND rep.material_kind='TEXT' AND rep.encoding='UTF-8'
+    AND rep.remote_state='NOT_APPLICABLE' AND rep.byte_count BETWEEN 1 AND 262144 AND rep.byte_count=octet_length(rep.text_content)
+    AND (s.source_kind='TEXT' AND s.acquisition_channel='PASTE' OR s.source_kind='FILE' AND s.acquisition_channel='FILES')
+-   THEN false ELSE public.trip_source_universal_pdf_material(r.actor_account_id,r.trip_id,i,false,true) IS NULL END)
++   THEN false
++   WHEN rep.role='ORIGINAL' AND rep.material_kind='BINARY' AND rep.mime_type='image/png'
++   THEN public.trip_sustained_universal_png_allowed(r.actor_account_id,r.trip_id) IS NOT TRUE
++    OR cardinality(r.scope_source_ids) IS DISTINCT FROM 1
++    OR public.trip_source_png_original_facts(r.actor_account_id,r.trip_id,i.source_id,i.representation_id,i.material_revision) IS NULL
++   ELSE public.trip_source_universal_pdf_material(r.actor_account_id,r.trip_id,i,false,true) IS NULL END)
+   THEN RAISE EXCEPTION 'INPUT_STALE';END IF;
+  ELSIF to_jsonb(r) IS DISTINCT FROM n THEN RAISE EXCEPTION 'UNIVERSAL_SUSTAINED_RUN_DENIED';END IF;
+  RETURN true;

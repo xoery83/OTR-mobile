@@ -1,49 +1,47 @@
-# Current Import Photo checkpoint — 31 October 2026
+# Current Import Photo checkpoint — 31 October / 1 November 2026
 
 Golden Slice FAIL before Vision; no Photo Save/Native E2E PASS.
-Owner approved exact recovery Gateeba232fc. Function installed d86864fb/OID67161;
-complete role graph, Owner/ACL and schema ACL restored; no persistent maintenance.
-AD5 code-only126.8 retained same inputs/Source/consent rev2, binary/data preserved.
-Compatible Backend2275d74d/image5c658706/capture10d59f5c preserves latest Native/Auth
-cfc baseline and all18 compose/5config/9mount/env hashes. Rollback a621/cfc retained.
+Approved recovery eba232fc installed d86864fb/OID67161; complete role graph,
+Owner/ACL/schema ACL restored. Same Batch e7dfba6d / Source df39c9b2 / rep9bf0ad08:
+normal App generation2 a81308ff PARSE_PASS, Uploadd2f59e69 and VERIFY5cc29190
+APPLIED/FINAL. Old077 negative journal/markers and old905 UNKNOWN retained.
+No generation3, replacement Batch, Run, Task or paid Photo model call.
 
-Same Batch e7dfba6d/Input69536a38/Source df39c9b2/rep9bf0ad08; old077 journal has
-actual negative PARSER_CRASH proof58fb, marker8d1074aa durably archived without
-overwrite. Old905 archive/original untouched. Approved canonical same-op quiescence
-and normal App generation2 a81308ff succeeded: PARSE_PASS, Uploadd2f59e69 APPLIED/FINAL
-at08:32Z. No generation3, replacement source, Task or model call.
+Actual service0cf269f5/image67f21d49/capture82d7cf57 includes Source72a34dc9,
+Native7603 and Autha7 loader; server/mcp/browser/env/HostConfig/9mount/18compose/
+5config unchanged. AD5 126.8/SQLite76, binary/session/data preserved, rootMyTrips.
+Compatible f68/dfc rollback retained; never return to older incompatible images.
 
-Current first FAIL: actual TaskPrepare SOURCE_BINDING/INPUT_STALE/P0001 at
-09:48:03Z. No SourceRun, Task, modelAttempt or Vision/Save PASS. Same PNG is already
-UPLOAD+VERIFY APPLIED/FINAL; all source calls200. Native rebuilt pin matches cloud
-source/material/hash/count/sourceRow1 and original revision ancestry/RETAINED;
-owner-read-only inputvalidator true. SourceWriter locally true too; Hosted role
-metadata/three SELECT policies match expected invoker/definer/permissive roles.
-Do not weaken guards or infer a PNG whitelist. Actual HTTP q.inputs still unproven;
-next minimal diagnostic hashes only the validated input set/single-pin fields on
-INPUT_STALE, so real field differences can be identified without raw values/IDs.
-7 focused checks and independent NO_BLOCKER; no authority/request/behavior change.
-Full isolated Begin fixture lacks scope table; automatic approval review twice
-rejected local fixture DDL as exceeding a readonly assignment. DDL was not executed
-or moved to another identity. Continue software request comparison independently.
+Actual first FAIL10:39:16Z: TaskPrepare SOURCE_BINDING / INPUT_STALE / P0001.
+Real HTTP input set and all eight pin fingerprints exactly match Native reconstruction.
+Current cloud Source/material/hash/count/row/ancestry/input validator and roles agree.
+Exact root cause is Input INSERT → catalog_write_guard → run_only_row →
+trip_source_sustained_run_row: TEXT-or-PDF-only CASE sends PNG to PDF helper NULL.
+Candidate adds only PNG scope/single Source/real png_original_facts branch; TXT/PDF
+unchanged. 12 existing isolated PG body checks RED→GREEN plus scope/CAS negatives;
+independent NO_BLOCKER. Test uses rollback pg_temp execution wrapper and non-PDF
+NULL helper representation, not full Begin/PDF/maintenance install proof. Earlier
+fixture table/column DDL auto-review rejection was not retried or bypassed.
 
-Window14 independently CLOSED: firstSourceBefore unconfirmed, finalSourceAfter
-closed=true/runtimeverified/workerinactive EMPTY/timers stopped. Never claim the
-first read passed. Current service f68caabe/imagedfc598d2/captureea16d720 includes
-Sourcefa63+Native7603 fixed projection diagnostic; Native29/Source7 checks PASS.
-Env/mount/config/server/Auth/browser unchanged. Compatible87/bc77 rollback retained.
-Native may run normal independentQA1f GET; no Root in-flight business request.
-Actual receipts: ops/universal-product-20261028/photo/recovery-execution-20261031/.
-Frozen recovery packet and private proof remain .env.photo-files-png-20261031/;
-after negative journal/newattempt, inverse is prohibited. Retain compatible Reader.
+New exact protected body is NOT INSTALLED: see
+ops/universal-product-20261028/authority/PHOTO_RUN_INPUT_GUARD_GATE.md.
+Function OID66391 MD5 8ef354be→661c2130; exact forward/reverse and same-transaction
+SourceWriter maintenance restoration frozen in photo/run-input-guard/. No new schema,
+role, persistent grant, budget or image required. Prior eba approval covers another
+function and does not substitute for this precise body approval.
 
-Next: bounded TaskPrepare diagnostic deployment preserving Native/Auth, CLOSED
-controller reanchor/check; retry same alreadyAPPLIED operation through normal App,
-then first original-image Vision(max1 original unused allowance)→Results→
-normal Review/Admission→PRIVATE SELF minimalP1/P6→readback/Day/cold/idempotence→close.
-Hard expiry2026-11-01T08:48:56Z and budgets unchanged. Never reset/remint/call again
-on UNKNOWN; read same identities first. No Root main changes. Native7603 optional
-Core projection diagnostic is not in Root image; coordinate next short Host change.
+Window15 independently CLOSED: Source before/after CLOSED, runtime verified,
+worker inactive EMPTY_VERIFIED, timers stopped. Window14 firstSourceBefore was
+unconfirmed; finalSourceAfter true, do not claim its first read passed. Safe receipts
+in photo/recovery-execution-20261031/. No global DEV/QA lock held. Other lanes may
+run normal QA; actual service/config mutations coordinate a short fresh CAS.
+
+Next after exact approval: CLOSED install/readback/release → same normal App Batch
+→ Source Run/Task → first original-image Vision (max1 existing unused allowance)
+→ Results → normal Review/Admission → PRIVATE SELF minimumP1/P6 → independent
+readback/Day/cold/idempotence → close. No new fixture/call on UNKNOWN. Original
+hard expiry2026-11-01T08:48:56Z, <=60m/+45close/+50watchdog bounds unchanged.
+No Root main/push changes; main fresh HEAD must be checked before any integration.
 
 Older checkpoints below are historical and superseded by the current header.
 

@@ -1,0 +1,90 @@
+{
+  "status": "LOCAL_BODY_PASS",
+  "checks": [
+    {
+      "name": "actual_before_rejects_verified_PNG",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "minimal_after_accepts_verified_PNG",
+      "passed": true,
+      "expected": "PASS",
+      "returncode": 0,
+      "error": null
+    },
+    {
+      "name": "PNG_closed_rejects",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "PNG_expired_rejects",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "stale_input_rejects",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "historical_input_rejects",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "missing_source_rejects",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "invalid_payload_sha256",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "invalid_byte_count",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "invalid_confirmation_id",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "invalid_material_revision",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    },
+    {
+      "name": "invalid_representation_id",
+      "passed": true,
+      "expected": "INPUT_STALE",
+      "returncode": 3,
+      "error": "INPUT_STALE"
+    }
+  ],
+  "limits": "Existing isolated fixture, unchanged body in transaction-local pg_temp wrapper; no table/column/role/GRANT changes or persistent installation. PDF helper is represented only by its explicit non-PDF NULL branch; actual PNG facts and scope helpers are unchanged. Not full Begin/PDF regression or Hosted E2E."
+}

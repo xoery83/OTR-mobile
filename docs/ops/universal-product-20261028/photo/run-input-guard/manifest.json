@@ -1,0 +1,20 @@
+{
+  "status": "CANDIDATE_NOT_INSTALLED",
+  "function": "public.trip_source_sustained_run_row(text,text,jsonb)",
+  "oid": 66391,
+  "beforeMD5": "8ef354beae3cb950d024ce17c7f200b5",
+  "afterMD5": "661c2130343a42aaa987ecc84c95fd16",
+  "targetMD5": "c3cff8ff6d2c120908654222cd96189e",
+  "files": {
+    "verify-local.py": "e74250c3e6a68ecaffd2531566500fc9b8068a9b4e8e1876a087b11e377523a7",
+    "local-checks.json": "a2009549e9b321d0148a62c5736aa99cbed56ecb9c040b96ed5148ec063e64f6",
+    "before.sql": "19a6c9badbcff09f5eb72e83303de62a7d468f4aa07daace160a2d09b48065f7",
+    "install.sql": "de9cbdea005f87ab30a54caec6a3e48cc3bf21446d6fafd6facd5a0e5b73d5dd",
+    "after.sql": "2fd00c343c6e1b05dc6e89433b52ad26c4f137f41889034430a0d3863619e434",
+    "function.diff": "9331871c78a1d4e71f41ea342841efc2018de25162e8dba1f6d9fe88ab4d0023",
+    "rollback.sql": "cb75c81f369aa3b8faf543518cf71a3935f21a86785ea29ee0559c4704f66c6f"
+  },
+  "noNewPersistentObjects": true,
+  "roleGraphAndSchemaAclRestoredInSameTransaction": true,
+  "localLimit": "Temporary wrapper changes execution to SECURITY DEFINER only to reproduce existing SourceWriter invoker context. PDF helper is non-PDF NULL stub. Actual PNG facts/scope and input validator unchanged. No full Begin/PDF/Hosted PASS claimed."
+}
