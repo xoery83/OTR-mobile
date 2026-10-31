@@ -1,0 +1,18 @@
+{
+  "status": "READY_DEFAULT_CLOSED_NOT_DEPLOYED",
+  "planPath": "/opt/otr/dev-backend/build/auth-write-unknown-root-7a3/deploy-plan.json",
+  "planSHA256": "e5f5860d2c9734a5beabd73a800dbd2d5753877cf460736c19e2f2e49dcc15ee",
+  "deployScriptSHA256": "9d0cd61af7fc6b78dc0028617a2117262dede366e58a175e014f356c393782bd",
+  "candidateImage": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a",
+  "beforeContainerId": "fdd5c151bb27ad2725afcf9b07dcf9cd53cac4da69041f34bac094528700d109",
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "server-capture.mjs": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "configDiff": false,
+  "authorityDiff": false,
+  "rollbackContainerRetained": true,
+  "newNamesUnoccupied": true
+}

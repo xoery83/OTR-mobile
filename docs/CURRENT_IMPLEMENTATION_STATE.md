@@ -24,10 +24,11 @@ AnyexistingpaidAttempt/call/UNKNOWN/recoverableresult blocksreplacement. Noextra
 
 Source window8ca564 started18:08Z, CLOSED early afternewFAIL: independentSourceafterCLOSED,
 workerinactive/EMPTY, timersstopped; rootcontrols noactiveSourcewindow. Latest compatible
-Backend nowfdd5c151/image7371d767/capture0cafa2c2 (Auth default-closed overlay); Source883e/Rootf2/Native3c3 preserved; MCPad47/
+Backend now43b2ab58/image10682571/capture40dadbb1 (Auth post-IO closed repair); Source883e/Rootf2/Native3c3 preserved; MCPad47/
 server7826/browser6040 (Auth closed candidate), Env b12/Hostd501/Mount14ee all23files preserved. Native phase
 logs only, noSQL/Authority change. Before nextwindow reanchor existingcloser tothisactualdefault;
-latest761b/34a retained stoppedrollback; earlier2c03/a3 ande786/4ef2 retained. Do not restore old incompatible image/config.
+latestfdd5/7371 retained stoppedrollback; earlier761b/34a,2c03/a3,e786/4ef2 retained.
+Do not choose known post-IO-bug7371 as a new business-window default rollback; use1068. Do not restore old incompatible image/config.
 
 Stable Import HEAD beforethischeckpoint a2bb2578: Source4090 preleaseAuthfix + Native
 VERIFY ADMITTED explicit same-executea2cee341 + safePG diagnosticsa2bb. ActualAD5 installed
@@ -53,11 +54,20 @@ SourcePhoto/PDFCLOSED and pendinghelperGRANTabsent verified. No model or feature
 The four Native history-copy lines remain LOCAL_PASS/not installed; AD5 remains126.9.
 See photo/recovery-execution-20261101/activity-expiry-deploy/.
 
-Auth reports a pending post-Core-write auth-expiry adapter bug in7371: a possibly
-committed POST may currently surface401/REJECTED. Write MUST stay CLOSED until the
-fixed post-IO503/UNKNOWN adapter and realcommit regression are independently reviewed.
-Root default-closed deployment was not Write functional acceptance; do notreuseReadGate.
-No Photo Source authority or evidence changes arise from this Auth-only pending repair.
+Auth post-Core-write result suppression bug now fixed in7a3caa63: afterPOST entersCore,
+revoke/expiry/cancel becomes503/UNKNOWN, not false401/REJECTED. Independent single-input
+reviewNO_BLOCKER; other350codeinputs byte-preserved.59targettests/types/lint and actualSDK
++realin-memoryCorecomposition3casesPASS (POST1/commit1/QUERY_SAME_OPERATION, noresultleak).
+Default-closedimage1068/43b2/Capture40dad actuallydeployed and independentlyreadbackPASS;
+MCPad47/browser6040/server7826,23files/Envb12/Hostd501/Mount14ee unchanged.17.15secondflock
+released; previousfdd5/7371 retained. MCPREAD/WRITEconfigabsent, SourcePhoto/PDFCLOSED,
+helper67145/a294unchanged andpendingGrantstillabsent; noAuthority/Provider/SQLchanges.
+This is notAuthWriteE2E. Write staysCLOSED pendingits separateOwnerGate; neverreuseReadC.
+Auth received fullDEPLOYMENT_RECEIPT.result withallconfig/mountedfilehashes forits frozen
+Gate. NextPhoto mustreanchor existingcloser to43b2/1068 orsubsequentfreshcompatiblehandoff.
+Evidence: photo/recovery-execution-20261101/auth-unknown-default-1068/. Durableprivatebase
+code .env.auth-write-root-compatible-20261101/tree plus single7a3overlay/operators under
+.env.auth-write-unknown-root-20261101 (noEnv/DB/Session/Keychain/credentialcopies).
 
 Auth default-closed software integration completed under Standing deployment authority:
 5Authinputs exactly match committedAuth62b0879f; other346codeinputs preserveRoot/Native.

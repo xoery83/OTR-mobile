@@ -1,0 +1,10 @@
+{
+  "status": "ROOT_FIXED_POST_IO_DIFF_NO_BLOCKER",
+  "commit": "7a3caa63",
+  "changedInputs": [
+    "backend/src/mcpAccountWriteBinding.ts"
+  ],
+  "otherInputsPreserved": 350,
+  "proof": "After POST enters existing Core, later suppressed result is conservatively503/UNKNOWN; pre-IO401 and response discard retained",
+  "authorityActivated": false
+}
