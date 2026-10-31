@@ -1,28 +1,40 @@
 # Current Import Photo checkpoint — 31 October 2026
 
-Golden Slice BLOCKED before original upload; not paid Vision/Save PASS.
-Owner-approved first-lookup9bc5 installed CLOSED; Source2bf0294a/acquire37d5cd82
-APPLIED/FINAL, exact PNG078de830/42630bytes, rep27b93994 rev1/PENDING retained.
-JSON receipt adapter2be397cf fixed/installed AD5 126.5. Next actual Native503
-SOURCE_IO_UNAVAILABLE at PNG execute leaves no PREPARE/UPLOAD/VERIFY operation.
-Actual Hosted operation row guard still invokes PDF-only fallback for PNG scope;
-exact-routine/trigger rollback PG RED PDF_V4_CLOSED. Single-function PNG branch
-candidate fixes only this guard; 25 semantic+6 package checks and independent
-NO_BLOCKER. See authority/PHOTO_OPERATION_GUARD_GATE.md / photo/operation-guard/.
-New protected body requires exact approval; NOT INSTALLED. OID58756 /87554→1eecc,
-Ownerpostgres; no maintenance GRANT, schema, budget or new object requested.
-All six windows CLOSED; worker inactive/EMPTY/timers stopped. No reverse/delete
-of accepted Source. Inverse additionally blocked by any subsequent Source op.
+Golden Slice BLOCKED at upload UNKNOWN; not Vision/Save PASS.
+Owner-approved first lookup9bc5 and operation guarddb1c actually installed and
+independently SERVER_VERIFIED CLOSED. OID58756/MD51eeccf27, same Owner/ACL/config,
+complete membership graph/public ACL unchanged. Same PNG Source2bf0294a/acquire
+37d5cd82 APPLIED; PREPARE0378792e now APPLIED. Upload70dd21b8/attempt905cd8ec remains
+IO_UNKNOWN/generation1, journal STARTING/ATTACH_IDENTITY, no decoder PARSE_PASS;
+rep27b93994 rev1/PENDING. Original batch67842863/PNG078de830/42630 bytes retained.
+No new objects, Task or paid image call. Never reverse installed guard after these
+accepted operations, erase UNKNOWN, fabricate terminal or switch operation IDs.
 
-V2 adopted Native/Import/Auth/MCP. SQL pin install held~11.43s; diagnostic software
-release~16.90s, released before normal business tests. No global DEV lock held.
-Root sourcef956bf95 preserves Native version-only integration. Latest Native
-runtime receipt624f3c53: container7a77a51d/image06b19831, preserves Photo diagnostics;
-fresh physical verification and controller re-anchor required before next window.
-Main8f79a421 changed serially by MCP, Root did not modify main. Auth Parent SQL
-installed default CLOSED by delegated Auth writer; no Root duplicate install.
-Original Photo scope expiry remains2026-11-01T08:48:56Z. Next approval→short CAS
-install→release→CLOSED controller proof→same Source real Vision/Save/cold/close.
+Actual worker negative cleanup first failed: Docker inspect8478B exceeds8192B
+stdout cap. One-line bounded65536 fixb88dca56 has RED→GREEN3s39/scoped lint and
+independent NO_BLOCKER. Both credential-free Host bundles rebuild byte-identically
+except that numeric literal; exact CAS repair installed CLOSED and same-attempt
+negative cleanup real TERMINATED. Marker/UNKNOWN journal/durable original retained.
+Full window7 b258aa50 CLOSED verified (Source before/after, compatible runtime,
+worker inactive/physical TERMINATED), old timers stopped. See photo/inspect-buffer/
+receipts. No temporary permission left active. Full tsc at1536MiB hit heap OOM,
+not counted PASS; no concurrent heavy retry. AD5 remains126.5/2be397cf.
+
+Next actual missing path: current PNG reconcile only finalizes a positive terminal
+upload; it cannot quiesce/retry this negative interrupted attempt. Existing Source
+observe has IO_UNKNOWN→IO_QUIESCENT and attempt_start supports new generation, but
+PNG wrapper lacks the owning entry and Host marker must remain identity-safe.
+Bounded same-operation recovery investigation/coding continues; any new protected
+body requires exact approval, no direct admin mutation/positive proof invention.
+Transport has30s whole-IPC deadline vs90s HTTP budget; cause still to be qualified,
+not assumed from a generic503. Do not restart same UNKNOWN decoder/upload blindly.
+
+V2 adopted four lanes; no global DEV lock. Photo Host slot returned to Native after
+actual closure. Last independently read runtime624f3c53/7a77a51d/image06b19831;
+Native62e settings-only source reviewed, may deploy next with fresh CAS. Reverify
+actual before re-anchor. Latest Photo close plan b88dca56-native624, SHAef1e8c06;
+new Native CID requires new exact plan. Main8f79a421 changed serially by MCP;
+Root has not updated main. Original hard expiry2026-11-01T08:48:56Z unchanged.
 
 Older checkpoints below are historical and superseded by the current header.
 

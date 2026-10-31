@@ -19,3 +19,12 @@ identity-bound sandbox; never clear marker, emit a positive terminal, alter the
 UNKNOWN journal, erase originals or repeat an upload. New controller plan must
 pin the new cleanup hash; old timers only stopped after closure independently
 verified. No Backend image/service, SQL, authority, Secret or budget change.
+
+Actual repair now SERVER_VERIFIED: both Host bundles CAS installed while SQL
+CLOSED; only buffer literal differs. Same-attempt negative helper TERMINATED,
+worker inactive, marker retained. Full close controller Source-before/after,
+compatible runtime and physical cleanup PASS; original timers stopped. See fixed
+receipts. No business terminal or positive decoder proof fabricated; UNKNOWN
+upload still retained. Native Host software slot released after full closure.
+Full repository typecheck hit bounded1536MiB heap OOM, not counted PASS; focused
+39 tests and scoped lint passed. No concurrent heavy retry was launched.

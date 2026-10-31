@@ -1,0 +1,31 @@
+{
+  "status": "PHOTO_SEVENTH_WINDOW_CLOSED_VERIFIED",
+  "windowId": "b258aa50c15f405cb1c1f1ea33a8c354",
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "TERMINATED"
+      }
+    }
+  },
+  "originalClosePlanSHA256": "eec52fa45a054b3a6c00c7d75b04e8c10dd47a2a1f5ba06e7e2c140c1eab001e",
+  "repairClosePlanSHA256": "ef1e8c069f0aad0be155831f0f0b42b5e49ae647652050b5cac7e283af0b2efd",
+  "timersStopped": true,
+  "reason": "Same-object Photo execution completed or stopped; independent Source/worker close verified",
+  "reopened": false
+}

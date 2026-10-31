@@ -1,0 +1,31 @@
+{
+  "status": "PNG_BUFFER_ONLY_SOFTWARE_REPAIR_CLOSED",
+  "sourceCommit": "b88dca56",
+  "acquiredAt": "2026-10-31T04:06:24.615391+00:00",
+  "releasedAt": "2026-10-31T04:06:25.693982+00:00",
+  "files": {
+    "negative-cleanup.mjs": {
+      "before": "babfb1f00a65911084e132b5a1feaead9deb410854b195a13186a26539ba446f",
+      "after": "d4559ccf7cb2831d455fcd56db346e52445ae2117ae1d7656f21328e105e8a8a",
+      "onlyBufferLiteral": true
+    },
+    "universal-png-worker.mjs": {
+      "before": "0129046f489b09a010b358f9f8a0ff5a7920a89cfe1c347dee59a3319a1461ad",
+      "after": "36197d6f81e1b4c456ad79a2d9637b91f493affe17a8d473d540ae2bd07730ba",
+      "onlyBufferLiteral": true
+    }
+  },
+  "negativeCleanup": {
+    "status": "TERMINATED",
+    "terminated": true
+  },
+  "worker": "inactive",
+  "markerPreserved": true,
+  "closePlanPath": "/opt/otr/universal-png-worker/close-plan-b88dca56-native624.json",
+  "closePlanSHA256": "ef1e8c069f0aad0be155831f0f0b42b5e49ae647652050b5cac7e283af0b2efd",
+  "backendUnchanged": true,
+  "sqlMutated": false,
+  "scopeActivated": false,
+  "newAuthority": false,
+  "paidCalls": 0
+}
