@@ -34,7 +34,10 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { getDefaultDataHealthScheduler } from "@/data/health/defaultDataHealthScheduler";
 import * as Network from "expo-network";
 import { AppState } from "react-native";
-import { refreshAccountTripReads } from "../sync/tripDownstreamCoordinator";
+import {
+  refreshAccountTripReads,
+  refreshForegroundTripReads,
+} from "../sync/tripDownstreamCoordinator";
 
 import type { LocalSession } from "@/domain/auth/localSession";
 import type { FoundationBootstrapDependencies } from "./bootstrapApplication";
@@ -75,7 +78,7 @@ export async function bootstrapActivatedAccount(session: LocalSession | null) {
 let syncPaused = false;
 let activeHealthTimer: ReturnType<typeof setInterval> | null = null;
 const ACTIVE_HEALTH_INTERVAL_MS = 15 * 60_000;
-const ACTIVE_TRIP_READ_INTERVAL_MS = 30_000;
+const ACTIVE_TRIP_READ_INTERVAL_MS = 45_000;
 
 export function subscribeOperationalSyncLifecycle() {
   let online: boolean | null = null;
@@ -87,7 +90,7 @@ export function subscribeOperationalSyncLifecycle() {
     activeHealthTimer = active
       ? setInterval(() => {
           if (!syncPaused && syncOnline)
-            void refreshAccountTripReads().catch(() => undefined);
+            void refreshForegroundTripReads().catch(() => undefined);
           if (Date.now() - lastHealthAt >= ACTIVE_HEALTH_INTERVAL_MS) {
             lastHealthAt = Date.now();
             void scheduleAutomaticDataHealth("PERIODIC").catch(() => undefined);

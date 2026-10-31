@@ -7,7 +7,10 @@ import {
 } from "../auth/accountRequestContext";
 import type { createTripCoreV2Repository } from "../repositories/tripCoreV2Repository";
 import type { CoreReadTransport } from "../api/tripCoreV2Transport";
-import { getAccountGeneration } from "../auth/accountGeneration";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "../auth/accountGeneration";
 
 // A validated unchanged collection does not rewrite SQLite or disturb pending work.
 export async function refreshCoreDownstream(
@@ -63,6 +66,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     id: string,
     work: () => Promise<void>,
     invalidated = false,
+    isCurrent?: () => boolean,
   ) {
     await assertAccountRequestContext(scope, deps.account);
     const key = `${scope.generation}:${scope.accountId}:${id}`;
@@ -75,6 +79,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     state ??= { next: 0, failures: 0 };
     reads.set(key, state);
     const current = state;
+    let skipped = false;
     current.running = serial(async () => {
       const live = await deps.scope();
       if (
@@ -84,11 +89,16 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
       )
         throw Error("TRIP_DOWNSTREAM_NOT_CURRENT");
       await assertAccountRequestContext(scope, deps.account);
+      if (isCurrent && !isCurrent()) {
+        skipped = true;
+        return;
+      }
       await work();
       await assertAccountRequestContext(scope, deps.account);
     })
       .then(
         () => {
+          if (skipped) return;
           current.failures = 0;
           current.next = now() + 15_000;
         },
@@ -103,7 +113,12 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
       });
     return current.running;
   }
-  async function trip(scope: AccountScope, tripId: string, invalidated = false) {
+  async function trip(
+    scope: AccountScope,
+    tripId: string,
+    invalidated = false,
+    isCurrent?: () => boolean,
+  ) {
     coreUuid.parse(tripId);
     return run(
       scope,
@@ -114,9 +129,23 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
         if (changed) deps.notify(scope, [tripId], false);
       },
       invalidated,
+      isCurrent,
     );
   }
+  async function discover(scope: AccountScope) {
+    let ids: string[] = [];
+    await run(scope, "discovery", async () => {
+      ids = await deps.discover(scope);
+      await assertAccountRequestContext(scope, deps.account);
+      deps.notify(scope, [], true);
+    });
+    return ids;
+  }
   return {
+    async discovery() {
+      const scope = await deps.scope();
+      if (scope) await discover(scope);
+    },
     async invalidate(context: AccountRequestContext) {
       await assertAccountRequestContext(context, deps.account);
       const running = reads.get(
@@ -129,20 +158,23 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
         return;
       await trip(context, context.tripId, true);
     },
-    async trip(tripId: string) {
+    async trip(tripId: string, expected?: AccountScope, isCurrent?: () => boolean) {
       const scope = await deps.scope();
-      if (scope) await trip(scope, tripId);
+      if (expected) {
+        await assertAccountRequestContext(expected, deps.account);
+        if (
+          scope?.accountId !== expected.accountId ||
+          scope.generation !== expected.generation
+        )
+          return;
+      }
+      if (scope) await trip(scope, tripId, false, isCurrent);
     },
     async account() {
       const scope = await deps.scope();
       if (!scope) return;
       // Do not hold the serial read lane while enqueueing its individual Trip reads.
-      let ids: string[] = [];
-      await run(scope, "discovery", async () => {
-        ids = await deps.discover(scope);
-        await assertAccountRequestContext(scope, deps.account);
-        deps.notify(scope, [], true);
-      });
+      const ids = await discover(scope);
       for (const id of ids) {
         try {
           await trip(scope, id);
@@ -155,6 +187,20 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
 }
 
 let coordinator: ReturnType<typeof createTripDownstreamCoordinator> | undefined;
+let foregroundTrip: AccountRequestContext | null = null;
+subscribeAccountGeneration(() => {
+  foregroundTrip = null;
+});
+
+export function observeForegroundTrip(context: AccountRequestContext) {
+  if (context.generation !== getAccountGeneration()) return () => {};
+  const lease = Object.freeze({ ...context });
+  foregroundTrip = lease;
+  return () => {
+    if (foregroundTrip !== lease) return;
+    foregroundTrip = null;
+  };
+}
 async function nativeCoordinator() {
   if (coordinator) return coordinator;
   const [
@@ -255,6 +301,13 @@ async function nativeCoordinator() {
 
 export async function refreshAccountTripReads() {
   await (await nativeCoordinator()).account();
+}
+export async function refreshForegroundTripReads() {
+  const read = await nativeCoordinator();
+  const target = foregroundTrip;
+  await read.discovery();
+  if (target && foregroundTrip === target)
+    await read.trip(target.tripId, target, () => foregroundTrip === target);
 }
 export async function refreshTripFromCloud(tripId: string) {
   await (await nativeCoordinator()).trip(tripId);

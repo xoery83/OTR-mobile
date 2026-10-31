@@ -30,7 +30,11 @@ candidate cannot be enabled or replace polling until those owning gaps close.
 Normal committed Accounts reuse existing Backend discovery/complete Core collections,
 Repository accepted-mirror transactions and operational notifications. Cold activation,
 foreground/network restoration and Trip entry schedule nonblocking, serialized reads;
-the existing active timer checks them every30 seconds. Duplicate triggers coalesce,
+activation/restoration still discovers and reads existing Trips. The existing active
+timer checks summaries and only the current focused Trip every45 seconds; leaving
+a Trip clears that target, and Account generation changes fence late reads. This
+is a temporary fallback, not a private subscription or cheap-version PASS.
+Duplicate triggers coalesce,
 unchanged versions avoid SQLite writes and read failures retain local data. Local
 Pending/UNKNOWN/receipts/drafts/outbox remain separate; Pull never authors a mutation.
 Discovery summaries alone never grant Core/creator authority. A paged omission or a

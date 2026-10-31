@@ -1,0 +1,44 @@
+{
+  "build": 132,
+  "source": "95e3ffa4",
+  "sourceBase": "14402d7f",
+  "fullNewPhysicalNativeCompile": false,
+  "nativeCompileSource": "5c765fa6",
+  "nativeBuildBasis": 127,
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "minimumOS": "16.4",
+  "deviceFamily": [
+    1,
+    2
+  ],
+  "actualOS": "27.2/24B119",
+  "profileExpiryUTC": "2026-11-05T20:20:57Z",
+  "localProvision": true,
+  "developerProgramActive": "NOT_ASSUMED",
+  "keychainGroups": [
+    "U9D5C58Z94.com.xoery.otrmobile.ipadqa"
+  ],
+  "signingVerified": true,
+  "GoogleOauth": "NOT_QUALIFIED_USE_NORMAL_EMAIL_OTP",
+  "jsSha256": "e48f94f3be459b3628b8ad8ae5c1d38a04ce1aec3efef945e99234c66f09ac4b",
+  "nativeHashes": {
+    "OTRMobile": "f255469713a433102808005a9feeb2b69a1ed8e2c17be68ff7ebf519c4e26f40",
+    "OTRMobile.debug.dylib": "af1e0c168211d35b786e8366fa44e7c09e395ae542fb7fb5ebf03c72ddc4aa39"
+  },
+  "appBytes": 200980009,
+  "iPhoneTouched": false,
+  "installed": true,
+  "installationEvidence": "install132.json: info.outcome=success",
+  "installationDatabaseUUID": "10092F0A-A7C8-4920-976D-E9D6725D504A",
+  "normalSessionPreserved": true,
+  "readOnlyNativeSmoke": [
+    "Trip List existing4Trips",
+    "Trip Home",
+    "real Core Day Feed",
+    "existing P3 Focus",
+    "P3 Details",
+    "Back to same Day Feed"
+  ],
+  "remoteMutationVisibleLatency": "NOT_YET_MEASURED",
+  "mainIntegrated": false
+}

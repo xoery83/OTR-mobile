@@ -110,7 +110,10 @@ import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
 import { acceptedHomeHeader, useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import type { TodayEntry } from "./MyTripsList";
-import { refreshTripFromCloud } from "@/data/sync/tripDownstreamCoordinator";
+import {
+  observeForegroundTrip,
+  refreshTripFromCloud,
+} from "@/data/sync/tripDownstreamCoordinator";
 import {
   resolvedWorkspaceKind,
   type WorkspaceKind,
@@ -486,6 +489,17 @@ function TripContent({
     knownTrip,
     navigation,
   ]);
+  const foregroundAccountId = trip?.scope.accountId;
+  useFocusEffect(
+    useCallback(() => {
+      if (!requested || !foregroundAccountId) return;
+      return observeForegroundTrip({
+        accountId: foregroundAccountId,
+        generation,
+        tripId: requested,
+      });
+    }, [requested, foregroundAccountId, generation]),
+  );
   useFocusEffect(
     useCallback(() => {
       void Promise.resolve().then(load);

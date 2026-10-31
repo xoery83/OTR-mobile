@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   refreshJourney: vi.fn(),
   scheduleHealth: vi.fn(),
   downstream: vi.fn(),
+  foregroundDownstream: vi.fn(),
   appStateListener: null as ((state: string) => void) | null,
   networkListener: null as
     ((state: { isConnected?: boolean; isInternetReachable?: boolean }) => void) | null,
@@ -41,6 +42,7 @@ vi.mock("@/data/auth/authRepository", () => ({
 }));
 vi.mock("../sync/tripDownstreamCoordinator", () => ({
   refreshAccountTripReads: mocks.downstream,
+  refreshForegroundTripReads: mocks.foregroundDownstream,
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => ({
@@ -117,6 +119,7 @@ describe("default bootstrap sync", () => {
     });
     mocks.listJourneys.mockResolvedValue([]);
     mocks.downstream.mockResolvedValue(undefined);
+    mocks.foregroundDownstream.mockResolvedValue(undefined);
     mocks.selectedJourney.mockResolvedValue(null);
     mocks.refreshJourney.mockResolvedValue({ changed: false, incomplete: false });
   });
@@ -142,11 +145,14 @@ describe("default bootstrap sync", () => {
       mocks.networkListener?.({ isConnected: true });
       await vi.advanceTimersByTimeAsync(0);
       expect(mocks.downstream).toHaveBeenCalledTimes(3);
-      await vi.advanceTimersByTimeAsync(30_000);
-      expect(mocks.downstream).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(14_999);
+      expect(mocks.downstream).toHaveBeenCalledTimes(3);
+      expect(mocks.foregroundDownstream).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mocks.foregroundDownstream).toHaveBeenCalledOnce();
       subscription.remove();
-      await vi.advanceTimersByTimeAsync(30_000);
-      expect(mocks.downstream).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(45_000);
+      expect(mocks.foregroundDownstream).toHaveBeenCalledOnce();
     } finally {
       vi.useRealTimers();
     }

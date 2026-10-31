@@ -1,3 +1,25 @@
+# Native focused downstream checkpoint — 1 November 2026
+
+Installed iPad132 source95e3ffa4 (Native basis127, same bundle/profile/Session and
+install database retained) now uses discovery plus only the focused Trip every45s,
+instead of account-wide30s repeated pulls. Foreground/network catch-up unchanged.
+Stale account/Trip leases are rechecked at actual dequeue; skipped reads do not
+consume cooldown. Existing Reader/SQLite/Queue/Auth/authority unchanged.
+
+Actual normal remote P3 SET_ITEM_TEXT14848b13 on Item612d7e55 returned APPLIED
+receipt7755e325; independent authorized Backend collection confirmed revision3.
+iPad remained in the same Day/Focus, no refresh/navigation: new title appeared
+24.375–26.041s after receipt return. Normal host session cleanup/refresh revoke PASS.
+This is one fallback sample, not a Realtime SLA, raw Supabase requery or physical
+COMMIT time. No new Item/Provider/Schema/authority. See IPAD132_PASSIVE_P3_UPDATE.json.
+
+Private subscription remains CLOSED: current read API lacks typed ordered
+Actor/Trip-bound DENY/regrant proof. Existing trip_members/journey_members revision
+triggers are reused; Core/Auth unique writers own formal qualification. Do not use
+404, capabilities closed or version token as a revoke certificate. Authorized
+version GET correctness passed but12.936s latency is not cheap; its performance
+candidate162e4be3 remains isolated/undeployed and is not included in this main slice.
+
 # MCP / AI Integration — 31 October 2026 / cloud slices verified, public OAuth pending
 
 - Independent MCP branch rebased onto fresh accepted origin/main42652324; no

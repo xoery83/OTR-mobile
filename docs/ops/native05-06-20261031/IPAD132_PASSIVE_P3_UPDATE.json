@@ -1,0 +1,50 @@
+{
+  "status": "NORMAL_REMOTE_P3_TO_PASSIVE_IPAD132_PASS",
+  "source": "95e3ffa4",
+  "build": 132,
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "itemId": "612d7e55-cfa8-4ba7-a625-5e0d622679da",
+  "operationId": "14848b13-7a9b-45f2-9b16-9ccf8485a70d",
+  "receiptId": "7755e325-c731-44a2-83f2-a3ac2f254080",
+  "outcome": "APPLIED",
+  "revision": 3,
+  "newTitle": "Native05 Remote Stay 1031 \u00b7 Focused132",
+  "receiptReceivedAt": "2026-10-31T16:25:27.196Z",
+  "lastAbsent": {
+    "startedAt": "2026-10-31T16:25:51.073424+00:00",
+    "endedAt": "2026-10-31T16:25:51.571063+00:00",
+    "visible": false
+  },
+  "firstVisible": {
+    "startedAt": "2026-10-31T16:25:52.581141+00:00",
+    "endedAt": "2026-10-31T16:25:53.236742+00:00",
+    "rect": {
+      "height": 191,
+      "y": 439.5,
+      "x": 0,
+      "width": 1180
+    }
+  },
+  "receiptReturnToVisibleSeconds": {
+    "greaterThan": 24.375063,
+    "atMost": 26.040742
+  },
+  "physicalCommitLatencyMeasured": false,
+  "independentAuthorizedBackendReadback": true,
+  "rawSupabaseReadback": false,
+  "manualRefresh": false,
+  "navigationDuringObservation": false,
+  "providerCalls": 0,
+  "newItems": 0,
+  "subscription": "CLOSED",
+  "fallback": "existing discovery plus focused Trip every45s; no Native version endpoint enabled",
+  "costLimit": "Request targeting reduced in source; actual DB cost not measured; single sample is not a latency SLA",
+  "normalSessionCleanup": {
+    "runId": "103a7416-6e29-4e0a-8e26-bd8b5d70df9b",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "status": "PASS",
+    "secretsOrOtpRecorded": false
+  }
+}

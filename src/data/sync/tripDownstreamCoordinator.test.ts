@@ -159,3 +159,73 @@ it("coalesces Account discovery without blocking its individual Trip pulls", asy
   expect(f.deps.discover).toHaveBeenCalledOnce();
   expect(f.deps.pull).toHaveBeenCalledTimes(2);
 });
+
+it("summary discovery does not download every historical Trip", async () => {
+  const f = fixture();
+  await f.read.discovery();
+  expect(f.deps.discover).toHaveBeenCalledOnce();
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
+it("a foreground target cannot be rebound to a new Account", async () => {
+  const f = fixture();
+  const expected = await f.deps.scope();
+  f.switchAccount();
+  await expect(f.read.trip(f.first, expected)).rejects.toThrow();
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
+it.each(["blur", "another Trip"])(
+  "does not begin an obsolete foreground pull after deferred scope: %s",
+  async (reason) => {
+    const f = fixture();
+    const expected = await f.deps.scope();
+    const target = {};
+    let current: object | null = target;
+    let release!: () => void;
+    f.deps.scope.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return expected;
+    });
+    const pending = f.read.trip(f.first, expected, () => current === target);
+    await vi.waitFor(() => expect(release).toBeTypeOf("function"));
+    current = reason === "blur" ? null : {};
+    release();
+    await pending;
+    expect(f.deps.pull).not.toHaveBeenCalled();
+    await f.read.trip(f.first, expected, () => true);
+    expect(f.deps.pull).toHaveBeenCalledOnce();
+  },
+);
+
+it.each(["blur", "another Trip"])(
+  "rechecks the foreground lease at actual dequeue without cancelling a lawful in-flight read: %s",
+  async (reason) => {
+    const f = fixture();
+    const expected = await f.deps.scope();
+    let release!: () => void;
+    f.deps.pull.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return true;
+    });
+    const inFlight = f.read.trip(f.first);
+    await vi.waitFor(() => expect(f.deps.pull).toHaveBeenCalledOnce());
+    const target = {};
+    let current: object | null = target;
+    const pending = f.read.trip(f.second, expected, () => current === target);
+    await vi.waitFor(() =>
+      expect(f.deps.scope.mock.calls.length).toBeGreaterThanOrEqual(3),
+    );
+    current = reason === "blur" ? null : {};
+    release();
+    await Promise.all([inFlight, pending]);
+    expect(f.deps.pull).toHaveBeenCalledExactlyOnceWith(expected, f.first);
+    await f.read.trip(f.second, expected, () => true);
+    expect(f.deps.pull).toHaveBeenLastCalledWith(expected, f.second);
+    expect(f.deps.pull).toHaveBeenCalledTimes(2);
+  },
+);
