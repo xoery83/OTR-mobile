@@ -1,0 +1,11 @@
+{
+  "status": "RENDERED_APPROVED_A_ONLY_NOT_SQL_APPLIED",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "startedAt": "2026-10-31T14:11:14.232000Z",
+  "expiresAt": "2026-10-31T14:26:14.232000Z",
+  "sqlSHA256": "a2c4676b3cbaaf3fbecb842fb04976f1ce6906ffd2ff117e7a56092b5c3fc3d2",
+  "closeSQLSHA256": "d4fca70a48e9e7ea51774851b9b1c947cb6c906b7d6e9020ec24c927dbf28f53",
+  "activeBodyMD5": "3d5b67ea94f9aa298be306090f373d12",
+  "sqlDisposition": "NOT_SENT"
+}

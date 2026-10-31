@@ -1,0 +1,13 @@
+{
+  "status": "DIRECT_HUMAN_GATE_APPROVAL_INDEPENDENTLY_VERIFIED",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "candidateCommit": "19253117",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "sourceTurnId": "01a19227-9b05-7dd2-8208-139e2efadda4",
+  "userMessageId": "01a19227-9e61-72b1-9607-7eb70e4dcc9d",
+  "originalHumanAnswer": "同意",
+  "confirmationMessageId": "call_f5f5960d3d7e4a35a1ed0b694236e2d8",
+  "originalConfirmation": "是否批准固定方案 `19253117 / Gate b3e66e9d…`，由我完成两轮正常 OTP／OAuth Consent 只读 QA？\n\n① 重连现有 ChatGPT OTR DEV QA，读取合成 Nelson QA Trip、事项列表及一个 P3，并验证跨账号拒绝和撤销后拒绝。\n② 第一轮独立关闭后，为 Claude 注册一个新的手动 public OAuth 客户端（唯一回调 `https://claude.ai/api/mcp/auth_callback`），连接同一合成 QA 账号并完成只读与撤销验证。\n\n每轮从首个临时配置变化起最多 30 分钟，互不重叠；访问 Token 最长 60 秒。临时启用 DEV OAuth／仅 QA 的读取策略，DCR 显式关闭；完成、失败或到期均撤销授权并恢复服务。Claude 客户端仅保留无有效授权的注册元数据。仅使用合成 QA 账号 `1f3d…`，不访问真实 Nelson，不开放写入或生产环境。\n\n详细方案：[OWNER_GATE.md](/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OWNER_GATE.md)。此确认不代表已取得共享 Host 写入锁，执行前仍须重新核验并短时 CAS。\n- 确认，执行这两轮只读 QA\n- 暂不授权",
+  "scope": "two non-overlapping <=30min read-only QA windows; ChatGPT835 then independently closed; one new manual public Claude client; QA1f only;60s access; no write/real Nelson/production",
+  "activationStarted": false
+}

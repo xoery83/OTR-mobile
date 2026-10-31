@@ -1,0 +1,9 @@
+{
+  "status": "FINITE_A_SIGNING_INDEPENDENTLY_VERIFIED",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "sqlSHA256": "a2c4676b3cbaaf3fbecb842fb04976f1ce6906ffd2ff117e7a56092b5c3fc3d2",
+  "disposition": "ACKNOWLEDGED",
+  "deadline": "2026-10-31T14:26:14.232000Z",
+  "verifiedAt": "2026-10-31T14:18:29.047772Z",
+  "activeBodyMD5": "3d5b67ea94f9aa298be306090f373d12"
+}

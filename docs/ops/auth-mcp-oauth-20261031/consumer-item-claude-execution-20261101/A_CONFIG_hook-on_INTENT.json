@@ -1,0 +1,32 @@
+{
+  "step": "hook-on",
+  "status": "ACKNOWLEDGED_AND_INDEPENDENT_DIFF_READBACK",
+  "before": [
+    {
+      "path": [
+        "auth",
+        "hook",
+        "custom_access_token",
+        "enabled"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": true,
+      "remote": false
+    },
+    {
+      "path": [
+        "auth",
+        "hook",
+        "custom_access_token",
+        "uri"
+      ],
+      "class": "local_only",
+      "declared": true,
+      "local": "pg-functions://postgres/public/otr_mcp_qa_access_token",
+      "remote": null
+    }
+  ],
+  "remainingDeclared": [],
+  "utc": "2026-10-31T14:13:11.130084Z"
+}

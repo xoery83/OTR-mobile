@@ -1,0 +1,40 @@
+{
+  "status": "NO_BLOCKER_A_CLOSURE_EVIDENCE_SCOPE",
+  "reviewer": "/root/auth_phase1_review",
+  "method": "Independent read-only review of local receipts and AS reload screenshot; no Host/SQL/UI re-execution",
+  "scope": [
+    "A close evidence retains raw action FAILED_OR_UNKNOWN and no new consumer PASS",
+    "Hook/runtime restored before immutable expiry; final AS/site/grant observations are later and are not claimed pre-deadline",
+    "B prepared-only, no registration/window/READY"
+  ],
+  "remaining": [
+    "A consumer actual first failure still awaits MCP report",
+    "B waits fresh software handoff and consumer PREPARED ACK"
+  ],
+  "files": {
+    "A_AS_OFF_READBACK.png": "24cfdf7164eda22eaf89d62d60b843bc0e1425bf8453626354fe123dfeb83360",
+    "A_AS_ON_DCR_OFF.png": "75657ab524be498b2a576f61fda5d163ab7fa604410e8a9c4ed80c9075c297f8",
+    "A_COMPLETE_CLOSED.json": "a6c71cf46bd1cbd0592f4dfb44ee87ea9686ad566ecaa86bb15ff6d597bcb6f8",
+    "A_CONFIG_dcr-off_INTENT.json": "3aa7e91badf8822a6852cd23b41fcd1088a3629bcc529602e8f4184f5727f00d",
+    "A_CONFIG_hook-off_INTENT.json": "905ae95fc27603c50b66d6d1d3dd981f7f4d2eaf346eb4ff120c66c3da065d94",
+    "A_CONFIG_hook-on_INTENT.json": "de0d12ed45c21a2c518e4e6b72898185e7561e49f3340cbd5a9a752600bf5678",
+    "A_CONFIG_server-off_INTENT.json": "ac545aebfb0494cb892c386a1eca9b1a28dd3fa424426af1ca624cd11abbd80e",
+    "A_CONFIG_site-on_INTENT.json": "ecd2da76a0d0977d4321b9bac019103c00ac11c8f1fdcdedfc27a88d028e620a",
+    "A_DEADLINE_CLOSE_TRIGGER.json": "3ebbc2085a56159f326294344b34045ad7fdd312aff963d09d005cd47dd1f55d",
+    "A_HOOK_CLOSED.json": "eeb2f2fb2e82c2797cb10ba1e124f8a0603980bf1b731b44be9e82390c707521",
+    "A_HOST_PLAN.json": "53e0b5bd098b222cf6ba923f25b3d1dbd305513529d89b2b2bb1c0ce3a03c924",
+    "A_RENDERED_POLICY.json": "08fbcc966422859974d17572535577c0d3026c11a750a5035f9573474f22e2e0",
+    "A_RUNTIME_CLOSE_RECEIPT.json": "b351b96cb58f066686dded9d6f01e71ab4136c1ec4c4d96b363f8696c96e9c9d",
+    "A_RUNTIME_DEPLOY_INTENT.json": "a17097e9953c8e6efe03882c48f0e4bf08ebff0caebefd3ce5944b161b053dfb",
+    "A_RUNTIME_DEPLOY_RECEIPT.json": "f2d0025f019d50cc0fa23f54ce3b495d8ab0f805bcf10ce780ac3c13cc537863",
+    "A_SIGNING_ACTIVATION.json": "752b5fac7c6649f2a651f238e7d1537e232da8f4b5f6bdf3bd262a728af68148",
+    "A_SITE_RESTORE.json": "1235e9c791eca3771230b7520a16c7bcb661ac3279b6e75adbcae52107b043c7",
+    "A_SQL_ACTIVATE_INTENT.json": "4c4b26790ff953d3abf36a4acca3044bcbd5cd971536708aa56df1023cea4150",
+    "A_SQL_CLOSE_INTENT.json": "4295098d28181eabd4ee7fa83532cfb6b763ff9675fe60fb019933a5345b97da",
+    "A_STAGED_ONLY.json": "182240e52d88dc464bd442ee377c084a9cf415efd334b54c98b31992d188a3f3",
+    "A_WINDOW_START_INTENT.json": "2f9cea445f8cbd893ddd24138dba4ddb15492a658a618039b637ec67f524720c",
+    "B_PREPARATION.json": "4cdc76ace4168bdef1c058aa7e0856d11cd981fa6e039d249b9e1bfcc2ac5ac7",
+    "CLIENT835_PREFLIGHT.json": "1f6d28e2049739fa3d395ffd8f92f08cac0fa353ac2bbc6835c09267e8a434bf",
+    "OWNER_APPROVAL_DIRECT.json": "719dcb1327771940a3c67631ea87c30d000c9041036a52da95a59e094f257652"
+  }
+}

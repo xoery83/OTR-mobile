@@ -1,0 +1,16 @@
+{
+  "before": [
+    {
+      "path": [
+        "auth",
+        "site_url"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": "http://localhost:3000",
+      "remote": "https://api-dev.xoery.art"
+    }
+  ],
+  "disposition": "ACKNOWLEDGED",
+  "status": "ORIGINAL_SITE_INDEPENDENTLY_RESTORED"
+}

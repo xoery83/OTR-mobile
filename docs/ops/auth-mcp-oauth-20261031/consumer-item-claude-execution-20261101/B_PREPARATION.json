@@ -1,0 +1,30 @@
+{
+  "status": "PREPARED_INPUTS_ONLY_NOT_STARTED",
+  "observedAt": "2026-10-31T14:40:05.530990+00:00",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "aClosedReceipt": "A_COMPLETE_CLOSED.json",
+  "clientId": null,
+  "clientRegistrationPerformed": false,
+  "windowStarted": false,
+  "newClientName": "OTR DEV QA - Claude Read",
+  "redirectUris": [
+    "https://claude.ai/api/mcp/auth_callback"
+  ],
+  "qaAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "authorizationScopes": [
+    "openid",
+    "offline_access"
+  ],
+  "businessScopes": [
+    "otr.trips.read"
+  ],
+  "maxWindowMinutes": 30,
+  "maxAccessTokenSeconds": 60,
+  "pending": [
+    "Native fresh accepted software handoff and Source EMPTY readback",
+    "MCP explicit PREPARED ACK and normal consumer flow availability"
+  ],
+  "registrationPrecondition": "Configure and independently verify existing deny-all Hook before creating the one new manual public/none client; registration is inside B window budget",
+  "consumerReadySignal": "A separate B_READY.json will be written only after exact runtime/client/active Hook verification; this preparation file is not READY",
+  "newSecretOrAuthorityCreated": false
+}

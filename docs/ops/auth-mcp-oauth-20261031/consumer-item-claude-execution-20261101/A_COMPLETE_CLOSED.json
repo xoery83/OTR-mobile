@@ -1,0 +1,18 @@
+{
+  "status": "A_INDEPENDENTLY_CLOSED",
+  "observedAt": "2026-10-31T14:36:56.665894+00:00",
+  "activeQaClientGrants": 0,
+  "siteAndHookConfigDiff": [],
+  "oauthServerOff": "A_AS_OFF_READBACK.png",
+  "runtimeReceipt": "A_RUNTIME_CLOSE_RECEIPT.json",
+  "normalSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "consumerAction": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+  "consumerReadPass": false,
+  "newAWindowPermitted": false,
+  "qaAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "grantReadPredicate": "auth.oauth_consents: exact user_id/client_id AND revoked_at IS NULL",
+  "normalControlRunId": "3d957965-c2f4-4e89-b5ba-5e05fcad0013",
+  "rawActionCompleted": false,
+  "rawActionStatus": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY"
+}

@@ -1,0 +1,16 @@
+{
+  "result": {
+    "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+    "containerId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+    "image": "sha256:67f21d4975f953d030d395533fe1a2a0f7b206c970dc80ed04476a07ca101ad1",
+    "finiteConfigAbsent": true,
+    "health": "healthy"
+  },
+  "deliveryTrace": {
+    "requestedAt": "2026-10-31T14:25:22.440682+00:00",
+    "readyAt": "2026-10-31T14:25:22.465096+00:00",
+    "acquiredAt": "2026-10-31T14:25:22.465164+00:00",
+    "mutationFinishedAt": "2026-10-31T14:25:38.313897+00:00",
+    "releasedAt": "2026-10-31T14:25:38.313938+00:00"
+  }
+}

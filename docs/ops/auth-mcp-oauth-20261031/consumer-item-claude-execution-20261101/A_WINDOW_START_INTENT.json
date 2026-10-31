@@ -1,0 +1,11 @@
+{
+  "status": "FIRST_TEMP_CONFIG_WRITE_INTENT",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "startedAtMs": 1793455874232,
+  "expiresAtMs": 1793456774232,
+  "startedAt": "2026-10-31T14:11:14.232000Z",
+  "expiresAt": "2026-10-31T14:26:14.232000Z",
+  "maximumMinutes": 15,
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "windowId": "ee63728befb7476f907572b50038d80e"
+}
