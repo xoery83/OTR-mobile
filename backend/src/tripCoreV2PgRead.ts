@@ -51,9 +51,9 @@ export function createCorePgReader(
       try {
         await lease.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
         began = true;
-        await lease.query("SET LOCAL statement_timeout='5000ms'");
-        await lease.query("SET LOCAL lock_timeout='1000ms'");
-        await lease.query("SET LOCAL TIME ZONE 'UTC'");
+        await lease.query(
+          "SELECT set_config('statement_timeout','5000ms',true),set_config('lock_timeout','1000ms',true),set_config('TimeZone','UTC',true)",
+        );
         const identity = (
           await lease.query("SELECT session_user AS principal,current_user AS role")
         ).rows[0];

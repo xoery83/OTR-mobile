@@ -118,6 +118,37 @@ function fixture() {
   };
 }
 
+it("sets the same transaction-local read limits in one round trip before identity and Actor checks", async () => {
+  const f = fixture();
+  await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
+  const queries = f.lease.query.mock.calls.map(([sql]) => sql);
+  expect(queries.slice(0, 4)).toEqual([
+    "BEGIN ISOLATION LEVEL REPEATABLE READ",
+    "SELECT set_config('statement_timeout','5000ms',true),set_config('lock_timeout','1000ms',true),set_config('TimeZone','UTC',true)",
+    "SELECT session_user AS principal,current_user AS role",
+    "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
+  ]);
+  expect(queries.filter((sql) => sql.startsWith("SET LOCAL statement_timeout") ||
+    sql.startsWith("SET LOCAL lock_timeout") || sql.startsWith("SET LOCAL TIME ZONE")))
+    .toEqual([]);
+  expect(queries.at(-1)).toBe("COMMIT");
+});
+
+it("rolls back a failed combined settings statement before identity, Actor or graph reads", async () => {
+  const f = fixture();
+  f.lease.query.mockReset();
+  f.lease.query.mockResolvedValueOnce({ rows: [] })
+    .mockRejectedValueOnce(Error("READ_SETTINGS_FAILED"))
+    .mockResolvedValueOnce({ rows: [] });
+  await expect(f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId))
+    .rejects.toThrow("READ_SETTINGS_FAILED");
+  expect(f.lease.query.mock.calls.map(([sql]) => sql)).toEqual([
+    "BEGIN ISOLATION LEVEL REPEATABLE READ",
+    "SELECT set_config('statement_timeout','5000ms',true),set_config('lock_timeout','1000ms',true),set_config('TimeZone','UTC',true)",
+    "ROLLBACK",
+  ]);
+});
+
 it("returns current internal ACL state only after the existing snapshot commits; collection remains original-disabled", async () => {
   const f = fixture();
   expect(f.acquire).not.toHaveBeenCalled();
