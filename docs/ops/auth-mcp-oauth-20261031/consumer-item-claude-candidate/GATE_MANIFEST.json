@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "status": "CANDIDATE_NOT_APPROVED_OR_ACTIVATED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "sourceCommit": "4c5baacf45b4e215de7fe8e31fd355e92a0045d5",
+  "opsSourceCommit": "3970e4fc53863161a4ffb016f43aedf95ba0d69c",
+  "fixtureCommit": "464734a3290df25cb1f7f5d4dc9528f250f05281",
+  "maximumWindows": 2,
+  "maximumWindowMinutes": 30,
+  "overlapAllowed": false,
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "newClientMaximum": 1,
+  "newFunctionsRolesRlsGrant": false,
+  "writeAllowed": false,
+  "runtimeParameters": [
+    "existing835 or one new issuer-assigned Claude client UUID",
+    "one UTC deadline per window <= first temporary config change +30min"
+  ],
+  "files": {
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OWNER_GATE.md": "8750ce6305da151198ce33120885743b4fb1fadc315130d10c7bbf3abf73e7c7",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/chatgpt-item-read-smoke.json": "b9f817017a848e3079fcf2722dfa2b313ec93d1eb811376464bd3777369630f0",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/claude-read-registration-proposal.json": "23833d143e45895342dd272974ac73327a355d8c30463d1780e8731f20572e36"
+  },
+  "sourceFiles": {
+    "4c5baacf45b4e215de7fe8e31fd355e92a0045d5:backend/mcp/source-pins.json": "03fbd30f7ebe5d7ed8976c1127689a26e3e59ac1950e188c40ada19481353df3",
+    "4c5baacf45b4e215de7fe8e31fd355e92a0045d5:scripts/auth/build-mcp-qa-runtime.mjs": "3777b513b9dcdf6458596d5bf2f8b5dc4d03d742b7b199ad90253f795c90fc1a",
+    "4c5baacf45b4e215de7fe8e31fd355e92a0045d5:scripts/auth/build-oauth-consent.mjs": "d0da6a1361c5a0daaed6b293a8c67f860b6ca48f39bf7e3f8b8a801c30f16508",
+    "3970e4fc53863161a4ffb016f43aedf95ba0d69c:docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "3970e4fc53863161a4ffb016f43aedf95ba0d69c:docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "3970e4fc53863161a4ffb016f43aedf95ba0d69c:scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341"
+  },
+  "gateSHA256": "c3922653ab17d51b800b550ed7969a09f68e7f2a5a153cbd8c1100273f0dd9ab"
+}

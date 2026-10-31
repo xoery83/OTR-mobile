@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "authority": "FROZEN_READ_ONLY_SMOKE_INPUT_NOT_WINDOW_ACTIVATION",
+  "qa_account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "client_id": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "business_scopes": [
+    "otr.trips.read"
+  ],
+  "access_token_ttl_seconds": 60,
+  "max_window_minutes": 30,
+  "own_target": {
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+    "family": "P3",
+    "expected_property_name": "Synthetic QA Lodge",
+    "expected_start_local_date": "2026-12-10",
+    "expected_end_local_date": "2026-12-13",
+    "revision": "Must read actual server revision; compare independently, never infer."
+  },
+  "execution": "One consumer message/tool call at a time. Observe and record actual result before sending the next message. No SDK rerun/list_trips/Create/Edit/Apply.",
+  "steps": [
+    {
+      "tool": "get_trip",
+      "arguments": {
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2"
+      },
+      "consumer_prompt": "这是已批准的合成 QA 只读验收。请通过现有 OTR DEV QA 连接，仅实际调用一次 get_trip，trip_id=cc44a705-6f43-41e0-a2f9-16f334b2a6b2。报告服务器返回的 Trip ID、名称、Revision（若合同未提供则明确没有）。不要调用其他工具，不要修改数据，不要使用上次结果代替实际读取。"
+    },
+    {
+      "tool": "list_trip_items",
+      "arguments": {
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "limit": 25
+      },
+      "consumer_prompt": "请严格只实际调用一次 OTR DEV QA 的 list_trip_items，trip_id=cc44a705-6f43-41e0-a2f9-16f334b2a6b2，limit=25，不加日期过滤。列出实际返回 Item 的 ID、P1–P6 类型、Revision 和真实日期精度，保留 next_cursor；如有下一页只报告未读完，不自动继续。不要调用其他工具或写入。"
+    },
+    {
+      "tool": "get_trip_item",
+      "arguments": {
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "3616da44-0d35-4400-a739-01f1029565ea"
+      },
+      "consumer_prompt": "请仅实际调用一次 OTR DEV QA 的 get_trip_item，trip_id=cc44a705-6f43-41e0-a2f9-16f334b2a6b2，item_id=3616da44-0d35-4400-a739-01f1029565ea。报告实际 P3 类型、Item/Trip ID、Revision、propertyName、住宿起止当地日期和已有时间精度/时区；没有的字段明确没有，不补造时间或已预订状态。不要调用其他工具或写入。"
+    },
+    {
+      "tool": "get_trip_item",
+      "arguments": {
+        "trip_id": "9d10b9d7-6744-4355-b05d-728bf929d208",
+        "item_id": "f3ca9163-1dbb-4d1b-8a0b-a06bce60c664"
+      },
+      "expected": "ACCESS_DENIED_OR_NOT_VISIBLE; never SERVER_CONFIRMED private data",
+      "consumer_prompt": "这是已批准的跨账号合成 QA 拒绝测试。请仅实际调用一次 OTR DEV QA 的 get_trip_item，trip_id=9d10b9d7-6744-4355-b05d-728bf929d208，item_id=f3ca9163-1dbb-4d1b-8a0b-a06bce60c664。只报告实际拒绝或错误状态；若意外返回数据，立即停止，不展开字段。不要写入或尝试其他身份。"
+    }
+  ],
+  "write_qualification": "Record actual tool visibility under this Read-only policy only. No Write scope, consent, tool activation or platform-Write limitation is inferred.",
+  "independent_readback": "Compare the same actual Trip/Item ID, revision and typed P3 fields with a separate authorized normal-QA Backend read; Auth may provide its own independently executed proof, never its Session/token. Matching display text alone is insufficient.",
+  "revoke_probe": {
+    "precondition": "Auth independently revokes this client grant while the qualified route is still online; do not reopen authorization.",
+    "tool": "get_trip_item",
+    "arguments": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "item_id": "3616da44-0d35-4400-a739-01f1029565ea"
+    },
+    "consumer_prompt": "请用同一 OTR DEV QA 连接，仅重新实际调用一次 get_trip_item，trip_id=cc44a705-6f43-41e0-a2f9-16f334b2a6b2，item_id=3616da44-0d35-4400-a739-01f1029565ea，验证当前访问状态。不能复用之前的详情；如失败仅报告实际错误，不重连、登录、刷新工具或重新授权。",
+    "expected": "No fresh authorized data; correlate owning401/invalid-grant logs separately from consumer generic UI errors."
+  },
+  "cleanup": "Close finite Hook/grant/AS; restore exact fresh Host baseline; independently prove normal-control Session cleanup and release receiver/Host. Keep raw failures unchanged; no real Owner Nelson access."
+}

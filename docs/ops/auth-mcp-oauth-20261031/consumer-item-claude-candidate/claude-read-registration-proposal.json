@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "authority": "PROPOSAL_ONLY_NOT_AUTHORIZED_FOR_REGISTRATION_OR_ACTIVATION",
+  "client_name": "OTR DEV QA - Claude Read",
+  "client_type": "public",
+  "token_endpoint_auth_method": "none",
+  "client_id": null,
+  "client_id_assignment": "New issuer-assigned UUID; never reuse or update the ChatGPT835 registration.",
+  "redirect_uris": [
+    "https://claude.ai/api/mcp/auth_callback"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "code_challenge_methods": [
+    "S256"
+  ],
+  "issuer": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "authorization_scopes": [
+    "openid",
+    "offline_access"
+  ],
+  "signed_business_scopes": [
+    "otr.trips.read"
+  ],
+  "qa_account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "access_token_ttl_seconds": 60,
+  "maximum_finite_window_minutes": 30,
+  "transport": "Streamable HTTP",
+  "actual_authorize_redirect_verified": false,
+  "official_auth_source": "https://claude.com/docs/connectors/building/authentication",
+  "preconditions": [
+    "Auth owning Writer maps this semantic proposal to its existing issuer registration API and independently reads back exact public client metadata. This is not an HTTP request body.",
+    "Review exact new client/callback/QA/read-only Hook delta, active-grant binding and current Host baseline; old ChatGPT Gate covers none of these changes.",
+    "Fresh exact Owner approval before protected activation and action-time browser permission confirmation before granting Claude access.",
+    "Before OTP/Consent/token issuance, compare actual authorize redirect/client/resource/S256/scopes with approved values; any mismatch stops.",
+    "Normal independent QA Session only; no reused Session, pasted bearer, Service Role, DCR/CIMD or new issuer.",
+    "No Write/real Owner Trip or unrestricted Account; close Hook/grant/AS window, independently restore fresh Host baseline and prove cleanup."
+  ]
+}
