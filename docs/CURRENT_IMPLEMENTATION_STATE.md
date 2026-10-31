@@ -152,40 +152,32 @@ integration must retain both, not roll back the old default image.
 Fresh local main/origin-main now both8f79a4214d39b7f174ef61a82aa27d31b10a8156
 (MCP Git-only integration, released). Future Auth integration must retain that
 default-closed MCP code and original primary dirty/index/fullDiff, then recheck HEAD. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
-MCP P0 normal Account OAuth read is a separate minimal owning-interface task;
-it does not wait for all Guest/People work. Public discovery is qualified, but
-Hosted OAuth/client/consent/hook configuration and real resource issuance are not.
-See ops/auth-mcp-oauth-20261031/OAUTH_INTERFACE_DELTA_V1.md: no second grant DB,
-separate sessionId, same-issuer online Account/grant check, read-only client
-candidate with explicit consent and resource-bound signed business permissions.
-Standard OIDC scopes are not Trip authority. No OAuth settings or mount enabled.
-Latest closed OAuth software9b0983ad adds normal OTP Consent, same-Account read
-binding, normal Business resource-token rejection and bounded Node ingress.
-Actual DEV Dashboard read: OAuth OFF, no apps/hooks, Site URL localhost:3000,
-redirect list empty. Proposed finite QA Gate9dc271f6 targets only Account1f and
-one public client with two exact callbacks; Owner directly approved9dc271f6.
-Closed hook function installed and independent body/ACL/role readback PASS;
-CLI sparse config enabled only the hook enabled/uri fields,22 other reported
-settings unchanged (0c1fc3be). Normal QA OTP/repository/refresh Native claims PASS;
-rotated refresh revoked, duplicate logout harness failure retained and independently
-reconciled (new Sessions/unrevoked refresh0). OAuth Server ON/DCR OFF/Site URL
-api-dev configured via sparse four-field push with independent diff; deny-all
-hook remains active. One public manual client83504d3f independently read back
-auth none/two exact callbacks/code+refresh. Default-closed software deployed43af/
-image8217 on exact base76c8+Auth9b (capturef18b/runtimeb518/browser75cb); original
-Env/HostConfig/mounts/Native/PNG retained, rollback a260 intact, Host released
-05:34:12Z. Finite public config absent and no OAuth token issued. New delta
-35 Consent/runtime tests and11 real Node HTTP tests/typecheck/lint PASS; prior
-hook PostgreSQL8 groups reused. Root Host coordination and independent narrow
-Review NO_BLOCKER_PROPOSED_GATE_ONLY. Next normal QA OTP smoke before enabling
-OAuth (configuration steps now complete). Next finite public runtime mount and
-real SDK code/S256→own/foreign read→refresh/revoke, then ChatGPT. No Hosted OAuth E2E PASS. See ops/auth-mcp-oauth-20261031/
-{OWNER_GATE.md,GATE_MANIFEST.json,SOFTWARE_READINESS.json}.
-Auth request-only verifier candidate d8f8b0fa is unmounted/default-closed;
-2 focused suites52/typecheck/lint PASS, independent source Review
-NO_BLOCKER_CLOSED_CANDIDATE with separate2 suites52 PASS. It
-uses same-issuer bounded user/grants reads, no Session/store; actual Hosted
-resource-token/session/revocation acceptance remains unqualified.
+MCP OAuth is the current separate Golden Slice: registered QA1f normal OTP →
+real Code/S256 → own Trip/P3 read and foreign9d10 NOT_VISIBLE → refresh/revoke;
+then ChatGPT. No Hosted OAuth E2E PASS yet.
+Owner directly approved exact finite Gate9dc271f6 (manifest928f3f7c). DEV
+project tuqigdxrvrerfewsxqgm now has the default-deny Token Hook installed and
+configured; body/owner/invoker/ACL/role flags independently verified. CLI sparse
+config changed only Hook enabled/uri, then OAuth Server ON/DCR OFF, Site URL
+https://api-dev.xoery.art and authorization path /oauth/consent. Other reported
+config unchanged. One manual public client83504d3f-59d4-43fd-99b1-bebc54c40f7d,
+auth none, exact ChatGPT and127.0.0.1:18764 callbacks, code+refresh independently
+read back. No finite signing body or public runtime config has been activated.
+Normal QA1f OTP/repository/refresh and unchanged Native claims PASS. Rotated
+session logout and refresh rejection PASS; a second logout in the smoke wrapper
+caused UNKNOWN, retained and independently reconciled (new Sessions/unrevoked
+refresh0), own receiver lock released. No automatic OTP retry.
+Actual closed software is base76c8ccfb + reviewed Auth9b0983ad, only8 owning files
+and3 shared regions, no Parent/Profile candidate. Source review NO_BLOCKER,
+5 suites84/capture build PASS. Hosted43afbc09/image8217aba6 healthy; capturef18b,
+runtimeb518/browser75cb, server782692 unchanged. Env/HostConfig/mounts/Native/PNG
+preserved, retained a260 rollback intact. Host released2026-10-31T05:34:12Z.
+Next: after Root's Photo business window closes, add only the approved finite
+public config, qualify real mount, activate the single QA/client ≤30min hook,
+run SDK then ChatGPT; close hook/revoke grant/restore exact default runtime and
+OAuth settings. No new issuer/session/grant DB or Business bearer forwarding.
+See ops/auth-mcp-oauth-20261031/{OWNER_APPROVAL.json,GATE_MANIFEST.json,
+HOSTED_SOFTWARE_DEPLOY_RECEIPT.json,NORMAL_SESSION_HOOK_SMOKE.json}.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.

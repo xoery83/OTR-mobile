@@ -1,0 +1,9 @@
+{
+  "finiteOperatorSHA256": "fd1c53089b237c27990c7c0a14db1d6fdc020ca6af86f2c6068ea52e1bd08365",
+  "restoreAdapterSHA256": "5805296d58d8c5533750fae2fd9943615fbd88b89de4150429a77ea990c03361",
+  "reusedRestoreHelperSHA256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+  "status": "NO_BLOCKER_OPERATOR_SOURCE_ONLY",
+  "reviewer": "/root/auth_phase1_review",
+  "independentValidation": "7/7 offline checks PASS; hashes and narrow diff checked",
+  "hostExecuted": false
+}

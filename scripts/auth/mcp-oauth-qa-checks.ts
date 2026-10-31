@@ -16,6 +16,15 @@ const result = z.object({
   content: z.array(z.object({ type: z.string(), text: z.string().optional() })),
 });
 
+export async function closeOAuthQa(
+  closeHook: () => Promise<void>, revokeGrant: () => Promise<void>,
+) {
+  let failed = false;
+  try { await closeHook(); } catch { failed = true; }
+  try { await revokeGrant(); } catch { failed = true; }
+  assert(!failed, "QA_CLEANUP_UNCONFIRMED");
+}
+
 // DEV-only assertions for the existing official SDK harness, never an authority or token store.
 export async function checkOAuthQaToken(
   accessToken: string,

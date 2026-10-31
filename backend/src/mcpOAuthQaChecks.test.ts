@@ -1,6 +1,16 @@
-import { expect, it } from "vitest";
-import { checkOAuthQaReads, checkOAuthQaToken } from "../../scripts/auth/mcp-oauth-qa-checks";
+import { expect, it, vi } from "vitest";
+import { checkOAuthQaReads, checkOAuthQaToken, closeOAuthQa } from "../../scripts/auth/mcp-oauth-qa-checks";
 import { registeredHostQa } from "../../scripts/auth/registered-qa-host-session";
+
+it("attempts grant revocation after an unknown close and never reports partial cleanup as PASS", async () => {
+  const close = vi.fn(async () => { throw Error("CLOSE_TIMEOUT"); });
+  const revoke = vi.fn(async () => {});
+  await expect(closeOAuthQa(close, revoke)).rejects.toThrow("QA_CLEANUP_UNCONFIRMED");
+  expect(revoke).toHaveBeenCalledOnce();
+  revoke.mockImplementation(async () => { throw Error("REVOKE_TIMEOUT"); });
+  await expect(closeOAuthQa(close, revoke)).rejects.toThrow("QA_CLEANUP_UNCONFIRMED");
+  expect(revoke).toHaveBeenCalledTimes(2);
+});
 
 it("refuses a different verified Account and any write grant", async () => {
   const grant = { accountId: registeredHostQa.accountId, clientId: "qa-client",
