@@ -24,10 +24,10 @@ AnyexistingpaidAttempt/call/UNKNOWN/recoverableresult blocksreplacement. Noextra
 
 Source window8ca564 started18:08Z, CLOSED early afternewFAIL: independentSourceafterCLOSED,
 workerinactive/EMPTY, timersstopped; rootcontrols noactiveSourcewindow. Latest compatible
-Backend now761b0581/image34a9e8f8/capture2cd578e7 (Root f2ab read-only Activity); Source883e/Auth/MCPf9/
-server7826/browser9264 unchanged, Env b12/Hostd501/Mount14ee all23files preserved. Native phase
+Backend nowfdd5c151/image7371d767/capture0cafa2c2 (Auth default-closed overlay); Source883e/Rootf2/Native3c3 preserved; MCPad47/
+server7826/browser6040 (Auth closed candidate), Env b12/Hostd501/Mount14ee all23files preserved. Native phase
 logs only, noSQL/Authority change. Before nextwindow reanchor existingcloser tothisactualdefault;
-latest2c03/a3 retained stoppedrollback; earlier e786/4ef2 also retained. Do not restore old incompatible image/config.
+latest761b/34a retained stoppedrollback; earlier2c03/a3 ande786/4ef2 retained. Do not restore old incompatible image/config.
 
 Stable Import HEAD beforethischeckpoint a2bb2578: Source4090 preleaseAuthfix + Native
 VERIFY ADMITTED explicit same-executea2cee341 + safePG diagnosticsa2bb. ActualAD5 installed
@@ -52,6 +52,19 @@ deployed: independenthealth200/protected401/all4artifacts+23files/configunchange
 SourcePhoto/PDFCLOSED and pendinghelperGRANTabsent verified. No model or feature E2E claimed.
 The four Native history-copy lines remain LOCAL_PASS/not installed; AD5 remains126.9.
 See photo/recovery-execution-20261101/activity-expiry-deploy/.
+
+Auth default-closed software integration completed under Standing deployment authority:
+5Authinputs exactly match committedAuth62b0879f; other346codeinputs preserveRoot/Native.
+Actualfdd5/7371/capture0cafa/MCPad47/browser6040, independently4pins/ImageConfig/runtime/
+23files/health200/protected401/lockreleased verified. MCPread/writeconfigabsent, SourcePDF/
+PhotoCLOSED, helperGrantstillabsent; noSQL/Authority/Provider changes. NotAuthWriteE2E.
+Firstsoftwareattempt hitreusedbackupNamecollision, automatically restoredhealthy761; fix
+onlyuniqueplanNames+pre-mutationbackupNameassert (actualcollisionRED/freeNamesGREEN), then
+same7371image deployed. Preserveallfailed/staged/rollbackcontainers andevidence. Never reuse
+oldbackupNamesunchecked. RootHostWriterreleased toNative/Auth forfreshcoordination.
+Evidence: photo/recovery-execution-20261101/auth-compatible-default-7371/. Durablecode-only
+assembly/operators privately preserved .env.auth-write-root-compatible-20261101/ (noEnv/DB/
+Session/Keychain/credentials copied). PendingPhotoGatebc37 SQL/artifacthashes unchanged.
 
 Older checkpoints below are historical and superseded by the current header.
 

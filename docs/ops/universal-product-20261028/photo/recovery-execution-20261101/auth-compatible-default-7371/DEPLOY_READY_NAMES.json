@@ -1,0 +1,21 @@
+{
+  "status": "READY_NAMES_REPAIRED_NOT_DEPLOYED",
+  "planPath": "/opt/otr/dev-backend/build/auth-write-root-7371-names/deploy-plan.json",
+  "planSHA256": "bf6ec1d1664821d2dbefa45d82a78427269fe029b33124283ddbc4706253d148",
+  "deployScriptSHA256": "99d8c45bc19cefd32f5794399aa6c63c40f87e914f574078907d4fd85db60f56",
+  "candidateImage": "sha256:7371d76732781af8990027280afb1662f4bed8a837e69f1a8595ef992aa60142",
+  "beforeContainerId": "761b0581d8711e7a2a2d87593ab82c262547fbd99b70820fc64f06f61af1361f",
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "server-capture.mjs": "0cafa2c28d43178856562fd6d017ad5bafe998bee8df0038a7f020c19c7fccdf",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "configDiff": false,
+  "authorityDiff": false,
+  "rollbackContainerRetained": true,
+  "actualCollisionReproduced": true,
+  "newNamesUnoccupied": true,
+  "oldPlanAndCreatedCandidateRetained": true,
+  "controllerDelta": "one read-only backup-name occupancy assert before any service mutation"
+}

@@ -1,0 +1,11 @@
+{
+  "authHEAD": "62b0879f83c2891d7e2c00518da853331ac61848",
+  "allFiveInputsMatchCommittedHEAD": true,
+  "matches": {
+    "backend/src/mcpQaRuntime.ts": true,
+    "backend/src/mcpOAuthGrantVerifier.ts": true,
+    "backend/src/mcpAccountReadBinding.ts": true,
+    "src/data/auth/mcpOAuthConsentRepository.ts": true,
+    "backend/src/mcpAccountWriteBinding.ts": true
+  }
+}

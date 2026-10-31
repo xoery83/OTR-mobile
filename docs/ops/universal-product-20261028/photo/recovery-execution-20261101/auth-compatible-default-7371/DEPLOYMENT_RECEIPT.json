@@ -1,0 +1,13 @@
+{
+  "exit": 1,
+  "status": "RECONCILE_REQUIRED",
+  "deliveryTrace": {
+    "requestedAt": "2026-10-31T19:55:24.045586+00:00",
+    "readyAt": "2026-10-31T19:55:24.045586+00:00",
+    "acquiredAt": "2026-10-31T19:55:28.806358+00:00",
+    "mutationFinishedAt": "2026-10-31T19:55:35.398733+00:00",
+    "releasedAt": "2026-10-31T19:55:35.398768+00:00"
+  },
+  "errorClass": "CalledProcessError",
+  "reason": null
+}

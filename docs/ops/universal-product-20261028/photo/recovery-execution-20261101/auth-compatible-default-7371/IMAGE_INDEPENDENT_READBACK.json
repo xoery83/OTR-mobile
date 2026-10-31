@@ -1,0 +1,19 @@
+{
+  "status": "ROOT_INDEPENDENT_IMAGE_PINS_AND_DEFAULT_CLOSED_PASS",
+  "baselineCID": "761b0581d8711e7a2a2d87593ab82c262547fbd99b70820fc64f06f61af1361f",
+  "baselineImage": "sha256:34a9e8f89ba0193e6b0adf204e0b8eea28934dc1977cfcf9fb59c8f082c7762e",
+  "candidateImage": "sha256:7371d76732781af8990027280afb1662f4bed8a837e69f1a8595ef992aa60142",
+  "bundles": {
+    "server-capture.mjs": "0cafa2c28d43178856562fd6d017ad5bafe998bee8df0038a7f020c19c7fccdf",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "sameImageConfig": true,
+  "imageConfigSHA": "d7605c7e7d56073f5d2f9b2337e080d8a46431be1ee00f48a232623fb6deb8df",
+  "sameRuntimeEnvironment": true,
+  "mcpReadWriteConfigAbsent": true,
+  "pngWorkerInactive": true,
+  "serviceMutations": 0,
+  "authorityMutations": 0
+}

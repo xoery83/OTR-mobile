@@ -1,0 +1,39 @@
+{
+  "planNames": {
+    "containerName": "otr-auth-write-root-7371",
+    "backupName": "otr-dev-backend-before-photo-activity-f2ab",
+    "beforeContainerId": "761b0581d8711e7a2a2d87593ab82c262547fbd99b70820fc64f06f61af1361f",
+    "beforeImage": "sha256:34a9e8f89ba0193e6b0adf204e0b8eea28934dc1977cfcf9fb59c8f082c7762e",
+    "candidateImage": "sha256:7371d76732781af8990027280afb1662f4bed8a837e69f1a8595ef992aa60142"
+  },
+  "containers": {
+    "otr-dev-backend": {
+      "id": "761b0581d8711e7a2a2d87593ab82c262547fbd99b70820fc64f06f61af1361f",
+      "name": "/otr-dev-backend",
+      "image": "sha256:34a9e8f89ba0193e6b0adf204e0b8eea28934dc1977cfcf9fb59c8f082c7762e",
+      "status": "running",
+      "healthy": "healthy"
+    },
+    "otr-auth-write-root-7371": {
+      "id": "4648e6365e7508bc8df81fb8eaced926261412b6b7e9829a91cddee51b263e8c",
+      "name": "/otr-auth-write-root-7371",
+      "image": "sha256:7371d76732781af8990027280afb1662f4bed8a837e69f1a8595ef992aa60142",
+      "status": "created",
+      "healthy": null
+    },
+    "otr-dev-backend-before-photo-activity-f2ab": {
+      "id": "2c037b20c18107dcbfb1873005a5cb310af347abc6798b4a5274008b61d593ee",
+      "name": "/otr-dev-backend-before-photo-activity-f2ab",
+      "image": "sha256:a3a2d4e085ee8371120e76db553cabf1d0aff09752ade35236a3c46414425417",
+      "status": "exited",
+      "healthy": "unhealthy"
+    },
+    "761b0581d8711e7a2a2d87593ab82c262547fbd99b70820fc64f06f61af1361f": {
+      "id": "761b0581d8711e7a2a2d87593ab82c262547fbd99b70820fc64f06f61af1361f",
+      "name": "/otr-dev-backend",
+      "image": "sha256:34a9e8f89ba0193e6b0adf204e0b8eea28934dc1977cfcf9fb59c8f082c7762e",
+      "status": "running",
+      "healthy": "healthy"
+    }
+  }
+}
