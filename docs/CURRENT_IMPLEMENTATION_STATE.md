@@ -79,10 +79,16 @@ Closed diagnostic source is now qualified: Auth eff3f5db/bridge2f54b05c plus MCP
 20 Auth tests/types/scoped lint/build and independent 4 target tests/4 compiled
 smoke checks PASS. Reuses existing log with three auth-failure sources and strict
 safe projection; no token/Account/path/body, expiry or HTTP semantics change.
-New bridge f9c339c4 is COMPILED_ONLY_NOT_DEPLOYED; oldb518 is unchanged. See
+Initial bridge f9c339c4 qualification was compiled-only. Root has since deployed
+default-closed combined imagef052/CID0c04/capturec088 with that actual bridge and
+Source4090; independent health200/protected401/config+mount preservation and
+PNG-closed/worker-inactive readback PASS. Originalac7/d8 retained for rollback;
+no OAuth window was activated. See HOSTED_INDEPENDENT_READBACK.json and
 auth-required-diagnostics-20261101/QUALIFICATION.json for the normalized five-file
-main patch. Root owns serial integration/fresh closed image after its active
-Source session; no new signing/window is authorized by this source qualification.
+main patch. Single existing-d2b diagnostic window candidate29f9c9ed/Gate84837c5e
+is pending independent Review and new Owner approval. Root's newly approved Photo
+recovery has resource priority; Auth starts no Host/config session until its actual
+closure, approval and fresh CAS. Source qualification grants no signing/window.
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
 edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →
