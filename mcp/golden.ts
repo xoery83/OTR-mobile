@@ -43,6 +43,7 @@ const fixtureSchema = z.object({
 });
 export async function runGolden(stage: "READ" | "P3" | "NELSON") {
   assert.equal(process.env.OTR_MCP_QA_CASE, stage);
+  if (stage === "P3") assert(process.stdin.isTTY, "P3_INTERACTIVE_TTY_REQUIRED");
   assert.equal(process.env.OTR_QA_DEV_BUSINESS_WINDOW, "HELD");
   const fixture = fixtureSchema.parse(
     JSON.parse(readFileSync("mcp/fixtures/golden-slices.json", "utf8")),
@@ -269,6 +270,7 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
               operationId: created.operation_id,
               outcome: created.outcome,
               revision: created.current_revision,
+              committedAt: createDb.committedAt,
               at: new Date().toISOString(),
             }),
           );

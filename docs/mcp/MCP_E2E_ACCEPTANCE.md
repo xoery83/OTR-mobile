@@ -19,7 +19,7 @@ Fresh fetched accepted main42652324 was the start base; no historical SHA chosen
 as current architecture. MCP work remains in its independent branch/worktree.
 Existing mandatory product/architecture/API/read/receipt contracts reused.
 
-Current focused tests28 PASS: official SDK loopback discovery/calls, signed JWT
+Current focused tests29 PASS: official SDK loopback discovery/calls, signed JWT
 issuer/audience/scope/client/grant negatives, actual Core command/receipt create/
 text edit/CAS, response loss and same-operation replay; three-item partial Apply
 and accepted UPDATE batch resume; full reviewable changed fields; timed-date loss
@@ -97,3 +97,16 @@ Item404, own normal-session local logout and refresh rejection PASS. Initial dir
 baseline503 remains in the artifact; later actual positive and negative reads
 completed. This is INTERNAL_READ_GOLDEN_PASS, not public OAuth/consumer or SLO PASS.
 Reviewed code49a14038; continue fixed synthetic P3 Create/Edit after Native ready.
+
+## Controlled P3 — first pre-submit failure, no POST
+
+`acceptance/P3_ATTEMPT_01.json`: normal QA Read and P3 Manual capability passed; exact
+pre-submit receipt GET produced UNKNOWN/RECOVERY_UNAVAILABLE. That branch
+returns before POST: businessPostCount0, no Edit. Own Session revoked/refresh
+rejected. `P3_RECEIPT_DIAGNOSTIC.json` then queries only the same operation:
+00:35:35.998Z start, HTTP404/NOT_VISIBLE after20786ms, own cleanupPASS, no POST.
+MCP receipt GET now uses50s like other reads; POST stays15s. A directed20s receipt
+read regression still permits only one controlled POST;29 focused tests and
+independent review PASS. This is a local availability repair, not cloud write PASS.
+P3 runner now asserts a real interactive stdin before opening any Session, so
+a heredoc/EOF cannot accidentally skip the separate Native Create observation.

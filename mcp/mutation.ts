@@ -183,7 +183,10 @@ export function createMutationTools(context: {
     headers?: Record<string, string>,
   ) {
     if (!context.backend) return null;
-    const boundary = createRequestBoundary(15000, context.signal);
+    const boundary = createRequestBoundary(
+      method === "GET" ? 50000 : 15000,
+      context.signal,
+    );
     try {
       const response = await boundary.run(() =>
         context.backend!(

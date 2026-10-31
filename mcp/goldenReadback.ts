@@ -120,6 +120,7 @@ export async function verifyGoldenReadback(
     itemId: p.target.id,
     revision: row.semantic_revision,
     receiptRevision: committed,
+    committedAt: receipt.committedAt,
     intentSha256: receipt.intentSha256,
     receiptSha256: receipt.receiptSha256,
     fieldsSha256: contentDigest(row),

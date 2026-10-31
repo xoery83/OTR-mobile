@@ -1,0 +1,15 @@
+{
+  "stage": "SAME_OPERATION_READ_ONLY_DIAGNOSTIC",
+  "status": "HTTP_RESPONSE_RECEIVED",
+  "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "operationId": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+  "timeoutMs": 50000,
+  "businessPostCount": 0,
+  "requestStartedAt": "2026-10-31T00:35:35.998Z",
+  "firstHttpMs": 20786,
+  "httpStatus": 404,
+  "backendCode": "NOT_VISIBLE",
+  "endedAt": "2026-10-31T00:35:56.785Z",
+  "elapsedMs": 20787,
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

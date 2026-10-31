@@ -5,7 +5,7 @@
   verifier/PRM, Core receipt-backed Create/Edit/status and Nelson12-operation
   preview/confirm/sequential Apply prepared. No startup mount, schema/ACL/Auth
   setting, Native/SQLite or protected deployment changes.
-  -28 focused tests/scoped types and independent closed-code NO_BLOCKER. Repairs:
+  -29 focused tests/scoped types and independent closed-code NO_BLOCKER. Repairs:
   exact UPDATE batch recovery, complete field confirmation, timed-date protection,
   strict independent business-field readback. Public OAuth remains
   BLOCKED_BY_OWNING_INTERFACE; no owning active client grant/binding port yet.
@@ -19,7 +19,11 @@
   service identity and explicit get_trip_item query; no fabricated Actor/ACL.
   MCP read50s/total60s are finite local budgets, not a Core worst-case guarantee.
   Reviewed candidate49a14038; controlled fixed new P3 Create/Edit next, Native
-  readiness requested. Original612d P3 untouched; zero business POST so far.
+  readiness requested. First P3 stopped before POST: receipt GET15s unavailable,
+  then same-op pure GET returned404 after20.786s. Receipt GET now50s/POST15s,
+  directed slow-read regression and independent review PASS. Own sessions revoked.
+  New interactive runner guard prevents stdin EOF skipping Native pause. Original
+  612d P3 untouched; zero business POST so far.
 - Current deliverables under docs/mcp/: MCP_ARCHITECTURE_INVENTORY,
   MCP_TOOL_CONTRACT_V1, MCP_AUTH_CONTRACT, MCP_NELSON_IMPORT_PLAN,
   MCP_E2E_ACCEPTANCE, MCP_EXTENDED_TOOLS_ROADMAP. Exact IDs/closure in acceptance.

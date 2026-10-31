@@ -198,6 +198,30 @@ it("owning P3 create/edit receipts, stable replay, lost response recovery and CA
     current_revision: 1,
   });
 });
+it("allows a bounded slow receipt read before a single controlled POST", async () => {
+  const f = fixture();
+  vi.useFakeTimers();
+  try {
+    const tools = createMutationTools(
+      context(async (q, signal) => {
+        if (q.method === "GET")
+          await new Promise((resolve) => setTimeout(resolve, 20000));
+        return f.backend(q, signal);
+      }),
+    );
+    const p = tools.prepareCreate(create());
+    const pending = tools.execute(
+      p,
+      "APPLY",
+      mutationIdentity(account, p).preview_digest,
+    );
+    await vi.advanceTimersByTimeAsync(20001);
+    expect((await pending).outcome).toBe("APPLIED");
+    expect(f.posts()).toBe(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
 it("rejects receipt identity drift and preserves UNKNOWN while owning recovery is unavailable", async () => {
   const f = fixture(),
     tools = createMutationTools(context(f.backend)),

@@ -1,0 +1,17 @@
+{
+  "stage": "P3",
+  "evidenceKind": "CONTENT_FREE_PROJECTION_OF_OBSERVED_FIRST_RUN",
+  "status": "FAILED_OR_UNKNOWN_QUERY_SAME_OPERATION",
+  "observedAt": "2026-10-31T00:32:08.631Z",
+  "phase": "create_trip_item",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "itemId": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+  "operationId": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+  "outcome": "UNKNOWN",
+  "errorCode": "RECOVERY_UNAVAILABLE",
+  "owningRunId": "e3b2462f-6b50-4f48-b9b2-80a7e0c996ee",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "businessPostCount": 0,
+  "submissionBoundary": "RECOVERY_GET_RETURNED_BEFORE_POST"
+}
