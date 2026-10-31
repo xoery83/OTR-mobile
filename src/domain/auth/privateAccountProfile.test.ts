@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { privateAccountProfileFieldsSchema } from "./privateAccountProfile";
+import { privateAccountProfileFieldsSchema, privateProfileChanges, privateProfileDraft } from "./privateAccountProfile";
 
 it.each([{}, { displayName: "" }, { displayName: null, travelDocumentName: null }])(
   "allows an incomplete profile without creating a registration requirement",
@@ -54,4 +54,36 @@ it("rejects a value that cannot be stored without changing its characters", () =
   expect(
     privateAccountProfileFieldsSchema.safeParse({ displayName: "林\0" }).success,
   ).toBe(false);
+});
+
+it.each([{}, { displayName: null, travelDocumentName: null }])(
+  "keeps an untouched optional profile empty without an artificial document name",
+  (fields) => expect(privateProfileChanges(fields, privateProfileDraft(fields))).toEqual({}),
+);
+
+it("edits or clears display name without touching the independent document name", () => {
+  const fields = { displayName: "林", travelDocumentName: { mode: "UNSPLIT" as const, fullName: "علي" } };
+  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), displayName: "" }))
+    .toEqual({ displayName: "" });
+});
+
+it("preserves exact original characters when switching name format", () => {
+  const fields = { travelDocumentName: { mode: "SPLIT" as const, familyName: "林", givenNames: null } };
+  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), mode: "UNSPLIT", fullName: "  e\u0301 林  " }))
+    .toEqual({ travelDocumentName: { mode: "UNSPLIT", fullName: "  e\u0301 林  " } });
+});
+
+it("does not submit hidden format edits or rewrite untouched nullable split names", () => {
+  const fields = { travelDocumentName: { mode: "SPLIT" as const, familyName: null, givenNames: "Sukarno" } };
+  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), fullName: "retained local draft" }))
+    .toEqual({});
+  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), familyName: "林" }))
+    .toEqual({ travelDocumentName: { mode: "SPLIT", familyName: "林", givenNames: "Sukarno" } });
+  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), givenNames: "علي" }))
+    .toEqual({ travelDocumentName: { mode: "SPLIT", familyName: null, givenNames: "علي" } });
+});
+
+it("rejects invalid stored or draft values before building a patch", () => {
+  expect(() => privateProfileChanges({}, { ...privateProfileDraft(), displayName: "\0" })).toThrow();
+  expect(() => privateProfileChanges({ displayName: "\0" }, privateProfileDraft())).toThrow();
 });

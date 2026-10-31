@@ -44,3 +44,33 @@ export function privateProfileDraft(
     fullName: document?.mode === "UNSPLIT" ? document.fullName : "",
   };
 }
+
+// Only edited visible fields become a patch; hidden format drafts stay local.
+export function privateProfileChanges(
+  fields: PrivateAccountProfileFields,
+  value: PrivateProfileNameDraft,
+): PrivateAccountProfileFields {
+  const draft = privateProfileNameDraftSchema.parse(value);
+  const original = privateAccountProfileFieldsSchema.parse(fields);
+  const prior = privateProfileDraft(original);
+  const changes: PrivateAccountProfileFields = {};
+  if (draft.displayName !== prior.displayName) changes.displayName = draft.displayName;
+  if (
+    draft.mode !== prior.mode ||
+    (draft.mode === "SPLIT"
+      ? draft.familyName !== prior.familyName || draft.givenNames !== prior.givenNames
+      : draft.fullName !== prior.fullName)
+  ) {
+    const old = original.travelDocumentName;
+    changes.travelDocumentName = draft.mode === "SPLIT"
+      ? {
+          mode: "SPLIT",
+          familyName: old?.mode === "SPLIT" && draft.familyName === prior.familyName
+            ? old.familyName : draft.familyName,
+          givenNames: old?.mode === "SPLIT" && draft.givenNames === prior.givenNames
+            ? old.givenNames : draft.givenNames,
+        }
+      : { mode: "UNSPLIT", fullName: draft.fullName };
+  }
+  return changes;
+}
