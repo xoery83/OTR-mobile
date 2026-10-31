@@ -14,5 +14,17 @@
     "Prove ordinary Business HTTP and Data/Storage cannot bypass read-only resource restrictions",
     "Real authorization code, refresh and revoked access/refresh negative evidence"
   ],
-  "notPerformed": "No DEV calls, credentials, settings, Schema/RLS/GRANT or consumer OAuth E2E during review"
+  "notPerformed": "No DEV calls, credentials, settings, Schema/RLS/GRANT or consumer OAuth E2E during review",
+  "implementationReview": {
+    "status": "NO_BLOCKER_CLOSED_CANDIDATE",
+    "commit": "d8f8b0fa0caa39a247b22f4c307e49350dfbac56",
+    "files": [
+      "backend/src/mcpOAuthGrantVerifier.ts",
+      "backend/src/mcpOAuthGrantVerifier.test.ts"
+    ],
+    "independentTests": "2 suites / 52 tests PASS, single worker",
+    "authorChecks": "Same 2 suites / 52 tests, typecheck and scoped eslint PASS",
+    "meaning": "Unmounted request-only component, no deployed provider or consumer qualification",
+    "signatureBoundary": "MCP must already verify the same bearer; Auth payload decode only checks consistent binding"
+  }
 }

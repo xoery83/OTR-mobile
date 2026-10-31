@@ -159,6 +159,11 @@ See ops/auth-mcp-oauth-20261031/OAUTH_INTERFACE_DELTA_V1.md: no second grant DB,
 separate sessionId, same-issuer online Account/grant check, read-only client
 candidate with explicit consent and resource-bound signed business permissions.
 Standard OIDC scopes are not Trip authority. No OAuth settings or mount enabled.
+Auth request-only verifier candidate d8f8b0fa is unmounted/default-closed;
+2 focused suites52/typecheck/lint PASS, independent source Review
+NO_BLOCKER_CLOSED_CANDIDATE with separate2 suites52 PASS. It
+uses same-issuer bounded user/grants reads, no Session/store; actual Hosted
+resource-token/session/revocation acceptance remains unqualified.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
