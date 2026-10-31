@@ -1,4 +1,4 @@
-import { createReadRuntime } from "../../dist/mcp/runtime.mjs";
+import { createReadRuntime, createWriteRuntime } from "../../dist/mcp/runtime.mjs";
 import assert from "node:assert/strict";
 globalThis.fetch = async () => {
   throw Error("NETWORK_NOT_EXPECTED_IN_CLOSED_SMOKE");
@@ -48,11 +48,44 @@ assert.ok(
     ),
   ),
 );
+assert.throws(() => createWriteRuntime({ confirmed: true }), /CONFIRM_CLOSED/);
+const write = createWriteRuntime({
+  issuer,
+  resource,
+  isGrantActive: async () => false,
+  bindBackend: async () => {
+    throw Error("WRITE_BIND_MUST_NOT_RUN_WITHOUT_AUTH");
+  },
+  confirm: async () => {
+    throw Error("WRITE_CONFIRM_MUST_NOT_RUN_WITHOUT_AUTH");
+  },
+});
+const writeMetadata = await write(
+  new Request("https://api-dev.xoery.art/.well-known/oauth-protected-resource/mcp"),
+);
+assert.equal(writeMetadata.status, 200);
+assert.deepEqual((await writeMetadata.json()).scopes_supported, [
+  "openid",
+  "offline_access",
+]);
+const deniedWrite = await write(
+  new Request(resource, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }),
+  }),
+);
+assert.equal(deniedWrite.status, 401);
 console.log(
   JSON.stringify({
     status: "COMPILED_NODE_PUBLIC_METADATA_AND_DENIAL_PASS",
     meaning:
       "Actual reviewed MCP SDK/Authorizer bridge, no token or provider calls; not OAuth E2E",
-    checks: 4,
+    checks: 7,
+    writeQualification:
+      "Missing trusted confirmation rejects; public metadata plus unauthenticated denial only, not Write OAuth E2E",
   }),
 );

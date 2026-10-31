@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "mcpSourceCommit": "c41a4f0a8c04e5a2f255243e2877d47e2cd89c76",
-  "mcpReviewedSource": "c41a4f0a",
+  "mcpSourceCommit": "a71a926c257ffb180cac2e97d90429ac05ff3ed2",
+  "mcpReviewedSource": "a71a926c",
   "readPathEquivalentTo": "8812dbbb8b9ed610c7716415b1377b6443005c4d",
   "files": {
     "src/domain/trip/tripCoreOrdinaryOrder.ts": "d40f7f12dd3e6de46f11739816c8aa2ab527af837e88b5f187476992b7d19afd",
@@ -32,7 +32,7 @@
     "mcp/batch.ts": "0904661c7d39af390c1914892e909d599ae67d5bfb3662062541bb104518431f",
     "mcp/read.ts": "8cdbb108a6f8d069447dccc885188b35a2f1fe27e57a96cdc12ca4088821d805",
     "mcp/server.ts": "c987111ebe9a628f11aaec03fa199e229aa0c7134f04255a97ac37026aa1cc4a",
-    "mcp/oauth.ts": "ea5cdec22bbdd402c43274d3e8d1e2cfd8fc2aa3f60105f042ea46b6b11c65f5",
+    "mcp/oauth.ts": "5227d88359e4e87b88b2f31e49bfef0512405a2e86f840921592155490130a87",
     "mcp/index.ts": "4e6b6951c6e3914ead00fde1793cad64097d3a4b9f3a081ed640e4ee992831e9",
     "mcp/package.json": "4395b97658f8db52042c19d1a0a7266543a80ee84284cde89c488e2462a1245c",
     "mcp/package-lock.json": "799da326696147e29b6caec92fc07436ed653ea4f7cddb28bd90cc19feabc2e1",

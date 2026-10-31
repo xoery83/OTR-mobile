@@ -1,0 +1,13 @@
+{
+  "status": "NO_BLOCKER_CLOSED_WRITE_RUNTIME_CANDIDATE",
+  "independentReview": "auth_phase1_review",
+  "activation": false,
+  "hostedChanges": 0,
+  "files": {
+    "backend/src/mcpQaRuntime.ts": "28aa779555c4b0d39136a5587140d15d4d4dd9595cba9dd0869156a3ad87f873",
+    "backend/src/mcpQaRuntime.test.ts": "b182b3bc7859879ef1d92f489e05ce01aa7426250abfa80da8281834f3271ad2",
+    "backend/mcp/runtime.mjs": "a0e930eec448f3c37f63397ddd6c224c97e9aa0088dffc4c8ab6f1b81d8da153",
+    "backend/mcp/source-pins.json": "facb94e0f21e529a462c5ca5f9f5410a8eefcd72be96e1e536f0d7ba9fea7d05",
+    "scripts/auth/smoke-mcp-qa-runtime.mjs": "d4c7ec22850efddab972cd89735a1edc0eb033783a9612fb908ed8d98666901e"
+  }
+}

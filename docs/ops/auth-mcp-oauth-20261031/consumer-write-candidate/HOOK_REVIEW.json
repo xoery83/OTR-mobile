@@ -1,0 +1,10 @@
+{
+  "status": "NO_BLOCKER_LOCAL_WRITE_HOOK_RENDERER_CANDIDATE",
+  "independentReview": "auth_phase1_review",
+  "activation": false,
+  "hostedChanges": 0,
+  "files": {
+    "scripts/auth/render-mcp-write-qa-hook.py": "6c4561af3b47be67801f5ae1f1e77953e8a14fb771e9f4dccf6f2838bc0368ae",
+    "scripts/auth/test-mcp-qa-hook.py": "0867834c8bb6b8e4cf222107d0098b76f971fbc528fd28b9e3d9cd6dd9046a39"
+  }
+}

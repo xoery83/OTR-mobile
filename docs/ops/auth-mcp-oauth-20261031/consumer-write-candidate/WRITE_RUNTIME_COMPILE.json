@@ -1,0 +1,18 @@
+{
+  "status": "CLOSED_WRITE_RUNTIME_COMPILED_SMOKE_PASS_NOT_DEPLOYED",
+  "mcpReviewedSource": "a71a926c",
+  "mcpSourceCommit": "a71a926c257ffb180cac2e97d90429ac05ff3ed2",
+  "sourcePinsSHA256": "facb94e0f21e529a462c5ca5f9f5410a8eefcd72be96e1e536f0d7ba9fea7d05",
+  "sdkInputSHA256": "15ccef81577539f927485d8883626cb3db96a48adb5f78def659fe0a178b5dcd",
+  "runtimeSHA256": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+  "esbuildVersion": "0.28.2",
+  "mobileDependencyChanges": false,
+  "providerCalls": 0,
+  "compiledSmokeChecks": 7,
+  "runtimeTargetedTests": 23,
+  "writeActivated": false,
+  "browserAssetSHA256": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+  "browserAssetBytes": 1349368,
+  "nativeBuilds": 0,
+  "authorityEnabled": false
+}

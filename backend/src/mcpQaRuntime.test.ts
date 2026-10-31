@@ -38,12 +38,153 @@ function fixture() {
   const core = { read: {} } as CoreHttpConnection;
   return { env, policy, files, gateway, core, handler, createReadRuntime, expiresAt };
 }
+function writeFixture() {
+  const q = fixture();
+  const policy = {
+    version: 2,
+    clientId: "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+    redirectUris: ["https://claude.ai/api/mcp/auth_callback"],
+    expiresAt: q.expiresAt,
+    consentNotBefore: Date.now() - 1000,
+    businessAccess: "READ_WRITE",
+    confirmations: [
+      {
+        operationId: "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+        previewDigest: "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0",
+      },
+      {
+        operationId: "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+        previewDigest: "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7",
+      },
+    ],
+  };
+  const createWriteRuntime = vi.fn((_options: unknown) => q.handler);
+  const files = {
+    ...q.files,
+    module: vi.fn(async () => ({
+      createReadRuntime: q.createReadRuntime,
+      createWriteRuntime: createWriteRuntime as typeof createWriteRuntime | undefined,
+    })),
+  };
+  const env: Record<string, string | undefined> = {
+    ...q.env,
+    OTR_DEV_MCP_READ_QA_CONFIG: undefined,
+    OTR_DEV_MCP_WRITE_QA_CONFIG: JSON.stringify(policy),
+  };
+  const core = {
+    ...q.core,
+    commands: { withLockedCommand: vi.fn() },
+  } as CoreHttpConnection;
+  return { ...q, env, policy, files, core, createWriteRuntime };
+}
 afterEach(() => vi.useRealTimers());
 it("does no module/asset/network IO without the explicit public QA config", async () => {
   const q = fixture();
   expect(await loadMcpQaRuntime({}, q.gateway, q.core, q.files)).toBeUndefined();
   expect(q.files.module).not.toHaveBeenCalled();
   expect(q.files.asset).not.toHaveBeenCalled();
+});
+it("Write rejects mixed/altered policy before SDK IO and refuses an old Read-only SDK", async () => {
+  const q = writeFixture();
+  await expect(
+    loadMcpQaRuntime(
+      { ...q.env, OTR_DEV_MCP_READ_QA_CONFIG: "{}" },
+      q.gateway,
+      q.core,
+      q.files,
+    ),
+  ).rejects.toThrow("CONFLICT");
+  for (const change of [
+    { version: 1 },
+    { clientId },
+    { redirectUris: ["https://other.invalid/callback"] },
+    { confirmations: [] },
+    { consentNotBefore: Date.now() + 60000 },
+    { consentNotBefore: Date.now() - 1800000 },
+    { expiresAt: Date.now() + 1800001 },
+    {
+      confirmations: [
+        { ...q.policy.confirmations[0], previewDigest: "0".repeat(64) },
+        q.policy.confirmations[1],
+      ],
+    },
+  ])
+    await expect(
+      loadMcpQaRuntime(
+        {
+          ...q.env,
+          OTR_DEV_MCP_WRITE_QA_CONFIG: JSON.stringify({ ...q.policy, ...change }),
+        },
+        q.gateway,
+        q.core,
+        q.files,
+      ),
+    ).rejects.toThrow();
+  expect(q.files.module).not.toHaveBeenCalled();
+  expect(q.files.asset).not.toHaveBeenCalled();
+  q.files.module.mockResolvedValueOnce({
+    createReadRuntime: q.createReadRuntime,
+    createWriteRuntime: undefined,
+  });
+  await expect(loadMcpQaRuntime(q.env, q.gateway, q.core, q.files)).rejects.toThrow(
+    "WRITE_RUNTIME_CLOSED",
+  );
+  expect(q.createReadRuntime).not.toHaveBeenCalled();
+});
+
+it("Write confirmation is exact and bounded; no model flag or alternate Actor can approve", async () => {
+  const q = writeFixture();
+  await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
+  const { confirm } = q.createWriteRuntime.mock.calls[0][0] as {
+    confirm(request: unknown, signal: AbortSignal): Promise<boolean>;
+  };
+  const request = {
+    accountId: "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    clientId: q.policy.clientId,
+    resource: "https://api-dev.xoery.art/mcp",
+    digest: q.policy.confirmations[0].previewDigest,
+    operationIds: [q.policy.confirmations[0].operationId],
+  };
+  const signal = new AbortController().signal;
+  expect(await confirm(request, signal)).toBe(true);
+  for (const change of [
+    { accountId: clientId },
+    { clientId },
+    { resource: "https://other.invalid/mcp" },
+    { digest: "0".repeat(64), confirmed: true },
+    { operationIds: [clientId], confirmed: true },
+    { operationIds: q.policy.confirmations.map((entry) => entry.operationId) },
+  ])
+    expect(await confirm({ ...request, ...change }, signal)).toBe(false);
+  expect(await confirm(null, signal)).toBe(false);
+  vi.useFakeTimers();
+  vi.setSystemTime(q.policy.expiresAt);
+  expect(await confirm(request, signal)).toBe(false);
+  const aborted = new AbortController();
+  aborted.abort();
+  await expect(confirm(request, aborted.signal)).rejects.toThrow();
+  expect(q.core.commands.withLockedCommand).not.toHaveBeenCalled();
+});
+
+it("Write exposes explicit Consent mode without approvals and requires private Auth evidence", async () => {
+  const q = writeFixture(),
+    handle = (await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files))!;
+  const response = await handle(
+    new Request("https://api-dev.xoery.art/oauth/consent/config"),
+  );
+  if (!response) throw Error("WRITE_CONSENT_ROUTE_NOT_HANDLED");
+  const publicConfig = await response.json();
+  expect(publicConfig.businessAccess).toBe("READ_WRITE");
+  expect(publicConfig).not.toHaveProperty("confirmations");
+  expect(publicConfig).not.toHaveProperty("consentNotBefore");
+  const { bindBackend } = q.createWriteRuntime.mock.calls[0][0] as {
+    bindBackend(grant: unknown, signal: AbortSignal): Promise<unknown>;
+  };
+  await expect(bindBackend({}, new AbortController().signal)).rejects.toThrow(
+    "EVIDENCE_CLOSED",
+  );
+  expect(q.core.commands.withLockedCommand).not.toHaveBeenCalled();
+  expect(q.createReadRuntime).not.toHaveBeenCalled();
 });
 it.each(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])(
   "logs only bounded request metadata and the existing %s diagnostic source",

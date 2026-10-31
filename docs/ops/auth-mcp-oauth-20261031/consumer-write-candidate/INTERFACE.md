@@ -30,3 +30,11 @@ before the new decision. Gate preflight must revoke old grants; neither changing
 Hook nor passing OIDC `openid offline_access` constitutes business Write consent.
 There is no live Write policy or caller until this full chain is independently
 reviewed and its separate activation/operation Gate is approved.
+
+QA Runtime candidate v2 uses `OTR_DEV_MCP_WRITE_QA_CONFIG`, mutually exclusive with
+the existing Read config. It is limited to QA1f/existing Claude d2b, at most30 minutes
+from the trusted activation floor, and the two frozen P3 preview digests/operation
+IDs in the existing MCP fixture. Its trusted ConfirmChanges callback only matches
+that exact Account/client/resource/digest/single operation; model booleans and
+other commands confer no approval. Missing Write SDK/evidence/Core ports fail closed.
+The browser receives explicit Write mode, not the private operation approvals.

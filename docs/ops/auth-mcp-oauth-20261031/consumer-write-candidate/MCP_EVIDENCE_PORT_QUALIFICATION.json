@@ -1,0 +1,15 @@
+{
+  "status": "NEW_AUTH_EVIDENCE_INTERFACE_COMPILED_READ_SMOKE_PASS_NOT_DEPLOYED",
+  "mcpReviewedSource": "a71a926c",
+  "mcpSourceCommit": "a71a926c257ffb180cac2e97d90429ac05ff3ed2",
+  "sourcePinsSHA256": "facb94e0f21e529a462c5ca5f9f5410a8eefcd72be96e1e536f0d7ba9fea7d05",
+  "sdkInputSHA256": "15ccef81577539f927485d8883626cb3db96a48adb5f78def659fe0a178b5dcd",
+  "runtimeSHA256": "c5aae245edbf28ec1ea9d588ef128044ae61bf8aa5aa14ac15adcdd08f5419d8",
+  "esbuildVersion": "0.28.2",
+  "mobileDependencyChanges": false,
+  "providerCalls": 0,
+  "compiledSmokeChecks": 4,
+  "sourceInputsVerified": 34,
+  "owningMcpFileChanged": "mcp/oauth.ts",
+  "writeActivated": false
+}
