@@ -1,0 +1,9 @@
+{
+  "status": "LOCAL_CANDIDATE_REPRODUCED_INELIGIBLE_READ_LEAK",
+  "failure": "PROFILE_INELIGIBLE_READ_LEAK",
+  "sqlBeforeRepairSHA256": "c1b8ddb26de9cb99fe83d942cb9b71c5bf7b30b1bd5961e4ed09f21ea3c335fb",
+  "scope": "Disposable network-none PostgreSQL fixture; existing private row with its Auth fixture disabled/anonymous; no real Account was altered",
+  "cause": "Save checked current Auth user eligibility, while SELECT only checked uid and resource markers",
+  "repair": "One profile-specific zero-argument self-subject SQL predicate reuses auth.uid/auth.jwt/auth.users for both RLS and save; no issuer, user store or session authority",
+  "hostedChanges": 0
+}

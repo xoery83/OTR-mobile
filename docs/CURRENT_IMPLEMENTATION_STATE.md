@@ -212,6 +212,11 @@ cloud state. Real SQLite reopen, A/B isolation, ABA/write rollback, dirty-draft/
 preservation and stale/foreign rejection:4s41/types/lint PASS, independent2s21
 NO_BLOCKER. SQLite77 reserved by Native (76 Source); definition not registered,
 no Native caller/worker/Hosted changes. See private-profile LOCAL_FOUNDATION_REVIEW.
+Local PG reproduced resource-token and disabled/anonymous-subject private-read
+leaks before repair. Candidate SELECT/save now share one normal-self predicate;
+adapter denies resource tokens before IO, then checks fresh Auth user and exact actor RPC.
+Boundary45/localPG10/types/scoped lint PASS; independent subject Review NO_BLOCKER.
+No Hosted installation; exact new-table/function/RLS/GRANT Owner Gate remains required.
 No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See

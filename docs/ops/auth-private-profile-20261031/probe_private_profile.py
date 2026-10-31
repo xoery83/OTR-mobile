@@ -38,8 +38,11 @@ def sql(text, error=None):
     return result.stdout.strip()
 
 
-def actor(identity):
-    return 'SET SESSION AUTHORIZATION authenticated;SET request.jwt.claim.sub=' + quote(identity) + ';'
+def actor(identity, extra_claims=None):
+    claims = {'sub': identity, 'role': 'authenticated', 'aud': 'authenticated'}
+    claims.update(extra_claims or {})
+    return ('SET SESSION AUTHORIZATION authenticated;SET request.jwt.claim.sub=' + quote(identity)
+            + ';SET request.jwt.claims=' + quote(json.dumps(claims)) + ';')
 
 
 def save(identity, operation, revision, changes):
@@ -65,6 +68,8 @@ try:
       CREATE TABLE auth.users(id uuid PRIMARY KEY,is_anonymous boolean NOT NULL,banned_until timestamptz);
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
       $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+      CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS
+      $$SELECT coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb)$$;
       GRANT USAGE ON SCHEMA auth TO authenticated;
       CREATE TABLE public.profiles(id uuid PRIMARY KEY,display_name text);
       INSERT INTO public.profiles VALUES('10000000-0000-4000-8000-000000000000','existing public fixture');
@@ -83,6 +88,27 @@ try:
     stored = json.loads(sql(actor(A) + 'SELECT fields_json FROM public.account_private_profiles;'))
     assert stored == changes
     checks.append('optional empty display name, independent unsplit Unicode name and exact duplicate receipt survive SQL round-trip')
+    resource = 'https://api-dev.xoery.art/mcp'
+    for delegated in [{'client_id': str(uuid.uuid4())}, {'otr_scopes': ['otr.trips.read']},
+                      {'otr_scopes': None}, {'aud': resource}, {'aud': ['authenticated', resource]}]:
+        for table in ['account_private_profiles', 'account_private_profile_receipts']:
+            assert sql(actor(A, delegated) + 'SELECT count(*) FROM public.' + table + ';') == '0', 'PROFILE_RESOURCE_READ_LEAK'
+        command = actor(A, delegated) + 'SELECT public.account_private_profile_save(' + quote(str(uuid.uuid4())) + ",1,'{\"displayName\":\"must not apply\"}');"
+        sql(command, error='PROFILE_NORMAL_ACCOUNT_REQUIRED')
+    checks.append('delegated resource/client/scope markers cannot read private names or receipts or call the save RPC')
+    for condition in ["banned_until=clock_timestamp()+interval '1 hour'", 'is_anonymous=true']:
+        sql('UPDATE auth.users SET ' + condition + ' WHERE id=' + quote(A) + ';')
+        for table in ['account_private_profiles', 'account_private_profile_receipts']:
+            assert sql(actor(A) + 'SELECT count(*) FROM public.' + table + ';') == '0', 'PROFILE_INELIGIBLE_READ_LEAK'
+        sql(save(A, str(uuid.uuid4()), 1, {'displayName': 'must not apply'}), error='PROFILE_NORMAL_ACCOUNT_REQUIRED')
+        sql('UPDATE auth.users SET banned_until=NULL,is_anonymous=false WHERE id=' + quote(A) + ';')
+    checks.append('existing private rows stay inaccessible while their Auth user is disabled or anonymous, without deleting them')
+    assert sql(actor(A) + 'SELECT public.account_private_profile_actor();') == A
+    for role in ['anon', 'service_role']:
+        sql('SET SESSION AUTHORIZATION ' + role + ';SELECT public.account_private_profile_actor();', error='permission denied')
+
+
+
     assert sql(actor(B) + 'SELECT count(*) FROM public.account_private_profiles WHERE account_id=' + quote(A) + ';') == '0'
     assert sql(actor(B) + 'SELECT count(*) FROM public.account_private_profile_receipts WHERE account_id=' + quote(A) + ';') == '0'
     sql(save(B, OP, 0, {'displayName': ''}))

@@ -19,3 +19,20 @@ than silently rebasing it. The existing Account Profile repository exposes this 
 data source only when explicitly supplied a database. No new queue or Sync Engine:
 future submission will use existing owner-scoped sync_operations with trip_id null.
 No Native entry, worker dispatch, Hosted route or RLS/GRANT is activated by this step.
+
+Focused local repair: the former self-read candidate allowed a delegated resource
+claim fixture to read Account-private values. This was reproduced only in the
+network-none PG fixture, never Hosted. New-table SELECT policies and the save RPC
+now exclude client_id/non-null, any otr_scopes marker and scalar/array MCP audience,
+mirroring the existing ordinary HTTP additive denial. The Backend adapter rejects
+the same markers before Auth/data IO. This does not authenticate a decoded token,
+change existing public profiles or grant any new permission; the candidate still
+requires its exact future Owner DEV Gate and independent review.
+
+The adjacent qualification check also reproduced a read/write mismatch for an
+existing row after its local Auth fixture was disabled. A single zero-argument,
+profile-specific SQL self-subject predicate now supplies both RLS and save checks
+from existing auth.uid/auth.jwt/auth.users (normal, not disabled, not delegated).
+It returns only the caller's own UUID or null; it is not an issuer, Session store
+or new identity mapping. This candidate adds two functions in total (predicate and
+save), requiring the same future exact Owner permission Gate; nothing is installed.

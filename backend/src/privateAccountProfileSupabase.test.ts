@@ -1,8 +1,23 @@
 import { randomUUID } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { expect, it } from "vitest";
 import { createPrivateAccountProfilePort } from "./privateAccountProfileSupabase";
 
 const origin = "https://tuqigdxrvrerfewsxqgm.supabase.co";
+const publicKey = "sb_publishable_private_profile_fixture_only";
+it.each([
+  { client_id: "unit-delegated-client" }, { otr_scopes: ["otr.trips.read"] },
+  { otr_scopes: null }, { aud: "https://api-dev.xoery.art/mcp" },
+  { aud: ["authenticated", "https://api-dev.xoery.art/mcp"] },
+])("rejects resource markers before Auth/data IO (unit fixture only): %j", async (claims) => {
+  const f = fixture();
+  const token = "unit." + Buffer.from(JSON.stringify(claims)).toString("base64url") + ".not-a-signature";
+  const scope = { ...f.scope, accessToken: token };
+  await expect(f.port.read(scope, f.signal)).rejects.toMatchObject({ status: 403 });
+  await expect(f.port.save(scope, f.input, f.signal)).rejects.toMatchObject({ status: 403 });
+  await expect(f.port.receipt(scope, f.operationId, f.signal)).rejects.toMatchObject({ status: 403 });
+  expect(f.calls).toEqual([]);
+});
 function fixture(mode = "existing") {
   const accountId = randomUUID(),
     operationId = randomUUID();
@@ -21,7 +36,7 @@ function fixture(mode = "existing") {
     calls.push(request);
     expect(url.origin).toBe(origin);
     expect(request.headers.get("Authorization")).toBe("Bearer fixture-normal-session");
-    expect(request.headers.get("apikey")).toBe("fixture-public-key");
+    expect(request.headers.get("apikey")).toBe(publicKey);
     expect(request.redirect).toBe("error");
     if (url.pathname === "/auth/v1/user")
       return Response.json({
@@ -30,6 +45,8 @@ function fixture(mode = "existing") {
         email: "fixture@example.invalid",
       });
     expect(url.pathname).not.toBe("/rest/v1/profiles");
+    if (url.pathname === "/rest/v1/rpc/account_private_profile_actor")
+      return Response.json(mode === "disabled subject" ? null : mode === "foreign subject" ? randomUUID() : accountId);
     if (url.pathname === "/rest/v1/rpc/account_private_profile_save") {
       if (mode === "redirect rejected") throw TypeError("fixture redirect rejected");
       if (mode === "conflict")
@@ -95,7 +112,7 @@ function fixture(mode = "existing") {
     scope: { accountId, accessToken: "fixture-normal-session" },
     port: createPrivateAccountProfilePort({
       url: origin,
-      publishableKey: "fixture-public-key",
+      publishableKey: publicKey,
       fetchImplementation: wire,
     }),
   };
@@ -114,9 +131,16 @@ it.each(["empty", "existing"])(
           ? {}
           : { displayName: "旅人", travelDocumentName: { fullName: "林 e\u0301" } },
     });
-    expect(f.calls.map((request) => request.method)).toEqual(["GET", "GET"]);
+    expect(f.calls.map((request) => request.method)).toEqual(["GET", "POST", "GET"]);
   },
 );
+
+it.each(["disabled subject", "foreign subject"])("rejects %s before private data access", async (mode) => {
+  const f = fixture(mode);
+  await expect(f.port.read(f.scope, f.signal)).rejects.toMatchObject({ status: 403 });
+  expect(f.calls.map(request => new URL(request.url).pathname))
+    .toEqual(["/auth/v1/user", "/rest/v1/rpc/account_private_profile_actor"]);
+});
 
 it("saves a frozen name patch through normal JWT RPC and reads only its private receipt", async () => {
   const f = fixture();
@@ -128,7 +152,7 @@ it("saves a frozen name patch through normal JWT RPC and reads only its private 
     operationId: f.operationId,
     revision: 1,
   });
-  expect(await f.calls[1].json()).toEqual({
+  expect(await f.calls.find(request => new URL(request.url).pathname === "/rest/v1/rpc/account_private_profile_save")!.json()).toEqual({
     p_operation: f.operationId,
     p_expected_revision: 0,
     p_changes: {
@@ -203,9 +227,15 @@ it("does not follow a rejected private-write redirect or fall back to public pro
   await expect(f.port.save(f.scope, f.input, f.signal)).rejects.toMatchObject({
     status: 503,
   });
-  expect(f.calls).toHaveLength(2);
+  expect(f.calls).toHaveLength(3);
   expect(f.calls.map((request) => new URL(request.url).pathname)).toEqual([
     "/auth/v1/user",
+    "/rest/v1/rpc/account_private_profile_actor",
     "/rest/v1/rpc/account_private_profile_save",
   ]);
+});
+
+it("rejects secret API keys before any network work", () => {
+  expect(() => createPrivateAccountProfilePort({ url: origin, publishableKey: "sb_secret_unit_only" }))
+    .toThrow("PROFILE_DEV_CONFIG_REQUIRED");
 });

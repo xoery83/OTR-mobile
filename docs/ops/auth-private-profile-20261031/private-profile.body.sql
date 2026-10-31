@@ -16,18 +16,29 @@ ALTER TABLE public.account_private_profile_receipts ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.account_private_profiles,public.account_private_profile_receipts
  FROM PUBLIC,anon,authenticated,service_role;
 GRANT SELECT ON public.account_private_profiles,public.account_private_profile_receipts TO authenticated;
+-- One bounded self-subject predicate for private reads and saves; no identity is created.
+CREATE FUNCTION public.account_private_profile_actor()
+RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT u.id FROM auth.users u WHERE u.id=auth.uid() AND u.is_anonymous IS FALSE
+   AND (u.banned_until IS NULL OR u.banned_until<=clock_timestamp())
+   AND (auth.jwt()->'client_id' IS NULL OR auth.jwt()->'client_id'='null'::jsonb)
+   AND NOT (coalesce(auth.jwt(),'{}'::jsonb)?'otr_scopes')
+   AND NOT (coalesce(auth.jwt()->'aud','null'::jsonb) @> '"https://api-dev.xoery.art/mcp"'::jsonb)
+$$;
+ALTER FUNCTION public.account_private_profile_actor() OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.account_private_profile_actor() FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.account_private_profile_actor() TO authenticated;
 CREATE POLICY account_private_profile_self_read ON public.account_private_profiles
- FOR SELECT TO authenticated USING(account_id=auth.uid());
+ FOR SELECT TO authenticated USING(account_id=public.account_private_profile_actor());
 CREATE POLICY account_private_profile_receipt_self_read ON public.account_private_profile_receipts
- FOR SELECT TO authenticated USING(account_id=auth.uid());
+ FOR SELECT TO authenticated USING(account_id=public.account_private_profile_actor());
 
 CREATE FUNCTION public.account_private_profile_save(p_operation uuid,p_expected_revision bigint,p_changes jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE actor uuid:=auth.uid();r record;old_revision bigint;fields jsonb;v jsonb;
+DECLARE actor uuid:=public.account_private_profile_actor();r record;old_revision bigint;fields jsonb;v jsonb;
  fingerprint text;instant timestamptz;
 BEGIN
- IF actor IS NULL OR NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=actor
-   AND u.is_anonymous IS FALSE AND (u.banned_until IS NULL OR u.banned_until<=clock_timestamp())) THEN
+ IF actor IS NULL THEN
   RAISE EXCEPTION 'PROFILE_NORMAL_ACCOUNT_REQUIRED' USING ERRCODE='42501';
  END IF;
  IF p_operation IS NULL OR p_expected_revision IS NULL OR p_expected_revision<0

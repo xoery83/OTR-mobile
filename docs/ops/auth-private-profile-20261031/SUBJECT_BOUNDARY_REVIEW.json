@@ -1,0 +1,7 @@
+{
+  "status": "NO_BLOCKER_PRIVATE_PROFILE_SUBJECT_CANDIDATE",
+  "sqlSHA256": "cf3081ab03aae25ed9373f84968d5118f81628df7a9c0fb59a08ad6fe7631b54",
+  "independentValidation": "2 suites34 PASS; PG10 SQL hash verified",
+  "focusedValidation": "3 suites45, typecheck and scoped lint PASS",
+  "scope": "Local candidate only. No Hosted install, route, Native activation. Exact new RLS/GRANT Gate still required."
+}

@@ -1,0 +1,10 @@
+{
+  "status": "LOCAL_CANDIDATE_REPRODUCED_RESOURCE_READ_LEAK",
+  "failure": "PROFILE_RESOURCE_READ_LEAK",
+  "sqlBeforeRepairSHA256": "9b4272adaef140ad3b8dd474ca3e0172b8444577b4383427cd6bc4ef3222a10e",
+  "scope": "Disposable network-none PostgreSQL only, Auth claims are unit fixtures not real JWTs",
+  "cause": "Previous private profile self-read policies checked auth.uid only and did not exclude delegated OAuth/resource markers",
+  "hostedInstallation": false,
+  "productionOrRealUserAccess": false,
+  "repair": "Additive marker rejection in both private SELECT policies, save RPC and existing Backend adapter; no new permission"
+}

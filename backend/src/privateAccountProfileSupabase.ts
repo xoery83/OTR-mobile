@@ -5,6 +5,8 @@ import {
   privateAccountProfileSnapshotSchema,
 } from "../../src/data/api/privateAccountProfileContracts";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import { isOAuthResourceToken } from "./authResourceTokenBoundary";
+import { isSupabaseDevPublicKey } from "../../src/data/auth/devSupabasePublicKey";
 import {
   PrivateAccountProfileError,
   type PrivateAccountProfilePort,
@@ -29,7 +31,7 @@ export function createPrivateAccountProfilePort(config: {
   fetchImplementation?: typeof fetch;
 }): PrivateAccountProfilePort {
   const origin = "https://tuqigdxrvrerfewsxqgm.supabase.co";
-  if (![origin, origin + "/"].includes(config.url) || !config.publishableKey)
+  if (![origin, origin + "/"].includes(config.url) || !isSupabaseDevPublicKey(config.publishableKey))
     throw Error("PROFILE_DEV_CONFIG_REQUIRED");
   async function client(
     raw: Parameters<PrivateAccountProfilePort["read"]>[0],
@@ -39,6 +41,8 @@ export function createPrivateAccountProfilePort(config: {
     coreUuid.parse(scope.accountId);
     if (!scope.accessToken || signal.aborted)
       throw new PrivateAccountProfileError(503, "PROFILE_UNAVAILABLE");
+    if (isOAuthResourceToken(scope.accessToken))
+      throw new PrivateAccountProfileError(403, "PROFILE_IDENTITY_REQUIRED");
     const wire = config.fetchImplementation ?? fetch;
     const database = createClient(origin, config.publishableKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -55,6 +59,10 @@ export function createPrivateAccountProfilePort(config: {
       identity.data.user.id !== scope.accountId ||
       identity.data.user.is_anonymous !== false
     )
+      throw new PrivateAccountProfileError(403, "PROFILE_IDENTITY_REQUIRED");
+    const subject = await database.rpc("account_private_profile_actor");
+    if (subject.error) failure(subject.error);
+    if (signal.aborted || subject.data !== scope.accountId)
       throw new PrivateAccountProfileError(403, "PROFILE_IDENTITY_REQUIRED");
     return { database, scope };
   }
