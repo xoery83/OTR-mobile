@@ -14,6 +14,7 @@ import {
 } from "../../src/domain/trip/tripCoreV2Commands";
 import { parseCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
+import { authorizedTripVersionSchema } from "../../src/domain/trip/tripAuthorizedVersion";
 import {
   createRequestBoundary,
   readBoundedJson,
@@ -91,7 +92,9 @@ export type CoreHttpConnection = {
     input: unknown,
   ): Promise<CoreCandidatePublicationResult>;
   read?: Pick<ReturnType<typeof createCorePgReader>, "collection" | "item"> &
-    Partial<Pick<ReturnType<typeof createCorePgReader>, "capabilities">>;
+    Partial<
+      Pick<ReturnType<typeof createCorePgReader>, "capabilities" | "authorizedVersion">
+    >;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
   hash: ImportHash;
@@ -377,6 +380,27 @@ export async function coreHttpBoundary(
               connection.hash,
             ),
       );
+    }
+    if (path === "authorized-version" && request.method === "GET") {
+      if (!connection?.read?.authorizedVersion)
+        return failure(503, "CORE_READ_UNAVAILABLE");
+      const orderVersion = request.headers.get("X-OTR-Ordinary-Order-Version");
+      if (orderVersion !== null && orderVersion !== "1")
+        return failure(426, "UNSUPPORTED_CLIENT");
+      const result = authorizedTripVersionSchema.safeParse(
+        await connection.read.authorizedVersion(
+          actor,
+          trip,
+          orderVersion === "1" ? 1 : undefined,
+        ),
+      );
+      if (
+        !result.success ||
+        result.data.actorAccountId !== actor ||
+        result.data.tripId !== trip
+      )
+        return failure(503, "CORE_READ_UNAVAILABLE");
+      return reply(200, result.data);
     }
     if (path === "collection" && request.method === "GET") {
       if (!connection?.read) return failure(503, "CORE_READ_UNAVAILABLE");
