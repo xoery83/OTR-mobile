@@ -24,7 +24,7 @@ No Source Host/config write until Auth returns actual default CLOSED baseline.
 Specific repair: Native settle treats every ADMITTED as reconcile-only, so an
 unstarted VERIFY can never resume. Minimal change permits explicit Analyze to
 execute the SAME VERIFY+ADMITTED; UPLOAD ADMITTED, IO_ACTIVE/UNKNOWN protections
-unchanged. RED1→50 targeted PASS+ESLint, independent focused review requested.
+unchanged. RED1→50 targeted PASS+ESLint, independent NO_BLOCKER.
 No SQL/Authority/budget changes. Isolated existing Source-chain STATUS and BEGIN
 PASS using actual5functions, so this is not proof of the initial Hosted BEGIN
 exception's cause. Next retry must record exact failure category if it persists.
@@ -38,10 +38,12 @@ change config; always fresh-CAS latest handoff. Root main untouched; Native repo
 main33388e52 integrated its client-only fallback, remote not pushed.
 
 Import UI139c7425 distinguishes local Photo re-confirmation from generic AI error;
-67tests/UIguard/ESLint/independentNO_BLOCKER LOCAL_PASS only. AD5 remains126.8/SQLite76,
-same data/session/rootMyTrips. Prepare one JS-only126.9 using unchanged nativebinary,
-reviewed Import fixes and existing public config; preserve QA Capture decisions/
-counts/bindings with readonly snapshots, no Session/Keychain copying. Sourceclosed
+67tests/UIguard/ESLint/independentNO_BLOCKER LOCAL_PASS only. AD5 now126.9/SQLite76, same data/session. JS-only update retained nativebinary/dylibs;
+Capture inputs/counts/bindings/decision readonly snapshots equal, no Session or
+Keychain copying. Actual cold GUI reopened My Trips, same04:15 Batch and AI choice.
+Finite static PG timeout/connection/SQLSTATE failure logging additionally LOCAL_PASS
+44checks/ESLint/independentNO_BLOCKER; response and all authority unchanged, not
+deployed. It must not be used to claim the initial BEGIN failure cause in advance. Sourceclosed
 through all builds. Full roottypes previously hit2GiB OOM; no heap escalation.
 
 Next: review/fix Native VERIFY ADMITTED→same execute, incremental code-only AD5

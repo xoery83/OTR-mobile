@@ -239,7 +239,7 @@ it("holds request lifetime through port composition and closes a late aborted sc
   expect(x.port.execute).not.toHaveBeenCalled();
 });
 
-it.each(["25P03", "P0001", "NOT_A_SQL_STATE"])(
+it.each(["25P03", "P0001", "P0003", "23514", "22P02", "NOT_A_SQL_STATE"])(
   "logs only bounded PNG failure facts (%s)",
   async (state) => {
     const x = await fixture(),
@@ -261,7 +261,9 @@ it.each(["25P03", "P0001", "NOT_A_SQL_STATE"])(
           action: "result",
           reason: "UNCLASSIFIED",
           errorKind: "OTHER",
-          ...(["25P03", "P0001"].includes(state) ? { sqlState: state } : {}),
+          ...(["25P03", "P0001", "P0003", "23514", "22P02"].includes(state)
+            ? { sqlState: state }
+            : {}),
         }),
       );
       expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_ERROR_CANARY");
@@ -271,3 +273,19 @@ it.each(["25P03", "P0001", "NOT_A_SQL_STATE"])(
     }
   },
 );
+
+it.each([
+  ["Query read timeout", "PG_QUERY_TIMEOUT"],
+  ["Connection terminated unexpectedly", "PG_CONNECTION_TERMINATED"],
+])("classifies only a fixed PNG transport error without exposing its message (%s)", async (message, expectedKind) => {
+  const x = await fixture();
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    x.port.lookup.mockRejectedValueOnce(Error(message));
+    const response = await x.handler(x.request({ command: x.proposals.prepare }, "result"));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: { code: "SOURCE_IO_UNAVAILABLE", message: "SOURCE_IO_UNAVAILABLE" } });
+    expect(JSON.parse(log.mock.calls[0][0] as string).errorKind).toBe(expectedKind);
+    expect(JSON.stringify(log.mock.calls)).not.toContain(message);
+  } finally { log.mockRestore(); }
+});

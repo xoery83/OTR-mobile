@@ -194,7 +194,11 @@ export async function sourcePngPreparationBoundary(
           errorKind:
             error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
               ? error.name
-              : "OTHER",
+              : code === "Query read timeout"
+                ? "PG_QUERY_TIMEOUT"
+                : code === "Connection terminated unexpectedly"
+                  ? "PG_CONNECTION_TERMINATED"
+                  : "OTHER",
           sqlState: [
             "42501",
             "P0001",
@@ -205,6 +209,11 @@ export async function sourcePngPreparationBoundary(
             "42883",
             "42P01",
             "23505",
+            "23514",
+            "22P02",
+            "42702",
+            "P0002",
+            "P0003",
           ].includes(String(sqlState))
             ? String(sqlState)
             : undefined,

@@ -1,0 +1,13 @@
+{
+  "status": "PHOTO_QA_1269_CODE_ONLY_INSTALLED",
+  "source": "a2cee341",
+  "build": "126.9",
+  "bundleSHA256": "7d69a881df598a8c609aa7bbd9a17d493b465571c17942fe5f523b0a2eba127e",
+  "nativeContentExcludingUpdatedSignatureSHA256": "f50edd854213c0eb3586af0052463c0e70277bd8472d3bf762904b7622e2f455",
+  "nativeDylibsUnchanged": true,
+  "pagingEnabled": true,
+  "sameCaptureInputAndCounts": true,
+  "uninstall": false,
+  "dataOrSessionCopied": false,
+  "providerCalls": 0
+}
