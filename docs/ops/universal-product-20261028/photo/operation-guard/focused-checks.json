@@ -1,0 +1,144 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "PREPARE_APPLIED_UPLOAD_ADMITTED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongOp",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongActor",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongTrip",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongSource",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongRep",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongMaterial",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongKey",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongDigest",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongCommand",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongContract",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongParent",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongSourceCAS",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongRepCAS",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongLifecycle",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongSourceRetention",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongRemote",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "wrongRepRetention",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "nullKey",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "ILLEGAL_PHASE_STILL_DENIED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "READ_RECEIPT_DML_DENIED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "CLOSED_REGISTER_DENIED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "EXPIRED_REGISTER_DENIED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "NO_PNG_SCOPE_LEGACY_PDF_STILL_CLOSED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "VERIFY_WITHOUT_COMPLETED_UPLOAD_DENIED",
+      "passed": true,
+      "firstError": null
+    }
+  ],
+  "allTransactionsRolledBack": true,
+  "network": "none",
+  "devExecuted": false,
+  "fixtureLimits": [
+    "accepted Source seeded before loading seven exact Hosted immediate routines",
+    "canonical operation statement/row triggers and actual PDF fallbacks added in transaction",
+    "fixture SourceWriter SELECT actions aligns actual accepted acquisition; no DEV GRANT",
+    "Two exact Hosted phase-custody helpers and missing staged pdf_sealed_at column aligned only inside rolled-back local transaction; no DEV DDL."
+  ],
+  "notProven": [
+    "actual Storage POST/GET",
+    "positive terminal VERIFY/custody journal",
+    "Vision/Admission/Core/Native recovery"
+  ]
+}

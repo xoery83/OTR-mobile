@@ -1,0 +1,17 @@
+{
+  "status": "NO_BLOCKER",
+  "scope": "Independent read-only exact diff/package review; not rerun or Hosted installation",
+  "reviewer": "p1_source_review_independent",
+  "installSha256": "95ac45ecee910b346555c9a8a1babf099d06d5a9775612d77a5714cea5fd378b",
+  "inverseSha256": "a985fbba5c6c7cb158be14b68af9f570f7571edd32c4bdf31f4c349043c5bdcb",
+  "checks": [
+    "One PNG branch; PDF fallback/state/result checks unchanged",
+    "Retained acquire exact; any other Source operation blocks forward/reverse",
+    "CLOSED, OID/Owner/ACL/config/dependency/graph/schema assertions",
+    "25 semantic checks and 6 package checks reviewed"
+  ],
+  "notProven": [
+    "Hosted install",
+    "Storage/terminal VERIFY/Vision/Save/Native recovery"
+  ]
+}

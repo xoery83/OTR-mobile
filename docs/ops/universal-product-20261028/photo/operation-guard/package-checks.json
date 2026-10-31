@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "FORWARD_REVERSE",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "FAULT_AFTER_REPLACE",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "FAULT_AFTER_POSTCHECK",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "ACTIVE_INSTALL_REJECTED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "WRONG_PREIMAGE_REJECTED",
+      "passed": true,
+      "firstError": null
+    },
+    {
+      "name": "REVERSE_AFTER_PREPARE_REJECTED",
+      "passed": true,
+      "firstError": null
+    }
+  ],
+  "devExecuted": false,
+  "allTransactionsRolledBack": true,
+  "fixtureOid": "created transaction-locally; OID literal omitted only in local test copy",
+  "hostedOid": 58756,
+  "fixtureLimits": [
+    "Hosted fixed OID check omitted only from local test copy because fixture function is transaction-created.",
+    "Seed exact accepted Source plus immediate Hosted functions, canonical operation triggers; fixture function Owner/ACL aligned inside rollback transaction.",
+    "Installer internal snapshots verify complete membership graph including OIDs, schema ACL and function Owner/ACL/config unchanged."
+  ]
+}

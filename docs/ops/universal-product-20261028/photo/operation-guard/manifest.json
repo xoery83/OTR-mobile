@@ -1,0 +1,23 @@
+{
+  "status": "CANDIDATE_NOT_INSTALLED",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "function": "public.trip_source_operation_guard()",
+  "oid": 58756,
+  "owner": "postgres",
+  "acl": "{postgres=X/postgres,otr_trip_source_writer=X/postgres}",
+  "preMd5": "87554d61b34d9ffee61d07bea8a23c43",
+  "postMd5": "1eeccf273aa0fbcd5e89bc96361d1ebf",
+  "sourceId": "2bf0294a-47df-4176-999f-0e352e34543c",
+  "acquisitionOperationId": "37d5cd82-f6bf-433c-8031-47fc00f509c0",
+  "changes": "PNG WRITE scope branch only; existing PDF fallback and state/result integrity unchanged",
+  "noNewPrivileges": true,
+  "sha256": {
+    "install.sql": "95ac45ecee910b346555c9a8a1babf099d06d5a9775612d77a5714cea5fd378b",
+    "rollback.sql": "a985fbba5c6c7cb158be14b68af9f570f7571edd32c4bdf31f4c349043c5bdcb",
+    "focused-checks.json": "61325b3b8468e8f7de3ce8afe81b07b7cd94299f28c9dadfbd768544981bd8ce",
+    "package-checks.json": "42621fbedc842fd079cc0cd7e55d8d85f7bf491b052941cd574bea5d0d00541c",
+    "independent-review.json": "cdcefd25c9195daf53486b77be5c4bba4b48b28484f09036ee9d924c33e08621",
+    "PHOTO_SIXTH_WINDOW_CLOSED.json": "3274347e5a443ddc91a0dfa5a1b5b1de5b8e1c6cc527d9461efc4852db6ed28c",
+    "DIAGNOSTIC_SOFTWARE_RELEASE.json": "11a2eef6b66478a4d926a7982cde16a9836c871b6caa968da7bf9fb041ab0a78"
+  }
+}

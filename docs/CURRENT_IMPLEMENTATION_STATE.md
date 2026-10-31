@@ -1,40 +1,30 @@
-# Latest real Photo / V2 release — 31 October 2026
+# Current Import Photo checkpoint — 31 October 2026
 
-Owner-approved9bc5 single-pin repair actually installed CLOSED; independent
-OID66243/Owner/ACL/postMD5 plus entire membership graph/public ACL restoration PASS.
-V2 five events recorded; unique Source maintenance resource held~11.43s and released
-before business E2E. Native/Auth/MCP all adopted V2; no global QA reservation.
-See ops/DEV_DELIVERY_MODEL_V2.md and photo/first-lookup/v2-release-receipt.json.
+Golden Slice BLOCKED before original upload; not paid Vision/Save PASS.
+Owner-approved first-lookup9bc5 installed CLOSED; Source2bf0294a/acquire37d5cd82
+APPLIED/FINAL, exact PNG078de830/42630bytes, rep27b93994 rev1/PENDING retained.
+JSON receipt adapter2be397cf fixed/installed AD5 126.5. Next actual Native503
+SOURCE_IO_UNAVAILABLE at PNG execute leaves no PREPARE/UPLOAD/VERIFY operation.
+Actual Hosted operation row guard still invokes PDF-only fallback for PNG scope;
+exact-routine/trigger rollback PG RED PDF_V4_CLOSED. Single-function PNG branch
+candidate fixes only this guard; 25 semantic+6 package checks and independent
+NO_BLOCKER. See authority/PHOTO_OPERATION_GUARD_GATE.md / photo/operation-guard/.
+New protected body requires exact approval; NOT INSTALLED. OID58756 /87554→1eecc,
+Ownerpostgres; no maintenance GRANT, schema, budget or new object requested.
+All six windows CLOSED; worker inactive/EMPTY/timers stopped. No reverse/delete
+of accepted Source. Inverse additionally blocked by any subsequent Source op.
 
-Same retained PNG Batch67842863 Source2bf0294a/operation37d5cd82 now ACQUIRE_SOURCE
-APPLIED/FINAL, materialrev1, exactSHA078de830/42630bytes, originalrepPENDING. No
-paid Vision or Save claimed. Next actual fail Native PNG_ORIGINAL validation:
-PNG adapter passed JSON string receipt into object schema; PDF already decodes.
-One-line JSON.parse fix + real-string mock RED→GREEN2s23PASS/typesPASS, independent
-NO_BLOCKER. Fourth scope d6ad6303 independently CLOSED/source before+after/runtime
-PASS; worker inactive/EMPTY and timers stopped. Accepted Source/receipt retained,
-no SQL reverse permitted. Next code-only AD5 update then same-identity recovery.
-Native prepares versionGET Host switch lock-free; before next Photo session,
-re-anchor/verify close plan if its container changes. No live Host/SQL lock held.
+V2 adopted Native/Import/Auth/MCP. SQL pin install held~11.43s; diagnostic software
+release~16.90s, released before normal business tests. No global DEV lock held.
+Root sourcef956bf95 preserves Native version-only integration. Latest Native
+runtime receipt624f3c53: container7a77a51d/image06b19831, preserves Photo diagnostics;
+fresh physical verification and controller re-anchor required before next window.
+Main8f79a421 changed serially by MCP, Root did not modify main. Auth Parent SQL
+installed default CLOSED by delegated Auth writer; no Root duplicate install.
+Original Photo scope expiry remains2026-11-01T08:48:56Z. Next approval→short CAS
+install→release→CLOSED controller proof→same Source real Vision/Save/cold/close.
 
-# Latest Import Photo / DEV delivery checkpoint — 31 October 2026
-
-V2 resource-scoped delivery adopted (Owner instruction): ordinary authorized QA
-runs without global reservation; only shared changes get short CAS/apply/smoke/
-receipt locks. Native/Auth notified and ACK; MCP direct notice was auto-review
-rejected; it independently read the forwardable notice and ACKed adoption. See ops/DEV_DELIVERY_MODEL_V2.md.
-No artificial release to demonstrate V2; live five-time receipt validation pending.
-
-Photo actual first failure is lookup-before-acquire: READ_RECEIPT pin required
-an existing Source, causing503 SOURCE_CAPABILITY_CLOSED before acquire. Prior
-missing-Trip diagnosis is superseded. Exact same-command RED→GREEN and four
-strict guard negatives PASS in isolated PG. Single-function maintenance forward/
-reverse/fault rollback checks PASS, full graph/schema ACL restored; fixture limits
-are explicit. New body needs precise protected approval, not another ordinary
-window approval. See authority/PHOTO_FIRST_LOOKUP_REPAIR_GATE.md and manifest.
-PNG remains CLOSED, no Source/paid Vision/Save PASS. Same Batch/Source/op retained;
-no new input, model call, expiry or budget authorized. Independent
-package review NO_BLOCKER; next exact approval, fresh V2 preflight/install, same Photo E2E.
+Older checkpoints below are historical and superseded by the current header.
 
 # Photo approved execution — 31 October 2026
 
