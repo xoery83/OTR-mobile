@@ -1,0 +1,18 @@
+{
+  "status": "DEFAULT_CLOSED_IMAGE_PREPARED_NOT_DEPLOYED",
+  "root": "/opt/otr/dev-backend/build/auth-write-e8ec9a30b676414ebf603070361b7905",
+  "baseImage": "sha256:7371d76732781af8990027280afb1662f4bed8a837e69f1a8595ef992aa60142",
+  "image": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a",
+  "bundles": {
+    "server-capture.mjs": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "imageConfigUnchanged": true,
+  "baseImageConfigSHA256": "d7605c7e7d56073f5d2f9b2337e080d8a46431be1ee00f48a232623fb6deb8df",
+  "candidateImageConfigSHA256": "d7605c7e7d56073f5d2f9b2337e080d8a46431be1ee00f48a232623fb6deb8df",
+  "serviceOrEnvOrMountOrSqlChanges": 0,
+  "authorityActivated": false,
+  "providerCalls": 0
+}

@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
 import { createMcpAccountWriteBinding } from "./mcpAccountWriteBinding";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
+import type { CoreCommandTransaction } from "./tripCoreV2Commands";
+import { emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
+import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
+import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
 
 const actor = "11111111-1111-4111-8111-111111111111";
 const trip = "22222222-2222-4222-8222-222222222222";
@@ -66,6 +70,74 @@ function setup() {
   };
 }
 afterEach(() => vi.useRealTimers());
+
+it.each(["revoke", "expiry", "cancel"])(
+  "keeps a real committed P3 uncertain when %s suppresses its response",
+  async (mode) => {
+    const q = setup();
+    let graph = emptyCoreGraph();
+    const commit = vi.fn<CoreCommandTransaction["commit"]>(async (mutation, receipt) => {
+      expect(receipt.outcome).toBe("APPLIED");
+      expect(receipt.operationId).toBe(operation);
+      if (!mutation) throw Error("MISSING_MUTATION");
+      graph = mutation.graph;
+      if (mode === "revoke") q.isWriteGrantCurrent.mockResolvedValue(false);
+      else if (mode === "expiry") {
+        vi.useFakeTimers();
+        vi.setSystemTime(q.grant.expiresAt);
+      } else q.parent.abort();
+      return item;
+    });
+    q.withLockedCommand.mockImplementationOnce(async (_scope, work) =>
+      work({
+        actor: {
+          accountId: actor,
+          tripId: trip,
+          personId: null,
+          personIds: [],
+          active: true,
+          canManageShared: false,
+        },
+        readReceipt: async () => null,
+        hasLegacyOperation: async () => false,
+        canReadReceipt: async () => true,
+        enabledCommands: async () => ["CREATE_ITEM"],
+        readLockedGraph: async () => graph,
+        verifyAdmission: async () => {},
+        lifecycleGraphHash: async () => undefined,
+        commit,
+      }),
+    );
+    const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.parent.signal);
+    const response = await binding.backend(
+      {
+        method: "POST",
+        path: commandPath,
+        body: {
+          ...q.command,
+          command: "CREATE_ITEM",
+          baseVector: [{ kind: "ITEM", id: item, revision: null }],
+          payload: {
+            ...coreDefaults("member"),
+            family: "P3",
+            core: { title: "Synthetic QA stay" },
+            schedule: {
+              start: coreDateBoundary("2026-12-12"),
+              end: coreDateBoundary("2026-12-13"),
+            },
+          },
+        },
+      },
+      q.signal,
+    );
+    expect(commit).toHaveBeenCalledOnce();
+    expect(q.withLockedCommand).toHaveBeenCalledOnce();
+    expect(graph.itinerary_events).toHaveLength(1);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: { code: "MCP_WRITE_UNAVAILABLE" } });
+    expect(q.readOperation).not.toHaveBeenCalled();
+  },
+);
 
 it("snapshots the confirmed method/operation/payload before awaiting current consent", async () => {
   const q = setup(),

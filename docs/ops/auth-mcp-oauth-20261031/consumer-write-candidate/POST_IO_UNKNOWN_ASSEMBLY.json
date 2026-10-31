@@ -1,0 +1,25 @@
+{
+  "status": "OFFLINE_POST_IO_UNKNOWN_ASSEMBLY_PASS_NOT_DEPLOYED",
+  "referencePacket": "/private/tmp/otr-auth-write-compatible-20261101/tree",
+  "referenceCaptureSHA256": "0cafa2c28d43178856562fd6d017ad5bafe998bee8df0038a7f020c19c7fccdf",
+  "baselineReproduced": true,
+  "candidateCaptureSHA256": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+  "beforeCodeInputs": 351,
+  "afterCodeInputs": 351,
+  "changedAuthInputs": [
+    {
+      "path": "backend/src/mcpAccountWriteBinding.ts",
+      "before": "7621bf6b36bfe733b980989db2e976ac2152af0eea1452f3033705018c5fefd6",
+      "after": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758"
+    }
+  ],
+  "otherCodeInputsPreserved": 350,
+  "artifactHashes": {
+    "server-capture.mjs": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "noCredentialsEnvDatabaseCopied": true,
+  "hostOrConfigOrAuthorityMutations": 0,
+  "providerCalls": 0
+}

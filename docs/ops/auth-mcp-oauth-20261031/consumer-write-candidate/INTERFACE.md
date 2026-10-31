@@ -18,8 +18,11 @@ neither a Read grant nor merely supplying this software creates Write permission
 Next: the same Auth-owned verifier/Consent must qualify fresh Write consent without
 silently upgrading existing grants. Activation and exact synthetic operations need
 their separate precise Owner Gate; the consumed Read C window cannot be reused.
-Expiry/cancellation after Core IO suppresses the result, never retries POST; recover
-the original operation through the existing Core operation reader after re-auth.
+After POST enters Core, a suppressed result (revocation, expiry, cancellation or
+other failure) returns503 so the existing MCP classifier preserves UNKNOWN rather
+than falsely asserting non-commit. Pre-dispatch auth rejection and GET semantics
+remain unchanged. Never retry POST; recover the original operation through the
+existing Core operation reader after re-auth.
 
 The closed DEV Write verifier reuses the existing issuer `/user` and
 `/user/oauth/grants` reads. It accepts both signed business scopes only, bound to

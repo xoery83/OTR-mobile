@@ -70,6 +70,7 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
         const boundary = createRequestBoundary(50000, AbortSignal.any([parent, signal]));
         let response: Response | undefined;
         let inactive = false;
+        let postEntered = false;
         try {
           const current = async () => {
             boundary.assertCurrent();
@@ -92,15 +93,22 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
             headers: { "X-OTR-Core-Contract-Version": "2" },
             ...(method === "POST" ? { body } : {}),
           });
-          response = await boundary.run(() =>
-            coreHttpBoundary(request, grant.accountId, ports.canReadTrip, ports.core),
-          );
+          response = await boundary.run(() => {
+            postEntered = method === "POST";
+            return coreHttpBoundary(
+              request,
+              grant.accountId,
+              ports.canReadTrip,
+              ports.core,
+            );
+          });
           await current();
           return response;
         } catch {
           void response?.body?.cancel().catch(() => undefined);
           return reply(
-            inactive || Date.now() >= grant.expiresAt ? 401 : 503,
+            // Once POST enters Core, suppressed results cannot prove non-commit.
+            !postEntered && (inactive || Date.now() >= grant.expiresAt) ? 401 : 503,
             "MCP_WRITE_UNAVAILABLE",
           );
         } finally {

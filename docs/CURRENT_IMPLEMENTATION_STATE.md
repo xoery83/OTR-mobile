@@ -108,8 +108,16 @@ actual a71 SDK Node smoke7 and local network-none PG10 groups PASS with independ
 NO_BLOCKER. New authority remains OFF and not approved. Fixed d2b/QA1f, two frozen
 P3 operation/digests only; no new client, store or Save pipeline. Root latest
 2cd/f2ab base was byte-reproduced; Auth-only overlay0cafa preserves346 other code
-inputs. Staged default-closed image7371/MCPad47/browser6040 has not been deployed;
-Root independent image/readback and serial software CAS are pending. Operators
+inputs. Root deployed default-closed image7371/CIDfdd5/MCPad47/browser6040 and independently
+verified health200, protected401, both QA keys absent and original Env/mounts.
+A post-Core-commit Auth failure was then found: old401 can falsely imply REJECTED.
+Minimal Adapter repair preserves503/UNKNOWN after POST IO; actual in-memory Core
+P3 commit then revoke/expiry/cancel regressions and59 target tests/types/lint PASS.
+Independent postIO Review NO_BLOCKER; actual SDK composition of revoke/expiry/
+cancel proves UNKNOWN with one POST/commit each and no result leakage. Replacement
+default-closed image106825 is built; Root independent software CAS is pending;
+no live Write has been activated. Assembly40dad byte-reproduces7371 capture0cafa,
+changes only the Adapter and preserves350 other code inputs. Operators
 reuse old CAS/restore with Write-only namespace/config;5 local groups and assembly
 independent Review PASS. Next exact protected Write activation/operation Gate is
 NOT yet requested; old Read C cannot authorize it. See consumer-write-candidate/.

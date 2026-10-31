@@ -1,0 +1,14 @@
+{
+  "status": "ROOT_FIXED_DIFF_DEFAULT_CLOSED_SOFTWARE_NO_BLOCKER",
+  "changedInputs": [
+    "backend/src/mcpAccountReadBinding.ts",
+    "backend/src/mcpAccountWriteBinding.ts",
+    "backend/src/mcpOAuthGrantVerifier.ts",
+    "backend/src/mcpQaRuntime.ts",
+    "src/data/auth/mcpOAuthConsentRepository.ts"
+  ],
+  "preservedOtherCodeInputs": 346,
+  "baselineReproduced": true,
+  "noWriteConfigMeansUnmounted": true,
+  "protectedWriteActivationReviewedOrAuthorizedByThisReceipt": false
+}
