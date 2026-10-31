@@ -1,0 +1,43 @@
+{
+  "function": {
+    "acl": "{postgres=X/postgres,otr_trip_source_writer=X/postgres}",
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "md5": "1eeccf273aa0fbcd5e89bc96361d1ebf",
+    "oid": "58756",
+    "owner": "postgres",
+    "securityDefiner": false
+  },
+  "graphMD5": "bfd9f720aacddc7c877aba2d1786bc30",
+  "observedAt": "2026-10-31T03:43:40.820952+00:00",
+  "operations": [
+    {
+      "command": "ACQUIRE_SOURCE",
+      "id": "37d5cd82-f6bf-433c-8031-47fc00f509c0",
+      "outcome": "APPLIED",
+      "phase": "FINAL"
+    }
+  ],
+  "pdfClosed": true,
+  "pngClosed": true,
+  "representation": {
+    "bytes": 42630,
+    "id": "27b93994-98f3-4f76-8d15-93a52a0aeb21",
+    "remote": "PENDING",
+    "retention": "RETAINED",
+    "revision": 1,
+    "sha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+    "source": "2bf0294a-47df-4176-999f-0e352e34543c"
+  },
+  "schemaACLMD5": "31ac3b914f4ed0e7395a0278997ab2dd",
+  "source": {
+    "actor": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "id": "2bf0294a-47df-4176-999f-0e352e34543c",
+    "lifecycle": "ACTIVE",
+    "material": 1,
+    "retention": "RETAINED",
+    "revision": 1,
+    "trip": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+  }
+}

@@ -25,7 +25,7 @@ vi.mock("node:child_process", () => ({
   execFile: (
     _bin: string,
     args: string[],
-    _options: unknown,
+    options: { maxBuffer: number },
     callback: (error: unknown, stdout?: string) => void,
   ) => ({
     stdin: {
@@ -34,7 +34,10 @@ vi.mock("node:child_process", () => ({
         queueMicrotask(() => {
           try {
             fake.events.push(args[0]);
-            callback(null, fake.command(args, input));
+            const output = fake.command(args, input);
+            if (Buffer.byteLength(output) > options.maxBuffer)
+              throw Object.assign(Error('stdout maxBuffer length exceeded'), { code: 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' });
+            callback(null, output);
           } catch (error) {
             callback(error);
           }
@@ -306,7 +309,7 @@ it("keeps the canonical durable PNG stage after its disposable decoder copy is r
   ).rejects.toThrow();
 });
 
-it.each(["valid", "foreignImage", "stillPresent"] as const)(
+it.each(["valid", "largeInspect", "foreignImage", "stillPresent"] as const)(
   "negative-only cleanup matches exact owned attempt: %s",
   async (mode) => {
     const f = await fixture();
@@ -323,6 +326,7 @@ it.each(["valid", "foreignImage", "stillPresent"] as const)(
                 ? "sha256:" + "f".repeat(64)
                 : SOURCE_PNG_SANDBOX_IMAGE,
             Name: "/otr-source-png-" + token,
+            InspectionMetadata: mode === "largeInspect" ? "x".repeat(8500) : "",
             Config: {
               Labels: {
                 "org.otr.png-owner": token,
@@ -339,7 +343,7 @@ it.each(["valid", "foreignImage", "stillPresent"] as const)(
       }
       throw Error("unexpected Docker operation");
     });
-    if (mode === "valid")
+    if (mode === "valid" || mode === "largeInspect")
       expect(await terminateSourcePngAttempt(f.binding)).toEqual({ terminated: true });
     else
       await expect(terminateSourcePngAttempt(f.binding)).rejects.toThrow(

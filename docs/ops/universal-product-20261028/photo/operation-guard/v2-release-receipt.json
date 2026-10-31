@@ -1,0 +1,30 @@
+{
+  "deliveryModel": "V2",
+  "resource": [
+    "DEV Source operation guard OID58756"
+  ],
+  "workstream": "Import Photo",
+  "candidateSHA": "db1c0a87",
+  "ownerApproved": true,
+  "requestedAt": "2026-10-31T03:43:24.503672Z",
+  "readyAt": "2026-10-31T03:43:29.744661Z",
+  "acquiredAt": "2026-10-31T03:43:29.745054Z",
+  "mutationFinishedAt": "2026-10-31T03:43:36.281534Z",
+  "releasedAt": "2026-10-31T03:43:41.932735Z",
+  "outcome": "INSTALLED_CLOSED_SERVER_VERIFIED",
+  "firstFailure": null,
+  "hostMutation": false,
+  "businessScopeActivated": false,
+  "noAutomaticRetry": true,
+  "writeDisposition": "ACKNOWLEDGED",
+  "releaseProof": {
+    "exactFunctionOidOwnerACL": true,
+    "preMD5": "87554d61b34d9ffee61d07bea8a23c43",
+    "postMD5": "1eeccf273aa0fbcd5e89bc96361d1ebf",
+    "graphRestored": true,
+    "schemaACLRestored": true,
+    "pngClosed": true,
+    "pdfClosed": true,
+    "receipt": "dev-install-readback.json"
+  }
+}

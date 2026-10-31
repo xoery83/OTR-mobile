@@ -1,0 +1,8 @@
+{
+  "status": "EXACT_INSPECT_READ_ONLY_PROBE",
+  "bytes": 8192,
+  "errorCode": "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
+  "killed": false,
+  "actualInspectBytes": 8478,
+  "rawInspectDiscarded": true
+}

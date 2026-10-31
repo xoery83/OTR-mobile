@@ -29,7 +29,7 @@ const execute = (args: string[], input?: string) =>
         encoding: "utf8",
         timeout: 6000,
         killSignal: "SIGKILL",
-        maxBuffer: 8192,
+        maxBuffer: 65536,
       },
       (error, stdout) =>
         error

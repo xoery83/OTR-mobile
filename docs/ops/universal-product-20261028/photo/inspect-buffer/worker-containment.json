@@ -1,0 +1,33 @@
+{
+  "status": "WORKER_CONTAINMENT_READ_ONLY",
+  "worker": "failed",
+  "directory": {
+    "exists": true,
+    "uid": 0,
+    "gid": 999,
+    "mode": "0o750",
+    "links": 3,
+    "size": 80,
+    "symlink": false,
+    "directory": true
+  },
+  "marker": {
+    "exists": true,
+    "uid": 0,
+    "gid": 999,
+    "mode": "0o600",
+    "links": 1,
+    "size": 1344,
+    "symlink": false,
+    "directory": false
+  },
+  "decoderContainers": [
+    {
+      "id": "483def98828974d5f61ff738a131c3d1f835d46e53ca24cb1ba9f6b067bde1af",
+      "status": "created",
+      "running": false,
+      "sameAttempt": true
+    }
+  ],
+  "markerDeleted": false
+}
