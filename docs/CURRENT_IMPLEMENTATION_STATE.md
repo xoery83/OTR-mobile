@@ -145,12 +145,20 @@ recorded; resource released/Writer returned Root. No Host deploy or actual reade
 HTTP/Native caller activation; current approval explicitly keeps these closed.
 See HOSTED_INSTALL_REAL_RECEIPT.json and OWNER_APPROVAL_DIRECT.json. This proves
 closed SQL installation, not native Add or new function business-user E2E.
-Latest Native-reported Host baseline is a6ddadb4/image1b031de1/source45951de8
-(dedb+versionGET only; Env/mounts/SQL/Auth flags preserved). Future Auth software
-integration must retain this version port, not roll back the old default image.
+Latest Root-reported Host baseline is11952db2/image81a2d53a/sourcef956bf95,
+preserving Native versionGET45951de8 plus Source PNG diagnostic logging. Env,
+mounts, SQL and Auth Parent flags remain unchanged/closed. Future Auth software
+integration must retain both, not roll back the old default image.
 Fresh local main/origin-main now both8f79a4214d39b7f174ef61a82aa27d31b10a8156
 (MCP Git-only integration, released). Future Auth integration must retain that
 default-closed MCP code and original primary dirty/index/fullDiff, then recheck HEAD. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
+MCP P0 normal Account OAuth read is a separate minimal owning-interface task;
+it does not wait for all Guest/People work. Public discovery is qualified, but
+Hosted OAuth/client/consent/hook configuration and real resource issuance are not.
+See ops/auth-mcp-oauth-20261031/OAUTH_INTERFACE_DELTA_V1.md: no second grant DB,
+separate sessionId, same-issuer online Account/grant check, read-only client
+candidate with explicit consent and resource-bound signed business permissions.
+Standard OIDC scopes are not Trip authority. No OAuth settings or mount enabled.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
