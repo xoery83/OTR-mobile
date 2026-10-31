@@ -17,7 +17,7 @@
     "one UTC deadline per window <= first temporary config change +30min"
   ],
   "files": {
-    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OWNER_GATE.md": "8750ce6305da151198ce33120885743b4fb1fadc315130d10c7bbf3abf73e7c7",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OWNER_GATE.md": "9a8a8b8e6e3fef5983af4f2a27359bb191d177cf0cf7b49ff7c788b0bcc0ea6d",
     "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/chatgpt-item-read-smoke.json": "b9f817017a848e3079fcf2722dfa2b313ec93d1eb811376464bd3777369630f0",
     "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/claude-read-registration-proposal.json": "23833d143e45895342dd272974ac73327a355d8c30463d1780e8731f20572e36"
   },
@@ -27,7 +27,13 @@
     "4c5baacf45b4e215de7fe8e31fd355e92a0045d5:scripts/auth/build-oauth-consent.mjs": "d0da6a1361c5a0daaed6b293a8c67f860b6ca48f39bf7e3f8b8a801c30f16508",
     "3970e4fc53863161a4ffb016f43aedf95ba0d69c:docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
     "3970e4fc53863161a4ffb016f43aedf95ba0d69c:docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
-    "3970e4fc53863161a4ffb016f43aedf95ba0d69c:scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341"
+    "3970e4fc53863161a4ffb016f43aedf95ba0d69c:scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "d0917e066e29de0c30c86e7bf9aa7daf21a27e71:backend/src/mcpQaRuntime.ts": "3348dbae9d5a61a0beb145fae05cd08cc00582ae4d1c2b4e58dd3f3cf1742abf",
+    "d0917e066e29de0c30c86e7bf9aa7daf21a27e71:backend/src/mcpQaRuntime.test.ts": "d145da585c90e3cba4d34695a112bb577998885c3782f8c7db2ea2e1543ad1ad"
   },
-  "gateSHA256": "c3922653ab17d51b800b550ed7969a09f68e7f2a5a153cbd8c1100273f0dd9ab"
+  "callbackLoaderPatch": "d0917e066e29de0c30c86e7bf9aa7daf21a27e71",
+  "curatedSource": "a7d39f11011fe2e081fca60d1496850e4d2c92d1",
+  "isolatedServerBuildSHA256": "841fbfdea2420bb952e6b321893abe8b70e082c4e8f62eb32b95da722591a5e0",
+  "isolatedServerBuildIsDeploymentTarget": false,
+  "gateSHA256": "d133e8fe34cf5a6ff4543dd26e5b0d2c037742503e553a7ef6e18cc99b80338b"
 }

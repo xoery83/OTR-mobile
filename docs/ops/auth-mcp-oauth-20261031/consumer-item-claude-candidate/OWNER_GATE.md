@@ -36,10 +36,20 @@ stops that attempt. No guessed callback or auto-registration fallback.
 
 ## Frozen implementation and bounded execution parameters
 
-Use reviewed main `4c5baacf45b4e215de7fe8e31fd355e92a0045d5` Auth/MCP sources and
-reproducible build recipe. Runtime SHA256 `f0516c5268d042a2109633032d720603eb2fb326001f26968231117f83e243e0`;
+Use reviewed main `4c5baacf45b4e215de7fe8e31fd355e92a0045d5` plus the two-file
+loader callback patch `d0917e06` (isolated curated source `a7d39f11`), not the long
+Auth branch. The former main loader rejected Claude. The patch permits exactly
+the old ChatGPT/SDK tuple OR the single Claude callback, never mixed/arbitrary
+redirects; it also forbids reusing client835 for Claude. Candidate53 tests PASS.
+SDK bridge and reproducible build recipe are unchanged. Bridge SHA256 `f0516c5268d042a2109633032d720603eb2fb326001f26968231117f83e243e0`;
 browser SHA256 `6f31ece06854c538b12b0adbe34e969b23cdced2d89fc980141c3289902ebb25`.
 No Native, Profile, Parent or future Write candidate is deployed with this action.
+The isolated main-plus-patch server builds to SHA256
+`841fbfdea2420bb952e6b321893abe8b70e082c4e8f62eb32b95da722591a5e0`.
+This is build proof, not an instruction to deploy an old service baseline. Root
+must carry the exact pinned loader into its fresh service source and record that
+build/image digest, then qualify it default-closed before either activation;
+ordinary traceable DEV software integration cannot change this Gate's authority.
 
 Reuse the unchanged `QA_TOKEN_HOOK_INSTALL.template.sql` and
 `scripts/auth/render-mcp-qa-hook.py`. Per window, only client UUID and execution-time

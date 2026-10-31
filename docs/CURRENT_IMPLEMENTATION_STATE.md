@@ -184,6 +184,12 @@ recipient lease. See chatgpt-consumer-window/{CHATGPT_REAL_E2E.json,
 HOOK_CLOSE_RECONCILIATION.json,POST_REVOKE_MCP_LOG.json,RUNTIME_CLOSE_RECEIPT.json}.
 Software/source integration remains separate and default closed; no Beta always-on
 OAuth readiness or private Data/Storage qualification claimed.
+Next consumer Item/Claude read Gate d133e8fe remains unapproved/default-closed.
+Review caught the main loader's ChatGPT-only callback tuple; minimal source patch
+d0917e06 / curated a7d39f11 admits only two exact separate profiles, not mixed
+redirects or client835 reuse. Isolated53/build/types/lint and independent new8
+tests/hash review NO_BLOCKER. Root fresh-service closed integration is required
+before presenting the final configuration Gate; no new client/window is active.
 Accepted source assembled from fresh main8f into independent codex/auth-oauth-main-
 slice-20261031 at884ca8e0, without Parent/Profile candidates. 9s130/types/lint/UIguard/
 browser+runtimebuild/closedsmoke PASS; independent curated-source and Native fixed
@@ -217,6 +223,10 @@ leaks before repair. Candidate SELECT/save now share one normal-self predicate;
 adapter denies resource tokens before IO, then checks fresh Auth user and exact actor RPC.
 Boundary45/localPG10/types/scoped lint PASS; independent subject Review NO_BLOCKER.
 No Hosted installation; exact new-table/function/RLS/GRANT Owner Gate remains required.
+Local draft Screen3970 now uses only that repository's local read/saveDraft;
+explicit device-only copy, identity/late-callback/busy/error fences:4s41/types/
+lint/UIguard166 and independent2s26 NO_BLOCKER. Dedicated Screen and six new
+catalog keys Writers returned Native/Root. No route/registry/worker mounted.
 No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See
