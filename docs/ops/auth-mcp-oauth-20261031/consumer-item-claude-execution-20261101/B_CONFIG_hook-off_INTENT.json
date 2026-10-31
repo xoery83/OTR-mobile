@@ -1,0 +1,20 @@
+{
+  "step": "hook-off",
+  "status": "ACKNOWLEDGED_AND_INDEPENDENT_DIFF_READBACK",
+  "before": [
+    {
+      "path": [
+        "auth",
+        "hook",
+        "custom_access_token",
+        "enabled"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": false,
+      "remote": true
+    }
+  ],
+  "remainingDeclared": [],
+  "utc": "2026-10-31T15:16:49.887391Z"
+}

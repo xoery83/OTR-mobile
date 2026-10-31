@@ -1,0 +1,13 @@
+{
+  "status": "APPROVED_SINGLE_MANUAL_PUBLIC_CLIENT_CREATE_INTENT",
+  "clientName": "OTR DEV QA - Claude Read",
+  "redirectUris": [
+    "https://claude.ai/api/mcp/auth_callback"
+  ],
+  "clientType": "public",
+  "tokenEndpointAuthMethod": "none",
+  "requestedAt": "2026-10-31T14:53:37.664971+00:00",
+  "disposition": "ACKNOWLEDGED_AND_INDEPENDENT_PUBLIC_METADATA_READBACK",
+  "denyAllHookConfiguredReceipt": "B_CONFIG_hook-on_INTENT.json",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141"
+}

@@ -58,9 +58,23 @@ window is independently CLOSED (2026-10-31T14:36:56Z): QA1f/client835 active gra
 Hook disabled/URI empty and Site localhost diff empty, OAuth Server off after reload,
 retained default0cf/image67 healthy. Normal control Session logout/refresh-negative
 PASS; its raw action remains FAILED_OR_UNKNOWN and no new consumer Read PASS is
-claimed. A cannot restart or extend. See consumer-item-claude-execution-20261101/
-A_COMPLETE_CLOSED.json. Next: Native serial compatible software handoff, then an
-explicit prepared consumer ACK before the separately approved Claude B window.
+claimed. Consumer later confirmed it reached only the email login page: a browser
+history query blocked1328s; no new OTP, Consent or tool read/write occurred. This
+is an execution-tool failure, not a proved Backend data failure; history queries
+are excluded from the next attempt. A cannot restart or extend. See consumer-item-claude-execution-20261101/
+A_COMPLETE_CLOSED.json. Claude B is now independently CLOSED as well; see
+B_COMPLETE_CLOSED.json. Its normal OTP/explicit Read Consent, four-tool discovery,
+get_trip and list_trip_items(3 Items) passed. Auth independently matched raw P3
+summary ID/revision1/Dec10→13 to the existing Backend baseline. Full P3 returned
+AUTH_REQUIRED before revoke; foreign negative was not run. Normal grant DELETE204
+plus fresh absence passed, but the later same-P3 authentication prompt proves no
+revoke causality/server401. Final deny-all Hook/exact original ACL/grant0 and
+localhost/Hook-disabled/URI-empty diff all independently passed. Latest Native
+ac7a/image d8b was restored healthy, never the older67 image. Hook/runtime closed
+before hard15:20:25Z; final independent AS/config/ACL observations are later.
+Root has the Host/config Writer back. Next: closed diagnosis of the first
+AUTH_REQUIRED, preserving the60s cap and existing ports; no new QA window is
+authorized. Consumer evidence: MCP7044e287, B_CONSUMER_OUTCOME.json.
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
 edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →

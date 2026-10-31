@@ -1,0 +1,17 @@
+{
+  "status": "REVIEWED_FILES_STAGED_ONLY_NO_EXECUTION",
+  "root": "/opt/otr/dev-backend/build/auth-consumer-qa-67e45e6a7b92418496bf7a474eebc5b8",
+  "files": {
+    "deploy.py": "6d3c1574b1c9b199095d58bd0cfa5b24ab092cd630ca2460cf83dd96921b8fce",
+    "prepare.py": "72098a3082a704a5f92e80db6048f204bc60184b6752934ae05aa76e2fa5735e",
+    "restore.py": "ed47ff982e61557c9aab46de26af184fa7c4159a042e953f631760a234f32891",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "software-handoff.json": "58e8ce277de4aec8a3f1c627cd30e84fa9da72d61e34f5088f3c9a4a1146bc0c",
+    "gate-manifest.json": "90baab502c0afd06500109df7352bf3090a1b02cc4f131f9109f87fc59a5d461",
+    "owner-approval.json": "719dcb1327771940a3c67631ea87c30d000c9041036a52da95a59e094f257652"
+  },
+  "serviceChanges": 0,
+  "configurationChanges": 0,
+  "sqlChanges": 0,
+  "deadlineStarted": false
+}

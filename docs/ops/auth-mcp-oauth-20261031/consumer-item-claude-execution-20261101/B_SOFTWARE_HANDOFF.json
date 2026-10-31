@@ -1,0 +1,81 @@
+{
+  "status": "FRESH_NATIVE_COMPATIBLE_BASELINE_AUTH_READBACK_PASS",
+  "rootDeployment": {
+    "result": {
+      "status": "AUTH_DEFAULT_CLOSED_DEPLOYED",
+      "containerId": "ac7a53f64827adb329f6acd5a740215451d025355911679355eb470b7b57a045",
+      "retainedContainerId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+      "image": "sha256:d8b789b8d80f65b7c08408d1c330cd46bbb79a401d5a87413a0aa882bd93d168",
+      "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+      "health": "healthy",
+      "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+      "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+      "configHashes": {
+        "/opt/otr/dev-backend/compose.png-runtime-20261031.yml": "7c5615032bbdeea3210b15031c9d11aa69cba4f10aeba07b6261078adbfd0fb2",
+        "/opt/otr/dev-backend/env/backend-api-key.cutover.yml": "b849fcbf2680f7349da4fba6e4a6e7e030bc9577d0ddcb2978f025477698b465",
+        "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/finite.yml": "efb62537c916f7a749bd4a5200e000093d4e897744745c226c8389dd50f0d9f1",
+        "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml": "89e8cc6afccb157f9e96196b6ffc2ddf00d616b81c6553e5e4ddaeefa0d77a24",
+        "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml": "813b731b2eba440d4b8ba5aaa6fbaa7135bb83d529ccaf175a44a07f3abfec49",
+        "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml": "1834d961bc616dceea905a449f68cb965f9f549339f0df9e0a901bae2fdd0e76",
+        "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc",
+        "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml": "fbd5b1e05573335e9f68f2d37539de277299121c79fd826f83b0dc14ef752bba",
+        "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml": "6cc4bf28b90c7c36bd0812e2098f513fb509dd9cd47fd07f0a6eb69d4aec2873",
+        "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml": "ff48b999cb9f3474a07bfdf0264204b05103699e5ed25c60ca427ac21b8914c7",
+        "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml": "41026f94c644e3e1ba69e86df7d8c49bb43eef5a58ef76140f601923be9d1736",
+        "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml": "ee1867ae8fe5a378e7d747068bca729f195f289084c6ad345e59aca69d972d47",
+        "/opt/otr/dev-backend/releases/sustained-original-rollback-20261024T023716Z/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc",
+        "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T005419Z/compose.forward.closed.yml": "109c50f6b4365258a69bed92662605c7e7b95153453891d8a69c575e364b5ba2",
+        "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T025507Z/compose.forward.closed.yml": "109c50f6b4365258a69bed92662605c7e7b95153453891d8a69c575e364b5ba2",
+        "/opt/otr/dev-backend/releases/universal-closed-417cfaad-0e52-4c46-8d7e-a3fcf466b525/image.yml": "8cefff6a38fb6e9ae211ea3e703469e201615479b45b7631e901930021908a61",
+        "/opt/otr/dev-backend/releases/universal-closed-9db9c41f-5406-41af-9550-c3bcc3d622f5/image.yml": "342357957cd1aeef761ccaf23a6b00213cf2627498100d4ff2cf6948334ea7c5",
+        "/opt/otr/dev-backend/releases/universal-closed-c1b46df8-2e30-4770-a11e-cdc25639ea83/image.yml": "8032a0b08613e2f1c89f14ae14092061cff4b889a77f7d4db005f637e3c82bbe"
+      },
+      "mountedFileHashes": {
+        "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+        "/opt/otr/dev-backend/env/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+        "/opt/otr/dev-backend/env/universal-png-runtime.json": "3d3cdff1ab33c2601ccc8f284d23ce5abf27bcb28461e69c9c74fe098162be18",
+        "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json": "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+        "/run/otr-r3a5-catalog/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a"
+      },
+      "adoptionEffectiveFlag": "0",
+      "scopePresent": false,
+      "retainedRollbackReady": true
+    }
+  },
+  "rootImage": {
+    "status": "FRESH_NATIVE_COMPATIBLE_SOFTWARE_INDEPENDENT_READBACK_PASS",
+    "image": "sha256:d8b789b8d80f65b7c08408d1c330cd46bbb79a401d5a87413a0aa882bd93d168",
+    "bundles": {
+      "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe",
+      "mcp/runtime.mjs": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+      "server-capture.mjs": "6d7610a321e5d240b2095e38c7acb55bbe053adecc6381c270da995400880711",
+      "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+    },
+    "sourceDescriptor": "Native722ffee1 + Rootf21620fd + retained Auth loader a7d39f11",
+    "httpChecks": [
+      {
+        "path": "/health",
+        "status": 200
+      },
+      {
+        "path": "/oauth/consent/config",
+        "status": 404
+      },
+      {
+        "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/collection",
+        "status": 401
+      },
+      {
+        "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/authorized-version",
+        "status": 401
+      }
+    ]
+  },
+  "authClosedLoader": "a7d39f11",
+  "sourceWindowReleased": true,
+  "configurationGateApproved": true,
+  "authLoaderSHA256": "3348dbae9d5a61a0beb145fae05cd08cc00582ae4d1c2b4e58dd3f3cf1742abf",
+  "readbackAt": "2026-10-31T14:48:21.168196+00:00",
+  "approvalReceipt": "OWNER_APPROVAL_DIRECT.json",
+  "sourceCoordination": "Native direct Root EMPTY/CLOSED handoff; fresh shared CAS required before deploy"
+}

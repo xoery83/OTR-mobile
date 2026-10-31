@@ -1,0 +1,8 @@
+{
+  "status": "APPROVED_SCOPE_CONFIGURATION_SEQUENCE_VERIFIED",
+  "initialAsSave": "AUTO_REVIEW_REJECTED_NO_COMMIT_SITE_URL_STILL_LOCALHOST",
+  "repair": "First set exact approved temporary Site URL via sparse CLI; independent diff empty; reload UI then save ASon/DCRoff/path",
+  "siteReceipt": "B_CONFIG_site-on_INTENT.json",
+  "asReloadProof": "B_AS_ON_DCR_OFF.png",
+  "newAuthorityBeyondGate": false
+}

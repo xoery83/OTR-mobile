@@ -1,0 +1,7 @@
+{
+  "runId": "517443fe-4d10-4aea-8f06-c4eeefc4b7ad",
+  "requestedAt": "2026-10-31T14:55:28.980Z",
+  "phase": "HOST_IDENTITY_VERIFIED",
+  "otpRequestAttempts": 1,
+  "journalPath": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-klf7kK/run.json"
+}

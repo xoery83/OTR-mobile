@@ -1,0 +1,9 @@
+{
+  "status": "SINGLE_DEPLOY_INTENT",
+  "planSHA256": "6563850152b1f5b64e749ef4682b0fe8844812b7e18d7729fd4c284a20e1a194",
+  "requestedAt": "2026-10-31T14:56:12.871247Z",
+  "disposition": "UNKNOWN_SSH_TIMEOUT_NO_AUTOMATIC_REPLAY",
+  "originalIntentDisposition": "NOT_SENT",
+  "independentReconciliation": "B_RUNTIME_TIMEOUT_RECONCILIATION.json",
+  "separateBoundedRecovery": "B_RUNTIME_RECOVERY_INTENT.json"
+}

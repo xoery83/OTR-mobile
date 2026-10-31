@@ -1,0 +1,8 @@
+{
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "expiresAt": "2026-10-31T15:20:25.498000Z",
+  "sqlSHA256": "9ba92e1fa5801c523073aac13d31b77714208995fe34ef38d94e86ce9009f2a1",
+  "closeSQLSHA256": "13b0415753b0c1b0c12f5e029bdeeb42ce0fca77b86dd7010a61cf1e817a8cc8",
+  "activeBodyMD5": "1a31f42a151952dbbdde86ab10e864f8",
+  "status": "RENDERED_ONLY_NOT_ACTIVATED"
+}

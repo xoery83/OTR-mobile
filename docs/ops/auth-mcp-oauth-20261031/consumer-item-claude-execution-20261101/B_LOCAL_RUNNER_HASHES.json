@@ -1,0 +1,14 @@
+{
+  "purpose": "Local execution glue only; approved owning operators/templates remain frozen",
+  "files": {
+    "/private/tmp/otr-auth-consumer-b3-stage-B-20261101.py": "627e64ac71eda1abc27818dfbd095322ae60f8030b5e64323546834b12b673bd",
+    "/private/tmp/otr-auth-consumer-b3-config-step-B-20261101.py": "d388965b360299267acf258147ea2c64b6a3d4b1bac413fa639a4170350e1c38",
+    "/private/tmp/otr-auth-consumer-b3-prepare-host-B-20261101.py": "19dbaad983cfb5a93c28e2d2d5015429905515676302b83cd30c122127bd3d7f",
+    "/private/tmp/otr-auth-consumer-b3-deploy-B-20261101.py": "5b87b0576a926444be99af19ac8ec688646ca6a0df85c7ae565e5ddd1cc0a456",
+    "/private/tmp/otr-auth-consumer-b3-sign-B-20261101.py": "b724ca16c75c181d73e62fdfcc2a3bc6e1de3a768bf641460cb5bd87f39592ff",
+    "/private/tmp/otr-auth-consumer-b3-close-B-20261101.py": "ecf62eed4650e7a9f07d116ee9fbfe05328bba5eff2cdf2737aef8c57662d2ee",
+    "/private/tmp/otr-auth-consumer-b3-watch-B-20261101.py": "946e92480c061d74b94a448d7a99adb8289537e87a2ed592fa4ffc05febc1ca7",
+    "/private/tmp/otr-auth-consumer-b3-launch-control-B-20261101.py": "c05189ed22d7cb5a7021476ec4c1e815a5a4609fe03ffa45b67ba0d73432f88a",
+    "/private/tmp/otr-auth-consumer-b3-binding-B-20261101.py": "39b306e5885876429fe84278a850fd4c1f96936f7ce882c676fd18fe5228d1f5"
+  }
+}

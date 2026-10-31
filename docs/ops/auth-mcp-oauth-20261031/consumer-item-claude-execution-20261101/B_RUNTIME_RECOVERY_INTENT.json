@@ -1,0 +1,7 @@
+{
+  "status": "ONE_BOUNDED_RECOVERY_AFTER_INDEPENDENT_NO_EFFECT_PROOF",
+  "originalDisposition": "UNKNOWN_TIMEOUT_PRESERVED",
+  "planSHA256": "6563850152b1f5b64e749ef4682b0fe8844812b7e18d7729fd4c284a20e1a194",
+  "windowExpiresAt": "2026-10-31T15:20:25.498000Z",
+  "newWindow": false
+}

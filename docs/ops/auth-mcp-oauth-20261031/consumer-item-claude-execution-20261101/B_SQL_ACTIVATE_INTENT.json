@@ -1,0 +1,7 @@
+{
+  "status": "APPROVED_SINGLE_SQL_APPLY_INTENT",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "sqlSHA256": "9ba92e1fa5801c523073aac13d31b77714208995fe34ef38d94e86ce9009f2a1",
+  "disposition": "ACKNOWLEDGED",
+  "deadline": "2026-10-31T15:20:25.498000Z"
+}

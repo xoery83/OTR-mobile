@@ -1,0 +1,16 @@
+{
+  "client_name": "OTR DEV QA - Claude Read",
+  "client_type": "public",
+  "created_at": "2026-10-31 14:53:41.081388+00",
+  "deleted_at": null,
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "id": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "redirect_uris": [
+    "https://claude.ai/api/mcp/auth_callback"
+  ],
+  "registration_type": "manual",
+  "token_endpoint_auth_method": "none"
+}

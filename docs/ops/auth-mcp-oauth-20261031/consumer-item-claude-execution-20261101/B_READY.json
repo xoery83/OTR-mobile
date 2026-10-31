@@ -1,0 +1,19 @@
+{
+  "status": "B_READY_AWAIT_PRE_OTP_BINDING_HASH",
+  "readyAt": "2026-10-31T15:00:16.098123+00:00",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "redirectUris": [
+    "https://claude.ai/api/mcp/auth_callback"
+  ],
+  "qaAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "hardDeadline": "2026-10-31T15:20:25.498000Z",
+  "hardDeadlineMs": 1793460025498,
+  "controlOtpRequestedAt": "2026-10-31T14:55:28.980Z",
+  "controlCooldown60sElapsed": true,
+  "publicConfigReadback": "MATCHED_200",
+  "signingReadback": "B_SIGNING_ACTIVATION.json",
+  "nextAction": "Connect Claude -> current consent URL MD5 only -> Auth pending record binding PASS -> normal OTP -> UI details/Consent -> fixed Read tools -> revoke live probe",
+  "noOtpBeforeIndependentBindingPass": true,
+  "noHistory": true,
+  "noWindowExtension": true
+}

@@ -1,0 +1,17 @@
+{
+  "status": "CONSUMER_ATTEMPT_STOPPED_NO_READ_QUALIFICATION",
+  "reportedByThread": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "recordedAt": "2026-10-31T14:46:21.854167+00:00",
+  "evidenceSource": "Consumer owner direct coordination report; Auth did not control consumer tabs",
+  "furthestPoint": "Existing ChatGPT Reconnect -> Connect OTR DEV QA -> api-dev /oauth/consent email login page",
+  "firstFailure": "Browser history permission/query blocked for 1328.055 seconds and returned []",
+  "newOtpRequested": false,
+  "otpRead": false,
+  "consentSubmitted": false,
+  "toolReadOrWritePerformed": false,
+  "lateConsentOrGrantReported": false,
+  "backendDataFailureProven": false,
+  "retryAAllowed": false,
+  "repair": "Do not use browser history; validate public binding parameters only in the current owned authorization tab, without logging code/state/token or full URLs",
+  "closeReceipt": "A_COMPLETE_CLOSED.json"
+}

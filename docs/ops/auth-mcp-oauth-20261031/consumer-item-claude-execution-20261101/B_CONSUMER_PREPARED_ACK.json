@@ -1,0 +1,15 @@
+{
+  "status": "EXPLICIT_CONSUMER_PREPARED_ACK",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "recordedAt": "2026-10-31T14:47:39.632984+00:00",
+  "aClosureRead": true,
+  "aOldPageClosed": true,
+  "claudeSetupReady": true,
+  "usesOwnOauthClient": true,
+  "transport": "Streamable HTTP",
+  "clientIdAndSecretFieldsEmpty": true,
+  "exactQaReceivingFilterReady": true,
+  "noBrowserHistoryQuery": true,
+  "readySignal": "B_READY.json only after verified activation; B_PREPARATION is not READY",
+  "windowStarted": false
+}

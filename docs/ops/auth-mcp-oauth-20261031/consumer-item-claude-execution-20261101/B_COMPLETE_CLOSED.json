@@ -1,0 +1,23 @@
+{
+  "status": "B_INDEPENDENTLY_CLOSED",
+  "observedAt": "2026-10-31T15:24:34.398994+00:00",
+  "qaAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "activeQaClientGrants": 0,
+  "hookClosedAndExactAcl": "B_FINAL_SQL_READBACK.json",
+  "siteAndHookConfig": "B_FINAL_CONFIG_READBACK.json",
+  "oauthServerOff": "B_AS_OFF_VERIFICATION.json",
+  "runtimeRestored": {
+    "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+    "containerId": "ac7a53f64827adb329f6acd5a740215451d025355911679355eb470b7b57a045",
+    "image": "sha256:d8b789b8d80f65b7c08408d1c330cd46bbb79a401d5a87413a0aa882bd93d168",
+    "finiteConfigAbsent": true,
+    "health": "healthy"
+  },
+  "normalControlCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "closureTiming": "Hook/runtime closed before deadline; final independent configuration/ACL/grant observations are later. AS Save ACK preceded 15:19:07Z; reload screenshot15:21:08Z.",
+  "consumerOutcome": "B_CONSUMER_OUTCOME.json",
+  "consumerFullReadPass": false,
+  "newBWindowPermitted": false,
+  "newClientRetainedInactive": true
+}

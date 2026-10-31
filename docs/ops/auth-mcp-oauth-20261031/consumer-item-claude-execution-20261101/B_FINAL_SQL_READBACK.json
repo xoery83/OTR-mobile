@@ -1,0 +1,18 @@
+{
+  "status": "INDEPENDENT_CLOSED_BODY_EXACT_ACL_AND_GRANT_ZERO_PASS",
+  "observedAt": "2026-10-31T15:23:02.238112+00:00",
+  "rows": [
+    {
+      "anon_denied": true,
+      "auth_admin_execute": true,
+      "authenticated_denied": true,
+      "exact_acl": true,
+      "hook_closed": true,
+      "owner_matches": true,
+      "qa_client_grants_zero": true,
+      "search_path_matches": true,
+      "security_invoker": true,
+      "service_role_denied": true
+    }
+  ]
+}

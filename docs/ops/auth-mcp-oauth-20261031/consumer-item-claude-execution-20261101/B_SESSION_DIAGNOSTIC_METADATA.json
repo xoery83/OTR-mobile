@@ -1,0 +1,13 @@
+{
+  "status": "POST_REVOKE_SAFE_SESSION_METADATA_ONLY",
+  "observedAt": "2026-10-31T15:16:02.925022+00:00",
+  "rows": [
+    {
+      "latest_refresh_created_at": null,
+      "refresh_rows": 0,
+      "revoked_refresh_rows": 0
+    }
+  ],
+  "tokenValuesRead": false,
+  "interpretation": "Post-revoke metadata is not proof of the cause of the earlier AUTH_REQUIRED"
+}
