@@ -1,0 +1,10 @@
+{
+  "status": "OWNER_APPROVED_EXACT_GATE",
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "candidateCommit": "928f3f7c",
+  "softwareCommit": "9b0983ad",
+  "source": "Direct human reply in this Auth conversation",
+  "ownerReply": "批准此精确 DEV OAuth QA Gate",
+  "approvedAt": "Exact receipt timestamp not captured; 2026-10-31 session",
+  "executed": false
+}

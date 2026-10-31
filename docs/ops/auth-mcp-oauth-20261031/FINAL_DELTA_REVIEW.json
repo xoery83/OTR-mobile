@@ -1,0 +1,12 @@
+{
+  "status": "NO_BLOCKER_PROPOSED_GATE_ONLY",
+  "reviewer": "/root/auth_phase1_review",
+  "softwareCommit": "9b0983ad",
+  "manifestCommit": "928f3f7c",
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "independentTests": "3 suites /35 PASS",
+  "authorNodeHttpTests": "11 PASS; loopback listener required",
+  "resolved": "Pre-buffer Node body limit; exact two callbacks pinned per authorization; pre-OTP QA recipient restriction; all callers checked",
+  "hostedConfigurationChanged": false,
+  "hostedOAuthE2E": "NOT_RUN_OWNER_GATE_REQUIRED"
+}
