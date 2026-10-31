@@ -75,6 +75,14 @@ before hard15:20:25Z; final independent AS/config/ACL observations are later.
 Root has the Host/config Writer back. Next: closed diagnosis of the first
 AUTH_REQUIRED, preserving the60s cap and existing ports; no new QA window is
 authorized. Consumer evidence: MCP7044e287, B_CONSUMER_OUTCOME.json.
+Closed diagnostic source is now qualified: Auth eff3f5db/bridge2f54b05c plus MCPc41,
+20 Auth tests/types/scoped lint/build and independent 4 target tests/4 compiled
+smoke checks PASS. Reuses existing log with three auth-failure sources and strict
+safe projection; no token/Account/path/body, expiry or HTTP semantics change.
+New bridge f9c339c4 is COMPILED_ONLY_NOT_DEPLOYED; oldb518 is unchanged. See
+auth-required-diagnostics-20261101/QUALIFICATION.json for the normalized five-file
+main patch. Root owns serial integration/fresh closed image after its active
+Source session; no new signing/window is authorized by this source qualification.
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
 edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →

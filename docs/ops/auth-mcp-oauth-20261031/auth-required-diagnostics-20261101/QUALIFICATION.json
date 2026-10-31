@@ -1,0 +1,55 @@
+{
+  "status": "CLOSED_COMPILED_QUALIFICATION_ONLY",
+  "firstFailure": "Hosted Claude B P3 detail AUTH_REQUIRED before revoke; original cause not proven",
+  "authLogPortCommit": "eff3f5db14b98ccab56286b3d15e8f7c828d90d1",
+  "authBridgeCommit": "2f54b05c395b61b47eda33a9548f10daa287ac89",
+  "mcpSourceCommit": "c41a4f0a8c04e5a2f255243e2877d47e2cd89c76",
+  "changes": "Reuse existing MCP log callback with enum provenance; Auth strips all fields except finite request metadata and exact read enums; generated bridge forwards callback",
+  "independentReview": [
+    "NO_BLOCKER_CLOSED_LOG_PORT_CANDIDATE",
+    "NO_BLOCKER_CLOSED_COMPILED_LOG_BRIDGE"
+  ],
+  "checks": {
+    "authRuntimeTests": 20,
+    "typecheck": "PASS",
+    "scopedEslint": "PASS",
+    "backendCaptureBuild": "PASS_BUILD_ONLY_NOT_DEPLOYABLE_LONG_BRANCH",
+    "strongInputPins": 34,
+    "compiledNoNetworkSmokeChecks": 4,
+    "independentAuthTargetTests": 4,
+    "independentCompiledSmokeChecks": 4,
+    "mcpReportedTargetTests": 57
+  },
+  "compiledArtifact": {
+    "status": "COMPILED_ONLY_NOT_DEPLOYED",
+    "mcpReviewedSource": "c41a4f0a",
+    "mcpSourceCommit": "c41a4f0a8c04e5a2f255243e2877d47e2cd89c76",
+    "sourcePinsSHA256": "2eb03a66835e5bac8fb94274177b10d894a7a2608975481e0be513824e63561c",
+    "sdkInputSHA256": "f8793862584d5305974af10c7e7a07d639f58bb0ea6d845689169b4f78e9eeb0",
+    "runtimeSHA256": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+    "esbuildVersion": "0.28.2",
+    "mobileDependencyChanges": false,
+    "providerCalls": 0
+  },
+  "authorityChanges": false,
+  "accessTokenLimitChanged": false,
+  "httpAuthFailureSemanticsChanged": false,
+  "hostedDeployed": false,
+  "oldB518ContainsNewLogs": false,
+  "newWindowAuthorized": false,
+  "mainIntegration": {
+    "status": "PENDING_UNIQUE_ROOT_WRITER",
+    "base": "a7d39f11011fe2e081fca60d1496850e4d2c92d1",
+    "patch": "MAIN_FORWARD.patch",
+    "patchSHA256": "192c70cc0e759c8723bf99b516bcc4cf242cefa63f96b4bce85f2e7f60260268",
+    "beforeBlobSHA256": {
+      "backend/src/mcpQaRuntime.ts": "3348dbae9d5a61a0beb145fae05cd08cc00582ae4d1c2b4e58dd3f3cf1742abf",
+      "backend/src/mcpQaRuntime.test.ts": "d145da585c90e3cba4d34695a112bb577998885c3782f8c7db2ea2e1543ad1ad",
+      "backend/mcp/runtime.mjs": "3e686c791aa33b1e03e7cb0cb4c8f69f3309133a00cd8c66146eab70cca1e87a",
+      "backend/mcp/source-pins.json": "03fbd30f7ebe5d7ed8976c1127689a26e3e59ac1950e188c40ada19481353df3",
+      "scripts/auth/smoke-mcp-qa-runtime.mjs": "e42a97e89f8cd04d1cf2e1cd39ecef568236c729f40674bc48956d51283ba4c7"
+    },
+    "instruction": "Compare current owning files before applying only this five-file patch and MCP reviewed source delta; never merge the long Auth branch or replace concurrent Native/Import work."
+  },
+  "next": "Root serial source/main integration and future fresh default-closed image qualification after current Source session; new finite QA approval required before any signing/window activation."
+}

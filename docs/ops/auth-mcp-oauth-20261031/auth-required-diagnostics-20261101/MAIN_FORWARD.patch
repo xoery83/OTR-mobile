@@ -1,0 +1,199 @@
+diff --git a/backend/mcp/runtime.mjs b/backend/mcp/runtime.mjs
+index db7fbf09..8a265b24 100644
+--- a/backend/mcp/runtime.mjs
++++ b/backend/mcp/runtime.mjs
+@@ -6,7 +6,7 @@ import {
+ import { createRemoteJWKSet } from "jose";
+ 
+ // Separately bundled Node target. No SDK dependency enters the Mobile TypeScript graph.
+-export function createReadRuntime({ issuer, resource, isGrantActive, bindBackend }) {
++export function createReadRuntime({ issuer, resource, isGrantActive, bindBackend, log }) {
+   const key = createRemoteJWKSet(new URL(issuer + "/.well-known/jwks.json"), {
+     timeoutDuration: 5000,
+   });
+@@ -20,6 +20,7 @@ export function createReadRuntime({ issuer, resource, isGrantActive, bindBackend
+   return createMcpHandler({
+     resource,
+     authorize,
++    log,
+     oauth: protectedResourceMetadata(resource, issuer, { read: ["openid"] }),
+   });
+ }
+diff --git a/backend/mcp/source-pins.json b/backend/mcp/source-pins.json
+index 50025e33..96c0e29c 100644
+--- a/backend/mcp/source-pins.json
++++ b/backend/mcp/source-pins.json
+@@ -1,7 +1,7 @@
+ {
+   "version": 1,
+-  "mcpSourceCommit": "71efcd21daea4be1c90372aea364af97bcf875c6",
+-  "mcpReviewedSource": "4b2c794a",
++  "mcpSourceCommit": "c41a4f0a8c04e5a2f255243e2877d47e2cd89c76",
++  "mcpReviewedSource": "c41a4f0a",
+   "readPathEquivalentTo": "8812dbbb8b9ed610c7716415b1377b6443005c4d",
+   "files": {
+     "src/domain/trip/tripCoreOrdinaryOrder.ts": "d40f7f12dd3e6de46f11739816c8aa2ab527af837e88b5f187476992b7d19afd",
+@@ -30,10 +30,10 @@
+     "mcp/mutationContract.ts": "b72e8d68708368911c0422d2d79a1132117a2341a6b1e307f4f3928b05c502da",
+     "mcp/mutation.ts": "dda380a04ac55100c83e6b944b196ba0032af2e2c7ae128a110e44e067b09ffc",
+     "mcp/batch.ts": "0904661c7d39af390c1914892e909d599ae67d5bfb3662062541bb104518431f",
+-    "mcp/read.ts": "ffad05005502e559ce51b44156cb27cfd6e706c41a73ce2014adeead22743d5d",
+-    "mcp/server.ts": "adcbca557aad3657d9a92e612483e3e9a38842932fee4fee207d7f32b0c2fee6",
++    "mcp/read.ts": "8cdbb108a6f8d069447dccc885188b35a2f1fe27e57a96cdc12ca4088821d805",
++    "mcp/server.ts": "c987111ebe9a628f11aaec03fa199e229aa0c7134f04255a97ac37026aa1cc4a",
+     "mcp/oauth.ts": "ea5cdec22bbdd402c43274d3e8d1e2cfd8fc2aa3f60105f042ea46b6b11c65f5",
+-    "mcp/index.ts": "ee8223671c044d9e54f95c6f76857731a833b1498070302e8408cad08b1e123f",
++    "mcp/index.ts": "4e6b6951c6e3914ead00fde1793cad64097d3a4b9f3a081ed640e4ee992831e9",
+     "mcp/package.json": "4395b97658f8db52042c19d1a0a7266543a80ee84284cde89c488e2462a1245c",
+     "mcp/package-lock.json": "799da326696147e29b6caec92fc07436ed653ea4f7cddb28bd90cc19feabc2e1",
+     "package.json": "111ecbd78b38404da7406329018ccbc98ff09c4a894da94ab0e21e51507890b4",
+diff --git a/backend/src/mcpQaRuntime.test.ts b/backend/src/mcpQaRuntime.test.ts
+index e4b205f2..d2f14a84 100644
+--- a/backend/src/mcpQaRuntime.test.ts
++++ b/backend/src/mcpQaRuntime.test.ts
+@@ -26,7 +26,7 @@ function fixture() {
+       origin: request.headers.get("origin"),
+     }),
+   );
+-  const createReadRuntime = vi.fn(() => handler);
++  const createReadRuntime = vi.fn((_options: unknown) => handler);
+   const files = {
+     module: vi.fn(async () => ({ createReadRuntime })),
+     asset: vi.fn(async () => new Uint8Array([1])),
+@@ -45,6 +45,51 @@ it("does no module/asset/network IO without the explicit public QA config", asyn
+   expect(q.files.module).not.toHaveBeenCalled();
+   expect(q.files.asset).not.toHaveBeenCalled();
+ });
++it.each(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])(
++  "logs only bounded request metadata and the existing %s diagnostic source",
++  async (authFailureSource) => {
++    const q = fixture();
++    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
++    try {
++      await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
++      const { log } = q.createReadRuntime.mock.calls[0][0] as {
++        log(event: unknown): void;
++      };
++      const safe = {
++        requestId: clientId,
++        status: 200,
++        durationMs: 8,
++        tool: "get_trip_item",
++        errorCode: "AUTH_REQUIRED",
++        authFailureSource,
++      };
++      log({
++        ...safe,
++        accessToken: "unit-secret",
++        accountId: clientId,
++        path: "/unit-private",
++        body: "unit-private",
++      });
++      expect(info).toHaveBeenCalledExactlyOnceWith(
++        "MCP_QA_REQUEST",
++        JSON.stringify(safe),
++      );
++      info.mockClear();
++      for (const changed of [
++        { requestId: "unit-secret" },
++        { tool: "unit-secret" },
++        { errorCode: "unit-secret" },
++        { authFailureSource: "unit-secret" },
++        { status: 999 },
++        { durationMs: Infinity },
++      ])
++        log({ ...safe, ...changed });
++      expect(info).not.toHaveBeenCalled();
++    } finally {
++      info.mockRestore();
++    }
++  },
++);
+ it("accepts only the separate exact Claude callback profile and passes it unchanged to consent", async () => {
+   const q = fixture();
+   q.env.OTR_DEV_MCP_READ_QA_CONFIG = JSON.stringify({
+diff --git a/backend/src/mcpQaRuntime.ts b/backend/src/mcpQaRuntime.ts
+index 3fde48b4..6b74b096 100644
+--- a/backend/src/mcpQaRuntime.ts
++++ b/backend/src/mcpQaRuntime.ts
+@@ -35,8 +35,29 @@ type ModulePort = {
+     resource: string;
+     isGrantActive: ReturnType<typeof createSupabaseDevMcpGrantVerifier>;
+     bindBackend: ReturnType<typeof createMcpAccountReadBinding>;
++    log?: (event: unknown) => void;
+   }): (request: Request) => Promise<Response>;
+ };
++const requestLogSchema = z.object({
++  requestId: z.uuid(),
++  status: z.number().int().min(100).max(599),
++  durationMs: z.number().min(0).max(120000),
++  tool: z.enum(["list_trips", "get_trip", "list_trip_items", "get_trip_item"]).optional(),
++  errorCode: z
++    .enum([
++      "NOT_VISIBLE",
++      "BACKEND_UNAVAILABLE",
++      "BACKEND_TIMEOUT",
++      "INVALID_INPUT",
++      "STALE_CURSOR",
++      "READ_LIMIT",
++      "AUTH_REQUIRED",
++    ])
++    .optional(),
++  authFailureSource: z
++    .enum(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])
++    .optional(),
++});
+ type RuntimeIo = {
+   module(): Promise<ModulePort>;
+   asset(): Promise<Uint8Array>;
+@@ -81,6 +102,10 @@ export async function loadMcpQaRuntime(
+     issuer,
+     resource,
+     bindBackend,
++    log: (event) => {
++      const safe = requestLogSchema.safeParse(event);
++      if (safe.success) console.info("MCP_QA_REQUEST", JSON.stringify(safe.data));
++    },
+     isGrantActive: (grant, signal, evidence) =>
+       grant.accountId === qaAccount && Date.now() < config.expiresAt
+         ? active(grant, signal, evidence)
+diff --git a/scripts/auth/smoke-mcp-qa-runtime.mjs b/scripts/auth/smoke-mcp-qa-runtime.mjs
+index 9bac5db2..99c11579 100644
+--- a/scripts/auth/smoke-mcp-qa-runtime.mjs
++++ b/scripts/auth/smoke-mcp-qa-runtime.mjs
+@@ -5,9 +5,11 @@ globalThis.fetch = async () => {
+ };
+ const resource = "https://api-dev.xoery.art/mcp";
+ const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1";
++const logs = [];
+ const handle = createReadRuntime({
+   issuer,
+   resource,
++  log: (event) => logs.push(event),
+   isGrantActive: async () => false,
+   bindBackend: async () => {
+     throw Error("BIND_MUST_NOT_RUN_WITHOUT_AUTH");
+@@ -35,11 +37,22 @@ const foreign = await handle(
+   new Request(resource, { method: "POST", headers: { Origin: "https://other.invalid" } }),
+ );
+ assert.equal(foreign.status, 403);
++assert.deepEqual(
++  logs.map((event) => event.status),
++  [401, 403],
++);
++assert.ok(
++  logs.every((event) =>
++    Object.keys(event).every((key) =>
++      ["requestId", "status", "durationMs"].includes(key),
++    ),
++  ),
++);
+ console.log(
+   JSON.stringify({
+     status: "COMPILED_NODE_PUBLIC_METADATA_AND_DENIAL_PASS",
+     meaning:
+       "Actual reviewed MCP SDK/Authorizer bridge, no token or provider calls; not OAuth E2E",
+-    checks: 3,
++    checks: 4,
+   }),
+ );
