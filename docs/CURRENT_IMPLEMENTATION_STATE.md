@@ -147,7 +147,10 @@ See HOSTED_INSTALL_REAL_RECEIPT.json and OWNER_APPROVAL_DIRECT.json. This proves
 closed SQL installation, not native Add or new function business-user E2E.
 Latest Native-reported Host baseline is a6ddadb4/image1b031de1/source45951de8
 (dedb+versionGET only; Env/mounts/SQL/Auth flags preserved). Future Auth software
-integration must retain this version port, not roll back the old default image. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
+integration must retain this version port, not roll back the old default image.
+Fresh local main/origin-main now both8f79a4214d39b7f174ef61a82aa27d31b10a8156
+(MCP Git-only integration, released). Future Auth integration must retain that
+default-closed MCP code and original primary dirty/index/fullDiff, then recheck HEAD. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
