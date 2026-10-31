@@ -1,0 +1,146 @@
+[
+  {
+    "active": true,
+    "capabilities": [
+      "EXTRACT"
+    ],
+    "environment": "DEV",
+    "environmentKill": false,
+    "expiresAt": "2026-11-01T08:48:56+00:00",
+    "grantExpiresAt": "2026-11-01T08:48:56+00:00",
+    "grantRevoked": false,
+    "integrationConfigMatches": false,
+    "integrationEnabled": true,
+    "integrationKill": false,
+    "modalities": [
+      "TEXT",
+      "IMAGE"
+    ],
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "providerConfigMatches": true,
+    "providerId": "DeepSeek",
+    "revision": 1,
+    "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+  },
+  {
+    "active": false,
+    "capabilities": [
+      "EXTRACT"
+    ],
+    "environment": "DEV",
+    "environmentKill": false,
+    "expiresAt": "2026-11-01T08:48:56+00:00",
+    "grantExpiresAt": "2026-11-01T08:48:56+00:00",
+    "grantRevoked": false,
+    "integrationConfigMatches": false,
+    "integrationEnabled": true,
+    "integrationKill": false,
+    "modalities": [
+      "TEXT",
+      "IMAGE"
+    ],
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "providerConfigMatches": true,
+    "providerId": "DeepSeek",
+    "revision": 2,
+    "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+  },
+  {
+    "active": true,
+    "capabilities": [
+      "EXTRACT"
+    ],
+    "environment": "DEV",
+    "environmentKill": false,
+    "expiresAt": "2026-11-01T08:48:56+00:00",
+    "grantExpiresAt": "2026-11-01T08:48:56+00:00",
+    "grantRevoked": false,
+    "integrationConfigMatches": false,
+    "integrationEnabled": true,
+    "integrationKill": false,
+    "modalities": [
+      "TEXT",
+      "IMAGE"
+    ],
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "providerConfigMatches": true,
+    "providerId": "DeepSeek",
+    "revision": 3,
+    "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+  },
+  {
+    "active": false,
+    "capabilities": [
+      "EXTRACT"
+    ],
+    "environment": "DEV",
+    "environmentKill": false,
+    "expiresAt": "2026-11-01T08:48:56+00:00",
+    "grantExpiresAt": "2026-11-01T08:48:56+00:00",
+    "grantRevoked": false,
+    "integrationConfigMatches": false,
+    "integrationEnabled": true,
+    "integrationKill": false,
+    "modalities": [
+      "TEXT",
+      "IMAGE"
+    ],
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "providerConfigMatches": true,
+    "providerId": "DeepSeek",
+    "revision": 4,
+    "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+  },
+  {
+    "active": true,
+    "capabilities": [
+      "EXTRACT"
+    ],
+    "environment": "DEV",
+    "environmentKill": false,
+    "expiresAt": "2026-11-01T08:48:56+00:00",
+    "grantExpiresAt": "2026-11-01T08:48:56+00:00",
+    "grantRevoked": false,
+    "integrationConfigMatches": true,
+    "integrationEnabled": true,
+    "integrationKill": false,
+    "modalities": [
+      "TEXT",
+      "IMAGE"
+    ],
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "providerConfigMatches": true,
+    "providerId": "DeepSeek",
+    "revision": 5,
+    "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+  },
+  {
+    "active": true,
+    "capabilities": [
+      "EXTRACT"
+    ],
+    "environment": "DEV",
+    "environmentKill": false,
+    "expiresAt": "2026-11-01T08:48:56+00:00",
+    "grantExpiresAt": "2026-11-01T08:48:56+00:00",
+    "grantRevoked": false,
+    "integrationConfigMatches": true,
+    "integrationEnabled": true,
+    "integrationKill": false,
+    "modalities": [
+      "TEXT",
+      "IMAGE"
+    ],
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "providerConfigMatches": true,
+    "providerId": "DeepSeek",
+    "revision": 6,
+    "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+  }
+]

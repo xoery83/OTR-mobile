@@ -317,6 +317,37 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
         throw Error("NO_UNSETTLED_RECOVERY_FIXTURE");
       },
     };
+    for (const loggerThrows of [false, true]) {
+      const failure = Object.assign(Error("PRIVATE_PREPARE_CANARY"), {
+        code: "PRIVATE_SQL_CANARY",
+      });
+      const log = vi.spyOn(console, "info").mockImplementation(() => {
+        if (loggerThrows) throw Error("LOGGER_PRIVATE_CANARY");
+      });
+      try {
+        const failing = createUniversalContinuousHost({
+          ...hostDeps,
+          selectProvider: async () => {
+            throw failure;
+          },
+        });
+        await expect(failing.prepare({})).rejects.toBe(failure);
+        expect(log).toHaveBeenCalledExactlyOnceWith(
+          JSON.stringify({
+            event: "universal_prepare_phase_failed",
+            phase: "PROVIDER_SELECTION",
+            reason: "UNCLASSIFIED",
+            kind: "OTHER",
+          }),
+        );
+        expect(JSON.stringify(log.mock.calls)).not.toContain("CANARY");
+        expect(
+          sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
+        ).toEqual({ n: 0 });
+      } finally {
+        log.mockRestore();
+      }
+    }
     const unprepared = createUniversalContinuousHost({
       ...hostDeps,
       publishedSource: {

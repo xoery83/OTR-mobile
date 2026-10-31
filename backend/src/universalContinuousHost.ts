@@ -267,62 +267,144 @@ export function createUniversalContinuousHost(deps: {
   }
   return {
     async prepare(raw: unknown) {
-      await current();
-      const selection = await deps.selectProvider();
-      await current();
-      const binding = await source.prepare(actor, trip, raw),
-        prior = await existing(binding);
-      const bindingContext = {
-        version: "otr.backend.universal-context/1" as const,
-        actorId: actor,
-        accountId: actor,
-        tripId: trip,
-        batchId: binding.batchId,
-        taskId: binding.taskId,
-      };
-      if (prior) return { status: "EXISTING" as const, context: bindingContext };
-      const manifest = await readManifest({
-        account_id: actor,
-        trip_id: trip,
-        import_id: binding.batchId,
-        task_id: binding.taskId,
-        run_id: binding.runId,
-        manifest_sha256: binding.submissionSha256,
-        input_pins: binding.inputs.map((p) => ({
-          kind: "SOURCE",
-          source_id: p.source_id,
-          material_revision: p.material_revision,
-          representation_id: p.representation_id,
-          payload_sha256: p.payload_sha256,
-          byte_count: p.byte_count,
-          input_id: p.id,
-          transform_sha256: p.pdfSource?.transformOptionsSha256 ?? null,
-        })),
-      });
-      const draft = await buildUniversalRegisteredTaskDraft(binding, manifest, selection);
-      if (Date.parse(draft.task.policy_snapshot.deadline!) <= Date.now())
-        throw Error("UNIVERSAL_TASK_EXPIRED");
-      const catalog = await readUniversalCatalog(
-        deps.catalogConnection,
-        draft.task,
-        AbortSignal.timeout(5000),
-      );
-      const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());
-      await current();
-      await bootstrapUniversalTask({
-        db: deps.db,
-        task: draft.task,
-        attempt: draft.attempt,
-        catalog,
-        ledger,
-        getAccountId: async () => actor,
-        assertCurrent() {
-          if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
-        },
-        claimQueue: false,
-      });
-      await current();
-      return { status: "QUEUED" as const, context: bindingContext };
+      let phase = "AUTH";
+      try {
+        await current();
+        phase = "PROVIDER_SELECTION";
+        const selection = await deps.selectProvider();
+        phase = "AUTH";
+        await current();
+        phase = "SOURCE_BINDING";
+        const binding = await source.prepare(actor, trip, raw);
+        phase = "TASK_READ";
+        const prior = await existing(binding);
+        const bindingContext = {
+          version: "otr.backend.universal-context/1" as const,
+          actorId: actor,
+          accountId: actor,
+          tripId: trip,
+          batchId: binding.batchId,
+          taskId: binding.taskId,
+        };
+        if (prior) return { status: "EXISTING" as const, context: bindingContext };
+        phase = "MANIFEST";
+        const manifest = await readManifest({
+          account_id: actor,
+          trip_id: trip,
+          import_id: binding.batchId,
+          task_id: binding.taskId,
+          run_id: binding.runId,
+          manifest_sha256: binding.submissionSha256,
+          input_pins: binding.inputs.map((p) => ({
+            kind: "SOURCE",
+            source_id: p.source_id,
+            material_revision: p.material_revision,
+            representation_id: p.representation_id,
+            payload_sha256: p.payload_sha256,
+            byte_count: p.byte_count,
+            input_id: p.id,
+            transform_sha256: p.pdfSource?.transformOptionsSha256 ?? null,
+          })),
+        });
+        phase = "TASK_DRAFT";
+        const draft = await buildUniversalRegisteredTaskDraft(
+          binding,
+          manifest,
+          selection,
+        );
+        if (Date.parse(draft.task.policy_snapshot.deadline!) <= Date.now())
+          throw Error("UNIVERSAL_TASK_EXPIRED");
+        phase = "CATALOG";
+        const catalog = await readUniversalCatalog(
+          deps.catalogConnection,
+          draft.task,
+          AbortSignal.timeout(5000),
+        );
+        phase = "LEDGER";
+        const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());
+        phase = "AUTH";
+        await current();
+        phase = "TASK_BOOTSTRAP";
+        await bootstrapUniversalTask({
+          db: deps.db,
+          task: draft.task,
+          attempt: draft.attempt,
+          catalog,
+          ledger,
+          getAccountId: async () => actor,
+          assertCurrent() {
+            if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
+          },
+          claimQueue: false,
+        });
+        phase = "AUTH";
+        await current();
+        return { status: "QUEUED" as const, context: bindingContext };
+      } catch (error) {
+        try {
+          const code = error instanceof Error ? error.message : "";
+          const sqlState =
+            error && typeof error === "object" && "code" in error ? error.code : "";
+          console.info(
+            JSON.stringify({
+              event: "universal_prepare_phase_failed",
+              phase,
+              reason: [
+                "UNIVERSAL_CONTINUOUS_CLOSED",
+                "UNIVERSAL_COMMAND_FORBIDDEN",
+                "UNIVERSAL_PROVIDER_CLOSED",
+                "UNIVERSAL_SOURCE_CLOSED",
+                "UNIVERSAL_SOURCE_PROFILE_DENIED",
+                "INVALID_UNIVERSAL_INPUT",
+                "UNIVERSAL_AUTH_REQUIRED",
+                "UNIVERSAL_AUTH_REJECTED",
+                "SOURCE_CAPABILITY_CLOSED",
+                "SOURCE_ACCESS_DENIED",
+                "UNIVERSAL_BINDING_SCOPE",
+                "OPERATION_KEY_REUSED",
+                "OWNING_RUN_READBACK_UNAVAILABLE",
+                "UNIVERSAL_SOURCE_BINDING_INVALID",
+                "UNIVERSAL_SOURCE_RUN_UNAVAILABLE",
+                "UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED",
+                "UNIVERSAL_SOURCE_MATERIAL_INVALID",
+                "UNIVERSAL_SOURCE_CHANGED",
+                "UNIVERSAL_TASK_SOURCE_BINDING",
+                "ORIGINAL_PREFLIGHT_NOT_READY",
+                "UNIVERSAL_TASK_EXPIRED",
+                "INPUT_STALE",
+                "CORE_CONNECTION_BUSY",
+                "CORE_CONNECTION_TIMEOUT",
+                "CORE_CONNECTION_RETIRED",
+              ].includes(code)
+                ? code
+                : "UNCLASSIFIED",
+              kind:
+                error instanceof ZodError
+                  ? "SCHEMA"
+                  : error instanceof Error &&
+                      ["AbortError", "TimeoutError"].includes(error.name)
+                    ? error.name
+                    : "OTHER",
+              sqlState: [
+                "P0001",
+                "42501",
+                "25P03",
+                "57014",
+                "53300",
+                "42703",
+                "42883",
+                "42P01",
+                "23505",
+              ].includes(String(sqlState))
+                ? String(sqlState)
+                : undefined,
+            }),
+          );
+        } catch {
+          /* Diagnostics cannot replace the owning failure. */
+        }
+        throw error;
+      }
     },
     async readContext(batch: string) {
       const state = await readBoundTask(batch);

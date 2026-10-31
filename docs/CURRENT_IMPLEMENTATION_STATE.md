@@ -13,23 +13,29 @@ overwrite. Old905 archive/original untouched. Approved canonical same-op quiesce
 and normal App generation2 a81308ff succeeded: PARSE_PASS, Uploadd2f59e69 APPLIED/FINAL
 at08:32Z. No generation3, replacement source, Task or model call.
 
-Current first FAIL: PNG_ORIGINAL HTTP503 SOURCE_IO_UNAVAILABLE after accepted
-upload; actual safe Backend logs08:33:35/08:40:10 both action execute/UNCLASSIFIED.
-Verify operation absent; do not guess whether failure is final-upload readback or
-first Verify REGISTER rollback. Local PG positive uploadFINAL/STATUS/firstVerify
-STATUS+REGISTER pass, so no proven SQL fix. Minimal static command/action/phase and
-P0001/timeout diagnostics are being fixed/deployed;26 focused checks/lint and
-independent NO_BLOCKER. No Authority/request/response/Idempotence changes.
+Current first FAIL is now Task Prepare, not PNG IO: Source VERIFY5cc29190 /
+attempt634da041 APPLIED/FINAL. All5PNG requests and post-Verify Catalog200;
+POST interpretations/prepare50309:06:14 (15.517s), Task/modelAttempt0. No actual
+Vision/Save PASS. Native stagePNG_ORIGINAL also covers later prepare and its
+bounded API client strips this error category; do not infer a PNG failure.
+Provider latestrev6 active, QA grant unrevoked, expiry/config matched,
+DeepSeek-V4.1-Flash TEXT+IMAGE; this is qualification metadata, not actual imagePASS.
 
-Windows11/12 independently CLOSED: Source before/after, runtime, worker inactive,
-EMPTY_VERIFIED, timers stopped. Controller anchored to2275/image5c, timer drillPASS.
-Exact receipts: ops/universal-product-20261028/photo/recovery-execution-20261031/.
+Window13 independently CLOSED: Source before/after, runtime, workerinactive,
+EMPTY_VERIFIED, timers stopped. Current diagnostic service87f31fd4/imagebc77412e /
+capture89e02b09 retainsNative/Auth; compatible2275/image5c rollback retained.
+Next minimal diagnostic is prepare-phase-only AUTH/provider/source/manifest/Task;
+7 focused Host/HTTP checks and scopedlint PASS, Root independent diff review.
+No Auth/authority/transaction/order/response changes. Approved Native7603 fixed
+AUTHORED/FULL diagnostic may accompany next software-only capture composition;
+it is not yet in actual service. No new Native/App build required.
+Actual receipts: ops/universal-product-20261028/photo/recovery-execution-20261031/.
 Frozen recovery packet and private proof remain .env.photo-files-png-20261031/;
 after negative journal/newattempt, inverse is prohibited. Retain compatible Reader.
 
-Next: bounded software diagnostic deployment preserving Native/Auth, CLOSED
+Next: bounded TaskPrepare diagnostic deployment preserving Native/Auth, CLOSED
 controller reanchor/check; retry same alreadyAPPLIED operation through normal App,
-then Verify→first original-image Vision(max1 original unused allowance)→Results→
+then first original-image Vision(max1 original unused allowance)→Results→
 normal Review/Admission→PRIVATE SELF minimalP1/P6→readback/Day/cold/idempotence→close.
 Hard expiry2026-11-01T08:48:56Z and budgets unchanged. Never reset/remint/call again
 on UNKNOWN; read same identities first. No Root main changes. Native7603 optional

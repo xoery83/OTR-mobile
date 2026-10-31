@@ -1,0 +1,52 @@
+{
+  "observedAt": "2026-10-31T09:08:03.793207+00:00",
+  "sourceId": "df39c9b2-fc19-4baa-8c7c-aafd0f04726f",
+  "operations": [
+    {
+      "attemptId": null,
+      "command": "ACQUIRE_SOURCE",
+      "id": "4b11aa7e-70f1-4bac-9d21-5159425e4567",
+      "outcome": "APPLIED",
+      "phase": "FINAL"
+    },
+    {
+      "attemptId": null,
+      "command": "PREPARE_REPRESENTATION",
+      "id": "973c6368-b217-8f81-85ec-85ba9d7803e2",
+      "outcome": "APPLIED",
+      "phase": "FINAL"
+    },
+    {
+      "attemptId": "a81308ff-e4fd-49cc-975b-d0b3e45003e3",
+      "command": "UPLOAD_ORIGINAL",
+      "id": "d2f59e69-59c0-83bf-b745-a2c6727cb618",
+      "outcome": "APPLIED",
+      "phase": "FINAL"
+    },
+    {
+      "attemptId": "634da041-c772-4e66-a715-52b1d9346eb7",
+      "command": "VERIFY_REPRESENTATION",
+      "id": "5cc29190-4716-840d-8dd0-93c2f7379407",
+      "outcome": "APPLIED",
+      "phase": "FINAL"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "077c0f34-f9e2-438c-b922-42bb3283566f",
+      "generation": 1,
+      "phase": "TERMINAL",
+      "terminalResult": "PARSER_CRASH",
+      "terminationOutstanding": false
+    },
+    {
+      "id": "a81308ff-e4fd-49cc-975b-d0b3e45003e3",
+      "generation": 2,
+      "phase": "TERMINAL",
+      "terminalResult": "PARSE_PASS",
+      "terminationOutstanding": false
+    }
+  ],
+  "photoVision": "NOT_EXECUTED",
+  "photoSave": "NOT_EXECUTED"
+}

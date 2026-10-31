@@ -1,0 +1,74 @@
+{
+  "diagnostics": [
+    {
+      "at": "2026-10-31T09:04:41.807009157Z",
+      "event": "universal_task_binding_read_failed",
+      "stage": "BINDING",
+      "category": "NOT_FOUND"
+    },
+    {
+      "at": "2026-10-31T09:04:41.807076734Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 404,
+      "durationMs": 6760
+    },
+    {
+      "at": "2026-10-31T09:04:55.089331860Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5570
+    },
+    {
+      "at": "2026-10-31T09:05:09.770844011Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 7044
+    },
+    {
+      "at": "2026-10-31T09:05:18.295261056Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 8212
+    },
+    {
+      "at": "2026-10-31T09:05:26.595991916Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 7959
+    },
+    {
+      "at": "2026-10-31T09:05:44.185129051Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 17263
+    },
+    {
+      "at": "2026-10-31T09:05:51.555371724Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/universal-source-originals/png/:action",
+      "status": 200,
+      "durationMs": 7029
+    },
+    {
+      "at": "2026-10-31T09:05:58.088777606Z",
+      "event": "request",
+      "route": "/v2/trips/:tripId/source-import-catalogs",
+      "status": 200,
+      "durationMs": 5446
+    },
+    {
+      "at": "2026-10-31T09:06:14.923481701Z",
+      "event": "request",
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 503,
+      "durationMs": 15517
+    }
+  ],
+  "rawLogsExposed": false
+}
