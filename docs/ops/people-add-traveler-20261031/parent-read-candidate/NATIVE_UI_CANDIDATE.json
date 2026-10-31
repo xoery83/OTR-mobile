@@ -25,7 +25,6 @@
     "../ADOPTED_PERSON_NATIVE_READER_REAL_E2E.json"
   ],
   "stillRequired": [
-    "Native owning review of delegated source ranges",
     "Root owning Parent8079 interface review",
     "Exact Owner Gate for new trip_create_parent_result EXECUTE",
     "Unique Writer applies/tests closed route/runtime patch",
@@ -45,5 +44,6 @@
     "No Hosted/Schema/RLS/GRANT/role/flag changes",
     "No new Repository/Queue/Session authority",
     "No devices or receiving credentials accessed this candidate stage"
-  ]
+  ],
+  "owningReview": "NO_BLOCKER_BOUNDED_NATIVE_UI_ONLY; NATIVE_OWNING_REVIEW.json; delegated UI Writer returned Native"
 }

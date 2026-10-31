@@ -1,0 +1,19 @@
+{
+  "status": "LOCAL_INSTALLER_CAS_ACL_AND_ROLLBACK_PASS",
+  "checks": [
+    "frozen observed-DEV preimage rejects a different owning definition before creating any function",
+    "non-installer role is rejected before changes",
+    "missing existing owning EXECUTE rejects instead of silently adding or borrowing it",
+    "unexpected inherited default ACL aborts and rolls back new function and EXECUTE atomically",
+    "Gateway role flag drift rejects without silently accepting or changing it",
+    "adapted fixture preimage installs exactly bounded function ACL without table rights or role flag changes",
+    "repeat install refuses replacement of an existing function"
+  ],
+  "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
+  "fixtureQualification": "Success path substitutes only two expected owning definition hashes with local stub hashes; no Hosted function/authority or frozen Hosted SQL success proof. Exact frozen candidate tested against mismatched preimage and rejected.",
+  "hostedMutations": 0,
+  "runtimeActivated": false,
+  "network": "none",
+  "containerMemory": "256m",
+  "containerCpus": 1
+}

@@ -1,0 +1,67 @@
+{
+  "status": "OBSERVED_DEV_PREIMAGE_UNAPPROVED_INSTALL_CANDIDATE",
+  "metadata": {
+    "candidateExists": false,
+    "gateway": {
+      "bypassRls": false,
+      "createDatabase": false,
+      "createRole": false,
+      "inherit": false,
+      "login": true,
+      "name": "otr_trip_create_gateway",
+      "replication": false,
+      "superuser": false
+    },
+    "gatewayDirectReceiptSelect": false,
+    "gatewayFiniteExecute": true,
+    "gatewayReceiptExecute": true,
+    "owningRoutines": [
+      {
+        "definitionMD5": "2fc18c1345ab1ae7231a33893745fb52",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "signature": "trip_create_finite_scope_allowed(uuid,uuid,uuid)"
+      },
+      {
+        "definitionMD5": "f850804dd98ebd5f33633498000e9e8a",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "signature": "trip_create_result(uuid,uuid)"
+      }
+    ]
+  },
+  "metadataEvidenceSHA256": "aa5bf3fc4c522106fba121f166826f199e2d9920b9881f3e93b9e85854c5af99",
+  "bodySHA256": "0c6b1a284de57af8a11c3eb2ef5a20008e1c7b2f7157606366d69cad95a478f7",
+  "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
+  "gateDelta": "Exactly one new function public.trip_create_parent_result(uuid,uuid), owner postgres/security-definer/search_path pg_catalog; one EXECUTE grant to existing otr_trip_create_gateway; no existing function/table/RLS/role change",
+  "preimageAcceptance": "Observed current metadata, not approval. Installer aborts if it drifts; Root owning review and exact Owner Gate still required.",
+  "localWrapperProof": "LOCAL_PG_RESULT.json (real PG wrapper/ACL tests; owning routine stub explicitly not Hosted authority requalification)",
+  "installCandidateChecks": "LOCAL_INSTALLER_RESULT.json: 7 local PG CAS/ACL/rollback checks PASS; success uses only local owning-hash substitutions; not Hosted installation/authority proof",
+  "writer": "Root; Auth only created local candidate SQL",
+  "sharedChangeLock": {
+    "requestedAt": "UNKNOWN",
+    "readyAt": "UNKNOWN",
+    "acquiredAt": "UNKNOWN",
+    "mutationFinishedAt": "UNKNOWN",
+    "releasedAt": "UNKNOWN",
+    "state": "NO_INSTALL_REQUESTED_OR_ACQUIRED"
+  },
+  "runnerContract": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "transport": "Existing scripts/import/universal_scope_close.py::SqlTransport binds db query --linked --project-ref tuqigdxrvrerfewsxqgm; unique Writer must verify DEV target and frozen install hash before any approved apply",
+    "productionAuthorized": false,
+    "activation": "Installation does not mount HTTP route, enable new Backend reader flag or enable Native caller prop"
+  },
+  "rollback": "First close the new Backend reader and Native caller; under unique Writer/CAS compare installed function definition+ACL receipt before removing only this new function. Never alter existing owning routines, Gateway role flags, business tables or user data.",
+  "owningReview": "PENDING_ROOT_CORE_INTERFACE_REVIEW",
+  "ownerApproval": "NOT_REQUESTED_NOT_APPROVED",
+  "nativeReview": "NATIVE_OWNING_REVIEW.json: NO_BLOCKER bounded UI only",
+  "candidateGateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
+  "independentReview": {
+    "result": "NO_BLOCKER_INSTALL_CANDIDATE_ONLY_NOT_READY",
+    "reviewer": "auth_phase1_review",
+    "checked": "Frozen SQL/wrapper/metadata/local evidence hashes; exact one new function/EXECUTE; preimage CAS, least ACL, atomic rollback; local stub qualification retained",
+    "hostedWrites": 0
+  },
+  "reconciliation": "A timeout/unknown is not an install failure or retry permission. Independently read exact function existence/source/owner/ACL plus original owning hashes before any further write; acknowledged COMMIT also requires readback. No automatic reapply or hash-drift acceptance."
+}
