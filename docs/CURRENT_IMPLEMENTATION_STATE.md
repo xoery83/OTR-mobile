@@ -85,8 +85,9 @@ Source4090; independent health200/protected401/config+mount preservation and
 PNG-closed/worker-inactive readback PASS. Originalac7/d8 retained for rollback;
 no OAuth window was activated. See HOSTED_INDEPENDENT_READBACK.json and
 auth-required-diagnostics-20261101/QUALIFICATION.json for the normalized five-file
-main patch. Single existing-d2b diagnostic window candidate29f9c9ed/Gate84837c5e
-is pending independent Review and new Owner approval. Root's newly approved Photo
+main patch. Single existing-d2b diagnostic window candidate0c4651f6/Gatebba48f2c
+has independent NO_BLOCKER/5 local control test groups; new Owner approval pending.
+Root's newly approved Photo
 recovery has resource priority; Auth starts no Host/config session until its actual
 closure, approval and fresh CAS. Source qualification grants no signing/window.
 

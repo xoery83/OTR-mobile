@@ -1,0 +1,13 @@
+{
+  "status": "NO_BLOCKER_CANDIDATE_ONLY",
+  "reviewer": "/root/auth_phase1_review",
+  "candidateCommit": "0c4651f6b647f58d71beae7f7919be6b999f034e",
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+  "frozenFilesVerified": 14,
+  "independentLocalTestGroups": 5,
+  "scope": "Existing d2/QA1f/sole Claude callback/read only/token60/new single<=30min; no oldb3 reuse",
+  "baseReview": "29f9c9ed/84837c5e control/operator/software/SQL evidence remains applicable",
+  "incrementalReview": "Exact foreign IDs unchanged, fixture hash matches, only steps2/3/revoke; legacy client835 and Trip/list excluded",
+  "newAuthorityInstalled": false,
+  "externalActionsDuringReview": false
+}
