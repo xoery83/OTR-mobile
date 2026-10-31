@@ -173,6 +173,15 @@ OAuth OFF, Hook disabled/URI null, original Site URL localhost:3000. Closed hook
 private ACL remains postgres+AuthAdmin EXEC only. Both normal control Sessions
 logged out and refresh rejected; no ChatGPT grant existed (fresh normal readback).
 No Auth Host/SQL/device lease remains; Root can resume serialized deployment.
+MCP later received direct user confirmation for ChatGPT creation after closure.
+New consumer-only Gate2ec2fde8 independently reviewed: earliest07:30Z, absolute
+08:00Z expiry, same QA/client/read/60s, no new function/ACL/RLS/role. Original MCP
+human confirmation context was independently read: it explicitly includes one
+new finite window for this ChatGPT flow. No duplicate Owner approval required;
+Root confirmed no Host/SQL/business in flight; fresh baseline+shared-lock CAS mounted
+8faae954/image4781, retainedce09. Hook activated/read back07:34:14Z. Normal QA
+control Session READY, consumer-only flow underway; absolute08:00Z and ten-minute
+control wait bound, then close/revoke/default restore. No consumer PASS yet.
 Parent Gate private hook/client installation remains traceable, no new RLS/role.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.

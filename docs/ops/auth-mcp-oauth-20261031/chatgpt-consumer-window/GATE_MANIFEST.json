@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "status": "PROPOSED_NOT_AUTHORIZED",
+  "parentApprovedGate": "02971807ae94f1da94cb8d712678fdc73844417a4000b848519932938eba53f3",
+  "candidateSource": "9691bd83",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "notBefore": "2026-10-31T07:30:00Z",
+  "expiresAt": "2026-10-31T08:00:00Z",
+  "maximumMinutes": 30,
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "accessTokenSecondsMaximum": 60,
+  "newFunctionRoleRlsGrant": false,
+  "files": {
+    "docs/ops/auth-mcp-oauth-20261031/chatgpt-consumer-window/OWNER_GATE.md": "d0fa7c1c6469e804a9ddbece032a20b1ac4ab290459a7fb46543d298cb3b78b8",
+    "docs/ops/auth-mcp-oauth-20261031/chatgpt-consumer-window/ACTIVATE_CANDIDATE.sql": "79209c3f6f2ad9be34582a35f6ba43b85d5078b6cc8d1ca8d6ed35755443c5f4",
+    "docs/ops/auth-mcp-oauth-20261031/chatgpt-consumer-window/CLOSE_CANDIDATE.sql": "c4a04e65165a7ee2bef5c156efeb5ee1b43efc547d2f1316cabe3879b0e6cbac"
+  },
+  "gateSHA256": "2ec2fde865e308fc579180f531785934f1ec80821d39dfe968afbfa7305f3f44"
+}

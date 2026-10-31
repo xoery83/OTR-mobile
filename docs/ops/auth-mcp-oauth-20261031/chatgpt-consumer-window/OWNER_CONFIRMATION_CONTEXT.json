@@ -1,0 +1,15 @@
+{
+  "status": "OWNER_CONFIRMED_ONCE_NEW_CONSUMER_WINDOW_AND_CREATE",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "directHumanMessageId": "01a190da-115b-7d22-a21e-c55f2484b057",
+  "ownerReply": "\u786e\u8ba4",
+  "verifiedUsing": "read_thread latest two original turns, not peer relay alone",
+  "precedingUserFacingRequest": "Allow ChatGPT OTR DEV QA read-only synthetic account connection; reply confirms coordination of a new finite window; previous window not reused.",
+  "interpretation": "One necessary <=30m same-QA/client/read/60s window for the already-confirmed consumer flow; no unlimited reactivation or additional authority.",
+  "gateSHA256": "2ec2fde865e308fc579180f531785934f1ec80821d39dfe968afbfa7305f3f44",
+  "notBefore": "2026-10-31T07:30:00Z",
+  "expiresAt": "2026-10-31T08:00:00Z",
+  "newFunctionRoleRlsGrant": false,
+  "activationPerformed": false,
+  "recordedAt": "2026-10-31T07:30:18.394249+00:00"
+}

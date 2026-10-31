@@ -1,0 +1,42 @@
+{
+  "gateSHA256": "2ec2fde865e308fc579180f531785934f1ec80821d39dfe968afbfa7305f3f44",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "operation": "CLI_DECLARED_HOOK_FIELDS_ONLY",
+  "startedAt": "2026-10-31T07:31:51.684675Z",
+  "declaredChanges": [
+    {
+      "path": [
+        "auth",
+        "hook",
+        "custom_access_token",
+        "enabled"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": true,
+      "remote": false
+    },
+    {
+      "path": [
+        "auth",
+        "hook",
+        "custom_access_token",
+        "uri"
+      ],
+      "class": "local_only",
+      "declared": true,
+      "local": "pg-functions://postgres/public/otr_mcp_qa_access_token",
+      "remote": null
+    }
+  ],
+  "configSHA256": "e020a08080cb5c562d3ea808c07a7186b767ccb9c609544d68686872fdf5069a",
+  "disposition": "ACKNOWLEDGED",
+  "oauthEnabled": false,
+  "finiteWindowActivated": false,
+  "mutationFinishedAt": "2026-10-31T07:31:55.358423Z",
+  "status": "HOOK_CONFIGURED_ONLY_INDEPENDENT_DIFF_VERIFIED",
+  "verifiedAt": "2026-10-31T07:31:57.572030Z",
+  "unchangedOtherReportedFields": 22,
+  "undeclaredFieldsPushed": false,
+  "dashboardSchemaGrantExecuted": false
+}
