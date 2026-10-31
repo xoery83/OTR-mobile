@@ -638,3 +638,14 @@ it("shows the owning accepted receipt even when save controls are closed, withou
   expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
   expect(confirm).not.toHaveBeenCalled();
 });
+
+it.each(["en", "zh-Hans"] as const)("explains a required Photo choice without claiming model failure (%s)", (locale) => {
+  setUiLocale(locale);
+  const f = fixture();
+  const html = renderToStaticMarkup(createElement(UniversalResultView, {
+    ...f.props, result: null, canStart: true, unavailable: true, photoReviewRequired: true,
+  }));
+  expect(html).toContain(t("capture.photo.reviewRequired"));
+  expect(html).not.toContain(t("capture.ai.unavailable"));
+  expect(f.props.start).not.toHaveBeenCalled();
+});

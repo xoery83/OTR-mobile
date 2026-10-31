@@ -364,6 +364,8 @@ export const en = {
   "capture.photo.localOnly":
     "Only local checks and choices are recorded here. AI image analysis has not started.",
   "capture.photo.notChecked": "This image has not been checked on this device.",
+  "capture.photo.reviewRequired":
+    "Check the image and choose AI analysis in Local image check before continuing.",
   "capture.photo.relevant": "Local text suggests possible travel information.",
   "capture.photo.uncertain":
     "Local text cannot determine whether this image is relevant.",
@@ -3370,6 +3372,7 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.photo.localTitle": "本机图片初筛",
   "capture.photo.localOnly": "此处仅记录本机初筛和选择，尚未开始 AI 图片分析。",
   "capture.photo.notChecked": "尚未在此设备上检查这张图片。",
+  "capture.photo.reviewRequired": "请先在“本机图片初筛”中检查图片并选择 AI 分析，再继续。",
   "capture.photo.relevant": "本机文字初筛发现了可能的旅行信息。",
   "capture.photo.uncertain": "本机文字初筛无法判断这张图片是否相关。",
   "capture.photo.irrelevant": "已标记为无关，原件仍会保留。",

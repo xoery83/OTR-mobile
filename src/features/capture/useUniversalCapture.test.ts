@@ -423,3 +423,15 @@ it("reports Task preparation after successful PNG custody instead of the previou
     log.mockRestore();
   }
 });
+
+it("distinguishes a Photo consent decision from an unconfirmed Source failure", async () => {
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  h.start.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
+  await Harness().start();
+  expect(Harness().photoReviewRequired).toBe(true);
+  h.start.mockRejectedValueOnce(Error("PNG_UPLOAD_OUTCOME_UNRESOLVED"));
+  await Harness().start();
+  expect(Harness().photoReviewRequired).toBe(false);
+  expect(Harness().unavailable).toBe(true);
+});

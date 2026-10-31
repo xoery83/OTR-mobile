@@ -19,6 +19,7 @@ export function useUniversalCapture(
   const [busy, setBusy] = useState(false),
     [unavailable, setUnavailable] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [photoReviewRequired, setPhotoReviewRequired] = useState(false);
   const [canStart, setCanStart] = useState(true);
   const [queued, setQueued] = useState(false);
   const [startPending, setStartPending] = useState(false);
@@ -84,6 +85,7 @@ export function useUniversalCapture(
     running.current = true;
     setBusy(true);
     setUnavailable(false);
+    setPhotoReviewRequired(false);
     setAttempted(true);
     try {
       if (!consumer.current) {
@@ -198,6 +200,10 @@ export function useUniversalCapture(
         setUnavailable(next === null && !consumer.current.queued);
       }
     } catch (error) {
+      if (current())
+        setPhotoReviewRequired(
+          error instanceof Error && error.message === "UNIVERSAL_PHOTO_REVIEW_REQUIRED",
+        );
       if (execute && current()) {
         try {
           const code =
@@ -322,6 +328,7 @@ export function useUniversalCapture(
     result,
     busy,
     unavailable,
+    photoReviewRequired,
     attempted,
     canStart,
     canStartDuringRead: busy && reading && !startPending,

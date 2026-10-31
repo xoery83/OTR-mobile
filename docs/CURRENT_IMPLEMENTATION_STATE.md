@@ -42,7 +42,10 @@ function + exact operator credential purpose require Owner approval before use.
 Next: after exact recovery Gate approval and fresh baseline checks, record
 negative/retain marker, same operation uniquegen2,
 normal App→actual imageVisiononce→Results→Review→one PRIVATE SELF P1/P6→independent
-readback/Day/cold/idempotence→close. FirstVision/Save still unverified. Originalhard
+readback/Day/cold/idempotence→close. FirstVision/Save still unverified. Import UI now distinguishes the actual local
+Photo re-confirmation requirement from generic AI unavailable, using bilingual
+actionable copy; 67 focused checks/UI guard/ESLint/independent NO_BLOCKER. LOCAL_PASS
+only; no Native rebuild or device acceptance claimed. Originalhard
 expiry2026-11-01T08:48:56Z and <=60m/+45close/+50watchdog bounds unchanged. Stable
 Import branch only; main untouched. AD5 remains126.8/SQLite76/rootMyTrips; false
 unassigned label fix622aa154 local-only. Full roottypes previously hit2GiB OOM;
