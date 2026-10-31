@@ -1,13 +1,5 @@
-import type { ReactNode, Ref } from "react";
-import {
-  TextInput,
-  View,
-  Pressable,
-  Text,
-  StyleSheet,
-  useWindowDimensions,
-  type TextInputProps,
-} from "react-native";
+import type { ReactNode } from "react";
+import { View, Pressable, Text, StyleSheet, useWindowDimensions } from "react-native";
 import DateTimePicker, {
   type IOSNativeProps,
 } from "@react-native-community/datetimepicker";
@@ -16,32 +8,8 @@ import type { UiColors } from "./palette";
 import { useUiLocale } from "./useUiLocale";
 import { getFormatLocale } from "./locale";
 import { visual } from "./visual";
-
-export function UiTextInput({
-  style,
-  editable,
-  variant = "field",
-  ...props
-}: TextInputProps & { ref?: Ref<TextInput>; variant?: "field" | "bare" }) {
-  const colors = useUiTheme();
-  const styles = useThemedStyles(createStyles);
-  return (
-    <TextInput
-      placeholderTextColor={colors.textSecondary}
-      selectionColor={colors.accent}
-      cursorColor={colors.accent}
-      keyboardAppearance={useUiAppearance()}
-      editable={editable}
-      {...props}
-      style={[
-        styles.input,
-        variant === "bare" && styles.bareInput,
-        style,
-        editable === false && styles.disabled,
-      ]}
-    />
-  );
-}
+import { textInputStyles } from "./textInput";
+export { UiTextInput } from "./textInput";
 // Keep the installed native picker. System-derived props update mounted modal hosts.
 // Locale override is reliable for the spinner mode used by these date sheets.
 export function UiDatePicker(
@@ -222,16 +190,7 @@ const createStyles = (colors: UiColors) =>
     actionCopy: { flex: 1, minWidth: 0, gap: 5 },
     actionTitle: { ...visual.type.row, color: colors.textPrimary },
     actionHint: { ...visual.type.meta, color: colors.textSecondary },
-    input: {
-      backgroundColor: colors.surface,
-      color: colors.textPrimary,
-      borderColor: colors.separator,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: visual.radius.control,
-      minHeight: 52,
-      paddingHorizontal: 14,
-      ...visual.type.row,
-    },
+    ...textInputStyles(colors),
     fieldGroup: { gap: visual.space.heading },
     fieldLabel: { ...visual.type.action, color: colors.textPrimary },
     fieldButton: { justifyContent: "center", paddingVertical: visual.space.heading },
@@ -242,14 +201,8 @@ const createStyles = (colors: UiColors) =>
       gap: visual.space.heading,
     },
     fieldAccessoryValue: { flex: 1 },
-    bareInput: {
-      backgroundColor: colors.background,
-      borderWidth: 0,
-      paddingHorizontal: 0,
-    },
     disabledSurface: { backgroundColor: colors.groupedBackground },
     disabledText: { color: colors.disabled },
-    disabled: { color: colors.disabled, backgroundColor: colors.groupedBackground },
     row: {
       alignItems: "center",
       backgroundColor: colors.surface,
