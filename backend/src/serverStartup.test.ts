@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
-import type { RequestListener, Server } from "node:http";
+import { request as httpRequest, type RequestListener, type Server } from "node:http";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { DevBackendGateway } from "./app";
 import { createCorePgHttpConnection } from "./tripCoreV2PgHttpConnection";
@@ -12,7 +12,9 @@ const fixtures = vi.hoisted(() => ({
   createGateway: vi.fn(),
   scannerStart: vi.fn(),
   scannerStop: vi.fn(),
+  mcpRuntime: vi.fn(),
 }));
+vi.mock("./mcpQaRuntime", () => ({ loadMcpQaRuntime: fixtures.mcpRuntime }));
 vi.mock("./supabaseGateway", () => ({
   createSupabaseDevGateway: fixtures.createGateway,
 }));
@@ -76,6 +78,7 @@ beforeEach(() => {
     token === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" as const } : null,
   );
   fixtures.canReadTrip.mockResolvedValue(true);
+  fixtures.mcpRuntime.mockResolvedValue(undefined);
   fixtures.createGateway.mockReturnValue({
     validateAccessToken: fixtures.validateAccessToken,
     canReadTrip: fixtures.canReadTrip,
@@ -95,6 +98,43 @@ async function address(server: Server) {
   if (!bound || typeof bound === "string") throw new Error("TEST_LOOPBACK_UNAVAILABLE");
   return `http://127.0.0.1:${bound.port}`;
 }
+async function chunked(url: string, method: string, parts: string[]) {
+  return new Promise<number>((resolve, reject) => {
+    const request = httpRequest(
+      url,
+      { method, headers: { "Transfer-Encoding": "chunked" } },
+      (response) => {
+        response.resume();
+        response.once("end", () => resolve(response.statusCode!));
+      },
+    );
+    request.on("error", reject);
+    for (const part of parts) request.write(part);
+    request.end();
+  });
+}
+
+it("bounds anonymous chunked MCP before buffering/SDK and forbids bodies on public GET surfaces", async () => {
+  const port = vi.fn(async () => new Response("unit"));
+  fixtures.mcpRuntime.mockResolvedValue(port);
+  const { startDevBackend } = await import("./serverStartup");
+  const base = await address(startDevBackend());
+  expect(
+    await chunked(base + "/mcp", "POST", ["x".repeat(8192), "x".repeat(8192), "x"]),
+  ).toBe(413);
+  for (const path of [
+    "/mcp",
+    "/.well-known/oauth-protected-resource/mcp",
+    "/oauth/consent",
+    "/oauth/consent/config",
+    "/oauth/consent/app.js",
+  ])
+    expect(await chunked(base + path, "GET", ["x"])).toBe(413);
+  expect(port).not.toHaveBeenCalled();
+  expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+  expect(await chunked(base + "/mcp", "POST", ["{}"])).toBe(200);
+  expect(port).toHaveBeenCalledOnce();
+});
 const post = (url: string, body: unknown = input, token = "valid") =>
   fetch(`${url}/v2/trips`, {
     method: "POST",

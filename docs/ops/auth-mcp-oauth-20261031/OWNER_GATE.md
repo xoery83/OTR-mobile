@@ -34,7 +34,9 @@ tokens are read-only on Data/Storage.
    redirect allowlist empty. Site URL is a project-global change, not MCP-local.
 4. Create **one** manually registered public OAuth client named
    `OTR DEV QA Read`, token endpoint auth `none`, code+PKCE S256 and refresh flow,
-   exact callback `https://chatgpt.com/connector/oauth/CYUxrs56rSrW`. Request only
+   exact callbacks `https://chatgpt.com/connector/oauth/CYUxrs56rSrW` and
+   `http://127.0.0.1:18764/callback`. The second is the existing official SDK QA
+   harness listener (fixed IPv4 host, port and path); no other loopback URI. Request only
    provider scope `openid`. The callback was freshly observed in the current
    ChatGPT draft and must still match immediately before registration; changed
    callback means stop and amend this Gate. No wildcard, CIMD, DCR or client secret.
@@ -60,6 +62,11 @@ gain write through a later hook change; write requires fresh explicit consent.
 
 - Consent login uses normal Email OTP through existing SDK and Repository;
   memory-only session, explicit decision, fresh Account/client/callback checks.
+  Requests are limited to the registered QA email before sending/verifying OTP;
+  server-confirmed Account UUID remains the identity authority. Each authorization
+  pins one of the two callbacks and rejects switching between them.
+- Node ingress caps MCP POST at16KiB before buffering; other mounted OAuth/metadata
+  routes accept no request body. Existing Business routes are unchanged.
 - Ordinary Business HTTP rejects OAuth resource markers; only the MCP trusted
   same-Account binding delegates existing Discovery/Core read and ACLs. No bearer
   forwarding to Business HTTP and no new service-role admission path.
@@ -74,11 +81,14 @@ gain write through a later hook change; write requires fresh explicit consent.
 
 ## Real qualification and limits
 
+Run the existing official SDK QA harness first, then ChatGPT with a fresh normal
+OTP consent. Tokens stay in the SDK process; never extract a ChatGPT session.
 Use formal OTP, real code/S256 exchange, signature/audience/Account/client/session
 binding, current grant readback, own Trip list/items and registered synthetic
 foreign Trip denial. Test refresh, access expiry, cancel/deny, grant revocation
 with old access and refresh rejection. Test the same resource bearer against
-ordinary Business HTTP and normal Data/Storage surfaces; unexpected access is
+ordinary Business HTTP and normal Data/Storage surfaces, plus an attempted
+ordinary `/auth/v1/token` refresh of the OAuth credential; unexpected access is
 FAIL, not hidden by MCP's read-tools UI. Do not expose a real Account to this test.
 Do not use an internal ordinary QA Session as the public MCP resource credential.
 No OTP bypass, hand-signed JWT, administrative login or second grant database.
@@ -91,10 +101,13 @@ smoke for this global hook/Site URL change; Apple remains Owner-paused.
 ## Close and recovery
 
 First CAS back to the approved deny-all OAuth body with the renderer's matching
-close SQL; repeated close is idempotent. The absolute window and token cap close
+close SQL; repeated close is idempotent. Between the SDK and ChatGPT stages,
+reactivation may use only the same approved client UUID and original absolute
+deadline after confirmed cleanup; no extension or additional identity is allowed. The absolute window and token cap close
 new issuance and MCP access even if the operator loses its connection. Data/Storage
 expiry/revocation behavior remains subject to actual qualification. Native claims
-continue unchanged. Then normally revoke only this QA client's provider grant,
+continue unchanged. Then normally revoke only this QA client's provider grant using a separately
+OTP-authenticated QA control session, including when the OAuth response was lost,
 prove old resource access/refresh rejected, and close the public runtime config.
 Restore OAuth Server OFF, no configured hook and Site URL
 `http://localhost:3000`; keep the existing redirect allowlist empty. Do not disable

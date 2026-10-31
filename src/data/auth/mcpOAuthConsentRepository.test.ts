@@ -9,7 +9,8 @@ const redirectUri = "https://chatgpt.com/connector/oauth/unit-draft-fixture";
 function fixture() {
   const config = {
     clientId,
-    redirectUri,
+    redirectUris: [redirectUri],
+    qaEmail: "unit@example.invalid",
     publishableKey: "sb_publishable_unit_fixture_no_live_credentials",
     accountIds: [id],
     expiresAt: Date.now() + 60000,
@@ -57,18 +58,18 @@ afterEach(() => {
 
 it("uses formal existing-user Email OTP, fresh identity and explicit provider consent", async () => {
   const q = fixture();
-  await q.repo.requestCode("otr-qa-unit@example.invalid");
+  await q.repo.requestCode("unit@example.invalid");
   expect(q.auth.signInWithOtp).toHaveBeenCalledWith({
-    email: "otr-qa-unit@example.invalid",
+    email: "unit@example.invalid",
     options: { shouldCreateUser: false },
   });
-  expect(await q.repo.verifyCode("otr-qa-unit@example.invalid", "12345678")).toEqual({
+  expect(await q.repo.verifyCode("unit@example.invalid", "12345678")).toEqual({
     kind: "CONSENT",
     accountId: id,
     clientName: "QA Read",
   });
   expect(q.auth.verifyOtp).toHaveBeenCalledWith({
-    email: "otr-qa-unit@example.invalid",
+    email: "unit@example.invalid",
     token: "12345678",
     type: "email",
   });
@@ -194,8 +195,8 @@ it("refuses secrets/configured redirect injection", () => {
   const q = fixture();
   for (const changed of [
     { publishableKey: "sb_secret_unit_not_a_public_key_123456" },
-    { redirectUri: redirectUri + "?other=1" },
-    { redirectUri: "http://chatgpt.com/callback" },
+    { redirectUris: [redirectUri + "?other=1"] },
+    { redirectUris: ["http://chatgpt.com/callback"] },
   ])
     expect(() =>
       createMcpOAuthConsentRepository({ ...q.config, ...changed }, "unit-authorization"),
@@ -243,6 +244,56 @@ it("does not start a queued OTP after close", async () => {
   await expect(pending).rejects.toMatchObject({ code: "CLOSED" });
   await closed;
   expect(q.auth.signInWithOtp).not.toHaveBeenCalled();
+});
+
+it("permits the exact SDK loopback and pins the authorization's selected redirect", async () => {
+  const q = fixture(),
+    loopback = "http://127.0.0.1:18764/callback";
+  const config = { ...q.config, redirectUris: [redirectUri, loopback] };
+  const repo = createMcpOAuthConsentRepository(config, "unit-authorization", {
+    auth: q.auth,
+  } as unknown as SupabaseClient);
+  expect(await repo.load()).toMatchObject({ kind: "CONSENT" });
+  q.oauth.getAuthorizationDetails.mockResolvedValueOnce({
+    data: { ...q.details, redirect_uri: loopback },
+    error: null,
+  });
+  await expect(repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  const second = fixture();
+  second.oauth.getAuthorizationDetails.mockResolvedValue({
+    data: { ...second.details, redirect_uri: loopback },
+    error: null,
+  });
+  const sdk = createMcpOAuthConsentRepository(config, "unit-authorization", {
+    auth: second.auth,
+  } as unknown as SupabaseClient);
+  expect(await sdk.load()).toMatchObject({ kind: "CONSENT" });
+  second.oauth.approveAuthorization.mockResolvedValueOnce({ data: { redirect_url: loopback + "?code=unit&state=unit" }, error: null });
+  expect(await sdk.decide(true)).toEqual({ kind: "REDIRECT", url: loopback + "?code=unit&state=unit" });
+  for (const uri of [
+    "http://localhost:18764/callback",
+    "http://127.0.0.1:18765/callback",
+    "http://127.0.0.1:18764/other",
+  ])
+    expect(() =>
+      createMcpOAuthConsentRepository(
+        { ...config, redirectUris: [uri] },
+        "unit-authorization",
+      ),
+    ).toThrow();
+});
+
+it("does not send or verify OTP for a non-QA recipient", async () => {
+  const q = fixture();
+  await expect(q.repo.requestCode("other@example.invalid")).rejects.toMatchObject({
+    code: "CLOSED",
+  });
+  await expect(
+    q.repo.verifyCode("other@example.invalid", "12345678"),
+  ).rejects.toMatchObject({ code: "CLOSED" });
+  expect(q.auth.signInWithOtp).not.toHaveBeenCalled();
+  expect(q.auth.verifyOtp).not.toHaveBeenCalled();
 });
 
 it.each(["close", "expiry"])(

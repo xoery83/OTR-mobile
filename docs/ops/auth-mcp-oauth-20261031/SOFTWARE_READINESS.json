@@ -1,0 +1,20 @@
+{
+  "status": "COMPILED_ONLY_NOT_DEPLOYED",
+  "mcpSource": "8812dbbb8b9ed610c7716415b1377b6443005c4d",
+  "mcpInputSHA256": "866b6c1286daf38aef9ca7ee759442ca96d9e98c1af2c1f92eca6d6e5183f94c",
+  "runtimeSHA256": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+  "mobileDependencyChanges": false,
+  "providerCalls": 0,
+  "browserBundleSHA256": "75cb5d68483c968748431abeb9fc607c6b57a90923d23bcc7681047a5fd44ba7",
+  "softwareCommit": "See fixed candidate commit containing this receipt",
+  "focusedTests": "8 suites / 116 tests PASS; typecheck PASS; scoped lint PASS; normal capture bundle PASS",
+  "protocolSmoke": "Actual compiled frozen MCP library: PRM200/openid, missing bearer401/openid challenge, foreign Origin403; no provider calls",
+  "gateSourceHashes": {
+    "QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "OWNER_GATE.md": "d88c92e62fc938988e89a6e9f4b62a309a053bd6cc837e7a007f3594b5c9e34f"
+  },
+  "activated": false,
+  "hostedOAuthE2E": "NOT_RUN_OWNER_GATE_REQUIRED",
+  "focusedDeltaTests": "3 non-listener suites /35 PASS; real Node HTTP11 PASS (loopback listener required); full typecheck and scoped lint PASS"
+}

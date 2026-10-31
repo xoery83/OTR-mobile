@@ -1,4 +1,5 @@
 import { guestAdoptionBodyLimit, guestAdoptionHttpBoundary } from "./guestAdoptionHttp";
+import { mcpIngressBodyLimit } from "./mcpIngress";
 import type { GuestAdoptionDevRuntime } from "./guestAdoptionRuntime";
 import { isNormalAccount, type AuthenticatedAccount } from "./authAccountQualification";
 import {
@@ -2548,16 +2549,7 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (
-        mcpHttp &&
-        [
-          "/mcp",
-          "/.well-known/oauth-protected-resource/mcp",
-          "/oauth/consent",
-          "/oauth/consent/config",
-          "/oauth/consent/app.js",
-        ].includes(url.pathname)
-      ) {
+      if (mcpHttp && mcpIngressBodyLimit(url.pathname, request.method) !== null) {
         route = "/mcp/auth-resource";
         response = (await mcpHttp(request)) ?? new Response(null, { status: 404 });
       } else if (guestAdoptionBodyLimit(url.pathname) !== null) {

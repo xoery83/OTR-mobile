@@ -6,6 +6,7 @@ import { createMcpConsentPage } from "./mcpConsentPage";
 import { isSupabaseDevPublicKey } from "@/data/auth/devSupabasePublicKey";
 import type { DevBackendGateway } from "./app";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
+import { mcpIngressBodyLimit } from "./mcpIngress";
 
 const qaAccount = "1f3d7935-1bdc-4952-8d7f-0f72077368c1";
 const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1";
@@ -13,7 +14,10 @@ const resource = "https://api-dev.xoery.art/mcp";
 const configSchema = z.strictObject({
   version: z.literal(1),
   clientId: z.uuid(),
-  redirectUri: z.literal("https://chatgpt.com/connector/oauth/CYUxrs56rSrW"),
+  redirectUris: z.tuple([
+    z.literal("https://chatgpt.com/connector/oauth/CYUxrs56rSrW"),
+    z.literal("http://127.0.0.1:18764/callback"),
+  ]),
   expiresAt: z.number().int().positive(),
 });
 type ModulePort = {
@@ -74,18 +78,17 @@ export async function loadMcpQaRuntime(
         : Promise.resolve(false),
   });
   const page = createMcpConsentPage(
-    { ...config, publishableKey: publicKey, accountIds: [qaAccount] },
+    {
+      ...config,
+      publishableKey: publicKey,
+      accountIds: [qaAccount],
+      qaEmail: "otr-qa-fde969f2-2dc5-4a33-83a1-268ac5fd6424@eldouzileu.resend.app",
+    },
     script,
   );
   return async (request: Request): Promise<Response | null> => {
     const url = new URL(request.url);
-    const relevant = [
-      "/mcp",
-      "/.well-known/oauth-protected-resource/mcp",
-      "/oauth/consent",
-      "/oauth/consent/config",
-      "/oauth/consent/app.js",
-    ].includes(url.pathname);
+    const relevant = mcpIngressBodyLimit(url.pathname, request.method) !== null;
     if (!relevant) return null;
     if (url.host !== "api-dev.xoery.art") return new Response(null, { status: 404 });
     if (Date.now() >= config.expiresAt)

@@ -6,10 +6,23 @@ import { isSupabaseDevPublicKey } from "./devSupabasePublicKey";
 const origin = "https://tuqigdxrvrerfewsxqgm.supabase.co";
 export const mcpConsentConfigSchema = z.object({
   clientId: z.uuid(),
-  redirectUri: z.url().refine((value) => {
-    const u = new URL(value);
-    return u.protocol === "https:" && !u.username && !u.password && !u.search && !u.hash;
-  }),
+  redirectUris: z
+    .array(
+      z.url().refine((value) => {
+        const u = new URL(value);
+        return (
+          (u.protocol === "https:" || value === "http://127.0.0.1:18764/callback") &&
+          !u.username &&
+          !u.password &&
+          !u.search &&
+          !u.hash
+        );
+      }),
+    )
+    .min(1)
+    .max(2)
+    .refine((values) => new Set(values).size === values.length),
+  qaEmail: z.email(),
   publishableKey: z.string().refine(isSupabaseDevPublicKey, "PUBLIC_DEV_KEY_REQUIRED"),
   accountIds: z.array(z.uuid()).min(1).max(2),
   expiresAt: z.number().int().positive(),
@@ -43,6 +56,7 @@ export function createMcpOAuthConsentRepository(
     closed = false;
   let closeTask: Promise<void> | undefined;
   let activeTask: Promise<unknown> | undefined;
+  let expectedRedirect: string | undefined;
   const current = () => {
     if (closed || Date.now() >= config.expiresAt) throw new McpConsentError("CLOSED");
   };
@@ -114,16 +128,20 @@ export function createMcpOAuthConsentRepository(
   }
   function redirect(raw: string) {
     if (raw.length > 8192) throw new McpConsentError("REQUEST_CHANGED");
-    const actual = new URL(raw),
-      expected = new URL(config.redirectUri);
+    const actual = new URL(raw);
+    const matching = config.redirectUris.find((value) => {
+      const expected = new URL(value);
+      return expected.origin === actual.origin && expected.pathname === actual.pathname;
+    });
     if (
-      actual.origin !== expected.origin ||
-      actual.pathname !== expected.pathname ||
+      !matching ||
+      (expectedRedirect !== undefined && matching !== expectedRedirect) ||
       actual.username ||
       actual.password ||
       actual.hash
     )
       throw new McpConsentError("REQUEST_CHANGED");
+    expectedRedirect = matching;
     if (
       [...actual.searchParams.keys()].some(
         (key) =>
@@ -164,10 +182,12 @@ export function createMcpOAuthConsentRepository(
       data.authorization_id !== authorizationId ||
       data.client.id !== config.clientId ||
       data.user.id !== identity.user.id ||
-      data.redirect_uri !== config.redirectUri ||
+      !config.redirectUris.includes(data.redirect_uri) ||
+      (expectedRedirect !== undefined && data.redirect_uri !== expectedRedirect) ||
       data.scope !== "openid"
     )
       throw new McpConsentError("REQUEST_CHANGED");
+    expectedRedirect = data.redirect_uri;
     return Object.freeze({
       kind: "CONSENT",
       accountId: identity.user.id,
@@ -195,6 +215,8 @@ export function createMcpOAuthConsentRepository(
   return Object.freeze({
     requestCode(email: string) {
       return run(async () => {
+        if (email.toLowerCase() !== config.qaEmail.toLowerCase())
+          throw new McpConsentError("CLOSED");
         const { error } = await client.auth.signInWithOtp({
           email: z.email().parse(email),
           options: { shouldCreateUser: false },
@@ -204,6 +226,8 @@ export function createMcpOAuthConsentRepository(
     },
     verifyCode(email: string, code: string) {
       return run(async () => {
+        if (email.toLowerCase() !== config.qaEmail.toLowerCase())
+          throw new McpConsentError("CLOSED");
         const { error } = await client.auth.verifyOtp({
           email: z.email().parse(email),
           token: z

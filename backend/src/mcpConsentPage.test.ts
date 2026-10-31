@@ -2,7 +2,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { createMcpConsentPage } from "./mcpConsentPage";
 const config = () => ({
   clientId: "11111111-1111-4111-8111-111111111111",
-  redirectUri: "https://chatgpt.com/connector/oauth/unit-fixture",
+  redirectUris: ["https://chatgpt.com/connector/oauth/unit-fixture"],
+  qaEmail: "unit@example.invalid",
   publishableKey: "sb_publishable_unit_fixture_only_not_real",
   accountIds: ["1f3d7935-1bdc-4952-8d7f-0f72077368c1"],
   expiresAt: Date.now() + 60000,

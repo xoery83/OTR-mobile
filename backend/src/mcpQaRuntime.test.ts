@@ -8,7 +8,10 @@ function fixture() {
   const policy = {
     version: 1,
     clientId,
-    redirectUri: "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+    redirectUris: [
+      "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+      "http://127.0.0.1:18764/callback",
+    ],
     expiresAt,
   };
   const env = {
@@ -62,7 +65,7 @@ it.each(["project", "secret", "scope", "deadline", "redirect", "missing core"])(
     if (mode === "redirect")
       q.env.OTR_DEV_MCP_READ_QA_CONFIG = JSON.stringify({
         ...q.policy,
-        redirectUri: "https://other.invalid",
+        redirectUris: ["https://other.invalid"],
       });
     await expect(
       loadMcpQaRuntime(

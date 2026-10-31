@@ -1,5 +1,6 @@
 import { guestAdoptionBodyLimit } from "./guestAdoptionHttp";
 import { loadMcpQaRuntime } from "./mcpQaRuntime";
+import { mcpIngressBodyLimit } from "./mcpIngress";
 import { createAccountProfileBootstrapPort } from "./accountProfileBootstrap";
 import { createServer } from "node:http";
 
@@ -172,8 +173,19 @@ export function startDevBackend(
         new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
       );
       let byteCount = 0;
+      const mcpLimit = mcpIngressBodyLimit(
+        new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
+        incoming.method ?? "",
+      );
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (mcpLimit !== null && byteCount > mcpLimit) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "MCP_REQUEST_SIZE_LIMIT" } }));
+          return;
+        }
         if (adoptionLimit !== null && byteCount > adoptionLimit) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");
