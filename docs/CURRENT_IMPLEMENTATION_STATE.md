@@ -16,17 +16,23 @@ retaining input/capture/revision/hash/bytes/consent guards. Historical75 SQL has
 unchanged.94 focused +5 migration tests, scoped production TypeScript/ESLint,
 ui:guard PASS, independent NO_BLOCKER. Full-repo tsc heap OOM is not PASS.
 Native delegated sole migration76 Writer; no Hosted schema/authority change.
-See photo/PHOTO_FILES_PNG_ADAPTER.md. Next: AD5 code-only126.6, normal OCR/explicit
-Continue on same input, then Source→actual Vision→Review→formal Save/readback/cold.
+See photo/PHOTO_FILES_PNG_ADAPTER.md. AD5 code-only126.6 installed, Native binary/data and both inputs preserved; real
+SQLite76 and local OCR RELEVANT/explicitContinue verified. Normal Source Start
+assigned Capture rev2; stale rev1 consent correctly blocked before paid execution.
+Current rev2 OCR/Continue now confirmed. Source df39c9b2/rep9bf0ad08/acquire4b11aa7e
+ADMITTED; independent Supabase Source readback05:53:08Z confirms OWNER_PRIVATE,
+FILES, exact QA Actor/Trip, zero Source attempts. Next: same Source preparation,
+actual Vision at most1, Review→formal Save/readback/cold. No third replacement.
 
-All Photo windows1–8 CLOSED independently; window8 3f23c779 scopes/runtime closed,
+All Photo windows1–9 CLOSED independently; window9 5a68a043 scopes/runtime closed,
 worker inactive/EMPTY and timers stopped. No temporary permission active.
 Host worker IPC budget90s (3175), cleanup inspect buffer65536 (b88d), approved
 pin184156c3 and operation guard1eeccf27 installed. PREPARE/UPLOAD accepted means
 no guard inverse. Original hard expiry2026-11-01T08:48:56Z, budget unchanged.
-Latest Import healthy runtime source76c8ccfb/CIDa2608753/image144e3bfb includes
-Native624f3c53/62e2782c. Auth owns next short default-closed Host deployment;
-fresh-read its receipt before reanchoring Photo controller and opening scope.
+Auth default-closed software deployed atop76c8: CID43afbc09/image8217aba6,
+Native624/62e and Photo IPC retained. Photo controller auth43af SHAe1945d57
+passed CLOSED/timer drill. Auth now owns finite OAuth public-config switch/QA;
+fresh-read its eventual default baseline before next Photo controller activation.
 No global DEV lock; main last known8f79a421, Root has not changed main.
 
 Older checkpoints below are historical and superseded by the current header.

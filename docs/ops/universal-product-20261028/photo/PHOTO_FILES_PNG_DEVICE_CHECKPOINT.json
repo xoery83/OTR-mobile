@@ -1,0 +1,53 @@
+{
+  "status": "SOURCE_SERVER_VERIFIED_VISION_PENDING",
+  "sourceCommit": "a58576c7",
+  "nativeBuild": "126.6",
+  "batchId": "e7dfba6d-fa6a-49e5-8cc7-563e9b6eff84",
+  "inputId": "69536a38-8ced-4ac4-9efb-c3804f6e0901",
+  "sourceId": "df39c9b2-fc19-4baa-8c7c-aafd0f04726f",
+  "representationId": "9bf0ad08-8a4c-4bd9-91ce-2e2e35ac4d4b",
+  "acquisitionOperationId": "4b11aa7e-70f1-4bac-9d21-5159425e4567",
+  "sourceAccessMode": "OWNER_PRIVATE",
+  "sourceKind": "IMAGE",
+  "acquisitionChannel": "FILES",
+  "captureProvenance": "FILE/files",
+  "captureRevision": 2,
+  "decision": "RELEVANT/CONTINUE_WITH_AI",
+  "readbackObservedAt": "2026-10-31T05:53:08.902375+00:00",
+  "sourceAttemptCountAtReadback": 0,
+  "visionCallObserved": false,
+  "firstStop": "UNIVERSAL_PHOTO_REVIEW_REQUIRED after normal Capture assignment revision1\u21922; revision2 choice now confirmed",
+  "window9Closed": {
+    "status": "PHOTO_NINTH_WINDOW_CLOSED_VERIFIED",
+    "windowId": "5a68a0435f7d49d486808cfe978d28bd",
+    "controller": {
+      "status": "PNG_CLOSED_VERIFIED",
+      "verified": true,
+      "steps": {
+        "sourceBefore": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "runtime": {
+          "verified": true
+        },
+        "sourceAfter": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "worker": {
+          "verified": true,
+          "activeState": "inactive",
+          "physicalCleanup": "EMPTY_VERIFIED"
+        }
+      }
+    },
+    "timersStopped": true,
+    "reason": "Same-object Photo execution completed or stopped; independent Source/worker close verified",
+    "reopened": false
+  },
+  "oldUnknownPreserved": true,
+  "thirdReplacementCreated": false,
+  "nativeBinaryUnchanged": true,
+  "dataOrSessionCopied": false
+}
