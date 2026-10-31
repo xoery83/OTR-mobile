@@ -279,7 +279,6 @@ export function createSourcePngBackendPreparation(
         const owner: SourcePngExecutionOwner = {
           assertCurrent: assertOwner,
           async attach(_binding, containerId) {
-            await assertOwner();
             await call(scope, q, "EXEC_ATTACH", ownerExpected, {
               nodeId: b.nodeId,
               runToken: b.runToken,
@@ -287,11 +286,9 @@ export function createSourcePngBackendPreparation(
             });
           },
           async running() {
-            await assertOwner();
             await call(scope, q, "EXEC_ADVANCE", ownerExpected, { nextPhase: "RUNNING" });
           },
           async terminal(_binding, observed) {
-            await assertOwner();
             await call(scope, q, "EXEC_ADVANCE", ownerExpected, {
               nextPhase: "TERMINATION_REQUIRED",
             });

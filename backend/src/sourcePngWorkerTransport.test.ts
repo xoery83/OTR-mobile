@@ -166,6 +166,7 @@ it("waits for real owning callbacks before Host start and confirms the terminal 
   const f = await fixture();
   expect(await f.call()).toEqual(observation());
   expect(f.events).toEqual(["attached", "started", "terminal"]);
+  expect(f.owner.assertCurrent).toHaveBeenCalledTimes(2);
   expect(f.owner.attach).toHaveBeenCalledOnce();
   expect(f.owner.running).toHaveBeenCalledOnce();
   expect(f.owner.terminal).toHaveBeenCalledOnce();
@@ -241,7 +242,7 @@ it.each([31000, 90001])("bounds owning journal acknowledgements by the 90-second
   const started = new Promise<void>((resolve) => { entered = resolve; });
   try {
     const f = await fixture();
-    f.owner.running.mockImplementation(async () => { entered(); await waiting; });
+    vi.mocked(f.owner.running).mockImplementation(async () => { entered(); await waiting; });
     const result = f.call().then(
       (value) => ({ value, error: undefined }),
       (error: unknown) => ({ value: undefined, error }),

@@ -207,8 +207,9 @@ export function createSourcePngWorkerClient(socketPath: string) {
         }
         const e = event.parse(raw);
         if (e.seq !== ++seq || seq > 64 || ended) throw Error("PNG_WORKER_PROTOCOL");
-        await owner.assertCurrent(binding);
-        if (e.action === "attach") {
+        if (e.action === "current") {
+          await owner.assertCurrent(binding);
+        } else if (e.action === "attach") {
           if (attached || running) throw Error("PNG_WORKER_PROTOCOL");
           await owner.attach(binding, e.containerId);
           attached = true;

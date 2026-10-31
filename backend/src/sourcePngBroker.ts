@@ -40,6 +40,7 @@ const response = z
 export function createSourcePngBroker(
   connection: CorePgConnection,
   assertCurrent: (scope: SourcePngBrokerScope) => Promise<void>,
+  assertRequestCurrent: () => void,
 ) {
   return async (
     scope: SourcePngBrokerScope,
@@ -52,8 +53,7 @@ export function createSourcePngBroker(
     if (scope.actorId !== q.actor_account_id || scope.tripId !== q.trip_id)
       throw Error("SOURCE_ACCESS_DENIED");
     scope.signal.throwIfAborted();
-    await assertCurrent(scope);
-    scope.signal.throwIfAborted();
+    assertRequestCurrent();
     const result = await universalPgTransaction(
       connection,
       async (lease) => {
@@ -68,6 +68,7 @@ export function createSourcePngBroker(
           throw Error("SOURCE_PRINCIPAL_UNAVAILABLE");
         scope.signal.throwIfAborted();
         await assertCurrent(scope);
+        assertRequestCurrent();
         scope.signal.throwIfAborted();
         return response.parse(
           (
@@ -85,12 +86,14 @@ export function createSourcePngBroker(
         );
       },
       false,
-      () => scope.signal.throwIfAborted(),
+      () => {
+        scope.signal.throwIfAborted();
+        assertRequestCurrent();
+      },
     );
     // A lost/late response never authorizes another attempt or remote POST.
     scope.signal.throwIfAborted();
-    await assertCurrent(scope);
-    scope.signal.throwIfAborted();
+    assertRequestCurrent();
     if (
       result.operation !== null &&
       (result.operation.operation_id !== q.operation_id ||

@@ -63,7 +63,7 @@ async function fixture(action: SourcePngBrokerAction = "STATUS") {
     leaseSpy,
     current,
     controller,
-    call: createSourcePngBroker(connection, current),
+    call: createSourcePngBroker(connection, current, () => scope.signal.throwIfAborted()),
   };
 }
 it("uses the existing Source transaction and a private fresh BEGIN reply exactly once", async () => {
@@ -71,7 +71,7 @@ it("uses the existing Source transaction and a private fresh BEGIN reply exactly
     expected = { attemptId: randomUUID() };
   const result = await f.call(f.scope, f.q, "BEGIN", expected);
   expect(result.freshAttempt).toBe(true);
-  expect(f.current).toHaveBeenCalledTimes(3);
+  expect(f.current).toHaveBeenCalledTimes(1);
   const calls = f.query.mock.calls.filter(([sql]) =>
     sql.includes("trip_source_png_operation"),
   );
@@ -168,4 +168,39 @@ it("cancellation while principal query is pending prevents the owning RPC", asyn
     f.query.mock.calls.some(([sql]) => sql.includes("trip_source_png_operation")),
   ).toBe(false);
   expect(f.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
+});
+
+it("reauthorizes once per action without caching access across the request", async () => {
+  const f = await fixture();
+  let simulatedNetworkMs = 0;
+  f.current.mockImplementation(async () => {
+    simulatedNetworkMs += 1200;
+  });
+  await f.call(f.scope, f.q, "STATUS");
+  await f.call(f.scope, f.q, "RECONCILE");
+  expect(simulatedNetworkMs).toBe(2400);
+  f.current.mockRejectedValueOnce(Error("SOURCE_ACCESS_DENIED"));
+  await expect(f.call(f.scope, f.q, "BEGIN")).rejects.toThrow("SOURCE_ACCESS_DENIED");
+  expect(
+    f.query.mock.calls.filter(([sql]) => sql.includes("trip_source_png_operation")),
+  ).toHaveLength(2);
+});
+
+it("local capability closure after COMMIT withholds the permit without replay", async () => {
+  const f = await fixture("BEGIN");
+  let closed = false;
+  const original = f.query.getMockImplementation()!;
+  f.query.mockImplementation(async (sql, params) => {
+    const result = await original(sql, params);
+    if (sql === "COMMIT") closed = true;
+    return result;
+  });
+  const call = createSourcePngBroker(f.connection, f.current, () => {
+    if (closed) throw Error("SOURCE_CAPABILITY_CLOSED");
+  });
+  await expect(call(f.scope, f.q, "BEGIN")).rejects.toThrow("SOURCE_CAPABILITY_CLOSED");
+  expect(f.current).toHaveBeenCalledOnce();
+  expect(
+    f.query.mock.calls.filter(([sql]) => sql.includes("trip_source_png_operation")),
+  ).toHaveLength(1);
 });

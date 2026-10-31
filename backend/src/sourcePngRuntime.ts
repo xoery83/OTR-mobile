@@ -91,13 +91,20 @@ export function createSourcePngRuntimePorts(
     tripId: config.tripId,
     assertEnabled,
     prepare(_scope, guard) {
+      const fence = () => {
+        assertEnabled();
+        guard.assertRequestCurrent();
+      };
       const current = async () => {
-        assertEnabled();
+        fence();
+      };
+      const authorize = async () => {
+        fence();
         await guard.assertCurrent();
-        assertEnabled();
+        fence();
       };
       return createSourcePngBackendPreparation({
-        broker: createSourcePngBroker(deps.connection, current),
+        broker: createSourcePngBroker(deps.connection, authorize, fence),
         stage,
         nodeId: config.nodeId,
         worker,
