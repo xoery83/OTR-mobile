@@ -26,7 +26,10 @@ cold connect2082ms. Same QA projection currentV2 schemaPASS, familymax33, login/
 valid. Existing aggregate5s wrongly includes3scheckout. Minimal software sets only
 aggregate8s at exact caller boundaries; SQL/query5s/lock1s/checkout3s/max1/TLS/
 principal/cancel/Auth5s/Trip5s/HTTP15s unchanged. 107 focused checks and independent
-NO_BLOCKER, runtime not deployed yet. Full roottypes hit2GiB cap/OOM, notPASS; no
+NO_BLOCKER. Runtime now deployed in accepted Native combined package; exact same
+production loader/reader with normal catalog principal PASS5239ms/V2/retainedRun
+present,0businessMutation/Provider. This is readerSERVER_VERIFIED, not normal App
+Task/Vision/Save E2E. Full roottypes hit2GiB cap/OOM, notPASS; no
 heap escalation or concurrent rebuild. No Schema/RLS/GRANT/Authority/Provider changes.
 Receipts/review: ops/universal-product-20261028/photo/recovery-execution-20261031/.
 
@@ -35,8 +38,9 @@ fix as c26a48e8. AD5 remains126.8/SQLite76, same session/data/rootMyTrips; no ne
 Native installation. Import622aa154 hides the false unassigned-intake label for
 assigned Capture progress;37presentation/UIguard PASS, not AD5verified. Replacement
 input Gate7303c608 fixed/pending Owner, not executed. Native combined8s+722 software
-184checksPASS, capture6d7610a3/imaged8b789b8 prepared, not deployed; freshCAS after
-AuthA independentclose, preserveb518/9264. Rootbranch stable, main untouched.
+184checksPASS, capture6d7610a3/imaged8b789b8 deployed actualCIDac7a53f6; all23files/
+9mount/env/HostConfig and server7826/b518/9264 independently match. Auth B now owns
+its finite Host/config session, Sourceclosed; do not reuse oldCID/plan during it. Rootbranch stable, main untouched.
 Originalhardexpiry remains
 2026-11-01T08:48:56Z, maxone unused realVision, <=60m/+45close/+50watchdog bounds.
 

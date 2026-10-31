@@ -1,0 +1,35 @@
+{
+  "status": "INDEPENDENT_DEPLOYMENT_READBACK_PASS",
+  "checkedAt": "2026-10-31T14:43:59.452141+00:00",
+  "containerId": "ac7a53f64827adb329f6acd5a740215451d025355911679355eb470b7b57a045",
+  "image": "sha256:d8b789b8d80f65b7c08408d1c330cd46bbb79a401d5a87413a0aa882bd93d168",
+  "retainedBeforeId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+  "retainedBeforeRunning": false,
+  "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "configFileCount": 18,
+  "mountedFileCount": 5,
+  "mountCount": 9,
+  "bundles": {
+    "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe",
+    "mcp/runtime.mjs": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+    "server-capture.mjs": "6d7610a321e5d240b2095e38c7acb55bbe053adecc6381c270da995400880711",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "httpChecks": [
+    {
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/collection",
+      "status": 401
+    },
+    {
+      "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/authorized-version",
+      "status": 401
+    }
+  ],
+  "nativeOrSourceAuthorityChanged": false
+}
