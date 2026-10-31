@@ -10,7 +10,7 @@
   "newClientRegistration": false,
   "oldB3WindowsReusable": false,
   "files": {
-    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/OWNER_GATE.md": "fc2822154d98aa1dd123694b1d964953ef41d9ac0c4099291040c83fab799c1b",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/OWNER_GATE.md": "98cf0332607e8ea071d702543c31d8247921b4cc3e712a2eab3b24214eaf6772",
     "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/SOFTWARE_HANDOFF.json": "4066bca944fa5c4cf0e4f0df693d3b3cafbaad9d40dcd9b0796d79fb1c8a64a5",
     "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/QA_WINDOW_CANDIDATE.md": "49a6341552ce5cf67cbe253acc7d2a6cc6cc2f15ee96e794f0f62e06e3643cbe",
     "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/HOSTED_DEPLOYMENT_RECEIPT.json": "847f6a2b722c0ff16cc6b32a3873f9d4c35de05ce6881f1561c7c19b06e05856",
@@ -22,7 +22,8 @@
     "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators/test_operators.py": "c0212d94859ac43585f83eaa9a41a9fa1f141e65e5185d2503c01b1e0861bd8f",
     "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
     "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
-    "scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341"
+    "scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/chatgpt-item-read-smoke.json": "b9f817017a848e3079fcf2722dfa2b313ec93d1eb811376464bd3777369630f0"
   },
   "referenceOnlySqlFiles": [
     "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql"
@@ -33,5 +34,18 @@
   ],
   "approvalRequiredBeforeTemporaryConfiguration": true,
   "rootSourceSessionMustBeClosedBeforeActivation": true,
-  "gateSHA256": "84837c5ebf5dcabf5ca5c4344b12782b265f96506416221f05ba97f9fc064d44"
+  "referenceOnlyFixture": {
+    "path": "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/chatgpt-item-read-smoke.json",
+    "reuseSections": [
+      "steps[2]",
+      "steps[3]",
+      "revoke_probe"
+    ],
+    "excludedLegacyFields": [
+      "client_id",
+      "steps[0]",
+      "steps[1]"
+    ]
+  },
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6"
 }

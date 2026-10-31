@@ -48,11 +48,15 @@ succeeds and budget remains, repeat this Read once after the60-second lifetime
 to qualify refresh. Otherwise preserve the first failure and safe diagnostic;
 no retry/reconnect loop or presumed cause from AUTH_REQUIRED.
 
-After successful authentication, run the registered foreign Trip9d10/Itemf3ca
-denial; then normal same-client grant DELETE/fresh absence and one same-P3 live
+After successful authentication, run the registered foreign Trip
+`9d10b9d7-6744-4355-b05d-728bf929d208`, Item
+`f3ca9163-1dbb-4d1b-8a0b-a06bce60c664` denial; then normal same-client grant
+DELETE/fresh absence and one same-P3 live
 probe. Generic errors do not prove server401 or revoke causality. Read only the
 existing projected MCP_QA_REQUEST metadata for this attempt; never Token,
 Account/path/arguments/body or unfiltered logs. No real Owner Nelson access.
+Reuse only steps[2], steps[3] and revoke_probe from the frozen prior smoke fixture;
+its old client835 and Trip/list steps are not this window's authorization/input.
 
 ## Fresh preflight and close
 
