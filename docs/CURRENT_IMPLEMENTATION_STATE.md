@@ -53,6 +53,12 @@ SourcePhoto/PDFCLOSED and pendinghelperGRANTabsent verified. No model or feature
 The four Native history-copy lines remain LOCAL_PASS/not installed; AD5 remains126.9.
 See photo/recovery-execution-20261101/activity-expiry-deploy/.
 
+Auth reports a pending post-Core-write auth-expiry adapter bug in7371: a possibly
+committed POST may currently surface401/REJECTED. Write MUST stay CLOSED until the
+fixed post-IO503/UNKNOWN adapter and realcommit regression are independently reviewed.
+Root default-closed deployment was not Write functional acceptance; do notreuseReadGate.
+No Photo Source authority or evidence changes arise from this Auth-only pending repair.
+
 Auth default-closed software integration completed under Standing deployment authority:
 5Authinputs exactly match committedAuth62b0879f; other346codeinputs preserveRoot/Native.
 Actualfdd5/7371/capture0cafa/MCPad47/browser6040, independently4pins/ImageConfig/runtime/
