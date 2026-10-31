@@ -211,7 +211,12 @@ it.each([
       await Harness().start();
       expect(Harness().unavailable).toBe(true);
       expect(log).toHaveBeenCalledExactlyOnceWith(
-        JSON.stringify({ event: "universal_capture_failed", code }),
+        JSON.stringify({
+          event: "universal_capture_failed",
+          stage: "CONTEXT_OR_RESULTS",
+          kind: "local",
+          code,
+        }),
       );
       expect(h.start).toHaveBeenCalledOnce();
     } finally {

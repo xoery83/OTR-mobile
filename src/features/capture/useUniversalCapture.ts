@@ -54,6 +54,7 @@ export function useUniversalCapture(
     model.batch.context?.tripPrior?.id,
     model.assignedTripId,
   ]);
+  const diagnosticStage = useRef("CONTEXT_OR_RESULTS");
   const controller = useRef<AbortController | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const scopeCurrent = () =>
@@ -77,6 +78,7 @@ export function useUniversalCapture(
       }
       return;
     }
+    diagnosticStage.current = "CONTEXT_OR_RESULTS";
     executing.current = execute;
     setReading(!execute);
     running.current = true;
@@ -118,6 +120,7 @@ export function useUniversalCapture(
             await transport.resume(context, binding);
           },
           prepareSources: async (context, job) => {
+            diagnosticStage.current = "SOURCE_PREPARE";
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
             const { prepareDefaultUniversalCaptureSources } =
               await import("@/data/operations/defaultUniversalOriginalSource");
@@ -141,7 +144,9 @@ export function useUniversalCapture(
                         >
                       >[1],
                     ) => {
+                      diagnosticStage.current = "TASK_PREPARE";
                       if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                      diagnosticStage.current = "PNG_ORIGINAL";
                       const { prepareAdmittedPngOriginal } =
                         await import("@/data/operations/universalPngOriginalPreparation");
                       const { createSourcePngPreparationTransport } =
@@ -204,6 +209,14 @@ export function useUniversalCapture(
           console.info(
             JSON.stringify({
               event: "universal_capture_failed",
+              stage: diagnosticStage.current,
+              status: error instanceof ApiClientError ? error.status : undefined,
+              kind:
+                error instanceof ApiClientError
+                  ? error.kind
+                  : error instanceof Error && error.name === "ZodError"
+                    ? "validation"
+                    : "local",
               code: [
                 "UNIVERSAL_SOURCE_PREPARATION_BLOCKED",
                 "SOURCE_NOT_ADMITTED",
@@ -217,6 +230,27 @@ export function useUniversalCapture(
                 "UNIVERSAL_CAPTURE_SCOPE_MISMATCH",
                 "OWNING_TASK_READER_UNAVAILABLE",
                 "INVALID_REQUEST",
+                "SOURCE_CAPABILITY_CLOSED",
+                "SOURCE_ACCESS_DENIED",
+                "INVALID_SOURCE_COMMAND",
+                "SOURCE_INTEGRITY_FAILURE",
+                "PNG_ORIGINAL_REQUIRED",
+                "SOURCE_IO_UNAVAILABLE",
+                "SOURCE_REQUEST_UNCONFIRMED",
+                "SOURCE_HTTP_REJECTED",
+                "SOURCE_AUTH_REQUIRED",
+                "SOURCE_RESPONSE_INVALID",
+                "UNIVERSAL_CAPTURE_INPUT_CHANGED",
+                "CAPTURE_SOURCE_FORMAT_UNAVAILABLE",
+                "UNIVERSAL_PHOTO_REVIEW_REQUIRED",
+                "UNIVERSAL_PHOTO_SCOPE_CHANGED",
+                "UNIVERSAL_PHOTO_SKIPPED",
+                "UNIVERSAL_PNG_PREPARATION_UNAVAILABLE",
+                "PNG_SOURCE_PREPARATION_UNCONFIRMED",
+                "PNG_SOURCE_RECEIPT_MISMATCH",
+                "PNG_SOURCE_PREPARATION_REJECTED",
+                "PNG_UPLOAD_OUTCOME_UNRESOLVED",
+                "SOURCE_CAPTURE_SCOPE_INVALID",
               ].includes(code)
                 ? code
                 : "UNCLASSIFIED",

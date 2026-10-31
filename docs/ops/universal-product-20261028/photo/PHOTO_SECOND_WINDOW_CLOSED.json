@@ -1,0 +1,39 @@
+{
+  "status": "PHOTO_SECOND_WINDOW_CLOSED_VERIFIED",
+  "windowId": "b035bff1231e47b084674a0304f92a3c",
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "timersStopped": true,
+  "reason": "Same-object Photo execution completed or stopped; independent Source/worker close verified",
+  "reopened": false,
+  "nativeFailureEvent": {
+    "event": "universal_capture_failed",
+    "code": "UNCLASSIFIED",
+    "observedAt": "2026-10-31T13:00:52.916+13:00"
+  },
+  "sameSourceId": "2bf0294a-47df-4176-999f-0e352e34543c",
+  "sameOperationId": "37d5cd82-f6bf-433c-8031-47fc00f509c0",
+  "next": "Only bounded error-code/status/stage diagnostics, then retry same retained Source under Standing; no new input or blind Provider resend.",
+  "review": "NO_BLOCKER after non-503 closed-message compatibility fix",
+  "checks": "32 focused transport/hook checks; typecheck/scoped lint PASS"
+}

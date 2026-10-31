@@ -1,5 +1,6 @@
 import { fetch as expoFetch } from "expo/fetch";
 import { z } from "zod";
+import { ApiClientError } from "./client";
 import { reserveNativeQaGet } from "./nativeQaReadBudget";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
 import {
@@ -100,29 +101,47 @@ export function createUniversalSourceJsonRequest(
         }),
       );
       if (response.status !== 200) {
-        if (response.status === 503) {
-          let closed = false;
-          try {
-            if (
-              response.headers.get("Content-Type")?.startsWith("application/json") &&
-              !response.headers.has("Content-Encoding")
-            ) {
-              const body = await readBoundedJson(response, 4096, boundary);
-              closed = z
-                .object({
-                  error: z.object({ code: z.literal("SOURCE_CAPABILITY_CLOSED") }),
-                })
-                .safeParse(body).success;
-            }
-          } catch {
-            // An ambiguous response cannot prove that the Source write never ran.
+        const fallback =
+          response.status === 401
+            ? "SOURCE_AUTH_REQUIRED"
+            : response.status === 503
+              ? "SOURCE_REQUEST_UNCONFIRMED"
+              : "SOURCE_HTTP_REJECTED";
+        let code: string = fallback;
+        try {
+          if (
+            response.headers.get("Content-Type")?.startsWith("application/json") &&
+            !response.headers.has("Content-Encoding")
+          ) {
+            const body = await readBoundedJson(response, 4096, boundary);
+            const parsed = z
+              .object({
+                error: z.object({
+                  code: z.enum([
+                    "SOURCE_CAPABILITY_CLOSED",
+                    "SOURCE_ACCESS_DENIED",
+                    "INVALID_SOURCE_COMMAND",
+                    "SOURCE_INTEGRITY_FAILURE",
+                    "PNG_ORIGINAL_REQUIRED",
+                    "SOURCE_IO_UNAVAILABLE",
+                    "SOURCE_REQUEST_UNCONFIRMED",
+                  ]),
+                }),
+              })
+              .safeParse(body);
+            if (parsed.success) code = parsed.data.error.code;
           }
-          void response.body?.cancel().catch(() => {});
-          throw Error(closed ? "SOURCE_CAPABILITY_CLOSED" : "SOURCE_REQUEST_UNCONFIRMED");
+        } catch {
+          // An unreadable reply never proves that a Source write did not run.
         }
         void response.body?.cancel().catch(() => {});
-        throw Error(
-          response.status === 401 ? "SOURCE_AUTH_REQUIRED" : "SOURCE_HTTP_REJECTED",
+        throw new ApiClientError(
+          response.status === 503 && code === "SOURCE_CAPABILITY_CLOSED"
+            ? code
+            : fallback,
+          "http",
+          response.status,
+          code,
         );
       }
       if (
