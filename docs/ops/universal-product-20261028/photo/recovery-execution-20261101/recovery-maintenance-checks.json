@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "name": "FORWARD_INVERSE",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": ""
+    },
+    {
+      "name": "FAULT_BEFORE_RESTORE",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": "ERROR:  INJECTED_BEFORE_RESTORE\nCONTEXT:  PL/pgSQL function inline_code_block line 1 at RAISE\n"
+    },
+    {
+      "name": "FAULT_AFTER_RESTORE",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": "ERROR:  INJECTED_AFTER_RESTORE\nCONTEXT:  PL/pgSQL function inline_code_block line 1 at RAISE\n"
+    },
+    {
+      "name": "WIRE_JSON_NULL_AND_ACCEPTED_NO_INVERSE",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": "ERROR:  PHOTO_WINDOW17_TARGET_DRIFT_NO_REVERSE\nCONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE\n"
+    },
+    {
+      "name": "TARGET_CAS_DRIFT",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": "ERROR:  PHOTO_WINDOW17_TARGET_DRIFT_NO_REVERSE\nCONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE\n"
+    },
+    {
+      "name": "POSTIMAGE_FAILURE_ROLLBACK",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": "ERROR:  PHOTO_PNG_WINDOW17_POSTIMAGE_DRIFT\nCONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE\n"
+    },
+    {
+      "name": "ROLE_RESTORE_FAILURE_ROLLBACK",
+      "passed": true,
+      "allBaselineRestored": true,
+      "lastError": "ERROR:  PHOTO_PNG_WINDOW17_MAINTENANCE_NOT_RESTORED\nCONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE\n"
+    }
+  ],
+  "devExecuted": false,
+  "fixtureAdjustments": [
+    "actualOID67161 resolves equivalent local signature",
+    "actual target digest replaced only by immutable per-case fixture digest because created_at differs",
+    "existing isolated superuser fixture; restricted SourceWriter maintenance recipe reused from actual approved first-lookup9bc installation, not newly claimed non-superuser validation"
+  ]
+}

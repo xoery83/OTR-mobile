@@ -1,0 +1,16 @@
+{
+  "status": "PREPARED_NOT_APPROVED_NOT_INSTALLED",
+  "signature": "public.trip_source_png_operation(uuid,text,text,jsonb,jsonb)",
+  "oid": 67161,
+  "owner": "otr_trip_source_writer",
+  "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+  "preMD5": "d86864fbe182c596dcb4a213413b7e9d",
+  "postMD5": "883e1eada03a5a907e726a953d375bac",
+  "targetDigest": "4b6595ba944b9a770e606896c8440cba",
+  "files": {
+    "function-before.sql": "88431fca8e51566bafd62706a86afd077a23f1c372cda6807e3976e547abcdf5",
+    "function-after.sql": "a82da69e101f95430eaab82403c2f40c763c68ed23e708f7497dbdd6aef9b6f3",
+    "install.sql": "f5f472cfee75cf42a0cc07c0e44e2ddc77aa6b8fa2d287f90d2ce1588a75ac9f",
+    "inverse.sql": "c4e1f7b2e906bc381660a6aae2857631618fb2c3ceaf748a6cce04fb42846506"
+  }
+}

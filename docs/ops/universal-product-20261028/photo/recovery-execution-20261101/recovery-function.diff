@@ -1,0 +1,29 @@
+--- installed-d868
++++ window17-same-operation-recovery
+@@ -21,10 +21,10 @@
+  elsif action='QUIESCE_NEGATIVE' then
+   -- Negative-only same-operation recovery after trusted physical/journal cleanup; never a parse proof.
+   if not public.trip_sustained_universal_png_allowed(actor,o.trip_id) or (proof is not null and proof<>'null'::jsonb)
+-   or o.id is distinct from 'd2f59e69-59c0-83bf-b745-a2c6727cb618'::uuid
+-   or o.source_id is distinct from 'df39c9b2-fc19-4baa-8c7c-aafd0f04726f'::uuid
++   or not ((o.id IS NOT DISTINCT FROM 'd2f59e69-59c0-83bf-b745-a2c6727cb618'::uuid AND o.source_id IS NOT DISTINCT FROM 'df39c9b2-fc19-4baa-8c7c-aafd0f04726f'::uuid AND o.attempt_id IS NOT DISTINCT FROM '077c0f34-f9e2-438c-b922-42bb3283566f'::uuid) OR (o.id IS NOT DISTINCT FROM 'bb0559c5-4ab6-8f2e-bc72-6bb272fec01c'::uuid AND o.source_id IS NOT DISTINCT FROM '03109f59-894f-4ddf-aad9-090d0920092f'::uuid AND o.attempt_id IS NOT DISTINCT FROM 'eb1479c3-f160-4f96-ba6f-07e0d986de33'::uuid))
++   
+    or o.command is distinct from 'UPLOAD_ORIGINAL' or o.phase not in ('IO_ACTIVE','IO_UNKNOWN','IO_QUIESCENT')
+-   or o.attempt_id is distinct from '077c0f34-f9e2-438c-b922-42bb3283566f'::uuid or o.attempt_generation<>1
++    or o.attempt_generation<>1
+    or jsonb_typeof(expected) is distinct from 'object'
+    or not(expected?&array['attemptId','attemptGeneration']) or (select count(*) from jsonb_object_keys(expected))<>2
+    or (expected->>'attemptId')::uuid is distinct from o.attempt_id
+@@ -51,9 +51,9 @@
+    if jsonb_typeof(expected) is distinct from 'object' then raise exception 'PNG_BEGIN_EXPECTED_REQUIRED';end if;
+    keys:=case when q->>'command'='UPLOAD_ORIGINAL' then array['attemptId','resourceId','nodeId','resourceKey','runToken','ownerRun'] else array['attemptId'] end;
+    if o.phase='IO_QUIESCENT' then
+-    if o.id is distinct from 'd2f59e69-59c0-83bf-b745-a2c6727cb618'::uuid
+-     or o.source_id is distinct from 'df39c9b2-fc19-4baa-8c7c-aafd0f04726f'::uuid or q->>'command'<>'UPLOAD_ORIGINAL'
+-     or o.attempt_id is distinct from '077c0f34-f9e2-438c-b922-42bb3283566f'::uuid or o.attempt_generation<>1
++    if not ((o.id IS NOT DISTINCT FROM 'd2f59e69-59c0-83bf-b745-a2c6727cb618'::uuid AND o.source_id IS NOT DISTINCT FROM 'df39c9b2-fc19-4baa-8c7c-aafd0f04726f'::uuid AND o.attempt_id IS NOT DISTINCT FROM '077c0f34-f9e2-438c-b922-42bb3283566f'::uuid) OR (o.id IS NOT DISTINCT FROM 'bb0559c5-4ab6-8f2e-bc72-6bb272fec01c'::uuid AND o.source_id IS NOT DISTINCT FROM '03109f59-894f-4ddf-aad9-090d0920092f'::uuid AND o.attempt_id IS NOT DISTINCT FROM 'eb1479c3-f160-4f96-ba6f-07e0d986de33'::uuid))
++      or q->>'command'<>'UPLOAD_ORIGINAL'
++      or o.attempt_generation<>1
+      or (expected->>'previousAttemptId')::uuid is distinct from o.attempt_id
+      or (expected->>'previousAttemptGeneration')::bigint is distinct from o.attempt_generation then raise exception 'PNG_RETRY_CAS_DENIED';end if;
+     select * into a from public.trip_source_execution_attempts where id=o.attempt_id and operation_id=o.id;

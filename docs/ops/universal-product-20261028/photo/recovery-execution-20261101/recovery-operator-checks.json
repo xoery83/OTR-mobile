@@ -1,0 +1,23 @@
+{
+  "status": "LOCAL_BUILD_SELF_CHECK_PASS",
+  "proofSHA256": "27027def028c3e39266cfcfa2135b51a426136d7915734a5609bcfa6d954d530",
+  "operatorSHA256": "8f2b6f6f7722b806787357ca5394c5ac1fbad6f6833619ad7847a4ef3b272052",
+  "sourceSHA256": "5d46c2f919d65efbfc8de5f288eaf2f7ead5fc12c7d31ecceeee635a955d1251",
+  "checks": [
+    {
+      "code": "PNG_RECOVERY_MODE_DENIED",
+      "passed": true,
+      "credentialLoaded": false
+    },
+    {
+      "code": "PNG_RECOVERY_PACKET_DRIFT",
+      "passed": true,
+      "credentialLoaded": false
+    },
+    {
+      "code": "PNG_RECOVERY_CONFIG_UNAVAILABLE",
+      "passed": true,
+      "credentialLoaded": false
+    }
+  ]
+}
