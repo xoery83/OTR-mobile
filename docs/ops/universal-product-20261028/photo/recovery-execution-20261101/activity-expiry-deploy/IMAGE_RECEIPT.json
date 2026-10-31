@@ -1,0 +1,13 @@
+{
+  "status": "IMAGE_PREPARED_NOT_DEPLOYED",
+  "baseImage": "sha256:a3a2d4e085ee8371120e76db553cabf1d0aff09752ade35236a3c46414425417",
+  "image": "sha256:34a9e8f89ba0193e6b0adf204e0b8eea28934dc1977cfcf9fb59c8f082c7762e",
+  "bundles": {
+    "server-capture.mjs": "2cd578e7e41436a694c80281ccfa95892c1dd34fd9e75831ab0cce125522b300",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "mcp/runtime.mjs": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+    "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+  },
+  "serviceMutations": 0,
+  "configMutations": 0
+}

@@ -1,0 +1,22 @@
+{
+  "status": "OFFLINE_COMPATIBLE_ACTIVITY_BUILD_PASS_NOT_DEPLOYED",
+  "commit": "f2abddf7",
+  "baselineCapture": "6ac6c95312789131f9bbeea20af91bab8dd7f1bb697b6efdea7d57f10ae305c1",
+  "candidateCapture": "2cd578e7e41436a694c80281ccfa95892c1dd34fd9e75831ab0cce125522b300",
+  "sourceInputs": 536,
+  "changedInputs": [
+    {
+      "path": "backend/src/universalTaskActivity.ts",
+      "before": "b4973adbb72d0cde618a28f57e6ac3e18234d13566db3e7144f712777cd27a4b",
+      "after": "44520b26c36d8550e735063232ca7a8ecae15d0b716243776af7cc5086f39a70"
+    },
+    {
+      "path": "backend/src/universalContinuousHost.ts",
+      "before": "f85854aa5b3fcc65fc0c45791fe2c2c5662d90dcb2dee1c131be8923e0469234",
+      "after": "3b69b29f036aa07fd04855ad7468b5f30e635338043cf48f305e1a43588f4370"
+    }
+  ],
+  "otherInputsUnchanged": 534,
+  "authorityDiff": false,
+  "inherited": "Native3c3/Autheff3/Source4090+a2bb/MCPf9 unchanged"
+}

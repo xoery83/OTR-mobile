@@ -24,10 +24,10 @@ AnyexistingpaidAttempt/call/UNKNOWN/recoverableresult blocksreplacement. Noextra
 
 Source window8ca564 started18:08Z, CLOSED early afternewFAIL: independentSourceafterCLOSED,
 workerinactive/EMPTY, timersstopped; rootcontrols noactiveSourcewindow. Latest compatible
-Backend handed back by Native2c037b20/imagea3a2d4e/capture6ac6c953; Source883e/Auth/MCPf9/
+Backend now761b0581/image34a9e8f8/capture2cd578e7 (Root f2ab read-only Activity); Source883e/Auth/MCPf9/
 server7826/browser9264 unchanged, Env b12/Hostd501/Mount14ee all23files preserved. Native phase
 logs only, noSQL/Authority change. Before nextwindow reanchor existingcloser tothisactualdefault;
-older e786/4ef2 retained stoppedrollback. Do not restore old incompatible image/config.
+latest2c03/a3 retained stoppedrollback; earlier e786/4ef2 also retained. Do not restore old incompatible image/config.
 
 Stable Import HEAD beforethischeckpoint a2bb2578: Source4090 preleaseAuthfix + Native
 VERIFY ADMITTED explicit same-executea2cee341 + safePG diagnosticsa2bb. ActualAD5 installed
@@ -47,7 +47,11 @@ readContext captures observedAt before all async Auth/snapshot work, avoiding fa
 classification when execution starts while Auth crosses deadline. UNKNOWN/anyAttempt/results
 recovery unchanged. RED boundary+asyncrace→55focusedPASS, independentNO_BLOCKER. Four local
 history en/zh copy lines no longer claim the entire interpretation is unavailable;19UItests/
-UIguardPASS, Auth confirmed this exact key region free. LOCAL_PASS only, not deployed yet.
+UIguardPASS, Auth confirmed this exact key region free. f2abddf7 Backend projection is now
+deployed: independenthealth200/protected401/all4artifacts+23files/configunchangedPASS,
+SourcePhoto/PDFCLOSED and pendinghelperGRANTabsent verified. No model or feature E2E claimed.
+The four Native history-copy lines remain LOCAL_PASS/not installed; AD5 remains126.9.
+See photo/recovery-execution-20261101/activity-expiry-deploy/.
 
 Older checkpoints below are historical and superseded by the current header.
 

@@ -1,0 +1,17 @@
+{
+  "status": "READY_NOT_ACQUIRED_NOT_DEPLOYED",
+  "planPath": "/opt/otr/dev-backend/build/photo-activity-expiry-f2ab/deploy-plan.json",
+  "planSHA256": "236adbe0c6d129e81a01365c03cec20a69b56335115e309c75451316fa091347",
+  "deployScriptSHA256": "dcbe76399ff95f70cfea36b1abc2282a700ba75a8aa7d5c28081f4bcf2009f1c",
+  "candidateImage": "sha256:34a9e8f89ba0193e6b0adf204e0b8eea28934dc1977cfcf9fb59c8f082c7762e",
+  "beforeContainerId": "2c037b20c18107dcbfb1873005a5cb310af347abc6798b4a5274008b61d593ee",
+  "bundles": {
+    "server-capture.mjs": "2cd578e7e41436a694c80281ccfa95892c1dd34fd9e75831ab0cce125522b300",
+    "mcp/runtime.mjs": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+  },
+  "configDiff": false,
+  "authorityDiff": false,
+  "rollbackContainerRetained": true
+}
