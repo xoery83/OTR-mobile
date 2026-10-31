@@ -1,0 +1,43 @@
+{
+  "status": "INDEPENDENT_SOFTWARE_READBACK_PASS",
+  "checkedAt": "2026-10-31T16:22:02.983804+00:00",
+  "containerId": "0c04b40ce566ebf63b98e98779d464f27e3aa0f964adca7472781007f83d8b6a",
+  "image": "sha256:f052742969e7ac9bc29f337b24be6d1a7af20b0aa9fc8381990fb128278e4e9a",
+  "bundles": {
+    "server-capture.mjs": "c0889ee73072cb570470adc13b42ff44ef146efdfb897df2e86cb0df8a256213",
+    "mcp/runtime.mjs": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+  },
+  "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "configAndMountFilesUnchanged": true,
+  "priorHealthyContainerRetained": true,
+  "hostLockReleased": true,
+  "workerInactive": true,
+  "httpChecks": [
+    {
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "path": "/v1/auth/guest-adoptions/status",
+      "status": 401
+    },
+    {
+      "path": "/v1/auth/guest-adoptions/preflight",
+      "status": 401
+    },
+    {
+      "path": "/v2/trips/825f79b2-4a9d-4535-a62e-43000ca50c4a/core/collection",
+      "status": 401
+    }
+  ],
+  "authorityChanged": false,
+  "providerCalls": 0,
+  "owningSqlReadback": {
+    "functionMD5": "d86864fbe182c596dcb4a213413b7e9d",
+    "pngClosed": true
+  }
+}

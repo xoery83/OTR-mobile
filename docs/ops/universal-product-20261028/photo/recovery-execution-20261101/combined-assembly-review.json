@@ -1,0 +1,17 @@
+{
+  "status": "NO_BLOCKER_LOCAL_COMBINED_ASSEMBLY_SCOPE",
+  "reviewer": "/root/auth_phase1_review",
+  "image": "sha256:f052742969e7ac9bc29f337b24be6d1a7af20b0aa9fc8381990fb128278e4e9a",
+  "candidateCaptureSHA256": "c0889ee73072cb570470adc13b42ff44ef146efdfb897df2e86cb0df8a256213",
+  "runtimeSHA256": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+  "scope": [
+    "Independent baseline-copy exact6d",
+    "350 source inputs, exactly2 allowed changes, other348 unchanged",
+    "Auth loader eff3 and Source4090 Gitblob exact match",
+    "No failure226 normalization or fake baseline proof",
+    "Prepared image receipt/binary hash match; no deployment claim"
+  ],
+  "assemblySHA256": "4056d6a4308236485ea76c02d5414556286b7a2a014429bbdb3c30f17e9b97f5",
+  "sourceCommitBindingSHA256": "1c18ba0c4e283f1f4d30fbac4660b84d800da1e31edb7373df7c63f506fd4ff1",
+  "externalActionsPerformedByReviewer": false
+}

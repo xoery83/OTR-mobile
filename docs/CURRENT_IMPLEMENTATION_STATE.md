@@ -21,10 +21,16 @@ while Source permits5s idle. Move that same per-action validation before lease;
 principal/SQL owning guard/cancellation fences and budgets unchanged. New ordering/
 denial tests RED2 then related43 PASS, ESLint and independent NO_BLOCKER. This is
 LOCAL_PASS for a concrete idle hazard, not proof of window17 root cause or actual
-repair. Not deployed yet. Auth is assembling reviewed diagnostic software plus
-this one Source file on byte-exact6d baseline; fresh short Host CAS still required.
+repair. Ordinary software now independently SERVER_VERIFIED: actualCID0c04b40c /
+imagef0527429 / capturec0889ee7 / MCPf9c339c4; server7826/browser9264 and Native722
+unchanged. Source4090 + Auth safe diagnostics only; original baseline6d byte-exact
+assembly proof, all348 other source inputs preserved. Envb12/Hostd501/Mount14ee,
+18+5 files unchanged, health200/protected401. Host lock16:19:54→16:20:01Z released,
+original ac7/d8 retained stopped/healthy rollback. Initial independent comparison
+failed only Docker Mounts list order; complete sorted object comparison PASS.
+PNG SQL CLOSED/d868/workerinactive independently verified, zeroProvider/Authority.
 
-Recovery remains protected: current d868 function authorizes generation2 only for
+Gate cde4f704 has been submitted; Owner approval pending. Recovery remains protected: current d868 function authorizes generation2 only for
 old Source df39/operationd2f/attempt077. New bb0559c5 may not borrow that authority.
 Minimal new tuple/CAS packet is prepared NOT APPROVED/NOT INSTALLED under
 .env.photo-window17-recovery-20261101; new22/legacy22 isolation checks, tuple27,
@@ -33,8 +39,8 @@ independent NO_BLOCKER. Physical negative proof retained; no PG negative journal
 or quiescence executed. No new Schema/RLS/roles/budget/expiry. Single protected
 function + exact operator credential purpose require Owner approval before use.
 
-Next: finish exact recovery Gate, ordinary compatible software deployment while
-CLOSED; after approval record negative/retain marker, same operation uniquegen2,
+Next: after exact recovery Gate approval and fresh baseline checks, record
+negative/retain marker, same operation uniquegen2,
 normal App→actual imageVisiononce→Results→Review→one PRIVATE SELF P1/P6→independent
 readback/Day/cold/idempotence→close. FirstVision/Save still unverified. Originalhard
 expiry2026-11-01T08:48:56Z and <=60m/+45close/+50watchdog bounds unchanged. Stable

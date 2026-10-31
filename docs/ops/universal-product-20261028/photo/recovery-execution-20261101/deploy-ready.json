@@ -1,0 +1,17 @@
+{
+  "status": "READY_NOT_ACQUIRED_NOT_DEPLOYED",
+  "planPath": "/opt/otr/dev-backend/build/source-auth-4090eff3/deploy-plan.json",
+  "planSHA256": "ade60ec1dcf68c415076f12a4bb721c6df936f2217f5aca58cd0c18cde827caa",
+  "deployScriptSHA256": "dcb5109d3300a74eb594b7cb9e501c66d141a3c7efeddface8474c14e064de83",
+  "candidateImage": "sha256:f052742969e7ac9bc29f337b24be6d1a7af20b0aa9fc8381990fb128278e4e9a",
+  "beforeContainerId": "ac7a53f64827adb329f6acd5a740215451d025355911679355eb470b7b57a045",
+  "bundles": {
+    "server-capture.mjs": "c0889ee73072cb570470adc13b42ff44ef146efdfb897df2e86cb0df8a256213",
+    "mcp/runtime.mjs": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+  },
+  "configDiff": false,
+  "authorityDiff": false,
+  "rollbackContainerRetained": true
+}
