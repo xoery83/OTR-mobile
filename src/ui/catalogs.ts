@@ -1,4 +1,30 @@
 export const en = {
+  "oauthConsent.title": "Connect OTR",
+  "oauthConsent.dev": "DEV QA connection",
+  "oauthConsent.explanation":
+    "Sign in to review this connection. Your verification code and OTR session are not shared with the connected app.",
+  "oauthConsent.email": "Email",
+  "oauthConsent.code": "Verification code",
+  "oauthConsent.send": "Send verification code",
+  "oauthConsent.verify": "Verify and continue",
+  "oauthConsent.resend": "Resend code",
+  "oauthConsent.wait": "Try again in {seconds}s",
+  "oauthConsent.allow": "Allow Trip Read",
+  "oauthConsent.decline": "Decline",
+  "oauthConsent.request":
+    "{client} requests access to your authorized Trips and itinerary items.",
+  "oauthConsent.scope":
+    "Read tools only. Editing, ledger records and original-file tools are unavailable in this connection.",
+  "oauthConsent.continue": "Continue to connected app",
+  "oauthConsent.busy": "Checking…",
+  "oauthConsent.CLOSED": "This DEV QA connection is unavailable or has expired.",
+  "oauthConsent.OTP_FAILED":
+    "The verification code was not accepted. Check the code or request a new one.",
+  "oauthConsent.RATE_LIMIT": "Too many requests. Wait before trying again.",
+  "oauthConsent.REQUEST_CHANGED":
+    "The connection request changed. Start again from the connected app.",
+  "oauthConsent.UNAVAILABLE": "The connection could not be checked. Try again.",
+  "oauthConsent.BUSY": "A request is already in progress.",
   "importDocuments.importedItems":
     "Saved items linked through this Import Batch: {count}",
   "importDocuments.itemLinksUnavailable": "Related saved items could not be checked.",
@@ -3051,6 +3077,28 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "oauthConsent.title": "连接 OTR",
+  "oauthConsent.dev": "DEV QA 测试连接",
+  "oauthConsent.explanation":
+    "登录后查看连接请求。验证码和 OTR 登录会话不会分享给连接的应用。",
+  "oauthConsent.email": "邮箱",
+  "oauthConsent.code": "验证码",
+  "oauthConsent.send": "发送验证码",
+  "oauthConsent.verify": "验证并继续",
+  "oauthConsent.resend": "重新发送验证码",
+  "oauthConsent.wait": "{seconds} 秒后重试",
+  "oauthConsent.allow": "允许读取旅行",
+  "oauthConsent.decline": "拒绝",
+  "oauthConsent.request": "{client} 请求读取你有权访问的旅行和行程事项。",
+  "oauthConsent.scope": "此连接仅提供读取工具，不提供修改、账本或原始文件工具。",
+  "oauthConsent.continue": "继续前往连接的应用",
+  "oauthConsent.busy": "正在检查…",
+  "oauthConsent.CLOSED": "此 DEV QA 连接不可用或已过期。",
+  "oauthConsent.OTP_FAILED": "验证码未通过验证。请检查验证码或重新获取。",
+  "oauthConsent.RATE_LIMIT": "请求过于频繁，请稍后重试。",
+  "oauthConsent.REQUEST_CHANGED": "连接请求已变化，请从连接的应用重新开始。",
+  "oauthConsent.UNAVAILABLE": "暂时无法核对连接，请重试。",
+  "oauthConsent.BUSY": "已有请求正在进行。",
   "importDocuments.importedItems": "通过本次导入关联的已保存事项：{count}",
   "importDocuments.itemLinksUnavailable": "暂时无法核对关联的已保存事项。",
   "updates.importActivity": "近期导入动态",

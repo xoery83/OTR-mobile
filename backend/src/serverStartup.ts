@@ -1,3 +1,5 @@
+import { mcpIngressBodyLimit } from "./mcpIngress";
+import { loadMcpQaRuntime } from "./mcpQaRuntime";
 import { guestAdoptionBodyLimit } from "./guestAdoptionHttp";
 import { createAccountProfileBootstrapPort } from "./accountProfileBootstrap";
 import { createServer } from "node:http";
@@ -106,7 +108,9 @@ export function startDevBackend(
         JSON.stringify({ level: event.failureClass ? "error" : "info", ...event }),
       ),
   );
+  const mcpReady = loadMcpQaRuntime(process.env,gateway,startOptions.coreConnection).catch(() => { console.info("MCP_QA_RUNTIME_CLOSED");return undefined; });
   const handle = createDevBackendHandler({
+    mcpHttp: async (request) => (await mcpReady)?.(request) ?? null,
     gateway,
     accountProfileBootstrapPort: createAccountProfileBootstrapPort({
       url: environment.OTR_DEV_SUPABASE_URL,
@@ -161,9 +165,14 @@ export function startDevBackend(
       const adoptionLimit = guestAdoptionBodyLimit(
         new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
       );
+      const mcpLimit = mcpIngressBodyLimit(new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,incoming.method ?? "");
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (mcpLimit !== null && byteCount > mcpLimit) {
+          outgoing.statusCode = 413;outgoing.setHeader("Content-Type", "application/json");outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "MCP_REQUEST_SIZE_LIMIT" } }));return;
+        }
         if (adoptionLimit !== null && byteCount > adoptionLimit) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");

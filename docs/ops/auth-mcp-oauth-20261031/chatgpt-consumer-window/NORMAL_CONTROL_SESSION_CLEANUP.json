@@ -1,0 +1,13 @@
+{
+  "status": "NORMAL_CONTROL_CLEANUP_METADATA",
+  "runs": [
+    {
+      "runId": "528f23d9-cb91-4071-8fe3-883506d2e142",
+      "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+      "phase": "HOST_SESSION_CLEANUP",
+      "requestedAt": "2026-10-31T07:34:31.528Z",
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+    }
+  ],
+  "rawWrapperStatusRetained": true
+}

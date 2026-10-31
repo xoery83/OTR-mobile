@@ -103,6 +103,19 @@ Actual stale mounted list fixed295071ce using one existing refreshKey dependency
 
 Current Native candidate integrates main82d5c8b3, preserving its exact accepted Core HTTP/FIFO/budgets and Auth/Import code. Ordinary126 covers the final unscoped smoke separately from124 account-switch evidence; no historical A queue was activated. Native source249204db is fast-forwarded into local main; final receipt-only commit/push pending. Auth owns Session/Principal and separate GuestQA window. No Provider or protected Authority change.
 
+# Auth OAuth Read — accepted bounded slice, 31 October 2026
+
+Real standard SDK Code/S256/own+foreign read/refresh/revoke PASS, then real
+ChatGPT OAuth/list_trips returned four QA Trips. Post-revoke same connection
+returned no fresh data; MCP server401 while runtime still on. All finite DEV
+windows closed, original OAuth/Hook/Site settings independently restored; Native
+may subsequently advance the retained healthy image. Raw control cleanup
+FAIL_OR_UNKNOWN is retained alongside independently reconciled final closure,
+not rewritten as PASS. Consumer Item/Write, full Data/Storage/expiry and always-on
+Beta OAuth remain unclaimed. Code integrates default closed, no SQL/config
+activation from main. Evidence: ops/auth-mcp-oauth-20261031/{SDK_REFRESH_OAUTH_E2E.json,
+chatgpt-consumer-window/CHATGPT_REAL_E2E.json}. Auth407eb2fc/MCP81ba6d93,4b2c794a.
+
 # Auth Golden Slice — current continuation, 30 October 2026
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,

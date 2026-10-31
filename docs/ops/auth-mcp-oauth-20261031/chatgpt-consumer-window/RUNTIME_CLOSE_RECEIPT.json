@@ -1,0 +1,14 @@
+{
+  "status": "TEMPORARY_CONSUMER_RUNTIME_REMOVED_DEFAULT_RESTORED",
+  "containerId": "ce0909f23f1b2233bf7dbe400f1d45ac739dde4c40fcc4f8fe544cad489e464e",
+  "image": "sha256:4781bf73c243b2f92a7d9e0dc1cf60f0867baa870f911820ecfaf389f51cd6e4",
+  "finiteConfigAbsent": true,
+  "health": "healthy",
+  "deliveryTrace": {
+    "requestedAt": "2026-10-31T07:48:15.514714+00:00",
+    "readyAt": "2026-10-31T07:48:15.538162+00:00",
+    "acquiredAt": "2026-10-31T07:48:15.538223+00:00",
+    "mutationFinishedAt": "2026-10-31T07:48:31.319038+00:00",
+    "releasedAt": "2026-10-31T07:48:31.319067+00:00"
+  }
+}

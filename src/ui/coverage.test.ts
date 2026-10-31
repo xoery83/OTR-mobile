@@ -62,6 +62,9 @@ it("automatically includes newly imported children and rejects inherited light-o
         true,
       ).map((issue) => issue.rule),
     ).toEqual(["string", "canonical-form"]);
+    expect(
+      scanUiSource("const Input=()=> <TextInput/>", "src/ui/textInput.tsx", true),
+    ).toEqual([]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

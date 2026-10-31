@@ -192,6 +192,7 @@ export function scanUiSource(
     if (
       strictFoundation &&
       file !== "src/ui/forms.tsx" &&
+      file !== "src/ui/textInput.tsx" &&
       ts.isJsxOpeningLikeElement(node) &&
       ["TextInput", "DateTimePicker"].includes(node.tagName.getText(ast))
     ) {

@@ -1,0 +1,40 @@
+{
+  "status": "PASS_REAL_CHATGPT_OAUTH_QA_LIST_TRIPS_GOLDEN_SLICE",
+  "conversation": "https://chatgpt.com/c/6ae59c39-79e4-83ec-a1fc-904e2384396d",
+  "pluginId": "plugin_asdk_app_6ae59a2086a481918a9d9bef984507ef",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "emailOtp": "Real current QA email delivered after request 2026-10-31T07:40:46.927Z; exact QA recipient and OTR sender checked; no code recorded",
+  "consent": "Explicit read-only Allow; current static client; success redirect and app connected",
+  "tool": "list_trips",
+  "resultStatus": "SERVER_CONFIRMED",
+  "tripIds": [
+    "41886054-5c86-45c1-a3ce-cbe530532bde",
+    "8b5ceb55-b3c2-462a-9a15-59de91fdabe5",
+    "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "eb3a3e70-fe4d-4cff-81f8-9945bc804f28"
+  ],
+  "nextCursor": null,
+  "postRevoke": {
+    "clientOutcome": "CALL_FAILED_NO_FRESH_DATA",
+    "clientError": "Script error: The tool failed internally.",
+    "clientCause": "NOT_EXPOSED",
+    "serverReadDenial": "Two MCP401 at07:46:51/52 after Hook close+grantDELETE204; runtime still available, before restore",
+    "noReconnectOrReauthorization": true
+  },
+  "notClaimed": [
+    "ChatGPT get_trip/list_trip_items/get_trip_item not executed",
+    "full Supabase Data/Storage/expiry qualification",
+    "Beta always-on OAuth readiness",
+    "raw control wrapper PASS"
+  ],
+  "screenshots": {
+    "CHATGPT_READ_PROOF.jpg": "c609498ff2b5911e9203a5bd33e266280e53b46287031f0fae5e35ad33f6ee38",
+    "CHATGPT_REVOKE_PROOF.jpg": "25f310c6504fe6b0e01f82a6da43360681a48fda3d6c145db18d6d0dae916849"
+  },
+  "tokensOtpOrSecretsRecorded": false,
+  "mcpAcceptanceCommits": [
+    "81ba6d93",
+    "4b2c794a"
+  ],
+  "independentReview": "FINAL_REVIEW.json"
+}
