@@ -1,0 +1,51 @@
+{
+  "stage": "P3",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "originalCreateRecovery": {
+    "version": "otr.mcp.status/1",
+    "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "operation_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "target": "ITEM",
+    "outcome": "APPLIED",
+    "current_revision": 1
+  },
+  "create": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "item_id": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+    "operation_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "current_revision": 1,
+    "preview_digest": "cd0a2b8b11ef2615d8ad2000bf5f8a2bb96d9b31d228d63d19569b886ce39874",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-11-02\",\"start_date\":\"2026-10-31\"},\"family\":\"P3\",\"notes\":\"Synthetic MCP controlled-create QA only; no real Booking or Ticket.\",\"property_name\":\"Synthetic QA Lodge\",\"title\":\"MCP Synthetic Nelson Stay 1031\"}",
+    "query": {
+      "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+      "operation_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+      "target": "ITEM"
+    },
+    "outcome": "APPLIED"
+  },
+  "createSupabase": {
+    "status": "SERVER_VERIFIED",
+    "itemCount": 1,
+    "operationId": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "itemId": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+    "revision": 1,
+    "receiptRevision": 1,
+    "committedAt": "2026-10-31T00:40:18.16509Z",
+    "intentSha256": "5220d90a34173a96599a83067d3112082b9c6edd57df1b6467a3e089ad0573a2",
+    "receiptSha256": "95b9d1f1b718b7c4132f71f92409cfa038c830f1838f292f4f5b292744fa43c1",
+    "fieldsSha256": "1acdac312f5fd91cd23f9ba66129e8e6ca0fca4686dfb2f5501b304bd8adb05e"
+  },
+  "status": "CREATE_MCP_APPLIED_AND_SERVER_VERIFIED",
+  "nativeCreate": {
+    "status": "PASS_REPORTED_BY_NATIVE_OWNER",
+    "firstPropertySampleAt": "2026-10-31T00:41:02.420Z",
+    "display": "Synthetic QA Lodge",
+    "latencyObservation": "ABOUT_44_SECONDS_FIRST_SAMPLE_NOT_SLO",
+    "note": "Core-title-only monitor missed canonical property-name card; original observation retained by Native"
+  },
+  "edit": "NOT_SENT",
+  "currentSession": "ACTIVE_AT_NATIVE_CHECKPOINT"
+}

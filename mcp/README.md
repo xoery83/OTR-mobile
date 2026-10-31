@@ -17,7 +17,8 @@ npm --prefix mcp run build
 Build emits root ignored `dist/mcp/index.mjs` (importable adapter exports) and
 `dist/mcp/internal.mjs` (QA-only loopback entry). No Backend startup or Mobile
 bundle imports them. A few protocol tests open localhost; run in an environment
-that allows local listening. SDK/JWT dependencies are isolated in this package.
+that allows local listening. SDK/JWT dependencies are isolated in this package. Root Mobile typechecking excludes
+MCP sources; run the separate MCP checks above whenever this module changes.
 
 For public DEV, the owning Backend host imports createMcpHandler, installs
 protectedResourceMetadata with approved issuer/resource, and supplies
@@ -37,11 +38,17 @@ Never reverse proxy/tunnel this Session harness or call it public OAuth.
 Actual Golden acceptance uses `mcp/golden.ts` and the existing registered-QA normal
 OTP helper. It requires OTR_DEV_OTP_TEST=1, approved public DEV URL/key,
 OTR_QA_RESEND_SCOPE=dedicated-qa-team, OTR_QA_DEV_BUSINESS_WINDOW=HELD and
-OTR_MCP_QA_CASE=READ/P3/NELSON. Flags grant no authority: first obtain Root's actual
+OTR_MCP_QA_CASE=READ/P3/NELSON/P3_VERIFY. Flags grant no authority: first obtain Root's actual
 window and coordinate fixed operation IDs with Native. The helper owns receiver
 locking and local logout+refresh-rejected cleanup. No copied Session/Keychain,
 credential arguments/logs or new fixture permissions. P3 and NELSON stages may
 write only their frozen synthetic cases after explicit owning coordination.
+P3 and NELSON require a real interactive stdin. P3_VERIFY uses a GET-only owning
+backend port for original-operation recovery/replay, with a separate authorized
+foreign negative POST. For an already submitted UNKNOWN Create,
+OTR_MCP_RECOVER_P3=1 performs only same-operation status lookup and DB validation
+before the Native checkpoint; it never invokes or re-POSTs the original Create.
+Native acknowledgement precedes the distinct Edit operation.
 
 Current contracts/evidence: docs/mcp/MCP_ARCHITECTURE_INVENTORY.md,
 MCP_TOOL_CONTRACT_V1.md, MCP_AUTH_CONTRACT.md, MCP_NELSON_IMPORT_PLAN.md,
@@ -52,3 +59,9 @@ Bounds:16KiB request/60s total/50s Backend reads/15s mutation calls/25 Items per
 visible collection and returns summaries; get_trip_item retrieves full typed detail. No auto retries,
 workers, sync engine, schemas or provider calls. Existing timed/qualified date
 moves require the owning temporal adapter; date-only edits are supported.
+
+Nelson QA retains the actual initial batch result. UNKNOWN is never re-POSTed:
+status and full expected receipt validation must succeed; only explicitly
+unsubmitted suffix operations can continue as unchanged, confirmed single-change
+subsets. Each Item requires independent DB verification before the next submit.
+This is QA composition of existing tools, not a server batch-atomic claim.

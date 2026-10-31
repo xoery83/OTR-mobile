@@ -7,8 +7,8 @@ Historical 29 October normal OTP/discovery evidence remains separate.
 | User outcome                       | Current evidence / limit                                                                                                                                                                         |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | AI reads an OTR Trip/P3            | Real standard SDK4 tools, Trip list independentMATCH,3 Item summaries, P3 full detail independent hashMATCH, foreign private404; normal own Session cleanupPASS. Earlier failures retained below |
-| AI creates/edits cloud Item        | Core-backed adapter and genuine domain/receipt tests pass; actual new P3 uses fixed operation/target IDs. Zero business POST; Read now PASS; waiting Native ready                                |
-| iPad automatically sees same Item  | Native's existing external P3 downstream is trusted infrastructure. New MCP Item is NOT_TESTED; Native agreed passive same-Account/Trip observation after fixed IDs/timing handoff               |
+| AI creates/edits cloud Item        | One fixed P3 Create POST recovered to formal APPLIED/rev1; independent Supabase full fields/receipt/unique row MATCH. Edit waits Native details readiness                                        |
+| iPad automatically sees same Item  | New MCP P3 automatically displayed its property card; first sample ~44s after commit. Original title-only monitor miss corrected; Edit/latest-revision check pending                             |
 | Nelson Preview/Confirm/Apply       | Three-day synthetic preview/partial/replay path implemented and tested; actual DEV/new-Trip/iPad proof pending. Real Owner plan untouched                                                        |
 | ChatGPT / Claude actual connection | NOT_TESTED: public OAuth grant/revocation/binding contract and approved mount absent. No paid-plan/region compatibility claim                                                                    |
 | Extended domains                   | Future owning interfaces only; no new domain adapters/authority                                                                                                                                  |
@@ -110,3 +110,40 @@ read regression still permits only one controlled POST;29 focused tests and
 independent review PASS. This is a local availability repair, not cloud write PASS.
 P3 runner now asserts a real interactive stdin before opening any Session, so
 a heredoc/EOF cannot accidentally skip the separate Native Create observation.
+
+## Actual controlled Create — APPLIED and iPad display, Edit pending
+
+One fixed Create POST in `P3_ATTEMPT_02.json` returned UNKNOWN/QUERY_SAME_OPERATION.
+No automatic re-POST: normal standard MCP get_operation_status later returned
+APPLIED/rev1 for the exact original operation; full new-object Backend GET200 and
+independent Supabase validation match the expected command/receipt/all modeled
+business fields, exactly one Item. Formal commit00:40:18.16509Z. See
+`P3_CREATE_SUPABASE.json` and `P3_CREATE_CHECKPOINT.json`.
+
+Native reports real same-page automatic property-card display at first AX sample
+00:41:02.420Z, about44s after commit. Original Core-title-only monitoring missed
+P3's canonical property-name-first display and was corrected; no downstream
+failure is inferred from that missed match. Original612d remains untouched.
+The existing recovery session waits before Edit. Day property label will stay
+Synthetic QA Lodge when only Core title is edited; do not invent a Day text-change
+PASS. Real Create re-APPLY idempotency remains pending in this recovery route; local
+Core/receipt replay tests pass. No whole P3/Native-update/Nelson PASS yet.
+
+## Controlled P3 cloud E2E — PASS with Native edit limit
+
+`P3_VERIFY.json` records actual standard MCP Create APPLIED/rev1 and Edit
+APPLIED/rev2, original Create APPLY replay returning its formal receipt through
+a GET-only host port (own Create/Edit re-POST impossible), exact new Item/Trip/
+rev2/title readback, independent full expected Edit receipt/intent/business row
+and unique count1. Separate approved foreign write test returned404. Own session
+local logout and refresh rejection PASS. Original UNKNOWN responses remain in
+P3.json/P3_ATTEMPT_02.json; independent final proof P3_EDIT_SUPABASE.json.
+
+Native authority: commit9c15ee9d,
+`docs/ops/native05-06-20261031/MCP_P3_DOWNSTREAM_OBSERVATION.json`. Real automatic
+Create card and exact UUID route cold Viewer/no-login PASS; edited Core title/
+revision are not visible in UI and latest-title download remains explicitly
+NOT_DIRECTLY_OBSERVABLE. This is not private Realtime or an SLO measurement.
+
+Root Mobile typecheck PASS after isolating MCP source checking; separate MCP
+types/29 directed tests/lint/build pass. No SDK dependency added to Mobile.

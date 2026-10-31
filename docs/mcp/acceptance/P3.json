@@ -1,0 +1,86 @@
+{
+  "stage": "P3",
+  "status": "FAILED_OR_UNKNOWN_QUERY_SAME_OPERATION",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T00:43:37.885Z",
+  "phase": "update_trip_item",
+  "directPath": "/v2/trips/:id/core/objects/ITEM/:id",
+  "directP3HttpStatus": 200,
+  "directP3Schema": "PASS",
+  "discovery": [
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item",
+    "create_trip",
+    "create_trip_item",
+    "update_trip_item",
+    "preview_trip_changes",
+    "apply_trip_changes",
+    "get_operation_status"
+  ],
+  "tripListIndependentHash": "MATCH",
+  "itemCount": 4,
+  "p3IndependentHash": "6560018a5b3ac9a0120129e7234d9565ffe80bfd2461f264200be12ae82d9b32",
+  "foreignPrivateDenied": 404,
+  "capability": "OWNING_P3_MANUAL_ENABLED",
+  "originalCreateRecovery": {
+    "version": "otr.mcp.status/1",
+    "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "operation_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "target": "ITEM",
+    "outcome": "APPLIED",
+    "current_revision": 1
+  },
+  "create": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "item_id": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+    "operation_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "current_revision": 1,
+    "preview_digest": "cd0a2b8b11ef2615d8ad2000bf5f8a2bb96d9b31d228d63d19569b886ce39874",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-11-02\",\"start_date\":\"2026-10-31\"},\"family\":\"P3\",\"notes\":\"Synthetic MCP controlled-create QA only; no real Booking or Ticket.\",\"property_name\":\"Synthetic QA Lodge\",\"title\":\"MCP Synthetic Nelson Stay 1031\"}",
+    "query": {
+      "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+      "operation_id": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+      "target": "ITEM"
+    },
+    "outcome": "APPLIED"
+  },
+  "createSupabase": {
+    "status": "SERVER_VERIFIED",
+    "itemCount": 1,
+    "operationId": "fe996d83-359e-4fa3-a4bb-af8bd0232d14",
+    "itemId": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+    "revision": 1,
+    "receiptRevision": 1,
+    "committedAt": "2026-10-31T00:40:18.16509Z",
+    "intentSha256": "5220d90a34173a96599a83067d3112082b9c6edd57df1b6467a3e089ad0573a2",
+    "receiptSha256": "95b9d1f1b718b7c4132f71f92409cfa038c830f1838f292f4f5b292744fa43c1",
+    "fieldsSha256": "1acdac312f5fd91cd23f9ba66129e8e6ca0fca4686dfb2f5501b304bd8adb05e"
+  },
+  "edit": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "item_id": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+    "operation_id": "d6420993-1a5d-40f0-9929-1d96d14b4990",
+    "current_revision": null,
+    "preview_digest": "b29364d2b35f5912c8ad18efeedf38c86a0429c8c563648198427002497d1126",
+    "summary": "Update 77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a at revision 1: {\"kind\":\"TEXT\",\"title\":\"MCP Synthetic Nelson Stay 1031 · Edited\"}",
+    "query": {
+      "trip_id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+      "operation_id": "d6420993-1a5d-40f0-9929-1d96d14b4990",
+      "target": "ITEM"
+    },
+    "outcome": "UNKNOWN",
+    "error_code": "QUERY_SAME_OPERATION"
+  },
+  "editObservedAt": "2026-10-31T00:56:27.888Z",
+  "failureClass": "ASSERTION",
+  "owningRunId": "73b89957-f676-41a9-8cf5-2bf1b59ac9f1",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "createRepostCount": 0,
+  "editPostCount": 1
+}

@@ -18,6 +18,8 @@ import { canonicalCoreJson, type Json } from "../src/domain/trip/tripCoreV2Json"
 import {
   sha,
   prepareCreate,
+  prepareTrip,
+  createMutationTools,
   prepareUpdate,
   mutationIdentity,
   type PreparedMutation,
@@ -41,9 +43,10 @@ const fixtureSchema = z.object({
   nelson_trip_request_id: z.uuid(),
   nelson_change_request_ids: z.array(z.uuid()).length(3),
 });
-export async function runGolden(stage: "READ" | "P3" | "NELSON") {
+export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
   assert.equal(process.env.OTR_MCP_QA_CASE, stage);
-  if (stage === "P3") assert(process.stdin.isTTY, "P3_INTERACTIVE_TTY_REQUIRED");
+  if (stage === "P3" || stage === "NELSON")
+    assert(process.stdin.isTTY, "GOLDEN_INTERACTIVE_TTY_REQUIRED");
   assert.equal(process.env.OTR_QA_DEV_BUSINESS_WINDOW, "HELD");
   const fixture = fixtureSchema.parse(
     JSON.parse(readFileSync("mcp/fixtures/golden-slices.json", "utf8")),
@@ -65,6 +68,7 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
     accountId: fixture.account_id,
     observedAt: new Date().toISOString(),
   };
+  const recoverP3 = stage === "P3" && process.env.OTR_MCP_RECOVER_P3 === "1";
   const outputPath = `docs/mcp/acceptance/${stage}.json`;
   mkdirSync("docs/mcp/acceptance", { recursive: true });
   const save = () => writeFileSync(outputPath, JSON.stringify(facts, null, 2) + "\n");
@@ -108,7 +112,20 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
       save();
       handle = createMcpHandler({
         resource,
-        authorize: internalSessionAuthorizer(config.publishableKey, stage !== "READ"),
+        authorize: async (request) => {
+          const auth = await internalSessionAuthorizer(
+            config.publishableKey,
+            stage !== "READ",
+          )(request);
+          if (stage === "P3_VERIFY" && auth?.backend) {
+            const backend = auth.backend;
+            auth.backend = (q, signal) => {
+              assert.equal(q.method, "GET", "VERIFY_CANNOT_REPOST");
+              return backend(q, signal);
+            };
+          }
+          return auth;
+        },
         confirm,
       });
       const client = new Client({
@@ -136,12 +153,77 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
         };
         return v.structuredContent ?? v.result ?? {};
       }
-      async function approvedCall(name: string, args: Record<string, unknown>) {
+      async function recoverApplied(
+        result: Record<string, unknown>,
+        prepared: PreparedMutation,
+      ) {
+        if (result.outcome !== "UNKNOWN" || result.error_code === "RECEIPT_UNVERIFIED")
+          return result;
+        const identity = mutationIdentity(context.accountId, prepared);
+        assert.equal(result.operation_id, identity.operation_id);
+        assert.equal(result.trip_id, identity.trip_id);
+        const target = prepared.kind;
+        const status = await call("get_operation_status", {
+          trip_id: z.uuid().parse(result.trip_id),
+          operation_id: z.uuid().parse(result.operation_id),
+          target,
+        });
+        const recoveries = (facts.sameOperationLookups ?? []) as unknown[];
+        recoveries.push({ original: result, status });
+        facts.sameOperationLookups = recoveries;
+        save();
+        if (status.outcome !== "APPLIED") return result;
+        const expectedPath =
+          prepared.kind === "TRIP"
+            ? `/v2/trip-create-operations/${identity.operation_id}`
+            : `/v2/trips/${identity.trip_id}/core/operations/${identity.operation_id}`;
+        const verifier = createMutationTools({
+          accountId: context.accountId,
+          clientId: "otr-internal-controlled-qa",
+          resource,
+          backend: (q, signal) => {
+            assert.equal(q.method, "GET", "RECOVERY_CANNOT_POST");
+            assert.equal(q.path, expectedPath);
+            return fetch(DEV_BACKEND + q.path, {
+              headers: {
+                Authorization: "Bearer " + session.accessToken,
+                "X-OTR-Core-Contract-Version": "2",
+              },
+              redirect: "error",
+              signal,
+            });
+          },
+        });
+        // Reuse the complete owning receipt validator behind a strict GET-only port.
+        const verified = await verifier.execute(
+          prepared,
+          "APPLY",
+          identity.preview_digest,
+          true,
+        );
+        recoveries.push({
+          operationId: identity.operation_id,
+          fullExpectedReceipt: verified,
+        });
+        save();
+        return verified.outcome === "APPLIED" ? verified : result;
+      }
+      async function approvedCall(
+        name: "create_trip" | "create_trip_item" | "update_trip_item",
+        args: Record<string, unknown>,
+      ) {
         const p = await call(name, args);
         assert.equal(p.outcome, "PREVIEW");
         const d = z.string().parse(p.preview_digest);
         approved.add(d);
-        return call(name, { ...args, mode: "APPLY", preview_digest: d });
+        return recoverApplied(
+          await call(name, { ...args, mode: "APPLY", preview_digest: d }),
+          name === "create_trip"
+            ? prepareTrip(context.accountId, args)
+            : name === "create_trip_item"
+              ? prepareCreate(context.accountId, args)
+              : prepareUpdate(context.accountId, args),
+        );
       }
       async function databaseVerify(
         operationId: string,
@@ -171,6 +253,34 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
         );
         return verifyGoldenReadback(JSON.parse(raw), prepared, context.accountId);
       }
+      async function foreignWriteNegative() {
+        const negativeCommand = prepareUpdate(context.accountId, {
+          request_id: fixture.foreign_write_request_id,
+          trip_id: "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+          item_id: "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+          expected_revision: Number.MAX_SAFE_INTEGER,
+          change: { kind: "TEXT", title: "Unauthorized QA write must be denied" },
+        });
+        assert.equal(negativeCommand.kind, "ITEM");
+        const negative = await fetch(
+          DEV_BACKEND + "/v2/trips/9a96becb-a10b-4c58-b50d-2547dd61b0b7/core/commands",
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + session.accessToken,
+              "Content-Type": "application/json",
+              "X-OTR-Core-Contract-Version": "2",
+              "Idempotency-Key": fixture.foreign_write_request_id,
+            },
+            body: JSON.stringify(negativeCommand.command),
+            redirect: "error",
+            signal: AbortSignal.timeout(15000),
+          },
+        );
+        assert([403, 404].includes(negative.status), "FOREIGN_WRITE_NOT_DENIED");
+        await negative.body?.cancel();
+        facts.independentForeignWriteDenied = negative.status;
+      }
       try {
         facts.phase = "MCP_CLIENT_CONNECT";
         save();
@@ -179,73 +289,149 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
             requestInit: { headers: { Authorization: "Bearer " + session.accessToken } },
           }),
         );
-        facts.phase = "DIRECT_P3_BASELINE";
-        save();
-        const directP3 = await direct(
-          `/v2/trips/${context.tripId}/core/objects/ITEM/${fixture.existing_p3_id}`,
-        );
-        facts.directP3HttpStatus = directP3.status;
-        if (directP3.ok) {
-          const parsed = itemSchema.safeParse(await directP3.json());
-          facts.directP3Schema = parsed.success
-            ? "PASS"
-            : parsed.error.issues
-                .slice(0, 8)
-                .map((issue) => ({ code: issue.code, path: issue.path }));
-        } else await directP3.body?.cancel();
-        save();
-        const tools = await client.listTools();
-        facts.discovery = tools.tools.map((t) => t.name);
-        const listed = await call("list_trips", {});
-        const independent = await direct("/v2/trips?limit=20");
-        assert.equal(independent.status, 200);
-        assert.equal(digest(listed.trips), digest((await independent.json()).trips));
-        facts.tripListIndependentHash = "MATCH";
-        const trip = await call("get_trip", { trip_id: context.tripId });
-        assert.equal((trip.trip as { id: string }).id, context.tripId);
-        const items = await call("list_trip_items", {
-          trip_id: context.tripId,
-          limit: 25,
-        });
-        facts.itemCount = z.array(z.unknown()).parse(items.items).length;
-        const p3 = await call("get_trip_item", {
-          trip_id: context.tripId,
-          item_id: fixture.existing_p3_id,
-        });
-        const r = await direct(
-          `/v2/trips/${context.tripId}/core/objects/ITEM/${fixture.existing_p3_id}`,
-        );
-        assert.equal(r.status, 200);
-        assert.equal(digest(p3.item), digest(itemSchema.parse(await r.json())));
-        facts.p3IndependentHash = digest(p3.item);
-        const denied = await client.callTool({
-          name: "get_trip_item",
-          arguments: {
-            trip_id: "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
-            item_id: "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
-          },
-        });
-        assert.equal((denied as { isError?: boolean }).isError, true);
-        const denyBackend = await direct(
-          "/v2/trips/9a96becb-a10b-4c58-b50d-2547dd61b0b7/core/objects/ITEM/85ef0df8-d9b2-42b7-98c3-e94404ff2033",
-        );
-        assert([403, 404].includes(denyBackend.status));
-        facts.foreignPrivateDenied = denyBackend.status;
-        if (stage === "READ") {
-          facts.status = "INTERNAL_READ_GOLDEN_PASS";
-          return;
+        if (stage !== "P3_VERIFY") {
+          facts.phase = "DIRECT_P3_BASELINE";
+          save();
+          const directP3 = await direct(
+            `/v2/trips/${context.tripId}/core/objects/ITEM/${fixture.existing_p3_id}`,
+          );
+          facts.directP3HttpStatus = directP3.status;
+          if (directP3.ok) {
+            const parsed = itemSchema.safeParse(await directP3.json());
+            facts.directP3Schema = parsed.success
+              ? "PASS"
+              : parsed.error.issues
+                  .slice(0, 8)
+                  .map((issue) => ({ code: issue.code, path: issue.path }));
+          } else await directP3.body?.cancel();
+          save();
+          const tools = await client.listTools();
+          facts.discovery = tools.tools.map((t) => t.name);
+          const listed = await call("list_trips", {});
+          const independent = await direct("/v2/trips?limit=20");
+          assert.equal(independent.status, 200);
+          assert.equal(digest(listed.trips), digest((await independent.json()).trips));
+          facts.tripListIndependentHash = "MATCH";
+          const trip = await call("get_trip", { trip_id: context.tripId });
+          assert.equal((trip.trip as { id: string }).id, context.tripId);
+          const items = await call("list_trip_items", {
+            trip_id: context.tripId,
+            limit: 25,
+          });
+          facts.itemCount = z.array(z.unknown()).parse(items.items).length;
+          const p3 = await call("get_trip_item", {
+            trip_id: context.tripId,
+            item_id: fixture.existing_p3_id,
+          });
+          const r = await direct(
+            `/v2/trips/${context.tripId}/core/objects/ITEM/${fixture.existing_p3_id}`,
+          );
+          assert.equal(r.status, 200);
+          assert.equal(digest(p3.item), digest(itemSchema.parse(await r.json())));
+          facts.p3IndependentHash = digest(p3.item);
+          const denied = await client.callTool({
+            name: "get_trip_item",
+            arguments: {
+              trip_id: "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+              item_id: "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+            },
+          });
+          assert.equal((denied as { isError?: boolean }).isError, true);
+          const denyBackend = await direct(
+            "/v2/trips/9a96becb-a10b-4c58-b50d-2547dd61b0b7/core/objects/ITEM/85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+          );
+          assert([403, 404].includes(denyBackend.status));
+          facts.foreignPrivateDenied = denyBackend.status;
+          if (stage === "READ") {
+            facts.status = "INTERNAL_READ_GOLDEN_PASS";
+            return;
+          }
+          const caps = await direct(`/v2/trips/${context.tripId}/core/capabilities`);
+          assert.equal(caps.status, 200);
+          const capability = coreCapabilitiesSchema.parse(await caps.json());
+          assert(
+            capability.enabledFamilies.includes("P3") &&
+              capability.enabledCommands.includes("CREATE_ITEM"),
+          );
+          facts.capability = "OWNING_P3_MANUAL_ENABLED";
         }
-        const caps = await direct(`/v2/trips/${context.tripId}/core/capabilities`);
-        assert.equal(caps.status, 200);
-        const capability = coreCapabilitiesSchema.parse(await caps.json());
-        assert(
-          capability.enabledFamilies.includes("P3") &&
-            capability.enabledCommands.includes("CREATE_ITEM"),
-        );
-        facts.capability = "OWNING_P3_MANUAL_ENABLED";
-        if (stage === "P3") {
+        if (stage === "P3_VERIFY") {
+          const create = prepareCreate(context.accountId, fixture.create);
+          const identity = mutationIdentity(context.accountId, create);
+          const edit = prepareUpdate(context.accountId, {
+            request_id: fixture.edit_request_id,
+            trip_id: context.tripId,
+            item_id: fixture.expected_item_id,
+            expected_revision: 1,
+            change: { kind: "TEXT", title: "MCP Synthetic Nelson Stay 1031 · Edited" },
+          });
+          for (const operationId of [identity.operation_id, fixture.edit_request_id]) {
+            const status = await call("get_operation_status", {
+              trip_id: context.tripId,
+              operation_id: operationId,
+              target: "ITEM",
+            });
+            facts[operationId === identity.operation_id ? "createStatus" : "editStatus"] =
+              status;
+            save();
+            assert.equal(status.outcome, "APPLIED");
+          }
+          approved.add(identity.preview_digest);
+          const replay = await call("create_trip_item", {
+            ...fixedCreate,
+            mode: "APPLY",
+            preview_digest: identity.preview_digest,
+          });
+          assert.equal(replay.outcome, "APPLIED");
+          assert.equal(replay.item_id, fixture.expected_item_id);
+          facts.createReplay = "FORMAL_RECEIPT_APPLIED_WITH_GET_ONLY_PORT_NO_POST";
+          const item = await call("get_trip_item", {
+            trip_id: context.tripId,
+            item_id: fixture.expected_item_id,
+          });
+          const detail = itemSchema.parse(item.item);
+          assert.equal(detail.itemId, fixture.expected_item_id);
+          assert.equal(detail.tripId, context.tripId);
+          assert.equal(detail.itemRevision, 2);
+          assert.equal(detail.title, "MCP Synthetic Nelson Stay 1031 · Edited");
+          facts.itemReadbackSha256 = digest(detail);
+          facts.finalSupabase = await databaseVerify(
+            fixture.edit_request_id,
+            fixture.expected_item_id,
+            edit,
+          );
+          assert.equal(
+            (facts.finalSupabase as { status: string }).status,
+            "SERVER_VERIFIED",
+          );
+          await foreignWriteNegative();
+          facts.status = "INTERNAL_P3_CLOUD_PASS_NATIVE_TITLE_EDIT_UNOBSERVABLE";
+        } else if (stage === "P3") {
           const q = z.record(z.string(), z.unknown()).parse(fixture.create);
-          const created = await approvedCall("create_trip_item", q);
+          let created: Record<string, unknown>;
+          if (recoverP3) {
+            const identity = mutationIdentity(
+              context.accountId,
+              prepareCreate(context.accountId, q),
+            );
+            const status = await call("get_operation_status", {
+              trip_id: context.tripId,
+              operation_id: identity.operation_id,
+              target: "ITEM",
+            });
+            facts.originalCreateRecovery = status;
+            save();
+            assert.equal(status.outcome, "APPLIED", "SAME_OPERATION_NOT_APPLIED");
+            assert(
+              z.number().int().positive().safe().safeParse(status.current_revision)
+                .success,
+            );
+            created = {
+              ...identity,
+              outcome: "APPLIED",
+              current_revision: status.current_revision,
+            };
+          } else created = await approvedCall("create_trip_item", q);
           facts.create = created;
           save();
           assert.equal(created.outcome, "APPLIED");
@@ -312,51 +498,28 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
             (facts.editSupabase as { status: string }).status,
             "SERVER_VERIFIED",
           );
-          const preview = mutationIdentity(
-            context.accountId,
-            prepareCreate(context.accountId, q),
-          );
-          approved.add(preview.preview_digest);
-          const replay = await call("create_trip_item", {
-            ...q,
-            mode: "APPLY",
-            preview_digest: preview.preview_digest,
-          });
-          assert.equal(replay.item_id, id);
-          assert.equal(replay.outcome, "APPLIED");
-          facts.replay = "SAME_TARGET_SAME_OPERATION";
+          if (!recoverP3) {
+            const preview = mutationIdentity(
+              context.accountId,
+              prepareCreate(context.accountId, q),
+            );
+            approved.add(preview.preview_digest);
+            const replay = await call("create_trip_item", {
+              ...q,
+              mode: "APPLY",
+              preview_digest: preview.preview_digest,
+            });
+            assert.equal(replay.item_id, id);
+            assert.equal(replay.outcome, "APPLIED");
+            facts.replay = "SAME_TARGET_SAME_OPERATION";
+          } else facts.replay = "UNKNOWN_CREATE_NOT_REPOSTED_STATUS_ONLY";
           const status = await call("get_operation_status", {
             trip_id: context.tripId,
             operation_id: fixture.edit_request_id,
             target: "ITEM",
           });
           assert.equal(status.outcome, "APPLIED");
-          const negativeCommand = prepareUpdate(context.accountId, {
-            request_id: fixture.foreign_write_request_id,
-            trip_id: "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
-            item_id: "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
-            expected_revision: Number.MAX_SAFE_INTEGER,
-            change: { kind: "TEXT", title: "Unauthorized QA write must be denied" },
-          });
-          assert.equal(negativeCommand.kind, "ITEM");
-          const negative = await fetch(
-            DEV_BACKEND + "/v2/trips/9a96becb-a10b-4c58-b50d-2547dd61b0b7/core/commands",
-            {
-              method: "POST",
-              headers: {
-                Authorization: "Bearer " + session.accessToken,
-                "Content-Type": "application/json",
-                "X-OTR-Core-Contract-Version": "2",
-                "Idempotency-Key": fixture.foreign_write_request_id,
-              },
-              body: JSON.stringify(negativeCommand.command),
-              redirect: "error",
-              signal: AbortSignal.timeout(15000),
-            },
-          );
-          assert([403, 404].includes(negative.status), "FOREIGN_WRITE_NOT_DENIED");
-          await negative.body?.cancel();
-          facts.independentForeignWriteDenied = negative.status;
+          await foreignWriteNegative();
           facts.status = "INTERNAL_P3_BACKEND_PASS_IPAD_PENDING";
         } else {
           const createdTrip = await approvedCall("create_trip", {
@@ -417,7 +580,59 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
           });
           facts.apply = applied;
           save();
-          assert.equal(applied.outcome, "APPLIED");
+          const rawOperations = z
+            .array(z.record(z.string(), z.unknown()))
+            .length(3)
+            .parse(applied.operations);
+          const completed = [];
+          const verified = [];
+          for (let i = 0; i < rawOperations.length; i++) {
+            let result = rawOperations[i];
+            assert.equal(result.operation_id, changes[i].request_id);
+            if (
+              result.outcome === "PREVIEW" &&
+              result.error_code === "NOT_SUBMITTED_AFTER_STOP"
+            ) {
+              // Only the explicit unsubmitted suffix; exact same confirmed synthetic operation/fields.
+              const subset = { trip_id: nelsonTrip, changes: [changes[i]] };
+              const nextPreview = await call("preview_trip_changes", subset);
+              assert.equal(nextPreview.outcome, "PREVIEW");
+              const nextDigest = z.string().parse(nextPreview.preview_digest);
+              approved.add(nextDigest);
+              const next = await call("apply_trip_changes", {
+                ...subset,
+                preview_digest: nextDigest,
+              });
+              const operation = z
+                .array(z.record(z.string(), z.unknown()))
+                .length(1)
+                .parse(next.operations)[0];
+              assert.equal(operation.operation_id, changes[i].request_id);
+              result = operation;
+            }
+            const { kind: _, ...change } = changes[i];
+            void _;
+            const prepared = prepareCreate(context.accountId, {
+              ...change,
+              trip_id: nelsonTrip,
+            });
+            result = await recoverApplied(result, prepared);
+            completed.push(result);
+            facts.compositeBatchProgress = completed;
+            save();
+            assert.equal(result.outcome, "APPLIED", "UNKNOWN_REQUIRES_QUERY_NOT_REPOST");
+            const proof = await databaseVerify(
+              z.uuid().parse(result.operation_id),
+              z.uuid().parse(result.item_id),
+              prepared,
+            );
+            assert.equal(proof.status, "SERVER_VERIFIED");
+            verified.push(proof);
+            facts.independentSupabase = verified;
+            save();
+          }
+          facts.batchCompletionSource =
+            "FORMAL_INDIVIDUAL_RECEIPTS_NOT_SERVER_ATOMIC_BATCH";
           const results = z
             .array(
               z.object({
@@ -426,22 +641,32 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
                 outcome: z.literal("APPLIED"),
               }),
             )
-            .parse(applied.operations);
+            .parse(completed);
           assert.equal(results.length, 3);
-          const verified = [];
-          for (let i = 0; i < results.length; i++) {
-            const { kind: _, ...change } = changes[i];
-            void _;
-            verified.push(
-              await databaseVerify(
-                results[i].operation_id,
-                results[i].item_id,
-                prepareCreate(context.accountId, { ...change, trip_id: nelsonTrip }),
-              ),
-            );
-          }
           facts.independentSupabase = verified;
+          facts.phase = "WAITING_NATIVE_NELSON_OBSERVATION";
           save();
+          console.info(
+            JSON.stringify({
+              phase: facts.phase,
+              tripId: nelsonTrip,
+              items: results,
+              commits: verified,
+              at: new Date().toISOString(),
+            }),
+          );
+          const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
+          try {
+            let continued = false;
+            for await (const line of input) {
+              assert.equal(line.trim(), "CONTINUE_AFTER_NATIVE_NELSON");
+              continued = true;
+              break;
+            }
+            assert(continued, "NATIVE_NELSON_OBSERVATION_REQUIRED");
+          } finally {
+            input.close();
+          }
           const edited = await approvedCall("update_trip_item", {
             request_id: fixture.date_edit_request_id,
             trip_id: nelsonTrip,
@@ -503,6 +728,8 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON") {
   return facts;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const stage = z.enum(["READ", "P3", "NELSON"]).parse(process.env.OTR_MCP_QA_CASE);
+  const stage = z
+    .enum(["READ", "P3", "NELSON", "P3_VERIFY"])
+    .parse(process.env.OTR_MCP_QA_CASE);
   console.info(JSON.stringify(await runGolden(stage)));
 }

@@ -22,8 +22,21 @@
   readiness requested. First P3 stopped before POST: receipt GET15s unavailable,
   then same-op pure GET returned404 after20.786s. Receipt GET now50s/POST15s,
   directed slow-read regression and independent review PASS. Own sessions revoked.
-  New interactive runner guard prevents stdin EOF skipping Native pause. Original
-  612d P3 untouched; zero business POST so far.
+  New interactive runner guard prevents stdin EOF skipping Native pause.
+- Real P3 cloud Create/Edit PASS: original POSTs returned UNKNOWN, then standard
+  MCP same-op queries recovered APPLIED/rev1→2; exact id/trip/new title readback,
+  unique1row/full expected receipt+intent/business fields independently verified.
+  Actual Create tool replay returned its formal receipt with GET-only guard (no
+  own re-POST); foreign write404. Every completed host session revoked/refresh
+  rejected. Evidence P3_VERIFY.json plus original UNKNOWN attempts retained.
+- Native Create first automatic property sample ~44s after commit; exact UUID
+  route cold Viewer/no-login PASS in Native9c15ee9d. UI does not show Core title
+  or revision: latest-title Native download remains NOT_DIRECTLY_OBSERVABLE,
+  unchanged property label is expected. No private Realtime/SLO PASS.
+- Nelson three-day synthetic stage now running: separate Tripcc44a705, original
+  Owner data untouched. Preview/confirmed exact operations; UNKNOWN only status+
+  complete expected receipt GET, explicit unsubmitted suffix resumes same IDs,
+  per-Item independent DB before next submit, Native pause before P1 date move.
 - Current deliverables under docs/mcp/: MCP_ARCHITECTURE_INVENTORY,
   MCP_TOOL_CONTRACT_V1, MCP_AUTH_CONTRACT, MCP_NELSON_IMPORT_PLAN,
   MCP_E2E_ACCEPTANCE, MCP_EXTENDED_TOOLS_ROADMAP. Exact IDs/closure in acceptance.

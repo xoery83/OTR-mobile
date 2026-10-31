@@ -1,0 +1,12 @@
+{
+  "status": "SERVER_VERIFIED",
+  "itemCount": 1,
+  "operationId": "d6420993-1a5d-40f0-9929-1d96d14b4990",
+  "itemId": "77dfc0f5-65c1-4f80-a780-b3aeeb0e4f3a",
+  "revision": 2,
+  "receiptRevision": 2,
+  "committedAt": "2026-10-31T00:56:29.944318Z",
+  "intentSha256": "03e59f0b494831b25c5aa95b2e212b5cd6b98cfacca016d9d4fe58883995441d",
+  "receiptSha256": "a3640cc8d365619c114e7c2ce57d349faa126934e7d1eca3143f697ccef6b2dd",
+  "fieldsSha256": "ea474bf89603940d758c17f338cae0b2210bbba7faec06721c6e5eb9eb7144d1"
+}
