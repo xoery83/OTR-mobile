@@ -493,7 +493,9 @@ export function CaptureContent({
             ? documents.scope === "TRIP" && selectedTripName
               ? `${t("importDocuments.private")} · ${selectedTripName}`
               : t("importDocuments.private")
-            : accountId && (activity || attempted || reopening || model)
+            : accountId &&
+                (activity || attempted || reopening || model) &&
+                (activity || !model?.assignedTripId)
               ? t("capture.progress.accountScope")
               : undefined
         }
