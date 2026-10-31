@@ -16,6 +16,7 @@ import { ledgerBootstrapResponseSchema } from "../../src/data/api/ledgerReadCont
 import type { PublicationCatalogConnection } from "./tripPublicationCatalogRead";
 import {
   createUniversalBatchSource,
+  universalBatchInputsSchema,
   type UniversalRunBinding,
 } from "./universalBatchSource";
 import type { UniversalSourceTask } from "./universalSourceRead";
@@ -345,9 +346,28 @@ export function createUniversalContinuousHost(deps: {
           const code = error instanceof Error ? error.message : "";
           const sqlState =
             error && typeof error === "object" && "code" in error ? error.code : "";
+          const pins =
+            phase === "SOURCE_BINDING" && code === "INPUT_STALE"
+              ? universalBatchInputsSchema.safeParse(raw)
+              : undefined;
+          const singlePin =
+            pins?.success && pins.data.inputs.length === 1
+              ? pins.data.inputs[0]
+              : undefined;
           console.info(
             JSON.stringify({
               event: "universal_prepare_phase_failed",
+              pinSetSha256: pins?.success
+                ? persistenceDigest(pins.data.inputs)
+                : undefined,
+              pinFieldSha256: singlePin
+                ? Object.fromEntries(
+                    Object.entries(singlePin).map(([key, value]) => [
+                      key,
+                      persistenceDigest(value),
+                    ]),
+                  )
+                : undefined,
               phase,
               reason: [
                 "UNIVERSAL_CONTINUOUS_CLOSED",

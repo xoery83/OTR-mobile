@@ -348,6 +348,33 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
         log.mockRestore();
       }
     }
+    const pinLog = vi.spyOn(console, "info").mockImplementation(() => {});
+    sourceCurrent = false;
+    try {
+      await expect(
+        createUniversalContinuousHost(hostDeps).prepare({
+          batchId: batch,
+          submissionSha256: binding.submissionSha256,
+          inputs: [pin],
+        }),
+      ).rejects.toThrow("INPUT_STALE");
+      expect(pinLog).toHaveBeenCalledOnce();
+      expect(JSON.parse(pinLog.mock.calls[0][0])).toEqual({
+        event: "universal_prepare_phase_failed",
+        pinSetSha256: persistenceDigest([pin]),
+        pinFieldSha256: Object.fromEntries(
+          Object.entries(pin).map(([key, value]) => [key, persistenceDigest(value)]),
+        ),
+        phase: "SOURCE_BINDING",
+        reason: "INPUT_STALE",
+        kind: "OTHER",
+      });
+      expect(JSON.stringify(pinLog.mock.calls)).not.toContain(pin.source_id);
+      expect(JSON.stringify(pinLog.mock.calls)).not.toContain(pin.payload_sha256);
+    } finally {
+      sourceCurrent = true;
+      pinLog.mockRestore();
+    }
     const unprepared = createUniversalContinuousHost({
       ...hostDeps,
       publishedSource: {

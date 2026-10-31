@@ -1,0 +1,16 @@
+{
+  "sourceId": "df39c9b2-fc19-4baa-8c7c-aafd0f04726f",
+  "pinContentMatchesCloud": true,
+  "representationRemoteState": "VERIFIED",
+  "revisionRetention": "RETAINED",
+  "originalLinkMatches": true,
+  "diagnosticOwnerReadOnlyValid": true,
+  "doesNotProveGatewayAdmission": true,
+  "realFailure": {
+    "phase": "SOURCE_BINDING",
+    "reason": "INPUT_STALE",
+    "sqlState": "P0001"
+  },
+  "providerCalls": 0,
+  "fixtureFullBegin": "BLOCKED_BY_AUTOMATIC_APPROVAL_REVIEW_NO_DDL_EXECUTED"
+}

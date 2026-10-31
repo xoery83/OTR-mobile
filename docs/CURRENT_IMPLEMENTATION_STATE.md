@@ -13,22 +13,26 @@ overwrite. Old905 archive/original untouched. Approved canonical same-op quiesce
 and normal App generation2 a81308ff succeeded: PARSE_PASS, Uploadd2f59e69 APPLIED/FINAL
 at08:32Z. No generation3, replacement source, Task or model call.
 
-Current first FAIL is now Task Prepare, not PNG IO: Source VERIFY5cc29190 /
-attempt634da041 APPLIED/FINAL. All5PNG requests and post-Verify Catalog200;
-POST interpretations/prepare50309:06:14 (15.517s), Task/modelAttempt0. No actual
-Vision/Save PASS. Native stagePNG_ORIGINAL also covers later prepare and its
-bounded API client strips this error category; do not infer a PNG failure.
-Provider latestrev6 active, QA grant unrevoked, expiry/config matched,
-DeepSeek-V4.1-Flash TEXT+IMAGE; this is qualification metadata, not actual imagePASS.
+Current first FAIL: actual TaskPrepare SOURCE_BINDING/INPUT_STALE/P0001 at
+09:48:03Z. No SourceRun, Task, modelAttempt or Vision/Save PASS. Same PNG is already
+UPLOAD+VERIFY APPLIED/FINAL; all source calls200. Native rebuilt pin matches cloud
+source/material/hash/count/sourceRow1 and original revision ancestry/RETAINED;
+owner-read-only inputvalidator true. SourceWriter locally true too; Hosted role
+metadata/three SELECT policies match expected invoker/definer/permissive roles.
+Do not weaken guards or infer a PNG whitelist. Actual HTTP q.inputs still unproven;
+next minimal diagnostic hashes only the validated input set/single-pin fields on
+INPUT_STALE, so real field differences can be identified without raw values/IDs.
+7 focused checks and independent NO_BLOCKER; no authority/request/behavior change.
+Full isolated Begin fixture lacks scope table; automatic approval review twice
+rejected local fixture DDL as exceeding a readonly assignment. DDL was not executed
+or moved to another identity. Continue software request comparison independently.
 
-Window13 independently CLOSED: Source before/after, runtime, workerinactive,
-EMPTY_VERIFIED, timers stopped. Current diagnostic service87f31fd4/imagebc77412e /
-capture89e02b09 retainsNative/Auth; compatible2275/image5c rollback retained.
-Next minimal diagnostic is prepare-phase-only AUTH/provider/source/manifest/Task;
-7 focused Host/HTTP checks and scopedlint PASS, Root independent diff review.
-No Auth/authority/transaction/order/response changes. Approved Native7603 fixed
-AUTHORED/FULL diagnostic may accompany next software-only capture composition;
-it is not yet in actual service. No new Native/App build required.
+Window14 independently CLOSED: firstSourceBefore unconfirmed, finalSourceAfter
+closed=true/runtimeverified/workerinactive EMPTY/timers stopped. Never claim the
+first read passed. Current service f68caabe/imagedfc598d2/captureea16d720 includes
+Sourcefa63+Native7603 fixed projection diagnostic; Native29/Source7 checks PASS.
+Env/mount/config/server/Auth/browser unchanged. Compatible87/bc77 rollback retained.
+Native may run normal independentQA1f GET; no Root in-flight business request.
 Actual receipts: ops/universal-product-20261028/photo/recovery-execution-20261031/.
 Frozen recovery packet and private proof remain .env.photo-files-png-20261031/;
 after negative journal/newattempt, inverse is prohibited. Retain compatible Reader.
