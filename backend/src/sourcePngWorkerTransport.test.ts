@@ -231,3 +231,34 @@ it("Host restart cannot run over an UNKNOWN durable lease", async () => {
   expect(f.events).toEqual([]);
   expect(await readFile(join(f.dir, "active-worker"), "utf8")).toBe("retained UNKNOWN");
 });
+
+
+it.each([31000, 90001])("bounds owning journal acknowledgements by the 90-second Source request budget: %i", async (elapsed) => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  let release!: () => void;
+  let entered!: () => void;
+  const waiting = new Promise<void>((resolve) => { release = resolve; });
+  const started = new Promise<void>((resolve) => { entered = resolve; });
+  try {
+    const f = await fixture();
+    f.owner.running.mockImplementation(async () => { entered(); await waiting; });
+    const result = f.call().then(
+      (value) => ({ value, error: undefined }),
+      (error: unknown) => ({ value: undefined, error }),
+    );
+    await started;
+    await vi.advanceTimersByTimeAsync(elapsed);
+    release();
+    const settled = await result;
+    if (elapsed < 90000) {
+      expect(settled.error).toBeUndefined();
+      expect(settled.value).toEqual(observation());
+    } else {
+      expect(settled.error).toBeInstanceOf(Error);
+      expect(settled.value).toBeUndefined();
+    }
+  } finally {
+    release?.();
+    vi.useRealTimers();
+  }
+});

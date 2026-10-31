@@ -93,7 +93,8 @@ export function createSourcePngWorkerServer(
       executing = false,
       seq = 0;
     let waiting: { seq: number; resolve(): void; reject(error: Error): void } | undefined;
-    const timer = setTimeout(() => socket.destroy(), 30000);
+    // Owning PG acknowledgements share the HTTP budget; decoder CPU remains separately bounded.
+    const timer = setTimeout(() => socket.destroy(), 90000);
     socket.on("error", () => {});
     socket.on("close", () => {
       clearTimeout(timer);
@@ -186,7 +187,7 @@ export function createSourcePngWorkerClient(socketPath: string) {
         running = false,
         ended = false,
         completed = false;
-      const timer = setTimeout(() => socket.destroy(Error("PNG_WORKER_TIMEOUT")), 30000);
+      const timer = setTimeout(() => socket.destroy(Error("PNG_WORKER_TIMEOUT")), 90000);
       socket.on("connect", () => send(socket, q));
       socket.on("error", () => reject(Error("PNG_WORKER_UNAVAILABLE")));
       socket.on("close", () => {

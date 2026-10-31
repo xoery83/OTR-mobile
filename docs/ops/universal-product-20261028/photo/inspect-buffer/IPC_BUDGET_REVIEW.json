@@ -1,0 +1,21 @@
+{
+  "status": "LOCAL_PASS_NO_BLOCKER",
+  "productionDiff": "Only PNG IPC client/server 30000\u219290000, matches existing Native/HTTP Source request budget",
+  "tests": {
+    "red": "31s owning ACK prematurely disconnects: 9 PASS /1 FAIL",
+    "green": "3 suites36 PASS",
+    "lint": "PASS"
+  },
+  "independentReview": "p1_source_review_independent NO_BLOCKER limited two files; no DEV or Source retry",
+  "unchanged": [
+    "decoder6s Docker client/1s CPU",
+    "Storage15s",
+    "Provider transport/budget",
+    "frame/sequence/owner/abort guards"
+  ],
+  "notProven": [
+    "unique actual503 root cause",
+    "successful Hosted source upload",
+    "Vision/Save"
+  ]
+}
