@@ -1,0 +1,12 @@
+{
+  "function": {
+    "acl": "{otr_trip_source_writer=X/otr_trip_source_writer}",
+    "md5": "184156c3861e9f50697b88d6774f124d",
+    "oid": "66243",
+    "owner": "otr_trip_source_writer"
+  },
+  "graphMD5": "bfd9f720aacddc7c877aba2d1786bc30",
+  "pdfClosed": true,
+  "pngClosed": true,
+  "schemaACLMD5": "31ac3b914f4ed0e7395a0278997ab2dd"
+}

@@ -476,7 +476,7 @@ it("single PNG checks fresh consent after Source assignment and before Task, ret
     bytes,
   });
   f.sourceTransport.mockReturnValue({
-    lookup: vi.fn(async () => ({ receipt: "owning" })),
+    lookup: vi.fn(async () => JSON.stringify({ receipt: "owning" })),
   });
   f.catalog.mockReturnValue({
     readUniversal: vi.fn(async () => ({ catalog: "owning" })),

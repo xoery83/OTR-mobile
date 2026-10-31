@@ -136,9 +136,23 @@ Rules/package/receipt template fixed; Import adopted, Auth and Native acknowledg
 publication-lock request. This document authorizes no additional SQL, Role,
 Provider, production access or scope extension.
 
-**PROCESS ADOPTED / LIVE RELEASE VALIDATION PENDING.** No artificial deployment,
-SQL activation or paid call was performed to demonstrate V2. Next natural eligible
-release must record all five actual times and prove short lock release before its
-business E2E. Photo pin repair is currently a candidate, not an approved release.
-No new Owner policy decision is needed for the procedural change; any new protected
-Photo function body/maintenance delta still needs its precise owning approval.
+**V2 DELIVERY PASS for the first natural release.** Owner approved Photo repair
+9bc5dea4 was installed CLOSED on the original DEV, independently verified, and
+its specific resource lock released before the normal Photo E2E. No extra release
+was manufactured for this demonstration. Five actual UTC events:
+
+| requestedAt | readyAt | acquiredAt | mutationFinishedAt | releasedAt |
+|---|---|---|---|---|
+| 2026-10-31T01:44:26.929496Z | 01:44:32.694603Z | 01:44:32.694866Z | 01:44:38.779959Z | 01:44:44.122507Z |
+
+Exclusive section ~11.43s; this is a measured single release, not an average or
+promised saving. [Actual receipt](universal-product-20261028/photo/first-lookup/v2-release-receipt.json)
+and [independent readback](universal-product-20261028/photo/first-lookup/dev-install-readback.json).
+Function identity/ACL and full graph/schema ACL preserved, PNG/PDF CLOSED,
+no Host/main change. Native/Auth were told the resource had been returned.
+
+Subsequent normal Photo Analyze acquired the same Source APPLIED but stopped on
+a Native receipt decoding bug; its separate finite business session was safely
+closed with compatible reader retained. That business failure does not invalidate
+publication lock release and is not a Photo E2E PASS. No second environment or
+new deployment platform was created. New protected changes still need exact Gates.

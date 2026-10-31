@@ -1,0 +1,32 @@
+{
+  "deliveryModel": "V2",
+  "resource": [
+    "DEV Source pin OID66243",
+    "SourceWriter existing postgres-grantor membership option maintenance",
+    "public schema ACL transaction restore"
+  ],
+  "workstream": "Import Photo",
+  "candidateSHA": "9bc5dea4",
+  "ownerApproved": true,
+  "requestedAt": "2026-10-31T01:44:26.929496Z",
+  "readyAt": "2026-10-31T01:44:32.694603Z",
+  "acquiredAt": "2026-10-31T01:44:32.694866Z",
+  "mutationFinishedAt": "2026-10-31T01:44:38.779959Z",
+  "releasedAt": "2026-10-31T01:44:44.122507Z",
+  "outcome": "INSTALLED_CLOSED_SERVER_VERIFIED",
+  "firstFailure": null,
+  "hostMutation": false,
+  "businessScopeActivated": false,
+  "noAutomaticRetry": true,
+  "writeDisposition": "ACKNOWLEDGED",
+  "releaseProof": {
+    "exactFunctionOidOwnerACL": true,
+    "preMD5": "d57dfe23f3b3b4b78188b34afb24323b",
+    "postMD5": "184156c3861e9f50697b88d6774f124d",
+    "graphRestored": true,
+    "schemaACLRestored": true,
+    "pngClosed": true,
+    "pdfClosed": true,
+    "receipt": "dev-install-readback.json"
+  }
+}

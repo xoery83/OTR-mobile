@@ -1,3 +1,22 @@
+# Latest real Photo / V2 release — 31 October 2026
+
+Owner-approved9bc5 single-pin repair actually installed CLOSED; independent
+OID66243/Owner/ACL/postMD5 plus entire membership graph/public ACL restoration PASS.
+V2 five events recorded; unique Source maintenance resource held~11.43s and released
+before business E2E. Native/Auth/MCP all adopted V2; no global QA reservation.
+See ops/DEV_DELIVERY_MODEL_V2.md and photo/first-lookup/v2-release-receipt.json.
+
+Same retained PNG Batch67842863 Source2bf0294a/operation37d5cd82 now ACQUIRE_SOURCE
+APPLIED/FINAL, materialrev1, exactSHA078de830/42630bytes, originalrepPENDING. No
+paid Vision or Save claimed. Next actual fail Native PNG_ORIGINAL validation:
+PNG adapter passed JSON string receipt into object schema; PDF already decodes.
+One-line JSON.parse fix + real-string mock RED→GREEN2s23PASS/typesPASS, independent
+NO_BLOCKER. Fourth scope d6ad6303 independently CLOSED/source before+after/runtime
+PASS; worker inactive/EMPTY and timers stopped. Accepted Source/receipt retained,
+no SQL reverse permitted. Next code-only AD5 update then same-identity recovery.
+Native prepares versionGET Host switch lock-free; before next Photo session,
+re-anchor/verify close plan if its container changes. No live Host/SQL lock held.
+
 # Latest Import Photo / DEV delivery checkpoint — 31 October 2026
 
 V2 resource-scoped delivery adopted (Owner instruction): ordinary authorized QA
