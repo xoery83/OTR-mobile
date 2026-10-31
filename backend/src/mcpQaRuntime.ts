@@ -11,15 +11,24 @@ import { mcpIngressBodyLimit } from "./mcpIngress";
 const qaAccount = "1f3d7935-1bdc-4952-8d7f-0f72077368c1";
 const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1";
 const resource = "https://api-dev.xoery.art/mcp";
-const configSchema = z.strictObject({
-  version: z.literal(1),
-  clientId: z.uuid(),
-  redirectUris: z.tuple([
-    z.literal("https://chatgpt.com/connector/oauth/CYUxrs56rSrW"),
-    z.literal("http://127.0.0.1:18764/callback"),
-  ]),
-  expiresAt: z.number().int().positive(),
-});
+const configSchema = z
+  .strictObject({
+    version: z.literal(1),
+    clientId: z.uuid(),
+    redirectUris: z.union([
+      z.tuple([
+        z.literal("https://chatgpt.com/connector/oauth/CYUxrs56rSrW"),
+        z.literal("http://127.0.0.1:18764/callback"),
+      ]),
+      z.tuple([z.literal("https://claude.ai/api/mcp/auth_callback")]),
+    ]),
+    expiresAt: z.number().int().positive(),
+  })
+  .refine(
+    (config) =>
+      config.redirectUris.length !== 1 ||
+      config.clientId !== "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  );
 type ModulePort = {
   createReadRuntime(options: {
     issuer: string;
