@@ -43,6 +43,13 @@ readback/Day/cold/idempotence → close. No new fixture/call on UNKNOWN. Origina
 hard expiry2026-11-01T08:48:56Z, <=60m/+45close/+50watchdog bounds unchanged.
 No Root main/push changes; main fresh HEAD must be checked before any integration.
 
+Lock-free follow-up coding fixed in ce7700cf (Import diagnostic stage moves to actual
+Task callback) and 725b7779 (one fixed bounded client error code retained). Native
+explicitly handed off and received back client.ts/client.test.ts Writer; both base
+blobs matched fresh main/origin a7. 42 affected client/hook/transport checks, lint
+and independent review PASS. Neither Native patch is installed on AD5; no Host,
+Auth, retry, permission, main or paid-call change. Protected guard remains pending.
+
 Older checkpoints below are historical and superseded by the current header.
 
 # Photo approved execution — 31 October 2026
