@@ -1,0 +1,33 @@
+{
+  "status": "ACCEPTED_SLICE_READY_FOR_SERIAL_MAIN_INTEGRATION",
+  "commit": "884ca8e0",
+  "branch": "codex/auth-oauth-main-slice-20261031",
+  "worktree": "/private/tmp/otr-auth-oauth-main-slice-20261031",
+  "baseMain": "8f79a4214d39b7f174ef61a82aa27d31b10a8156",
+  "authEvidenceCommit": "407eb2fc",
+  "mcpEvidenceCommits": [
+    "81ba6d93",
+    "4b2c794a"
+  ],
+  "independentReview": "NO_BLOCKER_CURATED_SOURCE_ONLY",
+  "nativeUiOwningReview": "Direct Native reply: fixed d5419150 four-file canonical extraction NO_BLOCKER; no other Form/Nav/DatePicker change",
+  "validation": {
+    "suites": 9,
+    "tests": 130,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "uiGuard": "PASS",
+    "browserBuild": "PASS",
+    "runtimeBuild": "PASS",
+    "closedSmoke": "PASS3"
+  },
+  "defaultClosed": true,
+  "devActivationFromMerge": false,
+  "excluded": [
+    "Parent create-receipt route",
+    "Profile candidate",
+    "SQL/config activation",
+    "other lanes worktrees or source overwrite"
+  ],
+  "mainIntegration": "Requested Root unique Writer FF/push with fresh HEAD and six-dirty-file preservation; no receipt yet"
+}

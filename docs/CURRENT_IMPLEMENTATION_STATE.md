@@ -184,6 +184,10 @@ recipient lease. See chatgpt-consumer-window/{CHATGPT_REAL_E2E.json,
 HOOK_CLOSE_RECONCILIATION.json,POST_REVOKE_MCP_LOG.json,RUNTIME_CLOSE_RECEIPT.json}.
 Software/source integration remains separate and default closed; no Beta always-on
 OAuth readiness or private Data/Storage qualification claimed.
+Accepted source assembled from fresh main8f into independent codex/auth-oauth-main-
+slice-20261031 at884ca8e0, without Parent/Profile candidates. 9s130/types/lint/UIguard/
+browser+runtimebuild/closedsmoke PASS; independent curated-source and Native fixed
+d541 UI extraction NO_BLOCKER. Root serial FF/push requested, not yet confirmed.
 Parent Gate private hook/client installation remains traceable, no new RLS/role.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
