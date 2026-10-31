@@ -144,7 +144,10 @@ old two routines, Gateway flags/old EXEC and no-table-SELECT unchanged. Five tim
 recorded; resource released/Writer returned Root. No Host deploy or actual reader/
 HTTP/Native caller activation; current approval explicitly keeps these closed.
 See HOSTED_INSTALL_REAL_RECEIPT.json and OWNER_APPROVAL_DIRECT.json. This proves
-closed SQL installation, not native Add or new function business-user E2E. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
+closed SQL installation, not native Add or new function business-user E2E.
+Latest Native-reported Host baseline is a6ddadb4/image1b031de1/source45951de8
+(dedb+versionGET only; Env/mounts/SQL/Auth flags preserved). Future Auth software
+integration must retain this version port, not roll back the old default image. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
