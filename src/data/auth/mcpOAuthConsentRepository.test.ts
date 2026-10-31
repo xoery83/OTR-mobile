@@ -121,6 +121,40 @@ it.each(["client", "redirect", "account", "scope", "authorization"])(
   },
 );
 
+it.each(["openid offline_access", "offline_access openid"])(
+  "accepts only the read identity and refresh protocol scopes: %s",
+  async (scope) => {
+    const q = fixture();
+    q.oauth.getAuthorizationDetails.mockResolvedValue({
+      data: { ...q.details, scope }, error: null,
+    });
+    await q.repo.decide(true);
+    expect(q.oauth.approveAuthorization).toHaveBeenCalledOnce();
+  },
+);
+
+it.each(["offline_access", "openid offline_access email", "openid offline_access offline_access", "openid profile"])(
+  "refuses any expanded or duplicate provider scopes: %s",
+  async (scope) => {
+    const q = fixture();
+    q.oauth.getAuthorizationDetails.mockResolvedValue({ data: { ...q.details, scope }, error: null });
+    await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+    expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  },
+);
+
+it.each([
+  { scope: ["openid"] }, { scope: ["openid offline_access"] },
+  { scope: null }, { scope: { value: "openid" } },
+])("refuses non-string scope metadata: $scope", async ({ scope }) => {
+  const q = fixture();
+  q.oauth.getAuthorizationDetails.mockResolvedValueOnce({
+    data: { ...q.details, scope: scope as unknown as string }, error: null,
+  });
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+});
+
 it.each(["foreign", "anonymous"])(
   "refuses %s login before reading grants",
   async (mode) => {

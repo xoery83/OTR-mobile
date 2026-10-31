@@ -184,7 +184,7 @@ export function createMcpOAuthConsentRepository(
       data.user.id !== identity.user.id ||
       !config.redirectUris.includes(data.redirect_uri) ||
       (expectedRedirect !== undefined && data.redirect_uri !== expectedRedirect) ||
-      data.scope !== "openid"
+      !["openid", "openid offline_access", "offline_access openid"].includes(data.scope)
     )
       throw new McpConsentError("REQUEST_CHANGED");
     expectedRedirect = data.redirect_uri;
