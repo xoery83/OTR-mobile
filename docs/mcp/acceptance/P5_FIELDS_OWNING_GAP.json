@@ -1,0 +1,20 @@
+{
+  "status": "PROTECTED_PORT_GAP_REQUIRES_OWNING_WRITER_QUALIFICATION",
+  "operationId": "b8ce0943-957f-4910-8d93-ef4d2bf46c7e",
+  "itemId": "bf5f0238-1def-4f87-afa2-a3d1bf79ca31",
+  "actualPostHttpStatus": 503,
+  "actualPostDurationMs": 29524,
+  "unknownRetained": true,
+  "totalPostCount": 2,
+  "thirdPostBlocked": true,
+  "function": "public.trip_core_guard_write()",
+  "readbackDdlSha256": "90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef",
+  "missingTable": "public.trip_transport_operational_facts",
+  "requestFact": "P5 CHECKIN civil08:45",
+  "finding": "Actual scoped MANUAL table allowlist excludes operational facts; this command reaches a protected table not authorized by the current scoped guard.",
+  "notAQualificationProbe": "Direct admin invocation of session-bound scope_allowed is not a Gateway qualification; its false result was not used as proof.",
+  "next": "Core unique Writer reproduce against exact Hosted guard; supply minimal approved protected delta or declare field unsupported. No permission/SQL change in MCP.",
+  "sameOperationAndIntentRequired": true,
+  "newScopeGranted": false,
+  "realOwnerDataWritten": false
+}

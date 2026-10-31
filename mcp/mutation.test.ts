@@ -1,3 +1,4 @@
+import { itemSchema } from "./contract";
 import { tripCreateBoundary } from "../backend/src/tripCreate";
 import { buildCoreActorCollection } from "../backend/src/tripCoreV2Collection";
 import { verifyGoldenReadback } from "./goldenReadback";
@@ -24,6 +25,7 @@ import {
   type ConfirmChanges,
 } from "./mutation";
 import { createBatchTools } from "./batch";
+import { batchOutput } from "./mutationContract";
 import type { createReadTools } from "./read";
 const account = randomUUID(),
   trip = randomUUID(),
@@ -69,6 +71,8 @@ function fixture() {
             "CREATE_ITEM",
             "SET_ITEM_TEXT",
             "SET_ITEM_SCHEDULE",
+            "CREATE_SPARSE_FLIGHT",
+            "SET_AUTHORED_FLIGHT_DETAILS",
           ],
           readLockedGraph: async () => graph,
           verifyAdmission: async () => {},
@@ -760,5 +764,493 @@ it("refuses date edits when the owning read returns a different Item identity", 
   expect(
     await guarded.execute(p, "APPLY", mutationIdentity(account, p).preview_digest),
   ).toMatchObject({ outcome: "REJECTED", error_code: "CURRENT_ITEM_SCOPE_MISMATCH" });
+  expect(f.posts()).toBe(1);
+});
+
+it.each(["P1", "P3", "P4"])(
+  "stores %s civil clocks and typed fields through existing Core, never a fake instant/Booking",
+  async (family) => {
+    const f = fixture(),
+      tools = createMutationTools(context(f.backend));
+    const prepared = tools.prepareCreate({
+      request_id: randomUUID(),
+      trip_id: trip,
+      item: {
+        family,
+        title: "Synthetic timed QA",
+        dates: {
+          start_date: "2026-12-10",
+          start_time: "11:00",
+          start_zone: "Pacific/Auckland",
+          end_date: "2026-12-12",
+          end_time: "10:00",
+          end_zone: "Pacific/Auckland",
+        },
+        place: "Synthetic pickup",
+        place_address: "Synthetic address",
+        ...(family === "P3"
+          ? {
+              property_name: "QA Lodge",
+              stay: { permitted_checkin_from: "14:00", permitted_checkout_by: "10:00" },
+            }
+          : {}),
+        ...(family === "P4"
+          ? {
+              return_place: "Synthetic return",
+              rental: {
+                supplier: "QA Rental",
+                reserved_category: "Reserved QA class",
+                or_similar: true,
+              },
+            }
+          : {}),
+      },
+    });
+    const result = await tools.execute(
+      prepared,
+      "APPLY",
+      mutationIdentity(account, prepared).preview_digest,
+    );
+    expect(result).toMatchObject({ outcome: "APPLIED", current_revision: 1 });
+    const row = itemSchema.parse(projectCoreItem(f.graph(), actor, result.item_id!));
+    expect(row.schedule.start).toMatchObject({
+      localDate: "2026-12-10",
+      localTime: "11:00:00",
+      zoneId: "Pacific/Auckland",
+      quality: "ESTIMATED",
+    });
+    expect(row.schedule.start).not.toHaveProperty("instant");
+    expect(f.graph().itinerary_reservations).toHaveLength(0);
+    const proof = {
+      rows: [
+        {
+          evidence: {
+            itemCount: 1,
+            items: f.graph().itinerary_events,
+            stay: f.graph().trip_stay_details[0] ?? null,
+            rental: f.graph().trip_rental_details[0] ?? null,
+            rentalPlaces: f.graph().trip_rental_places,
+            receipt: JSON.parse(f.receipts.get(result.operation_id)!.receiptText),
+          },
+        },
+      ],
+    };
+    expect(await verifyGoldenReadback(proof, prepared, account)).toHaveProperty(
+      "status",
+      "SERVER_VERIFIED",
+    );
+    if (family === "P3")
+      expect(row.details).toMatchObject({
+        permittedCheckinFrom: "14:00",
+        permittedCheckoutBy: "10:00",
+      });
+    if (family === "P4")
+      expect(row.details).toMatchObject({
+        supplier: "QA Rental",
+        reservedCategory: "Reserved QA class",
+        orSimilar: true,
+        returnPlace: { authoredLabel: "Synthetic return" },
+      });
+  },
+);
+
+it("creates a typed water taxi with independent check-in and unknown arrival preserved", async () => {
+  const f = fixture(),
+    tools = createMutationTools(context(f.backend));
+  const prepared = tools.prepareCreate({
+    request_id: randomUUID(),
+    trip_id: trip,
+    item: {
+      family: "P5",
+      title: "Synthetic QA water taxi",
+      dates: { start_date: "2026-12-10", start_time: "09:00" },
+      transport: {
+        subtype: "WATER_TAXI",
+        origin: "Synthetic village",
+        destination: "Synthetic jetty",
+        checkin: { date: "2026-12-10", time: "08:45" },
+      },
+    },
+  });
+  const result = await tools.execute(
+    prepared,
+    "APPLY",
+    mutationIdentity(account, prepared).preview_digest,
+  );
+  expect(result.outcome).toBe("APPLIED");
+  const row = itemSchema.parse(projectCoreItem(f.graph(), actor, result.item_id!));
+  expect(row.schedule.origin?.time).toMatchObject({
+    localTime: "09:00:00",
+    quality: "ESTIMATED",
+  });
+  expect(row.schedule.destination?.time.localTime).toBeUndefined();
+  expect(row.details).toMatchObject({
+    service: { transportSubtype: "WATER_TAXI", operatorLiteral: "" },
+    operationalFacts: [{ role: "CHECKIN", time: { localTime: "08:45:00" } }],
+  });
+  expect(f.graph().itinerary_reservations).toHaveLength(0);
+  const proof = {
+    rows: [
+      {
+        evidence: {
+          itemCount: 1,
+          items: f.graph().itinerary_events,
+          stay: null,
+          transportEndpoints: structuredClone(f.graph().itinerary_transport_endpoints),
+          transportServices: f.graph().itinerary_transport_services,
+          operationalFacts: structuredClone(f.graph().trip_transport_operational_facts),
+          receipt: JSON.parse(f.receipts.get(result.operation_id)!.receiptText),
+        },
+      },
+    ],
+  };
+  expect(await verifyGoldenReadback(proof, prepared, account)).toHaveProperty(
+    "status",
+    "SERVER_VERIFIED",
+  );
+  proof.rows[0].evidence.transportEndpoints.find((p) => p.role === "ORIGIN")!.local_time =
+    "09:01:00";
+  await expect(verifyGoldenReadback(proof, prepared, account)).rejects.toThrow(
+    "INDEPENDENT_EXPECTED_FIELD_MISMATCH:local_time",
+  );
+  proof.rows[0].evidence.transportEndpoints.find((p) => p.role === "ORIGIN")!.local_time =
+    "09:00:00";
+  proof.rows[0].evidence.operationalFacts[0].local_time = "08:46:00";
+  await expect(verifyGoldenReadback(proof, prepared, account)).rejects.toThrow(
+    "INDEPENDENT_EXPECTED_FIELD_MISMATCH:local_time",
+  );
+});
+
+it("edits a complete authored civil schedule with CAS and refuses date-only time/zone loss", async () => {
+  const f = fixture(),
+    tools = createMutationTools(context(f.backend));
+  const p = tools.prepareCreate({
+    ...create(),
+    item: {
+      ...create().item,
+      dates: {
+        start_date: "2026-12-10",
+        start_time: "15:00",
+        start_zone: "Pacific/Auckland",
+        end_date: "2026-12-12",
+      },
+    },
+  });
+  const created = await tools.execute(
+    p,
+    "APPLY",
+    mutationIdentity(account, p).preview_digest,
+  );
+  const guarded = createMutationTools({
+    ...context(f.backend),
+    read: async () => Response.json(projectCoreItem(f.graph(), actor, created.item_id!)!),
+  });
+  const change = {
+    kind: "SCHEDULE",
+    dates: {
+      start_date: "2026-12-11",
+      start_time: "16:00",
+      start_zone: "Pacific/Auckland",
+      end_date: "2026-12-13",
+    },
+  };
+  const edit = guarded.prepareUpdate({
+    request_id: randomUUID(),
+    trip_id: trip,
+    item_id: created.item_id,
+    expected_revision: 1,
+    change,
+  });
+  expect((await guarded.execute(edit, "PREVIEW")).outcome).toBe("PREVIEW");
+  expect(
+    await guarded.execute(edit, "APPLY", mutationIdentity(account, edit).preview_digest),
+  ).toMatchObject({ outcome: "APPLIED", current_revision: 2 });
+  expect(
+    itemSchema.parse(projectCoreItem(f.graph(), actor, created.item_id!)).schedule.start,
+  ).toMatchObject({ localDate: "2026-12-11", localTime: "16:00:00" });
+  const lossy = guarded.prepareUpdate({
+    request_id: randomUUID(),
+    trip_id: trip,
+    item_id: created.item_id,
+    expected_revision: 2,
+    change: {
+      kind: "DATES",
+      dates: { start_date: "2026-12-12", end_date: "2026-12-14" },
+    },
+  });
+  expect(await guarded.execute(lossy, "PREVIEW")).toMatchObject({
+    outcome: "REJECTED",
+    error_code: "DATE_EDIT_REQUIRES_OWNING_TEMPORAL_ADAPTER",
+  });
+  expect(f.posts()).toBe(2);
+});
+
+it("keeps existing accepted QA operation digests unchanged after field expansion", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const old = JSON.parse(
+    await readFile(
+      new URL("../docs/mcp/acceptance/NELSON_ATTEMPT_01.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  for (const prior of old.preview.operations) {
+    const item = JSON.parse(prior.summary.slice(prior.summary.indexOf(": ") + 2));
+    const prepared = prepareCreate(old.accountId, {
+      request_id: prior.operation_id,
+      trip_id: prior.trip_id,
+      item,
+    });
+    expect(mutationIdentity(old.accountId, prepared)).toMatchObject({
+      item_id: prior.item_id,
+      preview_digest: prior.preview_digest,
+    });
+  }
+});
+
+it("rejects invalid civil clocks/zones, reversed same-zone spans and wrong-family fields before dispatch", () => {
+  for (const patch of [
+    { dates: { start_date: "2026-12-10", start_time: "24:00" } },
+    { dates: { start_date: "2026-12-10", start_time: "09:00", start_zone: "Not/AZone" } },
+    {
+      dates: {
+        start_date: "2026-12-10",
+        start_time: "10:00",
+        end_date: "2026-12-10",
+        end_time: "09:00",
+      },
+    },
+    { dates: { start_date: "2026-12-10", end_time: "09:00" } },
+    { family: "P1", rental: { supplier: "QA" } },
+    { family: "P5" },
+    { family: "P3", return_place: "QA" },
+  ])
+    expect(() =>
+      prepareCreate(account, { ...create(), item: { ...create().item, ...patch } }),
+    ).toThrow();
+});
+
+it("retains sparse flight route/clocks via a separate current-revision owning operation", async () => {
+  const f = fixture(),
+    tools = createMutationTools(context(f.backend));
+  const q = {
+    request_id: randomUUID(),
+    trip_id: trip,
+    item: {
+      family: "P2",
+      title: "Synthetic QA flight",
+      flight_number: "QA123",
+      dates: { start_date: "2026-12-10" },
+    },
+  };
+  const p = tools.prepareCreate(q);
+  expect(p.kind === "ITEM" && p.command.command).toBe("CREATE_SPARSE_FLIGHT");
+  const first = await tools.execute(
+    p,
+    "APPLY",
+    mutationIdentity(account, p).preview_digest,
+  );
+  expect(first).toMatchObject({ outcome: "APPLIED", current_revision: 1 });
+  await expect(
+    verifyGoldenReadback(
+      {
+        rows: [
+          {
+            evidence: {
+              itemCount: 1,
+              items: f.graph().itinerary_events,
+              stay: null,
+              receipt: JSON.parse(f.receipts.get(first.operation_id)!.receiptText),
+            },
+          },
+        ],
+      },
+      p,
+      account,
+    ),
+  ).rejects.toThrow("INDEPENDENT_EXPECTED_COMMAND_UNSUPPORTED");
+  const guarded = createMutationTools({
+    ...context(f.backend),
+    read: async () => Response.json(projectCoreItem(f.graph(), actor, first.item_id!)!),
+  });
+  const change = {
+    kind: "FLIGHT_DETAILS",
+    flight_number: "QA123",
+    origin: {
+      date: "2026-12-10",
+      time: "09:00",
+      zone: null,
+      airport_code: "AKL",
+      name: "Auckland",
+      terminal: null,
+    },
+    destination: {
+      date: "2026-12-10",
+      time: "10:35",
+      zone: null,
+      airport_code: "NSN",
+      name: "Nelson",
+      terminal: null,
+    },
+  };
+  const edit = guarded.prepareUpdate({
+    request_id: randomUUID(),
+    trip_id: trip,
+    item_id: first.item_id,
+    expected_revision: 1,
+    change,
+  });
+  expect((await guarded.execute(edit, "PREVIEW")).outcome).toBe("PREVIEW");
+  const result = await guarded.execute(
+    edit,
+    "APPLY",
+    mutationIdentity(account, edit).preview_digest,
+  );
+  expect(result).toMatchObject({ outcome: "APPLIED", current_revision: 2 });
+  const row = itemSchema.parse(projectCoreItem(f.graph(), actor, first.item_id!));
+  expect(edit.summary).toContain("Core also sets the Item title");
+  expect(row.title).toBe("QA123");
+  expect(row.details).toMatchObject({
+    qualification: "SPARSE",
+    flightNumberLiteral: "QA123",
+    services: [],
+  });
+  expect(row.schedule.origin).toMatchObject({
+    airportCode: "AKL",
+    time: { localTime: "09:00:00", quality: "ESTIMATED" },
+  });
+  expect(row.schedule.destination).toMatchObject({
+    airportCode: "NSN",
+    time: { localTime: "10:35:00" },
+  });
+  expect(f.graph().itinerary_reservations).toHaveLength(0);
+  expect(f.posts()).toBe(2);
+  expect(
+    (await guarded.execute(edit, "APPLY", mutationIdentity(account, edit).preview_digest))
+      .outcome,
+  ).toBe("APPLIED");
+  expect(f.posts()).toBe(2);
+  const closed = createMutationTools({
+    ...context(f.backend),
+    read: async () =>
+      Response.json({ ...row, details: { ...row.details, qualification: "QUALIFIED" } }),
+  });
+  const qualifiedEdit = closed.prepareUpdate({
+    request_id: randomUUID(),
+    trip_id: trip,
+    item_id: first.item_id,
+    expected_revision: 2,
+    change,
+  });
+  expect(await closed.execute(qualifiedEdit, "PREVIEW")).toMatchObject({
+    outcome: "REJECTED",
+    error_code: "FLIGHT_EDIT_REQUIRES_SPARSE_AUTHORED_ITEM",
+  });
+  expect(() =>
+    tools.prepareCreate({
+      ...q,
+      item: { ...q.item, dates: { start_date: "2026-12-10", start_time: "09:00" } },
+    }),
+  ).toThrow();
+  expect(() =>
+    guarded.prepareUpdate({
+      request_id: randomUUID(),
+      trip_id: trip,
+      item_id: first.item_id,
+      expected_revision: 2,
+      change: { ...change, destination: { date: "2026-12-10" } },
+    }),
+  ).toThrow();
+});
+
+it("allows a slow Core POST inside the existing total budget without resubmitting", async () => {
+  const f = fixture();
+  vi.useFakeTimers();
+  try {
+    const tools = createMutationTools(
+      context(async (q, signal) => {
+        if (q.method === "POST") {
+          await new Promise((resolve) => setTimeout(resolve, 20000));
+          signal.throwIfAborted();
+        }
+        return f.backend(q, signal);
+      }),
+    );
+    const p = tools.prepareCreate(create());
+    const pending = tools.execute(
+      p,
+      "APPLY",
+      mutationIdentity(account, p).preview_digest,
+    );
+    await vi.advanceTimersByTimeAsync(20001);
+    expect((await pending).outcome).toBe("APPLIED");
+    expect(f.posts()).toBe(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("returns typed proposals and current UPDATE bases without rebasing or changing stable operation digests", async () => {
+  const f = fixture(),
+    ctx = context(f.backend),
+    tools = createMutationTools(ctx);
+  const prepared = tools.prepareCreate(create());
+  const accepted = await tools.execute(
+    prepared,
+    "APPLY",
+    mutationIdentity(account, prepared).preview_digest,
+  );
+  let current = itemSchema.parse(projectCoreItem(f.graph(), actor, accepted.item_id!));
+  const reads = {
+    list_trip_items: async () => ({ items: [current], next_cursor: null }),
+    get_trip_item: async () => ({ item: current }),
+  } as unknown as ReturnType<typeof createReadTools>;
+  const { trip_id: _, ...newItem } = create();
+  const plan = {
+    trip_id: trip,
+    changes: [
+      {
+        kind: "CREATE",
+        ...newItem,
+        item: {
+          ...newItem.item,
+          dates: {
+            start_date: "2026-12-10",
+            end_date: "2026-12-11",
+            start_time: "14:00",
+            start_zone: "Pacific/Auckland",
+          },
+        },
+      },
+      {
+        kind: "UPDATE",
+        request_id: randomUUID(),
+        item_id: current.itemId,
+        expected_revision: 1,
+        change: {
+          kind: "TEXT",
+          title: "Updated QA stay",
+          notes: "Explicit replacement note",
+        },
+      },
+    ],
+  };
+  const batch = createBatchTools(ctx, tools, reads);
+  const first = batchOutput.parse(await batch.preview_trip_changes(plan));
+  expect(first.review[0].proposed_change).toEqual(plan.changes[0]);
+  expect(first.review[0].update_base).toBeNull();
+  expect(first.review[0].possible_duplicate_item_ids).toEqual([current.itemId]);
+  expect(first.review[1].update_base).toEqual(current);
+  expect(first.review[1].proposed_change).toEqual(plan.changes[1]);
+  expect(f.posts()).toBe(1); // Only fixture setup; Preview never writes.
+  current = { ...current, itemRevision: 2, description: "Changed on another device" };
+  const second = batchOutput.parse(await batch.preview_trip_changes(plan));
+  expect(second.review[1].update_base?.itemRevision).toBe(2);
+  expect(second.review[1].proposed_change).toEqual(plan.changes[1]);
+  expect(second.warnings).toContain(`STALE_REVISION:${current.itemId}`);
+  expect(second.preview_digest).toBe(first.preview_digest);
+  current = { ...current, title: "A different stay" };
+  const third = await batch.preview_trip_changes(plan);
+  expect(third.review[0].possible_duplicate_item_ids).toEqual([]);
+  expect(third.preview_digest).not.toBe(first.preview_digest);
   expect(f.posts()).toBe(1);
 });

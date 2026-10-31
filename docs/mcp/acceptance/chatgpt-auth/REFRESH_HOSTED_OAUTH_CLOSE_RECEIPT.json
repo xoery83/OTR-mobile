@@ -1,0 +1,13 @@
+{
+  "status": "OAUTH_OFF_HOOK_DISABLED_ORIGINAL_SITE_URL_INDEPENDENTLY_VERIFIED",
+  "observedAt": "2026-10-31T07:51:28.638768Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "oauthServerEnabled": false,
+  "hookEnabled": false,
+  "siteUrl": "http://localhost:3000",
+  "hookUriRetained": false,
+  "uriReadback": null,
+  "newGrantOrRole": false,
+  "dashboardPublicExecuteGrantCancelledNotExecuted": true,
+  "note": "This consumer window: Hook body independently closed; grant DELETE204; normal control Session logout/refresh denial PASS. Retained default runtime restored, Server/Site saved via Dashboard, sparse Hook-only disable then independent config projection and private ACL readback passed. Raw control wrapper FAIL_OR_UNKNOWN is retained; first-close cause unqualified."
+}

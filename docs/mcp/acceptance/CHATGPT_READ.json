@@ -1,0 +1,87 @@
+{
+  "status": "PASS_CHATGPT_OAUTH_AND_LIST_TRIPS_ONLY",
+  "recordedAt": "2026-10-31T07:50:33.234935+00:00",
+  "client": "ChatGPT web custom MCP plugin",
+  "pluginId": "plugin_asdk_app_6ae59a2086a481918a9d9bef984507ef",
+  "conversationUrl": "https://chatgpt.com/c/6ae59c39-79e4-83ec-a1fc-904e2384396d",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "oauthClientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "ownerConfirmed": true,
+  "freshFiniteWindowExpiresAt": "2026-10-31T08:00:00Z",
+  "metadataDiscovery": "PASS",
+  "normalLogin": "Fresh QA email OTP in original Consent browser tab; code memory only, never emitted or persisted",
+  "otpRequestObservedAt": "2026-10-31T07:40:46.927Z",
+  "explicitConsent": "Allowed read Trips and Items only; no mutations/Ledger/raw files",
+  "callback": "PASS_RETURNED_TO_CHATGPT_INSTALLED_PLUGIN",
+  "actualRead": {
+    "tool": "list_trips",
+    "result": "SERVER_CONFIRMED",
+    "tripCount": 4,
+    "trips": [
+      {
+        "name": "Native04 Unified126 Cloud",
+        "id": "41886054-5c86-45c1-a3ce-cbe530532bde"
+      },
+      {
+        "name": "Native05 iPad QA 1031",
+        "id": "8b5ceb55-b3c2-462a-9a15-59de91fdabe5"
+      },
+      {
+        "name": "MCP Synthetic Nelson QA 20261031",
+        "id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2"
+      },
+      {
+        "name": "iPad First Account 1030 · Remote",
+        "id": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28"
+      }
+    ],
+    "next_cursor": null,
+    "evidenceBasis": "Actual consumer tool activity and rendered answer with exact known QA identities, plus owning Host HTTP evidence; not raw response-body hash verification"
+  },
+  "postRevokeRead": {
+    "sameConnection": true,
+    "freshCallRequested": true,
+    "outcome": "CALL_FAILED_NO_FRESH_DATA",
+    "exactError": "Script error: The tool failed internally.",
+    "cause": "NOT_EXPOSED_BY_CLIENT",
+    "explicitAuthErrorQualified": false,
+    "reconnectedOrReauthorized": false,
+    "serverDenial": "PASS_MCP_401_WHILE_ROUTE_STILL_AVAILABLE",
+    "serverRequests": [
+      "c70ccb89-12f1-45ed-8730-ee9b818f1b01",
+      "a1b3f072-dfb5-4bf9-9235-9df71907c322"
+    ],
+    "serverEvidence": "chatgpt-auth/POST_REVOKE_MCP_LOG.json"
+  },
+  "notTestedInConsumer": [
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item",
+    "foreign private denial",
+    "Create/Edit",
+    "refresh internals"
+  ],
+  "realOwnerNelsonAccessed": false,
+  "businessWritePerformed": false,
+  "secretsOrOtpRecorded": false,
+  "authCleanup": {
+    "finalIndependentState": "PASS_CLOSED_GRANT204_DEFAULT_HEALTHY_CONFIG_OFF_PRIVATE_ACL_UNCHANGED",
+    "rawControlWrapper": "FAIL_OR_UNKNOWN_NO_AUTOMATIC_OTP_OR_CLIENT_RETRY",
+    "firstCloseFailureCause": "UNQUALIFIED_NOT_RECORDED",
+    "rawResultRewritten": false,
+    "reconciliation": "chatgpt-auth/HOOK_CLOSE_RECONCILIATION.json",
+    "runtime": "chatgpt-auth/RUNTIME_CLOSE_RECEIPT.json",
+    "oauthConfig": "chatgpt-auth/REFRESH_HOSTED_OAUTH_CLOSE_RECEIPT.json"
+  },
+  "proofImages": {
+    "read": {
+      "file": "CHATGPT_READ.jpg",
+      "sha256": "c609498ff2b5911e9203a5bd33e266280e53b46287031f0fae5e35ad33f6ee38"
+    },
+    "revoke": {
+      "file": "CHATGPT_REVOKE.jpg",
+      "sha256": "25f310c6504fe6b0e01f82a6da43360681a48fda3d6c145db18d6d0dae916849"
+    }
+  }
+}

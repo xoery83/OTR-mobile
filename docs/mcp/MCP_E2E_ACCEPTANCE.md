@@ -1,17 +1,17 @@
 # MCP E2E acceptance — 31 October 2026
 
-Current: **LOCAL implementation verified; actual internal DEV Read PASS; public OAuth
-BLOCKED_BY_OWNING_INTERFACE**. No new real-use PASS is claimed by code/tests.
-Historical 29 October normal OTP/discovery evidence remains separate.
+Current: real finite-QA SDK OAuth Read/refresh/revoke PASS, and actual ChatGPT
+OAuth + list_trips PASS. Consumer Item reads/Write, Claude and Native date edit
+remain incomplete. Final independent Auth restoration passed; raw cleanup wrapper failure is retained.
 
-| User outcome                       | Current evidence / limit                                                                                                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| AI reads an OTR Trip/P3            | Real standard SDK4 tools, Trip list independentMATCH,3 Item summaries, P3 full detail independent hashMATCH, foreign private404; normal own Session cleanupPASS. Earlier failures retained below |
-| AI creates/edits cloud Item        | One fixed P3 Create POST recovered to formal APPLIED/rev1; independent Supabase full fields/receipt/unique row MATCH. Edit waits Native details readiness                                        |
-| iPad automatically sees same Item  | New MCP P3 automatically displayed its property card; first sample ~44s after commit. Original title-only monitor miss corrected; Edit/latest-revision check pending                             |
-| Nelson Preview/Confirm/Apply       | Three-day synthetic preview/partial/replay path implemented and tested; actual DEV/new-Trip/iPad proof pending. Real Owner plan untouched                                                        |
-| ChatGPT / Claude actual connection | NOT_TESTED: public OAuth grant/revocation/binding contract and approved mount absent. No paid-plan/region compatibility claim                                                                    |
-| Extended domains                   | Future owning interfaces only; no new domain adapters/authority                                                                                                                                  |
+| User outcome | Current evidence / limit |
+| --- | --- |
+| AI reads an OTR Trip/P3 | Public SDK OAuth own Trip/P3 and foreign denial PASS; ChatGPT actual OAuth/list_trips4 PASS. Consumer Item reads remain untested. |
+| AI creates/edits cloud Item | P3 formal APPLIED rev1→2, independent expected full-row/receipt/unique1 and same-op replay PASS. New P5 CHECKIN attempt remains UNKNOWN/owning guard gap. |
+| iPad sees same Item | P3 automatic Create property card and exact UUID cold Viewer PASS. Core-title Edit not directly observable; Nelson original Dec11 observed; date Edit blocked by pre-submit receipt read. |
+| Nelson Preview/Confirm/Apply | Synthetic Trip/three Items APPLIED with independent expected receipts/rows; partial recovery retained. Existing P1 date Edit NOT_SENT. Real Owner25 candidates are private source preview only. |
+| ChatGPT / Claude actual connection | ChatGPT real OAuth/list_trips4 PASS; exact Item/Write/revoke semantics incomplete. Claude NOT_TESTED. |
+| Extended domains | Future owning interfaces only; no new domain authority. |
 
 ## Source and focused verification
 
@@ -19,7 +19,7 @@ Fresh fetched accepted main42652324 was the start base; no historical SHA chosen
 as current architecture. MCP work remains in its independent branch/worktree.
 Existing mandatory product/architecture/API/read/receipt contracts reused.
 
-Current focused tests32 PASS: official SDK loopback discovery/calls, signed JWT
+Phase1 focused tests32 PASS (historical checkpoint): official SDK loopback discovery/calls, signed JWT
 issuer/audience/scope/client/grant negatives, actual Core command/receipt create/
 text edit/CAS, response loss and same-operation replay; three-item partial Apply
 and accepted UPDATE batch resume; full reviewable changed fields; timed-date loss
@@ -178,3 +178,140 @@ explicit Native observation of P1 Dec11 precedes its fixed CAS1 date move toDec1
 Dedicated date-only QA entry will not repeat Trip/three Creates. No Nelson Native
 or Date PASS is claimed yet. Owner real attachments remain outside Git and DEV,
 local read-only preview only; no real travel data was written.
+
+## Historical Phase2 candidate — before public OAuth qualification
+
+This preactivation checkpoint is retained as history. Current status at the top
+and the later actual SDK/ChatGPT sections supersede its missing-client/mount and
+NOT_TESTED statements.
+
+Accepted baseline main8f79a421. Real ChatGPT UI exposes Add custom MCP Server →
+OAuth → advanced OAuth settings in the current signed-in account. Exact callback
+was read from the unsubmitted draft and provided to Auth; no client was created,
+no consent/access was granted. Automatic discovery failed because the public MCP
+mount/PRM remains absent; DEV HTTPS health returned200. This proves the setup
+entry exists, not OAuth/tool discovery PASS or a plan-wide capability claim.
+
+Auth supplied versioned minimal delta28349170 and closed request verifierd8f8b0fa.
+MCP now requires signed otr_scopes plus independent session_id, passes original
+bearer only to the Auth-owned same-issuer verifier and separates provider request
+openid from business rights. Read-only policy hides writes. Standard SDK loopback
+checks metadata, zero-dispatch scope denial and expiry during write/status reads;
+these are local protocol tests, never Hosted issuer/consumer receipts.
+
+Core adapter tests preserve existing operation digests and civil clocks, P3/P4
+fields, P5 water-taxi/check-in/unknown arrival, and separate sparse Flight create /
+complete authored detail update with CAS/replay and qualified denial.46 directed
+local tests/types PASS plus focused independent NO_BLOCKER. No new field Cloud or
+Native PASS is claimed. Native explicitly NOT_READY for fixed original date9b;
+no date POST or idle MCP normal Session. Owner source data stay outside Git/DEV.
+
+Private25-row schema coverage:22 Manual Item drafts,1 sparse Flight requiring a
+separate detail operation,2 blocked missing flight literal. These are not23 fully
+qualified bookings or a current-cloud diff: target Account/Trip and current
+Snapshot are still unselected, source/booking admission and exact temporal
+qualification remain distinct. Real Owner Apply has not been authorized/executed.
+
+See MCP_CLIENT_COMPATIBILITY.md, MCP_NELSON_FIELD_COVERAGE.md and Auth contract for
+the remaining activation/consumer/confirmation/Native gates at that checkpoint.
+At that time ChatGPT/Claude Read/Write/revoke all remained NOT_TESTED.
+
+
+## Phase2 actual P5 attempt and device observation
+
+P5_FIELDS uses one fixed synthetic Water Taxi with09:00 departure,08:45 separate
+CHECKIN and unknown arrival. Attempt01 sent no POST. Attempt02 sent one POST,
+cancelled at the old15s local budget; GETs remained404/UNKNOWN. A reviewed bounded
+manual recovery preserved the exact operation/command/preview hashes and returned
+actual Backend503 after29.524s. Original UNKNOWN retained, total POST2; both wx
+markers prevent a third dispatch. Own normal QA sessions were revoked with refresh
+rejection each time. No new P5 Cloud/Native PASS. Evidence: P5_FIELDS_ATTEMPT_01,
+P5_FIELDS_ATTEMPT_02, P5_FIELDS_MANUAL_RECOVERY and P5_FIELDS_OWNING_GAP.json.
+
+Protected metadata read shows the scoped MANUAL guard excludes
+trip_transport_operational_facts. Core Writer must qualify the minimal owning
+repair; MCP made no SQL/GRANT change. The gap is concrete, while the full503 cause
+is not claimed proven. Backend per-call timeout is now50s inside the existing50s
+write-work /60s response budget; the slow POST regression failed before and passes
+after.46 focused tests, scoped checks and focused independent Review pass.
+
+Independent iPad observer used its own Session/state and the approved pinned
+Runner. Device claims were empty before open; snapshot failed before UI dispatch
+with xcodebuild70 / missing isolated test product. Own Session closed normally.
+No Session/SQLite copy, tap, install/reset or date9b POST. Native tool setup repair
+is pending. Owner explicitly permits missing real Trip/flight fields to stay
+pending while functional QA continues; this does not authorize real Owner writes.
+
+
+### Actual Nelson before-date UI — PASS; date submission blocked
+
+Device Automation's complete public artifact manifest resolved isolated Runner
+layout without copying Native private state. All16 file hashes matched; fresh
+AX and card tap read the synthetic walk details with Dec11,2026/Abel Tasman/Onlyme.
+The fixed9b CAS1→Dec12 standard MCP call then returned RECOVERY_UNAVAILABLE from
+the pre-submit receipt GET; that code branch returns before POST. The same-op
+status returned404/UNKNOWN, never NoCommit. No date modification was sent.
+Original result retained in NELSON_DATE_EDIT.json. Own normal QA session cleanup
+is PASS_LOCAL_SCOPE_REFRESH_REVOKED (run-Q85Egq); observer closed normally and
+shared claims were empty. Snapshots05/06 still showedDec11. This qualifies actual
+before-date UI and tooling only, not Native Edit or automatic date update.
+See NELSON_NATIVE_OBSERVER.json. Core owning receipt-read diagnosis is pending;
+no repeated Create, timeout increase, Host/permission or Native product change.
+
+
+### SDK-first OAuth test custody — prepared, not Hosted PASS
+
+mcp/sdkOAuthQa.ts uses the installed official SDK auth()/S256 with one static
+Read client and fixed127.0.0.1:18764/callback. Same-process Auth callbacks own real
+token checks, refresh/deny/read/revoke and mandatory cleanup; no Token storage is
+read from ChatGPT. Whole-flow15m/caller cancellation rejects late provider writes,
+closes listener/client and runs cleanup with a separate50s budget. Cleanup failure
+or timeout remains unconfirmed revocation.50 focused tests/types/lint and focused
+independent NO_BLOCKER pass, including simulated issuer PKCE exchange, callback
+mix-up/duplicate rejection, cancellation cleanup and callback port release.
+These local tests do not qualify actual issuance, OAuth revoke or consumer use.
+
+
+## Structured current-state Nelson Preview — actual DEV PASS
+
+`acceptance/NELSON_PREVIEW.json`, start2026-10-31T06:04:39.192Z, uses the normal
+registered QA Account and standard SDK, not public OAuth. Source7f0f5730 returns
+both typed proposed changes, current accepted P1base/revision1/Dec11 and the existing
+lodge's duplicate ID. Every full proposal and operation ID matched its submitted
+plan; current UPDATE base matched an independent Backend full typed read hash.
+Timed P3candidate retained14:00/Pacific/Auckland with authored/pending/noBooking
+warning. Forced GET-only Backend, empty confirmation set, no Apply/SQL and zero
+business POST. Own Session cleanup PASS_LOCAL_SCOPE_REFRESH_REVOKED; Receiver
+released.51 local tests/types/lint plus focused independent review PASS.
+This proves structured real-cloud Preview, not saving that draft or consumer OAuth.
+
+First actual public SDK OAuth failed before browser/Token because SDK2.4 adds
+`offline_access` for the advertised refresh grant while2334 asserted onlyopenid.
+Reviewed9c399e01 accepts exactly the two protocol scopes; Auth's supplemental Gate
+must approve the change before execution. No business permission expansion,
+new Client/issuer or actual OAuth acceptance is claimed by this local repair.
+
+
+## ChatGPT actual consumer OAuth and list_trips — PASS, bounded
+
+Owner confirmed the same QA Read connection and one fresh finite window. Actual
+ChatGPT custom plugin creation/discovery → normal QA email OTP → explicit read
+Consent → callback/installed plugin → new natural-language list_trips returned
+four current QA Trips, SERVER_CONFIRMED/next_cursor=null. Synthetic Nelson Trip
+cc44a705 appeared. No internal Session substituted for the consumer OAuth flow,
+no token/OTP was recorded, no real Owner Trip or business write was requested.
+
+After Auth's independently closed Hook and acknowledged grant DELETE204, one new
+request on that same connection failed with `Script error: The tool failed
+internally.` It returned no new data and no reconnect/login/authorization occurred.
+This is not a client-visible invalid_token or a complete consumer revocation PASS.
+Original cleanup wrapper failure remains Auth-owned evidence and must be reconciled
+by independent receipts, never rewritten as raw PASS. Final independent readback proves Hook closed, grant204, normal Session cleanup,
+default healthy, finite config absent and OAuth/Hook OFF with original Site URL.
+Two server401s while the route still ran qualify denied post-revoke requests;
+the client still exposes only the generic error. See acceptance/chatgpt-auth/.
+
+See acceptance/CHATGPT_READ.json and QA-only CHATGPT_READ.jpg/CHATGPT_REVOKE.jpg.
+Consumer get_trip/list_trip_items/get_trip_item/foreign denial/Write were not
+executed in this short window; SDK qualification remains separate. ChatGPT Read
+success is not Read+Write readiness or general-account/production availability.

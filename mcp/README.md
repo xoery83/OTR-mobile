@@ -54,7 +54,7 @@ Current contracts/evidence: docs/mcp/MCP_ARCHITECTURE_INVENTORY.md,
 MCP_TOOL_CONTRACT_V1.md, MCP_AUTH_CONTRACT.md, MCP_NELSON_IMPORT_PLAN.md,
 MCP_E2E_ACCEPTANCE.md. Earlier MCP_01 files are historical evidence.
 
-Bounds:16KiB request/60s total/50s Backend reads/15s mutation calls/25 Items per page,
+Bounds:16KiB request/60s total/50s individual Backend calls (writes also share the remaining50s work budget)/25 Items per page,
 64MiB certified collection,12 changes per preview. Item list uses one validated
 visible collection and returns summaries; get_trip_item retrieves full typed detail. No auto retries,
 workers, sync engine, schemas or provider calls. Existing timed/qualified date
@@ -73,3 +73,16 @@ created by the procedure. Structured Trip recovery requests explicitly use v2.
 NELSON_STATUS is GET-only; NELSON_RESUME is an explicitly selected same-command
 QA recovery with original-digest validation and a non-deleted pre-fetch marker.
 NELSON_DATE_EDIT requires actual Native readiness and never repeats three Creates.
+
+
+Public OAuth qualification uses `withSdkQaOAuthRead` in `sdkOAuthQa.ts`, after
+Auth's exact protected Gate is approved. One pre-registered public Read client
+uses the fixed `http://127.0.0.1:18764/callback`; bind failure stops the run. No
+DCR, alternate issuer, token file or credentials copied from consumer storage.
+Auth supplies same-process token verification, read/negative/refresh/revoke checks
+and mandatory cleanup. `onAuthorization` opens the SDK-generated normal consent
+URL. Tokens, code/verifier and discovery remain in that process; cleanup runs on
+failure/cancel with an independent50s budget after client/listener close; custody
+is then cleared. Caller cancellation covers the entire flow and late provider
+writes are rejected. Cleanup failure/timeout is unconfirmed revocation. The local SDK
+PKCE/callback tests use a simulated issuer and are not Hosted OAuth acceptance.

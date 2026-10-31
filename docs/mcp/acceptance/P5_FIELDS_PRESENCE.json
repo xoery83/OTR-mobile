@@ -1,0 +1,11 @@
+{
+  "status": "INDEPENDENT_READ_ONLY_PRESENCE_AT_OBSERVED_TIME",
+  "observedAt": "2026-10-31T03:17:38.490684+00:00",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "bf5f0238-1def-4f87-afa2-a3d1bf79ca31",
+  "operationId": "b8ce0943-957f-4910-8d93-ef4d2bf46c7e",
+  "itemCount": 0,
+  "receiptCount": 0,
+  "ownPreviousPostCount": 0,
+  "noAutomaticRepost": true
+}

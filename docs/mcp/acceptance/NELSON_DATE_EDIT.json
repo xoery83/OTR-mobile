@@ -1,0 +1,58 @@
+{
+  "stage": "NELSON_DATE_EDIT",
+  "status": "FAILED_OR_UNKNOWN_QUERY_SAME_OPERATION",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T04:30:28.995Z",
+  "phase": "get_operation_status",
+  "nativeCheckpoint": "ACTUAL_NATIVE_OWNER_READY_BEFORE_THIS_QA_ACTION",
+  "nelsonTripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+  "sameOperationLookups": [
+    {
+      "original": {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+        "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+        "current_revision": null,
+        "preview_digest": "c3678c8d63b040913e02a14f1289fe0106add07e4570f375dbe17cd1c2cb3f74",
+        "summary": "Update 73f6d7a2-3191-46ca-aba9-ea57d61f2183 at revision 1: {\"dates\":{\"start_date\":\"2026-12-12\"},\"kind\":\"DATES\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+          "target": "ITEM"
+        },
+        "outcome": "UNKNOWN",
+        "error_code": "RECOVERY_UNAVAILABLE"
+      },
+      "status": {
+        "version": "otr.mcp.status/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+        "target": "ITEM",
+        "outcome": "UNKNOWN",
+        "current_revision": null,
+        "error_code": "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT"
+      }
+    }
+  ],
+  "edit": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+    "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+    "current_revision": null,
+    "preview_digest": "c3678c8d63b040913e02a14f1289fe0106add07e4570f375dbe17cd1c2cb3f74",
+    "summary": "Update 73f6d7a2-3191-46ca-aba9-ea57d61f2183 at revision 1: {\"dates\":{\"start_date\":\"2026-12-12\"},\"kind\":\"DATES\"}",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+      "target": "ITEM"
+    },
+    "outcome": "UNKNOWN",
+    "error_code": "RECOVERY_UNAVAILABLE"
+  },
+  "failureClass": "ASSERTION"
+}

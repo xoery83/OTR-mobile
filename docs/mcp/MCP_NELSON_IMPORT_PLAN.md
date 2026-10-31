@@ -49,3 +49,28 @@ success. Do not upload original PDFs/screenshots through this Manual path: futur
 original-material handling reuses Universal Import Source/Interpretation/Admission.
 
 Actual execution status is in MCP_E2E_ACCEPTANCE.md; this plan is not evidence.
+
+## Phase 2 field adapter boundary
+
+See MCP_NELSON_FIELD_COVERAGE.md. Extend the existing create/edit schemas and
+conversion, keeping stable operations and the current receipt/confirmation/batch
+logic. Explicit civil clocks follow the existing Native manual contract:
+ESTIMATED/PENDING until owning qualification; local labels are retained formally,
+not shifted into Notes or treated as exact instants. Preserve date-only inputs.
+Support existing P3/P4 details and P5 water-taxi endpoint/check-in fields. P2
+sparse create and authored details require separate formal operations; never hide
+that dependency or call the first receipt a complete time-bearing Flight save.
+Do not activate real Owner Apply without selected Trip + true snapshot diff +
+exact operation confirmation. Existing synthetic date op remains NOT_SENT while
+Native reports NOT_READY; no idle Session is retained.
+
+
+## Structured review rows
+
+Batch Preview/Apply additionally return `review` rows: each operation's typed
+`proposed_change`, current legal `update_base` (UPDATE only), and possible duplicate
+Item IDs from the complete bounded visible collection scan. `review_basis` names
+the collection/detail basis; these sequential reads are not an atomic snapshot.
+CREATE's null update_base does not assert that its deterministic target is absent.
+Exact canonical operation digest, trusted confirmation, CAS and recovery remain
+unchanged. A stale UPDATE base is visible and warned; no silent rebase occurs.

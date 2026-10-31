@@ -34,18 +34,34 @@ export function createBatchTools(
     const operationPreviews = await Promise.all(
       operations.map((p) => mutations.execute(p, "PREVIEW")),
     );
+    const review = q.changes.map((proposed_change) => ({
+      operation_id: proposed_change.request_id,
+      proposed_change,
+      update_base: null as Awaited<ReturnType<typeof reads.get_trip_item>>["item"] | null,
+      possible_duplicate_item_ids: [] as string[],
+    }));
     const warnings: string[] = operationPreviews
       .filter((r) => r.error_code)
       .map((r) => `${r.error_code}:${r.operation_id}`);
     for (const c of q.changes)
-      if (c.kind === "CREATE")
-        warnings.push(`DATE_ONLY_NO_CLOCK_OR_BOOKING:${c.request_id}`);
+      if (c.kind === "CREATE") {
+        warnings.push(
+          `${c.item.dates.start_time || c.item.dates.end_time ? "AUTHORED_CIVIL_PENDING_NO_BOOKING" : "DATE_ONLY_NO_CLOCK_OR_BOOKING"}:${c.request_id}`,
+        );
+        if (c.item.family === "P2")
+          warnings.push(
+            `SPARSE_FLIGHT_ROUTE_CLOCKS_REQUIRE_SEPARATE_OPERATION:${c.request_id}`,
+          );
+        if (c.item.family === "P5" && !c.item.dates.end_time)
+          warnings.push(`TRANSPORT_ARRIVAL_TIME_UNSPECIFIED:${c.request_id}`);
+      }
     for (const c of q.changes) {
       if (c.kind === "UPDATE") {
         const result = await reads.get_trip_item({
           trip_id: q.trip_id,
           item_id: c.item_id,
         });
+        review[q.changes.indexOf(c)].update_base = result.item;
         if (result.item.itemRevision !== c.expected_revision)
           warnings.push(`STALE_REVISION:${c.item_id}`);
       }
@@ -68,8 +84,10 @@ export function createBatchTools(
             item.family === c.item.family &&
             item.title.normalize("NFKC").trim().toLocaleLowerCase("en") ===
               c.item.title.normalize("NFKC").trim().toLocaleLowerCase("en")
-          )
+          ) {
             warnings.push(`POSSIBLE_DUPLICATE:${c.request_id}:${item.itemId}`);
+            review[q.changes.indexOf(c)].possible_duplicate_item_ids.push(item.itemId);
+          }
       if (!found.next_cursor) break;
       if (page === 39) throw Error("DUPLICATE_SCAN_INCOMPLETE");
       cursor = found.next_cursor;
@@ -92,6 +110,8 @@ export function createBatchTools(
         preview_digest: digest,
         outcome: "PREVIEW" as const,
         operations: operationPreviews,
+        review_basis: "CURRENT_VISIBLE_COLLECTION_AND_UPDATE_DETAILS" as const,
+        review,
         warnings: [...new Set(warnings)],
       },
     };

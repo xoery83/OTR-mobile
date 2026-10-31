@@ -1,0 +1,22 @@
+{
+  "status": "LOCAL_CANCEL_CLASSIFICATION_REPRODUCED_PRIMARY_FAILURE_STILL_UNQUALIFIED",
+  "runtimeSource": "8812dbbb8b9ed610c7716415b1377b6443005c4d",
+  "reportedRequestId": "29a85439-b4ce-4a31-85ea-bd331a79a956",
+  "reportedHttpStatus": 504,
+  "reportedDurationMs": 17235,
+  "configuredReadBudgetMs": 50000,
+  "configuredOuterBudgetMs": 60000,
+  "localProbe": {
+    "explicitParentAbort": true,
+    "httpStatus": 504,
+    "bodyCode": "REQUEST_TIMEOUT",
+    "elapsedMs": 25,
+    "networkRequests": 0,
+    "credentialsUsed": false
+  },
+  "finding": "Parent cancellation and true timeout share the outer504 path; the17s receipt cannot alone establish budget exhaustion.",
+  "unprovenHypothesis": "A first tool error/assertion in Promise.all triggers finally/client.close and cancels an unfinished sibling.",
+  "recommendation": "Auth QA sequential reads with primary phase/fixed error code and relative token TTL; preserve original result; no runtime budget/concurrency change before primary evidence.",
+  "actualOAuthReadPass": false,
+  "productionCodeChanged": false
+}

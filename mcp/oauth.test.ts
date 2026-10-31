@@ -8,7 +8,10 @@ it("verifies genuine JWT signature/issuer/audience/expiry/client/scope plus curr
   const keys = await generateKeyPair("ES256"),
     other = await generateKeyPair("ES256"),
     account = randomUUID();
-  const active = vi.fn(async () => true),
+  const active = vi.fn(
+      async (_grant: unknown, _signal: AbortSignal, _evidence: { accessToken: string }) =>
+        true,
+    ),
     bind = vi.fn(async () => ({ read: async () => Response.json({}) }));
   const authorize = createOAuthAuthorizer({
     issuer,
@@ -27,7 +30,9 @@ it("verifies genuine JWT signature/issuer/audience/expiry/client/scope plus curr
       role: "authenticated",
       client_id: "test-client",
       jti: randomUUID(),
-      scope: "otr.trips.read otr.trips.write",
+      session_id: randomUUID(),
+      scope: "openid email",
+      otr_scopes: ["otr.trips.read", "otr.trips.write"],
       ...patch,
     })
       .setProtectedHeader({ alg: "ES256", typ: "at+jwt" })
@@ -46,12 +51,17 @@ it("verifies genuine JWT signature/issuer/audience/expiry/client/scope plus curr
     { iss: "https://wrong.invalid" },
     { exp: 1 },
     { client_id: undefined },
-    { jti: undefined },
-    { scope: "openid email" },
+    { session_id: undefined },
+    { otr_scopes: undefined },
+    { otr_scopes: ["openid", "email"] },
+    { otr_scopes: ["otr.trips.read", "unapproved.scope"] },
     { role: "service_role" },
   ])
     expect(await authorize(request(await token(patch)))).toBeNull();
   expect(await authorize(request(await token({}, other.privateKey)))).toBeNull();
+  expect(
+    active.mock.calls.every(([, , evidence]) => typeof evidence.accessToken === "string"),
+  ).toBe(true);
   expect(
     await authorize(request(await token({ jti: undefined, session_id: randomUUID() }))),
   ).toMatchObject({ accountId: account });
@@ -70,4 +80,15 @@ it("publishes resource metadata and challenge without impersonating an authoriza
     metadata.handle(new Request(issuer + "/.well-known/openid-configuration")),
   ).toBeNull();
   expect(() => protectedResourceMetadata("http://public.example/mcp", issuer)).toThrow();
+});
+
+it("advertises only provider-supported request scopes without granting business access", async () => {
+  const metadata = protectedResourceMetadata(resource, issuer, { read: ["openid"] });
+  const response = metadata.handle(new Request(metadata.metadataUrl))!;
+  expect(await response.json()).toMatchObject({ scopes_supported: ["openid"] });
+  expect(metadata.challenge).toContain('scope="openid"');
+  expect(metadata.authorizationScopes.write).toBeUndefined();
+  expect(() =>
+    protectedResourceMetadata(resource, issuer, { read: ['openid" injected'] }),
+  ).toThrow();
 });

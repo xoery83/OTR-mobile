@@ -1,0 +1,65 @@
+{
+  "observedAt": "2026-10-31T04:18:27.043809+00:00",
+  "status": "ACTUAL_BEFORE_DATE_UI_PASS_EDIT_PRE_SUBMIT_BLOCKED",
+  "session": "mcp-nelson-observer",
+  "device": "00008103-00113914020B401E",
+  "bundle": "com.xoery.otrmobile.ipadqa",
+  "expectedTripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "expectedItemId": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+  "expectedBeforeDate": "2026-12-11",
+  "dateEditOperationId": "9b077556-e0c3-46a9-8d97-2090504fa856",
+  "dateEditStatus": "NOT_SENT_PRE_SUBMIT_RECEIPT_UNAVAILABLE",
+  "attempts": [
+    {
+      "snapshot": "snap01",
+      "exitCode": 70,
+      "reason": "Missing public XCTest test product in isolated runner env",
+      "uiDispatched": false
+    },
+    {
+      "snapshot": "snap02",
+      "exitCode": 65,
+      "reason": "Missing public AgentDeviceRunner.app host product after approved test-bundle-only copy",
+      "uiDispatched": false
+    },
+    {
+      "snapshot": "snap03/snap04/snap05/snap06",
+      "publicManifestFilesVerified": 16,
+      "publicProducts": "Two public signed bundles linked in new isolated overlay",
+      "axAndTap": "PASS",
+      "title": "Synthetic Abel Tasman QA walk",
+      "dateBeforeAndAfter": "Dec 11, 2026",
+      "uiDateChangeObserved": false
+    }
+  ],
+  "sessionClosedNormally": true,
+  "claimsAfterClose": [],
+  "appDataOrSessionCopied": false,
+  "nativeAppInstalledOrReset": false,
+  "next": "Core owning receipt-read diagnosis before bounded date retry; original op/CAS/intent preserved. Fresh actual Native observation before future edit.",
+  "updatedAt": "2026-10-31T04:32:46.387770+00:00",
+  "dateEditResult": "UNKNOWN/RECOVERY_UNAVAILABLE; same-op status UNKNOWN/NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT",
+  "businessPostCount": 0,
+  "businessPostCountBasis": "Code path: RECOVERY_UNAVAILABLE returns before POST; no successful dispatch claim",
+  "ownNormalQaSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "ownNormalQaJournal": "run-Q85Egq/requestedAt2026-10-31T04:30:29.027Z",
+  "sourcePublicManifest": "docs/ops/device-automation/IPAD_PUBLIC_RUNNER_ARTIFACTS_20261031.json in device-automation-pilot worktree",
+  "snapshots": [
+    {
+      "name": "snap03",
+      "sha256": "25dd9f19576476d769dcc32be3dfe53052ec287d032df31c730dd53836721ad2"
+    },
+    {
+      "name": "snap04",
+      "sha256": "c16284f67f873fc6fd909a73b9f21c12b2edb3cb38b66383211e6fc5a95c60d4"
+    },
+    {
+      "name": "snap05",
+      "sha256": "7c160f0f62b5db44b79813d4d0c2b2e83220c32a496ee2e4cab421997c6f92e9"
+    },
+    {
+      "name": "snap06",
+      "sha256": "cfd018b8ec50f38c5a0ecaa515cd32dadd71a12d492f88c8aa548ec48968c0bd"
+    }
+  ]
+}

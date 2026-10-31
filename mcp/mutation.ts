@@ -2,10 +2,14 @@ import { itemSchema } from "./contract";
 import type { BackendRead } from "./read";
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { coreDateBoundary } from "../src/domain/trip/tripCoreV2Temporal";
+import {
+  coreDateBoundary,
+  coreBoundarySchema,
+} from "../src/domain/trip/tripCoreV2Temporal";
 import { coreDefaults, corePlaceSchema } from "../src/domain/trip/tripCoreV2";
 import {
   validateCoreCommand,
+  corePayloadSchemas,
   type CoreCommand,
 } from "../src/domain/trip/tripCoreV2Commands";
 import { validateCoreReceipt } from "../src/domain/trip/tripCoreV2Receipt";
@@ -23,6 +27,7 @@ import {
   createTripInput,
   operationInput,
   type MutationResult,
+  scheduledCalendar,
 } from "./mutationContract";
 export type BackendMutation = (
   request: {
@@ -56,42 +61,136 @@ function targetId(...parts: string[]) {
 export type PreparedMutation =
   | { kind: "ITEM"; command: CoreCommand; summary: string }
   | { kind: "TRIP"; command: TripCreateWireRequest; summary: string };
+function authoredPlace(label: string, address?: string) {
+  return corePlaceSchema.parse({
+    ...Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+    authored_label: label,
+    authored_address: address ?? null,
+  });
+}
+// Same pending civil tuple as Native Manual forms; no invented UTC/qualification.
+function authoredBoundary(date?: string, time?: string, zone?: string) {
+  return coreBoundarySchema.parse({
+    ...coreDateBoundary(date ?? "2000-01-01"),
+    local_date: date ?? null,
+    local_time: time ?? null,
+    clock_precision: time ? -1 : null,
+    quality: time ? "ESTIMATED" : "UNKNOWN",
+    zone_id: zone ?? null,
+  });
+}
+function authoredSchedule(dates: z.infer<typeof scheduledCalendar>) {
+  return {
+    start: authoredBoundary(dates.start_date, dates.start_time, dates.start_zone),
+    ...(dates.end_date
+      ? { end: authoredBoundary(dates.end_date, dates.end_time, dates.end_zone) }
+      : {}),
+  };
+}
 export function prepareCreate(account: string, raw: unknown): PreparedMutation {
   const q = createItemInput.parse(raw),
     i = q.item;
-  const place = i.place
-    ? {
-        ...Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
-        authored_label: i.place,
-      }
-    : undefined;
+  const place = i.place ? authoredPlace(i.place, i.place_address) : undefined;
+  const schedule = authoredSchedule(i.dates);
+  const transport = i.transport;
   const command = validateCoreCommand({
     contractVersion: 2,
     intentVersion: 2,
     operationId: q.request_id,
     tripId: q.trip_id,
-    command: "CREATE_ITEM",
+    command: i.family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM",
     target: { kind: "ITEM", id: targetId(account, q.trip_id, q.request_id) },
     baseVector: [
       { kind: "ITEM", id: targetId(account, q.trip_id, q.request_id), revision: null },
     ],
     admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
-    payload: {
-      ...coreDefaults("member"),
-      family: i.family,
-      core: {
-        title: i.title,
-        ...(i.notes !== undefined ? { description: i.notes } : {}),
-      },
-      schedule: {
-        start: coreDateBoundary(i.dates.start_date),
-        ...(i.dates.end_date ? { end: coreDateBoundary(i.dates.end_date) } : {}),
-      },
-      ...(place ? (i.family === "P4" ? { places: { pickup: place } } : { place }) : {}),
-      ...(i.family === "P3" && i.property_name
-        ? { details: { property_name: i.property_name } }
-        : {}),
-    },
+    payload:
+      i.family === "P2"
+        ? {
+            ...coreDefaults("member"),
+            flightNumberLiteral: i.flight_number,
+            departureDate: i.dates.start_date,
+            core: {
+              title: i.title,
+              ...(i.notes !== undefined ? { description: i.notes } : {}),
+            },
+          }
+        : {
+            ...coreDefaults("member"),
+            family: i.family,
+            core: {
+              title: i.title,
+              ...(i.notes !== undefined ? { description: i.notes } : {}),
+            },
+            ...(transport
+              ? {
+                  endpoints: {
+                    origin: {
+                      time: schedule.start,
+                      place: authoredPlace(transport.origin),
+                    },
+                    destination: {
+                      time: schedule.end ?? authoredBoundary(),
+                      place: authoredPlace(transport.destination),
+                    },
+                  },
+                  service: {
+                    service_key: "manual",
+                    transport_subtype: transport.subtype,
+                    attribution: "UNSPECIFIED",
+                    operator_namespace: "NAME",
+                    operator_issuer: "",
+                    operator_value: transport.operator ?? "",
+                    operator_literal: transport.operator ?? "",
+                    service_number: transport.service_number ?? "",
+                    service_literal: "",
+                    codeshare_operating_key: null,
+                  },
+                  ...(transport.checkin
+                    ? {
+                        operationalFacts: [
+                          {
+                            role: "CHECKIN",
+                            time: authoredBoundary(
+                              transport.checkin.date,
+                              transport.checkin.time,
+                              transport.checkin.zone,
+                            ),
+                            place: authoredPlace(
+                              transport.checkin.place ?? transport.origin,
+                            ),
+                          },
+                        ],
+                      }
+                    : {}),
+                }
+              : { schedule }),
+            ...(i.family === "P4"
+              ? {
+                  ...(place || i.return_place
+                    ? {
+                        places: {
+                          ...(place ? { pickup: place } : {}),
+                          ...(i.return_place
+                            ? { return: authoredPlace(i.return_place, i.return_address) }
+                            : {}),
+                        },
+                      }
+                    : {}),
+                  ...(i.rental ? { details: i.rental } : {}),
+                }
+              : place
+                ? { place }
+                : {}),
+            ...(i.family === "P3" && (i.property_name || i.stay)
+              ? {
+                  details: {
+                    ...(i.property_name ? { property_name: i.property_name } : {}),
+                    ...i.stay,
+                  },
+                }
+              : {}),
+          },
   });
   return {
     kind: "ITEM",
@@ -109,26 +208,53 @@ export function prepareUpdate(_account: string, raw: unknown): PreparedMutation 
     intentVersion: 2,
     operationId: q.request_id,
     tripId: q.trip_id,
-    command: c.kind === "TEXT" ? "SET_ITEM_TEXT" : "SET_ITEM_SCHEDULE",
+    command:
+      c.kind === "TEXT"
+        ? "SET_ITEM_TEXT"
+        : c.kind === "FLIGHT_DETAILS"
+          ? "SET_AUTHORED_FLIGHT_DETAILS"
+          : "SET_ITEM_SCHEDULE",
     target: { kind: "ITEM", id: q.item_id },
     baseVector: [{ kind: "ITEM", id: q.item_id, revision: q.expected_revision }],
     admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
     payload:
       c.kind === "TEXT"
         ? { title: c.title, ...(c.notes !== undefined ? { description: c.notes } : {}) }
-        : {
-            schedule: {
-              start: coreDateBoundary(c.dates.start_date),
-              ...(c.dates.end_date ? { end: coreDateBoundary(c.dates.end_date) } : {}),
-            },
-          },
+        : c.kind === "FLIGHT_DETAILS"
+          ? {
+              flightNumberLiteral: c.flight_number,
+              origin: {
+                airportCode: c.origin.airport_code,
+                name: c.origin.name,
+                terminal: c.origin.terminal,
+                time: authoredBoundary(
+                  c.origin.date ?? undefined,
+                  c.origin.time ?? undefined,
+                  c.origin.zone ?? undefined,
+                ),
+              },
+              destination: {
+                airportCode: c.destination.airport_code,
+                name: c.destination.name,
+                terminal: c.destination.terminal,
+                time: authoredBoundary(
+                  c.destination.date ?? undefined,
+                  c.destination.time ?? undefined,
+                  c.destination.zone ?? undefined,
+                ),
+              },
+            }
+          : { schedule: authoredSchedule(c.dates) },
   });
   return {
     kind: "ITEM",
     command,
     summary:
       `Update ${q.item_id} at revision ${q.expected_revision}: ` +
-      canonicalCoreJson(c as Json),
+      canonicalCoreJson(c as Json) +
+      (c.kind === "FLIGHT_DETAILS"
+        ? "; Core also sets the Item title to this flight number literal; remains SPARSE."
+        : ""),
   };
 }
 export function prepareTrip(account: string, raw: unknown): PreparedMutation {
@@ -185,10 +311,7 @@ export function createMutationTools(context: {
     if (!context.backend) return null;
     if (method === "GET" && path.startsWith("/v2/trip-create-operations/"))
       headers = { ...headers, "OTR-Trip-Create-Version": "2" };
-    const boundary = createRequestBoundary(
-      method === "GET" ? 50000 : 15000,
-      context.signal,
-    );
+    const boundary = createRequestBoundary(50000, context.signal);
     try {
       const response = await boundary.run(() =>
         context.backend!(
@@ -211,7 +334,11 @@ export function createMutationTools(context: {
     }
   }
   async function dateEditGuard(p: PreparedMutation): Promise<string | null> {
-    if (p.kind !== "ITEM" || p.command.command !== "SET_ITEM_SCHEDULE") return null;
+    if (
+      p.kind !== "ITEM" ||
+      !["SET_ITEM_SCHEDULE", "SET_AUTHORED_FLIGHT_DETAILS"].includes(p.command.command)
+    )
+      return null;
     if (!context.read) return "DATE_EDIT_REQUIRES_CURRENT_READ";
     const boundary = createRequestBoundary(50000, context.signal);
     try {
@@ -228,13 +355,36 @@ export function createMutationTools(context: {
       const item = itemSchema.parse(await readBoundedJson(response, 1048576, boundary));
       if (item.tripId !== p.command.tripId || item.itemId !== p.command.target.id)
         return "CURRENT_ITEM_SCOPE_MISMATCH";
-      if (
-        item.schedule.shape === "TRANSPORT" ||
-        [item.schedule.start, item.schedule.end].some(
-          (t) => t && (t.localTime || t.zoneId || t.instant || t.precision !== undefined),
+      if (p.command.command === "SET_AUTHORED_FLIGHT_DETAILS") {
+        if (
+          item.family !== "P2" ||
+          item.details.qualification !== "SPARSE" ||
+          [item.schedule.origin, item.schedule.destination].some(
+            (e) => e?.time.instant || e?.time.quality === "EXACT",
+          )
         )
-      )
+          return "FLIGHT_EDIT_REQUIRES_SPARSE_AUTHORED_ITEM";
+        return null;
+      }
+      const next = corePayloadSchemas.SET_ITEM_SCHEDULE.parse(p.command.payload).schedule;
+      if (item.family === "P2" || item.schedule.shape === "TRANSPORT")
         return "DATE_EDIT_REQUIRES_OWNING_TEMPORAL_ADAPTER";
+      for (const [current, replacement] of [
+        [item.schedule.start, next.start],
+        [item.schedule.end, next.end],
+      ] as const) {
+        if (
+          current &&
+          (!replacement ||
+            current.instant ||
+            current.quality === "EXACT" ||
+            current.basis === "SOURCE_INSTANT" ||
+            (current.precision !== undefined && current.precision !== -1) ||
+            (current.localTime && !replacement.local_time) ||
+            (current.zoneId && replacement.zone_id !== current.zoneId))
+        )
+          return "DATE_EDIT_REQUIRES_OWNING_TEMPORAL_ADAPTER";
+      }
       return null;
     } catch {
       return "CURRENT_ITEM_UNAVAILABLE";

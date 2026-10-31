@@ -39,7 +39,9 @@ original receipt. Backend formal CAS still decides an unaccepted stale mutation.
 Unsubmitted suffix is PREVIEW with NOT_SUBMITTED_AFTER_STOP, not false APPLIED or
 invented server-atomic rollback. UNKNOWN keeps exact query identity.
 
-MCP request budget is60s; each Backend read is bounded50s and mutation request15s.
+MCP request budget is60s; each Backend call is bounded50s, and writes also
+share the remaining50s work budget from request start. The former separate15s
+POST ceiling canceled a real synthetic attempt at15.002s and has been removed.
 These are MCP-local limits: no Native/Backend timeout or Core lease setting changes.
 A real authorized P3 returned200 after13.554s, exceeding the former10s MCP read
 limit. Timeout remains explicit; no automatic request retry is introduced. A batch
@@ -58,3 +60,48 @@ format2 create; they never silently downgrade to legacy metadata. Write work is
 bounded to approximately50s from request start inside the60s HTTP response budget,
 so a slow accepted prefix can return PARTIAL/UNKNOWN and unsubmitted suffix.
 Real auth expiry and caller cancellation remain separate hard fences.
+
+## Phase2 additive field adapters — locally verified, not consumer E2E
+
+Server0.3 preserves existing date-only command/preview digests. `dates` also accepts
+start_time/end_time (HH:MM) and explicit start_zone/end_zone IANA labels. No device
+zone/UTC is inferred. Native-equivalent civil tuples remain ESTIMATED/PENDING
+until owning qualification, distinct from booking confirmation status.
+
+P3 `stay` holds permitted_checkin_from/until and permitted_checkout_by, separately
+from planned schedule. P4 `rental` holds supplier/reserved_category/or_similar and
+explicit actual_vehicle_model/verified_plate only when supplied; return_place and
+return_address complement pickup place/address. P5 `transport` holds one existing
+supported subtype, explicit origin/destination, optional authored operator/service
+number and independent checkin date/time/place. Unknown arrival stays unknown;
+none of these creates a Booking/Ticket or paid status.
+
+P2 create requires a known flight_number and departure date; route/time/enddate
+fields on sparse Create are refused rather than discarded. After receipt/readback,
+a separate stable update with `change.kind=FLIGHT_DETAILS` supplies complete,
+explicit nullable origin/destination date/time/zone/airport_code/name/terminal.
+It invokes SET_AUTHORED_FLIGHT_DETAILS at the supplied current revision, requires
+a current same-object SPARSE/no-exact-time read and stays SPARSE. Its preview
+explicitly warns that Core changes Item title to the flight number literal. There
+is no automatic two-command transaction. A batch cannot preview an edit to an
+Item that does not yet exist; finish/verify the sparse create then preview the
+exact subsequent detail operation. Missing flight literals stay blocked.
+
+`change.kind=SCHEDULE` replaces a supported complete authored civil range. Current
+clock/zone/end values must not disappear, and exact/qualified/transport tuples
+require their owning adapters. Qualified Flight/transport edit is not implemented
+by this generic schedule tool. All modes retain Core CAS/receipt/confirmation.
+The independent live-QA verifier now checks P5 typed endpoint/service/check-in
+fields and civil tuples; unsupported P2 commands fail closed. Local new-field
+tests are not a new Supabase or iPad acceptance receipt.
+
+
+Batch outputs add `review_basis=CURRENT_VISIBLE_COLLECTION_AND_UPDATE_DETAILS`
+and `review[]` with operation_id, typed proposed_change, nullable update_base and
+possible_duplicate_item_ids. UPDATE bases come from current authorized detail
+reads; CREATE has no update base, which is not an absence claim. The visible
+collection provides duplicate candidates. These sequential observations are not
+an atomic snapshot. Current Revision drift stays visible without rewriting the
+submitted expected_revision or canonical operation digest; changed duplicate
+observations continue to invalidate the existing batch digest. Apply/partial/
+confirmation-required responses retain the same review structure.

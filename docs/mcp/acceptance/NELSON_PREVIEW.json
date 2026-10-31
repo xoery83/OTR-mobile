@@ -1,0 +1,122 @@
+{
+  "stage": "NELSON_PREVIEW",
+  "status": "STRUCTURED_NELSON_PREVIEW_REAL_READ_PASS_NO_APPLY",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T06:04:39.192Z",
+  "phase": "preview_trip_changes",
+  "preview": {
+    "version": "otr.mcp.batch/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "preview_digest": "3f66624144acf0cfc385492c1fec30611ce3d36a33d2b0cc8e66c602b4d1cef8",
+    "outcome": "PREVIEW",
+    "operations": [
+      {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+        "operation_id": "40280af6-546d-41fa-bdbc-36c524c59b16",
+        "current_revision": null,
+        "preview_digest": "aa5b4785aeaf6828bc3b95ba3dd6b3fa50b3a80cdbbec8668cd7a0ed21bcfad9",
+        "summary": "Update 73f6d7a2-3191-46ca-aba9-ea57d61f2183 at revision 1: {\"kind\":\"TEXT\",\"title\":\"Synthetic Abel Tasman QA walk · Preview only\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "40280af6-546d-41fa-bdbc-36c524c59b16",
+          "target": "ITEM"
+        },
+        "outcome": "PREVIEW"
+      },
+      {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "5b1c9c64-2efb-4f64-a333-2ddf9361679c",
+        "operation_id": "ab552cb5-cb04-47c1-bda6-139f30fa95f8",
+        "current_revision": null,
+        "preview_digest": "fa8d9d8671aba46db5edf94ae83292090efbd8f05ddd60228e387a96307853f8",
+        "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-13\",\"start_date\":\"2026-12-10\",\"start_time\":\"14:00\",\"start_zone\":\"Pacific/Auckland\"},\"family\":\"P3\",\"property_name\":\"Synthetic Nelson QA lodge (unbooked)\",\"title\":\"Synthetic Nelson QA lodge (unbooked)\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "ab552cb5-cb04-47c1-bda6-139f30fa95f8",
+          "target": "ITEM"
+        },
+        "outcome": "PREVIEW"
+      }
+    ],
+    "review_basis": "CURRENT_VISIBLE_COLLECTION_AND_UPDATE_DETAILS",
+    "review": [
+      {
+        "operation_id": "40280af6-546d-41fa-bdbc-36c524c59b16",
+        "proposed_change": {
+          "request_id": "40280af6-546d-41fa-bdbc-36c524c59b16",
+          "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+          "expected_revision": 1,
+          "change": {
+            "kind": "TEXT",
+            "title": "Synthetic Abel Tasman QA walk · Preview only"
+          },
+          "kind": "UPDATE"
+        },
+        "update_base": {
+          "itemId": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+          "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "itemRevision": 1,
+          "title": "Synthetic Abel Tasman QA walk",
+          "description": "Synthetic draft itinerary requested as Manual plan; no actual route or booking.",
+          "status": "planned",
+          "hidden": false,
+          "visibility": "PRIVATE",
+          "localState": "ACCEPTED",
+          "schedule": {
+            "shape": "CALENDAR",
+            "start": {
+              "comparable": false,
+              "localDate": "2026-12-11",
+              "quality": "UNKNOWN",
+              "basis": "DERIVED_CIVIL",
+              "civilResolution": "PENDING"
+            }
+          },
+          "place": {
+            "qualification": "TEXT_ONLY",
+            "authoredLabel": "Abel Tasman"
+          },
+          "family": "P1",
+          "details": {}
+        },
+        "possible_duplicate_item_ids": []
+      },
+      {
+        "operation_id": "ab552cb5-cb04-47c1-bda6-139f30fa95f8",
+        "proposed_change": {
+          "request_id": "ab552cb5-cb04-47c1-bda6-139f30fa95f8",
+          "item": {
+            "family": "P3",
+            "title": "Synthetic Nelson QA lodge (unbooked)",
+            "dates": {
+              "start_date": "2026-12-10",
+              "end_date": "2026-12-13",
+              "start_time": "14:00",
+              "start_zone": "Pacific/Auckland"
+            },
+            "property_name": "Synthetic Nelson QA lodge (unbooked)"
+          },
+          "kind": "CREATE"
+        },
+        "update_base": null,
+        "possible_duplicate_item_ids": [
+          "3616da44-0d35-4400-a739-01f1029565ea"
+        ]
+      }
+    ],
+    "warnings": [
+      "AUTHORED_CIVIL_PENDING_NO_BOOKING:ab552cb5-cb04-47c1-bda6-139f30fa95f8",
+      "POSSIBLE_DUPLICATE:ab552cb5-cb04-47c1-bda6-139f30fa95f8:3616da44-0d35-4400-a739-01f1029565ea"
+    ]
+  },
+  "businessPostCount": 0,
+  "writeGuard": "GET_ONLY_BACKEND_PORT_NO_CONFIRMATION_NO_APPLY",
+  "directPath": "/v2/trips/:id/core/objects/ITEM/:id",
+  "updateBaseIndependentHash": "MATCH",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

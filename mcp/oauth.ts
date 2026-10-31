@@ -8,6 +8,7 @@ export type OAuthGrant = Readonly<{
   accountId: string;
   clientId: string;
   tokenId: string;
+  sessionId: string;
   resource: string;
   scopes: readonly string[];
   expiresAt: number;
@@ -17,7 +18,11 @@ export type OAuthOptions = {
   resource: string;
   key: JWTVerifyGetKey | CryptoKey;
   // Auth owns grant/revocation and binding; no bearer token is forwarded to Backend.
-  isGrantActive: (grant: OAuthGrant, signal: AbortSignal) => Promise<boolean>;
+  isGrantActive: (
+    grant: OAuthGrant,
+    signal: AbortSignal,
+    evidence: Readonly<{ accessToken: string }>,
+  ) => Promise<boolean>;
   bindBackend: (
     grant: OAuthGrant,
     signal: AbortSignal,
@@ -27,8 +32,12 @@ const claims = z.object({
   sub: z.uuid(),
   client_id: z.string().min(1).max(2048),
   jti: z.string().min(1).max(256).optional(),
-  session_id: z.uuid().optional(),
-  scope: z.string().max(1024),
+  session_id: z.uuid(),
+  otr_scopes: z
+    .array(z.enum(["otr.trips.read", "otr.trips.write"]))
+    .min(1)
+    .max(2)
+    .refine((scopes) => new Set(scopes).size === scopes.length),
   exp: z.number().int().positive(),
   role: z.literal("authenticated"),
 });
@@ -50,22 +59,38 @@ export function createOAuthAuthorizer(options: OAuthOptions) {
           issuer: options.issuer,
           audience: options.resource,
           algorithms: ["ES256", "RS256"],
-          requiredClaims: ["sub", "aud", "iss", "exp", "iat", "client_id", "scope"],
+          requiredClaims: [
+            "sub",
+            "aud",
+            "iss",
+            "exp",
+            "iat",
+            "client_id",
+            "session_id",
+            "otr_scopes",
+          ],
         },
       );
       if (protectedHeader.typ !== "JWT" && protectedHeader.typ !== "at+jwt") return null;
       const c = claims.parse(payload),
-        scopes = [...new Set(c.scope.split(" ").filter(Boolean))];
-      if (!scopes.includes("otr.trips.read") || !(c.jti ?? c.session_id)) return null;
+        scopes = c.otr_scopes;
+      if (!scopes.includes("otr.trips.read")) return null;
       const grant: OAuthGrant = Object.freeze({
         accountId: c.sub,
         clientId: c.client_id,
-        tokenId: (c.jti ?? c.session_id)!,
+        tokenId: c.jti ?? c.session_id,
+        sessionId: c.session_id,
         resource: options.resource,
         scopes,
         expiresAt: c.exp * 1000,
       });
-      if (!(await options.isGrantActive(grant, request.signal))) return null;
+      // Only the Auth-owned verifier receives the bearer, for checks with its own issuer.
+      if (
+        !(await options.isGrantActive(grant, request.signal, {
+          accessToken: bearer.slice(7),
+        }))
+      )
+        return null;
       const ports = await options.bindBackend(grant, request.signal);
       request.signal.throwIfAborted();
       return { ...grant, ...ports };
@@ -74,7 +99,14 @@ export function createOAuthAuthorizer(options: OAuthOptions) {
     }
   };
 }
-export function protectedResourceMetadata(resource: string, issuer: string) {
+export function protectedResourceMetadata(
+  resource: string,
+  issuer: string,
+  authorizationScopes: { read: readonly string[]; write?: readonly string[] } = {
+    read: ["otr.trips.read"],
+    write: ["otr.trips.read", "otr.trips.write"],
+  },
+) {
   const r = new URL(resource),
     a = new URL(issuer);
   if (
@@ -84,16 +116,27 @@ export function protectedResourceMetadata(resource: string, issuer: string) {
     [r, a].some((u) => u.username || u.password || u.hash || u.search)
   )
     throw Error("INVALID_OAUTH_CONFIGURATION");
+  const scopeSet = z
+    .array(z.string().regex(/^[\x21\x23-\x5B\x5D-\x7E]+$/))
+    .min(1)
+    .max(16);
+  const scopes = Object.freeze({
+    read: Object.freeze(scopeSet.parse(authorizationScopes.read)),
+    ...(authorizationScopes.write
+      ? { write: Object.freeze(scopeSet.parse(authorizationScopes.write)) }
+      : {}),
+  });
   const metadataUrl = r.origin + "/.well-known/oauth-protected-resource/mcp";
   const metadata = Object.freeze({
     resource,
     authorization_servers: [issuer],
-    scopes_supported: ["otr.trips.read", "otr.trips.write"],
+    scopes_supported: [...new Set([...scopes.read, ...(scopes.write ?? [])])],
     bearer_methods_supported: ["header"],
   });
   return {
     metadataUrl,
-    challenge: `Bearer resource_metadata="${metadataUrl}", scope="otr.trips.read"`,
+    authorizationScopes: scopes,
+    challenge: `Bearer resource_metadata="${metadataUrl}", scope="${scopes.read.join(" ")}"`,
     handle(request: Request): Response | null {
       const url = new URL(request.url);
       if (url.href !== metadataUrl) return null;

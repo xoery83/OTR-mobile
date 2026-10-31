@@ -1,0 +1,43 @@
+{
+  "stage": "P5_FIELDS",
+  "status": "P5_FIELDS_GET_ONLY_DIAGNOSTIC",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T03:19:33.558Z",
+  "phase": "get_operation_status",
+  "intent": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "bf5f0238-1def-4f87-afa2-a3d1bf79ca31",
+    "operation_id": "b8ce0943-957f-4910-8d93-ef4d2bf46c7e",
+    "current_revision": null,
+    "preview_digest": "4f3a113cf85ae9e83a882ac0ced09b439c37f6a40e78c2838677d1cb6e8df4c9",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"start_date\":\"2026-12-10\",\"start_time\":\"09:00\"},\"family\":\"P5\",\"notes\":\"Synthetic Manual field acceptance only; no real transport Booking, Ticket or payment.\",\"title\":\"MCP Synthetic QA Water Taxi Fields\",\"transport\":{\"checkin\":{\"date\":\"2026-12-10\",\"time\":\"08:45\"},\"destination\":\"Synthetic QA Jetty\",\"origin\":\"Synthetic QA Harbour\",\"subtype\":\"WATER_TAXI\"}}",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "b8ce0943-957f-4910-8d93-ef4d2bf46c7e",
+      "target": "ITEM"
+    }
+  },
+  "directPath": "/v2/trips/:id/core/capabilities",
+  "httpTrace": [
+    {
+      "method": "GET",
+      "route": "/v2/trips/:id/core/operations/:id",
+      "status": 404,
+      "durationMs": 7172
+    }
+  ],
+  "diagnostic": {
+    "version": "otr.mcp.status/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "operation_id": "b8ce0943-957f-4910-8d93-ef4d2bf46c7e",
+    "target": "ITEM",
+    "outcome": "UNKNOWN",
+    "current_revision": null,
+    "error_code": "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT"
+  },
+  "postCount": 0,
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

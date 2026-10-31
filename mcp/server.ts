@@ -55,6 +55,7 @@ export type McpOptions = {
   confirm?: ConfirmChanges;
   oauth?: {
     metadataUrl: string;
+    authorizationScopes?: { read: readonly string[]; write?: readonly string[] };
     challenge: string;
     handle(request: Request): Response | null;
   };
@@ -81,6 +82,22 @@ export function createMcpHandler(options: McpOptions) {
     resource.password
   )
     throw Error("INVALID_MCP_RESOURCE");
+  const readScopes = options.oauth?.authorizationScopes?.read ?? ["otr.trips.read"];
+  const writeScopes = options.oauth?.authorizationScopes?.write ?? [
+    "otr.trips.read",
+    "otr.trips.write",
+  ];
+  const writesEnabled =
+    !options.oauth?.authorizationScopes || !!options.oauth.authorizationScopes.write;
+  const authError = (scopes: readonly string[], expired = false): CallToolResult => ({
+    isError: true,
+    content: [{ type: "text", text: expired ? "AUTH_REQUIRED" : "WRITE_SCOPE_REQUIRED" }],
+    _meta: {
+      "mcp/www_authenticate": [
+        `Bearer ${options.oauth ? `resource_metadata="${options.oauth.metadataUrl}", ` : ""}error="${expired ? "invalid_token" : "insufficient_scope"}", error_description="${expired ? "Authorization expired; reconnect OTR" : "Authorize the requested OTR tool scopes"}", scope="${(scopes.includes("otr.trips.write") ? writeScopes : readScopes).join(" ")}"`,
+      ],
+    },
+  });
   return async (request: Request): Promise<Response> => {
     const metadata = options.oauth?.handle(request);
     if (metadata) return metadata;
@@ -123,12 +140,16 @@ export function createMcpHandler(options: McpOptions) {
           auth.expiresAt <= Date.now()
         )
           response = reply(401, "AUTH_REQUIRED");
-        else if (!auth.scopes.includes("otr.trips.read"))
+        else if (!auth.scopes.includes("otr.trips.read")) {
           response = reply(403, "INSUFFICIENT_SCOPE");
-        else {
+          response.headers.set(
+            "WWW-Authenticate",
+            `${options.oauth?.challenge ?? "Bearer"}, error="insufficient_scope", error_description="OTR Trip Read grant required"`,
+          );
+        } else {
           const bytes = await readBoundedBytes({ body: request.body }, 16384, boundary);
           const tools = createReadTools(auth.accountId, auth.read, boundary.signal);
-          const server = new McpServer({ name: "otr", version: "0.2.0" });
+          const server = new McpServer({ name: "otr", version: "0.3.0" });
           const definitions = [
             [
               "list_trips",
@@ -162,6 +183,9 @@ export function createMcpHandler(options: McpOptions) {
                 inputSchema,
                 outputSchema,
                 description,
+                _meta: {
+                  securitySchemes: [{ type: "oauth2", scopes: readScopes }],
+                },
                 annotations: {
                   readOnlyHint: true,
                   destructiveHint: false,
@@ -183,6 +207,8 @@ export function createMcpHandler(options: McpOptions) {
                   const code =
                     error instanceof ReadError ? error.code : "BACKEND_UNAVAILABLE";
                   toolError = code;
+                  if (code === "AUTH_REQUIRED")
+                    return authError(["otr.trips.read"], true);
                   return {
                     isError: true,
                     content: [
@@ -252,7 +278,7 @@ export function createMcpHandler(options: McpOptions) {
                 "update_trip_item",
                 updateItemInput,
                 mutationOutput,
-                "Preview or edit text OR dates at an explicit expected revision; never overwrite silently.",
+                "Preview or edit text OR a supported complete civil schedule at an explicit revision; qualified/transport time edits need their owning adapter.",
                 async (args: unknown) => {
                   const q = updateItemInput.parse(args);
                   return writes.execute(
@@ -277,13 +303,22 @@ export function createMcpHandler(options: McpOptions) {
                 batch.apply_trip_changes,
               ],
             ] as const;
-            for (const [name, inputSchema, outputSchema, description, run] of definitions)
+            for (const [
+              name,
+              inputSchema,
+              outputSchema,
+              description,
+              run,
+            ] of writesEnabled ? definitions : [])
               server.registerTool(
                 name,
                 {
                   inputSchema,
                   outputSchema,
                   description,
+                  _meta: {
+                    securitySchemes: [{ type: "oauth2", scopes: writeScopes }],
+                  },
                   annotations: {
                     readOnlyHint: name === "preview_trip_changes",
                     destructiveHint: false,
@@ -294,12 +329,10 @@ export function createMcpHandler(options: McpOptions) {
                 async (args: unknown): Promise<CallToolResult> => {
                   invokedTool = name;
                   try {
-                    if (
-                      !auth.clientId ||
-                      auth.expiresAt <= Date.now() ||
-                      !auth.scopes.includes("otr.trips.write")
-                    )
-                      throw Error("WRITE_SCOPE_REQUIRED");
+                    if (auth.expiresAt <= Date.now() || !auth.clientId)
+                      return authError(["otr.trips.read", "otr.trips.write"], true);
+                    if (!auth.scopes.includes("otr.trips.write"))
+                      return authError(["otr.trips.read", "otr.trips.write"]);
                     const result = await boundary.run(async () => await run(args));
                     if (auth.expiresAt <= Date.now()) throw Error("AUTH_REQUIRED");
                     return {
@@ -307,6 +340,8 @@ export function createMcpHandler(options: McpOptions) {
                       structuredContent: result,
                     };
                   } catch {
+                    if (auth.expiresAt <= Date.now())
+                      return authError(["otr.trips.read", "otr.trips.write"], true);
                     toolError = "MUTATION_UNAVAILABLE_QUERY_OPERATION";
                     return {
                       isError: true,
@@ -322,6 +357,9 @@ export function createMcpHandler(options: McpOptions) {
                 outputSchema: operationOutput,
                 description:
                   "Read owning exact operation receipt. UNKNOWN is not failed or absent.",
+                _meta: {
+                  securitySchemes: [{ type: "oauth2", scopes: readScopes }],
+                },
                 annotations: {
                   readOnlyHint: true,
                   idempotentHint: true,
@@ -330,14 +368,20 @@ export function createMcpHandler(options: McpOptions) {
               },
               async (args: unknown): Promise<CallToolResult> => {
                 try {
+                  if (auth.expiresAt <= Date.now())
+                    return authError(["otr.trips.read"], true);
                   const result = await boundary.run(() =>
                     writes.get_operation_status(args),
                   );
+                  if (auth.expiresAt <= Date.now())
+                    return authError(["otr.trips.read"], true);
                   return {
                     content: [{ type: "text", text: JSON.stringify(result) }],
                     structuredContent: result,
                   };
                 } catch {
+                  if (auth.expiresAt <= Date.now())
+                    return authError(["otr.trips.read"], true);
                   return {
                     isError: true,
                     content: [{ type: "text", text: "OPERATION_UNAVAILABLE" }],

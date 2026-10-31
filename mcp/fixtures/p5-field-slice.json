@@ -1,0 +1,16 @@
+{
+  "request_id": "b8ce0943-957f-4910-8d93-ef4d2bf46c7e",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "item": {
+    "family": "P5",
+    "title": "MCP Synthetic QA Water Taxi Fields",
+    "notes": "Synthetic Manual field acceptance only; no real transport Booking, Ticket or payment.",
+    "dates": { "start_date": "2026-12-10", "start_time": "09:00" },
+    "transport": {
+      "subtype": "WATER_TAXI",
+      "origin": "Synthetic QA Harbour",
+      "destination": "Synthetic QA Jetty",
+      "checkin": { "date": "2026-12-10", "time": "08:45" }
+    }
+  }
+}

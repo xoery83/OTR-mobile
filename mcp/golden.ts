@@ -1,7 +1,7 @@
 import { createInterface } from "node:readline";
 import { createItemInput } from "./mutationContract";
 import { verifyGoldenReadback } from "./goldenReadback";
-// Explicit registered-QA protocol acceptance only. Root window and normal OTP helper remain mandatory.
+// Explicit registered-QA acceptance: normal OTP/custody mandatory; V2 normal API QA needs no global DEV lock.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
@@ -52,9 +52,28 @@ export async function runGolden(
     | "P3_VERIFY"
     | "NELSON_STATUS"
     | "NELSON_RESUME"
-    | "NELSON_DATE_EDIT",
+    | "NELSON_DATE_EDIT"
+    | "NELSON_PREVIEW"
+    | "P5_FIELDS",
 ) {
   assert.equal(process.env.OTR_MCP_QA_CASE, stage);
+  const fixedP5 =
+    stage === "P5_FIELDS"
+      ? createItemInput.parse(
+          JSON.parse(readFileSync("mcp/fixtures/p5-field-slice.json", "utf8")),
+        )
+      : null;
+  const p5ManualRecovery =
+    stage === "P5_FIELDS" && process.env.OTR_MCP_P5_MANUAL_RECOVERY === "1";
+  if (fixedP5) {
+    assert.equal(fixedP5.request_id, "b8ce0943-957f-4910-8d93-ef4d2bf46c7e");
+    assert.equal(fixedP5.trip_id, "cc44a705-6f43-41e0-a2f9-16f334b2a6b2");
+    assert.equal(
+      contentDigest(fixedP5),
+      "4178b86bd4f94947f5d5830cce98e9b129047f742b5051c0ccbec8836a019d0b",
+      "FIXED_P5_INPUT_CHANGED",
+    );
+  }
   if (stage === "NELSON_DATE_EDIT")
     assert.equal(
       process.env.OTR_MCP_NATIVE_NELSON_READY,
@@ -63,6 +82,25 @@ export async function runGolden(
     );
   if (stage === "P3" || stage === "NELSON" || stage === "NELSON_RESUME")
     assert(process.stdin.isTTY, "GOLDEN_INTERACTIVE_TTY_REQUIRED");
+  if (p5ManualRecovery) {
+    assert(fixedP5);
+    const marker = JSON.parse(
+      readFileSync("docs/mcp/acceptance/P5_FIELDS_DISPATCH.json", "utf8"),
+    );
+    const original = JSON.parse(
+      readFileSync("docs/mcp/acceptance/P5_FIELDS_ATTEMPT_02.json", "utf8"),
+    );
+    const prepared = prepareCreate(registeredHostQa.accountId, fixedP5);
+    assert(prepared.kind === "ITEM");
+    assert.equal(marker.operationId, fixedP5.request_id);
+    assert.equal(marker.commandSha256, contentDigest(prepared.command));
+    assert.equal(original.postCount, 1);
+    assert.equal(original.sessionCleanup, "PASS_LOCAL_SCOPE_REFRESH_REVOKED");
+    assert.equal(
+      original.intent.preview_digest,
+      mutationIdentity(registeredHostQa.accountId, prepared).preview_digest,
+    );
+  }
   assert.equal(process.env.OTR_QA_DEV_BUSINESS_WINDOW, "HELD");
   const fixture = fixtureSchema.parse(
     JSON.parse(readFileSync("mcp/fixtures/golden-slices.json", "utf8")),
@@ -85,7 +123,9 @@ export async function runGolden(
     observedAt: new Date().toISOString(),
   };
   const recoverP3 = stage === "P3" && process.env.OTR_MCP_RECOVER_P3 === "1";
-  const outputPath = `docs/mcp/acceptance/${stage}.json`;
+  const p5Diagnostic =
+    stage === "P5_FIELDS" && process.env.OTR_MCP_QA_DIAGNOSTIC_ONLY === "1";
+  const outputPath = `docs/mcp/acceptance/${p5Diagnostic ? "P5_FIELDS_DIAGNOSTIC" : p5ManualRecovery ? "P5_FIELDS_MANUAL_RECOVERY" : stage}.json`;
   mkdirSync("docs/mcp/acceptance", { recursive: true });
   const save = () => writeFileSync(outputPath, JSON.stringify(facts, null, 2) + "\n");
   save();
@@ -135,7 +175,12 @@ export async function runGolden(
             config.publishableKey,
             stage !== "READ",
           )(request);
-          if ((stage === "P3_VERIFY" || stage === "NELSON_STATUS") && auth?.backend) {
+          if (
+            (stage === "P3_VERIFY" ||
+              stage === "NELSON_STATUS" ||
+              stage === "NELSON_PREVIEW") &&
+            auth?.backend
+          ) {
             const backend = auth.backend;
             auth.backend = (q, signal) => {
               assert.equal(q.method, "GET", "VERIFY_CANNOT_REPOST");
@@ -143,11 +188,15 @@ export async function runGolden(
             };
           }
           if (
-            (stage === "NELSON_RESUME" || stage === "NELSON_DATE_EDIT") &&
+            (stage === "NELSON_RESUME" ||
+              stage === "NELSON_DATE_EDIT" ||
+              stage === "P5_FIELDS") &&
             auth?.backend
           ) {
             const backend = auth.backend;
             auth.backend = (q, signal) => {
+              if (p5Diagnostic)
+                assert.equal(q.method, "GET", "P5_DIAGNOSTIC_CANNOT_POST");
               if (q.method === "POST") {
                 const operationId = z
                   .uuid()
@@ -183,9 +232,58 @@ export async function runGolden(
                     ) + "\n",
                     { flag: "wx", mode: 0o600 },
                   );
+                if (stage === "P5_FIELDS")
+                  writeFileSync(
+                    p5ManualRecovery
+                      ? "docs/mcp/acceptance/P5_FIELDS_RECOVERY_DISPATCH.json"
+                      : "docs/mcp/acceptance/P5_FIELDS_DISPATCH.json",
+                    JSON.stringify(
+                      {
+                        operationId,
+                        itemId: expected.command.target.id,
+                        tripId: expected.command.tripId,
+                        commandSha256: contentDigest(expected.command),
+                        dispatchReservedBeforeFetchAt: new Date().toISOString(),
+                        authority: p5ManualRecovery
+                          ? "OWNER_PHASE2_EXPLICIT_SAME_OPERATION_MANUAL_RECOVERY"
+                          : "OWNER_PHASE2_SYNTHETIC_FIELD_QA",
+                      },
+                      null,
+                      2,
+                    ) + "\n",
+                    { flag: "wx", mode: 0o600 },
+                  );
                 resumePostCounts.set(operationId, 1);
               }
-              return backend(q, signal);
+              if (stage !== "P5_FIELDS") return backend(q, signal);
+              const at = Date.now();
+              const trace = (status: number | null, error?: string) => {
+                const rows = (facts.httpTrace ??= []) as unknown[];
+                rows.push({
+                  method: q.method,
+                  route: q.path.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/g, ":id"),
+                  status,
+                  durationMs: Date.now() - at,
+                  ...(error ? { error } : {}),
+                });
+                save();
+              };
+              return backend(q, signal).then(
+                (response) => {
+                  trace(response.status);
+                  return response;
+                },
+                (error: unknown) => {
+                  trace(
+                    null,
+                    error instanceof Error &&
+                      ["AbortError", "TimeoutError"].includes(error.name)
+                      ? error.name
+                      : "REQUEST_FAILED",
+                  );
+                  throw error;
+                },
+              );
             };
           }
           return auth;
@@ -298,7 +396,31 @@ export async function runGolden(
         z.uuid().parse(operationId);
         z.uuid().parse(itemId);
         const targetTrip = z.uuid().parse(prepared.command.tripId);
-        const sql = `BEGIN READ ONLY; SELECT json_build_object('itemCount',(SELECT count(*) FROM public.itinerary_events WHERE id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid AND owner_account_id='${context.accountId}'::uuid),'items',(SELECT json_agg(to_jsonb(e)) FROM public.itinerary_events e WHERE id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid),'stay',(SELECT to_jsonb(s) FROM public.trip_stay_details s WHERE event_id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid),'receipt',(SELECT body FROM public.trip_core_command_receipts WHERE operation_id='${operationId}'::uuid AND actor_account_id='${context.accountId}'::uuid AND trip_id='${targetTrip}'::uuid)) AS evidence; ROLLBACK;`;
+        const family =
+          prepared.kind === "ITEM" && prepared.command.command === "CREATE_ITEM"
+            ? (prepared.command.payload as { family?: string }).family
+            : undefined;
+        const extra =
+          family === "P5"
+            ? [
+                ["transportEndpoints", "itinerary_transport_endpoints"],
+                ["transportServices", "itinerary_transport_services"],
+                ["operationalFacts", "trip_transport_operational_facts"],
+              ]
+            : family === "P4"
+              ? [["rentalPlaces", "trip_rental_places"]]
+              : [];
+        const extraSql =
+          extra
+            .map(
+              ([key, table]) =>
+                `,'${key}',(SELECT coalesce(json_agg(to_jsonb(x)),'[]'::json) FROM public.${table} x WHERE event_id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid)`,
+            )
+            .join("") +
+          (family === "P4"
+            ? `,'rental',(SELECT to_jsonb(x) FROM public.trip_rental_details x WHERE event_id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid)`
+            : "");
+        const sql = `BEGIN READ ONLY; SELECT json_build_object('itemCount',(SELECT count(*) FROM public.itinerary_events WHERE id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid AND owner_account_id='${context.accountId}'::uuid),'items',(SELECT json_agg(to_jsonb(e)) FROM public.itinerary_events e WHERE id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid),'stay',(SELECT to_jsonb(s) FROM public.trip_stay_details s WHERE event_id='${itemId}'::uuid AND trip_id='${targetTrip}'::uuid),'receipt',(SELECT body FROM public.trip_core_command_receipts WHERE operation_id='${operationId}'::uuid AND actor_account_id='${context.accountId}'::uuid AND trip_id='${targetTrip}'::uuid)${extraSql}) AS evidence; ROLLBACK;`;
         const file = `/private/tmp/otr-mcp-${operationId}.sql`;
         writeFileSync(file, sql, { mode: 0o600 });
         const raw = execFileSync(
@@ -354,6 +476,154 @@ export async function runGolden(
             requestInit: { headers: { Authorization: "Bearer " + session.accessToken } },
           }),
         );
+        if (stage === "P5_FIELDS") {
+          assert(fixedP5);
+          const input = fixedP5;
+          assert.equal(input.trip_id, "cc44a705-6f43-41e0-a2f9-16f334b2a6b2");
+          assert.equal(input.item.family, "P5");
+          const prepared = prepareCreate(context.accountId, input);
+          const identity = mutationIdentity(context.accountId, prepared);
+          allowedResumePosts.set(input.request_id, prepared);
+          facts.targetTrip = input.trip_id;
+          facts.intent = identity;
+          facts.phase = "P5_FIELDS_CURRENT_CAPABILITY";
+          save();
+          const response = await direct(`/v2/trips/${input.trip_id}/core/capabilities`);
+          assert.equal(response.status, 200);
+          const caps = coreCapabilitiesSchema.parse(await response.json());
+          assert(
+            caps.activationState === "ENABLED" &&
+              caps.enabledFamilies.includes("P5") &&
+              caps.enabledCommands.includes("CREATE_ITEM") &&
+              caps.enabledAdmissionModes.includes("MANUAL"),
+          );
+          if (p5Diagnostic) {
+            facts.diagnostic = await call("get_operation_status", identity.query);
+            facts.postCount = 0;
+            facts.status = "P5_FIELDS_GET_ONLY_DIAGNOSTIC";
+            return;
+          }
+          facts.phase = "P5_FIELDS_STANDARD_MCP_PREVIEW_APPLY";
+          save();
+          const result = await approvedCall("create_trip_item", input);
+          facts.create = result;
+          save();
+          assert.equal(result.outcome, "APPLIED");
+          const proof = await databaseVerify(
+            input.request_id,
+            identity.item_id!,
+            prepared,
+          );
+          facts.independentSupabase = proof;
+          save();
+          assert.equal(proof.status, "SERVER_VERIFIED");
+          const detail = itemSchema.parse(
+            (
+              await call("get_trip_item", {
+                trip_id: input.trip_id,
+                item_id: identity.item_id,
+              })
+            ).item,
+          );
+          assert.equal(detail.family, "P5");
+          assert.equal(detail.tripId, input.trip_id);
+          assert.equal(detail.itemId, identity.item_id);
+          assert.equal(detail.schedule.origin?.time.localTime, "09:00:00");
+          assert.equal(detail.schedule.origin?.time.quality, "ESTIMATED");
+          assert.equal(detail.schedule.origin?.time.instant, undefined);
+          assert.equal(detail.schedule.destination?.time.localTime, undefined);
+          assert(detail.family === "P5");
+          assert.equal(detail.details.service?.transportSubtype, "WATER_TAXI");
+          assert.equal(detail.details.operationalFacts[0]?.time.localTime, "08:45:00");
+          facts.readbackSha256 = digest(detail);
+          facts.postCount = resumePostCounts.get(input.request_id) ?? 0;
+          assert((facts.postCount as number) <= 1);
+          facts.status = "P5_FIELDS_CLOUD_PASS_NATIVE_NOT_OBSERVED";
+          return;
+        }
+        if (stage === "NELSON_PREVIEW") {
+          const tripId = "cc44a705-6f43-41e0-a2f9-16f334b2a6b2";
+          const itemId = "73f6d7a2-3191-46ca-aba9-ea57d61f2183";
+          facts.targetTrip = tripId;
+          const existing = itemSchema.parse(
+            (await call("get_trip_item", { trip_id: tripId, item_id: itemId })).item,
+          );
+          const plan = {
+            trip_id: tripId,
+            changes: [
+              {
+                kind: "UPDATE",
+                request_id: "40280af6-546d-41fa-bdbc-36c524c59b16",
+                item_id: itemId,
+                expected_revision: existing.itemRevision,
+                change: {
+                  kind: "TEXT",
+                  title: "Synthetic Abel Tasman QA walk · Preview only",
+                },
+              },
+              {
+                kind: "CREATE",
+                request_id: "ab552cb5-cb04-47c1-bda6-139f30fa95f8",
+                item: {
+                  family: "P3",
+                  title: "Synthetic Nelson QA lodge (unbooked)",
+                  property_name: "Synthetic Nelson QA lodge (unbooked)",
+                  dates: {
+                    start_date: "2026-12-10",
+                    end_date: "2026-12-13",
+                    start_time: "14:00",
+                    start_zone: "Pacific/Auckland",
+                  },
+                },
+              },
+            ],
+          };
+          const preview = await call("preview_trip_changes", plan);
+          facts.preview = preview;
+          facts.businessPostCount = 0;
+          facts.writeGuard = "GET_ONLY_BACKEND_PORT_NO_CONFIRMATION_NO_APPLY";
+          save();
+          const rows = z
+            .array(
+              z.object({
+                operation_id: z.uuid(),
+                update_base: itemSchema.nullable(),
+                proposed_change: z.record(z.string(), z.unknown()),
+                possible_duplicate_item_ids: z.array(z.uuid()),
+              }),
+            )
+            .length(2)
+            .parse(preview.review);
+          for (let i = 0; i < rows.length; i++) {
+            assert.equal(rows[i].operation_id, plan.changes[i].request_id);
+            assert.deepEqual(rows[i].proposed_change, plan.changes[i]);
+          }
+          assert.equal(preview.outcome, "PREVIEW");
+          assert.equal(
+            preview.review_basis,
+            "CURRENT_VISIBLE_COLLECTION_AND_UPDATE_DETAILS",
+          );
+          assert.equal(rows[0].update_base?.itemId, itemId);
+          assert.equal(rows[0].update_base?.itemRevision, existing.itemRevision);
+          assert.equal(rows[0].proposed_change.expected_revision, existing.itemRevision);
+          assert.equal(rows[1].update_base, null);
+          assert(
+            rows[1].possible_duplicate_item_ids.includes(
+              "3616da44-0d35-4400-a739-01f1029565ea",
+            ),
+          );
+          const independent = await direct(
+            `/v2/trips/${tripId}/core/objects/ITEM/${itemId}`,
+          );
+          assert.equal(independent.status, 200);
+          assert.equal(
+            digest(rows[0].update_base),
+            digest(itemSchema.parse(await independent.json())),
+          );
+          facts.updateBaseIndependentHash = "MATCH";
+          facts.status = "STRUCTURED_NELSON_PREVIEW_REAL_READ_PASS_NO_APPLY";
+          return;
+        }
         if (stage === "NELSON_DATE_EDIT") {
           const checkpoint = z
             .object({
@@ -983,6 +1253,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       "NELSON_STATUS",
       "NELSON_RESUME",
       "NELSON_DATE_EDIT",
+      "NELSON_PREVIEW",
+      "P5_FIELDS",
     ])
     .parse(process.env.OTR_MCP_QA_CASE);
   console.info(JSON.stringify(await runGolden(stage)));
