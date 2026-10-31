@@ -72,6 +72,14 @@ owning ACL/CAS checks; service-role bypass is not an alternative.
 
 ## Writers, exact Gate and acceptance
 
+Local candidate: `backend/src/mcpOAuthGrantVerifier.ts`, unmounted and false without
+an explicit client policy. It snapshots the verified caller input, detects
+bearer/Account/client/session/resource/expiry/permission substitution, and uses two
+bounded same-issuer reads with public API key only. It stores no token or grant.
+MCP must verify the signature before calling it; local payload decoding is solely
+a consistency check. No SDK session is synthesized. Its test fixtures prove local
+closed behavior, not actual Hosted grant/session/revocation support.
+
 - Auth: Account classification, issuer hook/consent/client policy and request-only
   provider grant verifier; Auth-only code candidates may proceed while closed.
 - MCP: JWT/PRM/protocol caller, explicit session ID, signed `otr_scopes` adapter,
