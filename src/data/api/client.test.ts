@@ -267,6 +267,43 @@ describe("bounded API metadata-only diagnostics", () => {
     expect(readLastApiFailure()?.code).toBe("BODY_LIMIT");
     expect(JSON.stringify(readLastApiFailure())).not.toContain("PRIVATE_BODY");
   });
+  it("preserves the fixed Import preparation error without private response material or retries", async () => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const fetchImplementation = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: "UNIVERSAL_PREPARATION_UNAVAILABLE",
+              message: "PRIVATE_ORIGINAL",
+            },
+          }),
+          { status: 503 },
+        ),
+    );
+    try {
+      const client = createApiClient({
+        baseUrl: "https://api.example.com",
+        maxResponseBytes: 128,
+        fetchImplementation,
+      });
+      await expect(
+        client.post("/v2/import-batches/prepare", {}, responseSchema),
+      ).rejects.toMatchObject({
+        kind: "http",
+        status: 503,
+        code: "UNIVERSAL_PREPARATION_UNAVAILABLE",
+        details: undefined,
+      });
+      expect(readLastApiFailure()?.code).toBe("UNIVERSAL_PREPARATION_UNAVAILABLE");
+      expect(fetchImplementation).toHaveBeenCalledOnce();
+      expect(JSON.stringify([readLastApiFailure(), log.mock.calls])).not.toContain(
+        "PRIVATE_ORIGINAL",
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
   it("does not log arbitrary response error codes", async () => {
     const client = createApiClient({
       baseUrl: "https://api.example.com",
