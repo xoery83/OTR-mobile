@@ -3,7 +3,7 @@ import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
 import { tripDiscoveryBoundary, type TripDiscoveryPort } from "./tripDiscovery";
 import { mcpReadGrantSchema, type McpVerifiedGrant } from "./mcpOAuthGrantVerifier";
 
-type ReadPorts = Readonly<{
+export type ReadPorts = Readonly<{
   discovery: TripDiscoveryPort;
   canReadTrip(actor: string, trip: string): Promise<boolean>;
   core: CoreHttpConnection;
