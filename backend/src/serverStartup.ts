@@ -1,4 +1,5 @@
 import { guestAdoptionBodyLimit } from "./guestAdoptionHttp";
+import { loadMcpQaRuntime } from "./mcpQaRuntime";
 import { createAccountProfileBootstrapPort } from "./accountProfileBootstrap";
 import { createServer } from "node:http";
 
@@ -106,7 +107,16 @@ export function startDevBackend(
         JSON.stringify({ level: event.failureClass ? "error" : "info", ...event }),
       ),
   );
+  const mcpReady = loadMcpQaRuntime(
+    process.env,
+    gateway,
+    startOptions.coreConnection,
+  ).catch(() => {
+    console.info("MCP_QA_RUNTIME_CLOSED");
+    return undefined;
+  });
   const handle = createDevBackendHandler({
+    mcpHttp: async (request) => (await mcpReady)?.(request) ?? null,
     gateway,
     accountProfileBootstrapPort: createAccountProfileBootstrapPort({
       url: environment.OTR_DEV_SUPABASE_URL,

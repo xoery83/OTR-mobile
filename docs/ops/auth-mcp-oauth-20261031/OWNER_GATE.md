@@ -92,7 +92,8 @@ smoke for this global hook/Site URL change; Apple remains Owner-paused.
 
 First CAS back to the approved deny-all OAuth body with the renderer's matching
 close SQL; repeated close is idempotent. The absolute window and token cap close
-new issuance/access even if the operator loses its connection. Native claims
+new issuance and MCP access even if the operator loses its connection. Data/Storage
+expiry/revocation behavior remains subject to actual qualification. Native claims
 continue unchanged. Then normally revoke only this QA client's provider grant,
 prove old resource access/refresh rejected, and close the public runtime config.
 Restore OAuth Server OFF, no configured hook and Site URL

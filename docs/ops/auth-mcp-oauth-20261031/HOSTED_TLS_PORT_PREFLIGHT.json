@@ -1,0 +1,21 @@
+{
+  "host": "api-dev.xoery.art",
+  "tlsVerified": true,
+  "tlsVersion": "TLSv1.3",
+  "certificateSHA256": "d00218ea926729aab511953b25fa1458ea41fc51550d0221884c9bd50bb5f249",
+  "healthStatus": 200,
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "containerId": "7a77a51d71a155c5f70ee7aab467b62645ca1195d66aa112af28b09455ef9744",
+  "networkMode": "host",
+  "ports": {},
+  "mutation": false,
+  "scope": "Public DEV TLS/health and exact DEV container network projection only; no Caddy global config, Env, credentials or other services",
+  "limitation": "Read snapshot is not a Host lock or proof of future image; fresh baseline required before software mutation. Internal hop origin behavior also needs actual mounted MCP qualification.",
+  "backendPort8787Listeners": [
+    "127.0.0.1:8787"
+  ],
+  "privateListenerQualified": true
+}

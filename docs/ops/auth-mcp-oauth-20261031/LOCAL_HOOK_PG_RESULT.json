@@ -10,7 +10,7 @@
     "CAS close and repeat close restore deny-all OAuth with no new permission or Native claim change",
     "fixture-only shortened install guard proves deadline closes OAuth while ordinary Native claims still pass unchanged"
   ],
-  "templateSHA256": "f00758e650b6e83b7517f5ebe970e9307f4e9d7bb12246700fa4ea00a2fde307",
+  "templateSHA256": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
   "closedInstallSHA256": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
   "qualification": "JSON transformation/SQL ACL only, not signed JWT issuance; one fixture-only 2-minute installer guard substitution for fast expiry test",
   "devChanges": 0,

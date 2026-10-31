@@ -31,8 +31,9 @@ def sql(source, expected_error=None):
     return result.stdout.strip()
 
 
-def invoke(claims, role="supabase_auth_admin", error=None):
-    payload = json.dumps({"claims": claims}, separators=(",", ":"))
+def invoke(claims, role="supabase_auth_admin", error=None, user_id=None):
+    payload = json.dumps({"claims": claims, "user_id": user_id or claims.get("sub"),
+                          "authentication_method": "oauth_provider/authorization_code" if claims.get("client_id") else "otp"}, separators=(",", ":"))
     result = sql("SET ROLE " + role + ";SELECT public.otr_mcp_qa_access_token($payload$" + payload + "$payload$::jsonb);", error)
     return None if error else json.loads(result)["claims"]
 
@@ -79,6 +80,7 @@ try:
                     {"session_id": None}, {"session_id": "bad"}, {"session_id": "00000000-0000-0000-0000-000000000000"},
                     {"exp": None}, {"exp": 0}, {"exp": 1.5}]:
         invoke({**oauth, **changes}, error="ERROR:")
+    invoke(oauth, user_id=str(uuid4()), error="MCP_QA_OAUTH_ISSUANCE_CLOSED")
     checks.append("foreign client/account, anonymous/unknown, wrong role/aud/session and missing/expired/malformed exp deny")
     for role in ["anon", "authenticated", "service_role"]:
         invoke(oauth, role, "permission denied")

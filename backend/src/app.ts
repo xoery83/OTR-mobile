@@ -639,6 +639,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  mcpHttp?: (request: Request) => Promise<Response | null>;
   sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
   sourcePdfV2ForRequest?: (
     request: Request,
@@ -2442,6 +2443,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  mcpHttp,
   sourcePdfV2Port,
   sourcePdfV2ForRequest,
   sourcePdfV4PreparationPort,
@@ -2546,7 +2548,19 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (guestAdoptionBodyLimit(url.pathname) !== null) {
+      if (
+        mcpHttp &&
+        [
+          "/mcp",
+          "/.well-known/oauth-protected-resource/mcp",
+          "/oauth/consent",
+          "/oauth/consent/config",
+          "/oauth/consent/app.js",
+        ].includes(url.pathname)
+      ) {
+        route = "/mcp/auth-resource";
+        response = (await mcpHttp(request)) ?? new Response(null, { status: 404 });
+      } else if (guestAdoptionBodyLimit(url.pathname) !== null) {
         route = "/v1/auth/guest-adoptions/:operation";
         const actor = await authenticateNormalAccount(request, gateway);
         response = (await guestAdoptionHttpBoundary(

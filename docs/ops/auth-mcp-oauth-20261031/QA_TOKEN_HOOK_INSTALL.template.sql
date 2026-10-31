@@ -31,6 +31,7 @@ BEGIN
  -- Native OTP/Google sessions keep every original claim unchanged.
  IF client IS NULL THEN RETURN jsonb_build_object('claims',claims); END IF;
  IF client IS DISTINCT FROM '__CLIENT_UUID__'
+ OR event->>'user_id' IS DISTINCT FROM '1f3d7935-1bdc-4952-8d7f-0f72077368c1'
  OR claims->>'sub' IS DISTINCT FROM '1f3d7935-1bdc-4952-8d7f-0f72077368c1'
  OR claims->>'is_anonymous' IS DISTINCT FROM 'false'
  OR claims->>'role' IS DISTINCT FROM 'authenticated'
