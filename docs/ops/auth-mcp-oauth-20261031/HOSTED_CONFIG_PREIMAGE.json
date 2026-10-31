@@ -29,6 +29,14 @@
     "evidence": "Visible Site URL input value read from DOM; No Redirect URLs",
     "configurationChanged": false
   },
+  "publicSigningMetadata": {
+    "url": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1/.well-known/jwks.json",
+    "keyCount": 1,
+    "kid": "79aad5d4-341d-41da-8eff-cc04f7b232d2",
+    "alg": "ES256",
+    "kty": "EC",
+    "meaning": "Existing public asymmetric verification metadata; not OAuth issuance evidence or private key access"
+  },
   "boundaries": [
     "No toggle, Add, Save, new client, consent or hook actions",
     "No SMTP, provider secret, PAT, browser cookie or session extraction",

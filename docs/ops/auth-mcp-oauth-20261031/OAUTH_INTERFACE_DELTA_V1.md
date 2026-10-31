@@ -72,6 +72,25 @@ owning ACL/CAS checks; service-role bypass is not an alternative.
 
 ## Writers, exact Gate and acceptance
 
+Browser consent uses the existing OTR controls/theme/localization through Expo's
+supported `react-native-web ~0.21.0` adapter and existing React/React DOM19.2.3.
+Dependencies live in `browser/auth-consent`'s own manifest/lockfile; root Native
+dependencies are unchanged after the existing Expo/Worklets peer conflict. Native
+delegated the behavior-preserving canonical `UiTextInput` extraction (forms keeps
+its original export) and new `oauthConsent` catalog keys; owning review passed.
+The added platform package is needed to render canonical controls in a browser;
+it avoids a second control system. Its separate browser bundle is not imported
+by the iOS app and does not add another router, Account store or issuer.
+
+Actual Dashboard preimage is now recorded in `HOSTED_CONFIG_PREIMAGE.json`:
+OAuth Server off, no OAuth apps, no hooks, Site URL `http://localhost:3000`, no
+redirect allowlist. Public JWKS already advertises ES256; no signing key change is
+proposed. Initial issuance qualification is restricted to registered Synthetic QA
+Account `1f3d7935-1bdc-4952-8d7f-0f72077368c1`, not Owner's real account. The SQL
+hook candidate caps access at60 seconds and its issuance window at30 minutes.
+Direct Data/Storage restrictions are still unproven: this finite QA test must
+measure them and close, rather than claiming general read-only OAuth delivery.
+
 Local candidate: `backend/src/mcpOAuthGrantVerifier.ts`, unmounted and false without
 an explicit client policy. It snapshots the verified caller input, detects
 bearer/Account/client/session/resource/expiry/permission substitution, and uses two

@@ -2,20 +2,10 @@ import { Buffer } from "node:buffer";
 import { z } from "zod";
 import { createRequestBoundary, readBoundedJson } from "@/data/api/requestBoundary";
 import { classifySupabaseAuthAccount, isNormalAccount } from "./authAccountQualification";
+import { isSupabaseDevPublicKey } from "@/data/auth/devSupabasePublicKey";
 
 const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1";
 const resource = "https://api-dev.xoery.art/mcp";
-function isPublicKey(key: string) {
-  if (key.startsWith("sb_publishable_")) return key.length > 30;
-  try {
-    const value = JSON.parse(
-      Buffer.from(key.split(".")[1], "base64url").toString("utf8"),
-    );
-    return value.role === "anon" && value.ref === "tuqigdxrvrerfewsxqgm";
-  } catch {
-    return false;
-  }
-}
 const readScopes = z.tuple([z.literal("otr.trips.read")]);
 export const mcpReadGrantSchema = z.object({
   accountId: z.uuid(),
@@ -75,7 +65,7 @@ export function createSupabaseDevMcpGrantVerifier(
           .min(1)
           .max(4096)
           .regex(/^[^\r\n]+$/)
-          .refine(isPublicKey, "PUBLIC_DEV_KEY_REQUIRED"),
+          .refine(isSupabaseDevPublicKey, "PUBLIC_DEV_KEY_REQUIRED"),
       })
       .parse(policy);
 
