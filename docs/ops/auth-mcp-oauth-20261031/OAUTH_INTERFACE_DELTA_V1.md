@@ -19,6 +19,11 @@ ordinary-session QA is reusable business evidence, never OAuth issuance evidence
   optional. This is a draft observation, not a durable registration; fresh-check
   before creating the static public client. No client has been created here.
 - PKCE S256 only. Exact registered redirects; existing normal Account login.
+- First read-only provider request uses `scope=openid`. MCP PRM, challenges and
+  tool security metadata must use the provider request scope, independently of
+  signed business `otr_scopes`. No email/profile/phone request is needed. Refresh
+  issuance requirements, including any need for `offline_access`, remain subject
+  to actual Hosted provider qualification.
 
 ## Minimal issuance candidate — requires exact protected configuration approval
 
