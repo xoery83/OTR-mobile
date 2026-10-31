@@ -1,0 +1,48 @@
+{
+  "status": "COMBINED_IMAGE_PREPARED_NOT_DEPLOYED",
+  "image": {
+    "status": "IMAGE_PREPARED_NOT_DEPLOYED",
+    "root": "/opt/otr/dev-backend/build/auth-diagnostic-804df6d0d92a4319ae2d52208b90c421",
+    "baseImage": "sha256:d8b789b8d80f65b7c08408d1c330cd46bbb79a401d5a87413a0aa882bd93d168",
+    "image": "sha256:f052742969e7ac9bc29f337b24be6d1a7af20b0aa9fc8381990fb128278e4e9a",
+    "bundles": {
+      "server-capture.mjs": "c0889ee73072cb570470adc13b42ff44ef146efdfb897df2e86cb0df8a256213",
+      "mcp/runtime.mjs": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+      "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+      "auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+    },
+    "imageConfigUnchanged": true,
+    "serviceMutations": 0,
+    "configMutations": 0,
+    "schemaOrAuthorityChanges": false,
+    "providerCalls": 0
+  },
+  "authLogPort": "eff3f5db",
+  "authBridge": "2f54b05c",
+  "mcpSource": "c41a4f0a",
+  "sourceCommit": "4090dcbece1275b7b90f75fd3acc4d4f9691ea6f",
+  "baselineByteExactSHA256": "6d7610a321e5d240b2095e38c7acb55bbe053adecc6381c270da995400880711",
+  "sourceInputCount": 350,
+  "allowedChangedSourceInputs": [
+    "backend/src/mcpQaRuntime.ts",
+    "backend/src/sourcePngBroker.ts"
+  ],
+  "unchangedSourceInputCount": 348,
+  "sourceBeforeSHA256": "daa724fb54c36228e3b186f82ff4dc17a8594811073cc28a3a6851979bb88a55",
+  "sourceAfterSHA256": "cafdc262f566b9801d8d087545db006289c8b48923f5f372f1d477ce8bc21e9d",
+  "independentReview": "NO_BLOCKER_LOCAL_COMBINED_ASSEMBLY_SCOPE",
+  "independentReviewLimit": "Local metadata/source/binary hashes only; reviewer did not inspect Docker or deploy",
+  "rootReportedSourceValidation": "43 tests/lint/independent NO_BLOCKER reused",
+  "hostedDeployed": false,
+  "newOauthWindowAuthorized": false,
+  "failureCauseProven": false,
+  "originalFailedBaselineSHA256": "226fe69215db880365135e71d99ea7bb09258aa7534afd695869516b5ff6a260",
+  "localReceiptSHA256": {
+    "ASSEMBLY.json": "5d2088c1f77eefe3af4492401776abce18cdbbe87c0e84bdfee208102a5aaf16",
+    "COMBINED_ASSEMBLY.json": "4056d6a4308236485ea76c02d5414556286b7a2a014429bbdb3c30f17e9b97f5",
+    "SOURCE_COMMIT_BINDING.json": "1c18ba0c4e283f1f4d30fbac4660b84d800da1e31edb7373df7c63f506fd4ff1",
+    "COMBINED_HOST_IMAGE_RECEIPT.json": "f7b1d024972062605060f1523202fd698300de5dd0ab9cc7d10722944a94db55"
+  },
+  "localReceiptDirectory": "/private/tmp/otr-auth-diagnostic-image-20261101",
+  "next": "Unique Root Host Writer fresh baseline/default-closed preflight, short CAS deployment and independent readback; only then a new exact QA Gate."
+}

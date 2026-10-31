@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "status": "CANDIDATE_ONLY_NOT_APPROVED_NOT_ACTIVATED",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "maxWindowMinutes": 30,
+  "maxAccessTokenSeconds": 60,
+  "singleUse": true,
+  "newClientRegistration": false,
+  "oldB3WindowsReusable": false,
+  "files": {
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/OWNER_GATE.md": "fc2822154d98aa1dd123694b1d964953ef41d9ac0c4099291040c83fab799c1b",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/SOFTWARE_HANDOFF.json": "4066bca944fa5c4cf0e4f0df693d3b3cafbaad9d40dcd9b0796d79fb1c8a64a5",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/QA_WINDOW_CANDIDATE.md": "49a6341552ce5cf67cbe253acc7d2a6cc6cc2f15ee96e794f0f62e06e3643cbe",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/HOSTED_DEPLOYMENT_RECEIPT.json": "847f6a2b722c0ff16cc6b32a3873f9d4c35de05ce6881f1561c7c19b06e05856",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/HOSTED_INDEPENDENT_READBACK.json": "2da9ea20a166c7a64b9faf7f43753ed27d03f6844696f8e049b3d1fd109e50bf",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators/deploy.py": "eb89bf60e69bfae430ec1fe1fbe380d63c634ec48a0889bdf1b34582ae71f6ff",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators/prepare.py": "0c99e13196e2facf44ab45456deb2e1677ee036597ebfd36fd088e667f087bb5",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators/restore.py": "ed47ff982e61557c9aab46de26af184fa7c4159a042e953f631760a234f32891",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators/test_operators.py": "c0212d94859ac43585f83eaa9a41a9fa1f141e65e5185d2503c01b1e0861bd8f",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341"
+  },
+  "referenceOnlySqlFiles": [
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql"
+  ],
+  "executionParameters": [
+    "Execution-time deadline bounded by first temporary configuration intention+30min",
+    "Fresh Root service/Env/mount/config preimage with exact qualified Auth/MCP pins"
+  ],
+  "approvalRequiredBeforeTemporaryConfiguration": true,
+  "rootSourceSessionMustBeClosedBeforeActivation": true,
+  "gateSHA256": "84837c5ebf5dcabf5ca5c4344b12782b265f96506416221f05ba97f9fc064d44"
+}
