@@ -1,0 +1,61 @@
+{
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "operation": "CLI_DECLARED_OAUTH_SERVER_AND_SITE_ONLY",
+  "startedAt": "2026-10-31T05:13:00.878785Z",
+  "declaredChanges": [
+    {
+      "path": [
+        "auth",
+        "oauth_server",
+        "allow_dynamic_registration"
+      ],
+      "class": "local_only",
+      "declared": true,
+      "local": false,
+      "remote": null
+    },
+    {
+      "path": [
+        "auth",
+        "oauth_server",
+        "authorization_url_path"
+      ],
+      "class": "local_only",
+      "declared": true,
+      "local": "/oauth/consent",
+      "remote": null
+    },
+    {
+      "path": [
+        "auth",
+        "oauth_server",
+        "enabled"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": true,
+      "remote": false
+    },
+    {
+      "path": [
+        "auth",
+        "site_url"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": "https://api-dev.xoery.art",
+      "remote": "http://localhost:3000"
+    }
+  ],
+  "configSHA256": "09abf7c99b5c145f465b403a8f9601edfe2f9278df774b51ed0bb14e5407eb5c",
+  "disposition": "ACKNOWLEDGED",
+  "oauthEnabled": true,
+  "finiteWindowActivated": false,
+  "mutationFinishedAt": "2026-10-31T05:13:04.557680Z",
+  "status": "OAUTH_SERVER_CONFIGURED_CLOSED_HOOK_INDEPENDENT_DIFF_VERIFIED",
+  "verifiedAt": "2026-10-31T05:13:06.914548Z",
+  "unchangedOtherReportedFields": 23,
+  "undeclaredFieldsPushed": false,
+  "dashboardSchemaGrantExecuted": false
+}

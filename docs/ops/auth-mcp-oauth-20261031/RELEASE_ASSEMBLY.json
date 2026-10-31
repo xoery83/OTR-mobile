@@ -1,0 +1,39 @@
+{
+  "status": "ASSEMBLED_ONLY_NOT_DEPLOYED",
+  "baseSource": "76c8ccfbe464ff5f61ca86167e0777674ddd33fd",
+  "authSoftware": "9b0983ad",
+  "copiedOwningFiles": [
+    "backend/src/mcpQaRuntime.ts",
+    "backend/src/mcpIngress.ts",
+    "backend/src/mcpAccountReadBinding.ts",
+    "backend/src/mcpOAuthGrantVerifier.ts",
+    "backend/src/mcpConsentPage.ts",
+    "backend/src/authResourceTokenBoundary.ts",
+    "src/data/auth/devSupabasePublicKey.ts",
+    "src/data/auth/mcpOAuthConsentRepository.ts"
+  ],
+  "sharedPatchedFiles": [
+    "backend/src/app.ts",
+    "backend/src/serverStartup.ts",
+    "backend/src/supabaseGateway.ts"
+  ],
+  "excluded": "No Parent/Profile candidate, no Native/Import file overwrite",
+  "hashes": {
+    "backend/src/mcpQaRuntime.ts": "dd01f1ef9b26a1badadec8be32d6c99627bfd7272d33654649c3d440d4a48e39",
+    "backend/src/mcpIngress.ts": "ece86789987133795488a196d43f0c3ddf9b30ab4dbddbef3fb125f0df491954",
+    "backend/src/mcpAccountReadBinding.ts": "df2b4ae42856dc79f25e9b48cfc39252aef4ca8e75c76f4366ff4326ef346b42",
+    "backend/src/mcpOAuthGrantVerifier.ts": "f93814ee97af5beb330909507b0beaeadbc015a036664c455a7f154d5f648420",
+    "backend/src/mcpConsentPage.ts": "3aa45a14d38ca18c5beceed7c3d04b5d3467599ec41818ec57c40304419c7ad8",
+    "backend/src/authResourceTokenBoundary.ts": "36dce66d1132d5fe66fb808bd0e87a9e73d41c1602277e2af1278d16edd1cfa7",
+    "src/data/auth/devSupabasePublicKey.ts": "84a8427641a40a7cc9ad0c21ba980337ea825f0f1fadbbe31804b65a6856a664",
+    "src/data/auth/mcpOAuthConsentRepository.ts": "8553d20ed60117cd90b8757060155aae749266558972cf3655233870e840b90c",
+    "backend/src/app.ts": "fc2dc86187331b63304a5886f1f29ac0fdf40c306313e4b2e074e59ed315596c",
+    "backend/src/serverStartup.ts": "93ee80b4faade00941a6b65d13537eb4ba3bbd28487dc822159957d484e2019f",
+    "backend/src/supabaseGateway.ts": "57d919ff473de971c82635815f88d80cf62a5b4e3dcb0eee2557897f43cdc1bc"
+  },
+  "captureBundleSHA256": "f18b8fdf178062e8216c046538e908797bfb6d672b2e5099e2cb5cd23310d055",
+  "runtimeSHA256": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+  "browserSHA256": "75cb5d68483c968748431abeb9fc607c6b57a90923d23bcc7681047a5fd44ba7",
+  "checks": "5 suites84 PASS and capture bundle PASS",
+  "review": "NO_BLOCKER_ASSEMBLY_SOURCE_ONLY by /root/auth_phase1_review;8 source hashes+3 shared diffs and base tracked preservation checked"
+}

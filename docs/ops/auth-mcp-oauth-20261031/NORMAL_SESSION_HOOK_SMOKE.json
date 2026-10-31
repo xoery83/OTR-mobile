@@ -1,0 +1,25 @@
+{
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "startedAt": "2026-10-31T05:10:57.106Z",
+  "otpAttempts": 1,
+  "oauthEnabled": false,
+  "tokenOrOtpRecorded": false,
+  "normalOtp": "PASS",
+  "repositorySessionRead": "PASS",
+  "normalRefresh": "PASS",
+  "nativeClaimsUnchanged": "PASS",
+  "rotatedRefreshRevoked": "PASS",
+  "status": "PASS_NORMAL_OTP_REFRESH_CLEANUP_INDEPENDENTLY_RECONCILED",
+  "finishedAt": "2026-10-31T05:11:05.974Z",
+  "harnessOutcome": "FAIL_OR_UNKNOWN_NO_AUTOMATIC_OTP_RETRY",
+  "cleanupReconciliation": {
+    "basis": "Successful same-session refresh, fresh /user read, successful rotated-session logout and explicit rotated refresh rejection; independent exact QA/new-run metadata has no remaining Session or unrevoked refresh",
+    "metadata": {
+      "latestRefreshMetadata": [],
+      "newSessionCount": 0,
+      "newUnrevokedRefreshCount": 0
+    },
+    "verifiedAt": "2026-10-31T05:12:24.633014Z",
+    "duplicateLogoutWasNotRetried": true
+  }
+}

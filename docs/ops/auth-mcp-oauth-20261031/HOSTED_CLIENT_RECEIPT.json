@@ -1,0 +1,19 @@
+{
+  "status": "ONE_PUBLIC_QA_CLIENT_INDEPENDENT_METADATA_READBACK_PASS",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "metadata": {
+    "client_name": "OTR DEV QA Read",
+    "client_type": "public",
+    "created_at": "2026-10-31 05:13:44.864389+00",
+    "deleted_at": null,
+    "grant_types": "authorization_code,refresh_token",
+    "id": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "redirect_uris": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW,http://127.0.0.1:18764/callback",
+    "registration_type": "manual",
+    "token_endpoint_auth_method": "none"
+  },
+  "verifiedAt": "2026-10-31T05:15:46.410331Z",
+  "secretColumnsRead": false,
+  "finiteWindowActivated": false
+}

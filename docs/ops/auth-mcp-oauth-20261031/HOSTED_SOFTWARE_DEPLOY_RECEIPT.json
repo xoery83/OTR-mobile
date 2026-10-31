@@ -1,0 +1,30 @@
+{
+  "status": "AUTH_DEFAULT_CLOSED_DEPLOYED_AND_INDEPENDENTLY_VERIFIED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "containerId": "43afbc09c846f5a72de367d73e4b4e2ced41b6714a2e0556e6d32115cc42c047",
+  "image": "sha256:8217aba693015ffba8c999f94cf46ccd353c50b9a77fa8065785b6254f51b3d8",
+  "retainedContainerId": "a2608753836e2a509764a214b4166a641cc5c66c848afd8ba9e2834452529968",
+  "baseSource": "76c8ccfbe464ff5f61ca86167e0777674ddd33fd",
+  "authSoftware": "9b0983ad",
+  "bundles": {
+    "server-capture.mjs": "f18b8fdf178062e8216c046538e908797bfb6d672b2e5099e2cb5cd23310d055",
+    "mcp/runtime.mjs": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+    "auth-consent/app.js": "75cb5d68483c968748431abeb9fc607c6b57a90923d23bcc7681047a5fd44ba7",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "operator": "Root existing Photo76 operator; only fixed plan entry path changed, run AST equal",
+  "planSHA256": "ce242f7bbec4e2bc730b18286da1c3112fbbe3f851a0174adab8051d710230f2",
+  "environmentAndHostConfigUnchanged": true,
+  "finiteConfigAbsent": true,
+  "retainedRollbackReady": true,
+  "health": "healthy",
+  "operatorUnauthenticatedProtectedRoutes": "401 PASS",
+  "deliveryTrace": {
+    "requestedAt": "2026-10-31T05:33:21.253378+00:00",
+    "readyAt": "2026-10-31T05:33:24.477079+00:00",
+    "acquiredAt": "2026-10-31T05:33:56.501692+00:00",
+    "mutationFinishedAt": "2026-10-31T05:34:12.407053+00:00",
+    "releasedAt": "2026-10-31T05:34:12.407080+00:00"
+  },
+  "independentReadback": "Current/retained Config equality except Image; HostConfig/mounts equal;4 bundle hashes; no finite config; prior container intact/stopped"
+}
