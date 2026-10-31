@@ -1,0 +1,17 @@
+{
+  "diagnostics": [
+    {
+      "at": "2026-10-31T08:33:35.940134037Z",
+      "event": "source_png_preparation_failed",
+      "action": "execute",
+      "reason": "UNCLASSIFIED"
+    },
+    {
+      "at": "2026-10-31T08:40:10.368750662Z",
+      "event": "source_png_preparation_failed",
+      "action": "execute",
+      "reason": "UNCLASSIFIED"
+    }
+  ],
+  "rawLogsExposed": false
+}

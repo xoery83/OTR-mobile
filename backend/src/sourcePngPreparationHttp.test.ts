@@ -239,7 +239,7 @@ it("holds request lifetime through port composition and closes a late aborted sc
   expect(x.port.execute).not.toHaveBeenCalled();
 });
 
-it.each(["25P03", "NOT_A_SQL_STATE"])(
+it.each(["25P03", "P0001", "NOT_A_SQL_STATE"])(
   "logs only bounded PNG failure facts (%s)",
   async (state) => {
     const x = await fixture(),
@@ -260,7 +260,8 @@ it.each(["25P03", "NOT_A_SQL_STATE"])(
           event: "source_png_preparation_failed",
           action: "result",
           reason: "UNCLASSIFIED",
-          ...(state === "25P03" ? { sqlState: state } : {}),
+          errorKind: "OTHER",
+          ...(["25P03", "P0001"].includes(state) ? { sqlState: state } : {}),
         }),
       );
       expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_ERROR_CANARY");

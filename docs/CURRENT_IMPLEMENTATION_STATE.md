@@ -1,41 +1,39 @@
 # Current Import Photo checkpoint — 31 October 2026
 
-Photo Golden Slice BLOCKED before actual Vision. No Photo Save/Native E2E PASS.
-Same approved Batch e7dfba6d/Input69536a38, Source df39c9b2/rep9bf0ad08,
-Capturecd546b0b rev2 RELEVANT/explicitContinue retained;42630B PNG SHA078de830.
-Acquire4b11aa7e and PREPARE973c6368 APPLIED. Uploadd2f59e69/attempt077c0f34 gen1
-remains IO_ACTIVE/RUNNING/no terminal, Native response unconfirmed06:14:09Z.
-No automatic replacement or another paid call. Old Source2bf/upload70dd/attempt905
-UNKNOWN, marker/stage/original remain untouched. Latest read07:00:31 confirms same.
+Golden Slice FAIL before Vision; no Photo Save/Native E2E PASS.
+Owner approved exact recovery Gateeba232fc. Function installed d86864fb/OID67161;
+complete role graph, Owner/ACL and schema ACL restored; no persistent maintenance.
+AD5 code-only126.8 retained same inputs/Source/consent rev2, binary/data preserved.
+Compatible Backend2275d74d/image5c658706/capture10d59f5c preserves latest Native/Auth
+cfc baseline and all18 compose/5config/9mount/env hashes. Rollback a621/cfc retained.
 
-Files provenance/SQLite76 repaira58576c7 and HTTP boundary3f860280 fixed; AD5
-code-only126.7 installed, Native binary and input/Source/current consent preserved.
-Source acknowledgement amplification repaird84dcbd1 is fixed/local-reviewed,
-41tests/full typecheck PASS; not deployed. Per-action fresh Auth/Trip retained,
-repeated groups70→8 by code count,90s unchanged; actual performance unverified.
+Same Batch e7dfba6d/Input69536a38/Source df39c9b2/rep9bf0ad08; old077 journal has
+actual negative PARSER_CRASH proof58fb, marker8d1074aa durably archived without
+overwrite. Old905 archive/original untouched. Approved canonical same-op quiescence
+and normal App generation2 a81308ff succeeded: PARSE_PASS, Uploadd2f59e69 APPLIED/FINAL
+at08:32Z. No generation3, replacement source, Task or model call.
 
-All Photo windows1–10 independently CLOSED. Latest7ffab2d4 Source before/after,
-runtime verified, worker inactive/physical TERMINATED, timers stopped. Frozen
-physical negative proof58fb92d9 privately preserved; no PG terminal fabricated.
-Existing PNG wrapper lacks negative-quiescence/retry. A single protected function
-candidate5d40339e→d86864fb is prepared, NOT approved/installed; Owner/ACL/OID67161
-same, exact Source/op/oldattempt/gen1 only, onegen2. Oldstage/journal retained.
-Normal Native/Backend recovery wiring/local47tests/scoped tsc PASS;22 isolated PG
-cases + real2session concurrency(one freshgen2) +7 maintenance/inverse/fault cases
-PASS. Final independent review NO_BLOCKER. Local maintenance fixture is superuser;
-restricted recipe reuses actual first-lookup9bc install evidence, no new claim.
-See authority/PHOTO_RETAINED_OPERATION_RECOVERY_GATE.md and photo/retained-operation-recovery/.
-Full private frozen artifacts/generators durable .env.photo-files-png-20261031/.
+Current first FAIL: PNG_ORIGINAL HTTP503 SOURCE_IO_UNAVAILABLE after accepted
+upload; actual safe Backend logs08:33:35/08:40:10 both action execute/UNCLASSIFIED.
+Verify operation absent; do not guess whether failure is final-upload readback or
+first Verify REGISTER rollback. Local PG positive uploadFINAL/STATUS/firstVerify
+STATUS+REGISTER pass, so no proven SQL fix. Minimal static command/action/phase and
+P0001/timeout diagnostics are being fixed/deployed;26 focused checks/lint and
+independent NO_BLOCKER. No Authority/request/response/Idempotence changes.
 
-Next: exact protected Gate approval, preserve latest Auth/Native software baseline,
-finish compatible image/App/controller preflight CLOSED, trusted negative journal
-and retained-marker archive, finite same-op quiescence+normal App gen2, then actual
-original-image Vision once→Review/Admission→Core/readback/Day/cold/idempotence/close.
-Hard expiry2026-11-01T08:48:56Z, original allowance/budget unchanged. Ordinary
-coding/builds continue pending approval; do not execute private write operator yet.
-Latest Native accepted service:a6218839/imagecfc230e6 after Authce09/4781, capture
-b71d/server7826/runtimeb518/browser9264 preserved. Root must fresh-CAS that baseline,
-never restore43af or old76 image. No Root main update; main fresh-check at integration.
+Windows11/12 independently CLOSED: Source before/after, runtime, worker inactive,
+EMPTY_VERIFIED, timers stopped. Controller anchored to2275/image5c, timer drillPASS.
+Exact receipts: ops/universal-product-20261028/photo/recovery-execution-20261031/.
+Frozen recovery packet and private proof remain .env.photo-files-png-20261031/;
+after negative journal/newattempt, inverse is prohibited. Retain compatible Reader.
+
+Next: bounded software diagnostic deployment preserving Native/Auth, CLOSED
+controller reanchor/check; retry same alreadyAPPLIED operation through normal App,
+then Verify→first original-image Vision(max1 original unused allowance)→Results→
+normal Review/Admission→PRIVATE SELF minimalP1/P6→readback/Day/cold/idempotence→close.
+Hard expiry2026-11-01T08:48:56Z and budgets unchanged. Never reset/remint/call again
+on UNKNOWN; read same identities first. No Root main changes. Native7603 optional
+Core projection diagnostic is not in Root image; coordinate next short Host change.
 
 Older checkpoints below are historical and superseded by the current header.
 

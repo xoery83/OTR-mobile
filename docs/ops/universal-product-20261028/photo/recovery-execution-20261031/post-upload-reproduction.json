@@ -1,0 +1,17 @@
+{
+  "FINAL_UPLOAD_STATUS": {
+    "passed": true,
+    "staticError": [],
+    "functionContext": []
+  },
+  "FIRST_VERIFY_STATUS": {
+    "passed": true,
+    "staticError": [],
+    "functionContext": []
+  },
+  "VERIFY_REGISTER": {
+    "passed": true,
+    "staticError": [],
+    "functionContext": []
+  }
+}

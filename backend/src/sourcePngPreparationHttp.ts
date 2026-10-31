@@ -167,11 +167,37 @@ export async function sourcePngPreparationBoundary(
             "PNG_SCOPE_DENIED",
             "PNG_SCOPE_CLOSED",
             "PNG_OPERATION_DENIED",
+            "PNG_SOURCE_BINDING_MISMATCH",
+            "PNG_SOURCE_RECEIPT_MISMATCH",
+            "PNG_SOURCE_PERMIT_INVALID",
+            "PNG_SOURCE_OPERATION_UNAVAILABLE",
+            "SOURCE_IO_UNAVAILABLE",
+            "SOURCE_ATTEMPT_CONFLICT",
+            "SOURCE_OPERATION_IMMUTABLE",
+            "SOURCE_PHASE_CONFLICT",
+            "SOURCE_RESULT_INTEGRITY",
+            "TRIP_SOURCE_COMMANDS_DISABLED",
+            "UNIVERSAL_SOURCE_COMMAND_DENIED",
+            "INVALID_SOURCE_COMMAND",
+            "OPERATION_ID_REUSED",
+            "OPERATION_KEY_REUSED",
+            "PRIOR_STATE_CONFLICT",
+            "REPRESENTATION_CAS_CONFLICT",
+            "SOURCE_CAS_CONFLICT",
+            "SOURCE_NOT_AVAILABLE",
+            "PNG_OPERATION_SCOPE_MISMATCH",
+            "PDF_RECEIPT_READ_ONLY",
+            "PNG_RECEIPT_READ_ONLY",
           ].includes(code)
             ? code
             : "UNCLASSIFIED",
+          errorKind:
+            error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
+              ? error.name
+              : "OTHER",
           sqlState: [
             "42501",
+            "P0001",
             "25P03",
             "57014",
             "53300",

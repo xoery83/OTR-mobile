@@ -1,0 +1,12 @@
+{
+  "status": "PHOTO_RECOVERY_FUNCTION_SERVER_VERIFIED_CLOSED",
+  "approvedCommit": "eba232fc",
+  "beforeMD5": "5d40339e0af17a04886678c6340edba9",
+  "afterMD5": "d86864fbe182c596dcb4a213413b7e9d",
+  "oid": "67161",
+  "completeRoleGraphRestored": true,
+  "ownerACLRestored": true,
+  "schemaACLRestored": true,
+  "writeDisposition": "ACKNOWLEDGED",
+  "closed": true
+}

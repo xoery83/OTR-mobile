@@ -1,0 +1,1 @@
+26 focused checks and scoped lint PASS. Independent NO_BLOCKER: fixed enums only; original error preserved even if logging throws. BROKER also includes envelope parsing; no SQL root-cause claim. No DEV/Photo Vision/Save PASS implied.

@@ -101,16 +101,34 @@ export function createSourcePngBackendPreparation(
     await current(scope);
     if (scope.actorId !== q.actor_account_id || scope.tripId !== q.trip_id)
       throw Error("SOURCE_ACCESS_DENIED");
-    const r = envelope.parse(await deps.broker(scope, q, action, expected, detail));
-    await current(scope);
-    if (
-      r.operation &&
-      (r.operation.operation_id !== q.operation_id ||
-        r.operation.operation_key !== q.operation_key ||
-        r.operation.operation_sha256 !== q.operation_sha256)
-    )
-      throw Error("PNG_SOURCE_RECEIPT_MISMATCH");
-    return r;
+    let phase: "BROKER" | "POST_FENCE" = "BROKER";
+    try {
+      const r = envelope.parse(await deps.broker(scope, q, action, expected, detail));
+      phase = "POST_FENCE";
+      await current(scope);
+      if (
+        r.operation &&
+        (r.operation.operation_id !== q.operation_id ||
+          r.operation.operation_key !== q.operation_key ||
+          r.operation.operation_sha256 !== q.operation_sha256)
+      )
+        throw Error("PNG_SOURCE_RECEIPT_MISMATCH");
+      return r;
+    } catch (error) {
+      try {
+        console.info(
+          JSON.stringify({
+            event: "source_png_broker_failed",
+            command: q.command,
+            action,
+            phase,
+          }),
+        );
+      } catch {
+        // Diagnostics cannot change the owning transaction result.
+      }
+      throw error;
+    }
   }
   function bound(
     scope: SourcePngBrokerScope,

@@ -489,3 +489,31 @@ it("a lost retry BEGIN reply keeps the new actual attempt and never reissues IO"
   expect(f.worker).not.toHaveBeenCalled();
   expect(f.counts()).toEqual({ posts: 0, gets: 0 });
 });
+
+it.each([false, true])(
+  "keeps broker failure and private values out of diagnostics (logger throws: %s)",
+  async (loggerThrows) => {
+    const f = await fixture(),
+      failure = Error("PRIVATE_ERROR_CANARY"),
+      log = vi.spyOn(console, "info").mockImplementation(() => {
+        if (loggerThrows) throw Error("LOGGER_FAILED");
+      });
+    f.broker.mockRejectedValueOnce(failure);
+    try {
+      await expect(f.port.lookup(f.scope, f.proposals.upload)).rejects.toBe(failure);
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({
+          event: "source_png_broker_failed",
+          command: "UPLOAD_ORIGINAL",
+          action: "STATUS",
+          phase: "BROKER",
+        }),
+      );
+      expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_ERROR_CANARY");
+      expect(f.worker).not.toHaveBeenCalled();
+      expect(f.counts()).toEqual({ posts: 0, gets: 0 });
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
