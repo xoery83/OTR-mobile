@@ -1,0 +1,15 @@
+{
+  "status": "NO_BLOCKER_LOCAL_WRITE_OPERATORS_AND_ASSEMBLY_CANDIDATE",
+  "independentReview": "auth_phase1_review",
+  "operatorTests": "5/5 local groups PASS",
+  "assemblyCodeInputs": "350 baseline / 351 candidate, 4 existing Auth inputs changed + 1 new, other346 preserved",
+  "assemblyAllInputs": 537,
+  "artifactPins": {
+    "server-capture.mjs": "0cafa2c28d43178856562fd6d017ad5bafe998bee8df0038a7f020c19c7fccdf",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "authorityActivated": false,
+  "deployed": false,
+  "ownerApproval": "NOT_REQUESTED_OR_GRANTED_FOR_WRITE"
+}

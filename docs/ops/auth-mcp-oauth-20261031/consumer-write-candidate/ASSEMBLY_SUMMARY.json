@@ -1,0 +1,48 @@
+{
+  "status": "OFFLINE_WRITE_COMPATIBLE_ASSEMBLY_PASS_NOT_DEPLOYED",
+  "referencePacket": "/private/tmp/otr-photo-activity-expiry-f2ab-20261101/tree",
+  "referenceCaptureSHA256": "2cd578e7e41436a694c80281ccfa95892c1dd34fd9e75831ab0cce125522b300",
+  "baselineReproduced": true,
+  "candidateCaptureSHA256": "0cafa2c28d43178856562fd6d017ad5bafe998bee8df0038a7f020c19c7fccdf",
+  "beforeCodeInputs": 350,
+  "afterCodeInputs": 351,
+  "beforeAllInputs": 536,
+  "afterAllInputs": 537,
+  "changedAuthInputs": [
+    {
+      "path": "backend/src/mcpQaRuntime.ts",
+      "before": "9b0af263fa9d37708bcec8310b725f16030c837e1f41a6cd8974100603bc1af8",
+      "after": "28aa779555c4b0d39136a5587140d15d4d4dd9595cba9dd0869156a3ad87f873"
+    },
+    {
+      "path": "backend/src/mcpOAuthGrantVerifier.ts",
+      "before": "f93814ee97af5beb330909507b0beaeadbc015a036664c455a7f154d5f648420",
+      "after": "898f58274d7d8226f0c383075d2874c260c82ede89645a39bd2171d21eef5eea"
+    },
+    {
+      "path": "backend/src/mcpAccountReadBinding.ts",
+      "before": "df2b4ae42856dc79f25e9b48cfc39252aef4ca8e75c76f4366ff4326ef346b42",
+      "after": "84f275a6464fd38b7b5f600f25669d0ae7c97ea9a12794efb6235d157d58e59e"
+    },
+    {
+      "path": "src/data/auth/mcpOAuthConsentRepository.ts",
+      "before": "e2c064bc7c0cd49e9ad03bf4dae0d8ed1a16956dd10b03a189cb49048ac77c08",
+      "after": "be9a9c847c2c8c7b2c84f5b13cae1af42b52b82f945e6484c0e62828b3ccf6f9"
+    },
+    {
+      "path": "backend/src/mcpAccountWriteBinding.ts",
+      "before": null,
+      "after": "7621bf6b36bfe733b980989db2e976ac2152af0eea1452f3033705018c5fefd6"
+    }
+  ],
+  "otherCodeInputsPreserved": 346,
+  "artifactHashes": {
+    "server-capture.mjs": "0cafa2c28d43178856562fd6d017ad5bafe998bee8df0038a7f020c19c7fccdf",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "noCredentialsEnvDatabaseCopied": true,
+  "hostOrConfigOrAuthorityMutations": 0,
+  "nativeBuilds": 0,
+  "providerCalls": 0
+}

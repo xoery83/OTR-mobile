@@ -1,0 +1,31 @@
+{
+  "status": "CANDIDATE_ONLY_NOT_EXECUTED",
+  "upstream": "docs/ops/auth-mcp-oauth-20261031/auth-required-diagnostics-20261101/qa-window/operators",
+  "delta": "Write key/version/fixed approvals/new artifact pins/private plan name; same Docker CAS/restore/negative helper",
+  "files": {
+    "deploy.py": {
+      "beforeSHA256": "eb89bf60e69bfae430ec1fe1fbe380d63c634ec48a0889bdf1b34582ae71f6ff",
+      "afterSHA256": "df09778cc86ef71b7e90dd5d0ca3a08e09abdaf26505c5f93a256a3ad1c23d89"
+    },
+    "prepare.py": {
+      "beforeSHA256": "0c99e13196e2facf44ab45456deb2e1677ee036597ebfd36fd088e667f087bb5",
+      "afterSHA256": "6abca5d7d0c702b4fb948cd0e6232062a420cb5e867a5c8b0631250e4f0a23bc"
+    },
+    "restore.py": {
+      "beforeSHA256": "ed47ff982e61557c9aab46de26af184fa7c4159a042e953f631760a234f32891",
+      "afterSHA256": "0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367"
+    },
+    "universal_runtime_close.py": {
+      "beforeSHA256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+      "afterSHA256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+    },
+    "test_operators.py": {
+      "beforeSHA256": "c0212d94859ac43585f83eaa9a41a9fa1f141e65e5185d2503c01b1e0861bd8f",
+      "afterSHA256": "94b485f37d8a77dde27119d397cf25ff5919b66e8a3746596d8f3b72b026a4c0"
+    },
+    ".gitignore": {
+      "beforeSHA256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+      "afterSHA256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b"
+    }
+  }
+}
