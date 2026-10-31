@@ -1,0 +1,19 @@
+{
+  "status": "CLOSED_NOT_AUTHORIZED_TO_RECONNECT",
+  "observedAt": "2026-10-31T17:33:53.209187+00:00",
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+  "windowId": "e5b0042dc830474e914b0f30ccdc524e",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "expiresAt": "2026-10-31T17:45:07.181000Z",
+  "closeAt": "2026-10-31T17:43:07.181000+00:00",
+  "containerId": "600f60a9a8c748d6b12e406e779d555b4077ea6c63859e341d6f429e3547f10c",
+  "normalControlOtpLatestPossibleAt": "2026-10-31T17:13:07.181Z",
+  "receiverHandoff": "MCP exact registered QA recipient and after-current-request time",
+  "firstTool": "fixed P3 detail only",
+  "frozenHostOperatorsUnchanged": true,
+  "wrapperReview": "NO_BLOCKER_C_WRAPPER_SOURCE_ONLY",
+  "asOnDcrOffSiteVerifiedAfterReload": true,
+  "signingIndependentReadback": true,
+  "publicConfigMatches": true,
+  "closedAt": "2026-10-31T17:44:46.206290+00:00"
+}

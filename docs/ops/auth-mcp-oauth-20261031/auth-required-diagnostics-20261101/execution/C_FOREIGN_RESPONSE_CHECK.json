@@ -1,0 +1,9 @@
+{
+  "status": "EXACT_ERROR_ONLY_NOT_VISIBLE_PASS",
+  "responseSHA256": "7d8bbebfa3c58455187b1bc97e8bfd59508ce63381ed31146839629d53216d50",
+  "noTripOrItemData": true,
+  "requestId": "a2b327f8-0e98-48e0-939a-a69c6b2462dc",
+  "tool": "get_trip_item",
+  "httpStatus": 200,
+  "errorCode": "NOT_VISIBLE"
+}

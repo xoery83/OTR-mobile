@@ -1,0 +1,10 @@
+{
+  "status": "FRESH_CONSUMER_PREPARED_NO_RECONNECT_OTP_OR_CONSENT",
+  "sourceThread": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "consumer": "Claude",
+  "browserWriter": "MCP Chrome1",
+  "receiver": "MCP exact registered QA recipient and current request time filter",
+  "firstTool": "get_trip_item P3 steps[2] only",
+  "observedAt": "2026-10-31T17:18:21.365738+00:00",
+  "receiverHandoffAfterNormalControl": true
+}

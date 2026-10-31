@@ -1,0 +1,12 @@
+{
+  "status": "PROJECTED_METADATA_ONLY",
+  "events": [
+    {
+      "at": "2026-10-31T17:34:23.072864317Z",
+      "requestId": "ff5a7831-f462-41c3-89ba-a018aa8d034b",
+      "status": 401,
+      "durationMs": 1
+    }
+  ],
+  "rawOutputRecorded": false
+}

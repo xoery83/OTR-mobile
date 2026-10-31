@@ -1,0 +1,60 @@
+{
+  "status": "PROJECTED_METADATA_ONLY",
+  "events": [
+    {
+      "at": "2026-10-31T17:34:23.072864317Z",
+      "requestId": "ff5a7831-f462-41c3-89ba-a018aa8d034b",
+      "status": 401,
+      "durationMs": 1
+    },
+    {
+      "at": "2026-10-31T17:36:59.704332536Z",
+      "requestId": "ceec81a3-8f98-4344-bd05-cc5b76f78e69",
+      "status": 400,
+      "durationMs": 1157
+    },
+    {
+      "at": "2026-10-31T17:37:00.861027239Z",
+      "requestId": "44bb33f7-e952-4514-8636-8e365d75fffd",
+      "status": 200,
+      "durationMs": 722
+    },
+    {
+      "at": "2026-10-31T17:37:02.141152237Z",
+      "requestId": "ae1c11ec-ec93-4e13-99d1-3f3f0204b7cb",
+      "status": 202,
+      "durationMs": 753
+    },
+    {
+      "at": "2026-10-31T17:37:03.413654600Z",
+      "requestId": "7a458710-a032-4601-b907-debc220ca6c3",
+      "status": 200,
+      "durationMs": 731
+    },
+    {
+      "at": "2026-10-31T17:37:14.860217061Z",
+      "requestId": "5bf5622b-fcfa-4afc-be71-8f97e6e092af",
+      "status": 400,
+      "durationMs": 813
+    },
+    {
+      "at": "2026-10-31T17:37:16.719666732Z",
+      "requestId": "0833cdf6-7fa8-4df6-937a-55d718c00d57",
+      "status": 200,
+      "durationMs": 1330
+    },
+    {
+      "at": "2026-10-31T17:37:17.873878562Z",
+      "requestId": "a27af2e8-8e00-4ef5-b078-857421e5d90c",
+      "status": 202,
+      "durationMs": 728
+    },
+    {
+      "at": "2026-10-31T17:37:19.013033199Z",
+      "requestId": "d56ef4b1-db06-42a8-95c0-8a34ace3a0fb",
+      "status": 200,
+      "durationMs": 702
+    }
+  ],
+  "rawOutputRecorded": false
+}

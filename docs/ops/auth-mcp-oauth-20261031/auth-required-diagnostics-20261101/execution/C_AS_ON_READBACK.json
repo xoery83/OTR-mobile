@@ -1,0 +1,12 @@
+{
+  "status": "INDEPENDENT_DASHBOARD_RELOAD_PASS",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "oauthServerEnabled": true,
+  "dynamicClientRegistration": false,
+  "siteUrl": "https://api-dev.xoery.art",
+  "authorizationPath": "/oauth/consent",
+  "screenshot": "C_AS_ON.png",
+  "firstSaveAutomaticApprovalTimeout": true,
+  "readBeforeSingleAllowedRetry": true,
+  "retrySavedAndReloaded": true
+}

@@ -1,0 +1,15 @@
+{
+  "status": "LIFETIME_LATER_FULL_TYPED_READ_PASS",
+  "observedAt": "2026-10-31T17:40:32.293492+00:00",
+  "responseSHA256": "27d676f5c90d429f964f239e5fa9c7020866d09be9fc89c516fc39784ec03634",
+  "itemSHA256": "c2f9627883fc5a266bae2444ac230f8dbf99f8044afc119c39dfa5a536ce807b",
+  "firstRequestId": "222ad199-773f-48ee-aa46-ae7e9a16ab54",
+  "secondRequestId": "48899ef3-a5f1-45e2-9ee6-5a9e771fc106",
+  "firstCompletedAt": "2026-10-31T17:38:06.852414541Z",
+  "secondCompletedAt": "2026-10-31T17:39:27.916008440Z",
+  "secondDurationMs": 8203,
+  "secondCallAfterFirstCompletionPlus60s": true,
+  "noManualReconnect": true,
+  "tokenValuesNotObservedOrRecorded": true,
+  "doesNotClaimRefreshEndpointTelemetry": true
+}

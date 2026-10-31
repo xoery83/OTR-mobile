@@ -1,0 +1,10 @@
+{
+  "status": "ROOT_EXPLICIT_RESOURCE_RELEASE",
+  "sourceThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "photoWindow": "1e56c107",
+  "closed": true,
+  "workerInactive": true,
+  "timersStopped": true,
+  "defaultContainer": "0c04b40ce566ebf63b98e98779d464f27e3aa0f964adca7472781007f83d8b6a",
+  "freshCasStillRequired": true
+}

@@ -72,9 +72,8 @@ revoke causality/server401. Final deny-all Hook/exact original ACL/grant0 and
 localhost/Hook-disabled/URI-empty diff all independently passed. Latest Native
 ac7a/image d8b was restored healthy, never the older67 image. Hook/runtime closed
 before hard15:20:25Z; final independent AS/config/ACL observations are later.
-Root has the Host/config Writer back. Next: closed diagnosis of the first
-AUTH_REQUIRED, preserving the60s cap and existing ports; no new QA window is
-authorized. Consumer evidence: MCP7044e287, B_CONSUMER_OUTCOME.json.
+Old b3 is consumed and cannot restart. Its evidence remains MCP7044e287 /
+B_CONSUMER_OUTCOME.json; the later independently approved C result follows below.
 Closed diagnostic source is now qualified: Auth eff3f5db/bridge2f54b05c plus MCPc41,
 20 Auth tests/types/scoped lint/build and independent 4 target tests/4 compiled
 smoke checks PASS. Reuses existing log with three auth-failure sources and strict
@@ -85,12 +84,24 @@ Source4090; independent health200/protected401/config+mount preservation and
 PNG-closed/worker-inactive readback PASS. Originalac7/d8 retained for rollback;
 no OAuth window was activated. See HOSTED_INDEPENDENT_READBACK.json and
 auth-required-diagnostics-20261101/QUALIFICATION.json for the normalized five-file
-main patch. Single existing-d2b diagnostic window candidate0c4651f6/Gatebba48f2c
-has independent NO_BLOCKER/5 local control test groups and direct Owner approval
-(call80cb, user01a192e4). Window NOT_STARTED; execution/OWNER_APPROVAL_DIRECT.json.
-Root's newly approved Photo
-recovery has resource priority; Auth starts no Host/config session until its actual
-closure, approval and fresh CAS. Source qualification grants no signing/window.
+main patch. Single existing-d2b diagnostic window candidate0c4651f6/Gatebba48f2c received
+direct Owner approval (call80cb/user01a192e4). It is now completely CLOSED,
+independently verified17:44:46Z before hard17:45:07Z. Normal OTP/Read Consent,
+first full P3 and one lifetime-later Read PASS; both exact full typed objects
+match independent normal Backend baseline c2f962… (two get_trip_item HTTP200).
+Registered foreign returned NOT_VISIBLE/error-only. Normal same-client grant
+DELETE204/fresh absence and local-control logout/refresh-negative PASS; subsequent
+same-P3 probe required authentication/no data, with two actual live-route401 logs.
+Refresh wire traffic was not observed; revoke versus expiry sole causality was
+not isolated. Old B's AUTH_REQUIRED did not reproduce and its cause remains
+unproven. No extra retries, business writes or real Owner data. Final deny-all
+Hook/exact ACL/grant0, ASoff reload, localhost/Hookdisabled/URIempty diff[], and
+33 Host hash checks/default0c04/imagef052 restoration PASS. Source883e and other
+lane changes preserved; Host/config Writer and Receiving released to Root/Native.
+See auth-required-diagnostics-20261101/execution/C_OUTCOME.json and
+C_COMPLETE_CLOSED.json. This one window is consumed; no restart/extension or
+Write activation. Independent receipt Review NO_BLOCKER; curated main-forward
+integration is next; do not merge the long Auth branch or roll peers back.
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
 edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →

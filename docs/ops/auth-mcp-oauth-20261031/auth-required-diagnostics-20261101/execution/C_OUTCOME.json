@@ -1,0 +1,23 @@
+{
+  "status": "BOUNDED_CLAUDE_P3_READ_GOLDEN_SLICE_PASS_CLOSED",
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+  "normalOtpAndExplicitReadConsent": true,
+  "firstCompleteP3Read": "PASS_EXACT_FULL_TYPED_BASELINE_MATCH",
+  "lifetimeLaterRead": "PASS_SAME_FULL_TYPED_BASELINE_MATCH",
+  "canonicalItemSHA256": "c2f9627883fc5a266bae2444ac230f8dbf99f8044afc119c39dfa5a536ce807b",
+  "foreignNegative": "PASS_NOT_VISIBLE_ERROR_ONLY",
+  "normalGrantDelete": "PASS_204_AND_FRESH_ABSENCE",
+  "normalControlOwnSession": "PASS_LOCAL_LOGOUT_REFRESH_REJECTED",
+  "postRevokeSameConnectionProbe": "REAUTH_REQUIRED_NO_ITEM_DATA_WITH_TWO_LIVE_ROUTE_401_EVENTS",
+  "completeClosedReceipt": "C_COMPLETE_CLOSED.json",
+  "remainingLimits": [
+    "Refresh endpoint traffic/token values were not observed; only the real read beyond the 60s lifetime is proved.",
+    "Post-revoke live401 is proved, but grant revocation versus token expiry was not isolated as the sole cause.",
+    "Old B AUTH_REQUIRED did not reproduce; its root cause remains unproven, not claimed fixed.",
+    "No Write, real Owner data, production, full Beta security or new QA window is authorized."
+  ],
+  "newBusinessWrites": 0,
+  "review": "NO_BLOCKER_C_REAL_RECEIPT_SCOPE",
+  "consumerEvidenceCommit": "0b23d4e3",
+  "mcpIndependentFinalReview": "NO_BLOCKER"
+}

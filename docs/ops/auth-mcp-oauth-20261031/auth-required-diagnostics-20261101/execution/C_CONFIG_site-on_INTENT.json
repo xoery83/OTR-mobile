@@ -1,0 +1,18 @@
+{
+  "step": "site-on",
+  "status": "ACKNOWLEDGED_AND_INDEPENDENT_DIFF_READBACK",
+  "before": [
+    {
+      "path": [
+        "auth",
+        "site_url"
+      ],
+      "class": "update",
+      "declared": true,
+      "local": "https://api-dev.xoery.art",
+      "remote": "http://localhost:3000"
+    }
+  ],
+  "remainingDeclared": [],
+  "utc": "2026-10-31T17:28:44.941854Z"
+}
