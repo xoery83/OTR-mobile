@@ -144,7 +144,6 @@ export function useUniversalCapture(
                         >
                       >[1],
                     ) => {
-                      diagnosticStage.current = "TASK_PREPARE";
                       if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
                       diagnosticStage.current = "PNG_ORIGINAL";
                       const { prepareAdmittedPngOriginal } =
@@ -176,6 +175,7 @@ export function useUniversalCapture(
                     prepareTask: async (
                       input: import("@/data/api/universalImportContracts").UniversalBatchPrepare,
                     ) => {
+                      diagnosticStage.current = "TASK_PREPARE";
                       await transport.prepare(context, input);
                     },
                   }

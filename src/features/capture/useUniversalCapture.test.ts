@@ -389,3 +389,37 @@ it("discards in-flight recovery and deferred Start when same Batch Journey chang
   expect(h.start).not.toHaveBeenCalled();
   expect(Harness("batch-a", () => true, "trip-b").result).toBeNull();
 });
+
+
+it("reports Task preparation after successful PNG custody instead of the previous PNG phase", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED", "true");
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "true");
+  const prepare = vi.fn().mockRejectedValue(Error("UNIVERSAL_PREPARATION_UNAVAILABLE"));
+  h.transport.mockReturnValue({ prepare });
+  h.sourcePreparation.mockImplementationOnce(async (context, _job, options) => {
+    await options.preparePngOriginal(context, {});
+    await options.prepareTask({ batchId: "batch-a", tripId: "trip" });
+  });
+  h.start.mockImplementationOnce(() =>
+    h.options.prepareSources({ accountId: "qa", tripId: "trip" }, { inputs: [] }),
+  );
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    Harness();
+    await vi.advanceTimersByTimeAsync(0);
+    await Harness().start();
+    expect(h.pngPreparation).toHaveBeenCalledOnce();
+    expect(prepare).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        event: "universal_capture_failed",
+        stage: "TASK_PREPARE",
+        kind: "local",
+        code: "UNIVERSAL_PREPARATION_UNAVAILABLE",
+      }),
+    );
+    expect(Harness().unavailable).toBe(true);
+  } finally {
+    log.mockRestore();
+  }
+});
