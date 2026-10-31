@@ -1,0 +1,18 @@
+{
+  "status": "NO_BLOCKER_LOCAL_PROFILE_SCREEN_CANDIDATE",
+  "files": {
+    "src/features/auth/AccountPrivateProfileScreen.tsx": "f7e66b0c84f5b68667d09793d11e5ba7c923beb0eef10f27562944af2a3c66bd",
+    "src/features/auth/AccountPrivateProfileScreen.test.ts": "a54650bb6b0a8c1d2926db701d4cdd472950896b0b2085a136382663c8b45ba2"
+  },
+  "validation": "4 suites41 tests; types/scoped lint/UIguard166 PASS; exact six bilingual keys with all prior catalog bytes unchanged",
+  "independentValidation": "Screen+domain 2 suites26 PASS; no mandatory fix",
+  "writers": "Native delegated dedicated Screen/test; Root+Native delegated six new privateProfile keys only",
+  "notActivated": [
+    "Native route",
+    "Settings/Account entry",
+    "SQLite77 registry",
+    "worker or enqueue",
+    "Hosted schema/RLS/GRANT/route"
+  ],
+  "claims": "component test and reused real SQLite reopen evidence only; not Native or Hosted E2E"
+}

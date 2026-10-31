@@ -36,3 +36,12 @@ from existing auth.uid/auth.jwt/auth.users (normal, not disabled, not delegated)
 It returns only the caller's own UUID or null; it is not an issuer, Session store
 or new identity mapping. This candidate adds two functions in total (predicate and
 save), requiring the same future exact Owner permission Gate; nothing is installed.
+
+The unmounted `AccountPrivateProfileScreen` now consumes only the existing
+repository's local read/saveDraft methods. It explicitly labels device-private
+drafts and never calls cloud save, enqueues work or declares a server receipt.
+Account/generation, unmount and repository replacement fence delayed callbacks;
+failed local saves retain entered names. Native delegated this dedicated file,
+not Settings/Account/navigation or migration/worker activation. Root and Native
+delegated only the six new `privateProfile.*` copy keys; existing keys stay intact.
+Native registration and device E2E remain separate work, not a current UI PASS.
