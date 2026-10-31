@@ -1,0 +1,22 @@
+{
+  "status": "APPROVAL_RELAY_BLOCKED_BY_AUTOMATIC_REVIEW_NO_EXECUTION",
+  "gateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
+  "candidateCommit": "91eab4ba70b49dd7b6d174ad3877bb9cadcb0cf6",
+  "installSHA256": "5ee9d1aa125c3c9a24e7f446d97c5b849277a4a85aa433c68b82790c4c33d3e8",
+  "bodySHA256": "0c6b1a284de57af8a11c3eb2ef5a20008e1c7b2f7157606366d69cad95a478f7",
+  "relaySourceThread": "01a18fa0-c09f-7324-bdfd-4d29234e102b",
+  "relayEvidence": "Source thread readback contains forwarded transcript of Owner asking to approve the specific request. It was not accepted by automatic review as trusted executable authorization.",
+  "blockedAction": "send_message_to_thread to unique SQL Writer conveying installation authority",
+  "reviewReason": "Purported Owner approval only in untrusted tool-output context; exact protected EXECUTE action lacks verifiable authorization.",
+  "retry": "Not retried or routed indirectly. Direct confirmation requested in this chat.",
+  "requestedAt": "UNKNOWN",
+  "readyAt": "UNKNOWN",
+  "acquiredAt": "UNKNOWN",
+  "mutationFinishedAt": "UNKNOWN",
+  "releasedAt": "UNKNOWN",
+  "sharedChangeState": "NOT_REQUESTED_NOT_ACQUIRED",
+  "sqlExecuted": false,
+  "backendReaderEnabled": false,
+  "httpRouteEnabled": false,
+  "nativeCallerEnabled": false
+}
