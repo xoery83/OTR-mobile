@@ -1,0 +1,19 @@
+{
+  "status": "JOINT_REVIEWED_SOURCE_BUILD_VALIDATED_NOT_DEPLOYED",
+  "mcpReviewedSource": "4b2c794a",
+  "mcpSourceCommit": "71efcd21daea4be1c90372aea364af97bcf875c6",
+  "sourcePinsSHA256": "03fbd30f7ebe5d7ed8976c1127689a26e3e59ac1950e188c40ada19481353df3",
+  "sdkInputSHA256": "5f0692bce9f96d54e0d1464f7135e5e782ef74fb6c72f1e43e1dd1e4c2051911",
+  "runtimeSHA256": "f0516c5268d042a2109633032d720603eb2fb326001f26968231117f83e243e0",
+  "esbuildVersion": "0.28.2",
+  "mobileDependencyChanges": false,
+  "providerCalls": 0,
+  "base": "71efcd21",
+  "sourcePinNegativeTests": "PASS changed source + unlisted shadow + valid rebuild",
+  "closedSmoke": "PASS3, zero Provider calls",
+  "readAndTransitiveEquivalence": "All inputs identical to8812 except reviewed closed mcp/{mutation,mutationContract,batch}.ts",
+  "rootOrNativeDependencyChanges": false,
+  "independentReview": "NO_BLOCKER_BUILD_RECIPE_SOURCE_ONLY by /root/auth_phase1_review;34 exactpins and memory-only actual30-source graph checked",
+  "rootTypes": "PASS",
+  "scopedLint": "PASS"
+}

@@ -39,7 +39,7 @@ console.log(
   JSON.stringify({
     status: "COMPILED_NODE_PUBLIC_METADATA_AND_DENIAL_PASS",
     meaning:
-      "Actual frozen MCP SDK/Authorizer bridge, no token or provider calls; not OAuth E2E",
+      "Actual reviewed MCP SDK/Authorizer bridge, no token or provider calls; not OAuth E2E",
     checks: 3,
   }),
 );

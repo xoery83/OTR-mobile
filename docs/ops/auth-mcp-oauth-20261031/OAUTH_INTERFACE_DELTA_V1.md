@@ -142,3 +142,5 @@ These are supplier capabilities; Hosted configuration and end-to-end behavior
 remain unqualified.
 
 Browser dependency: canonical UiTextInput is extracted unchanged to src/ui/textInput.tsx; forms.tsx retains its export and uses the identical style factory. This keeps the Native DatePicker dependency outside the browser graph. Ordinary Native Form imports and API stay unchanged.
+
+Reproducible accepted-source build: see BUILD_RECIPE.md. The previous external8812 snapshot invocation is historical; the current builder validates the reviewed source-pin graph and rebuilds from the checkout. No active Provider configuration is implied.

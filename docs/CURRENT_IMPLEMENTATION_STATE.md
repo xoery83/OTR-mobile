@@ -113,7 +113,9 @@ may subsequently advance the retained healthy image. Raw control cleanup
 FAIL_OR_UNKNOWN is retained alongside independently reconciled final closure,
 not rewritten as PASS. Consumer Item/Write, full Data/Storage/expiry and always-on
 Beta OAuth remain unclaimed. Code integrates default closed, no SQL/config
-activation from main. Evidence: ops/auth-mcp-oauth-20261031/{SDK_REFRESH_OAUTH_E2E.json,
+activation from main. Joint MCP source71 follows Auth884; the reviewed source-pin
+recipe rebuilds from this checkout without temporary8812 snapshots (3 build guards
+and3 closed smoke PASS; same public Read/transitive source, no new deployment). Evidence: ops/auth-mcp-oauth-20261031/{SDK_REFRESH_OAUTH_E2E.json,
 chatgpt-consumer-window/CHATGPT_REAL_E2E.json}. Auth407eb2fc/MCP81ba6d93,4b2c794a.
 
 # Auth Golden Slice — current continuation, 30 October 2026
