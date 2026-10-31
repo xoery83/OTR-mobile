@@ -1,0 +1,25 @@
+{
+  "status": "CANDIDATE_QUALIFICATION_ONLY_NOT_DISPATCH_AUTHORITY",
+  "files": {
+    "claude-p3-write-smoke.json": {
+      "sourceCommit": "d985ffd8b10823c2dd115c6ea670991dbbf225bc",
+      "sourcePath": "mcp/fixtures/claude-p3-write-smoke.json",
+      "sha256": "8448feb6efaabb8ef91ee3748fd080bd758d6f60389c023f3651a846ad63f405"
+    },
+    "CONSUMER_WRITE_NATIVE_PREFLIGHT.json": {
+      "sourceCommit": "d23fbbea69ff8e09173edbb829abf9c8d16529c1",
+      "sourcePath": "docs/mcp/acceptance/CONSUMER_WRITE_NATIVE_PREFLIGHT.json",
+      "sha256": "c1e941e2621565fb8bb7e4e418cbfec7e4515f8a5e4aa8562a73eee967ef0fe0"
+    },
+    "POST_CORE_IO_COMPOSITION.json": {
+      "sourceCommit": "d23fbbea69ff8e09173edbb829abf9c8d16529c1",
+      "sourcePath": "docs/mcp/acceptance/POST_CORE_IO_COMPOSITION.json",
+      "sha256": "5a2d9c735b6ef38f0e34b9198b5c82d3f24128b17da6627140fa4f594890ddae"
+    },
+    "POST_CORE_IO_COMPOSITION_SOURCE.txt": {
+      "sourceCommit": "d23fbbea69ff8e09173edbb829abf9c8d16529c1",
+      "sourcePath": "docs/mcp/acceptance/POST_CORE_IO_COMPOSITION_SOURCE.txt",
+      "sha256": "1e46235d1ca2d96b2544c3347b1cb1d9fd14e143171ec683b86a96235295f25b"
+    }
+  }
+}

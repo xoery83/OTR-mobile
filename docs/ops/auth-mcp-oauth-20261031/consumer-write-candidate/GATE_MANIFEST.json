@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "status": "FIXED_NEW_WRITE_GATE_NOT_APPROVED_NOT_ACTIVATED",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "callback": "https://claude.ai/api/mcp/auth_callback",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "authFixCommit": "7a3caa63",
+  "softwareImage": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a",
+  "scopes": [
+    "otr.trips.read",
+    "otr.trips.write"
+  ],
+  "maxWindowMinutes": 30,
+  "maxAccessTokenSeconds": 60,
+  "singleUse": true,
+  "readCReusable": false,
+  "newClientRegistration": false,
+  "operations": [
+    {
+      "operationId": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+      "previewDigest": "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0"
+    },
+    {
+      "operationId": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+      "previewDigest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7"
+    }
+  ],
+  "files": {
+    "backend/src/mcpAccountWriteBinding.test.ts": "293a0313af76c0744fa7c1f24009f588a71320f04ebdf44e3d47f5f7a76663d5",
+    "backend/src/mcpAccountWriteBinding.ts": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758",
+    "backend/src/mcpOAuthGrantVerifier.ts": "898f58274d7d8226f0c383075d2874c260c82ede89645a39bd2171d21eef5eea",
+    "backend/src/mcpQaRuntime.ts": "28aa779555c4b0d39136a5587140d15d4d4dd9595cba9dd0869156a3ad87f873",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ADAPTER_REVIEW.json": "1e8d6cbcff813647e9642610f59b597a3db3dd1855ba00e5810a4c4f1694a8a8",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ASSEMBLY_SUMMARY.json": "5ab8d546532b160a85b8be6e12c0a124af0a5f333ed67af91d6e8aa6493b474e",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/CONSUMER_WRITE_NATIVE_PREFLIGHT.json": "c1e941e2621565fb8bb7e4e418cbfec7e4515f8a5e4aa8562a73eee967ef0fe0",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/GATE_SCOPE_REVIEW.json": "79cb45429795fe0ca925d68cae324bf5fdc1244f651bc80233d50e3d723304bf",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/HOOK_REVIEW.json": "75391d19afcf97b1ebe49436db18a4c6bfe3c8434a42f15559df0f599a65f266",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/HOST_IMAGE_RECEIPT.json": "cc3b36b920cf9be4cf14f19961bdf2fe45f9bc996fd1760ff72f252a833c118a",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/INTERFACE.md": "a55b036c9acdf0665e6847473843e1572ac47763e789f5873c300ad1131b3277",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/LOCAL_WRITE_HOOK_PG_RESULT.json": "a8226463cd8c55006ffc8cb4ee268b0265b5795e09ca4c1badf23f6e8cb45b13",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/MCP_EVIDENCE_PORT_QUALIFICATION.json": "c72848a3003bf22287d55ca38eadda4c2999c0957ff5c8341aeae71f068e6fec",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/MCP_WRITE_HANDOFF_PINS.json": "6b7aee4fbc30b9ed98010f2caeee122e69f33e6ec1488ab008b20fc6243dcaf1",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/OPERATORS_ASSEMBLY_REVIEW.json": "7d26b9aa69ca19d67d70aba049712f5ba007021b1fbe29741a2f979b2386f2e7",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/OPERATORS_UPSTREAM.json": "e3fa007abf1ec354fe8c8cc6a2f7caa0d40352183ebf05a3b7002f352091987f",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/OWNER_GATE.md": "e62905a8be1d1e5e43069af70a2571647e886517e91a5e651b3dc70d4c74f192",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/POST_CORE_IO_COMPOSITION.json": "5a2d9c735b6ef38f0e34b9198b5c82d3f24128b17da6627140fa4f594890ddae",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/POST_CORE_IO_COMPOSITION_SOURCE.txt": "1e46235d1ca2d96b2544c3347b1cb1d9fd14e143171ec683b86a96235295f25b",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/POST_IO_UNKNOWN_ASSEMBLY.json": "f7abedcb71088a67bda6528cacebc5fd121120a9d27be9597fe5c2e5b631470b",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/POST_IO_UNKNOWN_IMAGE_RECEIPT.json": "7c93cf774ee63be91d0ac1aec544eb976757ce3dfa9c703abe672433f831e26c",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/POST_IO_UNKNOWN_REVIEW.json": "f54fbc1a6b450381321f91ab59604e079e9f846599fda1d62684ed8bfc0eb03c",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/POST_IO_UNKNOWN_SDK_COMPOSITION.json": "8b17125291b4a6cc4d098a6779a98eced27881c0800039f509aace1c1763e428",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_1068_DEPLOYMENT_RECEIPT.json": "e187594a338d61d75e7d86acdc19c3946181baf1c0659ab0300c4f3d4a5eb74a",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_1068_IMAGE_INDEPENDENT_READBACK.json": "a928b6f181c315e035ed786f5f0a92b0ecf414e0b1473cbc2c41d7a75eab0c99",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_1068_INDEPENDENT_READBACK.json": "0c213fe12074b6ea79cc3e8352e774fc833f87f463fbfcf8bf8d6aa2b2a85d02",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_1068_SOURCE_CLOSED_READBACK.json": "c65c0d8ddf88b1f560855a3cb67b2fe3ce918ea06857600ebc97cb626db2ed29",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_1068_SOURCE_DIFF_REVIEW.json": "4e1ad7c8bd7b58ccdd955ad42d2b5a93cc43eb92578e8f321bea9dcfe48e21b9",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_7371_DEPLOYMENT_NAMES_RECEIPT.json": "6becd0db90059c10a77a31f80baf12d44ee2f068d1c61afa344e02ab9623f79a",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_7371_INDEPENDENT_READBACK.json": "f9f9c0c570d28b856cc5ca3991f2cf8d46ce2faa29c962dedb4572831d052427",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/ROOT_7371_SOURCE_DIFF_REVIEW.json": "b201867854139d81086d8cec6f30389f4fb296a784dc490a7af96c77e8c9f95d",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/RUNTIME_REVIEW.json": "7d257bfd2041f9bed1199e97c940e8b540cfd99b499c9f4ca8da75754a65dde1",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/SOFTWARE_HANDOFF.json": "7531e9637318469451af07facfec3f0be75fbd0e209b9600fbe7593c0aabe9e3",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/VERIFIER_CONSENT_REVIEW.json": "7a01e6af57346afeb6ffc5df1d72d9d945a401273c38e204b486e8eb3088e0b0",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/WRITE_RUNTIME_COMPILE.json": "fae3e54d4972e7601cd1cdd6f63323b0758e43c0056ba4f50b79748765f33c6d",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/claude-p3-write-smoke.json": "8448feb6efaabb8ef91ee3748fd080bd758d6f60389c023f3651a846ad63f405",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators/.gitignore": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators/deploy.py": "df09778cc86ef71b7e90dd5d0ca3a08e09abdaf26505c5f93a256a3ad1c23d89",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators/prepare.py": "6abca5d7d0c702b4fb948cd0e6232062a420cb5e867a5c8b0631250e4f0a23bc",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators/restore.py": "0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators/test_operators.py": "94b485f37d8a77dde27119d397cf25ff5919b66e8a3746596d8f3b72b026a4c0",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "scripts/auth/render-mcp-write-qa-hook.py": "6c4561af3b47be67801f5ae1f1e77953e8a14fb771e9f4dccf6f2838bc0368ae",
+    "src/data/auth/mcpOAuthConsentRepository.ts": "be9a9c847c2c8c7b2c84f5b13cae1af42b52b82f945e6484c0e62828b3ccf6f9"
+  },
+  "executionParameters": [
+    "first temporary intention UTC start and same-millisecond consent floor",
+    "hard deadline <= first intention+30min",
+    "collision-free private run and container names",
+    "fresh Root CAS/exact current compatible retained baseline"
+  ],
+  "protectedChanges": [
+    "temporary new business Write scope in existing finite QA Token Hook",
+    "Write-v2 runtime configuration for two fixed approved operation/digest pairs",
+    "fresh normal OAuth Write Consent; no silent Read grant upgrade"
+  ],
+  "noNewRoleRlsFunctionOrBusinessGrant": true,
+  "nativePhysicalAcceptance": "BLOCKED_XCTEST_INITIALIZATION_BEFORE_AX_NOT_VERIFIED",
+  "gateSHA256": "6dade51e337f692012e107b357daaf3ed48bb82dfbcdc51a84bff8e1972fdb3d"
+}

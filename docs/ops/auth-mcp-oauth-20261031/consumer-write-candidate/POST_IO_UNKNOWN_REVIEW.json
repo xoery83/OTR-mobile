@@ -18,5 +18,7 @@
   "responseDataSuppressed": true,
   "preIoAndGetSemanticsUnchanged": true,
   "authorityActivated": false,
-  "actualSdkComposition": "PASS actual createMutationTools + real in-memory Core commit; three UNKNOWN cases, one POST each; not Hosted OAuth E2E"
+  "actualSdkComposition": "PASS actual createMutationTools + real in-memory Core commit; three UNKNOWN cases, one POST each; not Hosted OAuth E2E",
+  "sdkCompositionIndependentReview": "MCP reviewer NO_BLOCKER at d23fbbea; Auth source exact c12a matches 7a3caa63",
+  "compositionLimits": "In-memory owning Core port, no PostgreSQL/Hosted OAuth/consumer/device E2E. Cancel may also become UNKNOWN via outer abort race; not attributed solely to HTTP503."
 }

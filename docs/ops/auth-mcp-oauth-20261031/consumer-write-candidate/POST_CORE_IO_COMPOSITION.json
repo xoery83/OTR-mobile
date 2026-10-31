@@ -1,0 +1,79 @@
+{
+  "status": "LOCAL_COMPOSITION_PASS_NOT_DEV_E2E",
+  "authAdapterSha256": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758",
+  "mcpMutationSha256": "dda380a04ac55100c83e6b944b196ba0032af2e2c7ae128a110e44e067b09ffc",
+  "sourceFixtureSha256": "ae5608c6ac4043d13a438def44f395e28ca0b9e2aea0cf43a7003a10cd2fc170",
+  "cases": [
+    {
+      "mode": "revoke",
+      "outcome": "UNKNOWN",
+      "errorCode": "QUERY_SAME_OPERATION",
+      "operationId": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+      "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+      "commits": 1,
+      "posts": 1,
+      "preRecoveryGets": 1,
+      "backendStatuses": [
+        404,
+        503
+      ],
+      "retainedGraphItems": 1,
+      "coreReceiptOutcome": "APPLIED",
+      "suppressedDataNotReturned": true
+    },
+    {
+      "mode": "expiry",
+      "outcome": "UNKNOWN",
+      "errorCode": "QUERY_SAME_OPERATION",
+      "operationId": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+      "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+      "commits": 1,
+      "posts": 1,
+      "preRecoveryGets": 1,
+      "backendStatuses": [
+        404,
+        503
+      ],
+      "retainedGraphItems": 1,
+      "coreReceiptOutcome": "APPLIED",
+      "suppressedDataNotReturned": true
+    },
+    {
+      "mode": "cancel",
+      "outcome": "UNKNOWN",
+      "errorCode": "QUERY_SAME_OPERATION",
+      "operationId": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+      "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+      "commits": 1,
+      "posts": 1,
+      "preRecoveryGets": 1,
+      "backendStatuses": [
+        404,
+        503
+      ],
+      "retainedGraphItems": 1,
+      "coreReceiptOutcome": "APPLIED",
+      "suppressedDataNotReturned": true
+    }
+  ],
+  "networkCalls": 0,
+  "hostCalls": 0,
+  "otpCalls": 0,
+  "scopeChanges": 0,
+  "liveWrites": 0,
+  "meaning": "Actual Auth binding and MCP createMutationTools; real in-memory owning Core execute/apply/commit, then response suppression. No live authority or database transaction.",
+  "executedSourceSha256": "1e46235d1ca2d96b2544c3347b1cb1d9fd14e143171ec683b86a96235295f25b",
+  "executedSourceArtifact": "POST_CORE_IO_COMPOSITION_SOURCE.txt",
+  "authFixCommit": "AWAIT_AUTH_FIXED_COMMIT_SOURCE_SHA_PINNED",
+  "notQualifiedByThisTest": [
+    "real OAuth Write Consent/grant",
+    "DEV database mutation",
+    "consumer Write client",
+    "physical device"
+  ],
+  "independentReview": "NO_BLOCKER_LOCAL_COMPOSITION_ONLY",
+  "causalLimits": [
+    "Revoke and expiry directly exercise actual503 to UNKNOWN classification",
+    "Cancellation can also return UNKNOWN through the outer abort race; not attributed solely to503"
+  ]
+}

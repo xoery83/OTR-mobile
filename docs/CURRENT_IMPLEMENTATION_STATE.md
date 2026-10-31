@@ -115,12 +115,14 @@ Minimal Adapter repair preserves503/UNKNOWN after POST IO; actual in-memory Core
 P3 commit then revoke/expiry/cancel regressions and59 target tests/types/lint PASS.
 Independent postIO Review NO_BLOCKER; actual SDK composition of revoke/expiry/
 cancel proves UNKNOWN with one POST/commit each and no result leakage. Replacement
-default-closed image106825 is built; Root independent software CAS is pending;
+default-closed image106825/CID43b2 is deployed and independently verified by Root
+(20:25:59Z health200/protected401/4pins/23files; both QA keys absent, workerinactive);
 no live Write has been activated. Assembly40dad byte-reproduces7371 capture0cafa,
 changes only the Adapter and preserves350 other code inputs. Operators
 reuse old CAS/restore with Write-only namespace/config;5 local groups and assembly
-independent Review PASS. Next exact protected Write activation/operation Gate is
-NOT yet requested; old Read C cannot authorize it. See consumer-write-candidate/.
+independent Review PASS. Next exact protected Write activation/operation Gate is frozen for Owner review;
+old Read C cannot authorize it. Native device initialization remains BLOCKED and
+physical downstream/cold verification is NOT_VERIFIED. See consumer-write-candidate/.
 
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
