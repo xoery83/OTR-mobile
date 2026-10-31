@@ -119,6 +119,18 @@ export function createSustainedDevTripPorts(
     ...(ports.core.read
       ? {
           read: {
+            async authorizedVersion(
+              ...args: Parameters<
+                NonNullable<NonNullable<CoreHttpConnection["read"]>["authorizedVersion"]>
+              >
+            ) {
+              guard(args[0]);
+              if (!ports.core.read!.authorizedVersion)
+                throw Error("CORE_READ_UNAVAILABLE");
+              const result = await ports.core.read!.authorizedVersion(...args);
+              guard(args[0]);
+              return result;
+            },
             async collection(
               ...args: Parameters<NonNullable<CoreHttpConnection["read"]>["collection"]>
             ) {

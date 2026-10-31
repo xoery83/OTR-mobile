@@ -106,6 +106,18 @@ export function createNormalDevTripPorts(
     ...(ports.core.read
       ? {
           read: {
+            async authorizedVersion(
+              ...args: Parameters<
+                NonNullable<NonNullable<CoreHttpConnection["read"]>["authorizedVersion"]>
+              >
+            ) {
+              guard(args[0]);
+              if (!ports.core.read!.authorizedVersion)
+                throw new TripCreateError(503, "CORE_READ_UNAVAILABLE");
+              const result = await ports.core.read!.authorizedVersion(...args);
+              guard(args[0]);
+              return result;
+            },
             async collection(
               ...args: Parameters<NonNullable<CoreHttpConnection["read"]>["collection"]>
             ) {

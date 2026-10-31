@@ -35,6 +35,14 @@ function fixture() {
       collection: vi.fn(),
       item: vi.fn(),
       capabilities: vi.fn(async () => coreClosedCapabilities),
+      authorizedVersion: vi.fn(
+        async (actorAccountId: string, tripId: string, _ordinaryOrderVersion?: 1) => ({
+          version: "otr.core.authorized-trip-version/1" as const,
+          actorAccountId,
+          tripId,
+          token: "a".repeat(64),
+        }),
+      ),
     },
   };
   const runtime = createNormalDevTripPorts(
@@ -132,4 +140,43 @@ it("preserves exact capability operation through the finite adapter without chan
     f.runtime.coreConnection.read!.capabilities!(actor, trip, operation),
   ).rejects.toThrow("CLOSED");
   expect(f.core.read.capabilities).toHaveBeenCalledTimes(2);
+});
+
+it("forwards authorized versions for its Actor and rejects foreign or expired results", async () => {
+  const f = fixture(),
+    trip = randomUUID();
+  await expect(
+    f.runtime.coreConnection.read!.authorizedVersion!(randomUUID(), trip),
+  ).rejects.toThrow("FORBIDDEN");
+  expect(f.core.read.authorizedVersion).not.toHaveBeenCalled();
+  expect(await f.runtime.coreConnection.read!.authorizedVersion!(actor, trip, 1)).toEqual(
+    {
+      version: "otr.core.authorized-trip-version/1",
+      actorAccountId: actor,
+      tripId: trip,
+      token: "a".repeat(64),
+    },
+  );
+  expect(f.core.read.authorizedVersion).toHaveBeenCalledExactlyOnceWith(actor, trip, 1);
+  const original = f.core.read.authorizedVersion.getMockImplementation()!;
+  f.core.read.authorizedVersion.mockImplementationOnce(async (...args) => {
+    f.expire();
+    return original(...args);
+  });
+  await expect(
+    f.runtime.coreConnection.read!.authorizedVersion!(actor, trip),
+  ).rejects.toThrow("CLOSED");
+  const calls = f.core.read.authorizedVersion.mock.calls.length;
+  await expect(
+    f.runtime.coreConnection.read!.authorizedVersion!(actor, trip),
+  ).rejects.toThrow("CLOSED");
+  expect(f.core.read.authorizedVersion).toHaveBeenCalledTimes(calls);
+});
+
+it("keeps the scoped version request closed when its owning port is absent", async () => {
+  const f = fixture();
+  Object.defineProperty(f.core.read, "authorizedVersion", { value: undefined });
+  await expect(
+    f.runtime.coreConnection.read!.authorizedVersion!(actor, randomUUID()),
+  ).rejects.toThrow("CORE_READ_UNAVAILABLE");
 });

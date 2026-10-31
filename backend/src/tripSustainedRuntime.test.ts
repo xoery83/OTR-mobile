@@ -18,6 +18,14 @@ function fixture() {
         collection: vi.fn(),
         item: vi.fn(),
         capabilities: vi.fn(async () => coreClosedCapabilities),
+        authorizedVersion: vi.fn(
+          async (actorAccountId: string, tripId: string, _ordinaryOrderVersion?: 1) => ({
+            version: "otr.core.authorized-trip-version/1" as const,
+            actorAccountId,
+            tripId,
+            token: "a".repeat(64),
+          }),
+        ),
       },
     },
   };
@@ -89,4 +97,44 @@ it("retains all capability context through the deployed sustained adapter and fe
   await expect(
     runtime.coreConnection.read!.capabilities!(actor, trip, operation),
   ).rejects.toThrow("CLOSED");
+});
+
+it("forwards authorized versions through sustained runtime and fences closure", async () => {
+  const f = fixture(),
+    runtime = createSustainedDevTripPorts(f.ports, true)!;
+  const actor = randomUUID(),
+    trip = randomUUID();
+  expect(await runtime.coreConnection.read!.authorizedVersion!(actor, trip, 1)).toEqual({
+    version: "otr.core.authorized-trip-version/1",
+    actorAccountId: actor,
+    tripId: trip,
+    token: "a".repeat(64),
+  });
+  expect(f.ports.core.read.authorizedVersion).toHaveBeenCalledExactlyOnceWith(
+    actor,
+    trip,
+    1,
+  );
+  const original = f.ports.core.read.authorizedVersion.getMockImplementation()!;
+  f.ports.core.read.authorizedVersion.mockImplementationOnce(async (...args) => {
+    runtime.close();
+    return original(...args);
+  });
+  await expect(
+    runtime.coreConnection.read!.authorizedVersion!(actor, trip),
+  ).rejects.toThrow("CLOSED");
+  const calls = f.ports.core.read.authorizedVersion.mock.calls.length;
+  await expect(
+    runtime.coreConnection.read!.authorizedVersion!(actor, trip),
+  ).rejects.toThrow("CLOSED");
+  expect(f.ports.core.read.authorizedVersion).toHaveBeenCalledTimes(calls);
+});
+
+it("keeps the sustained version request closed when its owning port is absent", async () => {
+  const f = fixture();
+  Object.defineProperty(f.ports.core.read, "authorizedVersion", { value: undefined });
+  const runtime = createSustainedDevTripPorts(f.ports, true)!;
+  await expect(
+    runtime.coreConnection.read!.authorizedVersion!(randomUUID(), randomUUID()),
+  ).rejects.toThrow("CORE_READ_UNAVAILABLE");
 });
