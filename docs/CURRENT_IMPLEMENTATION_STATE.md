@@ -36,7 +36,8 @@ Native installation. Rootbranch stable, main untouched. Originalhardexpiry remai
 2026-11-01T08:48:56Z, maxone unused realVision, <=60m/+45close/+50watchdog bounds.
 
 Next: fix/deploy catalog budget preserving currentNative/Auth after their shortCAS;
-obtain exact replacement-input scope rather than reset expired binding; normal App
+obtain exact PHOTO_AFTER_CATALOG_REPAIR_INPUT_GATE scope rather than reset expired
+binding (candidate prepared, independent NO_BLOCKER); normal App
 new allowed input only after zero oldmodel/Task/UNKNOWN check → first actualVision
 → Results → Review → unique PRIVATE SELF P1/P6 → independent readback/Day/cold/
 idempotence →close. Software and remaining nonprotected work continue meanwhile.
