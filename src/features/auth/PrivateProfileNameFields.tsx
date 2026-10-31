@@ -13,14 +13,8 @@ import { useThemedStyles } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
 
-// Retain both formats in the editor; changing format never parses or discards a name.
-export type PrivateProfileNameDraft = Readonly<{
-  displayName: string;
-  mode: "SPLIT" | "UNSPLIT";
-  familyName: string;
-  givenNames: string;
-  fullName: string;
-}>;
+import type { PrivateProfileNameDraft } from "@/domain/auth/privateAccountProfile";
+export type { PrivateProfileNameDraft } from "@/domain/auth/privateAccountProfile";
 
 export function PrivateProfileNameFields({
   scope,

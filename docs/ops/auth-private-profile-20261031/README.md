@@ -9,3 +9,13 @@ Values preserve Unicode and independent display/document names. Unsplit names ar
 Any new tables/RLS/GRANT/function installation requires independent review and the exact Owner DEV Gate. The SQL below is a local candidate, never an automatic migration. Existing public profiles and Auth/Trip permissions stay untouched.
 
 The existing Account Profile repository now also provides private read/save/receipt methods through the normal scoped API client. Inputs freeze before asynchronous work; Actor/operation/revision responses bind exactly, redirects are rejected and missing/closed/conflict responses propagate without fallback or an automatic write. Reads remain bounded at64KB to include both merged name fields and snapshot metadata. Independent14 tests PASS; near-limit JSON checks are client fixtures, not a PG maximum-size measurement. No Native caller or local persistence is activated.
+
+Next bounded local foundation: Account-private optional name draft plus last accepted
+private Profile snapshot survive ordinary SQLite reopen, behind the existing Account
+generation/apply fence. SQLite77 is reserved by Native (76 belongs to Source); its
+registry is not modified here. A local draft is never a cloud acceptance or identity
+connection. Remote refresh preserves an edited draft and its original base rather
+than silently rebasing it. The existing Account Profile repository exposes this local
+data source only when explicitly supplied a database. No new queue or Sync Engine:
+future submission will use existing owner-scoped sync_operations with trip_id null.
+No Native entry, worker dispatch, Hosted route or RLS/GRANT is activated by this step.

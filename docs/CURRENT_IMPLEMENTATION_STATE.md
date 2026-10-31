@@ -203,7 +203,13 @@ private persistence SQL candidate now have38 node checks plus8 real local PG gro
 PASS after removing redundant SDK abortSignal calls (global fetch already binds the
 request signal). Independent review found a private-body redirect risk; the unified
 fetch now rejects redirects, with every Auth/PostgREST call checked and no fallback
-after rejection. No actual Hosted private storage, permissions, UI, registration
+after rejection. Local Profile foundation now extends the same Account Profile repository with an
+optional scoped SQLite data source: draft plus last accepted snapshot, no fabricated
+cloud state. Real SQLite reopen, A/B isolation, ABA/write rollback, dirty-draft/base
+preservation and stale/foreign rejection:4s41/types/lint PASS, independent2s21
+NO_BLOCKER. SQLite77 reserved by Native (76 Source); definition not registered,
+no Native caller/worker/Hosted changes. See private-profile LOCAL_FOUNDATION_REVIEW.
+No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See
 ops/auth-private-profile-20261031/. AKA/other optional fields remain future scope.

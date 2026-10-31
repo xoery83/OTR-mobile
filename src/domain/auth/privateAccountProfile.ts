@@ -22,3 +22,25 @@ export type TravelDocumentName = z.infer<typeof travelDocumentNameSchema>;
 export type PrivateAccountProfileFields = z.infer<
   typeof privateAccountProfileFieldsSchema
 >;
+
+export const privateProfileNameDraftSchema = z.strictObject({
+  displayName: name,
+  mode: z.enum(["SPLIT", "UNSPLIT"]),
+  familyName: name,
+  givenNames: name,
+  fullName: name,
+});
+export type PrivateProfileNameDraft = Readonly<z.infer<typeof privateProfileNameDraftSchema>>;
+
+export function privateProfileDraft(
+  fields: PrivateAccountProfileFields = {},
+): PrivateProfileNameDraft {
+  const document = fields.travelDocumentName;
+  return {
+    displayName: fields.displayName ?? "",
+    mode: document?.mode ?? "SPLIT",
+    familyName: document?.mode === "SPLIT" ? document.familyName ?? "" : "",
+    givenNames: document?.mode === "SPLIT" ? document.givenNames ?? "" : "",
+    fullName: document?.mode === "UNSPLIT" ? document.fullName : "",
+  };
+}
