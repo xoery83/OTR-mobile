@@ -54,7 +54,7 @@
   },
   "rollback": "First close the new Backend reader and Native caller; under unique Writer/CAS compare installed function definition+ACL receipt before removing only this new function. Never alter existing owning routines, Gateway role flags, business tables or user data.",
   "owningReview": "Qualified independent interface review covers parent locator, normal Actor/Trip isolation, retained owning authorization and no implicit grant. Root clarified no extra personal approval Gate; Root has not independently read/endorsed the SQL.",
-  "ownerApproval": "NOT_REQUESTED_NOT_APPROVED",
+  "ownerApproval": "REQUESTED_PENDING_EXACT_DEV_INSTALL_ONLY; no authorization inferred",
   "nativeReview": "NATIVE_OWNING_REVIEW.json: NO_BLOCKER bounded UI only",
   "candidateGateId": "e89b3d5b28b90c3c2a96e4d3bce961dc967649f9848580de173bc8e7172af6fb",
   "independentReview": {

@@ -51,7 +51,7 @@ Actual stale mounted list fixed295071ce using one existing refreshKey dependency
 
 Current Native candidate integrates main82d5c8b3, preserving its exact accepted Core HTTP/FIFO/budgets and Auth/Import code. Ordinary126 covers the final unscoped smoke separately from124 account-switch evidence; no historical A queue was activated. Native source249204db is fast-forwarded into local main; final receipt-only commit/push pending. Auth owns Session/Principal and separate GuestQA window. No Provider or protected Authority change.
 
-# Auth Golden Slice — current continuation, 30 October 2026
+# Auth Golden Slice — current checkpoint, 31 October 2026
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,
 edit/P1/cold → unique normal Native Email OTP Account26876e → one explicit Add →
@@ -102,9 +102,12 @@ Owner. Local by-Trip read candidate remains unwired/default-closed: optional HTT
 PG/transport and existing PersonRepo parent-read adapter (36 tests+new cache-race1;
 3 Backend/transport suites48; types/scoped lint PASS), wrapper fixture6 checks PASS.
 Root delegated only these small read interfaces; no Bootstrap/Host/SQL changes.
-Fixed8079e7b9 independent NO_BLOCKER/4 suites85 PASS. Core owning review, exact
-new EXECUTE Gate and Native wiring remain pending. Native keeps its sole active
-Realtime slice and has not redelegated UI; no adopted-Trip Add Native E2E claim. Candidate under People parent-read-candidate.
+Fixed8079e7b9 independent NO_BLOCKER/4 suites85 PASS. Native has since delegated
+and reviewed the bounded default-closed remote People candidate daa31fc7, then
+reclaimed its UI Writer. Root clarified qualified independent interface review is
+sufficient; no extra personal engineering approval Gate. New EXECUTE Owner approval
+and unique SQL Writer fresh publish preflight remain required. No adopted-Trip Add
+Native E2E claim. Candidate under People parent-read-candidate.
 31 October shortest-path Backend L2 now PASS without new lookup/permissions:
 normal Owner268 OTP -> existing Person POST on adoptedTrip9d10 using proven parent7cf3
 created Person39661bda/op9766bee4; same-op duplicate201 and Receipt200 identical.
@@ -126,11 +129,13 @@ checks, and ServerParentTripPeople preserves drafts across equivalent setup refr
 while fencing identity ABA, unmount and late responses. Local-format2 Add unchanged.
 Optional Workspace prop defaults false; no real caller enables it. Independent
 3 suites123 plus repaired wrapper14 PASS/NO_BLOCKER; source only, not Native Add.
-Backend route/runtime remains unapplied candidate dc43121b (apply-check only), and
+Backend route/runtime remains unapplied candidate dc43121b (apply-check only).
 Qualified independent interface Review satisfies engineering review after Root
 clarification; exact Owner new EXECUTE Gate and unique SQL Writer fresh publish
-preflight still required. No DEV authority or
-flag change. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
+preflight still required. Exact SQL install candidate e89b3d5b/install5ee9d1aa
+has observed DEV preimage/ACL and local7 CAS/rollback checks plus independent
+NO_BLOCKER; Owner approval requested, pending. No new install or activation; no
+shared lock requested/acquired. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.
@@ -275,7 +280,7 @@ Root is building one combined default-CLOSED software image before next QA windo
 See ops/auth-phase2-20261028/FIRST_UI_PUBLICATION_REVIEW.json and
 hosted-gate-candidate/OWNER_GATE.md.
 
-# Auth Adoption active checkpoint — 30 October 2026
+# Historical Auth Adoption checkpoint — 30 October 2026 (superseded)
 
 Accepted source integration/main push: `662898cfdc12a98ba5f2bf1ef3f5235b637b8077`.
 Finite PG candidate qualified real owning Trip/Metadata/Person/Core on one held
@@ -555,7 +560,7 @@ Use short coordinated Device Hub access, preserve My Trips root, original Native
 binary compatibility and SQLite74. Do not copy Session/Keychain, operate Production
 or real-user data from this lane. Keep heavy builds serialized and bounded.
 
-## Auth / Identity — current checkpoint, Adoption NOT_READY
+## Historical Auth / Identity checkpoint — before real Adoption acceptance
 
 Photo intended schema75 compatibility is reviewed: only exact75 migration name,
 new table present and all business rows empty can install a normal Session.
