@@ -1,0 +1,13 @@
+{
+  "status": "NO_QA_CLIENT_CONSENT_OR_OAUTH_SESSION_INDEPENDENTLY_VERIFIED",
+  "metadata": {
+    "consentCount": 0,
+    "oauthSessionCount": 0
+  },
+  "verifiedAt": "2026-10-31T06:04:10.681402Z",
+  "normalControlSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "delete404": "Not counted as successful revoke; independent absence proof only",
+  "firstFailure": "SDK auto-added offline_access; exact scope assertion stopped before browser authorization callback",
+  "oauthTokenIssued": false,
+  "originalSDKReportRetained": true
+}

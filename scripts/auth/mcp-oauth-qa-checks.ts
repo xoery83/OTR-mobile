@@ -25,6 +25,18 @@ export async function closeOAuthQa(
   assert(!failed, "QA_CLEANUP_UNCONFIRMED");
 }
 
+export async function checkQaGrantRevocation(
+  clientId: string, status: number, readGrants: () => Promise<unknown>,
+) {
+  z.uuid().parse(clientId);
+  if (status >= 200 && status < 300) return "ACKNOWLEDGED";
+  assert.equal(status, 404, "QA_GRANT_REVOKE_REJECTED");
+  const grants = z.array(z.object({ client: z.object({ id: z.uuid() }) }))
+    .max(256).parse(await readGrants());
+  assert(!grants.some((grant) => grant.client.id === clientId), "QA_GRANT_REVOKE_UNCONFIRMED");
+  return "ABSENT_VERIFIED";
+}
+
 // DEV-only assertions for the existing official SDK harness, never an authority or token store.
 export async function checkOAuthQaToken(
   accessToken: string,

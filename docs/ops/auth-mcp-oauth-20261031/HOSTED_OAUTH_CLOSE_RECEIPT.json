@@ -1,0 +1,13 @@
+{
+  "status": "OAUTH_OFF_HOOK_DISABLED_ORIGINAL_SITE_URL_INDEPENDENTLY_VERIFIED",
+  "observedAt": "2026-10-31T06:12:42.275733Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "oauthServerEnabled": false,
+  "hookEnabled": false,
+  "siteUrl": "http://localhost:3000",
+  "hookUriRetained": false,
+  "uriReadback": null,
+  "newGrantOrRole": false,
+  "dashboardPublicExecuteGrantCancelledNotExecuted": true,
+  "note": "Combined CLI close did not apply; Server/Site restored through Dashboard; minimal Hook-only disable applied. Disabled-hook URI classification changed, so original broad diff equality was not accepted as closure proof; this explicit projected readback is authoritative."
+}

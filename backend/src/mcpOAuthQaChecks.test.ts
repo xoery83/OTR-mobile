@@ -1,6 +1,19 @@
 import { expect, it, vi } from "vitest";
-import { checkOAuthQaReads, checkOAuthQaToken, closeOAuthQa } from "../../scripts/auth/mcp-oauth-qa-checks";
+import { checkOAuthQaReads, checkOAuthQaToken, closeOAuthQa, checkQaGrantRevocation } from "../../scripts/auth/mcp-oauth-qa-checks";
 import { registeredHostQa } from "../../scripts/auth/registered-qa-host-session";
+
+it("never counts revoke404 as success without fresh well-formed grant absence", async () => {
+  const clientId = "83504d3f-59d4-43fd-99b1-bebc54c40f7d";
+  const absent = vi.fn(async () => []);
+  expect(await checkQaGrantRevocation(clientId, 204, absent)).toBe("ACKNOWLEDGED");
+  expect(absent).not.toHaveBeenCalled();
+  expect(await checkQaGrantRevocation(clientId, 404, absent)).toBe("ABSENT_VERIFIED");
+  await expect(checkQaGrantRevocation(clientId, 404, async () => [{ client: { id: clientId } }]))
+    .rejects.toThrow("QA_GRANT_REVOKE_UNCONFIRMED");
+  await expect(checkQaGrantRevocation(clientId, 404, async () => ({ grants: [] }))).rejects.toThrow();
+  await expect(checkQaGrantRevocation(clientId, 401, absent)).rejects.toThrow("QA_GRANT_REVOKE_REJECTED");
+  expect(absent).toHaveBeenCalledOnce();
+});
 
 it("attempts grant revocation after an unknown close and never reports partial cleanup as PASS", async () => {
   const close = vi.fn(async () => { throw Error("CLOSE_TIMEOUT"); });

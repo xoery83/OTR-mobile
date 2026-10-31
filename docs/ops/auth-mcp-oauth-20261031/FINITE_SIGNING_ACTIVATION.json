@@ -1,0 +1,12 @@
+{
+  "status": "FINITE_QA_SIGNING_INDEPENDENTLY_VERIFIED",
+  "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "deadline": "2026-10-31T06:15:05Z",
+  "sqlSHA256": "bf7684dca75ccb558d4c00601529c6c4a9be173e09bc80a3a3402bede3b14284",
+  "requestedAt": "2026-10-31T05:54:25.251330Z",
+  "sqlDisposition": "ACKNOWLEDGED",
+  "mutationFinishedAt": "2026-10-31T05:54:31.198781Z",
+  "verifiedAt": "2026-10-31T05:54:37.116948Z",
+  "bodyMD5": "47e590c4c0bf62fc0814a9fcc805427b"
+}

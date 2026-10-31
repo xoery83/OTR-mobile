@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "status": "PROPOSED_NOT_AUTHORIZED",
+  "parentGateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733",
+  "authCandidateCommit": "49711fb1f77180251dba329132f2e0404fbb0492",
+  "mcpCandidateCommit": "9c399e01",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "providerScopes": [
+    "openid",
+    "offline_access"
+  ],
+  "businessScopes": [
+    "otr.trips.read"
+  ],
+  "replacementWindowMinutesMaximum": 30,
+  "accessTokenSecondsMaximum": 60,
+  "originalWindowClosed": true,
+  "originalDeadlineNotExtended": "2026-10-31T06:15:05Z",
+  "files": {
+    "docs/ops/auth-mcp-oauth-20261031/REFRESH_SCOPE_ADDENDUM_CANDIDATE.md": "38a9064f281bc1d7ef721dd8c433146b0b1ddb152824f7b3b3caf0383cf307d3",
+    "src/data/auth/mcpOAuthConsentRepository.ts": "e2c064bc7c0cd49e9ad03bf4dae0d8ed1a16956dd10b03a189cb49048ac77c08",
+    "src/data/auth/mcpOAuthConsentRepository.test.ts": "279d9e6cd083ff42fbe277814508f89e7cdb2a657afe33114f54b7e655c87657"
+  },
+  "browserBundleSHA256": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe",
+  "hostedScopeChanged": false,
+  "gateSHA256": "02971807ae94f1da94cb8d712678fdc73844417a4000b848519932938eba53f3"
+}

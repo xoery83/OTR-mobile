@@ -1,0 +1,42 @@
+{
+  "status": "PUBLIC_QA_MOUNT_PASS_WITH_POST_401_SIGNING_STILL_CLOSED",
+  "observedAt": "2026-10-31T05:52:28.810Z",
+  "rows": [
+    {
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "path": "/.well-known/oauth-protected-resource/mcp",
+      "status": 200,
+      "resource": "https://api-dev.xoery.art/mcp"
+    },
+    {
+      "path": "/oauth/consent",
+      "status": 200
+    },
+    {
+      "path": "/oauth/consent/config",
+      "status": 200,
+      "publicKeyType": "DEV_PUBLIC_ONLY",
+      "expiresAt": 1793427305000
+    },
+    {
+      "path": "/oauth/consent/app.js",
+      "status": 200,
+      "sha256": "75cb5d68483c968748431abeb9fc607c6b57a90923d23bcc7681047a5fd44ba7"
+    },
+    {
+      "path": "/mcp",
+      "status": 405,
+      "method": "GET"
+    },
+    {
+      "path": "/mcp",
+      "method": "POST",
+      "status": 401,
+      "challengePresent": true
+    }
+  ],
+  "initialProbeOutcome": "PUBLIC_QA_MOUNT_FAIL_NO_SIGNING_ACTIVATION"
+}

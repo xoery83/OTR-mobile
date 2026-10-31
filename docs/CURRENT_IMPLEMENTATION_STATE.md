@@ -152,32 +152,32 @@ integration must retain both, not roll back the old default image.
 Fresh local main/origin-main now both8f79a4214d39b7f174ef61a82aa27d31b10a8156
 (MCP Git-only integration, released). Future Auth integration must retain that
 default-closed MCP code and original primary dirty/index/fullDiff, then recheck HEAD. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
-MCP OAuth is the current separate Golden Slice: registered QA1f normal OTP →
-real Code/S256 → own Trip/P3 read and foreign9d10 NOT_VISIBLE → refresh/revoke;
-then ChatGPT. No Hosted OAuth E2E PASS yet.
-Owner directly approved exact finite Gate9dc271f6 (manifest928f3f7c). DEV
-project tuqigdxrvrerfewsxqgm now has the default-deny Token Hook installed and
-configured; body/owner/invoker/ACL/role flags independently verified. CLI sparse
-config changed only Hook enabled/uri, then OAuth Server ON/DCR OFF, Site URL
-https://api-dev.xoery.art and authorization path /oauth/consent. Other reported
-config unchanged. One manual public client83504d3f-59d4-43fd-99b1-bebc54c40f7d,
-auth none, exact ChatGPT and127.0.0.1:18764 callbacks, code+refresh independently
-read back. No finite signing body or public runtime config has been activated.
-Normal QA1f OTP/repository/refresh and unchanged Native claims PASS. Rotated
-session logout and refresh rejection PASS; a second logout in the smoke wrapper
-caused UNKNOWN, retained and independently reconciled (new Sessions/unrevoked
-refresh0), own receiver lock released. No automatic OTP retry.
-Actual closed software is base76c8ccfb + reviewed Auth9b0983ad, only8 owning files
-and3 shared regions, no Parent/Profile candidate. Source review NO_BLOCKER,
-5 suites84/capture build PASS. Hosted43afbc09/image8217aba6 healthy; capturef18b,
-runtimeb518/browser75cb, server782692 unchanged. Env/HostConfig/mounts/Native/PNG
-preserved, retained a260 rollback intact. Host released2026-10-31T05:34:12Z.
-Next: after Root's Photo business window closes, add only the approved finite
-public config, qualify real mount, activate the single QA/client ≤30min hook,
-run SDK then ChatGPT; close hook/revoke grant/restore exact default runtime and
-OAuth settings. No new issuer/session/grant DB or Business bearer forwarding.
-See ops/auth-mcp-oauth-20261031/{OWNER_APPROVAL.json,GATE_MANIFEST.json,
-HOSTED_SOFTWARE_DEPLOY_RECEIPT.json,NORMAL_SESSION_HOOK_SMOKE.json}.
+MCP OAuth Golden Slice is FAIL before browser authorization. Real QA OTP/control
+Session and ordinary Business200 worked, but SDK2.4 automatically added
+`offline_access` for refresh. Frozen Gate9dc271f6 and harness2334 allowed only
+openid, so strict scope assertion stopped. Public-only/no-OTP probe reproduced
+it; no OAuth consent/session/token was created (independent QA/client counts0).
+Hook closedb0f7, controlSession normally revoked; DELETE404 retained as
+unqualified and reconciled by independent absence, not revoked-access PASS.
+Owner-approved parent configuration/closed software were actually installed:
+DEV tuqigdxrvrerfewsxqgm, private invoker hook+AuthAdmin EXEC, manual public
+client83504d3f-59d4-43fd-99b1-bebc54c40f7d/none/two exact callbacks, code+refresh.
+Public Consent/metadata/JS200 and MCP POST anonymous401 were qualified. Finite
+policy opened only QA1f/client,60s cap/deadline06:15:05Z; closed after first FAIL,
+never extended. Runtime0500 removed; exact retained43af/image8217 healthy/default
+restored and released06:03:35Z. Source base76c8+Auth9b, capturef18b/runtimeb518/
+browser75cb/server782692. Native/PNG/Env/HostConfig/mounts retained. Root may run
+Photo; no Auth Host/SQL/main/device lease held. AS OFF, Hook disabled/URI null,
+Site URL localhost:3000 independently verified06:12:42Z; no PUBLIC grant executed.
+Next is the precise refresh-scope addendum candidate49711fb1 + MCP9c399e01:
+strict openid or exact openid+offline_access, no other/duplicate/nonstring scope;
+33 Consent tests/types/lint/browser build, independent4 regression tests PASS.
+It requests only offline_access and one replacement≤30min window, sameQA/client/
+read authority, not extension of the old window. Owner supplemental approval
+still required; candidate is NOT deployed. Then retry real SDK Code/S256→own/
+foreign read→refresh/revoke and ChatGPT, preserving actual first-failure records.
+See ops/auth-mcp-oauth-20261031/{REFRESH_SCOPE_ADDENDUM_CANDIDATE.md,
+FIRST_QA_WINDOW_CLOSE_RECEIPT.json,FIRST_SDK_ATTEMPT_RECONCILIATION.json}.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.

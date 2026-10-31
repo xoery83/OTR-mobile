@@ -1,0 +1,33 @@
+{
+  "status": "FINITE_QA_RUNTIME_REMOVED_AND_PARENT_WINDOW_CLOSED",
+  "containerId": "43afbc09c846f5a72de367d73e4b4e2ced41b6714a2e0556e6d32115cc42c047",
+  "image": "sha256:8217aba693015ffba8c999f94cf46ccd353c50b9a77fa8065785b6254f51b3d8",
+  "finiteConfigAbsent": true,
+  "health": "healthy",
+  "restoreMethod": "Existing restore_retained with independently reviewed exact Auth adapter",
+  "finiteContainerRemoved": "050058dd6570834ad56867f5fc5ab4620f483ee029a14ebb7e028604ac3f67bf",
+  "runtimeMountedDeliveryTrace": {
+    "requestedAt": "2026-10-31T05:51:18.559813+00:00",
+    "readyAt": "2026-10-31T05:51:18.936538+00:00",
+    "acquiredAt": "2026-10-31T05:51:46.728771+00:00",
+    "mutationFinishedAt": "2026-10-31T05:52:03.787782+00:00",
+    "releasedAt": "2026-10-31T05:52:03.787811+00:00"
+  },
+  "defaultRestoredDeliveryTrace": {
+    "requestedAt": "2026-10-31T06:03:19.655284+00:00",
+    "readyAt": "2026-10-31T06:03:19.668668+00:00",
+    "acquiredAt": "2026-10-31T06:03:19.668728+00:00",
+    "mutationFinishedAt": "2026-10-31T06:03:35.498053+00:00",
+    "releasedAt": "2026-10-31T06:03:35.498087+00:00"
+  },
+  "hookClose": {
+    "status": "FINITE_HOOK_CLOSED_INDEPENDENT_READBACK_PASS",
+    "closedBodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+    "verifiedAt": "2026-10-31T05:56:08.246506Z",
+    "gateSHA256": "9dc271f6594f52da4e27cd58f70364d487d7c2ab2a1d365dcef6ed454e8ce733"
+  },
+  "configClose": "HOSTED_OAUTH_CLOSE_RECEIPT.json",
+  "normalControlAndGrantCleanup": "FIRST_SDK_ATTEMPT_RECONCILIATION.json",
+  "originalFailure": "SDK_OAUTH_E2E.json",
+  "oldDeadlineNotExtended": "2026-10-31T06:15:05Z"
+}
