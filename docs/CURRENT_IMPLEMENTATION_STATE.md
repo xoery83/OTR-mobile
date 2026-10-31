@@ -187,7 +187,10 @@ OAuth readiness or private Data/Storage qualification claimed.
 Accepted source assembled from fresh main8f into independent codex/auth-oauth-main-
 slice-20261031 at884ca8e0, without Parent/Profile candidates. 9s130/types/lint/UIguard/
 browser+runtimebuild/closedsmoke PASS; independent curated-source and Native fixed
-d541 UI extraction NO_BLOCKER. Root serial FF/push requested, not yet confirmed.
+d541 UI extraction NO_BLOCKER. Serial FF and normal push completed09:14:47Z at4c5baacf (curated Auth884, MCP71,
+reproducible build recipe4c). Independent local/remote readback and all six original
+dirty bytes/modes/status/index/fullDiff guards PASS; main Writer returned Root.
+See auth-mcp-oauth-20261031/MAIN_INTEGRATION.json. No deployment or activation.
 Parent Gate private hook/client installation remains traceable, no new RLS/role.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
@@ -198,7 +201,7 @@ Independent private Profile field preparation only: optional display name and
 split/unsplit travel-document name codec preserves original Unicode and independent
 values, accepts empty profile, rejects credential/identity fields and unstoreable NUL.
 12 field tests PASS. Default-unmounted Profile HTTP/normal-JWT Supabase adapter and
-private persistence SQL candidate now have38 node checks plus8 real local PG groups
+private persistence SQL candidate now have directed node checks plus10 real local PG groups
 (RLS cross-Account, CAS/concurrency, idempotency, receipt fault rollback); final types
 PASS after removing redundant SDK abortSignal calls (global fetch already binds the
 request signal). Independent review found a private-body redirect risk; the unified
