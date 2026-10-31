@@ -1,0 +1,8 @@
+{
+  "status": "CAPTURE_ENTRYPOINT_INDEPENDENT_METADATA_READ",
+  "containerId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+  "captureEntrypointSelected": true,
+  "commandSHA256": "16ec1ff6e1958d46b9da284e12868328c5ffaa3186f078cfdd1d1f657cad5466",
+  "observedAt": "2026-10-31T10:40:21.755342Z",
+  "mutations": 0
+}

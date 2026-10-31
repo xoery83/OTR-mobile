@@ -1,16 +1,11 @@
 {
   "status": "NO_BLOCKER_CANDIDATE_ONLY",
-  "gateSHA256": "d133e8fe34cf5a6ff4543dd26e5b0d2c037742503e553a7ef6e18cc99b80338b",
-  "callbackPatch": "d0917e066e29de0c30c86e7bf9aa7daf21a27e71",
-  "curatedSource": "a7d39f11011fe2e081fca60d1496850e4d2c92d1",
-  "firstFailure": "Original frozen main runtime rejected the Claude callback profile; initial c392 Gate was not executable. No registration/activation attempted.",
-  "repair": "Only old ChatGPT/SDK tuple OR exact one-Claude tuple; no mixed/altered callback and no835 reuse.",
-  "validation": "Primary isolated 3 suites53, backend build, types/scoped lint PASS; independent targeted new8 tests PASS;3 candidate+8Git hashes and digest verified",
-  "independentLimits": "Source and manifest review only; did not independently rebuild server or access Hosted/credentials",
-  "prerequisites": [
-    "Root fresh-service exact-loader integration, new build/image trace and default-closed qualification",
-    "Owner exact new Gate approval in one originating consumer chat",
-    "Actual client/callback/S256/scopes verification before fresh explicit consent"
-  ],
-  "currentState": "No new client, grant, finite QA config or Hosted activation"
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "independentValidation": "14 frozen files +8 Git sources +canonical digest matched;5 local unittest groups PASS; unchanged931be restore helper verified",
+  "primaryValidation": "same5 local groups PASS;all5 Python modules parse;actual Docker artifact/entrypoint/Env/HostConfig/mount hashes,public200/401/config404 andSupabaseASoff/HookoffURI null/closedSQLbody+ACL readbacks PASS",
+  "authority": "Review only,not Owner approval,new registration,configuration activation,Host lease orconsumer PASS",
+  "reuse": "retained real b518/9264 only;Source-onlyf051/6f31 andjoined6c are not deployed",
+  "dcr": "observed null withASoff;Gate requires explicit false andreadback beforeASon,retainfalse oncleanup",
+  "sourceCoordination": "Sourcewindow15historicalclose receipt attached;freshshortCASstillrequired beforeeachswitch",
+  "remaining": "MCP-originating single exact Owner Gate/action-time confirmation,thenfreshRootCAS and realconsumer E2E"
 }

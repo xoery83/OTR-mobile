@@ -1,0 +1,33 @@
+{
+  "sourceReceipt": {
+    "status": "PHOTO_FIFTEENTH_WINDOW_CLOSED_VERIFIED",
+    "windowId": "4d682c5a878d497b8f670aed0d828c45",
+    "controller": {
+      "status": "PNG_CLOSED_VERIFIED",
+      "verified": true,
+      "steps": {
+        "sourceBefore": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "runtime": {
+          "verified": true
+        },
+        "sourceAfter": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "worker": {
+          "verified": true,
+          "activeState": "inactive",
+          "physicalCleanup": "EMPTY_VERIFIED"
+        }
+      }
+    },
+    "timersStopped": true,
+    "reason": "Same-object Photo execution completed or stopped; independent Source/worker close verified",
+    "reopened": false
+  },
+  "authority": "Root-owned Source close receipt only; not OAuth Gate approval",
+  "sourceReceiptPath": "/private/tmp/otr-photo-approved-execution-20261031/window15/photo-first-window-closed.json"
+}

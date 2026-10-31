@@ -184,15 +184,23 @@ recipient lease. See chatgpt-consumer-window/{CHATGPT_REAL_E2E.json,
 HOOK_CLOSE_RECONCILIATION.json,POST_REVOKE_MCP_LOG.json,RUNTIME_CLOSE_RECEIPT.json}.
 Software/source integration remains separate and default closed; no Beta always-on
 OAuth readiness or private Data/Storage qualification claimed.
-Next consumer Item/Claude read Gate d133e8fe remains unapproved/default-closed.
+Next consumer Item/Claude read Gate b3e66e9d remains unapproved/default-closed.
 Review caught the main loader's ChatGPT-only callback tuple; minimal source patch
 d0917e06 / curated a7d39f11 admits only two exact separate profiles, not mixed
 redirects or client835 reuse. Isolated53/build/types/lint and independent new8
-tests/hash review NO_BLOCKER. Root fresh-service closed integration is required
-before presenting the final configuration Gate; no new client/window is active.
+tests/hash review NO_BLOCKER. Root actually deployed the exact loader in Source72
+image67f21d49/capture82d7cf57/container0cf269; retained real b518/9264 artifacts.
+Independent Docker entrypoint/artifact/Env/HostConfig/9mount hashes and 200/401/
+config404 plus ASoff/Hookoff/URI null/closed private SQL body+ACL readbacks PASS.
+DCR is null, not a claimed false: Gate requires explicit false before ASon.
+Root Source15 SQL/worker/runtime/timer close receipt exists; it is not a future
+lease. Reused finite operator adaptation5 local test groups/independent NO_BLOCKER;
+MCP presents the single exact Gate, then fresh Root short CAS for actual switches.
+No new client/grant/window is active. See consumer-item-claude-candidate/.
 Closed source patch now FF-integrated/pushed maina7d39f11 at09:38:20Z, exact local/
 remote and original six dirty bytes/modes/index/fullDiff PASS. Writer released;
-this proves source integration only, not fresh Host deployment or Gate approval.
+this main receipt proves source integration only; software observation is above,
+and neither proves the still-pending configuration Gate approval or consumer E2E.
 Accepted source assembled from fresh main8f into independent codex/auth-oauth-main-
 slice-20261031 at884ca8e0, without Parent/Profile candidates. 9s130/types/lint/UIguard/
 browser+runtimebuild/closedsmoke PASS; independent curated-source and Native fixed

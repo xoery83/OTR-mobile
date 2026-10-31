@@ -1,0 +1,14 @@
+{
+  "status": "LOCAL_OPERATOR_CANDIDATE_VALIDATION_PASS_NO_HOST_EXECUTION",
+  "checks": "5 unittest groups: exact profiles/deadlines, fresh baseline preservation, no plaintext Env in plan, manual/new-client metadata, image/loader/asset/entrypoint/mount drift and private namespace rejection",
+  "hostMutations": 0,
+  "providerCalls": 0,
+  "source": "prior accepted finite consumer operator retained; only bounded profile/baseline/namespace parameters adapted",
+  "oldOperatorHashes": {
+    "deploy.py": "b50f1b8ed3413a5ba708370d40f7d63b8ff156d4ec88f7e5988b1aa7bacb6a01",
+    "restore-default.py": "249940d433591030b2755f247d27da6373e8220399c7367872cc3903748f35eb",
+    "prepare.py": "8a21107b080fdb0de5fd573f7c77dafa8942343b5ba64aebf18556dea425174e",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "restoreHelperUnchanged": true
+}

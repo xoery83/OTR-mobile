@@ -1,0 +1,45 @@
+{
+  "retainedBaseline": {
+    "containerId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+    "image": "sha256:67f21d4975f953d030d395533fe1a2a0f7b206c970dc80ed04476a07ca101ad1",
+    "status": "running",
+    "health": "healthy",
+    "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+    "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+    "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+    "mountCount": 9,
+    "authFiniteConfigAbsent": true,
+    "adoptionClosed": true
+  },
+  "currentService": {
+    "containerId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+    "image": "sha256:67f21d4975f953d030d395533fe1a2a0f7b206c970dc80ed04476a07ca101ad1",
+    "status": "running",
+    "health": "healthy",
+    "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+    "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+    "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+    "mountCount": 9,
+    "authFiniteConfigAbsent": true,
+    "adoptionClosed": true
+  },
+  "artifactContainerId": "0cf269f503209d07dc257641591a5dd4fa5824f90ab3d253e81de9496cea5d9f",
+  "artifactHashes": {
+    "/app/server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "/app/server-capture.mjs": "82d7cf57aeabff6c1ee9d8b1040ceaf65a5fbf323845c759ca79274f3cfe955f",
+    "captureHasExactClaudeCallback": true,
+    "/app/mcp/runtime.mjs": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+    "/app/auth-consent/app.js": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe"
+  },
+  "observedAt": "2026-10-31T10:34:02.556175Z",
+  "publicUnauthenticatedStatuses": {
+    "/health": 200,
+    "/v2/trips": 401,
+    "/oauth/consent/config": 404
+  },
+  "mutations": 0,
+  "providerCalls": 0,
+  "hostLease": false,
+  "configurationGateApproved": false,
+  "status": "SOFTWARE_ONLY_READ_ONLY_OBSERVATION_PASS_NO_CONFIG_OR_HOST_HANDOFF"
+}

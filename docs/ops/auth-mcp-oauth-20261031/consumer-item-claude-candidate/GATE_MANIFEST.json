@@ -17,9 +17,20 @@
     "one UTC deadline per window <= first temporary config change +30min"
   ],
   "files": {
-    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OWNER_GATE.md": "9a8a8b8e6e3fef5983af4f2a27359bb191d177cf0cf7b49ff7c788b0bcc0ea6d",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/FRESH_AUTH_CLOSED_OBSERVATION.json": "6c28026587278fbd3d0b4bb3f236971a5a7221b90ec3913450671cb237e1f5c7",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/FRESH_ENTRYPOINT_OBSERVATION.json": "36b4ed0333e16e718bc0e8989d3305c50651f8a27b8d33bb7f339a6b102a283c",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/FRESH_HOST_SOFTWARE_OBSERVATION.json": "1fffa72c31d042ba8c3ec8bbd8a17ee678f73d4d1e84dfa209a0241e6abeabde",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OPERATORS_VALIDATION.json": "0af69fff8acc53c94b076393716f9fcbcdb62d4f414c95d93f9bf2882a3e57b7",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/OWNER_GATE.md": "103621867fb0673dc4a661f6338becd61447ad72505f74648eec82ced6e8d112",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/ROOT_SOFTWARE_HANDOFF.json": "5018ff5bbe12bea23b40544ebfcb05640b8dd4b47db581a42ecc8f55e48fc967",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/SOURCE_WINDOW15_RELEASE.json": "f3eddfc7884980cc78bd01809b93bbc4fa9b885e24595c1257a0ccb77ee97dad",
     "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/chatgpt-item-read-smoke.json": "b9f817017a848e3079fcf2722dfa2b313ec93d1eb811376464bd3777369630f0",
-    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/claude-read-registration-proposal.json": "23833d143e45895342dd272974ac73327a355d8c30463d1780e8731f20572e36"
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/claude-read-registration-proposal.json": "23833d143e45895342dd272974ac73327a355d8c30463d1780e8731f20572e36",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/operators/deploy.py": "6d3c1574b1c9b199095d58bd0cfa5b24ab092cd630ca2460cf83dd96921b8fce",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/operators/prepare.py": "72098a3082a704a5f92e80db6048f204bc60184b6752934ae05aa76e2fa5735e",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/operators/restore.py": "ed47ff982e61557c9aab46de26af184fa7c4159a042e953f631760a234f32891",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/operators/test_operators.py": "36a780742c1f3af3459c7dd57ac6518e88cc144bb2ab0d92ec36318f9b6fd83c",
+    "docs/ops/auth-mcp-oauth-20261031/consumer-item-claude-candidate/operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
   },
   "sourceFiles": {
     "4c5baacf45b4e215de7fe8e31fd355e92a0045d5:backend/mcp/source-pins.json": "03fbd30f7ebe5d7ed8976c1127689a26e3e59ac1950e188c40ada19481353df3",
@@ -35,5 +46,8 @@
   "curatedSource": "a7d39f11011fe2e081fca60d1496850e4d2c92d1",
   "isolatedServerBuildSHA256": "841fbfdea2420bb952e6b321893abe8b70e082c4e8f62eb32b95da722591a5e0",
   "isolatedServerBuildIsDeploymentTarget": false,
-  "gateSHA256": "d133e8fe34cf5a6ff4543dd26e5b0d2c037742503e553a7ef6e18cc99b80338b"
+  "retainedRuntimeSHA256": "b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72",
+  "retainedBrowserSHA256": "9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe",
+  "dcrPreimage": "unset/null with ASoff; set and verify explicit false before ASon; leave false after cleanup",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e"
 }

@@ -41,8 +41,13 @@ loader callback patch `d0917e06` (isolated curated source `a7d39f11`), not the l
 Auth branch. The former main loader rejected Claude. The patch permits exactly
 the old ChatGPT/SDK tuple OR the single Claude callback, never mixed/arbitrary
 redirects; it also forbids reusing client835 for Claude. Candidate53 tests PASS.
-SDK bridge and reproducible build recipe are unchanged. Bridge SHA256 `f0516c5268d042a2109633032d720603eb2fb326001f26968231117f83e243e0`;
-browser SHA256 `6f31ece06854c538b12b0adbe34e969b23cdced2d89fc980141c3289902ebb25`.
+Reuse the actual previously qualified SDK/ChatGPT Read artifacts retained by Root:
+bridge SHA256 `b518f81a7145ba8441d4d8bc599f9e3f09023ec552e8db68cfee859fed557b72`;
+browser SHA256 `9264dd02e6e4474326264ed4e8ac91ec82e21de374c731085b2dbfa0094627fe`.
+These are the exact artifacts from the real SDK/ChatGPT receipts, not a new build.
+The main recipe's f051 bridge and 6f31 browser remain source/build evidence only:
+its Read graph is unchanged; differing closed Write files and unused Profile copy
+are not needed for this Read-only slice. No artifact replacement is requested.
 No Native, Profile, Parent or future Write candidate is deployed with this action.
 The isolated main-plus-patch server builds to SHA256
 `841fbfdea2420bb952e6b321893abe8b70e082c4e8f62eb32b95da722591a5e0`.
@@ -50,6 +55,14 @@ This is build proof, not an instruction to deploy an old service baseline. Root
 must carry the exact pinned loader into its fresh service source and record that
 build/image digest, then qualify it default-closed before either activation;
 ordinary traceable DEV software integration cannot change this Gate's authority.
+Root deployed the exact loader in its fresh Source72+Native diagnostic assembly:
+image `67f21d4975f953d030d395533fe1a2a0f7b206c970dc80ed04476a07ca101ad1`,
+capture `82d7cf57aeabff6c1ee9d8b1040ceaf65a5fbf323845c759ca79274f3cfe955f`.
+Independent hash/entrypoint and 200/401/closed-config404 observations are attached.
+This proves closed software, not a Source window release or configuration approval.
+Root subsequently supplied the window15 SQL/runtime/worker/timer closure receipt.
+That historical release is not a future lease: acquire the shared short CAS lock
+and recheck current Source coordination immediately before each service switch.
 
 Reuse the unchanged `QA_TOKEN_HOOK_INSTALL.template.sql` and
 `scripts/auth/render-mcp-qa-hook.py`. Per window, only client UUID and execution-time
@@ -59,12 +72,25 @@ Claude UUID. Record rendered activate/close SQL hashes before applying. The acti
 Hook admits exactly one QA/client and read claim, and CAS accepts only closed body
 MD5 `b0f7eae14599bd32cb9430a59832c837`. No other substitution or ACL expansion.
 
+`operators/` reuses the prior deploy/retained-restore implementation and unchanged
+restore helper. Only the two literal consumer profiles, fresh baseline parameters
+and total-window timestamp are adapted. Preparation validates public/none/manual
+client metadata, exact callbacks and a newly created Claude client in this window;
+it retains hashes instead of plaintext Env. Deployment can add only the one public
+QA config Env key, never change the image or mounts. Private plans are root-owned
+0600 in one `auth-consumer-qa-<32hex>` directory. No operator is executed by staging
+or review; Owner approval and current Root CAS coordination remain prerequisites.
+
 Under Root's serial Host Writer, capture and retain the **fresh** healthy service,
 image digest, environment/mount/source pins and closed finite configuration before
-each window. Mount only the pinned Auth/MCP artifacts and matching public finite
-config. Keep ordinary Backend/Source/Native code and flags intact. Never restore a
+each window. Retain the pinned Auth/MCP artifacts; add only the matching public
+finite config. Keep ordinary Backend/Source/Native code and flags intact. Never restore a
 historical ce09 image over newer delivery. Fresh Auth preimage must be ASoff,
-Hook disabled/URI null, Site `http://localhost:3000`, DCRoff; drift stops activation.
+Hook disabled/URI null, Site `http://localhost:3000`; drift stops activation.
+Observed DCR is unset/null while AS is off, not a proved explicit false value.
+This Gate permits only setting it explicitly false while AS remains off; verify
+false before enabling AS. Null never permits dynamic registration. On cleanup,
+retain explicit DCRfalse with ASoff. Root's active Source window must close first.
 Temporary ASon/Hookon and Site `https://api-dev.xoery.art` are inside that budget.
 
 ## Revoke and close
@@ -79,3 +105,5 @@ readback. A 404 revoke response needs fresh absence proof. Raw UNKNOWN/failures 
 retained and reconciled independently, never rewritten PASS. Each window needs a
 ready close controller/operator before activation; on expiry it stays closed and
 is not restarted. Claude may not begin until ChatGPT closure is proven.
+Retain the new manual public QA client inactive after its grant is revoked; no
+active grant or issuing policy may remain merely because its metadata is retained.

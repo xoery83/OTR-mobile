@@ -1,0 +1,39 @@
+{
+  "status": "INDEPENDENT_AUTH_CONFIG_AND_HOOK_CLOSED_READBACK_PASS",
+  "observedAt": "2026-10-31T10:37:56.336422Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "hookConfig": {
+    "auth.hook.custom_access_token.enabled": false,
+    "auth.hook.custom_access_token.uri": null
+  },
+  "serverConfig": {
+    "auth.oauth_server.enabled": false,
+    "auth.site_url": "http://localhost:3000",
+    "auth.oauth_server.allow_dynamic_registration": null
+  },
+  "hookCatalog": {
+    "acl": [
+      {
+        "grantable": false,
+        "grantee": "postgres",
+        "privilege": "EXECUTE"
+      },
+      {
+        "grantable": false,
+        "grantee": "supabase_auth_admin",
+        "privilege": "EXECUTE"
+      }
+    ],
+    "bodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "owner": "postgres",
+    "securityDefiner": false
+  },
+  "mutations": 0,
+  "providerCalls": 0,
+  "hostLease": false,
+  "sourceWindowClosedClaim": false,
+  "configurationGateApproved": false
+}
