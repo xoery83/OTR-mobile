@@ -127,7 +127,9 @@ while fencing identity ABA, unmount and late responses. Local-format2 Add unchan
 Optional Workspace prop defaults false; no real caller enables it. Independent
 3 suites123 plus repaired wrapper14 PASS/NO_BLOCKER; source only, not Native Add.
 Backend route/runtime remains unapplied candidate dc43121b (apply-check only), and
-Root Parent8079 owning review/new EXECUTE Gate still required. No DEV authority or
+Qualified independent interface Review satisfies engineering review after Root
+clarification; exact Owner new EXECUTE Gate and unique SQL Writer fresh publish
+preflight still required. No DEV authority or
 flag change. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
