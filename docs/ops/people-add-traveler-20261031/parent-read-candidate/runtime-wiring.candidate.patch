@@ -1,0 +1,57 @@
+--- a/backend/src/app.ts
++++ b/backend/src/app.ts
+@@ -2706,7 +2706,8 @@
+           : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
+       } else if (
+         url.pathname === "/v2/trips" ||
+-        /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)
++        /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname) ||
++        /^\/v2\/trips\/[^/]+\/create-receipt$/.test(url.pathname)
+       ) {
+         route = "/v2/trips:create";
+         const actor = await authenticateNormalAccount(request, gateway);
+--- a/backend/src/tripCreateRuntime.ts
++++ b/backend/src/tripCreateRuntime.ts
+@@ -24,7 +24,7 @@
+ import { z } from "zod";
+ import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "../../src/domain/trip/tripCreateWireContract";
+ import { TripCreateError, type TripCreatePort } from "./tripCreate";
+-import { createTripPgStorage } from "./tripCreatePgStorage";
++import { createTripPgStorage, createTripParentReceiptPgReader } from "./tripCreatePgStorage";
+ 
+ // Proposed private mount only; loading it cannot provision a principal or open SQL gates.
+ export const tripCreateRuntimePath = "/run/otr/trip-create-runtime.json";
+@@ -139,9 +139,13 @@
+       environment,
+       rawCoreConnection,
+     );
++    const tripConnection = createTripPgConnection(config.tripPg);
++    const createPort = createTripPgStorage(tripConnection);
++    if (environment.OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED === "1")
++      createPort.parentReceipt = createTripParentReceiptPgReader(tripConnection);
+     const sustained = createSustainedDevTripPorts(
+       {
+-        create: createTripPgStorage(createTripPgConnection(config.tripPg)),
++        create: createPort,
+         metadata: createTripMetadataV2PgStorage(
+           createTripMetadataPgConnection(config.metadataPg),
+         ),
+--- a/backend/src/tripSustainedRuntime.ts
++++ b/backend/src/tripSustainedRuntime.ts
+@@ -20,6 +20,16 @@
+     if (closed) throw new TripCreateError(503, "TRIP_SUSTAINED_DEV_CLOSED");
+   };
+   const create: TripCreatePort = {
++    ...(ports.create.parentReceipt
++      ? {
++          async parentReceipt(actor: string, trip: string) {
++            guard(actor);
++            const result = await ports.create.parentReceipt!(actor, trip);
++            guard(actor);
++            return result;
++          },
++        }
++      : {}),
+     async create(actor, request) {
+       guard(actor);
+       if (!("formatVersion" in request) || request.formatVersion !== 2)

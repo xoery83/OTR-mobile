@@ -1,0 +1,32 @@
+{
+  "status": "UNAPPLIED_UNREVIEWED_WIRING_CANDIDATE",
+  "baseFilesSHA256": {
+    "backend/src/app.ts": "f5cd07b096537d298007e6424c3e7bf2b4d1dfe27677652ef07cefeb16f89719",
+    "backend/src/tripCreateRuntime.ts": "17f4d798b816ceaf798b5c1ce5139d2c90bb4e0121b7c6c57fedfd9d5be15ebe",
+    "backend/src/tripSustainedRuntime.ts": "a912ee6c6bd5141e201b88f91ade9576896797b78c508e7ac8f8a5db4d6bfcde"
+  },
+  "patchSHA256": "94f6146d4382af531e2affe879a1f9f8561119a63b88d6e753107cee8cb114a0",
+  "writer": "Root; no shared source file modified",
+  "activation": "Only sustained DEV config version3 and explicit OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED=1; absent flag keeps port closed. New SQL EXECUTE Gate still required.",
+  "semantics": [
+    "Exact route uses existing normal-Account authentication and tripCreateBoundary",
+    "One existing Trip connection supplies create and optional reader",
+    "Sustained wrapper guards both before and after optional read; close during read rejects",
+    "Finite v1/normal v2 runtime constructors unchanged"
+  ],
+  "requiredOwningChecks": [
+    "Apply to actual current shared source only after Writer delegation",
+    "Route normal/Guest/UNKNOWN authentication, invalid method/version/Trip and closed-port cases",
+    "No flag means no parent port; finite/normal constructors remain unchanged",
+    "Sustained close before/during read fails; original create/receipt tests stay applicable",
+    "Independent review; exact new EXECUTE Gate; no deployment before those checks"
+  ],
+  "notClaimed": [
+    "typechecked or tested applied patch",
+    "runtime activation",
+    "new SQL permission installed",
+    "Native callback wired"
+  ],
+  "requiresSourceCommit": "8079e7b98f993cab02f5f44cce769d39b7df1d47",
+  "validation": "git apply --check on Auth source baseline PASS; no applied-code/runtime PASS claim"
+}
