@@ -136,6 +136,7 @@ it.each(["ANONYMOUS", "UNKNOWN", undefined] as const)(
       `/v2/trips/${trip}/metadata`,
       `/v2/trip-metadata-operations/${op}`,
       `/v2/trip-create-operations/${op}`,
+      `/v2/trips/${trip}/create-receipt`,
       `/v2/trips/${trip}/core/capabilities`,
     ]) {
       const response = await handle(

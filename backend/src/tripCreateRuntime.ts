@@ -24,7 +24,10 @@ import { open } from "node:fs/promises";
 import { z } from "zod";
 import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "../../src/domain/trip/tripCreateWireContract";
 import { TripCreateError, type TripCreatePort } from "./tripCreate";
-import { createTripPgStorage } from "./tripCreatePgStorage";
+import {
+  createTripPgStorage,
+  createTripParentReceiptPgReader,
+} from "./tripCreatePgStorage";
 
 // Proposed private mount only; loading it cannot provision a principal or open SQL gates.
 export const tripCreateRuntimePath = "/run/otr/trip-create-runtime.json";
@@ -139,9 +142,13 @@ export async function loadDevTripCreateRuntime(
       environment,
       rawCoreConnection,
     );
+    const tripConnection = createTripPgConnection(config.tripPg);
+    const createPort = createTripPgStorage(tripConnection);
+    if (environment.OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED === "1")
+      createPort.parentReceipt = createTripParentReceiptPgReader(tripConnection);
     const sustained = createSustainedDevTripPorts(
       {
-        create: createTripPgStorage(createTripPgConnection(config.tripPg)),
+        create: createPort,
         metadata: createTripMetadataV2PgStorage(
           createTripMetadataPgConnection(config.metadataPg),
         ),

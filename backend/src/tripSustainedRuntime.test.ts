@@ -90,3 +90,34 @@ it("retains all capability context through the deployed sustained adapter and fe
     runtime.coreConnection.read!.capabilities!(actor, trip, operation),
   ).rejects.toThrow("CLOSED");
 });
+
+it("does not expose an absent parent reader and fences an injected parent reader across closure", async () => {
+  const f = fixture();
+  expect(
+    createSustainedDevTripPorts(f.ports, true)!.tripCreatePort.parentReceipt,
+  ).toBeUndefined();
+  let done!: (value: null) => void;
+  const parentReceipt = vi.fn(
+    () =>
+      new Promise<null>((resolve) => {
+        done = resolve;
+      }),
+  );
+  const runtime = createSustainedDevTripPorts(
+    { ...f.ports, create: { ...f.ports.create, parentReceipt } },
+    true,
+  )!;
+  const actor = randomUUID(),
+    trip = randomUUID();
+  const reading = runtime.tripCreatePort.parentReceipt!(actor, trip);
+  expect(parentReceipt).toHaveBeenCalledExactlyOnceWith(actor, trip);
+  runtime.close();
+  done(null);
+  await expect(reading).rejects.toThrow("CLOSED");
+  await expect(runtime.tripCreatePort.parentReceipt!(actor, trip)).rejects.toThrow(
+    "CLOSED",
+  );
+  expect(parentReceipt).toHaveBeenCalledOnce();
+  expect(f.create).not.toHaveBeenCalled();
+  expect(f.receipt).not.toHaveBeenCalled();
+});

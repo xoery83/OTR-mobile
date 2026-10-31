@@ -2706,7 +2706,8 @@ export function createDevBackendHandler({
           : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
       } else if (
         url.pathname === "/v2/trips" ||
-        /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)
+        /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname) ||
+        /^\/v2\/trips\/[^/]+\/create-receipt$/.test(url.pathname)
       ) {
         route = "/v2/trips:create";
         const actor = await authenticateNormalAccount(request, gateway);

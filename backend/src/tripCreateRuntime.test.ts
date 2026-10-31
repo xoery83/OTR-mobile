@@ -11,6 +11,8 @@ const f = vi.hoisted(() => ({
   core: vi.fn(),
   metadata: vi.fn(),
   person: vi.fn(),
+  parentFactory: vi.fn(),
+  parentRead: vi.fn(),
 }));
 vi.mock("node:fs/promises", () => ({ open: f.open }));
 vi.mock("./tripCoreV2PgConnection", () => ({
@@ -23,7 +25,10 @@ vi.mock("./tripMetadataV2PgStorage", () => ({
   createTripMetadataV2PgStorage: f.metadata,
 }));
 vi.mock("./tripCoreV2PgHttpConnection", () => ({ createCorePgHttpConnection: f.core }));
-vi.mock("./tripCreatePgStorage", () => ({ createTripPgStorage: f.storage }));
+vi.mock("./tripCreatePgStorage", () => ({
+  createTripPgStorage: f.storage,
+  createTripParentReceiptPgReader: f.parentFactory,
+}));
 vi.mock("./tripPersonCloudCreatePg", () => ({
   createTripPersonCloudCreatePgPort: f.person,
 }));
@@ -90,7 +95,12 @@ it("keeps missing mount CLOSED without a connection or alternate credential", as
 });
 it("composes the existing exact dedicated port and preserves request/receipt identities", async () => {
   const v = fixture(),
-    runtime = await loadDevTripCreateRuntime(environment);
+    runtime = await loadDevTripCreateRuntime({
+      ...environment,
+      OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED: "1",
+    });
+  expect(f.parentFactory).not.toHaveBeenCalled();
+  expect(runtime!.tripCreatePort.parentReceipt).toBeUndefined();
   expect(f.pg).toHaveBeenCalledExactlyOnceWith(v.config.tripPg);
   expect(f.storage).toHaveBeenCalledExactlyOnceWith(v.connection);
   expect(
@@ -248,7 +258,12 @@ it("reuses the existing private Create mount for a disjoint normal runtime and e
     commands: { withLockedCommand: vi.fn() },
     readOperation: vi.fn(),
   });
-  const runtime = await loadDevTripCreateRuntime(environment);
+  const runtime = await loadDevTripCreateRuntime({
+    ...environment,
+    OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED: "1",
+  });
+  expect(f.parentFactory).not.toHaveBeenCalled();
+  expect(runtime!.tripCreatePort.parentReceipt).toBeUndefined();
   expect(runtime).toHaveProperty("coreConnection");
   expect(runtime).toHaveProperty("tripMetadataV2Port");
   expect(f.pg).toHaveBeenCalledTimes(3);
@@ -342,5 +357,66 @@ it.each(["actorAccountId", "request", "expiresAt", "missingPerson"])(
       "TRIP_CREATE_RUNTIME_UNAVAILABLE",
     );
     expect(f.pg).not.toHaveBeenCalled();
+  },
+);
+
+it.each([undefined, "0", "true", "1"])(
+  "exposes the parent reader only in sustained runtime with explicit flag %s",
+  async (flag) => {
+    const v = fixture();
+    const config = {
+      version: 3,
+      enabled: true,
+      tripPg: v.config.tripPg,
+      metadataPg: v.config.tripPg,
+      corePg: v.config.tripPg,
+      personPg: v.config.tripPg,
+    };
+    f.open.mockResolvedValue({
+      stat: async () => v.stat,
+      readFile: async () => JSON.stringify(config),
+      close: v.close,
+    });
+    f.core.mockReturnValue({
+      hash: vi.fn(),
+      commands: { withLockedCommand: vi.fn() },
+      readOperation: vi.fn(),
+    });
+    f.metadata.mockReturnValue({ update: vi.fn(), receipt: vi.fn(), snapshot: vi.fn() });
+    f.person.mockReturnValue({ create: vi.fn(), receipt: vi.fn() });
+    f.parentRead.mockResolvedValue(null);
+    f.parentFactory.mockReturnValue(f.parentRead);
+    const runtime = await loadDevTripCreateRuntime({
+      ...environment,
+      ...(flag === undefined ? {} : { OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED: flag }),
+    });
+    expect(f.pg).toHaveBeenCalledTimes(4);
+    if (flag !== "1") {
+      expect(f.parentFactory).not.toHaveBeenCalled();
+      expect(runtime!.tripCreatePort.parentReceipt).toBeUndefined();
+    } else {
+      expect(f.parentFactory).toHaveBeenCalledExactlyOnceWith(f.storage.mock.calls[0][0]);
+      expect(
+        await runtime!.tripCreatePort.parentReceipt!(
+          v.config.actorAccountId,
+          v.config.request.tripId,
+        ),
+      ).toBeNull();
+      expect(f.parentRead).toHaveBeenCalledExactlyOnceWith(
+        v.config.actorAccountId,
+        v.config.request.tripId,
+      );
+      await runtime!.close();
+      await expect(
+        runtime!.tripCreatePort.parentReceipt!(
+          v.config.actorAccountId,
+          v.config.request.tripId,
+        ),
+      ).rejects.toThrow("CLOSED");
+      expect(f.parentRead).toHaveBeenCalledOnce();
+    }
+    expect(f.create).not.toHaveBeenCalled();
+    expect(f.receipt).not.toHaveBeenCalled();
+    await runtime!.close();
   },
 );
