@@ -26,7 +26,7 @@ function fixture() {
       origin: request.headers.get("origin"),
     }),
   );
-  const createReadRuntime = vi.fn(() => handler);
+  const createReadRuntime = vi.fn((_options: unknown) => handler);
   const files = {
     module: vi.fn(async () => ({ createReadRuntime })),
     asset: vi.fn(async () => new Uint8Array([1])),
@@ -45,6 +45,51 @@ it("does no module/asset/network IO without the explicit public QA config", asyn
   expect(q.files.module).not.toHaveBeenCalled();
   expect(q.files.asset).not.toHaveBeenCalled();
 });
+it.each(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])(
+  "logs only bounded request metadata and the existing %s diagnostic source",
+  async (authFailureSource) => {
+    const q = fixture();
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
+      const { log } = q.createReadRuntime.mock.calls[0][0] as {
+        log(event: unknown): void;
+      };
+      const safe = {
+        requestId: clientId,
+        status: 200,
+        durationMs: 8,
+        tool: "get_trip_item",
+        errorCode: "AUTH_REQUIRED",
+        authFailureSource,
+      };
+      log({
+        ...safe,
+        accessToken: "unit-secret",
+        accountId: clientId,
+        path: "/unit-private",
+        body: "unit-private",
+      });
+      expect(info).toHaveBeenCalledExactlyOnceWith(
+        "MCP_QA_REQUEST",
+        JSON.stringify(safe),
+      );
+      info.mockClear();
+      for (const changed of [
+        { requestId: "unit-secret" },
+        { tool: "unit-secret" },
+        { errorCode: "unit-secret" },
+        { authFailureSource: "unit-secret" },
+        { status: 999 },
+        { durationMs: Infinity },
+      ])
+        log({ ...safe, ...changed });
+      expect(info).not.toHaveBeenCalled();
+    } finally {
+      info.mockRestore();
+    }
+  },
+);
 it("accepts only the separate exact Claude callback profile and passes it unchanged to consent", async () => {
   const q = fixture();
   q.env.OTR_DEV_MCP_READ_QA_CONFIG = JSON.stringify({

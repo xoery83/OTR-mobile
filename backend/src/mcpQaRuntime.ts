@@ -35,8 +35,29 @@ type ModulePort = {
     resource: string;
     isGrantActive: ReturnType<typeof createSupabaseDevMcpGrantVerifier>;
     bindBackend: ReturnType<typeof createMcpAccountReadBinding>;
+    log?: (event: unknown) => void;
   }): (request: Request) => Promise<Response>;
 };
+const requestLogSchema = z.object({
+  requestId: z.uuid(),
+  status: z.number().int().min(100).max(599),
+  durationMs: z.number().min(0).max(120000),
+  tool: z.enum(["list_trips", "get_trip", "list_trip_items", "get_trip_item"]).optional(),
+  errorCode: z
+    .enum([
+      "NOT_VISIBLE",
+      "BACKEND_UNAVAILABLE",
+      "BACKEND_TIMEOUT",
+      "INVALID_INPUT",
+      "STALE_CURSOR",
+      "READ_LIMIT",
+      "AUTH_REQUIRED",
+    ])
+    .optional(),
+  authFailureSource: z
+    .enum(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])
+    .optional(),
+});
 type RuntimeIo = {
   module(): Promise<ModulePort>;
   asset(): Promise<Uint8Array>;
@@ -81,6 +102,10 @@ export async function loadMcpQaRuntime(
     issuer,
     resource,
     bindBackend,
+    log: (event) => {
+      const safe = requestLogSchema.safeParse(event);
+      if (safe.success) console.info("MCP_QA_REQUEST", JSON.stringify(safe.data));
+    },
     isGrantActive: (grant, signal, evidence) =>
       grant.accountId === qaAccount && Date.now() < config.expiresAt
         ? active(grant, signal, evidence)
