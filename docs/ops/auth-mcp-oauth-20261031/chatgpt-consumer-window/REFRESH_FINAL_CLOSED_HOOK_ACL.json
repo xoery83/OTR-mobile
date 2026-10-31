@@ -1,0 +1,24 @@
+{
+  "status": "CLOSED_PRIVATE_HOOK_ACL_PRESERVED_AFTER_CONFIG_REMOVAL",
+  "verifiedAt": "2026-10-31T07:51:30.968903Z",
+  "metadata": {
+    "acl": [
+      {
+        "grantable": false,
+        "grantee": "postgres",
+        "privilege": "EXECUTE"
+      },
+      {
+        "grantable": false,
+        "grantee": "supabase_auth_admin",
+        "privilege": "EXECUTE"
+      }
+    ],
+    "bodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "owner": "postgres",
+    "securityDefiner": false
+  }
+}

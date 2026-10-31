@@ -1,0 +1,8 @@
+{
+  "status": "OWNER_EXPLICIT_SCOPE_ADDENDUM_AND_ONE_NEW_FINITE_WINDOW_APPROVED",
+  "gateSHA256": "02971807ae94f1da94cb8d712678fdc73844417a4000b848519932938eba53f3",
+  "source": "Direct human answer in Auth conversation to exact pending request",
+  "ownerReply": "\u6279\u51c6\u6b64\u7cbe\u786e scope \u8865\u5145\u53ca\u65b0\u6709\u9650 QA \u7a97\u53e3",
+  "recordedAt": "2026-10-31T07:40:37.643060+00:00",
+  "note": "This explicit reply confirms the earlier direct approval, not permission for unlimited windows. SDK PASS and closed replacement-window evidence are retained; current ChatGPT consumer window has its separate direct-confirmation context."
+}

@@ -1,0 +1,21 @@
+{
+  "status": "POST_REVOKE_MCP_SAFE_LOG_PROJECTION",
+  "rows": [
+    {
+      "observedAt": "2026-10-31T07:46:51.716664170Z",
+      "route": "/mcp/auth-resource",
+      "status": 401,
+      "durationMs": 2,
+      "requestId": "c70ccb89-12f1-45ed-8730-ee9b818f1b01",
+      "event": "request"
+    },
+    {
+      "observedAt": "2026-10-31T07:46:52.001101987Z",
+      "route": "/mcp/auth-resource",
+      "status": 401,
+      "durationMs": 2,
+      "requestId": "a1b3f072-dfb5-4bf9-9235-9df71907c322",
+      "event": "request"
+    }
+  ]
+}

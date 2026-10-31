@@ -1,0 +1,16 @@
+{
+  "status": "FINAL_INDEPENDENT_HOOK_CLOSED_AND_GRANT_ACKNOWLEDGED",
+  "hook": {
+    "status": "FINITE_HOOK_CLOSED_INDEPENDENT_READBACK_PASS",
+    "closedBodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+    "verifiedAt": "2026-10-31T07:45:14.062446Z",
+    "gateSHA256": "2ec2fde865e308fc579180f531785934f1ec80821d39dfe968afbfa7305f3f44"
+  },
+  "grantRevokeHttpStatus": 204,
+  "normalSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "originalControlStatus": "FAIL_OR_UNKNOWN_NO_AUTOMATIC_OTP_OR_CLIENT_RETRY",
+  "firstCloseFailureCause": "UNQUALIFIED_NOT_RECORDED",
+  "originalStatusRetained": true,
+  "postRevokeServerEvidence": "POST_REVOKE_MCP_LOG.json",
+  "qualification": "Independent final state closes the security boundary; original cleanup wrapper did not return PASS."
+}

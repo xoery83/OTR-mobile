@@ -1,0 +1,26 @@
+{
+  "status": "FAIL_OR_UNKNOWN_NO_AUTOMATIC_OTP_OR_CLIENT_RETRY",
+  "startedAt": "2026-10-31T07:34:31.114Z",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "secretOrOtpRecorded": false,
+  "verifiedTokenCount": 0,
+  "phase": "CHATGPT_CONTROL_READY",
+  "wires": [
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user/oauth/grants",
+      "method": "DELETE",
+      "status": 204
+    }
+  ],
+  "grantRevoked": "ACKNOWLEDGED",
+  "hookClosed": "PASS",
+  "finishedAt": "2026-10-31T07:45:14.071Z"
+}

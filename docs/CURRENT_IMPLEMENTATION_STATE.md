@@ -163,25 +163,27 @@ OTP or secret saved. First attempt after token verification failed during four
 parallel reads; its cancellation504 is not established as the root cause. The
 same E2E passed with sequential QA reads; runtime/budgets/permissions unchanged.
 See SDK_REFRESH_OAUTH_E2E.json and retained SDK_REFRESH_OAUTH_ATTEMPT1.json.
-ChatGPT metadata discovery PASS; draft not Created, no consumer Consent/Token.
-Its browser at-action access confirmation remains Pending in the MCP chat. The
-window was closed early rather than kept active awaiting a reply. Full Data/Storage/
-expiry qualification remains unclaimed. Runtime e8b9 was removed, exact retained
-ce09/image4781 restored healthy and released07:24:11Z (browser9264, capturef18b/
-runtimeb518/server7826 unchanged). At07:25:15Z independent config readback proved
-OAuth OFF, Hook disabled/URI null, original Site URL localhost:3000. Closed hook
-private ACL remains postgres+AuthAdmin EXEC only. Both normal control Sessions
-logged out and refresh rejected; no ChatGPT grant existed (fresh normal readback).
-No Auth Host/SQL/device lease remains; Root can resume serialized deployment.
-MCP later received direct user confirmation for ChatGPT creation after closure.
-New consumer-only Gate2ec2fde8 independently reviewed: earliest07:30Z, absolute
-08:00Z expiry, same QA/client/read/60s, no new function/ACL/RLS/role. Original MCP
-human confirmation context was independently read: it explicitly includes one
-new finite window for this ChatGPT flow. No duplicate Owner approval required;
-Root confirmed no Host/SQL/business in flight; fresh baseline+shared-lock CAS mounted
-8faae954/image4781, retainedce09. Hook activated/read back07:34:14Z. Normal QA
-control Session READY, consumer-only flow underway; absolute08:00Z and ten-minute
-control wait bound, then close/revoke/default restore. No consumer PASS yet.
+ChatGPT consumer Golden Slice PASS: real QA OTP plus explicit read Consent,
+success callback and actual list_trips returned4 known QA Trips includingeB3,
+SERVER_CONFIRMED/next_cursor null. Same connection after grant DELETE204 returned
+no fresh data/generic ScriptError; server independently recorded MCP401 twice at
+07:46:51/52 while runtime/AS remained on (not a shutdown404). Client did not expose
+an auth-specific cause. SDK own P3/foreign/refresh negatives are reused; consumer
+get_trip/list_trip_items/get_trip_item and full Data/Storage/expiry not claimed.
+
+New Gate2ec2fde8 was for exactly this one consumer window, original MCP direct
+human confirmation independently verified; same QA/client/read/60s and expiry08:00.
+It closed early: Hook closed/readback07:45:14, normal control Session logout+
+refresh-denial PASS, grant204. Raw control wrapper reported FAIL_OR_UNKNOWN;
+first close failure cause was not recorded, so preserve raw result. Final boundary
+is independently reconciled, no claim that the wrapper itself passed.
+Retained defaultce09/image4781 restored healthy/finiteConfigAbsent and released
+07:48:31Z; ASoff/Hookfalse/URI null/Site localhost independently read07:51:28Z,
+closed private ACL unchanged. Root/Native notified, no Auth Host/SQL/device or
+recipient lease. See chatgpt-consumer-window/{CHATGPT_REAL_E2E.json,
+HOOK_CLOSE_RECONCILIATION.json,POST_REVOKE_MCP_LOG.json,RUNTIME_CLOSE_RECEIPT.json}.
+Software/source integration remains separate and default closed; no Beta always-on
+OAuth readiness or private Data/Storage qualification claimed.
 Parent Gate private hook/client installation remains traceable, no new RLS/role.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
