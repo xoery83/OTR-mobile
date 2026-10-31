@@ -21,6 +21,7 @@ import { useTripPersonalCover } from "./useTripPersonalCover";
 import { isTripCoverAssetId, tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
+import { ServerParentTripPeople } from "@/features/people/ServerParentTripPeople";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
@@ -100,6 +101,7 @@ const knownDate = (value: string | null) => {
 };
 
 type Props = {
+  serverParentPeopleEnabled?: boolean;
   refreshKey?: number;
   widgetsForHome?: (
     tripId: string,
@@ -138,6 +140,7 @@ export function LocalTripWorkspace(props: Props) {
   );
 }
 function LocalTripContent({
+  serverParentPeopleEnabled = false,
   refreshKey = 0,
   tripId,
   mode = "LIST",
@@ -1284,11 +1287,20 @@ function LocalTripContent({
             onChooseCover={openPersonalCover}
             onHeroHeight={onHomeHeroHeight}
             modules={
-              <TripMembersSummary
-                tripId={remoteSelected.id}
-                generation={generation}
-                setup={setup?.context.tripId === remoteSelected.id ? setup : null}
-              />
+              serverParentPeopleEnabled ? (
+                <ServerParentTripPeople
+                  tripId={remoteSelected.id}
+                  generation={generation}
+                  setup={setup?.context.tripId === remoteSelected.id ? setup : null}
+                  onSetup={receiveSetup}
+                />
+              ) : (
+                <TripMembersSummary
+                  tripId={remoteSelected.id}
+                  generation={generation}
+                  setup={setup?.context.tripId === remoteSelected.id ? setup : null}
+                />
+              )
             }
             widgets={pages}
             tripId={remoteSelected.id}

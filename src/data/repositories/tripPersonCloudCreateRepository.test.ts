@@ -18,6 +18,7 @@ import {
   createTripPersonCloudCreateRepository,
   saveAuthoredTripTraveler,
   saveServerParentTripTraveler,
+  readServerParentPeopleContext,
 } from "./tripPersonCloudCreateRepository";
 import { requireAdoptedUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
@@ -290,6 +291,53 @@ it("uses the existing parent transport inside the scoped save facade and returns
     localState: "LOCAL_PENDING",
   });
 });
+
+it("qualifies only the original Owner through an owning parent read without creating a Person or queue", async () => {
+  const f = await serverParentFixture();
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  parentRead.mockResolvedValue(f.parent);
+  expect(await readServerParentPeopleContext(f.scope)).toEqual({
+    context: f.scope,
+    ownerPersonId: f.parent.ownerPersonId,
+  });
+  expect(parentRead).toHaveBeenCalledWith(f.scope);
+  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+});
+
+it.each(["missing", "closed", "generation"] as const)(
+  "does not qualify an unavailable or stale parent reader: %s",
+  async (kind) => {
+    const f = await serverParentFixture();
+    vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+    parentRead.mockImplementation(async () => {
+      if (kind === "closed") throw Error("TRIP_CREATE_CLOSED");
+      if (kind === "generation") f.switchAccount();
+      return kind === "missing" ? null : f.parent;
+    });
+    await expect(readServerParentPeopleContext(f.scope)).rejects.toThrow();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  },
+);
+
+it.each(["actor", "owner", "revoked", "organizer", "epoch"] as const)(
+  "refuses local authoring qualification without exact parent and Owner continuity: %s",
+  async (kind) => {
+    const f = await serverParentFixture(),
+      parent = { ...f.parent };
+    if (kind === "actor") parent.actorAccountId = randomUUID();
+    if (kind === "owner") parent.ownerPersonId = randomUUID();
+    if (kind === "epoch") parent.coreEpoch = randomUUID();
+    if (kind === "revoked") f.sql.exec("UPDATE trip_core_scopes SET revoked=1");
+    if (kind === "organizer")
+      f.sql.exec("UPDATE ledger_actor_context SET role='organizer'");
+    await expect(f.repo.readServerParentCreator(f.trip, parent)).rejects.toThrow();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  },
+);
 
 it.each(["missing", "closed", "generation"] as const)(
   "keeps the existing dataset unchanged after an unqualified parent read: %s",

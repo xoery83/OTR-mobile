@@ -120,6 +120,15 @@ entry PASS. Native permitted window and own claim closed/returned. SQLite metada
 JSON export was rejected by automatic approval under the no-AppData-copy rule;
 not executed/retried. Evidence is independent server readback plus Native UI/cold,
 not offline-only or SQLite equality. See ADOPTED_PERSON_NATIVE_READER_REAL_E2E.json.
+Adopted/remote Add source continuation now exists under Native's exact remote People
+Writer delegation: shared read-only OriginalOwner qualifier reuses parent/Core-cache
+checks, and ServerParentTripPeople preserves drafts across equivalent setup refresh
+while fencing identity ABA, unmount and late responses. Local-format2 Add unchanged.
+Optional Workspace prop defaults false; no real caller enables it. Independent
+3 suites123 plus repaired wrapper14 PASS/NO_BLOCKER; source only, not Native Add.
+Backend route/runtime remains unapplied candidate dc43121b (apply-check only), and
+Root Parent8079 owning review/new EXECUTE Gate still required. No DEV authority or
+flag change. See parent-read-candidate/NATIVE_UI_CANDIDATE.json.
 Profile/connection-status/nickname follow afterward through owning ports; no name/
 email inference or public-profile private fields.
 No full People Home/Profile PASS. See ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json.

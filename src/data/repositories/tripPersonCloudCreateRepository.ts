@@ -37,12 +37,71 @@ type ParentReadEvidence = {
   snapshot: CoreAcceptedSnapshot;
 };
 
+async function requireServerParentCreator(
+  database: LedgerReadDatabase,
+  scope: AccountRequestContext,
+  parent: ParentReadEvidence,
+) {
+  const receipt = structuredTripCreateResultSchema.parse(parent.receipt);
+  if (
+    receipt.actorAccountId !== scope.accountId ||
+    receipt.tripId !== scope.tripId ||
+    parent.snapshot.actor.accountId !== scope.accountId ||
+    parent.snapshot.actor.tripId !== scope.tripId ||
+    parent.snapshot.actor.personId !== receipt.ownerPersonId ||
+    parent.snapshot.certificate.epoch !== receipt.coreEpoch
+  )
+    throw Error("PERSON_PARENT_CONTEXT_MISMATCH");
+  // This is local roster continuity, not a new permission grant. The server still authorizes the mutation.
+  const current = await database.getFirstAsync(
+    `SELECT a.member_id FROM ledger_actor_context a
+     JOIN ledger_members m ON m.id=a.member_id AND m.journey_id=a.journey_id
+     JOIN trip_core_read_certificates c ON c.account_id=a.user_id AND c.trip_id=a.journey_id
+     JOIN trip_core_scopes s ON s.account_id=c.account_id AND s.trip_id=c.trip_id
+     WHERE a.user_id=? AND a.journey_id=? AND a.member_id=? AND a.role='owner'
+       AND m.role='owner' AND m.status='linked' AND c.complete=1
+       AND c.epoch=? AND c.manifest_sha256=?
+       AND s.revoked=0 AND s.access_revision=c.access_revision`,
+    scope.accountId,
+    scope.tripId,
+    receipt.ownerPersonId,
+    receipt.coreEpoch,
+    parent.snapshot.certificate.manifest_sha256,
+  );
+  if (!current) throw Error("PERSON_PARENT_CONTEXT_CHANGED");
+  return { operationId: receipt.operationId, personId: receipt.ownerPersonId };
+}
+
 // UI authoring stays bound to the opening Account/Trip across asynchronous DB access.
 export async function saveAuthoredTripTraveler(
   origin: AccountRequestContext,
   input: Readonly<Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">>,
 ) {
   return saveTripTraveler(origin, input, false);
+}
+
+export async function readServerParentPeopleContext(origin: AccountRequestContext) {
+  const scope = Object.freeze({ ...origin });
+  const { requireAdoptedUserId } = await import("../auth/authRepository");
+  const account = async () => {
+    await assertAccountRequestContext(scope, requireAdoptedUserId);
+    return scope.accountId;
+  };
+  await account();
+  const { createTripCreateTransport } = await import("../sync/tripCreateTransport");
+  const transport = createTripCreateTransport(account);
+  if (!transport.parentReceipt) throw Error("PERSON_PARENT_READER_CLOSED");
+  const parent = await transport.parentReceipt(scope);
+  await account();
+  if (!parent) throw Error("PERSON_PARENT_RECEIPT_REQUIRED");
+  const { readInitializedDatabase } = await import("../db/database");
+  const database = await readInitializedDatabase();
+  const creator = await createTripPersonCloudCreateRepository(
+    database,
+    account,
+  ).readServerParentCreator(scope.tripId, parent);
+  await account();
+  return { context: scope, ownerPersonId: creator.personId };
 }
 
 export async function saveServerParentTripTraveler(
@@ -109,34 +168,7 @@ export async function retainAuthoredCloudTravelerWithinTransaction(
     throw Error("PERSON_RECEIPT_STORAGE_REQUIRED");
   let creator: { operationId: string; personId: string };
   if (parent) {
-    const receipt = structuredTripCreateResultSchema.parse(parent.receipt);
-    if (
-      receipt.actorAccountId !== scope.accountId ||
-      receipt.tripId !== scope.tripId ||
-      parent.snapshot.actor.accountId !== scope.accountId ||
-      parent.snapshot.actor.tripId !== scope.tripId ||
-      parent.snapshot.actor.personId !== receipt.ownerPersonId ||
-      parent.snapshot.certificate.epoch !== receipt.coreEpoch
-    )
-      throw Error("PERSON_PARENT_CONTEXT_MISMATCH");
-    // This is local roster continuity, not a new permission grant. The server still authorizes the mutation.
-    const current = await database.getFirstAsync(
-      `SELECT a.member_id FROM ledger_actor_context a
-       JOIN ledger_members m ON m.id=a.member_id AND m.journey_id=a.journey_id
-       JOIN trip_core_read_certificates c ON c.account_id=a.user_id AND c.trip_id=a.journey_id
-       JOIN trip_core_scopes s ON s.account_id=c.account_id AND s.trip_id=c.trip_id
-       WHERE a.user_id=? AND a.journey_id=? AND a.member_id=? AND a.role='owner'
-         AND m.role='owner' AND m.status='linked' AND c.complete=1
-         AND c.epoch=? AND c.manifest_sha256=?
-         AND s.revoked=0 AND s.access_revision=c.access_revision`,
-      scope.accountId,
-      scope.tripId,
-      receipt.ownerPersonId,
-      receipt.coreEpoch,
-      parent.snapshot.certificate.manifest_sha256,
-    );
-    if (!current) throw Error("PERSON_PARENT_CONTEXT_CHANGED");
-    creator = { operationId: receipt.operationId, personId: receipt.ownerPersonId };
+    creator = await requireServerParentCreator(database, scope, parent);
   } else {
     const local = await requireLocalTripPersonCreator(database, scope, account);
     structuredTripCreateRequestSchema.parse({
@@ -224,6 +256,22 @@ export function createTripPersonCloudCreateRepository(
   clock = () => new Date().toISOString(),
 ) {
   return {
+    async readServerParentCreator(tripId: string, rawParent: unknown) {
+      const receipt = structuredTripCreateResultSchema.parse(rawParent);
+      const scope = await captureAccountRequestContext(tripId, account);
+      const snapshot = await createTripCoreV2Repository(
+        database,
+        account,
+        tripCoreSha256Hex,
+      ).acceptedSnapshot(scope);
+      if (!snapshot) throw Error("PERSON_PARENT_COLLECTION_REQUIRED");
+      const creator = await requireServerParentCreator(database, scope, {
+        receipt,
+        snapshot,
+      });
+      await assertAccountRequestContext(scope, account);
+      return creator;
+    },
     // Only an owning reader supplies this receipt. Never synthesize a local CREATE_TRIP queue or replay Create.
     async createAuthoredFromParentReceipt(
       rawInput: Omit<PersonCloudCreate, "version" | "tripCreateOperationId">,

@@ -95,6 +95,12 @@ vi.mock("./TripMembersSheet", () => ({
     return null;
   },
 }));
+vi.mock("@/features/people/ServerParentTripPeople", () => ({
+  ServerParentTripPeople: (props: any) => {
+    state.nodes.push({ serverParentPeople: props });
+    return null;
+  },
+}));
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
@@ -350,6 +356,7 @@ const flush = async () => {
 };
 let key: string | null;
 const props = {
+  serverParentPeopleEnabled: false,
   tripId: null as string | null,
   mode: "LIST" as "LIST" | "CREATE",
   onOpen: vi.fn(),
@@ -429,6 +436,7 @@ beforeEach(() => {
   props.widgetsForHome.mockReturnValue([]);
   props.tripId = null;
   props.mode = "LIST";
+  props.serverParentPeopleEnabled = false;
   props.onOpen.mockReset();
   props.onKnownTrip.mockClear();
   props.onBackToTrips.mockClear();
@@ -563,6 +571,7 @@ it("opens a cached remote-only summary without local write controls and clears i
   expect(summary).not.toContain("data-trip-photos");
   expect(summary).not.toContain("tripCreate.addItem");
   expect(summary).not.toContain("myTrips.chooseCover");
+  expect(state.nodes.some((node) => node.serverParentPeople)).toBe(false);
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("CACHED");
   advanceAccountGeneration();
   state.repo.mockResolvedValue(repository());
@@ -570,6 +579,36 @@ it("opens a cached remote-only summary without local write controls and clears i
     readMerged: async () => ({ cachedAt: null, trips: [] }),
   });
   expect(render()).not.toContain("Cached shared Trip");
+});
+
+it("mounts the scoped server-parent People adapter only for an explicitly enabled remote Trip", async () => {
+  const remote = {
+    id: "remote-people",
+    name: "Remote People",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    createdAt: null,
+    localStatus: null,
+    selectedCoverAssetId: null,
+    remoteListed: true,
+  };
+  state.repo.mockResolvedValue(repository());
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: null, trips: [remote] }),
+  });
+  props.tripId = remote.id;
+  props.serverParentPeopleEnabled = true;
+  render();
+  await flush();
+  render();
+  const adapter = state.nodes.find((node) => node.serverParentPeople)!.serverParentPeople;
+  expect(adapter.tripId).toBe(remote.id);
+  expect(adapter.generation).toBe(getAccountGeneration());
+  expect(adapter.setup).toBeNull();
+  props.serverParentPeopleEnabled = false;
+  render();
+  expect(state.nodes.some((node) => node.serverParentPeople)).toBe(false);
 });
 
 it("mounts trusted Photos only for the currently selected local Trip", async () => {
@@ -1257,6 +1296,7 @@ it.each([
 ] as const)(
   "offers existing Person authoring only with a real opening Owner lineage: %s",
   async (kind) => {
+    props.serverParentPeopleEnabled = true;
     const local: Trip = {
       ...trip("people-trip", "People"),
       serverId: kind === "unaccepted" ? null : "people-trip",
