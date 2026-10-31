@@ -17,7 +17,7 @@ function isPublicKey(key: string) {
   }
 }
 const readScopes = z.tuple([z.literal("otr.trips.read")]);
-const grantSchema = z.object({
+export const mcpReadGrantSchema = z.object({
   accountId: z.uuid(),
   clientId: z.uuid(),
   sessionId: z.uuid(),
@@ -89,7 +89,7 @@ export function createSupabaseDevMcpGrantVerifier(
     if (!approved) return false;
     const boundary = createRequestBoundary(10000, signal);
     try {
-      const grant = grantSchema.parse(input);
+      const grant = mcpReadGrantSchema.parse(input);
       const token = z
         .string()
         .max(8192)

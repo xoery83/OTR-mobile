@@ -1,0 +1,38 @@
+{
+  "status": "READ_ONLY_DASHBOARD_PREIMAGE",
+  "observedAt": null,
+  "timePrecision": "Exact observation timestamp not captured; read-only observations preceded the 2026-10-31T03:12:04Z coordination record. No configuration mutation occurred.",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "projectName": "OTR Development",
+  "source": "Existing authenticated Chrome profile; visible Dashboard controls only",
+  "oauthServer": {
+    "url": "https://supabase.com/dashboard/project/tuqigdxrvrerfewsxqgm/auth/oauth-server",
+    "enabled": false,
+    "evidence": "Enable the Supabase OAuth Server switch Value 0; Save changes disabled",
+    "consentUrl": "NOT_VISIBLE_WHILE_DISABLED",
+    "dynamicClientRegistration": "NOT_VISIBLE_WHILE_DISABLED"
+  },
+  "clients": {
+    "url": "https://supabase.com/dashboard/project/tuqigdxrvrerfewsxqgm/auth/oauth-apps",
+    "evidence": "OAuth Server is disabled; No OAuth apps found; New OAuth App disabled",
+    "registeredCount": 0
+  },
+  "hooks": {
+    "url": "https://supabase.com/dashboard/project/tuqigdxrvrerfewsxqgm/auth/hooks",
+    "evidence": "Empty Hooks list, Create an auth hook",
+    "configuredCount": 0
+  },
+  "urls": {
+    "url": "https://supabase.com/dashboard/project/tuqigdxrvrerfewsxqgm/auth/url-configuration",
+    "siteUrl": "http://localhost:3000",
+    "redirectUrlCount": 0,
+    "evidence": "Visible Site URL input value read from DOM; No Redirect URLs",
+    "configurationChanged": false
+  },
+  "boundaries": [
+    "No toggle, Add, Save, new client, consent or hook actions",
+    "No SMTP, provider secret, PAT, browser cookie or session extraction",
+    "Supabase branch badge main PRODUCTION is dashboard branch labeling inside the verified DEV project ref, not permission to access the separate Production project",
+    "Readback is not OAuth E2E or activation approval"
+  ]
+}
