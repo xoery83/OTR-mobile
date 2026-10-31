@@ -1,4 +1,4 @@
-# MCP / AI Integration — 31 October 2026 / real Read blocked
+# MCP / AI Integration — 31 October 2026 / cloud slices verified, public OAuth pending
 
 - Independent MCP branch rebased onto fresh accepted origin/main42652324; no
   historical architecture base. Standard SDK2.4.0 reads, strict OAuth resource
@@ -18,8 +18,7 @@
 - Item list uses validated visible SUMMARY rows, preserving type/qualification/
   service identity and explicit get_trip_item query; no fabricated Actor/ACL.
   MCP read50s/total60s are finite local budgets, not a Core worst-case guarantee.
-  Reviewed candidate49a14038; controlled fixed new P3 Create/Edit next, Native
-  readiness requested. First P3 stopped before POST: receipt GET15s unavailable,
+  First P3 attempt stopped before POST: receipt GET15s unavailable,
   then same-op pure GET returned404 after20.786s. Receipt GET now50s/POST15s,
   directed slow-read regression and independent review PASS. Own sessions revoked.
   New interactive runner guard prevents stdin EOF skipping Native pause.

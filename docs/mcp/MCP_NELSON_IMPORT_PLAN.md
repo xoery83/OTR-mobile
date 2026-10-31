@@ -41,7 +41,10 @@ and three-day QA evidence are not complete Nelson transport/flight delivery.
 After the synthetic slice, accept Owner's actual plan as read-only input, identify
 the exact existing Nelson Trip and accepted Items, propose day/type/location/time
 changes, missing facts and duplicates. Show each batch; require explicit target
-and operation approval before writing. Retain the same operation set after partial
+and operation approval before writing. Exact times and confirmation status follow
+actual confirmation letters and booking emails; spreadsheet estimates remain
+planned facts. Conflicting or absent evidence never becomes a booked object.
+Retain the same operation set after partial
 success. Do not upload original PDFs/screenshots through this Manual path: future
 original-material handling reuses Universal Import Source/Interpretation/Admission.
 
