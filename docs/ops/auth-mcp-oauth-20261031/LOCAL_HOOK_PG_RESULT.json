@@ -1,0 +1,21 @@
+{
+  "status": "LOCAL_PG_HOOK_CANDIDATE_PASS",
+  "checks": [
+    "missing exact Gate and deadline beyond 30 minutes reject with no function installed",
+    "initial closed hook installs once; all OAuth denies before client creation while Native claims pass unchanged",
+    "finite activation CAS requires exact closed body and leaves ordinary Native OTP/Google claim object equal",
+    "only named QA/client gets resource aud and read claim, at most 60 second exp; refresh aud handled",
+    "foreign client/account, anonymous/unknown, wrong role/aud/session and missing/expired/malformed exp deny",
+    "invoker/search_path pinned; anon/authenticated/service_role cannot execute",
+    "CAS close and repeat close restore deny-all OAuth with no new permission or Native claim change",
+    "fixture-only shortened install guard proves deadline closes OAuth while ordinary Native claims still pass unchanged"
+  ],
+  "templateSHA256": "f00758e650b6e83b7517f5ebe970e9307f4e9d7bb12246700fa4ea00a2fde307",
+  "closedInstallSHA256": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+  "qualification": "JSON transformation/SQL ACL only, not signed JWT issuance; one fixture-only 2-minute installer guard substitution for fast expiry test",
+  "devChanges": 0,
+  "providerCalls": 0,
+  "network": "none",
+  "memory": "256m",
+  "cpus": 1
+}

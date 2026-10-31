@@ -1,0 +1,23 @@
+{
+  "status": "READ_ONLY_FUNCTION_CATALOG_PREFLIGHT",
+  "metadata": {
+    "authRole": {
+      "bypassRls": false,
+      "createRole": true,
+      "name": "supabase_auth_admin",
+      "superuser": false
+    },
+    "functionAbsent": true,
+    "functionDefaults": [
+      {
+        "grantable": false,
+        "grantee": "postgres",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      }
+    ],
+    "projectRef": "tuqigdxrvrerfewsxqgm"
+  },
+  "providerSettingsAuthority": false,
+  "devChanges": 0
+}
