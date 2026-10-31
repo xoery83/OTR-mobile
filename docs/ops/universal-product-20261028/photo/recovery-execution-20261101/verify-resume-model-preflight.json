@@ -1,0 +1,21 @@
+{
+  "status": "STOP_NEW_DISPATCH_RECONCILE_OLD",
+  "deadlines": [
+    {
+      "taskId": "13792ae2-123a-8c3b-8a64-922cc8902350",
+      "deadline": "2026-10-31T18:20:33.121Z"
+    }
+  ],
+  "matchingTasks": [
+    [
+      "13792ae2-123a-8c3b-8a64-922cc8902350",
+      "PENDING",
+      null
+    ]
+  ],
+  "matchingAttempts": [],
+  "taskCount": 1,
+  "attemptCount": 0,
+  "replacementDispatchAllowedByThisCheck": false,
+  "dataMutated": false
+}

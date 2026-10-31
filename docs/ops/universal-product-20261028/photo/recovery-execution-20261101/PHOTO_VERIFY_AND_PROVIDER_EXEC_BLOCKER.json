@@ -1,0 +1,20 @@
+{
+  "goldenSlice": "PARTIAL_NOT_PHOTO_E2E_PASS",
+  "upload": "FINAL_APPLIED",
+  "verify": "FINAL_APPLIED",
+  "verifyAttempt": "75ee87dc-8c98-4632-8364-1088abbde15e",
+  "task": "13792ae2-123a-8c3b-8a64-922cc8902350",
+  "taskDeadline": "2026-10-31T18:20:33.121Z",
+  "modelAttempts": 0,
+  "providerCalls": 0,
+  "failure": "RUNTIME_PREPARATION/UNIVERSAL_SOURCE_CLOSED",
+  "rootCause": "postgres SECURITY DEFINER owner lacks EXECUTE on existing PNG proof helper; caught false",
+  "scopeClosed": true,
+  "independentReview": "NO_BLOCKER",
+  "protectedGrantApplied": false,
+  "sqlSHA256": {
+    "PHOTO_PROVIDER_PROOF_EXEC_FORWARD.sql": "0aff791e4eecb09827299f81889969baa23a58a1c8615dcb636a1c91ac9cf310",
+    "PHOTO_PROVIDER_PROOF_EXEC_REVERSE.sql": "475282df07ef7d528ea059729bcb52a49ccafabbd80eb739ec5443616337aed9"
+  },
+  "skipped": "No paid Vision, formal Save or cold recovery claimed"
+}

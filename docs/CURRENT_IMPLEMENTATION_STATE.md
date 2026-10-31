@@ -1,58 +1,45 @@
 # Current Import Photo checkpoint — 1 November 2026
 
-Golden Slice PARTIAL: same original PNG upload SERVER_VERIFIED; VERIFY ADMITTED,
-no Task/model/Results/Photo Save yet. Owner approved cde4f704 recovery Gate. CLOSED
-install OID67161 d868→883e and full role graph/OIDs/schemaACL/Owner/ACL restored.
-Same uploadbb0559c5 / Source03109f59 / rep06e6bb76: gen1eb1479 negative terminal,
-actual physical TERMINATED, marker original inode + durable archive preserved;
-normal App gen2 0e32676c-f2f2-41e9-bc49-e83cf3ac7abb actualPARSE_PASS and
-UPLOAD APPLIED/FINAL at16:59Z. All originals/stages/oldUNKNOWN retained. No inverse
-is permitted after accepted negative/newattempt/upload; compatible function stays.
+Golden Slice PARTIAL, not Photo E2E PASS. Same approved7303 Batchd56f2cbc/Source03109f59/
+rep06e6bb76 original42630B PNG SHA078de830. UPLOADbb055 FINAL/APPLIED after approvedcde4f704
+recovery; now VERIFYb2fcc FINAL/APPLIED via normal App126.9, attempt75ee87dc at18:10Z.
+No recreation of old Source or reset of UNKNOWN. All originals/markers/receipts retained.
 
-Batchd56f2cbc/Input73fe13fa/Capture9f4dd0d3 remain original approved7303 input,
-42630B PNG SHA078de830… Current native AI choice binds Capture2/CONTINUE_WITH_AI.
-No new objects or paid allowance used. Original expiry2026-11-01T08:48:56Z unchanged.
+New actual firstFAIL18:12:13Z: RUNTIME_PREPARATION→UNIVERSAL_SOURCE_CLOSED. Task13792ae2
+PENDING/noAttempt, originaldeadline2026-10-31T18:20:33.121Z nowexpired; do notreset.
+Independent BackendSQLite and Providerledger confirm same-image modelAttempts0/calls0.
+Existing PNG proof helper67145 is ownedSourceWriter with onlySourceWriter EXEC;
+Provider Source-current SECURITY DEFINER ownerpostgres has no EXEC, catches42501→false.
+QA policy/Trip owner/member/role metadata were independently valid. No Parser/Save redesign needed.
 
-Recovery window1e56c107 started16:56Z; VERIFYb2fcc424 BEGIN failed16:59:38Z,
-Broker error UNCLASSIFIED/noSQLSTATE. Independent readback remainsADMITTED/noattempt.
-A second explicit Analyze only performed lookup/reconcile200, never retried BEGIN.
-Window closed early17:06Z: sourcebefore/after CLOSED, runtime verified, worker
-inactive/EMPTY, timersstopped. Same-image modelTask/Attempt0; firstVisionunused.
-Resources returned to Auth, which now owns its approved finite diagnostic session.
-No Source Host/config write until Auth returns actual default CLOSED baseline.
+Smallest candidate: one existing PNG facts helper EXEC to postgres, no body/OID/Owner change,
+Provider gateway/meter still no directEXEC. Transaction-only existing maintenance edge SET
+false→true→false, fullrolegraph/OIDs/schemaACL restored, noINHERIT/schemaCREATE. Actual
+qualified helper RED42501→singleGRANT proofPASS→REVOKE deny; non-superuser forward/reverse,
+fault rollback and inverse-after-any-call denialPASS. IndependentNO_BLOCKER. Candidate NOT
+approved/applied: authority/PHOTO_PROVIDER_PROOF_EXEC_GATE.md (+exactforward/reverseSQL).
+One combined Gate also requests at mostone normal App replacement Batch/Source/RunTask for
+samePNG, onlyoriginalunusedVision1 allowance; oldexpiredTask andallUNKNOWN remain untouched.
+AnyexistingpaidAttempt/call/UNKNOWN/recoverableresult blocksreplacement. Noextra budget.
 
-Specific repair: Native settle treats every ADMITTED as reconcile-only, so an
-unstarted VERIFY can never resume. Minimal change permits explicit Analyze to
-execute the SAME VERIFY+ADMITTED; UPLOAD ADMITTED, IO_ACTIVE/UNKNOWN protections
-unchanged. RED1→50 targeted PASS+ESLint, independent NO_BLOCKER.
-No SQL/Authority/budget changes. Isolated existing Source-chain STATUS and BEGIN
-PASS using actual5functions, so this is not proof of the initial Hosted BEGIN
-exception's cause. Next retry must record exact failure category if it persists.
+Source window8ca564 started18:08Z, CLOSED early afternewFAIL: independentSourceafterCLOSED,
+workerinactive/EMPTY, timersstopped; rootcontrols noactiveSourcewindow. Latest compatible
+Backend handed back by Native2c037b20/imagea3a2d4e/capture6ac6c953; Source883e/Auth/MCPf9/
+server7826/browser9264 unchanged, Env b12/Hostd501/Mount14ee all23files preserved. Native phase
+logs only, noSQL/Authority change. Before nextwindow reanchor existingcloser tothisactualdefault;
+older e786/4ef2 retained stoppedrollback. Do not restore old incompatible image/config.
 
-Actual default software0c04b40c/imagef0527429/capturec0889ee7/MCPf9c339c4; Source4090
-and Auth safe diagnostic overlay, server7826/browser9264/Native722 retained. Envb12,
-Hostd501/Mount14ee and18+5files unchanged; independenthealth200/protected401/lock
-released, ac7/d8 retained stopped rollback. Source883e function intentionally stays.
-Do not restore older incompatible images. Auth finite service may temporarily
-change config; always fresh-CAS latest handoff. Root main untouched; Native reports
-main33388e52 integrated its client-only fallback, remote not pushed.
+Stable Import HEAD beforethischeckpoint a2bb2578: Source4090 preleaseAuthfix + Native
+VERIFY ADMITTED explicit same-executea2cee341 + safePG diagnosticsa2bb. ActualAD5 installed
+126.9/SQLite76, rootMyTrips coldreopen verified, Capture2 AI consent retained. NoSession/Keychain
+copy, noProduction/realdata. Originalhardexpiry2026-11-01T08:48:56Z unchanged.
 
-Import UI139c7425 distinguishes local Photo re-confirmation from generic AI error;
-67tests/UIguard/ESLint/independentNO_BLOCKER LOCAL_PASS only. AD5 now126.9/SQLite76, same data/session. JS-only update retained nativebinary/dylibs;
-Capture inputs/counts/bindings/decision readonly snapshots equal, no Session or
-Keychain copying. Actual cold GUI reopened My Trips, same04:15 Batch and AI choice.
-Finite static PG timeout/connection/SQLSTATE failure logging additionally LOCAL_PASS
-44checks/ESLint/independentNO_BLOCKER; response and all authority unchanged, not
-deployed. It must not be used to claim the initial BEGIN failure cause in advance. Sourceclosed
-through all builds. Full roottypes previously hit2GiB OOM; no heap escalation.
-
-Next: review/fix Native VERIFY ADMITTED→same execute, incremental code-only AD5
-install; after Auth CLOSED, preflight same Source and unused Vision, reuse existing
-controller finitePNGwindow→sameVERIFY→Task10min/attempt1→actualVisiononce→Results→
-normalReview/Plan/Admission→one PRIVATE SELF P1/P6→independentreadback/Day/cold/
-idempotence→close. No new protected function or input Gate is currently proposed.
-If Hosted BEGIN still fails, close first and fix only that specific component.
-Evidence: ops/universal-product-20261028/photo/recovery-execution-20261101/.
+Next: exactprotectedhelperEXEC/inputGate approval, then installCLOSED→allprechecks→normalApp
+oneactualVision→Results→normalReview/Plan/Admission→onePRIVATE/SELF P1orP6→independentreadback/
+NativeDay/cold/idempotence→safeclose. Whilewaiting, continueImport-only UI/Activity recovery work.
+Publicreceipt: photo/recovery-execution-20261101/PHOTO_VERIFY_AND_PROVIDER_EXEC_BLOCKER.json.
+Private actualdefs/fixtures: /private/tmp/otr-photo-verify-resume-20261101 and
+/private/tmp/otr-photo-provider-proof-exec-20261101; nocredentials intheseevidencefiles.
 
 Older checkpoints below are historical and superseded by the current header.
 
