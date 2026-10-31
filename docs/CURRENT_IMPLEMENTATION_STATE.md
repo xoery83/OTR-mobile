@@ -5,7 +5,7 @@
   verifier/PRM, Core receipt-backed Create/Edit/status and Nelson12-operation
   preview/confirm/sequential Apply prepared. No startup mount, schema/ACL/Auth
   setting, Native/SQLite or protected deployment changes.
-  -29 focused tests/scoped types and independent closed-code NO_BLOCKER. Repairs:
+  -32 focused tests/scoped types and independent closed-code NO_BLOCKER. Repairs:
   exact UPDATE batch recovery, complete field confirmation, timed-date protection,
   strict independent business-field readback. Public OAuth remains
   BLOCKED_BY_OWNING_INTERFACE; no owning active client grant/binding port yet.
@@ -33,10 +33,18 @@
   route cold Viewer/no-login PASS in Native9c15ee9d. UI does not show Core title
   or revision: latest-title Native download remains NOT_DIRECTLY_OBSERVABLE,
   unchanged property label is expected. No private Realtime/SLO PASS.
-- Nelson three-day synthetic stage now running: separate Tripcc44a705, original
-  Owner data untouched. Preview/confirmed exact operations; UNKNOWN only status+
-  complete expected receipt GET, explicit unsubmitted suffix resumes same IDs,
-  per-Item independent DB before next submit, Native pause before P1 date move.
+- Nelson synthetic Tripcc44a705 and3 Items now formal APPLIED/unique1row/rev1
+  with per-item full expected receipt/intent/business fields independently verified.
+  Original response loss and PARTIAL/UNKNOWN preserved. Explicit same-op P6
+  manual recovery matched all original digests, checked current caps and allowed
+  one exact POST behind hash/count/wx guard; accepted prefix never re-POSTed.
+- MCP fixes: structured Trip receipt GET header2;50s write work inside60s response
+  preserves partial receipts.32 focused tests, scoped types/lint/build, global
+  Mobile types and independent reviews PASS. No shared Backend/schema/runtime change.
+- Native prioritizes Realtime; at its request idle host session closed normally
+  with refresh rejection. Nelson date9b NOT_SENT. Wait for actual P1 Dec11 visual
+  checkpoint, then a new normal Session executes only fixed CAS1→Dec12. Owner
+  real attachments are local read-only preview, outside Git/DEV; no real writes.
 - Current deliverables under docs/mcp/: MCP_ARCHITECTURE_INVENTORY,
   MCP_TOOL_CONTRACT_V1, MCP_AUTH_CONTRACT, MCP_NELSON_IMPORT_PLAN,
   MCP_E2E_ACCEPTANCE, MCP_EXTENDED_TOOLS_ROADMAP. Exact IDs/closure in acceptance.

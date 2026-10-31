@@ -1,3 +1,5 @@
+import { tripCreateBoundary } from "../backend/src/tripCreate";
+import { buildCoreActorCollection } from "../backend/src/tripCoreV2Collection";
 import { verifyGoldenReadback } from "./goldenReadback";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { createMcpHandler } from "./server";
@@ -581,4 +583,182 @@ it("independent DB verification rejects wrong business fields and separates hist
     "status",
     "HISTORICAL_RECEIPT_VERIFIED_CURRENT_ADVANCED",
   );
+});
+
+it("returns a partial receipt before the HTTP deadline after a slow accepted prefix", async () => {
+  const f = fixture(),
+    resource = "https://mcp.example.invalid/mcp";
+  let lookup = 0;
+  const handle = createMcpHandler({
+    resource,
+    authorize: async () => ({
+      accountId: account,
+      clientId: "qa",
+      resource,
+      scopes: ["otr.trips.read", "otr.trips.write"],
+      expiresAt: Date.now() + 120000,
+      read: async () =>
+        Response.json(
+          await buildCoreActorCollection(
+            f.graph(),
+            actor,
+            {
+              epoch: trip,
+              revision: 1,
+              accessRevision: 1,
+              generatedAt: new Date().toISOString(),
+            },
+            [],
+            async (bytes) => sha(bytes),
+          ),
+        ),
+      backend: async (q, signal) => {
+        if (q.method === "GET") {
+          lookup++;
+          if (lookup === 1) await new Promise((resolve) => setTimeout(resolve, 20000));
+          else return new Promise<Response>(() => {});
+        }
+        return f.backend(q, signal);
+      },
+    }),
+    confirm: async () => true,
+  });
+  const client = new Client({ name: "bounded-batch", version: "1" });
+  await client.connect(
+    new StreamableHTTPClientTransport(new URL(resource), {
+      fetch: (input, init) => handle(new Request(input, init)),
+    }),
+  );
+  const changes = [10, 11, 12].map((day) => ({
+    kind: "CREATE",
+    request_id: randomUUID(),
+    item: {
+      family: "P3",
+      title: "QA " + day,
+      dates: { start_date: `2026-12-${day}`, end_date: `2026-12-${day + 1}` },
+    },
+  }));
+  const plan = { trip_id: trip, changes };
+  const preview = await client.callTool({
+    name: "preview_trip_changes",
+    arguments: plan,
+  });
+  const p = (preview.structuredContent ??
+    (preview as { result?: Record<string, unknown> }).result) as Record<string, unknown>;
+  vi.useFakeTimers();
+  let response: unknown,
+    failed = false;
+  try {
+    const pending = client
+      .callTool({
+        name: "apply_trip_changes",
+        arguments: { ...plan, preview_digest: p.preview_digest },
+      })
+      .then((r) => {
+        response = r;
+      })
+      .catch(() => {
+        failed = true;
+      });
+    await vi.advanceTimersByTimeAsync(50001);
+    expect(failed).toBe(false);
+    expect(response).toBeDefined();
+    const r = response as {
+      structuredContent?: Record<string, unknown>;
+      result?: Record<string, unknown>;
+    };
+    const output = (r.structuredContent ?? r.result)!;
+    expect(output.outcome).toBe("PARTIAL");
+    expect((output.operations as { outcome: string }[]).map((o) => o.outcome)).toEqual([
+      "APPLIED",
+      "UNKNOWN",
+      "PREVIEW",
+    ]);
+    expect(f.posts()).toBe(1);
+    await pending;
+  } finally {
+    await vi.advanceTimersByTimeAsync(20000);
+    await client.close();
+    vi.useRealTimers();
+  }
+});
+
+it("recovers structured Trip receipts through the owning version2 HTTP boundary", async () => {
+  const p = prepareTrip(account, {
+    request_id: randomUUID(),
+    name: "Synthetic Nelson QA",
+    destinations: ["Nelson", "Abel Tasman"],
+  });
+  if (p.kind !== "TRIP") throw Error("TRIP_EXPECTED");
+  const result = {
+    ...p.command,
+    actorAccountId: account,
+    ownerPersonId: person,
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    metadataRevision: 0 as const,
+  };
+  let posts = 0;
+  const backend: BackendMutation = async (q) => {
+    if (q.method === "POST") posts++;
+    return tripCreateBoundary(
+      new Request("https://backend" + q.path, {
+        method: q.method,
+        headers: q.headers,
+        ...(q.body ? { body: JSON.stringify(q.body) } : {}),
+      }),
+      account,
+      {
+        create: async () => result,
+        receipt: async () => result,
+      },
+    );
+  };
+  const tools = createMutationTools(context(backend));
+  expect(
+    await tools.execute(p, "APPLY", mutationIdentity(account, p).preview_digest),
+  ).toMatchObject({ outcome: "APPLIED", trip_id: p.command.tripId });
+  expect(
+    await tools.get_operation_status({
+      target: "TRIP",
+      trip_id: p.command.tripId,
+      operation_id: p.command.operationId,
+    }),
+  ).toMatchObject({ outcome: "APPLIED", current_revision: 1 });
+  expect(posts).toBe(0);
+});
+
+it("refuses date edits when the owning read returns a different Item identity", async () => {
+  const f = fixture(),
+    tools = createMutationTools(context(f.backend));
+  const createP = tools.prepareCreate(create());
+  const created = await tools.execute(
+    createP,
+    "APPLY",
+    mutationIdentity(account, createP).preview_digest,
+  );
+  const raw = projectCoreItem(f.graph(), actor, created.item_id!)!;
+  const guarded = createMutationTools({
+    ...context(f.backend),
+    read: async () => Response.json({ ...raw, itemId: randomUUID() }),
+  });
+  const p = guarded.prepareUpdate({
+    request_id: randomUUID(),
+    trip_id: trip,
+    item_id: created.item_id,
+    expected_revision: 1,
+    change: {
+      kind: "DATES",
+      dates: { start_date: "2026-12-11", end_date: "2026-12-13" },
+    },
+  });
+  expect(await guarded.execute(p, "PREVIEW")).toMatchObject({
+    outcome: "REJECTED",
+    error_code: "CURRENT_ITEM_SCOPE_MISMATCH",
+  });
+  expect(
+    await guarded.execute(p, "APPLY", mutationIdentity(account, p).preview_digest),
+  ).toMatchObject({ outcome: "REJECTED", error_code: "CURRENT_ITEM_SCOPE_MISMATCH" });
+  expect(f.posts()).toBe(1);
 });

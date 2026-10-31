@@ -19,7 +19,7 @@ Fresh fetched accepted main42652324 was the start base; no historical SHA chosen
 as current architecture. MCP work remains in its independent branch/worktree.
 Existing mandatory product/architecture/API/read/receipt contracts reused.
 
-Current focused tests29 PASS: official SDK loopback discovery/calls, signed JWT
+Current focused tests32 PASS: official SDK loopback discovery/calls, signed JWT
 issuer/audience/scope/client/grant negatives, actual Core command/receipt create/
 text edit/CAS, response loss and same-operation replay; three-item partial Apply
 and accepted UPDATE batch resume; full reviewable changed fields; timed-date loss
@@ -147,3 +147,34 @@ NOT_DIRECTLY_OBSERVABLE. This is not private Realtime or an SLO measurement.
 
 Root Mobile typecheck PASS after isolating MCP source checking; separate MCP
 types/29 directed tests/lint/build pass. No SDK dependency added to Mobile.
+
+## Actual synthetic Nelson multi-item Apply — three Creates verified
+
+New synthetic Tripcc44a705-6f43-41e0-a2f9-16f334b2a6b2 created formally. Complete
+three-operation Preview/confirmation ran through standard MCP. Initial Apply lost
+its response: original artifact `NELSON_ATTEMPT_01.json` retained. Standard same-op
+status reads and independent DB found the first two APPLIED and the third UNKNOWN;
+404 was never reclassified as NoCommit.
+
+Focused fixes: reserve50s write work inside60s HTTP to return partial receipts
+(real SDK slow-prefix regression fails before/fixes after), and carry version2
+on structured Trip receipt GET (real owning HTTP boundary regression). Both are
+MCP-only fixes, no Backend/runtime/permission delta.32 focused tests PASS, types/
+lint/build and independent reviews PASS.
+
+Explicit Owner-authorized same-operation manual recovery reused the existing
+Core idempotency contract. All original Account/Trip/op/target/canonical command
+digests matched the initial Preview. First two were full-receipt and independent
+DB verified before the original P6's current capability check and one exact POST.
+Host hash/path/per-op count plus a pre-fetch wx marker block extra dispatches.
+Actual server PARTIAL/UNKNOWN remains retained; status plus full expected receipt
+then independent DB proves each APPLIED, unique1row/rev1. See
+`NELSON_P6_RETRY_ATTEMPT.json`, `NELSON_RESUME.json`, `NELSON_CREATE_CHECKPOINT.json`.
+This is individual receipt completion, not a server-atomic batch or new engine.
+
+Native currently prioritizes its Realtime release. At its request the idle host
+session was normally closed with refresh rejection; date9b was NOT_SENT. Next
+explicit Native observation of P1 Dec11 precedes its fixed CAS1 date move toDec12.
+Dedicated date-only QA entry will not repeat Trip/three Creates. No Nelson Native
+or Date PASS is claimed yet. Owner real attachments remain outside Git and DEV,
+local read-only preview only; no real travel data was written.

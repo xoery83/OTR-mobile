@@ -87,6 +87,7 @@ export function createMcpHandler(options: McpOptions) {
     const started = Date.now(),
       requestId = randomUUID();
     const boundary = createRequestBoundary(60000, request.signal);
+    let mutationBoundary: ReturnType<typeof createRequestBoundary> | undefined;
     let status = 503;
     let invokedTool: string | undefined;
     let toolError: string | undefined;
@@ -199,6 +200,11 @@ export function createMcpHandler(options: McpOptions) {
             );
           }
           if (auth.backend) {
+            // Leave time to return partial receipts before the outer HTTP deadline.
+            mutationBoundary = createRequestBoundary(
+              Math.max(1, 50000 - (Date.now() - started)),
+              boundary.signal,
+            );
             const context = {
               accountId: auth.accountId,
               clientId: auth.clientId ?? "",
@@ -206,13 +212,17 @@ export function createMcpHandler(options: McpOptions) {
               backend: auth.backend,
               read: auth.read,
               signal: AbortSignal.any([
-                boundary.signal,
+                mutationBoundary.signal,
                 AbortSignal.timeout(Math.max(1, auth.expiresAt - Date.now())),
               ]),
               confirm: options.confirm,
             };
             const writes = createMutationTools(context),
-              batch = createBatchTools(context, writes, tools);
+              batch = createBatchTools(
+                context,
+                writes,
+                createReadTools(auth.accountId, auth.read, context.signal),
+              );
             const definitions = [
               [
                 "create_trip",
@@ -395,6 +405,7 @@ export function createMcpHandler(options: McpOptions) {
         },
       );
     } finally {
+      mutationBoundary?.close();
       boundary.close();
       try {
         options.log?.({

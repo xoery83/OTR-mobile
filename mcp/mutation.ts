@@ -183,6 +183,8 @@ export function createMutationTools(context: {
     headers?: Record<string, string>,
   ) {
     if (!context.backend) return null;
+    if (method === "GET" && path.startsWith("/v2/trip-create-operations/"))
+      headers = { ...headers, "OTR-Trip-Create-Version": "2" };
     const boundary = createRequestBoundary(
       method === "GET" ? 50000 : 15000,
       context.signal,

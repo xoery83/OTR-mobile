@@ -1,0 +1,104 @@
+{
+  "stage": "NELSON",
+  "status": "FAILED_OR_UNKNOWN_QUERY_SAME_OPERATION",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T01:11:22.292Z",
+  "phase": "apply_trip_changes",
+  "directPath": "/v2/trips/:id/core/capabilities",
+  "directP3HttpStatus": 200,
+  "directP3Schema": "PASS",
+  "discovery": [
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item",
+    "create_trip",
+    "create_trip_item",
+    "update_trip_item",
+    "preview_trip_changes",
+    "apply_trip_changes",
+    "get_operation_status"
+  ],
+  "tripListIndependentHash": "MATCH",
+  "itemCount": 4,
+  "p3IndependentHash": "6560018a5b3ac9a0120129e7234d9565ffe80bfd2461f264200be12ae82d9b32",
+  "foreignPrivateDenied": 404,
+  "capability": "OWNING_P3_MANUAL_ENABLED",
+  "tripCreate": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+    "current_revision": 1,
+    "preview_digest": "2e2736a8169423fe3d00ca8be2394ecfd02924e9aa038eb844ce93594a41bcf9",
+    "summary": "Create Trip: MCP Synthetic Nelson QA 20261031; destinations: Nelson, Abel Tasman; 2026-12-10 → 2026-12-13",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+      "target": "TRIP"
+    },
+    "outcome": "APPLIED"
+  },
+  "preview": {
+    "version": "otr.mcp.batch/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "preview_digest": "d16750f63aec6ce73b6ffb376db18c1e5832e1c0a59c5d6f085155e66efba89f",
+    "outcome": "PREVIEW",
+    "operations": [
+      {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+        "operation_id": "3d2def94-00fc-4583-905f-3e47511e7427",
+        "current_revision": null,
+        "preview_digest": "644b602231dd2c1486b76a5b3aae3d863b012e76d7565f1dcc28273178a52c28",
+        "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-13\",\"start_date\":\"2026-12-10\"},\"family\":\"P3\",\"notes\":\"Synthetic QA only. No Booking/Ticket.\",\"property_name\":\"Synthetic QA Lodge\",\"title\":\"Synthetic Nelson QA lodge (unbooked)\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "3d2def94-00fc-4583-905f-3e47511e7427",
+          "target": "ITEM"
+        },
+        "outcome": "PREVIEW"
+      },
+      {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+        "operation_id": "6dc8974c-73e6-4e7f-b2b7-9dd7749f282f",
+        "current_revision": null,
+        "preview_digest": "9dfe72e593743a2fa8d4f4433263311032ef118a507d1ebc725f500396e2da11",
+        "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"start_date\":\"2026-12-11\"},\"family\":\"P1\",\"notes\":\"Synthetic draft itinerary requested as Manual plan; no actual route or booking.\",\"place\":\"Abel Tasman\",\"title\":\"Synthetic Abel Tasman QA walk\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "6dc8974c-73e6-4e7f-b2b7-9dd7749f282f",
+          "target": "ITEM"
+        },
+        "outcome": "PREVIEW"
+      },
+      {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "b26b8f5e-8db3-406a-a5e4-81219210c8bc",
+        "operation_id": "b587f7dc-1d2d-4b00-9bbd-70e6f89c3a9d",
+        "current_revision": null,
+        "preview_digest": "29c65acbaa11feafd44afc2248c2c4c1ddd3fab71906517cc09d3af960dfdb67",
+        "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"start_date\":\"2026-12-12\"},\"family\":\"P6\",\"notes\":\"Synthetic planned activity, no admission Ticket.\",\"place\":\"Nelson\",\"title\":\"Synthetic Nelson QA gallery visit\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "b587f7dc-1d2d-4b00-9bbd-70e6f89c3a9d",
+          "target": "ITEM"
+        },
+        "outcome": "PREVIEW"
+      }
+    ],
+    "warnings": [
+      "DATE_ONLY_NO_CLOCK_OR_BOOKING:3d2def94-00fc-4583-905f-3e47511e7427",
+      "DATE_ONLY_NO_CLOCK_OR_BOOKING:6dc8974c-73e6-4e7f-b2b7-9dd7749f282f",
+      "DATE_ONLY_NO_CLOCK_OR_BOOKING:b587f7dc-1d2d-4b00-9bbd-70e6f89c3a9d"
+    ]
+  },
+  "failureClass": "REQUEST_OR_PROTOCOL",
+  "owningRunId": "febb23cb-4544-49bc-9252-923c8615ba98",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}

@@ -1,0 +1,56 @@
+{
+  "stage": "NELSON_RESUME",
+  "status": "FAILED_OR_UNKNOWN_QUERY_SAME_OPERATION",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T01:46:55.121Z",
+  "phase": "get_operation_status",
+  "sameOperationLookups": [
+    {
+      "original": {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+        "current_revision": null,
+        "preview_digest": "2e2736a8169423fe3d00ca8be2394ecfd02924e9aa038eb844ce93594a41bcf9",
+        "summary": "Create Trip: MCP Synthetic Nelson QA 20261031; destinations: Nelson, Abel Tasman; 2026-12-10 → 2026-12-13",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+          "target": "TRIP"
+        },
+        "outcome": "UNKNOWN",
+        "error_code": "RECOVERY_UNAVAILABLE"
+      },
+      "status": {
+        "version": "otr.mcp.status/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+        "target": "TRIP",
+        "outcome": "UNKNOWN",
+        "current_revision": null,
+        "error_code": "RECOVERY_UNAVAILABLE"
+      }
+    }
+  ],
+  "tripCreate": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+    "current_revision": null,
+    "preview_digest": "2e2736a8169423fe3d00ca8be2394ecfd02924e9aa038eb844ce93594a41bcf9",
+    "summary": "Create Trip: MCP Synthetic Nelson QA 20261031; destinations: Nelson, Abel Tasman; 2026-12-10 → 2026-12-13",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "0a5a3ac6-6577-4bf2-a089-e1ddd04c4d10",
+      "target": "TRIP"
+    },
+    "outcome": "UNKNOWN",
+    "error_code": "RECOVERY_UNAVAILABLE"
+  },
+  "failureClass": "ASSERTION",
+  "owningRunId": "060d0d53-3e75-472a-ae90-673458058499",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "businessPostCount": 0
+}

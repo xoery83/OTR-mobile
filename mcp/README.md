@@ -38,8 +38,8 @@ Never reverse proxy/tunnel this Session harness or call it public OAuth.
 Actual Golden acceptance uses `mcp/golden.ts` and the existing registered-QA normal
 OTP helper. It requires OTR_DEV_OTP_TEST=1, approved public DEV URL/key,
 OTR_QA_RESEND_SCOPE=dedicated-qa-team, OTR_QA_DEV_BUSINESS_WINDOW=HELD and
-OTR_MCP_QA_CASE=READ/P3/NELSON/P3_VERIFY. Flags grant no authority: first obtain Root's actual
-window and coordinate fixed operation IDs with Native. The helper owns receiver
+OTR_MCP_QA_CASE=READ/P3/NELSON/P3_VERIFY. Flags grant no authority: ensure existing synthetic QA authorization and coordinate only overlapping
+receiver/object/device resources. Ordinary QA has no global DEV reservation. The helper owns receiver
 locking and local logout+refresh-rejected cleanup. No copied Session/Keychain,
 credential arguments/logs or new fixture permissions. P3 and NELSON stages may
 write only their frozen synthetic cases after explicit owning coordination.
@@ -65,3 +65,11 @@ status and full expected receipt validation must succeed; only explicitly
 unsubmitted suffix operations can continue as unchanged, confirmed single-change
 subsets. Each Item requires independent DB verification before the next submit.
 This is QA composition of existing tools, not a server batch-atomic claim.
+
+V2 delivery procedure: ordinary approved disjoint QA has no global DEV lock.
+Only intersecting main/service/SQL/config/device changes acquire that resource;
+prepare/review outside it and record five actual release times. No Authority is
+created by the procedure. Structured Trip recovery requests explicitly use v2.
+NELSON_STATUS is GET-only; NELSON_RESUME is an explicitly selected same-command
+QA recovery with original-digest validation and a non-deleted pre-fetch marker.
+NELSON_DATE_EDIT requires actual Native readiness and never repeats three Creates.

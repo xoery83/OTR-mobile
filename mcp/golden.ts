@@ -20,6 +20,7 @@ import {
   prepareCreate,
   prepareTrip,
   createMutationTools,
+  contentDigest,
   prepareUpdate,
   mutationIdentity,
   type PreparedMutation,
@@ -43,9 +44,24 @@ const fixtureSchema = z.object({
   nelson_trip_request_id: z.uuid(),
   nelson_change_request_ids: z.array(z.uuid()).length(3),
 });
-export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
+export async function runGolden(
+  stage:
+    | "READ"
+    | "P3"
+    | "NELSON"
+    | "P3_VERIFY"
+    | "NELSON_STATUS"
+    | "NELSON_RESUME"
+    | "NELSON_DATE_EDIT",
+) {
   assert.equal(process.env.OTR_MCP_QA_CASE, stage);
-  if (stage === "P3" || stage === "NELSON")
+  if (stage === "NELSON_DATE_EDIT")
+    assert.equal(
+      process.env.OTR_MCP_NATIVE_NELSON_READY,
+      "1",
+      "ACTUAL_NATIVE_CHECKPOINT_REQUIRED",
+    );
+  if (stage === "P3" || stage === "NELSON" || stage === "NELSON_RESUME")
     assert(process.stdin.isTTY, "GOLDEN_INTERACTIVE_TTY_REQUIRED");
   assert.equal(process.env.OTR_QA_DEV_BUSINESS_WINDOW, "HELD");
   const fixture = fixtureSchema.parse(
@@ -96,6 +112,8 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
       }
       facts.phase = "LOOPBACK_START";
       save();
+      const allowedResumePosts = new Map<string, PreparedMutation>();
+      const resumePostCounts = new Map<string, number>();
       let handle: ReturnType<typeof createMcpHandler>;
       const server = loopbackServer((request) => handle(request));
       await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -117,10 +135,56 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
             config.publishableKey,
             stage !== "READ",
           )(request);
-          if (stage === "P3_VERIFY" && auth?.backend) {
+          if ((stage === "P3_VERIFY" || stage === "NELSON_STATUS") && auth?.backend) {
             const backend = auth.backend;
             auth.backend = (q, signal) => {
               assert.equal(q.method, "GET", "VERIFY_CANNOT_REPOST");
+              return backend(q, signal);
+            };
+          }
+          if (
+            (stage === "NELSON_RESUME" || stage === "NELSON_DATE_EDIT") &&
+            auth?.backend
+          ) {
+            const backend = auth.backend;
+            auth.backend = (q, signal) => {
+              if (q.method === "POST") {
+                const operationId = z
+                  .uuid()
+                  .parse((q.body as { operationId?: unknown })?.operationId);
+                const expected = allowedResumePosts.get(operationId);
+                assert(expected?.kind === "ITEM", "RESUME_POST_NOT_AUTHORIZED");
+                assert.equal(
+                  q.path,
+                  `/v2/trips/${expected.command.tripId}/core/commands`,
+                );
+                assert.equal(contentDigest(q.body), contentDigest(expected.command));
+                assert.equal(
+                  resumePostCounts.get(operationId) ?? 0,
+                  0,
+                  "RESUME_POST_ALREADY_SENT",
+                );
+                if (operationId === fixture.nelson_change_request_ids[2])
+                  writeFileSync(
+                    "docs/mcp/acceptance/NELSON_P6_RETRY_ATTEMPT.json",
+                    JSON.stringify(
+                      {
+                        operationId,
+                        itemId: expected.command.target.id,
+                        tripId: expected.command.tripId,
+                        commandSha256: contentDigest(expected.command),
+                        dispatchReservedBeforeFetchAt: new Date().toISOString(),
+                        authority:
+                          "EXPLICIT_OWNER_AUTHORIZED_SYNTHETIC_SAME_OPERATION_RETRY",
+                        previous404IsNotNoCommit: true,
+                      },
+                      null,
+                      2,
+                    ) + "\n",
+                    { flag: "wx", mode: 0o600 },
+                  );
+                resumePostCounts.set(operationId, 1);
+              }
               return backend(q, signal);
             };
           }
@@ -186,6 +250,7 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
             assert.equal(q.path, expectedPath);
             return fetch(DEV_BACKEND + q.path, {
               headers: {
+                ...q.headers,
                 Authorization: "Bearer " + session.accessToken,
                 "X-OTR-Core-Contract-Version": "2",
               },
@@ -289,7 +354,90 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
             requestInit: { headers: { Authorization: "Bearer " + session.accessToken } },
           }),
         );
-        if (stage !== "P3_VERIFY") {
+        if (stage === "NELSON_DATE_EDIT") {
+          const checkpoint = z
+            .object({
+              trip: z.object({ trip_id: z.uuid() }),
+              operations: z
+                .array(z.object({ item_id: z.uuid(), operation_id: z.uuid() }))
+                .length(3),
+            })
+            .parse(
+              JSON.parse(
+                readFileSync("docs/mcp/acceptance/NELSON_CREATE_CHECKPOINT.json", "utf8"),
+              ),
+            );
+          const tripId = checkpoint.trip.trip_id,
+            itemId = checkpoint.operations[1].item_id;
+          assert.equal(tripId, "cc44a705-6f43-41e0-a2f9-16f334b2a6b2");
+          assert.equal(itemId, "73f6d7a2-3191-46ca-aba9-ea57d61f2183");
+          assert.equal(
+            checkpoint.operations[1].operation_id,
+            fixture.nelson_change_request_ids[1],
+          );
+          const args = {
+            request_id: fixture.date_edit_request_id,
+            trip_id: tripId,
+            item_id: itemId,
+            expected_revision: 1,
+            change: { kind: "DATES", dates: { start_date: "2026-12-12" } },
+          };
+          const prepared = prepareUpdate(context.accountId, args);
+          allowedResumePosts.set(fixture.date_edit_request_id, prepared);
+          facts.nativeCheckpoint = "ACTUAL_NATIVE_OWNER_READY_BEFORE_THIS_QA_ACTION";
+          facts.nelsonTripId = tripId;
+          facts.itemId = itemId;
+          const edited = await approvedCall("update_trip_item", args);
+          facts.edit = edited;
+          save();
+          assert.equal(edited.outcome, "APPLIED");
+          const proof = await databaseVerify(
+            fixture.date_edit_request_id,
+            itemId,
+            prepared,
+          );
+          assert.equal(proof.status, "SERVER_VERIFIED");
+          facts.independentSupabase = proof;
+          const readback = await call("get_trip_item", {
+            trip_id: tripId,
+            item_id: itemId,
+          });
+          const detail = itemSchema.parse(readback.item);
+          assert.equal(detail.itemId, itemId);
+          assert.equal(detail.tripId, tripId);
+          assert.equal(detail.itemRevision, 2);
+          assert.equal(detail.schedule.start?.localDate, "2026-12-12");
+          facts.readbackSha256 = digest(detail);
+          facts.ownDatePostCount =
+            resumePostCounts.get(fixture.date_edit_request_id) ?? 0;
+          facts.status = "NELSON_DATE_EDIT_CLOUD_PASS_NATIVE_AFTER_EDIT_PENDING";
+          return;
+        }
+        if (stage === "NELSON_STATUS") {
+          const plannedTrip = prepareTrip(context.accountId, {
+            request_id: fixture.nelson_trip_request_id,
+            name: "MCP Synthetic Nelson QA 20261031",
+            destinations: ["Nelson", "Abel Tasman"],
+            dates: { start_date: "2026-12-10", end_date: "2026-12-13" },
+          });
+          const tripId = mutationIdentity(context.accountId, plannedTrip).trip_id;
+          facts.nelsonTripId = tripId;
+          const statuses = [];
+          for (const operationId of fixture.nelson_change_request_ids) {
+            statuses.push(
+              await call("get_operation_status", {
+                trip_id: tripId,
+                operation_id: operationId,
+                target: "ITEM",
+              }),
+            );
+            facts.statuses = statuses;
+            save();
+          }
+          facts.status = "STATUS_QUERY_COMPLETE_NOT_NOCOMMIT_PROOF";
+          return;
+        }
+        if (stage !== "P3_VERIFY" && stage !== "NELSON_RESUME") {
           facts.phase = "DIRECT_P3_BASELINE";
           save();
           const directP3 = await direct(
@@ -574,10 +722,56 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
           save();
           assert.equal(preview.outcome, "PREVIEW");
           approved.add(z.string().parse(preview.preview_digest));
-          const applied = await call("apply_trip_changes", {
-            ...plan,
-            preview_digest: preview.preview_digest,
-          });
+          let applied: Record<string, unknown>;
+          if (stage === "NELSON_RESUME") {
+            const original = z
+              .object({
+                accountId: z.uuid(),
+                preview: z.object({
+                  trip_id: z.uuid(),
+                  operations: z.array(z.record(z.string(), z.unknown())).length(3),
+                }),
+              })
+              .parse(
+                JSON.parse(
+                  readFileSync("docs/mcp/acceptance/NELSON_ATTEMPT_01.json", "utf8"),
+                ),
+              );
+            assert.equal(original.accountId, context.accountId);
+            assert.equal(original.preview.trip_id, nelsonTrip);
+            for (let i = 0; i < changes.length; i++) {
+              const { kind: _, ...change } = changes[i];
+              void _;
+              const current = mutationIdentity(
+                context.accountId,
+                prepareCreate(context.accountId, { ...change, trip_id: nelsonTrip }),
+              );
+              assert.equal(
+                current.preview_digest,
+                original.preview.operations[i].preview_digest,
+                "ORIGINAL_INTENT_CHANGED",
+              );
+              assert.equal(
+                current.operation_id,
+                original.preview.operations[i].operation_id,
+              );
+              assert.equal(current.item_id, original.preview.operations[i].item_id);
+            }
+            facts.originalIntentBinding =
+              "ALL_THREE_ORIGINAL_ACCOUNT_TRIP_TARGET_COMMAND_DIGESTS_MATCH";
+            applied = {
+              outcome: "RECOVERY_REQUIRED",
+              operations: original.preview.operations.map((o) => ({
+                ...o,
+                outcome: "UNKNOWN",
+                error_code: "ORIGINAL_BATCH_RESPONSE_LOST",
+              })),
+            };
+          } else
+            applied = await call("apply_trip_changes", {
+              ...plan,
+              preview_digest: preview.preview_digest,
+            });
           facts.apply = applied;
           save();
           const rawOperations = z
@@ -589,6 +783,47 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
           for (let i = 0; i < rawOperations.length; i++) {
             let result = rawOperations[i];
             assert.equal(result.operation_id, changes[i].request_id);
+            if (stage === "NELSON_RESUME" && i === 2) {
+              assert.equal(verified.length, 2, "ACCEPTED_PREFIX_NOT_VERIFIED");
+              const response = await direct(`/v2/trips/${nelsonTrip}/core/capabilities`);
+              assert.equal(response.status, 200);
+              const caps = coreCapabilitiesSchema.parse(await response.json());
+              assert(
+                caps.activationState === "ENABLED" &&
+                  caps.enabledCommands.includes("CREATE_ITEM") &&
+                  caps.enabledFamilies.includes("P6") &&
+                  caps.enabledAdmissionModes.includes("MANUAL"),
+              );
+              const { kind: _, ...change } = changes[i];
+              void _;
+              const prepared = prepareCreate(context.accountId, {
+                ...change,
+                trip_id: nelsonTrip,
+              });
+              allowedResumePosts.set(changes[i].request_id, prepared);
+              facts.explicitManualRecovery = {
+                requestedAt: new Date().toISOString(),
+                operationId: changes[i].request_id,
+                sameIntent: true,
+                maximumOwnPostAttempts: 1,
+                previous404IsNotNoCommit: true,
+              };
+              save();
+              const subset = { trip_id: nelsonTrip, changes: [changes[i]] };
+              const reviewed = await call("preview_trip_changes", subset);
+              assert.equal(reviewed.outcome, "PREVIEW");
+              approved.add(z.string().parse(reviewed.preview_digest));
+              const attempt = await call("apply_trip_changes", {
+                ...subset,
+                preview_digest: reviewed.preview_digest,
+              });
+              facts.explicitManualRecoveryResult = attempt;
+              save();
+              result = z
+                .array(z.record(z.string(), z.unknown()))
+                .length(1)
+                .parse(attempt.operations)[0];
+            }
             if (
               result.outcome === "PREVIEW" &&
               result.error_code === "NOT_SUBMITTED_AFTER_STOP"
@@ -667,6 +902,17 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
           } finally {
             input.close();
           }
+          if (stage === "NELSON_RESUME")
+            allowedResumePosts.set(
+              fixture.date_edit_request_id,
+              prepareUpdate(context.accountId, {
+                request_id: fixture.date_edit_request_id,
+                trip_id: nelsonTrip,
+                item_id: results[1].item_id,
+                expected_revision: 1,
+                change: { kind: "DATES", dates: { start_date: "2026-12-12" } },
+              }),
+            );
           const edited = await approvedCall("update_trip_item", {
             request_id: fixture.date_edit_request_id,
             trip_id: nelsonTrip,
@@ -729,7 +975,15 @@ export async function runGolden(stage: "READ" | "P3" | "NELSON" | "P3_VERIFY") {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const stage = z
-    .enum(["READ", "P3", "NELSON", "P3_VERIFY"])
+    .enum([
+      "READ",
+      "P3",
+      "NELSON",
+      "P3_VERIFY",
+      "NELSON_STATUS",
+      "NELSON_RESUME",
+      "NELSON_DATE_EDIT",
+    ])
     .parse(process.env.OTR_MCP_QA_CASE);
   console.info(JSON.stringify(await runGolden(stage)));
 }

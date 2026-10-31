@@ -52,3 +52,9 @@ query explicitly names get_trip_item and its exact IDs. Pagination/overlap use
 that same snapshot. It does not perform N additional full-snapshot object reads.
 Use get_trip_item for typed schedule/time/place/details; no synthetic CoreActor
 or local ACL/privilege inference is used.
+
+Structured Trip receipt GETs carry OTR-Trip-Create-Version:2, matching the
+format2 create; they never silently downgrade to legacy metadata. Write work is
+bounded to approximately50s from request start inside the60s HTTP response budget,
+so a slow accepted prefix can return PARTIAL/UNKNOWN and unsubmitted suffix.
+Real auth expiry and caller cancellation remain separate hard fences.

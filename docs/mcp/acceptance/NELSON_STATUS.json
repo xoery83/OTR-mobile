@@ -1,0 +1,38 @@
+{
+  "stage": "NELSON_STATUS",
+  "status": "STATUS_QUERY_COMPLETE_NOT_NOCOMMIT_PROOF",
+  "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
+  "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "observedAt": "2026-10-31T01:31:32.394Z",
+  "phase": "get_operation_status",
+  "nelsonTripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "statuses": [
+    {
+      "version": "otr.mcp.status/1",
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "3d2def94-00fc-4583-905f-3e47511e7427",
+      "target": "ITEM",
+      "outcome": "APPLIED",
+      "current_revision": 1
+    },
+    {
+      "version": "otr.mcp.status/1",
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "6dc8974c-73e6-4e7f-b2b7-9dd7749f282f",
+      "target": "ITEM",
+      "outcome": "APPLIED",
+      "current_revision": 1
+    },
+    {
+      "version": "otr.mcp.status/1",
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "b587f7dc-1d2d-4b00-9bbd-70e6f89c3a9d",
+      "target": "ITEM",
+      "outcome": "UNKNOWN",
+      "current_revision": null,
+      "error_code": "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT"
+    }
+  ],
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+}
