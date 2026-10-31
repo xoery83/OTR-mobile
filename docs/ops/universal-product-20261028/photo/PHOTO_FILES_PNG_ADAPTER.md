@@ -24,3 +24,18 @@ Scoped production TypeScript, ESLint and ui:guard PASS. Independent review
 NO_BLOCKER. Full-repository TypeScript exceeded bounded heap, not counted PASS.
 Device update and same-Batch actual Vision/Save remain unverified.
 Same approved Batch/Input will be resumed; no third fixture.
+
+Native real Source Start accepted Source df39c9b2 (independent Supabase readback),
+then correctly rejected stale revision1 consent; current revision2 has been
+re-screened and explicitly confirmed. Window9 independently CLOSED.
+Further existing Native→HTTP test reproduced IMAGE-only transport guard RED for
+files/FILE; one-check fix3f860280 retains strict custody schema and all original
+byte/hash/Actor/Trip/version checks.30 tests/ESLint/independent NO_BLOCKER PASS.
+AD5 code-only126.7 installed; exact input/Source binding/current decision retained,
+Native binary unchanged. Actual Source upload/Vision/Save remain pending.
+
+Post-Golden UI follow-up from real evidence: review-required currently appears as
+an unavailable AI outcome; the Photo row refresh discovers changed Capture only
+on recheck. Surface the existing original-changed message and refresh this row
+through the same repository, without creating another decision authority. Keep
+physical-original custody, AI result and formal Item status distinct.
