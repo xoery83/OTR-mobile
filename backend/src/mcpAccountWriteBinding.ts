@@ -1,16 +1,9 @@
-import { z } from "zod";
 import { createRequestBoundary } from "@/data/api/requestBoundary";
-import { mcpReadGrantSchema, type McpVerifiedGrant } from "./mcpOAuthGrantVerifier";
+import { mcpWriteGrantSchema, type McpVerifiedGrant } from "./mcpOAuthGrantVerifier";
 import { createMcpAccountReadBinding, type ReadPorts } from "./mcpAccountReadBinding";
 import { coreHttpBoundary } from "./tripCoreV2Http";
 
-export const mcpWriteGrantSchema = mcpReadGrantSchema.extend({
-  scopes: z
-    .array(z.enum(["otr.trips.read", "otr.trips.write"]))
-    .length(2)
-    .refine((scopes) => new Set(scopes).size === 2),
-});
-type CommandRequest = Readonly<{
+export type CommandRequest = Readonly<{
   method: "GET" | "POST";
   path: string;
   body?: unknown;

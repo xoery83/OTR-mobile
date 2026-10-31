@@ -20,3 +20,13 @@ silently upgrading existing grants. Activation and exact synthetic operations ne
 their separate precise Owner Gate; the consumed Read C window cannot be reused.
 Expiry/cancellation after Core IO suppresses the result, never retries POST; recover
 the original operation through the existing Core operation reader after re-auth.
+
+The closed DEV Write verifier reuses the existing issuer `/user` and
+`/user/oauth/grants` reads. It accepts both signed business scopes only, bound to
+the same Account/client/session/expiry, and requires the current provider grant's
+`granted_at` to be at or after a trusted activation floor (`consentNotBefore`).
+The browser must show explicit Write copy and reject an already-authorized redirect
+before the new decision. Gate preflight must revoke old grants; neither changing a
+Hook nor passing OIDC `openid offline_access` constitutes business Write consent.
+There is no live Write policy or caller until this full chain is independently
+reviewed and its separate activation/operation Gate is approved.
