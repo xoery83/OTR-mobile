@@ -121,13 +121,20 @@ fbd9074e/runtimea0560110/SDK3b5ceca5 preserves actual compatible base with only
 2 Auth diagnostic sources and distinct fresh QA fixture changed. New defaultcb71e00e/config335997de/imagefbd health and all23files/4bundles
 independently verified20:07:56Z Nov1 (09:07:56NZDT Nov2), QAkeysabsent. Shortlock
 released20:07:17Z. Old9fd2 retained only as software rollback; finite close must
-restore newcb71 default. 80dd EMPTY independently SERVER_VERIFIED20:25:12Z, current41f9/configb81f.
-FixedT20:21:06.131Z/D20:40:48.239Z (Nov2 09:21→09:40NZDT); Root timer@D active,
-Auth close@D−120s. Root shortCAS released20:24:20Z, confirmations=[]/noNotesapproval.
-Actualb94→software530 identity adapter fixed with original requestSHA retained, no
-T/D reset; initial mismatch failed locally before intent/Host changes. Auth issuer
-and actualConsumer steps pending;
-oldf107 remainsUNKNOWN. Subsequent actual
+restore newcb71 default. 80dd CLOSED_NOT_SUBMITTED_NOT_PASS: originalT20:21:06Z/D20:40:48Z,
+never extended. ActualClaude OTP/Consent/eighttools/Guide/Trip/list/item reads
+passed; editbase AUTH_REQUIRED is firstFAIL, rootcause UNPROVEN. Preview was not
+sent; no freshNotesapproval/Apply, no newUNKNOWN. Fresh independentMCP SQL20:50Z
+reports rev1/originalNotes/fullroot baseline and receipt0. GPT notstarted.
+Root closed SERVER_VERIFIED20:39:46Z beforeD: newdefaultcb71/3359/fbd, bothQAkeys
+absent, health200/protected401, exactHost/all23files, timerinactive/shortlockreleased.
+Auth finalissuer/grant/session/console/Hook/Site and originalSQLbody/ACL closed.
+Finite container is normally removed by the pinned restore helper: post-close
+Docker log extraction exit1, so empty results are NOT event evidence. Root adds
+bounded pre-close diagnostic retention candidate; Auth owns ReadBinding finite
+classification, MCP owns toolAUTH_REQUIRED vsHTTP401 refresh contract tests.
+Original request/identity mismatch failure and its minimal adapter are retained;
+no new execution window approved. oldf107 remainsUNKNOWN. Subsequent actual
 Notes approval comes only from direct Auth human after actual Preview.
 
 Continue C2 existing sandbox/IPC adapter candidate and C3 Native integration independently.

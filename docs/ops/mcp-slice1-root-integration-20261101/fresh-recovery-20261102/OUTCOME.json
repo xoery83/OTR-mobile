@@ -1,0 +1,43 @@
+{
+  "status": "CLOSED_NOT_SUBMITTED_NOT_PASS",
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "executionGateSHA256": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "fixedT": 1793564466131,
+  "fixedD": 1793565648239,
+  "consumer": "Claude",
+  "actualProgress": [
+    "freshOTP",
+    "freshConsent",
+    "eightTools",
+    "OPERATING/FIELDS/CAPABILITIES",
+    "getTrip/listTripItems/getTripItem"
+  ],
+  "firstFailure": {
+    "tool": "get_trip_item_edit_base",
+    "error": "AUTH_REQUIRED",
+    "authFailureSource": "UNKNOWN",
+    "durationMs": "UNKNOWN",
+    "rootCause": "UNPROVEN"
+  },
+  "preview": "NOT_SENT_permission_card_rejected_after_cutoff",
+  "notesHumanApproved": false,
+  "applyCount": 0,
+  "freshBusinessDisposition": "NOT_SUBMITTED_NOT_UNKNOWN",
+  "chatGPT": "NOT_STARTED",
+  "mcpIndependentSqlReportedAt": "2026-11-01T20:50:12.312440Z",
+  "mcpIndependentSqlReported": "fresh item3616 rev1/originalNotes/fullroot baseline identical; fresh receipts0",
+  "rootClose": "SERVER_VERIFIED_2026-11-01T20:39:46.679576Z",
+  "authCloseReported": "issuerDENY_ALL20:39:03.396Z; own grant/session/console/Hook/Site closed; final original SQL body/ACL/invoker/searchpath verified",
+  "executedCloseDispatcherSHA256": "505015b366ad6f3e9928aaea9ad285ee552131297808f03dc8dd9d42300f1120",
+  "requestDiagnostics": "UNAVAILABLE_temporary_container_removed_docker_logs_exit1",
+  "emptyExtractionIsNotEvidence": true,
+  "rawConsumerTranscript": "MCP docs/mcp/slice1/FRESH_CLAUDE_TOOL_TRANSCRIPT.txt",
+  "historicalUnknowns": [
+    "f107",
+    "9b"
+  ],
+  "historicalUnknownsReplayed": false,
+  "deadlineExtended": false,
+  "sharedHostReleased": true,
+  "normalDefaultImage": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66"
+}
