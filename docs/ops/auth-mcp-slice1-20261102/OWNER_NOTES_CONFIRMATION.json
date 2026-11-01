@@ -1,0 +1,16 @@
+{
+  "humanMessageId": "01a1983a-9a2e-7961-9405-95c5fefc2412",
+  "questionCall": "call_c0e42bd3e38545c69899e644c9faeb7b",
+  "independentlyVerifiedVia": "MCP source read_thread userMessage",
+  "answer": "\u786e\u8ba4\u4e0a\u8ff0 Notes \u4fee\u6539\uff0c\u4ec5\u63d0\u4ea4\u8be5 Operation/digest",
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "previewDigest": "48dc6e4b7a0c632c9414978df73d38a9287f5e236a6cc4d7e6bbb6007c71a09e",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "expectedRevision": 2,
+  "delta": "Original Notes plus LF Slice1 Claude Notes QA verified. only",
+  "deadlineUnchanged": true,
+  "authChatDirectQuestionCall": "call_07fe799d201a4742b28bbea80af777fb",
+  "authChatDirectAnswer": "\u786e\u8ba4\u540c\u4e00\u7cbe\u786e Operation/digest \u7684 Notes \u4fee\u6539",
+  "previousRelay": "AUTO_REVIEW_REJECTED_CROSS_CHAT_EVIDENCE_NOT_EXECUTED",
+  "currentAuthority": "DIRECT_HUMAN_REPLY_IN_AUTH_CHAT"
+}

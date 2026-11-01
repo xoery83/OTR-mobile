@@ -1,5 +1,5 @@
 {
-  "status": "ACTIVE_EMPTY_CONFIRMATIONS_CONSUMER_CONNECTING",
+  "status": "ACTUAL_CONSUMER_PREVIEW_PASS_WAITING_CONCRETE_OWNER_CONFIRMATION",
   "windowId": "bb5ba3063468437ca608910bf84eaacf",
   "deadline": "2026-11-01T17:58:11.178Z",
   "closeStarts": "2026-11-01T17:56:11.178Z",
@@ -11,5 +11,24 @@
   "issuerActivation": "ACKNOWLEDGED_AND_EXACT_BODY_READBACK",
   "console": "HOOK_ENABLED_OAUTH_ON_DCR_OFF_SITE_API_DEV_REFRESH_VERIFIED",
   "notesApproved": false,
-  "oldOperationsReplayed": false
+  "oldOperationsReplayed": false,
+  "consumerChat": "https://claude.ai/chat/02780027-aebd-4280-80dd-852170faf2e2",
+  "businessSubmitted": false,
+  "firstFailure": {
+    "tool": "list_trip_items",
+    "source": "BACKEND_401",
+    "requestId": "167fc928-5ce5-4c4f-93f3-0a8238e21f82",
+    "durationMs": 9339,
+    "rootCause": "UNPROVEN: binding also maps expiry crossed during IO to401"
+  },
+  "currentGrant": "ACTIVE_SELECTED_GRANTS_1_READ_ONLY",
+  "consumerGetTrip": "SERVER_CONFIRMED_SAME_CONNECTION_NO_RECONNECT_OR_NEW_OTP",
+  "preview": {
+    "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+    "digest": "48dc6e4b7a0c632c9414978df73d38a9287f5e236a6cc4d7e6bbb6007c71a09e",
+    "expectedRevision": 2,
+    "currentRevision": null,
+    "scope": "Notes LF append only",
+    "assistance": "ONE_NOTES_DESCRIPTION_MAPPING_CLARIFICATION"
+  }
 }

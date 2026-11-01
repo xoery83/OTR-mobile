@@ -72,7 +72,7 @@ Start normal close no later than D-120s: stop signing/deny-all first, revoke onl
 QA client grant and verify its absence, close own control/session and refresh-negative;
 perform at most the bounded same-connection no-data probe. Root short CAS removes
 only this finite QA config/restores exact retained default; OAuth off with actual
-Save/reload, Hook disabled/URI empty/Site baseline, original ACL/purpose unchanged.
+Save/reload, Hook disabled with its fresh original function/URI retained, Site baseline, original ACL/purpose unchanged. Do not clear the existing disabled Hook binding.
 Independent timer closes issuer at the pinned deadline even if consumer/Runtime
 cleanup stalls. Runtime also refuses all relevant routes at D, and existing grant
 checks refuse expired/revoked writes before/after IO. Never extend/restart a round.
