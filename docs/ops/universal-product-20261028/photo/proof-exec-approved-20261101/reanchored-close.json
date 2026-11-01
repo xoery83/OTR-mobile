@@ -1,0 +1,31 @@
+{
+  "status": "PHOTO_REANCHORED_CONTROLLER_CLOSED_PASS",
+  "planPath": "/opt/otr/universal-png-worker/close-plan-proof-exec-bc37-20261101.json",
+  "planSHA256": "2a3c1bfb74d38e02faa19e0fa69b86bde049b0abb285138653cb93efdd619448",
+  "oldPlanPreserved": true,
+  "containerId": "43b2ab5807b616cc174b21f2e92c5d6486d17cf1c3dfddeda37de8fb53499b46",
+  "baselineConfigSHA256": "cc7030c7c9ae88024c6239d0411867c5668eb6905e4bf160ea3b6dd6cbefac46",
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "policyOpened": false
+}

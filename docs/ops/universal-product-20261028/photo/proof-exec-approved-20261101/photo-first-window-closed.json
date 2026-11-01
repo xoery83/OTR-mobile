@@ -1,0 +1,29 @@
+{
+  "status": "PHOTO_WINDOW17_RECOVERY_CLOSED_VERIFIED",
+  "windowId": "d2b04ec1c6484480b8c708c241d3082e",
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "timersStopped": true,
+  "reason": "Same-object Photo execution completed or stopped; independent Source/worker close verified",
+  "reopened": false
+}

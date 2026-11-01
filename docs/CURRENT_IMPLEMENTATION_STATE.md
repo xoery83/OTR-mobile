@@ -1,5 +1,23 @@
 # Current Import Photo checkpoint — 1 November 2026
 
+Latest approvedbc37 execution: helper67145 EXEC→postgres installedCLOSED/ACKNOWLEDGED,
+bodya294/Owner/OID unchanged, fullrolegraph+OIDs/schemaACL restored; directProviderEXECfalse.
+NormalApp created the ONE approved replacementBatchf1533073-0cd5-4514-824f-03f779a852b7 /
+Job6412e354/Input05d02034/Capture15e667b7, original42630B/SHA078de830 andsameQA825Trip verified.
+LocalOCR RELEVANT +explicitCONTINUE_WITH_AI pinnedCapture1. No Source/Run/Task/model yet.
+Do not create anotherBatch or resetexpired13792. SameBatch resumesunderapprovedGate.
+Closeplan2a3c1bfb anchored43b2/1068, actualCLOSEDcontroller+independenttimerPASS.
+Windowd2b04 started01:16:30Z, then proactivelyCLOSED beforeAnalyze becauseCUAcoordinate
+click/drag globallyfailsnoWindowsAvailable (AX/screenshot/AXtoolbarwork; reset/bundle/path/
+compact/Inspector retries didnotfix). Sourcebefore/afterCLOSED, workerinactive+EMPTY,
+timersstopped all independentlyverified. OldmodelTask13792 stillPENDING/expired/zeroAttempt;
+allmatchingProviderledger0. ActualVision/Results/Save/nativePhotoE2E remainNOTPASS.
+Auth receivedfullfreshhandoff andnowowns itsapproved finiteWrite maintenance/window;
+RootMUSTNOTmutateHost/config/protectedSQL untilAuthclosinghandoff. LocalGUI triage continues.
+Awaiting user's explicit permission to use existingagent-device Runner instead ofCUA per
+CUAtoolUI-interface constraint; not anewbusinessAuthorityGate. Sourcehelpergrantisnotpending.
+Durableevidence: photo/proof-exec-approved-20261101/ and.env.photo-proof-exec-approved-20261101/.
+
 Golden Slice PARTIAL, not Photo E2E PASS. Same approved7303 Batchd56f2cbc/Source03109f59/
 rep06e6bb76 original42630B PNG SHA078de830. UPLOADbb055 FINAL/APPLIED after approvedcde4f704
 recovery; now VERIFYb2fcc FINAL/APPLIED via normal App126.9, attempt75ee87dc at18:10Z.

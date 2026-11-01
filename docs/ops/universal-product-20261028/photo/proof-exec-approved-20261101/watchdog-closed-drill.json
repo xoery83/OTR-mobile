@@ -1,0 +1,36 @@
+{
+  "status": "PHOTO_INDEPENDENT_CLOSE_TIMER_REAL_PASS",
+  "unit": "otr-photo-close-drill-dce8caacf7",
+  "serviceResult": {
+    "Result": "success",
+    "ExecMainStartTimestampMonotonic": "10681689118168",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "exited"
+  },
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "workerActiveState": "inactive",
+  "businessWindowOpened": false,
+  "providerCalls": 0
+}
