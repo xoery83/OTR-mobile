@@ -1,0 +1,10 @@
+{
+  "status": "ROOT_ACTUALLY_CLOSED_AND_RELEASED_AUTH_UNIQUE_WRITER",
+  "observedAt": "2026-11-01T01:23:43.611408+00:00",
+  "rootMessage": "Root Photo P0 d2b04 actually closed, resources released; no shared Host/config/SQL writes in flight",
+  "photoWindow": "d2b04ec1c6484480b8c708c241d3082e",
+  "compatibleContainerId": "43b2ab5807b616cc174b21f2e92c5d6486d17cf1c3dfddeda37de8fb53499b46",
+  "image": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a",
+  "scope": "Auth Gate6dade51e only; not a running window",
+  "deadlineStarted": false
+}

@@ -1,0 +1,28 @@
+{
+  "status": "OWNER_NOTICE_NOT_CONFIRMED_CURRENT_SEND_FAILURE",
+  "recordedAtUtc": "2026-11-01T01:22:51.309729+00:00",
+  "ownerNoticeLocal": "2026-11-01 07:01 Pacific/Auckland",
+  "team": "xoery83",
+  "noticeDailyUsage": 100,
+  "noticeDailyLimit": 100,
+  "officialSource": "https://resend.com/docs/knowledge-base/account-quotas-and-limits",
+  "officialPolicy": {
+    "sendingAndReceivingBothCount": true,
+    "dailyReset": "00:00 UTC calendar day",
+    "localResetToday": "2026-11-01 13:00 Pacific/Auckland"
+  },
+  "currentTeamUsage": {
+    "observedAtUtc": "2026-11-01T01:22:15.943Z",
+    "team": "xoery83",
+    "plan": "Transactional Free",
+    "dailyUsed": 0,
+    "dailyLimit": 100,
+    "monthlyUsed": 167,
+    "monthlyLimit": 3000,
+    "source": "MCP read-only Settings Usage actual UI",
+    "resetNotDisplayedInUi": true
+  },
+  "actualSendFailure": "NOT_CONFIRMED",
+  "otpRequestsThisRun": 0,
+  "action": "Check current quota before control/browser OTP; no resend loop, no paid plan/SMTP/key changes"
+}

@@ -1,0 +1,13 @@
+{
+  "status": "EXACT_COMMAND_HASH_AND_DOMAIN_SEPARATED_INTENT_HASH_BOTH_PASS",
+  "rawCanonicalCommandSHA256": "52484a8b5d90794ebe7d91e3eaeb8ea16fabfed8c9fd2e864b5024df45735647",
+  "gateExpectedRawCanonicalCommandSHA256": "52484a8b5d90794ebe7d91e3eaeb8ea16fabfed8c9fd2e864b5024df45735647",
+  "receiptIntentSHA256": "fc36c5322fd0804adee7944dd6dbfa5f4bbe36f2b847e6601772a2e0d46a9684",
+  "storedIntentSHA256": "fc36c5322fd0804adee7944dd6dbfa5f4bbe36f2b847e6601772a2e0d46a9684",
+  "definition": "coreHashValue = SHA256(UTF8(domain + newline + canonicalCoreJson(command))); domain = otr-trip-core-intent-v2",
+  "owningDefinition": "src/domain/trip/tripCoreV2Read.ts:134-137; backend/src/tripCoreV2Commands.ts:109-110",
+  "sourceCanonicalIntent": "W_INDEPENDENT_CREATE.json rows[0].evidence.canonicalIntent",
+  "receiptSHA256": "004447ddf4ba493eff472d25fd3d04529b16edf6083a485886d74566e04948be",
+  "hashesAreNotInterchangeable": true,
+  "noDatabaseOrAuthorityChanges": true
+}

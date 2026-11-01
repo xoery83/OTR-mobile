@@ -1,0 +1,15 @@
+{
+  "status": "NORMAL_OTP_PASS_CONTROL_PREFLIGHT_FAILED_BEFORE_WINDOW",
+  "requestedAt": "2026-11-01T01:24:11.843Z",
+  "receivedAt": "2026-11-01T01:24:18.574Z",
+  "messageId": "ec559868-c0b9-4cff-9250-4020154a5571",
+  "sessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-RF5kA3/run.json",
+  "originalControlReport": "/private/tmp/otr-auth-consumer-write-cc26922514a1400ba78a5baa7b68ae56/control-attempt1-failed/status.json",
+  "earliestAction": "new pre-window normal OAuth grants read while AS is OFF",
+  "rootCauseQualification": "Supabase primary source documents OAuth grants route requires OAuth Server enabled; initial helper swallows underlying HTTP code, so specific response not recorded",
+  "minimalFix": "Use existing independently read SQL grant0 before window; normal GET/DELETE grants remain only for live AS window, no authority bypass",
+  "extraOtpRequests": "One focused retry after original normal Session cleanup and >60s cooldown; never resend loop",
+  "windowStarted": false,
+  "hostConfigSqlAuthorityChanges": 0
+}

@@ -1,0 +1,19 @@
+{
+  "observedAt": "2026-11-01T01:42:51.789Z",
+  "approvedAt": "2026-11-01T01:42:01.350Z",
+  "result": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "operation_id": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+    "current_revision": 1,
+    "preview_digest": "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-13\",\"start_date\":\"2026-12-12\"},\"family\":\"P3\",\"notes\":\"Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.\",\"property_name\":\"Consumer MCP QA Lodge\",\"title\":\"Consumer MCP QA Stay (unbooked)\"}",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+      "target": "ITEM"
+    },
+    "outcome": "APPLIED"
+  }
+}

@@ -1,0 +1,18 @@
+O
+
+Get trip item
+Get trip item
+
+请求
+
+{
+  "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2"
+}
+使用此工具需要身份验证
+连接
+思考中
+思考中
+20秒
+运行中
+思考中

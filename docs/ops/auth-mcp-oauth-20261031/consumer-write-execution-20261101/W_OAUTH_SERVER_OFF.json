@@ -1,0 +1,7 @@
+{
+  "status": "INDEPENDENT_UI_SAVE_AND_RELOAD_SERVER_OFF_PASS",
+  "observedAt": "2026-11-01T01:58:23.369723+00:00",
+  "enabled": false,
+  "screenshot": "W_OAUTH_SERVER_OFF.png",
+  "firstUnsavedToggleReload": "Detected still ON; modal only changed form. Repeated negative action then explicit Save before independent reload. No false OFF claimed."
+}

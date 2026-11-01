@@ -1,0 +1,17 @@
+{
+  "containerId": "43b2ab5807b616cc174b21f2e92c5d6486d17cf1c3dfddeda37de8fb53499b46",
+  "image": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a",
+  "health": "healthy",
+  "configSHA": "cc7030c7c9ae88024c6239d0411867c5668eb6905e4bf160ea3b6dd6cbefac46",
+  "environmentSHA": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "hostConfigSHA": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountsSHA": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "mcpReadWriteConfigAbsent": true,
+  "artifacts": {
+    "server-capture.mjs": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "mcp/runtime.mjs": "ad47fe3452ad9daa8e77b93e1f92acf35efc36936d2da2f769a82983dca0d812",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "pngWorker": "inactive"
+}

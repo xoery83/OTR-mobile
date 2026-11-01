@@ -1,0 +1,14 @@
+{
+  "status": "NORMAL_QA_CONTROL_PREFLIGHT_PASS",
+  "observedAt": "2026-11-01T01:28:14.282Z",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "oldClientGrantAbsent": true,
+  "existingQaItemStatus": 200,
+  "newTargetStatus": 404,
+  "operationStatuses": [
+    404,
+    404
+  ],
+  "businessPosts": 0
+}

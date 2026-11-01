@@ -11,5 +11,8 @@
   "newReadWindow": false,
   "rootPhotoConflict": "Root Photo P0 newly approved; Auth has no Host/config/SQL in flight and explicitly ceded first unique Writer slot",
   "deadlineStarted": false,
-  "nativePhysicalAcceptance": "BLOCKED_XCTEST_INITIALIZATION_BEFORE_AX_NOT_VERIFIED"
+  "nativePhysicalAcceptance": "BLOCKED_XCTEST_INITIALIZATION_BEFORE_AX_NOT_VERIFIED",
+  "humanTurnId": "01a194a3-7f33-79b3-9e0b-5b2c4fc06859",
+  "humanMessageId": "01a194a3-823c-7351-94dc-fa18ccf1db8f",
+  "independentHumanReplyReadback": "MCP confirmed exact same current direct user answer and Gate6dade51e; no tool-output-only authority inferred"
 }

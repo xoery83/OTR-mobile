@@ -1,0 +1,18 @@
+{
+  "status": "FIRST_RUNTIME_RESTORE_OBSERVED_IN_TOOL_STDOUT",
+  "source": "exec session32899 stdout; later deadline controller overwrote shared W_RUNTIME_CLOSE_RECEIPT with idempotent second close",
+  "result": {
+    "containerId": "43b2ab5807b616cc174b21f2e92c5d6486d17cf1c3dfddeda37de8fb53499b46",
+    "image": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a",
+    "finiteConfigAbsent": true,
+    "health": "healthy"
+  },
+  "deliveryTrace": {
+    "requestedAt": "2026-11-01T01:54:43.735100+00:00",
+    "acquiredAt": "2026-11-01T01:54:43.747509+00:00",
+    "mutationFinishedAt": "2026-11-01T01:54:59.511953+00:00",
+    "releasedAt": "2026-11-01T01:54:59.511994+00:00"
+  },
+  "firstHookDenyAllReadback": "2026-11-01T01:54:39.365073Z",
+  "deadlineCloseWasIdempotentAt": "2026-11-01T01:58:30.696041Z"
+}

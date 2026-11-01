@@ -1,0 +1,21 @@
+{
+  "status": "PAGE_LEVEL_PREPARED_NOT_WINDOW_READY",
+  "observedAt": "2026-11-01T01:16:32.563737+00:00",
+  "source": "MCP direct page-level acknowledgement",
+  "chromeBindingRestored": true,
+  "existingConnector": "40860a25\u2026",
+  "server": "https://api-dev.xoery.art/mcp",
+  "expiredConnectionVisible": true,
+  "reconnectButtonCount": 1,
+  "resendReceivingSelected": true,
+  "resendFilter": "exact registered QA email",
+  "oldMessageLinkBaselineCount": 30,
+  "messageBaselineStoredOnlyInCuaMemory": true,
+  "historyReads": 0,
+  "reconnectOrOtpConsentApply": false,
+  "freshRecheckRequiredBeforeWindow": true,
+  "native": "BLOCKED",
+  "freshRecheckObservedAtUtc": "2026-11-01T01:29:59.447Z",
+  "freshState": "same expired DEV connector, reconnect visible; Receiving exact QA filter and current baseline; no reconnect/send/consent/apply",
+  "nativeFreshCheck": "requested, prior normal QA profile and Trip visibility recorded; physical new item not accepted"
+}

@@ -1,0 +1,15 @@
+{
+  "version": "otr.mcp.mutation/1",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "operation_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+  "current_revision": null,
+  "preview_digest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7",
+  "summary": "Update 11fdaec9-3305-4db0-a146-be78823fcf74 at revision 1: {\"dates\":{\"end_date\":\"2026-12-13\",\"start_date\":\"2026-12-11\"},\"kind\":\"DATES\"}",
+  "query": {
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "operation_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+    "target": "ITEM"
+  },
+  "outcome": "PREVIEW"
+}

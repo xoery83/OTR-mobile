@@ -1,0 +1,29 @@
+{
+  "goldenSlice": "PARTIAL_CREATE_PASS_EDIT_AUTH_REQUIRED",
+  "gate": "6dade51e",
+  "fixedCandidate": "85fe2a33",
+  "window": "cc26922514a1400ba78a5baa7b68ae56",
+  "mail": "Current Resend quota0/100 at01:22; actual normal OTP delivery/verify PASS; no quota failure observed",
+  "create": {
+    "operation": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+    "item": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "outcome": "APPLIED",
+    "revision": 1,
+    "receiptSha256": "004447ddf4ba493eff472d25fd3d04529b16edf6083a485886d74566e04948be",
+    "independentBackendAndSqlAndConsumer": "PASS",
+    "nativeAutoArrival": "bounded01:42:32.995819 absent\u219201:42:36.484111 first display; coupled with independently exact11f receipt"
+  },
+  "edit": {
+    "operation": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+    "result": "AUTH_REQUIRED_NO_RECEIPT",
+    "snapshotAt": "2026-11-01T01:49:56.579014Z",
+    "snapshotRevision": 1,
+    "snapshotReceiptCount": 0,
+    "disposition": "UNKNOWN_ORIGINAL_OPERATION_RETAINED_NO_REPOST"
+  },
+  "closed": "W_COMPLETE_CLOSED.json",
+  "independentReview": "NO_BLOCKER bounded close/hash qualifications; no overallWritePASS",
+  "currentFirstFailure": "mutation HTTP wrapper may replace uncertain results with AUTH_REQUIRED on post-run expiry; actual livebb exactcause still unproven",
+  "next": "MCP unique Writer offline real-wrapper RED\u2192minimal fix\u2192target tests/review; Auth builds qualified default-closed SDK after fixed source; fresh exact new QA gate only when fully ready",
+  "noLiveReopening": true
+}

@@ -1,0 +1,11 @@
+{
+  "status": "INDEPENDENT_SYNTHETIC_PREFLIGHT_READBACK_PASS",
+  "observedAt": "2026-11-01T01:20:31.119018+00:00",
+  "rows": [
+    {
+      "receipts_absent": true,
+      "target_absent": true
+    }
+  ],
+  "businessWrites": 0
+}

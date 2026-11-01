@@ -1,0 +1,12 @@
+{
+  "status": "FIRST_TEMP_CONFIG_WRITE_INTENT",
+  "gateSHA256": "6dade51e337f692012e107b357daaf3ed48bb82dfbcdc51a84bff8e1972fdb3d",
+  "startedAtMs": 1793496664009,
+  "expiresAtMs": 1793498414285,
+  "startedAt": "2026-11-01T01:31:04.009000Z",
+  "expiresAt": "2026-11-01T02:00:14.285000Z",
+  "maximumMinutes": 30,
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "clientProfile": "claude-write",
+  "windowId": "cc26922514a1400ba78a5baa7b68ae56"
+}

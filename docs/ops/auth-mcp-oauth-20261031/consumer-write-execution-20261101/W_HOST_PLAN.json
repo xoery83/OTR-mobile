@@ -1,0 +1,6 @@
+{
+  "status": "PREPARED_ONLY_NOT_AUTHORIZED_OR_DEPLOYED",
+  "planSHA256": "51a51f2a016ee2d9f0e34a16e75809e792a31c7a588f63ab04d21db383b053bf",
+  "baselineContainerId": "43b2ab5807b616cc174b21f2e92c5d6486d17cf1c3dfddeda37de8fb53499b46",
+  "image": "sha256:1068257190400c62745d315ac9d260d2deb0fb5e949801dace581d4c3ecc998a"
+}

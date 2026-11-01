@@ -1,0 +1,15 @@
+{
+  "status": "NORMAL_BROWSER_OTP_AND_EXPLICIT_WRITE_CONSENT_OBSERVED",
+  "otpSendAt": "2026-11-01T01:39:37.356Z",
+  "messageIdPrefix": "96c1ff10",
+  "otpSendAttempts": 1,
+  "normalVerify": "PASS per MCP own browser observed",
+  "otpClearedFromCuaMemory": true,
+  "otpOrTokensRecorded": false,
+  "consentAt": "2026-11-01T01:40:25.548Z",
+  "actualConsentCopy": "Read trips and create/edit; each save still requires separate confirmation",
+  "actualButton": "Allow reading and editing trips",
+  "legacyClientNameRetained": "OTR DEV QA - Claude Read",
+  "authoritySource": "Owner Gate6dade51e, normal fresh consent; name alone not permission",
+  "businessCallsAtObservation": 0
+}
