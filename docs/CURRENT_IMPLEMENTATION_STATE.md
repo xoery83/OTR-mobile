@@ -1,3 +1,11 @@
+## Realtime-first sprint — local readiness fixed (2026-11-02)
+
+Native product `c3adb21f` follows `fcfe8745`: normal private subscription seam now composes the existing Auth lease adapter only with explicit owning admission/cache-fence ports; default undefined/no Account I/O. Fixed QA script `node scripts/trip/realtime-v1-qa.mjs` joins P3 Core APPLIED→fixture hint/version→existing Pull→file SQLite, same Item rev1→2→3, Pending/Conflict/cold/reconnect/ABA/backoff protection (25 local cases). P3 UNKNOWN feedback fix c74b5056 preserves original Source request identity. Independent reviews NO_BLOCKER; scoped types/lint/UIguard PASS.
+
+Separate Core candidate `fe4f510a` reuses actual Root reader and f70d69cf pool,64 retained cases/independent review. Fresh isolated PG17 cold33.37ms, warm5.72–11.09ms; same PID, hidden private mutation leaves other Actor token unchanged, visible P3 changes it. Synthetic authority, not production RLS or Hosted 8s closure. Existing deployed authored P1/P3 projection is reused; other graphs retain full fallback. Own local container/network/tunnel released. No shared deployment/main/SQL change.
+
+Enrichment separate125e0592 exact trusted-normal-account guard handed to Root, not merged into shared app.ts here. Retained90 Host composition still needs precise software stitching and fresh legal runtime. QA142 Chinese/Dark P2/P4/P5/P6 representative control/Cancel PASS, original history/session preserved, English/System restored/session released. No install/Save; new client source not hardware-qualified. Device fault injection/private channel remain unverified. See `docs/ops/native-realtime-first-20261102/`. Next actual missing ports are safe private admission/publisher/revoke cache fence and opaque version transport consumer; no invented Auth↔Core revision mapping.
+
 ## Autonomous Native V3 — local integration ready (2026-11-02)
 
 Fixed product `c2129b9f`, independent `/private/tmp/otr-native-focused-main-20261101`, shared main untouched. Auth82b93537 closed lease adapter received64038e6b; A1 conditional full Actor-visible Accepted-stamp consumer e44066cd stays undefined. Account/Trip/generation/Accepted-drift and Pending/backoff protections pass; no real VersionReader/private subscription/publisher authority is inferred, no measured Hosted savings. Auth authorizationRevision is not Core collection accessRevision.

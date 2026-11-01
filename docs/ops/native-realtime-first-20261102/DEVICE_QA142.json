@@ -1,0 +1,96 @@
+{
+  "status": "DEVICE_REPRESENTATIVE_FORM_CONTROL_PASS_NOT_REALTIME_E2E",
+  "build": 142,
+  "source": "3391d4cb",
+  "jsHash": "fe7232b550793823bbf808260925fe239ada09a757748f304594c3dee220c186",
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "device": "iPad Air5 / iPadOS27.2 / landscape1180x820",
+  "session": "native-realtime-first-qa-20261102",
+  "results": {
+    "P3EditChineseDark": "REUSED_QA141 actual sameItemEdit/unsavedRename/Discard/originalfield readback; QA142 unchanged UI cold Edit/CancelPASS. Not mechanically repeated here",
+    "P2": "PASS normalNewFlight→manualdetails→DepartureAirport fullScreen singleInput+keyboard→Cancel→FormCancel; all observed ChineseDark controls. No airport query/value adopted, no flightNumber/date entered",
+    "P4": "PASS normalNewRental pickupTimeNativePicker→Cancel; pickupTime remainsNotSet; lowerReturnFields separately visible; FormCancel. No date/time/location adopted",
+    "P5": "PASS normalNewTransport→typeChooser shows six legal subtypes; systemPopover dismissed by observed empty backdrop, checked TRAIN default unchanged; FormCancel",
+    "P6": "PASS normalNewActivity→admissionSection expansion showing session/admissionNotes/entryPoint separately; FormCancel. No text/value entered",
+    "normalScan": "CLOSED all4 normalforms unavailable and file/photo disabled; no fixture or realSource triggered",
+    "enrichmentFaultUI": "NOT_TESTED no normalUI faultinjector, no covertfixture or paidcall",
+    "realtime": "NOT_TESTED private port closed, no normalUI injection; no real subscription/pull latency claim",
+    "restore": "PASS English/System restored; Native05 originalP1 + uniqueP3 recentItems still visible",
+    "release": "PASS close andpostflight sessions empty"
+  },
+  "safety": {
+    "saveClicks": 0,
+    "businessCreates": 0,
+    "businessEdits": 0,
+    "providerCalls": 0,
+    "accountChanges": 0,
+    "productFilesChanged": false,
+    "installedOrReset": false,
+    "sqliteOrSessionCopied": false,
+    "mcpTripTouched": false,
+    "iPhoneOrAD5Touched": false
+  },
+  "coordinateUse": {
+    "reason": "NativeP5Popover exposes full-screen PopoverDismissRegion whose center lies over choices, no cancelbutton. Screenshot observed popover446..734x207..611pt; fixed outside point1000,600 dismissed without selecting subtype. Immediately resnapshot verified defaultTRAIN unchanged",
+    "randomTaps": false
+  },
+  "screenshots": {
+    "final-original-home.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/final-original-home.png",
+      "sha256": "659e3d14326ab9770a175d3eb5fc5745d34e0303ea9bc6af65daf6969ec5ee1f"
+    },
+    "p2-airport.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p2-airport.png",
+      "sha256": "37d0fd1daa1a78332d3c5a117b2e2b6571549b213c7a3e59272cfe1a3d42f924"
+    },
+    "p2-empty.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p2-empty.png",
+      "sha256": "5f4df13b58391bbe7fb6fbe690456442bdc53226686a25fdb14e878259062102"
+    },
+    "p2-manual.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p2-manual.png",
+      "sha256": "fe57a347410426db2acce0496fb3dfc03d37b0e8fa7905bf4f65c71ba2fb6299"
+    },
+    "p4-clock.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p4-clock.png",
+      "sha256": "d2937df54410c307a9265717b7700941cd585be47d8eb2191e203e77bda5f952"
+    },
+    "p4-fields.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p4-fields.png",
+      "sha256": "bee68017b199e315713646f5efe07917beeb222a71d58265bfb09189e987fc5c"
+    },
+    "p4-return.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p4-return.png",
+      "sha256": "8754b48e0feb98a40f8372c219270722ef93bdbc82de3768f6a489a112c46b2b"
+    },
+    "p5-fields.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p5-fields.png",
+      "sha256": "4225c7f8b02069967c07cd323654f4f8547cec0140130d14e205afe12e5368ca"
+    },
+    "p5-type-picker.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p5-type-picker.png",
+      "sha256": "113faf1cafe206ffeebcc574dbaff8c359a1250afd9b26b4a6e709905c45bcc3"
+    },
+    "p6-admission.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p6-admission.png",
+      "sha256": "2b5fab3c45f7a4fd5668fff50d6b9fa03cdbf71e05b70e88d0e0e29d1f7f929e"
+    },
+    "p6-fields.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/p6-fields.png",
+      "sha256": "aa051b39d54078f165a82e88806580449088072476ac251ee87e2e2262063466"
+    },
+    "restored-settings.png": {
+      "path": "/private/tmp/otr-native-realtime-first-device-20261102/restored-settings.png",
+      "sha256": "ad772ea79c7e4d6ce168ec03f28d200bf251355a33e5292539fba9fa57f4bd82"
+    }
+  },
+  "priorEvidence": [
+    "/private/tmp/otr-native-v3-deviceqa141-20261102/DEVICE_QA.json",
+    "/private/tmp/otr-native-v3-deviceqa142-20261102/DEVICE_QA.json"
+  ],
+  "remainingLimits": [
+    "P2/P4/P5/P6 normalCreate representative controls only; not saved ItemEdit/cloudqualification",
+    "No realScan/Enrichment/Realtime backend qualification",
+    "SQLite77 assumed retained noRegistrychange; noSQLread"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "nativeProduct": "c3adb21f",
+  "formUnknown": "c74b5056",
+  "qaPacket": "56f8ba3c",
+  "coreIsolatedCandidate": "fe4f510a",
+  "reviews": [
+    {
+      "scope": "P3 UNKNOWN + joined QA packet",
+      "status": "NO_BLOCKER",
+      "independentExecution": "joined Golden1PASS",
+      "log": "/private/tmp/otr-native-v3-realtime-golden-independent-review.log"
+    },
+    {
+      "scope": "closed private composition",
+      "status": "NO_BLOCKER",
+      "independentExecution": "2PASS"
+    },
+    {
+      "scope": "retained Core source exact + isolated perf script/result",
+      "status": "NO_BLOCKER",
+      "independentExecution": "64PASS; actual PG output reviewed not rerun"
+    }
+  ],
+  "checks": {
+    "privateCompositionAndExistingMount": "7PASS",
+    "qaPacket": "5groups25PASS",
+    "coreRetainedRegression": "64PASS",
+    "types": "scopedPASS; full-tree historical browser/test issues not repaired",
+    "uiGuard": "PASS",
+    "lint": "changed productPASS; standalone perf .mts outside ESLint config, tsc+assert used"
+  },
+  "hostedOrProviderCalls": 0
+}
