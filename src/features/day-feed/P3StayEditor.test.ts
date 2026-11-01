@@ -1450,3 +1450,46 @@ it("Scan status text uses the theme foreground instead of native black in Dark M
   );
   expect(status.style.color).toBe("theme-foreground");
 });
+
+it("pins one Source interpreter per Form so prop refresh cannot replace UNKNOWN's session", async () => {
+  const auth = await import("@/data/auth/authRepository");
+  vi.mocked(auth.requireAdoptedUserId).mockResolvedValue(
+    "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  );
+  const { p3SourceInterpretationFixture } =
+    await import("./__fixtures__/p3SourceInterpretation");
+  const first = vi.fn(
+    async (
+      context: import("@/data/operations/universalP3FormInterpretation").UniversalP3FormContext,
+    ) => {
+      const result = p3SourceInterpretationFixture(context, {});
+      result.candidates = [];
+      result.providerOutcome = "UNKNOWN";
+      return result;
+    },
+  );
+  const replacement = vi.fn(first.getMockImplementation()!);
+  const p = {
+    ...props(),
+    tripId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    sourceScan: first,
+  };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      baseRevision: null,
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  await scanFile(p);
+  await vi.waitFor(() => expect(first).toHaveBeenCalledOnce());
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  p.sourceScan = replacement;
+  render(p);
+  await node("formAutofill.scan").onPress();
+  await vi.waitFor(() => expect(first).toHaveBeenCalledTimes(2));
+  expect(replacement).not.toHaveBeenCalled();
+});

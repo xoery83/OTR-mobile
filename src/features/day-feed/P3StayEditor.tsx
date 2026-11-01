@@ -178,6 +178,8 @@ export function P3StayEditor({
   onChooseTransport?(): void;
 }) {
   useUiLocale();
+  // A prop refresh must not replace this Form's retained UNKNOWN intake session.
+  const [sourcePort] = useState(() => sourceScan);
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
@@ -218,8 +220,8 @@ export function P3StayEditor({
   const unavailableRef = useRef(false);
   const sourceConsumer = useCallback(
     async (...args: Parameters<ReturnType<typeof createP3SourceScanConsumer>>) => {
-      if (!sourceScan) throw Error("FORM_SCAN_UNAVAILABLE");
-      return createP3SourceScanConsumer(sourceScan, () =>
+      if (!sourcePort) throw Error("FORM_SCAN_UNAVAILABLE");
+      return createP3SourceScanConsumer(sourcePort, () =>
         alive.current &&
         !closedRef.current &&
         generation === getAccountGeneration() &&
@@ -230,7 +232,7 @@ export function P3StayEditor({
           : null,
       )(...args);
     },
-    [sourceScan, generation],
+    [sourcePort, generation],
   );
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
@@ -468,8 +470,8 @@ export function P3StayEditor({
                 ) : null}
                 <View style={styles.form}>
                   <P3SyntheticScan
-                    scan={sourceScan ? sourceConsumer : syntheticScan}
-                    sourceMode={!!sourceScan}
+                    scan={sourcePort ? sourceConsumer : syntheticScan}
+                    sourceMode={!!sourcePort}
                     disabled={saving || frozen || status === "UNAVAILABLE"}
                     context={() =>
                       current() &&
