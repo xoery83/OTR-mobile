@@ -6,7 +6,9 @@ from universal_continuous_runtime_ports import remote_python
 p=Path('/private/tmp/otr-mcp-slice1-root-fresh-20261102')
 request_path=Path(sys.argv[1]);request=json.loads(request_path.read_text())
 assert request['phase']=='EMPTY' and request['clientProfile']=='Claude' and request['windowId']==json.loads((p/'HOST_STAGE_PAYLOAD.json').read_text())['windowId']
-assert request['gateSHA256']=='530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801'
+assert request['gateSHA256']=='b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251'
+request = dict(request, approvedExecutionGateSHA256=request['gateSHA256'],
+               gateSHA256='530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801')
 assert request['jointCloseReady'] is True and request['issuerCloseIndependentOfRuntimeId'] is True
 qa=json.loads(request['authQaConfig']);assert qa['confirmations']==[] and qa['version']==4
 assert qa['expiresAt']==request['deadlineMs'] and qa['consentNotBefore']==request['windowStartedAtMs']

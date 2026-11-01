@@ -1,0 +1,51 @@
+{
+  "status": "READ_ONLY_METADATA_OBSERVATION_NOT_AUTHORIZATION",
+  "sourceRootRequest": "01a1753a-2837-7d20-89c8-d8c1476b0ed8 via Auth parent delegated exact query",
+  "actorAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "observedAtUTC": "2026-11-01T20:22:19.484072+00:00",
+  "sqlWrites": 0,
+  "attempts": 1,
+  "qualification": {
+    "checkedAt": "2026-11-01T20:22:19.294511+00:00",
+    "grant": {
+      "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "expiresAt": "2026-11-01T08:48:56+00:00",
+      "revision": 5,
+      "revoked": false,
+      "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6"
+    },
+    "scope": {
+      "accountDaily": 20,
+      "accountDayCostNanos": 1000000000,
+      "active": true,
+      "callCostNanos": 50000000,
+      "concurrentAccount": 1,
+      "configurationSHA256": "9b23a254dadaa01588226f3d437bb3ee371d5587def27c544061760bea74e7d2",
+      "devDaily": 20,
+      "devDayCostNanos": 1000000000,
+      "expiresAt": "2026-11-01T08:48:56+00:00",
+      "integrationId": "otr-universal-qa-1624499c-18d7-4026-b3fe-7346ab1f825d",
+      "maxAttempts": 1,
+      "priceScheduleId": "56f9eee5-bee5-4ace-820d-c3a8d472ef04",
+      "providerConfigId": "08e8113c-41dd-47cf-8d90-fc9eba98162e",
+      "providerDaily": 20,
+      "revision": 6,
+      "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6",
+      "scopeSHA256": "550eb26788e104de92f5f26ae46984af9b6235cd480248b7c254394f0fb273a2",
+      "workload": "UNIVERSAL_IMPORT_V1"
+    },
+    "sourcePolicy": {
+      "adoptionCutoff": "2026-10-25T06:15:00+00:00",
+      "enabled": true,
+      "revokedAt": null,
+      "universalImportEnabled": true
+    }
+  },
+  "limits": [
+    "Trip825f79b2 intent is not qualification",
+    "Does not prove holds/price-current/Tripmembership/SourceAccess",
+    "No renewal or reactivation of expired Nov1 scope"
+  ]
+}

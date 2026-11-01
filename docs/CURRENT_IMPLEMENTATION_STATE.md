@@ -59,10 +59,14 @@ P3 Form Scan does not need CONTINUOUS_MINIMUMS Core Import Save/Source Review/
 Admission authority: final Save remains MANUAL with sourceIntentId null. TXT still
 needs its owning Source policy/Trip receipt and active Task/Provider selection,
 Actor grant and price pins. Original Provider expiry Nov1 08:48:56Z has passed.
-Current live policy, remaining budget/UNKNOWN holds and price validity remain
-UNKNOWN: bounded READ ONLY metadata attempt returned management transport unknown;
-no raw error/credentials exposed and no state changed. This is not permission-denial
-proof. Auth asked for an existing safe metadata interface/receipt, not credentials.
+Auth independently supplied a bounded READ ONLY snapshot20:22:19Z: Sourcepolicy
+enabled/universalImportEnabled true, nonrevoked; scopebaac revision6 active and
+Actorgrant revision5 unrevoked, both expiredNov1 08:48:56Z. Existing caps20/day,
+$1/day, $0.05/call, concurrency1/attempt1 remain; price56f9 validity, remaining
+budget/UNKNOWN holds and current Trip qualification remain UNKNOWN. Root local
+management transport remains unconfirmed even withDO_NOT_TRACK; no raw errors
+or credentials exposed, no state changed, not permission-denial proof. Metadata
+receipt P3_RUNTIME_READONLY_METADATA_20261102.json is not execution authority.
 Old continuous close is not reusable unchanged: it revokes the entire Actor policy,
 changes global switches and restores an old Backend. Any future exact renewal/
 closure must preserve Native Manual/Core, existing Source and MCP Host baseline,
@@ -117,7 +121,12 @@ fbd9074e/runtimea0560110/SDK3b5ceca5 preserves actual compatible base with only
 2 Auth diagnostic sources and distinct fresh QA fixture changed. New defaultcb71e00e/config335997de/imagefbd health and all23files/4bundles
 independently verified20:07:56Z Nov1 (09:07:56NZDT Nov2), QAkeysabsent. Shortlock
 released20:07:17Z. Old9fd2 retained only as software rollback; finite close must
-restore newcb71 default. Auth/MCP preparing fresh finite window, noT/D/OTP yet;
+restore newcb71 default. 80dd EMPTY independently SERVER_VERIFIED20:25:12Z, current41f9/configb81f.
+FixedT20:21:06.131Z/D20:40:48.239Z (Nov2 09:21→09:40NZDT); Root timer@D active,
+Auth close@D−120s. Root shortCAS released20:24:20Z, confirmations=[]/noNotesapproval.
+Actualb94→software530 identity adapter fixed with original requestSHA retained, no
+T/D reset; initial mismatch failed locally before intent/Host changes. Auth issuer
+and actualConsumer steps pending;
 oldf107 remainsUNKNOWN. Subsequent actual
 Notes approval comes only from direct Auth human after actual Preview.
 

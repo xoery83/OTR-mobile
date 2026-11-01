@@ -1,0 +1,11 @@
+{
+  "status": "LOCAL_GATE_IDENTITY_MISMATCH_NO_SIDE_EFFECTS",
+  "originalAuthRequestSHA256": "3027f5cd9faa09f2414e0bd1d183433909856733c8aa84c607091041899a99cc",
+  "actualGate": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "softwareMarker": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "intentAbsentBeforeRepair": true,
+  "remoteMutationBeforeRepair": false,
+  "deadlineReset": false,
+  "repair": "Require actual b94, retain it as approvedExecutionGateSHA256, normalize software marker only; independent NO_BLOCKER and three selfchecks",
+  "confirmRequiresBothFields": true
+}

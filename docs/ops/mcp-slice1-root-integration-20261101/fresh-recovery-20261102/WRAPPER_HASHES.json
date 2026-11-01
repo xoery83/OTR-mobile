@@ -1,5 +1,5 @@
 {
-  "prepare-empty-round.py": "606443900ebf71294aea1f990524c3bea128e91ca610fb285e67e94bccb49b49",
-  "confirm-once.py": "42acd3731a6ec37c34156c4cb44fa6c615eac9780ccd94740a68bb886ef1cb05",
+  "prepare-empty-round.py": "19f82604c301a6653b03ad1b9018524206edd1791a08341f1973aada1ab4528a",
+  "confirm-once.py": "d51770b481fffdc8db9ff8324451cb64638e7659d2742004f6d1c74ceaa84741",
   "close-once.py": "505015b366ad6f3e9928aaea9ad285ee552131297808f03dc8dd9d42300f1120"
 }

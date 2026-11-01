@@ -6,6 +6,7 @@ from universal_continuous_runtime_ports import remote_python
 p=Path('/private/tmp/otr-mcp-slice1-root-fresh-20261102');approvalpath=Path(sys.argv[1]);a=json.loads(approvalpath.read_text())
 assert a['ownerConfirmed'] is True and a['sourceThreadId']=='01a1803b-c5a7-7ab0-a90f-fb4f87609201' and a['sourceMessageId']
 assert a['operationId']=='1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf' and a['previewDigest']=='1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546'
+assert a['approvedExecutionGateSHA256']=='b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251'
 assert a['gateSHA256']=='530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801'
 raw=approvalpath.read_bytes();base=json.loads((p/'EMPTY_ROUND_INTENT.json').read_text())['request'];active=json.loads((p/'EMPTY_ROUND_RESULT.json').read_text())['result'];assert active['status']=='MCP_SLICE1_CONFIG_CAS_HEALTHY'
 with (p/'CONFIRM_INTENT.json').open('x') as f:json.dump({'approvalSHA256':hashlib.sha256(raw).hexdigest(),'sourceMessageId':a['sourceMessageId'],'deadlineMs':base['deadlineMs']},f)

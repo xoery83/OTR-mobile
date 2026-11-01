@@ -1,0 +1,18 @@
+{
+  "status": "EMPTY_INDEPENDENT_SERVER_VERIFIED",
+  "checkedAt": "2026-11-01T20:25:12.442886+00:00",
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "containerId": "41f9dde45c3abd90a92cee677fb115535a21bb709f256e094b4a64d00323ada5",
+  "configSHA256": "b81f5c9ce62ac08e8823fb55b469fabb95b40e8a735cc9df8470ec8f6f700687",
+  "defaultContainerId": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+  "deadlineMs": 1793565648239,
+  "windowStartedAtMs": 1793564466131,
+  "health": "healthy",
+  "confirmationsEmpty": true,
+  "notesApproval": false,
+  "closePointerExact": true,
+  "runtimeCloseTimerActive": true,
+  "hostAnd23FilesExact": true,
+  "fourBundlesExact": true,
+  "httpHealth200Protected401": true
+}
