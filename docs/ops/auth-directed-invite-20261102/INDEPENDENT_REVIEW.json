@@ -1,0 +1,24 @@
+{
+  "status": "NO_BLOCKER_DORMANT_ORIGINAL_RECEIPT_RECOVERY",
+  "evidenceLevel": "LOCAL_PASS",
+  "independentReviewer": "auth_phase1_review",
+  "focusedTests": "21/21_PASS",
+  "checks": "TSC_SCOPED_ESLINT_DIFF_PASS",
+  "sourceSHA256": {
+    "backend/src/tripMemberClaimAuthority.ts": "cde25d09b0937cde05b901ae7dcaa86361bbc3a6ad82d3a1fc57e51cb2926f40",
+    "backend/src/tripMemberClaimRecovery.ts": "b693d72bd40e32a73c16283e95e304e5ce871288d1606c8ba0218cb5b7580cea",
+    "backend/src/tripMemberClaimRecovery.test.ts": "4c10fd5fd8259fbbe0b347cc819954f9ad194cbf0b927123786e48bc05ed93ff",
+    "docs/architecture/AUTH_DIRECTED_INVITE_RECOVERY_V1.md": "7bc004ef1b4ed74138126c4ccb418e3876f6b93b6a285632b50087fcf7aba562"
+  },
+  "verified": [
+    "Same atomic port; only effectiveAccess and original receipt reads",
+    "Actor/trip/person/op/canonical digest/invite/outcome matching",
+    "Null receipt remains ABSENT_UNCONFIRMED; no NoCommit/replay inference",
+    "Historical LINKED with current NONE does not grant access",
+    "No issue/link/revoke/save or new identity during recovery"
+  ],
+  "limits": [
+    "No actual server adapter or normal auth route mount",
+    "No SQL/permission install, Hosted or two-account cloud E2E"
+  ]
+}

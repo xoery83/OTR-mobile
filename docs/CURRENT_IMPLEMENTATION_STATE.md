@@ -5,6 +5,10 @@ focused tests/Review and types/lint PASS after3 async race fixes. Native receive
 fixed interface; no Hosted activation. Formal atomic authorizer/forced revoke,
 durable visibility/regrant, publisher/version reader remain owning gaps. Local
 qualification preparation continues without modifying shared permission files.
+B2 dormant original Invite/Claim receipt recovery local candidate independently21
+tests/Review/types/lint PASS. Same actor/op/digest only, no mutation/retry; missing
+receipt remains ABSENT_UNCONFIRMED and currentNONE never regains access. Formal
+server adapter/mount/permissions/twoAccountDEV remain absent.
 Native QA140/SQLite77 Profile and adopted private Draft PASS accepted by Owner V3.
 
 OAuth newwindowbb5 T17:30:11.178Z/D17:58:11.178Z Nov1UTC (Nov2NZ06:58:11) CLOSED.
