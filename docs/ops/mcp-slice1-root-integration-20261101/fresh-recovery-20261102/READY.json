@@ -1,0 +1,23 @@
+{
+  "status": "PREBUILT_DEFAULT_CLOSED_READY_NOT_DEPLOYED_NEW_CASE_GATE_REQUIRED",
+  "actualImageReceipt": "IMAGE_READY.json",
+  "assembly": "ASSEMBLY.json",
+  "sourceCompatibility": "SOURCE_COMPATIBILITY.json",
+  "defaultClosedSmoke": "DEFAULT_CLOSED_SMOKE.json",
+  "freshOperatorHashes": "OPERATOR_HASHES.json",
+  "freshOperatorReview": "Independent NO_BLOCKER on casespin/Authproof narrowing, sixmocktestsPASS; actualhuman still requiresRoot direct verification",
+  "releaseReview": "Independent NO_BLOCKER on exact path/known OOM equality diff; local assertion checks reject true/network/missing-key drift",
+  "executionAuthority": "NOT_APPROVED; renderer530 is codeidentity only, newcase must be explicitlyapproved",
+  "notesAuthority": "NOT_APPROVED; after actualnewPreview onlyone directhumanconfirmation inAuth, no oldNotesreuse",
+  "preservedUnknowns": [
+    "f107",
+    "9b"
+  ],
+  "deployed": false,
+  "qaActivated": false,
+  "otpSent": false,
+  "notesWritten": false,
+  "imageId": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66",
+  "releaseScriptSHA256": "1b6e4ff03716f0e08bc5c35dad7afe462d742c497dbf6fb71149411338ec61a1",
+  "planSHA256": "9b647890363a25299863c726ccb9a6d946e78220f5a0537459a78c1fab56e80b"
+}

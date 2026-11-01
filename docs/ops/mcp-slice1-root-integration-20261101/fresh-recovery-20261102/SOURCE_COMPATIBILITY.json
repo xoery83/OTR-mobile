@@ -1,0 +1,22 @@
+[
+  {
+    "path": "backend/src/mcpAccountWriteBinding.ts",
+    "preimageMatchesActual": true,
+    "actualSHA256": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758",
+    "beforeSHA256": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758",
+    "afterSHA256": "e9ab356cf5d0b5bb4b4ebcbf1792ae4fe3c78134fdf16fff2f5c6feca4cf0eea"
+  },
+  {
+    "path": "backend/src/mcpQaRuntime.ts",
+    "preimageMatchesActual": true,
+    "actualSHA256": "edaf6d8e812ae66947a0d5a9069caa37d88b1a8b034cc648dec91e9240429d46",
+    "beforeSHA256": "edaf6d8e812ae66947a0d5a9069caa37d88b1a8b034cc648dec91e9240429d46",
+    "afterSHA256": "5216d70ea05a74fe275c40af89edb799f2151ab7f92692cca2cc2ebb590e05d5"
+  },
+  {
+    "path": "mcp/guide.ts",
+    "preimageMatchesFrozenSDKSource": true,
+    "oldSDKGuideSHA256": "90760f52269f1118053551df6379462a0fd6c5dba30a1e831bee7e189df3a2cc",
+    "candidateGuideSHA256": "84b7d83d7051a647fe70cf1ccf9e3dfc98e4460859025551d825ad29b685b32e"
+  }
+]

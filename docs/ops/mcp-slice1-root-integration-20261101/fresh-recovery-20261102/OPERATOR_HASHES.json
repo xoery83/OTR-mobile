@@ -1,0 +1,19 @@
+{
+  "status": "PREPARED_ONLY_FRESH_CASE_NEEDS_OWNER_GATE",
+  "rendererMarkerGate": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "executionAuthority": "NOT_APPROVED_NEW_CASE",
+  "notesProofSource": "ONLY_DIRECT_HUMAN_AUTH_THREAD",
+  "changes": [
+    "casesSHA exactc87\u21926d5",
+    "Notes proof source strictlyMCP\u2192Auth to support one directAuth question"
+  ],
+  "files": {
+    "config_cas.py": "0ba00b4575b0c828ea5b6bb05d879c8f32e2a71d9602ac27ceba4980f9e9ebee",
+    "prepare_cas.py": "aac0c9940409a9eff40fe5f3e8d554ec984152f3cb74ad3511fc33249ed03a98",
+    "close_current.py": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "slice1-qa-cases.json": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da"
+  }
+}
