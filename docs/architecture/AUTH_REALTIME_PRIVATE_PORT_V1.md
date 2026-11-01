@@ -41,3 +41,22 @@ revocation/regrant reader and cache visibility fence; post-commit publisher; che
 qualified Trip revision reader. No Schema/RLS/GRANT, subscription transport, cache
 migration or Backend deployment is installed here. Server permission negatives and
 actual revoke/regrant E2E remain required. Local fixtures prove adapter behavior.
+
+## Backend admission boundary candidate
+
+`createTripPrivateRealtimeAdmission` reuses the existing trusted normal Auth
+validator. Its request accepts only Trip/localGeneration; the Account comes from
+getUser. The same Bearer is passed only in server memory to the mandatory atomic
+port for current Session/Actor revalidation and private join, never returned or
+logged. No port means closed before Auth IO. Mismatched/nil/expired leases and
+late cancelled joins are closed. A server timer is defense in depth; the owning
+transport must enforce actual access expiry/revoke independently. There is no
+HTTP route, real transport, SQL or permission installation in this candidate.
+
+Core Writer candidate `bace5af8` exposes only an Actor-bound observation marked
+`NOT_A_PRIVATE_JOIN_LEASE`, with separate coreEpoch/coreAccessRevision. Auth's
+admission guard rejects that observation as a lease even when numeric values match.
+No Auth epoch or authorizationRevision is derived from it. Core mapping remains
+NOT_MAPPABLE without a real immutable Auth transition receipt and rejects cross-epoch
+comparisons; no revision is passed to Native's numeric revoke API. Actual atomic
+admission and durable transition producers remain required before activation.

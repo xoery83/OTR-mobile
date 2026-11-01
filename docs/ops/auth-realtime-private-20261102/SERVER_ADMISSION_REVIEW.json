@@ -1,0 +1,26 @@
+{
+  "status": "NO_BLOCKER_DORMANT_NORMAL_AUTH_ADMISSION_BOUNDARY",
+  "evidenceLevel": "LOCAL_PASS",
+  "independentReviewer": "auth_phase1_review",
+  "independentFocused": "24 original PASS plus 1 added Core-observation rejection PASS",
+  "implementationChecks": "25_DIRECT_PASS_TSC_SCOPED_LINT_DIFF_PASS",
+  "sourceSHA256": {
+    "backend/src/tripPrivateRealtimeAdmission.ts": "b971dbb0886643ecad9f04c52e85e007c7eac29da2b91274951944eda7044d2b",
+    "backend/src/tripPrivateRealtimeAdmission.test.ts": "b00d52f1068c7565a9e619776851709f73f034ffe2634e8469a21eba23a79469"
+  },
+  "coreWriterCandidate": "bace5af8",
+  "qualification": "Core observation is NOT_A_PRIVATE_JOIN_LEASE; mapping remains NOT_MAPPABLE",
+  "verified": [
+    "No atomic port means closed before Auth IO",
+    "Request only Trip/localGeneration; Account from trusted normal getUser",
+    "Resource/anonymous/unknown Accounts rejected",
+    "Same bearer only server memory for mandatory current Session revalidation",
+    "Wrong scope/nilActor/nilLease/expired/aborted/late join closed idempotently",
+    "No token output; no cache delete/forced reauth/new permission ledger"
+  ],
+  "limits": [
+    "Not mounted; no real atomic authorizer or private transport",
+    "Core metadata is not Auth authorizationRevision or TTL",
+    "No actual admission/revoke/regrant/cold permission E2E"
+  ]
+}

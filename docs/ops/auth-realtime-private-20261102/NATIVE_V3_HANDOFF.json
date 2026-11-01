@@ -1,0 +1,14 @@
+{
+  "source": "Native owning thread handoff, not repeated Auth device execution",
+  "branch": "codex/native-focused-main-20261101",
+  "fixedHead": "525c6ecc",
+  "product": "3391d4cb",
+  "device": "iPad QA142",
+  "sqlite": 77,
+  "nativeEvidence": "Cold restore and Form Edit Cancel PASS",
+  "authClientIntegration": "64038e6b from82b93537,10 joined testsPASS",
+  "privatePortMounted": false,
+  "versionReaderConsumer": "e44066cd defaultundefined, fullPull fallback preserved",
+  "revisionBoundary": "AuthauthorizationRevision distinct from CoreaccessRevision; no numeric revoke or cache deletion",
+  "truePrivateRealtimeE2E": false
+}

@@ -1078,3 +1078,12 @@ healthy/noQAkeys; no deployment/OTP/window. Root FreshCAS preparation6 tests and
 independentReview PASS, Notes proof only Auth-direct human after actualPreview.
 Full executable digests are supplied by Root to MCP; see ROOT_FRESH_PREBUILD_HANDOFF
 for provenance, not a deployment authority. MCP coordinates one next preciseGate.
+
+B1 BackendnormalAuth→atomic admission guard nowLOCAL_PASS:25focused (24+new1
+independently), types/lint PASS. Noport→noAuthIO, trustedSession→exactTrip binding,
+expiry/abort/latejoin close, noTokenoutput/cachedelete/reauth. RootCore bace5af8
+observationNOT_A_LEASE and NOT_MAPPABLE remain separate; no trueprivate admission.
+Native latest525c6ecc/product3391QA142/SQLite77 cold/FormCancelPASS; Auth client
+64038e6b remainsunmounted. FixedClaude/GPT ops candidate independently selftest+8
+fakeSQLPASS; Claude output unchanged, only two registeredclients single-selection.
+B94 freshGate stillWAIT_HUMAN; noSQL/OTP/window or actualGPTPASS.
