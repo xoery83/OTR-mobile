@@ -132,6 +132,40 @@ it("requires an explicit decision then normal session cleanup before redirect", 
   expect(q.repo.decide).toHaveBeenCalledWith(true);
   expect(events).toEqual(["cleanup", "navigate"]);
 });
+it("shows explicit Write scope and waits for the Write button decision", async () => {
+  const q = fixture();
+  q.fill("oauthConsent.email", "qa@example.invalid");
+  q.press("oauthConsent.send");
+  await vi.waitFor(() =>
+    expect(
+      q.render().some((n) => n.props.accessibilityLabel === "oauthConsent.code"),
+    ).toBe(true),
+  );
+  q.repo.verifyCode.mockResolvedValueOnce({
+    kind: "CONSENT",
+    accountId: "unit",
+    clientName: "Unit Client",
+    businessAccess: "READ_WRITE",
+  });
+  q.fill("oauthConsent.code", "12345678");
+  q.press("oauthConsent.verify");
+  await vi.waitFor(() =>
+    expect(q.render().some((n) => n.props.label === "oauthConsent.allowWrite")).toBe(
+      true,
+    ),
+  );
+  expect(q.render().some((n) => n.props.children === "oauthConsent.writeScope")).toBe(
+    true,
+  );
+  expect(q.render().some((n) => n.props.label === "oauthConsent.allow")).toBe(false);
+  expect(q.repo.decide).not.toHaveBeenCalled();
+  q.repo.decide.mockResolvedValueOnce({
+    kind: "REDIRECT",
+    url: "https://claude.ai/api/mcp/auth_callback?code=unit",
+  });
+  q.press("oauthConsent.allowWrite");
+  await vi.waitFor(() => expect(q.repo.decide).toHaveBeenCalledWith(true));
+});
 it("keeps rate-limit errors visible and invalid email submit disabled", async () => {
   const q = fixture();
   q.fill("oauthConsent.email", "invalid");

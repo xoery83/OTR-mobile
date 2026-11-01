@@ -15,6 +15,12 @@ export const mcpReadGrantSchema = z.object({
   scopes: readScopes,
   expiresAt: z.number().int().positive(),
 });
+export const mcpWriteGrantSchema = mcpReadGrantSchema.extend({
+  scopes: z
+    .array(z.enum(["otr.trips.read", "otr.trips.write"]))
+    .length(2)
+    .refine((scopes) => new Set(scopes).size === 2),
+});
 export type McpVerifiedGrant = Readonly<{
   accountId: string;
   clientId: string;
@@ -51,9 +57,10 @@ const providerGrants = z
   .max(256);
 
 // Candidate only: no caller/mount or environment flag activates this policy.
-export function createSupabaseDevMcpGrantVerifier(
+function createGrantVerifier(
   policy?: Readonly<{ clientId: string; publishableKey: string }>,
   request: typeof fetch = fetch,
+  consentNotBefore?: number,
 ) {
   const approved =
     policy &&
@@ -68,6 +75,15 @@ export function createSupabaseDevMcpGrantVerifier(
           .refine(isSupabaseDevPublicKey, "PUBLIC_DEV_KEY_REQUIRED"),
       })
       .parse(policy);
+  const grantSchema =
+    consentNotBefore === undefined ? mcpReadGrantSchema : mcpWriteGrantSchema;
+  const claimsSchema =
+    consentNotBefore === undefined
+      ? tokenClaims
+      : tokenClaims.extend({
+          otr_scopes: mcpWriteGrantSchema.shape.scopes,
+          iat: z.number().int().positive(),
+        });
 
   // Caller must already verify this SAME bearer's signature/issuer/audience/expiry.
   // Decoding below only detects accidental claims/bearer substitution, never grants authority.
@@ -79,13 +95,13 @@ export function createSupabaseDevMcpGrantVerifier(
     if (!approved) return false;
     const boundary = createRequestBoundary(10000, signal);
     try {
-      const grant = mcpReadGrantSchema.parse(input);
+      const grant = grantSchema.parse(input);
       const token = z
         .string()
         .max(8192)
         .regex(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/)
         .parse(evidence.accessToken);
-      const claims = tokenClaims.parse(
+      const claims = claimsSchema.parse(
         JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8")),
       );
       if (
@@ -94,6 +110,13 @@ export function createSupabaseDevMcpGrantVerifier(
         claims.client_id !== grant.clientId ||
         claims.session_id !== grant.sessionId ||
         claims.exp * 1000 !== grant.expiresAt
+      )
+        return false;
+      if (
+        consentNotBefore !== undefined &&
+        (!("iat" in claims) ||
+          claims.iat * 1000 < consentNotBefore ||
+          claims.iat > Math.floor(Date.now() / 1000))
       )
         return false;
       const assertFresh = () => {
@@ -136,11 +159,39 @@ export function createSupabaseDevMcpGrantVerifier(
         .parse(await read("/user/oauth/grants"))
         .filter((entry) => entry.client.id === grant.clientId);
       assertFresh();
-      return matches.length === 1 && matches[0].scopes.includes("openid");
+      return (
+        matches.length === 1 &&
+        matches[0].scopes.includes("openid") &&
+        (consentNotBefore === undefined ||
+          (Date.parse(matches[0].granted_at) >= consentNotBefore &&
+            Date.parse(matches[0].granted_at) <= Date.now()))
+      );
     } catch {
       return false;
     } finally {
       boundary.close();
     }
   };
+}
+
+export function createSupabaseDevMcpGrantVerifier(
+  policy?: Readonly<{ clientId: string; publishableKey: string }>,
+  request: typeof fetch = fetch,
+) {
+  return createGrantVerifier(policy, request);
+}
+
+// Closed candidate: the trusted activation floor and explicit browser decision are mandatory.
+// The existing Read factory never accepts Write, even if extra policy fields are supplied.
+export function createSupabaseDevMcpWriteGrantVerifier(
+  policy?: Readonly<{
+    clientId: string;
+    publishableKey: string;
+    consentNotBefore: number;
+  }>,
+  request: typeof fetch = fetch,
+) {
+  const floor =
+    policy && z.number().int().positive().max(Date.now()).parse(policy.consentNotBefore);
+  return createGrantVerifier(policy, request, floor);
 }

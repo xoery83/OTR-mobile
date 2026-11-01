@@ -12,7 +12,20 @@ it("verifies genuine JWT signature/issuer/audience/expiry/client/scope plus curr
       async (_grant: unknown, _signal: AbortSignal, _evidence: { accessToken: string }) =>
         true,
     ),
-    bind = vi.fn(async () => ({ read: async () => Response.json({}) }));
+    bind = vi.fn(
+      async (
+        _grant: unknown,
+        _signal: AbortSignal,
+        evidence: Readonly<{ accessToken: string }>,
+      ) => ({
+        read: async () => Response.json({}),
+        backend: async () => Response.json({}),
+        // Unexpected Auth callback fields must not replace verified identity or leak evidence.
+        accountId: randomUUID(),
+        scopes: ["unapproved.scope"],
+        accessToken: evidence.accessToken,
+      }),
+    );
   const authorize = createOAuthAuthorizer({
     issuer,
     resource,
@@ -39,13 +52,22 @@ it("verifies genuine JWT signature/issuer/audience/expiry/client/scope plus curr
       .sign(key);
   const request = (t: string) =>
     new Request(resource, { headers: { Authorization: "Bearer " + t } });
-  const good = await authorize(request(await token()));
+  const goodToken = await token();
+  const good = await authorize(request(goodToken));
   expect(good).toMatchObject({
     accountId: account,
     clientId: "test-client",
     resource,
     scopes: ["otr.trips.read", "otr.trips.write"],
   });
+  expect(active.mock.calls[0][2]).toBe(bind.mock.calls[0][2]);
+  expect(Object.isFrozen(bind.mock.calls[0][2])).toBe(true);
+  expect(bind.mock.calls[0][2]).toEqual({ accessToken: goodToken });
+  const boundPorts = await bind.mock.results[0].value;
+  expect(good?.read).toBe(boundPorts.read);
+  expect(good?.backend).toBe(boundPorts.backend);
+  expect(good).not.toHaveProperty("accessToken");
+  expect(JSON.stringify(good)).not.toContain(goodToken);
   for (const patch of [
     { aud: "authenticated" },
     { iss: "https://wrong.invalid" },
@@ -65,6 +87,17 @@ it("verifies genuine JWT signature/issuer/audience/expiry/client/scope plus curr
   expect(
     await authorize(request(await token({ jti: undefined, session_id: randomUUID() }))),
   ).toMatchObject({ accountId: account });
+  expect(bind.mock.calls[1][2]).not.toBe(bind.mock.calls[0][2]);
+  const legacyAuthorize = createOAuthAuthorizer({
+    issuer,
+    resource,
+    key: keys.publicKey,
+    isGrantActive: active,
+    bindBackend: async (_grant, _signal) => ({ read: async () => Response.json({}) }),
+  });
+  expect(await legacyAuthorize(request(await token()))).toMatchObject({
+    accountId: account,
+  });
   active.mockResolvedValue(false);
   expect(await authorize(request(await token()))).toBeNull();
   expect(bind).toHaveBeenCalledTimes(2);

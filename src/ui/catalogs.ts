@@ -10,11 +10,14 @@ export const en = {
   "oauthConsent.resend": "Resend code",
   "oauthConsent.wait": "Try again in {seconds}s",
   "oauthConsent.allow": "Allow Trip Read",
+  "oauthConsent.allowWrite": "Allow Trip Read and Edit",
   "oauthConsent.decline": "Decline",
   "oauthConsent.request":
     "{client} requests access to your authorized Trips and itinerary items.",
   "oauthConsent.scope":
     "Read tools only. Editing, ledger records and original-file tools are unavailable in this connection.",
+  "oauthConsent.writeScope":
+    "Read Trips and create or edit itinerary items you have permission to change. Each save requires separate confirmation. Ledger records and original files are unavailable.",
   "oauthConsent.continue": "Continue to connected app",
   "oauthConsent.busy": "Checking…",
   "oauthConsent.CLOSED": "This DEV QA connection is unavailable or has expired.",
@@ -3088,9 +3091,12 @@ export const zhHans: Record<MessageKey, string> = {
   "oauthConsent.resend": "重新发送验证码",
   "oauthConsent.wait": "{seconds} 秒后重试",
   "oauthConsent.allow": "允许读取旅行",
+  "oauthConsent.allowWrite": "允许读取和编辑旅行",
   "oauthConsent.decline": "拒绝",
   "oauthConsent.request": "{client} 请求读取你有权访问的旅行和行程事项。",
   "oauthConsent.scope": "此连接仅提供读取工具，不提供修改、账本或原始文件工具。",
+  "oauthConsent.writeScope":
+    "读取旅行，并创建或编辑你有权修改的行程事项。每次保存仍需单独确认。此连接不提供账本记录或原始文件。",
   "oauthConsent.continue": "继续前往连接的应用",
   "oauthConsent.busy": "正在检查…",
   "oauthConsent.CLOSED": "此 DEV QA 连接不可用或已过期。",

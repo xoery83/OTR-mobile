@@ -18,14 +18,16 @@ import type { CoreReceipt } from "../src/domain/trip/tripCoreV2Receipt";
 import {
   createMutationTools,
   prepareCreate,
+  prepareUpdate,
   prepareTrip,
   mutationIdentity,
+  contentDigest,
   sha,
   type BackendMutation,
   type ConfirmChanges,
 } from "./mutation";
 import { createBatchTools } from "./batch";
-import { batchOutput } from "./mutationContract";
+import { batchOutput, mutationOutput } from "./mutationContract";
 import type { createReadTools } from "./read";
 const account = randomUUID(),
   trip = randomUUID(),
@@ -547,6 +549,111 @@ it("standard MCP HTTP client discovers controlled tools and applies only after t
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+
+it.each(["create_trip_item", "apply_trip_changes"])(
+  "preserves only original recovery identity when authorization expires after Core commits (%s)",
+  async (name) => {
+    const f = fixture(),
+      q = create();
+    const identity = mutationIdentity(account, prepareCreate(account, q));
+    const expiresAt = Date.now() + 60000;
+    let resource = "";
+    const backend: BackendMutation = async (request, signal) => {
+      const response = await f.backend(request, signal);
+      if (request.method === "POST") {
+        expect(f.receipts.size).toBe(1);
+        vi.spyOn(Date, "now").mockReturnValue(expiresAt + 1);
+      }
+      return response;
+    };
+    const server = loopbackServer((request) =>
+      createMcpHandler({
+        resource,
+        authorize: async () => ({
+          accountId: account,
+          clientId: "qa",
+          resource,
+          scopes: ["otr.trips.read", "otr.trips.write"],
+          expiresAt,
+          read: async () =>
+            Response.json(
+              await buildCoreActorCollection(
+                f.graph(),
+                actor,
+                {
+                  epoch: trip,
+                  revision: 1,
+                  accessRevision: 1,
+                  generatedAt: new Date().toISOString(),
+                },
+                [],
+                async (bytes) => sha(bytes),
+              ),
+            ),
+          backend,
+        }),
+        confirm: async () => true,
+      })(request),
+    );
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (!address || typeof address === "string") throw Error("PORT");
+    resource = `http://127.0.0.1:${address.port}/mcp`;
+    const client = new Client({ name: "post-commit-expiry", version: "1" });
+    try {
+      await client.connect(new StreamableHTTPClientTransport(new URL(resource)));
+      const plan = {
+        trip_id: trip,
+        changes: [{ kind: "CREATE", request_id: q.request_id, item: q.item }],
+      };
+      const preview =
+        name === "apply_trip_changes"
+          ? await client.callTool({
+              name: "preview_trip_changes",
+              arguments: plan,
+            })
+          : null;
+      const result = await client.callTool({
+        name,
+        arguments: preview
+          ? {
+              ...plan,
+              preview_digest: batchOutput.parse(preview.structuredContent).preview_digest,
+            }
+          : { ...q, mode: "APPLY", preview_digest: identity.preview_digest },
+      });
+      expect(f.posts()).toBe(1);
+      expect(f.graph().itinerary_events).toHaveLength(1);
+      expect(JSON.parse([...f.receipts.values()][0].receiptText).outcome).toBe("APPLIED");
+      const recovery =
+        name === "apply_trip_changes"
+          ? batchOutput.parse(result.structuredContent).operations[0]
+          : mutationOutput.parse(result.structuredContent);
+      expect(recovery).toMatchObject({
+        outcome: "UNKNOWN",
+        operation_id: q.request_id,
+        query: identity.query,
+        current_revision: null,
+      });
+      expect(JSON.stringify(result)).not.toContain("Synthetic Nelson Stay");
+      expect(JSON.stringify(result)).not.toContain("committedAt");
+      if (name === "apply_trip_changes")
+        expect(result.structuredContent).toMatchObject({
+          outcome: "UNKNOWN",
+          review: [],
+          operations: [expect.objectContaining({ summary: "" })],
+        });
+    } finally {
+      vi.restoreAllMocks();
+      await client.close().catch(() => {});
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  },
+);
 
 it("independent DB verification rejects wrong business fields and separates historical receipt evidence", async () => {
   const f = fixture(),
@@ -1253,4 +1360,102 @@ it("returns typed proposals and current UPDATE bases without rebasing or changin
   expect(third.review[0].possible_duplicate_item_ids).toEqual([]);
   expect(third.preview_digest).not.toBe(first.preview_digest);
   expect(f.posts()).toBe(1);
+});
+
+it("pins the prepared consumer sequence to exactly the reviewed two P3 intents", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./fixtures/consumer-p3-write.json", import.meta.url),
+  );
+  const fixture = JSON.parse(source.toString());
+  const plan = JSON.parse(
+    await readFile(
+      new URL("./fixtures/claude-p3-write-smoke.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  expect(plan.authority).toBe("PREPARATION_ONLY_NOT_OWNER_APPROVED_NOT_FOR_DISPATCH");
+  expect(plan.sourceFixtureSha256).toBe(sha(source));
+  expect(plan.steps.map((s: { tool: string }) => s.tool)).toEqual([
+    "create_trip_item",
+    "create_trip_item",
+    "get_trip_item",
+    "update_trip_item",
+    "update_trip_item",
+    "get_trip_item",
+  ]);
+  for (const [phase, prepare] of [
+    ["create", prepareCreate],
+    ["update", prepareUpdate],
+  ] as const) {
+    const prepared = prepare(fixture.account_id, fixture[phase]);
+    const identity = mutationIdentity(fixture.account_id, prepared);
+    expect(contentDigest(prepared.command)).toBe(
+      fixture.expected[phase + "_command_sha256"],
+    );
+    expect(identity.preview_digest).toBe(fixture.expected[phase + "_preview_digest"]);
+    expect(identity.item_id).toBe(fixture.expected.item_id);
+    for (const mode of ["PREVIEW", "APPLY"] as const) {
+      const step = plan.steps.find(
+        (s: { id: string }) => s.id === phase + "_" + mode.toLowerCase(),
+      );
+      expect(step.arguments).toEqual({
+        ...fixture[phase],
+        mode,
+        ...(mode === "APPLY" ? { preview_digest: identity.preview_digest } : {}),
+      });
+      expect(step.stopUnless.operation_id).toBe(identity.operation_id);
+      expect(step.stopUnless.preview_digest).toBe(identity.preview_digest);
+    }
+    const readback = plan.steps.find((s: { id: string }) => s.id === phase + "_readback");
+    expect(readback.arguments).toEqual({
+      trip_id: fixture.trip_id,
+      item_id: identity.item_id,
+    });
+    const dates =
+      phase === "create" ? fixture.create.item.dates : fixture.update.change.dates;
+    const boundary = (localDate: string) => ({
+      comparable: false,
+      localDate,
+      quality: "UNKNOWN",
+      basis: "DERIVED_CIVIL",
+      civilResolution: "PENDING",
+    });
+    expect(readback.stopUnless).toEqual({
+      state: "SERVER_CONFIRMED",
+      item: {
+        itemId: identity.item_id,
+        tripId: fixture.trip_id,
+        itemRevision: phase === "create" ? 1 : 2,
+        family: "P3",
+        title: fixture.create.item.title,
+        description: fixture.create.item.notes,
+        status: "planned",
+        hidden: false,
+        visibility: "PRIVATE",
+        localState: "ACCEPTED",
+        schedule: {
+          shape: "STAY",
+          start: boundary(dates.start_date),
+          end: boundary(dates.end_date),
+        },
+        details: { propertyName: fixture.create.item.property_name },
+      },
+    });
+    expect(readback.mustNotHaveItemPaths).toEqual(
+      ["start", "end"].flatMap((end) =>
+        ["localTime", "zoneId", "instant", "precision"].map(
+          (field) => `schedule.${end}.${field}`,
+        ),
+      ),
+    );
+    expect(plan.recovery).toContainEqual({
+      tool: "get_operation_status",
+      arguments: {
+        trip_id: fixture.trip_id,
+        operation_id: identity.operation_id,
+        target: "ITEM",
+      },
+    });
+  }
 });

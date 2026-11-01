@@ -1,5 +1,10 @@
 import {
   createMutationTools,
+  mutationIdentity,
+  prepareCreate,
+  prepareUpdate,
+  prepareTrip,
+  type PreparedMutation,
   type BackendMutation,
   type ConfirmChanges,
 } from "./mutation";
@@ -14,6 +19,7 @@ import {
   previewChangesInput,
   applyChangesInput,
   batchOutput,
+  type MutationResult,
 } from "./mutationContract";
 import { randomUUID } from "node:crypto";
 import {
@@ -27,7 +33,12 @@ import {
   readBoundedBytes,
   RequestBoundaryError,
 } from "../src/data/api/requestBoundary";
-import { createReadTools, ReadError, type BackendRead } from "./read";
+import {
+  createReadTools,
+  ReadError,
+  type BackendRead,
+  type ReadAuthFailureSource,
+} from "./read";
 import {
   listTripsInput,
   tripInput,
@@ -39,6 +50,52 @@ import {
   itemOutput,
 } from "./contract";
 
+function expiredApplyRecovery(accountId: string, name: string, args: unknown) {
+  const unknown = (prepared: PreparedMutation): MutationResult => ({
+    ...mutationIdentity(accountId, prepared),
+    summary: "",
+    outcome: "UNKNOWN",
+    error_code: "AUTH_REQUIRED_QUERY_SAME_OPERATION",
+  });
+  // Derive only from validated caller input, never from an expired business result.
+  try {
+    if (name === "create_trip") {
+      const q = createTripInput.parse(args);
+      return q.mode === "APPLY" ? unknown(prepareTrip(accountId, q)) : null;
+    }
+    if (name === "create_trip_item") {
+      const q = createItemInput.parse(args);
+      return q.mode === "APPLY" ? unknown(prepareCreate(accountId, q)) : null;
+    }
+    if (name === "update_trip_item") {
+      const q = updateItemInput.parse(args);
+      return q.mode === "APPLY" ? unknown(prepareUpdate(accountId, q)) : null;
+    }
+    if (name === "apply_trip_changes") {
+      const q = applyChangesInput.parse(args);
+      return batchOutput.parse({
+        version: "otr.mcp.batch/1",
+        trip_id: q.trip_id,
+        preview_digest: q.preview_digest,
+        outcome: "UNKNOWN",
+        operations: q.changes.map(({ kind, ...change }) =>
+          unknown(
+            kind === "CREATE"
+              ? prepareCreate(accountId, { ...change, trip_id: q.trip_id })
+              : prepareUpdate(accountId, { ...change, trip_id: q.trip_id }),
+          ),
+        ),
+        review_basis: "CURRENT_VISIBLE_COLLECTION_AND_UPDATE_DETAILS",
+        review: [],
+        warnings: ["AUTH_REQUIRED_QUERY_SAME_OPERATION"],
+      });
+    }
+  } catch {
+    // Invalid input has no qualified recovery identity.
+  }
+  return null;
+}
+
 // Auth owner verifies issuer/signature/resource/expiry/revocation/client consent before returning this context.
 export type McpAuthorization = {
   accountId: string;
@@ -48,6 +105,14 @@ export type McpAuthorization = {
   read: BackendRead;
   clientId?: string;
   backend?: BackendMutation;
+};
+export type McpLogEvent = {
+  requestId: string;
+  status: number;
+  durationMs: number;
+  tool?: string;
+  errorCode?: string;
+  authFailureSource?: ReadAuthFailureSource;
 };
 export type McpOptions = {
   resource: string;
@@ -59,13 +124,7 @@ export type McpOptions = {
     challenge: string;
     handle(request: Request): Response | null;
   };
-  log?: (event: {
-    requestId: string;
-    status: number;
-    durationMs: number;
-    tool?: string;
-    errorCode?: string;
-  }) => void;
+  log?: (event: McpLogEvent) => void;
 };
 export function createMcpHandler(options: McpOptions) {
   const resource = new URL(options.resource);
@@ -108,6 +167,7 @@ export function createMcpHandler(options: McpOptions) {
     let status = 503;
     let invokedTool: string | undefined;
     let toolError: string | undefined;
+    let authFailureSource: ReadAuthFailureSource | undefined;
     const reply = (code: number, error: string) =>
       new Response(JSON.stringify({ error }), { status: code });
     try {
@@ -196,9 +256,11 @@ export function createMcpHandler(options: McpOptions) {
               async (args: unknown): Promise<CallToolResult> => {
                 invokedTool = name;
                 try {
-                  if (auth.expiresAt <= Date.now()) throw new ReadError("AUTH_REQUIRED");
+                  if (auth.expiresAt <= Date.now())
+                    throw new ReadError("AUTH_REQUIRED", "EXPIRED_BEFORE_BACKEND");
                   const output = await boundary.run(async () => await tools[name](args));
-                  if (auth.expiresAt <= Date.now()) throw new ReadError("AUTH_REQUIRED");
+                  if (auth.expiresAt <= Date.now())
+                    throw new ReadError("AUTH_REQUIRED", "EXPIRED_AFTER_BACKEND");
                   return {
                     content: [{ type: "text", text: JSON.stringify(output) }],
                     structuredContent: output,
@@ -207,6 +269,8 @@ export function createMcpHandler(options: McpOptions) {
                   const code =
                     error instanceof ReadError ? error.code : "BACKEND_UNAVAILABLE";
                   toolError = code;
+                  if (error instanceof ReadError)
+                    authFailureSource = error.authFailureSource;
                   if (code === "AUTH_REQUIRED")
                     return authError(["otr.trips.read"], true);
                   return {
@@ -340,8 +404,20 @@ export function createMcpHandler(options: McpOptions) {
                       structuredContent: result,
                     };
                   } catch {
-                    if (auth.expiresAt <= Date.now())
-                      return authError(["otr.trips.read", "otr.trips.write"], true);
+                    if (auth.expiresAt <= Date.now()) {
+                      const error = authError(
+                        ["otr.trips.read", "otr.trips.write"],
+                        true,
+                      );
+                      const recovery = expiredApplyRecovery(auth.accountId, name, args);
+                      return recovery
+                        ? {
+                            ...error,
+                            content: [{ type: "text", text: JSON.stringify(recovery) }],
+                            structuredContent: recovery,
+                          }
+                        : error;
+                    }
                     toolError = "MUTATION_UNAVAILABLE_QUERY_OPERATION";
                     return {
                       isError: true,
@@ -458,6 +534,7 @@ export function createMcpHandler(options: McpOptions) {
           durationMs: Date.now() - started,
           ...(invokedTool ? { tool: invokedTool } : {}),
           ...(toolError ? { errorCode: toolError } : {}),
+          ...(authFailureSource ? { authFailureSource } : {}),
         });
       } catch {
         /* Logging cannot change the response. */

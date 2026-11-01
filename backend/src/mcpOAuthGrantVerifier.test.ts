@@ -2,6 +2,7 @@ import { Buffer } from "node:buffer";
 import { afterEach, expect, it, vi } from "vitest";
 import {
   createSupabaseDevMcpGrantVerifier,
+  createSupabaseDevMcpWriteGrantVerifier,
   type McpVerifiedGrant,
 } from "./mcpOAuthGrantVerifier";
 
@@ -33,7 +34,7 @@ function sample() {
     otr_scopes: ["otr.trips.read"],
   };
   // Local caller-contract fixture only; signature verification belongs to MCP.
-  const evidence = (payload = claims) => ({
+  const evidence = (payload: unknown = claims) => ({
     accessToken: `unit.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.unit`,
   });
   const providerGrant = {
@@ -273,3 +274,135 @@ it("bounds abort-ignoring IO and never admits a token expiring during the read",
   ).toBe(false);
   expect(delayed).toHaveBeenCalledOnce();
 });
+
+function writeSample() {
+  const q = sample(),
+    consentNotBefore = Date.now() - 1000;
+  const scopes = ["otr.trips.read", "otr.trips.write"];
+  return {
+    ...q,
+    grant: { ...q.grant, scopes },
+    claims: { ...q.claims, otr_scopes: scopes, iat: Math.floor(Date.now() / 1000) },
+    providerGrant: { ...q.providerGrant, granted_at: new Date().toISOString() },
+    policy: { ...policy, consentNotBefore },
+  };
+}
+
+it("Write token freshness keeps the trusted millisecond floor instead of rounding it down", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-01T00:00:02.000Z"));
+  const q = writeSample();
+  q.policy.consentNotBefore = Date.parse("2026-11-01T00:00:00.900Z");
+  const request = wire({ id: accountId, is_anonymous: false }, [q.providerGrant]);
+  const verify = createSupabaseDevMcpWriteGrantVerifier(q.policy, request);
+  const iat = Date.parse("2026-11-01T00:00:00.000Z") / 1000;
+  expect(
+    await verify(q.grant, new AbortController().signal, q.evidence({ ...q.claims, iat })),
+  ).toBe(false);
+  expect(request).not.toHaveBeenCalled();
+  expect(
+    await verify(
+      q.grant,
+      new AbortController().signal,
+      q.evidence({ ...q.claims, iat: iat + 1 }),
+    ),
+  ).toBe(true);
+});
+
+it("Write defaults closed, leaves Read factory Read-only, and checks the same issuer only", async () => {
+  const q = writeSample(),
+    signal = new AbortController().signal;
+  const request = wire({ id: accountId, is_anonymous: false }, [q.providerGrant]);
+  expect(
+    await createSupabaseDevMcpWriteGrantVerifier(undefined, request)(
+      q.grant,
+      signal,
+      q.evidence(q.claims),
+    ),
+  ).toBe(false);
+  expect(
+    await createSupabaseDevMcpGrantVerifier(q.policy, request)(
+      q.grant,
+      signal,
+      q.evidence(q.claims),
+    ),
+  ).toBe(false);
+  expect(request).not.toHaveBeenCalled();
+  expect(
+    await createSupabaseDevMcpWriteGrantVerifier(q.policy, request)(
+      q.grant,
+      signal,
+      q.evidence(q.claims),
+    ),
+  ).toBe(true);
+  expect(request.mock.calls.map(([url]) => url)).toEqual([
+    issuer + "/user",
+    issuer + "/user/oauth/grants",
+  ]);
+});
+
+it("Write requires a trusted present activation floor, never an omitted or future one", () => {
+  const q = writeSample();
+  for (const consentNotBefore of [undefined, 0, NaN, Date.now() + 60000])
+    expect(() =>
+      createSupabaseDevMcpWriteGrantVerifier({
+        ...q.policy,
+        consentNotBefore,
+      } as typeof q.policy),
+    ).toThrow();
+});
+
+it.each(["old grant", "future grant", "absent grant", "other client"])(
+  "Write rejects %s without silently upgrading consent",
+  async (mode) => {
+    const q = writeSample();
+    const providerGrant = {
+      ...q.providerGrant,
+      ...(mode === "old grant"
+        ? { granted_at: new Date(q.policy.consentNotBefore - 1).toISOString() }
+        : {}),
+      ...(mode === "future grant"
+        ? { granted_at: new Date(Date.now() + 60000).toISOString() }
+        : {}),
+      ...(mode === "other client" ? { client: { id: otherId } } : {}),
+    };
+    const request = wire(
+      { id: accountId, is_anonymous: false },
+      mode === "absent grant" ? [] : [providerGrant],
+    );
+    expect(
+      await createSupabaseDevMcpWriteGrantVerifier(q.policy, request)(
+        q.grant,
+        new AbortController().signal,
+        q.evidence(q.claims),
+      ),
+    ).toBe(false);
+  },
+);
+
+it.each(["Read bearer", "Read input", "old token", "future token", "wrong session"])(
+  "Write rejects %s before Auth IO",
+  async (mode) => {
+    const q = writeSample(),
+      request = vi.fn<typeof fetch>();
+    const claims = {
+      ...q.claims,
+      ...(mode === "Read bearer" ? { otr_scopes: ["otr.trips.read"] } : {}),
+      ...(mode === "old token"
+        ? { iat: Math.floor(q.policy.consentNotBefore / 1000) - 1 }
+        : {}),
+      ...(mode === "future token" ? { iat: Math.floor(Date.now() / 1000) + 60 } : {}),
+      ...(mode === "wrong session" ? { session_id: otherId } : {}),
+    };
+    const grant =
+      mode === "Read input" ? { ...q.grant, scopes: ["otr.trips.read"] } : q.grant;
+    expect(
+      await createSupabaseDevMcpWriteGrantVerifier(q.policy, request)(
+        grant,
+        new AbortController().signal,
+        q.evidence(claims),
+      ),
+    ).toBe(false);
+    expect(request).not.toHaveBeenCalled();
+  },
+);

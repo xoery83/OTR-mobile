@@ -26,6 +26,7 @@ export type OAuthOptions = {
   bindBackend: (
     grant: OAuthGrant,
     signal: AbortSignal,
+    evidence: Readonly<{ accessToken: string }>,
   ) => Promise<{ read: BackendRead; backend?: BackendMutation }>;
 };
 const claims = z.object({
@@ -84,16 +85,16 @@ export function createOAuthAuthorizer(options: OAuthOptions) {
         scopes,
         expiresAt: c.exp * 1000,
       });
-      // Only the Auth-owned verifier receives the bearer, for checks with its own issuer.
-      if (
-        !(await options.isGrantActive(grant, request.signal, {
-          accessToken: bearer.slice(7),
-        }))
-      )
-        return null;
-      const ports = await options.bindBackend(grant, request.signal);
+      // Only trusted Auth callbacks receive request-scoped evidence for their own issuer.
+      const evidence = Object.freeze({ accessToken: bearer.slice(7) });
+      if (!(await options.isGrantActive(grant, request.signal, evidence))) return null;
+      const ports = await options.bindBackend(grant, request.signal, evidence);
       request.signal.throwIfAborted();
-      return { ...grant, ...ports };
+      return {
+        ...grant,
+        read: ports.read,
+        ...(ports.backend ? { backend: ports.backend } : {}),
+      };
     } catch {
       return null;
     }
