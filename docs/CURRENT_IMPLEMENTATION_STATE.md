@@ -1058,3 +1058,10 @@ pins unchanged. Root handoff limits assembly to2Auth source files+fixedQAasset+
 SDK runtime, preserving actual Photo/Core; no deployment/window or newcase write
 authority. Independent new target proposal is not f107 recovery. MCP coordinates
 one future Gate; actualPreview Notes confirmation only once in Auth chat.
+
+B4 AccountUsage scopedReader is BLOCKED_BY_OWNING_INTERFACE: existing CP14 admin
+report is environment/integration-wide COST_READER, not self-only; exact support
+recovery lacks usage history. No client filtering/admin credential or second ledger
+added. Existing UI staysUnavailable/allowanceunknown/enforcementoff. Meter owner
+was asked for persistent trusted-Account filtering before safe projection. See
+architecture/AUTH_ACCOUNT_USAGE_READER_GAP_V1.md.
