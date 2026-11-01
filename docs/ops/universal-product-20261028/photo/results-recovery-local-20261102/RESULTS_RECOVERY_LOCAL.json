@@ -1,0 +1,55 @@
+{
+  "status": "LOCAL_PASS",
+  "scope": "Continuous Capture context-503 recovery policy; no deployed repair or Native acceptance",
+  "historicalFailure": {
+    "status": "OPEN_UNRESOLVED",
+    "rootCause": "UNPROVEN",
+    "receipt": "../golden-slice-20261101/FIRST_COLD_RESULTS_503_OPEN.json",
+    "receiptSha256": "e16633971f407b30c779cb480eb8de5bd988eeb875ebf42c62cc0ced1e33dde5",
+    "originalSanitizedReceiptRead": "/private/tmp/otr-photo-permission-object-20261101/core-safe-diagnostics.json",
+    "at": "2026-11-01T07:40:15.768418299Z",
+    "route": "/v2/import-batches/:batchId/interpretations",
+    "httpStatus": 503,
+    "durationMs": 8383,
+    "stage": "BINDING",
+    "category": "FAILED",
+    "evidenceLimit": "No underlying error kind/code/SQLSTATE was retained for this failure. Elapsed time is not proof of a timeout or a permission fault. The earlier SEAL 42501 and Core COLLECTION BUSY events are distinct events, not this failure's cause."
+  },
+  "readChain": [
+    "universalBoundary GET collection -> universalImportPort.readContext",
+    "ContinuousHost.readContext -> readBoundTask -> BatchSource.lookup",
+    "lookup includes reauthorization, serialized Source connection checkout, binding SQL, schema/scope validation and final reauthorization",
+    "Task snapshot follows a successful binding lookup; result reading and Provider execution were not reached by the failed context request"
+  ],
+  "provenLocalDefect": {
+    "before": "In continuous mode, an explicit Start following context 503 UNIVERSAL_CONTEXT_UNAVAILABLE or UNIVERSAL_IMPORT_CLOSED called prepareSources, despite no owning evidence that the Task/Source was absent.",
+    "red": "New two-case consumer regression: 2 failed, existing 41 passed. Start resolved after preparing instead of propagating the original 503.",
+    "fix": "Exclude continuous mode from the legacy 503 Source-preparation prerequisite. Continuous preparation still requires exact owning 404 TASK_NOT_FOUND.",
+    "after": "Cold recover and explicit Start preserve the original 503 without prepare/resume/execute. A subsequent read returns the original bound Task and retained UNKNOWN result."
+  },
+  "directedRegression": {
+    "command": "npx vitest run src/data/operations/universalCaptureConsumer.test.ts src/data/api/universalImportTransport.test.ts backend/src/universalContext.test.ts backend/src/universalContinuousHost.test.ts --maxWorkers=1 --configLoader runner",
+    "result": "4 suites, 68 tests PASS",
+    "hostProof": "Existing SQLite/Repository/Queue fixture: inject one binding-read failure into a fresh Host, observe BINDING/FAILED, then read the same Task/result and unchanged queue operation. Provider send count remains the original one. Source/Provider ports are synthetic and network-none; the injected timeout is not a reconstruction of the historical cause.",
+    "typecheck": "npm run typecheck PASS",
+    "scopedLint": "Three changed TypeScript files: 0 errors; two existing import/no-duplicates warnings in universalContinuousHost.test.ts",
+    "format": "Both changed consumer files PASS. Host test has one pre-existing formatting deviation outside the new block; retained to avoid unrelated edits.",
+    "diffCheck": "git diff --check PASS",
+    "runnerNote": "Default Vitest config bundling could not write through the existing node_modules symlink. The supported --configLoader runner completed without changing dependency/config files."
+  },
+  "originalIdentity": {
+    "batchPrefix": "794b02d7",
+    "sourcePrefix": "9e91719c",
+    "taskPrefix": "96ce2929",
+    "input": "i1",
+    "formalItemId": "c59d3d03-6830-84e8-8579-02a59fe624fa",
+    "operationId": "4f095d9c-449e-8456-a134-c69e9c33f3bb",
+    "disposition": "Historical evidence retained; none recreated or modified by this work"
+  },
+  "unchangedBoundaries": [
+    "No deployment, Host/configuration, SQL/RLS/GRANT, OAuth, Provider, device, paid call or session-credential access",
+    "No new retry loop, queue, Task, Source, migration, endpoint, dependency or UI change",
+    "Legacy noncontinuous prerequisite handling and exact continuous owning-404 initial preparation remain covered by existing tests"
+  ],
+  "remaining": "Historical Backend 503 requires future authorized failure diagnostics to establish its cause. This local policy repair must not close that incident or claim actual Native/server recovery acceptance. Root owns serial review/commit and current-state handoff."
+}

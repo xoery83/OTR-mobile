@@ -18,6 +18,14 @@ NextRootaction: exactsingletonCAS only after actualhumanapproval; noT/D reset.
 Close actuallatestpointer to original9fd2; runtime/helperchecks remain fixed.
 Rootprivatecaller/receipts /private/tmp/otr-mcp-slice1-continuation-20261102.
 
+Parallel Import C1 LOCAL_PASS: continuous context503 no longer invokes Source
+preparation; only owning404 permits initialprepare. Two-case RED→GREEN plus
+sameTask/UNKNOWN/queueoperation recovery regression:68 focused tests,types,scoped
+lintPASS. Root independentdiffreview NO_BLOCKER. Source/test/evidence fixed in
+this branch; no deployment/Provider/Native E2E. HistoricalfirstResults503 remains
+OPEN_UNRESOLVED/UNPROVEN:8383ms BINDINGFAILED has no retainedcausecode. C3 P3
+formadapter/runtimeDTO is being finalized with Native; its port staysclosed.
+
 # MCP Slice1 — finite round closed, Consumer not run
 
 ROOT_RUNTIME_CLOSED_SERVER_VERIFIED / CONSUMER_NOT_RUN.

@@ -97,7 +97,8 @@ export function createUniversalCaptureConsumer(dependencies: {
         !dependencies.prepareSources ||
         !(
           error instanceof ApiClientError &&
-          ((error.status === 503 &&
+          ((!dependencies.continuous &&
+            error.status === 503 &&
             ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
               error.code ?? "",
             )) ||
@@ -107,6 +108,7 @@ export function createUniversalCaptureConsumer(dependencies: {
         )
       )
         throw error;
+      // Continuous 503 is uncertainty; only an owning 404 permits Source preparation.
       await dependencies.prepareSources(context, model);
       preparedThisAction = true;
       current();

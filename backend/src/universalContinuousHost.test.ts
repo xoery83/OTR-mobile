@@ -621,6 +621,36 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     const published = await host.readPublished(batch, taskId);
     expect(published?.result).toEqual(result);
     expect(published?.resultSha256).toMatch(/^[a-f0-9]{64}$/);
+    // Injected binding failure proves same-ID recovery, not the real cold 503 cause.
+    const bindingRead = sourceQuery.getMockImplementation()!;
+    let failBinding = true;
+    sourceQuery.mockImplementation(async (q) => {
+      if (failBinding && q.includes("trip_source_find_sustained_universal_binding")) {
+        failBinding = false;
+        throw Error("Query read timeout");
+      }
+      return bindingRead(q);
+    });
+    const retainedOperation = await operation(),
+      coldHost = createUniversalContinuousHost(hostDeps),
+      bindingFailureLog = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      await expect(coldHost.readContext(batch)).rejects.toThrow("Query read timeout");
+      expect(bindingFailureLog).toHaveBeenCalledWith(
+        expect.stringContaining('"stage":"BINDING","category":"FAILED"'),
+      );
+      expect(await coldHost.readContext(batch)).toMatchObject({
+        batchId: batch,
+        taskId,
+        activity: { state: "RESULTS_READY", attemptCount: 1 },
+      });
+      expect(await coldHost.readResult(batch, taskId)).toEqual(result);
+      expect(await operation()).toEqual(retainedOperation);
+      expect(sends).toHaveBeenCalledTimes(1);
+    } finally {
+      sourceQuery.mockImplementation(bindingRead);
+      bindingFailureLog.mockRestore();
+    }
     const beforeRead = sourceQuery.mock.calls.filter(([q]) =>
       q.includes("trip_source_read_sustained_universal_inputs"),
     ).length;
