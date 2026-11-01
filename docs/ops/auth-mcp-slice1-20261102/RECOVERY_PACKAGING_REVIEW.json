@@ -1,0 +1,16 @@
+{
+  "status": "NO_BLOCKER_CLOSED_RECOVERY_GUIDE_PACKAGING_CANDIDATE",
+  "independentReviewer": "auth_phase1_review",
+  "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+  "runtimeSHA256": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+  "pinsSHA256": "9680ef5f6e356784891f1c5351f0f8e88d419169a52ef4db4a915ce0550d9520",
+  "sourceCount": 51,
+  "changedInputOnly": "mcp/guide.ts",
+  "oldPinsByteIdentical": true,
+  "oldQaCasesSHA256": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32",
+  "unknownProfileRejected": true,
+  "differentOutputPathReproducible": true,
+  "builderSHA256": "04be23b0d30e2294ee8c2afcd29850c632cddf9d0ca86af7d310b19ae99ba49f",
+  "activation": false,
+  "limits": "No new case, window, deployment, write or historical UNKNOWN replay authorized."
+}

@@ -9,9 +9,15 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = realpathSync(resolve(process.argv[2] ?? "."));
 const out = resolve(process.argv[3] ?? join(root, "dist/mcp-slice1"));
-const pinsPath = join(root, "backend/mcp/slice1-source-pins.json");
+const recovery = process.argv[4] === "recovery-guide";
+if (process.argv[4] !== undefined && !recovery) throw Error("SLICE1_PROFILE_INVALID");
+const pinsPath = join(root, recovery
+  ? "backend/mcp/slice1-recovery-source-pins.json"
+  : "backend/mcp/slice1-source-pins.json");
 const pins = JSON.parse(readFileSync(pinsPath, "utf8"));
-const expected = "7832ae51e06deb8df439540f8ab8723ba1bcbc807993e44799721e624be2f8c1";
+const expected = recovery
+  ? "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083"
+  : "7832ae51e06deb8df439540f8ab8723ba1bcbc807993e44799721e624be2f8c1";
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 if (
   pins.profile !== "SLICE1_NOTES_EDIT" ||

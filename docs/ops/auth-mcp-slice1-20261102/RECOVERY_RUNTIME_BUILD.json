@@ -1,0 +1,20 @@
+{
+  "build": {
+    "status": "DEFAULT_CLOSED_COMPILED_ONLY",
+    "profile": "SLICE1_NOTES_EDIT",
+    "sourceCount": 51,
+    "pinsSHA256": "9680ef5f6e356784891f1c5351f0f8e88d419169a52ef4db4a915ce0550d9520",
+    "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+    "runtimeSHA256": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+    "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+    "esbuildVersion": "0.28.2",
+    "providerCalls": 0,
+    "activation": false
+  },
+  "differentOutputPathReproducible": true,
+  "unknownProfileRejected": true,
+  "oldPinsByteIdentical": true,
+  "qaCasesUnchanged": true,
+  "caseAuthority": "SDK_ONLY_BACKEND_CASE_FIXTURE_SELECTION_UNCHANGED_NO_NEW_CASE_AUTHORITY",
+  "deployment": false
+}
