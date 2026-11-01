@@ -47,6 +47,27 @@ caller. Native owns SOURCE_STAY_SUGGESTIONS→existingFieldReview→ManualSave b
 exactthreefiles/SHA handedNative, no sharedNavigation/Sync/Repository changes.
 Contract: docs/ops/universal-product-20261028/P3_FORM_INTERPRETATION_V1.md.
 
+## P3 real runtime qualification follow-up
+
+Native fixed fcfe8745/c2129b9f receives the raw/default ports with semantic-only
+Capture dependency extraction. Three normal Create/Edit callers use a closed lazy
+port; qualified pin remains undefined/zero IO. Native reports local combined
+Capture→consumer→DTO→field review→original Manual Save/readback PASS; no new DEV
+or device deployment. Do not repeat those UI/Manual Save checks.
+
+P3 Form Scan does not need CONTINUOUS_MINIMUMS Core Import Save/Source Review/
+Admission authority: final Save remains MANUAL with sourceIntentId null. TXT still
+needs its owning Source policy/Trip receipt and active Task/Provider selection,
+Actor grant and price pins. Original Provider expiry Nov1 08:48:56Z has passed.
+Current live policy, remaining budget/UNKNOWN holds and price validity remain
+UNKNOWN: bounded READ ONLY metadata attempt returned management transport unknown;
+no raw error/credentials exposed and no state changed. This is not permission-denial
+proof. Auth asked for an existing safe metadata interface/receipt, not credentials.
+Old continuous close is not reusable unchanged: it revokes the entire Actor policy,
+changes global switches and restores an old Backend. Any future exact renewal/
+closure must preserve Native Manual/Core, existing Source and MCP Host baseline,
+retaining all UNKNOWN holds and existing budget ceilings.
+
 ## Existing Import Golden Slices and boundaries
 
 P1–P6minimumFormalSave, textPDF andsinglePNGPhoto previouslypassed; not ordinary
