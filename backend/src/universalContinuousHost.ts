@@ -206,6 +206,10 @@ export function createUniversalContinuousHost(deps: {
             event: "universal_task_binding_read_failed",
             stage,
             category,
+            kind: error instanceof Error && ["Error", "TypeError", "ZodError"].includes(error.name) ? error.name : "OTHER",
+            code: ["SOURCE_ACCESS_DENIED", "UNIVERSAL_BINDING_SCOPE", "UNIVERSAL_SOURCE_CLOSED", "CORE_CONNECTION_TIMEOUT", "CORE_CONNECTION_RETIRED", "UNIVERSAL_CONTINUOUS_CLOSED"].find((value) => value === message),
+            sqlState: error && typeof error === "object" && "code" in error && typeof error.code === "string" && /^[0-9A-Z]{5}$/.test(error.code) ? error.code : undefined,
+            deniedObject: message.match(/^permission denied for (function|table|schema) ([a-z_][a-z0-9_]*)$/)?.slice(1),
           }),
         );
       } catch {
