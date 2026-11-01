@@ -23,6 +23,7 @@ export type P3SourceInterpreter = (
   context: UniversalP3FormContext,
   signal: AbortSignal,
   material: readonly CaptureSelection[],
+  getCurrentContext: () => UniversalP3FormContext | null,
 ) => Promise<UniversalP3FormInterpretation>;
 export type SourceStayResult = {
   kind: "SOURCE_STAY_SUGGESTIONS";
@@ -77,6 +78,7 @@ export function isSourceStayResult(input: unknown): input is SourceStayResult {
 
 export function createP3SourceScanConsumer(
   interpret: P3SourceInterpreter,
+  currentBinding: () => StaySuggestionBinding | null,
   account = requireAdoptedUserId,
 ) {
   return async (
@@ -93,13 +95,30 @@ export function createP3SourceScanConsumer(
       formType: "P3",
     });
     await assertAccountRequestContext(context, account);
-    if (signal.aborted) throw Error("FORM_SCAN_CANCELLED");
+    const getCurrentContext = () => {
+      if (signal.aborted) return null;
+      try {
+        assertAccountRequestGeneration(context);
+        const live = currentBinding();
+        if (!live) return null;
+        return universalP3FormContextSchema.parse({
+          ...live,
+          itemRevision: live.itemRevision ?? null,
+          accountId,
+          formType: "P3",
+        });
+      } catch {
+        return null;
+      }
+    };
+    if (!isCurrentUniversalP3FormContext(context, getCurrentContext()))
+      throw Error("FORM_SCAN_STALE");
     const interpretation = universalP3FormInterpretationSchema.parse(
-      await interpret(Object.freeze(context), signal, material),
+      await interpret(Object.freeze(context), signal, material, getCurrentContext),
     );
     await assertAccountRequestContext(context, account);
     if (
-      signal.aborted ||
+      !isCurrentUniversalP3FormContext(context, getCurrentContext()) ||
       !isCurrentUniversalP3FormContext(context, interpretation.context)
     )
       throw Error("FORM_SCAN_STALE");

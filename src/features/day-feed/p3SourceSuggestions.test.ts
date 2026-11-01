@@ -7,6 +7,7 @@ import {
   createP3SourceScanConsumer,
   isSourceStayResult,
   applySourceStaySuggestions,
+  type P3SourceInterpreter,
 } from "./p3SourceSuggestions";
 import { p3SourceInterpretationFixture } from "./__fixtures__/p3SourceInterpretation";
 import type { StaySuggestionBinding } from "./p3FormSuggestions";
@@ -34,14 +35,18 @@ beforeEach(() => {
 function setup(mode: "CREATE" | "EDIT" = "CREATE") {
   const captured = binding(mode),
     controller = new AbortController();
-  const interpret = vi.fn(async (context) =>
+  const interpret = vi.fn<P3SourceInterpreter>(async (context) =>
     p3SourceInterpretationFixture(context, {
       title: "Extracted Inn",
       startDate: "2026-11-04",
       endDate: "2026-11-06",
     }),
   );
-  const scan = createP3SourceScanConsumer(interpret, async () => accountId);
+  const scan = createP3SourceScanConsumer(
+    interpret,
+    () => captured,
+    async () => accountId,
+  );
   return {
     captured,
     controller,
@@ -174,4 +179,15 @@ it("keeps all 64 independent candidates rather than silently applying synthetic'
   const result = await f.run();
   expect(result.candidates).toHaveLength(64);
   expect(isSourceStayResult(result)).toBe(true);
+});
+
+it("owning intake reads live UI revisions before its next I/O, not a captured echo", async () => {
+  const f = setup();
+  f.interpret.mockImplementationOnce(async (context, _signal, _material, current) => {
+    expect(current()).toEqual(context);
+    f.captured.revision++;
+    expect(current()!.revision).toBe(context.revision + 1);
+    return p3SourceInterpretationFixture(context, { title: "Stale before prepare" });
+  });
+  await expect(f.run()).rejects.toThrow("FORM_SCAN_STALE");
 });

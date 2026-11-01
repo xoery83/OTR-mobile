@@ -1,5 +1,5 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -178,10 +178,6 @@ export function P3StayEditor({
   onChooseTransport?(): void;
 }) {
   useUiLocale();
-  const sourceConsumer = useMemo(
-    () => (sourceScan ? createP3SourceScanConsumer(sourceScan) : undefined),
-    [sourceScan],
-  );
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
@@ -220,6 +216,22 @@ export function P3StayEditor({
   const firstAttemptRef = useRef<ManualStayFields | null>(null);
   const firstPlaceAttemptRef = useRef<P3PlaceSelectionDraft | null>(null);
   const unavailableRef = useRef(false);
+  const sourceConsumer = useCallback(
+    async (...args: Parameters<ReturnType<typeof createP3SourceScanConsumer>>) => {
+      if (!sourceScan) throw Error("FORM_SCAN_UNAVAILABLE");
+      return createP3SourceScanConsumer(sourceScan, () =>
+        alive.current &&
+        !closedRef.current &&
+        generation === getAccountGeneration() &&
+        !busyRef.current &&
+        !frozenRef.current &&
+        !unavailableRef.current
+          ? scanContext.current
+          : null,
+      )(...args);
+    },
+    [sourceScan, generation],
+  );
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
@@ -456,8 +468,8 @@ export function P3StayEditor({
                 ) : null}
                 <View style={styles.form}>
                   <P3SyntheticScan
-                    scan={sourceConsumer ?? syntheticScan}
-                    sourceMode={!!sourceConsumer}
+                    scan={sourceScan ? sourceConsumer : syntheticScan}
+                    sourceMode={!!sourceScan}
                     disabled={saving || frozen || status === "UNAVAILABLE"}
                     context={() =>
                       current() &&
