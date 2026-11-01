@@ -1,0 +1,17 @@
+{
+  "target": "backend/src/universalPhotoProviderRequest.test.ts",
+  "baseSha256": "5137bdf21de22bd36fa2ce100a39fcfaafcd98cfd6a08753ef6efae1a3ab8443",
+  "candidateSha256": "ec326480f57f9e50fa87cd2926c929aa6e4b1790803a01bd5dee62a4d577d23d",
+  "fixture": "assets/trips/covers/fjord.jpg",
+  "fixtureSha256": "138112d259ced8dbf81381a797cf5760154078d54a11b562b9f96fff28635d41",
+  "localTests": "8 PASS, isolated candidate.test.ts only imports rewritten to actual current production source; no production code copied/modified",
+  "productionJPEGSource": "BLOCKED unchanged",
+  "stableWrite": "automatic permission review timed out; no retry/no file modification",
+  "status": "LOCAL_PASS",
+  "rootStableTreeTests": "8 PASS on actual stable target; scoped ESLint/diffcheck PASS",
+  "review": "Root independently inspected exact test-only diff; no production change",
+  "scope": "Actual existing JPEG request bytes, encoded1600x800 dimensions, EXIF1/6/8 bytes retained and truncated input rejected",
+  "orientationQualification": "NOT_IMPLEMENTED; encoded SOF dimensions do not establish display-space orientation/region proof",
+  "formalSourceQualification": "BLOCKED/default closed. PendingSource/profile/proof/material/read/dispatch remain PNG-specific; no MIME relaxation",
+  "resources": "No Host/SQL/Provider call/device/deployment/main"
+}

@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import { createUniversalPort, prepareUniversalDispatch, UNIVERSAL_IMPORT_VERSION } from "./universalImport";
 import { createUniversalDeepSeekProvider } from "./universalDeepSeekProvider";
@@ -7,7 +8,7 @@ import { universalAdvisoryInstruction, universalInstruction } from "./universalP
 import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
 
 function request(
-  bytes = Buffer.from([255, 216, 255, 1, 2]),
+  bytes = readFileSync(new URL("../../assets/trips/covers/fjord.jpg", import.meta.url)),
 ): Parameters<typeof buildUniversalDeepSeekRequest>[0] {
   return {
     taskId: randomUUID(),
@@ -37,6 +38,7 @@ it("the existing Image request retains exact submitted pixels and the original i
   const images = message.content.filter(
     (part: { type: string }) => part.type === "image_url",
   );
+  expect(message.content[1].text).toContain("IMAGE_SIZE_PIXELS 1600 800\n");
   expect(built.imageCount).toBe(1);
   expect(images).toEqual([
     {
@@ -53,6 +55,26 @@ it("the existing Image request retains exact submitted pixels and the original i
     ),
   ).toBe(true);
   expect(createHash("sha256").update(built.body).digest("hex")).toBe(built.requestSha256);
+});
+// These tests cover serialization only, not a JPEG decoder/Source qualification.
+it.each([1, 6, 8])("preserves EXIF orientation %s without claiming pixel rotation", (orientation) => {
+  const original = request().sources[0].bytes;
+  // Valid APP1 Exif/TIFF orientation entry; the original encoded scan is unchanged.
+  const exif = Buffer.from("45786966000049492a0008000000010012010300010000000100000000000000", "hex");
+  exif.writeUInt16LE(orientation, 24);
+  const segment = Buffer.alloc(4);
+  segment.writeUInt16BE(0xffe1, 0);
+  segment.writeUInt16BE(exif.length + 2, 2);
+  const bytes = Buffer.concat([original.subarray(0, 2), segment, exif, original.subarray(2)]);
+  const built = buildUniversalDeepSeekRequest(request(bytes));
+  const content = JSON.parse(built.body).messages[1].content;
+  // SOF dimensions are encoded pixels; orientation-aware qualification is still absent.
+  expect(content[1].text).toContain("IMAGE_SIZE_PIXELS 1600 800\n");
+  expect(content[2].image_url.url).toBe("data:image/jpeg;base64," + bytes.toString("base64"));
+});
+it("rejects a real JPEG truncated before its dimensions instead of claiming image qualification", () => {
+  const bytes = request().sources[0].bytes.subarray(0, 20);
+  expect(() => buildUniversalDeepSeekRequest(request(bytes))).toThrow("UNIVERSAL_IMAGE_DIMENSIONS_INVALID");
 });
 it("rejects pixel/hash mismatch instead of silently falling back to OCR text", () => {
   const input = request();
