@@ -1,0 +1,24 @@
+{
+  "status": "NO_BLOCKER_PRIVATE_DRAFT_ADOPTED_READER_QUALIFICATION",
+  "candidate": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d",
+  "scope": "Read-only two-file consumer change plus direct Account/Trip qualification and storage dependencies",
+  "sourceSHA256": {
+    "src/features/people/ScopedAddTravelerSheet.tsx": "3a599c6b20f40449f465dfa0b91a5bc9462eba68b9db2b86e662a5767edd280c",
+    "src/features/people/ScopedAddTravelerSheet.test.ts": "38ecdd438623b7c6359d2e4faf127155534b676cbe948fcf604a8d7af3ba74c4"
+  },
+  "checks": [
+    "listJourneys SQL scopes actor and summary branches to current Account; hasActor requires non-null member ID",
+    "Exact journeyId and hasActor required before binding private draft",
+    "Active/generation fence rejects stale journey/port results",
+    "loadTripPersonEditorDraft asserts committed Account before and after initialized DB read",
+    "Bound draft operations retain AccountApplyGate, before/after Account checks and Account/Trip private storage keys",
+    "No onSave remains submissionEnabled=false; no Person/operation/queue or Cloud authority introduced"
+  ],
+  "tests": "Four consumer cases inspected: reader-cached success, summary-only denial, Account ABA, foreign Trip port. Native reports21 focused tests and lint PASS; not independently rerun in Native worktree.",
+  "findings": [],
+  "limits": [
+    "No device, OTP, Backend, shared files or credentials operated",
+    "Actual Build140 Draft/Cancel/cold recovery remains Native-owned and pending",
+    "Local actor cache is private draft eligibility only; no server permission or revocation proof"
+  ]
+}
