@@ -288,9 +288,12 @@ export function createCoreV2Transport(
     },
     async authorizedVersion(ctx, ordinaryOrderVersion) {
       await assertAccountRequestContext(ctx, getAccountId);
+      let refreshPending = false;
       const guardedProvider: NonNullable<
         Parameters<typeof createAuthenticatedApiClient>[1]
       > = async (input) => {
+        const refreshing = input?.forceRefresh === true;
+        if (refreshing) refreshPending = true;
         try {
           const provider =
             tokenProvider ??
@@ -306,15 +309,30 @@ export function createCoreV2Transport(
               "CORE_AUTH_REFRESH_UNAVAILABLE",
             );
           throw error;
+        } finally {
+          if (refreshing) refreshPending = false;
         }
       };
-      const result = await api(ctx, 4096, guardedProvider).get(
-        path(ctx) + "/authorized-version",
-        authorizedTripVersionSchema,
-        ordinaryOrderVersion === 1
-          ? { ...headers, "X-OTR-Ordinary-Order-Version": "1" }
-          : headers,
-      );
+      let result: AuthorizedTripVersion;
+      try {
+        result = await api(ctx, 4096, guardedProvider).get(
+          path(ctx) + "/authorized-version",
+          authorizedTripVersionSchema,
+          ordinaryOrderVersion === 1
+            ? { ...headers, "X-OTR-Ordinary-Order-Version": "1" }
+            : headers,
+        );
+      } catch (error) {
+        // A refresh pending at the shared boundary timeout follows a known HTTP401.
+        if (refreshPending && error instanceof ApiClientError && error.kind === "timeout")
+          throw new ApiClientError(
+            "OTR API read is unavailable.",
+            "http",
+            401,
+            "CORE_AUTH_REFRESH_UNAVAILABLE",
+          );
+        throw error;
+      }
       await assertAccountRequestContext(ctx, getAccountId);
       if (result.actorAccountId !== ctx.accountId || result.tripId !== ctx.tripId)
         throw new Error("CORE_AUTHORIZED_VERSION_SCOPE_MISMATCH");

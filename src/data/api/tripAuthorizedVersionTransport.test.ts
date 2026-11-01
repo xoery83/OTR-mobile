@@ -175,3 +175,70 @@ it("retains HTTP401 when normal token refresh fails instead of labeling it a net
   });
   expect(fetch).toHaveBeenCalledOnce();
 });
+it("retains the first HTTP401 when pending forceRefresh exceeds the existing 300ms request boundary", async () => {
+  const account = randomUUID(),
+    trip = randomUUID();
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json({ error: { code: "INVALID_SESSION" } }, { status: 401 }),
+  );
+  const provider = vi.fn(async (input?: { forceRefresh?: boolean }) => {
+    if (input?.forceRefresh)
+      return new Promise<{ userId: string; token: string }>(() => {});
+    return { userId: account, token: "synthetic-normal" };
+  });
+  const transport = createCoreV2Transport(
+    async () => account,
+    async () => "b".repeat(64),
+    {
+      baseUrl: "https://local.invalid",
+      fetchImplementation: fetch,
+      timeoutMs: 300,
+    },
+    provider,
+  );
+  const context = await captureAccountRequestContext(trip, async () => account);
+  await expect(transport.authorizedVersion(context)).rejects.toMatchObject({
+    kind: "http",
+    status: 401,
+    code: "CORE_AUTH_REFRESH_UNAVAILABLE",
+  });
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(provider.mock.calls.map(([input]) => !!input?.forceRefresh)).toEqual([
+    false,
+    true,
+  ]);
+});
+it("keeps a later fetch timeout as timeout after successful normal refresh", async () => {
+  const account = randomUUID(),
+    trip = randomUUID();
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(async () =>
+      Response.json({ error: { code: "INVALID_SESSION" } }, { status: 401 }),
+    )
+    .mockImplementationOnce(async () => new Promise<Response>(() => {}));
+  const provider = vi.fn(async (input?: { forceRefresh?: boolean }) => ({
+    userId: account,
+    token: input?.forceRefresh ? "synthetic-refreshed" : "synthetic-normal",
+  }));
+  const transport = createCoreV2Transport(
+    async () => account,
+    async () => "b".repeat(64),
+    {
+      baseUrl: "https://local.invalid",
+      fetchImplementation: fetch,
+      timeoutMs: 300,
+    },
+    provider,
+  );
+  const context = await captureAccountRequestContext(trip, async () => account);
+  await expect(transport.authorizedVersion(context)).rejects.toMatchObject({
+    kind: "timeout",
+    status: undefined,
+  });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(provider.mock.calls.map(([input]) => !!input?.forceRefresh)).toEqual([
+    false,
+    true,
+  ]);
+});
