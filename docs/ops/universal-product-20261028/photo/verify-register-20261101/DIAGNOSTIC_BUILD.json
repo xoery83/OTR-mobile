@@ -1,0 +1,41 @@
+{
+  "status": "DIAGNOSTIC_READY_NOT_DEPLOYED",
+  "commit": "4fa46caf",
+  "baselineCapture": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+  "candidateCapture": "006d520eef09349bc8881fb9909050a587f3da834bf7768ccbe30d6853c9ce28",
+  "codeInputs": 351,
+  "changedInputs": [
+    {
+      "path": "backend/src/sourcePngBroker.ts",
+      "before": "cafdc262f566b9801d8d087545db006289c8b48923f5f372f1d477ce8bc21e9d",
+      "after": "a40ee101efd82368b8c88d8f43c4f742f425d69cec8efc1d542f44edb2f7868d"
+    },
+    {
+      "path": "backend/src/sourcePngPreparationHttp.ts",
+      "before": "0835af2fc805bbd25b2c24e191eeaac44388056c7814c87abd5d0fe0390c8550",
+      "after": "60baa52eab0609c80abc0a4e81c00cc950080cd6e6e1bcc1e476c2404b2d9e85"
+    }
+  ],
+  "otherInputsPreserved": 349,
+  "outputLayout": "dist/server-capture.mjs matches accepted external path",
+  "noCredentialsEnvDatabaseCopied": true,
+  "devChanges": false,
+  "image": {
+    "status": "PHOTO_DIAGNOSTIC_AUTH_COMPATIBLE_IMAGE_BUILT_NOT_DEPLOYED",
+    "commit": "4fa46caf",
+    "baseImage": "sha256:3116c0fd46f8945fe0736177f246dd119645a68a7a209d39f09d39074ffb7530",
+    "candidateImage": "sha256:a5bf79175ce58239c9db82f31555ad2bf271cfedbf5dbdbdb2a7bbe91f27161c",
+    "imageConfigUnchanged": true,
+    "oneCaptureCopyLayer": true,
+    "artifacts": {
+      "server-capture.mjs": "006d520eef09349bc8881fb9909050a587f3da834bf7768ccbe30d6853c9ce28",
+      "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+      "mcp/runtime.mjs": "b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820",
+      "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+    },
+    "fileModes0644": true,
+    "serviceChanged": false,
+    "sqlOrAuthorityChanged": false
+  },
+  "authorityDifference": "NONE"
+}
