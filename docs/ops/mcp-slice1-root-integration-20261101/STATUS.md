@@ -24,3 +24,14 @@ Root short CAS only; MCP performs Consumer E2E. Independent issuer timer must no
 bind oldempty CID. Current-ID/fullConfigHash close pointer changesbefore serving
 confirmed candidate; originaldefault/T-D remainfixed. Existing UNKNOWN never
 replayed. No long global deployment lock; no main change by Root.
+
+## Current live blocker
+
+Auth operator reports Supabase DEV console session expired. Automatic approval
+rejected ContinuewithGitHub because that login source/private console access was
+not explicitly authorized. Auth has requested Owner login/recovery in its chat;
+Root/MCP must not switch browser/API/operator to bypass the rejection. Keep both
+QA keys absent, OAuth/Hookclosed, noT/D/OTP/Notes while this is pending. Software
+need not roll back: defaultclosed9fd2/ab77 remains qualified. All Root control-code
+work is locallycomplete and preserved; firstactual finite activation awaits Owner
+console recovery plus jointissuer/runtime closeREADY. Consumer remains NOT_RUN.
