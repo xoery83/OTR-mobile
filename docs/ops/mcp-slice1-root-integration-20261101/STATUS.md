@@ -11,8 +11,9 @@ Root actual close restored original9fd2 / imageab77 / configa6ba. Independent
 exact (OOMnull), all23 configuration files unchanged, health200/protected401,
 fulfilled timerinactive. Deployment/config resource released. Initial postclose
 wrapper failures remain recorded; no blind reclose. Auth issuerDENY_ALL verified
-10:14:19Z and never enabled. Auth own normal-control session cleanup remains
-UNCONFIRMED/AUTH_OWNED until its actual cleanup receipt arrives.
+10:14:19Z and never enabled. Auth own normal-control session cleanup is now independently resolved from its
+own helper journal: PASS_LOCAL_SCOPE_REFRESH_REVOKED, active lock absent. The
+outer CANCEL/business action and grant GET remain unconfirmed; not business PASS.
 
 Docker created-candidate normalization null→false required minimal Root CAS and
 Auth-owned restore compatibility. Independent review,9 CAS checks,3 realclose-entry
@@ -23,5 +24,5 @@ no SQL/RLS/GRANT/Provider/device/main changes by Root. Exact evidence adjacent.
 Prepared-only confirm caller remains private and never executed; any future use
 still requires actual ConsumerPreview and separate verified human confirmation.
 Historicalbb APPLIED/9b UNKNOWN untouched. Photo fullE2EPASS and firstResults503
-OPEN receipts remain preserved. Next owning dependency: Auth sessioncleanup;
-then MCP/Auth decide lawful next finite round, without repeating code build/review.
+OPEN receipts remain preserved. All runtime/issuer/own-session cleanup is verified. MCP/Auth may determine a
+lawful next finite round without repeating code build/review; no automatic restart.
