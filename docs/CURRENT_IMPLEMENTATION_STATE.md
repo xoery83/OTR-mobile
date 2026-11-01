@@ -15,7 +15,8 @@ NoCommit proof. f107 remainsUNKNOWN. ChatGPT27bf notstarted; historicalbb/9b unt
 Root actualclose SERVER_VERIFIED17:57:11Z: original9fd2b828/configa6ba55fd/imageab77a13c
 healthy, bothQAkeysabsent, exactoriginalHost/all23files, health200/protected401,
 fulfilledtimerinactive, shortlockreleased. Auth issuerdenyall17:56:26 and own grant/
-sessioncleanupPASS reported; finalconsoleHook/Site readback awaitsAuth receipt.
+sessioncleanupPASS reported; finalconsoleHook/Site readback PASS: HookDISABLED, OAuth0, localhost Site/no redirects;
+finalSQL17:58:31Z confirms original denyall body/ACL and activegrant0.
 Do not open anotherwindow or turnUNKNOWN intoNoCommit. Root doesnot submitMCP writes.
 Root helpers reuse actual qualifiedCASbf6/prepareaac0/restoree7/closerc9/helper931.
 Evidence: docs/ops/mcp-slice1-root-integration-20261101/round02/{STATUS.md,OUTCOME.json,
@@ -58,8 +59,38 @@ Photo evidence: docs/ops/universal-product-20261028/photo/golden-slice-20261101/
 TwoVision200 settled$0.00070026; olderUNKNOWN holds/costs retained, noautomaticreplay.
 OriginalPhoto/continuousproviderNov1expiry isnot revivedbyMCP finiteauthority orV3.
 
-Continue C1 precisefailurediagnostics, C2 minimallegitimateJPEGadapter/profile
-candidate, C3 Nativeformalbridge/realSourceintake coordination independently.
+## Latest fixed parallel delivery
+
+C1 safe binding diagnostics fixed1b64fe5a: finite stage/error classifier only, no
+raw messages/SQL/IDs; failure retains original response semantics. LOCAL_PASS,
+not deployed; historical Results503 still has no proven root cause.
+
+C2 fixed6471d917: JPEG uses existing Storage producer with independent read permit,
+exact MIME/hash/scope and outage semantics; 42 targeted Storage tests PASS. Pinned
+jpeg-js0.4.4 baseline-only local decoder verifies actual pixels, strict orientation1
+and finite dimensions/memory; 9 tests PASS. No Source profile, sandbox execution,
+proof, runtime caller or paid JPEG interpretation qualified. Generated decoder
+extraction ignored; archive/license and reproducible preparation retained.
+
+C3 raw Source interpreter fixedc0bd82c6, Root independent50tests PASS and handedNative.
+Reuses Capture submission/recovery and existing Universal consumer/transport;
+independent AccountRequestContext, live Form getter and frozen material intent.
+Same Task/UNKNOWN reads never become paid replay. Native owns stable perForm factory
+and field-review/manual-save integration. No actual runtime mount or scope renewal.
+
+Core/Auth B1 seam fixedbace5af8: existing transaction/actor locks observe explicit
+actorAccountId/tripId/actorPersonId/coreEpoch/coreAccessRevision only. NOT_A_PRIVATE_JOIN_LEASE;
+no real Auth transition receipt means NOT_MAPPABLE, including cross epoch. 16 tests
+independently PASS. Auth accepted shape and receives candidate; no SQL/Host changes.
+
+Fresh MCP recovery assembly fixed91465118 READY, NOT DEPLOYED. Candidate image
+fbd9074e/runtimea0560110/SDK3b5ceca5 preserves actual compatible base with only
+2 Auth diagnostic sources and distinct fresh QA fixture changed. Original9fd2/a6/ab77
+still running closed at last readback. MCP b94fd543 exact Owner execution question
+WAITING_HUMAN: no new clock/OTP/deploy; oldf107 remainsUNKNOWN. Subsequent actual
+Notes approval comes only from direct Auth human after actual Preview.
+
+Continue C2 existing sandbox/IPC adapter candidate and C3 Native integration independently.
 Only sharedHost/SQL/main/device/pinnedProvider mutations needresource-scopedserial
 coordination. No newSchema/RLS/GRANT/roles/SourceAuthority/budget withoutpreciseGate.
 NoProduction/realuser/secretcopy. Do not clean existinguntrackednode_modules or
