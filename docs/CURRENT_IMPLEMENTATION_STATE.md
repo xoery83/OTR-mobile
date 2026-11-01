@@ -17,8 +17,11 @@ Final independentSQL proves exact b0f7 denyall body/originalowner/invoker/search
 and expectedACL. Root defaultcb71/3359/fbd independently restored20:39:46.679Z
 beforeD: health200/protected401, bothQAkeysabsent, Host/all23filesexact, timerinactive,
 shortlockreleased. Do not restore obsolete9fd2. See ops/auth-mcp-fresh-20261102/ACTIVE_STATE.json.
-Read-stage diagnostic local candidate now wired through existing explicit QA Runtime
-with bounded safe whitelist; no TTL/ACL/status/retry change and no DEV deployment.
+Read-stage diagnostics609184bb deployed defaultclosed byRoot21:21:13Z: image1c5d8f83,
+CIDa1d0993e/config9a88efaa/Capture6e694383. Exact2prod inputs changed, other350
+preserved; runtimea056/SDK3b5 unchanged, QAkeysabsent/health200/protected401/23filesexact.
+Future finite restore must use this a1/9a88/1c5 default; cb71 is software rollback only.
+No TTL/ACL/status/retry change. Collector pending, no newT/OTP/issuer/windowapproval.
 Root finite container was removed by restore; old logs unavailable, not proven zero.
 Exact historical failure stage remains UNPROVEN; no automatic write replay.
 

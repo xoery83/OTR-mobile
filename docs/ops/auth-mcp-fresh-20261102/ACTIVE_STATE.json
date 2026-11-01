@@ -81,5 +81,27 @@
       "additionalEditBaseCost": "second snapshot plus collection hash validation; no extra scope",
       "longBranchCoreFilesByteIdentical": false
     }
+  },
+  "nextQaPreparation": {
+    "status": "DEFAULT_CLOSED_DEPLOYED_COLLECTOR_PENDING_NO_NEW_WINDOW",
+    "rootVerifiedAt": "2026-11-01T21:21:13Z",
+    "defaultContainer": "a1d0993ea215c4bb6f1ca554c2f5536d1ce8c1925374a06d867c36d44c21effd",
+    "defaultConfigSHA256": "9a88efaac354f37c8863f48d1ac8c5c9ecf5b3368a3bdbd6e7dade955d19caba",
+    "imageSHA256": "1c5d8f83d57ca9d704cfc947e908c3fa6d90ff8fbf16327e775201bdced4c39b",
+    "captureSHA256": "6e69438340ce20f51912b4ad465406270fc17a8589950d1d52b6f7eb566a59e0",
+    "authCandidate": "609184bb",
+    "productionInputsChanged": 2,
+    "otherInputsPreserved": 350,
+    "runtimeAndSdkUnchanged": true,
+    "bothQaKeysAbsent": true,
+    "health200Protected401": true,
+    "hostEnv23FilesExact": true,
+    "sharedLockReleased": true,
+    "previousDefault": "cb71/3359/fbd retained only as software rollback; not next finite restore target",
+    "collectorReady": false,
+    "newWindowStarted": false,
+    "newOwnerWindowApproval": false,
+    "newOtpSent": false,
+    "issuerActivated": false
   }
 }
