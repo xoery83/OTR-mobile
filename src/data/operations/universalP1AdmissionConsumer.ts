@@ -290,7 +290,7 @@ export async function readUniversalP1ReviewOriginal(
   const png =
     source.mime === "image/png" &&
     !source.pdfSource &&
-    input?.kind === "IMAGE" &&
+    (input?.kind === "IMAGE" || input?.kind === "FILE") &&
     input.declaredContentType === "image/png" &&
     source.submittedSha256 === source.originalSha256;
   const maximum = source.pdfSource

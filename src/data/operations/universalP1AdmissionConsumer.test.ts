@@ -876,7 +876,7 @@ it("reviews retained PDF through the canonical original preview, never by decodi
   expect(f.core.enqueue).not.toHaveBeenCalled();
 });
 
-it("opens the scoped retained original PNG instead of decoding it as text or OCR", async () => {
+it.each(["IMAGE", "FILE"] as const)("opens the scoped retained %s PNG instead of decoding it as text or OCR", async (kind) => {
   const f = await fixture();
   const bytes = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
@@ -886,7 +886,7 @@ it("opens the scoped retained original PNG instead of decoding it as text or OCR
     captureId = randomUUID(),
     payloadId = randomUUID();
   Object.assign(f.model.inputs[0], {
-    kind: "IMAGE",
+    kind,
     declaredContentType: "image/png",
     originalFilename: null,
     captureId,
