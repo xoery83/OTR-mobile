@@ -12,8 +12,9 @@ Originalf107/full48dc and allUNKNOWN evidence retained. ChatGPT notstarted.
 
 Root CLOSED_SERVER_VERIFIED17:57:11Z beforeD17:58:11.178Z:original9fd2/a6/ab77,
 healthy, QAkeysabsent, exactHost/all23files, HTTP200/401, fulfilledtimerinactive.
-Auth issuerdenyall17:56:26 and owngrant/sessioncleanupPASS reported; finalconsole
-Hook/Site restoration receipt stillpending. No autoextension/replacementwindow.
+Auth issuerdenyall17:56:26 and owngrant/sessioncleanupPASS reported; Auth final console readback reported OAuth0/reload, HookDISABLED and localhost
+Site/no redirects; finalSQL17:58:31.599Z confirmed original denyall body/ACL and
+activegrant0. No autoextension/replacementwindow.
 
 Safe logs prove read401/BACKEND_401 with9.339s/17.673s duration, but Authbinding
 can map expiryafterIO to401; cannot assign rootcausewithout finer evidence.
