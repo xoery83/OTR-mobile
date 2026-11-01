@@ -130,6 +130,14 @@ type ModulePort = {
   createReadRuntime(options: RuntimeOptions): (request: Request) => Promise<Response>;
   createWriteRuntime?(options: RuntimeOptions): (request: Request) => Promise<Response>;
 };
+const writeStageLogSchema = z.object({
+  diagnosticId: z.uuid(),
+  stage: z.enum(["PRECHECK", "CORE_BOUNDARY_ENTERED", "CORE_RETURNED", "POSTCHECK"]),
+  elapsedMs: z.number().min(0).max(120000),
+  failure: z
+    .enum(["EXPIRED", "CANCELED", "TIMEOUT", "GRANT_NOT_CURRENT", "UNCLASSIFIED"])
+    .optional(),
+});
 const requestLogSchema = z.object({
   requestId: z.uuid(),
   status: z.number().int().min(100).max(599),
@@ -240,6 +248,11 @@ export async function loadMcpQaRuntime(
           const accessToken = evidence.accessToken;
           const bound = await createMcpAccountWriteBinding({
             ...ports,
+            diagnostic: (event) => {
+              const safe = writeStageLogSchema.safeParse(event);
+              if (safe.success)
+                console.info("MCP_QA_WRITE_STAGE", JSON.stringify(safe.data));
+            },
             isWriteGrantCurrent: (current, checkSignal) =>
               current.accountId === qaAccount && Date.now() < config.expiresAt
                 ? active(current, checkSignal, { accessToken })

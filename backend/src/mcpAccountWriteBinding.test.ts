@@ -34,7 +34,9 @@ function setup() {
   const hash = vi.fn(async (bytes: Uint8Array) =>
     createHash("sha256").update(bytes).digest("hex"),
   );
+  const diagnostic = vi.fn();
   const ports = {
+    diagnostic,
     isWriteGrantCurrent,
     discovery: { discoverTrips },
     canReadTrip,
@@ -64,6 +66,7 @@ function setup() {
     readOperation,
     discoverTrips,
     isWriteGrantCurrent,
+    diagnostic,
     hash,
     parent: new AbortController(),
     signal: new AbortController().signal,
@@ -75,6 +78,7 @@ it.each(["revoke", "expiry", "cancel"])(
   "keeps a real committed P3 uncertain when %s suppresses its response",
   async (mode) => {
     const q = setup();
+    q.grant.expiresAt = Date.now() + 1000;
     let graph = emptyCoreGraph();
     const commit = vi.fn<CoreCommandTransaction["commit"]>(async (mutation, receipt) => {
       expect(receipt.outcome).toBe("APPLIED");
@@ -136,6 +140,27 @@ it.each(["revoke", "expiry", "cancel"])(
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: { code: "MCP_WRITE_UNAVAILABLE" } });
     expect(q.readOperation).not.toHaveBeenCalled();
+    expect(q.diagnostic.mock.calls.map(([event]) => event.stage)).toEqual(
+      mode === "cancel"
+        ? ["PRECHECK", "CORE_BOUNDARY_ENTERED", "CORE_BOUNDARY_ENTERED"]
+        : [
+            "PRECHECK",
+            "CORE_BOUNDARY_ENTERED",
+            "CORE_RETURNED",
+            "POSTCHECK",
+            "POSTCHECK",
+          ],
+    );
+    expect(q.diagnostic.mock.calls.at(-1)![0].failure).toBe(
+      mode === "expiry"
+        ? "EXPIRED"
+        : mode === "cancel"
+          ? "CANCELED"
+          : "GRANT_NOT_CURRENT",
+    );
+    expect(
+      new Set(q.diagnostic.mock.calls.map(([event]) => event.diagnosticId)).size,
+    ).toBe(1);
   },
 );
 
@@ -329,4 +354,103 @@ it("suppresses late responses after expiry/cancel and never retries an uncertain
   await vi.advanceTimersByTimeAsync(50000);
   expect((await result).status).toBe(503);
   expect(q.withLockedCommand).toHaveBeenCalledOnce();
+  expect(q.diagnostic.mock.calls.at(-1)![0]).toMatchObject({
+    stage: "CORE_BOUNDARY_ENTERED",
+    failure: "TIMEOUT",
+  });
+});
+
+it("reports expiry before dispatch without entering Core", async () => {
+  vi.useFakeTimers();
+  const q = setup();
+  const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.signal);
+  vi.setSystemTime(q.grant.expiresAt);
+  const response = await binding.backend(
+    { method: "POST", path: commandPath, body: q.command },
+    q.signal,
+  );
+  expect(response.status).toBe(401);
+  expect(q.withLockedCommand).not.toHaveBeenCalled();
+  expect(q.diagnostic.mock.calls.map(([event]) => event.stage)).toEqual([
+    "PRECHECK",
+    "PRECHECK",
+  ]);
+  expect(q.diagnostic.mock.calls.at(-1)![0].failure).toBe("EXPIRED");
+});
+
+it("reports expiry after Core entry without claiming that Core committed", async () => {
+  vi.useFakeTimers();
+  const q = setup();
+  q.grant.expiresAt = Date.now() + 1000;
+  const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.signal);
+  q.withLockedCommand.mockImplementationOnce(async () => {
+    vi.setSystemTime(q.grant.expiresAt);
+    throw Error("OWNING_COMMAND_PORT_UNAVAILABLE");
+  });
+  const response = await binding.backend(
+    { method: "POST", path: commandPath, body: q.command },
+    q.signal,
+  );
+  expect(response.status).toBe(503);
+  expect(q.withLockedCommand).toHaveBeenCalledOnce();
+  expect(q.diagnostic.mock.calls.map(([event]) => event.stage)).toEqual([
+    "PRECHECK",
+    "CORE_BOUNDARY_ENTERED",
+    "CORE_RETURNED",
+    "POSTCHECK",
+    "POSTCHECK",
+  ]);
+  expect(q.diagnostic.mock.calls.at(-1)![0].failure).toBe("EXPIRED");
+  const safe = JSON.stringify(q.diagnostic.mock.calls);
+  for (const forbidden of [
+    actor,
+    trip,
+    item,
+    operation,
+    commandPath,
+    "Synthetic QA edit",
+    "COMMITTED",
+  ])
+    expect(safe).not.toContain(forbidden);
+});
+
+it("diagnostic failures cannot alter command dispatch, response or retry count", async () => {
+  const q = setup();
+  q.diagnostic.mockImplementation(() => {
+    throw Error("LOGGER_FAILED");
+  });
+  const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.signal);
+  const response = await binding.backend(
+    { method: "POST", path: commandPath, body: q.command },
+    q.signal,
+  );
+  expect(response.status).toBe(503);
+  expect(q.withLockedCommand).toHaveBeenCalledOnce();
+});
+
+it("does not emit a late Core return after cancellation already terminated the diagnostic", async () => {
+  const q = setup();
+  const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.parent.signal);
+  let reject!: (error: Error) => void;
+  q.withLockedCommand.mockImplementationOnce(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+  );
+  const response = binding.backend(
+    { method: "POST", path: commandPath, body: q.command },
+    q.signal,
+  );
+  while (!reject) await Promise.resolve();
+  q.parent.abort();
+  expect((await response).status).toBe(503);
+  const count = q.diagnostic.mock.calls.length;
+  reject(Error("LATE_CORE_FAILURE"));
+  for (let n = 0; n < 20; n++) await Promise.resolve();
+  expect(q.diagnostic).toHaveBeenCalledTimes(count);
+  expect(q.diagnostic.mock.calls.at(-1)![0]).toMatchObject({
+    stage: "CORE_BOUNDARY_ENTERED",
+    failure: "CANCELED",
+  });
 });

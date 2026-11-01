@@ -2,12 +2,16 @@ import { afterEach, expect, it, vi } from "vitest";
 import { loadMcpQaRuntime } from "./mcpQaRuntime";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
 import cases from "../mcp/slice1-qa-cases.json";
-const calls = vi.hoisted(() => ({ backend: vi.fn(), active: vi.fn(async () => true) }));
+const calls = vi.hoisted(() => ({
+  diagnostic: undefined as undefined | ((event: unknown) => void),
+  backend: vi.fn(),
+  active: vi.fn(async () => true),
+}));
 vi.mock("./mcpAccountWriteBinding", () => ({
-  createMcpAccountWriteBinding: () => async () => ({
-    read: vi.fn(),
-    backend: calls.backend,
-  }),
+  createMcpAccountWriteBinding: (ports: { diagnostic(event: unknown): void }) => {
+    calls.diagnostic = ports.diagnostic;
+    return async () => ({ read: vi.fn(), backend: calls.backend });
+  },
 }));
 vi.mock("./mcpOAuthGrantVerifier", () => ({
   createSupabaseDevMcpGrantVerifier: () => calls.active,
@@ -227,5 +231,33 @@ it("logs guide/edit-base names through the existing safe projection only", async
     });
   expect(log).toHaveBeenCalledTimes(2);
   expect(JSON.stringify(log.mock.calls)).not.toContain("NEVER_LOG_THIS_UNIT_VALUE");
+  log.mockRestore();
+});
+
+it("wires write-stage diagnostics only through the finite QA safe projection", async () => {
+  const q = fixture();
+  const o = await options(q);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  await binding(o);
+  calls.diagnostic!({
+    diagnosticId: "11111111-1111-4111-8111-111111111111",
+    stage: "POSTCHECK",
+    elapsedMs: 12,
+    failure: "EXPIRED",
+    accessToken: "NEVER_LOG_THIS_UNIT_VALUE",
+    path: "/private",
+  });
+  calls.diagnostic!({ diagnosticId: "invalid", stage: "COMMITTED", elapsedMs: 12 });
+  expect(log.mock.calls).toEqual([
+    [
+      "MCP_QA_WRITE_STAGE",
+      JSON.stringify({
+        diagnosticId: "11111111-1111-4111-8111-111111111111",
+        stage: "POSTCHECK",
+        elapsedMs: 12,
+        failure: "EXPIRED",
+      }),
+    ],
+  ]);
   log.mockRestore();
 });

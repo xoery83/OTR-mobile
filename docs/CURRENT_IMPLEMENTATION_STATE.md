@@ -1040,3 +1040,8 @@ Auth receipt directory: `docs/ops/auth-phase2-20261028/`. Start with
 `GUEST_B_SOURCE_MAIN_INTEGRATION.json`, `GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json`,
 `GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json`, `GUEST_B_PROVISIONAL_TRANSPORT_REVIEW.json`
 and `GUEST_B_ATOMIC_PORT_CANDIDATE.md`; prior detailed state is preserved in Git.
+
+Safe WriteBinding stage diagnostic candidate:32 focused independent tests/Review,
+types/lint PASS; only log-only randomID/stage/elapsed/failure, default QA runtime
+closed. TTL/scope/UNKNOWN/dispatch unchanged. Not deployed and cannot retrospectively
+prove originalf107 dispatch/commit; per-call ID is not MCP operation correlation.
