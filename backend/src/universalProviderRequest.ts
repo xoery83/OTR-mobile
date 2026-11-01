@@ -1,10 +1,14 @@
+import { imageDimensions } from "../frozen-workbench/scripts/import-workbench/llm-first";
 import { createHash } from "node:crypto";
 import type { UniversalProvider } from "./universalImport";
 import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
 import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
 
 type Input = Parameters<UniversalProvider["interpret"]>[0];
-export function buildUniversalDeepSeekRequest(input: Input) {
+export function buildUniversalDeepSeekRequest(
+  input: Input,
+  imageFormat: "IMAGE_GEOMETRY_V1" | "LEGACY" = "IMAGE_GEOMETRY_V1",
+) {
   if (
     input.promptVersion !== COMPACT_PROMPT_VERSION ||
     input.instruction !== universalInstruction ||
@@ -29,7 +33,8 @@ export function buildUniversalDeepSeekRequest(input: Input) {
     {
       type: "text",
       text: images.length
-        ? "Interpret these source representations. Image evidence refers to the submitted image SHA256 and pixel regions, not OCR text offsets."
+        ? ("Interpret these source representations. Image evidence refers to the submitted image SHA256 and pixel regions, not OCR text offsets." +
+            (imageFormat === "LEGACY" ? "" : " IMAGE_SIZE_PIXELS gives the original image width and height. For visible P1/P6 activity.name and activity.date, return [sourceIndex,path,visibleRaw,{x:pixelX,y:pixelY,w:pixelWidth,h:pixelHeight}] when you can locate the text in that coordinate space. A region is an unverified proposal requiring human review. Never guess a region; omit it if you cannot locate the text."))
         : "Path B_PREPARED. Interpret these source representations. Each payload starts after its SOURCE marker; offsets exclude the marker.",
     },
   ];
@@ -42,7 +47,11 @@ export function buildUniversalDeepSeekRequest(input: Input) {
       const text = marker + value;
       content.push({ type: "text", text });
     } else {
-      content.push({ type: "text", text: marker });
+      const size = imageFormat === "LEGACY" ? null : imageDimensions(source.bytes, source.mime);
+      if (imageFormat !== "LEGACY" && (!size || !Number.isSafeInteger(size.width) ||
+        !Number.isSafeInteger(size.height) || size.width <= 0 || size.height <= 0))
+        throw new Error("UNIVERSAL_IMAGE_DIMENSIONS_INVALID");
+      content.push({ type: "text", text: marker + (size ? `IMAGE_SIZE_PIXELS ${size.width} ${size.height}\n` : "") });
       content.push({
         type: "image_url",
         image_url: {

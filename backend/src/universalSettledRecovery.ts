@@ -87,7 +87,7 @@ export async function recoverSettledUniversalTask(deps: {
     !dispatch.ready.length
   )
     throw Error("UNIVERSAL_RECOVERY_SOURCE_CHANGED");
-  const request = buildUniversalDeepSeekRequest({
+  const requestInput = {
     actorId: task.account_id,
     accountId: task.account_id,
     tripId: task.trip_id!,
@@ -104,7 +104,7 @@ export async function recoverSettledUniversalTask(deps: {
       sha256: p.submittedSha256,
       bytes: p.bytes,
     })),
-  });
+  } satisfies Parameters<typeof buildUniversalDeepSeekRequest>[0];
   const raw = await deps.stores.readRaw(task.account_id, deps.callId);
   const binding = raw.binding as {
     version?: unknown;
@@ -112,6 +112,10 @@ export async function recoverSettledUniversalTask(deps: {
     requestSha256?: unknown;
     httpStatus?: unknown;
   };
+  let request = buildUniversalDeepSeekRequest(requestInput);
+  // Existing paid responses retain their original request bytes and hash.
+  if (binding?.requestSha256 !== request.requestSha256)
+    request = buildUniversalDeepSeekRequest(requestInput, "LEGACY");
   if (
     !binding ||
     binding.version !== 1 ||
