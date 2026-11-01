@@ -1,0 +1,23 @@
+{
+  "status": "LOCAL_COMPATIBLE_CODE_BUILD_PASS_NOT_DEPLOYED",
+  "rootCommit": "63b8aa6d",
+  "acceptedCaptureReproduced": "44fbd00e11a7a99c8319a2e1a63aaabf9d52df2dcc4fc1d02e164279ffaec899",
+  "candidateCapture": "ba7471606d54615ac16733414f497e52e5e6b7155d5d5ea909093ecdf1db727d",
+  "codeInputs": 351,
+  "changedInputs": [
+    {
+      "path": "backend/src/universalDeepSeekProvider.ts",
+      "before": "4f4aab299e3ee256ac58181158cfa7e4eca3bdb44be3307858054f58e5531eb1",
+      "after": "c94c5a35e7bcfa14263c4f848e64763fc24a740b813606fc83a893098ef216b7"
+    },
+    {
+      "path": "backend/src/universalTaskActivity.ts",
+      "before": "44520b26c36d8550e735063232ca7a8ecae15d0b716243776af7cc5086f39a70",
+      "after": "0821c3e8d497f24665b11a45b93e2f338f2e1fbb8318db0aa7cce85890a1566d"
+    }
+  ],
+  "otherCodeInputsPreserved": 349,
+  "authorityChanged": false,
+  "providerCalls": 0,
+  "hostChanged": false
+}

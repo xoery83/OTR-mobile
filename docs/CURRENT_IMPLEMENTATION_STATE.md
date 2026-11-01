@@ -38,7 +38,10 @@ Overdue already-started RUNNING now projects existing UNKNOWN to stop misleading
 Reading/infinite polling; Task/ledger unchanged, manual GET/recovery retained.
 64 focused Backend/Native tests, scopedlint/ui:guard PASS; independentNO_BLOCKER.
 Not yet deployed or visually verified. One exact controlled-reexecution packet
-fixed4d1d5226 is pending Owner; no replacement created while waiting.
+fixed4d1d5226 explicitly APPROVED by Owner; no replacement created yet.
+Local compatible build ba747160 reproduces accepted44fbd byte-for-byte before
+2file overlay;349otherinputs unchanged. Await Auth actualCLOSED/fresh runtime CAS
+for ordinary serialized deployment, then recheck old results before one new input/call.
 
 Evidence: photo/provider-acquire-20261101/{EXECUTION,ACTUAL_PROVIDER_CALL_RECEIPT,
 PROVIDER_FAILURE_AND_RETENTION,WINDOW_CLOSED,DEPLOYED_DIAGNOSTIC_READBACK}.json.

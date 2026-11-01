@@ -1,0 +1,9 @@
+{
+  "gateCommit": "4d1d5226",
+  "gate": "PHOTO_ACQUIRE_FAILURE_CONTROLLED_REEXECUTION_GATE",
+  "source": "Human direct reply to exact question",
+  "answer": "批准该精确一次续测 Gate",
+  "scopeUnchanged": true,
+  "executionNotStarted": true,
+  "oldUnknownHoldPreserved": true
+}
