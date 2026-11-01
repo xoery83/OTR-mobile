@@ -51,7 +51,7 @@ type Dependencies = {
   notify(scope: AccountScope, tripIds: string[], discoveryChanged: boolean): void;
   now?: () => number;
 };
-type ReadState = { next: number; failures: number; running?: Promise<void> };
+type ReadState = { next: number; failures: number; running?: Promise<boolean> };
 
 // Ephemeral read coalescing only. Certificates and Pending/UNKNOWN remain owned by Core.
 export function createTripDownstreamCoordinator(deps: Dependencies) {
@@ -77,7 +77,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
         reads.delete(prior);
     let state = reads.get(key);
     if (state?.running) return state.running;
-    if (state && now() < state.next && (!invalidated || state.failures > 0)) return;
+    if (state && now() < state.next && (!invalidated || state.failures > 0)) return false;
     state ??= { next: 0, failures: 0 };
     reads.set(key, state);
     const current = state;
@@ -100,9 +100,10 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     })
       .then(
         () => {
-          if (skipped) return;
+          if (skipped) return false;
           current.failures = 0;
           current.next = now() + 15_000;
+          return true;
         },
         (error: unknown) => {
           current.next =
@@ -157,8 +158,8 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
       await assertAccountRequestContext(context, deps.account);
       const live = await deps.scope();
       if (live?.accountId !== context.accountId || live.generation !== context.generation)
-        return;
-      await trip(context, context.tripId, true);
+        return false;
+      return trip(context, context.tripId, true);
     },
     async trip(tripId: string, expected?: AccountScope, isCurrent?: () => boolean) {
       const scope = await deps.scope();
@@ -362,5 +363,5 @@ export async function refreshTripFromCloud(tripId: string) {
 
 // Unmounted until the owning private-subscription contract is qualified.
 export async function invalidateTripFromCloud(context: AccountRequestContext) {
-  await (await nativeCoordinator()).invalidate(context);
+  return (await nativeCoordinator()).invalidate(context);
 }

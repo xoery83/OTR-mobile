@@ -106,3 +106,17 @@ it("hint bursts do not bypass the existing Downstream failure backoff", async ()
   expect(f.pull).toHaveBeenCalledTimes(2);
   expect(f.accepted()).toBe(1);
 });
+
+it("a reconcile inside failure backoff retains the last hint for the later lifecycle retry", async () => {
+  vi.useFakeTimers();
+  const f = fixture();
+  f.pull.mockRejectedValueOnce(Error("CURSOR_COMMIT_FAILED"));
+  await f.trigger.activate(f.context);
+  expect(f.pull).toHaveBeenCalledOnce();
+  await f.trigger.activate(f.context);
+  expect(f.pull).toHaveBeenCalledOnce();
+  await vi.advanceTimersByTimeAsync(15_001);
+  await f.trigger.activate(f.context);
+  expect(f.pull).toHaveBeenCalledTimes(2);
+  expect(f.accepted()).toBe(1);
+});

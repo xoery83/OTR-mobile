@@ -7,7 +7,7 @@ import { subscribeAccountGeneration } from "../auth/accountGeneration";
 type Dependencies = {
   account(): Promise<string>;
   available(): Promise<boolean>;
-  invalidate(context: AccountRequestContext): Promise<void>;
+  invalidate(context: AccountRequestContext): Promise<void | boolean>;
   // Owning adapter must authorize/expire/revoke, honor abort and validate hints.
   subscribe?(
     context: AccountRequestContext,
@@ -70,7 +70,10 @@ export function createTripRealtimeTrigger(deps: Dependencies) {
     try {
       while (state.dirty && (await current(state))) {
         state.dirty = false;
-        await deps.invalidate(state.context);
+        if ((await deps.invalidate(state.context)) === false) {
+          state.dirty = true;
+          break; // Existing Downstream backoff owns when the next read may run.
+        }
       }
     } catch {
       state.dirty = true;
