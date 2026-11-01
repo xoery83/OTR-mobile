@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { loadMcpQaRuntime } from "./mcpQaRuntime";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
+import * as readBindings from "./mcpAccountReadBinding";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
 const clientId = "11111111-1111-4111-8111-111111111111";
 function fixture() {
@@ -393,4 +394,72 @@ it("delegates only exact optional paths without bypassing ordinary authenticatio
   expect(
     (await handle(new Request("https://api-dev.xoery.art/oauth/consent/private"))).status,
   ).toBe(404);
+});
+
+it("wires finite Read discovery stage logs through the whitelist and tolerates logger failure", async () => {
+  const q = fixture();
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  const original = readBindings.createMcpAccountReadBinding;
+  let diagnostic!: (event: readBindings.McpReadStageDiagnostic) => void;
+  const bindSpy = vi
+    .spyOn(readBindings, "createMcpAccountReadBinding")
+    .mockImplementation((ports) => {
+      diagnostic = ports!.readDiagnostic!;
+      return original(ports);
+    });
+  try {
+    await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
+    const { bindBackend } = q.createReadRuntime.mock.calls[0][0] as {
+      bindBackend: ReturnType<typeof readBindings.createMcpAccountReadBinding>;
+    };
+    const signal = new AbortController().signal;
+    const bound = await bindBackend(
+      {
+        accountId: "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+        clientId,
+        sessionId: "22222222-2222-4222-8222-222222222222",
+        resource: "https://api-dev.xoery.art/mcp",
+        scopes: ["otr.trips.read"],
+        expiresAt: q.expiresAt,
+      },
+      signal,
+    );
+    expect((await bound.read("/v2/trips", signal)).status).toBe(200);
+    const events = info.mock.calls.map(([label, event]) => {
+      expect(label).toBe("MCP_QA_READ_STAGE");
+      return JSON.parse(event);
+    });
+    expect(events.map((event) => event.stage)).toEqual([
+      "PRECHECK",
+      "OWNING_ENTERED",
+      "OWNING_RETURNED",
+      "POSTCHECK",
+    ]);
+    expect(new Set(events.map((event) => event.diagnosticId)).size).toBe(1);
+    expect(events.every((event) => event.resource === "DISCOVERY")).toBe(true);
+    expect(events.at(-1).owningResponseStatus).toBe(200);
+    diagnostic({
+      ...events[0],
+      accessToken: "NEVER_LOG_THIS_UNIT_VALUE",
+      accountId: "NEVER_LOG_THIS_UNIT_VALUE",
+      path: "/private",
+      body: "NEVER_LOG_THIS_UNIT_VALUE",
+    } as readBindings.McpReadStageDiagnostic);
+    expect(JSON.parse(info.mock.calls.at(-1)![1])).toEqual(events[0]);
+    const before = info.mock.calls.length;
+    diagnostic({
+      ...events[0],
+      stage: "COMMITTED",
+    } as readBindings.McpReadStageDiagnostic);
+    expect(info).toHaveBeenCalledTimes(before);
+    expect(JSON.stringify(info.mock.calls)).not.toContain("NEVER_LOG_THIS_UNIT_VALUE");
+    info.mockImplementation(() => {
+      throw Error("LOG_FAILED");
+    });
+    expect((await bound.read("/v2/trips", signal)).status).toBe(200);
+    expect(q.gateway.discoverTrips).toHaveBeenCalledTimes(2);
+  } finally {
+    bindSpy.mockRestore();
+    info.mockRestore();
+  }
 });

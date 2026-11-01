@@ -47,5 +47,13 @@
     "hostAnd23FilesExact": true,
     "timerInactive": true,
     "shortLockReleasedAt": "2026-11-01T20:39:46.521Z"
+  },
+  "postCloseDiagnosis": {
+    "actualFailure": "get_trip_item_edit_base AUTH_REQUIRED",
+    "exactFailureStage": "UNPROVEN",
+    "hostLogEvidence": "UNAVAILABLE_CONTAINER_REMOVED; earlier zero rows was not a successful log read",
+    "sourceCandidate": "ReadBinding bounded readDiagnostic and existing QA Runtime whitelist; LOCAL_ONLY_NOT_DEPLOYED",
+    "authorizationStatusUnchanged": true,
+    "noAutomaticWriteReplay": true
   }
 }

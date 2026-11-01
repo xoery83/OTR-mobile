@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { createMcpAccountReadBinding } from "./mcpAccountReadBinding";
+import {
+  createMcpAccountReadBinding,
+  type McpReadStageDiagnostic,
+} from "./mcpAccountReadBinding";
 import {
   createMcpAccountWriteBinding,
   type CommandRequest,
@@ -138,6 +141,15 @@ const writeStageLogSchema = z.object({
     .enum(["EXPIRED", "CANCELED", "TIMEOUT", "GRANT_NOT_CURRENT", "UNCLASSIFIED"])
     .optional(),
 });
+const readStageLogSchema = z.object({
+  diagnosticId: z.uuid(),
+  resource: z.enum(["DISCOVERY", "COLLECTION", "ITEM"]),
+  stage: z.enum(["PRECHECK", "OWNING_ENTERED", "OWNING_RETURNED", "POSTCHECK"]),
+  elapsedMs: z.number().min(0).max(120000),
+  remainingMs: z.number().min(0).max(60000),
+  owningResponseStatus: z.number().int().min(100).max(599).optional(),
+  failure: z.enum(["EXPIRED", "CANCELED", "TIMEOUT", "UNCLASSIFIED"]).optional(),
+});
 const requestLogSchema = z.object({
   requestId: z.uuid(),
   status: z.number().int().min(100).max(599),
@@ -233,6 +245,10 @@ export async function loadMcpQaRuntime(
       })
     : readActive;
   const ports = {
+    readDiagnostic: (event: McpReadStageDiagnostic) => {
+      const safe = readStageLogSchema.safeParse(event);
+      if (safe.success) console.info("MCP_QA_READ_STAGE", JSON.stringify(safe.data));
+    },
     discovery: { discoverTrips: gateway.discoverTrips.bind(gateway) },
     canReadTrip: gateway.canReadTrip.bind(gateway),
     core,

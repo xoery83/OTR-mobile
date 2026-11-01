@@ -17,6 +17,10 @@ Final independentSQL proves exact b0f7 denyall body/originalowner/invoker/search
 and expectedACL. Root defaultcb71/3359/fbd independently restored20:39:46.679Z
 beforeD: health200/protected401, bothQAkeysabsent, Host/all23filesexact, timerinactive,
 shortlockreleased. Do not restore obsolete9fd2. See ops/auth-mcp-fresh-20261102/ACTIVE_STATE.json.
+Read-stage diagnostic local candidate now wired through existing explicit QA Runtime
+with bounded safe whitelist; no TTL/ACL/status/retry change and no DEV deployment.
+Root finite container was removed by restore; old logs unavailable, not proven zero.
+Exact historical failure stage remains UNPROVEN; no automatic write replay.
 
 # Auth V3 / closed OAuth continuation — 2 November 2026
 
