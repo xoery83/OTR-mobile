@@ -1,0 +1,19 @@
+{
+  "status": "NO_BLOCKER_LOCAL_INSTALL_WRAPPER_CANDIDATE_ONLY",
+  "reviewer": "auth_phase1_review",
+  "candidateSHA256": "b53e767ef33ae5bb407f58acc0cf17df108a40055e393884ddbe0ae4703763c0",
+  "verified": [
+    "Candidate canonical self-hash and all7 attached file hashes match.",
+    "Reviewed body cf3081ab occurs exactly once byte-for-byte; no business SQL changes.",
+    "One BEGIN/COMMIT encloses role/database/explicit project+Gate setting, four-object absence and Auth dependency preconditions, all DDL and privilege postconditions. statement_timeout15s and lock_timeout3s remain local.",
+    "No CREATE OR REPLACE or automatic DROP/reinstall. Existing objects cause denial; unknown ACK requires exact read-only reconciliation.",
+    "Postconditions enforce two postgres-owned RLS tables, SELECT-only authenticated table ACL, two postgres SECURITY DEFINER functions with fixed pg_catalog search_path, exact function ACL, self access and two SELECT policies. Unexpected default ACL rejects before COMMIT.",
+    "Local harness uses its randomly named network-none256MB disposable container; existing target DB replacement and termination concern only that owned fixture. Six reported checks and result input hash are consistent; Python AST independently checked."
+  ],
+  "limits": [
+    "Did not rerun Docker or prior PG10/domain/RLS tests. Fixture auth.uid/auth.jwt are substitutes, not JWT/OTP E2E.",
+    "No actual Hosted object/default ACL/dependency readback or installer execution; explicit project GUC is an operator confirmation, not independent endpoint identity proof.",
+    "No Owner request/approval, runtime mount, Native entry, SQLite registry or sync activation. Fresh approved DEV channel metadata/resource release and final exact Gate remain pending."
+  ],
+  "findings": []
+}

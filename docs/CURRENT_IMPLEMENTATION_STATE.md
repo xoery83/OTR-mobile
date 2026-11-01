@@ -344,6 +344,13 @@ leaks before repair. Candidate SELECT/save now share one normal-self predicate;
 adapter denies resource tokens before IO, then checks fresh Auth user and exact actor RPC.
 Boundary45/localPG10/types/scoped lint PASS; independent subject Review NO_BLOCKER.
 No Hosted installation; exact new-table/function/RLS/GRANT Owner Gate remains required.
+Photo Focus installer-only preparation preserves that same cf308 SQL body and adds
+exact DEV/operator/role/absent-object preconditions plus transactional ACL/RLS/owner
+postconditions. Network-none local PG6 install/deny/rollback/reinstall checks and
+independent Review PASS. No Hosted metadata/install or approval request; fresh actual
+resource release, project channel, default-ACL/dependency readback and runtime/QA
+plan remain required. See ops/auth-private-profile-20261031/hosted-install-candidate (local only).
+
 Local draft Screen3970 now uses only that repository's local read/saveDraft;
 explicit device-only copy, identity/late-callback/busy/error fences:4s41/types/
 lint/UIguard166 and independent2s26 NO_BLOCKER. Dedicated Screen and six new

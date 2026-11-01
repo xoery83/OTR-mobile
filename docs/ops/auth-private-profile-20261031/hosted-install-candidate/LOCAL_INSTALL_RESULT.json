@@ -1,0 +1,16 @@
+{
+  "status": "LOCAL_INSTALL_CAS_PRIVILEGE_AND_ROLLBACK_PASS",
+  "checks": [
+    "missing approval and wrong DEV binding reject before all DDL",
+    "unprivileged role cannot execute the install even with fixture settings",
+    "unexpected existing object is retained and installation stops",
+    "unexpected default ACL fails postconditions and rolls back all new objects",
+    "exact reviewed install commits its two private tables and functions",
+    "duplicate install is rejected without replacing the installed functions"
+  ],
+  "installSHA256": "2652b1af01f083d7f1aaca39d2b0b37904f7ff14e2ca8f5164ec114d5ea2d15e",
+  "network": "none",
+  "hostedWrites": 0,
+  "runtimeWired": false,
+  "claims": "installer fixture only; reuse existing unchanged-body domain/RLS proof separately"
+}

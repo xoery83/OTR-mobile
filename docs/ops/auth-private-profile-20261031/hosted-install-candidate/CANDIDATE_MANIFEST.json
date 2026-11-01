@@ -1,0 +1,21 @@
+{
+  "status": "LOCAL_QUALIFIED_CANDIDATE_NOT_REQUESTED_OR_AUTHORIZED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "bodySHA256": "cf3081ab03aae25ed9373f84968d5118f81628df7a9c0fb59a08ad6fe7631b54",
+  "installSHA256": "2652b1af01f083d7f1aaca39d2b0b37904f7ff14e2ca8f5164ec114d5ea2d15e",
+  "newTables": 2,
+  "newFunctions": 2,
+  "newPolicies": 2,
+  "executionAllowed": false,
+  "photoSharedActions": 0,
+  "files": {
+    "docs/ops/auth-private-profile-20261031/private-profile.body.sql": "cf3081ab03aae25ed9373f84968d5118f81628df7a9c0fb59a08ad6fe7631b54",
+    "docs/ops/auth-private-profile-20261031/hosted-install-candidate/INSTALL_CANDIDATE.sql": "2652b1af01f083d7f1aaca39d2b0b37904f7ff14e2ca8f5164ec114d5ea2d15e",
+    "docs/ops/auth-private-profile-20261031/hosted-install-candidate/probe_install.py": "44fedd2e5bb3543cd3a12c99c32b58e09fc96467d00813f18a1c1cf8d2aa95e7",
+    "docs/ops/auth-private-profile-20261031/hosted-install-candidate/LOCAL_INSTALL_RESULT.json": "e679d2c9ae6caef52565f2cb8e92ec6e0cb9f7d1c8e9cc58bb7bce02b8f96f2a",
+    "docs/ops/auth-private-profile-20261031/hosted-install-candidate/OWNER_GATE_DRAFT.md": "02f68d1bc203d497122a6372050b875c5be7777851d120825b42cca39540293a",
+    "docs/ops/auth-private-profile-20261031/LOCAL_PG_RESULT.json": "7b243604492f1eb9e96776210940656ddc346c437447eeccf6e41bcfcf59241a",
+    "docs/ops/auth-private-profile-20261031/SUBJECT_BOUNDARY_REVIEW.json": "49dce5786fd907e6c6fdfa4da0d7db1f9d84f2c03add8ad0ad5e9e54b42f3925"
+  },
+  "candidateSHA256": "b53e767ef33ae5bb407f58acc0cf17df108a40055e393884ddbe0ae4703763c0"
+}
