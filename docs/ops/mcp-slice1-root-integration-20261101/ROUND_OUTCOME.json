@@ -1,0 +1,19 @@
+{
+  "windowId": "16d1bdd76f10420a8b0ddceb6be9fadf",
+  "rootRuntime": "CLOSED_SERVER_VERIFIED",
+  "consumer": "NOT_RUN",
+  "preview": "NOT_RUN",
+  "notesConfirmed": false,
+  "notesSubmitted": false,
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "issuer": "DENY_ALL_VERIFIED at 2026-11-01T10:14:19.055Z, never enabled per Auth",
+  "normalControlSessionCleanup": "UNCONFIRMED_AUTH_OWNED",
+  "reason": "Auth reported it did not continue issuer activation in time after actual Root EMPTY success; no additional Root blocker at that point",
+  "originalDeadlineMs": 1793528169025,
+  "deadlineReset": false,
+  "rootResourcesReleased": true,
+  "postcloseWrapperFailures": "REMOTE_RUNTIME_UNCONFIRMED twice; never reran mutation; independent default/config/Host/files/HTTP/timer reads verified closure",
+  "firstPostcheckBug": "restoreBaseline has no protectedRoutes; HTTP verification must use CAS plan",
+  "secondPostcheckFailureCause": "UNPROVEN; final independent readback verifies timer already inactive and default healthy",
+  "historicalUnknownsPreserved": true
+}

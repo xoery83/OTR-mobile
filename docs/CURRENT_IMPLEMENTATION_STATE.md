@@ -1,30 +1,30 @@
-# MCP Slice1 current checkpoint — 2026-11-01 10:04Z
+# MCP Slice1 — finite round closed, Consumer not run
 
-EMPTY_CONFIG_SERVER_VERIFIED / CONSUMER_PENDING. Owner Gate530937ac.
-Actual active14eb144b / imageab77a13c / config0baad0e7 healthy; same reviewed
-Capture63113903 / MCP19b5a0cb / SDK7832ae51. Independent readback confirms
-confirmations=[], read QA key absent, all23 old files unchanged, close pointer
-binds actualCID/planSHA. Original default9fd2/a6ba retained stopped.
-Short lock10:04:04.030Z→10:04:11.264Z released; no long DEV lock.
+ROOT_RUNTIME_CLOSED_SERVER_VERIFIED / CONSUMER_NOT_RUN.
+Window16d1 T09:51:29.824Z→D10:16:09.025Z was not reset or extended.
+ActualEMPTY passed10:04:11Z; Auth reported it did not continue issuer activation
+in time. No Consumer reconnect/Preview/CONFIRM/Notes submission occurred.
+Do not claim Consumer PASS or silently create a replacement window.
 
-Immutable T09:51:29.824Z / D10:16:09.025Z (window16d1). Auth sole issuer/operator
-closes at D−120s; independent Root timer at10:16:09Z reads latest exact pointer.
-No deadline reset/extension. Root timer active independently verified. Actual
-Consumer Preview plus separate concrete human op/digest approval is still required
-before one singleton config CAS; EMPTY is not Notes approval or Consumer PASS.
+Root actual close restored original9fd2 / imageab77 / configa6ba. Independent
+10:17:15.664Z readback confirms healthy, bothQAkeys absent, original HostConfig
+exact (OOMnull), all23 configuration files unchanged, health200/protected401,
+fulfilled timerinactive. Deployment/config resource released. Initial postclose
+wrapper failures remain recorded; no blind reclose. Auth issuerDENY_ALL verified
+10:14:19Z and never enabled. Auth own normal-control session cleanup remains
+UNCONFIRMED/AUTH_OWNED until its actual cleanup receipt arrives.
 
-First EMPTY attempt created14eb but never started it: Docker normalized only
-HostConfig.OomKillDisable null→false, causing strict equality failure. Root preserved
-original intent/failure receipts. Independent review also caught actual restore.py
-would reject this difference, so no serving occurred until Auth owning repair.
-Auth restoree7c06f49 and Root hardpin/limited CAS compatibility were reviewed;
-9 focused CAS checks and3 actual close_current→restore→retained-helper checks
-cover original default restore, no QA key, retained null, and other Host drift denial.
-Resumed exactcreated14eb; no secondcandidate, no SQL/RLS/GRANT/Provider/device action.
+Docker created-candidate normalization null→false required minimal Root CAS and
+Auth-owned restore compatibility. Independent review,9 CAS checks,3 realclose-entry
+fixtures and adjacent CONFIRM plan fixture qualified the exact one-field adapter.
+Actual firstcreated14eb was resumed; no secondcandidate. Source/image unchanged;
+no SQL/RLS/GRANT/Provider/device/main changes by Root. Exact evidence adjacent.
 
-Source/provenance and original default release remain in adjacent receipts.
-Auth/MCP notified actual receipt and independent readback. Historical UNKNOWN and
-Photo firstResults503 OPEN retained. No Root main merge.
+Prepared-only confirm caller remains private and never executed; any future use
+still requires actual ConsumerPreview and separate verified human confirmation.
+Historicalbb APPLIED/9b UNKNOWN untouched. Photo fullE2EPASS and firstResults503
+OPEN receipts remain preserved. Next owning dependency: Auth sessioncleanup;
+then MCP/Auth decide lawful next finite round, without repeating code build/review.
 
 # Active Photo checkpoint — 1 November 2026 08:00Z
 
