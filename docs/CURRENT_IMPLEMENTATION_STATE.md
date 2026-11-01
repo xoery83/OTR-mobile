@@ -1,3 +1,7 @@
+## Independent Native sprint — P3 synthetic consumer checkpoint (2026-11-01)
+
+Realtime default-CLOSED normal App mounting is fixed in `5807b155` (74 tests/types/lint; no private transport). P3 now has an opt-in DEV-only synthetic Scan consumer in the existing editor, with field review, original Manual Save, revision/Account/Trip/Item fences, explicit Edit target and Cancel protection. 33 tests/types/lint/UI guard PASS; no real scan/device qualification. See `docs/ops/native-independent-sprint-20261101/P3_LOCAL_SCAN.md` and the central gap register. Next: P2/P4/P5/P6 minimal field adapters, then Enrichment Native conditions. Photo retains all conflicting shared resources; Native has no shared write window. Batch independent review pending.
+
 # Native independent client sprint — 1 November 2026 NZ
 
 Active Native delivery tree: /private/tmp/otr-native-focused-main-20261101,

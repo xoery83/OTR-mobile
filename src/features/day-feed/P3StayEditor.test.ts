@@ -52,6 +52,7 @@ vi.mock("react", async (original) => ({
   useEffect: (callback: () => void | (() => void)) => {
     if (state.mount) state.effects.push(callback);
   },
+  useLayoutEffect: (callback: () => void) => callback(),
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.hooks))
@@ -835,4 +836,121 @@ it("keeps Notes visible when keyboard resizing changes the form viewport and sto
   scroll.onLayout();
   state.keyboardShown?.();
   expect(state.scrollToEnd).toHaveBeenCalledTimes(3);
+});
+
+it("synthetic Create review updates only Draft, then uses the original repository Save", async () => {
+  const p = {
+    ...props(),
+    syntheticScan: vi.fn(
+      (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+        kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+        binding,
+        candidates: [
+          {
+            id: "one",
+            fields: {
+              title: "Synthetic Inn",
+              startDate: "2027-12-30",
+              endDate: "2028-01-02",
+            },
+          },
+        ],
+      }),
+    ),
+  };
+  const draft = {
+    mode: "CREATE",
+    itemId: "stay",
+    fields: fields(),
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn(async () => ({ itemId: "stay" })),
+  };
+  await open(p, repo);
+  node("formAutofill.scan").onPress();
+  render(p);
+  for (let i = 0; i < 3; i++) {
+    node("formAutofill.keep").onPress();
+    render(p);
+  }
+  node("ui.apply").onPress();
+  render(p);
+  expect(node("tripCreate.stayName").value).toBe("Synthetic Inn");
+  expect(repo.save).not.toHaveBeenCalled();
+  node("headerSave").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({
+      title: "Synthetic Inn",
+      startDate: "2027-12-30",
+      endDate: "2028-01-02",
+      stayDetails: expect.objectContaining({ propertyName: "Synthetic Inn" }),
+    }),
+  );
+});
+
+it("rejects an old review after a user edits away and back to the same text", async () => {
+  const p = {
+    ...props(),
+    syntheticScan: (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+      kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+      binding,
+      candidates: [{ id: "one", fields: { title: "Suggestion" } }],
+    }),
+  };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  });
+  node("formAutofill.scan").onPress();
+  render(p);
+  node("formAutofill.keep").onPress();
+  render(p);
+  const apply = node("ui.apply").onPress;
+  node("tripCreate.stayName").onChangeText("Changed");
+  render(p);
+  node("tripCreate.stayName").onChangeText("");
+  render(p);
+  apply();
+  render(p);
+  expect(node("tripCreate.stayName").value).toBe("");
+  expect(node("ui.apply")).toBeUndefined();
+});
+
+it("Cancel invalidates retained Apply callbacks without touching the draft", async () => {
+  const p = {
+    ...props(),
+    syntheticScan: (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+      kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+      binding,
+      candidates: [{ id: "one", fields: { title: "Suggestion" } }],
+    }),
+  };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  });
+  node("formAutofill.scan").onPress();
+  render(p);
+  node("formAutofill.keep").onPress();
+  render(p);
+  const apply = node("ui.apply").onPress;
+  node("common.cancel").onPress();
+  render(p);
+  apply();
+  render(p);
+  expect(node("tripCreate.stayName").value).toBe("");
 });

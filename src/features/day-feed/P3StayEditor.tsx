@@ -1,5 +1,5 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -37,6 +37,10 @@ import {
   currentP3PlaceSelection,
   type P3PlaceSelectionDraft,
 } from "./p3PlaceSelectionDraft";
+
+import { createUuid } from "@/domain/localId";
+import { P3SyntheticScan } from "./P3SyntheticScan";
+import type { StaySuggestionBinding, SyntheticStayResult } from "./p3FormSuggestions";
 
 type Opened = { repository: ManualStayRepository; draft: ManualStayDraft };
 
@@ -150,6 +154,7 @@ export function P3StayEditor({
   onChoosePlan,
   onChooseRental,
   onChooseTransport,
+  syntheticScan,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -159,6 +164,7 @@ export function P3StayEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
+  syntheticScan?: (binding: StaySuggestionBinding) => SyntheticStayResult;
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
@@ -169,12 +175,27 @@ export function P3StayEditor({
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
+  const formId = useRef(createUuid());
+  const formRevision = useRef(0);
+  const scanContext = useRef<StaySuggestionBinding | null>(null);
   const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
   const [fields, setFields] = useState<ManualStayFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
   );
   const fieldsRef = useRef(fields);
+  useLayoutEffect(() => {
+    scanContext.current = source
+      ? {
+          formId: formId.current,
+          tripId,
+          itemId: source.draft.itemId,
+          generation,
+          revision: formRevision.current,
+          mode: source.draft.mode,
+        }
+      : null;
+  }, [source, tripId, generation]);
   const locationInputRevision = useRef(0);
   const selectedPlaceDraft = useRef<P3PlaceSelectionDraft | null>(null);
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
@@ -224,6 +245,7 @@ export function P3StayEditor({
           const value = structuredClone(draft.fields);
           if (!itemId && initialDate) value.startDate = initialDate;
           setSource({ repository, draft });
+          formRevision.current++;
           fieldsRef.current = value;
           setFields(value);
           initialRef.current = JSON.stringify(value);
@@ -246,6 +268,9 @@ export function P3StayEditor({
       locationInputRevision.current++;
       selectedPlaceDraft.current = null;
     }
+    formRevision.current++;
+    if (scanContext.current)
+      scanContext.current = { ...scanContext.current, revision: formRevision.current };
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -413,6 +438,25 @@ export function P3StayEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
+                  {syntheticScan ? (
+                    <P3SyntheticScan
+                      scan={syntheticScan}
+                      disabled={saving || frozen || status === "UNAVAILABLE"}
+                      context={() =>
+                        current() &&
+                        !busyRef.current &&
+                        !frozenRef.current &&
+                        !unavailableRef.current
+                          ? scanContext.current
+                          : null
+                      }
+                      fields={() => fieldsRef.current}
+                      onApply={(next) => {
+                        change(next);
+                        setNameQuery(null);
+                      }}
+                    />
+                  ) : null}
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.stayName")}</Text>
                     <UiTextInput

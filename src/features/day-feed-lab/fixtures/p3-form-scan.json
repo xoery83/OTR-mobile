@@ -1,0 +1,26 @@
+[
+  {
+    "id": "synthetic-stay-one",
+    "fields": {
+      "title": "Synthetic Harbour Hotel",
+      "location": "Synthetic address, Nelson",
+      "startDate": "2026-11-04",
+      "endDate": "2026-11-06",
+      "startTime": "17:00",
+      "endTime": "10:00",
+      "description": "Synthetic booking note"
+    }
+  },
+  {
+    "id": "synthetic-stay-two",
+    "targetItemId": "different-item",
+    "fields": {
+      "title": "Synthetic Airport Hotel",
+      "location": "Synthetic address, Auckland",
+      "startDate": "2026-11-07",
+      "endDate": "2026-11-08",
+      "startTime": "18:00",
+      "endTime": "09:00"
+    }
+  }
+]

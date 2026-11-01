@@ -1,4 +1,9 @@
 export const en = {
+  "formAutofill.scan": "Scan booking · Local preview",
+  "formAutofill.keep": "Keep current {field} · Suggestion: {value}",
+  "formAutofill.use": "Use suggested {field}: {value}",
+  "formAutofill.checkinDate": "Check-in date",
+  "formAutofill.checkoutDate": "Check-out date",
   "oauthConsent.title": "Connect OTR",
   "oauthConsent.dev": "DEV QA connection",
   "oauthConsent.explanation":
@@ -3080,6 +3085,11 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "formAutofill.scan": "扫描预订 · 本地预览",
+  "formAutofill.keep": "保留当前{field} · 建议：{value}",
+  "formAutofill.use": "使用建议{field}：{value}",
+  "formAutofill.checkinDate": "入住日期",
+  "formAutofill.checkoutDate": "退房日期",
   "oauthConsent.title": "连接 OTR",
   "oauthConsent.dev": "DEV QA 测试连接",
   "oauthConsent.explanation":

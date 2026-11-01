@@ -17,3 +17,5 @@ Profile77/People/Invite are not prerequisites for the above normal Account paths
 Private Profile caller/migration coordination is outside this Native delivery
 scope; no file-Writer handoff was performed by Native in this sprint. No repeated
 per-interface requests; Owner coordinates protected integration after resource release.
+
+P3 local progress (2026-11-01): the existing Stay editor now accepts an opt-in synthetic scan consumer, with per-candidate/per-field choices, exact Edit target, Form instance + Account generation + Trip + Item + monotonic UI revision fences. DEV-only `/day-feed-lab?fidelity=p3-scan&tripId=<authorizedTrip>[&item=<ownedItem>]` uses the real existing repository and normal Save. No scan entry is enabled in the normal product. Multiple candidates are separately reviewed; Apply updates only the current draft, never creates the other candidates automatically. Real interpretation, evidence and multi-object import/save remain Import-owned. No Hosted/Provider qualification is claimed.
