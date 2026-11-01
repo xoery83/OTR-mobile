@@ -8,7 +8,11 @@ NotesApply started. Root v4CAS/retained-close mockqualification+independentrevie
 complete; actualactivation waits Auth soleoperator issuer/closeREADY. Original9fd2
 default+T/D mustretain through confirmationCAS; actualHumanNotesapproval still
 separate. No Root main merge, SQL/RLS/GRANT or device/provider action.
-Current actual LIVE blocker: Auth Supabase console loginexpired; its GitHub loginwas rejected by automatic approval for missing login-source/private-console authorization. Auth awaitsOwner recovery; Root/MCP mustnot bypass. BothQAkeys remainabsent, noT/D/OTP/Notes. Rootcontroller code/localtests/review arecomplete; softwaredefaultclosed remainshealthy.
+Current LIVE checkpoint: Owner manualconsole logincomplete hasbeen independently
+verifiedbyAuth. Root fresh09:38 default9fd2/ab77 stillhealthy/twoQAkeysabsent.
+Auth ispreparing one normalQA revoke-control memorysession; jointissuer/control
+READY andimmutable newT/D remainrequired beforeRootruntime timer+EMPTYCAS.
+Do not duplicateGate approval orstartConsumer/Notes yet. Root control/callerprepared.
 Evidence docs/ops/mcp-slice1-root-integration-20261101/STATUS.md.
 
 # Active Photo checkpoint — 1 November 2026 08:00Z

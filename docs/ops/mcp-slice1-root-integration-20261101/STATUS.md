@@ -41,3 +41,9 @@ no keys, lock0.14s; reviewed helpersstaged in exactwindow16d1bdd76f10420a8b0ddce
 Host private directory. Dynamicclose pointer binds planSHAe82c0d2c/currentdefault9fd2.
 T/D remainnull, no timerarmed/noQAkey/OTP. All Root-side currentlylegal
 preparationcomplete; awaitingactualOwner console login andAuth controljointREADY.
+
+Superseding login checkpoint: Owner notified actuallogin complete andAuth
+independently verified freshDEV console (OAuthOFF/Hookdisabled, existingfunction
+row preserved). Root fresh09:38 readback still9fd2/ab77 healthy/defaultclosed;
+normalQA revoke-control memorysession preparation is the only current dependency.
+NoT/D orConsumerOTP/config/Notes yet. Gate530937ac isnot reapplied/reapproved.
