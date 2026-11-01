@@ -1,0 +1,17 @@
+{
+  "status": "PHOTO_PROVIDER_PROOF_EXEC_INSTALLED_CLOSED_VERIFIED",
+  "gate": "bc37baad",
+  "writeDisposition": "ACKNOWLEDGED",
+  "function": {
+    "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,postgres=X/otr_trip_source_writer}",
+    "md5": "a2945b7def0e9e5a19d4a66bd1e5a951",
+    "oid": "67145",
+    "owner": "otr_trip_source_writer"
+  },
+  "fullMembershipGraphAndOIDsRestored": true,
+  "schemaACLUnchanged": true,
+  "providerDirectExecute": false,
+  "closed": true,
+  "functionBodyChanged": false,
+  "modelCalls": 0
+}

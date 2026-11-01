@@ -16,9 +16,9 @@ Smallest candidate: one existing PNG facts helper EXEC to postgres, no body/OID/
 Provider gateway/meter still no directEXEC. Transaction-only existing maintenance edge SET
 false→true→false, fullrolegraph/OIDs/schemaACL restored, noINHERIT/schemaCREATE. Actual
 qualified helper RED42501→singleGRANT proofPASS→REVOKE deny; non-superuser forward/reverse,
-fault rollback and inverse-after-any-call denialPASS. IndependentNO_BLOCKER. Candidate NOT
-approved/applied: authority/PHOTO_PROVIDER_PROOF_EXEC_GATE.md (+exactforward/reverseSQL).
-One combined Gate also requests at mostone normal App replacement Batch/Source/RunTask for
+fault rollback and inverse-after-any-call denialPASS. IndependentNO_BLOCKER. Owner approvedbc37 onNov1; installedCLOSED andindependentlyverified:
+ authority/PHOTO_PROVIDER_PROOF_EXEC_GATE.md (+exactforward/reverseSQL).
+ApprovedGate permits at mostone normal App replacement Batch/Source/RunTask for
 samePNG, onlyoriginalunusedVision1 allowance; oldexpiredTask andallUNKNOWN remain untouched.
 AnyexistingpaidAttempt/call/UNKNOWN/recoverableresult blocksreplacement. Noextra budget.
 
@@ -35,7 +35,7 @@ VERIFY ADMITTED explicit same-executea2cee341 + safePG diagnosticsa2bb. ActualAD
 126.9/SQLite76, rootMyTrips coldreopen verified, Capture2 AI consent retained. NoSession/Keychain
 copy, noProduction/realdata. Originalhardexpiry2026-11-01T08:48:56Z unchanged.
 
-Next: exactprotectedhelperEXEC/inputGate approval, then installCLOSED→allprechecks→normalApp
+Next: bc37 helperEXEC nowinstalledCLOSED, completecloseprechecks→normalApp
 oneactualVision→Results→normalReview/Plan/Admission→onePRIVATE/SELF P1orP6→independentreadback/
 NativeDay/cold/idempotence→safeclose. Whilewaiting, continueImport-only UI/Activity recovery work.
 Publicreceipt: photo/recovery-execution-20261101/PHOTO_VERIFY_AND_PROVIDER_EXEC_BLOCKER.json.
@@ -61,7 +61,7 @@ reviewNO_BLOCKER; other350codeinputs byte-preserved.59targettests/types/lint and
 Default-closedimage1068/43b2/Capture40dad actuallydeployed and independentlyreadbackPASS;
 MCPad47/browser6040/server7826,23files/Envb12/Hostd501/Mount14ee unchanged.17.15secondflock
 released; previousfdd5/7371 retained. MCPREAD/WRITEconfigabsent, SourcePhoto/PDFCLOSED,
-helper67145/a294unchanged andpendingGrantstillabsent; noAuthority/Provider/SQLchanges.
+helper67145/a294bodyunchanged; helperEXECgrant approved/installedNov1; noAuthority/Provider/SQLchanges.
 This is notAuthWriteE2E. Write staysCLOSED pendingits separateOwnerGate; neverreuseReadC.
 Auth received fullDEPLOYMENT_RECEIPT.result withallconfig/mountedfilehashes forits frozen
 Gate. NextPhoto mustreanchor existingcloser to43b2/1068 orsubsequentfreshcompatiblehandoff.
