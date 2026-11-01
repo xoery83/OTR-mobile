@@ -8,7 +8,7 @@ import { universalAdvisoryInstruction, universalInstruction } from "./universalP
 import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
 
 function request(
-  bytes = readFileSync(new URL("../../assets/trips/covers/fjord.jpg", import.meta.url)),
+  bytes: Buffer = readFileSync(new URL("../../assets/trips/covers/fjord.jpg", import.meta.url)),
 ): Parameters<typeof buildUniversalDeepSeekRequest>[0] {
   return {
     taskId: randomUUID(),
