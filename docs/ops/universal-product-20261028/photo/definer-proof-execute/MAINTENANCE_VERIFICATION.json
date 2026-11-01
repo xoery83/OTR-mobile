@@ -1,0 +1,24 @@
+{
+  "status": "LOCAL_MAINTENANCE_WRAPPER_PASS",
+  "cases": [
+    {
+      "case": "ROUNDTRIP",
+      "passed": true,
+      "baselineGraphSchemaFunctionRestored": true,
+      "checks": [
+        "FORWARD_NON_SUPER_FULL_GRAPH_PASS",
+        "REVERSE_NON_SUPER_FULL_GRAPH_PASS"
+      ],
+      "error": ""
+    },
+    {
+      "case": "FAULT",
+      "passed": true,
+      "baselineGraphSchemaFunctionRestored": true,
+      "checks": [],
+      "error": "ERROR:  INJECTED_MAINTENANCE_FAILURE\nCONTEXT:  PL/pgSQL function inline_code_block line 1 at RAISE\n"
+    }
+  ],
+  "DEV": false,
+  "limits": "Exact maintenance fragment only; bootstrap postgres maps to non-superuser operator and local function OID resolves signature. Initial live candidate/item/receipt CAS not substituted or claimed as tested; no fixture tables added. All changes rolled back."
+}

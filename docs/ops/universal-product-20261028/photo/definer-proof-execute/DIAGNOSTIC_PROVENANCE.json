@@ -1,0 +1,12 @@
+{
+  "status": "COMPATIBLE_DIAGNOSTIC_PROVENANCE_VERIFIED",
+  "baseCommit": "76eb4df969397aaea0b12b352446928a937b6b3a",
+  "deltaCommit": "aef7873f484ffb310249efca3e7c17370902d44c",
+  "changedInput": "backend/src/universalP1SourcePg.ts",
+  "changedInputSHA256": "aea2ca5b00367ab2ffe998e544ae748b348632eb813f62999117d3d7a6378fa7",
+  "captureSHA256": "ece34fb1c6f8fb523402dfe01b400f1f0ab4e24e5467045950f947b3e748f500",
+  "image": "sha256:e998ccfa3413eb11cb73ff562524cbb231eb9080fdbb6c0b0f139245e831a476",
+  "receiptCommitLabelNote": "Image builder retained baseCommit label; this supplementary record identifies the exact committed diagnostic delta and source hash.",
+  "otherInputsUnchanged": true,
+  "authorityChanged": false
+}

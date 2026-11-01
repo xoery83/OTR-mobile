@@ -1,0 +1,15 @@
+{
+  "status": "OWNER_EXPLICIT_ONE_HOUR_EXPIRY_EXTENSION_VERIFIED",
+  "writeDisposition": "ACKNOWLEDGED",
+  "actualDEVRuntimeVerified": true,
+  "independentCloseAt": "2026-11-01T08:00:00Z",
+  "watchdogAt": "2026-11-01T08:05:00Z",
+  "sameWindow": true,
+  "readback": {
+    "enabled": true,
+    "expiresAt": "2026-11-01T08:10:00+00:00",
+    "parentPreserved": true
+  },
+  "hardExpiryUnchanged": "2026-11-01T08:48:56Z",
+  "resourceReleaseNoLaterThan": "2026-11-01T08:15:00Z"
+}

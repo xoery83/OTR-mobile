@@ -1,3 +1,49 @@
+# Active Photo checkpoint — 1 November 2026 07:22Z
+
+Photo Golden Slice NOT PASS. Same original PNG078de830 /42630B/1000×600.
+Current Batch794b02d7 /Source9e91719c /Task96ce2929 /call e4d41f9f completed real
+Vision200, SETTLED/PUBLISHED, candidate i1 Harbour Photo QA Walk /2026-11-02 with
+actual model pixel regions. Cost385680nanos=$0.00038568. Prior call f377becd cost
+$0.00031458, sealed ABSTAIN retained unchanged. Two actual successful calls in
+this sprint total$0.00070026; old UNKNOWN holds remain, no refunds/resets.
+Do not send another Vision call for current candidate.
+
+Native126.10 /SQLite76 installed, only Import PNG FILE reader condition changed
+(commit0fcc3ea5), same binary/public configuration. Actual original preview PASS;
+normal original/Trip reviewed, NEW selected. Final Save has NOT created Item.
+Current identities: candidate3bdc40b7-add4-8902-b8fa-f3e8773652ef,
+plan7f410bab-f176-87e2-86f8-7828328dbb1b,
+operation4f095d9c-449e-8456-a134-c69e9c33f3bb,
+itemc59d3d03-6830-84e8-8579-02a59fe624fa.
+
+First exact FAIL07:17:38Z: Source publication SEAL SQLSTATE42501, denied function
+trip_source_read_sustained_png_proof. Its CoreWriter EXEC=true, but actual nested
+caller is SECURITY DEFINER postgres (nonsuperuser), EXEC=false. Both P1 guard and
+PNG reviewed-evidence helper ownpostgres. Source projection passed; no candidate
+or receipt persisted. Do not change RLS or guess pool/region failures.
+Prepared one narrow protected EXECUTE Gate; isolated proof/maintenance/inverse/fault checks PASS and independent NO_BLOCKER; not approved/installed yet. Existing
+helper body/Actor/Trip/session/isolation/facts checks stay unchanged.
+
+Current DEV af04b7f6 /imagee998ccfa /Captureece34fb1 healthy, codeaef7873f.
+Other build inputs, MCP/browser/server/config preserved. Diagnostics
+only fixed reason or anchored DB object identifier; no raw errors or source data.
+Latest closer plan d7361e88 at /opt/otr/universal-png-worker/
+close-plan-photo-permission-object-v1-20261101.json; timers
+otr-photo-close-f07370c5-object /otr-photo-watchdog-f07370c5-object.
+Owner explicitly added one hour: close08:00Z/watchdog08:05Z armed against current
+runtime; SQL expiry08:10Z (Owner explicit one-hour extension, independently CAS verified), original hard08:48:56Z.
+Shared resources must release by08:15Z. Same scope f07370c5; parentcontinuous
+preserved, no Sourceworker restart needed. Actual close must be independently
+verified, preserve original/candidate/Item/receipts/UNKNOWN. Main not integrated.
+
+Next: narrow nested-definer EXECUTE approval →same normal Native confirm→formal
+receipt/independent Supabase readback→Day/cold/duplicate confirmation→safe close.
+Gate preparation and safe local testing continue while protected step is pending.
+Private evidence /private/tmp/otr-photo-permission-object-20261101 and
+/private/tmp/otr-photo-geometry-20261101. Never expose credentials or session DB.
+
+## Previous checkpoint (historical)
+
 # Active Photo checkpoint — 1 November 2026 06:22Z
 
 Photo NOT full E2E PASS. Batchf610/Task56d285da completed actual Vision200, SETTLED,

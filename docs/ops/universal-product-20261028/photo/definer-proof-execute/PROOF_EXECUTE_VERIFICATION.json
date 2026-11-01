@@ -1,0 +1,14 @@
+{
+  "status": "ISOLATED_PG_RED_TO_GREEN_PASS",
+  "DEV": false,
+  "observations": [
+    "RED_NESTED_DEFINER_EXEC_42501",
+    "GREEN_ACTUAL_PROOF_PASS",
+    "WRONG_ACTOR_REJECTED",
+    "WRONG_SESSION_REJECTED",
+    "REVOKE_RESTORES_DENIAL",
+    "ROLLBACK_NO_PROBE_ROLE"
+  ],
+  "scope": "Actual PNG proof body with non-superuser outer definer; fixture facts stub limited to same synthetic pins; all rolled back",
+  "independentReview": "NO_BLOCKER"
+}

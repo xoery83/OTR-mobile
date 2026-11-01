@@ -1,0 +1,14 @@
+{
+  "status": "PREPARED_NOT_APPROVED_NOT_EXECUTED",
+  "functionOID": 67149,
+  "functionBodySHA256": "c94c9e52951e7f58e7cead7197dadae00d1da3189e4804431015febe370a3e83",
+  "beforeACL": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_core_v2_gateway=X/otr_trip_source_writer,otr_trip_core_v2_writer=X/otr_trip_source_writer}",
+  "afterACL": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_core_v2_gateway=X/otr_trip_source_writer,otr_trip_core_v2_writer=X/otr_trip_source_writer,postgres=X/otr_trip_source_writer}",
+  "installSHA256": "074b52afbfd37d46d773cded0684570ee5e835f44245260b8cda61b147de361c",
+  "scope": "DEV tuqigdxrvrerfewsxqgm; existing QA actor/trip; current retained candidate and operation only",
+  "newRole": false,
+  "functionBodyChanged": false,
+  "schemaOrRLSChanged": false,
+  "providerCalls": 0,
+  "rollbackSHA256": "919812d6fd9db13712112d34836414cbcc9f7bcbae75cb061e6b6816329bb57d"
+}

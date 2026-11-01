@@ -1,0 +1,21 @@
+{
+  "status": "OWNER_ONE_HOUR_EXTENSION_CLOSERS_ARMED_SQL_EXPIRY_UNCHANGED",
+  "windowId": "f07370c5b0f947c39503f8a5563e8fd1",
+  "planPath": "/opt/otr/universal-png-worker/close-plan-photo-permission-object-v1-20261101.json",
+  "planSHA256": "d7361e88b0a2fa60c6275c0bd39e8ad34216aab74fa13d9c6a6fe3b6258b2d4f",
+  "containerId": "af04b7f6cfda305f6e6a8399b0d5062e91acf8e8004ba719f917d44d4bf6bba5",
+  "configSHA256": "2f3827bf3869951d7306ec300a5a279ce4c25556802064e550e119d1b6bd1a44",
+  "timerUnits": [
+    "otr-photo-close-f07370c5-object",
+    "otr-photo-watchdog-f07370c5-object"
+  ],
+  "supersededTimers": [
+    "otr-photo-close-f07370c5-reason",
+    "otr-photo-watchdog-f07370c5-reason"
+  ],
+  "closeAt": "2026-11-01T08:00:00Z",
+  "watchdogAt": "2026-11-01T08:05:00Z",
+  "sqlExpiresAt": "2026-11-01T07:35:00Z",
+  "sqlChanged": false,
+  "oldMarkersPreserved": true
+}
