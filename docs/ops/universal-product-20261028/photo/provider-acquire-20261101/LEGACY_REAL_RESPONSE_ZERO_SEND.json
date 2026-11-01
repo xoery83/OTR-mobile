@@ -1,0 +1,9 @@
+{
+  "status": "ACTUAL_LEGACY_IMAGE_HASH_AND_SEALED_RESULT_UNCHANGED",
+  "legacyRequestSHA256": "982ae17c7f456cbe0ba2ab76e2125f7a74ee84503a8259275075a19932bcc36e",
+  "newRequestSHA256": "70850e7706a8d8515d72f83a27158133d07996dce6699ea603339a1fe16c9fab",
+  "sealedResultSHA256": "26afd50fa49b7305ad4c5ec1c0136a790aefcacde14da615653e3d6555d08f72",
+  "originalSHA256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+  "providerSends": 0,
+  "receiptMutations": 0
+}

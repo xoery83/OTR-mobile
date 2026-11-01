@@ -1,3 +1,36 @@
+# Active Photo checkpoint — 1 November 2026 06:22Z
+
+Photo NOT full E2E PASS. Batchf610/Task56d285da completed actual Vision200, SETTLED,
+PUBLISHED. Usage1867in/109out/cache1280, cost314580nanos=$0.00031458. Realmodel name/date
+hints lacked pixel boxes, so original published result is ABSTAIN/candidates[];
+this is correct current adapter behavior. Do not treat raw hints as saved candidates,
+invent boxes, rewrite sealed result26afd50f or repeat that paid call.
+
+Minimal software fix3a6d05c9 provides sameoriginalPNG dimensions to model plus
+conservative pixel-location hint, no guesses/no autoAdmission. Exact LEGACY request
+format retained for oldresponse recovery.32focusedPASS/1Linuxskip/typecheck/lintPASS,
+independentNO_BLOCKER; realoldPNG/request982ae/result26afd seals reproduced zeroSEND.
+Newgeometry imageecea36c0/CIDc0a3e56d/Captured8095622 deployed healthy; all349other
+buildinputs/MCP/browser/server/23runtimefiles/Env/Host/mounts preserved.
+Old365d/37e5 retained healthy rollback. NoSQLfunction/Schema/RLS/GRANT/Role/budget change.
+
+Same windowf073 stays OPEN; no expiry extension or reactivation. Timers safely
+reanchored to newcompatible image before oldtimers stopped: close07:20Z,
+watchdog07:25Z, SQLexpiry07:35Z, exclusive resource end07:37:23Z, hard08:48:56Z.
+Newcloseplan159a87a6, timersotr-photo-close-f07370c5-geometry / watchdog equivalent.
+Oldmarker/plan/timer records retained. Worker maystop around06:44 via existing50m cap;
+check actual worker/IO status before later freshinputs, do not restart active IO.
+
+Owner latest two-hour more-rounds direction covers next purposeful normal QA fixture
+under existing20/day,$1/day,$0.05/call/originaltotalbudget; alloldUNKNOWN holds retained.
+Preparing one normal samePNG/account/trip test on newimage. Do not modify/reset old
+Taskdeadlines or sealedABSTAIN. Next actual target: modelbox→normalSourceReview→formalSave.
+Evidence: photo/provider-acquire-20261101/{GEOMETRY_DEPLOYMENT,
+SAME_WINDOW_GEOMETRY_CLOSERS,LEGACY_REAL_RESPONSE_ZERO_SEND}.json.
+Private work: /private/tmp/otr-photo-geometry-20261101.
+
+## Previous checkpoint (historical)
+
 # Photo live execution — 1 November 2026 06:09Z
 
 NOT full E2E PASS. Same Batchf610 / Source739b0ee9, all4Sourceoperations FINAL/APPLIED.

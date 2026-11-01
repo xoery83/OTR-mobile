@@ -1,0 +1,21 @@
+{
+  "status": "SAME_WINDOW_CLOSERS_REANCHORED_NO_EXPIRY_EXTENSION",
+  "windowId": "f07370c5b0f947c39503f8a5563e8fd1",
+  "planPath": "/opt/otr/universal-png-worker/close-plan-photo-geometry-3a6d05c9-20261101.json",
+  "planSHA256": "159a87a6b3d5d56df2bbc1c96845c5134323d85d9aec9b8d1c435ee54add1fcd",
+  "containerId": "c0a3e56dbb4100f93340efc48f7f4b17cb8149cfdea273c0b7bbaa93c9a75c96",
+  "configSHA256": "e3b8e92e31c56218d126211aa618c42e6dfd2dd35a7a6a01710e4a70c263a8f9",
+  "timerUnits": [
+    "otr-photo-close-f07370c5-geometry",
+    "otr-photo-watchdog-f07370c5-geometry"
+  ],
+  "supersededTimers": [
+    "otr-photo-close-f07370c5b0f947c39503f8a5563e8fd1",
+    "otr-photo-watchdog-f07370c5b0f947c39503f8a5563e8fd1"
+  ],
+  "closeAt": "2026-11-01T07:20:00Z",
+  "watchdogAt": "2026-11-01T07:25:00Z",
+  "sqlExpiresAt": "2026-11-01T07:35:00Z",
+  "sqlChanged": false,
+  "oldMarkersPreserved": true
+}
