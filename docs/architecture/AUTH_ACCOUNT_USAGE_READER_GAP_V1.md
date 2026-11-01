@@ -60,3 +60,8 @@ allowance values remain unknown and enforcement stays disabled.
 
 No production code, test framework, Host/SQL/RLS/GRANT, Provider, Secret, Session,
 Native shared file or payment behavior was changed for this gap assessment.
+
+Import/Meter owning Writer confirmed this gap on2 November2026: no normal-Account
+self-scoped history reader has been delivered. The minimum server-side filtering
+and existing projection seam above is agreed; any new protected reader permission
+still needs its exact Gate. UsageView remains UNAVAILABLE without that port.
