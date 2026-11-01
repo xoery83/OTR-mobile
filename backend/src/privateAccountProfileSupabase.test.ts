@@ -84,6 +84,7 @@ function fixture(mode = "existing") {
           fields_json: {
             displayName: "旅人",
             travelDocumentName: { mode: "UNSPLIT", fullName: "林 e\u0301" },
+            ...(mode === "private aka" ? { globalAka: ["  林 e\u0301  ", "علي", ""] } : {}),
           },
         },
       ]);
@@ -238,4 +239,30 @@ it("does not follow a rejected private-write redirect or fall back to public pro
 it("rejects secret API keys before any network work", () => {
   expect(() => createPrivateAccountProfilePort({ url: origin, publishableKey: "sb_secret_unit_only" }))
     .toThrow("PROFILE_DEV_CONFIG_REQUIRED");
+});
+
+it("preserves explicit private AKA in the normal Account RPC body", async () => {
+  const f = fixture();
+  const globalAka = ["  林 e\u0301  ", "علي", ""];
+  await f.port.save(
+    f.scope,
+    { ...f.input, changes: { ...f.input.changes, globalAka } },
+    f.signal,
+  );
+  const request = f.calls.find((call) =>
+    new URL(call.url).pathname.endsWith("account_private_profile_save"),
+  );
+  expect(await request?.json()).toEqual({
+    p_operation: f.input.operationId,
+    p_expected_revision: 0,
+    p_changes: { ...f.input.changes, globalAka },
+  });
+});
+
+it("reads private AKA only through the same self-scoped private Profile projection", async () => {
+  const f = fixture("private aka");
+  expect(await f.port.read(f.scope, f.signal)).toMatchObject({
+    accountId: f.accountId,
+    fields: { globalAka: ["  林 e\u0301  ", "علي", ""] },
+  });
 });

@@ -15,6 +15,7 @@ export const travelDocumentNameSchema = z.discriminatedUnion("mode", [
 // Account-private values only. Identity, roles and connection proofs belong to their owning contracts.
 export const privateAccountProfileFieldsSchema = z.strictObject({
   displayName: name.nullable().optional(),
+  globalAka: z.array(name).optional(),
   travelDocumentName: travelDocumentNameSchema.nullable().optional(),
 });
 

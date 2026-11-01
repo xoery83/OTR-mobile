@@ -1045,3 +1045,9 @@ Safe WriteBinding stage diagnostic candidate:32 focused independent tests/Review
 types/lint PASS; only log-only randomID/stage/elapsed/failure, default QA runtime
 closed. TTL/scope/UNKNOWN/dispatch unchanged. Not deployed and cannot retrospectively
 prove originalf107 dispatch/commit; per-call ID is not MCP operation correlation.
+
+B3 privateCloud AKA candidate: existing schema optional globalAka (no default),
+new separate SQL candidate550a36d7; independent46 changed tests/Review, author65
+focused/types/lint and isolatedPG12 PASS. Old payload/digest/receipt unchanged;
+local globalAkaDraft not uploaded. No Hosted install/activation. Older strict
+clients require rollout qualification before returning new field; not CloudReady.

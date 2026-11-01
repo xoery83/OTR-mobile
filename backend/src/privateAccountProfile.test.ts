@@ -183,3 +183,24 @@ it("rejects an unproven revision and distinguishes missing receipt, conflict and
   expect(unavailable.status).toBe(503);
   expect(await unavailable.text()).not.toContain("DO_NOT_EXPOSE_INTERNAL_DETAILS");
 });
+
+it("passes an explicit private AKA patch through the same Account-bound mutation without adding it to legacy requests", async () => {
+  const f = fixture();
+  const globalAka = ["  小林 e\u0301  ", "علي", ""];
+  const input = { ...f.input, changes: { ...f.input.changes, globalAka } };
+  const result = await privateAccountProfileBoundary(f.post(input), f.user, f.port);
+  expect(result.status).toBe(200);
+  expect(f.port.save).toHaveBeenCalledWith(
+    { accountId: f.user.id, accessToken: "unit-only" },
+    input,
+    expect.any(AbortSignal),
+  );
+  const legacy = fixture();
+  await privateAccountProfileBoundary(legacy.post(), legacy.user, legacy.port);
+  expect(legacy.port.save).toHaveBeenCalledWith(
+    expect.anything(),
+    legacy.input,
+    expect.any(AbortSignal),
+  );
+  expect(legacy.input.changes).not.toHaveProperty("globalAka");
+});

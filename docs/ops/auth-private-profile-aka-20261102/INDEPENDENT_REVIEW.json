@@ -1,0 +1,30 @@
+{
+  "status": "NO_BLOCKER_PRIVATE_AKA_CLOUD_CANDIDATE_ONLY",
+  "evidenceLevel": "LOCAL_PASS",
+  "independentReviewer": "auth_phase1_review",
+  "independentChangedSuites": "46/46_PASS",
+  "implementationFocused": "65_PASS_TSC_LINT_DIFF_PASS",
+  "isolatedPg": "12_PASS_NETWORK_NONE_256M_CONTAINER_REMOVED",
+  "sourceSHA256": {
+    "src/domain/auth/privateAccountProfile.ts": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a",
+    "src/domain/auth/privateAccountProfileAka.test.ts": "8b288f83515b8bbb03e6269adad028795bdfef7c6c7a690b37a4e1d3ab23227b",
+    "backend/src/privateAccountProfile.test.ts": "ac2bd5ce9d74cfa483dab74a444e0d837e9b118bfc239351e0ab02054f5cd4df",
+    "backend/src/privateAccountProfileSupabase.test.ts": "317fe82e9408d43639c67b036537b477918832a28dbc5168f27bfaac6af149a8",
+    "docs/ops/auth-private-profile-aka-20261102/private-profile.body.sql": "550a36d72333c970b564c759aa6446c85705409401748358cceb99bfc6053608",
+    "docs/ops/auth-private-profile-aka-20261102/probe_private_profile_aka.py": "b493d1dddff19bbabc09d2112e413b6f9081a71dc39c9235f5fc26338ad8885c",
+    "docs/ops/auth-private-profile-aka-20261102/README.md": "470975714a0957ee96165be1b5282c6538e772233d6e11028b498922754abaee",
+    "docs/ops/auth-private-profile-aka-20261102/LOCAL_PG_RESULT.json": "13bc860bc231f439fc450f6edb2be439a23c1324d7e1ca58763ff1c7b205fc52"
+  },
+  "verified": [
+    "Optional field no default or normalization",
+    "Legacy payload bytes/digest/receipt replay unchanged",
+    "Omission preserves; explicit [] clears; Unicode/order retained",
+    "Foreign/Guest/resource negatives; normal API private passthrough",
+    "Native local globalAkaDraft not automatically uploaded"
+  ],
+  "limits": [
+    "No Hosted installation or cloud runtime enablement",
+    "Strict older client read compatibility needs actual rollout qualification",
+    "No permission E2E or Native cloud cold-recovery claim"
+  ]
+}
