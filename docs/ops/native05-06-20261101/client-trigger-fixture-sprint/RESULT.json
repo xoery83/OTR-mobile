@@ -1,0 +1,54 @@
+{
+  "status": "FIXTURE_GOLDEN_PASS_DEFAULT_CLOSED_NOT_NATIVE_MOUNTED",
+  "at": "2026-11-01T04:39:15.738622+00:00",
+  "goldenSlice": "current Account/Trip injected authorized hint \u2192 existing main Downstream.invalidate \u2192 fake accepted read \u2192 normal notify; disconnect/reactivate catch-up",
+  "actualRed": [
+    "same current Trip activation subscribes twice",
+    "ten 10ms-spaced hints produce11 invalidations including initial instead of one coalesced trailing read"
+  ],
+  "redEvidence": "/private/tmp/otr-trigger-sprint-red.log",
+  "changes": [
+    "same-context activation idempotent but availability rechecked",
+    "fixed200ms hint coalescing; stop cancels queued timer",
+    "existing initial catch-up/15s opening/abort/Account fences preserved"
+  ],
+  "mainCompatibility": {
+    "baseline": "33388e52ea6be2a855beb5d81adb3ae978b1db2d",
+    "validationTree": "/private/tmp/otr-native-focused-main-20261101",
+    "suites": 4,
+    "tests": 39,
+    "types": "PASS",
+    "scopedLint": "PASS",
+    "evidence": "/private/tmp/otr-trigger-main-final.log"
+  },
+  "coverage": [
+    "default no port: zero subscription/Pull",
+    "subscribe-before-initial-read setup race",
+    "during-read trailing coalescing",
+    "spaced fast hints",
+    "Account generation abort and timer clear",
+    "Trip old callback/timer suppression",
+    "same-Trip reactivation and availability false",
+    "late availability cannot stop newer Trip",
+    "background/exit timer clear",
+    "opening abort/15s deadline/late close",
+    "disconnect queued hint clear and catch-up on caller reactivation",
+    "main Downstream backoff preserved",
+    "unchanged authorized collection emits no extra notify"
+  ],
+  "versionStrategy": "main45s focused/discovery fallback unchanged; slower unmerged version-enabled coordinator is NOT included or activated",
+  "interface": "existing optional subscribe(context, invalidated, disconnected, AbortSignal) promise<close>; lifecycle caller supplies null/stop on background/exit and fresh activate after foreground/reconnect; owning adapter authorizes, expires/revokes and validates hints",
+  "closedBoundary": [
+    "no production subscriber/Publisher or new version port mounted",
+    "no native UI/physical smoke from Fixture",
+    "no hosted/SQL/Provider/AD5/DeviceHub/main operation",
+    "no new repository/Queue/retry engine"
+  ],
+  "independentReview": "PENDING_NONBLOCKING",
+  "files": {
+    "src/data/sync/tripRealtimeTrigger.ts": "3f73e3fcc6a655d833e644409852cc6256dea1d99805e497240aebc46677e0bb",
+    "src/data/sync/tripRealtimeTrigger.test.ts": "842594c9c7bf19264ef1eda6f58358b3c92e411c09fcf01a2cac988626820b8d",
+    "src/data/sync/tripRealtimeTrigger.downstream.test.ts": "ec6f220f88f33bd8da0e15ee8b23788aff4c1956d193f5df20600c6df34b73ec"
+  },
+  "integration": "Curate these3Native files only against actual latest main; do not merge the long backend/performance branch. Full trigger diff vs main also contains previously isolated abort/opening guards and must be reviewed."
+}

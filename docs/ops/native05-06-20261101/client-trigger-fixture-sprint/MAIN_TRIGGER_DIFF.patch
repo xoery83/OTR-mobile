@@ -1,0 +1,94 @@
+diff --git a/src/data/sync/tripRealtimeTrigger.ts b/src/data/sync/tripRealtimeTrigger.ts
+index 9bf5701a..dda1e566 100644
+--- a/src/data/sync/tripRealtimeTrigger.ts
++++ b/src/data/sync/tripRealtimeTrigger.ts
+@@ -8,11 +8,12 @@ type Dependencies = {
+   account(): Promise<string>;
+   available(): Promise<boolean>;
+   invalidate(context: AccountRequestContext): Promise<void>;
+-  // Owning adapter must authorize the private channel and validate its hints.
++  // Owning adapter must authorize/expire/revoke, honor abort and validate hints.
+   subscribe?(
+     context: AccountRequestContext,
+     invalidated: () => void,
+     disconnected: () => void,
++    signal: AbortSignal,
+   ): Promise<() => void>;
+ };
+ 
+@@ -25,12 +26,22 @@ export function createTripRealtimeTrigger(deps: Dependencies) {
+         dirty: boolean;
+         running: boolean;
+         ready: boolean;
++        controller: AbortController;
++        opening?: ReturnType<typeof setTimeout>;
++        signalTimer?: ReturnType<typeof setTimeout>;
+       }
+     | undefined;
+   let disposed = false;
+   function stop() {
+     const previous = active;
+     active = undefined;
++    if (previous?.opening !== undefined) clearTimeout(previous.opening);
++    if (previous?.signalTimer !== undefined) clearTimeout(previous.signalTimer);
++    try {
++      previous?.controller.abort();
++    } catch {
++      // Transport abort listeners must not interrupt Account transitions either.
++    }
+     try {
+       previous?.close?.();
+     } catch {
+@@ -67,28 +78,50 @@ export function createTripRealtimeTrigger(deps: Dependencies) {
+   }
+   return {
+     async activate(context: AccountRequestContext | null) {
++      if (
++        active &&
++        context &&
++        active.context.accountId === context.accountId &&
++        active.context.tripId === context.tripId &&
++        active.context.generation === context.generation
++      ) {
++        await current(active);
++        return;
++      }
+       stop();
+       if (disposed || !context || !deps.subscribe) return;
+-      const state = {
++      const state: NonNullable<typeof active> = {
+         context: Object.freeze({ ...context }),
+         dirty: false,
+         running: false,
+         ready: false,
++        controller: new AbortController(),
+       };
+       active = state;
+       if (!(await current(state))) return;
++      state.opening = setTimeout(() => {
++        if (active === state) stop();
++      }, 15_000);
+       try {
+         const close = await deps.subscribe(
+           state.context,
+           () => {
+             if (active !== state) return;
+             state.dirty = true;
+-            if (state.ready) void drain(state);
++            if (state.ready && !state.running && state.signalTimer === undefined) {
++              state.signalTimer = setTimeout(() => {
++                delete state.signalTimer;
++                if (active === state) void drain(state);
++              }, 200);
++            }
+           },
+           () => {
+             if (active === state) stop();
+           },
++          state.controller.signal,
+         );
++        clearTimeout(state.opening);
++        delete state.opening;
+         if (!(await current(state))) {
+           close();
+           return;
