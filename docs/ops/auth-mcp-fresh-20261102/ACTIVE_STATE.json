@@ -55,5 +55,21 @@
     "sourceCandidate": "ReadBinding bounded readDiagnostic and existing QA Runtime whitelist; LOCAL_ONLY_NOT_DEPLOYED",
     "authorizationStatusUnchanged": true,
     "noAutomaticWriteReplay": true
+  },
+  "focusedReadComparison": {
+    "artifact": "MCP docs/mcp/slice1/AUTH_REQUIRED_READ_COMPARISON.json",
+    "artifactSHA256": "8f92fea7b502c3135a7f3d07f3a145cafa2db8bdf057ef69911039c5851eebde",
+    "captureKind": "UI-rendered transcript; no per-request HTTP/JWT evidence",
+    "sharedAuthority": "same normal grant binding and same Core canReadTrip(actor,trip); both read-scope",
+    "itemPath": "objects/ITEM read",
+    "editBaseAdditionalWork": "collection read and actor/trip/hash validation before Item/revision match",
+    "extraWriteScopeRequired": false,
+    "rawHttpStatus": null,
+    "oldRequestCorrelationId": null,
+    "emittingLayer": "UNDETERMINED",
+    "rootCause": "UNPROVEN",
+    "diagnosticCandidate": "609184bb LOCAL_PASS NOT_DEPLOYED",
+    "newWindowRequested": false,
+    "writeReplayAttempted": false
   }
 }
