@@ -29,6 +29,7 @@ export const privateProfileNameDraftSchema = z.strictObject({
   familyName: name,
   givenNames: name,
   fullName: name,
+  globalAkaDraft: z.array(name).optional(),
 });
 export type PrivateProfileNameDraft = Readonly<z.infer<typeof privateProfileNameDraftSchema>>;
 

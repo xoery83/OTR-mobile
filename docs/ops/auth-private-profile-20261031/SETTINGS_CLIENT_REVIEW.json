@@ -1,0 +1,30 @@
+{
+  "status": "NO_BLOCKER_DEVICE_LOCAL_SETTINGS_LEAF_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "independentTests": "2 suites9/9 PASS after focused repair",
+  "verified": [
+    "The two map onPress closures call save only on events; running ref is read in that event path, not during rendering. Narrow eslint suppressions are accurately explained.",
+    "Locale successful writes serialize and apply; failure retains prior successful locale, hydration skips after explicit choice and late startup hydration is generation-fenced.",
+    "Unprovided Profile route remains disabled/unavailable; preference IO remains device-local."
+  ],
+  "limits": [
+    "No shared Settings route/startup/SQLite integration or Native E2E.",
+    "SecureStore is mocked; no external IO, device or Keychain read performed."
+  ],
+  "resolvedFindings": [
+    {
+      "priority": "P2",
+      "file": "src/features/auth/AuthSettingsSection.tsx",
+      "problem": "Profile disabled prop does not protect a retained onPress from opening during an unresolved preference write; its handler calls onOpenProfile without the synchronous running fence used by selectors.",
+      "minimalRepair": "Check running.current in Profile event handler and add deferred-write/old-handler regression."
+    }
+  ],
+  "findings": [],
+  "resolution": "Profile event now checks running.current synchronously; retained-handler/deferred-language-write regression verifies no open before persistence settles and normal open afterward.",
+  "sourceSHA256": {
+    "src/features/auth/AuthSettingsSection.tsx": "0c57ffc0f0e22532c81605fb49b1684a07d29d3d5ed4403ef1509b51615120b0",
+    "src/features/auth/AuthSettingsSection.test.ts": "887dac739d7ee6063a61a295e58b24c2fc5c236a3e3c7115a09974b4033f3d04",
+    "src/native/uiLocalePreference.ts": "251005834deef422cdfda2c24b35d65c7b261ac4f81176fe7ba43bc4df35f7a8",
+    "src/native/uiLocalePreference.test.ts": "fe2ac76b858131c9011ba342e90fa7fb7d58adfaa354d84f1ab0fa955612f875"
+  }
+}

@@ -5,7 +5,7 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import type { AccountScope } from "@/data/auth/accountRequestContext";
-import { UiText } from "@/ui/controls";
+import { UiButton, UiText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import type { UiColors } from "@/ui/palette";
@@ -101,6 +101,34 @@ export function PrivateProfileNameFields({
       ) : (
         input("fullName")
       )}
+      <UiText accessibilityRole="header" style={styles.heading}>
+        {t("privateProfile.globalAkaDraft")}
+      </UiText>
+      <UiText style={styles.hint}>{t("privateProfile.akaDraftHint")}</UiText>
+      {(draft.globalAkaDraft ?? []).map((alias, index) => (
+        <UiTextInput
+          key={index}
+          testID={`private-profile-aka-${index}`}
+          accessibilityLabel={t("privateProfile.globalAkaDraft")}
+          value={alias}
+          editable={!disabled}
+          autoCorrect={false}
+          autoCapitalize="none"
+          onChangeText={(value) => {
+            const aliases = [...(latest.current.draft.globalAkaDraft ?? [])];
+            if (index >= aliases.length) return;
+            aliases[index] = value;
+            update({ globalAkaDraft: aliases });
+          }}
+        />
+      ))}
+      <UiButton
+        label={t("privateProfile.addAkaDraft")}
+        disabled={disabled}
+        onPress={() =>
+          update({ globalAkaDraft: [...(latest.current.draft.globalAkaDraft ?? []), ""] })
+        }
+      />
       <UiText style={styles.hint}>{t("privateProfile.privateHint")}</UiText>
     </View>
   );

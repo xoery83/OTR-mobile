@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { privateAccountProfileFieldsSchema, privateProfileChanges, privateProfileDraft } from "./privateAccountProfile";
+import { privateAccountProfileFieldsSchema, privateProfileChanges, privateProfileDraft, privateProfileNameDraftSchema } from "./privateAccountProfile";
 
 it.each([{}, { displayName: "" }, { displayName: null, travelDocumentName: null }])(
   "allows an incomplete profile without creating a registration requirement",
@@ -86,4 +86,18 @@ it("does not submit hidden format edits or rewrite untouched nullable split name
 it("rejects invalid stored or draft values before building a patch", () => {
   expect(() => privateProfileChanges({}, { ...privateProfileDraft(), displayName: "\0" })).toThrow();
   expect(() => privateProfileChanges({ displayName: "\0" }, privateProfileDraft())).toThrow();
+});
+
+it("retains optional Global AKA drafts locally without publishing them as Profile fields", () => {
+  const draft = { ...privateProfileDraft(), globalAkaDraft: ["  林 e\u0301  ", ""] };
+  expect(privateProfileNameDraftSchema.parse(draft)).toEqual(draft);
+  expect(privateProfileChanges({}, draft)).toEqual({});
+  expect(
+    privateAccountProfileFieldsSchema.safeParse({ globalAkaDraft: draft.globalAkaDraft })
+      .success,
+  ).toBe(false);
+  expect(
+    privateProfileNameDraftSchema.safeParse({ ...draft, globalAkaDraft: ["bad\0"] })
+      .success,
+  ).toBe(false);
 });

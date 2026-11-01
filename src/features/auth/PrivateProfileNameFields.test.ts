@@ -19,7 +19,7 @@ vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
   subscribeAccountGeneration: vi.fn(),
 }));
-vi.mock("@/ui/controls", () => ({ UiText: "Text" }));
+vi.mock("@/ui/controls", () => ({ UiText: "Text", UiButton: "Button" }));
 vi.mock("@/ui/forms", () => ({ UiTextInput: "Input", UiChoiceChip: "Choice" }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
@@ -122,4 +122,22 @@ it("makes a busy form read-only without leaving interactive format choices", () 
     node.props.onChangeText("unexpected edit");
   }
   expect(changed).not.toHaveBeenCalled();
+});
+
+it("keeps Global AKA drafts independent and fences old alias callbacks after Account change", () => {
+  const add = () =>
+    render()
+      .find((node) => node.props.label === "privateProfile.addAkaDraft")
+      .props.onPress();
+  add();
+  const alias = () =>
+    render().find((node) => node.props.testID === "private-profile-aka-0").props;
+  alias().onChangeText("  林 e\u0301  ");
+  expect(draft.globalAkaDraft).toEqual(["  林 e\u0301  "]);
+  expect(draft.displayName).toBe("");
+  expect(draft.familyName).toBe("");
+  const old = alias();
+  state.generation++;
+  old.onChangeText("foreign");
+  expect(draft.globalAkaDraft).toEqual(["  林 e\u0301  "]);
 });

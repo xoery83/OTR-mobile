@@ -12,7 +12,12 @@ Normal adopted Add caller and closed parent reader still need unique Writers.
 Synthetic Invite/Claim four-choice screen/model and existing AddTravelerSheet reuse
 now pass11 focused/independent tests; no accepted/connected authority state exists.
 Device-local Appearance store passes7 independent mocked tests including rapid
-write failure and stale hydration. Settings/startup remain unmounted.
+write failure and stale hydration. Profile Global AKA remains local draft only;
+formal AKA and Trip Nickname contracts remain gaps. AuthSettingsSection uses the
+existing language store and new appearance store; normal Settings/startup remain
+unmounted. Account AI Usage DTO/View and guarded injected reader reuse existing
+Flight Meter receipt projection; default UNAVAILABLE/null allowance/enforcementoff.
+No real Account Meter or Import aggregate/readback is claimed.
 Photo retains shared DEV/SQL/Provider/AD5. No Host/config/device changes this sprint.
 Track actual ports and later acceptance in AUTH_CLIENT_INTEGRATION_GAPS.md.
 

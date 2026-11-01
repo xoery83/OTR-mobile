@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-01",
+  "status": "CLIENT_CANDIDATES_REVIEWED_NORMAL_ENTRY_PENDING",
+  "golden_slices": {
+    "profile": "local optional names and Global AKA draft persist/cancel/reopen; normal App entry and SQLite registration pending",
+    "adopted_add_traveler": "existing PersonRepository/Queue with scoped editor and retained retry IDs; normal caller pending",
+    "invite_claim": "explicitly SYNTHETIC four-choice UI, no accepted/connected authority",
+    "settings": "local Language/Appearance preferences + Profile route callback leaf; normal Settings/startup pending",
+    "ai_usage": "Account DTO/View + qualified reader injection, existing Flight Meter projection; default unavailable, allowance null, enforcement off"
+  },
+  "validation": {
+    "targeted_suites": 13,
+    "targeted_tests": 153,
+    "post_repair_settings_tests": 5,
+    "typecheck": "PASS",
+    "scoped_eslint": "PASS",
+    "ui_guard": "PASS",
+    "independent_reviews": [
+      "GLOBAL_AKA_DRAFT_REVIEW.json",
+      "SETTINGS_CLIENT_REVIEW.json",
+      "ACCOUNT_AI_USAGE_CLIENT_REVIEW.json",
+      "../people-add-traveler-20261031/CLIENT_DRAFT_REVIEW.json",
+      "../people-add-traveler-20261031/CLAIM_PREVIEW_REVIEW.json"
+    ]
+  },
+  "shared_dev_sql_provider_device_changes": false,
+  "source_sha256": {
+    "src/features/auth/PrivateProfileNameFields.tsx": "6a1f904e64bd7025ce940cadd99eb8cef50fa01f710066ef2717e055686ebdd6",
+    "src/domain/auth/privateAccountProfile.ts": "dbfb60d19c99f2a4591b82a22489cc32946cb4cae9a97353a1b80e057c76aca0",
+    "src/features/auth/AuthSettingsSection.tsx": "0c57ffc0f0e22532c81605fb49b1684a07d29d3d5ed4403ef1509b51615120b0",
+    "src/native/uiAppearancePreference.ts": "ade7a7d5fc84d1ebed32e997335b2ad90b71d6161b717608bf4db55cc20f4423",
+    "src/native/uiLocalePreference.ts": "251005834deef422cdfda2c24b35d65c7b261ac4f81176fe7ba43bc4df35f7a8",
+    "src/domain/auth/accountAiUsage.ts": "056a6ad6aa1a00bfb96688b507fdfc9a972b071035d1b52d875b93d488f95167",
+    "src/data/auth/accountAiUsageReader.ts": "0c93bc284444d4eba43c1e8a328a8bafab3c0c40e32fe1836bd24983ca79bf01",
+    "src/features/auth/AccountAiUsageView.tsx": "11282bbf4d215215e46c544a3e180041fcd232c3c8076ff195bb675f4eeaa3c0",
+    "src/features/people/AddTravelerSheet.tsx": "cade8b33c5da28631de32daa82d87fbc856aba15983e858374552bd9597b61e3",
+    "src/data/repositories/tripPersonEditorDraft.ts": "7bf1144dfb3864ed9f2b066143a2a8a3ec8e554264f68307217634acb5ae80ea",
+    "src/native/tripPersonEditorDraft.ts": "69c72e6d3eb2ec9a0b81bbdd0630dc739a8929802a8be58257976b716b0bbec5",
+    "src/features/people/inviteClaimPreview.ts": "cc141e74be8b5900e38b89280978d0e7c1977548deff04415cce7c085d0303ad",
+    "src/features/people/InviteClaimPreviewScreen.tsx": "9c86d6ca691b9b8037237ee56fe779f75c027ae0d3ba77467f4c1d04d912f64b"
+  },
+  "limits": [
+    "No ordinary Native page or real SecureStore cold run",
+    "No Profile/Invite/Usage Hosted readback or authorization claim",
+    "No actual Profile migration registration or adopted parent reader activation",
+    "No change to Photo resources, main, business permissions, or commercial strategy"
+  ]
+}

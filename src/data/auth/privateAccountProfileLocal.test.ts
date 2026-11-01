@@ -74,7 +74,7 @@ async function fixture() {
 it("persists an optional Unicode draft across real SQLite reopen without inventing a server snapshot", async () => {
   const f = await fixture();
   const draft = { ...privateProfileDraft(), displayName: "", mode: "UNSPLIT" as const,
-    fullName: "山田 e\u0301", familyName: "王", givenNames: "小明" };
+    fullName: "山田 e\u0301", familyName: "王", givenNames: "小明", globalAkaDraft: ["  小林 e\u0301  ", ""] };
   await f.store.saveDraft(f.scope, draft);
   expect(await f.reopen().read(f.scope)).toEqual({ accountId: f.original, accepted: null, draft });
   expect(f.sql().prepare("SELECT value FROM preserved").get()).toEqual({ value: "original" });
