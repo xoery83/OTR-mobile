@@ -1,0 +1,18 @@
+{
+  "actualProblem": "Overdue started Photo Task stayed RUNNING, UI claimed Reading travel information and polled indefinitely",
+  "change": "Only read projection: RUNNING + attemptCount>0 + owning deadline passed => existing UNKNOWN",
+  "unchanged": [
+    "Task",
+    "Attempt",
+    "ledger",
+    "usage/hold",
+    "deadline",
+    "dispatch/identity",
+    "PUBLISHED",
+    "RESULT_PENDING"
+  ],
+  "validation": "RED reproduced then 64 focused Backend/Native display/lifecycle tests PASS; scoped eslint and ui:guard PASS",
+  "independentReview": "NO_BLOCKER; UNKNOWN retains manual GET and existing same-attempt recovery; no new dispatch authority",
+  "nativeVisual": "NOT_DEPLOYED/NOT_VERIFIED; existing localized UNKNOWN display reused",
+  "typecheck": "Full repository typecheck not repeated: known 2GiB OOM; focused tests/lint only"
+}

@@ -24,8 +24,12 @@ export function projectUniversalTaskActivity(
     ["PENDING", "WAITING"].includes(task.work_disposition) &&
     task.policy_snapshot.deadline !== null &&
     Date.parse(task.policy_snapshot.deadline) <= observedAt;
+  // An overdue started run is unconfirmed, not failed or safe to redispatch.
+  const overdueRun = attemptCount > 0 && task.work_disposition === "RUNNING" &&
+    task.policy_snapshot.deadline !== null &&
+    Date.parse(task.policy_snapshot.deadline) <= observedAt;
   return universalTaskActivitySchema.parse({
-    state: expiredBeforeStart ? "FAILED" : states[task.work_disposition],
+    state: expiredBeforeStart ? "FAILED" : overdueRun ? "UNKNOWN" : states[task.work_disposition],
     recordedAt: task.created_at,
     updatedAt: task.updated_at,
     completedAt: task.completed_at,

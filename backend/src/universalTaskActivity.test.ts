@@ -90,3 +90,21 @@ it("stops waiting after the owning deadline only when execution has never starte
   expect(raw.work_disposition).toBe("PENDING");
   expect(raw.policy_snapshot.deadline).toBe(deadline);
 });
+
+it("shows an overdue started run as unconfirmed without changing Task or accounting", () => {
+  const deadline = "2026-11-01T03:09:08.339Z";
+  const raw = {
+    ...task,
+    policy_snapshot: { ...task.policy_snapshot, deadline },
+    work_disposition: "RUNNING" as const,
+  };
+  const before = JSON.stringify(raw);
+  expect(projectUniversalTaskActivity(raw, 1, Date.parse(deadline) - 1).state).toBe("PROCESSING");
+  expect(projectUniversalTaskActivity(raw, 1, Date.parse(deadline)).state).toBe("UNKNOWN");
+  expect(projectUniversalTaskActivity(raw, 0, Date.parse(deadline)).state).toBe("PROCESSING");
+  expect(projectUniversalTaskActivity({ ...raw, work_disposition: "PUBLISHED" }, 1,
+    Date.parse(deadline)).state).toBe("RESULTS_READY");
+  expect(projectUniversalTaskActivity({ ...raw, work_disposition: "RESULT_PENDING" }, 1,
+    Date.parse(deadline)).state).toBe("PROCESSING");
+  expect(JSON.stringify(raw)).toBe(before);
+});

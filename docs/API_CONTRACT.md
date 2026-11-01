@@ -1,3 +1,11 @@
+<!-- Import read-only Activity projection, 1 November 2026 -->
+Universal Activity reports an already-started RUNNING Task past its owning deadline
+as UNKNOWN (unconfirmed), rather than claiming ongoing processing indefinitely.
+This read projection does not mutate Task/Attempt/ledger, settle/refund usage, grant
+redispatch, or reset deadlines. PUBLISHED and RESULT_PENDING retain their existing
+semantics; later normal GET may recover a result. Observation time is captured
+before async Auth/read work, as in the existing expired-unstarted projection.
+
 <!-- Import capability context repair, 28 October 2026 -->
 Reviewed Source dispatch may read existing `GET /v2/trips/:tripId/core/capabilities?operationId=<uuid>`
 for its exact durable operation. The normal authenticated Actor and Trip remain authoritative;

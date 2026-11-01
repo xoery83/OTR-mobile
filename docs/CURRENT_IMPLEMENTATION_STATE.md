@@ -34,6 +34,11 @@ empty-message AggregateError, no messages/IDs/payload/credentials logged; logger
 failure preserves owning error and no retry. Underlying historical cause is still
 unknown. Continue zero-send local tests and necessary exact recovery authorization;
 no speculative protected SQL repair and no automatic replacement paid call.
+Overdue already-started RUNNING now projects existing UNKNOWN to stop misleading
+Reading/infinite polling; Task/ledger unchanged, manual GET/recovery retained.
+64 focused Backend/Native tests, scopedlint/ui:guard PASS; independentNO_BLOCKER.
+Not yet deployed or visually verified. One exact controlled-reexecution packet
+fixed4d1d5226 is pending Owner; no replacement created while waiting.
 
 Evidence: photo/provider-acquire-20261101/{EXECUTION,ACTUAL_PROVIDER_CALL_RECEIPT,
 PROVIDER_FAILURE_AND_RETENTION,WINDOW_CLOSED,DEPLOYED_DIAGNOSTIC_READBACK}.json.
