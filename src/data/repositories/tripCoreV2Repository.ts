@@ -156,7 +156,7 @@ export function createTripCoreV2Repository(
     captureAccountRequestContext(tripId, getAccountId);
   const assertContext = (ctx: AccountRequestContext) =>
     assertAccountRequestContext(ctx, getAccountId);
-  async function scope(ctx: AccountRequestContext) {
+  async function storedScope(ctx: AccountRequestContext) {
     const row = await database.getFirstAsync<{
       refresh_generation: number;
       access_revision: number;
@@ -166,6 +166,10 @@ export function createTripCoreV2Repository(
       ctx.accountId,
       ctx.tripId,
     );
+    return row;
+  }
+  async function scope(ctx: AccountRequestContext) {
+    const row = await storedScope(ctx);
     if (row?.revoked) throw new Error("CORE_ACCESS_REVOKED");
     return row;
   }
@@ -766,7 +770,12 @@ export function createTripCoreV2Repository(
     });
     return { ...ctx, refreshGeneration: generation, accessRevision };
   }
-  async function install(ctx: CoreRefresh, manifest: unknown, pages: unknown[]) {
+  async function installCollection(
+    ctx: CoreRefresh,
+    manifest: unknown,
+    pages: unknown[],
+    denied?: CoreRefresh,
+  ) {
     const validated = await validateCoreReadCollection(
       manifest,
       pages,
@@ -780,11 +789,13 @@ export function createTripCoreV2Repository(
       await assertContext(ctx);
       ttrFence(database, ctx, true);
       await database.withTransactionAsync(async () => {
-        const current = await scope(ctx);
+        const current = denied ? await storedScope(ctx) : await scope(ctx);
         if (
           !current ||
-          current.refresh_generation !== ctx.refreshGeneration ||
-          current.access_revision !== ctx.accessRevision
+          current.refresh_generation !==
+            (denied?.refreshGeneration ?? ctx.refreshGeneration) ||
+          current.access_revision !== (denied?.accessRevision ?? ctx.accessRevision) ||
+          (denied && (!current.revoked || ctx.accessRevision < current.access_revision))
         )
           throw new Error("CORE_READ_SUPERSEDED");
         const old = await database.getFirstAsync<{
@@ -889,10 +900,95 @@ export function createTripCoreV2Repository(
               r.operation_id,
             );
         }
+        if (denied)
+          await database.runAsync(
+            "UPDATE trip_core_scopes SET revoked=0,refresh_generation=?,access_revision=? WHERE account_id=? AND trip_id=?",
+            ctx.refreshGeneration,
+            ctx.accessRevision,
+            ctx.accountId,
+            ctx.tripId,
+          );
         await assertContext(ctx);
       });
     });
     return validated;
+  }
+  const install = (ctx: CoreRefresh, manifest: unknown, pages: unknown[]) =>
+    installCollection(ctx, manifest, pages);
+
+  // Qualified Auth caller owns immutable transition validation; no Auth generation is a Core revision.
+  async function denyExistingAcceptedScope(
+    ctx: AccountRequestContext,
+  ): Promise<CoreRefresh | null> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let denied: CoreRefresh | null = null;
+      await database.withTransactionAsync(async () => {
+        const current = await storedScope(ctx);
+        const accepted = await database.getFirstAsync<{ access_revision: number }>(
+          "SELECT access_revision FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+          ctx.accountId,
+          ctx.tripId,
+        );
+        if (!current || !accepted || accepted.access_revision !== current.access_revision)
+          return;
+        const generation = current.refresh_generation + 1;
+        if (!Number.isSafeInteger(generation)) throw new Error("GENERATION_OVERFLOW");
+        ttrFence(database, ctx, true);
+        await database.runAsync(
+          "UPDATE trip_core_scopes SET revoked=1,refresh_generation=? WHERE account_id=? AND trip_id=?",
+          generation,
+          ctx.accountId,
+          ctx.tripId,
+        );
+        await database.runAsync(
+          "UPDATE sync_operations SET status='DEPENDENCY_BLOCKED' WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status<>'COMPLETED'",
+          ctx.accountId,
+          ctx.tripId,
+        );
+        denied = Object.freeze({
+          ...ctx,
+          refreshGeneration: generation,
+          accessRevision: current.access_revision,
+        });
+        await assertContext(ctx);
+      });
+      return denied;
+    });
+  }
+  async function regrantExistingAcceptedScope(
+    ctx: AccountRequestContext,
+    denied: CoreRefresh,
+    transport: CoreReadTransport,
+  ) {
+    await assertContext(ctx);
+    if (
+      ctx.accountId !== denied.accountId ||
+      ctx.tripId !== denied.tripId ||
+      ctx.generation !== denied.generation
+    )
+      throw new Error("CORE_SCOPE_MISMATCH");
+    const current = await storedScope(ctx);
+    if (
+      !current?.revoked ||
+      current.refresh_generation !== denied.refreshGeneration ||
+      current.access_revision !== denied.accessRevision
+    )
+      throw new Error("CORE_READ_SUPERSEDED");
+    const generation = denied.refreshGeneration + 1;
+    if (!Number.isSafeInteger(generation)) throw new Error("GENERATION_OVERFLOW");
+    const result = await transport.collection(ctx);
+    await assertContext(ctx);
+    return installCollection(
+      {
+        ...ctx,
+        refreshGeneration: generation,
+        accessRevision: result.manifest.accessRevision,
+      },
+      result.manifest,
+      result.pages,
+      denied,
+    );
   }
   async function applyReceipt(ctx: AccountRequestContext, input: unknown) {
     const receipt = await validateCoreReceipt(input, hash);
@@ -1438,6 +1534,8 @@ export function createTripCoreV2Repository(
     applyReceipt,
     recoverP1Receipts,
     revoke,
+    denyExistingAcceptedScope,
+    regrantExistingAcceptedScope,
     day,
   };
 }

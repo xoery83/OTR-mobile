@@ -611,6 +611,226 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
     await expect(f.repo.beginRefresh(ctx, 1)).rejects.toThrow("CORE_ACCESS_REVOKED");
     expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
   });
+  it("regrant accepts a fresh normal Reader after revocation without exposing the predecessor", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const denied = await f.repo.denyExistingAcceptedScope(ctx);
+    expect(denied?.accessRevision).toBe(1);
+    await expect(f.repo.readGraph(ctx)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    await expect(
+      f.repo.regrantExistingAcceptedScope(ctx, denied!, {
+        collection: async () => bundle,
+      }),
+    ).resolves.toBeDefined();
+    expect((await f.repo.readGraph(ctx)).itinerary_events[0].id).toBe(item);
+    expect((await f.repo.acceptedSnapshot(ctx))?.certificate.applied_generation).toBe(3);
+  });
+  it("does not manufacture a scope or Core revision for a subscription with no accepted cache", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip);
+    expect(await f.repo.denyExistingAcceptedScope(ctx)).toBeNull();
+    expect(f.sql.prepare("SELECT count(*) n FROM trip_core_scopes").get()?.n).toBe(0);
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  });
+  it("preserves pending identity and blocked delivery through deny and fresh installation", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const command = { ...sparse(), target: { kind: "ITEM", id: randomUUID() } };
+    command.baseVector = [{ kind: "ITEM", id: command.target.id, revision: null }];
+    await f.repo.enqueue(ctx, command);
+    const original = f.sql.prepare("SELECT id,payload_json FROM sync_operations").get();
+    const denied = await f.repo.denyExistingAcceptedScope(ctx);
+    expect(f.sql.prepare("SELECT status FROM sync_operations").get()?.status).toBe(
+      "DEPENDENCY_BLOCKED",
+    );
+    await f.repo.regrantExistingAcceptedScope(ctx, denied!, {
+      collection: async () => bundle,
+    });
+    expect(f.sql.prepare("SELECT id,payload_json FROM sync_operations").get()).toEqual(
+      original,
+    );
+    // Restored cache access is not proof that an old mutation is still authorized.
+    expect(f.sql.prepare("SELECT status FROM sync_operations").get()?.status).toBe(
+      "DEPENDENCY_BLOCKED",
+    );
+    expect(await f.repo.pending(ctx)).toHaveLength(1);
+  });
+  it("keeps deny and predecessor certificate on network or invalid collection failure", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const denied = await f.repo.denyExistingAcceptedScope(ctx);
+    await expect(
+      f.repo.regrantExistingAcceptedScope(ctx, denied!, {
+        collection: async () => {
+          throw new Error("OFFLINE");
+        },
+      }),
+    ).rejects.toThrow("OFFLINE");
+    await expect(
+      f.repo.regrantExistingAcceptedScope(ctx, denied!, {
+        collection: async () => ({ ...bundle, pages: [] }),
+      }),
+    ).rejects.toThrow("CORE_READ_INCOMPLETE");
+    await expect(f.repo.readGraph(ctx)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    expect(
+      f.sql.prepare("SELECT applied_generation FROM trip_core_read_certificates").get()
+        ?.applied_generation,
+    ).toBe(1);
+    expect(
+      f.sql
+        .prepare(
+          "SELECT revoked,refresh_generation,access_revision FROM trip_core_scopes",
+        )
+        .get(),
+    ).toEqual({ revoked: 1, refresh_generation: 2, access_revision: 1 });
+  });
+  it("does not install a regrant response after another authoritative deny", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const denied = await f.repo.denyExistingAcceptedScope(ctx);
+    let resolve!: (value: typeof bundle) => void;
+    const response = new Promise<typeof bundle>((r) => {
+      resolve = r;
+    });
+    let entered!: () => void;
+    const started = new Promise<void>((r) => {
+      entered = r;
+    });
+    const pending = f.repo.regrantExistingAcceptedScope(ctx, denied!, {
+      collection: () => {
+        entered();
+        return response;
+      },
+    });
+    await started;
+    await f.repo.denyExistingAcceptedScope(ctx);
+    resolve(bundle);
+    await expect(pending).rejects.toThrow("CORE_READ_SUPERSEDED");
+    await expect(f.repo.readGraph(ctx)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    expect(
+      f.sql.prepare("SELECT applied_generation FROM trip_core_read_certificates").get()
+        ?.applied_generation,
+    ).toBe(1);
+  });
+  it("fences regrant across Account A to B to A without exposing the old accepted cache", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const denied = await f.repo.denyExistingAcceptedScope(ctx);
+    let resolve!: (value: typeof bundle) => void;
+    const response = new Promise<typeof bundle>((r) => {
+      resolve = r;
+    });
+    let entered!: () => void;
+    const started = new Promise<void>((r) => {
+      entered = r;
+    });
+    const pending = f.repo.regrantExistingAcceptedScope(ctx, denied!, {
+      collection: () => {
+        entered();
+        return response;
+      },
+    });
+    await started;
+    let lease = await beginAccountTransition();
+    f.switchTo(randomUUID());
+    endAccountTransition(lease);
+    lease = await beginAccountTransition();
+    f.switchTo(account);
+    endAccountTransition(lease);
+    resolve(bundle);
+    await expect(pending).rejects.toThrow("Account changed");
+    await expect(f.repo.readGraph(await f.repo.captureContext(trip))).rejects.toThrow(
+      "CORE_ACCESS_REVOKED",
+    );
+  });
+  it("keeps deny across SQLite reopen and atomically replaces the predecessor with the fresh Reader", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "otr-core-deny-"));
+    folders.push(folder);
+    const path = join(folder, "core.sqlite"),
+      first = fixture(path);
+    const ctx = await first.repo.captureContext(trip),
+      bundle = await collection();
+    await first.repo.install(
+      await first.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    await first.repo.denyExistingAcceptedScope(ctx);
+    first.sql.close();
+    const f = fixture(path, false),
+      fresh = await f.repo.captureContext(trip);
+    await expect(f.repo.readGraph(fresh)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    const denied = await f.repo.denyExistingAcceptedScope(fresh);
+    const command = sparse();
+    command.payload.flightNumberLiteral = "NZ777";
+    const graph = applyCoreCommand(emptyCoreGraph(), command, actor, stamp).graph;
+    const updated = await buildCoreActorCollection(
+      graph,
+      actor,
+      {
+        epoch: bundle.manifest.epoch,
+        revision: 2,
+        accessRevision: 1,
+        generatedAt: stamp,
+      },
+      [
+        {
+          person_id: person,
+          account_id: account,
+          active: true,
+          participating: true,
+          revision: 1,
+        },
+      ],
+      hash,
+    );
+    expect(updated.manifest.manifestSha256).not.toBe(bundle.manifest.manifestSha256);
+    const validated = await f.repo.regrantExistingAcceptedScope(fresh, denied!, {
+      collection: async () => updated,
+    });
+    expect(await f.repo.readGraph(fresh)).toEqual(validated.graph);
+    expect((await f.repo.acceptedSnapshot(fresh))?.certificate.manifest_sha256).toBe(
+      updated.manifest.manifestSha256,
+    );
+    f.sql.close();
+    const reopened = fixture(path, false);
+    expect(
+      Number(
+        (await reopened.repo.acceptedSnapshot(await reopened.repo.captureContext(trip)))
+          ?.certificate.revision,
+      ),
+    ).toBe(2);
+  });
   it("never treats missing or damaged pages as absence", async () => {
     const f = fixture(),
       ctx = await f.repo.captureContext(trip),
