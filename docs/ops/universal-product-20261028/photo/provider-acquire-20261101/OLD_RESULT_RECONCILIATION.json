@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-11-01T03:50:58.568130+00:00",
+  "oldTasks": [
+    {
+      "taskId": "13792ae2-123a-8c3b-8a64-922cc8902350",
+      "workDisposition": "PENDING",
+      "attemptId": null,
+      "deadline": "2026-10-31T18:20:33.121Z",
+      "expired": true
+    },
+    {
+      "taskId": "ea78041f-f90f-836e-b205-14f1647ea2af",
+      "workDisposition": "RUNNING",
+      "attemptId": "803f2a52-42d4-8857-8a9e-c691da2bf1b3",
+      "deadline": "2026-11-01T03:09:08.339Z",
+      "expired": true
+    }
+  ],
+  "retainedRawResponseExists": false,
+  "retainedResultExists": false,
+  "dataMutated": false,
+  "note": "Only prior identities reconciled; fresh ledger and scope checks still required before dispatch"
+}

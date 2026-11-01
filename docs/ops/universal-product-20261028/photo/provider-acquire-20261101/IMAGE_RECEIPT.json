@@ -1,0 +1,17 @@
+{
+  "status": "BUILD_ONLY_IMAGE_HASHES_PASS_NOT_DEPLOYED",
+  "commit": "63b8aa6d",
+  "imageId": "sha256:953898a8d2809ed272bf7a5c3c0b3d437a26baa474ed987651606653ce831722",
+  "baseImage": "sha256:d3a5ece7d56eed75b6656763e8006a584f8f518a4cf8f156c69d8ff9b7330152",
+  "bundles": {
+    "server-capture.mjs": "ba7471606d54615ac16733414f497e52e5e6b7155d5d5ea909093ecdf1db727d",
+    "mcp/runtime.mjs": "b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "imageConfigPreserved": true,
+  "runtimeChanged": false,
+  "configChanged": false,
+  "sqlChanged": false,
+  "providerCalls": 0
+}

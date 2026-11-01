@@ -1,0 +1,12 @@
+{
+  "status": "LOCAL_RELEASE_PREPARED_NOT_UPLOADED_OR_DEPLOYED",
+  "codeCommit": "63b8aa6d",
+  "captureSHA256": "ba7471606d54615ac16733414f497e52e5e6b7155d5d5ea909093ecdf1db727d",
+  "dockerfileSHA256": "8da5ced2198eb11662e43d171f1909d3711f499439d6995dd7e2235cb59eda1a",
+  "buildContextSHA256": "e6c5cccf26fe36c32c80ba2ce179e85bc7173c7e80c3e4c386ec103881c874da",
+  "deployScriptSHA256": "08c4662fe3bf267c3fd9d24105eb566076c3e5b7696ae193d39ae9586db13b17",
+  "deployBehaviorChange": "None; only exact plan path and static receipt status label changed",
+  "serviceMutationReady": false,
+  "pending": "Auth actual CLOSED handoff and fresh config/identity preflight",
+  "noAuthorityChange": true
+}

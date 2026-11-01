@@ -42,6 +42,10 @@ fixed4d1d5226 explicitly APPROVED by Owner; no replacement created yet.
 Local compatible build ba747160 reproduces accepted44fbd byte-for-byte before
 2file overlay;349otherinputs unchanged. Await Auth actualCLOSED/fresh runtime CAS
 for ordinary serialized deployment, then recheck old results before one new input/call.
+Auth explicitly allowed independent BUILD_ONLY: fixed image953898a8 built network-none,
+4bundle hashes and unchanged imageConfig independently checked, no service/config/SQL
+change.03:50:58Z old-result read-only check: both old Tasks expired, no raw/result file.
+Do not deploy until Auth actualCLOSED/fresh default handoff.
 
 Evidence: photo/provider-acquire-20261101/{EXECUTION,ACTUAL_PROVIDER_CALL_RECEIPT,
 PROVIDER_FAILURE_AND_RETENTION,WINDOW_CLOSED,DEPLOYED_DIAGNOSTIC_READBACK}.json.
