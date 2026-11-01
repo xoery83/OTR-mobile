@@ -1,0 +1,48 @@
+{
+  "status": "ORIGINAL_BB_RECOVERY_SERVER_AND_CONSUMER_PASS",
+  "windowId": "462db18f31494ae39fc61a0c257daac9",
+  "operationId": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "recoveryApplyCount": 1,
+  "revision": 2,
+  "dates": [
+    "2026-12-11",
+    "2026-12-13"
+  ],
+  "nights": 2,
+  "providerFlow": "NORMAL_QA_OTP_FRESH_EXPLICIT_READ_EDIT_CONSENT",
+  "preApplyNormalAndSql": "EXACT_PRIOR_FIELDS_REV1_RECEIPT0_FRESH_GRANT_FLOOR_PASS",
+  "normalBackend": "ITEM200_RECEIPT200_OWNING_INTEGRITY_AND_EXACT_FIELDS_PASS",
+  "independentSupabase": "ITEM1_RECEIPT1_ACTOR_COMMAND_AND_RECEIPT_HASH_PASS",
+  "receiptSHA256": "f238b4812105e739a2c3bb948c7885a16deff8bb44defdd5f2a70d0667562330",
+  "plainCommandSHA256": "56498bb7794b7ca4ccb9895f20ed9af8d66d52acf75ce3dbd2daf2e13ad51b2c",
+  "domainIntentSHA256": "32b3e6c49bb558367777af1cbb6cbe07d84f86b175fc04a69b8de1a911d67e0f",
+  "consumer": "SERVER_CONFIRMED_EXACT_REV2_FIELDS_REPORTED",
+  "normalGrantRevoke": "DELETE204_FRESH_ABSENCE",
+  "postRevokeLive401": [
+    {
+      "at": "2026-11-01T04:02:21.782777043Z",
+      "requestId": "1c1246c9-07a4-4eef-ae3d-526dee4ba838",
+      "status": 401,
+      "durationMs": 3
+    },
+    {
+      "at": "2026-11-01T04:02:23.049965233Z",
+      "requestId": "98076084-0a00-4a35-9e9b-1914b5f06681",
+      "status": 401,
+      "durationMs": 0
+    }
+  ],
+  "postRevokeVisible": "AUTHENTICATION_REQUIRED_NO_ITEM_REPORTED",
+  "revokeVersusExpirySoleCausalityClaim": false,
+  "close": "COMPLETE_CLOSED_04_05_12_BEFORE_HARD_04_13_56",
+  "native": "OWNING_SAME_ITEM_AUTOMATIC_DAY_DETAILS_AND_NORMAL_COLD_PASS",
+  "mainIntegration": "PENDING_CURATED_SERIAL_INTEGRATION",
+  "limitations": [
+    "No wire refresh traffic qualification",
+    "No old bb failure sole-cause diagnosis",
+    "No Beta always-on authority claim",
+    "No continuous commit-to-visible latency measurement",
+    "Consent screenshot not retained; actual DOM and normal click plus new grant evidence retained"
+  ]
+}

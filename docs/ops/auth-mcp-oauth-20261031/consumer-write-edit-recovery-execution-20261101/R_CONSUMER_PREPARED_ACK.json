@@ -1,0 +1,11 @@
+{
+  "status": "CONSUMER_FRESH_PREPARED_NO_RECONNECT",
+  "observedAt": "2026-11-01T03:40:53.576Z",
+  "sourceThread": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "fixture": "c7/2ed5 original bb three steps",
+  "dailyUsage": 6,
+  "dailyLimit": 100,
+  "reconnects": 0,
+  "otpRequests": 0,
+  "nativeFreshAck": "PENDING"
+}

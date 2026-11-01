@@ -1,0 +1,10 @@
+{
+  "status": "RENDERED_ONLY_NOT_EXECUTED",
+  "gateSHA256": "deac94b128a36d0617888f54cc24550f205b7574e9cde4147e1523ac208231fc",
+  "sqlSHA256": "7d856350b0857aa35ee022d4af2ca620596bbf4bb3fc20184ed57d12c959e442",
+  "closeSQLSHA256": "ad51c0fe6abb75ec704e53e290da3e26c391097fed48bd679aa573e0b422e3cb",
+  "activeBodyMD5": "e782d682650384edf6e2ab04ff0b75ad",
+  "startedAt": "2026-11-01T03:44:03.556000Z",
+  "expiresAt": "2026-11-01T04:13:56.113000Z",
+  "consentNotBefore": 1793504643556
+}

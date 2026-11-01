@@ -1,0 +1,10 @@
+{
+  "status": "NATIVE_FRESH_QA_MENU_DAY_OBSERVATION_READY",
+  "sourceThread": "01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "observedAt": "2026-11-01T03:47:13Z",
+  "dayGrouping": "2026-12-12",
+  "visibleTarget": "Consumer MCP QA Lodge",
+  "identityFreshMatched": true,
+  "businessWrites": 0,
+  "editAppliedClaim": false
+}

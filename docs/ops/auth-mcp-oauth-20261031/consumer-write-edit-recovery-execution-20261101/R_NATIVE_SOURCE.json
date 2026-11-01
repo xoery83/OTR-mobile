@@ -1,0 +1,8 @@
+{
+  "source": "/private/tmp/otr-realtime-version-dev-20261031/docs/ops/native05-06-20261031/CONSUMER_RECOVERY_EDIT_NATIVE_CLOSURE.json",
+  "commit": "77d76ece",
+  "sha256": "6d98bb08825987523688cfb010335b215f3ae0fed31a0326d7c25937acf2df16",
+  "receiptType": "OWNING_NATIVE_DEVICE_EVIDENCE",
+  "continuousLatencyClaim": false,
+  "privateRealtimeClaim": false
+}

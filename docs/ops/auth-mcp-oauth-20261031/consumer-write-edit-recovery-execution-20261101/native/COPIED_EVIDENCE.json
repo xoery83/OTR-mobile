@@ -1,0 +1,12 @@
+{
+  "status": "NATIVE_OWNING_RAW_SUCCESS_RECORDS_COPIED_AND_DETAIL_HASHES_MATCH_FIXED_CLOSURE",
+  "sourceCommit": "77d76ece",
+  "files": {
+    "consumer-recovery-applied-detail.json": "02ded732c73126db6c6609920651d7aecebfd8dc1fc99295bc5f04a3a78d6e2a",
+    "consumer-recovery-applied-cold-detail.json": "629597edffc279737b4c133a410b45f265ab68a4ef2f2e4b4c36c40d076553aa",
+    "consumer-recovery-applied-close.json": "bf4c75b930ef97c30df43346c02a3dca3fb2497aa2e21a809b84e521212af91f",
+    "consumer-recovery-applied-cold-relaunch.json": "36573cebe0da61d5d2148cfe8726f8bf5c88bd8503c9c9c6738fc955b12a906c"
+  },
+  "continuousLatencyClaim": false,
+  "privateRealtimeClaim": false
+}

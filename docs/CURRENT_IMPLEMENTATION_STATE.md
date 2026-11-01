@@ -143,16 +143,24 @@ to v3/bb-only (Create/oldv2/repeats reject),54 targeted checks/types/lint and
 independent NO_BLOCKER. Root combined this with its two Source diagnostics,
 348 other Capture inputs preserved: actual6af4/d3a5/Capture44fbd/MCPb807,
 independent defaultclosed02:44:24Z health200/protected401/23files/Env/Host/mount
-PASS. Root Source work may continue. New original-bb recovery Gate deac94b1 is
-frozen and independently reviewed,35file/54criticalinput hashes match. Owner
-directly approved one exact window and one original-ID recovery APPLY (call7c9a852).
-New window462db18f remains NOT_STARTED, no first-intention/OTP/Host/config/SQL
-change; Root Source63779 is active, so actual closure/release/freshCAS is required.
-Local existing-item/original-receipt controls and close wrappers passed independent
-Review; no old window reused. It allows no new Item/op, reuses accepted stateless Preview
-only with fresh unchanged state/Consent/Confirm and at most one explicitly newly
-approved samebb APPLY; existing APPLIED receipt skipsPOST. See
-consumer-write-edit-recovery-qa-20261101/. No old window reuse or business retry. See consumer-write-candidate/.
+PASS. Root Source work may continue. Original-bb recovery Gate deac94b1 received direct Owner approval and its only
+window462db18f is now COMPLETE_CLOSED (04:05:12Z, before hard04:13:56). Fresh normal
+OTP/ReadEdit Consent and pre-apply original rev1/full-fields/receipt0 plus new-grant
+floor passed. One newly approved originalbb APPLY returned APPLIED/rev2. Consumer
+SERVER_CONFIRMED/same11f/Dec11→13/2nights, normal Backend owning receipt integrity
+and exact fields, and independent Supabase single Item/singlebb receipt/Actor/hash
+all PASS. Receipt f238b481; no new Item/op or second APPLY. Normal grant DELETE204
+and fresh absence/control logout+refresh rejection PASS; one same-connection probe
+required authentication/no Item, with two retained live401 logs before close.
+Expiry-versus-revoke sole causality and wire refresh traffic are not claimed.
+Denyall04:03:07/default6af4-d3a5 restored04:03:21/ASoff saved+reload/Hookoff/Sitelocal,
+then independent33Host/10SQL/configdiff[]/Sourceclosed and approved67145 ACL preserved
+PASS. Resources returned Root; no restart/extension. Native actual Day automatic
+move, exact details Dec11→13/2nights and normal cold passed (owning77d76ece).
+Fresh watcher first sample already visible/lastAbsentnull, no continuous latency claim.
+Independent evidence review and curated main-forward integration continue; never
+merge the long Auth branch or roll peers back. See consumer-write-edit-recovery-
+execution-20261101/{R_OUTCOME,R_COMPLETE_CLOSED}.json.
 
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,

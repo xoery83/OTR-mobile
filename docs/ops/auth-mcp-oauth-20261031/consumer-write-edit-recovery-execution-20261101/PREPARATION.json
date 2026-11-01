@@ -1,9 +1,12 @@
 {
-  "status": "APPROVED_LOCAL_PREPARATION_NO_WINDOW",
+  "status": "EXECUTED_AND_COMPLETE_CLOSED",
   "windowId": "462db18f31494ae39fc61a0c257daac9",
   "privateRoot": "/private/tmp/otr-auth-original-bb-462db18f31494ae39fc61a0c257daac9",
-  "rootResource": "AWAITING_ACTUAL_SOURCE_CLOSE_AND_RELEASE",
-  "otpRequests": 0,
-  "hostConfigSqlChanges": 0,
-  "deadlineStarted": false
+  "rootResource": "RELEASED_TO_ROOT",
+  "otpRequests": 2,
+  "hostConfigSqlChanges": "EXACT_APPROVED_FINITE_WINDOW_RESTORED",
+  "deadlineStarted": true,
+  "finalReceipt": "R_COMPLETE_CLOSED.json",
+  "normalControlOtpRequests": 1,
+  "consumerBrowserOtpRequests": 1
 }

@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "data": {
+    "session": "native-ipad-resume-[EIGHT_DIGITS_REDACTED]",
+    "sessionStateDir": "/private/tmp/otr-native05-[EIGHT_DIGITS_REDACTED]/state/sessions/native-ipad-resume-[EIGHT_DIGITS_REDACTED]",
+    "runnerLogPath": "/private/tmp/otr-native05-[EIGHT_DIGITS_REDACTED]/state/sessions/native-ipad-resume-[EIGHT_DIGITS_REDACTED]/runner.log",
+    "requestLogPath": "/private/tmp/otr-native05-[EIGHT_DIGITS_REDACTED]/state/sessions/native-ipad-resume-[EIGHT_DIGITS_REDACTED]/requests/660add1748cb3d4e.ndjson",
+    "eventLogPath": "/private/tmp/otr-native05-[EIGHT_DIGITS_REDACTED]/state/sessions/native-ipad-resume-[EIGHT_DIGITS_REDACTED]/events.ndjson",
+    "appName": "com.xoery.otrmobile.ipadqa",
+    "appBundleId": "com.xoery.otrmobile.ipadqa",
+    "selection": {
+      "reason": "existing-session",
+      "source": "session",
+      "candidateCount": 1,
+      "bootOccurred": false
+    },
+    "startup": {
+      "durationMs": 6112,
+      "measuredAt": "2026-11-01T04:01:35.043Z",
+      "method": "open-command-roundtrip",
+      "appTarget": "com.xoery.otrmobile.ipadqa",
+      "appBundleId": "com.xoery.otrmobile.ipadqa"
+    },
+    "platform": "ios",
+    "target": "mobile",
+    "device": "Yang的iPad",
+    "id": "[EIGHT_DIGITS_REDACTED]-00113914020B401E",
+    "device_udid": "[EIGHT_DIGITS_REDACTED]-00113914020B401E",
+    "ios_simulator_device_set": null,
+    "message": "Opened: com.xoery.otrmobile.ipadqa"
+  }
+}

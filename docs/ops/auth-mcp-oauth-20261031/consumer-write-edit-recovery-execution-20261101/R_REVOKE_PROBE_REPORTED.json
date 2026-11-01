@@ -1,0 +1,10 @@
+{
+  "status": "SAME_CONNECTION_AUTHENTICATION_REQUIRED_NO_ITEM_REPORTED",
+  "sourceThread": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "promptAt": "2026-11-01T04:02:09.908Z",
+  "allowedAt": "2026-11-01T04:02:20.519Z",
+  "observedAt": "2026-11-01T04:02:29.027Z",
+  "probeCount": 1,
+  "reconnectsAfterRevoke": 0,
+  "expiryVersusRevokeSoleCausalityClaim": false
+}

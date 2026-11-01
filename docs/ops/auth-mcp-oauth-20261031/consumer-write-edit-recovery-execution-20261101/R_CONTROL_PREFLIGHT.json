@@ -1,0 +1,77 @@
+{
+  "status": "NORMAL_QA_ORIGINAL_RECOVERY_PREFLIGHT_PASS",
+  "recovery": "ORIGINAL_APPLY_CONDITIONALLY_ELIGIBLE_NOT_AUTHORITY",
+  "observedAt": "2026-11-01T03:41:56.113Z",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "oldClientGrantAbsent": true,
+  "item": {
+    "status": 200,
+    "body": {
+      "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+      "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "itemRevision": 1,
+      "family": "P3",
+      "title": "Consumer MCP QA Stay (unbooked)",
+      "description": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+      "status": "planned",
+      "hidden": false,
+      "visibility": "PRIVATE",
+      "localState": "ACCEPTED",
+      "participation": {
+        "mode": "SELF",
+        "personIds": [],
+        "selfPersonId": "0fba6f2e-d0bd-4e65-8e41-decebe8c3154",
+        "rosterHash": "92bb566cab42ce5b9fdf69478dc1193835d9c293956a2ac334e2bc965c2a08b5"
+      },
+      "schedule": {
+        "shape": "STAY",
+        "start": {
+          "comparable": false,
+          "localDate": "2026-12-12",
+          "quality": "UNKNOWN",
+          "basis": "DERIVED_CIVIL",
+          "civilResolution": "PENDING"
+        },
+        "end": {
+          "comparable": false,
+          "localDate": "2026-12-13",
+          "quality": "UNKNOWN",
+          "basis": "DERIVED_CIVIL",
+          "civilResolution": "PENDING"
+        }
+      },
+      "details": {
+        "propertyName": "Consumer MCP QA Lodge",
+        "rooms": [],
+        "nights": 1
+      },
+      "bookingSummaries": [],
+      "entitlementSummaries": [],
+      "documentSummaries": [],
+      "instructionShortcuts": [],
+      "expenseLinkIds": [],
+      "capabilities": {
+        "canEdit": false,
+        "canManageParticipation": false,
+        "canManageVisibility": false,
+        "canCancel": false,
+        "canHide": false,
+        "canRestore": false,
+        "canLinkBooking": false,
+        "canLinkEntitlement": false,
+        "canAttachDocument": false
+      }
+    }
+  },
+  "originalOperation": {
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "NOT_VISIBLE",
+        "message": "NOT_VISIBLE"
+      }
+    }
+  },
+  "businessPosts": 0
+}

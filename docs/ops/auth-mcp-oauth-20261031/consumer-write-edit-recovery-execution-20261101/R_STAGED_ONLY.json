@@ -1,0 +1,17 @@
+{
+  "status": "REVIEWED_FILES_STAGED_ONLY_NO_EXECUTION",
+  "root": "/opt/otr/dev-backend/build/auth-consumer-write-qa-462db18f31494ae39fc61a0c257daac9",
+  "files": {
+    "deploy.py": "212562f4e6466cad90386ce64dcdcb2c300f657c9d7a22786a4b85b15baac12c",
+    "prepare.py": "e1b21f30a3e7e55a566c7b448971c3f9dcb2fb69ccd444b1fbd12ae7668f01f7",
+    "restore.py": "0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "software-handoff.json": "4203b126e3695c6942851958b63c6aa38583f1d3cfd1991eaf357f9f5f775729",
+    "gate-manifest.json": "e8d2a325516f5a0b95ab770d483c6ad00e6344240a53f6c5ae6ae537835aea8d",
+    "owner-approval.json": "b9251f9eaff6bade631932d36ef97be7a39df3e48db5d27f3d43ab7beb51214b"
+  },
+  "serviceChanges": 0,
+  "configurationChanges": 0,
+  "sqlChanges": 0,
+  "deadlineStarted": false
+}

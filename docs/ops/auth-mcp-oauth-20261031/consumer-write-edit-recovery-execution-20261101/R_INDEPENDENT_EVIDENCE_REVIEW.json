@@ -1,0 +1,24 @@
+{
+  "status": "NO_BLOCKER_EVIDENCE_WITH_LIMITS",
+  "reviewer": "auth_phase1_review",
+  "gateSHA256": "deac94b128a36d0617888f54cc24550f205b7574e9cde4147e1523ac208231fc",
+  "windowId": "462db18f31494ae39fc61a0c257daac9",
+  "reviewMethod": "Existing local evidence only; no network, Host, SQL, OTP or device operations.",
+  "verified": [
+    "Owning validateCoreReceipt passed; normal Backend and independent SQL receipts deeply equal for original bb, exact Account/Trip/Item and revision2.",
+    "Raw command SHA56498 and domain-separated intent SHA32b3 independently recomputed; item1/receipt1 and expected fields match.",
+    "Consumer source manifest self-hash and all19 source files verified; all9 copied files hash-exact; actual APPLY APPLIED/rev2 and SERVER_CONFIRMED projection match Backend recursively.",
+    "Fresh grant-after-activation evidence, normal grant revoke204/absence and normal Session cleanup are consistent.",
+    "Deny-all then retained runtime restore, AS-off, Hook-off and Site restore precede final SQL/config/Host33/source readbacks; complete04:05:12 precedes hard04:13:56.",
+    "Strict safe log projection contains no raw request payloads and records two live post-revoke401 events.",
+    "Native owning closure source and copied bytes match SHA6d98bb at recorded commit77d76ece; same Item details, automatic Day display, normal cold and normal close are consistently reported."
+  ],
+  "limitations": [
+    "Consent screenshot was not retained; actual DOM/normal successful click and fresh grant evidence were reviewed, with no reconstructed screenshot.",
+    "No direct refresh-wire traffic qualification.",
+    "Revoke versus expiry sole causality was not isolated; old bb failure root cause is not proved.",
+    "Native device raw files were not independently inspected; Native acceptance relies on the exact copied owning closure. First observed sample already visible and lastAbsent null do not measure continuous commit-to-visible latency.",
+    "Not private Realtime, Beta always-on authority, a new execution window or main integration acceptance."
+  ],
+  "findings": []
+}

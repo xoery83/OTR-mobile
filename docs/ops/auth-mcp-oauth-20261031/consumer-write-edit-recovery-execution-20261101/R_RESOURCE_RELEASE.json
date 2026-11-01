@@ -1,0 +1,36 @@
+{
+  "status": "ROOT_ACTUAL_CLOSED_AND_RESOURCE_RELEASED",
+  "observedAt": "2026-11-01T03:39:41.926459+00:00",
+  "rootMessage": "Photo637\u7a97\u53e3\u5df2\u5b9e\u9645\u5b89\u5168\u5173\u95ed\uff0cHost/config/SQL\u8d44\u6e90\u5f52\u8fd8",
+  "sourceReceipt": "/private/tmp/otr-photo-verify-diag-v3-20261101/photo-first-window-closed.json",
+  "sourceReceiptSHA256": "82d3186a5999b94166e611a5e09a78987d5bc583e9851b778dc73e9e63dbe2ca",
+  "receipt": {
+    "status": "PHOTO_WINDOW17_RECOVERY_CLOSED_VERIFIED",
+    "windowId": "63779abf49734395a3de0d633bd400f1",
+    "controller": {
+      "status": "PNG_CLOSED_VERIFIED",
+      "verified": true,
+      "steps": {
+        "sourceBefore": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "runtime": {
+          "verified": true
+        },
+        "sourceAfter": {
+          "status": "PNG_SCOPE_CLOSED_VERIFIED",
+          "closed": true
+        },
+        "worker": {
+          "verified": true,
+          "activeState": "inactive",
+          "physicalCleanup": "EMPTY_VERIFIED"
+        }
+      }
+    },
+    "timersStopped": true,
+    "reason": "Same-object Photo execution completed or stopped; independent Source/worker close verified",
+    "reopened": false
+  }
+}

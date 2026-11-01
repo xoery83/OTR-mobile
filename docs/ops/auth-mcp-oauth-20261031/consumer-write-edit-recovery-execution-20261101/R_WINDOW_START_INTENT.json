@@ -1,0 +1,12 @@
+{
+  "status": "FIRST_TEMP_CONFIG_WRITE_INTENT",
+  "gateSHA256": "deac94b128a36d0617888f54cc24550f205b7574e9cde4147e1523ac208231fc",
+  "startedAtMs": 1793504643556,
+  "expiresAtMs": 1793506436113,
+  "startedAt": "2026-11-01T03:44:03.556000Z",
+  "expiresAt": "2026-11-01T04:13:56.113000Z",
+  "maximumMinutes": 30,
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "clientProfile": "claude-edit-recovery",
+  "windowId": "462db18f31494ae39fc61a0c257daac9"
+}

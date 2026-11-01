@@ -1,0 +1,15 @@
+{
+  "status": "CONSUMER_NORMAL_OTP_AND_FRESH_READ_EDIT_CONSENT_REPORTED",
+  "sourceThread": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "otpSendAt": "2026-11-01T03:51:36.410Z",
+  "otpSendCount": 1,
+  "consentClickedAt": "2026-11-01T03:53:08.249Z",
+  "initialAutoReviewRejected": true,
+  "reviewReason": "Direct visible approval initially interpreted as read-only; fresh explicit Read/Edit authorization not recognized",
+  "sameButtonEvidenceRecheckCount": 1,
+  "directHumanApprovalReRead": true,
+  "sameNormalButtonRecheckSucceeded": true,
+  "alternateSubmission": false,
+  "businessOutcome": "NOT_YET_OBSERVED",
+  "otpOrTokenRecorded": false
+}

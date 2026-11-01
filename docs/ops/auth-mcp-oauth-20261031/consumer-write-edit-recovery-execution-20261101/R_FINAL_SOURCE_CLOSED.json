@@ -1,0 +1,12 @@
+{
+  "status": "SOURCE_CLOSED_AND_APPROVED_HELPER_PRESERVED",
+  "observedAt": "2026-11-01T04:04:45.234772+00:00",
+  "proof": {
+    "helperACL": "{otr_trip_source_writer=X/otr_trip_source_writer,postgres=X/otr_trip_source_writer}",
+    "helperMD5": "a2945b7def0e9e5a19d4a66bd1e5a951",
+    "helperOID": "67145",
+    "pdfClosed": true,
+    "pngClosed": true,
+    "providerDirectExec": false
+  }
+}

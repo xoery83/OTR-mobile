@@ -1,0 +1,38 @@
+{
+  "version": "otr.mcp.read/1",
+  "state": "SERVER_CONFIRMED",
+  "item": {
+    "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "itemRevision": 2,
+    "title": "Consumer MCP QA Stay (unbooked)",
+    "description": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+    "status": "planned",
+    "hidden": false,
+    "visibility": "PRIVATE",
+    "localState": "ACCEPTED",
+    "schedule": {
+      "shape": "STAY",
+      "start": {
+        "comparable": false,
+        "localDate": "2026-12-11",
+        "quality": "UNKNOWN",
+        "basis": "DERIVED_CIVIL",
+        "civilResolution": "PENDING"
+      },
+      "end": {
+        "comparable": false,
+        "localDate": "2026-12-13",
+        "quality": "UNKNOWN",
+        "basis": "DERIVED_CIVIL",
+        "civilResolution": "PENDING"
+      }
+    },
+    "family": "P3",
+    "details": {
+      "propertyName": "Consumer MCP QA Lodge",
+      "nights": 2,
+      "rooms": []
+    }
+  }
+}
