@@ -226,6 +226,8 @@ export const en = {
   "people.retrySave": "Retry save",
   "people.saveUnconfirmed":
     "Could not confirm the save. The entered name is kept here. Try again.",
+  "people.draftLoadFailed": "Could not read this private draft. Retry or close without changing it.",
+  "people.draftSaveFailed": "Could not confirm the draft change. Your entered name remains here.",
   "tripMembers.otherPeople": "Other named people",
   "tripMembers.localPending": "Saved on this device",
   "tripMembers.managementUnavailable":
@@ -3295,6 +3297,8 @@ export const zhHans: Record<MessageKey, string> = {
   "people.saveTraveler": "保存同行人",
   "people.retrySave": "重试保存",
   "people.saveUnconfirmed": "暂未能确认保存结果，已保留填写的名字。请重试。",
+  "people.draftLoadFailed": "未能读取此私密草稿。请重试，或关闭并保留原数据。",
+  "people.draftSaveFailed": "暂未能确认草稿修改，已保留此处填写的名字。",
   "tripMembers.otherPeople": "其他已命名人员",
   "tripMembers.localPending": "已保存在本设备",
   "tripMembers.managementUnavailable": "成员管理和邀请功能尚未开放。",

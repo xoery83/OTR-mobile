@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-01",
+  "status": "LOCAL_CLIENT_CANDIDATE_ONLY",
+  "flow": "private editor -> retain original Person/operation -> existing Person create/queue -> exact cleanup",
+  "direct_tests": {
+    "five_suites": 72,
+    "later_form_guard_repair": 12
+  },
+  "independent_review": "CLIENT_DRAFT_REVIEW.json",
+  "checks": [
+    "typecheck",
+    "scoped eslint",
+    "ui:guard"
+  ],
+  "not_proven": [
+    "real SecureStore",
+    "normal Native caller",
+    "cold App",
+    "Hosted parent reader or new server authorization"
+  ],
+  "authority_changes": false,
+  "shared_host_device_changes": false
+}

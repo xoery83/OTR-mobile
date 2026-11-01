@@ -1,3 +1,17 @@
+# Auth Independent Client Sprint — 1 November 2026
+
+Profile page loader/local save/cancel candidate is implemented (c4e0c0fb), but normal
+Settings/route and SQLite77 registration remain Native-owned and unmounted. Private
+cloud install2652b1af is reviewed local-only; no Hosted installation or activation.
+Add Traveler now has an optional Account/Trip-scoped private editor draft through
+existing PersonRepository: retain exact Person/operation IDs before create; UNKNOWN
+and close preserve them; explicit Cancel only discards unsubmitted drafts. Existing
+real SQLite queue reopen test proves one Person/one Queue after lost local reply.
+Mocked Native storage/form tests are not real Keychain/cold-App or server evidence.
+Normal adopted Add caller and closed parent reader still need unique Writers.
+Photo retains shared DEV/SQL/Provider/AD5. No Host/config/device changes this sprint.
+Track actual ports and later acceptance in AUTH_CLIENT_INTEGRATION_GAPS.md.
+
 # Native-05/06 — iPad business slice and closed trigger, 31 October 2026
 
 Physical iPad Air5 freshly verified OS27.2/24B119, exactUDID00008103-00113914020B401E,

@@ -442,6 +442,52 @@ it("cold-reconciles an UNKNOWN Person on the existing worker without replaying T
     f.sql.prepare("SELECT count(*) n FROM trip_person_cloud_create_receipts").get()?.n,
   ).toBe(1);
 });
+
+it("restores an editor attempt after a lost local reply and reuses exactly one adopted Person queue row", async () => {
+  const f = await serverParentFixture();
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: async (key: string) => values.get(key) ?? null,
+    setItem: async (key: string, value: string) => {
+      values.set(key, value);
+    },
+    deleteItem: async (key: string) => {
+      values.delete(key);
+    },
+  };
+  const reopen = () =>
+    createTripPersonCloudCreateRepository(f.db, f.readAccount, undefined, storage);
+  let repo = reopen();
+  const input = f.authored("Same Unicode 林 e\u0301");
+  const attempt = {
+    operationId: input.operationId,
+    personId: input.personId,
+    displayName: input.displayName,
+  };
+  await repo.drafts!.saveName(f.scope, input.displayName);
+  await repo.drafts!.retainAttempt(f.scope, attempt);
+  await repo.createAuthoredFromParentReceipt(input, f.parent);
+  // The queue commit happened, but its UI reply was lost before draft cleanup.
+  f.reopen();
+  repo = reopen();
+  const recovered = await repo.drafts!.read(f.scope);
+  expect(recovered?.attempt).toEqual(attempt);
+  await repo.createAuthoredFromParentReceipt(
+    { ...input, ...recovered!.attempt },
+    f.parent,
+  );
+  expect(
+    f.sql
+      .prepare("SELECT count(*) n FROM sync_operations WHERE id=?")
+      .get(input.operationId)?.n,
+  ).toBe(1);
+  expect(
+    f.sql.prepare("SELECT count(*) n FROM ledger_members WHERE id=?").get(input.personId)
+      ?.n,
+  ).toBe(1);
+  await repo.drafts!.complete(f.scope, input.operationId);
+  expect(await repo.drafts!.read(f.scope)).toBeNull();
+});
 it("the UI adapter binds one authoring operation to its opening Account and existing Trip lineage", async () => {
   const f = await fixture();
   const scope = await captureAccountRequestContext(f.trip, f.readAccount);

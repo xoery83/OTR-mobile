@@ -31,6 +31,10 @@ import {
   structuredTripCreateResultSchema,
   type TripCreateWireResult,
 } from "@/domain/trip/tripCreateWireContract";
+import {
+  createTripPersonEditorDraft,
+  type TripPersonDraftStorage,
+} from "./tripPersonEditorDraft";
 const json = (v: unknown) => canonicalCoreJson(v as Json);
 type ParentReadEvidence = {
   receipt: TripCreateWireResult;
@@ -254,8 +258,10 @@ export function createTripPersonCloudCreateRepository(
   database: LedgerReadDatabase,
   account: () => Promise<string>,
   clock = () => new Date().toISOString(),
+  draftStorage?: TripPersonDraftStorage,
 ) {
   return {
+    drafts: draftStorage ? createTripPersonEditorDraft(draftStorage, account) : undefined,
     async readServerParentCreator(tripId: string, rawParent: unknown) {
       const receipt = structuredTripCreateResultSchema.parse(rawParent);
       const scope = await captureAccountRequestContext(tripId, account);
