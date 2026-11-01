@@ -1,0 +1,29 @@
+{
+  "build": 141,
+  "source": "03cdf042",
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "team": "U9D5C58Z94",
+  "keychainGroups": [
+    "U9D5C58Z94.com.xoery.otrmobile.ipadqa"
+  ],
+  "profileExpiryUTC": "2026-11-05T20:20:57Z",
+  "signingVerified": true,
+  "deviceFamily": [
+    1,
+    2
+  ],
+  "minimumOS": "16.4",
+  "nativeBasis": "retained accepted iPad QA127/128 native binary; JS repackage only, not full new Native compile",
+  "rollbackArtifact": "/private/tmp/otr-native-auth-ipad140/OTRMobile140.app",
+  "rollbackLimit": "preserve installed QA135 artifact; additive local76/77 migration retains prior rows; no migration rollback, app uninstall or data deletion",
+  "sqliteSchemaVersion": 77,
+  "jsHash": "c737f957b7df0a66f09945b6d91c08965690216503a25edcd7d1b180324dfa9a",
+  "installed": true,
+  "iPhoneTouched": false,
+  "hostedActions": 0,
+  "device": "iPad Air5 / observed iPadOS27.2",
+  "qualification": "In-place signed JS repackage of prior accepted Native binary, no new Native compile; SQLite77 registry unchanged sinceQA140",
+  "registryDiffSinceAcceptedNativeBasis": true,
+  "registryDiffSincePreviousInstalled": false,
+  "schemaQualification": "Actual QA140 diagnostics77 reused; V3 registry unchanged, no new migration or DB copy"
+}

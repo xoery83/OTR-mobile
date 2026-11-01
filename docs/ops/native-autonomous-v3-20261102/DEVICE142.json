@@ -1,0 +1,43 @@
+{
+  "status": "READ_ONLY_NATIVE_COLD_SMOKE_PASS",
+  "build": 142,
+  "source": "3391d4cb",
+  "jsHash": "fe7232b550793823bbf808260925fe239ada09a757748f304594c3dee220c186",
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "sqliteSchemaVersion": "77_REGISTRY_UNCHANGED_PARENT_IDENTITY_NOT_REQUERIED_IN_UI",
+  "session": "native-v3-form-qa142-20261102",
+  "results": {
+    "fourHistoricalTrips": "PASS exact4 normalMyTrips button entries",
+    "sameSyntheticP3": "PASS Native05→uniqueTitle→Details Nov4–6/2nights/Everyone",
+    "sameItemEditOriginal": "PASS normalEdit loads exact originalTitle/dateRange;no change/Save",
+    "cancel": "PASS Cancel returnsDetails thenTripHome",
+    "release": "PASS ownClose+postflight sessions empty"
+  },
+  "evidence": {
+    "details.png": {
+      "path": "/private/tmp/otr-native-v3-deviceqa142-20261102/details.png",
+      "sha256": "676a33ac0db4950add49579e1ae12c8ab4affcfe17c2ccb5f222a338bcfb17b6"
+    },
+    "edit-original.png": {
+      "path": "/private/tmp/otr-native-v3-deviceqa142-20261102/edit-original.png",
+      "sha256": "10a14103ab5bbb56bc6e3cf6b23c439b0be996b08724154641f9baa07d6d71b3"
+    },
+    "four-trips.png": {
+      "path": "/private/tmp/otr-native-v3-deviceqa142-20261102/four-trips.png",
+      "sha256": "2fc1b4b1bc3645aa6982a7a6512e6421f28929e559f1364629e3ae49696b3a72"
+    }
+  },
+  "reused": "QA141 DarkChinese contrast/datepanel/Cancel; QA140 Noteskeyboard",
+  "safety": {
+    "saveAttempts": 0,
+    "businessChanges": 0,
+    "otherAccountOrTripTouched": false,
+    "copiedDbSession": false,
+    "providerCalls": 0
+  },
+  "limits": [
+    "No normalUIItemID/Receipt/Supabase readback",
+    "No CloudL3 or realScan claim",
+    "No new diagnostic schema read because no migration changed"
+  ]
+}

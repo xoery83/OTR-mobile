@@ -1,0 +1,200 @@
+{
+  "failureAt140": {
+    "status": "DEVICE_PARTIAL_PASS_ONE_ACTUAL_VISUAL_FAILURE",
+    "source": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d",
+    "build": 140,
+    "bundleId": "com.xoery.otrmobile.ipadqa",
+    "device": "iPad Air5 / iPadOS27.2 / 1180x820 landscape",
+    "udid": "00008103-00113914020B401E",
+    "session": "native-v3-form-qa-20261102",
+    "results": {
+      "originalFourTrips": "PASS real initial snapshot; no Session/account changes",
+      "normalP3Edit": "NOT_TESTED: Native05QA1031 and Native04Unified126Cloud each exposed only one P1; no scan of MCP Synthetic Nelson and no new saved object",
+      "normalP3SyntheticReviewAdopt": "NOT_TESTED: normal Scan port closed/unavailable, no sample action. Did not enable flags or substitute fixture for formal Source",
+      "darkChineseP3Create": "PARTIAL_PASS: translated title/field captions/input/calendar/participants visible with theme; Scan unavailable description has bad contrast",
+      "calendar": "PASS seven columns visible, Chinese month/week/day labels, square selected/day cells, normalCancel leaves initial Oct31 date unchanged; no chosen range or date Save",
+      "notesKeyboard": "PASS actual text-view y167 height99 above keyboard y453 height364; no text entered; normalCancel exited without dirty prompt",
+      "restore": "PASS English/System restored through Settings; original Native04 P1 feed visible",
+      "release": "PASS close receipt and postflight sessions empty"
+    },
+    "actualFailures": [
+      {
+        "severity": "P2",
+        "step": "Normal NewStay in Chinese/Dark",
+        "expected": "Scan status body follows theme foreground",
+        "observed": "扫描暂不可用，你可以手动填写详情。 rendered black on dark surface",
+        "screenshot": "p3-dark-zh.png",
+        "probableSource": "src/features/day-feed/SyntheticFormScan.tsx unstyled UiText; src/ui/controls.tsx UiText only spreads props onto native Text. Parent owns product repair.",
+        "sourceChanged": false,
+        "additionalObservation": "Notes-keyboard screenshot status bar dark foreground also low-contrast on dark top area; not isolated as separate root cause."
+      }
+    ],
+    "toolEvents": [
+      {
+        "event": "initialsnapshot15000ms timeout",
+        "recovery": "one bounded20s retry succeeded; no Owner prompt required"
+      },
+      {
+        "event": "approvalreviewdeadline on DarkChinese command",
+        "recovery": "one retry; timed-out action had not executed"
+      }
+    ],
+    "safety": {
+      "nativeBusinessSaveClicks": 0,
+      "businessCreates": 0,
+      "businessEdits": 0,
+      "providerCalls": 0,
+      "authChanges": 0,
+      "installedBuilds": 0,
+      "sqliteOrSessionCopied": false,
+      "iPhoneOrAD5Touched": false,
+      "productFilesChanged": false
+    },
+    "screenshots": {
+      "add-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/add-dark-zh.png",
+        "sha256": "4bb549e499d3d7a7ac0e4788e76fea8fe4a8204abd28e017b3ec6b0aeac63e63"
+      },
+      "blocked-screen.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/blocked-screen.png",
+        "sha256": "a9ef1cd8f616adfb7928c97926e42d918d3b2cab9f7411dc3baca02a1d5bb286"
+      },
+      "p3-calendar-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/p3-calendar-dark-zh.png",
+        "sha256": "7a499ef8449a33576f56130399214387f821a6b0937252173bdbad6aad5f6042"
+      },
+      "p3-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/p3-dark-zh.png",
+        "sha256": "82e062d6fb03b05413f58009c1f3f866946acb62c2a9c0e87a5da84eb40dd212"
+      },
+      "p3-lower-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/p3-lower-dark-zh.png",
+        "sha256": "dfc45386fc2dc983a7a2a44deeac586117f56a94d7dc784cef1a4e947370e823"
+      },
+      "p3-notes-keyboard-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/p3-notes-keyboard-dark-zh.png",
+        "sha256": "53cfce1d918f612ab183ef4edd43decf1fb1e59e3e14152438c71f1a694ecef8"
+      },
+      "restored-day.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/restored-day.png",
+        "sha256": "3dc5ebc43942f5c0f77d348f46c72d603126cf3e393b682b787acee19555a749"
+      },
+      "settings-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/settings-dark-zh.png",
+        "sha256": "e37bd78db16659edd7ecb708e5288a93d273362c03ccc59c20864ba8736387da"
+      },
+      "settings-restored.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/settings-restored.png",
+        "sha256": "1f20c04d9075adde2225287c9226cae1d698f4d86bb60643f33a37fd54ab2d24"
+      },
+      "trip-home.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/trip-home.png",
+        "sha256": "4f4a20a0d6d2bea48d1d7e11704d606620a11fb7c684fc9944daa831383b4504"
+      },
+      "unified-day.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa-20261102/unified-day.png",
+        "sha256": "3d53bc020fb09cb5fe227455b4772d359d2f02ba1359663f85da3997846c03e4"
+      }
+    }
+  },
+  "retestAt141": {
+    "status": "NATIVE_DEVICE_UI_PASS_NOT_CLOUD_L3",
+    "source": "03cdf042",
+    "jsHash": "c737f957b7df0a66f09945b6d91c08965690216503a25edcd7d1b180324dfa9a",
+    "build": 141,
+    "bundleId": "com.xoery.otrmobile.ipadqa",
+    "device": "iPad Air5 / iPadOS27.2 / landscape1180x820",
+    "session": "native-v3-form-qa141-20261102",
+    "goldenSlice": "NormalNative05Trip→NewStay singleSave→sameStayDetails/Edit→unsavedRename/Cancel/Discard→originalValues→sharedCalendarCancel",
+    "syntheticObject": {
+      "trip": "Native05 iPad QA 1031",
+      "title": "Native V3 UI QA Stay 1102",
+      "startDate": "2026-11-04",
+      "endDate": "2026-11-06",
+      "itemId": "NOT_EXPOSED_IN_NORMAL_UI",
+      "operationId": "NOT_EXPOSED_IN_NORMAL_UI",
+      "pendingOrServerAccepted": "NOT_INDEPENDENTLY_ESTABLISHED",
+      "retained": true
+    },
+    "results": {
+      "darkActualFailureRetest": "PASS: unavailable Scan description now light readable text on dark surface; actual screenshots inspected",
+      "create": "PASS one normalManualSave; TripHome now1Plan+1Stay and unique recentStay; no error or extraSave",
+      "details": "PASS exact title,2nights,Nov4/Nov6,Everyone visible",
+      "sameItemEdit": "PASS normalEdit caption+originalfields loaded; no copiedDraft or directRepo path",
+      "unsavedCancel": "PASS rename with CANCEL未保存→Cancel→normalUnsavedPrompt→Discard; details originalTitle/date preserved",
+      "repositoryReadbackThroughEditor": "PASS reopenEdit actual screenshot originalTitle anddateRange retained; noEditSave",
+      "editCalendar": "PASS ChineseDark sharedCalendar opens withsame range;Cancel nochange",
+      "keyboard": "REUSED QA140 actualNotes keyboard rect PASS; not mechanically rerun inQA141",
+      "restore": "PASS English/System restored throughSettings; returned normal Native05TripHome",
+      "sessionRelease": "PASS normalclose andsessionlistempty",
+      "realSourceScan": "NOT_TESTED closed normalPort; noSyntheticPreview forced; noAIclaims",
+      "cloudL3": "NOT_TESTED noindependentReceipt/Supabase readback"
+    },
+    "safety": {
+      "normalNativeSaveAttempts": 1,
+      "normalEditSaveAttempts": 0,
+      "duplicateCreates": 0,
+      "cloudOrQueueStatusFabricated": false,
+      "providerCalls": 0,
+      "sqlOrSessionReads": 0,
+      "mcpTripTouched": false,
+      "otherAccountTouched": false,
+      "appOrDataReset": false,
+      "productSourceChangedByQa": false
+    },
+    "screenshots": {
+      "create-calendar.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/create-calendar.png",
+        "sha256": "96acd960173440e46382c08652301278929ae451a022468c272cef25eb820a5d"
+      },
+      "create-ready.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/create-ready.png",
+        "sha256": "d5ae8155b48c853e0ffecf9e663c0018279acdb4fb7560a5f0e4c4b547e23f16"
+      },
+      "details-original-after-cancel.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/details-original-after-cancel.png",
+        "sha256": "e05517c7a449f139476f4b641eddc3610ebfd62a8a03a7390d6d53598f5322d6"
+      },
+      "edit-calendar-dark-zh.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/edit-calendar-dark-zh.png",
+        "sha256": "462b43713a83544445eeec1ec6b6bd2d7217cd2aa46ef1509ce29db36dc1c6ec"
+      },
+      "edit-cancel-prompt.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/edit-cancel-prompt.png",
+        "sha256": "06de634c148952978f4d6b3283ea110b8d09e4ba76200ff5a481d65d447b595c"
+      },
+      "edit-original-readback.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/edit-original-readback.png",
+        "sha256": "733fbc63bb70ada6da288b1a0054a8fcdadbce10212679103cd36d34395b8571"
+      },
+      "final-trip-home.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/final-trip-home.png",
+        "sha256": "c70fd80554b6c94fe8fa93d892f80467c81eef7458fdda9920bb95c2a1c487ca"
+      },
+      "p3-dark-fixed.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/p3-dark-fixed.png",
+        "sha256": "b0e23b3ca95e278384688590c4c7f66e7d8645dff9c09c30a8b0d287e7a91b14"
+      },
+      "same-stay-edit-before.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/same-stay-edit-before.png",
+        "sha256": "e6e8e204f7f37eccb9b014b1b043461f78bb6778a648476a823de332e7004eb7"
+      },
+      "save-after.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/save-after.png",
+        "sha256": "7af283d4ce81466701123ddbf0573665698fa7d5699e6fe792907f5b9f1f6ff2"
+      },
+      "saved-stay-details.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/saved-stay-details.png",
+        "sha256": "efa3af11cf680a51cf860b7bdffd7cf7b95637ec45a5202095b49d5a30917b41"
+      },
+      "settings-restored.png": {
+        "path": "/private/tmp/otr-native-v3-deviceqa141-20261102/settings-restored.png",
+        "sha256": "123c8eb2f80b509ddc0c487e0d882f570921a004a5b8793f4971262d5ba5db27"
+      }
+    },
+    "priorEvidence": {
+      "QA140": "/private/tmp/otr-native-v3-deviceqa-20261102/DEVICE_QA.json",
+      "closedFailure": "P3 Scan unavailable description Dark contrast, fixedQA141"
+    }
+  }
+}

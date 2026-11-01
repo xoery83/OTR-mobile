@@ -1,0 +1,26 @@
+{
+  "source": "3391d4cb",
+  "types": "PASS",
+  "affectedSourceLint": "PASS0errors0warnings",
+  "uiGuard": "PASS473legacy/170representative",
+  "iosJsExport": "PASS",
+  "logs": {
+    "/private/tmp/otr-native-v3-final/types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-v3-final/lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-v3-final/ui-guard.log": "141ce926e34cc4c8c45ffe526080c31557a4941d9656476ccde8720d89708142",
+    "/private/tmp/otr-native-v3-final/joined-tests.log": "29decbe23b36df3600dded2cd51662a87a7875e1b3d7cac5229e1ea29c1f6a9d"
+  },
+  "historicalReusableEvidence": [
+    "Auth iPadQA140 Profile/AdoptedDraft/A-B-A SQLite77 from136742be",
+    "Prior P1-P6 manualCloud and SyncReliability unchanged; not repeated",
+    "P2-P6 original synthetic FieldReview/ManualSave tests; only touched shared paths targeted"
+  ],
+  "hostedMutationsByParent": 0,
+  "providerCalls": 0,
+  "permissionOrSchemaChanges": 0,
+  "sharedHostSqlMainLocksUsed": 0,
+  "priorJoinedTests": "7suites150PASS at03cdf042",
+  "liveFormFenceRegression": "2suites50PASS (49previous+1liveGetter case; overlapping)",
+  "liveFormFenceTypesLint": "PASS",
+  "ordinaryDeviceSyntheticWrite": "Native05 single normal P3 Save under existing normal identity; no Receipt/Supabase verification performed, not CloudL3"
+}

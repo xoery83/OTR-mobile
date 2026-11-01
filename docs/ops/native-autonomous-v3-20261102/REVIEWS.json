@@ -1,0 +1,44 @@
+{
+  "realtime": {
+    "source": "660ea6d6b8e2937cbfe2c1c97d6b21ca0dfc7af7",
+    "integrated": "e44066cd",
+    "reviewer": "native_sprint_independent_review",
+    "status": "NO_BLOCKER",
+    "independentTests": "2suites36PASS plus actualSQLiteP3Pending1PASS/50notselected",
+    "limits": "No actual device/Hosted performance;25/400ms fixture inputs only"
+  },
+  "p3SourceBridge": {
+    "source": "c4d01e10ac3c28ef68483442d0190d3adabaaeb2",
+    "reviewer": "native_sprint_independent_review",
+    "status": "NO_BLOCKER",
+    "independentTests": "2suites49PASS including sourceDTO Create/Edit realSQLite/Core call-through",
+    "limits": "No realOCR/Source intake/Hosted; types/lint independently not rerun"
+  },
+  "enrichment": {
+    "source": "0a5705355a12a4b156596d22bfe6e0eb20d46525",
+    "integrated": "03cdf042",
+    "reviewer": "native_sprint_independent_review",
+    "status": "NO_BLOCKER",
+    "independentTests": "1suite22PASS",
+    "limits": "Two files only; Native owns 2EN/ZHkeys; no Backend/real usage/device qualification"
+  },
+  "authContract": {
+    "source": "82b93537",
+    "integrated": "64038e6b",
+    "receipt": "docs/ops/auth-realtime-private-20261102/INDEPENDENT_REVIEW.json"
+  },
+  "importContract": {
+    "source": "9aae9e19",
+    "integrated": "95abffd7",
+    "status": "Root independently reported NO_BLOCKER/33tests/types/lint; Native joined33PASS",
+    "authority": "Source/task/evidence schemas remain Import-owned"
+  },
+  "liveFormFence": {
+    "source": "3391d4cb39707217b16c2ea3ba977bcf645135b6",
+    "base": "03cdf042",
+    "status": "NO_BLOCKER",
+    "reviewer": "native_sprint_independent_review",
+    "independentTests": "2suites50PASS",
+    "limits": "Source getter is verified locally; Root intake must actually call it before each durable/provider I/O; no Hosted qualification"
+  }
+}
