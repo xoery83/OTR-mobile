@@ -1,3 +1,16 @@
+# Auth → Native local integration handoff — 1 November 2026
+
+Owner explicitly approved client-only integration; Native retains final Writer of
+Settings/navigation/startup/SQLite registry and its non-Photo device. Auth fixed
+source676065f8 and checked scoped patch package673eb337 are supplied. No Backend,
+SQL/RLS/GRANT, Hosted Profile/Invite/Usage, parent reader or Photo resource changes.
+Profile actual Settings→edit/save→restart/readback is next, then adopted Trip draft.
+Auth added an optional draft-only Sheet submission guard: private edits/restoration
+remain available without qualified cloud save; no Person/operation allocation or
+onSave. Default ordinary path unchanged. Directed/independent17 PASS including
+availability changes during preparation and stale callbacks; no Native PASS yet.
+See docs/ops/auth-client-native-handoff-20261101/HANDOFF.md and manifest.
+
 # Auth Independent Client Sprint — 1 November 2026
 
 Profile page loader/local save/cancel candidate is implemented (c4e0c0fb), but normal

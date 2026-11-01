@@ -2,7 +2,7 @@
 
 Updated 2026-11-01. Client tests and synthetic responses never prove server authority.
 
-Current first integration dependency: Native file-level Settings/route handoff remains pending; Auth has not modified its Settings, navigation, startup or SQLite registry. Dedicated Auth code continues independently.
+Owner has now explicitly approved the client-only handoff. Native retains final Writer ownership of Settings/navigation/startup/SQLite; Auth supplied the fixed 676065f8 source, scoped patches and call contract. Current dependency is Native integration/device execution, not another Owner approval.
 Photo retains shared DEV Backend/SQL/Provider/AD5 priority; no new shared release requested.
 
 | Slice | Existing interface/evidence | Actual missing delta | Owning Writer | Minimum later acceptance |
@@ -24,8 +24,8 @@ Photo retains shared DEV Backend/SQL/Provider/AD5 priority; no new shared releas
 
 ## File-level client handoff
 
-- Native Settings/route handoff was requested as one consolidated client-only change under Owner §4. No affirmative handoff has been received. Native reported its outgoing handoff message was rejected by automatic approval under its no-per-interface-request direction; it was not delivered. No permission is inferred from that failure.
+- Owner superseded the earlier coordination ambiguity with an explicit client-only handoff. Native owns final shared-file edits; Auth does not overwrite them. The fixed patch package is docs/ops/auth-client-native-handoff-20261101; actual normal-route/device evidence is still pending.
 - Integration calls: mount `AuthSettingsSection`; provide the normal Profile route callback only after startup-owned SQLite77 is qualified; new route renders `AccountPrivateProfilePage`. Existing startup calls `hydrateUiLocale`; add `hydrateUiAppearance` alongside it through its unique Writer.
-- Person caller binds `loadTripPersonEditorDraft(context)` to the existing `AddTravelerSheet.draft`; do not activate the closed adopted parent reader to obtain this local binding.
+- Person caller binds `loadTripPersonEditorDraft(context)` to the existing `AddTravelerSheet.draft`; use `submissionEnabled={false}` for a private draft when normal save qualification is unavailable. No UUID/onSave/Person/Queue is produced. Do not activate the closed adopted parent reader to obtain this local binding.
 - Preview-only Claim screen receives only `SYNTHETIC` input and cannot show a real accepted/connected badge. A real route requires the owning online authority, authoritative expiry/revocation and exact receipt lookup.
 - Usage View renders only the guarded reader result. No server reader means unavailable, not empty/zero. Empty requires a qualified response; allowance remains unconfigured/null and enforcement off.

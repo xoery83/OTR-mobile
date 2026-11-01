@@ -34,13 +34,14 @@ type Props = {
   // The owning caller fences the Account/Trip and saves through the existing repository.
   onSave(input: AddTravelerInput): Promise<void>;
   draft?: TripPersonEditorDraftPort;
+  submissionEnabled?: boolean;
 };
 
 export function AddTravelerSheet(props: Props) {
   return props.visible ? <AddTravelerForm {...props} /> : null;
 }
 
-function AddTravelerForm({ onClose, onSave, draft }: Props) {
+function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: Props) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const currentGeneration = useSyncExternalStore(
@@ -52,7 +53,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [ready, setReady] = useState(!draft);
+  const [ready, setReady] = useState(!draft && submissionEnabled);
   const [draftError, setDraftFeedback] = useState<{
     key: "people.draftLoadFailed" | "people.draftSaveFailed";
   } | null>(null);
@@ -64,9 +65,11 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
   const currentName = useRef("");
   const [originalDraft] = useState(draft);
   const latestDraft = useRef(draft);
+  const latestSubmission = useRef(submissionEnabled);
   useLayoutEffect(() => {
     latestDraft.current = draft;
-  }, [draft]);
+    latestSubmission.current = submissionEnabled;
+  }, [draft, submissionEnabled]);
   const valid = () =>
     alive.current &&
     generation === getAccountGeneration() &&
@@ -111,7 +114,14 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
     const current = personCloudCreateSchema.shape.displayName.safeParse(
       currentName.current.trim(),
     );
-    if (!valid() || !ready || running.current || !current.success) return;
+    if (
+      !latestSubmission.current ||
+      !valid() ||
+      !ready ||
+      running.current ||
+      !current.success
+    )
+      return;
     running.current = true;
     setBusy(true);
     setFailed(false);
@@ -120,7 +130,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
     try {
       Keyboard.dismiss();
       if (draft) await draft.saveName(current.data);
-      if (!valid()) return;
+      if (!valid() || !latestSubmission.current) return;
       // A lost local-save reply retries the same Person and intent, never a second traveler.
       attempt.current ??= Object.freeze({
         operationId: createUuid(),
@@ -130,6 +140,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
       setSubmitted(true);
       if (draft) await draft.retainAttempt(attempt.current);
       if (!valid()) return;
+      if (!latestSubmission.current) return;
       await onSave(attempt.current);
       if (!valid()) return;
       if (draft) await draft.complete(attempt.current.operationId);
@@ -195,6 +206,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
         onRight={() => void (!ready ? loadDraft() : save())}
         rightDisabled={
           busy ||
+          (ready && !submissionEnabled) ||
           (!ready ? draftError?.key !== "people.draftLoadFailed" : !parsed.success)
         }
       />
@@ -223,7 +235,14 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
           placeholder={t("people.travelerName")}
           value={name}
           onChangeText={(value) => {
-            if (!valid() || running.current || !ready || attempt.current) return;
+            if (
+              !valid() ||
+              (!draft && !latestSubmission.current) ||
+              running.current ||
+              !ready ||
+              attempt.current
+            )
+              return;
             currentName.current = value;
             setName(value);
             if (draft)
@@ -236,11 +255,13 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
                   if (valid()) setDraftFeedback({ key: "people.draftSaveFailed" });
                 });
           }}
-          editable={ready && !busy && !submitted}
+          editable={ready && !busy && !submitted && (!!draft || submissionEnabled)}
           maxLength={256}
           autoCapitalize="words"
         />
-        <UiText style={styles.hint}>{t("people.addTravelerHint")}</UiText>
+        <UiText style={styles.hint}>
+          {t(submissionEnabled ? "people.addTravelerHint" : "people.draftOnlyHint")}
+        </UiText>
       </ScrollView>
     </Modal>
   );
