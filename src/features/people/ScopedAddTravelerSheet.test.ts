@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { ScopedAddTravelerSheet } from "./ScopedAddTravelerSheet";
-import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { loadTripPersonEditorDraft } from "@/native/tripPersonEditorDraft";
 const hooks = vi.hoisted(() => ({
   cursor: 0,
@@ -55,8 +55,8 @@ vi.mock("@/ui/locale", () => ({ t: (v: string) => v }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
-vi.mock("@/data/repositories/tripRepository", () => ({
-  readLocalTripRepository: vi.fn(),
+vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
+  getDefaultLedgerReportingRepository: vi.fn(),
 }));
 vi.mock("@/native/tripPersonEditorDraft", () => ({ loadTripPersonEditorDraft: vi.fn() }));
 vi.mock("./AddTravelerSheet", () => ({ AddTravelerSheet: "AddTraveler" }));
@@ -71,15 +71,15 @@ const tick = async () => {
 };
 const nodes = (v: any): any[] =>
   Array.isArray(v) ? v.flatMap(nodes) : v?.props ? [v, ...nodes(v.props.children)] : [];
-const getTrip = vi.fn();
+const listJourneys = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   hooks.cursor = 0;
   hooks.values = [];
   hooks.effects = [];
   hooks.generation = 4;
-  getTrip.mockResolvedValue({ id: a.tripId });
-  vi.mocked(readLocalTripRepository).mockResolvedValue({ getTrip } as never);
+  listJourneys.mockResolvedValue([{ journeyId: a.tripId, hasActor: true }]);
+  vi.mocked(getDefaultLedgerReportingRepository).mockResolvedValue({ listJourneys } as never);
   vi.mocked(loadTripPersonEditorDraft).mockImplementation(
     async (scope) => ({ context: { ...scope } }) as never,
   );
@@ -99,7 +99,7 @@ function fixture() {
     },
   };
 }
-it("normal caller binds an existing local Trip to a private draft without any submit path", async () => {
+it("normal caller binds a reader-cached adopted Trip to a private draft without any submit path", async () => {
   const f = fixture();
   f.render();
   await tick();
@@ -109,8 +109,8 @@ it("normal caller binds an existing local Trip to a private draft without any su
   expect(loadTripPersonEditorDraft).toHaveBeenCalledExactlyOnceWith(a);
   await expect(v.props.onSave({})).rejects.toThrow("PERSON_SUBMISSION_UNAVAILABLE");
 });
-it("missing local Trip or foreign port fails closed without unscoped fallback", async () => {
-  getTrip.mockResolvedValue(null);
+it("summary-only Trip without local Actor fails closed without unscoped fallback", async () => {
+  listJourneys.mockResolvedValue([{ journeyId: a.tripId, hasActor: false }]);
   const f = fixture();
   f.render();
   await tick();

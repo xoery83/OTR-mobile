@@ -6,7 +6,7 @@ import {
 } from "@/data/auth/accountGeneration";
 import type { AccountRequestContext } from "@/data/auth/accountRequestContext";
 import type { TripPersonEditorDraftPort } from "@/data/repositories/tripPersonEditorDraft";
-import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { loadTripPersonEditorDraft } from "@/native/tripPersonEditorDraft";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -40,8 +40,9 @@ export function ScopedAddTravelerSheet({
     const origin = Object.freeze({ accountId, tripId, generation: openingGeneration });
     const valid = () => active && getAccountGeneration() === origin.generation;
     void (async () => {
-      const repository = await readLocalTripRepository();
-      const trip = await repository.getTrip(origin.tripId);
+      const repository = await getDefaultLedgerReportingRepository();
+      const trips = await repository.listJourneys();
+      const trip = trips.find((entry) => entry.journeyId === origin.tripId && entry.hasActor);
       if (!valid()) return;
       if (!trip) throw Error("PERSON_DRAFT_LOCAL_TRIP_REQUIRED");
       const draft = await loadTripPersonEditorDraft(origin);
