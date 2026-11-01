@@ -183,8 +183,11 @@ is a candidate, awaiting fresh Owner access confirmation. Root close6237746b,
 bound entry4c43a9d3 and collector9334be21 must remain pinned. Actual access Gate
 and software marker530 remain separate; delayed b94 approvals cannot reopen80dd.
 
-Native fcfe8745 still lacks C1 continuous503 prepare suppression; semantic delta
-handed its owning Writer for next local integration. No shared Host/device change.
+Native integrated C1 semantic delta at c555a4fa (consumer and tests only):
+Root independently checked its fixed receipt and consumer diff against b9e394dc;
+only pre-existing assignedTrip handling differs. Native reports actual2RED then
+consumer42+P3raw17 GREEN, scoped types/lint PASS. LOCAL_PASS only, no shared
+Host/device/Provider changes; historical firstPhoto503 root cause remains UNPROVEN.
 
 Root integrated Native125e0592 normal-account Enrichment guard locally: trusted
 Auth NORMAL_ACCOUNT required at resolution and pre-provider recheck, existing
