@@ -1,0 +1,36 @@
+{
+  "status": "NO_BLOCKER_CLOSED_SLICE1_SOFTWARE_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "sourceSHA256": {
+    "backend/src/mcpQaRuntime.ts": "edaf6d8e812ae66947a0d5a9069caa37d88b1a8b034cc648dec91e9240429d46",
+    "backend/mcp/runtime.mjs": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+    "backend/mcp/slice1-source-pins.json": "32393d7616d373f524abdb5f286f8ea8760507de0cf31f6fe5ebb5ca782486df",
+    "backend/mcp/slice1-qa-cases.json": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32",
+    "scripts/auth/build-mcp-slice1-runtime.mjs": "3416d7ef6229e49fefac57f222dd97f274c69bfa08c7013d187fc57beca74d67",
+    "backend/src/mcpSlice1QaRuntime.test.ts": "9da792a2c2c84d26f4dbf196725742e392f5319d2c475258581af7a4f4c847a8"
+  },
+  "independentValidation": {
+    "runtimeRegressionAndSlice1": "2 suites32/32 PASS",
+    "actualMcpSourcePins": "51/51 match actual files",
+    "isolatedSdkBuild": "PASS exact7832ae51e06deb8df439540f8ab8723ba1bcbc807993e44799721e624be2f8c1",
+    "buildDirectory": "/private/tmp/otr-auth-independent-slice1-virtual-build-20261101",
+    "runtimeSHA256": "19b5a0cb90179516fbd0bce2d741c46603a1ba83cac8cdd6b855ab2ad5d42208",
+    "pathIndependentRuntimeReproduction": "Independent alternate output matches exact author19b5 runtime; SDK7832 unchanged."
+  },
+  "verified": [
+    "Existing Read-v1/default absence no-IO and original Write-v3 remain unchanged.",
+    "Write-v4 strict profile selects only two fixed existing client/callback pairs; at most one exact client-specific operation/digest, empty approval denies confirm and POST.",
+    "Bound POST requires canonical equality with fixed command and configured approval; original-operation GET path only. Underlying existing Write binding still revalidates fresh grant/current Account and expiry around IO, preserving UNKNOWN after entered POST.",
+    "Fixed case commands constrain Trip/Item/operation/base revision/payload; other combinations fail closed. Model confirmed flag cannot populate host approval.",
+    "Wrapper forwards only optional profile to owning SDK; logging adds two finite tool names and strips arbitrary fields.",
+    "Build verifies all51 source hashes before/after SDK build and rejects unpinned first-party graph inputs; expected SDK bytes strictly checked. No deployment or activation is performed.",
+    "Exact @otr/mcp onResolve/onLoad virtual namespace serves only verified freshly built SDK contents under constant otr-slice1:slice1-sdk.mjs name. No arbitrary precompiled SDK is loaded; existing jose alias and default builder remain unchanged."
+  ],
+  "limits": [
+    "No real Notes confirmation, signed JWT/Provider, PostgreSQL, Hosted or consumer E2E qualification.",
+    "Case baseline is a frozen qualification; actual fresh current revision/state and explicit per-operation confirmation remain necessary before any live operation.",
+    "Review does not extend the Owner Gate or authorize operators/Host/SQL actions."
+  ],
+  "findings": [],
+  "recipeLintFollowup": "Explicit standard node:buffer Buffer import only; source logic, SDK inputs and generated runtime unchanged. Existing32 tests and exact19b5 artifact qualification retained, not rerun."
+}

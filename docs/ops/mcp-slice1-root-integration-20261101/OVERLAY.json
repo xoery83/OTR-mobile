@@ -1,0 +1,12 @@
+{
+  "status": "REVIEWED_AUTH_OVERLAY_ONLY",
+  "authCommit": "5b984996",
+  "mcpCandidate": "4908085d",
+  "changedInputs": [
+    "backend/src/mcpQaRuntime.ts",
+    "backend/mcp/slice1-qa-cases.json"
+  ],
+  "unchangedOriginalInputs": 350,
+  "runtimeSHA256": "19b5a0cb90179516fbd0bce2d741c46603a1ba83cac8cdd6b855ab2ad5d42208",
+  "authorityActivated": false
+}

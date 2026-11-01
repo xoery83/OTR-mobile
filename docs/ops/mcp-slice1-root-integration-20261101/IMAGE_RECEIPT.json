@@ -1,0 +1,19 @@
+{
+  "status": "MCP_SLICE1_DEFAULT_CLOSED_BUILD_PREFLIGHT_PASS",
+  "authCommit": "5b984996",
+  "sdkSHA256": "7832ae51e06deb8df439540f8ab8723ba1bcbc807993e44799721e624be2f8c1",
+  "imageId": "sha256:ab77a13ce66f877b67541e8cad7dcd0f9b70ac229c81841bf26f21665b709431",
+  "planSHA256": "0d92f0d1ea7e39fb577d5eb5e4e0caf7465ff8c1844a5a54fbee2e4f84b89e6b",
+  "scriptSHA256": "eaee8625a1a6269bcccc47239d0a91b4080561f118303a44879020b36704fb35",
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "19b5a0cb90179516fbd0bce2d741c46603a1ba83cac8cdd6b855ab2ad5d42208",
+    "server-capture.mjs": "63113903998f085c0aaffb6cc56147d895b3c1f4960f56243847d866c3a971bf",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "readyAt": "2026-11-01T09:00:33.699515+00:00",
+  "deployed": false,
+  "authorityActivated": false,
+  "qaConfigKeysAbsent": true,
+  "notesConfirmation": false
+}

@@ -1,3 +1,15 @@
+# Cross-lane MCP integration support — 1 November 2026
+
+Root default-closed software releasePASS:9fd2b828/ab77a13c, Auth5b984996,
+Capture63113903/MCP19b5a0cb/SDK7832ae51. Photo actual compatible composition
+preserved; 350 other compiled inputs/23runtimefiles/Env/Host/mounts unchanged.
+Backend short lock17.01s released09:01:36Z; bothMCPQAkeysabsent, noQAclock/OTP/
+NotesApply started. Root v4CAS/retained-close mockqualification+independentreview
+complete; actualactivation waits Auth soleoperator issuer/closeREADY. Original9fd2
+default+T/D mustretain through confirmationCAS; actualHumanNotesapproval still
+separate. No Root main merge, SQL/RLS/GRANT or device/provider action.
+Evidence docs/ops/mcp-slice1-root-integration-20261101/STATUS.md.
+
 # Active Photo checkpoint — 1 November 2026 08:00Z
 
 **Single PNG Photo Golden Slice: NATIVE_E2E_PASS.** Shared DEV/AD5 released to

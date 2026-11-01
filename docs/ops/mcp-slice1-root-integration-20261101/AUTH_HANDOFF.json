@@ -1,0 +1,67 @@
+{
+  "status": "DEFAULT_CLOSED_SOFTWARE_READY_NOT_DEPLOYED_NOT_ACTIVATED",
+  "gateSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "ownerReplyIndependentlyRead": true,
+  "notesApproval": false,
+  "activation": false,
+  "tests": {
+    "direct": 32,
+    "independent": 32,
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "build": {
+    "status": "DEFAULT_CLOSED_COMPILED_ONLY",
+    "profile": "SLICE1_NOTES_EDIT",
+    "sourceCount": 51,
+    "pinsSHA256": "32393d7616d373f524abdb5f286f8ea8760507de0cf31f6fe5ebb5ca782486df",
+    "sdkSHA256": "7832ae51e06deb8df439540f8ab8723ba1bcbc807993e44799721e624be2f8c1",
+    "runtimeSHA256": "19b5a0cb90179516fbd0bce2d741c46603a1ba83cac8cdd6b855ab2ad5d42208",
+    "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+    "esbuildVersion": "0.28.2",
+    "providerCalls": 0,
+    "activation": false
+  },
+  "reproducibleSecondOutput": {
+    "status": "DEFAULT_CLOSED_COMPILED_ONLY",
+    "profile": "SLICE1_NOTES_EDIT",
+    "sourceCount": 51,
+    "pinsSHA256": "32393d7616d373f524abdb5f286f8ea8760507de0cf31f6fe5ebb5ca782486df",
+    "sdkSHA256": "7832ae51e06deb8df439540f8ab8723ba1bcbc807993e44799721e624be2f8c1",
+    "runtimeSHA256": "19b5a0cb90179516fbd0bce2d741c46603a1ba83cac8cdd6b855ab2ad5d42208",
+    "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+    "esbuildVersion": "0.28.2",
+    "providerCalls": 0,
+    "activation": false
+  },
+  "photoSharedMcpInputs": 32,
+  "photoSharedMcpInputDifferences": [],
+  "beforeAfter": {
+    "backend/src/mcpQaRuntime.ts": {
+      "before": "76a1857bf012674f5ff267c707c9058c71e207f3d599df622da817f33738aee7",
+      "after": "edaf6d8e812ae66947a0d5a9069caa37d88b1a8b034cc648dec91e9240429d46"
+    },
+    "backend/mcp/runtime.mjs": {
+      "before": "a0e930eec448f3c37f63397ddd6c224c97e9aa0088dffc4c8ab6f1b81d8da153",
+      "after": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f"
+    },
+    "scripts/auth/build-mcp-slice1-runtime.mjs": {
+      "before": null,
+      "after": "3416d7ef6229e49fefac57f222dd97f274c69bfa08c7013d187fc57beca74d67"
+    },
+    "backend/mcp/slice1-source-pins.json": {
+      "before": null,
+      "after": "32393d7616d373f524abdb5f286f8ea8760507de0cf31f6fe5ebb5ca782486df"
+    },
+    "backend/mcp/slice1-qa-cases.json": {
+      "before": null,
+      "after": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32"
+    },
+    "backend/src/mcpSlice1QaRuntime.test.ts": {
+      "before": null,
+      "after": "9da792a2c2c84d26f4dbf196725742e392f5319d2c475258581af7a4f4c847a8"
+    }
+  },
+  "beforeSourceNote": "Loader before matches actual Photo tree and ASSEMBLY. Wrapper before is Auth source provenance; actual Photo tree has no wrapper source input. Root must CAS the retained compiled runtime b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820 before copying reviewed runtime19b5.",
+  "qualificationNote": "Scoped lint was rerun after explicit node:buffer import; runtime19b5 unchanged. Independent Review includes final recipe hash."
+}
