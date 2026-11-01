@@ -1,0 +1,30 @@
+{
+  "status": "PHOTO_REAL_CONTROLLER_CLOSED_DRILL_PASS",
+  "planPath": "/opt/otr/universal-png-worker/close-plan-photo-origin-8c136e66-20261101.json",
+  "planSHA256": "ae939b644fe67095864da9df636066c86d52e9380d4810720bbddb0047df2834",
+  "containerId": "365d27ad22347602c63a4100656cd9c07470c41ba628622dda9f1af58d4f6cbd",
+  "configSHA256": "403db15c7b23b91079554dc5b6d0a2c9b7686a83c85ebd3651a0688e3fe030ce",
+  "controller": {
+    "status": "PNG_CLOSED_VERIFIED",
+    "verified": true,
+    "steps": {
+      "sourceBefore": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "runtime": {
+        "verified": true
+      },
+      "sourceAfter": {
+        "status": "PNG_SCOPE_CLOSED_VERIFIED",
+        "closed": true
+      },
+      "worker": {
+        "verified": true,
+        "activeState": "inactive",
+        "physicalCleanup": "EMPTY_VERIFIED"
+      }
+    }
+  },
+  "policyOpened": false
+}

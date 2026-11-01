@@ -1,0 +1,26 @@
+{
+  "status": "PHOTO_SINGLE_GOLDEN_WINDOW_ACTIVE",
+  "writeDisposition": "ACKNOWLEDGED",
+  "window": {
+    "windowId": "f07370c5b0f947c39503f8a5563e8fd1",
+    "startedAt": "2026-11-01T05:54:33.277026+00:00",
+    "latestActivationAt": "2026-11-01T05:59:33.277026+00:00",
+    "expiresAt": "2026-11-01T07:35:00+00:00",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "f6103897-b0f2-4ea2-b4a1-7c1ba942e2c9",
+    "closePlanSHA256": "ae939b644fe67095864da9df636066c86d52e9380d4810720bbddb0047df2834",
+    "timerUnits": [
+      "otr-photo-close-f07370c5b0f947c39503f8a5563e8fd1",
+      "otr-photo-watchdog-f07370c5b0f947c39503f8a5563e8fd1"
+    ]
+  },
+  "readback": {
+    "enabled": true,
+    "expiresAt": "2026-11-01T07:35:00+00:00",
+    "parentPreserved": true
+  },
+  "newCallsCreatedByActivation": 0,
+  "newObjectsCreatedByActivation": 0,
+  "priorUnknownHoldPreserved": true
+}

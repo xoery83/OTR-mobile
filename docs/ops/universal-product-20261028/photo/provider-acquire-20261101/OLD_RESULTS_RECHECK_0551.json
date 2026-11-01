@@ -1,0 +1,32 @@
+{
+  "latestRetainedRawExists": false,
+  "latestRetainedResultExists": false,
+  "checkedAt": "2026-11-01T05:51:59.332133+00:00",
+  "oldTasks": [
+    {
+      "taskId": "13792ae2-123a-8c3b-8a64-922cc8902350",
+      "workDisposition": "PENDING",
+      "attemptId": null,
+      "deadline": "2026-10-31T18:20:33.121Z",
+      "expired": true
+    },
+    {
+      "taskId": "ea78041f-f90f-836e-b205-14f1647ea2af",
+      "workDisposition": "RUNNING",
+      "attemptId": "803f2a52-42d4-8857-8a9e-c691da2bf1b3",
+      "deadline": "2026-11-01T03:09:08.339Z",
+      "expired": true
+    },
+    {
+      "taskId": "2f0e37d8-2215-8eae-983a-5172c580ae78",
+      "workDisposition": "RUNNING",
+      "attemptId": "c10e92f8-9754-865c-a7b9-18befb716cd0",
+      "deadline": "2026-11-01T04:39:57.480Z",
+      "expired": true
+    }
+  ],
+  "retainedRawResponseExists": false,
+  "retainedResultExists": false,
+  "dataMutated": false,
+  "note": "Only prior identities reconciled; fresh ledger and scope checks still required before dispatch"
+}

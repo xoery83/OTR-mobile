@@ -1,3 +1,34 @@
+# Active Photo continuation — 1 November 2026 05:55Z
+
+Golden Slice NOT PASS. Owner granted two-hour exclusive conflicting DEV resources,
+fixed 05:37:23Z–07:37:23Z. Diagnostic-only commit8c136e66 deployed as image37e5ccba /
+container365d27ad, Capture09f35a71. Other350buildinputs, MCP/browser/server bundles,
+23runtimefiles, Env/Host/mounts preserved. Prior healthy d405/953 retained for rollback.
+Normal health/protected401 and real CLOSED controller drill PASS. No SQL function,
+Schema/RLS/GRANT/Role/Secret/budget change.
+
+Prior second run Source97be/representationf0c completed all4 Source ops APPLIED.
+Task2f0e37d8/attemptc10e92f8/callc9e81208 failed ACQUIRE/CUSTODY before SEND, inner
+reason UNCLASSIFIED. Its deadline04:39:57Z expired. Old ea780/32b7 also UNKNOWN.
+Both have no retained raw/result at05:51Z; both ledger holds preserved, not reset/refunded.
+Empty queue last_error_message is not diagnostic: queue settle does not persist it.
+Do not infer AggregateError/network failure from this field.
+
+New Owner-authorized normal App diagnostic round: Batchf6103897 / inputeb03aebb /
+Captureef5d5ab3. Same42630B PNG SHA078de830 and same QA Actorf4/Trip825, confirmed
+normal Trip prior. Local OCR relevant, explicit Choose AI recorded; Source prepare
+started. No new Vision response/Results/Save claimed.
+Windowf07370c5 activated with unchanged parent policy, SQL expiry07:35Z;
+independent close07:20Z and watchdog07:25Z armed before activation. Hard original
+08:48:56Z unchanged. Close plan ae939b64 binds healthy365d/37e5; preserve all old timers,
+plans/receipts. New Task lifetime remains10min/attempt1: never reset an expired task.
+Resume same Golden Slice, read new fixed reason/backendFrame on actual failure.
+Evidence: photo/provider-acquire-20261101/{ORIGIN_DIAGNOSTIC_DEPLOYMENT,
+EXTENDED_OWNER_WINDOW,ORIGIN_CLOSED_CONTROLLER_CHECK,OLD_RESULTS_RECHECK_0551}.json.
+Private work: /private/tmp/otr-photo-origin-07aef676-20261101.
+
+## Previous checkpoint (retained historical)
+
 # Current Import Photo checkpoint — 1 November 2026
 
 Golden Slice BLOCKED, not Vision/Save PASS. Normal authorized agent-device Runner
