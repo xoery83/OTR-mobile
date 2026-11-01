@@ -1,0 +1,140 @@
+diff --git a/backend/src/universalContinuousConfig.ts b/backend/src/universalContinuousConfig.ts
+index b92e2f02..236df964 100644
+--- a/backend/src/universalContinuousConfig.ts
++++ b/backend/src/universalContinuousConfig.ts
+@@ -12,6 +12,13 @@ export const universalContinuousConfigSchema = z.strictObject({
+   project: z.literal("tuqigdxrvrerfewsxqgm"),
+   enabled: z.literal(true),
+   integrationId: z.string().regex(/^[A-Za-z0-9._:-]{1,128}$/),
++  qaExecutionFence: z
++    .strictObject({
++      version: z.literal(1),
++      accountId: z.uuid(),
++      tripId: z.uuid(),
++    })
++    .optional(),
+   directory: universalFiniteConfigSchema.shape.directory,
+   identity: universalFiniteConfigSchema.shape.identity,
+   taskDatabase: universalFiniteConfigSchema.shape.taskDatabase,
+@@ -19,8 +26,8 @@ export const universalContinuousConfigSchema = z.strictObject({
+   taskPg: universalFiniteConfigSchema.shape.taskPg,
+   catalogPg: universalFiniteConfigSchema.shape.catalogPg,
+ });
+-// Same reviewed private mount with an explicit version. No App bearer, fixed Actor,
+-// Batch, Run, Task, finite window or environment-only permission is accepted.
++// Same private mount/hash. Optional execution restriction never supplies Auth,
++// Source/Provider permission, a caller bearer or a Batch/Run/Task identity.
+ export async function readUniversalContinuousConfig(
+   env: Record<string, string | undefined>,
+ ) {
+diff --git a/backend/src/universalContinuousHost.ts b/backend/src/universalContinuousHost.ts
+index 94b25e16..ad1d75f1 100644
+--- a/backend/src/universalContinuousHost.ts
++++ b/backend/src/universalContinuousHost.ts
+@@ -78,6 +78,7 @@ export function createUniversalContinuousHost(deps: {
+   enabled?: boolean;
+   context: AccountRequestContext;
+   assertCurrentAuth(): Promise<void>;
++  assertNewExecutionAllowed?(): void;
+   db: ReturnType<typeof universalTaskDatabase>;
+   catalogConnection: PublicationCatalogConnection;
+   bootstrapLedger(): Promise<unknown>;
+@@ -108,6 +109,10 @@ export function createUniversalContinuousHost(deps: {
+     if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
+     await deps.assertCurrentAuth();
+   };
++  const executionCurrent = async () => {
++    await current();
++    await deps.assertNewExecutionAllowed?.();
++  };
+   const source = createUniversalBatchSource({
+     enabled: deps.enabled,
+     connection: deps.runtime.sourceConnection,
+@@ -275,11 +280,11 @@ export function createUniversalContinuousHost(deps: {
+     async prepare(raw: unknown) {
+       let phase = "AUTH";
+       try {
+-        await current();
++        await executionCurrent();
+         phase = "PROVIDER_SELECTION";
+         const selection = await deps.selectProvider();
+         phase = "AUTH";
+-        await current();
++        await executionCurrent();
+         phase = "SOURCE_BINDING";
+         const binding = await source.prepare(actor, trip, raw);
+         phase = "TASK_READ";
+@@ -329,7 +334,7 @@ export function createUniversalContinuousHost(deps: {
+         phase = "LEDGER";
+         const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());
+         phase = "AUTH";
+-        await current();
++        await executionCurrent();
+         phase = "TASK_BOOTSTRAP";
+         await bootstrapUniversalTask({
+           db: deps.db,
+@@ -340,6 +345,7 @@ export function createUniversalContinuousHost(deps: {
+           getAccountId: async () => actor,
+           assertCurrent() {
+             if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
++            deps.assertNewExecutionAllowed?.();
+           },
+           claimQueue: false,
+         });
+@@ -442,7 +448,11 @@ export function createUniversalContinuousHost(deps: {
+         tripId: trip,
+         batchId: batch,
+         taskId: state.task.task_id,
+-        activity: projectUniversalTaskActivity(state.task, state.attempts.length, observedAt),
++        activity: projectUniversalTaskActivity(
++          state.task,
++          state.attempts.length,
++          observedAt,
++        ),
+       };
+     },
+     readResult,
+@@ -556,6 +566,7 @@ export function createUniversalContinuousHost(deps: {
+             });
+           return await readResult(batch, taskId);
+         }
++        await executionCurrent();
+         phase = "MANIFEST_READ";
+         const manifest = await readManifest(state.task);
+         phase = "PROVIDER_SELECTION";
+@@ -612,7 +623,7 @@ export function createUniversalContinuousHost(deps: {
+             priceScheduleId: draft.selection.priceScheduleId,
+             providerRequestSha256: request.requestSha256,
+           },
+-          assertCurrentAuth: current,
++          assertCurrentAuth: executionCurrent,
+         });
+         if (!runtime.universalImportPort) throw Error("UNIVERSAL_PROVIDER_CLOSED");
+         phase = "PROVIDER_EXECUTION";
+diff --git a/backend/src/universalContinuousRuntime.ts b/backend/src/universalContinuousRuntime.ts
+index a2a3e05b..fb1035e2 100644
+--- a/backend/src/universalContinuousRuntime.ts
++++ b/backend/src/universalContinuousRuntime.ts
+@@ -47,6 +47,7 @@ export async function loadDevUniversalContinuousRuntime(
+ ) {
+   const config = await readUniversalContinuousConfig(env);
+   if (!config) return undefined;
++  const executionFence = config.qaExecutionFence;
+   let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
+   let png: ReturnType<typeof createSourcePngRuntimePorts> | undefined;
+   let closed = false,
+@@ -192,6 +193,14 @@ export async function loadDevUniversalContinuousRuntime(
+         db,
+         catalogConnection,
+         assertCurrentAuth,
++        assertNewExecutionAllowed: () => {
++          guard();
++          if (
++            executionFence &&
++            (executionFence.accountId !== actor || executionFence.tripId !== trip)
++          )
++            throw Error("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
++        },
+         publishedSource,
+         bootstrapLedger: () => gateway.bootstrapLedger(actor, trip),
+         async selectProvider() {

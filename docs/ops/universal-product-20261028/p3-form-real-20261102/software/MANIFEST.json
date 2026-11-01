@@ -1,0 +1,9 @@
+{
+  "66d-three-production.patch": "eb19ba381d1ea7c5d14c7a5c7b32b469ce32840d1231c05ac75502e0c8f231fb",
+  "609-test-only-log-alignment.patch": "a5823fcc53cab3fe0304b50120f24d013adb2683f48ef6e4a579edfc4f1f806b",
+  "SOURCE_MANIFEST_BASE609.json": "2390abb4b542607d3cfb709123d5024bab90ccaeef5a09bcc1954bd507979980",
+  "SOURCE_MANIFEST_CANDIDATE.json": "0156d5493a8f87259f961c50eec95a1d6e72dcbc63f7e74bf39138dcfe6a44fe",
+  "BUILD_COMMAND.json": "bc632322246b144f1b4ba61b74831252faad60dbbec4468a456c5fe760ad1806",
+  "BUILD_COMPATIBILITY.json": "43c84609e3c04d30fa9f646f1fd9e048b2f37864fd12ddef8c312cfe9c1cfaae",
+  "LOCAL_RESULT.json": "f1ced32c83ab1579fca6bf3fd57a6354662f207019f9b78a3c1fb2e730aa0ebb"
+}

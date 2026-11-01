@@ -1,0 +1,22 @@
+{
+  "cwd": "/private/tmp/otr-p3-qa-fence-source-20261102/tree",
+  "argv": [
+    "node_modules/.bin/esbuild",
+    "backend/src/serverCapture.ts",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--alias:@=./src",
+    "--external:./src/data/auth/guestLocalWorkspace.ts",
+    "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
+    "--external:react-native",
+    "--external:expo-*",
+    "--outfile=dist/server-capture.mjs",
+    "--metafile=dist/read-diagnostic-capture-meta.json",
+    "--banner:js=import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 0.179,
+  "reusedOriginal609BuildArgv": true
+}

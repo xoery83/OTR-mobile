@@ -1,0 +1,20 @@
+{
+  "status": "P3_FENCE_IMAGE_PREBUILT_NOT_DEPLOYED",
+  "imageId": "sha256:9d653fb30449aa7e2aa4dfa6ba63c76d2fe40a86c756cd08fad40d30a76a9382",
+  "baseImage": "sha256:1c5d8f83d57ca9d704cfc947e908c3fa6d90ff8fbf16327e775201bdced4c39b",
+  "actualServiceStill": "a1d0993ea215c4bb6f1ca554c2f5536d1ce8c1925374a06d867c36d44c21effd",
+  "actualConfigSHA256": "9a88efaac354f37c8863f48d1ac8c5c9ecf5b3368a3bdbd6e7dade955d19caba",
+  "imageConfigUnchanged": true,
+  "bundles": {
+    "server-capture.mjs": "7046ccf1a31f21156c4ee7410c2c04d9baa583f1fc80124bc3dbeeb09328d72c",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542",
+    "mcp/runtime.mjs": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "syntaxCheck": true,
+  "qaKeysAbsent": true,
+  "deployed": false,
+  "authorityActivated": false,
+  "modelCalls": 0,
+  "checkedAt": "2026-11-01T22:56:24.405348+00:00"
+}

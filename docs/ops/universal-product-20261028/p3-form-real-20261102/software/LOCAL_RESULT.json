@@ -1,0 +1,70 @@
+{
+  "status": "LOCAL_PASS_CAPTURE_ONLY_NOT_IMAGE_NOT_DEV",
+  "sourceSnapshot": "/private/tmp/otr-mcp-read-diag-609184bb-7a4a6bwu/tree",
+  "productionPatchCommit": "66d46067c8c67f6229b9a58742ee6fc246ee1b9a",
+  "productionPatchSHA256": "eb19ba381d1ea7c5d14c7a5c7b32b469ce32840d1231c05ac75502e0c8f231fb",
+  "productionFiles": {
+    "backend/src/universalContinuousConfig.ts": {
+      "baseSha256": "83547e60b9c1602c8ed123ec971e26f4c00839c5add3d20671fe547e34e13002",
+      "candidateSha256": "50f07b4080362a1b81851bd89dc8f851ef679a7be988688676c5f46ef66f3ca3"
+    },
+    "backend/src/universalContinuousHost.ts": {
+      "baseSha256": "e1bd3204b58a19386562694123640c06d5a4a3f8908e2c8278d48781168858e5",
+      "candidateSha256": "4764b86f25dfe157a8ab0cbcffd6990cc7506d4d0b92c99d8ce3ab3f79d2e7eb"
+    },
+    "backend/src/universalContinuousRuntime.ts": {
+      "baseSha256": "4d35a24a79179d7c354da06e7601459c5f407f0da0f00a773747170e11d917c1",
+      "candidateSha256": "1aa84a2b430dc2239fd934a10aa41ca3bb57060140dcee7aada991160b33b48f"
+    }
+  },
+  "actualProductionInputs": 352,
+  "actualChanged": 3,
+  "actualUnchanged": 349,
+  "tests": {
+    "configAndRuntime": {
+      "passed": 37,
+      "rerunAfterSuccess": false
+    },
+    "host": {
+      "passed": 4,
+      "firstBlock": "Missing original fixture; added exact66d test-only JSON",
+      "nextRed": "C1-only Source diagnostic log expected2 but actual609 baseline1",
+      "rootApprovedTestOnlyAlignment": true,
+      "fenceRetainedReadPrivacyAssertions": "PRESERVED"
+    },
+    "totalPassed": 41,
+    "maxWorkers": 1,
+    "newTestFilesOnly": {
+      "backend/src/universalContinuousConfig.test.ts": "de578563e7c72c746274357743cc59dbe7a03be1a11f56a04aa0e0d67f0c9321",
+      "backend/src/universalContinuousRuntime.test.ts": "ab7381bc397a1220d07f6bf8909a7ea911c7b60857edfc8b86cb4d0eb3b6f2fa",
+      "backend/src/universalContinuousHost.test.ts": "2cf1aa242ea94b71bbb36fad127085a6643458903be43961c8409908c12c0025"
+    },
+    "fixture": {
+      "file": "src/data/repositories/__fixtures__/tripImportCatalogs.json",
+      "sha256": "6a8775cf4c42788c3bf899ef655b165795c3c1e8e93343d81d38877fd20aa293",
+      "productionInput": false
+    },
+    "testOnlyAlignmentSHA256": "a5823fcc53cab3fe0304b50120f24d013adb2683f48ef6e4a579edfc4f1f806b"
+  },
+  "captureSHA256": "7046ccf1a31f21156c4ee7410c2c04d9baa583f1fc80124bc3dbeeb09328d72c",
+  "captureBytes": 4460635,
+  "bundleBuildCount": 1,
+  "baseCaptureSHA256Unchanged": "6e69438340ce20f51912b4ad465406270fc17a8589950d1d52b6f7eb566a59e0",
+  "allOtherRootCodeCopied": false,
+  "nodeModules": {
+    "symlinkPreserved": "/private/tmp/otr-photo-acquire-63b8aa6d-20261101/tree/node_modules",
+    "contentCopied": false,
+    "installRan": false
+  },
+  "excluded": [
+    "dist initial outputs",
+    ".env*",
+    ".git*",
+    "node_modules contents"
+  ],
+  "hostActions": 0,
+  "dockerActions": 0,
+  "modelCalls": 0,
+  "secretFilesCopied": false,
+  "reviewRequired": true
+}

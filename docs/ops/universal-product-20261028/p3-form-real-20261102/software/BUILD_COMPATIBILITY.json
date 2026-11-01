@@ -1,0 +1,22 @@
+{
+  "status": "LOCAL_CAPTURE_BUNDLE_ONLY_NOT_IMAGE_NOT_DEV",
+  "addedInputs": [],
+  "removedInputs": [],
+  "changedProductionInputs": [
+    "backend/src/universalContinuousConfig.ts",
+    "backend/src/universalContinuousHost.ts",
+    "backend/src/universalContinuousRuntime.ts"
+  ],
+  "baseCaptureSHA256": "6e69438340ce20f51912b4ad465406270fc17a8589950d1d52b6f7eb566a59e0",
+  "captureSHA256": "7046ccf1a31f21156c4ee7410c2c04d9baa583f1fc80124bc3dbeeb09328d72c",
+  "captureBytes": 4460635,
+  "metafileSHA256": "7ca6aac4fdb654209ba815cc07d80bda881cfe82a7ab09c2e7bc2d6adb6331f8",
+  "allInputCount": 538,
+  "baseAllInputCount": 538,
+  "unchangedAllInputCount": 535,
+  "baseProductionInputCount": 352,
+  "candidateProductionInputCount": 352,
+  "unchangedProductionInputCount": 349,
+  "dependencyInputCount": 186,
+  "testFixtureInCaptureInputs": false
+}

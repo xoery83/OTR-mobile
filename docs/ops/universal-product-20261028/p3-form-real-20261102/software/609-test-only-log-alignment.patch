@@ -1,0 +1,19 @@
+--- 66d/backend/src/universalContinuousHost.test.ts
++++ 609-compat/backend/src/universalContinuousHost.test.ts
+@@ -361,14 +361,9 @@
+           inputs: [pin],
+         }),
+       ).rejects.toThrow("INPUT_STALE");
+-      expect(pinLog).toHaveBeenCalledTimes(2);
++      // actual609 has no C1 Source lookup diagnostic; retain its one Host failure and privacy checks.
++      expect(pinLog).toHaveBeenCalledTimes(1);
+       expect(JSON.parse(pinLog.mock.calls[0][0])).toEqual({
+-        event: "universal_binding_lookup_failed",
+-        stage: "PG_READ",
+-        kind: "Error",
+-        code: "UNKNOWN",
+-      });
+-      expect(JSON.parse(pinLog.mock.calls[1][0])).toEqual({
+         event: "universal_prepare_phase_failed",
+         pinSetSha256: persistenceDigest([pin]),
+         pinFieldSha256: Object.fromEntries(

@@ -197,20 +197,21 @@ C2 direct recheck found no isolated adapter fix before actual JPEG image/profile
 proof qualification: Storage/private stage/socket/transport remain explicitly PNG.
 Reuse lifecycle later, never reuse PNG proof. No extra placeholder platform added.
 
-## Current MCP finite access — 7cb5 ACTIVE EMPTY
+## Latest MCP finite access — 7cb5 CLOSED / NOT_SUBMITTED
 
-Direct human approval verified in MCP and, after reviewer rejected cross-chat
-evidence, separately in this Root chat callc6e5f1f9. Initial rejected command
-never started; exact requestSHAda55bc0b retained, then approved run succeeded.
-OriginalT22:32:33.252Z/D23:00:33.252Z, normalclose22:58:33.252Z unchanged.
-CurrentCID1de1f02e0bfbf2d25fd7b202afbd4a0b0ba5d8d273ff403173da642dce21f222,
-configf4671e9ca6f05c7e3d13180d837d4b9f828b17ed9ee618f48e1df0a6f2770ee5.
-CAS22:33:53→22:34:00Z shortlockreleased; independent22:34:18Z files/Host/health
-andtimerPASS. Default restore remainsa1/9a88/image1c5. Auth issuer/console later
-ACTUAL_READY; MCP normalConnect/OTP underway. No Consumer read/EditBase/Preview/
-Apply PASS yet. Confirmations empty, Notes NOT_APPROVED, no new operation.
-Root must retain bounded diagnostics before close4c43; independentabsolute timer
-remainsD. Read-only metadata/Import coding continues without Host mutation.
+Direct human f93 access approved in MCP and Root callc6e5f1f9; initial rejected
+command never started. OriginalT22:32:33.252Z/D23:00:33.252Z unchanged. EMPTY
+1de1/f467 healthy22:34:18Z; actualOTP/Consent and getItem succeededrev1. EditBase
+AUTH_REQUIRED repeated, Preview0/Apply0/1d6 NOT_SUBMITTED (notUNKNOWN).
+Bounded pre-close logs CAPTURED: collection owning200 after8885ms left1160ms;
+item began with1102ms left, owning200 after12741ms, POSTCHECK EXPIRED.
+Request64bec1c5 duration23109ms returnedHTTP200/toolAUTH_REQUIRED BACKEND_401.
+This proves this round's expiry path, not permission denial or oldf107 recovery.
+Root immediateclose independently22:51:44Z restoreda1/9a88/image1c5, QAkeys
+absent,23files/Host exact,health200/protected401,timerinactive,shortlockreleased.
+Auth grants/session revoked and issuerdenyall; Root read final Auth SQL22:54:53Z
+originalbody/Owner/invoker/searchpath/ACL PASS. Auth reports ConsoleOAuthoff,
+HookDISABLED and localhost Site reloaded, owncontrol/watch exited0. Do not reopen this consumed session or replay oldUNKNOWN.
 
 ## Owner P3 Real Form Scan priority — 2 November
 
@@ -230,3 +231,11 @@ candidate and read-only safe preimage query are under p3-form-real-20261102;
 NOT_AUTHORIZED/NOT_EXECUTABLE until fresh CAS, exact times/commands and Owner Gate.
 No new paid call. Two separate Form scans, if actually needed, require at most
 one new Task/call each, not unsupported crossForm reuse of an old Task.
+
+P3 QA-fence compatible software ready: actual609 baseline+66d three-file delta,
+3changed/349preserved production inputs, local41PASS (Host test-only C1 logging
+assertion aligned to actual609, no C1 prod added). Capture7046ccf1. Prebuilt image
+sha256:9d653fb30449aa7e2aa4dfa6ba63c76d2fe40a86c756cd08fad40d30a76a9382
+from current1c5; imageConfig/other3bundles preserved, syntaxcheckPASS, no service
+switch/Env/SQL/authority/modelcall. Still requires actualf4/825f config fence and
+valid scope/grant/price before P3 execution. Stable receipts under p3-form-real-20261102/software.
