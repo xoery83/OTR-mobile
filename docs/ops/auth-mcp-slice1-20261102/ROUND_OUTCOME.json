@@ -1,0 +1,31 @@
+{
+  "status": "CLOSED_AUTH_VERIFIED_CONSUMER_APPLY_UNKNOWN",
+  "windowId": "bb5ba3063468437ca608910bf84eaacf",
+  "startsAt": "2026-11-01T17:30:11.178Z",
+  "expiresAt": "2026-11-01T17:58:11.178Z",
+  "deadlineExtended": false,
+  "consumerEvidence": [
+    "NORMAL_OTP_FRESH_CONSENT_PASS",
+    "EIGHT_TOOLS_DISCOVERED",
+    "GUIDE_TRIP_LIST_ITEM_PASS",
+    "PREVIEW_PASS_EXACT_F107_DIGEST",
+    "DIRECT_OWNER_CONFIRMATION",
+    "SINGLETON_ACTUAL_HEALTHY",
+    "ONE_APPLY_UNKNOWN",
+    "SAME_OPERATION_STATUS_UNKNOWN"
+  ],
+  "assistance": "ONE_NOTES_DESCRIPTION_MAPPING_CLARIFICATION",
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "businessResult": "UNKNOWN_NOT_NO_COMMIT",
+  "repost": false,
+  "chatGpt": "NOT_RUN_CLAUDE_NOT_PASS",
+  "issuerClosedAt": "2026-11-01T17:56:26.209587Z",
+  "normalGrantRevoke": "204_ACKNOWLEDGED_AND_NORMAL_READ_ABSENT",
+  "ownControlSession": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "rootClosedVerifiedAt": "2026-11-01T17:57:11.072Z",
+  "rootDefault": "9fd2/a6/ab77",
+  "console": "OAUTH_OFF_RELOAD_VERIFIED_HOOK_DISABLED_EXISTING_FUNCTION_RETAINED_SITE_LOCALHOST_RELOAD_VERIFIED",
+  "finalAuthSql": "DENYALL_ORIGINAL_ACL_SELECTED_ACTIVE_GRANTS_0",
+  "historicalBb9b": "PRESERVED_NO_REPLAY",
+  "next": "Only read original operation/owning stage evidence; do not automatically reopen, extend, rePOST or start ChatGPT."
+}

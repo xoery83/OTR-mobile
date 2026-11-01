@@ -1,17 +1,29 @@
-# Auth active continuation / V3 — 2 November 2026
+# Auth V3 / closed OAuth continuation — 2 November 2026
 
-Owner direct MCP human reply independently verified for continuationef7c8ba6.
-New windowbb5ba306: T17:30:11.178Z/D17:58:11.178Z Nov1 UTC (Nov2 NZ06:58:11).
-Close startsD−120. Root actualEMPTY68d2/config4756 healthy+independent timer,
-retaineddefault9fd2. Auth finiteHook exactbody90db activated/readback, UIHookenabled,
-OAuthon/Siteapi-dev/DCRoff refresh verified; confirmations remain empty. MCP is
-connecting Claude, no actual Notes approval/submit. Own controlSession64154 and
-issuerwatch68131 live; never reuse closed16d1. See ops/auth-mcp-slice1-20261102.
-V3 releases Photo global priority; preserve this active MCP window. Auth B1 private
-Realtime authorization is nextP0; local DTO/closed adapter/contract implemented;10 focused tests and independent Review
-PASS after3 async race repairs. No Hosted authority or shared-file changes. Native
-QA140 Profile and adopted private Draft device PASS now accepted by Owner V3;
-source4e9a2d2e boundedAuth Review NO_BLOCKER. Cloud People/Profile/Usage still gated.
+B1 private Realtime DTO/closed adapter/contract82b93537 implemented; independent10
+focused tests/Review and types/lint PASS after3 async race fixes. Native received
+fixed interface; no Hosted activation. Formal atomic authorizer/forced revoke,
+durable visibility/regrant, publisher/version reader remain owning gaps. Local
+qualification preparation continues without modifying shared permission files.
+Native QA140/SQLite77 Profile and adopted private Draft PASS accepted by Owner V3.
+
+OAuth newwindowbb5 T17:30:11.178Z/D17:58:11.178Z Nov1UTC (Nov2NZ06:58:11) CLOSED.
+NormalOTP/freshConsent/8tools/Guide/currentTrip/list/P3/actualPreview PASS; one explicit
+Notes↔description clarification. ActualOwner Before/After confirmation independently
+read plus Auth-chat directreplycall07fe799d solved relay auto-review rejection.
+Root singletonhealthy17:53:20.701Z; sole originalf107 APPLY returnedUNKNOWN/authrequired,
+same-opstatus UNKNOWN; no repost/newID. Earlierread401 and expensiveeditbase401 remain
+unproven; later sameconnectionreads PASS. No APPLIED or NoCommit inference; ChatGPT
+NOT_RUN. Keep originalf107/full48dc/rev2 identities for owning readonly reconciliation.
+
+Issuerdenyallverified17:56:26.209Z; normalgrantDELETE204/readabsence and owncontrol
+SessioncleanupPASS_REFRESH_REVOKED17:56:46.407Z. Rootdefault9fd2/a6/ab77 independently
+closed17:57:11.072Z beforeD, keysabsent/exactHost23files/timerinactive/resourcesreleased.
+ConsoleOAuthoff reload/Hookdisabled retainedfunction/Sitelocalhost reload confirmed.
+FreshAuthSQL17:58:31Z originaldenyallbody/ACL and selectedactivegrant0. ConsumerOTP SDK
+memory-only, normalredirect awaits local-scope signOut per existing code; no independent
+consumerrefreshnegative claim. No secrets stored. No windowreuse/extension; all
+historicalbb/9b states preserved. See ops/auth-mcp-slice1-20261102/ROUND_OUTCOME.json.
 
 # Auth MCP Slice1 — closed, consumer not started, 1 November 2026
 

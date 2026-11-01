@@ -1,0 +1,66 @@
+{
+  "status": "READ_ONLY_MCP_QA_LOG_PROJECTION",
+  "windowId": "bb5ba3063468437ca608910bf84eaacf",
+  "readAt": "2026-11-01T17:45:40.785806+00:00",
+  "events": [
+    {
+      "requestId": "167fc928-5ce5-4c4f-93f3-0a8238e21f82",
+      "status": 200,
+      "durationMs": 9339,
+      "tool": "list_trip_items",
+      "errorCode": "AUTH_REQUIRED",
+      "authFailureSource": "BACKEND_401",
+      "loggedAt": "2026-11-01T17:39:56.352309604Z"
+    },
+    {
+      "requestId": "673fac82-358b-443a-8907-f7d7acf6ed18",
+      "status": 401,
+      "durationMs": 2,
+      "loggedAt": "2026-11-01T17:43:08.013629891Z"
+    },
+    {
+      "requestId": "c9a71f86-6ff7-4bc0-b33e-cf6e5d25ea4a",
+      "status": 200,
+      "durationMs": 4351,
+      "tool": "get_trip",
+      "loggedAt": "2026-11-01T17:43:13.923067998Z"
+    },
+    {
+      "requestId": "a679a34d-6076-4b7a-bae0-6ae71a8654d7",
+      "status": 200,
+      "durationMs": 9901,
+      "tool": "list_trip_items",
+      "loggedAt": "2026-11-01T17:43:38.250780911Z"
+    },
+    {
+      "requestId": "f58c7e1d-3a5f-4fdd-b326-fd5f3412dbee",
+      "status": 200,
+      "durationMs": 17673,
+      "tool": "get_trip_item_edit_base",
+      "errorCode": "AUTH_REQUIRED",
+      "authFailureSource": "BACKEND_401",
+      "loggedAt": "2026-11-01T17:44:13.430090904Z"
+    },
+    {
+      "requestId": "d9604883-d252-4cad-8c16-dda1e90b1aed",
+      "status": 401,
+      "durationMs": 2,
+      "loggedAt": "2026-11-01T17:44:33.949339253Z"
+    },
+    {
+      "requestId": "affbf5b0-f68c-45d8-8893-f414aef542f7",
+      "status": 200,
+      "durationMs": 8452,
+      "tool": "get_trip_item",
+      "loggedAt": "2026-11-01T17:44:43.903462021Z"
+    },
+    {
+      "requestId": "27eb895a-15ec-40cd-a380-3aefe8724626",
+      "status": 200,
+      "durationMs": 1569,
+      "tool": "get_otr_operating_guide",
+      "loggedAt": "2026-11-01T17:45:01.692809137Z"
+    }
+  ],
+  "noTokenAuthorizationCodeOrUrls": true
+}
