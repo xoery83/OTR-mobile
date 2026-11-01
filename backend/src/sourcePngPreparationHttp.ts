@@ -160,6 +160,20 @@ export async function sourcePngPreparationBoundary(
           event: "source_png_preparation_failed",
           action: route[2],
           reason: [
+            "INVALID_SESSION",
+            "AUTH_REQUIRED",
+            "CORE_PRINCIPAL_UNAVAILABLE",
+            "CORE_TRANSACTION_UNFINISHED",
+            "ECONNRESET",
+            "ECONNREFUSED",
+            "ETIMEDOUT",
+            "EPIPE",
+            "ENETUNREACH",
+            "EHOSTUNREACH",
+            "CERT_HAS_EXPIRED",
+            "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+            "ERR_TLS_CERT_ALTNAME_INVALID",
+            "SELF_SIGNED_CERT_IN_CHAIN",
             "CORE_CONNECTION_BUSY",
             "CORE_CONNECTION_TIMEOUT",
             "CORE_CONNECTION_RETIRED",
@@ -188,11 +202,9 @@ export async function sourcePngPreparationBoundary(
             "PNG_OPERATION_SCOPE_MISMATCH",
             "PDF_RECEIPT_READ_ONLY",
             "PNG_RECEIPT_READ_ONLY",
-          ].includes(code)
-            ? code
-            : "UNCLASSIFIED",
+          ].find((value) => value === code || value === sqlState) ?? "UNCLASSIFIED",
           errorKind:
-            error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
+            error instanceof Error && ["AbortError", "TimeoutError", "TypeError", "SyntaxError"].includes(error.name)
               ? error.name
               : code === "Query read timeout"
                 ? "PG_QUERY_TIMEOUT"

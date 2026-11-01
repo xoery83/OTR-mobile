@@ -226,3 +226,88 @@ it("denied or cancelled remote access cannot acquire a Source lease", async () =
   await expect(cancelled.call(cancelled.scope, cancelled.q, "STATUS")).rejects.toThrow();
   expect(cancelled.leaseSpy).not.toHaveBeenCalled();
 });
+
+it.each(["AUTH", "LEASE_BEGIN", "PRINCIPAL", "RPC", "REPLY", "COMMIT"] as const)(
+  "reports the static %s boundary without leaking data or retrying",
+  async (phase) => {
+    const f = await fixture("REGISTER");
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const privateMessage = "PRIVATE_IMAGE_COMMAND_SQL_TOKEN";
+    const original = f.query.getMockImplementation()!;
+    let reason = "OTHER";
+    if (phase === "AUTH") {
+      reason = "INVALID_SESSION";
+      f.current.mockRejectedValueOnce(
+        Object.assign(Error(privateMessage), {
+          code: reason,
+          status: 401,
+          stack: privateMessage + "\n at authenticate (/app/server-capture.mjs:123:45)",
+        }),
+      );
+    } else if (phase === "LEASE_BEGIN") {
+      reason = "ECONNRESET";
+      f.leaseSpy.mockRejectedValueOnce(
+        Object.assign(Error(privateMessage), { code: reason }),
+      );
+    } else if (phase === "PRINCIPAL") {
+      reason = "SOURCE_PRINCIPAL_UNAVAILABLE";
+      f.identity.role = "postgres";
+    } else if (phase === "REPLY") {
+      f.value.freshAttempt = "invalid" as unknown as boolean;
+    } else {
+      if (phase === "COMMIT") reason = "CORE_TRANSACTION_UNFINISHED";
+      f.query.mockImplementation(async (sql, params) => {
+        if (
+          (phase === "RPC" && sql.includes("trip_source_png_operation")) ||
+          (phase === "COMMIT" && sql === "COMMIT")
+        )
+          throw phase === "RPC"
+            ? Object.assign(Error(privateMessage), { code: "P0002" })
+            : Error(reason);
+        return original(sql, params);
+      });
+    }
+    try {
+      await expect(f.call(f.scope, f.q, "REGISTER")).rejects.toThrow();
+      const entries = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+      expect(entries).toEqual([
+        expect.objectContaining({
+          event: "source_png_broker_boundary_failed",
+          phase,
+          command: "UPLOAD_ORIGINAL",
+          action: "REGISTER",
+        }),
+      ]);
+      if (phase === "AUTH") {
+        expect(entries[0].backendFrame).toEqual({ line: 123, column: 45 });
+      }
+      const output = JSON.stringify(entries);
+      for (const value of [
+        privateMessage,
+        f.q.source_id,
+        f.q.operation_id,
+        f.scope.actorId,
+      ])
+        expect(output).not.toContain(value);
+      expect(f.leaseSpy.mock.calls.length).toBeLessThanOrEqual(1);
+      expect(
+        f.query.mock.calls.filter(([sql]) => sql.includes("trip_source_png_operation"))
+          .length,
+      ).toBeLessThanOrEqual(1);
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
+
+
+it("a failed diagnostic sink preserves the owning failure and never retries", async () => {
+  const f = await fixture("REGISTER");
+  const failure = Object.assign(Error("PRIVATE_ERROR_CANARY"), { code: "INVALID_SESSION" });
+  f.current.mockRejectedValueOnce(failure);
+  const log = vi.spyOn(console, "info").mockImplementation(() => { throw Error("LOG_FAILED"); });
+  try {
+    await expect(f.call(f.scope, f.q, "REGISTER")).rejects.toBe(failure);
+    expect(f.leaseSpy).not.toHaveBeenCalled();
+  } finally { log.mockRestore(); }
+});

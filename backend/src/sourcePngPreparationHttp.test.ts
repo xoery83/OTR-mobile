@@ -289,3 +289,32 @@ it.each([
     expect(JSON.stringify(log.mock.calls)).not.toContain(message);
   } finally { log.mockRestore(); }
 });
+
+it.each([
+  "INVALID_SESSION",
+  "CORE_PRINCIPAL_UNAVAILABLE",
+  "CORE_TRANSACTION_UNFINISHED",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "ERR_TLS_CERT_ALTNAME_INVALID",
+])(
+  "classifies the fixed error code %s without logging its private message",
+  async (code) => {
+    const x = await fixture();
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      x.port.lookup.mockRejectedValueOnce(
+        Object.assign(Error("PRIVATE_ERROR_CANARY"), { code }),
+      );
+      const response = await x.handler(
+        x.request({ command: x.proposals.prepare }, "result"),
+      );
+      expect(response.status).toBe(503);
+      expect(JSON.parse(String(log.mock.calls[0]?.[0])).reason).toBe(code);
+      expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_ERROR_CANARY");
+      expect(x.port.lookup).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
+  },
+);

@@ -1,0 +1,37 @@
+{
+  "status": "PHOTO_SOURCE_UPLOAD_PASS_VERIFY_REGISTER_FAIL",
+  "observedAt": "2026-11-01T02:24:06.791902+00:00",
+  "ownerGate": "bc37baad",
+  "batchId": "f1533073-0cd5-4514-824f-03f779a852b7",
+  "sourceId": "c9fe6fd2-3713-4e37-9e72-ede6db7b093d",
+  "acquisitionOperation": "0bc4bf83-8ba6-4ae0-9bf8-739a904715d5",
+  "prepareOperation": "c253f528-3e21-8c1e-8d4b-13d1d05da845",
+  "uploadOperation": "d7796850-794c-8e29-87c7-f16faef896ee",
+  "uploadAttempt": "d92855ca-7bf1-440a-88d1-d65a94725d6d",
+  "upload": "FINAL/APPLIED",
+  "uploadTerminationOutstanding": false,
+  "verifyFailure": {
+    "at": "2026-11-01T02:09:42Z",
+    "phase": "BROKER",
+    "action": "REGISTER",
+    "httpStatus": 503,
+    "reason": "UNCLASSIFIED",
+    "errorKind": "OTHER",
+    "sqlState": "NOT_REPORTED",
+    "verifyRowNotObservedAt": "2026-11-01T02:10:41Z",
+    "sqlRootCause": "NOT_YET_PROVEN"
+  },
+  "currentInputConsent": "Source acquisition advanced Capture revision; normal local recheck and explicit ChooseAI completed before same-Batch resume",
+  "newModelTasks": 0,
+  "modelAttempts": 0,
+  "paidCalls": 0,
+  "oldExpiredTaskRetained": "13792ae2-123a-8c3b-8a64-922cc8902350",
+  "scope": "CLOSED",
+  "sameSourceLookupRequiredBeforeResume": true,
+  "notProven": [
+    "Actual Vision",
+    "Results",
+    "Formal Save",
+    "Photo Day/cold recovery"
+  ]
+}

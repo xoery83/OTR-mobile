@@ -1,28 +1,44 @@
 # Current Import Photo checkpoint — 1 November 2026
 
-Latest approvedbc37 execution: helper67145 EXEC→postgres installedCLOSED/ACKNOWLEDGED,
-bodya294/Owner/OID unchanged, fullrolegraph+OIDs/schemaACL restored; directProviderEXECfalse.
-NormalApp created the ONE approved replacementBatchf1533073-0cd5-4514-824f-03f779a852b7 /
-Job6412e354/Input05d02034/Capture15e667b7, original42630B/SHA078de830 andsameQA825Trip verified.
-LocalOCR RELEVANT +explicitCONTINUE_WITH_AI pinnedCapture1. No Source/Run/Task/model yet.
-Do not create anotherBatch or resetexpired13792. SameBatch resumesunderapprovedGate.
-Closeplan2a3c1bfb anchored43b2/1068, actualCLOSEDcontroller+independenttimerPASS.
-Windowd2b04 started01:16:30Z, then proactivelyCLOSED beforeAnalyze becauseCUAcoordinate
-click/drag globallyfailsnoWindowsAvailable (AX/screenshot/AXtoolbarwork; reset/bundle/path/
-compact/Inspector retries didnotfix). Sourcebefore/afterCLOSED, workerinactive+EMPTY,
-timersstopped all independentlyverified. OldmodelTask13792 stillPENDING/expired/zeroAttempt;
-allmatchingProviderledger0. ActualVision/Results/Save/nativePhotoE2E remainNOTPASS.
-Auth receivedfullfreshhandoff andnowowns itsapproved finiteWrite maintenance/window;
-RootMUSTNOTmutateHost/config/protectedSQL untilAuthclosinghandoff. LocalGUI triage continues.
-Owner approved existing agent-device Runner continuation. On the SAME AD5 and Batchf153,
-Runner0.21.33 opened normal App, read real accessibility controls and tapped Scroll down;
-OCR RELEVANT and retained explicit AI choice independently visible. No Analyze/new object/model.
-CUA coordinate fault persists; Runner UI readiness PASS, Photo E2E still NOT PASS.
-Actual cold relaunch→My Trips→Import/Recent submissions→same14:13:09Batch restored
-original/RELEVANT/retainedContinueAI via normal UI. Input cold recovery PASS only; noAnalyze.
-Auth windowcc269225 started01:31:04Z/hard02:00:14Z; wait for independent close/handoff
-before Host/config/protected SQL mutation. Source helper grant is not pending.
-Durableevidence: photo/proof-exec-approved-20261101/ and.env.photo-proof-exec-approved-20261101/.
+Photo Golden Slice PARTIAL, not Vision/Save PASS. Approvedbc37 helper67145 EXEC→postgres
+installedCLOSED; bodya294/Owner/OID unchanged, full rolegraph+schemaACL restored.
+Owner approved existing agent-device Runner. AD5/App126.9/SQLite76 normal UI and semantic
+controls work; CUA coordinate fault persists. Cold relaunch→My Trips→Recent submissions
+restored SAME Batchf1533073-0cd5-4514-824f-03f779a852b7, original42630B/SHA078de830,
+RELEVANT and explicit AI choice. Input cold recovery PASS, not Photo Save recovery.
+
+Actual same-Batch Source c9fe6fd2-3713-4e37-9e72-ede6db7b093d accepted normally.
+ACQUIRE0bc4/PREPAREc253/UPLOADd779 are FINAL/APPLIED. Upload attemptd928 generation1
+TERMINAL/PARSE_PASS, no termination outstanding. Capture binding advanced revision;
+normal local OCR recheck and explicit ChooseAI performed on current pin before resume.
+First actual newFAIL02:09:42Z: VERIFY_REPRESENTATION broker REGISTER→503,
+UNCLASSIFIED/OTHER/no sqlState. At02:10:41 no Verify row/Attempt observed; SQL cause is
+NOT proven. Existing logs also mask Auth/connection/driver failures; do not change SQL
+qualification on speculation. Current focused code adds static broker boundary/compiled
+line diagnostics and extends existing fixed HTTP error classifier; no authority changes.
+
+Window0d874 started02:04:23Z and proactively CLOSED after failure: Sourcebefore/afterCLOSED,
+workerinactive/EMPTY, runtime43b2/1068 unchanged, both timersstopped independently verified.
+Fresh independent CLOSED timer drillPASS. All matching Photo paid ledger0/modelAttempts0;
+no new model Task, old13792 PENDING/expired unchanged. Do not create another Batch or reset.
+Resume SAME f153/c9fe/current operation after lookup; original unused Vision1 only.
+Hard expiry2026-11-01T08:48:56Z unchanged. Retain every original/operation/receipt.
+
+Auth cc269 window completely CLOSED and resources returned; Root Photo execution also
+released Host/config/SQL while doing local diagnostics. Auth BUILD_ONLY candidate3116
+contains reviewed MCP runtimeb807 (no live switch/authority); incorporate only through
+fresh serialized compatible software CAS. Current actual healthy default43b2/1068,
+Capture40dad/MCPad47/browser6040/server7826, Envb12/Hostd501/Mount14ee; Source helper ACL
+approved/retained. No concurrent Host/protected SQL writes during another lane's window.
+
+Evidence: photo/proof-exec-approved-20261101/{AD5_RUNNER_READY,INPUT_COLD_RECOVERY}.json;
+photo/verify-register-20261101/{VERIFY_REGISTER_FAILURE,WINDOW_CLOSED,WATCHDOG_CLOSED_DRILL}.json.
+Private current operators /private/tmp/otr-photo-same-batch-runner-20261101 and
+four immediate actual function definitions /private/tmp/otr-photo-verify-register-20261101.
+Next: fixed narrow diagnostic diff/review→ordinary compatible closed deployment→same Source
+Verify/Task/Vision→normal Review/Plan/Admission/Core→readback/Day/cold/idempotence→safe close.
+
+## Earlier checkpoints (historical)
 
 Golden Slice PARTIAL, not Photo E2E PASS. Same approved7303 Batchd56f2cbc/Source03109f59/
 rep06e6bb76 original42630B PNG SHA078de830. UPLOADbb055 FINAL/APPLIED after approvedcde4f704
