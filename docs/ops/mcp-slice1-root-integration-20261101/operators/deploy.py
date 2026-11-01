@@ -31,4 +31,3 @@ def plan_path(path):
  assert re.fullmatch(r'auth-consumer-write-qa-[0-9a-f]{32}',path.parent.name)
  assert path.resolve()==path,'PLAN_SYMLINK_FORBIDDEN'
  return path
-

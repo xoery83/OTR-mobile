@@ -5,7 +5,7 @@
   "files": {
     "close_current.py": "fb889246ca338027e3ac94871393b192342041ffcb0637fb72306999c3147f94",
     "config_cas.py": "21217ed3ef2ce3360ad23eb9f53d03fb6c06c2a9b277e0dd43513ef3faa040a3",
-    "deploy.py": "99000cff800e6170e9f41087a0385ef36e76372b5024adee7487f0b719a3d76b",
+    "deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
     "prepare_cas.py": "b00320bc95e678f2369957f231edd3be5147564528945bca2cfacaa5f22615d8",
     "restore.py": "0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367",
     "slice1-qa-cases.json": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32",
