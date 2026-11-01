@@ -1,3 +1,18 @@
+# Auth active continuation / V3 — 2 November 2026
+
+Owner direct MCP human reply independently verified for continuationef7c8ba6.
+New windowbb5ba306: T17:30:11.178Z/D17:58:11.178Z Nov1 UTC (Nov2 NZ06:58:11).
+Close startsD−120. Root actualEMPTY68d2/config4756 healthy+independent timer,
+retaineddefault9fd2. Auth finiteHook exactbody90db activated/readback, UIHookenabled,
+OAuthon/Siteapi-dev/DCRoff refresh verified; confirmations remain empty. MCP is
+connecting Claude, no actual Notes approval/submit. Own controlSession64154 and
+issuerwatch68131 live; never reuse closed16d1. See ops/auth-mcp-slice1-20261102.
+V3 releases Photo global priority; preserve this active MCP window. Auth B1 private
+Realtime authorization is nextP0; independent local subagent building minimal
+contract/closed adapter/tests, no Hosted authority or shared-file changes. Native
+QA140 Profile and adopted private Draft device PASS now accepted by Owner V3;
+source4e9a2d2e boundedAuth Review NO_BLOCKER. Cloud People/Profile/Usage still gated.
+
 # Auth MCP Slice1 — closed, consumer not started, 1 November 2026
 
 Owner Gate530937ac independently verified; closed software5b984996 and runtime19b5
