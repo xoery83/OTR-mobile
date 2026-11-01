@@ -1,0 +1,15 @@
+{
+  "status": "READ_ONLY_OLD_SELECTED_CONSENT_STATUS",
+  "observedAt": "2026-11-01T09:50:11.494450+00:00",
+  "rows": [
+    {
+      "consent": {
+        "created_at": null,
+        "deleted_at": null,
+        "revoked_at": "2026-11-01T04:01:19.744678+00:00",
+        "scopes": "openid offline_access",
+        "updated_at": null
+      }
+    }
+  ]
+}

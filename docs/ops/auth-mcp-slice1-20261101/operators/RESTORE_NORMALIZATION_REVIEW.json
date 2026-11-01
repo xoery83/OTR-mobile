@@ -1,0 +1,74 @@
+{
+  "status": "NO_BLOCKER_NARROW_RESTORE_HOST_DEFAULT_NORMALIZATION",
+  "reviewer": "auth_phase1_review",
+  "sourceSHA256": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+  "baseline": "consumer-write-candidate/operators/restore.py SHA0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367",
+  "diffScope": "Only copies HostConfig and converts explicitly present None OomKillDisable to False on either side before full equality. ID/image/config/mount/file/retained-helper checks unchanged.",
+  "independentValidation": {
+    "method": "Extracted exact Host comparison AST statements into isolated function; no restore entry execution.",
+    "cases": [
+      {
+        "actual": {
+          "OomKillDisable": null,
+          "Memory": 256
+        },
+        "expected": {
+          "OomKillDisable": false,
+          "Memory": 256
+        },
+        "accepted": true
+      },
+      {
+        "actual": {
+          "OomKillDisable": false
+        },
+        "expected": {
+          "OomKillDisable": null
+        },
+        "accepted": true
+      },
+      {
+        "actual": {},
+        "expected": {
+          "OomKillDisable": false
+        },
+        "accepted": false
+      },
+      {
+        "actual": {
+          "OomKillDisable": null
+        },
+        "expected": {},
+        "accepted": false
+      },
+      {
+        "actual": {
+          "OomKillDisable": true
+        },
+        "expected": {
+          "OomKillDisable": false
+        },
+        "accepted": false
+      },
+      {
+        "actual": {
+          "OomKillDisable": false,
+          "Memory": 1
+        },
+        "expected": {
+          "OomKillDisable": null,
+          "Memory": 2
+        },
+        "accepted": false
+      }
+    ],
+    "count": 6,
+    "inputsUnchanged": true
+  },
+  "limitations": [
+    "Based on provided Root evidence for Docker default null/false equivalence; no independent Host/Docker observation.",
+    "No missing field normalization, True allowance, other Host drift or permissions change.",
+    "No Host/SQL/network/device or actual restore action performed."
+  ],
+  "findings": []
+}

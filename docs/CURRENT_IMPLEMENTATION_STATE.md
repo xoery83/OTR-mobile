@@ -1,25 +1,28 @@
-# Auth MCP Slice1 — default-closed software, 1 November 2026
+# Auth MCP Slice1 — closed, consumer not started, 1 November 2026
 
-Owner Gate530937ac independently verified against direct MCP thread reply
-call386cf7ea, authorizes this bounded Auth Backend scope switch and finite QA,
-not actual Notes confirmation. Additive loader version4 selects only fixed
-SLICE1_NOTES_EDIT/client/callback/case; empty confirmations reject both SDK confirm
-and bound POST. Existing v3/read remain unchanged. Default no config has no IO.
-Direct/independent32 tests, types/scoped lint PASS. All51 source pins verified;
-SDK7832ae51 and runtime19b5a0cb reproduced independently and across output paths.
-32 shared actual Photo source pins match. Root default-closed9fd2/ab77 deploy and
-independent readback PASS; MCP19b5, both QA keys absent, Photo configuration retained.
-No QA clock/OTP/Notes activation. Supabase console expired; GitHub login auto-review
-denied. Owner is manually restoring login and will explicitly reply when finished.
-First-Claude close-only watchdog3 mock tests/independent Review and actual Hook
-deny-all/original ACL readonly preflight PASS; runtime v4 close6 mocks/Review READY.
-Auth supplies loader+fixed QA JSON and runtime to Root actual compatible assembly;
-never its own full Capture tree. Root short CAS, Auth sole window/control operator,
-MCP consumer; actual Before/After Owner reply required before singleton approval.
-See ops/auth-mcp-slice1-20261101/{SOFTWARE_HANDOFF.json,OPERATOR_PLAN.md}.
-Client/Profile Native handoff remains separate and is not revoked by this Gate.
-Native fixedae8b796f has Auth bounded source Review NO_BLOCKER; normal iPad136
-Profile/Draft cold acceptance is executing, not yet reported PASS.
+Owner Gate530937ac independently verified; closed software5b984996 and runtime19b5
+passed32 focused/independent tests, types/lint and source-pin reproducibility. Root
+closed deployment9fd2/ab77 preserves Photo inputs. First Claude window16d1 ran
+09:51:29.824–10:16:09.025 UTC without extension. Root EMPTY confirmations runtime
+passed10:04:11Z after Docker default null/false CAS and minimal reviewed restore
+repair. Auth did not promptly continue issuer/console activation; remaining time
+was insufficient. Consumer/Preview/Notes NOT_RUN, f107 not dispatched. This is an
+execution failure, not a proved business Backend failure or remaining Owner block.
+
+Issuer never activated and deny-all independently verified10:14:19Z. Root restored
+exact default9fd2/a6ba and independently verified health/23 files/Host/timer and both
+QA keys absent10:17:15Z (Root receiptc209c1bf). Normal QA control own Session cleanup
+PASS_LOCAL_SCOPE_REFRESH_REVOKED; its cancelled action remains unconfirmed. Fresh
+SQL read10:22:21Z selected active grants0. Console login restored; OAuth off, Hook
+disabled (existing function retained), Site localhost and no settings changed.
+No consumer OTP or new grant, no bb/9b replay. No old-window reuse. A further finite
+attempt needs exact new-window authorization; reuse qualified code/closers instead
+of repeating software qualification. See ops/auth-mcp-slice1-20261101/ROUND_OUTCOME.json.
+Native fixedae8b796f source boundary Review NO_BLOCKER. Native reports actual iPad
+Profile Save/restart/Cancel/empty-name and Chinese/Dark PASS; final evidence pending.
+Adopted268 login retry follows corrected public dev-transport build flag; Auth
+receiver lock released. Native owns its device and shared files; draft acceptance
+continues separately with cloud parent reader/authoring closed.
 
 # Auth → Native local integration handoff — 1 November 2026
 

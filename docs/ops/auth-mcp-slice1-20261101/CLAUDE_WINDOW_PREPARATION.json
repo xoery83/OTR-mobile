@@ -1,5 +1,5 @@
 {
-  "status": "PREPARED_NOT_STARTED",
+  "status": "CLOSED_CONSUMER_NOT_STARTED",
   "gateSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
   "windowId": "16d1bdd76f10420a8b0ddceb6be9fadf",
   "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
@@ -8,10 +8,18 @@
   ],
   "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
   "previewDigest": "48dc6e4b7a0c632c9414978df73d38a9287f5e236a6cc4d7e6bbb6007c71a09e",
-  "startsAt": null,
-  "expiresAt": null,
+  "startsAt": "2026-11-01T09:51:29.824Z",
+  "expiresAt": "2026-11-01T10:16:09.025Z",
   "confirmations": [],
-  "ownerConsoleRecovery": "OWNER_HANDOFF_PENDING",
+  "ownerConsoleRecovery": "VERIFIED_AUTHENTICATED_TARGET_DEV_UI",
   "otpSent": false,
-  "activation": false
+  "activation": false,
+  "startsAtMs": 1793526689824,
+  "expiresAtMs": 1793528169025,
+  "normalControlStatus": "OWN_SESSION_CLEANUP_PASS_REFRESH_REVOKED",
+  "issuerPlanSHA256": "297895114441d3698447779f4fea40cd9acc28ad65d1d413d87ace4c95ea0963",
+  "activeBodyMD5": "d78c92cb644bcb342a942708a10e38e4",
+  "deadlineReset": false,
+  "consumerOtpSent": false,
+  "notesSubmitted": false
 }

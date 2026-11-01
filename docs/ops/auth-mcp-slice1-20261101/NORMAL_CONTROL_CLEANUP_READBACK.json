@@ -1,0 +1,15 @@
+{
+  "runId": "26973ef6-e300-477b-a9da-389fe95cca7c",
+  "scope": "REGISTERED_QA_HOST_SESSION",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "phase": "HOST_SESSION_CLEANUP",
+  "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "actionCompleted": false,
+  "actionOutcome": "UNCONFIRMED_QUERY_OWNING_RECEIPT",
+  "requestedAt": "2026-11-01T09:43:57.791Z",
+  "otpRequestAttempts": 1,
+  "secretsOrOtpRecorded": false,
+  "lockExists": false,
+  "journalPath": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-XFfFtQ/run.json"
+}
