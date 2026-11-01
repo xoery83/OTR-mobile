@@ -19,6 +19,7 @@ import {
   acceptedVisibleVersion,
   coreVisibleVersionResultSchema,
   sameVisibleVersion,
+  sameAcceptedCertificate,
   tripVisibleVersionRead,
   type CoreVisibleVersionRead,
 } from "./tripVisibleVersionRead";
@@ -38,7 +39,9 @@ export async function refreshCoreDownstream(
   if (versionRead && before) {
     const compared = acceptedVisibleVersion(before.certificate);
     const result = coreVisibleVersionResultSchema.parse(
-      await versionRead(Object.freeze({ ...context }), compared),
+      await (versionRead.observeAccepted
+        ? versionRead(context, compared, before.certificate)
+        : versionRead(context, compared)),
     );
     const current = await core.acceptedSnapshot(context);
     assertAccountRequestGeneration(context);
@@ -52,11 +55,25 @@ export async function refreshCoreDownstream(
     if (
       result.unchanged &&
       current &&
-      sameVisibleVersion(compared, acceptedVisibleVersion(current.certificate))
+      sameVisibleVersion(compared, acceptedVisibleVersion(current.certificate)) &&
+      (!versionRead.observeAccepted ||
+        sameAcceptedCertificate(before.certificate, current.certificate))
     )
       return false;
   }
   const result = await transport.collection(context);
+  const observe = async () => {
+    if (!versionRead?.observeAccepted) return;
+    const accepted = await core.acceptedSnapshot(context);
+    if (!accepted) throw Error("CORE_DOWNSTREAM_CERTIFICATE_MISSING");
+    await versionRead.observeAccepted(context, accepted.certificate, result, async () => {
+      const latest = await core.acceptedSnapshot(context);
+      return (
+        latest !== null &&
+        sameAcceptedCertificate(accepted.certificate, latest.certificate)
+      );
+    });
+  };
   const m = result.manifest,
     c = before?.certificate;
   if (
@@ -66,12 +83,16 @@ export async function refreshCoreDownstream(
     c.access_revision === m.accessRevision &&
     c.roster_hash === m.participatingRosterHash &&
     c.actor_person_binding_hash === m.actorPersonBindingHash &&
-    c.ordinary_order_version === (m.ordinaryOrderVersion ?? 0)
-  )
+    c.ordinary_order_version === (m.ordinaryOrderVersion ?? 0) &&
+    (!versionRead?.observeAccepted || c.manifest_sha256 === m.manifestSha256)
+  ) {
+    await observe();
     return false;
+  }
   await core.refresh(context, { collection: async () => result });
   if (!(await core.acceptedSnapshot(context)))
     throw Error("CORE_DOWNSTREAM_CERTIFICATE_MISSING");
+  await observe();
   return true;
 }
 

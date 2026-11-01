@@ -1,0 +1,62 @@
+{
+  "status": "LOCAL_PASS_OPAQUE_CONSUMER_READY_DEFAULT_CLOSED",
+  "base": "c555a4fa",
+  "rootDomainSource": "fe4f510a",
+  "rootDomainSha256": "be78c2c6088b9381a0b0c3ba552a7712c9149b75b3fc072bbbd55c6a029059a2",
+  "actualHttpContractSource": "/private/tmp/otr-mcp-read-diag-609184bb-7a4a6bwu/tree/backend/src/tripCoreV2Http.ts",
+  "actualHttpContractSha256": "9b3d93443c6309dfd9771e53fd26d211fa8b3a045270f64ed51e76e488dec4a5",
+  "actualFailure": "Native Core transport had no authorizedVersion method; new test RED1. Two old positive API fixtures independently fail403 at c555a4fa due missing NORMAL_ACCOUNT and are now explicitly qualified fixtures.",
+  "validation": {
+    "focused": "5suites56PASS including old transport10, formal transport8, real SQLite consumer16, legacy stamp21, joined Golden1",
+    "scopedTypes": "PASS",
+    "changedFilesLint": "PASS",
+    "sharedAlgorithm": "BYTE_EXACT_ROOT_PIN",
+    "defaultRuntimePort": "undefined"
+  },
+  "guardedScenarios": [
+    "cold/no baseline full Apply first",
+    "exact opaque token warm skip",
+    "visible P3 Edit original full Pull and Pending queue row retention",
+    "restart/reopen baseline absent; refreshed generatedAt pairs exact Applied manifest",
+    "complete Accepted generation drift forces re-pair",
+    "network/timeout/known503 fallback only",
+    "401/403/NOT_VISIBLE/invalid propagate without full fallback",
+    "Account generation ABA cannot install/retain token",
+    "failed Apply cannot install new token",
+    "stale observer CAS rejected",
+    "scope/projection-mode mismatch",
+    "two equal version GETs cannot certify another Collection token",
+    "HTTP401 plus failed normal refresh preserves HTTP401; only one fetch, no network-fallback classification"
+  ],
+  "remaining": [
+    "explicit legal runtime composition (default undefined retained)",
+    "real server publisher/private admission and authoritative Auth cache fence remain separate owning ports",
+    "actual Hosted and hardware performance/security acceptance not run"
+  ],
+  "resources": {
+    "hosted": 0,
+    "sql": 0,
+    "provider": 0,
+    "device": 0,
+    "rootBackendChanges": 0,
+    "authChanges": 0,
+    "newQueueRepositoryMigration": 0
+  },
+  "logs": {
+    "/private/tmp/otr-authorized-version-consumer-red.log": "b26a362d3845eb515450827916bef9830e090bfa3580643605d81c14f90f8795",
+    "/private/tmp/otr-authorized-version-baseline-fixture-failure.log": "8a9d3fd49ebcfd9666b962b1a9f3d1013d59bdb823c849809d88ab43aa1832fc",
+    "/private/tmp/otr-authorized-version-final.log": "4809337fb289adb0a5ba44d198fdf22e719459756f77c369908c192b351bc94d",
+    "/private/tmp/otr-authorized-version-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-authorized-version-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sourceSha256": {
+    "src/data/api/tripCoreV2Transport.ts": "874be8b06cea3ce0dda21305aac968267563c63a503d3ea37035c9f54e2ebf5e",
+    "src/data/api/tripCoreV2Transport.test.ts": "f23b6525e71a7ecbb9773f48f43a433e698280030644b0d425dd2e586e86a86a",
+    "src/data/api/tripAuthorizedVersionTransport.test.ts": "3a7dc2e5cc64938f03580d3c92c477f609d412f5f6ae5ece28c61be3b1f39027",
+    "src/data/sync/tripVisibleVersionRead.ts": "afd38dc6bdc8faf5d2cffd2d5fa5c972b4570239be9936b7135300ff4ccc61e6",
+    "src/data/sync/tripAuthorizedVersionConsumer.ts": "6f0d8896f12a85bc6bd4382628fa1c27915650a9a1f1f3dec7fccd829e62a8b5",
+    "src/data/sync/tripAuthorizedVersionConsumer.test.ts": "a7dd57368841ba790bf035a9fe1a38f1015dd04ded9d7c98ee4b48b5997b68f3",
+    "src/data/sync/tripDownstreamCoordinator.ts": "2b00a797aa189bcf778edf2e37397af6f0e25e3ce3f15e6da00f4538b95646a1",
+    "src/domain/trip/tripAuthorizedVersion.ts": "be78c2c6088b9381a0b0c3ba552a7712c9149b75b3fc072bbbd55c6a029059a2"
+  }
+}

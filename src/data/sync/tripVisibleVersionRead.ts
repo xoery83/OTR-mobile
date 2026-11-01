@@ -2,6 +2,7 @@ import { z } from "zod";
 import { coreReadManifestSchema } from "@/domain/trip/tripCoreV2Read";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
+import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import type { CoreAcceptedCertificate } from "../repositories/tripCoreV2Repository";
 
 const stampSchema = coreReadManifestSchema
@@ -25,10 +26,30 @@ export const coreVisibleVersionResultSchema = z.strictObject({
 });
 
 // Owning adapter must check current per-Actor visibility, not a Trip-global counter.
-export type CoreVisibleVersionRead = (
+export type CoreVisibleVersionRead = ((
   context: AccountRequestContext,
   accepted: CoreVisibleVersionStamp,
-) => Promise<unknown>;
+  certificate?: CoreAcceptedCertificate,
+) => Promise<unknown>) & {
+  observeAccepted?(
+    context: AccountRequestContext,
+    certificate: CoreAcceptedCertificate,
+    collection: Awaited<ReturnType<CoreReadTransport["collection"]>>,
+    isCurrent: () => Promise<boolean>,
+  ): Promise<void>;
+};
+
+export function sameAcceptedCertificate(
+  a: CoreAcceptedCertificate,
+  b: CoreAcceptedCertificate,
+) {
+  return (
+    Object.keys(a).length === Object.keys(b).length &&
+    (Object.keys(a) as (keyof CoreAcceptedCertificate)[]).every(
+      (key) => a[key] === b[key],
+    )
+  );
+}
 
 export function acceptedVisibleVersion(certificate: CoreAcceptedCertificate) {
   return Object.freeze(
@@ -51,5 +72,5 @@ export function sameVisibleVersion(
   );
 }
 
-// No server comparison is qualified yet. Existing full reads remain the default.
+// Runtime composition stays closed; existing full reads remain the default.
 export const tripVisibleVersionRead: CoreVisibleVersionRead | undefined = undefined;

@@ -1,4 +1,8 @@
 import {
+  authorizedTripVersionSchema,
+  type AuthorizedTripVersion,
+} from "../../domain/trip/tripAuthorizedVersion";
+import {
   coreUniversalP1PublishRequestSchema,
   coreUniversalP1PublishResultSchema,
 } from "../../domain/trip/tripCoreV2SourceContract";
@@ -52,6 +56,12 @@ export type CoreSourcePlanReadTransport = {
     planId: string,
   ): Promise<CoreSourcePlanReadV2 | null>;
 };
+export type CoreAuthorizedVersionTransport = {
+  authorizedVersion(
+    ctx: AccountRequestContext,
+    ordinaryOrderVersion?: 1,
+  ): Promise<AuthorizedTripVersion>;
+};
 export type CoreReadTransport = {
   collection(
     ctx: AccountRequestContext,
@@ -101,17 +111,18 @@ export function createCoreV2Transport(
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
 ): CoreSyncTransport &
   CoreReadTransport &
+  CoreAuthorizedVersionTransport &
   CoreCandidatePublicationTransport &
   CoreSourcePlanTransport &
   CoreSourcePlanReadTransport {
-  const api = (ctx: AccountRequestContext, maximum = 1048576) =>
+  const api = (ctx: AccountRequestContext, maximum = 1048576, provider = tokenProvider) =>
     createAuthenticatedApiClient(
       {
         ...options,
         maxResponseBytes: maximum,
         parseBoundedResponseText: (text) => parseCoreJson(text, maximum),
       },
-      tokenProvider,
+      provider,
       ctx,
     );
   const headers = { "X-OTR-Core-Contract-Version": "2" };
@@ -273,6 +284,40 @@ export function createCoreV2Transport(
       await assertAccountRequestContext(ctx, getAccountId);
       if (result.slotId !== input.slotId)
         throw new Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
+      return result;
+    },
+    async authorizedVersion(ctx, ordinaryOrderVersion) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const guardedProvider: NonNullable<
+        Parameters<typeof createAuthenticatedApiClient>[1]
+      > = async (input) => {
+        try {
+          const provider =
+            tokenProvider ??
+            (await import("../auth/sessionAccessToken")).sessionAccessToken;
+          return await provider(input);
+        } catch (error) {
+          // Keep a rejected HTTP401 visible when normal refresh fails; it is not a version network fallback.
+          if (input?.forceRefresh)
+            throw new ApiClientError(
+              "OTR API read is unavailable.",
+              "http",
+              401,
+              "CORE_AUTH_REFRESH_UNAVAILABLE",
+            );
+          throw error;
+        }
+      };
+      const result = await api(ctx, 4096, guardedProvider).get(
+        path(ctx) + "/authorized-version",
+        authorizedTripVersionSchema,
+        ordinaryOrderVersion === 1
+          ? { ...headers, "X-OTR-Ordinary-Order-Version": "1" }
+          : headers,
+      );
+      await assertAccountRequestContext(ctx, getAccountId);
+      if (result.actorAccountId !== ctx.accountId || result.tripId !== ctx.tripId)
+        throw new Error("CORE_AUTHORIZED_VERSION_SCOPE_MISMATCH");
       return result;
     },
     async collection(ctx, ordinaryOrderVersion) {
