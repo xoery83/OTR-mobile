@@ -1,0 +1,13 @@
+{
+  "status": "DIRECT_HUMAN_ACCESS_APPROVAL_VERIFIED_NOT_STARTED",
+  "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "turnId": "01a1993b-34a6-7dd1-865c-0fdb9b947318",
+  "messageId": "01a1993b-35b1-7902-830d-e222d780fc13",
+  "questionCallId": "call_2740890e09bf43e59d26f24d9c25477f",
+  "answer": "批准本轮有限 QA 连接并同步",
+  "gateSHA256": "f93df0f8f6c37b74ca66930db9053b7ed8b0e7d5c3badbbaa10861a23b5f1d79",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "notesApproved": false,
+  "clockStarted": false,
+  "qaKeysAdded": false
+}
