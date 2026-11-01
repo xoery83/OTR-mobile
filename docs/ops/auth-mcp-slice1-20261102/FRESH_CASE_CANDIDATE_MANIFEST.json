@@ -1,0 +1,30 @@
+{
+  "status": "LOCAL_FRESH_FIXTURE_GUARD_CANDIDATE_NOT_AUTHORIZED_NOT_DEPLOYED",
+  "freshAsset": "backend/mcp/slice1-fresh-qa-cases.json",
+  "freshSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "oldAssetSHA256": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32",
+  "sdkMutationSourceSHA256": "96508ddf010828a67227773792244e75d2ab8ed1956718f5a66cda7f2b25b818",
+  "identityCheck": "Executed real prepareUpdate/mutationIdentity and canonicalCoreJson, no mutation execute or external IO",
+  "cases": [
+    {
+      "client": "Claude",
+      "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+      "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+      "expectedRevision": 1,
+      "pureSdkCommandAndIdentity": "MATCH"
+    },
+    {
+      "client": "ChatGPT",
+      "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+      "previewDigest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+      "expectedRevision": 2,
+      "pureSdkCommandAndIdentity": "MATCH"
+    }
+  ],
+  "guardCheck": "Test-only old JSON module substitution; production loader/builder/old asset unchanged",
+  "runtimeActivation": "Requires new exact finite Owner Gate; no inherited confirmation or UNKNOWN recovery",
+  "preservedUnknownOperations": [
+    "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+    "9b077556-e0c3-46a9-8d97-2090504fa856"
+  ]
+}

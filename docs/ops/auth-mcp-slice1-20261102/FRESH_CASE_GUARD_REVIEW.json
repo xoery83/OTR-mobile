@@ -1,0 +1,12 @@
+{
+  "status": "NO_BLOCKER_LOCAL_FRESH_FIXTURE_GUARD_CANDIDATE",
+  "independentReviewer": "auth_phase1_review",
+  "focusedTests": "15/15_PASS",
+  "sourceFixtureFixedGit": "MCP1ae2a1a9",
+  "fixtureSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "realPrepareAndIdentityRecomputed": true,
+  "oldAssetAndLoaderUnchanged": true,
+  "writeAuthority": false,
+  "historicalUnknownsPreserved": true,
+  "limits": "Fresh proposal only, not f107 recovery, no automatic rebasing/activation/deployment."
+}
