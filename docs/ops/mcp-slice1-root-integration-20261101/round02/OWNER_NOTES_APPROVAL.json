@@ -1,0 +1,21 @@
+{
+  "gateSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "continuationGateSHA256": "ef7c8ba62833e3dbffd479af395dff4d7211b7036cb2b54dcc3c0704b8244aff",
+  "ownerConfirmed": true,
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "previewDigest": "48dc6e4b7a0c632c9414978df73d38a9287f5e236a6cc4d7e6bbb6007c71a09e",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "sourceMessageId": "01a1983a-9a2e-7961-9405-95c5fefc2412",
+  "sourceQuestionCallId": "call_c0e42bd3e38545c69899e644c9faeb7b",
+  "ownerReply": "确认上述 Notes 修改，仅提交该 Operation/digest",
+  "verifiedDirectHumanByRoot": true,
+  "actualPreviewVerifiedByRoot": true,
+  "businessSubmitted": false,
+  "authDirectHumanSourceThreadId": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "authDirectHumanSourceMessageId": "01a1983c-62d2-77a1-90fe-983f928e9c13",
+  "authDirectHumanQuestionCallId": "call_07fe799d201a4742b28bbea80af777fb",
+  "authDirectHumanReply": "确认同一精确 Operation/digest 的 Notes 修改",
+  "authDirectReplyIndependentlyVerifiedByRoot": true,
+  "authOperatorExactCasRequestReceived": true
+}

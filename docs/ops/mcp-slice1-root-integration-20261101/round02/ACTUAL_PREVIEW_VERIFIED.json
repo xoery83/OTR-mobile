@@ -1,0 +1,14 @@
+{
+  "status": "ACTUAL_CONSUMER_PREVIEW_OBSERVED_NOT_NOTES_APPROVAL",
+  "sourceTranscriptSHA256": "48300b9f342247e17b1bdff57cf747676236eda61069cfc4a6f352f25f529513",
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "previewDigest": "48dc6e4b7a0c632c9414978df73d38a9287f5e236a6cc4d7e6bbb6007c71a09e",
+  "expectedRevision": 2,
+  "before": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+  "after": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.\nSlice1 Claude Notes QA verified.",
+  "outcome": "PREVIEW",
+  "currentRevision": null,
+  "humanApprovalReceived": false,
+  "notesConfirmationInstalled": false,
+  "capabilities": "staticclosedprojection, never overridden"
+}

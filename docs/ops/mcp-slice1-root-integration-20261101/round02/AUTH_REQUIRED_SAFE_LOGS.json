@@ -1,0 +1,108 @@
+{
+  "status": "READ_ONLY_MCP_QA_LOG_PROJECTION",
+  "windowId": "bb5ba3063468437ca608910bf84eaacf",
+  "readAt": "2026-11-01T17:41:55.900777+00:00",
+  "events": [
+    {
+      "requestId": "30d8ccb5-a92f-40c9-bacc-c2f6b7860c66",
+      "status": 401,
+      "durationMs": 1,
+      "loggedAt": "2026-11-01T17:33:18.143841183Z"
+    },
+    {
+      "requestId": "61314720-0977-45ec-9d52-a30e18d15b68",
+      "status": 400,
+      "durationMs": 2538,
+      "loggedAt": "2026-11-01T17:38:58.325703470Z"
+    },
+    {
+      "requestId": "88c54b26-bf6b-4edf-989d-a489a1d7b15b",
+      "status": 200,
+      "durationMs": 1538,
+      "loggedAt": "2026-11-01T17:39:00.401092144Z"
+    },
+    {
+      "requestId": "589bf1f6-1302-40c5-ba7e-febe04d83010",
+      "status": 202,
+      "durationMs": 1478,
+      "loggedAt": "2026-11-01T17:39:02.421657500Z"
+    },
+    {
+      "requestId": "dbdab704-f21a-449e-b18b-cef9e9959922",
+      "status": 200,
+      "durationMs": 1458,
+      "loggedAt": "2026-11-01T17:39:04.374962757Z"
+    },
+    {
+      "requestId": "972d7f97-3d9e-4009-bfd7-7b4a358c0137",
+      "status": 400,
+      "durationMs": 1460,
+      "loggedAt": "2026-11-01T17:39:07.284534461Z"
+    },
+    {
+      "requestId": "8cf96745-76e9-4c46-8bcb-f5dd974ed0fd",
+      "status": 400,
+      "durationMs": 1512,
+      "loggedAt": "2026-11-01T17:39:08.756495842Z"
+    },
+    {
+      "requestId": "2e1ee8ae-49fb-419d-af8e-e4de89020d87",
+      "status": 200,
+      "durationMs": 2154,
+      "loggedAt": "2026-11-01T17:39:09.972487338Z"
+    },
+    {
+      "requestId": "84a2625a-f494-4ee4-8888-509cca87cc9a",
+      "status": 200,
+      "durationMs": 1448,
+      "loggedAt": "2026-11-01T17:39:10.867124523Z"
+    },
+    {
+      "requestId": "82d154a1-043b-46f9-91a1-c9a73aecf465",
+      "status": 202,
+      "durationMs": 1412,
+      "loggedAt": "2026-11-01T17:39:12.791849133Z"
+    },
+    {
+      "requestId": "ce838eea-8013-4304-8d6e-091037d94d3c",
+      "status": 202,
+      "durationMs": 2758,
+      "loggedAt": "2026-11-01T17:39:13.233065166Z"
+    },
+    {
+      "requestId": "22afc936-a72b-4b00-a187-9573b42b2eda",
+      "status": 200,
+      "durationMs": 1447,
+      "loggedAt": "2026-11-01T17:39:14.655764657Z"
+    },
+    {
+      "requestId": "f54950da-89a4-4e43-b9b0-bf856973e936",
+      "status": 200,
+      "durationMs": 1618,
+      "loggedAt": "2026-11-01T17:39:15.316842727Z"
+    },
+    {
+      "requestId": "83b1ab52-5571-41b4-9336-7a29cb65ab8f",
+      "status": 202,
+      "durationMs": 1518,
+      "loggedAt": "2026-11-01T17:39:30.230934164Z"
+    },
+    {
+      "requestId": "9ebb7a49-56a7-4d84-8e3e-b9a421f367dd",
+      "status": 200,
+      "durationMs": 1626,
+      "tool": "get_otr_operating_guide",
+      "loggedAt": "2026-11-01T17:39:32.399842389Z"
+    },
+    {
+      "requestId": "167fc928-5ce5-4c4f-93f3-0a8238e21f82",
+      "status": 200,
+      "durationMs": 9339,
+      "tool": "list_trip_items",
+      "errorCode": "AUTH_REQUIRED",
+      "authFailureSource": "BACKEND_401",
+      "loggedAt": "2026-11-01T17:39:56.352309604Z"
+    }
+  ],
+  "noTokenAuthorizationCodeOrUrls": true
+}

@@ -1,0 +1,29 @@
+{
+  "status": "ROOT_CLOSED_SERVER_VERIFIED",
+  "windowId": "bb5ba3063468437ca608910bf84eaacf",
+  "checkedAt": "2026-11-01T17:57:11.072668+00:00",
+  "containerId": "9fd2b8283c82ac457d1c2aac1fd8bcaa828a57bdf1006b3670a2baf8ea7301f9",
+  "configSHA256": "a6ba55fd09a187db3c9871e3d1bb6414d2f33c14b2d11bb5babf9fcacd223dc4",
+  "health": "healthy",
+  "bothQaKeysAbsent": true,
+  "defaultHostExact": true,
+  "all23FilesMatch": true,
+  "httpHealth200Protected401": true,
+  "timerInactive": true,
+  "helper": {
+    "result": {
+      "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+      "containerId": "9fd2b8283c82ac457d1c2aac1fd8bcaa828a57bdf1006b3670a2baf8ea7301f9",
+      "image": "sha256:ab77a13ce66f877b67541e8cad7dcd0f9b70ac229c81841bf26f21665b709431",
+      "finiteConfigAbsent": true,
+      "health": "healthy"
+    },
+    "deliveryTrace": {
+      "requestedAt": "2026-11-01T17:57:04.931572+00:00",
+      "readyAt": "2026-11-01T17:57:04.950410+00:00",
+      "acquiredAt": "2026-11-01T17:57:04.950500+00:00",
+      "mutationFinishedAt": "2026-11-01T17:57:10.932366+00:00",
+      "releasedAt": "2026-11-01T17:57:10.932396+00:00"
+    }
+  }
+}
