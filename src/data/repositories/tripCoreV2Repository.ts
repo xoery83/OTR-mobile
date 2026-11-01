@@ -930,8 +930,7 @@ export function createTripCoreV2Repository(
           ctx.accountId,
           ctx.tripId,
         );
-        if (!current || !accepted || accepted.access_revision !== current.access_revision)
-          return;
+        if (!current || !accepted) return;
         const generation = current.refresh_generation + 1;
         if (!Number.isSafeInteger(generation)) throw new Error("GENERATION_OVERFLOW");
         ttrFence(database, ctx, true);

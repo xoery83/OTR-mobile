@@ -631,12 +631,62 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
     expect((await f.repo.readGraph(ctx)).itinerary_events[0].id).toBe(item);
     expect((await f.repo.acceptedSnapshot(ctx))?.certificate.applied_generation).toBe(3);
   });
+  it("denies an in-flight higher-access refresh even while its predecessor certificate remains installed", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const refresh = await f.repo.beginRefresh(ctx, 2);
+    const updated = await buildCoreActorCollection(
+      applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph,
+      actor,
+      {
+        epoch: bundle.manifest.epoch,
+        revision: 2,
+        accessRevision: 2,
+        generatedAt: stamp,
+      },
+      [
+        {
+          person_id: person,
+          account_id: account,
+          active: true,
+          participating: true,
+          revision: 1,
+        },
+      ],
+      hash,
+    );
+    const denied = await f.repo.denyExistingAcceptedScope(ctx);
+    await expect(
+      f.repo.install(refresh, updated.manifest, updated.pages),
+    ).rejects.toThrow("CORE_ACCESS_REVOKED");
+    expect(denied?.accessRevision).toBe(2);
+    expect(denied?.refreshGeneration).toBe(3);
+    await expect(f.repo.readGraph(ctx)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    expect(
+      f.sql
+        .prepare(
+          "SELECT applied_generation,access_revision FROM trip_core_read_certificates",
+        )
+        .get(),
+    ).toEqual({ applied_generation: 1, access_revision: 1 });
+  });
   it("does not manufacture a scope or Core revision for a subscription with no accepted cache", async () => {
     const f = fixture(),
       ctx = await f.repo.captureContext(trip);
     expect(await f.repo.denyExistingAcceptedScope(ctx)).toBeNull();
     expect(f.sql.prepare("SELECT count(*) n FROM trip_core_scopes").get()?.n).toBe(0);
     expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+    await f.repo.beginRefresh(ctx, 1);
+    expect(await f.repo.denyExistingAcceptedScope(ctx)).toBeNull();
+    expect(
+      f.sql.prepare("SELECT revoked,refresh_generation FROM trip_core_scopes").get(),
+    ).toEqual({ revoked: 0, refresh_generation: 1 });
   });
   it("preserves pending identity and blocked delivery through deny and fresh installation", async () => {
     const f = fixture(),
