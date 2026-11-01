@@ -38,19 +38,13 @@ const configSchema = z
       config.clientId !== "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
   );
 const writeConfigSchema = z.strictObject({
-  version: z.literal(2),
+  version: z.literal(3),
   clientId: z.literal("d2b8167f-ee42-4ac1-b5ef-4dc003c0d141"),
   redirectUris: z.tuple([z.literal("https://claude.ai/api/mcp/auth_callback")]),
   expiresAt: configSchema.shape.expiresAt,
   businessAccess: z.literal("READ_WRITE"),
   consentNotBefore: z.number().int().positive(),
   confirmations: z.tuple([
-    z.strictObject({
-      operationId: z.literal("e9b4a200-3b22-461f-bf3f-f4347b9dfb67"),
-      previewDigest: z.literal(
-        "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0",
-      ),
-    }),
     z.strictObject({
       operationId: z.literal("bb0cb010-0cb4-432b-8995-670aaec95b3d"),
       previewDigest: z.literal(
@@ -150,7 +144,7 @@ export async function loadMcpQaRuntime(
     writeRaw === undefined
       ? configSchema.parse(JSON.parse(readRaw!))
       : writeConfigSchema.parse(JSON.parse(writeRaw));
-  const write = config.version === 2 ? config : undefined;
+  const write = config.version === 3 ? config : undefined;
   const publicKey = env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "";
   if (
     env.OTR_DEV_SUPABASE_URL !== issuer.replace(/\/auth\/v1$/, "") ||

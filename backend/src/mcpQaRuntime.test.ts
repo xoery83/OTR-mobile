@@ -41,17 +41,13 @@ function fixture() {
 function writeFixture() {
   const q = fixture();
   const policy = {
-    version: 2,
+    version: 3,
     clientId: "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
     redirectUris: ["https://claude.ai/api/mcp/auth_callback"],
     expiresAt: q.expiresAt,
     consentNotBefore: Date.now() - 1000,
     businessAccess: "READ_WRITE",
     confirmations: [
-      {
-        operationId: "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
-        previewDigest: "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0",
-      },
       {
         operationId: "bb0cb010-0cb4-432b-8995-670aaec95b3d",
         previewDigest: "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7",
@@ -78,6 +74,46 @@ function writeFixture() {
   return { ...q, env, policy, files, core, createWriteRuntime };
 }
 afterEach(() => vi.useRealTimers());
+it("accepts only the original Edit recovery policy and refuses Create confirmation", async () => {
+  const q = writeFixture();
+  const edit = q.policy.confirmations[0];
+  q.env.OTR_DEV_MCP_WRITE_QA_CONFIG = JSON.stringify({
+    ...q.policy,
+    version: 3,
+    confirmations: [edit],
+  });
+  await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
+  const options = q.createWriteRuntime.mock.calls[0][0] as {
+    confirm(input: unknown, signal: AbortSignal): Promise<boolean>;
+  };
+  const base = {
+    accountId: "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    clientId: q.policy.clientId,
+    resource: "https://api-dev.xoery.art/mcp",
+  };
+  expect(
+    await options.confirm(
+      { ...base, digest: edit.previewDigest, operationIds: [edit.operationId] },
+      new AbortController().signal,
+    ),
+  ).toBe(true);
+  const create = {
+    operationId: "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+    previewDigest: "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0",
+  };
+  expect(
+    await options.confirm(
+      { ...base, digest: create.previewDigest, operationIds: [create.operationId] },
+      new AbortController().signal,
+    ),
+  ).toBe(false);
+  q.env.OTR_DEV_MCP_WRITE_QA_CONFIG = JSON.stringify({
+    ...q.policy,
+    version: 2,
+    confirmations: [create, edit],
+  });
+  await expect(loadMcpQaRuntime(q.env, q.gateway, q.core, q.files)).rejects.toThrow();
+});
 it("does no module/asset/network IO without the explicit public QA config", async () => {
   const q = fixture();
   expect(await loadMcpQaRuntime({}, q.gateway, q.core, q.files)).toBeUndefined();
@@ -96,6 +132,8 @@ it("Write rejects mixed/altered policy before SDK IO and refuses an old Read-onl
   ).rejects.toThrow("CONFLICT");
   for (const change of [
     { version: 1 },
+    { version: 2 },
+    { confirmations: [q.policy.confirmations[0], q.policy.confirmations[0]] },
     { clientId },
     { redirectUris: ["https://other.invalid/callback"] },
     { confirmations: [] },
@@ -103,10 +141,7 @@ it("Write rejects mixed/altered policy before SDK IO and refuses an old Read-onl
     { consentNotBefore: Date.now() - 1800000 },
     { expiresAt: Date.now() + 1800001 },
     {
-      confirmations: [
-        { ...q.policy.confirmations[0], previewDigest: "0".repeat(64) },
-        q.policy.confirmations[1],
-      ],
+      confirmations: [{ ...q.policy.confirmations[0], previewDigest: "0".repeat(64) }],
     },
   ])
     await expect(
@@ -153,7 +188,7 @@ it("Write confirmation is exact and bounded; no model flag or alternate Actor ca
     { resource: "https://other.invalid/mcp" },
     { digest: "0".repeat(64), confirmed: true },
     { operationIds: [clientId], confirmed: true },
-    { operationIds: q.policy.confirmations.map((entry) => entry.operationId) },
+    { operationIds: [q.policy.confirmations[0].operationId, clientId] },
   ])
     expect(await confirm({ ...request, ...change }, signal)).toBe(false);
   expect(await confirm(null, signal)).toBe(false);
