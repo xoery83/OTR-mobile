@@ -1,0 +1,25 @@
+{
+  "readAt": "2026-11-01T17:26:51.550186+00:00",
+  "containerId": "9fd2b8283c82ac457d1c2aac1fd8bcaa828a57bdf1006b3670a2baf8ea7301f9",
+  "image": "sha256:ab77a13ce66f877b67541e8cad7dcd0f9b70ac229c81841bf26f21665b709431",
+  "configSHA256": "a6ba55fd09a187db3c9871e3d1bb6414d2f33c14b2d11bb5babf9fcacd223dc4",
+  "envSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "hostSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "health": "healthy",
+  "readKeyAbsent": true,
+  "writeKeyAbsent": true,
+  "oldFilesMatch": true,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "19b5a0cb90179516fbd0bce2d741c46603a1ba83cac8cdd6b855ab2ad5d42208",
+    "server-capture.mjs": "63113903998f085c0aaffb6cc56147d895b3c1f4960f56243847d866c3a971bf",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "oldTimer": "inactive",
+  "oldCloseHelpers": {
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "close_current.py": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+    "config_cas_repair.py": "bf6c344f97a28e14eb191fecb9f59a6b2bee91eecaa72878aec7e0d7e1cf51be"
+  }
+}
