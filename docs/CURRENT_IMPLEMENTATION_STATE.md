@@ -84,8 +84,8 @@ Actor grant and price pins. Original Provider expiry Nov1 08:48:56Z has passed.
 Auth independently supplied a bounded READ ONLY snapshot20:22:19Z: Sourcepolicy
 enabled/universalImportEnabled true, nonrevoked; scopebaac revision6 active and
 Actorgrant revision5 unrevoked, both expiredNov1 08:48:56Z. Existing caps20/day,
-$1/day, $0.05/call, concurrency1/attempt1 remain; price56f9 validity, remaining
-budget/UNKNOWN holds and current Trip qualification remain UNKNOWN. Root local
+$1/day, $0.05/call, concurrency1/attempt1 remain; price56f9 is independently confirmed expired at the same timestamp (Auth read-only
+21:26:12Z); remaining budget/UNKNOWN holds and current Trip qualification remain UNKNOWN. Root local
 management transport remains unconfirmed even withDO_NOT_TRACK; no raw errors
 or credentials exposed, no state changed, not permission-denial proof. Metadata
 receipt P3_RUNTIME_READONLY_METADATA_20261102.json is not execution authority.
@@ -164,3 +164,24 @@ Only sharedHost/SQL/main/device/pinnedProvider mutations needresource-scopedseri
 coordination. No newSchema/RLS/GRANT/roles/SourceAuthority/budget withoutpreciseGate.
 NoProduction/realuser/secretcopy. Do not clean existinguntrackednode_modules or
 scripts/import/__pycache__. Root andproductwork may proceed while otherlanes run.
+
+## V3 next-execution boundary and finite recovery preparation
+
+QA execution fence fixed66d46067 LOCAL_PASS: optional strict version1 Account/Trip
+config denies mismatched new Prepare/attempt/SEND work. Existing attempt recovery
+and published-result reads stay unchanged; Root independently ran3suites41PASS.
+Not deployed/configured: future activation must prove actual f4b059c5/825f79b2
+fence and config SHA, plus valid owning Provider scope/grant/price. No new authority.
+Auth price metadata P3_RUNTIME_PRICE_METADATA_20261102.json confirms historical
+DeepSeek price56f9 expiredNov1; append-only price renewal must preserve budget and
+all UNKNOWN holds. No paid request or runtime renewal performed.
+
+Next MCP finite preparation uses only nonce7cb5cd285a774df8bc71375c6890bce4.
+Host no-change restore PASS21:49:41Z, defaulta1/9a88/image1c5 retained; no clock/OTP/
+issuer/QA activated. New MCP b28598c4 Gate f93df0f8f6c37b74ca66930db9053b7ed8b0e7d5c3badbbaa10861a23b5f1d79
+is a candidate, awaiting fresh Owner access confirmation. Root close6237746b,
+bound entry4c43a9d3 and collector9334be21 must remain pinned. Actual access Gate
+and software marker530 remain separate; delayed b94 approvals cannot reopen80dd.
+
+Native fcfe8745 still lacks C1 continuous503 prepare suppression; semantic delta
+handed its owning Writer for next local integration. No shared Host/device change.
