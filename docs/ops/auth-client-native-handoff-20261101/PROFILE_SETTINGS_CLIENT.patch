@@ -1,0 +1,2482 @@
+--- /dev/null
++++ b/src/data/api/privateAccountProfileContracts.ts
+@@ -0,0 +1,39 @@
++import { z } from "zod";
++import { coreUuid } from "@/domain/trip/tripCoreV2";
++import { privateAccountProfileFieldsSchema } from "@/domain/auth/privateAccountProfile";
++
++export const privateAccountProfilePath = "/v1/account/private-profile";
++export const privateAccountProfileSnapshotSchema = z.strictObject({
++  schemaId: z.literal("otr.auth.private-profile/1"),
++  accountId: coreUuid,
++  revision: z.number().int().nonnegative().safe(),
++  fields: privateAccountProfileFieldsSchema,
++});
++export const privateAccountProfileMutationSchema = z.strictObject({
++  operationId: coreUuid,
++  expectedRevision: z
++    .number()
++    .int()
++    .nonnegative()
++    .max(Number.MAX_SAFE_INTEGER - 1),
++  changes: privateAccountProfileFieldsSchema.refine(
++    (fields) => Object.keys(fields).length > 0,
++    "PROFILE_CHANGES_REQUIRED",
++  ),
++});
++export const privateAccountProfileReceiptSchema = z.strictObject({
++  schemaId: z.literal("otr.auth.private-profile-receipt/1"),
++  accountId: coreUuid,
++  operationId: coreUuid,
++  revision: z.number().int().positive().safe(),
++  recordedAt: z.iso.datetime({ offset: true }),
++});
++export type PrivateAccountProfileSnapshot = z.infer<
++  typeof privateAccountProfileSnapshotSchema
++>;
++export type PrivateAccountProfileMutation = z.infer<
++  typeof privateAccountProfileMutationSchema
++>;
++export type PrivateAccountProfileReceipt = z.infer<
++  typeof privateAccountProfileReceiptSchema
++>;
+--- /dev/null
++++ b/src/domain/auth/privateAccountProfile.ts
+@@ -0,0 +1,77 @@
++import { z } from "zod";
++
++// Original characters are retained; PostgreSQL text/JSON cannot retain NUL.
++const name = z.string().refine((value) => !value.includes("\0"), "PROFILE_NAME_INVALID");
++
++export const travelDocumentNameSchema = z.discriminatedUnion("mode", [
++  z.strictObject({
++    mode: z.literal("SPLIT"),
++    familyName: name.nullable(),
++    givenNames: name.nullable(),
++  }),
++  z.strictObject({ mode: z.literal("UNSPLIT"), fullName: name }),
++]);
++
++// Account-private values only. Identity, roles and connection proofs belong to their owning contracts.
++export const privateAccountProfileFieldsSchema = z.strictObject({
++  displayName: name.nullable().optional(),
++  travelDocumentName: travelDocumentNameSchema.nullable().optional(),
++});
++
++export type TravelDocumentName = z.infer<typeof travelDocumentNameSchema>;
++export type PrivateAccountProfileFields = z.infer<
++  typeof privateAccountProfileFieldsSchema
++>;
++
++export const privateProfileNameDraftSchema = z.strictObject({
++  displayName: name,
++  mode: z.enum(["SPLIT", "UNSPLIT"]),
++  familyName: name,
++  givenNames: name,
++  fullName: name,
++  globalAkaDraft: z.array(name).optional(),
++});
++export type PrivateProfileNameDraft = Readonly<z.infer<typeof privateProfileNameDraftSchema>>;
++
++export function privateProfileDraft(
++  fields: PrivateAccountProfileFields = {},
++): PrivateProfileNameDraft {
++  const document = fields.travelDocumentName;
++  return {
++    displayName: fields.displayName ?? "",
++    mode: document?.mode ?? "SPLIT",
++    familyName: document?.mode === "SPLIT" ? document.familyName ?? "" : "",
++    givenNames: document?.mode === "SPLIT" ? document.givenNames ?? "" : "",
++    fullName: document?.mode === "UNSPLIT" ? document.fullName : "",
++  };
++}
++
++// Only edited visible fields become a patch; hidden format drafts stay local.
++export function privateProfileChanges(
++  fields: PrivateAccountProfileFields,
++  value: PrivateProfileNameDraft,
++): PrivateAccountProfileFields {
++  const draft = privateProfileNameDraftSchema.parse(value);
++  const original = privateAccountProfileFieldsSchema.parse(fields);
++  const prior = privateProfileDraft(original);
++  const changes: PrivateAccountProfileFields = {};
++  if (draft.displayName !== prior.displayName) changes.displayName = draft.displayName;
++  if (
++    draft.mode !== prior.mode ||
++    (draft.mode === "SPLIT"
++      ? draft.familyName !== prior.familyName || draft.givenNames !== prior.givenNames
++      : draft.fullName !== prior.fullName)
++  ) {
++    const old = original.travelDocumentName;
++    changes.travelDocumentName = draft.mode === "SPLIT"
++      ? {
++          mode: "SPLIT",
++          familyName: old?.mode === "SPLIT" && draft.familyName === prior.familyName
++            ? old.familyName : draft.familyName,
++          givenNames: old?.mode === "SPLIT" && draft.givenNames === prior.givenNames
++            ? old.givenNames : draft.givenNames,
++        }
++      : { mode: "UNSPLIT", fullName: draft.fullName };
++  }
++  return changes;
++}
+--- /dev/null
++++ b/src/domain/auth/privateAccountProfile.test.ts
+@@ -0,0 +1,103 @@
++import { expect, it } from "vitest";
++import { privateAccountProfileFieldsSchema, privateProfileChanges, privateProfileDraft, privateProfileNameDraftSchema } from "./privateAccountProfile";
++
++it.each([{}, { displayName: "" }, { displayName: null, travelDocumentName: null }])(
++  "allows an incomplete profile without creating a registration requirement",
++  (value) => expect(privateAccountProfileFieldsSchema.parse(value)).toEqual(value),
++);
++
++it("keeps private display and travel-document names independent and preserves original Unicode", () => {
++  const value = {
++    displayName: "  小林 e\u0301  ",
++    travelDocumentName: {
++      mode: "SPLIT" as const,
++      familyName: "林",
++      givenNames: "علي ᐃᓄᒃ",
++    },
++  };
++  expect(privateAccountProfileFieldsSchema.parse(value)).toEqual(value);
++  expect(
++    privateAccountProfileFieldsSchema.parse({ displayName: value.displayName }),
++  ).not.toHaveProperty("travelDocumentName");
++});
++
++it("supports an unsplit name and does not require both family and given names", () => {
++  expect(
++    privateAccountProfileFieldsSchema.parse({
++      travelDocumentName: { mode: "UNSPLIT", fullName: "Björk Guðmundsdóttir" },
++    }).travelDocumentName,
++  ).toEqual({ mode: "UNSPLIT", fullName: "Björk Guðmundsdóttir" });
++  expect(
++    privateAccountProfileFieldsSchema.parse({
++      travelDocumentName: { mode: "SPLIT", familyName: null, givenNames: "Sukarno" },
++    }).travelDocumentName,
++  ).toMatchObject({ familyName: null, givenNames: "Sukarno" });
++});
++
++it("rejects ambiguous split/unsplit fields instead of silently discarding a name", () => {
++  expect(
++    privateAccountProfileFieldsSchema.safeParse({
++      travelDocumentName: { mode: "UNSPLIT", fullName: "林", familyName: "林" },
++    }).success,
++  ).toBe(false);
++});
++
++it.each(["accountId", "personId", "role", "connectedAccountId", "accessToken"])(
++  "does not accept identity or credential authority in profile values: %s",
++  (key) =>
++    expect(
++      privateAccountProfileFieldsSchema.safeParse({ [key]: "untrusted" }).success,
++    ).toBe(false),
++);
++
++it("rejects a value that cannot be stored without changing its characters", () => {
++  expect(
++    privateAccountProfileFieldsSchema.safeParse({ displayName: "林\0" }).success,
++  ).toBe(false);
++});
++
++it.each([{}, { displayName: null, travelDocumentName: null }])(
++  "keeps an untouched optional profile empty without an artificial document name",
++  (fields) => expect(privateProfileChanges(fields, privateProfileDraft(fields))).toEqual({}),
++);
++
++it("edits or clears display name without touching the independent document name", () => {
++  const fields = { displayName: "林", travelDocumentName: { mode: "UNSPLIT" as const, fullName: "علي" } };
++  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), displayName: "" }))
++    .toEqual({ displayName: "" });
++});
++
++it("preserves exact original characters when switching name format", () => {
++  const fields = { travelDocumentName: { mode: "SPLIT" as const, familyName: "林", givenNames: null } };
++  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), mode: "UNSPLIT", fullName: "  e\u0301 林  " }))
++    .toEqual({ travelDocumentName: { mode: "UNSPLIT", fullName: "  e\u0301 林  " } });
++});
++
++it("does not submit hidden format edits or rewrite untouched nullable split names", () => {
++  const fields = { travelDocumentName: { mode: "SPLIT" as const, familyName: null, givenNames: "Sukarno" } };
++  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), fullName: "retained local draft" }))
++    .toEqual({});
++  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), familyName: "林" }))
++    .toEqual({ travelDocumentName: { mode: "SPLIT", familyName: "林", givenNames: "Sukarno" } });
++  expect(privateProfileChanges(fields, { ...privateProfileDraft(fields), givenNames: "علي" }))
++    .toEqual({ travelDocumentName: { mode: "SPLIT", familyName: null, givenNames: "علي" } });
++});
++
++it("rejects invalid stored or draft values before building a patch", () => {
++  expect(() => privateProfileChanges({}, { ...privateProfileDraft(), displayName: "\0" })).toThrow();
++  expect(() => privateProfileChanges({ displayName: "\0" }, privateProfileDraft())).toThrow();
++});
++
++it("retains optional Global AKA drafts locally without publishing them as Profile fields", () => {
++  const draft = { ...privateProfileDraft(), globalAkaDraft: ["  林 e\u0301  ", ""] };
++  expect(privateProfileNameDraftSchema.parse(draft)).toEqual(draft);
++  expect(privateProfileChanges({}, draft)).toEqual({});
++  expect(
++    privateAccountProfileFieldsSchema.safeParse({ globalAkaDraft: draft.globalAkaDraft })
++      .success,
++  ).toBe(false);
++  expect(
++    privateProfileNameDraftSchema.safeParse({ ...draft, globalAkaDraft: ["bad\0"] })
++      .success,
++  ).toBe(false);
++});
+--- /dev/null
++++ b/src/data/auth/privateAccountProfileLocal.ts
+@@ -0,0 +1,103 @@
++import type * as SQLite from "expo-sqlite";
++import { coreUuid } from "@/domain/trip/tripCoreV2";
++import {
++  privateProfileDraft,
++  privateProfileNameDraftSchema,
++  type PrivateProfileNameDraft,
++} from "@/domain/auth/privateAccountProfile";
++import {
++  privateAccountProfileSnapshotSchema,
++  type PrivateAccountProfileSnapshot,
++} from "@/data/api/privateAccountProfileContracts";
++import {
++  assertAccountRequestContext,
++  withAccountApplyGate,
++  type AccountScope,
++} from "./accountRequestContext";
++
++export type PrivateProfileDatabase = Pick<SQLite.SQLiteDatabase,
++  "getFirstAsync" | "runAsync" | "withTransactionAsync">;
++export type PrivateProfileLocalState = Readonly<{
++  accountId: string;
++  accepted: PrivateAccountProfileSnapshot | null;
++  draft: PrivateProfileNameDraft;
++}>;
++type Row = { accepted_snapshot_json: string | null; draft_json: string };
++
++// A local draft is not a server receipt. The enclosing Account repository owns this data source.
++export function createPrivateProfileLocalStore(
++  database: PrivateProfileDatabase,
++  account: () => Promise<string>,
++  now: () => string = () => new Date().toISOString(),
++) {
++  async function scoped<T>(input: AccountScope, work: (scope: AccountScope) => Promise<T>) {
++    const scope = Object.freeze({ ...input });
++    coreUuid.parse(scope.accountId);
++    const result = await withAccountApplyGate(async () => {
++      await assertAccountRequestContext(scope, account);
++      let result!: T;
++      await database.withTransactionAsync(async () => {
++        await assertAccountRequestContext(scope, account);
++        result = await work(scope);
++        await assertAccountRequestContext(scope, account);
++      });
++      return result;
++    });
++    await assertAccountRequestContext(scope, account);
++    return result;
++  }
++  async function read(scope: AccountScope): Promise<PrivateProfileLocalState | null> {
++    const row = await database.getFirstAsync<Row>(
++      "SELECT accepted_snapshot_json,draft_json FROM account_private_profile_local WHERE account_id=?",
++      scope.accountId,
++    );
++    if (!row) return null;
++    try {
++      const accepted = row.accepted_snapshot_json === null ? null
++        : privateAccountProfileSnapshotSchema.parse(JSON.parse(row.accepted_snapshot_json));
++      if (accepted && accepted.accountId !== scope.accountId) throw Error();
++      return { accountId: scope.accountId, accepted,
++        draft: privateProfileNameDraftSchema.parse(JSON.parse(row.draft_json)) };
++    } catch { throw Error("PRIVATE_PROFILE_LOCAL_INVALID"); }
++  }
++  async function write(value: PrivateProfileLocalState) {
++    await database.runAsync(
++      `INSERT INTO account_private_profile_local(account_id,accepted_snapshot_json,draft_json,updated_at)
++       VALUES(?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET
++       accepted_snapshot_json=excluded.accepted_snapshot_json,draft_json=excluded.draft_json,updated_at=excluded.updated_at`,
++      value.accountId, value.accepted === null ? null : JSON.stringify(value.accepted),
++      JSON.stringify(value.draft), now(),
++    );
++  }
++  return {
++    read(input: AccountScope) { return scoped(input, read); },
++    saveDraft(input: AccountScope, value: PrivateProfileNameDraft) {
++      const draft = privateProfileNameDraftSchema.parse(value);
++      return scoped(input, async (scope) => {
++        const prior = await read(scope);
++        const result = { accountId: scope.accountId, accepted: prior?.accepted ?? null, draft };
++        await write(result);
++        return result;
++      });
++    },
++    cacheServer(input: AccountScope, value: PrivateAccountProfileSnapshot) {
++      const incoming = privateAccountProfileSnapshotSchema.parse(value);
++      return scoped(input, async (scope) => {
++        if (incoming.accountId !== scope.accountId) throw Error("PRIVATE_PROFILE_ACCOUNT_MISMATCH");
++        const prior = await read(scope);
++        if (prior?.accepted && incoming.revision < prior.accepted.revision)
++          throw Error("PRIVATE_PROFILE_STALE_SNAPSHOT");
++        if (prior?.accepted && incoming.revision === prior.accepted.revision &&
++          JSON.stringify(incoming) !== JSON.stringify(prior.accepted))
++          throw Error("PRIVATE_PROFILE_SNAPSHOT_CHANGED");
++        // Preserve both editor formats and the original CAS base until the user reviews changes.
++        if (prior && JSON.stringify(prior.draft) !== JSON.stringify(privateProfileDraft(prior.accepted?.fields)))
++          return { kind: "DRAFT_PRESERVED" as const, value: prior, incoming };
++        const result = { accountId: scope.accountId, accepted: incoming,
++          draft: privateProfileDraft(incoming.fields) };
++        await write(result);
++        return { kind: "CACHED" as const, value: result };
++      });
++    },
++  };
++}
+--- /dev/null
++++ b/src/data/auth/privateAccountProfileLocal.test.ts
+@@ -0,0 +1,144 @@
++import { DatabaseSync } from "node:sqlite";
++import { randomUUID } from "node:crypto";
++import { mkdtempSync, rmSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { afterEach, expect, it, vi } from "vitest";
++import { privateAccountProfileMigration } from "../db/privateAccountProfileMigration";
++import { captureAccountScope } from "./accountRequestContext";
++import { advanceAccountGeneration } from "./accountGeneration";
++import { createPrivateProfileLocalStore, type PrivateProfileDatabase } from "./privateAccountProfileLocal";
++import { privateProfileDraft } from "@/domain/auth/privateAccountProfile";
++import { createAccountProfileRepository } from "./accountProfileRepository";
++import type { PrivateAccountProfileSnapshot } from "../api/privateAccountProfileContracts";
++vi.mock("./sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
++const handles = new Set<DatabaseSync>();
++const folders: string[] = [];
++afterEach(() => {
++  for (const db of handles) db.close();
++  handles.clear();
++  for (const path of folders.splice(0)) rmSync(path, { recursive: true, force: true });
++});
++async function fixture() {
++  const folder = mkdtempSync(join(tmpdir(), "otr-private-profile-"));
++  folders.push(folder);
++  const path = join(folder, "profile.db");
++  let sql = new DatabaseSync(path);
++  handles.add(sql);
++  sql.exec("CREATE TABLE preserved(value TEXT);INSERT INTO preserved VALUES('original');");
++  sql.exec(privateAccountProfileMigration.sql);
++  const original = randomUUID();
++  let accountId = original;
++  let fault: "none" | "aba" | "write" = "none";
++  const account = async () => accountId;
++  const database: PrivateProfileDatabase = {
++    async getFirstAsync<T>(query: string, ...args: unknown[]) {
++      return (sql.prepare(query).get(...args as never[]) ?? null) as T;
++    },
++    async runAsync(query: string, ...args: unknown[]) {
++      const result = sql.prepare(query).run(...args as never[]);
++      if (fault !== "none") {
++        const current = fault; fault = "none";
++        if (current === "write") throw Error("FIXTURE_WRITE_FAILED");
++        advanceAccountGeneration(); advanceAccountGeneration();
++      }
++      return result as never;
++    },
++    async withTransactionAsync(work) {
++      sql.exec("BEGIN");
++      try { await work(); sql.exec("COMMIT"); }
++      catch (error) { sql.exec("ROLLBACK"); throw error; }
++    },
++  };
++  const snapshot: PrivateAccountProfileSnapshot = {
++    schemaId: "otr.auth.private-profile/1", accountId, revision: 2,
++    fields: { displayName: "Display e\u0301", travelDocumentName: {
++      mode: "SPLIT", familyName: "王", givenNames: "小明",
++    } },
++  };
++  return {
++    account, original, database, snapshot,
++    store: createPrivateProfileLocalStore(database, account),
++    scope: await captureAccountScope(account),
++    sql: () => sql,
++    fail(value: typeof fault) { fault = value; },
++    switch(value = randomUUID()) { accountId = value; advanceAccountGeneration(); },
++    reopen() {
++      sql.close(); handles.delete(sql);
++      sql = new DatabaseSync(path); handles.add(sql);
++      return createPrivateProfileLocalStore(database, account);
++    },
++  };
++}
++
++it("persists an optional Unicode draft across real SQLite reopen without inventing a server snapshot", async () => {
++  const f = await fixture();
++  const draft = { ...privateProfileDraft(), displayName: "", mode: "UNSPLIT" as const,
++    fullName: "山田 e\u0301", familyName: "王", givenNames: "小明", globalAkaDraft: ["  小林 e\u0301  ", ""] };
++  await f.store.saveDraft(f.scope, draft);
++  expect(await f.reopen().read(f.scope)).toEqual({ accountId: f.original, accepted: null, draft });
++  expect(f.sql().prepare("SELECT value FROM preserved").get()).toEqual({ value: "original" });
++});
++
++it("isolates Account A/B drafts and rejects stale A→B→A scopes", async () => {
++  const f = await fixture();
++  await f.store.saveDraft(f.scope, { ...privateProfileDraft(), displayName: "Private A" });
++  f.switch();
++  await expect(f.store.read(f.scope)).rejects.toThrow("Account changed");
++  const b = await captureAccountScope(f.account);
++  expect(await f.store.read(b)).toBeNull();
++  await f.store.saveDraft(b, { ...privateProfileDraft(), displayName: "Private B" });
++  f.switch(f.original);
++  await expect(f.store.read(f.scope)).rejects.toThrow("Account changed");
++  expect((await f.store.read(await captureAccountScope(f.account)))?.draft.displayName).toBe("Private A");
++});
++
++it.each(["aba", "write"] as const)("rolls back a local profile write after %s failure", async (fault) => {
++  const f = await fixture(); f.fail(fault);
++  await expect(f.store.saveDraft(f.scope, privateProfileDraft())).rejects.toThrow();
++  expect(f.sql().prepare("SELECT count(*) AS n FROM account_private_profile_local").get()).toEqual({ n: 0 });
++});
++
++it("freezes the caller's mutable draft before asynchronous persistence", async () => {
++  const f = await fixture(); const draft = privateProfileDraft();
++  const input = { ...draft, displayName: "Original" };
++  const save = f.store.saveDraft(f.scope, input); input.displayName = "Changed later";
++  await save;
++  expect((await f.store.read(f.scope))?.draft.displayName).toBe("Original");
++});
++
++it("keeps edited names, inactive format and original CAS base on a newer server read", async () => {
++  const f = await fixture(); await f.store.cacheServer(f.scope, f.snapshot);
++  const draft = { ...privateProfileDraft(f.snapshot.fields), displayName: "Local edit", fullName: "Kept inactive" };
++  await f.store.saveDraft(f.scope, draft);
++  const incoming = { ...f.snapshot, revision: 3, fields: { displayName: "Other device" } };
++  expect(await f.store.cacheServer(f.scope, incoming)).toMatchObject({ kind: "DRAFT_PRESERVED", incoming });
++  expect(await f.reopen().read(f.scope)).toEqual({ accountId: f.original, accepted: f.snapshot, draft });
++});
++
++it("refuses older revisions and changed fields at the same revision", async () => {
++  const f = await fixture(); await f.store.cacheServer(f.scope, f.snapshot);
++  await expect(f.store.cacheServer(f.scope, { ...f.snapshot, revision: 1 })).rejects.toThrow("STALE_SNAPSHOT");
++  await expect(f.store.cacheServer(f.scope, { ...f.snapshot, fields: {} })).rejects.toThrow("SNAPSHOT_CHANGED");
++  expect((await f.store.read(f.scope))?.accepted).toEqual(f.snapshot);
++});
++
++it("rejects a foreign response or corrupt persisted identity without exposing another profile", async () => {
++  const f = await fixture();
++  await expect(f.store.cacheServer(f.scope, { ...f.snapshot, accountId: randomUUID() }))
++    .rejects.toThrow("ACCOUNT_MISMATCH");
++  await f.store.cacheServer(f.scope, f.snapshot);
++  f.sql().prepare("UPDATE account_private_profile_local SET accepted_snapshot_json=?")
++    .run(JSON.stringify({ ...f.snapshot, accountId: randomUUID() }));
++  await expect(f.store.read(f.scope)).rejects.toThrow("LOCAL_INVALID");
++});
++
++it("caches only a successful matching scoped API response through the existing repository", async () => {
++  const f = await fixture();
++  const repository = createAccountProfileRepository(f.account,
++    { baseUrl: "https://api.example.test", fetchImplementation: async () => Response.json(f.snapshot) },
++    async () => ({ userId: f.original, token: "unit-only-token" }), f.database);
++  expect(await repository.readPrivate(f.scope)).toEqual(f.snapshot);
++  expect((await repository.local?.read(f.scope))?.accepted).toEqual(f.snapshot);
++  expect(repository.local).not.toHaveProperty("cacheServer");
++});
+--- a/src/data/auth/accountProfileRepository.ts
++++ b/src/data/auth/accountProfileRepository.ts
+@@ -1,18 +1,50 @@
+ import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
+ import type { ApiClientOptions } from "@/data/api/client";
++import { coreUuid } from "@/domain/trip/tripCoreV2";
++import {
++  privateAccountProfilePath,
++  privateAccountProfileMutationSchema,
++  privateAccountProfileReceiptSchema,
++  privateAccountProfileSnapshotSchema,
++  type PrivateAccountProfileMutation,
++} from "@/data/api/privateAccountProfileContracts";
+ import {
+   accountProfileBootstrapPath,
+   accountProfileBootstrapSchema,
+ } from "@/data/api/accountProfileContracts";
+ import { assertAccountRequestContext, type AccountScope } from "./accountRequestContext";
++import { createPrivateProfileLocalStore, type PrivateProfileDatabase } from "./privateAccountProfileLocal";
+ 
+ // Online sync preflight only. Launch/offline Session restoration must not await it.
+ export function createAccountProfileRepository(
+   account: () => Promise<string>,
+   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
+   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
++  localDatabase?: PrivateProfileDatabase,
+ ) {
++  const local = localDatabase ? createPrivateProfileLocalStore(localDatabase, account) : undefined;
++  async function privateClient(input: AccountScope) {
++    const scope = Object.freeze({ ...input });
++    await assertAccountRequestContext(scope, account);
++    const client = createAuthenticatedApiClient(
++      {
++        ...options,
++        maxResponseBytes: 65536,
++        fetchImplementation: async (target, init) => {
++          await assertAccountRequestContext(scope, account);
++          return (options.fetchImplementation ?? fetch)(target, {
++            ...init,
++            redirect: "error",
++          });
++        },
++      },
++      tokenProvider,
++      scope,
++    );
++    return { scope, client };
++  }
+   return {
++    local: local ? { read: local.read, saveDraft: local.saveDraft } : undefined,
+     async ensure(input: AccountScope) {
+       const scope = Object.freeze({ ...input });
+       await assertAccountRequestContext(scope, account);
+@@ -31,5 +63,49 @@
+         throw Error("ACCOUNT_PROFILE_IDENTITY_REQUIRED");
+       return result;
+     },
++    // Optional private-profile API candidate; no Native caller or storage activation.
++    async readPrivate(input: AccountScope) {
++      const { scope, client } = await privateClient(input);
++      const result = await client.get(
++        privateAccountProfilePath,
++        privateAccountProfileSnapshotSchema,
++      );
++      await assertAccountRequestContext(scope, account);
++      if (result.accountId !== scope.accountId)
++        throw Error("ACCOUNT_PROFILE_IDENTITY_REQUIRED");
++      await local?.cacheServer(scope, result);
++      await assertAccountRequestContext(scope, account);
++      return result;
++    },
++    async savePrivate(input: AccountScope, mutation: PrivateAccountProfileMutation) {
++      const request = privateAccountProfileMutationSchema.parse(mutation);
++      const { scope, client } = await privateClient(input);
++      const result = await client.post(
++        privateAccountProfilePath + "/operations",
++        request,
++        privateAccountProfileReceiptSchema,
++        { "Idempotency-Key": request.operationId },
++      );
++      await assertAccountRequestContext(scope, account);
++      if (
++        result.accountId !== scope.accountId ||
++        result.operationId !== request.operationId ||
++        result.revision !== request.expectedRevision + 1
++      )
++        throw Error("ACCOUNT_PROFILE_RECEIPT_REQUIRED");
++      return result;
++    },
++    async privateReceipt(input: AccountScope, operationId: string) {
++      const operation = coreUuid.parse(operationId);
++      const { scope, client } = await privateClient(input);
++      const result = await client.get(
++        privateAccountProfilePath + "/operations/" + operation,
++        privateAccountProfileReceiptSchema,
++      );
++      await assertAccountRequestContext(scope, account);
++      if (result.accountId !== scope.accountId || result.operationId !== operation)
++        throw Error("ACCOUNT_PROFILE_RECEIPT_REQUIRED");
++      return result;
++    },
+   };
+ }
+--- a/src/data/auth/accountProfileRepository.test.ts
++++ b/src/data/auth/accountProfileRepository.test.ts
+@@ -86,3 +86,161 @@
+     kind: "http",
+   });
+ });
++
++async function privateFixture() {
++  const f = await fixture();
++  const mutation = {
++    operationId: randomUUID(),
++    expectedRevision: 0,
++    changes: {
++      displayName: "",
++      travelDocumentName: { mode: "UNSPLIT" as const, fullName: "林 e\u0301" },
++    },
++  };
++  const receipt = {
++    schemaId: "otr.auth.private-profile-receipt/1",
++    accountId: f.original,
++    operationId: mutation.operationId,
++    revision: 1,
++    recordedAt: "2026-10-31T00:00:00Z",
++  };
++  const snapshot = {
++    schemaId: "otr.auth.private-profile/1",
++    accountId: f.original,
++    revision: 1,
++    fields: mutation.changes,
++  };
++  f.wire.mockImplementation(async (_target, init) => {
++    expect(init?.redirect).toBe("error");
++    expect(init?.headers).toMatchObject({ Authorization: "Bearer fixture-session" });
++    return Response.json(init?.method === "POST" ? receipt : snapshot);
++  });
++  return { ...f, mutation, receipt, snapshot };
++}
++
++it("reads optional private values through the existing Account repository without public bootstrap or registration", async () => {
++  const f = await privateFixture();
++  expect(await f.repository.readPrivate(f.scope)).toEqual(f.snapshot);
++  expect(f.wire).toHaveBeenCalledOnce();
++  expect(String(f.wire.mock.calls[0][0])).toBe(
++    "https://api.example.test/v1/account/private-profile",
++  );
++});
++
++it("reads two near-limit name patches merged into one bounded profile snapshot", async () => {
++  const f = await privateFixture();
++  const display = { displayName: "" };
++  const document = { travelDocumentName: { mode: "UNSPLIT", fullName: "" } };
++  display.displayName = "a".repeat(16376 - JSON.stringify(display).length);
++  document.travelDocumentName.fullName = "b".repeat(
++    16376 - JSON.stringify(document).length,
++  );
++  expect(Buffer.byteLength(JSON.stringify(display))).toBeLessThan(16384);
++  expect(Buffer.byteLength(JSON.stringify(document))).toBeLessThan(16384);
++  const snapshot = { ...f.snapshot, fields: { ...display, ...document } };
++  expect(Buffer.byteLength(JSON.stringify(snapshot))).toBeGreaterThan(32768);
++  f.wire.mockResolvedValueOnce(Response.json(snapshot));
++  expect(await f.repository.readPrivate(f.scope)).toEqual(snapshot);
++});
++
++it("rejects a truly oversized private snapshot without returning any profile", async () => {
++  const f = await privateFixture();
++  f.wire.mockResolvedValueOnce(
++    Response.json({ ...f.snapshot, fields: { displayName: "a".repeat(65536) } }),
++  );
++  await expect(f.repository.readPrivate(f.scope)).rejects.toMatchObject({
++    kind: "validation",
++  });
++  expect(f.wire).toHaveBeenCalledOnce();
++});
++
++it("freezes the private write before token resolution and uses its stable operation and expected revision", async () => {
++  const f = await privateFixture();
++  f.token.mockImplementationOnce(async () => {
++    f.mutation.changes.travelDocumentName.fullName = "changed after dispatch";
++    return { userId: f.original, token: "fixture-session" };
++  });
++  expect(await f.repository.savePrivate(f.scope, f.mutation)).toEqual(f.receipt);
++  const init = f.wire.mock.calls[0][1]!;
++  expect(init.headers).toMatchObject({ "Idempotency-Key": f.mutation.operationId });
++  expect(JSON.parse(String(init.body)).changes.travelDocumentName.fullName).toBe(
++    "林 e\u0301",
++  );
++  expect(JSON.parse(String(init.body)).expectedRevision).toBe(0);
++});
++
++it("reads the exact private operation receipt without resubmitting a write", async () => {
++  const f = await privateFixture();
++  f.wire.mockResolvedValueOnce(Response.json(f.receipt));
++  expect(await f.repository.privateReceipt(f.scope, f.mutation.operationId)).toEqual(
++    f.receipt,
++  );
++  expect(
++    String(f.wire.mock.calls[0][0]).endsWith("/operations/" + f.mutation.operationId),
++  ).toBe(true);
++  expect(f.wire.mock.calls[0][1]?.method).toBe("GET");
++});
++
++it("rejects malformed fields or receipt operation before token and wire work", async () => {
++  const f = await privateFixture();
++  await expect(
++    f.repository.savePrivate(f.scope, {
++      ...f.mutation,
++      changes: { accountId: randomUUID() },
++    } as any),
++  ).rejects.toThrow();
++  await expect(
++    f.repository.privateReceipt(f.scope, "not-an-operation"),
++  ).rejects.toThrow();
++  expect(f.token).not.toHaveBeenCalled();
++  expect(f.wire).not.toHaveBeenCalled();
++});
++
++it("rejects stale Account requests and an Account switch during private response read", async () => {
++  const f = await privateFixture();
++  f.wire.mockImplementationOnce(async () => {
++    f.switch();
++    return Response.json(f.snapshot);
++  });
++  await expect(f.repository.readPrivate(f.scope)).rejects.toThrow();
++  f.wire.mockClear();
++  f.token.mockClear();
++  await expect(f.repository.savePrivate(f.scope, f.mutation)).rejects.toThrow();
++  await expect(
++    f.repository.privateReceipt(f.scope, f.mutation.operationId),
++  ).rejects.toThrow();
++  expect(f.token).not.toHaveBeenCalled();
++  expect(f.wire).not.toHaveBeenCalled();
++});
++
++it("rejects foreign snapshots and mismatched operation/revision receipts", async () => {
++  const f = await privateFixture();
++  f.wire.mockResolvedValueOnce(Response.json({ ...f.snapshot, accountId: randomUUID() }));
++  await expect(f.repository.readPrivate(f.scope)).rejects.toThrow(
++    "ACCOUNT_PROFILE_IDENTITY_REQUIRED",
++  );
++  f.wire.mockResolvedValueOnce(Response.json({ ...f.receipt, revision: 2 }));
++  await expect(f.repository.savePrivate(f.scope, f.mutation)).rejects.toThrow(
++    "ACCOUNT_PROFILE_RECEIPT_REQUIRED",
++  );
++  f.wire.mockResolvedValueOnce(
++    Response.json({ ...f.receipt, operationId: randomUUID() }),
++  );
++  await expect(
++    f.repository.privateReceipt(f.scope, f.mutation.operationId),
++  ).rejects.toThrow("ACCOUNT_PROFILE_RECEIPT_REQUIRED");
++});
++
++it("preserves missing/closed/conflict responses as failures without fallback, resend or private activation", async () => {
++  const f = await privateFixture();
++  for (const status of [404, 503, 409]) {
++    f.wire.mockResolvedValueOnce(
++      Response.json({ error: { code: "PROFILE_CLOSED" } }, { status }),
++    );
++    await expect(
++      f.repository.privateReceipt(f.scope, f.mutation.operationId),
++    ).rejects.toMatchObject({ status });
++  }
++  expect(f.wire).toHaveBeenCalledTimes(3);
++  expect(f.wire.mock.calls.every((call) => call[1]?.method === "GET")).toBe(true);
++});
+--- /dev/null
++++ b/src/data/db/privateAccountProfileMigration.ts
+@@ -0,0 +1,13 @@
++// Native reserved 77; registry registration remains with the unique Native Writer.
++export const privateAccountProfileMigration = {
++  id: 77,
++  name: "account_private_profile_local",
++  sql: `
++CREATE TABLE account_private_profile_local (
++ account_id TEXT PRIMARY KEY NOT NULL,
++ accepted_snapshot_json TEXT CHECK(accepted_snapshot_json IS NULL OR json_valid(accepted_snapshot_json)),
++ draft_json TEXT NOT NULL CHECK(json_valid(draft_json)),
++ updated_at TEXT NOT NULL
++);
++`,
++};
+--- /dev/null
++++ b/src/data/repositories/defaultAccountProfileRepository.ts
+@@ -0,0 +1,22 @@
++import { requireAdoptedUserId } from "@/data/auth/authRepository";
++import { createAccountProfileRepository } from "@/data/auth/accountProfileRepository";
++import {
++  assertAccountRequestContext,
++  captureAccountScope,
++} from "@/data/auth/accountRequestContext";
++import { readInitializedDatabase } from "@/data/db/database";
++
++// Page entry reads only the committed Account and startup-owned local database.
++export async function getDefaultAccountPrivateProfileEditor() {
++  const scope = await captureAccountScope(requireAdoptedUserId);
++  const database = await readInitializedDatabase();
++  await assertAccountRequestContext(scope, requireAdoptedUserId);
++  const { local } = createAccountProfileRepository(
++    requireAdoptedUserId,
++    {},
++    undefined,
++    database,
++  );
++  if (!local) throw Error("PRIVATE_PROFILE_LOCAL_UNAVAILABLE");
++  return { scope, local };
++}
+--- /dev/null
++++ b/src/data/repositories/defaultAccountProfileRepository.test.ts
+@@ -0,0 +1,69 @@
++import { afterEach, beforeEach, expect, it, vi } from "vitest";
++import { getDefaultAccountPrivateProfileEditor } from "./defaultAccountProfileRepository";
++import { requireAdoptedUserId } from "@/data/auth/authRepository";
++import { readInitializedDatabase } from "@/data/db/database";
++import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
++import { privateProfileDraft } from "@/domain/auth/privateAccountProfile";
++
++vi.mock("@/data/auth/authRepository", () => ({ requireAdoptedUserId: vi.fn() }));
++vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
++vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
++const a = "11111111-1111-4111-8111-111111111111";
++const b = "22222222-2222-4222-8222-222222222222";
++const database = {
++  getFirstAsync: vi.fn(async () => null),
++  runAsync: vi.fn(async () => ({})),
++  withTransactionAsync: vi.fn(async (work: () => Promise<void>) => work()),
++};
++beforeEach(() => {
++  vi.clearAllMocks();
++  vi.mocked(requireAdoptedUserId).mockResolvedValue(a);
++  vi.mocked(readInitializedDatabase).mockResolvedValue(database as never);
++  vi.stubGlobal(
++    "fetch",
++    vi.fn(() => {
++      throw Error("UNEXPECTED_NETWORK");
++    }),
++  );
++});
++afterEach(() => vi.unstubAllGlobals());
++
++it("opens the existing Account-scoped local editor without network or migration", async () => {
++  const editor = await getDefaultAccountPrivateProfileEditor();
++  expect(editor.scope.accountId).toBe(a);
++  expect(Object.isFrozen(editor.scope)).toBe(true);
++  await editor.local.saveDraft(editor.scope, privateProfileDraft());
++  expect(database.runAsync).toHaveBeenCalledOnce();
++  expect(fetch).not.toHaveBeenCalled();
++});
++
++it("does not open a database for a Guest or uncommitted Account", async () => {
++  vi.mocked(requireAdoptedUserId).mockRejectedValueOnce(Error("NO_COMMITTED_ACCOUNT"));
++  await expect(getDefaultAccountPrivateProfileEditor()).rejects.toThrow();
++  expect(readInitializedDatabase).not.toHaveBeenCalled();
++});
++
++it("rejects an Account switch while the startup database resolves", async () => {
++  vi.mocked(readInitializedDatabase).mockImplementationOnce(async () => {
++    advanceAccountGeneration();
++    vi.mocked(requireAdoptedUserId).mockResolvedValue(b);
++    return database as never;
++  });
++  await expect(getDefaultAccountPrivateProfileEditor()).rejects.toThrow(
++    "Account changed",
++  );
++  expect(database.getFirstAsync).not.toHaveBeenCalled();
++  expect(database.runAsync).not.toHaveBeenCalled();
++});
++
++it("creates a fresh B editor and fences retained A callbacks", async () => {
++  const old = await getDefaultAccountPrivateProfileEditor();
++  advanceAccountGeneration();
++  vi.mocked(requireAdoptedUserId).mockResolvedValue(b);
++  const current = await getDefaultAccountPrivateProfileEditor();
++  expect(current.scope.accountId).toBe(b);
++  await expect(old.local.saveDraft(old.scope, privateProfileDraft())).rejects.toThrow();
++  await current.local.read(current.scope);
++  expect(database.runAsync).not.toHaveBeenCalled();
++  expect(fetch).not.toHaveBeenCalled();
++});
+--- /dev/null
++++ b/src/features/auth/AccountPrivateProfilePage.tsx
+@@ -0,0 +1,104 @@
++import { useEffect, useRef, useState, useSyncExternalStore } from "react";
++import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
++import { getDefaultAccountPrivateProfileEditor } from "@/data/repositories/defaultAccountProfileRepository";
++import {
++  getAccountGeneration,
++  subscribeAccountGeneration,
++} from "@/data/auth/accountGeneration";
++import { UiButton, UiSection, UiText } from "@/ui/controls";
++import { t } from "@/ui/locale";
++import { useUiLocale } from "@/ui/useUiLocale";
++import { useThemedStyles } from "@/ui/theme";
++import type { UiColors } from "@/ui/palette";
++import { visual } from "@/ui/visual";
++import { AccountPrivateProfileScreen } from "./AccountPrivateProfileScreen";
++
++type Editor = Awaited<ReturnType<typeof getDefaultAccountPrivateProfileEditor>>;
++
++export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
++  useUiLocale();
++  const styles = useThemedStyles(createStyles);
++  const generation = useSyncExternalStore(
++    subscribeAccountGeneration,
++    getAccountGeneration,
++    getAccountGeneration,
++  );
++  const lane = useRef<{ generation: number; active: boolean } | null>(null);
++  const [retry, setRetry] = useState(0);
++  const [view, setView] = useState<{
++    generation: number;
++    editor?: Editor;
++    failed?: boolean;
++  } | null>(null);
++  useEffect(() => {
++    const current = { generation, active: true };
++    lane.current = current;
++    const valid = () =>
++      current.active && lane.current === current && getAccountGeneration() === generation;
++    void getDefaultAccountPrivateProfileEditor()
++      .then((editor) => {
++        if (!valid()) return;
++        if (editor.scope.generation !== generation)
++          throw Error("PRIVATE_PROFILE_ENTRY_GENERATION_MISMATCH");
++        setView({ generation, editor });
++      })
++      .catch(() => {
++        if (valid()) setView({ generation, failed: true });
++      });
++    return () => {
++      current.active = false;
++    };
++  }, [generation, retry]);
++
++  const closeLane = () => {
++    const current = lane.current;
++    if (
++      !current?.active ||
++      current.generation !== generation ||
++      getAccountGeneration() !== generation
++    )
++      return false;
++    current.active = false;
++    return true;
++  };
++  const cancel = () => {
++    if (closeLane()) onCancel();
++  };
++  const visible = view?.generation === generation ? view : null;
++  if (visible?.editor)
++    return <AccountPrivateProfileScreen {...visible.editor} onCancel={cancel} />;
++  return (
++    <ScrollView
++      style={styles.screen}
++      contentContainerStyle={styles.content}
++      keyboardShouldPersistTaps="handled"
++    >
++      <UiSection>
++        {visible?.failed ? (
++          <>
++            <UiText accessibilityLiveRegion="polite">
++              {t("privateProfile.loadFailed")}
++            </UiText>
++            <UiButton
++              label={t("common.tryAgain")}
++              onPress={() => {
++                if (!closeLane()) return;
++                setView(null);
++                setRetry((value) => value + 1);
++              }}
++            />
++          </>
++        ) : (
++          <ActivityIndicator accessibilityLabel={t("common.loading")} />
++        )}
++        <UiButton label={t("common.cancel")} variant="secondary" onPress={cancel} />
++      </UiSection>
++    </ScrollView>
++  );
++}
++
++const createStyles = (colors: UiColors) =>
++  StyleSheet.create({
++    screen: { flex: 1, backgroundColor: colors.background },
++    content: { padding: visual.space.page, gap: visual.space.section },
++  });
+--- /dev/null
++++ b/src/features/auth/AccountPrivateProfileScreen.tsx
+@@ -0,0 +1,196 @@
++import { useEffect, useRef, useState, useSyncExternalStore } from "react";
++import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
++import type { createAccountProfileRepository } from "@/data/auth/accountProfileRepository";
++import type { AccountScope } from "@/data/auth/accountRequestContext";
++import {
++  getAccountGeneration,
++  subscribeAccountGeneration,
++} from "@/data/auth/accountGeneration";
++import {
++  privateProfileDraft,
++  privateProfileNameDraftSchema,
++  type PrivateProfileNameDraft,
++} from "@/domain/auth/privateAccountProfile";
++import { UiButton, UiSection, UiText } from "@/ui/controls";
++import { t } from "@/ui/locale";
++import type { UiColors } from "@/ui/palette";
++import { useThemedStyles } from "@/ui/theme";
++import { useUiLocale } from "@/ui/useUiLocale";
++import { visual } from "@/ui/visual";
++import { PrivateProfileNameFields } from "./PrivateProfileNameFields";
++
++type LocalProfile = NonNullable<
++  ReturnType<typeof createAccountProfileRepository>["local"]
++>;
++type Lane = {
++  key: string;
++  local: LocalProfile;
++  active: boolean;
++  busy: boolean;
++  draft: PrivateProfileNameDraft | null;
++};
++type Feedback = "draftSaved" | "loadFailed" | "saveFailed";
++
++// Unmounted local-draft candidate. No cloud write or sync acceptance is implied.
++export function AccountPrivateProfileScreen({
++  scope,
++  local,
++  onCancel,
++}: {
++  scope: AccountScope;
++  local: LocalProfile;
++  onCancel?(): void;
++}) {
++  useUiLocale();
++  const { accountId, generation: accountGeneration } = scope;
++  const styles = useThemedStyles(createStyles);
++  const generation = useSyncExternalStore(
++    subscribeAccountGeneration,
++    getAccountGeneration,
++    getAccountGeneration,
++  );
++  const key = `${accountId}:${accountGeneration}`;
++  const lane = useRef<Lane | null>(null);
++  const [retry, setRetry] = useState(0);
++  const [view, setView] = useState<{
++    key: string;
++    local: LocalProfile;
++    draft: PrivateProfileNameDraft | null;
++    busy: boolean;
++    feedback?: Feedback;
++  } | null>(null);
++
++  useEffect(() => {
++    const current: Lane = { key, local, active: true, busy: false, draft: null };
++    lane.current = current;
++    const valid = () =>
++      current.active &&
++      lane.current === current &&
++      getAccountGeneration() === accountGeneration;
++    void local
++      .read(Object.freeze({ accountId, generation: accountGeneration }))
++      .then((value) => {
++        if (!valid()) return;
++        if (value && value.accountId !== accountId)
++          throw Error("PRIVATE_PROFILE_ACCOUNT_MISMATCH");
++        current.draft = value?.draft ?? privateProfileDraft();
++        setView({ key, local, draft: current.draft, busy: false });
++      })
++      .catch(() => {
++        if (valid())
++          setView({
++            key,
++            local,
++            draft: null,
++            busy: false,
++            feedback: "loadFailed",
++          });
++      });
++    return () => {
++      current.active = false;
++    };
++  }, [key, local, retry, accountId, accountGeneration]);
++
++  const valid = (current: Lane | null): current is Lane =>
++    !!current &&
++    current.active &&
++    lane.current === current &&
++    current.local === local &&
++    current.key === key &&
++    getAccountGeneration() === accountGeneration;
++  const save = async () => {
++    const current = lane.current;
++    if (!valid(current) || current.busy || !current.draft) return;
++    current.busy = true;
++    setView((prior) => prior && { ...prior, busy: true, feedback: undefined });
++    try {
++      const draft = privateProfileNameDraftSchema.parse(current.draft);
++      const result = await local.saveDraft(Object.freeze({ ...scope }), draft);
++      if (!valid(current)) return;
++      if (result.accountId !== scope.accountId)
++        throw Error("PRIVATE_PROFILE_ACCOUNT_MISMATCH");
++      setView((prior) => prior && { ...prior, feedback: "draftSaved" });
++    } catch {
++      if (valid(current))
++        setView((prior) => prior && { ...prior, feedback: "saveFailed" });
++    } finally {
++      if (valid(current)) {
++        current.busy = false;
++        setView((prior) => prior && { ...prior, busy: false });
++      }
++    }
++  };
++  if (generation !== accountGeneration) return null;
++  const visible = view?.key === key && view.local === local ? view : null;
++  return (
++    <ScrollView
++      keyboardShouldPersistTaps="handled"
++      style={styles.screen}
++      contentContainerStyle={styles.content}
++    >
++      <UiSection title={t("privateProfile.title")}>
++        <UiText style={styles.hint}>{t("privateProfile.draftOnlyHint")}</UiText>
++        {!visible ? <ActivityIndicator accessibilityLabel={t("common.loading")} /> : null}
++        {visible?.draft ? (
++          <>
++            <PrivateProfileNameFields
++              scope={scope}
++              draft={visible.draft}
++              disabled={visible.busy}
++              onChange={(draft) => {
++                const current = lane.current;
++                if (!valid(current) || current.busy) return;
++                current.draft = draft;
++                setView((prior) => prior && { ...prior, draft, feedback: undefined });
++              }}
++            />
++            <UiButton
++              label={t("privateProfile.saveDraft")}
++              disabled={visible.busy}
++              onPress={() => void save()}
++            />
++          </>
++        ) : null}
++        {onCancel ? (
++          <UiButton
++            label={t("common.cancel")}
++            variant="secondary"
++            disabled={visible?.busy ?? false}
++            onPress={() => {
++              const current = lane.current;
++              if (!valid(current) || current.busy) return;
++              current.active = false;
++              onCancel();
++            }}
++          />
++        ) : null}
++        {visible?.feedback ? (
++          <UiText
++            accessibilityLiveRegion="polite"
++            style={visible.feedback === "draftSaved" ? styles.hint : styles.error}
++          >
++            {t(`privateProfile.${visible.feedback}`)}
++          </UiText>
++        ) : null}
++        {visible?.feedback === "loadFailed" ? (
++          <UiButton
++            label={t("common.tryAgain")}
++            onPress={() => {
++              if (!valid(lane.current)) return;
++              setView(null);
++              setRetry((value) => value + 1);
++            }}
++          />
++        ) : null}
++      </UiSection>
++    </ScrollView>
++  );
++}
++
++const createStyles = (colors: UiColors) =>
++  StyleSheet.create({
++    screen: { flex: 1, backgroundColor: colors.background },
++    content: { padding: visual.space.page, gap: visual.space.section },
++    hint: { ...visual.type.meta, color: colors.textSecondary },
++    error: { ...visual.type.meta, color: colors.destructive },
++  });
+--- /dev/null
++++ b/src/features/auth/AccountPrivateProfileScreen.test.ts
+@@ -0,0 +1,492 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import { DatabaseSync } from "node:sqlite";
++import { mkdtempSync, rmSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { AccountPrivateProfileScreen } from "./AccountPrivateProfileScreen";
++import { AccountPrivateProfilePage } from "./AccountPrivateProfilePage";
++import { getDefaultAccountPrivateProfileEditor } from "@/data/repositories/defaultAccountProfileRepository";
++import { privateProfileDraft } from "@/domain/auth/privateAccountProfile";
++import { createAccountProfileRepository } from "@/data/auth/accountProfileRepository";
++import { privateAccountProfileMigration } from "@/data/db/privateAccountProfileMigration";
++import type {
++  PrivateProfileDatabase,
++  PrivateProfileLocalState,
++} from "@/data/auth/privateAccountProfileLocal";
++
++const hooks = vi.hoisted(() => ({
++  cursor: 0,
++  values: [] as any[],
++  effects: [] as (() => void)[],
++  generation: 4,
++  writes: 0,
++}));
++vi.mock("react", async (original) => ({
++  ...(await original<typeof import("react")>()),
++  useSyncExternalStore: (_: unknown, get: () => number) => get(),
++  useRef: (value: unknown) => {
++    const index = hooks.cursor++;
++    return (hooks.values[index] ??= { current: value });
++  },
++  useState: (value: unknown) => {
++    const index = hooks.cursor++;
++    if (!(index in hooks.values)) hooks.values[index] = value;
++    return [
++      hooks.values[index],
++      (next: any) => {
++        hooks.writes++;
++        hooks.values[index] =
++          typeof next === "function" ? next(hooks.values[index]) : next;
++      },
++    ];
++  },
++  useEffect: (effect: () => () => void, deps: unknown[]) => {
++    const index = hooks.cursor++;
++    const prior = hooks.values[index];
++    if (prior && deps.every((value, n) => Object.is(value, prior.deps[n]))) return;
++    hooks.effects.push(() => {
++      prior?.cleanup();
++      hooks.values[index] = { deps, cleanup: effect() };
++    });
++  },
++}));
++vi.mock("react-native", () => ({
++  ScrollView: "Scroll",
++  ActivityIndicator: "Loading",
++  StyleSheet: { create: (v: unknown) => v },
++}));
++vi.mock("@/data/auth/accountGeneration", () => ({
++  getAccountGeneration: () => hooks.generation,
++  subscribeAccountGeneration: vi.fn(),
++}));
++vi.mock("@/ui/controls", () => ({
++  UiButton: "Button",
++  UiText: "Text",
++  UiSection: "Section",
++}));
++vi.mock("@/ui/locale", () => ({ t: (v: string) => v }));
++vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
++vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
++vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
++vi.mock("@/data/repositories/defaultAccountProfileRepository", () => ({
++  getDefaultAccountPrivateProfileEditor: vi.fn(),
++}));
++vi.mock("./PrivateProfileNameFields", () => ({ PrivateProfileNameFields: "Fields" }));
++
++const a = { accountId: "11111111-1111-4111-8111-111111111111", generation: 4 };
++const b = { accountId: "22222222-2222-4222-8222-222222222222", generation: 5 };
++const nodes = (value: any): any[] =>
++  Array.isArray(value)
++    ? value.flatMap(nodes)
++    : value?.props
++      ? [value, ...nodes(value.props.children)]
++      : [];
++const tick = async () => {
++  await Promise.resolve();
++  await Promise.resolve();
++  await Promise.resolve();
++};
++function deferred<T>() {
++  let resolve!: (value: T) => void;
++  const promise = new Promise<T>((done) => {
++    resolve = done;
++  });
++  return { promise, resolve };
++}
++function fixture(withCancel = false) {
++  let scope = a;
++  const read = vi.fn(async () => null as any);
++  const saveDraft = vi.fn(async (input, draft): Promise<PrivateProfileLocalState> => ({
++    accountId: input.accountId,
++    draft,
++    accepted: null,
++  }));
++  let local = { read, saveDraft };
++  const onCancel = vi.fn();
++  const render = () => {
++    hooks.cursor = 0;
++    const tree = nodes(
++      AccountPrivateProfileScreen({
++        scope,
++        local,
++        ...(withCancel ? { onCancel } : {}),
++      }),
++    );
++    for (const effect of hooks.effects.splice(0)) effect();
++    return tree;
++  };
++  const field = () => render().find((v) => v.type === "Fields").props;
++  const save = () =>
++    render().find((v) => v.props.label === "privateProfile.saveDraft").props;
++  return {
++    local,
++    render,
++    field,
++    save,
++    onCancel,
++    cancel: () => render().find((v) => v.props.label === "common.cancel").props,
++    replaceLocal() {
++      local = { read: vi.fn(async () => null), saveDraft: vi.fn() };
++      return local;
++    },
++    switch() {
++      hooks.generation = 5;
++      scope = b;
++    },
++  };
++}
++beforeEach(() => {
++  hooks.cursor = 0;
++  hooks.values = [];
++  hooks.effects = [];
++  hooks.generation = 4;
++  hooks.writes = 0;
++  vi.mocked(getDefaultAccountPrivateProfileEditor).mockReset();
++});
++
++function pageFixture() {
++  const onCancel = vi.fn();
++  const render = () => {
++    hooks.cursor = 0;
++    const tree = nodes(AccountPrivateProfilePage({ onCancel }));
++    for (const effect of hooks.effects.splice(0)) effect();
++    return tree;
++  };
++  return { render, onCancel };
++}
++
++it("loads the normal page through the existing local repository entry", async () => {
++  const editor = { scope: a, local: fixture().local };
++  vi.mocked(getDefaultAccountPrivateProfileEditor).mockResolvedValueOnce(editor);
++  const page = pageFixture();
++  expect(page.render().some((v) => v.type === AccountPrivateProfileScreen)).toBe(false);
++  await tick();
++  const screen = page.render().find((v) => v.type === AccountPrivateProfileScreen);
++  expect(screen.props.scope).toEqual(a);
++  expect(screen.props.local).toBe(editor.local);
++  screen.props.onCancel();
++  screen.props.onCancel();
++  expect(page.onCancel).toHaveBeenCalledOnce();
++});
++
++it("hides A and ignores its late page entry after switching to B", async () => {
++  const pending = deferred<any>();
++  const local = fixture().local;
++  vi.mocked(getDefaultAccountPrivateProfileEditor)
++    .mockReturnValueOnce(pending.promise)
++    .mockResolvedValueOnce({ scope: b, local });
++  const page = pageFixture();
++  page.render();
++  hooks.generation = 5;
++  expect(page.render().some((v) => v.type === AccountPrivateProfileScreen)).toBe(false);
++  await tick();
++  pending.resolve({ scope: a, local });
++  await tick();
++  expect(
++    page.render().find((v) => v.type === AccountPrivateProfileScreen).props.scope,
++  ).toEqual(b);
++});
++
++it("retries a failed entry and cannot show a canceled late response", async () => {
++  const pending = deferred<any>();
++  vi.mocked(getDefaultAccountPrivateProfileEditor)
++    .mockRejectedValueOnce(Error("storage unavailable"))
++    .mockReturnValueOnce(pending.promise);
++  const page = pageFixture();
++  page.render();
++  await tick();
++  page
++    .render()
++    .find((v) => v.props.label === "common.tryAgain")
++    .props.onPress();
++  page.render();
++  const cancel = page.render().find((v) => v.props.label === "common.cancel").props;
++  cancel.onPress();
++  const writes = hooks.writes;
++  pending.resolve({ scope: a, local: fixture().local });
++  await tick();
++  expect(hooks.writes).toBe(writes);
++  expect(page.onCancel).toHaveBeenCalledOnce();
++});
++
++it("cancels once without saving edits or accepting retained callbacks", async () => {
++  const f = fixture(true);
++  f.render();
++  await tick();
++  f.field().onChange({ ...privateProfileDraft(), displayName: "unsaved" });
++  const save = f.save();
++  const field = f.field();
++  const cancel = f.cancel();
++  cancel.onPress();
++  cancel.onPress();
++  save.onPress();
++  field.onChange({ ...privateProfileDraft(), displayName: "late" });
++  expect(f.onCancel).toHaveBeenCalledOnce();
++  expect(f.local.saveDraft).not.toHaveBeenCalled();
++});
++
++it("does not cancel a local save already in progress", async () => {
++  const f = fixture(true);
++  const pending = deferred<any>();
++  f.local.saveDraft.mockImplementationOnce(() => pending.promise);
++  f.render();
++  await tick();
++  const cancel = f.cancel();
++  f.save().onPress();
++  expect(f.cancel().disabled).toBe(true);
++  cancel.onPress();
++  expect(f.onCancel).not.toHaveBeenCalled();
++  pending.resolve({ accountId: a.accountId });
++  await tick();
++  f.cancel().onPress();
++  expect(f.onCancel).toHaveBeenCalledOnce();
++});
++
++it("ignores a pending read after cancellation", async () => {
++  const f = fixture(true);
++  const pending = deferred<any>();
++  f.local.read.mockImplementationOnce(() => pending.promise);
++  f.render();
++  f.cancel().onPress();
++  const writes = hooks.writes;
++  pending.resolve({ accountId: a.accountId, draft: privateProfileDraft() });
++  await tick();
++  expect(hooks.writes).toBe(writes);
++  expect(f.onCancel).toHaveBeenCalledOnce();
++});
++
++it("does not let A's retained cancel callback dismiss B", async () => {
++  const f = fixture(true);
++  f.render();
++  await tick();
++  const cancel = f.cancel();
++  f.switch();
++  f.render();
++  await tick();
++  cancel.onPress();
++  expect(f.onCancel).not.toHaveBeenCalled();
++  f.cancel().onPress();
++  expect(f.onCancel).toHaveBeenCalledOnce();
++});
++
++it("saves through the existing repository, cancels later edits and restores the saved draft after SQLite reopen", async () => {
++  const folder = mkdtempSync(join(tmpdir(), "otr-profile-editor-"));
++  const path = join(folder, "profile.db");
++  let sql = new DatabaseSync(path);
++  const network = vi.fn(async () => {
++    throw Error("UNEXPECTED_NETWORK");
++  });
++  const database: PrivateProfileDatabase = {
++    async getFirstAsync<T>(query: string, ...args: unknown[]) {
++      return (sql.prepare(query).get(...(args as never[])) ?? null) as T;
++    },
++    async runAsync(query: string, ...args: unknown[]) {
++      return sql.prepare(query).run(...(args as never[])) as never;
++    },
++    async withTransactionAsync(work) {
++      sql.exec("BEGIN");
++      try {
++        await work();
++        sql.exec("COMMIT");
++      } catch (error) {
++        sql.exec("ROLLBACK");
++        throw error;
++      }
++    },
++  };
++  const mount = () => {
++    const repository = createAccountProfileRepository(
++      async () => a.accountId,
++      { fetchImplementation: network },
++      undefined,
++      database,
++    );
++    const f = fixture(true);
++    f.local.read.mockImplementation(() => repository.local!.read(a));
++    f.local.saveDraft.mockImplementation((scope, draft) =>
++      repository.local!.saveDraft(scope, draft),
++    );
++    f.render();
++    return f;
++  };
++  try {
++    sql.exec(privateAccountProfileMigration.sql);
++    const f = mount();
++    await vi.waitFor(() => expect(f.field().draft).toEqual(privateProfileDraft()));
++    const draft = {
++      ...privateProfileDraft(),
++      displayName: "",
++      mode: "UNSPLIT" as const,
++      fullName: "  林 e\u0301  ",
++      familyName: "保留",
++      givenNames: "原文",
++    };
++    f.field().onChange(draft);
++    f.save().onPress();
++    await vi.waitFor(() =>
++      expect(
++        f.render().some((v) => v.props.children === "privateProfile.draftSaved"),
++      ).toBe(true),
++    );
++    f.field().onChange({ ...draft, fullName: "unsaved edit" });
++    f.cancel().onPress();
++    for (const value of hooks.values) value?.cleanup?.();
++    hooks.values = [];
++    hooks.effects = [];
++    sql.close();
++    sql = new DatabaseSync(path);
++    const restored = mount();
++    await vi.waitFor(() => expect(restored.field().draft).toEqual(draft));
++    expect(restored.local.saveDraft).not.toHaveBeenCalled();
++    expect(network).not.toHaveBeenCalled();
++  } finally {
++    for (const value of hooks.values) value?.cleanup?.();
++    sql.close();
++    rmSync(folder, { recursive: true, force: true });
++  }
++});
++
++it("reads and saves an optional private Unicode draft without making a cloud call", async () => {
++  const f = fixture();
++  f.render();
++  await tick();
++  expect(f.field().draft).toEqual(privateProfileDraft());
++  const draft = {
++    ...privateProfileDraft(),
++    displayName: "",
++    mode: "UNSPLIT" as const,
++    fullName: "  林 e\u0301  ",
++  };
++  f.field().onChange(draft);
++  f.save().onPress();
++  await tick();
++  expect(f.local.saveDraft).toHaveBeenCalledExactlyOnceWith(a, draft);
++  expect(f.render().some((v) => v.props.children === "privateProfile.draftSaved")).toBe(
++    true,
++  );
++});
++
++it("fences duplicate presses and edits during a pending save", async () => {
++  const f = fixture();
++  const pending = deferred<any>();
++  f.local.saveDraft.mockImplementationOnce(() => pending.promise);
++  f.render();
++  await tick();
++  const oldField = f.field();
++  const oldSave = f.save();
++  oldSave.onPress();
++  oldSave.onPress();
++  oldField.onChange({ ...privateProfileDraft(), displayName: "late" });
++  expect(f.local.saveDraft).toHaveBeenCalledTimes(1);
++  expect(f.field().disabled).toBe(true);
++  expect(f.field().draft.displayName).toBe("");
++  pending.resolve({ accountId: a.accountId });
++  await tick();
++  expect(f.field().disabled).toBe(false);
++});
++
++it("preserves entered names and exposes retryable feedback after local save failure", async () => {
++  const f = fixture();
++  f.local.saveDraft.mockRejectedValueOnce(Error("disk unavailable"));
++  f.render();
++  await tick();
++  f.field().onChange({ ...privateProfileDraft(), displayName: "原文" });
++  f.save().onPress();
++  await tick();
++  expect(f.field().draft.displayName).toBe("原文");
++  expect(f.render().some((v) => v.props.children === "privateProfile.saveFailed")).toBe(
++    true,
++  );
++  f.save().onPress();
++  await tick();
++  expect(f.local.saveDraft).toHaveBeenCalledTimes(2);
++});
++
++it("hides A immediately and ignores A's late read after switching to B", async () => {
++  const f = fixture();
++  const pending = deferred<any>();
++  f.local.read.mockImplementationOnce(() => pending.promise);
++  f.render();
++  f.switch();
++  expect(f.render().some((v) => v.type === "Fields")).toBe(false);
++  await tick();
++  pending.resolve({
++    accountId: a.accountId,
++    draft: { ...privateProfileDraft(), displayName: "private A" },
++  });
++  await tick();
++  expect(f.field().draft.displayName).toBe("");
++});
++
++it("ignores A's late save result and retained callbacks after B is mounted", async () => {
++  const f = fixture();
++  const pending = deferred<any>();
++  f.local.saveDraft.mockImplementationOnce(() => pending.promise);
++  f.render();
++  await tick();
++  const oldField = f.field();
++  const oldSave = f.save();
++  oldSave.onPress();
++  f.switch();
++  f.render();
++  await tick();
++  oldField.onChange({ ...privateProfileDraft(), displayName: "private A" });
++  oldSave.onPress();
++  pending.resolve({ accountId: a.accountId });
++  await tick();
++  expect(f.field().draft.displayName).toBe("");
++  expect(f.local.saveDraft).toHaveBeenCalledTimes(1);
++  expect(f.render().some((v) => v.props.children === "privateProfile.draftSaved")).toBe(
++    false,
++  );
++});
++
++it("does not expose a foreign or unreadable persisted draft", async () => {
++  const f = fixture();
++  f.local.read.mockResolvedValueOnce({
++    accountId: b.accountId,
++    draft: { ...privateProfileDraft(), displayName: "foreign" },
++  });
++  f.render();
++  await tick();
++  const tree = f.render();
++  expect(tree.some((v) => v.type === "Fields")).toBe(false);
++  expect(tree.some((v) => v.props.children === "privateProfile.loadFailed")).toBe(true);
++  tree.find((v) => v.props.label === "common.tryAgain").props.onPress();
++  f.render();
++  await tick();
++  expect(f.field().draft.displayName).toBe("");
++});
++
++it("rejects retained callbacks when the same Account receives a different repository", async () => {
++  const f = fixture(true);
++  f.render();
++  await tick();
++  const oldField = f.field();
++  const oldSave = f.save();
++  const oldCancel = f.cancel();
++  const replacement = f.replaceLocal();
++  f.render();
++  await tick();
++  oldField.onChange({ ...privateProfileDraft(), displayName: "old store" });
++  oldSave.onPress();
++  oldCancel.onPress();
++  expect(f.field().draft.displayName).toBe("");
++  expect(f.local.saveDraft).not.toHaveBeenCalled();
++  expect(replacement.saveDraft).not.toHaveBeenCalled();
++  expect(f.onCancel).not.toHaveBeenCalled();
++});
++
++it("ignores a read after unmount and hides fields after a generation change", async () => {
++  const f = fixture();
++  const pending = deferred<any>();
++  f.local.read.mockImplementationOnce(() => pending.promise);
++  f.render();
++  for (const value of hooks.values) value?.cleanup?.();
++  const writes = hooks.writes;
++  pending.resolve({ accountId: a.accountId, draft: privateProfileDraft() });
++  await tick();
++  expect(hooks.writes).toBe(writes);
++  hooks.generation = 6;
++  expect(f.render()).toEqual([]);
++});
+--- /dev/null
++++ b/src/features/auth/PrivateProfileNameFields.tsx
+@@ -0,0 +1,145 @@
++import { useLayoutEffect, useRef, useSyncExternalStore } from "react";
++import { StyleSheet, View } from "react-native";
++import {
++  getAccountGeneration,
++  subscribeAccountGeneration,
++} from "@/data/auth/accountGeneration";
++import type { AccountScope } from "@/data/auth/accountRequestContext";
++import { UiButton, UiText } from "@/ui/controls";
++import { UiChoiceChip, UiTextInput } from "@/ui/forms";
++import { t } from "@/ui/locale";
++import type { UiColors } from "@/ui/palette";
++import { useThemedStyles } from "@/ui/theme";
++import { useUiLocale } from "@/ui/useUiLocale";
++import { visual } from "@/ui/visual";
++
++import type { PrivateProfileNameDraft } from "@/domain/auth/privateAccountProfile";
++export type { PrivateProfileNameDraft } from "@/domain/auth/privateAccountProfile";
++
++export function PrivateProfileNameFields({
++  scope,
++  draft,
++  disabled = false,
++  onChange,
++}: {
++  scope: AccountScope;
++  draft: PrivateProfileNameDraft;
++  disabled?: boolean;
++  onChange(draft: PrivateProfileNameDraft): void;
++}) {
++  useUiLocale();
++  const styles = useThemedStyles(createStyles);
++  const generation = useSyncExternalStore(
++    subscribeAccountGeneration,
++    getAccountGeneration,
++    getAccountGeneration,
++  );
++  const latest = useRef({ scope, draft, disabled, onChange, active: true });
++  useLayoutEffect(() => {
++    latest.current = { scope, draft, disabled, onChange, active: true };
++    return () => {
++      latest.current.active = false;
++    };
++  }, [scope, draft, disabled, onChange]);
++  const update = (changes: Partial<PrivateProfileNameDraft>) => {
++    const current = latest.current;
++    if (
++      current.active &&
++      !current.disabled &&
++      current.scope.accountId === scope.accountId &&
++      current.scope.generation === scope.generation &&
++      scope.generation === getAccountGeneration()
++    ) {
++      current.draft = { ...current.draft, ...changes };
++      current.onChange(current.draft);
++    }
++  };
++  if (generation !== scope.generation) return null;
++  const input = (key: "displayName" | "familyName" | "givenNames" | "fullName") => (
++    <View style={styles.field}>
++      <UiText style={styles.label}>{t(`privateProfile.${key}`)}</UiText>
++      <UiTextInput
++        testID={`private-profile-${key}`}
++        accessibilityLabel={t(`privateProfile.${key}`)}
++        value={draft[key]}
++        onChangeText={(value) => update({ [key]: value })}
++        editable={!disabled}
++        autoCorrect={false}
++        autoCapitalize="none"
++      />
++    </View>
++  );
++  const modeLabel = (mode: PrivateProfileNameDraft["mode"]) =>
++    t(mode === "SPLIT" ? "privateProfile.splitName" : "privateProfile.unsplitName");
++  return (
++    <View style={styles.fields}>
++      {input("displayName")}
++      <UiText accessibilityRole="header" style={styles.heading}>
++        {t("privateProfile.travelDocumentName")}
++      </UiText>
++      <UiText style={styles.hint}>{t("privateProfile.optionalHint")}</UiText>
++      <UiText style={styles.label}>{t("privateProfile.nameFormat")}</UiText>
++      {disabled ? (
++        <UiText style={styles.hint}>{modeLabel(draft.mode)}</UiText>
++      ) : (
++        <View style={styles.choices}>
++          {(["SPLIT", "UNSPLIT"] as const).map((mode) => (
++            <UiChoiceChip
++              key={mode}
++              label={modeLabel(mode)}
++              selected={draft.mode === mode}
++              onPress={() => update({ mode })}
++            />
++          ))}
++        </View>
++      )}
++      {draft.mode === "SPLIT" ? (
++        <>
++          {input("familyName")}
++          {input("givenNames")}
++        </>
++      ) : (
++        input("fullName")
++      )}
++      <UiText accessibilityRole="header" style={styles.heading}>
++        {t("privateProfile.globalAkaDraft")}
++      </UiText>
++      <UiText style={styles.hint}>{t("privateProfile.akaDraftHint")}</UiText>
++      {(draft.globalAkaDraft ?? []).map((alias, index) => (
++        <UiTextInput
++          key={index}
++          testID={`private-profile-aka-${index}`}
++          accessibilityLabel={t("privateProfile.globalAkaDraft")}
++          value={alias}
++          editable={!disabled}
++          autoCorrect={false}
++          autoCapitalize="none"
++          onChangeText={(value) => {
++            const aliases = [...(latest.current.draft.globalAkaDraft ?? [])];
++            if (index >= aliases.length) return;
++            aliases[index] = value;
++            update({ globalAkaDraft: aliases });
++          }}
++        />
++      ))}
++      <UiButton
++        label={t("privateProfile.addAkaDraft")}
++        disabled={disabled}
++        onPress={() =>
++          update({ globalAkaDraft: [...(latest.current.draft.globalAkaDraft ?? []), ""] })
++        }
++      />
++      <UiText style={styles.hint}>{t("privateProfile.privateHint")}</UiText>
++    </View>
++  );
++}
++
++const createStyles = (colors: UiColors) =>
++  StyleSheet.create({
++    fields: { gap: visual.space.row },
++    field: { gap: visual.space.heading },
++    choices: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
++    label: { ...visual.type.row, color: colors.textPrimary },
++    heading: { ...visual.type.section, color: colors.textPrimary },
++    hint: { ...visual.type.meta, color: colors.textSecondary },
++  });
+--- /dev/null
++++ b/src/features/auth/PrivateProfileNameFields.test.ts
+@@ -0,0 +1,143 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import {
++  PrivateProfileNameFields,
++  type PrivateProfileNameDraft,
++} from "./PrivateProfileNameFields";
++
++const state = vi.hoisted(() => ({ generation: 4, ref: undefined as any }));
++vi.mock("react", async (original) => ({
++  ...(await original<typeof import("react")>()),
++  useSyncExternalStore: (_subscribe: unknown, get: () => number) => get(),
++  useRef: (value: unknown) => (state.ref ??= { current: value }),
++  useLayoutEffect: (effect: () => void) => effect(),
++}));
++vi.mock("react-native", () => ({
++  View: "View",
++  StyleSheet: { create: (styles: unknown) => styles },
++}));
++vi.mock("@/data/auth/accountGeneration", () => ({
++  getAccountGeneration: () => state.generation,
++  subscribeAccountGeneration: vi.fn(),
++}));
++vi.mock("@/ui/controls", () => ({ UiText: "Text", UiButton: "Button" }));
++vi.mock("@/ui/forms", () => ({ UiTextInput: "Input", UiChoiceChip: "Choice" }));
++vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
++vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
++vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
++
++const nodes = (value: any): any[] =>
++  Array.isArray(value)
++    ? value.flatMap(nodes)
++    : value?.props
++      ? [value, ...nodes(value.props.children)]
++      : [];
++let draft: PrivateProfileNameDraft;
++const changed = vi.fn((value: PrivateProfileNameDraft) => {
++  draft = value;
++});
++const render = (disabled = false) =>
++  nodes(
++    PrivateProfileNameFields({
++      scope: { accountId: "fixture-account", generation: 4 },
++      draft,
++      disabled,
++      onChange: changed,
++    }),
++  );
++const input = (key: string) =>
++  render().find((node) => node.props.testID === `private-profile-${key}`).props;
++const mode = (value: "splitName" | "unsplitName") =>
++  render().find((node) => node.props.label === `privateProfile.${value}`).props;
++beforeEach(() => {
++  state.generation = 4;
++  state.ref = undefined;
++  changed.mockClear();
++  draft = {
++    displayName: "",
++    mode: "SPLIT",
++    familyName: "",
++    givenNames: "",
++    fullName: "",
++  };
++});
++
++it("accepts empty optional names and preserves Unicode independently", () => {
++  expect(input("displayName").value).toBe("");
++  input("familyName").onChangeText("  林 e\u0301  ");
++  input("givenNames").onChangeText("海 🐈");
++  expect(draft.familyName).toBe("  林 e\u0301  ");
++  expect(draft.givenNames).toBe("海 🐈");
++  expect(draft.displayName).toBe("");
++});
++
++it("retains both drafts across name-format changes without parsing or concatenation", () => {
++  input("familyName").onChangeText("林");
++  input("givenNames").onChangeText("海");
++  mode("unsplitName").onPress();
++  input("fullName").onChangeText("ชื่อเดิม");
++  mode("splitName").onPress();
++  expect(input("familyName").value).toBe("林");
++  expect(input("givenNames").value).toBe("海");
++  mode("unsplitName").onPress();
++  expect(input("fullName").value).toBe("ชื่อเดิม");
++  expect(draft.displayName).toBe("");
++});
++
++it("retains two field events arriving before the next render", () => {
++  const tree = render();
++  const family = tree.find((node) => node.props.testID === "private-profile-familyName");
++  const given = tree.find((node) => node.props.testID === "private-profile-givenNames");
++  family.props.onChangeText("林");
++  given.props.onChangeText("海");
++  expect(draft.familyName).toBe("林");
++  expect(draft.givenNames).toBe("海");
++});
++
++it("blocks retained enabled callbacks after a busy render", () => {
++  const oldInput = input("displayName");
++  const oldMode = mode("unsplitName");
++  render(true);
++  oldInput.onChangeText("late name");
++  oldMode.onPress();
++  expect(changed).not.toHaveBeenCalled();
++});
++
++it("hides all private values and rejects retained callbacks when Account changes", () => {
++  const oldInput = input("displayName");
++  const oldMode = mode("unsplitName");
++  state.generation += 1;
++  expect(render()).toEqual([]);
++  oldInput.onChangeText("late private name");
++  oldMode.onPress();
++  expect(changed).not.toHaveBeenCalled();
++});
++
++it("makes a busy form read-only without leaving interactive format choices", () => {
++  const tree = render(true);
++  const inputs = tree.filter((node) => node.type === "Input");
++  expect(inputs).toHaveLength(3);
++  expect(tree.some((node) => node.type === "Choice")).toBe(false);
++  for (const node of inputs) {
++    expect(node.props.editable).toBe(false);
++    node.props.onChangeText("unexpected edit");
++  }
++  expect(changed).not.toHaveBeenCalled();
++});
++
++it("keeps Global AKA drafts independent and fences old alias callbacks after Account change", () => {
++  const add = () =>
++    render()
++      .find((node) => node.props.label === "privateProfile.addAkaDraft")
++      .props.onPress();
++  add();
++  const alias = () =>
++    render().find((node) => node.props.testID === "private-profile-aka-0").props;
++  alias().onChangeText("  林 e\u0301  ");
++  expect(draft.globalAkaDraft).toEqual(["  林 e\u0301  "]);
++  expect(draft.displayName).toBe("");
++  expect(draft.familyName).toBe("");
++  const old = alias();
++  state.generation++;
++  old.onChangeText("foreign");
++  expect(draft.globalAkaDraft).toEqual(["  林 e\u0301  "]);
++});
+--- /dev/null
++++ b/src/features/auth/AuthSettingsSection.tsx
+@@ -0,0 +1,117 @@
++import { useRef, useState, useSyncExternalStore } from "react";
++import { StyleSheet, View } from "react-native";
++import { chooseUiLocale } from "@/native/uiLocalePreference";
++import {
++  chooseUiAppearance,
++  getUiAppearancePreference,
++  subscribeUiAppearancePreference,
++  type UiAppearancePreference,
++} from "@/native/uiAppearancePreference";
++import { UiButton, UiSection, UiText } from "@/ui/controls";
++import { UiChoiceChip } from "@/ui/forms";
++import { t, type UiLocale } from "@/ui/locale";
++import type { UiColors } from "@/ui/palette";
++import { useThemedStyles } from "@/ui/theme";
++import { useUiLocale } from "@/ui/useUiLocale";
++import { visual } from "@/ui/visual";
++
++// Native Settings supplies the normal route callback only once local Profile is available.
++export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => void }) {
++  const locale = useUiLocale();
++  const styles = useThemedStyles(createStyles);
++  const appearance = useSyncExternalStore(
++    subscribeUiAppearancePreference,
++    getUiAppearancePreference,
++    getUiAppearancePreference,
++  );
++  const running = useRef(false);
++  const [busy, setBusy] = useState(false);
++  const [failed, setFailed] = useState(false);
++  async function save(value: UiLocale | UiAppearancePreference) {
++    if (running.current) return;
++    running.current = true;
++    setBusy(true);
++    setFailed(false);
++    try {
++      if (value === "en" || value === "zh-Hans") await chooseUiLocale(value);
++      else await chooseUiAppearance(value);
++    } catch {
++      setFailed(true);
++    } finally {
++      running.current = false;
++      setBusy(false);
++    }
++  }
++  return (
++    <View style={styles.content}>
++      <UiSection title={t("privateProfile.title")}>
++        <UiButton
++          label={t("privateProfile.title")}
++          disabled={!onOpenProfile || busy}
++          onPress={() => {
++            if (!running.current) onOpenProfile?.();
++          }}
++        />
++        {!onOpenProfile ? (
++          <UiText style={styles.hint}>{t("authSettings.profileUnavailable")}</UiText>
++        ) : null}
++      </UiSection>
++      <UiSection title={t("navigation.language")}>
++        <View style={styles.choices}>
++          {busy ? (
++            <UiText style={styles.hint}>
++              {t(locale === "en" ? "navigation.english" : "navigation.chinese")}
++            </UiText>
++          ) : (
++            (["en", "zh-Hans"] as const).map((value) => (
++              <UiChoiceChip
++                key={value}
++                label={t(value === "en" ? "navigation.english" : "navigation.chinese")}
++                selected={locale === value}
++                onPress={() => {
++                  // Event handler only: the ref fences a pending local preference write.
++                  // eslint-disable-next-line react-hooks/refs
++                  void save(value);
++                }}
++              />
++            ))
++          )}
++        </View>
++      </UiSection>
++      <UiSection title={t("authSettings.appearance")}>
++        <View style={styles.choices}>
++          {busy ? (
++            <UiText style={styles.hint}>
++              {t(`authSettings.appearance.${appearance}`)}
++            </UiText>
++          ) : (
++            (["system", "light", "dark"] as const).map((value) => (
++              <UiChoiceChip
++                key={value}
++                label={t(`authSettings.appearance.${value}`)}
++                selected={appearance === value}
++                onPress={() => {
++                  // Event handler only: the ref fences a pending local preference write.
++                  // eslint-disable-next-line react-hooks/refs
++                  void save(value);
++                }}
++              />
++            ))
++          )}
++        </View>
++      </UiSection>
++      {failed ? (
++        <UiText accessibilityRole="alert" style={styles.error}>
++          {t("settings.saveFailed")}
++        </UiText>
++      ) : null}
++    </View>
++  );
++}
++const createStyles = (colors: UiColors) =>
++  StyleSheet.create({
++    content: { gap: visual.space.section },
++    choices: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
++    hint: { ...visual.type.meta, color: colors.textSecondary },
++    error: { ...visual.type.meta, color: colors.destructive },
++  });
+--- /dev/null
++++ b/src/features/auth/AuthSettingsSection.test.ts
+@@ -0,0 +1,135 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import { AuthSettingsSection } from "./AuthSettingsSection";
++const current = vi.hoisted(() => ({
++  values: [] as unknown[],
++  cursor: 0,
++  running: { current: false },
++  language: vi.fn(),
++  appearance: vi.fn(),
++}));
++vi.mock("react", async (original) => ({
++  ...(await original<typeof import("react")>()),
++  useRef: () => current.running,
++  useSyncExternalStore: (_sub: unknown, get: () => unknown) => get(),
++  useState: (value: unknown) => {
++    const i = current.cursor++;
++    if (!(i in current.values)) current.values[i] = value;
++    return [
++      current.values[i],
++      (next: unknown) => {
++        current.values[i] = next;
++      },
++    ];
++  },
++}));
++vi.mock("react-native", () => ({
++  View: "View",
++  StyleSheet: { create: (value: unknown) => value },
++}));
++vi.mock("@/native/uiLocalePreference", () => ({ chooseUiLocale: current.language }));
++vi.mock("@/native/uiAppearancePreference", () => ({
++  chooseUiAppearance: current.appearance,
++  getUiAppearancePreference: () => "system",
++  subscribeUiAppearancePreference: () => () => {},
++}));
++vi.mock("@/ui/controls", () => ({
++  UiText: "Text",
++  UiButton: "Button",
++  UiSection: "Section",
++}));
++vi.mock("@/ui/forms", () => ({ UiChoiceChip: "Choice" }));
++vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
++vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
++vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
++const nodes = (value: any): any[] =>
++  Array.isArray(value)
++    ? value.flatMap(nodes)
++    : value?.props
++      ? [value, ...nodes(value.props.children)]
++      : [];
++const render = (onOpenProfile?: () => void) => {
++  current.cursor = 0;
++  return nodes(AuthSettingsSection({ onOpenProfile }));
++};
++beforeEach(() => {
++  current.values = [];
++  current.running.current = false;
++  vi.resetAllMocks();
++  current.language.mockResolvedValue(undefined);
++  current.appearance.mockResolvedValue(undefined);
++});
++it("keeps unavailable Profile disabled and delegates only a supplied normal route", () => {
++  expect(render().find((node) => node.type === "Button").props.disabled).toBe(true);
++  const open = vi.fn();
++  const button = render(open).find((node) => node.type === "Button");
++  expect(button.props.disabled).toBe(false);
++  button.props.onPress();
++  expect(open).toHaveBeenCalledTimes(1);
++});
++it("uses existing device-local language and appearance selectors", async () => {
++  const tree = render();
++  tree.find((node) => node.props.label === "navigation.chinese").props.onPress();
++  await Promise.resolve();
++  expect(current.language).toHaveBeenCalledWith("zh-Hans");
++  render()
++    .find((node) => node.props.label === "authSettings.appearance.dark")
++    .props.onPress();
++  await Promise.resolve();
++  expect(current.appearance).toHaveBeenCalledWith("dark");
++});
++it("fences retained callbacks while a local preference write is pending", async () => {
++  let finish!: () => void;
++  current.language.mockImplementation(
++    () =>
++      new Promise<void>((resolve) => {
++        finish = resolve;
++      }),
++  );
++  const tree = render();
++  tree.find((node) => node.props.label === "navigation.chinese").props.onPress();
++  tree
++    .find((node) => node.props.label === "authSettings.appearance.dark")
++    .props.onPress();
++  expect(current.appearance).not.toHaveBeenCalled();
++  expect(render().filter((node) => node.type === "Choice")).toHaveLength(0);
++  finish();
++  await Promise.resolve();
++  expect(render().filter((node) => node.type === "Choice")).toHaveLength(5);
++});
++it("shows storage failure feedback and allows an explicit later attempt", async () => {
++  current.appearance.mockRejectedValueOnce(Error("STORAGE_FAILED"));
++  render()
++    .find((node) => node.props.label === "authSettings.appearance.dark")
++    .props.onPress();
++  await Promise.resolve();
++  expect(render().some((node) => node.props.children === "settings.saveFailed")).toBe(
++    true,
++  );
++  render()
++    .find((node) => node.props.label === "authSettings.appearance.light")
++    .props.onPress();
++  await Promise.resolve();
++  expect(render().some((node) => node.props.children === "settings.saveFailed")).toBe(
++    false,
++  );
++});
++
++it("does not open Profile from a retained handler during a pending preference save", async () => {
++  let finish!: () => void;
++  current.language.mockImplementation(
++    () =>
++      new Promise<void>((resolve) => {
++        finish = resolve;
++      }),
++  );
++  const open = vi.fn();
++  const tree = render(open);
++  const profile = tree.find((node) => node.type === "Button").props.onPress;
++  tree.find((node) => node.props.label === "navigation.chinese").props.onPress();
++  profile();
++  expect(open).not.toHaveBeenCalled();
++  finish();
++  await Promise.resolve();
++  profile();
++  expect(open).toHaveBeenCalledTimes(1);
++});
+--- a/src/native/uiLocalePreference.ts
++++ b/src/native/uiLocalePreference.ts
+@@ -4,18 +4,19 @@
+ let generation = 0;
+ let writes = Promise.resolve();
+ export async function hydrateUiLocale() {
++  if (generation !== 0) return;
+   const version = generation;
+   const value = await SecureStore.getItemAsync(key);
+   if (generation === version && (value === "en" || value === "zh-Hans"))
+     setUiLocale(value);
+ }
+ export function chooseUiLocale(value: UiLocale) {
+-  const version = ++generation;
++  ++generation;
+   const write = writes
+     .catch(() => undefined)
+     .then(async () => {
+       await SecureStore.setItemAsync(key, value);
+-      if (version === generation) setUiLocale(value);
++      setUiLocale(value);
+     });
+   writes = write;
+   return write;
+--- a/src/native/uiLocalePreference.test.ts
++++ b/src/native/uiLocalePreference.test.ts
+@@ -1,46 +1,63 @@
+-import { afterEach, expect, it, vi } from "vitest";
+-import { getUiLocale, setUiLocale } from "@/ui/locale";
+-import { chooseUiLocale, hydrateUiLocale } from "./uiLocalePreference";
++import { beforeEach, expect, it, vi } from "vitest";
+ const storage = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn() }));
+ vi.mock("expo-secure-store", () => ({
+   getItemAsync: storage.get,
+   setItemAsync: storage.set,
+ }));
+-afterEach(() => {
+-  vi.clearAllMocks();
+-  setUiLocale("en");
++beforeEach(() => {
++  vi.resetModules();
++  vi.resetAllMocks();
++  storage.set.mockResolvedValue(undefined);
+ });
+-it("hydrates offline without requiring auth and does not overwrite a newer selection", async () => {
+-  setUiLocale("en");
+-  let finish!: (s: string) => void;
++const load = async () => ({
++  ...(await import("./uiLocalePreference")),
++  ...(await import("@/ui/locale")),
++});
++it("hydrates offline and does not overwrite a newer selection", async () => {
++  const p = await load();
++  let finish!: (value: string) => void;
+   storage.get.mockImplementation(
+     () =>
+-      new Promise<string>((resolve) => {
++      new Promise((resolve) => {
+         finish = resolve;
+       }),
+   );
+-  storage.set.mockResolvedValue(undefined);
+-  const hydration = hydrateUiLocale();
+-  await chooseUiLocale("zh-Hans");
++  const hydration = p.hydrateUiLocale();
++  await p.chooseUiLocale("zh-Hans");
+   finish("en");
+   await hydration;
+-  expect(getUiLocale()).toBe("zh-Hans");
++  expect(p.getUiLocale()).toBe("zh-Hans");
+   expect(storage.set).toHaveBeenCalledWith("otr-ui-locale-v1", "zh-Hans");
++});
++it("restores a saved locale at cold initialization and ignores unknown values", async () => {
++  let p = await load();
+   storage.get.mockResolvedValue("zh-Hans");
+-  setUiLocale("en");
+-  await hydrateUiLocale();
+-  expect(getUiLocale()).toBe("zh-Hans");
++  await p.hydrateUiLocale();
++  expect(p.getUiLocale()).toBe("zh-Hans");
++  vi.resetModules();
++  p = await load();
+   storage.get.mockResolvedValue("bad");
+-  await hydrateUiLocale();
+-  expect(getUiLocale()).toBe("zh-Hans");
++  await p.hydrateUiLocale();
++  expect(p.getUiLocale()).toBe("en");
+ });
+-it("serializes preference writes and preserves the locale after failed selection", async () => {
+-  setUiLocale("en");
+-  storage.set.mockRejectedValueOnce(new Error("storage failed"));
+-  await expect(chooseUiLocale("zh-Hans")).rejects.toThrow("storage failed");
+-  expect(getUiLocale()).toBe("en");
+-  storage.set.mockResolvedValue(undefined);
+-  await Promise.all([chooseUiLocale("zh-Hans"), chooseUiLocale("en")]);
+-  expect(storage.set.mock.calls.slice(-2).map((c) => c[1])).toEqual(["zh-Hans", "en"]);
+-  expect(getUiLocale()).toBe("en");
++it("keeps the last successful choice when the next rapid write fails", async () => {
++  const p = await load();
++  storage.set
++    .mockResolvedValueOnce(undefined)
++    .mockRejectedValueOnce(Error("STORAGE_FAILED"));
++  const a = p.chooseUiLocale("zh-Hans");
++  const b = p.chooseUiLocale("en");
++  await a;
++  await expect(b).rejects.toThrow();
++  expect(p.getUiLocale()).toBe("zh-Hans");
++  await p.chooseUiLocale("en");
++  expect(p.getUiLocale()).toBe("en");
+ });
++it("does not hydrate after an explicit choice has already started", async () => {
++  const p = await load();
++  const write = p.chooseUiLocale("zh-Hans");
++  await p.hydrateUiLocale();
++  await write;
++  expect(storage.get).not.toHaveBeenCalled();
++  expect(p.getUiLocale()).toBe("zh-Hans");
++});
+--- /dev/null
++++ b/src/native/uiAppearancePreference.ts
+@@ -0,0 +1,42 @@
++import * as SecureStore from "expo-secure-store";
++import { Appearance } from "react-native";
++
++export type UiAppearancePreference = "system" | "light" | "dark";
++const key = "otr-ui-appearance-v1";
++let preference: UiAppearancePreference = "system";
++let generation = 0;
++let writes = Promise.resolve();
++const listeners = new Set<() => void>();
++const valid = (value: unknown): value is UiAppearancePreference =>
++  value === "system" || value === "light" || value === "dark";
++function apply(value: UiAppearancePreference) {
++  Appearance.setColorScheme(value === "system" ? "unspecified" : value);
++  preference = value;
++  for (const listener of listeners) listener();
++}
++// Device-local like UI language; never Account-private or cloud-synchronized.
++export const getUiAppearancePreference = () => preference;
++export function subscribeUiAppearancePreference(listener: () => void) {
++  listeners.add(listener);
++  return () => {
++    listeners.delete(listener);
++  };
++}
++export async function hydrateUiAppearance() {
++  if (generation !== 0) return;
++  const version = generation;
++  const value = await SecureStore.getItemAsync(key);
++  if (generation === version && valid(value)) apply(value);
++}
++export function chooseUiAppearance(value: UiAppearancePreference) {
++  if (!valid(value)) throw Error("INVALID_UI_APPEARANCE");
++  ++generation;
++  const write = writes
++    .catch(() => undefined)
++    .then(async () => {
++      await SecureStore.setItemAsync(key, value);
++      apply(value);
++    });
++  writes = write;
++  return write;
++}
+--- /dev/null
++++ b/src/native/uiAppearancePreference.test.ts
+@@ -0,0 +1,102 @@
++import { beforeEach, expect, it, vi } from "vitest";
++const storage = vi.hoisted(() => ({
++  values: new Map<string, string>(),
++  get: vi.fn(),
++  set: vi.fn(),
++  apply: vi.fn(),
++}));
++vi.mock("expo-secure-store", () => ({
++  getItemAsync: storage.get,
++  setItemAsync: storage.set,
++}));
++vi.mock("react-native", () => ({ Appearance: { setColorScheme: storage.apply } }));
++beforeEach(() => {
++  vi.resetModules();
++  vi.clearAllMocks();
++  storage.values.clear();
++  storage.get.mockImplementation(async (key: string) => storage.values.get(key) ?? null);
++  storage.set.mockImplementation(async (key: string, value: string) => {
++    storage.values.set(key, value);
++  });
++});
++const load = () => import("./uiAppearancePreference");
++it("persists a local choice and restores it across module cold initialization", async () => {
++  let preference = await load();
++  await preference.chooseUiAppearance("dark");
++  expect(storage.apply).toHaveBeenLastCalledWith("dark");
++  vi.resetModules();
++  preference = await load();
++  expect(preference.getUiAppearancePreference()).toBe("system");
++  await preference.hydrateUiAppearance();
++  expect(preference.getUiAppearancePreference()).toBe("dark");
++  await preference.chooseUiAppearance("system");
++  expect(storage.apply).toHaveBeenLastCalledWith("unspecified");
++});
++it("does not let a late startup read overwrite a newer explicit choice", async () => {
++  const preference = await load();
++  let finish!: (value: string) => void;
++  storage.get.mockImplementationOnce(
++    () =>
++      new Promise((resolve) => {
++        finish = resolve;
++      }),
++  );
++  const hydration = preference.hydrateUiAppearance();
++  await preference.chooseUiAppearance("light");
++  finish("dark");
++  await hydration;
++  expect(preference.getUiAppearancePreference()).toBe("light");
++  expect(storage.apply).toHaveBeenCalledExactlyOnceWith("light");
++});
++it("serializes rapid choices and applies each successful persisted choice", async () => {
++  const preference = await load();
++  const a = preference.chooseUiAppearance("dark");
++  const b = preference.chooseUiAppearance("light");
++  await Promise.all([a, b]);
++  expect(storage.set.mock.calls.map((args) => args[1])).toEqual(["dark", "light"]);
++  expect(storage.apply.mock.calls).toEqual([["dark"], ["light"]]);
++});
++it("keeps the previous appearance after failed persistence and allows a later choice", async () => {
++  const preference = await load();
++  storage.set.mockRejectedValueOnce(Error("DEVICE_STORAGE_UNAVAILABLE"));
++  await expect(preference.chooseUiAppearance("dark")).rejects.toThrow();
++  expect(preference.getUiAppearancePreference()).toBe("system");
++  expect(storage.apply).not.toHaveBeenCalled();
++  await preference.chooseUiAppearance("light");
++  expect(preference.getUiAppearancePreference()).toBe("light");
++});
++it("ignores unknown stored values and rejects invalid caller values without writes", async () => {
++  const preference = await load();
++  storage.get.mockResolvedValueOnce("unexpected-mode");
++  await preference.hydrateUiAppearance();
++  expect(storage.apply).not.toHaveBeenCalled();
++  expect(() => preference.chooseUiAppearance("unexpected-mode" as never)).toThrow();
++  expect(storage.set).not.toHaveBeenCalled();
++});
++
++it("keeps the last successful rapid choice when the following write fails", async () => {
++  const preference = await load();
++  storage.set
++    .mockImplementationOnce(async (key: string, value: string) => {
++      storage.values.set(key, value);
++    })
++    .mockRejectedValueOnce(Error("DEVICE_STORAGE_UNAVAILABLE"));
++  const a = preference.chooseUiAppearance("dark");
++  const b = preference.chooseUiAppearance("light");
++  await a;
++  await expect(b).rejects.toThrow();
++  expect(preference.getUiAppearancePreference()).toBe("dark");
++  vi.resetModules();
++  const restored = await load();
++  await restored.hydrateUiAppearance();
++  expect(restored.getUiAppearancePreference()).toBe("dark");
++});
++
++it("does not start hydration after an explicit choice has already begun", async () => {
++  const preference = await load();
++  const choice = preference.chooseUiAppearance("dark");
++  await preference.hydrateUiAppearance();
++  await choice;
++  expect(storage.get).not.toHaveBeenCalled();
++  expect(preference.getUiAppearancePreference()).toBe("dark");
++});

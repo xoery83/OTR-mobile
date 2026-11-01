@@ -1,0 +1,795 @@
+--- /dev/null
++++ b/src/data/repositories/tripPersonEditorDraft.ts
+@@ -0,0 +1,144 @@
++import { z } from "zod";
++import type { SecureSessionStorage } from "@/data/auth/authSessionRepository";
++import {
++  assertAccountRequestContext,
++  withAccountApplyGate,
++  type AccountRequestContext,
++} from "@/data/auth/accountRequestContext";
++import { coreText, coreUuid } from "@/domain/trip/tripCoreV2";
++import { personCloudCreateSchema } from "@/domain/trip/tripPersonCloudCreate";
++
++const attemptSchema = personCloudCreateSchema.pick({
++  operationId: true,
++  personId: true,
++  displayName: true,
++});
++const draftSchema = z
++  .strictObject({
++    version: z.literal(1),
++    accountId: coreUuid,
++    tripId: coreUuid,
++    displayName: coreText(256),
++    attempt: attemptSchema.nullable(),
++  })
++  .refine((v) => !v.attempt || v.displayName === v.attempt.displayName);
++export type TripPersonEditorDraft = z.infer<typeof draftSchema>;
++export type TripPersonDraftStorage = Pick<
++  SecureSessionStorage,
++  "getItem" | "setItem" | "deleteItem"
++>;
++export type TripPersonEditorDraftPort = Readonly<{
++  context: AccountRequestContext;
++  read(): Promise<TripPersonEditorDraft | null>;
++  saveName(name: string): Promise<TripPersonEditorDraft>;
++  retainAttempt(input: z.input<typeof attemptSchema>): Promise<TripPersonEditorDraft>;
++  complete(operationId: string): Promise<void>;
++  discard(): Promise<void>;
++}>;
++
++export function bindTripPersonEditorDraft(
++  store: ReturnType<typeof createTripPersonEditorDraft>,
++  input: AccountRequestContext,
++): TripPersonEditorDraftPort {
++  const context = Object.freeze({ ...input });
++  return {
++    context,
++    read: () => store.read(context),
++    saveName: (name) => store.saveName(context, name),
++    retainAttempt: (attempt) => store.retainAttempt(context, attempt),
++    complete: (operationId) => store.complete(context, operationId),
++    discard: () => store.discard(context),
++  };
++}
++
++// Private editor data source for the existing Person repository, never a create/Sync authority.
++export function createTripPersonEditorDraft(
++  storage: TripPersonDraftStorage,
++  account: () => Promise<string>,
++) {
++  const key = (scope: AccountRequestContext) =>
++    `otr.people-editor.v1.${scope.accountId}.${scope.tripId}`;
++  async function scoped<T>(
++    input: AccountRequestContext,
++    work: (scope: AccountRequestContext) => Promise<T>,
++  ) {
++    const scope = Object.freeze({ ...input });
++    coreUuid.parse(scope.accountId);
++    coreUuid.parse(scope.tripId);
++    const result = await withAccountApplyGate(async () => {
++      await assertAccountRequestContext(scope, account);
++      const result = await work(scope);
++      await assertAccountRequestContext(scope, account);
++      return result;
++    });
++    await assertAccountRequestContext(scope, account);
++    return result;
++  }
++  async function read(scope: AccountRequestContext) {
++    const raw = await storage.getItem(key(scope));
++    if (raw === null) return null;
++    const draft = draftSchema.parse(JSON.parse(raw));
++    if (draft.accountId !== scope.accountId || draft.tripId !== scope.tripId)
++      throw Error("PERSON_DRAFT_CONTEXT_MISMATCH");
++    return draft;
++  }
++  async function write(scope: AccountRequestContext, draft: TripPersonEditorDraft) {
++    const parsed = draftSchema.parse(draft);
++    await storage.setItem(key(scope), JSON.stringify(parsed));
++    return parsed;
++  }
++  return {
++    read(input: AccountRequestContext) {
++      return scoped(input, read);
++    },
++    saveName(input: AccountRequestContext, name: string) {
++      const displayName = coreText(256).parse(name);
++      return scoped(input, async (scope) => {
++        const prior = await read(scope);
++        if (prior?.attempt) {
++          if (prior.displayName !== displayName)
++            throw Error("PERSON_DRAFT_ATTEMPT_FROZEN");
++          return prior;
++        }
++        return write(scope, {
++          version: 1,
++          accountId: scope.accountId,
++          tripId: scope.tripId,
++          displayName,
++          attempt: null,
++        });
++      });
++    },
++    retainAttempt(input: AccountRequestContext, raw: z.input<typeof attemptSchema>) {
++      const attempt = attemptSchema.parse(raw);
++      return scoped(input, async (scope) => {
++        const prior = await read(scope);
++        if (!prior || prior.displayName.trim() !== attempt.displayName)
++          throw Error("PERSON_DRAFT_NAME_CHANGED");
++        if (prior.attempt) {
++          if (JSON.stringify(prior.attempt) !== JSON.stringify(attempt))
++            throw Error("PERSON_DRAFT_ATTEMPT_COLLISION");
++          return prior;
++        }
++        return write(scope, { ...prior, displayName: attempt.displayName, attempt });
++      });
++    },
++    complete(input: AccountRequestContext, operationId: string) {
++      const operation = coreUuid.parse(operationId);
++      return scoped(input, async (scope) => {
++        const prior = await read(scope);
++        if (!prior) return;
++        if (prior.attempt?.operationId !== operation)
++          throw Error("PERSON_DRAFT_OPERATION_MISMATCH");
++        await storage.deleteItem(key(scope));
++      });
++    },
++    discard(input: AccountRequestContext) {
++      return scoped(input, async (scope) => {
++        const prior = await read(scope);
++        if (prior?.attempt) throw Error("PERSON_DRAFT_PENDING_REQUIRES_RECOVERY");
++        if (prior) await storage.deleteItem(key(scope));
++      });
++    },
++  };
++}
+--- /dev/null
++++ b/src/data/repositories/tripPersonEditorDraft.test.ts
+@@ -0,0 +1,133 @@
++import { randomUUID } from "node:crypto";
++import { expect, it, vi } from "vitest";
++import { createTripPersonEditorDraft } from "./tripPersonEditorDraft";
++import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
++import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
++
++async function fixture() {
++  const values = new Map<string, string>();
++  const original = randomUUID();
++  let accountId = original;
++  const account = async () => accountId;
++  const tripId = randomUUID();
++  const storage = {
++    getItem: vi.fn(async (key: string) => values.get(key) ?? null),
++    setItem: vi.fn(async (key: string, value: string) => {
++      values.set(key, value);
++    }),
++    deleteItem: vi.fn(async (key: string) => {
++      values.delete(key);
++    }),
++  };
++  return {
++    values,
++    storage,
++    original,
++    account,
++    tripId,
++    scope: await captureAccountRequestContext(tripId, account),
++    store: createTripPersonEditorDraft(storage, account),
++    reopen: () => createTripPersonEditorDraft(storage, account),
++    switch(id = randomUUID()) {
++      accountId = id;
++      advanceAccountGeneration();
++    },
++  };
++}
++
++it("restores raw private text after data-source recreation without claiming Person creation", async () => {
++  const f = await fixture();
++  await f.store.saveName(f.scope, "  林 e\u0301  ");
++  const restored = await f.reopen().read(f.scope);
++  expect(restored).toEqual({
++    version: 1,
++    accountId: f.original,
++    tripId: f.tripId,
++    displayName: "  林 e\u0301  ",
++    attempt: null,
++  });
++  expect(restored).not.toHaveProperty("connected");
++  expect(f.storage.deleteItem).not.toHaveBeenCalled();
++});
++
++it("retains the exact Person/operation/name after UNKNOWN, never a name-derived identity", async () => {
++  const f = await fixture();
++  await f.store.saveName(f.scope, " 同名 ");
++  const attempt = {
++    operationId: randomUUID(),
++    personId: randomUUID(),
++    displayName: "同名",
++  };
++  await f.store.retainAttempt(f.scope, attempt);
++  expect((await f.reopen().read(f.scope))?.attempt).toEqual(attempt);
++  expect(await f.store.retainAttempt(f.scope, attempt)).toMatchObject({ attempt });
++  const before = [...f.values];
++  await expect(f.store.saveName(f.scope, "another name")).rejects.toThrow("FROZEN");
++  await expect(
++    f.store.retainAttempt(f.scope, { ...attempt, personId: randomUUID() }),
++  ).rejects.toThrow("COLLISION");
++  await expect(f.store.discard(f.scope)).rejects.toThrow("RECOVERY");
++  await expect(f.store.complete(f.scope, randomUUID())).rejects.toThrow("MISMATCH");
++  expect([...f.values]).toEqual(before);
++});
++
++it("isolates Account/Trip keys and rejects old A→B→A generations", async () => {
++  const f = await fixture();
++  await f.store.saveName(f.scope, "Private A");
++  f.switch();
++  const b = await captureAccountRequestContext(f.tripId, f.account);
++  expect(await f.store.read(b)).toBeNull();
++  await f.store.saveName(b, "Private B");
++  expect(
++    await f.store.read(await captureAccountRequestContext(randomUUID(), f.account)),
++  ).toBeNull();
++  await expect(f.store.read(f.scope)).rejects.toThrow("Account changed");
++  f.switch(f.original);
++  await expect(f.store.read(f.scope)).rejects.toThrow("Account changed");
++  expect(
++    (await f.store.read(await captureAccountRequestContext(f.tripId, f.account)))
++      ?.displayName,
++  ).toBe("Private A");
++});
++
++it("preserves corrupted/foreign records rather than deleting or returning them", async () => {
++  const f = await fixture();
++  await f.store.saveName(f.scope, "Private");
++  const [key, raw] = [...f.values][0];
++  f.values.set(key, JSON.stringify({ ...JSON.parse(raw), accountId: randomUUID() }));
++  await expect(f.store.read(f.scope)).rejects.toThrow("CONTEXT_MISMATCH");
++  f.values.set(key, "invalid json");
++  await expect(f.store.read(f.scope)).rejects.toThrow();
++  expect(f.values.get(key)).toBe("invalid json");
++  expect(f.storage.deleteItem).not.toHaveBeenCalled();
++});
++
++it("does not claim durable preparation after storage failure and keeps the original bytes", async () => {
++  const f = await fixture();
++  await f.store.saveName(f.scope, "Kept");
++  const before = [...f.values];
++  f.storage.setItem.mockRejectedValueOnce(Error("LOCAL_WRITE_UNKNOWN"));
++  await expect(
++    f.store.retainAttempt(f.scope, {
++      operationId: randomUUID(),
++      personId: randomUUID(),
++      displayName: "Kept",
++    }),
++  ).rejects.toThrow("LOCAL_WRITE_UNKNOWN");
++  expect([...f.values]).toEqual(before);
++});
++
++it("clears only the exact completed intent, with idempotent cleanup", async () => {
++  const f = await fixture();
++  await f.store.saveName(f.scope, "Traveler");
++  const attempt = {
++    operationId: randomUUID(),
++    personId: randomUUID(),
++    displayName: "Traveler",
++  };
++  await f.store.retainAttempt(f.scope, attempt);
++  await f.store.complete(f.scope, attempt.operationId);
++  await f.store.complete(f.scope, attempt.operationId);
++  expect(await f.store.read(f.scope)).toBeNull();
++  expect(f.storage.deleteItem).toHaveBeenCalledOnce();
++});
+--- /dev/null
++++ b/src/native/tripPersonEditorDraft.ts
+@@ -0,0 +1,29 @@
++import * as SecureStore from "expo-secure-store";
++import { requireAdoptedUserId } from "@/data/auth/authRepository";
++import {
++  assertAccountRequestContext,
++  type AccountRequestContext,
++} from "@/data/auth/accountRequestContext";
++import { readInitializedDatabase } from "@/data/db/database";
++import { createTripPersonCloudCreateRepository } from "@/data/repositories/tripPersonCloudCreateRepository";
++import { bindTripPersonEditorDraft } from "@/data/repositories/tripPersonEditorDraft";
++
++// One editor slot per Account/Trip; these are draft bytes, never Session/Cloud authority.
++export async function loadTripPersonEditorDraft(input: AccountRequestContext) {
++  const context = Object.freeze({ ...input });
++  await assertAccountRequestContext(context, requireAdoptedUserId);
++  const database = await readInitializedDatabase();
++  await assertAccountRequestContext(context, requireAdoptedUserId);
++  const repository = createTripPersonCloudCreateRepository(
++    database,
++    requireAdoptedUserId,
++    undefined,
++    {
++      getItem: SecureStore.getItemAsync,
++      setItem: SecureStore.setItemAsync,
++      deleteItem: SecureStore.deleteItemAsync,
++    },
++  );
++  if (!repository.drafts) throw Error("PERSON_EDITOR_STORAGE_UNAVAILABLE");
++  return bindTripPersonEditorDraft(repository.drafts, context);
++}
+--- /dev/null
++++ b/src/native/tripPersonEditorDraft.test.ts
+@@ -0,0 +1,63 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import { randomUUID } from "node:crypto";
++import { loadTripPersonEditorDraft } from "./tripPersonEditorDraft";
++import { requireAdoptedUserId } from "@/data/auth/authRepository";
++import { readInitializedDatabase } from "@/data/db/database";
++import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
++import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
++
++const values = vi.hoisted(() => new Map<string, string>());
++vi.mock("expo-secure-store", () => ({
++  getItemAsync: async (key: string) => values.get(key) ?? null,
++  setItemAsync: async (key: string, value: string) => {
++    values.set(key, value);
++  },
++  deleteItemAsync: async (key: string) => {
++    values.delete(key);
++  },
++}));
++vi.mock("expo-crypto", () => ({ CryptoDigestAlgorithm: {}, digestStringAsync: vi.fn() }));
++vi.mock("@/data/auth/authRepository", () => ({ requireAdoptedUserId: vi.fn() }));
++vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
++const database = {
++  getFirstAsync: vi.fn(),
++  getAllAsync: vi.fn(),
++  runAsync: vi.fn(),
++  withTransactionAsync: vi.fn(),
++};
++beforeEach(() => {
++  vi.clearAllMocks();
++  values.clear();
++  vi.mocked(readInitializedDatabase).mockResolvedValue(database as never);
++});
++
++it("binds the existing repository's private editor to the exact Account/Trip without SQL or Cloud create", async () => {
++  const id = randomUUID();
++  vi.mocked(requireAdoptedUserId).mockResolvedValue(id);
++  const scope = await captureAccountRequestContext(randomUUID(), requireAdoptedUserId);
++  const port = await loadTripPersonEditorDraft(scope);
++  expect(Object.isFrozen(port.context)).toBe(true);
++  await port.saveName("Native draft 林 e\u0301");
++  const reopened = await loadTripPersonEditorDraft(scope);
++  expect((await reopened.read())?.displayName).toBe("Native draft 林 e\u0301");
++  expect(database.runAsync).not.toHaveBeenCalled();
++  expect(database.getFirstAsync).not.toHaveBeenCalled();
++});
++
++it("rejects old scope before initialization and isolates a new Account", async () => {
++  const id = randomUUID();
++  vi.mocked(requireAdoptedUserId).mockResolvedValue(id);
++  const scope = await captureAccountRequestContext(randomUUID(), requireAdoptedUserId);
++  const old = await loadTripPersonEditorDraft(scope);
++  await old.saveName("Private A");
++  vi.mocked(readInitializedDatabase).mockClear();
++  advanceAccountGeneration();
++  vi.mocked(requireAdoptedUserId).mockResolvedValue(randomUUID());
++  await expect(loadTripPersonEditorDraft(scope)).rejects.toThrow("Account changed");
++  expect(readInitializedDatabase).not.toHaveBeenCalled();
++  const b = await loadTripPersonEditorDraft(
++    await captureAccountRequestContext(scope.tripId, requireAdoptedUserId),
++  );
++  expect(await b.read()).toBeNull();
++  await expect(old.read()).rejects.toThrow("Account changed");
++});
+--- a/src/features/people/AddTravelerSheet.tsx
++++ b/src/features/people/AddTravelerSheet.tsx
+@@ -1,4 +1,10 @@
+-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
++import {
++  useEffect,
++  useLayoutEffect,
++  useRef,
++  useState,
++  useSyncExternalStore,
++} from "react";
+ import { Keyboard, Modal, ScrollView, StyleSheet } from "react-native";
+ import { SheetHeader } from "@/components/SheetHeader";
+ import {
+@@ -17,6 +23,7 @@
+ import { useThemedStyles } from "@/ui/theme";
+ import { useUiLocale } from "@/ui/useUiLocale";
+ import { visual } from "@/ui/visual";
++import type { TripPersonEditorDraftPort } from "@/data/repositories/tripPersonEditorDraft";
+ 
+ export type AddTravelerInput = Readonly<
+   Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">
+@@ -26,13 +33,14 @@
+   onClose(): void;
+   // The owning caller fences the Account/Trip and saves through the existing repository.
+   onSave(input: AddTravelerInput): Promise<void>;
++  draft?: TripPersonEditorDraftPort;
+ };
+ 
+ export function AddTravelerSheet(props: Props) {
+   return props.visible ? <AddTravelerForm {...props} /> : null;
+ }
+ 
+-function AddTravelerForm({ onClose, onSave }: Props) {
++function AddTravelerForm({ onClose, onSave, draft }: Props) {
+   useUiLocale();
+   const styles = useThemedStyles(createStyles);
+   const currentGeneration = useSyncExternalStore(
+@@ -44,53 +52,125 @@
+   const [busy, setBusy] = useState(false);
+   const [failed, setFailed] = useState(false);
+   const [submitted, setSubmitted] = useState(false);
++  const [ready, setReady] = useState(!draft);
++  const [draftError, setDraftFeedback] = useState<{
++    key: "people.draftLoadFailed" | "people.draftSaveFailed";
++  } | null>(null);
+   const [generation] = useState(currentGeneration);
+   const alive = useRef(true);
+   const running = useRef(false);
++  const loading = useRef(false);
+   const attempt = useRef<AddTravelerInput | null>(null);
++  const currentName = useRef("");
++  const [originalDraft] = useState(draft);
++  const latestDraft = useRef(draft);
++  useLayoutEffect(() => {
++    latestDraft.current = draft;
++  }, [draft]);
++  const valid = () =>
++    alive.current &&
++    generation === getAccountGeneration() &&
++    originalDraft === latestDraft.current &&
++    (!draft || draft.context.generation === generation);
++  async function loadDraft() {
++    if (!draft || !valid() || running.current || loading.current) return;
++    loading.current = true;
++    setDraftFeedback(null);
++    try {
++      const saved = await draft.read();
++      if (!valid()) return;
++      if (
++        saved &&
++        (saved.accountId !== draft.context.accountId ||
++          saved.tripId !== draft.context.tripId)
++      )
++        throw Error("PERSON_DRAFT_CONTEXT_MISMATCH");
++      currentName.current = saved?.displayName ?? "";
++      setName(currentName.current);
++      attempt.current = saved?.attempt ?? null;
++      setSubmitted(!!attempt.current);
++      setFailed(!!attempt.current);
++      setReady(true);
++    } catch {
++      if (valid()) setDraftFeedback({ key: "people.draftLoadFailed" });
++    } finally {
++      loading.current = false;
++    }
++  }
+   useEffect(() => {
+     alive.current = true;
++    void loadDraft();
+     return () => {
+       alive.current = false;
+     };
++    // The mounted editor owns its original scope; changes invalidate rather than reload it.
++    // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
+   const parsed = personCloudCreateSchema.shape.displayName.safeParse(name.trim());
+   async function save() {
+-    if (
+-      !alive.current ||
+-      running.current ||
+-      !parsed.success ||
+-      generation !== getAccountGeneration()
+-    )
+-      return;
++    const current = personCloudCreateSchema.shape.displayName.safeParse(
++      currentName.current.trim(),
++    );
++    if (!valid() || !ready || running.current || !current.success) return;
+     running.current = true;
+     setBusy(true);
+     setFailed(false);
++    setDraftFeedback(null);
+     let saved = false;
+     try {
+       Keyboard.dismiss();
++      if (draft) await draft.saveName(current.data);
++      if (!valid()) return;
+       // A lost local-save reply retries the same Person and intent, never a second traveler.
+       attempt.current ??= Object.freeze({
+         operationId: createUuid(),
+         personId: createUuid(),
+-        displayName: parsed.data,
++        displayName: current.data,
+       });
+       setSubmitted(true);
++      if (draft) await draft.retainAttempt(attempt.current);
++      if (!valid()) return;
+       await onSave(attempt.current);
++      if (!valid()) return;
++      if (draft) await draft.complete(attempt.current.operationId);
+       saved = true;
+     } catch {
+-      if (alive.current && generation === getAccountGeneration()) setFailed(true);
++      if (valid()) setFailed(true);
+     } finally {
+       running.current = false;
+-      if (alive.current && generation === getAccountGeneration()) setBusy(false);
+-    }
+-    if (saved && alive.current && generation === getAccountGeneration()) onClose();
++      if (valid()) setBusy(false);
++    }
++    if (saved && valid()) {
++      alive.current = false;
++      onClose();
++    }
+   }
+   const close = () => {
+-    if (alive.current && !running.current && generation === getAccountGeneration())
++    if (!valid() || running.current) return;
++    if (!draft || !ready || attempt.current) {
++      alive.current = false;
+       onClose();
++      return;
++    }
++    running.current = true;
++    setBusy(true);
++    void draft
++      .discard()
++      .then(() => {
++        if (valid()) {
++          alive.current = false;
++          onClose();
++        }
++      })
++      .catch(() => {
++        if (valid()) setDraftFeedback({ key: "people.draftSaveFailed" });
++      })
++      .finally(() => {
++        running.current = false;
++        if (valid()) setBusy(false);
++      });
+   };
+-  if (generation !== currentGeneration) return null;
++  if (generation !== currentGeneration || originalDraft !== draft) return null;
+   return (
+     <Modal
+       visible
+@@ -105,15 +185,29 @@
+         leftLabel={t(submitted ? "common.close" : "common.cancel")}
+         onLeft={close}
+         leftDisabled={busy}
+-        rightLabel={t(failed ? "people.retrySave" : "people.saveTraveler")}
+-        onRight={() => void save()}
+-        rightDisabled={busy || !parsed.success}
++        rightLabel={t(
++          !ready
++            ? "common.tryAgain"
++            : failed
++              ? "people.retrySave"
++              : "people.saveTraveler",
++        )}
++        onRight={() => void (!ready ? loadDraft() : save())}
++        rightDisabled={
++          busy ||
++          (!ready ? draftError?.key !== "people.draftLoadFailed" : !parsed.success)
++        }
+       />
+       <ScrollView
+         keyboardShouldPersistTaps="handled"
+         style={styles.body}
+         contentContainerStyle={styles.content}
+       >
++        {draftError ? (
++          <UiText accessibilityRole="alert" style={styles.error}>
++            {t(draftError.key)}
++          </UiText>
++        ) : null}
+         {failed ? (
+           <UiText
+             accessibilityRole="alert"
+@@ -128,8 +222,21 @@
+           accessibilityLabel={t("people.travelerName")}
+           placeholder={t("people.travelerName")}
+           value={name}
+-          onChangeText={setName}
+-          editable={!busy && !submitted}
++          onChangeText={(value) => {
++            if (!valid() || running.current || !ready || attempt.current) return;
++            currentName.current = value;
++            setName(value);
++            if (draft)
++              void draft
++                .saveName(value)
++                .then(() => {
++                  if (valid()) setDraftFeedback(null);
++                })
++                .catch(() => {
++                  if (valid()) setDraftFeedback({ key: "people.draftSaveFailed" });
++                });
++          }}
++          editable={ready && !busy && !submitted}
+           maxLength={256}
+           autoCapitalize="words"
+         />
+--- a/src/features/people/AddTravelerSheet.test.ts
++++ b/src/features/people/AddTravelerSheet.test.ts
+@@ -1,6 +1,10 @@
+ import { randomUUID } from "node:crypto";
+ import { beforeEach, expect, it, vi } from "vitest";
+ import { AddTravelerSheet } from "./AddTravelerSheet";
++import {
++  bindTripPersonEditorDraft,
++  createTripPersonEditorDraft,
++} from "@/data/repositories/tripPersonEditorDraft";
+ 
+ const state = vi.hoisted(() => ({
+   values: [] as unknown[],
+@@ -20,6 +24,7 @@
+ vi.mock("react", async (original) => ({
+   ...(await original<typeof import("react")>()),
+   useRef: (value: unknown) => (state.refs[state.refCursor++] ??= { current: value }),
++  useLayoutEffect: (effect: () => void) => effect(),
+   useEffect: (effect: () => void | (() => void)) => {
+     if (!state.mounted) state.effects.push(effect);
+   },
+@@ -229,3 +234,136 @@
+   expect(props.onSave).not.toHaveBeenCalled();
+   expect(state.uuid).not.toHaveBeenCalled();
+ });
++
++function persistedDraft() {
++  const context = {
++    accountId: randomUUID(),
++    tripId: randomUUID(),
++    generation: state.generation,
++  };
++  const values = new Map<string, string>();
++  const storage = {
++    getItem: vi.fn(async (key: string) => values.get(key) ?? null),
++    setItem: vi.fn(async (key: string, value: string) => {
++      values.set(key, value);
++    }),
++    deleteItem: vi.fn(async (key: string) => {
++      values.delete(key);
++    }),
++  };
++  const reopen = () =>
++    bindTripPersonEditorDraft(
++      createTripPersonEditorDraft(storage, async () => context.accountId),
++      context,
++    );
++  return { context, values, storage, reopen };
++}
++
++it("restores an unsubmitted private draft and explicit Cancel discards only that draft", async () => {
++  const f = persistedDraft();
++  props.draft = f.reopen();
++  input();
++  await vi.waitFor(() => expect(input().editable).toBe(true));
++  input().onChangeText("本地同行人 e\u0301");
++  await vi.waitFor(() => expect(f.values.size).toBe(1));
++  unmount();
++  props = { ...props, draft: f.reopen(), onClose: vi.fn() };
++  input();
++  await vi.waitFor(() => expect(input().value).toBe("本地同行人 e\u0301"));
++  header().onLeft();
++  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
++  expect(f.values.size).toBe(0);
++  expect(props.onSave).not.toHaveBeenCalled();
++  expect(state.uuid).not.toHaveBeenCalled();
++});
++
++it("reopens an UNKNOWN attempt with the original Person/name/operation and no new UUIDs", async () => {
++  const f = persistedDraft();
++  props.draft = f.reopen();
++  vi.mocked(props.onSave).mockRejectedValueOnce(Error("LOCAL_QUEUE_REPLY_UNKNOWN"));
++  input();
++  await vi.waitFor(() => expect(input().editable).toBe(true));
++  input().onChangeText("Original traveler");
++  header().onRight();
++  await vi.waitFor(() => expect(header().rightLabel).toBe("people.retrySave"));
++  const original = vi.mocked(props.onSave).mock.calls[0][0];
++  header().onLeft();
++  expect(f.values.size).toBe(1);
++  unmount();
++  props = {
++    ...props,
++    draft: f.reopen(),
++    onClose: vi.fn(),
++    onSave: vi.fn(async () => {}),
++  };
++  input();
++  await vi.waitFor(() => expect(header().rightLabel).toBe("people.retrySave"));
++  expect(input().value).toBe(original.displayName);
++  expect(input().editable).toBe(false);
++  header().onRight();
++  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
++  expect(props.onSave).toHaveBeenCalledExactlyOnceWith(original);
++  expect(state.uuid).toHaveBeenCalledTimes(2);
++  expect(f.values.size).toBe(0);
++});
++
++it("does not enqueue a Person when private draft preparation fails", async () => {
++  const f = persistedDraft();
++  props.draft = f.reopen();
++  input();
++  await vi.waitFor(() => expect(input().editable).toBe(true));
++  input().onChangeText("Kept input");
++  await vi.waitFor(() => expect(f.values.size).toBe(1));
++  f.storage.setItem.mockRejectedValueOnce(Error("DRAFT_WRITE_UNKNOWN"));
++  header().onRight();
++  await vi.waitFor(() => expect(header().rightLabel).toBe("people.retrySave"));
++  expect(input().value).toBe("Kept input");
++  expect(props.onSave).not.toHaveBeenCalled();
++  expect(state.uuid).not.toHaveBeenCalled();
++});
++
++it("does not expose a foreign persisted draft or call the Person save", async () => {
++  const f = persistedDraft();
++  const port = f.reopen();
++  props.draft = {
++    ...port,
++    read: async () => ({
++      version: 1,
++      accountId: randomUUID(),
++      tripId: f.context.tripId,
++      displayName: "foreign private name",
++      attempt: null,
++    }),
++  };
++  input();
++  await vi.waitFor(() =>
++    expect(render().some((v) => v.props.children === "people.draftLoadFailed")).toBe(
++      true,
++    ),
++  );
++  expect(input().value).toBe("");
++  expect(input().editable).toBe(false);
++  expect(props.onSave).not.toHaveBeenCalled();
++});
++
++it("can close a pending private read and ignores its late response", async () => {
++  const f = persistedDraft();
++  let release!: (value: any) => void;
++  const pending = new Promise<any>((resolve) => {
++    release = resolve;
++  });
++  props.draft = { ...f.reopen(), read: () => pending };
++  input();
++  header().onLeft();
++  expect(props.onClose).toHaveBeenCalledOnce();
++  release({
++    version: 1,
++    accountId: f.context.accountId,
++    tripId: f.context.tripId,
++    displayName: "Late private name",
++    attempt: null,
++  });
++  await Promise.resolve();
++  expect(input().value).toBe("");
++  expect(props.onSave).not.toHaveBeenCalled();
++});
+--- a/src/data/repositories/tripPersonCloudCreateRepository.ts
++++ b/src/data/repositories/tripPersonCloudCreateRepository.ts
+@@ -23,6 +23,7 @@
+ } from "@/domain/trip/tripPersonCloudCreate";
+ import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+ import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
++import { createTripPersonEditorDraft, type TripPersonDraftStorage } from "./tripPersonEditorDraft";
+ const json = (v: unknown) => canonicalCoreJson(v as Json);
+ 
+ // UI authoring stays bound to the opening Account/Trip across asynchronous DB access.
+@@ -148,8 +149,10 @@
+   database: LedgerReadDatabase,
+   account: () => Promise<string>,
+   clock = () => new Date().toISOString(),
++  draftStorage?: TripPersonDraftStorage,
+ ) {
+   return {
++    drafts: draftStorage ? createTripPersonEditorDraft(draftStorage, account) : undefined,
+     async createAuthored(
+       input: Omit<PersonCloudCreate, "version" | "tripCreateOperationId">,
+     ) {

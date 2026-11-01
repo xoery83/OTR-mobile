@@ -1,0 +1,45 @@
+{
+  "source": "676065f878c8bf568eae2f48703dde094986a17f",
+  "comparison_base": "4e1bedfc",
+  "scope": "CLIENT_ONLY_NO_SHARED_WRITER_FILES",
+  "profile_files": [
+    "src/data/api/privateAccountProfileContracts.ts",
+    "src/domain/auth/privateAccountProfile.ts",
+    "src/domain/auth/privateAccountProfile.test.ts",
+    "src/data/auth/privateAccountProfileLocal.ts",
+    "src/data/auth/privateAccountProfileLocal.test.ts",
+    "src/data/auth/accountProfileRepository.ts",
+    "src/data/auth/accountProfileRepository.test.ts",
+    "src/data/db/privateAccountProfileMigration.ts",
+    "src/data/repositories/defaultAccountProfileRepository.ts",
+    "src/data/repositories/defaultAccountProfileRepository.test.ts",
+    "src/features/auth/AccountPrivateProfilePage.tsx",
+    "src/features/auth/AccountPrivateProfileScreen.tsx",
+    "src/features/auth/AccountPrivateProfileScreen.test.ts",
+    "src/features/auth/PrivateProfileNameFields.tsx",
+    "src/features/auth/PrivateProfileNameFields.test.ts",
+    "src/features/auth/AuthSettingsSection.tsx",
+    "src/features/auth/AuthSettingsSection.test.ts",
+    "src/native/uiLocalePreference.ts",
+    "src/native/uiLocalePreference.test.ts",
+    "src/native/uiAppearancePreference.ts",
+    "src/native/uiAppearancePreference.test.ts"
+  ],
+  "people_files": [
+    "src/data/repositories/tripPersonEditorDraft.ts",
+    "src/data/repositories/tripPersonEditorDraft.test.ts",
+    "src/native/tripPersonEditorDraft.ts",
+    "src/native/tripPersonEditorDraft.test.ts",
+    "src/features/people/AddTravelerSheet.tsx",
+    "src/features/people/AddTravelerSheet.test.ts",
+    "src/data/repositories/tripPersonCloudCreateRepository.ts"
+  ],
+  "person_repo_delta": "only optional draftStorage constructor argument and drafts data-source; exclude closed server-parent implementation",
+  "patch_apply_check": "PASS_IN_DISPOSABLE_BASE_FILES",
+  "source_exact_match": "PROFILE_FILES_PASS",
+  "files": {
+    "PROFILE_SETTINGS_CLIENT.patch": "724991a3301a729b616486c135fe180f3afa7bb55834ef85c26f2d35aeeb387a",
+    "PERSON_DRAFT_ONLY.patch": "5dd9d4f7d628a861dee21d3cd90d68c7c48fe9398005cbf7fdbfc29eec661745",
+    "CLIENT_UI_KEYS.json": "4ab45125231d6db7cc843f3d4f008985819b40518d996fa5d1038a2fc447a8fd"
+  }
+}
