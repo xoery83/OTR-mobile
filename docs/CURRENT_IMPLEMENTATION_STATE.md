@@ -61,7 +61,11 @@ Env/Host/all23files exact, bothQAkeysabsent,health200/protected401. cb71/fbd ret
 only for software rollback; any new finite restore must use newa1/9a88/1c5 default.
 No newclock/issuer/QA/Notes/Source/Provider authority. b94 delayed replies do not
 reopen80dd. Source/assembly/image/release receipts under read-diagnostics-609184bb-20261102.
-Root bounded pre-close collector local candidate under review; actual automatic
+Root bounded pre-close collector fixed after independent11tests and actualHost
+selftest120ms/0600 PASS, noQA/servicechange; next templatea788/helper9334 records
+REQUEST/READ/WRITE finite fields beforemanualrestore. Nonzero/timeout/oversize is
+UNAVAILABLE, never empty/NoCommit proof. InnerCLI inherits diagnostic group; only
+that own group can be killed. Newwindow binding required; actual automatic
 timer remains safety-first without capture. New finite access requires its own
 specific action-time confirmation through MCP after all artifacts are READY.
 

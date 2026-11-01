@@ -1,0 +1,22 @@
+{
+  "status": "SOFTWARE_READY_NEW_WINDOW_NOT_BOUND_OR_AUTHORIZED",
+  "nextCloseTemplateSHA256": "a788ab2a2eba7c8ad5adc28238c562613599289af5c015f35baeadff67489faf",
+  "helperSHA256": "9334be21220e0c73b913c01d73f1007f810956bb6f790941382d7b95a2242c95",
+  "testSHA256": "a92d7b980e934c9c36889827a325473c1c7f718a44868701335281103c33fae5",
+  "tests": 11,
+  "rootIndependentReview": "NO_BLOCKER_after_process_group_and_timestamp_fixes",
+  "hostSelftest": "PASS_120ms_CAPUTRED_EMPTY_same_default_service_noQA",
+  "limits": {
+    "innerLogSeconds": 1.2,
+    "totalRetentionSeconds": 1.8,
+    "maxBytes": 32768,
+    "maxEvents": 64,
+    "tailLines": 128
+  },
+  "mandatoryCloseNeverBlocked": true,
+  "manualDispatcherOnly": true,
+  "timerFirstRemoval": "ALREADY_DEFAULT_NOT_CAPTURED_safety_first",
+  "historical80ddExecutedCloseSHA256": "505015b366ad6f3e9928aaea9ad285ee552131297808f03dc8dd9d42300f1120",
+  "requiresFreshWindowBindingBeforeClock": true,
+  "noNewAuthority": true
+}

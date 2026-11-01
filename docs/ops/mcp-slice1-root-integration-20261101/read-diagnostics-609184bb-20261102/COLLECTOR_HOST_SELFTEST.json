@@ -1,0 +1,13 @@
+{
+  "status": "HOST_CLOSED_COLLECTOR_SELFTEST_PASS",
+  "containerId": "a1d0993ea215c4bb6f1ca554c2f5536d1ce8c1925374a06d867c36d44c21effd",
+  "helperSHA256": "9334be21220e0c73b913c01d73f1007f810956bb6f790941382d7b95a2242c95",
+  "elapsedMs": 120,
+  "captureStatus": "CAPTURED_EMPTY",
+  "eventCount": 0,
+  "retained0600": true,
+  "serviceUnchanged": true,
+  "qaKeysAbsent": true,
+  "noScopeOrBusinessActivation": true,
+  "evidence": "BOUNDED_TAIL_NOT_COMMIT_PROOF"
+}
