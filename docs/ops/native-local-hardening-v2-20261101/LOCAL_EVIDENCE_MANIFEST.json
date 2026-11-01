@@ -1,0 +1,46 @@
+[
+  {
+    "path": "/private/tmp/otr-native-v2-final-tests.log",
+    "sha256": "f6efb6075eb0d49371b320bdca4959b1257a894ed17e36e63b66a1259f64731c"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-review-presentation-tests.log",
+    "sha256": "652e01c5d9c6cd3cf5d3eeacdb6074ac9ddcf750f345bd553d51733f10deefb1"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-field-sqlite-tests.log",
+    "sha256": "1915ed4458f151958a202474c8a454efff5a44f69a17baed7012191b26eee1e3"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-enrichment-tests.log",
+    "sha256": "bc22eb3840f7a575526030c6fa9043969dbe3ccb01b2b9598a8710408106d052"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-realtime-backoff-tests.log",
+    "sha256": "dd115d03ff8a94769c296cf68ecff33e09930935c901f1cb1a8bc2750552186e"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-downstream-real-sqlite-reuse.log",
+    "sha256": "3ad1d2028f283e073091e5f89873c5db71068b9ac09583a48caee3249c37493a"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-calendar-width-red.log",
+    "sha256": "99599919dc52038ac8894b35a6b44f3afab55e3b7f27eff977448b3812c87b01"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-calendar-width-tests.log",
+    "sha256": "e00b1a82f726d1ce9b2932c3de05e6b96b3a437e0932f744b6c38fe2dba6a1fd"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-calendar-width-lint.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-types.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/private/tmp/otr-native-v2-ui-guard.log",
+    "sha256": "1d69f43a5da418d1f82b2321a80cea6ab26be54f1e055f397443ad15c188b74e"
+  }
+]

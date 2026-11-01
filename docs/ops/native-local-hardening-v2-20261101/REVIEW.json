@@ -1,0 +1,51 @@
+{
+  "status": "NO_BLOCKER",
+  "scope": "bounded incremental Native local V2, no Hosted/provider qualification",
+  "sourceBaseline": "ec46423756a70353bd9ea4f8141920b86308c263",
+  "reviewStages": [
+    {
+      "source": "bc7502418458b30c542fa0d604c28c016af84847",
+      "result": "REQUEST_CHANGES",
+      "finding": "A skipped Downstream backoff Pull could clear the pending realtime dirty signal",
+      "tests": "9 suites /149 PASS, overlapping subsequent runs"
+    },
+    {
+      "source": "3701fedc9fee6db9043c3bb0c1afc3c3f57398d9",
+      "result": "NO_BLOCKER",
+      "tests": "4 suites /39 PASS"
+    },
+    {
+      "source": "7c11922a8ada932558ac0abc59822e870a4f0e2b",
+      "result": "NO_BLOCKER",
+      "tests": "P3 34 PASS"
+    },
+    {
+      "source": "5feccdc64c57c7e95ee9beee6b040055284bd0ae",
+      "result": "NO_BLOCKER",
+      "tests": "P3+P2 48 PASS"
+    },
+    {
+      "source": "8647a7e2",
+      "result": "NO_BLOCKER",
+      "tests": "Range Calendar16 PASS"
+    }
+  ],
+  "reviewer": "native_sprint_independent_review (read-only, independent execution)",
+  "parentChecks": {
+    "representativeBatch": "17 suites /226 PASS before last sample/presentation additions",
+    "presentation": "5 suites /77 PASS",
+    "sqliteFieldPreservation": "3 suites /48 PASS",
+    "enrichment": "2 suites /24 PASS",
+    "realtimeJoinedBackoff": "4 suites /43 PASS",
+    "calendarFinal": "2 suites /50 PASS",
+    "typescript": "scoped V2 project PASS",
+    "uiGuard": "PASS",
+    "lint": "changed presentation/calendar files PASS; prior batch retains 5 old test import-order warnings"
+  },
+  "counting": "Runs overlap; counts are not summed as unique tests",
+  "unverified": [
+    "Real Provider/Usage/Hosted E2E",
+    "Authorized private Realtime/revocation",
+    "Independent review did not operate device or rerun all types/UIguard"
+  ]
+}

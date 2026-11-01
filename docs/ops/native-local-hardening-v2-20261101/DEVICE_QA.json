@@ -1,0 +1,102 @@
+{
+  "build": 135,
+  "source": "8647a7e2",
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "team": "U9D5C58Z94",
+  "keychainGroups": [
+    "U9D5C58Z94.com.xoery.otrmobile.ipadqa"
+  ],
+  "profileExpiryUTC": "2026-11-05T20:20:57Z",
+  "signingVerified": true,
+  "deviceFamily": [
+    1,
+    2
+  ],
+  "minimumOS": "16.4",
+  "nativeBasis": "retained accepted iPad QA127/128 native binary; JS repackage only, not full new Native compile",
+  "rollbackArtifact": "/private/tmp/otr-native05-20261031/OTRMobile128.app",
+  "rollbackLimit": "accepted128, older than installed132; same schema75 contract; no app/data uninstall or SQLite rollback",
+  "registryDiff": false,
+  "jsHash": "077efd72bf1d392e5c9accb256e25f16259998614dd0f82386d66303d51d3599",
+  "installed": true,
+  "iPhoneTouched": false,
+  "hostedActions": 0,
+  "sqliteSchemaVersion": 75,
+  "schemaQualification": "Registry unchanged from accepted native basis; no migrations added, registry replaced or database copied",
+  "device": "iPad Air5 / iPadOS26.0.1 / landscape1180x820pt",
+  "control": "pinned agent-device0.21.33; owned native-v2-deviceqa-20261101 session, fresh AX refs, no DeviceHub GUI",
+  "results": {
+    "coldSessionAndFourHistoricalTrips": "PASS QA134/135; unchanged account still accesses prior Reader/Trip data",
+    "unconfirmedSuggestionsNotAcceptedOnColdStart": "PASS;133 review selection was not saved,134 cold starts normal MyTrips",
+    "P3CreateCandidateFieldAdopt": "PASS QA134;choose1 of2;only property adopted;address/date/clocks/Notes unselected remain empty",
+    "P3Cancel": "PASS;normal Unsaved changes \u2192 Discard own unsaved draft",
+    "P2P4P5P6RepresentativeField": "PASS QA134;one selected flight number/title applied to fresh draft;Cancel/Discard;no Save",
+    "P3Keyboard": "PASS QA134;actual keyboard visible419pt;no text entered",
+    "P3Calendar": "FAIL QA134\u2192fixed8647a7e2\u2192PASS QA135;7columns visible;Cancel leaves draft unchanged",
+    "deviceP3Edit": "NOT_RUN;existing peer-created P3 has normal Edit restriction, no authority bypass",
+    "darkChineseUI": "NOT_RUN on device;canonical theme and EN/ZH catalogs present, not device PASS",
+    "deviceAIOrHosted": "NOT_RUN;synthetic-only/no upload;no paid Provider or private channel"
+  },
+  "dataSafety": {
+    "appUninstall": false,
+    "osUpgrade": false,
+    "sessionCopied": false,
+    "sqliteCopiedOrReset": false,
+    "businessSaveClicks": 0,
+    "iPhoneTouched": false,
+    "AD5Touched": false,
+    "sharedDeployments": 0
+  },
+  "evidence": [
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p3-review.png",
+      "sha256": "4a5c0238c1461090bb106f40e70f8001f72690b02ac9e18d26ffb59e0e2f2154"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p3-applied.png",
+      "sha256": "d3acbc05df7ddc0022236f273c0cec5cfb41b09e3552fec557e90dad29192e02"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p2-applied.png",
+      "sha256": "d9f90ef53d7e4734b0dc3a52d8b7ea2d69ad9e62cbc2ebf15cadaaf16713bdb7"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p4-applied.png",
+      "sha256": "457a29b60da38e48bea01adbee156fdb8b77d7b49fa36d3440f15948869132e5"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p5-applied.png",
+      "sha256": "11cf8a098b830377e9a0e73a009f2f3cefd2876828b95cde5ee33971f9976818"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p6-applied.png",
+      "sha256": "176e33f10ec8dcef0a21ca37fdf826c4705cc381bdfd74503703acafadb4d293"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p3-keyboard.png",
+      "sha256": "006fd3a62ab0ab5da1673bf63d46b6d7b3e6af4d6d2e773732f23a2ef33cc803"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad134/p3-calendar.png",
+      "sha256": "6a7c4b38af979c94496602d19b51d075e4e158c93a915e9500aaddc555dc6400"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad135/calendar-fixed.png",
+      "sha256": "33edbd4f16693df11e137987638cb7e48fc82b917f45054ee1cf91152c92c5bf"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad135/INSTALL.json",
+      "sha256": "c8b4a7af9fe31c5d1bf803f1f3ae3e3443c62f3f516766b91ab41a72eebc70ad"
+    },
+    {
+      "path": "/private/tmp/otr-native-v2-ipad135/BUNDLE.json",
+      "sha256": "231f13c206dcfc72480735bf7391f468ada01ade506991411dd25761401421c2"
+    }
+  ],
+  "retries": "Hardware script initially scrolled during Form loading/route closure; fixed script to require actual ready Form and closed state before next open. No business writes occurred.",
+  "sessionReleased": true,
+  "releaseEvidence": [
+    "/private/tmp/otr-native05-20261031/native-v2-135-close.json",
+    "/private/tmp/otr-native05-20261031/native-v2-135-sessions.json"
+  ]
+}
