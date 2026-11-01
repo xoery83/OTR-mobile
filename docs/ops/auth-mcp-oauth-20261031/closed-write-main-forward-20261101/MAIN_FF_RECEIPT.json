@@ -1,0 +1,27 @@
+{
+  "status": "SERIAL_MAIN_FAST_FORWARD_AND_DIRTY_PRESERVATION_PASS",
+  "baseMain": "33388e52ea6be2a855beb5d81adb3ae978b1db2d",
+  "mainHead": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+  "startedAt": "2026-11-01T05:19:32.379466+00:00",
+  "completedAt": "2026-11-01T05:19:32.527181+00:00",
+  "preservedTrackedDirtyFiles": 1,
+  "protectedSnapshot": {
+    "files": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": {
+        "sha256": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+        "mode": 420,
+        "status": " M",
+        "indexEntry": "100644 ef5fd90612748b29621fee1c35620299ef3db14d 0\tdocs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md"
+      }
+    },
+    "statusSHA256": "4ba25b59375dc9ae16ddb1c852a754cb9a553bc9d88e3d6c8f030bf63570d0d6",
+    "fullDiffSHA256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a"
+  },
+  "independentReview": "NO_BLOCKER_CURATED_DEFAULT_CLOSED_SOURCE_ONLY",
+  "deploymentChanges": 0,
+  "supabaseChanges": 0,
+  "push": "NORMAL_PUSH_AND_REMOTE_HEAD_INDEPENDENTLY_VERIFIED",
+  "remoteMain": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+  "remoteVerifiedAt": "2026-11-01T05:23:03.322127+00:00",
+  "mainWriterReleased": true
+}

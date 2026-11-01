@@ -1,0 +1,19 @@
+{
+  "status": "LOCAL_PAGE_AND_EXISTING_REPOSITORY_ENTRY_PASS_UNMOUNTED",
+  "goldenSlice": "Committed cached Account -> initialized DB -> existing local Profile editor -> retry/cancel; stale Account response hidden",
+  "validation": {
+    "targetedTests": "3 suites29 PASS",
+    "independentTests": "2 suites20 PASS",
+    "typecheck": "PASS",
+    "uiGuard": "PASS166",
+    "lint": "PASS",
+    "format": "PASS"
+  },
+  "normalNativeRouteMounted": false,
+  "settingsWriterHandoff": "PENDING_CONCENTRATED_HANDOFF_NO_DIRECT_MODIFICATION",
+  "sqlite77Registered": false,
+  "networkCalls": 0,
+  "migrationCalls": 0,
+  "hostedOperations": 0,
+  "coldEvidence": "Real SQLite reopen only; no Native relaunch claim"
+}

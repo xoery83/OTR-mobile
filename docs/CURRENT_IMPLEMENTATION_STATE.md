@@ -359,9 +359,15 @@ catalog keys Writers returned Native/Root. No route/registry/worker mounted.
 write/delete, terminal lane fence, pending-save denial and stale Account/repository
 callbacks ignored. Four new cancel regressions RED→GREEN plus actual Screen→existing
 Repo→SQLite save/Cancel/reopen restoration;4 suites42/types/UIguard166 PASS. No shared
-Host/SQL/Provider/device action or new Native entry. Main candidate4e1bedfc is fixed
-and independently reviewed, held without FF/deploy during Photo priority.
+Host/SQL/Provider/device action or new Native entry. Main4e1bedfc is independently reviewed
+and now serially FF/pushed with independent remote SHA and actual dirty-report
+bytes/mode/index/fullDiff preserved; no DEV deployment.
 
+Independent Client Sprint: default Profile entry now captures only committed Account,
+uses startup-initialized DB and rechecks generation before returning existing.local.
+Page loading/retry/cancel and stale-account response guards:29 tests, independent20,
+types/guard/lint/format PASS. Normal route/Settings Writer and SQLite77 remain pending;
+see AUTH_CLIENT_INTEGRATION_GAPS.md. No Backend/Provider/device action.
 No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See

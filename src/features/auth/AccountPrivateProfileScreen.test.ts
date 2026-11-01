@@ -4,6 +4,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AccountPrivateProfileScreen } from "./AccountPrivateProfileScreen";
+import { AccountPrivateProfilePage } from "./AccountPrivateProfilePage";
+import { getDefaultAccountPrivateProfileEditor } from "@/data/repositories/defaultAccountProfileRepository";
 import { privateProfileDraft } from "@/domain/auth/privateAccountProfile";
 import { createAccountProfileRepository } from "@/data/auth/accountProfileRepository";
 import { privateAccountProfileMigration } from "@/data/db/privateAccountProfileMigration";
@@ -66,6 +68,9 @@ vi.mock("@/ui/locale", () => ({ t: (v: string) => v }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
+vi.mock("@/data/repositories/defaultAccountProfileRepository", () => ({
+  getDefaultAccountPrivateProfileEditor: vi.fn(),
+}));
 vi.mock("./PrivateProfileNameFields", () => ({ PrivateProfileNameFields: "Fields" }));
 
 const a = { accountId: "11111111-1111-4111-8111-111111111111", generation: 4 };
@@ -136,6 +141,72 @@ beforeEach(() => {
   hooks.effects = [];
   hooks.generation = 4;
   hooks.writes = 0;
+  vi.mocked(getDefaultAccountPrivateProfileEditor).mockReset();
+});
+
+function pageFixture() {
+  const onCancel = vi.fn();
+  const render = () => {
+    hooks.cursor = 0;
+    const tree = nodes(AccountPrivateProfilePage({ onCancel }));
+    for (const effect of hooks.effects.splice(0)) effect();
+    return tree;
+  };
+  return { render, onCancel };
+}
+
+it("loads the normal page through the existing local repository entry", async () => {
+  const editor = { scope: a, local: fixture().local };
+  vi.mocked(getDefaultAccountPrivateProfileEditor).mockResolvedValueOnce(editor);
+  const page = pageFixture();
+  expect(page.render().some((v) => v.type === AccountPrivateProfileScreen)).toBe(false);
+  await tick();
+  const screen = page.render().find((v) => v.type === AccountPrivateProfileScreen);
+  expect(screen.props.scope).toEqual(a);
+  expect(screen.props.local).toBe(editor.local);
+  screen.props.onCancel();
+  screen.props.onCancel();
+  expect(page.onCancel).toHaveBeenCalledOnce();
+});
+
+it("hides A and ignores its late page entry after switching to B", async () => {
+  const pending = deferred<any>();
+  const local = fixture().local;
+  vi.mocked(getDefaultAccountPrivateProfileEditor)
+    .mockReturnValueOnce(pending.promise)
+    .mockResolvedValueOnce({ scope: b, local });
+  const page = pageFixture();
+  page.render();
+  hooks.generation = 5;
+  expect(page.render().some((v) => v.type === AccountPrivateProfileScreen)).toBe(false);
+  await tick();
+  pending.resolve({ scope: a, local });
+  await tick();
+  expect(
+    page.render().find((v) => v.type === AccountPrivateProfileScreen).props.scope,
+  ).toEqual(b);
+});
+
+it("retries a failed entry and cannot show a canceled late response", async () => {
+  const pending = deferred<any>();
+  vi.mocked(getDefaultAccountPrivateProfileEditor)
+    .mockRejectedValueOnce(Error("storage unavailable"))
+    .mockReturnValueOnce(pending.promise);
+  const page = pageFixture();
+  page.render();
+  await tick();
+  page
+    .render()
+    .find((v) => v.props.label === "common.tryAgain")
+    .props.onPress();
+  page.render();
+  const cancel = page.render().find((v) => v.props.label === "common.cancel").props;
+  cancel.onPress();
+  const writes = hooks.writes;
+  pending.resolve({ scope: a, local: fixture().local });
+  await tick();
+  expect(hooks.writes).toBe(writes);
+  expect(page.onCancel).toHaveBeenCalledOnce();
 });
 
 it("cancels once without saving edits or accepting retained callbacks", async () => {
