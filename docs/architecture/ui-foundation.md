@@ -11,7 +11,7 @@ labels or messages. Do not infer domain changes from display vocabulary.
 
 Use `useUiTheme` and `useThemedStyles` from `src/ui/theme.ts`. The system's
 `useColorScheme` selects the semantic palette; screens never branch on appearance.
-There is no OTR appearance preference or theme selector. Keep Expo automatic
+Owner-approved Auth Settings may persist a device-local System/Light/Dark override through the native Appearance API; hydrate it alongside locale without network. Keep Expo automatic
 appearance and the native navigation theme in agreement. Use semantic background,
 surface, elevated surface, text, separator, accent, selected, disabled, destructive,
 warning, success and informational roles. Only `src/ui/palette.ts` defines colors.

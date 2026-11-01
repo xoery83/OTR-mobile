@@ -172,6 +172,7 @@ function ScopedMembersSummary({
       <TripMembersSheet
         visible={open}
         members={open ? (setup?.members ?? null) : null}
+        context={setup?.context}
         onClose={() => setOpen(false)}
         onAddTraveler={onAddTraveler}
       />

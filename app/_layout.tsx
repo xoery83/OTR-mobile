@@ -5,6 +5,7 @@ import { useColorScheme } from "react-native";
 import { useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { t } from "@/ui/locale";
+import { hydrateUiAppearance } from "@/native/uiAppearancePreference";
 import { hydrateUiLocale } from "@/native/uiLocalePreference";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
@@ -40,6 +41,7 @@ export default function RootLayout() {
   const nativeTheme = scheme === "dark" ? DarkTheme : DefaultTheme;
   useEffect(() => {
     void hydrateUiLocale().catch(() => undefined);
+    void hydrateUiAppearance().catch(() => undefined);
   }, []);
   const [queryClient] = useState(
     () =>
@@ -172,6 +174,10 @@ export default function RootLayout() {
             <Stack.Screen
               name="account"
               options={{ headerShown: true, headerTitle: t("navigation.account") }}
+            />
+            <Stack.Screen
+              name="profile"
+              options={{ headerShown: true, headerTitle: t("privateProfile.title") }}
             />
             <Stack.Screen
               name="settings"

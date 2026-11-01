@@ -1,3 +1,5 @@
+import { privateAccountProfileMigration } from "./privateAccountProfileMigration";
+import { capturePhotoPngFilesMigration } from "./migrations/capturePhotoPngFiles";
 import { capturePhotoImportDecisionsDefinition } from "./migrations/capturePhotoImportDecisions";
 import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
 import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
@@ -1733,4 +1735,6 @@ export const migrations: Migration[] = [
   captureMixedInputsMigration,
   tripPersonCloudCreateMigration,
   { ...capturePhotoImportDecisionsDefinition, id: 75 },
+  capturePhotoPngFilesMigration,
+  privateAccountProfileMigration,
 ];

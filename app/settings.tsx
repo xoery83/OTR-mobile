@@ -1,3 +1,4 @@
+import { AuthSettingsSection } from "@/features/auth/AuthSettingsSection";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
@@ -53,6 +54,7 @@ export default function SettingsRoute() {
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
     >
+      <AuthSettingsSection onOpenProfile={() => router.push("/profile")} />
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         {t("settings.system")}
       </Text>

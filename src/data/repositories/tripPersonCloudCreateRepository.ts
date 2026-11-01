@@ -23,6 +23,7 @@ import {
 } from "@/domain/trip/tripPersonCloudCreate";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
+import { createTripPersonEditorDraft, type TripPersonDraftStorage } from "./tripPersonEditorDraft";
 const json = (v: unknown) => canonicalCoreJson(v as Json);
 
 // UI authoring stays bound to the opening Account/Trip across asynchronous DB access.
@@ -148,8 +149,10 @@ export function createTripPersonCloudCreateRepository(
   database: LedgerReadDatabase,
   account: () => Promise<string>,
   clock = () => new Date().toISOString(),
+  draftStorage?: TripPersonDraftStorage,
 ) {
   return {
+    drafts: draftStorage ? createTripPersonEditorDraft(draftStorage, account) : undefined,
     async createAuthored(
       input: Omit<PersonCloudCreate, "version" | "tripCreateOperationId">,
     ) {

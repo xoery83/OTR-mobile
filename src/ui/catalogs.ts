@@ -1,4 +1,39 @@
 export const en = {
+  "people.draftLoadFailed":
+    "Could not read this private draft. Retry or close without changing it.",
+  "people.draftSaveFailed":
+    "Could not confirm the draft change. Your entered name remains here.",
+  "people.draftOnlyHint":
+    "You can edit a private draft here. Adding this traveler to the Trip is currently unavailable.",
+  "authSettings.profileUnavailable": "Profile is currently unavailable.",
+  "authSettings.appearance": "Appearance",
+  "authSettings.appearance.system": "System",
+  "authSettings.appearance.light": "Light",
+  "authSettings.appearance.dark": "Dark",
+  "privateProfile.globalAkaDraft": "Global AKA (private draft)",
+  "privateProfile.akaDraftHint":
+    "Optional aliases, separate from Trip Nickname. Saved only as a private draft; never used to connect an account or claim a person.",
+  "privateProfile.addAkaDraft": "Add alias draft",
+  "privateProfile.displayName": "Display name",
+  "privateProfile.title": "Profile",
+  "privateProfile.saveDraft": "Save draft on this device",
+  "privateProfile.draftSaved": "Private draft saved on this device.",
+  "privateProfile.loadFailed": "Could not read your private draft. Try again.",
+  "privateProfile.saveFailed":
+    "Could not save your private draft. Your entered names remain here.",
+  "privateProfile.draftOnlyHint":
+    "These edits are a private draft on this device. Your cloud profile has not been changed.",
+  "privateProfile.travelDocumentName": "Travel document name",
+  "privateProfile.familyName": "Family name",
+  "privateProfile.givenNames": "Given names",
+  "privateProfile.fullName": "Full name as written on your travel document",
+  "privateProfile.nameFormat": "Name format",
+  "privateProfile.splitName": "Family and given names",
+  "privateProfile.unsplitName": "One complete name",
+  "privateProfile.privateHint":
+    "These names are private. Trip nicknames are managed separately.",
+  "privateProfile.optionalHint":
+    "Optional. Use the original characters shown on your travel document.",
   "formAutofill.current": "Current {field}: {value}",
   "formAutofill.sample": "Preview synthetic sample · No upload",
   "flightLookup.adopt": "Use {field}: {value}",
@@ -3113,6 +3148,34 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "people.draftLoadFailed": "未能读取此私密草稿。请重试，或关闭并保留原数据。",
+  "people.draftSaveFailed": "暂未能确认草稿修改，已保留此处填写的名字。",
+  "people.draftOnlyHint": "可在此编辑私有草稿，暂时无法将此同行人加入行程。",
+  "authSettings.profileUnavailable": "个人资料暂不可用。",
+  "authSettings.appearance": "外观",
+  "authSettings.appearance.system": "跟随系统",
+  "authSettings.appearance.light": "浅色",
+  "authSettings.appearance.dark": "深色",
+  "privateProfile.globalAkaDraft": "全局别名（私有草稿）",
+  "privateProfile.akaDraftHint":
+    "可选别名，与行程昵称独立。仅保存为私有草稿，不用于连接账号或认领同行人。",
+  "privateProfile.addAkaDraft": "添加别名草稿",
+  "privateProfile.displayName": "显示名称",
+  "privateProfile.title": "个人资料",
+  "privateProfile.saveDraft": "在此设备保存草稿",
+  "privateProfile.draftSaved": "私密草稿已保存在此设备。",
+  "privateProfile.loadFailed": "未能读取私密草稿，请重试。",
+  "privateProfile.saveFailed": "未能保存私密草稿，已保留此处填写的姓名。",
+  "privateProfile.draftOnlyHint": "这些修改是此设备上的私密草稿，尚未更改云端个人资料。",
+  "privateProfile.travelDocumentName": "旅行证件姓名",
+  "privateProfile.familyName": "姓",
+  "privateProfile.givenNames": "名",
+  "privateProfile.fullName": "旅行证件上的完整姓名",
+  "privateProfile.nameFormat": "姓名格式",
+  "privateProfile.splitName": "分开填写姓与名",
+  "privateProfile.unsplitName": "填写完整姓名",
+  "privateProfile.privateHint": "这些姓名为私密信息。旅行昵称单独管理。",
+  "privateProfile.optionalHint": "选填，请保留旅行证件上的原文字符。",
   "formAutofill.current": "当前{field}：{value}",
   "formAutofill.sample": "预览合成示例 · 不上传",
   "flightLookup.adopt": "使用{field}：{value}",

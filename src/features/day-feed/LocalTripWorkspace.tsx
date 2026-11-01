@@ -809,8 +809,7 @@ function LocalTripContent({
               }
             : {}),
           ...(setup?.context.tripId === owner &&
-          setup.context.generation === generation &&
-          setup.members.state === "AVAILABLE"
+          setup.context.generation === generation
             ? {
                 members: () => {
                   if (alive.current && generation === getAccountGeneration())
@@ -1080,11 +1079,16 @@ function LocalTripContent({
             </Text>
           ) : null}
           <TripMembersSheet
+            context={
+              setup?.context.tripId === selected.id &&
+              setup.context.generation === generation
+                ? setup.context
+                : undefined
+            }
             visible={
               menuMembersTrip === selected.id &&
               setup?.context.tripId === selected.id &&
-              setup.context.generation === generation &&
-              setup.members.state === "AVAILABLE"
+              setup.context.generation === generation
             }
             members={
               setup?.context.tripId === selected.id &&

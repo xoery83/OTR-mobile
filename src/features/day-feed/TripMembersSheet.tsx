@@ -1,3 +1,5 @@
+import { ScopedAddTravelerSheet } from "@/features/people/ScopedAddTravelerSheet";
+import type { AccountRequestContext } from "@/data/auth/accountRequestContext";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,13 +11,11 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
-import {
-  AddTravelerSheet,
-  type AddTravelerInput,
-} from "@/features/people/AddTravelerSheet";
+import { type AddTravelerInput } from "@/features/people/AddTravelerSheet";
 
 type Props = {
   visible: boolean;
+  context?: AccountRequestContext;
   members: TripPreparationSetup["members"] | null;
   onClose(): void;
   onAddTraveler?(input: AddTravelerInput): Promise<void>;
@@ -25,7 +25,13 @@ export function TripMembersSheet(props: Props) {
   return props.visible ? <VisiblePeopleSheet {...props} /> : null;
 }
 
-function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props) {
+function VisiblePeopleSheet({
+  visible,
+  members,
+  context,
+  onClose,
+  onAddTraveler,
+}: Props) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const [adding, setAdding] = useState(false);
@@ -44,9 +50,9 @@ function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props)
           safeTop={false}
           onLeft={onClose}
           rightLabel={t("people.addTraveler")}
-          rightDisabled={!roster || !onAddTraveler}
+          rightDisabled={!context}
           onRight={() => {
-            if (roster && onAddTraveler) setAdding(true);
+            if (context) setAdding(true);
           }}
         />
         <ScrollView
@@ -90,9 +96,10 @@ function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props)
             <UiText style={styles.meta}>{t("tripForm.membersUnknown")}</UiText>
           )}
         </ScrollView>
-        {onAddTraveler ? (
-          <AddTravelerSheet
-            visible={adding}
+        {adding && context ? (
+          <ScopedAddTravelerSheet
+            key={JSON.stringify([context.accountId, context.tripId, context.generation])}
+            context={context}
             onClose={() => setAdding(false)}
             onSave={onAddTraveler}
           />
