@@ -1,6 +1,16 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { AccountPrivateProfileScreen } from "./AccountPrivateProfileScreen";
 import { privateProfileDraft } from "@/domain/auth/privateAccountProfile";
+import { createAccountProfileRepository } from "@/data/auth/accountProfileRepository";
+import { privateAccountProfileMigration } from "@/data/db/privateAccountProfileMigration";
+import type {
+  PrivateProfileDatabase,
+  PrivateProfileLocalState,
+} from "@/data/auth/privateAccountProfileLocal";
 
 const hooks = vi.hoisted(() => ({
   cursor: 0,
@@ -55,6 +65,7 @@ vi.mock("@/ui/controls", () => ({
 vi.mock("@/ui/locale", () => ({ t: (v: string) => v }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("./PrivateProfileNameFields", () => ({ PrivateProfileNameFields: "Fields" }));
 
 const a = { accountId: "11111111-1111-4111-8111-111111111111", generation: 4 };
@@ -77,18 +88,25 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
-function fixture() {
+function fixture(withCancel = false) {
   let scope = a;
   const read = vi.fn(async () => null as any);
-  const saveDraft = vi.fn(async (input, draft) => ({
+  const saveDraft = vi.fn(async (input, draft): Promise<PrivateProfileLocalState> => ({
     accountId: input.accountId,
     draft,
     accepted: null,
   }));
   let local = { read, saveDraft };
+  const onCancel = vi.fn();
   const render = () => {
     hooks.cursor = 0;
-    const tree = nodes(AccountPrivateProfileScreen({ scope, local }));
+    const tree = nodes(
+      AccountPrivateProfileScreen({
+        scope,
+        local,
+        ...(withCancel ? { onCancel } : {}),
+      }),
+    );
     for (const effect of hooks.effects.splice(0)) effect();
     return tree;
   };
@@ -100,6 +118,8 @@ function fixture() {
     render,
     field,
     save,
+    onCancel,
+    cancel: () => render().find((v) => v.props.label === "common.cancel").props,
     replaceLocal() {
       local = { read: vi.fn(async () => null), saveDraft: vi.fn() };
       return local;
@@ -116,6 +136,143 @@ beforeEach(() => {
   hooks.effects = [];
   hooks.generation = 4;
   hooks.writes = 0;
+});
+
+it("cancels once without saving edits or accepting retained callbacks", async () => {
+  const f = fixture(true);
+  f.render();
+  await tick();
+  f.field().onChange({ ...privateProfileDraft(), displayName: "unsaved" });
+  const save = f.save();
+  const field = f.field();
+  const cancel = f.cancel();
+  cancel.onPress();
+  cancel.onPress();
+  save.onPress();
+  field.onChange({ ...privateProfileDraft(), displayName: "late" });
+  expect(f.onCancel).toHaveBeenCalledOnce();
+  expect(f.local.saveDraft).not.toHaveBeenCalled();
+});
+
+it("does not cancel a local save already in progress", async () => {
+  const f = fixture(true);
+  const pending = deferred<any>();
+  f.local.saveDraft.mockImplementationOnce(() => pending.promise);
+  f.render();
+  await tick();
+  const cancel = f.cancel();
+  f.save().onPress();
+  expect(f.cancel().disabled).toBe(true);
+  cancel.onPress();
+  expect(f.onCancel).not.toHaveBeenCalled();
+  pending.resolve({ accountId: a.accountId });
+  await tick();
+  f.cancel().onPress();
+  expect(f.onCancel).toHaveBeenCalledOnce();
+});
+
+it("ignores a pending read after cancellation", async () => {
+  const f = fixture(true);
+  const pending = deferred<any>();
+  f.local.read.mockImplementationOnce(() => pending.promise);
+  f.render();
+  f.cancel().onPress();
+  const writes = hooks.writes;
+  pending.resolve({ accountId: a.accountId, draft: privateProfileDraft() });
+  await tick();
+  expect(hooks.writes).toBe(writes);
+  expect(f.onCancel).toHaveBeenCalledOnce();
+});
+
+it("does not let A's retained cancel callback dismiss B", async () => {
+  const f = fixture(true);
+  f.render();
+  await tick();
+  const cancel = f.cancel();
+  f.switch();
+  f.render();
+  await tick();
+  cancel.onPress();
+  expect(f.onCancel).not.toHaveBeenCalled();
+  f.cancel().onPress();
+  expect(f.onCancel).toHaveBeenCalledOnce();
+});
+
+it("saves through the existing repository, cancels later edits and restores the saved draft after SQLite reopen", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-profile-editor-"));
+  const path = join(folder, "profile.db");
+  let sql = new DatabaseSync(path);
+  const network = vi.fn(async () => {
+    throw Error("UNEXPECTED_NETWORK");
+  });
+  const database: PrivateProfileDatabase = {
+    async getFirstAsync<T>(query: string, ...args: unknown[]) {
+      return (sql.prepare(query).get(...(args as never[])) ?? null) as T;
+    },
+    async runAsync(query: string, ...args: unknown[]) {
+      return sql.prepare(query).run(...(args as never[])) as never;
+    },
+    async withTransactionAsync(work) {
+      sql.exec("BEGIN");
+      try {
+        await work();
+        sql.exec("COMMIT");
+      } catch (error) {
+        sql.exec("ROLLBACK");
+        throw error;
+      }
+    },
+  };
+  const mount = () => {
+    const repository = createAccountProfileRepository(
+      async () => a.accountId,
+      { fetchImplementation: network },
+      undefined,
+      database,
+    );
+    const f = fixture(true);
+    f.local.read.mockImplementation(() => repository.local!.read(a));
+    f.local.saveDraft.mockImplementation((scope, draft) =>
+      repository.local!.saveDraft(scope, draft),
+    );
+    f.render();
+    return f;
+  };
+  try {
+    sql.exec(privateAccountProfileMigration.sql);
+    const f = mount();
+    await vi.waitFor(() => expect(f.field().draft).toEqual(privateProfileDraft()));
+    const draft = {
+      ...privateProfileDraft(),
+      displayName: "",
+      mode: "UNSPLIT" as const,
+      fullName: "  林 e\u0301  ",
+      familyName: "保留",
+      givenNames: "原文",
+    };
+    f.field().onChange(draft);
+    f.save().onPress();
+    await vi.waitFor(() =>
+      expect(
+        f.render().some((v) => v.props.children === "privateProfile.draftSaved"),
+      ).toBe(true),
+    );
+    f.field().onChange({ ...draft, fullName: "unsaved edit" });
+    f.cancel().onPress();
+    for (const value of hooks.values) value?.cleanup?.();
+    hooks.values = [];
+    hooks.effects = [];
+    sql.close();
+    sql = new DatabaseSync(path);
+    const restored = mount();
+    await vi.waitFor(() => expect(restored.field().draft).toEqual(draft));
+    expect(restored.local.saveDraft).not.toHaveBeenCalled();
+    expect(network).not.toHaveBeenCalled();
+  } finally {
+    for (const value of hooks.values) value?.cleanup?.();
+    sql.close();
+    rmSync(folder, { recursive: true, force: true });
+  }
 });
 
 it("reads and saves an optional private Unicode draft without making a cloud call", async () => {
@@ -231,19 +388,22 @@ it("does not expose a foreign or unreadable persisted draft", async () => {
 });
 
 it("rejects retained callbacks when the same Account receives a different repository", async () => {
-  const f = fixture();
+  const f = fixture(true);
   f.render();
   await tick();
   const oldField = f.field();
   const oldSave = f.save();
+  const oldCancel = f.cancel();
   const replacement = f.replaceLocal();
   f.render();
   await tick();
   oldField.onChange({ ...privateProfileDraft(), displayName: "old store" });
   oldSave.onPress();
+  oldCancel.onPress();
   expect(f.field().draft.displayName).toBe("");
   expect(f.local.saveDraft).not.toHaveBeenCalled();
   expect(replacement.saveDraft).not.toHaveBeenCalled();
+  expect(f.onCancel).not.toHaveBeenCalled();
 });
 
 it("ignores a read after unmount and hides fields after a generation change", async () => {

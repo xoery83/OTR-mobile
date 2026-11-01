@@ -348,6 +348,13 @@ Local draft Screen3970 now uses only that repository's local read/saveDraft;
 explicit device-only copy, identity/late-callback/busy/error fences:4s41/types/
 lint/UIguard166 and independent2s26 NO_BLOCKER. Dedicated Screen and six new
 catalog keys Writers returned Native/Root. No route/registry/worker mounted.
+1 November Photo Focus local continuation adds optional owning Cancel: no local
+write/delete, terminal lane fence, pending-save denial and stale Account/repository
+callbacks ignored. Four new cancel regressions RED→GREEN plus actual Screen→existing
+Repo→SQLite save/Cancel/reopen restoration;4 suites42/types/UIguard166 PASS. No shared
+Host/SQL/Provider/device action or new Native entry. Main candidate4e1bedfc is fixed
+and independently reviewed, held without FF/deploy during Photo priority.
+
 No actual Hosted private storage, permissions, UI, registration
 gate or sync implementation is enabled. SQL auth.uid/class are local unit fixtures,
 not OTP proof. New RLS/GRANT needs exact Owner Gate after review. See

@@ -35,9 +35,11 @@ type Feedback = "draftSaved" | "loadFailed" | "saveFailed";
 export function AccountPrivateProfileScreen({
   scope,
   local,
+  onCancel,
 }: {
   scope: AccountScope;
   local: LocalProfile;
+  onCancel?(): void;
 }) {
   useUiLocale();
   const { accountId, generation: accountGeneration } = scope;
@@ -148,6 +150,19 @@ export function AccountPrivateProfileScreen({
               onPress={() => void save()}
             />
           </>
+        ) : null}
+        {onCancel ? (
+          <UiButton
+            label={t("common.cancel")}
+            variant="secondary"
+            disabled={visible?.busy ?? false}
+            onPress={() => {
+              const current = lane.current;
+              if (!valid(current) || current.busy) return;
+              current.active = false;
+              onCancel();
+            }}
+          />
         ) : null}
         {visible?.feedback ? (
           <UiText

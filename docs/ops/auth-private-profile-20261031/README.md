@@ -45,3 +45,12 @@ failed local saves retain entered names. Native delegated this dedicated file,
 not Settings/Account/navigation or migration/worker activation. Root and Native
 delegated only the six new `privateProfile.*` copy keys; existing keys stay intact.
 Native registration and device E2E remain separate work, not a current UI PASS.
+
+Photo Focus local continuation: `AccountPrivateProfileScreen` accepts an optional
+`onCancel` owning-dismiss callback. Cancel never saves or deletes a persisted draft;
+it invalidates this editor lane before dismissal so duplicate/stale callbacks cannot
+save or dismiss another Account. A save in progress disables cancellation. Existing
+callers without the callback remain unchanged. The page→existing Repository→real
+SQLite save→later unsaved edit→Cancel→close/reopen test restores exactly the saved
+Unicode draft. Local L1/L2 only: no Native entry, migration registration, cloud sync
+or Photo/shared DEV action. See `LOCAL_CANCEL_GOLDEN_SLICE.json`.

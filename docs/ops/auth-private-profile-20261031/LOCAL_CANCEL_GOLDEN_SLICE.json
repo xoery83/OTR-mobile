@@ -1,0 +1,37 @@
+{
+  "status": "LOCAL_SCREEN_REPOSITORY_SQLITE_SAVE_CANCEL_REOPEN_PASS",
+  "goldenSlice": "Read private draft -> edit -> explicit local save -> edit again -> Cancel -> real SQLite close/reopen -> saved Unicode draft restored",
+  "firstFailure": "AccountPrivateProfileScreen had no cancellation entry/callback",
+  "delta": [
+    "Optional onCancel using canonical common.cancel control",
+    "Invalidate current editor lane before one owning dismiss callback",
+    "No cancellation during pending save; stale Account/repository/unmount callbacks denied"
+  ],
+  "reuse": [
+    "Existing AccountProfileRepository.local",
+    "Existing generation/apply fence",
+    "Existing private SQLite draft data source",
+    "Existing Profile NameFields and UI primitives"
+  ],
+  "validation": {
+    "red": "4 new cancel tests failed missing control before repair",
+    "green": "4 suites42 tests PASS including real SQLite reopen",
+    "typecheck": "PASS",
+    "uiGuard": "PASS166",
+    "scopedLint": "PASS",
+    "format": "PASS"
+  },
+  "networkCalls": 0,
+  "hostConfigSqlChanges": 0,
+  "sharedDeviceActions": 0,
+  "sqliteMigrationRegistryChanges": 0,
+  "nativeRouteMounted": false,
+  "nativeE2E": "PENDING_OWNING_ENTRY_AND_DEVICE_WINDOW",
+  "notClaimed": [
+    "Hosted Profile sync",
+    "AKA/Nickname implementation",
+    "Private Profile schema/RLS installation",
+    "Native cold E2E"
+  ],
+  "independentReview": "NO_BLOCKER_LOCAL_CANCEL_CANDIDATE_ONLY_13_TESTS_PASS"
+}
