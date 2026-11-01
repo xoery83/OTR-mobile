@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "authority": "PREVIEW_ONLY_NOT_AUTHORIZED_FOR_DISPATCH",
+  "account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "required_business_scopes": [
+    "otr.trips.read",
+    "otr.trips.write"
+  ],
+  "create": {
+    "request_id": "e9b4a200-3b22-461f-bf3f-f4347b9dfb67",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item": {
+      "family": "P3",
+      "title": "Consumer MCP QA Stay (unbooked)",
+      "property_name": "Consumer MCP QA Lodge",
+      "notes": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+      "dates": {
+        "start_date": "2026-12-12",
+        "end_date": "2026-12-13"
+      }
+    }
+  },
+  "update": {
+    "request_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "expected_revision": 1,
+    "change": {
+      "kind": "DATES",
+      "dates": {
+        "start_date": "2026-12-11",
+        "end_date": "2026-12-13"
+      }
+    }
+  },
+  "expected": {
+    "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "create_command_sha256": "52484a8b5d90794ebe7d91e3eaeb8ea16fabfed8c9fd2e864b5024df45735647",
+    "update_command_sha256": "56498bb7794b7ca4ccb9895f20ed9af8d66d52acf75ce3dbd2daf2e13ad51b2c",
+    "create_preview_digest": "09afa70b340a3a296e7fc0ae728439c49c09f72940807f91afd03b99ed54edc0",
+    "update_preview_digest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7"
+  },
+  "preconditions": [
+    "Fresh explicit business Write consent; never upgrade the old Read grant silently.",
+    "Exact Owner-reviewed operations and trusted confirmation before submission.",
+    "Current legal Core capability, expected revision and original-operation recovery.",
+    "Actual Native before/after observation; no title-only visual PASS."
+  ]
+}

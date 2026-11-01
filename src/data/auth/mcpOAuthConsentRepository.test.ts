@@ -6,14 +6,15 @@ const id = "1f3d7935-1bdc-4952-8d7f-0f72077368c1";
 const other = "33333333-3333-4333-8333-333333333333";
 const clientId = "22222222-2222-4222-8222-222222222222";
 const redirectUri = "https://chatgpt.com/connector/oauth/unit-draft-fixture";
-function fixture() {
+function fixture(businessAccess?: "READ_WRITE", accountIds = [id]) {
   const config = {
     clientId,
     redirectUris: [redirectUri],
     qaEmail: "unit@example.invalid",
     publishableKey: "sb_publishable_unit_fixture_no_live_credentials",
-    accountIds: [id],
+    accountIds,
     expiresAt: Date.now() + 60000,
+    ...(businessAccess ? { businessAccess } : {}),
   };
   const details = {
     authorization_id: "unit-authorization",
@@ -54,6 +55,59 @@ function fixture() {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+});
+
+it("Write requires a presented fresh decision and never reuses an authorized redirect", async () => {
+  const q = fixture("READ_WRITE");
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  expect(await q.repo.load()).toMatchObject({
+    kind: "CONSENT",
+    businessAccess: "READ_WRITE",
+    accountId: id,
+  });
+  q.oauth.getAuthorizationDetails.mockResolvedValueOnce({
+    data: { redirect_url: redirectUri + "?code=unit" },
+    error: null,
+  });
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  await q.repo.close();
+});
+
+it("Write binds the shown Account and rechecks it before explicit approval", async () => {
+  const q = fixture("READ_WRITE", [id, other]);
+  await q.repo.requestCode("unit@example.invalid");
+  expect(await q.repo.verifyCode("unit@example.invalid", "12345678")).toMatchObject({
+    kind: "CONSENT",
+    businessAccess: "READ_WRITE",
+    accountId: id,
+  });
+  q.auth.getUser.mockResolvedValue({
+    data: { user: { id: other, is_anonymous: false } },
+    error: null,
+  });
+  q.oauth.getAuthorizationDetails.mockResolvedValue({
+    data: { ...q.details, user: { id: other } },
+    error: null,
+  });
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  await q.repo.close();
+});
+
+it("Write explicit approval uses the existing provider decision and normal cleanup", async () => {
+  const q = fixture("READ_WRITE");
+  await q.repo.load();
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  expect(await q.repo.decide(true)).toEqual({
+    kind: "REDIRECT",
+    url: redirectUri + "?code=unit&state=unit",
+  });
+  expect(q.oauth.approveAuthorization).toHaveBeenCalledOnce();
+  await q.repo.close();
+  expect(q.auth.signOut).toHaveBeenCalledWith({ scope: "local" });
 });
 
 it("uses formal existing-user Email OTP, fresh identity and explicit provider consent", async () => {
@@ -126,30 +180,39 @@ it.each(["openid offline_access", "offline_access openid"])(
   async (scope) => {
     const q = fixture();
     q.oauth.getAuthorizationDetails.mockResolvedValue({
-      data: { ...q.details, scope }, error: null,
+      data: { ...q.details, scope },
+      error: null,
     });
     await q.repo.decide(true);
     expect(q.oauth.approveAuthorization).toHaveBeenCalledOnce();
   },
 );
 
-it.each(["offline_access", "openid offline_access email", "openid offline_access offline_access", "openid profile"])(
-  "refuses any expanded or duplicate provider scopes: %s",
-  async (scope) => {
-    const q = fixture();
-    q.oauth.getAuthorizationDetails.mockResolvedValue({ data: { ...q.details, scope }, error: null });
-    await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
-    expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
-  },
-);
+it.each([
+  "offline_access",
+  "openid offline_access email",
+  "openid offline_access offline_access",
+  "openid profile",
+])("refuses any expanded or duplicate provider scopes: %s", async (scope) => {
+  const q = fixture();
+  q.oauth.getAuthorizationDetails.mockResolvedValue({
+    data: { ...q.details, scope },
+    error: null,
+  });
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+});
 
 it.each([
-  { scope: ["openid"] }, { scope: ["openid offline_access"] },
-  { scope: null }, { scope: { value: "openid" } },
+  { scope: ["openid"] },
+  { scope: ["openid offline_access"] },
+  { scope: null },
+  { scope: { value: "openid" } },
 ])("refuses non-string scope metadata: $scope", async ({ scope }) => {
   const q = fixture();
   q.oauth.getAuthorizationDetails.mockResolvedValueOnce({
-    data: { ...q.details, scope: scope as unknown as string }, error: null,
+    data: { ...q.details, scope: scope as unknown as string },
+    error: null,
   });
   await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
   expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
@@ -303,8 +366,14 @@ it("permits the exact SDK loopback and pins the authorization's selected redirec
     auth: second.auth,
   } as unknown as SupabaseClient);
   expect(await sdk.load()).toMatchObject({ kind: "CONSENT" });
-  second.oauth.approveAuthorization.mockResolvedValueOnce({ data: { redirect_url: loopback + "?code=unit&state=unit" }, error: null });
-  expect(await sdk.decide(true)).toEqual({ kind: "REDIRECT", url: loopback + "?code=unit&state=unit" });
+  second.oauth.approveAuthorization.mockResolvedValueOnce({
+    data: { redirect_url: loopback + "?code=unit&state=unit" },
+    error: null,
+  });
+  expect(await sdk.decide(true)).toEqual({
+    kind: "REDIRECT",
+    url: loopback + "?code=unit&state=unit",
+  });
   for (const uri of [
     "http://localhost:18764/callback",
     "http://127.0.0.1:18765/callback",

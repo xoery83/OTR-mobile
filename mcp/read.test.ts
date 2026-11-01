@@ -175,7 +175,12 @@ function fixture() {
     };
   return { actor, graph, ids, state, gateway, commands, read, seen };
 }
-async function protocol(f = fixture(), token = "a", clientName = "test-client") {
+async function protocol(
+  f = fixture(),
+  token = "a",
+  clientName = "test-client",
+  tokenLifetimeMs = 60000,
+) {
   let handle: ReturnType<typeof createMcpHandler>;
   const server = loopbackServer((r) => handle(r));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -195,7 +200,7 @@ async function protocol(f = fixture(), token = "a", clientName = "test-client") 
             accountId: user.id,
             resource,
             scopes: ["otr.trips.read"],
-            expiresAt: Date.now() + 60000,
+            expiresAt: Date.now() + tokenLifetimeMs,
             read: f.read(credential),
           }
         : null;
@@ -320,6 +325,45 @@ it("enforces real Backend Trip + Item ACL, cross-Trip IDs and client-independent
     }),
   );
 });
+it.each(["BACKEND_401", "EXPIRED_AFTER_BACKEND"] as const)(
+  "logs only the observed Read auth source %s while retaining the public challenge",
+  async (source) => {
+    const f = fixture(),
+      read = f.read;
+    const realNow = Date.now.bind(Date);
+    f.read = (token) => async (path, signal) => {
+      if (source === "BACKEND_401")
+        return new Response("private upstream diagnostic", { status: 401 });
+      const response = await read(token)(path, signal);
+      vi.spyOn(Date, "now").mockReturnValue(realNow() + 2000);
+      return response;
+    };
+    const p = await protocol(f, "a", "test-client", 1000);
+    const result = await p.client.callTool({
+      name: "get_trip_item",
+      arguments: { trip_id: trip, item_id: f.ids[1] },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content).toEqual([{ type: "text", text: "AUTH_REQUIRED" }]);
+    expect(result._meta?.["mcp/www_authenticate"]).toEqual([
+      expect.stringContaining('error="invalid_token"'),
+    ]);
+    expect(JSON.stringify(result)).not.toContain(source);
+    const event = p.logs.find(
+      (value) => (value as { tool?: string }).tool === "get_trip_item",
+    );
+    expect(event).toEqual({
+      requestId: expect.any(String),
+      status: 200,
+      durationMs: expect.any(Number),
+      tool: "get_trip_item",
+      errorCode: "AUTH_REQUIRED",
+      authFailureSource: source,
+    });
+    for (const secret of [a, trip, f.ids[1], "private upstream diagnostic", "Synthetic"])
+      expect(JSON.stringify(event)).not.toContain(secret);
+  },
+);
 it("date overlap, inclusive single day, empty range, UUID pagination and snapshot drift", async () => {
   const f = fixture(),
     tools = createReadTools(a, f.read());

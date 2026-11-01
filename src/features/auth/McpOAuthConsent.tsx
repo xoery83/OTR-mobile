@@ -144,9 +144,19 @@ export function McpOAuthConsent({
               <Text style={styles.body}>
                 {t("oauthConsent.request", { client: view.clientName })}
               </Text>
-              <Text style={styles.body}>{t("oauthConsent.scope")}</Text>
+              <Text style={styles.body}>
+                {t(
+                  view.businessAccess === "READ_WRITE"
+                    ? "oauthConsent.writeScope"
+                    : "oauthConsent.scope",
+                )}
+              </Text>
               <UiButton
-                label={t("oauthConsent.allow")}
+                label={t(
+                  view.businessAccess === "READ_WRITE"
+                    ? "oauthConsent.allowWrite"
+                    : "oauthConsent.allow",
+                )}
                 disabled={busy}
                 onPress={() =>
                   void run(async () => finish(await repository!.decide(true)))

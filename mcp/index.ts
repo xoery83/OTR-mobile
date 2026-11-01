@@ -1,4 +1,9 @@
-export { createMcpHandler, type McpAuthorization, type McpOptions } from "./server";
+export {
+  createMcpHandler,
+  type McpAuthorization,
+  type McpOptions,
+  type McpLogEvent,
+} from "./server";
 export {
   createOAuthAuthorizer,
   protectedResourceMetadata,

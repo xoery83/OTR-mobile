@@ -15,6 +15,8 @@ import {
 
 // The host binds this GET-only port to its verified actor. No token or actor override is a tool argument.
 export type BackendRead = (path: string, signal: AbortSignal) => Promise<Response>;
+export type ReadAuthFailureSource =
+  "EXPIRED_BEFORE_BACKEND" | "EXPIRED_AFTER_BACKEND" | "BACKEND_401";
 export class ReadError extends Error {
   constructor(
     public readonly code:
@@ -25,6 +27,7 @@ export class ReadError extends Error {
       | "STALE_CURSOR"
       | "READ_LIMIT"
       | "AUTH_REQUIRED",
+    public readonly authFailureSource?: ReadAuthFailureSource,
   ) {
     super(code);
   }
@@ -52,6 +55,7 @@ export function createReadTools(
             : response.status === 401
               ? "AUTH_REQUIRED"
               : "BACKEND_UNAVAILABLE",
+          response.status === 401 ? "BACKEND_401" : undefined,
         );
       }
       return await readBoundedJson(response, 67108864, boundary);

@@ -100,7 +100,7 @@ it.each([false, true])(
   },
 );
 
-it.each(["create_trip_item", "get_operation_status"])(
+it.each(["create_trip_item", "update_trip_item", "create_trip", "get_operation_status"])(
   "re-links when authorization expires during %s",
   async (name) => {
     const accountId = randomUUID(),
@@ -146,7 +146,20 @@ it.each(["create_trip_item", "get_operation_status"])(
           dates: { start_date: "2026-12-10", end_date: "2026-12-11" },
         },
       };
-      const { prepareCreate, mutationIdentity } = await import("./mutation");
+      const { prepareCreate, prepareUpdate, prepareTrip, mutationIdentity } =
+        await import("./mutation");
+      const update = {
+        request_id: randomUUID(),
+        trip_id: tripId,
+        item_id: randomUUID(),
+        expected_revision: 1,
+        change: { kind: "TEXT", title: "Private edit input" },
+      };
+      const tripCreate = {
+        request_id: randomUUID(),
+        name: "Private trip input",
+        destinations: [],
+      };
       const args =
         name === "create_trip_item"
           ? {
@@ -157,13 +170,47 @@ it.each(["create_trip_item", "get_operation_status"])(
                 prepareCreate(accountId, create),
               ).preview_digest,
             }
-          : { trip_id: tripId, operation_id: randomUUID(), target: "ITEM" };
+          : name === "update_trip_item"
+            ? {
+                ...update,
+                mode: "APPLY",
+                preview_digest: mutationIdentity(
+                  accountId,
+                  prepareUpdate(accountId, update),
+                ).preview_digest,
+              }
+            : name === "create_trip"
+              ? {
+                  ...tripCreate,
+                  mode: "APPLY",
+                  preview_digest: mutationIdentity(
+                    accountId,
+                    prepareTrip(accountId, tripCreate),
+                  ).preview_digest,
+                }
+              : { trip_id: tripId, operation_id: randomUUID(), target: "ITEM" };
       const result = await client.callTool({ name, arguments: args });
       expect(result.isError).toBe(true);
       expect(result._meta?.["mcp/www_authenticate"]).toEqual([
         expect.stringContaining('error="invalid_token"'),
       ]);
-      expect(result.structuredContent).toBeUndefined();
+      if (name === "get_operation_status")
+        expect(result.structuredContent).toBeUndefined();
+      else {
+        expect(result.structuredContent).toMatchObject({
+          outcome: "UNKNOWN",
+          operation_id:
+            name === "create_trip_item"
+              ? create.request_id
+              : name === "update_trip_item"
+                ? update.request_id
+                : tripCreate.request_id,
+          current_revision: null,
+          summary: "",
+        });
+        expect(JSON.stringify(result)).not.toContain("Private");
+        expect(backend).toHaveBeenCalledTimes(1);
+      }
       expect(backend).toHaveBeenCalled();
     } finally {
       vi.restoreAllMocks();

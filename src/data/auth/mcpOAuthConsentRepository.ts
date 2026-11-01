@@ -26,6 +26,7 @@ export const mcpConsentConfigSchema = z.object({
   publishableKey: z.string().refine(isSupabaseDevPublicKey, "PUBLIC_DEV_KEY_REQUIRED"),
   accountIds: z.array(z.uuid()).min(1).max(2),
   expiresAt: z.number().int().positive(),
+  businessAccess: z.literal("READ_WRITE").optional(),
 });
 export type McpConsentConfig = z.infer<typeof mcpConsentConfigSchema>;
 export class McpConsentError extends Error {
@@ -37,7 +38,12 @@ export class McpConsentError extends Error {
   }
 }
 export type McpConsentView =
-  | Readonly<{ kind: "CONSENT"; accountId: string; clientName: string }>
+  | Readonly<{
+      kind: "CONSENT";
+      accountId: string;
+      clientName: string;
+      businessAccess?: "READ_WRITE";
+    }>
   | Readonly<{ kind: "REDIRECT"; url: string }>;
 
 // Browser-only facade over the SAME Supabase Auth SDK, with its normal OTP/session.
@@ -57,6 +63,8 @@ export function createMcpOAuthConsentRepository(
   let closeTask: Promise<void> | undefined;
   let activeTask: Promise<unknown> | undefined;
   let expectedRedirect: string | undefined;
+  let presentedWriteAccount: string | undefined;
+  const write = config.businessAccess === "READ_WRITE";
   const current = () => {
     if (closed || Date.now() >= config.expiresAt) throw new McpConsentError("CLOSED");
   };
@@ -177,7 +185,10 @@ export function createMcpOAuthConsentRepository(
       await client.auth.oauth.getAuthorizationDetails(authorizationId);
     current();
     if (error || !data) throw new McpConsentError("UNAVAILABLE");
-    if ("redirect_url" in data) return redirect(data.redirect_url);
+    if ("redirect_url" in data) {
+      if (write) throw new McpConsentError("REQUEST_CHANGED");
+      return redirect(data.redirect_url);
+    }
     if (
       data.authorization_id !== authorizationId ||
       data.client.id !== config.clientId ||
@@ -192,7 +203,13 @@ export function createMcpOAuthConsentRepository(
       kind: "CONSENT",
       accountId: identity.user.id,
       clientName: z.string().min(1).max(200).parse(data.client.name),
+      ...(write ? { businessAccess: "READ_WRITE" as const } : {}),
     });
+  }
+  async function presentedDetails(): Promise<McpConsentView> {
+    const view = await details();
+    if (write && view.kind === "CONSENT") presentedWriteAccount = view.accountId;
+    return view;
   }
   function close() {
     if (closeTask) return closeTask;
@@ -217,6 +234,7 @@ export function createMcpOAuthConsentRepository(
       return run(async () => {
         if (email.toLowerCase() !== config.qaEmail.toLowerCase())
           throw new McpConsentError("CLOSED");
+        presentedWriteAccount = undefined;
         const { error } = await client.auth.signInWithOtp({
           email: z.email().parse(email),
           options: { shouldCreateUser: false },
@@ -226,6 +244,7 @@ export function createMcpOAuthConsentRepository(
     },
     verifyCode(email: string, code: string) {
       return run(async () => {
+        presentedWriteAccount = undefined;
         if (email.toLowerCase() !== config.qaEmail.toLowerCase())
           throw new McpConsentError("CLOSED");
         const { error } = await client.auth.verifyOtp({
@@ -237,22 +256,29 @@ export function createMcpOAuthConsentRepository(
           type: "email",
         });
         if (error) otpFailure(error.status);
-        return details();
+        return presentedDetails();
       });
     },
     load() {
-      return run(details);
+      return run(presentedDetails);
     },
     decide(allow: boolean) {
       return run(async () => {
+        const shownAccount = presentedWriteAccount;
+        if (write && allow && !shownAccount) throw new McpConsentError("REQUEST_CHANGED");
         const snapshot = await details();
         if (snapshot.kind === "REDIRECT") return snapshot;
+        if (write && allow && snapshot.accountId !== shownAccount) {
+          presentedWriteAccount = undefined;
+          throw new McpConsentError("REQUEST_CHANGED");
+        }
         const options = { skipBrowserRedirect: true };
         const { data, error } = allow
           ? await client.auth.oauth.approveAuthorization(authorizationId, options)
           : await client.auth.oauth.denyAuthorization(authorizationId, options);
         current();
         if (error || !data) throw new McpConsentError("UNAVAILABLE");
+        presentedWriteAccount = undefined;
         return redirect(data.redirect_url);
       });
     },
