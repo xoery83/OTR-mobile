@@ -1,3 +1,4 @@
+import { createP3SourceScanPort } from "@/native/p3FormScan";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -92,7 +93,7 @@ export function ManualItineraryContent({
     ) : family === "P1" ? (
       <P1PlanEditor {...props} initialStartTime={initialStartTime} />
     ) : family === "P3" ? (
-      <P3StayEditor {...props} />
+      <P3StayEditor {...props} sourceScan={createP3SourceScanPort()} />
     ) : family === "P4" ? (
       <P4RentalEditor {...props} />
     ) : family === "P5" ? (

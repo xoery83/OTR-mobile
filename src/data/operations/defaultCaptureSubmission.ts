@@ -128,13 +128,13 @@ async function withLocalProcessing(
     }),
   );
 }
-export async function createDefaultCaptureSubmissionSession(
-  context?: AccountRequestContext,
-  lineageRevisions?: Readonly<Record<string, number>>,
-) {
-  return createCaptureSubmissionSession({
-    context,
-    lineageRevisions,
+export async function getDefaultCaptureSubmissionDependencies(): Promise<
+  Omit<
+    Parameters<typeof createCaptureSubmissionSession>[0],
+    "context" | "lineageRevisions"
+  >
+> {
+  return {
     repository: await getDefaultCaptureSubmissionRepository(),
     getActiveUserId: requireActiveUserId,
     newId: randomUUID,
@@ -153,6 +153,17 @@ export async function createDefaultCaptureSubmissionSession(
       });
       return { reader: await openCaptureUriReader(verified.uri) };
     },
+  };
+}
+
+export async function createDefaultCaptureSubmissionSession(
+  context?: AccountRequestContext,
+  lineageRevisions?: Readonly<Record<string, number>>,
+) {
+  return createCaptureSubmissionSession({
+    ...(await getDefaultCaptureSubmissionDependencies()),
+    context,
+    lineageRevisions,
   });
 }
 

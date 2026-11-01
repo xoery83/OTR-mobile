@@ -1,3 +1,4 @@
+import { createP3SourceScanPort } from "@/native/p3FormScan";
 import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
 import { useCallback, useState, useSyncExternalStore } from "react";
@@ -185,6 +186,7 @@ export function P3Detail() {
       </NavigationContentFrame>
       {editing && visible?.editor ? (
         <P3StayEditor
+          sourceScan={createP3SourceScanPort()}
           tripId={tripId}
           itemId={itemId}
           opened={visible.editor}
