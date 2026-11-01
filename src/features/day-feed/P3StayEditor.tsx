@@ -164,10 +164,7 @@ export function P3StayEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
-  syntheticScan?: (
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ) => SyntheticStayResult | Promise<SyntheticStayResult>;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<SyntheticStayResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
@@ -201,6 +198,7 @@ export function P3StayEditor({
             generation,
             revision: formRevision.current,
             mode: source.draft.mode,
+            itemRevision: source.draft.baseRevision,
           }
         : null;
   }, [source, tripId, itemId, generation]);
@@ -447,26 +445,24 @@ export function P3StayEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
-                  {syntheticScan ? (
-                    <P3SyntheticScan
-                      scan={syntheticScan}
-                      disabled={saving || frozen || status === "UNAVAILABLE"}
-                      context={() =>
-                        current() &&
-                        !busyRef.current &&
-                        !frozenRef.current &&
-                        !unavailableRef.current
-                          ? scanContext.current
-                          : null
-                      }
-                      fields={() => fieldsRef.current}
-                      onApply={(next) => {
-                        const { location, ...rest } = next;
-                        change(location === fieldsRef.current?.location ? rest : next);
-                        setNameQuery(null);
-                      }}
-                    />
-                  ) : null}
+                  <P3SyntheticScan
+                    scan={syntheticScan}
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                    context={() =>
+                      current() &&
+                      !busyRef.current &&
+                      !frozenRef.current &&
+                      !unavailableRef.current
+                        ? scanContext.current
+                        : null
+                    }
+                    fields={() => fieldsRef.current}
+                    onApply={(next) => {
+                      const { location, ...rest } = next;
+                      change(location === fieldsRef.current?.location ? rest : next);
+                      setNameQuery(null);
+                    }}
+                  />
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.stayName")}</Text>
                     <UiTextInput

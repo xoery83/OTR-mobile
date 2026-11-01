@@ -869,8 +869,7 @@ it("synthetic Create review updates only Draft, then uses the original repositor
     save: vi.fn(async () => ({ itemId: "stay" })),
   };
   await open(p, repo);
-  node("formAutofill.scan").onPress();
-  render(p);
+  await scanFile(p);
   for (let i = 0; i < 3; i++) {
     node("formAutofill.keep").onPress();
     render(p);
@@ -910,8 +909,7 @@ it("rejects an old review after a user edits away and back to the same text", as
     })),
     save: vi.fn(),
   });
-  node("formAutofill.scan").onPress();
-  render(p);
+  await scanFile(p);
   node("formAutofill.keep").onPress();
   render(p);
   const apply = node("ui.apply").onPress;
@@ -943,8 +941,7 @@ it("Cancel invalidates retained Apply callbacks without touching the draft", asy
     })),
     save: vi.fn(),
   });
-  node("formAutofill.scan").onPress();
-  render(p);
+  await scanFile(p);
   node("formAutofill.keep").onPress();
   render(p);
   const apply = node("ui.apply").onPress;
@@ -989,8 +986,7 @@ it.each(["Cancel", "Draft", "Account", "Trip"] as const)(
       save: vi.fn(),
     };
     await open(p, repo);
-    void node("formAutofill.scan").onPress();
-    render(p);
+    await scanFile(p);
     if (change === "Cancel")
       state.nodes
         .filter((entry) => entry.label === "common.cancel")
@@ -1016,3 +1012,328 @@ it.each(["Cancel", "Draft", "Account", "Trip"] as const)(
     }
   },
 );
+
+vi.mock("@/native/capturePicker", () => ({
+  pickCaptureMaterial: vi.fn(async () => [
+    {
+      source: "files",
+      name: "Synthetic booking.pdf",
+      temporaryUri: "synthetic://booking",
+      typeHint: "application/pdf",
+    },
+  ]),
+}));
+async function scanFile(p: ReturnType<typeof props>) {
+  await node("formAutofill.files").onPress();
+  render(p);
+  void node("formAutofill.scan").onPress();
+  render(p);
+}
+
+vi.mock("@/data/files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  probeRetainedTripPhotoIdentity: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
+it.each(["CREATE", "EDIT"] as const)(
+  "P3 %s scans selected material through the real Form and SQLite Repository Save",
+  async (mode) => {
+    const { DatabaseSync } = await import("node:sqlite");
+    const { createHash, randomUUID } = await import("node:crypto");
+    const { migrations } = await import("@/data/db/migrations");
+    const { serializeDatabaseTransactions } =
+      await import("@/data/db/databaseConnection");
+    const { createTripCoreV2Repository } =
+      await import("@/data/repositories/tripCoreV2Repository");
+    const { createTripRepository } = await vi.importActual<
+      typeof import("@/data/repositories/tripRepository")
+    >("@/data/repositories/tripRepository");
+    const { createManualStayRepository } = await vi.importActual<
+      typeof import("@/data/repositories/manualStayRepository")
+    >("@/data/repositories/manualStayRepository");
+    const sql = new DatabaseSync(":memory:");
+    try {
+      sql.exec("PRAGMA foreign_keys=ON");
+      for (const migration of migrations) sql.exec(migration.sql);
+      const database = serializeDatabaseTransactions({
+        async getFirstAsync<T>(query: string, ...args: unknown[]) {
+          return (sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+        },
+        async getAllAsync<T>(query: string, ...args: unknown[]) {
+          return sql.prepare(query).all(...(args as never[])) as T[];
+        },
+        async runAsync(query: string, ...args: unknown[]) {
+          return sql.prepare(query).run(...(args as never[])) as never;
+        },
+        async withTransactionAsync(work: () => Promise<void>) {
+          sql.exec("BEGIN");
+          try {
+            await work();
+            sql.exec("COMMIT");
+          } catch (error) {
+            sql.exec("ROLLBACK");
+            throw error;
+          }
+        },
+      });
+      const accountId = randomUUID(),
+        tripId = randomUUID();
+      const account = async () => accountId,
+        clock = () => "2026-11-01T00:00:00.000Z";
+      const core = createTripCoreV2Repository(
+        database,
+        account,
+        async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+        clock,
+      );
+      await createTripRepository(database, account, core, clock).createTrip({
+        tripId,
+        operationId: randomUUID(),
+        name: "Synthetic Scan Trip",
+        destination: null,
+        startDate: "2026-11-04",
+        endDate: "2026-11-10",
+      });
+      const repository = createManualStayRepository(database, account, core, clock);
+      let itemId: string | undefined;
+      if (mode === "EDIT") {
+        const draft = await repository.createDraft(tripId);
+        itemId = draft.itemId;
+        await repository.save(draft, {
+          ...draft.fields,
+          title: "Existing",
+          location: "Original address",
+          startDate: "2026-11-04",
+          endDate: "2026-11-06",
+          startTime: "17:00",
+          endTime: "10:00",
+          description: "Keep existing note",
+          stayDetails: { ...draft.fields.stayDetails, propertyName: "Original property" },
+        });
+      }
+      const scan = vi.fn(
+        (
+          binding: import("./p3FormSuggestions").StaySuggestionBinding,
+          _signal: AbortSignal,
+        ) => ({
+          kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+          binding,
+          candidates: [
+            {
+              id: "one",
+              targetItemId: binding.mode === "EDIT" ? binding.itemId : undefined,
+              fields:
+                mode === "CREATE"
+                  ? {
+                      title: "Synthetic Inn",
+                      location: "Selected address",
+                      startDate: "2026-11-04",
+                      endDate: "2026-11-06",
+                      startTime: "17:00",
+                      endTime: "10:00",
+                    }
+                  : { location: "Changed address", description: null, startTime: null },
+              unsupported: [
+                { field: "Contact", state: "UNSUPPORTED" as const },
+                { field: "Instructions", state: "NEEDS_INPUT" as const },
+              ],
+            },
+          ],
+        }),
+      );
+      const p = { ...props(), tripId, itemId, syntheticScan: scan };
+      const save = vi.spyOn(repository, "save"); // Call-through; the actual Core/SQLite transaction executes.
+      await open(p, repository);
+      const pending = () =>
+        Number(sql.prepare("SELECT count(*) n FROM trip_core_pending_intents").get()!.n);
+      const before = pending();
+      await scanFile(p);
+      expect(scan).toHaveBeenCalledOnce();
+      expect(scan.mock.calls[0][0].itemRevision).toEqual(
+        mode === "EDIT" ? expect.any(Number) : null,
+      );
+      if (mode === "CREATE")
+        for (let i = 0; i < 6; i++) {
+          node("formAutofill.keep").onPress();
+          render(p);
+        }
+      else {
+        node("formAutofill.keep").onPress();
+        render(p);
+        state.nodes
+          .filter((entry) => entry.label === "formAutofill.keepClear")
+          .at(-1)!
+          .onPress();
+        render(p);
+      }
+      expect(pending()).toBe(before);
+      node("ui.apply").onPress();
+      render(p);
+      expect(pending()).toBe(before);
+      node("headerSave").onPress();
+      await vi.waitFor(() => expect(p.onSaved).toHaveBeenCalledOnce());
+      expect(save).toHaveBeenCalledOnce();
+      const savedId = p.onSaved.mock.calls[0][0];
+      const restored = await createManualStayRepository(
+        database,
+        account,
+        core,
+        clock,
+      ).read(tripId, savedId);
+      expect(restored.fields.location).toBe(
+        mode === "CREATE" ? "Selected address" : "Changed address",
+      );
+      if (mode === "EDIT") {
+        expect(savedId).toBe(itemId);
+        expect(restored.fields).toMatchObject({
+          title: "Existing",
+          startTime: "17:00",
+          endTime: "10:00",
+          description: null,
+          stayDetails: { propertyName: "Original property" },
+        });
+      } else
+        expect(restored.fields).toMatchObject({
+          title: "Synthetic Inn",
+          description: null,
+          stayDetails: { propertyName: "Synthetic Inn" },
+        });
+      expect(pending()).toBeGreaterThan(before);
+      expect(JSON.stringify(restored.fields)).not.toContain("Instructions");
+    } finally {
+      sql.close();
+    }
+  },
+);
+
+it("normal P3 entry is visibly unavailable and cannot open a picker or submit AI", async () => {
+  const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+  vi.mocked(picker).mockClear();
+  const p = props();
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  };
+  await open(p, repo);
+  expect(render(p)).toContain("formAutofill.unavailable");
+  expect(node("formAutofill.files").disabled).toBe(true);
+  await node("formAutofill.files").onPress();
+  expect(picker).not.toHaveBeenCalled();
+  expect(repo.save).not.toHaveBeenCalled();
+});
+it("multiple Edit candidates require an explicit choice and block the wrong target", async () => {
+  const draft = {
+    mode: "EDIT",
+    itemId: "stay",
+    fields: { ...fields(), title: "Mine" },
+    participantOptions: [],
+  };
+  const repo = { read: vi.fn(async () => draft), save: vi.fn() };
+  const p = {
+    ...props(),
+    itemId: "stay",
+    syntheticScan: (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+      kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+      binding,
+      candidates: [
+        { id: "one", targetItemId: "stay", fields: { title: "Matching hotel" } },
+        { id: "two", targetItemId: "another-item", fields: { title: "Other booking" } },
+      ],
+    }),
+  };
+  await open(p, repo);
+  await scanFile(p);
+  expect(node("ui.apply")).toBeUndefined();
+  node("Other booking").onPress();
+  render(p);
+  expect(node("ui.apply").disabled).toBe(true);
+  node("ui.apply").onPress();
+  expect(node("tripCreate.stayName").value).toBe("Mine");
+  node("Matching hotel").onPress();
+  render(p);
+  node("formAutofill.keep").onPress();
+  render(p);
+  node("ui.apply").onPress();
+  render(p);
+  expect(node("tripCreate.stayName").value).toBe("Matching hotel");
+  expect(repo.save).not.toHaveBeenCalled();
+});
+it("malformed suggestions show a recoverable error without changing the draft", async () => {
+  const scan = vi.fn(
+    () => null as unknown as import("./p3FormSuggestions").SyntheticStayResult,
+  );
+  const p = { ...props(), syntheticScan: scan };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  });
+  await scanFile(p);
+  expect(render(p)).toContain("formAutofill.failed");
+  expect(node("tripCreate.stayName").value).toBe("");
+  expect(node("common.tryAgain")).toBeDefined();
+  expect(scan).toHaveBeenCalledOnce();
+});
+it("Cancel during native selection releases late material and preserves user input", async () => {
+  const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+  let finish!: (
+    items: import("@/features/capture/captureStaging").CaptureSelection[],
+  ) => void;
+  vi.mocked(picker).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const scan = vi.fn((binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+    kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+    binding,
+    candidates: [],
+  }));
+  const p = { ...props(), syntheticScan: scan };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  });
+  node("tripCreate.stayName").onChangeText("My current draft");
+  render(p);
+  const picking = node("formAutofill.files").onPress();
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  state.nodes
+    .filter((entry) => entry.label === "common.cancel")
+    .at(-1)!
+    .onPress();
+  render(p);
+  const release = vi.fn();
+  finish([
+    {
+      source: "files",
+      name: "Late file",
+      temporaryUri: "synthetic://late",
+      typeHint: "application/pdf",
+      release,
+    },
+  ]);
+  await picking;
+  expect(render(p)).not.toContain("Late file");
+  expect(release).toHaveBeenCalledOnce();
+  expect(scan).not.toHaveBeenCalled();
+  expect(node("tripCreate.stayName").value).toBe("My current draft");
+  expect(p.onClose).not.toHaveBeenCalled();
+});

@@ -20,11 +20,13 @@ export type StaySuggestionBinding = {
   itemId: string;
   generation: number;
   revision: number;
+  itemRevision?: number | null;
   mode: "CREATE" | "EDIT";
 };
 export type SyntheticStayCandidate = {
   id: string;
   targetItemId?: string;
+  unsupported?: readonly { field: string; state: "UNSUPPORTED" | "NEEDS_INPUT" }[];
   fields: Partial<Pick<ManualStayFields, StaySuggestionKey>>;
 };
 export type SyntheticStayResult = {

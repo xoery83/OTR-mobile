@@ -149,10 +149,7 @@ export function P6ActivityEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
-  syntheticScan?: (
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ) => FormFieldResult | Promise<FormFieldResult>;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
 }) {
@@ -183,6 +180,7 @@ export function P6ActivityEditor({
             generation,
             revision: scanRevision.current,
             mode: source.draft.mode,
+            itemRevision: source.draft.baseRevision,
           }
         : null;
   }, [source, tripId, itemId, generation]);
@@ -424,20 +422,18 @@ export function P6ActivityEditor({
             {fields && source ? (
               <>
                 <View style={styles.form}>
-                  {syntheticScan ? (
-                    <FormFieldScan
-                      family="P6"
-                      scan={syntheticScan}
-                      disabled={saving || frozen || status === "UNAVAILABLE"}
-                      context={() =>
-                        current() && !busyRef.current && !frozenRef.current
-                          ? scanContext.current
-                          : null
-                      }
-                      fields={() => fieldsRef.current}
-                      onApply={change}
-                    />
-                  ) : null}
+                  <FormFieldScan
+                    family="P6"
+                    scan={syntheticScan}
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                    context={() =>
+                      current() && !busyRef.current && !frozenRef.current
+                        ? scanContext.current
+                        : null
+                    }
+                    fields={() => fieldsRef.current}
+                    onApply={change}
+                  />
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("p6.form.name")}</Text>
                     <UiTextInput

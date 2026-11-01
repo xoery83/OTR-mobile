@@ -73,7 +73,8 @@ export function createTripRealtimeTrigger(deps: Dependencies) {
         await deps.invalidate(state.context);
       }
     } catch {
-      // Existing Downstream owns retry/backoff and retains the lawful cache.
+      state.dirty = true;
+      // Lifecycle reconcile retries through the existing Downstream backoff.
     } finally {
       state.running = false;
     }
@@ -87,7 +88,8 @@ export function createTripRealtimeTrigger(deps: Dependencies) {
         active.context.tripId === context.tripId &&
         active.context.generation === context.generation
       ) {
-        await current(active);
+        const state = active;
+        if ((await current(state)) && state.ready && state.dirty) await drain(state);
         return;
       }
       stop();

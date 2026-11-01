@@ -1,3 +1,7 @@
+import {
+  applyFormFieldSuggestions,
+  type FormFieldResult,
+} from "@/features/day-feed/formFieldSuggestions";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it, vi } from "vitest";
@@ -455,4 +459,57 @@ it("rejects changed participation, stale drafts, revoked/account/ABA and foreign
   h.aba();
   await expect(hr.save(hd, inputFor(hd.fields))).rejects.toThrow();
   expect(count(h.sql)).toBe(0);
+});
+it("Scan supplier-only Edit preserves all other fields through real Core Save and repository reconstruction", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  await repo.save(draft, {
+    ...inputFor(draft.fields),
+    rentalDetails: {
+      supplier: "Old company",
+      reservedCategory: "Economy",
+      orSimilar: true,
+      actualVehicleModel: "Actual car",
+      verifiedPlate: "ABC123",
+    },
+  });
+  const edit = await repo.read(f.tripId, draft.itemId);
+  const binding = {
+    formId: "rental-form",
+    tripId: f.tripId,
+    itemId: edit.itemId,
+    revision: 0,
+    generation: 0,
+    mode: "EDIT" as const,
+    itemRevision: edit.baseRevision,
+  };
+  const result: FormFieldResult = {
+    kind: "SYNTHETIC_FORM_SUGGESTIONS",
+    family: "P4",
+    binding,
+    candidates: [
+      {
+        id: "one",
+        targetItemId: edit.itemId,
+        fields: { "rentalDetails.supplier": "New company" },
+      },
+    ],
+  };
+  const next = applyFormFieldSuggestions(
+    "P4",
+    result,
+    binding,
+    "one",
+    ["rentalDetails.supplier"],
+    edit.fields,
+  )!;
+  await repo.save(edit, next);
+  const cold = await f.repo().read(f.tripId, draft.itemId);
+  expect(cold.fields).toEqual({
+    ...edit.fields,
+    rentalDetails: { ...edit.fields.rentalDetails, supplier: "New company" },
+  });
+  expect(cold.itemId).toBe(edit.itemId);
+  expect(cold.baseRevision).toBeGreaterThan(edit.baseRevision!);
 });

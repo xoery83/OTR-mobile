@@ -128,6 +128,7 @@ type ManualItemFields = ManualPlanFields & {
 export type ManualPlanDraft = Readonly<{
   mode: "CREATE" | "EDIT";
   itemId: string;
+  baseRevision?: number | null;
   fields: ManualPlanFields;
   initialFields?: ManualPlanFields;
   participantOptions: readonly { personId: string; displayName: string }[];
@@ -511,6 +512,7 @@ export function createManualItemRepository(
         );
         draft = Object.freeze({
           mode: itemId ? "EDIT" : "CREATE",
+          baseRevision: row ? Number(row.semantic_revision) : null,
           itemId: recovery?.snapshot.itemId ?? itemId ?? newId(),
           fields: structuredClone(recovery?.snapshot.fields ?? fields),
           ...(recovery

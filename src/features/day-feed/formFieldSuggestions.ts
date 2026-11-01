@@ -1,5 +1,10 @@
 import type { z } from "zod";
-import { manualRentalFieldsSchema, manualActivityFieldsSchema } from "@/data/repositories/manualPlanRepository";
+import {
+  manualRentalDetailsSchema,
+  manualActivityDetailsSchema,
+  manualRentalFieldsSchema,
+  manualActivityFieldsSchema,
+} from "@/data/repositories/manualPlanRepository";
 import { manualTransportFieldsSchema } from "@/data/repositories/manualTransportRepository";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import {
@@ -23,6 +28,10 @@ export const formSuggestionKeys = {
     "departureTime",
     "arrivalDate",
     "arrivalTime",
+    "originTerminal",
+    "destinationTerminal",
+    "departureZone",
+    "arrivalZone",
   ],
   P4: [
     "title",
@@ -33,6 +42,11 @@ export const formSuggestionKeys = {
     "pickupLocation",
     "returnLocation",
     "description",
+    "rentalDetails.supplier",
+    "rentalDetails.reservedCategory",
+    "rentalDetails.orSimilar",
+    "rentalDetails.actualVehicleModel",
+    "rentalDetails.verifiedPlate",
   ],
   P5: [
     "title",
@@ -53,6 +67,9 @@ export const formSuggestionKeys = {
     "startTime",
     "endTime",
     "description",
+    "activityDetails.sessionLabel",
+    "activityDetails.admissionNote",
+    "activityDetails.entryLocation",
   ],
 } as const;
 const schemas = {
@@ -96,7 +113,20 @@ export function applyFormFieldSuggestions<Fields extends object>(
       !Object.hasOwn(candidate.fields, key)
     )
       return null;
-    const parsed = shape[key].safeParse(candidate.fields[key]);
+    const [parent, detail] = key.split(".");
+    const detailShape =
+      family === "P4"
+        ? manualRentalDetailsSchema.shape
+        : family === "P6"
+          ? manualActivityDetailsSchema.shape
+          : null;
+    const fieldSchema = detail
+      ? (detailShape as Record<string, z.ZodType> | null)?.[detail]
+      : shape[key];
+    if (!fieldSchema) return null;
+    let parsed = fieldSchema.safeParse(candidate.fields[key]);
+    if (!parsed.success && candidate.fields[key] === null)
+      parsed = fieldSchema.safeParse("");
     if (!parsed.success) return null;
     if (/Date$/.test(key) && parsed.data) {
       try {
@@ -105,7 +135,11 @@ export function applyFormFieldSuggestions<Fields extends object>(
         return null;
       }
     }
-    Object.assign(next, { [key]: parsed.data });
+    if (detail)
+      Object.assign(next, {
+        [parent]: { ...(next[parent] as object), [detail]: parsed.data },
+      });
+    else Object.assign(next, { [key]: parsed.data });
     if (family === "P2" && (key === "originCode" || key === "destinationCode")) {
       const code = String(parsed.data).trim().toUpperCase();
       const matches = airportSuggestions(code).filter(
@@ -113,25 +147,47 @@ export function applyFormFieldSuggestions<Fields extends object>(
       );
       if (matches.length !== 1) return null;
       const airport = matches[0];
-      Object.assign(
-        next,
-        key === "originCode"
-          ? {
-              originCode: code,
-              originName: airport.name,
-              departureZone: airportTimeZone(airport) ?? "",
-              originTerminal: "",
-            }
-          : {
-              destinationCode: code,
-              destinationName: airport.name,
-              arrivalZone: airportTimeZone(airport) ?? "",
-              destinationTerminal: "",
-            },
-      );
+      const origin = key === "originCode";
+      const codeKey = origin ? "originCode" : "destinationCode";
+      const nameKey = origin ? "originName" : "destinationName";
+      const zoneKey = origin ? "departureZone" : "arrivalZone";
+      const terminalKey = origin ? "originTerminal" : "destinationTerminal";
+      const before = fields as Record<string, unknown>;
+      const zone = airportTimeZone(airport);
+      if (
+        code !== before[codeKey] &&
+        before[terminalKey] &&
+        !selected.includes(terminalKey)
+      )
+        return null;
+      if (
+        zone &&
+        before[zoneKey] &&
+        before[zoneKey] !== zone &&
+        !selected.includes(zoneKey)
+      )
+        return null;
+      Object.assign(next, {
+        [codeKey]: code,
+        [nameKey]:
+          code === before[codeKey] && before[nameKey] ? before[nameKey] : airport.name,
+        [zoneKey]: selected.includes(zoneKey)
+          ? next[zoneKey]
+          : (zone ?? before[zoneKey] ?? ""),
+      });
     }
   }
   if (family === "P2") {
+    for (const origin of [true, false]) {
+      const codeKey = origin ? "originCode" : "destinationCode",
+        zoneKey = origin ? "departureZone" : "arrivalZone";
+      if (!selected.includes(codeKey)) continue;
+      const airport = airportSuggestions(String(next[codeKey])).find(
+        (value) => value.iata === next[codeKey] || value.icao === next[codeKey],
+      );
+      const zone = airport ? airportTimeZone(airport) : null;
+      if (zone && next[zoneKey] !== zone) return null;
+    }
     if (
       !flightSegmentDraftSchema.safeParse(next as unknown as FlightSegmentDraft).success
     )

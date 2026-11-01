@@ -1,5 +1,31 @@
 export const en = {
-  "formAutofill.scan": "Scan booking · Local preview",
+  "flightLookup.adopt": "Use {field}: {value}",
+  "flightLookup.review": "Review suggestions before updating your form.",
+  "flightLookup.budget": "Lookup allowance reached. You can continue manually.",
+  "formAutofill.departureTerminal": "Departure terminal",
+  "formAutofill.arrivalTerminal": "Arrival terminal",
+  "formAutofill.orSimilar": "Or similar vehicle",
+  "formAutofill.unavailable":
+    "Scanning is not available yet. You can enter details manually.",
+  "formAutofill.files": "Choose file",
+  "formAutofill.photos": "Choose photo",
+  "formAutofill.selected": "Selected material",
+  "formAutofill.loading": "Preparing suggestions…",
+  "formAutofill.empty": "No matching suggestions. Your draft is unchanged.",
+  "formAutofill.choose":
+    "Choose one booking to review. Other bookings will not be saved.",
+  "formAutofill.wrongTarget": "This suggestion does not match the item being edited.",
+  "formAutofill.clear": "Clear {field}",
+  "formAutofill.keepClear": "Keep {field} · Suggested action: clear",
+  "formAutofill.unsupported": "{field} · Not supported; enter separately when available",
+  "formAutofill.needsInput": "{field} · Needs your input",
+  "formAutofill.failed": "Suggestions could not be prepared. Your draft is unchanged.",
+  "formAutofill.stale":
+    "Your form changed. Choose the material again for new suggestions.",
+  "formAutofill.manualInputNeeded":
+    "Some suggested fields need manual input. Your draft is unchanged.",
+
+  "formAutofill.scan": "Scan booking",
   "formAutofill.keep": "Keep current {field} · Suggestion: {value}",
   "formAutofill.use": "Use suggested {field}: {value}",
   "formAutofill.checkinDate": "Check-in date",
@@ -3085,7 +3111,29 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
-  "formAutofill.scan": "扫描预订 · 本地预览",
+  "flightLookup.adopt": "使用{field}：{value}",
+  "flightLookup.review": "请确认建议后再更新表单。",
+  "flightLookup.budget": "查询额度已用完，你仍可手动填写。",
+  "formAutofill.departureTerminal": "出发航站楼",
+  "formAutofill.arrivalTerminal": "到达航站楼",
+  "formAutofill.orSimilar": "或同级车型",
+  "formAutofill.unavailable": "扫描暂不可用，你可以手动填写详情。",
+  "formAutofill.files": "选择文件",
+  "formAutofill.photos": "选择照片",
+  "formAutofill.selected": "已选择的材料",
+  "formAutofill.loading": "正在准备建议…",
+  "formAutofill.empty": "没有匹配的建议，草稿未改变。",
+  "formAutofill.choose": "请选择一项预订进行审核，其他预订不会保存。",
+  "formAutofill.wrongTarget": "这条建议与当前编辑的项目不匹配。",
+  "formAutofill.clear": "清空{field}",
+  "formAutofill.keepClear": "保留{field} · 建议操作：清空",
+  "formAutofill.unsupported": "{field} · 暂不支持，功能开放后请单独填写",
+  "formAutofill.needsInput": "{field} · 需要你填写",
+  "formAutofill.failed": "无法准备建议，草稿未改变。",
+  "formAutofill.stale": "表单已改变，请重新选择材料获取建议。",
+  "formAutofill.manualInputNeeded": "部分建议字段需要手动填写，草稿未改变。",
+
+  "formAutofill.scan": "扫描预订",
   "formAutofill.keep": "保留当前{field} · 建议：{value}",
   "formAutofill.use": "使用建议{field}：{value}",
   "formAutofill.checkinDate": "入住日期",

@@ -1,7 +1,6 @@
 import { createUuid } from "@/domain/localId";
 import { FormFieldScan } from "./FormFieldScan";
 import type { FormFieldResult } from "./formFieldSuggestions";
-import type { StaySuggestionBinding } from "./p3FormSuggestions";
 import { FlightEnrichmentAction } from "./FlightEnrichmentAction";
 import {
   useCallback,
@@ -61,10 +60,7 @@ export function ManualFlightForm({
   saveActionRef?: RefObject<(() => void) | null>;
   onSaveEnabledChange?(enabled: boolean): void;
   isIntentCurrent?(): boolean;
-  syntheticScan?: (
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ) => FormFieldResult | Promise<FormFieldResult>;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -278,37 +274,36 @@ export function ManualFlightForm({
               value={segment}
               lookupAction={
                 <>
-                  {syntheticScan ? (
-                    <FormFieldScan
-                      family="P2"
-                      scan={syntheticScan}
-                      disabled={frozen || !ready}
-                      context={() =>
-                        mutable() && draft.current
-                          ? {
-                              formId: scanFormId.current + ":" + segment.key,
-                              tripId,
-                              itemId: draft.current.itemId,
-                              generation: generation.current,
-                              revision: scanRevision.current,
-                              mode: itemId ? "EDIT" : "CREATE",
-                            }
-                          : null
-                      }
-                      fields={() =>
-                        fields.current.find((entry) => entry.key === segment.key) ?? null
-                      }
-                      onApply={(next) => {
-                        if (!mutable()) return;
-                        publish(
-                          fields.current.map((entry) =>
-                            entry.key === segment.key ? next : entry,
-                          ),
-                        );
-                        setFull(true);
-                      }}
-                    />
-                  ) : null}
+                  <FormFieldScan
+                    family="P2"
+                    scan={syntheticScan}
+                    disabled={frozen || !ready}
+                    context={() =>
+                      mutable() && draft.current
+                        ? {
+                            formId: scanFormId.current + ":" + segment.key,
+                            tripId,
+                            itemId: draft.current.itemId,
+                            generation: generation.current,
+                            revision: scanRevision.current,
+                            mode: itemId ? "EDIT" : "CREATE",
+                            itemRevision: draft.current.expectedRevision,
+                          }
+                        : null
+                    }
+                    fields={() =>
+                      fields.current.find((entry) => entry.key === segment.key) ?? null
+                    }
+                    onApply={(next) => {
+                      if (!mutable()) return;
+                      publish(
+                        fields.current.map((entry) =>
+                          entry.key === segment.key ? next : entry,
+                        ),
+                      );
+                      setFull(true);
+                    }}
+                  />
                   {!syntheticScan ? (
                     <FlightEnrichmentAction
                       tripId={tripId}
@@ -448,10 +443,7 @@ export function ManualFlightEditor({
   tripStartDate?: string | null;
   itemId?: string;
   expectedRevision?: number;
-  syntheticScan?: (
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ) => FormFieldResult | Promise<FormFieldResult>;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   registerDismissHandler?: (handler: () => void) => () => void;

@@ -313,3 +313,14 @@ it("background or Trip exit cancels pending hints before any extra Pull", async 
   expect(f.deps.invalidate).toHaveBeenCalledOnce();
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it("retains a failed invalidation for the next lifecycle reconcile without another signal", async () => {
+  const f = fixture();
+  f.deps.invalidate.mockRejectedValueOnce(Error("CURSOR_COMMIT_FAILED"));
+  await f.trigger.activate(f.context);
+  expect(f.deps.invalidate).toHaveBeenCalledOnce();
+  await f.trigger.activate(f.context);
+  expect(f.deps.invalidate).toHaveBeenCalledTimes(2);
+  await f.trigger.activate(f.context);
+  expect(f.deps.invalidate).toHaveBeenCalledTimes(2);
+});

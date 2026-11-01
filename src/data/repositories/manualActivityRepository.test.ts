@@ -1,3 +1,7 @@
+import {
+  applyFormFieldSuggestions,
+  type FormFieldResult,
+} from "@/features/day-feed/formFieldSuggestions";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -671,4 +675,54 @@ it.each([
     f.repo().read(f.tripId, f.itemId, kind === "stale" ? 99 : 1),
   ).rejects.toThrow();
   expect(count()).toBe(before);
+});
+it("Scan entry-only Edit preserves Session/Admission and schedule through the real Repository", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  await repo.save(draft, {
+    ...values(draft.fields),
+    activityDetails: {
+      sessionLabel: "Matinee",
+      admissionNote: "Reserved seat",
+      entryLocation: "Old entrance",
+    },
+  });
+  const edit = await repo.read(f.tripId, draft.itemId);
+  const binding = {
+    formId: "activity-form",
+    tripId: f.tripId,
+    itemId: edit.itemId,
+    revision: 0,
+    generation: 0,
+    mode: "EDIT" as const,
+    itemRevision: edit.baseRevision,
+  };
+  const result: FormFieldResult = {
+    kind: "SYNTHETIC_FORM_SUGGESTIONS",
+    family: "P6",
+    binding,
+    candidates: [
+      {
+        id: "one",
+        targetItemId: edit.itemId,
+        fields: { "activityDetails.entryLocation": "North entrance" },
+      },
+    ],
+  };
+  await repo.save(
+    edit,
+    applyFormFieldSuggestions(
+      "P6",
+      result,
+      binding,
+      "one",
+      ["activityDetails.entryLocation"],
+      edit.fields,
+    )!,
+  );
+  expect((await f.repo().read(f.tripId, draft.itemId)).fields).toEqual({
+    ...edit.fields,
+    activityDetails: { ...edit.fields.activityDetails, entryLocation: "North entrance" },
+  });
 });

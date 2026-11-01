@@ -79,6 +79,10 @@ vi.mock("@/ui/controls", () => ({
     return createElement("button", { disabled: p.disabled }, p.label);
   },
   UiText: (p: any) => createElement("span", null, p.children),
+  UiChoiceChip: (p: any) => {
+    state.nodes.push(p);
+    return null;
+  },
   UiSection: (p: any) => createElement("section", null, p.title, p.children),
 }));
 vi.mock("@/ui/forms", () => ({
@@ -392,8 +396,7 @@ it("synthetic P2 number review explicitly adopts into the existing Sparse Save",
     candidates: [{ id: "one", fields: { flightNumberLiteral: "NZ5071" } }],
   });
   const { repo, draft } = await ready();
-  node("formAutofill.scan").onPress();
-  render();
+  await scanFile();
   node("formAutofill.keep").onPress();
   render();
   expect(node("manualFlight.number").value).toBe("NZ5069");
@@ -464,8 +467,7 @@ it("synthetic P2 Edit preserves current endpoint facts and uses the same Item Sa
   show();
   await flush();
   show();
-  node("formAutofill.scan").onPress();
-  show();
+  await scanFile(show);
   node("formAutofill.keep").onPress();
   show();
   node("ui.apply").onPress();
@@ -486,3 +488,20 @@ it("synthetic P2 Edit preserves current endpoint facts and uses the same Item Sa
     expect.any(Function),
   );
 });
+
+vi.mock("@/native/capturePicker", () => ({
+  pickCaptureMaterial: vi.fn(async () => [
+    {
+      source: "files",
+      name: "Synthetic booking.pdf",
+      temporaryUri: "synthetic://booking",
+      typeHint: "application/pdf",
+    },
+  ]),
+}));
+async function scanFile(show: () => unknown = render) {
+  await node("formAutofill.files").onPress();
+  show();
+  void node("formAutofill.scan").onPress();
+  show();
+}

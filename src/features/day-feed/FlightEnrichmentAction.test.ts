@@ -80,6 +80,7 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 };
 let value = emptyFlightSegment("flight-1", "2026-10-27");
 let editing = false;
+let tripId = "trip";
 const apply = vi.fn();
 const flush = async () => {
   for (let i = 0; i < 16; i++) await Promise.resolve();
@@ -91,7 +92,7 @@ function render() {
   state.nodes = [];
   const html = renderToStaticMarkup(
     createElement(FlightEnrichmentAction, {
-      tripId: "trip",
+      tripId,
       value,
       editing,
       disabled: false,
@@ -147,6 +148,7 @@ beforeEach(() => {
     flightNumberLiteral: "NZ501",
   };
   editing = false;
+  tripId = "trip";
   apply.mockReset().mockImplementation((changes) => {
     value = { ...value, ...changes };
   });
@@ -439,3 +441,87 @@ it("rejects Keep/Replace after the draft was edited away and back to the same by
   replace();
   expect(apply).not.toHaveBeenCalled();
 });
+it("requires explicit adoption even for an empty field", async () => {
+  editing = true;
+  state.find.mockImplementation(async (request) =>
+    result(request, [
+      {
+        field: "departureLocalTime",
+        value: "12:00",
+        eligibility: "ADOPT",
+        referenceOnly: false,
+      },
+    ]),
+  );
+  render();
+  await flush();
+  render();
+  state.nodes[0].onPress();
+  await flush();
+  render();
+  expect(apply).not.toHaveBeenCalled();
+  state.nodes.find((entry) => entry.label === "flightLookup.adopt").onPress();
+  expect(apply).toHaveBeenCalledExactlyOnceWith({ departureTime: "12:00" });
+});
+it("budget rejection preserves manual input and never retries automatically", async () => {
+  editing = true;
+  const original = structuredClone(value);
+  state.find.mockImplementation(async (request) => ({
+    ...result(request),
+    failureReason: "BUDGET_REJECTED",
+  }));
+  render();
+  await flush();
+  render();
+  state.nodes[0].onPress();
+  await flush();
+  expect(render()).toContain("flightLookup.budget");
+  expect(value).toEqual(original);
+  expect(apply).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(state.find).toHaveBeenCalledOnce();
+});
+it.each(["Cancel", "Trip"] as const)(
+  "retired %s lookup cannot show late suggestions",
+  async (change) => {
+    editing = true;
+    let finish!: () => void;
+    state.find.mockImplementation(
+      (request) =>
+        new Promise((resolve) => {
+          finish = () =>
+            resolve(
+              result(request, [
+                {
+                  field: "departureLocalTime",
+                  value: "12:00",
+                  eligibility: "ADOPT",
+                  referenceOnly: false,
+                },
+              ]),
+            );
+        }),
+    );
+    render();
+    await flush();
+    render();
+    state.nodes[0].onPress();
+    render();
+    const signal = state.find.mock.calls[0][1];
+    if (change === "Cancel")
+      state.nodes.find((entry) => entry.label === "common.cancel").onPress();
+    else {
+      tripId = "other-trip";
+      render();
+      await flush();
+    }
+    expect(signal.aborted).toBe(true);
+    finish();
+    await flush();
+    render();
+    expect(
+      state.nodes.find((entry) => entry.label === "flightLookup.adopt"),
+    ).toBeUndefined();
+    expect(apply).not.toHaveBeenCalled();
+  },
+);

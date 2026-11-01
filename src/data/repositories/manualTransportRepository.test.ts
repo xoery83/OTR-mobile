@@ -1,3 +1,7 @@
+import {
+  applyFormFieldSuggestions,
+  type FormFieldResult,
+} from "@/features/day-feed/formFieldSuggestions";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it, vi } from "vitest";
@@ -688,47 +692,90 @@ it.each([
   "mode",
   "stale",
   "account",
-] as const)(
-  "denies accepted P5 with changed %s without new intents",
-  async (kind) => {
-    const f = await acceptedTransportFixture(kind === "owner"),
-      before = count(f.sql);
-    if (kind === "receipt")
-      f.sql.exec("DROP TRIGGER trip_core_receipt_immutable");
-    if (["hash", "mode"].includes(kind))
-      f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
-    if (kind === "receipt")
-      f.sql
-        .prepare(
-          "UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=?",
-        )
-        .run("0".repeat(64));
-    if (kind === "payload")
-      f.sql
-        .prepare(
-          "UPDATE sync_operations SET payload_json='{}' WHERE entity_type='TRIP_CORE_V2'",
-        )
-        .run();
-    if (kind === "hash")
-      f.sql
-        .prepare("UPDATE trip_core_pending_intents SET intent_sha256=?")
-        .run("0".repeat(64));
-    if (kind === "queue")
-      f.sql
-        .prepare(
-          "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_CORE_V2'",
-        )
-        .run();
-    if (kind === "mode")
-      f.sql
-        .prepare(
-          "UPDATE trip_core_pending_intents SET canonical_intent_text=json_set(canonical_intent_text,'$.admission.mode','REVIEWED_SOURCE')",
-        )
-        .run();
-    if (kind === "account") f.switchAccount();
-    await expect(
-      f.repo().read(f.tripId, f.itemId, kind === "stale" ? 99 : 1),
-    ).rejects.toThrow();
-    expect(count(f.sql)).toBe(before);
-  },
-);
+] as const)("denies accepted P5 with changed %s without new intents", async (kind) => {
+  const f = await acceptedTransportFixture(kind === "owner"),
+    before = count(f.sql);
+  if (kind === "receipt") f.sql.exec("DROP TRIGGER trip_core_receipt_immutable");
+  if (["hash", "mode"].includes(kind))
+    f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+  if (kind === "receipt")
+    f.sql
+      .prepare("UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=?")
+      .run("0".repeat(64));
+  if (kind === "payload")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET payload_json='{}' WHERE entity_type='TRIP_CORE_V2'",
+      )
+      .run();
+  if (kind === "hash")
+    f.sql
+      .prepare("UPDATE trip_core_pending_intents SET intent_sha256=?")
+      .run("0".repeat(64));
+  if (kind === "queue")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_CORE_V2'",
+      )
+      .run();
+  if (kind === "mode")
+    f.sql
+      .prepare(
+        "UPDATE trip_core_pending_intents SET canonical_intent_text=json_set(canonical_intent_text,'$.admission.mode','REVIEWED_SOURCE')",
+      )
+      .run();
+  if (kind === "account") f.switchAccount();
+  await expect(
+    f.repo().read(f.tripId, f.itemId, kind === "stale" ? 99 : 1),
+  ).rejects.toThrow();
+  expect(count(f.sql)).toBe(before);
+});
+it("Scan departure-only Edit preserves arrival, Notes and identity through the real Repository", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  await repo.save(draft, {
+    ...inputFor(draft.fields),
+    departureTime: "08:00",
+    arrivalDate: "2026-10-20",
+    arrivalTime: "10:00",
+    arrivalLocation: "Arrival station",
+  });
+  const edit = await repo.read(f.tripId, draft.itemId);
+  const binding = {
+    formId: "transport-form",
+    tripId: f.tripId,
+    itemId: edit.itemId,
+    revision: 0,
+    generation: 0,
+    mode: "EDIT" as const,
+    itemRevision: edit.baseRevision,
+  };
+  const result: FormFieldResult = {
+    kind: "SYNTHETIC_FORM_SUGGESTIONS",
+    family: "P5",
+    binding,
+    candidates: [
+      {
+        id: "one",
+        targetItemId: edit.itemId,
+        fields: { departureLocation: "New departure station" },
+      },
+    ],
+  };
+  await repo.save(
+    edit,
+    applyFormFieldSuggestions(
+      "P5",
+      result,
+      binding,
+      "one",
+      ["departureLocation"],
+      edit.fields,
+    )!,
+  );
+  expect((await f.repo().read(f.tripId, draft.itemId)).fields).toEqual({
+    ...edit.fields,
+    departureLocation: "New departure station",
+  });
+});

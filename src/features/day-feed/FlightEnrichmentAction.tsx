@@ -36,17 +36,19 @@ export function FlightEnrichmentAction({
   const online = network.isConnected === true && network.isInternetReachable !== false;
   const [lookupEpoch, setLookupEpoch] = useState(0);
   const [available, setAvailable] = useState(false),
-    [status, setStatus] = useState<"idle" | "loading" | "filled" | "manual" | "stale">(
-      "idle",
-    );
+    [status, setStatus] = useState<
+      "idle" | "loading" | "filled" | "manual" | "stale" | "review" | "budget"
+    >("idle");
   const [suggestions, setSuggestions] = useState<{
     response: FlightEnrichmentResponse;
+    request: FlightEnrichmentRequest;
     bytes: string;
     revision: number;
     token: symbol;
   } | null>(null);
   const [attemptedKeys, setAttemptedKeys] = useState<ReadonlySet<string>>(new Set());
   const suggestionToken = useRef<symbol | null>(null);
+  const requestOwner = useRef<symbol | null>(null);
   const inFlight = useRef(false),
     lease = useRef<symbol | null>(null);
   const attempted = useRef(new Set<string>()),
@@ -92,6 +94,7 @@ export function FlightEnrichmentAction({
       controller.current?.abort();
       lookup.current = null;
       suggestionToken.current = null;
+      requestOwner.current = null;
     };
   }, [tripId, online]);
   const identity = flightLookupIdentity(value);
@@ -131,6 +134,8 @@ export function FlightEnrichmentAction({
     const request: FlightEnrichmentRequest = parsed.data,
       expected = snapshot.current;
     const owner = lease.current;
+    const queryOwner = Symbol("flight-query");
+    requestOwner.current = queryOwner;
     inFlight.current = true;
     attempted.current.add(identity);
     setAttemptedKeys(new Set(attempted.current));
@@ -141,6 +146,7 @@ export function FlightEnrichmentAction({
       if (
         !alive.current ||
         lease.current !== owner ||
+        requestOwner.current !== queryOwner ||
         expected.generation !== getAccountGeneration()
       )
         return;
@@ -148,29 +154,33 @@ export function FlightEnrichmentAction({
         setStatus("stale");
         return;
       }
-      const changes = applyFlightLookup(response, request, value);
-      const nextBytes = JSON.stringify({ ...value, ...(changes ?? {}) });
       const token = Symbol("flight-suggestions");
       suggestionToken.current = token;
       setSuggestions({
         response,
-        bytes: nextBytes,
-        revision: expected.revision + (nextBytes === expected.bytes ? 0 : 1),
+        request,
+        bytes: expected.bytes,
+        revision: expected.revision,
         token,
       });
-      if (changes && Object.keys(changes).length) {
-        onApply(changes);
-        setStatus("filled");
-      } else setStatus("manual");
+      setStatus(
+        response.failureReason === "BUDGET_REJECTED"
+          ? "budget"
+          : response.suggestions.length
+            ? "review"
+            : "manual",
+      );
     } catch {
       if (
         alive.current &&
         lease.current === owner &&
+        requestOwner.current === queryOwner &&
         expected.generation === getAccountGeneration()
       )
         setStatus("manual");
     } finally {
-      if (lease.current === owner) inFlight.current = false;
+      if (lease.current === owner && requestOwner.current === queryOwner)
+        inFlight.current = false;
     }
   };
   const valid =
@@ -208,6 +218,49 @@ export function FlightEnrichmentAction({
     lookupEpoch,
   ]);
   if (!online || !available || (!eligible && !suggestions)) return null;
+  const cancel = () => {
+    requestOwner.current = null;
+    controller.current?.abort();
+    inFlight.current = false;
+    suggestionToken.current = null;
+    setSuggestions(null);
+    setStatus("manual");
+  };
+  const resolve = (index: number, changes: Partial<FlightSegmentDraft>) => {
+    if (
+      !suggestions ||
+      disabled ||
+      !alive.current ||
+      suggestionToken.current !== suggestions.token ||
+      snapshot.current.generation !== getAccountGeneration()
+    )
+      return;
+    if (
+      snapshot.current.bytes !== suggestions.bytes ||
+      snapshot.current.revision !== suggestions.revision
+    ) {
+      cancel();
+      setStatus("stale");
+      return;
+    }
+    if (Object.keys(changes).length) onApply(changes);
+    const nextBytes = JSON.stringify({ ...value, ...changes }),
+      token = Symbol("flight-suggestions");
+    suggestionToken.current = token;
+    setSuggestions({
+      ...suggestions,
+      response: {
+        ...suggestions.response,
+        suggestions: suggestions.response.suggestions.filter((_, i) => i !== index),
+      },
+      bytes: nextBytes,
+      revision:
+        snapshot.current.revision + (nextBytes === snapshot.current.bytes ? 0 : 1),
+      token,
+    });
+    setStatus("filled");
+  };
+
   return (
     <View>
       <UiButton
@@ -233,50 +286,41 @@ export function FlightEnrichmentAction({
             : suggestion.field === "arrivalLocalTime"
               ? "arrivalTime"
               : null;
-        if (
-          !field ||
-          suggestion.referenceOnly ||
-          suggestion.eligibility !== "KEEP_OR_REPLACE"
-        )
-          return null;
+        if (suggestion.referenceOnly) return null;
+        if (suggestion.eligibility === "ADOPT") {
+          const changes = applyFlightLookup(
+            { ...suggestions.response, suggestions: [suggestion] },
+            suggestions.request,
+            value,
+          );
+          if (!changes || !Object.keys(changes).length) return null;
+          return (
+            <UiButton
+              key={suggestion.field}
+              label={t("flightLookup.adopt", {
+                field:
+                  suggestion.field === "departureAirport"
+                    ? t("manualFlight.originAirport")
+                    : suggestion.field === "arrivalAirport"
+                      ? t("manualFlight.destinationAirport")
+                      : suggestion.field === "arrivalLocalDate"
+                        ? t("tripCreate.arrivalDate")
+                        : suggestion.field === "departureLocalTime"
+                          ? t("manualFlight.departureLocal")
+                          : t("manualFlight.arrivalLocal"),
+                value: suggestion.value,
+              })}
+              disabled={disabled || bytes !== suggestions.bytes}
+              onPress={() => resolve(index, changes)}
+            />
+          );
+        }
+        if (!field || suggestion.eligibility !== "KEEP_OR_REPLACE") return null;
         const label = t(
           field === "departureTime"
             ? "manualFlight.departureLocal"
             : "manualFlight.arrivalLocal",
         );
-        const resolve = (replace: boolean) => {
-          if (
-            disabled ||
-            !alive.current ||
-            suggestionToken.current !== suggestions.token ||
-            snapshot.current.generation !== getAccountGeneration()
-          )
-            return;
-          if (
-            snapshot.current.bytes !== suggestions.bytes ||
-            snapshot.current.revision !== suggestions.revision
-          ) {
-            suggestionToken.current = null;
-            setSuggestions(null);
-            setStatus("stale");
-            return;
-          }
-          const changes = replace ? { [field]: suggestion.value } : {};
-          if (replace) onApply(changes);
-          const nextBytes = JSON.stringify({ ...value, ...changes });
-          const token = Symbol("flight-suggestions");
-          suggestionToken.current = token;
-          setSuggestions({
-            response: {
-              ...suggestions.response,
-              suggestions: suggestions.response.suggestions.filter((_, i) => i !== index),
-            },
-            bytes: nextBytes,
-            revision:
-              snapshot.current.revision + (nextBytes === snapshot.current.bytes ? 0 : 1),
-            token,
-          });
-        };
         return (
           <View key={suggestion.field}>
             <UiText>
@@ -286,17 +330,20 @@ export function FlightEnrichmentAction({
               label={t("flightLookup.keep")}
               variant="text"
               disabled={disabled || bytes !== suggestions.bytes}
-              onPress={() => resolve(false)}
+              onPress={() => resolve(index, {})}
             />
             <UiButton
               label={t("flightLookup.replace")}
               variant="secondary"
               disabled={disabled || bytes !== suggestions.bytes}
-              onPress={() => resolve(true)}
+              onPress={() => resolve(index, { [field]: suggestion.value })}
             />
           </View>
         );
       })}
+      {suggestions || status === "loading" ? (
+        <UiButton label={t("common.cancel")} variant="text" onPress={cancel} />
+      ) : null}
       {status !== "idle" && status !== "loading" ? (
         <UiText>{t(`flightLookup.${status}`)}</UiText>
       ) : null}

@@ -69,6 +69,7 @@ export type ManualTransportFields = z.infer<typeof manualTransportFieldsSchema>;
 export type ManualTransportDraft = Readonly<{
   mode: "CREATE" | "EDIT";
   itemId: string;
+  baseRevision?: number | null;
   fields: ManualTransportFields;
   participantOptions: readonly { personId: string; displayName: string }[];
 }>;
@@ -248,6 +249,7 @@ export function createManualTransportRepository(
         );
         draft = Object.freeze({
           mode: itemId ? "EDIT" : "CREATE",
+          baseRevision: row ? Number(row.semantic_revision) : null,
           itemId: itemId ?? newId(),
           fields: structuredClone(fields),
           participantOptions: members

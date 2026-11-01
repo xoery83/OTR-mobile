@@ -153,10 +153,7 @@ export function P4RentalEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
-  syntheticScan?: (
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ) => FormFieldResult | Promise<FormFieldResult>;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
@@ -198,6 +195,7 @@ export function P4RentalEditor({
             generation,
             revision: scanRevision.current,
             mode: source.draft.mode,
+            itemRevision: source.draft.baseRevision,
           }
         : null;
   }, [source, tripId, itemId, generation]);
@@ -496,24 +494,22 @@ export function P4RentalEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
-                  {syntheticScan ? (
-                    <FormFieldScan
-                      family="P4"
-                      scan={syntheticScan}
-                      disabled={saving || frozen || status === "UNAVAILABLE"}
-                      context={() =>
-                        current() && !busyRef.current && !frozenRef.current
-                          ? scanContext.current
-                          : null
-                      }
-                      fields={() => fieldsRef.current}
-                      onApply={(next) => {
-                        sameReturnRef.current = sameRentalLocation(next);
-                        setSameReturnLocation(sameReturnRef.current);
-                        change(next);
-                      }}
-                    />
-                  ) : null}
+                  <FormFieldScan
+                    family="P4"
+                    scan={syntheticScan}
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                    context={() =>
+                      current() && !busyRef.current && !frozenRef.current
+                        ? scanContext.current
+                        : null
+                    }
+                    fields={() => fieldsRef.current}
+                    onApply={(next) => {
+                      sameReturnRef.current = sameRentalLocation(next);
+                      setSameReturnLocation(sameReturnRef.current);
+                      change(next);
+                    }}
+                  />
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.rentalName")}</Text>
                     <UiTextInput

@@ -557,8 +557,7 @@ it.each(["CREATE", "EDIT"] as const)(
       }),
     };
     await open(p, repo);
-    node("formAutofill.scan").onPress();
-    render(p);
+    await scanFile(p);
     node("formAutofill.keep").onPress();
     render(p);
     node("ui.apply").onPress();
@@ -577,3 +576,20 @@ it.each(["CREATE", "EDIT"] as const)(
     );
   },
 );
+
+vi.mock("@/native/capturePicker", () => ({
+  pickCaptureMaterial: vi.fn(async () => [
+    {
+      source: "files",
+      name: "Synthetic booking.pdf",
+      temporaryUri: "synthetic://booking",
+      typeHint: "application/pdf",
+    },
+  ]),
+}));
+async function scanFile(p: ReturnType<typeof props>) {
+  await node("formAutofill.files").onPress();
+  render(p);
+  void node("formAutofill.scan").onPress();
+  render(p);
+}

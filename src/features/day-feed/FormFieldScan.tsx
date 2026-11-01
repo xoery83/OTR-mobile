@@ -5,6 +5,10 @@ import { t } from "@/ui/locale";
 
 const labels = {
   P2: {
+    originTerminal: () => t("formAutofill.departureTerminal"),
+    destinationTerminal: () => t("formAutofill.arrivalTerminal"),
+    departureZone: () => t("manualFlight.departureZone"),
+    arrivalZone: () => t("manualFlight.arrivalZone"),
     flightNumberLiteral: () => t("manualFlight.number"),
     departureDate: () => t("tripCreate.departureDate"),
     originCode: () => t("manualFlight.originAirport"),
@@ -14,6 +18,11 @@ const labels = {
     arrivalTime: () => t("tripCreate.arrivalTime"),
   },
   P4: {
+    "rentalDetails.supplier": () => t("tripCreate.rentalSupplier"),
+    "rentalDetails.reservedCategory": () => t("tripCreate.rentalReservedCategory"),
+    "rentalDetails.orSimilar": () => t("formAutofill.orSimilar"),
+    "rentalDetails.actualVehicleModel": () => t("tripCreate.rentalActualModel"),
+    "rentalDetails.verifiedPlate": () => t("tripCreate.rentalVerifiedPlate"),
     title: () => t("tripCreate.rentalName"),
     startDate: () => t("tripCreate.rentalPickupDate"),
     endDate: () => t("tripCreate.rentalReturnDate"),
@@ -35,6 +44,9 @@ const labels = {
     description: () => t("tripCreate.transportNotes"),
   },
   P6: {
+    "activityDetails.sessionLabel": () => t("p6.form.sessionLabel"),
+    "activityDetails.admissionNote": () => t("p6.form.admissionNote"),
+    "activityDetails.entryLocation": () => t("p6.form.entryLocation"),
     title: () => t("p6.form.name"),
     location: () => t("p6.form.venue"),
     startDate: () => t("tripCreate.itemDate"),
@@ -50,10 +62,7 @@ export function FormFieldScan<Fields extends object>({
   ...props
 }: {
   family: FormFieldResult["family"];
-  scan(
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ): FormFieldResult | Promise<FormFieldResult>;
+  scan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
   context(): StaySuggestionBinding | null;
   fields(): Fields | null;
   disabled: boolean;

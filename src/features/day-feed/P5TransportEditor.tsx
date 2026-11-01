@@ -150,10 +150,7 @@ export function P5TransportEditor({
   initialDate?: string | null;
   tripStartDate?: string | null;
   opened?: Opened;
-  syntheticScan?: (
-    binding: StaySuggestionBinding,
-    signal: AbortSignal,
-  ) => FormFieldResult | Promise<FormFieldResult>;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   onChooseStay?(): void;
@@ -187,6 +184,7 @@ export function P5TransportEditor({
             generation,
             revision: scanRevision.current,
             mode: source.draft.mode,
+            itemRevision: source.draft.baseRevision,
           }
         : null;
   }, [source, tripId, itemId, generation]);
@@ -462,20 +460,18 @@ export function P5TransportEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
-                  {syntheticScan ? (
-                    <FormFieldScan
-                      family="P5"
-                      scan={syntheticScan}
-                      disabled={saving || frozen || status === "UNAVAILABLE"}
-                      context={() =>
-                        current() && !busyRef.current && !frozenRef.current
-                          ? scanContext.current
-                          : null
-                      }
-                      fields={() => fieldsRef.current}
-                      onApply={change}
-                    />
-                  ) : null}
+                  <FormFieldScan
+                    family="P5"
+                    scan={syntheticScan}
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                    context={() =>
+                      current() && !busyRef.current && !frozenRef.current
+                        ? scanContext.current
+                        : null
+                    }
+                    fields={() => fieldsRef.current}
+                    onApply={change}
+                  />
                   <UiFormRow
                     variant="field"
                     label={t("tripCreate.transportType")}

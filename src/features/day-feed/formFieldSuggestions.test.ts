@@ -185,3 +185,106 @@ it.each(["P2", "P4", "P5", "P6"] as const)(
     ).toBeNull();
   },
 );
+it("re-adopting the same airport does not silently clear the user's terminal", () => {
+  const before = {
+    ...emptyFlightSegment("one", "2026-11-04"),
+    originCode: "AKL",
+    originName: "Auckland International Airport",
+    originTerminal: "Domestic",
+    departureZone: "Pacific/Auckland",
+  };
+  expect(
+    applyFormFieldSuggestions(
+      "P2",
+      result("P2", { originCode: "AKL" }),
+      binding,
+      "one",
+      ["originCode"],
+      before,
+    )?.originTerminal,
+  ).toBe("Domestic");
+});
+it("P4 adopts supplier alone without changing user title or other vehicle details", () => {
+  const before = {
+    title: "My road trip",
+    rentalDetails: {
+      supplier: "Old",
+      reservedCategory: "Economy",
+      orSimilar: true,
+      actualVehicleModel: "Actual model",
+      verifiedPlate: "ABC123",
+    },
+  };
+  expect(
+    applyFormFieldSuggestions(
+      "P4",
+      result("P4", { "rentalDetails.supplier": "New company" }),
+      binding,
+      "one",
+      ["rentalDetails.supplier"],
+      before,
+    ),
+  ).toEqual({
+    ...before,
+    rentalDetails: { ...before.rentalDetails, supplier: "New company" },
+  });
+});
+it("P6 explicit entry change preserves Session and Admission, and omitted fields do not clear", () => {
+  const before = {
+    title: "Show",
+    activityDetails: {
+      sessionLabel: "Matinee",
+      entryLocation: "Old entrance",
+      admissionNote: "Reserved seat",
+    },
+  };
+  expect(
+    applyFormFieldSuggestions(
+      "P6",
+      result("P6", { "activityDetails.entryLocation": "North entrance" }),
+      binding,
+      "one",
+      ["activityDetails.entryLocation"],
+      before,
+    ),
+  ).toEqual({
+    ...before,
+    activityDetails: { ...before.activityDetails, entryLocation: "North entrance" },
+  });
+});
+it("changing P2 airport cannot silently erase a terminal or conflict with a retained zone", () => {
+  const before = {
+    ...emptyFlightSegment("one", "2026-11-04"),
+    originCode: "AKL",
+    originTerminal: "Domestic",
+    departureZone: "Pacific/Auckland",
+  };
+  const suggestions = result("P2", { originCode: "NSN", originTerminal: null });
+  expect(
+    applyFormFieldSuggestions("P2", suggestions, binding, "one", ["originCode"], before),
+  ).toBeNull();
+  expect(
+    applyFormFieldSuggestions(
+      "P2",
+      suggestions,
+      binding,
+      "one",
+      ["originCode", "originTerminal"],
+      before,
+    ),
+  ).toMatchObject({
+    originCode: "NSN",
+    originTerminal: "",
+    departureZone: "Pacific/Auckland",
+  });
+  expect(
+    applyFormFieldSuggestions(
+      "P2",
+      result("P2", { originCode: "NRT" }),
+      binding,
+      "one",
+      ["originCode"],
+      { ...before, originTerminal: "" },
+    ),
+  ).toBeNull();
+});
