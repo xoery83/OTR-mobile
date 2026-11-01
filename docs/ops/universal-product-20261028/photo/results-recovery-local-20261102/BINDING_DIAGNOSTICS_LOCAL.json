@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_PASS",
+  "scope": "Import-owned binding lookup diagnostics only; no deployment or new read/retry policy",
+  "historical503": {
+    "status": "OPEN_UNRESOLVED",
+    "rootCause": "UNPROVEN",
+    "receipt": "../golden-slice-20261101/FIRST_COLD_RESULTS_503_OPEN.json",
+    "receiptSha256": "e16633971f407b30c779cb480eb8de5bd988eeb875ebf42c62cc0ced1e33dde5",
+    "limit": "The old event lacks the underlying kind/code/SQLSTATE. New diagnostics cannot establish a cause retroactively."
+  },
+  "provenGap": "The existing Host BINDING event merges lookup authorization before/after, serialized PG checkout/transaction and parsing. It does not classify the known PG query timeout or AbortError; its old SQLSTATE regex and dynamic deniedObject were broader than a strict finite allowlist.",
+  "change": {
+    "lookupEvent": "universal_binding_lookup_failed",
+    "lookupStages": [
+      "VALIDATE",
+      "AUTHORIZE_BEFORE",
+      "PG_READ",
+      "AUTHORIZE_AFTER",
+      "PARSE"
+    ],
+    "pgStageLimit": "PG_READ includes FIFO/session checkout and transaction BEGIN/query/COMMIT/cleanup. It does not claim that the binding SQL reached PostgreSQL.",
+    "parseStageLimit": "PARSE includes schema and exact Actor/Trip/Batch scope validation.",
+    "sharedClassifier": "One pure Import helper emits finite kind/code/SQLSTATE values for both the new lookup event and existing Host event. Unknown values become UNKNOWN or omitted SQLSTATE.",
+    "privacy": "No raw message, query, URL, JWT, original text, identity, schema issue, dynamic deniedObject or arbitrary five-character code is logged.",
+    "semantics": "Lookup order/queries/authorization and returned binding remain unchanged; the same caught object is rethrown. Classifier or logger failure is contained. Success emits no new event. No Source/Task creation or Provider retry is added."
+  },
+  "validation": {
+    "red": "Original lookup with three new phase assertions: 3 FAIL, existing 6 PASS; no phase event emitted.",
+    "greenCommand": "npx vitest run backend/src/universalBindingDiagnostic.test.ts backend/src/universalBatchSource.test.ts backend/src/universalContinuousHost.test.ts backend/src/universalContext.test.ts --maxWorkers=1 --configLoader runner",
+    "green": "4 suites, 38 tests PASS",
+    "consumerTransportRegression": "Combined six suites, 90 tests PASS",
+    "coverage": "Authorization before/after and PG failure retain original thrown object; next lookup returns the original binding and performs no begin_sustained write. Malformed private schema details stay out of PARSE event. Known query timeout, Abort/Timeout names and SQLSTATE classify; arbitrary values and attached material do not. Logger and throwing diagnostic getter cannot replace failure. Existing fresh-Host same-Task/result/operation recovery remains PASS.",
+    "scopedLint": "Six TypeScript files: 0 errors, four existing duplicate-import warnings in Host source/test",
+    "format": "New helper/test and modified BatchSource/test PASS; unrelated pre-existing Host formatting retained",
+    "diffCheck": "PASS",
+    "typecheck": "npm run typecheck PASS after Root fixed the concurrent unrelated Photo Provider test Buffer type"
+  },
+  "boundaries": "No Host/config/SQL/RLS/GRANT/Auth/Core/MCP/device/Provider/paid-call changes or credential access. Root owns serial review/commit and current-state handoff."
+}

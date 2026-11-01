@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 import { universalPgTransaction } from "./universalPg";
+import { universalBindingDiagnostic } from "./universalBindingDiagnostic";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 const uuid = z.uuid().refine((v) => v === v.toLowerCase()),
   digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -100,24 +101,44 @@ export function createUniversalBatchSource(deps: {
     await deps.authorize(actor, trip);
   }
   async function lookup(actor: string, trip: string, batch: string) {
-    uuid.parse(batch);
-    await current(actor, trip);
-    const raw = await universalPgTransaction(
-      deps.connection,
-      async (lease) =>
-        (
-          await lease.query(
-            "SELECT public.trip_source_find_sustained_universal_binding($1::uuid,$2::uuid,$3::uuid) AS binding",
-            [actor, trip, batch],
-          )
-        ).rows[0]?.binding,
-    );
-    await current(actor, trip);
-    if (raw === null) return null;
-    const b = universalRunBindingSchema.parse(raw);
-    if (b.actorId !== actor || b.tripId !== trip || b.batchId !== batch)
-      throw Error("UNIVERSAL_BINDING_SCOPE");
-    return b;
+    let stage = "VALIDATE";
+    try {
+      uuid.parse(batch);
+      stage = "AUTHORIZE_BEFORE";
+      await current(actor, trip);
+      stage = "PG_READ";
+      const raw = await universalPgTransaction(
+        deps.connection,
+        async (lease) =>
+          (
+            await lease.query(
+              "SELECT public.trip_source_find_sustained_universal_binding($1::uuid,$2::uuid,$3::uuid) AS binding",
+              [actor, trip, batch],
+            )
+          ).rows[0]?.binding,
+      );
+      stage = "AUTHORIZE_AFTER";
+      await current(actor, trip);
+      if (raw === null) return null;
+      stage = "PARSE";
+      const b = universalRunBindingSchema.parse(raw);
+      if (b.actorId !== actor || b.tripId !== trip || b.batchId !== batch)
+        throw Error("UNIVERSAL_BINDING_SCOPE");
+      return b;
+    } catch (error) {
+      try {
+        console.info(
+          JSON.stringify({
+            event: "universal_binding_lookup_failed",
+            stage,
+            ...universalBindingDiagnostic(error),
+          }),
+        );
+      } catch {
+        /* Diagnostics cannot replace the owning failure. */
+      }
+      throw error;
+    }
   }
   return {
     lookup,

@@ -358,8 +358,14 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
           inputs: [pin],
         }),
       ).rejects.toThrow("INPUT_STALE");
-      expect(pinLog).toHaveBeenCalledOnce();
+      expect(pinLog).toHaveBeenCalledTimes(2);
       expect(JSON.parse(pinLog.mock.calls[0][0])).toEqual({
+        event: "universal_binding_lookup_failed",
+        stage: "PG_READ",
+        kind: "Error",
+        code: "UNKNOWN",
+      });
+      expect(JSON.parse(pinLog.mock.calls[1][0])).toEqual({
         event: "universal_prepare_phase_failed",
         pinSetSha256: persistenceDigest([pin]),
         pinFieldSha256: Object.fromEntries(

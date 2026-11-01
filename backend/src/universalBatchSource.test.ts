@@ -185,3 +185,88 @@ it("rejects malformed owning PDF normalization before reuse", async () => {
     await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toThrow();
   }
 });
+
+it.each(["AUTHORIZE_BEFORE", "PG_READ", "AUTHORIZE_AFTER"] as const)(
+  "reports only safe lookup stage %s and preserves the owning error and binding",
+  async (stage) => {
+    const f = fixture(),
+      binding = await f.source.prepare(f.actor, f.trip, f.input),
+      failure = Object.assign(Error("private JWT SQL original https://private.invalid"), {
+        code: "57014",
+        detail: "private source text",
+      }),
+      log = vi.spyOn(console, "info").mockImplementation(() => {});
+    f.query.mockClear();
+    if (stage === "AUTHORIZE_BEFORE") f.authorize.mockRejectedValueOnce(failure);
+    if (stage === "AUTHORIZE_AFTER")
+      f.authorize.mockResolvedValueOnce().mockRejectedValueOnce(failure);
+    if (stage === "PG_READ") {
+      const query = f.query.getMockImplementation()!;
+      f.query.mockImplementationOnce(query).mockRejectedValueOnce(failure);
+    }
+    try {
+      await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toBe(
+        failure,
+      );
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({
+          event: "universal_binding_lookup_failed",
+          stage,
+          kind: "Error",
+          code: "UNKNOWN",
+          sqlState: "57014",
+        }),
+      );
+      expect(await f.source.lookup(f.actor, f.trip, f.input.batchId)).toEqual(binding);
+      expect(f.query.mock.calls.some(([q]) => q.includes("begin_sustained"))).toBe(false);
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
+
+it("reports malformed binding as PARSE without logging schema contents", async () => {
+  const f = fixture(),
+    log = vi.spyOn(console, "info").mockImplementation(() => {});
+  f.setBinding({ actorId: "private-token", inputs: [{ text: "private original" }] });
+  try {
+    await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toThrow();
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        event: "universal_binding_lookup_failed",
+        stage: "PARSE",
+        kind: "ZodError",
+        code: "UNKNOWN",
+      }),
+    );
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it.each(["LOGGER", "CLASSIFIER"])(
+  "a failed diagnostic %s cannot replace the owning failure",
+  async (diagnostic) => {
+    const f = fixture(),
+      failure =
+        diagnostic === "LOGGER"
+          ? Error("original failure")
+          : Object.defineProperty({}, "code", {
+              get() {
+                throw Error("diagnostic property access");
+              },
+            }),
+      log = vi.spyOn(console, "info").mockImplementation(() => {
+        throw Error("diagnostic logger failure");
+      });
+    f.authorize.mockRejectedValueOnce(failure);
+    try {
+      await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toBe(
+        failure,
+      );
+      expect(f.query).not.toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
