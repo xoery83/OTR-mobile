@@ -1,0 +1,34 @@
+{
+  "status": "NO_BLOCKER_TWO_CLIENT_OPS_CANDIDATE_ONLY",
+  "independentReviewer": "auth_phase1_review",
+  "focusedChecks": "Renderer selftest and8 fakeSQL testsPASS",
+  "sourceSHA256": {
+    "scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "docs/ops/auth-mcp-slice1-20261101/operators/test_issuer_close.py": "fd22561b338c741d0b3428eb73c8c4e512c45c96daa8f7e16ad415659268faf6"
+  },
+  "clientsSingleSelectionOnly": [
+    "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+    "83504d3f-59d4-43fd-99b1-bebc54c40f7d"
+  ],
+  "claudeReferenceActiveSHA256": "698c1d326f616572b58ee756b2a43db4eef2fb336ed6cda2051ae7c6a57134f3",
+  "claudeReferenceCloseSHA256": "a63a08f86cbf41be005767d4a1541da303408208cfc8dcd5b9fec104c595ac5f",
+  "claudeOutputUnchanged": true,
+  "gptDelta": "Only fixed UUID in frozen template",
+  "unchanged": [
+    "QA actor",
+    "audience",
+    "scopes",
+    "token60s",
+    "window30min",
+    "freshiat",
+    "ACL",
+    "denyallbody",
+    "singleintent",
+    "UNKNOWN no-reapply"
+  ],
+  "softwareMarker530": "Not actual authority",
+  "ownerGateB94": "WAITING_HUMAN_NO_EXECUTION_AUTHORITY",
+  "activated": false,
+  "chatGptE2E": false
+}

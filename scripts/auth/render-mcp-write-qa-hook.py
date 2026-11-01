@@ -13,6 +13,8 @@ spec.loader.exec_module(read)
 TEMPLATE = read.TEMPLATE
 CLOSED_INSTALL = read.CLOSED_INSTALL
 CLIENT = "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141"
+CHATGPT_CLIENT = "83504d3f-59d4-43fd-99b1-bebc54c40f7d"
+CLIENTS = (CLIENT, CHATGPT_CLIENT)
 READ_GATE = "OTR_MCP_OAUTH_QA_20261031_V1"
 WRITE_GATE = "OTR_MCP_OAUTH_WRITE_QA_20261101_V1"
 
@@ -26,11 +28,14 @@ def utc(value):
 
 def render(client_id, deadline, started_at):
     start, end = utc(started_at), utc(deadline)
-    if client_id != CLIENT or not timedelta(0) < end - start <= timedelta(minutes=30):
+    if client_id not in CLIENTS or not timedelta(0) < end - start <= timedelta(minutes=30):
         raise ValueError("FIXED_CLIENT_AND_FINITE_WRITE_WINDOW_REQUIRED")
     start_sql = start.isoformat().replace("+00:00", "Z")
     end_sql = end.isoformat().replace("+00:00", "Z")
-    result = read.render(client_id, end_sql)
+    # Preserve frozen Claude output; only the selected registered UUID varies.
+    result = read.render(CLIENT, end_sql)
+    assert result.count(CLIENT) == 1, "UPSTREAM_REVIEWED_CLIENT_CHANGED"
+    result = result.replace(CLIENT, client_id)
     result = result.replace("Two documented parameters", "Three documented parameters")
     result = result.replace("the single newly registered public client's", "the existing fixed Claude QA public client's")
     result = "-- STARTED_AT_UTC = first temporary configuration intention; deadline cannot extend it.\n" + result

@@ -1,4 +1,4 @@
-"""First Claude Slice1 close-only watchdog. No activation, credentials or business writes."""
+"""Single registered-client Slice1 close-only watchdog. No activation, credentials or business writes."""
 import datetime as dt
 import hashlib
 import importlib.util
@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[4]
 GATE = '530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801'
 CLOSED = 'b0f7eae14599bd32cb9430a59832c837'
 CLIENT = 'd2b8167f-ee42-4ac1-b5ef-4dc003c0d141'
+CLIENTS = (CLIENT, '83504d3f-59d4-43fd-99b1-bebc54c40f7d')
 POLICY = 'OTR_MCP_OAUTH_WRITE_QA_20261101_V1'
 def sha(value): return hashlib.sha256(value).hexdigest()
 def instant(value):
@@ -23,13 +24,13 @@ def instant(value):
     return dt.datetime.fromisoformat(value.replace('Z','+00:00')).timestamp()
 def validate(plan, directory):
     if set(plan) != {'gateSHA256','windowId','clientId','startsAt','expiresAt','activeSQLSHA256','closeSQLSHA256','activeBodyMD5'}: raise ValueError('EXACT_PLAN_REQUIRED')
-    if plan['gateSHA256'] != GATE or plan['clientId'] != CLIENT or not re.fullmatch('[0-9a-f]{32}',plan['windowId']): raise ValueError('FIRST_CLAUDE_GATE_REQUIRED')
+    if plan['gateSHA256'] != GATE or plan['clientId'] not in CLIENTS or not re.fullmatch('[0-9a-f]{32}',plan['windowId']): raise ValueError('FIXED_SINGLE_CLIENT_GATE_REQUIRED')
     if directory != Path('/private/tmp/otr-auth-mcp-slice1-'+plan['windowId']) or directory.is_symlink() or directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077: raise ValueError('PRIVATE_DIRECTORY_REQUIRED')
     start,end=instant(plan['startsAt']),instant(plan['expiresAt'])
     if not 0 < end-start <= 1800: raise ValueError('FINITE_WINDOW_REQUIRED')
     spec=importlib.util.spec_from_file_location('existing_write_hook',ROOT/'scripts/auth/render-mcp-write-qa-hook.py')
     renderer=importlib.util.module_from_spec(spec);spec.loader.exec_module(renderer)
-    active=renderer.render(CLIENT,plan['expiresAt'],plan['startsAt']);closed=renderer.render_close(active)
+    active=renderer.render(plan['clientId'],plan['expiresAt'],plan['startsAt']);closed=renderer.render_close(active)
     if sha(active.encode()) != plan['activeSQLSHA256'] or sha(closed.encode()) != plan['closeSQLSHA256'] or hashlib.md5(active.split('$hook$')[1].encode()).hexdigest() != plan['activeBodyMD5']: raise ValueError('FROZEN_RENDER_REQUIRED')
     return end,closed
 
