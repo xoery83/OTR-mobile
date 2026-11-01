@@ -11,6 +11,10 @@ actual networknonePG4.17s PASS: sameCOMMIT/rollback/dedupe/ABA/oldlease denial/e
 Session revocation+private visibility. Test container cleaned. Corebace3files
 imported verbatim by Owner Writer handoff. Full scoped package+hashes:
 ops/auth-realtime-private-20261102/authority-package/PACKAGE_MANIFEST.json.
+Root shared default now ddd7/db8689/image57bce7 (verified23:44:03.978Z Nov1UTC),
+Capture7046/runtime416/SDK45ff; QAkeysabsent/healthy/23filesexact/lockreleased.
+Future acd60 close must restore this new tuple; a1 is software rollback only.
+No newT/OTP/issuer/access approval; B1 remains unmounted.
 Formal heldCore/currentSession adapter, canonicaltransition+postCOMMIT producer,
 actualprivateTransport/forceddisconnect, NativecacheRegrant and protectedSQL Gate
 remain unmounted/uninstalled. No Hosted/Provider/NativeRealtime E2E PASS.
