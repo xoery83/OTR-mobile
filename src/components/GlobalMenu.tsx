@@ -367,6 +367,7 @@ export function GlobalMenu({
           (membersRead === null || !!membersCurrent)
         }
         members={membersCurrent ? membersRead.members : null}
+        context={membersCurrent ? membersRead.context : undefined}
         onClose={() => {
           membersRequest.current++;
           setMembersVisible(null);

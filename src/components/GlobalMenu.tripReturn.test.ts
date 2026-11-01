@@ -20,12 +20,16 @@ const state = vi.hoisted(() => ({
   navigate: vi.fn(),
   alerts: vi.fn(),
   readMembers: vi.fn(),
+  membersOverride: null as any,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (value: unknown) => {
     const i = state.stateCursor++;
-    return [value, (state.setters[i] ??= vi.fn())];
+    return [
+      i === 0 && state.membersOverride ? state.membersOverride : value,
+      (state.setters[i] ??= vi.fn()),
+    ];
   },
   useEffect: (run: () => (() => void) | void, deps: readonly unknown[]) => {
     state.effects.push({ run, deps });
@@ -87,6 +91,7 @@ const back = () =>
     .find((item) => item.label === "navigation.allTrips");
 beforeEach(() => {
   state.effects = [];
+  state.membersOverride = null;
   vi.mocked(readCommittedLocalSession).mockReset().mockResolvedValue(null);
   vi.mocked(getDefaultLedgerReportingRepository).mockClear();
   state.generation = 1;
@@ -315,4 +320,22 @@ it("ignores a late identity snapshot from a superseded account generation", asyn
   await Promise.resolve();
   await Promise.resolve();
   expect(state.setters[2]).not.toHaveBeenCalled();
+});
+
+it("passes only the current menu reader scope to the normal draft-only Members entry", () => {
+  const context = { accountId: "account", tripId: "a", generation: 1 };
+  state.membersOverride = { context, members: { state: "UNKNOWN" } };
+  const sheet = () => {
+    state.cursor = 0;
+    state.refCursor = 0;
+    state.stateCursor = 0;
+    return GlobalMenu({ module: "TRIP" }).props.children[1];
+  };
+  expect(sheet().props.context).toEqual(context);
+  expect(sheet().props.onAddTraveler).toBeUndefined();
+  state.generation = 3;
+  expect(sheet().props.context).toBeUndefined();
+  state.generation = 1;
+  state.params.tripId = "other";
+  expect(sheet().props.context).toBeUndefined();
 });

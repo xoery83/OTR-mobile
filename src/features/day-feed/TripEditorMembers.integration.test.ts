@@ -26,6 +26,8 @@ import { TripCoverPicker } from "./TripCoverPicker";
 import { TripMembersSummary } from "./TripSetupRows";
 import { TripMembersSheet } from "./TripMembersSheet";
 
+vi.mock("@/native/tripPersonEditorDraft", () => ({ loadTripPersonEditorDraft: vi.fn() }));
+
 const hooks = vi.hoisted(() => ({
   values: [] as any[],
   refs: [] as any[],
