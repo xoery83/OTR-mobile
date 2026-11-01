@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_PG_BACKEND_COMPONENT_PASS_READY_FOR_INTEGRATION_NOT_REALTIME_E2E",
+  "fixture": "otr-core-v2-test-0426981787cb",
+  "network": "none",
+  "checkedAt": "2026-11-01T23:28:31.532Z",
+  "checks": [
+    "A_CURRENT_CANONICAL_ACTOR_AND_PG_GENERATION_ADMITTED_B_DENIED",
+    "REAL_CORE_PROJECTOR_PRIVATE_ITEM_WITHHELD_FROM_OTHER_LINKED_ACTOR",
+    "CANONICAL_DML_GENERATION_AND_RECEIPT_FAILURE_ROLL_BACK_TOGETHER",
+    "REAL_PG_COMMIT_LOSS_REJECTS_OLD_GENERATION_REJOIN_AND_CORE_READ",
+    "SAME_OPERATION_DEDUP_AND_REGRANT_NEW_PERSISTED_GENERATION_OLD_LEASE_NEVER_REVIVES",
+    "ONE_REAL_AUTH_SESSIONS_ROW_REVOKED_OTHER_SAME_ACCOUNT_SESSION_REMAINS_VALID",
+    "REAL_PG_LOCK_SERIALIZES_ADMISSION_AND_CANONICAL_REVOKE_NO_POSTCOMMIT_OLD_ACCESS",
+    "ABA_FOREIGN_ACCOUNT_AND_REPEATED_DISCONNECT_REJOIN_KEEP_SERVER_GENERATION"
+  ],
+  "finalState": {
+    "status": "linked",
+    "receipts": 4,
+    "generation": 5,
+    "memberXmin": "7259",
+    "receiptXmin": "7259",
+    "generationXmin": "7259"
+  },
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "limits": [
+    "Synthetic fixture bearer mapping, not real Provider/OTP login",
+    "Canonical membership DML executed only by isolated fixture writer, no user-facing revoke API",
+    "Fixture held-scope composition is not the delivered Core server adapter",
+    "Auth liveness generations are not Core accessRevision",
+    "No actual private channel, server forced-disconnect or Publisher proof; enforcement remains UNCONFIRMED"
+  ]
+}

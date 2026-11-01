@@ -1,10 +1,19 @@
-# Auth P0 Private Realtime / focused7cb5 closed — 2 November2026
+# Auth P0 Private Realtime candidate fixed — 2 November2026
 
-Owner assigns formal Private Subscription Authority/revoke/regrant P0. Local Authority
-and PG-adapter candidates in progress; canonicalCore membership remains sole source.
-Core bace5af8 verbatim3file handoff authorized and imported. No durableAuthgeneration,
-immutabletransition or forceddisconnect producer exists; minimal liveness sidecar+
-same-Core-transaction candidate under isolation, not Hosted. No TTL/404/mock strongrevoke claim.
+Formal V1 shared DTO/committed-revoke mapper, Backend Authority and held-Pg adapter
+are READY_FOR_INTEGRATION. Subscription, data visibility, committed access loss
+and network enforcement are separate. Canonical Core Actor/membership remains sole
+business authority; sidecar only persists connection generations/immutable receipts.
+Committed REVOKED immediately cache-denies even if network enforcement UNCONFIRMED.
+Expiry/disconnect/404 do not fabricate revoke; Regrant needs new qualified lease and
+Native freshFullPull, not Authgen→CoreRev arithmetic. Independent5suites57PASS+types;
+actual networknonePG4.17s PASS: sameCOMMIT/rollback/dedupe/ABA/oldlease denial/exact
+Session revocation+private visibility. Test container cleaned. Corebace3files
+imported verbatim by Owner Writer handoff. Full scoped package+hashes:
+ops/auth-realtime-private-20261102/authority-package/PACKAGE_MANIFEST.json.
+Formal heldCore/currentSession adapter, canonicaltransition+postCOMMIT producer,
+actualprivateTransport/forceddisconnect, NativecacheRegrant and protectedSQL Gate
+remain unmounted/uninstalled. No Hosted/Provider/NativeRealtime E2E PASS.
 
 7cb5 exactf93 window T22:32:33.252Z/D23:00:33.252Z Nov1UTC CLOSED EARLY.
 Root defaulta1/9a88/1c5 independentlyrestored22:51:44Z, keysabsent/Host23filesexact,

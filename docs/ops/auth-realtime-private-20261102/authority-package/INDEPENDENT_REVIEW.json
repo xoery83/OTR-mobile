@@ -1,0 +1,33 @@
+{
+  "status": "NO_BLOCKER_LOCAL_AUTHORITY_AND_PG_CANDIDATE_ONLY",
+  "independentReviewer": "auth_phase1_review",
+  "independentSuites": 5,
+  "independentTestsPassed": 57,
+  "typecheck": "PASS",
+  "pgExecution": "IMPLEMENTER_ACTUAL_NETWORK_NONE_FRESH_PASS_4_17_SECONDS",
+  "pgIndependentReview": "SOURCE_DDL_AND_EXISTING_RECEIPT_REVIEW_ONLY_NO_REBUILD",
+  "sourceSHA256": {
+    "src/domain/auth/tripRealtimeAuthorization.ts": "efc2ba7abd9ca7d0720aaa3a3f2bc39ba44b06de067945d691a58c55e3b8f486",
+    "src/domain/auth/tripRealtimeAuthorization.test.ts": "a6afc220710e85c93f2208aa13dff3d4eefcd7fa9928aa2d4156f4bc53ecd72f",
+    "backend/src/tripPrivateRealtimeAuthority.ts": "79bce683c24f970e0b8e76a50365ec730853d894bf821198ba174bdcbb06a614",
+    "backend/src/tripPrivateRealtimeAuthority.test.ts": "a1443b8fb376ff965807fb81d722f36358cdf54b0cbed440a6a8e7714a85ea48",
+    "backend/src/tripPrivateRealtimeAuthorityPg.ts": "356dd2c3d2ef2ba9c2eda883b702c5b622aedf818ceb585bfba698c37ac63732",
+    "backend/src/tripPrivateRealtimeAuthorityPg.test.ts": "3084e88b83ff1d2c79a5c50bb2ba0a70356ebde2ff217c8b5fd1a1e5da8599a1",
+    "backend/src/tripPrivateRealtimeAuthorization.pg.test.ts": "a8e356a7f93f1b4a767ce85b6fefc94c6c23e45ae5b526709d4e34dab296730d",
+    "backend/src/__fixtures__/tripPrivateRealtimeAuthorizationPg.ts": "76bc75e5fafb33dc08da4f22c89050c92bc0bae8136686d502446e87052fefb0",
+    "backend/src/tripCoreRealtimeQualification.ts": "7618507ca44d02e9529837356fb2fc3483d97b02931bb640334d0e8ba8c377ff",
+    "backend/src/tripCoreRealtimeQualification.test.ts": "b782f0dd7bb0e73c0d3634b365e8211f74fa4e0efcaa808385d3d9daf72c42d1",
+    "docs/architecture/AUTH_PRIVATE_REALTIME_AUTHORITY_V1.md": "a50fefd0faf672c3683686a436ccfaaf206b0817979085e52886c41ebc9208e5",
+    "docs/architecture/TRIP_CORE_REALTIME_QUALIFICATION_CANDIDATE.md": "75017e9330248fd378ac65831296162ed55b68f93b8612fb62eaf40e9c01ee58",
+    "docs/ops/auth-realtime-private-20261102/pg-candidate/CONNECTION_GENERATION_CANDIDATE.sql": "236a1cdef1d69ddc123ee7969170d6f85ed4b4bfeb86159967a24e58093a4b88",
+    "docs/ops/auth-realtime-private-20261102/pg-candidate/ISOLATED_PG_RECEIPT.json": "049899baca5618902e2527663187d808f513b2ff742d7a36c8b8a5a6ab7eda47"
+  },
+  "notClaimed": [
+    "Hosted authority or protected installation",
+    "Provider login for PG synthetic bearers",
+    "Production held Core or Session adapter",
+    "Actual network forced disconnect",
+    "Native cache-deny/Regrant E2E"
+  ],
+  "protectedGate": "NOT_REQUESTED_NOT_AUTHORIZED"
+}
