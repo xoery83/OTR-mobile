@@ -1,0 +1,30 @@
+{
+  "status": "PHOTO_INPUT_COLD_RECOVERY_NATIVE_PASS",
+  "observedAt": "2026-11-01T01:47:13.456871+00:00",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "app": "com.xoery.otrmobile",
+  "batchId": "f1533073-0cd5-4514-824f-03f779a852b7",
+  "entry": [
+    "Cold relaunch",
+    "My Trips",
+    "Start a Trip",
+    "Import Travel Plans",
+    "Add attachments",
+    "Recent submissions",
+    "Nov 1, 2026 at 14:13:09",
+    "View",
+    "Activity Progress",
+    "Scroll down"
+  ],
+  "originalFilename": "universal-photo-activity-qa.png",
+  "ocrGate": "RELEVANT",
+  "aiChoice": "CONTINUE_WITH_AI",
+  "aiChoiceRetained": true,
+  "sameInputRecovered": true,
+  "analyzeClicked": false,
+  "sourceWindow": "CLOSED",
+  "isPhotoVisionOrSavePass": false,
+  "limits": [
+    "Input recovery only; formal Photo Vision/Save still pending"
+  ]
+}

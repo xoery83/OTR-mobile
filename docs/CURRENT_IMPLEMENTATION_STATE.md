@@ -18,6 +18,8 @@ Owner approved existing agent-device Runner continuation. On the SAME AD5 and Ba
 Runner0.21.33 opened normal App, read real accessibility controls and tapped Scroll down;
 OCR RELEVANT and retained explicit AI choice independently visible. No Analyze/new object/model.
 CUA coordinate fault persists; Runner UI readiness PASS, Photo E2E still NOT PASS.
+Actual cold relaunch→My Trips→Import/Recent submissions→same14:13:09Batch restored
+original/RELEVANT/retainedContinueAI via normal UI. Input cold recovery PASS only; noAnalyze.
 Auth windowcc269225 started01:31:04Z/hard02:00:14Z; wait for independent close/handoff
 before Host/config/protected SQL mutation. Source helper grant is not pending.
 Durableevidence: photo/proof-exec-approved-20261101/ and.env.photo-proof-exec-approved-20261101/.
