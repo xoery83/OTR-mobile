@@ -470,6 +470,7 @@ export function P5TransportEditor({
                         : null
                     }
                     fields={() => fieldsRef.current}
+                    currentFields={fields}
                     onApply={change}
                   />
                   <UiFormRow

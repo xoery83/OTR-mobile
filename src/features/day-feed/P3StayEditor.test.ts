@@ -870,9 +870,11 @@ it("synthetic Create review updates only Draft, then uses the original repositor
   };
   await open(p, repo);
   await scanFile(p);
+  expect(node("formAutofill.keep").variant).toBe("secondary");
   for (let i = 0; i < 3; i++) {
     node("formAutofill.keep").onPress();
     render(p);
+    expect(node("formAutofill.use").variant).toBe("primary");
   }
   node("ui.apply").onPress();
   render(p);
@@ -1360,7 +1362,9 @@ it("explicit synthetic sample has no file URI/identity and never invokes the rea
   await node("formAutofill.scan").onPress();
   render(p);
   expect(picker).not.toHaveBeenCalled();
-  const sample = (scan.mock.calls[0] as unknown[])[2] as import("@/features/capture/captureStaging").CaptureSelection[];
+  const sample = (
+    scan.mock.calls[0] as unknown[]
+  )[2] as import("@/features/capture/captureStaging").CaptureSelection[];
   expect(sample[0].temporaryUri).toBeNull();
   expect(sample[0].identity).toBeUndefined();
 });

@@ -457,6 +457,7 @@ export function P3StayEditor({
                         : null
                     }
                     fields={() => fieldsRef.current}
+                    currentFields={fields}
                     onApply={(next) => {
                       const { location, ...rest } = next;
                       change(location === fieldsRef.current?.location ? rest : next);

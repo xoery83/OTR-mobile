@@ -291,6 +291,7 @@ export function ManualFlightForm({
                           }
                         : null
                     }
+                    currentFields={segment}
                     fields={() =>
                       fields.current.find((entry) => entry.key === segment.key) ?? null
                     }

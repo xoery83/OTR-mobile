@@ -65,6 +65,7 @@ export function FormFieldScan<Fields extends object>({
   scan?: import("./formScanResponse").FormScanConsumer<FormFieldResult>;
   context(): StaySuggestionBinding | null;
   fields(): Fields | null;
+  currentFields?: Fields;
   disabled: boolean;
   onApply(next: Fields): void;
 }) {

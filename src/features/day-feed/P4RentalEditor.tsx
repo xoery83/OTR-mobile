@@ -504,6 +504,7 @@ export function P4RentalEditor({
                         : null
                     }
                     fields={() => fieldsRef.current}
+                    currentFields={fields}
                     onApply={(next) => {
                       sameReturnRef.current = sameRentalLocation(next);
                       setSameReturnLocation(sameReturnRef.current);

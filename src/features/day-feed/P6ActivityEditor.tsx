@@ -432,6 +432,7 @@ export function P6ActivityEditor({
                         : null
                     }
                     fields={() => fieldsRef.current}
+                    currentFields={fields}
                     onApply={change}
                   />
                   <View style={styles.field}>

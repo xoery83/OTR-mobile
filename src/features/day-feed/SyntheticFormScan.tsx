@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { View } from "react-native";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
 import { UiChoiceChip } from "@/ui/forms";
 import { t } from "@/ui/locale";
@@ -46,6 +47,7 @@ export function SyntheticFormScan<
   scan,
   context,
   fields,
+  currentFields,
   disabled,
   onApply,
   apply,
@@ -54,6 +56,7 @@ export function SyntheticFormScan<
   scan?: FormScanConsumer<Result>;
   context(): StaySuggestionBinding | null;
   fields(): Fields | null;
+  currentFields?: Fields;
   disabled: boolean;
   onApply(next: Fields): void;
   apply(
@@ -266,42 +269,63 @@ export function SyntheticFormScan<
                 .map((key) => {
                   const selected = review.selected[candidate.id]?.includes(key) ?? false;
                   const clearValue = candidate.fields[key] === null;
+                  const [parent, detail] = key.split(".");
+                  const source = currentFields as Record<string, unknown> | undefined;
+                  const currentValue = detail
+                    ? (source?.[parent] as Record<string, unknown> | undefined)?.[detail]
+                    : source?.[key];
                   return (
-                    <UiButton
-                      key={key}
-                      label={t(
-                        clearValue
-                          ? selected
-                            ? "formAutofill.clear"
-                            : "formAutofill.keepClear"
-                          : selected
-                            ? "formAutofill.use"
-                            : "formAutofill.keep",
-                        {
-                          field: labels[key](),
-                          value:
-                            typeof candidate.fields[key] === "boolean"
-                              ? t(candidate.fields[key] ? "common.yes" : "common.no")
-                              : String(candidate.fields[key] ?? ""),
-                        },
-                      )}
-                      disabled={disabled || wrongTarget}
-                      onPress={() => {
-                        if (active.current !== review || disabled || wrongTarget) return;
-                        const selectedKeys = review.selected[candidate.id] ?? [];
-                        const next = {
-                          ...review,
-                          selected: {
-                            ...review.selected,
-                            [candidate.id]: selected
-                              ? selectedKeys.filter((value) => value !== key)
-                              : [...selectedKeys, key],
+                    <View key={key}>
+                      {currentValue !== undefined &&
+                      currentValue !== null &&
+                      currentValue !== "" ? (
+                        <UiText numberOfLines={2}>
+                          {t("formAutofill.current", {
+                            field: labels[key](),
+                            value:
+                              typeof currentValue === "boolean"
+                                ? t(currentValue ? "common.yes" : "common.no")
+                                : String(currentValue),
+                          })}
+                        </UiText>
+                      ) : null}
+                      <UiButton
+                        variant={selected ? "primary" : "secondary"}
+                        label={t(
+                          clearValue
+                            ? selected
+                              ? "formAutofill.clear"
+                              : "formAutofill.keepClear"
+                            : selected
+                              ? "formAutofill.use"
+                              : "formAutofill.keep",
+                          {
+                            field: labels[key](),
+                            value:
+                              typeof candidate.fields[key] === "boolean"
+                                ? t(candidate.fields[key] ? "common.yes" : "common.no")
+                                : String(candidate.fields[key] ?? ""),
                           },
-                        };
-                        active.current = next;
-                        setReview(next);
-                      }}
-                    />
+                        )}
+                        disabled={disabled || wrongTarget}
+                        onPress={() => {
+                          if (active.current !== review || disabled || wrongTarget)
+                            return;
+                          const selectedKeys = review.selected[candidate.id] ?? [];
+                          const next = {
+                            ...review,
+                            selected: {
+                              ...review.selected,
+                              [candidate.id]: selected
+                                ? selectedKeys.filter((value) => value !== key)
+                                : [...selectedKeys, key],
+                            },
+                          };
+                          active.current = next;
+                          setReview(next);
+                        }}
+                      />
+                    </View>
                   );
                 })}
               {Object.keys(candidate.fields)
