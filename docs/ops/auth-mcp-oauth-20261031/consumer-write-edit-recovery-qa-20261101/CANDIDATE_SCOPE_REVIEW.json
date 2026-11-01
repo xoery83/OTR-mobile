@@ -1,0 +1,12 @@
+{
+  "status": "NO_BLOCKER_EDIT_RECOVERY_GATE_CANDIDATE_SCOPE",
+  "reviewer": "auth_phase1_review",
+  "independentOperatorTests": "5/5 PASS",
+  "sourceAndCandidatePins": "6/6 match; restore/negative helper byte-identical",
+  "boundary": "New Owner explicit oneoriginalbb retry only; read receipt first/APPLIED skipsPOST; fresh identicalrev1/fields/receiptmissing; new UNKNOWN stops; nonewID/no404 NoCommit inference",
+  "softwareActualRootReadback": "PENDING",
+  "finalFreeze": "PENDING",
+  "newGateApproved": false,
+  "executionReady": false,
+  "externalIo": 0
+}

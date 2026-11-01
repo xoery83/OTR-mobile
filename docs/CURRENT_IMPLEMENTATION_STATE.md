@@ -138,8 +138,17 @@ See consumer-write-execution-20261101/{W_OUTCOME,W_COMPLETE_CLOSED}.json.
 MCP5382e3c8 then proved and repaired post-run-expiry result loss using actual SDK
 HTTP+Core memory commit (not a proved live bb cause).62 focused MCP checks and
 independent NO_BLOCKER; Auth repinned onlyserver.ts, preserves33 other inputs,
-new compiled runtimeb807/public-denial smoke7 PASS. New closed software and its
-independent qualification are in progress; no new live Gate or business retry. See consumer-write-candidate/.
+new compiled runtimeb807/public-denial smoke7 PASS. Auth620d narrows QA config
+to v3/bb-only (Create/oldv2/repeats reject),54 targeted checks/types/lint and
+independent NO_BLOCKER. Root combined this with its two Source diagnostics,
+348 other Capture inputs preserved: actual6af4/d3a5/Capture44fbd/MCPb807,
+independent defaultclosed02:44:24Z health200/protected401/23files/Env/Host/mount
+PASS. Root Source work may continue. New original-bb recovery Gate deac94b1 is
+frozen and independently reviewed,35file/54criticalinput hashes match, but NOT
+approved or activated. It allows no new Item/op, reuses accepted stateless Preview
+only with fresh unchanged state/Consent/Confirm and at most one explicitly newly
+approved samebb APPLY; existing APPLIED receipt skipsPOST. See
+consumer-write-edit-recovery-qa-20261101/. No old window reuse or business retry. See consumer-write-candidate/.
 
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,

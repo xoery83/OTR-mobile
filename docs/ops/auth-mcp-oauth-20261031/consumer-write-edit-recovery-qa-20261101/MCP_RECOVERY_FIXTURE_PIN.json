@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "c7db8c3742e2ad0b37bc72d8dc63c94968979ecc",
+  "sourcePath": "mcp/fixtures/claude-original-bb-recovery.json",
+  "sha256": "2ed5ed11565e1ae8df81e38f807d307622a66845e398fa76071acd0364e23101",
+  "independentMcpReview": "NO_BLOCKER",
+  "steps": "originalbb status -> conditional samebb APPLY -> same11f readback",
+  "noNewGateOrClientActions": true
+}

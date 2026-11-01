@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "authority": "PREPARATION_ONLY_PENDING_NEW_EXACT_OWNER_GATE_NOT_FOR_DISPATCH",
+  "sourceFixture": "claude-p3-write-smoke.json",
+  "sourceFixtureSha256": "8448feb6efaabb8ef91ee3748fd080bd758d6f60389c023f3651a846ad63f405",
+  "priorActualPreview": {
+    "file": "docs/mcp/acceptance/CLAUDE_WRITE_UPDATE_PREVIEW.json",
+    "sha256": "94a68ed50d26051779683d11a41ad095d60565c4b9b44c1d7f29a0ef225eac00",
+    "operation_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+    "preview_digest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7",
+    "outcome": "PREVIEW"
+  },
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "allowedWriteOperationIds": [
+    "bb0cb010-0cb4-432b-8995-670aaec95b3d"
+  ],
+  "createOperationPolicy": "e9 is accepted historical evidence only; no create tool or Create confirmation permitted",
+  "previewContract": "Single-item digest binds Account/kind/exact command, not Session or time. Reusing this actual unchanged preview does not reuse an old grant, Consent, confirmation or Gate.",
+  "prerequisites": [
+    "New exact Owner Gate explicitly permits at most one original-bb retry; old Write Gate is consumed",
+    "Fresh same Account/client/resource Write Consent, valid grant and trusted exact-operation confirmation; normal pending-request binding and deadline checks unchanged",
+    "Auth READY with fresh configuration/resource CAS; default-closed software review is not READY",
+    "Original bb receipt lookup first; independent normal Backend and Supabase reconciliation",
+    "Only if original receipt remains absent and independently current Item revision1 plus exact pre-Edit fields unchanged; absence is not proof of NoCommit",
+    "Runtime trusted confirmation allowlist must authorize bb only; previous [e9,bb] tuple must not silently retain Create confirmation"
+  ],
+  "steps": [
+    {
+      "id": "original_operation_lookup",
+      "tool": "get_operation_status",
+      "arguments": {
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "operation_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+        "target": "ITEM"
+      },
+      "consumer_prompt": "请只实际调用一次 OTR DEV QA 的 get_operation_status，参数为 {\"trip_id\":\"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\",\"operation_id\":\"bb0cb010-0cb4-432b-8995-670aaec95b3d\",\"target\":\"ITEM\"}。保留真实服务器 JSON；不要调用写入、重试、换 Operation ID 或重连。UNKNOWN 或查不到不能解释为未提交。"
+    },
+    {
+      "id": "conditional_original_update_apply",
+      "tool": "update_trip_item",
+      "arguments": {
+        "request_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+        "expected_revision": 1,
+        "change": {
+          "kind": "DATES",
+          "dates": {
+            "start_date": "2026-12-11",
+            "end_date": "2026-12-13"
+          }
+        },
+        "mode": "APPLY",
+        "preview_digest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7"
+      },
+      "stopUnless": {
+        "operation_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+        "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74",
+        "preview_digest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7",
+        "outcome": "APPLIED",
+        "current_revision": 2
+      },
+      "consumer_prompt": "请仅实际调用一次 OTR DEV QA 的 update_trip_item，参数为 {\"request_id\":\"bb0cb010-0cb4-432b-8995-670aaec95b3d\",\"trip_id\":\"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\",\"item_id\":\"11fdaec9-3305-4db0-a146-be78823fcf74\",\"expected_revision\":1,\"change\":{\"kind\":\"DATES\",\"dates\":{\"start_date\":\"2026-12-11\",\"end_date\":\"2026-12-13\"}},\"mode\":\"APPLY\",\"preview_digest\":\"ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7\"}。保留服务器真实 outcome、operation_id、item_id、current_revision 和 preview_digest；没有的字段明确没有。不要调用其他工具、重试、修改参数或宣称发送即保存成功。",
+      "onlyIf": "Fresh exact Owner retry authorization plus independent preconditions and fresh trusted Confirm; original lookup is UNKNOWN solely with NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT, never RECOVERY_UNAVAILABLE/auth/timeout"
+    },
+    {
+      "id": "accepted_update_readback",
+      "tool": "get_trip_item",
+      "arguments": {
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "11fdaec9-3305-4db0-a146-be78823fcf74"
+      },
+      "stopUnless": {
+        "state": "SERVER_CONFIRMED",
+        "item": {
+          "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+          "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "itemRevision": 2,
+          "family": "P3",
+          "title": "Consumer MCP QA Stay (unbooked)",
+          "description": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+          "status": "planned",
+          "hidden": false,
+          "visibility": "PRIVATE",
+          "localState": "ACCEPTED",
+          "schedule": {
+            "shape": "STAY",
+            "start": {
+              "comparable": false,
+              "localDate": "2026-12-11",
+              "quality": "UNKNOWN",
+              "basis": "DERIVED_CIVIL",
+              "civilResolution": "PENDING"
+            },
+            "end": {
+              "comparable": false,
+              "localDate": "2026-12-13",
+              "quality": "UNKNOWN",
+              "basis": "DERIVED_CIVIL",
+              "civilResolution": "PENDING"
+            }
+          },
+          "details": {
+            "propertyName": "Consumer MCP QA Lodge"
+          }
+        }
+      },
+      "consumer_prompt": "请仅实际调用一次 OTR DEV QA 的 get_trip_item，参数为 {\"trip_id\":\"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\",\"item_id\":\"11fdaec9-3305-4db0-a146-be78823fcf74\"}。保留本次完整服务器JSON；不要补造时间、时区或Booking，不重试或写入。",
+      "mustNotHaveItemPaths": [
+        "schedule.start.localTime",
+        "schedule.start.zoneId",
+        "schedule.start.instant",
+        "schedule.start.precision",
+        "schedule.end.localTime",
+        "schedule.end.zoneId",
+        "schedule.end.instant",
+        "schedule.end.precision"
+      ],
+      "onlyIf": "Original operation already APPLIED, or sole authorized retry returns formal APPLIED; otherwise no consumer business calls"
+    }
+  ],
+  "branches": {
+    "APPLIED": "Skip APPLY entirely; read same Item and compare formal original receipt with independent Backend/Supabase. An advanced revision is reported, never reset.",
+    "UNKNOWN_NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT": "Not automatic retry permission. Wait for independent same-account revision1/unchanged fields/receipt absence AND explicit new Gate allowing one original-bb retry, then fresh Confirm and at most one APPLY.",
+    "OTHER_TERMINAL_OR_UNQUALIFIED": "STOP on CONFLICT/REJECTED/NO_CHANGE, unavailable recovery, auth failure, timeout, malformed result or mismatched evidence. No POST or reconnection."
+  },
+  "execution": "One observed result at a time; no runner or batch. No fresh PREVIEW needed solely because Session changed. Any command/revision/field mismatch stops; never alter original bb payload or allocate replacement IDs.",
+  "afterApply": "UNKNOWN/error/timeout => STOP, retain original bb and query only if validly authorized; no second POST/new ID/automatic retry.",
+  "independentAfter": [
+    "Formal original-bb receipt and exact Item/revision/date readback by normal Backend plus Supabase",
+    "Native same exact Item auto date update and cold recovery; never edit local data to match"
+  ],
+  "cleanup": "Normal same-client revoke/fresh absence, one same-connection read probe only on Auth cue, durable safe projection before temporary container removal when available, full negative restoration; no extension/restart."
+}

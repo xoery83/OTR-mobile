@@ -1,0 +1,18 @@
+{
+  "status": "NO_BLOCKER_FINAL_ORIGINAL_BB_GATE",
+  "reviewer": "auth_phase1_review",
+  "gateSHA256": "deac94b128a36d0617888f54cc24550f205b7574e9cde4147e1523ac208231fc",
+  "manifestFileHashes": "35/35 PASS",
+  "criticalInputs": "54/54 match Root actual /private/tmp/otr-photo-broker-diagnostic-4fa46caf/tree and capture-v3-meta.json/351 input graph",
+  "actualCaptureSHA256": "44fbd00e11a7a99c8319a2e1a63aaabf9d52df2dcc4fc1d02e164279ffaec899",
+  "authLoaderCommit": "620d3354",
+  "fixtureSHA256": "2ed5ed11565e1ae8df81e38f807d307622a66845e398fa76071acd0364e23101",
+  "rootSoftwareActualReadback": "02:44:24Z 6af4/d3a5 default-closed PASS",
+  "scope": "Only one newly authorized originalbb recovery APPLY conditional on owning receipt/state; no Create/newID; oldwindow not reused",
+  "executionReady": false,
+  "pending": [
+    "explicit new Owner approval",
+    "Root actual Source closure/release and fresh CAS"
+  ],
+  "externalReviewIo": 0
+}

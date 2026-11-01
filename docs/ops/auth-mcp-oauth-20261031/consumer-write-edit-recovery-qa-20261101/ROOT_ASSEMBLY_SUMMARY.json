@@ -1,0 +1,29 @@
+{
+  "status": "AUTH_V3_AND_PHOTO_DIAGNOSTIC_CODE_ONLY_ASSEMBLY_PASS",
+  "rootCommit": "4fa46caf",
+  "authCommit": "620d3354cf372eb179f59f9a72f8cb08a35ddac3",
+  "baselineCapture": "40dadbb12655fe8fd48710a58397349c0d5afdd749dd2efd95905ebbcd040587",
+  "candidateCapture": "44fbd00e11a7a99c8319a2e1a63aaabf9d52df2dcc4fc1d02e164279ffaec899",
+  "codeInputs": 351,
+  "changedInputs": [
+    {
+      "path": "backend/src/sourcePngBroker.ts",
+      "before": "cafdc262f566b9801d8d087545db006289c8b48923f5f372f1d477ce8bc21e9d",
+      "after": "a40ee101efd82368b8c88d8f43c4f742f425d69cec8efc1d542f44edb2f7868d"
+    },
+    {
+      "path": "backend/src/sourcePngPreparationHttp.ts",
+      "before": "0835af2fc805bbd25b2c24e191eeaac44388056c7814c87abd5d0fe0390c8550",
+      "after": "60baa52eab0609c80abc0a4e81c00cc950080cd6e6e1bcc1e476c2404b2d9e85"
+    },
+    {
+      "path": "backend/src/mcpQaRuntime.ts",
+      "before": "28aa779555c4b0d39136a5587140d15d4d4dd9595cba9dd0869156a3ad87f873",
+      "after": "76a1857bf012674f5ff267c707c9058c71e207f3d599df622da817f33738aee7"
+    }
+  ],
+  "otherCodeInputsPreserved": 348,
+  "mcpRuntime": "b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820",
+  "authorityDifference": "NONE; two MCP QA configs remain absent",
+  "credentialsOrSessionOrDatabaseCopied": false
+}

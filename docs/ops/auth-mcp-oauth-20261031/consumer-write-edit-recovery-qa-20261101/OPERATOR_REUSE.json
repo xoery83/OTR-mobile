@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_NARROWING_PREPARATION_ONLY",
+  "source": "docs/ops/auth-mcp-oauth-20261031/consumer-write-candidate/operators",
+  "changes": "Only profile/version3/literalbb/pinnedSDK+loader; restore and negative helper unchanged",
+  "files": {
+    "deploy.py": {
+      "sourceSHA256": "df09778cc86ef71b7e90dd5d0ca3a08e09abdaf26505c5f93a256a3ad1c23d89",
+      "candidateSHA256": "212562f4e6466cad90386ce64dcdcb2c300f657c9d7a22786a4b85b15baac12c",
+      "unchanged": false
+    },
+    "prepare.py": {
+      "sourceSHA256": "6abca5d7d0c702b4fb948cd0e6232062a420cb5e867a5c8b0631250e4f0a23bc",
+      "candidateSHA256": "e1b21f30a3e7e55a566c7b448971c3f9dcb2fb69ccd444b1fbd12ae7668f01f7",
+      "unchanged": false
+    },
+    "restore.py": {
+      "sourceSHA256": "0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367",
+      "candidateSHA256": "0389ac4417397f4e61391238c9b731e851c28dcb6beab5a78127aa9527da3367",
+      "unchanged": true
+    },
+    "test_operators.py": {
+      "sourceSHA256": "94b485f37d8a77dde27119d397cf25ff5919b66e8a3746596d8f3b72b026a4c0",
+      "candidateSHA256": "76c28b200ba4737171993878b1acd097cc65aef346744cfab3ac0f591da94ae9",
+      "unchanged": false
+    },
+    "universal_runtime_close.py": {
+      "sourceSHA256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+      "candidateSHA256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+      "unchanged": true
+    },
+    ".gitignore": {
+      "sourceSHA256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+      "candidateSHA256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+      "unchanged": true
+    }
+  },
+  "liveActions": 0,
+  "focusedNegativeCases": "old v2, Create-only confirmation, duplicate bb confirmation, altered policy all reject"
+}

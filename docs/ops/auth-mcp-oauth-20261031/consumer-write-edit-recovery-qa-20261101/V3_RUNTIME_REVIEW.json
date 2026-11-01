@@ -1,0 +1,15 @@
+{
+  "status": "NO_BLOCKER_V3_EDIT_ONLY_CANDIDATE",
+  "sourceCommit": "620d3354cf372eb179f59f9a72f8cb08a35ddac3",
+  "productionFile": "backend/src/mcpQaRuntime.ts",
+  "productionSHA256": "76a1857bf012674f5ff267c707c9058c71e207f3d599df622da817f33738aee7",
+  "diff": "literal private config3/branch3; remove e9 confirmation; onlybb/ec151; Read1 unchanged/defaultAbsent no IO",
+  "redBeforeFix": "new v3 singlebb test failed on oldv2/tuple2",
+  "runtimeAndAdapterTests": "43/43 PASS",
+  "startupLocalHttpTests": "11/11 PASS after localhost permission; initial sandbox EPERM is not a business assertion failure",
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "independentRuntimeTests": "24/24 PASS",
+  "reviewer": "auth_phase1_review",
+  "notAuthorityOrE2EApproval": true
+}

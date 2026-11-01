@@ -1,0 +1,8 @@
+{
+  "helperACL": "{otr_trip_source_writer=X/otr_trip_source_writer,postgres=X/otr_trip_source_writer}",
+  "helperMD5": "a2945b7def0e9e5a19d4a66bd1e5a951",
+  "helperOID": "67145",
+  "pdfClosed": true,
+  "pngClosed": true,
+  "providerDirectExec": false
+}
