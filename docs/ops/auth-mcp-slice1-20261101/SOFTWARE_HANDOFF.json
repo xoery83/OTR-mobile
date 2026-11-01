@@ -47,7 +47,7 @@
     },
     "scripts/auth/build-mcp-slice1-runtime.mjs": {
       "before": null,
-      "after": "6939280b5a9ea95d661f920dc0e24b10b5598ea2b318b896fd35a2ad2990b70b"
+      "after": "3416d7ef6229e49fefac57f222dd97f274c69bfa08c7013d187fc57beca74d67"
     },
     "backend/mcp/slice1-source-pins.json": {
       "before": null,
@@ -62,5 +62,6 @@
       "after": "9da792a2c2c84d26f4dbf196725742e392f5319d2c475258581af7a4f4c847a8"
     }
   },
-  "beforeSourceNote": "Loader before matches actual Photo tree and ASSEMBLY. Wrapper before is Auth source provenance; actual Photo tree has no wrapper source input. Root must CAS the retained compiled runtime b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820 before copying reviewed runtime19b5."
+  "beforeSourceNote": "Loader before matches actual Photo tree and ASSEMBLY. Wrapper before is Auth source provenance; actual Photo tree has no wrapper source input. Root must CAS the retained compiled runtime b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820 before copying reviewed runtime19b5.",
+  "qualificationNote": "Scoped lint was rerun after explicit node:buffer import; runtime19b5 unchanged. Independent Review includes final recipe hash."
 }

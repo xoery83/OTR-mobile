@@ -1,5 +1,6 @@
 // DEV-only isolated Slice1 packaging; never activates Auth or modifies the default build.
 import { build, version as esbuildVersion } from "esbuild";
+import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, lstatSync, realpathSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";

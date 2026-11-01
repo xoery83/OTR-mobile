@@ -6,7 +6,7 @@
     "backend/mcp/runtime.mjs": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
     "backend/mcp/slice1-source-pins.json": "32393d7616d373f524abdb5f286f8ea8760507de0cf31f6fe5ebb5ca782486df",
     "backend/mcp/slice1-qa-cases.json": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32",
-    "scripts/auth/build-mcp-slice1-runtime.mjs": "6939280b5a9ea95d661f920dc0e24b10b5598ea2b318b896fd35a2ad2990b70b",
+    "scripts/auth/build-mcp-slice1-runtime.mjs": "3416d7ef6229e49fefac57f222dd97f274c69bfa08c7013d187fc57beca74d67",
     "backend/src/mcpSlice1QaRuntime.test.ts": "9da792a2c2c84d26f4dbf196725742e392f5319d2c475258581af7a4f4c847a8"
   },
   "independentValidation": {
@@ -31,5 +31,6 @@
     "Case baseline is a frozen qualification; actual fresh current revision/state and explicit per-operation confirmation remain necessary before any live operation.",
     "Review does not extend the Owner Gate or authorize operators/Host/SQL actions."
   ],
-  "findings": []
+  "findings": [],
+  "recipeLintFollowup": "Explicit standard node:buffer Buffer import only; source logic, SDK inputs and generated runtime unchanged. Existing32 tests and exact19b5 artifact qualification retained, not rerun."
 }
