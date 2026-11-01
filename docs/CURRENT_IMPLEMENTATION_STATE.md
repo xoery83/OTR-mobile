@@ -14,8 +14,12 @@ timersstopped all independentlyverified. OldmodelTask13792 stillPENDING/expired/
 allmatchingProviderledger0. ActualVision/Results/Save/nativePhotoE2E remainNOTPASS.
 Auth receivedfullfreshhandoff andnowowns itsapproved finiteWrite maintenance/window;
 RootMUSTNOTmutateHost/config/protectedSQL untilAuthclosinghandoff. LocalGUI triage continues.
-Awaiting user's explicit permission to use existingagent-device Runner instead ofCUA per
-CUAtoolUI-interface constraint; not anewbusinessAuthorityGate. Sourcehelpergrantisnotpending.
+Owner approved existing agent-device Runner continuation. On the SAME AD5 and Batchf153,
+Runner0.21.33 opened normal App, read real accessibility controls and tapped Scroll down;
+OCR RELEVANT and retained explicit AI choice independently visible. No Analyze/new object/model.
+CUA coordinate fault persists; Runner UI readiness PASS, Photo E2E still NOT PASS.
+Auth windowcc269225 started01:31:04Z/hard02:00:14Z; wait for independent close/handoff
+before Host/config/protected SQL mutation. Source helper grant is not pending.
 Durableevidence: photo/proof-exec-approved-20261101/ and.env.photo-proof-exec-approved-20261101/.
 
 Golden Slice PARTIAL, not Photo E2E PASS. Same approved7303 Batchd56f2cbc/Source03109f59/

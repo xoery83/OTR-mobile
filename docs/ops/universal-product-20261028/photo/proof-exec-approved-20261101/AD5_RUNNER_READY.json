@@ -1,0 +1,30 @@
+{
+  "status": "PHOTO_AD5_NORMAL_UI_RUNNER_READY",
+  "observedAt": "2026-11-01T01:35:54.850385+00:00",
+  "ownerAuthorization": "Latest user approval of pending existing agent-device Runner request",
+  "runnerVersion": "0.21.33",
+  "runnerEntry": "/private/tmp/otr-ipadqa-xctest-tap-review-r1/package/bin/agent-device.mjs",
+  "session": "otr-import-photo-ad5-20261101",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "app": "com.xoery.otrmobile",
+  "batchId": "f1533073-0cd5-4514-824f-03f779a852b7",
+  "createdAtVisible": "Nov 1, 2026 at 14:13:09",
+  "observations": [
+    "Activity Progress opened in retained normal App",
+    "Scroll down semantic button tapped successfully",
+    "Local text suggests possible travel information.",
+    "Your AI analysis preference is recorded on this device. Analysis has not started.",
+    "Choose AI analysis disabled because the choice is already retained"
+  ],
+  "sourceWindow": "CLOSED",
+  "analyzeClicked": false,
+  "newObjects": 0,
+  "newModelCalls": 0,
+  "credentialsCopied": false,
+  "sharedResourceOwner": "Auth window cc26922514a1400ba78a5baa7b68ae56 until independent close/handoff",
+  "cuaFault": "Coordinate click still noWindowsAvailable; existing Runner AX interaction succeeds",
+  "limitations": [
+    "No actual Vision or Photo save claimed",
+    "No other device/session targeted"
+  ]
+}
