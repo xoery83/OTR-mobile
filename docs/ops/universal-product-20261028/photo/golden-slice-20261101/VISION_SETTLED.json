@@ -1,0 +1,37 @@
+{
+  "status": "CANDIDATES_READY",
+  "providerOutcome": "SETTLED",
+  "batchId": "794b02d7-9287-4efd-b0c9-62e2f55c3a06",
+  "taskId": "96ce2929-7a0e-843b-8b40-a72bca0f0dd1",
+  "providerReceipt": {
+    "requestId": "d1e6a311-6dc5-4661-b2c7-d25ef47775ff",
+    "requestSha256": "70850e7706a8d8515d72f83a27158133d07996dce6699ea603339a1fe16c9fab",
+    "responseSha256": "57249eec21b61c37c7538480bdbee17181eb9fb23d6fc58a7e90f398f8b3d878",
+    "usage": {
+      "input_tokens": 1968,
+      "output_tokens": 143,
+      "total_tokens": 2111,
+      "cached_input_tokens": 1280,
+      "reasoning_tokens": null,
+      "provider_extension": {
+        "prompt_cache_miss_tokens": 688
+      },
+      "usage_quality": "ACTUAL_REPORTED"
+    },
+    "costNanos": "385680"
+  },
+  "sourceBindings": [
+    {
+      "alias": "S0",
+      "inputId": "56e75ae6-fea9-460f-a06e-693a6413ad5b",
+      "sourceId": "9e91719c-0e93-4a8c-a5b7-36d14d3121d2",
+      "representationId": "72daae36-cd88-403f-9097-604e657a5f48",
+      "revision": 1,
+      "mime": "image/png",
+      "originalSha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+      "submittedSha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+      "status": "READY"
+    }
+  ],
+  "sealedResultNotRewrittenAfterReview": true
+}

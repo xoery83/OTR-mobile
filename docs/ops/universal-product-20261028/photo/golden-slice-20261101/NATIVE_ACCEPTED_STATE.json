@@ -1,0 +1,24 @@
+{
+  "pending": [
+    {
+      "operation_id": "4f095d9c-449e-8456-a134-c69e9c33f3bb",
+      "state": "APPLIED",
+      "queue_operation_id": "4f095d9c-449e-8456-a134-c69e9c33f3bb"
+    }
+  ],
+  "slot": [],
+  "receipt": [
+    {
+      "operation_id": "4f095d9c-449e-8456-a134-c69e9c33f3bb",
+      "receipt_sha256": "059101118b9fbf0a42af4a62c50e5abf2e4c6a67c1d4581cfff52dfb5cdd2357"
+    }
+  ],
+  "item": [
+    {
+      "id": "c59d3d03-6830-84e8-8579-02a59fe624fa",
+      "title": "Harbour Photo QA Walk",
+      "start_local_date": "2026-11-02",
+      "semantic_revision": 1
+    }
+  ]
+}

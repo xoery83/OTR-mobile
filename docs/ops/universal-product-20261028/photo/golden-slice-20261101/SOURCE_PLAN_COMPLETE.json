@@ -1,0 +1,18 @@
+{
+  "planId": "7f410bab-f176-87e2-86f8-7828328dbb1b",
+  "sourceId": "9e91719c-0e93-4a8c-a5b7-36d14d3121d2",
+  "state": "COMPLETE",
+  "operationId": "4f095d9c-449e-8456-a134-c69e9c33f3bb",
+  "admission": {
+    "mode": "REVIEWED_SOURCE",
+    "policyVersion": null,
+    "sourceIntentId": "417b8eb2-e4de-853f-9cc3-4d305815d2fa"
+  },
+  "target": {
+    "id": "c59d3d03-6830-84e8-8579-02a59fe624fa",
+    "kind": "ITEM"
+  },
+  "domainReceiptId": "badf4a19-b5ec-4d1b-8050-ea28605fd5ec",
+  "candidateSHA256": "dd60068d3ff6224b8d150e49fb0a4bf5c5770c03ffadafefa9d84b24039444e8",
+  "receiptSHA256": "059101118b9fbf0a42af4a62c50e5abf2e4c6a67c1d4581cfff52dfb5cdd2357"
+}

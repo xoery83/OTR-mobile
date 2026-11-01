@@ -1,0 +1,13 @@
+{
+  "status": "PHOTO_DEFINER_PROOF_EXECUTE_INSTALLED_VERIFIED",
+  "writeDisposition": "ACKNOWLEDGED",
+  "functionOID": "67149",
+  "owner": "otr_trip_source_writer",
+  "bodySHA256": "c94c9e52951e7f58e7cead7197dadae00d1da3189e4804431015febe370a3e83",
+  "postgresExecute": true,
+  "fullMembershipGraphUnchanged": true,
+  "schemaACLUnchanged": true,
+  "installedAt": "2026-11-01T07:31:11.468028+00:00",
+  "installSHA256": "074b52afbfd37d46d773cded0684570ee5e835f44245260b8cda61b147de361c",
+  "newProviderCalls": 0
+}

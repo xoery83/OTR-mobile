@@ -1,0 +1,8 @@
+[
+  {
+    "input_id": "56e75ae6-fea9-460f-a06e-693a6413ad5b",
+    "decision_revision": 3,
+    "body_json": "{\"version\":1,\"pin\":{\"accountId\":\"f4b059c5-8241-4ffb-aa15-37fa25474543\",\"batchId\":\"794b02d7-9287-4efd-b0c9-62e2f55c3a06\",\"inputId\":\"56e75ae6-fea9-460f-a06e-693a6413ad5b\",\"ordinal\":0,\"captureId\":\"498f9889-5a85-4198-87fe-dcecc99b3ca0\",\"captureRevision\":2,\"payloadId\":\"27c40461-09c1-45a2-9af5-c07201f032c5\",\"sha256\":\"078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515\",\"byteCount\":42630,\"mediaType\":\"image/png\"},\"relevance\":{\"status\":\"RELEVANT\",\"reason\":\"TRAVEL_TEXT_CLUE\"},\"choice\":\"CONTINUE_WITH_AI\"}",
+    "recorded_at": "2026-11-01T06:29:09.581Z"
+  }
+]

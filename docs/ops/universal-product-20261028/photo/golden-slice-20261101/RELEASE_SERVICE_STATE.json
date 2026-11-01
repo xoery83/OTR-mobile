@@ -1,0 +1,8 @@
+{
+  "controllerServices": {
+    "otr-photo-close-f07370c5-cold": "0\ninactive",
+    "otr-photo-watchdog-f07370c5-cold": "0\ninactive"
+  },
+  "backendHealth": "healthy",
+  "backendImage": "sha256:64fccfa4dd6c95241a6a7378e0c9b5bfc8e609b0c2f325ec3d3f32d7627d199c"
+}
