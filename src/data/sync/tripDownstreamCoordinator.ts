@@ -4,6 +4,7 @@ import { createTripRealtimeTrigger } from "./tripRealtimeTrigger";
 import { tripPrivateSubscription } from "./tripPrivateSubscription";
 import {
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   type AccountScope,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
@@ -14,6 +15,14 @@ import {
   subscribeAccountGeneration,
 } from "../auth/accountGeneration";
 
+import {
+  acceptedVisibleVersion,
+  coreVisibleVersionResultSchema,
+  sameVisibleVersion,
+  tripVisibleVersionRead,
+  type CoreVisibleVersionRead,
+} from "./tripVisibleVersionRead";
+
 // A validated unchanged collection does not rewrite SQLite or disturb pending work.
 export async function refreshCoreDownstream(
   core: Pick<
@@ -22,8 +31,31 @@ export async function refreshCoreDownstream(
   >,
   context: AccountRequestContext,
   transport: CoreReadTransport,
+  versionRead?: CoreVisibleVersionRead,
 ) {
+  context = Object.freeze({ ...context });
   const before = await core.acceptedSnapshot(context);
+  if (versionRead && before) {
+    const compared = acceptedVisibleVersion(before.certificate);
+    const result = coreVisibleVersionResultSchema.parse(
+      await versionRead(Object.freeze({ ...context }), compared),
+    );
+    const current = await core.acceptedSnapshot(context);
+    assertAccountRequestGeneration(context);
+    if (
+      result.context.accountId !== context.accountId ||
+      result.context.tripId !== context.tripId ||
+      result.context.generation !== context.generation ||
+      !sameVisibleVersion(result.compared, compared)
+    )
+      throw Error("CORE_VISIBLE_VERSION_CONTEXT_MISMATCH");
+    if (
+      result.unchanged &&
+      current &&
+      sameVisibleVersion(compared, acceptedVisibleVersion(current.certificate))
+    )
+      return false;
+  }
   const result = await transport.collection(context);
   const m = result.manifest,
     c = before?.certificate;
@@ -338,6 +370,7 @@ async function nativeCoordinator() {
         createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
           timeoutMs: 20_000,
         }),
+        tripVisibleVersionRead,
       );
     },
     notify(scope, journeyIds, discoveryChanged) {

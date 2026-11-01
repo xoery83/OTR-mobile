@@ -193,6 +193,20 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
     };
     await f.repo.enqueue(context, local);
     const queued = f.sql.prepare("SELECT id,payload_json FROM sync_operations").all();
+    const conditionalRead = { collection: vi.fn(read(1).collection) };
+    expect(
+      await refreshCoreDownstream(
+        f.repo,
+        context,
+        conditionalRead,
+        async (request, compared) => ({ context: request, compared, unchanged: true }),
+      ),
+    ).toBe(false);
+    expect(conditionalRead.collection).not.toHaveBeenCalled();
+    expect(f.sql.prepare("SELECT id,payload_json FROM sync_operations").all()).toEqual(
+      queued,
+    );
+    expect((await f.repo.pending(context))[0].command.payload).toEqual(local.payload);
     const remote = {
       ...local,
       operationId: randomUUID(),

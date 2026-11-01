@@ -1,0 +1,43 @@
+{
+  "status": "LOCAL_PASS_READY_FOR_OWNING_PORT_INTEGRATION",
+  "base": "136742be",
+  "defaultPort": "undefined",
+  "hostedActions": 0,
+  "providerCalls": 0,
+  "schemaOrPermissionChanges": 0,
+  "deviceActions": 0,
+  "validation": {
+    "consumerAndExistingRealtime": "5 suites / 64 PASS",
+    "realSQLiteP3ConditionalSkipAndPendingPreservation": "1 PASS, 50 other tests intentionally not selected by -t",
+    "scopedTypes": "PASS",
+    "changedRealtimeSourceLint": "PASS zero errors/warnings",
+    "existingCoreRepositoryTestLint": "zero errors, 8 preexisting import/first warnings unchanged"
+  },
+  "measurement": {
+    "qualification": "CONTROLLED_FIXTURE_NOT_HARDWARE_OR_HOSTED_PERFORMANCE",
+    "sameAcceptedCertificateChecks": 10,
+    "warmVersionCalls": 10,
+    "warmFullCollectionCalls": 0,
+    "fallbackFullCollectionCalls": 10,
+    "simulatedComparisonCostMs": 25,
+    "simulatedCollectionCostMs": 400
+  },
+  "remainingOwningInterface": "Authorized conditional comparator must freshly verify current Account/Actor/Trip Item visibility, then compare complete Accepted stamp; current server publisher/private subscribe/revocation not supplied. No HTTP endpoint invented.",
+  "limits": [
+    "Accepted snapshot remains the original Repository read and may read the local graph; no new cheap local certificate port introduced.",
+    "No real latency/cost reduction measured; full Pull remains current runtime fallback.",
+    "No authorization, denial/revocation or cross-account Hosted E2E qualification."
+  ],
+  "sourceSha256": {
+    "src/data/sync/tripDownstreamCoordinator.ts": "8037b3a8776a4b9349f26d0684780e6a7f942ad623f4ea86cfaedeadbfe21c08",
+    "src/data/sync/tripVisibleVersionRead.ts": "a2d652b45ffb60da4783bc3b15762af23c50f6ffbac31b3970712e875613333e",
+    "src/data/sync/tripVisibleVersionRead.test.ts": "035748665604a1be998d7579d8c506462cedcce46cd2e1375d1a41cd10309432",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "4e19ccfc498839f54d72f1651f101d92231c2ada1b557346a0d6ed01fa1fd0ae"
+  },
+  "logs": {
+    "/private/tmp/otr-native-realtime-version-v3-final.log": "c3fffb64ffabb8e9b4f493a953e4c88e0ef2171d8fbf03dc05bc685eb3efdb2c",
+    "/private/tmp/otr-native-realtime-version-v3-sqlite.log": "0ebd82e0d2ed894a9b5df4eb587e53b8833394de5f0e349f00dea975c3e4c88d",
+    "/private/tmp/otr-native-realtime-version-v3-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-realtime-version-v3-lint-source.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
