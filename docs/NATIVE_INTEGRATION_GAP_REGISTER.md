@@ -1,6 +1,6 @@
 # Native integration gap register
 
-2026-11-01 · Local hardening V2 · consumer source `8647a7e2`.
+2026-11-02 · Auth client source `4e9a2d2e`; prior V2 consumer `8647a7e2` preserved.
 This register is an integration handoff, not authority to open a Gate or deploy.
 Real Scan, private Realtime and public flight cache remain closed. No Hosted,
 SQL/RLS/GRANT, paid Provider or Import authority changed in this work package.
@@ -49,7 +49,10 @@ outside this package. They do not block the prepared single-draft consumer.
 3. Existing Enrichment Host protected capability/Usage chain, small Create/Edit
    queries and manual fallback. No public cache or new table prerequisite.
 
-No per-interface requests were sent during this local package. Profile/People
-migration and shared Shell are unchanged. Local/fixture/device evidence is listed
-under `docs/ops/native-local-hardening-v2-20261101`; none certifies real AI,
-Hosted Provider or private Realtime E2E.
+## E — Auth client integration complete locally
+
+Normal Settings/Profile and actual adopted Trip private Traveler Draft are now connected (`4e9a2d2e`), independently reviewed, and accepted on iPad QA140 with cold recovery and normal A→B→A OTP isolation. Source76/Profile77 startup is verified; local appearance hydration is active. See `docs/ops/auth-native-client-integration-20261101/DELIVERY.md`.
+
+Remaining owning gaps: Auth/Core Hosted private Profile/AKA persistence and formal adopted Parent Reader/Person submission/Invite/Claim. Native consumers are ready; draft-only entry keeps `submissionEnabled=false` and allocates no Person/operation. No cloud Profile or Person association is implied. These gaps do not invalidate private local Save/Cancel/recovery.
+
+No formal AI/Realtime/Enrichment interface activation occurred. V2 evidence remains under `docs/ops/native-local-hardening-v2-20261101`; Auth local device acceptance does not certify real AI, Hosted Provider or private Realtime E2E.

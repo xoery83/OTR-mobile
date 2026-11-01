@@ -1,0 +1,28 @@
+{
+  "build": 140,
+  "source": "4e9a2d2e",
+  "bundleId": "com.xoery.otrmobile.ipadqa",
+  "team": "U9D5C58Z94",
+  "keychainGroups": [
+    "U9D5C58Z94.com.xoery.otrmobile.ipadqa"
+  ],
+  "profileExpiryUTC": "2026-11-05T20:20:57Z",
+  "signingVerified": true,
+  "deviceFamily": [
+    1,
+    2
+  ],
+  "minimumOS": "16.4",
+  "nativeBasis": "retained accepted iPad QA127/128 native binary; JS repackage only, not full new Native compile",
+  "rollbackArtifact": "/private/tmp/otr-native-v2-ipad135/OTRMobile135.app",
+  "rollbackLimit": "preserve installed QA135 artifact; additive local76/77 migration retains prior rows; no migration rollback, app uninstall or data deletion",
+  "registryDiff": true,
+  "sqliteSchemaVersion": 77,
+  "jsHash": "563af64c1b204a6181902276bcaeccb7522a62fb143b0bfa5ed02f251f4a6db9",
+  "installed": true,
+  "iPhoneTouched": false,
+  "hostedActions": 0,
+  "device": "iPad Air5 / iPadOS27.2 / landscape1180x820pt",
+  "osCorrection": "Fresh CoreDevice observation; prior26.0.1 was stale metadata, no OS upgrade performed by Native",
+  "sourceFull": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d"
+}

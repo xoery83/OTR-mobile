@@ -1,0 +1,67 @@
+{
+  "screenshots": {
+    "/private/tmp/otr-native-auth-ipad136/profile-saved.png": {
+      "sha256": "2fdc9040151cae52215a316db88b52d85928c7ba7630ec533c5ea96ca6df0224"
+    },
+    "/private/tmp/otr-native-auth-ipad136/profile-cold.png": {
+      "sha256": "b15ba1ac31d5c002b8f8a072bd8117b98c546e5a64c858666eb86edd85a85ef9"
+    },
+    "/private/tmp/otr-native-auth-ipad136/profile-cancel-readback.png": {
+      "sha256": "43f918ec99302cc00f982409a8453dedd2481e97cc8c1e380073ce62612c673e"
+    },
+    "/private/tmp/otr-native-auth-ipad136/profile-empty-cold-zh.png": {
+      "sha256": "96e1292b2b5a78b29aee976fdb0e3126e0f4a2456377bb91d6e95feeb294584f"
+    },
+    "/private/tmp/otr-native-auth-ipad136/settings-zh-dark.png": {
+      "sha256": "48f24999d2748b2106bf67380564377110b3cbbaa2033ad2e20133612389e44c"
+    },
+    "/private/tmp/otr-native-auth-ipad140/adopted-before.png": {
+      "sha256": "ac443c5ea6d3c115da229a0b4c284c95eb94bc10f1836b80ea344cdeb2c0d118"
+    },
+    "/private/tmp/otr-native-auth-ipad140/adopted-filled.png": {
+      "sha256": "2cb772e2868f51b880f8f890751e8304b7e492f6068db5cea836fd7c0734282f"
+    },
+    "/private/tmp/otr-native-auth-ipad140/adopted-cold.png": {
+      "sha256": "4d63bf4b0af183086337ed1049139498c25867d3473f2383d8b93dd324c6f58d"
+    },
+    "/private/tmp/otr-native-auth-ipad140/adopted-cancel-blank.png": {
+      "sha256": "98abb3fc7b24c84d486e0513f37295ccbda8893ed5b927259d2a928e8b711a4c"
+    },
+    "/private/tmp/otr-native-auth-ipad140/profile-b-isolated.png": {
+      "sha256": "8ff6592f314248e47408a8eaa5ec8f685cd5da80374862ab21b17ef308880b3f"
+    },
+    "/private/tmp/otr-native-auth-ipad140/profile-b-saved.png": {
+      "sha256": "c51917a9fd08a8beb7f16037863e255f31887cb897d135aee7769af04e3849d1"
+    },
+    "/private/tmp/otr-native-auth-ipad140/profile-a-restored.png": {
+      "sha256": "71450d83dabb796726a77f5ea1575f127d3b01d2fc241abf1320d3fd84bd04a1"
+    },
+    "/private/tmp/otr-native-auth-ipad140/profile-a-final-cold.png": {
+      "sha256": "38166425a9f0a37ad0a9ddbebebbc914d9bb0aa84204b2a7c15a19ee1f904dbf"
+    },
+    "/private/tmp/otr-native-auth-ipad140/schema77.png": {
+      "sha256": "1460829a479888462e2c8170831df1140f9b69bcb90c0368b4e5573332305281"
+    },
+    "/private/tmp/otr-native-auth-ipad140/final-four-trips.png": {
+      "sha256": "2944e84a72ef64652abc5c205f9ce86e5ca23667eb8ace30160661d0c8704d0c",
+      "qualification": "four original Trip cards visible behind normal menu; not a byte-level Trip database comparison"
+    }
+  },
+  "logs": {
+    "/private/tmp/otr-native-auth-client-20261101/first-tests.log": "e7e241b923f9ca058bdce234457c1bb3fb043ee3bd06a92e26d8a1579580cf1e",
+    "/private/tmp/otr-native-auth-client-20261101/caller-tests.log": "c8ee2f75cbc031bf510fc6d05c2aa28f52ba291750b7f4affc671e405845feb1",
+    "/private/tmp/otr-native-auth-client-20261101/members-regression.log": "5fa98ecf93d9b56c4a786226eb2aa66b973e7f8af8248105252acd9f70adfab1",
+    "/private/tmp/otr-native-auth-client-20261101/menu-caller-tests.log": "22eeef4208bde971acae9e915ab83d57d92779a48df24b3bf9af54b73beb3013",
+    "/private/tmp/otr-native-auth-client-20261101/metro-tests.log": "7da5cd1dcb2b6b1ea2b8868d200162fe473b451521b2af5ce5ae295a6508b59c",
+    "/private/tmp/otr-native-auth-client-20261101/adopted-reader-tests.log": "e38d6cc05d7f689b020903b4b715084adeccb87a10113e3dc6f356e269bb6787",
+    "/private/tmp/otr-native-auth-client-20261101/adopted-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-auth-client-20261101/final-ui-guard.log": "141ce926e34cc4c8c45ffe526080c31557a4941d9656476ccde8720d89708142"
+  },
+  "credentialsIncluded": false,
+  "rawDeviceSerialIncluded": false,
+  "sessionRelease": {
+    "path": "/private/tmp/otr-native05-20261031/native-auth-140-release.json",
+    "status": "CLOSED",
+    "independentSessionListCheck": "OWN_SESSION_ABSENT"
+  }
+}

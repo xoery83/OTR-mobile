@@ -23,16 +23,16 @@
   "hostedActions": 0,
   "sqliteSchemaVersion": 75,
   "schemaQualification": "Registry unchanged from accepted native basis; no migrations added, registry replaced or database copied",
-  "device": "iPad Air5 / iPadOS26.0.1 / landscape1180x820pt",
+  "device": "iPad Air5 / iPadOS27.2 / landscape1180x820pt",
   "control": "pinned agent-device0.21.33; owned native-v2-deviceqa-20261101 session, fresh AX refs, no DeviceHub GUI",
   "results": {
     "coldSessionAndFourHistoricalTrips": "PASS QA134/135; unchanged account still accesses prior Reader/Trip data",
     "unconfirmedSuggestionsNotAcceptedOnColdStart": "PASS;133 review selection was not saved,134 cold starts normal MyTrips",
     "P3CreateCandidateFieldAdopt": "PASS QA134;choose1 of2;only property adopted;address/date/clocks/Notes unselected remain empty",
-    "P3Cancel": "PASS;normal Unsaved changes \u2192 Discard own unsaved draft",
+    "P3Cancel": "PASS;normal Unsaved changes → Discard own unsaved draft",
     "P2P4P5P6RepresentativeField": "PASS QA134;one selected flight number/title applied to fresh draft;Cancel/Discard;no Save",
     "P3Keyboard": "PASS QA134;actual keyboard visible419pt;no text entered",
-    "P3Calendar": "FAIL QA134\u2192fixed8647a7e2\u2192PASS QA135;7columns visible;Cancel leaves draft unchanged",
+    "P3Calendar": "FAIL QA134→fixed8647a7e2→PASS QA135;7columns visible;Cancel leaves draft unchanged",
     "deviceP3Edit": "NOT_RUN;existing peer-created P3 has normal Edit restriction, no authority bypass",
     "darkChineseUI": "NOT_RUN on device;canonical theme and EN/ZH catalogs present, not device PASS",
     "deviceAIOrHosted": "NOT_RUN;synthetic-only/no upload;no paid Provider or private channel"
@@ -98,5 +98,7 @@
   "releaseEvidence": [
     "/private/tmp/otr-native05-20261031/native-v2-135-close.json",
     "/private/tmp/otr-native05-20261031/native-v2-135-sessions.json"
-  ]
+  ],
+  "osMetadataCorrection": "Corrected during Auth integration from fresh CoreDevice read; earlier26.0.1 was stale. Native did not upgrade OS.",
+  "configurationLimit": "QA133–137 packaging omitted three prior accepted Native DEV/general-sync/manual-P2 public flags. Local cached UI/SQLite results remain valid; these builds do not prove normal OTP or Cloud. Fixed QA139/140 with accepted128 flag parity and public-config Metro cache digest."
 }

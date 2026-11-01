@@ -1,0 +1,80 @@
+{
+  "initial": {
+    "status": "NO_BLOCKER_BOUNDED_AUTH_CLIENT_BOUNDARY_SOURCE_REVIEW",
+    "observedAt": "2026-11-01T09:19:49.997388+00:00",
+    "nativeBase": "ae8b796f37f2383fba8e71a20945ad33f9f8c454",
+    "uncommittedCandidate": true,
+    "reviewScope": "only new Account/private Draft boundary and callers; not Native architecture/Source implementation",
+    "fixedAuthFilesExact": [
+      "src/features/auth/AccountPrivateProfilePage.tsx",
+      "src/data/repositories/defaultAccountProfileRepository.ts",
+      "src/data/auth/privateAccountProfileLocal.ts",
+      "src/data/db/privateAccountProfileMigration.ts"
+    ],
+    "checks": [
+      "Profile page uses committed Account + initialized DB + local repository only; no cloud write",
+      "Private profile Account/generation fencing and Account-keyed rows unchanged",
+      "Scoped Sheet validates local current-account Trip existence then bound Account/Trip/generation port; no unscoped fallback",
+      "No onSave means submissionEnabled false; normal owning create path reused otherwise",
+      "Callers supply existing context, and editor key includes Account/Trip/generation",
+      "Source76/Profile77 final registration remains Native writer; no Backend/Auth Authority activation"
+    ],
+    "blockers": [],
+    "tests": "Native-reported102+12 PASS not independently rerun during this source-only review",
+    "nativeE2E": "PENDING_NOT_INFERRED",
+    "sourceSHA256": {
+      "src/features/people/ScopedAddTravelerSheet.tsx": "8190cf9579116cb19caa9023abe1a2e5120e1d3379dfbc01c6e9e151a8556d5a",
+      "src/features/people/ScopedAddTravelerSheet.test.ts": "dbb88379142aa62b8a836042f4779e757bb1b79b7fc1978026d6c791719a5adc",
+      "src/features/day-feed/TripMembersSheet.tsx": "254556f04930d68baa5cc60fdcd0bde99ec041bc4814ddd6fe3949cbbd0a99c9",
+      "src/features/day-feed/TripSetupRows.tsx": "1e5a492fcb2ac8b855cf0f092704da25d95a986017fed800c7592e82bdb12a40",
+      "src/features/day-feed/LocalTripWorkspace.tsx": "fb51edb91129d62c5bdf70928baafcbc9b8e80c8f15aa73d90e1c5e2f122bb91",
+      "app/profile.tsx": "44488dac8d6206118e986c7141ae3c0f5fab1277056435808a9af0994299ebc6",
+      "app/settings.tsx": "6044d1f84fb549ee67fa6207f6275c4caca44e0d706728c50cc895453d20cc2c",
+      "app/_layout.tsx": "edea64bd6034ad3ca6493edaf1af940631dee731402015a48aecb0188e8f9c00",
+      "src/data/db/privateAccountProfileMigration.ts": "1ebf5b165a74b150e13eeafd4ca9a6e38d6a38f246347040ba15f6764f993952",
+      "src/features/auth/AccountPrivateProfilePage.tsx": "1acdd2d5c41f59e1aa00cdb4dbf00ac9f1398e62e9d635229fd35d9698174358",
+      "src/data/repositories/defaultAccountProfileRepository.ts": "f86d8fc7624614510b82c067a080e62212681eda014f7aeeda2af95c9a4b7e88",
+      "src/data/auth/privateAccountProfileLocal.ts": "c996f6b31d132ed537137703941bda68c106aa2627ca5264730c42974adbd235"
+    },
+    "fixedNativeCandidate": "ae8b796f",
+    "reviewedHashesMatchFixedCandidate": true
+  },
+  "incremental": [
+    {
+      "candidate": "5d00dc3e",
+      "status": "NO_BLOCKER",
+      "scope": "GlobalMenu forwards existing membersCurrent context; no onSave enables draft-only"
+    },
+    {
+      "candidate": "4e9a2d2e",
+      "status": "NO_BLOCKER_BOUNDED_PRIVATE_DRAFT_CONSUMER",
+      "reviewerChat": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+      "source": "direct Auth review reply 2026-11-01/02",
+      "checks": [
+        "existing listJourneys SQL binds current Account four times",
+        "exact journeyId and hasActor, generation/active fences",
+        "original draft loader checks committed Account before/after DB initialization",
+        "AccountApplyGate and Account/Trip key fence every draft read/write",
+        "no onSave: disabled, throws, no new Person/operation/queue/Cloud authority"
+      ],
+      "limits": "source review;21 tests reported by Native, not independently rerun"
+    }
+  ],
+  "metroReview": {
+    "candidate": "564772ab",
+    "reviewer": "native_sprint_independent_review",
+    "status": "NO_BLOCKER",
+    "independentTests": "1PASS",
+    "scope": "metro config public environment digest plus test only"
+  },
+  "nativeAffectedScopeReview": {
+    "candidate": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d",
+    "base": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+    "reviewer": "native_sprint_independent_review",
+    "status": "NO_BLOCKER",
+    "independentTests": "4suites15PASS",
+    "command": "node node_modules/vitest/vitest.mjs run --configLoader runner src/data/db/authClientMigration.test.ts src/features/day-feed/TripEditorMembers.integration.test.ts src/features/day-feed/TripSetupRows.test.ts src/features/people/ScopedAddTravelerSheet.test.ts",
+    "scope": "specified startup/Settings/Profile routes; SQLite75→76→77 and late76; current Account/Trip/generation caller compatibility",
+    "limits": "no files changed; no device or Hosted checks; Auth Repository review not repeated"
+  }
+}

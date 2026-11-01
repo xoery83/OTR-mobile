@@ -1,0 +1,12 @@
+{
+  "authHandoff": "dfb35d88",
+  "integration": "ae8b796f",
+  "scope": "exact patches only, no long-branch merge",
+  "files": {
+    "PROFILE_SETTINGS_CLIENT.patch": "724991a3301a729b616486c135fe180f3afa7bb55834ef85c26f2d35aeeb387a",
+    "PERSON_DRAFT_ONLY.patch": "5dd9d4f7d628a861dee21d3cd90d68c7c48fe9398005cbf7fdbfc29eec661745",
+    "DRAFT_ONLY_SUBMISSION.patch": "3a942565fc09a591710de50554f0bfc6bf8cc1d9e7ff7a53eb00dbeba1ddeb3b",
+    "CLIENT_UI_KEYS.json": "4ab45125231d6db7cc843f3d4f008985819b40518d996fa5d1038a2fc447a8fd",
+    "PERSON_DRAFT_UI_KEYS.json": "46eb75b5a045843a3f6a43667223431cdecf73496c60984330ed53c715d522ca"
+  }
+}
