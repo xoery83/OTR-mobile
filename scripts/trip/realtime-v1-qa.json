@@ -1,0 +1,35 @@
+{
+  "qualification": "LOCAL_FIXTURE_ONLY",
+  "checks": [
+    {
+      "name": "P3 APPLIED → lease hint/version → existing Pull → same SQLite Item; Pending/CONFLICT, unchanged skip, reconnect/cold and revoked hint",
+      "args": ["src/data/sync/tripRealtimeGoldenSlice.test.ts"]
+    },
+    {
+      "name": "Existing Downstream backoff and retained dirty reconciliation",
+      "args": ["src/data/sync/tripRealtimeTrigger.downstream.test.ts"]
+    },
+    {
+      "name": "Existing trigger Account/Trip old callback and disconnect fences",
+      "args": ["src/data/sync/tripRealtimeTrigger.test.ts", "-t", "Account|generation|late|disconnect|Trip exit"]
+    },
+    {
+      "name": "Existing actual SQLite late A response across Account A→B→A",
+      "args": ["src/data/repositories/tripCoreV2Repository.test.ts", "-t", "fences late A responses across A→B→A generation changes"]
+    },
+    {
+      "name": "Existing Auth lease expiry/revoke/regrant and failed authoritative cache fence",
+      "args": ["src/data/auth/tripPrivateRealtimeAuthorization.test.ts"]
+    }
+  ],
+  "defaultRuntime": {
+    "tripPrivateSubscription": "undefined",
+    "tripVisibleVersionRead": "undefined"
+  },
+  "remainingOwningGaps": [
+    "Fresh per-Actor authorized cheap VersionReader is absent. The new fixture comparator builds a full actor-visible snapshot; no latency or cost reduction is measured.",
+    "Real post-COMMIT publisher and private transport admission/expiry/revocation remain unbound. Local tests provide these owning ports as fixtures.",
+    "Auth authorizationRevision41/42 is intentionally distinct from Core accessRevision7. The new joined test observes the revoke callback and fences old hints; it does not invent a Core cache-revocation mapping.",
+    "The executor storage commit is local in-memory fixture storage, with a real Core APPLIED/CONFLICT receipt. This is not a physical Hosted transaction, normal network Session or multi-device qualification."
+  ]
+}
