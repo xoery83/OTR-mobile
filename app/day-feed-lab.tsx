@@ -1,8 +1,16 @@
+import { canOpenFormScanFixture } from "@/features/day-feed-lab/formScanFixtureGate";
 import { Redirect, useLocalSearchParams } from "expo-router";
 
 export default function DayFeedLabRoute() {
   const { fidelity } = useLocalSearchParams<{ fidelity?: string }>();
-  if (!__DEV__) return <Redirect href="/trip" />;
+  if (
+    !__DEV__ &&
+    !(
+      canOpenFormScanFixture() &&
+      ["p2-scan", "p3-scan", "p4-scan", "p5-scan", "p6-scan"].includes(fidelity ?? "")
+    )
+  )
+    return <Redirect href="/trip" />;
   if (fidelity === "p6") {
     const { P6FidelityPreview } =
       // eslint-disable-next-line @typescript-eslint/no-require-imports

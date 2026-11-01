@@ -1,3 +1,4 @@
+import { canOpenFormScanFixture } from "./formScanFixtureGate";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { ManualFlightEditor } from "@/features/day-feed/ManualFlightForm";
@@ -16,7 +17,7 @@ export function FormFieldScanQa() {
   }>();
   const family = fidelity?.split("-")[0]?.toUpperCase();
   if (
-    !__DEV__ ||
+    !canOpenFormScanFixture() ||
     !coreUuid.safeParse(tripId).success ||
     (item !== undefined && !coreUuid.safeParse(item).success) ||
     !["P2", "P4", "P5", "P6"].includes(family ?? "")

@@ -1,3 +1,4 @@
+import { canOpenFormScanFixture } from "./formScanFixtureGate";
 import pack from "./fixtures/p3-form-scan.json";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
@@ -23,7 +24,7 @@ export function syntheticStayScan(binding: StaySuggestionBinding): SyntheticStay
 export function P3FormScanQa() {
   const { tripId, item } = useLocalSearchParams<{ tripId?: string; item?: string }>();
   if (
-    !__DEV__ ||
+    !canOpenFormScanFixture() ||
     !coreUuid.safeParse(tripId).success ||
     (item !== undefined && !coreUuid.safeParse(item).success)
   )
