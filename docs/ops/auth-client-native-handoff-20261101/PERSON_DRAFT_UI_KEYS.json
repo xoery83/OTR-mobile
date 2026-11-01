@@ -1,0 +1,12 @@
+{
+  "en": {
+    "people.draftLoadFailed": "Could not read this private draft. Retry or close without changing it.",
+    "people.draftSaveFailed": "Could not confirm the draft change. Your entered name remains here.",
+    "people.draftOnlyHint": "You can edit a private draft here. Adding this traveler to the Trip is currently unavailable."
+  },
+  "zhHans": {
+    "people.draftLoadFailed": "未能读取此私密草稿。请重试，或关闭并保留原数据。",
+    "people.draftSaveFailed": "暂未能确认草稿修改，已保留此处填写的名字。",
+    "people.draftOnlyHint": "可在此编辑私有草稿，暂时无法将此同行人加入行程。"
+  }
+}

@@ -1,0 +1,207 @@
+diff --git a/src/features/people/AddTravelerSheet.test.ts b/src/features/people/AddTravelerSheet.test.ts
+index 311663b8..27e69d5c 100644
+--- a/src/features/people/AddTravelerSheet.test.ts
++++ b/src/features/people/AddTravelerSheet.test.ts
+@@ -367,3 +367,87 @@ it("can close a pending private read and ignores its late response", async () =>
+   expect(input().value).toBe("");
+   expect(props.onSave).not.toHaveBeenCalled();
+ });
++
++it("recovers and cancels a draft-only editor without calling create or allocating IDs", async () => {
++  const f = persistedDraft();
++  props = { ...props, submissionEnabled: false, draft: f.reopen() };
++  input();
++  await vi.waitFor(() => expect(input().editable).toBe(true));
++  input().onChangeText("仅私有草稿 e\u0301");
++  await vi.waitFor(() => expect(f.values.size).toBe(1));
++  expect(header().rightDisabled).toBe(true);
++  header().onRight();
++  expect(props.onSave).not.toHaveBeenCalled();
++  expect(state.uuid).not.toHaveBeenCalled();
++  unmount();
++  props = { ...props, draft: f.reopen(), onClose: vi.fn() };
++  input();
++  await vi.waitFor(() => expect(input().value).toBe("仅私有草稿 e\u0301"));
++  header().onLeft();
++  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
++  expect(f.values.size).toBe(0);
++});
++it("fences an old enabled submit handler after the caller disables submission", () => {
++  input().onChangeText("Local name");
++  const old = header().onRight;
++  props = { ...props, submissionEnabled: false };
++  render();
++  old();
++  expect(props.onSave).not.toHaveBeenCalled();
++  expect(state.uuid).not.toHaveBeenCalled();
++});
++it("does not silently fall back to an unpersisted draft-only form without a draft port", () => {
++  props.submissionEnabled = false;
++  expect(input().editable).toBe(false);
++  expect(header().rightDisabled).toBe(true);
++});
++
++it("does not allocate or freeze an attempt when submission closes during draft preparation", async () => {
++  const f = persistedDraft();
++  const port = f.reopen();
++  let finish!: () => void;
++  let started!: () => void;
++  const prepared = new Promise<void>((resolve) => {
++    started = resolve;
++  });
++  let pause = false;
++  const retain = vi.fn(port.retainAttempt);
++  props.draft = {
++    ...port,
++    retainAttempt: retain,
++    saveName: async (name) => {
++      const result = await port.saveName(name);
++      if (pause) {
++        started();
++        await new Promise<void>((resolve) => {
++          finish = resolve;
++        });
++      }
++      return result;
++    },
++  };
++  input();
++  await vi.waitFor(() => expect(input().editable).toBe(true));
++  input().onChangeText("Prepared name");
++  await vi.waitFor(() => expect(f.values.size).toBe(1));
++  pause = true;
++  header().onRight();
++  await prepared;
++  props = { ...props, submissionEnabled: false };
++  render();
++  finish();
++  await vi.waitFor(() => expect(input().editable).toBe(true));
++  expect(state.uuid).not.toHaveBeenCalled();
++  expect(retain).not.toHaveBeenCalled();
++  expect(props.onSave).not.toHaveBeenCalled();
++  header().onLeft();
++  await vi.waitFor(() => expect(f.values.size).toBe(0));
++});
++it("disables a no-port editor and retained input callback when draft-only mode is selected", () => {
++  input().onChangeText("Original");
++  const old = input().onChangeText;
++  props = { ...props, submissionEnabled: false };
++  expect(input().editable).toBe(false);
++  old("Unpersisted new name");
++  expect(input().value).toBe("Original");
++});
+diff --git a/src/features/people/AddTravelerSheet.tsx b/src/features/people/AddTravelerSheet.tsx
+index 7096dcea..80b17fb5 100644
+--- a/src/features/people/AddTravelerSheet.tsx
++++ b/src/features/people/AddTravelerSheet.tsx
+@@ -34,13 +34,14 @@ type Props = {
+   // The owning caller fences the Account/Trip and saves through the existing repository.
+   onSave(input: AddTravelerInput): Promise<void>;
+   draft?: TripPersonEditorDraftPort;
++  submissionEnabled?: boolean;
+ };
+ 
+ export function AddTravelerSheet(props: Props) {
+   return props.visible ? <AddTravelerForm {...props} /> : null;
+ }
+ 
+-function AddTravelerForm({ onClose, onSave, draft }: Props) {
++function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: Props) {
+   useUiLocale();
+   const styles = useThemedStyles(createStyles);
+   const currentGeneration = useSyncExternalStore(
+@@ -52,7 +53,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+   const [busy, setBusy] = useState(false);
+   const [failed, setFailed] = useState(false);
+   const [submitted, setSubmitted] = useState(false);
+-  const [ready, setReady] = useState(!draft);
++  const [ready, setReady] = useState(!draft && submissionEnabled);
+   const [draftError, setDraftFeedback] = useState<{
+     key: "people.draftLoadFailed" | "people.draftSaveFailed";
+   } | null>(null);
+@@ -64,9 +65,11 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+   const currentName = useRef("");
+   const [originalDraft] = useState(draft);
+   const latestDraft = useRef(draft);
++  const latestSubmission = useRef(submissionEnabled);
+   useLayoutEffect(() => {
+     latestDraft.current = draft;
+-  }, [draft]);
++    latestSubmission.current = submissionEnabled;
++  }, [draft, submissionEnabled]);
+   const valid = () =>
+     alive.current &&
+     generation === getAccountGeneration() &&
+@@ -111,7 +114,14 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+     const current = personCloudCreateSchema.shape.displayName.safeParse(
+       currentName.current.trim(),
+     );
+-    if (!valid() || !ready || running.current || !current.success) return;
++    if (
++      !latestSubmission.current ||
++      !valid() ||
++      !ready ||
++      running.current ||
++      !current.success
++    )
++      return;
+     running.current = true;
+     setBusy(true);
+     setFailed(false);
+@@ -120,7 +130,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+     try {
+       Keyboard.dismiss();
+       if (draft) await draft.saveName(current.data);
+-      if (!valid()) return;
++      if (!valid() || !latestSubmission.current) return;
+       // A lost local-save reply retries the same Person and intent, never a second traveler.
+       attempt.current ??= Object.freeze({
+         operationId: createUuid(),
+@@ -130,6 +140,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+       setSubmitted(true);
+       if (draft) await draft.retainAttempt(attempt.current);
+       if (!valid()) return;
++      if (!latestSubmission.current) return;
+       await onSave(attempt.current);
+       if (!valid()) return;
+       if (draft) await draft.complete(attempt.current.operationId);
+@@ -195,6 +206,7 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+         onRight={() => void (!ready ? loadDraft() : save())}
+         rightDisabled={
+           busy ||
++          (ready && !submissionEnabled) ||
+           (!ready ? draftError?.key !== "people.draftLoadFailed" : !parsed.success)
+         }
+       />
+@@ -223,7 +235,14 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+           placeholder={t("people.travelerName")}
+           value={name}
+           onChangeText={(value) => {
+-            if (!valid() || running.current || !ready || attempt.current) return;
++            if (
++              !valid() ||
++              (!draft && !latestSubmission.current) ||
++              running.current ||
++              !ready ||
++              attempt.current
++            )
++              return;
+             currentName.current = value;
+             setName(value);
+             if (draft)
+@@ -236,11 +255,13 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
+                   if (valid()) setDraftFeedback({ key: "people.draftSaveFailed" });
+                 });
+           }}
+-          editable={ready && !busy && !submitted}
++          editable={ready && !busy && !submitted && (!!draft || submissionEnabled)}
+           maxLength={256}
+           autoCapitalize="words"
+         />
+-        <UiText style={styles.hint}>{t("people.addTravelerHint")}</UiText>
++        <UiText style={styles.hint}>
++          {t(submissionEnabled ? "people.addTravelerHint" : "people.draftOnlyHint")}
++        </UiText>
+       </ScrollView>
+     </Modal>
+   );

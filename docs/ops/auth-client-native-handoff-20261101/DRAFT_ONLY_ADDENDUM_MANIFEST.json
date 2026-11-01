@@ -1,0 +1,8 @@
+{
+  "source": "255da02bc5be9059d67121c15f307d6dd26681e2",
+  "after_sheet_source": "676065f8",
+  "patch_apply_and_exact_source": "PASS",
+  "patch_sha256": "3a942565fc09a591710de50554f0bfc6bf8cc1d9e7ff7a53eb00dbeba1ddeb3b",
+  "direct_and_independent_sheet_tests": 17,
+  "cloud_authority_changes": false
+}

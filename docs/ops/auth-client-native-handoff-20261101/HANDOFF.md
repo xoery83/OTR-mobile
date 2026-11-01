@@ -60,7 +60,7 @@ Keep the existing normal `onSave` repository call and receipt/queue semantics.
 Entering/editing a private draft does not require or grant server authoring. If an
 adopted Trip has no existing qualified parent for save, do not open the closed
 Backend reader or pretend queue acceptance. Report that exact caller qualification;
-Auth will supply a draft-only submit guard if needed, preserving normal create.
+Use the reviewed draft-only addendum below; it preserves normal create.
 
 Actual acceptance: existing adopted Trip→Add Traveler→type private name→restart
 without submit→same Account/Trip draft restored. Explicit Cancel clears only an
@@ -86,3 +86,25 @@ Return one unified code SHA and actual build/device/SQLite cold evidence for eac
 Golden Slice, preserving earlier UNKNOWN operations and all unrelated changes.
 Cloud differences remain in AUTH_CLIENT_INTEGRATION_GAPS.md. Auth reviews only the
 new Account/draft boundary in the integrated diff, not the full architecture.
+
+## Draft-only integration addendum
+
+Auth code `255da02b` adds optional `submissionEnabled` (default true) to the existing
+Sheet. Apply `DRAFT_ONLY_SUBMISSION.patch` after the base Person patch. Source/hash
+and apply/readback self-check are fixed in DRAFT_ONLY_ADDENDUM_MANIFEST.json.
+Merge only missing copy from PERSON_DRAFT_UI_KEYS.json (three People draft keys per
+locale, including the original draft load/save errors). Never replace a full catalog.
+
+For an adopted Trip with no qualified normal save, Native can still open this same
+scoped Sheet with `draft={boundPort}` and `submissionEnabled={false}`. It permits
+private name input/restart/cancel, but allocates no operation/Person UUID and cannot
+call onSave or queue a Person. Missing draft storage stays disabled; do not silently
+fall back to nonpersistent input. Caller remains responsible for current committed
+Account/Trip/generation, current local Trip existence, and normal permission display.
+Retain the existing normal onSave callback; when unavailable it is never invoked.
+Do not interpret this local editor as cloud authoring or accepted membership.
+
+17 direct/independent Sheet tests and types/lint/UI guard pass. Important additions:
+old enabled handler cannot submit after disabling; disabling during awaited draft
+preparation cannot allocate/retain an attempt; an unscoped no-port editor cannot
+stay editable after disabling. No new create/queue/retry/authority implementation.
