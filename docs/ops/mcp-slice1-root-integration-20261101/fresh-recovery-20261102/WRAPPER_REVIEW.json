@@ -1,0 +1,20 @@
+{
+  "status": "NO_BLOCKER_PREPARED_ONLY",
+  "reviewer": "independent photo_results_recovery_v3",
+  "baseline": "actual round02 dispatcher",
+  "changes": [
+    "fresh local directory",
+    "fresh image/template/helper pin",
+    "Auth direct human Notes source",
+    "fresh operation/digest",
+    "new cb71/3359 default restore"
+  ],
+  "unchanged": [
+    "pointer and timer before serving",
+    "Auth fixed T/D no extension",
+    "one-shot intent and unknown no blind retry"
+  ],
+  "notesHumanRootVerificationStillRequired": true,
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "clockStarted": false
+}
