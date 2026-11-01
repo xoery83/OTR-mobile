@@ -411,3 +411,19 @@ it("reports open/close and lets a scoped handoff block opening without changing 
   expect(onOpenChange.mock.calls).toEqual([[true], [true], [false]]);
   expect(onChange).not.toHaveBeenCalled();
 });
+
+it("fits all seven date columns to an iPad page sheet instead of the full window", () => {
+  state.width = 1180;
+  const onChange = vi.fn();
+  const render = () => {
+    state.cursor = 0;
+    return nodes(TripCalendarRangeField({ value: { start: "", end: "" }, onChange }));
+  };
+  render().find((n) => n.type === UiFormRow)!.props.onPress();
+  const sheet = render().find((n) => n.type === "SafeAreaView")!;
+  expect(sheet.props.onLayout).toBeTypeOf("function");
+  sheet.props.onLayout({ nativeEvent: { layout: { width: 936 } } });
+  const day = render().find((n) => n.type === "Pressable")!;
+  expect(day.props.style.find((s: any) => s?.width)?.width * 7).toBe(904);
+  expect(onChange).not.toHaveBeenCalled();
+});

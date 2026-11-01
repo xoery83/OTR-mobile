@@ -74,7 +74,8 @@ export function TripCalendarRangeField({
   const styles = useThemedStyles(createStyles);
   const { fontScale, width } = useWindowDimensions();
   const cellSize = Math.max(44, Math.ceil(24 * fontScale));
-  const gridWidth = Math.max(width - 2 * visual.space.page, cellSize * 7);
+  const [sheetWidth, setSheetWidth] = useState(width);
+  const gridWidth = Math.max(sheetWidth - 2 * visual.space.page, cellSize * 7);
   const [open, setOpen] = useState(false);
   const changeOpen = (next: boolean) => {
     if (onOpenChange?.(next) !== false) setOpen(next);
@@ -138,7 +139,13 @@ export function TripCalendarRangeField({
         allowSwipeDismissal
         onRequestClose={() => changeOpen(false)}
       >
-        <SafeAreaView edges={["bottom"]} style={styles.sheet}>
+        <SafeAreaView
+          edges={["bottom"]}
+          style={styles.sheet}
+          onLayout={({ nativeEvent: { layout } }) => {
+            if (layout.width > 0) setSheetWidth(layout.width);
+          }}
+        >
           <SheetHeader
             category="picker"
             title={label === t("tripForm.dates") ? t("tripForm.dateTitle") : label}
