@@ -1,0 +1,47 @@
+{
+  "status": "LOCAL_DECODER_PASS_ONLY_SOURCE_DISABLED",
+  "rootDependenciesChanged": false,
+  "pngFilesChanged": false,
+  "runtimeQualified": false,
+  "command": "node --max-old-space-size=64 --test --test-concurrency=1 decoder.test.mjs",
+  "tests": 9,
+  "files": {
+    "profile.mjs": {
+      "sha256": "6f9f78a63166e9269a82711878778f99e9d4e9e3f8eb64f2b303e0dff5d26529",
+      "bytes": 817
+    },
+    "jpeg-decode.mjs": {
+      "sha256": "ad5e025cb6693875d14fab8d551a2066a7be13e8a1fdc8ea7aff38b4314fffd5",
+      "bytes": 5640
+    },
+    "decoder.test.mjs": {
+      "sha256": "924293a6ab35db1dfd340ab4f25123032c8946154d08c4e702c97b792f454e69",
+      "bytes": 4817
+    },
+    "README.md": {
+      "sha256": "dab0029544e73f3ea44d7ab3af2f63ceb4be93b02c7cdc069043035c9b86a22f",
+      "bytes": 4646
+    },
+    "vendor/jpeg-js-0.4.4.tgz": {
+      "sha256": "269f988267bc71efe58baf97e8b2da064b5bbbbb8b0eab11e2149049935e1160",
+      "bytes": 21818
+    },
+    "fixtures/baseline-32x16.jpg": {
+      "sha256": "a4e4bc8f40288ad7853203f96d72c796dcc38e50180f9db474e0df9204dae6d0",
+      "bytes": 627
+    },
+    "DEPENDENCY.json": {
+      "sha256": "873007b08e396436eb111758afd7d10bae5eb284106f9908864e4fec1d6b02e7",
+      "bytes": 1688
+    },
+    "prepare-local.py": {
+      "sha256": "a60af31608d526e8531a6fa287e1fb28f712da3aff3c1d26f35dfec412617cb0",
+      "bytes": 1280
+    },
+    "LICENSE-APACHE-2.0.txt": {
+      "sha256": "a5e9f9b1575301c7a7a03508fdaa2e05a918cc17fd21c6e898096a96d6a34f61",
+      "bytes": 9142
+    }
+  },
+  "rootReview": "Strict baseline/Exif guard reviewed; tests use pinned decoder directly, never load unused encoder."
+}

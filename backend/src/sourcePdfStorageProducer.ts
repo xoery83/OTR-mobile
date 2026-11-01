@@ -82,7 +82,7 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
   profileId?: string,
   suppliedCustodyScope?: { accountId: string; tripId: string },
   requestGuard?: PdfSourceRequestIoGuard,
-  mimeType: "application/pdf" | "image/png" = "application/pdf",
+  mimeType: "application/pdf" | "image/png" | "image/jpeg" = "application/pdf",
 ) {
   type RequestBinding = { binding: B; dispatchId: string };
   type ReadBinding = RequestBinding & {
@@ -344,24 +344,28 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
       return Uint8Array.from(result.body);
     },
     async read(raw: ReadBinding) {
-      const png = mimeType === "image/png";
+      const image = mimeType === "image/png" || mimeType === "image/jpeg";
       const causal = raw.binding.uploadVersion === 3 || raw.binding.uploadVersion === 4;
       if (
-        (png || causal) &&
+        (image || causal) &&
         (!coreUuid.safeParse(raw.readId).success ||
           raw.readId === raw.dispatchId ||
-          !coreHash.safeParse(png ? raw.terminalEvidenceSha256 : raw.ackEvidenceSha256)
+          !coreHash.safeParse(image ? raw.terminalEvidenceSha256 : raw.ackEvidenceSha256)
             .success)
       )
         throw new Error(
-          png ? "PNG_QUALIFIED_READ_PERMIT_REQUIRED" : "PDF_CAUSAL_READ_PERMIT_REQUIRED",
+          image
+            ? mimeType === "image/jpeg"
+              ? "JPEG_QUALIFIED_READ_PERMIT_REQUIRED"
+              : "PNG_QUALIFIED_READ_PERMIT_REQUIRED"
+            : "PDF_CAUSAL_READ_PERMIT_REQUIRED",
         );
       const request = {
           ...bound(raw),
-          ...(png || causal
+          ...(image || causal
             ? {
                 readId: raw.readId!,
-                ...(png
+                ...(image
                   ? { terminalEvidenceSha256: raw.terminalEvidenceSha256! }
                   : { ackEvidenceSha256: raw.ackEvidenceSha256! }),
                 cacheBypassed: true as const,
@@ -400,8 +404,8 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
       try {
         await verify(bytes);
       } catch {
-        // A V4 worker outage cannot establish that the retained original is unsupported.
-        if (mimeType === "image/png" || b.uploadVersion === 4)
+        // A worker outage cannot establish that the retained original is unsupported.
+        if (image || b.uploadVersion === 4)
           return { kind: "UNAVAILABLE" as const, request };
         return { kind: "UNSUPPORTED" as const, ...observation };
       }

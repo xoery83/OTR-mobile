@@ -1,0 +1,21 @@
+{
+  "version": "0.4.4",
+  "license": "BSD-3-Clause",
+  "dependencies": {},
+  "dist": {
+    "shasum": "a9f1c6f1f9f0fa80cdb3484ed9635054d28936aa",
+    "tarball": "https://registry.npmjs.org/jpeg-js/-/jpeg-js-0.4.4.tgz",
+    "fileCount": 9,
+    "integrity": "sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==",
+    "signatures": [
+      {
+        "sig": "MEUCIGX6A3L3E06PinyJWYQzX0wBd90Z6SQRHKQb1T/IrBMvAiEAtuN07Rb4+G2dLr0QjzSSRmrBWwRlwzzp3Fo3MD5YEv0=",
+        "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+      }
+    ],
+    "unpackedSize": 76029,
+    "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v4.10.10\r\nComment: https://openpgpjs.org\r\n\r\nwsFzBAEBCAAGBQJin14ZACEJED1NWxICdlZqFiEECWMYAoorWMhJKdjhPU1b\r\nEgJ2Vmo3dQ//cuMCk4F3Ury8VxSpo3t3FS8mW7l5VZjFX8y5Ts21AE3b9BC2\r\nCVllp2G/8fKEps5geZLY5YwCiayaP3pYGFz/ZuQBzJUceO6LIT9Lifdi7NVl\r\nw4B0zJTC5laOOqrRMdM2dJ4kM96MA5Q3Oqm/PpAyjVcMjx9+AKxVYonFNL8w\r\nGDpVDqOk2IWlf9Dg/IZHGGARVkQL1CPxbXjf0R6HNwe3N+t9A1AoauzwwSEK\r\nIiw4fPruBTX0i0D/mX6OyHLDW9/W2i6JA15HO4gYxEV95eKlR/Xg8HJ9/OC7\r\nYeJCzSnLipT8JxLKge0ey1YdJjc4JLkkb46UjOCp8KjfM2/hlsao0kKKjl61\r\n0QdWfKuPP2wYuMCzWe0o6Vxf18xbaKvZMoH5BWzBOQzZh9lDrmHU4JbWBrOT\r\n1mghGci+cBz7vEDNvZELwovbaWeN7RQlptgmnMqnvfn4t8BGYW7p/C1q6hmy\r\n+PIpwze8HBqBfLtwABckImcTfcEJYOGUyF/vsslh5Pxn8zgjbyvdlQaeW08m\r\nzmASL9bSBqYjmPUwIuhzln8eR+gWUCOR00c9v2pZP4VuIaEYOzIkC9y8yuNU\r\n/oah/h6xjemT+zJN98LlsAppHeW0nr9ERxlp4QhWrDLByAD2dpmCwfNSjqXJ\r\n2JhnMqrk0oVci5fmtsiI4qGQcdhAtmJKNo0=\r\n=AFaC\r\n-----END PGP SIGNATURE-----\r\n"
+  },
+  "sha256": "269f988267bc71efe58baf97e8b2da064b5bbbbb8b0eab11e2149049935e1160",
+  "bytes": 21818
+}
