@@ -2665,6 +2665,10 @@ describe("Expense consistency v2 HTTP contract", () => {
 
 it("Manual Flight enrichment is authenticated, Trip scoped and default closed", async () => {
   const { gateway } = createGateway();
+  vi.mocked(gateway.validateAccessToken).mockResolvedValue({
+    id: userId,
+    accountClass: "NORMAL_ACCOUNT",
+  });
   const handler = createDevBackendHandler({ gateway });
   const path = `http://localhost/v1/trips/${tripId}/flight-enrichment`;
   expect((await handler(new Request(path + "/capabilities"))).status).toBe(401);

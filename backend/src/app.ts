@@ -2579,6 +2579,8 @@ export function createDevBackendHandler({
           enabled: flightEnrichmentEnabled,
           resolve: async (req, tripId) => {
             const actor = await authorizeRead(req, gateway, tripId);
+            if (!isNormalAccount(actor))
+              throw new Error("ENRICHMENT_NORMAL_ACCOUNT_REQUIRED");
             return {
               accountId: actor.id,
               actorId: actor.id,
@@ -2587,7 +2589,8 @@ export function createDevBackendHandler({
               assertCurrent: async () => {
                 req.signal.throwIfAborted();
                 const current = await authorizeRead(req, gateway, tripId);
-                if (current.id !== actor.id) throw new Error("ENRICHMENT_AUTH_CHANGED");
+                if (current.id !== actor.id || !isNormalAccount(current))
+                  throw new Error("ENRICHMENT_AUTH_CHANGED");
               },
             };
           },

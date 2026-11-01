@@ -1,0 +1,107 @@
+{
+  "status": "LOCAL_NORMAL_ACCOUNT_COMPATIBILITY_FIXED_RETAINED_HOST_COMPOSITION_PENDING",
+  "base": "fcfe8745",
+  "retainedHost": "90b4b1ce",
+  "rootHead": "6f458c5aa0f7c5f8da1247e1776da55eb8b31691",
+  "rootEightInterfaces": {
+    "backend/src/flight-enrichment/service.ts": {
+      "nativeBaseSha256": "2cf08068c9d22d5bf6ed1b274a97f637cf3994eaf308271d491ffcaf8c13f97e",
+      "rootHeadSha256": "2cf08068c9d22d5bf6ed1b274a97f637cf3994eaf308271d491ffcaf8c13f97e",
+      "equal": true
+    },
+    "backend/src/flight-enrichment/ports.ts": {
+      "nativeBaseSha256": "d0b3e5f10a0a78a8f8c86b5c6041c84530617671b7e7fa25c6a28cacffe37137",
+      "rootHeadSha256": "d0b3e5f10a0a78a8f8c86b5c6041c84530617671b7e7fa25c6a28cacffe37137",
+      "equal": true
+    },
+    "backend/src/flight-enrichment/contracts.ts": {
+      "nativeBaseSha256": "67615bd798b97ad743b7dfad6cb8e48f55a922b589f329aa347769eb87cd475e",
+      "rootHeadSha256": "67615bd798b97ad743b7dfad6cb8e48f55a922b589f329aa347769eb87cd475e",
+      "equal": true
+    },
+    "src/domain/intelligence/flightEnrichmentContracts.ts": {
+      "nativeBaseSha256": "e223d8008a71c6f1cef23333d900b46417c40e2ff4a589f676b9cfaf475b9f71",
+      "rootHeadSha256": "e223d8008a71c6f1cef23333d900b46417c40e2ff4a589f676b9cfaf475b9f71",
+      "equal": true
+    },
+    "backend/src/flight-enrichment/projection.ts": {
+      "nativeBaseSha256": "7900c0f58e852d9d2fd4e9fc1944dfc2456ee2a3d5dc26e5461dbd2a7834196d",
+      "rootHeadSha256": "7900c0f58e852d9d2fd4e9fc1944dfc2456ee2a3d5dc26e5461dbd2a7834196d",
+      "equal": true
+    },
+    "backend/src/authAccountQualification.ts": {
+      "nativeBaseSha256": "f3b70789e5dcb4012b056bc6df3264c71e40c5783657f0b09965c3fa0e3498b3",
+      "rootHeadSha256": "f3b70789e5dcb4012b056bc6df3264c71e40c5783657f0b09965c3fa0e3498b3",
+      "equal": true
+    },
+    "backend/src/flightHttpsTransport.ts": {
+      "nativeBaseSha256": "d61a14c705bd88742eaf3ce5335d5fe459fc4499531e56f62301b9e128fb4541",
+      "rootHeadSha256": "d61a14c705bd88742eaf3ce5335d5fe459fc4499531e56f62301b9e128fb4541",
+      "equal": true
+    },
+    "backend/src/externalIntegrationPersistence.ts": {
+      "nativeBaseSha256": "21335e03f6e8066a79353d7a6b0b2175d78bb070574305b84cc4e32d2caacaf7",
+      "rootHeadSha256": "21335e03f6e8066a79353d7a6b0b2175d78bb070574305b84cc4e32d2caacaf7",
+      "equal": true
+    }
+  },
+  "actualFailure": {
+    "scope": "local injected-service fixture only; no live privilege or Provider execution claim",
+    "before": "4 failed / 1 passed; non-normal classification allowed and same-ID downgrade not rejected",
+    "after": "5 PASS; service never invoked for non-normal/downgraded Account"
+  },
+  "validation": {
+    "serviceBoundaryAndAuth": "3 suites52PASS",
+    "legacyAppCase": "1PASS/53 unrelated cases not selected",
+    "types": "PASS",
+    "sourceLint": "PASS",
+    "rootPatchApplyCheck": "PASS READ_ONLY, root tree unmodified"
+  },
+  "protectedHostOverlay": {
+    "status": "EXPECTED_MISSING_COMPOSITION_INTERFACES_NOT_READY",
+    "missing": [
+      "verifyEnrichmentInput and 7 retained protected commands in existing gateway",
+      "Search destination and explicit transport profile overload",
+      "retained UPSTREAM contracts/prompt provenance metadata",
+      "availability/runtime forwarding and startup composition"
+    ],
+    "exactTemporaryFilesRemoved": true,
+    "retainedSourceHashes": {
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/devRuntime.ts": "7b3d07fcd07b9a2d3207d06e06d1ce7ec3a0a23aff33643ac629e6eaa41ce7ab",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/diagnostics.ts": "b13d415dd447f37fc0ec81beb3796a423326ceeb4396f1934ab7c303bea153d3",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/hostRun.ts": "fa8311584b2f3610c33af199aaafd70afb07f3e4d7f050a23e83ad83146f8d88",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/idempotency.ts": "ded6b7d207df1ea5eacd67eaed6aa5783bb6cedbbbcc2f047f0a251269bbebdc",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/metering.ts": "89cd9f70db0167e7a418cea8d23fbcb5cb728702fe1b6abdf251ef5f150d3462",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/modelBinding.ts": "6f1b4e012e5ff271853cd7c46e1cf08d08ae82587f72440dd1ad84434202789d",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/persistentPorts.ts": "2a651ab02e89db4d3404180a216fb8a3c38a0b4799b32eddfca9a87d608eaf26",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/registeredProfile.json": "74a253742dad7f6f1c721cf924b7def2f183abdc7ca0d68b7edbfc9e834bffe0",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/registeredProfile.ts": "59fef63847ea7e7c5b198f4e56e839f6ce1a4381ef59b984d00c45391534890e",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/runtime.ts": "cd50d6d38ea8869acb89b0596b8a7e75f3a04fd19329481a4eb857c78d09b40e",
+      "/private/tmp/otr-native-enrichment-host-compat-v3/backend/src/flight-enrichment/usageWriter.ts": "6439be64bf7a9c6babea1e1e3804d1e226a1b3cd576f0756de476bb8b51399da"
+    }
+  },
+  "resources": {
+    "hosted": 0,
+    "provider": 0,
+    "sql": 0,
+    "devices": 0,
+    "rootOrMainWrites": 0
+  },
+  "remaining": [
+    "unique Root writer integrates precise retained Host software pieces preserving MCP/Auth/Source",
+    "fresh lawful protected Scope/price/runtime/Provider authorization and actual query/usage/readback E2E"
+  ],
+  "logs": {
+    "/private/tmp/otr-native-enrichment-host-compat-red.log": "89397bb3d6bfb8317b5c08fa4b94b1ac03fc709f02e1c9666244f4030b8d656e",
+    "/private/tmp/otr-native-enrichment-host-compat-green.log": "0bca109e5eac8ae6fbdccc31da98c27be720b44b10aeb073492a2833a149412a",
+    "/private/tmp/otr-native-enrichment-host-compat-app.log": "624f124dc120285a039bb92cd3912a27c0d69b8cd061d24a655e68657af0efc0",
+    "/private/tmp/otr-native-enrichment-host-compat-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-enrichment-host-compat-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-enrichment-host-compat-overlay-types.log": "31a6657f212ca19ba39b488016ee53e926daf5c0b09692595e3d26085397b995"
+  },
+  "sourceSha256": {
+    "backend/src/app.ts": "dcc120ec0ae5124078bfc7e9c575b8dabbf09db2afd20bb9c1a99679b46218a0",
+    "backend/src/app.test.ts": "4720bd0e04eff985f8c1d9b26ce6edf3fd79763f0468df17e9766f7f943f4e28",
+    "backend/src/flight-enrichment/authCompatibility.test.ts": "9636e6add9c5804a90f2a8c1229d6b437033d28561cee7a50e2c25961f76dbd0"
+  }
+}
