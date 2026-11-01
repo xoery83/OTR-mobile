@@ -1,3 +1,4 @@
+const { createHash } = require("node:crypto");
 const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
@@ -16,7 +17,15 @@ if (process.env.EXPO_PUBLIC_OTR_IMPORT_WORKBENCH === "1") {
 }
 
 // Shared node_modules must not reuse a different checkout's Expo Router context.
-config.cacheVersion = `${config.cacheVersion ?? "expo"}:${__dirname}`;
+const publicEnvironment = Object.keys(process.env)
+  .filter((key) => key.startsWith("EXPO_PUBLIC_"))
+  .sort()
+  .map((key) => [key, process.env[key]]);
+// Expo inlines public flags; cached transforms must follow the build configuration.
+const publicConfigHash = createHash("sha256")
+  .update(JSON.stringify(publicEnvironment))
+  .digest("hex");
+config.cacheVersion = `${config.cacheVersion ?? "expo"}:${__dirname}:${publicConfigHash}`;
 
 if (process.env.OTR_FORMS_QA_EMBEDDED === "1") {
   const resolve = config.resolver.resolveRequest;
