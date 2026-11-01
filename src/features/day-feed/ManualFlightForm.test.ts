@@ -79,6 +79,7 @@ vi.mock("@/ui/controls", () => ({
     return createElement("button", { disabled: p.disabled }, p.label);
   },
   UiText: (p: any) => createElement("span", null, p.children),
+  UiSection: (p: any) => createElement("section", null, p.title, p.children),
 }));
 vi.mock("@/ui/forms", () => ({
   UiTextInput: (p: any) => {
@@ -131,6 +132,11 @@ vi.mock("@/data/repositories/localManualFlightRepository", () => ({
 }));
 const props = {
   tripId: "trip-a",
+  syntheticScan: undefined as
+    | undefined
+    | ((
+        binding: import("./p3FormSuggestions").StaySuggestionBinding,
+      ) => import("./formFieldSuggestions").FormFieldResult),
   initialDate: null as string | null,
   tripStartDate: null as string | null,
   onDirtyChange: vi.fn(),
@@ -178,6 +184,7 @@ beforeEach(() => {
   advanceAccountGeneration();
   vi.clearAllMocks();
   editorMode = false;
+  props.syntheticScan = undefined;
   props.initialDate = null;
   props.tripStartDate = null;
 });
@@ -374,4 +381,108 @@ it("keeps existing named-only participant choices when People retains an unnamed
   expect(node("SEGMENT_FIELDS").participantOptions).toEqual([
     { personId: "person-a", displayName: "Case A" },
   ]);
+});
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+it("synthetic P2 number review explicitly adopts into the existing Sparse Save", async () => {
+  props.syntheticScan = (binding) => ({
+    kind: "SYNTHETIC_FORM_SUGGESTIONS",
+    family: "P2",
+    binding,
+    candidates: [{ id: "one", fields: { flightNumberLiteral: "NZ5071" } }],
+  });
+  const { repo, draft } = await ready();
+  node("formAutofill.scan").onPress();
+  render();
+  node("formAutofill.keep").onPress();
+  render();
+  expect(node("manualFlight.number").value).toBe("NZ5069");
+  node("ui.apply").onPress();
+  render();
+  expect(node("manualFlight.number").value).toBe("NZ5071");
+  expect(repo.save).not.toHaveBeenCalled();
+  node("tripCreate.saveItem").onPress();
+  await flush();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({
+      flightNumberLiteral: "NZ5071",
+      departureDate: "2027-02-06",
+    }),
+    expect.any(Function),
+  );
+});
+
+it("synthetic P2 Edit preserves current endpoint facts and uses the same Item Save", async () => {
+  const formProps = {
+    ...props,
+    itemId: "item-a",
+    syntheticScan: (
+      binding: import("./p3FormSuggestions").StaySuggestionBinding,
+    ): import("./formFieldSuggestions").FormFieldResult => ({
+      kind: "SYNTHETIC_FORM_SUGGESTIONS",
+      family: "P2",
+      binding,
+      candidates: [
+        { id: "one", targetItemId: "item-a", fields: { flightNumberLiteral: "NZ5071" } },
+      ],
+    }),
+  };
+  const draft = { itemId: "item-a" };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    readForForm: vi.fn(async () => ({
+      itemId: "item-a",
+      itemRevision: 2,
+      details: { flightNumberLiteral: "NZ5069" },
+      schedule: {
+        origin: {
+          airportCode: "AKL",
+          time: {
+            localDate: "2027-02-06",
+            localTime: "12:00",
+            zoneId: "Pacific/Auckland",
+          },
+        },
+      },
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+    })),
+    save: vi.fn(async () => ({ status: "LOCAL_COMMITTED", itemId: "item-a" })),
+  };
+  state.factory.mockResolvedValue(repo);
+  const show = () => {
+    state.cursor = 0;
+    state.refCursor = 0;
+    state.nodes = [];
+    renderToStaticMarkup(createElement(ManualFlightForm, formProps));
+    for (const effect of state.effects.splice(0)) {
+      const cleanup = effect();
+      if (cleanup) state.cleanup.push(cleanup);
+    }
+    state.mount = false;
+  };
+  show();
+  await flush();
+  show();
+  node("formAutofill.scan").onPress();
+  show();
+  node("formAutofill.keep").onPress();
+  show();
+  node("ui.apply").onPress();
+  show();
+  expect(node("SEGMENT_FIELDS").value).toMatchObject({
+    originCode: "AKL",
+    departureTime: "12:00",
+    flightNumberLiteral: "NZ5071",
+  });
+  node("tripCreate.saveItem").onPress();
+  await flush();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({
+      flightNumberLiteral: "NZ5071",
+      origin: expect.objectContaining({ airportCode: "AKL" }),
+    }),
+    expect.any(Function),
+  );
 });

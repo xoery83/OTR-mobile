@@ -1,5 +1,9 @@
+import { createUuid } from "@/domain/localId";
+import { FormFieldScan } from "./FormFieldScan";
+import type { FormFieldResult } from "./formFieldSuggestions";
+import type { StaySuggestionBinding } from "./p3FormSuggestions";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -135,6 +139,7 @@ export function P6ActivityEditor({
   opened,
   onClose,
   onSaved,
+  syntheticScan,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -144,6 +149,10 @@ export function P6ActivityEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
+  syntheticScan?: (
+    binding: StaySuggestionBinding,
+    signal: AbortSignal,
+  ) => FormFieldResult | Promise<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
 }) {
@@ -156,7 +165,27 @@ export function P6ActivityEditor({
   const [fields, setFields] = useState<ManualActivityFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
   );
+  const scanSourceScope = useRef(
+    opened ? JSON.stringify([tripId, itemId ?? null, generation]) : null,
+  );
   const fieldsRef = useRef(fields);
+  const scanFormId = useRef(createUuid());
+  const scanRevision = useRef(0);
+  const scanContext = useRef<StaySuggestionBinding | null>(null);
+  useLayoutEffect(() => {
+    scanContext.current =
+      source &&
+      scanSourceScope.current === JSON.stringify([tripId, itemId ?? null, generation])
+        ? {
+            formId: scanFormId.current,
+            tripId,
+            itemId: source.draft.itemId,
+            generation,
+            revision: scanRevision.current,
+            mode: source.draft.mode,
+          }
+        : null;
+  }, [source, tripId, itemId, generation]);
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
@@ -179,6 +208,8 @@ export function P6ActivityEditor({
           if (!alive.current || generation !== getAccountGeneration()) return;
           const value = structuredClone(draft.fields);
           if (!itemId && initialDate) value.startDate = initialDate;
+          scanSourceScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
+          scanRevision.current++;
           setSource({ repository, draft });
           fieldsRef.current = value;
           setFields(value);
@@ -198,6 +229,9 @@ export function P6ActivityEditor({
     alive.current && !closedRef.current && generation === getAccountGeneration();
   const change = (next: Partial<ManualActivityFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
+    scanRevision.current++;
+    if (scanContext.current)
+      scanContext.current = { ...scanContext.current, revision: scanRevision.current };
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -390,6 +424,20 @@ export function P6ActivityEditor({
             {fields && source ? (
               <>
                 <View style={styles.form}>
+                  {syntheticScan ? (
+                    <FormFieldScan
+                      family="P6"
+                      scan={syntheticScan}
+                      disabled={saving || frozen || status === "UNAVAILABLE"}
+                      context={() =>
+                        current() && !busyRef.current && !frozenRef.current
+                          ? scanContext.current
+                          : null
+                      }
+                      fields={() => fieldsRef.current}
+                      onApply={change}
+                    />
+                  ) : null}
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("p6.form.name")}</Text>
                     <UiTextInput

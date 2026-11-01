@@ -21,6 +21,7 @@ vi.mock("react", async (original) => ({
   useEffect: (callback: () => void | (() => void)) => {
     if (state.mount) state.effects.push(callback);
   },
+  useLayoutEffect: (callback: () => void) => callback(),
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.hooks))
@@ -320,3 +321,62 @@ it("invalid start/end date range cannot freeze the draft by attempting Save", as
   expect(node("ui.save").disabled).toBe(false);
   expect(repo.save).not.toHaveBeenCalled();
 });
+
+vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+
+it.each(["CREATE", "EDIT"] as const)(
+  "synthetic Edit venue adoption keeps admission details and uses normal Save (%s)",
+  async (mode) => {
+    const draft = {
+      mode,
+      itemId: "activity",
+      fields: {
+        ...fields(),
+        title: "Show",
+        startDate: "2026-11-04",
+        location: "Original venue",
+        activityDetails: {
+          sessionLabel: "Matinee",
+          admissionNote: "Keep ticket note",
+          entryLocation: null,
+        },
+      },
+      participantOptions: [],
+    };
+    const repo = {
+      read: vi.fn(async () => draft),
+      createDraft: vi.fn(async () => draft),
+      save: vi.fn(async () => ({ itemId: "activity" })),
+    };
+    const p = {
+      ...props(),
+      itemId: mode === "EDIT" ? "activity" : undefined,
+      syntheticScan: (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+        kind: "SYNTHETIC_FORM_SUGGESTIONS" as const,
+        family: "P6" as const,
+        binding,
+        candidates: [
+          { id: "one", targetItemId: "activity", fields: { location: "New venue" } },
+        ],
+      }),
+    };
+    await open(p, repo);
+    node("formAutofill.scan").onPress();
+    render(p);
+    node("formAutofill.keep").onPress();
+    render(p);
+    node("ui.apply").onPress();
+    render(p);
+    expect(node("p6.form.venue").value).toBe("New venue");
+    expect(repo.save).not.toHaveBeenCalled();
+    node("ui.save").onPress();
+    await Promise.resolve();
+    expect(repo.save).toHaveBeenCalledWith(
+      draft,
+      expect.objectContaining({
+        location: "New venue",
+        activityDetails: draft.fields.activityDetails,
+      }),
+    );
+  },
+);

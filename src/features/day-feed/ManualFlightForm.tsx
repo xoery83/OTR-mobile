@@ -1,3 +1,7 @@
+import { createUuid } from "@/domain/localId";
+import { FormFieldScan } from "./FormFieldScan";
+import type { FormFieldResult } from "./formFieldSuggestions";
+import type { StaySuggestionBinding } from "./p3FormSuggestions";
 import { FlightEnrichmentAction } from "./FlightEnrichmentAction";
 import {
   useCallback,
@@ -44,6 +48,7 @@ export function ManualFlightForm({
   saveActionRef,
   onSaveEnabledChange,
   isIntentCurrent,
+  syntheticScan,
 }: {
   tripId: string;
   initialDate?: string | null;
@@ -56,6 +61,10 @@ export function ManualFlightForm({
   saveActionRef?: RefObject<(() => void) | null>;
   onSaveEnabledChange?(enabled: boolean): void;
   isIntentCurrent?(): boolean;
+  syntheticScan?: (
+    binding: StaySuggestionBinding,
+    signal: AbortSignal,
+  ) => FormFieldResult | Promise<FormFieldResult>;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -73,6 +82,8 @@ export function ManualFlightForm({
     [attemptStarted, setAttemptStarted] = useState(false),
     [loadAttempt, setLoadAttempt] = useState(0),
     [error, setError] = useState<Error | null>(null);
+  const scanFormId = useRef(createUuid());
+  const scanRevision = useRef(0);
   const pickers = useRef(new Set<string>());
   const fields = useRef(initial),
     nextKey = useRef(1),
@@ -92,6 +103,7 @@ export function ManualFlightForm({
     current() && !busy.current && !attemptLocked.current && (!itemId || readyRef.current);
   const publish = (next: FlightSegmentDraft[]) => {
     if (!mutable()) return;
+    scanRevision.current++;
     fields.current = next;
     setSegments(next);
     setError(null);
@@ -136,6 +148,7 @@ export function ManualFlightForm({
           if (!active()) return;
           draft.current = identity;
         }
+        scanRevision.current++;
         repository.current = repo;
         readyRef.current = true;
         setReady(true);
@@ -265,23 +278,56 @@ export function ManualFlightForm({
               value={segment}
               lookupAction={
                 <>
-                  <FlightEnrichmentAction
-                    tripId={tripId}
-                    value={segment}
-                    editing={Boolean(itemId)}
-                    disabled={frozen}
-                    onApply={(changes) => {
-                      if (!mutable()) return;
-                      publish(
-                        fields.current.map((entry) =>
-                          entry.key === segment.key
-                            ? { ...entry, ...changes, key: entry.key }
-                            : entry,
-                        ),
-                      );
-                      setFull(true);
-                    }}
-                  />
+                  {syntheticScan ? (
+                    <FormFieldScan
+                      family="P2"
+                      scan={syntheticScan}
+                      disabled={frozen || !ready}
+                      context={() =>
+                        mutable() && draft.current
+                          ? {
+                              formId: scanFormId.current + ":" + segment.key,
+                              tripId,
+                              itemId: draft.current.itemId,
+                              generation: generation.current,
+                              revision: scanRevision.current,
+                              mode: itemId ? "EDIT" : "CREATE",
+                            }
+                          : null
+                      }
+                      fields={() =>
+                        fields.current.find((entry) => entry.key === segment.key) ?? null
+                      }
+                      onApply={(next) => {
+                        if (!mutable()) return;
+                        publish(
+                          fields.current.map((entry) =>
+                            entry.key === segment.key ? next : entry,
+                          ),
+                        );
+                        setFull(true);
+                      }}
+                    />
+                  ) : null}
+                  {!syntheticScan ? (
+                    <FlightEnrichmentAction
+                      tripId={tripId}
+                      value={segment}
+                      editing={Boolean(itemId)}
+                      disabled={frozen}
+                      onApply={(changes) => {
+                        if (!mutable()) return;
+                        publish(
+                          fields.current.map((entry) =>
+                            entry.key === segment.key
+                              ? { ...entry, ...changes, key: entry.key }
+                              : entry,
+                          ),
+                        );
+                        setFull(true);
+                      }}
+                    />
+                  ) : null}
                   {!full ? (
                     <UiButton
                       label={t("manualFlight.manualDetails")}
@@ -394,6 +440,7 @@ export function ManualFlightEditor({
   onClose,
   onSaved,
   registerDismissHandler,
+  syntheticScan,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -401,6 +448,10 @@ export function ManualFlightEditor({
   tripStartDate?: string | null;
   itemId?: string;
   expectedRevision?: number;
+  syntheticScan?: (
+    binding: StaySuggestionBinding,
+    signal: AbortSignal,
+  ) => FormFieldResult | Promise<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   registerDismissHandler?: (handler: () => void) => () => void;
@@ -474,6 +525,7 @@ export function ManualFlightEditor({
             key={JSON.stringify([tripId, itemId ?? null])}
             itemId={itemId}
             expectedRevision={expectedRevision}
+            syntheticScan={syntheticScan}
             isIntentCurrent={current}
             saveActionRef={saveAction}
             onSaveEnabledChange={setCanSave}

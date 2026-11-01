@@ -513,3 +513,67 @@ it("restores same-return selection in an already opened rental draft", () => {
   expect(node("tripCreate.rentalSameLocation").accessibilityState.checked).toBe(true);
   expect(node("tripCreate.rentalReturnPlace").editable).toBe(false);
 });
+
+vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+
+it.each(["CREATE", "EDIT"] as const)(
+  "synthetic pickup adoption preserves a kept return and uses the original Edit Save (%s)",
+  async (mode) => {
+    const original = {
+      ...fields(),
+      title: "Car",
+      startDate: "2026-11-04",
+      endDate: "2026-11-06",
+      startTime: "09:00",
+      endTime: "10:00",
+      pickupLocation: "Original",
+      returnLocation: "Original",
+    };
+    const draft = {
+      mode,
+      itemId: "rental",
+      fields: original,
+      participantOptions: [],
+    };
+    const repo = {
+      read: vi.fn(async () => draft),
+      createDraft: vi.fn(async () => draft),
+      save: vi.fn(async () => ({ itemId: "rental" })),
+    };
+    const p = {
+      ...props(),
+      itemId: mode === "EDIT" ? "rental" : undefined,
+      syntheticScan: (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+        kind: "SYNTHETIC_FORM_SUGGESTIONS" as const,
+        family: "P4" as const,
+        binding,
+        candidates: [
+          {
+            id: "one",
+            targetItemId: "rental",
+            fields: { pickupLocation: "New pickup", returnLocation: "Ignored return" },
+          },
+        ],
+      }),
+    };
+    await open(p, repo);
+    node("formAutofill.scan").onPress();
+    render(p);
+    node("formAutofill.keep").onPress();
+    render(p);
+    node("ui.apply").onPress();
+    render(p);
+    expect(node("tripCreate.rentalPickupPlace").value).toBe("New pickup");
+    expect(node("tripCreate.rentalReturnPlace").value).toBe("Original");
+    expect(repo.save).not.toHaveBeenCalled();
+    node("ui.save").onPress();
+    await Promise.resolve();
+    expect(repo.save).toHaveBeenCalledWith(
+      draft,
+      expect.objectContaining({
+        pickupLocation: "New pickup",
+        returnLocation: "Original",
+      }),
+    );
+  },
+);

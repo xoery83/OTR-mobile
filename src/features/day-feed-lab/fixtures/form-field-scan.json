@@ -1,0 +1,41 @@
+{
+  "P2": {
+    "flightNumberLiteral": "NZ5061",
+    "departureDate": "2026-11-04",
+    "originCode": "AKL",
+    "destinationCode": "NSN",
+    "departureTime": "12:00",
+    "arrivalTime": "13:30",
+    "arrivalDate": "2026-11-04"
+  },
+  "P4": {
+    "title": "Synthetic rental",
+    "pickupLocation": "Synthetic pickup desk",
+    "returnLocation": "Synthetic return desk",
+    "startDate": "2026-11-04",
+    "endDate": "2026-11-06",
+    "startTime": "09:00",
+    "endTime": "10:00",
+    "description": "Synthetic rental note"
+  },
+  "P5": {
+    "title": "Synthetic train",
+    "transportType": "TRAIN",
+    "departureLocation": "Synthetic departure station",
+    "arrivalLocation": "Synthetic arrival station",
+    "departureDate": "2026-11-04",
+    "arrivalDate": "2026-11-04",
+    "departureTime": "10:00",
+    "arrivalTime": "11:00",
+    "description": "Synthetic transport note"
+  },
+  "P6": {
+    "title": "Synthetic show",
+    "location": "Synthetic venue",
+    "startDate": "2026-11-04",
+    "endDate": "2026-11-04",
+    "startTime": "14:00",
+    "endTime": "16:00",
+    "description": "Synthetic activity note"
+  }
+}

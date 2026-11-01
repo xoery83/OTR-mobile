@@ -1,3 +1,7 @@
+import { createUuid } from "@/domain/localId";
+import { FormFieldScan } from "./FormFieldScan";
+import type { FormFieldResult } from "./formFieldSuggestions";
+import type { StaySuggestionBinding } from "./p3FormSuggestions";
 import { AppIcon } from "@/components/AppIcon";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
@@ -139,6 +143,7 @@ export function P4RentalEditor({
   onSaved,
   onChoosePlan,
   onChooseTransport,
+  syntheticScan,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -148,6 +153,10 @@ export function P4RentalEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
+  syntheticScan?: (
+    binding: StaySuggestionBinding,
+    signal: AbortSignal,
+  ) => FormFieldResult | Promise<FormFieldResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
@@ -171,7 +180,27 @@ export function P4RentalEditor({
   const [fields, setFields] = useState<ManualRentalFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
   );
+  const scanSourceScope = useRef(
+    opened ? JSON.stringify([tripId, itemId ?? null, generation]) : null,
+  );
   const fieldsRef = useRef(fields);
+  const scanFormId = useRef(createUuid());
+  const scanRevision = useRef(0);
+  const scanContext = useRef<StaySuggestionBinding | null>(null);
+  useLayoutEffect(() => {
+    scanContext.current =
+      source &&
+      scanSourceScope.current === JSON.stringify([tripId, itemId ?? null, generation])
+        ? {
+            formId: scanFormId.current,
+            tripId,
+            itemId: source.draft.itemId,
+            generation,
+            revision: scanRevision.current,
+            mode: source.draft.mode,
+          }
+        : null;
+  }, [source, tripId, itemId, generation]);
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
@@ -215,6 +244,8 @@ export function P4RentalEditor({
           if (!alive.current || generation !== getAccountGeneration()) return;
           const value = structuredClone(draft.fields);
           if (!itemId && initialDate) value.startDate = initialDate;
+          scanSourceScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
+          scanRevision.current++;
           setSource({ repository, draft });
           fieldsRef.current = value;
           sameReturnRef.current = sameRentalLocation(value);
@@ -241,6 +272,9 @@ export function P4RentalEditor({
     identity.current.opened === opened;
   const change = (next: Partial<ManualRentalFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
+    scanRevision.current++;
+    if (scanContext.current)
+      scanContext.current = { ...scanContext.current, revision: scanRevision.current };
     const value = { ...fieldsRef.current, ...next };
     if (sameReturnRef.current && next.pickupLocation !== undefined)
       value.returnLocation = next.pickupLocation;
@@ -462,6 +496,24 @@ export function P4RentalEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
+                  {syntheticScan ? (
+                    <FormFieldScan
+                      family="P4"
+                      scan={syntheticScan}
+                      disabled={saving || frozen || status === "UNAVAILABLE"}
+                      context={() =>
+                        current() && !busyRef.current && !frozenRef.current
+                          ? scanContext.current
+                          : null
+                      }
+                      fields={() => fieldsRef.current}
+                      onApply={(next) => {
+                        sameReturnRef.current = sameRentalLocation(next);
+                        setSameReturnLocation(sameReturnRef.current);
+                        change(next);
+                      }}
+                    />
+                  ) : null}
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.rentalName")}</Text>
                     <UiTextInput

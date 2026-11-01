@@ -19,3 +19,15 @@ scope; no file-Writer handoff was performed by Native in this sprint. No repeate
 per-interface requests; Owner coordinates protected integration after resource release.
 
 P3 local progress (2026-11-01): the existing Stay editor now accepts an opt-in synthetic scan consumer, with per-candidate/per-field choices, exact Edit target, Form instance + Account generation + Trip + Item + monotonic UI revision fences. DEV-only `/day-feed-lab?fidelity=p3-scan&tripId=<authorizedTrip>[&item=<ownedItem>]` uses the real existing repository and normal Save. No scan entry is enabled in the normal product. Multiple candidates are separately reviewed; Apply updates only the current draft, never creates the other candidates automatically. Real interpretation, evidence and multi-object import/save remain Import-owned. No Hosted/Provider qualification is claimed.
+
+## Prepared field consumers (local only)
+
+| Gap | Owning writer | Blocked Golden Slice | Prepared consumer | Minimum integration delta |
+|---|---|---|---|---|
+| Form interpretation response | Import | Real P2–P6 document → suggestions | Opt-in async/cancellable Form review, explicit field choice, exact context and target fences; original Manual Save | Return authorized, evidence-bound typed candidates for current Form/Item/revision; no reviewed-source authority borrowed by Native |
+| P4 optional supplier/vehicle suggestions | Native field adapter + existing Core contract | Optional rental detail adoption | Minimal Pickup/Return consumer already working | Add explicit typed optional detail projection; keep pickup/return independent |
+| P5 operator/service/check-in suggestions | Import/Transport owning port + Native | Structured service/admission-field adoption | Legal subtype/endpoints/name/schedule consumer, rejects unsupported field keys | Preserve structured identities in formal port; never concatenate into Notes |
+| P6 admission/ticket suggestions | Import/Activity/Ticket owning port + Native | Structured ticket/admission adoption | Name/Venue/Schedule consumer preserves current admission details | Formal field-specific evidence/identity projection; no invented Ticket IDs |
+| Multi-object document save | Import + Native | Saving several stays from one scan | Per-candidate independent selections; explicit Apply to current draft only | Separate object selection/save contract; never silently write other candidates |
+
+Normal product Scan remains absent. DEV-only previews and headless tests do not prove real OCR/DeepSeek or Hosted E2E. See `docs/ops/native-independent-sprint-20261101/FIELD_ADAPTERS.md`.

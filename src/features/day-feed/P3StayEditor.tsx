@@ -164,7 +164,10 @@ export function P3StayEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
-  syntheticScan?: (binding: StaySuggestionBinding) => SyntheticStayResult;
+  syntheticScan?: (
+    binding: StaySuggestionBinding,
+    signal: AbortSignal,
+  ) => SyntheticStayResult | Promise<SyntheticStayResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
@@ -183,19 +186,24 @@ export function P3StayEditor({
   const [fields, setFields] = useState<ManualStayFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
   );
+  const scanSourceScope = useRef(
+    opened ? JSON.stringify([tripId, itemId ?? null, generation]) : null,
+  );
   const fieldsRef = useRef(fields);
   useLayoutEffect(() => {
-    scanContext.current = source
-      ? {
-          formId: formId.current,
-          tripId,
-          itemId: source.draft.itemId,
-          generation,
-          revision: formRevision.current,
-          mode: source.draft.mode,
-        }
-      : null;
-  }, [source, tripId, generation]);
+    scanContext.current =
+      source &&
+      scanSourceScope.current === JSON.stringify([tripId, itemId ?? null, generation])
+        ? {
+            formId: formId.current,
+            tripId,
+            itemId: source.draft.itemId,
+            generation,
+            revision: formRevision.current,
+            mode: source.draft.mode,
+          }
+        : null;
+  }, [source, tripId, itemId, generation]);
   const locationInputRevision = useRef(0);
   const selectedPlaceDraft = useRef<P3PlaceSelectionDraft | null>(null);
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
@@ -244,6 +252,7 @@ export function P3StayEditor({
           if (!alive.current || generation !== getAccountGeneration()) return;
           const value = structuredClone(draft.fields);
           if (!itemId && initialDate) value.startDate = initialDate;
+          scanSourceScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
           setSource({ repository, draft });
           formRevision.current++;
           fieldsRef.current = value;
@@ -452,7 +461,8 @@ export function P3StayEditor({
                       }
                       fields={() => fieldsRef.current}
                       onApply={(next) => {
-                        change(next);
+                        const { location, ...rest } = next;
+                        change(location === fieldsRef.current?.location ? rest : next);
                         setNameQuery(null);
                       }}
                     />

@@ -21,6 +21,12 @@ export default function DayFeedLabRoute() {
       require("@/features/day-feed-lab/FlightFidelityPreview") as typeof import("@/features/day-feed-lab/FlightFidelityPreview");
     return <FlightFidelityPreview />;
   }
+  if (["p2-scan", "p4-scan", "p5-scan", "p6-scan"].includes(fidelity ?? "")) {
+    const { FormFieldScanQa } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("@/features/day-feed-lab/FormFieldScanQa") as typeof import("@/features/day-feed-lab/FormFieldScanQa");
+    return <FormFieldScanQa />;
+  }
   if (fidelity === "p3-scan") {
     const { P3FormScanQa } =
       // eslint-disable-next-line @typescript-eslint/no-require-imports

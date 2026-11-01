@@ -948,9 +948,71 @@ it("Cancel invalidates retained Apply callbacks without touching the draft", asy
   node("formAutofill.keep").onPress();
   render(p);
   const apply = node("ui.apply").onPress;
-  node("common.cancel").onPress();
+  state.nodes
+    .filter((entry) => entry.label === "common.cancel")
+    .at(-1)!
+    .onPress();
   render(p);
   apply();
   render(p);
   expect(node("tripCreate.stayName").value).toBe("");
 });
+
+it.each(["Cancel", "Draft", "Account", "Trip"] as const)(
+  "ignores a late synthetic result after %s changes",
+  async (change) => {
+    let finish!: (result: import("./p3FormSuggestions").SyntheticStayResult) => void;
+    let requested!: import("./p3FormSuggestions").StaySuggestionBinding;
+    let signal!: AbortSignal;
+    const p = {
+      ...props(),
+      syntheticScan: (
+        binding: import("./p3FormSuggestions").StaySuggestionBinding,
+        abort: AbortSignal,
+      ) => {
+        requested = binding;
+        signal = abort;
+        return new Promise<import("./p3FormSuggestions").SyntheticStayResult>(
+          (resolve) => {
+            finish = resolve;
+          },
+        );
+      },
+    };
+    const repo = {
+      createDraft: vi.fn(async () => ({
+        mode: "CREATE",
+        itemId: "stay",
+        fields: fields(),
+        participantOptions: [],
+      })),
+      save: vi.fn(),
+    };
+    await open(p, repo);
+    void node("formAutofill.scan").onPress();
+    render(p);
+    if (change === "Cancel")
+      state.nodes
+        .filter((entry) => entry.label === "common.cancel")
+        .at(-1)!
+        .onPress();
+    if (change === "Draft") node("tripCreate.stayName").onChangeText("My input");
+    if (change === "Account") state.generation++;
+    if (change === "Trip") p.tripId = "other-trip";
+    render(p);
+    finish({
+      kind: "SYNTHETIC_STAY_SUGGESTIONS",
+      binding: requested,
+      candidates: [{ id: "one", fields: { title: "Late hotel" } }],
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+    render(p);
+    expect(node("formAutofill.keep")).toBeUndefined();
+    expect(node("tripCreate.stayName").value).toBe(change === "Draft" ? "My input" : "");
+    expect(repo.save).not.toHaveBeenCalled();
+    if (change === "Cancel") {
+      expect(signal.aborted).toBe(true);
+      expect(p.onClose).not.toHaveBeenCalled();
+    }
+  },
+);

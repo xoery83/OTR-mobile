@@ -21,6 +21,7 @@ vi.mock("react", async (original) => ({
   useEffect: (callback: () => void | (() => void)) => {
     if (state.mount) state.effects.push(callback);
   },
+  useLayoutEffect: (callback: () => void) => callback(),
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.hooks))
@@ -41,7 +42,10 @@ vi.mock("react", async (original) => ({
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
 }));
-vi.mock("@/data/repositories/manualTransportRepository", () => ({
+vi.mock("@/data/repositories/manualTransportRepository", async () => ({
+  ...(await vi.importActual<
+    typeof import("@/data/repositories/manualTransportRepository")
+  >("@/data/repositories/manualTransportRepository")),
   createDefaultManualTransportRepository: () => state.repository(),
 }));
 vi.mock("./PlanParticipantsField", () => ({
@@ -395,3 +399,59 @@ it("keeps place search actor-bound and stale results cannot overwrite the form",
   render(p);
   expect(node("tripCreate.departurePlace").value).toBe("Updated station");
 });
+
+vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+
+it.each(["CREATE", "EDIT"] as const)(
+  "synthetic transport Create changes endpoints only after Apply, then normal Save (%s)",
+  async (mode) => {
+    const draft = {
+      mode,
+      itemId: "transport",
+      fields: {
+        ...fields(),
+        title: "Train",
+        departureDate: "2026-11-04",
+        departureLocation: "Old station",
+      },
+      participantOptions: [],
+    };
+    const repo = {
+      createDraft: vi.fn(async () => draft),
+      read: vi.fn(async () => draft),
+      save: vi.fn(async () => ({ itemId: "transport" })),
+    };
+    const p = {
+      ...props(),
+      itemId: mode === "EDIT" ? "transport" : undefined,
+      syntheticScan: (binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+        kind: "SYNTHETIC_FORM_SUGGESTIONS" as const,
+        family: "P5" as const,
+        binding,
+        candidates: [
+          {
+            id: "one",
+            targetItemId: "transport",
+            fields: { departureLocation: "New station" },
+          },
+        ],
+      }),
+    };
+    await open(p, repo);
+    node("formAutofill.scan").onPress();
+    render(p);
+    node("formAutofill.keep").onPress();
+    render(p);
+    expect(node("tripCreate.departurePlace").value).toBe("Old station");
+    node("ui.apply").onPress();
+    render(p);
+    expect(node("tripCreate.departurePlace").value).toBe("New station");
+    expect(repo.save).not.toHaveBeenCalled();
+    node("ui.save").onPress();
+    await Promise.resolve();
+    expect(repo.save).toHaveBeenCalledWith(
+      draft,
+      expect.objectContaining({ departureLocation: "New station", description: null }),
+    );
+  },
+);
