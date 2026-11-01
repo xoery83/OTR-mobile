@@ -77,7 +77,13 @@ C3 raw Source interpreter fixedc0bd82c6, Root independent50tests PASS and handed
 Reuses Capture submission/recovery and existing Universal consumer/transport;
 independent AccountRequestContext, live Form getter and frozen material intent.
 Same Task/UNKNOWN reads never become paid replay. Native owns stable perForm factory
-and field-review/manual-save integration. No actual runtime mount or scope renewal.
+and field-review/manual-save integration. Default composition fixed8782a722 reuses
+the extracted Capture dependency getter, adopted-Account reader, normal transport
+and owning Source/Task preparation. Existing continuous flag closed means zero DB
+initialization; TXT and single enabled PDF only, PNG rejected without original
+Review/consent. Current invocation signal is factory-local, not frozen on first
+attempt. Root independent11tests PASS, types/lint PASS; handed Native for its
+three owning caller injection points. No actual runtime mount or scope renewal.
 
 Core/Auth B1 seam fixedbace5af8: existing transaction/actor locks observe explicit
 actorAccountId/tripId/actorPersonId/coreEpoch/coreAccessRevision only. NOT_A_PRIVATE_JOIN_LEASE;
