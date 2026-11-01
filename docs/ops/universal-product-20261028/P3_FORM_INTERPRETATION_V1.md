@@ -178,3 +178,44 @@ tests demonstrate raw selection → durable accepted Capture → existing consum
 ambiguous preparation and default-closed capability behavior. They are not real
 Source/Provider authorization, DEV PASS or consumer E2E. The expired November 1
 scope is never revived; Native's live source port remains unmounted.
+
+## Default composition candidate — still unmounted
+
+`createDefaultUniversalP3SourceInterpreter()` composes the reviewed raw factory
+with existing `requireAdoptedUserId`, Universal transport and Source preparation.
+The shared `getDefaultCaptureSubmissionDependencies()` preserves the existing
+submission repository, native URI reader, Clipboard validation, UUID and clock;
+the original default session consumes that getter with its original optional
+Context and lineage arguments. No second intake implementation is added.
+
+Factory construction requires the existing API origin and
+`EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED=true`; a closed continuous setting
+rejects before dependency loading or database IO. Construction does not read a
+Session or establish Source/Provider authority. The raw interpreter still captures
+the trusted normal Account at invocation.
+
+This candidate accepts FILES/TXT-only selections or exactly one FILES/PDF when
+the existing `EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED` is true. Canonical byte and
+Source verification remain with their existing owners; MIME metadata alone is
+not proof. Mixed PDF/TXT, images and other formats are outside this composition.
+PNG is rejected before intake regardless of the existing PNG flag, since this
+Form path has no original Photo Review/consent handoff. No PNG profile or
+preparation callback is supplied.
+
+Each Form factory keeps its own current invocation transport/check. Every raw
+invocation's `createTransport` supplies the current signal and current fence;
+Source preparation and Task Prepare use that same invocation. Retry does not
+reuse the first aborted signal, and another factory cannot replace the transport.
+The reviewed raw factory coalesces concurrent calls before transport construction.
+
+The existing `prepareDefaultUniversalCaptureSources` owns Source lifecycle and
+receives the existing Task Prepare callback. The Backend's current scope remains
+authoritative; the November 1 capability is not renewed or replaced. No default
+caller, Native mount, new environment flag, SQL permission or Provider budget is
+added. A normal configuration still has `sourceScan` undefined until the owning
+Native integration deliberately installs this candidate under a lawful scope.
+
+Local validation: new default composition plus existing default Capture suites,
+11 tests PASS; typecheck and scoped lint. These are mocked dependency/wiring
+checks, separate from the earlier real local SQLite/raw-chain tests, and do not
+claim an actual Source/Provider call, DEV PASS or mounted consumer E2E.
