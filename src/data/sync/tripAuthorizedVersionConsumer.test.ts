@@ -17,6 +17,7 @@ import {
   now,
 } from "../repositories/__fixtures__/captureBatchAssessment";
 import { ApiClientError } from "../api/client";
+import { createCoreV2Transport } from "../api/tripCoreV2Transport";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripAuthorizedVersionConsumer } from "./tripAuthorizedVersionConsumer";
 import { acceptedVisibleVersion } from "./tripVisibleVersionRead";
@@ -298,3 +299,64 @@ it("two equal version GETs cannot certify a different full Collection token", as
   expect(f.authorizedVersion).toHaveBeenCalledTimes(2);
   expect(f.collection).toHaveBeenCalledTimes(3);
 });
+
+it.each([
+  "CORE_READ_UNAVAILABLE",
+  "CORE_EXECUTION_UNAVAILABLE",
+  "CORE_CAPABILITY_CLOSED",
+])(
+  "real version HTTP503 %s falls back through the existing authorized collection",
+  async (code) => {
+    const f = await setup();
+    const fetch = vi.fn(async () => Response.json({ error: { code } }, { status: 503 }));
+    const transport = createCoreV2Transport(
+      f.f.getAccount,
+      sha256,
+      { baseUrl: "https://local.invalid", fetchImplementation: fetch },
+      async () => ({ userId: f.accountId, token: "synthetic-normal" }),
+    );
+    const consumer = createTripAuthorizedVersionConsumer({
+      account: f.f.getAccount,
+      transport,
+      hash: sha256,
+    });
+    cleanups.push(consumer.dispose);
+    const pull = () =>
+      refreshCoreDownstream(f.core, f.context, { collection: f.collection }, consumer);
+    await pull();
+    await pull();
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(f.collection).toHaveBeenCalledTimes(2);
+    expect(
+      (await f.core.acceptedSnapshot(f.context))?.graph.itinerary_events[0].title,
+    ).toBe("Original stay");
+  },
+);
+it.each([
+  [403, "TRIP_READ_FORBIDDEN"],
+  [404, "NOT_VISIBLE"],
+] as const)(
+  "real version HTTP%i denial does not fall back to collection",
+  async (status, code) => {
+    const f = await setup();
+    const fetch = vi.fn(async () => Response.json({ error: { code } }, { status }));
+    const transport = createCoreV2Transport(
+      f.f.getAccount,
+      sha256,
+      { baseUrl: "https://local.invalid", fetchImplementation: fetch },
+      async () => ({ userId: f.accountId, token: "synthetic-normal" }),
+    );
+    const consumer = createTripAuthorizedVersionConsumer({
+      account: f.f.getAccount,
+      transport,
+      hash: sha256,
+    });
+    cleanups.push(consumer.dispose);
+    const pull = () =>
+      refreshCoreDownstream(f.core, f.context, { collection: f.collection }, consumer);
+    await pull();
+    await expect(pull()).rejects.toMatchObject({ kind: "http", status });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(f.collection).toHaveBeenCalledOnce();
+  },
+);

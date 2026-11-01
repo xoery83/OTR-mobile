@@ -272,6 +272,21 @@ export function createApiClient(options: ApiClientOptions = {}) {
           ].includes(error.data.error.code)
         )
           diagnosticHttpCode = error.data.error.code;
+        // Formal version outages may fall back to the existing authorized Reader only.
+        const versionCode =
+          error.success &&
+          method === "GET" &&
+          /^\/v2\/trips\/[0-9a-f-]{36}\/core\/authorized-version$/.test(
+            path.split("?")[0],
+          ) &&
+          response.status === 503 &&
+          [
+            "CORE_READ_UNAVAILABLE",
+            "CORE_EXECUTION_UNAVAILABLE",
+            "CORE_CAPABILITY_CLOSED",
+          ].includes(error.data.error.code)
+            ? error.data.error.code
+            : undefined;
         const code =
           error.success &&
           [
@@ -292,7 +307,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
             "TASK_NOT_FOUND",
           ].includes(error.data.error.code)
             ? error.data.error.code
-            : undefined;
+            : versionCode;
         throw new ApiClientError(
           "OTR API read is unavailable.",
           "http",
