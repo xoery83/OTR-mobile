@@ -1,0 +1,16 @@
+{
+  "queue": [
+    {
+      "status": "RETRYABLE",
+      "code": "UNIVERSAL_PROVIDER_ACQUIRE_FAILED",
+      "category": "UNKNOWN",
+      "queueAttempts": 1,
+      "at": "2026-11-01T03:02:28.162Z"
+    }
+  ],
+  "retainedResponse": {
+    "expectedRawMetadataExists": false
+  },
+  "rawMessagesExposed": false,
+  "databaseMutated": false
+}

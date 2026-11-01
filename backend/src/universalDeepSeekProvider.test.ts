@@ -196,3 +196,75 @@ it("distinguishes custody retention failure without pretending settlement or sen
   expect(x.send).toHaveBeenCalledOnce();
   expect(x.custody.settle).not.toHaveBeenCalled();
 });
+
+it("diagnoses an empty-message acquire aggregate without exposing details or sending", async () => {
+  const x = provider();
+  const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  const failure = new AggregateError([
+    Object.assign(new Error("fixture-secret and private image detail"), {
+      code: "ECONNREFUSED",
+    }),
+  ]);
+  x.custody.acquire.mockRejectedValueOnce(failure);
+  try {
+    await expect(x.instance.interpret(input)).rejects.toMatchObject({
+      code: "UNIVERSAL_PROVIDER_ACQUIRE_FAILED",
+      cause: failure,
+    });
+    expect(log).toHaveBeenCalledWith(JSON.stringify({
+      event: "universal_provider_phase_failed",
+      phase: "ACQUIRE",
+      boundary: "CUSTODY",
+      kind: "AGGREGATE",
+      code: "ECONNREFUSED",
+    }));
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/fixture-secret|private image/);
+    expect(x.send).not.toHaveBeenCalled();
+    expect(x.custody.settle).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it("preserves the owning acquire failure if diagnostics throw", async () => {
+  const x = provider();
+  const log = vi.spyOn(console, "info").mockImplementation(() => { throw Error("logger"); });
+  const failure = Object.assign(new Error("private detail"), { code: "private-code" });
+  x.custody.acquire.mockRejectedValueOnce(failure);
+  try {
+    await expect(x.instance.interpret(input)).rejects.toMatchObject({
+      code: "UNIVERSAL_PROVIDER_ACQUIRE_FAILED", cause: failure,
+    });
+    expect(x.send).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
+
+
+it("redacts unknown codes and omits acquire boundaries after send", async () => {
+  const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  try {
+    const acquire = provider();
+    acquire.custody.acquire.mockRejectedValueOnce(
+      Object.assign(new Error("private detail"), { code: "private-code" }),
+    );
+    await expect(acquire.instance.interpret(input)).rejects.toMatchObject({
+      code: "UNIVERSAL_PROVIDER_ACQUIRE_FAILED",
+    });
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({
+      boundary: "CUSTODY", code: "UNCLASSIFIED",
+    });
+    const send = provider();
+    send.send.mockRejectedValueOnce(new Error("private detail"));
+    await expect(send.instance.interpret(input)).rejects.toMatchObject({
+      code: "UNIVERSAL_PROVIDER_SEND_FAILED",
+    });
+    expect(JSON.parse(log.mock.calls[1][0])).toEqual({
+      event: "universal_provider_phase_failed", phase: "SEND", kind: "OTHER", code: "UNCLASSIFIED",
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/private/);
+  } finally {
+    log.mockRestore();
+  }
+});

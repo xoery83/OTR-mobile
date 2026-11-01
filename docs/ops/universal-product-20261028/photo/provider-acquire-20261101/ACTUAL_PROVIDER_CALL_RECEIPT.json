@@ -1,0 +1,33 @@
+[
+  {
+    "admitted_at": "2026-11-01 03:01:33.578989+00",
+    "attempt_id": "803f2a52-42d4-8857-8a9e-c691da2bf1b3",
+    "call_id": "32b7fe02-9c6f-88a9-b400-446a4491b8a9",
+    "capability": "EXTRACT",
+    "dispatch_marked_at": "2026-11-01 03:01:38.386064+00",
+    "dispatch_state": "MAY_HAVE_STARTED",
+    "execution_certainty": "RUNNING",
+    "model_id": "deepseek-flash",
+    "model_version": "DeepSeek-V4.1-Flash",
+    "provider_id": "DeepSeek",
+    "safe_reason": null,
+    "task_class": "UNIVERSAL_IMPORT_V1",
+    "task_id": "ea78041f-f90f-836e-b205-14f1647ea2af",
+    "terminal_observed_at": null,
+    "usage": [
+      {
+        "costNanos": null,
+        "costQuality": "UNKNOWN",
+        "currency": "USD",
+        "imageUnits": null,
+        "inputTokens": null,
+        "kind": "START",
+        "outcome": null,
+        "outputTokens": null,
+        "receivedAt": "2026-11-01T03:00:33.825+00:00",
+        "status": "STARTED",
+        "totalTokens": null
+      }
+    ]
+  }
+]

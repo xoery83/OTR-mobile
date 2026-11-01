@@ -1,42 +1,44 @@
 # Current Import Photo checkpoint — 1 November 2026
 
-Photo Golden Slice PARTIAL, not Vision/Save PASS. Approvedbc37 helper67145 EXEC→postgres
-installedCLOSED; bodya294/Owner/OID unchanged, full rolegraph+schemaACL restored.
-Owner approved existing agent-device Runner. AD5/App126.9/SQLite76 normal UI and semantic
-controls work; CUA coordinate fault persists. Cold relaunch→My Trips→Recent submissions
-restored SAME Batchf1533073-0cd5-4514-824f-03f779a852b7, original42630B/SHA078de830,
-RELEVANT and explicit AI choice. Input cold recovery PASS, not Photo Save recovery.
+Golden Slice BLOCKED, not Vision/Save PASS. Normal authorized agent-device Runner
+resumed SAME Batch f1533073 / Source c9fe6fd2 on AD5 App126.9/SQLite76. Original
+42630B PNG SHA078de830 retained; current Capture2 explicit AI consent retained.
+ACQUIRE/PREPARE/UPLOAD/VERIFY are FINAL/APPLIED. Verify4f84eb80 succeeded on same
+Source without SQL change; historical REGISTER503 root cause remains unproven.
+Input cold recovery to My Trips/Recent submissions previously passed; this is not
+Photo Save cold recovery.
 
-Actual same-Batch Source c9fe6fd2-3713-4e37-9e72-ede6db7b093d accepted normally.
-ACQUIRE0bc4/PREPAREc253/UPLOADd779 are FINAL/APPLIED. Upload attemptd928 generation1
-TERMINAL/PARSE_PASS, no termination outstanding. Capture binding advanced revision;
-normal local OCR recheck and explicit ChooseAI performed on current pin before resume.
-First actual newFAIL02:09:42Z: VERIFY_REPRESENTATION broker REGISTER→503,
-UNCLASSIFIED/OTHER/no sqlState. At02:10:41 no Verify row/Attempt observed; SQL cause is
-NOT proven. Existing logs also mask Auth/connection/driver failures; do not change SQL
-qualification on speculation. Current focused code adds static broker boundary/compiled
-line diagnostics and extends existing fixed HTTP error classifier; no authority changes.
+Task ea78041f-f90f-836e-b205-14f1647ea2af / attempt803f2a52 / call32b7fe02
+reached durable START and dispatch. Actual03:02:28Z failure:
+UNIVERSAL_PROVIDER_ACQUIRE_FAILED before Provider SEND phase. Owning queue has
+zero-length error message, so underlying connection/Auth/scope cause is NOT proven.
+No retained Provider response found. Ledger MAY_HAVE_STARTED/RUNNING; tokens/cost
+UNKNOWN, no END. Deadline03:09:08.339Z expired. Do not reset/replay/refund or replace
+objects automatically. No actual Vision response, Results, Candidate or Save.
+All earlier expired tasks, UNKNOWNs, originals and receipts remain intact.
 
-Window0d874 started02:04:23Z and proactively CLOSED after failure: Sourcebefore/afterCLOSED,
-workerinactive/EMPTY, runtime43b2/1068 unchanged, both timersstopped independently verified.
-Fresh independent CLOSED timer drillPASS. All matching Photo paid ledger0/modelAttempts0;
-no new model Task, old13792 PENDING/expired unchanged. Do not create another Batch or reset.
-Resume SAME f153/c9fe/current operation after lookup; original unused Vision1 only.
-Hard expiry2026-11-01T08:48:56Z unchanged. Retain every original/operation/receipt.
+Window63779abf proactively CLOSED: independent Source before/afterCLOSED,
+workerinactive/EMPTY_VERIFIED, timersstopped. Activity panel dismissed normally to
+My Trips. Host/config/SQL resources returned to Auth for separately approved window;
+no shared-state writes while Auth owns them. Hard expiry2026-11-01T08:48:56Z unchanged.
 
-Auth cc269 window completely CLOSED and resources returned; Root Photo execution also
-released Host/config/SQL while doing local diagnostics. Auth BUILD_ONLY candidate3116
-contains reviewed MCP runtimeb807 (no live switch/authority); incorporate only through
-fresh serialized compatible software CAS. Current actual healthy default43b2/1068,
-Capture40dad/MCPad47/browser6040/server7826, Envb12/Hostd501/Mount14ee; Source helper ACL
-approved/retained. No concurrent Host/protected SQL writes during another lane's window.
+Healthy default at release: container6af45e99 / image d3a5ece7, Capture44fbd00e /
+MCPb8075ca9 / browser6040fcfd / server782692ba. Env b12fdecb / Host d5011846 /
+Mount14ee2d11 / Configbcfdf367; all23config/mountfiles retained. Auth620d restricted
+v3 parser included through exact three-file code composition; no capability activated.
+Approved PNG helper67145/bodya294/Owner/ACL retained; Provider directEXEC stillfalse.
+No Schema/RLS/GRANT/Role/Secret/budget change. Prior43b2 rollback retained stopped.
 
-Evidence: photo/proof-exec-approved-20261101/{AD5_RUNNER_READY,INPUT_COLD_RECOVERY}.json;
-photo/verify-register-20261101/{VERIFY_REGISTER_FAILURE,WINDOW_CLOSED,WATCHDOG_CLOSED_DRILL}.json.
-Private current operators /private/tmp/otr-photo-same-batch-runner-20261101 and
-four immediate actual function definitions /private/tmp/otr-photo-verify-register-20261101.
-Next: fixed narrow diagnostic diff/review→ordinary compatible closed deployment→same Source
-Verify/Task/Vision→normal Review/Plan/Admission/Core→readback/Day/cold/idempotence→safe close.
+Focused follow-up only: Provider fixed phase/boundary/type/code diagnostics, including
+empty-message AggregateError, no messages/IDs/payload/credentials logged; logger
+failure preserves owning error and no retry. Underlying historical cause is still
+unknown. Continue zero-send local tests and necessary exact recovery authorization;
+no speculative protected SQL repair and no automatic replacement paid call.
+
+Evidence: photo/provider-acquire-20261101/{EXECUTION,ACTUAL_PROVIDER_CALL_RECEIPT,
+PROVIDER_FAILURE_AND_RETENTION,WINDOW_CLOSED,DEPLOYED_DIAGNOSTIC_READBACK}.json.
+Private execution /private/tmp/otr-photo-verify-diag-v3-20261101; build/deploy
+/private/tmp/otr-photo-broker-diagnostic-4fa46caf. No credentials in public evidence.
 
 ## Earlier checkpoints (historical)
 

@@ -133,9 +133,10 @@ export function createUniversalDeepSeekProvider(deps: {
   return {
     mode: "HOSTED",
     async interpret(input: Input) {
-      let phase = "ACQUIRE";
+      let phase = "ACQUIRE", boundary = "REQUEST";
       try {
         const request = buildUniversalDeepSeekRequest(input);
+        boundary = "CUSTODY";
         const credential = await deps.custody.acquire({
           actorId: input.actorId,
           accountId: input.accountId,
@@ -151,6 +152,7 @@ export function createUniversalDeepSeekProvider(deps: {
           !/^[\x21-\x7e]{1,8192}$/.test(credential.secret)
         )
           throw new Error("UNIVERSAL_PROVIDER_CREDENTIAL_INVALID");
+        boundary = "CURRENT";
         await credential.assertCurrent();
         const signal = AbortSignal.timeout(60000);
         phase = "SEND";
@@ -224,6 +226,29 @@ export function createUniversalDeepSeekProvider(deps: {
             : failure.name === "AbortError"
               ? "ABORTED"
               : "FAILED";
+        try {
+          const errors = error instanceof AggregateError ? error.errors.slice(0, 4) : [error];
+          const codes = errors.map((value: unknown) =>
+            value instanceof Error && "code" in value ? value.code : undefined,
+          );
+          console.info(JSON.stringify({
+            event: "universal_provider_phase_failed",
+            phase,
+            boundary: phase === "ACQUIRE" ? boundary : undefined,
+            kind: error instanceof AggregateError ? "AGGREGATE"
+              : error instanceof TypeError ? "TYPE"
+                : error instanceof SyntaxError ? "SYNTAX"
+                  : kind === "TIMEOUT" || kind === "ABORTED" ? kind : "OTHER",
+            code: ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENETUNREACH",
+              "EHOSTUNREACH", "EAI_AGAIN", "ENOTFOUND", "42501", "53300", "57014",
+              "57P01", "08006", "INVALID_SESSION", "CORE_CONNECTION_TIMEOUT",
+              "UNIVERSAL_AUTH_REJECTED", "UNIVERSAL_PROVIDER_SCOPE_CHANGED",
+              "UNIVERSAL_DURABLE_START_UNAVAILABLE", "UNIVERSAL_PROVIDER_CLOSED",
+            ].find((code) => codes.includes(code) || failure.message === code) ?? "UNCLASSIFIED",
+          }));
+        } catch {
+          // Diagnostics must preserve the owning failure and never trigger another send.
+        }
         // Queue diagnostics retain a fixed stage code, never provider messages or material.
         throw Object.assign(new Error(failure.message, { cause: error }), {
           name: failure.name,
