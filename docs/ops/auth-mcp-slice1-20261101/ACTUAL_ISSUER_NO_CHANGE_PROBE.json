@@ -1,0 +1,14 @@
+{
+  "status": "ACTUAL_ISSUER_CLOSE_NO_CHANGE_PROBE_PASS",
+  "observedAt": "2026-11-01T09:36:29.120267+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "queries": 2,
+  "allReadOnly": true,
+  "sqlWrites": 0,
+  "qaWindowStarted": false,
+  "actualWindowId": "16d1bdd76f10420a8b0ddceb6be9fadf",
+  "actualT": null,
+  "actualD": null,
+  "probePlanIsNotAnActivationPlan": true,
+  "issuerCloseResult": "ISSUER_DENY_ALL_VERIFIED"
+}
