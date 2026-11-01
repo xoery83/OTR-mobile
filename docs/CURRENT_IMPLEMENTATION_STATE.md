@@ -9,6 +9,10 @@ and close preserve them; explicit Cancel only discards unsubmitted drafts. Exist
 real SQLite queue reopen test proves one Person/one Queue after lost local reply.
 Mocked Native storage/form tests are not real Keychain/cold-App or server evidence.
 Normal adopted Add caller and closed parent reader still need unique Writers.
+Synthetic Invite/Claim four-choice screen/model and existing AddTravelerSheet reuse
+now pass11 focused/independent tests; no accepted/connected authority state exists.
+Device-local Appearance store passes7 independent mocked tests including rapid
+write failure and stale hydration. Settings/startup remain unmounted.
 Photo retains shared DEV/SQL/Provider/AD5. No Host/config/device changes this sprint.
 Track actual ports and later acceptance in AUTH_CLIENT_INTEGRATION_GAPS.md.
 

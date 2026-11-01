@@ -1,0 +1,27 @@
+{
+  "status": "NO_BLOCKER_SYNTHETIC_CLAIM_PREVIEW_ONLY",
+  "reviewer": "auth_phase1_review",
+  "independentTests": "11/11 PASS after focused repair",
+  "scopeLimits": [
+    "Only SYNTHETIC fixtures, no HTTP/Token/repository or permission mutation present.",
+    "No real invite acceptance, claim/account connection, expiry or Native E2E qualification."
+  ],
+  "peopleFeedbackFollowup": "Current object-key feedback type and t(draftError.key) preserve prior local draft review semantics.",
+  "resolvedFindings": [
+    {
+      "priority": "P2",
+      "file": "src/features/people/inviteClaimPreview.ts",
+      "symbol": "submit/getSnapshot",
+      "problem": "respond receives the internal mutable attempt. A responder can replace op/action/person/context and return the same altered fields, bypassing comparison against the original command. getSnapshot also exposes mutable internal invitation/context.",
+      "isolatedReproduction": "Exact transpiled source with mocked UUID/generation dependencies: CONFIRM responder changes person/action/op and returns SIMULATED; observed final SIMULATED instead of UNKNOWN. No actual native/network APIs.",
+      "minimalRepair": "Preserve immutable internal binding; pass a deep command copy to respond. Freeze snapshots deeply or otherwise prevent consumers mutating internal context. Add mutation/UNKNOWN retry regressions."
+    }
+  ],
+  "findings": [],
+  "resolution": "Responder receives strict parsed deep copy while internal attempt remains private. Every published snapshot freezes state, invitation, context, people array and Person objects. Mutation-negative regression passes, preserving original binding and UNKNOWN same-ID recovery.",
+  "sourceSHA256": {
+    "src/features/people/inviteClaimPreview.ts": "cc141e74be8b5900e38b89280978d0e7c1977548deff04415cce7c085d0303ad",
+    "src/features/people/InviteClaimPreviewScreen.tsx": "9c86d6ca691b9b8037237ee56fe779f75c027ae0d3ba77467f4c1d04d912f64b",
+    "src/features/people/inviteClaimPreview.test.ts": "ebe5ac2f68dd3d76885c59c33d6d080cfbb8ece66c72e14bbb98a7343ee57e74"
+  }
+}
