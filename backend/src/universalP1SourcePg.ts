@@ -564,6 +564,13 @@ export async function publishUniversalP1Candidate(
               "CORE_CONNECTION_TIMEOUT",
               "CORE_CONNECTION_RETIRED",
               "PNG_PROOF_ACCESS_DENIED",
+              "P1_SOURCE_CAPABILITY_CLOSED",
+              "P1_SOURCE_REVIEW_SCOPE_CLOSED",
+              "CONTINUOUS_SOURCE_CANDIDATE_REQUIRED",
+              "P1_SOURCE_SCOPE_MISMATCH",
+              "P1_SOURCE_NOT_VISIBLE",
+              "AUTH_ADOPTION_MUTATION_ALREADY_FINALIZED",
+              "CORE_V2_CAPABILITY_CLOSED",
             ].find((value) => value === message) ?? "UNCLASSIFIED",
           sqlState:
             typeof sqlState === "string" && /^[0-9A-Z]{5}$/.test(sqlState)
