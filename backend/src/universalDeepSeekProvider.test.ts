@@ -268,3 +268,29 @@ it("redacts unknown codes and omits acquire boundaries after send", async () => 
     log.mockRestore();
   }
 });
+
+it("retains a fixed owning reason and compiled throw site without logging the error", async () => {
+  const x = provider();
+  const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  const failure = new Error("INTELLIGENCE_STALE_SOURCE");
+  failure.stack = "Error: private payload /app/server-capture.mjs:1:2\n    at read (/app/server-capture.mjs:12345:67)\n    at private-user-path:9:8";
+  x.custody.acquire.mockRejectedValueOnce(failure);
+  try {
+    await expect(x.instance.interpret(input)).rejects.toMatchObject({ code: "UNIVERSAL_PROVIDER_ACQUIRE_FAILED", cause: failure });
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ code: "INTELLIGENCE_STALE_SOURCE", backendFrame: { line: 12345, column: 67 } });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/private|payload/);
+    expect(x.send).not.toHaveBeenCalled();
+  } finally { log.mockRestore(); }
+});
+
+it("classifies schema failures without recording issue values", async () => {
+  const x = provider();
+  const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  x.custody.acquire.mockRejectedValueOnce(Object.assign(new Error("private issue value"), { name: "ZodError" }));
+  try {
+    await expect(x.instance.interpret(input)).rejects.toMatchObject({ code: "UNIVERSAL_PROVIDER_ACQUIRE_FAILED" });
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ kind: "SCHEMA" });
+    expect(JSON.stringify(log.mock.calls)).not.toContain("private issue");
+    expect(x.send).not.toHaveBeenCalled();
+  } finally { log.mockRestore(); }
+});

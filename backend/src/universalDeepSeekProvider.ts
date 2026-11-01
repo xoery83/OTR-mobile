@@ -146,6 +146,7 @@ export function createUniversalDeepSeekProvider(deps: {
           requestSha256: request.requestSha256,
         });
         if (!credential) throw new Error("UNIVERSAL_PROVIDER_CLOSED");
+        boundary = "CREDENTIAL";
         if (
           !credential.secret ||
           credential.secret.trim() !== credential.secret ||
@@ -231,11 +232,18 @@ export function createUniversalDeepSeekProvider(deps: {
           const codes = errors.map((value: unknown) =>
             value instanceof Error && "code" in value ? value.code : undefined,
           );
+          const origin = error && typeof error === "object" ? error as { name?: unknown; stack?: unknown } : undefined;
+          const frame = typeof origin?.stack === "string"
+            ? origin.stack.split("\n").slice(1).map((line) =>
+                /^\s+at .*\/app\/server-capture\.mjs:(\d{1,7}):(\d{1,7})\)?$/.exec(line),
+              ).find(Boolean) : undefined;
           console.info(JSON.stringify({
             event: "universal_provider_phase_failed",
             phase,
             boundary: phase === "ACQUIRE" ? boundary : undefined,
-            kind: error instanceof AggregateError ? "AGGREGATE"
+            backendFrame: frame ? { line: Number(frame[1]), column: Number(frame[2]) } : undefined,
+            kind: origin?.name === "ZodError" || origin?.name === "$ZodError" ? "SCHEMA"
+              : error instanceof AggregateError ? "AGGREGATE"
               : error instanceof TypeError ? "TYPE"
                 : error instanceof SyntaxError ? "SYNTAX"
                   : kind === "TIMEOUT" || kind === "ABORTED" ? kind : "OTHER",
@@ -244,6 +252,16 @@ export function createUniversalDeepSeekProvider(deps: {
               "57P01", "08006", "INVALID_SESSION", "CORE_CONNECTION_TIMEOUT",
               "UNIVERSAL_AUTH_REJECTED", "UNIVERSAL_PROVIDER_SCOPE_CHANGED",
               "UNIVERSAL_DURABLE_START_UNAVAILABLE", "UNIVERSAL_PROVIDER_CLOSED",
+              "UNIVERSAL_PROVIDER_CREDENTIAL_INVALID", "CORE_CONNECTION_BUSY",
+              "CORE_CONNECTION_RETIRED", "CORE_TRANSACTION_UNFINISHED",
+              "UNIVERSAL_SOURCE_CHANGED", "UNIVERSAL_SOURCE_MATERIAL_INVALID",
+              "UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED", "UNIVERSAL_TASK_SCOPE_CHANGED",
+              "PDF_CUSTODY_ORIGINAL_UNCONFIRMED", "INTELLIGENCE_STALE_SOURCE",
+              "INTELLIGENCE_STALE_CAPTURE", "INTELLIGENCE_DIGEST",
+              "CP14_CORRELATION_MISMATCH", "CP14_CONFIG_CORRELATION", "CP14_CALL_MISMATCH",
+              "UNIVERSAL_TASK_RECEIPT_BINDING_INVALID", "UNIVERSAL_MODEL_TASK_BINDING",
+              "UNIVERSAL_MODEL_TASK_BINDING_INVALID", "MODEL_TASK_READ_FORBIDDEN",
+              "UNIVERSAL_SOURCE_CLOSED", "UNIVERSAL_TASK_DEADLINE", "28P01", "28000", "P0001",
             ].find((code) => codes.includes(code) || failure.message === code) ?? "UNCLASSIFIED",
           }));
         } catch {
