@@ -1,0 +1,13 @@
+{
+  "status": "NO_BLOCKER_CLOSED_EXPIRY_SDK_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "pins": "34/34 match fixed Git5382 and actual inputs; onlyserver.ts changed,33 preserve",
+  "sourcePinsSHA256": "dca1d33935f789d2e96f082765adeb396d7ce42ebb1e0bc03150a177bc957b1f",
+  "sdkInputSHA256": "1d33eddf5a4a88cf43557ef0aeb68d7d5d84322226bd2ae704fd76f6d161ff2b",
+  "runtimeSHA256": "b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820",
+  "independentCompiledSmokeChecks": 7,
+  "sourceAuthorizationBoundary": "Only initially authorized APPLY expiry recovery from caller input. Initial/PREVIEW/status deny unchanged. No expired business data.",
+  "limits": "Not PG/Hosted OAuth/consumer Edit recovery or live deployment",
+  "providerCalls": 0,
+  "newGateOrScopeActivated": false
+}

@@ -1,0 +1,10 @@
+{
+  "commit": "a22fd026",
+  "rawEvidencePath": "docs/mcp/acceptance/",
+  "files": {
+    "CLAUDE_WRITE_NATIVE_COLD_DETAIL_STATE.json": "7c2a1f1c69f454acde3a473fde1c059d257f193ce22947d93fe24a837293a4ff",
+    "CLAUDE_WRITE_NATIVE_EDIT_PASSIVE_UI.json": "99207df5310b9874f99d154431355d3b35edbc06a32fe1062e9fd933a28734a6"
+  },
+  "copiedExactRecoverySummarySHA256": "e8590bc9dc07bfe89a8246d3938a7f31e7ba5a1ec37e04d14b1626357a6e0e6b",
+  "meaning": "QA exact11f normal relaunch/cold path and dates/Only me; not Edit PASS"
+}

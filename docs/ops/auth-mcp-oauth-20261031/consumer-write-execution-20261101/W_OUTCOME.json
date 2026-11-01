@@ -11,7 +11,8 @@
     "revision": 1,
     "receiptSha256": "004447ddf4ba493eff472d25fd3d04529b16edf6083a485886d74566e04948be",
     "independentBackendAndSqlAndConsumer": "PASS",
-    "nativeAutoArrival": "bounded01:42:32.995819 absent\u219201:42:36.484111 first display; coupled with independently exact11f receipt"
+    "nativeAutoArrival": "bounded01:42:32.995819 absent\u219201:42:36.484111 first display; coupled with independently exact11f receipt",
+    "nativeColdRestore": "PASS per a22fd026 raw exact11f/Trip route/Dec12\u201313/Onlyme normal relaunch, independent Native evidence review NO_BLOCKER"
   },
   "edit": {
     "operation": "bb0cb010-0cb4-432b-8995-670aaec95b3d",

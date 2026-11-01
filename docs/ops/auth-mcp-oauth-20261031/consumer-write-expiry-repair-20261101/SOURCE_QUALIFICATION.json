@@ -1,0 +1,13 @@
+{
+  "status": "CLOSED_SDK_IMAGE_PREPARED_INDEPENDENT_BUILD_REVIEW_PASS_NOT_DEPLOYED",
+  "sourceCommit": "5382e3c8c3a9635844d60d26283512ffa7943d3a",
+  "onlyChangedBuildInput": [
+    "mcp/server.ts"
+  ],
+  "otherPinnedInputsUnchanged": 33,
+  "sourcePinsSHA256": "dca1d33935f789d2e96f082765adeb396d7ce42ebb1e0bc03150a177bc957b1f",
+  "next": "Root independent image readback and serial default-closed service CAS",
+  "hostOrAuthorityChanges": 0,
+  "compiledNodePublicDenialSmokeChecks": 7,
+  "independentReview": "NO_BLOCKER_CLOSED_EXPIRY_SDK_CANDIDATE"
+}

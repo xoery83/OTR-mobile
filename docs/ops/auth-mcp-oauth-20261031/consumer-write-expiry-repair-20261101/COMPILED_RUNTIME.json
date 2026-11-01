@@ -1,0 +1,11 @@
+{
+  "status": "COMPILED_ONLY_NOT_DEPLOYED",
+  "mcpReviewedSource": "5382e3c8",
+  "mcpSourceCommit": "5382e3c8c3a9635844d60d26283512ffa7943d3a",
+  "sourcePinsSHA256": "dca1d33935f789d2e96f082765adeb396d7ce42ebb1e0bc03150a177bc957b1f",
+  "sdkInputSHA256": "1d33eddf5a4a88cf43557ef0aeb68d7d5d84322226bd2ae704fd76f6d161ff2b",
+  "runtimeSHA256": "b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820",
+  "esbuildVersion": "0.28.2",
+  "mobileDependencyChanges": false,
+  "providerCalls": 0
+}
