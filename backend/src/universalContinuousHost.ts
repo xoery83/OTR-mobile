@@ -78,6 +78,7 @@ export function createUniversalContinuousHost(deps: {
   enabled?: boolean;
   context: AccountRequestContext;
   assertCurrentAuth(): Promise<void>;
+  assertNewExecutionAllowed?(): void;
   db: ReturnType<typeof universalTaskDatabase>;
   catalogConnection: PublicationCatalogConnection;
   bootstrapLedger(): Promise<unknown>;
@@ -107,6 +108,10 @@ export function createUniversalContinuousHost(deps: {
   const current = async () => {
     if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     await deps.assertCurrentAuth();
+  };
+  const executionCurrent = async () => {
+    await current();
+    await deps.assertNewExecutionAllowed?.();
   };
   const source = createUniversalBatchSource({
     enabled: deps.enabled,
@@ -275,11 +280,11 @@ export function createUniversalContinuousHost(deps: {
     async prepare(raw: unknown) {
       let phase = "AUTH";
       try {
-        await current();
+        await executionCurrent();
         phase = "PROVIDER_SELECTION";
         const selection = await deps.selectProvider();
         phase = "AUTH";
-        await current();
+        await executionCurrent();
         phase = "SOURCE_BINDING";
         const binding = await source.prepare(actor, trip, raw);
         phase = "TASK_READ";
@@ -329,7 +334,7 @@ export function createUniversalContinuousHost(deps: {
         phase = "LEDGER";
         const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());
         phase = "AUTH";
-        await current();
+        await executionCurrent();
         phase = "TASK_BOOTSTRAP";
         await bootstrapUniversalTask({
           db: deps.db,
@@ -340,6 +345,7 @@ export function createUniversalContinuousHost(deps: {
           getAccountId: async () => actor,
           assertCurrent() {
             if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
+            deps.assertNewExecutionAllowed?.();
           },
           claimQueue: false,
         });
@@ -442,7 +448,11 @@ export function createUniversalContinuousHost(deps: {
         tripId: trip,
         batchId: batch,
         taskId: state.task.task_id,
-        activity: projectUniversalTaskActivity(state.task, state.attempts.length, observedAt),
+        activity: projectUniversalTaskActivity(
+          state.task,
+          state.attempts.length,
+          observedAt,
+        ),
       };
     },
     readResult,
@@ -556,6 +566,7 @@ export function createUniversalContinuousHost(deps: {
             });
           return await readResult(batch, taskId);
         }
+        await executionCurrent();
         phase = "MANIFEST_READ";
         const manifest = await readManifest(state.task);
         phase = "PROVIDER_SELECTION";
@@ -612,7 +623,7 @@ export function createUniversalContinuousHost(deps: {
             priceScheduleId: draft.selection.priceScheduleId,
             providerRequestSha256: request.requestSha256,
           },
-          assertCurrentAuth: current,
+          assertCurrentAuth: executionCurrent,
         });
         if (!runtime.universalImportPort) throw Error("UNIVERSAL_PROVIDER_CLOSED");
         phase = "PROVIDER_EXECUTION";

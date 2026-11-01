@@ -219,3 +219,37 @@ Local validation: new default composition plus existing default Capture suites,
 11 tests PASS; typecheck and scoped lint. These are mocked dependency/wiring
 checks, separate from the earlier real local SQLite/raw-chain tests, and do not
 claim an actual Source/Provider call, DEV PASS or mounted consumer E2E.
+
+## Optional Backend QA execution fence candidate
+
+Continuous ConfigV2 may carry `qaExecutionFence: { version: 1, accountId, tripId }`,
+with strict UUID fields. Absence leaves existing software behavior unchanged.
+The field is loaded through the existing private file/mode/hash boundary and
+only adds a denial condition; it is not an Auth principal, Source grant, Provider
+scope, budget or business permission. No new ENV flag is introduced.
+
+Runtime binds the optional fence to its verified Account/Trip and supplies an
+execution-only check. Host Prepare checks it before Provider selection and
+Source/Task writes. Queued Wake checks it only on the new-attempt path; the new
+Provider runtime composes that check with current Auth, reaching credential and
+SEND preflight through the existing lifecycle. A pending Task created before
+the fence cannot bypass it through Wake or HTTP resume.
+
+GET Context/Results, published reads and existing-attempt settled/UNKNOWN recovery
+keep the original Auth/Source checks without the new-execution fence. Existing
+attempt recovery does not send a Provider request, create a replacement attempt
+or forgive an UNKNOWN hold. The global Auth/current guard is not changed.
+
+Software defaults do not enable this fence or renew the expired Provider scope.
+A future lawful renewal gate must pin the actual QA Account
+`f4b059c5-8241-4ffb-aa15-37fa25474543`, Trip
+`825f79b2-4a9d-4535-a62e-43000ca50c4a`, presence of the fence and exact actual
+configuration hash. Unknown/mismatched configuration must not activate.
+Shared code accepts UUIDs rather than hardcoding QA identities. All existing
+Auth, Source, SQL expiry, Provider selection, price and budget checks still apply.
+This candidate makes no live configuration, Host, SQL, Role or permission change.
+
+Scoped validation: Config/Runtime/Host three suites, 41 tests PASS; full typecheck
+and formatting PASS; scoped lint has zero errors (four pre-existing duplicate
+import warnings). Host fixtures use local SQLite and synthetic Provider outcomes,
+including retained UNKNOWN, with no external SEND. This is LOCAL_PASS only.

@@ -47,6 +47,7 @@ export async function loadDevUniversalContinuousRuntime(
 ) {
   const config = await readUniversalContinuousConfig(env);
   if (!config) return undefined;
+  const executionFence = config.qaExecutionFence;
   let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
   let png: ReturnType<typeof createSourcePngRuntimePorts> | undefined;
   let closed = false,
@@ -192,6 +193,14 @@ export async function loadDevUniversalContinuousRuntime(
         db,
         catalogConnection,
         assertCurrentAuth,
+        assertNewExecutionAllowed: () => {
+          guard();
+          if (
+            executionFence &&
+            (executionFence.accountId !== actor || executionFence.tripId !== trip)
+          )
+            throw Error("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
+        },
         publishedSource,
         bootstrapLedger: () => gateway.bootstrapLedger(actor, trip),
         async selectProvider() {

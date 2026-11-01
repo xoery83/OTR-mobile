@@ -32,8 +32,9 @@ const hostCases = [
   { expired: false, pdf: false },
   { expired: true, pdf: false },
   { expired: false, pdf: true },
+  { expired: false, pdf: false, unknown: true },
 ];
-it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
+it.each(hostCases)("fences recovery %j", async ({ expired, pdf, unknown }) => {
   const sql = new DatabaseSync(":memory:"),
     db = initializeUniversalTaskDatabase(sql);
   try {
@@ -219,13 +220,15 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
       retainRaw: vi.fn(),
       readRaw: vi.fn(),
     };
-    const sends = vi.fn(async () => ({
-      output: { v: 2, items: [], bookings: [], tickets: [], links: [], issues: [] },
-      providerReceipt: {
-        outcome: "SETTLED" as const,
-        requestId: "synthetic-no-network",
-      },
-    }));
+    const sends = vi.fn(async () => {
+      return {
+        output: { v: 2, items: [], bookings: [], tickets: [], links: [], issues: [] },
+        providerReceipt: {
+          outcome: unknown ? ("UNKNOWN" as const) : ("SETTLED" as const),
+          requestId: "synthetic-no-network",
+        },
+      };
+    });
     fakeRuntime.mockImplementation(async (p: UniversalRuntimeProvisioning) => ({
       status: "CONFIGURED_NOT_ACTIVATED",
       universalImportPort: createUniversalPort(
@@ -397,7 +400,24 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     expect(
       sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
     ).toEqual({ n: 0 });
-    const host = createUniversalContinuousHost(hostDeps);
+    const fenceFailure = Error("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
+    let executionAllowed = true;
+    const executionFence = vi.fn(() => {
+      if (!executionAllowed) throw fenceFailure;
+    });
+    const deniedFence = vi.fn(() => {
+      throw fenceFailure;
+    });
+    const deniedSelection = vi.fn(hostDeps.selectProvider);
+    const deniedHost = createUniversalContinuousHost({
+      ...hostDeps,
+      selectProvider: deniedSelection,
+      assertNewExecutionAllowed: deniedFence,
+    });
+    const host = createUniversalContinuousHost({
+      ...hostDeps,
+      assertNewExecutionAllowed: executionFence,
+    });
     const prepare = {
       batchId: batch,
       submissionSha256: binding.submissionSha256,
@@ -412,6 +432,37 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
           : pin,
       ],
     };
+    const sourceCallsBeforeDeniedPrepare = sourceQuery.mock.calls.length;
+    await expect(deniedHost.prepare(prepare)).rejects.toBe(fenceFailure);
+    expect(deniedSelection).not.toHaveBeenCalled();
+    expect(sourceQuery).toHaveBeenCalledTimes(sourceCallsBeforeDeniedPrepare);
+    expect(
+      sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
+    ).toEqual({ n: 0 });
+    const changesDuringSelection = createUniversalContinuousHost({
+      ...hostDeps,
+      assertNewExecutionAllowed: executionFence,
+      selectProvider: async () => {
+        executionAllowed = false;
+        return hostDeps.selectProvider();
+      },
+    });
+    await expect(changesDuringSelection.prepare(prepare)).rejects.toBe(fenceFailure);
+    expect(sourceQuery).toHaveBeenCalledTimes(sourceCallsBeforeDeniedPrepare);
+    executionAllowed = true;
+    const changesBeforeBootstrap = createUniversalContinuousHost({
+      ...hostDeps,
+      assertNewExecutionAllowed: executionFence,
+      bootstrapLedger: async () => {
+        executionAllowed = false;
+        return hostDeps.bootstrapLedger();
+      },
+    });
+    await expect(changesBeforeBootstrap.prepare(prepare)).rejects.toBe(fenceFailure);
+    expect(
+      sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
+    ).toEqual({ n: 0 });
+    executionAllowed = true;
     expect((await host.prepare(prepare)).status).toBe("QUEUED");
     expect((await host.prepare(prepare)).status).toBe("EXISTING");
     expect((await host.readContext(batch)).activity).toMatchObject({
@@ -474,8 +525,9 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
         },
       });
       // Do not turn an earlier snapshot terminal using a clock after async Auth.
-      expect((await crossesDeadlineDuringAuth.readContext(batch)).activity?.state)
-        .toBe("PENDING");
+      expect((await crossesDeadlineDuringAuth.readContext(batch)).activity?.state).toBe(
+        "PENDING",
+      );
       vi.setSystemTime(Date.parse(now) + 600001);
     }
     if (expired) expect((await host.readContext(batch)).activity?.state).toBe("FAILED");
@@ -542,6 +594,20 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
       expect(sends).not.toHaveBeenCalled();
       return;
     }
+
+    const runtimesBeforeDeniedWake = fakeRuntime.mock.calls.length;
+    await expect(
+      deniedHost.executeQueued(batch, taskId, {
+        operationId: first.id,
+        owner: first.claimOwner!,
+        baseVersion: first.baseVersion!,
+      }),
+    ).rejects.toBe(fenceFailure);
+    expect(fakeRuntime).toHaveBeenCalledTimes(runtimesBeforeDeniedWake);
+    expect(sends).not.toHaveBeenCalled();
+    expect(
+      sql.prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts").get(),
+    ).toEqual({ n: 0 });
 
     const selectionFailure = Error("PRIVATE_SOURCE_ORIGINAL_NAME");
     for (const loggerThrows of [false, true]) {
@@ -611,11 +677,65 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
         log.mockRestore();
       }
     }
+    fakeRuntime.mockImplementationOnce(async (runtime: UniversalRuntimeProvisioning) => {
+      executionAllowed = false;
+      await runtime.assertCurrentAuth();
+      throw Error("FENCE_MUST_REJECT_BEFORE_SEND");
+    });
+    await expect(
+      host.executeQueued(batch, taskId, {
+        operationId: first.id,
+        owner: first.claimOwner!,
+        baseVersion: first.baseVersion!,
+      }),
+    ).rejects.toBe(fenceFailure);
+    expect(sends).not.toHaveBeenCalled();
+    expect(
+      sql.prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts").get(),
+    ).toEqual({ n: 0 });
+    executionAllowed = true;
     const result = await host.executeQueued(batch, taskId, {
       operationId: first.id,
       owner: first.claimOwner!,
       baseVersion: first.baseVersion!,
     });
+    if (unknown) {
+      expect(result?.providerOutcome).toBe("UNKNOWN");
+      expect(result?.status).toBe("EXECUTION_OUTCOME_UNKNOWN");
+      expect(
+        sql.prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts").get(),
+      ).toEqual({ n: 1 });
+      await queue.settle(context, first);
+      await db.runAsync(
+        "UPDATE sync_operations SET status='RETRYABLE',claim_owner=NULL WHERE id=?",
+        first.id,
+      );
+      const repeated = await operation();
+      expect(await queue.claim(context, repeated, "unknown-recovery")).toBe(true);
+      const recoveringPrice = vi.fn(async () => {
+        throw Error("LOCAL_EXISTING_ATTEMPT_RECOVERY");
+      });
+      const recoveringHost = createUniversalContinuousHost({
+        ...hostDeps,
+        assertNewExecutionAllowed: deniedFence,
+        readAdmittedPrice: recoveringPrice,
+      });
+      const deniedChecks = deniedFence.mock.calls.length;
+      await expect(
+        recoveringHost.executeQueued(batch, taskId, {
+          operationId: repeated.id,
+          owner: repeated.claimOwner!,
+          baseVersion: repeated.baseVersion!,
+        }),
+      ).rejects.toThrow("LOCAL_EXISTING_ATTEMPT_RECOVERY");
+      expect(recoveringPrice).toHaveBeenCalledOnce();
+      expect(deniedFence).toHaveBeenCalledTimes(deniedChecks);
+      expect(sends).toHaveBeenCalledTimes(1);
+      expect(
+        sql.prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts").get(),
+      ).toEqual({ n: 1 });
+      return;
+    }
     expect(result?.providerOutcome).toBe("SETTLED");
     await queue.settle(context, first);
     expect(sends).toHaveBeenCalledTimes(1);
@@ -627,6 +747,11 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     const published = await host.readPublished(batch, taskId);
     expect(published?.result).toEqual(result);
     expect(published?.resultSha256).toMatch(/^[a-f0-9]{64}$/);
+    const deniedChecksBeforeRead = deniedFence.mock.calls.length;
+    expect((await deniedHost.readContext(batch)).activity?.state).toBe("RESULTS_READY");
+    expect(await deniedHost.readResult(batch, taskId)).toEqual(result);
+    expect((await deniedHost.readPublished(batch, taskId))?.result).toEqual(result);
+    expect(deniedFence).toHaveBeenCalledTimes(deniedChecksBeforeRead);
     // Injected binding failure proves same-ID recovery, not the real cold 503 cause.
     const bindingRead = sourceQuery.getMockImplementation()!;
     let failBinding = true;
@@ -762,7 +887,7 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     const repeated = await operation();
     expect(await queue.claim(context, repeated, "fixture-replay")).toBe(true);
     expect(
-      await host.executeQueued(batch, taskId, {
+      await deniedHost.executeQueued(batch, taskId, {
         operationId: repeated.id,
         owner: repeated.claimOwner!,
         baseVersion: repeated.baseVersion!,

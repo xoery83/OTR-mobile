@@ -12,6 +12,13 @@ export const universalContinuousConfigSchema = z.strictObject({
   project: z.literal("tuqigdxrvrerfewsxqgm"),
   enabled: z.literal(true),
   integrationId: z.string().regex(/^[A-Za-z0-9._:-]{1,128}$/),
+  qaExecutionFence: z
+    .strictObject({
+      version: z.literal(1),
+      accountId: z.uuid(),
+      tripId: z.uuid(),
+    })
+    .optional(),
   directory: universalFiniteConfigSchema.shape.directory,
   identity: universalFiniteConfigSchema.shape.identity,
   taskDatabase: universalFiniteConfigSchema.shape.taskDatabase,
@@ -19,8 +26,8 @@ export const universalContinuousConfigSchema = z.strictObject({
   taskPg: universalFiniteConfigSchema.shape.taskPg,
   catalogPg: universalFiniteConfigSchema.shape.catalogPg,
 });
-// Same reviewed private mount with an explicit version. No App bearer, fixed Actor,
-// Batch, Run, Task, finite window or environment-only permission is accepted.
+// Same private mount/hash. Optional execution restriction never supplies Auth,
+// Source/Provider permission, a caller bearer or a Batch/Run/Task identity.
 export async function readUniversalContinuousConfig(
   env: Record<string, string | undefined>,
 ) {

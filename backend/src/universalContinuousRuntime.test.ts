@@ -174,6 +174,80 @@ it("overlapping activity and batch reads do not share an occupied Source connect
   }
 });
 
+it.each(["absent", "matching", "other-account", "other-trip"])(
+  "execution-only configuration fence: %s",
+  async (mode) => {
+    const actor = randomUUID(),
+      trip = randomUUID();
+    f.auth.mockResolvedValue({ id: actor });
+    f.config.mockResolvedValue({
+      taskDatabase: "/unused-test.db",
+      ...(mode === "absent"
+        ? {}
+        : {
+            qaExecutionFence: {
+              version: 1,
+              accountId: mode === "other-account" ? randomUUID() : actor,
+              tripId: mode === "other-trip" ? randomUUID() : trip,
+            },
+          }),
+    });
+    const prepare = vi.fn();
+    const result = { localFixture: "existing result" };
+    f.host.mockImplementation(({ assertCurrentAuth, assertNewExecutionAllowed }) => ({
+      prepare: async () => {
+        await assertCurrentAuth();
+        assertNewExecutionAllowed();
+        prepare();
+        return result;
+      },
+      readContext: async () => {
+        await assertCurrentAuth();
+        return result;
+      },
+      readResult: async () => {
+        await assertCurrentAuth();
+        return result;
+      },
+      readPublished: async () => {
+        await assertCurrentAuth();
+        return result;
+      },
+    }));
+    const runtime = await loadDevUniversalContinuousRuntime({
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    });
+    try {
+      const ports = await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer LOCAL_FIXTURE_ONLY" },
+        }),
+        actor,
+        trip,
+      );
+      if (mode === "other-account" || mode === "other-trip") {
+        await expect(ports.prepare(trip, { tripId: trip })).rejects.toThrow(
+          "UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED",
+        );
+        expect(prepare).not.toHaveBeenCalled();
+      } else expect(await ports.prepare(trip, { tripId: trip })).toEqual(result);
+      expect(await ports.universalImportPort.readContext(actor, "batch", trip)).toEqual(
+        result,
+      );
+      expect(await ports.universalImportPort.read(actor, "batch", "task")).toEqual(
+        result,
+      );
+      expect(await ports.readPublished("batch", "task")).toEqual(result);
+      f.canRead.mockResolvedValue(false);
+      await expect(
+        ports.universalImportPort.readContext(actor, "batch", trip),
+      ).rejects.toThrow("UNIVERSAL_AUTH_REJECTED");
+    } finally {
+      await runtime?.close();
+    }
+  },
+);
+
 it.each([
   ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED", false],
   ["UNIVERSAL_SOURCE_CLOSED", "UNIVERSAL_SOURCE_CLOSED", false],
