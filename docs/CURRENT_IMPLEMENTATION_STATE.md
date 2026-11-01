@@ -144,8 +144,12 @@ independent NO_BLOCKER. Root combined this with its two Source diagnostics,
 348 other Capture inputs preserved: actual6af4/d3a5/Capture44fbd/MCPb807,
 independent defaultclosed02:44:24Z health200/protected401/23files/Env/Host/mount
 PASS. Root Source work may continue. New original-bb recovery Gate deac94b1 is
-frozen and independently reviewed,35file/54criticalinput hashes match, but NOT
-approved or activated. It allows no new Item/op, reuses accepted stateless Preview
+frozen and independently reviewed,35file/54criticalinput hashes match. Owner
+directly approved one exact window and one original-ID recovery APPLY (call7c9a852).
+New window462db18f remains NOT_STARTED, no first-intention/OTP/Host/config/SQL
+change; Root Source63779 is active, so actual closure/release/freshCAS is required.
+Local existing-item/original-receipt controls and close wrappers passed independent
+Review; no old window reused. It allows no new Item/op, reuses accepted stateless Preview
 only with fresh unchanged state/Consent/Confirm and at most one explicitly newly
 approved samebb APPLY; existing APPLIED receipt skipsPOST. See
 consumer-write-edit-recovery-qa-20261101/. No old window reuse or business retry. See consumer-write-candidate/.

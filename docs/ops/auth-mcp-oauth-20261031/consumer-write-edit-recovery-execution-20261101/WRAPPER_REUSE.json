@@ -1,0 +1,74 @@
+{
+  "status": "LOCAL_REUSED_SOURCES_NOT_EXECUTED",
+  "files": {
+    "stage.py": {
+      "sourceSHA256": "315d34728695febeb38e861b51484cd9246db3fb18f10ac9286b2596ac4ddb1b",
+      "candidateSHA256": "3e7dcc717c788acdabf373007cc8af53faa448ad1284a471f986c368d37c36c4"
+    },
+    "fresh-host.py": {
+      "sourceSHA256": "8440684ed3bf2e8b8165fbe9ff29d629355e150d0a03ae8a7f6238fa60811c4f",
+      "candidateSHA256": "cd8399c9e2f960f8eedf9d64c902a28dafed6db7392c66ed0826d9b32522c86e"
+    },
+    "prepare-host.py": {
+      "sourceSHA256": "488457934c1eacc96bf60370f08b3fd8fedbf6c28aac199f04fee54f8403ffad",
+      "candidateSHA256": "74038c7444e48f65dbba267505c89ad3270fc75b3f83608b67f4e19cbbd86e25"
+    },
+    "sign.py": {
+      "sourceSHA256": "361324ae2f45daffee794e973c59f338cd19cc3a04bdf61dba5ddf090dc8abb5",
+      "candidateSHA256": "e9018ba972935c3d58c320edf02a43c58fec6247bc794a5d3cce4d291a946cc2"
+    },
+    "deploy.py": {
+      "sourceSHA256": "58f8efdc759d8b5f31ecaa2b2a86262e328075b8fbf4323fb0d19bf3f099de7f",
+      "candidateSHA256": "033c612b7a0b1200a9925223b5257bb778b2efca9bbf8b04ff24d49cd4cd8120"
+    },
+    "binding.py": {
+      "sourceSHA256": "9a7ef7001134f0fe132e3e53e2dca488a2dec41f154a42ef056c1e14de2cea5e",
+      "candidateSHA256": "2bb3dd278de62acf9fc2295860180c5bfedbc7c51e949e09efa7bc62dffaaa7d"
+    },
+    "close.py": {
+      "sourceSHA256": "d0812a3e300415b8f106cb588295834f4001477cfc7f1f04644a8d20800ea41d",
+      "candidateSHA256": "e29b1700dd2bfcdd62068cc8c0f9ac7a18ca8c6d16737deb3c8f56b1f10e66ed"
+    },
+    "watch.py": {
+      "sourceSHA256": "d7d0fb7d377030c236a54fc1191f8403c90e2f0d38893d93627f013cf71ed2d5",
+      "candidateSHA256": "e5ab29dd447c4df2083e47b4cdeed70034d43245b3882372f59398537a787c09"
+    },
+    "config-step.py": {
+      "sourceSHA256": "21c1c1db282e8bba77219d5bb674f1cdde7243ab3d430f340074c00fb2d145bb",
+      "candidateSHA256": "375c8632df8418893512b5252979f101bbf08b86ed559b464ad307b5066daa88"
+    },
+    "final-readback.py": {
+      "sourceSHA256": "f6f687d935c0e5c62d81c59357f7cb191a7b9a2383cde32505c0da23425b9cda",
+      "candidateSHA256": "000ac100d45b0ef566a3a0ca6c9c01816a5d6be87683f40f6e7f2c6a2365509b"
+    },
+    "preflight.py": {
+      "sourceSHA256": "a58ab9b4b3e3eee4520356e8b2680caa271406d99bd91e18f87e53921a741bc9",
+      "candidateSHA256": "bf75eb4c26f58b70856c86ebe873bf126fd176a4898b361a931197222e8f0ad1"
+    },
+    "render.py": {
+      "sourceSHA256": "ccff3ce33c1e3e60fa6bfe52649ab785a4673fdcf042549947e739ce2c2b7772",
+      "candidateSHA256": "f28953aac645c7e19ddac19d9b8946d38b9c0748c65a342bf019b17e45ec4902"
+    },
+    "safe-logs.py": {
+      "sourceSHA256": "6e31f55483f5165921660dc288a7942c62cecc99121a7cd0ea9a9601c4218274",
+      "candidateSHA256": "6e31f55483f5165921660dc288a7942c62cecc99121a7cd0ea9a9601c4218274"
+    },
+    "launch-control.py": {
+      "sourceSHA256": "7c7c4a512e9ba4b642296fe5f6de5299acc63e817d36daf94277eaa626932290",
+      "candidateSHA256": "c0eb1e14b4a4b4f561a490880b94f2715a4dd1c475aa8004c71687e1f3e0a75b"
+    },
+    "control.mts": {
+      "sourceSHA256": "56276cd307f1a1daf301b16c397d1dcc3d0b96bd5f1a31e4647bcd40ea765161",
+      "candidateSHA256": "fe900949b56f2e8db8861f1601dbffc28efc14a97d00537009db9083fe8a6c5b"
+    }
+  },
+  "pending": "Root actual Source close/release and fresh baseline; independent wrapper review; no external execution",
+  "focusedChanges": [
+    "Normal control now checks existing exact Item/raw original receipt; eligible snapshot never means NoCommit/authority",
+    "Real owning Core receipt validation for alreadyAPPLIED plus exact domain hash",
+    "Frozen prior accepted fields/revision/date/nights compare with six pure guard selfchecks",
+    "Render onlyv3/singlebb; oldCreate notconfirmed",
+    "Budgeted safe logs before removal; never delay negative closure on log failure",
+    "First successful runtime restore receipt preserved despite later idempotent deadline close"
+  ]
+}
