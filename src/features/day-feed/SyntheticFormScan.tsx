@@ -56,10 +56,12 @@ export function SyntheticFormScan<
   apply,
   labels,
   validateResult,
+  emptyMessage,
   sourceMode = false,
 }: {
   scan?: FormScanConsumer<Result>;
   validateResult?(result: unknown): boolean;
+  emptyMessage?(result: Result): string;
   sourceMode?: boolean;
   context(): StaySuggestionBinding | null;
   fields(): Fields | null;
@@ -253,7 +255,9 @@ export function SyntheticFormScan<
         <UiText style={styles.text}>{t("formAutofill.loading")}</UiText>
       ) : null}
       {review && !review.result.candidates.length ? (
-        <UiText style={styles.text}>{t("formAutofill.empty")}</UiText>
+        <UiText style={styles.text}>
+          {emptyMessage?.(review.result) ?? t("formAutofill.empty")}
+        </UiText>
       ) : null}
       {review && review.result.candidates.length > 1 ? (
         <>

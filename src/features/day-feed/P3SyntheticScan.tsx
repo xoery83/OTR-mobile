@@ -39,6 +39,15 @@ export function P3SyntheticScan(
     <SyntheticFormScan
       {...props}
       validateResult={props.sourceMode ? isSourceStayResult : undefined}
+      emptyMessage={(result) =>
+        t(
+          result.kind === "SOURCE_STAY_SUGGESTIONS" &&
+            (result.interpretation.providerOutcome === "UNKNOWN" ||
+              result.interpretation.status === "EXECUTION_OUTCOME_UNKNOWN")
+            ? "capture.ai.task.UNKNOWN"
+            : "formAutofill.empty",
+        )
+      }
       apply={(result, ...args) =>
         result.kind === "SOURCE_STAY_SUGGESTIONS"
           ? applySourceStaySuggestions(result, ...args)

@@ -1542,6 +1542,7 @@ it("pins one Source interpreter per Form so prop refresh cannot replace UNKNOWN'
     ) => {
       const result = p3SourceInterpretationFixture(context, {});
       result.candidates = [];
+      result.status = "EXECUTION_OUTCOME_UNKNOWN";
       result.providerOutcome = "UNKNOWN";
       return result;
     },
@@ -1564,7 +1565,9 @@ it("pins one Source interpreter per Form so prop refresh cannot replace UNKNOWN'
   await scanFile(p);
   await vi.waitFor(() => expect(first).toHaveBeenCalledOnce());
   await new Promise((resolve) => setImmediate(resolve));
-  render(p);
+  const unknown = render(p);
+  expect(unknown).toContain("capture.ai.task.UNKNOWN");
+  expect(unknown).not.toContain("formAutofill.empty");
   p.sourceScan = replacement;
   render(p);
   await node("formAutofill.scan").onPress();
