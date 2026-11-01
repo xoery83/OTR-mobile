@@ -1,5 +1,7 @@
 ## Realtime-first sprint — local readiness fixed (2026-11-02)
 
+C1 follow-up receives exact Root b9e394dc two-file semantic delta: continuous context503 no longer prepares Sources; only owning404 TASK_NOT_FOUND can initial-prepare. Same retainedTask recovery and finite503 behavior preserved. Actual2case RED→59focused PASS/scopedtypes/lint; no Host/device/Provider or default-port change. Receipt `ops/native-realtime-first-20261102/C1_RECOVERY_RECEIPT.json`.
+
 Native product `c3adb21f` follows `fcfe8745`: normal private subscription seam now composes the existing Auth lease adapter only with explicit owning admission/cache-fence ports; default undefined/no Account I/O. Fixed QA script `node scripts/trip/realtime-v1-qa.mjs` joins P3 Core APPLIED→fixture hint/version→existing Pull→file SQLite, same Item rev1→2→3, Pending/Conflict/cold/reconnect/ABA/backoff protection (25 local cases). P3 UNKNOWN feedback fix c74b5056 preserves original Source request identity. Independent reviews NO_BLOCKER; scoped types/lint/UIguard PASS.
 
 Separate Core candidate `fe4f510a` reuses actual Root reader and f70d69cf pool,64 retained cases/independent review. Fresh isolated PG17 cold33.37ms, warm5.72–11.09ms; same PID, hidden private mutation leaves other Actor token unchanged, visible P3 changes it. Synthetic authority, not production RLS or Hosted 8s closure. Existing deployed authored P1/P3 projection is reused; other graphs retain full fallback. Own local container/network/tunnel released. No shared deployment/main/SQL change.

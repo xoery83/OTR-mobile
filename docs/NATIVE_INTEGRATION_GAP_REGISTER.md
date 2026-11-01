@@ -58,3 +58,5 @@ Remaining owning gaps: Auth/Core Hosted private Profile/AKA persistence and form
 No formal AI/Realtime/Enrichment interface activation occurred. V2 evidence remains under `docs/ops/native-local-hardening-v2-20261101`; Auth local device acceptance does not certify real AI, Hosted Provider or private Realtime E2E.
 
 Realtime-first receipts: `ops/native-realtime-first-20261102/`. Enrichment125e0592 normal-account guard belongs to Root shared app.ts integration, not enabled Native runtime. QA142 representative Chinese/Dark P2/P4/P5/P6 control/Cancel PASS; new closed candidate not installed; real channel/fault UI not claimed.
+
+C1 Source recovery: exact b9e394dc semantic delta received; continuous503 stays read-only, owning404-only initial prepare. 59 focused caller testsPASS; no real Source/Provider capability enabled.

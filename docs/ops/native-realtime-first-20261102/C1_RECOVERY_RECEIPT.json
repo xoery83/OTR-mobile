@@ -1,0 +1,17 @@
+{
+  "owningCandidate": "b9e394dcc1a605dbe806f5acab9301a733e19fbe",
+  "integration": "Exact two-file commit delta only; no whole-file or backend replacement",
+  "actualRed": "2continuous503 casesFAIL beforeproductpatch",
+  "green": "2suites59PASS:Universalconsumer42+P3Sourceinterpreter17",
+  "types": "scopedPASS",
+  "lint": "PASS",
+  "semantics": "Continuous503 uncertainty read-only; only exactowning404 TASK_NOT_FOUND permits initial prepare. Finite503unchanged; sameTask retained.",
+  "review": "Reuse Root owning exactpatch review; Native adds only caller regression, no new logic",
+  "hostDeviceProviderChanges": 0,
+  "evidence": {
+    "/private/tmp/otr-native-c1-context-red.log": "f72a730d4357427be1ef43322420df92b7d1058cc535d3d44d51e168ee87cf63",
+    "/private/tmp/otr-native-c1-context-green.log": "7e8dca13b2831444b5147eca9d95d2eb85bd4f40946c9851ecb72fad89f35606",
+    "/private/tmp/otr-native-c1-context-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-c1-context-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
