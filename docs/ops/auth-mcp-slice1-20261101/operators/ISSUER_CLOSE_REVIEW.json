@@ -1,0 +1,29 @@
+{
+  "status": "NO_BLOCKER_FIRST_CLAUDE_CLOSE_ONLY_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "independentTests": "3/3 fake SQL tests PASS after durable intent repair",
+  "verified": [
+    "Fixed Gate and Claude client; plan private directory, regular single-link owner0600 bounded file and external SHA check.",
+    "Re-rendered active/close bodies must match exact SHA and active MD5; only reviewed negative close SQL can dispatch. No activation, new GRANT/role or business write.",
+    "Before deadline-minus120 requires explicit CLOSE; watch is bounded by fixed policy deadline; unknown write outcome preserves intent and subsequent calls only independently read back.",
+    "No actual SQL, credentials, network or Host actions were executed."
+  ],
+  "limits": [
+    "First Claude round only; ChatGPT readiness not reviewed.",
+    "Fake transport tests do not qualify real issuer closure, actual connection or fresh live policy.",
+    "Author-reported fresh DEV baseline metadata is outside this fsync-only independent recheck; no external read or activation was performed by reviewer."
+  ],
+  "resolvedFindings": [
+    {
+      "priority": "P2",
+      "problem": "Intent file creation is exclusive but not fsynced before SQL. Crash may lose the creation and weaken the no-reapply guarantee.",
+      "repair": "Flush and fsync intent fd, then fsync parent directory before dispatch."
+    }
+  ],
+  "findings": [],
+  "resolution": "Exclusive intent JSON is flushed and file-fsynced; private parent directory is opened O_DIRECTORY|O_NOFOLLOW and fsynced before any SQL dispatch. Failure at either stage prevents dispatch. Later UNKNOWN keeps the durable intent presence and never replays.",
+  "sourceSHA256": {
+    "docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "4216e8c58d65c1ddb2a2ec418e78a82d2cadab0f9e566193ab7e47b67fdc4d40",
+    "docs/ops/auth-mcp-slice1-20261101/operators/test_issuer_close.py": "91abb55f99e384b4e5238974dbcaca7c98e0300c8fc4caee23470cdafb094a2d"
+  }
+}

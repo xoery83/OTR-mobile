@@ -7,12 +7,19 @@ SLICE1_NOTES_EDIT/client/callback/case; empty confirmations reject both SDK conf
 and bound POST. Existing v3/read remain unchanged. Default no config has no IO.
 Direct/independent32 tests, types/scoped lint PASS. All51 source pins verified;
 SDK7832ae51 and runtime19b5a0cb reproduced independently and across output paths.
-32 shared actual Photo source pins match. No deploy/config/clock activation yet.
+32 shared actual Photo source pins match. Root default-closed9fd2/ab77 deploy and
+independent readback PASS; MCP19b5, both QA keys absent, Photo configuration retained.
+No QA clock/OTP/Notes activation. Supabase console expired; GitHub login auto-review
+denied. Owner is manually restoring login and will explicitly reply when finished.
+First-Claude close-only watchdog3 mock tests/independent Review and actual Hook
+deny-all/original ACL readonly preflight PASS; runtime v4 close6 mocks/Review READY.
 Auth supplies loader+fixed QA JSON and runtime to Root actual compatible assembly;
 never its own full Capture tree. Root short CAS, Auth sole window/control operator,
 MCP consumer; actual Before/After Owner reply required before singleton approval.
 See ops/auth-mcp-slice1-20261101/{SOFTWARE_HANDOFF.json,OPERATOR_PLAN.md}.
 Client/Profile Native handoff remains separate and is not revoked by this Gate.
+Native fixedae8b796f has Auth bounded source Review NO_BLOCKER; normal iPad136
+Profile/Draft cold acceptance is executing, not yet reported PASS.
 
 # Auth → Native local integration handoff — 1 November 2026
 

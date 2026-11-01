@@ -1,0 +1,15 @@
+{
+  "status": "DEFAULT_CLOSED_DEPLOYED_CONTROL_PREPARATION_ONLY",
+  "software": "5b984996",
+  "issuerReadOnly": "PASS_DENY_ALL_ORIGINAL_ACL",
+  "firstClaudeCloseOnly": "3_FAKE_SQL_TESTS_AND_INDEPENDENT_REVIEW_PASS_NOT_STARTED",
+  "supabaseConsole": "OWNER_MANUAL_LOGIN_IN_PROGRESS_NOT_YET_CONFIRMED",
+  "qaWindowStarted": false,
+  "otpSent": false,
+  "notesConfirmed": false,
+  "nativeCandidate": "ae8b796f",
+  "nativeBoundaryReview": "NO_BLOCKER_SOURCE_ONLY_NATIVE_E2E_PENDING",
+  "observedAt": "2026-11-01T09:29:26.839026+00:00",
+  "firstClaudeWindowId": "16d1bdd76f10420a8b0ddceb6be9fadf",
+  "rootRuntimeClose": "6_MOCK_TESTS_AND_INDEPENDENT_REVIEW_READY_NOT_ARMED"
+}

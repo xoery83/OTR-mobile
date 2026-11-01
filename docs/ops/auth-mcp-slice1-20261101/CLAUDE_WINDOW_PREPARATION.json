@@ -1,0 +1,17 @@
+{
+  "status": "PREPARED_NOT_STARTED",
+  "gateSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "windowId": "16d1bdd76f10420a8b0ddceb6be9fadf",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "redirectUris": [
+    "https://claude.ai/api/mcp/auth_callback"
+  ],
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "previewDigest": "48dc6e4b7a0c632c9414978df73d38a9287f5e236a6cc4d7e6bbb6007c71a09e",
+  "startsAt": null,
+  "expiresAt": null,
+  "confirmations": [],
+  "ownerConsoleRecovery": "OWNER_HANDOFF_PENDING",
+  "otpSent": false,
+  "activation": false
+}

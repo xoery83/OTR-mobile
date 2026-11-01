@@ -1,0 +1,26 @@
+{
+  "status": "READ_ONLY_ISSUER_BASELINE_PASS_NOT_ACTIVATED",
+  "observedAt": "2026-11-01T09:16:19.596519+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "hook": {
+    "acl": [
+      {
+        "grantable": false,
+        "privilege": "EXECUTE",
+        "role": "postgres"
+      },
+      {
+        "grantable": false,
+        "privilege": "EXECUTE",
+        "role": "supabase_auth_admin"
+      }
+    ],
+    "body_md5": "b0f7eae14599bd32cb9430a59832c837",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog"
+    ],
+    "prosecdef": false
+  },
+  "newRolesOrGrants": false
+}
