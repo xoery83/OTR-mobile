@@ -68,8 +68,9 @@ not deployed; historical Results503 still has no proven root cause.
 C2 fixed6471d917: JPEG uses existing Storage producer with independent read permit,
 exact MIME/hash/scope and outage semantics; 42 targeted Storage tests PASS. Pinned
 jpeg-js0.4.4 baseline-only local decoder verifies actual pixels, strict orientation1
-and finite dimensions/memory; 9 tests PASS. No Source profile, sandbox execution,
-proof, runtime caller or paid JPEG interpretation qualified. Generated decoder
+and finite dimensions/memory; 9 tests PASS. Fixed-input IPC candidate also LOCAL_PASS: Root16combined tests, canonical finite
+envelope, readonly no-follow descriptor/size/hash/close, separate content identity.
+No Source profile, sandbox execution, proof, runtime caller or paid JPEG interpretation qualified. Generated decoder
 extraction ignored; archive/license and reproducible preparation retained.
 
 C3 raw Source interpreter fixedc0bd82c6, Root independent50tests PASS and handedNative.

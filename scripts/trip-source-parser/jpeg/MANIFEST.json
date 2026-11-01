@@ -1,14 +1,14 @@
 {
-  "status": "LOCAL_DECODER_PASS_ONLY_SOURCE_DISABLED",
+  "status": "LOCAL_DECODER_AND_IPC_PASS_ONLY_SOURCE_DISABLED",
   "rootDependenciesChanged": false,
   "pngFilesChanged": false,
   "runtimeQualified": false,
-  "command": "node --max-old-space-size=64 --test --test-concurrency=1 decoder.test.mjs",
-  "tests": 9,
+  "command": "node --max-old-space-size=64 --test --test-concurrency=1 decoder.test.mjs worker.test.mjs",
+  "tests": 16,
   "files": {
     "profile.mjs": {
-      "sha256": "6f9f78a63166e9269a82711878778f99e9d4e9e3f8eb64f2b303e0dff5d26529",
-      "bytes": 817
+      "sha256": "d3f56fc5a74d0e2b03358d6f7ecdd7de2c7948da90f9659375a72954c4d9e6c0",
+      "bytes": 1629
     },
     "jpeg-decode.mjs": {
       "sha256": "ad5e025cb6693875d14fab8d551a2066a7be13e8a1fdc8ea7aff38b4314fffd5",
@@ -19,8 +19,8 @@
       "bytes": 4817
     },
     "README.md": {
-      "sha256": "dab0029544e73f3ea44d7ab3af2f63ceb4be93b02c7cdc069043035c9b86a22f",
-      "bytes": 4646
+      "sha256": "a8f22b19192012dd7e072197eaad59c37ecd8b98646b940c9918623c9bf89f29",
+      "bytes": 6056
     },
     "vendor/jpeg-js-0.4.4.tgz": {
       "sha256": "269f988267bc71efe58baf97e8b2da064b5bbbbb8b0eab11e2149049935e1160",
@@ -41,7 +41,19 @@
     "LICENSE-APACHE-2.0.txt": {
       "sha256": "a5e9f9b1575301c7a7a03508fdaa2e05a918cc17fd21c6e898096a96d6a34f61",
       "bytes": 9142
+    },
+    "protocol.mjs": {
+      "sha256": "15dd10fee302694656f661a35cfa118f7cf2e7be2f232607c74798ceafa881db",
+      "bytes": 2650
+    },
+    "jpeg-worker.mjs": {
+      "sha256": "2f4212007d8a018f580ead2f7af52af0ac6f959969a21a56b26dc4b8661f34b2",
+      "bytes": 2457
+    },
+    "worker.test.mjs": {
+      "sha256": "494e8d727e979fba585c7751a4bd2fd74018ccd9ffdea50a4faabe0fcad745e3",
+      "bytes": 5637
     }
   },
-  "rootReview": "Strict baseline/Exif guard reviewed; tests use pinned decoder directly, never load unused encoder."
+  "rootReview": "Independent decoder review NO_BLOCKER, nine fixed-commit tests plus targeted malformed probes. Root IPC review and 16 combined tests PASS; content hash includes both shared protocol and its profile. No sandbox/runtime registration or Source proof."
 }

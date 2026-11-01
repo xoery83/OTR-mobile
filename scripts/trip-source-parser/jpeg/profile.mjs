@@ -1,6 +1,14 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 // Local-only candidate; no image, execution registry or Source authority exists.
 export const profile = Object.freeze({
   name: "JPEG_BASELINE_YCBCR8_ORIENTATION1_V1",
+  protocolVersion: 1,
+  profileVersion: 1,
+  nodeVersion: "24.22.1",
+  zlibVersion: "1.3.2.1-motley-285e94b",
+  platform: "linux",
+  arch: "x64",
   decoder: "jpeg-js",
   decoderVersion: "0.4.4",
   decoderSha256:
@@ -26,3 +34,26 @@ export const profile = Object.freeze({
   fileMiB: 8,
   outputBytes: 4096,
 });
+
+// Content identity only: not an enrolled execution fingerprint or Source receipt.
+export const sha256 = (bytes) =>
+  createHash("sha256").update(bytes).digest("hex");
+export function profileHash() {
+  return sha256(
+    JSON.stringify({
+      profile,
+      files: [
+        "profile.mjs",
+        "protocol.mjs",
+        "jpeg-decode.mjs",
+        "jpeg-worker.mjs",
+        "vendor/jpeg-js-0.4.4.tgz",
+        "../protocol.mjs",
+        "../profile.mjs",
+      ].map((name) => [
+        name,
+        sha256(readFileSync(new URL(name, import.meta.url))),
+      ]),
+    }),
+  );
+}

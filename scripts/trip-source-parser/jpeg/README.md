@@ -79,3 +79,27 @@ acquire/pin/guard/broker/facts, manifest/provider-current/run-input and Core REG
 qualification differences. These are not installed here. Normal JPEG Capture,
 Source upload, paid interpretation and Save remain disabled; no MIME wildcard or
 PNG permission is broadened by this candidate.
+
+## Local IPC candidate (not sandbox-qualified)
+
+`jpeg-worker.mjs` reuses the existing PNG canonical framing, request validation
+and finite safe codes, tightening the byte bound to 1MiB. The JPEG content hash
+is separate and includes its adapter plus shared protocol bytes. The entrypoint
+accepts no path, runtime override or profile selection. It uses only fixed
+`/input` with O_NOFOLLOW, size/hash checks and finally-close before decoding.
+The proposed Linux/x64 Node24.22.1 runtime must match exactly; no Docker image
+or registered execution fingerprint is implied.
+
+    node --max-old-space-size=64 --test --test-concurrency=1 worker.test.mjs
+
+Seven local IPC tests use real temporary FileHandles mapped only to `/input`
+through a test seam. They verify local facts and identity/closure/error handling;
+actual subprocess tests reject malformed IPC and cannot decode on this unqualified
+local runtime. This is not a container lifecycle, resource-isolation, Host callback
+or Source receipt test. Existing sandbox owner/termination lifecycle is unchanged.
+No production caller is connected; JPEG remains disabled.
+
+Existing decoder evidence (Root independent review of `6471d917`): NO_BLOCKER,
+9 focused tests PASS; 41 size/sampling/EXIF negatives rejected before decode and
+16 entropy truncations not accepted. Those checks were not rerun for this IPC
+slice and do not qualify its new entrypoint or sandbox.
