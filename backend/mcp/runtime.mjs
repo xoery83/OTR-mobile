@@ -7,7 +7,7 @@ import { createRemoteJWKSet } from "jose";
 
 // Separately bundled Node target. No SDK dependency enters the Mobile TypeScript graph.
 function createRuntime(
-  { issuer, resource, isGrantActive, bindBackend, log, confirm },
+  { issuer, resource, isGrantActive, bindBackend, log, confirm, toolProfile },
   scopes,
 ) {
   const key = createRemoteJWKSet(new URL(issuer + "/.well-known/jwks.json"), {
@@ -25,6 +25,7 @@ function createRuntime(
     authorize,
     log,
     confirm,
+    ...(toolProfile ? { toolProfile } : {}),
     oauth: protectedResourceMetadata(resource, issuer, scopes),
   });
 }

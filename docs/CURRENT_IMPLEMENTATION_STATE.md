@@ -1,3 +1,19 @@
+# Auth MCP Slice1 — default-closed software, 1 November 2026
+
+Owner Gate530937ac independently verified against direct MCP thread reply
+call386cf7ea, authorizes this bounded Auth Backend scope switch and finite QA,
+not actual Notes confirmation. Additive loader version4 selects only fixed
+SLICE1_NOTES_EDIT/client/callback/case; empty confirmations reject both SDK confirm
+and bound POST. Existing v3/read remain unchanged. Default no config has no IO.
+Direct/independent32 tests, types/scoped lint PASS. All51 source pins verified;
+SDK7832ae51 and runtime19b5a0cb reproduced independently and across output paths.
+32 shared actual Photo source pins match. No deploy/config/clock activation yet.
+Auth supplies loader+fixed QA JSON and runtime to Root actual compatible assembly;
+never its own full Capture tree. Root short CAS, Auth sole window/control operator,
+MCP consumer; actual Before/After Owner reply required before singleton approval.
+See ops/auth-mcp-slice1-20261101/{SOFTWARE_HANDOFF.json,OPERATOR_PLAN.md}.
+Client/Profile Native handoff remains separate and is not revoked by this Gate.
+
 # Auth → Native local integration handoff — 1 November 2026
 
 Owner explicitly approved client-only integration; Native retains final Writer of

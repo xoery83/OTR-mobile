@@ -15,6 +15,8 @@ import { isSupabaseDevPublicKey } from "@/data/auth/devSupabasePublicKey";
 import type { DevBackendGateway } from "./app";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
 import { mcpIngressBodyLimit } from "./mcpIngress";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import slice1Cases from "../mcp/slice1-qa-cases.json";
 
 const qaAccount = "1f3d7935-1bdc-4952-8d7f-0f72077368c1";
 const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1";
@@ -53,6 +55,47 @@ const writeConfigSchema = z.strictObject({
     }),
   ]),
 });
+const slice1Clients = [
+  {
+    clientId: "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+    callback: "https://claude.ai/api/mcp/auth_callback",
+    qa: slice1Cases.cases[0],
+  },
+  {
+    clientId: "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    callback: "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+    qa: slice1Cases.cases[1],
+  },
+] as const;
+const slice1WriteConfigSchema = z
+  .strictObject({
+    version: z.literal(4),
+    toolProfile: z.literal("SLICE1_NOTES_EDIT"),
+    clientId: z.enum([slice1Clients[0].clientId, slice1Clients[1].clientId]),
+    redirectUris: z.tuple([z.string()]),
+    expiresAt: configSchema.shape.expiresAt,
+    businessAccess: z.literal("READ_WRITE"),
+    consentNotBefore: z.number().int().positive(),
+    confirmations: z
+      .array(
+        z.strictObject({
+          operationId: z.uuid(),
+          previewDigest: z.string().regex(/^[a-f0-9]{64}$/),
+        }),
+      )
+      .max(1),
+  })
+  .refine((config) => {
+    const selected = slice1Clients.find((client) => client.clientId === config.clientId)!;
+    return (
+      config.redirectUris[0] === selected.callback &&
+      config.confirmations.every(
+        (entry) =>
+          entry.operationId === selected.qa.command.operationId &&
+          entry.previewDigest === selected.qa.identity.preview_digest,
+      )
+    );
+  });
 type Confirmation = Readonly<{
   accountId: string;
   clientId: string;
@@ -68,6 +111,7 @@ const confirmationSchema = z.object({
   operationIds: z.tuple([z.uuid()]),
 });
 type RuntimeOptions = {
+  toolProfile?: "SLICE1_NOTES_EDIT";
   issuer: string;
   resource: string;
   isGrantActive: ReturnType<typeof createSupabaseDevMcpGrantVerifier>;
@@ -92,6 +136,8 @@ const requestLogSchema = z.object({
   durationMs: z.number().min(0).max(120000),
   tool: z
     .enum([
+      "get_otr_operating_guide",
+      "get_trip_item_edit_base",
       "list_trips",
       "get_trip",
       "list_trip_items",
@@ -143,8 +189,12 @@ export async function loadMcpQaRuntime(
   const config =
     writeRaw === undefined
       ? configSchema.parse(JSON.parse(readRaw!))
-      : writeConfigSchema.parse(JSON.parse(writeRaw));
-  const write = config.version === 3 ? config : undefined;
+      : z.union([writeConfigSchema, slice1WriteConfigSchema]).parse(JSON.parse(writeRaw));
+  const write = config.version === 3 || config.version === 4 ? config : undefined;
+  const slice1 =
+    write?.version === 4
+      ? slice1Clients.find((client) => client.clientId === write.clientId)!
+      : undefined;
   const publicKey = env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "";
   if (
     env.OTR_DEV_SUPABASE_URL !== issuer.replace(/\/auth\/v1$/, "") ||
@@ -181,19 +231,54 @@ export async function loadMcpQaRuntime(
   };
   const readBinding = createMcpAccountReadBinding(ports);
   const options: RuntimeOptions = {
+    ...(slice1 ? { toolProfile: "SLICE1_NOTES_EDIT" as const } : {}),
     issuer,
     resource,
     bindBackend: write
       ? async (grant, signal, evidence) => {
           if (!evidence) throw Error("MCP_WRITE_EVIDENCE_CLOSED");
           const accessToken = evidence.accessToken;
-          return createMcpAccountWriteBinding({
+          const bound = await createMcpAccountWriteBinding({
             ...ports,
             isWriteGrantCurrent: (current, checkSignal) =>
               current.accountId === qaAccount && Date.now() < config.expiresAt
                 ? active(current, checkSignal, { accessToken })
                 : Promise.resolve(false),
           })(grant, signal);
+          if (!slice1) return bound;
+          return {
+            ...bound,
+            backend: async (input: CommandRequest, requestSignal: AbortSignal) => {
+              const path = `/v2/trips/${slice1.qa.command.tripId}/core/`;
+              let allowed =
+                input.method === "GET" &&
+                input.path === path + "operations/" + slice1.qa.command.operationId;
+              if (input.method === "POST" && input.path === path + "commands") {
+                try {
+                  allowed =
+                    canonicalCoreJson(input.body as Json) ===
+                    canonicalCoreJson(slice1.qa.command as Json);
+                } catch {
+                  allowed = false;
+                }
+              }
+              if (
+                input.method === "POST" &&
+                !write.confirmations.some(
+                  (entry) =>
+                    entry.operationId === slice1.qa.command.operationId &&
+                    entry.previewDigest === slice1.qa.identity.preview_digest,
+                )
+              )
+                allowed = false;
+              if (!allowed)
+                return Response.json(
+                  { error: { code: "NOT_VISIBLE" } },
+                  { status: 404, headers: { "Cache-Control": "private, no-store" } },
+                );
+              return bound.backend(input, requestSignal);
+            },
+          };
         }
       : readBinding,
     ...(write
