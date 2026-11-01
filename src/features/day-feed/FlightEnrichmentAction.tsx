@@ -34,6 +34,7 @@ export function FlightEnrichmentAction({
   useUiLocale();
   const network = useNetworkState();
   const online = network.isConnected === true && network.isInternetReachable !== false;
+  const [lookupEpoch, setLookupEpoch] = useState(0);
   const [available, setAvailable] = useState(false),
     [status, setStatus] = useState<"idle" | "loading" | "filled" | "manual" | "stale">(
       "idle",
@@ -41,8 +42,11 @@ export function FlightEnrichmentAction({
   const [suggestions, setSuggestions] = useState<{
     response: FlightEnrichmentResponse;
     bytes: string;
+    revision: number;
+    token: symbol;
   } | null>(null);
   const [attemptedKeys, setAttemptedKeys] = useState<ReadonlySet<string>>(new Set());
+  const suggestionToken = useRef<symbol | null>(null);
   const inFlight = useRef(false),
     lease = useRef<symbol | null>(null);
   const attempted = useRef(new Set<string>()),
@@ -75,6 +79,7 @@ export function FlightEnrichmentAction({
             snapshot.current.generation === getAccountGeneration()
           ) {
             lookup.current = repo;
+            setLookupEpoch((previous) => previous + 1);
             setAvailable(enabled);
             setStatus((previous) => (previous === "loading" ? "manual" : previous));
           }
@@ -86,19 +91,22 @@ export function FlightEnrichmentAction({
       inFlight.current = false;
       controller.current?.abort();
       lookup.current = null;
+      suggestionToken.current = null;
     };
   }, [tripId, online]);
   const identity = flightLookupIdentity(value);
-  const emptyDetails =
-    !value.originCode &&
-    !value.originName &&
-    !value.destinationCode &&
-    !value.destinationName &&
-    !value.departureTime &&
-    !value.arrivalTime;
-  const eligible = !editing || emptyDetails;
+  const missingDetails =
+    !(value.originCode || value.originName) ||
+    !(value.destinationCode || value.destinationName) ||
+    !value.departureTime ||
+    !value.arrivalTime ||
+    !value.arrivalDate;
+  const eligible = missingDetails;
   const find = async () => {
     if (
+      !alive.current ||
+      !lease.current ||
+      snapshot.current.generation !== getAccountGeneration() ||
       inFlight.current ||
       !online ||
       !available ||
@@ -141,9 +149,14 @@ export function FlightEnrichmentAction({
         return;
       }
       const changes = applyFlightLookup(response, request, value);
+      const nextBytes = JSON.stringify({ ...value, ...(changes ?? {}) });
+      const token = Symbol("flight-suggestions");
+      suggestionToken.current = token;
       setSuggestions({
         response,
-        bytes: JSON.stringify({ ...value, ...(changes ?? {}) }),
+        bytes: nextBytes,
+        revision: expected.revision + (nextBytes === expected.bytes ? 0 : 1),
+        token,
       });
       if (changes && Object.keys(changes).length) {
         onApply(changes);
@@ -160,10 +173,41 @@ export function FlightEnrichmentAction({
       if (lease.current === owner) inFlight.current = false;
     }
   };
-  if (!online || !available || (!eligible && !suggestions)) return null;
   const valid =
     requestSchema.shape.flightNumber.safeParse(identity.split(":")[0]).success &&
     requestSchema.shape.departureLocalDate.safeParse(value.departureDate).success;
+  const latestFind = useRef(find);
+  useLayoutEffect(() => {
+    latestFind.current = find;
+  });
+  useEffect(() => {
+    if (
+      editing ||
+      disabled ||
+      !online ||
+      !available ||
+      !eligible ||
+      !valid ||
+      status === "loading" ||
+      attempted.current.has(identity)
+    )
+      return;
+    const timer = setTimeout(() => {
+      void latestFind.current();
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [
+    editing,
+    disabled,
+    online,
+    available,
+    eligible,
+    valid,
+    identity,
+    status,
+    lookupEpoch,
+  ]);
+  if (!online || !available || (!eligible && !suggestions)) return null;
   return (
     <View>
       <UiButton
@@ -203,18 +247,34 @@ export function FlightEnrichmentAction({
         const resolve = (replace: boolean) => {
           if (
             disabled ||
-            snapshot.current.generation !== getAccountGeneration() ||
-            snapshot.current.bytes !== suggestions.bytes
+            !alive.current ||
+            suggestionToken.current !== suggestions.token ||
+            snapshot.current.generation !== getAccountGeneration()
           )
             return;
+          if (
+            snapshot.current.bytes !== suggestions.bytes ||
+            snapshot.current.revision !== suggestions.revision
+          ) {
+            suggestionToken.current = null;
+            setSuggestions(null);
+            setStatus("stale");
+            return;
+          }
           const changes = replace ? { [field]: suggestion.value } : {};
           if (replace) onApply(changes);
+          const nextBytes = JSON.stringify({ ...value, ...changes });
+          const token = Symbol("flight-suggestions");
+          suggestionToken.current = token;
           setSuggestions({
             response: {
               ...suggestions.response,
               suggestions: suggestions.response.suggestions.filter((_, i) => i !== index),
             },
-            bytes: JSON.stringify({ ...value, ...changes }),
+            bytes: nextBytes,
+            revision:
+              snapshot.current.revision + (nextBytes === snapshot.current.bytes ? 0 : 1),
+            token,
           });
         };
         return (

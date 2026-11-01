@@ -31,3 +31,5 @@ P3 local progress (2026-11-01): the existing Stay editor now accepts an opt-in s
 | Multi-object document save | Import + Native | Saving several stays from one scan | Per-candidate independent selections; explicit Apply to current draft only | Separate object selection/save contract; never silently write other candidates |
 
 Normal product Scan remains absent. DEV-only previews and headless tests do not prove real OCR/DeepSeek or Hosted E2E. See `docs/ops/native-independent-sprint-20261101/FIELD_ADAPTERS.md`.
+
+Enrichment Native checkpoint: Create auto debounce/once and explicit partial Edit are prepared. Keep/Replace now checks revision/session, including an actual edit-away-and-back regression. No additional Backend interface was invented. The existing Host capability/price/budget/Usage/idempotency/protected-scope chain still gates real queries; those gates were not opened here. Cache remains closed. See `docs/ops/native-independent-sprint-20261101/ENRICHMENT_NATIVE.md`.

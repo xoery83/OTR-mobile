@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { FlightEnrichmentAction } from "./FlightEnrichmentAction";
 import { emptyFlightSegment } from "./manualFlightFormFields";
 const state = vi.hoisted(() => ({
@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
   refCursor: 0,
   mount: true,
   effects: [] as any[],
+  effectCursor: 0,
+  effectSlots: [] as { dependencies?: readonly unknown[]; cleanup?: () => void }[],
   cleanup: [] as any[],
   nodes: [] as any[],
   online: true,
@@ -33,8 +35,22 @@ vi.mock("react", async (original) => ({
   },
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
   useLayoutEffect: (fn: any) => fn(),
-  useEffect: (fn: any) => {
-    if (state.mount) state.effects.push(fn);
+  useEffect: (fn: any, dependencies?: readonly unknown[]) => {
+    const index = state.effectCursor++;
+    const previous = state.effectSlots[index];
+    if (
+      state.mount ||
+      !previous ||
+      !dependencies ||
+      dependencies.some((value, i) => value !== previous.dependencies?.[i])
+    ) {
+      state.effects.push(() => {
+        previous?.cleanup?.();
+        const cleanup = fn();
+        state.effectSlots[index] = { dependencies, cleanup };
+        return cleanup;
+      });
+    }
   },
 }));
 vi.mock("react-native", () => ({
@@ -71,6 +87,7 @@ const flush = async () => {
 function render() {
   state.cursor = 0;
   state.refCursor = 0;
+  state.effectCursor = 0;
   state.nodes = [];
   const html = renderToStaticMarkup(
     createElement(FlightEnrichmentAction, {
@@ -103,6 +120,7 @@ function result(request: any, suggestions: any[] = []) {
   };
 }
 beforeEach(() => {
+  vi.useFakeTimers();
   Object.assign(state, {
     values: [],
     refs: [],
@@ -110,6 +128,8 @@ beforeEach(() => {
     refCursor: 0,
     mount: true,
     effects: [],
+    effectSlots: [],
+    effectCursor: 0,
     cleanup: [],
     nodes: [],
     online: true,
@@ -239,6 +259,8 @@ it("an existing fully entered Edit flight does not offer lookup", async () => {
   value.originCode = "AKL";
   value.destinationCode = "NSN";
   value.departureTime = "12:00";
+  value.arrivalTime = "13:30";
+  value.arrivalDate = value.departureDate;
   render();
   await flush();
   expect(render()).toBe("");
@@ -315,5 +337,105 @@ it("reconnect releases loading for a new identity while a retired response stays
   for (const cleanup of state.cleanup) cleanup?.();
   completions[1]();
   await flush();
+  expect(apply).not.toHaveBeenCalled();
+});
+
+afterEach(() => {
+  for (const cleanup of state.cleanup) cleanup?.();
+  vi.useRealTimers();
+});
+it("Create automatically queries once after stable number/date and capability", async () => {
+  render();
+  await flush();
+  render();
+  await vi.advanceTimersByTimeAsync(599);
+  expect(state.find).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1);
+  await flush();
+  render();
+  expect(state.find).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(state.find).toHaveBeenCalledTimes(1);
+});
+it("Edit with partial details remains explicit, preserving known fields", async () => {
+  editing = true;
+  value.originCode = "AKL";
+  render();
+  await flush();
+  render();
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(state.find).not.toHaveBeenCalled();
+  state.nodes[0].onPress();
+  await flush();
+  expect(state.find).toHaveBeenCalledTimes(1);
+  expect(state.find.mock.calls[0][0].knownFields.departureAirport).toBe("AKL");
+});
+it("account switch before the automatic timer cannot dispatch an old account request", async () => {
+  render();
+  await flush();
+  render();
+  state.generation++;
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(state.find).not.toHaveBeenCalled();
+});
+it.each(["NO_RESULT", "AMBIGUOUS", "TIMEOUT"])(
+  "%s leaves the handwritten draft intact and does not loop",
+  async (status) => {
+    const before = structuredClone(value);
+    state.find.mockImplementation(async (request) => {
+      if (status === "TIMEOUT") throw Error("TIMEOUT");
+      return {
+        ...result(request),
+        status: status === "NO_RESULT" ? "NOT_FOUND" : "AMBIGUOUS",
+      };
+    });
+    render();
+    await flush();
+    render();
+    await vi.advanceTimersByTimeAsync(600);
+    await flush();
+    render();
+    expect(apply).not.toHaveBeenCalled();
+    expect(value).toEqual(before);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(state.find).toHaveBeenCalledTimes(1);
+  },
+);
+it("a capability-closed account never dispatches automatic lookup", async () => {
+  state.available = false;
+  render();
+  await flush();
+  render();
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(state.find).not.toHaveBeenCalled();
+  expect(render()).toBe("");
+});
+it("rejects Keep/Replace after the draft was edited away and back to the same bytes", async () => {
+  editing = true;
+  value.departureTime = "12:00";
+  state.find.mockImplementation(async (request) =>
+    result(request, [
+      {
+        field: "departureLocalTime",
+        value: "13:00",
+        eligibility: "KEEP_OR_REPLACE",
+        referenceOnly: false,
+      },
+    ]),
+  );
+  render();
+  await flush();
+  render();
+  state.nodes[0].onPress();
+  await flush();
+  render();
+  const replace = state.nodes.find(
+    (entry) => entry.label === "flightLookup.replace",
+  ).onPress;
+  value = { ...value, departureTime: "15:00" };
+  render();
+  value = { ...value, departureTime: "12:00" };
+  render();
+  replace();
   expect(apply).not.toHaveBeenCalled();
 });
