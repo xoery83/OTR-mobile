@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
   generation: 1,
   available: true,
   uuid: 0,
+  textColor: "semantic-primary",
   find: vi.fn(),
   factory: vi.fn(),
 }));
@@ -55,6 +56,7 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   View: (p: any) => createElement("div", null, p.children),
+  StyleSheet: { create: (styles: any) => styles },
 }));
 vi.mock("expo-network", () => ({
   useNetworkState: () => ({ isConnected: state.online }),
@@ -66,6 +68,9 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/flightEnrichmentRepository", () => ({
   readFlightEnrichmentRepository: (...args: any[]) => state.factory(...args),
 }));
+vi.mock("@/ui/theme", () => ({
+  useThemedStyles: (factory: any) => factory({ textPrimary: state.textColor }),
+}));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/controls", () => ({
@@ -73,7 +78,7 @@ vi.mock("@/ui/controls", () => ({
     state.nodes.push(p);
     return createElement("button", null, p.label);
   },
-  UiText: (p: any) => createElement("span", null, p.children),
+  UiText: (p: any) => createElement("span", { style: p.style }, p.children),
 }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -137,6 +142,7 @@ beforeEach(() => {
     generation: 1,
     available: true,
     uuid: 0,
+    textColor: "semantic-primary",
   });
   state.find.mockReset().mockImplementation(async (request) => result(request));
   state.factory.mockReset().mockImplementation(async () => ({
@@ -525,3 +531,61 @@ it.each(["Cancel", "Trip"] as const)(
     expect(apply).not.toHaveBeenCalled();
   },
 );
+
+it("UNKNOWN remains explicit after Cancel and never starts another request for the same identity", async () => {
+  const original = structuredClone(value);
+  state.find.mockImplementation(async (request) => ({
+    ...result(request),
+    status: "UNAVAILABLE",
+    failureReason: "UNKNOWN",
+  }));
+  render();
+  await flush();
+  render();
+  await vi.advanceTimersByTimeAsync(600);
+  await flush();
+  let html = render();
+  expect(html).toContain("flightLookup.unknown");
+  expect(html).not.toContain("flightLookup.manual");
+  expect(state.nodes[0].disabled).toBe(true);
+  state.nodes.find((node) => node.label === "common.cancel").onPress();
+  html = render();
+  expect(html).toContain("flightLookup.unknown");
+  expect(html).not.toContain("flightLookup.manual");
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(state.find).toHaveBeenCalledOnce();
+  expect(state.uuid).toBe(1);
+  expect(apply).not.toHaveBeenCalled();
+  expect(value).toEqual(original);
+});
+it("pending metering uses semantic text while suggestions remain explicitly adoptable", async () => {
+  editing = true;
+  state.textColor = "semantic-dark-primary";
+  state.find.mockImplementation(async (request) => ({
+    ...result(request, [
+      {
+        field: "departureLocalTime",
+        value: "12:00",
+        eligibility: "ADOPT",
+        referenceOnly: false,
+      },
+    ]),
+    usage: { metering: "PENDING" },
+  }));
+  render();
+  await flush();
+  render();
+  state.nodes[0].onPress();
+  await flush();
+  const html = render();
+  expect(html).toContain("flightLookup.usagePending");
+  expect(html).toContain("color:semantic-dark-primary");
+  expect(apply).not.toHaveBeenCalled();
+  const adopt = state.nodes.find((node) => node.label === "flightLookup.adopt");
+  expect(adopt.disabled).toBe(false);
+  adopt.onPress();
+  expect(apply).toHaveBeenCalledExactlyOnceWith({ departureTime: "12:00" });
+  expect(render()).toContain("flightLookup.usagePending");
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(state.find).toHaveBeenCalledOnce();
+});

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useNetworkState } from "expo-network";
 import { randomUUID } from "expo-crypto";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -12,6 +12,8 @@ import {
 import { UiButton, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import type { FlightSegmentDraft } from "./manualFlightFormFields";
 import {
   applyFlightLookup,
@@ -32,12 +34,13 @@ export function FlightEnrichmentAction({
   onApply(changes: Partial<FlightSegmentDraft>): void;
 }) {
   useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const network = useNetworkState();
   const online = network.isConnected === true && network.isInternetReachable !== false;
   const [lookupEpoch, setLookupEpoch] = useState(0);
   const [available, setAvailable] = useState(false),
     [status, setStatus] = useState<
-      "idle" | "loading" | "filled" | "manual" | "stale" | "review" | "budget"
+      "idle" | "loading" | "filled" | "manual" | "stale" | "review" | "budget" | "unknown"
     >("idle");
   const [suggestions, setSuggestions] = useState<{
     response: FlightEnrichmentResponse;
@@ -164,11 +167,13 @@ export function FlightEnrichmentAction({
         token,
       });
       setStatus(
-        response.failureReason === "BUDGET_REJECTED"
-          ? "budget"
-          : response.suggestions.length
-            ? "review"
-            : "manual",
+        response.failureReason === "UNKNOWN"
+          ? "unknown"
+          : response.failureReason === "BUDGET_REJECTED"
+            ? "budget"
+            : response.suggestions.length
+              ? "review"
+              : "manual",
       );
     } catch {
       if (
@@ -224,7 +229,7 @@ export function FlightEnrichmentAction({
     inFlight.current = false;
     suggestionToken.current = null;
     setSuggestions(null);
-    setStatus("manual");
+    setStatus((previous) => (previous === "unknown" ? "unknown" : "manual"));
   };
   const resolve = (index: number, changes: Partial<FlightSegmentDraft>) => {
     if (
@@ -272,10 +277,10 @@ export function FlightEnrichmentAction({
         onPress={() => void find()}
       />
       {suggestions?.response.references.length ? (
-        <UiText>{t("flightLookup.references")}</UiText>
+        <UiText style={styles.text}>{t("flightLookup.references")}</UiText>
       ) : null}
       {suggestions?.response.references.map((reference, index) => (
-        <UiText key={`reference:${index}`}>
+        <UiText key={`reference:${index}`} style={styles.text}>
           {t("flightLookup.reference", { value: reference.value })}
         </UiText>
       ))}
@@ -323,7 +328,7 @@ export function FlightEnrichmentAction({
         );
         return (
           <View key={suggestion.field}>
-            <UiText>
+            <UiText style={styles.text}>
               {t("flightLookup.suggestion", { field: label, value: suggestion.value })}
             </UiText>
             <UiButton
@@ -344,9 +349,15 @@ export function FlightEnrichmentAction({
       {suggestions || status === "loading" ? (
         <UiButton label={t("common.cancel")} variant="text" onPress={cancel} />
       ) : null}
+      {suggestions?.response.usage?.metering === "PENDING" ? (
+        <UiText style={styles.text}>{t("flightLookup.usagePending")}</UiText>
+      ) : null}
       {status !== "idle" && status !== "loading" ? (
-        <UiText>{t(`flightLookup.${status}`)}</UiText>
+        <UiText style={styles.text}>{t(`flightLookup.${status}`)}</UiText>
       ) : null}
     </View>
   );
 }
+
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({ text: { color: colors.textPrimary } });

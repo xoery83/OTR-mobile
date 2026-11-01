@@ -9,6 +9,7 @@ export function p3SourceInterpretationFixture(
   fields: UniversalP3FormInterpretation["candidates"][number]["fields"],
 ) {
   const paths = {
+    // ui-foundation-exception: string -- Owning evidence path in a test-only DTO, not visible copy.
     title: "property.name",
     location: "property.address",
     startDate: "check_in.date",
