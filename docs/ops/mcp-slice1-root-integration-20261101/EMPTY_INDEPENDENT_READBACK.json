@@ -1,0 +1,17 @@
+{
+  "status": "INDEPENDENT_EMPTY_READBACK_PASS",
+  "containerId": "14eb144b764636201d1b7dd887ddfa5a45dcf7665aada09e33832675a6b54f0f",
+  "image": "sha256:ab77a13ce66f877b67541e8cad7dcd0f9b70ac229c81841bf26f21665b709431",
+  "configSHA256": "0baad0e7c93d315a131b7ed0cc4d7a786626feaaeaaa5fc909fb24e2dabc2625",
+  "health": "healthy",
+  "profile": "SLICE1_NOTES_EDIT",
+  "confirmations": [],
+  "readKeyAbsent": true,
+  "deadlineMs": 1793528169025,
+  "defaultRetained": "exited",
+  "pointerBound": true,
+  "all23ConfigFilesMatch": true,
+  "timer": "active",
+  "restoreSHA256": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+  "closeCurrentSHA256": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0"
+}

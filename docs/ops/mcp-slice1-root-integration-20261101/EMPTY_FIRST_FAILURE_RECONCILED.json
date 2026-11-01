@@ -1,0 +1,18 @@
+{
+  "status": "NOT_SERVED_DEFAULT_HEALTHY",
+  "defaultContainerId": "9fd2b8283c82ac457d1c2aac1fd8bcaa828a57bdf1006b3670a2baf8ea7301f9",
+  "retainedCreatedCandidateId": "14eb144b764636201d1b7dd887ddfa5a45dcf7665aada09e33832675a6b54f0f",
+  "candidateState": "created_not_running",
+  "currentConfigSHA256": "a6ba55fd09a187db3c9871e3d1bb6414d2f33c14b2d11bb5babf9fcacd223dc4",
+  "bothQaKeysAbsent": true,
+  "onlyHostDifference": {
+    "key": "OomKillDisable",
+    "default": null,
+    "candidate": false
+  },
+  "rootTimerArmedAt": "2026-11-01T10:16:09Z",
+  "closePointer": "original_default",
+  "independentReviewBlocker": "Actual restore.py exact HostConfig rejects null-vs-false; do not serve until qualified",
+  "businessMutation": false,
+  "noSecondCreate": true
+}

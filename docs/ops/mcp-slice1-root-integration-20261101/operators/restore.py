@@ -16,7 +16,11 @@ try:
  def check(s,active):
   assert s['Id']==(current_id if active else g['beforeContainerId']) and s['Image']==g['candidateImage']
   assert digest(s['Config'])==(g['expectedConfigSHA256'] if active else g['beforeConfigSHA256'])
-  assert s['HostConfig']==g['expectedHostConfig']
+  actual_host=dict(s['HostConfig']);expected_host=dict(g['expectedHostConfig'])
+  # Docker preserves the explicit default as null on the original and false on create.
+  for value in (actual_host,expected_host):
+   if 'OomKillDisable' in value and value['OomKillDisable'] is None:value['OomKillDisable']=False
+  assert actual_host==expected_host
   assert sorted((m['Source'],m['Destination'],m['RW']) for m in s['Mounts'])==sorted(tuple(m) for m in g['expectedMounts'])
   for path,h in {**g['beforeConfigHashes'],**g['mountedFileHashes']}.items():assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==h
  trace['readyAt']=instant()

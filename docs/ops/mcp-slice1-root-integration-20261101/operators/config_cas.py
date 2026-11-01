@@ -74,6 +74,14 @@ def publish_close_plan(g, directory, current_id, config_sha):
         'planSHA256': hashlib.sha256(raw).hexdigest(), 'deadlineMs': g['deadlineMs'],
     })
 
+def same_host(a, b):
+    left, right = host(a), host(b)
+    # Docker create normalizes the default OOM setting from null to false.
+    for value in (left, right):
+        if "OomKillDisable" in value and value["OomKillDisable"] is None:
+            value["OomKillDisable"] = False
+    return left == right
+
 def run(g, directory):
     import fcntl
     trace = {'readyAt':datetime.datetime.now(datetime.timezone.utc).isoformat()}
@@ -116,13 +124,21 @@ def run(g, directory):
         # All other environment values stay inside the existing Host process.
         config = dict(old['Config'], Env=[v for v in old['Config']['Env'] if not v.startswith(WRITE + '=')] + [WRITE + '=' + g['authQaConfig']])
         assert digest(config) == g['expectedConfigSHA256']
-        client = Docker('localhost', timeout=20)
-        client.request('POST', '/v1.44/containers/create?name=' + g['containerName'], json.dumps({**config, 'HostConfig': old['HostConfig']}), {'Content-Type':'application/json'})
-        response = client.getresponse(); raw = response.read(); client.close()
-        assert response.status == 201, 'CREATE_UNKNOWN_RECONCILE_NO_RETRY'
-        new_id = json.loads(raw)['Id']; new = inspect(new_id)
+        retained_created = g.get('retainedCreatedCandidateId')
+        if retained_created is not None:
+            assert isinstance(retained_created, str) and len(retained_created) == 64
+            new = inspect(retained_created)
+            assert new['Id'] == retained_created and new['Name'] == '/' + g['containerName']
+            assert new['State']['Status'] == 'created' and not new['State']['Running']
+            new_id = retained_created
+        else:
+            client = Docker('localhost', timeout=20)
+            client.request('POST', '/v1.44/containers/create?name=' + g['containerName'], json.dumps({**config, 'HostConfig': old['HostConfig']}), {'Content-Type':'application/json'})
+            response = client.getresponse(); raw = response.read(); client.close()
+            assert response.status == 201, 'CREATE_UNKNOWN_RECONCILE_NO_RETRY'
+            new_id = json.loads(raw)['Id']; new = inspect(new_id)
         assert new['Config'] == config and new['Image'] == old['Image'] and new['State']['Status'] == 'created'
-        assert host(new) == host(old) and mounts(new) == mounts(old)
+        assert same_host(new, old) and mounts(new) == mounts(old)
         # The timer reads this pointer; original default and T/D never move.
         publish_close_plan(g, directory, new_id, digest(config))
         changed = False
@@ -141,7 +157,7 @@ def run(g, directory):
                 if running['State']['Status'] in ('dead','exited'): raise RuntimeError('CANDIDATE_EXITED')
                 time.sleep(1)
             else: raise RuntimeError('CANDIDATE_HEALTH_TIMEOUT')
-            assert running['Config'] == config and host(running) == host(old) and mounts(running) == mounts(old)
+            assert running['Config'] == config and same_host(running, old) and mounts(running) == mounts(old)
             for filename, h in g['bundles'].items():
                 assert hashlib.sha256(subprocess_bytes(new_id, filename)).hexdigest() == h
             verify_http(g)

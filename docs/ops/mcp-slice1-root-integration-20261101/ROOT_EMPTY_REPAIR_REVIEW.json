@@ -1,0 +1,10 @@
+{
+  "status": "NO_BLOCKER",
+  "reviewer": "/root/photo_relevance_delivery",
+  "casRepairSHA256": "bf6c344f97a28e14eb191fecb9f59a6b2bee91eecaa72878aec7e0d7e1cf51be",
+  "authRestoreSHA256": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+  "closeCurrentSHA256": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+  "checks": "9 CAS focused checks, 3 actualcloseentry RED/GREEN/control checks; exact original default restored and all otherHost drift rejected",
+  "liveConsumerPassClaim": false,
+  "notesApproval": false
+}

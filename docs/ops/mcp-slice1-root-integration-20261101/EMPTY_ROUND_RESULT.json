@@ -1,0 +1,12 @@
+{
+  "result": {
+    "status": "CONFIG_CAS_UNCONFIRMED",
+    "errorClass": "AssertionError"
+  },
+  "runtimeCloseTimer": "otr-mcp-slice1-runtime-close-16d1bdd76f10420a8b0ddceb6be9fadf",
+  "runtimeCloseAt": "2026-11-01 10:16:09 UTC",
+  "fixedT": 1793526689824,
+  "fixedD": 1793528169025,
+  "confirmationsEmpty": true,
+  "notesApproval": false
+}
