@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_READY_NOT_AUTHORIZED",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "approvedExecutionGateCandidateSHA256": "f93df0f8f6c37b74ca66930db9053b7ed8b0e7d5c3badbbaa10861a23b5f1d79",
+  "softwareMarkerSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "clockStarted": false,
+  "timerArmed": false,
+  "qaKeysAdded": false,
+  "issuerActivated": false,
+  "rootIndependentSelftest": "4 PASS; local in-memory transport sentinel; no Host dispatch",
+  "files": {
+    "HOST_STAGE_PAYLOAD.json": "dac5d6220227585202ec71245d603183e828abb7739bd2a2ac1715aed19214e2",
+    "NO_CHANGE_RESTORE.json": "acec0527ad1a8f225bd5f4072113b254aa761270d106786e57b5662ab8bd6861",
+    "close-once.py": "4c43a9d311b0073a4d3c9b802015e37775db2686d8c80a26aaced0c05bafd177",
+    "prepare-empty-round.py": "babc89abc8421ddd1b476203e021e80c6bda6f3a260c1118b97b53e5123e3a2f",
+    "test_prepare_empty_round.py": "e455beabae6dba55335c4d296e7ccb30d22ce3a30a6656f87968d440a5e1cbf3"
+  },
+  "collectorSHA256": "9334be21220e0c73b913c01d73f1007f810956bb6f790941382d7b95a2242c95",
+  "note": "MCP must obtain fresh action-time Owner access approval; this packet is not Notes confirmation or authority."
+}
