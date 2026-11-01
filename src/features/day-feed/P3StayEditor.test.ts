@@ -73,7 +73,10 @@ vi.mock("react", async (original) => ({
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
 }));
-vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(),
+  requireAdoptedUserId: vi.fn(),
+}));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("@/data/repositories/manualStayRepository", async () => ({
   manualStayFieldsSchema: (
@@ -128,7 +131,10 @@ vi.mock("@/components/SheetHeader", () => ({
   },
 }));
 vi.mock("@/ui/controls", () => ({
-  UiText: (p: any) => createElement("span", null, p.children),
+  UiText: (p: any) => {
+    state.nodes.push({ ...p, textNode: true });
+    return createElement("span", null, p.children);
+  },
   UiSection: (p: any) => createElement("section", null, p.title, p.children),
   UiButton: (p: any) => {
     state.nodes.push(p);
@@ -158,7 +164,10 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({
+  useThemedStyles: (create: (colors: unknown) => unknown) =>
+    create({ textPrimary: "theme-foreground" }),
+}));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -1038,9 +1047,14 @@ vi.mock("@/data/files/tripPhotoFileStore", () => ({
   probeRetainedTripPhotoIdentity: vi.fn(),
   discardRetainedTripPhoto: vi.fn(),
 }));
-it.each(["CREATE", "EDIT"] as const)(
-  "P3 %s scans selected material through the real Form and SQLite Repository Save",
-  async (mode) => {
+it.each([
+  ["CREATE", false],
+  ["EDIT", false],
+  ["CREATE", true],
+  ["EDIT", true],
+] as const)(
+  "P3 %s source=%s scans selected material through the real Form and SQLite Repository Save",
+  async (mode, sourceMode) => {
     const { DatabaseSync } = await import("node:sqlite");
     const { createHash, randomUUID } = await import("node:crypto");
     const { migrations } = await import("@/data/db/migrations");
@@ -1144,17 +1158,67 @@ it.each(["CREATE", "EDIT"] as const)(
           ],
         }),
       );
-      const p = { ...props(), tripId, itemId, syntheticScan: scan };
+      const auth = await import("@/data/auth/authRepository");
+      vi.mocked(auth.requireAdoptedUserId).mockResolvedValue(accountId);
+      const { p3SourceInterpretationFixture } =
+        await import("./__fixtures__/p3SourceInterpretation");
+      const sourceScan = vi.fn(
+        async (
+          context: import("@/data/operations/universalP3FormInterpretation").UniversalP3FormContext,
+        ) =>
+          p3SourceInterpretationFixture(
+            context,
+            mode === "CREATE"
+              ? {
+                  title: "Synthetic Inn",
+                  location: "Selected address",
+                  startDate: "2026-11-04",
+                  endDate: "2026-11-06",
+                  startTime: "17:00",
+                  endTime: "10:00",
+                }
+              : { location: "Changed address" },
+          ),
+      );
+      const p = {
+        ...props(),
+        tripId,
+        itemId,
+        ...(sourceMode ? { sourceScan } : { syntheticScan: scan }),
+      };
       const save = vi.spyOn(repository, "save"); // Call-through; the actual Core/SQLite transaction executes.
       await open(p, repository);
       const pending = () =>
         Number(sql.prepare("SELECT count(*) n FROM trip_core_pending_intents").get()!.n);
       const before = pending();
       await scanFile(p);
-      expect(scan).toHaveBeenCalledOnce();
-      expect(scan.mock.calls[0][0].itemRevision).toEqual(
-        mode === "EDIT" ? expect.any(Number) : null,
-      );
+      if (sourceMode) {
+        await vi.waitFor(() => {
+          render(p);
+          expect(
+            state.nodes.some(
+              (entry) =>
+                entry.label ===
+                (mode === "EDIT"
+                  ? "formAutofill.confirmStayTarget"
+                  : "formAutofill.keep"),
+            ),
+          ).toBe(true);
+        });
+        expect(sourceScan).toHaveBeenCalledOnce();
+        expect(scan).not.toHaveBeenCalled();
+        expect(state.nodes.some((entry) => entry.label === "formAutofill.sample")).toBe(
+          false,
+        );
+        if (mode === "EDIT") {
+          expect(node("ui.apply").disabled).toBe(true);
+          node("formAutofill.confirmStayTarget").onPress();
+          render(p);
+        }
+      } else expect(scan).toHaveBeenCalledOnce();
+      expect(
+        (sourceMode ? sourceScan.mock.calls[0][0] : scan.mock.calls[0][0]).itemRevision,
+      ).toEqual(mode === "EDIT" ? expect.any(Number) : null);
       if (mode === "CREATE")
         for (let i = 0; i < 6; i++) {
           node("formAutofill.keep").onPress();
@@ -1163,11 +1227,13 @@ it.each(["CREATE", "EDIT"] as const)(
       else {
         node("formAutofill.keep").onPress();
         render(p);
-        state.nodes
-          .filter((entry) => entry.label === "formAutofill.keepClear")
-          .at(-1)!
-          .onPress();
-        render(p);
+        if (!sourceMode) {
+          state.nodes
+            .filter((entry) => entry.label === "formAutofill.keepClear")
+            .at(-1)!
+            .onPress();
+          render(p);
+        }
       }
       expect(pending()).toBe(before);
       node("ui.apply").onPress();
@@ -1192,7 +1258,7 @@ it.each(["CREATE", "EDIT"] as const)(
           title: "Existing",
           startTime: "17:00",
           endTime: "10:00",
-          description: null,
+          description: sourceMode ? "Keep existing note" : null,
           stayDetails: { propertyName: "Original property" },
         });
       } else
@@ -1367,4 +1433,20 @@ it("explicit synthetic sample has no file URI/identity and never invokes the rea
   )[2] as import("@/features/capture/captureStaging").CaptureSelection[];
   expect(sample[0].temporaryUri).toBeNull();
   expect(sample[0].identity).toBeUndefined();
+});
+
+it("Scan status text uses the theme foreground instead of native black in Dark Mode", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  const status = state.nodes.find(
+    (entry) => entry.textNode && entry.children === "formAutofill.unavailable",
+  );
+  expect(status.style.color).toBe("theme-foreground");
 });

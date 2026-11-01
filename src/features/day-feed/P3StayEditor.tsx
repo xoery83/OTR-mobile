@@ -1,5 +1,5 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -39,6 +39,10 @@ import {
 } from "./p3PlaceSelectionDraft";
 
 import { createUuid } from "@/domain/localId";
+import {
+  createP3SourceScanConsumer,
+  type P3SourceInterpreter,
+} from "./p3SourceSuggestions";
 import { P3SyntheticScan } from "./P3SyntheticScan";
 import type { StaySuggestionBinding, SyntheticStayResult } from "./p3FormSuggestions";
 
@@ -155,6 +159,7 @@ export function P3StayEditor({
   onChooseRental,
   onChooseTransport,
   syntheticScan,
+  sourceScan,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -164,6 +169,7 @@ export function P3StayEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
+  sourceScan?: P3SourceInterpreter;
   syntheticScan?: import("./formScanResponse").FormScanConsumer<SyntheticStayResult>;
   onClose(): void;
   onSaved(itemId: string): void;
@@ -172,6 +178,10 @@ export function P3StayEditor({
   onChooseTransport?(): void;
 }) {
   useUiLocale();
+  const sourceConsumer = useMemo(
+    () => (sourceScan ? createP3SourceScanConsumer(sourceScan) : undefined),
+    [sourceScan],
+  );
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
@@ -198,7 +208,7 @@ export function P3StayEditor({
             generation,
             revision: formRevision.current,
             mode: source.draft.mode,
-            itemRevision: source.draft.baseRevision,
+            itemRevision: source.draft.baseRevision ?? null,
           }
         : null;
   }, [source, tripId, itemId, generation]);
@@ -446,7 +456,8 @@ export function P3StayEditor({
                 ) : null}
                 <View style={styles.form}>
                   <P3SyntheticScan
-                    scan={syntheticScan}
+                    scan={sourceConsumer ?? syntheticScan}
+                    sourceMode={!!sourceConsumer}
                     disabled={saving || frozen || status === "UNAVAILABLE"}
                     context={() =>
                       current() &&

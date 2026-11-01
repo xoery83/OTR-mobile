@@ -6,6 +6,11 @@ import {
   type StaySuggestionKey,
   type SyntheticStayResult,
 } from "./p3FormSuggestions";
+import {
+  applySourceStaySuggestions,
+  isSourceStayResult,
+  type SourceStayResult,
+} from "./p3SourceSuggestions";
 import type { ManualStayFields } from "@/data/repositories/manualStayRepository";
 
 const labels = {
@@ -21,10 +26,25 @@ const labels = {
 export function P3SyntheticScan(
   props: Omit<
     ComponentProps<
-      typeof SyntheticFormScan<ManualStayFields, StaySuggestionKey, SyntheticStayResult>
+      typeof SyntheticFormScan<
+        ManualStayFields,
+        StaySuggestionKey,
+        SyntheticStayResult | SourceStayResult
+      >
     >,
     "apply" | "labels"
   >,
 ) {
-  return <SyntheticFormScan {...props} apply={applyStaySuggestions} labels={labels} />;
+  return (
+    <SyntheticFormScan
+      {...props}
+      validateResult={props.sourceMode ? isSourceStayResult : undefined}
+      apply={(result, ...args) =>
+        result.kind === "SOURCE_STAY_SUGGESTIONS"
+          ? applySourceStaySuggestions(result, ...args)
+          : applyStaySuggestions(result, ...args)
+      }
+      labels={labels}
+    />
+  );
 }

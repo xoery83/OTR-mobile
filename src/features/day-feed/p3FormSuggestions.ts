@@ -42,8 +42,18 @@ export function applyStaySuggestions(
   selected: readonly StaySuggestionKey[],
   fields: ManualStayFields,
 ): ManualStayFields | null {
+  if (result.kind !== "SYNTHETIC_STAY_SUGGESTIONS") return null;
+  return applyStaySuggestionFields(result, current, candidateId, selected, fields);
+}
+
+export function applyStaySuggestionFields(
+  result: Pick<SyntheticStayResult, "binding" | "candidates">,
+  current: StaySuggestionBinding,
+  candidateId: string,
+  selected: readonly StaySuggestionKey[],
+  fields: ManualStayFields,
+): ManualStayFields | null {
   if (
-    result.kind !== "SYNTHETIC_STAY_SUGGESTIONS" ||
     Object.keys(current).some(
       (key) =>
         current[key as keyof StaySuggestionBinding] !==

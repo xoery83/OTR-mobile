@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
 import { UiChoiceChip } from "@/ui/forms";
 import { t } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import type { CaptureSelection } from "@/features/capture/captureStaging";
 import type { StaySuggestionBinding } from "./p3FormSuggestions";
 import type { FormScanConsumer } from "./formScanResponse";
@@ -15,6 +17,7 @@ export type SyntheticFormResult = {
     id: string;
     targetItemId?: string;
     fields: Readonly<Record<string, unknown>>;
+    evidence?: Readonly<Record<string, readonly { raw: string }[] | undefined>>;
     unsupported?: readonly { field: string; state: "UNSUPPORTED" | "NEEDS_INPUT" }[];
   }[];
 };
@@ -52,8 +55,12 @@ export function SyntheticFormScan<
   onApply,
   apply,
   labels,
+  validateResult,
+  sourceMode = false,
 }: {
   scan?: FormScanConsumer<Result>;
+  validateResult?(result: unknown): boolean;
+  sourceMode?: boolean;
   context(): StaySuggestionBinding | null;
   fields(): Fields | null;
   currentFields?: Fields;
@@ -68,6 +75,7 @@ export function SyntheticFormScan<
   ): Fields | null;
   labels: Record<Key, () => string>;
 }) {
+  const styles = useThemedStyles(createStyles);
   const keys = Object.keys(labels) as Key[];
   type Review = { result: Result; selected: Record<string, Key[]> };
   const [review, setReview] = useState<Review | null>(null);
@@ -156,7 +164,9 @@ export function SyntheticFormScan<
         return;
       }
       if (
-        !formScanResponseSchema.safeParse(result).success ||
+        !(validateResult
+          ? validateResult(result)
+          : formScanResponseSchema.safeParse(result).success) ||
         !sameBinding(binding, result.binding)
       ) {
         clear();
@@ -183,7 +193,15 @@ export function SyntheticFormScan<
   };
   return (
     <UiSection title={t("formAutofill.scan")}>
-      <UiText>{t(scan ? "capture.ai.fixture" : "formAutofill.unavailable")}</UiText>
+      <UiText style={styles.text}>
+        {t(
+          scan
+            ? sourceMode
+              ? "formAutofill.reviewSource"
+              : "capture.ai.fixture"
+            : "formAutofill.unavailable",
+        )}
+      </UiText>
       <UiButton
         label={t("formAutofill.files")}
         variant="text"
@@ -196,7 +214,7 @@ export function SyntheticFormScan<
         disabled={!scan || disabled || loading || selecting}
         onPress={() => pick("photos")}
       />
-      {scan ? (
+      {scan && !sourceMode ? (
         <UiButton
           label={t("formAutofill.sample")}
           variant="text"
@@ -220,7 +238,9 @@ export function SyntheticFormScan<
         />
       ) : null}
       {material.map((item, index) => (
-        <UiText key={index}>{item.name ?? t("formAutofill.selected")}</UiText>
+        <UiText style={styles.text} key={index}>
+          {item.name ?? t("formAutofill.selected")}
+        </UiText>
       ))}
       {scan ? (
         <UiButton
@@ -229,13 +249,15 @@ export function SyntheticFormScan<
           onPress={start}
         />
       ) : null}
-      {loading || selecting ? <UiText>{t("formAutofill.loading")}</UiText> : null}
+      {loading || selecting ? (
+        <UiText style={styles.text}>{t("formAutofill.loading")}</UiText>
+      ) : null}
       {review && !review.result.candidates.length ? (
-        <UiText>{t("formAutofill.empty")}</UiText>
+        <UiText style={styles.text}>{t("formAutofill.empty")}</UiText>
       ) : null}
       {review && review.result.candidates.length > 1 ? (
         <>
-          <UiText>{t("formAutofill.choose")}</UiText>
+          <UiText style={styles.text}>{t("formAutofill.choose")}</UiText>
           {review.result.candidates.map((candidate) => (
             <UiChoiceChip
               key={candidate.id}
@@ -259,7 +281,37 @@ export function SyntheticFormScan<
               key={candidate.id}
               title={String(candidate.fields.title ?? candidate.id)}
             >
-              {wrongTarget ? <UiText>{t("formAutofill.wrongTarget")}</UiText> : null}
+              {wrongTarget ? (
+                <UiText style={styles.text}>{t("formAutofill.wrongTarget")}</UiText>
+              ) : null}
+              {sourceMode && wrongTarget && !candidate.targetItemId ? (
+                <UiButton
+                  label={t("formAutofill.confirmStayTarget")}
+                  variant="secondary"
+                  disabled={disabled}
+                  onPress={() => {
+                    if (
+                      active.current !== review ||
+                      disabled ||
+                      !sameBinding(review.result.binding, context())
+                    )
+                      return;
+                    const next = {
+                      ...review,
+                      result: {
+                        ...review.result,
+                        candidates: review.result.candidates.map((entry) =>
+                          entry.id === candidate.id
+                            ? { ...entry, targetItemId: review.result.binding.itemId }
+                            : entry,
+                        ),
+                      },
+                    };
+                    active.current = next;
+                    setReview(next);
+                  }}
+                />
+              ) : null}
               {keys
                 .filter(
                   (key) =>
@@ -276,10 +328,17 @@ export function SyntheticFormScan<
                     : source?.[key];
                   return (
                     <View key={key}>
+                      {sourceMode && candidate.evidence?.[key]?.[0] ? (
+                        <UiText style={styles.text} numberOfLines={2}>
+                          {t("formAutofill.sourceText", {
+                            value: candidate.evidence[key]![0].raw,
+                          })}
+                        </UiText>
+                      ) : null}
                       {currentValue !== undefined &&
                       currentValue !== null &&
                       currentValue !== "" ? (
-                        <UiText numberOfLines={2}>
+                        <UiText style={styles.text} numberOfLines={2}>
                           {t("formAutofill.current", {
                             field: labels[key](),
                             value:
@@ -331,10 +390,12 @@ export function SyntheticFormScan<
               {Object.keys(candidate.fields)
                 .filter((key) => !keys.includes(key as Key))
                 .map((field) => (
-                  <UiText key={field}>{t("formAutofill.unsupported", { field })}</UiText>
+                  <UiText style={styles.text} key={field}>
+                    {t("formAutofill.unsupported", { field })}
+                  </UiText>
                 ))}
               {candidate.unsupported?.map((item) => (
-                <UiText key={item.field}>
+                <UiText style={styles.text} key={item.field}>
                   {t(
                     item.state === "UNSUPPORTED"
                       ? "formAutofill.unsupported"
@@ -384,7 +445,7 @@ export function SyntheticFormScan<
             </UiSection>
           );
         })}
-      {error !== null ? <UiText>{errorCopy[error]()}</UiText> : null}
+      {error !== null ? <UiText style={styles.text}>{errorCopy[error]()}</UiText> : null}
       {error === scanErrors.failed && scan && material.length ? (
         <UiButton label={t("common.tryAgain")} disabled={disabled} onPress={start} />
       ) : null}
@@ -394,3 +455,6 @@ export function SyntheticFormScan<
     </UiSection>
   );
 }
+
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({ text: { color: colors.textPrimary } });
