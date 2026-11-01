@@ -1,0 +1,25 @@
+{
+  "status": "NO_BLOCKER_B1_CLOSED_PRIVATE_REALTIME_AUTH_PORT",
+  "evidenceLevel": "LOCAL_PASS",
+  "independentReviewer": "auth_phase1_review",
+  "independentFocusedTests": "10/10_PASS",
+  "implementationChecks": "TSC_SCOPED_ESLINT_DIFF_PASS",
+  "resolvedFindings": [
+    "Abort during initial Account read must not open transport",
+    "Qualified new revocation synchronously closes before async cache fence",
+    "Older concurrent acknowledgement cannot clear newer failed fence"
+  ],
+  "sourceSHA256": {
+    "src/domain/auth/tripRealtimeAuthorization.ts": "3ce5c92aee09c75d9f86fcd2590439f67bbc4118cec934d16a718acf5dae9a5e",
+    "src/data/auth/tripPrivateRealtimeAuthorization.ts": "843582b4970d581dd445b6723f733e557a6b74924d3ee68bd684e372b79317bd",
+    "src/data/auth/tripPrivateRealtimeAuthorization.test.ts": "fe22bbd57fb065ca130d167651305087e64b31a3f636eb0c42709a0fa23a2d90",
+    "docs/architecture/AUTH_REALTIME_PRIVATE_PORT_V1.md": "318b90f9ca12b7f83f2741f97cccfa065af59b5007f07b7d7ca93eaae0bd2be1"
+  },
+  "hosted": "NOT_ENABLED_NO_SERVER_AUTHORITY_CLAIM",
+  "missingPorts": [
+    "Atomic server private channel admission and durable access revision",
+    "Server expiry and forced revoke",
+    "Authoritative revoke/regrant reader and cache visibility writer",
+    "Postcommit publisher and qualified version reader"
+  ]
+}
