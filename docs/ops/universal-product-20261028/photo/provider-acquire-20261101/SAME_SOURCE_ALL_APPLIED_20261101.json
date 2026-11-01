@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-11-01T06:04:17.382905+00:00",
+  "operations": [
+    {
+      "attemptId": null,
+      "command": "ACQUIRE_SOURCE",
+      "id": "fada3f12-4b3c-43a2-abe8-0ba681011e2d",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "sourceId": "739b0ee9-b394-4656-8ff8-2e130f05bb5e"
+    },
+    {
+      "attemptId": null,
+      "command": "PREPARE_REPRESENTATION",
+      "id": "0ca9724c-8014-8534-9fc0-9989c4fdcfaf",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "sourceId": "739b0ee9-b394-4656-8ff8-2e130f05bb5e"
+    },
+    {
+      "attemptId": "40fb88c5-8e0a-45bf-aa84-ef977e25be23",
+      "command": "UPLOAD_ORIGINAL",
+      "id": "b12fe9ea-490c-82c0-857b-a0f67521c0fe",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "sourceId": "739b0ee9-b394-4656-8ff8-2e130f05bb5e"
+    },
+    {
+      "attemptId": "e17c3f54-b451-4193-9193-be4b670dd596",
+      "command": "VERIFY_REPRESENTATION",
+      "id": "836ea34b-bc5c-8df8-9aeb-6ba1baa1479c",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "sourceId": "739b0ee9-b394-4656-8ff8-2e130f05bb5e"
+    }
+  ],
+  "sources": [
+    {
+      "createdAt": "2026-11-01T05:55:55.159993+00:00",
+      "id": "739b0ee9-b394-4656-8ff8-2e130f05bb5e",
+      "material": 1,
+      "revision": 1
+    }
+  ]
+}

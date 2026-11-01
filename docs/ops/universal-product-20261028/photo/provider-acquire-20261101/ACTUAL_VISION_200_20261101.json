@@ -1,0 +1,25 @@
+{
+  "details": {
+    "httpStatus": 200,
+    "responseSHA256": "959f66b53b82b83c191af119614c175a7f97671a5b3289fcd1ff30c0bc1ad30d",
+    "providerRequestId": "36eb9118-1d92-4edd-becf-6164679f6945",
+    "model": "deepseek-flash",
+    "usage": {
+      "prompt_tokens": 1867,
+      "completion_tokens": 109,
+      "total_tokens": 1976,
+      "prompt_tokens_details": {
+        "cached_tokens": 1280
+      },
+      "prompt_cache_hit_tokens": 1280,
+      "prompt_cache_miss_tokens": 587
+    },
+    "finishReason": "stop",
+    "errorType": null,
+    "errorCode": null
+  },
+  "checkedAt": "2026-11-01T06:09:00.958142+00:00",
+  "rawExists": true,
+  "resultExists": false,
+  "readOnly": true
+}

@@ -1,3 +1,23 @@
+# Photo live execution — 1 November 2026 06:09Z
+
+NOT full E2E PASS. Same Batchf610 / Source739b0ee9, all4Sourceoperations FINAL/APPLIED.
+VERIFY836ea34b initially503RPC/ADMITTED/noAttempt, normal App same-operation retry
+completed APPLIED/e17c3f54; no Source recreation or retransmission.
+Task56d285da-5d93-8239-b55d-bf850299f7b3 / attempt42037c06-639a-89e8-be47-398f9779ff43 /
+callf377becd-221a-8af2-bfd9-1434fca9a30e has durableSTART and actual Vision200.
+Providerrequest36eb9118-1d92-4edd-becf-6164679f6945, modeldeepseek-flash, responseSHA959f66b5.
+Usage input1867/cache1280/output109/total1976; actual cost awaits owning settlement.
+Structured retained response contains P1/ACTIVITY i1 Harbour Photo QA Walk /2026-11-02.
+No image-to-TXT offsets manufactured. Native Review/Admission/Core not yet reached.
+Response retained, do not re-send this call. Deadline06:13:52.007Z immutable.
+Activity dismissed normally afterPrepare202 to reduce polling; queue continues.
+Current image37e5/CID365d unchanged. Windowf073 active; close07:20/watchdog07:25/SQL07:35,
+exclusive resources end07:37:23Z; hard08:48:56Z. OldtwoUNKNOWN/holds preserved.
+Next: owning settlement/resultpublication→normalAppResults/Review→Save→readback/cold→close.
+Actual receipt photo/provider-acquire-20261101/ACTUAL_VISION_200_20261101.json.
+
+## Prior checkpoint (retained historical)
+
 # Active Photo continuation — 1 November 2026 05:55Z
 
 Golden Slice NOT PASS. Owner granted two-hour exclusive conflicting DEV resources,
