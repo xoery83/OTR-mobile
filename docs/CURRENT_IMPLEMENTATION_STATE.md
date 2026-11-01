@@ -120,9 +120,12 @@ default-closed image106825/CID43b2 is deployed and independently verified by Roo
 no live Write has been activated. Assembly40dad byte-reproduces7371 capture0cafa,
 changes only the Adapter and preserves350 other code inputs. Operators
 reuse old CAS/restore with Write-only namespace/config;5 local groups and assembly
-independent Review PASS. Next exact protected Write activation/operation Gate is frozen for Owner review;
-old Read C cannot authorize it. Native device initialization remains BLOCKED and
-physical downstream/cold verification is NOT_VERIFIED. See consumer-write-candidate/.
+independent Review PASS. New Write Gate6dade51e/candidate85fe2a33 received direct Owner approval “批准gate”
+on1Nov. No window/first-intention or OAuth/Hook/runtime change has started. Root
+first owns its newly approved Photo P0; Auth prepares only local reused controllers
+until actual Photo closure/fresh handoff. See consumer-write-execution-20261101/
+OWNER_APPROVAL_DIRECT.json. Old Read C is consumed, never reused. Native device
+initialization remains BLOCKED and physical downstream/cold is NOT_VERIFIED. See consumer-write-candidate/.
 
 
 31 October latest actual Golden Slice: new real Guest637e/Trip9d10 normal create,

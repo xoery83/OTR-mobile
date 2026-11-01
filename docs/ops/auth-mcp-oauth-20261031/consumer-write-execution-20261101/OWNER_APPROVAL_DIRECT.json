@@ -1,0 +1,15 @@
+{
+  "status": "DIRECT_OWNER_APPROVED_NOT_STARTED",
+  "originalHumanAnswer": "\u6279\u51c6gate",
+  "source": "Direct user message in current Auth conversation, answering the immediately pending Gate6dade51e request",
+  "gateSHA256": "6dade51e337f692012e107b357daaf3ed48bb82dfbcdc51a84bff8e1972fdb3d",
+  "candidateCommit": "85fe2a33",
+  "authFixCommit": "7a3caa63",
+  "windowId": "cc26922514a1400ba78a5baa7b68ae56",
+  "recordedAtUtc": "2026-11-01T01:06:25.834763+00:00",
+  "maxWindowMinutes": 30,
+  "newReadWindow": false,
+  "rootPhotoConflict": "Root Photo P0 newly approved; Auth has no Host/config/SQL in flight and explicitly ceded first unique Writer slot",
+  "deadlineStarted": false,
+  "nativePhysicalAcceptance": "BLOCKED_XCTEST_INITIALIZATION_BEFORE_AX_NOT_VERIFIED"
+}

@@ -1,0 +1,9 @@
+{
+  "status": "APPROVED_PREPARATION_NO_WINDOW",
+  "windowId": "cc26922514a1400ba78a5baa7b68ae56",
+  "privateRoot": "/private/tmp/otr-auth-consumer-write-cc26922514a1400ba78a5baa7b68ae56",
+  "rootWriter": "Root Photo first; no blanket lease",
+  "hostConfigSqlChanges": 0,
+  "otpRequests": 0,
+  "deadlineStarted": false
+}

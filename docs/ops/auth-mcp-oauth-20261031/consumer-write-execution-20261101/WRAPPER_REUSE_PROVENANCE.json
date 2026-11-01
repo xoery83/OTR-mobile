@@ -1,0 +1,67 @@
+{
+  "status": "LOCAL_PREPARATION_ONLY_NOT_EXECUTED",
+  "sources": {
+    "stage": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-stage-C-20261101.py",
+      "upstreamSHA256": "f7bb7a70c38bce1a57f699587c740ab58e25864da8da74c8f30c86509cd78d47",
+      "candidateSHA256": "315d34728695febeb38e861b51484cd9246db3fb18f10ac9286b2596ac4ddb1b"
+    },
+    "fresh-host": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-fresh-host-C-20261101.py",
+      "upstreamSHA256": "8615a99a960d6bc3d51e3e4a011d60558627d01641a0a7f812d225e77446fdba",
+      "candidateSHA256": "8440684ed3bf2e8b8165fbe9ff29d629355e150d0a03ae8a7f6238fa60811c4f"
+    },
+    "prepare-host": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-prepare-host-C-20261101.py",
+      "upstreamSHA256": "e855acbde7227a677e31f4a8bcf74ee75f55ae76387068645be8117d9ce99abe",
+      "candidateSHA256": "488457934c1eacc96bf60370f08b3fd8fedbf6c28aac199f04fee54f8403ffad"
+    },
+    "sign": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-sign-C-20261101.py",
+      "upstreamSHA256": "647cfb6f67f11116db98b96d233831f49c4348c843b3d96b8aba4b196fd699f8",
+      "candidateSHA256": "361324ae2f45daffee794e973c59f338cd19cc3a04bdf61dba5ddf090dc8abb5"
+    },
+    "deploy": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-deploy-C-20261101.py",
+      "upstreamSHA256": "29613856ce4709d4a47bac72b6a498b13a4b889fbc2b0c396a284d84c1a5de31",
+      "candidateSHA256": "58f8efdc759d8b5f31ecaa2b2a86262e328075b8fbf4323fb0d19bf3f099de7f"
+    },
+    "binding": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-binding-C-20261101.py",
+      "upstreamSHA256": "033b1cfd7e87e783450c475ad98c4041c6c1633025d8a3b2a359a7a753a57ff7",
+      "candidateSHA256": "9a7ef7001134f0fe132e3e53e2dca488a2dec41f154a42ef056c1e14de2cea5e"
+    },
+    "close": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-close-C-20261101.py",
+      "upstreamSHA256": "eb7029da3a18c4b469b176ef97a4705015834da1d780c1c0423c4f0c58931e42",
+      "candidateSHA256": "d0812a3e300415b8f106cb588295834f4001477cfc7f1f04644a8d20800ea41d"
+    },
+    "watch": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-watch-C-20261101.py",
+      "upstreamSHA256": "42514e11ee36da57cf5a1a21eeca9410263547c2c09d9140edc2e5c2578ae302",
+      "candidateSHA256": "d7d0fb7d377030c236a54fc1191f8403c90e2f0d38893d93627f013cf71ed2d5"
+    },
+    "config-step": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-config-step-C-20261101.py",
+      "upstreamSHA256": "59327a48614596beff940504e3298f9b72d6988584c4b6da1f8019507c0ad810",
+      "candidateSHA256": "72a65989f82868eacc577530707c3b75f8b9909428c2ab2b8f8ddf228f1f7031"
+    },
+    "final-readback": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-final-readback-C-20261101.py",
+      "upstreamSHA256": "5563af940c691f86b36fe59ab9b00e7d0bdb191cb1b60d725de9571ac6d28c65",
+      "candidateSHA256": "f6f687d935c0e5c62d81c59357f7cb191a7b9a2383cde32505c0da23425b9cda"
+    },
+    "preflight": {
+      "upstream": "/private/tmp/otr-auth-diagnostic-preflight-C-20261101.py",
+      "upstreamSHA256": "04e373b9ab93eda884bd72bec31f7235cf2d414b07701c916888808c3cb34100",
+      "candidateSHA256": "a58ab9b4b3e3eee4520356e8b2680caa271406d99bd91e18f87e53921a741bc9"
+    }
+  },
+  "noFrozenSourceChanged": true,
+  "firstIntention": false,
+  "focusedRepairs": [
+    "Write root regex matches reviewed Write operator namespace",
+    "fresh-host reads/writes current W execution path",
+    "sign receipt label WRITE not B"
+  ]
+}
