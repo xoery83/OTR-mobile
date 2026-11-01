@@ -1,3 +1,23 @@
+# Fresh Claude QA — 2 November 2026
+
+Window80dd T20:21:06.131Z/D20:40:48.239Z Nov1UTC, no extension.
+Ownerb94 execution Gate verified; old f107/48dc late confirmation did not authorize
+fresh1d6 and no historical operation was replayed. Root EMPTY independentlyready
+20:25Z; Auth fixed issuer SQL verified20:27Z, console issuerREADY20:32Z.
+Real singleOTP/freshConsent/8tools/Guide/Trip/list/targetP3rev1 reads PASS.
+First actual failure: get_trip_item_edit_base AUTH_REQUIRED. Model's modePREVIEW
+remained an unsubmitted consumer permission card. No formalPreview receipt,
+no freshNotes approval, noApply. Fresh1d6 NOT_SUBMITTED; oldf107/9b UNKNOWN preserved.
+GPT not started. Finite-window execution has not achieved Consumer Edit PASS.
+
+Issuerwatch denyall verified20:39:03.396Z; normalgrant DELETE204/readabsence and
+owncontrolSession PASS_LOCAL_SCOPE_REFRESH_REVOKED, process exit0. ConsoleOAuthoff
+persisted, HookDISABLED retainedfunction, Site localhost3000 reload confirmed.
+Final independentSQL proves exact b0f7 denyall body/originalowner/invoker/searchpath
+and expectedACL. Root defaultcb71/3359/fbd independently restored20:39:46.679Z
+beforeD: health200/protected401, bothQAkeysabsent, Host/all23filesexact, timerinactive,
+shortlockreleased. Do not restore obsolete9fd2. See ops/auth-mcp-fresh-20261102/ACTIVE_STATE.json.
+
 # Auth V3 / closed OAuth continuation — 2 November 2026
 
 B1 private Realtime DTO/closed adapter/contract82b93537 implemented; independent10

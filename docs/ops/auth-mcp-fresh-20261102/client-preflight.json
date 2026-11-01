@@ -1,0 +1,1 @@
+{"observedAt": "2026-11-01T20:09:01.959168+00:00", "rows": [{"client": {"client_type": "public", "deleted_at": null, "id": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141", "redirect_uris": "https://claude.ai/api/mcp/auth_callback", "registration_type": "manual", "token_endpoint_auth_method": "none"}}], "sqlWrites": 0}

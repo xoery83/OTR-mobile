@@ -1,0 +1,1 @@
+{"observedAt": "2026-11-01T20:08:57.381082+00:00", "rows": [{"hook": {"acl": "{postgres=X/postgres,supabase_auth_admin=X/postgres}", "body": "b0f7eae14599bd32cb9430a59832c837", "config": ["search_path=pg_catalog"], "owner": "postgres", "securityDefiner": false}}], "sqlWrites": 0}

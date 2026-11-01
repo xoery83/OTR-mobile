@@ -1,0 +1,18 @@
+{
+  "gateSHA256": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "phase": "EMPTY",
+  "clientProfile": "Claude",
+  "windowStartedAtMs": 1793564466131,
+  "deadlineMs": 1793565648239,
+  "authQaConfig": "{\"version\":4,\"toolProfile\":\"SLICE1_NOTES_EDIT\",\"clientId\":\"d2b8167f-ee42-4ac1-b5ef-4dc003c0d141\",\"redirectUris\":[\"https://claude.ai/api/mcp/auth_callback\"],\"expiresAt\":1793565648239,\"businessAccess\":\"READ_WRITE\",\"consentNotBefore\":1793564466131,\"confirmations\":[]}",
+  "expectedCurrentContainerId": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+  "defaultContainerId": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+  "expectedCurrentConfigSHA256": "335997de5233bb374e49b62abf34e10231bbf2b3e4856228092b075111cc6c34",
+  "defaultConfigSHA256": "335997de5233bb374e49b62abf34e10231bbf2b3e4856228092b075111cc6c34",
+  "jointCloseReady": true,
+  "issuerCloseIndependentOfRuntimeId": true,
+  "issuerPlanSHA256": "dd553341cc9250c66895a8711fe805380304aa83e256f1befbc016c7114d34b1",
+  "normalControlObservedAt": "2026-11-01T20:10:48.239Z",
+  "notesApproved": false
+}
