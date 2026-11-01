@@ -35,3 +35,9 @@ QA keys absent, OAuth/Hookclosed, noT/D/OTP/Notes while this is pending. Softwar
 need not roll back: defaultclosed9fd2/ab77 remains qualified. All Root control-code
 work is locallycomplete and preserved; firstactual finite activation awaits Owner
 console recovery plus jointissuer/runtime closeREADY. Consumer remains NOT_RUN.
+
+Actual closed restore preflight alsoPASS09:33:37Z: same9fd2/defaulta6 healthy,
+no keys, lock0.14s; reviewed helpersstaged in exactwindow16d1bdd76f10420a8b0ddceb6be9fadf
+Host private directory. Dynamicclose pointer binds planSHAe82c0d2c/currentdefault9fd2.
+T/D remainnull, no timerarmed/noQAkey/OTP. All Root-side currentlylegal
+preparationcomplete; awaitingactualOwner console login andAuth controljointREADY.
