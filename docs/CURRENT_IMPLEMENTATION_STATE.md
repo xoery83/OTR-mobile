@@ -1,3 +1,23 @@
+# Native independent client sprint — 1 November 2026 NZ
+
+Active Native delivery tree: /private/tmp/otr-native-focused-main-20261101,
+main4e1-based, preserving reviewed trigger410a956b and all Auth main changes.
+A default-closed Realtime App mount now passes6s74/types/lint locally. Existing
+operational foreground/network/pause lifecycle and focused Trip context drive
+the reviewed trigger; scope checks reuse committed identity reads. Private port
+is undefined, no channel/Publisher/version endpoint enabled. New mount delta still
+needs independent batch Review; prior410 Review is not extended to new files.
+No shared main/Host/SQL/Provider/AD5/device action. Root Photo resources are free
+from Native and retained for Root per Owner priority; no expiry inferred.
+
+Next B: full synthetic P3 per-candidate/per-field draft confirmation in existing
+Create/Edit + Manual Save, then C family adapters, then D Enrichment Native.
+Earlier clock-only P3 prototype preserved asWIPff54bb8e in the separate backend
+candidate tree; do not call it full Scan. Core poolf70d69cf remains reviewed/not
+hosted-deployed in /private/tmp/otr-core-pool-release-f70d69cf.
+Unified dependencies: docs/NATIVE_INTEGRATION_GAP_REGISTER.md; do not request
+protected interfaces individually. Fixtures are not Hosted/Provider/physical PASS.
+
 # Native focused downstream checkpoint — 1 November 2026
 
 Installed iPad132 source95e3ffa4 (Native basis127, same bundle/profile/Session and

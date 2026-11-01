@@ -1,5 +1,7 @@
 import { coreUuid, coreRevision } from "@/domain/trip/tripCoreV2";
 import { AppState } from "react-native";
+import { createTripRealtimeTrigger } from "./tripRealtimeTrigger";
+import { tripPrivateSubscription } from "./tripPrivateSubscription";
 import {
   assertAccountRequestContext,
   type AccountScope,
@@ -188,60 +190,105 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
 
 let coordinator: ReturnType<typeof createTripDownstreamCoordinator> | undefined;
 let foregroundTrip: AccountRequestContext | null = null;
+let realtime: ReturnType<typeof createTripRealtimeTrigger> | undefined;
+let realtimeActive = false;
+
+// Lifecycle availability only; the owning port still supplies all authorization.
+export function setTripRealtimeActive(active: boolean) {
+  realtimeActive = active;
+  if (!active) realtime?.stop();
+  else void refreshTripRealtimeSubscription().catch(() => undefined);
+}
+export async function refreshTripRealtimeSubscription() {
+  if (!tripPrivateSubscription || !realtimeActive) return;
+  const target = foregroundTrip;
+  if (!target) {
+    realtime?.stop();
+    return;
+  }
+  const { requireAdoptedUserId } = await import("../auth/authRepository");
+  realtime ??= createTripRealtimeTrigger({
+    account: requireAdoptedUserId,
+    available: async () => {
+      if (!realtimeActive) return false;
+      const scope = await nativeReadScope();
+      return realtimeActive && scope !== null;
+    },
+    invalidate: invalidateTripFromCloud,
+    subscribe: tripPrivateSubscription,
+  });
+  if (!realtimeActive || foregroundTrip !== target) return;
+  await realtime.activate(target);
+}
 subscribeAccountGeneration(() => {
   foregroundTrip = null;
+  realtime?.stop();
 });
 
 export function observeForegroundTrip(context: AccountRequestContext) {
   if (context.generation !== getAccountGeneration()) return () => {};
   const lease = Object.freeze({ ...context });
+  const previous = foregroundTrip;
   foregroundTrip = lease;
+  if (
+    previous &&
+    (previous.tripId !== lease.tripId ||
+      previous.accountId !== lease.accountId ||
+      previous.generation !== lease.generation)
+  )
+    realtime?.stop();
+  void refreshTripRealtimeSubscription().catch(() => undefined);
   return () => {
     if (foregroundTrip !== lease) return;
     foregroundTrip = null;
+    realtime?.stop();
   };
 }
-async function nativeCoordinator() {
-  if (coordinator) return coordinator;
+async function nativeReadScope(): Promise<AccountScope | null> {
   const [
     { requireAdoptedUserId, readCommittedLocalPrincipal, readCommittedLocalSession },
     { isGeneralAccountCloudSyncEnabled },
     Network,
-    { notifyLedgerReadCompletion },
   ] = await Promise.all([
     import("../auth/authRepository"),
     import("./nativeTripQaScope"),
     import("expo-network"),
+  ]);
+  if (!isGeneralAccountCloudSyncEnabled() || AppState.currentState !== "active")
+    return null;
+  const generation = getAccountGeneration();
+  let principal, session;
+  try {
+    principal = await readCommittedLocalPrincipal();
+    session = await readCommittedLocalSession();
+  } catch {
+    return null;
+  }
+  if (
+    generation !== getAccountGeneration() ||
+    principal?.kind !== "ACCOUNT" ||
+    principal.accountId !== session?.identity?.userId
+  )
+    return null;
+  const { captureAccountScope } = await import("../auth/accountRequestContext");
+  const scope = await captureAccountScope(requireAdoptedUserId);
+  if (scope.accountId !== principal.accountId) return null;
+  const network = await Network.getNetworkStateAsync();
+  await assertAccountRequestContext(scope, requireAdoptedUserId);
+  return network.isConnected === false || network.isInternetReachable === false
+    ? null
+    : scope;
+}
+
+async function nativeCoordinator() {
+  if (coordinator) return coordinator;
+  const [{ requireAdoptedUserId }, { notifyLedgerReadCompletion }] = await Promise.all([
+    import("../auth/authRepository"),
     import("./ledgerOperationalSync"),
   ]);
   coordinator ??= createTripDownstreamCoordinator({
     account: requireAdoptedUserId,
-    async scope() {
-      if (!isGeneralAccountCloudSyncEnabled() || AppState.currentState !== "active")
-        return null;
-      const generation = getAccountGeneration();
-      let principal, session;
-      try {
-        principal = await readCommittedLocalPrincipal();
-        session = await readCommittedLocalSession();
-      } catch {
-        return null;
-      }
-      if (
-        generation !== getAccountGeneration() ||
-        principal?.kind !== "ACCOUNT" ||
-        principal.accountId !== session?.identity?.userId
-      )
-        return null;
-      const { captureAccountScope } = await import("../auth/accountRequestContext");
-      const scope = await captureAccountScope(requireAdoptedUserId);
-      if (scope.accountId !== principal.accountId) return null;
-      const network = await Network.getNetworkStateAsync();
-      await assertAccountRequestContext(scope, requireAdoptedUserId);
-      return network.isConnected === false || network.isInternetReachable === false
-        ? null
-        : scope;
-    },
+    scope: nativeReadScope,
     async discover(scope) {
       const [
         { createTripDiscoveryTransport, refreshTripDiscovery },

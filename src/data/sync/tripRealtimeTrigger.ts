@@ -17,6 +17,8 @@ type Dependencies = {
   ): Promise<() => void>;
 };
 
+export type TripPrivateSubscribe = NonNullable<Dependencies["subscribe"]>;
+
 // No default transport: absence of the owning authorization port stays closed.
 export function createTripRealtimeTrigger(deps: Dependencies) {
   let active:

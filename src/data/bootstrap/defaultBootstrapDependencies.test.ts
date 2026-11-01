@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   scheduleHealth: vi.fn(),
   downstream: vi.fn(),
   foregroundDownstream: vi.fn(),
+  realtimeActive: vi.fn(),
+  realtimeRefresh: vi.fn(async () => {}),
   appStateListener: null as ((state: string) => void) | null,
   networkListener: null as
     ((state: { isConnected?: boolean; isInternetReachable?: boolean }) => void) | null,
@@ -43,6 +45,8 @@ vi.mock("@/data/auth/authRepository", () => ({
 vi.mock("../sync/tripDownstreamCoordinator", () => ({
   refreshAccountTripReads: mocks.downstream,
   refreshForegroundTripReads: mocks.foregroundDownstream,
+  setTripRealtimeActive: mocks.realtimeActive,
+  refreshTripRealtimeSubscription: mocks.realtimeRefresh,
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => ({
@@ -615,4 +619,44 @@ it("F1: partial hydration then successful retry reloads the mounted My Ledger", 
   });
   expect(mounted.loads()).toBe(after);
   mocks.notify.mockReset();
+});
+
+it("mounts closed Realtime lifecycle on foreground/network and stops on pause/removal", async () => {
+  vi.resetModules();
+  vi.clearAllMocks();
+  mocks.downstream.mockResolvedValue(undefined);
+  mocks.foregroundDownstream.mockResolvedValue(undefined);
+  vi.useFakeTimers();
+  const api = await import("./defaultBootstrapDependencies");
+  const subscription = api.subscribeOperationalSyncLifecycle();
+  try {
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(true);
+    mocks.appStateListener?.("background");
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(false);
+    mocks.appStateListener?.("active");
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(true);
+    mocks.networkListener?.({ isConnected: false });
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(false);
+    mocks.networkListener?.({ isConnected: true });
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(true);
+    await vi.advanceTimersByTimeAsync(45_000);
+    expect(mocks.realtimeRefresh).toHaveBeenCalled();
+    await api.pauseOperationalSync();
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(false);
+    mocks.appStateListener?.("active");
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(false);
+  } finally {
+    subscription.remove();
+    expect(mocks.realtimeActive).toHaveBeenLastCalledWith(false);
+    const oldApp = mocks.appStateListener,
+      oldNetwork = mocks.networkListener;
+    mocks.realtimeActive.mockClear();
+    oldApp?.("active");
+    oldNetwork?.({ isConnected: true });
+    const lateCalls = mocks.realtimeActive.mock.calls.length;
+    subscription.remove();
+    vi.useRealTimers();
+    expect(lateCalls).toBe(0);
+  }
 });

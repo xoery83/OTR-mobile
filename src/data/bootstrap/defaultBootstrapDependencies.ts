@@ -37,6 +37,8 @@ import { AppState } from "react-native";
 import {
   refreshAccountTripReads,
   refreshForegroundTripReads,
+  refreshTripRealtimeSubscription,
+  setTripRealtimeActive,
 } from "../sync/tripDownstreamCoordinator";
 
 import type { LocalSession } from "@/domain/auth/localSession";
@@ -79,6 +81,9 @@ let syncPaused = false;
 let activeHealthTimer: ReturnType<typeof setInterval> | null = null;
 const ACTIVE_HEALTH_INTERVAL_MS = 15 * 60_000;
 const ACTIVE_TRIP_READ_INTERVAL_MS = 45_000;
+function updateTripRealtimeAvailability() {
+  setTripRealtimeActive(!syncPaused && syncOnline && syncActive);
+}
 
 export function subscribeOperationalSyncLifecycle() {
   let online: boolean | null = null;
@@ -89,8 +94,10 @@ export function subscribeOperationalSyncLifecycle() {
     let lastHealthAt = Date.now();
     activeHealthTimer = active
       ? setInterval(() => {
-          if (!syncPaused && syncOnline)
+          if (!syncPaused && syncOnline) {
             void refreshForegroundTripReads().catch(() => undefined);
+            void refreshTripRealtimeSubscription().catch(() => undefined);
+          }
           if (Date.now() - lastHealthAt >= ACTIVE_HEALTH_INTERVAL_MS) {
             lastHealthAt = Date.now();
             void scheduleAutomaticDataHealth("PERIODIC").catch(() => undefined);
@@ -100,18 +107,22 @@ export function subscribeOperationalSyncLifecycle() {
   };
   syncActive = AppState.currentState === "active";
   updateActiveTimer(syncActive);
+  updateTripRealtimeAvailability();
   void Network.getNetworkStateAsync()
     .then((state) => {
       if (liveConnectivity || removed) return;
       online = isOnline(state);
       syncOnline = online;
+      updateTripRealtimeAvailability();
       if (!online) scheduleOperationalReadRetry(null);
     })
     .catch(() => undefined);
   const appState = AppState.addEventListener("change", (state) => {
+    if (removed) return;
     const active = state === "active";
     updateActiveTimer(active);
     syncActive = active;
+    updateTripRealtimeAvailability();
     if (!active) {
       scheduleOperationalReadRetry(null);
       return;
@@ -120,11 +131,13 @@ export function subscribeOperationalSyncLifecycle() {
     void scheduleAutomaticDataHealth("FOREGROUND").catch(() => undefined);
   });
   const network = Network.addNetworkStateListener((state) => {
+    if (removed) return;
     liveConnectivity = true;
     const next = isOnline(state);
     const restored = next && online === false;
     online = next;
     syncOnline = next;
+    updateTripRealtimeAvailability();
     if (!next) scheduleOperationalReadRetry(null);
     if (restored) {
       void resumeOperationalSync().catch(() => undefined);
@@ -139,6 +152,7 @@ export function subscribeOperationalSyncLifecycle() {
   return {
     remove() {
       removed = true;
+      setTripRealtimeActive(false);
       appState.remove();
       network.remove();
       unsubscribeSync();
@@ -148,6 +162,7 @@ export function subscribeOperationalSyncLifecycle() {
 }
 
 export function resumeOperationalSync() {
+  updateTripRealtimeAvailability();
   if (syncPaused || !syncOnline || !syncActive) return Promise.resolve();
   // Pull is independent of local mutation work and never blocks cached launch.
   void refreshAccountTripReads().catch(() => undefined);
@@ -162,6 +177,7 @@ export function resumeOperationalSync() {
 
 export async function pauseOperationalSync() {
   syncPaused = true;
+  updateTripRealtimeAvailability();
   // Read callbacks are generation-fenced; only durable mutation work must drain.
   await pauseLedgerOperationalSync();
 }
@@ -170,6 +186,7 @@ export async function restartOperationalSync() {
   if (!(await readLocalSession())?.identity?.userId) return;
   allowLedgerOperationalSync();
   syncPaused = false;
+  updateTripRealtimeAvailability();
   void reactivateLongLivedLedgerFailures()
     .catch(() => undefined)
     .then(() => resumeOperationalSync())

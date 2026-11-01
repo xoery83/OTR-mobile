@@ -1,0 +1,49 @@
+{
+  "status": "APP_LIFECYCLE_DEFAULT_CLOSED_LOCAL_PASS",
+  "at": "2026-11-01T05:40:18.574654+00:00",
+  "base": "main4e1bedfc merged into existingNative validation branch;410 reviewed trigger preserved",
+  "golden": "normal operational lifecycle/foregroundTrip \u2192 optional trigger \u2192 existing invalidate; disabled adapter performs zero channel/identity/network reads",
+  "mount": [
+    "foreground/cold and network availability",
+    "Account generation synchronous close",
+    "Trip focus/exit and stale cleanup fence",
+    "pause/removal synchronous stop",
+    "45s existing foreground tick reconcile; initial catch-up after reconnect"
+  ],
+  "adapter": "tripPrivateSubscription exports undefined; no runtime enable flag/private transport",
+  "reuse": "committed Account/Session/network scope predicate extracted unchanged; no identity selection/migration; existing Downstream remains Reader/backoff/notify owner",
+  "actualFailures": [
+    "missing lifecycle callbacks (new fixture RED)",
+    "removed listeners still invoked availability3 times (controlled logical RED)"
+  ],
+  "tests": {
+    "suites": 6,
+    "tests": 74,
+    "types": "PASS",
+    "lint": "PASS",
+    "evidence": "/private/tmp/otr-realtime-app-mount-tests.log",
+    "lateGuardRed": "/private/tmp/otr-realtime-mount-late-logical-red.log"
+  },
+  "independentReview": "410 base review preserved; new mount delta queued for final client batch review, NOT covered by prior Review",
+  "notQualified": [
+    "real private authorization/revocation",
+    "publisher",
+    "cheap hosted version read",
+    "device/private multiplayer/latency PASS"
+  ],
+  "mutations": {
+    "Host": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "AD5": 0,
+    "main": 0
+  },
+  "hashes": {
+    "src/data/bootstrap/defaultBootstrapDependencies.ts": "9cbd6673665d1e9213a80827a139aadca45f709bd41bb1c91447c3545e6ac73b",
+    "src/data/bootstrap/defaultBootstrapDependencies.test.ts": "48ec268a9fba2146580ebaf4545b37f3518b1ae8d3b35508ef5547bb861a4e74",
+    "src/data/sync/tripDownstreamCoordinator.ts": "8672872aca339768551e192f301eda1df8eb422e43e54e316e1fd4b87e0e0cc7",
+    "src/data/sync/tripRealtimeTrigger.ts": "f332640b600096e04acc303a95053800c0991c0d2ab691eb9abf64263c662fb7",
+    "src/data/sync/tripPrivateSubscription.ts": "2e42e993435acdd85fcc5e5da7a716b0b1324f6ce7a7c3c31e958f2a6efc46e2",
+    "src/data/sync/tripRealtimeMount.test.ts": "f53e2093c6c244671e2227dfb0bb2d5336e228d7a2e87d960deffbf66741a199"
+  }
+}
