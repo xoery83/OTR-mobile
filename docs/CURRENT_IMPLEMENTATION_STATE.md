@@ -1065,3 +1065,9 @@ recovery lacks usage history. No client filtering/admin credential or second led
 added. Existing UI staysUnavailable/allowanceunknown/enforcementoff. Meter owner
 was asked for persistent trusted-Account filtering before safe projection. See
 architecture/AUTH_ACCOUNT_USAGE_READER_GAP_V1.md.
+
+ProfileAKA exact install candidate c84671f4/manifest875ab566 is independently
+NO_BLOCKER_LOCAL_ONLY, pure2/installPG7 PASS plus reused bodyPG12. Frozen old
+package unchanged; new marker rejects old approval. Owner Gate draft remains
+NOT_REQUESTED/NOT_AUTHORIZED; no Hosted metadata claim/install/activation. Root
+fresh object/defaultACL/Auth dependencies and client compatibility are mandatory.

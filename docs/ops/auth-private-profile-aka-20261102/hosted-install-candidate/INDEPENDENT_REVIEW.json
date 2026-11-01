@@ -1,0 +1,24 @@
+{
+  "status": "NO_BLOCKER_LOCAL_PRIVATE_AKA_EXACT_INSTALL_CANDIDATE",
+  "independentReviewer": "auth_phase1_review",
+  "independentPureTests": "2/2_PASS",
+  "implementationNetworkNonePgInstall": "7_PASS",
+  "akaBodyPgEvidence": "12_PASS_REUSED_SAME_BODY_HASH",
+  "sourceSHA256": {
+    "render_install.py": "32e90485c5e8c0e30272900c53ea83c898102974461acf52ce3d926e446ea37a",
+    "test_render_install.py": "3653a4b3bfd60d73baadadb7a58ed5dec14d4302f4ebae2e36499a394e36fd1d",
+    "probe_install.py": "845ea562bcd1d1091ee72ceabf9c43787cbbc936f72f14332b3d3a7616137c28",
+    "INSTALL_CANDIDATE.sql": "c84671f456f4b0a850ae14dec9bf842b769cbab419e6398d1fefc1422ce6420d",
+    "CANDIDATE_MANIFEST.json": "e15286a80f25c185bf314600029f23153913151f2c6d6d50f092c4b16a55cbc3",
+    "LOCAL_INSTALL_RESULT.json": "0ded4878817fbda669ae142bb5fb971db35f1d6462516e2c16816b47ff169197",
+    "OWNER_GATE_DRAFT.md": "6f34d1431b00cf12a858ca8e003a62ac24073cebfa7b726be2b6aa6457a89d98"
+  },
+  "checks": [
+    "Exact old installer single body+marker replacement",
+    "Fixed three-source hashes, no arbitrary SQL path",
+    "Old marker cannot authorize AKA SQL",
+    "Original project/postgres/database/absence/transaction/timeout/ACL/RLS guards retained"
+  ],
+  "authority": "NO_OWNER_APPROVAL_NO_HOSTED_READ_OR_INSTALL",
+  "activation": "CLOSED_PENDING_FRESH_METADATA_AND_STRICT_CLIENT_QUALIFICATION"
+}

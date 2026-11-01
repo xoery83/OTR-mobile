@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_QUALIFIED_CANDIDATE_NOT_REQUESTED_OR_AUTHORIZED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "sourceProfileCommit": "3beeb2c8",
+  "bodySHA256": "550a36d72333c970b564c759aa6446c85705409401748358cceb99bfc6053608",
+  "installSHA256": "c84671f456f4b0a850ae14dec9bf842b769cbab419e6398d1fefc1422ce6420d",
+  "approvalMarker": "OTR_PRIVATE_PROFILE_AKA_DEV_INSTALL_20261102_V1",
+  "newTables": 2,
+  "newFunctions": 2,
+  "newPolicies": 2,
+  "newRoles": 0,
+  "executionAllowed": false,
+  "hostedReadPerformed": false,
+  "hostedWrites": 0,
+  "businessDataMigration": false,
+  "runtimeWired": false,
+  "cloudUiEnabled": false,
+  "strictClientQualificationRequired": true,
+  "tests": {
+    "pureRender": 2,
+    "isolatedInstall": 7,
+    "sameBodyDomainRlsCasAndLegacyReplay": 12
+  },
+  "files": {
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/INSTALL_CANDIDATE.sql": "c84671f456f4b0a850ae14dec9bf842b769cbab419e6398d1fefc1422ce6420d",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/OWNER_GATE_DRAFT.md": "6f34d1431b00cf12a858ca8e003a62ac24073cebfa7b726be2b6aa6457a89d98",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/render_install.py": "32e90485c5e8c0e30272900c53ea83c898102974461acf52ce3d926e446ea37a",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/test_render_install.py": "3653a4b3bfd60d73baadadb7a58ed5dec14d4302f4ebae2e36499a394e36fd1d",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/probe_install.py": "845ea562bcd1d1091ee72ceabf9c43787cbbc936f72f14332b3d3a7616137c28",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/LOCAL_INSTALL_RESULT.json": "0ded4878817fbda669ae142bb5fb971db35f1d6462516e2c16816b47ff169197",
+    "docs/ops/auth-private-profile-aka-20261102/private-profile.body.sql": "550a36d72333c970b564c759aa6446c85705409401748358cceb99bfc6053608",
+    "docs/ops/auth-private-profile-aka-20261102/LOCAL_PG_RESULT.json": "13bc860bc231f439fc450f6edb2be439a23c1324d7e1ca58763ff1c7b205fc52"
+  },
+  "candidateSHA256": "875ab566a6d005078e6d555b57d3ae0fa83c60a5543b379419832f00662898ff"
+}
