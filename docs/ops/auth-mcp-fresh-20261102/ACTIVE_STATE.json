@@ -58,7 +58,7 @@
   },
   "focusedReadComparison": {
     "artifact": "MCP docs/mcp/slice1/AUTH_REQUIRED_READ_COMPARISON.json",
-    "artifactSHA256": "8f92fea7b502c3135a7f3d07f3a145cafa2db8bdf057ef69911039c5851eebde",
+    "artifactSHA256": "d23896daaa86716fdadeb14c113d7249243427a2782ff0e9c9d55f4b55ca83ef",
     "captureKind": "UI-rendered transcript; no per-request HTTP/JWT evidence",
     "sharedAuthority": "same normal grant binding and same Core canReadTrip(actor,trip); both read-scope",
     "itemPath": "objects/ITEM read",
@@ -70,6 +70,16 @@
     "rootCause": "UNPROVEN",
     "diagnosticCandidate": "609184bb LOCAL_PASS NOT_DEPLOYED",
     "newWindowRequested": false,
-    "writeReplayAttempted": false
+    "writeReplayAttempted": false,
+    "artifactCommit": "4b66715c",
+    "actualCoreAssembly": {
+      "source": "Root fixed actual fbd compatible diagnostic assembly",
+      "pgReaderSHA256": "5c82e2c34e11eadfc8de0ea937c52b78ec43ad0899d08927543da7e5d7f33996",
+      "httpSHA256": "9b3d93443c6309dfd9771e53fd26d211fa8b3a045270f64ed51e76e488dec4a5",
+      "sharedReader": "collection and item both snapshot -> qualifiedSnapshot -> readSnapshot",
+      "identityQualification": "same principal, finiteScope, actor, runtimeGate and state",
+      "additionalEditBaseCost": "second snapshot plus collection hash validation; no extra scope",
+      "longBranchCoreFilesByteIdentical": false
+    }
   }
 }
