@@ -44,7 +44,14 @@
     "no hosted/SQL/Provider/AD5/DeviceHub/main operation",
     "no new repository/Queue/retry engine"
   ],
-  "independentReview": "PENDING_NONBLOCKING",
+  "independentReview": {
+    "status": "NO_BLOCKER_ACCOUNT_TRIP_CLIENT_INTERFACE_ONLY",
+    "independentSuites": 2,
+    "independentTests": 21,
+    "receipt": "INDEPENDENT_REVIEW.json",
+    "curatedCandidate": "410a956b",
+    "sourceHashesMatched": true
+  },
   "files": {
     "src/data/sync/tripRealtimeTrigger.ts": "3f73e3fcc6a655d833e644409852cc6256dea1d99805e497240aebc46677e0bb",
     "src/data/sync/tripRealtimeTrigger.test.ts": "842594c9c7bf19264ef1eda6f58358b3c92e411c09fcf01a2cac988626820b8d",
