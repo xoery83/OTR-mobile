@@ -1051,3 +1051,10 @@ new separate SQL candidate550a36d7; independent46 changed tests/Review, author65
 focused/types/lint and isolatedPG12 PASS. Old payload/digest/receipt unchanged;
 local globalAkaDraft not uploaded. No Hosted install/activation. Older strict
 clients require rollout qualification before returning new field; not CloudReady.
+
+MCP closed packagingc32db38b independently reproduces GuideSDK3b5/runtimea056;
+freshfixture88fe07f7 exact6d5 separately guarded15 tests/Review. Originalc87/7832
+pins unchanged. Root handoff limits assembly to2Auth source files+fixedQAasset+
+SDK runtime, preserving actual Photo/Core; no deployment/window or newcase write
+authority. Independent new target proposal is not f107 recovery. MCP coordinates
+one future Gate; actualPreview Notes confirmation only once in Auth chat.
