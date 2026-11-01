@@ -6,5 +6,6 @@
   "closeCurrentSHA256": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
   "checks": "9 CAS focused checks, 3 actualcloseentry RED/GREEN/control checks; exact original default restored and all otherHost drift rejected",
   "liveConsumerPassClaim": false,
-  "notesApproval": false
+  "notesApproval": false,
+  "adjacentConfirmPlan": "NO_BLOCKER: same proven normalization only; current host exact active pin and original default restore pin remain distinct; actual make_plan\u2192CAS fixture passes, true/network drift denied"
 }

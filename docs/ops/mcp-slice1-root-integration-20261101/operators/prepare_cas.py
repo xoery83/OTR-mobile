@@ -1,5 +1,5 @@
 """Pure plan construction from fresh Host snapshots; never copies Env into a plan."""
-from config_cas import GATE, WRITE, READ, HELPER_SHA, validate_config
+from config_cas import GATE, WRITE, READ, HELPER_SHA, validate_config, same_host
 from deploy import digest, environment, mounts
 
 def make_plan(request, current, default, template, now):
@@ -10,7 +10,7 @@ def make_plan(request, current, default, template, now):
     assert digest(current['Config']) == request['expectedCurrentConfigSHA256']
     assert default['Id'] == request['defaultContainerId'] and digest(default['Config']) == request['defaultConfigSHA256']
     assert current['Image'] == default['Image'] and current['State']['Health']['Status'] == 'healthy'
-    assert current['HostConfig'] == default['HostConfig'] and mounts(current) == mounts(default)
+    assert same_host(current, default) and mounts(current) == mounts(default)
     e, baseline = environment(current), environment(default)
     assert READ not in e and WRITE not in baseline and READ not in baseline
     assert {k:v for k,v in e.items() if k != WRITE} == baseline
@@ -37,7 +37,7 @@ def make_plan(request, current, default, template, now):
         'beforeContainerId':current['Id'], 'defaultContainerId':default['Id'], 'candidateImage':default['Image'],
         'beforeConfigSHA256':digest(current['Config']), 'beforeHostConfigSHA256':digest(current['HostConfig']),
         'beforeEnvironmentSHA256':digest(e), 'beforeAuthQaConfig':e.get(WRITE),
-        'expectedConfigSHA256':digest(config), 'expectedHostConfig':default['HostConfig'], 'expectedMounts':mounts(default),
+        'expectedConfigSHA256':digest(config), 'expectedHostConfig':current['HostConfig'], 'expectedMounts':mounts(default),
         'beforeConfigHashes':template['beforeConfigHashes'], 'mountedFileHashes':template['mountedFileHashes'],
         'bundles':template['bundles'], 'protectedRoutes':template['protectedRoutes'], 'restoreBaseline':restore,
         'containerName':'otr-mcp-slice1-'+request['phase'].lower()+'-'+window,
