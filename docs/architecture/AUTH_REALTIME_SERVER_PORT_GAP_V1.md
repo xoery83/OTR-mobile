@@ -65,3 +65,20 @@ shared interface change has been silently introduced.
 Root/Core and Native were sent these exact interface questions on2 November2026.
 No deployment, SQL/ACL/RLS/GRANT, Session, OAuth, device, Provider or business write
 was performed for this assessment. Server/E2E negatives remain outstanding.
+
+## Delivered next seam, 2 November2026
+
+Core Writer fixed `bace5af8` now provides the unmounted actor-bound metadata
+observation in `tripCoreRealtimeQualification.ts`. Its explicit coreEpoch and
+coreAccessRevision remain NOT_A_PRIVATE_JOIN_LEASE. It reuses Core transaction,
+principal, finite/runtime checks and Actor lock without graph reads. Its mapping
+is NOT_MAPPABLE when scope/epoch differs or the Auth transition receipt is absent.
+This advances the qualification seam; it does not supply private admission or a
+revoke/regrant producer.
+
+Auth fixed `ddbcedd8` supplies a separate normal-Auth admission guard with a mandatory
+atomic port. A focused integration negative rejects the exact Core observation as
+a lease. Nothing invokes Native numeric revoke, derives Auth revisions, adds a
+permission ledger, mounts a transport or changes Hosted permission. Remaining
+owning work is the actual atomic current-Session/Actor/private join and immutable
+transition producer/mapping, plus server expiry/revoke and post-commit publisher.

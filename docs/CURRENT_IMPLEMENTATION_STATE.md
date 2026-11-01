@@ -1087,3 +1087,10 @@ Native latest525c6ecc/product3391QA142/SQLite77 cold/FormCancelPASS; Auth client
 64038e6b remainsunmounted. FixedClaude/GPT ops candidate independently selftest+8
 fakeSQLPASS; Claude output unchanged, only two registeredclients single-selection.
 B94 freshGate stillWAIT_HUMAN; noSQL/OTP/window or actualGPTPASS.
+
+LatestB1 serverguardddbcedd8 and two-clientopsc8c145bd are fixed/pushed. Core
+bace5af8 metadata observation source reviewed for compatibility; exactshape test
+rejects promotion to privatelease, mapping remainsNOT_MAPPABLE without actual
+Authtransitionreceipt. Native525c6ecc/QA142 remains actual local baseline, no new
+device/Hosted action. B94singleexecutionquestion remainspending inMCP; Notes later
+onlyAuthdirecthuman afterrealPreview, no newwindow clock or OTP.
