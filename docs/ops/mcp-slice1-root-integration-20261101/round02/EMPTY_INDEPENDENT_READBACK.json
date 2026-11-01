@@ -1,0 +1,14 @@
+{
+  "status": "INDEPENDENT_EMPTY_READBACK_PASS",
+  "checkedAt": "2026-11-01T17:32:11.643843+00:00",
+  "windowId": "bb5ba3063468437ca608910bf84eaacf",
+  "containerId": "68d2a7ba739681df9e9cc4af79ae49cd8446898f4f5cacde48b6843fd2deaae5",
+  "configSHA256": "47566502b103ece784cc7fae8c43ee965b2bda28680d8519b5e6e850dcf944b1",
+  "health": "healthy",
+  "confirmations": [],
+  "readKeyAbsent": true,
+  "all23FilesMatch": true,
+  "pointerBound": true,
+  "runtimeCloseTimer": "active",
+  "deadlineMs": 1793555891178
+}
