@@ -1,0 +1,22 @@
+{
+  "status": "ROOT_REPORTED_READY_DEFAULT_CLOSED_PREBUILD_NOT_DEPLOYED",
+  "source": "Root owning Writer handoff, 2 November2026",
+  "imageDigestPrefix": "fbd9074e",
+  "captureSHA256Prefix": "8bb2",
+  "runtimeSHA256": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+  "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+  "fixtureSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "fullImageAndCaptureDigests": "Root supplied to MCP; abbreviated values here are not executable pins",
+  "candidateBackendCalls": 0,
+  "activeService": "UNCHANGED_9FD2_A6_AB77_HEALTHY_NO_QA_KEYS",
+  "freshCasPrefix": "0ba00b",
+  "rootReportedCasChecks": "6 focused and independent prepared NO_BLOCKER",
+  "notesConfirmationSource": "AUTH_DIRECT_HUMAN_ONLY_AFTER_ACTUAL_PREVIEW",
+  "hostPackage": "/opt/otr/dev-backend/build/mcp-slice1-fresh-closed-20261102",
+  "deployed": false,
+  "oauthActivated": false,
+  "otpSent": false,
+  "windowStarted": false,
+  "historicalF107": "UNKNOWN_PRESERVED_NO_REPOST",
+  "next": "MCP presents one exact finite Gate; no automatic activation or deployment"
+}

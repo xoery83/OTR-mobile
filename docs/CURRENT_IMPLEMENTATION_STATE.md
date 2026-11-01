@@ -1071,3 +1071,10 @@ NO_BLOCKER_LOCAL_ONLY, pure2/installPG7 PASS plus reused bodyPG12. Frozen old
 package unchanged; new marker rejects old approval. Owner Gate draft remains
 NOT_REQUESTED/NOT_AUTHORIZED; no Hosted metadata claim/install/activation. Root
 fresh object/defaultACL/Auth dependencies and client compatibility are mandatory.
+
+Root reports actual default-closed image prebuildREADY fbd9074e/Capture8bb2/
+runtimea056/SDK3b5/freshfixture6d5, backendCalls0. ActiveDEV remains9fd2/a6/ab77
+healthy/noQAkeys; no deployment/OTP/window. Root FreshCAS preparation6 tests and
+independentReview PASS, Notes proof only Auth-direct human after actualPreview.
+Full executable digests are supplied by Root to MCP; see ROOT_FRESH_PREBUILD_HANDOFF
+for provenance, not a deployment authority. MCP coordinates one next preciseGate.
