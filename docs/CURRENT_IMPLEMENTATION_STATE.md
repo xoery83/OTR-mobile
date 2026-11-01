@@ -111,11 +111,14 @@ actorAccountId/tripId/actorPersonId/coreEpoch/coreAccessRevision only. NOT_A_PRI
 no real Auth transition receipt means NOT_MAPPABLE, including cross epoch. 16 tests
 independently PASS. Auth accepted shape and receives candidate; no SQL/Host changes.
 
-Fresh MCP recovery assembly fixed91465118 READY, NOT DEPLOYED. Candidate image
+Fresh MCP recovery assembly fixed91465118 deployed after verified b94fd543 direct
+human approval01a198b7-8d65-7023-ad66-234131d23f70. Default-closed image
 fbd9074e/runtimea0560110/SDK3b5ceca5 preserves actual compatible base with only
-2 Auth diagnostic sources and distinct fresh QA fixture changed. Original9fd2/a6/ab77
-still running closed at last readback. MCP b94fd543 exact Owner execution question
-WAITING_HUMAN: no new clock/OTP/deploy; oldf107 remainsUNKNOWN. Subsequent actual
+2 Auth diagnostic sources and distinct fresh QA fixture changed. New defaultcb71e00e/config335997de/imagefbd health and all23files/4bundles
+independently verified20:07:56Z Nov1 (09:07:56NZDT Nov2), QAkeysabsent. Shortlock
+released20:07:17Z. Old9fd2 retained only as software rollback; finite close must
+restore newcb71 default. Auth/MCP preparing fresh finite window, noT/D/OTP yet;
+oldf107 remainsUNKNOWN. Subsequent actual
 Notes approval comes only from direct Auth human after actual Preview.
 
 Continue C2 existing sandbox/IPC adapter candidate and C3 Native integration independently.

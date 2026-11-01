@@ -1,0 +1,24 @@
+{
+  "status": "HANDOFF_VERIFIED_DEFAULT_CLOSED",
+  "at": "2026-11-01T20:07:56.035390+00:00",
+  "containerId": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+  "image": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66",
+  "configSHA256": "335997de5233bb374e49b62abf34e10231bbf2b3e4856228092b075111cc6c34",
+  "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "qaKeysAbsent": true,
+  "unchangedFiles": 23,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+    "server-capture.mjs": "8bb2dfba6f5c8c012491c2b42a47d8f876e73a51b9d35192beab286adc627c1d",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "http": {
+    "/health": 200,
+    "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/collection": 401,
+    "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/authorized-version": 401
+  },
+  "shortLockReleased": true,
+  "retainedSoftwareRollback": "9fd2b8283c82ac457d1c2aac1fd8bcaa828a57bdf1006b3670a2baf8ea7301f9"
+}
