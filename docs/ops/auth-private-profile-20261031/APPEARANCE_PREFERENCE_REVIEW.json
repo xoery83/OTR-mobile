@@ -1,0 +1,27 @@
+{
+  "status": "NO_BLOCKER_DEVICE_LOCAL_APPEARANCE_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "sourceSHA256": {
+    "src/native/uiAppearancePreference.ts": "ade7a7d5fc84d1ebed32e997335b2ad90b71d6161b717608bf4db55cc20f4423",
+    "src/native/uiAppearancePreference.test.ts": "767b996a04f79c42e36012d688db4af68edd940e3cbebca81e74b27f75ff8faa"
+  },
+  "independentTests": "7/7 PASS after focused repairs",
+  "resolvedFindings": [
+    "Rapid first-success/latest-failure left durable and in-memory values inconsistent. Successful serialized writes now apply in order; latest failure preserves the last successful appearance and module-reopen hydration matches.",
+    "Hydration beginning after explicit choice could race with its pending persistence. Hydration now skips after any explicit choice begins; existing generation check rejects a hydration started before a newer choice."
+  ],
+  "verified": [
+    "Choices remain system/light/dark and device-local only. No Account/cloud/session state or token source is added.",
+    "RN installed Appearance.js explicitly treats unspecified as system appearance; system mapping matches this API.",
+    "Invalid stored values are ignored, invalid caller values do not write, write failure leaves current successful state and later choices remain usable."
+  ],
+  "peopleFollowup": {
+    "status": "NO_BLOCKER_PREVIOUS_REVIEW_PRESERVED",
+    "changes": "useState captures original draft without render ref reads; uppercase error enum and mount-only scope explanation preserve Account/generation/draft-port fences."
+  },
+  "limitations": [
+    "SecureStore and Appearance are mocked in tests; no device/Host/network/real Keychain access.",
+    "No normal Settings wiring or Native persistence E2E accepted."
+  ],
+  "findings": []
+}

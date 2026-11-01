@@ -53,9 +53,9 @@ function AddTravelerForm({ onClose, onSave, draft }: Props) {
   const [failed, setFailed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ready, setReady] = useState(!draft);
-  const [draftError, setDraftFeedback] = useState<"LOAD_FAILED" | "SAVE_FAILED" | null>(
-    null,
-  );
+  const [draftError, setDraftFeedback] = useState<{
+    key: "people.draftLoadFailed" | "people.draftSaveFailed";
+  } | null>(null);
   const [generation] = useState(currentGeneration);
   const alive = useRef(true);
   const running = useRef(false);
