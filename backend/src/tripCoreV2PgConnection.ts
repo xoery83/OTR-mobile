@@ -1,6 +1,6 @@
 import { checkServerIdentity } from "node:tls";
 import type { Duplex } from "node:stream";
-import { Client } from "pg";
+import { Client, Pool, type PoolClient } from "pg";
 import { z } from "zod";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
 const configSchema = z.strictObject({
@@ -24,7 +24,7 @@ const configSchema = z.strictObject({
 });
 export type CorePgConfig = z.input<typeof configSchema>;
 // Dormant until a separately accepted dedicated primary principal is provisioned.
-// Each operation owns a fresh session; no role/GUC/aborted transaction can leak to another actor.
+// Core reuses a physical connection only after verified transaction/session cleanup.
 export function createCorePgConnection(input: CorePgConfig): CorePgConnection {
   // Sealed Source admission revalidates evidence; the 90s Import request covers FIFO + lease.
   return createOwningPgConnection(input, "otr_trip_core_v2_gateway", {
@@ -67,9 +67,10 @@ function createOwningPgConnection(
   budget = { idleMs: 5000, leaseMs: 30000 },
 ): CorePgConnection {
   const config = configSchema.parse(input);
+  let pool: Pool | undefined;
   let occupied = false;
   const waiters = new Set<() => void>();
-  // The Core principal has one connection: bound contention without reusing actor sessions.
+  // The Core principal retains its one-connection FIFO and bounded waiters.
   async function acquire() {
     if (!occupied) {
       occupied = true;
@@ -99,9 +100,9 @@ function createOwningPgConnection(
   return {
     async withLease(work) {
       await acquire();
-      let client: Client;
+      let client: Client | PoolClient | undefined;
       try {
-        client = new Client({
+        const options = {
           ...config,
           user: principal,
           connectionTimeoutMillis: 3000,
@@ -109,26 +110,51 @@ function createOwningPgConnection(
           ssl: {
             rejectUnauthorized: true,
             ...(config.ca ? { ca: config.ca } : {}),
-            checkServerIdentity: (_host, certificate) =>
-              checkServerIdentity(config.host, certificate),
+            checkServerIdentity: (
+              _host: string,
+              certificate: Parameters<typeof checkServerIdentity>[1],
+            ) => checkServerIdentity(config.host, certificate),
           },
           options: `-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=${budget.idleMs}`,
-        });
+        };
+        if (principal === "otr_trip_core_v2_gateway") {
+          if (!pool) {
+            pool = new Pool({
+              ...options,
+              max: 1,
+              idleTimeoutMillis: 60_000,
+              maxLifetimeSeconds: 120,
+              allowExitOnIdle: true,
+            });
+            // pg has already removed a failed idle client before emitting this event.
+            pool.on("error", () => {});
+          }
+        } else client = new Client(options);
       } catch (error) {
         release();
         throw error;
       }
       let retired = false,
+        returned = false,
+        successful = false,
         querying = false,
         finished = false;
       const retire = () => {
         retired = true;
+        if (pool) {
+          if (client && !returned) {
+            returned = true;
+            client.removeListener("error", retire);
+            (client as PoolClient).release(true);
+          }
+          return;
+        }
         (
           client as Client & { connection?: { stream?: Duplex } }
         ).connection?.stream?.destroy();
-        void client.end().catch(() => {});
+        void (client as Client).end().catch(() => {});
       };
-      client.on("error", retire);
+      client?.on("error", retire);
       let timeout: ReturnType<typeof setTimeout> | undefined;
       try {
         const deadline = new Promise<never>((_, reject) => {
@@ -138,28 +164,40 @@ function createOwningPgConnection(
           }, budget.leaseMs);
         });
         const operation = async () => {
-          await client.connect();
+          if (pool) {
+            const connected = await pool.connect();
+            if (retired) {
+              connected.release(true);
+              throw new Error("CORE_CONNECTION_RETIRED");
+            }
+            client = connected;
+            client.on("error", retire);
+          } else await client!.connect();
           if (retired) throw new Error("CORE_CONNECTION_RETIRED");
+          const physical = client!;
           const identity = (
-            await client.query(
-              "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
+            await physical.query(
+              pool
+                ? "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery,(SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname=session_user) AS login,(SELECT rolvaliduntil IS NULL OR rolvaliduntil>clock_timestamp() FROM pg_catalog.pg_roles WHERE rolname=session_user) AS unexpired"
+                : "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
             )
           ).rows;
           if (
             identity.length !== 1 ||
             identity[0].principal !== principal ||
             identity[0].role !== principal ||
-            identity[0].recovery !== false
+            identity[0].recovery !== false ||
+            (pool && (identity[0].login !== true || identity[0].unexpired !== true))
           )
             throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
           const lease: CorePgLease = {
             retire,
             async query(sql, parameters = []) {
-              if (retired || querying || finished)
+              if (retired || returned || querying || finished)
                 throw new Error("CORE_CONNECTION_RETIRED");
               querying = true;
               try {
-                const result = await client.query(sql, [...parameters]);
+                const result = await physical.query(sql, [...parameters]);
                 if (retired) throw new Error("CORE_CONNECTION_RETIRED");
                 if (sql === "COMMIT" || sql === "ROLLBACK") finished = true;
                 return { rows: result.rows };
@@ -178,10 +216,25 @@ function createOwningPgConnection(
           if (!finished || retired) throw new Error("CORE_TRANSACTION_UNFINISHED");
           return result;
         };
-        return await Promise.race([operation(), deadline]);
+        const result = await Promise.race([operation(), deadline]);
+        successful = true;
+        return result;
       } finally {
         if (timeout) clearTimeout(timeout);
-        retire();
+        if (pool && client && successful && finished && !retired) {
+          try {
+            // Do not hand the FIFO slot to another actor until cleanup or destruction.
+            await client.query("DISCARD ALL");
+            client.removeListener("error", retire);
+            if (!retired && !returned) {
+              returned = true;
+              (client as PoolClient).release();
+            }
+          } catch {
+            // Cleanup cannot replace a result whose owning transaction already committed.
+            retire();
+          }
+        } else retire();
         release();
       }
     },

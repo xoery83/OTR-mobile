@@ -1,13 +1,23 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { coreTableSchemas } from "../../src/domain/trip/tripCoreV2";
-import { emptyCoreGraph, type CoreActor } from "../../src/domain/trip/tripCoreV2Mutation";
+import {
+  applyCoreCommand,
+  emptyCoreGraph,
+  type CoreActor,
+  type CoreGraph,
+} from "../../src/domain/trip/tripCoreV2Mutation";
+import { ordinaryFixture } from "../../src/domain/trip/__fixtures__/coreOrdinaryOrder";
+import {
+  authoredVersionItemSchema,
+  authorizedTripVersionFromCollection,
+} from "../../src/domain/trip/tripAuthorizedVersion";
 import { createCorePgReader } from "./tripCoreV2PgRead";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 import { createTripDocumentOriginalRead } from "./tripDocumentOriginalRead";
 
-function fixture() {
-  const actor: CoreActor = {
+function fixture(options: { actor?: CoreActor; graph?: CoreGraph } = {}) {
+  const actor: CoreActor = options.actor ?? {
     accountId: randomUUID(),
     tripId: randomUUID(),
     active: true,
@@ -44,18 +54,20 @@ function fixture() {
     content_version: 1,
     custody_receipt_id: randomUUID(),
   };
-  const graph = emptyCoreGraph();
-  graph.trip_operational_documents = [document];
+  const graph = options.graph ?? emptyCoreGraph();
+  if (!options.graph) graph.trip_operational_documents = [document];
   const state = { epoch: randomUUID(), revision: 1, access_revision: 4 };
   const identity = {
     principal: "otr_trip_core_v2_gateway",
     role: "otr_trip_core_v2_gateway",
   };
   const gate = { runtime_enabled: true };
+  let projectionRows: { projection_kind: string; fact: unknown }[] = [];
   const lease = {
     retire: vi.fn(),
     query: vi.fn(async (sql: string) => {
-      if (sql === "SELECT session_user AS principal,current_user AS role")
+      if (sql.includes("authored_version_projection")) return { rows: projectionRows };
+      if (sql.startsWith("SELECT session_user AS principal,current_user AS role"))
         return { rows: [identity] };
       if (sql.includes("trip_core_finite_scope_allowed"))
         return { rows: [{ allowed: gate.runtime_enabled }] };
@@ -64,10 +76,9 @@ function fixture() {
       if (sql.includes("FROM public.trip_core_read_state")) return { rows: [state] };
       if (sql.includes('FROM public."trip_operational_documents"'))
         return {
-          rows: graph.trip_operational_documents.map((fact) => ({
-            core_table: "trip_operational_documents",
-            fact,
-          })),
+          rows: Object.entries(graph).flatMap(([table, facts]) =>
+            facts.map((fact) => ({ core_table: table, fact })),
+          ),
         };
       if (sql.includes("trip_core_read_person_bindings"))
         return { rows: [{ bindings: [] }] };
@@ -115,8 +126,101 @@ function fixture() {
     reader,
     request,
     ports,
+    hash,
+    graph,
+    setProjection(rows: typeof projectionRows) {
+      projectionRows = rows;
+    },
   };
 }
+
+it.each(["AUTHORED", "FULL"])(
+  "logs only the fixed %s projection after COMMIT and survives logger failure",
+  async (projection) => {
+    const f = fixture({ graph: emptyCoreGraph() });
+    if (projection === "AUTHORED")
+      f.setProjection([{ projection_kind: "blocked", fact: false }]);
+    let tick = 0;
+    const clock = vi.spyOn(performance, "now").mockImplementation(() => (tick += 10));
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      expect(f.lease.query.mock.calls.at(-1)?.[0]).toBe("COMMIT");
+    });
+    try {
+      const first = await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
+      expect(log.mock.calls).toEqual([
+        [
+          JSON.stringify({
+            event: "core_authorized_version_projection",
+            projection,
+            beforeProjectionMs: 80,
+            projectionAndCommitMs: 40,
+            phases: {
+              leaseMs: 10,
+              beginMs: 10,
+              setupMs: 10,
+              scopeMs: 10,
+              actorMs: 10,
+              gateMs: 10,
+              stateMs: 10,
+              projectMs: 20,
+              finalScopeMs: 10,
+              commitMs: 10,
+            },
+          }),
+        ],
+      ]);
+      log.mockImplementation(() => {
+        throw Error("PRIVATE_LOGGER_FAILURE");
+      });
+      expect(await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId)).toEqual(
+        first,
+      );
+    } finally {
+      clock.mockRestore();
+      log.mockRestore();
+    }
+  },
+);
+
+it("sets transaction-local limits/context and reads identity in one round trip before any scope or data read", async () => {
+  const f = fixture();
+  await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
+  const queries = f.lease.query.mock.calls.map(([sql]) => sql);
+  expect(queries.slice(0, 2)).toEqual([
+    "BEGIN ISOLATION LEVEL REPEATABLE READ",
+    "SELECT session_user AS principal,current_user AS role,set_config('statement_timeout','5000ms',true),set_config('lock_timeout','1000ms',true),set_config('TimeZone','UTC',true),set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
+  ]);
+  expect(f.lease.query.mock.calls[1]).toEqual([
+    "SELECT session_user AS principal,current_user AS role,set_config('statement_timeout','5000ms',true),set_config('lock_timeout','1000ms',true),set_config('TimeZone','UTC',true),set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
+    [f.actor.accountId, f.actor.tripId],
+  ]);
+  expect(
+    queries.filter(
+      (sql) =>
+        sql.startsWith("SET LOCAL statement_timeout") ||
+        sql.startsWith("SET LOCAL lock_timeout") ||
+        sql.startsWith("SET LOCAL TIME ZONE"),
+    ),
+  ).toEqual([]);
+  expect(queries.at(-1)).toBe("COMMIT");
+});
+
+it("rolls back a failed combined settings statement before identity, Actor or graph reads", async () => {
+  const f = fixture();
+  f.lease.query.mockReset();
+  f.lease.query
+    .mockResolvedValueOnce({ rows: [] })
+    .mockRejectedValueOnce(Error("READ_SETTINGS_FAILED"))
+    .mockResolvedValueOnce({ rows: [] });
+  await expect(
+    f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).rejects.toThrow("READ_SETTINGS_FAILED");
+  expect(f.lease.query.mock.calls.map(([sql]) => sql)).toEqual([
+    "BEGIN ISOLATION LEVEL REPEATABLE READ",
+    "SELECT session_user AS principal,current_user AS role,set_config('statement_timeout','5000ms',true),set_config('lock_timeout','1000ms',true),set_config('TimeZone','UTC',true),set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
+    "ROLLBACK",
+  ]);
+});
 
 it("returns current internal ACL state only after the existing snapshot commits; collection remains original-disabled", async () => {
   const f = fixture();
@@ -319,3 +423,204 @@ it("binds Source capability reads to one transaction-local operation and validat
   ).rejects.toThrow();
   expect(acquire).toHaveBeenCalledTimes(calls);
 });
+
+it("falls back to the complete snapshot within one qualified transaction", async () => {
+  const f = fixture();
+  const collection = await f.reader.collection(f.actor.accountId, f.actor.tripId);
+  f.lease.query.mockClear();
+  const version = await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
+  expect(version).toMatchObject({
+    actorAccountId: f.actor.accountId,
+    tripId: f.actor.tripId,
+  });
+  expect(Object.keys(version).sort()).toEqual([
+    "actorAccountId",
+    "token",
+    "tripId",
+    "version",
+  ]);
+  expect(
+    f.lease.query.mock.calls.filter(([sql]) => sql.startsWith("BEGIN")),
+  ).toHaveLength(1);
+  expect(f.lease.query.mock.calls.filter(([sql]) => sql === "COMMIT")).toHaveLength(1);
+  expect(JSON.stringify(version).length).toBeLessThan(JSON.stringify(collection).length);
+  f.gate.runtime_enabled = false;
+  await expect(
+    f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+});
+
+function manualFixture() {
+  const o = ordinaryFixture();
+  o.graph.trip_person_ordinary_orders = [];
+  const f = fixture({ actor: o.actor, graph: o.graph });
+  const updateProjection = () =>
+    f.setProjection([
+      ...o.graph.itinerary_events.map((r) => ({
+        projection_kind: "item",
+        fact: Object.fromEntries(
+          Object.keys(authoredVersionItemSchema.shape).map((k) => [k, r[k]]),
+        ),
+      })),
+      ...o.graph.trip_item_participants.map((r) => ({
+        projection_kind: "participants",
+        fact: r,
+      })),
+      ...o.graph.trip_item_visibility_people.map((r) => ({
+        projection_kind: "visibilityPeople",
+        fact: r,
+      })),
+      { projection_kind: "blocked", fact: false },
+    ]);
+  updateProjection();
+  return { ...f, ordinary: o, updateProjection };
+}
+
+it("matches the validated collection token without reading complete manual Item bodies", async () => {
+  const f = manualFixture();
+  const collection = await f.reader.collection(f.actor.accountId, f.actor.tripId);
+  const expected = await authorizedTripVersionFromCollection(
+    collection,
+    f.actor.accountId,
+    f.actor.tripId,
+    f.hash,
+  );
+  f.lease.query.mockClear();
+  expect(await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId)).toEqual(
+    expected,
+  );
+  const queries = f.lease.query.mock.calls.map(([sql]) => sql);
+  expect(queries.some((sql) => sql.includes("core_graph LIMIT"))).toBe(false);
+  expect(
+    queries.filter((sql) => sql.includes("trip_core_finite_scope_allowed")),
+  ).toHaveLength(2);
+  expect(queries.at(-1)).toBe("COMMIT");
+});
+
+it("does not expose a foreign private creation through the summary token", async () => {
+  const f = manualFixture();
+  const before = await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
+  const id = randomUUID(),
+    personId = randomUUID();
+  const other = { ...f.actor, accountId: randomUUID(), personId, personIds: [personId] };
+  const create = {
+    ...f.ordinary.creates[0],
+    operationId: randomUUID(),
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+  };
+  Object.assign(
+    f.graph,
+    applyCoreCommand(f.graph, create, other, "2026-10-31T00:00:00Z").graph,
+  );
+  f.state.revision++;
+  f.state.access_revision++;
+  f.updateProjection();
+  expect(await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId)).toEqual(
+    before,
+  );
+});
+
+it("falls back for source evidence without dropping the current rights context", async () => {
+  const f = manualFixture();
+  f.graph.itinerary_events[0].field_state = {
+    "itinerary_events.title": {
+      state: "KNOWN",
+      origin: "SOURCE",
+      protected: false,
+      changed_revision: 1,
+      evidence_ref: "SYNTHETIC_SOURCE_REFERENCE",
+    },
+  };
+  f.updateProjection();
+  const collection = await f.reader.collection(f.actor.accountId, f.actor.tripId);
+  const expected = await authorizedTripVersionFromCollection(
+    collection,
+    f.actor.accountId,
+    f.actor.tripId,
+    f.hash,
+  );
+  f.lease.query.mockClear();
+  expect(await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId)).toEqual(
+    expected,
+  );
+  expect(
+    f.lease.query.mock.calls.filter(([sql]) => sql.includes("core_graph LIMIT")),
+  ).toHaveLength(1);
+  expect(
+    f.lease.query.mock.calls.filter(([sql]) => sql.startsWith("BEGIN")),
+  ).toHaveLength(1);
+});
+
+it("rejects scope closure after a lightweight projection before committing a token", async () => {
+  const f = manualFixture(),
+    query = f.lease.query.getMockImplementation()!;
+  f.lease.query.mockImplementation(async (sql) => {
+    const result = await query(sql);
+    if (sql.includes("authored_version_projection")) f.gate.runtime_enabled = false;
+    return result;
+  });
+  await expect(
+    f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  const queries = f.lease.query.mock.calls.map(([sql]) => sql);
+  expect(queries.at(-1)).toBe("ROLLBACK");
+  expect(queries).not.toContain("COMMIT");
+});
+
+it("does not skip an unqualified external authority even for a manual projection", async () => {
+  const o = ordinaryFixture(),
+    f = fixture({ actor: o.actor, graph: o.graph });
+  const authority = {
+    authorize: vi.fn(async () => {
+      throw Error("OWNING_READ_DENIED");
+    }),
+  };
+  const reader = createCorePgReader(f.connection, f.hash, authority);
+  await expect(
+    reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).rejects.toThrow("OWNING_READ_DENIED");
+  expect(authority.authorize).toHaveBeenCalledOnce();
+  expect(
+    f.lease.query.mock.calls.some(([sql]) => sql.includes("authored_version_projection")),
+  ).toBe(false);
+});
+
+it("excludes its control row from the existing 20000-fact resource limit", async () => {
+  const f = fixture();
+  const facts = Array.from({ length: 20000 }, () => ({
+    projection_kind: "item",
+    fact: {},
+  }));
+  f.setProjection([...facts, { projection_kind: "blocked", fact: false }]);
+  // Unsupported metadata falls back, rather than rejecting a lawful fact count.
+  await expect(
+    f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).resolves.toMatchObject({ actorAccountId: f.actor.accountId });
+  f.setProjection([...facts, facts[0], { projection_kind: "blocked", fact: false }]);
+  await expect(
+    f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).rejects.toThrow("CORE_READ_RESOURCE_LIMIT");
+});
+
+it.each(["principal", "role"] as const)(
+  "rejects wrong %s after combined setup before scope or data queries",
+  async (field) => {
+    const f = fixture();
+    f.identity[field] = "unqualified";
+    await expect(
+      f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+    ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
+    const queries = f.lease.query.mock.calls.map(([sql]) => sql);
+    expect(queries).toHaveLength(3);
+    expect(queries.at(-1)).toBe("ROLLBACK");
+    expect(
+      queries.some(
+        (sql) =>
+          sql.includes("trip_core_finite_scope_allowed") ||
+          sql.includes("trip_core_lock_actor_scope") ||
+          sql.includes("authored_version_projection"),
+      ),
+    ).toBe(false);
+  },
+);

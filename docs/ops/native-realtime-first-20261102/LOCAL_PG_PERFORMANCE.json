@@ -1,0 +1,274 @@
+{
+  "status": "ISOLATED_PG_PASS_NOT_HOSTED",
+  "syntheticAuthorityStandIns": true,
+  "externalEndpoints": false,
+  "source": "actual deployed reader projection + f70d69cf Core pool",
+  "samples": [
+    {
+      "label": "cold",
+      "ms": 33.37,
+      "queries": 12,
+      "resultBytes": 29581
+    },
+    {
+      "label": "warm",
+      "ms": 11.09,
+      "queries": 12,
+      "resultBytes": 29581
+    },
+    {
+      "label": "warm",
+      "ms": 8.71,
+      "queries": 12,
+      "resultBytes": 29581
+    },
+    {
+      "label": "warm",
+      "ms": 9.21,
+      "queries": 12,
+      "resultBytes": 29581
+    },
+    {
+      "label": "warm",
+      "ms": 5.72,
+      "queries": 12,
+      "resultBytes": 29581
+    },
+    {
+      "label": "hidden_create_A",
+      "ms": 6.68,
+      "queries": 12,
+      "resultBytes": 34974
+    },
+    {
+      "label": "owner_B",
+      "ms": 6.29,
+      "queries": 12,
+      "resultBytes": 34936
+    },
+    {
+      "label": "hidden_edit_A",
+      "ms": 6.21,
+      "queries": 12,
+      "resultBytes": 34974
+    },
+    {
+      "label": "owner_edit_B",
+      "ms": 6.18,
+      "queries": 12,
+      "resultBytes": 34936
+    },
+    {
+      "label": "visible_P3_edit_A",
+      "ms": 7.17,
+      "queries": 12,
+      "resultBytes": 34974
+    }
+  ],
+  "phases": [
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 20,
+      "projectionAndCommitMs": 13,
+      "phases": {
+        "leaseMs": 15,
+        "beginMs": 0,
+        "setupMs": 1,
+        "scopeMs": 1,
+        "actorMs": 1,
+        "gateMs": 1,
+        "stateMs": 1,
+        "projectMs": 12,
+        "finalScopeMs": 1,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 4,
+      "projectionAndCommitMs": 7,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 1,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 1,
+        "projectMs": 6,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 3,
+      "projectionAndCommitMs": 6,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 5,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 3,
+      "projectionAndCommitMs": 6,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 1,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 5,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 2,
+      "projectionAndCommitMs": 4,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 3,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 3,
+      "projectionAndCommitMs": 4,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 3,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 3,
+      "projectionAndCommitMs": 3,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 1,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 3,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 2,
+      "projectionAndCommitMs": 4,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 3,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 3,
+      "projectionAndCommitMs": 4,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 3,
+        "finalScopeMs": 0,
+        "commitMs": 0
+      }
+    },
+    {
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 2,
+      "projectionAndCommitMs": 5,
+      "phases": {
+        "leaseMs": 1,
+        "beginMs": 0,
+        "setupMs": 0,
+        "scopeMs": 0,
+        "actorMs": 0,
+        "gateMs": 0,
+        "stateMs": 0,
+        "projectMs": 3,
+        "finalScopeMs": 1,
+        "commitMs": 0
+      }
+    }
+  ],
+  "physicalConnectionCount": 1,
+  "checks": [
+    "warm PID reuse",
+    "hidden private Create/Edit does not change A token",
+    "B own private Edit changes B token",
+    "visible P3 Edit changes A token",
+    "closed gate rejected"
+  ],
+  "limitations": [
+    "Loopback includes Docker stdio tunnel overhead; not Hosted latency",
+    "Synthetic authorization functions are not production RLS proof",
+    "Authored P1/P3 only; other graphs fall back to full collection"
+  ],
+  "baselineRegression": "3 suites64PASS",
+  "types": "PASS",
+  "lint": "Reader/Connection PASS; standalone .mts outside ESLint config, tsc+executed assertions used",
+  "independentReview": "NO_BLOCKER; independent2factory+64retainedCore testsPASS; PG evidence reviewed not rerun",
+  "sources": {
+    "backend/src/tripCoreV2PgRead.ts": "5c82e2c34e11eadfc8de0ea937c52b78ec43ad0899d08927543da7e5d7f33996",
+    "src/domain/trip/tripAuthorizedVersion.ts": "be78c2c6088b9381a0b0c3ba552a7712c9149b75b3fc072bbbd55c6a029059a2",
+    "backend/src/tripCoreV2PgConnection.ts": "ac5668a82ac69925b1bb3523211ff44170b5ad53d6e8ad8e97b13cc5b97b538c",
+    "scripts/trip/realtime-version-local-perf.mts": "14f54d5555eb41e2d163a17bf24ddf28e58f77f4f0adfa2fec1d4702b23ca6dd"
+  },
+  "metricScope": "Reader lease queries/row JSON bytes only; excludes connection qualification/PID observation/DISCARD cleanup; not HTTP bytes or total SQL"
+}
