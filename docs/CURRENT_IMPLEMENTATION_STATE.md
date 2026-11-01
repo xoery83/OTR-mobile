@@ -1,3 +1,24 @@
+# Auth P0 Private Realtime / focused7cb5 closed — 2 November2026
+
+Owner assigns formal Private Subscription Authority/revoke/regrant P0. Local Authority
+and PG-adapter candidates in progress; canonicalCore membership remains sole source.
+Core bace5af8 verbatim3file handoff authorized and imported. No durableAuthgeneration,
+immutabletransition or forceddisconnect producer exists; minimal liveness sidecar+
+same-Core-transaction candidate under isolation, not Hosted. No TTL/404/mock strongrevoke claim.
+
+7cb5 exactf93 window T22:32:33.252Z/D23:00:33.252Z Nov1UTC CLOSED EARLY.
+Root defaulta1/9a88/1c5 independentlyrestored22:51:44Z, keysabsent/Host23filesexact,
+health200/protected401/timerinactive/lockreleased. Auth denyall22:52:54Z; normalgrant
+DELETE204/readabsence + owncontrol39129 cleanup refreshrevoked PASS; watcher62069 exit0.
+ConsoleOAuthoff/Hookdisabled/localhost persisted; finalSQL22:54:53Z exactdenyall/ACL.
+NormalconsumerOTP/Consent and serialItemrev1 read PASS. Editbase FAILED: new bounded
+logs show collectionCore2008885ms then ItemCore20012741ms; only1102ms remained atItem
+entry, POSTCHECK EXPIRED afterreturn. Request64bec1c5 duration23109ms/toolHTTP200
+AUTH_REQUIRED/BACKEND_401. This proves7cb5 expiry rejection, not historicalf107 cause.
+Preview0/Apply0; original1d6 NOT_SUBMITTED, oldf107/9b UNKNOWN no retry. No new window.
+MCP owns local read-only HTTP401+WWWAuthenticate repair; writeUNKNOWN never auto-rePOST.
+See ops/auth-mcp-fresh-20261102/focused-7cb5/ and ACTIVE_STATE.json.
+
 # Fresh Claude QA — 2 November 2026
 
 Window80dd T20:21:06.131Z/D20:40:48.239Z Nov1UTC, no extension.
