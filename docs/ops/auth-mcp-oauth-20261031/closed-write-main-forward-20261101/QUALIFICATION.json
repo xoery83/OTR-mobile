@@ -1,0 +1,48 @@
+{
+  "status": "CURATED_DEFAULT_CLOSED_SOURCE_VALIDATED",
+  "baseMain": "33388e52ea6be2a855beb5d81adb3ae978b1db2d",
+  "authSource": "9cb4f1a7",
+  "mcpSource": "5382e3c8",
+  "consumerEvidence": "58b82d30",
+  "nativeEvidence": "77d76ece",
+  "goldenSlice": "One authorized original bb recovery APPLIED rev2; independent normal Backend/Supabase; Consumer exact read; Native automatic Day/details/cold PASS",
+  "authority": "DEFAULT_CLOSED_NO_NEW_WINDOW_OR_DEPLOYMENT",
+  "targetedAuthTests": 148,
+  "targetedSdkTests": 52,
+  "startupTests": 11,
+  "typecheck": "PASS",
+  "uiGuard": "PASS",
+  "scopedLint": "PASS",
+  "closedSmokeChecks": 7,
+  "backendBuilds": [
+    "server",
+    "serverCapture"
+  ],
+  "build": {
+    "status": "COMPILED_ONLY_NOT_DEPLOYED",
+    "mcpReviewedSource": "5382e3c8",
+    "mcpSourceCommit": "5382e3c8c3a9635844d60d26283512ffa7943d3a",
+    "sourcePinsSHA256": "dca1d33935f789d2e96f082765adeb396d7ce42ebb1e0bc03150a177bc957b1f",
+    "sdkInputSHA256": "a0d2c53a996e6d2b4b87a0c4cd901575071206e7e01b861061e711a402fecbfc",
+    "runtimeSHA256": "72ebd56abf2880e1812ae90b6820779a494ab7def7d6cc11691e62f67ba47493",
+    "esbuildVersion": "0.28.2",
+    "mobileDependencyChanges": false,
+    "providerCalls": 0
+  },
+  "browserSHA256": "84b68d082c3f87418104bff057ea8440e111fc67774130958f072de01ce7c5b4",
+  "liveEvidenceCommit": "9cb4f1a7",
+  "liveEvidenceDirectory": "docs/ops/auth-mcp-oauth-20261031/consumer-write-edit-recovery-execution-20261101",
+  "limitations": [
+    "Consent screenshot not retained; actual DOM/click and independent fresh grant retained",
+    "No refresh wire qualification or revoke versus expiry sole-cause claim",
+    "No continuous commit-to-visible latency or private Realtime claim",
+    "This main build locally qualified; no deployment or new live OAuth E2E"
+  ],
+  "excluded": [
+    "Private Profile candidate",
+    "Parent reader/caller candidate",
+    "SQL/config/QA activation",
+    "Peer worktree edits",
+    "Long-branch merge"
+  ]
+}

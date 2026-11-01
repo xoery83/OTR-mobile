@@ -1,0 +1,11 @@
+{
+  "status": "FIXED_CANDIDATE_HELD_NO_SHARED_DEPLOYMENT",
+  "candidate": "4e1bedfc",
+  "worktree": "/private/tmp/otr-auth-closed-write-main-20261101",
+  "independentReview": "NO_BLOCKER_CURATED_DEFAULT_CLOSED_SOURCE_ONLY",
+  "mainFastForwardExecuted": false,
+  "mainPushExecuted": false,
+  "sharedHostConfigSqlActions": 0,
+  "nextAuthWork": "Profile local editor save/cancel/reopen and Account isolation",
+  "releaseRule": "Only actual relevant Root resource release; not elapsed 60 minutes"
+}

@@ -1,0 +1,22 @@
+{
+  "status": "NO_BLOCKER_CURATED_DEFAULT_CLOSED_SOURCE_ONLY",
+  "reviewer": "auth_phase1_review",
+  "baseMain": "33388e52ea6be2a855beb5d81adb3ae978b1db2d",
+  "reviewedHead": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+  "worktree": "/private/tmp/otr-auth-closed-write-main-20261101",
+  "verified": [
+    "All24 selected source/test/fixture files match SOURCE_SELECTION hashes; all34 SDK input pins match actual curated files.",
+    "Diff preserves Native focused-poll baseline: no shared bootstrap, sync, Native components, app, serverStartup or serverCapture production changes. No Profile, Parent, SQL/config activation or long-branch merge.",
+    "Catalog changes are exactly allowWrite/writeScope in en and zhHans; no Private Profile keys.",
+    "Default missing QA configuration remains closed; Write-v3 permits only original bb and exact digest under existing explicit authorization checks.",
+    "Actual compiled SDK/runtime hashes match runtime-build; local browser84b6/runtime72eb agree with QUALIFICATION. Independently reran closed public/denial smoke7 PASS with real network forbidden.",
+    "CurrentState addition and qualification distinguish prior live evidence from this newly built, locally qualified artifact."
+  ],
+  "limitations": [
+    "No Host, DEV, SQL, OTP or device operations; no new live artifact or OAuth E2E acceptance.",
+    "Did not repeat the author-reported211 tests/types/builds; reused reviewed source equality and independently ran smoke7.",
+    "Temporary untracked node_modules symlinks are setup-only and must remain excluded from commits. Primary dirty bytes/modes/index preservation must be rechecked by the sole main writer immediately before integration.",
+    "Consent screenshot not retained; refresh wire and revoke-versus-expiry sole causality remain unqualified; no continuous latency or private Realtime acceptance."
+  ],
+  "findings": []
+}

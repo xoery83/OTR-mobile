@@ -1,0 +1,107 @@
+{
+  "status": "CURATED_SOURCE_PREPARATION",
+  "baseMain": "33388e52ea6be2a855beb5d81adb3ae978b1db2d",
+  "remoteMain": "a7d39f11011fe2e081fca60d1496850e4d2c92d1",
+  "worktree": "/private/tmp/otr-auth-closed-write-main-20261101",
+  "files": {
+    "backend/mcp/runtime.mjs": {
+      "source": "9cb4f1a7",
+      "sha256": "a0e930eec448f3c37f63397ddd6c224c97e9aa0088dffc4c8ab6f1b81d8da153"
+    },
+    "backend/mcp/source-pins.json": {
+      "source": "9cb4f1a7",
+      "sha256": "dca1d33935f789d2e96f082765adeb396d7ce42ebb1e0bc03150a177bc957b1f"
+    },
+    "backend/src/mcpAccountReadBinding.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "84f275a6464fd38b7b5f600f25669d0ae7c97ea9a12794efb6235d157d58e59e"
+    },
+    "backend/src/mcpAccountWriteBinding.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758"
+    },
+    "backend/src/mcpAccountWriteBinding.test.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "293a0313af76c0744fa7c1f24009f588a71320f04ebdf44e3d47f5f7a76663d5"
+    },
+    "backend/src/mcpOAuthGrantVerifier.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "898f58274d7d8226f0c383075d2874c260c82ede89645a39bd2171d21eef5eea"
+    },
+    "backend/src/mcpOAuthGrantVerifier.test.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "1fbf65ff383a4ae5428222b0cb2c953ead53936c94f5c1458af03ef8ee376011"
+    },
+    "backend/src/mcpQaRuntime.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "76a1857bf012674f5ff267c707c9058c71e207f3d599df622da817f33738aee7"
+    },
+    "backend/src/mcpQaRuntime.test.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "d50e1f76758bfe1c810ce39e9bc759ea18a2bf5e2d510a3da674e40596110097"
+    },
+    "src/data/auth/mcpOAuthConsentRepository.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "be9a9c847c2c8c7b2c84f5b13cae1af42b52b82f945e6484c0e62828b3ccf6f9"
+    },
+    "src/data/auth/mcpOAuthConsentRepository.test.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "9f3984cd07b09bc086bc94a807cfeaa39e9ad6b639aa95560d63c5d970697c9d"
+    },
+    "src/features/auth/McpOAuthConsent.tsx": {
+      "source": "9cb4f1a7",
+      "sha256": "d1a6aafb7524945ebeda1fc31b929b8ccbebdc58462a8e362bd14c2ee956bc98"
+    },
+    "src/features/auth/McpOAuthConsent.test.ts": {
+      "source": "9cb4f1a7",
+      "sha256": "f5dabb80368e4715e866b98fa1e5c606ae47e8a95d148c715d8484b19a9f8f98"
+    },
+    "scripts/auth/smoke-mcp-qa-runtime.mjs": {
+      "source": "9cb4f1a7",
+      "sha256": "d4c7ec22850efddab972cd89735a1edc0eb033783a9612fb908ed8d98666901e"
+    },
+    "mcp/read.ts": {
+      "source": "5382e3c8",
+      "sha256": "8cdbb108a6f8d069447dccc885188b35a2f1fe27e57a96cdc12ca4088821d805"
+    },
+    "mcp/server.ts": {
+      "source": "5382e3c8",
+      "sha256": "03a5184aedb35d32d93c0ce2be64e07cc8bdcb9f402efba2b68bf98121f46c15"
+    },
+    "mcp/oauth.ts": {
+      "source": "5382e3c8",
+      "sha256": "5227d88359e4e87b88b2f31e49bfef0512405a2e86f840921592155490130a87"
+    },
+    "mcp/index.ts": {
+      "source": "5382e3c8",
+      "sha256": "4e6b6951c6e3914ead00fde1793cad64097d3a4b9f3a081ed640e4ee992831e9"
+    },
+    "mcp/consumer.test.ts": {
+      "source": "5382e3c8",
+      "sha256": "6ce50e2efaabfe0d13ccbabbb86088c71584a4a4807689939a20c03565500688"
+    },
+    "mcp/mutation.test.ts": {
+      "source": "5382e3c8",
+      "sha256": "8a0f94b3ece69ec7d63393a4daa284307d2c401c4a17b11d575c300431877670"
+    },
+    "mcp/oauth.test.ts": {
+      "source": "5382e3c8",
+      "sha256": "a0bfd6abff51092387cf3ca68039350f76cec129c5de3b91201a87ac2cad60d1"
+    },
+    "mcp/read.test.ts": {
+      "source": "5382e3c8",
+      "sha256": "122c4e8f8ad7e3463907ea9e23ee721f1dadc519528f29a50bc440e947ac0140"
+    },
+    "mcp/fixtures/consumer-p3-write.json": {
+      "source": "5382e3c8",
+      "sha256": "ae5608c6ac4043d13a438def44f395e28ca0b9e2aea0cf43a7003a10cd2fc170"
+    },
+    "mcp/fixtures/claude-p3-write-smoke.json": {
+      "source": "5382e3c8",
+      "sha256": "8448feb6efaabb8ef91ee3748fd080bd758d6f60389c023f3651a846ad63f405"
+    }
+  },
+  "catalog": "Only 2 OAuth keys x2 locales; Profile keys excluded",
+  "defaultClosed": true,
+  "deploymentChanges": 0
+}
