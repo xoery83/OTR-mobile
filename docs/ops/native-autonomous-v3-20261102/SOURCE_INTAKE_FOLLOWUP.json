@@ -1,0 +1,47 @@
+{
+  "source": "c2129b9ff8b531a9b58ee7041f8cb120c9529c5e",
+  "importOwnerCandidate": "c0bd82c6",
+  "nativeLifetimeFix": "304fc1fb33f997145d8e348a2439cdc50d23fa41",
+  "status": "LOCAL_PASS_CLOSED_COMPOSITION_READY_FOR_LAWFUL_CAPABILITY",
+  "defaultMounted": false,
+  "realProviderCalls": 0,
+  "hostSqlPermissionChanges": 0,
+  "deviceQualification": "QA142 source3391d4cb remains installed; later Source lifetime/intake/closed-mount candidates are LOCAL_PASS only, no new hardware claim",
+  "goldenSlice": "Raw TXT fixture→existing durable Capture in sameSQLite→existing Universal consumer→formalDTO→normalP3Review→originalManualCoreSave→repository reconstruction/readback",
+  "checks": [
+    "Scan and Apply do not add Core pending; only normalManualSave does",
+    "Root execute throws if reached; no Provider or real custody represented",
+    "Pinned Source port retains original factory after prop replacement/UNKNOWN",
+    "Synthetic contract unchanged, no new parser/repository/queue/session store"
+  ],
+  "validation": {
+    "sourceJoined": "4suites102PASS",
+    "types": "PASS",
+    "affectedLint": "PASS",
+    "uiGuard": "PASS",
+    "independentLifetimeReview": "NO_BLOCKER;1PASS/37notselected",
+    "independentRawJoinedReview": "NO_BLOCKER;Root3files exact to c0bd82c6;1PASS/38notselected",
+    "closedComposition": "11PASS original dependencies + default runtime",
+    "closedNativePortAndForm": "3suites56PASS;types/lintPASS",
+    "independentClosedMount": "NO_BLOCKER;3suites20PASS;Rootnewfiles/docs/test exact8782, shareddeps semantic-delta only"
+  },
+  "evidence": {
+    "/private/tmp/otr-native-v3-intake-lifetime-red.log": "278f36d14cdd5cd2188a9c5a859739c60b7520ddec14e6349f8476dfb55f481a",
+    "/private/tmp/otr-native-v3-intake-lifetime-green.log": "5a7769335231ae088062b89f26c395fc5a572adf29af3f6cef03e037dc7e70b9",
+    "/private/tmp/otr-native-p3-intake-final-tests.log": "63aa7e4664c3f909edcd6576d78d0bf97ef4eb48090d8725f6d43b3b11bf7577",
+    "/private/tmp/otr-native-p3-intake-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-p3-intake-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-p3-intake-ui-guard.log": "141ce926e34cc4c8c45ffe526080c31557a4941d9656476ccde8720d89708142",
+    "/private/tmp/otr-native-p3-mount-tests.log": "0091a12bec6751b83ce7e26187ebe124e21f03d5814e1bc4cddf8eca00cff939",
+    "/private/tmp/otr-native-p3-mount-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-p3-mount-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-p3-default-composition-tests.log": "d66822c6c4cf1199325196f3fca4f6c8bd7fa5816efe1dc6848271faea767646"
+  },
+  "remaining": [
+    "Bind qualified factory only after lawful runtime and Source/Provider capability; pin is undefined",
+    "Real Source/Task/Provider E2E and independent cloud readback still not executed"
+  ],
+  "defaultCompositionOwnerCandidate": "8782a72202448344fdb523a6554a64410cb22a51",
+  "closedCallerWiring": "src/native/p3FormScan.ts→ManualItineraryContent/P3Detail/TripScreen",
+  "sharedFileMerge": "defaultCaptureSubmission applied only8782 dependency-extraction delta, preserving Native baseline; did not pull unrelated Root Journey assignment"
+}
