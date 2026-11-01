@@ -196,3 +196,37 @@ single affected app route PASS; no Hosted deployment/provider capability change.
 C2 direct recheck found no isolated adapter fix before actual JPEG image/profile/
 proof qualification: Storage/private stage/socket/transport remain explicitly PNG.
 Reuse lifecycle later, never reuse PNG proof. No extra placeholder platform added.
+
+## Current MCP finite access — 7cb5 ACTIVE EMPTY
+
+Direct human approval verified in MCP and, after reviewer rejected cross-chat
+evidence, separately in this Root chat callc6e5f1f9. Initial rejected command
+never started; exact requestSHAda55bc0b retained, then approved run succeeded.
+OriginalT22:32:33.252Z/D23:00:33.252Z, normalclose22:58:33.252Z unchanged.
+CurrentCID1de1f02e0bfbf2d25fd7b202afbd4a0b0ba5d8d273ff403173da642dce21f222,
+configf4671e9ca6f05c7e3d13180d837d4b9f828b17ed9ee618f48e1df0a6f2770ee5.
+CAS22:33:53→22:34:00Z shortlockreleased; independent22:34:18Z files/Host/health
+andtimerPASS. Default restore remainsa1/9a88/image1c5. Auth issuer/console later
+ACTUAL_READY; MCP normalConnect/OTP underway. No Consumer read/EditBase/Preview/
+Apply PASS yet. Confirmations empty, Notes NOT_APPROVED, no new operation.
+Root must retain bounded diagnostics before close4c43; independentabsolute timer
+remainsD. Read-only metadata/Import coding continues without Host mutation.
+
+## Owner P3 Real Form Scan priority — 2 November
+
+Golden Slice is P3 Create Form→Scan→existing Source/Interpretation→typed evidence
+suggestions→explicit field review→original MANUAL Save→independent readback,
+then Edit field protection. No Import Admission/autocreate. Actual interpretation
+and Native end-to-end remain BLOCKED by expired scope/grant/price and closed
+Native mount. Native confirms minimal pin is qualifiedFactory binding before a
+new Form; existing perForm/UNKNOWN port must not be hot-replaced. Compilation
+API base/continuous flag and synthetic QA session still need actual qualification.
+
+Import exact contract check found no new Adapter/DTO implementation needed.
+Original P3-Harbour-Beta-Hotel.txt restored from sealed Git blob9c4136e6,93B,
+SHAa8606e596966709b999b28720d7428a14c97e05a80347666034036e4f75dfbce.
+Future normal new Source input only, never revive old Task. Offline renewal
+candidate and read-only safe preimage query are under p3-form-real-20261102;
+NOT_AUTHORIZED/NOT_EXECUTABLE until fresh CAS, exact times/commands and Owner Gate.
+No new paid call. Two separate Form scans, if actually needed, require at most
+one new Task/call each, not unsupported crossForm reuse of an old Task.

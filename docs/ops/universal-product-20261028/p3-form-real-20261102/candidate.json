@@ -1,0 +1,193 @@
+{
+  "status": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTABLE_MISSING_FRESH_PREIMAGES",
+  "purpose": "P3_REAL_FORMSCAN_ONLY_EXISTING_MANUAL_SAVE",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "scopeId": "baac2ca8-f769-4ace-8bd4-d394a36312d6",
+  "expectedScopeRevision": 6,
+  "expectedScopeSha256": "550eb26788e104de92f5f26ae46984af9b6235cd480248b7c254394f0fb273a2",
+  "expectedGrantRevision": 5,
+  "parameters": {
+    "T0": null,
+    "D": null,
+    "closeStart": null,
+    "closeVerifiedBy": null,
+    "constraint": "T0 < closeStart < closeVerifiedBy < D; all finite, no autonomous renewal",
+    "existingTaskLifetimeMs": 600000
+  },
+  "provider": {
+    "integrationId": "otr-universal-qa-1624499c-18d7-4026-b3fe-7346ab1f825d",
+    "providerConfigId": "08e8113c-41dd-47cf-8d90-fc9eba98162e",
+    "providerId": "DeepSeek",
+    "modelId": "deepseek-flash",
+    "registryFamily": "DeepSeek-V4.1-Flash",
+    "observedUpstreamVersion": "DeepSeek-V4.1-Flash-1017",
+    "noProviderConfigMutation": true
+  },
+  "limits": {
+    "newP3InterpretationTasks": 2,
+    "modelMaxAttemptsPerTask": 1,
+    "maxPaidDispatchesForThatTask": 1,
+    "inputCeiling": 32768,
+    "outputCeiling": 4096,
+    "concurrentAccount": 1,
+    "accountDaily": 20,
+    "devDaily": 20,
+    "providerDaily": 20,
+    "callCostNanos": 50000000,
+    "accountDayCostNanos": 1000000000,
+    "devDayCostNanos": 1000000000,
+    "worstOneCallAtCeilingsNanos": 14745600,
+    "unknownAndHolds": "Never reset/refund/reuse UNKNOWN or retime old Task. Read recovery first.",
+    "maxTotalPaidDispatches": 2,
+    "stages": [
+      {
+        "stage": "CREATE",
+        "newTaskMax": 1,
+        "paidDispatchMax": 1,
+        "authorization": "AWAITING_ONE_EXACT_OWNER_APPROVAL"
+      },
+      {
+        "stage": "EDIT",
+        "newTaskMax": 1,
+        "paidDispatchMax": 1,
+        "authorization": "AWAITING_ONE_EXACT_OWNER_APPROVAL",
+        "onlyIf": "Real scan in new Form is needed; otherwise use no paid call for stale-response/field protection checks."
+      }
+    ],
+    "formPins": "Each new Form freezes its own material/session/form pins and normal new Batch/Source/Task. No cross-Form old Task rebind; no retime/resurrection."
+  },
+  "price": {
+    "operation": "external_integration_price_append",
+    "newPriceScheduleId": "8530e359-a1c3-455e-8ec7-044eb7910463",
+    "newScheduleVersion": "p3-form-peak-bound-20261102-1",
+    "expectedLatestScheduleVersion": null,
+    "expiredOldPriceId": "56f9eee5-bee5-4ace-820d-c3a8d472ef04",
+    "sourceReference": "deepseek:official-pricing:20261102",
+    "sourceVersion": "official-peak-upper-bound-observed-20261102",
+    "officialSource": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "effectiveFrom": "$T0",
+    "effectiveUntil": "$D",
+    "supersedesScheduleId": null,
+    "roundingPolicy": "SUM_THEN_CEIL_NANOS_V1",
+    "currency": "USD",
+    "units": [
+      {
+        "unit": "cached_input_tokens",
+        "quantity": 1000000,
+        "price": "0.006",
+        "definition": {
+          "version": 1,
+          "relationship": "DISJOINT",
+          "included_in": null,
+          "billable": true
+        }
+      },
+      {
+        "unit": "input_tokens",
+        "quantity": 1000000,
+        "price": "0.3",
+        "definition": {
+          "version": 1,
+          "relationship": "DISJOINT",
+          "included_in": null,
+          "billable": true
+        }
+      },
+      {
+        "unit": "output_tokens",
+        "quantity": 1000000,
+        "price": "1.2",
+        "definition": {
+          "version": 1,
+          "relationship": "DISJOINT",
+          "included_in": null,
+          "billable": true
+        }
+      }
+    ],
+    "rationale": "Old56f9 interval has ended; append nonoverlapping new interval, never UPDATE historic price/units or reprice old calls. Latest version and no overlap must be freshly checked; do not blindly supersede an expired interval.",
+    "scheduleSha256": null
+  },
+  "activation": [
+    {
+      "command": "external_integration_price_append",
+      "expectedVersion": "$freshLatestScheduleVersion"
+    },
+    {
+      "command": "flight_activation_select",
+      "expectedVersion": 6,
+      "newRevision": 7,
+      "changes": [
+        "price_schedule_id=newPriceScheduleId",
+        "pins.price_sha256=newScheduleSha256",
+        "expires_at=$D",
+        "scope_sha256=owning canonical hash of complete typed row"
+      ],
+      "preserveAllOtherFields": true
+    },
+    {
+      "command": "flight_activation_account_grant",
+      "expectedVersion": 5,
+      "newRevision": 6,
+      "changes": [
+        "expires_at=$D",
+        "revoked=false"
+      ],
+      "preserveAllOtherFields": true
+    }
+  ],
+  "close": [
+    {
+      "command": "flight_activation_account_grant",
+      "expectedVersion": 6,
+      "newRevision": 7,
+      "changes": [
+        "revoked=true"
+      ],
+      "preserveExpiry": true
+    },
+    {
+      "command": "flight_activation_select",
+      "expectedVersion": 7,
+      "newRevision": 8,
+      "changes": [
+        "active=false",
+        "scope_sha256=owning canonical hash of complete typed row"
+      ],
+      "preserveExpiry": true
+    }
+  ],
+  "config": {
+    "baseCommit": "66d46067c8c67f6229b9a58742ee6fc246ee1b9a",
+    "qaExecutionFence": {
+      "version": 1,
+      "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    },
+    "configDigest": "$freshFullConfigurationAfterOnlyFenceChange",
+    "image": "Deploy same-permission image containing66d fence under existing deployment authorization only if not already live; actual current digest and full unchanged configuration must be traced by Root. No image chosen by this offline draft.",
+    "recovery": "Fence only new Prepare/dispatch; existing read/recovery remains available."
+  },
+  "unchanged": [
+    "SourcePolicy",
+    "Source Review/Admission",
+    "Manual P3 Save/Core/Reader",
+    "MCP/Auth runtime and configs",
+    "PDF/PNG/JPEG flags and Source execution profiles",
+    "integration/environment kill and config (unless fresh evidence reveals an actual necessary change; abort this packet then)",
+    "old Source/Task/Call/Result/Usage/UNKNOWN/holds",
+    "roles/RLS/GRANT/Schema/Secrets and budget"
+  ],
+  "prerequisites": [
+    "Fresh exact safe preimages from read-preimages.sql; must still revision6/grant5/hash and known7pin keys. Any drift aborts/review before bind.",
+    "Fresh normal QA Auth+Trip permission and actual FormScan input qualification.",
+    "Root independently verifies scope/price exact command hashes with existing canonical implementation; real normal-admin issuer receipts before any command. No authority fabricated in candidate.",
+    "Before activation independent finite close mechanism ready; close before D because current admin commands may reject expired expiry even when revoking. D itself denies new paid dispatch if closer fails.",
+    "Fresh budget/UNKNOWN holds and no queued in-flight conflicting dispatch; no reset/reallocation.",
+    "Actual live QA execution fence configured and normal old-result recovery preserved.",
+    "Owner explicitly approves this maximum two-stage/new-Task scope; this is a proposed bound, not already authorized. Same sealed93B material identity/content must be independently pinned by Root/Native; this draft does not possess its bytes."
+  ],
+  "onlyEvidenceGap": "Fresh full safe scope/grant/integration/price metadata for precise CAS and hashes. No date or live command context is guessed."
+}

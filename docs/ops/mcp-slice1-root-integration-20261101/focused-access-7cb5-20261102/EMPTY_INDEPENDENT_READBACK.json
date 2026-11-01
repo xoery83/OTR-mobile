@@ -1,0 +1,14 @@
+{
+  "status": "ROOT_EMPTY_INDEPENDENT_READY",
+  "checkedAt": "2026-11-01T22:34:18.501275+00:00",
+  "containerId": "1de1f02e0bfbf2d25fd7b202afbd4a0b0ba5d8d273ff403173da642dce21f222",
+  "configSHA256": "f4671e9ca6f05c7e3d13180d837d4b9f828b17ed9ee618f48e1df0a6f2770ee5",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "all23FilesMatch": true,
+  "defaultHostExact": true,
+  "health200Protected401": true,
+  "timerActive": true,
+  "confirmationsEmpty": true,
+  "notesApproval": false,
+  "deadlineMs": 1793574033252
+}

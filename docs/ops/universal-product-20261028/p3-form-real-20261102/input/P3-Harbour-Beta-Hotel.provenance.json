@@ -1,0 +1,16 @@
+{
+  "status": "SEALED_ORIGINAL_BYTES_RECOVERED",
+  "sourceCommit": "9c4136e60677edb6a60e31b1b2f34ac59f29b3ea",
+  "sourcePath": "/Users/xoery/.codex/worktrees/universal-photo-resume-integration-20261030/otr-mobile-canonical/backend/src/__fixtures__/universal-product-beta/P3-Harbour-Beta-Hotel.txt",
+  "originalRepositoryPath": "backend/src/__fixtures__/universal-product-beta/P3-Harbour-Beta-Hotel.txt",
+  "inputPath": "/private/tmp/otr-p3-form-renewal-20261102/input/P3-Harbour-Beta-Hotel.txt",
+  "byteCount": 93,
+  "sha256": "a8606e596966709b999b28720d7428a14c97e05a80347666034036e4f75dfbce",
+  "gitOriginalAndManifestAndCopiedBytesMatch": true,
+  "manifestArchiveSHA256Reference": "040402979a4024fd914f7f2d34997958e7a3f233e932903a1205bf451b51920c",
+  "archiveReadOrReconstructed": false,
+  "purpose": "Future explicit new P3 Form Source input only; no old Source/Task/Item/Receipt revival",
+  "sourceAuthorityGranted": false,
+  "providerExecuted": false,
+  "deviceOrSessionAccess": false
+}

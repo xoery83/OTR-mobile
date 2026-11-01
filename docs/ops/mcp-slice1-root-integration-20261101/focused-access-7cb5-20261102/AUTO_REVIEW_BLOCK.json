@@ -1,0 +1,11 @@
+{
+  "status": "EXECUTION_BLOCKED_BY_AUTO_REVIEW_BEFORE_PROCESS_START",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "requestSHA256": "da55bc0bfebe58ed0468bfc9dc8d0429dd6bb3859c8534a884a4863ce36c077c",
+  "rootEmptyIntentExists": false,
+  "rootEmptyResultExists": false,
+  "remoteCommandStarted": false,
+  "reason": "Reviewer did not accept cross-chat direct-human approval evidence in its review context. No workaround or indirect execution allowed. Direct confirmation requested in Root chat.",
+  "notesApproved": false,
+  "fixedDeadlineUnchanged": true
+}

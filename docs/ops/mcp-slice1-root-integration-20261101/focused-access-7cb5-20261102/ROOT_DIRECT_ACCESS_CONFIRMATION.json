@@ -1,0 +1,10 @@
+{
+  "status": "ROOT_DIRECT_HUMAN_ACCESS_APPROVAL",
+  "questionCallId": "call_c6e5f1f90556427e8f8ab5f2b10293a7",
+  "answer": "批准本轮 f93 有限 DEV QA 连接",
+  "gateSHA256": "f93df0f8f6c37b74ca66930db9053b7ed8b0e7d5c3badbbaa10861a23b5f1d79",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "notesApproved": false,
+  "fixedDeadlineMs": 1793574033252,
+  "requestSHA256": "da55bc0bfebe58ed0468bfc9dc8d0429dd6bb3859c8534a884a4863ce36c077c"
+}
