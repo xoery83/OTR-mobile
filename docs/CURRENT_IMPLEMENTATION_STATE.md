@@ -24,7 +24,11 @@ sameTask/UNKNOWN/queueoperation recovery regression:68 focused tests,types,scope
 lintPASS. Root independentdiffreview NO_BLOCKER. Source/test/evidence fixed in
 this branch; no deployment/Provider/Native E2E. HistoricalfirstResults503 remains
 OPEN_UNRESOLVED/UNPROVEN:8383ms BINDINGFAILED has no retainedcausecode. C3 P3
-formadapter/runtimeDTO is being finalized with Native; its port staysclosed.
+formadapter+runtimeDTO LOCAL_PASS:33 focusedtests/types/lintPASS, Rootindependent
+reviewNO_BLOCKER. All Context/Task/Source/Evidence pins retained; ABSTAIN has no
+reviewrequirements; UNKNOWN/NOT_RUN cannot carry suggestions. Native formalbridge
+and realauthorizedSource intake stillpending, portclosed. JPEG requestserialization
+with realasset/EXIF/truncation8PASS is testonly; formalJPEGprofile remainsclosed.
 
 # MCP Slice1 — finite round closed, Consumer not run
 
