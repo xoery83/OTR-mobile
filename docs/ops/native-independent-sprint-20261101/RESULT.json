@@ -1,0 +1,90 @@
+{
+  "status": "LOCAL_CONSUMER_DELIVERY_PASS_NOT_HOSTED_E2E",
+  "sourceHead": "fa184b68381d6e8a5cde0f555f3d5e0517eb018e",
+  "review": "INDEPENDENT_REVIEW.json",
+  "sourceHashes": {
+    "app/day-feed-lab.tsx": "1b5c7df01175ac63a3bfc121d83989761a8e49e390a6c7a5734d46309c79b7af",
+    "src/data/bootstrap/defaultBootstrapDependencies.test.ts": "48ec268a9fba2146580ebaf4545b37f3518b1ae8d3b35508ef5547bb861a4e74",
+    "src/data/bootstrap/defaultBootstrapDependencies.ts": "9cbd6673665d1e9213a80827a139aadca45f709bd41bb1c91447c3545e6ac73b",
+    "src/data/sync/tripDownstreamCoordinator.ts": "8672872aca339768551e192f301eda1df8eb422e43e54e316e1fd4b87e0e0cc7",
+    "src/data/sync/tripPrivateSubscription.ts": "2e42e993435acdd85fcc5e5da7a716b0b1324f6ce7a7c3c31e958f2a6efc46e2",
+    "src/data/sync/tripRealtimeMount.test.ts": "f53e2093c6c244671e2227dfb0bb2d5336e228d7a2e87d960deffbf66741a199",
+    "src/data/sync/tripRealtimeTrigger.downstream.test.ts": "ec6f220f88f33bd8da0e15ee8b23788aff4c1956d193f5df20600c6df34b73ec",
+    "src/data/sync/tripRealtimeTrigger.test.ts": "842594c9c7bf19264ef1eda6f58358b3c92e411c09fcf01a2cac988626820b8d",
+    "src/data/sync/tripRealtimeTrigger.ts": "f332640b600096e04acc303a95053800c0991c0d2ab691eb9abf64263c662fb7",
+    "src/features/day-feed-lab/FormFieldScanQa.tsx": "6257ac4e93c78c72156b72ad8b186ece9b7445d1c9b27d967cf90be99389e0e1",
+    "src/features/day-feed-lab/P3FormScanQa.tsx": "c798dbe809a687ec05c973d2355da01c07be5dc36c2d7ef48e6f5b6c775ed032",
+    "src/features/day-feed-lab/fixtures/form-field-scan.json": "cc88e0ba475534b2aeebf550684a205b43de9cf24acb87362cc956e2910d0955",
+    "src/features/day-feed-lab/fixtures/p3-form-scan.json": "f0e68f27a668b785d46a55aad6bb38c2a6f4f7d07ab35ef49cd1a55895d44627",
+    "src/features/day-feed/FlightEnrichmentAction.test.ts": "5126f565c436714cd477c559261e2c79f72fca7852f75f94ec5b7fcd71d8b4e3",
+    "src/features/day-feed/FlightEnrichmentAction.tsx": "e261d6897e0ed63dd3146ffb94b12658024c7eb37959505f12f9bdca677bd49e",
+    "src/features/day-feed/FormFieldScan.tsx": "b2f66be9060616892e526adcca5c89854f56c597296a8fe21b30afe58c8f7ede",
+    "src/features/day-feed/ManualFlightForm.test.ts": "d1b9f9bfd9c212914952f31cb09cb0f754f76c9779432f75cb5b87029e920ead",
+    "src/features/day-feed/ManualFlightForm.tsx": "ac1453a863e979933a9a770548953cf77ce7659e24cc12c6852a0d27acd083c5",
+    "src/features/day-feed/P3StayEditor.test.ts": "4b71920b80e494de1835f8ddb6b5154a5ac06ae0846c857cfb8030c0addbb935",
+    "src/features/day-feed/P3StayEditor.tsx": "416e3df36b6bcec96f8b6ba5ae6854fa3119198cb260b2d013bf6138de1a439d",
+    "src/features/day-feed/P3SyntheticScan.tsx": "0444d14a6c012bcfe14616f994964a2e0151465f35cf99e2f7cdcdf1c1fffecb",
+    "src/features/day-feed/P4RentalEditor.test.ts": "1d609e04169b75deabbd9f694638e1f05c694384ea9858569984c163dcdddb22",
+    "src/features/day-feed/P4RentalEditor.tsx": "b6390d3f7d8a16d8904818b351d423c2daf84e09f01c81c689c11b132a62b865",
+    "src/features/day-feed/P5TransportEditor.test.ts": "ae5cb8dbe2ace36762ca7e5fead22db3dd0bd0ebc26db66365f00b6d39f2393b",
+    "src/features/day-feed/P5TransportEditor.tsx": "cc3c1b5f7bee341974f324280720b76b23549dd5a009fd60d2b380e24a94f86b",
+    "src/features/day-feed/P6ActivityEditor.test.ts": "d740a2c7f4c486129e364e4e0696ec2e8f5b948af21a59efad152a3c69345a8f",
+    "src/features/day-feed/P6ActivityEditor.tsx": "da92445356e4759329d075d703f7f688d07d49dbcd879da152de1dc116712009",
+    "src/features/day-feed/SyntheticFormScan.tsx": "d5e1fefbb08f955f4ce1b5410f76ad430e77ba5534e02558532d0d870a342641",
+    "src/features/day-feed/formFieldSuggestions.test.ts": "b74894d50e5d1dce8e1be31af2c4f69a7bcd9de6590f82512860c89cf6ea36f3",
+    "src/features/day-feed/formFieldSuggestions.ts": "2c75d63ba3a53a8e179acac89a39edbb34165055dfd58dbddb80e7069b60381c",
+    "src/features/day-feed/p3FormSuggestions.test.ts": "fbc751b486c65d0046f027ba0c0c847266e8591eeadc7463a20486ca14ddd533",
+    "src/features/day-feed/p3FormSuggestions.ts": "1edd35825f413d2d7df21b53bfb9c89938fc3100a6e152940b7c5bcf70db69c1",
+    "src/ui/catalogs.ts": "4eaebacddc8b34d38909ec6d76630f6caceeeefe3189f7575cfe432abd542948"
+  },
+  "A": {
+    "commit": "5807b155",
+    "state": "normal App lifecycle mount/default CLOSED",
+    "privateSubscription": "undefined; zero channel by default"
+  },
+  "B": {
+    "commit": "2114a196",
+    "state": "P3 explicit synthetic candidate/field review to existing Manual Draft/Save; async fencing extended in C"
+  },
+  "C": {
+    "commit": "eec8702f",
+    "state": "P2/P4/P5/P6 minimum field consumers/Create and Edit headless Golden Slices; DEV-only opt-in previews"
+  },
+  "D": {
+    "commit": "fa184b68",
+    "state": "Create auto debounce/once, explicit partial Edit, late/stale/session protection and fallback",
+    "actualFailure": "edit-away-and-back could reuse old Replace; RED reproduced and fixed",
+    "targetedTests": 20
+  },
+  "parentChecks": {
+    "scopedTypes": "PASS",
+    "scopedLint": "PASS with 5 existing import/first warnings in ManualFlightForm.test.ts",
+    "uiGuard": "PASS",
+    "iosJSExport": "PASS; not a signed Native/device build",
+    "iosBundle": "entry-d1472ec89ac1840c322ac70740811a1d.hbc"
+  },
+  "logs": [
+    "/private/tmp/otr-independent-sprint-types.log",
+    "/private/tmp/otr-independent-sprint-lint.log",
+    "/private/tmp/otr-independent-sprint-ui-guard.log",
+    "/private/tmp/otr-enrichment-away-back-red.log",
+    "/private/tmp/otr-enrichment-native-sprint-tests.log",
+    "/private/tmp/otr-native-independent-sprint-ios-export.log"
+  ],
+  "sharedWrites": {
+    "main": 0,
+    "HostedBackend": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "AD5": 0,
+    "DeviceHub": 0
+  },
+  "limits": [
+    "No device visual PASS",
+    "Synthetic single-current-draft Apply, no implicit multi-object batch save",
+    "UI revision lease, not a new formal Core semantic revision/proof port",
+    "Normal Save still owns Core qualification/CAS/Queue",
+    "Public flight cache remains closed/MISS",
+    "Backend/Import/Auth dependencies in central gap register"
+  ]
+}
