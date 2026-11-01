@@ -193,6 +193,29 @@ export function SyntheticFormScan<
         disabled={!scan || disabled || loading || selecting}
         onPress={() => pick("photos")}
       />
+      {scan ? (
+        <UiButton
+          label={t("formAutofill.sample")}
+          variant="text"
+          disabled={disabled || loading || selecting}
+          onPress={() => {
+            if (disabled || loading || selecting || !context()) return;
+            clear();
+            discardMaterial();
+            setError(null);
+            const sample: readonly CaptureSelection[] = [
+              {
+                source: "files",
+                temporaryUri: null,
+                name: t("formAutofill.sample"),
+                typeHint: null,
+              },
+            ];
+            materialRef.current = sample;
+            setMaterial(sample);
+          }}
+        />
+      ) : null}
       {material.map((item, index) => (
         <UiText key={index}>{item.name ?? t("formAutofill.selected")}</UiText>
       ))}

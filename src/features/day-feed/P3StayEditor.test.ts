@@ -1337,3 +1337,30 @@ it("Cancel during native selection releases late material and preserves user inp
   expect(node("tripCreate.stayName").value).toBe("My current draft");
   expect(p.onClose).not.toHaveBeenCalled();
 });
+it("explicit synthetic sample has no file URI/identity and never invokes the real picker", async () => {
+  const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+  vi.mocked(picker).mockClear();
+  const scan = vi.fn((binding: import("./p3FormSuggestions").StaySuggestionBinding) => ({
+    kind: "SYNTHETIC_STAY_SUGGESTIONS" as const,
+    binding,
+    candidates: [],
+  }));
+  const p = { ...props(), syntheticScan: scan };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  });
+  node("formAutofill.sample").onPress();
+  render(p);
+  await node("formAutofill.scan").onPress();
+  render(p);
+  expect(picker).not.toHaveBeenCalled();
+  const sample = (scan.mock.calls[0] as unknown[])[2] as import("@/features/capture/captureStaging").CaptureSelection[];
+  expect(sample[0].temporaryUri).toBeNull();
+  expect(sample[0].identity).toBeUndefined();
+});

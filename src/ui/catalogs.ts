@@ -1,4 +1,5 @@
 export const en = {
+  "formAutofill.sample": "Preview synthetic sample · No upload",
   "flightLookup.adopt": "Use {field}: {value}",
   "flightLookup.review": "Review suggestions before updating your form.",
   "flightLookup.budget": "Lookup allowance reached. You can continue manually.",
@@ -3111,6 +3112,7 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "formAutofill.sample": "预览合成示例 · 不上传",
   "flightLookup.adopt": "使用{field}：{value}",
   "flightLookup.review": "请确认建议后再更新表单。",
   "flightLookup.budget": "查询额度已用完，你仍可手动填写。",
