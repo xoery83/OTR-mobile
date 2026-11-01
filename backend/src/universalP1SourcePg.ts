@@ -572,6 +572,8 @@ export async function publishUniversalP1Candidate(
               "AUTH_ADOPTION_MUTATION_ALREADY_FINALIZED",
               "CORE_V2_CAPABILITY_CLOSED",
             ].find((value) => value === message) ?? "UNCLASSIFIED",
+          deniedObject:
+            message.match(/^permission denied for (function|table|schema) ([a-z_][a-z0-9_]*)$/)?.slice(1),
           sqlState:
             typeof sqlState === "string" && /^[0-9A-Z]{5}$/.test(sqlState)
               ? sqlState
