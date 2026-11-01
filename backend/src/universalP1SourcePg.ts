@@ -436,96 +436,144 @@ export async function publishUniversalP1Candidate(
   read: PublishedUniversalP1Reader,
   hash: ImportHash,
 ) {
-  const family = input.family ?? "P1";
-  if (
-    family !== "P1" &&
-    input.sourceReview?.version !==
-      `otr.universal.${family.toLowerCase()}-source-review/1`
-  )
-    throw Error("OWNING_REVIEW_REQUIRED");
-  await assertUniversalP1Capability(lease, scope, family);
-  const published = await read(
-    {
-      actorAccountId: scope.actorAccountId,
-      tripId: scope.tripId,
-      batchId: z.uuid().parse(input.batchId),
-      taskId: z.uuid().parse(input.taskId),
-    },
-    lease,
-  );
-  if (
-    !published ||
-    published.result.requestSha256 !== input.requestSha256 ||
-    published.result.batchId !== input.batchId ||
-    published.result.taskId !== input.taskId ||
-    universalResultSchema
-      .parse(published.result)
-      .candidates.filter((c) => c.token === input.token && c.kind === family).length !== 1
-  )
-    throw Error("UNIVERSAL_SELECTION_UNAVAILABLE");
-  const candidateId = universalP1Identity(input.taskId, input.token, "candidate"),
-    prior = (
-      await lease.query(
-        "SELECT candidate_id FROM public.trip_source_core_v2_candidates WHERE candidate_id=$1::uuid AND account_id=$2::uuid AND trip_id=$3::uuid AND source_id=$4::uuid",
-        [candidateId, scope.actorAccountId, scope.tripId, scope.sourceId],
-      )
-    ).rows[0];
-  if (prior) {
-    const c = (await readUniversalP1Catalog(lease, scope, [candidateId], hash, read))
-      .candidates[0];
+  let phase = "CAPABILITY";
+  try {
+    const family = input.family ?? "P1";
     if (
-      json((c.snapshot as { sourceReview?: unknown }).sourceReview ?? null) !==
-      json(input.sourceReview ?? null)
+      family !== "P1" &&
+      input.sourceReview?.version !==
+        `otr.universal.${family.toLowerCase()}-source-review/1`
     )
-      throw Error("SOURCE_REVIEW_REPLAY_CONFLICT");
+      throw Error("OWNING_REVIEW_REQUIRED");
+    await assertUniversalP1Capability(lease, scope, family);
+    phase = "RESULT_READ";
+    const published = await read(
+      {
+        actorAccountId: scope.actorAccountId,
+        tripId: scope.tripId,
+        batchId: z.uuid().parse(input.batchId),
+        taskId: z.uuid().parse(input.taskId),
+      },
+      lease,
+    );
+    if (
+      !published ||
+      published.result.requestSha256 !== input.requestSha256 ||
+      published.result.batchId !== input.batchId ||
+      published.result.taskId !== input.taskId ||
+      universalResultSchema
+        .parse(published.result)
+        .candidates.filter((c) => c.token === input.token && c.kind === family).length !==
+        1
+    )
+      throw Error("UNIVERSAL_SELECTION_UNAVAILABLE");
+    phase = "PROJECT";
+    const candidateId = universalP1Identity(input.taskId, input.token, "candidate"),
+      prior = (
+        await lease.query(
+          "SELECT candidate_id FROM public.trip_source_core_v2_candidates WHERE candidate_id=$1::uuid AND account_id=$2::uuid AND trip_id=$3::uuid AND source_id=$4::uuid",
+          [candidateId, scope.actorAccountId, scope.tripId, scope.sourceId],
+        )
+      ).rows[0];
+    if (prior) {
+      const c = (await readUniversalP1Catalog(lease, scope, [candidateId], hash, read))
+        .candidates[0];
+      if (
+        json((c.snapshot as { sourceReview?: unknown }).sourceReview ?? null) !==
+        json(input.sourceReview ?? null)
+      )
+        throw Error("SOURCE_REVIEW_REPLAY_CONFLICT");
+      return {
+        captureVersion: 2 as const,
+        status: "CANDIDATE_SEALED" as const,
+        proposedPlan: (
+          c.snapshot as {
+            plan: import("../../src/domain/trip/tripCoreV2SourceContract").CoreSourcePrepareV2;
+          }
+        ).plan,
+        candidateSha256: c.candidateSha256,
+        grantsAdmission: false as const,
+      };
+    }
+    const { checked } = await project(
+        lease,
+        scope,
+        published,
+        input.token,
+        hash,
+        true,
+        input.sourceReview,
+      ),
+      slot = checked.body.plan.slots[0];
+    phase = "SEAL";
+    await setUniversalP1WriteContext(
+      lease,
+      slot.target.id,
+      slot.operationId,
+      slot.slotId,
+      family,
+    );
+    await lease.query(
+      "INSERT INTO public.trip_source_core_v2_candidates(candidate_id,account_id,trip_id,source_id,source_revision,run_id,input_catalog_sha256,candidate_sha256,candidate_json,sealed_at) VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6::uuid,$7,$8,$9::jsonb,clock_timestamp())",
+      [
+        candidateId,
+        scope.actorAccountId,
+        scope.tripId,
+        scope.sourceId,
+        checked.body.sourceRevision,
+        checked.body.runId,
+        checked.body.inputCatalogSha256,
+        checked.candidateSha256,
+        json(checked.body),
+      ],
+    );
     return {
       captureVersion: 2 as const,
       status: "CANDIDATE_SEALED" as const,
-      proposedPlan: (
-        c.snapshot as {
-          plan: import("../../src/domain/trip/tripCoreV2SourceContract").CoreSourcePrepareV2;
-        }
-      ).plan,
-      candidateSha256: c.candidateSha256,
+      proposedPlan: checked.body.plan,
+      candidateSha256: checked.candidateSha256,
       grantsAdmission: false as const,
     };
+  } catch (error) {
+    try {
+      const message = error instanceof Error ? error.message : "";
+      const sqlState =
+        error && typeof error === "object" && "code" in error ? error.code : undefined;
+      console.info(
+        JSON.stringify({
+          event: "universal_source_publication_failed",
+          phase,
+          kind:
+            error instanceof z.ZodError
+              ? "SCHEMA"
+              : error instanceof TypeError
+                ? "TYPE"
+                : "OTHER",
+          code:
+            [
+              "OWNING_REVIEW_REQUIRED",
+              "CORE_CAPABILITY_CLOSED",
+              "UNIVERSAL_SELECTION_UNAVAILABLE",
+              "SOURCE_REVIEW_REPLAY_CONFLICT",
+              "SOURCE_INTEGRITY_FAILURE",
+              "OWNING_MATERIAL_QUALIFICATION_REQUIRED",
+              "CORE_SCOPE_MISMATCH",
+              "UNIVERSAL_SELECTION_STALE",
+              "IMPORT_EVIDENCE_INVALID",
+              "CORE_CONNECTION_BUSY",
+              "CORE_CONNECTION_TIMEOUT",
+              "CORE_CONNECTION_RETIRED",
+              "PNG_PROOF_ACCESS_DENIED",
+            ].find((value) => value === message) ?? "UNCLASSIFIED",
+          sqlState:
+            typeof sqlState === "string" && /^[0-9A-Z]{5}$/.test(sqlState)
+              ? sqlState
+              : undefined,
+        }),
+      );
+    } catch {
+      /* Diagnostics cannot change the owning error or retry the operation. */
+    }
+    throw error;
   }
-  const { checked } = await project(
-      lease,
-      scope,
-      published,
-      input.token,
-      hash,
-      true,
-      input.sourceReview,
-    ),
-    slot = checked.body.plan.slots[0];
-  await setUniversalP1WriteContext(
-    lease,
-    slot.target.id,
-    slot.operationId,
-    slot.slotId,
-    family,
-  );
-  await lease.query(
-    "INSERT INTO public.trip_source_core_v2_candidates(candidate_id,account_id,trip_id,source_id,source_revision,run_id,input_catalog_sha256,candidate_sha256,candidate_json,sealed_at) VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6::uuid,$7,$8,$9::jsonb,clock_timestamp())",
-    [
-      candidateId,
-      scope.actorAccountId,
-      scope.tripId,
-      scope.sourceId,
-      checked.body.sourceRevision,
-      checked.body.runId,
-      checked.body.inputCatalogSha256,
-      checked.candidateSha256,
-      json(checked.body),
-    ],
-  );
-  return {
-    captureVersion: 2 as const,
-    status: "CANDIDATE_SEALED" as const,
-    proposedPlan: checked.body.plan,
-    candidateSha256: checked.candidateSha256,
-    grantsAdmission: false as const,
-  };
 }

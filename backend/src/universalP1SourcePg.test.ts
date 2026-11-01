@@ -5,9 +5,13 @@ import {
   readUniversalP1Catalog,
 } from "./universalP1SourcePg";
 
-it.each(["publish", "catalog"])(
-  "%s retains the owning Core lease through published-result reads",
-  async (path) => {
+it.each([
+  ["publish", false],
+  ["publish", true],
+  ["catalog", false],
+] as const)(
+  "%s retains the owning Core lease through published-result reads (logger throws: %s)",
+  async (path, loggerThrows) => {
     const scope = {
       actorAccountId: "f4b059c5-8241-4ffb-aa15-37fa25474543",
       tripId: "825f79b2-4a9d-4535-a62e-43000ca50c4a",
@@ -42,9 +46,16 @@ it.each(["publish", "catalog"])(
           : [{ candidate_json: h }],
       })),
     };
+    const failure = Object.assign(
+      Error("OWNING_READER_REACHED_WITHOUT_SECOND_CONNECTION"),
+      { code: "42501" },
+    );
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (loggerThrows) throw Error("PRIVATE_LOG_FAILURE");
+    });
     const read = vi.fn(async (_scope: unknown, currentLease: unknown) => {
       expect(currentLease).toBe(lease);
-      throw Error("OWNING_READER_REACHED_WITHOUT_SECOND_CONNECTION");
+      throw failure;
     });
     const work =
       path === "publish"
@@ -67,8 +78,25 @@ it.each(["publish", "catalog"])(
             async () => "",
             read as never,
           );
-    await expect(work).rejects.toThrow("OWNING_READER_REACHED_WITHOUT_SECOND_CONNECTION");
-    expect(read).toHaveBeenCalledOnce();
+    try {
+      await expect(work).rejects.toBe(failure);
+      expect(read).toHaveBeenCalledOnce();
+      if (path === "publish") {
+        expect(log).toHaveBeenCalledExactlyOnceWith(
+          JSON.stringify({
+            event: "universal_source_publication_failed",
+            phase: "RESULT_READ",
+            kind: "OTHER",
+            code: "UNCLASSIFIED",
+            sqlState: "42501",
+          }),
+        );
+        expect(JSON.stringify(log.mock.calls)).not.toContain(failure.message);
+        expect(JSON.stringify(log.mock.calls)).not.toContain(scope.actorAccountId);
+      } else expect(log).not.toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
   },
 );
 
