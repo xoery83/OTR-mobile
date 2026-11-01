@@ -73,6 +73,8 @@ vi.mock("react", async (original) => ({
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
 }));
+vi.mock("expo/fetch", () => ({ fetch: vi.fn() }));
+vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("@/data/auth/authRepository", () => ({
   requireActiveUserId: vi.fn(),
   requireAdoptedUserId: vi.fn(),
@@ -1052,6 +1054,7 @@ it.each([
   ["EDIT", false],
   ["CREATE", true],
   ["EDIT", true],
+  ["CREATE", "INTAKE"],
 ] as const)(
   "P3 %s source=%s scans selected material through the real Form and SQLite Repository Save",
   async (mode, sourceMode) => {
@@ -1162,10 +1165,8 @@ it.each([
       vi.mocked(auth.requireAdoptedUserId).mockResolvedValue(accountId);
       const { p3SourceInterpretationFixture } =
         await import("./__fixtures__/p3SourceInterpretation");
-      const sourceScan = vi.fn(
-        async (
-          context: import("@/data/operations/universalP3FormInterpretation").UniversalP3FormContext,
-        ) =>
+      const sourceScan = vi.fn<import("./p3SourceSuggestions").P3SourceInterpreter>(
+        async (context) =>
           p3SourceInterpretationFixture(
             context,
             mode === "CREATE"
@@ -1180,6 +1181,77 @@ it.each([
               : { location: "Changed address" },
           ),
       );
+      if (sourceMode === "INTAKE") {
+        const { createCaptureSubmissionRepository } =
+          await import("@/data/repositories/captureSubmissionRepository");
+        const { createUniversalP3SourceInterpreter } =
+          await import("@/data/operations/universalP3SourceInterpreter");
+        const { universalP1SourceFixture } =
+          await import("../../../backend/src/__fixtures__/universalP1Source");
+        const { universalResultSchema } =
+          await import("@/data/api/universalImportContracts");
+        const { ApiClientError } = await import("@/data/api/client");
+        const original = await universalP1SourceFixture(
+          accountId,
+          tripId,
+          "2026-11-04",
+          "P3",
+        );
+        const result = universalResultSchema.parse({
+          ...original.input.result,
+          providerOutcome: "LOCAL_FIXTURE",
+        });
+        let task:
+          import("@/data/api/universalImportContracts").UniversalExecutionContext | null =
+          null;
+        sourceScan.mockImplementation(
+          createUniversalP3SourceInterpreter({
+            requireNormalAccount: account,
+            submission: {
+              repository: createCaptureSubmissionRepository(database, account, {
+                sha256: async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+                now: clock,
+                newId: randomUUID,
+              }),
+              open: async () => ({
+                bytes: new TextEncoder().encode(
+                  original.input.snapshot.representations[0].text_content!,
+                ),
+              }),
+              now: clock,
+              newId: randomUUID,
+            },
+            prepareSources: async (_context, job) => {
+              result.batchId = job.batch.batchId;
+              result.sourceBindings[0].inputId = job.inputs[0].id;
+              task = {
+                version: "otr.backend.universal-context/1",
+                accountId,
+                actorId: accountId,
+                tripId,
+                batchId: job.batch.batchId,
+                taskId: result.taskId,
+              };
+            },
+            createTransport: () => ({
+              context: async () => {
+                if (!task)
+                  throw new ApiClientError(
+                    "fixture missing Task",
+                    "http",
+                    404,
+                    "TASK_NOT_FOUND",
+                  );
+                return task;
+              },
+              result: async () => result,
+              execute: async () => {
+                throw Error("NO_PROVIDER_IN_LOCAL_FIXTURE");
+              },
+            }),
+          }),
+        );
+      }
       const p = {
         ...props(),
         tripId,
@@ -1220,7 +1292,7 @@ it.each([
         (sourceMode ? sourceScan.mock.calls[0][0] : scan.mock.calls[0][0]).itemRevision,
       ).toEqual(mode === "EDIT" ? expect.any(Number) : null);
       if (mode === "CREATE")
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < (sourceMode === "INTAKE" ? 3 : 6); i++) {
           node("formAutofill.keep").onPress();
           render(p);
         }
@@ -1250,7 +1322,11 @@ it.each([
         clock,
       ).read(tripId, savedId);
       expect(restored.fields.location).toBe(
-        mode === "CREATE" ? "Selected address" : "Changed address",
+        sourceMode === "INTAKE"
+          ? null
+          : mode === "CREATE"
+            ? "Selected address"
+            : "Changed address",
       );
       if (mode === "EDIT") {
         expect(savedId).toBe(itemId);
@@ -1263,9 +1339,11 @@ it.each([
         });
       } else
         expect(restored.fields).toMatchObject({
-          title: "Synthetic Inn",
+          title: sourceMode === "INTAKE" ? "海滨住宿" : "Synthetic Inn",
           description: null,
-          stayDetails: { propertyName: "Synthetic Inn" },
+          stayDetails: {
+            propertyName: sourceMode === "INTAKE" ? "海滨住宿" : "Synthetic Inn",
+          },
         });
       expect(pending()).toBeGreaterThan(before);
       expect(JSON.stringify(restored.fields)).not.toContain("Instructions");

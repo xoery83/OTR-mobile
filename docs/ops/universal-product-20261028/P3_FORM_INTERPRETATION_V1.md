@@ -111,3 +111,70 @@ intake and actual Field Review → existing manual Save/readback remain pending.
 Status: `LOCAL_PASS` after the focused test/type/lint checks; ready for independent
 review and Native adapter integration, **not** SHARED_DEV_PASS or CONSUMER_E2E_PASS.
 Root records the final SHA and current-state handoff during serial integration.
+
+## Raw Form material orchestration candidate
+
+`createUniversalP3SourceInterpreter` structurally implements Native's formal
+`P3SourceInterpreter(context, AbortSignal, CaptureSelection[], getCurrentContext)`.
+The fourth argument is `() => UniversalP3FormContext | null`. Each factory is
+owned by **one Form instance and one explicit material intent**. Native retains
+the factory and its frozen session; UNKNOWN never implicitly replaces it. There
+is no global last-request lock, Map, new queue or persistent store.
+
+Required injected owning dependencies are the existing Capture submission
+repository/open/UUID/clock inputs, trusted `requireNormalAccount` (normally
+`requireAdoptedUserId`), and an existing Universal transport
+factory honoring the invocation's `signal` / `assertCurrent`. Optional
+`prepareSources` must be the existing authorized Source lifecycle adapter. The
+candidate has no default mount, environment switch, Session reader or Provider
+capability. Absent Source preparation leaves accepted raw Capture retained and
+reports the missing owning Task rather than starting anything.
+
+The implementation uses `createCaptureSubmissionSession.submit` for the actual
+raw picker roster and Trip prior. That session freezes its original submission
+key and IDs; the repository owns durable intake and validation. The Account
+request context is independently captured using the owning auth helper; both
+Account guards use only that context, with explicit Account/Trip agreement to the
+Form. Form generation/revision is never substituted for Account generation. After successful intake,
+repeat calls use that same session's `recover` and original accepted Job. A failed
+intake retains the same session/submission key for its owning recovery.
+The session's raw opener remains bound to the initial cancellation scope. After
+accepted intake, a new invocation signal can recover/read that same Job without
+reopening raw bytes; cancellation never replaces its frozen material. Incomplete
+intake stays under existing Capture recovery rather than implicit Form recreation.
+
+It then uses the existing `createUniversalCaptureConsumer` in continuous mode,
+starting with passive `recover`. Existing successful or UNKNOWN Tasks are only
+read; existing missing Results, 503, forbidden or other ambiguous failures do not
+start work. Only the first exact owning context `404 TASK_NOT_FOUND` may use the
+existing explicit Start/Source preparation dependency. This start is marked
+before invocation and is never repeated after a lost preparation ACK. If a Task
+appears between the passive read and Start, it cannot fall through UNKNOWN into
+Source preparation. There is no feature timer, polling loop or automatic retry.
+Typed results pass through the existing v1 Context/Evidence projection.
+
+Before/after async work, cancellation, Account generation/identity and live Form
+Context are checked. Cancellation or stale Context blocks further Source
+dispatch and UI consumption; existing Capture/Source is left to its original
+durable lifecycle, never deleted. Same roster pointer identities and exact
+captured Context reuse the request. A reselected roster or changed Context yields
+`FORM_SCAN_FROZEN_REQUEST_MISMATCH`, preserving the existing reference. A future
+explicit new-intent nonce/lifecycle change belongs to Native, not an inferred
+NoCommit or implicit replacement inside Import.
+
+Native's owning bridge supplies the fourth argument from the original private
+`P3StayEditor.scanContext` reader. Import rejects old three-argument callers
+before intake. This is required so stale edits cannot authorize dispatch after
+long intake; echoing captured Context is not a production live reader. Native
+also owns explicit per-Form factory lifetime; recreating it to bypass UNKNOWN
+or frozen-intent mismatch is forbidden. The synthetic three-argument contract
+remains separate. Real Source capability injection/mounting is still pending.
+
+Focused LOCAL_PASS tests use the real Capture session/repository and in-memory
+SQLite, with explicitly labeled LOCAL_FIXTURE Source/Task results. The actual
+HTTP transport is exercised only with intercepted local wire responses. These
+tests demonstrate raw selection → durable accepted Capture → existing consumer
+→ v1 suggestions, same-ID read recovery, UNKNOWN isolation, stale/cancelled intake,
+ambiguous preparation and default-closed capability behavior. They are not real
+Source/Provider authorization, DEV PASS or consumer E2E. The expired November 1
+scope is never revived; Native's live source port remains unmounted.
