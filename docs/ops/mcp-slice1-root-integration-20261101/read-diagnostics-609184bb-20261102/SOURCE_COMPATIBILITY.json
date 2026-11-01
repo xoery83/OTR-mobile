@@ -1,0 +1,46 @@
+{
+  "status": "EXACT_PRODUCTION_PREIMAGES_PASS_TESTS_ADDED_NONBUILD_ONLY",
+  "base": "/private/tmp/otr-mcp-diagnostics-assembly-20261102/tree",
+  "candidate": "/private/tmp/otr-mcp-read-diag-609184bb-7a4a6bwu/tree",
+  "authCommit": "609184bb80c4dfbc03e321829695abf6fe40db69",
+  "baseCaptureSHA256": "8bb2dfba6f5c8c012491c2b42a47d8f876e73a51b9d35192beab286adc627c1d",
+  "expectedInputCount": 352,
+  "productionChangedCount": 2,
+  "expectedOtherProductionInputsPreserved": 350,
+  "scopedFiles": [
+    {
+      "path": "backend/src/mcpAccountReadBinding.ts",
+      "role": "production_delta",
+      "actualBeforeSHA256": "84f275a6464fd38b7b5f600f25669d0ae7c97ea9a12794efb6235d157d58e59e",
+      "authParentSHA256": "84f275a6464fd38b7b5f600f25669d0ae7c97ea9a12794efb6235d157d58e59e",
+      "afterSHA256": "5b865d27ab0449a22945a5a2b84eb377225dd2eedf13fb5fc8b089b336021be0"
+    },
+    {
+      "path": "backend/src/mcpAccountReadBinding.test.ts",
+      "role": "nonbuild_test_fixture",
+      "actualBeforeSHA256": null,
+      "authParentSHA256": "5b80455ee7a290b9587d8b84f7cadb0f95ebdb76ec29370f4458c154570af8cc",
+      "afterSHA256": "092e6465cc018e064dd170b415be9176d37d3d1a4b6116754e8599de36044608"
+    },
+    {
+      "path": "backend/src/mcpQaRuntime.ts",
+      "role": "production_delta",
+      "actualBeforeSHA256": "5216d70ea05a74fe275c40af89edb799f2151ab7f92692cca2cc2ebb590e05d5",
+      "authParentSHA256": "5216d70ea05a74fe275c40af89edb799f2151ab7f92692cca2cc2ebb590e05d5",
+      "afterSHA256": "bb6870521ec510cc7493fd7a0438553172f3c48fff228afef97d1f230c235a8b"
+    },
+    {
+      "path": "backend/src/mcpQaRuntime.test.ts",
+      "role": "nonbuild_test_fixture",
+      "actualBeforeSHA256": null,
+      "authParentSHA256": "d50e1f76758bfe1c810ce39e9bc759ea18a2bf5e2d510a3da674e40596110097",
+      "afterSHA256": "6e7b9ac75f94a652d4b32ece37ba3f1bde97871df020770c28d38b12a5239d4e"
+    }
+  ],
+  "runtimeSHA256Preserved": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+  "sdkSHA256Preserved": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+  "fixtureSHA256Preserved": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "hostAction": false,
+  "activation": false,
+  "commit": false
+}

@@ -1,0 +1,20 @@
+{
+  "candidateCaptureSHA256": "6e69438340ce20f51912b4ad465406270fc17a8589950d1d52b6f7eb566a59e0",
+  "probeSHA256": "f8b986059060de98ec90342cff8385a76b67c3b4a7032c793d92c53da1f4c1fc",
+  "builtOnly": true,
+  "command": [
+    "node_modules/.bin/esbuild",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--alias:@=./src",
+    "--external:./src/data/auth/guestLocalWorkspace.ts",
+    "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
+    "--external:react-native",
+    "--external:expo-*",
+    "--sourcefile=read-diag-closed-loader-entry.ts",
+    "--outfile=dist/closed-mcp-loader.mjs",
+    "--banner:js=import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);"
+  ]
+}

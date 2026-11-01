@@ -1,0 +1,37 @@
+{
+  "status": "FRESH_DEFAULT_CLOSED_IMAGE_PREBUILT_NOT_DEPLOYED",
+  "imageId": "sha256:1c5d8f83d57ca9d704cfc947e908c3fa6d90ff8fbf16327e775201bdced4c39b",
+  "baseImage": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66",
+  "actualServiceStill": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+  "actualServiceConfigSHA256": "335997de5233bb374e49b62abf34e10231bbf2b3e4856228092b075111cc6c34",
+  "qaKeysAbsent": true,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+    "server-capture.mjs": "6e69438340ce20f51912b4ad465406270fc17a8589950d1d52b6f7eb566a59e0",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "compiledDefaultClosedSmoke": {
+    "defaultClosed": true,
+    "backendCalls": 0
+  },
+  "planSHA256": "bdbe9d4bdb7eb3edf7538fe8ac745994a745970b9fcdabc149a46d2ea84351ce",
+  "releaseScriptSHA256": "b29c1d6f7565ea62e0d39addc3849a9a8f8e32b7a6bfc24f083f866eb8f4149a",
+  "operatorHashes": {
+    "config_cas.py": "0ba00b4575b0c828ea5b6bb05d879c8f32e2a71d9602ac27ceba4980f9e9ebee",
+    "prepare_cas.py": "aac0c9940409a9eff40fe5f3e8d554ec984152f3cb74ad3511fc33249ed03a98",
+    "close_current.py": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "slice1-qa-cases.json": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da"
+  },
+  "fixtureSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+  "readyAt": "2026-11-01T21:17:58.434626+00:00",
+  "deployed": false,
+  "authorityActivated": false,
+  "notesApproval": false,
+  "otpSent": false,
+  "oldUnknownReplayed": false
+}

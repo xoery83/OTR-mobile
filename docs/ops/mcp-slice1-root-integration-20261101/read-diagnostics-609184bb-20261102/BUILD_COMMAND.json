@@ -1,0 +1,21 @@
+{
+  "cwd": "/private/tmp/otr-mcp-read-diag-609184bb-7a4a6bwu/tree",
+  "argv": [
+    "node_modules/.bin/esbuild",
+    "backend/src/serverCapture.ts",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--alias:@=./src",
+    "--external:./src/data/auth/guestLocalWorkspace.ts",
+    "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
+    "--external:react-native",
+    "--external:expo-*",
+    "--outfile=dist/server-capture.mjs",
+    "--metafile=dist/read-diagnostic-capture-meta.json",
+    "--banner:js=import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);"
+  ],
+  "existingCommandSource": "/private/tmp/otr-mcp-diagnostics-assembly-20261102/build-candidate.py",
+  "oldBuilderExecuted": false
+}
