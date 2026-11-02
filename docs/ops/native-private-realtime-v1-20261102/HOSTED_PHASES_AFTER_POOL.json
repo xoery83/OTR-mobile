@@ -1,0 +1,57 @@
+{
+  "events": [
+    {
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 2101,
+      "projectionAndCommitMs": 2413,
+      "phases": {
+        "leaseMs": 299,
+        "beginMs": 299,
+        "setupMs": 299,
+        "scopeMs": 300,
+        "actorMs": 299,
+        "gateMs": 304,
+        "stateMs": 300,
+        "projectMs": 1514,
+        "finalScopeMs": 299,
+        "commitMs": 299
+      }
+    },
+    {
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 2090,
+      "projectionAndCommitMs": 2394,
+      "phases": {
+        "leaseMs": 298,
+        "beginMs": 297,
+        "setupMs": 298,
+        "scopeMs": 300,
+        "actorMs": 299,
+        "gateMs": 299,
+        "stateMs": 299,
+        "projectMs": 1499,
+        "finalScopeMs": 298,
+        "commitMs": 299
+      }
+    },
+    {
+      "projection": "AUTHORED",
+      "beforeProjectionMs": 2100,
+      "projectionAndCommitMs": 2399,
+      "phases": {
+        "leaseMs": 301,
+        "beginMs": 297,
+        "setupMs": 299,
+        "scopeMs": 304,
+        "actorMs": 300,
+        "gateMs": 300,
+        "stateMs": 298,
+        "projectMs": 1503,
+        "finalScopeMs": 298,
+        "commitMs": 300
+      }
+    }
+  ],
+  "containerId": "076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0",
+  "readOnly": true
+}

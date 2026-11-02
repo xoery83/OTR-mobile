@@ -49,7 +49,7 @@
     "Core physicalpostcommit Actor-visible publisher NOT_READY",
     "QualifiedRuntime cache callbacks+actualUI in-memory visibility invalidation still unmounted",
     "Actual cross-device/revoke/regrant/independentSupabase E2E notrun",
-    "Hosted ~7.84s repeated read unresolved; current deployed path vs reviewed local fast path and finer phase timing require precise comparison before shared release."
+    "Remaining serialSQL RTT: no accepted parameterized batch helper. Do not reorder authority guards, interpolate SQL or add multiresult protocol merely for 0.3s. Next bounded diagnosis is direct subquery timings inside projectMs; overall Hosted latency stillNOT_PASS."
   ],
   "evidence": {
     "/private/tmp/otr-native-private-v1-error-chain-final.log": "1c5528c7f1b3ea6e939d428985ff883ff027d5de6c2fa83253b7e2488b716b7e",
@@ -62,5 +62,6 @@
     "/private/tmp/otr-core-cache-fence-access-race-red.log": "89ad6f9122ba033d871585048940864d4bfb28970d8d35f6731b423529c13848",
     "/private/tmp/otr-version-refresh-boundary-red.log": "04a76e78dcf14fdee3699ba13674b64486c4b35050817551289e7c00af8d60b1",
     "/private/tmp/otr-native-private-v1-final-packet.log": "d128d29b89f75165e55236598902aa59686d7ca5536edaeed1ed1f364fd42bd1"
-  }
+  },
+  "hostedVersionAfterPool": "ACTUAL3GET2006542.38/7004.34/7460.57ms; ownnormalLogin/cleanupPASS. Rootphase lease299/298/301ms verifies pooltarget active (old2345/2350 repeated); overallperformanceNOT_PASS. Each remaining SQL~300ms, project~1500ms. No private/networkSignal/devicePASS."
 }
