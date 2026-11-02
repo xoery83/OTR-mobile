@@ -1,5 +1,5 @@
 {
-  "status": "ACTIVE_EXACT_APPROVED_FINITE_WINDOW",
+  "status": "CLOSED_PREVIEW_PASS_SAVE_NOT_SUBMITTED",
   "windowId": "78c1610ecf5f43409106fb67ecd36489",
   "previousWindow": "acd60fd27aee40e8b6cf1aca727ed169",
   "previousWindowState": "CLOSED_NEVER_REOPEN",
@@ -73,16 +73,26 @@
   "controlSession": 36280,
   "issuerWatchSession": 86506,
   "confirmationTableInstalled": false,
-  "issuerActivated": true,
+  "issuerActivated": false,
   "console": {
-    "oauth": "ON_SAVED",
-    "hook": "ENABLED",
-    "siteUrl": "https://api-dev.xoery.art",
-    "dcr": false
+    "oauth": "OFF_PERSISTED",
+    "hook": "DISABLED",
+    "siteUrl": "http://localhost:3000",
+    "temporaryTab": "CLOSED"
   },
   "ownerSourceMessage": "01a199f7-d7cd-77c3-aa06-cfbed19f9c68",
   "consumerNormalOtp": "MCP_ACTUAL_SINGLE_RECEIPT_VERIFY_CONSENT_PASS",
   "consumerConnected": true,
   "consumerToolCount": 8,
-  "consumerStep": "ORIGINAL_STATUS_FULL_EDIT_BASE_FRESH_PREVIEW_REQUESTED"
+  "consumerStep": "ORIGINAL_STATUS_FULL_EDIT_BASE_FRESH_PREVIEW_REQUESTED",
+  "operationState": "NOT_SUBMITTED",
+  "newUnknownOperations": 0,
+  "rootClosedAt": "2026-11-02T02:26:47.020538Z",
+  "issuerDenyAllAt": "2026-11-02T02:25:46.209951Z",
+  "finalAclVerifiedAt": "2026-11-02T02:28:52.333666Z",
+  "ownControlCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "ownQaLock": "ABSENCE_VERIFIED_AFTER_NORMAL_CLEANUP",
+  "noNewWindow": true,
+  "singletonInstalledAt": "2026-11-02T02:24:27Z",
+  "singletonIndependentReadinessAfterNormalClose": true
 }

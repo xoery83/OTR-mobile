@@ -1,15 +1,23 @@
-# Active finite MCP continuation 78c — 2 November 2026
+# Finite continuation 78c CLOSED — 2 November 2026
 
-Owner directly approved exact combined Gate e5cf4d1b / MCP commit7da5a4e6
-in Auth message01a199f7-d7cd-77c3-aa06-cfbed19f9c68. Only original1d6/CAS1/
-digest1d5 Notes append; fresh normal read+formal Preview must match before singleton.
-New T01:59:35.935Z, normal close02:25:30.554Z, hard D02:27:30.554Z; no extension.
-Root EMPTY6fb3169a/config18c47dbf on new default076edb49/config011909bc/imagecdd762
-verified02:01:46Z; close pointer/timer ready, confirmations empty. Auth normalcontrol
-36280, independent issuerwatch86506. Issuer verified02:01:54Z; Hook/OAuth enabled,
-DCR off/Site api-dev. MCP consumer login/read/new Preview underway, Apply not sent.
-See ops/auth-mcp-fresh-20261102/continuation-78c161/PREPARATION.json.
-Previous acd60 remains CLOSED. Realtime stays default closed; no new protected SQL.
+Direct Owner combined Gate e5cf/7da5 approved exact original1d6/CAS1/digest1d5.
+T01:59:35.935Z, normalclose02:25:30.554Z, D02:27:30.554Z, never extended.
+Normal OTP/Consent + actual new EditBase/Notes Preview PASS. Raw Preview revisionnull;
+CAS1 established by request and SERVER_CONFIRMED EditBase. Apply0, original1d6
+NOT_SUBMITTED; no new UNKNOWN, historicalf107/9b untouched. Root auto-review
+cross-chat denial required direct Root confirmation. Then actual V1 wire lacked
+existing clientId; V2 added only frozen clientId. Singleton actual independent
+READY02:25:36Z was after normalclose, so consumer correctly did not submit.
+Root restored076e/config011909bc/imagecdd762 before hardD at02:26:47Z; QAkeysabsent,
+health200/protected401/23filesHostexact/timerinactive/lockreleased. Authissuerdenyall
+02:25:46Z; normalgrantDELETE204+absent, owncontrol36280 logout/refreshnegativePASS,
+watch86506exit0. OAuthoff/Hookdisabled/localhostpersisted/tab8closed; ownQA lockabsent.
+Final denyall/originalACL read02:28:52Z PASS. Real wire offline regression V1RED/V2GREEN
+through frozen config validator and pure plan; no Host/CAS/DB execution. No newwindow.
+Evidence ops/auth-mcp-fresh-20261102/continuation-78c161/ROUND_OUTCOME.json.
+Realtime57c357 remains defaultclosed READY_FOR_INTEGRATION; Nativeacb0139d cache
+Deny/Regrant integration+QA accepted, no repeat NativeReview. Formal serverSession,
+COMMIT producer/private transport/forceddisconnect and protectedSQL Gate remain.
 
 # Read401 retest acd60 CLOSED — 2 November2026
 

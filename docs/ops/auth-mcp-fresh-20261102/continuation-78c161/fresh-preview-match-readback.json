@@ -1,0 +1,25 @@
+{
+  "status": "ACTUAL_DOM_BASE_AND_PREVIEW_MATCH",
+  "sourceSHA256": "7d15039b60f6be03aecb2cf721d8985e39c50fab8c62060f32a7adf914d9d9df",
+  "preview": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+    "operation_id": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+    "current_revision": null,
+    "preview_digest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+    "summary": "Update 3616da44-0d35-4400-a739-01f1029565ea at revision 1: {\"kind\":\"TEXT\",\"notes\":\"Synthetic QA only. No Booking/Ticket.\\nSlice1 Fresh Claude Notes QA verified.\"}",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+      "target": "ITEM"
+    },
+    "outcome": "PREVIEW"
+  },
+  "editBaseState": "SERVER_CONFIRMED",
+  "itemRevision": 1,
+  "ownerAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "originalNotes": "Synthetic QA only. No Booking/Ticket.",
+  "capabilitiesCanEditObserved": false,
+  "doesNotBypassBackendPermissions": true
+}
