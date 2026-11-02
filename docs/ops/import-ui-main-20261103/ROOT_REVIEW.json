@@ -1,0 +1,24 @@
+{
+  "status": "ROOT_INDEPENDENT_INTEGRATION_REVIEW_NO_BLOCKER",
+  "reviewedCandidate": "7fb634c3",
+  "base": "4e1bedfc",
+  "sourceDiffSHA256": "ffe5a0683fa14406f939f786143929d9ac9f9c906a65ff5a02390afde024406e",
+  "reviewedAt": "2026-11-02T21:11:28.411718+00:00",
+  "scope": [
+    "14 Import-only src/test files",
+    "Receipt UNKNOWN distinct from absent; accepted fact preserved",
+    "Same Task accepted Item only for optional Day adapter; no Candidate family/date authority",
+    "Original preview remains enabled while confirmation unavailable",
+    "Document format is display metadata only",
+    "No shared Navigation/Session/DayFeed/Sync/Backend/SQL/Provider change"
+  ],
+  "validationReused": "128 focused tests + scoped types + UIguard PASS",
+  "fullTypecheckLimitation": "Unchanged auth browser TS7016 from reused dependencies; no change introduced by this slice",
+  "notClaimed": [
+    "Native adapter mounted",
+    "Fresh Import or Provider use",
+    "Backend main integration",
+    "Unified Native current-build acceptance"
+  ],
+  "decision": "READY_FOR_SERIAL_MAIN_FAST_FORWARD_AFTER_FRESH_HEAD_AND_DIRTY_SCOPE_CHECK"
+}
