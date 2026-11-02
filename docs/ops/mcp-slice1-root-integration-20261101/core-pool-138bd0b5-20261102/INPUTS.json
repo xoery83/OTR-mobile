@@ -1,0 +1,10 @@
+{
+  "capturePath": "/private/tmp/otr-core-pool-root-release-20261102/tree/dist/server-capture.mjs",
+  "captureSHA256": "939627ab0df7c43546cd2c56a64a642227ce6207e5e115a2c48152d54fbd4cd4",
+  "runtimePath": "/private/tmp/otr-mcp-read401-2ff76bc0-20261102/runtime.mjs",
+  "runtimeSHA256": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
+  "sdkSHA256": "45ff3aee01cc1213a1f78d2dcb2bff2d7d1029ca3ea3508f96824ee92aa7c2f6",
+  "fixtureSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "probeSHA256": "f8b986059060de98ec90342cff8385a76b67c3b4a7032c793d92c53da1f4c1fc",
+  "releaseSHA256": "8efb5dccfeb5bb62eb69232bad36bab9d98a091d35d95bea188c4a214757dcc1"
+}

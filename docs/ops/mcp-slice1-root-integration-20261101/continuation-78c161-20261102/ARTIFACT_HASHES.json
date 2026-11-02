@@ -1,0 +1,8 @@
+{
+  "stage-closed-restore.py.diff": "ee588e92ed1fcb73e7ae5ed2bf82dd77595fbee2f37ab3606dd32e2ae1869229",
+  "close-once.py.diff": "3f21e8d49efaa3c5aea5524f4e4d3305578e225b4dbb20426bc8dd368afaa073",
+  "close-once.py": "e3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e",
+  "ACTUAL_NO_CHANGE_RESTORE.json": "fca5888c897cd466dd351b24bb45a13b4a7c46e7fb4d5bb41317b2734bf371c4",
+  "BINDING_READY.json": "3f0642181d904b723cdd95f2c5a4cc5c6746020111433e256d9560384004c069",
+  "stage-closed-restore.py": "fb2b09ba023cf9c6a0eb331fc3db8e1d9f0860b934108306c78c5eb8105100b4"
+}

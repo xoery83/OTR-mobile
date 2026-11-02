@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_EXACT_TWO_FILE_BUILD_READY",
+  "candidateCommitReported": "138bd0b5",
+  "exactPatchSHA256": "1e0838a82900c1416acfbc1e164845dfe274e9a02673a068ba7b005ceb37a01b",
+  "baseManifestSHA256": "0156d5493a8f87259f961c50eec95a1d6e72dcbc63f7e74bf39138dcfe6a44fe",
+  "sourceManifestSHA256": "082bc3910108352a9095b2cddb6e2c0495188837e0f69553faecccb4ce17dffe",
+  "changedManifestPaths": [
+    "backend/src/tripCoreV2PgConnection.ts"
+  ],
+  "exactCandidateFiles": {
+    "backend/src/tripCoreV2PgConnection.ts": "ac5668a82ac69925b1bb3523211ff44170b5ad53d6e8ad8e97b13cc5b97b538c",
+    "backend/src/tripCoreV2PgConnection.test.ts": "55e94e7a466cef95f83f24c915a58362fc3f5d9b803deef0d091912ce836e2d0"
+  },
+  "unchangedManifestFiles": 351,
+  "buildArgv": [
+    "node_modules/.bin/esbuild",
+    "backend/src/serverCapture.ts",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--alias:@=./src",
+    "--external:./src/data/auth/guestLocalWorkspace.ts",
+    "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
+    "--external:react-native",
+    "--external:expo-*",
+    "--outfile=dist/server-capture.mjs",
+    "--metafile=dist/read-diagnostic-capture-meta.json",
+    "--banner:js=import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);"
+  ],
+  "captureSHA256": "939627ab0df7c43546cd2c56a64a642227ce6207e5e115a2c48152d54fbd4cd4",
+  "buildDurationSeconds": 0.287,
+  "deployed": false,
+  "schemaOrAuthorityChanged": false
+}

@@ -1,5 +1,35 @@
 # Root / Import current state — 2 November 2026
 
+## Current default / new MCP preparation — 2 November, 14:09 NZDT
+
+Native reviewed two-file Core connection reuse candidate138bd0b5 is now software
+SERVER_VERIFIED01:07:33Z. ActualCID076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0,
+config011909bcc46adceb3f1defc9b769655d388413ac28d43502330bdfbc6afd588c,
+imagecdd762ea99b53fd21330dfe09df157b727b89e7a7c5e4e4da2c2487796364102.
+Capture939627ab0df7c43546cd2c56a64a642227ce6207e5e115a2c48152d54fbd4cd4;
+SDK/runtime/server/browser and23files/Env/Host unchanged. No SQL/Authority change.
+Shortlock01:06:53→01:07:00Z released. Oldddd7/db86/57 retained SOFTWARE rollback;
+future finite close must restore076e/0119/cdd7, not oldddd7. Native notifiedREADY
+before commits; original3GET performance retest pending, do not claim speedPASS.
+Exact source snapshot /private/tmp/otr-core-pool-root-release-20261102/tree, only
+one production manifest file changed and351 other manifest files unchanged; Native
+connection test also copied exact. Native candidate remains unique Writer; Root
+archives precise two-file patch rather than replacing its branch or other files.
+
+MCP newnonce78c1610ecf5f43409106fb67ecd36489 PREPARATION_ONLY, noT/D/OTP/QAkeys/
+Authority. SameItem3616/original1d6/CAS1/digest1d5, oldUNKNOWN untouched.
+No-change restore ACTUAL PASS01:09:21.996532Z on same076e/currentdefault, no clock/
+timer created. Close entry /private/tmp/otr-mcp-root-continuation-78c161-20261102/close-once.py
+SHAe3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e,
+plan8f43b6195e2f3616d9838a3f17682521d863d072761f9abd9fd30212a12038e1.
+All existing prepare/confirm/config/restore/closer helpers byte-identical; only
+nonce/default/path bindings changed. NewactualGate not yet approved; old4ab cannot
+be reused. Auth unique chat preparing one explicit finiteaccess+exactNotes approval,
+requiring freshread/newPreview sameCAS/digest before oneApply; mismatch stop.
+No assumption that broadcontinue is specificNotes intent. Local dispatch wrappers
+bind exact newGate only after freeze; do not build circularGate↔wrapper hashes.
+Evidence: core-pool-138bd0b5-20261102/ and continuation-78c161-20261102/.
+
 ## MCP acd60 — closed, 2 November
 
 Actual Consumer Item and Edit Base SERVER_CONFIRMED; actual Notes PREVIEW matches
