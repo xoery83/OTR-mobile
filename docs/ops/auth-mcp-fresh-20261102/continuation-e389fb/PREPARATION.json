@@ -61,7 +61,9 @@
     "proposedThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
     "status": "CANDIDATE_MUST_BE_EXPLICIT_IN_NEW_GATE",
     "currentValidatorAcceptsRootOrigin": false,
-    "requiredChange": "EXACT_OWNING_SOURCE_BINDING_NO_FALSE_AUTH_ORIGIN"
+    "requiredChange": "EXACT_OWNING_SOURCE_BINDING_NO_FALSE_AUTH_ORIGIN",
+    "candidateReview": "INDEPENDENT_10_CHECKS_PASS_FIXED_ROOT_ONLY_CANDIDATE_NOT_INSTALLED",
+    "candidateSHA256": "2ee651282e3c415c1616266ca19326c09bc8c890e006c15081b126d5883c11ad"
   },
   "wirePreflight": "FINAL_ACTUAL_APPROVAL_BYTES_AFTER_DIRECT_CONFIRMATION_BEFORE_CLOCK",
   "noNewOwnerQuestion": true
