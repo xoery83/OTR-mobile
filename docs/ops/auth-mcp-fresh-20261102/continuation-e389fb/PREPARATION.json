@@ -22,7 +22,7 @@
     "fresh formal Preview same operation/digest/CAS/Before/After",
     "any mismatch stops without Apply"
   ],
-  "status": "DISPATCHER_INCREMENT_REVIEW_PASS_FINAL_GATE_REBIND_PENDING_NO_AUTHORITY",
+  "status": "FINAL_GATE_AND_DISPATCHER_REVIEW_PASS_WAIT_ROOT_ONLY_APPROVAL_NO_CLOCK",
   "windowId": "e389fb93736b401c9e9b5f1437e852dc",
   "previousWindow": "78c1610ecf5f43409106fb67ecd36489",
   "previousWindowState": "CLOSED_NEVER_REOPEN",
@@ -82,16 +82,16 @@
     "All close and normal own Session/control/consumer UI ready before T/D"
   ],
   "gate": {
-    "commit": "c6073455",
+    "commit": "6e8bedd9",
     "path": "docs/mcp/slice1/NEXT_NOTES_ACCESS_AND_EXACT_SAVE_GATE.md",
-    "sha256": "acaad3a5afc3aff946913a15d6ddf73af8368fb726f1acdabf0519154a37367f",
+    "sha256": "cb1dcf94151d6e03b00ad35f1d8edfd0258fe27276fb8669513ba079438555eb",
     "gitBlobIndependentlyVerified": true,
     "approval": false,
     "previousCandidateCommit": "a5d75b5f",
     "previousCandidateSHA256": "cd5e4c3d359937009ad9ab33d4fdcb922e9b1ce109f2b708abda3ceba1bd4822",
-    "delta": "ONLY_CLARIFY_EXISTING_HOOK_BODY_CAS_AND_RESTORE_SQL_NO_NEW_SCHEMA_RLS_GRANT",
+    "delta": "NEW_FINAL_DEFAULT_AND_CLOSE_PINS_MATCH_COREAD_PLUS_REVIEW_EVIDENCE_ONLY",
     "rootQuestionState": "ROOT_TO_CONFIRM_NO_DUPLICATE_REQUEST",
-    "status": "OLDER_DEFAULT_GATE_NOT_FOR_EXECUTION_WAIT_MCP_FINAL_HASH"
+    "status": "FINAL_GIT_BLOB_VERIFIED_NO_APPROVAL"
   },
   "latestClosedDefaultBinding": {
     "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
