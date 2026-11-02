@@ -1,5 +1,18 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Owner Hosted-closure direction: C04 remains primary; Root preparing default-closed
+composition integration/deployment and exact runtime QA qualification; Core asked
+for actual member-revoke authority (new Organizer-removal direction conflicts with
+old PeopleV1 and requires precise protected scope, not pending-invite cancellation).
+Auth independently implemented the normal Native MemberClaim Repository using
+existing authenticated transport. Shared strict command schema moved without
+digest/order changes; Backend old exports retained, no crypto in Native. 15new
+client tests + independent15 PASS; initial changed-schema combo50PASS. Original
+command retained, UNKNOWN recovery-only, no optimistic queue/local accepted state.
+Evidence ops/auth-c04-20261103/NATIVE_TRANSPORT_EVIDENCE.json. UI/runtime unmounted;
+Hosted A/B still NOT_RUN. MC ReadyQueue requested only for existing approved work;
+no new scope claimed and no wait for ACK required.
+
 Root raw-Core composition f5554e28 accepted into Auth as5da84bef: existing v3
 connection, optional trusted third argument, existing close fence, passthrough;
 all existing loader calls omit selection, so runtime remains CLOSED. Two test

@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_REPOSITORY_CANDIDATE_PASS",
+  "goldenSlice": "Normal Account scoped original Invite/Claim command through existing authenticated transport; UNKNOWN recovery reads original disposition without replay",
+  "files": [
+    "src/data/api/memberClaimContracts.ts",
+    "src/data/repositories/memberClaimRepository.ts",
+    "src/data/repositories/memberClaimRepository.test.ts",
+    "backend/src/tripMemberClaimAuthority.ts"
+  ],
+  "authorValidation": {
+    "initialClientAndChangedSchemaBackendSuitesPassed": 50,
+    "finalClientIncluding401Passed": 15,
+    "oldPgRepeated": false
+  },
+  "independentReview": {
+    "result": "SCOPED_NO_BLOCKER_CANDIDATE",
+    "newClientTestsPassed": 15,
+    "method": "14 initial tests and 1 added401 test independently; stable suites not repeated"
+  },
+  "invariants": [
+    "Command schema field/key order unchanged; Backend reexports preserve caller path and digest algorithm",
+    "Native has no Backend or node:crypto import",
+    "Context and parsed command copied before first await; normal token bound to expected Account",
+    "Trip mismatch and caller-supplied actor rejected; post-token and post-response Account generation fenced",
+    "Bounded8KiB response, redirect:error and same operation idempotency header",
+    "Person/invite/outcome mismatch rejected",
+    "Recovery uses original command only on recovery route; absence and historical LINKED/NONE never grant",
+    "No network/503/UNKNOWN blind replay; existing single401 token refresh preserves command"
+  ],
+  "uiMounted": false,
+  "runtimeEnabled": false,
+  "hostedInvoked": false,
+  "newQueueOrAuthority": false,
+  "limits": "Historical disposition/currentAccess is not complete receipt or Core certificate. Caller retains original attempt; successful Claim still needs authorized Core pull. Pending invite revoke is not existing member revoke."
+}

@@ -7,6 +7,22 @@ all existing Source/Core guards still run. Manual requests omit operationId and 
 
 # OTR Mobile 2.0 API Contract Draft
 
+## Directed Invite/Claim Native transport candidate — 3 November 2026
+
+`createMemberClaimRepository` uses the existing authenticated bounded client for
+POST `/v2/trips/:tripId/member-claim-operations` and POST its `/recovery` suffix.
+Both retain the exact strict original command and identical operation/idempotency
+header; actor identity comes only from normal Auth. Shared command schema moved
+without changing parse ordering or digest input; Backend exports remain compatible.
+Account/Trip/generation and response Person/invite/outcome are fenced. No optimistic
+membership, new queue, local accepted snapshot or automatic uncertain-operation
+replay is introduced. Existing single401 Auth refresh retains the same command.
+Recovery's ABSENT_UNCONFIRMED never proves no commit; historical LINKED with
+currentAccess NONE does not regrant. Successful command response is not a Core
+read certificate: Native must use the existing authorized downstream pull.
+This repository has no mounted UI caller or runtime activation. The current
+REVOKE_UNCLAIMED_INVITE command does not revoke an existing member.
+
 ## Universal existing Task context and Native consumer candidate — 24 October 2026
 
 `GET /v2/import-batches/:batchId/interpretations?tripId=:tripId` is a read-only

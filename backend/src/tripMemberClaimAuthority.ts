@@ -2,35 +2,15 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 
-const target = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("REGISTERED_ACCOUNT"), accountId: coreUuid }),
-  z.strictObject({ kind: z.literal("UNREGISTERED_PERSON") }),
-]);
-export const memberClaimCommandSchema = z.discriminatedUnion("kind", [
-  z.strictObject({
-    kind: z.literal("ISSUE_TARGETED_INVITE"),
-    operationId: coreUuid,
-    tripId: coreUuid,
-    personId: coreUuid,
-    target,
-  }),
-  z.strictObject({
-    kind: z.literal("CLAIM_PERSON"),
-    operationId: coreUuid,
-    tripId: coreUuid,
-    personId: coreUuid,
-    inviteId: coreUuid,
-    explicitConsent: z.literal(true),
-  }),
-  z.strictObject({
-    kind: z.literal("REVOKE_UNCLAIMED_INVITE"),
-    operationId: coreUuid,
-    tripId: coreUuid,
-    personId: coreUuid,
-    inviteId: coreUuid,
-  }),
-]);
-export type MemberClaimCommand = z.infer<typeof memberClaimCommandSchema>;
+import {
+  memberClaimCommandSchema,
+  memberClaimTargetSchema as target,
+  type MemberClaimCommand,
+} from "../../src/data/api/memberClaimContracts";
+export {
+  memberClaimCommandSchema,
+  type MemberClaimCommand,
+} from "../../src/data/api/memberClaimContracts";
 type Target = z.infer<typeof target>;
 type Outcome = "ISSUED" | "LINKED" | "ALREADY_LINKED" | "INVITE_REVOKED";
 type Access = "NONE" | "READ" | "COLLABORATE" | "ORGANIZER";
