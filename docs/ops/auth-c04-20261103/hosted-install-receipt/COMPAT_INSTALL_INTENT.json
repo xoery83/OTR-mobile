@@ -1,0 +1,14 @@
+{
+  "status": "OWNER_APPROVED_EXACT_ONESHOT_INSTALL",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "ownerApprovalThread": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "ownerApprovalTurn": "01a19e23-808e-7013-965b-c53ca52fb8a9",
+  "ownerAnswer": "\u6279\u51c6\u6b64\u7cbe\u786e\u517c\u5bb9\u8865\u5145\uff0c\u4fdd\u6301\u8fd0\u884c\u65f6\u5173\u95ed",
+  "gateSHA256": "7c3250efae9cd816857f14540066a46fe89fb7f0b12621bf03b1861636d15cbf",
+  "sqlSHA256": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+  "freshPreimageSHA256": "ddb42f0ab76cf35f8b6723d0db6fc557cbd1af97a50d2bc39bc477363feb1f4a",
+  "acquiredAt": "2026-11-02T21:29:55.005062+00:00",
+  "runtimeActivation": false,
+  "authSessionCreation": false,
+  "businessMutation": false
+}

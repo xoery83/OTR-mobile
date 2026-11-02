@@ -1,0 +1,32 @@
+{
+  "status": "AUTH_ACCEPTED_PROTECTED_INSTALL_RUNTIME_CLOSED",
+  "source": "Root exact single install plus independent Hosted metadata readbacks; Auth revalidated existing artifacts only",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "gateSHA256": "7c3250efae9cd816857f14540066a46fe89fb7f0b12621bf03b1861636d15cbf",
+  "sqlSHA256": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+  "rootOutcomeSHA256": "0afc0a5c67f01400ef430a1731017e729829f8da0ef2d7b913185bf111cd06a9",
+  "checks": [
+    "One COMMIT acknowledgement",
+    "Two empty private RLS tables, zero policies, owner-only direct ACL",
+    "Three exact function bodies, owner/search_path/SECDEF/EXEC boundaries",
+    "Two expected enabled UPDATE/DELETE row triggers",
+    "Existing role/default ACL/dependency functions/relation ACLs/Synthetic cases unchanged",
+    "No additional Auth-side Hosted calls or business mutation"
+  ],
+  "runtimeMounted": false,
+  "authSessionsCreated": 0,
+  "businessCalls": 0,
+  "providerCalls": 0,
+  "locksHeld": false,
+  "hostedTwoAccountInviteClaim": "NOT_RUN",
+  "memberRevocation": "NOT_RUN",
+  "nativeColdRestore": "NOT_RUN",
+  "evidenceSHA256": {
+    "COMPAT_INSTALL_INTENT.json": "78f7b82550f9d9c38b6b101ba0407dffc519d923c874499ffe835484e1fffce4",
+    "FRESH_COMPAT_PRE_INSTALL.json": "ddb42f0ab76cf35f8b6723d0db6fc557cbd1af97a50d2bc39bc477363feb1f4a",
+    "POST_INSTALL_METADATA.json": "4a4b722d8dd277e6188b260ce2482036f8e7b8747388420c9da90b0a7e2e49fe",
+    "COMPAT_INSTALL_TRANSPORT.json": "44707c29a1c5337143d53ec4dacff6037e0f4a275063db1a5326cf94024ae7a2",
+    "POST_DETAILS.json": "7b0ecbbe5095d67850596e6b468cc0e43d32931de12938b4f02f510f360b626c",
+    "ROOT_INSTALL_VERIFIED.json": "0afc0a5c67f01400ef430a1731017e729829f8da0ef2d7b913185bf111cd06a9"
+  }
+}

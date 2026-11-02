@@ -1,3 +1,22 @@
+# C04 Hosted protected install verified; runtime closed — 3 November 2026
+
+Root completed exact3bbe install under Owner7c3250 approval once, COMMIT acknowledged,
+SQL short lock released. Independent Hosted readbacks: 2tables actually empty/RLS/
+zero policies/owner-only ACL; 3function source MD5/owner/search_path/SECDEF and only
+CoreGateway dispatcher EXEC; 2trigger target/type/enabled correct. Existing role
+flags/defaultACL/oldfunctions/relationACL and exact Synthetic cases unchanged.
+Auth independently checked the existing artifacts; no extra SQL/Provider/login or
+business call. Stable evidence: ops/auth-c04-20261103/hosted-install-receipt/.
+This is PROTECTED_INSTALL_SERVER_VERIFIED_RUNTIME_UNMOUNTED, not normal A/B E2E.
+Hosted Invite/Claim, Member revoke and Native Cold Restore remain NOT_RUN.
+
+Next legal work is default-closed Backend/native wiring and exact normal A/B test
+qualification; this installation approval did not enable Runtime or Session/QA
+operations. Existing A268/B1f3/Tripfb2/Personbcd registration/binding preimage is now
+available but confers no new Session/access or claimed membership. C03 adapters
+5d292b63/4ca558f9 remain ready for Native's accepted-cache Reader delivery. No old
+PG/Review rerun, no new permission expansion, no Role mutation or device reset.
+
 # C04 LOGIN compatibility approved; Root installation pending — 3 November 2026
 
 Owner directly approved call9d140c71: exact compatibility supplement, runtime closed.
