@@ -1,5 +1,14 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Root raw-Core composition f5554e28 accepted into Auth as5da84bef: existing v3
+connection, optional trusted third argument, existing close fence, passthrough;
+all existing loader calls omit selection, so runtime remains CLOSED. Two test
+append conflicts resolved by preserving both parent-reader and Claim fixtures;
+7focused PASS/24skip, fulltypes PASS. No existing PG rerun. Candidate not main or
+Hosted. Future selection still needs exact normal QA scope/expiry and execution
+qualification; invite expiry is not an activation deadline. Do not silently treat
+this optional constructor as a finite QA window or automatic member revoke.
+
 Root integrated default-closed Backend wiring to main10094d52 and verified remote.
 Auth checked final receipt +9 actual route smoke and four exact Auth leaf hashes.
 Backend code dependency now UNBLOCKED_DEFAULT_CLOSED_MAIN_INTEGRATION, not deployment.
