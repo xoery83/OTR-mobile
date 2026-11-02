@@ -1,0 +1,31 @@
+--- 
++++ 
+@@ -16,7 +16,9 @@
+ empty_qa=json.loads(base['authQaConfig']);assert empty_qa['confirmations']==[] and empty_qa['expiresAt']==base['deadlineMs'] and empty_qa['consentNotBefore']==base['windowStartedAtMs']
+ assert hashlib.sha256((p/'close-once.py').read_bytes()).hexdigest()=='e3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e'
+ assert hashlib.sha256((p/'prepare-empty-round.py').read_bytes()).hexdigest()=='2d015b26245d7498934dacf58ba8ff15015d541d6ae30de182eb3e7e1cfcef0d'
+-with (p/'CONFIRM_INTENT.json').open('x') as f:json.dump({'approvalSHA256':hashlib.sha256(raw).hexdigest(),'sourceMessageId':a['sourceMessageId'],'deadlineMs':base['deadlineMs']},f)
++prior=json.loads((p/'CONFIRM_INTENT.json').read_text());assert prior['approvalSHA256']=='68d91cbba72e4aaf2221420f9aacf1e899b80a680209218d36e01e2c46e24aee'
++assert not (p/'CONFIRM_RESULT.json').exists()
++with (p/'CONFIRM_RECOVERY_INTENT.json').open('x') as f:json.dump({'approvalSHA256':hashlib.sha256(raw).hexdigest(),'sourceMessageId':a['sourceMessageId'],'deadlineMs':base['deadlineMs']},f)
+ out=remote_python('APPROVAL='+repr(raw)+'\nBASE='+repr(base)+'\nACTIVE='+repr(active)+'\n'+r'''
+ import sys,json,hashlib,subprocess,os,time
+ from pathlib import Path
+@@ -31,6 +33,11 @@
+ assert s['Id']==ACTIVE['containerId'] and digest(s['Config'])==ACTIVE['configSHA256']
+ q=json.loads(environment(s)['OTR_DEV_MCP_WRITE_QA_CONFIG']);assert q['confirmations']==[]
+ q['confirmations']=[{'operationId':a['operationId'],'previewDigest':a['previewDigest']}]
++previous=private(r/'owner-approval.json');assert hashlib.sha256(previous).hexdigest()=='68d91cbba72e4aaf2221420f9aacf1e899b80a680209218d36e01e2c46e24aee'
++oldApproval=json.loads(previous);assert 'clientId' not in oldApproval and a['clientId']==q['clientId']
++assert {k:v for k,v in a.items() if k!='clientId'}==oldApproval
++assert not (r/'confirm-cas.json').exists() and not (r/'owner-approval.preplan-missing-clientId.json').exists()
++os.rename(r/'owner-approval.json',r/'owner-approval.preplan-missing-clientId.json')
+ for name,b in [('owner-approval.json',APPROVAL)]:
+  fd=os.open(r/name,os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_WRONLY,0o600)
+  with os.fdopen(fd,'wb') as f:f.write(b);f.flush();os.fsync(f.fileno())
+@@ -46,4 +53,4 @@
+ except Exception:res={'status':'CONFIRM_UNCONFIRMED','exitCode':x.returncode}
+ print(json.dumps(res))
+ ''')
+-(p/'CONFIRM_RESULT.json').write_text(json.dumps(out,indent=2));print(json.dumps(out))
++(p/'CONFIRM_RECOVERY_RESULT.json').write_text(json.dumps(out,indent=2));print(json.dumps(out))

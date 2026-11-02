@@ -1,0 +1,19 @@
+{
+  "status": "READ_ONLY_CONFIRM_RECONCILIATION",
+  "checkedAt": "2026-11-02T02:21:33.736404+00:00",
+  "containerId": "6fb3169a3fa20a9b5f2ff158e51cde5a89d2948f4920ce5641b1779c8f10134b",
+  "configSHA256": "18c47dbf394c8c1998a37fc4f46aeacbe83e348cdf06a478689f82e7bca63ef9",
+  "health": "healthy",
+  "confirmations": [],
+  "filePresence": {
+    "owner-approval.json": true,
+    "confirm-cas.json": false,
+    "manual-close-intent.json": false,
+    "confirm-result.json": false
+  },
+  "closePointerCurrentId": "6fb3169a3fa20a9b5f2ff158e51cde5a89d2948f4920ce5641b1779c8f10134b",
+  "closePointerPlanSHA256": "612c6fd2fe70a36183e6e22d2a95fce215072309f774953183a96a3bb8db5a82",
+  "confirmPlanSHA256": null,
+  "confirmPlanKeys": null,
+  "timer": "active"
+}

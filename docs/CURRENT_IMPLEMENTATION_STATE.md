@@ -1,32 +1,38 @@
 # Root / Import current state — 2 November 2026
 
-## LIVE MCP 78c — restart priority, 2 November 15:02 NZDT
+## MCP 78c CLOSED — 2 November, 15:30 NZDT
 
-DIRECT human combinedapproval verified in Auth chat message01a199f7-d7cd-77c3-aa06-cfbed19f9c68,
-call05e932; actualGate7da5a4e6 SHAe5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d.
-Newnonce78c1610ecf5f43409106fb67ecd36489 activeEMPTY, not oldacd60.
-ExactUTC T2026-11-02T01:59:35.935Z / D02:27:30.554Z,
-normalclose02:25:30.554Z (NZDT14:59:35 /15:27:30 /15:25:30). NEVER EXTEND.
-ActualEMPTY CID6fb3169a3fa20a9b5f2ff158e51cde5a89d2948f4920ce5641b1779c8f10134b,
-config18c47dbf394c8c1998a37fc4f46aeacbe83e348cdf06a478689f82e7bca63ef9.
-Independent02:01:46.723Z confirms emptyconfirmation/23files/bundles/Host/health200/
-protected401/closepointer exact/timeractive. Shortlock released02:00:53.879Z.
-Auth actualissuer/OAuth READY: MD5adfef27b at02:01:54.281Z, Hook/OAuthON/DCR0,
-control36280 and independentwatch86506 running. MCP can normalLogin. Original1d6 notyet
-submitted, freshread/EditBase/newformalPreview MUST exact sameItem3616/rev1/
-originalNotes/op/digest1d5 beforeRoot installs singleton. Combinedhumanapproval
-already includes exactNotes; DO NOT ASK AGAIN. Anyfreshmismatch stops; UNKNOWN
-onlyquerysameID, neverPOSTreplay; historicalf107/9b unchanged.
+Read/EditBase/fresh actual Notes PREVIEW PASS; APPLIED NOT VERIFIED. Apply attempts0,
+MCP cleared unsent draft. Original1d6 remains NOT_SUBMITTED, historicalf107/9b
+UNKNOWN unchanged. IndependentMCP SQL02:29:24Z reports sameItem3616/rev1/original
+Notes/root+11children unchanged/receipt0; absence is not generalNoCommit proof.
+Actual newPreview raw/digest/op/CAS verified. ProjectioncanEditfalse observation
+retained; actualCore command never attempted and permissions must not be bypassed.
 
-Root local /private/tmp/otr-mcp-root-continuation-78c161-20261102:
-close-once.py SHAe3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e;
-prepare2d015b26 / confirm15145e07; 8 no-I/O checks PASS. AuthEMPTY original bytesSHA
-da05d35cfcbc68ed442102bec98616ad07a8e4b03495ea28241ec5e9fe2f10e8.
-Auth normalcontrol36280READY01:57:30Z; independentissuerwatch requested with
-planSHA64b7d05f773307d5ab852265f022a5e0b42dd332eabc27e02ef78fb6e56a6417,
-actualwatchREADY/issueractivation handled byAuth. Rootruntimeauto-close armedD.
-Futureclose restores076e/0119/cdd7 currentdefault, NOT oldddd7. All actual JSON
-receipts safely fixed under continuation-78c161-20261102/.
+CombinedOwner approval e5cf/7da5 was directly verified inAuth. Automaticreview
+rejectedRootconfirmation command beforeCreateProcess, treating crosschatproof as
+untrusted and citing oldaccess exclusions. Root directhuman call03f49 then explicitly
+approved same exactsave in thischat. Do not claim the approval remained blocked.
+
+ActualwireV1 omitted required clientId (Root's field list omission): helper0ba0
+line49 rejected beforeconfirmPlan/CAS. Host stayedEMPTY6fb/18c, noCoreApply.
+V2 adds only same frozenclientId; oldwire/intent preserved; focusedRED/GREEN and
+AuthincrementalNO_BLOCKER. One explicit preplan continuation CAS succeeded02:24:27,
+newCID43b9/configeec5. IndependentREADY02:25:36 was AFTER normalclose02:25:30, soMCP
+correctly started noApply. No time extension. Root actualclose02:26:47 beforehardD
+02:27:30 restores076e/0119/cdd7, bothQAkeysabsent/23files/Hostexact/health200/
+protected401/timerinactive/shortlockreleased. Authissuerdenyall02:25:46; Grant/own
+Session/console/lockcleanupPASS, originalfunction/Owner/ACL verified02:28:52.
+
+OfflineactualV1/V2 now validates through existingmake_plan with syntheticDocker
+metadata (noEnvcredentials): V1RED/V2GREEN, wrongclient and realexpiredwindow
+rejected;0Host/CAS/DB. This is LOCAL_INTEROP_PASS, notCoreSavePASS. Reuse actualwire
+validation before any future clock; no newPlatform/controller needed. Consumed78c
+is NOT reopening authority. Newfiniteaccess would need applicable authorization;
+no newwindow/request currently started. Root scripts/receipts and rawpreview fixed
+under continuation-78c161-20261102/. Currentdefault076e/0119/imagecdd7 unchanged.
+Next legalparallel work: review Native059892c4 diagnostic-only3production files,
+then ordinaryDEV software release/3GET afterREADY; no protectedSQL/Auth expansion.
 
 ## Current default / new MCP preparation — 2 November, 14:09 NZDT
 
