@@ -1,0 +1,22 @@
+{
+  "status": "OWNER_APPROVED_COMPAT_INSTALL_PENDING_ROOT_VERIFICATION",
+  "source": "DIRECT_HUMAN_REPLY_IN_AUTH_CHAT",
+  "sourceThreadId": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "questionCallId": "call_9d140c716b2541e89aa825f146a5c480",
+  "ownerAnswer": "批准此精确兼容补充，保持运行时关闭",
+  "recordedAt": "2026-11-02T21:22:40.382730+00:00",
+  "candidateCommit": "327335d7",
+  "baseCandidateCommit": "7734f3b0",
+  "baseGateSHA256": "3edebba4ac1a3d7178dc6cb5b240c68a76cec4dda4b58c7a87ab6b7fb4deb989",
+  "gateSHA256": "7c3250efae9cd816857f14540066a46fe89fb7f0b12621bf03b1861636d15cbf",
+  "sqlSHA256": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "fixedPackageHashVerification": "PASS",
+  "executor": "Root unique protected Writer",
+  "runtimeEnabled": false,
+  "installationReceipt": "PENDING",
+  "hostedTwoAccountInviteClaim": "NOT_RUN",
+  "memberRevocation": "NOT_RUN",
+  "nativeColdRestore": "NOT_RUN",
+  "note": "Root must independently verify actual human reply and fresh DEV preimage before executing exact bytes. No role modification, Session or business write authorized."
+}

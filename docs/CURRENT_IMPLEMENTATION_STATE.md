@@ -1,3 +1,16 @@
+# C04 LOGIN compatibility approved; Root installation pending — 3 November 2026
+
+Owner directly approved call9d140c71: exact compatibility supplement, runtime closed.
+Gate7c3250ef / fixed327335d7 / SQL3bbe7fbf and all package hashes reverified PASS.
+Root has execution handoff and must verify original human source, actualDEV target,
+fresh safeLOGIN flags/absence/dependencies/ACLs before exact installation and
+independent readback. No installation receipt yet: APPROVED_INSTALL_PENDING_ROOT.
+Original3ed approval and7734 isolated evidence are retained, not rerun. Nothing
+activates Backend/Native/OTP/Session/business writes; formal two-account Hosted,
+Member revoke and Native Cold Restore remain NOT_RUN. Approval record:
+ops/auth-c04-20261103/OWNER_APPROVAL_7C3250EF.json. C03 local adapters remain ready;
+next client dependency is Native's actual accepted-cache Reader delivery.
+
 # C04 install stopped on actual role drift; exact supplement ready — 3 November 2026
 
 Original Gate3edebba4 approval is valid and retained, but Root did NOT install:
