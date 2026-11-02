@@ -3,6 +3,8 @@ import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 import { createHash } from "node:crypto";
 import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
 import { createTripPersonCloudCreatePgPort } from "./tripPersonCloudCreatePg";
+import { createTripMemberClaimPgPort } from "./tripMemberClaimPg";
+import type { MemberClaimAuthorityPort } from "./tripMemberClaimAuthority";
 import {
   PersonCloudCreateError,
   type TripPersonCloudCreatePort,
@@ -86,6 +88,7 @@ export const tripCreateRuntimeSchema = z.union([
 export async function loadDevTripCreateRuntime(
   environment: Record<string, string | undefined>,
   readUniversalP1?: PublishedUniversalP1Reader,
+  options?: Readonly<{ memberClaim?: Readonly<{ inviteExpiresAt: string }> }>,
 ) {
   let file;
   try {
@@ -166,6 +169,26 @@ export async function loadDevTripCreateRuntime(
     const guard = () => {
       if (closed) throw new PersonCloudCreateError(503, "PERSON_CREATE_CLOSED");
     };
+    // Internal trusted server selection only; no existing mount/Env selects this port.
+    const claim = options?.memberClaim
+      ? createTripMemberClaimPgPort(rawCoreConnection, options.memberClaim)
+      : undefined;
+    const claimGuard = () => {
+      if (closed) throw Error("MEMBER_CLAIM_RUNTIME_CLOSED");
+    };
+    const memberClaimPort: MemberClaimAuthorityPort | undefined = claim && {
+      async atomic(scope, work) {
+        claimGuard();
+        const result = await claim.atomic(scope, async (tx) => {
+          claimGuard();
+          const value = await work(tx);
+          claimGuard();
+          return value;
+        });
+        claimGuard();
+        return result;
+      },
+    };
     const tripPersonCloudCreatePort: TripPersonCloudCreatePort = {
       async create(actor, request) {
         guard();
@@ -183,6 +206,7 @@ export async function loadDevTripCreateRuntime(
     return {
       ...sustained,
       guestAdoptionRuntime,
+      ...(memberClaimPort ? { memberClaimPort } : {}),
       tripPersonCloudCreatePort,
       async close() {
         closed = true;

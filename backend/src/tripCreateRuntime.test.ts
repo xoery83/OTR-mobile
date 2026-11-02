@@ -11,6 +11,7 @@ const f = vi.hoisted(() => ({
   core: vi.fn(),
   metadata: vi.fn(),
   person: vi.fn(),
+  claim: vi.fn(),
 }));
 vi.mock("node:fs/promises", () => ({ open: f.open }));
 vi.mock("./tripCoreV2PgConnection", () => ({
@@ -27,6 +28,7 @@ vi.mock("./tripCreatePgStorage", () => ({ createTripPgStorage: f.storage }));
 vi.mock("./tripPersonCloudCreatePg", () => ({
   createTripPersonCloudCreatePgPort: f.person,
 }));
+vi.mock("./tripMemberClaimPg", () => ({ createTripMemberClaimPgPort: f.claim }));
 const environment = {
   OTR_DEV_BACKEND_NETWORK_MODE: "host",
   OTR_DEV_SUPABASE_URL: "https://tuqigdxrvrerfewsxqgm.supabase.co",
@@ -283,6 +285,8 @@ it("reuses the private mount for non-expiring sustained ports without minting an
   f.person.mockReturnValue(person);
   const runtime = await loadDevTripCreateRuntime(environment);
   expect(f.pg).toHaveBeenCalledTimes(4);
+  expect(runtime).not.toHaveProperty("memberClaimPort");
+  expect(f.claim).not.toHaveBeenCalled();
   expect(f.core).toHaveBeenCalledWith(
     v.connection,
     expect.any(Function),
@@ -344,3 +348,86 @@ it.each(["actorAccountId", "request", "expiresAt", "missingPerson"])(
     expect(f.pg).not.toHaveBeenCalled();
   },
 );
+
+function claimFixture() {
+  const v = fixture();
+  const config = {
+    version: 3,
+    enabled: true,
+    tripPg: v.config.tripPg,
+    metadataPg: v.config.tripPg,
+    corePg: v.config.tripPg,
+    personPg: v.config.tripPg,
+  };
+  f.open.mockResolvedValue({
+    stat: async () => v.stat,
+    readFile: async () => JSON.stringify(config),
+    close: v.close,
+  });
+  f.core.mockReturnValue({
+    hash: vi.fn(),
+    commands: { withLockedCommand: vi.fn() },
+    readOperation: vi.fn(),
+  });
+  f.metadata.mockReturnValue({ update: vi.fn(), receipt: vi.fn(), snapshot: vi.fn() });
+  f.person.mockReturnValue({ create: vi.fn(), receipt: vi.fn() });
+  return v;
+}
+it("explicit internal Claim composition reuses raw Core, exact server expiry and the existing close fence", async () => {
+  const v = claimFixture(),
+    atomic = vi.fn(async (_scope, work) => work({}));
+  f.claim.mockReturnValue({ atomic });
+  const trusted = { inviteExpiresAt: "2026-11-03T12:00:00Z" };
+  const runtime = await loadDevTripCreateRuntime(environment, undefined, {
+    memberClaim: trusted,
+  });
+  if (!runtime || !("memberClaimPort" in runtime) || !runtime.memberClaimPort)
+    throw Error("MISSING_CLAIM_PORT");
+  const port = runtime.memberClaimPort;
+  expect(f.claim).toHaveBeenCalledExactlyOnceWith(v.connection, trusted);
+  expect(f.pg).toHaveBeenCalledTimes(4);
+  const scope = {
+    tripId: v.config.request.tripId,
+    actorAccountId: v.config.actorAccountId,
+  };
+  await expect(port.atomic(scope, async () => "read")).resolves.toBe("read");
+  await expect(
+    port.atomic(scope, async () => {
+      await runtime.close();
+      return "late";
+    }),
+  ).rejects.toThrow("MEMBER_CLAIM_RUNTIME_CLOSED");
+  expect(atomic).toHaveBeenCalledTimes(2);
+  await expect(port.atomic(scope, async () => "closed")).rejects.toThrow(
+    "MEMBER_CLAIM_RUNTIME_CLOSED",
+  );
+  expect(atomic).toHaveBeenCalledTimes(2);
+});
+it("a queued Claim transaction cannot start work after runtime close", async () => {
+  const v = claimFixture();
+  let release!: () => void;
+  const queued = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const atomic = vi.fn(async (_scope, work) => {
+    await queued;
+    return work({});
+  });
+  f.claim.mockReturnValue({ atomic });
+  const runtime = await loadDevTripCreateRuntime(environment, undefined, {
+    memberClaim: { inviteExpiresAt: "2026-11-03T12:00:00Z" },
+  });
+  if (!runtime || !("memberClaimPort" in runtime) || !runtime.memberClaimPort)
+    throw Error("MISSING_CLAIM_PORT");
+  const port = runtime.memberClaimPort;
+  const work = vi.fn(async () => "must not execute");
+  const pending = port.atomic(
+    { tripId: v.config.request.tripId, actorAccountId: v.config.actorAccountId },
+    work,
+  );
+  await runtime.close();
+  release();
+  await expect(pending).rejects.toThrow("MEMBER_CLAIM_RUNTIME_CLOSED");
+  expect(work).not.toHaveBeenCalled();
+  expect(atomic).toHaveBeenCalledOnce();
+});

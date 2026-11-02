@@ -1,0 +1,36 @@
+{
+  "status": "LOCAL_PASS_DEFAULT_CLOSED",
+  "baseCommit": "8c992a79fd3a427b6a429de6c41916cd76df0cd1",
+  "authCommits": [
+    "51fa7d66",
+    "56d78536"
+  ],
+  "baseAppSha256": "434b8612777ba7907ca467fbee4adfed16ab236d090860d50d48ea83b5df78ee",
+  "targetAppSha256": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+  "sourceSha256": {
+    "backend/src/app.ts": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+    "backend/src/tripMemberClaimAuthority.ts": "4e9d70408369410bd68b98922dbba48f97d89ff584c3d3a3924db9cc143ac524",
+    "backend/src/tripMemberClaimRecovery.ts": "ad0ff2feada91dd2c76da1f6ba9987abfb174e42db0286dbc5eb3747bd39fda6",
+    "backend/src/tripMemberClaimHttp.ts": "daa6cbf327a85f18c5e7be72cb97232b73cee9abd5c55e9eeaf71f9dbc19c98f",
+    "backend/src/tripMemberClaimPg.ts": "0e840261962f219283da0a44b7824899d801dd4fd13c5b6d3aeda57964548b7e",
+    "backend/src/tripMemberClaimWiring.test.ts": "49b7c3d545bb0d869999eced3dfa5f7c6bbcd409cb1495b85e71fc4fede4a70c"
+  },
+  "routeTests": {
+    "passed": 9,
+    "skipped": 0,
+    "target": "actual integrated createDevBackendHandler, not a generated app"
+  },
+  "focusedStrict": "PASS: six roots and transitive production dependencies",
+  "scopedLint": "PASS",
+  "diffCheck": "PASS",
+  "runtimePortConstructed": false,
+  "bootstrapChanged": false,
+  "serverCaptureChanged": false,
+  "hostedCalls": 0,
+  "sqlActions": 0,
+  "deviceActions": 0,
+  "independentReview": {
+    "status": "NO_BLOCKER_DEFAULT_CLOSED_AUTH_MAIN_WIRING",
+    "receiptSha256": "63a88e3987e468fa7da96fb066092e25ddd7147bfd67043566268ea621095239"
+  }
+}

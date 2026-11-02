@@ -1,0 +1,1 @@
+UI guard PASS; 473 legacy occurrences; 165 representative UI files checked without baseline forgiveness.

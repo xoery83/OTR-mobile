@@ -85,9 +85,12 @@ export type MemberClaimResult =
   | { status: "INVALID" | "UNAVAILABLE" | "DENIED" | "CONFLICT" }
   | { status: Outcome; personId: string; inviteId: string; currentAccess: Access };
 
-const digest = (command: MemberClaimCommand) =>
+export const memberClaimIntentDigest = (command: MemberClaimCommand) =>
   createHash("sha256")
-    .update("otr-member-claim-v1\n" + JSON.stringify(command), "utf8")
+    .update(
+      "otr-member-claim-v1\n" + JSON.stringify(memberClaimCommandSchema.parse(command)),
+      "utf8",
+    )
     .digest("hex");
 const denied: MemberClaimResult = { status: "DENIED" };
 const unavailable: MemberClaimResult = { status: "UNAVAILABLE" };
@@ -103,7 +106,7 @@ export async function executeMemberClaim(
     return { status: "INVALID" };
   if (!port) return unavailable;
   const command = parsed.data;
-  const intentDigest = digest(command);
+  const intentDigest = memberClaimIntentDigest(command);
   try {
     return await port.atomic(
       { tripId: command.tripId, actorAccountId: authenticatedActorAccountId },
@@ -207,11 +210,15 @@ export async function executeMemberClaim(
           inviteId,
         };
         await tx.saveReceipt(receipt);
+        const currentAccess = await tx.currentEffectiveAccess(
+          authenticatedActorAccountId,
+        );
+        if (currentAccess === null) throw new Error("MEMBER_CLAIM_ACCESS_UNAVAILABLE");
         return {
           status: outcome,
           personId: command.personId,
           inviteId,
-          currentAccess: access,
+          currentAccess,
         };
       },
     );

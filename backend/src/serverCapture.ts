@@ -177,6 +177,9 @@ async function main() {
       ...(trip && "coreConnection" in trip
         ? { coreConnection: trip.coreConnection }
         : {}),
+      ...(trip && "memberClaimPort" in trip
+        ? { memberClaimPort: trip.memberClaimPort }
+        : {}),
       tripCreatePort: trip?.tripCreatePort,
       ...(trip && "tripPersonCloudCreatePort" in trip
         ? { tripPersonCloudCreatePort: trip.tripPersonCloudCreatePort }

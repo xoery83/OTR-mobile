@@ -1,0 +1,28 @@
+{
+  "status": "ROOT_INDEPENDENT_DEFAULT_CLOSED_INTEGRATION_REVIEW_NO_BLOCKER",
+  "candidate": "f6d835de",
+  "base": "8c992a79",
+  "reviewedAt": "2026-11-02T22:20:26.470048+00:00",
+  "appSHA256": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+  "fixedAuthSourcePinsMatched": true,
+  "reviewed": [
+    "Existing normal-account authentication before both routes",
+    "No Trip Reader precheck prevents registered claimant B",
+    "Missing memberClaimPort503; no PG adapter constructed or injected",
+    "Recovery read only and retains original operation/actor/Trip/intent binding",
+    "Four Auth owning leaves unchanged from approved/reviewed package",
+    "No serverCapture/bootstrap/env/schema/roles or Source/MCP behavior change"
+  ],
+  "reusedValidation": "9 integrated actual-app route tests, focused strict, scoped lint and independent leaf/route review",
+  "enablementStillRequires": [
+    "Existing raw CorePgConnection lifecycle (not CoreHttpConnection)",
+    "Trusted server expiry and owning qualification",
+    "Auth-led exact normal A/B runtime qualification"
+  ],
+  "notClaimed": [
+    "Hosted software deployed",
+    "Runtime enabled",
+    "A/B claim business E2E",
+    "Member removal or private-item authority"
+  ]
+}

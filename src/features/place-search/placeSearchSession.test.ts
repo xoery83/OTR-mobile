@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { ApplePlaceCandidate } from "@/data/places/applePlaceProvider";
+import { randomUUID } from "node:crypto";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  createApplePlaceProvider,
+  type ApplePlaceCandidate,
+  type ApplePlaceNative,
+} from "@/data/places/applePlaceProvider";
 import { PlaceSearchSession, relaxedPlaceQuery } from "./placeSearchSession";
 const candidate = (
   kind: "completion" | "mapItem" = "completion",
@@ -263,4 +269,114 @@ it("More deduplicates matching display rows without losing other quick suggestio
     "Other suggestion",
     "Extra place",
   ]);
+});
+
+it("refreshes cancelled Quick completion handles when Back interrupts their resolution from More", async () => {
+  const cancelledThrough = new Map<string, number>();
+  const handles = new Map<string, { session: string; generation: number }>();
+  let pending: { input: Record<string, unknown>; finish(value: unknown): void } | null =
+    null;
+  let holdResolve = true;
+  const reply = (
+    input: Record<string, unknown>,
+    status: string,
+    rows: unknown[] = [],
+  ) => ({
+    provider: "apple",
+    sessionId: input.sessionId,
+    requestId: input.requestId,
+    generation: input.generation,
+    status,
+    candidates: rows,
+  });
+  const native: ApplePlaceNative = {
+    complete: vi.fn(async (input) => {
+      const handle = randomUUID();
+      handles.set(handle, {
+        session: String(input.sessionId),
+        generation: Number(input.generation),
+      });
+      return reply(input, "READY", [
+        {
+          provider: "apple",
+          handle,
+          kind: "completion",
+          title: "Sky Tower",
+          secondary: "Auckland",
+        },
+      ]);
+    }),
+    search: vi.fn(async (input) => reply(input, "NO_RESULTS")),
+    resolve: vi.fn(async (input) => {
+      const retained = handles.get(String(input.handle));
+      if (
+        !retained ||
+        retained.session !== input.sessionId ||
+        retained.generation !== input.generation ||
+        Number(input.generation) <= (cancelledThrough.get(String(input.sessionId)) ?? 0)
+      )
+        return reply(input, "CANCELLED");
+      if (holdResolve)
+        return new Promise((finish) => {
+          pending = { input, finish };
+        });
+      return reply(input, "READY", [
+        {
+          provider: "apple",
+          handle: randomUUID(),
+          kind: "mapItem",
+          title: "Sky Tower",
+          secondary: "Auckland",
+          address: "Victoria Street, Auckland",
+        },
+      ]);
+    }),
+    cancel(session, generation) {
+      cancelledThrough.set(
+        session,
+        Math.max(cancelledThrough.get(session) ?? 0, generation),
+      );
+      for (const [handle, retained] of handles) {
+        if (retained.session === session && retained.generation <= generation)
+          handles.delete(handle);
+      }
+      if (
+        pending?.input.sessionId === session &&
+        Number(pending.input.generation) <= generation
+      ) {
+        const aborted = pending;
+        pending = null;
+        aborted.finish(reply(aborted.input, "CANCELLED"));
+      }
+    },
+  };
+  const binding = {
+    accountId: randomUUID(),
+    tripId: randomUUID(),
+    editorId: randomUUID(),
+    accountGeneration: getAccountGeneration(),
+    isCurrent: () => true,
+  };
+  const session = new PlaceSearchSession(
+    createApplePlaceProvider(native, binding),
+    createApplePlaceProvider(native, binding),
+    vi.fn(),
+  );
+  session.update({ text: "Sky Tower" }, 0);
+  await vi.advanceTimersByTimeAsync(0);
+  const original = session.state.rows[0];
+  await session.searchMore();
+  const resolving = session.resolve(original);
+  await Promise.resolve();
+  session.backToQuick();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(await resolving).toBeNull();
+  holdResolve = false;
+  expect(await session.resolve(session.state.rows[0])).toMatchObject({
+    address: "Victoria Street, Auckland",
+  });
+  expect(native.complete).toHaveBeenCalledTimes(2);
+  expect(session.state.more).toBe(false);
+  expect(session.state.rows[0].handle).not.toBe(original.handle);
+  session.close();
 });
