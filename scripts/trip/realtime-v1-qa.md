@@ -17,15 +17,22 @@ B receives its original Item ID and revisions1→2→3 through the normal Reposi
 An unsent B edit/queue row stays byte-for-byte retained, a stale A edit receives
 CONFLICT, an unchanged comparison avoids a collection request, disconnect/rejoin
 catches a missed edit, and SQLite reopen retains both accepted Item and Pending.
-The fixture lease revoke invalidates its old hint callbacks.
+The fixture committed Auth revoke goes through the shared mapper and actual
+SQLite scope denial, blocking old hint callbacks and reads. A fresh fixture lease
+and authorized full Reader regrant atomically restore cache; old writes stay
+blocked with original identities/payloads.
 
 The remaining checks reuse existing tests for Account ABA, late signals,
 backoff/dirty retry and Auth revoke/regrant/failed-cache-fence behavior. These
 are separate checks, not a claim that normal real Account sessions were exercised.
 
-Default subscription and VersionReader stay undefined. The fixture comparator
-builds a full snapshot; no cheap Reader or performance measurement is supplied.
+Default subscription and VersionReader stay undefined. The original joined fixture comparator
+builds a full snapshot. The added formal-opaque consumer check derives its token
+from the validated Collection and Accepted readback; its wire provider is still a
+fixture, so no Hosted cheap Reader or latency is claimed.
 Auth authorization revision and Core access revision are deliberately different.
-The joined test's no-op cache-fence spy only proves receipt delivery and old-hint
-closure. A lawful owning cache-revocation mapping remains a prerequisite to a
-real integration; neither a hint nor an Auth lease may invent it.
+The joined test now uses real local cache-deny/regrant ports, preserving actual
+Core accessRevision7 while Auth generation advances41→42→43. Its committed
+transition and network authorization remain explicit fixtures. Qualified runtime
+callbacks, actual forced disconnect, fresh server qualification and UI in-memory
+snapshot invalidation still require real integration; no hint/lease grants data.

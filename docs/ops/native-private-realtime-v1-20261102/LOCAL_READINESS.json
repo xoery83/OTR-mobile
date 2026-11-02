@@ -1,0 +1,66 @@
+{
+  "status": "READY_FOR_INTEGRATION_DEFAULT_CLOSED",
+  "nativeProduct": "acb0139d",
+  "versionConsumer": "8d6bab9f",
+  "errorRepairs": [
+    "d7f0cdaf",
+    "e98dfd8e"
+  ],
+  "authSharedLeaves": "699658e0 exact57c357f0",
+  "cachePorts": [
+    "8c507d1f",
+    "acb0139d"
+  ],
+  "validation": {
+    "formalTransportConsumerMeasurementClient": "4suites47PASS",
+    "authSharedAndExistingLease": "2suites20PASS",
+    "repo": "original51+new8 cases; child full58 before finalrace, independent8finalPASS",
+    "joinedAuthMapperCacheAndFreshRead": "1PASS parent+independent",
+    "scopedTypes": "PASS",
+    "changedLint": "PASS; inheritedRepo test import warnings unchanged",
+    "uiGuard": "PASS",
+    "finalJoinedQaPacket": "6 sequential checks PASS; formal consumer/real SQLite denial and fresh regrant; local fixtures only",
+    "finalScopedTypes": "PASS including actual Repository and joined test"
+  },
+  "independentReview": {
+    "formalConsumerAndRealErrorChains": "NO_BLOCKER;10selectedPASS; prior26PASS reused",
+    "cachePortsAndRace": "NO_BLOCKER;8selectedPASS",
+    "sharedAuthLeaves": "BYTE_EXACT57c357f0",
+    "joinedActualLocalCache": "NO_BLOCKER;1PASS; COMMIT/lease/Reader authorization fixtures and readnotify spy explicitly marked"
+  },
+  "actualRepairs": [
+    "known503codes were diagnostic-only and did not reach realconsumer; route-scoped code forwarding repaired, unrelatedAPI mapping retained",
+    "known401 plus hangingforceRefresh was reclassified timeout; version-only pending guard preserves401, successfulrefresh/fetchtimeout stilltimeout",
+    "cache denial could returnnull during beginRefresh neweraccess vs oldcertificate; currentScope realrevision is now denied and lateinstall blocked"
+  ],
+  "runtime": {
+    "privateSubscription": "undefined",
+    "visibleVersionConsumer": "undefined",
+    "newCacheMethodsMounted": false,
+    "sqlSchemaChanges": 0,
+    "hostedChanges": 0,
+    "providerCalls": 0,
+    "deviceInstalled": false,
+    "QA142Retained": true
+  },
+  "hostedVersionMeasurement": "NOT_RUN: ordinary read slot granted, but existing registered-host active.lock refused before this run allocated a journal, OTP or Session. Actual GET=0. Foreign lock/session retained; narrow slot returned. Retry only after owning helper cleanup and Core lane release; no new Owner permission required.",
+  "remaining": [
+    "Auth qualified current-session atomicadmission/actualprivatetransport/forceddisconnect not Hosted qualified",
+    "Core physicalpostcommit Actor-visible publisher NOT_READY",
+    "QualifiedRuntime cache callbacks+actualUI in-memory visibility invalidation still unmounted",
+    "Actual Hosted first/repeatedHTTP and cold/warmPG phase timing pending",
+    "Actual cross-device/revoke/regrant/independentSupabase E2E notrun"
+  ],
+  "evidence": {
+    "/private/tmp/otr-native-private-v1-error-chain-final.log": "1c5528c7f1b3ea6e939d428985ff883ff027d5de6c2fa83253b7e2488b716b7e",
+    "/private/tmp/otr-native-private-v1-503-red.log": "34a33ecaa5d8828d2b4539d2cfd65aa5b0630835b63e171c9d1b2912de76c3b7",
+    "/private/tmp/otr-native-private-v1-503-green.log": "d240fed9f4d57b6e77d4cf9ac0c8bc89c17c0a3e84666aa030798c7382724d9f",
+    "/private/tmp/otr-native-private-v1-golden-cache-joined.log": "4c5c598fb56d09bb58fc6a7a7e293e949e2a7f3fb0bff670df5164b0f5bf1f3a",
+    "/private/tmp/otr-native-private-v1-auth-dto-tests.log": "53a056faac35a7c425a9dd036fb621a19d8ad57f5669d635329e9bdd9eff1088",
+    "/private/tmp/otr-native-private-v1-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/private/tmp/otr-native-private-v1-ui-guard.log": "141ce926e34cc4c8c45ffe526080c31557a4941d9656476ccde8720d89708142",
+    "/private/tmp/otr-core-cache-fence-access-race-red.log": "89ad6f9122ba033d871585048940864d4bfb28970d8d35f6731b423529c13848",
+    "/private/tmp/otr-version-refresh-boundary-red.log": "04a76e78dcf14fdee3699ba13674b64486c4b35050817551289e7c00af8d60b1",
+    "/private/tmp/otr-native-private-v1-final-packet.log": "d128d29b89f75165e55236598902aa59686d7ca5536edaeed1ed1f364fd42bd1"
+  }
+}

@@ -1,6 +1,6 @@
 # Native integration gap register
 
-2026-11-02 · Realtime-first product `c3adb21f`; V3 product `c2129b9f`; Auth client `4e9a2d2e` and V2 `8647a7e2` preserved.
+2026-11-02 · Private RT consumer/cache product `acb0139d`; Realtime-first product `c3adb21f`; V3 product `c2129b9f`; Auth client `4e9a2d2e` and V2 `8647a7e2` preserved.
 This register is an integration handoff, not authority to open a Gate or deploy.
 Real Scan, private Realtime and public flight cache remain closed. No Hosted,
 SQL/RLS/GRANT, paid Provider or Import authority changed in this work package.
@@ -60,3 +60,5 @@ No formal AI/Realtime/Enrichment interface activation occurred. V2 evidence rema
 Realtime-first receipts: `ops/native-realtime-first-20261102/`. Enrichment125e0592 normal-account guard belongs to Root shared app.ts integration, not enabled Native runtime. QA142 representative Chinese/Dark P2/P4/P5/P6 control/Cancel PASS; new closed candidate not installed; real channel/fault UI not claimed.
 
 C1 Source recovery: exact b9e394dc semantic delta received; continuous503 stays read-only, owning404-only initial prepare. 59 focused caller testsPASS; no real Source/Provider capability enabled.
+
+PrivateRealtime follow-up: actual opaque HTTP transport/Consumer8d6bab9f and401/503 realerror chains fixed d7f0cdaf/e98dfd8e. Root shared token algorithm exact; existing accepted install/CAS only. Auth57c357 DTO+committed-revoke mapper received699658e0. Existing-scope cache deny/freshfull regrant8c507d1f/acb0139d require qualified runtime caller/notification; no new Schema. Hosted timing awaits only MCPsameQA mailbox/reader-lane narrow slot, independent from missing private authority/publisher. All actual private ports stay undefined; new methods not mounted. See `ops/native-private-realtime-v1-20261102/` for precise guards and independent reviews.

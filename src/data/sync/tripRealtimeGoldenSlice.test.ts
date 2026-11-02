@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { tripRealtimeRevocationFromTransition } from "@/domain/auth/tripRealtimeAuthorization";
+import { ApiClientError } from "../api/client";
 import { expect, it, vi } from "vitest";
 import { executeCoreCommandV2, type CoreCommandStorage } from "../../../backend/src/tripCoreV2Commands";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
@@ -71,7 +73,11 @@ it("fixture P3 APPLIED → authorized hint/version → existing Pull → same SQ
     person_id: actor.personId!, account_id: actor.accountId,
     active: true, participating: true, revision: 1,
   })), sha256);
-  const collection = vi.fn(snapshot);
+  let readerAllowed = true;
+  const collection = vi.fn(async () => {
+    if (!readerAllowed) throw new ApiClientError("fixture denied", "http", 403, "TRIP_READ_FORBIDDEN");
+    return snapshot();
+  });
   // Fixture comparison builds a full authorized snapshot; this is NOT a cheap server Reader.
   const versionRead: CoreVisibleVersionRead = vi.fn(async (scope, compared) => {
     const m = (await snapshot()).manifest;
@@ -89,15 +95,21 @@ it("fixture P3 APPLIED → authorized hint/version → existing Pull → same SQ
   });
   type Events = Parameters<NonNullable<Parameters<typeof createTripPrivateRealtimeAuthorization>[0]["open"]>>[1];
   let events!: Events;
-  const leaseId = randomUUID();
-  const accessRevoked = vi.fn(async () => {});
+  let leaseId = randomUUID(), authorizationRevision = 41;
+  let denied: Awaited<ReturnType<typeof core.denyExistingAcceptedScope>> = null;
+  const accessRevoked = vi.fn(async (scope: typeof context) => {
+    denied = await core.denyExistingAcceptedScope(scope);
+    expect(denied?.accessRevision).toBe(7);
+    notify(scope, [tripId], false);
+  });
   const subscribe = createTripPrivateRealtimeAuthorization({
     account: f.getAccount, accessRevoked,
     open: async (_scope, callbacks) => {
+      if (!readerAllowed) throw Error("FIXTURE_REVOKED");
       events = callbacks;
       return { lease: {
         accountId: accountB, tripId, actorPersonId: actorB.personId!, leaseId,
-        channel: "fixture-private-channel", authorizationRevision: 41,
+        channel: "fixture-private-channel", authorizationRevision,
         expiresAt: Date.now() + 86_400_000,
       }, close: () => {} };
     },
@@ -149,13 +161,42 @@ it("fixture P3 APPLIED → authorized hint/version → existing Pull → same SQ
     expect((await cold.acceptedSnapshot(context))?.graph.itinerary_events[0].id).toBe(itemId);
     expect(f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(queued);
     const beforeRevoke = collection.mock.calls.length;
-    // Auth receipt revision42 is NOT translated into Core accessRevision7 or a SQLite revoke.
-    events.revoked({ accountId: accountB, tripId, receiptId: randomUUID(), authorizationRevision: 42 });
-    events.invalidated({ leaseId, authorizationRevision: 41 });
+    // Trusted COMMIT/transport is a fixture; the mapper and local cache denial are real.
+    readerAllowed = false;
+    const oldEvents = events, oldLeaseId = leaseId;
+    events.revoked(tripRealtimeRevocationFromTransition({
+      receipt: { accountId: accountB, tripId, receiptId: randomUUID(),
+        operationId: randomUUID(), actorPersonId: actorB.personId!, kind: "REVOKED",
+        previousGeneration: 41, membershipGeneration: 42 },
+      receiptState: "COMMITTED", enforcement: "UNCONFIRMED",
+    }, context));
+    oldEvents.invalidated({ leaseId: oldLeaseId, authorizationRevision: 41 });
     await vi.advanceTimersByTimeAsync(250);
     expect(accessRevoked).toHaveBeenCalledOnce();
     expect(collection).toHaveBeenCalledTimes(beforeRevoke);
-    expect(notify).toHaveBeenCalledTimes(3);
+    expect(denied).not.toBeNull();
+    await expect(cold.acceptedSnapshot(context)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    expect(f.sql.prepare("SELECT access_revision,revoked FROM trip_core_scopes").get()).toEqual({access_revision:7,revoked:1});
+    await expect(core.regrantExistingAcceptedScope(context, denied!, {collection})).rejects.toMatchObject({status:403});
+    await expect(cold.acceptedSnapshot(context)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    // A newly qualified server lease and fresh authorized full Reader are separate fixtures.
+    readerAllowed = true;
+    authorizationRevision = 43;
+    leaseId = randomUUID();
+    await trigger.activate(context);
+    await core.regrantExistingAcceptedScope(context, denied!, {collection});
+    notify(context, [tripId], false);
+    expect((await cold.acceptedSnapshot(context))?.graph.itinerary_events[0].semantic_revision).toBe(3);
+    expect(f.sql.prepare("SELECT access_revision,revoked FROM trip_core_scopes").get()).toEqual({access_revision:7,revoked:0});
+    const stripStatus = (rows: Record<string, unknown>[]) => rows.map(({status: _status, ...row}) => row);
+    const retained = f.sql.prepare("SELECT * FROM sync_operations").all();
+    expect(stripStatus(retained)).toEqual(stripStatus(queued));
+    expect(retained.every(row => row.status === "DEPENDENCY_BLOCKED")).toBe(true);
+    const afterRegrant = collection.mock.calls.length;
+    oldEvents.invalidated({leaseId:oldLeaseId,authorizationRevision:41});
+    await vi.advanceTimersByTimeAsync(250);
+    expect(collection).toHaveBeenCalledTimes(afterRegrant);
+    expect(notify).toHaveBeenCalledTimes(5);
   } finally {
     trigger.dispose();
     vi.useRealTimers();

@@ -1,0 +1,61 @@
+{
+  "status": "IOS_JS_ONLY_READY_NATIVE_ABI_UNVERIFIED",
+  "source": "6a20ec1106a022f7c42128a892012a03a8e629c3",
+  "base": "e98dfd8e",
+  "pinOriginal": "73856226",
+  "exactChangedFilesFromBase": [
+    "src/features/day-feed/ManualItineraryContent.test.ts",
+    "src/native/p3FormScan.test.ts",
+    "src/native/p3FormScan.ts"
+  ],
+  "platform": "ios",
+  "dev": false,
+  "minified": false,
+  "bundleIdTarget": "com.xoery.otrmobile",
+  "simulatorUDIDTarget": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "jsHash": "568da6ea676289a19fb5f193fa27e144208e2f2a491b5e70d6dfafca90218800",
+  "bytes": 20039845,
+  "configurationHashes": {
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL": "bc2d39af6a99c88a1e746c8032a521743816ee645db2ef2dc8b6c60273ef1597",
+    "EXPO_PUBLIC_OTR_API_BASE_URL": "ed6d818542d80e46ef6b9c61afff9634c775bd5fd9c1a56203fb384688401c71",
+    "EXPO_PUBLIC_OTR_SYNC_TRANSPORT": "ef260e9aa3c673af240d17a2660480361a8e081d1ffeca2a5ed0e3219fc18567",
+    "EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "e2337f29000bb3e38e5c0765ec003c8a3805872e3fc50ad11716e6b75c65db1b",
+    "EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+  },
+  "acceptedQA142ConfigParity": "SIX_PUBLIC_VALUES_EXACT_HASH_MATCH",
+  "candidateOnlyPublicDelta": {
+    "EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED": true
+  },
+  "fixtureMarker": "ABSENT",
+  "dotenvRead": false,
+  "secretsReadOrPrinted": false,
+  "abiQualification": "JS_ONLY; arm64 simulator metadata observed, static Native module compatibility unverified; no repack/install",
+  "installed": false,
+  "deviceBootedOrLaunched": false,
+  "dataOrSessionAccessed": false,
+  "providerCalls": 0,
+  "providerGate": "NOT_GRANTED_NOT_ACTIVATED",
+  "hostedActions": 0,
+  "mainOrParentModified": false,
+  "maxWorkers": 1,
+  "heapMB": 1536,
+  "compiledChecks": {
+    "defaultFactoryQualified": true,
+    "factoryContinuousGateTrue": true,
+    "factoryApiDev": true,
+    "generalCloudTrue": true,
+    "noContinuousEnvReference": true,
+    "strictGeneralCloudTrueExpression": true,
+    "pdfFlagFalse": true
+  },
+  "assetCount": 96,
+  "assetManifestSha256": "4cf4b26082028c51ec19cb92d1556d76c9ff8611cadf821781cc04005d00af0b",
+  "pinFilesByteExactOriginal73856226": true,
+  "targetedValidation": {
+    "tests": "2suites17PASS",
+    "logSha256": "480ac67d93effa7a9a76659945653a891a7f14465128893c1ac687de8b594c83",
+    "pinFilesByteExactOriginal73856226": true
+  }
+}

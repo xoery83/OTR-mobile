@@ -2,24 +2,46 @@
   "qualification": "LOCAL_FIXTURE_ONLY",
   "checks": [
     {
-      "name": "P3 APPLIED → lease hint/version → existing Pull → same SQLite Item; Pending/CONFLICT, unchanged skip, reconnect/cold and revoked hint",
-      "args": ["src/data/sync/tripRealtimeGoldenSlice.test.ts"]
+      "name": "P3 APPLIED \u2192 fixture Auth hint/version \u2192 existing Pull \u2192 SQLite; committed-revoke mapper \u2192 real local denial/fresh regrant with Pending retained",
+      "args": [
+        "src/data/sync/tripRealtimeGoldenSlice.test.ts"
+      ]
+    },
+    {
+      "name": "Formal opaque Version transport/Accepted baseline: cold Apply and visible P3 Edit preserve Pending",
+      "args": [
+        "src/data/sync/tripAuthorizedVersionConsumer.test.ts",
+        "-t",
+        "cold starts|visible P3 Edit"
+      ]
     },
     {
       "name": "Existing Downstream backoff and retained dirty reconciliation",
-      "args": ["src/data/sync/tripRealtimeTrigger.downstream.test.ts"]
+      "args": [
+        "src/data/sync/tripRealtimeTrigger.downstream.test.ts"
+      ]
     },
     {
       "name": "Existing trigger Account/Trip old callback and disconnect fences",
-      "args": ["src/data/sync/tripRealtimeTrigger.test.ts", "-t", "Account|generation|late|disconnect|Trip exit"]
+      "args": [
+        "src/data/sync/tripRealtimeTrigger.test.ts",
+        "-t",
+        "Account|generation|late|disconnect|Trip exit"
+      ]
     },
     {
-      "name": "Existing actual SQLite late A response across Account A→B→A",
-      "args": ["src/data/repositories/tripCoreV2Repository.test.ts", "-t", "fences late A responses across A→B→A generation changes"]
+      "name": "Existing actual SQLite late A response across Account A\u2192B\u2192A",
+      "args": [
+        "src/data/repositories/tripCoreV2Repository.test.ts",
+        "-t",
+        "fences late A responses across A\u2192B\u2192A generation changes"
+      ]
     },
     {
       "name": "Existing Auth lease expiry/revoke/regrant and failed authoritative cache fence",
-      "args": ["src/data/auth/tripPrivateRealtimeAuthorization.test.ts"]
+      "args": [
+        "src/data/auth/tripPrivateRealtimeAuthorization.test.ts"
+      ]
     }
   ],
   "defaultRuntime": {
@@ -27,9 +49,9 @@
     "tripVisibleVersionRead": "undefined"
   },
   "remainingOwningGaps": [
-    "Fresh per-Actor authorized cheap VersionReader is absent. The new fixture comparator builds a full actor-visible snapshot; no latency or cost reduction is measured.",
+    "Formal opaque Version Consumer is prepared and default closed. Local wire provider is a fixture; Hosted pool/latency remains unverified, not a cheap server PASS.",
     "Real post-COMMIT publisher and private transport admission/expiry/revocation remain unbound. Local tests provide these owning ports as fixtures.",
-    "Auth authorizationRevision41/42 is intentionally distinct from Core accessRevision7. The new joined test observes the revoke callback and fences old hints; it does not invent a Core cache-revocation mapping.",
+    "Auth generation41/42/43 is independent of Core accessRevision7. Joined test now routes fixture trustedCOMMITTED receipt through shared mapper and real existing-scope cache deny/regrant; fresh lease, Reader authorization and transport remain fixtures. Runtime qualified callback and actual UI snapshot invalidation are not mounted.",
     "The executor storage commit is local in-memory fixture storage, with a real Core APPLIED/CONFLICT receipt. This is not a physical Hosted transaction, normal network Session or multi-device qualification."
   ]
 }
