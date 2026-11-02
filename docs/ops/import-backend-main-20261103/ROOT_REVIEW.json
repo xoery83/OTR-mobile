@@ -1,0 +1,25 @@
+{
+  "status": "ROOT_INDEPENDENT_INTEGRATION_REVIEW_NO_BLOCKER",
+  "candidate": "e89dfddf",
+  "base": "405aa329",
+  "sourceManifestSHA256": "f47b58b8bb6c5dbe5f778212ff5fa55fc6cbdddc3f735d3ea47ddbfdee3e55b2",
+  "reviewedAt": "2026-11-02T21:44:57.360573+00:00",
+  "scope": [
+    "Only exact published retained PNG Results and COMPLETE historical receipt audit",
+    "Existing c8 owning PNG proof and current Actor/Trip/Source locks preserved",
+    "Same six Source pins, immutable marker/result SHA, Task and publication fences",
+    "PUBLISHED + INSTALLED only; no dispatch/write path",
+    "No live mutation witness and exact raw custody closed error before historical fallback",
+    "Actual APPLIED/NO_CHANGE and COMPLETE operation/target/candidate/hash/receipt linkage",
+    "Existing x64 profile declared as already registered and verified, no new registry activation",
+    "Runtime/Capture minimal requestId and read opt-in; preserves main Native405"
+  ],
+  "verificationReused": "117 PASS/1 pre-existing skip, strict22roots, local compile, independent fixed-diff review; actual corresponding DEV changes already normal QA200 + Native126.14 read recovery",
+  "notClaimed": [
+    "Whole candidate image deployed",
+    "New PNG runtime/worker copied into main",
+    "New Source/Provider/Admission Authority",
+    "Fresh paid call or Beta E2E"
+  ],
+  "deploymentConstraint": "Actual Host still contains other accepted runtime capabilities absent from main; never replace it using standalone candidate capture bundle"
+}
