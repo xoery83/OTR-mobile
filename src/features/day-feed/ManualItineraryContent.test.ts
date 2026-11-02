@@ -1,7 +1,10 @@
 import { createElement } from "react";
 import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ManualItineraryContent } from "./ManualItineraryContent";
+vi.mock("@/data/operations/defaultUniversalP3SourceInterpreter", () => ({
+  createDefaultUniversalP3SourceInterpreter: vi.fn(),
+}));
 vi.mock("./ManualFlightForm", () => ({
   ManualFlightEditor: (props: any) => {
     state.editor = { family: "P2", ...props };
@@ -112,7 +115,9 @@ function render() {
   state.editor = null;
   return renderToStaticMarkup(createElement(ManualItineraryContent, props));
 }
+afterEach(() => vi.unstubAllEnvs());
 beforeEach(() => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "false");
   props.localOnly = false;
   state.hooks = [];
   state.generation = 1;
@@ -232,4 +237,16 @@ it("Guest local slice exposes only the existing P1 writer and preserves normal A
     .onPress();
   render();
   expect(state.editor.family).toBe("P1");
+});
+
+it("mounts the lazy existing Source port only for the enabled normal P3 entry", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "true");
+  render();
+  state.buttons.find((p) => p.accessibilityLabel === "formEntry.stay").onPress();
+  render();
+  expect(state.editor.family).toBe("P3");
+  expect(state.editor.sourceScan).toBeTypeOf("function");
+  const { createDefaultUniversalP3SourceInterpreter } =
+    await import("@/data/operations/defaultUniversalP3SourceInterpreter");
+  expect(createDefaultUniversalP3SourceInterpreter).not.toHaveBeenCalled();
 });

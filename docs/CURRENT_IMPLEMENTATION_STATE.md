@@ -1,3 +1,12 @@
+# Reviewed P3 Source scan software candidate — 3 November 2026
+
+Isolated candidate from mainec57 adds the reviewed11fb Native/Import source delta;
+all27 source/test hashes match the combined fixed package.50minimal seam smoke,
+scoped strict/UI guard/lint pass; prior229/72 evidence reused. Existing Auth,
+Updates, Source Review and503 recovery remain unchanged. See
+`ops/p3-reviewed-main-20261103/HANDOFF.md`. Root serial FF/actual qualification
+pending; no Host/SQL/device/paid authority or new configuration from this candidate.
+
 # Reviewed Import fixes candidate — 3 November 2026
 
 Isolated candidate from mainf99b8ad0 combines reviewed eafa8341 Source Review

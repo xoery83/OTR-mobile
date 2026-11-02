@@ -1,3 +1,4 @@
+import { createP3SourceScanPort } from "@/native/p3FormScan";
 import { localInsertionTime } from "./localInsertionTime";
 import { readCommittedLocalSession } from "@/data/auth/authRepository";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
@@ -1276,6 +1277,7 @@ function TripContent({
   const stayEditor =
     stayEdit?.tripId === requested && stayEdit.generation === generation ? (
       <P3StayEditor
+        sourceScan={createP3SourceScanPort()}
         key={`${stayEdit.tripId}:${stayEdit.draft.itemId}:${generation}`}
         tripId={stayEdit.tripId}
         itemId={stayEdit.draft.itemId}

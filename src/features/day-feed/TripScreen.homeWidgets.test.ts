@@ -8,6 +8,9 @@ import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
 import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
+vi.mock("@/native/p3FormScan", () => ({
+  createP3SourceScanPort: vi.fn(() => undefined),
+}));
 vi.mock("./useMinuteClock", () => ({
   useMinuteClock: () => ({
     instant: "2026-10-26T00:00:00Z",
