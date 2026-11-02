@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c02-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C02",
+      "execution_slice_id": "AUTH-C02:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-02T23:58:09.069180+00:00",
+      "actual_started_at": "2026-11-02T23:58:09.069180+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-c02-guest-whitelist-map",
+      "summary": "Started scoped Guest normal UI creation versus qualified Trip/P1 whitelist reconciliation; no prior Adoption test rerun or Hosted action",
+      "next_action": "Finish source-qualified whitelist map, then return C04 precise parser handoff"
+    }
+  ]
+}

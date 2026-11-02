@@ -1,0 +1,95 @@
+{
+  "package": "AUTH-C02",
+  "slice": "AUTH-C02:LOCAL_PREP",
+  "claimId": "auth-c02-local-prep-20261103-v1",
+  "instructionCanonicalSHA256": "b2a4b0ab44733be5db648ef1e79d77027f56b8493b93255f2d7d5e23f7fb4c0b",
+  "instructionReference": "/Users/xoery/.codex/visualizations/2026/11/02/01a19a2c-de35-72d2-96b7-e66333286e13/otr-mission-control/public/instructions/AUTH-C02.json",
+  "quality": {
+    "status": "SLICE_READY_LOCAL_ONLY",
+    "complete_package_instruction": "SOURCE_BOUND_WITH_RECONCILIATION",
+    "reconciliation": "NEEDS_RECONCILIATION",
+    "allowed_slice_ids": [
+      "AUTH-C02:LOCAL_PREP"
+    ],
+    "not_authorized": [
+      "Protected Hosted",
+      "Cloud write",
+      "OAuth/Consent session",
+      "Provider charges",
+      "Production",
+      "Shared writer takeover"
+    ]
+  },
+  "status": "LOCAL_SOURCE_RECONCILIATION_COMPLETE_NOT_DEVICE_OR_HOSTED_PASS",
+  "sourceCommitBeforeWork": "22d5505b",
+  "entries": [
+    {
+      "surface": "Trip create/edit/deferred metadata",
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "sha256": "4df0ca757ea05f90dfa970ae14d062c0e8729f3a0f79a6cfc45015a7996e0dfc",
+      "finding": "Normal Guest principal uses existing localTripAccess; localOnly passed to form, no cloud discovery"
+    },
+    {
+      "surface": "Normal Manual chooser",
+      "path": "src/features/day-feed/ManualItineraryContent.tsx",
+      "sha256": "a843c54f3c74c117b7c215cfc2ac20444984b71995cdc32370cf4f819631e9df",
+      "finding": "Both rendered enabled state and onChoose allow only P1 when localOnly"
+    },
+    {
+      "surface": "Guest repository capability",
+      "path": "src/data/auth/localTripAccess.ts",
+      "sha256": "0ecee405b56419e2a54d1690c08663864809f4bc6fe0ac32eba75900871c87cd",
+      "finding": "Only existing trips/days/plan exposed; kick sync only for ACCOUNT"
+    },
+    {
+      "surface": "Guest workspace",
+      "path": "src/data/auth/guestLocalWorkspace.ts",
+      "sha256": "c1515d9bfb8732c23883c82d024d0450650b90168792d1591b2b63f1ef76de01",
+      "finding": "Separate otr-guest-localId DB; syncAllowed false; plan=P1; photo cover storage rejected"
+    },
+    {
+      "surface": "P1 repository factory",
+      "path": "src/data/repositories/manualPlanRepository.ts",
+      "sha256": "845dba3b67f06709cd718713fca3968acd8a82a43af6cd260e9a4c03da498fe7",
+      "finding": "Guest plan factory fixes family P1; no second repository/sync"
+    },
+    {
+      "surface": "Adoption source whitelist",
+      "path": "src/data/auth/guestTripP1SourceSchema.ts",
+      "sha256": "1585008290019469025db4d61446672573e36da7d3688f4b4727a41b26716ca7",
+      "finding": "CREATE_ITEM P1 only; same-created-target manual TEXT/SCHEDULE/PLACE/PARTICIPATION supported"
+    },
+    {
+      "surface": "Handoff retention",
+      "path": "src/data/auth/guestHandoffInventory.ts",
+      "sha256": "625ef99473f569ee5fb691cf1b2ab9e42d7a8bf1742335a4659ca9e71f23faa1",
+      "finding": "Freeze Trip/P1 draft/file/census; unsupported data not treated as empty or silently discarded"
+    },
+    {
+      "surface": "Real evidence",
+      "path": "docs/ops/auth-phase2-20261028/NEW_GUEST_ADOPTION_GOLDEN_SLICE_REAL_E2E.json",
+      "sha256": "a60a4bf47c132ea6777c7daf668e8165147a61f80a8039693cac45f46cefd496",
+      "finding": "Reuse exact fileless normal Native Trip/P1 and deferred metadata proof; no P2-P6/file/capture expansion"
+    }
+  ],
+  "approvedMinimalScope": [
+    "Trip metadata/static cover",
+    "P1 Create and owning supported edits"
+  ],
+  "notExpanded": [
+    "P2-P6",
+    "Ledger authoring",
+    "Documents",
+    "Capture",
+    "cloud media",
+    "multimember"
+  ],
+  "remaining": [
+    "Current actual binary wider global Capture/Document entries not independently observed by this source-only slice; Native owns any shared UI adjustment",
+    "Draft/registered-file candidates and unsupported inventory remain explicit; fileless receipt is not acceptance for every Guest dataset"
+  ],
+  "testsRun": false,
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "missingLocalInstructionFields": []
+}
