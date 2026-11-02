@@ -210,11 +210,15 @@ export async function executeMemberClaim(
           inviteId,
         };
         await tx.saveReceipt(receipt);
+        const currentAccess = await tx.currentEffectiveAccess(
+          authenticatedActorAccountId,
+        );
+        if (currentAccess === null) throw new Error("MEMBER_CLAIM_ACCESS_UNAVAILABLE");
         return {
           status: outcome,
           personId: command.personId,
           inviteId,
-          currentAccess: access,
+          currentAccess,
         };
       },
     );

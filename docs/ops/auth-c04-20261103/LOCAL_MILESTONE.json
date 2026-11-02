@@ -1,0 +1,56 @@
+{
+  "status": "LOCAL_CANDIDATE_REVIEWED_NOT_HOSTED_E2E",
+  "workPackage": "AUTH-C04",
+  "prerequisite": "AUTH-C03",
+  "baselineCommit": "cfb22bf8",
+  "goldenSlice": "A exact registered B invite to existing unlinked Person -> B explicit Claim -> owning member and Item read",
+  "firstReproducedFailure": {
+    "test": "returns owning access after the atomic link",
+    "before": "LINKED returned NONE after owning transaction changed access to COLLABORATE",
+    "after": "Current owning access re-read inside same atomic callback; null throws for rollback",
+    "redObserved": true
+  },
+  "changes": [
+    "Postwrite access readback, no new grant policy",
+    "Unmounted normal-Account HTTP boundary using existing execution/recovery",
+    "Trip/body/operation binding; recovery never replays mutation"
+  ],
+  "authorValidation": {
+    "focusedSuites": 3,
+    "focusedTestsPassed": 36,
+    "typecheck": "PASS",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "independentReview": {
+    "reviewer": "auth_phase1_review",
+    "status": "SCOPED_NO_BLOCKER",
+    "initialIndependentTests": 34,
+    "finalIncrementalTests": 2,
+    "limits": "No repeated stable tests; fixtures only, no real PG/Hosted authentication or transaction proof"
+  },
+  "existingEvidenceReused": [
+    "docs/ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json",
+    "docs/ops/people-add-traveler-20261031/ADOPTED_PERSON_BACKEND_REAL_E2E.json",
+    "docs/ops/people-add-traveler-20261031/ADOPTED_PERSON_NATIVE_READER_REAL_E2E.json",
+    "docs/ops/auth-directed-invite-20261102/INDEPENDENT_REVIEW.json",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/CANDIDATE_MANIFEST.json"
+  ],
+  "pending": [
+    "Actual serialized MemberClaimAuthorityPort with owning approval/link/access/immutable receipts",
+    "Exact protected SQL candidate qualification and approval before Hosted install",
+    "Shared normal-Account route mount and Native entry by unique Writers",
+    "Two real normal Accounts, independent DB readback, visibility/revoke negatives and Native cold recovery"
+  ],
+  "runtimeMounted": false,
+  "hostedWrites": 0,
+  "sqlInstalls": 0,
+  "providerCalls": 0,
+  "deviceOperations": 0,
+  "sourceSHA256": {
+    "backend/src/tripMemberClaimAuthority.ts": "4e9d70408369410bd68b98922dbba48f97d89ff584c3d3a3924db9cc143ac524",
+    "backend/src/tripMemberClaimAuthority.test.ts": "5959c78a184e7a76647cffca9a46c93259c863fe0f22e3694f3a85509699f860",
+    "backend/src/tripMemberClaimHttp.ts": "daa6cbf327a85f18c5e7be72cb97232b73cee9abd5c55e9eeaf71f9dbc19c98f",
+    "backend/src/tripMemberClaimHttp.test.ts": "1922719ca1863164501009d504397c90fb715fef013f8ebb1b39b7ef16e6e31c"
+  }
+}

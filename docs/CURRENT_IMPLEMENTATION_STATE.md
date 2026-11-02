@@ -1,3 +1,30 @@
+# AUTH-C04 People & Collaboration resumed — 3 November 2026
+
+Owner now prioritizes AUTH-C04 Invite/Claim/Multi-member with AUTH-C03 Profile/People
+as a parallel prerequisite. Private Realtime is Post-Beta, not a dependency; previous
+"next realtime integration" entries below are historical. Existing Email/Google,
+Guest Trip/P1 Adoption and Native local Profile/Settings acceptance are reused.
+
+First slice: A invites exact registered B to an existing unlinked Trip Person;
+B explicitly claims, then owning Member/visibility Readers establish actual access.
+Current Claim/Recovery authority is dormant: no actual atomic PG adapter or mounted
+route. A new unmounted normal-Account HTTP boundary reuses it and binds Trip/body/op;
+read-only original-operation recovery never executes Claim. Local regression exposed
+stale pre-link currentAccess; result now reads owning access again within atomic,
+and failed post-write qualification throws for full rollback. These are local
+candidate tests, not new Hosted authorization or two-account E2E evidence.
+
+Profile+AKA Cloud install remains reviewed candidate only (2 tables/2 functions/
+2 self SELECT RLS; install c84671f4); local UI is not cloud-synced. Account≠Person;
+link alone confers neither Organizer nor private Item access. Unclaimed Invite revoke
+is separate from post-Claim access loss. Owner's new remove/revoke acceptance goal
+needs an exact approved owning transition; no generic expulsion policy is invented.
+Root owns shared Backend/SQL, Native owns shared UI/Navigation/SQLite. No active
+Auth QA window or new Host/SQL/SMTP/Provider/device action. Mission Control notified
+STARTED/AUTH-C04. Current gaps: AUTH_CLIENT_INTEGRATION_GAPS.md; scope/evidence:
+ops/auth-c04-20261103/. Next: implement/review the actual serialized owning adapter,
+prepare exact protected SQL and normal-Account route composition, then lawful DEV QA.
+
 # Private Realtime exact Session reader candidate — 2 November 2026
 
 preparePrivateRealtimeSession(existing gateway,scope) now supplies a candidate exact

@@ -38,3 +38,23 @@ new capability is invented here. Formal ACCEPT/Reject/Choose Another/Create New,
 cutoff/Owner restrictions, two-account readback, permissions negatives and real
 Native/Backend E2E are not completed by this recovery candidate. Keep it unmounted.
 No Backend/bootstrap, SQL/RLS/GRANT, Session, OAuth, device or Hosted change.
+
+## AUTH-C04 local transport candidate — 3 November 2026
+
+`tripMemberClaimBoundary` is an unmounted adapter, not a replacement Auth gateway.
+The owning host must pass its already-verified normal Account, including existing
+resource-token rejection. POST `/v2/trips/:tripId/member-claim-operations` runs the
+existing strict command. POST to the same path plus `/recovery` only reads the
+original command's receipt. Both require the original `Idempotency-Key`, exact
+Trip binding and bounded body; actor identity is never accepted in the body.
+A new invited Account need not already pass a Trip Reader: exact invitation
+authorization remains inside the serialized transaction. No public route is mounted.
+
+A local RED regression demonstrated stale pre-link access in successful responses.
+New mutations now read owning access again after saving the receipt, inside the
+same atomic callback; an unavailable read throws and requires complete rollback.
+This does not add a grant: a successful link with owning NONE remains NONE. The
+HTTP adapter does not retry a failed/UNKNOWN operation. 202 ABSENT_UNCONFIRMED on
+recovery does not establish NoCommit. The body deadline does not claim to cancel
+an in-flight transaction; actual timeout/COMMIT reconciliation belongs to the port.
+Local evidence/review: `../ops/auth-c04-20261103/LOCAL_MILESTONE.json`.
