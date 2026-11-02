@@ -20,6 +20,9 @@ export type UniversalImportUpdate = Readonly<{
   updatedAt: string;
   rowRevision: number;
   savedItemCount?: number;
+  sourceDisplayName?: string;
+  submittedText?: boolean;
+  submittedAt?: string;
 }>;
 
 type SavedOutcome = Pick<
@@ -76,6 +79,15 @@ export function projectUniversalImportUpdates(
       state,
       updatedAt,
       rowRevision,
+      ...(batch.inputs?.length === 1 && batch.inputs[0].originalFilename?.trim()
+        ? { sourceDisplayName: batch.inputs[0].originalFilename }
+        : {}),
+      ...(batch.inputs?.length === 1 && batch.inputs[0].kind === "TEXT"
+        ? { submittedText: true }
+        : {}),
+      ...(Number.isFinite(Date.parse(batch.createdAt))
+        ? { submittedAt: batch.createdAt }
+        : {}),
       ...(complete
         ? {
             savedItemCount: outcome.savedItemCount,

@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_PASS_INDEPENDENT_REVIEW_NO_BLOCKER_NOT_INSTALLED",
+  "base": "8c992a79",
+  "sourceDiffSHA256": "f898c0bf57f5403019b641031d2d6d017b61c48f821560dc9633e226382f2d37",
+  "sourceCommits": [
+    "9beb1d2a",
+    "5ee6078a"
+  ],
+  "sourceFiles": 6,
+  "tests": {
+    "checks": 26,
+    "files": 3,
+    "status": "PASS"
+  },
+  "strictTypes": {
+    "status": "PASS",
+    "fixedRoots": 6
+  },
+  "uiGuard": {
+    "status": "PASS",
+    "legacyOccurrences": 473,
+    "representativeFiles": 165
+  },
+  "scopedLint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "diffCheck": "PASS",
+  "independentReviewSHA256": "3cac6a499581e6056ef593b77d428d1af90f03030efe0c7016fab9320efda297",
+  "preservedMainScope": "tripPrior only; no unmerged assignedTrip DTO or fallback added",
+  "execution": "All Context reads sequential, then ready detail reads sequential, current Actor/Account/generation rechecked before each queued detail",
+  "metadata": "Optional display fields only from same-Account Batch; event identity/sort/update time unchanged",
+  "priorSourceEvidence": "Root9beb source lane126.14 Updates\u2192sameBatch/serverAccepted/original recovery PASS; 5ee metadata LOCAL_ONLY. Neither is this uninstalled main-context candidate Native PASS.",
+  "mainRemoteHostedSqlDeviceProviderActions": 0
+}

@@ -1,12 +1,23 @@
+# Import Updates main-context candidate — 3 November 2026
+
+Independent `codex/imp-c01-updates-main-20261103` from8c992a79 prepares Task-status
+first/detail-second reads and optional Updates filename/TEXT/submission-time display.
+26 focused checks/six-root strict types/UI guard/lint pass; independentNO_BLOCKER.
+Main's tripPrior scope stays unchanged; no assignedTrip DTO/cache/new concurrency.
+Not installed/merged/deployed; no paid/SQL/device operation. See
+`ops/import-updates-main-20261103/HANDOFF.md`. Root owns serial integration and
+separate Native acceptance; prior126.14 source-lane PASS is not this candidate PASS.
+
 # Import Backend main-context candidate — 3 November 2026
 
 Independent `codex/imp-c01-backend-read-main-20261103` ports accepted retained PNG
 Results and committed Source audit reads onto a516, preserving current permissions
 and full-material Admission. 117 focused checks pass/one existing skip, strict
 22-root types/build pass, independent Review NO_BLOCKER. No Hosted/SQL/device/paid
-action. See `ops/import-backend-main-20261103/HANDOFF.md`; actual main/DEV integration
-is pending. Candidate source61b5ef06 ordinary-merged Native main405 as6b4ce517;
-independent recheck confirms all22 fixed Backend blobs unchanged and405 retained.
+action. See `ops/import-backend-main-20261103/HANDOFF.md`. Root reviewed and serially
+integrated this read slice asmain8c992a79, preservingNative405; no Hosted replacement.
+Candidate source61b5ef06 ordinary-merged Native405 as6b4ce517, with exact22file
+independent recheck retained.
 
 # Import UI main-context candidate — 3 November 2026
 

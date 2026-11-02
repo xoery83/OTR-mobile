@@ -156,3 +156,85 @@ it("reads completion details only after a valid READY observation and preserves 
     onReady.mock.invocationCallOrder[0],
   );
 });
+
+it("emits all lightweight observations before an unresolved first detail read", async () => {
+  const f = fixture(),
+    onObservation = vi.fn();
+  let release!: () => void;
+  const slow = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const onReady = vi
+    .fn()
+    .mockImplementationOnce(() => slow)
+    .mockResolvedValueOnce(undefined);
+  const work = readUniversalActivities(f.jobs, {
+    ...f,
+    onObservation,
+    onReady,
+  });
+  try {
+    for (let i = 0; i < 24; i++) await Promise.resolve();
+    expect(f.context).toHaveBeenCalledTimes(2);
+    expect(onObservation.mock.calls.map(([id]) => id)).toEqual(
+      f.jobs.map((j) => j.batch.batchId),
+    );
+    expect(onReady).toHaveBeenCalledOnce();
+    expect(onObservation.mock.invocationCallOrder[1]).toBeLessThan(
+      onReady.mock.invocationCallOrder[0],
+    );
+  } finally {
+    release();
+    await work;
+  }
+  expect(onReady.mock.calls.map(([job]) => job.batch.batchId)).toEqual(
+    f.jobs.map((j) => j.batch.batchId),
+  );
+  expect(f.context).toHaveBeenCalledTimes(2);
+});
+
+it("stops queued detail reads and discards return value when generation changes in first detail", async () => {
+  const f = fixture(),
+    onObservation = vi.fn();
+  const onReady = vi.fn(async () => {
+    advanceAccountGeneration();
+  });
+  expect(
+    await readUniversalActivities(f.jobs, { ...f, onObservation, onReady }),
+  ).toEqual({});
+  expect(f.context).toHaveBeenCalledTimes(2);
+  expect(onObservation).toHaveBeenCalledTimes(2);
+  expect(onReady).toHaveBeenCalledOnce();
+});
+
+it("rechecks the owning Account before queued details and stops without calling them", async () => {
+  const f = fixture(),
+    onReady = vi.fn();
+  let account = f.jobs[0].batch.accountId;
+  const observed = await readUniversalActivities(f.jobs, {
+    ...f,
+    getAccountId: async () => account,
+    onObservation: (batchId) => {
+      if (batchId === f.jobs[1].batch.batchId) account = randomUUID();
+    },
+    onReady,
+  });
+  expect(observed).toEqual({});
+  expect(f.context).toHaveBeenCalledTimes(2);
+  expect(onReady).not.toHaveBeenCalled();
+});
+
+it("retains both Task statuses and continues same-order details after a first detail failure", async () => {
+  const f = fixture(),
+    onReady = vi
+      .fn()
+      .mockRejectedValueOnce(Error("RESULTS_503"))
+      .mockResolvedValueOnce(undefined);
+  expect(
+    Object.keys(await readUniversalActivities(f.jobs, { ...f, onReady })),
+  ).toEqual(f.jobs.map((j) => j.batch.batchId));
+  expect(onReady.mock.calls.map(([job]) => job.batch.batchId)).toEqual(
+    f.jobs.map((j) => j.batch.batchId),
+  );
+  expect(f.context).toHaveBeenCalledTimes(2);
+});

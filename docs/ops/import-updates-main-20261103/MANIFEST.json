@@ -1,0 +1,26 @@
+{
+  "status": "FROZEN_LOCAL_CANDIDATE_NOT_REVIEWED_NOT_INSTALLED",
+  "base": "8c992a79",
+  "sourceCommits": [
+    "9beb1d2a (phase ordering only; main tripPrior scope preserved)",
+    "5ee6078a (optional metadata projection/UI)"
+  ],
+  "sourceDiffSHA256": "f898c0bf57f5403019b641031d2d6d017b61c48f821560dc9633e226382f2d37",
+  "files": {
+    "src/data/operations/universalActivityReader.test.ts": "e8d642f8d965bbb09227b0f877d0a066d2c0980d7385e4060ba98d750ff536a0",
+    "src/data/operations/universalActivityReader.ts": "36fd9a0762ed63775ef6b14f9ab45f7e4c9f03a498fa73aeca549e656f265b5e",
+    "src/data/operations/universalImportUpdates.test.ts": "d849b26ec3669b144126e5423b7c454265e96fb14fdc077d4eec2fd80545e5a1",
+    "src/data/operations/universalImportUpdates.ts": "d810b7d5f4f37c5904d0254271875b308b330bc944e8411996f6ce7221115514",
+    "src/features/updates/ImportUpdatesSection.tsx": "d5929e10c156e872536d8fa95c615ccf172b1718197fb8cd7888f63b8455f81e",
+    "src/features/updates/ImportUpdatesSection.test.ts": "3c561e5d9ab0a394fcf30d4de160b2317c9315febf1c4da88830204565ad5944"
+  },
+  "tests": {
+    "checks": 26,
+    "files": 3,
+    "status": "PASS"
+  },
+  "mainScopeUnchanged": true,
+  "newAssignedTripDto": false,
+  "newCacheOrConcurrency": false,
+  "hostedDeviceOrProviderActions": 0
+}

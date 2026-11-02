@@ -94,7 +94,9 @@ export function ImportUpdatesSection({
   const query = filter.query.trim().toLocaleLowerCase();
   const cards =
     loaded?.cards.filter((card) =>
-      `${t("updates.importActivity")} ${label(card)}`.toLocaleLowerCase().includes(query),
+      `${t("updates.importActivity")} ${label(card)} ${card.sourceDisplayName ?? ""} ${card.submittedText ? t("capture.ai.submittedText") : ""}`
+        .toLocaleLowerCase()
+        .includes(query),
     ) ?? [];
   return (
     <UiSection title={t("updates.importActivity")}>
@@ -107,6 +109,22 @@ export function ImportUpdatesSection({
       ) : null}
       {cards.map((card) => (
         <View key={card.id}>
+          {card.sourceDisplayName || card.submittedText ? (
+            <UiText>{card.sourceDisplayName ?? t("capture.ai.submittedText")}</UiText>
+          ) : null}
+          {card.submittedAt ? (
+            <View>
+              <UiText>{t("capture.progress.registered")}</UiText>
+              <UiText>
+                {formatUiDate(new Date(card.submittedAt), {
+                  // ui-foundation-exception: string -- Intl stored submission-time presentation
+                  dateStyle: "medium",
+                  // ui-foundation-exception: string -- Intl stored submission-time presentation
+                  timeStyle: "medium",
+                })}
+              </UiText>
+            </View>
+          ) : null}
           <UiText>
             {formatUiDate(new Date(card.updatedAt), {
               // ui-foundation-exception: string -- Intl stored server-time presentation

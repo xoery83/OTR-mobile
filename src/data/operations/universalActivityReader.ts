@@ -1,6 +1,9 @@
 import { getAccountGeneration } from "../auth/accountGeneration";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
-import { captureAccountRequestContext } from "../auth/accountRequestContext";
+import {
+  captureAccountRequestContext,
+  assertAccountRequestContext,
+} from "../auth/accountRequestContext";
 import type {
   UniversalTaskActivity,
   UniversalExecutionContext,
@@ -26,8 +29,14 @@ export async function readUniversalActivities(
   },
 ): Promise<Record<string, UniversalTaskActivity>> {
   const generation = getAccountGeneration();
-  const current = () => dependencies.isCurrent() && generation === getAccountGeneration();
+  const current = () =>
+    dependencies.isCurrent() && generation === getAccountGeneration();
   const observed: Record<string, UniversalTaskActivity> = {};
+  const ready: {
+    job: CaptureJobReadModel;
+    context: Awaited<ReturnType<typeof captureAccountRequestContext>>;
+    binding: UniversalExecutionContext;
+  }[] = [];
   for (const job of jobs) {
     if (!current()) break;
     const tripId = job.batch.context.tripPrior?.id;
@@ -51,11 +60,30 @@ export async function readUniversalActivities(
       if (binding.activity) {
         observed[job.batch.batchId] = binding.activity;
         dependencies.onObservation?.(job.batch.batchId, binding.activity);
-        if (binding.activity.state === "RESULTS_READY" && current())
-          await dependencies.onReady?.(job, context, binding);
+        if (
+          binding.activity.state === "RESULTS_READY" &&
+          dependencies.onReady &&
+          current()
+        )
+          ready.push({ job, context, binding });
       }
     } catch {
       // Older/offline Hosts and unprepared Batches have no Task observation, never a fabricated failure.
+    }
+  }
+  // Slow Results/receipt reads must not hold back another Batch's Task status.
+  for (const { job, context, binding } of ready) {
+    if (!current()) break;
+    try {
+      await assertAccountRequestContext(context, dependencies.getAccountId);
+    } catch {
+      return {};
+    }
+    if (!current()) break;
+    try {
+      await dependencies.onReady?.(job, context, binding);
+    } catch {
+      // A missing completion detail does not erase the valid Task observation.
     }
   }
   return current() ? observed : {};
@@ -64,13 +92,18 @@ export async function readDefaultUniversalActivities(
   jobs: readonly CaptureJobReadModel[],
   isCurrent: () => boolean,
   onObservation?: (batchId: string, activity: UniversalTaskActivity) => void,
-  onResult?: (job: CaptureJobReadModel, result: UniversalImportResult) => Promise<void>,
+  onResult?: (
+    job: CaptureJobReadModel,
+    result: UniversalImportResult,
+  ) => Promise<void>,
 ) {
   const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
   if (!baseUrl || !isCurrent()) return {};
-  const [{ requireActiveUserId }, { createUniversalImportTransport }] = await Promise.all(
-    [import("../auth/authRepository"), import("../api/universalImportTransport")],
-  );
+  const [{ requireActiveUserId }, { createUniversalImportTransport }] =
+    await Promise.all([
+      import("../auth/authRepository"),
+      import("../api/universalImportTransport"),
+    ]);
   if (!isCurrent()) return {};
   const transport = createUniversalImportTransport(requireActiveUserId, {
     baseUrl,

@@ -324,3 +324,56 @@ it("projects each completed saved receipt while later candidates are still readi
     readDefaultUniversalImportUpdates(f.tripId, () => true, observed),
   ).rejects.toThrow();
 });
+
+it("adds only same-Account Batch display metadata without changing event time or identity", () => {
+  const f = fixture();
+  f.job.batch.createdAt = "2026-10-28T00:00:00Z";
+  f.job.batch.inputs = [{ originalFilename: "photo.png", kind: "IMAGE" }] as never;
+  const cards = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [f.job, f.job],
+    f.observations,
+  );
+  expect(cards).toHaveLength(1);
+  expect(cards[0]).toMatchObject({
+    sourceDisplayName: "photo.png",
+    submittedAt: f.job.batch.createdAt,
+    updatedAt: f.activity.updatedAt,
+    id: `universal-import:${f.batchId}`,
+  });
+  expect(
+    projectUniversalImportUpdates(randomUUID(), f.tripId, [f.job], f.observations),
+  ).toEqual([]);
+  const older = fixture();
+  older.job.batch.accountId = f.accountId;
+  older.job.batch.context.tripPrior = { id: f.tripId } as never;
+  older.job.batch.createdAt = "2026-10-28T00:10:00Z";
+  const sorted = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [older.job, f.job],
+    {
+      ...f.observations,
+      [older.batchId]: { ...older.activity, updatedAt: "2026-10-28T00:00:30Z" },
+    },
+  );
+  expect(sorted.map((card) => card.batchId)).toEqual([f.batchId, older.batchId]);
+  expect(source.list).not.toHaveBeenCalled();
+  expect(source.read).not.toHaveBeenCalled();
+  f.job.batch.inputs = [{ originalFilename: null, kind: "TEXT" }] as never;
+  expect(
+    projectUniversalImportUpdates(f.accountId, f.tripId, [f.job], f.observations)[0],
+  ).toMatchObject({ submittedText: true });
+  f.job.batch.inputs = [];
+  f.job.batch.createdAt = "invalid";
+  const legacy = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [f.job],
+    f.observations,
+  )[0];
+  expect(legacy).not.toHaveProperty("sourceDisplayName");
+  expect(legacy).not.toHaveProperty("submittedText");
+  expect(legacy).not.toHaveProperty("submittedAt");
+});
