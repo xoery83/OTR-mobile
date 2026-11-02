@@ -1,0 +1,26 @@
+{
+  "status": "SUPPLEMENT_WAITING_FOR_APPROVAL",
+  "baseGateSHA256": "3edebba4ac1a3d7178dc6cb5b240c68a76cec4dda4b58c7a87ab6b7fb4deb989",
+  "baseCandidateCommit": "7734f3b0",
+  "baseSQLSHA256": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+  "sqlSHA256": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "replacementSpans": [
+    "approval marker",
+    "existing role safety predicate"
+  ],
+  "businessBodyIdentical": true,
+  "roleMutations": 0,
+  "newGrantsBeyondBase": 0,
+  "runtimeEnabled": false,
+  "executionAllowed": false,
+  "files": {
+    "docs/ops/auth-c04-20261103/login-role-compat/render_compat.py": "e73e2006c24021cd15bec58f9dc0516d858f4145d02884a785be86b1c4223854",
+    "docs/ops/auth-c04-20261103/login-role-compat/test_render_compat.py": "ed980749a91c340b3839eaa38da49446179eca223e1f744aee421bff044152e2",
+    "docs/ops/auth-c04-20261103/login-role-compat/INSTALL_CANDIDATE.sql": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+    "docs/ops/auth-c04-20261103/login-role-compat/LIVE_ROLE_PREIMAGE.json": "6222968fa71992606831e2363173f70f3f8214e2619e4db98f857b9e1868aa3a",
+    "docs/ops/auth-c04-20261103/login-role-compat/INDEPENDENT_REVIEW.json": "67cf3e84b59d63447dd975b5c7443909a270433ed40e9e0607fbf4207104a1b2",
+    "docs/ops/auth-c04-20261103/login-role-compat/OWNER_ADDENDUM.md": "7751d24df215dea242f21e8192d19f23f194482adadab6f260a5b0fc5a8242fc"
+  },
+  "gateSHA256": "7c3250efae9cd816857f14540066a46fe89fb7f0b12621bf03b1861636d15cbf"
+}

@@ -1,0 +1,18 @@
+{
+  "status": "READONLY_SAME_ROLE_FLAGS",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "observedAt": "2026-11-02T21:17:53.818286+00:00",
+  "rows": [
+    {
+      "rolbypassrls": false,
+      "rolcanlogin": true,
+      "rolcreatedb": false,
+      "rolcreaterole": false,
+      "rolinherit": false,
+      "rolname": "otr_trip_core_v2_gateway",
+      "rolreplication": false,
+      "rolsuper": false
+    }
+  ],
+  "sqlWrites": 0
+}

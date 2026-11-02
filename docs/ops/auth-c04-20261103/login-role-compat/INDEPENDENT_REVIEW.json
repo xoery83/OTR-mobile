@@ -1,0 +1,16 @@
+{
+  "status": "SCOPED_NO_BLOCKER_CANDIDATE_ONLY",
+  "reviewer": "auth_phase1_review",
+  "independentPureTestsPassed": 4,
+  "oldPgTestsRerun": 0,
+  "scope": "Exactly approval marker and role predicate; original CREATE TABLE onward identical",
+  "sourceSHA256": {
+    "docs/ops/auth-c04-20261103/login-role-compat/render_compat.py": "e73e2006c24021cd15bec58f9dc0516d858f4145d02884a785be86b1c4223854",
+    "docs/ops/auth-c04-20261103/login-role-compat/test_render_compat.py": "ed980749a91c340b3839eaa38da49446179eca223e1f744aee421bff044152e2",
+    "docs/ops/auth-c04-20261103/login-role-compat/INSTALL_CANDIDATE.sql": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+    "docs/ops/auth-c04-20261103/login-role-compat/LIVE_ROLE_PREIMAGE.json": "6222968fa71992606831e2363173f70f3f8214e2619e4db98f857b9e1868aa3a"
+  },
+  "hostedExecution": false,
+  "newOwnerAddendumRequired": true,
+  "liveRolePreimage": "Root read-only same-role flags; all six unsafe flags false"
+}

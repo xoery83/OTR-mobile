@@ -1,3 +1,17 @@
+# C04 install stopped on actual role drift; exact supplement ready — 3 November 2026
+
+Original Gate3edebba4 approval is valid and retained, but Root did NOT install:
+fresh DEV shows existing CoreGateway LOGIN=true while frozen2eec SQL required
+NOLOGIN. Root left role/schema/business unchanged and holds no lock. Same-role
+fresh flags confirm super/bypass/inherit/createdb/createrole/replication all false.
+Exact supplement is ops/auth-c04-20261103/login-role-compat/: only a new approval
+marker and safe-existing-LOGIN predicate, original business/DDL/GRANT body identical.
+No ALTER ROLE or permission expansion. Independent4puretests PASS; original PG
+and Review reused, not rerun. Supplement approval pending; original approval alone
+cannot cover changed install bytes. Runtime stays closed; Hosted A/B/Member revoke/
+NativeColdRestore remain NOT_RUN. C03 adapters5d292b63/4ca558f9 remain ready with
+Native accepted-cache Reader delivery pending; no new broad dispatch required.
+
 # AUTH-C04 exact installation approved; runtime remains closed — 3 November 2026
 
 Owner directly approved call_1e84540d…: approve exact DEV install, keep runtime closed.
