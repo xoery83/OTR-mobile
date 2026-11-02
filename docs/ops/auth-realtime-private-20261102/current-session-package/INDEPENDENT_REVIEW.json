@@ -1,0 +1,18 @@
+{
+  "status": "SCOPED_NO_BLOCKER_AFTER_LOCK_WAIT_SESSION_EXPIRY_REPAIR",
+  "reviewer": "auth_phase1_review",
+  "independentSuites": 3,
+  "independentTestsPassed": 40,
+  "pgReview": "SOURCE_AND_ACTUAL_IMPLEMENTER_RECEIPT_NO_DUPLICATE_PG_RUN",
+  "resolvedBlocker": "Fresh DB not_after check after FOR SHARE lock wait; unchanged lock owner crosses deadline PG RED to GREEN",
+  "hostedAuthority": "NOT_INSTALLED_NOT_MOUNTED",
+  "networkForcedDisconnect": "NOT_IMPLEMENTED_NOT_CLAIMED",
+  "sourceSHA256": {
+    "backend/src/tripPrivateRealtimeCurrentSession.ts": "204a0985df98a6f4d4f8b36b48495698106ae5845964d7ec831bef288eaf7564",
+    "backend/src/tripPrivateRealtimeCurrentSession.test.ts": "6aaffa383c5464f7f4b1fb0ae4c184eaa982e7492ed7a684ba7288621f6ba90a",
+    "backend/src/tripPrivateRealtimeCurrentSession.pg.test.ts": "991267d685664b5bc7beda9fd2bc8d896dd1c597314040c09f3d0104b971f818",
+    "docs/ops/auth-realtime-private-20261102/pg-candidate/CURRENT_SESSION_READER_CANDIDATE.sql": "021c27faa8e56e5899a344b5ed36b2baec991b1bafe5db0016c14ea4e07dc185",
+    "docs/ops/auth-realtime-private-20261102/pg-candidate/CURRENT_SESSION_ISOLATED_PG_RECEIPT.json": "9513907aca5cd3eca95eae1dc00d52bd21d9c350218dc5fa25d0702d5ee80b26",
+    "docs/architecture/AUTH_PRIVATE_REALTIME_AUTHORITY_V1.md": "1d57813374026b2f5c18a14e846592a5792b8deed39c32d1e2f24f7006bd46fb"
+  }
+}

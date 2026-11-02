@@ -1,0 +1,55 @@
+{
+  "status": "READY_FOR_CORE_LOCAL_INTEGRATION_PROTECTED_SQL_CANDIDATE_ONLY",
+  "entry": "backend/src/tripPrivateRealtimeCurrentSession.ts:preparePrivateRealtimeSession(gateway,scope)",
+  "compose": [
+    "Before Core BEGIN, await preparePrivateRealtimeSession(existingNormalGateway, scope)",
+    "Inside the existing held Core transaction, set verified actor/Trip GUC via owning Core adapter",
+    "held.currentSession = () => prepared.currentSession(context.lease)",
+    "Keep existing canonical currentActor/qualifyCore/readVisibleItem checks; this reader grants no Trip access"
+  ],
+  "scope": "Verified normal account, exact bearer sub/session_id/exp, exact held actor/Trip; no checkout or BEGIN in reader",
+  "dependencies": [
+    "Existing Supabase validateAccessToken and NORMAL_ACCOUNT classification",
+    "Existing CorePgLease",
+    "RealtimeAuthorityScope type from approved 57c357 private Authority package; do not wholesale merge Auth branch",
+    "Core observeHeld handoff 3e071574 independent three-new-test Review accepted"
+  ],
+  "sqlCandidate": "docs/ops/auth-realtime-private-20261102/pg-candidate/CURRENT_SESSION_READER_CANDIDATE.sql",
+  "protectedDiff": {
+    "newFunctions": 1,
+    "newCoreGatewayExecute": 1,
+    "newTables": 0,
+    "newRoles": 0,
+    "newRlsPolicies": 0,
+    "directAuthTableGrants": 0,
+    "grantee": "otr_trip_core_v2_gateway",
+    "denied": [
+      "PUBLIC",
+      "anon",
+      "authenticated",
+      "service_role"
+    ],
+    "installation": "Exact Owner Gate required; none requested/executed on Hosted"
+  },
+  "evidence": {
+    "unitTests": 19,
+    "independentFocusedTests": 40,
+    "actualNetworkNonePg": "PASS_WITH_REAL_ROW_LOCK_WAIT_EXPIRY_AND_EXACT_SESSION_DELETE",
+    "cleanup": "OWNED_FIXTURE_REMOVED",
+    "providerCalls": 0,
+    "hostedWrites": 0
+  },
+  "remaining": [
+    "Hosted exact Gate and installation",
+    "Core held-scope adapter assembly",
+    "Canonical authorized member revoke/regrant mutation + same-COMMIT generation/receipt producer",
+    "Authoritative Session invalidation event and actual private transport forced disconnect"
+  ],
+  "noNewAuthorityFrom": [
+    "getUser alone",
+    "Decoded JWT alone",
+    "Offline cached App session",
+    "Fixture bearer mapping",
+    "A successful Session read without canonical membership/visibility"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "status": "EXACT_CURRENT_SESSION_READER_ISOLATED_PG_PASS_NOT_HOSTED_OR_TRANSPORT_E2E",
+  "checkedAt": "2026-11-02T05:52:21.669Z",
+  "network": "none",
+  "checks": [
+    "EXACT_SESSION_ACCOUNT_AND_HELD_TRIP_BINDING",
+    "PUBLIC_ANON_AUTHENTICATED_SERVICE_ROLE_DENIED_NO_DIRECT_AUTH_TABLE_GRANT",
+    "REAL_SESSION_REVOKE_WAITS_HELD_SHARE_LOCK_AND_OTHER_SESSION_REMAINS_CURRENT",
+    "SESSION_EXPIRY_RECHECKED_AFTER_LOCK_WAIT_WITHOUT_ROW_UPDATE",
+    "DATABASE_NOT_AFTER_BANNED_ANONYMOUS_AND_SOFT_DELETED_DENIED"
+  ],
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "limits": [
+    "Synthetic gateway authentication; no new real Provider login proof",
+    "No member transition producer or private network forced disconnect",
+    "Candidate protected EXECUTE installed only in this isolated fixture"
+  ],
+  "ownedFixtureRemoved": true,
+  "fixtureImageSHA256": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "candidateSQLSHA256": "021c27faa8e56e5899a344b5ed36b2baec991b1bafe5db0016c14ea4e07dc185"
+}

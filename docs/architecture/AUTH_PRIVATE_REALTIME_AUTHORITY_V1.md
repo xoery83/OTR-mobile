@@ -113,3 +113,23 @@ qualification/projection fixture seams and any transport mock. No actual connect
 private-channel forced-disconnect, Hosted RLS/GRANT, Native revocation E2E, real
 Session mutation or publisher activation is claimed. All candidate paths remain
 unmounted; no Host/OAuth/Session/shared SQL/Bootstrap/Native files are changed here.
+
+## Exact Session reader candidate
+
+`preparePrivateRealtimeSession(gateway, scope)` verifies the same normal bearer
+through the existing Supabase gateway before Core begins its transaction. Decoded
+claims only bind the verified Account to its Session ID and access-token expiry;
+they never authenticate a token. The returned `currentSession(heldLease)` uses the
+existing held transaction, with no checkout, BEGIN or network authentication.
+
+The separate candidate `otr_private_realtime_current_session(session, trip)` reads
+the exact `auth.sessions` row and normal, enabled Auth user under shared row locks.
+It checks the held Core actor/Trip and Session expiry; absence or revocation denies
+only that Session. Session expiry is rechecked after lock acquisition with a fresh
+database clock; an unchanged row does not make an expired Session current again.
+It neither stores another Session nor grants Trip membership.
+Its single EXECUTE for the existing Core gateway requires a new exact protected
+Gate before installation. No function is installed or route mounted here.
+
+This is a current-state reader, not an invalidation publisher or network transport.
+Actual Session invalidation signals and forced disconnect remain separate gaps.

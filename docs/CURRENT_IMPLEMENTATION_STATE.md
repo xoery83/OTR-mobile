@@ -1,3 +1,22 @@
+# Private Realtime exact Session reader candidate — 2 November 2026
+
+preparePrivateRealtimeSession(existing gateway,scope) now supplies a candidate exact
+currentSession(heldLease) source. Gateway verifies the same normal bearer before
+Core BEGIN; claims only bind verified Account/session_id/expiry. Held SQL checks
+real auth.sessions + normal/enabled Auth user, exact actor/Trip and shared row locks.
+IndependentReview found a lock-wait expiry race; realPG RED→GREEN confirms a fresh
+DB deadline check AFTER lock acquisition. Session1 delete denies only Session1;
+Session2 remains current. Foreign actor/Trip, role EXECUTE negatives, no directAuth
+read grant, not_after/banned/anonymous/softdelete negatives PASS. 19 unit tests,
+independent3suites40PASS; actual networknonePG4.39s PASS, container removed.
+Types/lint PASS. No Hosted/Provider/new Session invalidation event/transport claim.
+One new function + one existing Core gateway EXECUTE is candidate only, not installed;
+no new table/role/RLS or second Session system. Exact Owner SQL Gate still required.
+Package: ops/auth-realtime-private-20261102/current-session-package/HANDOFF.json.
+Root/Core observeHeld3e071574 accepted with independent3newtests PASS; no nestedTX.
+Remaining real member-transition producer and privateTransport/forceddisconnect are
+absent; current-source completion does not make PrivateRealtime Hosted E2E PASS.
+
 # Claude Consumer Edit e389 PASS and CLOSED — 2 November 2026
 
 Real normal OTP/Consent, current Item/EditBase, fresh exact Preview and one original
