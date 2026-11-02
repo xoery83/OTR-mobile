@@ -1,0 +1,99 @@
+{
+  "status": "HISTORICAL_FIRST_503_OPEN_UNPROVEN_CLIENT_RECOVERY_LOCAL_PASS",
+  "baseline": "9eef2b2d89d2a229eeb83aac168397d93d2c28e4",
+  "identity": {
+    "batchId": "794b02d7-9287-4efd-b0c9-62e2f55c3a06",
+    "taskId": "96ce2929-7a0e-843b-8b40-a72bca0f0dd1",
+    "sourceId": "9e91719c-0e93-4a8c-a5b7-36d14d3121d2"
+  },
+  "originalReceipts": {
+    "/Users/xoery/.codex/worktrees/universal-photo-resume-integration-20261030/otr-mobile-canonical/docs/ops/universal-product-20261028/photo/golden-slice-20261101/FIRST_COLD_RESULTS_503_OPEN.json": "e16633971f407b30c779cb480eb8de5bd988eeb875ebf42c62cc0ced1e33dde5",
+    "/private/tmp/otr-photo-permission-object-20261101/core-safe-diagnostics.json": "30dacc01f970a1953441cf7d13803e1ca556021124af42278a45c7e8e386d009",
+    "/private/tmp/otr-photo-permission-object-20261101/read-core-diagnostics.py": "52901312d22db706b2c601bf78d7f7d262ce560669c00909dfbcaf908cd50c7f",
+    "/private/tmp/otr-photo-permission-object-20261101/PROVENANCE.json": "c4705f0ee75ccb0fcf2bcd8ce080ea0517f7e0611e2f3ae7af8f35cc20460364",
+    "/private/tmp/otr-photo-permission-object-20261101/NORMAL_SOURCE_BINDING_LOOKUP_5S.private.json": "19176bf4cad439935a2e6181cab7d0f98b4bfd517b1c69d6c02a38d178b5f6a7"
+  },
+  "firstFailure": {
+    "bindingEventAt": "2026-11-01T07:40:15.768418299Z",
+    "stage": "BINDING",
+    "category": "FAILED",
+    "httpEventAt": "2026-11-01T07:40:15.768883278Z",
+    "routeBucket": "/v2/import-batches/:batchId/interpretations",
+    "status": 503,
+    "durationMs": 8383,
+    "requestId": "UNKNOWN: original sanitizer omitted value, retained key name only",
+    "actualMethodAndFullPath": "UNKNOWN: route bucket covers context and result; no original method/path value retained",
+    "sameBatchAttribution": "Historical Golden Slice narrative; exact request-to-Batch correlation unavailable in sanitized log"
+  },
+  "frozenSourceVerifiedAgainstAssembly": {
+    "backend/src/universalContinuousHost.ts": "3b69b29f036aa07fd04855ad7468b5f30e635338043cf48f305e1a43588f4370",
+    "backend/src/universalBatchSource.ts": "5ba4001d61752d0ff7460f473c19f3a8a899b5e93e426fe1d41e66bf36fdda45",
+    "backend/src/universalImport.ts": "3e63c8918f3d2d229eb4fc8e05df0e6bfc7befb65cf03b36d50adcc331ea9c38",
+    "backend/src/universalPg.ts": "65bf4de807e2f0fad082550478f78b0841e02cc2cb75293f7b48bf5245ce1391",
+    "backend/src/app.ts": "817c1dcd3ba45954f5ceaa67cd17e6b9ac59d31f3fa93793ed4a24a4121c0251"
+  },
+  "historicalChain": [
+    {
+      "file": "backend/src/app.ts",
+      "line": 2615,
+      "meaning": "Context and per-Task Results share one logged route bucket"
+    },
+    {
+      "file": "backend/src/universalImport.ts",
+      "line": 696,
+      "meaning": "Context calls readContext; unexpected failures map to503 UNIVERSAL_CONTEXT_UNAVAILABLE at720"
+    },
+    {
+      "file": "backend/src/universalContinuousHost.ts",
+      "line": 173,
+      "meaning": "BINDING covers lookup; TASK stage begins after lookup. readManifest is later in found at219"
+    },
+    {
+      "file": "backend/src/universalBatchSource.ts",
+      "line": 102,
+      "meaning": "lookup: authorize-before, transaction/find binding, authorize-after, schema and scope validation"
+    },
+    {
+      "file": "backend/src/universalPg.ts",
+      "line": 5,
+      "meaning": "withLease transaction begin/work/commit; original error rethrown"
+    }
+  ],
+  "inferencesAndLimits": [
+    "BINDING/FAILED localizes the logged failure before Task snapshot/material read; if adjacent HTTP belongs to it, it differs from the Nov3 FIRST/BINARY_READ/SOURCE_CAPABILITY_CLOSED chain",
+    "Null binding and exact known BUSY/NOT_FOUND/STALE/SCOPE messages have other fixed categories; do not generalize that all permission/timeout/contention causes are excluded",
+    "8383ms is duration, not root cause. Earlier Core CONNECTION_BUSY events are different requests and not proof of this failure",
+    "Successful later binding lookup (605ms), same-ID read retry and accepted Item do not identify why the first lookup failed",
+    "Missing requestId/code/SQLSTATE/lookup-phase/timing detail prevents proving service-not-ready/race/auth/PG/parse as root cause"
+  ],
+  "reproducibleCurrentBug": {
+    "location": "src/data/operations/universalCaptureConsumer.ts:100",
+    "issue": "Current9eef main omitted accepted b9e394dc/c555a4fa guard; explicit continuous Start treats unavailable503 as proof to prepare Sources",
+    "red": "Two precise503 cases fail on unmodified production;40 old checks pass",
+    "fix": "Restore !continuous prerequisite on legacy503 preparation; continuous owning404 path and legacy behavior unchanged",
+    "notClaimed": "This client repair did not cause or solve the historical server503"
+  },
+  "validation": {
+    "focusedPassed": 45,
+    "consumer": 42,
+    "syntheticHost": 3,
+    "strict": "PASS:3 roots plus transitive",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS",
+    "hostFixtureLimit": "Injected BINDING_READ_FIXTURE_UNAVAILABLE demonstrates same-ID recovery with real local Task/Queue/marker and controlled synthetic Provider, not historical root-cause reproduction"
+  },
+  "newCandidateSource": {
+    "src/data/operations/universalCaptureConsumer.ts": "0b69a1ec65850e5ab2164f890ce00fe9d044ea0d5f4c6713747e83b5df07f347",
+    "src/data/operations/universalCaptureConsumer.test.ts": "06dfdd8865d9b5bc204baf954031b1243b56817f69ce1875ac1ed271a8e892c6",
+    "backend/src/universalContinuousHost.test.ts": "0dfb0949cbcecc2404536e9ae76d29c7ad3a9a533289c0a75f583bd60806c158"
+  },
+  "independentReview": "Pending Root; existing reviewer could not start due thread limit",
+  "actions": {
+    "mainWrites": 0,
+    "host": 0,
+    "sql": 0,
+    "paid": 0,
+    "device": 0,
+    "authCandidateChanges": 0
+  }
+}

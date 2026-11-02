@@ -1,3 +1,12 @@
+# Reviewed Import fixes candidate — 3 November 2026
+
+Isolated candidate from mainf99b8ad0 combines reviewed eafa8341 Source Review
+read-only controls and8e9fb27b continuous503 uncertainty recovery; all five source
+hashes match the independent reviews.48merged smoke/scoped strict/UI guard pass;
+lint has only two old warnings. Existing Auth/Native/Updates unchanged. See
+`ops/import-reviewed-fixes-main-20261103/HANDOFF.md`. Root FF/device acceptance
+pending; historical first Photo503 remains OPEN_UNPROVEN. No Host/SQL/paid action.
+
 # Auth C04 default-closed integration candidate — 3 November 2026
 
 Isolated `codex/root-auth-c04-main-20261103` from main8c992a79 consumes fixed Auth

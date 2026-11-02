@@ -131,6 +131,45 @@ it("a closed screen cannot expose an asynchronous context result", async () => {
 
 const missingContext = () =>
   new ApiClientError("closed", "http", 503, "UNIVERSAL_CONTEXT_UNAVAILABLE");
+it.each(["UNIVERSAL_CONTEXT_UNAVAILABLE", "UNIVERSAL_IMPORT_CLOSED"])(
+  "continuous context 503 %s never prepares Sources and retries the same retained Task read-only",
+  async (code) => {
+    const prepare = vi.fn(async () => {}),
+      resume = vi.fn(async () => {}),
+      f = fixture(prepare, true, resume),
+      binding = await f.transport.context(),
+      failure = new ApiClientError("unavailable", "http", 503, code);
+    f.transport.context.mockClear();
+    Object.assign(f.result, {
+      taskId: binding.taskId,
+      status: "EXECUTION_OUTCOME_UNKNOWN",
+      providerOutcome: "UNKNOWN",
+    });
+    // A cold read and explicit Start both retain uncertainty; neither proves absence.
+    for (const action of ["recover", "start"] as const) {
+      f.transport.context.mockRejectedValueOnce(failure);
+      await expect(f.consumer[action](f.model)).rejects.toBe(failure);
+      expect(prepare).not.toHaveBeenCalled();
+      expect(resume).not.toHaveBeenCalled();
+      expect(f.transport.result).not.toHaveBeenCalled();
+      expect(f.transport.execute).not.toHaveBeenCalled();
+    }
+    expect(await f.consumer.recover(f.model)).toBe(f.result);
+    expect(f.transport.result).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ accountId: f.accountId, tripId: binding.tripId }),
+      binding,
+    );
+    expect(f.transport.context.mock.calls).toEqual(
+      Array.from({ length: 3 }, () => [
+        expect.objectContaining({ accountId: f.accountId, tripId: binding.tripId }),
+        binding.batchId,
+      ]),
+    );
+    expect(prepare).not.toHaveBeenCalled();
+    expect(resume).not.toHaveBeenCalled();
+    expect(f.transport.execute).not.toHaveBeenCalled();
+  },
+);
 it("first explicit Start prepares real Sources only on exact missing context and then obtains Task from Backend", async () => {
   const prepare = vi.fn(async () => {}),
     f = fixture(prepare);

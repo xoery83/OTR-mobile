@@ -64,6 +64,10 @@ it.each([
     );
     const save = state.buttons.find((b) => b.label === t("capture.ai.p1Confirm"))!;
     expect(save.disabled).toBe(complete || confirmationUnavailable);
+    for (const label of ["capture.ai.p1Reviewed", "capture.ai.p1NewSelected"] as const)
+      expect(state.buttons.find((button) => button.label === t(label))!.disabled).toBe(
+        complete || confirmationUnavailable,
+      );
     save.onPress();
     expect(onConfirm).toHaveBeenCalledTimes(complete || confirmationUnavailable ? 0 : 1);
     const original = state.buttons.find(

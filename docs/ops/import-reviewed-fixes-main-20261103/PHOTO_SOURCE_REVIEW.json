@@ -1,0 +1,29 @@
+{
+  "status": "NO_BLOCKER_SCOPED_SOURCE",
+  "commit": "8e9fb27b563bd35dd1a040052ec252c5874568b4",
+  "fileSHA256": {
+    "src/data/operations/universalCaptureConsumer.ts": "0b69a1ec65850e5ab2164f890ce00fe9d044ea0d5f4c6713747e83b5df07f347",
+    "src/data/operations/universalCaptureConsumer.test.ts": "06dfdd8865d9b5bc204baf954031b1243b56817f69ce1875ac1ed271a8e892c6",
+    "backend/src/universalContinuousHost.test.ts": "0dfb0949cbcecc2404536e9ae76d29c7ad3a9a533289c0a75f583bd60806c158"
+  },
+  "observations": [
+    "Only continuous503 legacy preparation condition changes: !continuous guard preserves same thrown error, never prepare/resume/execute or allocate identity.",
+    "Noncontinuous exact503 first-start behavior and continuous owning404 preparation are unchanged. Recover never dispatches and successful retry reads original same Batch/Task.",
+    "Existing current gates surround awaited IO; UNKNOWN reconciliation preserves original binding and checks resumed task/batch/trip/account/actor identity. This diff creates no new queue/permission/provider path.",
+    "Fixture host test is explicit injected BINDING failure then same-ID retained result with original operation and one synthetic send total; not historical server503 root cause.",
+    "Historical first503 remains OPEN_UNPROVEN; evidence distinguishes incomplete request correlation from Nov3 expired binary read proof."
+  ],
+  "checks": "Photo45focusedchecks/types/lint and prior protocol negative cases reused; no original6Golden/Host rerun.",
+  "mainIntegration": "READY_FOR_ROOT_SERIAL_MAIN_INTEGRATION_AFTER_FRESH_HEAD_CHECK",
+  "runtimeProof": "NOT_EXECUTED_BY_REVIEWER_NOT_ADDITIONAL_E2E_PASS",
+  "actions": {
+    "fileChangesToOtherTrees": 0,
+    "Host": 0,
+    "SQL": 0,
+    "Auth": 0,
+    "Devices": 0,
+    "Provider": 0,
+    "TestSuitesRerun": 0
+  },
+  "remaining": "Historical first server503 not closed; source guard fixes current reproducible client side-effect."
+}

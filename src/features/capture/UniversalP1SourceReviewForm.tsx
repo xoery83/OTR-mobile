@@ -199,7 +199,13 @@ export function UniversalP1SourceReviewForm({
       {originalError ? <UiText>{t("capture.ai.p1Unavailable")}</UiText> : null}
       <UiButton
         variant="secondary"
-        disabled={disabled || !tripName || original === null}
+        disabled={
+          disabled ||
+          complete ||
+          confirmationUnavailable ||
+          !tripName ||
+          original === null
+        }
         label={t(
           originalReviewed ? "capture.ai.p1Reviewed" : "capture.ai.p1ReviewOriginal",
         )}
@@ -207,7 +213,7 @@ export function UniversalP1SourceReviewForm({
       />
       <UiButton
         variant="secondary"
-        disabled={disabled || !originalReviewed}
+        disabled={disabled || complete || confirmationUnavailable || !originalReviewed}
         label={t(
           newSelected
             ? "capture.ai.p1NewSelected"

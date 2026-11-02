@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_PASS_REVIEWED_FIXES_INTEGRATION",
+  "baseMain": "f99b8ad08b56ff0fc0c60d03d5b565432777a0eb",
+  "sourceCommits": [
+    "eafa8341a5356480eccd6dfb3b08409aa71daf68",
+    "8e9fb27b563bd35dd1a040052ec252c5874568b4"
+  ],
+  "sourceSha256": {
+    "src/features/capture/UniversalP1SourceReviewForm.tsx": "3765ca1f6f7382281d3651b671d262584126b73289af88a023cb1fce74badc46",
+    "src/features/capture/UniversalP1SourceReviewForm.test.ts": "48217b7026c38d77868c7d15853c97ff61af402090110688363c298328283893",
+    "src/data/operations/universalCaptureConsumer.ts": "0b69a1ec65850e5ab2164f890ce00fe9d044ea0d5f4c6713747e83b5df07f347",
+    "src/data/operations/universalCaptureConsumer.test.ts": "06dfdd8865d9b5bc204baf954031b1243b56817f69ce1875ac1ed271a8e892c6",
+    "backend/src/universalContinuousHost.test.ts": "0dfb0949cbcecc2404536e9ae76d29c7ad3a9a533289c0a75f583bd60806c158"
+  },
+  "allFiveSourceHashesMatchIndependentReview": true,
+  "reviews": {
+    "UI_SOURCE_REVIEW.json": "c1c3178d759a8931ed06cb61468488a33afd3b14ce8f2a256e302798c6147794",
+    "PHOTO_SOURCE_REVIEW.json": "cb6bb35aac0afa6c260d35dcfdf6c342e4482d56a749a6f27ce4374a636e88d1"
+  },
+  "smoke": {
+    "passed": 48,
+    "suites": 3,
+    "scope": [
+      "src/features/capture/UniversalP1SourceReviewForm.tsx",
+      "src/features/capture/UniversalP1SourceReviewForm.test.ts",
+      "src/data/operations/universalCaptureConsumer.ts",
+      "src/data/operations/universalCaptureConsumer.test.ts",
+      "backend/src/universalContinuousHost.test.ts"
+    ]
+  },
+  "strict": "PASS:5 changed roots plus transitive",
+  "uiGuard": "PASS:473 legacy/165 representative",
+  "scopedLint": "0 errors;2 preexisting Host test duplicate-import warnings",
+  "diffCheck": "PASS",
+  "preservesBaselineAuthNativeUpdates": true,
+  "historicalFirstPhoto503": "OPEN_UNPROVEN; no new diagnosis claim",
+  "mainOrRemoteChanged": false,
+  "hostSqlPaidDeviceActions": 0
+}
