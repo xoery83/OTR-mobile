@@ -17,6 +17,10 @@ const receiptSchema = z.strictObject({
   inviteId: coreUuid,
 });
 const accessSchema = z.enum(["NONE", "READ", "COLLABORATE", "ORGANIZER"]);
+export {
+  receiptSchema as memberClaimReceiptSchema,
+  accessSchema as memberClaimAccessSchema,
+};
 
 // Dormant recovery only: no route/permission install, command replay or new identity.
 export async function recoverMemberClaimReceipt(

@@ -1,0 +1,27 @@
+{
+  "status": "REAL_ISOLATED_PG_PASS_NOT_HOSTED",
+  "checks": [
+    "Install without exact DEV marker rejects; explicit local fixture install validates absent objects, owner/RLS/ACL postconditions",
+    "Raw SQL missing/null target kind rejects; no invitation/receipt mutation",
+    "Existing legacy accept cannot consume directed record; non-gateway reactivation denied",
+    "Owner issue; exact B Claim; C denied; canonical Person readback; actual COMMIT ack loss recovered from original receipt; concurrent duplicate no mutation",
+    "Claimed invite revoke cannot remove linked Member or existing rights",
+    "Fixture-only administrative unlink denies canonical Core membership; historical LINKED receipt remains NONE, not regrant",
+    "Real SQL receipt failure rolls back link+invite; UNKNOWN lookup absence does not replay",
+    "Unclaimed invite revoke blocks exact B Claim",
+    "Real two-connection held transaction races: Claim then Revoke; Revoke then Claim; different-Person Claim vs Claim; exactly one connection at most",
+    "Server expiry rejects Claim without linking",
+    "Public/Auth/service EXECUTE denied; gateway direct private table read denied; immutable receipt rejects update"
+  ],
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "normalProviderLoginCertified": false,
+  "memberRemovalCertified": false,
+  "fixtureAdministrativeUnlinkIsNotProductionAuthority": true,
+  "candidateSQLSHA256": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+  "fixtureImageSHA256": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "dockerContext": "colima",
+  "daemonEndpoint": "unix:///Users/xoery/.colima/default/docker.sock",
+  "ownedFixtureRemoved": true,
+  "elapsedSeconds": 3.893
+}

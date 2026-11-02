@@ -1,3 +1,26 @@
+# AUTH-C04 registered Invite/Claim PG candidate — 3 November 2026
+
+Formal `createTripMemberClaimPgPort` now implements the existing atomic authority
+on the existing Core connection. Only original Owner → exact registered Account →
+never-linked Person is qualified. Reuses legacy Invite record + canonical Person;
+private target extension and immutable receipt are not a second membership/ACL.
+Real local PG PASS: canonical link/readback/Core revision, foreign Account denial,
+raw missing/null target denial, actual COMMIT success + lost ACK original recovery,
+real receipt-failure rollback, concurrent duplicate/competing Claim and Claim/Revoke
+both orders, expiry, legacy accept bypass closed, ACL/immutable receipt negatives.
+Independent new5unit PASS; author focused18 PASS/types/lint. Review findings fixed.
+Pinned localColima/networknone fixture removed; no Hosted/Provider/Native PASS.
+
+Protected exact package: ops/auth-c04-20261103/pg-candidate/PACKAGE_MANIFEST.json.
+2 empty private tables/2RLS enables (0policies), 3functions, 2triggers including a
+mapped-only guard on existing journey_invites, 1existingCore EXEC, no newrole.
+Candidate only, no permission approval/install/runtime mount. Root fresh read-only
+preflight requested; next precise Owner Gate and minimal Host/Native composition.
+No generic member removal, Organizer delegation, unregistered Claim or Reset is
+claimed. Fixture unlink only proves old receipt stays NONE, never removal authority.
+Primary remains AUTH-C04; Private Realtime Post-Beta and MCP/Import short support do
+not replace it. Profile Cloud remains separate reviewed/uninstalled candidate.
+
 # AUTH-C04 People & Collaboration resumed — 3 November 2026
 
 Owner now prioritizes AUTH-C04 Invite/Claim/Multi-member with AUTH-C03 Profile/People

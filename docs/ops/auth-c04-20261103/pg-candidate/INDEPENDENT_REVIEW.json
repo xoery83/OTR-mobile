@@ -1,0 +1,27 @@
+{
+  "status": "SCOPED_NO_BLOCKER_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "independentNewUnitTests": 5,
+  "authorFocusedRegressionTests": 18,
+  "actualPGReceipt": "docs/ops/auth-c04-20261103/pg-candidate/ISOLATED_PG_RESULT.json",
+  "actualPGExecution": "AUTHOR_RUN_REVIEWER_SOURCE_AND_RECEIPT_CHECK",
+  "reviewFindingsClosed": [
+    "nullable SQL target guard: actual PG RED to GREEN",
+    "whole-method pending/validation poisoning including forgotten await",
+    "local daemon pinned with environment overrides rejected",
+    "Claim revision baseline immediately before Claim"
+  ],
+  "limits": [
+    "No Hosted permission approval or install",
+    "No actual Provider/Native/membership-removal acceptance",
+    "Fixture administrative unlink is not production authority"
+  ],
+  "sourceSHA256": {
+    "backend/src/tripMemberClaimPg.ts": "0e840261962f219283da0a44b7824899d801dd4fd13c5b6d3aeda57964548b7e",
+    "backend/src/tripMemberClaimPg.test.ts": "042f1508f36bafb564a8b44a632cac3ddad395f5fa2b354e62754d83388b9dea",
+    "backend/src/tripMemberClaimPg.pg.test.ts": "ae693021f005237a28809de124620309577cb6779db9bbb8887ed29b1fb1dffd",
+    "scripts/auth/member-claim-isolated-pg.py": "49502464eca27daae7745a66f31d1a44e12899365a4c8499b14f84265a1f3e89",
+    "docs/ops/auth-c04-20261103/pg-candidate/MEMBER_CLAIM_CANDIDATE.sql": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+    "docs/ops/auth-c04-20261103/pg-candidate/ISOLATED_PG_RESULT.json": "8f8d327a1bac0bdd586414676bd8f403f14b1243b2ab6b2815c109262d8d84ef"
+  }
+}

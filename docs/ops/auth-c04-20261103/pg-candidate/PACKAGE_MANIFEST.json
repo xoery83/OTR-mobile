@@ -1,0 +1,28 @@
+{
+  "status": "READY_FOR_PROTECTED_REVIEW_PREFLIGHT_PENDING",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "sqlSHA256": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+  "newTables": 2,
+  "newFunctions": 3,
+  "newTriggers": 2,
+  "rlsEnabledTables": 2,
+  "newRlsPolicies": 0,
+  "newRoles": 0,
+  "newGatewayExecuteGrants": 1,
+  "runtimeMounted": false,
+  "executionAllowed": false,
+  "files": {
+    "backend/src/tripMemberClaimPg.ts": "0e840261962f219283da0a44b7824899d801dd4fd13c5b6d3aeda57964548b7e",
+    "backend/src/tripMemberClaimPg.test.ts": "042f1508f36bafb564a8b44a632cac3ddad395f5fa2b354e62754d83388b9dea",
+    "backend/src/tripMemberClaimPg.pg.test.ts": "ae693021f005237a28809de124620309577cb6779db9bbb8887ed29b1fb1dffd",
+    "scripts/auth/member-claim-isolated-pg.py": "49502464eca27daae7745a66f31d1a44e12899365a4c8499b14f84265a1f3e89",
+    "docs/ops/auth-c04-20261103/pg-candidate/MEMBER_CLAIM_CANDIDATE.sql": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+    "docs/ops/auth-c04-20261103/pg-candidate/ISOLATED_PG_RESULT.json": "8f8d327a1bac0bdd586414676bd8f403f14b1243b2ab6b2815c109262d8d84ef",
+    "backend/src/tripMemberClaimRecovery.ts": "ad0ff2feada91dd2c76da1f6ba9987abfb174e42db0286dbc5eb3747bd39fda6",
+    "docs/ops/auth-c04-20261103/pg-candidate/HANDOFF.md": "03e9d19d6eac77ddfb9a31743156fe601840f4f93ae929b0291ba4aec805b62b",
+    "docs/ops/auth-c04-20261103/pg-candidate/OWNER_GATE.md": "7ffcb58b4e5e03a375edc65b7a704f576af28aee7ea8457e1b3f9e7efdf6c23a",
+    "docs/ops/auth-c04-20261103/pg-candidate/PREFLIGHT_READONLY.sql": "2f2c4e4526fec75e5d6dbe12cb622a190ecf5cd0f98af56137481c201e0f9f07",
+    "docs/ops/auth-c04-20261103/pg-candidate/INDEPENDENT_REVIEW.json": "ef56639aa380e4188c5905192d95065bde0366833227404c24b535e57a80d80c"
+  },
+  "gateSHA256": "3edebba4ac1a3d7178dc6cb5b240c68a76cec4dda4b58c7a87ab6b7fb4deb989"
+}

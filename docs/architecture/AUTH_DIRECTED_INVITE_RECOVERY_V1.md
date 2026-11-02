@@ -58,3 +58,14 @@ HTTP adapter does not retry a failed/UNKNOWN operation. 202 ABSENT_UNCONFIRMED o
 recovery does not establish NoCommit. The body deadline does not claim to cancel
 an in-flight transaction; actual timeout/COMMIT reconciliation belongs to the port.
 Local evidence/review: `../ops/auth-c04-20261103/LOCAL_MILESTONE.json`.
+
+## Registered PG candidate — 3 November 2026
+
+`createTripMemberClaimPgPort` now implements the actual held PostgreSQL transaction
+for original Owner + exact registered recipient + never-linked Person. The earlier
+missing-adapter description above is historical; runtime mounting/Hosted installation
+remain absent. See `../ops/auth-c04-20261103/pg-candidate/HANDOFF.md` for exact scope,
+real PG receipt, independent Review and protected installation manifest. Existing
+legacy invites are reused but directed rows remain legacy-inactive and guarded;
+old generic accept cannot consume them. No second membership/permission system,
+unregistered confirmation, delegated Organizer, Reset or member expulsion is added.
