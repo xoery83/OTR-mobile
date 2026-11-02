@@ -14,8 +14,10 @@ shortlock00:40:27.467→33.344 released. DefaultCIDddd7ac46ab3d1575bc9d9864b128a
 configdb86894730f9a7e3f675d7bc805ea00a5057c05c5d5047d0b8c292746e0ef512,
 image57bce7bb398f0508bf6dad99aaf53cac044be8f07112ca45e57c584757ffcb4d.
 Both finite QA keys absent, health200/protected401, Host/all23files exact,
-timer inactive; bounded pre-close diagnostic logs retained. Auth issuer/grant/
-console/session final independent cleanup receipt is pending; do not mark it PASS.
+timer inactive; bounded pre-close diagnostic logs retained. Auth issuer DENY_ALL00:40:31 and own Session cleanup PASS00:41:54 independently
+read by Root; refresh-revoked negative PASS. Grant DELETE204/absence and own normal
+QA lock release reported by Auth. Final console reload/ACL readback pending; do
+not mark that final-only verification PASS. Safe projection AUTH_CLOSE_METADATA.json.
 OriginalT00:14:48.231Z/D00:42:16.118Z unchanged; never reopen consumed acd60.
 
 SDK45ff/runtime416 fixes strict five-read AUTH_REQUIRED HTTP401 mapping; current

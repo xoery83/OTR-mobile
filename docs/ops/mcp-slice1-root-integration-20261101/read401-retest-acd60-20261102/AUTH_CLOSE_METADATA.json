@@ -1,0 +1,20 @@
+{
+  "issuer": {
+    "status": "ISSUER_DENY_ALL_VERIFIED",
+    "windowId": "acd60fd27aee40e8b6cf1aca727ed169",
+    "observedAt": "2026-11-02T00:40:31.224564+00:00",
+    "issuerClosed": true
+  },
+  "normalControl": {
+    "secretsRecorded": false,
+    "phase": "NORMAL_CONTROL_SESSION_CLEANUP_PASS",
+    "observedAt": "2026-11-02T00:41:54.355Z",
+    "status": 204,
+    "disposition": "ACKNOWLEDGED"
+  },
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "controlResult": "PASS",
+  "originalIssuerReceiptSHA256": "02971275cf649ef91bf6af9b9b90caed01094b4b77c4ffb33d4b7f55f8c3ef61",
+  "originalControlReceiptSHA256": "8e748e1497c4c1193c4652d1f7cfb5b42d99f6add5f632250442dee581eaf6c0",
+  "consoleAndFinalACL": "PENDING_AUTH_FINAL_READBACK"
+}
