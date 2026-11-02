@@ -22,7 +22,7 @@
     "fresh formal Preview same operation/digest/CAS/Before/After",
     "any mismatch stops without Apply"
   ],
-  "status": "PREPARATION_ONLY_NO_AUTHORITY_NO_CLOCK",
+  "status": "EXACT_CANDIDATE_VERIFIED_READY_FOR_ROOT_ONLY_CONFIRMATION_NO_AUTHORITY",
   "windowId": "e389fb93736b401c9e9b5f1437e852dc",
   "previousWindow": "78c1610ecf5f43409106fb67ecd36489",
   "previousWindowState": "CLOSED_NEVER_REOPEN",
@@ -80,5 +80,12 @@
     "Root conditional exact0ba0\u21922ee source-guard installation and independent postimage verification",
     "Final actual new approval bytes including clientId and true Root source pass installed exact validator and pure plan with external IO disabled",
     "All close and normal own Session/control/consumer UI ready before T/D"
-  ]
+  ],
+  "gate": {
+    "commit": "a5d75b5f",
+    "path": "docs/mcp/slice1/NEXT_NOTES_ACCESS_AND_EXACT_SAVE_GATE.md",
+    "sha256": "cd5e4c3d359937009ad9ab33d4fdcb922e9b1ce109f2b708abda3ceba1bd4822",
+    "gitBlobIndependentlyVerified": true,
+    "approval": false
+  }
 }
