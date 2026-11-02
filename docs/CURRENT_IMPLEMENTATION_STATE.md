@@ -1,3 +1,19 @@
+# AUTH-C04 exact installation approved; runtime remains closed — 3 November 2026
+
+Owner directly approved call_1e84540d…: approve exact DEV install, keep runtime closed.
+Gate3edebba4 / fixed7734f3b0 / SQL2eec272c and all sealed package hashes reverified
+unchanged. Root unique protected Writer has the execution handoff: actualDEV target,
+fresh expected-absence/dependency/ACL preimage, exact serial install, independent
+postconditions and restore verification. Installation receipt is still PENDING;
+no Auth-side Hosted action or runtime/Session/business activation occurred.
+Approval provenance: ops/auth-c04-20261103/OWNER_APPROVAL_3EDEBBA4.json; Root still
+must independently verify actual human source. The sealed candidate manifest and
+its original executionAllowed=false are not edited to manufacture new authority.
+C04 local isolated PASS retained. Hosted two-account Invite/Claim, member revoke
+and Native Cold Restore remain NOT_RUN. C03 local adapters fixed5d292b63/4ca558f9
+remain ready; Native's accepted-cache Reader is still the next client integration
+handoff. No old PG/Review repeated; no new broad Owner dispatch required.
+
 # C03 local adapters ready; exact integrations pending — 3 November 2026
 
 Profile original-op recovery fixed5d292b63 (33focused tests; independent8new). People
