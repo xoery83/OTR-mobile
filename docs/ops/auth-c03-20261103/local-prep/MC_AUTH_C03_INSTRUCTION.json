@@ -1,0 +1,1910 @@
+{
+  "schema_version": "3.3.0",
+  "kind": "TASK_INSTRUCTION",
+  "identity": {
+    "package_id": "AUTH-C03",
+    "title": "Basic profile and people",
+    "title_zh": "基础资料、旅行名册与合法身份关联",
+    "lane": "D",
+    "capability_ids": [
+      "CAP-AUTH-PROFILE",
+      "CAP-AUTH-DOCUMENT-NAME",
+      "CAP-AUTH-TRIP-NICKNAME",
+      "CAP-AUTH-CONFIRMED-AKA",
+      "CAP-AUTH-PEOPLE",
+      "CAP-AUTH-PEOPLE-ROSTER"
+    ],
+    "scope": "MUST",
+    "plan_id": "PROPOSED_EXECUTION_PLAN_V1",
+    "plan_revision": 2,
+    "primary_dri": "Auth",
+    "owner_decision": "OWNER_BETA_MODULE_DECISION_04_AUTH",
+    "owner_source": {
+      "path": "docs/owner-decisions/OWNER_BETA_MODULE_DECISION_04_AUTH.md",
+      "commit": "01da22631f2c5a255f2ed196a7a6fde56e8170fc",
+      "sha256": "25fb58c312a2016e6d7dfdb4f68b2fc1ae8d88789959dca5ecddde2856b2c796"
+    },
+    "amendments": [
+      {
+        "id": "OWNER_BETA_MODULE_DECISION_04_AUTH_AMENDMENT_01",
+        "source": {
+          "path": "docs/owner-decisions/OWNER_BETA_MODULE_DECISION_04_AUTH_AMENDMENT_01.md",
+          "commit": "01da22631f2c5a255f2ed196a7a6fde56e8170fc",
+          "sha256": "a58efb4312a6152f015291c694cafd37b4dfa877cc4118351be8359efebbb0f7"
+        }
+      }
+    ],
+    "enrichment_authority": {
+      "id": "OWNER_V33_INSTRUCTION_ENRICHMENT_20261103",
+      "path": "docs/v33/OWNER_DIRECTION.md",
+      "sha256": "e56535bdcdbbef4bd7781755568fa10e0bad91d15bc2c8bb99ab860c98270189"
+    },
+    "collaboration": {
+      "primary_dri": "Auth",
+      "supporting": [
+        "Native",
+        "Root"
+      ],
+      "core": "业务语义、权限、Revision/幂等与正式Receipt由原Core/Ledger/Auth Owning Port负责。",
+      "root": "只接固定候选的共享集成与批准资源窗口；不接管本Lane E2E。",
+      "native": "原Repository/本地队列/表单采纳与正式消费展示；不直接访问Supabase业务表。",
+      "backend": "唯一Owning Writer维护既有DTO/Port及受保护部署；缺口交最小合同而非复制Backend。"
+    }
+  },
+  "priority_reason": {
+    "owner_order": "D02",
+    "sequence": 2,
+    "path": "MAIN_SEQUENCE",
+    "reason": "NEAR_TERM_PARALLEL",
+    "changes_owner_plan": false
+  },
+  "product_objective": {
+    "journey": "用户维护正式Profile及Trip成员显示名/昵称，名册与合法Claim身份一致",
+    "capability_outcomes": [
+      {
+        "id": "CAP-AUTH-PROFILE",
+        "explanation": "按已批准的隐私规则显示姓名、昵称和私人别名。",
+        "approved_acceptance": "按已批准的隐私规则显示姓名、昵称和私人别名。 完成标准需要下方各阶段独立的验收证明。"
+      },
+      {
+        "id": "CAP-AUTH-DOCUMENT-NAME",
+        "explanation": "私下保存姓、名或完整原文姓名，不把填写证件姓名设为注册门槛。",
+        "approved_acceptance": "保留原文字符和私人资料访问边界；姓名不能自动授予旅行访问权。"
+      },
+      {
+        "id": "CAP-AUTH-TRIP-NICKNAME",
+        "explanation": "旅行成员可为本次旅行选择昵称，不覆盖账户资料，也不被组织者备注替换。",
+        "approved_acceptance": "本人昵称的修改权限、离线恢复和冲突处理遵守 People 规则；全局姓名只能提示，不能暗改。"
+      },
+      {
+        "id": "CAP-AUTH-CONFIRMED-AKA",
+        "explanation": "保存、纠正或停用已确认别名，帮助以后核对文件中的姓名，不把机器猜测直接学成事实。",
+        "approved_acceptance": "别名保留来源、去重、停用和更正记录，不能代替授予权限的身份认领。"
+      },
+      {
+        "id": "CAP-AUTH-PEOPLE",
+        "explanation": "把旅行成员加入名册，同时不把名册记录误当成已获账户访问权限。",
+        "approved_acceptance": "把旅行成员加入名册，同时不把名册记录误当成已获账户访问权限。 完成标准需要下方各阶段独立的验收证明。"
+      },
+      {
+        "id": "CAP-AUTH-PEOPLE-ROSTER",
+        "explanation": "查看谁在旅行中、谁已连接账户，以及当前用户能管理哪些内容。",
+        "approved_acceptance": "成员页和个人详情只显示正式来源的姓名、连接状态和权限，不泄露私人资料。"
+      }
+    ],
+    "non_beta_scope": [
+      {
+        "id": "CAP-AUTH-PROVIDER-LINKING",
+        "limit": "仅用户统计/非必要账户扩展延期；安全、成本基础计量和统一身份规则保留"
+      },
+      {
+        "id": "CAP-AUTH-AI-USAGE",
+        "limit": "仅用户统计/非必要账户扩展延期；安全、成本基础计量和统一身份规则保留"
+      }
+    ],
+    "non_goals": "只实现本包Owner批准边界；全文Owner Decision与修订优先，不恢复Flexible/TTR/NOW、独立Wallet/Email、PrivatePush或商业化延期范围。"
+  },
+  "current_verified_baseline": {
+    "classification": "EXISTING_IMPLEMENTATION_NOT_FROM_ZERO",
+    "definition_gap": "本地私有Profile/证件名、部分名册与format2 AddTraveler已验；Hosted私有Profile、Trip Nickname独立编辑、People详情/连接状态及完整Cloud闭环仍缺。",
+    "definition_evidence_summary": "沿用V2.2精确版本与原收据范围；本地私有Profile/证件名、部分名册与format2 AddTraveler已验；Hosted私有Profile、Trip Nickname独立编辑、People详情/连接状态及完整Cloud闭环仍缺。",
+    "verified_historical": [
+      {
+        "capability_id": "CAP-AUTH-PROFILE",
+        "implementation": {
+          "states": [
+            "LOCAL_IMPLEMENTED",
+            "NATIVE_INTEGRATED"
+          ],
+          "source_ids": [
+            "C-S045",
+            "C-S046",
+            "C-S047"
+          ],
+          "entrypoint_source_ids": [
+            "C-S060",
+            "C-S059"
+          ],
+          "summary": "正常Settings里的Account私有本地Profile保存/取消/Unicode/空显示名/cold/A-B-A可用；Hosted私有Profile未启用。",
+          "branch": "codex/native-focused-main-20261101",
+          "commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+          "main_integration": "CANDIDATE_ONLY",
+          "main_source_ids": [],
+          "hosted_status": "NOT_DEPLOYED_CONFIRMED",
+          "hosted_source_ids": [
+            "B-S046",
+            "C-S054"
+          ]
+        },
+        "local_device_hosted_consumer_evidence": [
+          {
+            "level": "DEVICE_PASS",
+            "source_ids": [
+              "B-S046",
+              "C-S062"
+            ],
+            "scope": "正常Settings→Profile本地Save/Cancel/Unicode/emptyName→cold、A-B-A隔离；QA140同旧NativebinaryJSrepackage。",
+            "environment": "Physical iPadQA140 / SQLite77 local-only",
+            "commit": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d",
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": true
+          },
+          {
+            "level": "ISOLATED_PG_PASS",
+            "source_ids": [
+              "C-S048",
+              "C-S049"
+            ],
+            "scope": "私有Profile候选RLS/CAS/idempotency/rollback，本地SQLite账户隔离/草稿base保护；非Hosted安装。",
+            "environment": "Network-none PG + local SQLite",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": false
+          }
+        ],
+        "seven_stages": [
+          {
+            "stage": 1,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S001",
+              "C-S002"
+            ],
+            "summary": "已批准产品方向；具体负责接口及后续Delta仍需按下述实际范围核对。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 2,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S045",
+              "C-S046",
+              "C-S047",
+              "C-S060",
+              "C-S059"
+            ],
+            "summary": "正常Settings里的Account私有本地Profile保存/取消/Unicode/空显示名/cold/A-B-A可用；Hosted私有Profile未启用。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 3,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S049",
+              "C-S048"
+            ],
+            "summary": "已恢复局部本地/隔离测试证据；仅限来源列出的实现与版本。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 4,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "B-S046"
+            ],
+            "summary": "已恢复准确Golden Slice或有限真实读取；不外推整个模块或当前main。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 5,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S049",
+              "C-S048",
+              "B-S046"
+            ],
+            "summary": "已有局部作用域、取消、重试或权限证明；完整安全/恢复矩阵未闭合。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 6,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "B-S046"
+            ],
+            "summary": "设备与功能UI分开记录；未找到该能力完整正式UX+无障碍+跨屏验收。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 7,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "未找到该能力完整Beta场景/发布资格收据。",
+            "remaining": "完整批准Beta场景、可靠性、UX及Release Gates仍需收口。",
+            "revision_relation": "UNKNOWN"
+          }
+        ],
+        "owner_ux": {
+          "design_status": "UX_READY_FOR_REVIEW",
+          "acceptance_status": "UX_UNKNOWN",
+          "source_ids": [
+            "B-S046"
+          ],
+          "summary": "已有设计/局部功能与设备证明，不代表正式UX Acceptance；本域未发现新的完整UX批准。",
+          "stage6": {
+            "device_qa": "PARTIAL",
+            "functional_ui": "PARTIAL",
+            "formal_ux": "UNKNOWN",
+            "accessibility": "UNKNOWN",
+            "cross_screen_consistency": "UNKNOWN"
+          }
+        },
+        "beta_acceptance": {
+          "status": "UNKNOWN",
+          "source_ids": [],
+          "summary": "未找到完整Beta Qualification收据；不按局部Golden Slice计算完成。"
+        },
+        "known_gaps": [
+          {
+            "kind": "NOT_INTEGRATED",
+            "summary": "Native固定候选4e9a已上QA140，本地main4e1未接正常Profile入口。",
+            "source_ids": [
+              "B-S046"
+            ]
+          },
+          {
+            "kind": "FUNCTIONAL_GAP",
+            "summary": "Cloud Profile/AKA worker、Hosted私有存储与普通跨设备冷恢复未安装/启用。",
+            "source_ids": [
+              "C-S054",
+              "B-S046"
+            ]
+          },
+          {
+            "kind": "UX_GAP",
+            "summary": "该能力完整正式UX、Accessibility与跨屏一致性验收未恢复。",
+            "source_ids": [
+              "B-S046"
+            ]
+          }
+        ]
+      },
+      {
+        "capability_id": "CAP-AUTH-DOCUMENT-NAME",
+        "implementation": {
+          "states": [
+            "LOCAL_IMPLEMENTED",
+            "NATIVE_INTEGRATED"
+          ],
+          "source_ids": [
+            "C-S045",
+            "C-S046",
+            "C-S047"
+          ],
+          "entrypoint_source_ids": [
+            "C-S060",
+            "C-S059"
+          ],
+          "summary": "Split/unsplit证件名已进入Account私有本地Profile并经QA140cold；不是公开profiles列或身份绑定。",
+          "branch": "codex/native-focused-main-20261101",
+          "commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+          "main_integration": "CANDIDATE_ONLY",
+          "main_source_ids": [],
+          "hosted_status": "NOT_DEPLOYED_CONFIRMED",
+          "hosted_source_ids": [
+            "B-S046",
+            "C-S054"
+          ]
+        },
+        "local_device_hosted_consumer_evidence": [
+          {
+            "level": "DEVICE_PASS",
+            "source_ids": [
+              "B-S046",
+              "C-S062"
+            ],
+            "scope": "正常Settings→Profile本地Save/Cancel/Unicode/emptyName→cold、A-B-A隔离；QA140同旧NativebinaryJSrepackage。",
+            "environment": "Physical iPadQA140 / SQLite77 local-only",
+            "commit": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d",
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": true
+          },
+          {
+            "level": "ISOLATED_PG_PASS",
+            "source_ids": [
+              "C-S048",
+              "C-S049"
+            ],
+            "scope": "私有Profile候选RLS/CAS/idempotency/rollback，本地SQLite账户隔离/草稿base保护；非Hosted安装。",
+            "environment": "Network-none PG + local SQLite",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": false
+          }
+        ],
+        "seven_stages": [
+          {
+            "stage": 1,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S001",
+              "C-S002"
+            ],
+            "summary": "已批准产品方向；具体负责接口及后续Delta仍需按下述实际范围核对。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 2,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S045",
+              "C-S046",
+              "C-S047",
+              "C-S060",
+              "C-S059"
+            ],
+            "summary": "Split/unsplit证件名已进入Account私有本地Profile并经QA140cold；不是公开profiles列或身份绑定。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 3,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S049",
+              "C-S048"
+            ],
+            "summary": "已恢复局部本地/隔离测试证据；仅限来源列出的实现与版本。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 4,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "B-S046"
+            ],
+            "summary": "已恢复准确Golden Slice或有限真实读取；不外推整个模块或当前main。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 5,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S049",
+              "C-S048",
+              "B-S046"
+            ],
+            "summary": "已有局部作用域、取消、重试或权限证明；完整安全/恢复矩阵未闭合。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 6,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "B-S046"
+            ],
+            "summary": "设备与功能UI分开记录；未找到该能力完整正式UX+无障碍+跨屏验收。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 7,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "未找到该能力完整Beta场景/发布资格收据。",
+            "remaining": "完整批准Beta场景、可靠性、UX及Release Gates仍需收口。",
+            "revision_relation": "UNKNOWN"
+          }
+        ],
+        "owner_ux": {
+          "design_status": "UX_READY_FOR_REVIEW",
+          "acceptance_status": "UX_UNKNOWN",
+          "source_ids": [
+            "B-S046"
+          ],
+          "summary": "已有设计/局部功能与设备证明，不代表正式UX Acceptance；本域未发现新的完整UX批准。",
+          "stage6": {
+            "device_qa": "PARTIAL",
+            "functional_ui": "PARTIAL",
+            "formal_ux": "UNKNOWN",
+            "accessibility": "UNKNOWN",
+            "cross_screen_consistency": "UNKNOWN"
+          }
+        },
+        "beta_acceptance": {
+          "status": "UNKNOWN",
+          "source_ids": [],
+          "summary": "未找到完整Beta Qualification收据；不按局部Golden Slice计算完成。"
+        },
+        "known_gaps": [
+          {
+            "kind": "NOT_INTEGRATED",
+            "summary": "Native固定候选4e9a已上QA140，本地main4e1未接正常Profile入口。",
+            "source_ids": [
+              "B-S046"
+            ]
+          },
+          {
+            "kind": "FUNCTIONAL_GAP",
+            "summary": "Cloud Profile/AKA worker、Hosted私有存储与普通跨设备冷恢复未安装/启用。",
+            "source_ids": [
+              "C-S054",
+              "B-S046"
+            ]
+          },
+          {
+            "kind": "UX_GAP",
+            "summary": "该能力完整正式UX、Accessibility与跨屏一致性验收未恢复。",
+            "source_ids": [
+              "B-S046"
+            ]
+          }
+        ]
+      },
+      {
+        "capability_id": "CAP-AUTH-TRIP-NICKNAME",
+        "implementation": {
+          "states": [
+            "LOCAL_IMPLEMENTED",
+            "NATIVE_INTEGRATED"
+          ],
+          "source_ids": [
+            "A-S033"
+          ],
+          "entrypoint_source_ids": [
+            "C-S013"
+          ],
+          "summary": "创建Trip时selfNickname/creatorDisplayName与名册显示存在；独立已建Trip selfNickname编辑、同步和冲突接口仍缺。",
+          "branch": "main",
+          "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+          "main_integration": "MERGED_EXACT",
+          "main_source_ids": [
+            "A-S033"
+          ],
+          "hosted_status": "UNKNOWN",
+          "hosted_source_ids": []
+        },
+        "local_device_hosted_consumer_evidence": [],
+        "seven_stages": [
+          {
+            "stage": 1,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S002",
+              "C-S001"
+            ],
+            "summary": "已批准产品方向；具体负责接口及后续Delta仍需按下述实际范围核对。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 2,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "A-S033",
+              "C-S013"
+            ],
+            "summary": "创建Trip时selfNickname/creatorDisplayName与名册显示存在；独立已建Trip selfNickname编辑、同步和冲突接口仍缺。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 3,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "已恢复局部本地/隔离测试证据；仅限来源列出的实现与版本。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 4,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "已恢复准确Golden Slice或有限真实读取；不外推整个模块或当前main。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 5,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "已有局部作用域、取消、重试或权限证明；完整安全/恢复矩阵未闭合。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 6,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "设备与功能UI分开记录；未找到该能力完整正式UX+无障碍+跨屏验收。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 7,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "未找到该能力完整Beta场景/发布资格收据。",
+            "remaining": "完整批准Beta场景、可靠性、UX及Release Gates仍需收口。",
+            "revision_relation": "UNKNOWN"
+          }
+        ],
+        "owner_ux": {
+          "design_status": "UX_DESIGNED",
+          "acceptance_status": "UX_UNKNOWN",
+          "source_ids": [],
+          "summary": "已有设计/局部功能与设备证明，不代表正式UX Acceptance；本域未发现新的完整UX批准。",
+          "stage6": {
+            "device_qa": "UNKNOWN",
+            "functional_ui": "UNKNOWN",
+            "formal_ux": "UNKNOWN",
+            "accessibility": "UNKNOWN",
+            "cross_screen_consistency": "UNKNOWN"
+          }
+        },
+        "beta_acceptance": {
+          "status": "UNKNOWN",
+          "source_ids": [],
+          "summary": "未找到完整Beta Qualification收据；不按局部Golden Slice计算完成。"
+        },
+        "known_gaps": [
+          {
+            "kind": "FUNCTIONAL_GAP",
+            "summary": "初始化显示名不是完整Trip Nickname修改路径，不能冒充Cloud/profile接续。",
+            "source_ids": [
+              "C-S002",
+              "C-S044"
+            ]
+          },
+          {
+            "kind": "UX_GAP",
+            "summary": "该能力完整正式UX、Accessibility与跨屏一致性验收未恢复。",
+            "source_ids": []
+          }
+        ]
+      },
+      {
+        "capability_id": "CAP-AUTH-CONFIRMED-AKA",
+        "implementation": {
+          "states": [
+            "LOCAL_IMPLEMENTED",
+            "NATIVE_INTEGRATED"
+          ],
+          "source_ids": [
+            "C-S045",
+            "C-S046",
+            "C-S047"
+          ],
+          "entrypoint_source_ids": [
+            "C-S060",
+            "C-S059"
+          ],
+          "summary": "GlobalAKA本地私有draft可保留；可选CloudAKA已本地PG兼容验证，但不是跨Trip已确认AKA学习/Matching全闭环。",
+          "branch": "codex/native-focused-main-20261101",
+          "commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+          "main_integration": "CANDIDATE_ONLY",
+          "main_source_ids": [],
+          "hosted_status": "NOT_DEPLOYED_CONFIRMED",
+          "hosted_source_ids": [
+            "B-S046",
+            "C-S054"
+          ]
+        },
+        "local_device_hosted_consumer_evidence": [
+          {
+            "level": "DEVICE_PASS",
+            "source_ids": [
+              "B-S046",
+              "C-S062"
+            ],
+            "scope": "正常Settings→Profile本地Save/Cancel/Unicode/emptyName→cold、A-B-A隔离；QA140同旧NativebinaryJSrepackage。",
+            "environment": "Physical iPadQA140 / SQLite77 local-only",
+            "commit": "4e9a2d2eb75f00808c9696b5f4cf86d3eb7f2b8d",
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": true
+          },
+          {
+            "level": "ISOLATED_PG_PASS",
+            "source_ids": [
+              "C-S048",
+              "C-S049"
+            ],
+            "scope": "私有Profile候选RLS/CAS/idempotency/rollback，本地SQLite账户隔离/草稿base保护；非Hosted安装。",
+            "environment": "Network-none PG + local SQLite",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": false
+          },
+          {
+            "level": "ISOLATED_PG_PASS",
+            "source_ids": [
+              "C-S053",
+              "C-S054"
+            ],
+            "scope": "GlobalAKA可选字段与旧payload/receipt兼容12组隔离PG，localdraft不自动上传。",
+            "environment": "Network-none PG local candidate",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": false
+          }
+        ],
+        "seven_stages": [
+          {
+            "stage": 1,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S001",
+              "C-S002"
+            ],
+            "summary": "已批准产品方向；具体负责接口及后续Delta仍需按下述实际范围核对。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 2,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S045",
+              "C-S046",
+              "C-S047",
+              "C-S060",
+              "C-S059"
+            ],
+            "summary": "GlobalAKA本地私有draft可保留；可选CloudAKA已本地PG兼容验证，但不是跨Trip已确认AKA学习/Matching全闭环。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 3,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S049",
+              "C-S048"
+            ],
+            "summary": "已恢复局部本地/隔离测试证据；仅限来源列出的实现与版本。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 4,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "B-S046"
+            ],
+            "summary": "已恢复准确Golden Slice或有限真实读取；不外推整个模块或当前main。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 5,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S049",
+              "C-S048",
+              "B-S046"
+            ],
+            "summary": "已有局部作用域、取消、重试或权限证明；完整安全/恢复矩阵未闭合。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 6,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "B-S046"
+            ],
+            "summary": "设备与功能UI分开记录；未找到该能力完整正式UX+无障碍+跨屏验收。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 7,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "未找到该能力完整Beta场景/发布资格收据。",
+            "remaining": "完整批准Beta场景、可靠性、UX及Release Gates仍需收口。",
+            "revision_relation": "UNKNOWN"
+          }
+        ],
+        "owner_ux": {
+          "design_status": "UX_READY_FOR_REVIEW",
+          "acceptance_status": "UX_UNKNOWN",
+          "source_ids": [
+            "B-S046"
+          ],
+          "summary": "已有设计/局部功能与设备证明，不代表正式UX Acceptance；本域未发现新的完整UX批准。",
+          "stage6": {
+            "device_qa": "PARTIAL",
+            "functional_ui": "PARTIAL",
+            "formal_ux": "UNKNOWN",
+            "accessibility": "UNKNOWN",
+            "cross_screen_consistency": "UNKNOWN"
+          }
+        },
+        "beta_acceptance": {
+          "status": "UNKNOWN",
+          "source_ids": [],
+          "summary": "未找到完整Beta Qualification收据；不按局部Golden Slice计算完成。"
+        },
+        "known_gaps": [
+          {
+            "kind": "NOT_INTEGRATED",
+            "summary": "Native固定候选4e9a已上QA140，本地main4e1未接正常Profile入口。",
+            "source_ids": [
+              "B-S046"
+            ]
+          },
+          {
+            "kind": "FUNCTIONAL_GAP",
+            "summary": "Cloud Profile/AKA worker、Hosted私有存储与普通跨设备冷恢复未安装/启用。",
+            "source_ids": [
+              "C-S054",
+              "B-S046"
+            ]
+          },
+          {
+            "kind": "UX_GAP",
+            "summary": "该能力完整正式UX、Accessibility与跨屏一致性验收未恢复。",
+            "source_ids": [
+              "B-S046"
+            ]
+          }
+        ]
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE",
+        "implementation": {
+          "states": [
+            "LOCAL_IMPLEMENTED",
+            "NATIVE_INTEGRATED",
+            "BACKEND_INTEGRATED",
+            "DEV_DEPLOYED"
+          ],
+          "source_ids": [
+            "C-S012"
+          ],
+          "entrypoint_source_ids": [
+            "C-S013",
+            "A-S033"
+          ],
+          "summary": "原Owner本地format2Trip的AddTraveler已云端/Native闭环；adoptedTrip后端新增与Native只读也有证据，但普通adoptedAdd作者入口仍分开。",
+          "branch": "main",
+          "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+          "main_integration": "MERGED_EXACT",
+          "main_source_ids": [
+            "C-S012"
+          ],
+          "hosted_status": "DEPLOYED_SCOPED",
+          "hosted_source_ids": [
+            "C-S030",
+            "C-S063"
+          ]
+        },
+        "local_device_hosted_consumer_evidence": [
+          {
+            "level": "HOSTED_DEV_E2E_PASS",
+            "source_ids": [
+              "C-S030"
+            ],
+            "scope": "原Owner locally-authored format2Trip AddTraveler一次、独立Person/Receipt、foreign403和Nativecold。",
+            "environment": "Hosted DEV + Native GuestQB71",
+            "commit": "6883e3a0f76573e1db4014be1f7939e6e97282a6",
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": true,
+            "cold_restore": true
+          },
+          {
+            "level": "LOCAL_PASS",
+            "source_ids": [
+              "C-S030",
+              "C-S031"
+            ],
+            "scope": "Person新建/既有Flight选项兼容定向集成测试及独立源审查，主线已包含。",
+            "environment": "历史固定DEV/Native或隔离测试，详见来源",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": false
+          },
+          {
+            "level": "HOSTED_DEV_E2E_PASS",
+            "source_ids": [
+              "C-S063"
+            ],
+            "scope": "adoptedTrip后端普通Person POST/幂等receipt、独立SQL/foreign403；非Native Add。",
+            "environment": "Hosted DEV Backend only",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": true,
+            "cold_restore": false
+          },
+          {
+            "level": "DEVICE_PASS",
+            "source_ids": [
+              "C-S064"
+            ],
+            "scope": "QA71正常People读取已新增Person并cold；Add按钮仍disabled。",
+            "environment": "NativeQA71 reader-only",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": true
+          }
+        ],
+        "seven_stages": [
+          {
+            "stage": 1,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S002"
+            ],
+            "summary": "已批准产品方向；具体负责接口及后续Delta仍需按下述实际范围核对。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 2,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S012",
+              "C-S013",
+              "A-S033"
+            ],
+            "summary": "原Owner本地format2Trip的AddTraveler已云端/Native闭环；adoptedTrip后端新增与Native只读也有证据，但普通adoptedAdd作者入口仍分开。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 3,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030",
+              "C-S031"
+            ],
+            "summary": "已恢复局部本地/隔离测试证据；仅限来源列出的实现与版本。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 4,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030",
+              "C-S063",
+              "C-S064"
+            ],
+            "summary": "已恢复准确Golden Slice或有限真实读取；不外推整个模块或当前main。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 5,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030"
+            ],
+            "summary": "已有局部作用域、取消、重试或权限证明；完整安全/恢复矩阵未闭合。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 6,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030",
+              "C-S064"
+            ],
+            "summary": "设备与功能UI分开记录；未找到该能力完整正式UX+无障碍+跨屏验收。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 7,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "未找到该能力完整Beta场景/发布资格收据。",
+            "remaining": "完整批准Beta场景、可靠性、UX及Release Gates仍需收口。",
+            "revision_relation": "UNKNOWN"
+          }
+        ],
+        "owner_ux": {
+          "design_status": "UX_IMPLEMENTING",
+          "acceptance_status": "UX_UNKNOWN",
+          "source_ids": [
+            "C-S030",
+            "C-S064"
+          ],
+          "summary": "已有设计/局部功能与设备证明，不代表正式UX Acceptance；本域未发现新的完整UX批准。",
+          "stage6": {
+            "device_qa": "PARTIAL",
+            "functional_ui": "PARTIAL",
+            "formal_ux": "UNKNOWN",
+            "accessibility": "UNKNOWN",
+            "cross_screen_consistency": "UNKNOWN"
+          }
+        },
+        "beta_acceptance": {
+          "status": "UNKNOWN",
+          "source_ids": [],
+          "summary": "未找到完整Beta Qualification收据；不按局部Golden Slice计算完成。"
+        },
+        "known_gaps": [
+          {
+            "kind": "FUNCTIONAL_GAP",
+            "summary": "完整PeopleHome/connection-status与adopted/remote正式Add作者入口不等于已完成；本地draft只能保留不能提交。",
+            "source_ids": [
+              "B-S046",
+              "C-S064"
+            ]
+          },
+          {
+            "kind": "UX_GAP",
+            "summary": "该能力完整正式UX、Accessibility与跨屏一致性验收未恢复。",
+            "source_ids": [
+              "C-S030",
+              "C-S064"
+            ]
+          }
+        ]
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE-ROSTER",
+        "implementation": {
+          "states": [
+            "LOCAL_IMPLEMENTED",
+            "NATIVE_INTEGRATED",
+            "BACKEND_INTEGRATED",
+            "DEV_DEPLOYED"
+          ],
+          "source_ids": [
+            "C-S012"
+          ],
+          "entrypoint_source_ids": [
+            "C-S013",
+            "A-S033"
+          ],
+          "summary": "正常名册与当前Actor/You显示、本地format2Add及adoptedPerson读取/cold已证实；完整连接状态/私有Profile视图仍缺。",
+          "branch": "main",
+          "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+          "main_integration": "MERGED_EXACT",
+          "main_source_ids": [
+            "C-S012"
+          ],
+          "hosted_status": "DEPLOYED_SCOPED",
+          "hosted_source_ids": [
+            "C-S030",
+            "C-S063"
+          ]
+        },
+        "local_device_hosted_consumer_evidence": [
+          {
+            "level": "HOSTED_DEV_E2E_PASS",
+            "source_ids": [
+              "C-S030"
+            ],
+            "scope": "原Owner locally-authored format2Trip AddTraveler一次、独立Person/Receipt、foreign403和Nativecold。",
+            "environment": "Hosted DEV + Native GuestQB71",
+            "commit": "6883e3a0f76573e1db4014be1f7939e6e97282a6",
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": true,
+            "cold_restore": true
+          },
+          {
+            "level": "DEVICE_PASS",
+            "source_ids": [
+              "C-S064"
+            ],
+            "scope": "adoptedTripPeople正常下行显示Person/You并cold，Add仍disabled。",
+            "environment": "NativeQA71",
+            "commit": null,
+            "accepted_at": null,
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED",
+            "independent_readback": false,
+            "cold_restore": true
+          }
+        ],
+        "seven_stages": [
+          {
+            "stage": 1,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S002"
+            ],
+            "summary": "已批准产品方向；具体负责接口及后续Delta仍需按下述实际范围核对。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 2,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S012",
+              "C-S013",
+              "A-S033"
+            ],
+            "summary": "正常名册与当前Actor/You显示、本地format2Add及adoptedPerson读取/cold已证实；完整连接状态/私有Profile视图仍缺。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "UNKNOWN"
+          },
+          {
+            "stage": 3,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030"
+            ],
+            "summary": "已恢复局部本地/隔离测试证据；仅限来源列出的实现与版本。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 4,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030",
+              "C-S064"
+            ],
+            "summary": "已恢复准确Golden Slice或有限真实读取；不外推整个模块或当前main。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 5,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030"
+            ],
+            "summary": "已有局部作用域、取消、重试或权限证明；完整安全/恢复矩阵未闭合。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 6,
+            "qualification": "PARTIAL",
+            "source_ids": [
+              "C-S030",
+              "C-S064"
+            ],
+            "summary": "设备与功能UI分开记录；未找到该能力完整正式UX+无障碍+跨屏验收。",
+            "remaining": "核对当前版本及批准完整范围；需要新测试时另列NEW_VERIFICATION_REQUIRED，不在本轮运行。",
+            "revision_relation": "HISTORICAL_PASS_CURRENT_REVISION_UNVERIFIED"
+          },
+          {
+            "stage": 7,
+            "qualification": "UNKNOWN",
+            "source_ids": [],
+            "summary": "未找到该能力完整Beta场景/发布资格收据。",
+            "remaining": "完整批准Beta场景、可靠性、UX及Release Gates仍需收口。",
+            "revision_relation": "UNKNOWN"
+          }
+        ],
+        "owner_ux": {
+          "design_status": "UX_IMPLEMENTING",
+          "acceptance_status": "UX_UNKNOWN",
+          "source_ids": [
+            "C-S030",
+            "C-S064"
+          ],
+          "summary": "已有设计/局部功能与设备证明，不代表正式UX Acceptance；本域未发现新的完整UX批准。",
+          "stage6": {
+            "device_qa": "PARTIAL",
+            "functional_ui": "PARTIAL",
+            "formal_ux": "UNKNOWN",
+            "accessibility": "UNKNOWN",
+            "cross_screen_consistency": "UNKNOWN"
+          }
+        },
+        "beta_acceptance": {
+          "status": "UNKNOWN",
+          "source_ids": [],
+          "summary": "未找到完整Beta Qualification收据；不按局部Golden Slice计算完成。"
+        },
+        "known_gaps": [
+          {
+            "kind": "FUNCTIONAL_GAP",
+            "summary": "完整People Home/Person Detail/connection status与昵称/Invite不等于名单已显示。",
+            "source_ids": [
+              "C-S002",
+              "C-S044"
+            ]
+          },
+          {
+            "kind": "UX_GAP",
+            "summary": "该能力完整正式UX、Accessibility与跨屏一致性验收未恢复。",
+            "source_ids": [
+              "C-S030",
+              "C-S064"
+            ]
+          }
+        ]
+      }
+    ],
+    "reviewed_execution": null,
+    "latest_reported_execution": {
+      "actual_dri": "Auth",
+      "reported_execution": {
+        "event_id": "auth-c03-unblocked-native-reader-c9fb6fc8",
+        "transition": "UNBLOCKED",
+        "sequence": null,
+        "status": "IN_PROGRESS",
+        "summary": "Agent报告：Native Reader固定交付已消费并验证，本地接口等待已解除，可进行后续联调；UI/main/Hosted尚未挂载。",
+        "source_confidence": "AGENT_REPORTED",
+        "last_reported_at": null,
+        "received_at": "2026-11-02T22:18:06.823Z",
+        "scope": null
+      },
+      "reported_slices": {
+        "AUTH-C03:LOCAL_PREP": {
+          "event_id": "auth-c03-unblocked-native-reader-c9fb6fc8",
+          "transition": "UNBLOCKED",
+          "sequence": null,
+          "status": "IN_PROGRESS",
+          "summary": "Agent报告：Native Reader固定交付已消费并验证，本地接口等待已解除，可进行后续联调；UI/main/Hosted尚未挂载。",
+          "source_confidence": "AGENT_REPORTED",
+          "last_reported_at": null,
+          "received_at": "2026-11-02T22:18:06.823Z",
+          "scope": null,
+          "owner_slice_id": null
+        }
+      },
+      "actual_status": "IN_PROGRESS",
+      "latest_report": "Agent报告：Native Reader固定交付已消费并验证，本地接口等待已解除，可进行后续联调；UI/main/Hosted尚未挂载。",
+      "next_action": "继续正常页面/主线联调，Profile Cloud、Trip Nickname owning接口及正式验收仍保留缺口。",
+      "last_reported_at": null,
+      "last_received_at": "2026-11-02T22:18:06.823Z",
+      "execution_confidence": "AGENT_REPORTED",
+      "runtime_status": "UNKNOWN",
+      "source_high_water_at": null,
+      "actual_started_at": null,
+      "start_time_status": "UNKNOWN",
+      "blocker": null,
+      "unblock_condition": "Native交付已确认的只读port和对应正常页面接线条件。",
+      "blocked_since": null
+    },
+    "agent_report_events": [
+      {
+        "event": {
+          "agent": "Auth",
+          "reported_at": null,
+          "actual_started_at": null,
+          "event_id": "auth-c03-started-20261103-001",
+          "package_id": "AUTH-C03",
+          "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+          "transition": "STARTED",
+          "summary": "Agent已实际开始Profile响应丢失后的原Operation/CAS只读恢复，初始Golden Slice为RED；准确开工时间未知。",
+          "next_action": "完成本地DTO/Adapter适配，复用既有Account Repository，不改Hosted。"
+        },
+        "source": {
+          "kind": "REGISTERED_THREAD",
+          "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+          "turn_id": "01a19dfc-8026-7d62-9863-78cf3d1bde8d",
+          "message_id": "exec-4df41a03-fc36-4277-9204-f8773d0667c3",
+          "path": "docs/v32/sources/auth-c03-started-20261103-001.json",
+          "sha256": "d1271dce276aefdf6ddc34219a8b68f4dc0421b27b013a1de30fad65885c99ad"
+        },
+        "received_at": "2026-11-02T21:11:47.025Z",
+        "acceptance": "UNCHANGED"
+      },
+      {
+        "event": {
+          "agent": "Auth",
+          "reported_at": null,
+          "actual_started_at": null,
+          "event_id": "auth-c03-progress-5d292b63-4ca558f9",
+          "package_id": "AUTH-C03",
+          "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+          "transition": "BLOCKED",
+          "supersedes_event_id": "auth-c03-started-20261103-001",
+          "summary": "Agent报告：Profile恢复与People展示两个本地Adapter切片已就绪，正常页面接线等待Native只读port。",
+          "next_action": "收到readAcceptedPeopleConnections固定交付后联调；不代建Core Reader。",
+          "blocker": "Native accepted-cache port尚未交付；Profile Cloud未安装，Trip Nickname写接口仍有缺口。",
+          "unblock_condition": "Native交付已确认的只读port和对应正常页面接线条件。",
+          "reported_acceptance": "LOCAL_PASS",
+          "acceptance_scope": "5d292b63/4ca558f9本地Adapter，测试/Review声明待核验，不是正常页面或Cloud PASS。",
+          "source_commits": [
+            "5d292b63",
+            "4ca558f9"
+          ]
+        },
+        "source": {
+          "kind": "REGISTERED_THREAD",
+          "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+          "turn_id": "01a19dfc-8026-7d62-9863-78cf3d1bde8d",
+          "message_id": "exec-e1375209-5b58-4f30-828e-4a927f5ec406",
+          "path": "docs/v32/sources/auth-c03-progress-5d292b63-4ca558f9.json",
+          "sha256": "eaa29217feddb22997bf0357e85054c04c235e50b21f3bd3cd4f68c740e876cb"
+        },
+        "received_at": "2026-11-02T21:11:47.206Z",
+        "acceptance": "PENDING_VERIFICATION"
+      },
+      {
+        "event": {
+          "event_id": "auth-c03-unblocked-native-reader-c9fb6fc8",
+          "agent": "Auth",
+          "package_id": "AUTH-C03",
+          "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+          "transition": "UNBLOCKED",
+          "reported_at": null,
+          "actual_started_at": null,
+          "supersedes_event_id": "auth-c03-progress-5d292b63-4ca558f9",
+          "summary": "Agent报告：Native Reader固定交付已消费并验证，本地接口等待已解除，可进行后续联调；UI/main/Hosted尚未挂载。",
+          "next_action": "继续正常页面/主线联调，Profile Cloud、Trip Nickname owning接口及正式验收仍保留缺口。",
+          "reported_acceptance": "READY_FOR_INTEGRATION",
+          "acceptance_scope": "仅eb93a144→c14359b6、c9fb6fc8本地consumer/SQLite验证18PASS/46skip及types/lint声明待核验；不含UI/main/Hosted。",
+          "source_commits": [
+            "eb93a144",
+            "c14359b6",
+            "c9fb6fc8"
+          ]
+        },
+        "source": {
+          "kind": "REGISTERED_THREAD",
+          "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+          "turn_id": "01a19e53-7aad-74b0-977c-05412d68b049",
+          "message_id": "exec-3e7603fc-96be-4ddf-9565-051d5790d7ad",
+          "path": "docs/v32/sources/auth-c03-unblocked-native-reader-c9fb6fc8.json",
+          "sha256": "59c10b2e66c27839b5dff6131ca2b5f3f61a29130632a0f082c237a1af74bf92"
+        },
+        "received_at": "2026-11-02T22:18:06.823Z",
+        "acceptance": "PENDING_VERIFICATION"
+      }
+    ],
+    "source_code_comparison": [
+      {
+        "capability_id": "CAP-AUTH-PEOPLE",
+        "source_id": "C-S012",
+        "path": "src/data/repositories/tripPersonCloudCreateRepository.ts",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "5f4891af02c80ba86940fcabc8e17b9a73c282739b220cd7c3c8bb0cb78bc0c2",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE",
+        "source_id": "C-S013",
+        "path": "src/features/day-feed/TripMembersSheet.tsx",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "6e0f6fee4e424972eb5ce4e0653634bd1fb179030ed90367df22b051889a8143",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE",
+        "source_id": "A-S033",
+        "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "4df0ca757ea05f90dfa970ae14d062c0e8729f3a0f79a6cfc45015a7996e0dfc",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-PROFILE",
+        "source_id": "C-S045",
+        "path": "src/data/auth/privateAccountProfileLocal.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "c996f6b31d132ed537137703941bda68c106aa2627ca5264730c42974adbd235",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-PROFILE",
+        "source_id": "C-S046",
+        "path": "src/domain/auth/privateAccountProfile.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-PROFILE",
+        "source_id": "C-S047",
+        "path": "src/data/auth/accountProfileRepository.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "5bea43e5daa9bfd67f3ed2d2fef54ef7520c1ea9e73a9ff44694946e6fa2b81c",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-PROFILE",
+        "source_id": "C-S060",
+        "path": "src/features/auth/AccountPrivateProfilePage.tsx",
+        "historical_commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "1acdd2d5c41f59e1aa00cdb4dbf00ac9f1398e62e9d635229fd35d9698174358",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-PROFILE",
+        "source_id": "C-S059",
+        "path": "app/settings.tsx",
+        "historical_commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "43b5a6ed9d1cedc13703b1629d2902ffc8fed99e60ffe23c6fa1f6287cea6018",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-DOCUMENT-NAME",
+        "source_id": "C-S045",
+        "path": "src/data/auth/privateAccountProfileLocal.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "c996f6b31d132ed537137703941bda68c106aa2627ca5264730c42974adbd235",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-DOCUMENT-NAME",
+        "source_id": "C-S046",
+        "path": "src/domain/auth/privateAccountProfile.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-DOCUMENT-NAME",
+        "source_id": "C-S047",
+        "path": "src/data/auth/accountProfileRepository.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "5bea43e5daa9bfd67f3ed2d2fef54ef7520c1ea9e73a9ff44694946e6fa2b81c",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-DOCUMENT-NAME",
+        "source_id": "C-S060",
+        "path": "src/features/auth/AccountPrivateProfilePage.tsx",
+        "historical_commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "1acdd2d5c41f59e1aa00cdb4dbf00ac9f1398e62e9d635229fd35d9698174358",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-DOCUMENT-NAME",
+        "source_id": "C-S059",
+        "path": "app/settings.tsx",
+        "historical_commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "43b5a6ed9d1cedc13703b1629d2902ffc8fed99e60ffe23c6fa1f6287cea6018",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-CONFIRMED-AKA",
+        "source_id": "C-S045",
+        "path": "src/data/auth/privateAccountProfileLocal.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "c996f6b31d132ed537137703941bda68c106aa2627ca5264730c42974adbd235",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-CONFIRMED-AKA",
+        "source_id": "C-S046",
+        "path": "src/domain/auth/privateAccountProfile.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-CONFIRMED-AKA",
+        "source_id": "C-S047",
+        "path": "src/data/auth/accountProfileRepository.ts",
+        "historical_commit": "1dcb9724fd028b7fea020fd130d1cd603629745d",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "5bea43e5daa9bfd67f3ed2d2fef54ef7520c1ea9e73a9ff44694946e6fa2b81c",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-CONFIRMED-AKA",
+        "source_id": "C-S060",
+        "path": "src/features/auth/AccountPrivateProfilePage.tsx",
+        "historical_commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "1acdd2d5c41f59e1aa00cdb4dbf00ac9f1398e62e9d635229fd35d9698174358",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-CONFIRMED-AKA",
+        "source_id": "C-S059",
+        "path": "app/settings.tsx",
+        "historical_commit": "11476b4c2e4ec2e81974adda06aca2c40ae84e95",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "43b5a6ed9d1cedc13703b1629d2902ffc8fed99e60ffe23c6fa1f6287cea6018",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-TRIP-NICKNAME",
+        "source_id": "A-S033",
+        "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "4df0ca757ea05f90dfa970ae14d062c0e8729f3a0f79a6cfc45015a7996e0dfc",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-TRIP-NICKNAME",
+        "source_id": "C-S013",
+        "path": "src/features/day-feed/TripMembersSheet.tsx",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "6e0f6fee4e424972eb5ce4e0653634bd1fb179030ed90367df22b051889a8143",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE-ROSTER",
+        "source_id": "C-S012",
+        "path": "src/data/repositories/tripPersonCloudCreateRepository.ts",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "5f4891af02c80ba86940fcabc8e17b9a73c282739b220cd7c3c8bb0cb78bc0c2",
+        "status": "NEEDS_RECONCILIATION"
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE-ROSTER",
+        "source_id": "C-S013",
+        "path": "src/features/day-feed/TripMembersSheet.tsx",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "6e0f6fee4e424972eb5ce4e0653634bd1fb179030ed90367df22b051889a8143",
+        "status": "CURRENT_PINNED_CODE_MATCH"
+      },
+      {
+        "capability_id": "CAP-AUTH-PEOPLE-ROSTER",
+        "source_id": "A-S033",
+        "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+        "historical_commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "current_commit": "4df356750140cad2a3649c5ed7a9145e0dd5474f",
+        "current_sha256": "4df0ca757ea05f90dfa970ae14d062c0e8729f3a0f79a6cfc45015a7996e0dfc",
+        "status": "NEEDS_RECONCILIATION"
+      }
+    ],
+    "reconciliation": "NEEDS_RECONCILIATION",
+    "reconciliation_reason": "当前代码与历史收据范围分别保留。不同源码或新报告不是回归结论，也不自动使旧PASS无效；负责Agent仅核对受影响差异。",
+    "do_not_repeat": "相同合同/代码/场景未受影响的收据直接复用；先做差异表，只有真实缺口进入测试。"
+  },
+  "functional_requirements": {
+    "authoritative_package_text": "## 4. AUTH-C03 — Basic Profile & People\n\nBeta 必须完成：\n\n- Global Profile 基础展示/编辑；\n- Display Name；\n- 旅行证件姓名的已有批准结构；\n- Trip Nickname；\n- People Roster；\n- Add/Edit Traveler；\n- Account 与 Person 的授权关联；\n- Private/Group 信息隔离；\n- 正式 Cloud Save/Readback 与冷恢复。\n\nAKA 的基础确认/匹配规则保留，复杂自动匹配或批量管理不得成为 Beta 阻塞。\n\n不允许根据姓名相同自动 Claim。\n\n调度：近期与 Invite 并行。\n\nDRI：Auth。\n\n",
+    "approved_contracts": [
+      {
+        "id": "DOC-PEOPLE-DESIGN",
+        "path": "docs/people/design-v1-20261024/INTAKE_AND_GAPS.md",
+        "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "sha256": "924e7a2af36ecc2ed72d4cbe60cbf6aa69043338b4c4092c917fd09c8a98e2af",
+        "status": "PINNED_BLOB_VERIFIED",
+        "headings": [
+          "# People and Identity V1 design intake",
+          "## Retained authority",
+          "## Bounded implementation and interface mapping",
+          "## Delivery order and current-line dependencies",
+          "## Owner decisions and boundaries"
+        ]
+      },
+      {
+        "id": "DOC-RM-AUTH-DESIGN",
+        "path": "docs/auth/design-v1-20261018/01_AUTH.md",
+        "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "sha256": "1ef373080e5b798b08a85f9fd8bd31b46a3167baf15e96829140c85d930ec7ed",
+        "status": "PINNED_BLOB_VERIFIED",
+        "headings": [
+          "# OTR-AUTH-01 — Final Product Delta V1.0",
+          "## First launch and login",
+          "## Identity/entitlement gates",
+          "## Guest→Account adoption hard gate",
+          "## Profile, AKA, provider linking",
+          "## Session/logout/app lock",
+          "## Release gates"
+        ]
+      },
+      {
+        "id": "DOC-SCOPE",
+        "path": "docs/beta/BETA_DECISIONS.md",
+        "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "sha256": "f7f78857413fb5650d19c49f66b58f6fb337ee2bbcf7ec3cd4eb46a4bddd1706",
+        "status": "PINNED_BLOB_VERIFIED",
+        "headings": [
+          "# FLIGHT-PARTIAL-01 phased Owner approval — 2026-10-17",
+          "# FLIGHT-PARTIAL-01 V1.1 — registered 2026-10-17",
+          "# People / Identity V1 intake — 24 October 2026",
+          "## EXPERIENCE-REVIEW-02 approved / 2026-10-18",
+          "# OTR Beta — Unified Decisions and Scope Baseline",
+          "## TIME-01A Day entry clarification — Owner / 2026-10-16",
+          "## Complex visual documents — bounded C4-R escalation / 2026-10-16",
+          "## TIME-01 V1.1 — Owner product baseline / 2026-10-16",
+          "## Trip Home V1.1 — Owner delivery authority / 2026-10-16",
+          "### Owner-approved UPD-UX-02 V2 and implementation boundary — 2026-10-15",
+          "### Owner Shell proportion/material and Camera local followup — 2026-10-15",
+          "### Owner model-routing priority amendment — 2026-10-14",
+          "### Owner-approved contextual actions and global Trip navigation — 2026-10-14",
+          "### Owner-approved CP Entry/Composer/Connections — 2026-10-14",
+          "### Owner-approved CP submission/activity lifecycle — 2026-10-14",
+          "### Owner-approved Updates inbox — 2026-10-14 / registered2026-10-15",
+          "### Installed schema amendment — source Push68 / 2026-10-14",
+          "## Owner product correction — 2026-10-15",
+          "### BD34 finite Members resolution and Push42–43 local receipts — 2026-10-14",
+          "### Prior Push37–40 scoped execution (historical) under BD43 — 2026-10-14 NZDT",
+          "### Prior Push35 scoped execution (historical) under BD43 — 2026-10-14 NZDT",
+          "### Prior Push31–33 scoped execution under BD43 — 2026-10-14 NZDT",
+          "### Prior Push29 scoped execution under BD43 — 2026-10-14 NZDT",
+          "### BD43 — normal canonical push authority, 2026-10-13",
+          "### BD51 — META-01 existing DEV metadata authorization and bounded result, 2026-10-14 NZDT",
+          "### BD44 / MAP-01 — optional embedded context map backlog, 2026-10-13",
+          "### BD45 — P4 Rental approved design and bounded R0/R1 implementation, 2026-10-13",
+          "### BD46 — bounded R3-A6 authenticated QA recovery, 2026-10-13",
+          "### BD47 — P5 Scheduled Transport approved design and scoped R0/R1 queue, 2026-10-13",
+          "### BD48 — P6 Ticketed Activity approved design and scoped R0/R1 queue, 2026-10-13",
+          "### BD49 — WP-EXP-SHELL-01 bounded bottom shell, 2026-10-13",
+          "### BD50 — Trips / My Trips list and covers approved R0/R1, 2026-10-13",
+          "## Authority and evidence rules",
+          "## Source index and provenance",
+          "## Deduplicated decision register",
+          "## Cross-module discrepancies and disposition",
+          "## Beta Scope Baseline",
+          "## L1/L2 authorization receipt — APPROVED,2026-10-13",
+          "## Protected grants retained",
+          "## Minimum Owner decisions now",
+          "## Flexible Immersive Authority receipt — APPROVED,2026-10-13",
+          "## Owner operating authority and incremental artifact receipt",
+          "### BD42 — directly accepted P3 Delta / finite ordinary implementation authority",
+          "## 24 October — Day Feed / P1 final UX approval",
+          "## 24 October — Focused Repair Mode V1 trial"
+        ]
+      },
+      {
+        "id": "DOC-PEOPLE",
+        "path": "docs/ops/people-add-traveler-20261031/REAL_GOLDEN_SLICE.json",
+        "commit": "4e1bedfcf3fbb7444878cb0dadd7a9b02154bfa6",
+        "sha256": "838ad76eac57edc70cf1389c090ce50928de583d8e66cb255cfbf0665437deec",
+        "status": "PINNED_BLOB_VERIFIED",
+        "headings": []
+      }
+    ],
+    "owner_scope_notes": [
+      "OTP/Google、Session/Cold Recovery与A/B隔离已有准确范围证据；不能外推当前版本全部登录/People。",
+      "最小fileless Trip/P1 Adoption已验，Guest实际能创建的类型和白名单仍须核对。",
+      "多人是Beta Must；dormant/synthetic/隔离PG候选不是实际Hosted邀请/Claim/撤权完整闭环。"
+    ],
+    "specific_requirements": [
+      "同名不自动Claim",
+      "私有字段不随名册泄露",
+      "正式SaveReadbackRestore按字段",
+      "原attempt无持久化证据不猜恢复"
+    ],
+    "source_precedence": "最新Owner模块决策及修订 → 已批准产品合同 → 正式Owning Interface；历史代码/报告不能补造产品规则。",
+    "spec_gaps": []
+  },
+  "execution_slices": [
+    {
+      "slice_id": "AUTH-C03:LOCAL_PREP",
+      "objective": "区分Account/Person/私有证件名/TripNickname/确认AKA，准备ProfileCloud与Roster端口差异",
+      "code_interface_boundary": "仅所属领域本地代码/Fixture/合同与已有Repository/Adapter；具体路径见baseline.source_code_comparison。公共组件/Schema/权限端口只交Delta给唯一Writer。",
+      "hard_start": [],
+      "package_hard_start_preserved": [],
+      "independent_local_exception": null,
+      "required_permissions": [
+        "Local source read / approved owning worktree edits only"
+      ],
+      "deliverables": [
+        "区分Account/Person/私有证件名/TripNickname/确认AKA，准备ProfileCloud与Roster端口差异",
+        "固定候选SHA及逐字段/场景差异清单；使用既有测试与收据索引，不创建第二套业务模型。"
+      ],
+      "done_condition": "本切片列明的具体产物可审查、差异有准确来源/范围；涉及逻辑改变的本地检查通过，Package/Capability验收仍独立。",
+      "alternative": "GET_NEXT_WORK查询同Lane已批准且前置满足的本地Slice；无合法项则记录精确阻塞/Resume Cursor。",
+      "instruction_status": "SLICE_READY_LOCAL_ONLY"
+    },
+    {
+      "slice_id": "AUTH-C03:PROTECTED_INTEGRATION",
+      "objective": "在正式接口和精确授权具备后集成：用户维护正式Profile及Trip成员显示名/昵称，名册与合法Claim身份一致",
+      "hard_start": [],
+      "required_permissions": [
+        {
+          "id": "SHARED_BACKEND",
+          "exclusive": true,
+          "phase": "PROTECTED_EXECUTION"
+        }
+      ],
+      "current_readiness": "WAIT_FOR_EXACT_INTERFACE_AND_AUTHORIZATION",
+      "deliverables": [
+        "正式候选/环境/Actor范围、操作Receipt、独立Cloud读回及客户端恢复；只验证变化覆盖。"
+      ],
+      "done_condition": "正式Cloud Save/独立读回及冷恢复证明覆盖适用字段；AKA仅基础确认/匹配规则，不因同名自动Claim，不要求复杂自动匹配或批量管理。",
+      "alternative": "AUTH-C03:LOCAL_PREP"
+    },
+    {
+      "slice_id": "AUTH-C03:ACCEPTANCE",
+      "objective": "正式Cloud Save/独立读回及冷恢复证明覆盖适用字段；AKA仅基础确认/匹配规则，不因同名自动Claim，不要求复杂自动匹配或批量管理。",
+      "hard_acceptance": [],
+      "current_readiness": "EVIDENCE_GATED_NOT_AUTO_READY",
+      "required_permissions": [
+        "Only existing exact approvals; Owner UX participation when applicable"
+      ],
+      "deliverables": [
+        "当前适用范围完整验收矩阵/独立证据，不扩充历史PASS"
+      ],
+      "done_condition": "正式Cloud Save/独立读回及冷恢复证明覆盖适用字段；AKA仅基础确认/匹配规则，不因同名自动Claim，不要求复杂自动匹配或批量管理。",
+      "alternative": "AUTH-C03:LOCAL_PREP"
+    }
+  ],
+  "dependencies_and_interfaces": {
+    "existing_package_dependencies": [
+      {
+        "target_id": "CAP-SYNC-UPSTREAM",
+        "condition": "资料与Person正式写入合同",
+        "relation": "INTEGRATION",
+        "readiness": "QUALIFICATION_NOT_RECHECKED",
+        "grants_execution_authority": false
+      },
+      {
+        "target_id": "CAP-SYNC-PULL",
+        "condition": "独立读回和恢复",
+        "relation": "INTEGRATION",
+        "readiness": "QUALIFICATION_NOT_RECHECKED",
+        "grants_execution_authority": false
+      },
+      {
+        "target_id": "CAP-AUTH-ROLES-PERMISSIONS",
+        "condition": "Private/Group与成员管理权限",
+        "relation": "INTEGRATION",
+        "readiness": "QUALIFICATION_NOT_RECHECKED",
+        "grants_execution_authority": false
+      }
+    ],
+    "edges": [],
+    "owning_writer": {
+      "primary_dri": "Auth",
+      "supporting": [
+        "Native",
+        "Root"
+      ],
+      "core": "业务语义、权限、Revision/幂等与正式Receipt由原Core/Ledger/Auth Owning Port负责。",
+      "root": "只接固定候选的共享集成与批准资源窗口；不接管本Lane E2E。",
+      "native": "原Repository/本地队列/表单采纳与正式消费展示；不直接访问Supabase业务表。",
+      "backend": "唯一Owning Writer维护既有DTO/Port及受保护部署；缺口交最小合同而非复制Backend。"
+    },
+    "hard_start_vs_acceptance": "HARD_START限制对应执行切片启动；HARD_ACCEPTANCE不阻止合法独立本地准备，但未解除前不得关闭整包。SOFT为协作顺序，RESOURCE_CONFLICT为独占窗口。",
+    "parallel_allowed": "区分Account/Person/私有证件名/TripNickname/确认AKA，准备ProfileCloud与Roster端口差异",
+    "shared_writes": "Root/Core唯一Writer；资源实际状态未知不得推定可用。"
+  },
+  "acceptance_matrix": {
+    "levels": [
+      {
+        "level": "LOCAL",
+        "applicability": "APPLICABLE_CHANGED_SCOPE_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "DEVICE",
+        "applicability": "APPLICABLE_CHANGED_SCOPE_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "ISOLATED_PG",
+        "applicability": "CONTRACT_DELTA_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "HOSTED",
+        "applicability": "APPLICABLE_CLOUD_PATHS_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "CLOUD_READBACK",
+        "applicability": "APPLICABLE_CLOUD_PATHS_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "CONSUMER_E2E",
+        "applicability": "NOT_APPLICABLE_UNLESS_CONSUMED_BY_MCP",
+        "acceptance_granted": false
+      },
+      {
+        "level": "SECURITY_RELIABILITY",
+        "applicability": "APPLICABLE_CHANGED_SCOPE_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "OWNER_UX",
+        "applicability": "APPLICABLE_CHANGED_SCOPE_ONLY",
+        "acceptance_granted": false
+      },
+      {
+        "level": "BETA_RELEASE",
+        "applicability": "PACKAGE_QUALIFICATION_INPUT_ONLY",
+        "acceptance_granted": false
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "AUTH-C03-A1",
+        "precondition": "固定候选/已批准合成Fixture及对应合法权限；先排除已有同范围有效收据。",
+        "action": "用户维护正式Profile及Trip成员显示名/昵称，名册与合法Claim身份一致；针对场景：同名不自动Claim",
+        "expected_result": "同名不自动Claim",
+        "evidence": "记录精确版本、环境、输入/字段、用户确认与结果；Cloud变化附原Receipt/独立Readback/恢复，UX需Owner确认。",
+        "existing_evidence_refs": [
+          "C-S001",
+          "C-S002",
+          "C-S045",
+          "C-S046",
+          "C-S047",
+          "C-S060",
+          "C-S059",
+          "C-S049",
+          "C-S048",
+          "B-S046",
+          "C-S054",
+          "C-S062",
+          "A-S033",
+          "C-S013",
+          "C-S044",
+          "C-S053",
+          "C-S012",
+          "C-S030",
+          "C-S031",
+          "C-S063",
+          "C-S064"
+        ]
+      },
+      {
+        "id": "AUTH-C03-A2",
+        "precondition": "固定候选/已批准合成Fixture及对应合法权限；先排除已有同范围有效收据。",
+        "action": "用户维护正式Profile及Trip成员显示名/昵称，名册与合法Claim身份一致；针对场景：私有字段不随名册泄露",
+        "expected_result": "私有字段不随名册泄露",
+        "evidence": "记录精确版本、环境、输入/字段、用户确认与结果；Cloud变化附原Receipt/独立Readback/恢复，UX需Owner确认。",
+        "existing_evidence_refs": [
+          "C-S001",
+          "C-S002",
+          "C-S045",
+          "C-S046",
+          "C-S047",
+          "C-S060",
+          "C-S059",
+          "C-S049",
+          "C-S048",
+          "B-S046",
+          "C-S054",
+          "C-S062",
+          "A-S033",
+          "C-S013",
+          "C-S044",
+          "C-S053",
+          "C-S012",
+          "C-S030",
+          "C-S031",
+          "C-S063",
+          "C-S064"
+        ]
+      },
+      {
+        "id": "AUTH-C03-A3",
+        "precondition": "固定候选/已批准合成Fixture及对应合法权限；先排除已有同范围有效收据。",
+        "action": "用户维护正式Profile及Trip成员显示名/昵称，名册与合法Claim身份一致；针对场景：正式SaveReadbackRestore按字段",
+        "expected_result": "正式SaveReadbackRestore按字段",
+        "evidence": "记录精确版本、环境、输入/字段、用户确认与结果；Cloud变化附原Receipt/独立Readback/恢复，UX需Owner确认。",
+        "existing_evidence_refs": [
+          "C-S001",
+          "C-S002",
+          "C-S045",
+          "C-S046",
+          "C-S047",
+          "C-S060",
+          "C-S059",
+          "C-S049",
+          "C-S048",
+          "B-S046",
+          "C-S054",
+          "C-S062",
+          "A-S033",
+          "C-S013",
+          "C-S044",
+          "C-S053",
+          "C-S012",
+          "C-S030",
+          "C-S031",
+          "C-S063",
+          "C-S064"
+        ]
+      },
+      {
+        "id": "AUTH-C03-A4",
+        "precondition": "固定候选/已批准合成Fixture及对应合法权限；先排除已有同范围有效收据。",
+        "action": "用户维护正式Profile及Trip成员显示名/昵称，名册与合法Claim身份一致；针对场景：原attempt无持久化证据不猜恢复",
+        "expected_result": "原attempt无持久化证据不猜恢复",
+        "evidence": "记录精确版本、环境、输入/字段、用户确认与结果；Cloud变化附原Receipt/独立Readback/恢复，UX需Owner确认。",
+        "existing_evidence_refs": [
+          "C-S001",
+          "C-S002",
+          "C-S045",
+          "C-S046",
+          "C-S047",
+          "C-S060",
+          "C-S059",
+          "C-S049",
+          "C-S048",
+          "B-S046",
+          "C-S054",
+          "C-S062",
+          "A-S033",
+          "C-S013",
+          "C-S044",
+          "C-S053",
+          "C-S012",
+          "C-S030",
+          "C-S031",
+          "C-S063",
+          "C-S064"
+        ]
+      }
+    ],
+    "final_condition": "正式Cloud Save/独立读回及冷恢复证明覆盖适用字段；AKA仅基础确认/匹配规则，不因同名自动Claim，不要求复杂自动匹配或批量管理。",
+    "full_package_pass": false
+  },
+  "safety_and_non_goals": [
+    "仅Owner批准范围；身份/Trip/Item ACL与Revision由正式Owning Port校验。",
+    "本地准备不授予Hosted/SQL/OAuth/真实Cloud写入/设备或付费Provider权限；未知资格保持关闭。",
+    "用户确认后才正式Apply/Save；证据不足Abstain，不静默覆盖、不猜Person/时区/付款或原件关联。",
+    "保留原Operation/Task/Receipt，UNKNOWN先恢复原请求，不重复付费调用或业务写入。",
+    "Local-private/Draft/Transient不为验收而上传；原件保留及ACL遵守既有合同。",
+    "不重复当前版本/场景已足够验证且未受改动影响的测试；历史范围不外推。",
+    "公共main/Backend/数据库/共享UI仍由Root/Core指定唯一Writer串行；不抢占外部锁。"
+  ],
+  "handoff_and_next_work": {
+    "on_pass": "提交同一原始Event ID及准确范围Evidence；不要因局部PASS或ACK Pending停工。GET_NEXT_WORK优先当前包下一合法Slice，再同Lane READY/LOCAL WORK；CLAIM成功才开始，STARTED另报。",
+    "on_blocked": "明确Producer、所缺Port/DTO/Receipt与解除条件；选择同Lane另一个合法本地Slice，不绕过Gate。",
+    "support_return": "临时Support交接后回正式Primary Assignment；不改变Owner Lane。",
+    "resume": "SAVE_RESUME记录Package/Slice、下一候选、依赖与最后Evidence；技术会话结束用RUNTIME_SESSION_END，不虚报业务阻塞。",
+    "owner_ux_ready": "仅实际Native候选已可演示时提交OWNER_UX_TEST_READY：环境/Build、设备、合成Fixture、入口路径、步骤/预期、权限范围、已知限制；Owner未确认不记UX Accepted。"
+  },
+  "quality_gate": {
+    "status": "SLICE_READY_LOCAL_ONLY",
+    "complete_package_instruction": "SOURCE_BOUND_WITH_RECONCILIATION",
+    "reconciliation": "NEEDS_RECONCILIATION",
+    "allowed_slice_ids": [
+      "AUTH-C03:LOCAL_PREP"
+    ],
+    "not_authorized": [
+      "Protected Hosted",
+      "Cloud write",
+      "OAuth/Consent session",
+      "Provider charges",
+      "Production",
+      "Shared writer takeover"
+    ]
+  }
+}

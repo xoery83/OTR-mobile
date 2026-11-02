@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c03-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-02T23:53:43.554804+00:00",
+      "actual_started_at": "2026-11-02T23:53:43.554804+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-c03-field-interface-map",
+      "summary": "Started actual C03 field/source/interface reconciliation: Profile/DocumentName/TripNickname/AKA/People; reuse existing adapters, identify owning mutation gaps, no Hosted activation",
+      "next_action": "Complete exact field/source/interface map; retain C04 primary and all Hosted gates"
+    }
+  ]
+}
