@@ -1,6 +1,6 @@
 # MCP Consumer Edit — bounded debug retrospective, 2 November 2026
 
-**Result: Item / Edit Base / Preview PASS; Apply NOT_SUBMITTED. Root Backend CLOSED_SERVER_VERIFIED.** Auth issuer and own Session cleanup receipts independently checked; final console/ACL readback pending. No APPLIED or post-write readback is claimed.
+**Result: Item / Edit Base / Preview PASS; Apply NOT_SUBMITTED. Root Backend CLOSED_SERVER_VERIFIED.** Auth issuer and own Session cleanup receipts independently checked; final console/ACL readback verified. No APPLIED or post-write readback is claimed.
 
 | Actual stage | UTC | Result |
 |---|---|---|
@@ -24,10 +24,10 @@ NZDT is UTC+13. Original D00:42:16 and normal-close target00:40:16 were never ex
 
 **Remaining true privilege.** The current temporary issuer/consent QA configuration and exact Notes confirmation allowlist still require protected control. Do not make that temporary access permanent. A normal durable QA Session can avoid activation only where existing owning authority already permits it; it cannot replace missing issuer/consent or business intent. Native ordinary QA measured GET=0 because the same-account helper active.lock was still held; that is a Session resource conflict, not a global DEV lock. Preserve the owning session/lock until its normal cleanup.
 
-**Closure.** Root independently confirmed defaultddd7/configdb86/image57, both QA keys absent, Host/all23 files exact, health200/protected401, timer inactive. Bounded pre-close diagnostics retained. No new SQL, Provider or business write occurred during this continuation. Auth issuer and own Session cleanup receipts independently checked; final console/ACL readback remains pending.
+**Closure.** Root independently confirmed defaultddd7/configdb86/image57, both QA keys absent, Host/all23 files exact, health200/protected401, timer inactive. Bounded pre-close diagnostics retained. No new SQL, Provider or business write occurred during this continuation. Auth issuer and own Session cleanup receipts independently checked; final console/ACL readback verified.
 
 **Next same-class fault.** Actual request → existing stage logs → minimal fix → focused check → short version CAS → immediate legal read retry. Do not rebuild packages whose hashes did not change or repeat stable security reviews. Exact waiting savings are UNKNOWN; no percentage is claimed.
 
 Evidence: 7cb5 FINAL_CLOSE_READBACK; combined DEPLOY_RESULT/INDEPENDENT_READBACK; acd60 ACTUAL_NO_CHANGE_RESTORE/EMPTY_ROUND_RESULT/EMPTY_INDEPENDENT_READBACK/FINAL_CLOSE_READBACK; actual Consumer preview raw response. Scope deliberately excludes broad OAuth/Core re-audit, new DEV infrastructure and Provider expansion.
 
-Auth closure addendum: Root directly read issuer DENY_ALL at00:40:31.224564Z and NORMAL_CONTROL_SESSION_CLEANUP_PASS at00:41:54.355Z, own refresh revoked negative PASS; original receipt hashes and safe fields in AUTH_CLOSE_METADATA.json. Auth reports Grant DELETE204/readback absent and normalQA lock released; final console reload/ACL readback is still pending and is not claimed PASS.
+Auth closure addendum: Root directly read issuer DENY_ALL at00:40:31.224564Z and NORMAL_CONTROL_SESSION_CLEANUP_PASS at00:41:54.355Z, own refresh revoked negative PASS; original receipt hashes and safe fields in AUTH_CLOSE_METADATA.json. Auth reports Grant DELETE204/readback absent and normalQA lock released; final console reload and original function/Owner/ACL verified at00:45:44.419768Z. All closing checks PASS.

@@ -16,5 +16,27 @@
   "controlResult": "PASS",
   "originalIssuerReceiptSHA256": "02971275cf649ef91bf6af9b9b90caed01094b4b77c4ffb33d4b7f55f8c3ef61",
   "originalControlReceiptSHA256": "8e748e1497c4c1193c4652d1f7cfb5b42d99f6add5f632250442dee581eaf6c0",
-  "consoleAndFinalACL": "PENDING_AUTH_FINAL_READBACK"
+  "consoleAndFinalACL": "PASS",
+  "console": {
+    "oauth": "OFF_PERSISTED",
+    "hook": "DISABLED",
+    "siteUrl": "http://localhost:3000",
+    "temporaryTab": "CLOSED"
+  },
+  "normalQaLock": "OWN_LOCK_RELEASED_ABSENCE_VERIFIED_AFTER_CLEANUP",
+  "finalAcl": {
+    "status": "FINAL_DENYALL_ORIGINAL_ACL_VERIFIED",
+    "observedAt": "2026-11-02T00:45:44.419768+00:00",
+    "rows": [
+      {
+        "anon_denied": true,
+        "auth_admin_execute": true,
+        "authenticated_denied": true,
+        "body": "b0f7eae14599bd32cb9430a59832c837",
+        "exact_search_path": true,
+        "invoker": true,
+        "original_owner": true
+      }
+    ]
+  }
 }
