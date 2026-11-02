@@ -1,0 +1,19 @@
+{
+  "status": "AUTH_DEFAULT_CLOSED_MAIN_INTEGRATED_AND_REMOTE_VERIFIED",
+  "before": "8c992a79fd3a427b6a429de6c41916cd76df0cd1",
+  "after": "10094d5228375756a4ac74e31dcf6047cb8ccbba",
+  "changedFiles": 11,
+  "originalDirtyStatePreserved": true,
+  "originalTrackedDirtyHashesPreserved": true,
+  "smokeExitCode": 0,
+  "smokeSource": "exact same integrated candidate tree; main source equality verified",
+  "deploymentConstraint": "Auth default closed only; memberClaimPort not injected; no Hosted or SQL changes",
+  "acquiredAt": "2026-11-02T22:24:40.283012+00:00",
+  "releasedAt": "2026-11-02T22:24:43.572990+00:00",
+  "hostMutations": 0,
+  "sqlWrites": 0,
+  "paidCalls": 0,
+  "pushed": true,
+  "remoteVerifiedAt": "2026-11-02T22:25:39.733865+00:00",
+  "smokeRetryReason": "Dependency path only; 9 actual route tests PASS"
+}

@@ -1,5 +1,15 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Root integrated default-closed Backend wiring to main10094d52 and verified remote.
+Auth checked final receipt +9 actual route smoke and four exact Auth leaf hashes.
+Backend code dependency now UNBLOCKED_DEFAULT_CLOSED_MAIN_INTEGRATION, not deployment.
+Hosted remains previous920f/1efe; memberClaimPort unconstructed/uninjected. Together
+with delivered People reader, both original code interfaces are closed. Actual next
+qualification: existing raw CorePg connection lifecycle, explicit trusted server
+expiry, exact normal A/B runtime authorization/composition. Installation approval
+keeps runtime closed. Formal member revoke still lacks an owning port; no generic
+remove/link-reset authority is introduced. All Hosted business stages remain NOT_RUN.
+
 Native delivered exact eb93a144; Auth cherry-picked only its 3 files as c14359b6.
 People Read Port now UNBLOCKED_LOCAL_INTERFACE after source review and 18 affected
 consumer/SQLite checks PASS (46 unrelated tests skipped). New compile-bound consumer

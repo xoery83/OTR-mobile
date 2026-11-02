@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/root-auth-c04-main-20261103
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  11:25:12
+   Duration  774ms (transform 468ms, setup 0ms, import 675ms, tests 27ms, environment 0ms)
+

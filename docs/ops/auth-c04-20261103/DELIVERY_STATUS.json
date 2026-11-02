@@ -1,10 +1,10 @@
 {
   "primaryAssignment": "AUTH-C04",
   "status": "IN_PROGRESS",
-  "stage": "INTERFACE_DEPENDENCIES",
+  "stage": "RUNTIME_QUALIFICATION_PENDING",
   "authPgAdapter": {"status": "ISOLATED_PG_PASS", "commit": "7734f3b0"},
   "protectedInstall": {"status": "SERVER_VERIFIED_RUNTIME_UNMOUNTED", "evidenceCommit": "553237b9"},
-  "backendPatch": {"status": "WAITING_FOR_ROOT_INTEGRATION", "commit": "51fa7d66"},
+  "backendPatch": {"status": "UNBLOCKED_DEFAULT_CLOSED_MAIN_INTEGRATION", "candidateCommit": "51fa7d66", "mainCommit": "10094d5228375756a4ac74e31dcf6047cb8ccbba", "deployed": false},
   "peopleReadPort": {"status": "UNBLOCKED_LOCAL_INTERFACE", "sourceCommit": "eb93a144", "acceptedCommit": "c14359b6", "consumerCommit": "4ca558f9", "uiMounted": false},
   "profileRecovery": {"status": "LOCAL_PASS", "commit": "5d292b63"},
   "hostedMultiAccountE2E": "NOT_RUN",
@@ -14,5 +14,5 @@
   "runtimeEnabled": false,
   "executionPlan": "E2E_HANDOFF.md",
   "unblockRule": "Verify delivered code SHA and affected behavior; chat acknowledgment alone does not unblock",
-  "nextAction": "Consume Root default-closed integration and Native accepted-cache port; separately qualify normal A/B runtime execution"
+  "nextAction": "Prepare explicit existing-raw-Core connection composition, trusted server expiry and exact normal A/B runtime execution qualification; preserve missing formal member revoke authority"
 }
