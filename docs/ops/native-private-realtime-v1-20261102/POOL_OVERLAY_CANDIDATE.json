@@ -1,0 +1,53 @@
+{
+  "status": "LOCAL_EXACT_OVERLAY_COMPATIBILITY_PASS_NOT_DEPLOYED",
+  "candidate": "138bd0b5",
+  "reuse": "fe4f510a exact two files; not whole commit",
+  "deployedSource": "/private/tmp/otr-p3-qa-fence-source-20261102/tree",
+  "deployedSourceManifestSHA256": "0156d5493a8f87259f961c50eec95a1d6e72dcbc63f7e74bf39138dcfe6a44fe",
+  "confirmedMissing": "deployed Core connection still creates Client/connect/identity and retires per lease; reviewed Core-only Pool was not received",
+  "confirmedPresent": "deployed authored projection reader and shared token schema byteequal fe4; formal HTTP route reaches existing reader through normal Core connection",
+  "owningDelta": [
+    "backend/src/tripCoreV2PgConnection.ts",
+    "backend/src/tripCoreV2PgConnection.test.ts"
+  ],
+  "candidateSHA256": {
+    "backend/src/tripCoreV2PgConnection.ts": "ac5668a82ac69925b1bb3523211ff44170b5ad53d6e8ad8e97b13cc5b97b538c",
+    "backend/src/tripCoreV2PgConnection.test.ts": "55e94e7a466cef95f83f24c915a58362fc3f5d9b803deef0d091912ce836e2d0"
+  },
+  "preserved": [
+    "all deployed HTTP/auth/gate/reader/token code",
+    "non-Core principals retain fresh Client",
+    "one-Core FIFO, primary/principal/expiry checks, bounded lease, DISCARD ALL or retire"
+  ],
+  "validation": {
+    "connectionTests": "27 PASS",
+    "scopedTypes": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "knownTiming": {
+    "warmLeaseMs": [
+      2345,
+      2350
+    ],
+    "warmProjectMs": [
+      1473,
+      1465
+    ],
+    "otherSQLPhasesMs": "about 290-302 each"
+  },
+  "unresolved": [
+    "lease metric combines FIFO, connection establishment and principal qualification; no separate connect timing",
+    "project metric includes SQL role transitions/projection/bindings and token computation; no per-subquery timing",
+    "HTTP minus Reader aggregate includes other auth/route/network work, not measured separately",
+    "pool does not remove remaining sequential SQL round-trip latency; Hosted improvement unmeasured"
+  ],
+  "excluded": [
+    "Hosted requests",
+    "Auth/token/SQL queries",
+    "deployment",
+    "Provider",
+    "parent tree edits"
+  ],
+  "independentReview": "PENDING incremental compatibility review; prior fe4 review retained"
+}

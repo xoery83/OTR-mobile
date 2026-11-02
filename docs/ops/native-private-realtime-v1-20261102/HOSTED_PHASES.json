@@ -1,0 +1,51 @@
+{
+  "events": [
+    {
+      "projection": "AUTHORED",
+      "phases": {
+        "leaseMs": 5897,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 300,
+        "actorMs": 291,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1469,
+        "finalScopeMs": 291,
+        "commitMs": 291
+      }
+    },
+    {
+      "projection": "AUTHORED",
+      "phases": {
+        "leaseMs": 2345,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 302,
+        "actorMs": 293,
+        "gateMs": 294,
+        "stateMs": 292,
+        "projectMs": 1473,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      }
+    },
+    {
+      "projection": "AUTHORED",
+      "phases": {
+        "leaseMs": 2350,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 301,
+        "actorMs": 292,
+        "gateMs": 293,
+        "stateMs": 291,
+        "projectMs": 1465,
+        "finalScopeMs": 291,
+        "commitMs": 290
+      }
+    }
+  ],
+  "containerId": "ddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f",
+  "readOnly": true
+}
