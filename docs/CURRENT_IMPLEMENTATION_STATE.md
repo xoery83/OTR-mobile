@@ -16,6 +16,9 @@ Package: ops/auth-realtime-private-20261102/current-session-package/HANDOFF.json
 Root/Core observeHeld3e071574 accepted with independent3newtests PASS; no nestedTX.
 Remaining real member-transition producer and privateTransport/forceddisconnect are
 absent; current-source completion does not make PrivateRealtime Hosted E2E PASS.
+People V1 PD P17 forbids routine organizer expulsion/general Leave in Beta; approved
+Switch/Reset and security-remediation must use owning Auth/Invite semantics. Fixture
+unlink/delete/regrant cannot become a generic production removal permission.
 
 # Claude Consumer Edit e389 PASS and CLOSED — 2 November 2026
 

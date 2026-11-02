@@ -51,5 +51,13 @@
     "Offline cached App session",
     "Fixture bearer mapping",
     "A successful Session read without canonical membership/visibility"
-  ]
+  ],
+  "canonicalTransitionContractBoundary": {
+    "source": "People V1 Product Delta, Reconnect P14-P17; Blueprint reset/switch acceptance",
+    "ordinaryOrganizerExpulsionOrLeave": "NOT_APPROVED_IN_BETA_PD_P17",
+    "existingApprovedRoutes": "Online own Account Switch or Organizer Reset another Person then fresh directed Invite; keep Person/history and respect cutoff",
+    "securityRemediation": "Only through owning Auth/Invite; no generic revoke API inferred from a fixture",
+    "unresolvedBeforeProducer": "Exact security-remediation actor/trigger/effect, or authoritative Switch/Reset cutoff/Creator representation where not resolved by latest owning decisions",
+    "fixtureDml": "Never promote unlink/delete/relink fixture code directly to production permissions"
+  }
 }
