@@ -1,0 +1,22 @@
+{
+  "status": "ROOT_FOCUSED_INTEGRATION_REVIEW_PASS",
+  "base": "10094d5228375756a4ac74e31dcf6047cb8ccbba",
+  "source": "549cea07",
+  "patchSHA256": "234c1aceb5d740c5418893a7f062e8b844a4851683744dd660d16d2a06843571",
+  "scope": [
+    "src/features/place-search/placeSearchSession.ts",
+    "src/features/place-search/placeSearchSession.test.ts"
+  ],
+  "checks": [
+    "Both files exact source commit bytes",
+    "Only interrupted retained Quick resolve refreshes invalid native handles",
+    "Ordinary Back reuses existing Quick cache; no automatic full search",
+    "Sequence+abort fences retained; resolver cleanup only clears same controller",
+    "Native independent review reused; exact candidate36 targeted tests PASS"
+  ],
+  "uiChange": "No copy/theme/navigation/component layout change",
+  "hostedChanged": false,
+  "deviceActions": 0,
+  "paidCalls": 0,
+  "reviewedAt": "2026-11-02T23:05:08.790431+00:00"
+}

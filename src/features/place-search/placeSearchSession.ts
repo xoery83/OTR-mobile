@@ -98,6 +98,7 @@ export class PlaceSearchSession {
   state: PlaceSearchState = empty;
   private sequence = 0;
   private controller?: AbortController;
+  private resolvingQuick?: AbortController;
   private timer?: ReturnType<typeof setTimeout>;
   private quick: PlaceSearchState = empty;
   private extended?: readonly ApplePlaceCandidate[];
@@ -244,9 +245,21 @@ export class PlaceSearchSession {
     }
   }
   backToQuick() {
+    const refreshQuick =
+      !!this.resolvingQuick &&
+      this.resolvingQuick === this.controller &&
+      !this.resolvingQuick.signal.aborted;
     this.sequence++;
     this.controller?.abort();
     this.moreProvider.cancel();
+    if (refreshQuick) {
+      // Aborting a completion resolve invalidates its native generation's handles.
+      this.extended = undefined;
+      this.quick = empty;
+      this.publish({ status: "LOADING", rows: [], more: false });
+      void this.complete(this.sequence);
+      return;
+    }
     this.publish(this.quick);
   }
   async resolve(candidate: ApplePlaceCandidate) {
@@ -260,6 +273,8 @@ export class PlaceSearchSession {
     const sequence = ++this.sequence,
       controller = new AbortController();
     this.controller = controller;
+    if (candidate.kind === "completion" && this.quick.rows.includes(candidate))
+      this.resolvingQuick = controller;
     this.publish({ ...this.state, status: "LOADING" });
     try {
       const resolved =
@@ -280,6 +295,8 @@ export class PlaceSearchSession {
           error: error instanceof Error ? error.message : "ERROR",
         });
       return null;
+    } finally {
+      if (this.resolvingQuick === controller) this.resolvingQuick = undefined;
     }
   }
   close() {

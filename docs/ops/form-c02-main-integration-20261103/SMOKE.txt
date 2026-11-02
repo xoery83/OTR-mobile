@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/root-form-c02-main-20261103
+
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  12:04:47
+   Duration  408ms (transform 58ms, setup 0ms, import 179ms, tests 42ms, environment 0ms)
+
