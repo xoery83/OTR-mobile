@@ -56,15 +56,29 @@
     "retainedRollbackExact": true,
     "authorityActivated": false
   },
-  "closeBinding": "ROOT_OWNED_REBIND_PENDING",
+  "closeBinding": {
+    "status": "ACTUAL_NO_CHANGE_RESTORE_PASS_WITH_ORIGINAL_SOURCE_GUARD",
+    "verifiedAt": "2026-11-02T03:23:21.675786+00:00",
+    "planSHA256": "6c1c1b3ad4455dded79d93fce196f15e79664481fcda37c9fb23f499e1a30e13",
+    "entry": "/private/tmp/otr-mcp-root-source-binding-e389-20261102/close-once.py",
+    "entrySHA256": "9b4698504dab10cd560ecf715d2e497c7032d2b13d15aef65e22805e04f76f17"
+  },
   "confirmationOrigin": {
     "proposedThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
     "status": "CANDIDATE_MUST_BE_EXPLICIT_IN_NEW_GATE",
     "currentValidatorAcceptsRootOrigin": false,
     "requiredChange": "EXACT_OWNING_SOURCE_BINDING_NO_FALSE_AUTH_ORIGIN",
     "candidateReview": "INDEPENDENT_10_CHECKS_PASS_FIXED_ROOT_ONLY_CANDIDATE_NOT_INSTALLED",
-    "candidateSHA256": "2ee651282e3c415c1616266ca19326c09bc8c890e006c15081b126d5883c11ad"
+    "candidateSHA256": "2ee651282e3c415c1616266ca19326c09bc8c890e006c15081b126d5883c11ad",
+    "candidateInstalled": false,
+    "hostCurrentGuardSHA256": "0ba00b4575b0c828ea5b6bb05d879c8f32e2a71d9602ac27ceba4980f9e9ebee"
   },
   "wirePreflight": "FINAL_ACTUAL_APPROVAL_BYTES_AFTER_DIRECT_CONFIRMATION_BEFORE_CLOCK",
-  "noNewOwnerQuestion": true
+  "noNewOwnerQuestion": true,
+  "beforeClockRequirements": [
+    "Owner directly approves new exact Root-only Gate",
+    "Root conditional exact0ba0\u21922ee source-guard installation and independent postimage verification",
+    "Final actual new approval bytes including clientId and true Root source pass installed exact validator and pure plan with external IO disabled",
+    "All close and normal own Session/control/consumer UI ready before T/D"
+  ]
 }
