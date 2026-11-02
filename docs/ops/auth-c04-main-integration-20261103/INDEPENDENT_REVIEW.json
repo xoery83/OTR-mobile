@@ -1,0 +1,44 @@
+{
+  "status": "NO_BLOCKER_DEFAULT_CLOSED_AUTH_MAIN_WIRING",
+  "reviewer": "/root/imp_c01_main_delta/backend_read_independent_review",
+  "baseMain": "8c992a79",
+  "approvedManifestSHA256": "0b72994c59f6d654e7077f40b7a14d699b13bd5e8fdf997df00d82b0278f981e",
+  "baseAppSHA256": "434b8612777ba7907ca467fbee4adfed16ab236d090860d50d48ea83b5df78ee",
+  "patchedAppSHA256": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+  "appMatchesApprovedFourAnchorPatch": true,
+  "fixedAuthLeafPinsMatch": true,
+  "files": {
+    "backend/src/app.ts": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+    "backend/src/tripMemberClaimAuthority.ts": "4e9d70408369410bd68b98922dbba48f97d89ff584c3d3a3924db9cc143ac524",
+    "backend/src/tripMemberClaimRecovery.ts": "ad0ff2feada91dd2c76da1f6ba9987abfb174e42db0286dbc5eb3747bd39fda6",
+    "backend/src/tripMemberClaimHttp.ts": "daa6cbf327a85f18c5e7be72cb97232b73cee9abd5c55e9eeaf71f9dbc19c98f",
+    "backend/src/tripMemberClaimPg.ts": "0e840261962f219283da0a44b7824899d801dd4fd13c5b6d3aeda57964548b7e",
+    "backend/src/tripMemberClaimWiring.test.ts": "49b7c3d545bb0d869999eced3dfa5f7c6bbcd409cb1495b85e71fc4fede4a70c"
+  },
+  "reviewed": [
+    "Actual app route uses the existing authenticateNormalAccount/gateway validator. Normal Supabase getUser qualification and pre-IO resource-token rejection remain unchanged.",
+    "Dedicated Claim/Recovery paths do not require preexisting Trip read access; the authenticated actor is passed to the exact owning claim transaction, never a caller-supplied actor. Other app behavior matches the already-reviewed exact b7a32d4b target bytes.",
+    "Missing memberClaimPort returns503/MEMBER_CLAIM_CLOSED; no PG factory, connection, Bootstrap/env injection or new authority activation is added to this app slice.",
+    "HTTP boundary preserves strict UUID/path/query/method, bounded body, matching Trip/operation idempotency key and normal-account checks.",
+    "Recovery validates exact original operation/actor/Trip/person/intent/invite receipt and returns current access; it does not relink, issue, revoke, replay a command or restore access from an old receipt.",
+    "Four Authority/Recovery/Http/Pg leaves match the fixed Auth package hashes. Post-mutation access refresh and canonical intent digest are the previously-reviewed leaf behavior.",
+    "Wiring tests import actual createDevBackendHandler from ./app, not a fixture handler; direct route coverage includes default close, claimant B without read grant, read-only recovery, anonymous/unknown/invalid auth, resource tokens and forged caller identity/idempotency."
+  ],
+  "validationReused": {
+    "actualAppRouteChecks": 9,
+    "strictScope": "6 roots plus transitive PASS per implementer",
+    "scopedLint": "PASS per implementer",
+    "oldPgOrAuthAuditRepeated": false
+  },
+  "findings": [],
+  "limitations": [
+    "This review does not approve or perform Hosted SQL installation, runtime PG injection, role/GRANT changes, or actual claim/revocation business E2E.",
+    "No deploy, paid Provider call, device action, main/remote mutation or candidate product-code write performed by this reviewer."
+  ],
+  "actions": {
+    "productWrites": 0,
+    "hostedOrSql": 0,
+    "deviceOrProvider": 0,
+    "mainOrRemoteWrites": 0
+  }
+}

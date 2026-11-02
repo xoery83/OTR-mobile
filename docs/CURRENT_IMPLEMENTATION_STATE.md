@@ -1,3 +1,12 @@
+# Auth C04 default-closed integration candidate — 3 November 2026
+
+Isolated `codex/root-auth-c04-main-20261103` from main8c992a79 consumes fixed Auth
+51fa7d66/56d78536 through four app anchors and four owning leaves. Nine actual route
+tests, focused strict and scoped lint pass. Optional PG port remains uninjected;
+normal Account without a port returns503/CLOSED. No runtime/SQL/Hosted/device action.
+See `ops/auth-c04-main-integration-20261103/HANDOFF.md`; Root serial merge and Auth
+E2E qualification remain pending.
+
 # Import Backend main-context candidate — 3 November 2026
 
 Independent `codex/imp-c01-backend-read-main-20261103` ports accepted retained PNG
