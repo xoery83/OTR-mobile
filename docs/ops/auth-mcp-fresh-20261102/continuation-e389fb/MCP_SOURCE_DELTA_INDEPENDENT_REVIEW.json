@@ -1,0 +1,32 @@
+{
+  "status": "NO_BLOCKER_MECHANICAL_MCP_SOURCE_DELTA_ONLY",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "candidateSHA256": "2776777e4fe399d14a806f9b71708dcf9db772f96a51cabdf70567c91387dce2",
+  "productionChanges": "EXACT_THREAD_LITERAL_AND_DEPENDENT_HASH_REPLACEMENTS_ONLY",
+  "independentTestsPassed": 11,
+  "checks": [
+    "OLD_ROOT_SOURCE_REJECTED",
+    "OLD_AUTH_SOURCE_REJECTED",
+    "OTHER_SOURCE_REJECTED",
+    "NOT_APPROVED_REJECTED",
+    "MISSING_MESSAGE_REJECTED",
+    "WRONG_CLIENT_REJECTED",
+    "MISSING_CLIENT_REJECTED",
+    "WRONG_OPERATION_REJECTED",
+    "WRONG_DIGEST_REJECTED",
+    "MCP_SOURCE_FULL_CLIENT_WIRE_PURE_PLAN_PASS",
+    "EXPIRED_WINDOW_REJECTED"
+  ],
+  "hostSqlSessionConsoleCalls": 0,
+  "actualApprovalBytes": "Root must preserve original direct MCP human bytes and run exact preclock preflight; this Review does not grant execution authority",
+  "filesSHA256": {
+    "operators/config_cas.py": "2776777e4fe399d14a806f9b71708dcf9db772f96a51cabdf70567c91387dce2",
+    "preflight-actual-owner-wire.py": "66538044bc9e59be2738e91cf3e0b0ee2648ea73e5531211b37fbf1c14b19337",
+    "install-root-source-guard.py": "da8899c06b5af009df48538ed77cbdad448c2d2bd7a7125da927d5df0adc0ee4",
+    "launch-own-control.py": "c3d7c286a33680372d2d3af13277aeb84c294b7f3b7007279dc4c0257213d59b",
+    "activate-issuer.py": "12cf8160891fe908bf14f00e82c6b3b37a12a9c9fa0909a7e381e9ebe573515b",
+    "prepare-fixed-window.py": "05a80341e06a969cd44a2db6526fd9068365c6d8b6c8a4dd36ffa4cf084b783a",
+    "confirm-once.py": "98dc871925ddbfc42037ca85a6b3cb60d2667204b65359098b632f906611ded6",
+    "prepare-empty-round.py": "7945d99fe8bbc0e57ca7591503914f2d7b24b52494a18e39c929cd4516f9da07"
+  }
+}
