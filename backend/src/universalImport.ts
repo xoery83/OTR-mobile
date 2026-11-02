@@ -295,6 +295,57 @@ function pinManifest(
   return { manifest, prepared, bindings, requestSha256 };
 }
 
+// Reconstruct only the already sealed UNKNOWN marker; this does not prepare bytes or dispatch.
+export function sealedUniversalDispatchMarker(
+  result: Pick<
+    UniversalResult,
+    | "version"
+    | "actorId"
+    | "accountId"
+    | "tripId"
+    | "batchId"
+    | "taskId"
+    | "requestSha256"
+    | "promptVersion"
+    | "sourceBindings"
+    | "formalReview"
+    | "admission"
+    | "canonicalWrites"
+  >,
+): UniversalResult {
+  const base = {
+    version: result.version,
+    actorId: result.actorId,
+    accountId: result.accountId,
+    tripId: result.tripId,
+    batchId: result.batchId,
+    taskId: result.taskId,
+    requestSha256: result.requestSha256,
+    promptVersion: result.promptVersion,
+    sourceBindings: result.sourceBindings,
+    formalReview: result.formalReview,
+    admission: result.admission,
+    canonicalWrites: result.canonicalWrites,
+  };
+  return {
+    ...base,
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+    providerReceipt: null,
+    candidates: [],
+    bookingObservations: [],
+    ticketObservations: [],
+    quality: null,
+    minimumFacts: [],
+    sourceObservations: [],
+    advisoryStatus: "ABSENT",
+    advisoryIssues: [],
+    outputCoverage: "PARTIAL_COVERAGE",
+    coverageGaps: [...COVERAGE_GAPS],
+    unresolved: [],
+  };
+}
+
 // Owning Task producers use this exact plan to pin immutable request custody before dispatch.
 export function prepareUniversalDispatch(
   actorId: string,
@@ -340,23 +391,7 @@ export function prepareUniversalDispatch(
     admission: "NOT_RUN" as const,
     canonicalWrites: false as const,
   };
-  const dispatchMarker: UniversalResult = {
-    ...base,
-    status: "EXECUTION_OUTCOME_UNKNOWN",
-    providerOutcome: "UNKNOWN",
-    providerReceipt: null,
-    candidates: [],
-    bookingObservations: [],
-    ticketObservations: [],
-    quality: null,
-    minimumFacts: [],
-    sourceObservations: [],
-    advisoryStatus: "ABSENT",
-    advisoryIssues: [],
-    outputCoverage: "PARTIAL_COVERAGE",
-    coverageGaps: [...COVERAGE_GAPS],
-    unresolved: [],
-  };
+  const dispatchMarker = sealedUniversalDispatchMarker(base);
   return {
     manifest,
     prepared,

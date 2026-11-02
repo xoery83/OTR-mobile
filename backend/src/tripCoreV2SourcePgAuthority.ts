@@ -12,6 +12,7 @@ import { assertP1OutputPurposeV2 } from "../../src/domain/trip/p1OutputPurposeV2
 import {
   isUniversalP1Body,
   readUniversalP1Catalog,
+  readAcceptedUniversalAuditCatalog,
   publishUniversalP1Candidate,
   assertUniversalP1Capability,
   hasAcceptedUniversalSourceReceipt,
@@ -1928,20 +1929,38 @@ export function createCoreSourcePgAuthority(
           p1Candidates.set(id, { sourceId, candidate });
           return candidate;
         }
-        const c = (
-          await readUniversalP1Catalog(
+        const scope = {
+          actorAccountId: actor.accountId,
+          tripId: actor.tripId,
+          sourceId,
+          planId: receipt.operationId,
+        };
+        let current;
+        try {
+          current = await readUniversalP1Catalog(
             lease,
-            {
-              actorAccountId: actor.accountId,
-              tripId: actor.tripId,
-              sourceId,
-              planId: receipt.operationId,
-            },
+            scope,
             [id],
             hash,
             options.readUniversalP1!,
+          );
+        } catch (error) {
+          if (
+            witness ||
+            !(error instanceof Error) ||
+            error.message !== "SOURCE_CAPABILITY_CLOSED"
           )
-        ).candidates[0];
+            throw error;
+          current = await readAcceptedUniversalAuditCatalog(
+            lease,
+            scope,
+            id,
+            receipt,
+            hash,
+            options.readUniversalP1!,
+          );
+        }
+        const c = current.candidates[0];
         p1Candidates.set(id, { sourceId, candidate: c });
         return c;
       };

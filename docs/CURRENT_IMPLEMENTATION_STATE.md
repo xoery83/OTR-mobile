@@ -1,3 +1,12 @@
+# Import Backend main-context candidate — 3 November 2026
+
+Independent `codex/imp-c01-backend-read-main-20261103` ports accepted retained PNG
+Results and committed Source audit reads onto a516, preserving current permissions
+and full-material Admission. 117 focused checks pass/one existing skip, strict
+22-root types/build pass, independent Review NO_BLOCKER. No Hosted/SQL/device/paid
+action. See `ops/import-backend-main-20261103/HANDOFF.md`; actual main/DEV integration
+is pending. The next local merge must preserve Native main405.
+
 # Import UI main-context candidate — 3 November 2026
 
 Independent branch `codex/imp-c01-ui-main-20261103` based on main4e1bedfc prepares
@@ -6,9 +15,10 @@ loading wording and optional receipt-bound Open Day adapter. 128 focused checks,
 scoped types/UI guard pass. Full types retain unchanged Auth-browser dependency
 TS7016; no dependency/Auth/shared Navigation changes. See
 `ops/import-ui-main-20261103/HANDOFF.md` and VALIDATION.json.
-Not installed, not merged, no Hosted/SQL/Provider/authority change. Root independent
-Review and Native-owned callback consumption precede serial main integration.
-Progress document shortcuts/assigned Batch DTO remain a separate slice.
+UI source7fb634c3 passed Root independent Review and was serially integrated into
+maina5161ad0. Native-owned optional callback consumption/device acceptance remains
+pending; no Hosted/SQL/Provider/authority change came from that UI merge. Progress
+document shortcuts/assigned Batch DTO remain a separate slice.
 
 # Native focused downstream checkpoint — 1 November 2026
 

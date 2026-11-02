@@ -108,6 +108,7 @@ export async function loadDevUniversalContinuousRuntime(
       actor: string,
       trip: string,
       assertCurrentAuth: () => Promise<void>,
+      sourceReadRequestId?: string,
       publishedSource?: Parameters<
         typeof createUniversalContinuousHost
       >[0]["publishedSource"],
@@ -167,6 +168,8 @@ export async function loadDevUniversalContinuousRuntime(
         catalogConnection,
         assertCurrentAuth,
         publishedSource,
+        sourceReadRequestId,
+        retainedResultsEnabled: true,
         bootstrapLedger: () => gateway.bootstrapLedger(actor, trip),
         async selectProvider() {
           guard();
@@ -225,7 +228,12 @@ export async function loadDevUniversalContinuousRuntime(
         },
       });
     }
-    async function forRequest(request: Request, verifiedActor: string, tripId: string) {
+    async function forRequest(
+      request: Request,
+      verifiedActor: string,
+      tripId: string,
+      requestId?: string,
+    ) {
       guard();
       const match = /^Bearer ([^\s]+)$/i.exec(request.headers.get("Authorization") ?? "");
       if (!match) throw Error("UNIVERSAL_AUTH_REQUIRED");
@@ -241,7 +249,7 @@ export async function loadDevUniversalContinuousRuntime(
           throw Error("UNIVERSAL_AUTH_REJECTED");
         guard();
       };
-      const scoped = await host(verifiedActor, tripId, authorize),
+      const scoped = await host(verifiedActor, tripId, authorize, requestId),
         original = createUniversalOriginalSourceConnection(sourceConnection, hash, {
           pendingPdf: pdf?.originalMetadataAllowed(verifiedActor, tripId) === true,
         });
@@ -428,7 +436,7 @@ export async function loadDevUniversalContinuousRuntime(
           guard();
         };
         const published = await (
-          await host(a, t, authorize, currentSource)
+          await host(a, t, authorize, undefined, currentSource)
         ).readPublished(scope.batchId, scope.taskId);
         if (!published) return null;
         return {

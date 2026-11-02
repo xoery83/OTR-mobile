@@ -97,9 +97,9 @@ async function main() {
         ? {
             sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
             sourcePdfV2ForRequest: continuous.sourcePdfV2ForRequest,
-            universalRuntimeForRequest: async (request, actor) => {
+            universalRuntimeForRequest: async (request, actor, requestId) => {
               const scoped = (trip: string) =>
-                continuous!.forRequest(request, actor, coreUuid.parse(trip));
+                continuous!.forRequest(request, actor, coreUuid.parse(trip), requestId);
               return {
                 universalOriginalSourcePort: {
                   async acquire(a, t, input) {

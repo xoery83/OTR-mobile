@@ -1,3 +1,5 @@
+import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
+import type { CoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
 import {
   readUniversalPngSourceMaterial,
   type UniversalBinaryReader,
@@ -47,6 +49,8 @@ export type PublishedUniversalP1Reader = (
   result: UniversalResult;
   resultSha256: string;
   runId: string;
+  taskRowRevision?: number;
+  publicationFence?: number;
   // Interface gap: must come from an owning lifecycle qualifier, never the Interpreter.
   owningLifecycleRelationships?: ImportLifecycleRequest["relationships"];
   readBinary?: UniversalBinaryReader;
@@ -422,6 +426,207 @@ export async function readUniversalP1Catalog(
   ];
   return catalog;
 }
+// Read-only historical audit: the actual committed receipt pins this immutable candidate.
+// New selection/Admission continues through readUniversalP1Catalog and full material checks.
+export async function readAcceptedUniversalAuditCatalog(
+  lease: CorePgLease,
+  scope: Scope,
+  candidateId: string,
+  receipt: CoreReceipt,
+  hash: ImportHash,
+  read: PublishedUniversalP1Reader,
+) {
+  if (
+    receipt.actorAccountId !== scope.actorAccountId ||
+    receipt.tripId !== scope.tripId ||
+    !["APPLIED", "NO_CHANGE"].includes(receipt.outcome)
+  )
+    throw Error("INVALID_PROVENANCE");
+  const prefix = `otr-core/source-candidate/${z.uuid().parse(candidateId)}/`;
+  const refs = receipt.audit.authorizationRefs.filter((ref) => ref.startsWith(prefix));
+  if (refs.length !== 1 || !/^[a-f0-9]{64}$/.test(refs[0].slice(prefix.length)))
+    throw Error("INVALID_PROVENANCE");
+  const expectedSHA = refs[0].slice(prefix.length);
+  const rows = (
+    await lease.query(
+      `SELECT c.*,to_jsonb(s) AS retained_slot,r.id AS retained_receipt_id,
+      r.body AS retained_receipt_body,r.receipt_sha256 AS retained_receipt_sha256,
+      r.intent_sha256 AS retained_intent_sha256,r.outcome AS retained_outcome
+     FROM public.trip_source_core_v2_candidates c
+     JOIN public.trip_source_core_v2_slots s ON s.candidate_id=c.candidate_id AND s.account_id=c.account_id AND s.trip_id=c.trip_id AND s.source_id=c.source_id
+     JOIN public.trip_core_command_receipts r ON r.id=s.domain_receipt_id AND r.actor_account_id=s.account_id AND r.trip_id=s.trip_id AND r.operation_id=s.operation_id AND r.intent_sha256=s.intent_sha256
+     WHERE c.candidate_id=$1::uuid AND c.account_id=$2::uuid AND c.trip_id=$3::uuid AND c.source_id=$4::uuid
+       AND s.state='COMPLETE' AND r.outcome IN ('APPLIED','NO_CHANGE') AND s.operation_id=$5::uuid AND r.receipt_sha256=$6 AND r.body=$7::jsonb`,
+      [
+        candidateId,
+        scope.actorAccountId,
+        scope.tripId,
+        scope.sourceId,
+        receipt.operationId,
+        receipt.receiptSha256,
+        json(receipt),
+      ],
+    )
+  ).rows;
+  if (rows.length !== 1) throw Error("INVALID_PROVENANCE");
+  const row = rows[0],
+    slot = row.retained_slot as Record<string, unknown>,
+    h = header.parse(row.candidate_json);
+  if (
+    !slot ||
+    !z.uuid().safeParse(row.retained_receipt_id).success ||
+    !z.uuid().safeParse(slot.plan_id).success ||
+    row.candidate_id !== candidateId ||
+    row.account_id !== scope.actorAccountId ||
+    row.trip_id !== scope.tripId ||
+    row.source_id !== scope.sourceId ||
+    slot.state !== "COMPLETE" ||
+    slot.account_id !== scope.actorAccountId ||
+    slot.trip_id !== scope.tripId ||
+    slot.source_id !== scope.sourceId ||
+    slot.candidate_id !== candidateId ||
+    slot.operation_id !== receipt.operationId ||
+    slot.command !== receipt.command ||
+    slot.target_kind !== "ITEM" ||
+    !receipt.targetVector.some(
+      (v) =>
+        v.kind === "ITEM" && v.id === slot.target_id && (v.committedRevision ?? 0) > 0,
+    ) ||
+    slot.domain_receipt_id !== row.retained_receipt_id ||
+    slot.intent_sha256 !== receipt.intentSha256 ||
+    row.retained_outcome !== receipt.outcome ||
+    row.retained_intent_sha256 !== receipt.intentSha256 ||
+    row.retained_receipt_sha256 !== receipt.receiptSha256 ||
+    json(row.retained_receipt_body) !== json(receipt) ||
+    row.candidate_sha256 !== expectedSHA ||
+    (await coreHashValue(
+      "otr-trip-core-source-candidate-v2",
+      row.candidate_json as Json,
+      hash,
+    )) !== expectedSHA ||
+    h.accountId !== scope.actorAccountId ||
+    h.tripId !== scope.tripId ||
+    h.sourceId !== scope.sourceId ||
+    h.candidateId !== candidateId ||
+    h.runId !== row.run_id ||
+    h.sourceRevision !== Number(row.source_revision) ||
+    (h.sourceReview && h.reviewedBy !== scope.actorAccountId)
+  )
+    throw Error("INVALID_PROVENANCE");
+  const key = {
+    actorAccountId: scope.actorAccountId,
+    tripId: scope.tripId,
+    batchId: h.batchId,
+    taskId: h.taskId,
+  };
+  const published = await read(key, lease);
+  if (
+    !published ||
+    !Number.isSafeInteger(published.taskRowRevision) ||
+    published.taskRowRevision! < 1 ||
+    !Number.isSafeInteger(published.publicationFence) ||
+    published.publicationFence! < 1 ||
+    published.resultSha256 !== h.resultSha256 ||
+    published.runId !== h.runId ||
+    published.result.taskId !== h.taskId ||
+    published.result.batchId !== h.batchId
+  )
+    throw Error("UNIVERSAL_SELECTION_STALE");
+  const result = universalResultSchema.parse(published.result),
+    bindings = result.sourceBindings;
+  // Other material families keep their original projection and raw-material qualification.
+  if (bindings.length !== 1 || bindings[0].mime !== "image/png")
+    return readUniversalP1Catalog(lease, scope, [candidateId], hash, read);
+  const selected = result.candidates.filter((c) => c.token === h.token);
+  if (
+    result.actorId !== scope.actorAccountId ||
+    result.accountId !== scope.actorAccountId ||
+    result.tripId !== scope.tripId ||
+    result.providerOutcome !== "SETTLED" ||
+    result.status !== "CANDIDATES_READY" ||
+    selected.length !== 1 ||
+    !["P1", "P6"].includes(selected[0].kind) ||
+    !h.sourceReview ||
+    h.reviewedBy !== scope.actorAccountId ||
+    h.schemaId !==
+      (selected[0].kind === "P1"
+        ? "otr.core.universal-p1-source/2"
+        : "otr.core.universal-p6-source/1") ||
+    bindings[0].sourceId !== scope.sourceId ||
+    bindings[0].status !== "READY" ||
+    bindings[0].pdfSource ||
+    bindings[0].submittedSha256 !== bindings[0].originalSha256
+  )
+    throw Error("INVALID_PROVENANCE");
+  const readCatalog = () =>
+    readOwningLegacySourceCatalog(lease, scope, h.runId, undefined, {
+      runId: h.runId,
+      taskId: h.taskId,
+      batchId: h.batchId,
+      resultSha256: h.resultSha256,
+    });
+  const catalog = await readCatalog();
+  const pin = flightInputSchema.parse(catalog.inputs[0]),
+    binding = bindings[0];
+  const body = row.candidate_json as Record<string, unknown>;
+  if (
+    !catalog.source ||
+    typeof catalog.source !== "object" ||
+    Array.isArray(catalog.source)
+  )
+    throw Error("INVALID_PROVENANCE");
+  const currentSource = catalog.source as Record<string, Json>;
+  if (
+    catalog.actorAccountId !== scope.actorAccountId ||
+    catalog.tripId !== scope.tripId ||
+    catalog.sourceId !== scope.sourceId ||
+    currentSource.id !== scope.sourceId ||
+    currentSource.trip_id !== scope.tripId ||
+    currentSource.acquired_by !== scope.actorAccountId ||
+    currentSource.lifecycle !== "ACTIVE" ||
+    currentSource.retention_state !== "RETAINED" ||
+    currentSource.source_kind !== "IMAGE" ||
+    currentSource.current_material_revision !== h.sourceRevision ||
+    currentSource.row_revision !== pin.observed_source_row_revision ||
+    catalog.sourceRevision !== h.sourceRevision ||
+    catalog.inputs.length !== 1 ||
+    catalog.inputCatalogSha256 !== row.input_catalog_sha256 ||
+    catalog.inputCatalogSha256 !== body.inputCatalogSha256 ||
+    !pin ||
+    pin.id !== binding.inputId ||
+    pin.source_id !== binding.sourceId ||
+    pin.representation_id !== binding.representationId ||
+    pin.material_revision !== binding.revision ||
+    pin.payload_sha256 !== binding.originalSha256 ||
+    (body.plan as { planId?: string })?.planId !== slot.plan_id
+  )
+    throw Error("INVALID_PROVENANCE");
+  const after = await read(key, lease);
+  if (
+    !after ||
+    after.taskRowRevision !== published.taskRowRevision ||
+    after.publicationFence !== published.publicationFence ||
+    after.runId !== published.runId ||
+    after.resultSha256 !== published.resultSha256 ||
+    json(after.result) !== json(published.result)
+  )
+    throw Error("UNIVERSAL_SELECTION_STALE");
+  if (json(await readCatalog()) !== json(catalog))
+    throw Error("UNIVERSAL_SELECTION_STALE");
+  catalog.candidates = [
+    {
+      candidateId: h.candidateId,
+      runId: h.runId,
+      kind: selected[0].kind,
+      candidateSha256: expectedSHA,
+      snapshot: row.candidate_json as Json,
+      identityFacts: null,
+      identityEvidenceRefs: null,
+    },
+  ];
+  return catalog;
+}
+
 export async function publishUniversalP1Candidate(
   lease: CorePgLease,
   scope: Scope,

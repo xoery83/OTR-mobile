@@ -17,8 +17,9 @@ export type UniversalBinaryReader = (scope: {
   representationId: string;
   sha256: string;
   byteCount: number;
+  mimeType?: string;
 }) => Promise<Uint8Array>;
-const proofSchema = z.strictObject({
+export const universalPngSourceProofSchema = z.strictObject({
   actorAccountId: z.uuid(),
   tripId: z.uuid(),
   sourceId: z.uuid(),
@@ -30,25 +31,22 @@ const proofSchema = z.strictObject({
   verification: importImageMaterialSchema.shape.verification,
 });
 // Existing owning Source locks must remain held. The protected proof RPC is default closed until its exact Gate is installed.
-export async function readUniversalPngSourceMaterial(
+export async function readUniversalPngSourceProof(
   lease: CorePgLease,
   catalog: Pick<
     CoreSourceCatalogV2,
     "actorAccountId" | "tripId" | "sourceId" | "sourceRevision"
   >,
   rawPin: unknown,
-  hash: ImportHash,
-  readBinary?: UniversalBinaryReader,
 ) {
   const pin = flightInputSchema.parse(rawPin);
   if (
-    !readBinary ||
     pin.source_id !== catalog.sourceId ||
     pin.material_revision !== catalog.sourceRevision
   )
     throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
   const readProof = async () =>
-    proofSchema.parse(
+    universalPngSourceProofSchema.parse(
       (
         await lease.query(
           "SELECT public.trip_source_read_sustained_png_proof($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::bigint) AS proof",
@@ -74,6 +72,29 @@ export async function readUniversalPngSourceMaterial(
     proof.byteCount !== pin.byte_count
   )
     throw Error("SOURCE_INTEGRITY_FAILURE");
+  return proof;
+}
+
+// Existing owning Source locks must remain held. The protected proof RPC is default closed until its exact Gate is installed.
+export async function readUniversalPngSourceMaterialWithProof(
+  lease: CorePgLease,
+  catalog: Pick<
+    CoreSourceCatalogV2,
+    "actorAccountId" | "tripId" | "sourceId" | "sourceRevision"
+  >,
+  rawPin: unknown,
+  hash: ImportHash,
+  readBinary?: UniversalBinaryReader,
+) {
+  const pin = flightInputSchema.parse(rawPin);
+  if (
+    !readBinary ||
+    pin.source_id !== catalog.sourceId ||
+    pin.material_revision !== catalog.sourceRevision
+  )
+    throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+  const readProof = () => readUniversalPngSourceProof(lease, catalog, pin);
+  const proof = await readProof();
   const bytes = await readBinary({
     accountId: catalog.actorAccountId,
     tripId: catalog.tripId,
@@ -81,6 +102,7 @@ export async function readUniversalPngSourceMaterial(
     representationId: pin.representation_id,
     sha256: pin.payload_sha256,
     byteCount: pin.byte_count,
+    mimeType: "image/png",
   });
   if (bytes.length < 24) throw Error("SOURCE_INTEGRITY_FAILURE");
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -96,5 +118,11 @@ export async function readUniversalPngSourceMaterial(
   await importImageBytes(material, hash);
   if (JSON.stringify(await readProof()) !== JSON.stringify(proof))
     throw Error("SOURCE_INTEGRITY_FAILURE");
-  return material;
+  return { material, proof };
+}
+
+export async function readUniversalPngSourceMaterial(
+  ...args: Parameters<typeof readUniversalPngSourceMaterialWithProof>
+) {
+  return (await readUniversalPngSourceMaterialWithProof(...args)).material;
 }

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { PNG_DEV_X64_EXECUTION_PROFILE_SHA256 } from "../../src/domain/trip/sourcePngPreparation";
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import type { Task } from "../../src/domain/intelligence/persistence";
@@ -5,7 +7,11 @@ import { createUniversalSourceReader } from "./universalSourceRead";
 import { createUniversalBackendRuntime } from "./universalRuntime";
 
 function fixture(binary = false) {
-  const bytes = Buffer.from(binary ? "synthetic-png-custody" : "Museum walk"),
+  const bytes = binary
+      ? readFileSync(
+          new URL("../../output/photo/universal-photo-activity-qa.png", import.meta.url),
+        )
+      : Buffer.from("Museum walk"),
     sha256 = createHash("sha256").update(bytes).digest("hex");
   const r = {
     inputId: randomUUID(),
@@ -26,6 +32,26 @@ function fixture(binary = false) {
     submissionSha256: "b".repeat(64),
     representations: [r],
   };
+  const pngSource = {
+    actorAccountId: manifest.accountId,
+    tripId: manifest.tripId,
+    sourceId: r.sourceId,
+    representationId: r.representationId,
+    sourceRevision: r.revision,
+    sourceRowRevision: 1,
+    sha256: r.sha256,
+    byteCount: r.byteCount,
+    verification: {
+      attemptId: randomUUID(),
+      operationId: randomUUID(),
+      terminalEvidenceSha256: "e".repeat(64),
+      profileId: "PNG_STATIC_RGB8_RGBA8_V1" as const,
+      profileSha256: PNG_DEV_X64_EXECUTION_PROFILE_SHA256,
+    },
+  };
+  // Synthetic owning proof only, not a real Source authority claim.
+  const representation = r as typeof r & { pngSource?: typeof pngSource };
+  if (binary) representation.pngSource = pngSource;
   const task = {
     account_id: manifest.accountId,
     trip_id: manifest.tripId,
@@ -57,7 +83,7 @@ function fixture(binary = false) {
   return {
     bytes,
     manifest,
-    r,
+    r: representation,
     task,
     query,
     readBinary,
@@ -172,4 +198,36 @@ it("does not let a pinned PDF derivative lose its original provenance", async ()
   const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
   Object.assign(f.task.input_pins[0], { transform_sha256: PDF_V2_OPTIONS_SHA });
   await expect(f.read(f.task)).rejects.toThrow("UNIVERSAL_SOURCE_MATERIAL_INVALID");
+});
+
+it.each(["missing", "foreign", "text", "derived"])(
+  "does not disclose PNG bytes with %s owning proof",
+  async (fault) => {
+    const f = fixture(true);
+    if (fault === "missing") delete f.r.pngSource;
+    if (fault === "foreign") f.r.pngSource!.representationId = randomUUID();
+    if (fault === "text") f.r.text = "OCR is relevance only";
+    if (fault === "derived")
+      f.task.input_pins[0] = {
+        ...f.task.input_pins[0],
+        transform_sha256: "a".repeat(64),
+      } as (typeof f.task.input_pins)[0];
+    await expect(f.read(f.task)).rejects.toThrow("UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED");
+    expect(f.readBinary).not.toHaveBeenCalled();
+  },
+);
+it("discloses only original PNG bytes after two matching Source proof snapshots", async () => {
+  const f = fixture(true);
+  const result = await f.read(f.task);
+  expect(result.representations[0].bytes).toEqual(f.bytes);
+  expect(result.representations[0].mime).toBe("image/png");
+  expect(f.query.mock.calls.filter(([sql]) => sql.startsWith("SELECT"))).toHaveLength(2);
+});
+it("withholds PNG after the owning execution witness changes during custody I/O", async () => {
+  const f = fixture(true);
+  f.readBinary.mockImplementationOnce(async () => {
+    f.r.pngSource!.verification.terminalEvidenceSha256 = "f".repeat(64);
+    return f.bytes;
+  });
+  await expect(f.read(f.task)).rejects.toThrow("UNIVERSAL_SOURCE_CHANGED");
 });

@@ -61,6 +61,7 @@ it("binds owning proof and exact retained bytes under the same Source scope and 
     representationId: f.pin.representation_id,
     sha256: f.pin.payload_sha256,
     byteCount: f.pin.byte_count,
+    mimeType: "image/png",
   });
   expect(f.query).toHaveBeenCalledTimes(2);
 });
@@ -88,3 +89,14 @@ it.each(["scope", "hash", "revision", "profile", "custody", "late-change", "clos
       expect(f.read).not.toHaveBeenCalled();
   },
 );
+
+it("keeps the real x64 execution fingerprint and never relabels it as ARM", async () => {
+  const f = await fixture();
+  f.proof.verification.profileSha256 =
+    "0e22d87a595129dbd9a3b2b00a771379f0e26d15d7a46781c76c7c08ed65a726";
+  const material = await f.run();
+  expect(material.verification.profileSha256).toBe(f.proof.verification.profileSha256);
+  expect(material.verification.profileSha256).not.toBe(
+    "526b66b7bd63daeed309c3d2630cdeaec759a6031a9efe7ade381c06fd04ede5",
+  );
+});

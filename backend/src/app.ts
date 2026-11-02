@@ -660,6 +660,7 @@ export type BackendDependencies = {
   universalRuntimeForRequest?(
     request: Request,
     actorId: string,
+    requestId?: string,
   ): Promise<{
     universalImportPort?: UniversalPort;
     universalOriginalSourcePort?: ReturnType<
@@ -2607,7 +2608,7 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/import-batches/:batchId/interpretations";
         const actor = await authenticate(request, gateway);
-        const runtime = await universalRuntimeForRequest?.(request, actor.id);
+        const runtime = await universalRuntimeForRequest?.(request, actor.id, requestId);
         response = url.pathname.endsWith("/prepare")
           ? await universalPrepareBoundary(
               request,

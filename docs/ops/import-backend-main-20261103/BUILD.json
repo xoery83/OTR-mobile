@@ -1,0 +1,10 @@
+{
+  "status": "LOCAL_CAPTURE_BUILD_PASS_NOT_DEPLOYED",
+  "captureSHA256": "298a6a7532755ef0a1e2337947942b4a9019c64a5ae39f0d32c0285f136645e8",
+  "base": "a5161ad0",
+  "sourceDiffSHA256": "5dd25a4b9c3c47114e6bc216fef6ea7e9d789dc8483b2b4179d09072ae495db4",
+  "nativeBuild": false,
+  "hostedActions": 0,
+  "providerCalls": 0,
+  "nonFunctionalPostValidationChange": "Removed one proven-unused context import; no branch/type/runtime behavior changed"
+}

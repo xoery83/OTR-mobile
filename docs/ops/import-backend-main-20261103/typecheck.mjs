@@ -1,0 +1,4 @@
+import fs from "node:fs";import {createRequire} from "node:module";import {fileURLToPath} from "node:url";
+const root=fileURLToPath(new URL("../../../",import.meta.url)),require=createRequire(root+"package.json"),ts=require("typescript");
+const manifest=JSON.parse(fs.readFileSync(new URL("./MANIFEST.json",import.meta.url),"utf8"));const files=Object.keys(manifest.files).map(f=>root+f);if(files.length!==22)throw Error("FIXED_BACKEND_ROOTS_REQUIRED");
+const raw=ts.readConfigFile(root+"tsconfig.json",ts.sys.readFile),config=ts.parseJsonConfigFileContent(raw.config,ts.sys,root);const program=ts.createProgram(files,{...config.options,noEmit:true}),diagnostics=ts.getPreEmitDiagnostics(program);if(diagnostics.length)throw Error(ts.formatDiagnosticsWithColorAndContext(diagnostics,{getCurrentDirectory:()=>root,getCanonicalFileName:f=>f,getNewLine:()=>"\n"}));console.log(JSON.stringify({status:"STRICT_BACKEND_TYPES_PASS",rootFiles:files.length}));

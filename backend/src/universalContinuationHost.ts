@@ -28,7 +28,8 @@ export function createUniversalContinuationHost(deps: {
   repository: Repository;
   custody: PrivateMaterialCustody;
   retained: Awaited<ReturnType<typeof createFlightPrivateCustody>>["retained"];
-  requestMaterialByteCount: number;
+  requestMaterialByteCount?: number;
+  publishedReadOnly?: true;
   readSourceManifest(task: Readonly<Task>): Promise<UniversalManifest | null>;
   attempt: Attempt;
   // Existing Provider reservation must prove its actual durable START and the
@@ -49,9 +50,10 @@ export function createUniversalContinuationHost(deps: {
     attempt.attempt_sequence !== 1 ||
     !attempt.request_material_reference ||
     attempt.request_material_reference === attempt.attempt_id ||
-    !Number.isSafeInteger(deps.requestMaterialByteCount) ||
-    deps.requestMaterialByteCount < 1 ||
-    deps.requestMaterialByteCount > 4194304
+    (!deps.publishedReadOnly &&
+      (!Number.isSafeInteger(deps.requestMaterialByteCount) ||
+        deps.requestMaterialByteCount! < 1 ||
+        deps.requestMaterialByteCount! > 4194304))
   )
     throw new Error("UNIVERSAL_TASK_BINDING_INVALID");
 
@@ -59,6 +61,7 @@ export function createUniversalContinuationHost(deps: {
     const snapshot = await deps.repository.snapshot(context, deps.taskId);
     const t = snapshot.task;
     if (
+      (deps.publishedReadOnly && t.work_disposition !== "PUBLISHED") ||
       t.account_id !== context.accountId ||
       t.trip_id !== context.tripId ||
       t.import_id !== deps.batchId ||
@@ -139,11 +142,12 @@ export function createUniversalContinuationHost(deps: {
     return material(
       a.request_material_reference!,
       a.request_material_sha256!,
-      deps.requestMaterialByteCount,
+      deps.requestMaterialByteCount!,
     );
   }
   return {
     async readManifest(actor, trip, batch) {
+      if (deps.publishedReadOnly) throw Error("UNIVERSAL_READ_ONLY");
       assertScope(actor, batch);
       if (trip !== context.tripId) return null;
       const { task: t } = await current();
@@ -152,6 +156,7 @@ export function createUniversalContinuationHost(deps: {
       return manifest;
     },
     async claimDispatch(marker) {
+      if (deps.publishedReadOnly) throw Error("UNIVERSAL_READ_ONLY");
       assertScope(marker.actorId, marker.batchId, marker.taskId);
       const state = await current();
       if (state.attempts[0]) {
@@ -189,6 +194,7 @@ export function createUniversalContinuationHost(deps: {
       return { claimed: true, receipt: marker };
     },
     async writeReceipt(result) {
+      if (deps.publishedReadOnly) throw Error("UNIVERSAL_READ_ONLY");
       assertScope(result.actorId, result.batchId, result.taskId);
       if (
         result.accountId !== context.accountId ||

@@ -1,5 +1,6 @@
 import {
-  readUniversalPngSourceMaterial,
+  readUniversalPngSourceMaterialWithProof,
+  readUniversalPngSourceProof,
   type UniversalBinaryReader,
 } from "./universalPngSourceMaterial";
 import { hasCurrentPdfV2ProofAccess } from "./sourcePdfV2CoreProof";
@@ -205,7 +206,7 @@ export function createCoreUniversalSourceRead(
     });
     return structuredClone(lockedBinding);
   }
-  async function readSnapshot(task: Readonly<UniversalSourceTask>) {
+  async function readSnapshot(task: Readonly<UniversalSourceTask>, metadataOnly = false) {
     return scoped(async () => {
       const b = await binding(task.import_id!);
       if (
@@ -238,18 +239,23 @@ export function createCoreUniversalSourceRead(
           rep.remote_state === "VERIFIED" &&
           !p.pdfSource
         ) {
-          await readUniversalPngSourceMaterial(
-            lease,
-            {
-              actorAccountId: actor,
-              tripId: trip,
-              sourceId: p.source_id,
-              sourceRevision: p.material_revision,
-            },
-            p,
-            async (bytes) => createHash("sha256").update(bytes).digest("hex"),
-            readBinary,
-          );
+          const catalog = {
+            actorAccountId: actor,
+            tripId: trip,
+            sourceId: p.source_id,
+            sourceRevision: p.material_revision,
+          };
+          const proof = metadataOnly
+            ? await readUniversalPngSourceProof(lease, catalog, p)
+            : (
+                await readUniversalPngSourceMaterialWithProof(
+                  lease,
+                  catalog,
+                  p,
+                  async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+                  readBinary,
+                )
+              ).proof;
           representations.push({
             inputId: p.id,
             sourceId: p.source_id,
@@ -259,6 +265,7 @@ export function createCoreUniversalSourceRead(
             byteCount: p.byte_count,
             mime: "image/png",
             text: null,
+            pngSource: proof,
           });
           continue;
         }
@@ -312,6 +319,24 @@ export function createCoreUniversalSourceRead(
     async lookup(a: string, t: string, batch: string) {
       if (a !== actor || t !== trip) throw Error("SOURCE_ACCESS_DENIED");
       return scoped(() => binding(batch));
+    },
+    withRetainedMetadata<T>(
+      task: Readonly<UniversalSourceTask>,
+      read: (
+        snapshot: import("./universalSourceRead").UniversalSourceMetadata,
+      ) => Promise<T>,
+    ) {
+      return createUniversalSourceReader({
+        connection: {
+          withLease: async () => {
+            throw Error("SECOND_SOURCE_CONNECTION_FORBIDDEN");
+          },
+        },
+        readSnapshot: (task) => readSnapshot(task, true),
+        readBinary: async () => {
+          throw Error("UNIVERSAL_METADATA_CANNOT_READ_BINARY");
+        },
+      }).withRetainedMetadata(task, read);
     },
     readManifest: createUniversalSourceReader({
       connection: {

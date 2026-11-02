@@ -1,0 +1,44 @@
+{
+  "status": "LOCAL_PASS_INDEPENDENT_REVIEW_NO_BLOCKER_NOT_DEPLOYED",
+  "base": "a5161ad0",
+  "latestTargetMain": "405aa3298a066df9b3c60c9366b0314ee658d6a9",
+  "sourceDiffSHA256": "5dd25a4b9c3c47114e6bc216fef6ea7e9d789dc8483b2b4179d09072ae495db4",
+  "sourceCommits": [
+    "c8d473b9",
+    "ca0b3dab (only two profile declaration files and targeted test)",
+    "f86008f0 (minimal diagnostics/requestId)",
+    "f5aad5ff",
+    "2146e9a7"
+  ],
+  "tests": {
+    "numTotalTests": 118,
+    "numPassedTests": 117,
+    "numFailedTests": 0,
+    "numPendingTests": 1,
+    "numTotalTestSuites": 12,
+    "success": true
+  },
+  "strictTypes": {
+    "status": "PASS",
+    "fixedRootFiles": 22
+  },
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 2,
+    "reason": "Existing duplicate universalImport type/value imports in Host; unrelated cleanup omitted"
+  },
+  "diffCheck": "PASS",
+  "captureBuild": "PASS",
+  "independentReviewSHA256": "4db5680a5d99b043ab285d6060567ec53756363b4e85f7b02796f0e4c8bdf40c",
+  "newPngWorkerRuntime": false,
+  "newQaExecutionFence": false,
+  "newSchemaRolesRlsGrantsOrAuthority": false,
+  "hostedOrNativeActions": 0,
+  "providerCalls": 0,
+  "notClaimed": [
+    "Merged main runtime verification",
+    "Hosted compatibility deployment",
+    "New Provider/Source authority",
+    "Unknown accepted operation with SourceSlot not COMPLETE"
+  ]
+}

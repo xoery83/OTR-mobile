@@ -18,7 +18,7 @@ import {
   createUniversalBatchSource,
   type UniversalRunBinding,
 } from "./universalBatchSource";
-import type { UniversalSourceTask } from "./universalSourceRead";
+import type { UniversalSourceTask, UniversalSourceMetadata } from "./universalSourceRead";
 import type { UniversalManifest } from "./universalImport";
 import { createUniversalSourceReader } from "./universalSourceRead";
 import {
@@ -38,6 +38,7 @@ import { readUniversalCatalog } from "./universalCatalog";
 import { persistenceDigest } from "./externalIntegrationPersistence";
 import {
   prepareUniversalDispatch,
+  sealedUniversalDispatchMarker,
   UNIVERSAL_IMPORT_VERSION,
   type UniversalResult,
 } from "./universalImport";
@@ -86,6 +87,8 @@ export function createUniversalContinuousHost(deps: {
         "readRaw"
       >;
   };
+  sourceReadRequestId?: string;
+  retainedResultsEnabled?: boolean;
   publishedSource?: {
     lookup(
       actor: string,
@@ -93,6 +96,10 @@ export function createUniversalContinuousHost(deps: {
       batch: string,
     ): Promise<UniversalRunBinding | null>;
     readManifest(task: Readonly<UniversalSourceTask>): Promise<UniversalManifest>;
+    withRetainedMetadata?<T>(
+      task: Readonly<UniversalSourceTask>,
+      read: (snapshot: UniversalSourceMetadata) => Promise<T>,
+    ): Promise<T>;
   };
   readAdmittedPrice(task: Task, attempt: Attempt): Promise<UniversalPriceSchedule>;
 }) {
@@ -111,13 +118,16 @@ export function createUniversalContinuousHost(deps: {
       await current();
     },
   });
-  const readManifest =
-    deps.publishedSource?.readManifest ??
-    createUniversalSourceReader({
-      connection: deps.runtime.sourceConnection,
-      continuous: true,
-      readBinary: deps.runtime.readBinary,
-    });
+  const sourceReader = createUniversalSourceReader({
+    connection: deps.runtime.sourceConnection,
+    continuous: true,
+    diagnosticRequestId: deps.sourceReadRequestId,
+    readBinary: deps.runtime.readBinary,
+  });
+  const readManifest = deps.publishedSource?.readManifest ?? sourceReader;
+  const withRetainedMetadata = deps.publishedSource
+    ? deps.publishedSource.withRetainedMetadata?.bind(deps.publishedSource)
+    : sourceReader.withRetainedMetadata;
   const repository = (expected?: Task, admitted?: Attempt) =>
     createIntelligenceContinuationRepository(deps.db, {
       getAccountId: async () => actor,
@@ -224,14 +234,128 @@ export function createUniversalContinuousHost(deps: {
       lockedManifest ?? (await readManifest(task)),
     );
     if (!dispatch.ready.length) throw Error("UNIVERSAL_NO_INTERPRETABLE_SOURCE");
-    return { dispatch, bytes: Buffer.from(JSON.stringify(dispatch.dispatchMarker)) };
+    return {
+      dispatch,
+      bytes: Buffer.from(JSON.stringify(dispatch.dispatchMarker)),
+    };
   }
   async function readResult(batch: string, taskId: string) {
-    const state = await found(batch, taskId);
-    return readState(state, state.sourceManifest);
+    const state = await readBoundTask(batch, taskId);
+    if (
+      deps.retainedResultsEnabled === true &&
+      withRetainedMetadata &&
+      state.task.work_disposition === "PUBLISHED"
+    )
+      return readRetained(state);
+    const sourceManifest = await readManifest(state.task);
+    await current();
+    return readState(state, sourceManifest);
+  }
+  async function readRetained(before: Awaited<ReturnType<typeof readBoundTask>>) {
+    const { task, binding, attempts } = before;
+    if (attempts.length !== 1 || attempts[0].result_install_disposition !== "INSTALLED")
+      throw Error("UNIVERSAL_RESULT_UNAVAILABLE");
+    const attempt = attempts[0];
+    if (!withRetainedMetadata) throw Error("UNIVERSAL_RESULT_UNAVAILABLE");
+    const result = await withRetainedMetadata(task, async (snapshot) => {
+      // Other source kinds retain the existing full material read contract.
+      const representation = snapshot.representations[0],
+        pin = binding.inputs[0];
+      if (snapshot.representations.length !== 1 || representation.mime !== "image/png") {
+        const state = await found(binding.batchId, task.task_id);
+        return readState(state, state.sourceManifest);
+      }
+      if (
+        binding.inputs.length !== 1 ||
+        pin.pdfSource !== undefined ||
+        representation.inputId !== pin.id ||
+        representation.sourceId !== pin.source_id ||
+        representation.representationId !== pin.representation_id ||
+        representation.revision !== pin.material_revision ||
+        representation.sha256 !== pin.payload_sha256 ||
+        representation.byteCount !== pin.byte_count ||
+        !representation.pngSource ||
+        representation.pngSource.sourceRowRevision !== pin.observed_source_row_revision
+      )
+        throw Error("UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED");
+      const host = createUniversalContinuationHost({
+        context,
+        batchId: binding.batchId,
+        taskId: task.task_id,
+        repository: repository(task, attempt),
+        ...deps.runtime.stores,
+        attempt,
+        publishedReadOnly: true,
+        readSourceManifest: readManifest,
+        async assertDurableStart() {
+          throw Error("UNIVERSAL_READ_ONLY");
+        },
+        async assertCompletion() {
+          throw Error("UNIVERSAL_READ_ONLY");
+        },
+      });
+      const value = await host.readReceipt(actor, binding.batchId, task.task_id);
+      if (
+        !value ||
+        value.providerOutcome !== "SETTLED" ||
+        value.sourceBindings.length !== 1
+      )
+        throw Error("UNIVERSAL_RESULT_UNAVAILABLE");
+      const resultPin = value.sourceBindings[0];
+      if (
+        resultPin.alias !== "S0" ||
+        resultPin.mime !== "image/png" ||
+        resultPin.status !== "READY" ||
+        resultPin.inputId !== pin.id ||
+        resultPin.sourceId !== pin.source_id ||
+        resultPin.representationId !== pin.representation_id ||
+        resultPin.revision !== pin.material_revision ||
+        resultPin.originalSha256 !== pin.payload_sha256 ||
+        resultPin.submittedSha256 !== pin.payload_sha256 ||
+        resultPin.pdfSource
+      )
+        throw Error("UNIVERSAL_SOURCE_BINDING_INVALID");
+      const requestSHA = await hash(
+        Buffer.from(
+          JSON.stringify({
+            version: UNIVERSAL_IMPORT_VERSION,
+            actorId: actor,
+            accountId: actor,
+            tripId: trip,
+            batchId: binding.batchId,
+            bindings: value.sourceBindings,
+          }),
+        ),
+      );
+      const marker = Buffer.from(JSON.stringify(sealedUniversalDispatchMarker(value)));
+      if (
+        requestSHA !== attempt.request_sha256 ||
+        (await hash(marker)) !== attempt.request_material_sha256
+      )
+        throw Error("UNIVERSAL_TASK_CHANGED");
+      // Exact expected length is derived from the sealed marker and independently checked by custody.
+      const stored = await deps.runtime.stores.custody.read({
+        accountId: actor,
+        reference: attempt.request_material_reference!,
+        sha256: attempt.request_material_sha256!,
+        byteCount: marker.length,
+      });
+      if (
+        !Buffer.from(stored).equals(marker) ||
+        (await hash(stored)) !== attempt.request_material_sha256
+      )
+        throw Error("UNIVERSAL_RECEIPT_INTEGRITY");
+      return value;
+    });
+    const after = await readBoundTask(binding.batchId, task.task_id);
+    if (JSON.stringify(after) !== JSON.stringify(before))
+      throw Error("UNIVERSAL_PUBLICATION_CHANGED");
+    await repository(task, attempt).authorizeResultDisclosure(context, attempt);
+    await current();
+    return result;
   }
   async function readState(
-    state: Awaited<ReturnType<typeof found>>,
+    state: Awaited<ReturnType<typeof readBoundTask>>,
     lockedManifest?: UniversalManifest,
   ) {
     const batch = state.binding.batchId,
@@ -342,17 +466,30 @@ export function createUniversalContinuousHost(deps: {
       batch: string,
       taskId: string,
     ): Promise<UniversalPublishedResult | null> {
-      const before = await found(batch, taskId);
-      if (before.task.work_disposition !== "PUBLISHED") return null;
+      const retained = deps.retainedResultsEnabled === true && !!withRetainedMetadata;
+      const before = retained
+        ? { ...(await readBoundTask(batch, taskId)), sourceManifest: undefined }
+        : await found(batch, taskId);
+      if (before.task.work_disposition !== "PUBLISHED") {
+        if (retained) {
+          await readManifest(before.task);
+          await current();
+        }
+        return null;
+      }
       // Core retains the owning Source locks; its first manifest already checks all bytes twice.
-      const result = deps.publishedSource
-        ? await readState(before, before.sourceManifest)
-        : await readResult(batch, taskId);
+      const result = retained
+        ? await readRetained(before)
+        : deps.publishedSource
+          ? await readState(before, before.sourceManifest)
+          : await readResult(batch, taskId);
       if (!result || result.providerOutcome !== "SETTLED" || !before.task.result_sha256)
         throw Error("UNIVERSAL_RESULT_UNAVAILABLE");
-      const after = deps.publishedSource
-        ? await existing(before.binding)
-        : await found(batch, taskId);
+      const after = retained
+        ? await readBoundTask(batch, taskId)
+        : deps.publishedSource
+          ? await existing(before.binding)
+          : await found(batch, taskId);
       await current();
       if (!after) throw Error("UNIVERSAL_TASK_UNAVAILABLE");
       if (

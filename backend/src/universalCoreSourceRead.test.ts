@@ -351,3 +351,182 @@ it("does not leak accepted-read provenance into a later fresh read on the same l
   ).toHaveLength(2);
   await expect(f.source.readManifest(f.task)).rejects.toThrow("CONTRACT_UNSUPPORTED");
 });
+
+it("passes the actual held PNG proof through the shared Source reader, without Candidate reconstruction", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { PNG_DEV_X64_EXECUTION_PROFILE_SHA256 } =
+    await import("../../src/domain/trip/sourcePngPreparation");
+  const f = fixture("otr_trip_core_v2_gateway");
+  const bytes = Uint8Array.from(
+    readFileSync(
+      new URL("../../output/photo/universal-photo-activity-qa.png", import.meta.url),
+    ),
+  );
+  f.inputs.splice(1);
+  f.run.scope_source_ids.splice(1);
+  f.state.scopeCount = 1;
+  f.task.input_pins.splice(1);
+  const pin = f.inputs[0],
+    sha256 = createHash("sha256").update(bytes).digest("hex");
+  pin.payload_sha256 = sha256;
+  pin.byte_count = bytes.length;
+  Object.assign(f.task.input_pins[0], {
+    payload_sha256: sha256,
+    byte_count: bytes.length,
+  });
+  const proof = {
+    actorAccountId: f.state.actor,
+    tripId: f.state.trip,
+    sourceId: pin.source_id,
+    representationId: pin.representation_id,
+    sourceRevision: 1,
+    sourceRowRevision: 1,
+    sha256,
+    byteCount: bytes.length,
+    verification: {
+      attemptId: randomUUID(),
+      operationId: randomUUID(),
+      terminalEvidenceSha256: "e".repeat(64),
+      profileId: "PNG_STATIC_RGB8_RGBA8_V1",
+      profileSha256: PNG_DEV_X64_EXECUTION_PROFILE_SHA256,
+    },
+  };
+  const original = f.query.getMockImplementation()!;
+  f.query.mockImplementation(async (sql, args) => {
+    if (sql.includes("trip_source_read_sustained_png_proof"))
+      return { rows: [{ proof: structuredClone(proof) }] };
+    if (sql.includes("material_kind,encoding"))
+      return {
+        rows: [
+          {
+            id: pin.representation_id,
+            source_id: pin.source_id,
+            role: "ORIGINAL",
+            material_kind: "BINARY",
+            encoding: null,
+            mime_type: "image/png",
+            text_content: null,
+            remote_state: "VERIFIED",
+          },
+        ],
+      };
+    return original(sql, args);
+  });
+  const readBinary = vi.fn(async () => bytes);
+  const source = createCoreUniversalSourceRead(
+    f.lease,
+    f.state.actor,
+    f.state.trip,
+    readBinary,
+  );
+  const result = await source.readManifest(f.task);
+  expect(result.representations[0].bytes).toEqual(Buffer.from(bytes));
+  expect(result.representations[0].mime).toBe("image/png");
+  expect(
+    f.query.mock.calls.filter(([sql]) =>
+      sql.includes("trip_source_read_sustained_png_proof"),
+    ),
+  ).toHaveLength(4);
+  expect(f.state.role).toBe("otr_trip_core_v2_gateway");
+  expect(f.query.mock.calls.some(([sql]) => /BEGIN|COMMIT/.test(sql))).toBe(false);
+});
+
+it("keeps expired raw material closed while a held-lease metadata callback rechecks the same PNG proof", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { PNG_DEV_X64_EXECUTION_PROFILE_SHA256 } =
+    await import("../../src/domain/trip/sourcePngPreparation");
+  const f = fixture("otr_trip_core_v2_gateway");
+  const bytes = Uint8Array.from(
+    readFileSync(
+      new URL("../../output/photo/universal-photo-activity-qa.png", import.meta.url),
+    ),
+  );
+  f.inputs.splice(1);
+  f.run.scope_source_ids.splice(1);
+  f.state.scopeCount = 1;
+  f.task.input_pins.splice(1);
+  const pin = f.inputs[0],
+    sha256 = createHash("sha256").update(bytes).digest("hex");
+  pin.payload_sha256 = sha256;
+  pin.byte_count = bytes.length;
+  Object.assign(f.task.input_pins[0], {
+    payload_sha256: sha256,
+    byte_count: bytes.length,
+  });
+  const proof = {
+    actorAccountId: f.state.actor,
+    tripId: f.state.trip,
+    sourceId: pin.source_id,
+    representationId: pin.representation_id,
+    sourceRevision: 1,
+    sourceRowRevision: 1,
+    sha256,
+    byteCount: bytes.length,
+    verification: {
+      attemptId: randomUUID(),
+      operationId: randomUUID(),
+      terminalEvidenceSha256: "e".repeat(64),
+      profileId: "PNG_STATIC_RGB8_RGBA8_V1",
+      profileSha256: PNG_DEV_X64_EXECUTION_PROFILE_SHA256,
+    },
+  };
+  const original = f.query.getMockImplementation()!;
+  f.query.mockImplementation(async (sql, args) => {
+    if (sql.includes("trip_source_read_sustained_png_proof"))
+      return { rows: [{ proof: structuredClone(proof) }] };
+    if (sql.includes("material_kind,encoding"))
+      return {
+        rows: [
+          {
+            id: pin.representation_id,
+            source_id: pin.source_id,
+            role: "ORIGINAL",
+            material_kind: "BINARY",
+            encoding: null,
+            mime_type: "image/png",
+            text_content: null,
+            remote_state: "VERIFIED",
+          },
+        ],
+      };
+    return original(sql, args);
+  });
+  const readBinary = vi.fn(async () => {
+    throw Error("SOURCE_CAPABILITY_CLOSED");
+  });
+  const source = createCoreUniversalSourceRead(
+    f.lease,
+    f.state.actor,
+    f.state.trip,
+    readBinary,
+  );
+  await expect(source.readManifest(f.task)).rejects.toThrow("SOURCE_CAPABILITY_CLOSED");
+  const before = readBinary.mock.calls.length;
+  const result = await source.withRetainedMetadata(f.task, async (snapshot) => {
+    expect(snapshot.representations[0].pngSource).toEqual(proof);
+    expect("bytes" in snapshot.representations[0]).toBe(false);
+    return "sealed-receipt-metadata";
+  });
+  expect(result).toBe("sealed-receipt-metadata");
+  expect(readBinary).toHaveBeenCalledTimes(before);
+  await expect(
+    source.withRetainedMetadata(f.task, async () => {
+      proof.verification.terminalEvidenceSha256 = "f".repeat(64);
+      return "must-not-disclose";
+    }),
+  ).rejects.toThrow("UNIVERSAL_SOURCE_CHANGED");
+  proof.verification.terminalEvidenceSha256 = "e".repeat(64);
+  const query = f.query.getMockImplementation()!;
+  f.query.mockImplementation(async (sql, args) => {
+    if (sql.includes("trip_source_read_sustained_png_proof"))
+      throw Error("SOURCE_ACCESS_DENIED");
+    return query(sql, args);
+  });
+  await expect(
+    source.withRetainedMetadata(f.task, async () => "must-not-disclose"),
+  ).rejects.toThrow("SOURCE_ACCESS_DENIED");
+  f.query.mockImplementation(query);
+  expect(f.state.role).toBe("otr_trip_core_v2_gateway");
+  expect(f.query.mock.calls.some(([sql]) => /BEGIN|COMMIT/.test(sql))).toBe(false);
+  await expect(source.readManifest(f.task)).rejects.toThrow("SOURCE_CAPABILITY_CLOSED");
+});

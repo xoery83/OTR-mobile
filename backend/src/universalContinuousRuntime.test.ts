@@ -15,6 +15,7 @@ const f = vi.hoisted(() => ({
   execute: vi.fn(),
   sourceConnection: vi.fn(),
   host: vi.fn(),
+  coreSource: vi.fn(),
   pdfConfig: vi.fn(),
   pdfPorts: vi.fn(),
 }));
@@ -46,6 +47,9 @@ vi.mock("./supabaseGateway", () => ({
 }));
 vi.mock("./universalTaskBootstrap", () => ({
   initializeUniversalTaskDatabase: () => ({ getFirstAsync: f.read }),
+}));
+vi.mock("./universalCoreSourceRead", () => ({
+  createCoreUniversalSourceRead: f.coreSource,
 }));
 vi.mock("./universalContinuousHost", () => ({
   createUniversalContinuousHost: f.host,
@@ -318,3 +322,64 @@ it.each(["enabled", "closed", "invalid", "foreign", "expired"])(
     }
   },
 );
+
+
+it("binds retained read-only recovery to request diagnostics and the original Core-held Source port", async () => {
+  const actor = randomUUID(),
+    trip = randomUUID(),
+    batch = randomUUID(),
+    task = randomUUID();
+  const requestId = randomUUID();
+  const lease = { query: vi.fn(), retire: vi.fn() };
+  const source = {
+    lookup: vi.fn(async () => ({
+      actorId: actor,
+      tripId: trip,
+      batchId: batch,
+      taskId: task,
+      inputs: [],
+    })),
+    readManifest: vi.fn(),
+    withRetainedMetadata: vi.fn(),
+  };
+  f.coreSource.mockReturnValue(source);
+  f.auth.mockResolvedValue({ id: actor });
+  f.host.mockReturnValue({ readPublished: vi.fn(async () => null) });
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+  });
+  try {
+    await runtime!.forRequest(
+      new Request("https://example.test", {
+        headers: { Authorization: "Bearer synthetic-test-only" },
+      }),
+      actor,
+      trip,
+      requestId,
+    );
+    expect(f.host.mock.calls[0][0]).toMatchObject({
+      sourceReadRequestId: requestId,
+      retainedResultsEnabled: true,
+    });
+    expect(f.host.mock.calls[0][0].publishedSource).toBeUndefined();
+    await expect(
+      runtime!.readPublished(
+        { actorAccountId: actor, tripId: trip, batchId: batch, taskId: task },
+        lease,
+      ),
+    ).resolves.toBeNull();
+    expect(f.coreSource).toHaveBeenCalledExactlyOnceWith(
+      lease,
+      actor,
+      trip,
+      expect.any(Function),
+    );
+    expect(f.host.mock.calls[1][0].publishedSource).toBe(source);
+    expect(f.host.mock.calls[1][0].sourceReadRequestId).toBeUndefined();
+    expect(f.host.mock.calls[1][0].retainedResultsEnabled).toBe(true);
+    expect(lease.query).not.toHaveBeenCalled();
+    expect(f.execute).not.toHaveBeenCalled();
+  } finally {
+    await runtime?.close();
+  }
+});
