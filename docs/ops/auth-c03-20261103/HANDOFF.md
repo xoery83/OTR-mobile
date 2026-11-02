@@ -33,3 +33,29 @@ inactive/missing means UNKNOWN, participating is not connected. Other Account UU
 are excluded. Auth will consume stable Person IDs; no name/email/AKA matching.
 No shared Core/Navigation/SQLite file was changed by Auth. Trip Nickname needs its
 owning self-Person write/CAS path; Account-private Display Name is not that field.
+
+
+## People connection display adapter candidate
+
+`src/features/people/peopleConnectionProjection.ts` consumes the Native-agreed port
+through `readPeopleConnectionProjection(context, {account, listTripPersons,
+connections?})`. The existing Person repository remains the roster owner; Native
+Core remains the accepted-certificate qualification owner. No direct SQLite or
+new network/repository path exists here. Pass the existing scoped current-account
+getter and Person repository method. Connect the Native Reader only after its
+unique Writer delivers it; the adapter works with UNKNOWN when that port is absent.
+It is not wired to a page yet and does not assert Native delivery.
+
+Matches stable Person IDs only. Trip-scoped `displayName` is retained verbatim;
+private global Display Name, travel-document names and AKA are not inputs. Only
+OBSERVED_CACHE connection/self flags and non-private Core epoch/access revision are
+projected. Missing/inactive/local-pending does not become not-connected. Participation
+is independent. Bad duplicates/self-state or extra Account fields fail closed.
+An explicit owning-reader rejection propagates; null is merely unknown. Existing
+roster/downstream owners must enforce actual revoke/cache invalidation; neither
+this adapter nor a mock exception proves server revocation. See
+PEOPLE_PROJECTION_EVIDENCE.json (10 new tests, independent9+1).
+
+Trip Nickname edit is not implemented by reusing global Profile mutation or the
+Person Add create request. It needs its own approved self-Person write/CAS source
+and existing repository/sync integration; no new engine or guessed revision is added.

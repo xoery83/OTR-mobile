@@ -35,3 +35,20 @@ runtime caller; a real access-loss integration remains required, without convert
 an Auth revision into Core accessRevision. Native currently owns conflicting
 `LocalTripWorkspace.tsx` and its test under SYNC-C01. Auth will not edit these shared
 files. No new device build or Realtime subscription is required for this handoff.
+
+## C03 independent increment — 3 November 2026
+
+- Private Profile original-operation recovery DTO/Repository/Backend adapter is
+  locally qualified at5d292b63; no save replay, no accepted-draft overwrite and no
+  current-name inference from receipt metadata. Hosted Profile remains unmounted.
+- People connection display adapter is locally qualified (10new tests). Native
+  confirmed the accepted-cache Reader contract but has NOT delivered its method or
+  shared page wiring; Auth does not claim this is integrated. No UUID/name matching,
+  no other Account UUID exposed; missing/inactive/pending stays UNKNOWN.
+- Native read port delivery is the exact next local integration dependency. Actual
+  Profile/Invite Hosted operation still needs its corresponding approved package.
+  Trip Nickname write remains a distinct owning mutation/CAS gap; participation
+  revision and Account Display Name cannot be substituted.
+- C04 7734f3b0 local isolated PASS is preserved.3edebba4 install remains
+  WAITING_FOR_APPROVAL. Hosted A/B Invite/Claim, member revoke and Native cold restore
+  are each NOT_RUN. New Owner direction is not installation authorization.

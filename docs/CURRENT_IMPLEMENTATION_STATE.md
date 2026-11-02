@@ -1,3 +1,20 @@
+# C03 local adapters ready; exact integrations pending — 3 November 2026
+
+Profile original-op recovery fixed5d292b63 (33focused tests; independent8new). People
+connection display adapter now10new tests/independent9+1/types/lint PASS. Uses existing
+roster + Native-agreed accepted-cache Reader, no matching/inferred Account and no
+private global names. Reader missing/inactive/pending stays UNKNOWN; explicit reader
+denial propagates. No shared Core/Navigation/SQLite modification or Native/Hosted PASS.
+Native confirmed the minimal Reader is still queued by its unique Writer, not shipped.
+Next real UI integration depends on that precise port; no replacement Reader/Sync
+engine is built. Trip Nickname write needs its owning self-Person mutation/CAS port,
+not Account Profile or participation revision. Evidence ops/auth-c03-20261103/.
+C04 7734f3b0 local isolated PASS retained without rerun. Protected installation
+WAITING_FOR_APPROVAL (Gate3edebba4); Hosted A/B, Member revoke and Native Cold Restore
+all NOT_RUN. Owner's 11-03 handoff explicitly is NOT approval. Root alone handles
+fresh preimage/install/restore after actual approval. Profile Cloud also remains
+reviewed/uninstalled; no protected operation or service change this increment.
+
 # AUTH-C03 STARTED; AUTH-C04 protected integration pending — 3 November 2026
 
 Owner explicitly retained C04 and did NOT approve Gate3edebba4. Exact states:
