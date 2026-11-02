@@ -1,0 +1,68 @@
+{
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "expectedRevision": 1,
+  "beforeNotes": "Synthetic QA only. No Booking/Ticket.",
+  "afterNotes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+  "limits": {
+    "maxWindowSeconds": 1800,
+    "normalCloseBeforeDeadlineSeconds": 120,
+    "maxAccessTokenSeconds": 60,
+    "maxApplyAttempts": 1,
+    "unknown": "READ_ORIGINAL_RECEIPT_ONLY_NO_REPOST"
+  },
+  "requiredRevalidation": [
+    "same Account/client/Trip/Item",
+    "same baseline/revision/Notes",
+    "original operation has no applied receipt",
+    "fresh formal Preview same operation/digest/CAS/Before/After",
+    "any mismatch stops without Apply"
+  ],
+  "status": "PREPARATION_ONLY_NO_AUTHORITY_NO_CLOCK",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "previousWindow": "78c1610ecf5f43409106fb67ecd36489",
+  "previousWindowState": "CLOSED_NEVER_REOPEN",
+  "startsAt": null,
+  "expiresAt": null,
+  "accessApproved": false,
+  "notesApproved": false,
+  "otpSent": false,
+  "applyAttempts": 0,
+  "finalAssembly": {
+    "status": "DEFAULT_CLOSED_DIAGNOSTIC_SOFTWARE_SERVER_VERIFIED",
+    "checkedAt": "2026-11-02T02:52:53.789502+00:00",
+    "containerId": "aaf656c3742f4d6ec8c8bccfe467c26ec0a77db82530796f918f0f476cc4e6a2",
+    "configSHA256": "1b704c490237427ae451fbc011af3dbd598305b6a7ba0609a139b93fe3934b51",
+    "image": "sha256:266ed7dfd6a2a50e62b116ea019fa99a3eb5cbc0d1fb29085c883782c3828b9e",
+    "health": "healthy",
+    "qaKeysAbsent": true,
+    "all23FilesExact": true,
+    "hostExact": true,
+    "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+    "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+    "bundles": {
+      "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+      "mcp/runtime.mjs": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
+      "server-capture.mjs": "7e715d4b33b118135dbccac3a6ff7789adbb7108c74096ddd7c141c86dbb089e",
+      "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+    },
+    "httpHealth200Protected401": true,
+    "deploymentLockReleased": true,
+    "retainedRollbackId": "076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0",
+    "retainedRollbackExact": true,
+    "authorityActivated": false
+  },
+  "closeBinding": "ROOT_OWNED_REBIND_PENDING",
+  "confirmationOrigin": {
+    "proposedThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+    "status": "CANDIDATE_MUST_BE_EXPLICIT_IN_NEW_GATE",
+    "currentValidatorAcceptsRootOrigin": false,
+    "requiredChange": "EXACT_OWNING_SOURCE_BINDING_NO_FALSE_AUTH_ORIGIN"
+  },
+  "wirePreflight": "FINAL_ACTUAL_APPROVAL_BYTES_AFTER_DIRECT_CONFIRMATION_BEFORE_CLOCK",
+  "noNewOwnerQuestion": true
+}
