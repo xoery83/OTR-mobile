@@ -1,0 +1,22 @@
+{
+  "status": "ALL_FINITE_RESOURCES_CLOSED_CONSUMER_E2E_PASS",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "recordedAt": "2026-11-02T05:24:40.455613+00:00",
+  "hostRestoredAt": "2026-11-02T05:20:23.397859Z",
+  "finalIssuerReadbackAt": "2026-11-02T05:22:36.802217Z",
+  "defaultContainer": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+  "oauthOffSaved": true,
+  "hookDisabledObserved": true,
+  "siteLocalhostReloadVerified": true,
+  "temporaryTabClosed": true,
+  "grantRevokeStatus": 204,
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "runtimeTimerInactive": true,
+  "issuerWatcherExited": true,
+  "serviceLockReleased": true,
+  "consumerApplyCount": 1,
+  "independentReceiptCount": 1,
+  "rootBusinessApplyCount": 0,
+  "historicalUnknownUnchanged": true,
+  "providerCalls": 0
+}

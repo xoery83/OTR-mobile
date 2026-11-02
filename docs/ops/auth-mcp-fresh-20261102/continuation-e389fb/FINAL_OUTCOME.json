@@ -1,0 +1,29 @@
+{
+  "status": "CLAUDE_CONSUMER_EDIT_E2E_PASS_ALL_FINITE_RESOURCES_CLOSED",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "applyAttempts": 1,
+  "formalOutcome": "APPLIED",
+  "revision": 2,
+  "independentReceiptCount": 1,
+  "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+  "otherRootAndFieldStateUnchanged": true,
+  "allItemChildrenUnchanged": true,
+  "rootCommit": "9eb6c17a",
+  "rootClosedAt": "2026-11-02T05:20:23.397859Z",
+  "finalIssuerReadbackAt": "2026-11-02T05:22:36.802217Z",
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "historicalUnknownReplayed": false,
+  "providerCalls": 0,
+  "chatGPT": "NOT_RUN_THIS_SLICE",
+  "realtimeHosted": "NOT_COVERED",
+  "evidenceSHA256": {
+    "actual-applied.json": "9bbe69eaca4e0c6c26cbaef14aac8840c5e4f96336dae457436ed1a23f3f1af6",
+    "independent-business-readback.json": "83a4b3c6b15ae38ae2fa5d8bd8712aa92bd0dc8f9a23ee6d4d3c5f2e77aaf45c",
+    "consumer-acceptance.json": "852dae3e09cfcd21af174ef47df0d6a542ec29249f4173b55389871af54e0832",
+    "root-final-outcome.json": "b7458dd89164ee574557334c5e4ee723e34911c1a39a03a3fc794a35db9a6621",
+    "root-final-close-readback.json": "54088aa118ab03a5bffcb367361254b452606e503bd418c24df29ed39fa8996c",
+    "final-hook-readback.json": "f92771a3f7d65ae3a904de04c893816f5a84fd17df1f6935d367a6fb18841be9"
+  }
+}

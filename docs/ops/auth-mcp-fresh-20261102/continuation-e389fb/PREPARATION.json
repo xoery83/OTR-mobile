@@ -22,16 +22,16 @@
     "fresh formal Preview same operation/digest/CAS/Before/After",
     "any mismatch stops without Apply"
   ],
-  "status": "FINAL_GATE_AND_DISPATCHER_REVIEW_PASS_WAIT_ROOT_ONLY_APPROVAL_NO_CLOCK",
+  "status": "CLOSED_CLAUDE_CONSUMER_EDIT_E2E_PASS",
   "windowId": "e389fb93736b401c9e9b5f1437e852dc",
   "previousWindow": "78c1610ecf5f43409106fb67ecd36489",
   "previousWindowState": "CLOSED_NEVER_REOPEN",
   "startsAt": null,
   "expiresAt": null,
-  "accessApproved": false,
-  "notesApproved": false,
+  "accessApproved": true,
+  "notesApproved": true,
   "otpSent": false,
-  "applyAttempts": 0,
+  "applyAttempts": 1,
   "finalAssembly": {
     "status": "DEFAULT_CLOSED_DIAGNOSTIC_SOFTWARE_SERVER_VERIFIED",
     "checkedAt": "2026-11-02T02:52:53.789502+00:00",
@@ -101,5 +101,12 @@
     "closeEntrySHA256": "471a338ae9a66cab8865b3bab00f2ad5f587737b62371cdbebf56ed0c4687f83",
     "closePlanSHA256": "cb0db7f85270f157fa6e5954a1de0235b5bab61c2167ed27e4f64c51bbfe825a",
     "sourceGuardInstalled": false
-  }
+  },
+  "operationState": "APPLIED",
+  "currentRevision": 2,
+  "actualApprovalSourceThread": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "actualApprovalSourceMessage": "01a19aa1-63c8-7af2-bd43-38b3ce532fe3",
+  "protectedExecutor": "Root",
+  "ownAuthProtectedExecution": false,
+  "activeAuthority": false
 }

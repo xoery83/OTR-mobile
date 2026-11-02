@@ -1,24 +1,287 @@
 {
-  "status": "DEFAULT_CLOSED_DIAGNOSTIC_SOFTWARE_SERVER_VERIFIED",
-  "checkedAt": "2026-11-02T02:52:53.789502+00:00",
-  "containerId": "aaf656c3742f4d6ec8c8bccfe467c26ec0a77db82530796f918f0f476cc4e6a2",
-  "configSHA256": "1b704c490237427ae451fbc011af3dbd598305b6a7ba0609a139b93fe3934b51",
-  "image": "sha256:266ed7dfd6a2a50e62b116ea019fa99a3eb5cbc0d1fb29085c883782c3828b9e",
+  "status": "ROOT_CLOSED_SERVER_VERIFIED",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "checkedAt": "2026-11-02T05:20:23.397859+00:00",
+  "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+  "configSHA256": "0ebea28102b868a112bf410cc51fc8883cb249bc84cdfcc6f08ff1ce0e77fb66",
   "health": "healthy",
-  "qaKeysAbsent": true,
-  "all23FilesExact": true,
-  "hostExact": true,
-  "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
-  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
-  "bundles": {
-    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
-    "mcp/runtime.mjs": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
-    "server-capture.mjs": "7e715d4b33b118135dbccac3a6ff7789adbb7108c74096ddd7c141c86dbb089e",
-    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
-  },
+  "bothQaKeysAbsent": true,
+  "defaultHostExact": true,
+  "all23FilesMatch": true,
   "httpHealth200Protected401": true,
-  "deploymentLockReleased": true,
-  "retainedRollbackId": "076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0",
-  "retainedRollbackExact": true,
-  "authorityActivated": false
+  "timerInactive": true,
+  "helper": {
+    "result": {
+      "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+      "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+      "image": "sha256:0ffd444c102405d3cb7844a40258dfa561d5b8b8af0add026233eb9580cf2d0a",
+      "finiteConfigAbsent": true,
+      "health": "healthy"
+    },
+    "deliveryTrace": {
+      "requestedAt": "2026-11-02T05:20:17.484654+00:00",
+      "readyAt": "2026-11-02T05:20:17.493801+00:00",
+      "acquiredAt": "2026-11-02T05:20:17.493845+00:00",
+      "mutationFinishedAt": "2026-11-02T05:20:23.261509+00:00",
+      "releasedAt": "2026-11-02T05:20:23.261542+00:00"
+    }
+  },
+  "mcpDiagnostics": {
+    "status": "CAPTURED",
+    "evidence": "BOUNDED_TAIL_NOT_COMMIT_PROOF",
+    "events": [
+      {
+        "event": "MCP_QA_REQUEST",
+        "dockerTimestamp": "2026-11-02T05:17:25.637436297Z",
+        "requestId": "a1a5f11f-f12e-4406-9cdd-4d6ff089447e",
+        "durationMs": 85,
+        "status": 401
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:28.780787394Z",
+        "diagnosticId": "8971f2c6-28dd-4939-81a2-faeadf54622d",
+        "elapsedMs": 0,
+        "stage": "PRECHECK"
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:29.462759365Z",
+        "diagnosticId": "8971f2c6-28dd-4939-81a2-faeadf54622d",
+        "elapsedMs": 684,
+        "stage": "CORE_BOUNDARY_ENTERED"
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:33.576542330Z",
+        "diagnosticId": "8971f2c6-28dd-4939-81a2-faeadf54622d",
+        "elapsedMs": 4798,
+        "stage": "CORE_RETURNED"
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:33.576626538Z",
+        "diagnosticId": "8971f2c6-28dd-4939-81a2-faeadf54622d",
+        "elapsedMs": 4798,
+        "stage": "POSTCHECK"
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:34.291763632Z",
+        "diagnosticId": "fbaa68ec-86f2-4f49-9d6d-e085453a4523",
+        "elapsedMs": 0,
+        "resource": "COLLECTION",
+        "stage": "PRECHECK",
+        "remainingMs": 51710
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:34.292094818Z",
+        "diagnosticId": "fbaa68ec-86f2-4f49-9d6d-e085453a4523",
+        "elapsedMs": 1,
+        "resource": "COLLECTION",
+        "stage": "OWNING_ENTERED",
+        "remainingMs": 51709
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:42.999202824Z",
+        "diagnosticId": "fbaa68ec-86f2-4f49-9d6d-e085453a4523",
+        "elapsedMs": 8708,
+        "resource": "COLLECTION",
+        "stage": "OWNING_RETURNED",
+        "remainingMs": 43002,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:42.999293035Z",
+        "diagnosticId": "fbaa68ec-86f2-4f49-9d6d-e085453a4523",
+        "elapsedMs": 8709,
+        "resource": "COLLECTION",
+        "stage": "POSTCHECK",
+        "remainingMs": 43001,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:43.070108297Z",
+        "diagnosticId": "a82c1d50-8a7b-4af2-9488-b2ce06f92b16",
+        "elapsedMs": 0,
+        "resource": "ITEM",
+        "stage": "PRECHECK",
+        "remainingMs": 42931
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:43.070354572Z",
+        "diagnosticId": "a82c1d50-8a7b-4af2-9488-b2ce06f92b16",
+        "elapsedMs": 1,
+        "resource": "ITEM",
+        "stage": "OWNING_ENTERED",
+        "remainingMs": 42930
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:48.150824871Z",
+        "diagnosticId": "a82c1d50-8a7b-4af2-9488-b2ce06f92b16",
+        "elapsedMs": 5080,
+        "resource": "ITEM",
+        "stage": "OWNING_RETURNED",
+        "remainingMs": 37851,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:48.150904761Z",
+        "diagnosticId": "a82c1d50-8a7b-4af2-9488-b2ce06f92b16",
+        "elapsedMs": 5081,
+        "resource": "ITEM",
+        "stage": "POSTCHECK",
+        "remainingMs": 37850,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:48.165824386Z",
+        "diagnosticId": "210fcb26-f637-4f95-b812-bbba1d0cbfbf",
+        "elapsedMs": 0,
+        "stage": "PRECHECK"
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:17:49.535147087Z",
+        "diagnosticId": "210fcb26-f637-4f95-b812-bbba1d0cbfbf",
+        "elapsedMs": 1370,
+        "stage": "CORE_BOUNDARY_ENTERED"
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:00.294464262Z",
+        "diagnosticId": "210fcb26-f637-4f95-b812-bbba1d0cbfbf",
+        "elapsedMs": 12130,
+        "stage": "CORE_RETURNED"
+      },
+      {
+        "event": "MCP_QA_WRITE_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:00.294522763Z",
+        "diagnosticId": "210fcb26-f637-4f95-b812-bbba1d0cbfbf",
+        "elapsedMs": 12130,
+        "stage": "POSTCHECK"
+      },
+      {
+        "event": "MCP_QA_REQUEST",
+        "dockerTimestamp": "2026-11-02T05:18:01.039243471Z",
+        "requestId": "5d8eb2ee-a5d2-46f7-9cfa-291a2f234e4e",
+        "durationMs": 33741,
+        "status": 200,
+        "tool": "update_trip_item"
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:21.893586722Z",
+        "diagnosticId": "b9ea4efb-34ce-401f-9828-b801ba9ee6a4",
+        "elapsedMs": 0,
+        "resource": "ITEM",
+        "stage": "PRECHECK",
+        "remainingMs": 4107
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:21.893715045Z",
+        "diagnosticId": "b9ea4efb-34ce-401f-9828-b801ba9ee6a4",
+        "elapsedMs": 0,
+        "resource": "ITEM",
+        "stage": "OWNING_ENTERED",
+        "remainingMs": 4107
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:26.945876687Z",
+        "diagnosticId": "b9ea4efb-34ce-401f-9828-b801ba9ee6a4",
+        "elapsedMs": 5052,
+        "resource": "ITEM",
+        "stage": "OWNING_RETURNED",
+        "remainingMs": 0,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:26.947077407Z",
+        "diagnosticId": "b9ea4efb-34ce-401f-9828-b801ba9ee6a4",
+        "elapsedMs": 5052,
+        "resource": "ITEM",
+        "stage": "POSTCHECK",
+        "remainingMs": 0,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:26.947096633Z",
+        "diagnosticId": "b9ea4efb-34ce-401f-9828-b801ba9ee6a4",
+        "elapsedMs": 5052,
+        "resource": "ITEM",
+        "stage": "POSTCHECK",
+        "remainingMs": 0,
+        "owningResponseStatus": 200,
+        "failure": "EXPIRED"
+      },
+      {
+        "event": "MCP_QA_REQUEST",
+        "dockerTimestamp": "2026-11-02T05:18:26.955809524Z",
+        "requestId": "5d4e4350-ac11-44f2-b5f0-f90cc5c33996",
+        "durationMs": 6423,
+        "status": 401,
+        "tool": "get_trip_item",
+        "errorCode": "AUTH_REQUIRED",
+        "authFailureSource": "BACKEND_401"
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:29.989614570Z",
+        "diagnosticId": "100a1e89-7ae2-43f3-ac05-82ed0e8b691f",
+        "elapsedMs": 0,
+        "resource": "ITEM",
+        "stage": "PRECHECK",
+        "remainingMs": 57011
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:29.989722996Z",
+        "diagnosticId": "100a1e89-7ae2-43f3-ac05-82ed0e8b691f",
+        "elapsedMs": 0,
+        "resource": "ITEM",
+        "stage": "OWNING_ENTERED",
+        "remainingMs": 57011
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:35.701472250Z",
+        "diagnosticId": "100a1e89-7ae2-43f3-ac05-82ed0e8b691f",
+        "elapsedMs": 5712,
+        "resource": "ITEM",
+        "stage": "OWNING_RETURNED",
+        "remainingMs": 51299,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_READ_STAGE",
+        "dockerTimestamp": "2026-11-02T05:18:35.701568111Z",
+        "diagnosticId": "100a1e89-7ae2-43f3-ac05-82ed0e8b691f",
+        "elapsedMs": 5712,
+        "resource": "ITEM",
+        "stage": "POSTCHECK",
+        "remainingMs": 51299,
+        "owningResponseStatus": 200
+      },
+      {
+        "event": "MCP_QA_REQUEST",
+        "dockerTimestamp": "2026-11-02T05:18:35.708897847Z",
+        "requestId": "f29926d5-7e36-4229-b588-d70142a67aaf",
+        "durationMs": 7182,
+        "status": 200,
+        "tool": "get_trip_item"
+      }
+    ]
+  }
 }
