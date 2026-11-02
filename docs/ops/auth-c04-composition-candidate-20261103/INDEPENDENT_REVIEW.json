@@ -1,0 +1,32 @@
+{
+  "status": "NO_BLOCKER_DEFAULT_CLOSED_MEMBER_CLAIM_COMPOSITION",
+  "base": "10094d5228375756a4ac74e31dcf6047cb8ccbba",
+  "scope": [
+    "backend/src/tripCreateRuntime.ts",
+    "backend/src/serverCapture.ts",
+    "backend/src/tripCreateRuntime.test.ts"
+  ],
+  "sha256": {
+    "backend/src/tripCreateRuntime.ts": "ca1a4af1125f85c2c9d603ed4bf4fcdbf7e6807ce7d76fcad21bdfdd80f7b814",
+    "backend/src/serverCapture.ts": "70199a383f2df4a1d8fe84619e224ec02f0a20ddca2cdcdda616250f0fda1af1",
+    "backend/src/tripCreateRuntime.test.ts": "8f08ccdf23d803420499588ad31c260d7d77224a83139af9e4658d94358b5ede"
+  },
+  "checks": [
+    "Only internal optional third loader argument enables composition; no environment, mount-schema or TTL changes. All production loader callers omit this option, preserving CLOSED.",
+    "Only v3 uses fixed existing PG adapter on the same rawCoreConnection; no Core HTTP adapter or additional connection is created. Explicit expiry is passed unchanged and validated by existing fixed adapter; no inferred expiry or authority.",
+    "Close guard runs before atomic, on callback entry (including queued work), after callback before existing PG commit, and after atomic completion. Existing transaction handles callback exception by rollback.",
+    "serverCapture forwards only an existing optional port; existing normal-auth/resource-filter/claim route authority remains unchanged.",
+    "Tests cover default absent port, exact raw connection/expiry, callback-time close and queued-close refusal."
+  ],
+  "validation": {
+    "reported_by_implementer": "36 focused checks PASS (27 runtime + 9 actual route)",
+    "reviewer_repeated_tests": false,
+    "strict": "Pending at review; no strict PASS claimed",
+    "lint": "Pending at review; no lint PASS claimed"
+  },
+  "limitations": [
+    "No SQL, Hosted runtime activation, main merge, provider, device or business E2E performed.",
+    "Close after COMMIT can suppress a successful response; original operation receipt recovery remains necessary. This composition does not promise cancellation of an already committed operation."
+  ],
+  "findings": []
+}

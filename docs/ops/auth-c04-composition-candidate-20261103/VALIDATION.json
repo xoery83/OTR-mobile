@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_PASS_DEFAULT_CLOSED_COMPOSITION",
+  "baseCommit": "10094d5228375756a4ac74e31dcf6047cb8ccbba",
+  "sourceSha256": {
+    "backend/src/tripCreateRuntime.ts": "ca1a4af1125f85c2c9d603ed4bf4fcdbf7e6807ce7d76fcad21bdfdd80f7b814",
+    "backend/src/serverCapture.ts": "70199a383f2df4a1d8fe84619e224ec02f0a20ddca2cdcdda616250f0fda1af1",
+    "backend/src/tripCreateRuntime.test.ts": "8f08ccdf23d803420499588ad31c260d7d77224a83139af9e4658d94358b5ede"
+  },
+  "actualAppSha256Unchanged": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+  "tests": {
+    "passed": 36,
+    "runtime": 27,
+    "actualAppRoutes": 9
+  },
+  "strict": "PASS:3 roots plus transitive",
+  "scopedLint": "PASS",
+  "diffCheck": "PASS",
+  "independentReview": {
+    "status": "NO_BLOCKER_DEFAULT_CLOSED_MEMBER_CLAIM_COMPOSITION",
+    "sha256": "05dd0edf2d85b85c06b7a73613acc5a1ec1e3be6514ff548b684b8d26d5b30bc"
+  },
+  "currentStartupInjectsClaim": false,
+  "newEnvOrMountSchema": false,
+  "activationPolicyInvented": false,
+  "newConnections": 0,
+  "hostedSqlDeviceActions": 0,
+  "limitations": [
+    "Explicit internal candidate composition only; no production caller provides the trusted server selection",
+    "Invitation expiry is not an activation deadline; no TTL/QA policy is chosen",
+    "Close cannot cancel an already committed transaction; use original operation recovery",
+    "Fixed PG/full Auth/device suites not repeated"
+  ]
+}
