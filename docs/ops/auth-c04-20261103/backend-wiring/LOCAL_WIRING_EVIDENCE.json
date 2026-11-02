@@ -1,0 +1,50 @@
+{
+  "status": "DEFAULT_CLOSED_PATCH_REVIEWED_NOT_APPLIED",
+  "rootBaselineCommit": "e89dfddf",
+  "rootAppSHA256": "434b8612777ba7907ca467fbee4adfed16ab236d090860d50d48ea83b5df78ee",
+  "patchedAppSHA256": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+  "authorTestsPassed": 9,
+  "independentReview": {
+    "reviewer": "auth_phase1_review",
+    "status": "SCOPED_NO_BLOCKER_CANDIDATE",
+    "newTestsPassed": 9,
+    "baseSource": "git e89dfddf app blob, hash verified",
+    "oldPgRerun": false
+  },
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "candidateSyntaxParse": "PASS",
+  "checks": [
+    "Absent port stays503 after normal authentication",
+    "B with canReadTrip false reaches owning claim scope",
+    "Anonymous/unknown/invalid rejected before port",
+    "Existing SupabaseGateway authoritative getUser mocked fixture exercised",
+    "OAuth resource markers rejected before Auth/business IO",
+    "Request actor/idempotency binding rejects forged inputs",
+    "Recovery reads historical disposition without linking or restoring NONE access",
+    "Root fixed baseline preserved; only Auth temporary candidate file used and cleaned"
+  ],
+  "authSourceCompatibility": {
+    "normalGatewayValidatorBodySHA256": "014144884bf9adad3a29cb78af056c2811137eb59760d2b1f0ab8a2684b9a87c",
+    "validatorBodyIdenticalBetweenRootAndAuth": true,
+    "authAccountQualificationSourceIdentical": true,
+    "resourceTokenBoundarySourceIdentical": true
+  },
+  "runtimePortConstructed": false,
+  "runtimeActivated": false,
+  "bootstrapChanged": false,
+  "rootWorktreeModified": false,
+  "hostedCalls": 0,
+  "sqlChanges": 0,
+  "newSecretsOrEnv": 0,
+  "normalProviderLoginCertified": false,
+  "sourceSHA256": {
+    "backend/src/__fixtures__/memberClaimWiringCandidate.ts": "d439161c22adef2eddf76d0e21f1e76c4000a972b87fc6bc0c7e06c65cdf161d",
+    "backend/src/tripMemberClaimWiring.test.ts": "75849b77f51be466edad578796dd54bbdc038779576665b606266f3688abc82c",
+    "docs/ops/auth-c04-20261103/backend-wiring/APP_DEFAULT_CLOSED.patch": "cb0c7a18e4eabb693c4423a7690485f5a99f7beaf9a661ba2ef163b1d8688843",
+    "backend/src/tripMemberClaimAuthority.ts": "4e9d70408369410bd68b98922dbba48f97d89ff584c3d3a3924db9cc143ac524",
+    "backend/src/tripMemberClaimRecovery.ts": "ad0ff2feada91dd2c76da1f6ba9987abfb174e42db0286dbc5eb3747bd39fda6",
+    "backend/src/tripMemberClaimHttp.ts": "daa6cbf327a85f18c5e7be72cb97232b73cee9abd5c55e9eeaf71f9dbc19c98f",
+    "backend/src/tripMemberClaimPg.ts": "0e840261962f219283da0a44b7824899d801dd4fd13c5b6d3aeda57964548b7e"
+  }
+}

@@ -1,0 +1,40 @@
+--- a/backend/src/app.ts
++++ b/backend/src/app.ts
+@@ -18,6 +18,8 @@
+   tripPersonCloudCreateBoundary,
+   type TripPersonCloudCreatePort,
+ } from "./tripPersonCloudCreateHttp";
++import { tripMemberClaimBoundary } from "./tripMemberClaimHttp";
++import type { MemberClaimAuthorityPort } from "./tripMemberClaimAuthority";
+ import {
+   universalOriginalSourceBoundary,
+   createUniversalOriginalSourceConnection,
+@@ -656,6 +658,7 @@
+   >;
+   captureRemoteProcessing?: CaptureRemoteProcessingPort;
+   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
++  memberClaimPort?: MemberClaimAuthorityPort;
+   universalImportPort?: UniversalPort;
+   universalRuntimeForRequest?(
+     request: Request,
+@@ -2452,6 +2455,7 @@
+   sourcePdfV4PreparationForRequest,
+   captureRemoteProcessing,
+   tripPersonCloudCreatePort,
++  memberClaimPort,
+   universalImportPort,
+   universalRuntimeForRequest,
+   flightEnrichmentService,
+@@ -2670,6 +2674,12 @@
+           runtime?.universalOriginalSourcePort ?? universalOriginalSourcePort,
+         );
+       } else if (
++        /^\/v2\/trips\/[^/]+\/member-claim-operations(?:\/recovery)?$/.test(url.pathname)
++      ) {
++        route = "/v2/trips/:tripId/member-claim-operations/:resource";
++        const actor = await authenticateNormalAccount(request, gateway);
++        response = await tripMemberClaimBoundary(request, actor, memberClaimPort);
++      } else if (
+         /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)$/.test(
+           url.pathname,
+         )

@@ -1,0 +1,18 @@
+{
+  "status": "READY_FOR_ROOT_DEFAULT_CLOSED_INTEGRATION",
+  "baseAppSHA256": "434b8612777ba7907ca467fbee4adfed16ab236d090860d50d48ea83b5df78ee",
+  "patchedAppSHA256": "b7a32d4b8163a1511d4bb01f4d2e41b8c5045cf5a977d0bb9359bb7d325db3e9",
+  "runtimeEnabled": false,
+  "bootstrapInjection": false,
+  "files": {
+    "backend/src/__fixtures__/memberClaimWiringCandidate.ts": "d439161c22adef2eddf76d0e21f1e76c4000a972b87fc6bc0c7e06c65cdf161d",
+    "backend/src/tripMemberClaimWiring.test.ts": "75849b77f51be466edad578796dd54bbdc038779576665b606266f3688abc82c",
+    "docs/ops/auth-c04-20261103/backend-wiring/APP_DEFAULT_CLOSED.patch": "cb0c7a18e4eabb693c4423a7690485f5a99f7beaf9a661ba2ef163b1d8688843",
+    "backend/src/tripMemberClaimAuthority.ts": "4e9d70408369410bd68b98922dbba48f97d89ff584c3d3a3924db9cc143ac524",
+    "backend/src/tripMemberClaimRecovery.ts": "ad0ff2feada91dd2c76da1f6ba9987abfb174e42db0286dbc5eb3747bd39fda6",
+    "backend/src/tripMemberClaimHttp.ts": "daa6cbf327a85f18c5e7be72cb97232b73cee9abd5c55e9eeaf71f9dbc19c98f",
+    "backend/src/tripMemberClaimPg.ts": "0e840261962f219283da0a44b7824899d801dd4fd13c5b6d3aeda57964548b7e",
+    "docs/ops/auth-c04-20261103/backend-wiring/HANDOFF.md": "d1d77dd43fc6a41ab88742ee2428fa902ca65b3b859015627e23e0abf53560a0",
+    "docs/ops/auth-c04-20261103/backend-wiring/LOCAL_WIRING_EVIDENCE.json": "1d1ec2f97812e2662acd3f8f6e173636b01861fda86518ea68fc859ca35994a5"
+  }
+}

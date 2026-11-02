@@ -1,3 +1,19 @@
+# C04 default-closed app wiring candidate ready — 3 November 2026
+
+Root supplied fixed app e89dfddf/SHA434b… and retained shared app/Bootstrap/factory
+ownership. Auth prepared an exact minimal patch (optional MemberClaim port + normal
+Account route) in ops/auth-c04-20261103/backend-wiring/; actual shared files unchanged.
+9new local tests and independent9PASS/types/lint/parse. B is not blocked by prior
+Trip Reader; Guest/resource credentials fail before authority; missingport503;
+receipt recovery cannot relink or restoreNONE. This remains NOT_APPLIED/NOT_DEPLOYED.
+Patch never constructs a PG port, changes startup/env, reads credentials or activates
+runtime. Future injection needs existing raw CorePgConnection, not CoreHttpConnection,
+plus explicit server expiry. Root consumes exact Auth four leaves and patch under
+its normal serial integration; scope/normal QA eligibility still need qualification.
+C04 installed7c/3bbe remains independently verified with runtime unmounted. Hosted
+A/B, Member revoke, Native cold restore remain NOT_RUN. C03 Native reader pending.
+No old PG rerun, shared worktree edit, SQL/Role/Session/Provider/device action.
+
 # C04 Hosted protected install verified; runtime closed — 3 November 2026
 
 Root completed exact3bbe install under Owner7c3250 approval once, COMMIT acknowledged,
