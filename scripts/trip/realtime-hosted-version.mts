@@ -10,10 +10,36 @@ import type { AccountRequestContext } from "../../src/data/auth/accountRequestCo
 
 type Version = { actorAccountId: string; tripId: string; token: string };
 
+// Reuse the existing fetch seam; keep only server-generated correlation and durations.
+export function createHostedVersionFetchTiming(fetchImplementation: typeof fetch = fetch) {
+  let last: { requestId: string | null; headersMs: number; headersAt: number } | undefined;
+  const timedFetch: typeof fetch = async (input, init) => {
+    last = undefined;
+    const started = performance.now();
+    const response = await fetchImplementation(input, init);
+    const id = response.headers.get("X-Request-Id");
+    last = {
+      requestId: id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null,
+      headersMs: +(performance.now() - started).toFixed(2),
+      headersAt: performance.now(),
+    };
+    return response;
+  };
+  return {
+    fetch: timedFetch,
+    sample: () => last ? {
+      requestId: last.requestId,
+      httpToHeadersMs: last.headersMs,
+      afterHeadersMs: +(performance.now() - last.headersAt).toFixed(2),
+    } : undefined,
+  };
+}
+
 // Timing only; no stored token, new Auth path, or connection-pool reset.
 export async function measureHostedVersion(
   context: AccountRequestContext,
   read: (context: AccountRequestContext) => Promise<Version>,
+  readTiming?: ReturnType<typeof createHostedVersionFetchTiming>["sample"],
 ) {
   const samples = [];
   let previous: string | undefined;
@@ -26,6 +52,7 @@ export async function measureHostedVersion(
     samples.push({
       label,
       startedAt,
+      ...readTiming?.(),
       milliseconds: +(performance.now() - started).toFixed(2),
       decodedBodyBytes: Buffer.byteLength(JSON.stringify(result)),
       unchangedFromPrevious: previous === undefined ? null : previous === result.token,
@@ -58,17 +85,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       tripId: input.tripId,
       generation: getAccountGeneration(),
     };
+    const timing = createHostedVersionFetchTiming();
     const transport = createCoreV2Transport(
       async () => input.accountId,
       async (bytes) => createHash("sha256").update(bytes).digest("hex"),
-      { baseUrl: "https://api-dev.xoery.art", timeoutMs: 20_000 },
+      { baseUrl: "https://api-dev.xoery.art", timeoutMs: 20_000, fetchImplementation: timing.fetch },
       async (request) => {
         if (request?.forceRefresh) throw Error("FRESH_NORMAL_LOGIN_REQUIRED");
         return { userId: input.accountId, token: input.accessToken };
       },
     );
     const result = await measureHostedVersion(context, (ctx) =>
-      transport.authorizedVersion(ctx),
+      transport.authorizedVersion(ctx), timing.sample,
     );
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {

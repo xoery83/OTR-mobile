@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { createCoreV2Transport } from "../../src/data/api/tripCoreV2Transport";
-import { measureHostedVersion } from "../../scripts/trip/realtime-hosted-version.mjs";
+import { createHostedVersionFetchTiming, measureHostedVersion } from "../../scripts/trip/realtime-hosted-version.mjs";
 
 const context = {
   accountId: "11111111-1111-4111-8111-111111111111",
@@ -76,4 +76,28 @@ it("a real HTTP401 and refused refresh stop measurement after one fetch", async 
     measureHostedVersion(context, (ctx) => transport.authorizedVersion(ctx)),
   ).rejects.toMatchObject({ kind: "http", status: 401 });
   expect(fetch).toHaveBeenCalledOnce();
+});
+
+it("correlates the same real response without logging headers, identity or body", async () => {
+  const requestId = "33333333-3333-4333-8333-333333333333";
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({
+    version: "otr.core.authorized-trip-version/1", actorAccountId: context.accountId,
+    tripId: context.tripId, token: "a".repeat(64),
+  }, { headers: { "X-Request-Id": requestId, "Secret-Header": "synthetic-private-header" } }));
+  const timing = createHostedVersionFetchTiming(fetch);
+  const transport = createCoreV2Transport(async () => context.accountId, async () => "b".repeat(64),
+    { baseUrl: "https://api-dev.xoery.art", fetchImplementation: timing.fetch },
+    async () => ({ userId: context.accountId, token: "synthetic-private-token" }));
+  const result = await measureHostedVersion(context, (ctx) => transport.authorizedVersion(ctx), timing.sample);
+  expect(result.samples.every((s) => s.requestId === requestId && s.httpToHeadersMs! >= 0 && s.afterHeadersMs! >= 0)).toBe(true);
+  expect(JSON.stringify(result)).not.toMatch(/synthetic-private|11111111|aaaaaaaa/);
+  expect(fetch).toHaveBeenCalledTimes(3);
+});
+it("never logs an arbitrary response header as a correlation ID", async () => {
+  const timing = createHostedVersionFetchTiming(async () => new Response(null, {
+    headers: { "X-Request-Id": "synthetic-secret-or-body" },
+  }));
+  await timing.fetch("https://api-dev.xoery.art");
+  expect(timing.sample()?.requestId).toBeNull();
+  expect(JSON.stringify(timing.sample())).not.toContain("synthetic-secret");
 });
