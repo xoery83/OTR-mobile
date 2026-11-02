@@ -43,13 +43,13 @@
     "deviceInstalled": false,
     "QA142Retained": true
   },
-  "hostedVersionMeasurement": "NOT_RUN: ordinary read slot granted, but existing registered-host active.lock refused before this run allocated a journal, OTP or Session. Actual GET=0. Foreign lock/session retained; narrow slot returned. Retry only after owning helper cleanup and Core lane release; no new Owner permission required.",
+  "hostedVersionMeasurement": "ACTUAL3GET200:11478.13/7848.55/7837.93ms, equal repeated opaque tokens, own normalLogin/scope-local cleanupPASS. Server beforeProjection7652/4108/4106ms, projectionAndCommit2051/2057/2046ms. Hosted performanceNOT_PASS; precise stage root cause pending; seeHOSTED_VERSION_READ.json.",
   "remaining": [
     "Auth qualified current-session atomicadmission/actualprivatetransport/forceddisconnect not Hosted qualified",
     "Core physicalpostcommit Actor-visible publisher NOT_READY",
     "QualifiedRuntime cache callbacks+actualUI in-memory visibility invalidation still unmounted",
-    "Actual Hosted first/repeatedHTTP and cold/warmPG phase timing pending",
-    "Actual cross-device/revoke/regrant/independentSupabase E2E notrun"
+    "Actual cross-device/revoke/regrant/independentSupabase E2E notrun",
+    "Hosted ~7.84s repeated read unresolved; current deployed path vs reviewed local fast path and finer phase timing require precise comparison before shared release."
   ],
   "evidence": {
     "/private/tmp/otr-native-private-v1-error-chain-final.log": "1c5528c7f1b3ea6e939d428985ff883ff027d5de6c2fa83253b7e2488b716b7e",

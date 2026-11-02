@@ -1,0 +1,72 @@
+{
+  "qualification": "ACTUAL_NORMAL_ACCOUNT_AUTHORIZED_VERSION_READ; PERFORMANCE_NOT_PASS",
+  "measurement": {
+    "qualification": "NORMAL_AUTHORIZED_VERSION_GET_ONLY",
+    "samples": [
+      {
+        "label": "first_request",
+        "startedAt": "2026-11-02T00:47:04.493Z",
+        "milliseconds": 11478.13,
+        "decodedBodyBytes": 227,
+        "unchangedFromPrevious": null
+      },
+      {
+        "label": "repeat_1",
+        "startedAt": "2026-11-02T00:47:15.971Z",
+        "milliseconds": 7848.55,
+        "decodedBodyBytes": 227,
+        "unchangedFromPrevious": true
+      },
+      {
+        "label": "repeat_2",
+        "startedAt": "2026-11-02T00:47:23.820Z",
+        "milliseconds": 7837.93,
+        "decodedBodyBytes": 227,
+        "unchangedFromPrevious": true
+      }
+    ],
+    "limits": "First/repeated HTTP requests, not proved cold/warm PG connections; correlate existing server phase telemetry. No mutation, subscription, Provider, Supabase readback or cross-device PASS.",
+    "actual": "NORMAL_HOST_QA_READ_ONLY",
+    "newMutations": 0,
+    "providerCalls": 0,
+    "devicesTouched": 0
+  },
+  "serverPhases": {
+    "status": "READ_ONLY_PHASE_LOG_PROJECTION",
+    "events": [
+      {
+        "event": "core_authorized_version_projection",
+        "beforeProjectionMs": 7652,
+        "projectionAndCommitMs": 2051
+      },
+      {
+        "event": "core_authorized_version_projection",
+        "beforeProjectionMs": 4108,
+        "projectionAndCommitMs": 2057
+      },
+      {
+        "event": "core_authorized_version_projection",
+        "beforeProjectionMs": 4106,
+        "projectionAndCommitMs": 2046
+      }
+    ],
+    "containerId": "ddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f",
+    "exitCode": 0
+  },
+  "phaseSource": "Root unique Writer read-only projected current-container logs; Native received safe projection, did not independently access Host",
+  "sessionCleanup": {
+    "status": "PASS",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "runId": "41c28a6e-bc69-44d7-9e75-19677fdefd5c",
+    "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-tHrztF/run.json"
+  },
+  "businessMutations": 0,
+  "providerCalls": 0,
+  "limits": [
+    "first/repeated HTTP are not proved cold/warm PG connections",
+    "beforeProjection includes multiple stages; no fine-grained phases emitted, cannot attribute to PG/Auth yet",
+    "not private channel, revoke, cross-device or UI runtime PASS"
+  ]
+}
