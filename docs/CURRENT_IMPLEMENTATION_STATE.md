@@ -1,5 +1,18 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Runtime composition now actually main/origin de3a368b and Hosted94eecf2/imagebf007/
+config1bc26f8f, Capture d0be. Auth read original main+independent Hosted evidence;
+Env/mount unchanged, olda96a stopped/retained, locks released. Archived under
+ops/auth-c04-20261103/runtime-hosted-receipt/. Production loader still omits options:
+SOFTWARE_HOSTED_DEFAULT_CLOSED, not A/B PASS. No repeat7c installation required.
+Auth next finite-QA restriction source candidate limits existing Authority to exact
+A/B/Trip/Person/two operations, original receipt digest and independent≤30min window;
+16new+independent16/types/lintPASS. It does not grant rights, select itself or create
+a config/connection. Template lacks activation timestamps deliberately, no valid
+run window yet. Root still needs fixed selector+close/restore controller and exact
+execution Gate. Core is preparing actual member-revoke owning port; no current
+member-revoke authority. Normal A/B/Native cold remain NOT_RUN.
+
 Owner Hosted-closure direction: C04 remains primary; Root preparing default-closed
 composition integration/deployment and exact runtime QA qualification; Core asked
 for actual member-revoke authority (new Organizer-removal direction conflicts with

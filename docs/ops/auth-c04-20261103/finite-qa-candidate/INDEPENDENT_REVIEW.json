@@ -1,0 +1,22 @@
+{
+  "status": "SCOPED_NO_BLOCKER_CANDIDATE",
+  "authorTestsPassed": 16,
+  "independentTestsPassed": 16,
+  "typecheck": "PASS",
+  "lint": "PASS",
+  "files": {
+    "backend/src/tripMemberClaimQa.ts": "8c637e241498274b8ed1441777e24afa2cf0063c3e98a52e5140d3245fd992af",
+    "backend/src/tripMemberClaimQa.test.ts": "031c0e1ebbc71787b1d46c7aec2ab47083674444c832b848c4997d5183cec55e"
+  },
+  "runtimeSelected": false,
+  "hostedInvoked": false,
+  "newSqlOrAuthority": false,
+  "limits": [
+    "Scope filter only; existing gateway normal session and PG business authorization remain required",
+    "projectRef field does not prove actual endpoint",
+    "Independent activation deadline; invitation expiry is not the close mechanism",
+    "Post-COMMIT close may be UNKNOWN; never infer rollback or reexecute",
+    "No general member revoke or pending invite cancellation in this QA case",
+    "Fixture tests do not prove real PG timer cancellation"
+  ]
+}

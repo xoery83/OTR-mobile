@@ -2,18 +2,51 @@
   "primaryAssignment": "AUTH-C04",
   "status": "IN_PROGRESS",
   "stage": "RUNTIME_QUALIFICATION_PENDING",
-  "authPgAdapter": {"status": "ISOLATED_PG_PASS", "commit": "7734f3b0"},
-  "protectedInstall": {"status": "SERVER_VERIFIED_RUNTIME_UNMOUNTED", "evidenceCommit": "553237b9"},
-  "backendPatch": {"status": "UNBLOCKED_DEFAULT_CLOSED_MAIN_INTEGRATION", "candidateCommit": "51fa7d66", "mainCommit": "10094d5228375756a4ac74e31dcf6047cb8ccbba", "deployed": false},
-  "peopleReadPort": {"status": "UNBLOCKED_LOCAL_INTERFACE", "sourceCommit": "eb93a144", "acceptedCommit": "c14359b6", "consumerCommit": "4ca558f9", "uiMounted": false},
-  "profileRecovery": {"status": "LOCAL_PASS", "commit": "5d292b63"},
+  "authPgAdapter": {
+    "status": "ISOLATED_PG_PASS",
+    "commit": "7734f3b0"
+  },
+  "protectedInstall": {
+    "status": "SERVER_VERIFIED_RUNTIME_UNMOUNTED",
+    "evidenceCommit": "553237b9"
+  },
+  "backendPatch": {
+    "status": "UNBLOCKED_DEFAULT_CLOSED_MAIN_INTEGRATION",
+    "candidateCommit": "51fa7d66",
+    "mainCommit": "10094d5228375756a4ac74e31dcf6047cb8ccbba",
+    "deployed": false
+  },
+  "peopleReadPort": {
+    "status": "UNBLOCKED_LOCAL_INTERFACE",
+    "sourceCommit": "eb93a144",
+    "acceptedCommit": "c14359b6",
+    "consumerCommit": "4ca558f9",
+    "uiMounted": false
+  },
+  "profileRecovery": {
+    "status": "LOCAL_PASS",
+    "commit": "5d292b63"
+  },
   "hostedMultiAccountE2E": "NOT_RUN",
   "memberRevocation": "NOT_RUN",
   "memberRevokeAuthority": "MISSING_OWNING_PORT",
   "nativeColdRestore": "NOT_RUN",
   "runtimeEnabled": false,
-  "runtimeComposition": {"status": "LOCAL_ACCEPTED_DEFAULT_CLOSED", "sourceCommit": "f5554e28", "acceptedCommit": "5da84bef", "mainIntegrated": false, "deployed": false},
+  "runtimeComposition": {
+    "status": "SOFTWARE_HOSTED_DEFAULT_CLOSED",
+    "mainCommit": "de3a368b96d069c588f3e48753ba040328845497",
+    "deployed": true,
+    "selected": false
+  },
   "executionPlan": "E2E_HANDOFF.md",
   "unblockRule": "Verify delivered code SHA and affected behavior; chat acknowledgment alone does not unblock",
-  "nextAction": "Prepare explicit existing-raw-Core connection composition, trusted server expiry and exact normal A/B runtime execution qualification; preserve missing formal member revoke authority"
+  "nextAction": "Root trusted QA selector/controller and exact execution Gate using finite QA candidate; no repeated protected installation",
+  "finiteQaAdapter": {
+    "status": "LOCAL_REVIEWED_UNSELECTED",
+    "evidence": "finite-qa-candidate/INDEPENDENT_REVIEW.json"
+  },
+  "nativeCommandTransport": {
+    "status": "LOCAL_REVIEWED_UNMOUNTED",
+    "commit": "c9858f88"
+  }
 }

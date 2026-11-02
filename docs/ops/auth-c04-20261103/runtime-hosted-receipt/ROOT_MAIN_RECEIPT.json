@@ -1,0 +1,18 @@
+{
+  "status": "AUTH_C04_RUNTIME_MAIN_INTEGRATED_AND_REMOTE_VERIFIED",
+  "before": "9eef2b2d89d2a229eeb83aac168397d93d2c28e4",
+  "after": "de3a368b96d069c588f3e48753ba040328845497",
+  "changedFiles": 4,
+  "originalDirtyStatePreserved": true,
+  "originalTrackedDirtyHashesPreserved": true,
+  "smokeExitCode": 0,
+  "smokeSource": "exact same integrated candidate tree; main source equality verified",
+  "deploymentConstraint": "Default closed Auth Runtime only; no runtime selection, QA config or authority",
+  "acquiredAt": "2026-11-02T23:39:28.716898+00:00",
+  "releasedAt": "2026-11-02T23:39:32.391015+00:00",
+  "hostMutations": 0,
+  "sqlWrites": 0,
+  "paidCalls": 0,
+  "pushed": true,
+  "remoteVerifiedAt": "2026-11-02T23:40:13.873567+00:00"
+}
