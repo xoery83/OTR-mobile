@@ -22,7 +22,7 @@
     "fresh formal Preview same operation/digest/CAS/Before/After",
     "any mismatch stops without Apply"
   ],
-  "status": "EXACT_CANDIDATE_VERIFIED_READY_FOR_ROOT_ONLY_CONFIRMATION_NO_AUTHORITY",
+  "status": "DISPATCHER_INCREMENT_REVIEW_PASS_FINAL_GATE_REBIND_PENDING_NO_AUTHORITY",
   "windowId": "e389fb93736b401c9e9b5f1437e852dc",
   "previousWindow": "78c1610ecf5f43409106fb67ecd36489",
   "previousWindowState": "CLOSED_NEVER_REOPEN",
@@ -90,6 +90,16 @@
     "previousCandidateCommit": "a5d75b5f",
     "previousCandidateSHA256": "cd5e4c3d359937009ad9ab33d4fdcb922e9b1ce109f2b708abda3ceba1bd4822",
     "delta": "ONLY_CLARIFY_EXISTING_HOOK_BODY_CAS_AND_RESTORE_SQL_NO_NEW_SCHEMA_RLS_GRANT",
-    "rootQuestionState": "ROOT_TO_CONFIRM_NO_DUPLICATE_REQUEST"
+    "rootQuestionState": "ROOT_TO_CONFIRM_NO_DUPLICATE_REQUEST",
+    "status": "OLDER_DEFAULT_GATE_NOT_FOR_EXECUTION_WAIT_MCP_FINAL_HASH"
+  },
+  "latestClosedDefaultBinding": {
+    "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+    "configSHA256": "0ebea28102b868a112bf410cc51fc8883cb249bc84cdfcc6f08ff1ce0e77fb66",
+    "image": "sha256:0ffd444c102405d3cb7844a40258dfa561d5b8b8af0add026233eb9580cf2d0a",
+    "checkedAt": "2026-11-02T04:11:43.589994+00:00",
+    "closeEntrySHA256": "471a338ae9a66cab8865b3bab00f2ad5f587737b62371cdbebf56ed0c4687f83",
+    "closePlanSHA256": "cb0db7f85270f157fa6e5954a1de0235b5bab61c2167ed27e4f64c51bbfe825a",
+    "sourceGuardInstalled": false
   }
 }
