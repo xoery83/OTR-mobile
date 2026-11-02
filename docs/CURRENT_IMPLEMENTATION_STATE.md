@@ -1,3 +1,16 @@
+# Active finite MCP continuation 78c — 2 November 2026
+
+Owner directly approved exact combined Gate e5cf4d1b / MCP commit7da5a4e6
+in Auth message01a199f7-d7cd-77c3-aa06-cfbed19f9c68. Only original1d6/CAS1/
+digest1d5 Notes append; fresh normal read+formal Preview must match before singleton.
+New T01:59:35.935Z, normal close02:25:30.554Z, hard D02:27:30.554Z; no extension.
+Root EMPTY6fb3169a/config18c47dbf on new default076edb49/config011909bc/imagecdd762
+verified02:01:46Z; close pointer/timer ready, confirmations empty. Auth normalcontrol
+36280, independent issuerwatch86506. Issuer verified02:01:54Z; Hook/OAuth enabled,
+DCR off/Site api-dev. MCP consumer login/read/new Preview underway, Apply not sent.
+See ops/auth-mcp-fresh-20261102/continuation-78c161/PREPARATION.json.
+Previous acd60 remains CLOSED. Realtime stays default closed; no new protected SQL.
+
 # Read401 retest acd60 CLOSED — 2 November2026
 
 Exact4ab/8580 window T00:14:48.231Z/D00:42:16.118Z closed normally00:40:16Z.

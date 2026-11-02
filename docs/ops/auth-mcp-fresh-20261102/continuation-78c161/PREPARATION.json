@@ -1,5 +1,5 @@
 {
-  "status": "PREPARATION_ONLY_NO_AUTHORITY_NO_CLOCK",
+  "status": "ACTIVE_EXACT_APPROVED_FINITE_WINDOW",
   "windowId": "78c1610ecf5f43409106fb67ecd36489",
   "previousWindow": "acd60fd27aee40e8b6cf1aca727ed169",
   "previousWindowState": "CLOSED_NEVER_REOPEN",
@@ -12,14 +12,31 @@
   "expectedRevision": 1,
   "beforeNotes": "Synthetic QA only. No Booking/Ticket.",
   "afterNotes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
-  "startsAt": null,
-  "expiresAt": null,
-  "accessApproved": false,
-  "notesApproved": false,
+  "startsAt": "2026-11-02T01:59:35.935Z",
+  "expiresAt": "2026-11-02T02:27:30.554Z",
+  "accessApproved": true,
+  "notesApproved": true,
   "otpSent": false,
   "applyAttempts": 0,
-  "finalAssembly": "WAIT_ROOT_ACTUAL_DEFAULT_READY",
-  "closeBinding": "WAIT_FINAL_ASSEMBLY_REBIND_EXISTING_CLOSER",
+  "finalAssembly": {
+    "verifiedAt": "2026-11-02T01:07:33Z",
+    "containerId": "076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0",
+    "configSHA256": "011909bcc46adceb3f1defc9b769655d388413ac28d43502330bdfbc6afd588c",
+    "image": "sha256:cdd762ea99b53fd21330dfe09df157b727b89e7a7c5e4e4da2c2487796364102",
+    "capturePrefix": "939627ab",
+    "source": "Root INDEPENDENT_READBACK.json",
+    "health": "200",
+    "protected": "401",
+    "bothQaKeysAbsent": true,
+    "shortLockReleased": true
+  },
+  "closeBinding": {
+    "status": "ACTUAL_NO_CHANGE_RESTORE_PASS",
+    "verifiedAt": "2026-11-02T01:09:21.996532Z",
+    "entry": "/private/tmp/otr-mcp-root-continuation-78c161-20261102/close-once.py",
+    "entrySHA256": "e3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e",
+    "planSHA256": "8f43b6195e2f3616d9838a3f17682521d863d072761f9abd9fd30212a12038e1"
+  },
   "limits": {
     "maxWindowSeconds": 1800,
     "normalCloseBeforeDeadlineSeconds": 120,
@@ -40,5 +57,32 @@
     "old Preview without new exact save approval"
   ],
   "currentReadbackSource": "MCP CONTINUATION_PREFLIGHT_READBACK.json 2026-11-02T01:03:58.147Z",
-  "lastHostReadback": "Root 2026-11-02T01:03:35.685341Z ddd7/db86/image57; NOT final next assembly"
+  "lastHostReadback": "Root 2026-11-02T01:03:35.685341Z ddd7/db86/image57; NOT final next assembly",
+  "gate": {
+    "commit": "7da5a4e6",
+    "sha256": "e5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d",
+    "path": "docs/mcp/slice1/CONTINUATION_ACCESS_AND_EXACT_SAVE_GATE.md",
+    "owningWorktree": "mcp-01-read-only"
+  },
+  "dispatcherPins": {
+    "prepare-empty-round.py": "2d015b26245d7498934dacf58ba8ff15015d541d6ae30de182eb3e7e1cfcef0d",
+    "confirm-once.py": "15145e07704525ba27c3056f8737aa178cd8a2bdf4a4054a8bd8e7453467d7f7"
+  },
+  "dispatcherSelfCheck": "ROOT_8_NO_IO_PASS",
+  "normalCloseStartsAt": "2026-11-02T02:25:30.554Z",
+  "controlSession": 36280,
+  "issuerWatchSession": 86506,
+  "confirmationTableInstalled": false,
+  "issuerActivated": true,
+  "console": {
+    "oauth": "ON_SAVED",
+    "hook": "ENABLED",
+    "siteUrl": "https://api-dev.xoery.art",
+    "dcr": false
+  },
+  "ownerSourceMessage": "01a199f7-d7cd-77c3-aa06-cfbed19f9c68",
+  "consumerNormalOtp": "MCP_ACTUAL_SINGLE_RECEIPT_VERIFY_CONSENT_PASS",
+  "consumerConnected": true,
+  "consumerToolCount": 8,
+  "consumerStep": "ORIGINAL_STATUS_FULL_EDIT_BASE_FRESH_PREVIEW_REQUESTED"
 }
