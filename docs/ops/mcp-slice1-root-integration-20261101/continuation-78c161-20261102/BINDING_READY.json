@@ -21,6 +21,8 @@
   "notesConfirmed": false,
   "T": null,
   "D": null,
-  "gateFrozen": false,
-  "dispatcherBinding": "Only after MCP exact new Gate frozen; not old4ab"
+  "gateFrozen": true,
+  "dispatcherBinding": "Exact new Gate bound; not activated; 8 no-I/O checks PASS",
+  "executionGateSHA256": "e5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d",
+  "gateCommit": "7da5a4e6"
 }

@@ -1,0 +1,49 @@
+--- 
++++ 
+@@ -3,19 +3,19 @@
+ from pathlib import Path
+ sys.path.insert(0,'/Users/xoery/.codex/worktrees/universal-photo-resume-integration-20261030/otr-mobile-canonical/scripts/import')
+ from universal_continuous_runtime_ports import remote_python
+-p=Path('/private/tmp/otr-mcp-root-read401-retest-20261102');approvalpath=Path(sys.argv[1]);raw=approvalpath.read_bytes();a=json.loads(raw)
++p=Path('/private/tmp/otr-mcp-root-continuation-78c161-20261102');approvalpath=Path(sys.argv[1]);raw=approvalpath.read_bytes();a=json.loads(raw)
+ assert a['ownerConfirmed'] is True and a['sourceThreadId']=='01a1803b-c5a7-7ab0-a90f-fb4f87609201' and a['sourceMessageId']
+ assert a['operationId']=='1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf' and a['previewDigest']=='1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546'
+-assert a['approvedExecutionGateSHA256']=='4ab236c94c0cc34e775823b0160602a19c0f898dc7be8eaf0f3a2eec531f192d'
++assert a['approvedExecutionGateSHA256']=='e5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d'
+ assert a['gateSHA256']=='530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801'
+ base=json.loads((p/'EMPTY_ROUND_INTENT.json').read_text())['request'];active=json.loads((p/'EMPTY_ROUND_RESULT.json').read_text())['result'];assert active['status']=='MCP_SLICE1_CONFIG_CAS_HEALTHY'
+-assert base['windowId']=='acd60fd27aee40e8b6cf1aca727ed169' and base['windowId']==json.loads((p/'HOST_STAGE_PAYLOAD.json').read_text())['windowId']
++assert base['windowId']=='78c1610ecf5f43409106fb67ecd36489' and base['windowId']==json.loads((p/'HOST_STAGE_PAYLOAD.json').read_text())['windowId']
+ assert base['approvedExecutionGateSHA256']==a['approvedExecutionGateSHA256'] and base['gateSHA256']==a['gateSHA256']
+-assert base['defaultContainerId']=='ddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f' and base['defaultConfigSHA256']=='db86894730f9a7e3f675d7bc805ea00a5057c05c5d5047d0b8c292746e0ef512'
++assert base['defaultContainerId']=='076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0' and base['defaultConfigSHA256']=='011909bcc46adceb3f1defc9b769655d388413ac28d43502330bdfbc6afd588c'
+ assert active['defaultContainerId']==base['defaultContainerId'] and active['deadlineMs']==base['deadlineMs']
+ empty_qa=json.loads(base['authQaConfig']);assert empty_qa['confirmations']==[] and empty_qa['expiresAt']==base['deadlineMs'] and empty_qa['consentNotBefore']==base['windowStartedAtMs']
+-assert hashlib.sha256((p/'close-once.py').read_bytes()).hexdigest()=='6ed5f2b7695daae0be1cb621745e78c30c9c20b468ae3ae978f04d20b69c7508'
+-assert hashlib.sha256((p/'prepare-empty-round.py').read_bytes()).hexdigest()=='f573debfe26dea87ade843a140b77f98645833f5ed656f1a5269073b755e7783'
++assert hashlib.sha256((p/'close-once.py').read_bytes()).hexdigest()=='e3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e'
++assert hashlib.sha256((p/'prepare-empty-round.py').read_bytes()).hexdigest()=='2d015b26245d7498934dacf58ba8ff15015d541d6ae30de182eb3e7e1cfcef0d'
+ with (p/'CONFIRM_INTENT.json').open('x') as f:json.dump({'approvalSHA256':hashlib.sha256(raw).hexdigest(),'sourceMessageId':a['sourceMessageId'],'deadlineMs':base['deadlineMs']},f)
+ out=remote_python('APPROVAL='+repr(raw)+'\nBASE='+repr(base)+'\nACTIVE='+repr(active)+'\n'+r'''
+ import sys,json,hashlib,subprocess,os,time
+@@ -27,7 +27,7 @@
+ assert hashlib.sha256(private(r/'config_cas.py')).hexdigest()=='0ba00b4575b0c828ea5b6bb05d879c8f32e2a71d9602ac27ceba4980f9e9ebee'
+ assert hashlib.sha256(private(r/'restore.py')).hexdigest()=='e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b'
+ assert subprocess.check_output(['systemctl','show','otr-mcp-slice1-runtime-close-'+BASE['windowId']+'.timer','--property=ActiveState','--value'],text=True).strip()=='active'
+-a=json.loads(APPROVAL);s=inspect('otr-dev-backend');d=inspect('ddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f')
++a=json.loads(APPROVAL);s=inspect('otr-dev-backend');d=inspect('076edb49d761983f0f507d2102dbde5400b450ef38979ce16022e31fbb6fa2c0')
+ assert s['Id']==ACTIVE['containerId'] and digest(s['Config'])==ACTIVE['configSHA256']
+ q=json.loads(environment(s)['OTR_DEV_MCP_WRITE_QA_CONFIG']);assert q['confirmations']==[]
+ q['confirmations']=[{'operationId':a['operationId'],'previewDigest':a['previewDigest']}]
+@@ -36,9 +36,9 @@
+  with os.fdopen(fd,'wb') as f:f.write(b);f.flush();os.fsync(f.fileno())
+ assert hashlib.sha256(private(r/'prepare_cas.py')).hexdigest()=='aac0c9940409a9eff40fe5f3e8d554ec984152f3cb74ad3511fc33249ed03a98'
+ from prepare_cas import make_plan
+-request={'gateSHA256':a['gateSHA256'],'windowId':BASE['windowId'],'phase':'CONFIRM','clientProfile':'Claude','windowStartedAtMs':BASE['windowStartedAtMs'],'authQaConfig':json.dumps(q),'ownerApproval':a,'approvalRecordSHA256':hashlib.sha256(APPROVAL).hexdigest(),'expectedCurrentContainerId':s['Id'],'expectedCurrentConfigSHA256':digest(s['Config']),'defaultContainerId':d['Id'],'defaultConfigSHA256':'db86894730f9a7e3f675d7bc805ea00a5057c05c5d5047d0b8c292746e0ef512'}
++request={'gateSHA256':a['gateSHA256'],'windowId':BASE['windowId'],'phase':'CONFIRM','clientProfile':'Claude','windowStartedAtMs':BASE['windowStartedAtMs'],'authQaConfig':json.dumps(q),'ownerApproval':a,'approvalRecordSHA256':hashlib.sha256(APPROVAL).hexdigest(),'expectedCurrentContainerId':s['Id'],'expectedCurrentConfigSHA256':digest(s['Config']),'defaultContainerId':d['Id'],'defaultConfigSHA256':'011909bcc46adceb3f1defc9b769655d388413ac28d43502330bdfbc6afd588c'}
+ t=json.loads(private(r/'empty-cas.json'))
+-assert t['candidateImage']=='sha256:57bce7bb398f0508bf6dad99aaf53cac044be8f07112ca45e57c584757ffcb4d' and t['defaultContainerId']==d['Id']
++assert t['candidateImage']=='sha256:cdd762ea99b53fd21330dfe09df157b727b89e7a7c5e4e4da2c2487796364102' and t['defaultContainerId']==d['Id']
+ assert t['windowId']==BASE['windowId'] and t['windowStartedAtMs']==BASE['windowStartedAtMs'] and t['deadlineMs']==BASE['deadlineMs']
+ g=make_plan(request,s,d,t,int(time.time()*1000));plan=r/'confirm-cas.json';assert not plan.exists();atomic_private(plan,g);sha=hashlib.sha256(private(plan)).hexdigest()
+ x=subprocess.run(['python3',str(r/'config_cas.py'),str(plan),sha],capture_output=True,text=True,timeout=60)

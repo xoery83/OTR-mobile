@@ -1,0 +1,20 @@
+{
+  "status": "DISPATCHERS_BOUND_NOT_AUTHORIZED_NOT_ACTIVATED",
+  "gateCommit": "7da5a4e6",
+  "executionGateSHA256": "e5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d",
+  "windowId": "78c1610ecf5f43409106fb67ecd36489",
+  "softwareMarkerSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "helpersUnchanged": true,
+  "clockStarted": false,
+  "ownerApprovalReceived": false,
+  "notesConfirmed": false,
+  "hostExecuted": false,
+  "T": null,
+  "D": null,
+  "hashes": {
+    "prepare-empty-round.py": "2d015b26245d7498934dacf58ba8ff15015d541d6ae30de182eb3e7e1cfcef0d",
+    "confirm-once.py": "15145e07704525ba27c3056f8737aa178cd8a2bdf4a4054a8bd8e7453467d7f7",
+    "close-once.py": "e3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e",
+    "stage-closed-restore.py": "fb2b09ba023cf9c6a0eb331fc3db8e1d9f0860b934108306c78c5eb8105100b4"
+  }
+}

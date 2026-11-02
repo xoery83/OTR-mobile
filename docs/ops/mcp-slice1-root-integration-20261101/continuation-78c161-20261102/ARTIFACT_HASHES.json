@@ -1,8 +1,15 @@
 {
   "stage-closed-restore.py.diff": "ee588e92ed1fcb73e7ae5ed2bf82dd77595fbee2f37ab3606dd32e2ae1869229",
+  "prepare-empty-round.py": "2d015b26245d7498934dacf58ba8ff15015d541d6ae30de182eb3e7e1cfcef0d",
   "close-once.py.diff": "3f21e8d49efaa3c5aea5524f4e4d3305578e225b4dbb20426bc8dd368afaa073",
+  "confirm-once.py": "15145e07704525ba27c3056f8737aa178cd8a2bdf4a4054a8bd8e7453467d7f7",
   "close-once.py": "e3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e",
+  "prepare-empty-round.py.diff": "e24cabe180ac71e8000b0d3524b2934ceff7c2805a341cd5c84a7e3e4f008548",
+  "test_prepare_empty_round.py": "ea7d78396f119ee8e182b488c823d966f47ff53869d23df94caeb29014ac4fd8",
+  "test_confirm_once.py": "030787a147b540119feb9857b433c68b7fcc895ccc258d0dc69609bc7fa91ffc",
   "ACTUAL_NO_CHANGE_RESTORE.json": "fca5888c897cd466dd351b24bb45a13b4a7c46e7fb4d5bb41317b2734bf371c4",
-  "BINDING_READY.json": "3f0642181d904b723cdd95f2c5a4cc5c6746020111433e256d9560384004c069",
+  "BINDING_READY.json": "cee0481df75d30ac1129e78854289518125199a1c74706fcbfda16c332a1e892",
+  "confirm-once.py.diff": "47fbeea10f80506f4355703fe7cfbbd97f482ed45e83afe6132ed4221e2d0704",
+  "DISPATCHERS_LOCAL_READY.json": "484c31eabaf42568ee33a2636fa1c63d045de289c5d38d15e1507d132d1b8307",
   "stage-closed-restore.py": "fb2b09ba023cf9c6a0eb331fc3db8e1d9f0860b934108306c78c5eb8105100b4"
 }

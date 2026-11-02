@@ -23,11 +23,12 @@ timer created. Close entry /private/tmp/otr-mcp-root-continuation-78c161-2026110
 SHAe3a90d17d037eb1c331b3af1e6f7b6cf783d53ac103c1a5122718df1385a7d8e,
 plan8f43b6195e2f3616d9838a3f17682521d863d072761f9abd9fd30212a12038e1.
 All existing prepare/confirm/config/restore/closer helpers byte-identical; only
-nonce/default/path bindings changed. NewactualGate not yet approved; old4ab cannot
-be reused. Auth unique chat preparing one explicit finiteaccess+exactNotes approval,
+nonce/default/path bindings changed. NewactualGate7da5a4e6 SHAe5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d
+frozen but NOT approved; old4ab cannot be reused. Auth unique chat has presented
+one explicit finiteaccess+exactNotes approval,
 requiring freshread/newPreview sameCAS/digest before oneApply; mismatch stop.
-No assumption that broadcontinue is specificNotes intent. Local dispatch wrappers
-bind exact newGate only after freeze; do not build circularGate↔wrapper hashes.
+No assumption that broadcontinue is specificNotes intent. Local prepare2d015b26/confirm15145e07 now bound exact newGate;8 no-I/O checks PASS.
+No actual approval/request read or activation; do not build circularGate↔wrapper hashes.
 Evidence: core-pool-138bd0b5-20261102/ and continuation-78c161-20261102/.
 
 ## MCP acd60 — closed, 2 November
