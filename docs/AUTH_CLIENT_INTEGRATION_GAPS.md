@@ -20,3 +20,18 @@ ADOPTED_PERSON_BACKEND_REAL_E2E.json and ADOPTED_PERSON_NATIVE_READER_REAL_E2E.j
 auth-directed-invite-20261102/INDEPENDENT_REVIEW.json;
 auth-private-profile-aka-20261102/hosted-install-candidate/CANDIDATE_MANIFEST.json
 (all under docs/ops). Current milestone evidence: docs/ops/auth-c04-20261103/.
+
+## Native owning handoff — HEAD 5d202070
+
+Native confirms no normal Invite/Claim UI or post-Claim callback exists yet.
+`LocalTripWorkspace → TripMembersSheet` already owns roster/Add Traveler. After a
+formal Claim, reuse `tripDownstreamCoordinator.refreshAccountTripReads()` for
+Discovery and listed-Trip pulls, or `refreshTripFromCloud(tripId)` for the known
+Trip. Both retain the existing CoreTransport/downstream accepted-snapshot path;
+never install a fabricated local roster/Accepted result from the Claim response.
+AccountGeneration/context/applyGate already fence Account changes. Existing cache
+`denyExistingAcceptedScope`/`regrantExistingAcceptedScope` candidates have no normal
+runtime caller; a real access-loss integration remains required, without converting
+an Auth revision into Core accessRevision. Native currently owns conflicting
+`LocalTripWorkspace.tsx` and its test under SYNC-C01. Auth will not edit these shared
+files. No new device build or Realtime subscription is required for this handoff.
