@@ -144,6 +144,88 @@ async function collection(
   );
 }
 describe("Core SQLite54 account partition and durable offline foundation", () => {
+  it("rejects stale generations, invalid certificates and duplicate accepted actor bindings for connections", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const otherTrip = await f.repo.captureContext(randomUUID());
+    expect(await f.repo.readAcceptedPeopleConnections(otherTrip)).toBeNull();
+    const read = f.database.getFirstAsync.bind(f.database);
+    const versionFault = vi
+      .spyOn(f.database, "getFirstAsync")
+      .mockImplementation(async (query, ...args) => {
+        const row = await read<Record<string, unknown>>(query, ...args);
+        return row && query.includes("business_version")
+          ? { ...row, business_version: 1 }
+          : row;
+      });
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_READ_VERSION_MISMATCH",
+    );
+    versionFault.mockRestore();
+    f.sql
+      .prepare(
+        "INSERT INTO trip_core_person_bindings(account_id,trip_id,person_id,linked_account_id,active,participating) VALUES(?,?,?,?,1,0)",
+      )
+      .run(account, trip, randomUUID(), account);
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_PERSON_BINDING_MISMATCH",
+    );
+    const lease = await beginAccountTransition();
+    endAccountTransition(lease);
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "Account changed",
+    );
+  });
+  it("projects only active accepted connections without exposing account IDs or confusing participation", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip);
+    expect(await f.repo.readAcceptedPeopleConnections(ctx)).toBeNull();
+    const bundle = await collection(false);
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const foreign = randomUUID(),
+      unlinked = randomUUID(),
+      inactive = randomUUID();
+    const insert = f.sql.prepare(
+      "INSERT INTO trip_core_person_bindings(account_id,trip_id,person_id,linked_account_id,active,participating) VALUES(?,?,?,?,?,?)",
+    );
+    insert.run(account, trip, foreign, randomUUID(), 1, 0);
+    insert.run(account, trip, unlinked, null, 1, 1);
+    insert.run(account, trip, inactive, randomUUID(), 0, 1);
+    const result = await f.repo.readAcceptedPeopleConnections(ctx);
+    expect(result?.certificate).toEqual(
+      (await f.repo.acceptedSnapshot(ctx))?.certificate,
+    );
+    expect(result?.people).toEqual(
+      [
+        { personId: person, connected: true, isCurrentActor: true },
+        { personId: foreign, connected: true, isCurrentActor: false },
+        { personId: unlinked, connected: false, isCurrentActor: false },
+      ].sort((a, b) => a.personId.localeCompare(b.personId)),
+    );
+    expect(await f.repo.pending(ctx)).toEqual([]);
+    f.sql.prepare("UPDATE trip_core_scopes SET access_revision=access_revision+1").run();
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_READ_ACCESS_MISMATCH",
+    );
+    f.sql.prepare("UPDATE trip_core_scopes SET revoked=1").run();
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_ACCESS_REVOKED",
+    );
+    f.switchTo(randomUUID());
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "Account changed",
+    );
+  });
   it("pulls another client's P3 Create/Edit/Skip, survives SQLite reopen and preserves a competing local intent", async () => {
     const folder = mkdtempSync(join(tmpdir(), "otr-downstream-p3-"));
     folders.push(folder);
