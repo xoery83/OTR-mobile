@@ -1,3 +1,21 @@
+# Read401 retest acd60 CLOSED — 2 November2026
+
+Exact4ab/8580 window T00:14:48.231Z/D00:42:16.118Z closed normally00:40:16Z.
+NormalOTP/Consent, real same3616 Item+EditBase SERVER_CONFIRMED, then actual
+Notes-only PREVIEW1d6/CAS1/digest1d5 PASS. This does not quantify credential refresh.
+Preview.current_revision=null; expectedRevision1 is request/EditBase evidence.
+No Noteshuman confirmation arrived beforeclose; confirmationsneverinstalled,
+Apply0/original1d6 NOT_SUBMITTED. SQLreadback retainedrev1/originalNotes/receipt0.
+Historicalf107/9b UNKNOWN untouched. No windowreuse/newOTP/rePOST.
+
+Root defaultddd7/db86/image57 independentlyrestored00:40:33.493Z beforeD,
+QAkeysabsent/Host23filesexact/healthy200/protected401/timerinactive/lockreleased.
+Auth denyall00:40:31.224Z; ownnormalgrantDELETE204/readabsence + control69236
+cleanuprefreshrevokedPASS00:41:54.355Z/watch41343exit0. OwnnormalQA lock naturally
+released and absenceverified; Native notified. ConsoleOAuthoff/Hookdisabled/
+localhost persisted, tabclosed. FinalindependentSQL00:45:44Z originaldenyall/ACL.
+See ops/auth-mcp-fresh-20261102/read401-acd60/ROUND_OUTCOME.json.
+
 # Auth P0 Private Realtime candidate fixed — 2 November2026
 
 Formal V1 shared DTO/committed-revoke mapper, Backend Authority and held-Pg adapter

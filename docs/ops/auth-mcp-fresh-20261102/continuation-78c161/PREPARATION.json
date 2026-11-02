@@ -1,0 +1,44 @@
+{
+  "status": "PREPARATION_ONLY_NO_AUTHORITY_NO_CLOCK",
+  "windowId": "78c1610ecf5f43409106fb67ecd36489",
+  "previousWindow": "acd60fd27aee40e8b6cf1aca727ed169",
+  "previousWindowState": "CLOSED_NEVER_REOPEN",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "expectedRevision": 1,
+  "beforeNotes": "Synthetic QA only. No Booking/Ticket.",
+  "afterNotes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+  "startsAt": null,
+  "expiresAt": null,
+  "accessApproved": false,
+  "notesApproved": false,
+  "otpSent": false,
+  "applyAttempts": 0,
+  "finalAssembly": "WAIT_ROOT_ACTUAL_DEFAULT_READY",
+  "closeBinding": "WAIT_FINAL_ASSEMBLY_REBIND_EXISTING_CLOSER",
+  "limits": {
+    "maxWindowSeconds": 1800,
+    "normalCloseBeforeDeadlineSeconds": 120,
+    "maxAccessTokenSeconds": 60,
+    "maxApplyAttempts": 1,
+    "unknown": "READ_ORIGINAL_RECEIPT_ONLY_NO_REPOST"
+  },
+  "requiredRevalidation": [
+    "same Account/client/Trip/Item",
+    "same baseline/revision/Notes",
+    "original operation has no applied receipt",
+    "fresh formal Preview same operation/digest/CAS/Before/After",
+    "any mismatch stops without Apply"
+  ],
+  "notAuthority": [
+    "historic access approvals",
+    "continue instruction alone",
+    "old Preview without new exact save approval"
+  ],
+  "currentReadbackSource": "MCP CONTINUATION_PREFLIGHT_READBACK.json 2026-11-02T01:03:58.147Z",
+  "lastHostReadback": "Root 2026-11-02T01:03:35.685341Z ddd7/db86/image57; NOT final next assembly"
+}

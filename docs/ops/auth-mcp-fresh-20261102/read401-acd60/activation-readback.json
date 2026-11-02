@@ -1,0 +1,7 @@
+{
+  "status": "EXACT_FINITE_ISSUER_BODY_VERIFIED",
+  "disposition": "ACKNOWLEDGED",
+  "observedAt": "2026-11-02T00:21:12.891121+00:00",
+  "bodyMD5": "75bcfeff77510acdfc8c7a720f20ae5f",
+  "notesApproved": false
+}
