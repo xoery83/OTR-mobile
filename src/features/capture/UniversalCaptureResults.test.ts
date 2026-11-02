@@ -566,7 +566,7 @@ it("lists unprocessed originals separately without inventing a candidate or Revi
   expect(f.result.sourceBindings).toHaveLength(2);
 });
 
-it("shows unsupported retained input before Results without inventing a Source or Review", () => {
+it("shows retained original metadata before Results without inventing a processing outcome", () => {
   const f = fixture();
   const model = {
     ...f.props.model,
@@ -584,8 +584,9 @@ it("shows unsupported retained input before Results without inventing a Source o
   const html = renderToStaticMarkup(
     createElement(UniversalResultView, { ...f.props, model, result: null, busy: true }),
   );
-  expect(html).toContain("Not processed (1)");
   expect(html).toContain("Retained-before-task.pdf");
+  expect(html).toContain(t("capture.ai.originals"));
+  expect(html).not.toContain("Not processed (1)");
   expect(html).not.toContain(t("capture.ai.retainedUnprocessedDescription"));
   expect(html).not.toContain("Museum walk");
   expect(f.props.start).not.toHaveBeenCalled();
@@ -609,5 +610,104 @@ it.each([true, false])(
     expect(button).toBeDefined();
     expect(button?.disabled).toBe(!canStartDuringRead);
     expect(f.props.start).not.toHaveBeenCalled();
+  },
+);
+
+it("shows the owning accepted receipt even when save controls are closed, without an incomplete prompt", () => {
+  const f = fixture();
+  const result = {
+    ...f.result,
+    candidates: [
+      { ...f.result.candidates[0], presentationTier: "INCOMPLETE" as const },
+    ],
+  };
+  const confirm = vi.fn(async () => {});
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, {
+      ...f.props,
+      result,
+      admission: {
+        enabled: false,
+        busyToken: null,
+        statuses: { i1: "SERVER_ACCEPTED" as const },
+        completed: { i1: true },
+        confirm,
+        readOriginal: vi.fn(async () => "original"),
+      },
+    }),
+  );
+  expect(html).toContain(t("capture.ai.p1Accepted"));
+  expect(html).not.toContain(t("capture.ai.incomplete"));
+  expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(
+    false,
+  );
+  expect(confirm).not.toHaveBeenCalled();
+});
+
+it("shows an unresolved Save read and blocks confirmation instead of treating it as a new item", () => {
+  const f = fixture();
+  const token = f.result.candidates[0].token;
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, {
+      ...f.props,
+      admission: {
+        enabled: true,
+        statuses: { [token]: "UNAVAILABLE" },
+        busyToken: null,
+        readOriginal: vi.fn(),
+        confirm: vi.fn(),
+      },
+    }),
+  );
+  expect(html).toContain(t("capture.ai.p1Unavailable"));
+  expect(
+    state.buttons.find((b) => b.label === t("capture.ai.p1OpenOriginal"))
+      ?.disabled,
+  ).toBe(false);
+});
+
+it.each([
+  ["SERVER_ACCEPTED", true, true],
+  ["SERVER_ACCEPTED", false, false],
+  ["UNAVAILABLE", true, false],
+  ["SYNC_PENDING", true, false],
+] as const)(
+  "opens Day only for the same Task's actual accepted Item (%s, %s)",
+  (status, sameTask, shown) => {
+    const f = fixture(),
+      onOpenAcceptedItem = vi.fn(),
+      itemId = randomUUID();
+    let current = true;
+    renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        isCurrent: () => current,
+        onOpenAcceptedItem,
+        admission: {
+          enabled: false,
+          busyToken: null,
+          statuses: { i1: status },
+          acceptedItems: {
+            i1: { taskId: sameTask ? f.result.taskId : randomUUID(), itemId },
+          },
+          confirm: vi.fn(async () => {}),
+          readOriginal: vi.fn(async () => "original"),
+        },
+      }),
+    );
+    const button = state.buttons.find(
+      (b) => b.label === t("tripHome.preparation.day"),
+    );
+    expect(Boolean(button)).toBe(shown);
+    if (button) {
+      button.onPress();
+      expect(onOpenAcceptedItem).toHaveBeenCalledExactlyOnceWith({
+        tripId: f.result.tripId,
+        itemId,
+      });
+      current = false;
+      button.onPress();
+      expect(onOpenAcceptedItem).toHaveBeenCalledTimes(1);
+    } else expect(onOpenAcceptedItem).not.toHaveBeenCalled();
   },
 );

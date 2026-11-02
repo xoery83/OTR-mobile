@@ -29,9 +29,13 @@ beforeEach(() => {
   state.buttons = [];
   setUiLocale("en");
 });
-it.each([false, true])(
-  "only confirmed Source completion disables Save; original remains readable (complete=%s)",
-  async (complete) => {
+it.each([
+  [false, false],
+  [true, false],
+  [false, true],
+] as const)(
+  "Source completion=%s or unavailable receipt=%s blocks Save while originals remain readable",
+  async (complete, confirmationUnavailable) => {
     const readOriginal = vi.fn(async () => "retained original"),
       onConfirm = vi.fn();
     renderToStaticMarkup(
@@ -52,15 +56,16 @@ it.each([false, true])(
         } as never,
         disabled: false,
         complete,
+        confirmationUnavailable,
         isCurrent: () => true,
         readOriginal,
         onConfirm,
       }),
     );
     const save = state.buttons.find((b) => b.label === t("capture.ai.p1Confirm"))!;
-    expect(save.disabled).toBe(complete);
+    expect(save.disabled).toBe(complete || confirmationUnavailable);
     save.onPress();
-    expect(onConfirm).toHaveBeenCalledTimes(complete ? 0 : 1);
+    expect(onConfirm).toHaveBeenCalledTimes(complete || confirmationUnavailable ? 0 : 1);
     const original = state.buttons.find(
       (b) => b.label === t("capture.ai.p1OpenOriginal"),
     )!;

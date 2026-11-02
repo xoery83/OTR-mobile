@@ -13,6 +13,7 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { captureActivityTime } from "./CaptureActivity";
+import type { OpenAcceptedImportItem } from "./useUniversalP1Admission";
 const UniversalResults = lazy(() =>
   import("./UniversalCaptureResults").then((module) => ({
     default: module.UniversalCaptureResults,
@@ -32,6 +33,7 @@ export function CaptureProgress({
   onOpenJob,
   onActivity,
   onNewImport,
+  onOpenAcceptedItem,
   isCurrent,
   photoRelevanceCopy,
 }: {
@@ -47,6 +49,7 @@ export function CaptureProgress({
   onOpenJob: (id: string) => void;
   onActivity: () => void;
   onNewImport: () => void;
+  onOpenAcceptedItem?: OpenAcceptedImportItem;
   isCurrent?: () => boolean;
   photoRelevanceCopy?: UniversalPhotoRelevanceCopy;
 }) {
@@ -153,6 +156,7 @@ export function CaptureProgress({
             >
               <UniversalResults
                 readTripTargets={readTripTargets}
+                onOpenAcceptedItem={onOpenAcceptedItem}
                 key={model.batch.batchId}
                 model={model}
                 isCurrent={isCurrent}

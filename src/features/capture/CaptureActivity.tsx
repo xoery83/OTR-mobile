@@ -237,6 +237,15 @@ export function CaptureActivityList({
               ? t("capture.progress.batchTitle", { count: job.counts.selected })
               : captureJobTitle(job)}
           </Text>
+          {isCurrent()
+            ? job.inputs?.map((input) =>
+                input.originalFilename ? (
+                  <Text key={input.id} style={styles.secondary}>
+                    {input.originalFilename}
+                  </Text>
+                ) : null,
+              )
+            : null}
           <Text style={styles.secondary}>{captureActivityTime(job.batch.createdAt)}</Text>
           {!job.allInputsAccepted ? (
             <Text style={styles.secondary}>

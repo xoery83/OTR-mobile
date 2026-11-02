@@ -21,6 +21,19 @@ const recordedTime = (at: string) =>
     timeStyle: "medium",
   });
 
+// Display metadata only; custody verification and preview eligibility remain separate.
+const documentFormat = (document: ImportDocument) =>
+  document.kind === "FILE"
+    ? document.declaredContentType === "application/pdf"
+      ? t("attachment.pdf")
+      : document.declaredContentType === "image/png" ||
+          document.declaredContentType === "image/jpeg"
+        ? t("importDocuments.format.IMAGE")
+        : document.declaredContentType === "text/plain"
+          ? t("importDocuments.format.TEXT")
+          : t("importDocuments.format.FILE")
+    : t(`importDocuments.format.${document.kind}`);
+
 // Native owns the route/pager. These Import-only views receive scoped repository observations.
 export function ImportDocumentsList({
   documents,
@@ -92,7 +105,7 @@ export function ImportDocumentsList({
                 {doc.originalFilename ??
                   t(doc.kind === "TEXT" ? "capture.ai.submittedText" : "capture.unnamed")}
               </UiText>
-              <UiText style={s.meta}>{t(`importDocuments.format.${doc.kind}`)}</UiText>
+              <UiText style={s.meta}>{documentFormat(doc)}</UiText>
               <UiText style={s.meta}>{recordedTime(doc.recordedAt)}</UiText>
               <UiText style={s.meta}>{t("importDocuments.private")}</UiText>
               <UiText style={s.meta}>
@@ -180,7 +193,7 @@ export function ImportDocumentDetail({
           t(document.kind === "TEXT" ? "capture.ai.submittedText" : "capture.unnamed")
         }
       >
-        <UiText style={s.meta}>{t(`importDocuments.format.${document.kind}`)}</UiText>
+        <UiText style={s.meta}>{documentFormat(document)}</UiText>
         <UiText style={s.meta}>{recordedTime(document.recordedAt)}</UiText>
         <UiText style={s.meta}>{t("importDocuments.private")}</UiText>
         <UiText style={s.meta}>{t("importDocuments.custodyExplanation")}</UiText>

@@ -1,3 +1,15 @@
+# Import UI main-context candidate — 3 November 2026
+
+Independent branch `codex/imp-c01-ui-main-20261103` based on main4e1bedfc prepares
+retained filenames/media labels, accepted/UNKNOWN recovery display, original-only
+loading wording and optional receipt-bound Open Day adapter. 128 focused checks,
+scoped types/UI guard pass. Full types retain unchanged Auth-browser dependency
+TS7016; no dependency/Auth/shared Navigation changes. See
+`ops/import-ui-main-20261103/HANDOFF.md` and VALIDATION.json.
+Not installed, not merged, no Hosted/SQL/Provider/authority change. Root independent
+Review and Native-owned callback consumption precede serial main integration.
+Progress document shortcuts/assigned Batch DTO remain a separate slice.
+
 # Native focused downstream checkpoint — 1 November 2026
 
 Installed iPad132 source95e3ffa4 (Native basis127, same bundle/profile/Session and

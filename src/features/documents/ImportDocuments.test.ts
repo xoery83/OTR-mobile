@@ -244,3 +244,39 @@ it("opens a repository original only through an available versioned Native adapt
   open.onPress();
   expect(onOpenOriginal).toHaveBeenCalledOnce();
 });
+
+it.each([
+  ["image/png", "importDocuments.format.IMAGE"],
+  ["image/jpeg", "importDocuments.format.IMAGE"],
+  ["application/pdf", "attachment.pdf"],
+  ["text/plain", "importDocuments.format.TEXT"],
+  [null, "importDocuments.format.FILE"],
+])(
+  "displays a retained file's declared format %s without changing its intake kind",
+  (declaredContentType, key) => {
+    const f = fixture();
+    const document: ImportDocument = {
+      ...f.doc,
+      kind: "FILE",
+      originalFilename: "original.png",
+      declaredContentType,
+    };
+    const list = renderToStaticMarkup(
+      createElement(ImportDocumentsList, { ...f.props, documents: [document] }),
+    );
+    const detail = renderToStaticMarkup(
+      createElement(ImportDocumentDetail, {
+        document,
+        accountId: document.accountId,
+        tripId: null,
+        opening: false,
+        error: false,
+        isCurrent: () => true,
+        onOpenOriginal: vi.fn(),
+      }),
+    );
+    expect(list).toContain(t(key as Parameters<typeof t>[0]));
+    expect(detail).toContain(t(key as Parameters<typeof t>[0]));
+    expect(document.kind).toBe("FILE");
+  },
+);

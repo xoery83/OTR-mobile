@@ -450,3 +450,32 @@ it("accepted IMAGE rows receive local Photo controls even when another Source is
     expect(state.photoRows).toHaveLength(0);
   }
 });
+
+it("identifies current Activity batches by retained filenames without exposing stale metadata", async () => {
+  const f = fixture();
+  const request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  model.inputs[0].originalFilename = "Harbour-stay-confirmation.pdf";
+  const props = {
+    jobs: [model],
+    expectedAccountId: model.batch.accountId,
+    loading: false,
+    error: false,
+    hasMore: false,
+    onRefresh: vi.fn(),
+    onMore: vi.fn(),
+    onOpenJob: vi.fn(),
+    onReturn: vi.fn(),
+    onHide: vi.fn(),
+  };
+  expect(
+    renderToStaticMarkup(
+      createElement(CaptureActivityList, { ...props, isCurrent: () => true }),
+    ),
+  ).toContain("Harbour-stay-confirmation.pdf");
+  expect(
+    renderToStaticMarkup(
+      createElement(CaptureActivityList, { ...props, isCurrent: () => false }),
+    ),
+  ).not.toContain("Harbour-stay-confirmation.pdf");
+});

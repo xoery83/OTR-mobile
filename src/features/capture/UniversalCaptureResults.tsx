@@ -3,6 +3,7 @@ import { UniversalP1SourceReviewForm } from "./UniversalP1SourceReviewForm";
 import {
   useUniversalP1Admission,
   type P1AdmissionActions,
+  type OpenAcceptedImportItem,
 } from "./useUniversalP1Admission";
 import { StyleSheet, View } from "react-native";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
@@ -24,9 +25,11 @@ export function UniversalCaptureResults({
   model,
   isCurrent,
   readTripTargets,
+  onOpenAcceptedItem,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
+  onOpenAcceptedItem?: OpenAcceptedImportItem;
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
@@ -37,6 +40,7 @@ export function UniversalCaptureResults({
       isCurrent={isCurrent}
       admission={admission}
       readTripTargets={readTripTargets}
+      onOpenAcceptedItem={onOpenAcceptedItem}
       {...state}
     />
   );
@@ -44,6 +48,7 @@ export function UniversalCaptureResults({
 export function UniversalResultView({
   model,
   readTripTargets,
+  onOpenAcceptedItem,
   result,
   busy,
   unavailable,
@@ -58,6 +63,7 @@ export function UniversalResultView({
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
+  onOpenAcceptedItem?: OpenAcceptedImportItem;
   result: UniversalImportResult | null;
   busy: boolean;
   unavailable: boolean;
@@ -102,7 +108,9 @@ export function UniversalResultView({
       {unprocessed.length ? (
         <View style={s.group}>
           <UiText style={s.heading}>
-            {t("capture.ai.retainedUnprocessedTitle", { count: unprocessed.length })}
+            {result
+              ? t("capture.ai.retainedUnprocessedTitle", { count: unprocessed.length })
+              : t("capture.ai.originals")}
           </UiText>
           {result ? (
             <UiText style={s.meta}>
@@ -172,15 +180,34 @@ export function UniversalResultView({
               </UiText>
               <UiText style={s.meta}>
                 {t(
-                  candidate.presentationTier === "HIGH_CONFIDENCE"
-                    ? "capture.ai.high"
-                    : candidate.presentationTier === "INCOMPLETE"
-                      ? "capture.ai.incomplete"
-                      : candidate.presentationTier === "ABSTAIN"
-                        ? "capture.ai.abstain"
-                        : "capture.ai.reviewable",
+                  admission?.statuses[candidate.token] === "SERVER_ACCEPTED"
+                    ? "capture.ai.p1Accepted"
+                    : candidate.presentationTier === "HIGH_CONFIDENCE"
+                      ? "capture.ai.high"
+                      : candidate.presentationTier === "INCOMPLETE"
+                        ? "capture.ai.incomplete"
+                        : candidate.presentationTier === "ABSTAIN"
+                          ? "capture.ai.abstain"
+                          : "capture.ai.reviewable",
                 )}
               </UiText>
+              {onOpenAcceptedItem &&
+              admission?.statuses[candidate.token] === "SERVER_ACCEPTED" &&
+              admission.acceptedItems?.[candidate.token]?.taskId === result.taskId ? (
+                <UiButton
+                  label={t("tripHome.preparation.day")}
+                  variant="secondary"
+                  disabled={busy || !isCurrent()}
+                  onPress={() => {
+                    const accepted = admission.acceptedItems?.[candidate.token];
+                    if (!busy && isCurrent() && accepted?.taskId === result.taskId)
+                      onOpenAcceptedItem({
+                        tripId: result.tripId,
+                        itemId: accepted.itemId,
+                      });
+                  }}
+                />
+              ) : null}
               {candidate.fields.map((field, index) => (
                 <View key={`${field.path}:${index}`}>
                   <UiText style={s.copy}>{field.raw}</UiText>
@@ -218,17 +245,16 @@ export function UniversalResultView({
                                 : "capture.ai.p1Details",
                     )}
                   </UiText>
-                  {admission.statuses[candidate.token] ? (
+                  {admission.statuses[candidate.token] &&
+                  admission.statuses[candidate.token] !== "SERVER_ACCEPTED" ? (
                     <UiText style={s.meta}>
                       {t(
-                        admission.statuses[candidate.token] === "SERVER_ACCEPTED"
-                          ? "capture.ai.p1Accepted"
-                          : admission.statuses[candidate.token] === "SYNC_PENDING"
-                            ? "capture.ai.p1Pending"
-                            : admission.statuses[candidate.token] ===
-                                "OWNING_ADMISSION_PENDING"
-                              ? "capture.ai.p1Blocked"
-                              : "capture.ai.p1Unavailable",
+                        admission.statuses[candidate.token] === "SYNC_PENDING"
+                          ? "capture.ai.p1Pending"
+                          : admission.statuses[candidate.token] ===
+                              "OWNING_ADMISSION_PENDING"
+                            ? "capture.ai.p1Blocked"
+                            : "capture.ai.p1Unavailable",
                       )}
                     </UiText>
                   ) : null}
@@ -238,6 +264,9 @@ export function UniversalResultView({
                     candidate={candidate}
                     readTripTargets={readTripTargets}
                     disabled={busy || admission.busyToken !== null || !isCurrent()}
+                    confirmationUnavailable={
+                      admission.statuses[candidate.token] === "UNAVAILABLE"
+                    }
                     complete={admission.completed?.[candidate.token] === true}
                     isCurrent={isCurrent}
                     readOriginal={() => admission.readOriginal(result, candidate.token)}

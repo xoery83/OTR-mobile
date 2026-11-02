@@ -360,6 +360,7 @@ export async function readUniversalAcceptedItems(
     transport: Pick<ReturnType<typeof createCoreV2Transport>, "receipt"> &
       Partial<Pick<ReturnType<typeof createCoreV2Transport>, "sourcePlan">>;
     onAccepted?(token: string, item: AcceptedImportItem): void;
+    onRecoveryState?(token: string, state: "ABSENT" | "UNAVAILABLE"): void;
   },
 ) {
   const current = () => {
@@ -395,14 +396,22 @@ export async function readUniversalAcceptedItems(
             error.status !== undefined &&
             error.status >= 500 &&
             error.status < 600))
-      )
+      ) {
+        deps.onRecoveryState?.(candidate.token, "UNAVAILABLE");
         continue;
+      }
       throw error;
     }
     current();
     await assertAccountRequestContext(context, deps.getAccountId);
-    if (!read) continue;
-    if (read.projection !== "FULL") continue;
+    if (!read) {
+      deps.onRecoveryState?.(candidate.token, "ABSENT");
+      continue;
+    }
+    if (read.projection !== "FULL") {
+      deps.onRecoveryState?.(candidate.token, "UNAVAILABLE");
+      continue;
+    }
     const receipt = read.receipt;
     if (
       receipt.operationId !== operationId ||

@@ -6,6 +6,9 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import type { UniversalItemSourceReview } from "@/domain/trip/universalP1SourceReview";
 export type P1AdmissionStatus =
   "SYNC_PENDING" | "SERVER_ACCEPTED" | "OWNING_ADMISSION_PENDING" | "UNAVAILABLE";
+export type OpenAcceptedImportItem = (
+  target: Readonly<{ tripId: string; itemId: string }>,
+) => void;
 export type P1AdmissionActions = {
   enabled: boolean;
   enabledFamilies?: readonly ("P1" | "P2" | "P3" | "P4" | "P5" | "P6")[];
@@ -13,6 +16,7 @@ export type P1AdmissionActions = {
   busyToken: string | null;
   statuses: Record<string, P1AdmissionStatus>;
   completed?: Readonly<Record<string, boolean>>;
+  acceptedItems?: Readonly<Record<string, { taskId: string; itemId: string }>>;
   confirm(
     result: UniversalImportResult,
     token: string,
@@ -45,6 +49,9 @@ export function useUniversalP1Admission(
   const [statuses, setStatuses] = useState<Record<string, P1AdmissionStatus>>({}),
     [busyToken, setBusyToken] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  const [acceptedItems, setAcceptedItems] = useState<
+    Record<string, { taskId: string; itemId: string }>
+  >({});
   const alive = useRef(true),
     running = useRef(false),
     generation = useRef(getAccountGeneration()),
@@ -69,6 +76,16 @@ export function useUniversalP1Admission(
   useEffect(() => {
     if (!result || !current()) return;
     let canceled = false;
+    const recoveryState = (token: string, state: "ABSENT" | "UNAVAILABLE") => {
+      if (canceled || !current()) return;
+      setStatuses((previous) => {
+        if (previous[token] === "SERVER_ACCEPTED") return previous;
+        const next = { ...previous };
+        if (state === "ABSENT") delete next[token];
+        else next[token] = "UNAVAILABLE";
+        return next;
+      });
+    };
     const recover = async () => {
       const [
         { requireAdoptedUserId },
@@ -85,6 +102,15 @@ export function useUniversalP1Admission(
         accepted: Awaited<ReturnType<typeof readUniversalAcceptedItems>>,
       ) => {
         if (!canceled && current()) {
+          setAcceptedItems((previous) => ({
+            ...previous,
+            ...Object.fromEntries(
+              Object.entries(accepted).map(([token, item]) => [
+                token,
+                { taskId: result.taskId, itemId: item.itemId },
+              ]),
+            ),
+          }));
           setCompleted((previous) => ({
             ...previous,
             ...Object.fromEntries(
@@ -108,11 +134,16 @@ export function useUniversalP1Admission(
           timeoutMs: 90000,
         }),
         onAccepted: (token, item) => apply({ [token]: item }),
+        onRecoveryState: recoveryState,
       });
       apply(accepted);
     };
     // A failed GET is not a failed Save; explicit confirm/recovery retains its original identity.
-    void recover().catch(() => {});
+    void recover().catch(() => {
+      result.candidates.forEach((candidate) =>
+        recoveryState(candidate.token, "UNAVAILABLE"),
+      );
+    });
     return () => {
       canceled = true;
     };
@@ -125,6 +156,7 @@ export function useUniversalP1Admission(
     busyToken,
     statuses,
     completed,
+    acceptedItems,
     async readOriginal(result, token) {
       if (!current() || !permits(result, token)) throw Error("OWNING_REVIEW_REQUIRED");
       const [
@@ -176,7 +208,13 @@ export function useUniversalP1Admission(
       });
     },
     async confirm(result, token, review) {
-      if (!current() || !permits(result, token) || running.current) return;
+      if (
+        !current() ||
+        !permits(result, token) ||
+        running.current ||
+        statuses[token] === "UNAVAILABLE"
+      )
+        return;
       running.current = true;
       setBusyToken(token);
       try {
@@ -223,8 +261,13 @@ export function useUniversalP1Admission(
         const outcome = await consumer.confirm(model, result, token, review);
         if (current()) {
           setStatuses((s) => ({ ...s, [token]: outcome.status }));
-          if (outcome.status === "SERVER_ACCEPTED")
+          if (outcome.status === "SERVER_ACCEPTED") {
             setCompleted((previous) => ({ ...previous, [token]: true }));
+            setAcceptedItems((previous) => ({
+              ...previous,
+              [token]: { taskId: result.taskId, itemId: outcome.itemId },
+            }));
+          }
         }
       } catch (error) {
         const code =

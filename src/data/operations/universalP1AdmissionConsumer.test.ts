@@ -936,3 +936,30 @@ it("opens the scoped retained original PNG instead of decoding it as text or OCR
   ).rejects.toThrow("IMPORT_EVIDENCE_INVALID");
   expect(previewOriginal).toHaveBeenCalledOnce();
 });
+
+it("keeps an unavailable saved receipt distinct from an absent operation without writing", async () => {
+  const f = await fixture();
+  const onRecoveryState = vi.fn();
+  const deps = {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => true,
+    transport: f.transport as never,
+    onRecoveryState,
+  };
+  f.transport.receipt.mockRejectedValueOnce(
+    new ApiClientError("Unavailable", "http", 503, "CORE_EXECUTION_UNAVAILABLE"),
+  );
+  expect(await readUniversalAcceptedItems(f.model, f.result, deps)).toEqual({});
+  expect(onRecoveryState).toHaveBeenLastCalledWith(
+    f.result.candidates[0].token,
+    "UNAVAILABLE",
+  );
+  f.transport.receipt.mockResolvedValueOnce(null);
+  expect(await readUniversalAcceptedItems(f.model, f.result, deps)).toEqual({});
+  expect(onRecoveryState).toHaveBeenLastCalledWith(
+    f.result.candidates[0].token,
+    "ABSENT",
+  );
+  expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+});

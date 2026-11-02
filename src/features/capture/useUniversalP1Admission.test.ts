@@ -5,6 +5,8 @@ import { useUniversalP1Admission } from "./useUniversalP1Admission";
 const hooks = vi.hoisted(() => ({
   slots: [] as unknown[],
   cursor: 0,
+  states: [] as unknown[],
+  stateCursor: 0,
   layout: [] as (() => void)[],
   effects: [] as (() => void)[],
   transport: vi.fn(),
@@ -16,13 +18,20 @@ vi.mock("react", () => ({
     if (!(i in hooks.slots)) hooks.slots[i] = { current: initial };
     return hooks.slots[i];
   },
-  useState: (initial: unknown) => [initial, vi.fn()],
+  useState(initial: unknown) {
+    const i = hooks.stateCursor++;
+    if (!(i in hooks.states)) hooks.states[i] = initial;
+    return [hooks.states[i], (value: unknown) => {
+      hooks.states[i] = typeof value === "function" ? value(hooks.states[i]) : value;
+    }];
+  },
   useEffect: (effect: () => void) => hooks.effects.push(effect),
   useLayoutEffect: (effect: () => void) => hooks.layout.push(effect),
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 1 }));
 function Harness(batchId: string, current = () => true, result?: UniversalImportResult) {
   hooks.cursor = 0;
+  hooks.stateCursor = 0;
   hooks.layout = [];
   const actions = useUniversalP1Admission(
     { batch: { accountId: "qa", batchId } } as CaptureJobReadModel,
@@ -34,6 +43,7 @@ function Harness(batchId: string, current = () => true, result?: UniversalImport
 }
 beforeEach(() => {
   hooks.slots = [];
+  hooks.states = [];
   hooks.effects = [];
   hooks.transport.mockReset();
   hooks.accepted.mockReset();
@@ -135,4 +145,51 @@ it("receipt-only cold recovery keeps the same Core request budget as explicit co
     expect.any(Object),
     expect.objectContaining({ transport }),
   );
+});
+
+
+it("retains receipt-bound Item identity and never downgrades accepted recovery to unknown", async () => {
+  const result = {
+    taskId: "task-a",
+    candidates: [{ token: "i1", kind: "P1" }],
+  } as UniversalImportResult;
+  hooks.transport.mockReturnValue({ receipt: vi.fn() });
+  hooks.accepted.mockResolvedValue({
+    i1: { itemId: "accepted-item", sourceComplete: true },
+  });
+  Harness("batch-a", () => true, result);
+  hooks.effects.forEach((effect) => effect());
+  await vi.waitFor(() =>
+    expect(Harness("batch-a", () => true, result).acceptedItems).toEqual({
+      i1: { taskId: "task-a", itemId: "accepted-item" },
+    }),
+  );
+  hooks.accepted.mock.calls[0][2].onRecoveryState("i1", "UNAVAILABLE");
+  const recovered = Harness("batch-a", () => true, result);
+  expect(recovered.statuses.i1).toBe("SERVER_ACCEPTED");
+  expect(recovered.completed?.i1).toBe(true);
+});
+
+it("blocks confirmation while receipt recovery is unknown", async () => {
+  const result = {
+    taskId: "task-a",
+    candidates: [{ token: "i1", kind: "P1" }],
+  } as UniversalImportResult;
+  hooks.transport.mockReturnValue({ receipt: vi.fn() });
+  hooks.accepted.mockImplementation(async (_model, _result, deps) => {
+    deps.onRecoveryState("i1", "UNAVAILABLE");
+    return {};
+  });
+  Harness("batch-a", () => true, result);
+  hooks.effects.forEach((effect) => effect());
+  await vi.waitFor(() => expect(hooks.accepted).toHaveBeenCalledOnce());
+  const unavailable = Harness("batch-a", () => true, result);
+  expect(unavailable.statuses.i1).toBe("UNAVAILABLE");
+  expect(unavailable.acceptedItems).toEqual({});
+  await unavailable.confirm(
+    result,
+    "i1",
+    {} as Parameters<typeof unavailable.confirm>[2],
+  );
+  expect(hooks.transport).toHaveBeenCalledOnce();
 });

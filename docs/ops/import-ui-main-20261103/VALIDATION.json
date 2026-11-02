@@ -1,0 +1,59 @@
+{
+  "status": "LOCAL_PASS_PENDING_ROOT_INDEPENDENT_REVIEW_NOT_INSTALLED",
+  "base": "4e1bedfc",
+  "sourceCommits": [
+    "674ee4a7",
+    "d075ff21",
+    "93b3aeb9",
+    "c2635fb5",
+    "d91234ee"
+  ],
+  "tests": {
+    "suites": 7,
+    "checks": 128,
+    "status": "PASS"
+  },
+  "strictScopedUiTypes": "PASS",
+  "uiGuard": {
+    "status": "PASS",
+    "legacyOccurrences": 473,
+    "representativeFiles": 165
+  },
+  "scopedLint": {
+    "errors": 0,
+    "warnings": 1,
+    "existingWarning": "CaptureContent require() import at original line362"
+  },
+  "fullTypecheck": {
+    "status": "BLOCKED_BY_UNCHANGED_DEPENDENCY_BASELINE",
+    "code": "TS7016",
+    "path": "browser/auth-consent/main.tsx:1",
+    "reason": "Reused approved node_modules lacks react-dom/client declarations; no dependency or Auth browser change introduced by this slice",
+    "browserFileSameAsMain": true
+  },
+  "files": [
+    "src/data/operations/universalP1AdmissionConsumer.test.ts",
+    "src/data/operations/universalP1AdmissionConsumer.ts",
+    "src/features/capture/CaptureActivity.tsx",
+    "src/features/capture/CaptureContent.tsx",
+    "src/features/capture/CaptureProgress.test.ts",
+    "src/features/capture/CaptureProgress.tsx",
+    "src/features/capture/UniversalCaptureResults.test.ts",
+    "src/features/capture/UniversalCaptureResults.tsx",
+    "src/features/capture/UniversalP1SourceReviewForm.test.ts",
+    "src/features/capture/UniversalP1SourceReviewForm.tsx",
+    "src/features/capture/useUniversalP1Admission.test.ts",
+    "src/features/capture/useUniversalP1Admission.ts",
+    "src/features/documents/ImportDocuments.test.ts",
+    "src/features/documents/ImportDocuments.tsx"
+  ],
+  "sourceDiffSHA256": "ffe5a0683fa14406f939f786143929d9ac9f9c906a65ff5a02390afde024406e",
+  "deferred13f": "Requires owning assignedTrip DTO and Activity polling parity; no wholesale assignment/polling changes included",
+  "nativeInstalled": false,
+  "hostedChanges": 0,
+  "providerCalls": 0,
+  "sqlOrAuthorityChanges": 0,
+  "mainOrRemoteChanges": false,
+  "sourceDiffArtifact": "SOURCE.patch.json (UTF8 patch bytes in patch field; digest above)",
+  "sourceDiffCheck": "PASS for actual source; JSON wrapper preserves context-only whitespace without adding documentation trailing whitespace"
+}

@@ -17,6 +17,7 @@ import type {
 } from "@/data/operations/defaultCaptureSubmission";
 import { CaptureActivity, captureJobTitle } from "./CaptureActivity";
 import { CaptureProgress } from "./CaptureProgress";
+import type { OpenAcceptedImportItem } from "./useUniversalP1Admission";
 import { CaptureComposer } from "./CaptureComposer";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
 import { subscribeCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
@@ -33,6 +34,7 @@ export function CaptureContent({
   jobId,
   draftStaging,
   onReopenJob,
+  onOpenAcceptedItem,
   accountId,
 }: {
   isCurrent: () => boolean;
@@ -44,6 +46,7 @@ export function CaptureContent({
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
   onReopenJob?: (id: string) => void;
+  onOpenAcceptedItem?: OpenAcceptedImportItem;
   accountId?: string;
 }) {
   useUiLocale();
@@ -522,6 +525,13 @@ export function CaptureContent({
                 reading={reading}
                 error={readError || submitError}
                 canRetry={canRetryRetained}
+                onOpenAcceptedItem={
+                  onOpenAcceptedItem
+                    ? (target) => {
+                        if (current()) onOpenAcceptedItem(target);
+                      }
+                    : undefined
+                }
                 onRetry={() => void submit()}
                 onRecover={(id) => void recover(id)}
                 onOpenJob={(id) => void openJob(id)}
