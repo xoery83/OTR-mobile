@@ -1,0 +1,91 @@
+{
+  "status": "REVIEWED_FIXED_CANDIDATE_HOSTED_AFTER_PENDING",
+  "candidate": "a205b904",
+  "parent": "6777b442",
+  "productFile": "backend/src/tripCoreV2PgRead.ts",
+  "preimageSHA256": "23e5f3754eb9e26d852c6bbf994028d4c10329b691d8100214d7c29798fc226b",
+  "postimageSHA256": "0913a0ae34c986a57f800fb60278956cdefbb8edcbdd1e754c52705f101b01af",
+  "patch": "/private/tmp/otr-native-version-bindings-coread-v1.patch",
+  "patchSHA256": "e5598c291bf6b6632844b92539eb2a8272db436e8b02e9f69949d195374a84f6",
+  "change": "Only authorizedVersion co-reads existing state and authorized bindings in one parameterized SELECT after unchanged principal/scope/Actor/gate guards. Normal collection unchanged. Reuse parsed bindings solely inside the same repeatable-read transaction, including FULL fallback. No cache or new query protocol.",
+  "phaseMeaning": {
+    "bindingsRead": "STATE_CO_READ in existing diagnostic event only, not DTO",
+    "stateMs": "now includes existing bindings function execution in co-read SQL",
+    "projectionPhases.bindingsMs": "transaction-local binding reuse/parse overhead, not an independent SQL improvement",
+    "expectedSaving": "one previously measured ~290ms SQL round trip; Hosted before/after NOT_MEASURED"
+  },
+  "validation": {
+    "unit": "37 PASS (35 Reader incl existing ACL/token/epoch/fallback plus2joined diagnostics)",
+    "actualPG": "2 PASS after strengthening fixture counter and marker cleanup, own loopback PG only",
+    "types": "PASS",
+    "lint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "realPGSafety": "Existing marker-verified isolated loopback cluster; new random own-marker database only; copied two exact CREATE FUNCTION definitions from actual migrations. Existing cluster roles reused without CREATE/ALTER/DROP ROLE or membership changes. Table/function grants were only own new database objects. Own database dropped after marker match. Old fixture data/roles preserved.",
+  "functionDefinitions": {
+    "path": "/private/tmp/otr-coread-canonical-function-definitions-20261102.json",
+    "functions": [
+      {
+        "proname": "trip_core_lock_actor_scope",
+        "sha256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b",
+        "provolatile": "v",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=pg_catalog"
+        ]
+      },
+      {
+        "proname": "trip_core_read_person_bindings",
+        "sha256": "7828d6d7ec279f688aa658b5b925546c9d7f218aef0ff9efd01832f4f7f57948",
+        "provolatile": "v",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=pg_catalog"
+        ]
+      }
+    ]
+  },
+  "functionSemantics": "Both functions are VOLATILE SECURITY DEFINER, search_path=pg_catalog. Binding function has no business mutation but invokes Actor scope FOR SHARE locks; not a pure/STABLE read. Existing earlier Actor lock acquired same ordered locks; re-entrant locking and same state/binding values tested in isolated PG.",
+  "missingStateProof": "Fixture-only sequence counter proves zero-row read_state query does not invoke VOLATILE binding function; no production function changed.",
+  "remaining": "Independent review and unique-Writer deployment/Hosted before-after measurement; no live RLS or Hosted performance PASS inferred.",
+  "excluded": [
+    "Hosted GET",
+    "DEV SQL",
+    "Auth/OTP",
+    "deployment",
+    "Provider",
+    "new Schema/GRANT/role in product",
+    "Parent/Root edits"
+  ],
+  "liveFunctionEquivalence": {
+    "source": "/private/tmp/otr-core-binding-function-catalog-jxxsihdk/FUNCTIONS_READONLY.json",
+    "matches": [
+      {
+        "signature": "trip_core_lock_actor_scope(uuid,uuid)",
+        "exactDefinitionBytes": true,
+        "sha256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b",
+        "provolatile": "v",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=pg_catalog"
+        ]
+      },
+      {
+        "signature": "trip_core_read_person_bindings(uuid,uuid)",
+        "exactDefinitionBytes": true,
+        "sha256": "7828d6d7ec279f688aa658b5b925546c9d7f218aef0ff9efd01832f4f7f57948",
+        "provolatile": "v",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=pg_catalog"
+        ]
+      }
+    ],
+    "verification": "Child independently compared Root-provided READ ONLY catalog; made no Hosted query"
+  },
+  "independentReview": {
+    "status": "NO_BLOCKER",
+    "focusedReaderAndJoined": "6PASS/31unselected",
+    "limits": "No newHosted/SQL/device checks in independentReview; realisolatedPG evidence reused"
+  }
+}

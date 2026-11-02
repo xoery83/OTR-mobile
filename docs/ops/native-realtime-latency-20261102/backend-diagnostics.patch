@@ -1,0 +1,640 @@
+diff --git a/backend/src/app.ts b/backend/src/app.ts
+index 9ae901f8..4c22d3d9 100644
+--- a/backend/src/app.ts
++++ b/backend/src/app.ts
+@@ -637,6 +637,9 @@ export type SafeLogEvent = {
+   route: string;
+   status: number;
+   durationMs: number;
++  coreVersionAuthMs?: number;
++  coreVersionTripVisibilityMs?: number;
++  coreVersionBoundaryMs?: number;
+   singleFlightLeader?: boolean;
+   singleFlightJoinCount?: number;
+   singleFlightCancelCount?: number;
+@@ -2553,6 +2556,12 @@ export function createDevBackendHandler({
+     const requestId = randomUUID();
+     let route = "unknown";
+     let response: Response;
++    let coreVersionTimings:
++      | Pick<
++          SafeLogEvent,
++          "coreVersionAuthMs" | "coreVersionTripVisibilityMs" | "coreVersionBoundaryMs"
++        >
++      | undefined;
+     let myLedgerFlightLog:
+       { leader: boolean; flight: MyLedgerFlight; keyCount: number } | undefined;
+ 
+@@ -2761,13 +2770,34 @@ export function createDevBackendHandler({
+         );
+       } else if (/^\/v2\/trips\/[^/]+\/core\//.test(url.pathname)) {
+         route = "/v2/trips/:tripId/core/:resource";
+-        const actor = await authenticateNormalAccount(request, gateway);
++        const timedVersion =
++          request.method === "GET" &&
++          /^\/v2\/trips\/[^/]+\/core\/authorized-version$/.test(url.pathname);
++        if (timedVersion) coreVersionTimings = {};
++        const authStarted = now();
++        const actor = await authenticateNormalAccount(request, gateway).finally(() => {
++          if (coreVersionTimings)
++            coreVersionTimings.coreVersionAuthMs = now() - authStarted;
++        });
++        const boundaryStarted = now();
+         response = await coreHttpBoundary(
+           request,
+           actor.id,
+-          (a, t) => gateway.canReadTrip(a, t),
++          async (a, t) => {
++            const visibilityStarted = now();
++            try {
++              return await gateway.canReadTrip(a, t);
++            } finally {
++              if (coreVersionTimings)
++                coreVersionTimings.coreVersionTripVisibilityMs =
++                  now() - visibilityStarted;
++            }
++          },
+           coreConnection,
++          timedVersion ? requestId : undefined,
+         );
++        if (coreVersionTimings)
++          coreVersionTimings.coreVersionBoundaryMs = now() - boundaryStarted;
+       } else if (/^\/v2\/trips\/[^/]*\/source-import-catalogs$/.test(url.pathname)) {
+         route = "/v2/trips/:tripId/source-import-catalogs";
+         response = await readPublicationBoundary(request, gateway);
+@@ -3004,6 +3034,7 @@ export function createDevBackendHandler({
+       route,
+       status: response.status,
+       durationMs: now() - startedAt,
++      ...coreVersionTimings,
+       ...(myLedgerFlightLog
+         ? {
+             singleFlightLeader: myLedgerFlightLog.leader,
+diff --git a/backend/src/tripAuthorizedVersionDiagnostics.test.ts b/backend/src/tripAuthorizedVersionDiagnostics.test.ts
+new file mode 100644
+index 00000000..aab1d09b
+--- /dev/null
++++ b/backend/src/tripAuthorizedVersionDiagnostics.test.ts
+@@ -0,0 +1,167 @@
++import { createHash, randomUUID } from "node:crypto";
++import { afterEach, expect, it, vi } from "vitest";
++import { createDevBackendHandler, type DevBackendGateway } from "./app";
++import { createCorePgReader } from "./tripCoreV2PgRead";
++import type { CoreHttpConnection } from "./tripCoreV2Http";
++import type { CorePgConnection } from "./tripCoreV2PgStorage";
++
++const accountId = randomUUID(),
++  tripId = randomUUID(),
++  epoch = randomUUID();
++afterEach(() => vi.restoreAllMocks());
++function fixture(allowed = true) {
++  let time = 0;
++  vi.spyOn(performance, "now").mockImplementation(() => time);
++  const events: Record<string, unknown>[] = [];
++  vi.spyOn(console, "info").mockImplementation((value) => {
++    events.push(JSON.parse(String(value)));
++  });
++  const queries: string[] = [];
++  const connection: CorePgConnection = {
++    async withLease(work, timing) {
++      timing?.("queueMs", 2);
++      timing?.("physicalAcquireMs", 4);
++      timing?.("principalCheckMs", 6);
++      const result = await work({
++        retire() {},
++        async query(sql) {
++          time += 3;
++          queries.push(sql);
++          if (sql.includes("session_user"))
++            return {
++              rows: [
++                {
++                  principal: "otr_trip_core_v2_gateway",
++                  role: "otr_trip_core_v2_gateway",
++                },
++              ],
++            };
++          if (sql.includes("trip_core_finite_scope_allowed"))
++            return { rows: [{ allowed: true }] };
++          if (sql.includes("trip_core_lock_actor_scope"))
++            return {
++              rows: [
++                {
++                  actor: {
++                    accountId,
++                    tripId,
++                    active: true,
++                    canManageShared: false,
++                    personId: null,
++                    personIds: [],
++                  },
++                },
++              ],
++            };
++          if (sql.includes("trip_core_activation_gate"))
++            return { rows: [{ runtime_enabled: true }] };
++          if (sql.includes("trip_core_read_state"))
++            return { rows: [{ epoch, revision: 1, access_revision: 1 }] };
++          if (sql.includes("authored_version_projection"))
++            return { rows: [{ projection_kind: "blocked", fact: false }] };
++          if (sql.includes("trip_core_read_person_bindings"))
++            return { rows: [{ bindings: [] }] };
++          return { rows: [] };
++        },
++      });
++      time += 17; // Deterministic existing lease release/cleanup time, not a Hosted measurement.
++      timing?.("cleanupMs", 17);
++      return result;
++    },
++  };
++  const hash = async (bytes: Uint8Array) => {
++    time += 11;
++    return createHash("sha256").update(bytes).digest("hex");
++  };
++  const reader = createCorePgReader(connection, hash);
++  const authorizedVersion = vi.fn(reader.authorizedVersion);
++  const logs: Record<string, unknown>[] = [];
++  const gateway = {
++    async validateAccessToken() {
++      time += 5;
++      return { id: accountId, accountClass: "NORMAL_ACCOUNT" };
++    },
++    async canReadTrip() {
++      time += 7;
++      return allowed;
++    },
++  } as unknown as DevBackendGateway;
++  const handler = createDevBackendHandler({
++    gateway,
++    coreConnection: {
++      read: { ...reader, authorizedVersion },
++      hash,
++    } as unknown as CoreHttpConnection,
++    now: () => time,
++    log: (value) => {
++      logs.push(value);
++    },
++  });
++  const request = () =>
++    new Request(`http://local/v2/trips/${tripId}/core/authorized-version`, {
++      headers: {
++        Authorization: "Bearer synthetic-secret-not-for-logs",
++        "X-Request-Id": "untrusted-client-id",
++      },
++    });
++  return { handler, request, events, logs, queries, authorizedVersion };
++}
++it("correlates only server request ID across HTTP/Reader and includes existing lease cleanup without sensitive values", async () => {
++  const f = fixture(),
++    response = await f.handler(f.request());
++  expect(response.status).toBe(200);
++  const body = await response.json(),
++    requestId = response.headers.get("X-Request-Id");
++  expect(requestId).toMatch(/^[a-f0-9-]{36}$/);
++  expect(f.authorizedVersion).toHaveBeenCalledWith(
++    accountId,
++    tripId,
++    undefined,
++    requestId,
++  );
++  expect(f.logs[0]).toMatchObject({
++    requestId,
++    coreVersionAuthMs: 5,
++    coreVersionTripVisibilityMs: 7,
++  });
++  expect(f.events).toHaveLength(2);
++  expect(f.events.every((e) => e.requestId === requestId)).toBe(true);
++  expect(f.events[0]).toMatchObject({
++    event: "core_authorized_version_projection",
++    leaseReleaseMs: 17,
++    leasePhases: { queueMs: 2, physicalAcquireMs: 4, principalCheckMs: 6, cleanupMs: 17 },
++    projectionPhases: {
++      writerRoleMs: 3,
++      projectionSqlMs: 3,
++      gatewayRoleMs: 3,
++      bindingsMs: 3,
++    },
++  });
++  expect(f.events[0].totalMs).toBeGreaterThan(Number(f.events[0].beforeProjectionMs));
++  const logText = JSON.stringify([f.events, f.logs]);
++  for (const secret of [
++    accountId,
++    tripId,
++    body.token,
++    "synthetic-secret",
++    "untrusted-client-id",
++    "SELECT",
++    "Bearer",
++  ])
++    expect(logText).not.toContain(secret);
++  expect(f.queries[0]).toBe("BEGIN ISOLATION LEVEL REPEATABLE READ");
++  expect(f.queries.at(-1)).toBe("COMMIT");
++});
++it("denied Trip never enters Reader and diagnostic logger failures cannot change a valid response", async () => {
++  const denied = fixture(false),
++    response = await denied.handler(denied.request());
++  expect(response.status).toBe(404);
++  expect(denied.authorizedVersion).not.toHaveBeenCalled();
++  expect(denied.queries).toEqual([]);
++  expect(denied.events).toEqual([]);
++  const f = fixture();
++  vi.mocked(console.info).mockImplementation(() => {
++    throw new Error("logger unavailable");
++  });
++  expect((await f.handler(f.request())).status).toBe(200);
++});
+diff --git a/backend/src/tripCoreV2Http.ts b/backend/src/tripCoreV2Http.ts
+index 293f739b..799d18f3 100644
+--- a/backend/src/tripCoreV2Http.ts
++++ b/backend/src/tripCoreV2Http.ts
+@@ -172,6 +172,7 @@ export async function coreHttpBoundary(
+   actor: string,
+   canReadTrip: (actor: string, trip: string) => Promise<boolean>,
+   connection?: CoreHttpConnection,
++  diagnosticRequestId?: string,
+ ) {
+   const url = new URL(request.url),
+     match = /^\/v2\/trips\/([^/]+)\/core\/(.+)$/.exec(url.pathname);
+@@ -387,20 +388,44 @@ export async function coreHttpBoundary(
+       const orderVersion = request.headers.get("X-OTR-Ordinary-Order-Version");
+       if (orderVersion !== null && orderVersion !== "1")
+         return failure(426, "UNSUPPORTED_CLIENT");
+-      const result = authorizedTripVersionSchema.safeParse(
+-        await connection.read.authorizedVersion(
+-          actor,
+-          trip,
+-          orderVersion === "1" ? 1 : undefined,
+-        ),
++      const requestId = coreUuid.safeParse(diagnosticRequestId).success
++        ? diagnosticRequestId
++        : undefined;
++      const readerStarted = performance.now();
++      const value = await connection.read.authorizedVersion(
++        actor,
++        trip,
++        orderVersion === "1" ? 1 : undefined,
++        requestId,
+       );
++      const readerMs = performance.now() - readerStarted;
++      const validationStarted = performance.now();
++      const result = authorizedTripVersionSchema.safeParse(value);
++      const validationMs = performance.now() - validationStarted;
+       if (
+         !result.success ||
+         result.data.actorAccountId !== actor ||
+         result.data.tripId !== trip
+       )
+         return failure(503, "CORE_READ_UNAVAILABLE");
+-      return reply(200, result.data);
++      const serializationStarted = performance.now();
++      const response = reply(200, result.data);
++      if (requestId) {
++        try {
++          console.info(
++            JSON.stringify({
++              event: "core_authorized_version_http",
++              requestId,
++              readerMs: Math.round(readerMs),
++              validationMs: Math.round(validationMs),
++              serializationMs: Math.round(performance.now() - serializationStarted),
++            }),
++          );
++        } catch {
++          /* Diagnostics cannot change an authorized response. */
++        }
++      }
++      return response;
+     }
+     if (path === "collection" && request.method === "GET") {
+       if (!connection?.read) return failure(503, "CORE_READ_UNAVAILABLE");
+diff --git a/backend/src/tripCoreV2PgConnection.test.ts b/backend/src/tripCoreV2PgConnection.test.ts
+index c0ec3d2c..10cc25cd 100644
+--- a/backend/src/tripCoreV2PgConnection.test.ts
++++ b/backend/src/tripCoreV2PgConnection.test.ts
+@@ -591,3 +591,64 @@ it("rejects an expired LOGIN before the next Core callback on a warm connection"
+   expect(work).not.toHaveBeenCalled();
+   expect(f.releases).toEqual([false, true]);
+ });
++
++it("reports FIFO, physical checkout, principal SQL and final cleanup separately without changing query order", async () => {
++  const ticks = [0, 5, 5, 18, 18, 47, 47, 88];
++  const clock = vi
++    .spyOn(performance, "now")
++    .mockImplementation(() => ticks.shift() ?? 88);
++  const phases: [string, number][] = [];
++  const observations: { phase: string; queries: string[]; releases: boolean[] }[] = [];
++  try {
++    await createCorePgConnection(config).withLease(
++      async (lease) => {
++        await lease.query("BEGIN");
++        await lease.query("COMMIT");
++      },
++      (phase, duration) => {
++        phases.push([phase, duration]);
++        observations.push({ phase, queries: [...f.queries], releases: [...f.releases] });
++      },
++    );
++    expect(phases).toEqual([
++      ["queueMs", 5],
++      ["physicalAcquireMs", 13],
++      ["principalCheckMs", 29],
++      ["cleanupMs", 41],
++    ]);
++    expect(observations.find((o) => o.phase === "physicalAcquireMs")?.queries).toEqual(
++      [],
++    );
++    expect(
++      observations.find((o) => o.phase === "principalCheckMs")?.queries.at(-1),
++    ).toContain("pg_is_in_recovery");
++    expect(observations.find((o) => o.phase === "cleanupMs")).toMatchObject({
++      releases: [false],
++    });
++    expect(observations.find((o) => o.phase === "cleanupMs")?.queries.at(-1)).toBe(
++      "DISCARD ALL",
++    );
++    expect(f.queries.slice(1)).toEqual(["BEGIN", "COMMIT", "DISCARD ALL"]);
++  } finally {
++    clock.mockRestore();
++  }
++});
++it("a rejected diagnostic callback cannot change committed results or warm principal rejection", async () => {
++  const connection = createCorePgConnection(config);
++  const timing = () => {
++    throw new Error("diagnostic unavailable");
++  };
++  const result = await connection.withLease(async (lease) => {
++    await lease.query("BEGIN");
++    await lease.query("COMMIT");
++    return "committed";
++  }, timing);
++  expect(result).toBe("committed");
++  f.loginUnexpired = false;
++  const work = vi.fn();
++  await expect(connection.withLease(work, timing)).rejects.toThrow(
++    "CORE_PRINCIPAL_UNAVAILABLE",
++  );
++  expect(work).not.toHaveBeenCalled();
++  expect(f.releases).toEqual([false, true]);
++});
+diff --git a/backend/src/tripCoreV2PgConnection.ts b/backend/src/tripCoreV2PgConnection.ts
+index 183e2771..5cf480fd 100644
+--- a/backend/src/tripCoreV2PgConnection.ts
++++ b/backend/src/tripCoreV2PgConnection.ts
+@@ -98,8 +98,20 @@ function createOwningPgConnection(
+     } else occupied = false;
+   }
+   return {
+-    async withLease(work) {
++    async withLease(work, timing) {
++      const report = (
++        phase: Parameters<NonNullable<typeof timing>>[0],
++        started: number,
++      ) => {
++        try {
++          timing?.(phase, Math.round(performance.now() - started));
++        } catch {
++          /* Diagnostics cannot affect the owning lease. */
++        }
++      };
++      const queueStarted = timing ? performance.now() : 0;
+       await acquire();
++      report("queueMs", queueStarted);
+       let client: Client | PoolClient | undefined;
+       try {
+         const options = {
+@@ -164,6 +176,7 @@ function createOwningPgConnection(
+           }, budget.leaseMs);
+         });
+         const operation = async () => {
++          const physicalStarted = timing ? performance.now() : 0;
+           if (pool) {
+             const connected = await pool.connect();
+             if (retired) {
+@@ -173,8 +186,10 @@ function createOwningPgConnection(
+             client = connected;
+             client.on("error", retire);
+           } else await client!.connect();
++          report("physicalAcquireMs", physicalStarted);
+           if (retired) throw new Error("CORE_CONNECTION_RETIRED");
+           const physical = client!;
++          const principalStarted = timing ? performance.now() : 0;
+           const identity = (
+             await physical.query(
+               pool
+@@ -182,6 +197,7 @@ function createOwningPgConnection(
+                 : "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
+             )
+           ).rows;
++          report("principalCheckMs", principalStarted);
+           if (
+             identity.length !== 1 ||
+             identity[0].principal !== principal ||
+@@ -220,6 +236,7 @@ function createOwningPgConnection(
+         successful = true;
+         return result;
+       } finally {
++        const cleanupStarted = timing ? performance.now() : 0;
+         if (timeout) clearTimeout(timeout);
+         if (pool && client && successful && finished && !retired) {
+           try {
+@@ -236,6 +253,7 @@ function createOwningPgConnection(
+           }
+         } else retire();
+         release();
++        report("cleanupMs", cleanupStarted);
+       }
+     },
+   };
+diff --git a/backend/src/tripCoreV2PgRead.test.ts b/backend/src/tripCoreV2PgRead.test.ts
+index eb46d120..4eb80db4 100644
+--- a/backend/src/tripCoreV2PgRead.test.ts
++++ b/backend/src/tripCoreV2PgRead.test.ts
+@@ -151,9 +151,18 @@ it.each(["AUTHORED", "FULL"])(
+         [
+           JSON.stringify({
+             event: "core_authorized_version_projection",
++            totalMs: projection === "AUTHORED" ? 180 : 160,
++            leaseReleaseMs: 20,
++            leasePhases: {},
++            projectionPhases: {
++              writerRoleMs: 10,
++              projectionSqlMs: 10,
++              gatewayRoleMs: 10,
++              ...(projection === "AUTHORED" ? { bindingsMs: 10, tokenMs: 10 } : {}),
++            },
+             projection,
+             beforeProjectionMs: 80,
+-            projectionAndCommitMs: 40,
++            projectionAndCommitMs: projection === "AUTHORED" ? 120 : 100,
+             phases: {
+               leaseMs: 10,
+               beginMs: 10,
+@@ -162,7 +171,7 @@ it.each(["AUTHORED", "FULL"])(
+               actorMs: 10,
+               gateMs: 10,
+               stateMs: 10,
+-              projectMs: 20,
++              projectMs: projection === "AUTHORED" ? 80 : 60,
+               finalScopeMs: 10,
+               commitMs: 10,
+             },
+diff --git a/backend/src/tripCoreV2PgRead.ts b/backend/src/tripCoreV2PgRead.ts
+index b7939d5f..644bb007 100644
+--- a/backend/src/tripCoreV2PgRead.ts
++++ b/backend/src/tripCoreV2PgRead.ts
+@@ -25,6 +25,7 @@ import {
+   readCorePgGraph,
+   type CorePgConnection,
+   type CorePgLease,
++  type CorePgLeaseTiming,
+ } from "./tripCoreV2PgStorage";
+ import type { ImportHash } from "../../src/domain/trip/flightImportReview";
+ import type {
+@@ -59,6 +60,7 @@ export function createCorePgReader(
+       state: { epoch: unknown; revision: unknown; access_revision: unknown },
+     ) => Promise<T>,
+     mark?: (phase: string) => void,
++    leaseTiming?: CorePgLeaseTiming,
+   ) {
+     coreUuid.parse(actorAccountId);
+     coreUuid.parse(tripId);
+@@ -141,7 +143,7 @@ export function createCorePgReader(
+         }
+         throw error;
+       }
+-    });
++    }, leaseTiming);
+   }
+   async function readBindings(
+     lease: CorePgLease,
+@@ -205,7 +207,12 @@ export function createCorePgReader(
+       readSnapshot(lease, actor, state, ordinaryOrderVersion),
+     );
+   }
+-  async function authoredVersion(lease: CorePgLease, actor: CoreActor, epoch: unknown) {
++  async function authoredVersion(
++    lease: CorePgLease,
++    actor: CoreActor,
++    epoch: unknown,
++    mark?: (phase: string) => void,
++  ) {
+     // expense_links is already excluded by the complete Core graph reader.
+     const allowed = new Set([
+       "itinerary_events",
+@@ -225,6 +232,7 @@ export function createCorePgReader(
+       `SELECT 'blocked',to_jsonb(EXISTS(${blockedTables.map((t) => `SELECT 1 FROM public."${t}" WHERE trip_id=$1::uuid`).join(" UNION ALL ")}))`,
+     ].join(" UNION ALL ");
+     await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
++    mark?.("writerRoleMs");
+     let rows;
+     try {
+       rows = (
+@@ -233,8 +241,10 @@ export function createCorePgReader(
+           [actor.tripId],
+         )
+       ).rows;
++      mark?.("projectionSqlMs");
+     } finally {
+       await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
++      mark?.("gatewayRoleMs");
+     }
+     if (rows.filter((r) => r.projection_kind !== "blocked").length > 20000)
+       throw Error("CORE_READ_RESOURCE_LIMIT");
+@@ -269,7 +279,9 @@ export function createCorePgReader(
+       return null;
+     const visible = items.filter((r) => coreCanRead(graph, actor, "ITEM", r));
+     const ids = new Set(visible.map((r) => r.id));
+-    return authorizedTripVersionFromAuthoredProjection(
++    const bindings = await readBindings(lease, actor.accountId, actor.tripId);
++    mark?.("bindingsMs");
++    const token = await authorizedTripVersionFromAuthoredProjection(
+       {
+         actorAccountId: actor.accountId,
+         tripId: actor.tripId,
+@@ -277,10 +289,12 @@ export function createCorePgReader(
+         items: visible,
+         participants: participants.filter((r) => ids.has(r.item_id)),
+         visibilityPeople: visibilityPeople.filter((r) => ids.has(r.item_id)),
+-        bindings: await readBindings(lease, actor.accountId, actor.tripId),
++        bindings,
+       },
+       hash,
+     );
++    mark?.("tokenMs");
++    return token;
+   }
+   return {
+     async capabilities(actorAccountId: string, tripId: string, operationId?: string) {
+@@ -418,12 +432,15 @@ export function createCorePgReader(
+       actorAccountId: string,
+       tripId: string,
+       ordinaryOrderVersion?: 1,
++      diagnosticRequestId?: string,
+     ) {
+       let projection = "FULL";
+       const started = performance.now();
+       let projectionStarted = started;
+       let lastPhase = started;
+       const phases: Record<string, number> = {};
++      const projectionPhases: Record<string, number> = {};
++      const leasePhases: Record<string, number> = {};
+       const result = await qualifiedSnapshot(
+         actorAccountId,
+         tripId,
+@@ -433,7 +450,12 @@ export function createCorePgReader(
+             ordinaryOrderVersion === undefined &&
+             (!authority || authority.authoredSummaryWithoutExternalObjects)
+           ) {
+-            const version = await authoredVersion(lease, actor, state.epoch);
++            let subphaseStarted = performance.now();
++            const version = await authoredVersion(lease, actor, state.epoch, (phase) => {
++              const at = performance.now();
++              projectionPhases[phase] = Math.round(at - subphaseStarted);
++              subphaseStarted = at;
++            });
+             if (version) {
+               projection = "AUTHORED";
+               return version;
+@@ -457,11 +479,21 @@ export function createCorePgReader(
+           phases[phase] = Math.round(at - lastPhase);
+           lastPhase = at;
+         },
++        (phase, durationMs) => {
++          leasePhases[phase] = durationMs;
++        },
+       );
+       try {
+         console.info(
+           JSON.stringify({
+             event: "core_authorized_version_projection",
++            ...(coreUuid.safeParse(diagnosticRequestId).success
++              ? { requestId: diagnosticRequestId }
++              : {}),
++            totalMs: Math.round(performance.now() - started),
++            leaseReleaseMs: Math.round(performance.now() - lastPhase),
++            leasePhases,
++            projectionPhases,
+             projection,
+             beforeProjectionMs: Math.round(projectionStarted - started),
+             projectionAndCommitMs: Math.round(performance.now() - projectionStarted),
+diff --git a/backend/src/tripCoreV2PgStorage.ts b/backend/src/tripCoreV2PgStorage.ts
+index 9d7cd757..eef97662 100644
+--- a/backend/src/tripCoreV2PgStorage.ts
++++ b/backend/src/tripCoreV2PgStorage.ts
+@@ -41,8 +41,15 @@ export type CorePgLease = {
+   retire(): void;
+   query(sql: string, parameters?: readonly unknown[]): Promise<{ rows: CoreRow[] }>;
+ };
++export type CorePgLeaseTiming = (
++  phase: "queueMs" | "physicalAcquireMs" | "principalCheckMs" | "cleanupMs",
++  durationMs: number,
++) => void;
+ export type CorePgConnection = {
+-  withLease<T>(work: (lease: CorePgLease) => Promise<T>): Promise<T>;
++  withLease<T>(
++    work: (lease: CorePgLease) => Promise<T>,
++    timing?: CorePgLeaseTiming,
++  ): Promise<T>;
+ };
+ export type CorePgAdmission = {
+   audit?(

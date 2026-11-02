@@ -1,0 +1,68 @@
+{
+  "status": "ACTUAL_CORRELATED_BASELINE_COMPLETE_FIRST_FIX_REVIEWED_HOSTED_AFTER_PENDING",
+  "clientCommit": "57332c55",
+  "backendDiagnosticHead": "6777b442",
+  "backendDiagnosticPatchSHA256": "450590d8cb32874c8df6e968d337095c24aa3640fe5f64f23da8613e38ce70d3",
+  "clientMeasurement": {
+    "qualification": "NORMAL_AUTHORIZED_VERSION_GET_ONLY",
+    "samples": [
+      {
+        "label": "first_request",
+        "startedAt": "2026-11-02T02:55:00.632Z",
+        "requestId": "58adc94e-a2ce-4f85-b441-b162826b9f35",
+        "httpToHeadersMs": 6213.52,
+        "afterHeadersMs": 3.04,
+        "milliseconds": 6219.23,
+        "decodedBodyBytes": 227,
+        "unchangedFromPrevious": null
+      },
+      {
+        "label": "repeat_1",
+        "startedAt": "2026-11-02T02:55:06.851Z",
+        "requestId": "7ed25673-58cd-40ed-9616-82932e166c78",
+        "httpToHeadersMs": 8323.72,
+        "afterHeadersMs": 1.25,
+        "milliseconds": 8325.34,
+        "decodedBodyBytes": 227,
+        "unchangedFromPrevious": true
+      },
+      {
+        "label": "repeat_2",
+        "startedAt": "2026-11-02T02:55:15.177Z",
+        "requestId": "b442e1ab-4c88-44a6-a191-d4c9023821bb",
+        "httpToHeadersMs": 6816.44,
+        "afterHeadersMs": 2.17,
+        "milliseconds": 6818.84,
+        "decodedBodyBytes": 227,
+        "unchangedFromPrevious": true
+      }
+    ],
+    "limits": "First/repeated HTTP requests, not proved cold/warm PG connections; correlate existing server phase telemetry. No mutation, subscription, Provider, Supabase readback or cross-device PASS.",
+    "actual": "NORMAL_HOST_QA_READ_ONLY",
+    "newMutations": 0,
+    "providerCalls": 0,
+    "devicesTouched": 0
+  },
+  "sessionCleanup": {
+    "status": "PASS",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "runId": "0af9e58a-abf3-41f4-927e-d8b6b808eefe",
+    "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-pdEzUd/run.json"
+  },
+  "backendSourceManifestSHA256": "2f58fb1762ce569afe0dcfa9c13e73a356343b61af352580e341efd1566983f7",
+  "businessMutations": 0,
+  "providerCalls": 0,
+  "devicesTouched": 0,
+  "clientReview": "NO_BLOCKER;6injected-fetch tests PASS; scopedTypesPASS; ESLint testPASS/scriptmts ignored by config",
+  "backendReview": "059+677 incremental independent NO_BLOCKER;62affected tests reused, independent2Pool+2joinedPASS",
+  "limits": [
+    "Fetch-to-headers includes server work and network; not pure network latency",
+    "afterHeaders includes decode/validation; not pure JSON cost",
+    "First/repeated HTTP are not yet proved cold/warm PG; use corresponding leasePhases",
+    "No private subscription, device Realtime, revoke/regrant or performance PASS"
+  ],
+  "serverLogs": "CORRELATED_SERVER_LOGS.json",
+  "diagnosis": "DIAGNOSIS.json"
+}

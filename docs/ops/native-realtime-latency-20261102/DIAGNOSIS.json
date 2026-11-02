@@ -1,0 +1,125 @@
+{
+  "status": "ACTUAL_SAME_REQUEST_DIAGNOSIS",
+  "rows": [
+    {
+      "requestId": "58adc94e-a2ce-4f85-b441-b162826b9f35",
+      "clientTotalMs": 6219.23,
+      "fetchToHeadersMs": 6213.52,
+      "afterHeadersMs": 3.04,
+      "appTotalMs": 5206,
+      "authMs": 392,
+      "tripVisibilityMs": 432,
+      "readerMs": 4380,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 295,
+        "cleanupMs": 290
+      },
+      "transactionPhases": {
+        "leaseMs": 295,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 294,
+        "actorMs": 290,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1466,
+        "finalScopeMs": 290,
+        "commitMs": 291
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 290,
+        "projectionSqlMs": 586,
+        "gatewayRoleMs": 290,
+        "bindingsMs": 295,
+        "tokenMs": 5
+      },
+      "validationMs": 1,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 1013.23
+    },
+    {
+      "requestId": "7ed25673-58cd-40ed-9616-82932e166c78",
+      "clientTotalMs": 8325.34,
+      "fetchToHeadersMs": 8323.72,
+      "afterHeadersMs": 1.25,
+      "appTotalMs": 7191,
+      "authMs": 1018,
+      "tripVisibilityMs": 1808,
+      "readerMs": 4365,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 290,
+        "cleanupMs": 290
+      },
+      "transactionPhases": {
+        "leaseMs": 290,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 293,
+        "actorMs": 291,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1457,
+        "finalScopeMs": 290,
+        "commitMs": 291
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 290,
+        "projectionSqlMs": 581,
+        "gatewayRoleMs": 289,
+        "bindingsMs": 294,
+        "tokenMs": 3
+      },
+      "validationMs": 0,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 1134.34
+    },
+    {
+      "requestId": "b442e1ab-4c88-44a6-a191-d4c9023821bb",
+      "clientTotalMs": 6818.84,
+      "fetchToHeadersMs": 6816.44,
+      "afterHeadersMs": 2.17,
+      "appTotalMs": 5717,
+      "authMs": 353,
+      "tripVisibilityMs": 998,
+      "readerMs": 4365,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 290,
+        "cleanupMs": 290
+      },
+      "transactionPhases": {
+        "leaseMs": 290,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 292,
+        "actorMs": 290,
+        "gateMs": 291,
+        "stateMs": 291,
+        "projectMs": 1460,
+        "finalScopeMs": 291,
+        "commitMs": 291
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 289,
+        "projectionSqlMs": 581,
+        "gatewayRoleMs": 289,
+        "bindingsMs": 295,
+        "tokenMs": 5
+      },
+      "validationMs": 0,
+      "serializationMs": 1,
+      "clientMinusHandlerMs": 1101.84
+    }
+  ],
+  "largestStableComponent": "Core Reader4380/4365/4365ms; queue and physicalAcquire0; many serial SQL phases ~290ms",
+  "variableAdditionalWait": "Auth353\u20131018ms and TripVisibility432\u20131808ms explain most extra second-request delay",
+  "notNativeParsing": "afterHeaders0.38\u20132.46ms (<0.05%clienttotal)",
+  "notYetAttributed": "Client minus handler ~1s includes network/TLS/HTTP-adapter scheduling; projectionSQL581\u2013586ms includes server SQL/network wait, not proven pure CPU/RTT",
+  "localBaseline": "Previously reviewed isolatedPG cold33.37ms/warm5.72\u201311.09ms; different network/authority fixture, not HostedPGcold proof",
+  "nextMinimalCandidate": "Reader-only co-read state+existing person-bindings function after same guards, same gatewayRole/RR transaction; prove exact function and semantics before release; expected save1roundtrip, not overall closure"
+}

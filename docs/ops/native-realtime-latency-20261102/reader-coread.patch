@@ -1,0 +1,480 @@
+diff --git a/backend/src/tripAuthorizedVersionDiagnostics.test.ts b/backend/src/tripAuthorizedVersionDiagnostics.test.ts
+index aab1d09b..c0775ef8 100644
+--- a/backend/src/tripAuthorizedVersionDiagnostics.test.ts
++++ b/backend/src/tripAuthorizedVersionDiagnostics.test.ts
+@@ -56,7 +56,7 @@ function fixture(allowed = true) {
+           if (sql.includes("trip_core_activation_gate"))
+             return { rows: [{ runtime_enabled: true }] };
+           if (sql.includes("trip_core_read_state"))
+-            return { rows: [{ epoch, revision: 1, access_revision: 1 }] };
++            return { rows: [{ epoch, revision: 1, access_revision: 1, bindings: [] }] };
+           if (sql.includes("authored_version_projection"))
+             return { rows: [{ projection_kind: "blocked", fact: false }] };
+           if (sql.includes("trip_core_read_person_bindings"))
+@@ -134,7 +134,7 @@ it("correlates only server request ID across HTTP/Reader and includes existing l
+       writerRoleMs: 3,
+       projectionSqlMs: 3,
+       gatewayRoleMs: 3,
+-      bindingsMs: 3,
++      bindingsMs: 0,
+     },
+   });
+   expect(f.events[0].totalMs).toBeGreaterThan(Number(f.events[0].beforeProjectionMs));
+diff --git a/backend/src/tripCoreV2PgRead.test.ts b/backend/src/tripCoreV2PgRead.test.ts
+index 4eb80db4..91537c30 100644
+--- a/backend/src/tripCoreV2PgRead.test.ts
++++ b/backend/src/tripCoreV2PgRead.test.ts
+@@ -73,7 +73,10 @@ function fixture(options: { actor?: CoreActor; graph?: CoreGraph } = {}) {
+         return { rows: [{ allowed: gate.runtime_enabled }] };
+       if (sql.includes("trip_core_lock_actor_scope")) return { rows: [{ actor }] };
+       if (sql.includes("trip_core_activation_gate")) return { rows: [gate] };
+-      if (sql.includes("FROM public.trip_core_read_state")) return { rows: [state] };
++      if (sql.includes("FROM public.trip_core_read_state"))
++        return {
++          rows: [sql.includes(" AS bindings") ? { ...state, bindings: [] } : state],
++        };
+       if (sql.includes('FROM public."trip_operational_documents"'))
+         return {
+           rows: Object.entries(graph).flatMap(([table, facts]) =>
+@@ -151,6 +154,7 @@ it.each(["AUTHORED", "FULL"])(
+         [
+           JSON.stringify({
+             event: "core_authorized_version_projection",
++            bindingsRead: "STATE_CO_READ",
+             totalMs: projection === "AUTHORED" ? 180 : 160,
+             leaseReleaseMs: 20,
+             leasePhases: {},
+@@ -633,3 +637,58 @@ it.each(["principal", "role"] as const)(
+     ).toBe(false);
+   },
+ );
++
++it("co-reads bindings only for authorized Version after the same scope/Actor/gate guards and reuses them in full fallback", async () => {
++  const f = fixture(); // Existing document graph forces FULL fallback.
++  await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
++  const queries = f.lease.query.mock.calls.map(([sql]) => sql);
++  const state = queries.findIndex((sql) =>
++    sql.includes("FROM public.trip_core_read_state"),
++  );
++  expect(
++    queries.slice(0, state).some((sql) => sql.includes("trip_core_finite_scope_allowed")),
++  ).toBe(true);
++  expect(
++    queries.slice(0, state).some((sql) => sql.includes("trip_core_lock_actor_scope")),
++  ).toBe(true);
++  expect(
++    queries.slice(0, state).some((sql) => sql.includes("trip_core_activation_gate")),
++  ).toBe(true);
++  expect(
++    queries.filter((sql) => sql.includes("trip_core_read_person_bindings")),
++  ).toHaveLength(1);
++  expect(f.lease.query.mock.calls[state]).toEqual([
++    "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision,public.trip_core_read_person_bindings($2::uuid,$1::uuid) AS bindings FROM public.trip_core_read_state WHERE trip_id=$1::uuid",
++    [f.actor.tripId, f.actor.accountId],
++  ]);
++  f.lease.query.mockClear();
++  await f.reader.collection(f.actor.accountId, f.actor.tripId);
++  const normal = f.lease.query.mock.calls.map(([sql]) => sql);
++  expect(
++    normal.find((sql) => sql.includes("FROM public.trip_core_read_state")),
++  ).not.toContain("bindings");
++  expect(normal.find((sql) => sql.includes("trip_core_read_person_bindings"))).toBe(
++    "SELECT public.trip_core_read_person_bindings($1::uuid,$2::uuid) AS bindings",
++  );
++});
++it.each([undefined, {}, [{ person_id: "invalid" }]])(
++  "rejects malformed co-read bindings before projection and rolls back: %j",
++  async (bindings) => {
++    const f = fixture(),
++      query = f.lease.query.getMockImplementation()!;
++    f.lease.query.mockImplementation(async (sql) =>
++      sql.includes("FROM public.trip_core_read_state")
++        ? { rows: [{ ...f.state, bindings }] }
++        : query(sql),
++    );
++    await expect(
++      f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
++    ).rejects.toThrow();
++    expect(
++      f.lease.query.mock.calls.some(([sql]) =>
++        sql.includes("authored_version_projection"),
++      ),
++    ).toBe(false);
++    expect(f.lease.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
++  },
++);
+diff --git a/backend/src/tripCoreV2PgRead.ts b/backend/src/tripCoreV2PgRead.ts
+index 644bb007..3523faec 100644
+--- a/backend/src/tripCoreV2PgRead.ts
++++ b/backend/src/tripCoreV2PgRead.ts
+@@ -45,6 +45,10 @@ export type CorePgReadAuthority = {
+     sourceEvidenceRefs?: readonly string[];
+   }>;
+ };
++const bindingsSchema = z
++  .array(corePersonBindingSchema.extend({ revision: z.number().int().min(0).safe() }))
++  .max(20000);
++type CoreReadBindings = z.infer<typeof bindingsSchema>;
+ export function createCorePgReader(
+   connection: CorePgConnection,
+   hash: ImportHash,
+@@ -58,9 +62,11 @@ export function createCorePgReader(
+       lease: CorePgLease,
+       actor: CoreActor,
+       state: { epoch: unknown; revision: unknown; access_revision: unknown },
++      bindings?: CoreReadBindings,
+     ) => Promise<T>,
+     mark?: (phase: string) => void,
+     leaseTiming?: CorePgLeaseTiming,
++    coReadBindings = false,
+   ) {
+     coreUuid.parse(actorAccountId);
+     coreUuid.parse(tripId);
+@@ -108,24 +114,33 @@ export function createCorePgReader(
+         mark?.("gateMs");
+         const rawState = (
+           await lease.query(
+-            "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision FROM public.trip_core_read_state WHERE trip_id=$1::uuid",
+-            [tripId],
++            coReadBindings
++              ? "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision,public.trip_core_read_person_bindings($2::uuid,$1::uuid) AS bindings FROM public.trip_core_read_state WHERE trip_id=$1::uuid"
++              : "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision FROM public.trip_core_read_state WHERE trip_id=$1::uuid",
++            coReadBindings ? [tripId, actorAccountId] : [tripId],
+           )
+         ).rows[0];
+         if (!rawState) throw new Error("CORE_READ_UNAVAILABLE");
+-        const state = z
+-          .strictObject({
+-            epoch: coreUuid,
+-            revision: z.number().int().positive().safe(),
+-            access_revision: z.number().int().positive().safe(),
+-          })
+-          .parse(rawState);
+-        mark?.("stateMs");
+-        const result = await project(lease, actor, {
+-          epoch: state.epoch,
+-          revision: state.revision,
+-          access_revision: state.access_revision,
++        const stateSchema = z.strictObject({
++          epoch: coreUuid,
++          revision: z.number().int().positive().safe(),
++          access_revision: z.number().int().positive().safe(),
+         });
++        const stateWithBindings = coReadBindings
++          ? stateSchema.extend({ bindings: bindingsSchema }).parse(rawState)
++          : null;
++        const state = stateWithBindings ?? stateSchema.parse(rawState);
++        mark?.("stateMs");
++        const result = await project(
++          lease,
++          actor,
++          {
++            epoch: state.epoch,
++            revision: state.revision,
++            access_revision: state.access_revision,
++          },
++          stateWithBindings?.bindings,
++        );
+         mark?.("projectMs");
+         await finiteScope();
+         mark?.("finalScopeMs");
+@@ -150,29 +165,28 @@ export function createCorePgReader(
+     actorAccountId: string,
+     tripId: string,
+   ) {
+-    return z
+-      .array(corePersonBindingSchema.extend({ revision: z.number().int().min(0).safe() }))
+-      .max(20000)
+-      .parse(
+-        (
+-          await lease.query(
+-            "SELECT public.trip_core_read_person_bindings($1::uuid,$2::uuid) AS bindings",
+-            [actorAccountId, tripId],
+-          )
+-        ).rows[0]?.bindings,
+-      );
++    return bindingsSchema.parse(
++      (
++        await lease.query(
++          "SELECT public.trip_core_read_person_bindings($1::uuid,$2::uuid) AS bindings",
++          [actorAccountId, tripId],
++        )
++      ).rows[0]?.bindings,
++    );
+   }
+   async function readSnapshot(
+     lease: CorePgLease,
+     actor: CoreActor,
+     state: { epoch: unknown; revision: unknown; access_revision: unknown },
+     ordinaryOrderVersion?: 1,
++    prefetchedBindings?: CoreReadBindings,
+   ) {
+     const tripId = actor.tripId;
+     await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+     const graph = await readCorePgGraph(lease, tripId);
+     await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+-    const bindings = await readBindings(lease, actor.accountId, tripId);
++    const bindings =
++      prefetchedBindings ?? (await readBindings(lease, actor.accountId, tripId));
+     const rights = authority
+       ? await authority.authorize(lease, actor, graph)
+       : {
+@@ -212,6 +226,7 @@ export function createCorePgReader(
+     actor: CoreActor,
+     epoch: unknown,
+     mark?: (phase: string) => void,
++    prefetchedBindings?: CoreReadBindings,
+   ) {
+     // expense_links is already excluded by the complete Core graph reader.
+     const allowed = new Set([
+@@ -279,7 +294,8 @@ export function createCorePgReader(
+       return null;
+     const visible = items.filter((r) => coreCanRead(graph, actor, "ITEM", r));
+     const ids = new Set(visible.map((r) => r.id));
+-    const bindings = await readBindings(lease, actor.accountId, actor.tripId);
++    const bindings =
++      prefetchedBindings ?? (await readBindings(lease, actor.accountId, actor.tripId));
+     mark?.("bindingsMs");
+     const token = await authorizedTripVersionFromAuthoredProjection(
+       {
+@@ -444,18 +460,24 @@ export function createCorePgReader(
+       const result = await qualifiedSnapshot(
+         actorAccountId,
+         tripId,
+-        async (lease, actor, state) => {
++        async (lease, actor, state, bindings) => {
+           projectionStarted = performance.now();
+           if (
+             ordinaryOrderVersion === undefined &&
+             (!authority || authority.authoredSummaryWithoutExternalObjects)
+           ) {
+             let subphaseStarted = performance.now();
+-            const version = await authoredVersion(lease, actor, state.epoch, (phase) => {
+-              const at = performance.now();
+-              projectionPhases[phase] = Math.round(at - subphaseStarted);
+-              subphaseStarted = at;
+-            });
++            const version = await authoredVersion(
++              lease,
++              actor,
++              state.epoch,
++              (phase) => {
++                const at = performance.now();
++                projectionPhases[phase] = Math.round(at - subphaseStarted);
++                subphaseStarted = at;
++              },
++              bindings,
++            );
+             if (version) {
+               projection = "AUTHORED";
+               return version;
+@@ -466,6 +488,7 @@ export function createCorePgReader(
+             actor,
+             state,
+             ordinaryOrderVersion,
++            bindings,
+           );
+           return authorizedTripVersionFromCollection(
+             collection,
+@@ -482,11 +505,13 @@ export function createCorePgReader(
+         (phase, durationMs) => {
+           leasePhases[phase] = durationMs;
+         },
++        true,
+       );
+       try {
+         console.info(
+           JSON.stringify({
+             event: "core_authorized_version_projection",
++            bindingsRead: "STATE_CO_READ",
+             ...(coreUuid.safeParse(diagnosticRequestId).success
+               ? { requestId: diagnosticRequestId }
+               : {}),
+diff --git a/backend/src/tripCoreVersionCoRead.real.test.ts b/backend/src/tripCoreVersionCoRead.real.test.ts
+new file mode 100644
+index 00000000..99178b5a
+--- /dev/null
++++ b/backend/src/tripCoreVersionCoRead.real.test.ts
+@@ -0,0 +1,182 @@
++import { createHash, randomUUID } from "node:crypto";
++import { readFileSync, writeFileSync } from "node:fs";
++import { checkServerIdentity } from "node:tls";
++import { Client } from "pg";
++import { beforeAll, afterAll, expect, it } from "vitest";
++
++// Existing owned loopback fixture only; never Hosted DEV or a caller-provided remote URL.
++const path = process.env.OTR_CORE_REUSE_LOCAL_FIXTURE;
++const test = path ? it : it.skip;
++let admin: Client, db: Client, database: string;
++const marker = randomUUID();
++const actor = randomUUID(),
++  trip = randomUUID(),
++  person = randomUUID(),
++  epoch = randomUUID();
++const sql =
++  "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision,public.trip_core_read_person_bindings($2::uuid,$1::uuid) AS bindings FROM public.trip_core_read_state WHERE trip_id=$1::uuid";
++beforeAll(async () => {
++  if (!path) return;
++  const f = JSON.parse(readFileSync(path, "utf8"));
++  if (
++    f.host !== "127.0.0.1" ||
++    !/^otr_core_reuse_[a-f0-9]{8}$/.test(f.database) ||
++    !/^[a-f0-9]{32}$/.test(f.marker)
++  )
++    throw Error("NOT_OWN_LOOPBACK_FIXTURE");
++  const options = {
++    host: f.host,
++    port: f.port,
++    user: "postgres",
++    password: f.password,
++    connectionTimeoutMillis: 3000,
++    ssl: {
++      ca: f.ca,
++      rejectUnauthorized: true,
++      checkServerIdentity: (_: string, cert: Parameters<typeof checkServerIdentity>[1]) =>
++        checkServerIdentity(f.host, cert),
++    },
++  };
++  admin = new Client({ ...options, database: f.database });
++  await admin.connect();
++  expect((await admin.query("SELECT value FROM fixture_marker")).rows).toEqual([
++    { value: f.marker },
++  ]);
++  database = `otr_coread_${randomUUID().replaceAll("-", "")}`;
++  await admin.query(`CREATE DATABASE "${database}"`);
++  db = new Client({ ...options, database });
++  await db.connect();
++  await db.query("CREATE TABLE own_fixture_marker(value text)");
++  await db.query("INSERT INTO own_fixture_marker VALUES($1)", [marker]);
++  await db.query(`CREATE TABLE trips(id uuid,created_by uuid); CREATE TABLE trip_members(trip_id uuid,user_id uuid);
++    CREATE TABLE journey_members(id uuid,trip_id uuid,user_id uuid,status text,participation_active boolean,participation_revision int);
++    CREATE TABLE trip_core_read_state(trip_id uuid,epoch uuid,revision bigint,access_revision bigint);`);
++  for (const file of [
++    "20261011000300_trip_core_v2_owning_session.sql",
++    "20261011000400_trip_core_v2_read_scope.sql",
++  ]) {
++    const source = readFileSync(
++      new URL(`../../supabase/migrations/${file}`, import.meta.url),
++      "utf8",
++    );
++    await db.query(
++      source.slice(source.indexOf("create function"), source.indexOf("revoke all")),
++    );
++  }
++  const definitions = (
++    await db.query(
++      "SELECT proname,pg_get_functiondef(oid) AS definition,provolatile,prosecdef,proconfig FROM pg_proc WHERE oid IN ('public.trip_core_lock_actor_scope(uuid,uuid)'::regprocedure,'public.trip_core_read_person_bindings(uuid,uuid)'::regprocedure) ORDER BY proname",
++    )
++  ).rows;
++  if (process.env.OTR_COREAD_FUNCTION_RECEIPT)
++    writeFileSync(
++      process.env.OTR_COREAD_FUNCTION_RECEIPT,
++      JSON.stringify(
++        definitions.map((r) => ({
++          ...r,
++          sha256: createHash("sha256").update(r.definition).digest("hex"),
++        })),
++        null,
++        2,
++      ),
++    );
++  expect(definitions.every((r) => r.provolatile === "v" && r.prosecdef === true)).toBe(
++    true,
++  );
++  await db.query("INSERT INTO trips VALUES($1,$2);", [trip, actor]);
++  await db.query("INSERT INTO journey_members VALUES($1,$2,$3,'linked',true,7)", [
++    person,
++    trip,
++    actor,
++  ]);
++  await db.query("INSERT INTO trip_core_read_state VALUES($1,$2,4,5)", [trip, epoch]);
++  // Fixture-only invocation counter proves a zero-row FROM does not invoke the VOLATILE function.
++  await db.query("CREATE SEQUENCE binding_calls");
++  const binding = definitions.find(
++    (r) => r.proname === "trip_core_read_person_bindings",
++  )!.definition;
++  const instrumented = binding.replace(
++    "begin\n",
++    "begin\n PERFORM nextval('public.binding_calls');\n",
++  );
++  expect(instrumented).not.toBe(binding);
++  await db.query(instrumented);
++  await db.query(
++    "GRANT SELECT ON trip_core_read_state TO otr_trip_core_v2_gateway; GRANT EXECUTE ON FUNCTION trip_core_read_person_bindings(uuid,uuid),trip_core_lock_actor_scope(uuid,uuid) TO otr_trip_core_v2_gateway",
++  );
++});
++afterAll(async () => {
++  if (db) {
++    expect((await db.query("SELECT value FROM own_fixture_marker")).rows).toEqual([
++      { value: marker },
++    ]);
++    await db.end();
++  }
++  if (admin) {
++    if (database && /^otr_coread_[a-f0-9]{32}$/.test(database))
++      await admin.query(`DROP DATABASE "${database}" WITH (FORCE)`);
++    await admin.end();
++  }
++});
++async function asActor<T>(work: () => Promise<T>) {
++  await db.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
++  try {
++    await db.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
++    await db.query(
++      "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
++      [actor, trip],
++    );
++    const result = await work();
++    await db.query("COMMIT");
++    return result;
++  } catch (error) {
++    await db.query("ROLLBACK");
++    throw error;
++  } finally {
++    await db.query("RESET SESSION AUTHORIZATION");
++  }
++}
++test("actual SQL co-read equals separate state/bindings under the same prior actor lock", async () => {
++  await asActor(async () => {
++    await db.query("SELECT public.trip_core_lock_actor_scope($1,$2)", [actor, trip]);
++    const state = (
++      await db.query(
++        "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision FROM trip_core_read_state WHERE trip_id=$1",
++        [trip],
++      )
++    ).rows[0];
++    const bindings = (
++      await db.query("SELECT public.trip_core_read_person_bindings($1,$2) AS bindings", [
++        actor,
++        trip,
++      ])
++    ).rows[0].bindings;
++    const combined = (await db.query(sql, [trip, actor])).rows[0];
++    expect(combined).toEqual({ ...state, bindings });
++    expect(bindings).toEqual([
++      {
++        person_id: person,
++        account_id: actor,
++        active: true,
++        participating: true,
++        revision: 7,
++      },
++    ]);
++  });
++  expect(
++    (await db.query("SELECT last_value,is_called FROM binding_calls")).rows[0],
++  ).toEqual({ last_value: "2", is_called: true });
++});
++test("actual SQL missing state does not invoke bindings and mismatched Actor still rejects", async () => {
++  const before = (await db.query("SELECT last_value,is_called FROM binding_calls"))
++    .rows[0];
++  await asActor(async () => {
++    expect((await db.query(sql, [randomUUID(), actor])).rows).toEqual([]);
++  });
++  expect(
++    (await db.query("SELECT last_value,is_called FROM binding_calls")).rows[0],
++  ).toEqual(before);
++  await expect(asActor(() => db.query(sql, [trip, randomUUID()]))).rejects.toThrow(
++    "CORE_SCOPE_MISMATCH",
++  );
++});

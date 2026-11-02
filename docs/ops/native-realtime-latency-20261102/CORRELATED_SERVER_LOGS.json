@@ -1,0 +1,163 @@
+{
+  "status": "READ_ONLY_SAME_REQUEST_SAFE_LOG_PROJECTION",
+  "containerId": "aaf656c3742f4d6ec8c8bccfe467c26ec0a77db82530796f918f0f476cc4e6a2",
+  "events": [
+    {
+      "requestId": "58adc94e-a2ce-4f85-b441-b162826b9f35",
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "totalMs": 4379,
+      "leaseReleaseMs": 290,
+      "beforeProjectionMs": 2042,
+      "projectionAndCommitMs": 2337,
+      "phases": {
+        "leaseMs": 295,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 294,
+        "actorMs": 290,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1466,
+        "finalScopeMs": 290,
+        "commitMs": 291
+      },
+      "projectionPhases": {
+        "writerRoleMs": 290,
+        "projectionSqlMs": 586,
+        "gatewayRoleMs": 290,
+        "bindingsMs": 295,
+        "tokenMs": 5
+      },
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 295,
+        "cleanupMs": 290
+      }
+    },
+    {
+      "requestId": "58adc94e-a2ce-4f85-b441-b162826b9f35",
+      "event": "core_authorized_version_http",
+      "validationMs": 1,
+      "serializationMs": 0,
+      "readerMs": 4380
+    },
+    {
+      "requestId": "58adc94e-a2ce-4f85-b441-b162826b9f35",
+      "route": "/v2/trips/:tripId/core/:resource",
+      "status": 200,
+      "durationMs": 5206,
+      "coreVersionBoundaryMs": 4813,
+      "coreVersionAuthMs": 392,
+      "coreVersionTripVisibilityMs": 432
+    },
+    {
+      "requestId": "7ed25673-58cd-40ed-9616-82932e166c78",
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "totalMs": 4364,
+      "leaseReleaseMs": 290,
+      "beforeProjectionMs": 2036,
+      "projectionAndCommitMs": 2329,
+      "phases": {
+        "leaseMs": 290,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 293,
+        "actorMs": 291,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1457,
+        "finalScopeMs": 290,
+        "commitMs": 291
+      },
+      "projectionPhases": {
+        "writerRoleMs": 290,
+        "projectionSqlMs": 581,
+        "gatewayRoleMs": 289,
+        "bindingsMs": 294,
+        "tokenMs": 3
+      },
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 290,
+        "cleanupMs": 290
+      }
+    },
+    {
+      "requestId": "7ed25673-58cd-40ed-9616-82932e166c78",
+      "event": "core_authorized_version_http",
+      "validationMs": 0,
+      "serializationMs": 0,
+      "readerMs": 4365
+    },
+    {
+      "requestId": "7ed25673-58cd-40ed-9616-82932e166c78",
+      "route": "/v2/trips/:tripId/core/:resource",
+      "status": 200,
+      "durationMs": 7191,
+      "coreVersionBoundaryMs": 6173,
+      "coreVersionAuthMs": 1018,
+      "coreVersionTripVisibilityMs": 1808
+    },
+    {
+      "requestId": "b442e1ab-4c88-44a6-a191-d4c9023821bb",
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "totalMs": 4365,
+      "leaseReleaseMs": 290,
+      "beforeProjectionMs": 2035,
+      "projectionAndCommitMs": 2330,
+      "phases": {
+        "leaseMs": 290,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 292,
+        "actorMs": 290,
+        "gateMs": 291,
+        "stateMs": 291,
+        "projectMs": 1460,
+        "finalScopeMs": 291,
+        "commitMs": 291
+      },
+      "projectionPhases": {
+        "writerRoleMs": 289,
+        "projectionSqlMs": 581,
+        "gatewayRoleMs": 289,
+        "bindingsMs": 295,
+        "tokenMs": 5
+      },
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 290,
+        "cleanupMs": 290
+      }
+    },
+    {
+      "requestId": "b442e1ab-4c88-44a6-a191-d4c9023821bb",
+      "event": "core_authorized_version_http",
+      "validationMs": 0,
+      "serializationMs": 1,
+      "readerMs": 4365
+    },
+    {
+      "requestId": "b442e1ab-4c88-44a6-a191-d4c9023821bb",
+      "route": "/v2/trips/:tripId/core/:resource",
+      "status": 200,
+      "durationMs": 5717,
+      "coreVersionBoundaryMs": 5363,
+      "coreVersionAuthMs": 353,
+      "coreVersionTripVisibilityMs": 998
+    }
+  ],
+  "requestedIds": [
+    "58adc94e-a2ce-4f85-b441-b162826b9f35",
+    "7ed25673-58cd-40ed-9616-82932e166c78",
+    "b442e1ab-4c88-44a6-a191-d4c9023821bb"
+  ],
+  "newBusinessRequests": 0,
+  "mutations": 0
+}

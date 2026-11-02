@@ -1,0 +1,28 @@
+{
+  "status": "LIVE_TWO_FUNCTION_DEFINITIONS_BYTE_EQUAL_ISOLATED_PG",
+  "functions": [
+    {
+      "function": "trip_core_lock_actor_scope",
+      "definitionSHA256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b",
+      "byteEqual": true,
+      "provolatile": "v",
+      "securityDefiner": true,
+      "proconfig": [
+        "search_path=pg_catalog"
+      ]
+    },
+    {
+      "function": "trip_core_read_person_bindings",
+      "definitionSHA256": "7828d6d7ec279f688aa658b5b925546c9d7f218aef0ff9efd01832f4f7f57948",
+      "byteEqual": true,
+      "provolatile": "v",
+      "securityDefiner": true,
+      "proconfig": [
+        "search_path=pg_catalog"
+      ]
+    }
+  ],
+  "liveReadBy": "Root uniqueWriter read-only catalog, no businessrows/DML",
+  "comparisonBy": "Native parent exact bytes and attributes, no normalization",
+  "limits": "VOLATILE/FOR SHARE; not pure/STABLE. SQL co-read semantics still require fixed candidate and independent review."
+}
