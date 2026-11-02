@@ -1,5 +1,5 @@
 {
-  "status": "REVIEWED_FIXED_CANDIDATE_HOSTED_AFTER_PENDING",
+  "status": "DEPLOYED_ACTUAL_HOSTED_COMPONENT_IMPROVEMENT_VERIFIED",
   "candidate": "a205b904",
   "parent": "6777b442",
   "productFile": "backend/src/tripCoreV2PgRead.ts",
@@ -47,7 +47,7 @@
   },
   "functionSemantics": "Both functions are VOLATILE SECURITY DEFINER, search_path=pg_catalog. Binding function has no business mutation but invokes Actor scope FOR SHARE locks; not a pure/STABLE read. Existing earlier Actor lock acquired same ordered locks; re-entrant locking and same state/binding values tested in isolated PG.",
   "missingStateProof": "Fixture-only sequence counter proves zero-row read_state query does not invoke VOLATILE binding function; no production function changed.",
-  "remaining": "Independent review and unique-Writer deployment/Hosted before-after measurement; no live RLS or Hosted performance PASS inferred.",
+  "remaining": "Overall latency remains open: other serial authorized SQL, intermittent shared-Core queue wait, Auth/Trip lookup variability, unseparated HTTP/network residual. Private channels stay closed.",
   "excluded": [
     "Hosted GET",
     "DEV SQL",
@@ -87,5 +87,6 @@
     "status": "NO_BLOCKER",
     "focusedReaderAndJoined": "6PASS/31unselected",
     "limits": "No newHosted/SQL/device checks in independentReview; realisolatedPG evidence reused"
-  }
+  },
+  "hostedVerification": "HOSTED_AFTER_AND_COMPARISON.json"
 }

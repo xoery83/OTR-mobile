@@ -1,0 +1,291 @@
+{
+  "status": "ACTUAL_HOSTED_FIRST_REPAIR_VERIFIED_OVERALL_LATENCY_NOT_CLOSED",
+  "backendCandidate": "a205b904",
+  "readerAfterSHA256": "0913a0ae34c986a57f800fb60278956cdefbb8edcbdd1e754c52705f101b01af",
+  "beforeRows": [
+    {
+      "requestId": "58adc94e-a2ce-4f85-b441-b162826b9f35",
+      "clientTotalMs": 6219.23,
+      "fetchToHeadersMs": 6213.52,
+      "afterHeadersMs": 3.04,
+      "appTotalMs": 5206,
+      "authMs": 392,
+      "tripVisibilityMs": 432,
+      "readerMs": 4380,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 295,
+        "cleanupMs": 290
+      },
+      "transactionPhases": {
+        "leaseMs": 295,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 294,
+        "actorMs": 290,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1466,
+        "finalScopeMs": 290,
+        "commitMs": 291
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 290,
+        "projectionSqlMs": 586,
+        "gatewayRoleMs": 290,
+        "bindingsMs": 295,
+        "tokenMs": 5
+      },
+      "validationMs": 1,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 1013.23
+    },
+    {
+      "requestId": "7ed25673-58cd-40ed-9616-82932e166c78",
+      "clientTotalMs": 8325.34,
+      "fetchToHeadersMs": 8323.72,
+      "afterHeadersMs": 1.25,
+      "appTotalMs": 7191,
+      "authMs": 1018,
+      "tripVisibilityMs": 1808,
+      "readerMs": 4365,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 290,
+        "cleanupMs": 290
+      },
+      "transactionPhases": {
+        "leaseMs": 290,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 293,
+        "actorMs": 291,
+        "gateMs": 292,
+        "stateMs": 291,
+        "projectMs": 1457,
+        "finalScopeMs": 290,
+        "commitMs": 291
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 290,
+        "projectionSqlMs": 581,
+        "gatewayRoleMs": 289,
+        "bindingsMs": 294,
+        "tokenMs": 3
+      },
+      "validationMs": 0,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 1134.34
+    },
+    {
+      "requestId": "b442e1ab-4c88-44a6-a191-d4c9023821bb",
+      "clientTotalMs": 6818.84,
+      "fetchToHeadersMs": 6816.44,
+      "afterHeadersMs": 2.17,
+      "appTotalMs": 5717,
+      "authMs": 353,
+      "tripVisibilityMs": 998,
+      "readerMs": 4365,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 290,
+        "cleanupMs": 290
+      },
+      "transactionPhases": {
+        "leaseMs": 290,
+        "beginMs": 289,
+        "setupMs": 290,
+        "scopeMs": 292,
+        "actorMs": 290,
+        "gateMs": 291,
+        "stateMs": 291,
+        "projectMs": 1460,
+        "finalScopeMs": 291,
+        "commitMs": 291
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 289,
+        "projectionSqlMs": 581,
+        "gatewayRoleMs": 289,
+        "bindingsMs": 295,
+        "tokenMs": 5
+      },
+      "validationMs": 0,
+      "serializationMs": 1,
+      "clientMinusHandlerMs": 1101.84
+    }
+  ],
+  "afterRows": [
+    {
+      "requestId": "5dd7c218-d917-49ba-a3ce-0f96f1ccb4f9",
+      "clientTotalMs": 9170.79,
+      "fetchToHeadersMs": 9164.89,
+      "afterHeadersMs": 4.72,
+      "appTotalMs": 8075,
+      "authMs": 352,
+      "tripVisibilityMs": 355,
+      "readerMs": 7367,
+      "leasePhases": {
+        "queueMs": 3542,
+        "physicalAcquireMs": 12,
+        "principalCheckMs": 291,
+        "cleanupMs": 291
+      },
+      "transactionPhases": {
+        "leaseMs": 3845,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 294,
+        "actorMs": 292,
+        "gateMs": 296,
+        "stateMs": 293,
+        "projectMs": 888,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 292,
+        "projectionSqlMs": 297,
+        "gatewayRoleMs": 291,
+        "bindingsMs": 4,
+        "tokenMs": 5
+      },
+      "validationMs": 1,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 1095.79
+    },
+    {
+      "requestId": "7cea4725-0d9b-4f2d-b486-a2805c3191a1",
+      "clientTotalMs": 5967.89,
+      "fetchToHeadersMs": 5964,
+      "afterHeadersMs": 3.18,
+      "appTotalMs": 4846,
+      "authMs": 381,
+      "tripVisibilityMs": 370,
+      "readerMs": 4094,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 292,
+        "cleanupMs": 291
+      },
+      "transactionPhases": {
+        "leaseMs": 292,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 294,
+        "actorMs": 292,
+        "gateMs": 293,
+        "stateMs": 293,
+        "projectMs": 1173,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 291,
+        "projectionSqlMs": 584,
+        "gatewayRoleMs": 291,
+        "bindingsMs": 4,
+        "tokenMs": 3
+      },
+      "validationMs": 0,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 1121.89
+    },
+    {
+      "requestId": "92b8c118-c03a-4805-a41e-5a855e6a8316",
+      "clientTotalMs": 6408.6,
+      "fetchToHeadersMs": 6406.99,
+      "afterHeadersMs": 0.54,
+      "appTotalMs": 5501,
+      "authMs": 373,
+      "tripVisibilityMs": 1037,
+      "readerMs": 4090,
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 291,
+        "cleanupMs": 291
+      },
+      "transactionPhases": {
+        "leaseMs": 292,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 294,
+        "actorMs": 292,
+        "gateMs": 293,
+        "stateMs": 293,
+        "projectMs": 1171,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      },
+      "projectionSubphases": {
+        "writerRoleMs": 291,
+        "projectionSqlMs": 583,
+        "gatewayRoleMs": 291,
+        "bindingsMs": 3,
+        "tokenMs": 3
+      },
+      "validationMs": 0,
+      "serializationMs": 0,
+      "clientMinusHandlerMs": 907.6
+    }
+  ],
+  "componentComparison": {
+    "policy": "Compare actual Reader samples with queueMs=0 and physicalAcquireMs=0; all raw totals including outlier retained below",
+    "beforeUncontendedReaderMs": [
+      4380,
+      4365,
+      4365
+    ],
+    "afterUncontendedReaderMs": [
+      4094,
+      4090
+    ],
+    "beforeMedianMs": 4365,
+    "afterMedianMs": 4092.0,
+    "reductionMs": 273.0,
+    "reductionPercent": 6.25,
+    "interpretation": "Measured one SQL round-trip removed; small sample, not broad statistical latency SLA"
+  },
+  "allClientTotals": {
+    "before": [
+      6219.23,
+      8325.34,
+      6818.84
+    ],
+    "after": [
+      9170.79,
+      5967.89,
+      6408.6
+    ]
+  },
+  "outlier": {
+    "requestId": "5dd7c218-d917-49ba-a3ce-0f96f1ccb4f9",
+    "clientMs": 9170.79,
+    "queueMs": 3542,
+    "physicalAcquireMs": 12,
+    "notColdPG": "First HTTP sample queued behind shared Core lease; do not label it cold DB"
+  },
+  "sessionCleanup": {
+    "status": "PASS",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "runId": "267ee7b5-eaec-4728-808e-1ce7b23a7801",
+    "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-sXj1PC/run.json"
+  },
+  "businessMutations": 0,
+  "providerCalls": 0,
+  "devicesTouched": 0,
+  "remaining": [
+    "Core Reader still ~4.09s due serial authorized SQL stages; not full performance closure",
+    "Shared Core queue contention produced 3.54s wait in one sample; no concurrency policy changed",
+    "Auth/Trip visibility and client-minus-handler remain variable; residual is not proved pure DNS/TLS/network",
+    "No forced Hosted cold-PG sample; previous isolatedPG33.37ms cold/5.72\u201311.09ms warm not equivalent to Hosted network/authority",
+    "Private subscription, revoke/regrant, publisher remain closed/unqualified"
+  ]
+}

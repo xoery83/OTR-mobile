@@ -1,0 +1,31 @@
+{
+  "status": "REVIEWED_SINGLE_READER_SOURCE_BUILT_NOT_DEPLOYED",
+  "candidate": "a205b904",
+  "patchSHA256": "e5598c291bf6b6632844b92539eb2a8272db436e8b02e9f69949d195374a84f6",
+  "changedProductionFiles": [
+    "backend/src/tripCoreV2PgRead.ts"
+  ],
+  "otherManifestFilesUnchanged": 351,
+  "sourceManifestSHA256": "f47b2044cfb084dd46891e4b394cb4a7a16f79294872961f04f6bf9a7591529e",
+  "baseSourceManifestSHA256": "2f58fb1762ce569afe0dcfa9c13e73a356343b61af352580e341efd1566983f7",
+  "captureSHA256": "fa90e74706a907de045480cb5c9a9bb56b7e210008434f6edba6fb3f75b885c1",
+  "buildArgv": [
+    "node_modules/.bin/esbuild",
+    "backend/src/serverCapture.ts",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--alias:@=./src",
+    "--external:./src/data/auth/guestLocalWorkspace.ts",
+    "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
+    "--external:react-native",
+    "--external:expo-*",
+    "--outfile=dist/server-capture.mjs",
+    "--metafile=dist/read-diagnostic-capture-meta.json",
+    "--banner:js=import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);"
+  ],
+  "buildSeconds": 0.181,
+  "validationReused": "37unit+2actualisolatedPG+independentNO_BLOCKER6focused",
+  "authorityChanged": false
+}

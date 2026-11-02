@@ -1,0 +1,166 @@
+{
+  "status": "READ_ONLY_SAME_REQUEST_SAFE_LOG_PROJECTION",
+  "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+  "events": [
+    {
+      "requestId": "5dd7c218-d917-49ba-a3ce-0f96f1ccb4f9",
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "bindingsRead": "STATE_CO_READ",
+      "totalMs": 7366,
+      "leaseReleaseMs": 292,
+      "projectionAndCommitMs": 1764,
+      "beforeProjectionMs": 5602,
+      "phases": {
+        "leaseMs": 3845,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 294,
+        "actorMs": 292,
+        "gateMs": 296,
+        "stateMs": 293,
+        "projectMs": 888,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      },
+      "projectionPhases": {
+        "writerRoleMs": 292,
+        "projectionSqlMs": 297,
+        "gatewayRoleMs": 291,
+        "bindingsMs": 4,
+        "tokenMs": 5
+      },
+      "leasePhases": {
+        "queueMs": 3542,
+        "physicalAcquireMs": 12,
+        "principalCheckMs": 291,
+        "cleanupMs": 291
+      }
+    },
+    {
+      "requestId": "5dd7c218-d917-49ba-a3ce-0f96f1ccb4f9",
+      "event": "core_authorized_version_http",
+      "readerMs": 7367,
+      "serializationMs": 0,
+      "validationMs": 1
+    },
+    {
+      "requestId": "5dd7c218-d917-49ba-a3ce-0f96f1ccb4f9",
+      "route": "/v2/trips/:tripId/core/:resource",
+      "status": 200,
+      "durationMs": 8075,
+      "coreVersionBoundaryMs": 7723,
+      "coreVersionTripVisibilityMs": 355,
+      "coreVersionAuthMs": 352
+    },
+    {
+      "requestId": "7cea4725-0d9b-4f2d-b486-a2805c3191a1",
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "bindingsRead": "STATE_CO_READ",
+      "totalMs": 4094,
+      "leaseReleaseMs": 291,
+      "projectionAndCommitMs": 2048,
+      "beforeProjectionMs": 2046,
+      "phases": {
+        "leaseMs": 292,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 294,
+        "actorMs": 292,
+        "gateMs": 293,
+        "stateMs": 293,
+        "projectMs": 1173,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      },
+      "projectionPhases": {
+        "writerRoleMs": 291,
+        "projectionSqlMs": 584,
+        "gatewayRoleMs": 291,
+        "bindingsMs": 4,
+        "tokenMs": 3
+      },
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 292,
+        "cleanupMs": 291
+      }
+    },
+    {
+      "requestId": "7cea4725-0d9b-4f2d-b486-a2805c3191a1",
+      "event": "core_authorized_version_http",
+      "readerMs": 4094,
+      "serializationMs": 0,
+      "validationMs": 0
+    },
+    {
+      "requestId": "7cea4725-0d9b-4f2d-b486-a2805c3191a1",
+      "route": "/v2/trips/:tripId/core/:resource",
+      "status": 200,
+      "durationMs": 4846,
+      "coreVersionBoundaryMs": 4464,
+      "coreVersionTripVisibilityMs": 370,
+      "coreVersionAuthMs": 381
+    },
+    {
+      "requestId": "92b8c118-c03a-4805-a41e-5a855e6a8316",
+      "event": "core_authorized_version_projection",
+      "projection": "AUTHORED",
+      "bindingsRead": "STATE_CO_READ",
+      "totalMs": 4090,
+      "leaseReleaseMs": 291,
+      "projectionAndCommitMs": 2046,
+      "beforeProjectionMs": 2044,
+      "phases": {
+        "leaseMs": 292,
+        "beginMs": 291,
+        "setupMs": 291,
+        "scopeMs": 294,
+        "actorMs": 292,
+        "gateMs": 293,
+        "stateMs": 293,
+        "projectMs": 1171,
+        "finalScopeMs": 292,
+        "commitMs": 292
+      },
+      "projectionPhases": {
+        "writerRoleMs": 291,
+        "projectionSqlMs": 583,
+        "gatewayRoleMs": 291,
+        "bindingsMs": 3,
+        "tokenMs": 3
+      },
+      "leasePhases": {
+        "queueMs": 0,
+        "physicalAcquireMs": 0,
+        "principalCheckMs": 291,
+        "cleanupMs": 291
+      }
+    },
+    {
+      "requestId": "92b8c118-c03a-4805-a41e-5a855e6a8316",
+      "event": "core_authorized_version_http",
+      "readerMs": 4090,
+      "serializationMs": 0,
+      "validationMs": 0
+    },
+    {
+      "requestId": "92b8c118-c03a-4805-a41e-5a855e6a8316",
+      "route": "/v2/trips/:tripId/core/:resource",
+      "status": 200,
+      "durationMs": 5501,
+      "coreVersionBoundaryMs": 5128,
+      "coreVersionTripVisibilityMs": 1037,
+      "coreVersionAuthMs": 373
+    }
+  ],
+  "requestedIds": [
+    "5dd7c218-d917-49ba-a3ce-0f96f1ccb4f9",
+    "7cea4725-0d9b-4f2d-b486-a2805c3191a1",
+    "92b8c118-c03a-4805-a41e-5a855e6a8316"
+  ],
+  "newBusinessRequests": 0,
+  "mutations": 0
+}

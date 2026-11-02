@@ -1,0 +1,27 @@
+{
+  "status": "NATIVE_READER_SOFTWARE_RELEASE_ACTUAL",
+  "scope": "OnlyReader a205b904; temporary uniqueWriter handoff fromRoot, nowreturned",
+  "legacyPipelineStatus": "MCP_SLICE1_SOFTWARE_DEFAULT_CLOSED_DEPLOYED",
+  "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+  "retainedRollbackId": "aaf656c3742f4d6ec8c8bccfe467c26ec0a77db82530796f918f0f476cc4e6a2",
+  "image": "sha256:0ffd444c102405d3cb7844a40258dfa561d5b8b8af0add026233eb9580cf2d0a",
+  "captureSHA256": "fa90e74706a907de045480cb5c9a9bb56b7e210008434f6edba6fb3f75b885c1",
+  "configSHA256": "0ebea28102b868a112bf410cc51fc8883cb249bc84cdfcc6f08ff1ce0e77fb66",
+  "sourceManifestSHA256": "f47b2044cfb084dd46891e4b394cb4a7a16f79294872961f04f6bf9a7591529e",
+  "hostPlanPath": "/opt/otr/dev-backend/build/coread-a205b904-20261102/deploy-plan.json",
+  "hostPlanSHA256": "0b8a5baaaa710c361a2f9cf0e07c7f4fa741e9771f064dd9c4b3db811c82b5c3",
+  "releaseScriptSHA256": "6dba1235c0e4cb84ddb90c6b6831003141a89ddbb32a922387198fb18951dfc0",
+  "deliveryTrace": {
+    "requestedAt": "2026-11-02T04:05:04.875874+00:00",
+    "readyAt": "2026-11-02T04:02:55.004932+00:00",
+    "acquiredAt": "2026-11-02T04:05:04.965504+00:00",
+    "mutationFinishedAt": "2026-11-02T04:05:12.015758+00:00",
+    "releasedAt": "2026-11-02T04:05:12.015786+00:00"
+  },
+  "authorityActivated": false,
+  "schemaRlsGrantChanged": false,
+  "newProviderCalls": 0,
+  "deviceOperations": 0,
+  "mainUpdated": false,
+  "independentReviews": "Reader/code and releaseadaptation NO_BLOCKER; separately executed liveverification inDEPLOYED_READBACK.json"
+}
