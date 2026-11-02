@@ -37,3 +37,14 @@ export type PrivateAccountProfileMutation = z.infer<
 export type PrivateAccountProfileReceipt = z.infer<
   typeof privateAccountProfileReceiptSchema
 >;
+// Historical operation disposition only; absence never authorizes a new save.
+export const privateAccountProfileRecoverySchema = z.discriminatedUnion("status", [
+  z.strictObject({
+    status: z.literal("APPLIED"),
+    receipt: privateAccountProfileReceiptSchema,
+  }),
+  z.strictObject({ status: z.literal("ABSENT_UNCONFIRMED") }),
+]);
+export type PrivateAccountProfileRecovery = z.infer<
+  typeof privateAccountProfileRecoverySchema
+>;

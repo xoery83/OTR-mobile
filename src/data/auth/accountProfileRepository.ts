@@ -6,14 +6,19 @@ import {
   privateAccountProfileMutationSchema,
   privateAccountProfileReceiptSchema,
   privateAccountProfileSnapshotSchema,
+  privateAccountProfileRecoverySchema,
   type PrivateAccountProfileMutation,
+  type PrivateAccountProfileRecovery,
 } from "@/data/api/privateAccountProfileContracts";
 import {
   accountProfileBootstrapPath,
   accountProfileBootstrapSchema,
 } from "@/data/api/accountProfileContracts";
 import { assertAccountRequestContext, type AccountScope } from "./accountRequestContext";
-import { createPrivateProfileLocalStore, type PrivateProfileDatabase } from "./privateAccountProfileLocal";
+import {
+  createPrivateProfileLocalStore,
+  type PrivateProfileDatabase,
+} from "./privateAccountProfileLocal";
 
 // Online sync preflight only. Launch/offline Session restoration must not await it.
 export function createAccountProfileRepository(
@@ -22,7 +27,9 @@ export function createAccountProfileRepository(
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
   localDatabase?: PrivateProfileDatabase,
 ) {
-  const local = localDatabase ? createPrivateProfileLocalStore(localDatabase, account) : undefined;
+  const local = localDatabase
+    ? createPrivateProfileLocalStore(localDatabase, account)
+    : undefined;
   async function privateClient(input: AccountScope) {
     const scope = Object.freeze({ ...input });
     await assertAccountRequestContext(scope, account);
@@ -104,6 +111,26 @@ export function createAccountProfileRepository(
       );
       await assertAccountRequestContext(scope, account);
       if (result.accountId !== scope.accountId || result.operationId !== operation)
+        throw Error("ACCOUNT_PROFILE_RECEIPT_REQUIRED");
+      return result;
+    },
+    async recoverPrivate(
+      input: AccountScope,
+      original: PrivateAccountProfileMutation,
+    ): Promise<PrivateAccountProfileRecovery> {
+      const request = privateAccountProfileMutationSchema.parse(original);
+      const { scope, client } = await privateClient(input);
+      const result = await client.get(
+        privateAccountProfilePath + "/operations/" + request.operationId + "/recovery",
+        privateAccountProfileRecoverySchema,
+      );
+      await assertAccountRequestContext(scope, account);
+      if (
+        result.status === "APPLIED" &&
+        (result.receipt.accountId !== scope.accountId ||
+          result.receipt.operationId !== request.operationId ||
+          result.receipt.revision !== request.expectedRevision + 1)
+      )
         throw Error("ACCOUNT_PROFILE_RECEIPT_REQUIRED");
       return result;
     },

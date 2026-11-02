@@ -57,6 +57,43 @@ it("keeps storage optional and allows an empty private profile without creating 
   expect(f.port.save).not.toHaveBeenCalled();
 });
 
+it("recovers disposition read-only without changing the existing receipt endpoint", async () => {
+  const f = fixture();
+  const path = "/operations/" + f.input.operationId;
+  const found = await privateAccountProfileBoundary(
+    f.get(path + "/recovery"),
+    f.user,
+    f.port,
+  );
+  expect(found.status).toBe(200);
+  expect(await found.json()).toEqual({ status: "APPLIED", receipt: f.receipt });
+  f.port.receipt.mockResolvedValueOnce(null as never);
+  const absent = await privateAccountProfileBoundary(
+    f.get(path + "/recovery"),
+    f.user,
+    f.port,
+  );
+  expect(await absent.json()).toEqual({ status: "ABSENT_UNCONFIRMED" });
+  f.port.receipt.mockResolvedValueOnce(null as never);
+  expect((await privateAccountProfileBoundary(f.get(path), f.user, f.port)).status).toBe(
+    404,
+  );
+  expect(f.port.save).not.toHaveBeenCalled();
+  expect(f.port.read).not.toHaveBeenCalled();
+  expect(absent.headers.get("Cache-Control")).toBe("private, no-store");
+});
+
+it("rejects foreign recovery receipts and leaves a missing reader closed", async () => {
+  const f = fixture();
+  const path = "/operations/" + f.input.operationId + "/recovery";
+  expect((await privateAccountProfileBoundary(f.get(path), f.user)).status).toBe(503);
+  f.port.receipt.mockResolvedValueOnce({ ...f.receipt, accountId: randomUUID() });
+  expect((await privateAccountProfileBoundary(f.get(path), f.user, f.port)).status).toBe(
+    503,
+  );
+  expect(f.port.save).not.toHaveBeenCalled();
+});
+
 it("binds private mutation and receipt lookup to normal authenticated Account and stable operation", async () => {
   const f = fixture();
   const result = await privateAccountProfileBoundary(f.post(), f.user, f.port);

@@ -181,6 +181,75 @@ it("reads the exact private operation receipt without resubmitting a write", asy
   expect(f.wire.mock.calls[0][1]?.method).toBe("GET");
 });
 
+it("recovers the original private mutation receipt after a lost save response without another POST", async () => {
+  const f = await privateFixture();
+  f.wire.mockResolvedValueOnce(
+    Response.json({ error: { code: "PROFILE_UNAVAILABLE" } }, { status: 503 }),
+  );
+  await expect(f.repository.savePrivate(f.scope, f.mutation)).rejects.toMatchObject({
+    status: 503,
+  });
+  f.wire.mockResolvedValueOnce(Response.json({ status: "APPLIED", receipt: f.receipt }));
+  expect(await f.repository.recoverPrivate(f.scope, f.mutation)).toEqual({
+    status: "APPLIED",
+    receipt: f.receipt,
+  });
+  expect(f.wire.mock.calls.map((call) => call[1]?.method)).toEqual(["POST", "GET"]);
+  expect(String(f.wire.mock.calls[1][0])).toBe(
+    `https://api.example.test/v1/account/private-profile/operations/${f.mutation.operationId}/recovery`,
+  );
+});
+
+it("keeps recovery absence unconfirmed and preserves unrelated failures without another write", async () => {
+  const f = await privateFixture();
+  f.wire.mockResolvedValueOnce(Response.json({ status: "ABSENT_UNCONFIRMED" }));
+  expect(await f.repository.recoverPrivate(f.scope, f.mutation)).toEqual({
+    status: "ABSENT_UNCONFIRMED",
+  });
+  for (const status of [403, 404, 503]) {
+    f.wire.mockResolvedValueOnce(
+      Response.json({ error: { code: "PROFILE_CLOSED" } }, { status }),
+    );
+    await expect(f.repository.recoverPrivate(f.scope, f.mutation)).rejects.toMatchObject({
+      status,
+    });
+  }
+  expect(f.wire.mock.calls.every((call) => call[1]?.method === "GET")).toBe(true);
+});
+
+it.each(["accountId", "operationId", "revision"] as const)(
+  "rejects mismatched recovery %s",
+  async (field) => {
+    const f = await privateFixture();
+    const receipt = { ...f.receipt, [field]: field === "revision" ? 2 : randomUUID() };
+    f.wire.mockResolvedValueOnce(Response.json({ status: "APPLIED", receipt }));
+    await expect(f.repository.recoverPrivate(f.scope, f.mutation)).rejects.toThrow(
+      "ACCOUNT_PROFILE_RECEIPT_REQUIRED",
+    );
+    expect(f.wire).toHaveBeenCalledOnce();
+  },
+);
+
+it("freezes recovery CAS before token resolution and rejects a late old-Account result", async () => {
+  const f = await privateFixture();
+  f.token.mockImplementationOnce(async () => {
+    f.mutation.expectedRevision = 9;
+    return { userId: f.original, token: "fixture-session" };
+  });
+  f.wire.mockResolvedValueOnce(Response.json({ status: "APPLIED", receipt: f.receipt }));
+  expect(await f.repository.recoverPrivate(f.scope, f.mutation)).toMatchObject({
+    status: "APPLIED",
+  });
+  f.wire.mockImplementationOnce(async () => {
+    f.switch();
+    return Response.json({ status: "ABSENT_UNCONFIRMED" });
+  });
+  await expect(f.repository.recoverPrivate(f.scope, f.mutation)).rejects.toThrow();
+  f.wire.mockClear();
+  await expect(f.repository.recoverPrivate(f.scope, f.mutation)).rejects.toThrow();
+  expect(f.wire).not.toHaveBeenCalled();
+});
+
 it("rejects malformed fields or receipt operation before token and wire work", async () => {
   const f = await privateFixture();
   await expect(

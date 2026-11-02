@@ -50,8 +50,14 @@ export async function privateAccountProfileBoundary(
 ) {
   const url = new URL(request.url),
     operations = privateAccountProfilePath + "/operations";
+  const recovery = url.pathname.endsWith("/recovery");
   const operation = url.pathname.startsWith(operations + "/")
-    ? coreUuid.safeParse(url.pathname.slice(operations.length + 1))
+    ? coreUuid.safeParse(
+        url.pathname.slice(
+          operations.length + 1,
+          recovery ? -"/recovery".length : undefined,
+        ),
+      )
     : null;
   if (![privateAccountProfilePath, operations].includes(url.pathname) && !operation)
     return failure(404, "PROFILE_NOT_FOUND");
@@ -99,11 +105,14 @@ export async function privateAccountProfileBoundary(
       const raw = await boundary.run(() =>
         port.receipt(scope, operation.data, boundary.signal),
       );
-      if (raw === null) return failure(404, "PROFILE_RECEIPT_NOT_FOUND");
+      if (raw === null)
+        return recovery
+          ? reply(200, { status: "ABSENT_UNCONFIRMED" })
+          : failure(404, "PROFILE_RECEIPT_NOT_FOUND");
       const result = privateAccountProfileReceiptSchema.parse(raw);
       if (result.accountId !== scope.accountId || result.operationId !== operation.data)
         return failure(503, "PROFILE_RESULT_BINDING");
-      return reply(200, result);
+      return reply(200, recovery ? { status: "APPLIED", receipt: result } : result);
     }
     return failure(405, "METHOD_NOT_ALLOWED");
   } catch (error) {

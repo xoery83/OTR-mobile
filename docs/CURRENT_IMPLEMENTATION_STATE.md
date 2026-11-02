@@ -1,3 +1,25 @@
+# AUTH-C03 STARTED; AUTH-C04 protected integration pending — 3 November 2026
+
+Owner explicitly retained C04 and did NOT approve Gate3edebba4. Exact states:
+- Local/isolated PG: PASS, fixed7734f3b0.
+- Protected Hosted install: WAITING_FOR_APPROVAL; Root unique SQL Writer.
+- Hosted A/B Invite/Claim: NOT_RUN.
+- Member revocation: NOT_RUN.
+- Native Cold Restore: NOT_RUN.
+No old C04 PG or Review rerun. No protected changes or runtime activation.
+
+C03 actually started with code: Profile Cloud original-operation recovery DTO and
+existing Account Repository/Backend adapter. New read-only endpoint adds explicit
+APPLIED metadata/ABSENT_UNCONFIRMED, exact Account/op/CAS/generation fences; never
+resubmits or overwrites a private draft. Original endpoint unchanged.33focused tests
+and independent8newPASS/types/lint. Evidence ops/auth-c03-20261103/. Optional API
+remains unmounted; Profile Cloud storage still reviewed/uninstalled candidate.
+Native confirms existing acceptedCore cache can provide a small People connection
+read port; not delivered yet, queued by unique Native Writer after current work.
+Missing/inactive binding stays UNKNOWN; no cross-Account UUID exposure or name
+matching. Auth did not edit shared Core/Navigation/SQLite files. Next consume that
+port for local People identity projection; return C04 after legitimate Host Gate.
+
 # AUTH-C04 registered Invite/Claim PG candidate — 3 November 2026
 
 Formal `createTripMemberClaimPgPort` now implements the existing atomic authority
