@@ -82,10 +82,14 @@
     "All close and normal own Session/control/consumer UI ready before T/D"
   ],
   "gate": {
-    "commit": "a5d75b5f",
+    "commit": "c6073455",
     "path": "docs/mcp/slice1/NEXT_NOTES_ACCESS_AND_EXACT_SAVE_GATE.md",
-    "sha256": "cd5e4c3d359937009ad9ab33d4fdcb922e9b1ce109f2b708abda3ceba1bd4822",
+    "sha256": "acaad3a5afc3aff946913a15d6ddf73af8368fb726f1acdabf0519154a37367f",
     "gitBlobIndependentlyVerified": true,
-    "approval": false
+    "approval": false,
+    "previousCandidateCommit": "a5d75b5f",
+    "previousCandidateSHA256": "cd5e4c3d359937009ad9ab33d4fdcb922e9b1ce109f2b708abda3ceba1bd4822",
+    "delta": "ONLY_CLARIFY_EXISTING_HOOK_BODY_CAS_AND_RESTORE_SQL_NO_NEW_SCHEMA_RLS_GRANT",
+    "rootQuestionState": "ROOT_TO_CONFIRM_NO_DUPLICATE_REQUEST"
   }
 }
