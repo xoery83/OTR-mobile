@@ -1,5 +1,12 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Native delivered exact eb93a144; Auth cherry-picked only its 3 files as c14359b6.
+People Read Port now UNBLOCKED_LOCAL_INTERFACE after source review and 18 affected
+consumer/SQLite checks PASS (46 unrelated tests skipped). New compile-bound consumer
+test directly accepts the repository method without a DTO converter. No UI/main/
+Hosted activation; Root default-closed Backend integration remains pending. Existing
+Revoke authority gap and normal A/B/Native cold acceptance NOT_RUN remain unchanged.
+
 Auth remains Single DRI. Exact E2E_HANDOFF.md and DELIVERY_STATUS.json under
 ops/auth-c04-20261103 now bind A/B/Trip/Person qualification, Root's default-closed
 integration/rollback/readback, original-operation UNKNOWN recovery and Native cold

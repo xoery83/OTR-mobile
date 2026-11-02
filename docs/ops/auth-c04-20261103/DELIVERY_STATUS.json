@@ -5,7 +5,7 @@
   "authPgAdapter": {"status": "ISOLATED_PG_PASS", "commit": "7734f3b0"},
   "protectedInstall": {"status": "SERVER_VERIFIED_RUNTIME_UNMOUNTED", "evidenceCommit": "553237b9"},
   "backendPatch": {"status": "WAITING_FOR_ROOT_INTEGRATION", "commit": "51fa7d66"},
-  "peopleReadPort": {"status": "WAITING_FOR_NATIVE_INTERFACE", "consumerCommit": "4ca558f9"},
+  "peopleReadPort": {"status": "UNBLOCKED_LOCAL_INTERFACE", "sourceCommit": "eb93a144", "acceptedCommit": "c14359b6", "consumerCommit": "4ca558f9", "uiMounted": false},
   "profileRecovery": {"status": "LOCAL_PASS", "commit": "5d292b63"},
   "hostedMultiAccountE2E": "NOT_RUN",
   "memberRevocation": "NOT_RUN",

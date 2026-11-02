@@ -1,0 +1,20 @@
+{
+  "status": "UNBLOCKED_LOCAL_INTERFACE",
+  "nativeSourceCommit": "eb93a144aa726e4ad744c0a92c4ff14c4391a134",
+  "authAcceptedCommit": "c14359b6",
+  "scope": "Exact Native three-file cherry-pick; Auth consumer type and behavior check",
+  "reader": "createTripCoreV2Repository.readAcceptedPeopleConnections",
+  "checks": [
+    "Existing acceptedWithinTransaction qualifies Account/Trip/generation/version/access/deny before binding projection",
+    "Public method owns AccountApplyGate and transaction; consumer calls outside either",
+    "Only active personId/connected/isCurrentActor plus certificate; no foreign Account ID",
+    "Missing/inactive connection remains UNKNOWN; explicit errors propagate",
+    "Actual repository method type is assignable directly to Auth PeopleConnectionReader"
+  ],
+  "focusedTests": {"passed": 18, "skipped": 46},
+  "uiMounted": false,
+  "mainIntegrated": false,
+  "hostedInvoked": false,
+  "nativeDeviceTest": "NOT_RUN",
+  "authorityProof": false
+}

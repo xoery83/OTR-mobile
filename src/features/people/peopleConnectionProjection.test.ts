@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import type { TripPerson } from "@/domain/trip/person";
+import type { createTripCoreV2Repository } from "@/data/repositories/tripCoreV2Repository";
 import {
   readPeopleConnectionProjection,
   type AcceptedPeopleConnections,
@@ -51,6 +52,29 @@ async function fixture() {
     },
   };
 }
+
+it("accepts the delivered Native repository reader without a DTO conversion", async () => {
+  const f = await fixture();
+  const native: Pick<
+    ReturnType<typeof createTripCoreV2Repository>,
+    "readAcceptedPeopleConnections"
+  > = {
+    readAcceptedPeopleConnections: vi.fn(async () => ({
+      certificate: f.snapshot.certificate,
+      people: [...f.snapshot.people],
+    })),
+  };
+  const result = await readPeopleConnectionProjection(f.context, {
+    account: f.sources.account,
+    listTripPersons: f.sources.listTripPersons,
+    connections: native.readAcceptedPeopleConnections,
+  });
+  expect(native.readAcceptedPeopleConnections).toHaveBeenCalledWith(f.context);
+  expect(result.people.map((person) => person.connection)).toEqual([
+    { status: "OBSERVED_CACHE", connected: true, isCurrentActor: true },
+    { status: "OBSERVED_CACHE", connected: false, isCurrentActor: false },
+  ]);
+});
 
 it("keeps duplicate names distinct and does not equate participation with connection", async () => {
   const f = await fixture();
