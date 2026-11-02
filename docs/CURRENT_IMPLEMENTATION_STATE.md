@@ -5,7 +5,8 @@ Results and committed Source audit reads onto a516, preserving current permissio
 and full-material Admission. 117 focused checks pass/one existing skip, strict
 22-root types/build pass, independent Review NO_BLOCKER. No Hosted/SQL/device/paid
 action. See `ops/import-backend-main-20261103/HANDOFF.md`; actual main/DEV integration
-is pending. The next local merge must preserve Native main405.
+is pending. Candidate source61b5ef06 ordinary-merged Native main405 as6b4ce517;
+independent recheck confirms all22 fixed Backend blobs unchanged and405 retained.
 
 # Import UI main-context candidate — 3 November 2026
 

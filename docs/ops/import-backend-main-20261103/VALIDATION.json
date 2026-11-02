@@ -40,5 +40,9 @@
     "Hosted compatibility deployment",
     "New Provider/Source authority",
     "Unknown accepted operation with SourceSlot not COMPLETE"
-  ]
+  ],
+  "candidateSourceCommit": "61b5ef06",
+  "ordinaryMainMergeCommit": "6b4ce517",
+  "latestMainPreserved": "405aa3298a066df9b3c60c9366b0314ee658d6a9",
+  "postMainRecheckSHA256": "b53c68797a847dbd88714ef99c030e7ea6dd322481244dae7d75af957944a4a0"
 }

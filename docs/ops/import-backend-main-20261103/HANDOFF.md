@@ -30,10 +30,18 @@ reader contract, not a new storage path.
 Capture build pass. SOURCE.patch.json preserves exact frozen UTF8 diff bytes;
 MANIFEST lists actual source hashes. INDEPENDENT_REVIEW.json is NO_BLOCKER.
 
-Latest main405 contains only the separate Native C01 slice after a516. Candidate
-will ordinary-merge that main after its own fixed commit, preserving Native and
-rechecking these exact Backend source hashes. No main/remote update, Hosted SQL,
+Backend source was fixed at61b5ef06, then latest main405 was ordinary-merged as
+candidate6b4ce517 without conflict. Independent POST_MAIN_405_RECHECK confirms405
+is an ancestor and the exact22 Backend/domain committed blobs and working files
+still match the fixed source manifest. Native's two files are preserved. No main/remote update, Hosted SQL,
 deployment, Session, device or Provider action is performed here. Parent must
 freshly serialize actual main integration and separately verify any later DEV
 release. This historical fallback does not cover accepted-but-not-COMPLETE Source
 recovery or other formats; their original full-material qualification remains.
+
+This is a main-context read-only code integration. Its local full Capture bundle
+is a compile artifact, not a drop-in replacement for the currently deployed Host:
+main still lacks separate accepted PNG worker/runtime integration from21590e11.
+A future deployment must preserve the actual current Host's other lanes and
+capabilities through a fresh qualified package; do not replace it blindly with
+this main-only build or infer fresh PNG Intake/Interpretation qualification.
