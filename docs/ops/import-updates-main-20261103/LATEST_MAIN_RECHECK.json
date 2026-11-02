@@ -1,0 +1,20 @@
+{
+  "status": "FF_READY_AGAINST_OBSERVED_MAIN_PENDING_ROOT_SERIAL_CAS",
+  "sourceCommit": "2c720197",
+  "ordinaryMergeCommit": "c1dc9b7e",
+  "observedMain": "de3a368b96d069c588f3e48753ba040328845497",
+  "containsRequestedNativeMain9eef": true,
+  "sourceSixFilesSameAsIndependentReview": true,
+  "sourceDiffSHA256": "f898c0bf57f5403019b641031d2d6d017b61c48f821560dc9633e226382f2d37",
+  "onlyConflictResolved": "docs/CURRENT_IMPLEMENTATION_STATE.md: retained complete Auth and Import handoff blocks; no source conflict",
+  "authHandoffVerbatimRetained": true,
+  "importHandoffVerbatimRetained": true,
+  "postMergeTests": {
+    "checks": 26,
+    "files": 3,
+    "status": "PASS"
+  },
+  "scopedTypes": "PASS (6 roots)",
+  "mainRemoteHostDeviceWrites": 0,
+  "upstreamWhitespaceNote": "Native form-c02 SMOKE.txt blank EOF preserved byte-for-byte; no source whitespace issue in this Updates delta"
+}

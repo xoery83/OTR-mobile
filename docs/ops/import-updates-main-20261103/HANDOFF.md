@@ -1,6 +1,8 @@
 # IMP-C01 Updates main-context candidate
 
-Base `8c992a79`, separate `codex/imp-c01-updates-main-20261103` branch. This is
+Source2c720197 was based on `8c992a79`; the separate candidate ordinary-merged
+latest mainde3a368b (including requested9eef Native) as c1dc9b7e. Its exact six
+Import files remain unchanged and both handoff blocks are preserved. This is
 LOCAL_PASS / independent NO_BLOCKER; not installed, merged or deployed.
 
 The phase reader preserves normal main Actor/Account/Trip/Batch/generation
