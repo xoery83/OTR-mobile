@@ -1,3 +1,13 @@
+# Current shared DEV default — 2 November 2026
+
+Root independently verified at02:52:53.789502Z: CID aaf656c3/config1b704c49/
+image266ed7df, Capture7e715d4b. QAkeys absent, health200/protected401,
+23files/Host exact and release lock released; no new Authority or SQL.
+Receipt: ops/auth-mcp-fresh-20261102/LATEST_DEFAULT_READBACK.json.
+Previous076e/0119/cdd7 is SOFTWARE rollback only. Any future finite QA must
+bind the actual then-current default and new close pins, not old78c defaults.
+No QA window is open; no Auth retest required for this ordinary diagnostic update.
+
 # Finite continuation 78c CLOSED — 2 November 2026
 
 Direct Owner combined Gate e5cf/7da5 approved exact original1d6/CAS1/digest1d5.
