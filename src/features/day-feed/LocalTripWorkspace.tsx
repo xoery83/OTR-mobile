@@ -507,16 +507,21 @@ function LocalTripContent({
       onKnownTrip("NONE");
     }
   }, [tripId, onKnownTrip, generation]);
-  useEffect(() => {
-    void Promise.resolve().then(load);
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") void load();
-    });
-    return () => {
-      request.current += 1;
-      sub.remove();
-    };
-  }, [load, generation, refreshKey]);
+  useFocusEffect(
+    useCallback(() => {
+      // Retained My Trips must reread durable edits when navigation returns.
+      void Promise.resolve().then(load);
+      const sub = AppState.addEventListener("change", (state) => {
+        if (state === "active") void load();
+      });
+      return () => {
+        request.current += 1;
+        sub.remove();
+      };
+      // Normal sync completion must also invalidate the focused local read.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [load, refreshKey]),
+  );
   const save = async () => {
     if (
       busy.current ||

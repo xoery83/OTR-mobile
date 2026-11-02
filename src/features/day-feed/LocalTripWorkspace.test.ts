@@ -139,6 +139,7 @@ const state = vi.hoisted(() => ({
   publish: vi.fn(),
   forceEffects: false,
   focused: true,
+  focusReturned: false,
   foreground: null as null | ((state: string) => void),
   finance: null as TripHomeWidget | null,
   preparation: null as any,
@@ -267,8 +268,9 @@ vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
   readTripDayFeed: vi.fn(),
 }));
 vi.mock("./MyTripsList", () => ({
-  MyTripsList: (p: any) =>
-    createElement(
+  MyTripsList: (p: any) => {
+    state.nodes.push({ tripList: p });
+    return createElement(
       "div",
       null,
       p.trips.map((trip: Trip) => {
@@ -281,7 +283,8 @@ vi.mock("./MyTripsList", () => ({
         state.nodes.push(node);
         return createElement("button", { key: trip.id }, trip.name);
       }),
-    ),
+    );
+  },
 }));
 vi.mock("./LocalTripPhotos", () => ({
   LocalTripPhotos: (p: { tripId: string }) =>
@@ -415,6 +418,7 @@ beforeEach(() => {
   state.alert.mockReset();
   state.forceEffects = false;
   state.focused = true;
+  state.focusReturned = false;
   state.repo.mockReset();
   state.saveTraveler.mockReset();
   state.discovery.mockReset();
@@ -686,7 +690,7 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
 vi.mock("expo-router", () => ({
   router: { push: vi.fn() },
   useFocusEffect: (callback: () => void | (() => void)) => {
-    if (state.focused && (state.mount || state.forceEffects))
+    if (state.focused && (state.mount || state.forceEffects || state.focusReturned))
       state.effects.push(callback);
   },
 }));
@@ -2061,5 +2065,50 @@ it.each(["onQueryDirty", "onBusy"])(
     await expect(guestTripDraftInventory.freeze(guestDraftScope())).rejects.toThrow(
       "GUEST_TRIP_CREATE_DRAFT_NOT_READY",
     );
+  },
+);
+
+it.each([null, "2026-10-01"])(
+  "rereads durable local dates when returning to retained My Trips (previous start %s), without waiting for cloud",
+  async (initialStart) => {
+    const initial = {
+      ...trip("local-dates", "Local dates"),
+      startDate: initialStart,
+      endDate: initialStart,
+    };
+    const repo = repository([initial]);
+    state.repo.mockResolvedValue(repo);
+    render();
+    await flush();
+    render();
+    expect(state.nodes.find((n) => n.tripList)?.tripList.trips[0].startDate).toBe(
+      initialStart,
+    );
+
+    state.focused = false;
+    render();
+    // SQLite has committed the edit; Cloud is still pending, with an older discovery snapshot.
+    const committed = {
+      ...initial,
+      startDate: "2026-11-03",
+      endDate: "2026-11-10",
+      metadataPending: true,
+    };
+    vi.mocked(repo.listTrips).mockResolvedValue([committed]);
+    state.discovery.mockResolvedValue({
+      readMerged: async () => ({
+        cachedAt: null,
+        trips: [{ ...initial, localStatus: null }],
+      }),
+    });
+    state.focused = true;
+    state.focusReturned = true;
+    render();
+    state.focusReturned = false;
+    await flush();
+    render();
+    expect(state.nodes.find((n) => n.tripList)?.tripList.trips).toEqual([committed]);
+    expect(repo.listTrips).toHaveBeenCalledTimes(2);
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
   },
 );
