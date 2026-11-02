@@ -1,0 +1,17 @@
+{
+  "status": "LOCAL_SELFTEST_8_PASS_NO_REMOTE_OR_REAL_AUTH_INPUT",
+  "files": {
+    "prepare-empty-round.py": "f573debfe26dea87ade843a140b77f98645833f5ed656f1a5269073b755e7783",
+    "confirm-once.py": "59679117b371f93e852ac2b607a9aff7dabea048a31b51bb6dffdb12384b55fe",
+    "test_prepare_empty_round.py": "d886fdfdad334e6c16fbc1929dddd6d7227ab6bc79aedfaf05b13dd617d52538",
+    "test_confirm_once.py": "8a1325c5c5b110c4b4c7698d97d8ed1b4157dca28acd5b42508f59179c29130f",
+    "prepare-empty-round.py.diff": "5cde969765a1e356d690612ba5b38a1d09fee4b90716554a2ddbdba14e88a9b9",
+    "confirm-once.py.diff": "4bf356cc77745e31964df34b987b49148f76710ac326be4974015242b7248aa9",
+    "DISPATCHERS_LOCAL_READY.json": "66070d12123b2a9de348cad87fdecdfd5f4d515e538d665686db1a891665025a",
+    "prepare-dispatchers-local.py": "e687495dfb58d50fff18a17c03a96a8be475eb04d807499fa57b9bb432f73e80"
+  },
+  "tests": 8,
+  "syntaxSegments": 4,
+  "noRealIntentOrResultFiles": true,
+  "actualHostCalls": 0
+}

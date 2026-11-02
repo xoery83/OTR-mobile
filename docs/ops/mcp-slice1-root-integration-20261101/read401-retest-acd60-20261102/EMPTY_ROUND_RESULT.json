@@ -1,0 +1,24 @@
+{
+  "result": {
+    "status": "MCP_SLICE1_CONFIG_CAS_HEALTHY",
+    "phase": "EMPTY",
+    "containerId": "0025a67cbe3e377faf399eadacfd56b40e1553601c2e19b7cf8949d8288beb07",
+    "defaultContainerId": "ddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f",
+    "configSHA256": "52541fb738a37884318cbbb82fa659f64d1cff93e5805bc22a9e9a4b330bbcab",
+    "deadlineMs": 1793580136118,
+    "closePlanPublishedBeforeServe": true,
+    "approvalRecordSHA256": null,
+    "deliveryTrace": {
+      "readyAt": "2026-11-02T00:17:56.351055+00:00",
+      "acquiredAt": "2026-11-02T00:17:56.351566+00:00",
+      "mutationFinishedAt": "2026-11-02T00:18:03.789545+00:00",
+      "releasedAt": "2026-11-02T00:18:03.789573+00:00"
+    }
+  },
+  "runtimeCloseTimer": "otr-mcp-slice1-runtime-close-acd60fd27aee40e8b6cf1aca727ed169",
+  "runtimeCloseAt": "2026-11-02 00:42:16 UTC",
+  "fixedT": 1793578488231,
+  "fixedD": 1793580136118,
+  "confirmationsEmpty": true,
+  "notesApproval": false
+}

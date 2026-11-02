@@ -1,5 +1,37 @@
 # Root / Import current state — 2 November 2026
 
+## Live restart priority — MCP acd60, 2 November
+
+Owner ReduceDebugCycle direction: finish currentConsumer first; P3 parallel prep
+continues. Newdefault CLOSED software release independentlyverified
+actualUTC23:44:03.977Z Nov1 =12:44NZDT Nov2. CIDddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f,
+configdb86894730f9a7e3f675d7bc805ea00a5057c05c5d5047d0b8c292746e0ef512,
+image57bce7bb398f0508bf6dad99aaf53cac044be8f07112ca45e57c584757ffcb4d.
+Capture7046+MCP wrapper416c/SDK45ff, server782/browser604, Envb12/Hostd501/all23
+files preserved. Software shortlock23:41:55→23:42:02Z released. Olda1/9a88/1c5
+retained ONLY software rollback; future finiteclose restoresnewddd7/db86/57.
+
+CurrentACTIVE EMPTY acd60fd27aee40e8b6cf1aca727ed169, directMCP Owner4ab approval
+verifiedhuman01a19992-7fad-7d73-92c8-2f131c937798. T00:14:48.231Z/D00:42:16.118Z
+Nov2 (13:14→13:42NZDT), normalclose00:40:16.118Z unchanged. CurrentCID0025a67cbe3e377faf399eadacfd56b40e1553601c2e19b7cf8949d8288beb07,
+config52541fb738a37884318cbbb82fa659f64d1cff93e5805bc22a9e9a4b330bbcab.
+Independent00:18:41Z files/Host/health/timer/pointerPASS, lockreleased00:18:03Z.
+Auth activatingissuer/console; MCP UIready, awaitingAuthactualREADY beforeOTP.
+Notes=[] NOT_APPROVED, original1d6 NOT_SUBMITTED; do not replayf107/9bUNKNOWN.
+Rootclose local /private/tmp/otr-mcp-root-read401-retest-20261102/close-once.py
+SHA6ed5f2b7695daae0be1cb621745e78c30c9c20b468ae3ae978f04d20b69c7508;
+collector9334 beforemanualclose, independentabsolute timer atD. Newpreparef573,
+confirm5967, actualGate4ab separate internalmarker530. Exactreceipts fixed under
+read401-retest-acd60-20261102; no newaccess/Notes beyondactualhuman.
+
+P3 Source/Provider remains expired, no newpaidcall/role/SQL/qaFenceconfig. RootAD5
+preflight restorednormalMyTrips, app126.10; originalautomation session thenclosed
+andonlyAD5shutdown, noinstall/logout/Keychain/SQLitereset. ActorUUID notprovenbyQA
+name. NativeJS candidate568da6 from6a20ec11 READY butnativeABIUNVERIFIED/noinstall.
+OwnHostf4sessionmetadataexpiredOct27; normalrefresh wrapper prepared(notexecuted),
+Authreviewfound read-before-claim race; mustfix+independentcheck beforerealrefresh.
+
+
 ## Shared MCP round02
 
 CLOSED_UNKNOWN_NOT_PASS. Continuationef7c8ba6, windowbb5ba306, fixed
