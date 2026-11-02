@@ -1,3 +1,17 @@
+# C04 interface closure / normal QA preparation — 3 November 2026
+
+Auth remains Single DRI. Exact E2E_HANDOFF.md and DELIVERY_STATUS.json under
+ops/auth-c04-20261103 now bind A/B/Trip/Person qualification, Root's default-closed
+integration/rollback/readback, original-operation UNKNOWN recovery and Native cold
+handoff. Root51fa integration and Native accepted-cache Reader remain pending actual
+fixed delivery, not unblocked by chat. Native reports implementation in progress.
+One additional full-exit gap is explicit: installed REVOKE_UNCLAIMED_INVITE does
+not revoke an already-linked member; no formal member-removal Owning Port exists
+in this package. Never use administrative unlink or invite cancellation as proof.
+Normal Invite/Claim/Member Read can proceed once separately qualified, while full
+member revoke remains missing authority. No new permissions/runtime/OTP/session or
+business calls; no existing PG or independent Review repeated.
+
 # C04 default-closed app wiring candidate ready — 3 November 2026
 
 Root supplied fixed app e89dfddf/SHA434b… and retained shared app/Bootstrap/factory
