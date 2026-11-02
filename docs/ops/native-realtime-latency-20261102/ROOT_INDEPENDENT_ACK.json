@@ -1,0 +1,21 @@
+{
+  "source": "Root direct coordination acknowledgement",
+  "sourceThreadId": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "independentDeploymentVerifiedAt": "2026-11-02T04:10:06Z",
+  "verifiedDeploymentReference": "DEPLOYED_READBACK.json",
+  "verifiedPrefixes": {
+    "container": "dc58",
+    "config": "0ebe",
+    "image": "0ffd",
+    "retainedRollback": "aaf"
+  },
+  "closedPlanReboundOnceAt": "2026-11-02T04:11:43Z",
+  "closedPlanSHA256": "cb0db7f85270f157fa6e5954a1de0235b5bab61c2167ed27e4f64c51bbfe825a",
+  "closedNoChangeRestore": "PASS_REPORTED_BY_ROOT",
+  "doNotRepeatRebinding": true,
+  "ownAfterSessionRunIdAcknowledged": "267ee7b5-eaec-4728-808e-1ce7b23a7801",
+  "overallLatency": "NOT_CLOSED",
+  "privateSubscription": "CLOSED",
+  "newNativeHostWrites": 0,
+  "newNativeQARequests": 0
+}
