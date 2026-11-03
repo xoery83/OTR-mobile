@@ -1,0 +1,21 @@
+{
+  "request": "IMP-C01-COMPOSER-UI-20261104-05",
+  "candidate": "4e2be1dd8d4666dadcf8c95a2f63e99e017ae405",
+  "base": "ec81cf20d6a007b95aee6d07e43cfc8c535efce9",
+  "productScope": "Exactly two leaf blobs; both match fixed candidate; old CURRENT/manifest excluded",
+  "files": {
+    "src/features/capture/CaptureComposer.tsx": "2063cd9a1aff36a2221b2b94818286bdf5493b64d66568020d2815b6f1332f3d",
+    "src/features/capture/CaptureComposer.test.ts": "fe9c64d735b7cb375a9df369a6c773d8e3fba1d44140d246b0d8d72fe26b965d"
+  },
+  "independentReview": "NO_BLOCKER",
+  "actualMainChecks": {
+    "composer": 19,
+    "uiGuard": "473 legacy /168 representative PASS"
+  },
+  "notRun": [
+    "iPad real layout",
+    "Device install",
+    "Source/Provider/Core Save"
+  ],
+  "draftAndOriginalIO": false
+}

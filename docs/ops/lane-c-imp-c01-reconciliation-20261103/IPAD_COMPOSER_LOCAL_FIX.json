@@ -1,0 +1,22 @@
+{
+  "status": "LOCAL_PASS_DEVICE_RECHECK_PENDING",
+  "rootCause": "Native Files picker returns opaque otr-capture-file lease tokens, not Image URLs; retain metadata-only pre-submit intake",
+  "change": [
+    "Image-type icon and filename for leased images; normal displayable photo URI retains thumbnail",
+    "Keyboard with attachments caps multiline editor at3lines; hide restores6; text unchanged"
+  ],
+  "tests": {
+    "composer": 19,
+    "strictRoots": 2,
+    "eslint": "PASS",
+    "uiGuard": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limits": [
+    "No real thumbnail decoder added for Files leases",
+    "Keyboard layout requires actual iPad recheck",
+    "Current mixed draft/process preserved; no new installation",
+    "No Source/Provider/Save changes"
+  ],
+  "dataPath": "Draft/Transient only; no bytes read/copy/upload before owning registration; same lifetime and original identity; L1 only"
+}

@@ -29,6 +29,7 @@ const state = vi.hoisted(() => ({
   nodes: [] as any[],
   confirm: vi.fn(),
   scheme: "light" as "light" | "dark",
+  keyboardListeners: {} as Record<string, () => void>,
   runEffects: false,
 }));
 vi.mock("./useImportDictation", () => ({
@@ -86,7 +87,13 @@ vi.mock("react-native", () => {
     Image: primitive,
     Modal: primitive,
     KeyboardAvoidingView: primitive,
-    Keyboard: { dismiss: state.dismissKeyboard },
+    Keyboard: {
+      dismiss: state.dismissKeyboard,
+      addListener: (name: string, callback: () => void) => {
+        state.keyboardListeners[name] = callback;
+        return { remove: vi.fn() };
+      },
+    },
     Platform: {
       get OS() {
         return state.os;
@@ -546,4 +553,48 @@ it("keeps Personal Inbox and Trip Documents as separate Import menu destinations
   render(empty, 0, { onDocuments, tripName: "QA Trip" });
   row("importDocuments.trip").onPress();
   expect(onDocuments).toHaveBeenLastCalledWith("TRIP");
+});
+
+it("leased Files images keep a named card without passing an opaque lease to Image", () => {
+  const item = {
+    source: "files" as const,
+    temporaryUri: "otr-capture-file://test-token",
+    name: "sample.png",
+    typeHint: "image/png",
+    stagingId: 91,
+    availability: "unverified" as const,
+  };
+  render({ ...empty, items: [item] }, 1);
+  expect(state.nodes.some((n) => n.source?.uri === item.temporaryUri)).toBe(false);
+  expect(
+    state.nodes.some(
+      (n) => n.accessibilityLabel === item.name && n.children === item.name,
+    ),
+  ).toBe(true);
+});
+it("keyboard reduces editor height with attachments and restores it without changing text", () => {
+  state.runEffects = true;
+  const draft = {
+    ...empty,
+    editorText: "one\ntwo\nthree\nfour",
+    items: [
+      {
+        source: "files" as const,
+        temporaryUri: "file://sample.pdf",
+        name: "sample.pdf",
+        typeHint: "application/pdf",
+        stagingId: 92,
+        availability: "unverified" as const,
+      },
+    ],
+  };
+  render(draft, 2);
+  const expanded = state.nodes.find((n) => n.multiline).style[1].maxHeight;
+  state.keyboardListeners.keyboardDidShow();
+  render(draft, 2);
+  expect(state.nodes.find((n) => n.multiline).style[1].maxHeight).toBeLessThan(expanded);
+  expect(state.nodes.find((n) => n.multiline).value).toBe(draft.editorText);
+  state.keyboardListeners.keyboardDidHide();
+  render(draft, 2);
+  expect(state.nodes.find((n) => n.multiline).style[1].maxHeight).toBe(expanded);
 });

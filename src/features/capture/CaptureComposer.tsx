@@ -93,6 +93,15 @@ export function CaptureComposer({
   const [trips, setTrips] = useState<readonly { id: string; name: string }[]>([]);
   const [targetBusy, setTargetBusy] = useState(false);
   const [targetError, setTargetError] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   useEffect(() => {
     if (page !== "context") return;
     let active = true;
@@ -133,7 +142,9 @@ export function CaptureComposer({
       if (current()) setTargetBusy(false);
     }
   };
-  const maxInputHeight = 6 * 22 * Math.max(1, fontScale) + 16;
+  // Keep the material names visible while the multiline editor owns the keyboard.
+  const inputLines = keyboardVisible && snapshot.items.length ? 3 : 6;
+  const maxInputHeight = inputLines * 22 * Math.max(1, fontScale) + 16;
   const sendDisabled = locked || !count;
   const context =
     contextLabel ??
@@ -297,6 +308,8 @@ export function CaptureComposer({
                         const photo =
                           item.source !== "magic_input" &&
                           item.typeHint?.startsWith("image/") &&
+                          item.temporaryUri &&
+                          !item.temporaryUri.startsWith("otr-capture-file://") &&
                           item.temporaryUri;
                         return (
                           <View key={item.stagingId} style={styles.tile}>
@@ -313,9 +326,11 @@ export function CaptureComposer({
                                   name={
                                     item.source === "magic_input"
                                       ? "text.alignleft"
-                                      : item.typeHint === "application/pdf"
-                                        ? "doc.richtext"
-                                        : "doc"
+                                      : item.typeHint?.startsWith("image/")
+                                        ? "photo"
+                                        : item.typeHint === "application/pdf"
+                                          ? "doc.richtext"
+                                          : "doc"
                                   }
                                   size={28}
                                   color={colors.accent}

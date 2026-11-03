@@ -1,0 +1,35 @@
+{
+  "requestId": "IMP-C01-COMPOSER-UI-20261104-05",
+  "status": "NO_BLOCKER_SOURCE_REVIEW_ONLY",
+  "commit": "4e2be1dd8d4666dadcf8c95a2f63e99e017ae405",
+  "target": "ec81cf20d6a007b95aee6d07e43cfc8c535efce9",
+  "parentProductMatchesTarget": {
+    "src/features/capture/CaptureComposer.tsx": true,
+    "src/features/capture/CaptureComposer.test.ts": true
+  },
+  "sha256": {
+    "src/features/capture/CaptureComposer.tsx": "2063cd9a1aff36a2221b2b94818286bdf5493b64d66568020d2815b6f1332f3d",
+    "src/features/capture/CaptureComposer.test.ts": "fe9c64d735b7cb375a9df369a6c773d8e3fba1d44140d246b0d8d72fe26b965d"
+  },
+  "evidenceSHA256": "2000fba0b6cd6de6a75e03223ac1f3637af757c6f22a26e5c83fd13eeb27b88f",
+  "findings": [],
+  "review": [
+    "Opaque otr-capture-file:// leases are no longer passed to React Native Image. Existing photo AppIcon and complete accessible filename remain; no original read, URI resolution, lease mutation, copy or upload added.",
+    "Displayable photo URIs retain existing thumbnail behavior. MIME selects a glyph only and grants no format/Source qualification.",
+    "Keyboard listeners affect transient maxHeight only: three lines with attachments, six otherwise, respecting existing fontScale formula. Text value and callbacks remain unchanged. Both listeners are removed on unmount.",
+    "Canonical existing View/AppIcon/theme/text primitives and copy retained; no raw colors, new locale strings, navigation or persistence changes.",
+    "Both candidate parent product blobs match ec81cf20 exactly; minimal two-file integration has no baseline conflict."
+  ],
+  "validationReused": {
+    "composer": 19,
+    "strictRoots": 2,
+    "eslint": "PASS",
+    "uiGuard": "PASS",
+    "diffCheck": "PASS"
+  },
+  "notRun": [
+    "No redundant full suite or device actions.",
+    "Actual iPad keyboard/layout recheck remains pending; local checks are not Native visual acceptance.",
+    "No Host, SQL, Provider or writer-tree mutations."
+  ]
+}
