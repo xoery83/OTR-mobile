@@ -1,0 +1,12 @@
+{
+  "commit": "b911e5da1d4397f30414423d738f415e7daa5431",
+  "sourceDirectory": "docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/AUTH-C04-FRESH-INVITATION-CONTROLLER-20261104-001/",
+  "files": {
+    "BUSINESS_GATE_CANDIDATE.md": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+    "BUSINESS_PACKAGE_CANDIDATE.json": "6b5f28ed21e83e24f81ff389ab4e550b7284c70fb711a8cb574d3e44b3634d80",
+    "BUSINESS_SOFTWARE_MANIFEST.json": "a6c6ca13d4de3f2d4d267622535c474d676bd70e1880bd11231255ceb2e0b8f1"
+  },
+  "copiedByteForByte": true,
+  "sourceBlobAndActualReceiptHashesChecked": true,
+  "executionAuthorized": false
+}

@@ -1,0 +1,28 @@
+{
+  "status": "COMPLETE_SCOPE_CANDIDATE_NOT_APPROVAL_READY",
+  "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+  "manifestSHA256": "a6c6ca13d4de3f2d4d267622535c474d676bd70e1880bd11231255ceb2e0b8f1",
+  "executionAuthorized": false,
+  "ownerApproval": null,
+  "windowId": null,
+  "T": null,
+  "D": null,
+  "readinessBlockers": [
+    "Root1 source main integration matching candidate dependencies",
+    "Auth/joint review of this exact business Gate (client qualifier review complete)",
+    "exact direct Owner business approval, then fresh PG/Host/legal-scope qualification and actual timer/close readiness"
+  ],
+  "fixedReceiptCommits": {
+    "AuthInstallAnd59aSoftware": "1d974b233bc015e62f010cb7d599b870d6da3ee6",
+    "current794Software": "b589643fe717f1a8953225743a7981ecc4c0d7f7"
+  },
+  "dataPathChecklist": {
+    "dataOwnership": "Existing Cloud-shared invitation/Claim; session tokens Local-private; no new schema",
+    "localStorage": "Existing operation retention/UNKNOWN journal; no Native/SQLite acceptance claimed",
+    "syncBackendContract": "Existing normal Auth and Claim port/immutable receipts; no contract expansion",
+    "conflictOfflineBehavior": "Online-only; original UNKNOWN preserved; no retry/new ID on ambiguity",
+    "requiredEvidence": "33 controller local tests; Auth55 reported/joint review pending; real L3 pending separate Gate",
+    "remainingIntegrationDelta": "Root1 integration+exact Gate review+Owner approval+fresh qualified execution/cleanup"
+  },
+  "authSourceCommit": "67aed9a75cc5bbf38e64ee959e4a552ebcb3d83b"
+}

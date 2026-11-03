@@ -1,0 +1,19 @@
+{
+  "status": "SCOPED_NO_BLOCKER_BUSINESS_GATE_CANDIDATE",
+  "reviewer": "auth_phase1_review",
+  "candidate": "b911e5da1d4397f30414423d738f415e7daa5431",
+  "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+  "manifestSHA256": "a6c6ca13d4de3f2d4d267622535c474d676bd70e1880bd11231255ceb2e0b8f1",
+  "actualMain": "ec81cf20d6a007b95aee6d07e43cfc8c535efce9",
+  "authIndependentlyMatchedMainFiles": 15,
+  "checks": [
+    "Gate/package/manifest hashes,12 Auth files,7 controller pins and fixed actual receipts match",
+    "Actual deployed794 contains main59 Claim repair",
+    "One initial submission per fresh operation; UNKNOWN recovery only; confirmedLINKED-only duplicate matches scenario",
+    "Old UNKNOWN/expiry unchanged; no falsezero-history preflight; actual fresh qualification remains mandatory",
+    "Both absolute timers, ownsession cleanup and fulldefaultrestore required"
+  ],
+  "normalOtpClarification": "Gate expressly permits exactly one normal OTP for each A/B; Provider exclusion applies to other business/AI/Search calls and budgets. No extra Provider call is permitted.",
+  "executionAuthorized": false,
+  "externalCallsInReview": 0
+}

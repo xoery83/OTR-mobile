@@ -1,0 +1,25 @@
+{
+  "request": "AUTH-C04-FRESH-INVITATION-SOURCE-20261104-01",
+  "base": "7946800b02a0b63c0b1a8a748b2492bd04dc6367",
+  "files": {
+    "backend/src/authMemberClaimQaReadback.test.ts": "a89e2b589d79d3290a83eb3a7923e4cf5c8de92a9f3699a920924c8547f90043",
+    "backend/src/authMemberClaimQaRecoveryWindow.test.ts": "b5bb1dc87e0542c9b99b349a175e3073f7d20e47f8fc5b2d5bff02621510f9a5",
+    "backend/src/authMemberClaimQaResumeDriver.test.ts": "51d06751ce4136efcd3874595dd65548a45246c75e693bdfb24dc228f03f337b",
+    "docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/AUTH-C04-FRESH-INVITATION-CONTROLLER-20261104-001/INTERFACE_CANDIDATE.json": "35e5418ac6e9913da3fa2f24fa9b8c4558ea456fb5a69ab108c95bf93cf06f86",
+    "docs/ops/auth-c04-20261103/after-fix-fresh-invite-qa/CASE_CANDIDATE.json": "730dc9902aac7c37f8df0ac725d5bedf0896998261b2d2175464eee8cfa9d4be",
+    "docs/ops/auth-c04-finite-runtime-20261103/FRESH_INVITATION_CASE_TEMPLATE.json": "730dc9902aac7c37f8df0ac725d5bedf0896998261b2d2175464eee8cfa9d4be",
+    "docs/ops/auth-c04-finite-runtime-20261103/HANDOFF.md": "bb3f7b09a20ce51b4955c62827721fe675d49cddd3b2da058ee099f53473c91a",
+    "docs/ops/auth-c04-finite-runtime-20261103/QA_CASE_TEMPLATE.json": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "87d9bdb69b65e940549aaaff16bab9b5e0400b641f0bb7044d8f7ee2143078ad",
+    "docs/ops/auth-c04-finite-runtime-20261103/test_runtime.py": "ffba9e066f356f538c050751aee71e6a01363be7e86eeb197fe9f0d5b7951005",
+    "docs/ops/auth-phase2-20261028/finite-qa-window/runtime.py": "014844d487ba4fb32d9abc42c22d533195831be3114d47a2b253d465d44b5444",
+    "scripts/auth/member-claim-qa-control-read.ts": "27cc78daa7f16123d45f08affb168f69e3b4aaf601fd6722e2e5d3fcbf998ac7",
+    "scripts/auth/member-claim-qa-readback.ts": "471ed12b019ab54afe852af2cbfa1319f24a455144b8ed78734f4046f95f39c0",
+    "scripts/auth/member-claim-qa-recovery-window.ts": "62a34069727099f67e0a59bbea695b3a4d6e4a061e3ffd49d0728652faf4c652",
+    "scripts/auth/member-claim-qa-resume-driver.ts": "5272e4244cb8fe12b83aa81870d8eb10c357470423f0f18dec92386f086fedbe"
+  },
+  "actualMainTests": "55 Auth +33 controller PASS; all mocked/no network",
+  "review": "JOINT_SOURCE_REVIEW.json",
+  "integrationBoundary": "7 Auth source/tests+CASE and current controller/template diffs only; old CURRENT/Root2 RESUME/MANIFEST/environment receipts excluded",
+  "protectedActions": 0
+}

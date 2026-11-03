@@ -54,9 +54,10 @@ Next lawful slice: separate fresh invitation preparation, not old Claim retry.
 Fixed case730dc990 uses new0b8927c2/ba97129d; original operations unchanged.
 Client3suites55PASS, types/lint/headless-no-network PASS, independent scoped
 Review NO_BLOCKER. Root2 controller7e47ff07 matches fresh-mode/action/status and
-dual absolute timers. No window/OTP/Session/business executed. Complete fixed new
-business Gate, Root1 DEV-source integration and direct Owner approval remain
-required; current installed software must be freshly pinned (Root2 later reports
+dual absolute timers. No window/OTP/Session/business executed. Root1 integrated actualmainec81cf20,15dependencyhashes Auth independently
+matched; Root1 actualmain55client+33controller PASS/jointNO_BLOCKER. Complete
+Gate2fad8f56 atRoot2b911e5da passed independentbusinessReviewNO_BLOCKER;
+new direct Owner business approval remains required; current installed software must be freshly pinned (Root2 later reports
 8805008f/bafa6517, not historical5938). See after-fix-fresh-invite-qa/.
 
 Independent operator review passed after hardcoded software-pin repair. Initial
