@@ -38,8 +38,8 @@
     },
     {
       "path": "evidence/PG_CURRENT.json",
-      "bytes": 6615,
-      "sha256": "a5df56a12cdf90d5abab072a7bad0901fcb9de7d9fcfed769d7130dc6adee223",
+      "bytes": 6784,
+      "sha256": "acf1ca9fe646e6ffb3fce780433433a36ebb83a444b881a64f83a046963ee6a8",
       "origin": "Current read-only snapshot"
     },
     {

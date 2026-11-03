@@ -98,20 +98,20 @@
               "otr_trip_core_v2_gateway=X/postgres",
               "otr_trip_core_v2_writer=X/postgres"
             ],
-            "bodySHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
             "name": "trip_sustained_import_p1_capabilities",
             "oid": "66408",
-            "owner": "postgres"
+            "owner": "postgres",
+            "definitionSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9"
           },
           {
             "acl": [
               "postgres=X/postgres",
               "otr_trip_core_v2_writer=X/postgres"
             ],
-            "bodySHA256": "1b325a95da38f2976a7ac857abfd13c6cdc1fcccf42f096a7db6677984996a99",
             "name": "trip_sustained_import_p1_guard",
             "oid": "66410",
-            "owner": "postgres"
+            "owner": "postgres",
+            "definitionSHA256": "1b325a95da38f2976a7ac857abfd13c6cdc1fcccf42f096a7db6677984996a99"
           },
           {
             "acl": [
@@ -119,10 +119,10 @@
               "otr_trip_source_writer=X/postgres",
               "otr_trip_core_v2_writer=X/postgres"
             ],
-            "bodySHA256": "ecaa1945ca2b650e5975ae94abdb3cde56f1fec5421a89f49845ff6b8c6964d0",
             "name": "trip_sustained_universal_pdf_allowed",
             "oid": "66868",
-            "owner": "postgres"
+            "owner": "postgres",
+            "definitionSHA256": "ecaa1945ca2b650e5975ae94abdb3cde56f1fec5421a89f49845ff6b8c6964d0"
           },
           {
             "acl": [
@@ -131,10 +131,10 @@
               "otr_trip_core_v2_writer=X/postgres",
               "otr_trip_source_execution_writer=X/postgres"
             ],
-            "bodySHA256": "a0a8f5f27b0c9987a470aa82d282baddc7d01164d905cdfc7757167c1be3e759",
             "name": "trip_sustained_universal_png_allowed",
             "oid": "67144",
-            "owner": "postgres"
+            "owner": "postgres",
+            "definitionSHA256": "a0a8f5f27b0c9987a470aa82d282baddc7d01164d905cdfc7757167c1be3e759"
           },
           {
             "acl": [
@@ -143,10 +143,10 @@
               "otr_trip_core_v2_writer=X/otr_trip_source_writer",
               "postgres=X/otr_trip_source_writer"
             ],
-            "bodySHA256": "c94c9e52951e7f58e7cead7197dadae00d1da3189e4804431015febe370a3e83",
             "name": "trip_source_read_sustained_png_proof",
             "oid": "67149",
-            "owner": "otr_trip_source_writer"
+            "owner": "otr_trip_source_writer",
+            "definitionSHA256": "c94c9e52951e7f58e7cead7197dadae00d1da3189e4804431015febe370a3e83"
           }
         ],
         "sourcePolicy": {
@@ -170,7 +170,8 @@
           "pngExpiry": null,
           "revoked": false,
           "universal": true
-        }
+        },
+        "sourceFunctionHashMethod": "SHA256(UTF8(pg_get_functiondef(oid))); not prosrc/body SHA256; do not compare labels across methods"
       }
     }
   ],
