@@ -1,0 +1,25 @@
+{
+  "status": "CLEAN_EXACT_FOUR_FILE_PATCH_ON_FRESH_MAIN",
+  "main": "3c74f358a2781103e370e68b69829b0a1885f6fe",
+  "sourceCandidate": "4471ba7f",
+  "sourceUnchanged": true,
+  "patchPath": "/private/tmp/otr-auth-c04-diagnostics-main-3c74-to-4471.patch",
+  "patchSHA256": "ac09e6f66ed529bbeccf54175b72eaa80e923714abc0b4db6b77dc5201c12310",
+  "allowlist": [
+    "backend/src/tripMemberClaimHttp.ts",
+    "backend/src/tripMemberClaimPg.ts",
+    "backend/src/tripMemberClaimHttp.test.ts",
+    "backend/src/tripMemberClaimPg.test.ts"
+  ],
+  "priorPatchFailure": "Original diff assumed two Auth PG/HTTP test files already existed; they are absent from main. This main-based patch adds complete reviewed tests. No production source conflict found.",
+  "checks": "git apply --cached --check using separate /private/tmp index PASS; main/worktrees untouched",
+  "resource": "Shared Host stays CLOSED; this is ordinary default-closed code integration only",
+  "publishPreconditions": [
+    "Fresh main HEAD and no intersecting Writer",
+    "No active conflicting MCP/Import service window; do not interrupt",
+    "Keep Auth selector absent and all existing OAuth/Provider/custody config unchanged",
+    "Build existing backend target from integrated source; health/protected unauthenticated baseline only, no borrowed QA Session or business probe"
+  ],
+  "rollback": "Retain fresh healthy default container/image/Host/Env/mount/file hashes; restore those exact bytes/identity on failure, no business data undo",
+  "unknownOperation": "b3299bda… retained UNKNOWN; no retry/newID or oldGate reuse"
+}
