@@ -1,0 +1,22 @@
+{
+  "status": "THREE_IMPORT_FILES_OVERLAY_ON_ACCEPTED_12614",
+  "sourceCommit": "eafa8341a5356480eccd6dfb3b08409aa71daf68",
+  "baseline": "126.14",
+  "inputs": {
+    "src/data/operations/universalImportUpdates.ts": {
+      "beforeSHA256": "ed0a46058ca973d351949afd36b3a7e761e98074056a8cdc98aa0f37a632cf19",
+      "afterSHA256": "ecbd92995ad9be6fd6ff4b8b151be8ce6564dc927dddb4687e4eb9f677e9f250"
+    },
+    "src/features/updates/ImportUpdatesSection.tsx": {
+      "beforeSHA256": "07541150ea943576425ca1df5a630d4c7e9015343e53e1924ff06bdb199b2c55",
+      "afterSHA256": "d5929e10c156e872536d8fa95c615ccf172b1718197fb8cd7888f63b8455f81e"
+    },
+    "src/features/capture/UniversalP1SourceReviewForm.tsx": {
+      "beforeSHA256": "2dff3b8374fe7817ede50c0f310b1c215c13b902a8975ac1a8945de97cc000f1",
+      "afterSHA256": "3765ca1f6f7382281d3651b671d262584126b73289af88a023cb1fce74badc46"
+    }
+  },
+  "allOtherCopiedSourceFilesUnchanged": true,
+  "nativeOrAuthorityChanges": false,
+  "scope": "Import UX preview; not latest unified Native/SQLite acceptance"
+}

@@ -1,0 +1,11 @@
+{
+  "status": "INSTALLED_APP_BUNDLE_READONLY_VERIFIED",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "bundleVersion": "126.15",
+  "mainJSBundleSHA256": "7c29118d0acbd896455c0d78f3cb13a1dd5cd573d1cb31e3aade4d046ff71b48",
+  "nativeCodeSHA256ExcludingSignature": "f50edd854213c0eb3586af0052463c0e70277bd8472d3bf762904b7622e2f455",
+  "appDataRead": false,
+  "sessionOrKeychainRead": false,
+  "uninstall": false,
+  "providerCalls": 0
+}

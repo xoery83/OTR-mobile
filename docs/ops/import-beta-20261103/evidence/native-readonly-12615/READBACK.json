@@ -1,0 +1,37 @@
+{
+  "status": "PARTIAL_NATIVE_UX_PASS_RETAINED_BATCH_NOT_NEW_AI_E2E",
+  "build": "126.15",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "observedAt": "2026-11-02T23:58:01.810711+00:00",
+  "sourceCommit": "eafa8341",
+  "jsBundleSHA256": "7c29118d0acbd896455c0d78f3cb13a1dd5cd573d1cb31e3aade4d046ff71b48",
+  "checks": {
+    "normalLaunchMyTripsAndSameSyntheticTrip": "PASS",
+    "updatesOriginalFilename": "PASS universal-photo-activity-qa.png",
+    "updatesSubmittedAtDistinctFromEventAt": "PASS 2026-11-01 19:26:26 vs19:38:42",
+    "updatesSameBatchReopen": "PASS794b02d7",
+    "sameTaskResultAndSavedStatus": "PASS96ce2929 / c59d3d03 / Item accepted by the server.",
+    "readRetainedPngOriginal": "PASS visual title and2026-11-02",
+    "reviewCheckboxAndNewAndConfirmAfterOriginalReturn": "PASS all3disabled",
+    "closeReturnsSameUpdates": "PASS actualHeaderCloseRef",
+    "newBatchNewInterpretationReviewSave": "NOT_RUN_EXPIRED_AUTHORITY",
+    "documentsNewBatch": "NOT_RUN",
+    "extraIndependentColdRestart": "NOT_RUN_CODE_UPDATE_FRESH_LAUNCH_ONLY"
+  },
+  "toolIssuesRetained": [
+    "One wait text timedout; freshAX then showed accepted sameItem; no serverfailure claimed",
+    "AX duplicateClose parentbutton was non-action; actualheaderbutton succeeded",
+    "QuickLook toolbarhidden; blankarea tap revealed nativeclose; noannotation/edit/share"
+  ],
+  "knownUxGaps": [
+    "Account-level intake caption remains despite results bound toQATrip; assignedTrip adapter independently preparing",
+    "Unresolved visual reasons remain raw machinecodes",
+    "Updates may continue displaying Loading while optionaldetailreads complete; timingnotmeasured"
+  ],
+  "paidCalls": 0,
+  "newObjects": 0,
+  "writesOrFinalConfirm": 0,
+  "databaseSessionKeychainReadOrCopy": false,
+  "uninstall": false,
+  "nativeCodeAndSQLite": "unchanged old126.x/SQLite76; notUnifiedNative144/SQLite77"
+}

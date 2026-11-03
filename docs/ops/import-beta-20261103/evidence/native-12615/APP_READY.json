@@ -1,0 +1,14 @@
+{
+  "status": "SIGNED_CODE_ONLY_APP_READY_NOT_INSTALLED",
+  "build": "126.15",
+  "sourceCommit": "eafa8341a5356480eccd6dfb3b08409aa71daf68",
+  "bundleSHA256": "7c29118d0acbd896455c0d78f3cb13a1dd5cd573d1cb31e3aade4d046ff71b48",
+  "nativeCodeSHA256ExcludingSignature": "f50edd854213c0eb3586af0052463c0e70277bd8472d3bf762904b7622e2f455",
+  "allNativeDylibsUnchanged": true,
+  "publicConfigurationMatchesAccepted12610": true,
+  "sourceOverlayCount": 12,
+  "appId": "com.xoery.otrmobile",
+  "noDatabaseSessionOrKeychainReadOrCopy": true,
+  "uninstall": false,
+  "providerCalls": 0
+}
