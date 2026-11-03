@@ -1,3 +1,11 @@
+# MCP sparse Stay adapter — source integration, 4 November 2026
+
+Minimal reviewed LaneB98470d01 adapter uses existing sparse Core port4c8d0fd9.
+Seven source hashes match independent Review; actual-main3suites59 PASS after
+reusing existing MCP SDK dependencies (no install). sparseStaySupported remains
+false/unmounted; no public tool, OAuth, Hosted or consumer qualification added.
+See docs/mcp/c02/s2/SOURCE_MAIN_VALIDATION.json.
+
 # Existing PNG Native restoration — source integration, 4 November 2026
 
 Restored eight historical0e9a730d PNG command/operation/transport blobs and the
