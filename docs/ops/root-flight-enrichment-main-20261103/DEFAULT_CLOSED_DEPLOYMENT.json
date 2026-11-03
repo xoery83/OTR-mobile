@@ -1,0 +1,27 @@
+{
+  "status": "SERVER_VERIFIED_DEFAULT_CLOSED_SOFTWARE",
+  "source": "e013bbfd",
+  "image": "sha256:4609fc77a46406d6e0848e41c7c605919b772944a146d2d71107ab7465b029e9",
+  "container": "cf5a7e0276f91719a16c6a2f860e17cc158e2a4573f74f10d04aa487866b031f",
+  "switchedAt": "2026-11-03T06:02:32.922Z",
+  "releasedAt": "2026-11-03T06:02:32.922Z",
+  "planSHA256": "b04fa05664fcc40c0bc3c22db89b244487cf087de374dc2e4fa91e97dd6fa98d",
+  "bundles": {
+    "server.mjs": "081e877b8a1c77fd14f6e6f3a5a6d7c22ce0475f1ad0e5718d1c35db642b7f35",
+    "server-capture.mjs": "b83316ee45c4b91f03e619483289678b19da20f906871798ca4d967cf324cdca"
+  },
+  "independentReadback": {
+    "healthy": true,
+    "healthHTTP": "200 / development",
+    "enrichmentOptIn": false,
+    "enrichmentRuntimeMount": false,
+    "finiteAuthMcpConfig": false,
+    "bundles": "MATCH"
+  },
+  "configuration": "Exact prior environment/mount/Host configuration retained; no SQL/schema/roles/grants/secret changes",
+  "rollbackContainer": "0d35ba82c7b66c9543fba7bde5cdda7895ca97af777e8e411d0f9e5e871b671b",
+  "rollbackImage": "sha256:98f88eb18659debdbe2af9368bbeab8dd8f48247c621ca99baf9761842714408",
+  "providerCalls": 0,
+  "actualEnrichmentE2E": "NOT_RUN_EXPIRED_QUALIFICATION",
+  "permissionReview": "First automatic review timed out before launch; identical once-only retry was approved and executed"
+}
