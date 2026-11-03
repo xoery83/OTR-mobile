@@ -1,0 +1,22 @@
+{
+  "status": "NO_BLOCKER",
+  "requestId": "IMP-C01-IPAD-MIXED-20261104-09",
+  "commit": "236948262c78a86d2e8b54a83ccefa31d491bc07",
+  "productFile": "src/features/capture/CaptureComposer.tsx",
+  "productSHA256": "ab89dd495f64e4760e6dd411755d43388dfa51954114b07ee7c1a778cf85faae",
+  "mainParentBlobMatch": "08530696 CaptureComposer equals candidate parent byte-for-byte",
+  "scope": "Four layout expressions only: keyboard two-line max editor height plus matching vertical padding, keyboard bottom inset and composer gap",
+  "checks": [
+    "UiTextInput/canonical controls/theme/localized copy retained",
+    "existing keyboard listeners/unmount cleanup and KeyboardAvoidingView retained",
+    "fontScale aware height and minHeight44 retained",
+    "text onChange/Submit guards unchanged; no new IO/state/Account/Source/lease/AI code",
+    "QA146 evidence explicitly local intake and keyboard fix device verification pending"
+  ],
+  "validation": "Read-only fixed diff/direct layout; reused author 21 Composer/types/lint/UIguard evidence; no independent test/device run",
+  "limits": [
+    "No claim of keyboard fix physical-device PASS",
+    "Local three-item intake Save is not Core Save, Vision or Mixed Cloud E2E",
+    "No Hosted/device/original access or author/main edits"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "request": "IMP-C01-IPAD-MIXED-20261104-09",
+  "candidate": "236948262c78a86d2e8b54a83ccefa31d491bc07",
+  "base": "256b2dae51f7ada88617b181760f25e7d940bd7a",
+  "productScope": "Exactly one CaptureComposer leaf; oldCURRENT/manifest/screenshots excluded",
+  "files": {
+    "src/features/capture/CaptureComposer.tsx": "ab89dd495f64e4760e6dd411755d43388dfa51954114b07ee7c1a778cf85faae"
+  },
+  "independentReview": "NO_BLOCKER fixedcandidate",
+  "actualMainChecks": "21ComposerPASS/UIguard473/168PASS",
+  "deviceEvidenceReference": "23694826:docs/ops/lane-c-imp-c01-reconciliation-20261103/QA146_DEVICE_MIXED_20261104.json",
+  "deviceStatement": "LaneC reported original layout and local mixed intake3saved/0failed/0waiting; not new keyboard-layout acceptance",
+  "localIntakeNotCoreSave": true,
+  "providerCallsByThisIntegration": 0,
+  "notRun": [
+    "Device installation/restart or draft mutation",
+    "New layout physical verification",
+    "CoreSave/PhotoAI E2E",
+    "Cold recovery acceptance"
+  ]
+}

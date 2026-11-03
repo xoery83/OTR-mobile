@@ -143,8 +143,8 @@ export function CaptureComposer({
     }
   };
   // Keep the material names visible while the multiline editor owns the keyboard.
-  const inputLines = keyboardVisible && snapshot.items.length ? 3 : 6;
-  const maxInputHeight = inputLines * 22 * Math.max(1, fontScale) + 16;
+  const inputLines = keyboardVisible && snapshot.items.length ? 2 : 6;
+  const maxInputHeight = inputLines * 22 * Math.max(1, fontScale) + 20;
   const sendDisabled = locked || !count;
   const context =
     contextLabel ??
@@ -208,7 +208,7 @@ export function CaptureComposer({
               styles.sheet,
               {
                 maxHeight: Math.max(44, height - insets.top - 16),
-                paddingBottom: insets.bottom,
+                paddingBottom: keyboardVisible ? 0 : insets.bottom,
               },
             ]}
           >
@@ -473,7 +473,9 @@ export function CaptureComposer({
                     </UiText>
                   ) : null}
                 </ScrollView>
-                <View style={styles.composerShadow}>
+                <View
+                  style={[styles.composerShadow, keyboardVisible && { marginTop: 0 }]}
+                >
                   <UiGlassSurface style={styles.composer}>
                     {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
                     <View style={styles.footer}>
