@@ -1,0 +1,60 @@
+{
+  "requestId": "AUTH-C04-SOURCE-C91-V4-20261104",
+  "status": "MAIN_SOURCE_INTEGRATED_REMOTE_VERIFIED",
+  "recordedAt": "2026-11-03T17:09:35.286378+00:00",
+  "beforeMain": "b16c2d932ce602e86db83796eefe20d94b215aed",
+  "candidate": "c91a27caf51ba6ae334a81a8c1c4f59cc4bd919b",
+  "actualRemoteMain": "c91a27caf51ba6ae334a81a8c1c4f59cc4bd919b",
+  "method": "Fresh ls-remote before; merge-base ancestor; non-force push; independent ls-remote after",
+  "fileCount": 6,
+  "files": [
+    {
+      "path": "backend/src/authMemberClaimQaResumeDriver.test.ts",
+      "sha256": "9158299476caabacd56d7e024f91c6a9f0e4df5c6f63c6e359a104874d166592",
+      "gitBlob": "849d8ab697fd763afe33827e1dd228dc43d51c95",
+      "exactCandidateMatch": true
+    },
+    {
+      "path": "docs/ops/auth-c04-20261103/original-id-resume/DRIVER_HANDOFF.md",
+      "sha256": "1f52e7ffbeed8872913fcfd0b4b96db0877a01039d6481f48986d2bcc9613e49",
+      "gitBlob": "b1270e476060e1baa964a9652890116c2953a67f",
+      "exactCandidateMatch": true
+    },
+    {
+      "path": "docs/ops/auth-c04-20261103/original-id-resume/RESUME_DRIVER_REVIEW.json",
+      "sha256": "efde3fdc2617ff73b20db124240b34b35a42e08959652f12903e2c619bf4bd1c",
+      "gitBlob": "0d776b288356b7fa592704383be8ec11e4768298",
+      "exactCandidateMatch": true
+    },
+    {
+      "path": "docs/ops/auth-c04-original-id-resume-20261103/ORIGINAL_ID_EXECUTION_GATE.md",
+      "sha256": "24d32ad0d77bd770056c3349e6386a2f8ea6c39e375c0ea6264ab61a61dea2ae",
+      "gitBlob": "8be49707397b5d6bc68b696872c281c92dca64dc",
+      "exactCandidateMatch": true
+    },
+    {
+      "path": "docs/ops/auth-c04-original-id-resume-20261103/SOFTWARE_MANIFEST.json",
+      "sha256": "e188a6f9fafa6aebb9fcc82be3d37a261c04f48b48cd268d467eb97183ae7980",
+      "gitBlob": "7a3b59eac00460960c8142636a5bb70c206ce75b",
+      "exactCandidateMatch": true
+    },
+    {
+      "path": "scripts/auth/member-claim-qa-resume-driver.ts",
+      "sha256": "4c5af1a1b9ef2d9bc0ba7719211737014a096196e97fb91f2c308da93bd7a109",
+      "gitBlob": "59a87acd9f9f7951f987202cbf34b8d931a61c0e",
+      "exactCandidateMatch": true
+    }
+  ],
+  "softwareManifest9Hashes": "PASS",
+  "independentReview": "a514f8a9 C91_GATE_SCOPED_REVIEW.json; RESUME_DRIVER_REVIEW.json",
+  "validation": "Exact fixed source/main and all 9 manifest hashes verified; original 3 driver tests/scoped lint/types/headless import reviewed evidence reused, no rerun",
+  "mainChangesBeyondRequestedSixFiles": false,
+  "hostedDeployment": false,
+  "businessExecution": false,
+  "ownerGateGranted": false,
+  "sourceIntegrator": "Root1",
+  "businessDri": "Auth",
+  "hostedOpsOwner": "Root2",
+  "unknownOperations": "ISSUE b329 / CLAIM4028 unchanged; no recovery or execute invoked",
+  "remaining": "Auth owns Driver/Scenario/E2E. Any finite window requires corresponding fresh Owner Gate and Root2 qualification; source integration does not authorize invocation."
+}
