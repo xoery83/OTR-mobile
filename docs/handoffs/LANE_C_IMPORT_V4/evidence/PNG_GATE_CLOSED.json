@@ -1,0 +1,32 @@
+{
+  "status": "PHOTO_GATE_CLOSED_AND_SHARED_RESOURCES_RELEASEABLE",
+  "containerId": "6093f935a06b7c4128cdcaa5f70900b5f1cb582a19ce544f30e0410c44a202b6",
+  "image": "sha256:64fccfa4dd6c95241a6a7378e0c9b5bfc8e609b0c2f325ec3d3f32d7627d199c",
+  "health": "healthy",
+  "worker": "inactive",
+  "timersStopped": true,
+  "originalReaderRetained": true,
+  "controllerWrapper": "TIMED_OUT; independent SQL/runtime/physical fallback verified",
+  "newProviderCalls": 0,
+  "sqlAuthority": {
+    "status": "QA_PNG_SQL_AUTHORITY_CLOSED_INDEPENDENTLY_VERIFIED",
+    "writeDisposition": "ACKNOWLEDGED",
+    "pngEnabled": false,
+    "pngExpiry": null,
+    "allOtherPolicyFieldsPreserved": true,
+    "itemAndSourceRowsChanged": false,
+    "hostClosureStillRequiresReconciliation": true
+  },
+  "physical": {
+    "status": "PINNED_PNG_BASELINE_WORKER_PHYSICAL_CLOSE_VERIFIED",
+    "baselineVerified": true,
+    "workerState": "inactive",
+    "physicalCleanup": {
+      "status": "EMPTY_VERIFIED",
+      "terminated": true
+    },
+    "sqlAuthorityVerifiedSeparately": true,
+    "originalReaderMountPreserved": true,
+    "functionBodiesOrRolesChanged": false
+  }
+}

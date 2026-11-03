@@ -1,0 +1,25 @@
+{
+  "status": "NO_BLOCKER_VERIFY_ONLY_READY_ROOT_ACTUAL_GET",
+  "commit": "020112a525924cbd50a0efc88fda4753e02c3f8a",
+  "findings": [],
+  "authBoundary": "FixedDEVproject/account/purpose/state;O_RDONLY/NOFOLLOW/NONBLOCK fdregularroot0600singlelinkboundedread. OnlyexistingcurrentaccessToken /auth/v1/user GET through existingNoRedirect15srequesthelper; noPOST/refresh/newsession/Vaultwrite/retry.",
+  "identityAndTime": "Requiresactualuserid exactf4,nonanonymousisFalse,matchingemail(notoutput),parseabletimezone-awareconfirmationnotfuture;sessionexpirycheckedbeforeGETandafterresponse. GenericCLIerrorserializesnoexception/email/token/response.",
+  "emission": "ModuleType refresh_existing_qa_session sets__name__toitsmodulename;execpriorhelperonlydefinesfunctions/constants,oldif__main__ branchnotexecuted. OwnSSHstdinargvoverridesonlyverify-current-host. Independentlyexecemittedsourceunderdefinitions-onlynamespace locally:oldrunexistsnotcalled,noprint/noAuthcall;actualCLIentryreviewedstatically.",
+  "binder": "Exactly7safeNORMAL_AUTH_USER_VERIFIEDfields matchbind_five.prepare requiredstatus/actor/account/confirmed/sessionreference/verifiedAt/authSessionExpiresAt. Notrelabelingminimalrefreshreceipt. RootOwnerT/D/CP14authorityremainseparate.",
+  "evidence": "Readfixedscript/tests/directpriorhelper+bindercontract;reuse7focusedmocktests includingreceiptbinderinterop. Addedindependentdefinitions-onlyemitcheckPASS; noirrelevanttests/Hosted calls.",
+  "files": {
+    "docs/ops/import-unified-renewal-20261103/control/renewal/normal_auth_receipt.py": "a4cdeb13f427021ae63f35a198b61ca5de6c911401850dfacf9f29a78d94075a",
+    "docs/ops/import-unified-renewal-20261103/control/renewal/test_normal_auth_receipt.py": "2a996267d982c3deee4cd9c3778f40f10eb8bc7d0ccb8ebf2c4d9531a884f34b"
+  },
+  "actions": {
+    "WriterEdits": 0,
+    "Host": 0,
+    "AuthGet": 0,
+    "Refresh": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "Device": 0,
+    "Main": 0
+  },
+  "limits": "RootactualGET/authreceipt notperformedbyreview; expired/rejected/UNKNOWN GETmuststopwithoutrefreshandretry. NoSource/Provider/maintenancewindowauthoritycreated."
+}

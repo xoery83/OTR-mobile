@@ -1,0 +1,28 @@
+# Import interface dependencies — V4 handoff
+
+Pinned inventory: main `b16c2d932ce602e86db83796eefe20d94b215aed`. No new endpoint, schema, permission, cache or Save path is proposed.
+
+| Consumer → owning producer | Existing path / contract | Invariants and failure behavior |
+| --- | --- | --- |
+| Capture UI → durable submission | `src/data/operations/captureSubmission.ts`, `defaultCaptureSubmission.ts`; `src/data/repositories/captureSubmissionRepository.ts` | Account and generation fence; Batch/input/job identity retained. Text and Photo do not erase each other's accepted Source. UI callbacks cannot own retry/upload lifecycle. |
+| Universal consumer → Backend | `src/data/api/universalImportTransport.ts`, `universalImportContracts.ts`; `src/data/operations/universalCaptureConsumer.ts` | Context/activity/results share original Batch/Task. GET recovery does not prepare or execute. Continuous503 cannot be treated as missing-work proof; original owning404 preparation and legacy behavior are separate. UNKNOWN is not retry permission. |
+| Backend interpretation → Source current snapshot/proof | `backend/src/universalContinuousHost.ts`, `universalBatchSource.ts`, `universalSourceRead.ts`; owning original/PDF/PNG material readers | Normal Actor/Account/Trip; current revision/representation identity and SHA/length; immutable marker and exact Task/attempt/binding/request/response pins. SQL refusal propagates; do not fabricate Manifest bytes or byteCount. |
+| Retained Results / related published readers → sealed Task response | `universalContinuousHost.ts` `readResult`/`readPublished`; existing SourceReader retained metadata method; `universalContinuationHost.ts` | Only qualified PNG PUBLISHED/INSTALLED retained branch; exact current Source ↔ Task pins ↔ binding.inputs field equality. Nonpublished execution/recovery/fullmaterial retains old guards. No raw image re-fetch is required solely to redisclose an already sealed response. |
+| Core historical receipt → Core-held Source audit | `backend/src/universalCoreSourceRead.ts` `withRetainedMetadata`; owning Core Pg storage/Admission audit | Same held transaction/Source locks, actual committed APPLIED/NO_CHANGE and COMPLETE Source linkage, canonical stored-body/hash and receipt/candidate/operation pins. It does not qualify a new command, Admission or write. No second Source connection substitutes for Core authority. |
+| Source Review → canonical Core Save | `UniversalP1SourceReviewForm.tsx`, Backend Source/Admission and `tripCoreV2PgStorage.ts` | Explicit review intent, source/candidate revision and existing operation receipt. Read success is not a second Save or authority renewal. Preserve receipt/Person/private Item/Ledger history. |
+| Documents / Inbox → existing scoped readers | `src/features/documents/ImportDocumentsPanel.tsx` and existing scoped inventory readers and `docs/ops/import-documents-pagination-20261103/HANDOFF.md` | Account/Trip/view/generation and current inventory fences; stale More/Refresh closures cannot issue obsolete page reads. Existing cursor/dedup unchanged. Actual Native verification pending. |
+| Updates → accepted jobs + Task/receipt projection | `src/data/operations/universalImportUpdates.ts`, `src/features/updates/ImportUpdatesSection.tsx` | Stable same-Batch dedup; updatedAt remains event/sort time. Optional filename/submittedAt come from legal jobs metadata only, no new Source read/IO. Foreign Account/Trip/generation cannot enrich the card. |
+| Form Source interpreter → Native Form review | `src/data/operations/universalP3SourceInterpreter.ts`, `universalP3FormInterpretation.ts`; `src/native/p3FormScan.ts`, `src/features/day-feed/p3FormSuggestions.ts` | Form request + Account/Trip/generation/revision/itemRevision and Source/Task pins; no automatic draft clear/override; multi-candidate explicit selection and Keep/Replace. Manual Save stays manual repository path. |
+| Owning UNKNOWN → existing Native empty state | `docs/ops/imp-c03-unknown-state-20261103/HANDOFF.md` | Only exact UNKNOWN Task + EXECUTION_OUTCOME_UNKNOWN/UNKNOWN empty result/no candidates projects. No IDs allocated, suggestions installed, Source prepared or paid call enabled. |
+| All above → Auth / Native / Root | Existing normal session/Account generation, shared navigation/native readers, finite Provider/Source control ports | Auth owns identity, Native owns device/shared UI, Core owns canonical acceptance, Root owns protected execution and shared installation. Local adapters cannot infer these authorities. |
+
+## Direct evidence to retain
+
+- `docs/ops/photo-first-cold-503-20261103/{HANDOFF.md,FIRST_FAILURE_RECONCILIATION.json}` — first503 limits and actual client recovery regression.
+- `docs/ops/import-beta-20261103/evidence/native-readonly-12615/READBACK.json` — retained same-Batch/Results/Original/Updates observations and limits.
+- `docs/ops/imp-c01-activity-refresh-20261103/HANDOFF.md` — completion overlap/coalesced read, not a Task resend.
+- `docs/ops/import-documents-pagination-20261103/{HANDOFF.md,MAIN_INTEGRATION.json}` — source/local main-context checks, Native acceptance pending.
+- `docs/ops/p3-reviewed-main-20261103/{HANDOFF.md,INDEPENDENT_COMBINED_REVIEW.json}` — composed Form consumer/DTO boundaries.
+- `docs/ops/imp-c03-form-dto-20261103/HANDOFF.md` and `imp-c03-unknown-state-20261103/{HANDOFF.md,MAIN_INTEGRATION.json}` — Actor fence and bounded UNKNOWN advisory behavior.
+
+Private protected bodies, SQL catalogs, original credentials and Session files are not handoff artifacts. Use only their approved safe hashes/receipt indexes; fresh exact execution preimages remain Root's responsibility.

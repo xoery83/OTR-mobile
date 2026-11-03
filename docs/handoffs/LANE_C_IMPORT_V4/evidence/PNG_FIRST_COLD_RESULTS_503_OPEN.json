@@ -1,0 +1,37 @@
+{
+  "status": "OPEN_UNRESOLVED",
+  "events": [
+    {
+      "at": "2026-11-01T07:40:15.768418299Z",
+      "event": "universal_task_binding_read_failed",
+      "keys": [
+        "category",
+        "event",
+        "stage"
+      ],
+      "stage": "BINDING",
+      "category": "FAILED"
+    },
+    {
+      "at": "2026-11-01T07:40:15.768883278Z",
+      "event": "request",
+      "keys": [
+        "durationMs",
+        "event",
+        "level",
+        "requestId",
+        "route",
+        "status"
+      ],
+      "route": "/v2/import-batches/:batchId/interpretations",
+      "status": 503,
+      "durationMs": 8383
+    }
+  ],
+  "sameIdReadOnlyRetryRecovered": true,
+  "rootCause": "UNPROVEN",
+  "diagnosticOnlyCommit": "7b393587",
+  "noNewProviderCall": true,
+  "originalSanitizedReceiptPreserved": "/private/tmp/otr-photo-permission-object-20261101/core-safe-diagnostics.json",
+  "firstFailureNotDeleted": true
+}

@@ -1,0 +1,21 @@
+{
+  "firstMeasuredFreeze": "2026-11-03T09:23:05Z",
+  "mainAtFreeze": "b16c2d932ce602e86db83796eefe20d94b215aed",
+  "handoffBranch": "codex/lane-c-import-v4-handoff-20261103",
+  "receivingAgentAccepted": false,
+  "importBusinessWriterFrozen": true,
+  "newPaidCallsDuringHandoff": 0,
+  "hostEvidence": "HOST_AND_TASKS.json",
+  "postgresEvidence": "PG_SCHEMA_AND_SOURCE.json",
+  "providerEvidence": "PROVIDER_CURRENT.json",
+  "migrationLedger": {
+    "count": 68,
+    "maxVersion": "20261004000300",
+    "limitation": "Later governed function patches are outside migration ledger; see fingerprints. Not a full schema audit."
+  },
+  "nativeInstalledVersion": "NOT_INDEPENDENTLY_MEASURED",
+  "backendTaskStoreSQLiteVersion": 74,
+  "nativeParityWithMain": "NOT_VERIFIED",
+  "sourceProviderActorPrice": "EXPIRED",
+  "oldApprovalsTransferable": false
+}

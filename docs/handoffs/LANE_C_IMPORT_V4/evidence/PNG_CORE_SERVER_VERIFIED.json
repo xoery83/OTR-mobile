@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-11-01T08:01:23.325492+00:00",
+  "expectedItem": "c59d3d03-6830-84e8-8579-02a59fe624fa",
+  "expectedOperation": "4f095d9c-449e-8456-a134-c69e9c33f3bb",
+  "itemCount": 1,
+  "receiptCount": 1,
+  "outcomes": [
+    "APPLIED"
+  ],
+  "serverVerified": true,
+  "admissionMode": "REVIEWED_SOURCE",
+  "sourceIntentId": "417b8eb2-e4de-853f-9cc3-4d305815d2fa",
+  "titlePresent": true,
+  "datePresent": true,
+  "receiptNamesSameItem": true,
+  "family": "P1"
+}

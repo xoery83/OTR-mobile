@@ -1,0 +1,33 @@
+{
+  "status": "NATIVE_DAY_AND_FULL_RESTART_COLD_PASS",
+  "observedAt": "2026-10-26T05:38:04.472735+00:00",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "restart": "Device Hub Restart; no reset/uninstall",
+  "normalSessionRestored": true,
+  "normalOriginalMetroConfiguration": true,
+  "dayVisible": "Day 1 · Nov 1, 2026 / Walk in Auckland Domain",
+  "unselectedDay2Day3": "No accepted Events match this date and timezone.",
+  "timeDisplay": "Time details incomplete (date-only admitted, no clock fabricated)",
+  "coldMirror": [
+    {
+      "cache_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "title": "Walk in Auckland Domain",
+      "start_local_date": "2026-11-01",
+      "start_local_time": null,
+      "visibility": "PRIVATE",
+      "participation_mode": "SELF",
+      "experience_family": "P1",
+      "semantic_revision": 1
+    }
+  ],
+  "pending": [
+    {
+      "operation_id": "b1406697-47aa-8780-846c-37f4796cb52b",
+      "state": "APPLIED",
+      "reconciled_revision": 2
+    }
+  ],
+  "gate": "ALREADY_CLOSED_FALSE_NULL_DEFAULT_RUNTIME"
+}

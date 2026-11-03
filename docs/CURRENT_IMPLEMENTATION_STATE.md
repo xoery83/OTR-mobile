@@ -1,3 +1,15 @@
+# Import V4 handoff / Root1 split — 3 November 2026
+
+Import business Writer is FROZEN at first measured09:23:05UTC/22:23:05NZDT.
+Read `docs/handoffs/LANE_C_IMPORT_V4/README.md` and its fixed safe evidence before
+any further Import work. Snapshot base mainb16c2d93, Hosted68aa/0c723 healthy;
+Source/Provider/Actor/Price expiredNov1, PDF/PNG false, no maintenance login or
+renewal timer. AD5 has only an unsubmitted PNG draft; no new Batch/Task/paid call.
+Historical P1–P6/PDF/PNG PASS is retained, not continuous current-user acceptance.
+Old Root approvals do not authorize the receiving Agent. Transfer is pending
+actual LANE_C_HANDOFF_ACCEPTED +Root1 acknowledgement. Root1 Core/Main work is
+not frozen. Dated entries below are historical and may have superseded pins.
+
 # Auth original-ID resume client integration — 3 November 2026
 
 Reviewed411ceee5 client/DTO changes are composed without activation: both original

@@ -1,5 +1,15 @@
 # OTR Mobile 2.0 Product Scope
 
+## Owner V4 Beta scope — 3 November 2026
+
+Owner approved the Lane C Beta targets and Post-Beta boundary recorded in
+[Import V4 Product Scope](handoffs/LANE_C_IMPORT_V4/PRODUCT_SCOPE.md), including
+Import-created Trips, format/mixed/voice inputs, Form AI P2/P3/P4/P5 and Ledger
+Receipt AI. These are delivery targets, not runtime/Provider authorization or
+verified completion. Existing Receipt OCR1.0 acceptance and Core/Auth/Native
+ownership remain; do not infer remote AI or canonical financial write authority.
+
+
 ## Authorized DayHeader presentation (2026-10-27)
 
 Owner approved four tap-to-cycle DayHeader styles with one device-local preference

@@ -1,0 +1,35 @@
+{
+  "status": "PHOTO_PNG_GOLDEN_SLICE_NATIVE_E2E_PASS",
+  "appBuild": "126.10",
+  "sqlite": 76,
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "itemId": "c59d3d03-6830-84e8-8579-02a59fe624fa",
+  "coldRestartMethod": "normal agent-device App close then open, no data/credential clearing",
+  "coldRoot": "My Trips",
+  "normalRoute": "same QA Trip -> Day -> Harbour Photo QA Walk",
+  "resultsColdRecovery": "first read503, normal read-only retry returned same accepted candidate; root cause unproven",
+  "duplicateAttempt": "normal tap of disabled accepted confirmation had no UI change; independent counts remain1Item/1Receipt; no extra server POST replay claimed",
+  "sourceAdmission": "REVIEWED_SOURCE",
+  "imageInput": "FILE with declared image/png, same original42630B; relevanceRELEVANT and explicitCONTINUE_WITH_AI persisted",
+  "shots": [
+    {
+      "file": "day-feed-before-cold.png",
+      "sha256": "7aac2a1eda9291fbd64dea510e2dde9b7ce461408c8b5cb050366fa4c168b42f"
+    },
+    {
+      "file": "day-feed-after-cold.png",
+      "sha256": "452843b3c62e25d1520a822e1589cf97ae055873a28ddb02326444878170bc15"
+    },
+    {
+      "file": "duplicate-confirmation-blocked.png",
+      "sha256": "96097c2c4975582f1bd06df1d4567aed2641242722bbda2b029790d53258dc5b"
+    }
+  ],
+  "newSettledCallsInSprint": 2,
+  "settledCostNanos": "700260",
+  "settledCostUSD": "0.00070026",
+  "priorUnknownHolds": "2 retained; cost unresolved, no reset/refund",
+  "callsAfterFinalGrantApproval": 0,
+  "mainIntegration": "PENDING; no main updated this sprint",
+  "remaining": "general photo format/multi-image coverage and Activity/Documents/Updates/Review UI polish; cold status503 and timed-out close wrapper reliability follow-ups"
+}

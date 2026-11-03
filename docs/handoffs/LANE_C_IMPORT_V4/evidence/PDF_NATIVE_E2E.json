@@ -1,0 +1,171 @@
+{
+  "asOf": "2026-10-30T10:19:59.695555+00:00",
+  "goldenSlice": "NATIVE_E2E_PASS",
+  "batchId": "e6f789bc-6982-463b-a36e-064ece0a8d34",
+  "taskId": "3dae44cd-f83e-89b6-be8d-f85c5ea5a9c7",
+  "sourceId": "68225d05-83c1-4ffb-b0d2-9eeb62f84f94",
+  "originalRepresentationId": "46547237-4038-4209-97d9-3585c87d1d0e",
+  "derivedRepresentationId": "0fb62bf9-5fd9-815b-9d36-21130a02904d",
+  "originalSHA256": "f58061aa535c7a5585c4c953890c5d387cf20656cca7129e36861beb82ee1758",
+  "derivedSHA256": "5059d2167ecfba916c9434eb618aae6fd2ad23e0f12487f45c45c6eab8bc608d",
+  "modelCallId": "74536f38-478d-8daf-87ba-7ef9c3946b9c",
+  "modelCostNanosUSD": 341580,
+  "newPaidCallsThisRepair": 0,
+  "candidateId": "daa3b0f0-5cfa-889d-8df9-8743765b1d26",
+  "item": {
+    "date": "2026-11-02",
+    "family": "P1",
+    "id": "4b2cf335-7132-8288-aac9-c886db266d36",
+    "participation": "SELF",
+    "title": "Harbour PDF QA Workshop",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "visibility": "PRIVATE"
+  },
+  "receipt": {
+    "id": "277d40d1-78e9-4a7a-a825-7f7fb015cb46",
+    "operationId": "8409d5e2-b949-841e-88cf-d026b12d270c",
+    "outcome": "APPLIED"
+  },
+  "receiptSHA256": "f46aac65667ea77dc557e1b886cd366e5e1c91f72ce0b404bb0c824182770712",
+  "slot": {
+    "id": "adbcc07a-2caa-8d5a-90dd-639ae3a01fdd",
+    "receiptId": "277d40d1-78e9-4a7a-a825-7f7fb015cb46",
+    "state": "COMPLETE"
+  },
+  "nativeAcceptedMessageObserved": true,
+  "duplicateConfirmDisabledAndNoNewItem": true,
+  "nativeExactMirrorBeforeCold": [
+    {
+      "id": "4b2cf335-7132-8288-aac9-c886db266d36",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "title": "Harbour PDF QA Workshop",
+      "experience_family": "P1",
+      "start_local_date": "2026-11-02",
+      "visibility": "PRIVATE",
+      "participation_mode": "SELF",
+      "semantic_revision": 1
+    }
+  ],
+  "sourceCommit": "c2b762d1f315e0f80dbd254c5bcdc7827ed7bc06",
+  "image": "sha256:8cd9f923d90dcdf09fd37ec383d318acb42ffce2b9fd821c74a5bb4845593143",
+  "defaultHealthyContainer": "148168a021361c55e2d0ef2c04201adab63f55e12411a3663bce47df18339783",
+  "closure": {
+    "sourceGateway": "PDF_SCOPE_CLOSED_VERIFIED",
+    "worker": "inactive",
+    "decoderCount": 0,
+    "timer": "stopped"
+  },
+  "TXTControlSeparateItemId": "ad59e97b-01cc-8462-90bc-b1cdb6c956ac",
+  "note": "Two same-titled native rows are legitimate independent TXT control and PDF inputs; dedup assertions use exact PDF identity, not title.",
+  "nativeDayFeedObserved": true,
+  "nativeColdStart": {
+    "processClosedThroughAppSwitcher": true,
+    "root": "My Trips",
+    "sameJourneyDayFeedObserved": true,
+    "sameItemMirror": [
+      {
+        "id": "4b2cf335-7132-8288-aac9-c886db266d36",
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+        "title": "Harbour PDF QA Workshop",
+        "experience_family": "P1",
+        "start_local_date": "2026-11-02",
+        "visibility": "PRIVATE",
+        "participation_mode": "SELF",
+        "semantic_revision": 1
+      }
+    ],
+    "databaseSessionOrKeychainCopied": false
+  },
+  "independentSourceAssociationAndUsage": {
+    "association": {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "candidate_id": "daa3b0f0-5cfa-889d-8df9-8743765b1d26",
+      "created_at": "2026-10-30T10:05:36.150426+00:00",
+      "domain_receipt_id": "277d40d1-78e9-4a7a-a825-7f7fb015cb46",
+      "field_evidence": {
+        "ROOT.title.0": {
+          "inputId": "cff42346-81f0-4695-95c3-96153cecb4c7",
+          "locator": {
+            "end": 48,
+            "excerpt": "Harbour PDF QA Workshop",
+            "input_id": "cff42346-81f0-4695-95c3-96153cecb4c7",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 25
+          },
+          "payloadSha256": "5059d2167ecfba916c9434eb618aae6fd2ad23e0f12487f45c45c6eab8bc608d",
+          "raw": "Harbour PDF QA Workshop",
+          "ref": "track-c/field-evidence/daa3b0f0-5cfa-889d-8df9-8743765b1d26/ROOT.title.0",
+          "representationId": "0fb62bf9-5fd9-815b-9d36-21130a02904d",
+          "sourceId": "68225d05-83c1-4ffb-b0d2-9eeb62f84f94",
+          "sourceRevision": 1,
+          "value": "Harbour PDF QA Workshop"
+        },
+        "START.local_date.0": {
+          "inputId": "cff42346-81f0-4695-95c3-96153cecb4c7",
+          "locator": {
+            "end": 72,
+            "excerpt": "November 2, 2026",
+            "input_id": "cff42346-81f0-4695-95c3-96153cecb4c7",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 56
+          },
+          "normalization": {
+            "rule": "ENGLISH_MONTH_CIVIL_DATE",
+            "value": "2026-11-02"
+          },
+          "payloadSha256": "5059d2167ecfba916c9434eb618aae6fd2ad23e0f12487f45c45c6eab8bc608d",
+          "raw": "November 2, 2026",
+          "ref": "track-c/field-evidence/daa3b0f0-5cfa-889d-8df9-8743765b1d26/START.local_date.0",
+          "representationId": "0fb62bf9-5fd9-815b-9d36-21130a02904d",
+          "sourceId": "68225d05-83c1-4ffb-b0d2-9eeb62f84f94",
+          "sourceRevision": 1,
+          "value": "2026-11-02"
+        }
+      },
+      "id": "4d6dccbd-57b8-4de0-880c-a8e6546ee2c8",
+      "identity_sha256": "c5fe2a039a5b373bef20cb2845cc04d6354e33c6736fb34f1186745d28b345af",
+      "output_slot_id": "adbcc07a-2caa-8d5a-90dd-639ae3a01fdd",
+      "receipt_sha256": "f46aac65667ea77dc557e1b886cd366e5e1c91f72ce0b404bb0c824182770712",
+      "run_id": "97b7cf5f-4da1-81ec-b93d-c4678184e41a",
+      "source_id": "68225d05-83c1-4ffb-b0d2-9eeb62f84f94",
+      "source_revision": 1,
+      "target_id": "4b2cf335-7132-8288-aac9-c886db266d36",
+      "target_kind": "ITEM",
+      "target_revision": 1,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    },
+    "guardMD5": "6c7ef0d85cfd8893796ccc53e31f51f0",
+    "pdfClosed": true,
+    "taskCallCount": 1,
+    "usage": [
+      {
+        "costNanos": null,
+        "currency": "USD",
+        "inputTokens": null,
+        "kind": "START",
+        "outputTokens": null,
+        "status": "STARTED"
+      },
+      {
+        "costNanos": 341580,
+        "currency": "USD",
+        "inputTokens": 1521,
+        "kind": "COMPLETION",
+        "outputTokens": 218,
+        "status": "SUCCEEDED"
+      }
+    ]
+  },
+  "validation": {
+    "actualOldFailure": "Source Plan prepare / CORE_CONNECTION_TIMEOUT at 30s active lease",
+    "focusedRed": "progressing 36s transaction killed at 30s",
+    "focusedGreen": "46 tests/typecheck/lint/UI guard PASS",
+    "independentReview": "NO_BLOCKER",
+    "actualRepairProof": "same Plan READY, CREATE_ITEM APPLIED, association COMPLETE",
+    "unchangedSafety": "single connection; FIFO15s/4; query/statement5s; lock1s; idle5s; absolute business expiry and Source/Actor/Trip checks"
+  }
+}

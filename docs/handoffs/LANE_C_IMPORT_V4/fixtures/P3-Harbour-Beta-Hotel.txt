@@ -1,0 +1,4 @@
+Synthetic QA only
+Property: Harbour QA Beta Hotel
+Check in: 2026-11-02
+Check out: 2026-11-03

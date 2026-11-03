@@ -1,0 +1,107 @@
+{
+  "scope": "Safe read-only snapshots, synthetic fixtures, historical receipts; no credentials",
+  "artifacts": [
+    {
+      "path": "evidence/CANDIDATE_INVENTORY.json",
+      "bytes": 21547,
+      "sha256": "45410a300229b8fd62a10a7c01f86d6ca1f2fdd09c2107cb1f694d810cde1dd1",
+      "source": "Read-only candidate Git inventory at handoff"
+    },
+    {
+      "path": "evidence/FORMAL_ASSOCIATIONS.json",
+      "bytes": 9084,
+      "sha256": "33942ffeee6ff241f0104447afdfd5b5a750956dc2a2f4026214a164aa786d54",
+      "source": "Fresh read-only metadata / assembled handoff record"
+    },
+    {
+      "path": "evidence/HOST_AND_TASKS.json",
+      "bytes": 23324,
+      "sha256": "886997bc19ba2b78a8521718981230e5607ec3508a80eff630a0e23b3092fadb",
+      "source": "Fresh read-only metadata / assembled handoff record"
+    },
+    {
+      "path": "evidence/NORMAL_AUTH_ADAPTER_REVIEW.json",
+      "bytes": 2124,
+      "sha256": "c6d56b23973f3408e1f8f28f0afd835667f43e707b8f812086daec8c10219632",
+      "source": "Fresh read-only metadata / assembled handoff record"
+    },
+    {
+      "path": "evidence/P1_NATIVE_COLD.json",
+      "bytes": 1179,
+      "sha256": "0d07e6ccd030dc03e207d76bc8904ebf0de56e6c6c70c36e42a6e87e4227af51",
+      "source": "b16c2d932ce602e86db83796eefe20d94b215aed:docs/ops/universal-stage2-20261025/actual-execution/resume-20261026/P1_NATIVE_DAY_COLD_RECEIPT.json"
+    },
+    {
+      "path": "evidence/PDF_NATIVE_E2E.json",
+      "bytes": 6779,
+      "sha256": "8a21eb38709e2c7aff16e5c9d2c69df3f98c02c852f711c20bf15410d7cbcc82",
+      "source": "db1729bf3edbc47113b46253557034a70efc8591:docs/ops/universal-product-20261028/PDF_MINIMUM_FORMAL_SAVE_NATIVE_E2E.json"
+    },
+    {
+      "path": "evidence/PG_SCHEMA_AND_SOURCE.json",
+      "bytes": 3833,
+      "sha256": "f38b57b384bdf6389d7cfcbfac74378b1617cd1dfcfeed0a073cd1b250c4b356",
+      "source": "Fresh read-only metadata / assembled handoff record"
+    },
+    {
+      "path": "evidence/PNG_CORE_SERVER_VERIFIED.json",
+      "bytes": 470,
+      "sha256": "e28f5c7b3504d29d5bbdabb1518abbebc325796c25a87e4e1788f6ebbaac2f52",
+      "source": "0e9a730daabc23e0bbab85b70315759a313fa1e1:docs/ops/universal-product-20261028/photo/golden-slice-20261101/CORE_SERVER_VERIFIED.json"
+    },
+    {
+      "path": "evidence/PNG_FIRST_COLD_RESULTS_503_OPEN.json",
+      "bytes": 910,
+      "sha256": "e16633971f407b30c779cb480eb8de5bd988eeb875ebf42c62cc0ced1e33dde5",
+      "source": "0e9a730daabc23e0bbab85b70315759a313fa1e1:docs/ops/universal-product-20261028/photo/golden-slice-20261101/FIRST_COLD_RESULTS_503_OPEN.json"
+    },
+    {
+      "path": "evidence/PNG_GATE_CLOSED.json",
+      "bytes": 1141,
+      "sha256": "5fe3ee77b517fb643e969ae399fb08542c2a4b44e8db63401eac6fa328a12302",
+      "source": "0e9a730daabc23e0bbab85b70315759a313fa1e1:docs/ops/universal-product-20261028/photo/golden-slice-20261101/GATE_CLOSED.json"
+    },
+    {
+      "path": "evidence/PNG_NATIVE_E2E.json",
+      "bytes": 1720,
+      "sha256": "e0be1f7feb070c5eafe10e8d774147b1e68372d1f5c20bf9c32b9544af373067",
+      "source": "0e9a730daabc23e0bbab85b70315759a313fa1e1:docs/ops/universal-product-20261028/photo/golden-slice-20261101/NATIVE_E2E.json"
+    },
+    {
+      "path": "evidence/PNG_VISION_SETTLED.json",
+      "bytes": 1299,
+      "sha256": "64371c6dfd09fb2b3b5edf3b22a52ea58871089bd0dfdbc50ea1f36e6a6bc9d9",
+      "source": "0e9a730daabc23e0bbab85b70315759a313fa1e1:docs/ops/universal-product-20261028/photo/golden-slice-20261101/VISION_SETTLED.json"
+    },
+    {
+      "path": "evidence/PROVIDER_CURRENT.json",
+      "bytes": 3770,
+      "sha256": "1e8741c4589899d230633667be0dba54645a0815ffab6f0a5e7ee8365d3a7211",
+      "source": "Fresh read-only metadata / assembled handoff record"
+    },
+    {
+      "path": "evidence/SNAPSHOT.json",
+      "bytes": 845,
+      "sha256": "31b24be76b00804e89163becf829969aa654eba393cd34f3530d7e7f1de1b874",
+      "source": "Fresh read-only metadata / assembled handoff record"
+    },
+    {
+      "path": "fixtures/P3-Harbour-Beta-Hotel.txt",
+      "bytes": 93,
+      "sha256": "a8606e596966709b999b28720d7428a14c97e05a80347666034036e4f75dfbce",
+      "source": "import-unified-renewal-20261103/input/P3-Harbour-Beta-Hotel.txt"
+    },
+    {
+      "path": "fixtures/universal-p6-activity-qa.pdf",
+      "bytes": 1676,
+      "sha256": "f58061aa535c7a5585c4c953890c5d387cf20656cca7129e36861beb82ee1758",
+      "source": "import-unified-renewal-20261103/input/universal-p6-activity-qa.pdf"
+    },
+    {
+      "path": "fixtures/universal-photo-activity-qa.png",
+      "bytes": 42630,
+      "sha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
+      "source": "import-unified-renewal-20261103/input/universal-photo-activity-qa.png"
+    }
+  ]
+}
