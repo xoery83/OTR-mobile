@@ -9,3 +9,5 @@ Activity/Updates/Results may use the hint only for authorized reads. New interpr
 The remaining server-only attribution case cannot be solved by inventing local metadata; it needs the existing Owning reader to return a formally validated mapping. No new Authority is proposed here.
 
 Ordinary merge of mainf15 preserves all P3 seams. Two manual conflict resolutions retained both handoffs and both test mocks; production auto-merged unchanged intended adapter. Post-merge107 checks/16-root strict/conflict-file lint pass; source digests in LATEST_MAIN_RECHECK.json. Independent review/Root serial integration still pending.
+
+Root independent review identified memory risk from Promise.all over original-byte reads. A narrow follow-up serializes jobs, preserves order and all original checks. New two-job spy confirms max inFlight=1 and matching hints/order. Original concurrent code failed this new case (second hint null; no measured peak claim is made). 108 focused cases passed; final timer-stabilized producer suite6/6 and strict16/lint pass. Historical RED/GREEN retained.

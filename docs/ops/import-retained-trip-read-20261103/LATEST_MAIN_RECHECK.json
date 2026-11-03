@@ -7,15 +7,16 @@
     "defaultCaptureSubmission.test preserves handoff + session/uri mocks and P3 case"
   ],
   "checks": {
-    "tests": 107,
+    "tests": 108,
     "testFiles": 7,
     "strictRoots": 16,
-    "scopedConflictFileLint": "PASS",
-    "uiGuard": "reused unchanged original423 UI proof"
+    "scopedConflictFileLint": "PASS after repair",
+    "uiGuard": "reused unchanged original423 UI proof",
+    "newBoundedReadSpy": "Two jobs, max inFlight=1, ordered matching hints; post-final test edit all6 producer cases pass; 108 full focused cases passed before timer-only stabilization."
   },
   "files": {
-    "src/data/operations/defaultCaptureSubmission.test.ts": "77c26c4ab1697eddac86a8de99dfa6461b31f4698bd782c482a88101b33328b7",
-    "src/data/operations/defaultCaptureSubmission.ts": "671325556d386802cd2914ae66e8ad351d77a4b2e3dd0512be1caf5d5ba56dab",
+    "src/data/operations/defaultCaptureSubmission.test.ts": "eb4f3db995cf6f29ed239f8617db6aad10d6f6824bb78e5e2a0e74e51f4e83b9",
+    "src/data/operations/defaultCaptureSubmission.ts": "bf9dd1ec07224da431a0fc36fe5ca46fe4f60cf693f73b320b0d2d2c69cfd289",
     "src/data/operations/universalActivityReader.test.ts": "3572f9e58c3f99998876edcc93cfceca0db5b2e6528f0490dbbe8609c662bf2d",
     "src/data/operations/universalActivityReader.ts": "146e0d46d9e6d48bf798c0283be1060a5d554a85bce311c8e1cb32834b7bd6b2",
     "src/data/operations/universalCaptureConsumer.test.ts": "515b8cf2a32999979b75def064c1e7dc9f4c42af25510ab2e69651455a173e5d",
@@ -30,5 +31,6 @@
     "src/features/capture/useUniversalP1Admission.ts": "187a437f9bf6a03c9d69ae866e9d3237754cdece9945d174fb7a421d7c7d2f05",
     "src/data/operations/captureJobAssignment.ts": "5311216ab1033f1fd0f086d8c8e7af6d5df106f16b1cd6d6e98373c0503ef4f6",
     "src/data/operations/captureJobAssignment.test.ts": "2737244e1a9d8b0f86745a04c3393522fd3421977a0150a710968a84a45d6569"
-  }
+  },
+  "readMemoryRepair": "Sequential per-job processing, preserving input order and every repository hash/tuple check; no cache or metadata bypass."
 }

@@ -2,7 +2,7 @@
 
 Isolated `codex/imp-c01-retained-trip-read-20261103` prepares a read-only retained
 Capture attribution hint, exact original tuple checks and Trip response fences.
-106 focused tests/16-root strict/lint/UI guard pass; no main/Host/device/SQL/paid
+108 focused tests/16-root strict/lint/UI guard pass; no main/Host/device/SQL/paid
 action or independent review of this subset yet. See
 `ops/import-retained-trip-read-20261103/HANDOFF.md`. Missing local originals remain
 unsupported; the hint cannot start paid interpretation or grant Save authority.

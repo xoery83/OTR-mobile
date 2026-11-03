@@ -148,3 +148,28 @@ it.each([true, false])("projects only verified retained assignment while leaving
   expect(read.batch.context.tripPrior).toBeNull();
   expect(state.handoff).toHaveBeenCalledExactlyOnceWith("capture");
 });
+
+it("bounds retained original reads across jobs to one and preserves list order", async () => {
+  await import("./captureJobAssignment");
+  await import("../repositories/defaultLocalCaptureInboxRepository");
+  const jobs = ["first", "second"].map((id) => ({
+    batch: { jobId: id, accountId: "A", context: { tripPrior: null } },
+    inputs: [{ id, captureId: id, payloadId: id, contentSha256: "a".repeat(64), contentByteCount: 3, state: "ACCEPTED" }],
+    allInputsAccepted: true,
+    processing: { capability: "NOT_INSTALLED" },
+  }));
+  state.open.mockResolvedValue(undefined);
+  state.list.mockResolvedValue(jobs);
+  let inFlight = 0, maximum = 0;
+  state.handoff.mockImplementation(async (id: string) => {
+    maximum = Math.max(maximum, ++inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    inFlight--;
+    return { capture: { accountId: "A", id, payloadId: id, sha256: "a".repeat(64), byteCount: 3, tripId: "retained-trip" } };
+  });
+  const results = await listDefaultCaptureJobs({ limit: 2 });
+  expect(maximum).toBe(1);
+  expect(results.map((job) => job.batch.jobId)).toEqual(["first", "second"]);
+  expect(results.map((job) => job.assignedTripId)).toEqual(["retained-trip", "retained-trip"]);
+  expect(state.handoff.mock.calls.map(([id]) => id)).toEqual(["first", "second"]);
+});

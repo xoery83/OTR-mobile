@@ -102,48 +102,49 @@ async function withLocalProcessing(
       announceCaptureProcessingActivity(context.accountId, config.jobId);
     await ensureForeground(context, processing, config.jobId);
   }
-  return Promise.all(
-    jobs.map(async (job) => {
-      let assignedTripId: string | null = null;
-      if (job.allInputsAccepted && !job.batch.context.tripPrior) {
-        try {
-          const { readCaptureJobAssignment } = await import("./captureJobAssignment");
-          const { getDefaultLocalCaptureInboxRepository } =
-            await import("../repositories/defaultLocalCaptureInboxRepository");
-          const captures = await getDefaultLocalCaptureInboxRepository();
-          assignedTripId = await readCaptureJobAssignment(context, job, {
-            captures,
-            getAccountId: requireActiveUserId,
-            isCurrent: () => true,
-          });
-        } catch {
-          // Missing local originals cannot assert a recovered Journey attribution.
-        }
+  const results = [];
+  // Original verification reads and hashes payload bytes; keep it bounded across jobs.
+  for (const job of jobs) {
+    let assignedTripId: string | null = null;
+    if (job.allInputsAccepted && !job.batch.context.tripPrior) {
+      try {
+        const { readCaptureJobAssignment } = await import("./captureJobAssignment");
+        const { getDefaultLocalCaptureInboxRepository } =
+          await import("../repositories/defaultLocalCaptureInboxRepository");
+        const captures = await getDefaultLocalCaptureInboxRepository();
+        assignedTripId = await readCaptureJobAssignment(context, job, {
+          captures,
+          getAccountId: requireActiveUserId,
+          isCurrent: () => true,
+        });
+      } catch {
+        // Missing local originals cannot assert a recovered Journey attribution.
       }
-      const processingEvents = await processing.events(context, job.batch.jobId);
-      const localInterpretationEvents = await processing.localEvents(
-        context,
-        job.batch.jobId,
-      );
-      const localInterpretationResults = await processing.localResults(
-        context,
-        job.batch.jobId,
-      );
-      return {
-        ...job,
-        assignedTripId,
-        processing: {
-          ...job.processing,
-          capability: processingEvents.length
-            ? ("LOCAL_VALIDATION" as const)
-            : job.processing.capability,
-        },
-        processingEvents,
-        localInterpretationEvents,
-        localInterpretationResults,
-      };
-    }),
-  );
+    }
+    const processingEvents = await processing.events(context, job.batch.jobId);
+    const localInterpretationEvents = await processing.localEvents(
+      context,
+      job.batch.jobId,
+    );
+    const localInterpretationResults = await processing.localResults(
+      context,
+      job.batch.jobId,
+    );
+    results.push({
+      ...job,
+      assignedTripId,
+      processing: {
+        ...job.processing,
+        capability: processingEvents.length
+          ? ("LOCAL_VALIDATION" as const)
+          : job.processing.capability,
+      },
+      processingEvents,
+      localInterpretationEvents,
+      localInterpretationResults,
+    });
+  }
+  return results;
 }
 export async function getDefaultCaptureSubmissionDependencies(): Promise<
   Omit<
