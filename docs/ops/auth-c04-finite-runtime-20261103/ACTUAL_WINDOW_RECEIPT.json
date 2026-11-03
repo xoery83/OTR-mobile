@@ -1,0 +1,41 @@
+{
+  "status": "HOST_CLOSED_BUSINESS_E2E_FAILED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "gateSHA256": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+  "ownerApprovalSHA256": "290b13ca2878bdd3964fb3a4feba56599d5f20530430d8a5760ef612fc68dd7d",
+  "qualifiedPreflightSHA256": "90bdc800c6df8fecfcb9de6aa7c07a5c16a12714ccf2e36de88e82011b72d568",
+  "planSHA256": "615867aa25111fcc39a451d8d0ddb277e3391b03b79af2936e990eb09b05955d",
+  "windowId": "1f09807b-6799-4c23-b2f7-222c9d54e68c",
+  "opensAt": "2026-11-03T04:04:35Z",
+  "inviteExpiresAt": "2026-11-03T04:14:35Z",
+  "closesAt": "2026-11-03T04:34:35Z",
+  "candidateContainerId": "4dc9cd04de06c975e8128701475d68b36166dc4220dd219eb0e3386f81dcf7db",
+  "timer": "Armed and independently read back before start: active, exact absolute close time, exact service argv and plan hash; disarmed after verified early close.",
+  "normalAuth": "A and B each sent one OTP, received it and passed normal identity verification; both local sessions were cleaned up.",
+  "firstFailure": {
+    "at": "2026-11-03T04:07:49.424Z",
+    "stage": "Original A ISSUE operation POST",
+    "httpStatus": 503,
+    "errorCode": "UNKNOWN_CLIENT_DID_NOT_RETAIN_BODY_CODE",
+    "originalOperationId": "b3299bda-8939-4e49-8377-338f8e619869",
+    "recovery": "One read of the same original operation also returned HTTP 503; no replacement operation or resend.",
+    "claimAttempted": false
+  },
+  "postFailureReadback": {
+    "receiptSHA256": "2771b94c00b37328ebf42e13564492f83a95a147402f449bdafb1d4c897e2531",
+    "at": "2026-11-03T04:11:36.096681Z",
+    "observed": "Original ISSUE receipt absent, CLAIM receipt absent, directed invite absent, target still unlinked at this read; original ISSUE disposition remains UNKNOWN."
+  },
+  "boundedDiagnosis": "Stopped candidate had exact host network mode and DEV URL, selector present, no selection-closed marker; runtime mount was valid v3 and gateway had schema USAGE/function EXECUTE. First 503 layer remains unproven because Host request log retained status but no business error code.",
+  "closeReadback": {
+    "status": "AUTH_C04_RUNTIME_CLOSED_VERIFIED",
+    "containerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "health": "healthy",
+    "selectorAbsent": true,
+    "independentHealth": "GET /health returned development ok"
+  },
+  "hostReleased": true,
+  "memberRevoke": "NOT_RUN",
+  "nativeE2E": "NOT_RUN"
+}
