@@ -1,0 +1,7 @@
+test_stopped_health_stale_must_not_qualify (__main__.Negative.test_stopped_health_stale_must_not_qualify) ... ok
+test_active_wrong_timer_metadata_must_not_qualify (__main__.Negative.test_active_wrong_timer_metadata_must_not_qualify) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.017s
+
+OK

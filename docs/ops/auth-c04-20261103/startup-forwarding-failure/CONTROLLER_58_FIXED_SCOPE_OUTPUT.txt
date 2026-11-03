@@ -1,0 +1,11 @@
+test_active_but_drifted_timer_details_cannot_qualify_recovery (test_runtime.Controller.test_active_but_drifted_timer_details_cannot_qualify_recovery) ... ok
+test_stale_healthy_stopped_or_wrong_named_candidate_cannot_qualify (test_runtime.Controller.test_stale_healthy_stopped_or_wrong_named_candidate_cannot_qualify) ... ok
+test_recovery_mode_is_bound_and_restored_by_the_existing_controller (test_runtime.Controller.test_recovery_mode_is_bound_and_restored_by_the_existing_controller) ... ok
+test_missing_normal_recovery_timer_blocks_start_before_stop (test_runtime.Controller.test_missing_normal_recovery_timer_blocks_start_before_stop) ... ok
+test_recovery_window_cannot_inherit_thirty_minute_business_limit (test_runtime.Controller.test_recovery_window_cannot_inherit_thirty_minute_business_limit) ... ok
+test_recovery_qualification_rejects_normal_business_mode (test_runtime.Controller.test_recovery_qualification_rejects_normal_business_mode) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.024s
+
+OK

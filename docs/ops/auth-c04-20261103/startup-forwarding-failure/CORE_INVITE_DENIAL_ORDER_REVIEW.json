@@ -1,0 +1,15 @@
+{
+  "status": "SCOPED_NO_BLOCKER_FOR_FAILED_INVITE_DENIAL_PRESERVATION",
+  "candidate": "791ddee189cbfea681b08ca27b1ac038beefdac2",
+  "candidateSQLSHA256": "20c3bf2967fd14e0a8d5493a41ad743c5f6e7fe6548608f153ba02d35213a947",
+  "review": "Direct function diff against canonical production baseline text: only early marker DELETE moved to inserted_count>0 joined tail and removed_at CAS added. Failure exits preserve denial. Normal accepted insertion and deletion remain in one transaction.",
+  "validation": "Core isolated PG17 RED-to-GREEN receipt reused, not rerun by Auth",
+  "notQualified": [
+    "Hosted SQL install",
+    "Retained membership regrant",
+    "Concurrent revoke/regrant",
+    "Repeatable-read visibility",
+    "Core producer/receipt/access revision"
+  ],
+  "authority": "No SQL execution approved or performed by this review"
+}

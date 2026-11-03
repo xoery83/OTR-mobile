@@ -152,3 +152,17 @@ is not checked; stopped containers with stale healthy values pass. Root is repai
 only these guards. See CONTROLLER_974_REVIEW.json and negative repro/output in the
 same evidence directory. These findings concern new qualification, not prior
 recovery-only port Review. Gate draft scope conditionally accepted, not authorized.
+
+Root repaired controller as58e4dbed; Auth reran original2 negatives→GREEN and6
+focused Controller checks→PASS, scoped NO_BLOCKER. See CONTROLLER_58_REVIEW.json.
+The974 findings are resolved in this candidate. Executable normal-session driver
+qualification-return binding, exact approval and actual execution remain pending.
+
+Auth implemented createMemberClaimQaRecoveryWindowQualifier: strict8-field output,
+independent frozen expected identity, exact QA/image/CID/config/plan comparison and
+pre/post open/close/constructor-expiry checks. 28 focused and independent28 PASS;
+7 stronger valid-hash negatives PASS; types/scopedlint PASS. See
+RECOVERY_WINDOW_QUALIFIER_REVIEW.json. Root still owns bounded SSH readControl and
+actual window/plan/approval. No Hosted execution resulted from this local work.
+Native received exact two-factory Guest cover handoff; Auth is not concurrently
+editing guestLocalWorkspace.ts. No census/adoption/cloud boundary change allowed.
