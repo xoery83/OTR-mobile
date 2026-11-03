@@ -549,6 +549,17 @@ it("shows each unresolved source and reason once without changing sealed results
   expect(JSON.stringify(f.result)).toBe(before);
 });
 
+it("shows photo verification reasons as user copy while retaining sealed codes", () => {
+  const f = fixture();
+  const reason = "VISUAL_CANDIDATE_UNVERIFIED:activity.name";
+  f.result.unresolved = [{ sourceId: "S0", reason }];
+  const before = JSON.stringify(f.result);
+  const html = renderToStaticMarkup(createElement(UniversalResultView, f.props));
+  expect(html).toContain(t("capture.ai.evidenceInsufficient"));
+  expect(html).not.toContain(reason);
+  expect(JSON.stringify(f.result)).toBe(before);
+});
+
 it("lists unprocessed originals separately without inventing a candidate or Review action", () => {
   const f = fixture();
   f.props.model.inputs = [

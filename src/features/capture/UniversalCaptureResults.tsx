@@ -410,6 +410,8 @@ const styles = (c: UiColors) =>
     meta: { ...visual.type.meta, color: c.textSecondary },
   });
 function reasonCopy(reason: string) {
+  if (/^VISUAL_CANDIDATE_UNVERIFIED(?::|$)/.test(reason))
+    return t("capture.ai.evidenceInsufficient");
   if (/LIFECYCLE|amendment target|cancellation notice/i.test(reason))
     return t("capture.ai.lifecycleUnknown");
   if (/TICKET|RIGHTS|ENTITLEMENT/.test(reason)) return t("capture.ai.ticketObservation");
