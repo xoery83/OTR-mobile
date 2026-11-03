@@ -447,3 +447,49 @@ it("shows pending links and retries only their readonly lookup on the same docum
   expect(h.read).toHaveBeenCalledOnce();
   expect(h.original).not.toHaveBeenCalled();
 });
+
+it.each(["onMore", "onRefresh"] as const)(
+  "ignores stale Documents %s captured before a refreshed inventory",
+  async (action) => {
+    const old = { ...doc, captureId: "old-page", recordedAt: "2026-10-27T00:00:00Z" };
+    const fresh = { ...doc, captureId: "fresh-page" };
+    h.list.mockResolvedValueOnce([old]);
+    Harness();
+    await settle();
+    const stale = Harness().props[action] as () => void;
+    h.list.mockResolvedValueOnce([fresh]);
+    (Harness().props.onRefresh as () => void)();
+    await settle();
+    expect(Harness().props.documents).toEqual([fresh]);
+    const reads = h.list.mock.calls.length;
+    h.list.mockResolvedValue([{ ...old, captureId: "obsolete-older-page" }]);
+    stale();
+    await settle();
+    expect(h.list).toHaveBeenCalledTimes(reads);
+    expect(Harness().props.documents).toEqual([fresh]);
+  },
+);
+
+it("keeps current Documents pagination on the current cursor and deduplicates rows", async () => {
+  const first = Array.from({ length: 30 }, (_, i) => ({
+    ...doc,
+    captureId: `page-${i}`,
+  }));
+  h.list.mockResolvedValueOnce(first);
+  Harness();
+  await settle();
+  expect(Harness().props.hasMore).toBe(true);
+  const added = { ...doc, captureId: "next-page" };
+  h.list.mockResolvedValueOnce([first[29], added]);
+  (Harness().props.onMore as () => void)();
+  await settle();
+  expect(h.list).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accountId: "qa" }),
+    "PERSONAL_INBOX",
+    {
+      before: { recordedAt: first[29].recordedAt, captureId: first[29].captureId },
+    },
+  );
+  expect(Harness().props.documents).toEqual([...first, added]);
+  expect(Harness().props.hasMore).toBe(false);
+});

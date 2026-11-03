@@ -923,3 +923,11 @@ native Results/Review/Documents/Updates acceptance and Root integration pending.
 # MCP C02 loader repair — 3 November 2026 / main integration
 
 Main e2da9d13 preserves all existing Auth/Native/Import content. Fixed0dd guarded C02 loader plus the existing review_travel_materials safe logger enum is integrated default closed. Logger RED1FAIL to GREEN40PASS (new/legacy loader suites); scoped strict/lint and both local bundles PASS. Original90 affected tests remain prior evidence. Root reports fixed6c9 Host module present in actual039 image; Root/MCP final review and fresh-window qualification remain required. No deployment/issuer/session/business action. See `ops/mcp-c02-loader-repair-20261103/HANDOFF.md`.
+
+# Import Documents stale-pagination candidate - 3 November 2026
+
+Isolated from origin/main4c3094fa, the Documents panel now rejects list callbacks
+captured before a newer inventory, reusing the Activity inventory fence.32 focused
+UI checks, scoped types/lint/UI guard pass; see
+`ops/import-documents-pagination-20261103/HANDOFF.md`. Independent review/main
+integration and Native acceptance pending; no external or authority changes.

@@ -39,6 +39,7 @@ function ScopedDocuments(props: Props) {
   const [linksLoading, setLinksLoading] = useState(props.scope === "TRIP");
   const [linksRetry, setLinksRetry] = useState(0);
   const [documents, setDocuments] = useState<ImportDocument[]>([]);
+  const inventory = useRef(documents);
   const [document, setDocument] = useState<ImportDocument | null>(null);
   const [original, setOriginal] = useState<{
     captureId: string;
@@ -80,7 +81,7 @@ function ScopedDocuments(props: Props) {
     return { context, repository };
   }
   async function load(more = false) {
-    if (!current()) return;
+    if (!current() || documents !== inventory.current) return;
     const request = ++sequence.current;
     try {
       const { context, repository } = await reader();
@@ -100,16 +101,16 @@ function ScopedDocuments(props: Props) {
             : {},
         );
         if (current() && request === sequence.current) {
-          setDocuments((previous) =>
-            more
-              ? [
-                  ...previous,
-                  ...next.filter(
-                    (row) => !previous.some((old) => old.captureId === row.captureId),
-                  ),
-                ]
-              : next,
-          );
+          const refreshed = more
+            ? [
+                ...documents,
+                ...next.filter(
+                  (row) => !documents.some((old) => old.captureId === row.captureId),
+                ),
+              ]
+            : next;
+          inventory.current = refreshed;
+          setDocuments(refreshed);
           setHasMore(next.length === 30);
         }
       }

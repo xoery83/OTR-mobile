@@ -1,0 +1,22 @@
+{
+  "status": "LOCAL_PASS_NOT_NATIVE_ACCEPTED",
+  "base": "4c3094fa",
+  "firstFailure": "CapturedDocumentsonMore/onRefreshaftercurrentfirstpagerefreshstillissueathirdrepositoryreadandmayappendobsoleteoldcursorpage.2focusedregressionsREDonbase(expected2reads,got3).",
+  "minimalFix": "ReuseActivityinventory-ref fence: reject load closure ifitsdocumentsarrayisnotcurrentinventory;publishnewinventorysynchronouslybeforestate. ExistingAccount/generation/view/sequence/repositoryandSourceoriginalguardsunchanged.",
+  "checks": {
+    "uiSuites": "2suites32actualPASS",
+    "redOnBase": "2newstalehandlercasesFAILbeforefix",
+    "currentPagination": "Currentcursoranddedup/hasMorepositivePASS",
+    "scopedStrict": "2roots/transitivedepsPASS",
+    "eslint": "2filesPASS",
+    "uiGuard": "PASS473legacy/168representative",
+    "formatAndDiff": "PASS"
+  },
+  "scope": "ImportDocumentsPanelownedUI+testonly;noNativeNav/Session/Day/Sync;noRepository/API/Schema/Authority/newvisiblecopy.",
+  "externalActions": 0,
+  "files": {
+    "src/features/documents/ImportDocumentsPanel.tsx": "71a625de0cddefe588e9d993048ee3eff7ca62dd75a75ee968d84976199aea03",
+    "src/features/documents/ImportDocumentsPanel.test.ts": "aa30078560f3905b8008ac62d099153ba258b8a3a184f450cdb7136f21707297"
+  },
+  "acceptance": "NativeDocumentsruntimeflow/deviceandOwneracceptanceNOT_RUN;noAI/paidE2Eclaim."
+}
