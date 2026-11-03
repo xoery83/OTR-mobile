@@ -1,3 +1,10 @@
+# Native Day publication — source integration, 4 November 2026
+
+DF-C02 publishes the qualified Day read before awaiting optional Home summaries.
+Existing Account/Trip/request/generation fences and downstream authority stay unchanged.
+Native candidate63d7b7a2 has independent Review and105 local checks; no new Hosted
+or device acceptance is claimed. See ops/native-dfc02-20261104/RESULT.json.
+
 # Import mixed-intake UI — source integration, 4 November 2026
 
 LaneC355c7dca presents distinct originals/captions/PDF glyph, keeps material/error/

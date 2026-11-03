@@ -1935,3 +1935,43 @@ it("Guest retains its actual local Day reader without constructing the Account T
   expect(workspace.widgetsForHome(reference, "Active")).toEqual([]);
   expect(workspace.onChooseDay).toBeTypeOf("function");
 });
+
+it("shows the qualified Day read while the optional Home snapshot is still loading", async () => {
+  state.routeMode = "day";
+  let release!: (value: unknown) => void;
+  state.snapshotRead.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+  const node = await loaded();
+  try {
+    expect(state.snapshotRead).toHaveBeenCalledOnce();
+    expect(find(node, DayFeed)?.projection).toBe(state.result.observed.projection);
+  } finally {
+    release?.(state.snapshot);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+});
+
+it("publishes an acknowledged remote revision before an unrelated Home snapshot completes", async () => {
+  state.routeMode = "day";
+  await loaded();
+  (state.focusEffect as () => void)();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  render();
+  const updated = {
+    ...state.result,
+    observed: {
+      ...state.result.observed,
+      projection: { ...state.result.observed.projection, source: { epoch: "updated" } },
+    },
+  };
+  state.result = updated;
+  let release!: (value: unknown) => void;
+  state.snapshotRead.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+  state.syncCompletion?.({ accountId: actor, generation: 5, journeyIds: [reference] });
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  try {
+    expect(find(render(), DayFeed)?.projection).toBe(updated.observed.projection);
+  } finally {
+    release?.(state.snapshot);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+});

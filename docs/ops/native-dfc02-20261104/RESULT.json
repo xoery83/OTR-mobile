@@ -1,0 +1,34 @@
+{
+  "status": "LOCAL_SYNC_PRESENTATION_PASS / MAIN_DEVICE_PENDING",
+  "package": "DF-C02",
+  "slice": "DF-C02:LOCAL_PREP",
+  "claim": "native-dfc02-local-20261104-r1",
+  "started_event": "7d33da7c-4f73-4b76-a154-4accd15c1de7",
+  "started_ack_revision": 78,
+  "legacy_actual_started_at": null,
+  "first_failure": "Qualified Reader result blocked by optional Home summary: initial Day empty; successful sync notification new epoch remains old until summary returns",
+  "red": "Two deterministic actual TripScreen caller tests failed before change (first test harness setup was corrected before valid2RED evidence)",
+  "fix": "Move existing setTrip/setStatus before awaited Home snapshot, after existing reader+metadata generation/request checks. No new Reader/cache/sync; no default Version Reader change.",
+  "checks": {
+    "regression": "3suites105PASS including full87TripScreen + Downstream + Identity",
+    "scoped_typecheck": "PASS TripScreen and caller test direct dependency graph",
+    "affected_lint": "PASS",
+    "ui_guard": "PASS 473legacy/168representative",
+    "diff_check": "PASS",
+    "independent_review": "apple_place_form_mapping NO_BLOCKER; current generation/Trip/request/snapshot epoch consumers preserved; no independent rerun"
+  },
+  "coverage": {
+    "D1": "Reuse Owner-approved P1-P6 Manual receipts and current source. New local initial Feed publication test; not repeat Cloud Golden Slice.",
+    "D2": "Existing sync completion event to latest Reader result publication now independently of Home summary; original Foreground/Periodic Pull and Version consumer unchanged",
+    "D3": "Existing Downstream/Identity deterministic regressions reused in105; no new real offline/UNKNOWN mutation or physical network test",
+    "D4": "Preparation only; lawful two-account sameTrip/Revoke evidence still owning Auth/Core. No simulated Member promoted to Hosted."
+  },
+  "not_run": [
+    "Device installation/UI",
+    "Hosted query/write",
+    "Supabase independent readback for this unchanged-data UI reorder",
+    "PrivateRealtime",
+    "full repository typecheck"
+  ],
+  "rollback": "Revert only publication ordering and two tests; no durable data transformation"
+}

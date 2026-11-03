@@ -448,6 +448,9 @@ function TripContent({
           (workingViewTripId !== requested || workingViewGeneration !== captured)
         )
           switchTrip(requested, captured);
+        // The qualified Day read must not wait for the optional Home summary.
+        setTrip(result);
+        setStatus(result.observed || result.localManual ? "READY" : "UNAVAILABLE");
         if (
           result.observed?.projection.version === 2 &&
           result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
@@ -465,8 +468,6 @@ function TripContent({
             setHomeSnapshot(snapshot);
           else setHomeSnapshot(null);
         } else setHomeSnapshot(null);
-        setTrip(result);
-        setStatus(result.observed || result.localManual ? "READY" : "UNAVAILABLE");
         if (!today && result.observed)
           setZone(
             (previous) => previous || boundaryZone(result.observed!.projection) || "",
