@@ -176,3 +176,43 @@ it("does no login or network when aborted", async () => {
   expect(f.deps.withOwnerSession).not.toHaveBeenCalled();
   expect(f.wire).not.toHaveBeenCalled();
 });
+
+it("receives the actual 18.418s 202 path instead of timing out at 15s, retaining absence without replay", async () => {
+  vi.useFakeTimers();
+  try {
+    const f = fixture();
+    f.wire.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 18_418));
+      return Response.json({ status: "ABSENT_UNCONFIRMED" }, { status: 202 });
+    });
+    const result = recoverMemberClaimQaIssue(f.qa, f.retained, f.deps).catch(
+      (error) => error,
+    );
+    await vi.advanceTimersByTimeAsync(18_418);
+    expect(await result).toHaveProperty(
+      "message",
+      "C04_QA_ORIGINAL_OPERATION_UNCONFIRMED",
+    );
+    expect(f.wire).toHaveBeenCalledOnce();
+    expect(f.deps.readReceipt).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("still stops a hung recovery at the dedicated 90s bound without retry", async () => {
+  vi.useFakeTimers();
+  try {
+    const f = fixture();
+    f.wire.mockImplementation(() => new Promise<Response>(() => {}));
+    const result = recoverMemberClaimQaIssue(f.qa, f.retained, f.deps).catch(
+      (error) => error,
+    );
+    await vi.advanceTimersByTimeAsync(90_000);
+    expect(await result).toMatchObject({ kind: "timeout", code: "REQUEST_TIMEOUT" });
+    expect(f.wire).toHaveBeenCalledOnce();
+    expect(f.deps.readReceipt).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
+});

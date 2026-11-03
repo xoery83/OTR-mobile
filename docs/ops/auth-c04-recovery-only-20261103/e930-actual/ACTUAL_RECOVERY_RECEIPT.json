@@ -1,0 +1,27 @@
+{
+  "status": "EXECUTED_CLOSED_CLIENT_TIMEOUT_NO_RECEIPT_CONFIRMED",
+  "source": "58134238",
+  "windowId": "e9309b36-f7b6-43a8-b486-fdcf4c47e914",
+  "gateSHA256": "416d6af371fb6eda314dd79bae337247f611f1456d41c30704cbc750ae8dde1e",
+  "planSHA256": "ac679b6f26ffa24f833be7033e86a74a003918568087a0f4156acceb991970aa",
+  "window": {
+    "T": "2026-11-03T06:48:53Z",
+    "normalClose": "2026-11-03T07:01:53Z",
+    "D": "2026-11-03T07:03:53Z"
+  },
+  "normalAuth": "A OTP1, verified normal identity; B login0; own-session refresh revoked PASS",
+  "business": "One repository.recover request; client FETCH timeout at06:54:12.911Z before response. No ISSUE resend/Claim/independent receipt SELECT. Original UNKNOWN retained.",
+  "serverTrace": {
+    "requestId": "caa05eb8-b157-4c06-b415-6ee690635cd4",
+    "completedAt": "2026-11-03T06:54:17.411111189Z",
+    "httpStatus": 202,
+    "durationMs": 18418,
+    "qualification": "Status202 maps to ABSENT_UNCONFIRMED, but response body not received. Not authority to resend."
+  },
+  "rootCauseBoundary": "Client15s budget elapsed before actual18.418s completion; Auth/FIFO latency split not proven.",
+  "close": "Manual close restored exact healthy defaultc213/039, selector/mode absent. Both timers/services independently inactive. Stopped candidate logs retained.",
+  "softwareRepair": "Auth-reviewed DEV-only90s recovery budget; ordinary App/API/Backend/SQL/connection unchanged. Not reexecuted.",
+  "providerCalls": 0,
+  "newOperations": 0,
+  "next": "Do not automatically repeat read-only windows; original-ID submission requires precise execution authorization."
+}
