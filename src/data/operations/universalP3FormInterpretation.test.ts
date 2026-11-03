@@ -369,3 +369,74 @@ it.each(["ABSTAIN", "EXECUTION_OUTCOME_UNKNOWN"] as const)(
     expect(f.run()).toMatchObject({ status, candidates: [], canonicalWrites: false });
   },
 );
+
+it("preserves a matching UNKNOWN Task and unknown empty result for the existing Native status path", () => {
+  const f = fixture();
+  Object.assign(f.task, {
+    activity: {
+      state: "UNKNOWN",
+      recordedAt: "2026-11-03T00:00:00Z",
+      updatedAt: "2026-11-03T00:00:01Z",
+      completedAt: null,
+      rowRevision: 2,
+      attemptCount: 1,
+      waitReason: null,
+    },
+  });
+  f.result.status = "EXECUTION_OUTCOME_UNKNOWN";
+  f.result.providerOutcome = "UNKNOWN";
+  f.result.candidates = [];
+  expect(f.run()).toMatchObject({
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+    candidates: [],
+    context: f.capturedContext,
+    task: { taskId: f.task.taskId, requestSha256: f.result.requestSha256 },
+  });
+});
+
+it.each(["PENDING", "WAITING", "PROCESSING", "FAILED", "CANCELED", "STALE"])(
+  "keeps %s Task out of the UNKNOWN status-only projection",
+  (state) => {
+    const f = fixture();
+    Object.assign(f.task, {
+      activity: {
+        state,
+        recordedAt: "2026-11-03T00:00:00Z",
+        updatedAt: "2026-11-03T00:00:01Z",
+        completedAt: null,
+        rowRevision: 2,
+        attemptCount: 1,
+        waitReason: null,
+      },
+    });
+    f.result.status = "EXECUTION_OUTCOME_UNKNOWN";
+    f.result.providerOutcome = "UNKNOWN";
+    f.result.candidates = [];
+    expect(f.run()).toBeNull();
+  },
+);
+it("rejects contradictory UNKNOWN Task combinations and any usable candidates", () => {
+  const f = fixture();
+  Object.assign(f.task, {
+    activity: {
+      state: "UNKNOWN",
+      recordedAt: "2026-11-03T00:00:00Z",
+      updatedAt: "2026-11-03T00:00:01Z",
+      completedAt: null,
+      rowRevision: 2,
+      attemptCount: 1,
+      waitReason: null,
+    },
+  });
+  expect(f.run()).toBeNull();
+  f.result.status = "EXECUTION_OUTCOME_UNKNOWN";
+  f.result.providerOutcome = "UNKNOWN";
+  expect(f.run()).toBeNull();
+  f.result.candidates = [];
+  f.result.providerOutcome = "SETTLED";
+  expect(f.run()).toBeNull();
+  f.result.providerOutcome = "UNKNOWN";
+  f.result.status = "CANDIDATES_READY";
+  expect(f.run()).toBeNull();
+});

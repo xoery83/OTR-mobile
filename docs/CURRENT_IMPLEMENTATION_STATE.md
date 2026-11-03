@@ -1,3 +1,12 @@
+# IMP-C03 retained UNKNOWN advisory state — 3 November 2026
+
+From current-main9bdc469e, Import projection now preserves only the exact owning
+UNKNOWN Task + EXECUTION_OUTCOME_UNKNOWN/UNKNOWN empty Result combination so the
+already-existing Native UNKNOWN status path can render. No suggestions, IDs,
+Source preparation or dispatch permission added.10 focused checks/scoped strict/
+lint pass;52 stable checks not repeated. See `ops/imp-c03-unknown-state-20261103/HANDOFF.md`;
+LOCAL_PASS, actual Native/provider acceptance pending.
+
 # Latest Root shared checkpoint — 3 November 2026, 07:35 UTC
 
 Main `4c3094fa` retains Native Round1 and Import Activity completion-refresh fixes.

@@ -188,7 +188,14 @@ export function projectUniversalP3FormInterpretation(input: {
     (["actorId", "accountId", "tripId", "batchId", "taskId"] as const).some(
       (key) => r[key] !== task.data[key],
     ) ||
-    (task.data.activity && task.data.activity.state !== "RESULTS_READY")
+    (task.data.activity &&
+      task.data.activity.state !== "RESULTS_READY" &&
+      !(
+        task.data.activity.state === "UNKNOWN" &&
+        r.status === "EXECUTION_OUTCOME_UNKNOWN" &&
+        r.providerOutcome === "UNKNOWN" &&
+        r.candidates.length === 0
+      ))
   )
     return null;
   const candidates = r.candidates.filter((c) => c.kind === "P3");

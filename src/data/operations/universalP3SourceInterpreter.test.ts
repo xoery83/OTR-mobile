@@ -13,6 +13,7 @@ import {
 } from "../api/universalImportContracts";
 import { createUniversalImportTransport } from "../api/universalImportTransport";
 import { createUniversalP3SourceInterpreter } from "./universalP3SourceInterpreter";
+import { createP3SourceScanConsumer } from "@/features/day-feed/p3SourceSuggestions";
 import type { UniversalP3FormContext } from "./universalP3FormInterpretation";
 import type { CaptureSelection } from "@/features/capture/captureStaging";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
@@ -459,4 +460,46 @@ it("real raw Edit intake reaches formal Keep/Replace without clearing manual fie
   expect(f.submission.open).toHaveBeenCalledOnce();
   expect(f.prepareSources).toHaveBeenCalledOnce();
   expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+it("delivers retained UNKNOWN Task status to the real Native consumer without another Source preparation or new IDs", async () => {
+  const f = await fixture();
+  const prepare = f.prepareSources.getMockImplementation()!;
+  f.prepareSources.mockImplementation(async (context, model) => {
+    await prepare(context, model);
+    f.task!.activity = {
+      state: "UNKNOWN",
+      recordedAt: "2026-11-03T00:00:00Z",
+      updatedAt: "2026-11-03T00:00:01Z",
+      completedAt: null,
+      rowRevision: 2,
+      attemptCount: 1,
+      waitReason: null,
+    };
+    f.result.status = "EXECUTION_OUTCOME_UNKNOWN";
+    f.result.providerOutcome = "UNKNOWN";
+    f.result.candidates = [];
+  });
+  const retained = await f.run();
+  const { accountId: _accountId, formType: _formType, ...binding } = f.context;
+  const consume = createP3SourceScanConsumer(
+    f.interpret,
+    () => binding,
+    f.deps.requireNormalAccount,
+  );
+  const ids = f.submission.newId.mock.calls.length;
+  const before = f.sql.sql.prepare("SELECT total_changes() AS count").get();
+  const output = await consume(binding, new AbortController().signal, f.material);
+  expect(output.kind).toBe("SOURCE_STAY_SUGGESTIONS");
+  expect(output.interpretation).toMatchObject({
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+    candidates: [],
+    task: retained.task,
+    sourceBindings: retained.sourceBindings,
+  });
+  expect(f.prepareSources).toHaveBeenCalledOnce();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+  expect(f.submission.newId).toHaveBeenCalledTimes(ids);
+  expect(f.sql.sql.prepare("SELECT total_changes() AS count").get()).toEqual(before);
 });

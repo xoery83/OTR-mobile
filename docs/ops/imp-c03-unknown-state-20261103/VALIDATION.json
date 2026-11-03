@@ -1,0 +1,23 @@
+{
+  "status": "LOCAL_PASS_NOT_AI_E2E",
+  "base": "9bdc469e",
+  "nativeFixedCandidate": "10c34c51",
+  "redRegressions": 2,
+  "greenSelectedTests": 10,
+  "stableTestsNotRepeated": 52,
+  "checks": {
+    "scopedTypes": "3 roots/transitive PASS",
+    "eslint": "PASS",
+    "format": "PASS",
+    "diff": "PASS"
+  },
+  "productionDelta": "Single P3 projection activity gate; accept exact UNKNOWN Task/unknown status/provider/no candidates only",
+  "nativeOwnedFilesChanged": false,
+  "recovery": "Real existing Source/Native consumer; no new IDs or SQLite changes, no additional Source prepare, execute calls0",
+  "externalActions": 0,
+  "files": {
+    "src/data/operations/universalP3FormInterpretation.ts": "8e6102c564112ee2844853b50df1fb9c2fc2a89ffb4e81ed48d71551f4ebe8d6",
+    "src/data/operations/universalP3FormInterpretation.test.ts": "d129bd289cfead634d303440124e3ccc833c4e368d4bf1f2aebbffe6a2430d8c",
+    "src/data/operations/universalP3SourceInterpreter.test.ts": "da4b73544aa3f53a3e8126db9b7ab7d4003bcc0c89c651309e215a1fc214a25a"
+  }
+}
