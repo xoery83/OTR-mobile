@@ -167,7 +167,9 @@ export function startDevBackend(
         /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)(?:\?|$)/.test(
           incoming.url ?? "",
         );
-      const flightEnrichmentRoute = /^\/v1\/trips\/[^/]+\/flight-enrichment(?:\/capabilities)?(?:\?|$)/.test(incoming.url ?? "");
+      const flightEnrichmentRoute = /^\/v1\/trips\/[^/]+\/flight-enrichment(?:\/capabilities)?$/.test(
+        new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
+      );
       const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
         incoming.url ?? "",
       );

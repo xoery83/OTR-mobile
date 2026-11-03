@@ -98,11 +98,11 @@ async function address(server: Server) {
   if (!bound || typeof bound === "string") throw new Error("TEST_LOOPBACK_UNAVAILABLE");
   return `http://127.0.0.1:${bound.port}`;
 }
-async function chunked(url: string, method: string, parts: string[]) {
+async function chunked(url: string, method: string, parts: string[], rawPath?: string) {
   return new Promise<number>((resolve, reject) => {
     const request = httpRequest(
       url,
-      { method, headers: { "Transfer-Encoding": "chunked" } },
+      { method, ...(rawPath ? { path: rawPath } : {}), headers: { "Transfer-Encoding": "chunked" } },
       (response) => {
         response.resume();
         response.once("end", () => resolve(response.statusCode!));
@@ -367,5 +367,14 @@ it("bounds unauthenticated Enrichment bodies before buffering and Auth", async (
     { method: "POST", body: "x".repeat(8193) },
   );
   expect(response.status).toBe(413);
+  expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+});
+
+it("bounds normalized Enrichment paths before buffering or Auth", async () => {
+  const { startDevBackend } = await import("./serverStartup");
+  const base = await address(startDevBackend());
+  expect(
+    await chunked(base, "POST", ["x".repeat(8193)], `/v1/ignored/../trips/${input.tripId}/flight-enrichment`),
+  ).toBe(413);
   expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
 });
