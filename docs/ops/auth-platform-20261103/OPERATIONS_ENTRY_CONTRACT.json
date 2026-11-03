@@ -1,0 +1,62 @@
+{
+  "package": "PLAT-C02",
+  "slice": "PLAT-C02:LOCAL_PREP",
+  "claimId": "auth-plat-c02-local-prep-20261103-v1",
+  "status": "LOCAL_RESTRICTED_ENTRY_CONTRACT_PREP_ONLY",
+  "instructionCanonicalSHA256": "0972f417ed290b49a06811a98b1d2b1f25b6594a9dcaf491c6d2ee1222701a98",
+  "minimumEntry": "Link existing service consoles through their existing authentication; source-timed manual metadata snapshots allowed; no new Admin API/CRM/Billing",
+  "authorityBoundary": [
+    "Trip Owner/Organizer/QA Account does not imply system operations admin",
+    "Existing Data Health is current-account local-data health, not cross-account server operations authority",
+    "Do not reuse Mission Control engineering acceptance as live service control or operational health"
+  ],
+  "existingSources": [
+    {
+      "path": "src/data/api/client.ts",
+      "sha256": "1791f4fbbabdb466b158c770af58ba3fb2fd553956ebe8af345a310bd05f4082",
+      "symbol": "readLastApiFailure",
+      "scope": "One sanitized last-failure snapshot; method/masked route/kind/status/code/requestId/time/stage where present, no request/response body or tokens; not a trend/time-series/billing source"
+    },
+    {
+      "path": "src/data/health/dataHealthCoordinator.ts",
+      "sha256": "3c737038541fefde13e50bc799e881572a3a89317b54f318da16fcc769c785f5",
+      "scope": "Account/generation-scoped local findings; must not be relabeled global service metrics"
+    },
+    {
+      "path": "docs/ops/auth-platform-20261103/ROOT_CURRENT_DEFAULT_READBACK.json",
+      "scope": "Actual DEV container/image/config/health metadata only as of independent source timestamp; not capacity/uptime SLA"
+    }
+  ],
+  "manualSnapshotContract": [
+    "serviceId",
+    "environment",
+    "sourceRef",
+    "observedAt",
+    "qualificationScope",
+    "nullable actual metrics",
+    "unavailableReason"
+  ],
+  "allowedData": [
+    "Aggregate service health/error/cost/capacity only from qualified owning reader",
+    "Sanitized correlation IDs with exact source/time",
+    "Actual renewal/quota only from authorized current source"
+  ],
+  "prohibited": [
+    "Secret/SMTP/API keys/JWT/refresh/OTP/payment-card fields",
+    "Raw user/Trip/expense/document bodies or queue payloads",
+    "Public cross-account logs or new operator authority inferred from email/name/Trip role",
+    "Unknown metrics as0/healthy/unlimited",
+    "Privileged shell/SQL/role actions from this local entry"
+  ],
+  "missingRuntimePorts": [
+    "Approved restricted operator access binding or existing-console-only selection",
+    "Qualified service metrics/alerts Reader with privacy filtering",
+    "Current account/billing facts from PLAT-C01"
+  ],
+  "uiChanged": false,
+  "newRoleOrGrant": false,
+  "testsRepeated": false,
+  "consoleAccessed": false,
+  "hostedActions": 0,
+  "missingLocalInstructionFields": []
+}

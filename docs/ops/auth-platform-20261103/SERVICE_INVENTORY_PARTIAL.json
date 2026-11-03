@@ -39,7 +39,7 @@
       "source": "Retained custody mount is evidenced; no current bucket/ACL/usage inspection here",
       "qualification": "CONFIG_REFERENCE_ONLY",
       "responsibleAccountLabel": "OTR DEV project",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Existing local/source retention; do not fake upload success",
       "accountFields": {
         "plan": null,
@@ -87,7 +87,7 @@
       "source": "Owner-named existing provider/meter; Auth performed no model call or billing inspection",
       "qualification": "NOT_OBSERVED_CURRENT_ACCOUNT",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Existing manual/abstain path; preserve real provider cost receipts",
       "accountFields": {
         "plan": null,
@@ -111,7 +111,7 @@
       "source": "Existing Native QA144/main9eef evidence is historical device scope, not account quota proof",
       "qualification": "HISTORICAL_DEVICE_EVIDENCE",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Manual place/address input",
       "accountFields": {
         "plan": null,
@@ -159,7 +159,7 @@
       "source": "Owner service instruction labels inactive-for-iOS; Google Sign-In is separate and does not prove Places usage",
       "qualification": "OWNER_SCOPE_ONLY",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": false,
       "fallback": "Approved MapKit/manual path",
       "accountFields": {
         "plan": null,
@@ -207,7 +207,7 @@
       "source": "Existing approved FX/read contracts; actual current external provider/account not inspected",
       "qualification": "NOT_OBSERVED_CURRENT_ACCOUNT",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Existing explicit/manual accepted FX; never invent rate",
       "accountFields": {
         "plan": null,
@@ -231,7 +231,7 @@
       "source": "Last Owner instruction paused Apple until developer enrollment; no current console or paid status read",
       "qualification": "LAST_OWNER_DIRECTION_ONLY",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "DEV local work continues; no public-release compliance PASS",
       "accountFields": {
         "plan": null,
@@ -255,7 +255,7 @@
       "source": "Owner verified auth.xoery.art DNS; no new DNS/admin/TLS expiry check",
       "qualification": "HISTORICAL_OWNER_NOTICE",
       "responsibleAccountLabel": "OTR domain owner (label only)",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Keep approved endpoints; no new DNS or production mutation",
       "accountFields": {
         "plan": null,
@@ -279,7 +279,7 @@
       "source": "Reuse evaluation required by MC; no live project/billing/deployment permission qualification",
       "qualification": "NOT_OBSERVED_CURRENT_ACCOUNT",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Local candidate only; no public publish",
       "accountFields": {
         "plan": null,
@@ -327,7 +327,7 @@
       "source": "Owner-required service row; no active provider/charge/account inspection by Auth",
       "qualification": "NOT_OBSERVED_CURRENT_ACCOUNT",
       "responsibleAccountLabel": "Owner account label not verified",
-      "betaCritical": true,
+      "betaCritical": null,
       "fallback": "Retain source and show unavailable/abstain through existing pipeline",
       "accountFields": {
         "plan": null,
