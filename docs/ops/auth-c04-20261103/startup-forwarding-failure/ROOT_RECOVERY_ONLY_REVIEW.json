@@ -1,0 +1,25 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE",
+  "candidate": "e44bed4277f1c45cc13bf12ded7faee3335e710b",
+  "reviewer": "Auth Lane D independent of Root implementation",
+  "hashes": {
+    "backend/src/tripMemberClaimQaRecoveryOnly.ts": "5e40d1f97463ea6446a316c3acee14211ccacad746bbbbfa2303b64d497980e9",
+    "backend/src/tripMemberClaimQaRuntime.ts": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "b0e69d9d55666588a3103784155ca8a08f9df73ec3c13f6c93888efd757bdf28"
+  },
+  "verification": {
+    "guardTests": 17,
+    "newRuntimeModeTests": 2,
+    "independentEscapedCallbackAndUnfinishedReadTests": 2,
+    "stableRuntimeTestsSkipped": 13,
+    "authEntryAndTest": "MATCH 3e002e0d exact bytes; prior independent11 reused",
+    "controller": "Diff reviewed; Root16-test report reused, not independently rerun"
+  },
+  "findings": [],
+  "remaining": [
+    "Fixed current runtime/selector/controller plan must bind executionMode RECOVERY_ONLY and exact original A/Trip/op/digest",
+    "Actual qualifyRecoveryWindow and fresh CAS/timers not yet proved",
+    "New exact execution approval before any active runtime or normal OTP; old713 approval consumed"
+  ],
+  "limits": "No Hosted/SQL/OTP/business request; PG retains owning transaction locks, not BEGIN READ ONLY; receipt absence stays UNKNOWN; no replay or Claim"
+}

@@ -139,3 +139,9 @@ or Claims, and absence preserves UNKNOWN. Root must supply actual
 source hashes and remaining controller/authorization dependency are recorded in
 startup-forwarding-failure/RECOVERY_ENTRY_REVIEW.json and RECOVERY_SCOPE_DRAFT.md.
 MC GET_NEXT_WORK remains revision70/nextnull/candidates0 at this checkpoint.
+
+Root delivered recovery-only controller/runtime candidate e44bed42. Auth independently
+reviewed: guard17/new mode2/additional escape+unfinished2 PASS; Auth entry exact-match.
+See startup-forwarding-failure/ROOT_RECOVERY_ONLY_REVIEW.json. Default-closed software
+integration may proceed; actual fresh plan/CAS/timers/qualifyRecoveryWindow and exact
+new execution approval remain required. No new Hosted request or OTP occurred.
