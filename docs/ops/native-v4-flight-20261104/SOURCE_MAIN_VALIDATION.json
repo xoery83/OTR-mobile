@@ -1,0 +1,17 @@
+{
+  "request": "NATIVE-FLIGHT-SOURCE-20261104-01",
+  "base": "952ea829543968ecf42dcd144d2c971494b21cdb",
+  "candidate": "7d7c086ed62e71bc07b2cff6f1eb7d324e344879",
+  "sourceCommit": "0479cbccbc4ee5811254ba253a1d015c41d3092d",
+  "tests": "4 suites / 38 PASS",
+  "uiGuard": "473 legacy / 168 representative PASS",
+  "unrelatedCatalogValuesPreserved": 5538,
+  "independentReview": "Native apple_place_form_mapping NO_BLOCKER reused",
+  "sharedContract": "otr-flight-enrichment/1 strict eleven fields unchanged; Provider terminals disabled",
+  "notRun": [
+    "Hosted",
+    "Provider",
+    "Device",
+    "Consumer"
+  ]
+}
