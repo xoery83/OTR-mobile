@@ -1,0 +1,34 @@
+{
+  "package": "AUTH-C04",
+  "businessDRI": "Auth",
+  "latestCandidate": "d7ac98e1",
+  "latestActualEvidence": "actual-1bf81/ACTUAL_OUTCOME.json",
+  "inviteClaim": "HOSTED_PASS_EXACT_NEW_OPERATIONS",
+  "memberRead": "BLOCKED_ACTUAL_OWNING_READ_SCOPE_OWNER_ONLY",
+  "primaryNext": "Consume Root1 minimal READ-only scope repair after fixedreview/protectedauthorization/Root2integration; then normalA/B GET-only probe; no Claim replay",
+  "producerRequest": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "producer": "Root1/Core",
+  "producerActualProgress": "Three REDcases against owner-only read qualification; stable19PASS. Newtrip_sustained_core_read_scope_allowed candidate inprogress, writes unchanged; noinstall/deploy",
+  "authIndependentWork": "ExactGET/shared90s/owncleanup probe5PASS/types/lint/independentreviewNO_BLOCKER; no newOTP/Session",
+  "mcReadyQueueRead": {
+    "observedAt": "2026-11-03T20:45:20.460572+00:00",
+    "primary": "AUTH-C04",
+    "next": null,
+    "candidates": [],
+    "instructionContext": "CURRENT_PACKAGE_CONTEXT_ONLY_NO_READY_CLAIM",
+    "instructionPackRead": true,
+    "noAssignmentChange": true
+  },
+  "returnTrigger": [
+    "Fixed Core READ-only candidate/preciseSQL Gate and tests/review",
+    "Owner approval ifprotectedchanges; Root2actualfreshintegrationqualification",
+    "DefaultnormalReader actualA/Bqualification then boundednormalprobe"
+  ],
+  "mustPreserve": [
+    "old4028UNKNOWN",
+    "oldinvitationexpiry",
+    "newclaimedmembership/receipts",
+    "closedwindow1bf81consumed",
+    "NoSession/Keychaincopy; ownedSessionsalreadyrevoked"
+  ]
+}
