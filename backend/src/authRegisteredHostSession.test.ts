@@ -7,6 +7,7 @@ import {
 import {
   runRegisteredQaHostSession,
   registeredHostQa,
+  createNormalRegisteredQaHostDependencies,
   type RegisteredQaHostContext,
 } from "../../scripts/auth/registered-qa-host-session";
 function setup() {
@@ -217,4 +218,96 @@ it("rejects a Session read that finishes after the action scope was released", a
     );
   });
   expect(await late).toBe("REGISTERED_HOST_SCOPE_RELEASED");
+});
+
+it("composes extracted normal callbacks through OTP, user verification and local refresh revocation", async () => {
+  const f = setup();
+  const wire = vi.fn<typeof fetch>(async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path.endsWith("/otp")) return Response.json({});
+    if (path.endsWith("/verify"))
+      return Response.json({
+        access_token: "unit-host-access",
+        refresh_token: "unit-host-refresh",
+        expires_in: 3600,
+        user: { id: registeredHostQa.accountId, email: registeredHostQa.email },
+      });
+    if (path.endsWith("/user")) return Response.json(await f.readUser());
+    if (path.endsWith("/logout")) return new Response(null, { status: 204 });
+    if (path.endsWith("/token"))
+      return Response.json({ error_code: "refresh_token_not_found" }, { status: 400 });
+    throw Error("UNEXPECTED_UNIT_AUTH_PATH");
+  });
+  vi.stubGlobal("fetch", wire);
+  try {
+    const deps = createNormalRegisteredQaHostDependencies(
+      f.deps.receiver,
+      (value) => f.notes.push(value),
+      {
+        url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+        publishableKey: "sb_publishable_unit_only_000000000000000000000000",
+        persistSession: async () => undefined,
+      },
+    );
+    expect(
+      await runRegisteredQaHostSession(
+        deps,
+        async (context) => {
+          expect((await context.readSession()).identity?.userId).toBe(
+            registeredHostQa.accountId,
+          );
+        },
+        registeredHostQa,
+      ),
+    ).toMatchObject({ ownSessionCleanup: "PASS_LOCAL_SCOPE_REFRESH_REVOKED" });
+    expect(wire).toHaveBeenCalledTimes(5);
+    expect(JSON.parse(String(wire.mock.calls[0][1]?.body))).toEqual({
+      email: registeredHostQa.email,
+      create_user: false,
+    });
+    expect(String(wire.mock.calls[3][0])).toContain("/logout?scope=local");
+    expect(String(wire.mock.calls[4][0])).toContain("/token?grant_type=refresh_token");
+    expect(JSON.stringify(f.notes)).not.toMatch(
+      /unit-host-access|unit-host-refresh|12345678/,
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it("extracted normal callbacks preserve rate-limit rejection without another OTP attempt", async () => {
+  const f = setup(),
+    wire = vi.fn<typeof fetch>(async () => Response.json({}, { status: 429 }));
+  vi.stubGlobal("fetch", wire);
+  try {
+    const deps = createNormalRegisteredQaHostDependencies(f.deps.receiver, () => {}, {
+      url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      publishableKey: "sb_publishable_unit_only_000000000000000000000000",
+      persistSession: async () => undefined,
+    });
+    await expect(deps.request(registeredHostQa.email)).rejects.toMatchObject({
+      kind: "rate_limited",
+      status: 429,
+    });
+    expect(wire).toHaveBeenCalledOnce();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it("extracted normal callbacks snapshot validated DEV options before sending a Session Bearer", async () => {
+  const f = setup(), wire = vi.fn<typeof fetch>(async () => Response.json(await f.readUser()));
+  const options = { url: "https://tuqigdxrvrerfewsxqgm.supabase.co", publishableKey: "sb_publishable_unit_only_000000000000000000000000", persistSession: vi.fn(async () => undefined) };
+  vi.stubGlobal("fetch", wire);
+  try {
+    expect(() => createNormalRegisteredQaHostDependencies(f.deps.receiver, () => {}, { ...options, url: "https://foreign.example.test" })).toThrow();
+    expect(wire).not.toHaveBeenCalled();
+    const deps = createNormalRegisteredQaHostDependencies(f.deps.receiver, () => {}, options);
+    options.url = "https://foreign.example.test"; options.publishableKey = "changed";
+    await deps.readUser(f.session);
+    expect(wire).toHaveBeenCalledExactlyOnceWith("https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1/user", expect.objectContaining({
+      redirect: "error", headers: { apikey: "sb_publishable_unit_only_000000000000000000000000", Authorization: "Bearer unit-host-access" },
+    }));
+    expect(options.persistSession).not.toHaveBeenCalled();
+  } finally { vi.unstubAllGlobals(); }
 });
