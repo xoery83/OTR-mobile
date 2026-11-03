@@ -1,0 +1,13 @@
+{
+  "approved": true,
+  "source": "Direct human reply in Auth chat",
+  "questionCall": "call_0a40ad0b71f94d48b52f742200883eb8",
+  "answer": "\u6279\u51c6\u6b64\u7cbe\u786e\u65b0\u9080\u8bf7 QA \u7a97\u53e3",
+  "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+  "candidate": "b911e5da1d4397f30414423d738f415e7daa5431",
+  "main": "ec81cf20d6a007b95aee6d07e43cfc8c535efce9",
+  "scope": "Only exact new invitation finite QA Gate; fresh qualification, CAS, operator readiness and timers still required; old UNKNOWN unchanged",
+  "windowId": null,
+  "T": null,
+  "D": null
+}
