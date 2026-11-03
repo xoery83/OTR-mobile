@@ -1,0 +1,38 @@
+{
+  "requestId": "LC-C01-MIXED-ADAPTER-SOURCE-20261104-01",
+  "reviewFinding": "P2_INDEPENDENT_TEXT_ISSUE_DROPS_VALID_PNG",
+  "baseCandidate": "98a4a7cd",
+  "red": {
+    "suite": "universalVisualReview",
+    "failed": 2,
+    "passed": 9,
+    "pngIndexes": [
+      0,
+      2
+    ],
+    "expected": "photo plus independent hotel",
+    "actual": "hotel only"
+  },
+  "green": {
+    "suites": 5,
+    "tests": 52,
+    "strictRoots": 3,
+    "strict": "PASS",
+    "lint": "PASS:0errors/0warnings",
+    "format": "PASS",
+    "diff": "PASS"
+  },
+  "scope": "Existing typed inspection reused; known exact Source-local veto plus independent verified TEXT object only; all raw item fields must stay within one source. Preserve original issue and TEXT ABSTAIN. Image/unknown/unmatched/opaque/cross-source/commercial remain closed. No new parse/Core/Source/Provider authority.",
+  "files": {
+    "backend/src/universalImport.ts": "030904d825ca2bd630b621dd154e3255b0bab744e85d4c78a7fd2c5f502d5bd2",
+    "backend/src/universalVisualReview.ts": "0f452b76fd69dc7c19900b75b18ad453626cf99df4acd68e8bd0c287bc99cf3c",
+    "backend/src/universalVisualReview.test.ts": "985c7271f6f3375acc65409fe1c7f29d767ab6a6ddef4f755f53fcd80c9d21ee"
+  },
+  "notClaimed": [
+    "Native current candidate UX",
+    "installed mixed Source proof",
+    "ordinary Native PNG upload/verify port",
+    "Cloud E2E",
+    "Owner acceptance"
+  ]
+}

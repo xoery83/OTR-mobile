@@ -73,7 +73,10 @@ export type CaptureSourceDependencies = {
   pendingPngProfile?: typeof PNG_CAPTURE_ORIGINAL_PROFILE;
   // Strict format profiles or explicit PENDING intake markers. PENDING never
   // substitutes for the owning Host decoder/Source qualification. Default unwired.
-  verifyBinary?(bytes: Uint8Array): Promise<{
+  verifyBinary?(
+    bytes: Uint8Array,
+    declaredContentType: string | null,
+  ): Promise<{
     mimeType:
       "application/pdf" | "image/jpeg" | "image/png" | "image/heic" | "image/heif";
     profileId: string;
@@ -462,7 +465,10 @@ export function createCaptureSourceAdmissionRepository(
       let mimeType: string | null = null;
       if (capture.kind !== "TEXT" && fileText === null && plan.intent_kind !== "REUSE") {
         if (!dependencies.verifyBinary) fail("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
-        const proof = await dependencies.verifyBinary(new Uint8Array(bytes));
+        const proof = await dependencies.verifyBinary(
+          new Uint8Array(bytes),
+          capture.declaredContentType,
+        );
         const allowedFormat =
           (proof.profileId === "PNG_STATIC_RGB8_RGBA8_V1" &&
             proof.mimeType === "image/png") ||

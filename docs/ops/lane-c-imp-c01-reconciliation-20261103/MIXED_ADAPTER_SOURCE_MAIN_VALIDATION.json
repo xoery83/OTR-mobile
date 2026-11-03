@@ -1,0 +1,18 @@
+{
+  "request": "LC-C01-MIXED-ADAPTER-SOURCE-20261104-01",
+  "base": "1daaf3a52366432e4a579ff920debf547e06fca7",
+  "candidates": [
+    "98a4a7cd",
+    "eccc19cc75e4f1835d42ce10f0c236b2620b0385"
+  ],
+  "sourceBeforeImages": "12 paths exactly match candidate parent",
+  "actualMainTests": "7 suites / 82 PASS including restored PNG hook",
+  "independentReview": "NO_BLOCKER; source-local issue isolation finding closed",
+  "integration": "12 source/test paths and scoped evidence only; old CURRENT/manifest/Gate draft excluded",
+  "notRun": [
+    "Hosted",
+    "Source/Provider qualification",
+    "Paid interpretation",
+    "Mixed Native E2E"
+  ]
+}

@@ -1,3 +1,12 @@
+# Mixed intake adapter — source integration, 4 November 2026
+
+LaneC98a4+eccc preserves source order/pins/consent for mixed preparations and
+independent text-issue isolation for image Review. Twelve source before-images
+match; independent finding closed; actual-main7suites82 PASS including the restored
+PNG hook. No protected Source/Provider/SQL guard or paid execution changed.
+See ops/lane-c-imp-c01-reconciliation-20261103/MIXED_ADAPTER_SOURCE_MAIN_VALIDATION.json.
+This is LOCAL_PASS/source integration, not mixed Hosted/Native E2E.
+
 # MCP sparse Stay adapter — source integration, 4 November 2026
 
 Minimal reviewed LaneB98470d01 adapter uses existing sparse Core port4c8d0fd9.

@@ -21,7 +21,8 @@ import { createTripPublicationCatalogTransport } from "../api/tripPublicationCat
 import { createPublicationCatalogNativeFetch } from "@/native/publicationCatalogReceive";
 import { UTF8_TEXT_FILE_PROFILE } from "@/domain/capture/utf8TextFile";
 import {
-  isSingleEnabledPng,
+  isEnabledPng,
+  isEnabledPdf,
   recoverUniversalOriginalPlans,
   runUniversalOriginalBatch,
 } from "./universalOriginalBatch";
@@ -76,6 +77,16 @@ export async function prepareDefaultUniversalCaptureSources(
     );
   options.assertCurrent();
   const { sha256, now, newId } = captureStorageDependencies;
+  const hasPng = model.inputs.some((input) =>
+    isEnabledPng(input, options.pendingPngProfile),
+  );
+  const pdfVerifier =
+    options.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE
+      ? (
+          await import("@/native/pendingPdfOriginal")
+        ).createPendingPdfOriginalFormatVerifier()
+      : undefined;
+  const pngVerifier = hasPng ? createPendingPngOriginalIntakeVerifier(sha256) : undefined;
   const sources = createCaptureSourceAdmissionRepository(database, options.getAccountId, {
     sha256,
     now,
@@ -83,22 +94,15 @@ export async function prepareDefaultUniversalCaptureSources(
     handoff: captures.getForSourceHandoff,
     readSelectedMaterial: async () => null,
     utf8FileProfile: UTF8_TEXT_FILE_PROFILE,
-    ...(options.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE
-      ? {
-          pendingPdfProfile: options.pendingPdfProfile,
-          verifyBinary: (
-            await import("@/native/pendingPdfOriginal")
-          ).createPendingPdfOriginalFormatVerifier(),
+    pendingPdfProfile: options.pendingPdfProfile,
+    ...(hasPng ? { pendingPngProfile: options.pendingPngProfile } : {}),
+    verifyBinary: pngVerifier
+      ? (bytes, mimeType) => {
+          if (mimeType === "image/png") return pngVerifier(bytes);
+          if (mimeType === "application/pdf" && pdfVerifier) return pdfVerifier(bytes);
+          throw Error("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
         }
-      : {}),
-    ...(isSingleEnabledPng(model, options.pendingPngProfile)
-      ? {
-          pendingPngProfile: options.pendingPngProfile,
-          verifyBinary: createPendingPngOriginalIntakeVerifier(
-            captureStorageDependencies.sha256,
-          ),
-        }
-      : {}),
+      : pdfVerifier,
   });
   const deps = {
     database,
@@ -148,15 +152,12 @@ export async function prepareDefaultUniversalCaptureSources(
   options.assertCurrent();
   const result = await runUniversalOriginalBatch(context, model.batch.jobId, plans, deps);
   options.assertCurrent();
-  const singlePdf =
-    options.pendingPdfProfile === PDF_CAPTURE_ORIGINAL_PROFILE &&
-    model.inputs.length === 1 &&
-    model.inputs[0].kind === "FILE" &&
-    model.inputs[0].declaredContentType === "application/pdf";
-  const singlePng = isSingleEnabledPng(model, options.pendingPngProfile);
   const unhandled = model.inputs
     .filter(
-      (input) => !singlePdf && !singlePng && isUnsupportedUniversalInputMetadata(input),
+      (input) =>
+        !isEnabledPdf(input, options.pendingPdfProfile) &&
+        !isEnabledPng(input, options.pendingPngProfile) &&
+        isUnsupportedUniversalInputMetadata(input),
     )
     .map((i) => i.id);
   if (
@@ -168,9 +169,10 @@ export async function prepareDefaultUniversalCaptureSources(
     result.results.some((r) => r.state !== "ADMITTED")
   )
     throw new Error("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");
-  if (singlePdf) {
-    const input = model.inputs[0],
-      prepared = result.inputs[0];
+  for (const input of model.inputs.filter((input) =>
+    isEnabledPdf(input, options.pendingPdfProfile),
+  )) {
+    const prepared = result.inputs.find((prepared) => prepared.inputId === input.id);
     if (!input.captureId || !prepared || prepared.inputId !== input.id)
       throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
     const retained = await captures.getForSourceHandoff(input.captureId);
@@ -229,12 +231,14 @@ export async function prepareDefaultUniversalCaptureSources(
     await deps.imports.applyUniversalCatalogs(context, raw);
     options.assertCurrent();
   }
-  if (singlePng) {
+  if (hasPng) {
     // Source Start may have assigned rev1→rev2. User must re-screen/re-choose that revision.
     const consent = await assertDefaultUniversalPhotoConsent(context, model, options);
     if (!options.preparePngOriginal) throw Error("UNIVERSAL_PNG_PREPARATION_UNAVAILABLE");
-    const input = model.inputs[0],
-      prepared = result.inputs[0];
+    const input = model.inputs.find((input) =>
+      isEnabledPng(input, options.pendingPngProfile),
+    )!;
+    const prepared = result.inputs.find((prepared) => prepared.inputId === input.id);
     if (!input.captureId || !prepared || prepared.inputId !== input.id)
       throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
     const retained = await captures.getForSourceHandoff(input.captureId);
@@ -295,7 +299,7 @@ export async function prepareDefaultUniversalCaptureSources(
       );
     }
     options.assertCurrent();
-    if (singlePng) await assertDefaultUniversalPhotoConsent(context, model, options);
+    if (hasPng) await assertDefaultUniversalPhotoConsent(context, model, options);
     await options.prepareTask({
       tripId: context.tripId,
       batchId: result.batchId,

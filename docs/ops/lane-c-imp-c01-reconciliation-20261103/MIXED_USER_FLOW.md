@@ -6,14 +6,14 @@ independent original identities and source/result counts, truthful stages, minim
 review, no fabricated progress, evidence-linked results, explicit Core Save, same-ID
 recovery, discoverable Documents/Updates.
 
-Current integration target is main4c8d0fd9; Root1 confirmed Auth/Core changes and
-Import source comparison againstb16 is unchanged. Do not reset or overwrite main.
+Current integration target is main eb692ad3; Root1 confirmed Auth/Core changes and
+Import source comparison against b16 is unchanged. Do not reset or overwrite main.
 Historical Golden format acceptance is reused; no repeated parser/Core rewrite.
 
 | Delta | Owning implementation / closure |
 | --- | --- |
 | Mixed intake | PNG+PDF picker selections and inline editor text freeze into one existing C3 roster; exact raw text/ordering retained; test explicit three-way input. |
-| Preparation/AI | Existing single-PNG/PDF gates and PNG manifest-one-input guard mean real mixed support is not yet qualified. Lane C owns adapters; Root1 request LC-C01-MIXED-CORE-20261104-01 resolves exact Source binding/proof/full selection contract. No predicate-only bypass. |
+| Preparation/AI | Local per-input PNG/PDF/TEXT preparation and mixed projection now pass scoped tests; ordinary Native PNG continuation and installed mixed Source proof remain unqualified. Lane C owns adapters; Root1 request LC-C01-MIXED-CORE-20261104-01 resolves exact Source binding/proof/full selection contract. No predicate-only bypass. |
 | Visual foundation | Canonical controls/theme/type/44pt targets, zh/en, Dynamic Type; named materials and simple user actions. Processing history is secondary disclosure, not initial screen content. |
 | Results | Original/evidence links, missing/uncertain facts and explicit Save stay honest. No machine-code/plain internal diagnostics in normal prose; accepted and pending states stay distinct. |
 | Device | Lane A request LC-C01-MIXED-NATIVE-20261104-01 supplies unique Writer and independent QA environment; AD5 old draft/process preserved, VisionD473/FormsQA not assumed available. |

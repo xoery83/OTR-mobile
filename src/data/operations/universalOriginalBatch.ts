@@ -29,28 +29,24 @@ async function admissionKey(batchId: string, inputId: string, hash: ImportHash) 
     (await hash(new TextEncoder().encode(canonicalEventJson([batchId, inputId]))))
   );
 }
-// First PDF slice is one explicit original; mixed/image routing remains unchanged.
-function isSingleEnabledPdf(
-  job: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+export function isEnabledPdf(
+  input: import("@/domain/capture/captureSubmission").CaptureJobReadModel["inputs"][number],
   profile: typeof PDF_CAPTURE_ORIGINAL_PROFILE | undefined,
 ) {
   return (
     profile === PDF_CAPTURE_ORIGINAL_PROFILE &&
-    job.inputs.length === 1 &&
-    job.inputs[0].kind === "FILE" &&
-    job.inputs[0].declaredContentType === "application/pdf"
+    input.kind === "FILE" &&
+    input.declaredContentType === "application/pdf"
   );
 }
-// Single PNG pending original only; does not open mixed/image interpretation.
-export function isSingleEnabledPng(
-  job: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+export function isEnabledPng(
+  input: import("@/domain/capture/captureSubmission").CaptureJobReadModel["inputs"][number],
   profile: typeof PNG_CAPTURE_ORIGINAL_PROFILE | undefined,
 ) {
   return (
     profile === PNG_CAPTURE_ORIGINAL_PROFILE &&
-    job.inputs.length === 1 &&
-    job.inputs[0].kind === "IMAGE" &&
-    job.inputs[0].declaredContentType === "image/png"
+    input.kind === "IMAGE" &&
+    input.declaredContentType === "image/png"
   );
 }
 // Source command IDs are created locally once and retained by the existing owning binding.
@@ -62,10 +58,16 @@ export async function recoverUniversalOriginalPlans(
 ) {
   await assertAccountRequestContext(context, deps.getAccountId);
   const job = await deps.submissions.reopen(jobId, context);
-  const pdf = isSingleEnabledPdf(job, deps.pendingPdfProfile);
-  const png = isSingleEnabledPng(job, deps.pendingPngProfile);
+  if (
+    deps.pendingPngProfile === PNG_CAPTURE_ORIGINAL_PROFILE &&
+    job.inputs.filter((input) => input.kind === "IMAGE").length > 1
+  )
+    throw Error("UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE");
   const supported = job.inputs.filter(
-    (i) => pdf || png || !isUnsupportedUniversalInputMetadata(i),
+    (i) =>
+      isEnabledPdf(i, deps.pendingPdfProfile) ||
+      isEnabledPng(i, deps.pendingPngProfile) ||
+      !isUnsupportedUniversalInputMetadata(i),
   );
   if (
     !job.allInputsAccepted ||
@@ -73,8 +75,8 @@ export async function recoverUniversalOriginalPlans(
     !supported.length ||
     supported.some(
       (i) =>
-        !pdf &&
-        !png &&
+        !isEnabledPdf(i, deps.pendingPdfProfile) &&
+        !isEnabledPng(i, deps.pendingPngProfile) &&
         i.kind !== "TEXT" &&
         !(i.kind === "FILE" && i.declaredContentType === "text/plain"),
     )
@@ -269,8 +271,11 @@ export async function prepareUniversalOriginalBatch(
   await current();
   if (job.batch.accountId !== context.accountId || !job.allInputsAccepted)
     throw new Error("UNIVERSAL_CAPTURE_BATCH_NOT_READY");
-  const pdf = isSingleEnabledPdf(job, deps.pendingPdfProfile);
-  const png = isSingleEnabledPng(job, deps.pendingPngProfile);
+  if (
+    deps.pendingPngProfile === PNG_CAPTURE_ORIGINAL_PROFILE &&
+    job.inputs.filter((input) => input.kind === "IMAGE").length > 1
+  )
+    throw Error("UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE");
   const selected = plans.map((p) => {
     const input = job.inputs.find((i) => i.id === p.inputId);
     if (
@@ -278,8 +283,8 @@ export async function prepareUniversalOriginalBatch(
       !input.captureId ||
       !input.payloadId ||
       input.state !== "ACCEPTED" ||
-      (!pdf &&
-        !png &&
+      (!isEnabledPdf(input, deps.pendingPdfProfile) &&
+        !isEnabledPng(input, deps.pendingPngProfile) &&
         input.kind !== "TEXT" &&
         !(input.kind === "FILE" && input.declaredContentType === "text/plain"))
     )

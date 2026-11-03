@@ -233,11 +233,11 @@ function pinManifest(
     )
   )
     throw new Error("SOURCE_BINDING_INVALID");
-  const originalPng = sources.some(
+  const originalPng = sources.filter(
     (s) => s.mime === "image/png" && s.prepared === undefined,
   );
   // Source format/custody qualification belongs to the owning reader, not A_DIRECT.
-  if (originalPng && sources.length !== 1) throw Error("UNIVERSAL_ORIGINAL_IMAGE_BOUND");
+  if (originalPng.length > 1) throw Error("UNIVERSAL_ORIGINAL_IMAGE_BOUND");
   const prepared = sources
     .map((s, index) =>
       prepare(
@@ -251,7 +251,7 @@ function pinManifest(
             ? { preparedText: new TextDecoder().decode(s.bytes) }
             : {}),
         },
-        originalPng ? "A_DIRECT" : "B_PREPARED",
+        s.mime === "image/png" && s.prepared === undefined ? "A_DIRECT" : "B_PREPARED",
         {
           mimes: ["text/plain", "text/html", "image/png", "image/jpeg"],
           modalities: ["TEXT", "IMAGE"],
@@ -419,23 +419,54 @@ export function projectUniversalResponse(
     [],
     base.taskId,
   );
-  const visual = projectUniversalVisualReview(interpretation, dispatch);
-  if (visual)
+  const quality = projectImportQuality(interpretation, inspection, ready);
+  const wire = compactSchema.safeParse(interpretation);
+  const visual = projectUniversalVisualReview(interpretation, dispatch, inspection);
+  if (visual) {
+    const visualTokens = new Set(visual.quality.reviewableTokens);
+    const previous = inspection.proposals;
+    const objects = [
+      ...(previous?.objects ?? []).filter((o) => !visualTokens.has(o.token)),
+      ...visual.proposals.objects,
+    ];
     inspection = {
       ...inspection,
       schemaValidity: "VALID",
       businessCandidateValidation: "ACCEPTED",
-      proposals: visual.proposals,
+      proposals: {
+        ...(previous ?? visual.proposals),
+        objects: wire.success
+          ? wire.data.items.flatMap((item) => objects.filter((o) => o.token === item.id))
+          : objects,
+        documents: [
+          ...(previous?.documents ?? []),
+          ...visual.proposals.documents.filter(
+            (d) => !previous?.documents.some((p) => p.id === d.id),
+          ),
+        ],
+        reviews: [...(previous?.reviews ?? []), ...visual.proposals.reviews],
+      },
     };
-  const wire = compactSchema.safeParse(interpretation);
+    quality.decisions = quality.decisions.map(
+      (decision) =>
+        visual.quality.decisions.find((d) => d.token === decision.token) ?? decision,
+    );
+    quality.acceptedTokens = quality.decisions
+      .filter((d) => d.tier === "HIGH_CONFIDENCE")
+      .map((d) => d.token);
+    quality.reviewableTokens = quality.decisions
+      .filter((d) => d.tier === "REVIEWABLE")
+      .map((d) => d.token);
+    quality.abstainedTokens = quality.decisions
+      .filter((d) => d.tier === "ABSTAIN")
+      .map((d) => d.token);
+  }
   const sourceIssues = wire.success
     ? wire.data.issues.map(([index, reason]) => ({
         sourceId: ready[index]?.sourceId ?? "UNKNOWN",
         reason,
       }))
     : [];
-  const quality =
-    visual?.quality ?? projectImportQuality(interpretation, inspection, ready);
   const minimumFacts = (inspection.proposals?.objects ?? []).map(
     projectUniversalMinimumFacts,
   );

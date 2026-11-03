@@ -8,11 +8,11 @@ import {
 } from "../repositories/__fixtures__/captureBatchAssessment";
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
 import { createUniversalPhotoRelevanceActions } from "./universalPhotoRelevanceActions";
-import { assertSinglePngPhotoConsent } from "./universalPhotoConsent";
+import { assertPngPhotoConsent } from "./universalPhotoConsent";
 
-async function setup() {
+async function setup(mixed = false) {
   const f = fixture(true, 75),
-    request = f.request(),
+    request = f.request(mixed ? 3 : 1),
     trip = randomUUID();
   request.context.tripPrior = { id: trip, origin: "PRIOR", observedAt: now() };
   Object.assign(request.inputs[0], {
@@ -23,7 +23,14 @@ async function setup() {
   const bytes = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
   const job = await f.submissions.submit(
     request,
-    new Map([[request.inputs[0].id, async () => ({ bytes })]]),
+    new Map(
+      request.inputs.map((input) => [
+        input.id,
+        async () => ({
+          bytes: input.kind === "IMAGE" ? bytes : new TextEncoder().encode("typed note"),
+        }),
+      ]),
+    ),
   );
   f.sql
     .prepare(
@@ -55,28 +62,41 @@ async function setup() {
     extract,
   });
   const check = (signal?: AbortSignal) =>
-    assertSinglePngPhotoConsent(context, request.jobId, deps, signal);
+    assertPngPhotoConsent(context, request.jobId, deps, signal);
   return { f, request, job, trip, context, actions, check, deps, extract };
 }
-it("blocks stale Continue after normal Source assignment, then accepts only newly chosen revision without queue changes", async () => {
-  const x = await setup(),
-    id = x.request.inputs[0].id;
-  const one = await x.actions.screen(x.request.jobId, id);
-  await x.actions.choose(x.request.jobId, one.revision, one.decision, "CONTINUE_WITH_AI");
-  await x.f.captures.assign(x.job.inputs[0].captureId!, x.trip, 1);
-  const before = x.f.sql.prepare("SELECT * FROM sync_operations").all();
-  await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
-  const two = await x.actions.screen(x.request.jobId, id);
-  expect(two.decision.pin.captureRevision).toBe(2);
-  expect(two.decision.choice).toBe("UNDECIDED");
-  await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
-  await x.actions.choose(x.request.jobId, two.revision, two.decision, "CONTINUE_WITH_AI");
-  expect((await x.check()).captureRevision).toBe(2);
-  x.f.reopen();
-  expect((await x.check()).captureRevision).toBe(2);
-  expect(x.f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
-  expect(x.extract).toHaveBeenCalledTimes(2);
-});
+it.each([false, true])(
+  "blocks stale Continue then accepts only exact PNG revision (mixed=%s)",
+  async (mixed) => {
+    const x = await setup(mixed),
+      id = x.request.inputs[0].id;
+    const one = await x.actions.screen(x.request.jobId, id);
+    await x.actions.choose(
+      x.request.jobId,
+      one.revision,
+      one.decision,
+      "CONTINUE_WITH_AI",
+    );
+    await x.f.captures.assign(x.job.inputs[0].captureId!, x.trip, 1);
+    const before = x.f.sql.prepare("SELECT * FROM sync_operations").all();
+    await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
+    const two = await x.actions.screen(x.request.jobId, id);
+    expect(two.decision.pin.captureRevision).toBe(2);
+    expect(two.decision.choice).toBe("UNDECIDED");
+    await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
+    await x.actions.choose(
+      x.request.jobId,
+      two.revision,
+      two.decision,
+      "CONTINUE_WITH_AI",
+    );
+    expect((await x.check()).captureRevision).toBe(2);
+    x.f.reopen();
+    expect((await x.check()).captureRevision).toBe(2);
+    expect(x.f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
+    expect(x.extract).toHaveBeenCalledTimes(2);
+  },
+);
 it("missing, uncertain and skipped choices never qualify paid analysis", async () => {
   const x = await setup();
   await x.f.captures.assign(x.job.inputs[0].captureId!, x.trip, 1);
@@ -92,14 +112,14 @@ it("rejects cancellation, foreign Account and a changed retained Trip", async ()
   controller.abort();
   await expect(x.check(controller.signal)).rejects.toThrow("PHOTO_IMPORT_CANCELLED");
   await expect(
-    assertSinglePngPhotoConsent(
+    assertPngPhotoConsent(
       { ...x.context, accountId: randomUUID() },
       x.request.jobId,
       x.deps,
     ),
   ).rejects.toThrow("Account changed");
   await expect(
-    assertSinglePngPhotoConsent(
+    assertPngPhotoConsent(
       { ...x.context, tripId: randomUUID() },
       x.request.jobId,
       x.deps,
@@ -124,14 +144,14 @@ it("rejects a newer choice or cancellation that arrives during the original read
     return original;
   };
   await expect(
-    assertSinglePngPhotoConsent(x.context, x.request.jobId, {
+    assertPngPhotoConsent(x.context, x.request.jobId, {
       ...x.deps,
       captures: { getForSourceHandoff },
     }),
   ).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
   const controller = new AbortController();
   await expect(
-    assertSinglePngPhotoConsent(
+    assertPngPhotoConsent(
       x.context,
       x.request.jobId,
       {

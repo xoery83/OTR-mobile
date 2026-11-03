@@ -11,7 +11,7 @@ import {
 } from "@/domain/capture/photoImportRelevance";
 
 // Read-only pre-paid fence. Source Start owns Trip assignment; this never rebinds consent.
-export async function assertSinglePngPhotoConsent(
+export async function assertPngPhotoConsent(
   context: AccountRequestContext,
   jobId: string,
   dependencies: {
@@ -35,11 +35,12 @@ export async function assertSinglePngPhotoConsent(
   await current();
   const job = await dependencies.submissions.reopen(jobId, context);
   await current();
-  const input = job.inputs[0];
+  const images = job.inputs.filter((input) => input.kind === "IMAGE");
+  const input = images[0];
   if (
     job.batch.accountId !== context.accountId ||
     job.batch.context.tripPrior?.id !== context.tripId ||
-    job.inputs.length !== 1 ||
+    images.length !== 1 ||
     !input ||
     input.state !== "ACCEPTED" ||
     input.kind !== "IMAGE" ||

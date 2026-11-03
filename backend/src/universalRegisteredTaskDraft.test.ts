@@ -246,30 +246,86 @@ it("transmits the original PNG inline with its exact source alias/hash and no OC
   ]);
 });
 
-it.each([
-  "mixed",
-  "second-image",
-  "oversize",
-  "changed-bytes",
-  "raw-jpeg",
-  "bad-prepared",
-])("rejects %s before producing a paid image Task", async (failure) => {
-  const f = imageFixture();
-  const r = f.manifest.representations[0];
-  let error = "ORIGINAL_PREFLIGHT_NOT_READY";
-  if (failure === "mixed" || failure === "second-image") {
-    const other = fixture().manifest.representations[0];
-    Object.assign(other, {
-      accountId: r.accountId,
-      tripId: r.tripId,
-      batchId: r.batchId,
-    });
-    if (failure === "second-image")
+it.each(["second-image", "oversize", "changed-bytes", "raw-jpeg", "bad-prepared"])(
+  "rejects %s before producing a paid image Task",
+  async (failure) => {
+    const f = imageFixture();
+    const r = f.manifest.representations[0];
+    let error = "ORIGINAL_PREFLIGHT_NOT_READY";
+    if (failure === "second-image") {
+      const other = fixture().manifest.representations[0];
       Object.assign(other, {
-        mime: r.mime,
-        bytes: r.bytes,
-        originalSha256: r.originalSha256,
+        accountId: r.accountId,
+        tripId: r.tripId,
+        batchId: r.batchId,
       });
+      if (failure === "second-image")
+        Object.assign(other, {
+          mime: r.mime,
+          bytes: r.bytes,
+          originalSha256: r.originalSha256,
+        });
+      f.manifest.representations.push(other);
+      f.binding.inputs.push({
+        ...f.binding.inputs[0],
+        id: other.inputId,
+        source_id: other.sourceId,
+        representation_id: other.representationId,
+        payload_sha256: other.originalSha256,
+        byte_count: other.bytes.length,
+      });
+      error = "UNIVERSAL_ORIGINAL_IMAGE_BOUND";
+    } else if (failure === "oversize") {
+      r.bytes = Buffer.alloc(4194305);
+      r.originalSha256 = createHash("sha256").update(r.bytes).digest("hex");
+      Object.assign(f.binding.inputs[0], {
+        payload_sha256: r.originalSha256,
+        byte_count: r.bytes.length,
+      });
+      error = "4194304";
+    } else if (failure === "changed-bytes") {
+      r.bytes = Buffer.from("changed");
+      error = "SOURCE_BINDING";
+    } else if (failure === "raw-jpeg") r.mime = "image/jpeg";
+    else
+      (r as BoundRepresentation).prepared = {
+        bytes: r.bytes,
+        mime: "image/jpeg",
+        originalSha256: r.originalSha256,
+        submittedSha256: "f".repeat(64),
+        operations: ["UNVERIFIED"],
+      };
+    await expect(
+      buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection),
+    ).rejects.toThrow(error);
+  },
+);
+it("pins one upfront PNG, sealed PDF text and typed text in the same immutable Task", async () => {
+  const f = imageFixture();
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  for (const index of [1, 2]) {
+    const other: ReturnType<typeof fixture>["manifest"]["representations"][number] &
+      Pick<BoundRepresentation, "pdfSource"> = {
+      ...fixture().manifest.representations[0],
+      accountId: f.binding.actorId,
+      tripId: f.binding.tripId,
+      batchId: f.binding.batchId,
+    };
+    other.bytes = Buffer.from(
+      index === 1 ? "PDF first\r\n\r\n\r\nline\n" : "Typed note  \n",
+    );
+    other.originalSha256 = createHash("sha256").update(other.bytes).digest("hex");
+    if (index === 1)
+      other.pdfSource = {
+        original: {
+          representationId: randomUUID(),
+          sha256: "d".repeat(64),
+          byteCount: 1676,
+        },
+        sealSha256: "e".repeat(64),
+        pageMapSha256: "f".repeat(64),
+        transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+      };
     f.manifest.representations.push(other);
     f.binding.inputs.push({
       ...f.binding.inputs[0],
@@ -278,29 +334,26 @@ it.each([
       representation_id: other.representationId,
       payload_sha256: other.originalSha256,
       byte_count: other.bytes.length,
+      ...(other.pdfSource ? { pdfSource: other.pdfSource } : {}),
     });
-    error = "UNIVERSAL_ORIGINAL_IMAGE_BOUND";
-  } else if (failure === "oversize") {
-    r.bytes = Buffer.alloc(4194305);
-    r.originalSha256 = createHash("sha256").update(r.bytes).digest("hex");
-    Object.assign(f.binding.inputs[0], {
-      payload_sha256: r.originalSha256,
-      byte_count: r.bytes.length,
-    });
-    error = "4194304";
-  } else if (failure === "changed-bytes") {
-    r.bytes = Buffer.from("changed");
-    error = "SOURCE_BINDING";
-  } else if (failure === "raw-jpeg") r.mime = "image/jpeg";
-  else
-    (r as BoundRepresentation).prepared = {
-      bytes: r.bytes,
-      mime: "image/jpeg",
-      originalSha256: r.originalSha256,
-      submittedSha256: "f".repeat(64),
-      operations: ["UNVERIFIED"],
-    };
-  await expect(
-    buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection),
-  ).rejects.toThrow(error);
+  }
+  const draft = await buildUniversalRegisteredTaskDraft(
+    f.binding,
+    f.manifest,
+    f.selection,
+  );
+  expect(draft).toEqual(
+    await buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection),
+  );
+  expect(draft.task.task_id).toBe(f.binding.taskId);
+  expect(draft.task.input_pins).toHaveLength(3);
+  expect(draft.attempt.descriptor_snapshot.modalities).toEqual(["IMAGE", "TEXT"]);
+  expect(draft.task.input_pins[1]).toMatchObject({
+    transform_sha256: PDF_V2_OPTIONS_SHA,
+  });
+  const bindings = JSON.parse(draft.marker.toString()).sourceBindings;
+  expect(bindings.map((b: { alias: string }) => b.alias)).toEqual(["S0", "S1", "S2"]);
+  expect(bindings[0].submittedSha256).toBe(bindings[0].originalSha256);
+  expect(bindings[1].submittedSha256).not.toBe(bindings[1].originalSha256);
+  expect(bindings[2].submittedSha256).not.toBe(bindings[2].originalSha256);
 });

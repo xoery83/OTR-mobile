@@ -1,10 +1,13 @@
+import { universalResultSchema } from "../../src/data/api/universalImportContracts";
 import { randomUUID, createHash } from "node:crypto";
 import { expect, it } from "vitest";
 import {
   prepareUniversalDispatch,
   projectUniversalResponse,
   UNIVERSAL_IMPORT_VERSION,
+  type BoundRepresentation,
 } from "./universalImport";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 
 function fixture() {
   const accountId = randomUUID(),
@@ -114,3 +117,155 @@ it("keeps separate visual candidates stable across repeated response recovery", 
   expect(new Set(first.candidates.map((c: any) => c.id)).size).toBe(2);
   expect(first.quality?.acceptedTokens).toEqual([]);
 });
+it.each([0, 2])(
+  "keeps independent PDF/text and visual proposals when the PNG is input %s",
+  (imageIndex) => {
+    const f = fixture();
+    const image = f.dispatch.manifest.representations[0];
+    const source = (text: string): BoundRepresentation => {
+      const bytes = Buffer.from(text);
+      return {
+        ...image,
+        inputId: randomUUID(),
+        sourceId: randomUUID(),
+        representationId: randomUUID(),
+        mime: "text/plain",
+        bytes,
+        originalSha256: createHash("sha256").update(bytes).digest("hex"),
+      };
+    };
+    const pdf = source("Museum walk\n2026-11-02");
+    pdf.pdfSource = {
+      original: {
+        representationId: randomUUID(),
+        sha256: "d".repeat(64),
+        byteCount: 1676,
+      },
+      sealSha256: "e".repeat(64),
+      pageMapSha256: "f".repeat(64),
+      transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+    };
+    const text = source("Harbour QA Hotel\n2026-11-02\n2026-11-03");
+    const representations = [pdf, text];
+    representations.splice(imageIndex, 0, image);
+    const dispatch = prepareUniversalDispatch(
+      image.accountId,
+      image.batchId,
+      {
+        version: UNIVERSAL_IMPORT_VERSION,
+        tripId: image.tripId,
+        taskId: f.dispatch.base.taskId,
+      },
+      { ...f.dispatch.manifest, representations },
+    );
+    const field = (r: BoundRepresentation, path: string, raw: string) => {
+      const start = r.bytes.indexOf(raw);
+      return [
+        representations.indexOf(r),
+        path,
+        raw,
+        start,
+        start + Buffer.byteLength(raw),
+      ];
+    };
+    const output = {
+      ...f.output,
+      issues: [] as [number, string][],
+      items: [
+        {
+          ...f.output.items[0],
+          f: f.output.items[0].f.map((v) => [imageIndex, ...v.slice(1)]),
+        },
+        {
+          id: "pdf",
+          kind: "P1",
+          subtype: "ACTIVITY",
+          f: [
+            field(pdf, "activity.name", "Museum walk"),
+            field(pdf, "activity.date", "2026-11-02"),
+          ],
+        },
+        {
+          id: "hotel",
+          kind: "P3",
+          subtype: "ACCOMMODATION",
+          f: [
+            field(text, "property.name", "Harbour QA Hotel"),
+            field(text, "check_in.date", "2026-11-02"),
+            field(text, "check_out.date", "2026-11-03"),
+          ],
+        },
+      ],
+    };
+    const run = () =>
+      projectUniversalResponse(dispatch, {
+        output,
+        providerReceipt: { outcome: "SETTLED", requestId: "synthetic-mixed-no-network" },
+      });
+    const result = universalResultSchema.parse(run());
+    expect(result.candidates.map((c) => c.token)).toEqual(["photo", "pdf", "hotel"]);
+    expect(result.quality?.acceptedTokens).toEqual(["pdf", "hotel"]);
+    expect(result.quality?.reviewableTokens).toEqual(["photo"]);
+    expect(result.candidates[0]).toMatchObject({
+      visualReviewRequired: true,
+      presentationTier: "REVIEWABLE",
+    });
+    expect(
+      result.candidates[0].fields.every(
+        (v) => v.sourceId === `S${imageIndex}` && "region" in v,
+      ),
+    ).toBe(true);
+    expect(run()).toEqual(result);
+    expect(result.canonicalWrites).toBe(false);
+    for (const [source, token] of [
+      [pdf, "pdf"],
+      [text, "hotel"],
+    ] as const) {
+      const issueIndex = representations.indexOf(source);
+      output.issues = [[issueIndex, "cancellation notice"]];
+      const isolated = universalResultSchema.parse(run());
+      expect(isolated.candidates.map((c) => c.token)).toEqual([
+        "photo",
+        token === "pdf" ? "hotel" : "pdf",
+      ]);
+      expect(isolated.quality?.reviewableTokens).toEqual(["photo"]);
+      expect(isolated.quality?.abstainedTokens).toContain(token);
+      expect(isolated.unresolved).toContainEqual({
+        sourceId: `S${issueIndex}`,
+        reason: "cancellation notice",
+      });
+    }
+    const textIndex = representations.indexOf(text);
+    for (const issue of [
+      [imageIndex, "cancellation notice"],
+      [99, "cancellation notice"],
+      [textIndex, "uncertain target across sources"],
+    ] as [number, string][]) {
+      output.issues = [issue];
+      expect(universalResultSchema.parse(run()).quality?.reviewableTokens).not.toContain(
+        "photo",
+      );
+    }
+    output.issues = [[textIndex, "cancellation notice"]];
+    const hotel = output.items.pop()!;
+    expect(universalResultSchema.parse(run()).quality?.reviewableTokens).not.toContain(
+      "photo",
+    );
+    output.items.push(hotel);
+    output.items[1].f.push([
+      imageIndex,
+      "activity.venue",
+      "Harbour",
+      { x: 0, y: 0, w: 1, h: 1 },
+    ]);
+    expect(universalResultSchema.parse(run()).quality?.reviewableTokens).not.toContain(
+      "photo",
+    );
+    output.items[1].f.pop();
+    output.issues = [];
+    (output.items[0].f[0][3] as { w: number }).w = 2;
+    const partial = universalResultSchema.parse(run());
+    expect(partial.candidates.map((c) => c.token)).toEqual(["pdf", "hotel"]);
+    expect(partial.quality?.abstainedTokens).toContain("photo");
+  },
+);

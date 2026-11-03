@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_PASS_SCOPED_SYNC_CONTRACT_PASS_NOT_CLOUD",
+  "checks": {
+    "suites": 10,
+    "tests": 86,
+    "strictRoots": 12,
+    "strict": "PASS",
+    "format": "PASS",
+    "diff": "PASS",
+    "lint": "PASS: 0 errors / 0 warnings"
+  },
+  "files": {
+    "backend/src/universalImport.ts": "15334854740113c4b959e08f7c0a529f408067651b2e71cd330b8338da51b742",
+    "backend/src/universalRegisteredTaskDraft.test.ts": "5b70e6ca9dcd7f76c2676ff5789d1443e3d3bcc72d9f8a39d86e48247894ddc4",
+    "backend/src/universalVisualReview.test.ts": "f250ae510fd4ad9b31ef1a1710a8908f4314adb997fe3052ad73462b7fece995",
+    "backend/src/universalVisualReview.ts": "14ec5034dacc9a1a7ad53466a98ba66934704e9f689f8df58f63a20f1e2ab0fa",
+    "src/data/operations/defaultUniversalOriginalSource.test.ts": "42f868832921b68a25d365538901ffbe5dae9e70394b734a626cc6b4a8f4869f",
+    "src/data/operations/defaultUniversalOriginalSource.ts": "116ee0dfe7dcd91892c86f5c3cca9b4424af59a4988a9d91699cbe4a55499d76",
+    "src/data/operations/defaultUniversalPhotoConsent.ts": "325c56b0b5c25ea0f2d657bfd746c6441c5bd740f2a809cac6cb0d88c6cdcb3f",
+    "src/data/operations/universalOriginalBatch.ts": "aa51fa890696fa8c593c116cb6fb10deb6e8501aaccd13804caa9faa70c2dc9e",
+    "src/data/operations/universalPhotoConsent.test.ts": "bf007428d4fac2e90c87a9d1cd83895b02cf5c2a3c9153e4ebe512740ace8622",
+    "src/data/operations/universalPhotoConsent.ts": "275d2cf07052222eed7fb75f3e3af43adcf767c3c07279fd9db3a995581e0fcf",
+    "src/data/repositories/capturePngSource.test.ts": "9a7374bbf5f28ef1f45f4077f360125fe920d9664d1274bc45053d86d350dd6b",
+    "src/data/repositories/captureSourceAdmissionRepository.ts": "8f6ea7e6151804f12c3d2b25ee2bf659fa849d1c7106af8e69362b37cb301ae7"
+  },
+  "remaining": [
+    "ordinary Native PNG upload/verify/seal owning interface",
+    "installed mixed Source proof qualification",
+    "mixed retained reads after expiry",
+    "current Native signed build/pixel/gesture evidence",
+    "normal QA identity/Trip qualification",
+    "fresh Source/Provider/Actor/Price authority and Root2 deployment/window",
+    "authorized mixed Cloud E2E and Vision acceptance"
+  ]
+}

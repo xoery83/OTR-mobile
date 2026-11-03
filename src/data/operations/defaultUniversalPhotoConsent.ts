@@ -7,7 +7,7 @@ import {
   captureStorageDependencies,
 } from "../repositories/defaultLocalCaptureInboxRepository";
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
-import { assertSinglePngPhotoConsent } from "./universalPhotoConsent";
+import { assertPngPhotoConsent } from "./universalPhotoConsent";
 
 // Explicit Prepare/Resume fence only. No OCR, assignment, decisions write or network.
 export async function assertDefaultUniversalPhotoConsent(
@@ -16,9 +16,9 @@ export async function assertDefaultUniversalPhotoConsent(
   options: { getAccountId(): Promise<string>; assertCurrent(): void },
 ) {
   if (
-    model.inputs.length !== 1 ||
-    model.inputs[0].kind !== "IMAGE" ||
-    model.inputs[0].declaredContentType !== "image/png"
+    !model.inputs.some(
+      (input) => input.kind === "IMAGE" && input.declaredContentType === "image/png",
+    )
   )
     return;
   options.assertCurrent();
@@ -34,7 +34,7 @@ export async function assertDefaultUniversalPhotoConsent(
     options.assertCurrent();
     return id;
   };
-  const pin = await assertSinglePngPhotoConsent(context, model.batch.jobId, {
+  const pin = await assertPngPhotoConsent(context, model.batch.jobId, {
     getAccountId: guardedAccount,
     submissions,
     captures,
