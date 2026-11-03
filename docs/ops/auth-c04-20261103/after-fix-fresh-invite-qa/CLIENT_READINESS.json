@@ -1,0 +1,43 @@
+{
+  "status": "CLIENT_PREPARED_NOT_AUTHORIZED_NOT_EXECUTED",
+  "caseSHA256": "730dc9902aac7c37f8df0ac725d5bedf0896998261b2d2175464eee8cfa9d4be",
+  "root2ControllerCandidate": "7e47ff0772bcc2e5da9bdb822e2efa8136da2de6",
+  "validation": {
+    "targetedSuites": 3,
+    "passed": 55,
+    "typecheck": "PASS",
+    "scopedESLint": "PASS",
+    "headlessBundleImport": "PASS_WITH_FETCH_FORBIDDEN_NOT_INVOKED"
+  },
+  "independentReview": {
+    "reviewer": "auth_phase1_review",
+    "status": "SCOPED_NO_BLOCKER_FRESH_INVITATION_QUALIFIER",
+    "newTestsPassed": 2,
+    "stableSkipped": 35,
+    "checks": [
+      "Exact Root2 eight-field wire/mode/status/action and case bytes",
+      "Mode mutual rejection",
+      "Qualification before any normal Session",
+      "Existing scenario requalification and independent expected binding retained"
+    ]
+  },
+  "noExternalOperations": true,
+  "executionAuthorized": false,
+  "remaining": [
+    "Root1 source integration of DEV adapters/controller",
+    "Complete fixed Root2 business Gate reviewed and directly Owner approved",
+    "Actual fresh PG/identity/old-expiry/software/CAS qualification",
+    "Ready operator handshake before clock; independent dual timers and active qualifier",
+    "Normal A/B OTP, single fresh intent, independent receipts/member read/isolation, cleanup and Host closure"
+  ],
+  "files": {
+    "scripts/auth/member-claim-qa-control-read.ts": "27cc78daa7f16123d45f08affb168f69e3b4aaf601fd6722e2e5d3fcbf998ac7",
+    "scripts/auth/member-claim-qa-readback.ts": "471ed12b019ab54afe852af2cbfa1319f24a455144b8ed78734f4046f95f39c0",
+    "scripts/auth/member-claim-qa-recovery-window.ts": "62a34069727099f67e0a59bbea695b3a4d6e4a061e3ffd49d0728652faf4c652",
+    "scripts/auth/member-claim-qa-resume-driver.ts": "5272e4244cb8fe12b83aa81870d8eb10c357470423f0f18dec92386f086fedbe",
+    "backend/src/authMemberClaimQaReadback.test.ts": "a89e2b589d79d3290a83eb3a7923e4cf5c8de92a9f3699a920924c8547f90043",
+    "backend/src/authMemberClaimQaRecoveryWindow.test.ts": "b5bb1dc87e0542c9b99b349a175e3073f7d20e47f8fc5b2d5bff02621510f9a5",
+    "backend/src/authMemberClaimQaResumeDriver.test.ts": "51d06751ce4136efcd3874595dd65548a45246c75e693bdfb24dc228f03f337b",
+    "docs/ops/auth-c04-20261103/after-fix-fresh-invite-qa/CASE_CANDIDATE.json": "730dc9902aac7c37f8df0ac725d5bedf0896998261b2d2175464eee8cfa9d4be"
+  }
+}

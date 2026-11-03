@@ -1,0 +1,62 @@
+{
+  "status": "SERVER_VERIFIED_SOFTWARE_DEFAULT_CLOSED",
+  "observedAt": "2026-11-03T19:36:46.769800+00:00",
+  "sourceMain": "59a5415d2458f82fe2998a12797d7d2ea5811de0",
+  "containerId": "0272263628c58f9710af75526968844542ad8611f048a992f2f0e60685536c2c",
+  "image": "sha256:5938c5678dfec5a920c9f902805105ec8d03507c82d5eaaba2e20ca69f52da83",
+  "configSHA256": "490e1651f2a4bc3f956541fa5cfd032c190b364f244099c2bd4d9829533e5412",
+  "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "configurationFilesVerified": 18,
+  "mountedFilesVerified": 5,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "server-capture.mjs": "429fffebebede7606e06c670ae6a5a7cd91567a8fc6c2427661025671c1fc4b7",
+    "server.mjs": "05db4e6354cfd07b10d5676f992167ab7c17aa9d8ac7e38974318adf39fc3e20"
+  },
+  "http": [
+    {
+      "origin": "http://127.0.0.1:8787",
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:8787",
+      "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    },
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    }
+  ],
+  "authMcpFiniteSelectorsAbsent": true,
+  "lockReleasedAndIndependentlyAvailable": true,
+  "retainedDefaultContainer": "d5ed2ea737f4ef6221301eb17ec64f87f4bf6efec7f3f1bc8487c5b1fa3d9c15",
+  "retainedDefaultImage": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+  "workers": {
+    "otr-universal-pdf-worker.service": {
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "2229750",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "otr-universal-png-worker.service": {
+      "RuntimeMaxUSec": "50min",
+      "MainPID": "2229773",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "businessInvocations": 0,
+  "providerInvocations": 0,
+  "runtimeScopeRenewed": false
+}

@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import template from "../../docs/ops/auth-c04-20261103/finite-qa-candidate/QA_CASE_TEMPLATE.json";
-import { createMemberClaimQaReadback } from "../../scripts/auth/member-claim-qa-readback";
+import freshInvitation from "../../docs/ops/auth-c04-20261103/after-fix-fresh-invite-qa/CASE_CANDIDATE.json";
+import {
+  createMemberClaimQaReadback,
+  createFreshInvitationQaReadback,
+} from "../../scripts/auth/member-claim-qa-readback";
 import { memberClaimIntentDigest } from "./tripMemberClaimAuthority";
 import type { MemberClaimCommand } from "../../src/data/api/memberClaimContracts";
 
@@ -39,6 +43,38 @@ function fixture() {
   }));
   return { query, port: createMemberClaimQaReadback(qa, query) };
 }
+
+it("keeps fresh invitation and original UNKNOWN readback scopes separate", async () => {
+  const fresh = { ...qa, ...freshInvitation.qaCase, projectRef: qa.projectRef };
+  const query = vi.fn(async (_sql: string): Promise<unknown> => ({
+    rows: [{ result: null }],
+  }));
+  expect(() => createMemberClaimQaReadback(fresh, query)).toThrow("FIXED_CASE_REQUIRED");
+  expect(() => createFreshInvitationQaReadback(qa, query)).toThrow("FIXED_CASE_REQUIRED");
+  const port = createFreshInvitationQaReadback(fresh, query);
+  expect(port).not.toHaveProperty("preflight");
+  const oldClaim: MemberClaimCommand = {
+    kind: "CLAIM_PERSON",
+    operationId: qa.claimOperationId,
+    tripId: qa.tripId,
+    personId: qa.personId,
+    inviteId: randomUUID(),
+    explicitConsent: true,
+  };
+  await expect(port.readReceipt(oldClaim, qa.claimantAccountId)).rejects.toThrow();
+  expect(query).not.toHaveBeenCalled();
+  const command: MemberClaimCommand = {
+    kind: "ISSUE_TARGETED_INVITE",
+    operationId: fresh.issueOperationId,
+    tripId: fresh.tripId,
+    personId: fresh.personId,
+    target: { kind: "REGISTERED_ACCOUNT", accountId: fresh.claimantAccountId },
+  };
+  await expect(port.readReceipt(command, fresh.ownerAccountId)).rejects.toThrow();
+  expect(query).toHaveBeenCalledOnce();
+  expect(query.mock.calls[0][0]).toContain(fresh.issueOperationId);
+  expect(query.mock.calls[0][0]).not.toContain(qa.issueOperationId);
+});
 
 it("reads the exact directed invitation observation through one existing read-only query", async () => {
   const f = fixture(),

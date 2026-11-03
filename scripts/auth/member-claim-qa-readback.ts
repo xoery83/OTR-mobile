@@ -1,5 +1,6 @@
 import { z } from "zod";
 import template from "../../docs/ops/auth-c04-20261103/finite-qa-candidate/QA_CASE_TEMPLATE.json";
+import freshInvitation from "../../docs/ops/auth-c04-20261103/after-fix-fresh-invite-qa/CASE_CANDIDATE.json";
 import {
   parseMemberClaimQaCase,
   type MemberClaimQaCase,
@@ -37,12 +38,13 @@ export const memberClaimQaInviteObservationSchema = z.strictObject({
 });
 
 // DEV operator readback only. Root supplies its existing read-only SqlTransport; never a normal A/B operation identity.
-export function createMemberClaimQaReadback(
+function createFixedReadback(
   input: MemberClaimQaCase,
   query: (sql: string) => Promise<unknown>,
+  fixedCase: Readonly<Record<string, string>>,
 ) {
   const qa = Object.freeze(parseMemberClaimQaCase(input));
-  for (const [key, value] of Object.entries(template.qaCase))
+  for (const [key, value] of Object.entries(fixedCase))
     if (qa[key as keyof MemberClaimQaCase] !== value)
       throw Error("C04_READBACK_FIXED_CASE_REQUIRED");
   const uuid = (value: string) => `'${z.uuid().parse(value)}'::uuid`;
@@ -134,4 +136,24 @@ export function createMemberClaimQaReadback(
       return receipt;
     },
   };
+}
+
+export function createMemberClaimQaReadback(
+  input: MemberClaimQaCase,
+  query: (sql: string) => Promise<unknown>,
+) {
+  return createFixedReadback(input, query, template.qaCase);
+}
+
+// Separate fixed QA intent only; this cannot qualify or replay the prior UNKNOWN.
+export function createFreshInvitationQaReadback(
+  input: MemberClaimQaCase,
+  query: (sql: string) => Promise<unknown>,
+) {
+  const { readInvite, readReceipt } = createFixedReadback(
+    input,
+    query,
+    freshInvitation.qaCase,
+  );
+  return { readInvite, readReceipt };
 }

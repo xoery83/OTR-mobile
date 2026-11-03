@@ -1,0 +1,25 @@
+{
+  "rows": [
+    {
+      "result": {
+        "currentBLinkedPeople": 0,
+        "observedAt": "2026-11-03T19:50:31.405201+00:00",
+        "oldClaimReceiptCount": 0,
+        "person": {
+          "id": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+          "linkedAt": null,
+          "status": "unlinked",
+          "userId": null
+        },
+        "priorInvite": {
+          "expired": true,
+          "expiresAt": "2026-11-03T18:15:28+00:00",
+          "id": "eb671ca9-8610-4b93-aa1d-3e92a7bdbe65",
+          "status": "PENDING",
+          "targetAccount": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+          "usedCount": 0
+        }
+      }
+    }
+  ]
+}

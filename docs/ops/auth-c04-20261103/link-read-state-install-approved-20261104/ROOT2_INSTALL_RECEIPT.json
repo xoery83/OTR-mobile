@@ -1,0 +1,21 @@
+{
+  "status": "INSTALLED_INDEPENDENTLY_VERIFIED_RUNTIME_CLOSED",
+  "startedAt": "2026-11-03T19:28:57.210823+00:00",
+  "gateSHA256": "4c718bc72be06f73ac1245c90d95a0def4d50cc7defef33668a9a14eb77e3a79",
+  "installSQLSHA256": "94ee6ccb53f61aa59abeb345e628f75107afac490dcbd6bf710b3c75eaf1ed1e",
+  "disposition": "ACKNOWLEDGED",
+  "businessWrites": 0,
+  "verifiedAt": "2026-11-03T19:29:16.485517+00:00",
+  "functionBodyMD5": {
+    "trip_member_claim_read_state_allowed": "d1977767b0dc389ef5329e890491b5db",
+    "trip_member_claim_transaction": "c76f2a642deb21ca3bf86e056b2f9b32",
+    "trip_core_finite_read_state_guard": "731aa1c777f14b422fc9e9dd2f72af4f"
+  },
+  "nullableProofColumns": 3,
+  "nonemptyProofRows": 0,
+  "oldACLAndRLSUnchanged": true,
+  "helperOwnerOnly": true,
+  "newBusinessWindow": false,
+  "originalClaimRetried": false,
+  "rollbackExecuted": false
+}

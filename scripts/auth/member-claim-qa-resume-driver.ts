@@ -4,15 +4,20 @@ import {
   runRegisteredQaHostSession,
   registeredHostQa,
 } from "./registered-qa-host-session";
-import { createMemberClaimQaReadback } from "./member-claim-qa-readback";
-import { createRootMemberClaimQaResumeWindowQualifier } from "./member-claim-qa-control-read";
+import {
+  createMemberClaimQaReadback,
+  createFreshInvitationQaReadback,
+} from "./member-claim-qa-readback";
+import {
+  createRootMemberClaimQaResumeWindowQualifier,
+  createRootFreshInvitationQaWindowQualifier,
+} from "./member-claim-qa-control-read";
 import { resumeMemberClaimQaScenario } from "./member-claim-qa-scenario";
 
 type NormalAuth = Parameters<typeof createNormalRegisteredQaHostDependencies>;
 type Control = Parameters<typeof createRootMemberClaimQaResumeWindowQualifier>;
 
-// DEV-only composition, invoked only after exact approval and Root's active-window handshake.
-export function runMemberClaimQaResumeDriver(input: {
+type DriverInput = {
   windowId: string;
   expected: Control[0]["expected"];
   retainedIssue: Parameters<typeof resumeMemberClaimQaScenario>[1];
@@ -25,11 +30,20 @@ export function runMemberClaimQaResumeDriver(input: {
   now?: () => number;
   controlExecute?: Control[1];
   fetchImplementation?: typeof fetch;
-}) {
+};
+
+function runDriver(
+  input: DriverInput,
+  readbackFactory: (
+    qa: ReturnType<typeof parseMemberClaimQaCase>,
+    query: DriverInput["query"],
+  ) => Pick<ReturnType<typeof createMemberClaimQaReadback>, "readReceipt" | "readInvite">,
+  qualifierFactory = createRootMemberClaimQaResumeWindowQualifier,
+) {
   const qa = parseMemberClaimQaCase(input.expected.qaCase);
   // This parser rejects foreign fixture IDs before opening any normal session.
-  const readback = createMemberClaimQaReadback(qa, input.query);
-  const qualify = createRootMemberClaimQaResumeWindowQualifier(
+  const readback = readbackFactory(qa, input.query);
+  const qualify = qualifierFactory(
     {
       windowId: input.windowId,
       expected: input.expected,
@@ -71,5 +85,19 @@ export function runMemberClaimQaResumeDriver(input: {
       now: input.now,
       fetchImplementation: input.fetchImplementation,
     }),
+  );
+}
+
+// DEV-only composition, invoked only after exact approval and Root's active-window handshake.
+export function runMemberClaimQaResumeDriver(input: DriverInput) {
+  return runDriver(input, createMemberClaimQaReadback);
+}
+
+// A separately approved fresh invitation intent; the prior operations remain untouched.
+export function runFreshInvitationQaDriver(input: DriverInput) {
+  return runDriver(
+    input,
+    createFreshInvitationQaReadback,
+    createRootFreshInvitationQaWindowQualifier,
   );
 }

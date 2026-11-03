@@ -1,4 +1,4 @@
-# Auth Lane D — current handoff, 3 November 2026
+# Auth Lane D — current handoff, 4 November 2026
 
 Primary assignment: **AUTH-C04 — Invite / Claim / Multi-member**. Read this first;
 follow only the evidence/owning files needed for the next failure. Earlier detailed
@@ -17,13 +17,13 @@ have PASS_LOCAL_SCOPE_REFRESH_REVOKED. MemberRead/privateItemNegative/NativeCold
 MemberRevoke NOT_RUN. Root2 earlyclose independently verified: d5ed/3f02 healthy default restored,
 selectors absent and own timers/services inactive. Independent SQL confirms exact
 ISSUE receipt; CLAIM absent remainsUNKNOWN. Fixed Root2 execution receiptbd899ed0
-was directly read and matched against Auth journals. Core is now checking the
-read-state invalidation guard/context after the member UPDATE; exact denying
-object remains pending. Actual Root2 safe diagnostics show RPC/link/
+was directly read and matched against Auth journals. Root1 identified the exact denial in the existing read-state invalidation guard;
+the minimal transaction-context repair is now installed and independently checked. Actual Root2 safe diagnostics show RPC/link/
 SQLSTATE42501, aligned with Claim request664b31a9…/7226ms. Core request
 AUTH-C04-CLAIM-LINK42501-PREIMAGE-20261104 asks only affected UPDATE trigger/
 authority preimages; no permission expansion or retry. See hosted-original-resume-20261104.
-Do not reuse this consumed window or create replacement operations/invitation.
+Do not reuse this consumed window or replay the old UNKNOWN Claim. A separate
+new invitation requires its own exact business approval and fresh qualification.
 
 Local minimal fix now passes exact-guard RED→GREEN: existing private directed row
 gets server-only xid8/PID/originalClaim proof, verified only by a postgres-only
@@ -34,12 +34,30 @@ no role/GRANT/RLS expansion. Six affected unit suites69PASS/8skip, one new actua
 isolatedPG casePASS/oldcase skipped, types/scopedlintPASS. It proves canonical
 digest, stale-context/permission/defaultACL negatives, rollback and original
 receipt recovery after successfulCOMMIT/lostACK. Exact rollback preserves business
-rows. See link-read-state-context/VALIDATION.json and OWNER_GATE.md. Not installed;
+rows. See link-read-state-context/VALIDATION.json and OWNER_GATE.md. Installed:
 exact Gate4c718bc7 was directly approved (call7758ed4…), and Root1 final Core
 Review/main59a5415d source integration passed. Root2 verified the original reply;
-installation waits only for prior MCPe0d1 window closure/release, then fresh
-preimage/install/independent readback. No further Owner dispatch is required.
+installation completed after MCPe0d1 release at2026-11-03T19:29:16Z,
+independent Root2 metadata and Auth fixed-SQL body hashes match. Three nullable
+proof columns/helper owner-only ACL/unchanged old ACL-RLS/no proof/no active
+Claim verified. Runtime stays closed. Closed Backend release request
+AUTH-C04-CLOSED-BACKEND-20261104-01 (68c8a9ec) completed: newimage5938c567…
+/container02722636… independently healthy/closed at19:36:46Z; Auth compared
+compiled bundle bytes to actualreadback, normal health200/protected401 PASS,
+Env/HostConfig/mounts unchanged, selectors absent and lock released. Oldd5ed/3f02
+retained for software rollback. Initial inheritedCMD=true smoke was a harness
+issue, corrected to the actual Node command; no domain-code workaround.
+No further Owner dispatch is required.
 Approval/source receipts are in link-read-state-install-approved-20261104.
+
+Next lawful slice: separate fresh invitation preparation, not old Claim retry.
+Fixed case730dc990 uses new0b8927c2/ba97129d; original operations unchanged.
+Client3suites55PASS, types/lint/headless-no-network PASS, independent scoped
+Review NO_BLOCKER. Root2 controller7e47ff07 matches fresh-mode/action/status and
+dual absolute timers. No window/OTP/Session/business executed. Complete fixed new
+business Gate, Root1 DEV-source integration and direct Owner approval remain
+required; current installed software must be freshly pinned (Root2 later reports
+8805008f/bafa6517, not historical5938). See after-fix-fresh-invite-qa/.
 
 Independent operator review passed after hardcoded software-pin repair. Initial
 local10min wait expired with0OTP/0Session/no consumedmarker; its receipts preserved,

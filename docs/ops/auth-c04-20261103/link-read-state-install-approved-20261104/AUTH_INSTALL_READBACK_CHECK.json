@@ -1,0 +1,23 @@
+{
+  "status": "AUTH_INDEPENDENT_FIXED_SQL_AND_ROOT2_METADATA_MATCH",
+  "expectedFunctionBodyMD5": {
+    "trip_member_claim_read_state_allowed": "d1977767b0dc389ef5329e890491b5db",
+    "trip_member_claim_transaction": "c76f2a642deb21ca3bf86e056b2f9b32",
+    "trip_core_finite_read_state_guard": "731aa1c777f14b422fc9e9dd2f72af4f"
+  },
+  "checks": [
+    "Exact94ee SQL hash and installed3functionbodyMD5",
+    "Three nullable proof types/no columnACL",
+    "Postgres-only helperEXEC/SECDEF/pg_catalog",
+    "Private tableowner/RLS/zeroPolicy; no nonemptyproof/no activeClaimquery"
+  ],
+  "hostRuntimeClosed": "Root2 receipt; no Auth activation or independent business call",
+  "softwareDeployment": "SERVER_VERIFIED_SOFTWARE_DEFAULT_CLOSED",
+  "businessE2E": "NOT_RUN_AFTER_FIX",
+  "originalClaim4028": "UNKNOWN_NOT_RETRIED",
+  "softwareImage": "sha256:5938c5678dfec5a920c9f902805105ec8d03507c82d5eaaba2e20ca69f52da83",
+  "softwareContainer": "0272263628c58f9710af75526968844542ad8611f048a992f2f0e60685536c2c",
+  "compiledBundleHashesMatchActualReadback": true,
+  "isolatedHealthAndUnauthenticatedRejection": "PASS",
+  "runtimeSelectorsAbsentAndLockReleased": true
+}

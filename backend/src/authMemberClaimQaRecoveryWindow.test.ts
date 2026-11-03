@@ -4,6 +4,7 @@ import type { MemberClaimQaCase } from "./tripMemberClaimQa";
 import {
   createMemberClaimQaRecoveryWindowQualifier,
   createMemberClaimQaResumeWindowQualifier,
+  createFreshInvitationQaWindowQualifier,
 } from "../../scripts/auth/member-claim-qa-recovery-window";
 
 function fixture() {
@@ -44,6 +45,34 @@ it("accepts only a controller result bound to independently fixed expected ident
     createMemberClaimQaRecoveryWindowQualifier(f.options)(f.qaCase),
   ).resolves.toBeUndefined();
   expect(f.readControl).toHaveBeenCalledOnce();
+});
+
+it("requires separate fresh-invitation qualification and rejects either prior mode", async () => {
+  const f = fixture();
+  await expect(
+    createFreshInvitationQaWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow("UNQUALIFIED");
+  Object.assign(f.response, {
+    status: "AUTH_C04_RESUME_WINDOW_QUALIFIED",
+    executionMode: "ORIGINAL_ID_RESUME",
+    businessMutationAuthorized: true,
+  });
+  await expect(
+    createFreshInvitationQaWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow("UNQUALIFIED");
+  Object.assign(f.response, {
+    status: "AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED",
+    executionMode: "FRESH_INVITATION",
+  });
+  await expect(
+    createFreshInvitationQaWindowQualifier(f.options)(f.qaCase),
+  ).resolves.toBeUndefined();
+  await expect(
+    createMemberClaimQaResumeWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow("UNQUALIFIED");
+  await expect(
+    createMemberClaimQaRecoveryWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow("UNQUALIFIED");
 });
 it.each([
   "image",

@@ -19,13 +19,20 @@ type QualificationInput = {
 };
 
 // Expected identity is supplied from the frozen plan/staged CID, never learned from readControl().
-function createWindowQualifier(input: QualificationInput, resume: boolean) {
+function createWindowQualifier(
+  input: QualificationInput,
+  mode: "RECOVERY_ONLY" | "ORIGINAL_ID_RESUME" | "FRESH_INVITATION",
+) {
+  const recovery = mode === "RECOVERY_ONLY";
+  const statuses = {
+    RECOVERY_ONLY: "AUTH_C04_RECOVERY_WINDOW_QUALIFIED",
+    ORIGINAL_ID_RESUME: "AUTH_C04_RESUME_WINDOW_QUALIFIED",
+    FRESH_INVITATION: "AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED",
+  } as const;
   const controlSchema = expectedSchema.extend({
-    status: z.literal(
-      resume ? "AUTH_C04_RESUME_WINDOW_QUALIFIED" : "AUTH_C04_RECOVERY_WINDOW_QUALIFIED",
-    ),
-    executionMode: z.literal(resume ? "ORIGINAL_ID_RESUME" : "RECOVERY_ONLY"),
-    businessMutationAuthorized: z.literal(resume),
+    status: z.literal(statuses[mode]),
+    executionMode: z.literal(mode),
+    businessMutationAuthorized: z.literal(!recovery),
   });
   const expected = expectedSchema.parse(input.expected);
   const readControl = input.readControl;
@@ -35,7 +42,7 @@ function createWindowQualifier(input: QualificationInput, resume: boolean) {
   };
   require(
     Date.parse(expected.qaCase.closesAt) - Date.parse(expected.qaCase.opensAt) <=
-      (resume ? 1800000 : 900000) &&
+      (recovery ? 900000 : 1800000) &&
       Date.parse(expected.qaCase.inviteExpiresAt) - Date.parse(expected.qaCase.opensAt) <=
         600000,
   );
@@ -72,10 +79,14 @@ function createWindowQualifier(input: QualificationInput, resume: boolean) {
 }
 
 export function createMemberClaimQaRecoveryWindowQualifier(input: QualificationInput) {
-  return createWindowQualifier(input, false);
+  return createWindowQualifier(input, "RECOVERY_ONLY");
 }
 
 // A different, explicitly authorized mode; a read-only qualification can never pass here.
 export function createMemberClaimQaResumeWindowQualifier(input: QualificationInput) {
-  return createWindowQualifier(input, true);
+  return createWindowQualifier(input, "ORIGINAL_ID_RESUME");
+}
+
+export function createFreshInvitationQaWindowQualifier(input: QualificationInput) {
+  return createWindowQualifier(input, "FRESH_INVITATION");
 }
