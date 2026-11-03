@@ -8,8 +8,12 @@ import { captureAccountRequestContext } from "../../src/data/auth/accountRequest
 import { corePersonBindingSchema } from "../../src/domain/trip/tripCoreV2Read";
 import { itinerary_eventsSchema } from "../../src/domain/trip/tripCoreV2";
 import { memberClaimIntentDigest } from "../../backend/src/tripMemberClaimAuthority";
-import type { MemberClaimCommand } from "../../src/data/api/memberClaimContracts";
+import {
+  memberClaimCommandSchema,
+  type MemberClaimCommand,
+} from "../../src/data/api/memberClaimContracts";
 import { memberClaimReceiptSchema } from "../../backend/src/tripMemberClaimRecovery";
+import { memberClaimQaInviteObservationSchema } from "./member-claim-qa-readback";
 import {
   parseMemberClaimQaCase,
   type MemberClaimQaCase,
@@ -26,7 +30,7 @@ const cleanupSchema = z.object({
 });
 
 // DEV-only orchestration. Real normal Auth, independent SQL reader and approved window/controller are supplied by the owning operator.
-export async function runMemberClaimQaScenario(
+async function runScenario(
   input: MemberClaimQaCase,
   deps: {
     withOwnerSession: SessionRun;
@@ -38,6 +42,7 @@ export async function runMemberClaimQaScenario(
     signal?: AbortSignal;
     now?: () => number;
   },
+  readResumeInvite?: (inviteId: string) => Promise<unknown>,
 ) {
   const qa = Object.freeze(parseMemberClaimQaCase(input));
   const current = () => {
@@ -80,7 +85,11 @@ export async function runMemberClaimQaScenario(
     return {
       accountId: expected,
       context: await captureAccountRequestContext(qa.tripId, account),
-      repository: createMemberClaimRepository(account, options, token),
+      repository: createMemberClaimRepository(
+        account,
+        readResumeInvite ? { ...options, timeoutMs: 90_000 } : options,
+        token,
+      ),
       core: createCoreV2Transport(account, hash, options, token),
     };
   };
@@ -104,25 +113,47 @@ export async function runMemberClaimQaScenario(
           command: structuredClone(command),
           intentDigest: memberClaimIntentDigest(command),
         });
-        let result;
-        try {
-          result = await person.repository.execute(person.context, command);
-        } catch (error) {
-          if (
-            !(error instanceof ApiClientError) ||
-            !(
-              error.kind === "network" ||
-              error.kind === "timeout" ||
-              error.status === 503
+        // Resume is separately authorized for one original-ID submission; absence never means NoCommit.
+        let result = readResumeInvite
+          ? await person.repository.recover(person.context, command)
+          : undefined;
+        current();
+        if (!result || result.status === "ABSENT_UNCONFIRMED") {
+          if (readResumeInvite && command.kind === "CLAIM_PERSON") {
+            const invite = memberClaimQaInviteObservationSchema.parse(
+              await readResumeInvite(command.inviteId),
+            );
+            current();
+            require(
+              invite.id === command.inviteId &&
+                invite.tripId === qa.tripId &&
+                invite.personId === qa.personId &&
+                invite.targetAccountId === qa.claimantAccountId &&
+                Date.parse(invite.observedAt) >= Date.parse(qa.opensAt) &&
+                Date.parse(invite.observedAt) < Date.parse(qa.closesAt) &&
+                Date.parse(invite.expiresAt) > Date.parse(invite.observedAt) &&
+                Date.parse(invite.expiresAt) > (deps.now ?? Date.now)(),
+            );
+          }
+          try {
+            result = await person.repository.execute(person.context, command);
+          } catch (error) {
+            if (
+              !(error instanceof ApiClientError) ||
+              !(
+                error.kind === "network" ||
+                error.kind === "timeout" ||
+                error.status === 503
+              )
             )
-          )
-            throw error;
-          current();
-          deps.retain({
-            phase: "UNKNOWN_RECOVERY_ONLY",
-            operationId: command.operationId,
-          });
-          result = await person.repository.recover(person.context, command);
+              throw error;
+            current();
+            deps.retain({
+              phase: "UNKNOWN_RECOVERY_ONLY",
+              operationId: command.operationId,
+            });
+            result = await person.repository.recover(person.context, command);
+          }
         }
         current();
         if (result.status === "ABSENT_UNCONFIRMED")
@@ -204,6 +235,7 @@ export async function runMemberClaimQaScenario(
         nativeColdRestore: "NOT_RUN",
         memberRevoke: "NOT_RUN",
         evidenceScope: "SCENARIO_CHECKS_ATTACH_REAL_AUTH_READBACK_CONTROLLER_RECEIPTS",
+        ...(readResumeInvite ? { entry: "ORIGINAL_ID_RECOVERY_FIRST" } : {}),
       };
       deps.retain({ phase: "SCENARIO_CHECKS_COMPLETED", ...summary });
     });
@@ -212,4 +244,43 @@ export async function runMemberClaimQaScenario(
   checkedCleanup(ownerCleanup, qa.ownerAccountId);
   require(summary && ownerCalls === 1 && claimantCalls === 1);
   return summary!;
+}
+
+export function runMemberClaimQaScenario(
+  input: MemberClaimQaCase,
+  deps: Parameters<typeof runScenario>[1],
+) {
+  return runScenario(input, deps);
+}
+
+// Dormant candidate: requires a new exact write-capable QA Gate, not either consumed read-only window.
+export function resumeMemberClaimQaScenario(
+  input: MemberClaimQaCase,
+  retainedIssue: { command: unknown; intentDigest: string },
+  deps: Omit<Parameters<typeof runScenario>[1], "preflight"> & {
+    allowOriginalIdSubmissions: true;
+    qualifyResumeWindow(qa: MemberClaimQaCase): Promise<void>;
+    readInvite(inviteId: string): Promise<unknown>;
+  },
+) {
+  const qa = parseMemberClaimQaCase(input);
+  const command = memberClaimCommandSchema.parse(retainedIssue.command);
+  if (
+    deps.allowOriginalIdSubmissions !== true ||
+    typeof deps.qualifyResumeWindow !== "function" ||
+    typeof deps.readInvite !== "function" ||
+    command.kind !== "ISSUE_TARGETED_INVITE" ||
+    command.operationId !== qa.issueOperationId ||
+    command.tripId !== qa.tripId ||
+    command.personId !== qa.personId ||
+    command.target.kind !== "REGISTERED_ACCOUNT" ||
+    command.target.accountId !== qa.claimantAccountId ||
+    memberClaimIntentDigest(command) !== retainedIssue.intentDigest
+  )
+    throw Error("C04_QA_RESUME_SCOPE_UNPROVEN");
+  return runScenario(
+    qa,
+    { ...deps, preflight: deps.qualifyResumeWindow },
+    deps.readInvite,
+  );
 }

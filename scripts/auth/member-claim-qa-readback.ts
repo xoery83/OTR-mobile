@@ -26,6 +26,15 @@ const preflightSchema = z.strictObject({
 const rowsSchema = z.object({
   rows: z.array(z.strictObject({ result: z.unknown() })).length(1),
 });
+export const memberClaimQaInviteObservationSchema = z.strictObject({
+  id: z.uuid(),
+  tripId: z.uuid(),
+  personId: z.uuid(),
+  targetAccountId: z.uuid(),
+  status: z.literal("PENDING"),
+  expiresAt: z.iso.datetime({ offset: true }),
+  observedAt: z.iso.datetime({ offset: true }),
+});
 
 // DEV operator readback only. Root supplies its existing read-only SqlTransport; never a normal A/B operation identity.
 export function createMemberClaimQaReadback(
@@ -43,6 +52,27 @@ export function createMemberClaimQaReadback(
     b = uuid(qa.claimantAccountId);
   const read = async (sql: string) => rowsSchema.parse(await query(sql)).rows[0].result;
   return {
+    async readInvite(inviteId: string) {
+      const selected = uuid(inviteId);
+      const invite = memberClaimQaInviteObservationSchema.parse(
+        await read(`SELECT (
+        SELECT jsonb_build_object('id',i.id,'tripId',d.trip_id,'personId',d.person_id,
+          'targetAccountId',d.target_account_id,'status',d.status,'expiresAt',i.expires_at,
+          'observedAt',clock_timestamp())
+        FROM public.trip_directed_invite_targets d JOIN public.journey_invites i ON i.id=d.invite_id
+        WHERE i.id=${selected} AND i.trip_id=${trip} AND NOT i.is_active
+          AND d.trip_id=${trip} AND d.person_id=${person} AND d.target_account_id=${b} AND d.approved_by=${a}
+      ) AS result`),
+      );
+      if (
+        invite.id !== inviteId ||
+        invite.tripId !== qa.tripId ||
+        invite.personId !== qa.personId ||
+        invite.targetAccountId !== qa.claimantAccountId
+      )
+        throw Error("C04_READBACK_INVITE_MISMATCH");
+      return invite;
+    },
     async preflight(expected: MemberClaimQaCase) {
       const checked = parseMemberClaimQaCase(expected);
       if (

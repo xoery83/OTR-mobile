@@ -1,3 +1,13 @@
+# Auth original-ID resume client integration — 3 November 2026
+
+Reviewed411ceee5 client/DTO changes are composed without activation: both original
+ISSUE/CLAIM recover first, only a separately approved ORIGINAL_ID_RESUME may submit
+an absent original once. UNKNOWN never repeats execute; live invite identity and
+expiry must qualify Claim. Exact metadata Reader and new strict resume qualifier
+retain old recovery-only behavior. Root controller/SSH adapter is being prepared;
+new explicit finite business Gate and actual timers remain required. All713/e930
+windows are consumed. See `ops/auth-c04-20261103/original-id-resume/`.
+
 # Latest Root / Import checkpoint — 3 November 2026, 08:05 UTC
 
 MCP a2f8 finite diagnostic is consumed and CLOSED, blocked before Consumer reconnect
