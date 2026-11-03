@@ -1,0 +1,35 @@
+{
+  "status": "CONSUMER_BLOCKED_CUA_APPROVAL_TIMEOUT_CLOSED_VERIFIED",
+  "windowId": "a2f8c128-ba79-4de4-bcf3-c98d324ffc63",
+  "approvedGateSHA256": "d0f576f6356bf70cd2388c9c934e38ec4563addbc0ca7a8e7b970e8bfd0c19c6",
+  "T": "2026-11-03T07:50:13.502Z",
+  "normalClose": "2026-11-03T08:18:13.502Z",
+  "D": "2026-11-03T08:20:13.502Z",
+  "runtime": {
+    "candidateId": "9998376476e861a656e635a0bc875b8a9e6677f6940ebdd824dbe3f73145da8e",
+    "image": "68aa588ffd16",
+    "command": null,
+    "confirmations": [],
+    "mutualExclusion": "Only CAS mutations, not wholeE2E. Serve lock released07:53:05Z; restore lock released08:01:52Z."
+  },
+  "actualProgress": "Software/CAS/timers/finiteIssuer/Console setup verified. Consumer did not clickReconnect/BrowserOTP/Consent/refresh/task because two CUA auto-review read-only observations timed out; not a security rejection, and no transport/Auth/Consumer refresh result inferred.",
+  "normalControl": "Initial sandboxKeychain44 preOTP/network0/Session0 retained. Escalated firstrealAuth on sameQA/client and authstart private directory READY; own refresh revoked and live selectedGrant absence independently verified before close. No markers/journals deleted.",
+  "business": {
+    "consumerOAuth": false,
+    "preview": false,
+    "apply": false,
+    "providerCalls": 0,
+    "historicalUnknown": "UNCHANGED"
+  },
+  "closure": {
+    "defaultCID": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "defaultImage": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+    "defaultConfigSHA256": "eb99ebf60049e076085f517d9dc06a69440749de0d02ee553ebacaf46413cedf",
+    "restoreAt": "2026-11-03T08:01:52.972026Z",
+    "issuerClosedAt": "2026-11-03T08:02:08.051671Z",
+    "console": "SavedOAuthOFF/SiteURLhttp://localhost:3000; DCRfalse unchanged",
+    "timers": "Bothown timer/service inactive; no window reset/extension"
+  },
+  "traceScope": "Accepted logger records0 is not proof of zeroallHTTP; trace retained prior to candidate removal.",
+  "next": "Do not reopen consumed a2f8; fix browser infrastructure readiness before considering new finite authority. No Apply authorization exists."
+}

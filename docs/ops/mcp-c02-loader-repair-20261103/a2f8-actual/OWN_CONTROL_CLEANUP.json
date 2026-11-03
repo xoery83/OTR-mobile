@@ -1,0 +1,21 @@
+{
+  "status": "INTENTIONAL_CANCEL_NO_CONSUMER_GRANT_AND_SESSION_CLEANUP_PASS",
+  "controlProcessExit": 1,
+  "exitMeaning": "Expected intentional CANCEL propagates failure; not an unresolved cleanup. Evidence below is owning helper final outcome.",
+  "grantReconciliation": "GRANT_ABSENT_INDEPENDENTLY_VERIFIED_WITH_LIVE_ROUTE",
+  "selectedClientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "journalPath": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-875ezw/run.json",
+  "journalSHA256": "90eb141ebc3657a07a5858bd92d69ca9f04b584bd57d803067a2e3fdb97cd332",
+  "journal": {
+    "runId": "57da0f40-efc1-4bf0-ad6d-15a36aa0814d",
+    "scope": "REGISTERED_QA_HOST_SESSION",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "phase": "HOST_SESSION_CLEANUP",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+    "secretsOrOtpRecorded": false
+  },
+  "qaLock": "RELEASED",
+  "browserAuthStarted": false,
+  "businessApply": false
+}

@@ -1,3 +1,21 @@
+# Latest Root / Import checkpoint — 3 November 2026, 08:05 UTC
+
+MCP a2f8 finite diagnostic is consumed and CLOSED, blocked before Consumer reconnect
+by two CUA approval-service observation timeouts. No Consumer OTP/Consent/refresh/
+Preview/Apply. Exact default0c723/image68aa/configeb99 restored, finite selectors
+absent, Issuer deny-all and Console OAuthOFF/SiteURLlocalhost verified; own grant
+absence/refresh revoke and both timer/service inactive pass. No Provider calls.
+Actual receipt: `ops/mcp-c02-loader-repair-20261103/a2f8-actual/EXECUTION_RECEIPT.json`.
+Do not reuse this clock/authority. Default healthy039 remains retained rollback.
+
+Import Documents pagination fence is reviewed/main-context smoke25 PASS; P3 retained
+UNKNOWN projection is reviewed/main-context selected14 PASS. These are LOCAL_PASS,
+not a new native/paid Golden Slice. See each `MAIN_INTEGRATION.json`. Native/Vision
+continues valid standard-signed runtime UX independently. Auth original-ID resume
+411ceee5 and Root controller preparation continue isolated; no new runtime Gate
+is active. Core v2 TRIP_ACCESS encoding67e374fb remains unmounted candidate; formal
+PG producer/guard/revision installation is not authorized or delivered.
+
 # IMP-C03 retained UNKNOWN advisory state — 3 November 2026
 
 From current-main9bdc469e, Import projection now preserves only the exact owning
