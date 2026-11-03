@@ -30,13 +30,18 @@ const qaSchema = z
   );
 export type MemberClaimQaCase = z.infer<typeof qaSchema>;
 
+// Shape/policy only; the owning selector must independently verify the actual DEV endpoint and current window.
+export function parseMemberClaimQaCase(raw: unknown): MemberClaimQaCase {
+  return qaSchema.parse(raw);
+}
+
 // Unselected DEV QA restriction only; the owning port still performs every business authorization.
 export function createMemberClaimQaAuthority(
   underlying: MemberClaimAuthorityPort,
   input: MemberClaimQaCase,
   now: () => number = Date.now,
 ) {
-  const qa = Object.freeze(qaSchema.parse(input));
+  const qa = Object.freeze(parseMemberClaimQaCase(input));
   let closed = false,
     lastInstant = -Infinity;
   const require = (ok: unknown) => {

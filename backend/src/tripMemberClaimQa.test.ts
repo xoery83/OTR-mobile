@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
   createMemberClaimQaAuthority,
+  parseMemberClaimQaCase,
   type MemberClaimQaCase,
 } from "./tripMemberClaimQa";
 import {
@@ -93,6 +94,18 @@ function fixture() {
     },
   };
 }
+
+it("exports the same pure case parser without constructing a port or selecting a window", () => {
+  const f = fixture();
+  const parsed = parseMemberClaimQaCase(f.qa);
+  expect(parsed).toEqual(f.qa);
+  const originalPerson = parsed.personId;
+  f.qa.personId = randomUUID();
+  expect(parsed.personId).toBe(originalPerson);
+  expect(() => parseMemberClaimQaCase({ ...f.qa, unknownAuthority: true })).toThrow();
+  expect(() => parseMemberClaimQaCase({ ...f.qa, claimantAccountId: f.qa.ownerAccountId })).toThrow();
+  expect(f.underlying.atomic).not.toHaveBeenCalled();
+});
 
 it("permits only the exact A issue/B claim and read-only original recovery, never grants from history", async () => {
   const f = fixture();

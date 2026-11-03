@@ -1,5 +1,13 @@
 # Finite A/B QA restriction candidate — not selected or authorized
 
+Root selector handoff addendum: `parseMemberClaimQaCase(raw:unknown)` exports the
+same strict case schema and constructor now calls it. It copies/validates shape
+and policy only; it does not check live time, endpoint or select a port. Root must
+independently reject unopened/expired cases before composing PG options. Invalid
+QA input must close only Claim, leaving ordinary Trip/Core startup intact. No
+second configuration entry exists in Auth. One new parser check PASS; the prior16
+policy tests/review remain unchanged evidence, not rerun or rehashed as a new review.
+
 `createMemberClaimQaAuthority(existingPort, exactCase)` returns `{port,close}`.
 Root's existing v3 raw-Core constructor remains the only PG connection source.
 Wrap that port with this Auth restriction before any future explicit selection;
