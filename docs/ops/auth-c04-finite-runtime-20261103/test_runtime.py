@@ -428,5 +428,102 @@ class Controller(unittest.TestCase):
         self.assertEqual(self.f.commands, [])
 
 
+    def fresh(self):
+        self.p['executionMode'] = 'FRESH_INVITATION'
+        self.p['qaCase'].update(r.FRESH_CASE)
+        self.p['pgFunctionBodyMD5'] = dict(r.FRESH_PG_BODY_MD5)
+
+    def test_fresh_qualifier_uses_new_case_two_absolute_timers_and_exact_restore(self):
+        self.fresh()
+        state = self.ready()
+        self.assertNotIn(r.MODE, r.env(self.f.containers[CANDIDATE]))
+        self.assertEqual(json.loads(r.env(self.f.containers[CANDIDATE])[r.SELECTOR]), self.p['qaCase'])
+        r.start(self.p, state, '9' * 64)
+        result = r.qualify_fresh_invitation(self.p, state, '9' * 64)
+        self.assertEqual(result['status'], 'AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED')
+        self.assertEqual(result['executionMode'], 'FRESH_INVITATION')
+        self.assertIs(result['businessMutationAuthorized'], True)
+        self.assertEqual([v['calendar'] for v in self.f.timers.values()],
+            ['2030-01-01 00:30:00 UTC', '2030-01-01 00:28:00 UTC'])
+        with patch.object(r.time, 'time', return_value=r.instant('2030-01-01T01:00:00Z')):
+            self.assertEqual(r.close(self.p, state)['containerId'], BASE)
+        self.assertTrue(r.verify(self.p)['runtimeClosed'])
+
+    def test_fresh_and_old_cases_and_qualifiers_are_mutually_exclusive(self):
+        self.fresh()
+        for mode in [None, 'RECOVERY_ONLY', 'ORIGINAL_ID_RESUME']:
+            with self.subTest(mode=mode), self.assertRaisesRegex(AssertionError, 'EXACT_A_B_CASE_REQUIRED'):
+                r.validate({**self.p, 'executionMode': mode})
+        for key in r.CASE:
+            if r.CASE[key] == r.FRESH_CASE[key]: continue
+            with self.subTest(key=key), self.assertRaisesRegex(AssertionError, 'EXACT_A_B_CASE_REQUIRED'):
+                r.validate({**self.p, 'qaCase': {**self.p['qaCase'], key: r.CASE[key]}})
+        for qualifier in [r.qualify_resume, r.qualify_recovery]:
+            with self.assertRaises(AssertionError): qualifier(self.p, {}, '9' * 64)
+        old = {**self.p, 'executionMode': 'ORIGINAL_ID_RESUME', 'qaCase': {**self.p['qaCase'], **r.CASE}}
+        with self.assertRaisesRegex(AssertionError, 'FRESH_INVITATION_MODE_REQUIRED'):
+            r.qualify_fresh_invitation(old, {}, '9' * 64)
+        self.assertEqual(self.f.commands, [])
+
+    def test_fresh_pg_approval_gate_and_bounds_fail_before_mutation(self):
+        self.fresh()
+        variants = [{'pgFunctionBodyMD5': {}}, {'ownerAuthorized': False}, {'executionQualified': False},
+            {'approvedGateSHA256': '03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093'},
+            {'qualifiedPreflightSHA256': '0' * 64}]
+        for key in r.FRESH_PG_BODY_MD5:
+            variants.append({'pgFunctionBodyMD5': {**r.FRESH_PG_BODY_MD5, key: '0' * 32}})
+        for change in variants:
+            with self.subTest(change=change), self.assertRaises(AssertionError):
+                r.stage({**self.p, **change})
+        for change in [{'closesAt': '2030-01-01T00:30:01Z'}, {'inviteExpiresAt': '2030-01-01T00:10:01Z'},
+                       {'inviteExpiresAt': '2030-01-01T00:01:00Z', 'closesAt': '2030-01-01T00:02:00Z'}]:
+            with self.assertRaises(AssertionError):
+                r.stage({**self.p, 'qaCase': {**self.p['qaCase'], **change}})
+        self.assertEqual(self.f.commands, [])
+
+    def test_fresh_missing_either_timer_blocks_before_stop(self):
+        self.fresh()
+        state = self.ready()
+        original = copy.deepcopy(self.f.timers)
+        for unit in original:
+            self.f.timers = copy.deepcopy(original)
+            self.f.timers.pop(unit)
+            before = len(self.f.commands)
+            with self.subTest(unit=unit), self.assertRaisesRegex(AssertionError, 'CLOSE_TIMER_REQUIRED'):
+                r.start(self.p, state, '9' * 64)
+            self.assertFalse(any(c[:2] == ['docker', 'stop'] for c in self.f.commands[before:]))
+
+    def test_fresh_qualified_wire_rejects_timer_and_active_identity_drift(self):
+        self.fresh()
+        state = self.ready()
+        r.start(self.p, state, '9' * 64)
+        original = copy.deepcopy(self.f.timers)
+        for unit in original:
+            for change in [{'calendar': '2030-01-01 00:31:00 UTC'}, {'argv': ['/usr/bin/true']}, {'user': 'other'},
+                           {'deadline': '2030-01-01 00:31:00 UTC'}]:
+                self.f.timers = copy.deepcopy(original)
+                self.f.timers[unit].update(change)
+                with self.subTest(unit=unit, change=change), self.assertRaises(AssertionError):
+                    r.qualify_fresh_invitation(self.p, state, '9' * 64)
+        self.f.timers = original
+        self.f.containers[CANDIDATE]['State']['Running'] = False
+        with self.assertRaisesRegex(AssertionError, 'FRESH_INVITATION_RUNTIME_NOT_RUNNING'):
+            r.qualify_fresh_invitation(self.p, state, '9' * 64)
+        self.f.containers[CANDIDATE]['State']['Running'] = True
+        self.f.containers[CANDIDATE]['Config']['Env'].append('UNAPPROVED=1')
+        with self.assertRaises(AssertionError): r.qualify_fresh_invitation(self.p, state, '9' * 64)
+
+    def test_fresh_health_failure_restores_without_business_outcome(self):
+        self.fresh()
+        state = self.ready()
+        def healthy(identity):
+            if identity == CANDIDATE: raise RuntimeError('HEALTH_TIMEOUT')
+            return self.f.inspect(identity)
+        with patch.object(r, 'wait_healthy', side_effect=healthy), self.assertRaisesRegex(RuntimeError, 'HEALTH_TIMEOUT'):
+            r.start(self.p, state, '9' * 64)
+        self.assertTrue(r.verify(self.p)['runtimeClosed'])
+        self.assertEqual(r.verify(self.p)['businessOutcome'], 'NOT_INFERRED')
+
+
 if __name__ == '__main__':
     unittest.main()

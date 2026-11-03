@@ -1,3 +1,14 @@
+# Auth fresh-invitation QA preparation — source integration, 4 November 2026
+
+Auth67aed9a7 and Root2 controller7e47ff07 define a separate DEV-only fresh
+invitation intent/qualifier. Strict mode/case mismatch rejection preserves old
+recovery/resume and original UNKNOWN4028. Backend MODE remains absent. Root1
+joint independent review NO_BLOCKER; actual-main55client+33in-memory controller
+checks PASS; all15 manifest entries match. See ops/auth-c04-20261103/
+after-fix-fresh-invite-qa/JOINT_SOURCE_REVIEW.json. No plan/time/OTP/Timer/business
+execution created; fresh exact Owner Gate and Root2 PG/CAS/dual-timer qualification
+remain mandatory. Previous install and closed receipts are not new execution rights.
+
 # MCP Preview hash proof — source integration, 4 November 2026
 
 LaneB1840374b repairs runtime/close-collector omission of existing hash-only

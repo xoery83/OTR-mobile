@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
 import template from "../../docs/ops/auth-c04-20261103/finite-qa-candidate/QA_CASE_TEMPLATE.json";
-import { runMemberClaimQaResumeDriver } from "../../scripts/auth/member-claim-qa-resume-driver";
+import freshInvitation from "../../docs/ops/auth-c04-20261103/after-fix-fresh-invite-qa/CASE_CANDIDATE.json";
+import {
+  runMemberClaimQaResumeDriver,
+  runFreshInvitationQaDriver,
+} from "../../scripts/auth/member-claim-qa-resume-driver";
 import { memberClaimIntentDigest } from "./tripMemberClaimAuthority";
 
 const mocks = vi.hoisted(() => ({
@@ -142,6 +146,39 @@ it("composes fixed A/B normal session callbacks, actual new Root qualifier and i
   expect(f.query.mock.calls.every(([sql]) => !sql.includes("originalReceipts"))).toBe(
     true,
   );
+});
+
+it("uses a separate fixed fresh invitation scope without opening the old UNKNOWN scope", async () => {
+  const f = fixture();
+  Object.assign(f.qaCase, freshInvitation.qaCase);
+  const command = {
+    kind: "ISSUE_TARGETED_INVITE" as const,
+    operationId: f.qaCase.issueOperationId,
+    tripId: f.qaCase.tripId,
+    personId: f.qaCase.personId,
+    target: {
+      kind: "REGISTERED_ACCOUNT" as const,
+      accountId: f.qaCase.claimantAccountId,
+    },
+  };
+  f.input.retainedIssue = { command, intentDigest: memberClaimIntentDigest(command) };
+  expect(() => runMemberClaimQaResumeDriver(f.input)).toThrow("FIXED_CASE_REQUIRED");
+  expect(mocks.normal).not.toHaveBeenCalled();
+  await expect(runFreshInvitationQaDriver(f.input)).rejects.toThrow("WINDOW_UNQUALIFIED");
+  expect(mocks.session).not.toHaveBeenCalled();
+  f.wire.status = "AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED";
+  f.wire.executionMode = "FRESH_INVITATION";
+  await expect(runFreshInvitationQaDriver(f.input)).resolves.toEqual({
+    scope: "MOCK_DRIVER_COMPOSITION_ONLY",
+  });
+  expect(mocks.scenario.mock.calls[0][0].claimOperationId).toBe(
+    freshInvitation.qaCase.claimOperationId,
+  );
+  expect(mocks.scenario.mock.calls[0][0].claimOperationId).not.toBe(
+    template.qaCase.claimOperationId,
+  );
+  expect(f.controlExecute).toHaveBeenCalledTimes(2);
+  expect(f.controlExecute.mock.calls[1][1].at(-1)).toContain("qualify-fresh-invitation");
 });
 it("rejects a foreign QA case before normal Auth construction, query or control read", () => {
   const f = fixture();

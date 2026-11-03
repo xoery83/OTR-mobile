@@ -28,6 +28,14 @@ MODE = 'OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE'
 raw = (HERE / 'QA_CASE_TEMPLATE.json').read_bytes()
 assert hashlib.sha256(raw).hexdigest() == '98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4'
 CASE = json.loads(raw)['qaCase']
+fresh_raw = (HERE / 'FRESH_INVITATION_CASE_TEMPLATE.json').read_bytes()
+assert hashlib.sha256(fresh_raw).hexdigest() == '730dc9902aac7c37f8df0ac725d5bedf0896998261b2d2175464eee8cfa9d4be'
+FRESH_CASE = json.loads(fresh_raw)['qaCase']
+FRESH_PG_BODY_MD5 = {
+    'trip_member_claim_transaction': 'c76f2a642deb21ca3bf86e056b2f9b32',
+    'trip_member_claim_read_state_allowed': 'd1977767b0dc389ef5329e890491b5db',
+    'trip_core_finite_read_state_guard': '731aa1c777f14b422fc9e9dd2f72af4f',
+}
 
 
 def digest(value):
@@ -38,16 +46,22 @@ def digest(value):
 def validate(p, now=None, starting=False):
     assert p['version'] == 1 and str(uuid.UUID(p['windowId'])) == p['windowId']
     assert p['root'] == '/opt/otr/dev-backend/releases/auth-c04-qa-' + p['windowId']
-    assert p.get('executionMode') in (None, 'RECOVERY_ONLY', 'ORIGINAL_ID_RESUME'), 'UNKNOWN_EXECUTION_MODE'
+    assert p.get('executionMode') in (None, 'RECOVERY_ONLY', 'ORIGINAL_ID_RESUME', 'FRESH_INVITATION'), 'UNKNOWN_EXECUTION_MODE'
     qa = p['qaCase']
-    assert set(qa) == set(CASE) | {'opensAt', 'inviteExpiresAt', 'closesAt'}
-    assert {k: qa[k] for k in CASE} == CASE, 'EXACT_A_B_CASE_REQUIRED'
+    case = FRESH_CASE if p.get('executionMode') == 'FRESH_INVITATION' else CASE
+    assert set(qa) == set(case) | {'opensAt', 'inviteExpiresAt', 'closesAt'}
+    assert {k: qa[k] for k in case} == case, 'EXACT_A_B_CASE_REQUIRED'
     opening, invite, closing = (instant(qa[k]) for k in ('opensAt', 'inviteExpiresAt', 'closesAt'))
     assert 0 < closing - opening <= 1800 and 0 < invite - opening <= 600 and invite <= closing
     if p.get('executionMode') == 'RECOVERY_ONLY':
         assert 120 < closing - opening <= 900, 'RECOVERY_WINDOW_LIMIT'
     if p.get('executionMode') == 'ORIGINAL_ID_RESUME':
         assert 120 < closing - opening <= 1800, 'RESUME_WINDOW_LIMIT'
+    if p.get('executionMode') == 'FRESH_INVITATION':
+        assert 120 < closing - opening <= 1800, 'FRESH_INVITATION_WINDOW_LIMIT'
+        # Root's independently read PG preflight is pinned by qualifiedPreflightSHA256; no SQL here.
+        assert p.get('pgFunctionBodyMD5') == FRESH_PG_BODY_MD5, 'FRESH_PG_PREIMAGE_REQUIRED'
+        assert p['approvedGateSHA256'] != '03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093', 'CONSUMED_GATE'
     assert p['ownerAuthorized'] is True and p['executionQualified'] is True, 'EXECUTION_NOT_QUALIFIED'
     for key in ('approvedGateSHA256', 'ownerApprovalSHA256', 'qualifiedPreflightSHA256', 'runtimeSHA256'):
         digest(p[key])
@@ -186,6 +200,8 @@ def reconcile_stage(p):
 
 def timer_bindings(p):
     hard = ('otr-auth-c04-close-' + p['windowId'], instant(p['qaCase']['closesAt']))
+    if p.get('executionMode') == 'FRESH_INVITATION':
+        return [hard, ('otr-auth-c04-fresh-invitation-close-' + p['windowId'], hard[1] - 120)]
     if p.get('executionMode') == 'ORIGINAL_ID_RESUME':
         return [hard, ('otr-auth-c04-resume-close-' + p['windowId'], hard[1] - 120)]
     return [hard, ('otr-auth-c04-recovery-close-' + p['windowId'], hard[1] - 120)] if p.get('executionMode') == 'RECOVERY_ONLY' else [hard]
@@ -195,7 +211,7 @@ def verify_timers(p, plan_hash):
     expected = {'unit': 'otr-auth-c04-close-' + p['windowId'], 'planSHA256': plan_hash, 'closesAt': p['qaCase']['closesAt']}
     if p.get('executionMode') == 'RECOVERY_ONLY':
         expected['normalUnit'] = timer_bindings(p)[1][0]
-    elif p.get('executionMode') == 'ORIGINAL_ID_RESUME':
+    elif p.get('executionMode') in ('ORIGINAL_ID_RESUME', 'FRESH_INVITATION'):
         expected['normalUnit'] = timer_bindings(p)[1][0]
     assert json.loads(private(Path(p['root']) / 'timer.json')) == expected, 'TIMER_PLAN_DRIFT'
     for unit, cutoff in timer_bindings(p):
@@ -234,6 +250,17 @@ def qualify_resume(p, state, plan_hash):
     return {'status': 'AUTH_C04_RESUME_WINDOW_QUALIFIED', 'qaCase': p['qaCase'], 'executionMode': 'ORIGINAL_ID_RESUME', 'image': active['Image'], 'containerId': active['Id'], 'configSHA256': sha(active['Config']), 'planSHA256': plan_hash, 'businessMutationAuthorized': True}
 
 
+def qualify_fresh_invitation(p, state, plan_hash):
+    validate(p, starting=True)
+    assert p.get('executionMode') == 'FRESH_INVITATION', 'FRESH_INVITATION_MODE_REQUIRED'
+    verify_timers(p, plan_hash)
+    active = inspect('otr-dev-backend')
+    check_active(p, active, state)
+    assert active['State'].get('Health', {}).get('Status') == 'healthy'
+    assert active['State'].get('Running') is True and active['Name'] == '/otr-dev-backend', 'FRESH_INVITATION_RUNTIME_NOT_RUNNING'
+    return {'status': 'AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED', 'qaCase': p['qaCase'], 'executionMode': 'FRESH_INVITATION', 'image': active['Image'], 'containerId': active['Id'], 'configSHA256': sha(active['Config']), 'planSHA256': plan_hash, 'businessMutationAuthorized': True}
+
+
 def arm(p, plan_hash):
     validate(p, starting=True)
     state = json.loads(private(Path(p['root']) / 'state.json'))
@@ -250,7 +277,7 @@ def arm(p, plan_hash):
     record = {'unit': unit, 'planSHA256': plan_hash, 'closesAt': p['qaCase']['closesAt']}
     if p.get('executionMode') == 'RECOVERY_ONLY':
         record['normalUnit'] = timer_bindings(p)[1][0]
-    elif p.get('executionMode') == 'ORIGINAL_ID_RESUME':
+    elif p.get('executionMode') in ('ORIGINAL_ID_RESUME', 'FRESH_INVITATION'):
         record['normalUnit'] = timer_bindings(p)[1][0]
     save(Path(p['root']) / 'timer.json', record)
     verify_timers(p, plan_hash)
@@ -283,7 +310,7 @@ def start(p, state, plan_hash):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['stage', 'reconcile-stage', 'arm', 'start', 'close', 'verify', 'qualify-recovery', 'qualify-resume'])
+    parser.add_argument('mode', choices=['stage', 'reconcile-stage', 'arm', 'start', 'close', 'verify', 'qualify-recovery', 'qualify-resume', 'qualify-fresh-invitation'])
     parser.add_argument('plan', type=Path)
     parser.add_argument('sha256')
     args = parser.parse_args()
@@ -304,7 +331,7 @@ def main():
             result = verify(p)
         else:
             state = json.loads(private(Path(p['root']) / 'state.json'))
-            result = qualify_resume(p, state, args.sha256) if args.mode == 'qualify-resume' else qualify_recovery(p, state, args.sha256) if args.mode == 'qualify-recovery' else start(p, state, args.sha256) if args.mode == 'start' else close(p, state)
+            result = qualify_fresh_invitation(p, state, args.sha256) if args.mode == 'qualify-fresh-invitation' else qualify_resume(p, state, args.sha256) if args.mode == 'qualify-resume' else qualify_recovery(p, state, args.sha256) if args.mode == 'qualify-recovery' else start(p, state, args.sha256) if args.mode == 'start' else close(p, state)
     print(json.dumps(result))
 
 

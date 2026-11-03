@@ -1,0 +1,65 @@
+{
+  "status": "CANDIDATE_NOT_AUTHORIZED_NOT_EXECUTED",
+  "executionMode": "FRESH_INVITATION",
+  "action": "qualify-fresh-invitation",
+  "qualifiedOutput": {
+    "status": "AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED",
+    "executionMode": "FRESH_INVITATION",
+    "businessMutationAuthorized": true,
+    "otherFields": [
+      "qaCase",
+      "image",
+      "containerId",
+      "configSHA256",
+      "planSHA256"
+    ]
+  },
+  "qaCase": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "claimantAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "issueOperationId": "0b8927c2-6665-41ac-ad49-59586acbb9aa",
+    "claimOperationId": "ba97129d-0d7d-4102-8e56-659d4867e67b"
+  },
+  "requiredPlanAddition": {
+    "pgFunctionBodyMD5": {
+      "trip_member_claim_transaction": "c76f2a642deb21ca3bf86e056b2f9b32",
+      "trip_member_claim_read_state_allowed": "d1977767b0dc389ef5329e890491b5db",
+      "trip_core_finite_read_state_guard": "731aa1c777f14b422fc9e9dd2f72af4f"
+    }
+  },
+  "templateFile": "FRESH_INVITATION_CASE_TEMPLATE.json",
+  "templateSHA256": "730dc9902aac7c37f8df0ac725d5bedf0896998261b2d2175464eee8cfa9d4be",
+  "backendMode": "ABSENT; existing selector only",
+  "timers": {
+    "hard": "otr-auth-c04-close-<windowId> at closesAt",
+    "normal": "otr-auth-c04-fresh-invitation-close-<windowId> at closesAt minus120s",
+    "absolute": true,
+    "samePlanAndRuntimePins": true
+  },
+  "limits": {
+    "maximumWindowSeconds": 1800,
+    "minimumWindowSecondsExclusive": 120,
+    "maximumInviteSeconds": 600
+  },
+  "preflightBoundary": "Controller validates exact PG map in the pinned private plan; it does not query PG. Root must independently read current PG and legal tuple facts, bind them into qualifiedPreflightSHA256, and verify the separate exact Owner Gate before setting executionQualified/ownerAuthorized. Installation receipt is not fresh business qualification.",
+  "freshFactsRequired": [
+    "old invite expired; original Claim UNKNOWN preserved",
+    "Person never linked; B no linked Person and no removed-user denial",
+    "A original owner; both registered accounts usable",
+    "new operations previously unused; no consumed Gate/window reuse",
+    "fresh current software/CAS, installed PG metadata and exact legal business scope"
+  ],
+  "clock": null,
+  "windowId": null,
+  "ownerApproval": null,
+  "executionAuthorized": false,
+  "integrationDelta": {
+    "Auth": "Owns control-read and named client qualifier plus Driver/readback; must consume exact eight-field wire.",
+    "Root1": "Source integration and independent review before final business Gate.",
+    "Root2": "Fresh PG/host preflight, complete owner-approved packet, timer/close qualification before actual activation.",
+    "closure": "Fixed joint reviewed source and separately approved exact business packet; no runtime activity authorized by this candidate."
+  }
+}

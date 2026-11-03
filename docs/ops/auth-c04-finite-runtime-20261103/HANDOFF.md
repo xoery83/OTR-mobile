@@ -1,3 +1,19 @@
+Current candidate: see `../../handoffs/ROOT2_HOSTED_OPS_V4/requests/AUTH-C04-FRESH-INVITATION-CONTROLLER-20261104-001/` for the fixed interface, manifest and 33-test validation. Earlier validation below is historical.
+
+FRESH_INVITATION adds one separately pinned fixed case and the named
+`qualify-fresh-invitation` action. It never uses ORIGINAL_ID_RESUME for a new
+invitation. Backend MODE remains absent; the selector alone carries the fixed case.
+Both old and new template files MUST accompany the new controller, including
+`FRESH_INVITATION_CASE_TEMPLATE.json` (SHA730dc990…). Old template bytes remain unchanged.
+The fresh plan additionally binds `pgFunctionBodyMD5` to installed c76/d197/731.
+Root must produce a fresh independent PG/tuple qualification and bind its evidence
+hash via qualifiedPreflightSHA256; this controller performs no SQL and the local
+map assertion is not an online PG readback. The new exact business Gate, Owner
+approval, one-use plan/window and current Host CAS remain separate prerequisites.
+Fresh mode uses absolute normal D-120 and hard D timers and the existing exact
+retained-container restore. Original Claim UNKNOWN/old invitation are not changed.
+No candidate manifest or software installation grants business execution authority.
+
 # AUTH-C04 finite runtime controller — prepared, not authorized
 
 This additive Root control reuses the existing Auth phase2 retained-container
