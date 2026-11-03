@@ -1,0 +1,75 @@
+{
+  "status": "MAIN_EXACT_ELEVEN_FILE_SOURCE_ACCEPTED_RUNTIME_CLOSED",
+  "mainCommit": "3c74f358a2781103e370e68b69829b0a1885f6fe",
+  "authSourceCommit": "eb884c67",
+  "authVerifiedAt": "2026-11-03T03:41:17.607808+00:00",
+  "checks": [
+    {
+      "path": "src/data/api/memberClaimContracts.ts",
+      "sha256": "5bf3e6590d63e233a07d9b7652416d55ebe40391d841bdbe8339856ceea8ddf9",
+      "exactMatch": true
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.ts",
+      "sha256": "a09dfdef0004cd7b98f1dd2859c448ef31839d3bfb925d86978890372dbb4e19",
+      "exactMatch": true
+    },
+    {
+      "path": "backend/src/tripMemberClaimAuthority.ts",
+      "sha256": "436079c40574adbe4d3cfad6ba2dc6977dfe27aa3f4fd5372a5ed82c92345a3a",
+      "exactMatch": true
+    },
+    {
+      "path": "scripts/auth/member-claim-qa-scenario.ts",
+      "sha256": "b9a9cd721b453a37a41e3146bc5fec9fbd283a483b02de5e7744c5c74cbec34c",
+      "exactMatch": true
+    },
+    {
+      "path": "scripts/auth/member-claim-qa-readback.ts",
+      "sha256": "c5a844f2edfe746f6a9384ccc62ca4b8793f0df1a6f9af40542feb21fb8fa750",
+      "exactMatch": true
+    },
+    {
+      "path": "scripts/auth/registered-qa-host-session.ts",
+      "sha256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d",
+      "exactMatch": true
+    },
+    {
+      "path": "docs/ops/auth-c04-20261103/finite-qa-candidate/QA_CASE_TEMPLATE.json",
+      "sha256": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+      "exactMatch": true
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.test.ts",
+      "sha256": "0f97e18af593c1ca3d589870771763c9a451bb1aa7b5a4c546cccdda69428a7b",
+      "exactMatch": true
+    },
+    {
+      "path": "backend/src/authMemberClaimQaScenario.test.ts",
+      "sha256": "0c0085d0adb6fce3086eed59eddc4e281e86c3384b96fb592154e1cdfbeec14d",
+      "exactMatch": true
+    },
+    {
+      "path": "backend/src/authMemberClaimQaReadback.test.ts",
+      "sha256": "cb6db187ff44423e2bfe7595e8e451c3552915efd73a6332ba2d58355b220883",
+      "exactMatch": true
+    },
+    {
+      "path": "backend/src/authRegisteredHostSession.test.ts",
+      "sha256": "d3d88678d215912079cbb12c0550b3c9c2dfe4f6d64672ae7c7bc5e44a2de6f7",
+      "exactMatch": true
+    }
+  ],
+  "rootReportedQualification": {
+    "remoteLsRemoteConfirmed": true,
+    "focusedTests": "5 files / 62 PASS",
+    "scopedEslint": "PASS",
+    "changedFileTypes": "PASS",
+    "fullRepositoryTypes": "Root reports only missing @types/react-dom in browser/auth-consent/main.tsx; not a full-repo PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "qualificationBoundary": "Auth directly compared all 11 Git source blobs; Root tests/remote/Host state are reported, not rerun by Auth",
+  "runtime": "Root reports default CLOSED; no stage/arm/start/OTP",
+  "ownerGate": "d28e777f / 713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f already requested, not approved",
+  "hostedAB": "NOT_RUN"
+}
