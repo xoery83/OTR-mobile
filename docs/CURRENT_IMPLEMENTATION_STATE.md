@@ -1,3 +1,24 @@
+# Latest Root shared checkpoint — 3 November 2026, 07:35 UTC
+
+Main `4c3094fa` retains Native Round1 and Import Activity completion-refresh fixes.
+MCP C02 loader wiring is now installed in DEV default-CLOSED image `68aa588ffd16`
+(container `0c723151aae5`); independent bundle/Host6c9/Consent6040, health and unchanged
+Env/mounts verification passed. Previous healthy039/c213 is retained for rollback.
+No SQL, OAuth/Issuer activation, Provider call or business Apply in this deployment.
+See `ops/mcp-c02-loader-repair-20261103/HOST_DEFAULT_CLOSED.json`.
+
+Auth e930 recovery-only window is consumed and CLOSED. One normal A recovery timed
+out client-side at15s; server completed202 after18.418s. No response/receipt was
+confirmed; original UNKNOWN remains. Own Session cleanup and exact default restore
+passed. Reviewed DEV-only90s recovery budget is software-integrated, not reexecuted.
+See `ops/auth-c04-recovery-only-20261103/e930-actual/ACTUAL_RECOVERY_RECEIPT.json`.
+
+Next: qualify approved, unused MCP a2f8 diagnostic/Preview-only scope against this
+new default; no Save/Apply. Native/Vision device UX and Import Documents scoped
+preparation continue independently. PNG renewal is approved but its old039 software
+CAS must be mechanically aligned before execution; do not bind its finite clock
+until normal QA/worker/closing preflight is ready. Dated entries below are historical.
+
 # Root Enrichment current-main preparation — 3 November 2026
 
 Default-closed retained Host composition is prepared on current main with Normal Account fences, startup availability and normalized ingress bounds. Local223 checks, runtime strict types and capture build pass; independent review NO_BLOCKER, serial maine013bbfd integrated. Default-closed image4609fc77 deployed and independently verified healthy with opt-in/mount/finite QA absent; old98f retained for rollback. No SQL/Provider activation. See `ops/root-flight-enrichment-main-20261103/HOST_COMPOSITION.json`; real Provider/price/scope qualification remains unverified.
