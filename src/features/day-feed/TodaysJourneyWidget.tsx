@@ -98,7 +98,7 @@ export function TodaysJourneyWidget({
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const readKey = `${tripId}/${zone}/${planningDate ?? ""}/${now ?? ""}`;
+  const readKey = `${generation}/${tripId}/${zone}/${planningDate ?? ""}/${now ?? ""}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [read, setRead] = useState<AnyTodayRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
@@ -130,6 +130,7 @@ export function TodaysJourneyWidget({
     } catch {
       if (ticket === request.current && generation === getAccountGeneration()) {
         setDebug(null);
+        setLoadedKey(readKey);
         setRead(null);
         setStatus("UNAVAILABLE");
       }
@@ -287,7 +288,7 @@ export function TodaysJourneyWidget({
             <Text style={styles.meta}>{copy.multipleStays}</Text>
           ) : null}
         </>
-      ) : status === "LOADING" ? (
+      ) : loadedKey !== readKey || status === "LOADING" ? (
         <DayReadSkeleton compact />
       ) : (
         <Text accessibilityRole="alert" style={styles.meta}>

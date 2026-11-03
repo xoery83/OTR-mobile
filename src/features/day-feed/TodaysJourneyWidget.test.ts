@@ -79,7 +79,7 @@ it("opens accepted-only unknown-zone plans directly through the normal reader", 
     open = vi.fn();
   state.cursor = 0;
   state.hooks = [
-    "trip/null/2026-10-16/",
+    "1/trip/null/2026-10-16/",
     {
       scope: { tripId: "trip", generation: 1 },
       source: { epoch: "accepted" },
@@ -325,4 +325,40 @@ it("ignores a late Debug preference read after effect cleanup", async () => {
   complete(true);
   await settle();
   expect(state.hooks[3]).toBe(previousDebug);
+});
+
+it.each(["date", "trip", "zone", "account"])(
+  "shows loading, not an unavailable alert, during a new %s scope read",
+  async (changed) => {
+    const reader = await loadReady();
+    reader.readLocal.mockImplementation(() => new Promise(() => {}));
+    state.cleanups.pop()!();
+    const props =
+      changed === "date"
+        ? { planningDate: "2026-10-17" }
+        : changed === "trip"
+          ? { tripId: "other" }
+          : changed === "zone"
+            ? { zone: "Pacific/Auckland" }
+            : {};
+    if (changed === "account") state.generation++;
+    const before = JSON.stringify(renderRefresh(props));
+    expect(before).not.toContain("Sky City Hotel");
+    expect(before).not.toContain("Unavailable");
+    runEffect();
+    await settle();
+    expect(JSON.stringify(renderRefresh(props))).not.toContain("Unavailable");
+  },
+);
+
+it("shows a confirmed error after the new scope read fails", async () => {
+  const reader = await loadReady();
+  reader.readLocal.mockRejectedValue(new Error("Current scope unavailable"));
+  state.cleanups.pop()!();
+  renderRefresh({ planningDate: "2026-10-17" });
+  runEffect();
+  await settle();
+  const result = JSON.stringify(renderRefresh({ planningDate: "2026-10-17" }));
+  expect(result).not.toContain("Sky City Hotel");
+  expect(result).toContain("Unavailable");
 });
