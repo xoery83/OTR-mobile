@@ -1,0 +1,16 @@
+import {runMemberReadProbe} from "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/member-claim-qa-member-read";
+import {createNormalRegisteredQaHostDependencies,runRegisteredQaHostSession,registeredHostQa} from "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/registered-qa-host-session";
+export {createAcceptedHostQaReceiver} from "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/resend-inbound-otp-native-relogin";
+export {publicConfiguration,inboundKeychainArgs} from "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/resend-inbound-otp-e2e";
+const tripId="fb2f0820-e429-404a-b4dd-7adcad814e45";
+type Auth=Parameters<typeof createNormalRegisteredQaHostDependencies>;
+export async function runNormalMemberRead(input:{qualify():Promise<void>;receivers:{A:Auth[0];B:Auth[0]};publicOptions:Auth[2];note:(actor:string,value:Record<string,unknown>)=>void}) {
+ await input.qualify();
+ const a=createNormalRegisteredQaHostDependencies(input.receivers.A,v=>input.note("A",v),input.publicOptions);
+ const b=createNormalRegisteredQaHostDependencies(input.receivers.B,v=>input.note("B",v),input.publicOptions);
+ return runMemberReadProbe({
+ withOwnerSession:work=>runRegisteredQaHostSession(a,work,{accountId:"26876e6e-a919-457d-bc00-78d76ba08043",tripId,email:"otr-qa-3f43c81b-500b-4e59-b0a8-c7ffdbd19a31@eldouzileu.resend.app"}),
+ withClaimantSession:work=>runRegisteredQaHostSession(b,work,{accountId:registeredHostQa.accountId,tripId,email:registeredHostQa.email,createdAt:registeredHostQa.createdAt}),
+ note:v=>input.note("READ",v),
+ });
+}

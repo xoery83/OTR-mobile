@@ -1,0 +1,22 @@
+{
+  "status": "COMPOSED_NOT_EXECUTED_PENDING_FORMAL_READ_SCOPE",
+  "probeCandidate": "d7ac98e1",
+  "coreReadCandidate": "22bcaa1db5d3ee5bc012151b5a3844cc409fe567",
+  "entrySHA256": "ffa0fb20855759241cddb8abe0d70f5f8eae1009022c4f91e78b7a13e49b1bc3",
+  "headlessBundleSHA256": "5dfbaf0f43d14a265ed446e39b7398e9d427b3b1935e60cb8a2748851644e5cf",
+  "checks": [
+    "Headless import with fetch forbidden PASS",
+    "Rejected qualification stops before any Auth setup or request PASS",
+    "Existing normal OTP/User/session cleanup and exactCoreGET reused"
+  ],
+  "normalOtpRequests": 0,
+  "normalSessions": 0,
+  "protectedActions": 0,
+  "mcReadyQuery": {
+    "observedAt": "2026-11-03T21:09:52.036461+00:00",
+    "next": null,
+    "candidates": []
+  },
+  "returnTrigger": "Root1 isolatedPG/finalCoreGate+review+integration, Root2 exactOwnerapproval/install/software/normalreadqualification; then own normalGET-onlyE2E",
+  "approvalRouting": "Root2 actualHostedWriter submits one exactGate question after fullfixedpacket, Auth will not duplicate"
+}

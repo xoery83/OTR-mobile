@@ -32,6 +32,14 @@ normalAuth/CoreReader with exactfixedGET and shared90sbudget;5tests/types/lint
 PASS and independentNO_BLOCKER. ReadytoexecuteafteractualReaderqualification,
 withoutClaimreplay/windowreuse. Evidence ROOT2_MEMBER_READ_QUALIFICATION.json
 and MEMBER_READ_PROBE_REVIEW.json. No newOwnerapprovalrequestedbeforefixeddiff.
+Root1fixed22bcaa1d now supplies dedicated sustainedREADpredicate and snapshot
+before/after wiring; oldwrite/finitechecks unchanged. Auth consumed3fixedblob
+hashes and confirmedDTO/pathcompatibility; source3RED→22GREEN reported byRoot1,
+actualisolatedPG/finalGate stillpending. OwnnormalA/B driver composition/import
+and preAuthqualificationfailure checksPASS,0OTP/Session. Root2agreedtoownone
+exactprotectedapprovalquestion afterfixedpackage; noAuthduplicateprompt. Latest
+MCquery stillnextnull/candidates[]; PrimaryC04unchanged. See
+CORE_READ_CANDIDATE_CONSUMPTION.json/NORMAL_READ_DRIVER_PREPARATION.json.
 
 ### Previous failure and installed repair (retained evidence)
 

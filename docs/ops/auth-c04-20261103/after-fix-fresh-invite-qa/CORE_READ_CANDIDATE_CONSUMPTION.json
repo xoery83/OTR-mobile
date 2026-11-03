@@ -1,0 +1,26 @@
+{
+  "status": "AUTH_CONSUMER_CONTRACT_COMPATIBLE_NOT_HOSTED_QUALIFIED",
+  "candidate": "22bcaa1db5d3ee5bc012151b5a3844cc409fe567",
+  "checks": [
+    "Normal collection/item API DTO/path unchanged; existing Auth GET-only probe needs no newauthority/client API",
+    "Sustained snapshot before/after calls dedicated readonly helper; legacyfinite unchanged",
+    "Capabilities and commands still call original finite_scope+write capabilities",
+    "New helper requires trustedGateway matching actor/trip, active registeredaccount, exactlinkedmembership, noexplicitdeny/removed and existingTriprolloutprovenance",
+    "Existingactorlock/projection/account/hash fences preserved"
+  ],
+  "files": {
+    "backend/src/tripCoreV2PgRead.ts": "30995fcf6b8cedeb53cc65340ef33e7a1bc7c50f915431aa77346bbf279b0942",
+    "docs/API_CONTRACT.md": "3346a274a1219f04e30335f452dad262679fd725cdb3a0dd1ee007caa01489e0",
+    "docs/ops/core-member-read-20261104/INSTALL_CANDIDATE.sql": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844"
+  },
+  "sourceValidation": "Root1 reports3RED/19stable\u219222GREEN; Auth did not duplicate unchangedtests",
+  "sqlValidation": "PENDING_ROOT1_ISOLATED_PG_AND_FINAL_FIXED_GATE",
+  "protectedInstall": "NOT_AUTHORIZED_NOT_RUN",
+  "normalOtpRequests": 0,
+  "memberReadHosted": "NOT_RUN_B_SCOPE_STILL_CLOSED",
+  "ownDriverComposition": {
+    "path": "/private/tmp/otr-auth-c04-normal-member-read-20261104",
+    "headlessImport": "PASS_FETCH_FORBIDDEN",
+    "preAuthQualificationDenial": "PASS_NO_AUTH_OR_NETWORK"
+  }
+}
