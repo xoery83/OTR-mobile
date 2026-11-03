@@ -1,0 +1,19 @@
+{
+  "status": "CORE_SOURCE_SCOPE_NO_BLOCKER_PENDING_FINAL_AUTH_COMMIT",
+  "sqlSHA256": "94ee6ccb53f61aa59abeb345e628f75107afac490dcbd6bf710b3c75eaf1ed1e",
+  "oldGuardAfterRemovingOnlyNewBranch": "BYTE_IDENTICAL_EXCEPT_SQL_STATEMENT_TERMINATOR",
+  "twoFunctionAclPrePost": "PRESENT",
+  "helperExec": "OWNER_ONLY_POSTCONDITION_UNKNOWN_DEFAULT_GRANTEE_ABORTS",
+  "newRoleOrGrant": "NONE",
+  "transactionProof": "EXISTING_PRIVATE_ROW_FULL_XID8_PID_ORIGINAL_OP_CLEARED_AFTER_LINK",
+  "notRun": [
+    "Hosted install",
+    "Business Claim",
+    "Independent PG rerun"
+  ],
+  "requiredBeforeInstall": [
+    "Fixed final Auth commit/manifest/review evidence",
+    "Owner precise protected install approval",
+    "Root2 fresh CAS and independent readback"
+  ]
+}

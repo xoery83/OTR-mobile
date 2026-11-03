@@ -25,6 +25,18 @@ AUTH-C04-CLAIM-LINK42501-PREIMAGE-20261104 asks only affected UPDATE trigger/
 authority preimages; no permission expansion or retry. See hosted-original-resume-20261104.
 Do not reuse this consumed window or create replacement operations/invitation.
 
+Local minimal fix now passes exact-guard RED→GREEN: existing private directed row
+gets server-only xid8/PID/originalClaim proof, verified only by a postgres-only
+helper during the member-trigger read-state update, then cleared in the same
+transaction. Public HTTP/Native commands unchanged. Candidate SQL94ee6ccb… adds
+three nullable proof columns/constraint, one helper and replaces two functions;
+no role/GRANT/RLS expansion. Six affected unit suites69PASS/8skip, one new actual
+isolatedPG casePASS/oldcase skipped, types/scopedlintPASS. It proves canonical
+digest, stale-context/permission/defaultACL negatives, rollback and original
+receipt recovery after successfulCOMMIT/lostACK. Exact rollback preserves business
+rows. See link-read-state-context/VALIDATION.json and OWNER_GATE.md. Not installed;
+new exact protected approval and Root2 fresh preimage/readback remain required.
+
 Independent operator review passed after hardcoded software-pin repair. Initial
 local10min wait expired with0OTP/0Session/no consumedmarker; its receipts preserved,
 then reception restored under the same actualT/plan with no clockreset. Journals

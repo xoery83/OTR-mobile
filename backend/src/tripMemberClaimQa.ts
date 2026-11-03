@@ -167,7 +167,22 @@ export function createMemberClaimQaAuthority(
                         !owner &&
                           args[0] === qa.personId &&
                           args[1] === qa.claimantAccountId &&
-                          seenInvites.has(String(args[2])),
+                          seenInvites.has(String(args[2])) &&
+                          z
+                            .strictObject({
+                              operationId: z.literal(operationId),
+                              intentDigest: z.literal(
+                                memberClaimIntentDigest({
+                                  kind: "CLAIM_PERSON",
+                                  operationId,
+                                  tripId: qa.tripId,
+                                  personId: qa.personId,
+                                  inviteId: coreUuid.parse(args[2]),
+                                  explicitConsent: true,
+                                }),
+                              ),
+                            })
+                            .safeParse(args[3]).success,
                       );
                       break;
                     case "saveReceipt":

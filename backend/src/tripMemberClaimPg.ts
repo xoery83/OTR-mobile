@@ -140,12 +140,19 @@ export function createTripMemberClaimPgPort(
                   expiresAt,
                 }),
               ),
-            link: async (personId, account, inviteId) => {
+            link: async (personId, account, inviteId, admission) => {
               own(account);
+              const proof = z
+                .strictObject({
+                  operationId: coreUuid,
+                  intentDigest: z.string().regex(/^[a-f0-9]{64}$/),
+                })
+                .parse(admission);
               z.literal(true).parse(
                 await call("link", {
                   personId: coreUuid.parse(personId),
                   inviteId: coreUuid.parse(inviteId),
+                  ...proof,
                 }),
               );
             },

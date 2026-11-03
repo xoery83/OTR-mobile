@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   executeMemberClaim,
+  memberClaimIntentDigest,
   type MemberClaimAuthorityPort,
   type MemberClaimTransaction,
 } from "./tripMemberClaimAuthority";
@@ -91,10 +92,28 @@ const claim = (operation = laterOperation) => ({
   tripId,
   personId,
   inviteId,
-  explicitConsent: true,
+  explicitConsent: true as const,
 });
 
 describe("dormant targeted Member claim authority", () => {
+  it("binds link admission to the validated original Claim operation and digest", async () => {
+    const { facts, port, tx } = fixture();
+    facts.target = { kind: "REGISTERED_ACCOUNT", accountId: claimant };
+    let admission: unknown;
+    const original = tx.link;
+    tx.link = async (...args) => {
+      admission = args[3];
+      await original(...args);
+    };
+    const command = claim();
+    expect(await executeMemberClaim(command, claimant, port)).toMatchObject({
+      status: "LINKED",
+    });
+    expect(admission).toEqual({
+      operationId: command.operationId,
+      intentDigest: memberClaimIntentDigest(command),
+    });
+  });
   it("returns owning access after the atomic link, rather than the pre-claim access", async () => {
     const { facts, port, tx } = fixture();
     facts.target = { kind: "REGISTERED_ACCOUNT", accountId: claimant };

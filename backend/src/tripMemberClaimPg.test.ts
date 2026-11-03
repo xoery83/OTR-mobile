@@ -22,6 +22,29 @@ function fixture(result: unknown = true) {
   return { scope, lease, port, statements };
 }
 
+it("passes exact Claim admission to SQL and rejects missing proof before link", async () => {
+  const f = fixture(),
+    personId = randomUUID(),
+    inviteId = randomUUID();
+  const admission = { operationId: randomUUID(), intentDigest: "b".repeat(64) };
+  await f.port.atomic(f.scope, (tx) =>
+    tx.link(personId, f.scope.actorAccountId, inviteId, admission),
+  );
+  expect(
+    vi.mocked(f.lease.query).mock.calls.find(([, args]) => args?.[0] === "link")?.[1],
+  ).toEqual(["link", JSON.stringify({ personId, inviteId, ...admission })]);
+  const invalid = fixture();
+  await expect(
+    invalid.port.atomic(invalid.scope, (tx) =>
+      tx.link(personId, invalid.scope.actorAccountId, inviteId, undefined as never),
+    ),
+  ).rejects.toThrow();
+  expect(
+    vi.mocked(invalid.lease.query).mock.calls.some(([, args]) => args?.[0] === "link"),
+  ).toBe(false);
+  expect(invalid.statements()).not.toContain("COMMIT");
+});
+
 it("commits awaited valid operations and rejects escaped transaction methods without SQL", async () => {
   const f = fixture("READ");
   let escaped!: MemberClaimTransaction;
@@ -41,7 +64,10 @@ it("cannot commit a forgotten method await, including a fast malformed SQL resul
   const f = fixture(false);
   await expect(
     f.port.atomic(f.scope, async (tx) => {
-      void tx.link(randomUUID(), f.scope.actorAccountId, randomUUID());
+      void tx.link(randomUUID(), f.scope.actorAccountId, randomUUID(), {
+        operationId: randomUUID(),
+        intentDigest: "a".repeat(64),
+      });
     }),
   ).rejects.toThrow();
   expect(f.statements()).not.toContain("COMMIT");
@@ -62,7 +88,10 @@ it("retires a lease with still pending SQL and never commits it", async () => {
   let pending!: Promise<void>;
   await expect(
     f.port.atomic(f.scope, async (tx) => {
-      pending = tx.link(randomUUID(), f.scope.actorAccountId, randomUUID());
+      pending = tx.link(randomUUID(), f.scope.actorAccountId, randomUUID(), {
+        operationId: randomUUID(),
+        intentDigest: "a".repeat(64),
+      });
     }),
   ).rejects.toThrow();
   expect(f.lease.retire).toHaveBeenCalledTimes(1);

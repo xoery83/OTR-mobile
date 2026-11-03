@@ -1,0 +1,10 @@
+{
+  "status": "PASS_CURRENT_GUARD_RED_TO_GREEN_ORIGINAL_CLAIM_RECOVERY",
+  "onlyNewTest": true,
+  "stableSuiteRerun": false,
+  "fixtureRemoved": true,
+  "fixtureNetwork": "none",
+  "guardDefinitionSHA256": "41e240f6bd952c95066184fdc916d3fe19bf836eec77f78dcf7a52e69314b1b6",
+  "elapsedSeconds": 2.526,
+  "limits": "Unrelated Guest/Core/Source qualification helpers deny; positive admission uses the actual candidate only. No Hosted acceptance."
+}
