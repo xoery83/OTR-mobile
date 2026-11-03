@@ -51,5 +51,11 @@
     "issue": "ISSUED_EXACT_ORIGINAL_IDS_DIGEST",
     "claim": "RECEIPT_NOT_OBSERVED_NOT_NOCOMMIT",
     "connectionAggregate": "One core gateway idle-in-transaction observed; not killed or attributed to a specific request"
+  },
+  "rootFixedExecutionReceipt": {
+    "commit": "bd899ed01054f25ad14716771b6504e5addfbcb3",
+    "file": "ROOT_FIXED_EXECUTION_RECEIPT.json",
+    "sha256": "2e066b9c876bb0cd8c8a9b375ecaed670a1412d2c87ac3533f6d3a03611b6e7e",
+    "crossCheck": "PASS_FIXED_GATE_PLAN_OPERATIONS_INVITE_CLEANUP_RESTORE"
   }
 }

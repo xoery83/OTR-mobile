@@ -1,0 +1,74 @@
+{
+  "status": "HOST_WINDOW_CLOSED_VERIFIED_BUSINESS_PARTIAL_FAIL_CLAIM_42501",
+  "requestId": "AUTH-C04-HOST-ORIGINAL-RESUME-V4-20261104",
+  "recordedAt": "2026-11-03T18:23:29.864538+00:00",
+  "windowId": "9ce410c7-aa59-4a03-aff3-c350dc03b2f6",
+  "gateSHA256": "03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093",
+  "ownerApprovalSHA256": "d2a5721800923d5f3ccddbc9682467c49378c283145f9078740dd21be2e20d8b",
+  "planSHA256": "e1f901c039bb56bf2ae99959a071e18b7b82a4f386655a9f080506f69f22b5d6",
+  "T": "2026-11-03T18:05:28Z",
+  "normalCloseScheduled": "2026-11-03T18:33:28Z",
+  "hardCloseScheduled": "2026-11-03T18:35:28Z",
+  "actualEarlyRestoreIndependentlyVerifiedAt": "2026-11-03T18:17:02.844457+00:00",
+  "actualTimerDisarmIndependentlyVerifiedAt": "2026-11-03T18:20:15.302123+00:00",
+  "restoreContainerId": "d5ed2ea737f4ef6221301eb17ec64f87f4bf6efec7f3f1bc8487c5b1fa3d9c15",
+  "restoreImage": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+  "restoreConfigSHA256": "874777a26729b314eb2133a69483358dbc6f9032c3c3dc2b44035ef42600c971",
+  "rootRuntimeOps": "Reviewed same-image selectorstage, twoabsolutecloseTimers,start,independentqualifier,earlyclose,exactdefault/health/readback,ownTimerdisarm allverified",
+  "AuthActualOutcomeCommit": "5bd3283a17a20eee44778ceceb60a5bf13b67f21",
+  "normalAuth": {
+    "A": "OTP1_HOST_IDENTITY_VERIFIED",
+    "B": "OTP1_HOST_IDENTITY_VERIFIED"
+  },
+  "ownSessionCleanup": {
+    "A": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "B": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  },
+  "issue": {
+    "operationId": "b3299bda-8939-4e49-8377-338f8e619869",
+    "status": "ISSUED_SERVER_ACCEPTED_AND_INDEPENDENT_RECEIPT_SEEN",
+    "inviteId": "eb671ca9-8610-4b93-aa1d-3e92a7bdbe65",
+    "intentDigest": "27da9414669e8ecd83c826d39438c09f2ad9049bfcfcb829c6b300975164e7d1"
+  },
+  "claim": {
+    "operationId": "4028b673-9032-41c8-807e-c7d3592eae93",
+    "intentDigest": "b0adb3aed8c226817878acae890cbfb01be8047f9d57ec1da7eac57e466b2a01",
+    "status": "HTTP503_THEN_ONE_ORIGINAL_RECOVERY_UNCONFIRMED;preserveUNKNOWN",
+    "firstFailure": {
+      "dockerTimestamp": "2026-11-03T18:13:33.518305398Z",
+      "event": "member_claim_pg_failed",
+      "stage": "RPC",
+      "lastRpcMethod": "link",
+      "sqlState": "42501",
+      "requestIdAdjacent503": "664b31a9-8e6e-49da-a4e4-e9e9b8589cd8",
+      "durationMs": 7226
+    },
+    "receiptAtReadback": "Notseen at18:20:18Z; absence is NOTNoCommit"
+  },
+  "connectionMetadata": [
+    {
+      "count": 1,
+      "state": "idle in transaction",
+      "usename": "otr_trip_core_v2_gateway"
+    }
+  ],
+  "connectionMetadataLimit": "Aggregate role/state only; idleintransaction notattributedtoClaim or assumedleak; no sessions terminated",
+  "stageCorrection": "InitialgenericPOSTsummarymisattributed503toISSUE; actualjournaland201/503/request/PGlog confirmISSUEsuccess thenCLAIMfailure. Only this corrected outcome authoritative.",
+  "businessE2E": "NOT_PASSED_CLAIM_AND_MEMBERSHIP_READ_NATIVE_RECOVERY_PENDING",
+  "notRun": [
+    "MemberRead",
+    "PrivateItemNegative",
+    "NativeColdRestore",
+    "MemberRevoke"
+  ],
+  "windowConsumed": true,
+  "furtherExecutionAllowed": false,
+  "businessDataReversed": false,
+  "oldAndNewUnknownPreserved": true,
+  "ScopeWritesOutsideGate": false,
+  "Root2BusinessDriverInvoked": false,
+  "localWaitTimeout": "InitialAuth10minwait ended with0OTP/0Session/nooperator/challenge; same reviewedharness resumedreceiving under same immutableT/plan. No clockreset/newwindow. ActualOTP exactly1perAccount.",
+  "firstTransportIssue": "SSHtimeout beforestaticPythonexecuted; filetransportresolved beforeT. No runtimeoperationreplayed.",
+  "timerDisarmNote": "systemctlstop removedownTimers then reportedservicesnotloaded; exactinactive/not-found readbackreconciled, no rearm or secondwindow.",
+  "nextOwningInterface": "Auth/Core diagnose actual Hostedlink42501 with exact function/ACL/trigger preimages; no inferredobject orautomaticGRANT. Any install/anotherexecution requires its own qualifiedsource/preciseGate, not consumed03e24."
+}

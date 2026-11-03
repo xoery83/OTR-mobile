@@ -16,7 +16,10 @@ was attempted. Final outcome remainsUNKNOWN; no replay. Both newly owned Session
 have PASS_LOCAL_SCOPE_REFRESH_REVOKED. MemberRead/privateItemNegative/NativeCold/
 MemberRevoke NOT_RUN. Root2 earlyclose independently verified: d5ed/3f02 healthy default restored,
 selectors absent and own timers/services inactive. Independent SQL confirms exact
-ISSUE receipt; CLAIM absent remainsUNKNOWN. Exact denying object still pending. Actual Root2 safe diagnostics show RPC/link/
+ISSUE receipt; CLAIM absent remainsUNKNOWN. Fixed Root2 execution receiptbd899ed0
+was directly read and matched against Auth journals. Core is now checking the
+read-state invalidation guard/context after the member UPDATE; exact denying
+object remains pending. Actual Root2 safe diagnostics show RPC/link/
 SQLSTATE42501, aligned with Claim request664b31a9…/7226ms. Core request
 AUTH-C04-CLAIM-LINK42501-PREIMAGE-20261104 asks only affected UPDATE trigger/
 authority preimages; no permission expansion or retry. See hosted-original-resume-20261104.
