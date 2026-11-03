@@ -1,0 +1,30 @@
+{
+  "status": "SOURCE_ACCEPTED_DEFAULT_CLOSED_NOT_HOSTED_QA",
+  "mainCommit": "2606c8dd",
+  "sourceHashes": {
+    "backend/src/tripMemberClaimQa.ts": "eb3fca5477160fa12833e005b84b07a5c31326ea62ae59c7467ebfa3de3656ed",
+    "backend/src/tripMemberClaimQaRuntime.ts": "71ec7683ebbbc4a63ae140d3e35bce45c52d48bd2078de58ce8f8a2d5b2c7a98",
+    "backend/src/serverCapture.ts": "b8d0df54a90ed5c45dc5eeb67aecd262b23e36e4fd06f381a4364c717bd53a5a"
+  },
+  "qaOwningSourceEqualsAuth": true,
+  "checks": [
+    "Missing/invalid/unopened/expired/oversize config selects no Claim port",
+    "Exact DEV public host/network assertion and existing pure parser reused",
+    "No duplicate Auth business policy; existing raw Core constructor used",
+    "Raw port stripped on failed/unselected wrapper path",
+    "Independent close wraps original ordinary close; no config activated",
+    "Invitation duration <=10min distinct from <=30min activation bound"
+  ],
+  "independentRootReview": "docs/ops/shared-defaultclosed-20261103/REVIEW.json",
+  "rootReviewScope": "65focused PASS; source-scoped strict PASS; full-repo1024MiB tsc stopped at heap limit, not full tsc PASS",
+  "authBehaviorRetest": "Four exact previous permission fixture cases now PASS against copied fixed main Core module; no65suite rerun",
+  "hostedQA": "NOT_RUN",
+  "gateStillNeeded": [
+    "Fresh current Hosted deployment/identity/CAS",
+    "Fixed exact QA config and independent close/restore controller",
+    "Owner exact one-shot activation authorization",
+    "Each own normal A/B session and Reader/cleanup qualification"
+  ],
+  "runtimeEnabled": false,
+  "liveHostStateProvenByThisSource": false
+}

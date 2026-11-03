@@ -1,5 +1,15 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Returned to C04 on actual main2606c8dd delivery. Root's selector reuses Auth pure
+parser (exact same QA module), strips raw port on all failed/default selection,
+checks DEV/current window/invitation bound, retains ordinary startup/close. Source
+accepted only: no actual QA config/activation. Previously RED non-Everyone fixture
+retested against exact copied2606 Core blob:4PASS; canonical Core untouched, temps
+removed. Original f15 FAIL evidence retained, server-negative still pending legal
+normal manager/otherCreator fixture. Root65focused/scopedstrict evidence reused;
+full main tsc heap-limit attempt is not reported as PASS. Deployment/close/Gate
+qualification still needed before real A/B write; current source review isn't it.
+
 Actual MC continuation progressed beyond a list: C03/C02/C05/C01 local-prep
 claims/start/completion accepted throughrev12; C06 claim/start acceptedrev13/14.
 C05 fixedmainf15 source reproduced2non-Everyone management-contractFAIL+2controlPASS

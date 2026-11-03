@@ -1,0 +1,12 @@
+{
+  "status": "FOCUSED_LOCAL_CONTRACT_GREEN_NOT_SERVER_PASS",
+  "mainCommit": "2606c8dd",
+  "sourceSHA256": "b89d1d9690774c4a260c06730850865bc81f0df05e3412cec824932949add616",
+  "source": "Exact git blob copied into an Auth-owned temporary same-directory module; original Core file not edited",
+  "sameFixtureAsRed": "CORE_NON_EVERYONE_REPRO.test.ts.txt",
+  "passed": 4,
+  "previousContractFailures": 2,
+  "hostedInvoked": false,
+  "serverNegative": "PENDING_NORMAL_QUALIFIED_ACTOR_OTHER_CREATOR_CASE",
+  "temporaryFilesRemoved": true
+}
