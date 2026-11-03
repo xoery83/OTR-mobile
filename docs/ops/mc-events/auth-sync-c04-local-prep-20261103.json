@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-sync-c04-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "SYNC-C04",
+      "execution_slice_id": "SYNC-C04:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T00:37:42.535586+00:00",
+      "actual_started_at": "2026-11-03T00:37:42.535586+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-sync-identity-recovery-ports",
+      "summary": "Started scoped identity/UNKNOWN/Pending/cold recovery port reconciliation from existing Ledger/Bootstrap/Downstream owning paths; read-only local prep, not Sync takeover",
+      "next_action": "Hand exact original-attempt/denial producer gaps to owning callers; preserve C04 primary"
+    }
+  ]
+}

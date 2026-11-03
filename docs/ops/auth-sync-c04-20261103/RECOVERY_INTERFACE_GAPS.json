@@ -1,0 +1,60 @@
+{
+  "status": "LOCAL_RECOVERY_INTERFACE_PREP_COMPLETE_NOT_SYNC_E2E",
+  "package": "SYNC-C04",
+  "slice": "SYNC-C04:LOCAL_PREP",
+  "claimId": "auth-sync-c04-local-prep-20261103-v1",
+  "instructionCanonicalSHA256": "206bb84b0eae8f2f2bbf198a25adbfbabcba9bc495c16abb71cc68b1fa47e55f",
+  "scope": "Auth/Session and original-operation recovery boundary only; no Native/Sync/financial owning-file change",
+  "sourceHashes": {
+    "src/data/sync/ledgerOperationalSync.ts": "c194bcaae99e9868cb071ce447b369b069d378d125d43f92bb7f00d18bdb9806",
+    "src/data/bootstrap/defaultBootstrapDependencies.ts": "fb31d4f999d81c14abdb84bc32a478c410dbebeef72dd2757048a41684a8ef65",
+    "src/data/sync/tripDownstreamCoordinator.ts": "f3a97b7f83b7e7bfea507b3ab617927b2be593e43c4bb7f3b540207c0af98d4b",
+    "src/data/repositories/memberClaimRepository.ts": "a09dfdef0004cd7b98f1dd2859c448ef31839d3bfb925d86978890372dbb4e19",
+    "src/data/auth/accountProfileRepository.ts": "5bea43e5daa9bfd67f3ed2d2fef54ef7520c1ea9e73a9ff44694946e6fa2b81c"
+  },
+  "reuse": [
+    {
+      "path": "src/data/sync/ledgerOperationalSync.ts",
+      "boundary": "Existing one durable-work timer/queue owner; pause clears timers/readRetry and drains running mutation work"
+    },
+    {
+      "path": "src/data/bootstrap/defaultBootstrapDependencies.ts",
+      "boundary": "Offline cached launch independent of background pull; resume and retries use current generation, no new launch reauth requirement"
+    },
+    {
+      "path": "src/data/sync/tripDownstreamCoordinator.ts",
+      "boundary": "Reads coalesce per Account/generation/Trip; owning Core certificates and durable Pending/UNKNOWN remain separate; unchanged manifest does not overwrite local work"
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.ts",
+      "boundary": "Sensitive Claim executes online only, original operation recovery is separate POST; no queue/replay inference from absence or historical receipt"
+    },
+    {
+      "path": "src/data/auth/accountProfileRepository.ts",
+      "boundary": "Profile original-operation metadata does not prove present fields or authorize deleting/rebasing edited local draft"
+    }
+  ],
+  "remaining": [
+    {
+      "id": "NATIVE_SENSITIVE_ATTEMPT_RETENTION",
+      "owner": "Auth repository + Native owning caller/SQLite",
+      "condition": "Qualify retained original Claim/Profile request across process restart before mounting automatic UNKNOWN recovery; no second queue or reconstructed new operation"
+    },
+    {
+      "id": "FORMAL_DENIAL_CACHE_PRODUCER",
+      "owner": "Core/Auth server + Native cache",
+      "condition": "Qualify current Account/Trip/generation/epoch/access denial observation and existing cache invalidation, not404/TTL/network failure; direct invalidation function is not itself permission proof"
+    },
+    {
+      "id": "CHANGED_SCOPE_COLD_RECOVERY",
+      "owner": "Native/Sync/Auth",
+      "condition": "Once legitimate A/B scope exists, test only changed principal/receipt/queue edges; reuse unchanged prior Core/Ledger receipts"
+    }
+  ],
+  "financialBoundary": "Existing stronger Ledger CAS/conflict/settlement rules unchanged; no LWW, totals migration or legacy audit introduced",
+  "testsRepeated": false,
+  "hostedActions": 0,
+  "newSyncEngine": false,
+  "sharedFilesChanged": false,
+  "missingLocalInstructionFields": []
+}
