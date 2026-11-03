@@ -1,0 +1,29 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE",
+  "sourceSHA256": "392cc9da890ca6269b7f2d0bc2c17bf7cec31007fd636055ba3ecc792413d8c0",
+  "testSHA256": "aa36cde672f89e18adfc9affd66c4c77ba21cf23f8fbf412e3ee8e01811343c1",
+  "actualFailure": "Retained request caa05eb8 completed202 in18418ms after client15s timeout; body not observed",
+  "change": "Only DEV recoverMemberClaimQaIssue repository timeoutMs=90000; existing Core FIFO15s + lease60s + bounded Auth/HTTP allowance",
+  "authorValidation": {
+    "baselineRed": 1,
+    "newTestsGreen": 2,
+    "stableTestsSkipped": 11,
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "independentReview": {
+    "reviewer": "/root/auth_phase1_review",
+    "newTestsPassed": 2,
+    "stableSkipped": 11,
+    "result": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE"
+  },
+  "semanticsUnchanged": [
+    "ABSENT retainsUNKNOWN",
+    "No execute/replay/Claim",
+    "One recovery request only",
+    "Abort/window/account/generation/session cleanup fences",
+    "Ordinary API15s/Native/Backend/SQL/connection unchanged"
+  ],
+  "execution": "No new Hosted business request/OTP/window. Prior e930 and713 consumed. New budget is code only, not renewed authority.",
+  "remaining": "Fix does not turn server202 into independent original receipt. Any future original-ID submission requires precise new authority; do not reopen read-only window as automatic retry."
+}

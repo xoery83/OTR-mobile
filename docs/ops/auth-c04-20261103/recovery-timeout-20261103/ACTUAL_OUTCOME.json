@@ -1,0 +1,54 @@
+{
+  "goldenSlice": "FAIL_AT_ORIGINAL_ISSUE_RECOVERY_FETCH_TIMEOUT",
+  "executionReportedBy": "Root; approved416/e930 window reported consumed, not reusable; Auth has not independently revalidated approval/Host closure yet",
+  "originalOperationId": "b3299bda-8939-4e49-8377-338f8e619869",
+  "intentDigest": "27da9414669e8ecd83c826d39438c09f2ad9049bfcfcb829c6b300975164e7d1",
+  "actualPhaseProjection": {
+    "normalAuth": [
+      "OTP_REQUEST_ATTEMPTED",
+      "OTP_RECEIVED",
+      "HOST_IDENTITY_VERIFIED"
+    ],
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "recoveryError": {
+      "kind": "timeout",
+      "status": null,
+      "code": "REQUEST_TIMEOUT",
+      "stage": "FETCH (Root supplied safe diagnostic)",
+      "at": "2026-11-03T06:54:12.911Z"
+    },
+    "wrapperFailure": "REGISTERED_HOST_ACTION_FAILED",
+    "observedAt": "2026-11-03T06:54:13.383Z"
+  },
+  "retainedArtifactsSHA256": {
+    "FAILURE.json": "66a0a46932424d22b9cf37094f6be0a9720978e29e1d13d80182a2c7a8ac7e1a",
+    "operations.jsonl": "046ae4e87a67ff007d73cb3c7affa2feef842d1884dd74cb5204463eb1c428eb",
+    "auth-A.jsonl": "ff535fae0e34431e7850e3086631d7323afb9430971eaebdff391f45e381214a",
+    "recovery-failure.jsonl": "685bb89cc3c9c782bd977d8f7170bfaa20cd9da9704f7c6afe654d47c6906f62"
+  },
+  "closedReportedByRoot": "Early close; default c213/039 healthy/env1f63; selector/mode absent; both timers/service inactive; independent fixed receipt pending",
+  "notRun": [
+    "ISSUE replay",
+    "Claim",
+    "B login",
+    "Independent receipt SELECT after ISSUED",
+    "Member Read",
+    "Member Revoke",
+    "Native Cold Restore"
+  ],
+  "outcome": "UNKNOWN_RETAINED; missing PG/unavailable logs does not prove no execution",
+  "nextAction": "Focused DEV-only recovery caller90s budget fix, with original18.418s case and90s hard-bound tests; independent review; no Hosted retry without exact new authorization.",
+  "diagnosticCodeFacts": [
+    "Client bounded request default15s; FETCH means no response headers obtained",
+    "Actual route awaits gateway.validateAccessToken before tripMemberClaimBoundary",
+    "Core connection FIFO may wait15s before a lease; this is a candidate cause, not root-cause evidence"
+  ],
+  "independentRetainedRouteObservation": {
+    "source": "RETAINED_ROUTE_TRACE.json",
+    "requestId": "caa05eb8-b157-4c06-b415-6ee690635cd4",
+    "status": 202,
+    "durationMs": 18418,
+    "completedAt": "2026-11-03T06:54:17.411111189Z",
+    "interpretation": "Client15s timeout precedes server completion. No response body observed; do not convert202 alone to receipt/replay qualification."
+  }
+}

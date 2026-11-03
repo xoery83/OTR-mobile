@@ -7,7 +7,20 @@ and the evidence directories below; do not reconstruct it or rerun stable suites
 
 ## Actual Golden Slice
 
-**FAIL_AT_FIRST_ISSUE_HTTP_503**, not Hosted multi-member PASS.
+**FAIL_AT_ORIGINAL_ISSUE_RECOVERY_FETCH_TIMEOUT**, not Hosted multi-member PASS.
+Root's later416/e930 recovery window authenticated A normally but client15s timed
+out. Auth independently read retained stopped-container route metadata: HTTP202,
+18418ms, requestcaa05eb8…, completed06:54:17Z after client timeout06:54:12Z. No body
+was observed, so originalb329 remainsUNKNOWN. DEV recovery-only caller now uses a
+bounded90s budget matching existingCore FIFO15s+lease60s+overhead; baseline18.418s
+RED→newcaseGREEN and90s hung-bound PASS, independently2PASS. Ordinary15s/Native/
+Backend/SQL unchanged. Evidence: recovery-timeout-20261103/ACTUAL_OUTCOME.json,
+RETAINED_ROUTE_TRACE.json and BUDGET_FIX_REVIEW.json. Root reports safe closure;
+fixed Root execution/closure receipt remains pending. No new window/retry authorized.
+
+## Prior ISSUE attempt (historical)
+
+**FAIL_AT_FIRST_ISSUE_HTTP_503**, subsequently repaired in startup wiring.
 
 Owner approved exactly one finite A/B window, Gate `713a7b92…` at `d28e777f`.
 Auth directly verified the original user reply in Root chat; this was not inferred
@@ -178,3 +191,11 @@ Native delivered Guest cover candidate db06bad2. Auth scoped data Review NO_BLOC
 retained local photos still block fileless Adoption after Auto. Exact evidence in
 auth-c04-20261103/GUEST_COVER_NATIVE_DATA_REVIEW.json. This is no Native device/UI
 E2E or photo migration acceptance; Native owns final shared-file integration.
+
+Root executed separately approved416/e930 original-ISSUE recovery window: normalA
+OTP/identity/own-session cleanup passed; sole recovery FETCH timed out at06:54:12Z,
+no ISSUE replay/Claim/B/independent receipt read. Root reports safe early closure;
+Auth read only whitelist private phase metadata, no secret values. Root fixed route/
+closure receipt pending. See recovery-timeout-20261103/ACTUAL_OUTCOME.json; original
+UNKNOWN preserved, both old windows consumed. First failure is now timeout; no
+causal claim from missing PG logs and no global timeout increase/retry authorized.

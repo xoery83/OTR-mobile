@@ -71,6 +71,8 @@ export async function recoverMemberClaimQaIssue(
       account,
       {
         baseUrl: "https://api-dev.xoery.art",
+        // DEV recovery shares the existing Core FIFO (15s) and lease (60s); allow bounded Auth/HTTP overhead.
+        timeoutMs: 90_000,
         fetchImplementation: deps.fetchImplementation,
         signal: deps.signal,
       },

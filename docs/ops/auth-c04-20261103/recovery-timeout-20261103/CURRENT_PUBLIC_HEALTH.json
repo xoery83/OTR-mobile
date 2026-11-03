@@ -1,0 +1,8 @@
+{
+  "observedAt": "2026-11-03T07:08:09.615Z",
+  "route": "/health",
+  "method": "GET",
+  "authenticated": false,
+  "status": 200,
+  "elapsedMs": 1080
+}

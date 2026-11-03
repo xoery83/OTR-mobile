@@ -1,0 +1,19 @@
+{
+  "containerId": "49dd8f41e0e04d37579b3f6294533bd395b3e2458b68742c3c9e2e2db0c0af8a",
+  "range": [
+    "2026-11-03T06:53:30Z",
+    "2026-11-03T07:04:00Z"
+  ],
+  "dockerCommandExit": 0,
+  "parsedJsonRecords": 35,
+  "memberClaimMetadata": [
+    {
+      "event": "request",
+      "requestId": "caa05eb8-b157-4c06-b415-6ee690635cd4",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 202,
+      "durationMs": 18418,
+      "dockerTimestamp": "2026-11-03T06:54:17.411111189Z"
+    }
+  ]
+}
