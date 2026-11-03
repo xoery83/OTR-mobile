@@ -334,6 +334,13 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
       sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
     ).toEqual({ n: 0 });
     const host = createUniversalContinuousHost(hostDeps);
+    const deniedFence = vi.fn(() => {
+      throw Error("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
+    });
+    const deniedHost = createUniversalContinuousHost({
+      ...hostDeps,
+      assertNewExecutionAllowed: deniedFence,
+    });
     const prepare = {
       batchId: batch,
       submissionSha256: binding.submissionSha256,
@@ -348,6 +355,10 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
           : pin,
       ],
     };
+    await expect(deniedHost.prepare(prepare)).rejects.toThrow(
+      "UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED",
+    );
+    expect(sends).not.toHaveBeenCalled();
     expect((await host.prepare(prepare)).status).toBe("QUEUED");
     expect((await host.prepare(prepare)).status).toBe("EXISTING");
     expect((await host.readContext(batch)).activity).toMatchObject({
@@ -414,6 +425,16 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     ).rejects.toThrow("QUEUE_SCOPE");
     expect(sends).not.toHaveBeenCalled();
     expect(await queue.claim(context, first, "fixture-worker")).toBe(true);
+    if (!expired) {
+      await expect(
+        deniedHost.executeQueued(batch, taskId, {
+          operationId: first.id,
+          owner: first.claimOwner!,
+          baseVersion: first.baseVersion!,
+        }),
+      ).rejects.toThrow("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
+      expect(sends).not.toHaveBeenCalled();
+    }
     if (expired) {
       const originalPolicy = sql
         .prepare("SELECT policy_snapshot FROM intelligence_continuations WHERE task_id=?")
@@ -592,6 +613,7 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
         q.includes("trip_source_read_sustained_universal_inputs"),
       ).length - beforeRead,
     ).toBe(2);
+    expect(await deniedHost.readResult(batch, taskId)).toEqual(result);
     const sourceRead = sourceQuery.getMockImplementation()!;
     for (const corrupt of ["MATERIAL", "SECOND_SNAPSHOT"] as const) {
       let reads = 0;

@@ -74,6 +74,7 @@ export function createUniversalContinuousHost(deps: {
   enabled?: boolean;
   context: AccountRequestContext;
   assertCurrentAuth(): Promise<void>;
+  assertNewExecutionAllowed?(): void;
   db: ReturnType<typeof universalTaskDatabase>;
   catalogConnection: PublicationCatalogConnection;
   bootstrapLedger(): Promise<unknown>;
@@ -109,6 +110,10 @@ export function createUniversalContinuousHost(deps: {
   const current = async () => {
     if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     await deps.assertCurrentAuth();
+  };
+  const executionCurrent = async () => {
+    await current();
+    deps.assertNewExecutionAllowed?.();
   };
   const source = createUniversalBatchSource({
     enabled: deps.enabled,
@@ -391,9 +396,9 @@ export function createUniversalContinuousHost(deps: {
   }
   return {
     async prepare(raw: unknown) {
-      await current();
+      await executionCurrent();
       const selection = await deps.selectProvider();
-      await current();
+      await executionCurrent();
       const binding = await source.prepare(actor, trip, raw),
         prior = await existing(binding);
       const bindingContext = {
@@ -432,7 +437,7 @@ export function createUniversalContinuousHost(deps: {
         AbortSignal.timeout(5000),
       );
       const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());
-      await current();
+      await executionCurrent();
       await bootstrapUniversalTask({
         db: deps.db,
         task: draft.task,
@@ -442,6 +447,7 @@ export function createUniversalContinuousHost(deps: {
         getAccountId: async () => actor,
         assertCurrent() {
           if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
+          deps.assertNewExecutionAllowed?.();
         },
         claimQueue: false,
       });
@@ -585,6 +591,7 @@ export function createUniversalContinuousHost(deps: {
             });
           return await readResult(batch, taskId);
         }
+        await executionCurrent();
         phase = "MANIFEST_READ";
         const manifest = await readManifest(state.task);
         phase = "PROVIDER_SELECTION";
@@ -641,7 +648,7 @@ export function createUniversalContinuousHost(deps: {
             priceScheduleId: draft.selection.priceScheduleId,
             providerRequestSha256: request.requestSha256,
           },
-          assertCurrentAuth: current,
+          assertCurrentAuth: executionCurrent,
         });
         if (!runtime.universalImportPort) throw Error("UNIVERSAL_PROVIDER_CLOSED");
         phase = "PROVIDER_EXECUTION";

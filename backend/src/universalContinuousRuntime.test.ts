@@ -172,6 +172,60 @@ it("overlapping activity and batch reads do not share an occupied Source connect
   }
 });
 
+it.each(["matching", "other-account", "other-trip"])(
+  "execution fence limits new work but preserves Results: %s",
+  async (mode) => {
+    const actor = randomUUID(),
+      trip = randomUUID(),
+      result = { existing: true },
+      prepare = vi.fn();
+    f.auth.mockResolvedValue({ id: actor });
+    f.config.mockResolvedValue({
+      taskDatabase: "/unused-test.db",
+      qaExecutionFence: {
+        version: 1,
+        accountId: mode === "other-account" ? randomUUID() : actor,
+        tripId: mode === "other-trip" ? randomUUID() : trip,
+      },
+    });
+    f.host.mockImplementation(({ assertCurrentAuth, assertNewExecutionAllowed }) => ({
+      prepare: async () => {
+        await assertCurrentAuth();
+        assertNewExecutionAllowed();
+        prepare();
+        return result;
+      },
+      readResult: async () => {
+        await assertCurrentAuth();
+        return result;
+      },
+    }));
+    const runtime = await loadDevUniversalContinuousRuntime({
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    });
+    try {
+      const ports = await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer LOCAL_FIXTURE_ONLY" },
+        }),
+        actor,
+        trip,
+      );
+      if (mode === "matching")
+        expect(await ports.prepare(trip, { tripId: trip })).toEqual(result);
+      else {
+        await expect(ports.prepare(trip, { tripId: trip })).rejects.toThrow(
+          "UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED",
+        );
+        expect(prepare).not.toHaveBeenCalled();
+      }
+      expect(await ports.universalImportPort.read(actor, "batch", "task")).toEqual(result);
+    } finally {
+      await runtime?.close();
+    }
+  },
+);
+
 it.each([
   ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED", false],
   ["UNIVERSAL_SOURCE_CLOSED", "UNIVERSAL_SOURCE_CLOSED", false],
