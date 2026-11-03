@@ -1,0 +1,26 @@
+{
+  "status": "STATIC_PREPARATION_COMPLETE_NOT_EXECUTABLE",
+  "observedAt": "2026-11-03T17:37:17.421159+00:00",
+  "sourceMain": "c91a27caf51ba6ae334a81a8c1c4f59cc4bd919b",
+  "sourceReceipt": "08684bb85e866cda06b50a5807fb969e65a267cb",
+  "sourceSixBlobAndHashChecks": "PASS",
+  "publicConfiguration": "PRESENT_EXPECTED_DEV_PROJECT",
+  "qaInboundKeychainMetadata": "PRESENT",
+  "keychainPasswordRequested": false,
+  "secretStoredInEvidence": false,
+  "mailboxAccessed": false,
+  "otpSent": 0,
+  "sessionsStarted": 0,
+  "businessRequests": 0,
+  "driver": "Existing runMemberClaimQaResumeDriver; no alternate Auth/Repository/runner architecture",
+  "receiving": "Existing exact-recipient/request-time accepted receivers; fresh one-challenge custody required at actual readiness",
+  "remaining": [
+    "Direct Owner approval of exact current software Gate; generic continue is not substitution",
+    "Root2 Sparse Stay software request may change pinned68aa; exact baseline difference must be resolved before Auth invocation",
+    "Fresh immutable plan, independent expected pins, project-checked read-only query transport and absolute close timers",
+    "Auth private execution custody and actual accepted receiving readiness before window starts"
+  ],
+  "oldUnknown": "Retain original ISSUE b3299bda-8939-4e49-8377-338f8e619869 and CLAIM4028b673-9032-41c8-807e-c7d3592eae93; no replay",
+  "gateStartDeadlineUTC": "2026-11-04T08:00:00Z",
+  "hostedE2E": "NOT_PASS"
+}

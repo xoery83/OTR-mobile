@@ -241,3 +241,28 @@ was created. Source94 compatibility preserves only separately approved same-imag
 config, grants no Source authority and still requires Root actual conflict/CAS
 checks. Next: Root submits this single precise approval request, then actual plan/
 normalA/B/Hosted execution only after approval. Do not replay consumed windows.
+
+## V4 ownership resume cursor — 4 November 2026
+
+Auth retains Driver/Scenario maintenance, normal A/B actions and C04 E2E DRI.
+Root2 actual handover was read from its completed receipt8225ecfa/MCb4915bad;
+Hosted operations now go to thread01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232.
+Root1 received AUTH-C04-SOURCE-C91-V4-20261104 for the fixedc91 six-file source
+integration, reviewed bya514. Source dependency is now UNBLOCKED: Root1's fixed
+receipt08684bb8 records fresh remote mainc91a27ca and source resource release;
+Auth directly read the receipt and independently matched all6 Git blobs/SHA256.
+No stable tests rerun. Root2 and MC received the source-unblocked event.
+Root2 received AUTH-C04-HOST-ORIGINAL-RESUME-V4-20261104 for that precise Gate,
+not permission to execute. MC received the responsibility/request/return-trigger
+update. Neither handoff changes Primary Assignment or grants execution authority.
+Return trigger: actual main hashes, valid direct Owner approval, then Root2 fresh
+plan/CAS/timers/active qualification. Auth runs its own normal A/B driver only
+after these conditions. Gate T deadline2026-11-04T08:00Z must not be extended
+silently. No new Host action, OTP, Session or business request was made here.
+
+Auth pre-execution preparation: correct DEV public config present; dedicated QA
+Inbound Keychain metadata exists (password not requested, output discarded). No
+mailbox/OTP/Session/business call. Root2 directly confirmed exact approval pending
+and is processing Sparse Stay software; this may replace Gate-pinned68aa, so
+exact software-baseline compatibility must be resolved before invocation. See
+original-id-resume/V4_PRE_EXECUTION_READINESS.json. No new runner was invented.
