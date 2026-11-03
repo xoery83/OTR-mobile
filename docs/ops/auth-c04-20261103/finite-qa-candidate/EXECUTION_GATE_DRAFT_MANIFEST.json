@@ -1,0 +1,74 @@
+{
+  "status": "DRAFT_NOT_AUTHORIZED_NOT_READY_FOR_OWNER_REQUEST",
+  "controllerCandidate": "66b99173",
+  "controllerSourcePins": {
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "42fa15a12ca12d3d97b1ada331cc997f164e8be25136932469290e803e2f399a",
+    "docs/ops/auth-c04-finite-runtime-20261103/QA_CASE_TEMPLATE.json": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "docs/ops/auth-c04-finite-runtime-20261103/HANDOFF.md": "3a995e3848f6420a8cc86c9a5892fddad889f285e8d7474daceeb4bbce4cc071",
+    "docs/ops/auth-c04-finite-runtime-20261103/VALIDATION.json": "07621ed3b4f1e8974c9d143b3010c1a9113db3ee874fffaad6237e578fb5ab7b"
+  },
+  "retainedHelperSHA256": "014844d487ba4fb32d9abc42c22d533195831be3114d47a2b253d465d44b5444",
+  "authScenarioCommit": "a0245ba2",
+  "selectorCandidate": "a403549f",
+  "draftSHA256": "96ddb3f0f832773ad488e3e611f9d4f89c58b76d3865bb74c5570c1e16877fca",
+  "fixedCaseSource": "QA_CASE_TEMPLATE.json",
+  "proposalOnly": {
+    "runtimeMaxSeconds": 1800,
+    "inviteMaxSeconds": 600,
+    "logicalIssueOperations": 1,
+    "logicalClaimOperations": 1,
+    "confirmedClaimDuplicateMax": 1,
+    "unknownReplayAllowed": false,
+    "memberRevoke": false,
+    "pendingInviteRevoke": false,
+    "newSchemaRlsGrantRole": false
+  },
+  "unfilledExecutionFields": {
+    "windowId": null,
+    "opensAt": null,
+    "inviteExpiresAt": null,
+    "closesAt": null,
+    "baseline": null,
+    "qualifiedPreflightSHA256": null,
+    "independentControllerReviewSHA256": "72ff43ea668b828a09752a49dc936dfbcf6f26974bd3a709350a069bfb04beb3",
+    "ownerApprovalSHA256": null,
+    "finalApprovedGateSHA256": null
+  },
+  "missingBeforeOwnerRequest": [
+    "Non-activating Host controller prerequisites and final exact Gate review",
+    "Original fresh sanitized full Host identity/CAS receipt and fixed runtime/selector identity",
+    "Qualified normal A/B session/readback/custody operator interfaces",
+    "Final sealed exact Gate scope and independent review"
+  ],
+  "executionPlan": false,
+  "businessCalls": 0,
+  "controllerIndependentReviewSHA256": "72ff43ea668b828a09752a49dc936dfbcf6f26974bd3a709350a069bfb04beb3",
+  "controllerReviewStatus": "NO_BLOCKER_DEFAULT_CLOSED_ONLY",
+  "afterApprovalBeforeStart": [
+    "Fresh approved CAS",
+    "Stage once and independently reconcile any UNKNOWN",
+    "Arm/readback exact absolute timer with immutable plan hash",
+    "Start only after timer/retained-default verification"
+  ],
+  "rootReportedControllerStaging": {
+    "source": "Root chat report, original full Host receipt pending",
+    "directory": "/opt/otr/dev-backend/build/auth-c04-finite-controller-66b99173-20261103/",
+    "owner": "root",
+    "mode": "0600",
+    "runtimeSHA256": "42fa15a12ca12d3d97b1ada331cc997f164e8be25136932469290e803e2f399a",
+    "qaTemplateSHA256": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "retainedHelperSHA256": "014844d487ba4fb32d9abc42c22d533195831be3114d47a2b253d465d44b5444",
+    "planCreated": false,
+    "timerArmed": false,
+    "qaContainerCreated": false,
+    "otpSent": false,
+    "runtimeSelector": "ABSENT_CLOSED"
+  },
+  "draftIndependentReview": {
+    "status": "SCOPED_NO_BLOCKER_DRAFT_ONLY",
+    "reviewer": "auth_phase1_review",
+    "scope": "Document/call-contract and source/hash checks only, no repeated tests or external IO",
+    "repairedFinding": "Before-approval sealed execution plan wording changed to sealing specification; actual plan sealed after approval with permitted substitutions",
+    "remaining": "Full original Host readback, operator qualification and final Gate review/approval; cannot execute from draft"
+  }
+}

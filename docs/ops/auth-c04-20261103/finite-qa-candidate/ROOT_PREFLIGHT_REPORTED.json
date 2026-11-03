@@ -25,5 +25,12 @@
     "Fresh B no existing same-Trip Person and exact Ledger history/grant count",
     "Exact finite activation approval; formal open requires another fresh CAS"
   ],
-  "businessWritesPerformedByAuth": false
+  "businessWritesPerformedByAuth": false,
+  "rootReportedSupplement": {
+    "source": "Root follow-up report; preparation only, actual open requires fresh CAS",
+    "bConnectedPersonsInTrip": 0,
+    "targetPersonalSettlementCounterpartyRecords": 0,
+    "targetOldDirectedInvites": 0,
+    "financialOriginalTextRead": false
+  }
 }
