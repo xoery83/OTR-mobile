@@ -180,6 +180,8 @@ type DraftState = {
   fingerprint: string;
   actor: string;
   revision: number | null;
+  // Private pre-first-save evidence, never a persisted authority or certificate.
+  firstCreateRead?: { graph: string; operations: string; personId: string };
   original: ManualItemFields;
   ids: string[];
   attempt?: {
@@ -535,6 +537,19 @@ export function createManualItemRepository(
           fingerprint: snapshot.fingerprint,
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
+          ...(family === "P1" &&
+          !itemId &&
+          !recovery &&
+          !snapshot.cert &&
+          snapshot.actor.personId
+            ? {
+                firstCreateRead: {
+                  graph: json(snapshot.graph),
+                  operations: json(snapshot.operations),
+                  personId: snapshot.actor.personId,
+                },
+              }
+            : {}),
           original: structuredClone(fields),
           ids: Array.from({ length: family === "P3" || family === "P6" ? 5 : 4 }, () =>
             newId(),
@@ -622,7 +637,25 @@ export function createManualItemRepository(
         throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
       return core.commitManualBatch(state.context, async () => {
         const snapshot = await current(state.context);
-        if (json(snapshot.actor) !== state.actor)
+        // First normal Accepted read may replace LOCAL_CREATOR's presentation envelope.
+        // Permit only that transition, with identical business graph/operations and Person
+        // binding. The commands below are still validated by the current Accepted actor.
+        const firstCreateRead = state.firstCreateRead;
+        const acceptedCreatorRead = !!(
+          family === "P1" &&
+          draft.mode === "CREATE" &&
+          !state.attempt &&
+          firstCreateRead &&
+          snapshot.cert &&
+          snapshot.actor.active &&
+          snapshot.actor.personId === firstCreateRead.personId &&
+          snapshot.actor.canManageShared === false &&
+          json({ ...snapshot.actor, canManageShared: true }) === state.actor &&
+          json(snapshot.graph) === firstCreateRead.graph &&
+          json(snapshot.operations) === firstCreateRead.operations &&
+          !snapshot.graph.itinerary_events.some((item) => item.id === draft.itemId)
+        );
+        if (json(snapshot.actor) !== state.actor && !acceptedCreatorRead)
           throw new Error("MANUAL_PLAN_SCOPE_CHANGED");
         if (draft.mode === "EDIT")
           editable(snapshot, draft.itemId, state.context.accountId, family);
@@ -660,7 +693,7 @@ export function createManualItemRepository(
             };
           }
         }
-        if (snapshot.fingerprint !== state.fingerprint)
+        if (snapshot.fingerprint !== state.fingerprint && !acceptedCreatorRead)
           throw new Error("MANUAL_PLAN_CONFLICT");
         const row =
           draft.mode === "EDIT"
@@ -935,6 +968,11 @@ export function createManualItemRepository(
         });
         if (state.attempt && json(state.attempt.commands) !== json(commands))
           throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
+        if (acceptedCreatorRead) {
+          state.actor = json(snapshot.actor);
+          state.fingerprint = snapshot.fingerprint;
+          state.firstCreateRead = undefined;
+        }
         state.attempt = {
           fields: fieldsText,
           placeDraft: placeDraftText,

@@ -1303,3 +1303,287 @@ it("keeps a published Guest source locked against Create recovery", async () => 
   );
   expect(count(f.sql)).toBe(before);
 });
+
+async function vn04Snapshot(f: Awaited<ReturnType<typeof fixture>>) {
+  const context = await f.core.captureContext(f.tripId);
+  const { readLocalManualSnapshotWithinTransaction } =
+    await import("./tripLocalManualReadRepository");
+  const accepted = await f.core.readAcceptedSnapshotWithinTransaction(context);
+  return (await readLocalManualSnapshotWithinTransaction(
+    f.coreDatabase,
+    f.identity,
+    f.core,
+    context,
+    accepted,
+  ))!;
+}
+async function vn04Accepted(
+  f: Awaited<ReturnType<typeof fixture>>,
+  change?: "PERSON" | "PEOPLE" | "GRAPH",
+) {
+  const before = await vn04Snapshot(f);
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const { emptyCoreGraph } = await import("@/domain/trip/tripCoreV2Mutation");
+  const graph = change === "GRAPH" ? structuredClone(before.graph) : emptyCoreGraph();
+  if (change === "GRAPH")
+    graph.itinerary_events[0].title = "Synthetic independent remote change";
+  const bundle = await buildCoreActorCollection(
+    graph,
+    before.actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-20T00:00:00.000Z",
+    },
+    [
+      {
+        person_id: change === "PERSON" ? randomUUID() : before.actor.personId!,
+        account_id: f.originalAccount,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+      ...(change === "PEOPLE"
+        ? [
+            {
+              person_id: randomUUID(),
+              account_id: null,
+              active: true,
+              participating: true,
+              revision: 1,
+            },
+          ]
+        : []),
+    ],
+    async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+  );
+  await f.core.refresh(await f.core.captureContext(f.tripId), {
+    collection: async () => bundle,
+  });
+  return { before, after: await vn04Snapshot(f) };
+}
+
+it.each([true, false])(
+  "VN04 first P1 Create preserves entered fields when initial Accepted read arrives during editor=%s",
+  async (duringEditor) => {
+    const f = await fixture(true),
+      repo = f.repo();
+    const draft = duringEditor ? await repo.createDraft(f.tripId) : null;
+    const { before, after } = await vn04Accepted(f);
+    expect(before.cert).toBeNull();
+    expect(after.cert).not.toBeNull();
+    expect(after.graph).toEqual(before.graph);
+    expect(after.operations).toEqual(before.operations);
+    expect(after.actor).toEqual({ ...before.actor, canManageShared: false });
+    const saveDraft = draft ?? (await repo.createDraft(f.tripId));
+    const input = {
+      ...values(saveDraft.fields),
+      title: "Synthetic Sky Tower",
+      startDate: "2026-11-05",
+      endDate: "2026-11-05",
+      location: "Synthetic Apple-selected Auckland address",
+    };
+    const saved = await repo.save(saveDraft, input);
+    expect(saved.itemId).toBe(saveDraft.itemId);
+    expect(saved.localStatus).toBe("PENDING");
+    expect(
+      (await f.read(f.tripId))?.items.find((item) => item.itemId === saved.itemId),
+    ).toMatchObject({
+      title: input.title,
+      place: { authoredLabel: input.location },
+      schedule: {
+        start: { localDate: input.startDate },
+        end: { localDate: input.endDate },
+      },
+    });
+    const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+    expect(pending).toHaveLength(1);
+    expect(pending[0].command.target.id).toBe(saveDraft.itemId);
+    expect(pending[0].command.operationId).toBe(saved.operationIds[0]);
+    expect(after.actor.canManageShared).toBe(false);
+    expect(await repo.save(saveDraft, input)).toEqual(saved);
+    expect(count(f.sql)).toBe(1);
+  },
+);
+
+it("VN04 first Accepted rebind also proves nonempty graph and original pending operations are unchanged", async () => {
+  const f = await fixture(true),
+    repo = f.repo();
+  const previous = await repo.createDraft(f.tripId);
+  await repo.save(previous, values(previous.fields, "Existing synthetic pending plan"));
+  const target = await repo.createDraft(f.tripId);
+  const { before, after } = await vn04Accepted(f);
+  expect(before.graph.itinerary_events).toHaveLength(1);
+  expect(before.operations).toHaveLength(1);
+  expect(after.graph).toEqual(before.graph);
+  expect(after.operations).toEqual(before.operations);
+  const saved = await repo.save(target, values(target.fields, "New synthetic plan"));
+  expect(saved.itemId).toBe(target.itemId);
+  expect(await repo.save(target, values(target.fields, "New synthetic plan"))).toEqual(
+    saved,
+  );
+  expect(count(f.sql)).toBe(2);
+});
+
+it.each(["PERSON", "PEOPLE", "GRAPH"] as const)(
+  "VN04 first Accepted arrival cannot rebind changed %s",
+  async (change) => {
+    const f = await fixture(true),
+      repo = f.repo();
+    if (change === "GRAPH") {
+      const old = await repo.createDraft(f.tripId);
+      await repo.save(old, values(old.fields));
+    }
+    const target = await repo.createDraft(f.tripId),
+      n = count(f.sql);
+    const { before, after } = await vn04Accepted(f, change);
+    if (change === "GRAPH") {
+      expect(after.operations).toEqual(before.operations);
+      expect(after.graph).not.toEqual(before.graph);
+    }
+    await expect(repo.save(target, values(target.fields))).rejects.toThrow(
+      "MANUAL_PLAN_SCOPE_CHANGED",
+    );
+    expect(count(f.sql)).toBe(n);
+  },
+);
+
+it("VN04 rejects a pending operation state change even when the business graph is identical", async () => {
+  const f = await fixture(true),
+    repo = f.repo();
+  const old = await repo.createDraft(f.tripId);
+  await repo.save(old, values(old.fields));
+  const target = await repo.createDraft(f.tripId);
+  const basis = await vn04Snapshot(f);
+  f.sql.exec("UPDATE trip_core_pending_intents SET state='IN_FLIGHT'");
+  const { after } = await vn04Accepted(f);
+  expect(after.graph).toEqual(basis.graph);
+  expect(after.operations).not.toEqual(basis.operations);
+  await expect(repo.save(target, values(target.fields))).rejects.toThrow(
+    "MANUAL_PLAN_SCOPE_CHANGED",
+  );
+  expect(count(f.sql)).toBe(1);
+});
+
+it("VN04 cannot rebind an already attempted Create after rollback or an existing Edit", async () => {
+  const f = await fixture(true),
+    repo = f.repo(),
+    target = await repo.createDraft(f.tripId);
+  f.failNext(1);
+  await expect(repo.save(target, values(target.fields))).rejects.toThrow(
+    "TEST_WRITE_FAILURE",
+  );
+  await vn04Accepted(f);
+  await expect(repo.save(target, values(target.fields))).rejects.toThrow(
+    "MANUAL_PLAN_SCOPE_CHANGED",
+  );
+  expect(count(f.sql)).toBe(0);
+  const g = await fixture(true),
+    otherRepo = g.repo(),
+    initial = await otherRepo.createDraft(g.tripId);
+  await otherRepo.save(initial, values(initial.fields));
+  const edit = await otherRepo.read(g.tripId, initial.itemId);
+  await vn04Accepted(g);
+  await expect(
+    otherRepo.save(edit, { ...edit.fields, title: "Must not overwrite" }),
+  ).rejects.toThrow("MANUAL_PLAN_SCOPE_CHANGED");
+  expect(count(g.sql)).toBe(1);
+});
+
+it("VN04 rebind never bypasses revocation, account switch or current participant validation", async () => {
+  const f = await fixture(true),
+    repo = f.repo(),
+    target = await repo.createDraft(f.tripId);
+  await vn04Accepted(f);
+  await f.core.revoke(await f.core.captureContext(f.tripId), 2);
+  await expect(repo.save(target, values(target.fields))).rejects.toThrow(
+    "CORE_ACCESS_REVOKED",
+  );
+  expect(count(f.sql)).toBe(0);
+  const g = await fixture(true),
+    otherRepo = g.repo(),
+    other = await otherRepo.createDraft(g.tripId);
+  await vn04Accepted(g);
+  g.switchAccount();
+  await expect(otherRepo.save(other, values(other.fields))).rejects.toThrow(
+    "Account changed",
+  );
+  expect(count(g.sql)).toBe(0);
+  const h = await fixture(true),
+    thirdRepo = h.repo(),
+    third = await thirdRepo.createDraft(h.tripId);
+  await vn04Accepted(h);
+  await expect(
+    thirdRepo.save(third, {
+      ...values(third.fields),
+      participation: {
+        mode: "SELECTED_MEMBERS",
+        people: [randomUUID()],
+        selfPersonId: null,
+      },
+    }),
+  ).rejects.toThrow("CROSS_TRIP_PERSON");
+  expect(count(h.sql)).toBe(0);
+});
+
+it("VN04 retries the same rebound Create after SQL rollback with original Item/Operation and entered fields", async () => {
+  const f = await fixture(true),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = {
+    ...values(draft.fields),
+    title: "Synthetic rebound retry",
+    description: "Keep Unicode 林 é and original text",
+    startDate: "2026-11-05",
+    endDate: "2026-11-05",
+    startTime: "10:15",
+    endTime: "11:20",
+    location: "Synthetic selected place",
+  };
+  const { after } = await vn04Accepted(f);
+  expect(after.actor.canManageShared).toBe(false);
+  const writes = vi.spyOn(f.coreDatabase, "runAsync");
+  f.failNext(1);
+  await expect(repo.save(draft, input)).rejects.toThrow("TEST_WRITE_FAILURE");
+  const failedInsert = writes.mock.calls.find(([query]) =>
+    query.startsWith("INSERT INTO trip_core_pending_intents"),
+  )!;
+  const operationId = failedInsert[3];
+  const intent = JSON.parse(String(failedInsert[4]));
+  expect(intent).toMatchObject({
+    operationId,
+    target: { kind: "ITEM", id: draft.itemId },
+    admission: { mode: "MANUAL" },
+  });
+  expect(count(f.sql)).toBe(0);
+  expect(await f.read(f.tripId)).toBeNull();
+  const saved = await repo.save(draft, input);
+  expect(saved).toMatchObject({
+    itemId: draft.itemId,
+    operationIds: [operationId],
+    localStatus: "PENDING",
+  });
+  expect(await repo.save(draft, input)).toEqual(saved);
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending.map((entry) => entry.command)).toEqual([intent]);
+  expect(count(f.sql)).toBe(1);
+  const read = (await f.read(f.tripId))!;
+  expect(read.items).toHaveLength(1);
+  expect(read.items[0]).toMatchObject({
+    itemId: draft.itemId,
+    title: input.title,
+    description: input.description,
+    place: { authoredLabel: input.location },
+    schedule: {
+      start: { localDate: input.startDate, localTime: "10:15:00" },
+      end: { localDate: input.endDate, localTime: "11:20:00" },
+    },
+  });
+  const accepted = await f.core.readAcceptedSnapshotWithinTransaction(
+    await f.core.captureContext(f.tripId),
+  );
+  expect(accepted?.actor.canManageShared).toBe(false);
+  writes.mockRestore();
+});

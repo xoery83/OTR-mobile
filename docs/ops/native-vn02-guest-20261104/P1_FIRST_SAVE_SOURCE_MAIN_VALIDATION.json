@@ -1,0 +1,14 @@
+{
+  "requestId": "NATIVE-VN04-P1-FIRST-SAVE-20261104-04",
+  "baseMain": "5bb59e6a8df685fcfa1c8139cbd72ae239384b3f",
+  "candidate": "84d732e7856b3239ee29f0ca66d51ee24c1a3144",
+  "status": "SOURCE_VALIDATED_DEVICE_PENDING",
+  "scopeHashesMatchIndependentReview": true,
+  "actualTests": "manualPlanRepository + P1PlanEditor: 2 suites /85 PASS",
+  "independentReview": "P1_FIRST_SAVE_ROOT1_COMPATIBILITY_REVIEW.json",
+  "authority": "current Accepted Actor only; no new Core/PG/Auth authority",
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "historicalUnknownRetried": false,
+  "returnTo": "Native/Vision: real first normal P1 Create, same item/operation recovery, then cold read"
+}

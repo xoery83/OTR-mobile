@@ -1,3 +1,7 @@
+## Root1 source integration — P1 first-save draft (2026-11-04)
+
+Native candidate `84d732e7`: fresh private P1 CREATE survives the first normal Accepted read only when Actor/Person/graph/operations remain identical except the local presentation management flag. Current Accepted authority still validates the command. Two affected suites: 85 PASS; independent Review: no blocker. Source integrated; actual first-save device closure remains Native/Vision pending. Receipt: `docs/ops/native-vn02-guest-20261104/P1_FIRST_SAVE_SOURCE_MAIN_VALIDATION.json`. No Hosted or historic UNKNOWN execution.
+
 # Core Member read caller — latest-main integration, 4 November 2026
 
 Root2 cb34214d installed exactff8143 read helper at10:40NZDT and independently

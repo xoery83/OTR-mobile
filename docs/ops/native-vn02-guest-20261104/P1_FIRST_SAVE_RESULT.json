@@ -1,0 +1,48 @@
+{
+  "status": "LOCAL_REVIEWED_CANDIDATE_DEVICE_PENDING",
+  "base": "59dc124f461aba67c121a90c8cd095c967c229a0",
+  "files": {
+    "src/data/repositories/manualPlanRepository.ts": {
+      "beforeSha256": "8368fcefd39704ae1eb34df9132735f4dbe514e2da68607782bc44026e369715",
+      "afterSha256": "0c510df2c5680be040bc812ef627e334d0b090d844695629777bb7978ba9f75f"
+    },
+    "src/data/repositories/manualPlanRepository.test.ts": {
+      "beforeSha256": "5eae701f2f8d1969bf73528d049757948d3b8eb6c31ce0148a65694d4edb6188",
+      "afterSha256": "99b5f2480c2d9e3d0cdb3d1bc74e4bb15ca3cec6e7d0b480bf48774958b6cd2f"
+    }
+  },
+  "patchSha256": "c244f9aa5a7cd80643192b01700785cc463e5dff6985a44dfc72e15318e78a6a",
+  "actualFailure": "MANUAL_PLAN_SCOPE_CHANGED with identical Account/Trip/Person/people; canManageShared local true -> accepted false; certificate fingerprint changes",
+  "red": "before product fix, first CREATE during editor expected SAVED but returned MANUAL_PLAN_SCOPE_CHANGED; same six empty/pending counts as Vision",
+  "green": "10 VN04 tests PASS; full manualPlanRepository + P1PlanEditor 2 suites85PASS; scopedESLint0",
+  "positiveProof": "Nonempty preexisting graph/operations equal across first accepted arrival; retained original target and operation IDs; current accepted actor remains canManageShared false; exact retry no duplicate",
+  "negativeProof": [
+    "changed Creator Person",
+    "changed personIds",
+    "changed graph with unchanged operations",
+    "changed pending operation state with identical graph",
+    "already-attempted Create after rollback",
+    "Edit",
+    "revocation",
+    "Account switch",
+    "invalid current participation"
+  ],
+  "scope": "P1 CREATE only, no prior attempt/guestRestore/cert; private ephemeral draft comparison basis; current Core apply/permission and original CAS retained otherwise",
+  "deviceResult": "NOT_RUN",
+  "hostedCalls": 0,
+  "visionOriginalErrorCode": "NOT_OBSERVED; isolated matching reproduction only",
+  "credentialsOrPersonalRows": "NONE; generated synthetic fixture IDs and labels only",
+  "commit": "NOT_COMMITTED; source archive lacks .git; parent owns serial source integration",
+  "supersedes": {
+    "manifest": "VN04_CANDIDATE_v1.json",
+    "patch": "VN04_CREATE_REBIND_v1.patch",
+    "patchSha256": "e069df0270eb283083831c9606ba60fb56e637573885afd5408c2385d565c683",
+    "priorProductSha256": "0c510df2c5680be040bc812ef627e334d0b090d844695629777bb7978ba9f75f",
+    "priorTestSha256": "45be7b8105e561bfaadbf87f7bcaa36a6b194a644b5ac933a3f706c0b6cd6221"
+  },
+  "addedRollbackProof": "first Accepted rebind -> injected first SQL intent insert failure/atomic rollback -> same draft+fields retry -> exact original operationId/canonical command + original Item, single pending intent and single LocalReader Item, Unicode notes/civil clocks/place retained, Accepted actor canManageShared remains false; exact repeat does not duplicate",
+  "addedTestInitialFailure": "Test initially expected empty LocalManualRead.items, but lawful reader returns null for empty Accepted graph with no pending targets; corrected expectation, product unchanged.",
+  "parent_validation": "2suites85PASS on Native current candidate composition",
+  "independent_review": "NO_BLOCKER: original2suites84PASS and finalrollback1PASS; source unchanged; original Vision device code not directly observed",
+  "restriction": "No old permission revived: current Accepted actor validates all commands; CREATE-only no-attempt identical graph/operations/identity; EDIT and other scope changes retain prior rejection"
+}
