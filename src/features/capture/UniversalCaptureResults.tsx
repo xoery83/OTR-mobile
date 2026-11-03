@@ -137,7 +137,7 @@ export function UniversalResultView({
                     name={
                       binding.mime.startsWith("image/")
                         ? "photo"
-                        : binding.mime === "application/pdf"
+                        : binding.pdfSource || binding.mime === "application/pdf"
                           ? "doc.richtext"
                           : "doc.text"
                     }
@@ -417,7 +417,10 @@ function reasonCopy(reason: string) {
   if (/TICKET|RIGHTS|ENTITLEMENT/.test(reason)) return t("capture.ai.ticketObservation");
   if (/BOOKING_OBSERVATION_WITHHELD/.test(reason)) return t("capture.ai.bookingWithheld");
   if (/UNCONFIRMED|TRAVEL_IDEA/.test(reason)) return t("capture.ai.unconfirmed");
-  if (/EVIDENCE|VALIDATION|SCHEMA|UNSUPPORTED|MISSING/.test(reason))
+  if (
+    /EVIDENCE|VALIDATION|SCHEMA|UNSUPPORTED|MISSING/.test(reason) ||
+    /^[A-Z][A-Z0-9_:-]+$/.test(reason)
+  )
     return t("capture.ai.evidenceInsufficient");
   return reason;
 }

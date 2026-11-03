@@ -16,7 +16,8 @@ export const en = {
     "Some suggested fields need manual input. Your draft is unchanged.",
   "formAutofill.needsInput": "{field} · Needs your input",
   "formAutofill.photos": "Choose photo",
-  "formAutofill.reviewSource": "Choose which extracted details to use. Save the form to save your changes.",
+  "formAutofill.reviewSource":
+    "Choose which extracted details to use. Save the form to save your changes.",
   "formAutofill.sample": "Preview synthetic sample · No upload",
   "formAutofill.scan": "Scan booking",
   "formAutofill.selected": "Selected material",
@@ -128,7 +129,7 @@ export const en = {
   "capture.ai.p6Confirm": "Confirm activity name and date and add item",
   "capture.ai.p6Details":
     "Review the original and current Journey before adding this activity. Only the evidenced name and date will be saved privately for you.",
-  "capture.ai.title": "AI preview",
+  "capture.ai.title": "Import results",
   "capture.composer.qaSample": "Fill synthetic test sample",
   "capture.ai.queued":
     "AI processing is queued. Check results to continue. No itinerary items have been saved.",
@@ -170,13 +171,13 @@ export const en = {
   "capture.ai.p1Details":
     "This private item is for you and uses the evidenced name and date. Other extracted details stay with the source.",
   "capture.ai.p1Pending": "Item queued for sync. Other suggestions have not been saved.",
-  "capture.ai.p1Accepted": "Item accepted by the server.",
+  "capture.ai.p1Accepted": "Added to your trip.",
   "capture.ai.p1Blocked":
-    "Source or Review qualification is still required before saving this item.",
+    "This suggestion is not ready to save yet. Your originals are kept.",
   "capture.ai.p1Unavailable":
     "The save outcome could not be confirmed. Check its status before retrying. Your materials remain.",
   "capture.ai.previewOnly":
-    "Check suggestions before saving. Originals, AI results and saved trip items have separate statuses.",
+    "Review suggestions against your originals. Plans are added only when you confirm.",
   "capture.ai.fixture": "Local test result. No real AI request was made.",
   "capture.ai.unknown":
     "The processing outcome is unknown. Check its status before continuing.",
@@ -388,18 +389,20 @@ export const en = {
     "Recorded intake: {accepted} accepted · {failed} failed · {pending} pending",
   "capture.progress.closeHint":
     "Closing dismisses this view. Work may pause while the app is away.",
-  "capture.progress.batchTitle": "Batch · Inputs: {count}",
-  "capture.progress.title": "Activity Progress",
+  "capture.progress.batchTitle": "Import · {count} materials",
+  "capture.progress.title": "Import progress",
+  "capture.progress.showDetails": "Show processing details",
+  "capture.progress.hideDetails": "Hide processing details",
   "capture.progress.pageUp": "Scroll up",
   "capture.progress.pageDown": "Scroll down",
   "capture.progress.activeImports": "Active Imports",
-  "capture.progress.accountScope":
-    "Account-level intake. Trip attribution is not confirmed.",
+  "capture.progress.accountScope": "Imports saved to this account",
   "capture.progress.saving": "Saving selected inputs locally…",
   "capture.progress.localCounts":
-    "Saved on this device: {accepted} · Not saved: {failed} · Pending local intake: {pending}",
-  "capture.progress.noCloud": "Local intake does not confirm cloud sync.",
-  "capture.progress.outcomesUnavailable": "Canonical results are not available.",
+    "On this device: {accepted} saved · {failed} not saved · {pending} waiting",
+  "capture.progress.noCloud": "Review suggestions before adding plans to your trip.",
+  "capture.progress.outcomesUnavailable":
+    "No suggestions are available for these materials yet.",
   "capture.progress.history": "Recorded local intake",
   "capture.progress.partialHistory":
     "Registration and acceptance records only; processing history is unavailable.",
@@ -3216,7 +3219,7 @@ export const zhHans: Record<MessageKey, string> = {
   "auth.adoptionRetryCancel": "重试取消登录",
   "auth.logoutWarning": "未同步的更改会为此账户保留在本机。退出登录需要网络连接。",
   "auth.logoutOffline": "请连接网络后退出登录。当前账户和本地数据已保留。",
-  "capture.ai.title": "AI 候选预览",
+  "capture.ai.title": "导入结果",
   "capture.ai.queued": "AI 处理已进入队列。请检查结果以继续，尚未保存任何行程项目。",
   "capture.ai.suggestionsStatus":
     "候选与已保存的行程项目分别显示。只有你明确确认的项目才会保存。",
@@ -3262,12 +3265,11 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.p1Details":
     "本次将为你保存私密行程条目，使用有证据支持的名称和日期。其他识别信息继续保留在来源中。",
   "capture.ai.p1Pending": "行程项目已进入同步队列，其他候选尚未保存。",
-  "capture.ai.p1Accepted": "服务器已接受此行程项目。",
-  "capture.ai.p1Blocked": "此行程项目仍需完成来源资格验证或审核后才能保存。",
+  "capture.ai.p1Accepted": "已加入你的旅行。",
+  "capture.ai.p1Blocked": "此建议暂时无法保存，原始材料仍保留。",
   "capture.ai.p1Unavailable":
     "暂时无法确认保存结果。请先检查状态再重试，原始资料仍已保留。",
-  "capture.ai.previewOnly":
-    "保存前请检查候选。原件、AI 结果和已保存的行程项目分别显示状态。",
+  "capture.ai.previewOnly": "请对照原件审核建议，确认后才会将计划加入旅行。",
   "capture.ai.fixture": "本机测试结果，未发起真实 AI 请求。",
   "capture.ai.unknown": "尚无法确认处理结果。请先查询状态再继续。",
   "capture.ai.notSaved": "尚未保存任何候选项目或预订。",
@@ -3460,17 +3462,19 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.recordedCounts":
     "接收记录：已接收{accepted}项 · 失败{failed}项 · 待处理{pending}项",
   "capture.progress.closeHint": "关闭仅收起此界面，离开应用后工作可能暂停。",
-  "capture.progress.batchTitle": "批次 · {count}项材料",
-  "capture.progress.title": "提交活动进度",
+  "capture.progress.batchTitle": "本次导入 · {count}项材料",
+  "capture.progress.title": "导入进度",
+  "capture.progress.showDetails": "查看处理详情",
+  "capture.progress.hideDetails": "收起处理详情",
   "capture.progress.pageUp": "向上翻页",
   "capture.progress.pageDown": "向下翻页",
   "capture.progress.activeImports": "导入活动",
-  "capture.progress.accountScope": "账户级材料接收，尚未确认旅行归属。",
+  "capture.progress.accountScope": "此账户的导入记录",
   "capture.progress.saving": "正在本机保存所选材料…",
   "capture.progress.localCounts":
-    "已保存在本机：{accepted} · 未保存：{failed} · 待本机接收：{pending}",
-  "capture.progress.noCloud": "本机接收不代表已同步至云端。",
-  "capture.progress.outcomesUnavailable": "暂无正式业务结果。",
+    "本机材料：已保存{accepted}项 · 未保存{failed}项 · 等待中{pending}项",
+  "capture.progress.noCloud": "审核建议并确认后，才会将计划加入旅行。",
+  "capture.progress.outcomesUnavailable": "这些材料暂时还没有可审核的建议。",
   "capture.progress.history": "本机接收记录",
   "capture.progress.partialHistory": "仅含提交登记及接收记录，暂无处理历史。",
   "capture.progress.localValidationHistory": "下方记录了本机校验事件；解释处理暂不可用。",

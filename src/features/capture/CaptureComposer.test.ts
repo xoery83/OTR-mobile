@@ -387,7 +387,7 @@ it("long Tray copy stays compact while its complete identity and remove target r
   const { props } = render({ ...empty, items: [item] }, 1);
   const title = state.nodes.find((node) => node.accessibilityLabel === name);
   expect(title.children).toBe(name);
-  expect(title.numberOfLines).toBe(1);
+  expect(title.numberOfLines).toBe(2);
   expect(state.nodes.some((node) => node.horizontal)).toBe(true);
   state.buttons
     .find((button) => button.label === t("capture.remove", { name }))
@@ -403,7 +403,7 @@ it("an added multiline text card keeps its complete draft content without growin
     text,
   );
   expect(state.nodes.find((node) => node.accessibilityLabel === text).numberOfLines).toBe(
-    1,
+    2,
   );
   expect(
     state.buttons.find((button) => button.label === t("capture.composer.submit"))

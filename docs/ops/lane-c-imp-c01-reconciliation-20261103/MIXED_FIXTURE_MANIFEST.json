@@ -1,0 +1,33 @@
+{
+  "scope": "SYNTHETIC_FIXTURE_ONLY_NO_SOURCE_OR_EXECUTION_AUTHORITY",
+  "userAction": "One submission: photo PNG + Files PDF + editor TEXT",
+  "inputs": [
+    {
+      "kind": "PNG",
+      "acquisition": "photos",
+      "fixtureReference": "docs/ops/import-beta-20261103/owner-ux-preview/fixtures/universal-photo-activity-qa.png",
+      "bytes": 42630,
+      "sha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515"
+    },
+    {
+      "kind": "PDF",
+      "acquisition": "files",
+      "fixtureReference": "docs/ops/import-beta-20261103/owner-ux-preview/fixtures/universal-p6-activity-qa.pdf",
+      "bytes": 1676,
+      "sha256": "f58061aa535c7a5585c4c953890c5d387cf20656cca7129e36861beb82ee1758"
+    },
+    {
+      "kind": "TEXT",
+      "acquisition": "magic_input",
+      "fixtureReference": "backend/src/__fixtures__/universal-product-beta/P3-Harbour-Beta-Hotel.txt",
+      "bytes": 93,
+      "sha256": "a8606e596966709b999b28720d7428a14c97e05a80347666034036e4f75dfbce",
+      "submission": "Type or paste exact text into composer editor; never attach this TXT fixture file",
+      "syntheticEditorText": "Synthetic QA only\nProperty: Harbour QA Beta Hotel\nCheck in: 2026-11-02\nCheck out: 2026-11-03\n"
+    }
+  ],
+  "expectedLocal": "One immutable Batch/Job with3accepted inputs and exact original hash/bytes; SQLite cold reopen preserves identities",
+  "expectedCloud": "Not run. Existing single-format E2E is not mixed qualification; Source selection/proof/Core and fresh execution Gate required",
+  "expectedReview": "0-N candidates, no forced family/count; each evidence link uses only actual sources, unresolved/partial retained; explicit Core Save and independent receipt/readback",
+  "oldAd5Draft": "Preserve; this package is not replacement identity or permission to submit it"
+}

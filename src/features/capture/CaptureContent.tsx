@@ -461,7 +461,13 @@ export function CaptureContent({
               ? `${t("importDocuments.private")} · ${selectedTripName}`
               : t("importDocuments.private")
             : accountId && (activity || attempted || reopening || model)
-              ? t("capture.progress.accountScope")
+              ? !activity &&
+                model &&
+                (model.batch.context.tripPrior?.id ?? model.assignedTripId) ===
+                  selectedTripPrior &&
+                selectedTripName
+                ? t("capture.context", { name: selectedTripName })
+                : t("capture.progress.accountScope")
               : undefined
         }
         content={

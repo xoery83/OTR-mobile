@@ -20,6 +20,16 @@ const state = vi.hoisted(() => ({
   photoRows: [] as any[],
   scrollProps: null as any,
   scrollTo: vi.fn(),
+  detailsOpen: false,
+}));
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useState: () => [
+    state.detailsOpen,
+    (value: boolean | ((open: boolean) => boolean)) => {
+      state.detailsOpen = typeof value === "function" ? value(state.detailsOpen) : value;
+    },
+  ],
 }));
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
 vi.mock("./UniversalPhotoRelevanceRow", () => ({
@@ -54,6 +64,7 @@ beforeEach(() => {
   state.buttons = [];
   state.photoRows = [];
   state.scrollTo.mockClear();
+  state.detailsOpen = false;
   setUiLocale("en");
 });
 afterEach(() => {
@@ -107,7 +118,8 @@ it.each([
     expect(state.scrollTo.mock.calls.slice(-2).map(([p]) => p.y)).toEqual([90, 0]);
   },
 );
-it("shows retained C3 validation history in normal Job detail while interpretation stays unavailable", async () => {
+it("retains C3 validation history behind the processing-details disclosure", async () => {
+  state.detailsOpen = true;
   const f = fixture();
   const request = await f.submit();
   const context = await captureAccountRequestContext("", f.getAccount);
@@ -146,6 +158,7 @@ it("shows retained C3 validation history in normal Job detail while interpretati
   expect(model.availableActions.canReviewNow).toBe(false);
 });
 it("shows a local partial result and C4 event without granting Review", async () => {
+  state.detailsOpen = true;
   const f = fixture();
   const request = await f.submit();
   const stored = await f.submissions.reopen(request.jobId);
@@ -195,6 +208,48 @@ it("shows a local partial result and C4 event without granting Review", async ()
   expect(html).toContain(t("capture.processing.LOCAL_RESULT_RECORDED"));
   expect(html).not.toContain(t("capture.processing.waitingInterpreter"));
   expect(model.availableActions.canReviewNow).toBe(false);
+});
+it("keeps mixed originals visible while processing details open and close without changing intake", async () => {
+  const f = fixture();
+  const request = await f.submit(3);
+  const model = await f.submissions.reopen(request.jobId);
+  model.inputs[0].originalFilename = "confirmation.png";
+  model.inputs[1].originalFilename = "confirmation.pdf";
+  const props = {
+    model,
+    accountId: model.batch.accountId,
+    busy: false,
+    reading: false,
+    error: false,
+    canRetry: false,
+    onRetry: vi.fn(),
+    onRecover: vi.fn(),
+    onOpenJob: vi.fn(),
+    onActivity: vi.fn(),
+    onNewImport: vi.fn(),
+  };
+  const original = JSON.stringify(model);
+  for (const locale of ["en", "zh-Hans"] as const) {
+    setUiLocale(locale);
+    state.detailsOpen = false;
+    const render = () => renderToStaticMarkup(createElement(CaptureProgress, props));
+    let html = render();
+    expect(html).toContain("confirmation.png");
+    expect(html).toContain("confirmation.pdf");
+    expect(html).toContain(t("capture.ai.submittedText"));
+    expect(html).not.toContain(t("capture.progress.registered"));
+    state.buttons
+      .findLast((b) => b.label === t("capture.progress.showDetails"))
+      .onPress();
+    html = render();
+    expect(html).toContain(t("capture.progress.registered"));
+    state.buttons
+      .findLast((b) => b.label === t("capture.progress.hideDetails"))
+      .onPress();
+    expect(render()).not.toContain(t("capture.progress.registered"));
+    expect(JSON.stringify(model)).toBe(original);
+    expect(props.onRetry).not.toHaveBeenCalled();
+  }
 });
 it("normal owning SQLite intake renders local acceptance, stored seconds and unavailable processing/outcomes without generic Add More", async () => {
   const f = fixture();

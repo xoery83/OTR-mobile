@@ -1,0 +1,69 @@
+{
+  "requestId": "LC-C01-MIXED-UI-SOURCE-20261104-01",
+  "status": "NO_BLOCKER_SOURCE_REVIEW_ONLY",
+  "commit": "355c7dca6cfbd0176f6b0906d8342344a21f8d71",
+  "base": "20187f7b09c726f6c6a5b5d6fbe77bbae0f2f45b",
+  "integrationTarget": "eb692ad3a52ade8674fa30e945175dc7e804084d",
+  "scope": [
+    "src/data/repositories/captureSubmissionRepository.test.ts",
+    "src/features/capture/CaptureComposer.test.ts",
+    "src/features/capture/CaptureComposer.tsx",
+    "src/features/capture/CaptureContent.tsx",
+    "src/features/capture/CaptureProgress.test.ts",
+    "src/features/capture/CaptureProgress.tsx",
+    "src/features/capture/UniversalCaptureResults.test.ts",
+    "src/features/capture/UniversalCaptureResults.tsx",
+    "src/features/capture/captureStaging.test.ts",
+    "src/ui/catalogs.ts"
+  ],
+  "sha256": {
+    "src/data/repositories/captureSubmissionRepository.test.ts": "6b8c869f783c778f798b2b6d469a50064902995102bd5a38a16b356aaacc14dc",
+    "src/features/capture/CaptureComposer.test.ts": "a246c0c7d8959b5c3f0ac9a6e05af9eafd62f03380db299028a986cfd4ecb6a2",
+    "src/features/capture/CaptureComposer.tsx": "8f5c0e6548e2eede85b58b5f6bdd834019b682eac121d620bdabde2668a2be48",
+    "src/features/capture/CaptureContent.tsx": "d5ea6e3713a20f8c6c7725f94e7acacff1cffa50328b8e4e0856548b27d8fc12",
+    "src/features/capture/CaptureProgress.test.ts": "05f6fcfc5ce7e1acf73892d0464e4bc1dd76cf5127ade5dffaedcb32b8e51089",
+    "src/features/capture/CaptureProgress.tsx": "ff145e5cfac4f0d86107abed49643a2dd8e755ff760b29105f2cc617992a0de7",
+    "src/features/capture/UniversalCaptureResults.test.ts": "5d6fbcd1f3ce56c61e0f5dc1186ed83bb36321d5066193e4fab653fe2e393e4e",
+    "src/features/capture/UniversalCaptureResults.tsx": "b1a7a92f3579018f11374c51cdae94d036f1cc8caca91440b628eb26bdafdf3c",
+    "src/features/capture/captureStaging.test.ts": "16744feecaaace8e92237ab83406b01d87043b2cab5a6ede49a331550ebab1e0",
+    "src/ui/catalogs.ts": "4e9ca3610ceb7062f5e464f83a32efc274c521f673650cc78dda8f85102164a5"
+  },
+  "documentationSHA256": {
+    "MIXED_UI_HANDOFF.md": "fa74f818a745345f7b502fe1a6f9b3dee88f18cf276296fff0610f4802bcc8bb",
+    "MIXED_UI_VALIDATION.json": "c76df03f9eca201a95aba9d92325be927a7539a1fea9bd57beee15323b2acb03",
+    "MIXED_FIXTURE_MANIFEST.json": "51547761b1da7323c80d3caa5e632b14dbf9c26f064d69f9e6acdc0a9d994871",
+    "MIXED_USER_FLOW.md": "de645b6234524ab6db055d7127c5594dfb351861345200f0d1048bc72c73d7d9"
+  },
+  "findings": [],
+  "verified": [
+    "Read ui-foundation and terminology glossary. Existing UiButton/UiText/AppIcon, visual tokens/theme and accessible material names retained.",
+    "Catalog semantic differences are capture keys only; non-capture difference is formatting only. zh/en key parity retained.",
+    "Disclosure changes transient history display only. Original names/statuses/failures/recovery, request error and intake retry remain outside disclosure. No model mutation or dispatch added.",
+    "Trip header requires matching retained job context and selected current Trip label; account Activity continues account scope. Existing Account/generation and navigation callbacks are unchanged.",
+    "PDF glyph uses existing pdfSource provenance, never alters MIME, Source or admission. Uppercase machine-reason fallback changes presentation only; sealed reason retained.",
+    "Repository/staging additions are local fixture tests; no production Source/Task/DTO/provider/Core authority modifications.",
+    "All 10 product SHA256 values match fixed manifest. All base product bytes match eb692ad3; no product integration conflict on specified target."
+  ],
+  "validationReused": {
+    "uiSuites": 5,
+    "uiTests": 97,
+    "sqliteRepositoryTests": 54,
+    "strict": "PASS: all changed UI/test/catalog/repository roots and transitive imports",
+    "guard": "PASS:473/168",
+    "scopedLint": "0 errors /7 pre-existing warnings",
+    "foundationAndTerminology": "11 PASS",
+    "keyboardTapPolicy": "1 FAIL:4 unchanged Native Detail ScrollViews; Native owning repair in progress",
+    "formatAndDiff": "PASS"
+  },
+  "notRun": [
+    "No redundant full suite; reused fixed focused validation after code/connected-caller review.",
+    "No device or Native pixel/gesture acceptance.",
+    "No mixed Source/Task/Provider/Core execution or Hosted/SQL/paid operations."
+  ],
+  "limits": [
+    "NO_BLOCKER applies to UI-only source integration, not real mixed interpretation/Save qualification.",
+    "Existing single-format backend guards remain; actual mixed L3 and qualified Native visual review are still pending.",
+    "Existing raw prose reason fallback remains; new fallback sanitizes uppercase machine-code-shaped reasons only, not a general error-sanitization redesign."
+  ],
+  "authorTreeModified": false
+}

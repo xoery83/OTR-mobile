@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -1327,6 +1327,73 @@ it("Camera recovery passes the captured host acquisition lease before a late per
   expect(f.count("capture_submission_batches")).toBe(1);
 });
 
+it("retains the exact C01 PNG, PDF and inline text in one Job after SQLite cold reopen", async () => {
+  const f = fixture(true, true, migrations.at(-1)!.id);
+  const png = readFileSync(
+    "docs/ops/import-beta-20261103/owner-ux-preview/fixtures/universal-photo-activity-qa.png",
+  );
+  const pdf = readFileSync(
+    "docs/ops/import-beta-20261103/owner-ux-preview/fixtures/universal-p6-activity-qa.pdf",
+  );
+  const text = readFileSync(
+    "backend/src/__fixtures__/universal-product-beta/P3-Harbour-Beta-Hotel.txt",
+    "utf8",
+  );
+  const open = vi.fn(async (selection: { source: string }) => ({
+    bytes: selection.source === "photos" ? png : pdf,
+  }));
+  const session = createCaptureSubmissionSession({
+    repository: f.repo,
+    getActiveUserId: f.getUser,
+    ...deps,
+    open,
+  });
+  const model = await session.submit(
+    [
+      {
+        source: "photos",
+        temporaryUri: "file:///qa.png",
+        name: "universal-photo-activity-qa.png",
+        typeHint: "image/png",
+      },
+      {
+        source: "files",
+        temporaryUri: "file:///qa.pdf",
+        name: "universal-p6-activity-qa.pdf",
+        typeHint: "application/pdf",
+      },
+      { source: "magic_input", stagingId: 3, text },
+    ],
+    () => {},
+  );
+  expect(model.counts).toEqual({ selected: 3, accepted: 3, failed: 0, pending: 0 });
+  expect(
+    model.inputs.map((input) => [
+      input.acquisitionSource,
+      input.kind,
+      input.originalFilename,
+    ]),
+  ).toEqual([
+    ["photos", "IMAGE", "universal-photo-activity-qa.png"],
+    ["files", "FILE", "universal-p6-activity-qa.pdf"],
+    ["magic_input", "TEXT", null],
+  ]);
+  const expected = [png, pdf, Buffer.from(text)];
+  for (const [index, input] of model.inputs.entries()) {
+    expect(input.contentSha256).toBe(await sha256(expected[index]));
+    const payload = f.sql
+      .prepare("SELECT bytes FROM local_capture_payloads WHERE account_id=? AND id=?")
+      .get(a, input.payloadId!)!;
+    expect(Buffer.from(payload.bytes as Uint8Array)).toEqual(expected[index]);
+  }
+  expect(f.count("capture_submission_batches")).toBe(1);
+  expect(open).toHaveBeenCalledTimes(2);
+  f.reopen();
+  const restored = await f.repo.reopen(model.batch.jobId);
+  expect(restored.batch).toEqual(model.batch);
+  expect(restored.inputs).toEqual(model.inputs);
+  expect(open).toHaveBeenCalledTimes(2);
+});
 it("C3 v2 retains typed text plus file and clipboard image in one immutable Batch across cold reopen", async () => {
   const f = fixture(true, true, 73);
   const open = vi.fn(async () => ({ bytes: Buffer.from("synthetic file") }));

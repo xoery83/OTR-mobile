@@ -166,6 +166,26 @@ it("shows mixed candidates and each field's actual original without creating lin
   expect(html).not.toContain(f.result.candidates[0].id);
   expect(state.buttons.some((b) => b.label === t("capture.ai.manual"))).toBe(false);
 });
+it("labels original PDF provenance even when its submitted representation is text", () => {
+  const f = fixture();
+  f.result.sourceBindings[0].pdfSource = {
+    original: { representationId: randomUUID(), sha256: "c".repeat(64), byteCount: 1676 },
+    sealSha256: "d".repeat(64),
+    pageMapSha256: "e".repeat(64),
+    transformOptionsSha256: "f".repeat(64),
+  };
+  const html = renderToStaticMarkup(createElement(UniversalResultView, f.props));
+  expect(html).toContain("doc.richtext");
+  expect(f.result.sourceBindings[0].mime).toBe("text/plain");
+});
+it("keeps unknown machine reasons out of user prose while preserving the sealed result", () => {
+  const f = fixture();
+  f.result.unresolved = [{ sourceId: "S0", reason: "FUTURE_INTERNAL_STATE" }];
+  const html = renderToStaticMarkup(createElement(UniversalResultView, f.props));
+  expect(html).not.toContain("FUTURE_INTERNAL_STATE");
+  expect(html).toContain(t("capture.ai.evidenceInsufficient"));
+  expect(f.result.unresolved[0].reason).toBe("FUTURE_INTERNAL_STATE");
+});
 it("keeps ticket observations distinct from rights and content classification distinct from file format", () => {
   const f = fixture(),
     binding = f.bindings[0];

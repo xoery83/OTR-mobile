@@ -1,3 +1,17 @@
+# Import mixed-intake UI — source integration, 4 November 2026
+
+LaneC355c7dca presents distinct originals/captions/PDF glyph, keeps material/error/
+recovery visible, folds detailed history, scopes known Trip context and uses
+reviewed en/zh capture-only copy. Ten product blobs match the independent
+NO_BLOCKER candidate; actual-main8suites156 checks/real local SQLite cold reopen,
+keyboard policy and UIguard473/168 PASS. Native four Detail handled props74f182c9
+are retained. See ops/lane-c-imp-c01-reconciliation-20261103/SOURCE_MAIN_VALIDATION.json.
+This is LOCAL_PASS/source integration, not installed pixels, mixed interpretation,
+cloud Save or Owner acceptance. No Source/Task/DTO/Schema/permission change.
+Mixed adapter98a4 Review has a separate source-issue isolation finding; not included
+here. LC-C01-MIXED-CORE contract/ordinary PNG continuation and fresh execution
+qualification remain separate; Source guards were not removed by this UI slice.
+
 # Import future-failure correlation — source integration, 4 November 2026
 
 Lane C20187f7b adds safe UUID requestId, CONTEXT/TASK readKind, duration and the

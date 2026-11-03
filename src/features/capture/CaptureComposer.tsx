@@ -300,24 +300,30 @@ export function CaptureComposer({
                           item.temporaryUri;
                         return (
                           <View key={item.stagingId} style={styles.tile}>
-                            {photo ? (
-                              <Image
-                                source={{ uri: photo }}
-                                style={styles.thumbnail}
-                                resizeMode="cover"
-                                accessibilityLabel={name}
-                              />
-                            ) : (
-                              <AppIcon
-                                name={
-                                  item.source === "magic_input" ? "text.alignleft" : "doc"
-                                }
-                                size={28}
-                                color={colors.accent}
-                              />
-                            )}
+                            <View style={styles.preview}>
+                              {photo ? (
+                                <Image
+                                  source={{ uri: photo }}
+                                  style={styles.thumbnail}
+                                  resizeMode="cover"
+                                  accessibilityLabel={name}
+                                />
+                              ) : (
+                                <AppIcon
+                                  name={
+                                    item.source === "magic_input"
+                                      ? "text.alignleft"
+                                      : item.typeHint === "application/pdf"
+                                        ? "doc.richtext"
+                                        : "doc"
+                                  }
+                                  size={28}
+                                  color={colors.accent}
+                                />
+                              )}
+                            </View>
                             <UiText
-                              numberOfLines={1}
+                              numberOfLines={2}
                               style={styles.filename}
                               accessibilityLabel={name}
                             >
@@ -646,10 +652,21 @@ const createStyles = (c: UiColors) =>
     },
     instruction: { ...visual.type.meta, color: c.textSecondary, lineHeight: 24, flex: 1 },
     link: { color: c.accent, textDecorationLine: "underline" },
-    tray: { gap: visual.space.card, paddingVertical: 8, paddingRight: 12 },
+    tray: {
+      gap: visual.space.card,
+      paddingVertical: 8,
+      paddingRight: 12,
+      alignItems: "flex-start",
+    },
     tile: {
-      width: 72,
-      height: 76,
+      width: 96,
+      alignItems: "center",
+      gap: 4,
+      overflow: "visible",
+    },
+    preview: {
+      width: "100%",
+      height: 72,
       borderRadius: visual.radius.control,
       backgroundColor: c.background,
       alignItems: "center",
@@ -658,17 +675,11 @@ const createStyles = (c: UiColors) =>
     },
     thumbnail: { ...StyleSheet.absoluteFill, borderRadius: visual.radius.control },
     filename: {
-      ...visual.type.navigation,
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
+      ...visual.type.meta,
+      alignSelf: "stretch",
       paddingHorizontal: 3,
       paddingVertical: 3,
       color: c.textPrimary,
-      backgroundColor: c.surface,
-      borderBottomLeftRadius: visual.radius.control,
-      borderBottomRightRadius: visual.radius.control,
     },
     remove: { position: "absolute", top: -10, right: -10 },
     tileError: {

@@ -215,6 +215,46 @@ it("staging and acquisition remain volatile; content uses operations without dir
 });
 
 const draftOwner = { accountId: "real-account", tripPrior: "trip-one" };
+it("submits one PNG, one PDF and verbatim typed input together without adding a TXT file", async () => {
+  const staging = createCaptureStaging(
+    async (source) =>
+      source === "photos"
+        ? [
+            {
+              source: "photos",
+              temporaryUri: "file://photo.png",
+              name: "confirmation.png",
+              typeHint: "image/png",
+            },
+          ]
+        : [
+            {
+              source: "files",
+              temporaryUri: "file://confirmation.pdf",
+              name: "confirmation.pdf",
+              typeHint: "application/pdf",
+            },
+          ],
+    scope(),
+    draftOwner,
+  );
+  await staging.pick("photos");
+  await staging.pick("files");
+  const text = "  Harbour QA Beta Hotel\nCheck in: 2026-11-02\nCheck out: 2026-11-03\n";
+  staging.setEditorText(text);
+  const submitted = staging.prepareSubmit()!;
+  expect(submitted.map((input) => input.source)).toEqual([
+    "photos",
+    "files",
+    "magic_input",
+  ]);
+  expect(submitted[2]).toEqual({ source: "magic_input", stagingId: 3, text });
+  staging.setEditorText("Later change");
+  staging.remove(submitted[0].stagingId);
+  expect(submitted).toHaveLength(3);
+  expect(submitted[2]).toMatchObject({ text });
+  expect(Object.isFrozen(submitted)).toBe(true);
+});
 const selection = (name = "one.pdf", identity?: { key: string; revision: string }) => ({
   source: "files" as const,
   temporaryUri: "temporary://file",

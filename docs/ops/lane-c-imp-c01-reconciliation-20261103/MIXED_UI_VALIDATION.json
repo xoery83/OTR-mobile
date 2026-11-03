@@ -1,0 +1,41 @@
+{
+  "status": "LOCAL_PASS_NOT_NATIVE_VISUAL_OR_CLOUD_ACCEPTED",
+  "sourceBase": "b16c2d932ce602e86db83796eefe20d94b215aed",
+  "integrationTarget": "eb692ad3a52ade8674fa30e945175dc7e804084d",
+  "baseImportBlobsUnchangedOnTarget": true,
+  "files": {
+    "src/data/repositories/captureSubmissionRepository.test.ts": "6b8c869f783c778f798b2b6d469a50064902995102bd5a38a16b356aaacc14dc",
+    "src/features/capture/CaptureComposer.test.ts": "a246c0c7d8959b5c3f0ac9a6e05af9eafd62f03380db299028a986cfd4ecb6a2",
+    "src/features/capture/CaptureComposer.tsx": "8f5c0e6548e2eede85b58b5f6bdd834019b682eac121d620bdabde2668a2be48",
+    "src/features/capture/CaptureContent.tsx": "d5ea6e3713a20f8c6c7725f94e7acacff1cffa50328b8e4e0856548b27d8fc12",
+    "src/features/capture/CaptureProgress.test.ts": "05f6fcfc5ce7e1acf73892d0464e4bc1dd76cf5127ade5dffaedcb32b8e51089",
+    "src/features/capture/CaptureProgress.tsx": "ff145e5cfac4f0d86107abed49643a2dd8e755ff760b29105f2cc617992a0de7",
+    "src/features/capture/UniversalCaptureResults.test.ts": "5d6fbcd1f3ce56c61e0f5dc1186ed83bb36321d5066193e4fab653fe2e393e4e",
+    "src/features/capture/UniversalCaptureResults.tsx": "b1a7a92f3579018f11374c51cdae94d036f1cc8caca91440b628eb26bdafdf3c",
+    "src/features/capture/captureStaging.test.ts": "16744feecaaace8e92237ab83406b01d87043b2cab5a6ede49a331550ebab1e0",
+    "src/ui/catalogs.ts": "4e9ca3610ceb7062f5e464f83a32efc274c521f673650cc78dda8f85102164a5"
+  },
+  "checks": {
+    "uiSuites": 5,
+    "uiTests": 97,
+    "sqliteRepositoryTests": 54,
+    "strict": "PASS: all changed UI/test/catalog/repository roots and transitive imports",
+    "guard": "PASS:473/168",
+    "scopedLint": "0 errors /7 pre-existing warnings",
+    "foundationAndTerminology": "11 PASS",
+    "keyboardTapPolicy": "1 FAIL:4 unchanged Native Detail ScrollViews; Native owning repair in progress",
+    "formatAndDiff": "PASS"
+  },
+  "notRun": [
+    "Native current-candidate pixels/gestures",
+    "new Source/Task/Provider/Core Save",
+    "Hosted deployment",
+    "Owner UX acceptance"
+  ],
+  "crossLaneRequests": [
+    "LC-C01-MIXED-CORE-20261104-01",
+    "LC-C01-MIXED-NATIVE-20261104-01",
+    "LC-C01-MIXED-AUTH-20261104-01",
+    "LC-C01-MIXED-MC-20261104-01"
+  ]
+}

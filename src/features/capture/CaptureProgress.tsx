@@ -3,7 +3,7 @@ import {
   type UniversalPhotoRelevanceCopy,
 } from "./UniversalPhotoRelevanceRow";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { lazy, Suspense, useRef } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import { UiButton, UiText } from "@/ui/controls";
@@ -55,6 +55,7 @@ export function CaptureProgress({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const scroll = useRef<ScrollView>(null);
   const position = useRef({ y: 0, height: 0, contentHeight: 0 });
   const page = (direction: number) => {
@@ -114,7 +115,7 @@ export function CaptureProgress({
             )}
           </UiText>
           <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
-          {model?.processingEvents?.length || !hasUniversalReader ? (
+          {!hasUniversalReader || (detailsOpen && model?.processingEvents?.length) ? (
             <UiText style={styles.secondary}>
               {t(
                 model?.processingEvents?.length
@@ -123,12 +124,13 @@ export function CaptureProgress({
               )}
             </UiText>
           ) : null}
-          {model?.localInterpretationResults?.length ? (
+          {detailsOpen && model?.localInterpretationResults?.length ? (
             <UiText style={styles.secondary}>
               {t("capture.processing.localPartial")}
             </UiText>
           ) : null}
-          {model?.allInputsAccepted &&
+          {detailsOpen &&
+          model?.allInputsAccepted &&
           model.inputs?.every((item) =>
             model.processingEvents?.some(
               (event) => event.inputId === item.id && event.state === "INPUT_VALIDATED",
@@ -163,36 +165,58 @@ export function CaptureProgress({
               />
             </Suspense>
           ) : null}
-          <UiText accessibilityRole="header" style={styles.copy}>
-            {t("capture.progress.history")}
-          </UiText>
-          <UiText style={styles.secondary}>
-            {t(
-              model?.localInterpretationEvents?.length
-                ? "capture.progress.localInterpretationHistory"
-                : model?.processingEvents?.length
-                  ? "capture.progress.localValidationHistory"
-                  : "capture.progress.partialHistory",
+          <UiButton
+            label={t(
+              detailsOpen
+                ? "capture.progress.hideDetails"
+                : "capture.progress.showDetails",
             )}
-          </UiText>
-          {activity.recordedFacts.map((fact) => (
-            <View key={fact.id} style={styles.fact}>
-              <UiText style={styles.copy}>
+            variant="text"
+            onPress={() => setDetailsOpen((open) => !open)}
+          />
+          {detailsOpen ? (
+            <View style={styles.details}>
+              <UiText accessibilityRole="header" style={styles.copy}>
+                {t("capture.progress.history")}
+              </UiText>
+              <UiText style={styles.secondary}>
                 {t(
-                  fact.kind === "SUBMISSION_RECORDED"
-                    ? "capture.progress.registered"
-                    : fact.kind === "INPUT_ACCEPTANCE_RECORDED"
-                      ? "capture.progress.acceptanceRecorded"
-                      : `capture.processing.${fact.kind}`,
+                  model?.localInterpretationEvents?.length
+                    ? "capture.progress.localInterpretationHistory"
+                    : model?.processingEvents?.length
+                      ? "capture.progress.localValidationHistory"
+                      : "capture.progress.partialHistory",
                 )}
               </UiText>
-              <UiText style={styles.secondary}>{captureActivityTime(fact.at)}</UiText>
+              {activity.recordedFacts.map((fact) => (
+                <View key={fact.id} style={styles.fact}>
+                  <UiText style={styles.copy}>
+                    {t(
+                      fact.kind === "SUBMISSION_RECORDED"
+                        ? "capture.progress.registered"
+                        : fact.kind === "INPUT_ACCEPTANCE_RECORDED"
+                          ? "capture.progress.acceptanceRecorded"
+                          : `capture.processing.${fact.kind}`,
+                    )}
+                  </UiText>
+                  <UiText style={styles.secondary}>{captureActivityTime(fact.at)}</UiText>
+                </View>
+              ))}
             </View>
-          ))}
+          ) : null}
+          <UiText accessibilityRole="header" style={styles.copy}>
+            {t("capture.ai.originals")}
+          </UiText>
           {activity.currentInputs.map((item) => (
             <View key={item.inputId} style={styles.fact}>
               <UiText style={styles.copy}>
-                {item.originalFilename ?? t("capture.unnamed")}
+                {item.originalFilename ??
+                  t(
+                    model?.inputs.find((input) => input.id === item.inputId)?.kind ===
+                      "TEXT"
+                      ? "capture.ai.submittedText"
+                      : "capture.unnamed",
+                  )}
               </UiText>
               <UiText style={styles.secondary}>
                 {t(
@@ -315,6 +339,7 @@ const createStyles = (c: UiColors) =>
     content: { padding: visual.space.page, gap: visual.space.row },
     copy: { ...visual.type.row, color: c.textPrimary },
     secondary: { ...visual.type.meta, color: c.textSecondary },
+    details: { gap: visual.space.heading },
     error: { ...visual.type.row, color: c.destructive },
     fact: {
       gap: visual.space.heading,
