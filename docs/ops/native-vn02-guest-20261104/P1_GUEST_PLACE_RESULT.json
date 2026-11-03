@@ -1,0 +1,24 @@
+{
+  "request": "VISION-VN04-P1-SAVE-20261104-001; Guest Apple portion of VISION-VN02-GUEST-ACCESS-002",
+  "status": "LOCAL_REVIEWED_DEVICE_PENDING",
+  "actual_failure": "Supported Guest P1 Form Find Place used Account-only getter and could not open sheet",
+  "fix": "Same captureAccountScope with existing readLocalTripPrincipal Account ID or committed Guest localId; only local MapKit editor fence, not Cloud authority",
+  "preserved": [
+    "No Principal/Session/Trip creation",
+    "Save uses original LocalTripAccess repository",
+    "Generation/double-owner-read/current draft/ticket guards",
+    "Cancel/manual entry and late-result protection"
+  ],
+  "validation": {
+    "tests": "Parent3suites53PASS; actual captureAccountScope test invokes real getter",
+    "review": "Parent read exact one-getter delta and direct caller, no auth/Core/DTO mutation; author independent from parent",
+    "lint": "PASS",
+    "ui_guard": "PASS"
+  },
+  "not_run": [
+    "Actual Guest MapKit provider/device Save",
+    "Hosted/Cloud L3",
+    "Other unsupported Guest Form families"
+  ],
+  "authorityChanges": 0
+}

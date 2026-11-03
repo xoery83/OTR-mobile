@@ -1,0 +1,13 @@
+{
+  "request": "NATIVE-VN04-GUEST-PLACE-20261104-05",
+  "candidate": "205f08e799a3683955a3c4d66aa40f37118de496",
+  "baseMain": "382000ab6c1843438beeaf661e4feba7022fb99d",
+  "exact3Files": true,
+  "review": "P1_GUEST_PLACE_RESULT.json parent independent53PASS; Root1 one-getter and caller scope compatibility read",
+  "validationReused": "3suites53PASS/lint/UIguard; no stable reruns",
+  "status": "SOURCE_VALIDATED_DEVICE_PENDING",
+  "authorityChanged": false,
+  "saveRepositoryChanged": false,
+  "hostedOrDeviceActions": 0,
+  "writer": "Root1 sole Source Writer/freshmain CAS/nonforce"
+}

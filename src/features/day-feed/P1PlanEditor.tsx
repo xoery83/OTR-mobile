@@ -4,7 +4,6 @@ import {
 } from "@/features/place-search/PlaceSearchSheet";
 import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
-import { requireActiveUserId } from "@/data/auth/authRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -22,6 +21,7 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { guestP1DraftInventory } from "@/data/auth/guestP1DraftInventory";
 import {
   createDefaultManualPlanRepository,
+  readLocalTripPrincipal,
   type ManualPlanDraft,
   type ManualPlanFields,
   type ManualPlanRepository,
@@ -336,7 +336,13 @@ export function P1PlanEditor({
     const ticket = ++placeRequest.current.ticket;
     setPlaceError(false);
     try {
-      const account = await captureAccountScope(requireActiveUserId);
+      // The MapKit owner is an existing local editor identity, not Cloud authority.
+      const account = await captureAccountScope(async () => {
+        const principal = await readLocalTripPrincipal();
+        if (principal?.kind === "ACCOUNT") return principal.accountId;
+        if (principal?.kind === "GUEST") return principal.localId;
+        throw new Error("LOCAL_TRIP_PRINCIPAL_REQUIRED");
+      });
       if (
         !current() ||
         account.generation !== generation ||

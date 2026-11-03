@@ -22,13 +22,13 @@ vi.mock("@/features/place-search/PlaceSearchSheet", () => ({
     return null;
   },
 }));
-vi.mock("@/data/auth/accountRequestContext", () => ({
-  captureAccountScope: async () => ({
-    accountId: "00000000-0000-4000-8000-000000000099",
-    generation: state.generation,
-  }),
+
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: async () => {
+    if (state.principal?.kind !== "ACCOUNT") throw Error("No Account session");
+    return state.principal.accountId;
+  },
 }));
-vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 
 vi.mock("@/data/auth/guestP1DraftInventory", async (original) => ({
   ...(await original<typeof import("@/data/auth/guestP1DraftInventory")>()),
@@ -55,6 +55,9 @@ const state = vi.hoisted(() => ({
   nodes: [] as Record<string, any>[],
   mount: true,
   generation: 1,
+  principal: { kind: "ACCOUNT", accountId: "00000000-0000-4000-8000-000000000099" } as
+    import("@/data/auth/guestPrincipalRepository").LaunchIdentity | null,
+  principalRead: vi.fn(),
   repository: vi.fn(),
   alert: vi.fn(),
   draftParticipants:
@@ -205,6 +208,11 @@ beforeEach(() => {
   state.nodes = [];
   state.mount = true;
   state.generation = 1;
+  state.principal = {
+    kind: "ACCOUNT",
+    accountId: "00000000-0000-4000-8000-000000000099",
+  };
+  state.principalRead.mockReset().mockImplementation(async () => state.principal);
   state.repository.mockReset();
   state.alert.mockReset();
   state.draftParticipants = [];
@@ -538,10 +546,9 @@ const placeResult = (usePlaceName = false) => ({
 async function search(p: ReturnType<typeof props>, label = "tripCreate.findPlace") {
   if (label === "placeSearch.searchLocation") node("tripCreate.planLocation").onFocus();
   else node(label).onPress();
-  await Promise.resolve();
-  await Promise.resolve();
+  await new Promise((resolve) => setImmediate(resolve));
   render(p);
-  return state.nodes.find((n) => n.placeSearch)!.placeSearch;
+  return state.nodes.find((n) => n.placeSearch)?.placeSearch;
 }
 it("P1 searches authored Name but always fills only Location using immediate selection", async () => {
   const { p, repo } = await withPlace();
@@ -696,10 +703,7 @@ it("never applies insertion defaults over an existing P1 edit", async () => {
 });
 
 vi.mock("@/data/auth/localTripAccess", async () => ({
-  readLocalTripPrincipal: vi.fn(async () => ({
-    kind: "ACCOUNT",
-    accountId: "test-account",
-  })),
+  readLocalTripPrincipal: () => state.principalRead(),
   ...(await import("@/data/repositories/manualPlanRepository")),
   kickLocalTripSync: vi.fn(async () => {}),
 }));
@@ -875,4 +879,109 @@ it("renders a restored Create through opened and retains its original dirty base
   expect(snapshot.initialFields).toEqual(baseline);
   expect(repository.save).not.toHaveBeenCalled();
   await lease.resume();
+});
+
+it("Guest P1 searches with its committed local principal and saves the selected address through the original Form repository", async () => {
+  const localId = "00000000-0000-4000-8000-000000000077";
+  state.principal = { kind: "GUEST", localId };
+  const { p, repo } = await withPlace("Original Guest plan");
+  const sheet = await search(p);
+  expect(sheet).toBeDefined();
+  expect(state.principalRead).toHaveBeenCalledTimes(2);
+  expect(sheet.binding).toMatchObject({
+    accountId: localId,
+    tripId: p.tripId,
+    editorId: "00000000-0000-4000-8000-000000000011",
+    accountGeneration: 1,
+  });
+  sheet.onConfirm(placeResult(true));
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Original Guest plan");
+  node("ui.save").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    expect.objectContaining({ itemId: "00000000-0000-4000-8000-000000000011" }),
+    expect.objectContaining({
+      title: "Original Guest plan",
+      location: "Victoria Street West, Auckland",
+    }),
+  );
+});
+
+it("Guest P1 Cancel and manual location fallback preserve the existing plan and reject late Account-switch selection", async () => {
+  state.principal = { kind: "GUEST", localId: "00000000-0000-4000-8000-000000000077" };
+  const { p, repo } = await withPlace("Guest name", "Original Guest address");
+  let sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onCancel();
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Original Guest address");
+  sheet.onConfirm(placeResult());
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Original Guest address");
+  sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onConfirm({ kind: "MANUAL", text: "Guest manually entered address" });
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Guest manually entered address");
+  const stale = await search(p);
+  state.principal = {
+    kind: "ACCOUNT",
+    accountId: "00000000-0000-4000-8000-000000000099",
+  };
+  state.generation++;
+  expect(stale.binding.isCurrent()).toBe(false);
+  stale.onConfirm(placeResult());
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Guest manually entered address");
+  expect(repo.save).not.toHaveBeenCalled();
+});
+
+it.each([null, { kind: "SIGNED_OUT" as const }])(
+  "P1 does not invent a local owner for unavailable principal %j",
+  async (principal) => {
+    const { p, repo } = await withPlace("Entered name", "Entered address");
+    state.principal = principal;
+    const sheet = await search(p);
+    expect(sheet).toBeUndefined();
+    expect(node("tripCreate.planName").value).toBe("Entered name");
+    expect(node("tripCreate.planLocation").value).toBe("Entered address");
+    expect(repo.save).not.toHaveBeenCalled();
+  },
+);
+
+it("P1 cancels delayed Guest context capture after principal generation changes", async () => {
+  const { p, repo } = await withPlace("Original Guest draft", "Original typed address");
+  let finish!: (
+    principal: import("@/data/auth/guestPrincipalRepository").LaunchIdentity,
+  ) => void;
+  state.principalRead.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  node("tripCreate.findPlace").onPress();
+  state.generation++;
+  finish({ kind: "GUEST", localId: "00000000-0000-4000-8000-000000000077" });
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  expect(state.nodes.find((entry) => entry.placeSearch)).toBeUndefined();
+  expect(node("tripCreate.planLocation").value).toBe("Original typed address");
+  expect(repo.save).not.toHaveBeenCalled();
+});
+
+it("P1 uses the real context double-read and refuses a changed local owner during capture", async () => {
+  const { p } = await withPlace("Unchanged title", "Unchanged address");
+  state.principalRead
+    .mockResolvedValueOnce({
+      kind: "GUEST",
+      localId: "00000000-0000-4000-8000-000000000077",
+    })
+    .mockResolvedValueOnce({
+      kind: "ACCOUNT",
+      accountId: "00000000-0000-4000-8000-000000000099",
+    });
+  const sheet = await search(p);
+  expect(state.principalRead).toHaveBeenCalledTimes(2);
+  expect(sheet).toBeUndefined();
+  expect(node("tripCreate.planLocation").value).toBe("Unchanged address");
 });

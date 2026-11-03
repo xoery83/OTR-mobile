@@ -1,3 +1,7 @@
+## Root1 Guest P1 place-search fence — 4 November 2026
+
+Fixed `205f08e7` allows existing committed Guest identity in the P1 MapKit editor scope, retaining original captureAccountScope double-read/generation checks and Save repository. Source-only, no new Principal/Auth/Core authority. Three-suite53PASS/lint/UIguard reused; actual Guest MapKit/Save device acceptance remains Native/Vision pending. Receipt: `docs/ops/native-vn02-guest-20261104/P1_GUEST_PLACE_SOURCE_MAIN_VALIDATION.json`.
+
 ## Root1 Native Guest Past Snapshot — 4 November 2026
 
 Reviewed `db16f255` reuses existing local manual Snapshot Reader and selector for Guest Past plans; Account path unchanged. Typed source/fingerprint and fresh callback fences retained; epoch/certificate remain null. Exact reviewed files integrated; author224/independent108 checks reused. Device/visual acceptance remains Native/Vision pending. Receipt: `docs/ops/native-vn02-guest-20261104/PAST_SOURCE_MAIN_VALIDATION.json`. No Hosted or schema action.
