@@ -62,7 +62,8 @@ handler dependency object. Auth copied exact main256741fa and reproduced forward
 FAIL/default-closed PASS. Actual stopped image entry SHA2cb1c023… contains selector
 code but zero `startOptions.memberClaimPort` access. Root's two-line fix plus real
 startup HTTP regression was independently reviewed by Auth:1PASS/11stable skipped;
-Root reports38focusedPASS. See `startup-forwarding-failure/FINDING.json`. Root alone
+Root reports38focusedPASS. Root integrated fix3917562e; Auth compared both
+Git blobs with the reviewed hashes. Hosted publication still awaits MCP release. See `startup-forwarding-failure/FINDING.json`. Root alone
 edits this shared startup file; Auth did not overwrite it. Hosted repaired flow is
 still NOT_RUN; the original response code was lost, so do not exclude every other
 possible failure or reclassify the retained UNKNOWN automatically.

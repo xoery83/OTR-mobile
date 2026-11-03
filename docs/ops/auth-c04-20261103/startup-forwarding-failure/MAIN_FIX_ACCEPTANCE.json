@@ -1,0 +1,18 @@
+{
+  "status": "ROOT_STARTUP_FIX_MAIN_SOURCE_ACCEPTED_NOT_HOSTED",
+  "mainCommit": "3917562e7026cc3bd0f5f1c26985b1b9b83cff2e",
+  "checks": [
+    {
+      "path": "backend/src/serverStartup.ts",
+      "sha256": "80439cf2d890e58d409d2dbf51d870e1908ec914f0ff096bf924c285e731aee1"
+    },
+    {
+      "path": "backend/src/serverStartup.test.ts",
+      "sha256": "9e3e66bf119b2609de7f9b8035e5a9a315b09ca8d561fbe8029133205a16520f"
+    }
+  ],
+  "scope": "Auth directly compared two integrated source blobs with independent reviewed hashes; no old tests rerun",
+  "hosted": "Root reports MCP finite image active; new diagnostic/startup code not yet deployed",
+  "originalIssue": "UNKNOWN_RETAINED_NO_REPLAY",
+  "next": "Root ordinary default-closed release after conflicting MCP window closes, then fresh legitimate recovery qualification"
+}
