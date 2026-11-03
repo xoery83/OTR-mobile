@@ -1,0 +1,34 @@
+{
+  "status": "LOCAL_PASS_DORMANT_ROOT_CANDIDATE_NOT_AUTHORIZED_OR_DEPLOYED",
+  "base": "79518bbe8a9c5e29d3ad85703e5247a98c01ae02",
+  "authDependency": "411ceee5 unchangedowningresumeQualifier/scenario/readInviteinterfaces;notcopiedormodifiedinthisbranch",
+  "firstFailure": "OriginalRootvalidate rejectedORIGINAL_ID_RESUME asUNKNOWN_EXECUTION_MODE; exactnewpositiveREDonbase.",
+  "mapping": "Rootplan ORIGINAL_ID_RESUME mapsnoBackendMODEenv =>existingfullfixedA/B QAauthority. BackendcurrentlyonlyacceptsMODEabsent/RECOVERY_ONLY. NoBackendselector/PG/Authowningfilemodified. Exactcase/issue+claimIDs remainfrozenQA_CASE_TEMPLATE.",
+  "newWire": "qualify-resume returnsAUTH_C04_RESUME_WINDOW_QUALIFIED/ORIGINAL_ID_RESUME/businessMutationAuthorizedtrue onlyafteractualactiveconfig/healthyRunningrightName/exactstagedID+plan/twoindependenttimerverification. ReadonlyqualificationitselfdoesnotperformbusinessIO.",
+  "oldRecovery": "qualify_recovery functionliteralbody byte-for-byteunchanged, falsewire/<=900s unchanged. ExistingRecoverySSHAPI/action andtests retained;newSSHfactory usesseparatequalify-resume +Auth411strictqualifier.",
+  "timers": "Resume only:max1800s existingQA envelope, constructorinvite<=600s unchanged; normalcloseD-120 andindependenthardD. Reuseexactexistingclose/rollback/systemdverification;missingnormalblocksstart. Noexistingwindowreset/extension.",
+  "evidence": {
+    "python": "27inmemoryDocker/systemdtestsPASS:old21+6resumeincludingexactcase,oldfalse,missingnormal,rollback,unapprovedclosed",
+    "controlRead": "15mocksubprocesstestsPASSagainstexactreadonlyAuth411qualifieroverlay;notliveSSH",
+    "scopedStrict": "Rootcontrol/test+transitive strictPASSonexplicitAuth411readonlyoverlay",
+    "lintDiff": "Root2TSfileslint+gitdiffPASS",
+    "overlayQualifierSHA256": "41db4d13ae4dcd9bacfb97cb9d3bd4ba0d14bf3a859d9f233c52c5ba988f2bbb"
+  },
+  "noZeroCount": "NoDB/receiptcountpreflightorcleanupadded. Existingreceiptsarelegitimaterecoverablestates. RootscenarioAuth411ownsrecover-first/conditionaloriginalsubmissionandreadInvite.",
+  "actualNext": "RootintegratesAuth411andthiscandidate,independentlyreviewsfixedRootdiff,preparesnewpreciseOwnerexecutionGate/currentdefault/stagedCID/config/plan/timers+freshnormalA/B qualification. Old713/e930 approvals/windowremainconsumed/closed;noauthorityinferredfrommodeflag/mocktests.",
+  "notPerformed": [
+    "Host/SSH",
+    "OTP/session/Secret",
+    "SQL/schema/grant",
+    "stage/arm/start/Provider",
+    "newGateexecution",
+    "mainupdate",
+    "Authwriteredits"
+  ],
+  "files": {
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "da0a18b452aceb7bf6d11c32e82cd5b717b6d80979d9ad45c08f99bd1f2a0a10",
+    "docs/ops/auth-c04-finite-runtime-20261103/test_runtime.py": "e65858b994a1906516ee6ddc38995bff08f1f285101307733ce87346f613a989",
+    "scripts/auth/member-claim-qa-control-read.ts": "ca8e7295f23104fb4d780c45afa4403bb9862ffe12c889ebde63780a69fe1a10",
+    "backend/src/authMemberClaimQaControlRead.test.ts": "397cbb78d301670e7ce9c5b47354b95084997bcce306156cda4c0f785ed65c08"
+  }
+}

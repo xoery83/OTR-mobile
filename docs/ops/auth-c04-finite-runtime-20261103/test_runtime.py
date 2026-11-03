@@ -367,5 +367,66 @@ class Controller(unittest.TestCase):
                 r.qualify_recovery(self.p, state, '9' * 64)
 
 
+    def test_original_resume_uses_existing_fixed_authority_and_distinct_qualified_wire(self):
+        self.p['executionMode'] = 'ORIGINAL_ID_RESUME'
+        state = self.ready()
+        self.assertNotIn(r.MODE, r.env(self.f.containers[CANDIDATE]))
+        self.assertEqual(json.loads(r.env(self.f.containers[CANDIDATE])[r.SELECTOR]), self.p['qaCase'])
+        r.start(self.p, state, '9' * 64)
+        result = r.qualify_resume(self.p, state, '9' * 64)
+        self.assertEqual(result['status'], 'AUTH_C04_RESUME_WINDOW_QUALIFIED')
+        self.assertEqual(result['executionMode'], 'ORIGINAL_ID_RESUME')
+        self.assertIs(result['businessMutationAuthorized'], True)
+        self.assertEqual(len([c for c in self.f.commands if c[0]=='systemd-run']), 2)
+        r.close(self.p, state)
+        self.assertTrue(r.verify(self.p)['runtimeClosed'])
+
+
+    def test_resume_requires_its_own_mode_and_recovery_stays_false_fifteen_minutes(self):
+        self.p['executionMode'] = 'RECOVERY_ONLY'
+        self.p['qaCase']['closesAt'] = '2030-01-01T00:15:00Z'
+        state = self.ready()
+        r.start(self.p, state, '9' * 64)
+        self.assertIs(r.qualify_recovery(self.p, state, '9' * 64)['businessMutationAuthorized'], False)
+        with self.assertRaisesRegex(AssertionError, 'RESUME_MODE_REQUIRED'):
+            r.qualify_resume(self.p, state, '9' * 64)
+
+    def test_resume_missing_normal_timer_blocks_before_start(self):
+        self.p['executionMode'] = 'ORIGINAL_ID_RESUME'
+        state = self.ready()
+        unit = r.timer_bindings(self.p)[1][0]
+        self.f.timers.pop(unit)
+        before = len(self.f.commands)
+        with self.assertRaisesRegex(AssertionError, 'CLOSE_TIMER_REQUIRED'):
+            r.start(self.p, state, '9' * 64)
+        self.assertFalse(any(c[:2] == ['docker','stop'] for c in self.f.commands[before:]))
+
+    def test_resume_rejects_foreign_case_and_short_tail(self):
+        self.p['executionMode'] = 'ORIGINAL_ID_RESUME'
+        for change in ({'personId':str(uuid.uuid4())},{'closesAt':'2030-01-01T00:02:00Z','inviteExpiresAt':'2030-01-01T00:01:00Z'}):
+            with self.assertRaises(AssertionError):
+                r.validate({**self.p,'qaCase':{**self.p['qaCase'],**change}})
+        self.assertEqual(self.f.commands, [])
+
+    def test_resume_health_failure_restores_exact_default(self):
+        self.p['executionMode'] = 'ORIGINAL_ID_RESUME'
+        state = self.ready()
+        def healthy(identity):
+            if identity == CANDIDATE: raise RuntimeError('HEALTH_TIMEOUT')
+            return self.f.inspect(identity)
+        with patch.object(r,'wait_healthy',side_effect=healthy), self.assertRaisesRegex(RuntimeError,'HEALTH_TIMEOUT'):
+            r.start(self.p,state,'9'*64)
+        self.assertTrue(r.verify(self.p)['runtimeClosed'])
+        self.assertNotIn(r.MODE,r.env(self.f.inspect('otr-dev-backend')))
+
+
+    def test_unapproved_resume_stays_closed_before_mutation(self):
+        self.p['executionMode'] = 'ORIGINAL_ID_RESUME'
+        self.p['ownerAuthorized'] = False
+        with self.assertRaisesRegex(AssertionError, 'EXECUTION_NOT_QUALIFIED'):
+            r.stage(self.p)
+        self.assertEqual(self.f.commands, [])
+
+
 if __name__ == '__main__':
     unittest.main()

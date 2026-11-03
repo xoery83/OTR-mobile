@@ -968,3 +968,12 @@ captured before a newer inventory, reusing the Activity inventory fence.32 focus
 UI checks, scoped types/lint/UI guard pass; see
 `ops/import-documents-pagination-20261103/HANDOFF.md`. Independent review/main
 integration and Native acceptance pending; no external or authority changes.
+
+# Root original-ID resume controller candidate - 3 November 2026
+
+Isolated from79518bbe, Root controller/SSH qualification can compose Auth411
+ORIGINAL_ID_RESUME through existing fixed A/B authority; old RECOVERY_ONLY false/
+15min behavior is preserved.27 controller and15 mocked-wire tests/scoped strict
+pass. See `ops/root-auth-original-resume-20261103/HANDOFF.md`.
+Dormant/unapproved: no Host/OTP/SQL/stage/arm or main action. New exact execution
+scope and real timer/session qualification still required; consumed windows stay closed.

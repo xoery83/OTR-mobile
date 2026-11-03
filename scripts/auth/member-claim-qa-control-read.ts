@@ -1,4 +1,4 @@
-import { createMemberClaimQaRecoveryWindowQualifier } from "./member-claim-qa-recovery-window";
+import { createMemberClaimQaRecoveryWindowQualifier, createMemberClaimQaResumeWindowQualifier } from "./member-claim-qa-recovery-window";
 import { execFile } from "node:child_process";
 import { z } from "zod";
 
@@ -14,14 +14,14 @@ const run: Run = (program, args, options) => new Promise((resolve, reject) => {
 });
 
 // Root driver only; the owning qualifier separately verifies every returned field.
-export function createMemberClaimQaControlRead(input: z.infer<typeof selection>, execute: Run = run) {
+function createControlRead(input: z.infer<typeof selection>, action: "qualify-recovery" | "qualify-resume", execute: Run) {
   const fixed = Object.freeze(selection.parse(input));
   const root = `/opt/otr/dev-backend/releases/auth-c04-qa-${fixed.windowId}`;
   return async (): Promise<unknown> => {
     try {
       const result = await execute("ssh", [
         "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", "root@178.105.151.143",
-        `python3 ${root}/runtime.py qualify-recovery ${root}/plan.json ${fixed.planSHA256}`,
+        `python3 ${root}/runtime.py ${action} ${root}/plan.json ${fixed.planSHA256}`,
       ], { timeout: 15000, maxBuffer: 131072 });
       return JSON.parse(result.stdout);
     } catch {
@@ -31,6 +31,21 @@ export function createMemberClaimQaControlRead(input: z.infer<typeof selection>,
   };
 }
 
+export function createMemberClaimQaControlRead(
+  input: z.infer<typeof selection>,
+  execute: Run = run,
+) {
+  return createControlRead(input, "qualify-recovery", execute);
+}
+
+export function createMemberClaimQaResumeControlRead(
+  input: z.infer<typeof selection>,
+  execute: Run = run,
+) {
+  return createControlRead(input, "qualify-resume", execute);
+}
+
+
 export function createRootMemberClaimQaRecoveryWindowQualifier(
   input: { windowId: string; expected: Parameters<typeof createMemberClaimQaRecoveryWindowQualifier>[0]["expected"]; now?: () => number },
   execute: Run = run,
@@ -39,5 +54,24 @@ export function createRootMemberClaimQaRecoveryWindowQualifier(
     expected: input.expected,
     now: input.now,
     readControl: createMemberClaimQaControlRead({ windowId: input.windowId, planSHA256: input.expected.planSHA256 }, execute),
+  });
+}
+
+
+export function createRootMemberClaimQaResumeWindowQualifier(
+  input: {
+    windowId: string;
+    expected: Parameters<typeof createMemberClaimQaResumeWindowQualifier>[0]["expected"];
+    now?: () => number;
+  },
+  execute: Run = run,
+) {
+  return createMemberClaimQaResumeWindowQualifier({
+    expected: input.expected,
+    now: input.now,
+    readControl: createMemberClaimQaResumeControlRead(
+      { windowId: input.windowId, planSHA256: input.expected.planSHA256 },
+      execute,
+    ),
   });
 }

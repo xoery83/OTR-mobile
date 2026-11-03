@@ -1,7 +1,7 @@
 import { expect, it, vi } from "vitest";
 import template from "../../docs/ops/auth-c04-20261103/finite-qa-candidate/QA_CASE_TEMPLATE.json";
 import { parseMemberClaimQaCase } from "./tripMemberClaimQa";
-import { createRootMemberClaimQaRecoveryWindowQualifier, createMemberClaimQaControlRead } from "../../scripts/auth/member-claim-qa-control-read";
+import { createRootMemberClaimQaRecoveryWindowQualifier, createMemberClaimQaControlRead, createMemberClaimQaResumeControlRead, createRootMemberClaimQaResumeWindowQualifier } from "../../scripts/auth/member-claim-qa-control-read";
 const input = { windowId: "10000000-0000-4000-8000-000000000001", planSHA256: "a".repeat(64) };
 it("runs only the exact bounded recovery qualification command without session material", async () => {
   const run = vi.fn(async () => ({ stdout: '{"status":"fixture"}' }));
@@ -31,3 +31,68 @@ it.each([false, true])("composes the actual Root SSH reader with owning frozen-w
   expect(run).toHaveBeenCalledOnce();
   expect(run.mock.calls[0][1].at(-1)).toContain("qualify-recovery");
 });
+
+
+it("runs only the separately selected exact bounded resume command", async () => {
+  const execute = vi.fn(async (_program: string, _args: string[]) => ({ stdout: '{"status":"fixture"}' }));
+  await createMemberClaimQaResumeControlRead(
+    { windowId: input.windowId, planSHA256: "f".repeat(64) },
+    execute,
+  )();
+  expect(execute.mock.calls[0][1].at(-1)).toBe(
+    `python3 /opt/otr/dev-backend/releases/auth-c04-qa-${input.windowId}/runtime.py qualify-resume /opt/otr/dev-backend/releases/auth-c04-qa-${input.windowId}/plan.json ${"f".repeat(64)}`,
+  );
+});
+
+it.each(["valid", "recovery", "no-permission", "drift", "closed"])(
+  "resume qualifier binds existing Auth411 wire, %s",
+  async (kind) => {
+    const qaCase = parseMemberClaimQaCase({
+      ...template.qaCase,
+      opensAt: "2026-11-03T00:00:00Z",
+      inviteExpiresAt: "2026-11-03T00:10:00Z",
+      closesAt: "2026-11-03T00:30:00Z",
+    });
+    const expected = {
+      qaCase,
+      image: "sha256:" + "a".repeat(64),
+      containerId: "b".repeat(64),
+      configSHA256: "c".repeat(64),
+      planSHA256: "d".repeat(64),
+    };
+    const wire = {
+      ...expected,
+      status: "AUTH_C04_RESUME_WINDOW_QUALIFIED",
+      executionMode: "ORIGINAL_ID_RESUME",
+      businessMutationAuthorized: true,
+    };
+    const execute = vi.fn(async () => ({
+      stdout: JSON.stringify({
+        ...wire,
+        ...(kind === "recovery"
+          ? {
+              status: "AUTH_C04_RECOVERY_WINDOW_QUALIFIED",
+              executionMode: "RECOVERY_ONLY",
+              businessMutationAuthorized: false,
+            }
+          : kind === "no-permission"
+            ? { businessMutationAuthorized: false }
+            : kind === "drift"
+              ? { planSHA256: "e".repeat(64) }
+              : {}),
+      }),
+    }));
+    const qualify = createRootMemberClaimQaResumeWindowQualifier(
+      {
+        windowId: input.windowId,
+        expected,
+        now: () =>
+          Date.parse(kind === "closed" ? "2026-11-03T00:10:00Z" : "2026-11-03T00:01:00Z"),
+      },
+      execute,
+    );
+    if (kind === "valid") await expect(qualify(qaCase)).resolves.toBeUndefined();
+    else await expect(qualify(qaCase)).rejects.toThrow("RECOVERY_WINDOW_UNQUALIFIED");
+    expect(execute).toHaveBeenCalledTimes(kind === "closed" ? 0 : 1);
+  },
+);

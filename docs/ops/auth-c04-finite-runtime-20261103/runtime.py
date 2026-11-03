@@ -38,7 +38,7 @@ def digest(value):
 def validate(p, now=None, starting=False):
     assert p['version'] == 1 and str(uuid.UUID(p['windowId'])) == p['windowId']
     assert p['root'] == '/opt/otr/dev-backend/releases/auth-c04-qa-' + p['windowId']
-    assert p.get('executionMode') in (None, 'RECOVERY_ONLY'), 'UNKNOWN_EXECUTION_MODE'
+    assert p.get('executionMode') in (None, 'RECOVERY_ONLY', 'ORIGINAL_ID_RESUME'), 'UNKNOWN_EXECUTION_MODE'
     qa = p['qaCase']
     assert set(qa) == set(CASE) | {'opensAt', 'inviteExpiresAt', 'closesAt'}
     assert {k: qa[k] for k in CASE} == CASE, 'EXACT_A_B_CASE_REQUIRED'
@@ -46,6 +46,8 @@ def validate(p, now=None, starting=False):
     assert 0 < closing - opening <= 1800 and 0 < invite - opening <= 600 and invite <= closing
     if p.get('executionMode') == 'RECOVERY_ONLY':
         assert 120 < closing - opening <= 900, 'RECOVERY_WINDOW_LIMIT'
+    if p.get('executionMode') == 'ORIGINAL_ID_RESUME':
+        assert 120 < closing - opening <= 1800, 'RESUME_WINDOW_LIMIT'
     assert p['ownerAuthorized'] is True and p['executionQualified'] is True, 'EXECUTION_NOT_QUALIFIED'
     for key in ('approvedGateSHA256', 'ownerApprovalSHA256', 'qualifiedPreflightSHA256', 'runtimeSHA256'):
         digest(p[key])
@@ -85,6 +87,7 @@ def check_base(p, s, healthy=False):
 def active_config(p, baseline):
     values = env(baseline)
     values[SELECTOR] = canonical(p['qaCase']).decode()
+    # ORIGINAL_ID_RESUME reuses the existing fixed A/B selector; no new Backend mode.
     if p.get('executionMode') == 'RECOVERY_ONLY':
         values[MODE] = 'RECOVERY_ONLY'
     return dict(baseline['Config'], Env=[k + '=' + v for k, v in values.items()])
@@ -183,12 +186,16 @@ def reconcile_stage(p):
 
 def timer_bindings(p):
     hard = ('otr-auth-c04-close-' + p['windowId'], instant(p['qaCase']['closesAt']))
+    if p.get('executionMode') == 'ORIGINAL_ID_RESUME':
+        return [hard, ('otr-auth-c04-resume-close-' + p['windowId'], hard[1] - 120)]
     return [hard, ('otr-auth-c04-recovery-close-' + p['windowId'], hard[1] - 120)] if p.get('executionMode') == 'RECOVERY_ONLY' else [hard]
 
 
 def verify_timers(p, plan_hash):
     expected = {'unit': 'otr-auth-c04-close-' + p['windowId'], 'planSHA256': plan_hash, 'closesAt': p['qaCase']['closesAt']}
     if p.get('executionMode') == 'RECOVERY_ONLY':
+        expected['normalUnit'] = timer_bindings(p)[1][0]
+    elif p.get('executionMode') == 'ORIGINAL_ID_RESUME':
         expected['normalUnit'] = timer_bindings(p)[1][0]
     assert json.loads(private(Path(p['root']) / 'timer.json')) == expected, 'TIMER_PLAN_DRIFT'
     for unit, cutoff in timer_bindings(p):
@@ -216,6 +223,17 @@ def qualify_recovery(p, state, plan_hash):
     return {'status': 'AUTH_C04_RECOVERY_WINDOW_QUALIFIED', 'qaCase': p['qaCase'], 'executionMode': 'RECOVERY_ONLY', 'image': active['Image'], 'containerId': active['Id'], 'configSHA256': sha(active['Config']), 'planSHA256': plan_hash, 'businessMutationAuthorized': False}
 
 
+def qualify_resume(p, state, plan_hash):
+    validate(p, starting=True)
+    assert p.get('executionMode') == 'ORIGINAL_ID_RESUME', 'RESUME_MODE_REQUIRED'
+    verify_timers(p, plan_hash)
+    active = inspect('otr-dev-backend')
+    check_active(p, active, state)
+    assert active['State'].get('Health', {}).get('Status') == 'healthy'
+    assert active['State'].get('Running') is True and active['Name'] == '/otr-dev-backend', 'RESUME_RUNTIME_NOT_RUNNING'
+    return {'status': 'AUTH_C04_RESUME_WINDOW_QUALIFIED', 'qaCase': p['qaCase'], 'executionMode': 'ORIGINAL_ID_RESUME', 'image': active['Image'], 'containerId': active['Id'], 'configSHA256': sha(active['Config']), 'planSHA256': plan_hash, 'businessMutationAuthorized': True}
+
+
 def arm(p, plan_hash):
     validate(p, starting=True)
     state = json.loads(private(Path(p['root']) / 'state.json'))
@@ -231,6 +249,8 @@ def arm(p, plan_hash):
         assert call(['systemctl', 'show', unit_name + '.timer', '--property=ActiveState', '--value']).strip() == 'active', 'TIMER_NOT_ARMED'
     record = {'unit': unit, 'planSHA256': plan_hash, 'closesAt': p['qaCase']['closesAt']}
     if p.get('executionMode') == 'RECOVERY_ONLY':
+        record['normalUnit'] = timer_bindings(p)[1][0]
+    elif p.get('executionMode') == 'ORIGINAL_ID_RESUME':
         record['normalUnit'] = timer_bindings(p)[1][0]
     save(Path(p['root']) / 'timer.json', record)
     verify_timers(p, plan_hash)
@@ -263,7 +283,7 @@ def start(p, state, plan_hash):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['stage', 'reconcile-stage', 'arm', 'start', 'close', 'verify', 'qualify-recovery'])
+    parser.add_argument('mode', choices=['stage', 'reconcile-stage', 'arm', 'start', 'close', 'verify', 'qualify-recovery', 'qualify-resume'])
     parser.add_argument('plan', type=Path)
     parser.add_argument('sha256')
     args = parser.parse_args()
@@ -284,7 +304,7 @@ def main():
             result = verify(p)
         else:
             state = json.loads(private(Path(p['root']) / 'state.json'))
-            result = qualify_recovery(p, state, args.sha256) if args.mode == 'qualify-recovery' else start(p, state, args.sha256) if args.mode == 'start' else close(p, state)
+            result = qualify_resume(p, state, args.sha256) if args.mode == 'qualify-resume' else qualify_recovery(p, state, args.sha256) if args.mode == 'qualify-recovery' else start(p, state, args.sha256) if args.mode == 'start' else close(p, state)
     print(json.dumps(result))
 
 
