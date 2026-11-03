@@ -238,3 +238,14 @@ it("retains both Task statuses and continues same-order details after a first de
   );
   expect(f.context).toHaveBeenCalledTimes(2);
 });
+
+it("cold activity reads use persisted original attribution without changing Account intake", async () => {
+  const f = fixture(),
+    tripId = f.jobs[0].batch.context.tripPrior!.id;
+  for (const job of f.jobs) {
+    job.batch.context.tripPrior = null;
+    job.assignedTripId = tripId;
+  }
+  expect(Object.keys(await readUniversalActivities(f.jobs, f))).toHaveLength(2);
+  expect(f.jobs.every((job) => job.batch.context.tripPrior === null)).toBe(true);
+});

@@ -41,7 +41,7 @@ export function projectUniversalImportUpdates(
   const updates = new Map<string, UniversalImportUpdate>();
   for (const job of jobs) {
     const batch = job.batch,
-      prior = batch.context.tripPrior?.id;
+      prior = batch.context.tripPrior?.id ?? job.assignedTripId;
     if (
       batch.accountId !== accountId ||
       !job.allInputsAccepted ||
@@ -125,7 +125,7 @@ export async function readDefaultUniversalImportUpdates(
   const jobs = (await listDefaultCaptureJobs({ limit: 20 })).filter(
     (job) =>
       job.batch.accountId === context.accountId &&
-      (!tripId || job.batch.context.tripPrior?.id === tripId),
+      (!tripId || (job.batch.context.tripPrior?.id ?? job.assignedTripId) === tripId),
   );
   await assertAccountRequestContext(context, requireActiveUserId);
   if (!current()) return;
@@ -220,7 +220,7 @@ export async function reopenDefaultUniversalImportUpdate(
     job.batch.accountId !== context.accountId ||
     job.batch.batchId !== card.batchId ||
     job.batch.jobId !== card.jobId ||
-    job.batch.context.tripPrior?.id !== card.tripId
+    (job.batch.context.tripPrior?.id ?? job.assignedTripId) !== card.tripId
   )
     throw Error("UPDATES_SOURCE_UNAVAILABLE");
   return job;

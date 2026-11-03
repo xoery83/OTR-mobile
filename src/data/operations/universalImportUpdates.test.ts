@@ -377,3 +377,15 @@ it("adds only same-Account Batch display metadata without changing event time or
   expect(legacy).not.toHaveProperty("submittedText");
   expect(legacy).not.toHaveProperty("submittedAt");
 });
+
+it("keeps assigned Account intake visible only in its actual Journey Updates", () => {
+  const f = fixture();
+  f.job.batch.context.tripPrior = null;
+  f.job.assignedTripId = f.tripId;
+  expect(
+    projectUniversalImportUpdates(f.accountId, f.tripId, [f.job], f.observations),
+  ).toHaveLength(1);
+  expect(
+    projectUniversalImportUpdates(f.accountId, randomUUID(), [f.job], f.observations),
+  ).toEqual([]);
+});

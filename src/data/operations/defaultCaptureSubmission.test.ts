@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   open: vi.fn(),
   list: vi.fn(),
   reopen: vi.fn(),
+  handoff: vi.fn(),
 }));
 vi.mock("expo-crypto", () => ({ randomUUID: vi.fn() }));
 vi.mock("react-native", () => ({
@@ -30,6 +31,7 @@ vi.mock("@/data/auth/authRepository", () => ({
 vi.mock("@/data/db/database", () => ({ openDatabase: state.open }));
 vi.mock("@/data/repositories/defaultLocalCaptureInboxRepository", () => ({
   captureStorageDependencies: {},
+  getDefaultLocalCaptureInboxRepository: async () => ({ getForSourceHandoff: state.handoff }),
 }));
 vi.mock("@/data/repositories/captureSubmissionRepository", () => ({
   createCaptureSubmissionRepository: () => ({ list: state.list, reopen: state.reopen }),
@@ -92,3 +94,21 @@ it.each(["list", "reopen"] as const)(
     );
   },
 );
+
+
+it.each([true, false])("projects only verified retained assignment while leaving frozen intake unchanged: %s", async (matching) => {
+  const job = {
+    batch: { jobId: "retained-job", accountId: "A", context: { tripPrior: null } },
+    inputs: [{ id: "input", captureId: "capture", payloadId: "payload", contentSha256: "a".repeat(64), contentByteCount: 3, state: "ACCEPTED" }],
+    allInputsAccepted: true,
+    processing: { capability: "NOT_INSTALLED" },
+  };
+  state.open.mockResolvedValue(undefined);
+  state.list.mockResolvedValue([job]);
+  state.handoff.mockResolvedValue({ capture: { accountId: "A", id: "capture", payloadId: "payload", sha256: (matching ? "a" : "b").repeat(64), byteCount: 3, tripId: "retained-trip" } });
+  const [read] = await listDefaultCaptureJobs({ limit: 1 });
+  expect(read.assignedTripId).toBe(matching ? "retained-trip" : null);
+  expect(read.batch).toEqual(job.batch);
+  expect(read.batch.context.tripPrior).toBeNull();
+  expect(state.handoff).toHaveBeenCalledExactlyOnceWith("capture");
+});

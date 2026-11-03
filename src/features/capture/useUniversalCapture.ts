@@ -28,11 +28,15 @@ export function useUniversalCapture(
   const generation = useRef(getAccountGeneration());
   const alive = useRef(true),
     running = useRef(false);
-  const initialScope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
-  const scope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
+  const initialScope = useRef(
+    `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`,
+  );
+  const scope = useRef(
+    `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`,
+  );
   const currentRef = useRef(isCurrent);
   useLayoutEffect(() => {
-    const nextScope = `${model.batch.accountId}:${model.batch.batchId}`;
+    const nextScope = `${model.batch.accountId}:${model.batch.batchId}:${model.batch.context?.tripPrior?.id ?? model.assignedTripId ?? ""}`;
     if (
       scope.current !== nextScope ||
       !isCurrent() ||
@@ -43,7 +47,13 @@ export function useUniversalCapture(
     }
     scope.current = nextScope;
     currentRef.current = isCurrent;
-  }, [isCurrent, model.batch.accountId, model.batch.batchId]);
+  }, [
+    isCurrent,
+    model.batch.accountId,
+    model.batch.batchId,
+    model.batch.context?.tripPrior?.id,
+    model.assignedTripId,
+  ]);
   const controller = useRef<AbortController | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const scopeCurrent = () =>
@@ -59,7 +69,7 @@ export function useUniversalCapture(
     };
   }, []);
   async function run(execute: boolean) {
-    if (!current()) return;
+    if (!current() || (execute && !model.batch.context?.tripPrior?.id)) return;
     if (running.current) {
       if (execute && !executing.current && !deferredStart.current) {
         deferredStart.current = true;
@@ -205,10 +215,14 @@ export function useUniversalCapture(
     }
   }
   useEffect(() => {
-    if (model.allInputsAccepted && model.batch.context.tripPrior) void run(false);
+    if (
+      model.allInputsAccepted &&
+      (model.batch.context.tripPrior?.id ?? model.assignedTripId)
+    )
+      void run(false);
     // One read on reopen; only explicit Start may prepare or dispatch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [model.assignedTripId]);
   useEffect(() => {
     const pending = () => {
       const state = current() ? consumer.current?.activity?.state : activity?.state;
@@ -237,8 +251,9 @@ export function useUniversalCapture(
     busy,
     unavailable,
     attempted,
-    canStart,
-    canStartDuringRead: busy && reading && !startPending,
+    canStart: canStart && !!model.batch.context?.tripPrior?.id,
+    canStartDuringRead:
+      !!model.batch.context?.tripPrior?.id && busy && reading && !startPending,
     queued,
     start: () => run(true),
     recover: () => run(false),

@@ -69,15 +69,16 @@ vi.mock("@/data/operations/universalCaptureConsumer", () => ({
 vi.mock("@/data/operations/defaultUniversalPhotoConsent", () => ({
   assertDefaultUniversalPhotoConsent: h.consent,
 }));
-function Harness(batchId = "batch-a", current = () => true) {
+function Harness(batchId = "batch-a", current = () => true, assignedTripId?: string) {
   h.cursor = 0;
   h.layout = [];
   h.effects = [];
   const output = useUniversalCapture(
     {
       allInputsAccepted: true,
+      assignedTripId,
       inputs: [],
-      batch: { accountId: "qa", batchId, context: { tripPrior: { id: "trip" } } },
+      batch: { accountId: "qa", batchId, context: { tripPrior: assignedTripId ? null : { id: "trip" } } },
     } as unknown as CaptureJobReadModel,
     current,
   );
@@ -299,4 +300,40 @@ it("checks current Photo consent before resuming the same Task and rejects a lat
     "UNIVERSAL_CAPTURE_STALE",
   );
   expect(resume).not.toHaveBeenCalled();
+});
+
+it("discards in-flight recovery when the same Batch retained Journey changes", async () => {
+  h.consumer.activity = null;
+  let finish!: (v: null) => void;
+  h.recover.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  Harness("batch-a", () => true, "trip-a");
+  await vi.advanceTimersByTimeAsync(0);
+  await Harness("batch-a", () => true, "trip-a").start();
+  Harness("batch-a", () => true, "trip-b");
+  expect(h.options.isCurrent()).toBe(false);
+  finish(null);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.start).not.toHaveBeenCalled();
+  expect(Harness("batch-a", () => true, "trip-b").result).toBeNull();
+});
+
+
+it("retained read-only attribution never offers or queues Analyze", async () => {
+  let finish!: (value: null) => void;
+  h.recover.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+  const reading = Harness("batch-a", () => true, "retained-trip");
+  await vi.advanceTimersByTimeAsync(0);
+  const active = Harness("batch-a", () => true, "retained-trip");
+  expect(reading.canStart).toBe(false);
+  expect(active.canStartDuringRead).toBe(false);
+  await active.start();
+  expect(h.start).not.toHaveBeenCalled();
+  finish(null);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.start).not.toHaveBeenCalled();
 });

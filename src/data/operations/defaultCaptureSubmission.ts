@@ -104,6 +104,22 @@ async function withLocalProcessing(
   }
   return Promise.all(
     jobs.map(async (job) => {
+      let assignedTripId: string | null = null;
+      if (job.allInputsAccepted && !job.batch.context.tripPrior) {
+        try {
+          const { readCaptureJobAssignment } = await import("./captureJobAssignment");
+          const { getDefaultLocalCaptureInboxRepository } =
+            await import("../repositories/defaultLocalCaptureInboxRepository");
+          const captures = await getDefaultLocalCaptureInboxRepository();
+          assignedTripId = await readCaptureJobAssignment(context, job, {
+            captures,
+            getAccountId: requireActiveUserId,
+            isCurrent: () => true,
+          });
+        } catch {
+          // Missing local originals cannot assert a recovered Journey attribution.
+        }
+      }
       const processingEvents = await processing.events(context, job.batch.jobId);
       const localInterpretationEvents = await processing.localEvents(
         context,
@@ -115,6 +131,7 @@ async function withLocalProcessing(
       );
       return {
         ...job,
+        assignedTripId,
         processing: {
           ...job.processing,
           capability: processingEvents.length
