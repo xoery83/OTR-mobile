@@ -1,0 +1,20 @@
+{
+  "status": "AUTH_CONSUMER_NO_BLOCKER_FIXED_SINGLE_FUNCTION_CANDIDATE",
+  "candidate": "0f230995a717aba751b5a4528dab08191f5756b8",
+  "request": "AUTH-C04-READ-STATE-ONE-FUNCTION-INSTALL-PREP-20261104-01",
+  "manifestSHA256": "1423d534f1f526c02cdb643646d38fabd5b291f4be35827261fa1a6f55aca40d",
+  "manifestFilesChecked": 8,
+  "installSHA256": "9300320f3bfa8a49ea26d2466eb940a154e8d8aff827cdb081f64549f2a22990",
+  "rollbackSHA256": "8204912d7217ec3a93ab1a341ff00250ad68676fc16f2b9dd1ed7ebf58c8f391",
+  "testsReexecuted": false,
+  "newAuthorityOrAcl": false,
+  "helperWriterExecuteRemainsFalse": true,
+  "sourceIntegration": "REQUESTED_NOT_YET_VERIFIED",
+  "protectedInstall": "PREPARATION_REQUESTED_NOT_APPROVED",
+  "fullItemReceiptSave": "NOT_PROVEN",
+  "hostedE2E": "NOT_RUN",
+  "originalOperation": "f5e13639-4240-4817-bf43-c60a1ea46361",
+  "originalOutcome": "UNKNOWN_NO_REPLAY",
+  "businessPostAuthorizedByThisPackage": false,
+  "next": "Root1 exact main source receipt; Root2 one-function exact protected approval package, then fresh CAS and independent readback only after approval"
+}

@@ -1,0 +1,22 @@
+{
+  "metadataUnchanged": true,
+  "readStateUnchangedAfterRolledBackTests": true,
+  "reverseRestoresExactPriorDenial": true,
+  "phase": "normal-qualification-read-state-upsert-real-predicates",
+  "before": {
+    "returncode": 3,
+    "error": "ERROR:  42501: permission denied for function trip_member_claim_read_state_allowed\nCONTEXT:  PL/pgSQL function public.trip_core_finite_read_state_guard() line 5 at IF\nLOCATION:  aclcheck_error, aclchk.c:2843\n"
+  },
+  "after": {
+    "returncode": 0,
+    "stdout": "00000000-0000-4000-8000-000000000001|10000000-0000-4000-8000-000000000001|CREATE_ITEM|P1|MANUAL|44887b12-f1ec-43a9-8ef5-394675746f4d|f5e13639-4240-4817-bf43-c60a1ea46361\nt\n"
+  },
+  "foreignActor": {
+    "returncode": 3,
+    "error": "ERROR:  42501: CORE_V2_CAPABILITY_CLOSED\nCONTEXT:  PL/pgSQL function public.trip_core_finite_read_state_guard() line 27 at RAISE\nLOCATION:  exec_stmt_raise, pl_exec.c:3911\n"
+  },
+  "helperWriterExecuteStillFalse": true,
+  "scope": "ISOLATED_TRUE_GATEWAY_LOGIN_REAL_FINITE_AND_SUSTAINED_SCOPE_CURRENT_READ_STATE_GUARD; synthetic existing fixture Owner/Trip/v2provenance, only deny Guest seams, no full Item+receipt mutation or Hosted claim",
+  "positiveScopeStubs": 0,
+  "hostedActions": 0
+}

@@ -51,8 +51,13 @@ remains pending; no request-field change or original POST replay is justified.
 Actual guard65713 local Gateway LOGIN→SET writer→INSERT ON CONFLICT now reproduces
 42501 on private trip_member_claim_read_state_allowed at guard IF line5. Root1
 minimal nested-role IF avoids premature helper privilege checking without GRANT;
-existing finite=false still denies, helper EXEC remainsfalse. Independent source
-Review PASS; full positive isolated CoreSave/CAS/rollback candidate still pending.
+existing finite=false still denies, helper EXEC remainsfalse. Independent guard and CAS source Review PASS; fixed Root1 candidate0f230995 has
+real-predicate read_state upsert/foreign denial, generated install+exact reverse,
+wrong-preimage transaction abort and unchanged metadata/state evidence. Auth verified
+HEAD+8 manifest files and consumer boundary; no repeated tests. Full Item+Receipt
+Save remains unproven. Root1 source integration requested; Root2 request
+AUTH-C04-READ-STATE-ONE-FUNCTION-INSTALL-PREP-20261104-01 prepares one-function
+protected Gate, not yet approved or installed. No image/runtime/GRANT changes.
 This is a proven current blocker, not proof of the original Hosted unique phase.
 Auth runner and original operation stay unchanged; no automatic resubmit.
 Next is minimal Core guard repair → positive focused validation → exact install Gate;
