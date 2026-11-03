@@ -1,0 +1,48 @@
+{
+  "package": "PLAT-C03",
+  "slice": "PLAT-C03:LOCAL_PREP",
+  "claimId": "auth-plat-c03-local-prep-20261103-v1",
+  "status": "LOCAL_COMPANION_CONTRACT_PREP_NOT_WEB_DELIVERY",
+  "instructionCanonicalSHA256": "6d3eaba84207c00e5138a2ede5be6982d8f5227cafd21f0fcedf7352fe980318",
+  "reuseEvidence": "NEXT_REUSE_SOURCE_ONLY.json",
+  "reuseDecision": "Existing Next dependency/build technology is a bounded reuse candidate only. No Vercel project/deploy/DNS authorization proved; no legacy UI or product code copied",
+  "mobileSchemeObserved": "otrmobile",
+  "universalLinksQualified": false,
+  "minimumContracts": [
+    {
+      "capability": "Invite landing",
+      "producer": "Auth Invite owning reader + Native route Writer",
+      "requirement": "Opaque invite reference only; fetch current status through existing server authority after normal login, explicit Claim consent, no name/email matching or token/PII in logs",
+      "missing": "C04 directed registered Claim is not public link/QR authority; public landing/read/expiry context port still unqualified"
+    },
+    {
+      "capability": "Installed/uninstalled handoff",
+      "producer": "Native/Platform",
+      "requirement": "Qualified actual bundle+allowed route/origin; QA variants sharing scheme must not silently select another App/Session. No Guest draft loss or automatic Adoption on return",
+      "missing": "Native invite route, associated domains and actual approved TestFlight link/context recovery"
+    },
+    {
+      "capability": "Authenticated ZIP Review",
+      "producer": "Import/Custody + Auth + Web Writer",
+      "requirement": "Use existing normal Auth and Source/Custody/Review/Admission; stable upload operation/hash/receipt, authorize target Trip/Item, explicit Review before Save",
+      "missing": "Qualified Web upload/context port and scope; no second parser, storage authority or automatic association"
+    },
+    {
+      "capability": "Privacy/support",
+      "producer": "Owner approved content + Platform",
+      "requirement": "Use formally approved mobile privacy/deletion/support source; no invented terms or old Web policy assumption",
+      "missing": "Approved public copy/support channel and publication/domain permission"
+    }
+  ],
+  "boundaries": [
+    "Only existing Next package metadata read in legacy repo; no legacy UI/env/Production",
+    "No new website, deployment, paid service, DNS or public link created",
+    "Invitation context is not authentication or membership; no Session/Keychain transfer",
+    "No open redirect or arbitrary callback; current OAuth redirect allowlist stays separate",
+    "Unknown expiry/start-date/reconnect policy not inferred from device time"
+  ],
+  "testsRepeated": false,
+  "externalCalls": 0,
+  "hostedActions": 0,
+  "missingLocalInstructionFields": []
+}

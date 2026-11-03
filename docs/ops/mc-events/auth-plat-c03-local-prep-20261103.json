@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-plat-c03-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "PLAT-C03",
+      "execution_slice_id": "PLAT-C03:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T01:11:12.768152+00:00",
+      "actual_started_at": "2026-11-03T01:11:12.768152+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-companion-context-contract",
+      "summary": "Started Web Companion invite/deep-link/install/ZIP-review contract and narrow read-only Next build metadata evaluation; no legacy UI, DNS, deploy or Production read",
+      "next_action": "Retain missing public invite/route/upload/privacy interfaces, no hosting or permissions change"
+    }
+  ]
+}

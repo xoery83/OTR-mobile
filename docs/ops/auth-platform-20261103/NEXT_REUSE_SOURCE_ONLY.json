@@ -1,0 +1,17 @@
+{
+  "path": "/Users/xoery/Project/otr/package.json",
+  "sha256": "5a85925383eb3b6546680eb6bb6e6472b6c0e547b34a5587b1601acb121e6171",
+  "nextVersionInSource": "16.2.9",
+  "reactVersionInSource": "19.2.4",
+  "hasBuildScript": true,
+  "vercelJsonPresent": false,
+  "legacySourceOnly": true,
+  "legacyUiRead": false,
+  "envRead": false,
+  "deploymentPermissionProven": false,
+  "mobileContext": {
+    "scheme": "otrmobile",
+    "iosBundleId": "com.xoery.otrmobile",
+    "associatedDomainsConfigured": false
+  }
+}
