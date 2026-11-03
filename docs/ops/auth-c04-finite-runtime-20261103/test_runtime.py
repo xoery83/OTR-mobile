@@ -265,9 +265,14 @@ class Controller(unittest.TestCase):
 
     def test_recovery_mode_is_bound_and_restored_by_the_existing_controller(self):
         self.p['executionMode'] = 'RECOVERY_ONLY'
+        self.p['qaCase']['closesAt'] = '2030-01-01T00:15:00Z'
         state = self.ready()
         self.assertEqual(r.env(self.f.containers[CANDIDATE])[r.MODE], 'RECOVERY_ONLY')
         r.start(self.p, state, '9' * 64)
+        before = len(self.f.commands)
+        self.assertEqual(r.qualify_recovery(self.p, state, '9' * 64)['status'], 'AUTH_C04_RECOVERY_WINDOW_QUALIFIED')
+        self.assertFalse(any(c[:2] in [['docker', 'stop'], ['docker', 'rename'], ['docker', 'start']] for c in self.f.commands[before:]))
+        self.assertEqual(len([c for c in self.f.commands if c[0]=='systemd-run']), 2)
         r.close(self.p, state)
         self.assertNotIn(r.MODE, r.env(self.f.inspect('otr-dev-backend')))
         self.assertTrue(r.verify(self.p)['runtimeClosed'])
@@ -282,6 +287,31 @@ class Controller(unittest.TestCase):
         self.f.containers[BASE]['Config']['Env'].append(r.MODE + '=RECOVERY_ONLY')
         with self.assertRaises(AssertionError):
             r.verify(self.p)
+
+
+    def test_recovery_window_cannot_inherit_thirty_minute_business_limit(self):
+        self.p['executionMode'] = 'RECOVERY_ONLY'
+        with self.assertRaisesRegex(AssertionError, 'RECOVERY_WINDOW_LIMIT'):
+            r.validate(self.p)
+
+    def test_missing_normal_recovery_timer_blocks_start_before_stop(self):
+        self.p['executionMode'] = 'RECOVERY_ONLY'
+        self.p['qaCase']['closesAt'] = '2030-01-01T00:15:00Z'
+        state = self.ready()
+        original = self.f.call
+        def response(args, input=None):
+            if args[:2] == ['systemctl', 'show'] and args[2].startswith('otr-auth-c04-recovery-close-'):
+                return 'inactive'
+            return original(args, input)
+        before = len(self.f.commands)
+        with patch.object(r, 'call', side_effect=response):
+            with self.assertRaisesRegex(AssertionError, 'CLOSE_TIMER_REQUIRED'):
+                r.start(self.p, state, '9' * 64)
+        self.assertFalse(any(c[:2] == ['docker', 'stop'] for c in self.f.commands[before:]))
+
+    def test_recovery_qualification_rejects_normal_business_mode(self):
+        with self.assertRaisesRegex(AssertionError, 'RECOVERY_MODE_REQUIRED'):
+            r.qualify_recovery(self.p, {'candidateId': CANDIDATE}, '9' * 64)
 
 
 if __name__ == '__main__':

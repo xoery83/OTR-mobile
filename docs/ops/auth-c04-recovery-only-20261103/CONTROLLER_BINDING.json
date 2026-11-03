@@ -1,0 +1,9 @@
+{
+  "status": "LOCAL_PASS_REVIEW_PENDING_NOT_ARMED",
+  "scope": "Reuse existing finite runtime controller: RECOVERY_ONLY max900s, normal close D-120s plus existing hardD, both required before start; qualify-recovery is exact active state/config/image/timer verification without business IO",
+  "validation": "19 in-memory controller tests PASS; missing normal timer rejects before stop; ordinary QA mode cannot qualify recovery; mode roundtrip closes to retained exact default",
+  "contract": "Normal existing PG transactions/locks retained, only access+original receipt methods reachable; no SQL/role/OTP/business activation",
+  "callerBinding": "Root normal-session driver passes qualifyRecoveryWindow callback invoking runtime.py qualify-recovery with exact approved plan hash and then compares returned qaCase/image/config to frozen plan; zero-count preflight forbidden",
+  "expiry": "Selection constructor inviteExpiresAt remains future within10min; it cannot reach issue and never updates actual invitation expiry",
+  "remaining": "Independent review; precise finite execution Gate and fresh normal Owner session; not authorized or armed"
+}
