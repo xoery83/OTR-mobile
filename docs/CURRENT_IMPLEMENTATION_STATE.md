@@ -14,6 +14,14 @@ not been approved or executed. Member Revoke PG remains an uninstalled candidate
 The dated entries below are historical candidate snapshots; consult the current
 main, fixed receipts and shared queue before acting on an older “pending” line.
 
+# IMP-C03 P3 Form DTO boundary — 3 November 2026
+
+Current-main `0a1cfbb9` already includes Native10c/Import P3 scan composition.
+The isolated IMP-C03 candidate adds only a shared output-schema Actor/Account
+fence, closing acceptance of a mutually consistent foreign-Actor Task/result pair.
+80 focused checks/scoped strict/lint pass; no Provider/Host/SQL/device execution.
+See `ops/imp-c03-form-dto-20261103/HANDOFF.md`; LOCAL_PASS, Root review/integration pending.
+
 # Import retained Trip read preparation — 3 November 2026
 
 Isolated `codex/imp-c01-retained-trip-read-20261103` prepares a read-only retained

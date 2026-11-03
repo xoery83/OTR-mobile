@@ -167,6 +167,20 @@ it.each(["actorId", "accountId", "tripId", "batchId", "taskId"] as const)(
   },
 );
 
+it.each(["CREATE", "EDIT"] as const)(
+  "rejects a foreign Actor at the %s Form DTO boundary",
+  (mode) => {
+    const f = fixture(mode);
+    const output = f.run()!;
+    const otherActor = randomUUID();
+    f.task.actorId = otherActor;
+    f.result.actorId = otherActor;
+    expect(f.run()).toBeNull();
+    output.task.actorId = otherActor;
+    expect(universalP3FormInterpretationSchema.safeParse(output).success).toBe(false);
+  },
+);
+
 it("requires explicit valid Edit revision and exact context shape", () => {
   const f = fixture("EDIT");
   expect(

@@ -78,6 +78,7 @@ export const universalP3FormInterpretationSchema = z
   .superRefine((r, ctx) => {
     const aliases = r.sourceBindings.map((b) => b.alias);
     let invalid =
+      r.task.actorId !== r.context.accountId ||
       new Set(aliases).size !== aliases.length ||
       new Set(r.sourceBindings.map((b) => b.representationId)).size !==
         r.sourceBindings.length ||
