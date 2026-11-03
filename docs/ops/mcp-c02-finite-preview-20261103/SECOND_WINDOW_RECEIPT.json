@@ -1,0 +1,44 @@
+{
+  "status": "CLOSED_NO_CONSUMER_PREVIEW",
+  "windowId": "679c81a463474879884992440106c9d1",
+  "scope": "One synthetic QA ChatGPT OAuth connection and P3 Create Preview; no Apply or Save",
+  "window": {
+    "startedAt": "2026-11-03T04:42:58.792Z",
+    "normalCloseDeadline": "2026-11-03T05:10:58.792Z",
+    "hardDeadline": "2026-11-03T05:12:58.792Z"
+  },
+  "host": {
+    "activeContainerId": "6f8a1397ee663c7a77db0ceedf368336976ae051722967d0cf4146429fb9c5a2",
+    "runtimeConfigSHA256": "d80d7f30102db97f4eb1622cb7305f43a887f5e3551ec475303a207a044c2a35",
+    "closedAt": "2026-11-03T05:09:32.614Z",
+    "closeStatus": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+    "restoredContainerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "restoredImage": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "healthy": true,
+    "finiteConfigAbsent": true,
+    "twoTimersDisarmed": true
+  },
+  "issuer": {
+    "activeSQLSHA256": "615e706bac38de44d3a1f5229bdbec7cda5b6b24c8d47e652de6ce6104ffc1ab",
+    "closedAt": "2026-11-03T05:09:14.139Z",
+    "readback": "ISSUER_DENY_ALL_VERIFIED"
+  },
+  "oauthConsole": {
+    "server": "OFF after save and reload",
+    "siteURL": "http://localhost:3000 after save and reload",
+    "dcr": "OFF during window"
+  },
+  "consumer": {
+    "normalConnection": "Primary now connected after one OTP and Consent",
+    "appRefresh": "unable to update app",
+    "toolResponse": "unable to load this response",
+    "guideOrTripRead": false,
+    "p3Preview": false,
+    "apply": false,
+    "coreWrite": false,
+    "grantCleanup": "MCP lane DELETE 204 and independent GET absent",
+    "sessionCleanup": "MCP lane own-control scope refresh revoked"
+  },
+  "openFailure": "ChatGPT app manifest refresh/tool load failed after successful OAuth connection; MCP lane investigating exact stage without another OAuth window",
+  "historicalUnknown": "Preserved; no replacement operation executed"
+}
