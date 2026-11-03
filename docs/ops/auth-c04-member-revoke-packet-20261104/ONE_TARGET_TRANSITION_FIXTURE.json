@@ -1,0 +1,78 @@
+{
+  "status": "CONTRACT_ONLY_NO_EXECUTION_AUTHORITY",
+  "purpose": "One existingAOwner removesBlinkedTripaccess; no Person/accountconnection/historymutation",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "actorAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "targetAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "targetPersonId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "observedCoreBefore": {
+    "accessRevision": 4,
+    "epoch": "4907c5b0-94a1-4fc0-8ec2-39f858a37144",
+    "revision": 4
+  },
+  "observedAt": "2026-11-03T22:16:34.097739+00:00",
+  "observedOwner": {
+    "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "participating": true,
+    "participationRevision": 0,
+    "personId": "b90c34ba-96d7-4b64-874a-b4f5525d64d8",
+    "role": "owner",
+    "status": "linked"
+  },
+  "observedMember": {
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "participating": true,
+    "participationRevision": 0,
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "role": "group_member",
+    "status": "linked"
+  },
+  "removedMarkerCount": 0,
+  "metadataIsNotNormalReaderSuccess": true,
+  "executionMustRecaptureNormalOwnerScopeAndCurrentCoreReference": true,
+  "commandCandidate": {
+    "contractVersion": 2,
+    "intentVersion": 2,
+    "operationId": "4ab7bbcc-9d5d-4786-9885-4cbecb919001",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "command": "REVOKE_LINKED_MEMBER_ACCESS",
+    "target": {
+      "kind": "TRIP_ACCESS",
+      "id": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+    },
+    "baseVector": [
+      {
+        "kind": "TRIP_ACCESS",
+        "id": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+        "revision": 4
+      }
+    ],
+    "admission": {
+      "mode": "MANUAL",
+      "sourceIntentId": null,
+      "policyVersion": null
+    },
+    "payload": {
+      "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+      "targetAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "coreEpoch": "4907c5b0-94a1-4fc0-8ec2-39f858a37144"
+    }
+  },
+  "operationIdFixtureOnlyNeverSubmitted": true,
+  "expectedAfter": {
+    "epoch": "SAME_AS_LOCKED_CURRENT_EPOCH",
+    "revision": "ACTUAL_PRODUCER_GREATER_THAN_BEFORE",
+    "accessRevision": "ACTUAL_PRODUCER_GREATER_THAN_BEFORE",
+    "noClientArithmeticOrAuthRevisionMapping": true,
+    "nativeRevokeArgument": "actualCoreAfter.accessRevision, neverAuthRevision/PersonParticipationRevision"
+  },
+  "preserve": [
+    "Personid/user_id/status/role/participation_active/participation_revision andhistory",
+    "Creatoridentity andallItem/Booking/Document/Ledger rows",
+    "OriginalClaim4028UNKNOWN andnewInviteClaimreceipts",
+    "BnormalAccount/Session andBownotherTrips"
+  ],
+  "newIntentRequiresFreshQualification": true,
+  "hostedOperationSubmitted": false
+}

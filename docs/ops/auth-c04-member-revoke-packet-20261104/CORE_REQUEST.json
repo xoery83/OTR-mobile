@@ -1,0 +1,32 @@
+{
+  "requestId": "AUTH-C04-MEMBER-REVOKE-CORE-PACKET-20261104-01",
+  "sourcePackage": "AUTH-C04",
+  "status": "CONTRACT_ONLY_REVIEWED_READY_FOR_CORE_IMPLEMENTATION",
+  "existingCandidates": [
+    "66497abcd49cec21e0311f6dc5c8dfdffebbede8",
+    "67e374fb8e039451608d023c592ca5ff51034d22"
+  ],
+  "firstActualGap": "No formalcommand/receipt+atomicPGproducer/accesslossdelivery; normalwritevalidators rejectcandidate",
+  "uniqueCapabilityRequested": "Root1canonical existingCorev2 memberrevoke branch, atomicreceipt/deny/Coreinvalidation and explicitreadaccessloss observation",
+  "requiredProducer": "Root1/Core",
+  "businessDRI": "Auth",
+  "resources": "Local/isolatedsourcecandidate only; protectedSQL/runtime/QAexecution separateexactGateRoot2",
+  "minimumDelivery": [
+    "Canonicalcommand/receipt branch+unchanged existinghashdomains",
+    "ServercurrentlinkedOwneronly; nonOwnertarget",
+    "Atomic denial+actualCoreepoch/revision/accessRevision+immutableReceipt",
+    "Join/revoke/legacyaccept serialization; noimplicitmarkererase/regrant",
+    "ExplicitB-scopedauthoritativeAccessLoss with actualCoreReference forNativeexistingrevoke",
+    "FocusedPGnegative/rollback/concurrency/ackloss andfixedreviewedinstall/rollbackpackage"
+  ],
+  "evidence": [
+    "REFERENCE_METADATA.json",
+    "ONE_TARGET_TRANSITION_FIXTURE.json",
+    "ACL_AND_RECOVERY_REQUIREMENTS.md"
+  ],
+  "boundary": "Not aninstall/mount/writeapproval; no secondReceiptstore/Repo/Sync",
+  "releaseCondition": "FixedreviewedformalCoreport/metadata\u2192separatelegalRoot2integration\u2192AuthnormalOwner/BRevokeReadNegative+Nativecachecoldproof",
+  "referenceMainBaseline": "5936318992c4d903db1985656f1ba4d8db134ae8",
+  "referenceMainIsFreshInstallQualification": false,
+  "readCallerSource": "5bb59e6a8df685fcfa1c8139cbd72ae239384b3f"
+}

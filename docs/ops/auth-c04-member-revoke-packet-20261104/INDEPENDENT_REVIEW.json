@@ -1,0 +1,21 @@
+{
+  "status": "SCOPED_NO_BLOCKER_MEMBER_REVOKE_CONSUMPTION_PACKET",
+  "reviewer": "auth_phase1_review",
+  "checks": [
+    "CurrentlinkedOwnerpolicyfrom10e35; old66497creatorintersectionnotfinal",
+    "Actualmetadataepoch4907/rev4/access4, candidatevectorusesaccessRevision; no fabricatedafterversion",
+    "RetainedPerson/link/role/participation/history; no accountorCreatorreset",
+    "AtomicReceipt/denial/invalidation, ACKlostoriginalrecovery andjoin/revoke/legacyinviteordering explicitlyCoregaps",
+    "NativeownBcontext andactualCoreReference; ambiguous404/503notrevocationproof",
+    "No productionvalidator/mount/install/Hostexecutiongrant claimed"
+  ],
+  "validation": "67eCandidateSchemaAcceptsFixture; productionCoreCommandSchemaRejects; fetchforbidden/noexternalIO",
+  "nonBlockingBaselineCorrection": "reference593631 main markedhistorical, freshqualificationrequired",
+  "testsRerun": false,
+  "files": {
+    "docs/ops/auth-c04-member-revoke-packet-20261104/ACL_AND_RECOVERY_REQUIREMENTS.md": "ef66dd07c77aa7b66d164481cbdca2cdf0acb619547ea85252fa91edcda2e62d",
+    "docs/ops/auth-c04-member-revoke-packet-20261104/CORE_REQUEST.json": "66d4cb7f04e0cddcc31937afdc92ab93f87b6e3dd3dd27e80d6713d893ab1103",
+    "docs/ops/auth-c04-member-revoke-packet-20261104/ONE_TARGET_TRANSITION_FIXTURE.json": "63840fe75cddac3e39c66dcc2ad7469084a855c7948f4a05159632100d0950d5",
+    "docs/ops/auth-c04-member-revoke-packet-20261104/REFERENCE_METADATA.json": "7d2430c06aeef5c6e39885e1c4cffb286533fbf7d5b46bb061a454c94e048fa6"
+  }
+}

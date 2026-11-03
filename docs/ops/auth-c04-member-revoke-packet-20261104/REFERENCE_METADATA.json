@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "result": {
+        "coreReference": {
+          "accessRevision": 4,
+          "epoch": "4907c5b0-94a1-4fc0-8ec2-39f858a37144",
+          "revision": 4
+        },
+        "member": {
+          "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+          "participating": true,
+          "participationRevision": 0,
+          "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+          "role": "group_member",
+          "status": "linked"
+        },
+        "observedAt": "2026-11-03T22:16:34.097739+00:00",
+        "owner": {
+          "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+          "participating": true,
+          "participationRevision": 0,
+          "personId": "b90c34ba-96d7-4b64-874a-b4f5525d64d8",
+          "role": "owner",
+          "status": "linked"
+        },
+        "removedMarkerCount": 0
+      }
+    }
+  ]
+}
