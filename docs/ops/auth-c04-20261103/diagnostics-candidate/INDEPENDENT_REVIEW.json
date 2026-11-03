@@ -1,0 +1,44 @@
+{
+  "status": "NO_BLOCKER_DIAGNOSTICS_CANDIDATE",
+  "sourceHashes": {
+    "backend/src/tripMemberClaimHttp.ts": "bc296f67a2121c0ab31df2ccf09aaaff5c6f57a6851508071df4e8e7b5bf0129",
+    "backend/src/tripMemberClaimHttp.test.ts": "e4bfb673a4bea280ffdd3cfebcfc0a957a17e0a6531647309e0dccd23e2789d8",
+    "backend/src/tripMemberClaimPg.ts": "0f53ad9b20417cf2054dfe6172ac9021899c7f151cc0e37bde2afc4d4a61dc47",
+    "backend/src/tripMemberClaimPg.test.ts": "88f0bfe4da289f8430d74ca394b9da96a82837205b2750634b500bf74b64fb58"
+  },
+  "independentValidation": {
+    "newLoggerFailureTestsPassed": 3,
+    "stableTestsSkipped": 23,
+    "priorDiagnosticTestsPassed": 5,
+    "realPgOrHostRun": false
+  },
+  "findingsClosed": [
+    "HTTP diagnostic projection/log failure cannot replace original 503 response.",
+    "PG error.code getter or diagnostic log failure cannot replace original COMMIT UNKNOWN error."
+  ],
+  "preservedSemantics": [
+    "No permission/TTL/retry changes.",
+    "Rollback/retire and UNKNOWN rules unchanged; no new transaction command.",
+    "Only finite stage/method and five-character SQLSTATE or null logged; no raw errors/SQL/IDs/body."
+  ],
+  "rootCloseMetadata": {
+    "exactFixedGitBlobMatch": true,
+    "sourceCommit": "f1c4410a",
+    "sha256": "17f7bd1d329eec150968fa202c67c881763a00f4f649f85c09087280ee8e8db2",
+    "gateAndCandidateMatch": true,
+    "restoredDefault": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "healthySelectorAbsent": true,
+    "qualifiedBy": "Existing Root receipt of its independent Host readback; no new Auth Host access",
+    "businessOutcome": "FAILED; original ISSUE UNKNOWN, Claim not run, no NoCommit inference"
+  },
+  "remainingDocumentFinding": {
+    "path": "ACTUAL_OUTCOME.json:rootWindow.actualEarlyClose",
+    "summary": "Still says exact close receipt pending although rootCloseEvidence now supplies the original receipt. Mark historical or update to received."
+  },
+  "limits": [
+    "Diagnostic source candidate only; not yet proof it was deployed or produced actual diagnostics.",
+    "Original 503 root cause remains unproven; diagnostics are not commit proof or a demonstrated repair.",
+    "Root receipt has no exact actual close timestamp; no additional independent deadline timing qualification asserted.",
+    "No network/Host/SQL/Secrets/device access, no new authorization or business retry."
+  ]
+}

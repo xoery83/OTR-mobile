@@ -1,0 +1,47 @@
+{
+  "status": "READY_FOR_ROOT_DEFAULT_CLOSED_DIAGNOSTIC_INTEGRATION",
+  "triggerEvidence": "../hosted-ab-first-attempt/ACTUAL_OUTCOME.json",
+  "actualFailure": "Real original ISSUE503 + original recovery503; precise backend layer/code unavailable in original client/Host log",
+  "sourceFiles": {
+    "backend/src/tripMemberClaimHttp.ts": "bc296f67a2121c0ab31df2ccf09aaaff5c6f57a6851508071df4e8e7b5bf0129",
+    "backend/src/tripMemberClaimPg.ts": "0f53ad9b20417cf2054dfe6172ac9021899c7f151cc0e37bde2afc4d4a61dc47",
+    "backend/src/tripMemberClaimHttp.test.ts": "e4bfb673a4bea280ffdd3cfebcfc0a957a17e0a6531647309e0dccd23e2789d8",
+    "backend/src/tripMemberClaimPg.test.ts": "88f0bfe4da289f8430d74ca394b9da96a82837205b2750634b500bf74b64fb58"
+  },
+  "behavior": "HTTP PORT_SELECTION vs OWNING_AUTHORITY fixed code; PG lease/setup/scope/RPC/work/commit stage and internal last method/5charSQLSTATE only. No raw message/SQL/payload/IDs. Logger/getter exceptions cannot mask original response/error. No authorization/TTL/retry/transaction change.",
+  "validation": {
+    "focused": "2 files26PASS",
+    "independent": "new5+3PASS; stable tests skipped by reviewer",
+    "typecheck": "PASS",
+    "scopedEslint": "PASS",
+    "review": "NO_BLOCKER_DIAGNOSTICS_CANDIDATE",
+    "reviewSHA256": "f3ef59e5ff45b5ef4c837837e90dbcb2c76ca0306a15e396087ceed422ec71fb"
+  },
+  "documentFindingResolved": "ACTUAL_OUTCOME.rootWindow.actualEarlyClose now references received fixed Root close artifact; original review finding retained as historical review input",
+  "handoff": {
+    "writer": "Root for shared integration/deployment; Auth owns this exact code candidate",
+    "scope": "Only the four listed files, existing main source compatible; no SQL/RLS/GRANT/role/config/timer change",
+    "resource": "Do not interrupt MCP/Import current window; integrate default-closed at normal serial opportunity",
+    "rollback": "Revert these source changes using previous healthy software; do not undo business data/receipts",
+    "nextRealVerification": "After Root deploys default-closed source, qualify only exact permitted diagnostic/recovery access. No old-window reuse, OTP resend, original UNKNOWN replay or replacement operation."
+  },
+  "notProven": [
+    "Actual503rootcause",
+    "Rootcausefix",
+    "Hosted diagnostic logs",
+    "New A/B InviteClaim",
+    "MemberRevoke",
+    "NativeColdRestore"
+  ],
+  "newBusinessActivation": false,
+  "sourcePatch": {
+    "path": "/private/tmp/otr-auth-c04-diagnostics-source-20261103.patch",
+    "sha256": "10b7e3a95a71a2faf69e2f5029cbab7fe334397675fcda8ae8121315309266ca",
+    "allowlist": [
+      "backend/src/tripMemberClaimHttp.ts",
+      "backend/src/tripMemberClaimPg.ts",
+      "backend/src/tripMemberClaimHttp.test.ts",
+      "backend/src/tripMemberClaimPg.test.ts"
+    ]
+  }
+}

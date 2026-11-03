@@ -103,3 +103,107 @@ it("retires on unknown COMMIT without replay or ROLLBACK on the uncertain lease"
   expect(f.statements()).not.toContain("ROLLBACK");
   expect(f.lease.retire).toHaveBeenCalledTimes(1);
 });
+
+it.each(["LEASE", "RPC", "COMMIT"])(
+  "records only safe %s diagnostics while retaining transaction failure semantics",
+  async (stage) => {
+    const f = fixture(),
+      failure = Object.assign(Error("UNIT_CREDENTIAL_DO_NOT_LOG"), {
+        code: "42501",
+        detail: "UNIT_PAYLOAD_DO_NOT_LOG",
+      });
+    const original = vi.mocked(f.lease.query).getMockImplementation()!;
+    vi.mocked(f.lease.query).mockImplementation(async (sql, args) => {
+      if (
+        (stage === "RPC" && args?.[0] === "lock") ||
+        (stage === "COMMIT" && sql === "COMMIT")
+      )
+        throw failure;
+      return original(sql, args);
+    });
+    const port =
+      stage === "LEASE"
+        ? createTripMemberClaimPgPort(
+            {
+              withLease: async () => {
+                throw failure;
+              },
+            },
+            { inviteExpiresAt: "2027-01-01T00:00:00Z" },
+          )
+        : f.port;
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      await expect(port.atomic(f.scope, async () => true)).rejects.toBe(failure);
+      expect(log).toHaveBeenCalledOnce();
+      expect(JSON.parse(String(log.mock.calls[0][0]))).toEqual({
+        event: "member_claim_pg_failed",
+        stage,
+        lastRpcMethod: stage === "LEASE" ? null : "lock",
+        sqlState: "42501",
+      });
+      expect(JSON.stringify(log.mock.calls)).not.toMatch(
+        new RegExp(
+          `UNIT_CREDENTIAL|UNIT_PAYLOAD|${f.scope.actorAccountId}|${f.scope.tripId}`,
+        ),
+      );
+      if (stage === "RPC") expect(f.statements().at(-1)).toBe("ROLLBACK");
+      if (stage === "COMMIT") {
+        expect(f.statements()).not.toContain("ROLLBACK");
+        expect(f.lease.retire).toHaveBeenCalledOnce();
+      }
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
+
+it("does not emit arbitrary error codes as SQLSTATE", async () => {
+  const f = fixture(),
+    log = vi.spyOn(console, "info").mockImplementation(() => {});
+  vi.mocked(f.lease.query).mockRejectedValueOnce(
+    Object.assign(Error("PRIVATE_ERROR"), { code: "UNIT_EMAIL_OR_SECRET_DO_NOT_LOG" }),
+  );
+  try {
+    await expect(f.port.atomic(f.scope, async () => true)).rejects.toThrow(
+      "PRIVATE_ERROR",
+    );
+    expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({
+      stage: "BEGIN",
+      sqlState: null,
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/UNIT_EMAIL|PRIVATE_ERROR/);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it.each(["logger", "code-getter"])(
+  "preserves original COMMIT UNKNOWN when %s diagnostics fail",
+  async (mode) => {
+    const f = fixture(),
+      original = Error("ORIGINAL_COMMIT_RESPONSE_LOST");
+    if (mode === "code-getter")
+      Object.defineProperty(original, "code", {
+        get() {
+          throw Error("GETTER_FAILED");
+        },
+      });
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (mode === "logger") throw Error("LOGGER_FAILED");
+    });
+    const query = vi.mocked(f.lease.query).getMockImplementation()!;
+    vi.mocked(f.lease.query).mockImplementation(async (sql, args) => {
+      if (sql === "COMMIT") throw original;
+      return query(sql, args);
+    });
+    try {
+      await expect(f.port.atomic(f.scope, async () => true)).rejects.toBe(original);
+      expect(f.statements().filter((s) => s === "COMMIT")).toHaveLength(1);
+      expect(f.statements()).not.toContain("ROLLBACK");
+      expect(f.lease.retire).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
+  },
+);

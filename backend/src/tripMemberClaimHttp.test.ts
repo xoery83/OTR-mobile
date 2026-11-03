@@ -176,3 +176,56 @@ it("returns unavailable when the owning transaction fails without replaying it",
   expect(await response.json()).toEqual({ status: "UNAVAILABLE" });
   expect(f.port.atomic).toHaveBeenCalledTimes(1);
 });
+
+it("distinguishes a closed port from an unavailable owning authority without logging request or raw error", async () => {
+  const f = fixture(),
+    log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const closed = await tripMemberClaimBoundary(f.request(), f.user);
+    expect(closed.status).toBe(503);
+    expect(await closed.json()).toEqual({ error: { code: "MEMBER_CLAIM_CLOSED" } });
+    vi.mocked(f.port.atomic).mockRejectedValueOnce(
+      Object.assign(Error("UNIT_TOKEN_DO_NOT_LOG"), { code: "42501" }),
+    );
+    const unavailable = await tripMemberClaimBoundary(f.request(), f.user, f.port);
+    expect(unavailable.status).toBe(503);
+    expect(await unavailable.json()).toEqual({ status: "UNAVAILABLE" });
+    expect(log.mock.calls.map(([v]) => JSON.parse(v))).toEqual([
+      {
+        event: "member_claim_unavailable",
+        stage: "PORT_SELECTION",
+        code: "MEMBER_CLAIM_CLOSED",
+      },
+      {
+        event: "member_claim_unavailable",
+        stage: "OWNING_AUTHORITY",
+        code: "MEMBER_CLAIM_UNAVAILABLE",
+      },
+    ]);
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(
+      new RegExp(
+        `UNIT_TOKEN_DO_NOT_LOG|${f.user.id}|${f.command.operationId}|${f.command.tripId}`,
+      ),
+    );
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it("keeps original closed/unavailable responses when diagnostic logging throws", async () => {
+  const f = fixture(),
+    log = vi.spyOn(console, "info").mockImplementation(() => {
+      throw Error("LOGGER_FAILED");
+    });
+  try {
+    const closed = await tripMemberClaimBoundary(f.request(), f.user);
+    expect(closed.status).toBe(503);
+    expect(await closed.json()).toEqual({ error: { code: "MEMBER_CLAIM_CLOSED" } });
+    vi.mocked(f.port.atomic).mockRejectedValueOnce(Error("ORIGINAL_AUTHORITY_FAILURE"));
+    const unavailable = await tripMemberClaimBoundary(f.request(), f.user, f.port);
+    expect(unavailable.status).toBe(503);
+    expect(await unavailable.json()).toEqual({ status: "UNAVAILABLE" });
+  } finally {
+    log.mockRestore();
+  }
+});

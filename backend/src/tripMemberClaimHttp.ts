@@ -17,6 +17,20 @@ const reply = (status: number, body: unknown) =>
     headers: { "Cache-Control": "private, no-store", Vary: "Authorization" },
   });
 const failure = (status: number, code: string) => reply(status, { error: { code } });
+function reportUnavailable(stage: "PORT_SELECTION" | "OWNING_AUTHORITY") {
+  try {
+    console.info(
+      JSON.stringify({
+        event: "member_claim_unavailable",
+        stage,
+        code:
+          stage === "PORT_SELECTION" ? "MEMBER_CLAIM_CLOSED" : "MEMBER_CLAIM_UNAVAILABLE",
+      }),
+    );
+  } catch {
+    /* Diagnostics must not replace the original response. */
+  }
+}
 
 // Unmounted candidate. The host must authenticate the bearer using its existing gateway.
 export async function tripMemberClaimBoundary(
@@ -32,7 +46,10 @@ export async function tripMemberClaimBoundary(
   const trip = coreUuid.safeParse(path?.[1]);
   if (!path || !trip.success || url.search) return failure(400, "MEMBER_CLAIM_INVALID");
   if (request.method !== "POST") return failure(405, "METHOD_NOT_ALLOWED");
-  if (!port) return failure(503, "MEMBER_CLAIM_CLOSED");
+  if (!port) {
+    reportUnavailable("PORT_SELECTION");
+    return failure(503, "MEMBER_CLAIM_CLOSED");
+  }
   const boundary = createRequestBoundary(15000, request.signal);
   let raw: unknown;
   try {
@@ -54,6 +71,7 @@ export async function tripMemberClaimBoundary(
   const result = path[2]
     ? await recoverMemberClaimReceipt(command.data, user.id, port)
     : await executeMemberClaim(command.data, user.id, port);
+  if (result.status === "UNAVAILABLE") reportUnavailable("OWNING_AUTHORITY");
   const status =
     result.status === "INVALID"
       ? 400
