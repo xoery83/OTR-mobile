@@ -338,3 +338,34 @@ it.each([
     expect(closed.status).toBe(503);
   },
 );
+
+it("forwards Enrichment availability through startup after normal Auth", async () => {
+  const { startDevBackend } = await import("./serverStartup");
+  const available = vi.fn(async () => true);
+  const enrich = vi.fn();
+  const url = `${await address(startDevBackend({
+    flightEnrichmentEnabled: true,
+    flightEnrichmentService: { enrich },
+    flightEnrichmentAvailable: available,
+  }))}/v1/trips/${input.tripId}/flight-enrichment/capabilities`;
+  const get = (token: string) => fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(await (await get("valid")).json()).toMatchObject({ enabled: true });
+  expect(available).toHaveBeenCalledTimes(1);
+  available.mockResolvedValue(false);
+  expect(await (await get("valid")).json()).toMatchObject({ enabled: false });
+  expect((await get("invalid")).status).toBe(401);
+  expect(available).toHaveBeenCalledTimes(2);
+  expect(enrich).not.toHaveBeenCalled();
+});
+it("bounds unauthenticated Enrichment bodies before buffering and Auth", async () => {
+  const { startDevBackend } = await import("./serverStartup");
+  const server = startDevBackend();
+  const response = await fetch(
+    `${await address(server)}/v1/trips/${input.tripId}/flight-enrichment`,
+    { method: "POST", body: "x".repeat(8193) },
+  );
+  expect(response.status).toBe(413);
+  expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+});

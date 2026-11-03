@@ -1,0 +1,10 @@
+{
+  "status": "LOCAL_PASS_REVIEW_PENDING",
+  "base": "0a75b4ba",
+  "source": "90b4b1ce",
+  "scope": "Startup option forwarding, per-account availability callback and 8192-byte pre-Auth ingress limit only",
+  "red": "Availability ignored; startup capability false despite supplied service; oversized unauthenticated POST401 instead of413. Initial sandbox socket denial excluded using authorized loopback repeat.",
+  "green": "78 tests across startup/app/authCompatibility/hostBoundary; scoped ESLint and capture bundle build PASS",
+  "hostProviderSqlChanges": false,
+  "next": "Review seam; prepare retained metered Host leaves separately, default closed"
+}

@@ -676,6 +676,7 @@ export type BackendDependencies = {
   >;
   flightEnrichmentService?: ReturnType<typeof createFlightEnrichmentService>;
   flightEnrichmentEnabled?: boolean;
+  flightEnrichmentAvailable?: Parameters<typeof createFlightEnrichmentBoundary>[0]["available"];
   captureMaterialCustody?: CaptureMaterialCustody;
   accountProfileBootstrapPort?: AccountProfileBootstrapPort;
   tripCreatePort?: TripCreatePort;
@@ -2460,6 +2461,7 @@ export function createDevBackendHandler({
   universalRuntimeForRequest,
   flightEnrichmentService,
   flightEnrichmentEnabled = false,
+  flightEnrichmentAvailable,
   universalOriginalSourcePort,
   captureMaterialCustody,
   accountProfileBootstrapPort,
@@ -2582,6 +2584,7 @@ export function createDevBackendHandler({
         response = (await createFlightEnrichmentBoundary({
           service: flightEnrichmentService,
           enabled: flightEnrichmentEnabled,
+          available: flightEnrichmentAvailable,
           resolve: async (req, tripId) => {
             const actor = await authorizeRead(req, gateway, tripId);
             if (!isNormalAccount(actor))

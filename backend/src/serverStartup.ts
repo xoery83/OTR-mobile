@@ -64,6 +64,9 @@ export function startDevBackend(
     | "sourcePdfV4PreparationForRequest"
     | "sourcePdfV2ForRequest"
     | "universalOriginalSourcePort"
+    | "flightEnrichmentService"
+    | "flightEnrichmentEnabled"
+    | "flightEnrichmentAvailable"
   > & {
     publicationCatalogConnection?: PublicationCatalogConnection & {
       close(): Promise<void>;
@@ -132,6 +135,9 @@ export function startDevBackend(
     sourcePdfV4PreparationForRequest: startOptions.sourcePdfV4PreparationForRequest,
     sourcePdfV2ForRequest: startOptions.sourcePdfV2ForRequest,
     universalOriginalSourcePort: startOptions.universalOriginalSourcePort,
+    flightEnrichmentService: startOptions.flightEnrichmentService,
+    flightEnrichmentEnabled: startOptions.flightEnrichmentEnabled,
+    flightEnrichmentAvailable: startOptions.flightEnrichmentAvailable,
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
     },
@@ -161,6 +167,7 @@ export function startDevBackend(
         /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)(?:\?|$)/.test(
           incoming.url ?? "",
         );
+      const flightEnrichmentRoute = /^\/v1\/trips\/[^/]+\/flight-enrichment(?:\/capabilities)?(?:\?|$)/.test(incoming.url ?? "");
       const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
         incoming.url ?? "",
       );
@@ -171,6 +178,13 @@ export function startDevBackend(
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (flightEnrichmentRoute && byteCount > 8192) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: "REQUEST_TOO_LARGE" }));
+          return;
+        }
         if (mcpLimit !== null && byteCount > mcpLimit) {
           outgoing.statusCode = 413;outgoing.setHeader("Content-Type", "application/json");outgoing.setHeader("Cache-Control", "private, no-store");
           outgoing.end(JSON.stringify({ error: { code: "MCP_REQUEST_SIZE_LIMIT" } }));return;

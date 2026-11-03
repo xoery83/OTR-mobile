@@ -63,3 +63,26 @@ it("public flight reuse stays MISS and rejects writes independently of request i
     closedPublicFlightCache.put({} as any, new AbortController().signal),
   ).rejects.toThrow("PUBLIC_FLIGHT_CACHE_LICENSE_CLOSED");
 });
+it("per-account closed or unavailable admission hides the capability and blocks POST before Provider work", async () => {
+  const enrich = vi.fn();
+  for (const available of [
+    async () => false,
+    async () => {
+      throw Error("SCOPE_CLOSED");
+    },
+  ]) {
+    const handle = createFlightEnrichmentBoundary({
+      resolve: async () => context(),
+      enabled: true,
+      service: { enrich } as any,
+      available,
+    });
+    expect(
+      (await (await handle(new Request(path + "/capabilities")))!.json()).enabled,
+    ).toBe(false);
+    expect(
+      (await handle(new Request(path, { method: "POST", body: "{}" })))!.status,
+    ).toBe(503);
+  }
+  expect(enrich).not.toHaveBeenCalled();
+});

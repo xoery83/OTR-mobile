@@ -8,6 +8,7 @@ export function createFlightEnrichmentBoundary(options: {
   resolve(request: Request, tripId: string): Promise<TrustedContext>;
   service?: ReturnType<typeof createFlightEnrichmentService>;
   enabled?: boolean;
+  available?(context: TrustedContext): Promise<boolean>;
 }) {
   return async (request: Request): Promise<Response | null> => {
     const match = /^\/v1\/trips\/([^/]+)\/flight-enrichment(\/capabilities)?$/.exec(
@@ -24,7 +25,14 @@ export function createFlightEnrichmentBoundary(options: {
     } catch {
       return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
     }
-    const enabled = options.enabled === true && !!options.service;
+    let enabled = options.enabled === true && !!options.service;
+    if (enabled && options.available) {
+      try {
+        enabled = await options.available(context);
+      } catch {
+        enabled = false;
+      }
+    }
     if (match[2])
       return request.method === "GET"
         ? Response.json({ version: "otr-flight-enrichment/1", enabled })
