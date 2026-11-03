@@ -35,10 +35,9 @@
     "finalApprovedGateSHA256": null
   },
   "missingBeforeOwnerRequest": [
-    "Non-activating Host controller prerequisites and final exact Gate review",
-    "Original fresh sanitized full Host identity/CAS receipt and fixed runtime/selector identity",
-    "Qualified normal A/B session/readback/custody operator interfaces",
-    "Final sealed exact Gate scope and independent review"
+    "Final bounded config/mounted-file path hashes and immutable execution sealing specification",
+    "Qualified normal A/B session and independent readReceipt/preflight/custody operator interfaces",
+    "Final exact Gate review; repeat CAS only after approval before actual execution"
   ],
   "executionPlan": false,
   "businessCalls": 0,
@@ -70,5 +69,18 @@
     "scope": "Document/call-contract and source/hash checks only, no repeated tests or external IO",
     "repairedFinding": "Before-approval sealed execution plan wording changed to sealing specification; actual plan sealed after approval with permitted substitutions",
     "remaining": "Full original Host readback, operator qualification and final Gate review/approval; cannot execute from draft"
+  },
+  "qualifiedPreparationReadback": {
+    "sourceCommit": "0e0cf906",
+    "path": "ROOT_CONTROLLER_HOST_STAGE_READBACK.json",
+    "sha256": "3e2d61d2affcf1891f8f78aad7bb42d264c32deae517c169e935c471e668cfed",
+    "observedAt": "2026-11-03T03:02:59Z",
+    "notOpenWindowCAS": true
+  },
+  "rootReportedMainObservation": {
+    "sha": "5648818e8eabc7d1930cbf74ff8f019054e4dbdb",
+    "source": "Root prior git ls-remote observation",
+    "liveMainOrImageProvenance": false,
+    "mustRecheckBeforeExecution": true
   }
 }

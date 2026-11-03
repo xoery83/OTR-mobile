@@ -1,0 +1,29 @@
+{
+  "status": "DEFAULT_CLOSED_CONTROLLER_STAGED_NOT_ACTIVATED",
+  "observedAt": "2026-11-03T03:02:59Z",
+  "service": "otr-dev-backend",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "containerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+  "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "health": "healthy",
+  "configSHA256": "b00829fc8f260bac9ab6f31b8e78899d287cd1685e1dfd8f7db1c9fead40480b",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+  "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "authClaimQaSelectorAbsent": true,
+  "stagedDirectory": "/opt/otr/dev-backend/build/auth-c04-finite-controller-66b99173-20261103",
+  "stagedRootMode": "0700",
+  "stagedFiles": {
+    "runtime.py": "42fa15a12ca12d3d97b1ada331cc997f164e8be25136932469290e803e2f399a",
+    "QA_CASE_TEMPLATE.json": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "auth-phase2-runtime.py": "014844d487ba4fb32d9abc42c22d533195831be3114d47a2b253d465d44b5444"
+  },
+  "stagedFileMode": "0600",
+  "systemdRunExists": true,
+  "commonLockParentExists": true,
+  "planCreated": false,
+  "timerArmed": false,
+  "businessAuthorityEnabled": false,
+  "hostOrPgBusinessWrites": 0,
+  "freshCasRequiredBeforeExecution": true
+}
