@@ -1,0 +1,35 @@
+{
+  "status": "CLOSED_VERIFIED_ISSUE_CLAIM_SERVER_VERIFIED_MEMBER_READ_INCOMPLETE",
+  "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+  "windowId": "1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+  "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12",
+  "T": "2026-11-03T20:21:35Z",
+  "inviteExpiresAt": "2026-11-03T20:31:35Z",
+  "normalCloseAt": "2026-11-03T20:49:35Z",
+  "hardDeadline": "2026-11-03T20:51:35Z",
+  "runtimeActiveAt": "2026-11-03T20:28:19.208572+00:00",
+  "closedVerifiedAt": "2026-11-03T20:31:55.889334+00:00",
+  "issue": "ISSUED_INDEPENDENTLY_VERIFIED",
+  "claim": "LINKED_INDEPENDENTLY_VERIFIED",
+  "personAccountBinding": "B_LINKED_ONE_PERSON_VERIFIED",
+  "memberRead": "CLIENT_REQUEST_TIMEOUT_AFTER_CLAIM; NOT_ACCEPTED",
+  "privateIsolation": "NOT_COMPLETED_NOT_PASS",
+  "cleanup": {
+    "A": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "B": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  },
+  "oldClaim": "UNKNOWN_PRESERVED",
+  "oldInvite": "expiry18:15:28Z/used0 unchanged",
+  "businessDataUndone": false,
+  "clockExtended": false,
+  "windowConsumed": true,
+  "retryAuthorized": false,
+  "restoredDefault": {
+    "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+    "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+    "configSHA256": "12ca750ded949aa58bf74e664b0e98c6b0ae15db8a3c0d03e929f645899ae4ba"
+  },
+  "closeDisposition": "First wrapper returnedunconfirmed; read-only reconciliation proved defaulthealthy+timersinactive; independentfullfingerprints+HTTP+lock thenPASS; no secondmutation",
+  "routeDiagnostics": "SAFE_ROUTE_DIAGNOSTICS.json; templatecore/:resource has200 durations17112/21871/22313ms; exactactor/collection cannot be inferred from route template alone",
+  "scope": "No MemberRevoke/Native/Provider, no wholeAuthCLOUD_E2E_PASS"
+}

@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-11-03T20:37:40.495798+00:00",
+  "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+  "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+  "health": "healthy",
+  "runtimeConfigVersion": 3,
+  "corePgConfigPresent": true,
+  "runtimeFileSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+  "authSelectorAbsent": true,
+  "sustainedDevByDeployedSource": true
+}

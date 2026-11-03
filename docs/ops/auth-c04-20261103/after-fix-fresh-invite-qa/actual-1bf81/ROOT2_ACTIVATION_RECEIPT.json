@@ -1,0 +1,53 @@
+{
+  "status": "ACTIVE_INDEPENDENTLY_QUALIFIED",
+  "observedAt": "2026-11-03T20:28:19.208572+00:00",
+  "rootActive": {
+    "status": "AUTH_C04_FINITE_RUNTIME_HEALTHY",
+    "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+    "windowId": "1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+    "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12"
+  },
+  "results": {
+    "closeProbe": {
+      "status": "AUTH_C04_RUNTIME_CLOSED_VERIFIED",
+      "runtimeClosed": true,
+      "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+      "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+      "selectorAbsent": true,
+      "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+      "businessOutcome": "NOT_INFERRED"
+    },
+    "arm": {
+      "status": "INDEPENDENT_RUNTIME_CLOSE_ARMED",
+      "unit": "otr-auth-c04-close-1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+      "closesAt": "2026-11-03T20:51:35Z"
+    },
+    "start": {
+      "status": "AUTH_C04_FINITE_RUNTIME_HEALTHY",
+      "closesAt": "2026-11-03T20:51:35Z",
+      "candidateId": "3354e2bd2b03dbb1e473a183e43f977b8a7b34ba5d7c62f261cf194368c0f38b",
+      "businessOutcome": "NOT_INFERRED"
+    },
+    "qualify": {
+      "status": "AUTH_C04_FRESH_INVITATION_WINDOW_QUALIFIED",
+      "qaCase": {
+        "claimOperationId": "ba97129d-0d7d-4102-8e56-659d4867e67b",
+        "claimantAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+        "closesAt": "2026-11-03T20:51:35Z",
+        "inviteExpiresAt": "2026-11-03T20:31:35Z",
+        "issueOperationId": "0b8927c2-6665-41ac-ad49-59586acbb9aa",
+        "opensAt": "2026-11-03T20:21:35Z",
+        "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+        "projectRef": "tuqigdxrvrerfewsxqgm",
+        "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+      },
+      "executionMode": "FRESH_INVITATION",
+      "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+      "containerId": "3354e2bd2b03dbb1e473a183e43f977b8a7b34ba5d7c62f261cf194368c0f38b",
+      "configSHA256": "79681e9af6ec504fd9c474099f09fcca16eb4cdeaca66789b8be05db9bb0c688",
+      "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12",
+      "businessMutationAuthorized": true
+    }
+  }
+}

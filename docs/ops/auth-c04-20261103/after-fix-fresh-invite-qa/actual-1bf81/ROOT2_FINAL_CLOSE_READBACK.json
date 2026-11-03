@@ -1,0 +1,41 @@
+{
+  "status": "CLOSED_INDEPENDENTLY_VERIFIED_TIMERS_DISARMED",
+  "observedAt": "2026-11-03T20:31:55.889334+00:00",
+  "windowId": "1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+  "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12",
+  "close": {
+    "status": "PRIOR_CLOSE_RECONCILED_DEFAULT_RESTORED"
+  },
+  "independentVerification": {
+    "status": "AUTH_C04_RUNTIME_CLOSED_VERIFIED",
+    "runtimeClosed": true,
+    "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+    "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+    "selectorAbsent": true,
+    "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+    "businessOutcome": "NOT_INFERRED"
+  },
+  "configSHA256": "12ca750ded949aa58bf74e664b0e98c6b0ae15db8a3c0d03e929f645899ae4ba",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "configFilesVerified": 18,
+  "mountedFilesVerified": 5,
+  "timerStates": {
+    "otr-auth-c04-close-1bf81c2c-8ccd-43ae-bee1-6d9a80b07564.timer": "inactive",
+    "otr-auth-c04-close-1bf81c2c-8ccd-43ae-bee1-6d9a80b07564.service": "inactive",
+    "otr-auth-c04-fresh-invitation-close-1bf81c2c-8ccd-43ae-bee1-6d9a80b07564.timer": "inactive",
+    "otr-auth-c04-fresh-invitation-close-1bf81c2c-8ccd-43ae-bee1-6d9a80b07564.service": "inactive"
+  },
+  "lockReleased": true,
+  "http": [
+    {
+      "route": "/health",
+      "status": 200
+    },
+    {
+      "route": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    }
+  ],
+  "businessDataUndone": false
+}

@@ -1,0 +1,131 @@
+{
+  "status": "STAGED_BINDING_ACKED_NOT_BUSINESS_E2E",
+  "root2PgObservedAt": "2026-11-03T20:17:47.817611+00:00",
+  "root2PgMetadata": {
+    "activeClaimQueries": 0,
+    "constraint": "CHECK ((((claim_transaction_id IS NULL) AND (claim_backend_pid IS NULL) AND (claim_operation_id IS NULL)) OR ((claim_transaction_id IS NOT NULL) AND (claim_backend_pid IS NOT NULL) AND (claim_backend_pid > 0) AND (claim_operation_id IS NOT NULL) AND (status = 'CLAIMED'::text))))",
+    "database": "postgres",
+    "defaultACL": [
+      {
+        "acl": "{postgres=X/postgres}",
+        "namespace": "public",
+        "role": "postgres",
+        "type": "f"
+      }
+    ],
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "bodyMD5": "731aa1c777f14b422fc9e9dd2f72af4f",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "definitionSHA256": "5e7decd9c757920210013bf7de8004f7ef13945414f1580a18c6dfefea3f921d",
+        "owner": "postgres",
+        "securityDefiner": false,
+        "signature": "trip_core_finite_read_state_guard()"
+      },
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+        "bodyMD5": "c76f2a642deb21ca3bf86e056b2f9b32",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "definitionSHA256": "2e43b5f5a88424a3b6f1dbd48f4025d68caee5b7497dd6e6dfdf9fba0ac7ec55",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "signature": "trip_member_claim_transaction(text,jsonb)"
+      },
+      {
+        "acl": "{postgres=X/postgres}",
+        "bodyMD5": "d1977767b0dc389ef5329e890491b5db",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "definitionSHA256": "e2b8d26256bdb6bd5a74918a55f43d7d3436a172ed7fcc11076f19e16af3f8fd",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "signature": "trip_member_claim_read_state_allowed(uuid)"
+      }
+    ],
+    "proofColumns": [
+      {
+        "acl": null,
+        "name": "claim_backend_pid",
+        "notNull": false,
+        "type": "integer"
+      },
+      {
+        "acl": null,
+        "name": "claim_operation_id",
+        "notNull": false,
+        "type": "uuid"
+      },
+      {
+        "acl": null,
+        "name": "claim_transaction_id",
+        "notNull": false,
+        "type": "xid8"
+      }
+    ],
+    "role": "postgres",
+    "table": {
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "forceRls": false,
+      "owner": "postgres",
+      "policyCount": 0,
+      "rls": true
+    }
+  },
+  "root2LegalPreflight": {
+    "bLinkedPeople": 0,
+    "newOperationReceipts": 0,
+    "observedAt": "2026-11-03T20:17:49.745274+00:00",
+    "oldClaimReceipts": 0,
+    "oldInvite": {
+      "expired": true,
+      "expiresAt": "2026-11-03T18:15:28+00:00",
+      "id": "eb671ca9-8610-4b93-aa1d-3e92a7bdbe65",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+      "usedCount": 0
+    },
+    "ownerPersonLinkedToA": true,
+    "registeredAccounts": 2,
+    "removedAccounts": 0,
+    "targetNeverLinked": true,
+    "tripOwnedByA": true,
+    "unexpiredDirectedInvites": 0
+  },
+  "binding": {
+    "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+    "windowId": "1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+    "expected": {
+      "qaCase": {
+        "projectRef": "tuqigdxrvrerfewsxqgm",
+        "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+        "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+        "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+        "claimantAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+        "issueOperationId": "0b8927c2-6665-41ac-ad49-59586acbb9aa",
+        "claimOperationId": "ba97129d-0d7d-4102-8e56-659d4867e67b",
+        "opensAt": "2026-11-03T20:21:35Z",
+        "inviteExpiresAt": "2026-11-03T20:31:35Z",
+        "closesAt": "2026-11-03T20:51:35Z"
+      },
+      "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+      "containerId": "3354e2bd2b03dbb1e473a183e43f977b8a7b34ba5d7c62f261cf194368c0f38b",
+      "configSHA256": "79681e9af6ec504fd9c474099f09fcca16eb4cdeaca66789b8be05db9bb0c688",
+      "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12"
+    }
+  },
+  "authBindingAccepted": {
+    "status": "INDEPENDENT_PLAN_BINDING_ACCEPTED_WAITING_ROOT_ACTIVE",
+    "planBindingSHA256": "a0552f0d26f8689f0de7b1878e4187ec9b6e202d833ab8f87e822c05900d30de",
+    "windowId": "1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+    "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12"
+  },
+  "preflightSHA256": "347a3dd4679376f40cface77178125d071234b92b4db78da99148d97f37426b0",
+  "originalClaimOutcome": "UNKNOWN_UNCHANGED",
+  "newOtpOrSessionAtObservation": false,
+  "runtimeActiveAtObservation": false
+}

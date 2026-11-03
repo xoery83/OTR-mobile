@@ -1,0 +1,33 @@
+{
+  "goldenSlice": "PARTIAL_PASS_INVITE_CLAIM_FAIL_AT_NORMAL_MEMBER_READ_TIMEOUT",
+  "gateSHA256": "2fad8f560b938ad597abd03ff201608caa9b113ed93ebdee30ba04f9d3f49834",
+  "windowId": "1bf81c2c-8ccd-43ae-bee1-6d9a80b07564",
+  "planSHA256": "ded415dcba69de030ce58f03b0fb8d595d18397a4de5352bdf43b512a1baea12",
+  "normalEmailOtpA": "PASS_ONE_REQUEST",
+  "normalEmailOtpB": "PASS_ONE_REQUEST",
+  "identityReadbackAandB": "PASS",
+  "invite": "PASS_ISSUED_INDEPENDENT_RECEIPT_MATCH",
+  "claim": "PASS_LINKED_INDEPENDENT_RECEIPT_AND_PERSON_BINDING_MATCH",
+  "confirmedClaimIdempotencyAndReceiptRecovery": "PASS_SCENARIO_REACHED_COLLECTION_ONLY_AFTER_BOTH_CHECKS",
+  "firstFailure": {
+    "method": "GET",
+    "route": "/v2/trips/:id/core/collection",
+    "kind": "timeout",
+    "code": "REQUEST_TIMEOUT",
+    "at": "2026-11-03T20:30:21.678Z",
+    "ordinaryClientBudgetMs": 15000,
+    "exactServerRequestId": "NOT_PROVEN_LOGS_ONLY_NORMALIZED_ROUTE",
+    "serverLatencyObservation": "Other genericCore200 records17-22s; correlation unproven"
+  },
+  "memberRead": "NOT_VERIFIED",
+  "privateItemNegative": "NOT_RUN",
+  "nativeColdRestore": "NOT_RUN",
+  "memberRevoke": "NOT_RUN",
+  "ownSessionCleanupA": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "ownSessionCleanupB": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "root2FixedEvidence": "efc73352",
+  "hostClosure": "CLOSED_INDEPENDENTLY_VERIFIED_TIMERS_DISARMED",
+  "originalClaim4028": "UNKNOWN_UNCHANGED_NOT_RETRIED",
+  "oldInviteExpiry": "2026-11-03T18:15:28Z_UNCHANGED",
+  "next": "Prepare read-only normalMemberReader retry with bounded DEV budget, after confirming defaultReader qualification; no Claim replay/window reuse"
+}

@@ -1,0 +1,21 @@
+{
+  "status": "SCOPED_NO_BLOCKER_MEMBER_READ_PROBE",
+  "reviewer": "auth_phase1_review",
+  "tests": 5,
+  "typecheck": "PASS",
+  "scopedESLint": "PASS",
+  "source": "scripts/auth/member-claim-qa-member-read.ts",
+  "sourceSHA256": "7d012545178da0b713184b8dfda09511f29ca430b17e285b1ddf553794628c7f",
+  "testSHA256": "14de80cc3779d9ffc663f026d363d6b57e06a2256fd2008c44aedee0faa7c874",
+  "checks": [
+    "Exact fixed A/B/Trip and GETcollection only",
+    "ExistingCoretransport actor/Trip/hash/accountGeneration validation retained",
+    "Shared90s budget, exact ownSession cleanup required, no finalPASS on failure",
+    "UniqueactiveBPerson binding and actualqualifiedownerprivatefixture only",
+    "NoClaim/Hostconfig/permission changes"
+  ],
+  "hostedRun": "NOT_RUN_KNOWN_B_SCOPE_BLOCKED",
+  "normalOtpRequestsForProbe": 0,
+  "normalSessionsForProbe": 0,
+  "owningScopeEvidence": "Root2c885bc35; Root1formalreadscope repair requested"
+}

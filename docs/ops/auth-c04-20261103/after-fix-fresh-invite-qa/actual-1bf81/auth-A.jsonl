@@ -1,0 +1,5 @@
+{"phase":"OTP_REQUEST_ATTEMPTED","requestedAt":"2026-11-03T20:28:24.290Z","otpRequestAttempts":1}
+{"phase":"OTP_RECEIVED","messageId":"c96fc4c8-007c-4df8-8f73-cd4cd989b773","receivedAt":"2026-11-03T20:28:34.797Z"}
+{"phase":"HOST_IDENTITY_VERIFIED","accountId":"26876e6e-a919-457d-bc00-78d76ba08043","tripId":"fb2f0820-e429-404a-b4dd-7adcad814e45"}
+{"phase":"HOST_RUN_FAILED_NO_AUTOMATIC_RETRY","actionOutcome":"UNCONFIRMED_QUERY_OWNING_RECEIPT"}
+{"phase":"HOST_SESSION_CLEANUP","ownSessionCleanup":"PASS_LOCAL_SCOPE_REFRESH_REVOKED","actionCompleted":false}

@@ -7,6 +7,34 @@ and the evidence directories below; do not reconstruct it or rerun stable suites
 
 ## Actual Golden Slice
 
+**PARTIAL_PASS_INVITE_CLAIM / MEMBER_READ_TIMEOUT** — latest actual Gate2fad,
+window1bf81c2c, immutableT20:21:35Z/D20:51:35Z. A/B each one realEmailOTP and
+normal identity readbackPASS. New0b8927c2 ISSUE/ba97129d CLAIM have independent
+matchingISSUED/LINKED receipts and realPerson linked toB at20:29:46.862938Z. New
+invite35c4163e statusCLAIMED/used1, temporarytransactionproofcleared. Confirmed
+Claim duplicate+recovery passed before collection. Then normalCorecollection
+GET15s REQUEST_TIMEOUT20:30:21.678Z; MemberRead/privateNegative/NativeCold/Revoke
+notverified. GenericserverCore200 logs17-22s cannot uniquelycorrelateownrequest.
+BothownSessions refreshrejected; Root2 actualclosed20:31:55Z default880/bafa,
+full18+5hashes/timersinactive/lockreleased; fixedefc73352 evidence directlyread.
+Old4028 remainsUNKNOWN and oldeb expiryunchanged, no retries/newops. See
+after-fix-fresh-invite-qa/actual-1bf81/ACTUAL_OUTCOME.json. Nextminimumrepair: DEV
+normalMemberReader boundedbudget and closed-defaultReader qualification, no new
+Claimwrite/window. Root1 checkingReaderqualification, Authcontinuesreadprobe prep.
+
+**Next actual blocker identified:** Root2c885bc35 normalclosed880/bafa has
+sustainedDev Coreowner-only scope. A passesOwner+v2createReceipt; B islegitimate
+linkedgroup_member/no deny/removed but fails thatOwner predicate. This is a
+formalREADqualification mismatch, separate fromClaim; nofurtherOTP/probe executed.
+Root1owns minimalREAD-onlyport/scope repair; existingWRITE admission/private
+projectionmustnotbroaden. Auth’s member-claim-qa-member-read.ts candidate reuses
+normalAuth/CoreReader with exactfixedGET and shared90sbudget;5tests/types/lint
+PASS and independentNO_BLOCKER. ReadytoexecuteafteractualReaderqualification,
+withoutClaimreplay/windowreuse. Evidence ROOT2_MEMBER_READ_QUALIFICATION.json
+and MEMBER_READ_PROBE_REVIEW.json. No newOwnerapprovalrequestedbeforefixeddiff.
+
+### Previous failure and installed repair (retained evidence)
+
 **FAIL_AT_CLAIM_HTTP_503_AFTER_CONFIRMED_INVITE** for actual approved03e24
 window9ce410c7… / plane1f901c0…. Same fixed A/B each used one realOTP and passed
 normal identity readback. ISSUEb329 returned ISSUED and independent receipt check
