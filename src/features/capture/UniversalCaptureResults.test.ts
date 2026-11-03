@@ -742,3 +742,21 @@ it.each([
     } else expect(onOpenAcceptedItem).not.toHaveBeenCalled();
   },
 );
+
+it.each(["en", "zh-Hans"] as const)(
+  "explains missing photo confirmation with localized next steps (%s)",
+  (locale) => {
+    setUiLocale(locale);
+    const f = fixture();
+    const html = renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        result: null,
+        photoReviewRequired: true,
+      }),
+    );
+    expect(html).toContain(t("capture.ai.photoReviewRequired"));
+    expect(html).not.toContain(t("capture.ai.unavailable"));
+    expect(f.props.start).not.toHaveBeenCalled();
+  },
+);

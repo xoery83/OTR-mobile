@@ -1,5 +1,6 @@
 import { fetch as expoFetch } from "expo/fetch";
 import { z } from "zod";
+import { ApiClientError } from "./client";
 import { reserveNativeQaGet } from "./nativeQaReadBudget";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
 import {
@@ -26,6 +27,28 @@ export function createUniversalOriginalSourceTransport(
     tokenProvider?: typeof sessionAccessToken;
   },
 ): UniversalOriginalSourceTransport {
+  const request = createUniversalSourceJsonRequest(getAccountId, options);
+  return {
+    acquire: async (c, q) => {
+      const r = await request(c, q, "acquire");
+      if (r === null) throw new Error("SOURCE_RESPONSE_INVALID");
+      return r;
+    },
+    lookup: (c, q) => request(c, q, "result", true),
+  };
+}
+// Shared authenticated request boundary; this supplies no Source command authority.
+export function createUniversalSourceJsonRequest(
+  getAccountId: () => Promise<string>,
+  options: {
+    baseUrl: string;
+    fetchImplementation?: typeof fetch;
+    tokenProvider?: typeof sessionAccessToken;
+    signal?: AbortSignal;
+    assertRequestCurrent?: () => void;
+    timeoutMs?: 15000 | 90000;
+  },
+) {
   const origin = new URL(options.baseUrl);
   if (
     origin.origin !== options.baseUrl ||
@@ -35,16 +58,22 @@ export function createUniversalOriginalSourceTransport(
   )
     throw new Error("SOURCE_ORIGIN_INVALID");
   const fetcher = options.fetchImplementation ?? expoFetch;
-  async function request(
+  return async function request(
     context: AccountRequestContext,
     command: Json,
-    method: "acquire" | "result",
+    method: "acquire" | "result" | "png/result" | "png/execute" | "png/reconcile",
+    allowNull = false,
   ) {
     const body = canonicalEventJson(command);
     if (new TextEncoder().encode(body).byteLength > 2097152)
       throw new Error("INVALID_SOURCE_COMMAND");
-    const boundary = createRequestBoundary(15000, undefined, () =>
-      assertAccountRequestGeneration(context),
+    const boundary = createRequestBoundary(
+      options.timeoutMs ?? 15000,
+      options.signal,
+      () => {
+        options.assertRequestCurrent?.();
+        assertAccountRequestGeneration(context);
+      },
     );
     try {
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
@@ -72,29 +101,47 @@ export function createUniversalOriginalSourceTransport(
         }),
       );
       if (response.status !== 200) {
-        if (response.status === 503) {
-          let closed = false;
-          try {
-            if (
-              response.headers.get("Content-Type")?.startsWith("application/json") &&
-              !response.headers.has("Content-Encoding")
-            ) {
-              const body = await readBoundedJson(response, 4096, boundary);
-              closed = z
-                .object({
-                  error: z.object({ code: z.literal("SOURCE_CAPABILITY_CLOSED") }),
-                })
-                .safeParse(body).success;
-            }
-          } catch {
-            // An ambiguous response cannot prove that the Source write never ran.
+        const fallback =
+          response.status === 401
+            ? "SOURCE_AUTH_REQUIRED"
+            : response.status === 503
+              ? "SOURCE_REQUEST_UNCONFIRMED"
+              : "SOURCE_HTTP_REJECTED";
+        let code: string = fallback;
+        try {
+          if (
+            response.headers.get("Content-Type")?.startsWith("application/json") &&
+            !response.headers.has("Content-Encoding")
+          ) {
+            const body = await readBoundedJson(response, 4096, boundary);
+            const parsed = z
+              .object({
+                error: z.object({
+                  code: z.enum([
+                    "SOURCE_CAPABILITY_CLOSED",
+                    "SOURCE_ACCESS_DENIED",
+                    "INVALID_SOURCE_COMMAND",
+                    "SOURCE_INTEGRITY_FAILURE",
+                    "PNG_ORIGINAL_REQUIRED",
+                    "SOURCE_IO_UNAVAILABLE",
+                    "SOURCE_REQUEST_UNCONFIRMED",
+                  ]),
+                }),
+              })
+              .safeParse(body);
+            if (parsed.success) code = parsed.data.error.code;
           }
-          void response.body?.cancel().catch(() => {});
-          throw Error(closed ? "SOURCE_CAPABILITY_CLOSED" : "SOURCE_REQUEST_UNCONFIRMED");
+        } catch {
+          // An unreadable reply never proves that a Source write did not run.
         }
         void response.body?.cancel().catch(() => {});
-        throw Error(
-          response.status === 401 ? "SOURCE_AUTH_REQUIRED" : "SOURCE_HTTP_REJECTED",
+        throw new ApiClientError(
+          response.status === 503 && code === "SOURCE_CAPABILITY_CLOSED"
+            ? code
+            : fallback,
+          "http",
+          response.status,
+          code,
         );
       }
       if (
@@ -107,20 +154,12 @@ export function createUniversalOriginalSourceTransport(
       );
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
       if (value === null) {
-        if (method !== "result") throw new Error("SOURCE_RESPONSE_INVALID");
+        if (!allowNull) throw new Error("SOURCE_RESPONSE_INVALID");
         return null;
       }
       return canonicalEventJson(value as Json);
     } finally {
       boundary.close();
     }
-  }
-  return {
-    acquire: async (c, q) => {
-      const r = await request(c, q, "acquire");
-      if (r === null) throw new Error("SOURCE_RESPONSE_INVALID");
-      return r;
-    },
-    lookup: (c, q) => request(c, q, "result"),
   };
 }

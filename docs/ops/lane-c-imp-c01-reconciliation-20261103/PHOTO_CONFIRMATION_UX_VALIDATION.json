@@ -1,0 +1,30 @@
+{
+  "status": "LOCAL_PASS_UI_COPY_AND_TRANSIENT_STATE_ONLY",
+  "sourceBase": "0d7a7fbe",
+  "files": {
+    "src/features/capture/useUniversalCapture.ts": "b4005aff8b6c6f0b1fae9c08f5156e94a9d3fc261266bebd95a5dd12bfd644e3",
+    "src/features/capture/useUniversalCapture.test.ts": "32cf3139fa09d863793c57f9515beb1e94e5bd84d95e38319ba8031daaaf015e",
+    "src/features/capture/UniversalCaptureResults.tsx": "e21edb4bef1a99eeb4cfe772e25c970615be93557004b9c09b9af2e500e6ae39",
+    "src/features/capture/UniversalCaptureResults.test.ts": "db15f0a97adb16d0657311c4ab09229a6000b33d274999bf7e4a104b948dbffc",
+    "src/ui/catalogs.ts": "518aa3b73addc83030c8e036b574550e7a0aba88a59efb16719904b8811b8e0a"
+  },
+  "checks": {
+    "targetedSuites": 4,
+    "targetedTests": 80,
+    "foundationTests": 4,
+    "terminologyTests": 6,
+    "strictChangedRoots": 5,
+    "strict": "PASS",
+    "uiGuard": "PASS:473/168",
+    "scopedLint": "PASS:0 errors /0 warnings",
+    "formatScope": "three product files; existing test formatting preserved",
+    "diffCheck": "PASS"
+  },
+  "integration": "Root1 review/integration required, no deployment",
+  "notRun": [
+    "Native current-candidate pixel/gesture/large-text/dark appearance",
+    "ordinary Native PNG upload/verify/seal completion",
+    "mixed current Hosted/Cloud E2E",
+    "paid Provider call"
+  ]
+}

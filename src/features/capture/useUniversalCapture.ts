@@ -18,6 +18,7 @@ export function useUniversalCapture(
   const [result, setResult] = useState<UniversalImportResult | null>(null);
   const [busy, setBusy] = useState(false),
     [unavailable, setUnavailable] = useState(false);
+  const [photoReviewRequired, setPhotoReviewRequired] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [canStart, setCanStart] = useState(true);
   const [queued, setQueued] = useState(false);
@@ -82,6 +83,7 @@ export function useUniversalCapture(
     running.current = true;
     setBusy(true);
     setUnavailable(false);
+    if (execute) setPhotoReviewRequired(false);
     setAttempted(true);
     try {
       if (!consumer.current) {
@@ -128,6 +130,44 @@ export function useUniversalCapture(
                     pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1" as const,
                   }
                 : {}),
+              ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED === "true"
+                ? {
+                    pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1" as const,
+                    preparePngOriginal: async (
+                      pngContext: import("@/data/auth/accountRequestContext").AccountRequestContext,
+                      input: Parameters<
+                        NonNullable<
+                          Parameters<
+                            typeof prepareDefaultUniversalCaptureSources
+                          >[2]["preparePngOriginal"]
+                        >
+                      >[1],
+                    ) => {
+                      if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                      const { prepareAdmittedPngOriginal } =
+                        await import("@/data/operations/universalPngOriginalPreparation");
+                      const { createSourcePngPreparationTransport } =
+                        await import("@/data/api/sourcePngPreparationTransport");
+                      const { captureStorageDependencies } =
+                        await import("@/data/repositories/defaultLocalCaptureInboxRepository");
+                      const assertCurrent = () => {
+                        if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                      };
+                      assertCurrent();
+                      await prepareAdmittedPngOriginal(pngContext, input, {
+                        getAccountId,
+                        hash: captureStorageDependencies.sha256,
+                        assertCurrent,
+                        signal: controller.current?.signal,
+                        port: createSourcePngPreparationTransport(getAccountId, {
+                          baseUrl,
+                          signal: controller.current?.signal,
+                          assertRequestCurrent: assertCurrent,
+                        }),
+                      });
+                    },
+                  }
+                : {}),
               ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true"
                 ? {
                     prepareTask: async (
@@ -151,22 +191,31 @@ export function useUniversalCapture(
       const next = await consumer.current[execute ? "start" : "recover"](model);
       if (current()) {
         setResult(next);
+        if (next !== null) setPhotoReviewRequired(false);
         setQueued(consumer.current.queued);
         setUnavailable(next === null && !consumer.current.queued);
       }
     } catch (error) {
+      let code = "";
+      try {
+        code =
+          error instanceof ApiClientError
+            ? (error.code ?? "")
+            : error instanceof Error
+              ? error.message
+              : "";
+      } catch {
+        // Error metadata must not interrupt recovery.
+      }
+      const needsPhotoReview = code === "UNIVERSAL_PHOTO_REVIEW_REQUIRED";
+      if (execute && current() && needsPhotoReview) setPhotoReviewRequired(true);
       if (execute && current()) {
         try {
-          const code =
-            error instanceof ApiClientError
-              ? (error.code ?? "")
-              : error instanceof Error
-                ? error.message
-                : "";
           console.info(
             JSON.stringify({
               event: "universal_capture_failed",
               code: [
+                "UNIVERSAL_PHOTO_REVIEW_REQUIRED",
                 "UNIVERSAL_SOURCE_PREPARATION_BLOCKED",
                 "SOURCE_NOT_ADMITTED",
                 "SOURCE_PIN_STALE",
@@ -190,11 +239,12 @@ export function useUniversalCapture(
       }
       if (current())
         setUnavailable(
-          !(
-            error instanceof ApiClientError &&
-            error.status === 404 &&
-            error.code === "TASK_NOT_FOUND"
-          ),
+          !needsPhotoReview &&
+            !(
+              error instanceof ApiClientError &&
+              error.status === 404 &&
+              error.code === "TASK_NOT_FOUND"
+            ),
         );
     } finally {
       const continueExplicitStart = deferredStart.current && current();
@@ -250,6 +300,7 @@ export function useUniversalCapture(
     result,
     busy,
     unavailable,
+    photoReviewRequired,
     attempted,
     canStart: canStart && !!model.batch.context?.tripPrior?.id,
     canStartDuringRead:

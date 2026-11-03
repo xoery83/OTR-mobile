@@ -11,6 +11,10 @@ const h = vi.hoisted(() => ({
   start: vi.fn(),
   transport: vi.fn(),
   consent: vi.fn(),
+  sourcePrepare: vi.fn(),
+  pngPrepare: vi.fn(),
+  pngTransport: vi.fn(),
+  hash: vi.fn(),
   options: null as any,
   consumer: { activity: null as unknown, queued: true, canDispatch: true },
 }));
@@ -68,6 +72,18 @@ vi.mock("@/data/operations/universalCaptureConsumer", () => ({
 }));
 vi.mock("@/data/operations/defaultUniversalPhotoConsent", () => ({
   assertDefaultUniversalPhotoConsent: h.consent,
+}));
+vi.mock("@/data/operations/defaultUniversalOriginalSource", () => ({
+  prepareDefaultUniversalCaptureSources: h.sourcePrepare,
+}));
+vi.mock("@/data/operations/universalPngOriginalPreparation", () => ({
+  prepareAdmittedPngOriginal: h.pngPrepare,
+}));
+vi.mock("@/data/api/sourcePngPreparationTransport", () => ({
+  createSourcePngPreparationTransport: h.pngTransport,
+}));
+vi.mock("@/data/repositories/defaultLocalCaptureInboxRepository", () => ({
+  captureStorageDependencies: { sha256: h.hash },
 }));
 function Harness(batchId = "batch-a", current = () => true, assignedTripId?: string) {
   h.cursor = 0;
@@ -336,4 +352,54 @@ it("retained read-only attribution never offers or queues Analyze", async () => 
   finish(null);
   await vi.advanceTimersByTimeAsync(0);
   expect(h.start).not.toHaveBeenCalled();
+});
+
+it("shows an actionable photo confirmation state without treating it as an unknown AI failure or retrying", async () => {
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  h.start.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
+  await Harness().start();
+  expect(Harness().photoReviewRequired).toBe(true);
+  expect(Harness().unavailable).toBe(false);
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(h.start).toHaveBeenCalledOnce();
+  expect(Harness().photoReviewRequired).toBe(true);
+  h.start.mockResolvedValueOnce(null);
+  await Harness().start();
+  expect(Harness().photoReviewRequired).toBe(false);
+});
+
+it("clears an earlier photo prompt when a real result is recovered", async () => {
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  h.start.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
+  await Harness().start();
+  expect(Harness().photoReviewRequired).toBe(true);
+  h.recover.mockResolvedValueOnce({ status: "INTERPRETED" });
+  await Harness().recover();
+  expect(Harness().photoReviewRequired).toBe(false);
+  expect(h.start).toHaveBeenCalledOnce();
+});
+
+it.each([false, true])("restores the existing PNG continuation only under its existing build option (%s)", async (enabled) => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED", enabled ? "true" : "false");
+  let visible = true;
+  Harness("batch-a", () => visible);
+  await vi.advanceTimersByTimeAsync(0);
+  const context = { accountId: "qa", tripId: "trip" }, job = { batch: "same-job" };
+  await h.options.prepareSources(context, job);
+  expect(h.sourcePrepare).toHaveBeenCalledOnce();
+  const options = h.sourcePrepare.mock.calls[0][2];
+  if (!enabled) {
+    expect(options).not.toHaveProperty("pendingPngProfile");
+    expect(options).not.toHaveProperty("preparePngOriginal");
+    return;
+  }
+  const port = { existing: "Source port" }, input = { existing: "original binding" };
+  h.pngTransport.mockReturnValue(port);
+  await options.preparePngOriginal(context, input);
+  expect(h.pngPrepare).toHaveBeenCalledExactlyOnceWith(context, input, expect.objectContaining({ port, hash: h.hash }));
+  visible = false;
+  await expect(options.preparePngOriginal(context, input)).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+  expect(h.pngPrepare).toHaveBeenCalledOnce();
 });

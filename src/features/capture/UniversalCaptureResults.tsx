@@ -52,6 +52,7 @@ export function UniversalResultView({
   result,
   busy,
   unavailable,
+  photoReviewRequired = false,
   canStart,
   canStartDuringRead = false,
   isCurrent,
@@ -67,6 +68,7 @@ export function UniversalResultView({
   result: UniversalImportResult | null;
   busy: boolean;
   unavailable: boolean;
+  photoReviewRequired?: boolean;
   attempted: boolean;
   canStart: boolean;
   canStartDuringRead?: boolean;
@@ -376,6 +378,11 @@ export function UniversalResultView({
             <UiText style={s.copy}>{t("capture.ai.noCandidates")}</UiText>
           ) : null}
         </>
+      ) : null}
+      {photoReviewRequired ? (
+        <UiText accessibilityRole="alert" style={s.copy}>
+          {t("capture.ai.photoReviewRequired")}
+        </UiText>
       ) : null}
       {unavailable ? <UiText style={s.meta}>{t("capture.ai.unavailable")}</UiText> : null}
       {!ready ? <UiText style={s.meta}>{t("capture.ai.needsContext")}</UiText> : null}

@@ -95,3 +95,64 @@ it("accepts only the explicit bounded Backend closed code as a closed capability
   await expect(t.acquire(context, {})).rejects.toThrow("SOURCE_CAPABILITY_CLOSED");
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
+
+it("retains bounded owning failure code and status without changing retry behavior", async () => {
+  const fetcher = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "SOURCE_ACCESS_DENIED",
+            message: "private material must never be logged",
+          },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      ),
+  );
+  const { t, context } = await setup(fetcher);
+  await expect(t.acquire(context, {})).rejects.toMatchObject({
+    message: "SOURCE_HTTP_REJECTED",
+    status: 403,
+    code: "SOURCE_ACCESS_DENIED",
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+});
+
+it("does not reflect arbitrary server error content or turn ambiguity into a safe retry", async () => {
+  const fetcher = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        JSON.stringify({
+          error: { code: "PRIVATE_TRAVELLER_MATERIAL", message: "private" },
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } },
+      ),
+  );
+  const { t, context } = await setup(fetcher);
+  await expect(t.acquire(context, {})).rejects.toMatchObject({
+    message: "SOURCE_REQUEST_UNCONFIRMED",
+    status: 503,
+    code: "SOURCE_REQUEST_UNCONFIRMED",
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+});
+
+it.each([401, 403, 500])(
+  "preserves original rejection semantics for closed code on HTTP %s",
+  async (status) => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(JSON.stringify({ error: { code: "SOURCE_CAPABILITY_CLOSED" } }), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+    const { t, context } = await setup(fetcher);
+    await expect(t.acquire(context, {})).rejects.toMatchObject({
+      message: status === 401 ? "SOURCE_AUTH_REQUIRED" : "SOURCE_HTTP_REJECTED",
+      status,
+      code: "SOURCE_CAPABILITY_CLOSED",
+    });
+    expect(fetcher).toHaveBeenCalledOnce();
+  },
+);

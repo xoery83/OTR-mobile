@@ -220,6 +220,8 @@ export const en = {
   "capture.ai.missingFacts": "Some details remain unresolved.",
   "capture.ai.unresolved": "Unresolved observations",
   "capture.ai.noCandidates": "No supported item suggestions were found.",
+  "capture.ai.photoReviewRequired":
+    "Confirm this image before continuing. In the image section below, check the current image and choose AI analysis, then select Analyze saved materials. Your saved materials are kept.",
   "capture.ai.unavailable":
     "AI processing is unavailable or its outcome could not be confirmed. Your saved materials remain.",
   "capture.ai.needsContext":
@@ -3329,6 +3331,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.missingFacts": "部分信息尚未确定。",
   "capture.ai.unresolved": "尚未确定的资料",
   "capture.ai.noCandidates": "未找到可支持的行程候选。",
+  "capture.ai.photoReviewRequired":
+    "请先确认图片，再继续导入。在下方图片区域检查当前图片并选择使用 AI，然后点击“解析已保存的材料”。已保存的材料都会保留。",
   "capture.ai.unavailable": "AI 处理暂不可用，或尚无法确认处理结果。已保存的材料仍保留。",
   "capture.ai.needsContext": "处理需要合法的行程上下文，且全部原件已保存在本机。",
   "capture.ai.processing": "正在等待处理状态…",

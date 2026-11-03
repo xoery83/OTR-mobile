@@ -1,0 +1,21 @@
+{
+  "request": "LC-C01-EXISTING-PNG-RESTORE-SOURCE-20261104-01",
+  "base": "c2e00307bc108a59f295acd1ee6ed91e7ec7ff42",
+  "candidates": [
+    "0563d3ed",
+    "6a9f49716bacb246c18e51d447d55a4f3a2f3358"
+  ],
+  "historicalEightBlobs": "BYTE_IDENTICAL_0e9a730d",
+  "integration": "Product patches only; five scoped source evidence files; no historical CURRENT/manifest/Gate draft",
+  "actualMainTests": "5 suites 96 PASS",
+  "uiGuard": "473 legacy / 168 representative PASS",
+  "existingCatalogValuesPreserved": 5594,
+  "runtimeFlagsEnabled": false,
+  "notRun": [
+    "Hosted",
+    "Device",
+    "SQL",
+    "Provider",
+    "iPad E2E"
+  ]
+}

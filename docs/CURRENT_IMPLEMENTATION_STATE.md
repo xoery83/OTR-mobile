@@ -1,3 +1,13 @@
+# Existing PNG Native restoration — source integration, 4 November 2026
+
+Restored eight historical0e9a730d PNG command/operation/transport blobs and the
+existing opt-in continuation in useUniversalCapture, after reviewed photo-confirm
+UX0563. Current Account/generation/hidden-view fences retained; no flag enabled.
+Independent NO_BLOCKER; actual-main5suites96/UIguard168 PASS; all5594 prior
+catalog values unchanged. See ops/lane-c-imp-c01-reconciliation-20261103/
+EXISTING_PNG_SOURCE_MAIN_VALIDATION.json. Backend mounting/worker/Hosted/iPad
+acceptance remain separate; no new Port/Parser/Task/permission system was built.
+
 # Native Day publication — source integration, 4 November 2026
 
 DF-C02 publishes the qualified Day read before awaiting optional Home summaries.

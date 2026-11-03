@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_REAL_HOST_LAUNCHER_DECODER_PASS_NOT_DEV",
+  "profileSha256": "ca5a7b63bda8ed5c5b9018b82fbbd14c1a01f054a37b1c2ed76445152b36539c",
+  "originalSha256": "f58061aa535c7a5585c4c953890c5d387cf20656cca7129e36861beb82ee1758",
+  "originalByteCount": 1676,
+  "textSha256": "5059d2167ecfba916c9434eb618aae6fd2ad23e0f12487f45c45c6eab8bc608d",
+  "textByteCount": 130,
+  "pages": 1,
+  "socketMode": "0660",
+  "markerReleased": true,
+  "closeRemovedSocket": true,
+  "devInstalled": false,
+  "sourceQualified": false,
+  "providerCalls": 0
+}

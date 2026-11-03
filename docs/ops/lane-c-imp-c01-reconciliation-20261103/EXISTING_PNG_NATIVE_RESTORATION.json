@@ -1,0 +1,225 @@
+{
+  "status": "EXISTING_NATIVE_PNG_RESTORATION_LOCAL_PASS_NOT_DEPLOYED",
+  "historicalFixedSource": "0e9a730daabc23e0bbab85b70315759a313fa1e1",
+  "exactRestoredBlobs": [
+    {
+      "path": "src/domain/trip/sourceBinaryOriginalCommands.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "3b2023ff842c0c2c7a53dc9e5b47931149d68f237703da120f2e86010ee805d1"
+    },
+    {
+      "path": "src/domain/trip/sourcePngPreparationCommands.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "0282114a847b0912602778f3aa36c24442c4e7df2d93755d6dede9e4f65f00fc"
+    },
+    {
+      "path": "src/domain/trip/sourcePngPreparationCommands.test.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "9c76216b1c790cf0d2f2c89d50cb931f313389deaad448d08cff140c9b6fb2ad"
+    },
+    {
+      "path": "src/data/operations/universalPngOriginalPreparation.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "050d60b03c493a81cb646546ce721006eb521d3df197a1dfb22bcf2d868ccfa5"
+    },
+    {
+      "path": "src/data/operations/universalPngOriginalPreparation.test.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "f22b4f6c6b00b6a3b76ba7df396a82a525c3ff593ec07099506a9fbaa3549531"
+    },
+    {
+      "path": "src/data/api/sourcePngPreparationTransport.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "6c35e5262e16acb36cb729b83c0dec49dc5ccb0db0b95f3f41100e6240c1667c"
+    },
+    {
+      "path": "src/data/api/universalOriginalSourceTransport.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "a34e2ebdee80bbf1cbf88ce9916b5049de03b9e396a0bfde764ef5d445f2bffb"
+    },
+    {
+      "path": "src/data/api/universalOriginalSourceTransport.test.ts",
+      "status": "BYTE_IDENTICAL_EXISTING_IMPLEMENTATION",
+      "sha256": "95e89df683540347adbb6fdf3f3e4a82551ac544b55081e1944b2e045801d087"
+    }
+  ],
+  "caller": "useUniversalCapture restores prior PNG continuation block under the existing unchanged build option; current scope/confirmation state retained",
+  "callerChecks": "two existing-option on/off/current-view tests added; no flag enabled",
+  "checks": {
+    "nativeSuites": 4,
+    "nativeTests": 55,
+    "strictRoots": 10,
+    "lint": "PASS0errors/0warnings",
+    "uiGuard": "PASS473/168",
+    "diff": "PASS",
+    "format": "7 restored blobs + hook PASS; one historical test formatting warning retained for byte-exact reuse"
+  },
+  "backendExistingMissingLeaves": [
+    {
+      "path": "backend/src/sourcePngBackendPreparation.test.ts",
+      "sourceSHA256": "46ba80ff1e12956f710245e00229437bd53c5e9e3215aba80d47a6cfabbe6cb6",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngBackendPreparation.ts",
+      "sourceSHA256": "2b35ae496bebadbdac4c6d970c90d2db205347c0e018b4544e1081fde4531266",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngBroker.test.ts",
+      "sourceSHA256": "8a35c9dcc5639af04c2ca77a359e54b1f4609da0d5e6490ad1de9234e6c91d27",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngBroker.ts",
+      "sourceSHA256": "a40ee101efd82368b8c88d8f43c4f742f425d69cec8efc1d542f44edb2f7868d",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngCloseControl.test.ts",
+      "sourceSHA256": "ff8ecc812c60280c2772de3a352a632340e41ca6bd245561b28e066c45526eb1",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngCloseControl.ts",
+      "sourceSHA256": "509dffb54ba38872bdcded3601e0174dac6f28132f49f6ed615fcb564ebbe24a",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngCloseControlMain.ts",
+      "sourceSHA256": "a1ba50fc52b1c0a510c99b4ae8ee3645261a0f04821e34a0cf8d4119eea5fcc5",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngOwnedSandbox.test.ts",
+      "sourceSHA256": "884444bf6395bd880b203b32014bbff3087e537e88db0b064cf008d26a2d648d",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngOwnedSandbox.ts",
+      "sourceSHA256": "c13fd0ef92ddfe2a6ee0478ecc974e3758cf94b206f304256ab667e19e6ff730",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngPreparationHttp.test.ts",
+      "sourceSHA256": "06aababb2a34d3421cff12bd4621157d5dd2a7e07e03726510f2876a97e3aaec",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngPreparationHttp.ts",
+      "sourceSHA256": "60baa52eab0609c80abc0a4e81c00cc950080cd6e6e1bcc1e476c2404b2d9e85",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngPrivateStage.ts",
+      "sourceSHA256": "093d3045ac24be01c2b8d34bf2cd6371b29b2dc4a0dc12601e9bc239b124b0dd",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngRequestPreparation.test.ts",
+      "sourceSHA256": "5a02029fcc2b3e9d24d03f184826ce984f2f6cc8d0d597c136097eed0181d64b",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngRequestPreparation.ts",
+      "sourceSHA256": "e9aba96ae1b3e5908e0b8bc06c3496a3cc8aabb44ed21776ce8311d9050cf128",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngRuntime.test.ts",
+      "sourceSHA256": "0690fe2268b4d2474dd3ee13797f98a63796c2cab91e36a4162b99f7b67bccec",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngRuntime.ts",
+      "sourceSHA256": "0531d9574375294176b3842751dc6423db6017315c3aac52427f35f0e93f1e81",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngStorageProducer.test.ts",
+      "sourceSHA256": "df9bc33e192ea426b8fd2266b9c7b591eecaf10bf1519117cb8d44c4bcbdf489",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngStorageProducer.ts",
+      "sourceSHA256": "422610d2889bc2d9cb71f4aea430161259bbf24de59454ff79d92e73dca6d9c4",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerCleanupMain.test.ts",
+      "sourceSHA256": "99dec8d3ca37acae0ddd7329f469d7d02e90604a712305a3d537431cff620745",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerCleanupMain.ts",
+      "sourceSHA256": "fcd139d2d34315539c94ee8fd6419d53d54310482c61ca6ef0722ae2887c9628",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerHost.ts",
+      "sourceSHA256": "2a76588dd175cc0ccdb35f698a779eb6406d9a5b4646be334bfbd006231b91ee",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerHostMain.test.ts",
+      "sourceSHA256": "8663911624261a6c91b1e350614ce990d6666cad1fae4b7785aeff5c77fbfb6e",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerHostMain.ts",
+      "sourceSHA256": "a4a89feb3d408f37d03412acc6209bcef76ef189445a901000b897b508262bd5",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerTransport.test.ts",
+      "sourceSHA256": "8c949c0d68c7d80e5a74b83203dedfefd5d97e30837ea50ec2dd9b6e41761d0d",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    },
+    {
+      "path": "backend/src/sourcePngWorkerTransport.ts",
+      "sourceSHA256": "495ad7e0a2cb5be76406442d897afdcab7210ae9698bf31ec2ea5ea3581fd0a1",
+      "currentMainStatus": "ABSENT",
+      "implementedHistorically": true
+    }
+  ],
+  "backendRestoredByThisSlice": false,
+  "notChanged": [
+    "Parser",
+    "PDF pipeline",
+    "Review",
+    "Core Save/ACL/receipt",
+    "account/OTP",
+    "Provider configuration or paid dispatch",
+    "shared Hosted/device state"
+  ],
+  "workerSoftwareRegression": {
+    "suites": 5,
+    "passed": 45,
+    "skipped": 1,
+    "scope": "Existing PDF runtime/verifier/worker host/transport and PNG material helpers; sandbox socket EPERM was runner restriction, normal host rerun passed"
+  }
+}

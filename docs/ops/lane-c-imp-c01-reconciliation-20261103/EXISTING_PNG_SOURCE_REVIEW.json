@@ -1,0 +1,70 @@
+{
+  "requestId": "LC-C01-EXISTING-PNG-RESTORE-SOURCE-20261104-01",
+  "status": "NO_BLOCKER_SOURCE_INTEGRATION_ONLY",
+  "commit": "6a9f49716bacb246c18e51d447d55a4f3a2f3358",
+  "explicitPrerequisite": "0563d3ed02ec252c1977ae3fae2cc9b23312725b",
+  "target": "c2e00307bc108a59f295acd1ee6ed91e7ec7ff42",
+  "scopeSHA256": {
+    "src/domain/trip/sourceBinaryOriginalCommands.ts": "3b2023ff842c0c2c7a53dc9e5b47931149d68f237703da120f2e86010ee805d1",
+    "src/domain/trip/sourcePngPreparationCommands.ts": "0282114a847b0912602778f3aa36c24442c4e7df2d93755d6dede9e4f65f00fc",
+    "src/domain/trip/sourcePngPreparationCommands.test.ts": "9c76216b1c790cf0d2f2c89d50cb931f313389deaad448d08cff140c9b6fb2ad",
+    "src/data/operations/universalPngOriginalPreparation.ts": "050d60b03c493a81cb646546ce721006eb521d3df197a1dfb22bcf2d868ccfa5",
+    "src/data/operations/universalPngOriginalPreparation.test.ts": "f22b4f6c6b00b6a3b76ba7df396a82a525c3ff593ec07099506a9fbaa3549531",
+    "src/data/api/sourcePngPreparationTransport.ts": "6c35e5262e16acb36cb729b83c0dec49dc5ccb0db0b95f3f41100e6240c1667c",
+    "src/data/api/universalOriginalSourceTransport.ts": "a34e2ebdee80bbf1cbf88ce9916b5049de03b9e396a0bfde764ef5d445f2bffb",
+    "src/data/api/universalOriginalSourceTransport.test.ts": "95e89df683540347adbb6fdf3f3e4a82551ac544b55081e1944b2e045801d087",
+    "src/features/capture/useUniversalCapture.ts": "ef9d560610ff64aff0997a262d8475e3f8226054d82f9b54738ec78b2ead3bc2",
+    "src/features/capture/useUniversalCapture.test.ts": "903a84c24eed821f6bc2041492bc13f9685fce680ae9d6f5d5d7ce016e045538"
+  },
+  "prerequisiteScopeSHA256": {
+    "src/features/capture/useUniversalCapture.ts": "b4005aff8b6c6f0b1fae9c08f5156e94a9d3fc261266bebd95a5dd12bfd644e3",
+    "src/features/capture/useUniversalCapture.test.ts": "32cf3139fa09d863793c57f9515beb1e94e5bd84d95e38319ba8031daaaf015e",
+    "src/features/capture/UniversalCaptureResults.tsx": "e21edb4bef1a99eeb4cfe772e25c970615be93557004b9c09b9af2e500e6ae39",
+    "src/features/capture/UniversalCaptureResults.test.ts": "db15f0a97adb16d0657311c4ab09229a6000b33d274999bf7e4a104b948dbffc",
+    "src/ui/catalogs.ts": "518aa3b73addc83030c8e036b574550e7a0aba88a59efb16719904b8811b8e0a"
+  },
+  "manifestSHA256": "bb04f7ef53f724c72a5f7673b18686992e903a04e681844f533e1dbc8c1950dd",
+  "findings": [],
+  "verified": [
+    "All eight restored product/test blobs are byte-identical to historical 0e9a730daabc23e0bbab85b70315759a313fa1e1 and match manifest hashes.",
+    "0563d3ed photoReviewRequired transient error state is explicit-start only, current guarded, clears on new start or successful recovery, adds no retry/dispatch. Results receives it through existing state spread. Both locales use canonical UiText alert and capture-only keys.",
+    "PNG callback retains existing build-option default-closed condition; current() checks before imports/work and injected assertCurrent + AbortSignal fence every preparation/transport step. Existing generation/scope/hidden-view behavior preserved.",
+    "PNG preparation checks exact account/trip/material/receipt hashes and operation identity. IO_ACTIVE/IO_UNKNOWN use same-operation reconcile; only absent, formal IO_QUIESCENT upload or unclaimed verification may execute; final verified readback required.",
+    "Shared JSON transport keeps same normal session/account/generation and bounded HTTPS origin/request boundaries. Failure mapping preserves HTTP status and bounded owning code, does not reflect arbitrary server body or introduce retry.",
+    "Current c2e00307 already has single-PNG default Source continuation port/consent/material checks. Unmerged 98/eccc mixed adapters are not required for this existing single-PNG restoration."
+  ],
+  "integrationConditions": [
+    "Apply 0563d3ed as minimal five-file patch, then 6a9f4971 ten-file patch. Do not overwrite current catalog or hook wholesale from historical source.",
+    "056 hook/Results/test preimages exactly match c2e00307. Catalog differs on main: preserve current catalog and add only photoReviewRequired en/zh keys.",
+    "Do not transplant candidate defaultUniversalOriginalSource mixed-adapter blob or long branch/evidence history as dependency.",
+    "Backend PNG leaves/runtime remain absent on current main as documented; restoring Native source is not a claim of mounted Backend or current authority."
+  ],
+  "validationReused": {
+    "png": {
+      "nativeSuites": 4,
+      "nativeTests": 55,
+      "strictRoots": 10,
+      "lint": "PASS0errors/0warnings",
+      "uiGuard": "PASS473/168",
+      "diff": "PASS",
+      "format": "7 restored blobs + hook PASS; one historical test formatting warning retained for byte-exact reuse"
+    },
+    "photoConfirmation": {
+      "targetedSuites": 4,
+      "targetedTests": 80,
+      "foundationTests": 4,
+      "terminologyTests": 6,
+      "strictChangedRoots": 5,
+      "strict": "PASS",
+      "uiGuard": "PASS:473/168",
+      "scopedLint": "PASS:0 errors /0 warnings",
+      "formatScope": "three product files; existing test formatting preserved",
+      "diffCheck": "PASS"
+    }
+  },
+  "notRun": [
+    "No redundant full suite or new mock framework.",
+    "No Host/SQL/device/Provider operations or author-tree edits.",
+    "No real Native PNG upload/verify/interpretation/Save E2E; actual backend/runtime/qualification still required."
+  ]
+}
