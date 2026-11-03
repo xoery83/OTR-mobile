@@ -48,7 +48,14 @@ Core pure-local probe validated the original intent and applied it for synthetic
 canManageShared false/true; no schema/date/WHOLE_GROUP error reproduced. This is
 not a Hosted Actor snapshot or PG admission proof. Actual SQL-stage diagnosis
 remains pending; no request-field change or original POST replay is justified.
-Next is actual failure diagnosis → minimal repair → focused validation;
+Actual guard65713 local Gateway LOGIN→SET writer→INSERT ON CONFLICT now reproduces
+42501 on private trip_member_claim_read_state_allowed at guard IF line5. Root1
+minimal nested-role IF avoids premature helper privilege checking without GRANT;
+existing finite=false still denies, helper EXEC remainsfalse. Independent source
+Review PASS; full positive isolated CoreSave/CAS/rollback candidate still pending.
+This is a proven current blocker, not proof of the original Hosted unique phase.
+Auth runner and original operation stay unchanged; no automatic resubmit.
+Next is minimal Core guard repair → positive focused validation → exact install Gate;
 never blindly replay the original operation. Native has released its earlier B
 normalOTP slot; no QA Session is borrowed or kept by Auth.
 

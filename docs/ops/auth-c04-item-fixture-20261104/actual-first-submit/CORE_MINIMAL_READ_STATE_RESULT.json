@@ -1,0 +1,16 @@
+{
+  "scope": "OWNED_LOCAL_MINIMAL_TRIGGER_PERMISSION_REPRO_NOT_FULL_CORE_ADMISSION",
+  "before": {
+    "code": 3,
+    "error": "ERROR:  42501: permission denied for function trip_member_claim_read_state_allowed\nCONTEXT:  PL/pgSQL function public.trip_core_finite_read_state_guard() line 5 at IF\nLOCATION:  aclcheck_error, aclchk.c:2843\n"
+  },
+  "after": {
+    "code": 3,
+    "error": "ERROR:  42501: CORE_V2_CAPABILITY_CLOSED\nCONTEXT:  PL/pgSQL function public.trip_core_finite_read_state_guard() line 27 at RAISE\nLOCATION:  exec_stmt_raise, pl_exec.c:3911\n",
+    "expected": "Existing finite scope false still denies business write; only premature privilege failure removed"
+  },
+  "writerHelperExecuteStillFalse": true,
+  "fix": "Nest postgres/session gate around existing Claim predicate; no GRANT or predicate relaxation",
+  "positiveScopeStubs": 0,
+  "hostedActions": 0
+}
