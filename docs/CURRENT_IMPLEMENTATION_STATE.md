@@ -1,3 +1,12 @@
+# AUTH-C04 runtime control candidate — 3 November 2026
+
+The isolated selector-integration worktree prepares a Root-only finite runtime
+controller using existing phase2 private-IO/lock/retained-container/timer helpers.
+Exact fixed A/B case and fresh Root baseline/Gate binding are required; no plan,
+timestamps or actual runtime activation are supplied.13 in-memory focused checks
+pass. See `ops/auth-c04-finite-runtime-20261103/HANDOFF.md`; Root review and exact
+Owner QA execution Gate/timer qualification remain pending.
+
 # Current shared checkpoint — 3 November 2026
 
 Remote main `ded9e962` now includes the reviewed Import Updates, bounded retained

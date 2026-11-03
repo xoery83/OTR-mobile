@@ -1,0 +1,17 @@
+{
+  "status": "LOCAL_PASS_NOT_ACTIVATED",
+  "base": "5648818e",
+  "focusedTests": 13,
+  "hostCalls": 0,
+  "sqlCalls": 0,
+  "providerCalls": 0,
+  "deviceCalls": 0,
+  "planSupplied": false,
+  "timestampsSupplied": false,
+  "files": {
+    "runtime.py": "42fa15a12ca12d3d97b1ada331cc997f164e8be25136932469290e803e2f399a",
+    "test_runtime.py": "8c73f4a1a8069800554a7ab984601606c7f69f3c7a53601bf8baeeb64704b521",
+    "QA_CASE_TEMPLATE.json": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "HANDOFF.md": "3a995e3848f6420a8cc86c9a5892fddad889f285e8d7474daceeb4bbce4cc071"
+  }
+}

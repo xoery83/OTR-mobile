@@ -1,0 +1,26 @@
+{
+  "status": "PREPARED_NOT_AUTHORIZED_NOT_RUN",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "qaCase": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "claimantAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "issueOperationId": "b3299bda-8939-4e49-8377-338f8e619869",
+    "claimOperationId": "4028b673-9032-41c8-807e-c7d3592eae93"
+  },
+  "activationInputs": "opensAt, inviteExpiresAt, closesAt absent intentionally; this template cannot instantiate the Adapter",
+  "proposedQaLimits": {
+    "activationWindowMaxSeconds": 1800,
+    "inviteLifetimeMaxSeconds": 600,
+    "issueOperations": 1,
+    "claimOperations": 1,
+    "pendingInviteRevoke": false,
+    "memberRevoke": false
+  },
+  "productionPolicy": false,
+  "sessions": "Each own normal OTP/Google; quotas checked before any OTP; no token or OTP in output",
+  "activation": "Requires fixed server selector/controller, independent review, exact Owner QA execution Gate and fresh actual DEV/CAS qualification",
+  "recovery": "Retain original command/digest; no blind retry or new operation. Closed window does not implicitly authorize later recovery access."
+}
