@@ -1,0 +1,33 @@
+{
+  "request": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "status": "READY_FOR_OWNER_PROTECTED_INSTALL_APPROVAL",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "installSQLSHA256": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844",
+  "rollbackSQLSHA256": "37831ebb99409ee09481ed58c2baa623470dd48de300ef96f31e1fdfe47beab7",
+  "gateSHA256": "7c1f14c42075c6d86e1677838ac7c6f05fd49d8beb7a50a64db5442862e33687",
+  "scope": {
+    "newFunctions": 1,
+    "newGatewayExecute": 1,
+    "newTablesColumnsRlsRoles": 0,
+    "changedExistingWriteFunctions": 0,
+    "businessDml": false
+  },
+  "ownerApprovalPresent": false,
+  "hostedInstalled": false,
+  "callerOnMain": false,
+  "files": {
+    "backend/src/tripCoreV2PgRead.ts": "30995fcf6b8cedeb53cc65340ef33e7a1bc7c50f915431aa77346bbf279b0942",
+    "backend/src/tripCoreV2PgRead.test.ts": "47900f066be5350d6412004e906e817e19f38518b278d4c839201edd35a7db9c",
+    "docs/API_CONTRACT.md": "3346a274a1219f04e30335f452dad262679fd725cdb3a0dd1ee007caa01489e0",
+    "scripts/trip/core-member-read-isolated-pg.py": "7ab2210dae347d5fa81e45333539d7d518a27cb83c36f6ddca9cbf2a4129052e",
+    "docs/ops/core-member-read-20261104/HANDOFF.md": "cf076c961c1c802e4584332c182a4ad20ae65dc12f506f99459587fb472d3b9b",
+    "docs/ops/core-member-read-20261104/HOSTED_FAILURE_RECEIPT.json": "bc56258d3d72c707504a00af4ee612af9f69eddfc3716c27a26d2a3091b8c90d",
+    "docs/ops/core-member-read-20261104/INSTALL_CANDIDATE.sql": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844",
+    "docs/ops/core-member-read-20261104/ISOLATED_PG_RESULT.json": "7cb1f843a5ac5d4df8616740e880b637fbdc183f157ab3587c448e33490f4ac5",
+    "docs/ops/core-member-read-20261104/LOCAL_STATUS.json": "0306450d2ec7a362b7642a94f45f95950285bedf56e22bd73d1e10567a5de025",
+    "docs/ops/core-member-read-20261104/OWNER_GATE.md": "7c1f14c42075c6d86e1677838ac7c6f05fd49d8beb7a50a64db5442862e33687",
+    "docs/ops/core-member-read-20261104/ROLLBACK_CANDIDATE.sql": "37831ebb99409ee09481ed58c2baa623470dd48de300ef96f31e1fdfe47beab7",
+    "docs/ops/core-member-read-20261104/ROLLBACK_GATE_REVIEW.json": "1bc1cfe915df0fb8bbee2d5a7bff0db1b586dc79ea1a6969abe3c3a0a1ad08ed",
+    "docs/ops/core-member-read-20261104/SOURCE_REVIEW.json": "241df4101abe53b2acc437acfaaa9b2a5d057e90fbfd6012ce14d36652e10e3e"
+  }
+}

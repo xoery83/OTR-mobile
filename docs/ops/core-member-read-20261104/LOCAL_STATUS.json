@@ -1,14 +1,20 @@
 {
-  "status": "LOCAL_READER_RED_TO_GREEN_SQL_CANDIDATE_UNINSTALLED",
-  "base": "4bafb36f34f3eeb097752fd7e81b90e3304b22d3",
-  "actualFailureReceipt": "c885bc35",
-  "red": "Corrected P1 fixture: baseline3failed/19passed",
-  "green": "22passed; Owner/write capability still closed for Member",
-  "fixtureCorrection": "Initial positive test lacked mandatory P1 schedule; corrected before final baseline RED/22GREEN",
-  "sourceChanges": "Sustained snapshot only; legacy finite and command capability branches unchanged",
-  "sql": "Single new independent readonly predicate; no replacement of shared write scope",
-  "sqlValidation": "PENDING_OWNED_ISOLATED_PG",
-  "hosted": "NOT_RUN",
-  "authority": "EXACT_PROTECTED_GATE_REQUIRED",
-  "candidateSQLSHA256": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844"
+  "status": "READY_FOR_EXACT_OWNER_GATE_NOT_INSTALLED_NOT_MAIN",
+  "request": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "codeBase": "22bcaa1db5d3ee5bc012151b5a3844cc409fe567",
+  "red": "Corrected valid P1 fixture baseline3FAIL/19PASS",
+  "green": "Reader22PASS",
+  "typecheck": "PASS strict2roots; tsc --ignoreConfig/noEmit",
+  "lint": "PASS affected2TSroots",
+  "isolatedPG": "55PASS with exact install/rollback; owned fixture removed",
+  "review": "Independent source+Gate/rollback NO_BLOCKER; PG result inspected, not independently rerun by reviewer",
+  "protectedChanges": "One new read-only function +one EXECUTE to existing internal CoreGateway; no existing write function/table/RLS/role changes",
+  "notRun": [
+    "Hosted install",
+    "Latest-main Reader caller integration",
+    "Hosted software deployment",
+    "Normal A/B read/isolation HTTP",
+    "Concurrent Revoke E2E"
+  ],
+  "deploymentOrder": "SQL approved/install/independent readback first; then Root1 integrate onto latestmain; then Root2 latestmain build/standing software deploy; Auth lawful readprobe"
 }

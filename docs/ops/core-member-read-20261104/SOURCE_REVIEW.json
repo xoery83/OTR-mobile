@@ -1,0 +1,33 @@
+{
+  "requestId": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "status": "NO_BLOCKER_SOURCE_SQL_CANDIDATE_REVIEW_ONLY",
+  "commit": "22bcaa1db5d3ee5bc012151b5a3844cc409fe567",
+  "scopeSHA256": {
+    "backend/src/tripCoreV2PgRead.test.ts": "47900f066be5350d6412004e906e817e19f38518b278d4c839201edd35a7db9c",
+    "backend/src/tripCoreV2PgRead.ts": "30995fcf6b8cedeb53cc65340ef33e7a1bc7c50f915431aa77346bbf279b0942",
+    "docs/API_CONTRACT.md": "3346a274a1219f04e30335f452dad262679fd725cdb3a0dd1ee007caa01489e0",
+    "docs/ops/core-member-read-20261104/HANDOFF.md": "cf076c961c1c802e4584332c182a4ad20ae65dc12f506f99459587fb472d3b9b",
+    "docs/ops/core-member-read-20261104/INSTALL_CANDIDATE.sql": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844",
+    "docs/ops/core-member-read-20261104/LOCAL_STATUS.json": "9d0c90210895f8b15f57c4931cf2bf7531e00aa78ff403f025010ddbb7346841"
+  },
+  "findings": [],
+  "verified": [
+    "New independent sustained read helper only. Three existing finite/sustained capability/write predicate bodies are CAS preconditions and are not replaced. No command or capability advertisement expansion.",
+    "Helper requires exact normal Core Gateway session/current-role boundary, exact transaction actor/trip GUCs, no Guest composite, fixed role flags/membership restrictions, normal non-anonymous nondeleted nonbanned auth account, explicit-denial policy, no journey_removed_users marker, rolled-out v2 Trip Create provenance, and exactly one current linked membership. Creator receipt is trip provenance, not reader Owner authority.",
+    "SECURITY DEFINER uses pg_catalog search_path and explicitly qualified business tables. Candidate revokes PUBLIC/anon/authenticated/service_role/writer execution and grants existing Gateway only; postcondition checks owner/definer/search_path/exact owner+Gateway ACL. Actual isolated PostgreSQL ACL validation remains pending.",
+    "Reader sustained snapshot alone switches to read predicate and stops consulting owner/write runtime flag. Existing gateway identity, actor lock/active denial, graph+person binding read, buildCoreActorCollection/projectCoreItem and independent Source/Document/Ledger rights remain unchanged. Rights default empty.",
+    "Read scope checked before graph acquisition and before return. Missing helper/SQL error causes rollback and error propagation with no alternate Owner/write authorization fallback.",
+    "Finite snapshots, capabilities, Manual/Source Admission and Core write contracts are unchanged. SQL installation must precede software requiring the new helper; otherwise sustained snapshot fails closed."
+  ],
+  "validationReused": {
+    "localReader": "22passed; Owner/write capability still closed for Member",
+    "redEvidence": "Corrected P1 fixture: baseline3failed/19passed",
+    "fixtureCorrection": "Initial positive test lacked mandatory P1 schedule; corrected before final baseline RED/22GREEN"
+  },
+  "notValidated": [
+    "Actual PostgreSQL isolated behavior/Role ACL installation is pending in separate owning harness; no PG PASS claimed.",
+    "Concurrent Revoke semantics are unverified; two checks in REPEATABLE READ are not proof of observing a concurrent revoke. Existing actor lock and revoke serialization must be verified separately.",
+    "No Hosted SQL/software deployment, real normal member read, paid Provider/device action or source edits."
+  ],
+  "executionBoundary": "New protected function/EXECUTE requires exact Owner approval and Root2 fresh preimage/ACL/readback qualification. This source review is not installation or execution authorization."
+}

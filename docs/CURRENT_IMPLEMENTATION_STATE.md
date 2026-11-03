@@ -1,3 +1,16 @@
+# Core Member read scope — fixed candidate, 4 November 2026
+
+ActualRoot2c885 proves legal linked B is blocked by an Owner/Create write scope.
+Core candidate adds one independent sustained read predicate and onlyGatewayEXEC,
+keeps three shared write gates/capabilities unchanged, and preserves current actor
+projection/PRIVATE Source/Document/Ledger rights. Reader22/strict2/lint PASS; owned
+networknonePG55incl exactrollback PASS; independent source+GateReview NO_BLOCKER.
+See ops/core-member-read-20261104/OWNER_GATE.md and final manifest.
+Not installed/not main: exact Owner protected approval→Root2 SQL/readback→Root1
+latestmain caller integration→Root2 software→Auth lawful normal readprobe. Keeping
+uninstalled caller offmain prevents this Gate from blocking other deployments.
+Historical Claim4028 UNKNOWN untouched; no OTP/Provider/Hosted actions by Root1.
+
 # Auth fresh-invitation QA preparation — source integration, 4 November 2026
 
 Auth67aed9a7 and Root2 controller7e47ff07 define a separate DEV-only fresh

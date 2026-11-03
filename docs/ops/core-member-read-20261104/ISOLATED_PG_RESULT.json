@@ -1,0 +1,255 @@
+{
+  "status": "PASS_LOCAL_ISOLATED_PG_MEMBER_READ_NOT_HOSTED",
+  "requestId": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "fixture": {
+    "name": "otr-core-member-read-1b8584ba3e08",
+    "image": "otr-core-v2-server84-fixture:20261012",
+    "imageSHA256": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+    "network": "none",
+    "memoryBytes": 268435456,
+    "cpus": 1,
+    "removed": true
+  },
+  "candidateSHA256": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844",
+  "rollbackSHA256": "37831ebb99409ee09481ed58c2baa623470dd48de300ef96f31e1fdfe47beab7",
+  "priorEvidence": [
+    {
+      "status": "PASS_LOCAL_ISOLATED_PG_MEMBER_READ_NOT_HOSTED",
+      "checks": 51,
+      "stdoutPath": "/private/tmp/otr-core-member-read-ac6e488c786e/stdout.log",
+      "resultSHA256": "2eea7da768457b5523ba72e813aa1053b1425cd8e6e17d98f71ac78648178987"
+    }
+  ],
+  "checks": [
+    {
+      "name": "private prosrc MD5 exact:trip_core_finite_scope_allowed",
+      "passed": true
+    },
+    {
+      "name": "private prosrc MD5 exact:trip_sustained_core_capabilities",
+      "passed": true
+    },
+    {
+      "name": "private prosrc MD5 exact:trip_sustained_dev_scope_allowed",
+      "passed": true
+    },
+    {
+      "name": "unknown default ACL aborts entire install; helper absent",
+      "passed": true
+    },
+    {
+      "name": "three shared functions OID/body/Owner/ACL/config unchanged",
+      "passed": true
+    },
+    {
+      "name": "all six private table ACL/Owner/RLS unchanged",
+      "passed": true
+    },
+    {
+      "name": "no new helper EXECUTE:anon",
+      "passed": true
+    },
+    {
+      "name": "no new helper EXECUTE:authenticated",
+      "passed": true
+    },
+    {
+      "name": "no new helper EXECUTE:service_role",
+      "passed": true
+    },
+    {
+      "name": "no new helper EXECUTE:otr_trip_core_v2_writer",
+      "passed": true
+    },
+    {
+      "name": "PUBLIC no helper EXECUTE",
+      "passed": true
+    },
+    {
+      "name": "A owner allowed",
+      "passed": true
+    },
+    {
+      "name": "B linked member allowed",
+      "passed": true
+    },
+    {
+      "name": "foreign actor denied",
+      "passed": true
+    },
+    {
+      "name": "foreign trip denied",
+      "passed": true
+    },
+    {
+      "name": "actor GUC mismatch denied",
+      "passed": true
+    },
+    {
+      "name": "trip GUC mismatch denied",
+      "passed": true
+    },
+    {
+      "name": "removed member denied",
+      "passed": true
+    },
+    {
+      "name": "removed member denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "unlinked member denied",
+      "passed": true
+    },
+    {
+      "name": "unlinked member denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "anonymous denied",
+      "passed": true
+    },
+    {
+      "name": "anonymous denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "disabled policy denied",
+      "passed": true
+    },
+    {
+      "name": "disabled policy denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "revoked policy denied",
+      "passed": true
+    },
+    {
+      "name": "revoked policy denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "banned actor denied",
+      "passed": true
+    },
+    {
+      "name": "banned actor denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "deleted actor denied",
+      "passed": true
+    },
+    {
+      "name": "deleted actor denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "non-v2 provenance denied",
+      "passed": true
+    },
+    {
+      "name": "non-v2 provenance denied: restored legal member",
+      "passed": true
+    },
+    {
+      "name": "actual old write scope still denies member B",
+      "passed": true
+    },
+    {
+      "name": "actual old write capabilities still deny member B",
+      "passed": true
+    },
+    {
+      "name": "actual old finite write scope still denies member B",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:auth.users:SELECT",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:auth.users:INSERT",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:auth.users:UPDATE",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:auth.users:DELETE",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_sustained_dev_policy:SELECT",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_sustained_dev_policy:INSERT",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_sustained_dev_policy:UPDATE",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_sustained_dev_policy:DELETE",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_create_receipts:SELECT",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_create_receipts:INSERT",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_create_receipts:UPDATE",
+      "passed": true
+    },
+    {
+      "name": "Gateway private table denied:public.trip_create_receipts:DELETE",
+      "passed": true
+    },
+    {
+      "name": "shared three function fingerprints remain exact",
+      "passed": true
+    },
+    {
+      "name": "private table ACL/Owner/RLS final snapshot unchanged",
+      "passed": true
+    },
+    {
+      "name": "no role/schema grants in candidate",
+      "passed": true
+    },
+    {
+      "name": "actual rollback removes only the new helper",
+      "passed": true
+    },
+    {
+      "name": "rollback preserves three shared function fingerprints and OIDs",
+      "passed": true
+    },
+    {
+      "name": "rollback preserves private table ACL/Owner/RLS",
+      "passed": true
+    },
+    {
+      "name": "rollback preserves exact synthetic membership and Create receipt rows",
+      "passed": true
+    }
+  ],
+  "stdoutPath": "/private/tmp/otr-core-member-read-1b8584ba3e08/stdout.log",
+  "elapsedSeconds": 6.749,
+  "limits": [
+    "Synthetic local users, linked member and formatVersion2 Create provenance seeded with fixture administration, not real Claim/TripCreate acceptance.",
+    "Four actual Core migrations and actual TripCreate owning-port migration; normal Gateway uses real LOGIN connlimit1 and its original SET writer edge.",
+    "Unrelated Guest composite functions are explicit deny-only fixture seams; no positive Source/Core write qualification stubs.",
+    "Private preimages read only from CLI path; no raw definitions copied into tracked files.",
+    "No Hosted/Auth HTTP/Reader/ItemVisibility/Native/Consumer E2E qualification.",
+    "Rollback tests only actual SQL/object/ACL/data preservation. Prior Reader software restoration and active-read drain are external operational prerequisites, not proved by SQL or this fixture."
+  ]
+}

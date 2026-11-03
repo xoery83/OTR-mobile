@@ -1,0 +1,33 @@
+{
+  "requestId": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "status": "NO_BLOCKER_INCREMENTAL_SOURCE_REVIEW",
+  "priorCommit": "22bcaa1db5d3ee5bc012151b5a3844cc409fe567",
+  "priorReview": "/private/tmp/otr-core-member-read-review-20261104/REVIEW.json",
+  "installUnchangedFromPrior": true,
+  "scopeSHA256": {
+    "docs/ops/core-member-read-20261104/ROLLBACK_CANDIDATE.sql": "37831ebb99409ee09481ed58c2baa623470dd48de300ef96f31e1fdfe47beab7",
+    "docs/ops/core-member-read-20261104/OWNER_GATE.md": "a7c64a6a0bffae201c60858f9e1c237444ec05fadac6c1ee204691133d48f7db",
+    "scripts/trip/core-member-read-isolated-pg.py": "7ab2210dae347d5fa81e45333539d7d518a27cb83c36f6ddca9cbf2a4129052e",
+    "docs/ops/core-member-read-20261104/ISOLATED_PG_RESULT.json": "7cb1f843a5ac5d4df8616740e880b637fbdc183f157ab3587c448e33490f4ac5"
+  },
+  "findings": [],
+  "verified": [
+    "Rollback matches actual candidate helper prosrc MD5 882997ee273bded9f32e7b70868e2afb; also checks DEV marker/operator, Owner/SECURITY DEFINER/search_path/exact ACL and original three write predicate hashes. DROP is single helper without CASCADE, no data mutation.",
+    "Gate requires previous compatible Reader software restoration and read drain before SQL rollback; drift/timeouts/dependencies fail closed. It explicitly retains compatibility if software cannot safely restore.",
+    "Publication sequence explicitly installs SQL and independently qualifies definition/ACL first, then Root1 integrates caller onto latest main, then Root2 deploys. Uninstalled helper caller is not permitted to block other main releases.",
+    "Runner uses exact local Colima Unix endpoint, --pull=never fixed image SHA, network-none/256MiB/1CPU and uniquely owned container removed finally. No Host mounts/ports or Hosted/Auth/API/Provider network execution.",
+    "Actual three private preimage bodies verified by fixed MD5 and consumed from local CLI input only. Runner source does not embed those definitions; temporary diagnostic log remains private path.",
+    "Existing51 isolated PG checks attest normal member read/Owner behavior, denial cases, unchanged original write predicates and private ACL/RLS. Source/Reader/privacy review from prior receipt reused."
+  ],
+  "validationSnapshot": {
+    "status": "PASS_LOCAL_ISOLATED_PG_MEMBER_READ_NOT_HOSTED",
+    "checks": 55,
+    "allPassed": true,
+    "containerRemoved": true
+  },
+  "pending": [
+    "New rollback isolated PG rerun was not present in the read snapshot; its result must be attached separately before representing rollback as runtime-tested.",
+    "Concurrent Revoke behavior remains unverified.",
+    "Actual protected install, Hosted normal member read and subsequent software deployment not performed or authorized by this review."
+  ]
+}
