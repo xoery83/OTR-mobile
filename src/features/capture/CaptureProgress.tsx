@@ -172,7 +172,14 @@ export function CaptureProgress({
                 : "capture.progress.showDetails",
             )}
             variant="text"
-            onPress={() => setDetailsOpen((open) => !open)}
+            onPress={() => {
+              setDetailsOpen((open) => !open);
+              if (!detailsOpen && model && isCurrent?.()) {
+                void import("@/data/operations/captureMixedQaManifest")
+                  .then((api) => api.exportMixedQaManifest(model, isCurrent))
+                  .catch(() => {});
+              }
+            }}
           />
           {detailsOpen ? (
             <View style={styles.details}>

@@ -1,3 +1,7 @@
+## Root1 approved mixed QA metadata projection — 4 November 2026
+
+Reviewed `b6521dbd` exports only the exact approved three-input Batch metadata to QA cache from existing ShowDetails; no contents/filenames/credentials or new submission. QA marker and stale-current guards tested. Source-only; device export and Root2 tuple/runtime qualification remain pending. Receipt: `docs/ops/lane-c-imp-c01-reconciliation-20261103/MIXED_MANIFEST_ROOT1_SOURCE_REVIEW.json`. No Provider use or permission change.
+
 ## Root1 Guest P1 place-search fence — 4 November 2026
 
 Fixed `205f08e7` allows existing committed Guest identity in the P1 MapKit editor scope, retaining original captureAccountScope double-read/generation checks and Save repository. Source-only, no new Principal/Auth/Core authority. Three-suite53PASS/lint/UIguard reused; actual Guest MapKit/Save device acceptance remains Native/Vision pending. Receipt: `docs/ops/native-vn02-guest-20261104/P1_GUEST_PLACE_SOURCE_MAIN_VALIDATION.json`.

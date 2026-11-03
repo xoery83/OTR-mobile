@@ -1,0 +1,11 @@
+{
+  "request": "IMP-C01-MIXED-BINDING-20261104-11",
+  "status": "LOCAL_PASS_DEVICE_EXPORT_PENDING",
+  "purpose": "Exact original mixedbatch metadata for approved one-call execution",
+  "scope": "Existing CaptureProgress normal model; only approved actor/trip/time/3exact content hashes+bytes; existing ShowDetails action, QA bundle marker only; cache metadata file only, no payload/Token/Session/queue/Source work",
+  "tests": "2suites20PASS; strict2 changed roots; eslint PASS; prior UIguard unchanged PASS",
+  "lifetime": "Transient local QA cache; export only approved existing model; never sync/upload",
+  "device": "QA147layoutdraft remains preserved; original10:18:03batch durable/coldreopened; install transition must preserve originalbatch",
+  "remaining": "Independent review/main, JSincrement, normal open existingrecord/ShowDetails, copy only cache/otr-mixed-qa-manifest.json, validate exact binding, Root2finiteprofile",
+  "reviewFix": "Remove filename entirely; filename canary excluded; QA marker/current-before-and-after-import guards tested; exact cache path and single write asserted"
+}

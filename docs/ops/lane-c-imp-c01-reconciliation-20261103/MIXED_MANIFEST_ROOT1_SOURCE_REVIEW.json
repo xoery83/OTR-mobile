@@ -1,0 +1,26 @@
+{
+  "request": "IMP-C01-MIXED-BINDING-20261104-11",
+  "candidate": "b6521dbde2ede111d9ca80625b37f770bfb2cd10",
+  "baseMain": "7f38acb79560f7f6edaee13bbc22f166fd2a6192",
+  "status": "SOURCE_REVIEW_NO_BLOCKER_DEVICE_EXPORT_PENDING",
+  "reviewer": "Root1 independent from LaneC author",
+  "fixedFinding": "Removed originalFilename and added filename-canary exclusion",
+  "checks": [
+    "Exact approved Actor/Trip/createdAt second and3distinct content hashes+bytes; allInputsAccepted",
+    "Existing QA bundle marker only; isCurrent before/after async import",
+    "Only existing ShowDetails invokes best-effort helper; no original/body/credentials/Session/DB copy",
+    "Exact cache metadata path; no submit/Source/Task/Core/Provider mutation",
+    "Ordinary host/stale cases do not touch disk; matching case writes once"
+  ],
+  "validationReused": "2 suites20 PASS, strict2roots/eslint; unchanged UIguard from author. Exact reviewed candidate on matching before-images; no historical E2E rerun",
+  "fileSHA256": {
+    "src/data/operations/captureMixedQaManifest.ts": "aa4b338cdff9b7e4b02ee334bcfc9abd56b02689ea0dfb9faea72640d932eb8e",
+    "src/data/operations/captureMixedQaManifest.test.ts": "f8d1f69c8e44cca4a32e29a1e498858d1658b68846d2f7081889ccfdcba8403e",
+    "src/features/capture/CaptureProgress.tsx": "12247f31ea4de22dcc99f315b6c20fef16c360992f89c8a903ae7ef8a7307013",
+    "docs/ops/lane-c-imp-c01-reconciliation-20261103/MIXED_MANIFEST_QA_PROJECTION.json": "d350e5b4d51617ecdedbd10751a8d798b8631c9f58b67889d0539398fbafd125"
+  },
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "providerCalls": 0,
+  "scopeNote": "Metadata export is not runtime/Source/Provider/Save authority; Root2 must still bind exact original tuple under separate qualified scope"
+}
