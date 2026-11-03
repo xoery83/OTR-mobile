@@ -1,0 +1,57 @@
+{
+  "status": "SCOPED_NO_BLOCKER_DORMANT_CANDIDATE",
+  "sourceHashes": {
+    "scripts/auth/member-claim-qa-scenario.ts": "7f632290bdb1a39eef2192250c422a08f224c51979506d96b3cc753a1b87ecca",
+    "scripts/auth/member-claim-qa-readback.ts": "b13c34e7758dd6cf56982bb04bf749523f0592a7fb99c287425df032d60b5f1c",
+    "scripts/auth/member-claim-qa-recovery-window.ts": "41db4d13ae4dcd9bacfb97cb9d3bd4ba0d14bf3a859d9f233c52c5ba988f2bbb",
+    "backend/src/authMemberClaimQaScenario.test.ts": "53b08a22c64f202988062e724942aa8ec5955ff02d2398355666dfd68869a0d2",
+    "backend/src/authMemberClaimQaReadback.test.ts": "a1abfefb1830e99cc9a3adf1a7debe2a9d69691d9e692f4923fc6f4f6c0e2131",
+    "backend/src/authMemberClaimQaRecoveryWindow.test.ts": "84fe70d2a0f146b9da0fe7b1857446f0b4e97fa4d9f68284dd2cf51abf295638"
+  },
+  "authorTests": {
+    "affectedSuites": 3,
+    "passed": 64
+  },
+  "independentReview": {
+    "reviewer": "/root/auth_phase1_review",
+    "resumeTestsPassed": 7,
+    "legacyScenarioSkipped": 8,
+    "newQualifierAndInviteReadTestsPassed": 9,
+    "stableInterfaceTestsSkipped": 40,
+    "findings": []
+  },
+  "scope": "Existing A/B scenario/repositories/Core Reader; original-ID recover-first, one expressly preauthorized submission if absent, exact live invite observation, receipt validation and UNKNOWN recovery-only; distinct resume qualifier, existing bounded independent read-only transport",
+  "notAuthority": [
+    "Literal allowOriginalIdSubmissions true is not Owner approval",
+    "Mock qualification is not a runtime grant",
+    "No consumed window can be reused",
+    "SQL absence is not NoCommit"
+  ],
+  "remaining": [
+    "Root ORIGINAL_ID_RESUME selector/Controller and bounded qualify-resume transport",
+    "Fixed exact new approval/current runtime plan and actual staged CID/config/timers",
+    "Normal A/B live session and Hosted Golden Slice"
+  ],
+  "inviteDTOFields": [
+    "id",
+    "tripId",
+    "personId",
+    "targetAccountId",
+    "status",
+    "expiresAt",
+    "observedAt"
+  ],
+  "qualifierWire": {
+    "status": "AUTH_C04_RESUME_WINDOW_QUALIFIED",
+    "executionMode": "ORIGINAL_ID_RESUME",
+    "businessMutationAuthorized": true,
+    "otherFields": [
+      "qaCase",
+      "image",
+      "containerId",
+      "configSHA256",
+      "planSHA256"
+    ]
+  },
+  "externalActions": 0
+}

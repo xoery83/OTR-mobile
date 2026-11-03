@@ -1,6 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { runMemberClaimQaScenario } from "../../scripts/auth/member-claim-qa-scenario";
+import {
+  runMemberClaimQaScenario,
+  resumeMemberClaimQaScenario,
+} from "../../scripts/auth/member-claim-qa-scenario";
 import {
   makeCoreReadCollection,
   coreHashValue,
@@ -252,4 +255,153 @@ it("stops pre-cancelled scenarios before creating either Session", async () => {
   expect(claimant).not.toHaveBeenCalled();
   expect(f.deps.preflight).not.toHaveBeenCalled();
   expect(f.wire).not.toHaveBeenCalled();
+});
+
+function resumeFixture(absentUntilSubmitted = false) {
+  const f = fixture();
+  const command = {
+    kind: "ISSUE_TARGETED_INVITE" as const,
+    operationId: f.qa.issueOperationId,
+    tripId: f.qa.tripId,
+    personId: f.qa.personId,
+    target: { kind: "REGISTERED_ACCOUNT" as const, accountId: f.qa.claimantAccountId },
+  };
+  const retained = { command, intentDigest: memberClaimIntentDigest(command) };
+  const original = f.wire.getMockImplementation()!;
+  const submitted = new Set<string>();
+  f.wire.mockImplementation(async (url, init) => {
+    if (!String(url).endsWith("/collection")) {
+      const body = JSON.parse(String(init?.body)) as MemberClaimCommand;
+      if (String(url).endsWith("/recovery")) {
+        if (absentUntilSubmitted && !submitted.has(body.operationId))
+          return Response.json({ status: "ABSENT_UNCONFIRMED" }, { status: 202 });
+      } else submitted.add(body.operationId);
+    }
+    return original(url, init);
+  });
+  const deps = {
+    ...f.deps,
+    allowOriginalIdSubmissions: true as const,
+    qualifyResumeWindow: vi.fn(async () => {}),
+    readInvite: vi.fn(async (id: string) => ({
+      id,
+      tripId: f.qa.tripId,
+      personId: f.qa.personId,
+      targetAccountId: f.qa.claimantAccountId,
+      status: "PENDING",
+      expiresAt: f.qa.inviteExpiresAt,
+      observedAt: f.qa.opensAt,
+    })),
+  };
+  return { ...f, retained, deps };
+}
+
+it("resumes confirmed originals without executing ISSUE or a new CLAIM", async () => {
+  const f = resumeFixture();
+  expect(await resumeMemberClaimQaScenario(f.qa, f.retained, f.deps)).toMatchObject({
+    entry: "ORIGINAL_ID_RECOVERY_FIRST",
+  });
+  const calls = f.wire.mock.calls.filter(([url]) => !String(url).endsWith("/collection"));
+  expect(calls.map(([url]) => String(url).endsWith("/recovery"))).toEqual([
+    true,
+    true,
+    false,
+    true,
+  ]);
+  expect(JSON.parse(String(calls[2][1]?.body)).kind).toBe("CLAIM_PERSON"); // Only the confirmed idempotency check.
+  expect(f.deps.readInvite).not.toHaveBeenCalled();
+  expect(f.deps.preflight).not.toHaveBeenCalled();
+  expect(f.deps.qualifyResumeWindow).toHaveBeenCalledOnce();
+});
+
+it("uses one explicitly authorized original-ID submission after each absent recovery, then member read", async () => {
+  const f = resumeFixture(true);
+  await expect(
+    resumeMemberClaimQaScenario(f.qa, f.retained, f.deps),
+  ).resolves.toMatchObject({ status: "INVITE_CLAIM_MEMBER_READ_CHECKED" });
+  const calls = f.wire.mock.calls.filter(([url]) => !String(url).endsWith("/collection"));
+  expect(calls.map(([url]) => String(url).endsWith("/recovery"))).toEqual([
+    true,
+    false,
+    true,
+    false,
+    false,
+    true,
+  ]);
+  expect(JSON.parse(String(calls[0][1]?.body))).toEqual(f.retained.command);
+  expect(calls[0][1]?.body).toBe(calls[1][1]?.body);
+  expect(calls[2][1]?.body).toBe(calls[3][1]?.body);
+  expect(f.deps.readInvite).toHaveBeenCalledOnce();
+});
+
+it("stops expired actual invitation before any Claim submission", async () => {
+  const f = resumeFixture(true);
+  const read = f.deps.readInvite.getMockImplementation()!;
+  f.deps.readInvite.mockImplementation(async (id) => ({
+    ...(await read(id)),
+    expiresAt: f.qa.opensAt,
+  }));
+  await expect(resumeMemberClaimQaScenario(f.qa, f.retained, f.deps)).rejects.toThrow(
+    "CASE_UNPROVEN",
+  );
+  expect(
+    f.wire.mock.calls.filter(
+      ([url, init]) =>
+        !String(url).endsWith("/recovery") &&
+        JSON.parse(String(init?.body)).kind === "CLAIM_PERSON",
+    ),
+  ).toHaveLength(0);
+});
+
+it("does not submit after failed initial recovery", async () => {
+  const f = resumeFixture();
+  f.wire.mockImplementation(async () => Response.json({}, { status: 503 }));
+  await expect(resumeMemberClaimQaScenario(f.qa, f.retained, f.deps)).rejects.toThrow();
+  expect(f.wire).toHaveBeenCalledOnce();
+  expect(String(f.wire.mock.calls[0][0])).toMatch(/\/recovery$/);
+});
+
+it("retains UNKNOWN after the permitted submission loses its response and recovery is absent", async () => {
+  const f = resumeFixture(true);
+  f.setUnknown("absent");
+  await expect(resumeMemberClaimQaScenario(f.qa, f.retained, f.deps)).rejects.toThrow(
+    "ORIGINAL_OPERATION_UNCONFIRMED",
+  );
+  const writes = f.wire.mock.calls.filter(([url]) => !String(url).endsWith("/recovery"));
+  expect(writes).toHaveLength(2);
+  expect(JSON.parse(String(writes[0][1]?.body)).operationId).toBe(f.qa.issueOperationId);
+  expect(JSON.parse(String(writes[1][1]?.body)).operationId).toBe(f.qa.claimOperationId);
+});
+
+it("requires explicit resume scope and unchanged retained intent before login", () => {
+  const f = resumeFixture();
+  expect(() =>
+    resumeMemberClaimQaScenario(f.qa, f.retained, {
+      ...f.deps,
+      allowOriginalIdSubmissions: false as never,
+    }),
+  ).toThrow("RESUME_SCOPE_UNPROVEN");
+  expect(() =>
+    resumeMemberClaimQaScenario(
+      f.qa,
+      { ...f.retained, intentDigest: "0".repeat(64) },
+      f.deps,
+    ),
+  ).toThrow("RESUME_SCOPE_UNPROVEN");
+  expect(() =>
+    resumeMemberClaimQaScenario(f.qa, f.retained, {
+      ...f.deps,
+      readInvite: undefined as never,
+    }),
+  ).toThrow("RESUME_SCOPE_UNPROVEN");
+  expect(f.wire).not.toHaveBeenCalled();
+});
+
+it("does not bypass independent receipt mismatch in resume", async () => {
+  const f = resumeFixture();
+  f.setWrongReceipt();
+  await expect(resumeMemberClaimQaScenario(f.qa, f.retained, f.deps)).rejects.toThrow(
+    "CASE_UNPROVEN",
+  );
+  expect(f.wire).toHaveBeenCalledOnce();
 });

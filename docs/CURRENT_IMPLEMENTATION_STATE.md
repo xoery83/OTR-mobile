@@ -16,7 +16,7 @@ bounded90s budget matching existingCore FIFO15s+lease60s+overhead; baseline18.41
 RED→newcaseGREEN and90s hung-bound PASS, independently2PASS. Ordinary15s/Native/
 Backend/SQL unchanged. Evidence: recovery-timeout-20261103/ACTUAL_OUTCOME.json,
 RETAINED_ROUTE_TRACE.json and BUDGET_FIX_REVIEW.json. Root reports safe closure;
-fixed Root execution/closure receipt remains pending. No new window/retry authorized.
+fixed Root main4c3094fa execution/closure/route receipts have been directly read and copied under ROOT_*.json in that directory; Root independently verified closed healthyc213/039 and both timers inactive. No new window/retry authorized.
 
 ## Prior ISSUE attempt (historical)
 
@@ -199,3 +199,18 @@ Auth read only whitelist private phase metadata, no secret values. Root fixed ro
 closure receipt pending. See recovery-timeout-20261103/ACTUAL_OUTCOME.json; original
 UNKNOWN preserved, both old windows consumed. First failure is now timeout; no
 causal claim from missing PG logs and no global timeout increase/retry authorized.
+
+## Next complete local resume candidate
+
+Auth now has a dormant original-ID resume candidate in the existing scenario:
+ISSUE and CLAIM recover first; only under new explicit mode/qualification may
+each absent original be submitted once. UNKNOWN still only reads recovery; no
+second execute. Existing confirmed receipts are reused, actual invitation identity/
+expiry independently checked before a fresh Claim, and expired invitations stop.
+Existing Core member/private-read and own-session cleanup remain unchanged.
+Auth also provides strict ORIGINAL_ID_RESUME qualifier (old read-only unchanged)
+and fixed-case metadata readInvite using the existing read-only SQL transport.
+Affected3suites64PASS; independent new7+9PASS, old tests reused appropriately.
+See original-id-resume/INDEPENDENT_REVIEW.json and EXECUTION_SCOPE_CANDIDATE.md.
+Root must deliver the mode/controller/qualify-resume SSH binding, exact new Gate
+and fresh plan/CAS/timers before any actual resume. No new OTP/Host/business call.

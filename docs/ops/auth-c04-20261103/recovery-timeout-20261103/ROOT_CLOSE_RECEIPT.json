@@ -1,0 +1,19 @@
+{
+  "status": "CLOSED_TIMERS_DISARMED_WITH_RETAINED_DIAGNOSTICS",
+  "closed": {
+    "status": "AUTH_C04_RUNTIME_CLOSED_VERIFIED",
+    "runtimeClosed": true,
+    "containerId": "c213f5dd69ef1e8e4f469450a7985ff731b04ada6f514a48c91e2b4008dba682",
+    "image": "sha256:039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058",
+    "selectorAbsent": true,
+    "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+    "businessOutcome": "NOT_INFERRED"
+  },
+  "timerStates": {
+    "otr-auth-c04-close-e9309b36-f7b6-43a8-b486-fdcf4c47e914.timer": "inactive",
+    "otr-auth-c04-close-e9309b36-f7b6-43a8-b486-fdcf4c47e914.service": "inactive",
+    "otr-auth-c04-recovery-close-e9309b36-f7b6-43a8-b486-fdcf4c47e914.timer": "inactive",
+    "otr-auth-c04-recovery-close-e9309b36-f7b6-43a8-b486-fdcf4c47e914.service": "inactive"
+  },
+  "safeMemberClaimEvents": []
+}

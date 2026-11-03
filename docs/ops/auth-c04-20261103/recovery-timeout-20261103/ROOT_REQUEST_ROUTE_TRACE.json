@@ -1,0 +1,18 @@
+{
+  "status": "RETAINED_REQUEST_ROUTE_PROJECTION",
+  "candidate": "49dd8f41e0e04d37579b3f6294533bd395b3e2458b68742c3c9e2e2db0c0af8a",
+  "targetInterval": "2026-11-03T06:53:30Z/06:54:50Z",
+  "memberRoutes": [
+    {
+      "timestamp": "2026-11-03T06:54:17.411111189Z",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 202,
+      "durationMs": 18418,
+      "requestId": "caa05eb8-b157-4c06-b415-6ee690635cd4"
+    }
+  ],
+  "otherCounts": {
+    "otherRouteNotPrinted": 14,
+    "health": 3
+  }
+}

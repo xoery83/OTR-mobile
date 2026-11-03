@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import type { MemberClaimQaCase } from "./tripMemberClaimQa";
-import { createMemberClaimQaRecoveryWindowQualifier } from "../../scripts/auth/member-claim-qa-recovery-window";
+import {
+  createMemberClaimQaRecoveryWindowQualifier,
+  createMemberClaimQaResumeWindowQualifier,
+} from "../../scripts/auth/member-claim-qa-recovery-window";
 
 function fixture() {
   const qaCase: MemberClaimQaCase = {
@@ -145,4 +148,45 @@ it("rejects a wider expected recovery window before control IO", () => {
   f.expected.qaCase.closesAt = "2026-11-03T00:30:00Z";
   expect(() => createMemberClaimQaRecoveryWindowQualifier(f.options)).toThrow();
   expect(f.readControl).not.toHaveBeenCalled();
+});
+
+it("qualifies resume only with its distinct write-capable mode, preserving the read-only boundary", async () => {
+  const f = fixture();
+  f.response.status = "AUTH_C04_RESUME_WINDOW_QUALIFIED";
+  f.response.executionMode = "ORIGINAL_ID_RESUME";
+  f.response.businessMutationAuthorized = true;
+  await expect(
+    createMemberClaimQaResumeWindowQualifier(f.options)(f.qaCase),
+  ).resolves.toBeUndefined();
+  await expect(
+    createMemberClaimQaRecoveryWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow();
+});
+it("does not treat an actual read-only qualification as original-ID submission authority", async () => {
+  const f = fixture();
+  await expect(
+    createMemberClaimQaResumeWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow();
+});
+it("rejects valid-shaped plan drift in resume mode", async () => {
+  const f = fixture();
+  f.response.status = "AUTH_C04_RESUME_WINDOW_QUALIFIED";
+  f.response.executionMode = "ORIGINAL_ID_RESUME";
+  f.response.businessMutationAuthorized = true;
+  f.response.planSHA256 = "e".repeat(64);
+  await expect(
+    createMemberClaimQaResumeWindowQualifier(f.options)(f.qaCase),
+  ).rejects.toThrow();
+});
+it("allows at most the existing 30-minute QA envelope for resume without widening the read-only envelope", async () => {
+  const f = fixture();
+  f.expected.qaCase.closesAt = "2026-11-03T00:30:00Z";
+  f.response.qaCase = structuredClone(f.qaCase);
+  f.response.status = "AUTH_C04_RESUME_WINDOW_QUALIFIED";
+  f.response.executionMode = "ORIGINAL_ID_RESUME";
+  f.response.businessMutationAuthorized = true;
+  await expect(
+    createMemberClaimQaResumeWindowQualifier(f.options)(f.qaCase),
+  ).resolves.toBeUndefined();
+  expect(() => createMemberClaimQaRecoveryWindowQualifier(f.options)).toThrow();
 });

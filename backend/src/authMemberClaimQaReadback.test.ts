@@ -12,6 +12,15 @@ const qa = {
   inviteExpiresAt: "2026-11-03T00:10:00Z",
   closesAt: "2026-11-03T00:30:00Z",
 };
+const inviteObservation = () => ({
+  id: randomUUID(),
+  tripId: qa.tripId,
+  personId: qa.personId,
+  targetAccountId: qa.claimantAccountId,
+  status: "PENDING",
+  expiresAt: qa.inviteExpiresAt,
+  observedAt: qa.opensAt,
+});
 const preflight = {
   tripOwnedByA: true,
   ownerPersonLinkedToA: true,
@@ -30,6 +39,40 @@ function fixture() {
   }));
   return { query, port: createMemberClaimQaReadback(qa, query) };
 }
+
+it("reads the exact directed invitation observation through one existing read-only query", async () => {
+  const f = fixture(),
+    invite = inviteObservation();
+  f.query.mockResolvedValue({ rows: [{ result: invite }] });
+  expect(await f.port.readInvite(invite.id)).toEqual(invite);
+  const sql = f.query.mock.calls[0][0];
+  expect(sql).toContain(invite.id);
+  expect(sql).toContain(qa.tripId);
+  expect(sql).toContain(qa.personId);
+  expect(sql).toContain(qa.claimantAccountId);
+  expect(sql).toContain(qa.ownerAccountId);
+  expect(sql).toContain("clock_timestamp()");
+  expect(sql).not.toMatch(/\b(INSERT|UPDATE|DELETE|GRANT|ALTER|token|password|email)\b/i);
+  expect(f.query).toHaveBeenCalledOnce();
+});
+it.each(["targetAccountId", "personId", "id"] as const)(
+  "rejects unrelated invite observation %s without repair",
+  async (key) => {
+    const f = fixture(),
+      invite = inviteObservation();
+    f.query.mockResolvedValue({ rows: [{ result: { ...invite, [key]: randomUUID() } }] });
+    await expect(f.port.readInvite(invite.id)).rejects.toThrow("INVITE_MISMATCH");
+    expect(f.query).toHaveBeenCalledOnce();
+  },
+);
+it("rejects missing invitation and invalid UUID without writing or retrying", async () => {
+  const f = fixture();
+  await expect(f.port.readInvite("../other")).rejects.toThrow();
+  expect(f.query).not.toHaveBeenCalled();
+  f.query.mockResolvedValue({ rows: [{ result: null }] });
+  await expect(f.port.readInvite(randomUUID())).rejects.toThrow();
+  expect(f.query).toHaveBeenCalledOnce();
+});
 
 it("limits preflight to one fixed QA SELECT snapshot with no profile or financial original", async () => {
   const f = fixture();
