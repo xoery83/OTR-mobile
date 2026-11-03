@@ -1,0 +1,23 @@
+{
+  "eventId": "IMP-C01-RUNTIME-PROFILE-20261104-08",
+  "status": "LOCAL_PASS_DEPLOYMENT_PENDING",
+  "trigger": "Root2 actual readback0e3f121a: PDF worker active but config/mount/flag missing; PNG worker timeout and hardcoded Nov1 profile",
+  "changes": "Five schema fields: actor/trip UUIDs from hashed private config for both formats; PNG ISO deadline matches existing PDF mechanism",
+  "preserved": "DEV/project pins, root file owner/mode/nlink/no-follow/hash, exact actor/trip request match, expiry/close, normal bearer/Trip/Source SQL authorization; no new Provider or write grant",
+  "validation": {
+    "tests": 35,
+    "suites": 4,
+    "strictRoots": 4,
+    "eslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "dataPathChecklist": {
+    "ownership": "Runtime configuration only; no business fields changed",
+    "localStorage": "Unchanged",
+    "syncBackendContract": "Existing Source/Core owning ports unchanged",
+    "conflictOfflineBehavior": "Unchanged; config remains default closed and expires",
+    "requiredEvidence": "L2 runtime/request tests PASS; deployment readback and mixed L3 pending",
+    "remainingDelta": "Root1review/main; Root2 closed software deployment plus explicit current profile/mount/readback; Lane C normal E2E"
+  },
+  "deployment": "No migration. Root2 retain current rollback/container/stage; restore original worker, no alternate pipeline. Do not set current actor/trip by guessing old fixture."
+}

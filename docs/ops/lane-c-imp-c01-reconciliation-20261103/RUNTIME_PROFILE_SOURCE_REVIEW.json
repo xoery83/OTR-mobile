@@ -1,0 +1,42 @@
+{
+  "requestId": "IMP-C01-RUNTIME-PROFILE-20261104-08",
+  "status": "NO_BLOCKER_SOURCE_REVIEW_ONLY",
+  "commit": "60bfdc67effc9e50734e10d7ae9cceafb117816b",
+  "mainTarget": "4bafb36f34f3eeb097752fd7e81b90e3304b22d3",
+  "parentMatchesMain": {
+    "backend/src/sourcePdfRuntime.test.ts": true,
+    "backend/src/sourcePdfRuntime.ts": true,
+    "backend/src/sourcePngRuntime.test.ts": true,
+    "backend/src/sourcePngRuntime.ts": true
+  },
+  "scopeSHA256": {
+    "backend/src/sourcePdfRuntime.test.ts": "888611b7eebf8dc928a2780428dcf8328e0d803a431f0c081b82c1fe511fd3a2",
+    "backend/src/sourcePdfRuntime.ts": "00feee54a166329ed3c20222d9be3605f21ad3bb8f2090272103be55982dccb3",
+    "backend/src/sourcePngRuntime.test.ts": "114822b64d7bbb34a80bb63d7d294f8af60f0356bda0ff14a9dbeafa37312ed6",
+    "backend/src/sourcePngRuntime.ts": "78f9f12bba6017dd863231dff255ef69d4011fdc6b7d4a0b027f843837f331ab"
+  },
+  "evidenceSHA256": "0e0500e8bcde5d1ab43feeda97d11ff6880278fe948c1d236f4b06cef1d251d5",
+  "findings": [],
+  "review": [
+    "Production diff changes only five schema fields: PDF/PNG actor+trip UUID validation and PNG finite ISO datetime validation. DEV/project pins and strict-object format remain.",
+    "Root-owned regular file0440/gid999/singlelink/NOFOLLOW, size and exact SHA/env enablement validation unchanged. UUID-valid configuration is not itself execution authority.",
+    "Both runtimes compare actor/trip exactly to the loaded config. Normal bearer and canReadTrip revalidation plus Source operation command/broker/canonical SQL checks remain unchanged; arbitrary caller cannot choose config scope.",
+    "Expiry and explicit close guards remain on metadata/request/IO paths. Current or future config still requires Root2 actual approved profile/hash/mount/ActorTrip/SQL qualification. Old Nov1 Gate is not renewed by this schema patch.",
+    "No Source SQL, policy, GRANT, Provider budget/profile or Host changes included. Existing default-closed behavior retained."
+  ],
+  "validationReused": {
+    "tests": 35,
+    "suites": 4,
+    "strictRoots": 4,
+    "eslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "executionQualification": [
+    "Root2 must independently verify actual configured Actor/Trip identity, fresh Source/Provider/Actor/Price SQL authority and expiry/close/readback before activation.",
+    "No reuse of old expired Gate, no runtime/profile activation approved by this review."
+  ],
+  "notRun": [
+    "No redundant full audit or broad suites.",
+    "No Host/profile/SQL/Provider/device operation."
+  ]
+}

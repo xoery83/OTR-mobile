@@ -1,0 +1,29 @@
+{
+  "request": "IMP-C01-RUNTIME-PROFILE-20261104-08",
+  "candidate": "60bfdc67effc9e50734e10d7ae9cceafb117816b",
+  "base": "47981655f0a6e4a4fc2d55a736f18068f8b22635",
+  "files": {
+    "backend/src/sourcePdfRuntime.ts": "00feee54a166329ed3c20222d9be3605f21ad3bb8f2090272103be55982dccb3",
+    "backend/src/sourcePdfRuntime.test.ts": "888611b7eebf8dc928a2780428dcf8328e0d803a431f0c081b82c1fe511fd3a2",
+    "backend/src/sourcePngRuntime.ts": "78f9f12bba6017dd863231dff255ef69d4011fdc6b7d4a0b027f843837f331ab",
+    "backend/src/sourcePngRuntime.test.ts": "114822b64d7bbb34a80bb63d7d294f8af60f0356bda0ff14a9dbeafa37312ed6"
+  },
+  "fourBeforeImages": "MATCH_CURRENT_MAIN",
+  "independentReview": "NO_BLOCKER_SOURCE_ONLY",
+  "actualMainChecks": "4suites35PASS",
+  "runtimeProfileChanged": false,
+  "sourceOrProviderAuthorityRenewed": false,
+  "deploymentConditions": [
+    "Root2 independently qualifies current actual Actor/Trip and profile",
+    "Private config hash/owner/mode/no-follow plus runtime exact scope/expiry/close remain",
+    "Owning SQL Source/Provider gates must independently allow actual scope; historical expired Gates not reusable"
+  ],
+  "notRun": [
+    "Hosted deployment",
+    "Profile activation",
+    "Source custody write",
+    "Provider call",
+    "Native E2E"
+  ],
+  "integrationBoundary": "Four backend leaves plus scoped receipts, no old CURRENT/manifest"
+}

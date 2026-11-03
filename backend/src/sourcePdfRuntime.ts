@@ -16,8 +16,8 @@ export const sourcePdfRuntimeSchema = z.strictObject({
   enabled: z.literal(true),
   environment: z.literal("DEV"),
   project: z.literal("tuqigdxrvrerfewsxqgm"),
-  actorId: z.literal("f4b059c5-8241-4ffb-aa15-37fa25474543"),
-  tripId: z.literal("825f79b2-4a9d-4535-a62e-43000ca50c4a"),
+  actorId: z.uuid(),
+  tripId: z.uuid(),
   // Deadline remains pinned by the existing root-owned hashed config and owning SQL.
   expiresAt: z.iso.datetime(),
   nodeId: z.uuid(),
