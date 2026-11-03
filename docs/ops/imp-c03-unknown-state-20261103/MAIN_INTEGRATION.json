@@ -1,0 +1,14 @@
+{
+  "status": "MAIN_CONTEXT_LOCAL_PASS_NOT_AI_E2E",
+  "candidate": "d54ff3808df247d5379d988b1d7d145507c72dfb",
+  "integrationCommit": "6ad512c5",
+  "independentReview": "9df71085 / 4aa78c0c",
+  "scope": "Exact UNKNOWN no-candidate projection only; no runtime/backend/Native writer change",
+  "sourceBlobs": "All3 affected source/test blobs equal fixed reviewed candidate",
+  "rootChecks": {
+    "selectedUnknownAndStatusOnly": "2files14PASS48stableSKIPPED",
+    "diffCheck": "PASS"
+  },
+  "externalActions": 0,
+  "next": "Real normal QA Source/AI/native Field Review and ManualSave remain unverified for P3 Form"
+}
