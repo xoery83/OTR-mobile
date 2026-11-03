@@ -1,0 +1,18 @@
+{
+  "action": "STARTED",
+  "event_id": "auth-plat-c06-local-prep-started-20261103-v1",
+  "claim_id": "auth-plat-c06-local-prep-20261103-v1",
+  "lane": "D",
+  "agent": "Auth",
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "worker_id": "auth-identity-delivery-20261103-c03",
+  "worktree": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical",
+  "package_id": "PLAT-C06",
+  "slice_id": "PLAT-C06:LOCAL_PREP",
+  "plan_revision": 2,
+  "expected_revision": 43,
+  "actual_started_at": "2026-11-03T01:35:10.542265+00:00",
+  "summary": "Started fixed-candidate qualification matrix from exact existing evidence; no new global tests, device or Hosted execution",
+  "scope_kind": "SLICE_ONLY",
+  "owner_slice_id": "PLAT-C06:LOCAL_PREP"
+}

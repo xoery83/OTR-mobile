@@ -1,0 +1,149 @@
+{
+  "package": "PLAT-C06",
+  "slice": "PLAT-C06:LOCAL_PREP",
+  "claimId": "auth-plat-c06-local-prep-20261103-v1",
+  "instructionCanonicalSHA256": "73d6d0a1319067f40d322eabf52d9a740dbaacc7e47b69f32bdb7ae122c67bf2",
+  "status": "LOCAL_QUALIFICATION_MATRIX_PREPARED_NOT_BETA_READY",
+  "sourcePins": [
+    {
+      "path": "src/data/sync/syncOperationRepository.ts",
+      "sha256": "a829f09fd8fe8757ba15ed510cc4c6cbb13da469da54e43550bcb6e27322214c",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "src/data/health/dataHealthCoordinator.ts",
+      "sha256": "3c737038541fefde13e50bc799e881572a3a89317b54f318da16fcc769c785f5",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "src/data/db/migrationRunner.ts",
+      "sha256": "47c222de6ec4e99beb33cbb8abbacea91721aa853eb1a443fa31d26beac891fe",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "app/_layout.tsx",
+      "sha256": "5c53efbd4d7428651ecf7de2cd18bfbc8945c672415df4a92016105ff021a874",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "src/features/updates/UpdatesInboxScreen.tsx",
+      "sha256": "f2e0a33105f24d3d5fe039a4814b655679071c438a8075ad6c72b771eb1899a0",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "src/data/repositories/updatesInboxRepository.ts",
+      "sha256": "d041460defcf3bd20ff91a9bc926ab4ea8fff735ad928519e48343c5847d1609",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "app/(tabs)/updates.tsx",
+      "sha256": "73761861e78bfb00ac6052042a6700df0847d2b13853358e6a4241de0ce86e3f",
+      "instructionPinMatches": true
+    },
+    {
+      "path": "src/data/repositories/tripPhotoRepository.ts",
+      "sha256": "2cd3d8c89048f8ab8969920f4009ebb016427810ee3f1eb12af3bee4437aa919",
+      "instructionPinMatches": true
+    }
+  ],
+  "releaseCandidate": {
+    "nativeBuild": null,
+    "nativeGitSHA": null,
+    "sqliteSchema": null,
+    "backendImage": null,
+    "configurationHash": null,
+    "qualification": "No single unified Beta candidate nominated; historical builds/deploy receipts remain separately scoped"
+  },
+  "boundedKnownBaselines": [
+    {
+      "scope": "Auth new fixed A/B scenario LOCAL ONLY",
+      "commit": "a0245ba2",
+      "evidence": "../auth-c04-20261103/finite-qa-candidate/SCENARIO_COMPOSITION_EVIDENCE.json",
+      "qualification": "8focused+independent8/types/lint PASS; real Auth/controller/Hosted NOT_RUN"
+    },
+    {
+      "scope": "Historical Native account switch and cold isolation",
+      "evidence": "../native-04-downstream-20261030/ACCOUNT_SWITCH_E2E.json",
+      "qualification": "Build124 SQLite74; genuine normal OTP A/B; 85 historical queue row hashes preserved; not current release candidate acceptance"
+    },
+    {
+      "scope": "Historical conflict recovery",
+      "evidence": "../native-04-downstream-20261030/PENDING_CONFLICT_CLOSURE.json",
+      "qualification": "Build122 schema74; original CONFLICT retained, one Item and independent receipts; controlled outage not physical network experiment"
+    },
+    {
+      "scope": "Default-closed Backend snapshot",
+      "evidence": "ROOT_CURRENT_DEFAULT_READBACK.json",
+      "qualification": "Timestamped healthy software deployment metadata only; Root subsequent deployment may supersede; does not qualify C04 runtime"
+    }
+  ],
+  "qualificationRows": [
+    {
+      "journey": "Fresh install/login/Guest adoption",
+      "dri": "Auth/Native",
+      "status": "HISTORICAL_SCOPED_PASS_RETAINED_CURRENT_CANDIDATE_NOT_NOMINATED",
+      "remaining": "Reuse exact OTP/Google/Guest Trip/P1 receipts; run only changed release installation/session/adoption risks; Apple remains paused"
+    },
+    {
+      "journey": "Trip/P1-P6/Day Feed/FormAI",
+      "dri": "Native/Core",
+      "status": "OWNING_CANDIDATE_EVIDENCE_REQUIRED",
+      "remaining": "Fixed Native build and actual applicable create/edit/manual-save/field suggestions evidence; no Auth reimplementation or new six-form blanket test"
+    },
+    {
+      "journey": "MCP AI-first Trip and normal consumer",
+      "dri": "MCP/Auth/Core",
+      "status": "OWNING_CURRENT_SESSION_EVIDENCE_REQUIRED",
+      "remaining": "Actual ChatGPT/Claude fresh-session exact scope and operation receipts; limited preview not full consumer write PASS"
+    },
+    {
+      "journey": "Universal Import/Documents/Review/Updates",
+      "dri": "Import/Native",
+      "status": "OWNING_CANDIDATE_EVIDENCE_REQUIRED",
+      "remaining": "Exact source/custody/review/admission/receipt and user-visible recovery evidence; no provider charge or backend runtime change by Auth"
+    },
+    {
+      "journey": "Ledger",
+      "dri": "Ledger/Core/Native",
+      "status": "HISTORICAL_VALID_RANGE_RETAINED_NEW_DELTA_PENDING",
+      "remaining": "Existing financial CAS/idempotency/settlement evidence plus only identity/link/visibility changed ranges; not complexBooking obligation"
+    },
+    {
+      "journey": "Native Members/Invite/Claim/Revoke",
+      "dri": "Auth/Core/Native",
+      "status": "HOSTED_A_B_AND_REVOKE_AND_NATIVE_COLD_NOT_RUN",
+      "remaining": "Owner exact finite activation and Root close/controller; fresh A/B metadata incl linked Ledger history; actual member-revoke authoritative port and qualified cache invalidation"
+    },
+    {
+      "journey": "Automatic cloud/downstream/offline/recovery",
+      "dri": "Native/Sync/Auth",
+      "status": "BOUNDED_HISTORY_ONLY_CURRENT_FIXED_CANDIDATE_PENDING",
+      "remaining": "Reuse known account-switch/conflict receipts; preserve own Pending across current install/cold/reconnect and server-denial generation fences; PrivatePush excluded from Beta prerequisite"
+    },
+    {
+      "journey": "Migration/upgrade/rollback/data safety/capacity",
+      "dri": "Native/Platform/Root",
+      "status": "LOCAL_EVIDENCE_MAP_READY_ACTUAL_QUALIFICATION_PENDING",
+      "remaining": "See SAFETY_CAPACITY_EVIDENCE_MAP.json; actual Beta scale, restore drill, bounded upgrade from/to and no active data destructive restore"
+    },
+    {
+      "journey": "App Updates/notifications",
+      "dri": "Import/Native",
+      "status": "SOURCE_ACCOUNT_SCOPED_IMPLEMENTATION_NOT_DEVICE_ACCEPTANCE",
+      "remaining": "Existing repository account/generation and committed-failure-CAS paths observed; actual candidate visibility/action/current failed source recovery proof needed; no external push requirement"
+    },
+    {
+      "journey": "Service monitoring and allowance",
+      "dri": "Platform/Root",
+      "status": "CURRENT_ACCOUNT_METADATA_MISSING",
+      "remaining": "SERVICE_INVENTORY_PARTIAL.json and OPERATIONS_ENTRY_CONTRACT.json: no fake zeros/connected/admin access; dated authorized redacted quotas/balances/health required"
+    },
+    {
+      "journey": "Owner UX / Beta release",
+      "dri": "Owner + existing domain DRIs",
+      "status": "NOT_REQUESTED_NOT_ACCEPTED",
+      "remaining": "Only request Owner UX once actual fixed candidate is demonstrable, listing build/device/input/expected path/limits. Historical PASS totals do not yield BetaReady"
+    }
+  ],
+  "scopeLimit": "This is the MC-approved LOCAL_PREP qualification checklist, not a new global gate, re-audit, full regression execution or reallocation of domain ownership. No new device, Hosted/SQL/Provider/Production action."
+}
