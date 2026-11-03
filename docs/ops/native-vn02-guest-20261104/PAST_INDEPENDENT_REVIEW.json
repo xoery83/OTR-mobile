@@ -1,0 +1,27 @@
+{
+  "candidate": "db16f255",
+  "reviewer": "/root/narrow_version_review",
+  "verdict": "NO_BLOCKER",
+  "scope": "4 production files and4 test files only; excludes separately uncommitted P1 editor changes at review time",
+  "checks": [
+    "Existing localManual+Snapshot selector only",
+    "PENDING and typed localSource/fingerprint, epoch/certnull",
+    "Account default keeps original certificate path",
+    "Fresh callback read checks account/generation/source/itemRevision",
+    "No Queue/Schema/Authority or Hosted change"
+  ],
+  "testResult": "Independent4suites108PASS; author224 and scopedtypes reused",
+  "reviewLogSha256": "1d620e7e4f29ae53ff64766745a91a10ec5b833a9aadecf690637585f1070607",
+  "reviewLogPath": "/private/tmp/otr-vn02-pastsnapshot-review.log",
+  "fileSha256": {
+    "src/data/auth/guestLocalJourneySnapshot.test.ts": "1b548379a68b30f4267d212530ee6a6a70de27a3a553f4f304a65514483bbd96",
+    "src/data/auth/guestLocalWorkspace.ts": "26eab0891322e307d8c456faeddf9e66dd725c2f8757e0a69f0c9fc3012bddad",
+    "src/data/repositories/tripJourneySnapshotRepository.test.ts": "dfbb7d3e17fdddfcf197bae963c0c6d187e5d09e93096ef8ab882eb3b51911d8",
+    "src/data/repositories/tripJourneySnapshotRepository.ts": "7910cfa99d2e7697f2285096ef79e76e0942c20ed26205443069426d997e194a",
+    "src/features/day-feed/JourneySnapshotWidget.test.ts": "64e6360391574f429c1e03b9ae31a9d9236a2d3b28512cc8aeb3142e13d29942",
+    "src/features/day-feed/JourneySnapshotWidget.tsx": "b3274c6e7c132ffe16627cc41210903728c32a339bc907f7865c35a57cd4c4f1",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts": "b10016eed67d60c35ca738a0bf854d379022c4a06ce505bf05b6dc2fe525941a",
+    "src/features/day-feed/TripScreen.tsx": "fd00fff295e2949f183b53409ba95e251fc269292daf4bbd92d9ec4b7c422b29"
+  },
+  "deviceHosted": "NOT_RUN"
+}

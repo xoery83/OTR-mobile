@@ -1,3 +1,4 @@
+import { getAccountGeneration } from "../auth/accountGeneration";
 import { expect, it, vi } from "vitest";
 import { DatabaseSync } from "node:sqlite";
 import { createHash, randomUUID } from "node:crypto";
@@ -8,7 +9,8 @@ import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
-import { readTripJourneySnapshot } from "./tripJourneySnapshotRepository";
+import { readTripJourneySnapshot, createTripJourneySnapshotReader } from "./tripJourneySnapshotRepository";
+import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
 import { requireActiveUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
@@ -21,7 +23,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
   probeRetainedTripPhotoIdentity: vi.fn(),
   discardRetainedTripPhoto: vi.fn(),
 }));
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn(), readCommittedLocalPrincipal: vi.fn(async () => null) }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 it("normal reader requires installed certificates, counts whole Trip, and rechecks cold/stale/revoked/Account authority at tap", async () => {
   const folder = mkdtempSync(join(tmpdir(), "otr-journey-snapshot-")),
@@ -185,4 +187,39 @@ it("normal reader requires installed certificates, counts whole Trip, and rechec
     sql.close();
     rmSync(folder, { recursive: true, force: true });
   }
+});
+
+
+it("merges an explicitly injected local draft with the existing display source, de-duplicates targets and rejects changed source/foreign scope", async () => {
+  // Consumer-only fixture: these inputs are not an installed certificate or server authorization.
+  const accountId = randomUUID(), tripId = randomUUID(), first = randomUUID(), second = randomUUID();
+  const scope = { accountId, tripId, generation: getAccountGeneration() };
+  const actor = { accountId, tripId, active: true, canManageShared: true, personId: null, personIds: [] };
+  let graph = emptyCoreGraph();
+  for (const id of [first, second]) graph = applyCoreCommand(graph, {
+    contractVersion: 2, intentVersion: 2, operationId: randomUUID(), tripId, command: "CREATE_ITEM",
+    target: { kind: "ITEM", id }, baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { family: "P1", core: { title: id === first ? "Old title" : "Unchanged item" }, schedule: { start: coreDateBoundary("2026-10-20") }, ...coreDefaults("member") },
+  }, actor, "2026-10-20T00:00:00Z").graph;
+  const certificate = { epoch: randomUUID(), roster_hash: "fixture-roster" };
+  const display = { graph, actor, certificate, participatingPersonIds: [] };
+  const read = vi.fn(async () => display);
+  const core = { captureContext: async () => scope, acceptedSnapshot: read } as any;
+  const item = projectCoreItem(graph, actor, first, { rosterHash: certificate.roster_hash, participatingPersonIds: [] })!;
+  const manual = {
+    scope, source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "local-version" },
+    items: [{ ...item, title: "Current local title", localState: "PENDING" }],
+    hasPendingItem: (id: string) => id === first,
+  } as any;
+  const reader = createTripJourneySnapshotReader(core, async () => ({ id: tripId, name: "Trip", startDate: null, endDate: null }), async () => accountId, async () => manual);
+  const value = await reader.read(tripId);
+  expect(value?.snapshot.itemCount).toBe(2);
+  expect(value?.snapshot.tags.filter((tag) => tag.itemId === first)).toHaveLength(1);
+  expect(value?.snapshot.tags.find((tag) => tag.itemId === first)?.title).toBe("Current local title");
+  expect((await reader.resolveItem(tripId, first, certificate.epoch))?.localSource?.source.fingerprint).toBe("local-version");
+  read.mockResolvedValueOnce(display).mockResolvedValueOnce({ ...display, certificate: { ...certificate, epoch: randomUUID() } });
+  await expect(reader.read(tripId)).rejects.toThrow("SNAPSHOT_SOURCE_CHANGED");
+  manual.scope = { ...scope, accountId: randomUUID() };
+  await expect(reader.read(tripId)).rejects.toThrow("SNAPSHOT_MANUAL_SCOPE");
 });

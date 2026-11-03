@@ -452,8 +452,9 @@ function TripContent({
         setTrip(result);
         setStatus(result.observed || result.localManual ? "READY" : "UNAVAILABLE");
         if (
-          result.observed?.projection.version === 2 &&
-          result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
+          (result.observed?.projection.version === 2 &&
+            result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE") ||
+          (isGuest && result.localManual?.scope.tripId === requested)
         ) {
           const snapshot = await readTripJourneySnapshot()
             .then((reader) => reader.read(requested))
@@ -463,7 +464,13 @@ function TripContent({
             snapshot?.scope.accountId === result.scope.accountId &&
             snapshot.scope.tripId === requested &&
             snapshot.scope.generation === captured &&
-            snapshot.epoch === result.observed.projection.source.epoch
+            (isGuest
+              ? snapshot.epoch === null && !!snapshot.localSource && !!result.localManual &&
+                snapshot.localSource.scope.accountId === result.scope.accountId &&
+                snapshot.localSource.scope.tripId === requested &&
+                snapshot.localSource.scope.generation === captured &&
+                snapshot.localSource.source.fingerprint === result.localManual.source.fingerprint
+              : result.observed?.projection.version === 2 && snapshot.epoch === result.observed.projection.source.epoch)
           )
             setHomeSnapshot(snapshot);
           else setHomeSnapshot(null);
@@ -849,7 +856,20 @@ function TripContent({
             homeProjection.query(date, zone),
           )?.zone ?? null)
         : null;
-  const reviewItinerary = reviewZone
+  const reviewItinerary = guest
+    ? async ({ scope, epoch, candidateDays, localSource }: Pick<SnapshotRead, "scope" | "epoch" | "candidateDays" | "localSource">) => {
+        if (!localSource || localSource.source.fingerprint !== homeSnapshot?.localSource?.source.fingerprint ||
+            epoch !== null || scope.accountId !== localSource.scope.accountId || scope.tripId !== requested)
+          throw Error("LOCAL_NAV_SCOPE");
+        const result = await freshLocalRead(localSource);
+        const date = candidateDays[0];
+        if (!date || !homeSnapshot?.candidateDays.includes(date)) throw Error("HOME_HEADER_UNAVAILABLE");
+        setTrip(result);
+        const context = viewContext(date, reviewZone || { zone: null, viewMode: "FLOATING" });
+        enterHeader({ tripId: requested, ...context, generation }, "FIRST_VALID_PAST_DAY_HEADER");
+        router.setParams({ tripId: requested, date, zone: context.zone ?? "", viewMode: context.viewMode, view: "day" });
+      }
+    : reviewZone
     ? async ({
         scope,
         epoch,
@@ -913,6 +933,21 @@ function TripContent({
     router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId } });
   };
   const openHomeItem = async (value: SnapshotItem) => {
+    if (guest) {
+      const expected = value.localSource;
+      if (!expected || expected.source.fingerprint !== visibleTrip?.localManual?.source.fingerprint ||
+          expected.source.fingerprint !== homeSnapshot?.localSource?.source.fingerprint ||
+          value.certificate || value.item.localState !== "PENDING" ||
+          value.scope.accountId !== expected.scope.accountId || value.scope.tripId !== expected.scope.tripId ||
+          value.scope.generation !== expected.scope.generation)
+        throw Error("LOCAL_NAV_SCOPE");
+      const result = await freshLocalRead(expected);
+      const current = result.localManual?.items.find((item) => item.itemId === value.item.itemId && item.itemRevision === value.item.itemRevision);
+      if (!current || current.hidden || ["cancelled", "skipped"].includes(String(current.status)))
+        throw Error("LOCAL_ITEM_UNAVAILABLE");
+      setTrip(result);
+      return openLocalItem(current.itemId, expected);
+    }
     const itemRevision = value.item.itemRevision;
     if (
       typeof itemRevision !== "number" ||
@@ -1070,14 +1105,20 @@ function TripContent({
         },
       ];
     if (lifecycle !== "Past") return [];
-    if (
+    const guestSnapshot = guest && !!homeSnapshot?.localSource && !!visibleTrip?.localManual && homeSnapshot.epoch === null &&
+      homeSnapshot.scope.accountId === visibleTrip?.scope.accountId &&
+      homeSnapshot.scope.tripId === requested && homeSnapshot.scope.generation === generation &&
+      homeSnapshot.localSource.scope.accountId === visibleTrip.scope.accountId &&
+      homeSnapshot.localSource.scope.tripId === requested && homeSnapshot.localSource.scope.generation === generation &&
+      homeSnapshot.localSource.source.fingerprint === visibleTrip.localManual.source.fingerprint;
+    if (!guestSnapshot && (
       visibleTrip?.observed?.projection.version !== 2 ||
       visibleTrip.observed.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
       !homeSnapshot ||
       homeSnapshot.scope.generation !== generation ||
       homeSnapshot.scope.tripId !== requested ||
       homeSnapshot.epoch !== visibleTrip.observed.projection.source.epoch
-    )
+    ))
       return [];
     return [
       {

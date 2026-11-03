@@ -49,7 +49,7 @@ export function JourneySnapshotWidget({
   copy: JourneySnapshotCopy;
   onOpenItem: (item: Item) => Promise<void> | void;
   onReviewItinerary?: (
-    context: Pick<Read, "scope" | "epoch" | "candidateDays">,
+    context: Pick<Read, "scope" | "epoch" | "candidateDays" | "localSource">,
   ) => Promise<void> | void;
 }) {
   useUiLocale();
@@ -108,7 +108,12 @@ export function JourneySnapshotWidget({
       const reader = await readTripJourneySnapshot();
       const current = await reader.resolveItem(tripId, itemId, visible.epoch);
       if (generation !== getAccountGeneration() || request.current !== ticket) return;
-      if (!current) {
+      if (!current || (visible.localSource && (
+        current.localSource?.scope.accountId !== visible.localSource.scope.accountId ||
+        current.localSource.scope.tripId !== tripId ||
+        current.localSource.scope.generation !== generation ||
+        current.localSource.source.fingerprint !== visible.localSource.source.fingerprint
+      ))) {
         setRead(null);
         setState("UNAVAILABLE");
         return;
@@ -128,7 +133,12 @@ export function JourneySnapshotWidget({
       const reader = await readTripJourneySnapshot();
       const current = await reader.read(tripId);
       if (generation !== getAccountGeneration() || request.current !== ticket) return;
-      if (!current || current.epoch !== visible.epoch) {
+      if (!current || current.epoch !== visible.epoch || (visible.localSource && (
+        current.localSource?.scope.accountId !== visible.localSource.scope.accountId ||
+        current.localSource.scope.tripId !== tripId ||
+        current.localSource.scope.generation !== generation ||
+        current.localSource.source.fingerprint !== visible.localSource.source.fingerprint
+      ))) {
         setRead(null);
         setState("UNAVAILABLE");
         return;
@@ -137,6 +147,7 @@ export function JourneySnapshotWidget({
         scope: current.scope,
         epoch: current.epoch,
         candidateDays: current.candidateDays,
+        ...(current.localSource ? { localSource: current.localSource } : {}),
       });
     } catch {
       if (generation === getAccountGeneration() && request.current === ticket) {

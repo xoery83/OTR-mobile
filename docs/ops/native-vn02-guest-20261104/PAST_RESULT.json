@@ -1,0 +1,26 @@
+{
+  "request": "VISION-VN02-R1-GUEST-ACCESS-20261104-002",
+  "status": "LOCAL_REVIEWED_DEVICE_PENDING",
+  "actual_failure": "Guest legacy P1 is present in existing LocalManualRead but absent from combined Core Snapshot; original JourneySnapshotReader returned null",
+  "reuse": "Existing SnapshotReader optional Guest-only LocalManualRead fallback and existing selectJourneySnapshot; Account default unchanged",
+  "source": "Typed LOCAL_MANUAL_COMMITTED scope/fingerprint, epoch/certificate null; no invented Core graph, Actor or Accepted authority",
+  "navigation": "Widget fresh read/source check; TripScreen normal freshLocalRead and same Item/revision/owner/generation guards; floating day retained when zone unknown",
+  "validation": {
+    "author": "5suites224PASS including originalGuest116; scoped8entrytypes/lint/uiGuard",
+    "independent": "NO_BLOCKER /4suites108PASS; Account cert/revoke and real Guest disk tests",
+    "parent": "Read production projection and callback diff; no extra Authority or queue",
+    "scope_cases": [
+      "Guestempty/P1/cold/unchangedIDs",
+      "scope/freeze/AccountSwitch",
+      "mixedPendingDedup/sourceDrift",
+      "staleFingerprint/revision/removedItem/generation rejected"
+    ]
+  },
+  "not_claimed": [
+    "Actual device Snapshot visual",
+    "Hosted/Cloud E2E",
+    "New Finance permission or fabricated zero summary"
+  ],
+  "deviceActions": 0,
+  "hostedActions": 0
+}

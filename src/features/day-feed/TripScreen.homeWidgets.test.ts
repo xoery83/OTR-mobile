@@ -2008,7 +2008,7 @@ it("Guest mounts the existing Today widget through its real local Reader adapter
     pathname: "/p1-detail",
     params: { tripId: reference, itemId: "guest-plan", occurrence: "START" },
   });
-  expect(state.snapshotRead).not.toHaveBeenCalled();
+  expect(state.snapshotRead).toHaveBeenCalled();
   expect(workspace.widgetsForHome("other-trip", "Active")).toEqual([]);
   expect(workspace.widgetsForHome(reference, "Past")).toEqual([]);
 });
@@ -2033,7 +2033,7 @@ it("Guest empty local Day produces the existing truthful FREE state without an a
     tonight: null,
   });
   expect(read.source.kind).toBe("LOCAL_MANUAL_COMMITTED");
-  expect(state.snapshotRead).not.toHaveBeenCalled();
+  expect(state.snapshotRead).toHaveBeenCalled();
 });
 it.each(["GUEST", "ACCOUNT", "generation"])(
   "Guest Today rejects late local results after a %s switch",
@@ -2122,4 +2122,46 @@ it("publishes an acknowledged remote revision before an unrelated Home snapshot 
     release?.(state.snapshot);
     await new Promise<void>((resolve) => setImmediate(resolve));
   }
+});
+
+
+function guestPastRead() {
+  const local = guestRead();
+  state.view.zone = "";
+  state.snapshot = {
+    scope: local.scope, trip: { id: reference, name: "Guest Trip", startDate: "2026-10-16", endDate: "2026-10-17" },
+    epoch: null, localSource: { scope: local.scope, source: local.source },
+    candidateDays: ["2026-10-16", "2026-10-17"],
+    snapshot: { days: 2, activities: 1, places: null, itemCount: 1, tags: [{ itemId: "guest-plan", family: "P1", title: "Guest saved plan", slot: 0 }] },
+  };
+  return local;
+}
+it("Guest Past mounts the original Snapshot and uses normal local P1 and Floating Day callbacks", async () => {
+  const local = guestPastRead();
+  const p = page(await loaded());
+  expect(p.content.type).toBe(JourneySnapshotWidget);
+  await p.content.props.onOpenItem({ scope: local.scope, certificate: null, localSource: { scope: local.scope, source: local.source }, item: local.items[0] });
+  expect(state.push).toHaveBeenCalledWith({ pathname: "/p1-detail", params: { tripId: reference, itemId: "guest-plan", occurrence: "START" } });
+  await p.content.props.onReviewItinerary({ scope: local.scope, epoch: null, localSource: { scope: local.scope, source: local.source }, candidateDays: state.snapshot.candidateDays });
+  expect(state.params).toHaveBeenCalledWith(expect.objectContaining({ view: "day", date: "2026-10-16", zone: "", viewMode: "FLOATING" }));
+  expect(state.resolveDay).not.toHaveBeenCalled();
+});
+it.each(["fingerprint", "revision", "removed", "generation"])("Guest Past rejects stale %s detail callbacks", async (kind) => {
+  const local = guestPastRead();
+  const p = page(await loaded());
+  const value = { scope: { ...local.scope }, certificate: null, localSource: { scope: { ...local.scope }, source: { ...local.source } }, item: { ...local.items[0] } };
+  state.result = { ...state.result, localManual: { ...local, source: { ...local.source }, items: local.items.map((item: any) => ({ ...item })) } };
+  if (kind === "fingerprint") state.result.localManual.source.fingerprint = "new-source";
+  if (kind === "revision") state.result.localManual.items[0].itemRevision++;
+  if (kind === "removed") state.result.localManual.items = [];
+  if (kind === "generation") state.liveGeneration++;
+  await expect(p.content.props.onOpenItem(value)).rejects.toThrow();
+  expect(state.push).not.toHaveBeenCalled();
+});
+it.each(["foreign", "fingerprint", "generation"])("Guest Past withholds an unbound %s snapshot", async (kind) => {
+  guestPastRead();
+  if (kind === "foreign") state.snapshot.localSource.scope = { ...state.snapshot.scope, accountId: "foreign" };
+  if (kind === "fingerprint") state.snapshot.localSource.source = { ...state.snapshot.localSource.source, fingerprint: "wrong" };
+  if (kind === "generation") state.snapshot.scope = { ...state.snapshot.scope, generation: 4 };
+  expect(page(await loaded())).toBeUndefined();
 });

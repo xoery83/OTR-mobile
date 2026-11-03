@@ -160,3 +160,42 @@ it("dispatches the current authorized Item separately from full-itinerary intent
   state.generation = 2;
   expect(render(props)).not.toContain("Long current activity title");
 });
+
+it.each(["item", "review"])("rejects a changed local fingerprint before the %s callback", async (action) => {
+  const localSource = { scope, source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "rendered-local" } };
+  state.reader.read.mockResolvedValue({ ...observed, epoch: null, localSource });
+  const onOpenItem = vi.fn(), onReviewItinerary = vi.fn();
+  const props = { tripId: "trip", copy, onOpenItem, onReviewItinerary };
+  render(props);
+  state.effects[0]();
+  await vi.waitFor(() => expect(state.reader.read).toHaveBeenCalled());
+  render(props);
+  const changed = { ...localSource, source: { ...localSource.source, fingerprint: "changed-local" } };
+  if (action === "item") {
+    state.reader.resolveItem.mockResolvedValue({ scope, certificate: null, item: { itemId: "item", localState: "PENDING" }, localSource: changed });
+    state.presses.find((press) => press.accessibilityLabel === "Long current activity title").onPress();
+  } else {
+    state.reader.read.mockResolvedValue({ ...observed, epoch: null, localSource: changed });
+    state.presses.find((press) => press.accessibilityLabel === copy.review).onPress();
+  }
+  await vi.waitFor(() => expect(render(props)).toContain("Unavailable"));
+  expect(onOpenItem).not.toHaveBeenCalled();
+  expect(onReviewItinerary).not.toHaveBeenCalled();
+});
+
+it("preserves null epoch and local provenance in the normal Snapshot callbacks", async () => {
+  const localSource = { scope, source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "local" } };
+  state.reader.read.mockResolvedValue({ ...observed, epoch: null, localSource });
+  const item = { scope, certificate: null, item: { itemId: "item", localState: "PENDING" }, localSource };
+  state.reader.resolveItem.mockResolvedValue(item);
+  const onOpenItem = vi.fn(), onReviewItinerary = vi.fn();
+  const props = { tripId: "trip", copy, onOpenItem, onReviewItinerary };
+  render(props);
+  state.effects[0]();
+  await vi.waitFor(() => expect(state.reader.read).toHaveBeenCalled());
+  render(props);
+  state.presses.find((press) => press.accessibilityLabel === "Long current activity title").onPress();
+  await vi.waitFor(() => expect(onOpenItem).toHaveBeenCalledExactlyOnceWith(item));
+  state.presses.find((press) => press.accessibilityLabel === copy.review).onPress();
+  await vi.waitFor(() => expect(onReviewItinerary).toHaveBeenCalledWith({ scope, epoch: null, candidateDays: observed.candidateDays, localSource }));
+});
