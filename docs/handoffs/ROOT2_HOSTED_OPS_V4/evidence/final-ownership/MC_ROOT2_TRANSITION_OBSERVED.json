@@ -1,0 +1,50 @@
+{
+  "status": "POST_TRANSFER_VERIFIED_OPERATIONS_OWNER",
+  "current_owner": "Root2",
+  "target_owner": "Root2",
+  "receiver_acceptance_event_id": "root2-hosted-writer-accepted-v4-20261103-01",
+  "resource_transfer_evidence": "386cb0dfc09b7fd9980f0a645363923beb14e464",
+  "prepared_candidate": "f61c7030",
+  "designated_thread_id": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "prepared_source": {
+    "path": "docs/v4/sources/ROOT2_PREPARED_REPORT.json",
+    "sha256": "5aa4865e28edcdcaa3630be430f8bdc9ddf033c5c3fc86786a979bffd29a2889"
+  },
+  "required_sequence": [
+    "Independent fixed-package verification",
+    "Root1 release",
+    "Root2 actual accept",
+    "MC source-verified registration"
+  ],
+  "previous_owner": "Root1",
+  "previous_owner_release": {
+    "event_id": "root1-hosted-writer-release-v4-20261103-01",
+    "commit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+    "source": {
+      "path": "docs/v4/sources/ROOT1_HOSTED_RELEASE.json",
+      "sha256": "c05d15279a62e42e741ca7249f9e5198f80c4589ce00d580baa8a20caf733798"
+    }
+  },
+  "registered_ops_owner": "Root2",
+  "fixed_acceptance_source": {
+    "path": "docs/v4/sources/ROOT2_FIXED_ACCEPTANCE.json",
+    "sha256": "264fd3cc6697611b295c23dc553ef737ce4956602324544cc0777506b4038639"
+  },
+  "mc_registration": {
+    "path": "docs/v4/ROOT2_OWNERSHIP_ACK.json",
+    "sha256": "446548b4e0b7876463dd5441e947856c10d46d0be8420dd8b888a405f37a4110"
+  },
+  "current_executable_writer": "Root2_WITH_TASK_SPECIFIC_AUTHORITY",
+  "writes_enabled": false,
+  "transition_freeze": false,
+  "writer_assignment_active": true,
+  "task_specific_authority_required": true,
+  "post_transfer_source": {
+    "path": "docs/v4/sources/ROOT2_POST_TRANSFER_VERIFIED.json",
+    "sha256": "9f1f3a85e3157990599dc1a299bcadf16d32eca154a9de0fbd4227c4c819634e"
+  },
+  "final_registration": {
+    "path": "docs/v4/ROOT2_OWNERSHIP_FINAL_ACK.json",
+    "sha256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72"
+  }
+}

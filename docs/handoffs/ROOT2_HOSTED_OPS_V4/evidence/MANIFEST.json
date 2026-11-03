@@ -119,6 +119,24 @@
       "bytes": 9245,
       "sha256": "b7f8ed6d057ffd7fb09ee5c4082be986f330baa79b9ca9cac1789d18e53a49af",
       "origin": "Root2 post-registration independent no-business-write readback or observed MC registration ACK"
+    },
+    {
+      "path": "FINAL_OWNERSHIP_OBSERVED.json",
+      "bytes": 1973,
+      "sha256": "cbef44bd5d5edfaa588e830cb6b91df5d62584b1734ee164271633c26d5b5c08",
+      "origin": "Root2 independent final MC ownership observation; does not create action authority"
+    },
+    {
+      "path": "evidence/final-ownership/MC_ROOT2_TRANSITION_OBSERVED.json",
+      "bytes": 1968,
+      "sha256": "d50d10c6548306b018e7931ff121a6df0439d37ff28c7507abf53574086d4392",
+      "origin": "Root2 independent final MC ownership observation; does not create action authority"
+    },
+    {
+      "path": "evidence/final-ownership/MC_FINAL_ACK_OBSERVED.json",
+      "bytes": 1931,
+      "sha256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
+      "origin": "Root2 independent final MC ownership observation; does not create action authority"
     }
   ],
   "containsCredentials": false

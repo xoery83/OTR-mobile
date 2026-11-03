@@ -1,0 +1,37 @@
+{
+  "event_id": "root2-hosted-post-transfer-verified-v4-20261103-01",
+  "ack_status": "VERIFIED_SAME_RESOURCE_UNIQUE_HOSTED_OPS_OWNER",
+  "registered_at": "2026-11-03T10:31:12.975Z",
+  "registered_ops_owner": "Root2",
+  "current_writer": "Root2",
+  "root1_hosted_writer_released": true,
+  "transition_freeze": false,
+  "task_specific_authority_required": true,
+  "protected_business_authority_granted": false,
+  "initial_registration": {
+    "path": "docs/v4/ROOT2_OWNERSHIP_ACK.json",
+    "sha256": "446548b4e0b7876463dd5441e947856c10d46d0be8420dd8b888a405f37a4110"
+  },
+  "release_event_id": "root1-hosted-writer-release-v4-20261103-01",
+  "acceptance_event_id": "root2-hosted-writer-accepted-v4-20261103-01",
+  "release_commit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "acceptance_commit": "200a2aa61f22c432b31aed5ab44affb0fa945ef3",
+  "post_transfer_commit": "386cb0dfc09b7fd9980f0a645363923beb14e464",
+  "resource": {
+    "environment": "DEV",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "service": "otr-dev-backend",
+    "container": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc"
+  },
+  "post_transfer_source": {
+    "path": "docs/v4/sources/ROOT2_POST_TRANSFER_VERIFIED.json",
+    "sha256": "9f1f3a85e3157990599dc1a299bcadf16d32eca154a9de0fbd4227c4c819634e"
+  },
+  "limits": [
+    "OAuth console OFF/Site URL/DCR current values UNKNOWN; existing historical proof not refreshed",
+    "Scoped point-in-time metadata, not complete schema/global session/business UNKNOWN certification",
+    "No deployment/restart/config write/SQL mutation/business/Provider call or rollback drill"
+  ],
+  "required_before_any_action": "Root2 reads final fixed MC record; each operation requires its own exact valid Packet/Gate, current CAS/preimage, resource lock and rollback/close conditions. No task is started by this ACK."
+}

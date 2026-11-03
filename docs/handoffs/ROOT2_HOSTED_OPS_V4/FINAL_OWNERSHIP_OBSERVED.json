@@ -1,0 +1,41 @@
+{
+  "status": "ROOT2_UNIQUE_HOSTED_OPS_OWNER_FINAL_ACK_OBSERVED",
+  "observedAt": "2026-11-03T10:32:34.859908+00:00",
+  "eventId": "root2-final-ownership-observed-v4-20261103-01",
+  "mcAckSHA256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
+  "mcHeadObserved": "248a907ac0d3f16807dc462f43da508f41f39fa1",
+  "mcFixedAckVerified": false,
+  "mcFixedCommit": null,
+  "durability": "MC_WORKTREE_ONLY_PENDING_FIXED_COMMIT",
+  "owner": "Root2",
+  "receiverThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "releaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "acceptanceCommit": "200a2aa61f22c432b31aed5ab44affb0fa945ef3",
+  "postTransferCommit": "386cb0dfc09b7fd9980f0a645363923beb14e464",
+  "resource": {
+    "environment": "DEV",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "service": "otr-dev-backend",
+    "container": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc"
+  },
+  "transitionFreeze": false,
+  "root1HostedMutationsAllowed": false,
+  "taskSpecificAuthorityRequired": true,
+  "newBusinessAuthority": false,
+  "anyReadyProtectedTaskEstablished": false,
+  "hostedMutationAllowedNow": false,
+  "actionEligibility": "No operation starts from ownership ACK. Read final fixed MC record before actual Ops; each task needs exact valid Release Packet/Gate, fresh resource CAS, short lock and close/rollback conditions.",
+  "remaining": [
+    "MC fixed commit and exact-byte confirmation"
+  ],
+  "scopeExclusions": [
+    "Core/main/schema design retained by Root1",
+    "Business Source/Task/Custody lifecycle and E2E remain owning Lane responsibility",
+    "No new OAuth/Apply/paidProvider/arbitrarySQL/Production or Native/Vision authority"
+  ],
+  "knownLimits": [
+    "OAuth console current values remain UNKNOWN",
+    "Prior post-transfer readback is scoped point-in-time; refresh affected preimages before later operation"
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "status": "POST_TRANSFER_VERIFIED_PENDING_MC_FINAL_RECORD",
+  "status": "ROOT2_UNIQUE_OPS_OWNER_PENDING_MC_FIXED_COMMIT",
   "resource": "DEV tuqigdxrvrerfewsxqgm /178.105.151.143 /otr-dev-backend /runtime and protected install execution",
   "writer": "Root2 01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
   "receiver": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
@@ -21,5 +21,10 @@
   "mcOwnershipAckSHA256": "446548b4e0b7876463dd5441e947856c10d46d0be8420dd8b888a405f37a4110",
   "mcOwnershipAckDurability": "WORKTREE_OBSERVED_NOT_COMMIT_CONFIRMED",
   "postTransferEventId": "root2-hosted-post-transfer-verified-v4-20261103-01",
-  "postTransferVerifiedAt": "2026-11-03T10:28:37.883713+00:00"
+  "postTransferVerifiedAt": "2026-11-03T10:28:37.883713+00:00",
+  "mcFinalOwnershipAckSHA256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
+  "mcFinalAckFixedCommit": null,
+  "mcFinalAckDurability": "MC_WORKTREE_ONLY_PENDING_FIXED_COMMIT",
+  "transitionFreeze": false,
+  "taskSpecificAuthorityRequired": true
 }

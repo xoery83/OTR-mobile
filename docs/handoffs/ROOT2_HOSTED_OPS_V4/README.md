@@ -1,6 +1,6 @@
 # Root1 → Root2 Hosted Operations V4
 
-Status: **POST_TRANSFER_VERIFIED; Hosted writes FROZEN pending MC final ownership record.**
+Status: **Root2 unique Hosted Ops Owner observed in final MC ACK; MC fixed-commit durability remains pending. No task execution enabled.**
 Root2 independently verified e179481e at10:19–10:20Z, with no unexplained drift or active scoped window. See WRITER_STATE and evidence/ROOT2_READ_ONLY_VERIFIED.json. Root1 performs no further Hosted mutation.
 Receiving chat: **OTR-ROOT2-HOSTED-OPS**, `01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232`.
 The other chat titled Root2 created that receiver; it is not a second resource owner.
@@ -38,3 +38,5 @@ Do not infer root access from this document. Existing machine-local authenticati
 Root2 acceptance is fixed in `ROOT2_HOSTED_WRITER_ACCEPTED.json`, bound to Root1 release9e411ee8 and independent verificatione179. Responsibility acceptance grants no business or standing protected-action authority.
 
 Post-registration no-business check is fixed in `POST_TRANSFER_VERIFIED.json`; the observed MC ACK names Root2 but keeps mutations false. No Hosted write is enabled by this readback alone.
+
+Latest MC final ACK/durability is recorded in `FINAL_OWNERSHIP_OBSERVED.json`; no business permission or READY protected task is established.

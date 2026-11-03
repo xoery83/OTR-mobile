@@ -1,6 +1,6 @@
 # Root2 Hosted ownership acceptance — 3 November 2026
 
-Root2 accepted same DEV Hosted resources after Root1 release9e411ee8 and independent verificatione179 (33 checks). MC registration ACK independently observed; subsequent no-business health/default-close/lock/timer/scoped PG readback is POST_TRANSFER_VERIFIED. Hosted writes remain FROZEN pending MC final committed ownership record. No deployment, restart, config/SQL/business/Provider operation occurred. See `handoffs/ROOT2_HOSTED_OPS_V4/ROOT2_HOSTED_WRITER_ACCEPTED.json`. Root1 retains Core/schema design/main; all exact action Gates remain separate.
+Root2 accepted same DEV Hosted resources after Root1 release9e411ee8 and independent verificatione179 (33 checks). MC registration ACK independently observed; subsequent no-business health/default-close/lock/timer/scoped PG readback is POST_TRANSFER_VERIFIED. Final MC ACK assigns unique Hosted Ops ownership to Root2 and clears the transfer freeze, but fixed-commit durability remains pending; no task is authorized or started. No deployment, restart, config/SQL/business/Provider operation occurred. See `handoffs/ROOT2_HOSTED_OPS_V4/ROOT2_HOSTED_WRITER_ACCEPTED.json`. Root1 retains Core/schema design/main; all exact action Gates remain separate.
 
 # Hosted Operations V4 transfer — 3 November 2026
 
