@@ -1,0 +1,30 @@
+{
+  "status": "SCOPED_NO_BLOCKER_FOR_PREPARING_UPDATED_GATE_NOT_EXECUTION",
+  "root2ReceiptCommit": "01df9867dab92116e5affce8359126e229ac3b41",
+  "newSource": "4c8d0fd9dc4d0210f02b6bfaace5ced0f59f454a",
+  "authManifestMatches": 9,
+  "sourceReviewHashes": "2/2 Core leaf hashes match independent review",
+  "inspectedNonTestSourceDelta": [
+    "src/data/operations/universalP3FormInterpretation.ts",
+    "src/domain/trip/tripCoreV2Commands.ts",
+    "src/domain/trip/tripCoreV2Mutation.ts"
+  ],
+  "scopeClarification": "Git source range also contains one client form UNKNOWN projection fix. Only-two-source-files claim is not true across whole tree. Root2 normalized two-Core-leaf overlay versus full main bundle equivalence reused for deployed bundle scope.",
+  "coreLeafInspection": "Legacy whole-rooms branch unchanged; sparse branch MANUAL only; no Auth/Actor/Receipt/permission edits in the inspected Core diff",
+  "newImage": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+  "newBundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "server-capture.mjs": "4da7dc865085942a0584d357f09758235b2cdad9572aa5e99f9425a849c145be",
+    "server.mjs": "6162b34edb29c3e1e3504fe46ec1540ebe027596a56c43b172e33480468a35b3"
+  },
+  "controllerSHA256": "da0a18b452aceb7bf6d11c32e82cd5b717b6d80979d9ad45c08f99bd1f2a0a10",
+  "next": "Root2 fixes one updated approval packet against new image/bundles and current healthy restore preimage; original Gate cannot authorize new image.",
+  "runtimeInvoked": false,
+  "testsRerun": false,
+  "limits": [
+    "Bundle equivalence and actual Host readback attributed to Root2 receipt, not Auth reproduction",
+    "Not full Core behavior re-review; reuse existing independent review",
+    "No execution authorization or Hosted E2E PASS"
+  ]
+}
