@@ -1,0 +1,21 @@
+{
+  "status": "EXISTING_APPROVED_DEPENDENCY_FOUND_NOT_LIVE_ACL_PROOF",
+  "request": "AUTH-C04-NORMAL-P1-42501-20261104-01",
+  "gate": "fd671463e04c095197e20faaba223ed26eb1ea99d2ad64b207bd06aaaaefde5c",
+  "installSHA256": "26f036d4ff4afca6a0580ca0f9a632da8e204dcdbca56442fafa53dac41c113e",
+  "manifest": "docs/ops/auth-phase2-20261028/hosted-gate-candidate/MANIFEST.json",
+  "schemaUsage": [
+    "otr_trip_core_v2_gateway",
+    "otr_trip_core_v2_writer"
+  ],
+  "mutationAllowedExecute": [
+    "otr_trip_core_v2_writer"
+  ],
+  "renderer": "docs/ops/auth-phase1-20261028/composite-publication-candidate/principal_patch.py:55",
+  "helper": "docs/ops/auth-phase1-20261028/composite-publication-candidate/authority.local.sql:264",
+  "meaning": "Unconditional guard dependency was enumerated by original package; no current-transaction composite terminal scope should permit ordinary writes. Actual live ACL/body must still be verified.",
+  "newPermissionOrExecutionAuthorized": false,
+  "authTestsRerun": false,
+  "hostedMutation": false,
+  "originalOperationReplayed": false
+}
