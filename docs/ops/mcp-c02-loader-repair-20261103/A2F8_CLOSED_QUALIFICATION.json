@@ -1,0 +1,48 @@
+{
+  "status": "ACTUAL_DEFAULT_CLOSE_PROBE_AND_PREIMAGE_PASS_NO_CLOCK",
+  "windowId": "a2f8c128ba794de4bcf3c98d324ffc63",
+  "preimages": "All18 config/5mounted file hashes and5bundle hashes freshly matched template on Host",
+  "closeProbe": [
+    {
+      "result": {
+        "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+        "containerId": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+        "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+        "finiteConfigAbsent": true,
+        "health": "healthy"
+      },
+      "deliveryTrace": {
+        "requestedAt": "2026-11-03T07:41:32.422931+00:00",
+        "readyAt": "2026-11-03T07:41:32.441802+00:00",
+        "acquiredAt": "2026-11-03T07:41:32.441869+00:00",
+        "mutationFinishedAt": "2026-11-03T07:41:32.565847+00:00",
+        "releasedAt": "2026-11-03T07:41:32.565884+00:00"
+      }
+    },
+    {
+      "status": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+      "windowId": "a2f8c128ba794de4bcf3c98d324ffc63",
+      "containerId": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+      "issuerCleanup": "SEPARATE_MANDATORY_AUTH_CLOSE_RECEIPT",
+      "requestTrace": {
+        "status": "SKIPPED_DEFAULT_CONTAINER"
+      }
+    }
+  ],
+  "issuer": {
+    "status": "ISSUER_CLOSED_PREIMAGE_VERIFIED",
+    "rows": [
+      {
+        "body": "b0f7eae14599bd32cb9430a59832c837",
+        "invoker_ok": true,
+        "owner_ok": true,
+        "path_ok": true
+      }
+    ]
+  },
+  "console": "OAuthOFF; unsavedexpand DCRfalse, localhost3000, /oauth/consent; Cancel verified no save",
+  "initialProbeFailure": "tar retained local file uid; close refused before restore. Exact staged scripts chown root corrected, byte hashes unchanged. Same default verified.",
+  "clockStarted": false,
+  "sessionReady": false,
+  "authorityActivated": false
+}
