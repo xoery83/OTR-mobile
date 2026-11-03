@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_PASS_REVIEW_PENDING_DEFAULT_CLOSED",
+  "status": "LOCAL_PASS_INDEPENDENT_REVIEW_NO_BLOCKER",
   "base": "5138f555",
   "retainedSource": "90b4b1ce",
   "exactRetainedLeafFiles": [
@@ -35,5 +35,14 @@
   ],
   "qualification": "Public endpoint documentation is not QA credential/scope/price authorization. No real Provider call; historical expired limits not reused.",
   "protectedArtifacts": "PROFILE_SCOPE_CANDIDATE.sql copied only as pinned test/provenance fixture. No SQL installed; no runtime opt-in/config/credentials deployed.",
-  "next": "Independent review, serial main integration, fresh read-only Hosted/profile/price preimages and one exact execution qualification package"
+  "next": "Independent review, serial main integration, fresh read-only Hosted/profile/price preimages and one exact execution qualification package",
+  "independentReview": {
+    "reviewer": "Native independent reviewer",
+    "commits": [
+      "5138f555",
+      "02c0defe"
+    ],
+    "result": "NO_BLOCKER",
+    "checks": "raw-path regression413; three targeted suites7PASS; retained21leaf/SQLfixture hashes exact; no Hosted execution"
+  }
 }

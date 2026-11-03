@@ -1,0 +1,89 @@
+{
+  "status": "READ_ONLY_EXECUTION_AUTHORITY_EXPIRED",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "observedAt": "2026-11-03T05:57:08Z",
+  "host": {
+    "container": "0d35ba82c7b66c9543fba7bde5cdda7895ca97af777e8e411d0f9e5e871b671b",
+    "image": "sha256:98f88eb18659debdbe2af9368bbeab8dd8f48247c621ca99baf9761842714408",
+    "healthy": true,
+    "enrichmentOptIn": false,
+    "runtimeMount": false,
+    "finiteQaConfig": false
+  },
+  "scope": {
+    "id": "ce76c38a-3705-4c3f-84d0-f4ff462192b6",
+    "latestRevision": 6,
+    "active": false,
+    "expiredAt": "2026-10-29T07:25:00Z"
+  },
+  "qa": {
+    "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+    "tripId": "215bbb17-dd5e-4a03-80fd-9df7d4360129",
+    "grantRevision": 6,
+    "revoked": true,
+    "normalNativeSession": "NOT_CHECKED"
+  },
+  "integration": {
+    "version": 7,
+    "killSwitch": true,
+    "capabilities": [
+      "SEARCH",
+      "EXTRACT"
+    ]
+  },
+  "prices": "All inspected Search/Extraction schedules expired; latest ended2026-10-29T07:15Z",
+  "providerId": "0f8ab8bb-15e7-4393-aaa8-45e9032a48fb",
+  "installedFunctions": [
+    {
+      "bodyMD5": "b5a388b54bc109dd23b3b2094c5f9779",
+      "name": "cp_enrichment_profile",
+      "oid": "66579",
+      "owner": "postgres"
+    },
+    {
+      "bodyMD5": "9752baa004f0cd4dda6d23a73c6f1f3c",
+      "name": "flight_enrichment_mark_dispatch",
+      "oid": "66602",
+      "owner": "otr_external_integration_meter_writer"
+    },
+    {
+      "bodyMD5": "f7b5b501e91233c58c9ce205fc5aca7a",
+      "name": "flight_enrichment_request_claim",
+      "oid": "66573",
+      "owner": "otr_external_integration_meter_writer"
+    },
+    {
+      "bodyMD5": "0d3f7cac885d74798aa5291baf74ce7e",
+      "name": "flight_enrichment_request_finish",
+      "oid": "66574",
+      "owner": "otr_external_integration_meter_writer"
+    },
+    {
+      "bodyMD5": "0fc0682fe60e788b03f4dbe221847a7c",
+      "name": "flight_enrichment_reserve_step",
+      "oid": "66597",
+      "owner": "otr_external_integration_meter_writer"
+    },
+    {
+      "bodyMD5": "fa122aa4b3556f278651dd10cb7b1658",
+      "name": "flight_enrichment_runtime_scope",
+      "oid": "66596",
+      "owner": "otr_external_integration_meter_writer"
+    },
+    {
+      "bodyMD5": "7d1981bd7554723d4938b556ccca2bdf",
+      "name": "flight_enrichment_scope_select",
+      "oid": "66582",
+      "owner": "otr_external_integration_config_writer"
+    },
+    {
+      "bodyMD5": "971a7e3e146dc78a793a98f585efe23f",
+      "name": "flight_enrichment_step_receipt",
+      "oid": "66603",
+      "owner": "otr_external_integration_meter_writer"
+    }
+  ],
+  "next": "One exact finite scope/grant/price/runtime renewal package and normal Native QA identity proof. No historical paid authority reused.",
+  "writes": 0,
+  "paidCalls": 0
+}
