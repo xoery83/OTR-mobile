@@ -454,3 +454,54 @@ it("does not emit a late Core return after cancellation already terminated the d
     failure: "CANCELED",
   });
 });
+
+it("retains safe Core status through a postcheck failure without changing UNKNOWN disposition", async () => {
+  vi.useFakeTimers();
+  const q = setup();
+  q.grant.expiresAt = Date.now() + 1000;
+  const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.signal);
+  q.withLockedCommand.mockImplementationOnce(async () => {
+    vi.setSystemTime(q.grant.expiresAt);
+    throw Error("OWNING_COMMAND_PORT_UNAVAILABLE");
+  });
+  const response = await binding.backend(
+    { method: "POST", path: commandPath, body: q.command },
+    q.signal,
+  );
+  expect(response.status).toBe(503);
+  expect(q.withLockedCommand).toHaveBeenCalledOnce();
+  expect(q.diagnostic.mock.calls.at(-1)![0]).toMatchObject({
+    method: "POST",
+    stage: "POSTCHECK",
+    coreStatus: 503,
+    failure: "EXPIRED",
+  });
+  expect(q.diagnostic.mock.calls[0][0]).not.toHaveProperty("coreStatus");
+});
+
+it("distinguishes a receipt GET from a mutation without logging payload or identity", async () => {
+  const q = setup();
+  const binding = await createMcpAccountWriteBinding(q.ports)(q.grant, q.signal);
+  const response = await binding.backend(
+    { method: "GET", path: operationPath },
+    q.signal,
+  );
+  expect(response.status).toBe(404);
+  expect(q.withLockedCommand).not.toHaveBeenCalled();
+  expect(q.diagnostic.mock.calls.at(-1)![0]).toMatchObject({
+    method: "GET",
+    stage: "POSTCHECK",
+    coreStatus: 404,
+  });
+  const serialized = JSON.stringify(q.diagnostic.mock.calls);
+  for (const forbidden of [
+    actor,
+    trip,
+    item,
+    operation,
+    operationPath,
+    "Synthetic QA edit",
+    "Bearer",
+  ])
+    expect(serialized).not.toContain(forbidden);
+});

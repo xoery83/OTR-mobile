@@ -12,8 +12,10 @@ export type CommandRequest = Readonly<{
 }>;
 export type McpWriteStageDiagnostic = Readonly<{
   diagnosticId: string;
+  method: "GET" | "POST";
   stage: "PRECHECK" | "CORE_BOUNDARY_ENTERED" | "CORE_RETURNED" | "POSTCHECK";
   elapsedMs: number;
+  coreStatus?: number;
   failure?: "EXPIRED" | "CANCELED" | "TIMEOUT" | "GRANT_NOT_CURRENT" | "UNCLASSIFIED";
 }>;
 type WritePorts = ReadPorts & {
@@ -83,14 +85,17 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
         // Log-only ID; it never replaces the command or MCP request identity.
         const diagnosticId = ports.diagnostic ? randomUUID() : undefined;
         let stage: McpWriteStageDiagnostic["stage"] = "PRECHECK";
+        let coreStatus: number | undefined;
         let diagnosticFinished = false;
         const observe = (failure?: McpWriteStageDiagnostic["failure"]) => {
           if (diagnosticFinished || !diagnosticId) return;
           try {
             ports.diagnostic?.({
               diagnosticId,
+              method,
               stage,
               elapsedMs: Math.max(0, Math.min(120000, Date.now() - startedAt)),
+              ...(coreStatus === undefined ? {} : { coreStatus }),
               ...(failure ? { failure } : {}),
             });
           } catch {
@@ -130,6 +135,12 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
               ports.canReadTrip,
               ports.core,
             );
+            if (
+              Number.isInteger(returned.status) &&
+              returned.status >= 100 &&
+              returned.status <= 599
+            )
+              coreStatus = returned.status;
             stage = "CORE_RETURNED";
             observe();
             return returned;

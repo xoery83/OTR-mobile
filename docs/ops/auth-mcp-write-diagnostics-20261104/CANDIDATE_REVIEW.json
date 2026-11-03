@@ -1,0 +1,40 @@
+{
+  "request": "MCP-C02-S1-EED8-WRITE-UNKNOWN-20261104-001",
+  "status": "LOCAL_REVIEWED_DIAGNOSTIC_NOT_DEPLOYED",
+  "existingCandidateReused": "f1de4b473a101b08b8f04d20c54c5b2b349fe054",
+  "deployed794AndMain5bb": "No existingfourstagewriteDiagnostic; cannotdiagnosehistoricaleed8phase",
+  "files": {
+    "backend/src/mcpAccountWriteBinding.ts": "7c8daf61555f404336244e6bbb465f53067ba1778c319ea733a7bbac3f8d3677",
+    "backend/src/mcpAccountWriteBinding.test.ts": "7ba6ed38be842b626751cbd2c0d6ca728722041887eb1e9f451844d8a1388079"
+  },
+  "tests": 25,
+  "typecheck": "PASS",
+  "scopedESLint": "PASS",
+  "independentReview": {
+    "reviewer": "auth_phase1_review",
+    "status": "SCOPED_NO_BLOCKER_WRITE_DIAGNOSTIC_METHOD_STATUS",
+    "newTests": 2,
+    "stableSkipped": 23
+  },
+  "safeLogFields": [
+    "randomDiagnosticId",
+    "methodGETorPOST",
+    "finiteStage",
+    "boundedElapsedMs",
+    "optionalCoreStatus100..599",
+    "finiteFailureClass"
+  ],
+  "unchanged": [
+    "Authorization/TTLs/50sboundary",
+    "401vs503andpostEnteredUNKNOWNsemantics",
+    "dispatch/retrycount",
+    "Corepermission/Receipt/operationidentity"
+  ],
+  "limits": [
+    "InitialSDK/initialbindingqualification outsidebackendcall notcovered",
+    "Core-returned/status200 isnotCOMMITproof",
+    "MissingstageisnotNoCommit",
+    "Existingeed8a8c1 remainsUNKNOWN; no re-submit/window granted",
+    "MCPowns latestRuntimewire+whitelist; oldf1runtime mustnot overwriteCreate config"
+  ]
+}
