@@ -1,0 +1,47 @@
+{
+  "status": "L1_EXISTING_BUILD_ENTRY_PASS",
+  "device": "00008103-00113914020B401E",
+  "bundle": "com.xoery.otrmobile.ipadqa",
+  "build": 144,
+  "os": "27.2",
+  "flow": [
+    "MyTrips",
+    "Native05 iPad QA1031",
+    "Add",
+    "Import",
+    "Files system picker",
+    "Cancel",
+    "Close empty Composer",
+    "AllTrips"
+  ],
+  "observations": [
+    "Files picker opens normally; no recent files",
+    "No permission prompt",
+    "Submit Batch disabled while empty",
+    "System picker AX exposes sparse tree; screenshot confirms normal modal"
+  ],
+  "notPerformed": [
+    "File selection",
+    "Text entry",
+    "Submit",
+    "AI",
+    "Save",
+    "Install",
+    "Reboot",
+    "Logout",
+    "Share entry",
+    "Current-main UI acceptance"
+  ],
+  "release": {
+    "stopped": true,
+    "mode": "graceful",
+    "cleanupConfidence": "known",
+    "session": "lane-c-ipad-hw-qa-20261104",
+    "claimsReleased": [
+      "local:apple:ipados:00008103-00113914020B401E"
+    ],
+    "claimsOrphaned": [],
+    "warnings": []
+  },
+  "rawScreenshots": "/private/tmp/lane-c-ipad-hw-qa-20261104/"
+}

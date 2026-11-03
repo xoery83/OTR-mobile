@@ -109,6 +109,7 @@ async function main() {
       ...(continuous
         ? {
             sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
+            sourcePngPreparationForRequest: continuous.sourcePngPreparationForRequest,
             sourcePdfV2ForRequest: continuous.sourcePdfV2ForRequest,
             universalRuntimeForRequest: async (request, actor, requestId) => {
               const scoped = (trip: string) =>

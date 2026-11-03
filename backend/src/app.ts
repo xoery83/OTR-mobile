@@ -1,3 +1,4 @@
+import { sourcePngPreparationBoundary, type SourcePngPreparationForRequest } from "./sourcePngPreparationHttp";
 import { mcpIngressBodyLimit } from "./mcpIngress";
 import { guestAdoptionBodyLimit, guestAdoptionHttpBoundary } from "./guestAdoptionHttp";
 import type { GuestAdoptionDevRuntime } from "./guestAdoptionRuntime";
@@ -642,6 +643,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  sourcePngPreparationForRequest?: SourcePngPreparationForRequest;
   mcpHttp?: (request: Request) => Promise<Response | null>;
   sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
   sourcePdfV2ForRequest?: (
@@ -2449,6 +2451,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  sourcePngPreparationForRequest,
   mcpHttp,
   sourcePdfV2Port,
   sourcePdfV2ForRequest,
@@ -2632,6 +2635,19 @@ export function createDevBackendHandler({
               (a, t) => gateway.canReadTrip(a, t),
               runtime?.universalImportPort ?? universalImportPort,
             );
+      } else if (
+        /^\/v2\/trips\/[^/]+\/universal-source-originals\/png\/(?:result|execute|reconcile)$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/universal-source-originals/png/:action";
+        const actor = await authenticate(request, gateway);
+        response = await sourcePngPreparationBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          sourcePngPreparationForRequest,
+        );
       } else if (
         /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained|status)$/.test(
           url.pathname,

@@ -1,0 +1,54 @@
+{
+  "status": "SYNC_CONTRACT_PASS",
+  "baseline": "0e9a730daabc23e0bbab85b70315759a313fa1e1",
+  "byteIdenticalLeaves": {
+    "backend/src/sourcePngBackendPreparation.test.ts": "46ba80ff1e12956f710245e00229437bd53c5e9e3215aba80d47a6cfabbe6cb6",
+    "backend/src/sourcePngBackendPreparation.ts": "2b35ae496bebadbdac4c6d970c90d2db205347c0e018b4544e1081fde4531266",
+    "backend/src/sourcePngBroker.test.ts": "8a35c9dcc5639af04c2ca77a359e54b1f4609da0d5e6490ad1de9234e6c91d27",
+    "backend/src/sourcePngBroker.ts": "a40ee101efd82368b8c88d8f43c4f742f425d69cec8efc1d542f44edb2f7868d",
+    "backend/src/sourcePngCloseControl.test.ts": "ff8ecc812c60280c2772de3a352a632340e41ca6bd245561b28e066c45526eb1",
+    "backend/src/sourcePngCloseControl.ts": "509dffb54ba38872bdcded3601e0174dac6f28132f49f6ed615fcb564ebbe24a",
+    "backend/src/sourcePngCloseControlMain.ts": "a1ba50fc52b1c0a510c99b4ae8ee3645261a0f04821e34a0cf8d4119eea5fcc5",
+    "backend/src/sourcePngOwnedSandbox.test.ts": "884444bf6395bd880b203b32014bbff3087e537e88db0b064cf008d26a2d648d",
+    "backend/src/sourcePngOwnedSandbox.ts": "c13fd0ef92ddfe2a6ee0478ecc974e3758cf94b206f304256ab667e19e6ff730",
+    "backend/src/sourcePngPreparationHttp.test.ts": "06aababb2a34d3421cff12bd4621157d5dd2a7e07e03726510f2876a97e3aaec",
+    "backend/src/sourcePngPreparationHttp.ts": "60baa52eab0609c80abc0a4e81c00cc950080cd6e6e1bcc1e476c2404b2d9e85",
+    "backend/src/sourcePngPrivateStage.ts": "093d3045ac24be01c2b8d34bf2cd6371b29b2dc4a0dc12601e9bc239b124b0dd",
+    "backend/src/sourcePngRequestPreparation.test.ts": "5a02029fcc2b3e9d24d03f184826ce984f2f6cc8d0d597c136097eed0181d64b",
+    "backend/src/sourcePngRequestPreparation.ts": "e9aba96ae1b3e5908e0b8bc06c3496a3cc8aabb44ed21776ce8311d9050cf128",
+    "backend/src/sourcePngRuntime.test.ts": "0690fe2268b4d2474dd3ee13797f98a63796c2cab91e36a4162b99f7b67bccec",
+    "backend/src/sourcePngRuntime.ts": "0531d9574375294176b3842751dc6423db6017315c3aac52427f35f0e93f1e81",
+    "backend/src/sourcePngStorageProducer.test.ts": "df9bc33e192ea426b8fd2266b9c7b591eecaf10bf1519117cb8d44c4bcbdf489",
+    "backend/src/sourcePngStorageProducer.ts": "422610d2889bc2d9cb71f4aea430161259bbf24de59454ff79d92e73dca6d9c4",
+    "backend/src/sourcePngWorkerCleanupMain.test.ts": "99dec8d3ca37acae0ddd7329f469d7d02e90604a712305a3d537431cff620745",
+    "backend/src/sourcePngWorkerCleanupMain.ts": "fcd139d2d34315539c94ee8fd6419d53d54310482c61ca6ef0722ae2887c9628",
+    "backend/src/sourcePngWorkerHost.ts": "2a76588dd175cc0ccdb35f698a779eb6406d9a5b4646be334bfbd006231b91ee",
+    "backend/src/sourcePngWorkerHostMain.test.ts": "8663911624261a6c91b1e350614ce990d6666cad1fae4b7785aeff5c77fbfb6e",
+    "backend/src/sourcePngWorkerHostMain.ts": "a4a89feb3d408f37d03412acc6209bcef76ef189445a901000b897b508262bd5",
+    "backend/src/sourcePngWorkerTransport.test.ts": "8c949c0d68c7d80e5a74b83203dedfefd5d97e30837ea50ec2dd9b6e41761d0d",
+    "backend/src/sourcePngWorkerTransport.ts": "495ad7e0a2cb5be76406442d897afdcab7210ae9698bf31ec2ea5ea3581fd0a1"
+  },
+  "sharedHelpersRestored": [
+    "universalPg.ts",
+    "sourcePdfPrivateStage.ts",
+    "sourcePdfStorageProducer.ts"
+  ],
+  "composition": [
+    "app.ts",
+    "universalContinuousRuntime.ts",
+    "serverCapture.ts",
+    "serverStartup.ts"
+  ],
+  "validation": {
+    "pngSuites": 8,
+    "pngTestsPassed": 100,
+    "continuousRuntimeTestsPassed": 23,
+    "pdfRegressionSuites": 6,
+    "pdfTestsPassed": 71,
+    "pdfConditionalSkipped": 1,
+    "strictRoots": 32,
+    "eslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "bounds": "No deployment, schema, provider, account, permission expansion or Source write. Existing QA runtime expiry preserved."
+}

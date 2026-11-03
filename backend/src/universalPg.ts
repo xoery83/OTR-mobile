@@ -6,15 +6,18 @@ export function universalPgTransaction<T>(
   connection: CorePgConnection,
   work: (lease: CorePgLease) => Promise<T>,
   readOnly = false,
+  assertCurrent?: () => void,
 ) {
   return connection.withLease(async (lease) => {
     let began = false;
     try {
+      assertCurrent?.();
       await lease.query(
         `BEGIN ISOLATION LEVEL READ COMMITTED${readOnly ? " READ ONLY" : ""}`,
       );
       began = true;
       const value = await work(lease);
+      assertCurrent?.();
       await lease.query("COMMIT");
       began = false;
       return value;

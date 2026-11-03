@@ -39,7 +39,7 @@ export type PdfReadBinding = PdfRequestBinding & {
 };
 // Internal observations only. Nothing here means WRITER_TERMINAL, VERIFIED or FINAL.
 export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
-  const producer = createProducer(
+  const producer = createOriginalStorageProducer(
     config,
     sourcePdfBackendBindingSchema,
     async (bytes) => verifySourcePdf(bytes),
@@ -57,7 +57,7 @@ export function createSourcePdfV2StorageProducer(
   custodyScope?: { accountId: string; tripId: string },
   requestGuard?: PdfSourceRequestIoGuard,
 ) {
-  return createProducer(
+  return createOriginalStorageProducer(
     config,
     sourcePdfV2UploadBindingSchema,
     (bytes) => verifySourcePdfV2UploadBytes(bytes, runWorker),
@@ -67,7 +67,14 @@ export function createSourcePdfV2StorageProducer(
     requestGuard,
   );
 }
-function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
+type OriginalStorageBinding = {
+  objectKey: string;
+  sha256: string;
+  byteCount: number;
+  uploadVersion?: number;
+};
+// Shared IO only: the supplied owning schema/verifier still decides format qualification.
+export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
   config: PdfStorageConfig,
   bindingSchema: z.ZodType<B>,
   verify: (bytes: Uint8Array) => Promise<unknown>,
@@ -75,9 +82,14 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
   profileId?: string,
   suppliedCustodyScope?: { accountId: string; tripId: string },
   requestGuard?: PdfSourceRequestIoGuard,
+  mimeType: "application/pdf" | "image/png" | "image/jpeg" = "application/pdf",
 ) {
   type RequestBinding = { binding: B; dispatchId: string };
-  type ReadBinding = RequestBinding & { readId?: string; ackEvidenceSha256?: string };
+  type ReadBinding = RequestBinding & {
+    readId?: string;
+    ackEvidenceSha256?: string;
+    terminalEvidenceSha256?: string;
+  };
   const custodyScope = suppliedCustodyScope
     ? Object.freeze(
         z
@@ -184,7 +196,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
               : { Authorization: "Bearer " + config.serviceToken }),
             ...(body
               ? {
-                  "content-type": "application/pdf",
+                  "content-type": mimeType,
                   "content-length": body.byteLength,
                   "x-upsert": "false",
                 }
@@ -300,7 +312,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
           sourceId: coreUuid,
           representationId: coreUuid,
           sha256: coreHash,
-          byteCount: z.number().int().positive().max(4194304),
+          byteCount: z.number().int().positive().max(Math.min(maxBytes, 4194304)),
         })
         .parse(supplied);
       if (
@@ -324,8 +336,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
         headerNames.filter((name) => name === "content-type").length !== 1 ||
         headerNames.includes("content-encoding") ||
         headerNames.includes("content-range") ||
-        result.headers["content-type"]?.split(";")[0].trim().toLowerCase() !==
-          "application/pdf" ||
+        result.headers["content-type"]?.split(";")[0].trim().toLowerCase() !== mimeType ||
         result.body.length !== scope.byteCount ||
         pdfHash(result.body) !== scope.sha256
       )
@@ -333,20 +344,30 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
       return Uint8Array.from(result.body);
     },
     async read(raw: ReadBinding) {
+      const image = mimeType === "image/png" || mimeType === "image/jpeg";
       const causal = raw.binding.uploadVersion === 3 || raw.binding.uploadVersion === 4;
       if (
-        causal &&
+        (image || causal) &&
         (!coreUuid.safeParse(raw.readId).success ||
           raw.readId === raw.dispatchId ||
-          !coreHash.safeParse(raw.ackEvidenceSha256).success)
+          !coreHash.safeParse(image ? raw.terminalEvidenceSha256 : raw.ackEvidenceSha256)
+            .success)
       )
-        throw new Error("PDF_CAUSAL_READ_PERMIT_REQUIRED");
+        throw new Error(
+          image
+            ? mimeType === "image/jpeg"
+              ? "JPEG_QUALIFIED_READ_PERMIT_REQUIRED"
+              : "PNG_QUALIFIED_READ_PERMIT_REQUIRED"
+            : "PDF_CAUSAL_READ_PERMIT_REQUIRED",
+        );
       const request = {
           ...bound(raw),
-          ...(causal
+          ...(image || causal
             ? {
                 readId: raw.readId!,
-                ackEvidenceSha256: raw.ackEvidenceSha256!,
+                ...(image
+                  ? { terminalEvidenceSha256: raw.terminalEvidenceSha256! }
+                  : { ackEvidenceSha256: raw.ackEvidenceSha256! }),
                 cacheBypassed: true as const,
               }
             : {}),
@@ -377,14 +398,15 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
       if (
         observation.sha256 !== b.sha256 ||
         bytes.length !== b.byteCount ||
-        mime !== "application/pdf"
+        mime !== mimeType
       )
         return { kind: "MISMATCH" as const, ...observation };
       try {
         await verify(bytes);
       } catch {
-        // A V4 worker outage cannot establish that the retained original is unsupported.
-        if (b.uploadVersion === 4) return { kind: "UNAVAILABLE" as const, request };
+        // A worker outage cannot establish that the retained original is unsupported.
+        if (image || b.uploadVersion === 4)
+          return { kind: "UNAVAILABLE" as const, request };
         return { kind: "UNSUPPORTED" as const, ...observation };
       }
       return { kind: "MATCH" as const, ...observation };
@@ -395,4 +417,7 @@ export type SourcePdfStorageProducer = ReturnType<typeof createSourcePdfStorageP
 
 export type SourcePdfStorageProducerFor<
   B extends PdfBackendBinding | SourcePdfV2UploadBinding,
-> = Pick<ReturnType<typeof createProducer<B>>, "configurationSha256" | "upload" | "read">;
+> = Pick<
+  ReturnType<typeof createOriginalStorageProducer<B>>,
+  "configurationSha256" | "upload" | "read"
+>;

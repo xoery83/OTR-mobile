@@ -1,3 +1,4 @@
+import type { SourcePngStorageBinding } from "./sourcePngStorageProducer";
 import { z } from "zod";
 import {
   sourcePdfV2UploadBindingSchema,
@@ -39,7 +40,9 @@ export function createSourcePdfV2PrivateStage(
     "otr-pdf-stage/4",
   );
 }
-function createPrivateStage<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
+export function createPrivateStage<
+  B extends PdfBackendBinding | SourcePdfV2UploadBinding | SourcePngStorageBinding,
+>(
   root: string,
   bindingSchema: z.ZodType<B>,
   verify: (bytes: Uint8Array) => Promise<unknown>,

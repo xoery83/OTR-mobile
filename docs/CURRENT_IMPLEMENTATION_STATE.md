@@ -1,3 +1,12 @@
+# Existing PNG Backend restoration — source integration, 4 November 2026
+
+Restores25 historical0e9 PNG modules and3 shared IO helpers;7 current shared
+before-images matched. Current Auth/MCP/requestId/retainedResults/fences remain.
+Independent NO_BLOCKER; actual-main5suites81 PASS, previous194 checks reused.
+See ops/lane-c-imp-c01-reconciliation-20261103/EXISTING_PNG_BACKEND_SOURCE_MAIN_VALIDATION.json.
+No deployment, permission renewal, Provider call or Source/Core SQL change. Fixed
+Nov1 runtime expiry remains; installed/runtime/iPadAI acceptance is NOT_RUN.
+
 # Mixed intake adapter — source integration, 4 November 2026
 
 LaneC98a4+eccc preserves source order/pins/consent for mixed preparations and

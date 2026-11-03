@@ -1,0 +1,22 @@
+{
+  "request": "IMP-C01-RESTORE-20261104-02",
+  "candidate": "45ddf1ab",
+  "base": "26efaef15b96943c2bc76832ab54a964b86ec221",
+  "historicalIdentity": "25 PNG leaves +3 shared helpers byte-identical0e9a730d",
+  "sharedBeforeImages": "7 paths exact current main",
+  "actualMainTests": "5 suites /81 PASS: continuousRuntime,serverStartup,PNG runtime,HTTP,storage",
+  "authorEvidenceReused": "100 PNG +23 runtime +71 PDF /1 conditional skip; strict32/lint/diff",
+  "notChanged": [
+    "Auth/MCP composition",
+    "requestId/retainedResults",
+    "Source/Core SQL",
+    "runtime expiry",
+    "Provider budget"
+  ],
+  "notRun": [
+    "Hosted deployment",
+    "iPad Submit/AI",
+    "Paid Provider",
+    "Current runtime activation"
+  ]
+}
