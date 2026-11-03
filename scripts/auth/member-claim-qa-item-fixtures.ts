@@ -135,6 +135,47 @@ export async function createOwnerItemFixtures(input: {
   return (await t.collection(ctx)).pages.flatMap((p) => p.records);
 }
 
+// Original shared POST only: absence is UNKNOWN, and this port has no submit capability.
+export async function readOriginalFixtureOutcome(
+  transport: Pick<Transport, "receipt" | "collection">,
+  context: Context,
+) {
+  if (context.accountId !== qa.ownerAccountId || context.tripId !== qa.tripId)
+    throw Error("C04_FIXTURE_SCOPE_MISMATCH");
+  const command = fixtureCommands[0];
+  const receipt = await transport.receipt(context, command.operationId);
+  const records = (await transport.collection(context)).pages.flatMap((p) => p.records);
+  requireBinding(records, qa.ownerAccountId, qa.ownerPersonId);
+  const items = records.filter((r) => r.kind === "ITEM" && r.id === command.target.id);
+  if (!receipt || receipt.projection !== "FULL")
+    return { outcome: "UNKNOWN", itemObserved: items.length > 0, automaticRetry: false };
+  const r = receipt.receipt;
+  if (
+    r.actorAccountId !== context.accountId ||
+    r.tripId !== context.tripId ||
+    r.operationId !== command.operationId ||
+    r.command !== command.command ||
+    r.intentSha256 !== (await coreHashValue("otr-trip-core-intent-v2", command, hash))
+  )
+    throw Error("C04_FIXTURE_RECEIPT_MISMATCH");
+  if (
+    r.outcome === "APPLIED" &&
+    (items.length !== 1 ||
+      (items[0].body as { owner_account_id?: string }).owner_account_id !==
+        context.accountId ||
+      (items[0].body as { visibility?: string }).visibility !== "GROUP" ||
+      r.result.created.filter((v) => v.kind === "ITEM" && v.id === command.target.id)
+        .length !== 1)
+  )
+    throw Error("C04_FIXTURE_APPLIED_READBACK_MISMATCH");
+  return {
+    outcome: r.outcome,
+    itemObserved: items.length > 0,
+    receiptSha256: r.receiptSha256,
+    automaticRetry: false,
+  };
+}
+
 export function fixtureTransport(
   context: RegisteredQaHostContext,
   note: (value: Record<string, unknown>) => void,

@@ -1,0 +1,11 @@
+{
+  "status": "SCOPED_NO_BLOCKER_ORIGINAL_FIXTURE_READ_RECOVERY",
+  "sourceSHA256": "237228d642cb7020220f94e3dd956d0fa7d6727abbc2bc31d8450baf42ca387e",
+  "testSHA256": "43fa411666f586e18a56b98377282b99f8bb05ec22ba719b509f06cd33ce410b",
+  "independentReview": "2 changed tests PASS/6 stable skipped; no source blocker",
+  "focusedFinalTests": "3 original-recovery tests PASS/6 stable skipped; added APPLIED exact positive and missing/private/foreign-owner negative",
+  "typecheck": "PASS",
+  "scope": "Read only original shared operation receipt and owner collection; no submit port, no new session/OTP, no business IO executed",
+  "absenceAndStatusOnly": "UNKNOWN_NOT_NO_COMMIT",
+  "automaticRetry": false
+}

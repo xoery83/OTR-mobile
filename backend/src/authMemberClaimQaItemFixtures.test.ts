@@ -5,6 +5,7 @@ import {
   fixtureCommands,
   checkFixtureIsolation,
   fixtureTransport,
+  readOriginalFixtureOutcome,
 } from "../../scripts/auth/member-claim-qa-item-fixtures";
 import { coreClosedCapabilities } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreHashValue, type CoreReadRecord } from "../../src/domain/trip/tripCoreV2Read";
@@ -150,5 +151,93 @@ it("allows only fixed commands once, including automatic auth retry attempts", a
     expect(wire).toHaveBeenCalledTimes(1);
   } finally {
     vi.unstubAllGlobals();
+  }
+});
+it("read-only original recovery keeps absent or redacted receipts UNKNOWN even when an item exists", async () => {
+  for (const receipt of [null, { projection: "STATUS_ONLY", outcome: "APPLIED" }]) {
+    const transport = {
+      receipt: vi.fn().mockResolvedValue(receipt),
+      collection: vi
+        .fn()
+        .mockResolvedValue({ pages: [{ records: [owner, records[0]] }] }),
+    };
+    await expect(readOriginalFixtureOutcome(transport, context)).resolves.toEqual({
+      outcome: "UNKNOWN",
+      itemObserved: true,
+      automaticRetry: false,
+    });
+    expect(transport.receipt).toHaveBeenCalledExactlyOnceWith(
+      context,
+      qa.items[0].operationId,
+    );
+  }
+});
+it("read-only original recovery rejects foreign scope before IO and mismatched intent before accepting a terminal receipt", async () => {
+  const transport = {
+    receipt: vi.fn().mockResolvedValue({
+      projection: "FULL",
+      receipt: {
+        actorAccountId: context.accountId,
+        tripId: context.tripId,
+        operationId: qa.items[0].operationId,
+        command: "CREATE_ITEM",
+        intentSha256: "wrong",
+        outcome: "APPLIED",
+      },
+    }),
+    collection: vi.fn().mockResolvedValue({ pages: [{ records: [owner, records[0]] }] }),
+  };
+  await expect(
+    readOriginalFixtureOutcome(transport, { ...context, accountId: qa.memberAccountId }),
+  ).rejects.toThrow("SCOPE_MISMATCH");
+  expect(transport.receipt).not.toHaveBeenCalled();
+  await expect(readOriginalFixtureOutcome(transport, context)).rejects.toThrow(
+    "RECEIPT_MISMATCH",
+  );
+});
+it("read-only original recovery accepts exact APPLIED readback and rejects missing, private or foreign-owned item", async () => {
+  const command = fixtureCommands[0];
+  const transport = {
+    receipt: vi.fn().mockResolvedValue({
+      projection: "FULL",
+      receipt: {
+        actorAccountId: context.accountId,
+        tripId: context.tripId,
+        operationId: command.operationId,
+        command: "CREATE_ITEM",
+        intentSha256: await coreHashValue("otr-trip-core-intent-v2", command, async (b) =>
+          createHash("sha256").update(b).digest("hex"),
+        ),
+        outcome: "APPLIED",
+        result: { created: [command.target] },
+        receiptSha256: "a".repeat(64),
+      },
+    }),
+    collection: vi.fn().mockResolvedValue({ pages: [{ records: [owner, records[0]] }] }),
+  };
+  await expect(readOriginalFixtureOutcome(transport, context)).resolves.toMatchObject({
+    outcome: "APPLIED",
+    itemObserved: true,
+    automaticRetry: false,
+  });
+  for (const items of [
+    [],
+    [
+      {
+        ...records[0],
+        body: { owner_account_id: context.accountId, visibility: "PRIVATE" },
+      },
+    ],
+    [
+      {
+        ...records[0],
+        body: { owner_account_id: qa.memberAccountId, visibility: "GROUP" },
+      },
+    ],
+  ]) {
+    transport.collection.mockResolvedValue({ pages: [{ records: [owner, ...items] }] });
+    await expect(readOriginalFixtureOutcome(transport, context)).rejects.toThrow(
+      "APPLIED_READBACK_MISMATCH",
+    );
   }
 });
