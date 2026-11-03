@@ -147,3 +147,28 @@ it("original metadata shares the exact live PDF scope and closes independently o
   ports.close();
   expect(ports.originalMetadataAllowed(q.config.actorId, q.config.tripId)).toBe(false);
 });
+
+it("accepts a renewed hashed deadline but expires before Source or custody IO", async () => {
+  const q = fixture();
+  const config = { ...q.config, expiresAt: "2026-11-03T01:30:00Z" };
+  vi.setSystemTime(new Date("2026-11-03T00:45:00Z"));
+  const text = JSON.stringify(config);
+  f.open.mockResolvedValue({
+    stat: async () => ({ ...q.stat, size: text.length }),
+    readFile: async () => text,
+    close: q.close,
+  });
+  const env = {
+    ...q.env,
+    OTR_DEV_UNIVERSAL_PDF_RUNTIME_SHA256: createHash("sha256").update(text).digest("hex"),
+  };
+  expect(await readSourcePdfRuntimeConfig(env)).toEqual(config);
+  const ports = createSourcePdfRuntimePorts(config, q.deps);
+  expect(ports.originalMetadataAllowed(config.actorId, config.tripId)).toBe(true);
+  vi.setSystemTime(new Date(config.expiresAt));
+  expect(ports.originalMetadataAllowed(config.actorId, config.tripId)).toBe(false);
+  expect(f.lease).not.toHaveBeenCalled();
+  expect(
+    sourcePdfRuntimeSchema.safeParse({ ...config, expiresAt: "infinity" }).success,
+  ).toBe(false);
+});
