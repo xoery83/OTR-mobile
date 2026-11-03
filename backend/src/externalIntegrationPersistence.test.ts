@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   createClosedPersistenceGateway,
   commandDigest,
@@ -56,6 +56,96 @@ function fixture(overrides: Partial<VerifiedCallContextV1> = {}, missing = false
   return { body, gateway, count: () => calls };
 }
 describe("CP14 injectable host boundary (not a production verifier)", () => {
+  it("requires independent Enrichment input custody before SQL, not caller auth flags", async () => {
+    const body = "{}",
+      callId = randomUUID();
+    const raw = {
+      version: 1,
+      environment: "DEV",
+      request_id: randomUUID(),
+      account_id: actor,
+      actor_id: actor,
+      trip_id: randomUUID(),
+      call_id: callId,
+      input_reference: callId,
+      input_sha256: createHash("sha256").update(body).digest("hex"),
+      input_byte_count: 2,
+      provider_body: body,
+      step_id: "a".repeat(64),
+      kind: "SEARCH",
+    };
+    const command = { ...raw, request_sha256: commandDigest(raw) };
+    for (const custody of [undefined, false, true]) {
+      const execute = vi.fn(async () => ({ sqlBoundaryOnly: true }));
+      const verifyEnrichmentInput =
+        custody === undefined
+          ? undefined
+          : vi.fn<
+              NonNullable<
+                Parameters<
+                  typeof createClosedPersistenceGateway
+                >[0]["verifyEnrichmentInput"]
+              >
+            >(async (context, material) => {
+              expect(Object.isFrozen(context)).toBe(true);
+              expect(Object.isFrozen(material)).toBe(true);
+              expect(material).toMatchObject({
+                accountId: actor,
+                callId,
+                reference: callId,
+                byteCount: 2,
+                sha256: raw.input_sha256,
+              });
+              return custody;
+            });
+      const gateway = createClosedPersistenceGateway({
+        gatewayIdentity: "otr_external_integration_call_gateway",
+        now: () => now,
+        execute,
+        verifyEnrichmentInput,
+        async verify(request) {
+          return {
+            version: 1,
+            principal_kind: "TRUSTED_WORKLOAD",
+            verified_actor_id: actor,
+            verified_account_id: actor,
+            verified_client_identity: null,
+            verified_external_subject: null,
+            verified_environment: "DEV",
+            auth_source: "SYNTHETIC_ONLY_VERIFIER",
+            auth_config_version: 1,
+            auth_session_reference: null,
+            verified_at: now,
+            expires_at: "2026-10-07T00:00:00.000Z",
+            revoked: false,
+            request_id: request.requestId,
+            request_sha256: request.requestSha256,
+            command_kind: request.command,
+            gateway_identity: "otr_external_integration_call_gateway",
+          };
+        },
+      });
+      if (custody === true) {
+        expect(await gateway.invoke("flight_enrichment_reserve_step", command)).toEqual({
+          sqlBoundaryOnly: true,
+        });
+        expect(execute).toHaveBeenCalledOnce();
+        const tampered = { ...raw, provider_body: "changed" };
+        await expect(
+          gateway.invoke("flight_enrichment_reserve_step", {
+            ...tampered,
+            request_sha256: commandDigest(tampered),
+          }),
+        ).rejects.toThrow("ENRICHMENT_CUSTODY_UNAVAILABLE");
+        expect(execute).toHaveBeenCalledOnce();
+      } else {
+        await expect(
+          gateway.invoke("flight_enrichment_reserve_step", command),
+        ).rejects.toThrow("ENRICHMENT_CUSTODY_UNAVAILABLE");
+        expect(execute).not.toHaveBeenCalled();
+      }
+    }
+  });
   it("binds verified actor/request/environment and exact command", async () => {
     const f = fixture();
     expect(await f.gateway.invoke("external_integration_configure", f.body)).toEqual({

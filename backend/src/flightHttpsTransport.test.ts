@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { createFlightHttpsSend } from "./flightHttpsTransport";
+import {
+  createFlightHttpsSend,
+  DEEPSEEK_FLIGHT_SEARCH_DESTINATION,
+} from "./flightHttpsTransport";
 import { DEEPSEEK_FLIGHT_DESTINATION, type FlightLiveTransport } from "./deepSeekFlight";
 const request = (): Parameters<FlightLiveTransport["send"]>[0] => ({
   url: DEEPSEEK_FLIGHT_DESTINATION,
@@ -11,6 +14,45 @@ const request = (): Parameters<FlightLiveTransport["send"]>[0] => ({
   max_response_bytes: 131072,
 });
 describe("fixed HTTPS transport unit, injected boundary only", () => {
+  it("keeps Search closed for existing Import callers", async () => {
+    const http = vi.fn<typeof fetch>();
+    await expect(
+      createFlightHttpsSend(http)({
+        ...request(),
+        url: DEEPSEEK_FLIGHT_SEARCH_DESTINATION,
+      }),
+    ).rejects.toThrow("LIVE_DESTINATION_REJECTED");
+    expect(http).not.toHaveBeenCalled();
+  });
+  it("allows one fixed Search POST only for the independent Enrichment profile", async () => {
+    const http = vi.fn<typeof fetch>(async () => new Response("{}"));
+    await createFlightHttpsSend(
+      http,
+      "FLIGHT_ENRICHMENT_V1",
+    )({
+      ...request(),
+      url: DEEPSEEK_FLIGHT_SEARCH_DESTINATION,
+    });
+    expect(http).toHaveBeenCalledExactlyOnceWith(
+      DEEPSEEK_FLIGHT_SEARCH_DESTINATION,
+      expect.objectContaining({ redirect: "error", method: "POST" }),
+    );
+  });
+  it("does not follow Search to the completion endpoint", async () => {
+    const response = new Response("{}");
+    Object.defineProperty(response, "url", { value: DEEPSEEK_FLIGHT_DESTINATION });
+    const http = vi.fn<typeof fetch>(async () => response);
+    await expect(
+      createFlightHttpsSend(
+        http,
+        "FLIGHT_ENRICHMENT_V1",
+      )({
+        ...request(),
+        url: DEEPSEEK_FLIGHT_SEARCH_DESTINATION,
+      }),
+    ).rejects.toThrow("LIVE_DESTINATION_REJECTED");
+    expect(http).toHaveBeenCalledOnce();
+  });
   it("one fixed POST carries Authorization only to the approved origin", async () => {
     const http = vi.fn<typeof fetch>(async () => new Response("ok"));
     const result = await createFlightHttpsSend(http)(request());

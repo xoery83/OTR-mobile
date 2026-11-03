@@ -2,5 +2,7 @@
   "commit": "9024307b86b1002219d7daa77522e61d88b6400f",
   "archiveSha256": "a31aeb4636fc2fc9ffe7ef9d540a8d96e77ab5b9c898a762ca1bb114ef38da3c",
   "manifestSha256": "a16ac95a40027fcc70a1008670d9ce5519ac9706b4be7b395da47fefeb410cce",
-  "adaptation": "Extensionless relative imports; contracts shared with Native. No Host runtime composition or live credentials."
+  "contractsSourceSha256": "0481d15746de54ecff2e5cabc70c1a0ea511269743c589b12f5bbaf80f6ebaa7",
+  "extractionPromptSha256": "73beaf0f7382de2e13bd60f20a31e3a3fa26abb28f78aaf576f6a1b5c7eed1bc",
+  "adaptation": "Extensionless relative imports; contracts shared with Native. Original extraction prompt exported unchanged for protected profile binding. No live credentials or automatic runtime activation."
 }

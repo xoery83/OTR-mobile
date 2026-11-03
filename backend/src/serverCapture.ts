@@ -1,3 +1,5 @@
+import { reportEnrichmentDiagnostic } from "./flight-enrichment/diagnostics";
+import { loadDevFlightEnrichmentRuntime } from "./flight-enrichment/devRuntime";
 import { loadDevUniversalContinuousRuntime } from "./universalContinuousRuntime";
 import {
   universalBatchPreparedSchema,
@@ -15,6 +17,13 @@ import { settledReadSettings } from "./universalSettledReadBootstrap";
 
 // Opt-in image command only. The ordinary server.ts remains CLOSED and unchanged.
 async function main() {
+  let enrichment: Awaited<ReturnType<typeof loadDevFlightEnrichmentRuntime>>;
+  try {
+    enrichment = await loadDevFlightEnrichmentRuntime(process.env);
+  } catch (error) {
+    reportEnrichmentDiagnostic("LOAD_RUNTIME", error);
+    console.info("FLIGHT_ENRICHMENT_RUNTIME_CLOSED");
+  }
   let settled: Awaited<ReturnType<typeof loadSettledUniversalReadRuntime>> | undefined;
   try {
     const selection = settledReadSettings(process.env);
@@ -96,6 +105,7 @@ async function main() {
       console.info("TRIP_METADATA_RUNTIME_CLOSED");
     }
     server = startDevBackend({
+      ...(enrichment ? { flightEnrichmentService: enrichment.service, flightEnrichmentEnabled: true, flightEnrichmentAvailable: enrichment.available } : {}),
       ...(continuous
         ? {
             sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
@@ -197,6 +207,7 @@ async function main() {
         originals?.catalogConnection,
     });
   } catch (error) {
+    await enrichment?.close();
     await settled?.close();
     await continuous?.close();
     await originals?.close();
@@ -207,6 +218,7 @@ async function main() {
     throw error;
   }
   server.once("close", () => {
+    void enrichment?.close();
     void settled?.close();
     void continuous?.close();
     void originals?.close();

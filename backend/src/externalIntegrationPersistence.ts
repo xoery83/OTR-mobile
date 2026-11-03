@@ -46,6 +46,13 @@ export const protectedCommands = [
   "flight_activation_account_grant",
   "flight_activation_reserve_call",
   "universal_activation_reserve_call",
+  "flight_enrichment_request_claim",
+  "flight_enrichment_request_finish",
+  "flight_enrichment_scope_select",
+  "flight_enrichment_runtime_scope",
+  "flight_enrichment_reserve_step",
+  "flight_enrichment_mark_dispatch",
+  "flight_enrichment_step_receipt",
   "external_integration_configure",
   "external_integration_set_kill",
   "intelligence_provider_config_append",
@@ -95,6 +102,19 @@ export function createClosedPersistenceGateway(deps: {
       sha256: string;
       admissionSha256: string | null;
     },
+  ): Promise<boolean>;
+  verifyEnrichmentInput?(
+    context: Readonly<VerifiedCallContextV1>,
+    material: Readonly<{
+      accountId: string;
+      tripId: string;
+      callId: string;
+      reference: string;
+      sha256: string;
+      byteCount: number;
+      stepId: string;
+      kind: "SEARCH" | "EXTRACTION";
+    }>,
   ): Promise<boolean>;
   execute(
     command: ProtectedCommand,
@@ -156,6 +176,48 @@ export function createClosedPersistenceGateway(deps: {
       ] as const)
         if (Object.hasOwn(command, field) && command[field] !== bound)
           throw new Error("CP14_SCOPE_FORBIDDEN");
+      if (kind === "flight_enrichment_reserve_step") {
+        if (
+          context.gateway_identity !== "otr_external_integration_call_gateway" ||
+          context.principal_kind !== "TRUSTED_WORKLOAD" ||
+          context.verified_environment !== "DEV"
+        )
+          throw new Error("CP14_SCOPE_FORBIDDEN");
+        const material = z
+          .strictObject({
+            accountId: id,
+            tripId: id,
+            callId: id,
+            reference: id,
+            sha256: digest,
+            byteCount: z.number().int().positive().max(24000),
+            stepId: digest,
+            kind: z.enum(["SEARCH", "EXTRACTION"]),
+          })
+          .parse({
+            accountId: command.account_id,
+            tripId: command.trip_id,
+            callId: command.call_id,
+            reference: command.input_reference,
+            sha256: command.input_sha256,
+            byteCount: command.input_byte_count,
+            stepId: command.step_id,
+            kind: command.kind,
+          });
+        if (
+          material.reference !== material.callId ||
+          typeof command.provider_body !== "string" ||
+          Buffer.byteLength(command.provider_body) !== material.byteCount ||
+          createHash("sha256").update(command.provider_body).digest("hex") !==
+            material.sha256 ||
+          !deps.verifyEnrichmentInput ||
+          !(await deps.verifyEnrichmentInput(
+            Object.freeze(context),
+            Object.freeze(material),
+          ))
+        )
+          throw new Error("CP14_ENRICHMENT_CUSTODY_UNAVAILABLE");
+      }
       if (kind === "inbound_ai_attach_material" || kind === "inbound_ai_reserve_review") {
         const review =
           kind === "inbound_ai_reserve_review"

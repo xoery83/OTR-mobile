@@ -1,28 +1,35 @@
 import { DEEPSEEK_FLIGHT_DESTINATION, type FlightLiveTransport } from "./deepSeekFlight";
+export const DEEPSEEK_FLIGHT_SEARCH_DESTINATION =
+  "https://api.deepseek.com/v1/tools/search" as const;
+type FlightHttpsRequest = Omit<Parameters<FlightLiveTransport["send"]>[0], "url"> & {
+  url: typeof DEEPSEEK_FLIGHT_DESTINATION | typeof DEEPSEEK_FLIGHT_SEARCH_DESTINATION;
+};
 // Low-level transport unit seam; never accepts custody, credentials or host provisioning.
 export function createFlightHttpsSend(
   http: typeof fetch = globalThis.fetch,
-): FlightLiveTransport["send"] {
+  profile: "FLIGHT_IMPORT_V1" | "FLIGHT_ENRICHMENT_V1" = "FLIGHT_IMPORT_V1",
+): (request: FlightHttpsRequest) => ReturnType<FlightLiveTransport["send"]> {
   return async (request) => {
     if (
-      request.url !== DEEPSEEK_FLIGHT_DESTINATION ||
+      (request.url !== DEEPSEEK_FLIGHT_DESTINATION &&
+        !(
+          profile === "FLIGHT_ENRICHMENT_V1" &&
+          request.url === DEEPSEEK_FLIGHT_SEARCH_DESTINATION
+        )) ||
       request.method !== "POST" ||
       request.redirect !== "error" ||
       request.max_response_bytes !== 131072
     )
       throw new Error("LIVE_DESTINATION_REJECTED");
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(30000)]);
-    const response = await http(DEEPSEEK_FLIGHT_DESTINATION, {
+    const response = await http(request.url, {
       method: "POST",
       redirect: "error",
       headers: request.headers,
       body: request.body,
       signal,
     });
-    if (
-      response.redirected ||
-      (response.url && response.url !== DEEPSEEK_FLIGHT_DESTINATION)
-    ) {
+    if (response.redirected || (response.url && response.url !== request.url)) {
       await response.body?.cancel();
       throw new Error("LIVE_DESTINATION_REJECTED");
     }

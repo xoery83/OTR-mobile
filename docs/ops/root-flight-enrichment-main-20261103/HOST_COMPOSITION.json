@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_PASS_REVIEW_PENDING_DEFAULT_CLOSED",
+  "base": "5138f555",
+  "retainedSource": "90b4b1ce",
+  "exactRetainedLeafFiles": [
+    "backend/src/flight-enrichment/devRuntime.ts",
+    "backend/src/flight-enrichment/devRuntime.test.ts",
+    "backend/src/flight-enrichment/diagnostics.ts",
+    "backend/src/flight-enrichment/diagnostics.test.ts",
+    "backend/src/flight-enrichment/hostRun.ts",
+    "backend/src/flight-enrichment/hostRun.test.ts",
+    "backend/src/flight-enrichment/idempotency.ts",
+    "backend/src/flight-enrichment/idempotency.test.ts",
+    "backend/src/flight-enrichment/metering.ts",
+    "backend/src/flight-enrichment/metering.test.ts",
+    "backend/src/flight-enrichment/modelBinding.ts",
+    "backend/src/flight-enrichment/modelBinding.test.ts",
+    "backend/src/flight-enrichment/persistentPorts.ts",
+    "backend/src/flight-enrichment/persistentPorts.test.ts",
+    "backend/src/flight-enrichment/registeredProfile.ts",
+    "backend/src/flight-enrichment/registeredProfile.test.ts",
+    "backend/src/flight-enrichment/runtime.ts",
+    "backend/src/flight-enrichment/runtime.test.ts",
+    "backend/src/flight-enrichment/usageWriter.ts",
+    "backend/src/flight-enrichment/usageWriter.test.ts",
+    "backend/src/flight-enrichment/registeredProfile.json"
+  ],
+  "currentSharedContract": "Byte-identical to retained90b4 candidate; strict /1, eleven fields; terminals deferred",
+  "changes": "Necessary persistent request journal/usage/model binding/private runtime leaves and existing gateway/transport adapters; manual current-main serverCapture composition preserves Auth/MCP/Source ports",
+  "validation": "223 local tests; strict devRuntime types; capture bundle build; lint zero errors, one unchanged service.ts unused admitted warning",
+  "broaderTypecheck": "serverCapture dependency closure has unchanged timer.unref typing conflicts in five other modules; not claimed PASS",
+  "providerPublicDocumentation": [
+    "https://api-docs.deepseek.com/api/search/",
+    "https://api-docs.deepseek.com/guides/search/"
+  ],
+  "qualification": "Public endpoint documentation is not QA credential/scope/price authorization. No real Provider call; historical expired limits not reused.",
+  "protectedArtifacts": "PROFILE_SCOPE_CANDIDATE.sql copied only as pinned test/provenance fixture. No SQL installed; no runtime opt-in/config/credentials deployed.",
+  "next": "Independent review, serial main integration, fresh read-only Hosted/profile/price preimages and one exact execution qualification package"
+}

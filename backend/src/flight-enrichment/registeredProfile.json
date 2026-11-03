@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "consumer_id": "flight-enrichment",
+  "execution_scope": "FLIGHT_ENRICHMENT_V1",
+  "default_state": "CLOSED",
+  "package_sha256": "a31aeb4636fc2fc9ffe7ef9d540a8d96e77ab5b9c898a762ca1bb114ef38da3c",
+  "provider_id": "DeepSeek",
+  "model_id": "deepseek-flash",
+  "expected_family": "DeepSeek-V4.1-Flash-1017",
+  "accepted_returned_models": ["deepseek-flash", "DeepSeek-V4.1-Flash-1017"],
+  "search_url": "https://api.deepseek.com/v1/tools/search",
+  "extraction_url": "https://api.deepseek.com/chat/completions",
+  "credential_reference": "vault:otr/dev/deepseek/flight-enrichment-v1",
+  "search_billable_unit": "successful_search_requests",
+  "max_search_calls": 1,
+  "max_llm_calls": 1,
+  "max_request_bytes": 24000,
+  "max_response_bytes": 131072,
+  "max_output_tokens": 1200,
+  "target_nanos": "10000000",
+  "currency": "USD"
+}
