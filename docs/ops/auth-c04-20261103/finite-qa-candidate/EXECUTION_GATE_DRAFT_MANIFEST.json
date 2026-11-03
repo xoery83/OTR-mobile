@@ -35,9 +35,7 @@
     "finalApprovedGateSHA256": null
   },
   "missingBeforeOwnerRequest": [
-    "Final bounded config/mounted-file path hashes and immutable execution sealing specification",
-    "Qualified normal A/B session and independent readReceipt/preflight/custody operator interfaces",
-    "Final exact Gate review; repeat CAS only after approval before actual execution"
+    "Final fixed-code manifest/Gate review and actual Root/Auth operator invocation agreement; no new credentials required"
   ],
   "executionPlan": false,
   "businessCalls": 0,
@@ -82,5 +80,56 @@
     "source": "Root prior git ls-remote observation",
     "liveMainOrImageProvenance": false,
     "mustRecheckBeforeExecution": true
+  },
+  "proposedMountedFileHashes": {
+    "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+    "/opt/otr/dev-backend/env/universal-png-runtime.json": "3d3cdff1ab33c2601ccc8f284d23ce5abf27bcb28461e69c9c74fe098162be18",
+    "/run/otr-r3a5-catalog/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+    "/opt/otr/dev-backend/env/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+    "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json": "1febb2a7715e33c891c62fe97f9e4c26bca2edd1e7c8213363a86a046f48606d"
+  },
+  "mountedFilesQualification": "Root reported exact path hashes, no file bodies/Secrets read by Auth; three directory mounts covered by Docker Mounts hash; fresh CAS required",
+  "configHashesQualification": "No additional non-mounted Host config dependency has been identified; Root must use actual dependencies only, not invented path hashes",
+  "readbackAdapter": {
+    "path": "scripts/auth/member-claim-qa-readback.ts",
+    "export": "createMemberClaimQaReadback(exactCase, query)",
+    "sourceSHA256": "c5a844f2edfe746f6a9384ccc62ca4b8793f0df1a6f9af40542feb21fb8fa750",
+    "focusedTests": "12/12 PASS",
+    "independentReview": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE; independent11+new1 PASS",
+    "typecheck": "PASS",
+    "targetedLint": "PASS",
+    "actualPgQuery": "NOT_RUN",
+    "queryOwner": "Root existing SqlTransport, only fixed read-only DEV projection; never A/B operation identity"
+  },
+  "uniqueRemainingRuntimeQualification": "Actual normal A/B login and business execution remain NOT_RUN and belong inside proposed exact execution window; Receiving permission available, daily sending allowance unknown",
+  "normalAuthCallbackComposition": {
+    "path": "scripts/auth/registered-qa-host-session.ts",
+    "export": "createNormalRegisteredQaHostDependencies(receiver,note,publicOptions)",
+    "sourceSHA256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d",
+    "validation": "3new+independent3PASS; 16 unchanged tests skipped; typecheck/scopedlintPASS",
+    "security": "Existing DEV URL/public-key validator, immutable snapshot, noop persistence; retained registered-QA-only request/normal verify/user/local logout/revoked refresh semantics",
+    "actualSessions": "NOT_RUN"
+  },
+  "receiverReadiness": {
+    "path": "RECEIVING_READINESS.json",
+    "sha256": "f19ac579c36a28ec27d94405f3cfe22a01d8f4c6eb344de493dddba860087b1e",
+    "sendingQuota": "UNKNOWN_FAIL_CLOSED_NO_RESEND"
+  },
+  "rootActualPreflightReport": {
+    "source": "Root actual DEV read-only SqlTransport report circa2026-11-03T03:22Z, original artifact not supplied",
+    "fields": {
+      "tripOwnedByA": true,
+      "ownerPersonLinkedToA": true,
+      "targetNeverLinked": true,
+      "bLinkedPeople": 0,
+      "originalReceipts": 0,
+      "directedInvites": 0,
+      "targetPaymentRecords": 0,
+      "targetPaymentGrants": 0,
+      "removedAccounts": 0,
+      "claimFunctionPresent": true
+    },
+    "notBusinessE2E": true,
+    "freshCasRequired": true
   }
 }

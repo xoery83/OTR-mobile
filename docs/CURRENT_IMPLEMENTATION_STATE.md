@@ -1,3 +1,17 @@
+# C04 readback and normal Auth wiring — 3 November 2026
+
+Auth completed fixed-case preflight/receipt readback Adapter:12new tests plus
+independent11+1 PASS. Root reports actualDEV 10-field readonly preflight matching,
+not A/B proof. Existing normal Auth callbacks extracted for explicitA/B cases;
+3new+independent3 PASS, URL-mutation leak finding repaired with existing public
+config validator/frozen snapshot/noop storage. Types/scopedlint PASS. Actual
+Receiving checkPermission GET succeeded03:28:17Z; no mail body/OTP/session/business
+write. Public config came only from approved runbook two-variable source; dedicated
+Keychain secret used only in receiver memory. Daily send quota still UNKNOWN,
+429/allowance failure must stop, not resend. Final finite execution Gate now needs
+fixed-code packet review/operator agreement; actual normalA/B+business remain
+NOT_RUN, no newSchema/GRANT or runtime activation.
+
 # C04 finite execution Gate preparation — 3 November 2026
 
 Root controller66b99173 now has independent NO_BLOCKER_DEFAULT_CLOSED review,

@@ -198,6 +198,60 @@ export async function runRegisteredQaHostSession(
   });
 }
 
+// Shares the existing normal DEV Auth callbacks; caller owns the fixed QA case, receiver and safe reservation journal.
+export function createNormalRegisteredQaHostDependencies(
+  receiver: Receiver,
+  note: (value: Record<string, unknown>) => void,
+  options: ReturnType<typeof publicConfiguration>,
+): Parameters<typeof runRegisteredQaHostSession>[0] {
+  const authOptions = Object.freeze(publicConfiguration({
+    NODE_ENV: "development",
+    OTR_DEV_OTP_TEST: "1",
+    EXPO_PUBLIC_OTR_DEV_SUPABASE_URL: options.url,
+    EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY: options.publishableKey,
+  }));
+  return {
+    receiver,
+    note,
+    request: (email) =>
+      requestSupabaseDevEmailOtp(email, { ...authOptions, allowRegistration: false }),
+    verify: (email, code) => verifySupabaseDevEmailOtp(email, code, authOptions),
+    readUser: async (session) => {
+      const boundary = createRequestBoundary(10000);
+      try {
+        const response = await boundary.run(() =>
+          fetch(`${authOptions.url}/auth/v1/user`, {
+            method: "GET",
+            redirect: "error",
+            signal: boundary.signal,
+            headers: {
+              apikey: authOptions.publishableKey,
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          }),
+        );
+        if (!response.ok) {
+          await response.body?.cancel();
+          throw new OtpQaError("REGISTERED_HOST_IDENTITY_UNPROVEN");
+        }
+        return await readBoundedJson(response, 262144, boundary);
+      } finally {
+        boundary.close();
+      }
+    },
+    revoke: (token) => revokeSupabaseDevSession(token, authOptions),
+    isRevoked: async (session) => {
+      requireQa(session.refreshToken, "REGISTERED_HOST_SESSION_INVALID");
+      try {
+        await refreshSupabaseDevSession(session.refreshToken, authOptions, session.identity);
+        return false;
+      } catch (error) {
+        return error instanceof SupabaseDevAuthError && error.kind === "invalid_session";
+      }
+    },
+  };
+}
+
 // Only the registered DEV QA case. Importing this file performs no IO. The caller
 // must first hold the coordinated DEV business window; this flag grants no authority.
 export async function withRegisteredQaHostSession(
@@ -314,51 +368,7 @@ export async function withRegisteredQaHostSession(
       },
     });
     const result = await runRegisteredQaHostSession(
-      {
-        receiver,
-        note,
-        request: (email) => requestSupabaseDevEmailOtp(email, options),
-        verify: (email, code) => verifySupabaseDevEmailOtp(email, code, options),
-        readUser: async (session) => {
-          const boundary = createRequestBoundary(10000);
-          try {
-            const response = await boundary.run(() =>
-              fetch(`${options.url}/auth/v1/user`, {
-                method: "GET",
-                redirect: "error",
-                signal: boundary.signal,
-                headers: {
-                  apikey: options.publishableKey,
-                  Authorization: `Bearer ${session.accessToken}`,
-                },
-              }),
-            );
-            if (!response.ok) {
-              await response.body?.cancel();
-              throw new OtpQaError("REGISTERED_HOST_IDENTITY_UNPROVEN");
-            }
-            return await readBoundedJson(response, 262144, boundary);
-          } finally {
-            boundary.close();
-          }
-        },
-        revoke: (token) => revokeSupabaseDevSession(token, options),
-        isRevoked: async (session) => {
-          requireQa(session.refreshToken, "REGISTERED_HOST_SESSION_INVALID");
-          try {
-            await refreshSupabaseDevSession(
-              session.refreshToken,
-              options,
-              session.identity,
-            );
-            return false;
-          } catch (error) {
-            return (
-              error instanceof SupabaseDevAuthError && error.kind === "invalid_session"
-            );
-          }
-        },
-      },
+      createNormalRegisteredQaHostDependencies(receiver, note, options),
       action,
     );
     note({ status: "PASS" });
