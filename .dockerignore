@@ -8,3 +8,4 @@
 !src/data/**
 !src/domain/
 !src/domain/**
+!scripts/source-pdf-v2-linux/profile.mjs
