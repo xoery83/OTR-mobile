@@ -1,0 +1,62 @@
+ROOT2_READ_ONLY_VERIFIED — scoped Hosted handoff reconciliation
+Receiver chat:01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232
+Fixed Root1 packet:e179481e206010309fa5590300693be51f7b6867
+Path:/Users/xoery/Project/otr-mobile-import/root2-hosted-handoff-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/
+Prior f61 packet independently reconciled; e179 metadata-only correction reviewed and eight artifact hashes rechecked. No Root1 branch/worktree/shared state was modified.
+Scope:measured DEV Host/Backend/runtime and scoped PG metadata/closure. This is not Writer acceptance, rollback drill or business E2E.
+
+1. Independent resource inventory
+Host observation:2026-11-03T10:20:02.372310Z =23:20:02 NZDT.
+PG observation:2026-11-03T10:19:31.958884Z =23:19:31 NZDT.
+DEV tuqigdxrvrerfewsxqgm /178.105.151.143 /otr-dev-backend /https://api-dev.xoery.art.
+CID0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f.
+Image sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc.
+Configeb99ebf60049e076085f517d9dc06a69440749de0d02ee553ebacaf46413cedf.
+Env-map1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020.
+HostConfigd50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c.
+Mount-triples14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696.
+All nine mounts, five mounted config-file hashes and four deployed bundles match packet. Host-network/127.0.0.1:8787, userotr/read-only rootfs, Docker healthy/running, local/public health ok/development.
+Current default0c723/68aa is next deployment's retained restore preimage. Historicalc213/039 exists stopped and image exists; not automatic fallback and not exercised.
+PDF/PNG units loaded/inactive/dead/PID0. PNG runtime3d3cdff1 remains enabled but Nov1 expired; PDF runtime mount absent. No new runtime/config/permission change.
+PG READ ONLY independently returns ledger68/max20261004000300; five exact Source definitions/OID/owner/ACL match packet. Ledger is not complete schema lineage.
+Import source PDF=false/PNG=false/PNGexpiry=null; existing six-family Admission expiredNov1. Provider scope6 active=true but expired; Actor grant5 revoked=false but expired. Never relabel those two flags as inactive/revoked.
+Flight scope6 inactive/expiredOct29; Actor grant6 revoked/expired. Both integrations' ten inspected price schedules expired, including both current Flight pins and Import current price56f9.
+Maintenance CONFIG10/SECURITY12 revoked/expired; admin57852 NOLOGIN/connlimit1/non-super/non-bypass; own-role session count0.
+Issuer function67215 bodyMD5b0f7eae14599bd32cb9430a59832c837/ownerpostgres/securityDefinerfalse/search_pathpg_catalog matches retained CLOSED fingerprint. No issuer or business function invoked.
+Full fingerprints and observations:HOST_INDEPENDENT.json, PG_INDEPENDENT.json.
+
+2. Delta against fixed Root1 packet
+Unexplained measured resource drift:NONE.
+e179 changes label bodySHA256→definitionSHA256 and documents SHA256(UTF8(pg_get_functiondef(oid))); independent Root2 query already hashes pg_get_functiondef. Same five values; no function change inferred.
+Original Root2 Env-list digests used different canonicalization; existing deploy.py Env-map/Mount-triples match. This is not environment drift.
+Independent additions:Issuer CLOSED fingerprint and fresh Flight scopes/grants/prices, READ ONLY transaction proof, exact device+inode lock lookup, mounted-file uid/gid/mode, deployed release.py hash.
+Not independently observed:current Supabase Console OAuth toggle/Site URL/DCR; packet explicitly labels its08:02Z observation historical. Current console values remain UNKNOWN and cannot qualify a new OAuth window.
+No complete global UNKNOWN/session/external-tool enumeration. Bounded packet preserves original Auth/MCP and Import raw RUNNING/PENDING; stale task rows do not establish an active authorized worker. No receipt was reset or replayed.
+Root1 build source2b71/baseacbe identified by packet plus actual four bundle pins; no single image Git label established. Fresh source-main remote is not re-read in this verification round; preceding Root2 direct ls-remote establishedb16. Do not equate localc91 with deployed/main.
+
+3. Actual Writer / lock
+Fixed WRITER_STATE:PREPARED_ROOT1_RETAINED; root1Released=false; root2Accepted=false; mcOwnershipRecorded=false. Root1 is sole recorded Hosted Writer, paused for handoff. Root2 READ_ONLY_ONBOARDING.
+Host lock /run/lock/otr-universal-finite-service.lock root0600; exact device+inode match in/proc/locks found noholder. No lock opened/acquired/released. No OTR timers loaded, all known finite Backend selectors absent, both workers stopped; scoped no-active-window baseline confirmed at observation time.
+These are point-in-time scoped observations, not proof of arbitrary global process inactivity or a resource reservation.
+
+4. Unclosed work / Gates
+Auth:713/e930 consumed/CLOSED; historical ISSUE/CLAIM UNKNOWN retained. c91 exact newGate unapproved/unarmed; requires fresh normal A/B proof, immutable case/plan and dual timers; no reissue/reset.
+MCP:a2f8 consumed/CLOSED; browser readiness unresolved; no ConsumerPreview/Apply PASS. Issuer currently fingerprintCLOSED. New OAuth/Consumer scope requires new exact valid permission and fresh Console readback. Apply requires its own authority.
+Import:LaneC owns business afteraaff handoff; Root1 old94a unused permission is not transferable. Scope/Actor/Source/prices expired; no new legal Source/ProviderT/D. Host runtime presence is not permission. Fresh normal identity,typed contexts,quotas,timers/cleanup and exact authorization required.
+Flight:scope/grant/price/runtime/Native normal identity qualification missing. Software deployed defaultclosed only, no Provider call.
+CoreRevoke:67e374fb isolated codec candidate; formal atomic PG producer,receipt/revision,deny/invalidation/Invite/concurrency prerequisites and protected installGate still absent. NOT_READY.
+
+5. Resource scope eligible for sequenced transfer
+DEV Host/Backend container/image,port8787, runtime Env/config/mount CAS, health/readback, default-close/shutdown/restore/rollback, protected-window environmental operation and explicitly qualified protected installation execution.
+Root1 retains Core contracts/canonical ports/schema or migration design/source review/main integration. Business Lane retains Source/Task/Custody/Provider usage/E2E. Native/Vision and Production excluded.
+No standing OAuth,Apply,paidProvider or SQL/permission authority transfers. Console unknown is an execution preflight blocker, not permission to probe by enabling it.
+Remaining exact sequence:Root1 commits same-resource ROOT1_HOSTED_WRITER_RELEASED → Root2 explicit ROOT2_HOSTED_WRITER_ACCEPTED → MC unique-owner registration/ACK → Root2 no-business health/default-close check. No Hosted writes before all conditions.
+No READY protected Hosted task currently established; safe work completed is read-only qualification and fixed-packet reconciliation.
+
+6. Still-needed approvals / coordination
+Ownership steps above remain incomplete; no release SHA received. Exact per-package Gate/Release Packet/action eligibility still required independently of ownership.
+Transport permissions obtained in this session cover only read-only SSH and BEGIN READ ONLY metadata. They cannot be reused for deployment or SQL installation.
+Current MC read-only registry has Native/MCP/newImport/Auth, Root2 not registered. No shared MC or Source status changed.
+Sending non-sensitive reconciliation requests to Root1/MC remains blocked by automatic approval review; two latest sends were rejected because authorization from read_thread/delegated history was not accepted as a direct trusted user instruction. No message delivered; no indirect sending attempted. A direct user authorization in this chat is required by that review before further sends.
+
+Evidence:ROOT2_READ_ONLY_VERIFIED.json binds exact packet,33 checks,exceptions and remaining steps. Verification scripts retained beside receipts; no credentials or raw env values copied. No rollback drill,Native,Provider,OAuth activation,business write or SQL mutation performed.

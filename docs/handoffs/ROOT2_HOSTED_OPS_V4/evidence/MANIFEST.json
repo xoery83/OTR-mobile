@@ -47,6 +47,18 @@
       "bytes": 10434,
       "sha256": "de86fe03a8a79dbbebb73106d014a13100df882b7f075bd5dbe9ed8d40b47e96",
       "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    },
+    {
+      "path": "evidence/ROOT2_READ_ONLY_VERIFIED.json",
+      "bytes": 3704,
+      "sha256": "69d4e6059fd1db8e54b1607a909fbdd06cc9cac7b1b297c9ce91d3d884869f0d",
+      "origin": "Root2 independent read-only exact e179 package reconciliation"
+    },
+    {
+      "path": "evidence/READ_ONLY_RECONCILIATION.txt",
+      "bytes": 8105,
+      "sha256": "0452aa99a3b901e456b82911ffdf54f4984111566d019f4741353dca39002a32",
+      "origin": "Root2 independent read-only exact e179 package reconciliation"
     }
   ],
   "containsCredentials": false

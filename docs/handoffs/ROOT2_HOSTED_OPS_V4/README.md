@@ -1,6 +1,7 @@
 # Root1 → Root2 Hosted Operations V4
 
-Status: **PREPARED; Root1 retains Writer, new writes paused for handoff.**
+Status: **ROOT1 RELEASED; no active Writer until Root2 acceptance and MC registration.**
+Root2 independently verified e179481e at10:19–10:20Z, with no unexplained drift or active scoped window. See WRITER_STATE and evidence/ROOT2_READ_ONLY_VERIFIED.json. Root1 performs no further Hosted mutation.
 Receiving chat: **OTR-ROOT2-HOSTED-OPS**, `01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232`.
 The other chat titled Root2 created that receiver; it is not a second resource owner.
 No business execution, OAuth expansion, Provider spending or Production authorization is granted here.
