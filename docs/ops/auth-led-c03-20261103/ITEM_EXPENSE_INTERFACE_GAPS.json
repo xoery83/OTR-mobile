@@ -1,0 +1,60 @@
+{
+  "package": "LED-C03",
+  "slice": "LED-C03:LOCAL_PREP",
+  "claimId": "auth-led-c03-local-prep-20261103-v1",
+  "status": "LOCAL_INTERFACE_PREP_COMPLETE_OWNING_LINK_CAPABILITY_MISSING",
+  "instructionCanonicalSHA256": "419aecad17d1eaea13ed7c678e78a54a1620206b395fd2e7b4585f51e712fc36",
+  "scope": "Basic lawful existing Item<->Expense relation before any Widget; no second financial aggregate",
+  "sourceHashes": {
+    "app/trip-item-expense.tsx": "d079cae25465ce075c3bc51c465248e230eee3ea6bfb00576819cf3d1d477535",
+    "src/features/day-feed/P3Detail.tsx": "7d741a3c7ea118666b0139c909d2af8dcdf021bf1d8fe31992b67a87a9e5354a",
+    "src/domain/trip/tripCoreV2Commands.ts": "9f29ff0a97b1d5d5ce850006e4ac4d34898643de8ca032f343c2975d49604f48",
+    "src/domain/trip/tripCoreV2Mutation.ts": "53e0d6ab46023b3eca396f7c1113fd73cc0bf5d58b3bdb249daee5a001af7b7f",
+    "backend/src/tripCoreV2Collection.ts": "ab868b31f1873d7b8a55c677c790287dff6bec6a8f68040e6c5d60170b6819ff"
+  },
+  "actualFindings": [
+    {
+      "source": "app/trip-item-expense.tsx",
+      "finding": "Reuses LedgerExpenseEntryScreen in modal, not a formal link worker"
+    },
+    {
+      "source": "src/features/day-feed/P3Detail.tsx",
+      "finding": "P3 addExpense passes journey/title/date/mode, no stable target Item identity; a prefill does not establish a relation"
+    },
+    {
+      "source": "src/domain/trip/tripCoreV2Commands.ts",
+      "finding": "Existing strict LINK_EXPENSE/UNLINK_EXPENSE payload has expenseId,targetKind,targetId; do not invent another relation model"
+    },
+    {
+      "source": "src/domain/trip/tripCoreV2Mutation.ts",
+      "finding": "Both commands explicitly throw OWNING_CAPABILITY_REQUIRED; schema existence is not enabled write authority"
+    },
+    {
+      "source": "backend/src/tripCoreV2Collection.ts",
+      "finding": "Collection only exports links whose Expense is independently authorized and whose target is visible; default expense allowlist empty; link record contains no qualified amount summary"
+    }
+  ],
+  "minimumOwningPort": [
+    "Ledger/Core qualifies both same-Trip endpoints and link-management rights, stable tuple/operation/digest/CAS/receipt; no read==write inference",
+    "Existing Native entry supplies exact Item ID and return context; changing/unlinking relation does not delete or reprice Expense",
+    "Use existing authorized Ledger money/FX read for later summary; do not add sums in Core/DayFeed or infer0 from unavailable Reader"
+  ],
+  "negativeCases": [
+    "Cross-Trip relation rejected",
+    "Readable Item + hidden private Expense cannot leak link/amount",
+    "Readable Expense + hidden target cannot leak target",
+    "Same original relation operation idempotent; changed tuple with same operation rejected",
+    "Revoke/account-switch clears qualified visibility, old result cannot repaint another Account",
+    "Unlink removes only relationship; Expense and its independent ownership remain"
+  ],
+  "notPrerequisites": [
+    "Complex Booking/Document/Choice auto-link",
+    "New financial aggregate",
+    "Universal source inference"
+  ],
+  "testsRepeated": false,
+  "financialWrites": 0,
+  "hostedActions": 0,
+  "newPermissions": false,
+  "missingLocalInstructionFields": []
+}

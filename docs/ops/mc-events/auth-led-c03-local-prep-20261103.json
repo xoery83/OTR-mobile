@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-led-c03-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "LED-C03",
+      "execution_slice_id": "LED-C03:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T00:52:38.739774+00:00",
+      "actual_started_at": "2026-11-03T00:52:38.739774+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-ledger-existing-item-link-port",
+      "summary": "Started exact Expense-Link/Item/Member ACL port prep using existing Core Collection filtering; no duplicate financial aggregate or link writes",
+      "next_action": "Handoff existing closed LINK/UNLINK owning capability and Native stable target/ACL requirements, no speculative aggregate"
+    }
+  ]
+}
