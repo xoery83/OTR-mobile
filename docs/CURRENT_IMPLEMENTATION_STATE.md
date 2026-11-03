@@ -1,12 +1,3 @@
-# IMP-C01 Activity completion refresh — 3 November 2026
-
-Isolated from origin/main58e4dbed, the Import Activity candidate preserves a local
-Capture completion notification that overlaps its list read, then coalesces one
-follow-up read. Existing stale-handler/scope guards remain; no Task dispatch,
-Save or shared Navigation change.27 targeted checks/scoped strict/lint/UI guard
-pass. See `ops/imp-c01-activity-refresh-20261103/HANDOFF.md`; LOCAL_PASS, actual
-native Results/Review/Documents/Updates acceptance and Root integration pending.
-
 # Root Enrichment current-main preparation — 3 November 2026
 
 Default-closed retained Host composition is prepared on current main with Normal Account fences, startup availability and normalized ingress bounds. Local223 checks, runtime strict types and capture build pass; independent review NO_BLOCKER, serial maine013bbfd integrated. Default-closed image4609fc77 deployed and independently verified healthy with opt-in/mount/finite QA absent; old98f retained for rollback. No SQL/Provider activation. See `ops/root-flight-enrichment-main-20261103/HOST_COMPOSITION.json`; real Provider/price/scope qualification remains unverified.
@@ -897,3 +888,12 @@ Isolated main581 rehearsal:22 targeted checks, five-root strict types, product l
 and UI guard473/168 PASS. Fixed Native603 FINAL_REVIEW/Auth705 review retained in
 `ops/root-native-round1-integration-20261103/`; Root serial main and Native/Vision
 full-main build/device/Owner acceptance remain pending. No Host/device/build action.
+
+# IMP-C01 Activity completion refresh — 3 November 2026
+
+Isolated from origin/main58e4dbed, the Import Activity candidate preserves a local
+Capture completion notification that overlaps its list read, then coalesces one
+follow-up read. Existing stale-handler/scope guards remain; no Task dispatch,
+Save or shared Navigation change.27 targeted checks/scoped strict/lint/UI guard
+pass. See `ops/imp-c01-activity-refresh-20261103/HANDOFF.md`; LOCAL_PASS, actual
+native Results/Review/Documents/Updates acceptance and Root integration pending.
