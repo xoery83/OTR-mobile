@@ -173,3 +173,36 @@ it("preserves exact Base/Create/Edit proof hashes but drops malformed or unquali
     }
   }
 });
+
+it("C02 stage logger strips private fields and rejects invalid finite fields", async () => {
+  const q = fixture();
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
+  const { diagnostic } = q.createC02ConfiguredHost.mock.calls[0][0] as {
+    diagnostic(event: unknown): void;
+  };
+  const event = {
+    diagnosticId: "11111111-1111-4111-8111-111111111111",
+    method: "POST",
+    stage: "CORE_RETURNED",
+    elapsedMs: 20,
+    coreStatus: 503,
+  };
+  diagnostic({
+    ...event,
+    accessToken: "SECRET_CANARY",
+    body: "PRIVATE_CANARY",
+    accountId: "PRIVATE_CANARY",
+    operationId: "PRIVATE_CANARY",
+  });
+  expect(info).toHaveBeenLastCalledWith("MCP_QA_WRITE_STAGE", JSON.stringify(event));
+  info.mockClear();
+  for (const invalid of [
+    { ...event, method: "DELETE" },
+    { ...event, coreStatus: 600 },
+    { ...event, elapsedMs: Infinity },
+    { ...event, stage: "COMMITTED" },
+  ])
+    diagnostic(invalid);
+  expect(info).not.toHaveBeenCalled();
+});

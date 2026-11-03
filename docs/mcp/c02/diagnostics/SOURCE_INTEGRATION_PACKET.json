@@ -1,0 +1,77 @@
+{
+  "request_id": "MCP-C02-S1-CORE-TRACE-20261104-001",
+  "related_auth_request_id": "MCP-C02-S1-EED8-WRITE-UNKNOWN-20261104-001",
+  "package": "MCP-C02",
+  "slice": "C02-S1",
+  "business_dri": "MCP Lane B",
+  "source_integrator": "Root1",
+  "hosted_owner": "Root2",
+  "candidate_commit": "978f02009544188b844870331aa1aa81b1b5d82b",
+  "supersedes_source_candidate": "61a3bd37",
+  "reference_main": "5936318992c4d903db1985656f1ba4d8db134ae8",
+  "target": "Latest accepted origin/main at Root1 integration-time CAS; do not reset main to reference SHA",
+  "files": [
+    {
+      "path": "backend/src/mcpAccountWriteBinding.ts",
+      "candidate_sha256": "7c8daf61555f404336244e6bbb465f53067ba1778c319ea733a7bbac3f8d3677",
+      "present_in_reference_main": true,
+      "integration": "Apply reviewed delta against latest target; preserve newer unrelated changes"
+    },
+    {
+      "path": "backend/src/mcpAccountWriteBinding.test.ts",
+      "candidate_sha256": "7ba6ed38be842b626751cbd2c0d6ca728722041887eb1e9f451844d8a1388079",
+      "present_in_reference_main": true,
+      "integration": "Apply reviewed delta against latest target; preserve newer unrelated changes"
+    },
+    {
+      "path": "backend/src/mcpQaRuntime.ts",
+      "candidate_sha256": "152b2a67aac794a99526cfd913490ca0ef389ddb6c69387116804689942adb3b",
+      "present_in_reference_main": true,
+      "integration": "Apply reviewed delta against latest target; preserve newer unrelated changes"
+    },
+    {
+      "path": "backend/src/mcpQaRuntimeC02.test.ts",
+      "candidate_sha256": "de7296bc89435cdb306a4fd859c61f344d30d01a205723af21a9803f74da04a9",
+      "present_in_reference_main": true,
+      "integration": "Apply reviewed delta against latest target; preserve newer unrelated changes"
+    },
+    {
+      "path": "mcp/c02Host.ts",
+      "candidate_sha256": "713bd6fc089701e24b5c225b48980d92f776ad8b341a5906ba680aacf614b0f9",
+      "present_in_reference_main": false,
+      "integration": "Retain as independent C02 bundle source candidate; do not silently import its entire dependency tree"
+    },
+    {
+      "path": "scripts/mcp/c02-close.py",
+      "candidate_sha256": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+      "present_in_reference_main": true,
+      "integration": "Apply reviewed delta against latest target; preserve newer unrelated changes"
+    },
+    {
+      "path": "scripts/mcp/c02-close.test.py",
+      "candidate_sha256": "76fb5bacfe66d4d648ae0b4d4a882eee9bba55e560c0082629da435c56c0ac8b",
+      "present_in_reference_main": true,
+      "integration": "Apply reviewed delta against latest target; preserve newer unrelated changes"
+    }
+  ],
+  "evidence_paths": [
+    "docs/mcp/c02/diagnostics/WRITE_STAGE_REVIEW.json",
+    "docs/mcp/c02/diagnostics/WRITE_STAGE_INTEGRATION.md"
+  ],
+  "review": "NO_BLOCKER; original response plus exact seven hashes preserved",
+  "validation": "67Backend+19C02+6collector, root/MCP Typecheck, scopedLint, CaptureBuild PASS; do not repeat stable checks",
+  "merge_conditions": [
+    "Root1 verifies current source preimage and holds existing reliable sole-writer/CAS mechanism",
+    "Use delta against current target; do not blanket cherry-pick old lane runtime or CURRENT_IMPLEMENTATION_STATE",
+    "Full binding/test equal Auth6b985946; preserve responseProof and newer unrelated runtime",
+    "mcp/c02Host.ts is existing separately built5343 source; its runtime diagnostic callback and updated bundle must remain paired",
+    "Retain Source and Hosted acceptance separately; no OAuth/permissions/window/replay granted"
+  ],
+  "not_ready_if": [
+    "No reliable source writer mutual exclusion: Root1 must state exact absent mechanism",
+    "Unresolved overlapping source changes: identify exact file and owner"
+  ],
+  "return_trigger": "Root1 READY/NOT_READY with sole missing prerequisite; if READY integrated main SHA and file handling receipt to MCP/Root2",
+  "mc_requirement": "Keep same request in durable Active Queue while claim routing fails; return actual error/code, queue, READY qualification and ACK",
+  "execution_boundary": "Source only; Root2 requires separately qualified deployment request; no new window, no original a8c1 replay or new Apply"
+}

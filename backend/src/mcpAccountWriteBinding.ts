@@ -1,4 +1,5 @@
-import { createRequestBoundary } from "@/data/api/requestBoundary";
+import { randomUUID } from "node:crypto";
+import { createRequestBoundary, RequestBoundaryError } from "@/data/api/requestBoundary";
 import { mcpWriteGrantSchema, type McpVerifiedGrant } from "./mcpOAuthGrantVerifier";
 import { createMcpAccountReadBinding, type ReadPorts } from "./mcpAccountReadBinding";
 import { coreHttpBoundary } from "./tripCoreV2Http";
@@ -9,7 +10,16 @@ export type CommandRequest = Readonly<{
   body?: unknown;
   headers?: Record<string, string>;
 }>;
+export type McpWriteStageDiagnostic = Readonly<{
+  diagnosticId: string;
+  method: "GET" | "POST";
+  stage: "PRECHECK" | "CORE_BOUNDARY_ENTERED" | "CORE_RETURNED" | "POSTCHECK";
+  elapsedMs: number;
+  coreStatus?: number;
+  failure?: "EXPIRED" | "CANCELED" | "TIMEOUT" | "GRANT_NOT_CURRENT" | "UNCLASSIFIED";
+}>;
 type WritePorts = ReadPorts & {
+  diagnostic?(event: McpWriteStageDiagnostic): void;
   isWriteGrantCurrent(grant: McpVerifiedGrant, signal: AbortSignal): Promise<boolean>;
 };
 const reply = (status: number, code: string) =>
@@ -71,6 +81,28 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
         let response: Response | undefined;
         let inactive = false;
         let postEntered = false;
+        const startedAt = Date.now();
+        // Log-only ID; it never replaces the command or MCP request identity.
+        const diagnosticId = ports.diagnostic ? randomUUID() : undefined;
+        let stage: McpWriteStageDiagnostic["stage"] = "PRECHECK";
+        let coreStatus: number | undefined;
+        let diagnosticFinished = false;
+        const observe = (failure?: McpWriteStageDiagnostic["failure"]) => {
+          if (diagnosticFinished || !diagnosticId) return;
+          try {
+            ports.diagnostic?.({
+              diagnosticId,
+              method,
+              stage,
+              elapsedMs: Math.max(0, Math.min(120000, Date.now() - startedAt)),
+              ...(coreStatus === undefined ? {} : { coreStatus }),
+              ...(failure ? { failure } : {}),
+            });
+          } catch {
+            /* Diagnostics never alter authorization or recovery. */
+          }
+        };
+        observe();
         try {
           const current = async () => {
             boundary.assertCurrent();
@@ -93,18 +125,44 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
             headers: { "X-OTR-Core-Contract-Version": "2" },
             ...(method === "POST" ? { body } : {}),
           });
-          response = await boundary.run(() => {
+          response = await boundary.run(async () => {
             postEntered = method === "POST";
-            return coreHttpBoundary(
+            stage = "CORE_BOUNDARY_ENTERED";
+            observe();
+            const returned = await coreHttpBoundary(
               request,
               grant.accountId,
               ports.canReadTrip,
               ports.core,
             );
+            if (
+              Number.isInteger(returned.status) &&
+              returned.status >= 100 &&
+              returned.status <= 599
+            )
+              coreStatus = returned.status;
+            stage = "CORE_RETURNED";
+            observe();
+            return returned;
           });
+          stage = "POSTCHECK";
+          observe();
           await current();
           return response;
-        } catch {
+        } catch (error) {
+          const failure =
+            error instanceof RequestBoundaryError
+              ? error.code === "REQUEST_TIMEOUT"
+                ? "TIMEOUT"
+                : error.code === "REQUEST_CANCELED"
+                  ? "CANCELED"
+                  : "UNCLASSIFIED"
+              : error instanceof Error && error.message === "MCP_GRANT_EXPIRED"
+                ? "EXPIRED"
+                : inactive
+                  ? "GRANT_NOT_CURRENT"
+                  : "UNCLASSIFIED";
+          observe(failure);
           void response?.body?.cancel().catch(() => undefined);
           return reply(
             // Once POST enters Core, suppressed results cannot prove non-commit.
@@ -112,6 +170,7 @@ export function createMcpAccountWriteBinding(ports?: WritePorts) {
             "MCP_WRITE_UNAVAILABLE",
           );
         } finally {
+          diagnosticFinished = true;
           boundary.close();
         }
       },

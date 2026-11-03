@@ -1,3 +1,7 @@
+## Root1 MCP safe write-stage diagnostics — 4 November 2026
+
+Fixed candidate `978f0200` composes Auth binding, runtime callback and pre-close diagnostic collector on main593 baseline. Six exact main leaves; existing responseProof/restore and permission/UNKNOWN semantics retained. The separate C02 Host source remains pinned at candidate `mcp/c02Host.ts` for its independent bundle build; not silently installed with missing dependencies. Source-only; no deployment, business replay or recovery claim. Evidence: `docs/mcp/c02/diagnostics/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Root1 source integration — P1 first-save draft (2026-11-04)
 
 Native candidate `84d732e7`: fresh private P1 CREATE survives the first normal Accepted read only when Actor/Person/graph/operations remain identical except the local presentation management flag. Current Accepted authority still validates the command. Two affected suites: 85 PASS; independent Review: no blocker. Source integrated; actual first-save device closure remains Native/Vision pending. Receipt: `docs/ops/native-vn02-guest-20261104/P1_FIRST_SAVE_SOURCE_MAIN_VALIDATION.json`. No Hosted or historic UNKNOWN execution.

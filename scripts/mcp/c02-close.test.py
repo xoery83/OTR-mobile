@@ -72,6 +72,42 @@ class Trace(unittest.TestCase):
                 self.assertTrue(all('responseProof' not in v for v in records[1:]))
                 self.assertNotIn('CANARY', text)
 
+    def test_core_categories_are_preserved_without_raw_data_or_operation_attribution(self):
+        events = [
+            {'event': 'core_execution_failed', 'resource': 'COMMAND', 'category': 'CORE_CONNECTION_TIMEOUT',
+             'driverCode': '57014', 'message': 'SECRET_CANARY', 'operationId': 'PRIVATE_CANARY'},
+            {'event': 'core_validation_failed', 'resource': 'commands', 'method': 'POST', 'cause': 'SCHEMA',
+             'issues': [{'path': ['PRIVATE_CANARY']}], 'body': 'SECRET_CANARY'},
+            {'event': 'core_execution_failed', 'resource': 'PRIVATE_CANARY', 'category': ['SECRET_CANARY'], 'driverCode': 'SECRET_CANARY'},
+            {'event': 'unrelated', 'message': 'SECRET_CANARY'},
+        ]
+        output = '\n'.join('2026-11-03T04:43:00Z ' + json.dumps(e) for e in events)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            m['capture_request_trace'](root, POINTER, lambda _: CONFIG, lambda *a, **kw: types.SimpleNamespace(stdout=output))
+            text = (root / FILENAME).read_text()
+            self.assertNotIn('CANARY', text)
+            data = json.loads(text)
+            self.assertEqual(len(data['coreRecords']), 3)
+            self.assertEqual(data['coreRecords'][0]['category'], 'CORE_CONNECTION_TIMEOUT')
+            self.assertEqual(data['coreRecords'][1]['cause'], 'SCHEMA')
+            self.assertEqual(set(data['coreRecords'][2]), {'timestamp', 'event'})
+            self.assertEqual(data['coreCorrelation'], 'CONTAINER_AND_WINDOW_ONLY_NOT_OPERATION_ATTRIBUTED')
+
+    def test_write_stages_keep_only_safe_fields(self):
+        event = {'diagnosticId': 'ef4562cf-f928-44ee-b160-cd03072c4072', 'method': 'POST',
+                 'stage': 'CORE_RETURNED', 'elapsedMs': 22, 'coreStatus': 503,
+                 'failure': 'TIMEOUT', 'body': 'SECRET_CANARY', 'operationId': 'PRIVATE_CANARY'}
+        output = '2026-11-03T04:43:00Z MCP_QA_WRITE_STAGE ' + json.dumps(event)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            m['capture_request_trace'](root, POINTER, lambda _: CONFIG, lambda *a, **kw: types.SimpleNamespace(stdout=output))
+            text = (root / FILENAME).read_text()
+            self.assertNotIn('CANARY', text)
+            record = json.loads(text)['writeStageRecords'][0]
+            self.assertEqual(record['coreStatus'], 503)
+            self.assertEqual(record['failure'], 'TIMEOUT')
+
     def test_default_probe_never_reads_shared_default_logs(self):
         def forbidden(*_): raise AssertionError('DEFAULT_LOG_READ_FORBIDDEN')
         with tempfile.TemporaryDirectory() as tmp:

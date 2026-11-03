@@ -86,6 +86,20 @@ type ModulePort = {
   createReadRuntime(options: RuntimeOptions): (request: Request) => Promise<Response>;
   createWriteRuntime?(options: RuntimeOptions): (request: Request) => Promise<Response>;
 };
+const writeStageLogSchema = z.object({
+  diagnosticId: z.uuid(),
+  method: z.enum(["GET", "POST"]),
+  stage: z.enum(["PRECHECK", "CORE_BOUNDARY_ENTERED", "CORE_RETURNED", "POSTCHECK"]),
+  elapsedMs: z.number().min(0).max(120000),
+  coreStatus: z.number().int().min(100).max(599).optional(),
+  failure: z
+    .enum(["EXPIRED", "CANCELED", "TIMEOUT", "GRANT_NOT_CURRENT", "UNCLASSIFIED"])
+    .optional(),
+});
+function logWriteStage(event: unknown) {
+  const safe = writeStageLogSchema.safeParse(event);
+  if (safe.success) console.info("MCP_QA_WRITE_STAGE", JSON.stringify(safe.data));
+}
 const responseProofSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     version: z.literal("otr.mcp.response-proof/1"),
@@ -159,6 +173,7 @@ type C02ModulePort = {
     publishableKey: string;
     consentJavascript: Uint8Array;
     log(event: unknown): void;
+    diagnostic(event: unknown): void;
   }): (request: Request) => Promise<Response | null>;
 };
 type RuntimeIo = {
@@ -203,6 +218,7 @@ export async function loadMcpQaRuntime(
       throw Error("MCP_QA_ASSET_INVALID");
     return library.createC02ConfiguredHost({
       rawConfig: c02Raw,
+      diagnostic: logWriteStage,
       ports: {
         discovery: { discoverTrips: gateway.discoverTrips.bind(gateway) },
         canReadTrip: gateway.canReadTrip.bind(gateway),
@@ -268,6 +284,7 @@ export async function loadMcpQaRuntime(
           const accessToken = evidence.accessToken;
           return createMcpAccountWriteBinding({
             ...ports,
+            diagnostic: logWriteStage,
             isWriteGrantCurrent: (current, checkSignal) =>
               current.accountId === qaAccount && Date.now() < config.expiresAt
                 ? active(current, checkSignal, { accessToken })

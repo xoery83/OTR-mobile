@@ -41,14 +41,59 @@ def capture_request_trace(directory, pointer, read_private=private, run=subproce
                         capture_output=True, text=True, timeout=5, check=True)
         lines = completed.stdout.splitlines()
         records = []
+        core_records = []
+        write_records = []
         tools = {'get_otr_operating_guide', 'get_trip_item_edit_base', 'list_trips', 'get_trip', 'list_trip_items', 'get_trip_item',
                  'create_trip', 'create_trip_item', 'update_trip_item', 'review_travel_materials', 'preview_trip_changes', 'apply_trip_changes', 'get_operation_status'}
         errors = {'NOT_VISIBLE', 'BACKEND_UNAVAILABLE', 'BACKEND_TIMEOUT', 'INVALID_INPUT', 'STALE_CURSOR', 'READ_LIMIT', 'AUTH_REQUIRED'}
         for line in lines[-200:]:
             stamp, _, body = line.partition(' ')
-            if len(line) > 16384 or not re.fullmatch(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?Z', stamp) or not body.startswith('MCP_QA_REQUEST '):
+            if len(line) > 16384 or not re.fullmatch(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?Z', stamp):
                 continue
             try:
+                if body.startswith('MCP_QA_WRITE_STAGE '):
+                    event = json.loads(body[len('MCP_QA_WRITE_STAGE '):])
+                    if (not isinstance(event, dict) or not isinstance(event.get('diagnosticId'), str) or
+                        not re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', event['diagnosticId']) or
+                        event.get('method') not in ('GET', 'POST') or
+                        event.get('stage') not in ('PRECHECK', 'CORE_BOUNDARY_ENTERED', 'CORE_RETURNED', 'POSTCHECK') or
+                        type(event.get('elapsedMs')) not in (int, float) or not 0 <= event['elapsedMs'] <= 120000):
+                        continue
+                    safe = {'timestamp': stamp, **{k: event[k] for k in ('diagnosticId', 'method', 'stage', 'elapsedMs')}}
+                    if type(event.get('coreStatus')) is int and 100 <= event['coreStatus'] <= 599:
+                        safe['coreStatus'] = event['coreStatus']
+                    if isinstance(event.get('failure'), str) and event['failure'] in {'EXPIRED', 'CANCELED', 'TIMEOUT', 'GRANT_NOT_CURRENT', 'UNCLASSIFIED'}:
+                        safe['failure'] = event['failure']
+                    write_records.append(safe)
+                    continue
+                if body.startswith('{'):
+                    event = json.loads(body)
+                    if not isinstance(event, dict):
+                        continue
+                    safe = {'timestamp': stamp}
+                    if event.get('event') == 'core_execution_failed':
+                        allowed = {
+                            'resource': {'CAPABILITIES', 'RECEIPT', 'COMMAND'},
+                            'category': {'CORE_CONNECTION_BUSY', 'CORE_CONNECTION_TIMEOUT', 'CORE_CONNECTION_RETIRED',
+                                         'CORE_PRINCIPAL_UNAVAILABLE', 'CORE_TRANSACTION_UNFINISHED', 'CORE_CAPABILITY_CLOSED',
+                                         'CORE_READ_UNAVAILABLE', 'NOT_VISIBLE', 'TRIP_NOT_AUTHORIZED', 'REVISION_CONFLICT', 'OTHER'},
+                            'driverCode': {'53300', '42501', '57014', '40001', '40P01', '25P02', '42P01', '42703',
+                                           '42883', '28P01', '08006', '57P01', 'P0001', 'OTHER'},
+                        }
+                    elif event.get('event') == 'core_validation_failed':
+                        allowed = {'resource': {'commands', 'source-plans', 'source-candidates', 'universal-p1-candidates', 'core'},
+                                   'method': {'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'},
+                                   'cause': {'SCHEMA'}}
+                    else:
+                        continue
+                    safe['event'] = event['event']
+                    for key, values in allowed.items():
+                        if isinstance(event.get(key), str) and event[key] in values:
+                            safe[key] = event[key]
+                    core_records.append(safe)
+                    continue
+                if not body.startswith('MCP_QA_REQUEST '):
+                    continue
                 event = json.loads(body[len('MCP_QA_REQUEST '):])
                 if (not isinstance(event, dict) or not isinstance(event.get('requestId'), str) or
                     not re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', event['requestId']) or
@@ -73,7 +118,8 @@ def capture_request_trace(directory, pointer, read_private=private, run=subproce
             except (ValueError, TypeError):
                 continue
         raw = (json.dumps({'windowId': pointer['windowId'], 'candidateId': pointer['currentContainerId'], 'since': since,
-                           'scope': 'ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP', 'tailLimit': 200, 'tailMayBeTruncated': len(lines) >= 200, 'records': records}, indent=2) + '\n').encode()
+                           'scope': 'ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP', 'tailLimit': 200, 'tailMayBeTruncated': len(lines) >= 200, 'records': records, 'coreRecords': core_records, 'writeStageRecords': write_records,
+                           'coreCorrelation': 'CONTAINER_AND_WINDOW_ONLY_NOT_OPERATION_ATTRIBUTED'}, indent=2) + '\n').encode()
         assert len(raw) <= 131072
         fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         with os.fdopen(fd, 'wb') as output:
