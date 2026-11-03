@@ -78,7 +78,9 @@ export function coreCanManage(
   return (
     coreCanRead(g, actor, kind, row) &&
     (row.owner_account_id === actor.accountId ||
-      (row.visibility !== "PRIVATE" && actor.canManageShared))
+      (row.visibility !== "PRIVATE" &&
+        actor.canManageShared &&
+        (kind !== "ITEM" || row.participation_mode === "WHOLE_GROUP")))
   );
 }
 const rev = (row: CoreRow, kind: f.CoreKind) =>

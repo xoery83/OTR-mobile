@@ -6,7 +6,7 @@ import {
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { loadDevTripMetadataV2Runtime } from "./tripMetadataRuntime";
 import { loadDevCaptureCustody } from "./captureCustodyRuntime";
-import { loadDevTripCreateRuntime } from "./tripCreateRuntime";
+import { loadDevTripCreateWithMemberClaimQaRuntime } from "./tripMemberClaimQaRuntime";
 import { startDevBackend } from "./serverStartup";
 import { loadDevUniversalRuntime } from "./universalFiniteRuntime";
 import { loadDevUniversalOriginalSourceRuntime } from "./universalOriginalSourceRuntime";
@@ -71,7 +71,7 @@ async function main() {
     // An unavailable finite capability must not prevent the closed Backend starting.
     console.info("CAPTURE_RUNTIME_CLOSED");
   }
-  let trip: Awaited<ReturnType<typeof loadDevTripCreateRuntime>>;
+  let trip: Awaited<ReturnType<typeof loadDevTripCreateWithMemberClaimQaRuntime>>;
   let metadata: Awaited<ReturnType<typeof loadDevTripMetadataV2Runtime>>;
   let server: ReturnType<typeof startDevBackend>;
   try {
@@ -79,8 +79,11 @@ async function main() {
       // Source Review composition is opt-in; SQL capability and Actor checks still own admission.
       trip =
         continuous && process.env.OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW === "enabled"
-          ? await loadDevTripCreateRuntime(process.env, continuous.readPublished)
-          : await loadDevTripCreateRuntime(process.env);
+          ? await loadDevTripCreateWithMemberClaimQaRuntime(
+              process.env,
+              continuous.readPublished,
+            )
+          : await loadDevTripCreateWithMemberClaimQaRuntime(process.env);
     } catch {
       console.info("TRIP_CREATE_RUNTIME_CLOSED");
     }

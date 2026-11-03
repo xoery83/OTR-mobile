@@ -511,3 +511,125 @@ describe("owning private Document custody", () => {
     ).toThrow("OWNING_CAPABILITY_REQUIRED");
   });
 });
+
+describe("People V1 Creator versus Everyone management", () => {
+  const manager: CoreActor = { ...actor, accountId: randomUUID(), canManageShared: true };
+  function shared(
+    mode: "SELF" | "SELECTED_MEMBERS" | "WHOLE_GROUP",
+    visibility = "GROUP",
+  ) {
+    const { id, result } = create();
+    let graph = result.graph;
+    graph = applyCoreCommand(
+      graph,
+      command(graph, "SET_ITEM_PARTICIPATION", id, {
+        participation: {
+          mode,
+          people: mode === "SELECTED_MEMBERS" ? [person] : [],
+          selfPersonId: mode === "SELF" ? person : null,
+        },
+      }),
+      actor,
+      now,
+    ).graph;
+    graph = applyCoreCommand(
+      graph,
+      command(graph, "SET_OBJECT_VISIBILITY", id, {
+        acl: { visibility, people: visibility === "SELECTED_PERSONS" ? [person] : [] },
+      }),
+      actor,
+      now,
+    ).graph;
+    return { id, graph };
+  }
+  it.each(["SELF", "SELECTED_MEMBERS"] as const)(
+    "readable %s Item denies another creator's text and participation mutations",
+    (mode) => {
+      for (const visibility of ["GROUP", "SELECTED_PERSONS"]) {
+        const { id, graph } = shared(mode, visibility),
+          before = structuredClone(graph);
+        expect(coreCanRead(graph, manager, "ITEM", graph.itinerary_events[0])).toBe(true);
+        for (const [name, payload] of [
+          ["SET_ITEM_TEXT", { title: "unauthorized" }],
+          [
+            "SET_ITEM_PARTICIPATION",
+            { participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null } },
+          ],
+        ] as const)
+          expect(() =>
+            applyCoreCommand(graph, command(graph, name, id, payload), manager, now),
+          ).toThrow("NOT_VISIBLE");
+        expect(graph).toEqual(before);
+        expect(
+          applyCoreCommand(
+            graph,
+            command(graph, "SET_ITEM_TEXT", id, { title: "creator edit" }),
+            actor,
+            now,
+          ).graph.itinerary_events[0].title,
+        ).toBe("creator edit");
+      }
+    },
+  );
+  it("preserves authorized Everyone management and does not broaden ordinary members", () => {
+    const { id, graph } = shared("WHOLE_GROUP");
+    const q = command(graph, "SET_ITEM_TEXT", id, { title: "authorized" });
+    expect(applyCoreCommand(graph, q, manager, now).graph.itinerary_events[0].title).toBe(
+      "authorized",
+    );
+    expect(() =>
+      applyCoreCommand(graph, q, { ...manager, canManageShared: false }, now),
+    ).toThrow("NOT_VISIBLE");
+  });
+  it("parent Item management also gates real Instruction append and correction", () => {
+    const { id, graph } = shared("SELF");
+    const entry = randomUUID(),
+      payload = {
+        itemId: id,
+        section: "DURING",
+        body: "original",
+        sensitivity: "NORMAL",
+        sourceRepresentationId: null,
+        acl: { visibility: "GROUP", people: [] },
+      };
+    const append = command(graph, "APPEND_INSTRUCTION", entry, payload, "INSTRUCTION", [
+      {
+        kind: "ITEM",
+        id,
+        revision: graph.itinerary_events[0].semantic_revision as number,
+      },
+    ]);
+    expect(() => applyCoreCommand(graph, append, manager, now)).toThrow("NOT_VISIBLE");
+    const added = applyCoreCommand(graph, append, actor, now).graph;
+    const newEntryId = randomUUID();
+    const correction = command(
+      added,
+      "CORRECT_INSTRUCTION",
+      entry,
+      {
+        newEntryId,
+        body: "replacement",
+        sensitivity: "NORMAL",
+        acl: { visibility: "GROUP", people: [] },
+      },
+      "INSTRUCTION",
+      [
+        {
+          kind: "ITEM",
+          id,
+          revision: added.itinerary_events[0].semantic_revision as number,
+        },
+        { kind: "INSTRUCTION", id: newEntryId, revision: null },
+      ],
+    );
+    correction.baseVector.find(
+      (base) => base.kind === "INSTRUCTION" && base.id === entry,
+    )!.revision = added.trip_instruction_entries[0].revision as number;
+    expect(() => applyCoreCommand(added, correction, manager, now)).toThrow(
+      "NOT_VISIBLE",
+    );
+    expect(
+      applyCoreCommand(added, correction, actor, now).graph.trip_instruction_entries,
+    ).toHaveLength(2);
+  });
+});
