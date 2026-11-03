@@ -23,6 +23,7 @@ private, save, call, inspect = legacy.private, legacy.save, legacy.call, legacy.
 env, mounts, Docker, locked = legacy.env, legacy.mounts, legacy.Docker, legacy.locked
 wait_healthy = legacy.wait_healthy
 SELECTOR = 'OTR_DEV_AUTH_MEMBER_CLAIM_QA_CONFIG'
+MODE = 'OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE'
 raw = (HERE / 'QA_CASE_TEMPLATE.json').read_bytes()
 assert hashlib.sha256(raw).hexdigest() == '98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4'
 CASE = json.loads(raw)['qaCase']
@@ -36,6 +37,7 @@ def digest(value):
 def validate(p, now=None, starting=False):
     assert p['version'] == 1 and str(uuid.UUID(p['windowId'])) == p['windowId']
     assert p['root'] == '/opt/otr/dev-backend/releases/auth-c04-qa-' + p['windowId']
+    assert p.get('executionMode') in (None, 'RECOVERY_ONLY'), 'UNKNOWN_EXECUTION_MODE'
     qa = p['qaCase']
     assert set(qa) == set(CASE) | {'opensAt', 'inviteExpiresAt', 'closesAt'}
     assert {k: qa[k] for k in CASE} == CASE, 'EXACT_A_B_CASE_REQUIRED'
@@ -70,7 +72,7 @@ def check_base(p, s, healthy=False):
     assert s['Id'] == b['containerId'] and s['Image'] == b['image'], 'BASELINE_IDENTITY_DRIFT'
     assert sha(s['Config']) == b['configSHA256'] and sha(s['HostConfig']) == b['hostConfigSHA256']
     assert sha(env(s)) == b['environmentSHA256'] and sha(mounts(s)) == b['mountsSHA256']
-    assert SELECTOR not in env(s), 'BASELINE_NOT_CLOSED'
+    assert SELECTOR not in env(s) and MODE not in env(s), 'BASELINE_NOT_CLOSED'
     for path, expected in {**b['configHashes'], **b['mountedFileHashes']}.items():
         assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == expected, 'FILE_DRIFT'
     if healthy:
@@ -80,6 +82,8 @@ def check_base(p, s, healthy=False):
 def active_config(p, baseline):
     values = env(baseline)
     values[SELECTOR] = canonical(p['qaCase']).decode()
+    if p.get('executionMode') == 'RECOVERY_ONLY':
+        values[MODE] = 'RECOVERY_ONLY'
     return dict(baseline['Config'], Env=[k + '=' + v for k, v in values.items()])
 
 

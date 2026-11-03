@@ -1,3 +1,4 @@
+import { createMemberClaimQaRecoveryOnly } from "./tripMemberClaimQaRecoveryOnly";
 import { loadDevTripCreateRuntime } from "./tripCreateRuntime";
 import {
   createMemberClaimQaAuthority,
@@ -13,9 +14,11 @@ export async function loadDevTripCreateWithMemberClaimQaRuntime(
 ) {
   let selected: MemberClaimQaCase | undefined;
   const raw = environment.OTR_DEV_AUTH_MEMBER_CLAIM_QA_CONFIG;
+  const mode = environment.OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE;
   if (raw !== undefined) {
     try {
       if (
+        (mode !== undefined && mode !== "RECOVERY_ONLY") ||
         Buffer.byteLength(raw) > 4096 ||
         environment.OTR_DEV_BACKEND_NETWORK_MODE !== "host" ||
         environment.OTR_DEV_SUPABASE_URL !== "https://tuqigdxrvrerfewsxqgm.supabase.co"
@@ -57,7 +60,7 @@ export async function loadDevTripCreateWithMemberClaimQaRuntime(
   }
   return {
     ...ordinary,
-    ...(qa ? { memberClaimPort: qa.port } : {}),
+    ...(qa ? { memberClaimPort: mode === "RECOVERY_ONLY" ? createMemberClaimQaRecoveryOnly(qa.port, selected!) : qa.port } : {}),
     async close() {
       qa?.close();
       await runtime.close();

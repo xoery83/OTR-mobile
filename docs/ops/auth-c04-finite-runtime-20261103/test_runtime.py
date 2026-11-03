@@ -263,5 +263,26 @@ class Controller(unittest.TestCase):
             r.verify(self.p)
 
 
+    def test_recovery_mode_is_bound_and_restored_by_the_existing_controller(self):
+        self.p['executionMode'] = 'RECOVERY_ONLY'
+        state = self.ready()
+        self.assertEqual(r.env(self.f.containers[CANDIDATE])[r.MODE], 'RECOVERY_ONLY')
+        r.start(self.p, state, '9' * 64)
+        r.close(self.p, state)
+        self.assertNotIn(r.MODE, r.env(self.f.inspect('otr-dev-backend')))
+        self.assertTrue(r.verify(self.p)['runtimeClosed'])
+
+    def test_unknown_recovery_mode_fails_before_any_mutation(self):
+        self.p['executionMode'] = 'ALLOW_WRITES'
+        with self.assertRaisesRegex(AssertionError, 'UNKNOWN_EXECUTION_MODE'):
+            r.validate(self.p)
+        self.assertEqual(self.f.commands, [])
+
+    def test_baseline_with_recovery_mode_is_not_closed(self):
+        self.f.containers[BASE]['Config']['Env'].append(r.MODE + '=RECOVERY_ONLY')
+        with self.assertRaises(AssertionError):
+            r.verify(self.p)
+
+
 if __name__ == '__main__':
     unittest.main()

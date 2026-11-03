@@ -127,3 +127,22 @@ it("absent ordinary runtime remains absent", async () => {
   f.load.mockResolvedValue(undefined);
   expect(await load(env)).toBeUndefined();
 });
+
+it("RECOVERY_ONLY selection denies mutation delegation and keeps the original runtime expiry constructor", async () => {
+  const v = fixture();
+  const receipt = vi.fn(async () => null), issue = vi.fn();
+  v.atomic.mockImplementation(async (_scope, work) => work({ receipt, issue }));
+  const runtime = await load({ ...v.selected, OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE: "RECOVERY_ONLY" });
+  if (!runtime?.memberClaimPort) throw Error("fixture");
+  const scope = { tripId: v.qa.tripId, actorAccountId: v.qa.ownerAccountId };
+  await runtime.memberClaimPort.atomic(scope, tx => tx.receipt(v.qa.issueOperationId));
+  expect(receipt).toHaveBeenCalledWith(v.qa.issueOperationId);
+  await expect(runtime.memberClaimPort.atomic(scope, tx => tx.issue(v.qa.personId, { kind: "REGISTERED_ACCOUNT", accountId: v.qa.claimantAccountId }))).rejects.toThrow("RECOVERY_ONLY");
+  expect(issue).not.toHaveBeenCalled();
+});
+it("unknown QA mode never exposes the underlying Claim port", async () => {
+  const v = fixture();
+  const runtime = await load({ ...v.selected, OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE: "INVALID" });
+  expect(runtime).not.toHaveProperty("memberClaimPort");
+  expect(v.atomic).not.toHaveBeenCalled();
+});
