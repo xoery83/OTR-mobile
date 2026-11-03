@@ -1,3 +1,17 @@
+# Core sparse Stay owning port — 4 November 2026
+
+Request MCP-C02-S2-CORE-SPARSE-20261104-001 adds MANUAL-only sparse input to the
+existing SET_STAY_DETAILS command; omitted rooms/leaves and unchanged provenance
+are retained. Old whole-room/Source paths remain unchanged. Exported owning DTO
+is coreSparseStayPayloadSchema/CoreSparseStayPayload; no Schema/RLS/Role or
+Receipt system changes. Local131 checks/types/lint and independent21 checks PASS.
+See ops/core-sparse-stay-20261104/HANDOFF.md. Source integration is distinct from
+Root2 deployment and MCP Consumer E2E; both are NOT_RUN for this new payload.
+Root1 owns Core/main only. LaneC and Root2 handoffs are complete (Import aaff6e89;
+Hosted1624e321, MCb4915bad); ordinary business Drivers/Browser/UI stay Lane-owned.
+Auth c91 six-file source request is main integrated, not new execution permission.
+Historical statuses below retain their original evidence/time and may be superseded.
+
 # Auth original-ID resume client integration — 3 November 2026
 
 Reviewed411ceee5 client/DTO changes are composed without activation: both original
