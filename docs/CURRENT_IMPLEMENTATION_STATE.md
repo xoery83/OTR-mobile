@@ -16,8 +16,8 @@ the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.
 - Both own temporary Sessions were locally logged out and refresh rejected at
   2026-11-03T22:29:17.586Z (4 November11:29 NZDT). No Session/token was copied.
   B mailbox was returned to Native for its independent OWNTrip2a70… D2 read;
-  Native subsequently confirmed taking that one normal OTP slot. Wait its cleanup
-  before another Auth B OTP. No Auth Session remains active.
+  Native subsequently confirmed taking and cleaning that one normal OTP slot;
+  its cleanup was independently reported PASS_LOCAL_SCOPE_REFRESH_REVOKED. No Auth Session remains active.
 - No SharedItem or qualified A-private Item fixture exists in this observation:
   `NO_QUALIFIED_PRIVATE_FIXTURE` is **not isolation PASS**. Native cold restore and
   member revoke remain NOT_RUN. B's measured21s exceeds ordinary15s; Native was
@@ -26,6 +26,24 @@ the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.
 Fixed evidence71da1578:
 `docs/ops/auth-c04-20261103/normal-member-read-20261104/ACTUAL_OUTCOME.json`,
 normal Auth logs, exact HTTP metadata, operator Review and Root2 readback.
+
+## Latest continuation: first normal P1 failure
+
+Candidate d5839d73 adds DEV-only existing normal Owner Core transport fixture runner,
+6 focused tests/typecheck/lint and independent Review PASS. A used one normal OTP,
+validated `/user`, normal CREATE_ITEM/P1/MANUAL capabilities and exact Owner Person.
+The one shared P1 POST returned503 CORE_EXECUTION_UNAVAILABLE at23:08:47Z,
+requestee6c661a…/13.095s. Original opf5e13639… remains UNKNOWN: its following
+receipt404 is not NoCommit. No retry/newOperation; private op12161d34… NOT_SENT,
+B OTP0, both Item isolation and Native cold remain NOT_RUN. A own-local logout and
+refresh rejection PASS. Root2 stable coordination released after cleanup.
+
+Evidence: `docs/ops/auth-c04-item-fixture-20261104/actual-first-submit/`.
+Auth READ ONLY management metadata query returned transport UNKNOWN, not empty
+rows. Root2 was asked for the exact server failure and two fixed Item/receipt
+metadata. Next is actual failure diagnosis → minimal repair → focused validation;
+never blindly replay the original operation. Native has released its earlier B
+normalOTP slot; no QA Session is borrowed or kept by Auth.
 
 ## Installed Core / actual deployed source
 

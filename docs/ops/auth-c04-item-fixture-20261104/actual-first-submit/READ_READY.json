@@ -1,0 +1,46 @@
+{
+  "status": "NORMAL_MANUAL_CORE_PROFILE_METADATA_MATCH_NO_POST_EXECUTED",
+  "host": {
+    "observedAt": "2026-11-03T23:03:26.810648+00:00",
+    "containerId": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569",
+    "image": "sha256:0e7586fcfacd8278df0cc7c025500ab633a375f104a0cabff805892538107db5",
+    "health": "healthy",
+    "coreRuntimeVersion": 3,
+    "coreRuntimeEnabled": true,
+    "coreRuntimeFileSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+    "finiteSelectorsPresent": [],
+    "protectedTimers": "",
+    "sharedLockAvailable": true,
+    "mutations": 0
+  },
+  "ownerQualification": {
+    "actorId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "formatV2OwnerCreateReceipt": true,
+    "gateway": {
+      "bypassRls": false,
+      "connectionLimit": 1,
+      "createDb": false,
+      "createRole": false,
+      "inherit": false,
+      "login": true,
+      "replication": false,
+      "super": false,
+      "validUntil": "infinity"
+    },
+    "linkedOwner": true,
+    "observedAt": "2026-11-03T23:04:09.275395+00:00",
+    "registeredNonAnonymous": true,
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+  },
+  "sustainedScopeFunctionMD5": "2ffdada2e9916df010b960e84f77bffb",
+  "capabilitiesFunctionMD5": "85ddf997f6984bbf771f22c728843553",
+  "policyAbsentBehavior": "Allowed by existing Core helper unless explicit disabled/revoked policy. Universal Import policy requirement differs.",
+  "profile": "Existing normal capability definition includes CREATE_ITEM/P1/MANUAL; metadata does not activate or expand it.",
+  "actualAuthenticatedCapabilityEndpoint": "NOT_INVOKED_BY_ROOT2; Auth must validate through existing normal actor/session before POST and stop if unavailable.",
+  "actorMustMatch": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "stableServiceCoordination": "Available; no Root2 deployment/activation currently running. Keep this service stable for Auth run until result/cleanup, subject to explicit release.",
+  "finiteWindowStarted": false,
+  "businessPOSTs": 0,
+  "scopeChanges": 0,
+  "sourceMain": "5936318992c4d903db1985656f1ba4d8db134ae8"
+}
