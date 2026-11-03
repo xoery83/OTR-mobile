@@ -1,3 +1,13 @@
+# MCP Preview hash proof — source integration, 4 November 2026
+
+LaneB1840374b repairs runtime/close-collector omission of existing hash-only
+responseProof. Four final hashes match independent NO_BLOCKER; actual-main17
+runtimeC02+4 collector tests PASS. Unknown/extra proof fields and tool/status
+mismatches are discarded. No raw parameters/token logging or Auth/confirmation/
+Core changes. See docs/mcp/c02/s1/preview-proof-repair-20261104/SOURCE_MAIN_VALIDATION.json.
+Source only; retained live producer, Root2 deployment and Consumer proof remain
+unverified. e0d1 stays closed; no permission or Save qualification is granted.
+
 # Auth Claim/read-state repair — source integration, 4 November 2026
 
 Autha16af0af passes final Root1 Core Review: private existing-row full transaction/
