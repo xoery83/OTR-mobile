@@ -1,0 +1,14 @@
+{
+  "base": "2537b4fcd291ad8c751e30ef535a56b7fc1f2655",
+  "candidate": "a16af0af510abb0eb377e1c0441a314084187310",
+  "manifestHashes": "18MATCH",
+  "productionBeforeImages": "3MATCH",
+  "testBlobs": "3EXACT_FINAL_CANDIDATE",
+  "actualMainTests": "5suites72PASS",
+  "dependencyFixtures": {
+    "docs/ops/auth-c04-20261103/pg-candidate/MEMBER_CLAIM_CANDIDATE.sql": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+    "docs/ops/auth-c04-20261103/login-role-compat/INSTALL_CANDIDATE.sql": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565"
+  },
+  "sqlExecuted": false,
+  "runtimeActivated": false
+}

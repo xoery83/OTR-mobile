@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   executeMemberClaim,
+  memberClaimIntentDigest,
   type MemberClaimAuthorityPort,
   type MemberClaimTransaction,
 } from "./tripMemberClaimAuthority";
@@ -72,7 +73,7 @@ function fixture() {
   const port: MemberClaimAuthorityPort = {
     atomic: async (_scope, work) => work(tx),
   };
-  return { facts, port };
+  return { facts, port, tx };
 }
 const issue = (
   target:
@@ -91,10 +92,66 @@ const claim = (operation = laterOperation) => ({
   tripId,
   personId,
   inviteId,
-  explicitConsent: true,
+  explicitConsent: true as const,
 });
 
 describe("dormant targeted Member claim authority", () => {
+  it("binds link admission to the validated original Claim operation and digest", async () => {
+    const { facts, port, tx } = fixture();
+    facts.target = { kind: "REGISTERED_ACCOUNT", accountId: claimant };
+    let admission: unknown;
+    const original = tx.link;
+    tx.link = async (...args) => {
+      admission = args[3];
+      await original(...args);
+    };
+    const command = claim();
+    expect(await executeMemberClaim(command, claimant, port)).toMatchObject({
+      status: "LINKED",
+    });
+    expect(admission).toEqual({
+      operationId: command.operationId,
+      intentDigest: memberClaimIntentDigest(command),
+    });
+  });
+  it("returns owning access after the atomic link, rather than the pre-claim access", async () => {
+    const { facts, port, tx } = fixture();
+    facts.target = { kind: "REGISTERED_ACCOUNT", accountId: claimant };
+    const link = tx.link;
+    tx.link = async (...args) => {
+      await link(...args);
+      facts.access = "COLLABORATE";
+    };
+    expect(await executeMemberClaim(claim(), claimant, port)).toMatchObject({
+      status: "LINKED",
+      currentAccess: "COLLABORATE",
+    });
+    expect(facts.links).toBe(1);
+  });
+
+  it("rolls back link and receipt if the post-link authority cannot be read", async () => {
+    const { facts, tx } = fixture();
+    tx.currentEffectiveAccess = async () => (facts.linked === null ? "NONE" : null);
+    const port: MemberClaimAuthorityPort = {
+      atomic: async (_scope, work) => {
+        const before = facts.linked;
+        const receipts = new Map(facts.receipts);
+        try {
+          return await work(tx);
+        } catch (error) {
+          facts.linked = before;
+          facts.receipts = receipts;
+          throw error;
+        }
+      },
+    };
+    expect(await executeMemberClaim(claim(), claimant, port)).toEqual({
+      status: "UNAVAILABLE",
+    });
+    expect(facts.linked).toBeNull();
+    expect(facts.receipts.size).toBe(0);
+  });
+
   it("defaults closed and requires explicit consent", async () => {
     expect((await executeMemberClaim(issue(), organizer)).status).toBe("UNAVAILABLE");
     const { facts, port } = fixture();

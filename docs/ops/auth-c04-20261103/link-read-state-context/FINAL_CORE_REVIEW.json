@@ -1,0 +1,34 @@
+{
+  "request": "AUTH-C04-LINK-READSTATE-INSTALL-20261104-01",
+  "status": "NO_BLOCKER_FINAL_CORE_SOURCE_AND_SCHEMA_CANDIDATE_REVIEW",
+  "candidate": "a16af0af510abb0eb377e1c0441a314084187310",
+  "reviewer": "Root1 independent of Auth author",
+  "installSQLSHA256": "94ee6ccb53f61aa59abeb345e628f75107afac490dcbd6bf710b3c75eaf1ed1e",
+  "rollbackSQLSHA256": "7cafa40d93387ebe0415f89cd7f77555f3af7226070dbdb067af94385ae4166c",
+  "packageManifestSHA256": "e101f1e1d0b5c17a86cd0c930b95e55b49871977cda945d1d16dcd68db3d570b",
+  "verified": [
+    "All18 fixed artifact hashes",
+    "Private existing-row xid8/PID/original-op proof minted only after validated atomic link admission and cleared before terminal receipt",
+    "Exact existing canonical digest binding",
+    "Old guard code byte-identical after removing sole Claim branch apart from SQL statement terminator",
+    "No role/gateway EXEC expansion; exact old ACL pre/post; unknown helper default grantee aborts transaction",
+    "Exact rollback requires closed runtime and proven drained Claim; null proof alone is insufficient; business data/receipts preserved"
+  ],
+  "evidenceReused": [
+    "Auth scoped independent security Review",
+    "Actual isolated PG RED/GREEN/defaultACL/rollback/lost COMMIT ACK evidence; not rerun by Root1"
+  ],
+  "actualMainChecks": "5 suites /72 PASS; 3 production beforeimages matchmain2537",
+  "sourceIntegrationAdjustment": "Preserve final three test blobs including two older post-link regression cases; include two immutable old SQL files required by isolated test and offline builder",
+  "notAuthorized": [
+    "Protected installation",
+    "Hosted deployment or runtime activation",
+    "New invitation or membership write",
+    "OriginalUNKNOWN Claim4028 retry"
+  ],
+  "remaining": [
+    "Owner precise protected SQL approval",
+    "Root2 fresh CAS/install/independent metadata readback",
+    "Separate lawful business execution qualification"
+  ]
+}

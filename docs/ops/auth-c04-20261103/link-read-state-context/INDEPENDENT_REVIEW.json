@@ -1,0 +1,28 @@
+{
+  "status": "SCOPED_NO_BLOCKER_CANDIDATE_AND_ROLLBACK",
+  "reviewer": "/root/auth_phase1_review",
+  "independentUnitChecks": {
+    "suites": 3,
+    "passed": 40,
+    "scope": "Authority/Pg/Qa; reused once final changes were installer-only"
+  },
+  "installerAndRollbackFollowups": "Static only; no repeated PG or Hosted execution",
+  "installSQLSHA256": "94ee6ccb53f61aa59abeb345e628f75107afac490dcbd6bf710b3c75eaf1ed1e",
+  "rollbackSQLSHA256": "7cafa40d93387ebe0415f89cd7f77555f3af7226070dbdb067af94385ae4166c",
+  "builderSHA256": "675bc87a894eb453dbf7e5d15076bc6acfcb705a904e7df608d5eeb3881745c1",
+  "reviewed": [
+    "Private full xid8/PID/originaloperation proof and exact canonical digest binding",
+    "Same transaction proof mint/link/clear; failed link/receipt rolls back; prior receipts cannot mint proof again",
+    "Narrow Core branch and preserved Guest/Core code",
+    "Fixed source3bbe/guard41e builder inputs",
+    "Old function owner/ACL/searchpath checks; private table RLS/ACL unchanged",
+    "New helper owner-only EXEC; unexpected default grants abort whole install",
+    "Exact rollback restores original functions and preserves business rows/receipts/readstate"
+  ],
+  "limits": [
+    "No independent Hosted install or business E2E",
+    "Author new-PG receipt inspected, not independently rerun",
+    "Rollback requires closed runtime and drained in-flight Claim; null proof alone is not drain proof",
+    "Final Root1 fixed-commit Core Review and new Owner protected approval remain required"
+  ]
+}

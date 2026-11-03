@@ -1,0 +1,78 @@
+{
+  "claimHashes": [
+    {
+      "bodyMD5": "a14a9cb8bd5044bd399f270e88d2d19f",
+      "definitionSHA256": "7bdcc159caaa7e34a4d10c79ccbc66c3a3b7757a0cff3c2ca3749bae71e1315d",
+      "oid": "67398",
+      "signature": "trip_member_claim_transaction(text,jsonb)"
+    }
+  ],
+  "functions": [
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "bodyMD5": "ad004dfecb850f735c1acf55bc7e34c4",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "definitionSHA256": "3fd39fab2dc57495416ffb10dbcdd1f4e57b7262080644b1f8685ed42624103d",
+      "name": "trip_core_invalidate_actor_read",
+      "oid": "65504",
+      "owner": "postgres",
+      "securityDefiner": true,
+      "signature": "trip_core_invalidate_actor_read()",
+      "privateDefinitionPath": "/private/tmp/otr-root2-auth-guard-readonly-20261104/65504.private.sql"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "bodyMD5": "669dff475c12ca966c70d0c5af64c818",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "definitionSHA256": "41e240f6bd952c95066184fdc916d3fe19bf836eec77f78dcf7a52e69314b1b6",
+      "name": "trip_core_finite_read_state_guard",
+      "oid": "65713",
+      "owner": "postgres",
+      "securityDefiner": false,
+      "signature": "trip_core_finite_read_state_guard()",
+      "privateDefinitionPath": "/private/tmp/otr-root2-auth-guard-readonly-20261104/65713.private.sql"
+    }
+  ],
+  "observedAt": "2026-11-03T18:27:40.290391+00:00",
+  "transactionReadOnly": "on",
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER finite_core_read_state_scope BEFORE INSERT OR DELETE OR UPDATE ON trip_core_read_state FOR EACH ROW EXECUTE FUNCTION trip_core_finite_read_state_guard()",
+      "enabled": "O",
+      "functionOid": "65713",
+      "functionSignature": "trip_core_finite_read_state_guard()",
+      "name": "finite_core_read_state_scope",
+      "oid": "65714",
+      "typeBits": 31
+    }
+  ],
+  "requestId": "AUTH-C04-CLAIM-LINK42501-PREIMAGE-20261104",
+  "hashMethod": "SHA256(UTF8(pg_get_functiondef(oid))); bodyMD5=MD5(prosrc)",
+  "businessFunctionsInvoked": false,
+  "businessDataRead": false,
+  "hostLockAcquired": false,
+  "sqlMutations": 0,
+  "privateBodiesPublished": false,
+  "claimComparison": {
+    "approvedSQLSHA256": "3bbe7fbf47ae40d18dfcb91d98d1aa8da1cf3839853320f1e4733fc61490d565",
+    "existingFixedInstallReceipt": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-c04-20261103/hosted-install-receipt/ROOT_INSTALL_VERIFIED.json",
+    "installedProsrcMD5MatchesFixedReceipt": true,
+    "note": "Auth definition_fingerprint96ed7a is not prosrcMD5 a14a9c; do not compare unlike hash inputs. No new Claim-body query required."
+  },
+  "keyAuthorizationPredicates": [
+    "Enabled BEFORE ROW INSERT/DELETE/UPDATE trigger finite_core_read_state_scope, OID65714 -> guard65713, SECURITY INVOKER.",
+    "Special postgres/current_user + otr_trip_core_v2_gateway/session_user path permits CREATE insert only with guest CREATE context and revisions1/1; PERSON update requires guest PERSON context, unchanged epoch and both revisions+1.",
+    "Otherwise a core gateway session enters Core branch requiring current_user otr_trip_core_v2_writer, finite actor/trip context and admitted command; Core update requires unchanged epoch/access_revision and revision+1, rejection CORE_V2_CAPABILITY_CLOSED/42501.",
+    "Invalidator65504 is SECURITY DEFINER postgres. For non-INSERT membership changes it updates old Trip read-state revision+1/access_revision+1; INSERT or Trip-changing UPDATE also updates new Trip.",
+    "This is an authorization-path observation, not a completed root-cause proof or authority to bypass guard. Root1 owns canonical correction and Auth owns adapter."
+  ]
+}

@@ -51,7 +51,12 @@ export type MemberClaimTransaction = {
     personId: string,
     target: Target,
   ): Promise<{ inviteId: string; expiresAt: string }>;
-  link(personId: string, claimantAccountId: string, inviteId: string): Promise<void>;
+  link(
+    personId: string,
+    claimantAccountId: string,
+    inviteId: string,
+    admission: { operationId: string; intentDigest: string },
+  ): Promise<void>;
   revokeUnclaimed(inviteId: string): Promise<void>;
   saveReceipt(receipt: Receipt): Promise<void>;
 };
@@ -173,7 +178,10 @@ export async function executeMemberClaim(
             if (otherPerson !== null && otherPerson !== command.personId)
               return { status: "CONFLICT" };
             if (linked === null) {
-              await tx.link(command.personId, authenticatedActorAccountId, invite.id);
+              await tx.link(command.personId, authenticatedActorAccountId, invite.id, {
+                operationId: command.operationId,
+                intentDigest,
+              });
               outcome = "LINKED";
             } else {
               outcome = "ALREADY_LINKED";

@@ -1,3 +1,14 @@
+# Auth Claim/read-state repair — source integration, 4 November 2026
+
+Autha16af0af passes final Root1 Core Review: private existing-row full transaction/
+PID/original Claim proof fixes the actual link42501 read-state guard seam. Existing
+Guest/Core branches, owner/ACL and normal external DTO remain unchanged. All18
+manifest hashes match; actual-main5suites72 PASS; isolated PG/security evidence
+reused. See ops/auth-c04-20261103/link-read-state-context/FINAL_CORE_REVIEW.json.
+SQL94ee/rollback7cafa are source candidates only: Owner exact protected approval
+and Root2 fresh CAS/install/readback remain required. No runtime activation, new
+invitation or retry of historical UNKNOWN4028. Runtime stays closed.
+
 # Existing PNG Backend restoration — source integration, 4 November 2026
 
 Restores25 historical0e9 PNG modules and3 shared IO helpers;7 current shared
