@@ -122,8 +122,8 @@
     },
     {
       "path": "FINAL_OWNERSHIP_OBSERVED.json",
-      "bytes": 1973,
-      "sha256": "cbef44bd5d5edfaa588e830cb6b91df5d62584b1734ee164271633c26d5b5c08",
+      "bytes": 2086,
+      "sha256": "19ac94283ef74a1ccda2cf09ab63ae4e12e47534d5a30a10af1305ef5e1fb06d",
       "origin": "Root2 independent final MC ownership observation; does not create action authority"
     },
     {
@@ -137,6 +137,12 @@
       "bytes": 1931,
       "sha256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
       "origin": "Root2 independent final MC ownership observation; does not create action authority"
+    },
+    {
+      "path": "HANDOFF_COMPLETE.json",
+      "bytes": 2905,
+      "sha256": "c73142837da7f5546e11e6cb1c97867aa8743aee1969e042ad3dedd0ac9a6fe1",
+      "origin": "Root2 verifies exact fixed MC ACK and marks ownership handoff complete; no task authority granted"
     }
   ],
   "containsCredentials": false

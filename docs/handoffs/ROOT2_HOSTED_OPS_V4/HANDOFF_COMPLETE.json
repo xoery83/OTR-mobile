@@ -1,0 +1,49 @@
+{
+  "status": "ROOT2_HOSTED_OWNERSHIP_HANDOFF_COMPLETE",
+  "eventId": "root2-hosted-ownership-handoff-complete-v4-20261103-01",
+  "completedAt": "2026-11-03T10:36:54.345383+00:00",
+  "owner": "Root2",
+  "ownerThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "sourceMCCommit": "b4915bad7bf8c44f3bb53a85b2ddbe488b4c4c34",
+  "sourceMCFinalAckPath": "docs/v4/ROOT2_OWNERSHIP_FINAL_ACK.json",
+  "sourceMCFinalAckSHA256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
+  "sourceMCOwnershipPath": "data/execution/ownership-v4.json",
+  "fixedMCBytesMatchObservedAckAndTransition": true,
+  "releaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "acceptanceCommit": "200a2aa61f22c432b31aed5ab44affb0fa945ef3",
+  "postTransferCommit": "386cb0dfc09b7fd9980f0a645363923beb14e464",
+  "resource": {
+    "environment": "DEV",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "service": "otr-dev-backend",
+    "container": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc"
+  },
+  "root1HostedMutationAllowed": false,
+  "transitionFreeze": false,
+  "writerAssignmentActive": true,
+  "currentExecutableWriter": "Root2_WITH_TASK_SPECIFIC_AUTHORITY",
+  "taskSpecificAuthorityRequired": true,
+  "newBusinessAuthority": false,
+  "anyReadyProtectedTaskEstablished": false,
+  "hostedActionStarted": false,
+  "remainingOwnershipBlockers": [],
+  "queueDisposition": {
+    "Auth": "BLOCKED: prepared new exact Gate unapproved; normal A/B/plan/timers qualification missing",
+    "MCP": "BLOCKED: consumed prior window; new Consumer/Issuer authority and browser readiness needed",
+    "Import": "BLOCKED: old permission not transferable; fresh LaneC exact authorization and Source/Provider/runtime qualifications needed",
+    "Flight": "BLOCKED: Provider/Actor/prices/runtime expired or closed; precise renewal and normal QA identity needed",
+    "CoreRevoke": "NOT_READY: owning formal atomic PG producer/invalidation/concurrency/install packet missing"
+  },
+  "actionRule": "Each future action requires a complete valid Release Packet, exact current action authority, fresh affected-resource CAS, short lock, health/readback and rollback/close conditions. Ownership transfers no business/OAuth/paidProvider/SQL authority.",
+  "scopeExclusions": [
+    "Root1 retains Core/canonical ports/schema-migration design/main integration",
+    "Business lifecycle and E2E remain owning Lane",
+    "Native/Vision and Production excluded"
+  ],
+  "validation": "Only git show of exact fixed MC commit, ACK SHA and same-resource transition/lineage checks. No repeat Host/SQL/preflight.",
+  "knownLimits": [
+    "Current OAuth Console values UNKNOWN and must be qualified for any later applicable task",
+    "Prior health/closure evidence is point-in-time; refresh affected preimages at each actual operation"
+  ]
+}

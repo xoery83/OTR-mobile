@@ -1,5 +1,5 @@
 {
-  "status": "ROOT2_UNIQUE_OPS_OWNER_PENDING_MC_FIXED_COMMIT",
+  "status": "ROOT2_HOSTED_OWNERSHIP_HANDOFF_COMPLETE",
   "resource": "DEV tuqigdxrvrerfewsxqgm /178.105.151.143 /otr-dev-backend /runtime and protected install execution",
   "writer": "Root2 01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
   "receiver": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
@@ -23,8 +23,14 @@
   "postTransferEventId": "root2-hosted-post-transfer-verified-v4-20261103-01",
   "postTransferVerifiedAt": "2026-11-03T10:28:37.883713+00:00",
   "mcFinalOwnershipAckSHA256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
-  "mcFinalAckFixedCommit": null,
-  "mcFinalAckDurability": "MC_WORKTREE_ONLY_PENDING_FIXED_COMMIT",
+  "mcFinalAckFixedCommit": "b4915bad7bf8c44f3bb53a85b2ddbe488b4c4c34",
+  "mcFinalAckDurability": "FIXED_COMMIT_VERIFIED",
   "transitionFreeze": false,
-  "taskSpecificAuthorityRequired": true
+  "taskSpecificAuthorityRequired": true,
+  "handoffCompletedAt": "2026-11-03T10:36:54.345383+00:00",
+  "handoffCompleteEventId": "root2-hosted-ownership-handoff-complete-v4-20261103-01",
+  "writerAssignmentActive": true,
+  "currentExecutableWriter": "Root2_WITH_TASK_SPECIFIC_AUTHORITY",
+  "remainingOwnershipBlockers": [],
+  "hostedMutationAllowedNowReason": "No specific task Packet/Gate established; ownership transition complete"
 }

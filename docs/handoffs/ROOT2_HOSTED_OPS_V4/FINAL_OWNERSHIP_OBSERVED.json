@@ -1,12 +1,12 @@
 {
-  "status": "ROOT2_UNIQUE_HOSTED_OPS_OWNER_FINAL_ACK_OBSERVED",
+  "status": "ROOT2_UNIQUE_HOSTED_OPS_OWNER_FIXED_MC_VERIFIED",
   "observedAt": "2026-11-03T10:32:34.859908+00:00",
   "eventId": "root2-final-ownership-observed-v4-20261103-01",
   "mcAckSHA256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
   "mcHeadObserved": "248a907ac0d3f16807dc462f43da508f41f39fa1",
-  "mcFixedAckVerified": false,
-  "mcFixedCommit": null,
-  "durability": "MC_WORKTREE_ONLY_PENDING_FIXED_COMMIT",
+  "mcFixedAckVerified": true,
+  "mcFixedCommit": "b4915bad7bf8c44f3bb53a85b2ddbe488b4c4c34",
+  "durability": "FIXED_COMMIT_VERIFIED",
   "owner": "Root2",
   "receiverThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
   "releaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
@@ -27,7 +27,7 @@
   "hostedMutationAllowedNow": false,
   "actionEligibility": "No operation starts from ownership ACK. Read final fixed MC record before actual Ops; each task needs exact valid Release Packet/Gate, fresh resource CAS, short lock and close/rollback conditions.",
   "remaining": [
-    "MC fixed commit and exact-byte confirmation"
+    "Each requested operation requires its own valid Packet/Gate and fresh CAS"
   ],
   "scopeExclusions": [
     "Core/main/schema design retained by Root1",
@@ -37,5 +37,6 @@
   "knownLimits": [
     "OAuth console current values remain UNKNOWN",
     "Prior post-transfer readback is scoped point-in-time; refresh affected preimages before later operation"
-  ]
+  ],
+  "fixedCommitVerifiedAt": "2026-11-03T10:36:54.345383+00:00"
 }
