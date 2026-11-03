@@ -166,3 +166,9 @@ RECOVERY_WINDOW_QUALIFIER_REVIEW.json. Root still owns bounded SSH readControl a
 actual window/plan/approval. No Hosted execution resulted from this local work.
 Native received exact two-factory Guest cover handoff; Auth is not concurrently
 editing guestLocalWorkspace.ts. No census/adoption/cloud boundary change allowed.
+
+Root driver candidate488b3992 now concretely composes bounded SSH reader with Auth
+qualifier. Auth independent9 new tests PASS; source manifest6/6 hashes match; scoped
+NO_BLOCKER in ROOT_CONTROL_READER_REVIEW.json. Local entry/port/controller/qualifier/
+reader candidates are reviewed; remaining is exact new approval and fresh actual
+plan/stage/timers/normalSession/Hosted read-only recovery. No activation authorized.
