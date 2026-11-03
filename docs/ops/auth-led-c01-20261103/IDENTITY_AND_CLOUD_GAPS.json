@@ -1,0 +1,45 @@
+{
+  "package": "LED-C01",
+  "slice": "LED-C01:LOCAL_PREP",
+  "claimId": "auth-led-c01-local-prep-20261103-v1",
+  "status": "LOCAL_IDENTITY_DELTA_PREP_ONLY",
+  "instructionCanonicalSHA256": "773d4cc1c0673b012d1dee781b86c0d8ee733e5fb6cb6dec5287b3fa640f34b0",
+  "scope": "Existing Ledger identity and permission/cloud-environment differences only; Ledger/Core retains owning financial logic",
+  "sourceHashes": {
+    "src/data/repositories/ledgerExpenseRepository.ts": "023301905ed009fa4c0a9fa98713115797506187a43434abf5ab16429ce2917f",
+    "src/data/repositories/ledgerSettlementRepository.ts": "cd85ae3cf8825e7a2b597b21353d623bb19fadfcd7180e7129378a5c60ec78ec",
+    "src/data/repositories/ledgerPersonalPaymentRepository.ts": "0d4c5f30776a1f57e696caddf85630b7bc038b19d7f7c8d7b77cbb9d5c52b14e",
+    "supabase/migrations/20260922000100_settlement_2_phase_1a_personal_payments.sql": "47f01655470fb8c9e63a2ecfe79e173ab33c9d9ffde38c8b68443a91d5280519"
+  },
+  "invariants": [
+    "Account UUID is not Member/Person UUID; normal server bootstrap must qualify the exact mapping after Claim",
+    "Trip/Core READ and Organizer flags are not blanket Ledger or private settlement authority",
+    "Personal payment projections use projection_user_id; preserve current account isolation and existing private history entitlements",
+    "No money allocation/FX/settlement algorithm or stronger financial CAS/conflict rule changes",
+    "No current QA Auth window/template authorizes financial CRUD/finalize/payment writes"
+  ],
+  "actualScopedFinding": {
+    "source": "supabase/migrations/20260922000100_settlement_2_phase_1a_personal_payments.sql",
+    "symbol": "ledger_grant_linked_personal_payment_history_1a",
+    "effect": "On formal user_id/status link, existing trigger grants only matching same-Trip counterparty personal payment history, not all Trip financial records",
+    "hostedTriggerBodyFreshlyRechecked": false,
+    "targetFootprintKnown": false
+  },
+  "minimumFuturePreflight": [
+    "Root reads exact known synthetic Trip/target Person counters only: matching counterparty payment history/read-grant footprint, no private financial content dump",
+    "If footprint nonzero, qualify existing owning Ledger entitlement before Claim; do not silently call it zero or delete history",
+    "Qualify each normal A/B Account->Member actor via existing Ledger bootstrap/Reader; never reuse MCP resource token/admin role",
+    "Use existing read/receipt/UNKNOWN/cold paths and exact historical valid receipts; no full Ledger UI or legacy rerun"
+  ],
+  "minimumChangedScopeCases": [
+    "A/B old async read cannot repaint the other current Account; qualify owning UI/generation wrapper instead of inferring from a single repo method",
+    "B after explicit Claim cannot access A private payment rows or unrelated Member history",
+    "Membership revoke denies general Ledger paths while independent private ownership/history entitlements follow their own contract",
+    "Financial mutation/settlement failures retain original operation and stronger explicit conflict resolution, never silent LWW"
+  ],
+  "testsRepeated": false,
+  "financialWrites": 0,
+  "hostedActions": 0,
+  "legacyRead": false,
+  "missingLocalInstructionFields": []
+}

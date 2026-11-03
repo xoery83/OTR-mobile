@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-led-c01-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "LED-C01",
+      "execution_slice_id": "LED-C01:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T00:49:35.784743+00:00",
+      "actual_started_at": "2026-11-03T00:49:35.784743+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-ledger-normal-identity-delta",
+      "summary": "Started bounded Ledger normal-Account/Trip-Person and private-history identity delta preparation; reuse mature model/UX, no legacy audit or financial execution",
+      "next_action": "Deliver normal Actor/Person and target private-history footprint preflight, no financial operation or model rewrite"
+    }
+  ]
+}
