@@ -1,0 +1,44 @@
+{
+  "status": "CLOSED_BEFORE_OAUTH_ISSUER_ACTIVATION",
+  "windowId": "e32551d418f54fcdb02d9783eb4c2f9c",
+  "originalHardDeadline": "2026-11-03T04:50:13.655Z",
+  "scope": "Synthetic QA ChatGPT connection and Create Preview only; Apply/Save not authorized",
+  "firstFailure": {
+    "phase": "EMPTY_CONFIG_CAS_PREFLIGHT",
+    "result": "CONFIG_CAS_UNCONFIRMED/FileNotFoundError",
+    "rootCause": "The Host has no node executable; Node exists inside the pinned Backend image.",
+    "serviceChanged": false
+  },
+  "focusedRepair": {
+    "operatorSHA256": "ab8e9077929a19124136efde1213476b379c67af32c24a7af4cd8396a69bb523",
+    "change": "Run the existing c02HostConfig parser through Node inside otr-dev-backend.",
+    "pinnedParserSHA256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d"
+  },
+  "emptyCAS": {
+    "status": "MCP_SLICE1_CONFIG_CAS_HEALTHY",
+    "observedAt": "2026-11-03T04:29:44Z",
+    "containerId": "13a23246c4f710fbb466e17ab332528da5ae27d80d5c350a2fdafa2d639f8c1e",
+    "configSHA256": "c99889ab465cf55e68e02a13f9e3bd402797e0a24d98da7f17b560f2cd1bb984",
+    "businessCommand": null,
+    "confirmations": []
+  },
+  "protectedIssuer": {
+    "activeSQLSHA256": "5ed8fcc997b0a402309b533fdcd012a4ddcece2aaf7ffadc9212d388a3df072a",
+    "attempted": false,
+    "autoReview": "REJECTED_MISSING_DIRECT_EXACT_OAUTH_ISSUER_APPROVAL_IN_ROOT_CHAT",
+    "reason": "The reviewer did not accept coordination and preview scope as authorization to activate the protected DEV OAuth issuer hook.",
+    "readback": "ISSUER_DENY_ALL_VERIFIED at 2026-11-03T04:33:21.471609Z"
+  },
+  "runtimeClose": {
+    "status": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+    "defaultContainerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "defaultImage": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "healthy": true,
+    "finiteConfigAbsent": true,
+    "normalTimer": "not-found/inactive",
+    "hardTimer": "not-found/inactive",
+    "disarmHelper": "systemctl stop returned exit 5 for missing transient service; independent unit readback verified both timers inactive"
+  },
+  "consumer": "No OAuth request, Preview, Apply, or Core write executed in this window.",
+  "next": "Require direct Owner approval of a fresh finite DEV OAuth issuer activation, then rebind a new nonextended window; preserve the MCP lane's normal Session/Grant cleanup result."
+}
