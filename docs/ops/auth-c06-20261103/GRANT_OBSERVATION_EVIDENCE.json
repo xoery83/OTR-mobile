@@ -1,0 +1,28 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE",
+  "authorTestsPassed": 6,
+  "independentTestsPassed": 6,
+  "typecheck": "PASS",
+  "lint": "PASS",
+  "sourceHashes": {
+    "src/data/auth/mcpGrantObservation.ts": "38abdd6fccd240a2ce29fe99cc6cc25cd570d9366d819144f2655afc3bc0a06e",
+    "src/data/auth/mcpGrantObservation.test.ts": "eeb8e555002c5918ea10337b42aed34a72691def61ce0aa266be82e001cf986d"
+  },
+  "sdkObserved": {
+    "package": "@supabase/auth-js",
+    "installedVersion": "2.116.0",
+    "source": "src/GoTrueClient.ts:_listOAuthGrants",
+    "path": "GET /auth/v1/user/oauth/grants",
+    "scope": "Existing SDK returns consent/client/scopes/granted_at metadata, not connection expiry/liveness; no endpoint request made"
+  },
+  "runtimeReaderQualified": false,
+  "uiMounted": false,
+  "newQueueOrGrantDatabase": false,
+  "actualSessionOrOAuthCalls": 0,
+  "evidenceLimits": [
+    "Account envelope is checked but owning Reader must prove normal current self Auth",
+    "Grant list is not session liveness/currentConnection/Trip ACL",
+    "MissingReader is UNAVAILABLE; qualified empty list still connection UNKNOWN",
+    "SDK client-level revoke is not modeled as arbitrary per-session delete; no revoke method implemented"
+  ]
+}

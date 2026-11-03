@@ -1,5 +1,18 @@
 # C04 interface closure / normal QA preparation — 3 November 2026
 
+Actual MC continuation progressed beyond a list: C03/C02/C05/C01 local-prep
+claims/start/completion accepted throughrev12; C06 claim/start acceptedrev13/14.
+C05 fixedmainf15 source reproduced2non-Everyone management-contractFAIL+2controlPASS
+(5e152500), handed red fixture to Core; Root reports repair/review in progress,
+not a Hosted negative. C01 f0a4a2ed records release/Apple-paused/delete-contract
+gaps only. C06 3a6454ca records real Settings/Consent/connection-reader differences;
+Auth then implemented mcpGrantObservation (6new+independent6/types/lintPASS), using
+installed SDK grant metadata shape with strict Account scope, no active/expiry
+inference, no URLs or local connected Boolean. Reader absent→UNAVAILABLE; listed
+grants always connectionStatus UNKNOWN. Actual normal self Reader/UI still absent,
+no new OAuth/OTP/Hosted action. Root64f3 revoke typed contract was read source-only;
+Native target preparation and neutral wire schema remain precise dependencies.
+
 Continuation actually executed: MC C03 LOCAL_PREP claim/start/complete accepted
 rev1/2/3 (22d5505b), then C02 LOCAL_PREP accepted rev4/5/6 (a3df0c22). Both are
 PENDING_VERIFICATION local reconciliations only. C02 confirmed source chooser and
