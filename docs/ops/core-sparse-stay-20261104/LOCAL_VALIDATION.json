@@ -1,0 +1,27 @@
+{
+  "requestId": "MCP-C02-S2-CORE-SPARSE-20261104-001",
+  "status": "LOCAL_PASS_NOT_HOSTED",
+  "baseMain": "c91a27caf51ba6ae334a81a8c1c4f59cc4bd919b",
+  "red": "New tests: 11 failed /4 existing rejection assertions passed before implementation; command required whole rooms",
+  "green": {
+    "files": 6,
+    "tests": 131,
+    "newDomainTests": 17,
+    "newBackendReceiptTests": 4
+  },
+  "scopedStrictTypes": "PASS (--ignoreConfig, current TypeScript CLI)",
+  "scopedLint": "PASS",
+  "diffCheck": "PASS",
+  "independentReview": "PENDING",
+  "testLimits": "Domain clone and mocked CoreCommandStorage/PG-port unit regressions only. No actual SQL fixture/Hosted/Native/Consumer/Provider execution. Existing immutable operation/hash transaction unchanged.",
+  "sourceRequestFileSHA256": "e9f998c3b078ccaad467394362e49a87d38b409c2070fd083b752c71002adc40",
+  "fileSHA256": {
+    "src/domain/trip/tripCoreV2Commands.ts": "58ccc22a6a20fd97a401a22aa8d7b77bb19aaccecdabc114d96f2a4c9faa8acc",
+    "src/domain/trip/tripCoreV2Mutation.ts": "bb2cad24cf10295f94d744b4175c1c112059816362afc4f268f5da16666ae050",
+    "src/domain/trip/tripCoreV2StayPatch.test.ts": "da33c30494365f88882fcb198cd712924abdaf8963b521a4f58438c4f5170ad5",
+    "backend/src/tripCoreV2StayPatchReceipt.test.ts": "40d472321f226f4e7de5e8506a2acd638e47efa588aea429fa1459a21df51752",
+    "docs/API_CONTRACT.md": "8ac52acdfb31cebb1b6a342cf0260bf8209f900eb4e3c7f02f1526cec5c45d93"
+  },
+  "schemaOrRoleOrSqlChanges": false,
+  "runtimeActivation": false
+}

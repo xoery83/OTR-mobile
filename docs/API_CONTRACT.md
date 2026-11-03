@@ -1457,3 +1457,27 @@ original/Trip/NEW/title/date Source Review, Plan and Admission. No text offsets 
 invented. The ordinary original preview opens the verified local PNG through the
 existing preview port; missing capability fails closed. Protected SQL, runtime
 activation and actual image E2E remain separate acceptance requirements.
+
+## Core v2 sparse Stay details — local candidate, 4 November 2026
+
+`SET_STAY_DETAILS` retains its existing full-replacement `{details,rooms}` form.
+The additional MANUAL-only sparse form omits `rooms` and accepts optional
+`details` (existing Stay leaves) and `roomChanges` with explicit operations:
+
+- `{operation:"PATCH",room_id,changes:{capacity:4}}`: nonempty existing room leaves.
+- `{operation:"ADD",room:{room_id,category,quantity,capacity}}`: new stable identity.
+- `{operation:"REMOVE",room_id}`: exact existing target-room removal.
+
+At least one detail leaf or room operation is required. A room identity appears
+at most once per request, must belong to the target for PATCH/REMOVE and must not
+already exist for ADD. No more than64 rooms may result. Omission retains; null
+explicitly clears. Repeating an existing non-null value does not reauthor its
+provenance. Null against an unknown null records explicit CLEARED; repeating an
+already-cleared null is a no-op. Unchanged fields, evidence/protection/revisions
+and other room rows remain unchanged. A no-op leaves Item revision unchanged.
+Existing Actor/Trip/Item authority, base vector CAS, operation/immutable receipt,
+conflict and original-operation recovery are reused. This form adds no Source
+Admission route, role, SQL schema or business authority. Legacy Source/Create
+and full replacement behavior are unchanged. Source Review may not use this new
+MANUAL payload as proof. Candidate/code tests are not Hosted qualification;
+consumers must not send it to an old Backend that has not deployed this contract.

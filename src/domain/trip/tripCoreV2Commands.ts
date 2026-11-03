@@ -40,6 +40,37 @@ export const entitlementFields = f.trip_entitlementsSchema
   .partial();
 const room = f.trip_stay_roomsSchema.omit({ trip_id: true, event_id: true });
 const stay = f.trip_stay_detailsSchema.omit({ trip_id: true, event_id: true }).partial();
+const roomChange = z.discriminatedUnion("operation", [
+  z.strictObject({
+    operation: z.literal("PATCH"),
+    room_id: f.coreUuid,
+    changes: room
+      .omit({ room_id: true })
+      .partial()
+      .refine((v) => Object.keys(v).length > 0),
+  }),
+  z.strictObject({ operation: z.literal("ADD"), room }),
+  z.strictObject({ operation: z.literal("REMOVE"), room_id: f.coreUuid }),
+]);
+export const coreSparseStayPayloadSchema = z
+  .strictObject({
+    details: stay.optional(),
+    roomChanges: z
+      .array(roomChange)
+      .max(64)
+      .refine((rows) => {
+        const ids = rows.map((row) =>
+          row.operation === "ADD" ? row.room.room_id : row.room_id,
+        );
+        return new Set(ids).size === ids.length;
+      })
+      .optional(),
+  })
+  .refine(
+    (v) => Object.keys(v.details ?? {}).length > 0 || (v.roomChanges?.length ?? 0) > 0,
+  );
+export type CoreSparseStayPayload = z.infer<typeof coreSparseStayPayloadSchema>;
+
 const rental = f.trip_rental_detailsSchema
   .omit({ trip_id: true, event_id: true })
   .partial();
@@ -225,7 +256,10 @@ export const corePayloadSchemas = {
   SET_ITEM_STATUS: z.strictObject({
     status: z.enum(["planned", "skipped", "completed"]),
   }),
-  SET_STAY_DETAILS: z.strictObject({ details: stay, rooms: z.array(room).max(64) }),
+  SET_STAY_DETAILS: z.union([
+    z.strictObject({ details: stay, rooms: z.array(room).max(64) }),
+    coreSparseStayPayloadSchema,
+  ]),
   SET_RENTAL_DETAILS: z.strictObject({ details: rental, places }),
   SET_ACTIVITY_DETAILS: z.strictObject({
     details: activity,

@@ -918,9 +918,69 @@ function executeCoreMutation(
     case "SET_STAY_DETAILS": {
       const r = target();
       if (r.experience_family !== "P3") throw new Error("INVALID_AGGREGATE");
-      touch("ITEM", r);
-      detail("trip_stay_details", r.id as string, p.details);
-      replaceDetails("trip_stay_rooms", r.id as string, p.rooms, "room_id");
+      if ("rooms" in p) {
+        touch("ITEM", r);
+        detail("trip_stay_details", r.id as string, p.details);
+        replaceDetails("trip_stay_rooms", r.id as string, p.rooms, "room_id");
+        break;
+      }
+      if (q.admission.mode !== "MANUAL") throw new Error("SCOPE_NOT_AUTHORIZED");
+      const sparseDetail = (
+        t: "trip_stay_details" | "trip_stay_rooms",
+        values: CoreRow,
+        roomId?: string,
+      ) => {
+        const old = g[t].find(
+          (row) =>
+            row.event_id === r.id && (roomId === undefined || row.room_id === roomId),
+        );
+        const prefix = t + "." + (roomId ? roomId + "." : "");
+        const state = r.field_state as Record<string, { state: string }>;
+        const changes = Object.fromEntries(
+          Object.entries(values).filter(([key, value]) =>
+            value === null
+              ? old?.[key] !== null || state[prefix + key]?.state !== "CLEARED"
+              : canonicalCoreJson(value as Json) !==
+                canonicalCoreJson((old?.[key] ?? null) as Json),
+          ),
+        );
+        if (!Object.keys(changes).length) return;
+        touch("ITEM", r);
+        detail(t, r.id as string, changes, roomId);
+      };
+      if (p.details) sparseDetail("trip_stay_details", p.details);
+      for (const change of p.roomChanges ?? []) {
+        if (change.operation === "ADD") {
+          const { room_id, ...facts } = change.room;
+          if (g.trip_stay_rooms.some((row) => row.room_id === room_id))
+            throw new Error("DUPLICATE_CORE_ROW");
+          touch("ITEM", r);
+          detail("trip_stay_rooms", r.id as string, facts, room_id);
+          continue;
+        }
+        const old = g.trip_stay_rooms.find(
+          (row) => row.event_id === r.id && row.room_id === change.room_id,
+        );
+        if (!old) throw new Error("NOT_VISIBLE");
+        if (change.operation === "PATCH") {
+          sparseDetail("trip_stay_rooms", change.changes, change.room_id);
+          continue;
+        }
+        touch("ITEM", r);
+        g.trip_stay_rooms = g.trip_stay_rooms.filter((row) => row !== old);
+        const state = r.field_state as Record<string, unknown>;
+        for (const field of ["category", "quantity", "capacity"]) {
+          state["trip_stay_rooms." + change.room_id + "." + field] = {
+            state: "CLEARED",
+            origin: "MANUAL",
+            protected: true,
+            changed_revision: rev(r, "ITEM"),
+            evidence_ref: null,
+          };
+        }
+      }
+      if (g.trip_stay_rooms.filter((row) => row.event_id === r.id).length > 64)
+        throw new Error("INVALID_AGGREGATE");
       break;
     }
     case "SET_RENTAL_DETAILS": {

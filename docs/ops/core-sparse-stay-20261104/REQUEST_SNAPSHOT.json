@@ -1,0 +1,23 @@
+{
+  "request_id": "MCP-C02-S2-CORE-SPARSE-20261104-001",
+  "source_package": "MCP-C02",
+  "source_slice": "C02-S2",
+  "previous_event_id": "mcp-c02-s2-core-gap-20261103-001",
+  "receiver": "Root1/Core",
+  "blocker": "SET_STAY_DETAILS replaces room collection and reauthors unchanged field provenance; no formal sparse preservation port delivered to MCP.",
+  "requested_unique_capability": "Existing Core-authorized sparse Stay/room mutation contract, or precise current delivery/status under the existing Core queue. Not MCP adapter development.",
+  "fixed_candidate_sha": "56256e6ff9fa299d4b6245dcb9d94b675d7d2ef3",
+  "completed_evidence": [
+    "docs/mcp/c02/s2/CORE_INTERFACE_REQUEST.md",
+    "mcp/fieldAdapter.ts existing fail-closed STAY preservation guard"
+  ],
+  "minimum_delivery": [
+    "Stable room_id with changed leaves only; omission retain, explicit clear and add/remove distinct",
+    "Unchanged rows/provenance remain byte-identical; existing Authority/CAS/exact operation/Receipt/recovery semantics",
+    "Formal owning DTO/port and focused preservation/permission/conflict tests; delivery SHA or exact blocked status"
+  ],
+  "resource_permission_boundary": "Local/Core contract request only. No Hosted deployment, SQL install, grant/role/scope expansion, consumer/financial/realNelson writes, or historical UNKNOWN retry. Root2 receives any separate future install/deploy packet.",
+  "acceptance_release_condition": "Owning contract fixed and invariants proven; MCP consumes minimal Adapter and local tests. S1/S3 remain independently executable.",
+  "status": "ROOT1_ACKNOWLEDGED_PORT_NOT_DELIVERED",
+  "receiver_ack": "Root1 retained fixed56256e6f/original request; after current short Auth main integration will inspect existing port and provide minimal owning contract candidate. No Hosted/Browser/MCPAdapter work requested."
+}
