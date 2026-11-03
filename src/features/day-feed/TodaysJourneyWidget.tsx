@@ -50,6 +50,7 @@ export type TodaysJourneyCopy = {
   chooseDay?: string;
 };
 export type TodaysJourneyWidgetProps = {
+  loadReader?: typeof readTripTodaysJourney;
   tripId: string;
   zone: string | null;
   planningDate?: string | null;
@@ -83,6 +84,7 @@ export function TodaysJourneyWidget({
   tripId,
   zone,
   planningDate,
+  loadReader = readTripTodaysJourney,
   now,
   copy,
   onOpenToday,
@@ -115,7 +117,7 @@ export function TodaysJourneyWidget({
   const load = useCallback(async () => {
     const ticket = ++request.current;
     try {
-      const reader = await readTripTodaysJourney();
+      const reader = await loadReader();
       const [value, debugMode] = await Promise.all([
         reader
           .readLocal(tripId, clock())
@@ -135,7 +137,7 @@ export function TodaysJourneyWidget({
         setStatus("UNAVAILABLE");
       }
     }
-  }, [tripId, clock, generation, readKey]);
+  }, [tripId, clock, generation, readKey, loadReader]);
   const cancelPending = useCallback(() => {
     request.current++;
   }, []);
@@ -168,7 +170,7 @@ export function TodaysJourneyWidget({
     if (!visible || generation !== getAccountGeneration()) return;
     const ticket = request.current;
     try {
-      const reader = await readTripTodaysJourney();
+      const reader = await loadReader();
       if (itemId) {
         if (localRead(visible)) {
           const item = await reader.resolveLocalItem(tripId, itemId, visible);

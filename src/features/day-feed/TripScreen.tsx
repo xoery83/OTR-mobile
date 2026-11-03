@@ -59,7 +59,7 @@ import {
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import {
   readTripTodaysJourney,
-  type createTripTodaysJourneyReader,
+  createTripTodaysJourneyReader,
 } from "@/data/repositories/tripTodaysJourneyRepository";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
@@ -977,12 +977,31 @@ function TripContent({
       itemRevision,
     });
   };
+  const readGuestTodaysJourney = useCallback(async () => {
+    const principal = await readLocalTripPrincipal();
+    if (principal?.kind !== "GUEST" || generation !== getAccountGeneration())
+      throw new Error("LOCAL_TODAY_SCOPE_CHANGED");
+    const localId = principal.localId;
+    return createTripTodaysJourneyReader(
+      await readTripDayFeed(),
+      { resolveItem: async () => null },
+      async () => {
+        const current = await readLocalTripPrincipal();
+        if (
+          current?.kind !== "GUEST" ||
+          current.localId !== localId ||
+          generation !== getAccountGeneration()
+        )
+          throw new Error("LOCAL_TODAY_SCOPE_CHANGED");
+        return localId;
+      },
+    );
+  }, [generation]);
   const widgetsForHome = (
     id: string,
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
     tripStartDate?: string | null,
   ) => {
-    if (guest) return [];
     if (id !== requested) return [];
     if (lifecycle === "Active")
       return [
@@ -993,6 +1012,7 @@ function TripContent({
             <TodaysJourneyWidget
               key={JSON.stringify([generation, requested])}
               tripId={requested}
+              loadReader={guest ? readGuestTodaysJourney : undefined}
               zone={
                 homePerspective?.zone ??
                 savedTripZone(view, requested, generation) ??

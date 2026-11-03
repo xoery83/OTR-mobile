@@ -1,3 +1,4 @@
+import { readGuestTripCurrencyRepository } from "@/data/repositories/guestTripCurrencyRepository";
 import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
 import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
 import {
@@ -406,6 +407,10 @@ function LocalTripContent({
           ? await repo.listTrips()
           : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
+      const guestCurrencySetup = isGuest && local
+        ? await readGuestTripCurrencyRepository().then((reader) => reader.readSetup(local.id))
+            .catch(() => null)
+        : null;
       // A local Repository result already wins; discovery is only needed for list/remote fallback.
       const discovery =
         local || isGuest
@@ -428,6 +433,7 @@ function LocalTripContent({
         return;
       loadedGuest.current = guestLocalId;
       loadedListScope.current = principalScope;
+      if (isGuest) setSetup(guestCurrencySetup);
       setMetadataEditable(canEditMetadata);
       setTrips(list);
       setRemoteTrips(
@@ -1195,7 +1201,7 @@ function LocalTripContent({
                     setEditorSaving(saving);
                   }}
                   setup={setup?.context.tripId === selected.id ? setup : null}
-                  currencyAvailable={guest === false}
+                  currencyAvailable={guest !== null}
                   coverAvailable={guest !== null}
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}

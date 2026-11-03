@@ -1,4 +1,5 @@
 import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
+import { selectTodaysJourneyRows } from "@/domain/trip/todaysJourney";
 // TEMP QA-tool caller test: explicit mocked normal-reader inputs, not certificate/Auth evidence.
 import { Children, isValidElement, type ReactNode, type ReactElement } from "react";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
@@ -269,7 +270,8 @@ vi.mock("@/data/repositories/manualRentalRepository", () => ({
 vi.mock("@/data/repositories/manualTransportRepository", () => ({
   createDefaultManualTransportRepository: vi.fn(),
 }));
-vi.mock("@/data/repositories/tripTodaysJourneyRepository", () => ({
+vi.mock("@/data/repositories/tripTodaysJourneyRepository", async (original) => ({
+  ...(await original<typeof import("@/data/repositories/tripTodaysJourneyRepository")>()),
   readTripTodaysJourney: async () => ({ resolveLocalItem: state.resolveLocalItem }),
 }));
 vi.mock("./DayFeed", () => ({ DayFeed: () => null }));
@@ -1923,23 +1925,164 @@ vi.mock("@/data/auth/localTripAccess", async () => ({
   kickLocalTripSync: vi.fn(async () => {}),
 }));
 
-it("Guest retains its actual local Day reader without constructing the Account Today widget", async () => {
+const guestId = "00000000-0000-4000-8000-000000000001";
+function guestRead(empty = false) {
   vi.mocked(readLocalTripPrincipal).mockResolvedValue({
     kind: "GUEST",
-    localId: "00000000-0000-4000-8000-000000000001",
+    localId: guestId,
   });
+  const local = localRead();
+  local.scope.accountId = guestId;
+  local.items = empty
+    ? []
+    : [
+        {
+          ...local.items[0],
+          itemId: "guest-plan",
+          family: "P1",
+          title: "Guest saved plan",
+        },
+      ];
+  const today = (clock: any) =>
+    selectTodaysJourneyRows(
+      empty
+        ? []
+        : ([
+            {
+              itemRef: "guest-plan",
+              title: "Guest saved plan",
+              family: "P1",
+              status: "planned",
+              position: "NON_COMPARABLE",
+              rowKey: { localDate: "2026-10-26" },
+            },
+          ] as any),
+      clock.now,
+      "2026-10-26",
+      clock.zone,
+      () => ({}),
+    );
+  state.result.scope.accountId = guestId;
   state.result.observed = null;
-  state.result.localManual = localRead();
+  state.result.localManual = { ...local, today };
   state.result.localManualStatus = "AVAILABLE";
+  return state.result.localManual;
+}
+it("Guest mounts the existing Today widget through its real local Reader adapter and retains P1/Day callbacks", async () => {
+  const local = guestRead();
+  state.view.zone = "";
   const workspace = find(await loaded(), LocalTripWorkspace);
-  expect(workspace.widgetsForHome(reference, "Active")).toEqual([]);
-  expect(workspace.onChooseDay).toBeTypeOf("function");
+  const widgets = workspace.widgetsForHome(reference, "Active");
+  expect(widgets).toHaveLength(1);
+  const today = widgets[0].content.props;
+  expect(today.loadReader).toBeTypeOf("function");
+  const reader = await today.loadReader();
+  const read = await reader.readLocal(reference, {
+    now: "2026-10-26T00:00:00Z",
+    zone: null,
+    planningDate: "2026-10-26",
+  });
+  expect(read.scope).toEqual(local.scope);
+  expect(read.source).toEqual(local.source);
+  expect(read.today.primary.itemRef).toBe("guest-plan");
+  expect(
+    await reader.read(reference, {
+      now: "2026-10-26T00:00:00Z",
+      zone: null,
+      planningDate: "2026-10-26",
+    }),
+  ).toBeNull();
+  await today.onOpenLocalToday(read);
+  expect(state.navigate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      params: expect.objectContaining({
+        tripId: reference,
+        date: "2026-10-26",
+        view: "day",
+        viewMode: "FLOATING",
+      }),
+    }),
+  );
+  await today.onOpenLocalItem({ ...read, item: local.items[0] });
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p1-detail",
+    params: { tripId: reference, itemId: "guest-plan", occurrence: "START" },
+  });
+  expect(state.snapshotRead).not.toHaveBeenCalled();
+  expect(workspace.widgetsForHome("other-trip", "Active")).toEqual([]);
+  expect(workspace.widgetsForHome(reference, "Past")).toEqual([]);
 });
+it("Guest empty local Day produces the existing truthful FREE state without an accepted snapshot", async () => {
+  guestRead(true);
+  state.view.zone = "";
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  const reader = await workspace
+    .widgetsForHome(reference, "Active")[0]
+    .content.props.loadReader();
+  const read = await reader.readLocal(reference, {
+    now: "2026-10-26T00:00:00Z",
+    zone: null,
+    planningDate: "2026-10-26",
+  });
+  expect(read.today).toMatchObject({
+    date: "2026-10-26",
+    zone: null,
+    primary: null,
+    primaryKind: "FREE",
+    later: [],
+    tonight: null,
+  });
+  expect(read.source.kind).toBe("LOCAL_MANUAL_COMMITTED");
+  expect(state.snapshotRead).not.toHaveBeenCalled();
+});
+it.each(["GUEST", "ACCOUNT", "generation"])(
+  "Guest Today rejects late local results after a %s switch",
+  async (kind) => {
+    const local = guestRead();
+    const workspace = find(await loaded(), LocalTripWorkspace);
+    const reader = await workspace
+      .widgetsForHome(reference, "Active")[0]
+      .content.props.loadReader();
+    let complete!: (value: unknown) => void;
+    state.read.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          complete = resolve;
+        }),
+    );
+    const pending = reader.readLocal(reference, {
+      now: "2026-10-26T00:00:00Z",
+      zone: null,
+      planningDate: "2026-10-26",
+    });
+    await Promise.resolve();
+    if (kind === "GUEST")
+      vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+        kind: "GUEST",
+        localId: "00000000-0000-4000-8000-000000000002",
+      });
+    else if (kind === "ACCOUNT")
+      vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+        kind: "ACCOUNT",
+        accountId: actor,
+      });
+    else state.liveGeneration++;
+    complete({ ...state.result, localManual: local });
+    await expect(pending).rejects.toThrow("LOCAL_TODAY_SCOPE_CHANGED");
+    expect(state.navigate).not.toHaveBeenCalled();
+    expect(state.push).not.toHaveBeenCalled();
+  },
+);
 
 it("shows the qualified Day read while the optional Home snapshot is still loading", async () => {
   state.routeMode = "day";
   let release!: (value: unknown) => void;
-  state.snapshotRead.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+  state.snapshotRead.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
   const node = await loaded();
   try {
     expect(state.snapshotRead).toHaveBeenCalledOnce();
@@ -1965,7 +2108,12 @@ it("publishes an acknowledged remote revision before an unrelated Home snapshot 
   };
   state.result = updated;
   let release!: (value: unknown) => void;
-  state.snapshotRead.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+  state.snapshotRead.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
   state.syncCompletion?.({ accountId: actor, generation: 5, journeyIds: [reference] });
   await new Promise<void>((resolve) => setImmediate(resolve));
   try {

@@ -362,3 +362,66 @@ it("shows a confirmed error after the new scope read fails", async () => {
   expect(result).not.toContain("Sky City Hotel");
   expect(result).toContain("Unavailable");
 });
+
+it("uses injected local Reader for a truthful empty Guest day and the existing Day action", async () => {
+  const { readTripTodaysJourney } =
+    await import("@/data/repositories/tripTodaysJourneyRepository");
+  vi.mocked(readTripTodaysJourney).mockClear();
+  const local = {
+    ...snapshot(),
+    scope: { accountId: "guest-a", tripId: "trip", generation: 1 },
+    source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "guest-empty" },
+    today: { ...snapshot().today, tonight: null },
+  };
+  const reader = {
+    readLocal: vi.fn(async () => local),
+    read: vi.fn(async () => null),
+  };
+  const loadReader = vi.fn(async () => reader as any),
+    open = vi.fn(),
+    openAccepted = vi.fn();
+  const props = { loadReader, onOpenLocalToday: open, onOpenToday: openAccepted };
+  renderRefresh(props);
+  runEffect();
+  await settle();
+  const view = renderRefresh(props);
+  expect(JSON.stringify(view)).toContain('"Free"');
+  expect(JSON.stringify(view)).not.toContain("Unavailable");
+  expect(JSON.stringify(view)).not.toContain("Sky City Hotel");
+  expect(reader.read).not.toHaveBeenCalled();
+  expect(readTripTodaysJourney).not.toHaveBeenCalled();
+  await buttons(view)[0].onPress();
+  await settle();
+  expect(open).toHaveBeenCalledWith(local);
+  expect(openAccepted).not.toHaveBeenCalled();
+});
+
+it("drops an injected Guest Reader's late response after principal generation changes", async () => {
+  let complete!: (value: any) => void;
+  const local = {
+    ...snapshot(),
+    scope: { accountId: "guest-a", tripId: "trip", generation: 1 },
+    source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "guest-a" },
+  };
+  const reader = {
+    readLocal: vi.fn(
+      () =>
+        new Promise((resolve) => {
+          complete = resolve;
+        }),
+    ),
+    read: vi.fn(async () => null),
+  };
+  const loadReader = async () => reader as any;
+  renderRefresh({ loadReader });
+  runEffect();
+  await settle();
+  state.generation = 2;
+  state.cleanups.pop()!();
+  complete(local);
+  await settle();
+  const view = JSON.stringify(renderRefresh({ loadReader }));
+  expect(view).not.toContain("Sky City Hotel");
+  expect(view).not.toContain("guest-a");
+  expect(state.hooks[1]).toBeNull();
+});

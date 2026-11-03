@@ -12,6 +12,12 @@ const state = vi.hoisted(() => ({
   preview: vi.fn(),
   commit: vi.fn(),
   classify: vi.fn(),
+  principal: vi.fn(),
+  guestRead: vi.fn(),
+  guestSave: vi.fn(),
+  refs: [] as any[],
+  refCursor: 0,
+  online: true,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -25,7 +31,10 @@ vi.mock("react", async (original) => ({
       },
     ];
   },
-  useRef: (v: any) => ({ current: v }),
+  useRef: (v: any) => {
+    const i = state.refCursor++;
+    return state.refs[i] ?? (state.refs[i] = { current: v });
+  },
   useEffect: (fn: any) => {
     if (state.mount) {
       const cleanup = fn();
@@ -44,7 +53,7 @@ vi.mock("react-native", () => ({
   StyleSheet: { create: (s: any) => s },
 }));
 vi.mock("expo-network", () => ({
-  useNetworkState: () => ({ isConnected: true, isInternetReachable: true }),
+  useNetworkState: () => ({ isConnected: state.online, isInternetReachable: state.online }),
 }));
 vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}), useThemedStyles: () => ({}) }));
 vi.mock("@/ui/locale", () => ({ t: (s: string) => s }));
@@ -70,6 +79,11 @@ vi.mock("@/data/repositories/ledgerCurrencyRepository", () => ({
     commit: (...a: any[]) => state.commit(...a),
   },
 }));
+vi.mock("@/data/auth/authRepository", () => ({ readCommittedLocalPrincipal: () => state.principal() }));
+vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 1 }));
+vi.mock("@/data/repositories/guestTripCurrencyRepository", () => ({
+  readGuestTripCurrencyRepository: async () => ({ read: state.guestRead, save: state.guestSave }),
+}));
 type Node = ReactElement<any>;
 const nodes = (n: ReactNode): Node[] =>
   isValidElement(n)
@@ -86,6 +100,7 @@ const b = {
 const actor = vi.fn().mockResolvedValue({ role: "owner" });
 const render = (id?: string) => {
   state.cursor = 0;
+  state.refCursor = 0;
   const v = nodes(CurrencySettingsScreen({ journeyId: id }));
   state.mount = false;
   return v;
@@ -95,6 +110,12 @@ const flush = async () => {
 };
 beforeEach(() => {
   state.cleanups = [];
+  state.refs = [];
+  state.refCursor = 0;
+  state.online = true;
+  state.principal.mockReset().mockResolvedValue({ kind: "ACCOUNT", accountId: "account-a" });
+  state.guestRead.mockReset();
+  state.guestSave.mockReset();
   state.trips.mockReset().mockResolvedValue([]);
   state.values = [];
   state.cursor = 0;
@@ -216,4 +237,44 @@ it("ignores an old Trip name read completing after another Journey has loaded", 
   await flush();
   expect(state.values[2]).toMatchObject({ journeyId: "b", title: "Current B" });
   expect(render("b").some((n) => n.props.children === "Current B")).toBe(true);
+});
+
+
+it("changes a Guest local currency offline without Account reporting, preview, commit or FX lookup", async () => {
+  state.online = false;
+  state.principal.mockResolvedValue({ kind: "GUEST", localId: "guest-a" });
+  const value = { context: { accountId: "guest-a", tripId: "b", generation: 1 }, title: "Guest trip", code: "NZD", scale: 2, updatedAt: "old", historyLocked: 0 };
+  state.guestRead.mockResolvedValue(value);
+  state.guestSave.mockResolvedValue({ ...value, code: "JPY", scale: 0, updatedAt: "new" });
+  state.reporting.mockClear();
+  state.settlement.mockClear();
+  render("b");
+  await flush();
+  let v = render("b");
+  expect(v.some((node) => node.props.children === "Guest trip")).toBe(true);
+  expect(v.some((node) => node.type === "ExchangeRateLookup")).toBe(false);
+  await v.find((node) => node.type === "CurrencyPicker")!.props.onSelect("JPY");
+  await flush();
+  v = render("b");
+  expect(v.some((node) => node.props.children === "JPY")).toBe(true);
+  expect(state.guestSave).toHaveBeenCalledExactlyOnceWith(value, "JPY");
+  expect(state.reporting).not.toHaveBeenCalled();
+  expect(state.settlement).not.toHaveBeenCalled();
+  expect(state.preview).not.toHaveBeenCalled();
+  expect(state.commit).not.toHaveBeenCalled();
+});
+
+it("keeps the Guest currency when a local save fails and never falls back to Cloud", async () => {
+  state.principal.mockResolvedValue({ kind: "GUEST", localId: "guest-a" });
+  state.guestRead.mockResolvedValue({ context: { accountId: "guest-a", tripId: "b", generation: 1 }, title: "Guest trip", code: "NZD", scale: 2, updatedAt: "old", historyLocked: 0 });
+  state.guestSave.mockRejectedValue(Error("GUEST_CURRENCY_CONFLICT"));
+  render("b");
+  await flush();
+  await render("b").find((node) => node.type === "CurrencyPicker")!.props.onSelect("JPY");
+  await flush();
+  const v = render("b");
+  expect(v.some((node) => node.props.children === "NZD")).toBe(true);
+  expect(v.some((node) => node.props.children === "ui.couldNotSave · common.tryAgain")).toBe(true);
+  expect(state.preview).not.toHaveBeenCalled();
+  expect(state.commit).not.toHaveBeenCalled();
 });

@@ -34,6 +34,9 @@ import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
 import { SheetHeader } from "@/components/SheetHeader";
+import { readCommittedLocalPrincipal } from "@/data/auth/authRepository";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { readGuestTripCurrencyRepository, type GuestTripCurrency } from "@/data/repositories/guestTripCurrencyRepository";
 
 const previewFailureMessages: Record<
   JourneyCurrencyPreviewFailure["kind"],
@@ -72,11 +75,29 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
   const [working, setWorking] = useState(false);
   const committing = useRef(false);
   const locale = useUiLocale();
+  const [guestLocal, setGuestLocal] = useState(false);
+  const guestRead = useRef<GuestTripCurrency | null>(null);
 
   useEffect(() => {
     let active = true;
-    void getDefaultLedgerReportingRepository()
+    void (async () => {
+      const principal = await readCommittedLocalPrincipal();
+      if (!active) return null;
+      if (principal?.kind === "GUEST") {
+        if (!journeyId) throw Error("GUEST_CURRENCY_UNAVAILABLE");
+        const value = await (await readGuestTripCurrencyRepository()).read(journeyId);
+        if (!active || value.context.generation !== getAccountGeneration()) return null;
+        guestRead.current = value;
+        setGuestLocal(true);
+        setJourney({ journeyId, title: value.title, settlementCurrency: value.code });
+        setCanChange(true);
+        setLocked(Boolean(value.historyLocked));
+        return null;
+      }
+      return getDefaultLedgerReportingRepository();
+    })()
       .then(async (repository) => {
+        if (!repository || !active) return;
         const [selectedId, journeys] = await Promise.all([
           repository.getSelectedJourneyId(),
           repository.listJourneys(),
@@ -122,14 +143,33 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
+    return () => { active = false; guestRead.current = null; };
   }, [journeyId]);
 
   const selectCurrency = async (currency: string) => {
     setPickerOpen(false);
     setPreview(null);
     setOperationId(null);
-    if (!journey || !online || currency === journey.settlementCurrency) return;
+    if (!journey || currency === journey.settlementCurrency) return;
+    if (guestLocal) {
+      const before = guestRead.current;
+      if (!before || locked || working) return;
+      setWorking(true);
+      setMessage(null);
+      try {
+        const value = await (await readGuestTripCurrencyRepository()).save(before, currency);
+        if (guestRead.current !== before || value.context.generation !== getAccountGeneration()) return;
+        guestRead.current = value;
+        setJourney({ journeyId: value.context.tripId, title: value.title, settlementCurrency: value.code });
+        setMessage(t("currencySettings.copy6"));
+      } catch {
+        if (guestRead.current === before) setMessage(`${t("ui.couldNotSave")} · ${t("common.tryAgain")}`);
+      } finally {
+        if (guestRead.current?.context.generation === getAccountGeneration()) setWorking(false);
+      }
+      return;
+    }
+    if (!online) return;
     setWorking(true);
     setMessage(null);
     try {
@@ -223,9 +263,9 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
             <Pressable
               accessibilityRole="button"
               accessibilityState={{
-                disabled: locked || !canChange || !online || working,
+                disabled: locked || !canChange || (!guestLocal && !online) || working,
               }}
-              disabled={locked || !canChange || !online || working}
+              disabled={locked || !canChange || (!guestLocal && !online) || working}
               onPress={() => setPickerOpen(true)}
               style={styles.row}
             >
@@ -233,12 +273,12 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
                 <Text style={styles.label}>{journey.title}</Text>
                 <Text style={styles.detail}>{t("currencySettings.copy8")}</Text>
                 {locked ? (
-                  <Text style={styles.detail}>{t("currencySettings.copy9")}</Text>
+                  <Text style={styles.detail}>{guestLocal ? t("tripForm.currencyReadOnly", { code: journey.settlementCurrency }) : t("currencySettings.copy9")}</Text>
                 ) : null}
                 {!canChange && !locked ? (
                   <Text style={styles.detail}>{t("currencySettings.copy10")}</Text>
                 ) : null}
-                {!online ? (
+                {!guestLocal && !online ? (
                   <Text style={styles.detail}>{t("currencySettings.copy11")}</Text>
                 ) : null}
               </View>
@@ -326,7 +366,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
             </Pressable>
           </View>
         ) : null}
-        {journey ? (
+        {journey && !guestLocal ? (
           <ExchangeRateLookup
             journeyId={journey.journeyId}
             key={`${journey.journeyId}:${journey.settlementCurrency}`}

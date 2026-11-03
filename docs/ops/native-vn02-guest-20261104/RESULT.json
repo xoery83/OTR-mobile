@@ -1,0 +1,31 @@
+{
+  "request": [
+    "VISION-VN02-R1-NATIVE-20261104-001",
+    "VISION-VN02-R1-GUEST-ACCESS-20261104-002"
+  ],
+  "basis": "b437577295d673e289e34c0e14e1e0bbe3c2d5bd",
+  "status": "LOCAL_REVIEWED_CANDIDATE_DEVICE_PENDING",
+  "changes": {
+    "VN02-03": "Committed Guest localId fences existing Apple MapKit editor; no Account/Session creation or Backend authorization",
+    "VN02-05": "Active Trip Today widget uses existing localTripAccess DayReader and same Today projection; local P1/empty state and normal callbacks",
+    "VN02-07": "Guest existing Ledger SQLite currency settings via existing creator proof, transaction/CAS and freeze; original Create queue untouched, snapshot preserves currency"
+  },
+  "validation": {
+    "parent": "6 suites224 PASS",
+    "additional_guest_workspace_and_currency": "Agent5suites233PASS incl historicalGuest116; not additive to parent224",
+    "review_place_currency": "Independent NO_BLOCKER and3suites37PASS",
+    "review_widget": "Parent inspected production reader injection/defaultAccount and scope fences; actual caller+widget test rerun in224",
+    "types": "Scoped dependency typesPASS",
+    "ui_guard": "PASS",
+    "lint": "PASS"
+  },
+  "remaining": [
+    "Actual new-build Guest Apple selection Save/Reopen",
+    "Device currency save/cold",
+    "Guest Past snapshot lacks accepted projection port; not fabricated",
+    "Upcoming/Undated preparation and Finance visibility not changed in this commit",
+    "Remaining VN02 animation/date/nickname presentation separate commit/review",
+    "No Hosted Provider or new Cloud E2E"
+  ],
+  "authority": "No new Account/Schema/Queue/Cloud grant; Guest local currency with financial history remains locked"
+}

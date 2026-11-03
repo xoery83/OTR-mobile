@@ -3,7 +3,7 @@ import { createTripNameQuery } from "@/data/places/createTripNameQuery";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useNetworkState } from "expo-network";
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readCommittedLocalPrincipal } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   ApplePlaceError,
@@ -96,7 +96,15 @@ export function CreateTripDestinations({
     let active = true;
     let phase = "READ_CONTEXT";
     void (async () => {
-      const accountId = (await readLocalSession())?.identity?.userId;
+      const principal = await readCommittedLocalPrincipal();
+      // MapKit binding is a local editor fence, not Backend Account authority.
+      // Reuse an already committed Guest ID; never create or adopt a principal here.
+      const accountId =
+        principal?.kind === "ACCOUNT"
+          ? principal.accountId
+          : principal?.kind === "GUEST"
+            ? principal.localId
+            : null;
       if (!active || !current()) return;
       if (!accountId) throw new Error("NATIVE_UNAVAILABLE");
       const binding = {

@@ -4,7 +4,7 @@ import {
   withAccountApplyGate,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
-import { requireActiveUserId } from "@/data/auth/authRepository";
+import { readCommittedLocalPrincipal, requireActiveUserId } from "@/data/auth/authRepository";
 import { readInitializedDatabase } from "@/data/db/database";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
@@ -121,6 +121,10 @@ export function createTripPreparationSetupRepository(
 }
 
 export async function readTripPreparationSetupRepository() {
+  if ((await readCommittedLocalPrincipal())?.kind === "GUEST") {
+    const { openGuestLocalWorkspace } = await import("../auth/guestLocalWorkspace");
+    return { read: (await openGuestLocalWorkspace()).currency.readSetup };
+  }
   return createTripPreparationSetupRepository(
     await readInitializedDatabase(),
     requireActiveUserId,

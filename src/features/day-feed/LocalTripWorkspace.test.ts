@@ -1,3 +1,7 @@
+const guestCurrency = vi.hoisted(() => ({ readSetup: vi.fn() }));
+vi.mock("@/data/repositories/guestTripCurrencyRepository", () => ({
+  readGuestTripCurrencyRepository: async () => ({ readSetup: guestCurrency.readSetup }),
+}));
 import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
 vi.mock("@/data/auth/guestTripDraftInventory", async (original) => {
   const m = await original<typeof import("@/data/auth/guestTripDraftInventory")>();
@@ -394,6 +398,7 @@ function input(label: string, value: string) {
   state.nodes.find((node) => node.accessibilityLabel === label)!.onChangeText(value);
 }
 beforeEach(() => {
+  guestCurrency.readSetup.mockReset().mockResolvedValue(null);
   vi.mocked(readLocalTripPrincipal)
     .mockReset()
     .mockResolvedValue({ kind: "ACCOUNT", accountId: "test-account" });
@@ -2286,4 +2291,35 @@ it("Guest Cover Cancel discards the staged choice without a preference or metada
   render();
   expect(state.personal.select).not.toHaveBeenCalled();
   expect(repo.updateMetadata).not.toHaveBeenCalled();
+});
+
+
+it("opens the same Guest Trip local currency without enabling Account preparation modules", async () => {
+  const id = "guest-currency";
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "GUEST", localId: "00000000-0000-4000-8000-000000000001" });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  const local = { ...trip(id, "Guest currency"), syncFormatVersion: 2 as const };
+  const repo = repository([local]);
+  vi.mocked(repo.readDeferredMetadataEditBase).mockResolvedValue({ metadata: {
+    name: local.name, destination: null, startDate: null, endDate: null, destinations: [],
+  } } as any);
+  state.repo.mockResolvedValue(repo);
+  guestCurrency.readSetup.mockResolvedValue({
+    context: { accountId: "00000000-0000-4000-8000-000000000001", tripId: id, generation: getAccountGeneration() },
+    currency: { state: "AVAILABLE", code: "NZD", scale: 2, permission: "OWNER", lock: "NOT_OBSERVED" },
+    members: { state: "UNKNOWN" }, invitations: "UNKNOWN", connections: "UNKNOWN",
+  });
+  props.tripId = id;
+  render();
+  await flush();
+  render();
+  await button("tripHome.edit").onPress();
+  await flush();
+  render();
+  const currency = state.nodes.find((node) => node.label === "tripForm.currency")!;
+  expect(currency.disabled).toBe(false);
+  currency.onPress();
+  render();
+  expect(state.nodes.find((node) => node.currencyScreen)?.currencyScreen.journeyId).toBe(id);
+  expect(state.preparation.tripId).toBeNull();
 });

@@ -20,6 +20,12 @@ const state = vi.hoisted(() => ({
   emit: null as any,
   provider: vi.fn(),
   online: true,
+  principal: { kind: "ACCOUNT", accountId: "f97c6ad1-5328-4a23-af39-8fa8bf280006" } as
+    | { kind: "ACCOUNT"; accountId: string }
+    | { kind: "GUEST"; localId: string }
+    | { kind: "SIGNED_OUT" }
+    | null,
+  readPrincipal: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -67,9 +73,11 @@ vi.mock("expo-network", () => ({
   useNetworkState: () => ({ isConnected: state.online }),
 }));
 vi.mock("@/data/auth/authRepository", () => ({
-  readLocalSession: async () => ({
-    identity: { userId: "f97c6ad1-5328-4a23-af39-8fa8bf280006" },
-  }),
+  readLocalSession: async () =>
+    state.principal?.kind === "ACCOUNT"
+      ? { identity: { userId: state.principal.accountId } }
+      : null,
+  readCommittedLocalPrincipal: () => state.readPrincipal(),
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
@@ -144,6 +152,11 @@ beforeEach(() => {
   state.close.mockReset();
   state.provider.mockReset().mockResolvedValue({ close: vi.fn() });
   state.online = true;
+  state.principal = {
+    kind: "ACCOUNT",
+    accountId: "f97c6ad1-5328-4a23-af39-8fa8bf280006",
+  };
+  state.readPrincipal.mockReset().mockImplementation(async () => state.principal);
   items = [];
   context = { draftId: "f97c6ad1-5328-4a23-af39-8fa8bf280007" };
   name = "Nelson Summer";
@@ -388,4 +401,80 @@ it("binds Edit autocomplete to the actual Trip and editor while keeping destinat
   expect(oldBinding.isCurrent()).toBe(false);
   await flush();
   expect(state.provider).toHaveBeenLastCalledWith(expect.objectContaining(context));
+});
+
+it("uses the existing committed Guest local identity for name suggestions and selected destinations without an Account session", async () => {
+  const localId = "f97c6ad1-5328-4a23-af39-8fa8bf280012";
+  state.principal = { kind: "GUEST", localId };
+  render();
+  await flush();
+  expect(state.provider).toHaveBeenCalledTimes(2);
+  expect(state.provider).toHaveBeenCalledWith(
+    expect.objectContaining({ accountId: localId, ...context, accountGeneration: 1 }),
+  );
+  expect(state.update).toHaveBeenCalledWith(
+    { text: "Nelson", locale: "en-NZ", intent: "destinationArea" },
+    450,
+    true,
+  );
+  input("Tokyo");
+  render();
+  expect(state.update).toHaveBeenLastCalledWith(
+    { text: "Tokyo", locale: "en-NZ", intent: "destinationArea" },
+    450,
+    true,
+  );
+  state.emit({
+    status: "READY",
+    rows: [{ handle: "guest-completion", title: "Tokyo", secondary: "Japan" }],
+    more: false,
+  });
+  render();
+  state.resolve.mockResolvedValue({
+    provider: "apple",
+    kind: "mapItem",
+    title: "Tokyo",
+    secondary: "Japan",
+    providerPlaceId: "actual-apple-place-id",
+  });
+  await press("Tokyo, Japan");
+  expect(items).toEqual([
+    expect.objectContaining({
+      source: "APPLE",
+      text: "Tokyo",
+      match: expect.objectContaining({ providerPlaceId: "actual-apple-place-id" }),
+    }),
+  ]);
+});
+
+it.each([null, { kind: "SIGNED_OUT" as const }])(
+  "does not invent a Guest identity for absent or signed-out principal %j and keeps manual entry",
+  async (principal) => {
+    state.principal = principal;
+    render();
+    await flush();
+    expect(state.provider).not.toHaveBeenCalled();
+    input("My manual place");
+    render();
+    press("createTripV2.custom:My manual place");
+    expect(items).toEqual([
+      expect.objectContaining({ source: "MANUAL", text: "My manual place" }),
+    ]);
+  },
+);
+
+it("drops a Guest principal read that completes after an Account generation switch", async () => {
+  let finish!: (value: unknown) => void;
+  state.readPrincipal.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  render();
+  state.generation = 2;
+  finish({ kind: "GUEST", localId: "f97c6ad1-5328-4a23-af39-8fa8bf280012" });
+  await flush();
+  expect(state.provider).not.toHaveBeenCalled();
+  expect(items).toEqual([]);
 });
