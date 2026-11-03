@@ -1,0 +1,102 @@
+{
+  "package": "PLAT-C05",
+  "slice": "PLAT-C05:LOCAL_PREP",
+  "claimId": "auth-plat-c05-local-prep-20261103-v1",
+  "status": "LOCAL_SAFETY_EVIDENCE_MAP_NOT_CAPACITY_OR_RESTORE_PASS",
+  "instructionCanonicalSHA256": "ba91ab232c4614c4bc0712941d0befffc4430c11585759533f601ecc64d26ef0",
+  "sourcePins": [
+    {
+      "path": "src/data/sync/syncOperationRepository.ts",
+      "sha256": "a829f09fd8fe8757ba15ed510cc4c6cbb13da469da54e43550bcb6e27322214c",
+      "instructionPinnedMatch": true
+    },
+    {
+      "path": "src/data/health/dataHealthCoordinator.ts",
+      "sha256": "3c737038541fefde13e50bc799e881572a3a89317b54f318da16fcc769c785f5",
+      "instructionPinnedMatch": true
+    },
+    {
+      "path": "src/data/db/migrationRunner.ts",
+      "sha256": "47c222de6ec4e99beb33cbb8abbacea91721aa853eb1a443fa31d26beac891fe",
+      "instructionPinnedMatch": true
+    },
+    {
+      "path": "app/_layout.tsx",
+      "sha256": "5c53efbd4d7428651ecf7de2cd18bfbc8945c672415df4a92016105ff021a874",
+      "instructionPinnedMatch": true
+    },
+    {
+      "path": "src/features/day-feed/WindowedDayList.tsx",
+      "sha256": "b258335a742d175eb2e6bfa8c9277a1b4f5ec15fcb5985017ea3d0fb06aafe8d",
+      "instructionPinnedMatch": true
+    },
+    {
+      "path": "src/data/repositories/tripPhotoRepository.ts",
+      "sha256": "2cd3d8c89048f8ab8969920f4009ebb016427810ee3f1eb12af3bee4437aa919",
+      "instructionPinnedMatch": true
+    }
+  ],
+  "existingEvidence": [
+    {
+      "area": "SQLite migration",
+      "source": "src/data/db/migrationRunner.ts",
+      "observed": "Each unapplied migration runs transactionally and records schema_migrations only with success; rebuild73 checks FK integrity and finally restores prior foreign_keys state",
+      "notProven": "Full historical release upgrade/rollback matrix or backup restoration"
+    },
+    {
+      "area": "Pending and UNKNOWN",
+      "source": "src/data/sync/syncOperationRepository.ts",
+      "reuseEvidence": "../auth-sync-c04-20261103/RECOVERY_INTERFACE_GAPS.json",
+      "observed": "Persistent operation/dependency identities and owning queue retained; original operation recovery remains owning-domain scoped",
+      "notProven": "One cross-domain universal repair or backup-derived Pending reconstruction"
+    },
+    {
+      "area": "Account privacy",
+      "source": "src/data/health/dataHealthCoordinator.ts + src/data/repositories/tripPhotoRepository.ts",
+      "observed": "Account/generation fences and account/Trip-scoped photo queries; active-account scan does not imply access to other account data",
+      "notProven": "Full-product current-candidate privacy or member-revoke denial"
+    },
+    {
+      "area": "Performance",
+      "source": "src/features/day-feed/WindowedDayList.tsx",
+      "observed": "Existing flat native list/window and anchor mechanism reused",
+      "notProven": "Device large-roster/large-document workload memory, latency or server capacity numbers"
+    },
+    {
+      "area": "DEV rollback",
+      "source": "ROOT_CURRENT_DEFAULT_READBACK.json",
+      "observed": "Timestamped Root default-closed software readback retains healthy predecessor for rollback; latestRoot may have moved again",
+      "notProven": "Database rollback, restore drill, Production readiness or current host capacity"
+    }
+  ],
+  "requiredQualification": [
+    {
+      "id": "BACKUP_RESTORE",
+      "owner": "Root/Platform existing operator",
+      "minimum": "Dated sanitized DEV backup policy/scope/retention and isolated restore drill proving rows, custody references and Pending consistency; never restore over active DEV or Production"
+    },
+    {
+      "id": "RELEASE_UPGRADE",
+      "owner": "Native SQLite unique Writer",
+      "minimum": "Fixed from/to build and schema, preserved own-account Pending/assets, failed transaction recovery; reuse prior exact same-range receipts"
+    },
+    {
+      "id": "BETA_CAPACITY",
+      "owner": "Root/Platform + Native",
+      "minimum": "Actual intended Beta users/Trips/items/assets, observed limits/usage and bounded fixture workload on qualified candidate; unknown values remain unknown"
+    },
+    {
+      "id": "ACCESS_REVOCATION",
+      "owner": "Core/Auth/Native",
+      "minimum": "Actual membership deny plus qualified current-account cache invalidation, not 404 or TTL"
+    }
+  ],
+  "capacity": {
+    "actualBetaPopulation": null,
+    "currentProviderLimits": null,
+    "measuredHeadroom": null,
+    "upgradePurchased": false,
+    "storagePolicy": "Keep Supabase Storage for Beta; alert on actual limits, no unapproved migration or speculative capacity purchase"
+  },
+  "checks": "Source/evidence reconciliation only; unchanged historical tests not rerun; no Hosted/Provider/SQL/device/Production action"
+}
