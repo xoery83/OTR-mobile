@@ -1,0 +1,14 @@
+{
+  "status": "MAIN_CONTEXT_LOCAL_PASS_NOT_NATIVE_ACCEPTED",
+  "candidate": "2732aa908aff8fdafbfac9851a82f0a06a9f1a33",
+  "integrationCommit": "38584ac9",
+  "independentReview": "11551eba / 0a3e6fce",
+  "sourceBlobs": "Both product files equal fixed2732 candidate",
+  "rootChecks": {
+    "documentsAndCaptureActivityLifecycle": "2files25PASS",
+    "diffCheck": "PASS"
+  },
+  "priorCandidateEvidence": "Focused candidate32/UIguard/strict reused; Root25 is a different named suite subset, not counted as32",
+  "externalActions": "No device/paid AI/Source Gate; existing default68aa closed unaffected",
+  "readiness": "IMPLEMENTED/LOCAL_PASS; native UX acceptance pending"
+}
