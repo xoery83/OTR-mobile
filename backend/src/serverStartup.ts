@@ -51,6 +51,7 @@ export function startDevBackend(
     BackendDependencies,
     | "tripCreatePort"
     | "tripPersonCloudCreatePort"
+    | "memberClaimPort"
     | "tripMetadataPort"
     | "tripMetadataV2Port"
     | "coreConnection"
@@ -120,6 +121,7 @@ export function startDevBackend(
     captureRemoteProcessing: startOptions.captureRemoteProcessing,
     tripCreatePort: startOptions.tripCreatePort,
     tripPersonCloudCreatePort: startOptions.tripPersonCloudCreatePort,
+    memberClaimPort: startOptions.memberClaimPort,
     tripMetadataPort: startOptions.tripMetadataPort,
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,

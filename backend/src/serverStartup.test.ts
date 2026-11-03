@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { request as httpRequest, type RequestListener, type Server } from "node:http";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { DevBackendGateway } from "./app";
+import type { BackendDependencies, DevBackendGateway } from "./app";
 import { createCorePgHttpConnection } from "./tripCoreV2PgHttpConnection";
 
 const fixtures = vi.hoisted(() => ({
@@ -145,6 +145,36 @@ const post = (url: string, body: unknown = input, token = "valid") =>
     },
     body: JSON.stringify(body),
   });
+
+it("passes the owning member claim port through the real startup handler", async () => {
+  const { startDevBackend } = await import("./serverStartup");
+  const atomic = vi.fn(async () => {
+    throw new Error("SYNTHETIC_OWNING_FAILURE");
+  });
+  const memberClaimPort = { atomic } as unknown as NonNullable<
+    BackendDependencies["memberClaimPort"]
+  >;
+  const command = {
+    kind: "CLAIM_PERSON",
+    operationId: randomUUID(),
+    tripId: randomUUID(),
+    personId: randomUUID(),
+    inviteId: randomUUID(),
+    explicitConsent: true,
+  };
+  const url = await address(startDevBackend({ memberClaimPort }));
+  const response = await fetch(`${url}/v2/trips/${command.tripId}/member-claim-operations`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer valid",
+      "Idempotency-Key": command.operationId,
+    },
+    body: JSON.stringify(command),
+  });
+  expect(response.status).toBe(503);
+  expect(await response.json()).toEqual({ status: "UNAVAILABLE" });
+  expect(atomic).toHaveBeenCalledOnce();
+});
 it.each(["acquire", "result"])(
   "bounds Universal original %s before buffering or authentication",
   async (resource) => {
