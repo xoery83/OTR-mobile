@@ -86,42 +86,72 @@ type ModulePort = {
   createReadRuntime(options: RuntimeOptions): (request: Request) => Promise<Response>;
   createWriteRuntime?(options: RuntimeOptions): (request: Request) => Promise<Response>;
 };
-const requestLogSchema = z.object({
-  requestId: z.uuid(),
-  status: z.number().int().min(100).max(599),
-  durationMs: z.number().min(0).max(120000),
-  tool: z
-    .enum([
-      "get_otr_operating_guide",
-      "get_trip_item_edit_base",
-      "review_travel_materials",
-      "list_trips",
-      "get_trip",
-      "list_trip_items",
-      "get_trip_item",
-      "create_trip",
-      "create_trip_item",
-      "update_trip_item",
-      "preview_trip_changes",
-      "apply_trip_changes",
-      "get_operation_status",
-    ])
-    .optional(),
-  errorCode: z
-    .enum([
-      "NOT_VISIBLE",
-      "BACKEND_UNAVAILABLE",
-      "BACKEND_TIMEOUT",
-      "INVALID_INPUT",
-      "STALE_CURSOR",
-      "READ_LIMIT",
-      "AUTH_REQUIRED",
-    ])
-    .optional(),
-  authFailureSource: z
-    .enum(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])
-    .optional(),
-});
+const responseProofSchema = z.discriminatedUnion("kind", [
+  z.strictObject({
+    version: z.literal("otr.mcp.response-proof/1"),
+    kind: z.literal("EDIT_BASE"),
+    inputSHA256: z.string().regex(/^[0-9a-f]{64}$/),
+    outputSHA256: z.string().regex(/^[0-9a-f]{64}$/),
+  }),
+  z.strictObject({
+    version: z.literal("otr.mcp.response-proof/1"),
+    kind: z.literal("PREVIEW"),
+    inputSHA256: z.string().regex(/^[0-9a-f]{64}$/),
+    outputSHA256: z.string().regex(/^[0-9a-f]{64}$/),
+    previewDigest: z.string().regex(/^[0-9a-f]{64}$/),
+  }),
+]);
+const requestLogSchema = z
+  .object({
+    requestId: z.uuid(),
+    status: z.number().int().min(100).max(599),
+    durationMs: z.number().min(0).max(120000),
+    tool: z
+      .enum([
+        "get_otr_operating_guide",
+        "get_trip_item_edit_base",
+        "review_travel_materials",
+        "list_trips",
+        "get_trip",
+        "list_trip_items",
+        "get_trip_item",
+        "create_trip",
+        "create_trip_item",
+        "update_trip_item",
+        "preview_trip_changes",
+        "apply_trip_changes",
+        "get_operation_status",
+      ])
+      .optional(),
+    errorCode: z
+      .enum([
+        "NOT_VISIBLE",
+        "BACKEND_UNAVAILABLE",
+        "BACKEND_TIMEOUT",
+        "INVALID_INPUT",
+        "STALE_CURSOR",
+        "READ_LIMIT",
+        "AUTH_REQUIRED",
+      ])
+      .optional(),
+    authFailureSource: z
+      .enum(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])
+      .optional(),
+    responseProof: responseProofSchema.optional().catch(undefined),
+  })
+  .transform(({ responseProof, ...event }) => ({
+    ...event,
+    // Keep only successful, correlated handler hashes; never raw tool payloads.
+    ...(responseProof &&
+    event.status === 200 &&
+    !event.errorCode &&
+    !event.authFailureSource &&
+    ((responseProof.kind === "EDIT_BASE" && event.tool === "get_trip_item_edit_base") ||
+      (responseProof.kind === "PREVIEW" &&
+        ["create_trip_item", "update_trip_item"].includes(event.tool ?? "")))
+      ? { responseProof }
+      : {}),
+  }));
 type C02ModulePort = {
   createC02ConfiguredHost(input: {
     rawConfig: string;

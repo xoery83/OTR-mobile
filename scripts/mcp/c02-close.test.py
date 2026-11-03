@@ -50,6 +50,28 @@ class Trace(unittest.TestCase):
             self.assertEqual(len(calls), 1)
             self.assertEqual((root / FILENAME).read_text(), raw)
 
+    def test_preserves_only_correlated_strict_response_proof(self):
+        common = {'requestId': 'ef4562cf-f928-44ee-b160-cd03072c4072', 'status': 200, 'durationMs': 2}
+        hashes = {'version': 'otr.mcp.response-proof/1', 'inputSHA256': 'a' * 64, 'outputSHA256': 'b' * 64}
+        for tool in ('get_trip_item_edit_base', 'create_trip_item', 'update_trip_item'):
+            proof = dict(hashes, kind='EDIT_BASE') if tool == 'get_trip_item_edit_base' else dict(hashes, kind='PREVIEW', previewDigest='c' * 64)
+            valid = dict(common, tool=tool, responseProof=proof)
+            invalid = [dict(valid, status=401), dict(valid, errorCode='AUTH_REQUIRED'), dict(valid, authFailureSource='BACKEND_401'), dict(valid, tool='list_trips')]
+            for bad in (dict(proof, inputSHA256='SECRET_CANARY'), dict(proof, rawBody='SECRET_CANARY'), dict(proof, version='other'), dict(proof, kind='APPLIED')):
+                invalid.append(dict(valid, responseProof=bad))
+            invalid.append(dict(valid, responseProof=dict(proof, previewDigest=None)))
+            events = [dict(valid, authorization='SECRET_CANARY')] + invalid
+            raw = '\n'.join('2026-11-03T04:43:00Z MCP_QA_REQUEST ' + json.dumps(e) for e in events)
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                result = m['capture_request_trace'](root, POINTER, lambda _: CONFIG, lambda *a, **kw: types.SimpleNamespace(stdout=raw))
+                self.assertEqual(result['records'], len(events))
+                text = (root / FILENAME).read_text()
+                records = json.loads(text)['records']
+                self.assertEqual(records[0]['responseProof'], proof)
+                self.assertTrue(all('responseProof' not in v for v in records[1:]))
+                self.assertNotIn('CANARY', text)
+
     def test_default_probe_never_reads_shared_default_logs(self):
         def forbidden(*_): raise AssertionError('DEFAULT_LOG_READ_FORBIDDEN')
         with tempfile.TemporaryDirectory() as tmp:

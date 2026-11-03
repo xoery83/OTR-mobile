@@ -58,6 +58,17 @@ def capture_request_trace(directory, pointer, read_private=private, run=subproce
                 safe = {'timestamp': stamp, **{key: event[key] for key in ('requestId', 'status', 'durationMs')}}
                 if isinstance(event.get('tool'), str) and event['tool'] in tools: safe['tool'] = event['tool']
                 if isinstance(event.get('errorCode'), str) and event['errorCode'] in errors: safe['errorCode'] = event['errorCode']
+                proof = event.get('responseProof')
+                if (isinstance(proof, dict) and event['status'] == 200 and
+                    not event.get('errorCode') and not event.get('authFailureSource') and
+                    proof.get('version') == 'otr.mcp.response-proof/1'):
+                    keys = {'version', 'kind', 'inputSHA256', 'outputSHA256'}
+                    hashes = {'inputSHA256', 'outputSHA256'}
+                    valid_kind = proof.get('kind') == 'EDIT_BASE' and safe.get('tool') == 'get_trip_item_edit_base'
+                    if proof.get('kind') == 'PREVIEW' and safe.get('tool') in {'create_trip_item', 'update_trip_item'}:
+                        keys.add('previewDigest'); hashes.add('previewDigest'); valid_kind = True
+                    if valid_kind and set(proof) == keys and all(isinstance(proof.get(k), str) and re.fullmatch(r'[0-9a-f]{64}', proof[k]) for k in hashes):
+                        safe['responseProof'] = proof
                 records.append(safe)
             except (ValueError, TypeError):
                 continue

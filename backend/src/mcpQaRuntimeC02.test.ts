@@ -126,3 +126,50 @@ it.each([
   input.log({ ...safe, tool: "unknown_tool" });
   expect(log).not.toHaveBeenCalled();
 });
+it("preserves exact Base/Create/Edit proof hashes but drops malformed or unqualified proof", async () => {
+  const q = fixture();
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  await loadMcpQaRuntime(q.env, q.gateway, q.core, q.files);
+  const { log } = q.createC02ConfiguredHost.mock.calls[0][0] as {
+    log(event: unknown): void;
+  };
+  const base = {
+    requestId: "11111111-1111-4111-8111-111111111111",
+    status: 200,
+    durationMs: 2,
+  };
+  const hashes = {
+    version: "otr.mcp.response-proof/1",
+    inputSHA256: "a".repeat(64),
+    outputSHA256: "b".repeat(64),
+  };
+  for (const tool of [
+    "get_trip_item_edit_base",
+    "create_trip_item",
+    "update_trip_item",
+  ]) {
+    const responseProof =
+      tool === "get_trip_item_edit_base"
+        ? { ...hashes, kind: "EDIT_BASE" }
+        : { ...hashes, kind: "PREVIEW", previewDigest: "c".repeat(64) };
+    const safe = { ...base, tool, responseProof };
+    log({ ...safe, rawBody: "SECRET_CANARY" });
+    expect(JSON.parse(info.mock.calls.at(-1)![1])).toEqual(safe);
+    for (const changed of [
+      { status: 401 },
+      { errorCode: "AUTH_REQUIRED" },
+      { authFailureSource: "BACKEND_401" },
+      { tool: "list_trips" },
+      { responseProof: { ...responseProof, inputSHA256: "SECRET_CANARY" } },
+      { responseProof: { ...responseProof, rawBody: "SECRET_CANARY" } },
+      { responseProof: { ...responseProof, version: "other" } },
+      { responseProof: { ...responseProof, kind: "APPLIED" } },
+      { responseProof: { ...responseProof, previewDigest: null } },
+    ]) {
+      log({ ...safe, ...changed });
+      const recorded = JSON.parse(info.mock.calls.at(-1)![1]);
+      expect(recorded).not.toHaveProperty("responseProof");
+      expect(JSON.stringify(recorded)).not.toContain("CANARY");
+    }
+  }
+});
