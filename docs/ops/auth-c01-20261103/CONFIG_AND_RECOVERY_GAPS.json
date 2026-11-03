@@ -1,0 +1,56 @@
+{
+  "status": "LOCAL_PREP_COMPLETE_NOT_RELEASE_ACCEPTANCE",
+  "package": "AUTH-C01",
+  "slice": "AUTH-C01:LOCAL_PREP",
+  "claimId": "auth-c01-local-prep-20261103-v1",
+  "instructionCanonicalSHA256": "3a19d30225cfd588e13dc09558bdda07b4f5b2c0ad7886e6a46f54fb0689b69a",
+  "sourceCommitBeforeWork": "5e152500",
+  "sourceHashes": {
+    "app.json": "258120e354b2c8ed824a2442a70e0f50bdf95d7adcb20935d29088031bfe0dd7",
+    "src/data/auth/googleSignIn.ts": "fea12c796c5499f48f6a4da3d2bacc7be09926d89b9a076af7f6e73f00789073",
+    "src/data/auth/authSessionRepository.ts": "c58b23ea52f88ab0750d01791fb9df036ad2458e5f9367b979cd89106fe9b09e",
+    "src/features/auth/EmailOtpSignIn.tsx": "68403803ea3932915152c269037c298432eeed7ae60ca8262081175385444a6c",
+    "src/components/AccountManagementScreen.tsx": "ba1aa8e7c8eacaec98253f52af6788c6b490b78f04c04e73cda3b9f1632063a4",
+    "src/data/auth/defaultAccountSwitchCoordinator.ts": "112eac765b08fd0007e00cc488be2bb0b35cca40ab5549b532d498bbcf43ab47"
+  },
+  "observed": {
+    "iosBundleId": "com.xoery.otrmobile",
+    "nativeGooglePluginConfigured": true,
+    "googleFlow": "native nonce-bound ID Token via existing Supabase DEV Auth, no browser OAuth redesign",
+    "applePluginConfigured": false,
+    "appleImplementation": "OWNER_PAUSED",
+    "ordinaryLogoutAndSwitch": "Existing UI/coordinator reused; no new Session authority",
+    "accountDeletion": "No owning delete contract/runtime in inspected Auth UI/API scope"
+  },
+  "reuse": [
+    "Existing exact OTP/Google/cold session/account-isolation receipts; no new E2E claim"
+  ],
+  "remaining": [
+    {
+      "id": "GOOGLE_RELEASE_QUALIFICATION",
+      "producer": "Auth/Platform/Owner provider console",
+      "condition": "Qualify actual release binary native bridge/URL scheme/client audience and legitimate provider settings; DEV config is not production/release proof"
+    },
+    {
+      "id": "APPLE_RELEASE_DECISION",
+      "producer": "Owner/Platform",
+      "condition": "Close approved module release-policy gate; Apple coding remains paused and no console or paid developer enrollment performed"
+    },
+    {
+      "id": "ACCOUNT_DELETE_OWNING_CONTRACT",
+      "producer": "Owner/Auth/Core data lifecycle",
+      "condition": "Approved exact irreversible identity/data-retention/ownership behavior and owning server authorization before any delete implementation or execution"
+    },
+    {
+      "id": "FINAL_LOGIN_UX",
+      "producer": "Auth/Native",
+      "condition": "Final fixed release candidate UX and changed-scope recovery coverage, reuse unchanged receipts"
+    }
+  ],
+  "externalPolicyVerifiedThisSlice": false,
+  "missingLocalInstructionFields": [],
+  "testsRepeated": false,
+  "otpOrOAuthRequests": 0,
+  "hostedActions": 0,
+  "secretsRead": false
+}

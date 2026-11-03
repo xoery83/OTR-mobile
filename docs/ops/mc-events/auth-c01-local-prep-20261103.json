@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c01-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C01",
+      "execution_slice_id": "AUTH-C01:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T00:09:31.565765+00:00",
+      "actual_started_at": "2026-11-03T00:09:31.565765+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-c01-config-recovery-gaps",
+      "summary": "Started exact existing-login evidence versus release/provider/account-delete configuration gap reconciliation; no OTP/OAuth/Apple console/test rerun",
+      "next_action": "Retain exact release/provider/delete-contract gaps without changing existing Auth"
+    }
+  ]
+}
