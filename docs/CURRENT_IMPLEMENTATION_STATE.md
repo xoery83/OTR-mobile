@@ -222,3 +222,13 @@ Evidence original-id-resume/ROOT_RESUME_CONTROL_REVIEW.json. Root integration
 candidate is no longer missing. Actual exact new approval/fresh CAS/plan/timers/
 normalA/B/Hosted execution still pending; reported latest closed0c723/68aa is not
 a permanent baseline. No external operation occurred in this review.
+
+Auth now supplies runMemberClaimQaResumeDriver, concrete composition of existing
+normal A/B Auth callbacks, same fixed Trip, Root actual qualifier and independent
+readers/resume scenario. Actual Root qualification runs BEFORE any Session; the
+scenario requalifies after both logins. New3glue tests + independent3PASS, types/
+scopedlint PASS, headless bundle import PASS with fetch forbidden (no invocation).
+See original-id-resume/RESUME_DRIVER_REVIEW.json and DRIVER_HANDOFF.md. Tests mock
+Auth/scenario, not realOTP/cleanup. Launcher still must prove exact approval/pins,
+receivers durable leases, in-memory safe config, custody and actual active Root
+window. Root control dependency is unchanged e282 SHAca8, already mainb16.
