@@ -1,0 +1,70 @@
+{
+  "package": "AUTH-C06",
+  "slice": "AUTH-C06:LOCAL_PREP",
+  "claimId": "auth-c06-local-prep-20261103-v1",
+  "status": "LOCAL_INTERFACE_UX_PREP_COMPLETE_NOT_CONNECTION_ACCEPTANCE",
+  "instructionCanonicalSHA256": "5d03e7dcae00a31a436e0ac50d43f978e2f21fb80fb7de23d3f91010bef82bef",
+  "sourceCommitBeforeWork": "f0a4a2ed",
+  "existing": [
+    {
+      "path": "src/features/auth/AuthSettingsSection.tsx",
+      "sha256": "0c57ffc0f0e22532c81605fb49b1684a07d29d3d5ed4403ef1509b51615120b0",
+      "finding": "Auth local Profile/Language/Appearance section; no Connected AI callback or status Reader"
+    },
+    {
+      "path": "src/data/auth/mcpOAuthConsentRepository.ts",
+      "sha256": "be9a9c847c2c8c7b2c84f5b13cae1af42b52b82f945e6484c0e62828b3ccf6f9",
+      "finding": "Existing finite browser OTP/authorization approve/deny/close facade; not normal Native per-connection status/list/revoke manager"
+    },
+    {
+      "path": "src/features/auth/McpOAuthConsent.tsx",
+      "sha256": "d1a6aafb7524945ebeda1fc31b929b8ccbebdc58462a8e362bd14c2ee956bc98",
+      "finding": "Existing consent view; not Connected AI account settings page"
+    },
+    {
+      "path": "backend/src/mcpOAuthGrantVerifier.ts",
+      "sha256": "898f58274d7d8226f0c383075d2874c260c82ede89645a39bd2171d21eef5eea",
+      "finding": "Existing active-grant verifier for protected resource; not a normal Account self connection-summary API"
+    }
+  ],
+  "mcpUxSource": {
+    "path": "docs/mcp/MCP_AI_CONNECT_UX_CONTRACT.md",
+    "owningRepo": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical",
+    "sourceCommit": "bade3230c3b1dc7d8230afd9de87ee29f2058bf3",
+    "sha256": "5b3854bcb309f2f62973a4782163c919f0ddb3e8bb0b027179e66e689491cc3e",
+    "scope": "Native sole page/navigation/opening Writer; approved info-only platform entry has no self connection status Reader"
+  },
+  "remaining": [
+    {
+      "id": "NORMAL_CONNECTED_CLIENT_GRANT_READER",
+      "owner": "Auth Backend",
+      "requirement": "Normal Account/self-only current connected/expired/revoked state and per-connection identity; never infer from opening external platform or consent callback"
+    },
+    {
+      "id": "CONNECTION_REVOKE_RECONNECT",
+      "owner": "Auth authority + MCP consumer + Native page",
+      "requirement": "Server-authorized connection-level action/receipt/recovery, unchanged App session and Trip ACL; no closed QA window reuse"
+    },
+    {
+      "id": "NATIVE_CONNECTED_AI_ENTRY",
+      "owner": "Native unique page/navigation/external-opening Writer",
+      "requirement": "Consume MCP UX contract and qualified Auth ports; info-only public platform guidance is not Connect/status acceptance"
+    },
+    {
+      "id": "STATUS_COPY_QUALIFICATION",
+      "owner": "Auth/MCP/Native",
+      "requirement": "Old finite QA outcomes never become production Connected flags; source unknown stays unavailable, no local connected boolean"
+    }
+  ],
+  "deferred": [
+    "User AI usage dashboard",
+    "Paywall/pricing/subscription",
+    "Extra languages",
+    "Advanced provider linking"
+  ],
+  "testsRepeated": false,
+  "oauthSessionsCreated": 0,
+  "hostedActions": 0,
+  "uiChanged": false,
+  "missingLocalInstructionFields": []
+}

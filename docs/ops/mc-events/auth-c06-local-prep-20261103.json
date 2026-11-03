@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c06-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C06",
+      "execution_slice_id": "AUTH-C06:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T00:12:35.331924+00:00",
+      "actual_started_at": "2026-11-03T00:12:35.331924+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-c06-settings-connection-gaps",
+      "summary": "Started scoped Settings/Connected AI consent versus connection-management source and UX gap reconciliation; no OAuth window or UI/shared writer change",
+      "next_action": "Hand precise Native/authority gaps to owning Writers; no new connection/UI activation"
+    }
+  ]
+}
