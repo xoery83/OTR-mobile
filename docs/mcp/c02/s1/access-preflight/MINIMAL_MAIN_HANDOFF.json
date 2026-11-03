@@ -1,0 +1,38 @@
+{
+  "status": "FUTURE_C02_DIAGNOSTIC_SOURCE_ONLY_ALL_WINDOWS_CLOSED",
+  "prepared_at": "2026-11-03T04:16:34.467546+00:00",
+  "source_scope": "Only fixed C02 ops source, tests and normal helper pin; no merge of MCP long branch, no P4 runtime/Guide activation. Root applies exact files after main conflict review.",
+  "files": {
+    "scripts/mcp/c02-timers.py": "df79551ae5484838078c0245470f763713f1bdf9f709dba0f0820e56490fca8b",
+    "scripts/mcp/c02-timers.test.py": "1c0a18d13023d320f2d6a46dfa25a19d0079349f02f15d4f8399448a2e1ef6b6",
+    "scripts/mcp/build-c02-control.py": "115bcb64168a8424478fd3b2434ebfe469adddaf929b660b074300825a7b9df1",
+    "scripts/mcp/c02-normal-control.py": "2857591fd52995ac2eb85dcc137186fa8dafcae4b703725f844300ea36fc096a",
+    "scripts/mcp/c02-control.test.py": "38857e346d3fdd118bb23102f7a78a4e194152d2d004ce4351595b72a21f9e1b",
+    "scripts/mcp/c02-close.py": "e2f45d0492a455d60edfcc87283049a4f096033a6d149dfcf777ed1debb52c81",
+    "scripts/mcp/c02-close.test.py": "31fa5a3bd67958363f185fdb395d69ce0ae436b801fbae64d590725ed2f91e7f"
+  },
+  "dependencies": [
+    "Existing reviewed Root CAS templates in /private/tmp/otr-mcp-chatgpt-751df5929be940f7b18e4f55e584692c-20261102/operators and existing C02 private BUILD_MANIFEST; generator is local-only and not run as application",
+    "Auth owning helper eb884c67 SHAa8b9b8e2; unchanged normal-control.mts626e96ac and other2 helper pins",
+    "Existing Host/SDK image bundles unchanged;8 private files installed with exact fb7818a1 hashes; no service restart needed for source integration"
+  ],
+  "host_install_receipt_sha256": "6ba454b562db0042ff067030407fbcb1522012d33b68db63d731ae902727a689",
+  "binder": {
+    "status": "ORIGINAL_BOUND_AND_CLOSED_NO_RESTART",
+    "qa_session": "OWN_LOCAL_LOGOUT_REFRESH_REVOKED",
+    "T_D": {
+      "T": "2026-11-03T04:20:13.655Z",
+      "D": "2026-11-03T04:50:13.655Z"
+    },
+    "why": "Root automatic approval rejected exact issuer activation; no consumer OAuth/Preview/Apply. Runtime restored; no extension. New precise activation authorization needed for next run."
+  },
+  "authority": "No activeWindow/Session/Grant. Existing Root restore helpers unchanged. Fresh resource/Owner qualification required for future activation.",
+  "validation": "Timer8 + narrowMCP control tests, Auth callbacks3, independent timer Review; no need rerun completed S1 model gate.",
+  "new_candidate_only": {
+    "closeSHA256": "e2f45d0492a455d60edfcc87283049a4f096033a6d149dfcf777ed1debb52c81",
+    "timerSHA256": "df79551ae5484838078c0245470f763713f1bdf9f709dba0f0820e56490fca8b",
+    "casSHA256": "fa75e23d43f8b365b784776667a40a1afb5ca1822d923dadcb966a36b9aa10ea",
+    "deployed": false,
+    "why": "Actual679c logs lost on container removal; preserve current-candidate safe summaries before unchanged Root restore. Diagnostic error never blocks close."
+  }
+}
