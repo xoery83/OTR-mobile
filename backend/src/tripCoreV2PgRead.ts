@@ -68,7 +68,9 @@ export function createCorePgReader(
         const finiteScope = async () => {
           const allowed = (
             await lease.query(
-              "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
+              gateMode?.sustainedDev
+                ? "SELECT public.trip_sustained_core_read_scope_allowed($1::uuid,$2::uuid) AS allowed"
+                : "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
               [actorAccountId, tripId],
             )
           ).rows[0]?.allowed;
@@ -78,6 +80,7 @@ export function createCorePgReader(
         const actor = await lockCorePgActor(lease, actorAccountId, tripId);
         if (!actor.active) throw new Error("NOT_VISIBLE");
         if (
+          !gateMode?.sustainedDev &&
           !(
             await readCoreGate(lease, actorAccountId, tripId, gateMode, "runtime_enabled")
           )?.runtime_enabled

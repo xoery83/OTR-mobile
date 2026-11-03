@@ -1481,3 +1481,19 @@ Admission route, role, SQL schema or business authority. Legacy Source/Create
 and full replacement behavior are unchanged. Source Review may not use this new
 MANUAL payload as proof. Candidate/code tests are not Hosted qualification;
 consumers must not send it to an old Backend that has not deployed this contract.
+
+## Sustained Core member read qualification (candidate, 4 November 2026)
+
+Normal collection/item snapshots use a dedicated read-only owning predicate,
+`trip_sustained_core_read_scope_allowed(actor, trip)`, before reading and again
+before returning a snapshot. It must qualify the existing DEV rollout, normal
+Account, current linked membership and removal/explicit-denial boundaries.
+An Owner Create Receipt is rollout provenance, not a requirement for the reading
+member to be the original creator. Existing actor-visible projection and explicit
+Source/Document/Ledger rights remain mandatory.
+
+This predicate does not qualify commands, manual capability advertisements,
+Admission or writes. Those retain `trip_core_finite_scope_allowed` and existing
+write capabilities. Finite non-sustained readers retain the original checks.
+Installing the new protected function/EXECUTE requires its exact Owner Gate;
+missing support fails closed, with no fallback to write authorization.

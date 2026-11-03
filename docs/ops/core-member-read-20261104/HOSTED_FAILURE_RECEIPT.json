@@ -1,0 +1,35 @@
+{
+  "status": "BLOCKED_BY_OWNING_INTERFACE_B_ORDINARY_CORE_SCOPE",
+  "observedAt": "2026-11-03T20:38:13.844643+00:00",
+  "request": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "functions": [
+    {
+      "bodyMD5": "3339e0dce619dbd8d92651c3ccf213eb",
+      "owner": "postgres",
+      "securityDefiner": true,
+      "signature": "trip_core_finite_scope_allowed(uuid,uuid)",
+      "volatility": "v"
+    },
+    {
+      "bodyMD5": "85ddf997f6984bbf771f22c728843553",
+      "owner": "postgres",
+      "securityDefiner": true,
+      "signature": "trip_sustained_core_capabilities(uuid,uuid)",
+      "volatility": "v"
+    },
+    {
+      "bodyMD5": "2ffdada2e9916df010b960e84f77bffb",
+      "signature": "trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)"
+    }
+  ],
+  "normalCoreConnection": "Current880/bafa healthy, mountedtrip-create-runtime version3/corePgpresent; exactdeployedsource composes sustainedDev true and forwards coreConnection independently of absentC04selector. This is config/source evidence, not fresh normal authenticatedHTTP success.",
+  "A": "Registered, linkedowner, matchingv2createReceipt, noexplicitpolicydeny orremovedrow; necessarysustainedpredicatesPASS. FullauthenticatedGatewayReader notinvokedbyRoot2.",
+  "B": "Registered linkedgroup_member, noexplicitpolicydeny/removedrow; ownerCreateV2Receipt=false and linkedOwner=false. Actualtrip_sustained_dev_scope_allowed CORE requiresboth, so normalB scope fails.",
+  "readCoreGate": "version3 uses trip_sustained_core_capabilities, which raisesCORE_CAPABILITY_CLOSED when sustainedscopefalse. OrdinaryfiniteactivationGate isruntime_enabledfalse; cannotfallbackgrantB.",
+  "claimNotUndone": "BlinkedmembershipandnewClaimreceipt remainvalid; thisReadergate mismatch isseparate fromClaim42501repair. No newC04windowneededtofixowningReadercontract; anyprotectedPGchange stillneedsitsownexactauthorization.",
+  "timeoutCorrelation": "Existinggenericcore/:resource records containnoHTTPmethod/account/Trip/resource. CannotconclusivelymatchAcollectiontimeout20:30:21.678Z;17\u201322s200onlyconsistentobservation.",
+  "protectedMutations": 0,
+  "normalSessions": 0,
+  "claimCalls": 0,
+  "neededOwningAction": "Root1review existingnormalmember-readcontract againstactualowner-onlysustainedscope, returnminimalreviewedinterfacefix/qualification; noautochangeGate orgrant."
+}

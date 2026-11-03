@@ -1,0 +1,16 @@
+{
+  "request": "AUTH-C04-POST-LINK-MEMBER-READ-20261104-01",
+  "status": "SOURCE_INTEGRATION_VALIDATED_SQL_INSTALLED_SOFTWARE_PENDING",
+  "baseMain": "7768852322640d5485a2ce32456920c943d0f6b6",
+  "candidate": "567576cd26cd3df42fc02f4ab61d87a815fe7aa3",
+  "root2InstallReceiptCommit": "cb34214d",
+  "adjacentDependencyCommit": "e7b36a9e",
+  "manifestFilesExact": 13,
+  "currentMainReaderTests": "22 PASS",
+  "isolatedPG": "55 PASS reused exact SQL",
+  "independentReview": "SOURCE_REVIEW.json and ROLLBACK_GATE_REVIEW.json",
+  "hostedCallerDeployment": "NOT_RUN_ROOT2_OWNS",
+  "ordinaryMemberHttpE2E": "NOT_RUN_AUTH_OWNS",
+  "historicalManifestFlags": "immutable preapproval snapshot; current install is PRECALL_INSTALL_RECEIPT.json",
+  "writeAuthorityChanged": false
+}

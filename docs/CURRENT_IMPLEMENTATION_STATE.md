@@ -1,3 +1,16 @@
+# Core Member read caller — latest-main integration, 4 November 2026
+
+Root2 cb34214d installed exactff8143 read helper at10:40NZDT and independently
+verified body882997/owner/searchpath/Gateway-only grant; old3write functions, roles
+and31tableACL/RLS unchanged. AdjacentActor/bindings metadatae7b36a9e has noOwner-only
+read restriction. This latest-main caller now uses the independent read predicate
+only for sustained snapshots; oldfinite/write/capabilities/PRIVATE projection kept.
+Original candidate567576cd has Reader22/types/lint/ownedPG55+rollback/independent
+Review PASS. See ops/core-member-read-20261104/PRECALL_INSTALL_RECEIPT.json.
+Software deployment remains Root2; Auth normalA/B read/isolation HTTP remainsNOT_RUN.
+No new OTP/Claim/Provider or original4028 UNKNOWN replay. Candidate manifests below
+are historical frozenpreapproval evidence; current install proof is the receipt.
+
 # Auth fresh-invitation QA preparation — source integration, 4 November 2026
 
 Auth67aed9a7 and Root2 controller7e47ff07 define a separate DEV-only fresh

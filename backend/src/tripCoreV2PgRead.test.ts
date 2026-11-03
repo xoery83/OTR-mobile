@@ -1,7 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { coreTableSchemas } from "../../src/domain/trip/tripCoreV2";
-import { emptyCoreGraph, type CoreActor } from "../../src/domain/trip/tripCoreV2Mutation";
+import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
+import { coreDefaults, coreTableSchemas } from "../../src/domain/trip/tripCoreV2";
+import {
+  applyCoreCommand,
+  emptyCoreGraph,
+  type CoreActor,
+} from "../../src/domain/trip/tripCoreV2Mutation";
 import { createCorePgReader } from "./tripCoreV2PgRead";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 import { createTripDocumentOriginalRead } from "./tripDocumentOriginalRead";
@@ -105,6 +110,7 @@ function fixture() {
   };
   return {
     actor,
+    graph,
     document,
     state,
     identity,
@@ -318,4 +324,111 @@ it("binds Source capability reads to one transaction-local operation and validat
     reader.capabilities(f.actor.accountId, f.actor.tripId, "bad"),
   ).rejects.toThrow();
   expect(acquire).toHaveBeenCalledTimes(calls);
+});
+
+function memberReadFixture() {
+  const f = fixture();
+  f.actor.personId = randomUUID();
+  f.actor.personIds = [f.actor.personId];
+  f.gate.runtime_enabled = false; // Existing write/finite qualification stays closed.
+  const scope = { allowed: true };
+  const base = f.lease.query.getMockImplementation()!;
+  f.lease.query.mockImplementation(async (sql) => {
+    if (sql.includes("trip_sustained_core_read_scope_allowed"))
+      return { rows: [{ allowed: scope.allowed }] } as any;
+    if (sql.includes("to_jsonb(facts)"))
+      return {
+        rows: Object.entries(f.graph).flatMap(([table, rows]) =>
+          rows.map((fact) => ({ core_table: table, fact })),
+        ),
+      } as any;
+    return base(sql);
+  });
+  const reader = createCorePgReader(
+    f.connection,
+    async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+    undefined,
+    { sustainedDev: true },
+  );
+  return { ...f, reader, scope };
+}
+
+it("sustained linked member reads GROUP items without gaining PRIVATE documents, Items or write capabilities", async () => {
+  const f = memberReadFixture(),
+    owner = { ...f.actor, accountId: randomUUID(), canManageShared: true };
+  f.document.owner_account_id = owner.accountId;
+  let group = "";
+  for (const visibility of ["GROUP", "PRIVATE"]) {
+    const id = randomUUID();
+    if (visibility === "GROUP") group = id;
+    const result = applyCoreCommand(
+      f.graph,
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: randomUUID(),
+        tripId: owner.tripId,
+        command: "CREATE_ITEM",
+        target: { kind: "ITEM", id },
+        baseVector: [{ kind: "ITEM", id, revision: null }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload: {
+          family: "P1",
+          core: { title: visibility },
+          schedule: { start: coreDateBoundary("2026-11-04") },
+          ...coreDefaults("organizer"),
+          acl: { visibility, people: [] },
+        },
+      },
+      owner,
+      "2026-11-04T00:00:00Z",
+    );
+    Object.assign(f.graph, result.graph);
+  }
+  const records = (
+    await f.reader.collection(f.actor.accountId, f.actor.tripId)
+  ).pages.flatMap((p) => p.records);
+  expect(records.filter((r) => r.kind === "ITEM").map((r) => r.id)).toEqual([group]);
+  expect(records.some((r) => r.kind === "DOCUMENT")).toBe(false);
+  expect(
+    (await f.reader.capabilities(f.actor.accountId, f.actor.tripId)).activationState,
+  ).toBe("CLOSED");
+});
+
+it("member read-only policy closure rejects before graph acquisition", async () => {
+  const f = memberReadFixture();
+  f.scope.allowed = false;
+  await expect(f.reader.collection(f.actor.accountId, f.actor.tripId)).rejects.toThrow(
+    "CORE_CAPABILITY_CLOSED",
+  );
+  expect(f.lease.query.mock.calls.some(([sql]) => sql.includes("to_jsonb(facts)"))).toBe(
+    false,
+  );
+});
+
+it("member read-only scope does not replace the current actor denial", async () => {
+  const f = memberReadFixture();
+  f.actor.active = false;
+  await expect(f.reader.collection(f.actor.accountId, f.actor.tripId)).rejects.toThrow(
+    "NOT_VISIBLE",
+  );
+  expect(f.lease.query.mock.calls.some(([sql]) => sql.includes("to_jsonb(facts)"))).toBe(
+    false,
+  );
+});
+
+it("member read scope is requalified before returning a snapshot", async () => {
+  const f = memberReadFixture(),
+    base = f.lease.query.getMockImplementation()!;
+  let reads = 0;
+  f.lease.query.mockImplementation(async (sql) => {
+    if (sql.includes("trip_sustained_core_read_scope_allowed"))
+      return { rows: [{ allowed: ++reads === 1 }] } as any;
+    return base(sql);
+  });
+  await expect(f.reader.collection(f.actor.accountId, f.actor.tripId)).rejects.toThrow(
+    "CORE_CAPABILITY_CLOSED",
+  );
+  expect(reads).toBe(2);
+  expect(f.lease.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
 });

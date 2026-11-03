@@ -1,0 +1,31 @@
+{
+  "status": "INSTALLED_INDEPENDENT_METADATA_VERIFIED",
+  "verifiedAt": "2026-11-03T21:40:44.058771+00:00",
+  "sqlDisposition": "ACKNOWLEDGED",
+  "gateSHA256": "7c1f14c42075c6d86e1677838ac7c6f05fd49d8beb7a50a64db5442862e33687",
+  "installSHA256": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844",
+  "helperBodyMD5": "882997ee273bded9f32e7b70868e2afb",
+  "helperDefinitionSHA256": "57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5",
+  "helperOwner": "postgres",
+  "securityDefiner": true,
+  "searchPath": "pg_catalog",
+  "helperACL": [
+    {
+      "grantable": false,
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "privilege": "EXECUTE"
+    },
+    {
+      "grantable": false,
+      "grantee": "otr_trip_core_v2_gateway",
+      "grantor": "postgres",
+      "privilege": "EXECUTE"
+    }
+  ],
+  "originalThreeFunctionsRolesMembershipGraph31Unchanged": true,
+  "businessDml": 0,
+  "runtimeActivated": false,
+  "callerDeployed": false,
+  "rollbackExecuted": false
+}
