@@ -35,7 +35,11 @@ isolatedPG casePASS/oldcase skipped, types/scopedlintPASS. It proves canonical
 digest, stale-context/permission/defaultACL negatives, rollback and original
 receipt recovery after successfulCOMMIT/lostACK. Exact rollback preserves business
 rows. See link-read-state-context/VALIDATION.json and OWNER_GATE.md. Not installed;
-new exact protected approval and Root2 fresh preimage/readback remain required.
+exact Gate4c718bc7 was directly approved (call7758ed4…), and Root1 final Core
+Review/main59a5415d source integration passed. Root2 verified the original reply;
+installation waits only for prior MCPe0d1 window closure/release, then fresh
+preimage/install/independent readback. No further Owner dispatch is required.
+Approval/source receipts are in link-read-state-install-approved-20261104.
 
 Independent operator review passed after hardcoded software-pin repair. Initial
 local10min wait expired with0OTP/0Session/no consumedmarker; its receipts preserved,
