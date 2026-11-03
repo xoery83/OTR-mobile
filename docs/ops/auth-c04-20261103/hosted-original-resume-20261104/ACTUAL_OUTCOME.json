@@ -1,0 +1,37 @@
+{
+  "status": "FAIL_AT_CLAIM_HTTP_503_AFTER_CONFIRMED_INVITE",
+  "windowId": "9ce410c7-aa59-4a03-aff3-c350dc03b2f6",
+  "gateSHA256": "03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093",
+  "planSHA256": "e1f901c039bb56bf2ae99959a071e18b7b82a4f386655a9f080506f69f22b5d6",
+  "normalAuth": {
+    "A": "OTP1_HOST_IDENTITY_VERIFIED",
+    "B": "OTP1_HOST_IDENTITY_VERIFIED"
+  },
+  "ownSessionCleanup": {
+    "A": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "B": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  },
+  "issue": {
+    "operationId": "b3299bda-8939-4e49-8377-338f8e619869",
+    "status": "ISSUED_AND_INDEPENDENT_RECEIPT_CHECKED_BY_DRIVER",
+    "inviteId": "eb671ca9-8610-4b93-aa1d-3e92a7bdbe65"
+  },
+  "claim": {
+    "operationId": "4028b673-9032-41c8-807e-c7d3592eae93",
+    "intentDigest": "b0adb3aed8c226817878acae890cbfb01be8047f9d57ec1da7eac57e466b2a01",
+    "status": "HTTP503_THEN_SINGLE_ORIGINAL_RECOVERY_UNCONFIRMED",
+    "failedAtUTC": "2026-11-03T18:13:33.584Z"
+  },
+  "processExitUTC": "2026-11-03T18:13:54.793Z",
+  "automaticRetry": false,
+  "memberRead": "NOT_RUN",
+  "privateItemNegative": "NOT_RUN",
+  "nativeColdRestore": "NOT_RUN",
+  "memberRevoke": "NOT_RUN",
+  "earlyClose": "REQUESTED_WAITING_ROOT2_INDEPENDENT_READBACK",
+  "notes": [
+    "Original local10min pre-execution wait expired with0OTP/0Session/no operation marker. Retained receipts, restored reception under same approved plan/T, not new window.",
+    "Initial generic POST telemetry was mistakenly attributed to ISSUE; actual command journal proves CLAIM failure. Corrected before diagnosis.",
+    "No receipt absence is NoCommit; preserve CLAIM UNKNOWN until authoritative readback."
+  ]
+}

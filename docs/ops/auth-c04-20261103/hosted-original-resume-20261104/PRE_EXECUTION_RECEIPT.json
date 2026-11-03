@@ -1,0 +1,40 @@
+{
+  "status": "ACTUAL_LOCAL_READY_AWAITING_ROOT2_PLAN_AND_QUALIFICATION",
+  "windowId": "9ce410c7-aa59-4a03-aff3-c350dc03b2f6",
+  "gateSHA256": "03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093",
+  "approvalOrigin": {
+    "threadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+    "turnId": "01a1a288-c05f-7dd2-9c0d-b28b8b983bed",
+    "messageId": "01a1a289-1997-78a2-a83e-068d5d2f9096",
+    "questionCall": "call_875d3d865bc84231a2bd49bd6e409898",
+    "answer": "\u6279\u51c6\u65b0\u724803e24\u5355\u6b21\u7a97\u53e3"
+  },
+  "ready": {
+    "status": "READY_CAN_RECEIVE_EXPECTED_AND_RUN_ONLY_AFTER_QUALIFIED",
+    "gateSHA256": "03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093",
+    "pid": 30968,
+    "observedAt": "2026-11-03T17:58:11.271Z",
+    "otpSent": 0,
+    "sessionsStarted": 0
+  },
+  "readySHA256": "49979881128cc8e4ad42f0131ba8930b824fd186b5476077069d61fe3ca0e99b",
+  "fixedBuildPins": {
+    "driver.mjs": "d54d198687229468e66d302f1fc9b72eae9496657d6cabd3cd61af5dde6e705a",
+    "run.mjs": "ddc5838705dfc36fefb25c4fde630a4683776e7f88d8a153ef3770d195a5ceef",
+    "query.py": "ea155910a5f158ddd5d9449aa86af5621dcc0982b5c3e07b465f104bf96251e0",
+    "entry.ts": "a7752638ea6f7636cc09c4e27c1287ce9eb40e694e0021b1e306021b78c38298",
+    "SOURCE_MANIFEST.json": "e188a6f9fafa6aebb9fcc82be3d37a261c04f48b48cd268d467eb97183ae7980"
+  },
+  "independentReview": {
+    "reviewer": "/root/auth_phase1_review",
+    "status": "SCOPED_NO_BLOCKER_APPROVED_OPERATOR_BINDING",
+    "tests": "1positive+5negative binding selfchecks and fetch-forbidden compiled import PASS",
+    "pinRepair": "Hardcode reviewed driver/query/entry/Gate manifest hashes; validate nine source bytes, not mutable build-map self-report",
+    "limits": "No actualOTP/Host/business PASS implied"
+  },
+  "actualOtpSent": 0,
+  "actualSessionsStarted": 0,
+  "actualBusinessRequests": 0,
+  "T": null,
+  "D": null
+}

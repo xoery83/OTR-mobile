@@ -1,0 +1,26 @@
+{
+  "status": "DIRECT_OWNER_APPROVED_FIXED_GATE_NOT_YET_ACTIVATED",
+  "recordedAt": "2026-11-03T17:51:59.344649+00:00",
+  "source": "Direct human user reply in Root2 chat",
+  "questionItemId": "[\"request_user_input_async\",\"call_875d3d865bc84231a2bd49bd6e409898\",0]",
+  "answer": "\u6279\u51c6\u65b0\u724803e24\u5355\u6b21\u7a97\u53e3",
+  "requestId": "AUTH-C04-HOST-ORIGINAL-RESUME-V4-20261104",
+  "reviewablePacketCommit": "cffbd8b8d003b972ee7a155227fd5553e35f70f2",
+  "gateSHA256": "03e24e48efb318ec66491e8fa58e8433bc73149c16c3e9dd21eb779c52ed0093",
+  "image": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+  "manifestSHA256": "e188a6f9fafa6aebb9fcc82be3d37a261c04f48b48cd268d467eb97183ae7980",
+  "authReviewCommit": "38e51e0893c6c232b91c37f7efe1dc81a7498fbe",
+  "approved": true,
+  "scope": "One exact synthetic original-ID recovery-first A/B window under the complete fixed updatedGate; at mostone normalOTP/account and conditional at-most-once originalISSUE/CLAIM submission only as that Gate permits; UNKNOWN never repeated/newID/invitationextension",
+  "maxWindowSeconds": 1800,
+  "latestStartUTC": "2026-11-04T08:00:00Z",
+  "sourceProviderOAuthSqlExpansionAuthorized": false,
+  "readinessStillRequired": [
+    "Actual Auth receiving/custody/driver+cleanup readiness with no Session transfer",
+    "Root2 fresh exact CAS/currenthealthydefault/operator/close qualification",
+    "Oneimmutable actualplan/window/T/D,stagedindependentexpectedpins,real D-120/hardD timers and pre/postloginqualification"
+  ],
+  "clockStarted": false,
+  "businessInvoked": false,
+  "old24d32Authorized": false
+}

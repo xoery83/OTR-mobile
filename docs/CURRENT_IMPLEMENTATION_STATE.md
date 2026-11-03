@@ -7,6 +7,23 @@ and the evidence directories below; do not reconstruct it or rerun stable suites
 
 ## Actual Golden Slice
 
+**FAIL_AT_CLAIM_HTTP_503_AFTER_CONFIRMED_INVITE** for actual approved03e24
+window9ce410c7… / plane1f901c0…. Same fixed A/B each used one realOTP and passed
+normal identity readback. ISSUEb329 returned ISSUED and independent receipt check
+passed; actual inviteeb671ca9-8610-4b93-aa1d-3e92a7bdbe65. CLAIM4028 was actually
+submitted, returned503 at2026-11-03T18:13:33.584Z, and only one original recovery
+was attempted. Final outcome remainsUNKNOWN; no replay. Both newly owned Sessions
+have PASS_LOCAL_SCOPE_REFRESH_REVOKED. MemberRead/privateItemNegative/NativeCold/
+MemberRevoke NOT_RUN. Root2 earlyclose requested; independent closed readback and
+redacted failure diagnostics pending. See hosted-original-resume-20261104.
+Do not reuse this consumed window or create replacement operations/invitation.
+
+Independent operator review passed after hardcoded software-pin repair. Initial
+local10min wait expired with0OTP/0Session/no consumedmarker; its receipts preserved,
+then reception restored under the same actualT/plan with no clockreset. Journals
+prove503 was CLAIM, correcting an initial generic-POST telemetry mislabel asISSUE.
+
+Prior failure (repaired budget, retained history):
 **FAIL_AT_ORIGINAL_ISSUE_RECOVERY_FETCH_TIMEOUT**, not Hosted multi-member PASS.
 Root's later416/e930 recovery window authenticated A normally but client15s timed
 out. Auth independently read retained stopped-container route metadata: HTTP202,
