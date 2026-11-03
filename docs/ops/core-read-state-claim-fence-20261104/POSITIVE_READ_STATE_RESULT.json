@@ -1,0 +1,27 @@
+{
+  "generatedCasInstallAndRollback": true,
+  "faultPreimageCasRollsBack": true,
+  "fixtureOidRebindingOnly": "Generated SQL literal OIDs rebound to owned fixture OIDs; production packet remains frozen65713/67419",
+  "metadataUnchanged": true,
+  "readStateUnchangedAfterRolledBackTests": true,
+  "reverseRestoresExactPriorDenial": true,
+  "fixtureImage": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "fixtureLimits": "network none /256MiB /1CPU; removed in finally",
+  "phase": "normal-qualification-read-state-upsert-real-predicates",
+  "before": {
+    "returncode": 3,
+    "error": "ERROR:  42501: permission denied for function trip_member_claim_read_state_allowed\nCONTEXT:  PL/pgSQL function public.trip_core_finite_read_state_guard() line 5 at IF\nLOCATION:  aclcheck_error, aclchk.c:2843\n"
+  },
+  "after": {
+    "returncode": 0,
+    "stdout": "00000000-0000-4000-8000-000000000001|10000000-0000-4000-8000-000000000001|CREATE_ITEM|P1|MANUAL|a288e567-82cc-4164-a019-95f2f628476b|f5e13639-4240-4817-bf43-c60a1ea46361\nt\n"
+  },
+  "foreignActor": {
+    "returncode": 3,
+    "error": "ERROR:  42501: CORE_V2_CAPABILITY_CLOSED\nCONTEXT:  PL/pgSQL function public.trip_core_finite_read_state_guard() line 27 at RAISE\nLOCATION:  exec_stmt_raise, pl_exec.c:3911\n"
+  },
+  "helperWriterExecuteStillFalse": true,
+  "scope": "ISOLATED_TRUE_GATEWAY_LOGIN_REAL_FINITE_AND_SUSTAINED_SCOPE_CURRENT_READ_STATE_GUARD; synthetic existing fixture Owner/Trip/v2provenance, only deny Guest seams, no full Item+receipt mutation or Hosted claim",
+  "positiveScopeStubs": 0,
+  "hostedActions": 0
+}

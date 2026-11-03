@@ -1,0 +1,20 @@
+{
+  "beforeDefinitionSHA256": "5e7decd9c757920210013bf7de8004f7ef13945414f1580a18c6dfefea3f921d",
+  "afterDefinitionSHA256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+  "helperUnchangedSHA256": "e2b8d26256bdb6bd5a74918a55f43d7d3436a172ed7fcc11076f19e16af3f8fd",
+  "files": {
+    "GUARD_AFTER.private.sql": {
+      "sha256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+      "bytes": 5618
+    },
+    "INSTALL.private.sql": {
+      "sha256": "9300320f3bfa8a49ea26d2466eb940a154e8d8aff827cdb081f64549f2a22990",
+      "bytes": 8476
+    },
+    "ROLLBACK.private.sql": {
+      "sha256": "8204912d7217ec3a93ab1a341ff00250ad68676fc16f2b9dd1ed7ebf58c8f391",
+      "bytes": 8462
+    }
+  },
+  "databaseActions": 0
+}

@@ -1,3 +1,7 @@
+## Core normal-write Claim fence — 4 November 2026
+
+Isolated source candidate for AUTH-C04 normal P1 42501: actual read_state trigger prematurely initializes a postgres-only Claim helper for ordinary writer. Nested original role/session IF fixes the reproducible privilege error without GRANT/ACL change. Real finite/sustained local upsert, foreign denial, exact rollback and metadata/state preservation pass; full P1/Hosted phase not claimed. See `docs/ops/core-read-state-claim-fence-20261104/HANDOFF.md`. Protected function install remains Root2 + fresh exact approval; original Operation UNKNOWN is not replayed. This branch is not main/Hosted integration.
+
 ## Universal exact Flash response version — 4 November 2026
 
 Reviewed `4fcfaea7` accepts only the current official `DeepSeek-V4.1-Flash-1017` as one additional Universal returned-model identifier. Requested alias, Flight conformance, prompt/caps/retry and execution qualifications remain unchanged. Eight focused provider tests/type/lint reused on exact files; official model page independently read. Source-only, no Provider call/registration/budget change. Receipt: `docs/ops/lane-c-imp-c01-reconciliation-20261103/FLASH_ALIAS_ROOT1_SOURCE_REVIEW.json`. Root2 runtime qualification remains separate.
