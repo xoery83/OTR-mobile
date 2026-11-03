@@ -1,0 +1,39 @@
+{
+  "status": "DEFAULT_CLOSED_SOFTWARE_DEPLOYED_SERVER_VERIFIED",
+  "sourceCommits": {
+    "forwarding": "3917562e",
+    "dockerContext": "b46182bf"
+  },
+  "environment": "OTR Development / tuqigdxrvrerfewsxqgm; Production untouched",
+  "image": "sha256:98f88eb18659debdbe2af9368bbeab8dd8f48247c621ca99baf9761842714408",
+  "container": "0d35ba82c7b66c9543fba7bde5cdda7895ca97af777e8e411d0f9e5e871b671b",
+  "bundles": {
+    "server.mjs": "b46047f737fa570afe94795fda828af87c22f6ab04b2ecec30de98b616529c07",
+    "server-capture.mjs": "1b1696aae8b985b63f7ca3fdd8711ff99d4ed80b7e506afdff19e16cf350ad79"
+  },
+  "deploymentPlanSHA256": "719192436764871c7f487bc51b9515c80fa8e896516a5a2f7e4cb6cb6acf4639",
+  "deployedAt": "2026-11-03T05:30:42.460Z",
+  "independentReadback": {
+    "containerImageAndBundles": "MATCH",
+    "health": "healthy / HTTP 200",
+    "command": [
+      "node",
+      "server-capture.mjs"
+    ],
+    "unauthenticatedProtectedRoutes": "401 by release helper",
+    "finiteAuthBusinessWindow": "CLOSED"
+  },
+  "configuration": {
+    "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+    "mountsSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+    "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+    "newSchemaRlsGrantRoleSecret": false
+  },
+  "rollback": {
+    "retainedHealthyContainer": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "retainedImage": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "needed": false
+  },
+  "businessOutcome": "Original ISSUE b329 UNKNOWN preserved; no new Auth A/B execution or OTP. Hosted A/B E2E remains pending exact legal recovery.",
+  "buildRecovery": "Initial full x86 host npm-ci build caused transient host load and healthcheck timeouts; running default container was never switched and recovered healthy. Final deployed x86 overlay uses the retained amd64 base plus exact locally built architecture-neutral JS bundles."
+}

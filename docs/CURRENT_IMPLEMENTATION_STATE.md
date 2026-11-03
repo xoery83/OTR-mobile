@@ -63,18 +63,17 @@ FAIL/default-closed PASS. Actual stopped image entry SHA2cb1c023… contains sel
 code but zero `startOptions.memberClaimPort` access. Root's two-line fix plus real
 startup HTTP regression was independently reviewed by Auth:1PASS/11stable skipped;
 Root reports38focusedPASS. Root integrated fix3917562e; Auth compared both
-Git blobs with the reviewed hashes. Hosted publication still awaits MCP release. See `startup-forwarding-failure/FINDING.json`. Root alone
+Git blobs with the reviewed hashes. Root deployed the fixed software default-closed at05:30:42Z; Auth verified the exact receipt from main8c920f0f, SHA140279de…. Image98f88eb1/container0d35ba82 were independently healthy. See startup-forwarding-failure/ROOT_DEPLOYMENT_RECEIPT.json. No repaired business run has occurred. See `startup-forwarding-failure/FINDING.json`. Root alone
 edits this shared startup file; Auth did not overwrite it. Hosted repaired flow is
 still NOT_RUN; the original response code was lost, so do not exclude every other
 possible failure or reclassify the retained UNKNOWN automatically.
 
 Auth also delivered default-closed HTTP/PG redacted diagnostics4471ba7f; Root
-integrated into main256741fa, not yet deployed at last report. Two suites26PASS,
+integrated into main256741fa and included in the now-deployed repaired software. Two suites26PASS,
 independent new5+3PASS, Auth types/scopedlintPASS. Logging failure preserves original
 response/error/COMMIT UNKNOWN. Four-file main-based patch adds the two reviewed
 previously absent tests; old base-relative patch is superseded. No auth/TTL/retry/
-transaction/SQL/permission change. Root can release diagnostic+startup source at a
-safe serial opportunity, not interrupt MCP. Then continue the actual first failure
+transaction/SQL/permission change. Default-closed deployment is complete. Continue the actual first failure
 under qualified recovery authority; the consumed713 window cannot be reopened.
 
 ## Reused baseline and integration
@@ -130,3 +129,13 @@ actual MC instructions after each meaningful slice; do not wait for ACK or inven
 work. Current priority is the C04 first-failure diagnostic/repair. Use precise
 Evidence and preserve UNKNOWN. Do not stop at a report if another approved slice
 is genuinely ready, but do not fabricate tasks or bypass gates to stay active.
+
+## Recovery-only local candidate
+
+`recoverMemberClaimQaIssue` in scripts/auth/member-claim-qa-recovery.ts is implemented;
+11 focused and independent checks PASS, scoped Review NO_BLOCKER. It never executes
+or Claims, and absence preserves UNKNOWN. Root must supply actual
+`qualifyRecoveryWindow`; the old zero-receipt preflight cannot be reused. Exact
+source hashes and remaining controller/authorization dependency are recorded in
+startup-forwarding-failure/RECOVERY_ENTRY_REVIEW.json and RECOVERY_SCOPE_DRAFT.md.
+MC GET_NEXT_WORK remains revision70/nextnull/candidates0 at this checkpoint.
