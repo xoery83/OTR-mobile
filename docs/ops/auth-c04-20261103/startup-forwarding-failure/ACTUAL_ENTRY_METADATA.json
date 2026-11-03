@@ -1,0 +1,24 @@
+{
+  "status": "STOPPED_CANDIDATE_ENTRY_CODE_READ_ONLY",
+  "observedAt": "2026-11-03T04:49:54.943755Z",
+  "candidateId": "4dc9cd04de06c975e8128701475d68b36166dc4220dd219eb0e3386f81dcf7db",
+  "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "entryPath": "/app/server-capture.mjs",
+  "entrySHA256": "2cb1c023f0e49a83b8204c04436821c106945bbaae2143e69b747d7f9e852436",
+  "entryBytes": 4480597,
+  "markers": {
+    "OTR_DEV_AUTH_MEMBER_CLAIM_QA_CONFIG": 1,
+    "loadDevTripCreateWithMemberClaimQaRuntime": 3,
+    "MEMBER_CLAIM_QA_SELECTION_CLOSED": 2,
+    "trip_member_claim_transaction": 1,
+    "memberClaimPort": 13
+  },
+  "startupForwardingProbe": {
+    "observedAt": "2026-11-03T04:57:12.165731Z",
+    "startDevBackendDeclarationCount": 1,
+    "startDevBackendCallAndDeclarationCount": 2,
+    "startOptionsMemberClaimAccessorCount": 0,
+    "otherForwardedFieldsPresent": true
+  },
+  "scope": "Actual stopped-container code identity/marker metadata only; no container start, config-file bodies, environment values or bundle content exported"
+}

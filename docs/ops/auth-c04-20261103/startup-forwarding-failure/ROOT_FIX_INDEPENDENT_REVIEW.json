@@ -1,0 +1,23 @@
+{
+  "status": "NO_BLOCKER_SCOPED_STARTUP_MEMBER_CLAIM_FORWARDING",
+  "observedAt": "2026-11-03T05:00:30.851559+00:00",
+  "writer": "Root only; Auth read/review/test, no shared source edits",
+  "productionDiff": "Only add optional memberClaimPort to existing BackendDependencies Pick and forward same reference to createDevBackendHandler",
+  "safety": "No port construction, automatic selector, new authority/permissions, TTL, Actor mapping, DB/network configuration, retry or transaction change. Undefined remains closed; existing Auth/QA/PG ownership still validates. MCP and other dependencies preserved.",
+  "validation": {
+    "independentNewRealStartupHttpRegression": "1PASS (11stable skipped)",
+    "rootReportedFocused": "3files38PASS/scopedlintPASS",
+    "authSeparatePinnedMainReproduction": "Copied256741fa real startup: qualified-port forwarding FAIL, undefined defaultPASS; temporary files removed",
+    "hosted": "NOT_RUN; no oldwindow reuse/OTP/PG mutation"
+  },
+  "sourceHashes": {
+    "backend/src/serverStartup.ts": "80439cf2d890e58d409d2dbf51d870e1908ec914f0ff096bf924c285e731aee1",
+    "backend/src/serverStartup.test.ts": "9e3e66bf119b2609de7f9b8035e5a9a315b09ca8d561fbe8029133205a16520f"
+  },
+  "blockingFindings": [],
+  "limits": [
+    "Two-line wiring fix reviewed, not a Hosted Invite/Claim PASS",
+    "Root must fresh-check shared main/resource and deploy default-closed",
+    "Original ISSUE UNKNOWN retained; new execution/recovery requires qualified scope"
+  ]
+}

@@ -1,0 +1,61 @@
+
+ RUN  v4.1.11 /Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical
+
+ ❯ backend/src/.auth-c04-startup-forwarding-probe.test.ts (2 tests | 1 failed) 274ms
+   × forwards the already-qualified memberClaimPort through the actual main startup function 273ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  backend/src/.auth-c04-startup-forwarding-probe.test.ts > forwards the already-qualified memberClaimPort through the actual main startup function
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "memberClaimPort": {
+-       "atomic": [Function Mock],
+-     },
++   {
++     "accountProfileBootstrapPort": undefined,
++     "captureMaterialCustody": undefined,
++     "captureRemoteProcessing": undefined,
++     "coreConnection": undefined,
++     "documentOriginalReader": undefined,
++     "gateway": {},
++     "guestAdoptionRuntime": undefined,
++     "log": [Function log],
++     "mcpHttp": [Function mcpHttp],
++     "sourcePdfV2ForRequest": undefined,
++     "sourcePdfV4PreparationForRequest": undefined,
++     "tripCreatePort": undefined,
++     "tripMetadataPort": undefined,
++     "tripMetadataV2Port": undefined,
++     "tripPersonCloudCreatePort": undefined,
++     "universalImportPort": undefined,
++     "universalOriginalSourcePort": undefined,
++     "universalRuntimeForRequest": undefined,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ backend/src/.auth-c04-startup-forwarding-probe.test.ts:18:19
+     16|  const {startDevBackend}=await import('./.auth-c04-startup-main-probe'…
+     17|  Reflect.apply(startDevBackend,null,[{memberClaimPort:port}]);
+     18|  expect(f.handle).toHaveBeenCalledWith(expect.objectContaining({member…
+       |                   ^
+     19| });
+     20| it('keeps missing memberClaimPort undefined by default',async()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  17:57:09
+   Duration  363ms (transform 180ms, setup 0ms, import 19ms, tests 274ms, environment 0ms)
+

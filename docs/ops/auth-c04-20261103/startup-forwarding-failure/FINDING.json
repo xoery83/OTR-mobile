@@ -1,0 +1,17 @@
+{
+  "status": "CONFIRMED_STARTUP_PORT_FORWARDING_DEFECT_LOCAL_REPAIR_VERIFIED_NOT_HOSTED_PASS",
+  "pinnedMain": "256741fa",
+  "pinnedStartupSHA256": "b251dadc5ac17c25623c1cd99a81951a5801b32c10467c4d4f2382e6abe69c62",
+  "fault": "serverCapture supplies memberClaimPort, serverStartup Pick and createDevBackendHandler dependency object omit it, app passes undefined to memberClaimBoundary",
+  "authReproduction": "Exact copied main startup, handler spy: forwarded port assertion FAIL, missing-port default PASS; temporary modules removed, reproduction text retained outside CI",
+  "rootFix": "Root unique Writer adds only Pick entry and same-reference forwarding plus real-startup HTTP regression",
+  "independentRootFixTest": "Auth ran only new real startup HTTP test:1PASS/11stable skipped; Root reports full3file38PASS/scopedlintPASS",
+  "rootFixReviewSHA256": "69a49eca5f42f7b5c1ae23a0fb77df178966473022235387a0c8984b8094adee",
+  "actualImageCheck": "ACTUAL_ENTRY_METADATA.json proves selector code exists and deployed startup never accesses startOptions.memberClaimPort; not an absent compiled selector guess",
+  "limits": [
+    "Original503 response body code was not retained; no claim that all other potential PG/runtime failures are excluded",
+    "No Hosted retry/newOTP/newwindow, no permission or SQL change",
+    "Original ISSUE operation/digest stays retained UNKNOWN; no automatic replay or NoCommit inference"
+  ],
+  "next": "Root serially integrate/deploy same default-closed startup fix and diagnostics without disrupting MCP. Fresh legitimate recovery/business qualification only after actual release evidence."
+}

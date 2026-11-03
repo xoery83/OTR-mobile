@@ -56,25 +56,25 @@ later coordinated device task, not proven by a Host Session.
 
 ## First failure and next code action
 
-The current bounded client did not retain the MemberClaim business error code.
-Root's stopped-candidate checks found exact host-mode/DEV URL/selector, zero
-selection-closed markers, valid v3 mount and existing gateway schema/function
-permissions. This does not yet distinguish missing Port from PG/authority failure.
-Do not invent a permission fix, change Owner semantics or call503 a proven PG bug.
+A concrete startup defect is now proved: `serverCapture` supplies the selected
+`memberClaimPort`, but actual `serverStartup` omits it from both its Pick and the
+handler dependency object. Auth copied exact main256741fa and reproduced forwarding
+FAIL/default-closed PASS. Actual stopped image entry SHA2cb1c023… contains selector
+code but zero `startOptions.memberClaimPort` access. Root's two-line fix plus real
+startup HTTP regression was independently reviewed by Auth:1PASS/11stable skipped;
+Root reports38focusedPASS. See `startup-forwarding-failure/FINDING.json`. Root alone
+edits this shared startup file; Auth did not overwrite it. Hosted repaired flow is
+still NOT_RUN; the original response code was lost, so do not exclude every other
+possible failure or reclassify the retained UNKNOWN automatically.
 
-A minimal **default-closed diagnostics candidate** now changes only Auth owning
-`backend/src/tripMemberClaimHttp.ts` and `tripMemberClaimPg.ts`, with their tests:
-
-- HTTP distinguishes closed Port from owning-authority unavailable.
-- PG records lease/setup/scope/RPC/work/commit stage, internal method and only
-  five-character SQLSTATE or null. No raw message, SQL, body, credentials or IDs.
-- Diagnostics are best effort: logger/code-getter failures preserve the original
-  response/error, rollback/retire and COMMIT UNKNOWN behavior.
-- Two focused suites26PASS; independent new5+3PASS; full Auth-worktree typecheck and
-  changed-file eslint PASS. No old isolated-PG/deployment tests repeated.
-- It is not deployed and is **not a demonstrated repair**. Hand the exact four-file
-  candidate to Root without interrupting MCP's shared window. Continue from the
-  next actual safe diagnostic; any new runtime/business window needs its own scope.
+Auth also delivered default-closed HTTP/PG redacted diagnostics4471ba7f; Root
+integrated into main256741fa, not yet deployed at last report. Two suites26PASS,
+independent new5+3PASS, Auth types/scopedlintPASS. Logging failure preserves original
+response/error/COMMIT UNKNOWN. Four-file main-based patch adds the two reviewed
+previously absent tests; old base-relative patch is superseded. No auth/TTL/retry/
+transaction/SQL/permission change. Root can release diagnostic+startup source at a
+safe serial opportunity, not interrupt MCP. Then continue the actual first failure
+under qualified recovery authority; the consumed713 window cannot be reopened.
 
 ## Reused baseline and integration
 
