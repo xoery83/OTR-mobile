@@ -172,3 +172,9 @@ qualifier. Auth independent9 new tests PASS; source manifest6/6 hashes match; sc
 NO_BLOCKER in ROOT_CONTROL_READER_REVIEW.json. Local entry/port/controller/qualifier/
 reader candidates are reviewed; remaining is exact new approval and fresh actual
 plan/stage/timers/normalSession/Hosted read-only recovery. No activation authorized.
+
+Native delivered Guest cover candidate db06bad2. Auth scoped data Review NO_BLOCKER:
+3 independent SQLite/fake-file tests PASS; added census assertion PASS proves
+retained local photos still block fileless Adoption after Auto. Exact evidence in
+auth-c04-20261103/GUEST_COVER_NATIVE_DATA_REVIEW.json. This is no Native device/UI
+E2E or photo migration acceptance; Native owns final shared-file integration.
