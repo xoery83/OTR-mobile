@@ -1,0 +1,35 @@
+{
+  "status": "FIXED_SOFTWARE_ONLY_NO_EXECUTION_AUTHORITY",
+  "qaCase": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "claimantAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "issueOperationId": "b3299bda-8939-4e49-8377-338f8e619869",
+    "claimOperationId": "4028b673-9032-41c8-807e-c7d3592eae93"
+  },
+  "files": {
+    "scripts/auth/member-claim-qa-resume-driver.ts": "4c5af1a1b9ef2d9bc0ba7719211737014a096196e97fb91f2c308da93bd7a109",
+    "scripts/auth/member-claim-qa-scenario.ts": "7f632290bdb1a39eef2192250c422a08f224c51979506d96b3cc753a1b87ecca",
+    "scripts/auth/member-claim-qa-readback.ts": "b13c34e7758dd6cf56982bb04bf749523f0592a7fb99c287425df032d60b5f1c",
+    "scripts/auth/member-claim-qa-recovery-window.ts": "41db4d13ae4dcd9bacfb97cb9d3bd4ba0d14bf3a859d9f233c52c5ba988f2bbb",
+    "scripts/auth/member-claim-qa-control-read.ts": "ca8e7295f23104fb4d780c45afa4403bb9862ffe12c889ebde63780a69fe1a10",
+    "scripts/auth/registered-qa-host-session.ts": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d",
+    "scripts/auth/resend-inbound-otp-e2e.ts": "d85a134817d827caf34461f01050e0ebb50edc9357f66b7d1554b4bd38951358",
+    "scripts/auth/resend-inbound-otp-native-relogin.ts": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce",
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "da0a18b452aceb7bf6d11c32e82cd5b717b6d80979d9ad45c08f99bd1f2a0a10"
+  },
+  "driverCandidate": "03d728a3",
+  "rootControlCandidate": "7c7c0dab",
+  "authScenarioCandidate": "411ceee5",
+  "independentReviews": [
+    "original-id-resume/INDEPENDENT_REVIEW.json",
+    "original-id-resume/ROOT_RESUME_CONTROL_REVIEW.json",
+    "original-id-resume/RESUME_DRIVER_REVIEW.json"
+  ],
+  "actualRootIntegrationChecks": "27 controller +15 concrete SSH/qualifier +3 driver checks; no business/network in these tests",
+  "T_D": null,
+  "windowId": null,
+  "executed": false
+}

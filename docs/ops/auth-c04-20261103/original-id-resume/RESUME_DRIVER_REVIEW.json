@@ -1,0 +1,32 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_COMPOSITION_CANDIDATE",
+  "sourceSHA256": "4c5af1a1b9ef2d9bc0ba7719211737014a096196e97fb91f2c308da93bd7a109",
+  "testSHA256": "9158299476caabacd56d7e024f91c6a9f0e4df5c6f63c6e359a104874d166592",
+  "rootDependency": {
+    "path": "scripts/auth/member-claim-qa-control-read.ts",
+    "commit": "e2821670",
+    "sha256": "ca8e7295f23104fb4d780c45afa4403bb9862ffe12c889ebde63780a69fe1a10",
+    "ownership": "Root; materialized unchanged for Auth compilation; already mainb16c2d93, do not overwrite/reimplement"
+  },
+  "authorValidation": {
+    "newTests": 3,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "headlessBundleImport": "PASS with fetch forbidden; only import, no invocation"
+  },
+  "independentReview": {
+    "reviewer": "/root/auth_phase1_review",
+    "finalNewTestsPassed": 3,
+    "result": "SCOPED_NO_BLOCKER",
+    "preSessionCheck": "Real Root qualifier is invoked before scenario/session; read-only wire rejects driver and Session count0; scenario later requalifies"
+  },
+  "mockLimits": "Tests mock normal Session helpers and scenario, prove composition only, not realOTP/cleanup/Host/PG/startup. Existing normal helpers are reused unchanged.",
+  "remainingLauncherDuties": [
+    "Actual trusted Owner approval/fixed manifest before invocation",
+    "Independently frozen plan/expected and stage CID/config, actual Root active window",
+    "Dedicated QA receiver credentials in memory and durable single-challenge reservations",
+    "Approved two public config variables only, no SMTP credential fallback",
+    "Safe note and fsync retained command/digest custody; Root bounded read-only query"
+  ],
+  "externalActions": 0
+}
