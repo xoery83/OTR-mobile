@@ -7,13 +7,13 @@ PREPARED_NOT_AUTHORIZED_NOT_ARMED. One DEV recovery session; no resubmission.
 - Project `tuqigdxrvrerfewsxqgm`; Backend `https://api-dev.xoery.art` only.
 - Account A `26876e6e-a919-457d-bc00-78d76ba08043`; Trip `fb2f0820-e429-404a-b4dd-7adcad814e45`; Person `bcd1d48e-a9f7-445a-911b-0452ff8dc55a`.
 - Original ISSUE `b3299bda-8939-4e49-8377-338f8e619869`, target B `1f3d7935-1bdc-4952-8d7f-0f72077368c1`, digest `27da9414669e8ecd83c826d39438c09f2ad9049bfcfcb829c6b300975164e7d1`.
-- Reviewed entry/port/runtime source `e44bed42`, review `acbe0b70`; Controller candidate `58e4dbed` must independently pass Review before activation.
+- Reviewed entry/port/runtime source `e44bed42`, review `acbe0b70`; Controller `58e4dbed`, owning qualifier `a1775c88` and concrete Root reader `488b3992` have scoped independent NO_BLOCKER Reviews. No Review grants execution authority.
 - Default-closed image `sha256:039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058`, CID `c213f5dd69ef1e8e4f469450a7985ff731b04ada6f514a48c91e2b4008dba682`, Config SHA `bb7ab53035c91d1a7d83953fdc22c8ef57c185baeea2493077fb984a0c0cf9ed`.
 - Independent default readback SHA `a63cc8d5669b05309f8417afb68b9ee979253b8736b96bf906fa7ce7d34cb654`. Fresh CAS must still match; drift stops preparation before mutation.
 
 ## Requested execution
 
-After normal Account A session qualification, exact Host preflight and independent Controller Review, bind one immutable T/D at actual resource readiness. D=T+900 seconds; no extension/restart. Fresh selector inviteExpiresAt=T+600 seconds exists only to satisfy the existing constructor. Qualification must complete before T+600; the 15-minute outer close bound is not permission to delay the query. RECOVERY_ONLY rejects issue/link/revoke/save and every method except exact A access and original ISSUE receipt; this selector date cannot change the actual historic invite or grant Claim permission.
+After normal Account A login eligibility checks, exact Host preflight and independent Controller Review, bind one immutable T/D at actual resource readiness. The one normal Owner-session callback must then obtain and verify the actual A session before recovery and before T+600; no receipt query runs on metadata alone. D=T+900 seconds; no extension/restart. Fresh selector inviteExpiresAt=T+600 seconds exists only to satisfy the existing constructor. Qualification must complete before T+600; the 15-minute outer close bound is not permission to delay the query. RECOVERY_ONLY rejects issue/link/revoke/save and every method except exact A access and original ISSUE receipt; this selector date cannot change the actual historic invite or grant Claim permission.
 
 Stage the same image with only the fixed QA selector and `OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE=RECOVERY_ONLY`. Arm the existing close command twice: normal T+780 seconds and hard D. Verify both active and exact frozen plan/config before start. The in-process QA expiry independently denies at D. No SQL/schema/RLS/GRANT/role changes, Provider calls, Secret scope or account scope changes. Existing receipt SELECTs and owning PG transaction/locks remain.
 

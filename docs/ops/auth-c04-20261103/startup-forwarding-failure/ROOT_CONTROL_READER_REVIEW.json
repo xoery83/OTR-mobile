@@ -1,0 +1,25 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE",
+  "candidate": "488b3992dbb4ccbb8b6daaf99927b7ba0707b884",
+  "sourceSHA256": "baf627e376ca44c6dcee3383cac84aa359cea90929240b627189062261f4912a",
+  "testSHA256": "8c972f2a1102105d69f577088c1ca7c2fec73563c6dd91b6514539df2d280081",
+  "independentTests": {
+    "passed": 9,
+    "scope": "Exact command/options, input injection/hash rejection, source snapshot, sanitized error/JSON failure, actual reader+qualifier composition pass and valid-shaped config drift reject"
+  },
+  "manifestSourceHashes": "6/6 exact Git blobs matched",
+  "review": "Fixed host, BatchMode, ConnectTimeout5, subprocess15s/maxBuffer128KiB. UUID+nonzeroSHA parse before shell-safe fixed remote command. No command from output; no Session material; catches stderr/JSON exception into fixed error. Root factory passes independent expected through owning qualifier.",
+  "notRun": [
+    "Actual SSH/Host qualification",
+    "OTP/normal Session",
+    "Runtime activation",
+    "Hosted recovery",
+    "Business execution"
+  ],
+  "remaining": [
+    "Fresh fixed execution plan and staged CID/config from trusted controller",
+    "Exact new finite recovery approval",
+    "Actual independent timer/CAS/closure readbacks"
+  ],
+  "authority": "Review does not authorize activation or reuse consumed713 window"
+}
