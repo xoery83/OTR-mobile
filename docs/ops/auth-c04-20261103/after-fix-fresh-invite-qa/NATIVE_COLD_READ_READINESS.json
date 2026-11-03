@@ -1,0 +1,29 @@
+{
+  "request": "AUTH-C04-NATIVE-COLD-READ-PREP-20261104-01",
+  "source": "Native directhandoff thread01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "sourceCommit": "4bafb36f34f3eeb097752fd7e81b90e3304b22d3",
+  "verifiedSource": {
+    "path": "src/data/sync/tripDownstreamCoordinator.ts",
+    "sha256": "07b9604af24f31ac196bf787f5c76cb4c9b52ec13df81929867eeb86df43a486",
+    "ports": [
+      "refreshAccountTripReads(): nativeCoordinator.account()",
+      "refreshTripFromCloud(tripId): nativeCoordinator.trip(tripId)"
+    ]
+  },
+  "normalUiPath": "normalAppLogin/bootstrap\u2192AccountGeneration/ApplyGate\u2192existingDiscovery/Pull\u2192LocalTripWorkspace\u2192readTripPreparationSetupRepository/scopedmembers\u2192TripMembersSheet",
+  "device": "Native reports iPadQA146, fullNative4bafb installed/readback, Nativeownclaim released; LaneC currentexclusive mixed/preview claim",
+  "otherDevices": "AD5 preservesImportdraft/claim; D473 belongsVision",
+  "returnTriggers": [
+    "CoreReadformalqualified and AuthfirstnormalGETPASS",
+    "LaneC actualdeviceclaimrelease",
+    "One preciseNativeownednormalLogin/read/restart/read window"
+  ],
+  "notAuthorizedByReadiness": [
+    "OTP/deviceclaim/newSession",
+    "Host/SQLmutation",
+    "Claimreplay",
+    "CopiedSession/Token",
+    "NativeReadPASSinferredfromClaim"
+  ],
+  "nativeColdRestore": "NOT_RUN"
+}
