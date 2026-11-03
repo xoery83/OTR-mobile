@@ -9,12 +9,13 @@
   "testsReexecuted": false,
   "newAuthorityOrAcl": false,
   "helperWriterExecuteRemainsFalse": true,
-  "sourceIntegration": "REQUESTED_NOT_YET_VERIFIED",
-  "protectedInstall": "PREPARATION_REQUESTED_NOT_APPROVED",
+  "sourceIntegration": "SOURCE_MAIN_EXACT_8_ARTIFACTS_VERIFIED",
+  "protectedInstall": "ROOT2_GATE_PREPARATION_PENDING_APPROVAL_NOT_INSTALLED",
   "fullItemReceiptSave": "NOT_PROVEN",
   "hostedE2E": "NOT_RUN",
   "originalOperation": "f5e13639-4240-4817-bf43-c60a1ea46361",
   "originalOutcome": "UNKNOWN_NO_REPLAY",
   "businessPostAuthorizedByThisPackage": false,
-  "next": "Root1 exact main source receipt; Root2 one-function exact protected approval package, then fresh CAS and independent readback only after approval"
+  "next": "Root2 fresh preimage and exact protected approval; install/readback only after approval; no business replay",
+  "sourceMain": "1e563567e3527fe5b4c5c7595761ae39d325603d"
 }

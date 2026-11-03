@@ -55,7 +55,8 @@ existing finite=false still denies, helper EXEC remainsfalse. Independent guard 
 real-predicate read_state upsert/foreign denial, generated install+exact reverse,
 wrong-preimage transaction abort and unchanged metadata/state evidence. Auth verified
 HEAD+8 manifest files and consumer boundary; no repeated tests. Full Item+Receipt
-Save remains unproven. Root1 source integration requested; Root2 request
+Save remains unproven. Root1 integrated main1e563567; Auth independently verified
+all8 manifest artifacts from that Git object, source lock released. Root2 request
 AUTH-C04-READ-STATE-ONE-FUNCTION-INSTALL-PREP-20261104-01 prepares one-function
 protected Gate, not yet approved or installed. No image/runtime/GRANT changes.
 This is a proven current blocker, not proof of the original Hosted unique phase.
