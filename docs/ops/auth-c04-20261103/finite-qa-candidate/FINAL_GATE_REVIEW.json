@@ -1,0 +1,42 @@
+{
+  "status": "NO_BLOCKER_FINAL_OWNER_GATE_CANDIDATE_NOT_EXECUTION_APPROVAL",
+  "gateSHA256": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+  "manifestSHA256": "853c58e87878a26cabbc6173179445eeb806e6ea8902628fbd64a40f036d29ad",
+  "minimumIntegrationSHA256": "6bb7dcd4753876ccf993a920ec08db8fb9d5ff0da1ea0f5ce6bd65524598abf4",
+  "reviewedSourceCommits": [
+    "eb884c67",
+    "a0245ba2",
+    "66b99173"
+  ],
+  "scope": [
+    "Exact one finite DEV A/B registered Invite/Claim case and original operation IDs",
+    "At most one OTP per Account; quota uncertainty and rejection stop without resend",
+    "Confirmed Claim same-operation duplicate at most once; UNKNOWN original recovery only",
+    "Normal own-session cleanup, no cross-session logout or tokens transferred",
+    "Root same-image CAS, independent absolute close before start and exact retained restore",
+    "Approval-first permitted substitutions only; no renewal or identity/authority/source expansion",
+    "Default-closed exact eleven-file integration, not long-branch merge",
+    "Root resource release before QA; short lock does not confer a business window"
+  ],
+  "checks": {
+    "packetFilesMatch": true,
+    "gateMatches": true,
+    "minimumMatches": true,
+    "authSourcesMatch": true,
+    "controllerPinsMatchFixedGit": true,
+    "elevenSourceGitPinsMatch": true,
+    "patchHashMatches": true,
+    "patchExactElevenFileAllowlist": true
+  },
+  "blockingFindings": [],
+  "limits": [
+    "Owner approval absent: this review is not authorization to activate or send OTP.",
+    "No executable plan, actual normal Sessions, business execution or timer activation is qualified by this packet.",
+    "Minimum source integration and fresh Host/DEV/resource CAS remain execution prerequisites.",
+    "Receiving GET permission proves no sending allowance; daily quota remains UNKNOWN.",
+    "Root read-only preflight aggregate is reported without its original artifact and must be repeated fresh.",
+    "Private Item absence needs a qualified existing A-visible private fixture; otherwise NOT_VERIFIED.",
+    "Member/pending-invite Revoke, Native/cold restoration, new SQL/RLS/GRANT/roles and Provider/OAuth changes excluded.",
+    "Review used local source/metadata only; no Host, SQL, credentials, network or device IO; no stable tests rerun."
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "status": "EXACT_FILE_ALLOWLIST_NOT_LONG_BRANCH_MERGE",
+  "baseMain": "0e0cf906",
+  "sourceCommit": "eb884c67",
+  "dependencyCommits": [
+    {
+      "commit": "c9858f88",
+      "scope": "Shared wire schema, normal MemberClaim Repository/test, authority schema re-export only; semantic/wire identity previously verified"
+    },
+    {
+      "commit": "4df35675",
+      "scope": "Exact finite QA case JSON only; backend QA module already main, do not re-merge"
+    },
+    {
+      "commit": "a0245ba2",
+      "scope": "DEV-only scenario and its8tests"
+    },
+    {
+      "commit": "eb884c67",
+      "scope": "Readback/12tests and normal callback extraction/3tests"
+    }
+  ],
+  "patchPath": "/private/tmp/otr-auth-c04-minimum-source-0e0cf906-to-eb884c67.patch",
+  "patchSHA256": "88c958cc24e710ec650dc85a53439ba431e95998a78d1bd96469ec90cb30d8b1",
+  "files": [
+    {
+      "path": "src/data/api/memberClaimContracts.ts",
+      "sha256": "5bf3e6590d63e233a07d9b7652416d55ebe40391d841bdbe8339856ceea8ddf9"
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.ts",
+      "sha256": "a09dfdef0004cd7b98f1dd2859c448ef31839d3bfb925d86978890372dbb4e19"
+    },
+    {
+      "path": "backend/src/tripMemberClaimAuthority.ts",
+      "sha256": "436079c40574adbe4d3cfad6ba2dc6977dfe27aa3f4fd5372a5ed82c92345a3a"
+    },
+    {
+      "path": "scripts/auth/member-claim-qa-scenario.ts",
+      "sha256": "b9a9cd721b453a37a41e3146bc5fec9fbd283a483b02de5e7744c5c74cbec34c"
+    },
+    {
+      "path": "scripts/auth/member-claim-qa-readback.ts",
+      "sha256": "c5a844f2edfe746f6a9384ccc62ca4b8793f0df1a6f9af40542feb21fb8fa750"
+    },
+    {
+      "path": "scripts/auth/registered-qa-host-session.ts",
+      "sha256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d"
+    },
+    {
+      "path": "docs/ops/auth-c04-20261103/finite-qa-candidate/QA_CASE_TEMPLATE.json",
+      "sha256": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4"
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.test.ts",
+      "sha256": "0f97e18af593c1ca3d589870771763c9a451bb1aa7b5a4c546cccdda69428a7b"
+    },
+    {
+      "path": "backend/src/authMemberClaimQaScenario.test.ts",
+      "sha256": "0c0085d0adb6fce3086eed59eddc4e281e86c3384b96fb592154e1cdfbeec14d"
+    },
+    {
+      "path": "backend/src/authMemberClaimQaReadback.test.ts",
+      "sha256": "cb6db187ff44423e2bfe7595e8e451c3552915efd73a6332ba2d58355b220883"
+    },
+    {
+      "path": "backend/src/authRegisteredHostSession.test.ts",
+      "sha256": "d3d88678d215912079cbb12c0550b3c9c2dfe4f6d64672ae7c7bc5e44a2de6f7"
+    }
+  ],
+  "mainDependencyObservation": "0e0cf906 existing generic QA Session, receiver, Core transport and Backend recovery/QA modules present; shared Native schema/Repository and Auth case/scenario absent",
+  "rootWriterInstruction": "Apply exact allowlist diff only after fresh main HEAD/check. Do not merge Auth long branch or overwrite changed Backend owning file. Resolve actual overlap narrowly. Controller/selector already main, do not re-run PG/installation. Adding DEV test modules does not activate Hosted runtime. Gate commit is separate Auth evidence, not executable software.",
+  "checksToReuse": "c985 existing transport15/combined50 + a024 scenario8 + eb readback12/normal3 independent reviews; integration only needs apply/import checks and changed-range failures, not old PG/deploy suite"
+}

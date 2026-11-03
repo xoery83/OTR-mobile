@@ -1,0 +1,83 @@
+{
+  "status": "FINAL_CANDIDATE_NOT_AUTHORIZED",
+  "authScenarioCommit": "a0245ba2",
+  "authReadbackNormalCallbackCommit": "eb884c67",
+  "rootControllerCommit": "66b99173",
+  "rootSelectorCommit": "a403549f",
+  "rootReportedDefaultClosedMain": "0e0cf906",
+  "gateSHA256": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+  "packetFiles": {
+    "OWNER_EXECUTION_GATE.md": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+    "QA_CASE_TEMPLATE.json": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "ROOT_CONTROLLER_INDEPENDENT_REVIEW.json": "72ff43ea668b828a09752a49dc936dfbcf6f26974bd3a709350a069bfb04beb3",
+    "ROOT_CONTROLLER_HOST_STAGE_READBACK.json": "3e2d61d2affcf1891f8f78aad7bb42d264c32deae517c169e935c471e668cfed",
+    "RECEIVING_READINESS.json": "f19ac579c36a28ec27d94405f3cfe22a01d8f4c6eb344de493dddba860087b1e",
+    "READBACK_OPERATOR_HANDOFF.md": "91183ef224d066806f92c64e307864c54fbd52b66100a1597f2ff9909a0ac579",
+    "SCENARIO_COMPOSITION_EVIDENCE.json": "85c9dfc84848ca7d93a84053ea2ffdd7a4fb848470d6fb69845f36daa1b81b81"
+  },
+  "authSourceFiles": {
+    "scripts/auth/member-claim-qa-scenario.ts": "b9a9cd721b453a37a41e3146bc5fec9fbd283a483b02de5e7744c5c74cbec34c",
+    "scripts/auth/member-claim-qa-readback.ts": "c5a844f2edfe746f6a9384ccc62ca4b8793f0df1a6f9af40542feb21fb8fa750",
+    "scripts/auth/registered-qa-host-session.ts": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d"
+  },
+  "controllerSourcePins": {
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "42fa15a12ca12d3d97b1ada331cc997f164e8be25136932469290e803e2f399a",
+    "docs/ops/auth-c04-finite-runtime-20261103/QA_CASE_TEMPLATE.json": "98cc4472819c038a997715863257b2b2729daa5c26c0938c6fc866d82b5f72b4",
+    "docs/ops/auth-c04-finite-runtime-20261103/HANDOFF.md": "3a995e3848f6420a8cc86c9a5892fddad889f285e8d7474daceeb4bbce4cc071",
+    "docs/ops/auth-c04-finite-runtime-20261103/VALIDATION.json": "07621ed3b4f1e8974c9d143b3010c1a9113db3ee874fffaad6237e578fb5ab7b"
+  },
+  "retainedHelperSHA256": "014844d487ba4fb32d9abc42c22d533195831be3114d47a2b253d465d44b5444",
+  "preparationMountedFileHashes": {
+    "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+    "/opt/otr/dev-backend/env/universal-png-runtime.json": "3d3cdff1ab33c2601ccc8f284d23ce5abf27bcb28461e69c9c74fe098162be18",
+    "/run/otr-r3a5-catalog/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+    "/opt/otr/dev-backend/env/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+    "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json": "1febb2a7715e33c891c62fe97f9e4c26bca2edd1e7c8213363a86a046f48606d"
+  },
+  "hostPreparationSnapshot": "ROOT_CONTROLLER_HOST_STAGE_READBACK.json; exact values historical, not permanent baseline or activation time",
+  "sourceQualification": {
+    "scenario": "8focused+independent8/types/lintPASS",
+    "readback": "12focused+independent11+1/types/lintPASS",
+    "normalCallbackExtraction": "3focused+independent3/types/lintPASS; URL snapshot finding repaired",
+    "rootController": "13 mocked/independent NO_BLOCKER default-closed",
+    "rootSelector": "Root30 focused/independent NO_BLOCKER; reused not rerun"
+  },
+  "rootReadOnlyPreflightReport": {
+    "source": "Root actual DEV read-only SqlTransport report circa2026-11-03T03:22Z, original artifact not supplied",
+    "fields": {
+      "tripOwnedByA": true,
+      "ownerPersonLinkedToA": true,
+      "targetNeverLinked": true,
+      "bLinkedPeople": 0,
+      "originalReceipts": 0,
+      "directedInvites": 0,
+      "targetPaymentRecords": 0,
+      "targetPaymentGrants": 0,
+      "removedAccounts": 0,
+      "claimFunctionPresent": true
+    },
+    "notBusinessE2E": true,
+    "freshCasRequired": true
+  },
+  "runtimeInputs": {
+    "windowId": null,
+    "opensAt": null,
+    "inviteExpiresAt": null,
+    "closesAt": null,
+    "baseline": null,
+    "ownerApprovalSHA256": null
+  },
+  "runtimeInputsQualification": "Substitutions only as specified in Gate, sealed after Owner approval, fresh CAS before actual start; not an executable plan",
+  "normalSessions": "NOT_RUN",
+  "businessE2E": "NOT_RUN",
+  "runtimeEnabled": false,
+  "otpSent": 0,
+  "finalIndependentGateReview": "PENDING",
+  "rootOperatorAgreement": "CONFIRMED Root message: Root solely controls Host+independent readonly SqlTransport; Auth owns normal separate Sessions and API operations, no tokens exchanged",
+  "minimumIntegration": {
+    "path": "MINIMUM_INTEGRATION.json",
+    "sha256": "6bb7dcd4753876ccf993a920ec08db8fb9d5ff0da1ea0f5ce6bd65524598abf4",
+    "sourcePatchSHA256": "88c958cc24e710ec650dc85a53439ba431e95998a78d1bd96469ec90cb30d8b1",
+    "integrationState": "PENDING_ROOT_EXACT_FILE_APPLY_NOT_RUNTIME_ACTIVATION"
+  }
+}
