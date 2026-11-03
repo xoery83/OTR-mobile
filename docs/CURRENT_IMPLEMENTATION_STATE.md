@@ -1,3 +1,12 @@
+# Hosted Operations V4 transfer — 3 November 2026
+
+Read `docs/handoffs/ROOT2_HOSTED_OPS_V4/README.md` and WRITER_STATE before any
+Hosted operation. Root1 retains Writer while new protected writes are paused for
+fixed-package independent verification. Root2 receiver is chat01a1a0c0; transfer
+requires Root1 release, Root2 acceptance, MC ownership registration and no-business
+health/close readback. Core/schema source/main integration remains Root1.
+No old Gate or new business/Provider authority transfers automatically.
+
 # Auth original-ID resume client integration — 3 November 2026
 
 Reviewed411ceee5 client/DTO changes are composed without activation: both original

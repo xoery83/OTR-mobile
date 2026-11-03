@@ -1,0 +1,134 @@
+{
+  "observedAt": "2026-11-03T10:13:55.539191+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "service": "otr-dev-backend",
+  "containerId": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+  "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+  "imageRef": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+  "health": "healthy",
+  "running": true,
+  "configSHA256": "eb99ebf60049e076085f517d9dc06a69440749de0d02ee553ebacaf46413cedf",
+  "environmentMapSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "mountTriplesSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "mounts": [
+    {
+      "source": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json",
+      "destination": "/run/otr/trip-create-runtime.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json",
+      "destination": "/run/otr/universal-runtime.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/universal-png-runtime.json",
+      "destination": "/run/otr/universal-png-runtime.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/universal-png-stage-20261031",
+      "destination": "/var/lib/otr/universal-png-stage",
+      "rw": true
+    },
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/capture-custody",
+      "destination": "/var/lib/otr/capture-custody",
+      "rw": true
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/universal-custody-2d964c16-6bc6-423b-a827-740efa133dab",
+      "destination": "/var/lib/otr/universal-custody",
+      "rw": true
+    },
+    {
+      "source": "/run/otr/universal-png-worker",
+      "destination": "/run/otr/universal-png-worker",
+      "rw": false
+    }
+  ],
+  "selectorsPresent": {
+    "OTR_DEV_AUTH_MEMBER_CLAIM_QA_CONFIG": false,
+    "OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE": false,
+    "OTR_DEV_MCP_C02_QA_CONFIG": false,
+    "OTR_DEV_MCP_WRITE_QA_CONFIG": false,
+    "OTR_DEV_MCP_READ_QA_CONFIG": false,
+    "OTR_DEV_FLIGHT_ENRICHMENT_HOST": false
+  },
+  "bundles": {
+    "/app/server.mjs": "7cbfdad34dbac6f12b31c69f0579690b43ad0dffcf73af8f51c4038a5aa36a7e",
+    "/app/server-capture.mjs": "6f4c4cdcd9fd225379e572f24ebd72a274052d65b3e4c5c5d58cb630b14210c3",
+    "/app/mcp/c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "/app/auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "mountedFileFingerprints": [
+    {
+      "source": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json",
+      "destination": "/run/otr/trip-create-runtime.json",
+      "sha256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5"
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json",
+      "destination": "/run/otr/universal-runtime.json",
+      "sha256": "1febb2a7715e33c891c62fe97f9e4c26bca2edd1e7c8213363a86a046f48606d"
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/universal-png-runtime.json",
+      "destination": "/run/otr/universal-png-runtime.json",
+      "sha256": "3d3cdff1ab33c2601ccc8f284d23ce5abf27bcb28461e69c9c74fe098162be18"
+    },
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "sha256": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a"
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "sha256": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765"
+    }
+  ],
+  "lock": {
+    "path": "/run/lock/otr-universal-finite-service.lock",
+    "method": "stat + /proc/locks; no open/flock",
+    "inode": 7,
+    "holders": []
+  },
+  "timers": [],
+  "workers": {
+    "otr-universal-png-worker.service": [
+      "MainPID=0",
+      "ActiveState=inactive",
+      "SubState=dead"
+    ],
+    "otr-universal-pdf-worker.service": [
+      "MainPID=0",
+      "ActiveState=inactive",
+      "SubState=dead"
+    ]
+  },
+  "rollback": [
+    {
+      "containerId": "c213f5dd69ef1e8e4f469450a7985ff731b04ada6f514a48c91e2b4008dba682",
+      "name": "/otr-mcp-c02-closed-2b71f8c5-before",
+      "image": "sha256:039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058",
+      "status": "exited",
+      "configSHA256": "bb7ab53035c91d1a7d83953fdc22c8ef57c185baeea2493077fb984a0c0cf9ed"
+    }
+  ],
+  "healthChecks": {
+    "http://127.0.0.1:8787/health": "{\"status\":\"ok\",\"environment\":\"development\"}",
+    "https://api-dev.xoery.art/health": "{\"status\":\"ok\",\"environment\":\"development\"}"
+  }
+}

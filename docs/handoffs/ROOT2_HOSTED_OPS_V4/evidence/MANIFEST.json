@@ -1,0 +1,53 @@
+{
+  "artifacts": [
+    {
+      "path": "evidence/DEPLOYMENT_DEFAULT_CLOSED.json",
+      "bytes": 1199,
+      "sha256": "5241d389d3b1283c6e5c38f8178251defc6f8cda578a815eb945786e95e4df11",
+      "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    },
+    {
+      "path": "evidence/FLIGHT_QUALIFICATION_0557Z.json",
+      "bytes": 2778,
+      "sha256": "70db2f8bd4abb7342a000a898eb36bdf89a4a5174f34ffdf7279b93c5b0b1652",
+      "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    },
+    {
+      "path": "evidence/HOST_CURRENT.json",
+      "bytes": 5229,
+      "sha256": "2c9a45ad4657e1e337c28bee86874bb9abcfcb280843c9a8c15935d4abd7b0b3",
+      "origin": "Current read-only snapshot"
+    },
+    {
+      "path": "evidence/IMPORT_PRICES_0947Z.json",
+      "bytes": 3770,
+      "sha256": "1e8741c4589899d230633667be0dba54645a0815ffab6f0a5e7ee8365d3a7211",
+      "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    },
+    {
+      "path": "evidence/IMPORT_RETAINED_TASKS.json",
+      "bytes": 23324,
+      "sha256": "886997bc19ba2b78a8521718981230e5607ec3508a80eff630a0e23b3092fadb",
+      "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    },
+    {
+      "path": "evidence/MCP_LAST_WINDOW.json",
+      "bytes": 2175,
+      "sha256": "272eaf861dc9d2672bd655bbbd13ec2e84c731fa59e7432c02f7fe310d587b7c",
+      "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    },
+    {
+      "path": "evidence/PG_CURRENT.json",
+      "bytes": 6615,
+      "sha256": "a5df56a12cdf90d5abab072a7bad0901fcb9de7d9fcfed769d7130dc6adee223",
+      "origin": "Current read-only snapshot"
+    },
+    {
+      "path": "evidence/ROOT2_INITIAL_READONLY.json",
+      "bytes": 10434,
+      "sha256": "de86fe03a8a79dbbebb73106d014a13100df882b7f075bd5dbe9ed8d40b47e96",
+      "origin": "Timestamped retained independent/queue evidence; see contained observation time"
+    }
+  ],
+  "containsCredentials": false
+}

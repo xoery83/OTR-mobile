@@ -1,0 +1,259 @@
+{
+  "scope": "ROOT2_INITIAL_READ_ONLY_NOT_WRITER_HANDOFF",
+  "liveReadback": {
+    "observedAt": "2026-11-03T09:35:10.193037+00:00",
+    "containerId": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+    "health": "healthy",
+    "configSHA256": "eb99ebf60049e076085f517d9dc06a69440749de0d02ee553ebacaf46413cedf",
+    "environmentSHA256": "551c847682d7b9d2d5f010c427a118622b7c0c7bc19cd5da177a9c2a276d2c52",
+    "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+    "networkMode": "host",
+    "readOnly": true,
+    "user": "otr",
+    "envNames": [
+      "NODE_ENV",
+      "NODE_VERSION",
+      "OTR_DEV_BACKEND_BIND_ADDRESS",
+      "OTR_DEV_BACKEND_NETWORK_MODE",
+      "OTR_DEV_BACKEND_PORT",
+      "OTR_DEV_DEEPSEEK_API_KEY",
+      "OTR_DEV_FLIGHT_ONE_SHOT",
+      "OTR_DEV_FLIGHT_REMOTE_TRANSPORT",
+      "OTR_DEV_SOURCE_PDF2_TRANSPORT",
+      "OTR_DEV_SUPABASE_PUBLISHABLE_KEY",
+      "OTR_DEV_SUPABASE_SECRET_KEY",
+      "OTR_DEV_SUPABASE_URL",
+      "OTR_DEV_UNIVERSAL_CONTINUOUS_HOST",
+      "OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW",
+      "OTR_DEV_UNIVERSAL_PNG_RUNTIME",
+      "OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256",
+      "OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT",
+      "OTR_DEV_UNIVERSAL_RUNTIME_SHA256",
+      "PATH",
+      "YARN_VERSION"
+    ],
+    "finiteAuthMcpEnrichmentSelectors": [],
+    "mounts": [
+      {
+        "source": "/opt/otr/dev-backend/private/universal-png-stage-20261031",
+        "destination": "/var/lib/otr/universal-png-stage",
+        "rw": true
+      },
+      {
+        "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+        "destination": "/run/otr/catalog-reader.json",
+        "rw": false
+      },
+      {
+        "source": "/opt/otr/dev-backend/private/capture-custody",
+        "destination": "/var/lib/otr/capture-custody",
+        "rw": true
+      },
+      {
+        "source": "/opt/otr/dev-backend/env/capture-custody.json",
+        "destination": "/run/otr/capture-custody.json",
+        "rw": false
+      },
+      {
+        "source": "/opt/otr/dev-backend/private/universal-custody-2d964c16-6bc6-423b-a827-740efa133dab",
+        "destination": "/var/lib/otr/universal-custody",
+        "rw": true
+      },
+      {
+        "source": "/run/otr/universal-png-worker",
+        "destination": "/run/otr/universal-png-worker",
+        "rw": false
+      },
+      {
+        "source": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json",
+        "destination": "/run/otr/trip-create-runtime.json",
+        "rw": false
+      },
+      {
+        "source": "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json",
+        "destination": "/run/otr/universal-runtime.json",
+        "rw": false
+      },
+      {
+        "source": "/opt/otr/dev-backend/env/universal-png-runtime.json",
+        "destination": "/run/otr/universal-png-runtime.json",
+        "rw": false
+      }
+    ],
+    "files": [
+      {
+        "destination": "/run/otr/catalog-reader.json",
+        "sha256": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+        "bytes": 1526
+      },
+      {
+        "destination": "/run/otr/capture-custody.json",
+        "sha256": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+        "bytes": 1321
+      },
+      {
+        "destination": "/run/otr/trip-create-runtime.json",
+        "sha256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+        "bytes": 6305,
+        "safeProjection": {
+          "version": 3,
+          "enabled": true,
+          "tripPg": {},
+          "metadataPg": {},
+          "corePg": {},
+          "personPg": {}
+        }
+      },
+      {
+        "destination": "/run/otr/universal-runtime.json",
+        "sha256": "1febb2a7715e33c891c62fe97f9e4c26bca2edd1e7c8213363a86a046f48606d",
+        "bytes": 5386,
+        "safeProjection": {
+          "catalogPg": {},
+          "enabled": true,
+          "environment": "DEV",
+          "identity": {},
+          "project": "tuqigdxrvrerfewsxqgm",
+          "qaExecutionFence": {
+            "version": 1
+          },
+          "sourcePg": {},
+          "taskPg": {},
+          "version": 2
+        }
+      },
+      {
+        "destination": "/run/otr/universal-png-runtime.json",
+        "sha256": "3d3cdff1ab33c2601ccc8f284d23ce5abf27bcb28461e69c9c74fe098162be18",
+        "bytes": 285,
+        "safeProjection": {
+          "enabled": true,
+          "environment": "DEV",
+          "expiresAt": "2026-11-01T08:48:56Z",
+          "project": "tuqigdxrvrerfewsxqgm",
+          "version": "OTR_DEV_UNIVERSAL_PNG/1"
+        }
+      }
+    ],
+    "units": {
+      "otr-universal-pdf-worker.service": {
+        "exitCode": 0,
+        "properties": [
+          "RuntimeMaxUSec=infinity",
+          "MainPID=0",
+          "LoadState=loaded",
+          "ActiveState=inactive",
+          "SubState=dead"
+        ]
+      },
+      "otr-universal-png-worker.service": {
+        "exitCode": 0,
+        "properties": [
+          "RuntimeMaxUSec=50min",
+          "MainPID=0",
+          "LoadState=loaded",
+          "ActiveState=inactive",
+          "SubState=dead"
+        ]
+      }
+    },
+    "writerLock": {
+      "path": "/run/lock/otr-universal-finite-service.lock",
+      "exists": true,
+      "method": "stat and /proc/locks only; never opened or flocked",
+      "uid": 0,
+      "mode": "0o600",
+      "inode": 7,
+      "holders": []
+    },
+    "healthChecks": {
+      "http://127.0.0.1:8787/health": {
+        "exitCode": 0,
+        "body": "{\"status\":\"ok\",\"environment\":\"development\"}"
+      },
+      "https://api-dev.xoery.art/health": {
+        "exitCode": 0,
+        "body": "{\"status\":\"ok\",\"environment\":\"development\"}"
+      }
+    },
+    "backendContainers": [
+      "0c723151aae5 68aa588ffd16 Up 2 hours (healthy) otr-dev-backend",
+      "00f7fcf61c24 fbc245d5ac98 Exited (137) 7 hours ago otr-dev-backend-before-import-fence-20261103",
+      "43b2ab5807b6 106825719040 Exited (0) 2 days ago otr-dev-backend-before-photo-v3-4fa46caf",
+      "fdd5c151bb27 7371d7673278 Exited (137) 2 days ago otr-dev-backend-before-write-unknown-root-7a3",
+      "761b0581d871 34a9e8f89ba0 Exited (137) 2 days ago otr-dev-backend-before-auth-write-root-7371",
+      "2c037b20c181 a3a2d4e085ee Exited (0) 2 days ago otr-dev-backend-before-photo-activity-f2ab",
+      "e78661ed22c7 4ef2bde1f6fe Exited (137) 2 days ago otr-dev-backend-before-realtime-phase-3c3",
+      "0c04b40ce566 f052742969e7 Exited (0) 2 days ago otr-dev-backend-before-realtime-prelude-162a2",
+      "ac7a53f64827 d8b789b8d80f Exited (0) 2 days ago otr-dev-backend-before-source-auth-4090eff3",
+      "0cf269f50320 67f21d4975f9 Exited (137) 2 days ago otr-dev-backend-before-native-timing-source-722f216",
+      "ce0909f23f1b 4781bf73c243 Exited (137) 3 days ago otr-dev-backend-before-native-authored-30435c31",
+      "43afbc09c846 8217aba69301 Exited (137) 3 days ago otr-dev-backend-before-auth-refresh-02971807",
+      "a2608753836e 144e3bfb6c08 Exited (137) 3 days ago otr-dev-backend-before-auth-oauth-9b0983ad",
+      "a055940bd0c9 09465509122e Exited (0) 4 days ago otr-dev-backend-retained-deadline104-20261030",
+      "c92b9d8d7df4 8e269985d94d Exited (0) 5 days ago otr-dev-backend-retained-before-deadline104-20261029",
+      "23ffb7c14f90 b3128adf178c Exited (0) 5 days ago otr-dev-backend-retained-profile-diagnostic-d736-20261029",
+      "d32e8370295c c8f9dbce0b15 Exited (0) 5 days ago otr-dev-backend-retained-owner-profile-d736-20261029",
+      "4847b7c4de8a 750a459b1178 Exited (0) 5 days ago otr-dev-backend-retained-read103-20261029",
+      "ea942fd2e9e1 1dc308c8c89f Exited (137) 5 days ago otr-dev-backend-retained-codes102-20261029",
+      "da051e10cb6b 750e633fe100 Exited (137) 5 days ago otr-dev-backend-retained-phase88-20261029",
+      "0f9c4b6f97ca dab8df27d38d Exited (0) 5 days ago otr-dev-backend-retained-enrichment-8bb993a2"
+    ]
+  },
+  "bundleAndRollbackReadback": {
+    "observedAt": "2026-11-03T09:35:55.197622+00:00",
+    "environmentSortedSHA256": "a6d476ac75db6756d36ab8f919fa2eaae510fdad2edb66b8b76c1d028b3fae77",
+    "bundles": {
+      "/app/server.mjs": {
+        "exitCode": 0,
+        "sha256": "7cbfdad34dbac6f12b31c69f0579690b43ad0dffcf73af8f51c4038a5aa36a7e"
+      },
+      "/app/server-capture.mjs": {
+        "exitCode": 0,
+        "sha256": "6f4c4cdcd9fd225379e572f24ebd72a274052d65b3e4c5c5d58cb630b14210c3"
+      },
+      "/app/mcp/c02-host.mjs": {
+        "exitCode": 0,
+        "sha256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d"
+      },
+      "/app/auth-consent/app.js": {
+        "exitCode": 0,
+        "sha256": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+      }
+    },
+    "rollback": [
+      {
+        "id": "c213f5dd69ef1e8e4f469450a7985ff731b04ada6f514a48c91e2b4008dba682",
+        "exists": true,
+        "image": "sha256:039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058",
+        "name": "/otr-mcp-c02-closed-2b71f8c5-before",
+        "state": "exited",
+        "configSHA256": "bb7ab53035c91d1a7d83953fdc22c8ef57c185baeea2493077fb984a0c0cf9ed"
+      },
+      {
+        "id": "039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058",
+        "exists": true,
+        "image": "sha256:039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058",
+        "name": null,
+        "state": null,
+        "configSHA256": "d7605c7e7d56073f5d2f9b2337e080d8a46431be1ee00f48a232623fb6deb8df"
+      }
+    ],
+    "listeners8787": [
+      "LISTEN 0      511        127.0.0.1:8787       0.0.0.0:*          "
+    ],
+    "otrTimers": []
+  },
+  "deploymentHelperCanonicalization": {
+    "environmentMapSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+    "mountTriplesSHA256": "14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+    "matchesSavedReceipt": true,
+    "note": "Env list/sorted-list digests in raw readbacks use different canonicalization. Use deploy.py environment map and mount triples for receipt comparison."
+  },
+  "sourceObservation": {
+    "remoteMain": "b16c2d932ce602e86db83796eefe20d94b215aed",
+    "rootLocalCandidate": "c91a27caf51ba6ae334a81a8c1c4f59cc4bd919b",
+    "method": "git ls-remote origin refs/heads/main; git rev-parse HEAD; no fetch or ref mutation"
+  }
+}

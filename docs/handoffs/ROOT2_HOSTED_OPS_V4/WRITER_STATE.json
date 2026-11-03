@@ -1,0 +1,13 @@
+{
+  "status": "PREPARED_ROOT1_RETAINED",
+  "resource": "DEV tuqigdxrvrerfewsxqgm /178.105.151.143 /otr-dev-backend /runtime and protected install execution",
+  "writer": "Root1 01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "receiver": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "root1NewProtectedWritesPaused": true,
+  "independentVerification": "PENDING_FIXED_PACKAGE_RECONCILIATION",
+  "root1Released": false,
+  "root2Accepted": false,
+  "mcOwnershipRecorded": false,
+  "postTransferNoBusinessWriteCheck": "PENDING",
+  "newBusinessAuthorization": false
+}
