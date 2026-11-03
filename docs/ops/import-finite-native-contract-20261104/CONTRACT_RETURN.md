@@ -1,0 +1,27 @@
+# IMP-C01-FINITE-NATIVE-20261104-13 — bounded owning return
+
+Reference source main `bb7373e9`; Lane C proposal `af26bd10`; Root2 fixed private definitions/metadata `FINITE_OWNING_PORTS_SAFE_HANDOFF.json`. This is a source contract review, not execution/installation approval.
+
+**Decision: use strictly Batch-qualified finite composition; do not enable actor-wide sustained policy or weaken the three-argument continuous Provider selector.** The proposal's seven bindings and distinction between approved original and normalized owning pins are accepted as the internal adapter boundary. Lane C remains the domain Adapter/DTO/Controller writer. No Core Item/Admission command changes are needed for this routing slice.
+
+## Minimum existing path and actual gaps
+
+| Seam | Existing implementation | Minimal required delta |
+|---|---|---|
+| Finite Source begin | `trip_source_begin_universal_inputs(actor,trip,raw)` OID66232 validates actual finite actor/trip/batch/task/run/submission/input hash and clock. | Reuse this validator. Add finite normalization composition equivalent to existing PDF material/proof handling before delegation; it does not currently perform the sustained wrapper's ORIGINAL→DERIVED normalization. Do not relabel binary as text or bypass Source locks. |
+| Source lookup / recovery | Current `trip_source_find_sustained_universal_binding` rejects finite-only scope before lookup. Native deterministic Run/Task use `universalBatchIdentity`. | Exact finite-Batch read contract must return ABSENT without creating anything; otherwise validate same actor/trip/batch/run/task/submission and complete ordered owning inputs/retention. Do not use an Actor/Trip-only fallback or ordinary GET to mint Run/Task. |
+| Finite Source read | `trip_source_read_universal_inputs(actor,trip,batch,task,run)` OID66234 already has exact finite scope. | Current PNG path requires Run input count=1 and rejects the approved three-input Batch with `UNIVERSAL_PNG_MATERIAL_UNSUPPORTED`. PDF provenance also has the old f4/825 Actor/Trip special case. Adapt these two qualifications only under the exact finite Batch/pins/proof; retain per-PNG consent/current proof and per-PDF original/derived/seal/transform/span lineage. No other fixed Actor/date restrictions found in 66232/234 themselves. |
+| Provider selection | Current `universal_import_select_continuous(actor,trip,integration)` requires sustained allowance and lacks Batch identity; it runs before Source prepare. | Leave it unchanged for sustained mode. Trusted finite config may project inert immutable registration metadata into the explicit seven-tuple DTO; this is not paid admission. No Attempt/call/hold/reservation during selection. |
+| Provider execution | `universal_import_read_scope` / `universal_import_validate_binding` (Root2 finite definitions), then existing reserve/dispatch functions, validate actual actor/trip/batch/task/attempt/call/config/price/request/input/model binding. | Reuse the finite path once actual Source/Task bindings exist. Do not suppress any validation or forward a usable three-tuple selection. Runtime's finite branch must retain exact model/price, one-call cap, revision/fence, auth, proof and deadline checks before dispatch. |
+
+Finite Source/provider scope table CHECKs already cap duration at 15 minutes. Choose a single ready-to-execute window no longer than 15 minutes, intersected with Owner's ≤30-minute window and approved absolute deadline; this needs no CHECK widening. Prepare code, normal identity, proofs, price/config, readback and closure before starting. No automatic replacement call/window after UNKNOWN.
+
+## Implementation and review boundary
+
+1. Lane C implements trusted-server finite mode (not a request flag), exact tuple DTO/call order, existing Source normalization and reader adapters. Preserve sustained default behavior; do not mount the operator-only TXT profile as a Native interface.
+2. Seven bindings: Actor==Account, Trip, original Batch, derived Run, derived Task, submission SHA and complete approved ordered Source input pins. Separately pin integration/model/adapter/price. Keep original approval pins and normalized derived pins distinct and independently validated; never copy one hash over the other.
+3. Source SQL candidate groups lookup + normalization + mixed-PNG/PDF qualification in one focused reviewed package. Root1 reviews the exact owning delta and guard/proof tests; Root2 alone prepares fresh preimage/CAS/ACL and requests any new protected function/EXEC approval. This document does not approve unspecified SQL bytes.
+4. Required focused cases: approved exact tuple; same Actor/Trip other Batch; changed run/task/submission/order/hash; missing/stale/wrong-Actor PNG/PDF proof; ABSENT lookup is read-only; prepare/queued tuple agreement; close/expiry; previous settled/UNKNOWN Task never causes a second paid send. Preserve accepted originals/receipts.
+5. Bound uncertainty: delegated custody/proof/CP14 helper behavior remains subject to this candidate's narrow real PG tests. A helper-level refusal is not permission to add broad policy, relax source validity or reset an old operation. No six-type Golden Slice rerun.
+
+Return trigger: Lane C fixed adapter + exact SQL/proof delta and focused evidence → Root1 scoped review → Root2 independently qualified finite installation/execution → Lane C normal user E2E. No Hosted/SQL/Provider/device action occurred in this contract review.

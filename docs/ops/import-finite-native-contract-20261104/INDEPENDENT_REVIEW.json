@@ -1,0 +1,167 @@
+{
+  "requestId": "IMP-C01-FINITE-NATIVE-20261104-13",
+  "status": "REUSABLE_FINITE_PROVIDER_SOURCE_ADAPTER_GAPS_REMAIN_NOT_APPROVED_FOR_INSTALL",
+  "reviewedMainHead": "bb7373e9b752ed3a09e7b770a18031b67ad0abbc",
+  "reviewScope": "Six named runtime/source files, direct ContinuousHost/PersistenceHost call sites, four captured wrapper preimages, finite-interface gap receipt. Read only; no execution.",
+  "decision": {
+    "directFinitePortForNativeMixedBatch": false,
+    "reason": "Finite Source RPCs are reusable owning primitives, not a delivered Native mixed intake/Task preparation adapter. OriginalSourceRuntime.prepareInputs is explicitly Trusted Operator only and readPreparedInputs rejects binary. FiniteRuntime requires a preprovisioned full Task/Attempt/marker/private custody, not ordinary Native batch prepare.",
+    "smallestReusableDirection": "Keep existing normal Auth/Trip, Source/Task identities, Native prepare/context/results and queue. Add an explicit exact-Batch-qualified finite route/fallback inside that owning composition, delegating to actual finite Source/Provider RPCs after their current definitions are qualified. Keep sustained branches unchanged; do not enable actor-wide sustained policy.",
+    "providerBoundary": "selectProvider currently receives no Batch/Run/Task and executes before Source.prepare. A finite fallback cannot be selected solely by actor/trip/integration. Pass the validated exact batch context explicitly through prepare and executeQueued selection (or an equally exact transaction-bound owning input), verify deterministic Run/Task plus approved Source pins, and recheck actual scope when reserving/executing. Actor-wide availability is not authority."
+  },
+  "concreteCallSites": [
+    "universalBatchSource.lookup/prepare hardcode find_sustained/begin_sustained; lookup precedes begin and must support missing exact binding without minting or widening scope.",
+    "universalContinuousHost uses continuous SourceReader and continuousProvider in createUniversalBackendRuntime; changing only Source begin does not change manifest/read/current Provider scope.",
+    "universalContinuousRuntime.selectProvider at lines206-215 has only actor/trip/integration; universalPersistenceHost.currentScope chooses read_continuous_scope when continuousProvider is set, otherwise finite read_scope(account,task,attempt,call).",
+    "universalSourceRead already supports the finite read_universal_inputs switch and validates account/trip/batch/task/run/submission/input pin equality and double snapshot. Reuse these checks and actual binary custody, PNG proof and PDF seal; no text substitution."
+  ],
+  "requiredExactBindingValues_notNewOrAssumedDatabaseColumns": [
+    "Actual authenticated Actor/Account and permitted Trip; full original Batch/job IDs (39fe2a07/8930950b prefixes alone are insufficient), submission SHA and complete frozen ordered input pins including existing Source/representation/material/current-row revisions, hashes and byte counts.",
+    "Deterministic universalBatchIdentity Run/Task verified against owning stored Run/binding; PDF ORIGINAL/DERIVED/seal/transform lineage and PNG current proof/consent remain required.",
+    "Exact integration/config/model/price/adapter and eventual immutable request/schema/model binding; actual Task/Attempt/call IDs and revisions/fences at the existing admission seam. Do not reset or replace existing UNKNOWN.",
+    "Server-checked finite start/end: <=30 minutes and no later than Owner 2026-11-04 17:30 NZDT (04:30Z); one call <=USD0.05, <=3 reviewed Saves only within the approved batch. No quota transfer or new Batch. Source/Provider/Core Save permissions remain distinct."
+  ],
+  "missingActualPreimagesBeforeFinalApproval": [
+    "Current trip_source_begin_universal_inputs and trip_source_read_universal_inputs complete definitions/OID/body hash/Owner/ACL/config, plus exact existing binding read contract or proposed exact adapter readback; verify normalization, all material locks and replay semantics, not only wrapper first predicates.",
+    "Actual columns/types/defaults/constraints/keys/RLS/ACL for trip_source_universal_scope and universal_import_provider_scope; current row revisions/values and authoritative row-update/negative-close ports. Historical repository column names are not current DB proof.",
+    "Actual finite Provider read/admission/reservation entrypoints and universal_import_read_continuous_scope/source_current dependencies reached by the selected route; owner/principal checks and protected helpers must not still require sustained qualification. Current selector has insufficient Batch arguments.",
+    "Actual PNG/PDF proof/material access and custody scope eligibility under the proposed finite path; Source begin success alone does not prove mixed read or image Provider qualification. Precise patch/prepost metadata, default-closed install/reverse and lost-response/close tests are required for whichever existing functions must change."
+  ],
+  "minimumLocalTests": [
+    "Exact original batch allowed; same actor/trip with another batch, wrong run/task/hash/pin, stale consent or missing binary/seal proof denied before attempt/send.",
+    "prepare/context/Results/read route is consistent; existing Run/Task replay preserves IDs, UNKNOWN does not dispatch; deadline/close denies new execution while accepted receipt recovery remains lawful.",
+    "Provider selection cannot produce usable finite admission from actor/trip/integration alone; actual read/reserve/check binds the same approved Task/Attempt/call and one-call cap."
+  ],
+  "limits": [
+    "No candidate SQL approved by this review; requested missing actual finite definitions/DDL/Provider entrypoints were not present in the supplied four-wrapper directory.",
+    "No Host/SSH/SQL/session/device/Provider/business invocation or Lane code/main edits.",
+    "No new parser, queue, permission platform, raw credentials or private function bodies included."
+  ],
+  "addendumActualFinitePorts": {
+    "proposalCommit": "af26bd10661f150c826bef9cdac5ebae43e9cb99",
+    "proposalReview": "Seven-tuple, explicit selector DTO, inert/no-reserve prepare metadata, ORIGINAL versus normalized PDF pins, fresh PNG proof/consent and UNKNOWN no-dispatch are the correct bounded direction. The actual finite functions below require these specific additional seams.",
+    "capturedDefinitionsMatchSafeHandoff": [
+      {
+        "oid": "66232",
+        "name": "trip_source_begin_universal_inputs",
+        "definitionSHA256": "7bbf5b100a86f3ca5b3af4b9bd1952640fbae0cfb2f373bc4c69b06b274c9b84",
+        "bodyMD5": "ddf4cc39ed2880a049ceb8b2e2bb504f"
+      },
+      {
+        "oid": "66234",
+        "name": "trip_source_read_universal_inputs",
+        "definitionSHA256": "01c448a9348a606ad8ee72c2fad546ca2ba2940004ebd286cc52e5eafacc1447",
+        "bodyMD5": "1d34e815f70955cb4b7d6c746de120e1"
+      },
+      {
+        "oid": "66337",
+        "name": "universal_activation_reserve_call",
+        "definitionSHA256": "eb121dd863816ffc4f6be6a625e7a05a100264df9fe9343292c4571ff8350cf9",
+        "bodyMD5": "2270cb9c49d1f29ab1a7c28056995263"
+      },
+      {
+        "oid": "66339",
+        "name": "universal_import_call_admission_guard",
+        "definitionSHA256": "cb75969be6cbeab60c7d86d50b5b95bdb80a2880567c3e40b67d75faa97810ba",
+        "bodyMD5": "724cff4b47aed698d68a1f8329443ba8"
+      },
+      {
+        "oid": "66338",
+        "name": "universal_import_mark_dispatch",
+        "definitionSHA256": "bc4b3de94600ba73f2771f37f715184971a86ec93270385585c5e2a2ce1d1a08",
+        "bodyMD5": "800a7f217baf7ead0787bd7f0a8c3c8c"
+      },
+      {
+        "oid": "66332",
+        "name": "universal_import_read_scope",
+        "definitionSHA256": "35c0d8f249333460d37585baf77e82c2a1b46e03ea485739fb23380d1c39476a",
+        "bodyMD5": "ecab4abd025a2a8c91b93eb31efb7e2d"
+      },
+      {
+        "oid": "66333",
+        "name": "universal_import_validate_binding",
+        "definitionSHA256": "382d007855394773cbe33069170e9d6ce2ed55f572423dab3ff12c2acf173057",
+        "bodyMD5": "bad59845503d1309a336501c4da5bdcd"
+      }
+    ],
+    "finiteSourceBegin": {
+      "oid": 66232,
+      "reuse": "Already exact actor_id/trip_id/batch_id/task_id/run_id/submission_sha256/input_sha256 plus starts_at/expires_at, real normal Actor/material locks, strict inputs and existing Run replay comparison. Delegate actual immutable Run/Input insertion to it.",
+      "gap": "It neither normalizes ORIGINAL PDF inputs nor emits binding metadata. The sustained normalization wrapper66394 cannot simply be called because it first requires sustained eligibility. Before delegation qualify the exact approved ORIGINAL tuple, normalize through the real PDF material/seal helper, and bind the finite row input_sha256 to the exact normalized input hash actually checked by66232. Keep ORIGINAL pins separately in the approved config/source_command_pins and compare both lineages."
+    },
+    "finiteSourceRead": {
+      "oid": 66234,
+      "reuse": "Already validates normal Actor, exact actor/trip/batch/task/run, retained/nonfailed Run, current input/material facts, and returns submission+representation metadata. No finite-scope clock read is directly imposed here; existing reader permissions/currentness still apply.",
+      "blockingCurrentPredicate": "PNG branch requires total Run input count=1. Original approved mixed selection with PNG/PDF/TEXT therefore raises UNIVERSAL_PNG_MATERIAL_UNSUPPORTED. This owning predicate needs an exact-batch-qualified change, preserving one PNG, complete input identities, real PNG facts and all independent text/PDF qualification. Merely routing the Native adapter cannot pass it.",
+      "identityRestriction": "PDF provenance is attached only for actor f4b059c5-8241-4ffb-aa15-37fa25474543 and Trip825f79b2-4a9d-4535-a62e-43000ca50c4a. Same pair is compatible at this branch; any different actual iPad Actor/Trip lacks pdfSource and will fail the downstream provenance contract. Do not remove this pin broadly."
+    },
+    "missingExactLookup": "No finite equivalent of find_sustained_universal_binding was supplied. Existing wrapper66395 is sustained-only. Minimum contract must read the exact approved Batch/Run/Task/submission and normalized owning inputs, allow ABSENT only after the finite approved tuple is checked, create nothing, and return generation/createdAt plus actual PDF provenance in the existing UniversalRunBinding shape. An approved narrowly extended existing lookup wrapper can supply this; no second repository/Task identity system.",
+    "finiteProvider": {
+      "readScopeOID": 66332,
+      "validateBindingOID": 66333,
+      "reserveOID": 66337,
+      "dispatchOID": 66338,
+      "admissionGuardOID": 66339,
+      "reuse": "read_scope accepts actual Actor/Task/Attempt/call and returns only the matching finite provider row in time. validate_binding falls back to that row when sustained eligibility is false and matches Actor/Trip/Batch/Task/Attempt/call/integration/config/price/request/input/full model binding, deadline and cost ceilings. reserve validates the binding and existing admission/idempotency before inserting call/admission; dispatch validates actual call revision/fence/model binding. No actor-wide sustained enable is needed for this finite branch.",
+      "minimalSelectorContract": "Prepare needs only trusted root-config/hash-pinned immutable selection metadata for the explicit seven-tuple, with zero reservation/Attempt issuance. It may use the existing authorized registration read/config composition, rather than inventing a public grant selector. At execute use actual persisted normalized binding and finite universal_import_read_scope; do not set continuousProvider or call the current three-argument continuous selector. If a SQL selector is introduced, it must accept/check the exact tuple and return inert metadata only.",
+      "remainingDependencies": "Actual cp14_call_admission, universal_import_lock_actor, expected-profile and current Source/binary proof dependencies still need final package preflight. These captured wrapper definitions alone are not proof the registered model/profile/price or original UNKNOWN concurrency state qualifies. Retain all old calls/holds; never reset/release them to pass."
+    },
+    "actualFiniteScopeConstraints": {
+      "sourceFields": [
+        "actor_id",
+        "trip_id",
+        "batch_id",
+        "task_id",
+        "run_id",
+        "submission_sha256",
+        "input_sha256",
+        "starts_at",
+        "expires_at",
+        "source_command_pins"
+      ],
+      "providerFields": [
+        "actor_id",
+        "trip_id",
+        "batch_id",
+        "task_id",
+        "attempt_id",
+        "call_id",
+        "integration_id",
+        "provider_config_id",
+        "price_schedule_id",
+        "request_sha256",
+        "provider_request_sha256",
+        "input_sha256",
+        "model_binding",
+        "input_ceiling",
+        "output_ceiling",
+        "max_cost_nanos",
+        "starts_at",
+        "expires_at"
+      ],
+      "bothMaxWindowMinutes": 15,
+      "decision": "Use <=15 minutes, also within Owner <=30min and absolute17:30NZDT cutoff. No CHECK widening or automatic second window. Operator must bind <=USD0.05 even though table CHECK permits a larger general ceiling."
+    },
+    "minimumProtectedSQLBoundary": "Exact Batch-qualified Source lookup/normalization entry and the66234 single-total-input PNG predicate are the concrete missing owning seams. Provider reserve/validate/dispatch have an existing finite branch and do not by themselves require replacement. No actor-wide policy, global PNG/PDF enable, new budget/Schema/role/GRANT follows from this review. Gate must pin actual dependency metadata and precise before/after definitions for whatever seams are changed.",
+    "hardcodedExpiryProfile": "No Nov1 timestamp or hardcoded Actor/Trip appears in the supplied finite Provider functions; active finite row clocks and frozen profile/model/adapter registration still apply. The finite Source read PDF pair pin and PNG total-count1 are actual blockers. The real PDF material and PNG proof/custody helper implementations were not newly supplied, so their current hardcoded profile/Actor/expiry compatibility remains an explicit unresolved preflight, not assumed true.",
+    "qualification": "Contract analysis only; af26 is a proposal, no executable patch or installed qualification reviewed. No Host/SQL/model/test invocation."
+  },
+  "initialAssessmentNote": "Initial missing-preimage list is historical. This addendum resolves the two finite Source definitions, seven Provider definitions and finite table column/CHECK inventory; current row values, table ACL/RLS, exact binary helper qualification and final adapter/SQL patch are still not supplied as execution proof.",
+  "finalBoundedConclusion": {
+    "direction": "Proceed to one exact local SQL/adapter candidate package on the stated Source seams; this is preparation direction, not install/execute approval.",
+    "confirmedSourceLimits": [
+      "66232 has no literal QA Actor/Trip, Nov1 deadline or fixed Source/image profile. Its finite row binds the complete stored tuple/input hash and clocks; PDF normalization is absent.",
+      "66234 has the confirmed PNG total Run-input-count1 rejection and the PDF provenance f4/Trip825 special case. No additional fixed Actor/Trip/time literal was found in these two supplied bodies. Current input validity, real PNG facts, retained Source/revision and representation material checks must remain."
+    ],
+    "confirmedProviderLiterals": [
+      "66333 requires exact universal_import_expected_profile(), UNIVERSAL_IMPORT_V1/OTR_TYPED_V1 binding, consumer import/1, max_attempts1, DEV/EXTRACT/OUTBOUND_MODEL, DeepSeek/deepseek-flash/DeepSeek-V4.1-Flash, finite actual request/model-binding identity, live deadline, DISJOINT token price units and cost ceilings. These are actual frozen registration constraints, not new permission; they may not be loosened to make mixed pass.",
+      "No direct hardcoded QA Actor/Trip, Nov1 expiry or Source-format whitelist was found in supplied66332/333/337/338/339. Their delegated Source/profile/CP14 helpers are not hereby proven eligible."
+    ],
+    "minimalSinglePackage": "Exact-batch lookup + finite PDF ORIGINAL-to-DERIVED normalization + exact-scope66234 mixed-PNG/provenance qualification, preserving all Actor/current Source/proof locks and IDs. Provider selection is trusted immutable inert metadata plus explicit seven-tuple; actual reserve/dispatch continue through the existing finite scope binding. No change to actor-wide sustained policy, P-family Core guards, roles/GRANT or scope CHECK ceilings.",
+    "unknownOnlyForFocusedCandidateTest": [
+      "Actual trip_source_lock_universal_actor/trip_import_input_valid plus PNG facts/proof and PDF material/seal/custody helpers may have additional scope/profile/current-row restrictions. Their precise relevant preimages and one exact mixed local qualification test must settle those; do not infer compatibility from names or substitute true stubs.",
+      "Actual universal_import_expected_profile/universal_import_lock_actor/cp14_call_admission and current config/model/price registration plus original-call/concurrency state must qualify unchanged in that same bounded package. No recursive whole-graph review or new eligibility issuer is proposed."
+    ],
+    "finiteWindow": "Both actual tables enforce at most15min. Use the intersection with Owner <=30min and absolute17:30NZDT; no CHECK change or unapproved renewal."
+  }
+}
