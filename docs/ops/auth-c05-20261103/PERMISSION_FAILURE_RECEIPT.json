@@ -1,0 +1,13 @@
+{
+  "status": "ACTUAL_LOCAL_CONTRACT_FAIL",
+  "mainCommit": "f15ff0ab9962ef83d89c9bd8d705f3dd71f5b511",
+  "coreSource": "src/domain/trip/tripCoreV2Mutation.ts",
+  "coreSourceSHA256": "53e0d6ab46023b3eca396f7c1113fd73cc0bf5d58b3bdb249daee5a001af7b7f",
+  "sourceEqualsPinnedMain": true,
+  "failedContractCases": 2,
+  "passedControls": 2,
+  "owningCoreModified": false,
+  "hostedInvoked": false,
+  "serverExploitProven": false,
+  "nextAction": "Core unique Writer repairs registered non-Everyone rule using owning Everyone/Creator authority, then owning command/PG/server negatives; do not equate GROUP visibility with Everyone participation"
+}

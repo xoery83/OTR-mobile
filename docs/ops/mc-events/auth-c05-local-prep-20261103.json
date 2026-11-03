@@ -1,0 +1,18 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c05-local-prep-started-20261103-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C05",
+      "execution_slice_id": "AUTH-C05:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-03T00:04:04.731141+00:00",
+      "actual_started_at": "2026-11-03T00:04:04.731141+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-c05-permission-negative-prep",
+      "summary": "Started exact current-main non-Everyone permission negative fixture and existing cache/session port handoff, no Core owning file or Hosted changes",
+      "next_action": "Hand actual non-Everyone failure and formal revoke consumer gaps to Core unique Writer"
+    }
+  ]
+}

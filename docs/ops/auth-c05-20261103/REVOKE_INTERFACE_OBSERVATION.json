@@ -1,0 +1,18 @@
+{
+  "status": "SOURCE_INTERFACE_READ_NOT_RUNTIME_QUALIFIED",
+  "sourceCommit": "64f3a196",
+  "sourceSHA256": "307f8096b5b6c58e384664f6735c28e38e9ffb05a2bebe9e987858fd569d4a40",
+  "sourcePath": "backend/src/tripMemberRevokeAuthority.ts",
+  "existingBindingReference": true,
+  "inventedMembershipId": false,
+  "participationRevisionIsAuthority": false,
+  "missing": [
+    "PG/receipt persistence/HTTP runtime",
+    "all applicable general access denial",
+    "qualified target preparation port for Native",
+    "neutral Native schema export",
+    "qualified denial-to-cache observation"
+  ],
+  "testsRepeated": false,
+  "hostedInvoked": false
+}

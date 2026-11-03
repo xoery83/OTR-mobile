@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 /Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical
+
+ ❯ backend/src/.auth-c05-non-everyone-1b06a66a-5d92-4869-9cc1-cd8a534454fc.test.ts (4 tests | 2 failed) 4ms
+   × management role cannot edit another creator's non-Everyone Item with GROUP visibility 3ms
+   × management role cannot edit another creator's non-Everyone Item with SELECTED_PERSONS visibility 0ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  13:04:46
+   Duration  229ms (transform 76ms, setup 0ms, import 146ms, tests 4ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  backend/src/.auth-c05-non-everyone-1b06a66a-5d92-4869-9cc1-cd8a534454fc.test.ts > management role cannot edit another creator's non-Everyone Item with GROUP visibility
+ FAIL  backend/src/.auth-c05-non-everyone-1b06a66a-5d92-4869-9cc1-cd8a534454fc.test.ts > management role cannot edit another creator's non-Everyone Item with SELECTED_PERSONS visibility
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ backend/src/.auth-c05-non-everyone-1b06a66a-5d92-4869-9cc1-cd8a534454fc.test.ts:10:49
+      8|  const item={...row,visibility};
+      9|  expect(coreCanRead(graph,actor,"ITEM",item)).toBe(true);
+     10|  expect(coreCanManage(graph,actor,"ITEM",item)).toBe(false);
+       |                                                 ^
+     11| });
+     12| it("retains own creator edit control",()=>{expect(coreCanManage(emptyC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
