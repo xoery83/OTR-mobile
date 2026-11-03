@@ -1,0 +1,22 @@
+{
+  "status": "BLOCKED_TWO_QUALIFICATION_GAPS",
+  "candidate": "974958c39cfee2ebd6c41fb1be3f433e3f3a553f",
+  "sourceSHA256": "7eb034ff99159171cb856a2e4a95a1addb0567ba4d990a8ed8f52f3820bdb7b6",
+  "independentNegativeTests": {
+    "expectedDenied": 2,
+    "actualIncorrectQualification": 2
+  },
+  "findings": [
+    {
+      "code": "ACTIVE_TIMER_NOT_DEADLINE_OR_COMMAND_BINDING",
+      "detail": "verify_timers checks ActiveState and local timer.json but never actual timer deadline/close ExecStart. Active timer metadata drift is undetected."
+    },
+    {
+      "code": "STOPPED_CONTAINER_STALE_HEALTH_QUALIFIES",
+      "detail": "qualify_recovery checks health but not State.Running; stopped candidate with retained healthy value qualifies."
+    }
+  ],
+  "resolution": "Root sole Writer notified; minimal guard changes and focused regression requested. No authority activation.",
+  "gateScopeReview": "b710 draft fixed recovery-only domain scope accepted conditionally; controller defects block qualification; draft not approved",
+  "externalIO": "None; copied fixed candidate/dependencies and in-memory Docker/systemd fixtures only"
+}

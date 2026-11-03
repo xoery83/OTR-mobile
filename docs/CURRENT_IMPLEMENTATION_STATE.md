@@ -145,3 +145,10 @@ reviewed: guard17/new mode2/additional escape+unfinished2 PASS; Auth entry exact
 See startup-forwarding-failure/ROOT_RECOVERY_ONLY_REVIEW.json. Default-closed software
 integration may proceed; actual fresh plan/CAS/timers/qualifyRecoveryWindow and exact
 new execution approval remain required. No new Hosted request or OTP occurred.
+
+Follow-up controller974958c3 Review found two real qualification gaps (2 isolated
+negative repros incorrectly qualified): actual timer deadline/close-command drift
+is not checked; stopped containers with stale healthy values pass. Root is repairing
+only these guards. See CONTROLLER_974_REVIEW.json and negative repro/output in the
+same evidence directory. These findings concern new qualification, not prior
+recovery-only port Review. Gate draft scope conditionally accepted, not authorized.

@@ -1,0 +1,23 @@
+import unittest
+from unittest.mock import patch
+from test_runtime import Controller,r,CANDIDATE
+class Negative(Controller):
+ def prepare_recovery(self):
+  self.p['executionMode']='RECOVERY_ONLY'
+  self.p['qaCase']['closesAt']='2030-01-01T00:15:00Z'
+  state=self.ready();r.start(self.p,state,'9'*64);return state
+ def test_stopped_health_stale_must_not_qualify(self):
+  state=self.prepare_recovery()
+  self.f.containers[CANDIDATE]['State'].update(Running=False,Status='exited')
+  with self.assertRaises(AssertionError):r.qualify_recovery(self.p,state,'9'*64)
+ def test_active_wrong_timer_metadata_must_not_qualify(self):
+  state=self.prepare_recovery(); original=self.f.call
+  def drift(args,input=None):
+   if args[:2]==['systemctl','show'] and '--property=ActiveState' not in args:
+    return 'WRONG_DEADLINE_WRONG_CLOSE_PLAN'
+   return original(args,input)
+  with patch.object(r,'call',side_effect=drift):
+   with self.assertRaises(AssertionError):r.qualify_recovery(self.p,state,'9'*64)
+s=unittest.TestSuite(Negative(n) for n in ['test_stopped_health_stale_must_not_qualify','test_active_wrong_timer_metadata_must_not_qualify'])
+r=unittest.TextTestRunner(verbosity=2).run(s)
+raise SystemExit(not r.wasSuccessful())
