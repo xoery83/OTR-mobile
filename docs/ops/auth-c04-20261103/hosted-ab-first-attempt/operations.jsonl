@@ -1,0 +1,2 @@
+{"phase":"ORIGINAL_COMMAND_RETAINED","actorAccountId":"26876e6e-a919-457d-bc00-78d76ba08043","command":{"kind":"ISSUE_TARGETED_INVITE","operationId":"b3299bda-8939-4e49-8377-338f8e619869","tripId":"fb2f0820-e429-404a-b4dd-7adcad814e45","personId":"bcd1d48e-a9f7-445a-911b-0452ff8dc55a","target":{"kind":"REGISTERED_ACCOUNT","accountId":"1f3d7935-1bdc-4952-8d7f-0f72077368c1"}},"intentDigest":"27da9414669e8ecd83c826d39438c09f2ad9049bfcfcb829c6b300975164e7d1"}
+{"phase":"UNKNOWN_RECOVERY_ONLY","operationId":"b3299bda-8939-4e49-8377-338f8e619869"}

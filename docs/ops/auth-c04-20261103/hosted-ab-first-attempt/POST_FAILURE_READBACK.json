@@ -1,0 +1,13 @@
+{
+  "status": "POST_FAILURE_ORIGINAL_RECEIPT_OBSERVATION_ONLY",
+  "observedAt": "2026-11-03T04:11:36.096681+00:00",
+  "querySHA256": "ac6f82f170b86d58a23b2637fdcaf0ce3e141a4e15c9057a42d18b9d6530dab2",
+  "result": {
+    "claimReceiptCount": 0,
+    "directedInvitesCount": 0,
+    "issueReceipt": null,
+    "targetUnlinked": true
+  },
+  "interpretation": "No retry/replay/NoCommit inference; absent receipt stays unconfirmed",
+  "businessWrites": 0
+}

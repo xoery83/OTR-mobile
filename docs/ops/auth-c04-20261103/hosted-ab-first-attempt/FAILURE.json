@@ -1,0 +1,9 @@
+{
+  "status": "STOPPED_NO_AUTOMATIC_RETRY",
+  "error": {
+    "kind": null,
+    "status": null,
+    "code": "REGISTERED_HOST_ACTION_FAILED"
+  },
+  "observedAt": "2026-11-03T04:07:51.493Z"
+}

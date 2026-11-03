@@ -1,0 +1,12 @@
+{
+  "status": "NORMAL_AUTH_RESOURCES_READY_WAITING_ROOT_HEALTHY_ACTIVE",
+  "gateSHA256": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+  "pid": 76318,
+  "observedAt": "2026-11-03T04:03:48.827Z",
+  "publicDevConfigurationValidated": true,
+  "dedicatedReceivingCredentialInMemory": true,
+  "normalSessionsCreated": 0,
+  "otpSent": 0,
+  "businessWrites": 0,
+  "sendingQuota": "UNKNOWN_FAIL_CLOSED"
+}

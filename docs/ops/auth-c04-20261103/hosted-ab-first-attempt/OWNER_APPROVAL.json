@@ -1,0 +1,14 @@
+{
+  "status": "DIRECT_OWNER_APPROVAL_VERIFIED_FROM_ROOT_CHAT",
+  "gateSHA256": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+  "gateCommit": "d28e777f",
+  "sourceThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "sourceTurn": "01a19f6f-4fe4-7e82-b4cd-045754b764a5",
+  "sourceMessage": "01a19f85-7091-7053-9871-bc2e844a75e5",
+  "content": [
+    {
+      "type": "text",
+      "text": "<send_user_message_question_reply>\n[{\"questionItemId\":\"[\\\"request_user_input_async\\\",\\\"call_7bb3294113e840baa76c887412aaa16f\\\",0]\",\"question\":\"是否批准 AUTH_C04_FINITE_AB_GATE：仅原 DEV 合成 QA Trip fb2f0820…，Account A 26876e6e… 向既定 Account B 1f3d7935… 为 Person bcd1d48e… 发送一次定向邀请（原 ISSUE operation b3299bda…），B 明确同意后用原 CLAIM operation 4028b673… 加入？窗口最多30分钟、邀请最多10分钟；各账号最多一次正常 OTP，限流即停；独立回执与 A/B Reader 核对，确认成功后仅一次同 operation 幂等检查，UNKNOWN 只查询原回执。Root 在启动前 fresh CAS、先 arm 并核对绝对截止 timer，结束或失败恢复健康默认关闭容器。无新 SQL/RLS/GRANT/角色、Member Revoke、Native 操作或其他 Account/Trip。精确 Gate 已固定于 d28e777f（SHA713a7b92…）并独立 Review；本次单独确认是因为先前指令明确不授权新的 Hosted 业务写入。\",\"answer\":\"批准这一次精确 A/B 业务 Gate\"}]\n</send_user_message_question_reply>\n"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "goldenSlice": "FAIL_AT_FIRST_ISSUE_HTTP_503",
+  "gateCommit": "d28e777f",
+  "gateSHA256": "713a7b922ba0ba15f6c09945814c7b551ed276ade35a9acf98992234f955988f",
+  "candidateId": "4dc9cd04de06c975e8128701475d68b36166dc4220dd219eb0e3386f81dcf7db",
+  "rootWindow": {
+    "opensAt": "2026-11-03T04:04:35Z",
+    "inviteExpiresAt": "2026-11-03T04:14:35Z",
+    "closesAt": "2026-11-03T04:34:35Z",
+    "actualEarlyClose": "Root original receipt now received at ROOT_ACTUAL_WINDOW_RECEIPT.json (commit f1c4410a): verified healthy retained default, selector absent, timer disarmed"
+  },
+  "actualNormalAuth": {
+    "A": {
+      "otpRequests": 1,
+      "received": true,
+      "verifiedUserIdentity": true,
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+    },
+    "B": {
+      "otpRequests": 1,
+      "received": true,
+      "verifiedUserIdentity": true,
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+    },
+    "secretsOrCodeOrSessionCopied": false,
+    "quotaFailureObserved": false
+  },
+  "firstFailure": {
+    "at": "2026-11-03T04:07:49.424Z",
+    "method": "POST",
+    "route": "/v2/trips/:id/member-claim-operations",
+    "operationId": "b3299bda-8939-4e49-8377-338f8e619869",
+    "intentDigest": "27da9414669e8ecd83c826d39438c09f2ad9049bfcfcb829c6b300975164e7d1",
+    "status": 503,
+    "clientStage": "READ",
+    "backendErrorCode": "NOT_RETAINED_BY_CURRENT_CLIENT_WHITELIST",
+    "rootCause": "NOT_YET_PROVEN"
+  },
+  "recovery": {
+    "originalOperationReadOnlyHttpAttempts": 1,
+    "status": 503,
+    "at": "2026-11-03T04:07:50.855Z",
+    "executeReplayed": false,
+    "newOperationAllocated": false,
+    "originalOutcome": "UNKNOWN_RETAINED"
+  },
+  "notRun": [
+    "CLAIM",
+    "Confirmed duplicate",
+    "Member Read",
+    "Private Item negative",
+    "Member Revoke",
+    "Native Cold Restore"
+  ],
+  "postFailureObservation": {
+    "status": "POST_FAILURE_ORIGINAL_RECEIPT_OBSERVATION_ONLY",
+    "observedAt": "2026-11-03T04:11:36.096681+00:00",
+    "querySHA256": "ac6f82f170b86d58a23b2637fdcaf0ce3e141a4e15c9057a42d18b9d6530dab2",
+    "result": {
+      "claimReceiptCount": 0,
+      "directedInvitesCount": 0,
+      "issueReceipt": null,
+      "targetUnlinked": true
+    },
+    "interpretation": "No retry/replay/NoCommit inference; absent receipt stays unconfirmed",
+    "businessWrites": 0
+  },
+  "retention": {
+    "operatorSourceSHA256": "d9f78c2e057a2e19fe03bcfbb3861f71d9f517c06224eb46e338a2bac2ef20d0",
+    "queryBridgeSHA256": "2d8380c9792a1a2568094bf65272829a36f00a6728e62b7604523478e0256fad",
+    "pins": {
+      "OWNER_APPROVAL.json": "290b13ca2878bdd3964fb3a4feba56599d5f20530430d8a5760ef612fc68dd7d",
+      "FRESH_PREFLIGHT.json": "26903afa780a1d799bd6e69b0d7a47302fe88cd210c169a54388e3ce99bdb581",
+      "EFFECTIVE_OWNER_READONLY.json": "a523adf7c367c3734b12d73c0bd6c7dc17cf92129f6c63776c1d5da9754eee69",
+      "READY.json": "91dcc6d3ec0e417349200dd910ddd09eb71da53ffefb6307ed4b10b751611e17",
+      "ROOT_ACTIVE.json": "ed1e980b126b7cc4edea0b283f2c5f8df8b04b07f5a5e2c56a94141f43ab2b71",
+      "LIVE_PREFLIGHT.json": "beb4c493a7306757b84f28a6512451b7e18567de3d60edbf6f067d3fb0dc0eb6",
+      "POST_FAILURE_READBACK.json": "2771b94c00b37328ebf42e13564492f83a95a147402f449bdafb1d4c897e2531",
+      "FAILURE.json": "587f171681664cae269174dcd45947fe94d0dcc16e52dcf40ffcbabf7988e329",
+      "operations.jsonl": "4695d98864ba542d8d0f105df3b27c64ee7fed602b6b90e5ecb1ba8ce5a87d04",
+      "auth-A.jsonl": "da21737b25c6fa48e9675c4c50a9e53039fe112336e90232de4a2f84696c37ef",
+      "auth-B.jsonl": "23a4d7c8a98ea983f68b844a7a9c82a4558d38e0ff3bc47c0416d7ac29e3f5f2",
+      "business-failure.jsonl": "ba7e701802614558909d6e712f77c7205a1cbe81f3fb67f2eea6024ae712f1a9"
+    }
+  },
+  "nextAction": "Default-closed owning HTTP/PG stage+SQLSTATE diagnostics candidate under focused review; no proof of root cause/fix and no further business window authorized",
+  "betaAcceptance": false,
+  "rootCloseEvidence": {
+    "sourceCommit": "f1c4410a",
+    "path": "ROOT_ACTUAL_WINDOW_RECEIPT.json",
+    "sha256": "17f7bd1d329eec150968fa202c67c881763a00f4f649f85c09087280ee8e8db2",
+    "authArtifactVerification": "Auth directly read exact Git blob and matched Gate, candidate and healthy restored default/selectorAbsent; Root performed actual independent Host readback",
+    "actualResult": "HOST_CLOSED_BUSINESS_E2E_FAILED"
+  },
+  "rootBoundedDiagnosis": "Host network/URL/selector matched; no selection-closed marker; v3 mount and gateway schema/function permissions matched. Does not isolate missing port versus actual PG/authority failure."
+}

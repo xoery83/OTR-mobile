@@ -1,0 +1,20 @@
+{
+  "status": "LIVE_FIXED_CASE_TEN_FIELDS_AND_EFFECTIVE_OWNER_PASS",
+  "observedAt": "2026-11-03T04:07:47.519Z",
+  "counts": {
+    "tripOwnedByA": true,
+    "ownerPersonLinkedToA": true,
+    "targetNeverLinked": true,
+    "bLinkedPeople": 0,
+    "originalReceipts": 0,
+    "directedInvites": 0,
+    "targetPaymentRecords": 0,
+    "targetPaymentGrants": 0,
+    "removedAccounts": 0,
+    "claimFunctionPresent": true
+  },
+  "effectiveOwner": {
+    "effectiveLinkedOwner": true,
+    "removedMarkerAbsent": true
+  }
+}
