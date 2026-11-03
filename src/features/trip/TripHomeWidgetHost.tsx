@@ -30,7 +30,14 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
     if (width) scroll.current?.scrollTo({ x: index * width, animated: false });
   }, [index, width]);
   if (!widgets.length)
-    return <UiText style={styles.fallback}>{t("tripHome.noQualifiedWork")}</UiText>;
+    return (
+      <View style={styles.page}>
+        <UiText accessibilityRole="header" style={styles.emptyTitle}>
+          {t("tripHome.emptyTitle")}
+        </UiText>
+        <UiText style={styles.fallback}>{t("tripHome.noQualifiedWork")}</UiText>
+      </View>
+    );
   if (widgets.length === 1) return <View style={styles.page}>{widgets[0].content}</View>;
   const measured = currentId ? sizes[currentId] : undefined;
   const pageHeight =
@@ -115,6 +122,11 @@ const createStyles = (colors: UiColors) =>
       padding: visual.space.page,
       backgroundColor: colors.surface,
       borderRadius: visual.radius.hero,
+    },
+    emptyTitle: {
+      ...visual.type.section,
+      color: colors.textPrimary,
+      marginBottom: visual.space.heading,
     },
     fallback: { ...visual.type.row, color: colors.textSecondary },
   });

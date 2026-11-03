@@ -1,0 +1,9 @@
+{
+  "status": "NO_BLOCKER_AFTER_GUEST_LIST_SCOPE_FIX",
+  "reviewer": "apple_place_provider_diagnosis",
+  "originalFinding": "Failed Guest LIST refresh could preserve previous principal after the old fence rejected current identity",
+  "repair": "Re-read current Principal/Session, then alive/generation/request guards; preserve only same verified scope",
+  "regression": "Two exact LIST Guest-to-Guest/Account cases RED then GREEN",
+  "parentChecks": "5 suites /180 PASS; UI guard PASS; scoped product typecheck PASS; scoped lint0 errors with15 existing test import-order warnings",
+  "notClaimed": "No device/Owner UX/Hosted/Provider acceptance"
+}

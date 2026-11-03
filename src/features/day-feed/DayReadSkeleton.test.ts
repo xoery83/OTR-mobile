@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { createRequire } from "node:module";
 import { expect, it, vi } from "vitest";
 import { DayReadSkeleton } from "./DayReadSkeleton";
+import { MyTripsListSkeleton } from "./MyTripsListSkeleton";
 import { darkPalette, lightPalette } from "@/ui/palette";
 const state = vi.hoisted(() => ({ colors: {} as any, nodes: [] as any[] }));
 vi.mock("react-native", () => ({
@@ -36,5 +37,18 @@ it.each([lightPalette, darkPalette])(
           n.style.some((s: any) => s?.backgroundColor === colors.controlTrack),
       ),
     ).toBe(true);
+  },
+);
+
+it.each([lightPalette, darkPalette])(
+  "renders two noninteractive list placeholders before local data",
+  (colors) => {
+    state.colors = colors;
+    state.nodes = [];
+    const html = renderToStaticMarkup(createElement(MyTripsListSkeleton));
+    expect(state.nodes.some((n) => n.testID === "my-trips-list-skeleton")).toBe(true);
+    expect(state.nodes.filter((n) => n.testID === "day-widget-skeleton")).toHaveLength(2);
+    expect(state.nodes.some((n) => n.onPress)).toBe(false);
+    expect(html).not.toContain("dayFeed.loading");
   },
 );

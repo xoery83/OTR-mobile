@@ -48,6 +48,9 @@ import {
   getAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
+vi.mock("./MyTripsListSkeleton", () => ({
+  MyTripsListSkeleton: () => createElement("div", { "data-my-trips-skeleton": true }),
+}));
 import { router } from "expo-router";
 vi.mock("@/features/ledger/CurrencySettingsScreen", () => ({
   CurrencySettingsScreen: (props: any) => {
@@ -2110,5 +2113,76 @@ it.each([null, "2026-10-01"])(
     expect(state.nodes.find((n) => n.tripList)?.tripList.trips).toEqual([committed]);
     expect(repo.listTrips).toHaveBeenCalledTimes(2);
     expect(repo.updateMetadata).not.toHaveBeenCalled();
+  },
+);
+
+it("shows list skeleton before the first local read, not loading copy or an empty list", async () => {
+  state.repo.mockImplementation(() => new Promise(() => {}));
+  const html = render();
+  expect(html).toContain("data-my-trips-skeleton");
+  expect(html).not.toContain("dayFeed.loading");
+  expect(state.nodes.some((n) => n.tripList)).toBe(false);
+});
+
+it("recovers a failed first list read with an explicit retry", async () => {
+  state.repo.mockRejectedValueOnce(Error("READ_FAILED"));
+  render();
+  await flush();
+  let html = render();
+  expect(html).toContain("myTrips.loadFailed");
+  expect(html).not.toContain("data-my-trips-skeleton");
+  state.repo.mockResolvedValue(repository([trip("retry-trip", "Recovered trip")]));
+  button("common.tryAgain").onPress();
+  expect(render()).toContain("data-my-trips-skeleton");
+  await flush();
+  html = render();
+  expect(html).toContain("Recovered trip");
+  expect(html).not.toContain("myTrips.loadFailed");
+});
+
+it("keeps the same Account list on refresh failure with separate recovery", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "ACCOUNT",
+    accountId: "10000000-0000-4000-8000-000000000001",
+  });
+  state.repo.mockResolvedValue(repository([trip("kept-trip", "Existing trip")]));
+  render();
+  await flush();
+  expect(render()).toContain("Existing trip");
+  state.repo.mockRejectedValue(Error("READ_FAILED"));
+  state.foreground!("active");
+  await flush();
+  const html = render();
+  expect(html).toContain("Existing trip");
+  expect(html).toContain("myTrips.loadFailed");
+  expect(button("common.tryAgain")).toBeTruthy();
+});
+
+it.each(["Guest", "Account"])(
+  "does not retain the old Guest list after a failed read detects another %s",
+  async (next) => {
+    const principal = {
+      kind: "GUEST" as const,
+      localId: "00000000-0000-4000-8000-000000000001",
+    };
+    vi.mocked(readLocalTripPrincipal).mockResolvedValue(principal);
+    vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+    state.repo.mockResolvedValue(
+      repository([trip("guest-list", "Private old Guest trip")]),
+    );
+    render();
+    await flush();
+    expect(render()).toContain("Private old Guest trip");
+    state.repo.mockImplementation(async () => {
+      vi.mocked(readLocalTripPrincipal).mockResolvedValue(
+        next === "Guest"
+          ? { ...principal, localId: "00000000-0000-4000-8000-000000000002" }
+          : { kind: "ACCOUNT", accountId: "account-b" },
+      );
+      throw Error("GUEST_INVENTORY_FROZEN");
+    });
+    state.foreground!("active");
+    await flush();
+    expect(render()).not.toContain("Private old Guest trip");
   },
 );

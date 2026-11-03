@@ -73,6 +73,7 @@ import { visual } from "@/ui/visual";
 import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
+import { MyTripsListSkeleton } from "./MyTripsListSkeleton";
 import { calendarDate } from "./TripCalendarField";
 import { TripBasicEditor } from "./TripBasicEditor";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
@@ -225,6 +226,7 @@ function LocalTripContent({
     [error, setError] = useState(false);
   const [menuMembersTrip, setMenuMembersTrip] = useState<string | null>(null);
   const loadedGuest = useRef<string | null>(null);
+  const loadedListScope = useRef<string | null>(null);
   const request = useRef(0),
     busy = useRef(false),
     tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() });
@@ -364,6 +366,8 @@ function LocalTripContent({
     const captured = generation,
       ticket = ++request.current;
     let guestLocalId: string | null = null;
+    let principalScope: string | null = null;
+    setStatus((previous) => (previous === "UNAVAILABLE" ? "LOADING" : previous));
     try {
       const session = await readCommittedLocalSession();
       const principal = await readLocalTripPrincipal();
@@ -375,6 +379,12 @@ function LocalTripContent({
         return;
       const isGuest = principal?.kind === "GUEST";
       guestLocalId = isGuest ? principal.localId : null;
+      principalScope = isGuest
+        ? `GUEST:${principal.localId}`
+        : principal?.kind === "ACCOUNT" &&
+            session?.identity?.userId === principal.accountId
+          ? `ACCOUNT:${principal.accountId}`
+          : null;
       setGuest(isGuest);
       if (!session?.identity && !isGuest) {
         setMetadataEditable(false);
@@ -417,6 +427,7 @@ function LocalTripContent({
       )
         return;
       loadedGuest.current = guestLocalId;
+      loadedListScope.current = principalScope;
       setMetadataEditable(canEditMetadata);
       setTrips(list);
       setRemoteTrips(
@@ -497,7 +508,37 @@ function LocalTripContent({
         ticket !== request.current
       )
         return;
+      // A failed refresh must not erase a previously read list for this same principal.
+      if (
+        !tripId &&
+        mode === "LIST" &&
+        principalScope &&
+        loadedListScope.current === principalScope
+      ) {
+        const [currentPrincipal, currentSession] = await Promise.all([
+          readLocalTripPrincipal().catch(() => null),
+          readCommittedLocalSession().catch(() => null),
+        ]);
+        if (
+          !alive.current ||
+          captured !== getAccountGeneration() ||
+          ticket !== request.current
+        )
+          return;
+        const currentScope =
+          currentPrincipal?.kind === "GUEST"
+            ? `GUEST:${currentPrincipal.localId}`
+            : currentPrincipal?.kind === "ACCOUNT" &&
+                currentSession?.identity?.userId === currentPrincipal.accountId
+              ? `ACCOUNT:${currentPrincipal.accountId}`
+              : null;
+        if (currentScope === principalScope) {
+          setStatus("UNAVAILABLE");
+          return;
+        }
+      }
       loadedGuest.current = null;
+      loadedListScope.current = null;
       setTrips([]);
       setRemoteTrips([]);
       setSelected(null);
@@ -506,7 +547,7 @@ function LocalTripContent({
       setStatus("UNAVAILABLE");
       onKnownTrip("NONE");
     }
-  }, [tripId, onKnownTrip, generation]);
+  }, [tripId, mode, onKnownTrip, generation]);
   useFocusEffect(
     useCallback(() => {
       // Retained My Trips must reread durable edits when navigation returns.
@@ -1336,21 +1377,33 @@ function LocalTripContent({
           ) : null}
         </>
       ) : mode === "LIST" ? (
-        status === "READY" ? (
-          <MyTripsList
-            trips={trips}
-            remoteTrips={remoteTrips}
-            today={calendarDate(new Date())}
-            eligibleToday={eligibleToday}
-            onOpen={onOpen}
-            onOpenToday={(id) => void openToday(id)}
-            onCreate={onCreate}
-          />
-        ) : (
-          <Text style={styles.status}>
-            {t(status === "LOADING" ? "dayFeed.loading" : "tripCreate.unavailable")}
-          </Text>
-        )
+        <>
+          {status === "UNAVAILABLE" ? (
+            <View>
+              <Text accessibilityRole="alert" style={styles.status}>
+                {t("myTrips.loadFailed")}
+              </Text>
+              <UiButton
+                label={t("common.tryAgain")}
+                variant="text"
+                onPress={() => void load()}
+              />
+            </View>
+          ) : null}
+          {status === "READY" || trips.length || remoteTrips.length ? (
+            <MyTripsList
+              trips={trips}
+              remoteTrips={remoteTrips}
+              today={calendarDate(new Date())}
+              eligibleToday={eligibleToday}
+              onOpen={onOpen}
+              onOpenToday={(id) => void openToday(id)}
+              onCreate={onCreate}
+            />
+          ) : status === "LOADING" ? (
+            <MyTripsListSkeleton />
+          ) : null}
+        </>
       ) : (
         <>
           <MyTripsList

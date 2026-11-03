@@ -1579,7 +1579,7 @@ function TripContent({
           )}
         </Text>
       ) : null}
-      {!hideHomePrelude && status === "LOADING" ? (
+      {!isMyTrips && !hideHomePrelude && status === "LOADING" ? (
         <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
       ) : null}
       {!hideHomePrelude &&

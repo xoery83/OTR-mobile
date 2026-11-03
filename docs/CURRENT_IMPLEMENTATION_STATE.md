@@ -873,3 +873,8 @@ Auth receipt directory: `docs/ops/auth-phase2-20261028/`. Start with
 `GUEST_B_SOURCE_MAIN_INTEGRATION.json`, `GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json`,
 `GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json`, `GUEST_B_PROVISIONAL_TRANSPORT_REVIEW.json`
 and `GUEST_B_ATOMIC_PORT_CANDIDATE.md`; prior detailed state is preserved in Git.
+
+## Native Vision round1 isolated integration — 3 November 2026
+
+Reviewed d220f1df adds quiet MyTrips local-loading placeholders and compact empty
+Trip Home guidance. No schema/Hosted change or final-main device/Owner acceptance.

@@ -91,11 +91,12 @@ const render = (widgets: any[]) => {
   state.effects.forEach((fn) => fn());
   return html;
 };
-it("has a plain truthful zero-widget fallback without tags, pager or invented modules", () => {
+it("has a compact product empty state without tags, pager or invented modules", () => {
   const html = render([]);
+  expect(html).toContain("tripHome.emptyTitle");
   expect(html).toContain("tripHome.noQualifiedWork");
   expect(html).not.toContain("button");
-  expect(state.nodes).toHaveLength(0);
+  expect(state.nodes.some((node) => node.onPress)).toBe(false);
   expect(state.scrollTo).not.toHaveBeenCalled();
 });
 it("renders one widget directly without a selector or a pager", () => {

@@ -1,0 +1,11 @@
+{
+  "status": "PASS_SYNTHETIC_DISK_REOPEN_ONLY",
+  "candidateRegistry": 75,
+  "beforeActualSchema": 77,
+  "afterActualSchema": 77,
+  "allSchemaDefinitionsAndMigrationRowsUnchanged": true,
+  "syntheticTripAndUnicodeProfileUnchanged": true,
+  "snapshotSha256": "7e32b4b4d3c4cae816d8077358eee18197434409cf1dcb7ae6ace7e6cc590baa",
+  "deviceDatabaseUsed": false,
+  "sessionCopied": false
+}
