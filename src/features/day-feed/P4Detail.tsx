@@ -139,7 +139,11 @@ export function P4Detail() {
         />
       </Stack.Toolbar>
       <NavigationContentFrame>
-        <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.root}
+          contentContainerStyle={styles.content}
+        >
           {visible ? (
             <RentalContent
               title={visible.presentation.title}

@@ -1,0 +1,21 @@
+{
+  "status": "LOCAL_REGRESSION_PASS_NOT_DEVICE",
+  "source_base": "956f69d4",
+  "request": "LC-C01-MIXED-NATIVE-20261104-01",
+  "failure": "Existing keyboardTapPolicy test RED identified exactly four Detail ScrollViews missing handled tap policy",
+  "change": "Only add keyboardShouldPersistTaps=handled to P1/P2/P3/P4 Details; no Reader, navigation, Save, Auth, Schema or Import modification",
+  "validation": {
+    "suites": 4,
+    "tests": 28,
+    "result": "PASS",
+    "ui_guard": "PASS 168 representative files",
+    "eslint": "PASS affected four files",
+    "diff_check": "PASS"
+  },
+  "device": "NOT_RUN; FormsQA claim/unsaved state not yet qualified",
+  "not_checked": [
+    "full repository typecheck",
+    "physical keyboard behavior",
+    "latest main integration"
+  ]
+}

@@ -110,7 +110,11 @@ export function P1Detail() {
         />
       </Stack.Toolbar>
       <NavigationContentFrame>
-        <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.root}
+          contentContainerStyle={styles.content}
+        >
           {visible ? (
             <P1Row
               {...visible.presentation}

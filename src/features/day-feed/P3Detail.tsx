@@ -172,7 +172,11 @@ export function P3Detail() {
         />
       </Stack.Toolbar>
       <NavigationContentFrame>
-        <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.root}
+          contentContainerStyle={styles.content}
+        >
           {visible ? (
             <StayReadView stay={presentation!} role={role} context={context} />
           ) : failed ? (
