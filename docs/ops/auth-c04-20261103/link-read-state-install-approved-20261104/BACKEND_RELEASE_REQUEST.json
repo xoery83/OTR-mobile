@@ -1,0 +1,63 @@
+{
+  "requestId": "AUTH-C04-CLOSED-BACKEND-20261104-01",
+  "sourcePackage": "AUTH-C04",
+  "businessDri": "Auth",
+  "sourceIntegrator": "Root1",
+  "hostedOpsOwner": "Root2",
+  "mainSHA": "59a5415d2458f82fe2998a12797d7d2ea5811de0",
+  "candidateSHA": "a16af0af510abb0eb377e1c0441a314084187310",
+  "createdAtUTC": "2026-11-03T19:25:24.084163+00:00",
+  "resource": "Existing DEV otr-dev-backend service; same deployment/rollback pipeline",
+  "reason": "The repaired SQL requires originalClaim operationId/intentDigest in internal link RPC; old software lacks these fields and must remain closed. Deploy reviewed software default-closed before any later lawful business QA.",
+  "productionFiles": {
+    "backend/src/tripMemberClaimAuthority.ts": "74efb447b943cedb0ac6b245b9d941acb9fae56fb60179fc0e80c7446b6922ff",
+    "backend/src/tripMemberClaimPg.ts": "61302c09796460e69822b08463f13a8952349d62c92fdc5035be8e2de951922e",
+    "backend/src/tripMemberClaimQa.ts": "259d4255d5ab91d11e9073bc47195ee371c73dfd09909eb4d9619544187182f5"
+  },
+  "softwareScope": [
+    "Existing server Claim authority passes validated original admission",
+    "Existing PG adapter serializes the admission into the same atomic link RPC",
+    "Existing finite QA guard checks matching original operation and digest"
+  ],
+  "publicHttpNativeDtoChanged": false,
+  "newDependencies": false,
+  "bootstrapOrNavigationChanged": false,
+  "schemaDependency": {
+    "requestId": "AUTH-C04-LINK-READSTATE-INSTALL-20261104-01",
+    "ownerGateSHA256": "4c718bc72be06f73ac1245c90d95a0def4d50cc7defef33668a9a14eb77e3a79",
+    "installSQLSHA256": "94ee6ccb53f61aa59abeb345e628f75107afac490dcbd6bf710b3c75eaf1ed1e",
+    "approved": true,
+    "sqlMayNotBeSubstitutedOrImplicitlyExecutedBySoftwareDeployment": true
+  },
+  "evidence": {
+    "coreReview": "59a5415d:docs/ops/auth-c04-20261103/link-read-state-context/FINAL_CORE_REVIEW.json",
+    "rootMainTests": "5suites72PASS",
+    "authUnitTests": "6suites69PASS8skip",
+    "authTypesAndScopedLint": "PASS",
+    "isolatedPg": "ExactguardRED\u2192GREEN,canonicalDigest,permissions/defaultACL,proofrollback,COMMITackloss,originalreceipt/duplicate and exactschemaRollback; fixture removed"
+  },
+  "currentPreimage": "Root2 must freeze actual healthy closed default AFTER MCPe0d1 restoration; earlier d5ed/3f02 is descriptive only, never permanentCAS",
+  "targetImageDigest": null,
+  "buildResponsibility": "Root2 builds/traces image from exact main using existing pipeline; no runtime/config expansion. Preserve unrelated frozen bundle/mount/env identities or report scoped drift.",
+  "configuration": "Keep all Auth/QA selectors closed, preserve current Console/OAuth/Issuer/Source/Provider state and existing secrets/mounts; no new feature flags or credentials",
+  "authorization": "Standing ordinary non-expanding DEV software deployment authorization; exact protected SQL separately approved; no authority for businessQA",
+  "qualificationBeforeMutation": [
+    "Existing e0d1 window closed and independently restored/cleaned; resource lock actually released",
+    "Fresh project/service/image/config/env/mount/file CAS; no conflicting protected operation",
+    "Traceable build/test/review and default-closed isolated smoke",
+    "Short exclusive Hosted mutation lock; preserve exact retained healthydefault for rollback"
+  ],
+  "healthChecks": "Existing internal/external health200; unauthenticated protected routes401; no OTP, Session, Provider or business mutation",
+  "independentReadback": "Actual image/bundle hashes, healthy service, closed Auth selectors and unchanged config/env/mount secrets fingerprints; confirm SQL/adapter compatibility without invoking link",
+  "rollback": "Root2 retains and restores exact previous healthy closed software image/config; SQL rollback only under independently approved fixedSQL+closed/drained preconditions, never undo businessdata",
+  "exitCondition": "Closed reviewedBackend actually deployed+independent readback, shared lock released; Auth returns to separately qualified business acceptance",
+  "notAuthorized": [
+    "New QA window",
+    "Old03e24 reuse",
+    "OriginalClaim4028 retry",
+    "Invitation extension or new invitation",
+    "OAuth/Provider expansion",
+    "Native device changes",
+    "Production"
+  ]
+}
