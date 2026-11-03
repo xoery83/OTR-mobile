@@ -1,0 +1,19 @@
+{
+  "request": "IMP-C01-FLASH-ALIAS-20261104-12",
+  "status": "LOCAL_PASS_SOURCE_AND_REGISTRATION_REVIEW_PENDING",
+  "officialSource": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "verifiedDateNZDT": "2026-11-04",
+  "requestedAlias": "deepseek-flash",
+  "officialReturnedVersion": "DeepSeek-V4.1-Flash-1017",
+  "delta": "Universal response decoder additionally accepts exactly current official returned identifier. Existing old exact IDs retained; unknown still rejected. Shared Flight conformance, requested alias, prompt, token caps, single-attempt behavior, SQL and runtime registrations untouched.",
+  "tests": "8Provider testsPASS incl currentversion response retain/settleonce and existing foreignversion rejection; strict2/eslint/diffPASS",
+  "peakUSDPerMillion": {
+    "cachedInput": 0.006,
+    "input": 0.3,
+    "output": 1.2
+  },
+  "conservativeTokenCeilingCostUSD": "0.0147456 for32768uncachedInput+4096output; not actualchargedfee, requiresvalidprice/tokenboundregistration",
+  "approvedTotalCapUSD": "0.05",
+  "providerCalls": 0,
+  "remaining": "Root1source review/integration; Root2 exact finite provider/model/price admission review, do not broaden sustained accountpolicy; onecall only afterREADY"
+}

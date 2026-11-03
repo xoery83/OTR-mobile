@@ -196,3 +196,16 @@ it("distinguishes custody retention failure without pretending settlement or sen
   expect(x.send).toHaveBeenCalledOnce();
   expect(x.custody.settle).not.toHaveBeenCalled();
 });
+
+it("accepts the current official Flash alias version with one retained and settled response", async () => {
+  const raw = JSON.parse(responseBytes.toString());
+  raw.model = "DeepSeek-V4.1-Flash-1017";
+  const x = provider(200, Buffer.from(JSON.stringify(raw)));
+  const result = await x.instance.interpret(input);
+  expect(result.output).toEqual(output);
+  expect(result.providerReceipt.outcome).toBe("SETTLED");
+  expect(x.send).toHaveBeenCalledOnce();
+  expect(x.custody.retainResponse).toHaveBeenCalledOnce();
+  expect(x.custody.settle).toHaveBeenCalledOnce();
+  expect(JSON.parse(x.send.mock.calls[0][0].body).model).toBe("deepseek-flash");
+});

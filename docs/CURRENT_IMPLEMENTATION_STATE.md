@@ -1,3 +1,7 @@
+## Universal exact Flash response version — 4 November 2026
+
+Reviewed `4fcfaea7` accepts only the current official `DeepSeek-V4.1-Flash-1017` as one additional Universal returned-model identifier. Requested alias, Flight conformance, prompt/caps/retry and execution qualifications remain unchanged. Eight focused provider tests/type/lint reused on exact files; official model page independently read. Source-only, no Provider call/registration/budget change. Receipt: `docs/ops/lane-c-imp-c01-reconciliation-20261103/FLASH_ALIAS_ROOT1_SOURCE_REVIEW.json`. Root2 runtime qualification remains separate.
+
 ## Root1 approved mixed QA metadata projection — 4 November 2026
 
 Reviewed `b6521dbd` exports only the exact approved three-input Batch metadata to QA cache from existing ShowDetails; no contents/filenames/credentials or new submission. QA marker and stale-current guards tested. Source-only; device export and Root2 tuple/runtime qualification remain pending. Receipt: `docs/ops/lane-c-imp-c01-reconciliation-20261103/MIXED_MANIFEST_ROOT1_SOURCE_REVIEW.json`. No Provider use or permission change.

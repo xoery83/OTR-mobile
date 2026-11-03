@@ -74,10 +74,12 @@ export function decodeUniversalDeepSeekResponse(
   }
   const parsed = completion.safeParse(raw);
   if (!parsed.success) throw new Error("UNIVERSAL_PROVIDER_COMPLETION_INVALID");
+  // Official alias version revalidated 2026-11-04: api-docs.deepseek.com/quick_start/pricing/.
   if (
     !(FLIGHT_MODEL_CONFORMANCE.accepted_returned_models as readonly string[]).includes(
       parsed.data.model,
-    )
+    ) &&
+    parsed.data.model !== "DeepSeek-V4.1-Flash-1017"
   )
     throw new Error("UNIVERSAL_PROVIDER_MODEL_UNRESOLVED");
   const usage = mapDeepSeekFlightUsage(parsed.data.usage);

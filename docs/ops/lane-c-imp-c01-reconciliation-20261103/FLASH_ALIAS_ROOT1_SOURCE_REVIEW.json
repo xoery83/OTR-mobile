@@ -1,0 +1,25 @@
+{
+  "request": "IMP-C01-FLASH-ALIAS-20261104-12",
+  "candidate": "4fcfaea7ebd7b945edded04bf4af5d59f6b7ab76",
+  "baseMain": "317d1c0a060a94388f2ec0f5a1d3e658c1a6b720",
+  "status": "SOURCE_REVIEW_NO_BLOCKER_RUNTIME_QUALIFICATION_SEPARATE",
+  "reviewer": "Root1 independent from Import author",
+  "officialVerification": {
+    "url": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "dateNZDT": "2026-11-04",
+    "requestedAlias": "deepseek-flash",
+    "returnedModel": "DeepSeek-V4.1-Flash-1017"
+  },
+  "scope": "Universal response decoder exact returned ID only; Flight shared conformance untouched; unknown still denied",
+  "validationReused": "8 provider tests PASS including single send/retain/settle and foreign model denial; strict2/eslint from exact candidate",
+  "fileSHA256": {
+    "backend/src/universalDeepSeekProvider.test.ts": "40b95b2e8425a5e382e549cc9fbb0e079c862c1994e679a501dbb6e49559b1b8",
+    "backend/src/universalDeepSeekProvider.ts": "cc9b4bd021870fb9fc64c7365e034a03ebc8b76f49601a3384f8c704c7b4165a",
+    "docs/ops/lane-c-imp-c01-reconciliation-20261103/FLASH_ALIAS_COMPATIBILITY_20261104.json": "8487f82af79ca39f557e72991db8dba74b16f64774b9b1ad8082a14a7f164a07"
+  },
+  "providerCalls": 0,
+  "registrationChanged": false,
+  "budgetChanged": false,
+  "hostedActions": 0,
+  "returnTo": "LaneC/Root2: independently qualify finite current model/price/token caps and actual prior-attempt/UNKNOWN state before any approved single call"
+}
