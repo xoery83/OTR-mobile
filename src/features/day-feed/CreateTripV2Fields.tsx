@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiText } from "@/ui/controls";
@@ -171,40 +171,58 @@ export function CreateTripV2Fields({
       </View>
       <Modal
         visible={!!editor}
-        animationType="slide"
-        presentationStyle="pageSheet"
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
         onRequestClose={() => changeEditor(null)}
       >
-        <SafeAreaProvider style={styles.body}>
-          <SheetHeader
-            category="form"
-            title={t(
-              editor?.self ? "createTripV2.editName" : "createTripV2.editTraveler",
-            )}
-            leftLabel={t("common.cancel")}
-            onLeft={() => changeEditor(null)}
-            rightLabel={t("common.done")}
-            rightDisabled={disabled}
-            onRight={done}
+        <SafeAreaProvider style={styles.host}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("common.cancel")}
+            onPress={() => changeEditor(null)}
+            style={[StyleSheet.absoluteFill, styles.backdrop]}
           />
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.editor}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.host}
+            pointerEvents="box-none"
           >
-            <UiTextInput
-              autoFocus
-              accessibilityLabel={t("createTripV2.nickname")}
-              placeholder={t("createTripV2.nickname")}
-              value={editor?.value ?? ""}
-              maxLength={256}
-              editable={!disabled}
-              onChangeText={(value) =>
-                changeEditor((current) => (current ? { ...current, value } : null))
-              }
-            />
-            <UiText style={styles.meta}>{t("createTripV2.optional")}</UiText>
-          </ScrollView>
+            <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
+              <SheetHeader
+                safeTop={false}
+                category="form"
+                title={t(
+                  editor?.self ? "createTripV2.editName" : "createTripV2.editTraveler",
+                )}
+                leftLabel={t("common.cancel")}
+                onLeft={() => changeEditor(null)}
+                rightLabel={t("common.done")}
+                rightDisabled={disabled}
+                onRight={done}
+              />
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.editor}
+                keyboardShouldPersistTaps="handled"
+              >
+                <UiTextInput
+                  autoFocus
+                  accessibilityLabel={t("createTripV2.nickname")}
+                  placeholder={t("createTripV2.nickname")}
+                  value={editor?.value ?? ""}
+                  maxLength={256}
+                  editable={!disabled}
+                  returnKeyType="done"
+                  onSubmitEditing={done}
+                  onChangeText={(value) =>
+                    changeEditor((current) => (current ? { ...current, value } : null))
+                  }
+                />
+                <UiText style={styles.meta}>{t("createTripV2.optional")}</UiText>
+              </ScrollView>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
         </SafeAreaProvider>
       </Modal>
     </View>
@@ -212,7 +230,16 @@ export function CreateTripV2Fields({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    body: { flex: 1, backgroundColor: colors.background },
+    host: { flex: 1, justifyContent: "flex-end" },
+    backdrop: { backgroundColor: colors.overlay },
+    sheet: {
+      maxHeight: "90%",
+      backgroundColor: colors.background,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      overflow: "hidden",
+    },
+    scroll: { flexGrow: 0, flexShrink: 1, backgroundColor: colors.background },
     fields: { gap: visual.space.section },
     section: { gap: visual.space.card },
     label: { ...visual.type.action, color: colors.textPrimary },

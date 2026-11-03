@@ -1,0 +1,25 @@
+{
+  "request": "VISION-VN02-R1-NATIVE-20261104-001",
+  "status": "LOCAL_REVIEWED_DEVICE_PENDING",
+  "changes": {
+    "VN02-01": "Fixed absolute backdrop opacity and separate sheet translation; closing retained until native animation completion, rapid toggle/unmount guards",
+    "VN02-02": "Canonical field placeholder optional/default false; unselected date uses textSecondary and existing field font",
+    "VN02-04": "Nickname existing draft callbacks in content-fit safe-area/keyboard-aware sheet",
+    "VN02-06": "Edit metadata dates reuse canonical field presentation matching Name/Destination padding"
+  },
+  "validation": {
+    "parent": "6 suites135PASS",
+    "agent_forms": "5 suites129PASS overlapping",
+    "independent_review": "NO_BLOCKER /4 suites32PASS",
+    "lint": "PASS",
+    "scoped_types": "PASS",
+    "ui_guard": "PASS"
+  },
+  "not_claimed": [
+    "Native animation timing/visualPASS",
+    "Actual keyboard or DynamicType devicePASS",
+    "OwnerAcceptance",
+    "WholeVN02complete"
+  ],
+  "remaining": "Guest Upcoming/Undated preparation/Finance and Past snapshot still need fact-backed consumers; actual new-account P1 save race separately reproduced and under minimal repair"
+}

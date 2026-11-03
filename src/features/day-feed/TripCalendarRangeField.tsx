@@ -106,6 +106,7 @@ export function TripCalendarRangeField({
     <View>
       <UiFormRow
         variant={presentation}
+        placeholder={!value.start && !value.end}
         label={label}
         value={
           referenceRange && value.start && !value.end

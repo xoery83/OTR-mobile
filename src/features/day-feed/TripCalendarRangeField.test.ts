@@ -2,6 +2,7 @@ import { Children, isValidElement, type ReactElement, type ReactNode } from "rea
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { UiButton } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
+import { TripMetadataFields } from "./TripMetadataFields";
 import { SheetHeader } from "@/components/SheetHeader";
 import { lightPalette } from "@/ui/palette";
 import {
@@ -40,7 +41,7 @@ vi.mock("react-native", () => ({
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("@/ui/controls", () => ({ UiText: "UiText", UiButton: "UiButton" }));
-vi.mock("@/ui/forms", () => ({ UiFormRow: "UiFormRow" }));
+vi.mock("@/ui/forms", () => ({ UiFormRow: "UiFormRow", UiTextInput: "UiTextInput" }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create(lightPalette) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({
@@ -410,4 +411,16 @@ it("reports open/close and lets a scoped handoff block opening without changing 
   expect(render().find((node) => node.type === "Modal")!.props.visible).toBe(false);
   expect(onOpenChange.mock.calls).toEqual([[true], [true], [false]]);
   expect(onChange).not.toHaveBeenCalled();
+});
+
+
+it("treats only an unset range as a placeholder and uses the canonical field for Edit Trip", () => {
+  state.cursor = 0;
+  const empty = nodes(TripCalendarRangeField({ value: { start: "", end: "" }, presentation: "field", onChange() {} }));
+  expect(empty.find((node) => node.type === UiFormRow)!.props.placeholder).toBe(true);
+  state.cursor = 0;
+  const filled = nodes(TripCalendarRangeField({ value: { start: "2026-11-04", end: "" }, presentation: "field", onChange() {} }));
+  expect(filled.find((node) => node.type === UiFormRow)!.props.placeholder).toBe(false);
+  const metadata = nodes(TripMetadataFields({ name: "Trip", destination: "", range: { start: "", end: "" }, disabled: false, onName() {}, onDestination() {}, onRange() {} }));
+  expect(metadata.find((node) => node.type === TripCalendarRangeField)!.props.presentation).toBe("field");
 });

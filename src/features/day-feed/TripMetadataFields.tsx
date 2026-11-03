@@ -57,6 +57,7 @@ export function TripMetadataFields({
         </>
       )}
       <TripCalendarRangeField
+        presentation="field"
         value={range}
         onChange={onRange}
         disabled={disabled}

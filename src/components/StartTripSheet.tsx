@@ -1,4 +1,13 @@
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "./AppIcon";
 import { SheetHeader } from "./SheetHeader";
@@ -22,69 +31,118 @@ export function StartTripSheet({
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
+  const { height } = useWindowDimensions();
+  const [presented, setPresented] = useState(visible);
+  const [progress] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    let current = true;
+    progress.stopAnimation();
+    const animation = Animated.timing(progress, {
+      toValue: visible ? 1 : 0,
+      duration: visible ? 220 : 180,
+      useNativeDriver: true,
+    });
+    animation.start(({ finished }) => {
+      if (current && finished && !visible) setPresented(false);
+    });
+    return () => {
+      current = false;
+      animation.stop();
+    };
+  }, [visible, progress]);
   return (
     <Modal
-      visible={visible}
+      visible={visible || presented}
       transparent
-      animationType="slide"
+      animationType="none"
       presentationStyle="overFullScreen"
       onRequestClose={onClose}
+      onShow={() => {
+        if (visible) setPresented(true);
+      }}
     >
       <SafeAreaProvider style={styles.host}>
-        <View style={styles.backdrop}>
+        <View
+          style={styles.backdrop}
+          pointerEvents={visible ? "auto" : "none"}
+          accessibilityElementsHidden={!visible}
+          importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, styles.mask, { opacity: progress }]}
+          />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t("common.close")}
             onPress={onClose}
             style={StyleSheet.absoluteFill}
           />
-          <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
-            <SheetHeader
-              category="action"
-              surface="background"
-              title={t("actionIsland.startTrip")}
-              safeTop={false}
-              leftLabel={t("common.cancel")}
-              onLeft={onClose}
-            />
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
-            >
-              <UiText style={styles.meta}>{t("createTripV2.startHint")}</UiText>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("actionIsland.importPlans")}
-                onPress={onImport}
-                style={styles.row}
+          <Animated.View
+            style={[
+              styles.sheet,
+              {
+                transform: [
+                  {
+                    translateY: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [height, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheetBody}>
+              <SheetHeader
+                category="action"
+                surface="background"
+                title={t("actionIsland.startTrip")}
+                safeTop={false}
+                leftLabel={t("common.cancel")}
+                onLeft={onClose}
+              />
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
               >
-                <View style={styles.icon}>
-                  <AppIcon name="doc.badge.arrow.up" color={colors.accent} size={24} />
-                </View>
-                <View style={styles.copy}>
-                  <UiText style={styles.title}>{t("actionIsland.importPlans")}</UiText>
-                  <UiText style={styles.meta}>{t("createTripV2.importHint")}</UiText>
-                </View>
-                <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("actionIsland.createManually")}
-                onPress={onCreate}
-                style={styles.row}
-              >
-                <View style={styles.icon}>
-                  <AppIcon name="map" color={colors.accent} size={24} />
-                </View>
-                <View style={styles.copy}>
-                  <UiText style={styles.title}>{t("actionIsland.createManually")}</UiText>
-                  <UiText style={styles.meta}>{t("createTripV2.manualHint")}</UiText>
-                </View>
-                <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
-              </Pressable>
-            </ScrollView>
-          </SafeAreaView>
+                <UiText style={styles.meta}>{t("createTripV2.startHint")}</UiText>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("actionIsland.importPlans")}
+                  onPress={onImport}
+                  style={styles.row}
+                >
+                  <View style={styles.icon}>
+                    <AppIcon name="doc.badge.arrow.up" color={colors.accent} size={24} />
+                  </View>
+                  <View style={styles.copy}>
+                    <UiText style={styles.title}>{t("actionIsland.importPlans")}</UiText>
+                    <UiText style={styles.meta}>{t("createTripV2.importHint")}</UiText>
+                  </View>
+                  <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("actionIsland.createManually")}
+                  onPress={onCreate}
+                  style={styles.row}
+                >
+                  <View style={styles.icon}>
+                    <AppIcon name="map" color={colors.accent} size={24} />
+                  </View>
+                  <View style={styles.copy}>
+                    <UiText style={styles.title}>
+                      {t("actionIsland.createManually")}
+                    </UiText>
+                    <UiText style={styles.meta}>{t("createTripV2.manualHint")}</UiText>
+                  </View>
+                  <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
+                </Pressable>
+              </ScrollView>
+            </SafeAreaView>
+          </Animated.View>
         </View>
       </SafeAreaProvider>
     </Modal>
@@ -93,7 +151,9 @@ export function StartTripSheet({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     host: { flex: 1 },
-    backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay },
+    backdrop: { flex: 1, justifyContent: "flex-end" },
+    mask: { backgroundColor: colors.overlay },
+    sheetBody: { flexShrink: 1 },
     sheet: {
       maxHeight: "90%",
       backgroundColor: colors.background,

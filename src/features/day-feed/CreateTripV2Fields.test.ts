@@ -11,6 +11,8 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   nodes: [] as any[],
   calendars: [] as any[],
+  modals: [] as any[],
+  keyboards: [] as any[],
   refs: [] as { current: any }[],
   refCursor: 0,
 }));
@@ -29,7 +31,12 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
-  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
+  Modal: (p: any) => {
+    state.modals.push(p);
+    return p.visible ? createElement("div", null, p.children) : null;
+  },
+  Platform: { OS: "ios" },
+  KeyboardAvoidingView: (p: any) => { state.keyboards.push(p); return createElement("div", null, p.children); },
   Pressable: (p: any) => {
     state.nodes.push(p);
     return createElement("button", null, p.children);
@@ -38,7 +45,7 @@ vi.mock("react-native", () => ({
   View: "div",
   StyleSheet: { create: (value: unknown) => value },
 }));
-vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div", SafeAreaView: "div" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
@@ -90,6 +97,8 @@ function render() {
   state.cursor = state.refCursor = 0;
   state.nodes = [];
   state.calendars = [];
+  state.modals = [];
+  state.keyboards = [];
   return renderToStaticMarkup(createElement(CreateTripV2Fields, props));
 }
 const node = (key: string) =>
@@ -209,4 +218,23 @@ it("Done retains the last typed self or traveler name before React renders", () 
   node("createTripV2.nickname").onChangeText("最后输入的同行人");
   node("common.done").onPress();
   expect(props.travelers).toMatchObject([{ displayName: "最后输入的同行人" }]);
+});
+
+
+it("fits nickname editing to its content with keyboard avoidance and original Done/Cancel boundaries", () => {
+  render();
+  node("createTripV2.editName").onPress();
+  render();
+  expect(state.modals.at(-1)).toMatchObject({ transparent: true, presentationStyle: "overFullScreen" });
+  expect(state.keyboards.at(-1)?.behavior).toBe("padding");
+  node("createTripV2.nickname").onChangeText("Local nickname");
+  render();
+  node("createTripV2.nickname").onSubmitEditing();
+  expect(props.onSelfNickname).toHaveBeenLastCalledWith("Local nickname");
+  render();
+  node("createTripV2.editName").onPress();
+  render();
+  node("createTripV2.nickname").onChangeText("Discard this");
+  state.modals.at(-1).onRequestClose();
+  expect(props.onSelfNickname).not.toHaveBeenCalledWith("Discard this");
 });

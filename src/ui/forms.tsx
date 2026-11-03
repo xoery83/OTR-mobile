@@ -39,8 +39,10 @@ export function UiFormRow({
   variant = "row",
   leading,
   trailing,
+  placeholder = false,
 }: {
   compact?: boolean;
+  placeholder?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
   label: string;
@@ -113,6 +115,7 @@ export function UiFormRow({
         numberOfLines={2}
         style={[
           field ? styles.fieldValue : styles.rowValue,
+          field && placeholder && styles.placeholderValue,
           field && !!trailing && styles.fieldAccessoryValue,
           !field && (largeText || stacked) && styles.rowValueLargeText,
           disabled && styles.disabledText,
@@ -195,6 +198,7 @@ const createStyles = (colors: UiColors) =>
     fieldLabel: { ...visual.type.action, color: colors.textPrimary },
     fieldButton: { justifyContent: "center", paddingVertical: visual.space.heading },
     fieldValue: { ...visual.type.row, color: colors.textPrimary },
+    placeholderValue: { color: colors.textSecondary },
     fieldWithAccessory: {
       flexDirection: "row",
       alignItems: "center",
