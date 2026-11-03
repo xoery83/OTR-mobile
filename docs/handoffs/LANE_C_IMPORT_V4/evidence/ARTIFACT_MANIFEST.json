@@ -102,6 +102,12 @@
       "bytes": 42630,
       "sha256": "078de830361d65bb3890b43fb30646aa6e6ebfa7088a0f2dc4c7bd7b343fa515",
       "source": "import-unified-renewal-20261103/input/universal-photo-activity-qa.png"
+    },
+    {
+      "path": "evidence/HANDOFF_INDEPENDENT_REVIEW.json",
+      "bytes": 1606,
+      "sha256": "8c11ac781d8b66524a4e1e2c2649ffc1cc82cf165e2a292f75b7308e0540468d",
+      "source": "Independent reviewer message for 5d34b310; recorded by Root1 without changing reviewed documents"
     }
   ]
 }
