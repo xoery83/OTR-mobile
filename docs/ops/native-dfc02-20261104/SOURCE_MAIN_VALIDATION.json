@@ -1,0 +1,14 @@
+{
+  "request": "NATIVE-DF-C02-SOURCE-20261104-01",
+  "sourceCandidate": "63d7b7a2458a22fb003659f7eab60cb07002b907",
+  "base": "7f32fb939d67b3f5b59b776994ec6ce8502ff1bf",
+  "sourceCommit": "27bef83bcb825e157a2d9ab4ff112e97eb3c035e",
+  "review": "Native independent NO_BLOCKER reused; Root1 exact production diff checked",
+  "actualMainTests": "TripScreen.homeWidgets: 87 PASS",
+  "notRun": [
+    "Hosted",
+    "Device",
+    "Provider"
+  ],
+  "dataOrAuthorityChanges": false
+}
