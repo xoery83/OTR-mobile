@@ -28,6 +28,7 @@ class Fake:
         self.commands = []
         self.fail = None
         self.timer = False
+        self.timers = {}
         self.created_body = None
         self.plan = self.make_plan()
 
@@ -58,9 +59,22 @@ class Fake:
         self.commands.append(args)
         if args[0] == 'systemd-run':
             self.timer = True
+            unit = next(v.split('=',1)[1] for v in args if v.startswith('--unit='))
+            calendar = next(v.split('=',1)[1] for v in args if v.startswith('--on-calendar='))
+            self.timers[unit] = {'calendar':calendar, 'argv':args[args.index('/usr/bin/python3'):], 'user':'root'}
             return ''
         if args[0] == 'systemctl':
-            return ('active\n' if self.timer else 'inactive\n') if args[1] == 'show' else ''
+            if args[1] != 'show': return ''
+            key = args[-2].split('=',1)[1]
+            unit = args[2].removesuffix('.timer').removesuffix('.service')
+            if key == 'ActiveState': return 'active' if self.timer and unit in self.timers else 'inactive'
+            row = self.timers[unit]
+            if key == 'Unit': return unit + '.service'
+            if key == 'TimersCalendar': return 'OnCalendar=' + row['calendar'] + '; next_elapse=ignored'
+            if key == 'NextElapseUSecRealtime': return dt.datetime.strptime(row.get('deadline',row['calendar']), '%Y-%m-%d %H:%M:%S UTC').strftime('%a %Y-%m-%d %H:%M:%S UTC')
+            if key == 'ExecStart': return '{ argv[]=' + ' '.join(row['argv']) + ' ; }'
+            if key == 'User': return row['user']
+            raise AssertionError(key)
         if args[:2] == ['docker', 'ps']:
             name = args[-1].split('name=^/')[1].removesuffix('$')
             return '\n'.join(c['Id'] for c in self.containers.values() if c['Name'] == '/' + name)
@@ -312,6 +326,45 @@ class Controller(unittest.TestCase):
     def test_recovery_qualification_rejects_normal_business_mode(self):
         with self.assertRaisesRegex(AssertionError, 'RECOVERY_MODE_REQUIRED'):
             r.qualify_recovery(self.p, {'candidateId': CANDIDATE}, '9' * 64)
+
+
+    def test_active_but_drifted_timer_details_cannot_qualify_recovery(self):
+        self.p['executionMode'] = 'RECOVERY_ONLY'
+        self.p['qaCase']['closesAt'] = '2030-01-01T00:15:00Z'
+        state = self.ready()
+        r.start(self.p, state, '9' * 64)
+        original = copy.deepcopy(self.f.timers)
+        changes = [
+            {'calendar': '2030-01-01 01:00:00 UTC'},
+            {'deadline': '2030-01-01 01:00:00 UTC'},
+            {'argv': ['/usr/bin/true']},
+            {'argv': ['/usr/bin/python3', self.p['root']+'/runtime.py', 'close', '/other/plan.json', '9'*64]},
+            {'argv': ['/usr/bin/python3', self.p['root']+'/runtime.py', 'close', self.p['root']+'/plan.json', '8'*64]},
+            {'user': 'other'},
+        ]
+        for unit in original:
+            for change in changes:
+                self.f.timers = copy.deepcopy(original)
+                self.f.timers[unit].update(change)
+                with self.subTest(unit=unit,change=change), self.assertRaises(AssertionError):
+                    r.qualify_recovery(self.p, state, '9' * 64)
+        self.f.timers = original
+
+    def test_stale_healthy_stopped_or_wrong_named_candidate_cannot_qualify(self):
+        self.p['executionMode'] = 'RECOVERY_ONLY'
+        self.p['qaCase']['closesAt'] = '2030-01-01T00:15:00Z'
+        state = self.ready()
+        r.start(self.p, state, '9' * 64)
+        self.f.containers[CANDIDATE]['State']['Running'] = False
+        with self.assertRaisesRegex(AssertionError, 'RECOVERY_RUNTIME_NOT_RUNNING'):
+            r.qualify_recovery(self.p, state, '9' * 64)
+        self.f.containers[CANDIDATE]['State']['Running'] = True
+        self.f.containers[CANDIDATE]['Name'] = '/stopped-candidate'
+        # Select the stopped candidate directly to exercise the explicit Name fence.
+        original_inspect = self.f.inspect
+        with patch.object(r, 'inspect', side_effect=lambda value: original_inspect(CANDIDATE) if value=='otr-dev-backend' else original_inspect(value)):
+            with self.assertRaisesRegex(AssertionError, 'RECOVERY_RUNTIME_NOT_RUNNING'):
+                r.qualify_recovery(self.p, state, '9' * 64)
 
 
 if __name__ == '__main__':

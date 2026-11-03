@@ -7,6 +7,7 @@ import json
 import math
 from pathlib import Path
 import re
+import shlex
 import time
 import uuid
 
@@ -190,8 +191,18 @@ def verify_timers(p, plan_hash):
     if p.get('executionMode') == 'RECOVERY_ONLY':
         expected['normalUnit'] = timer_bindings(p)[1][0]
     assert json.loads(private(Path(p['root']) / 'timer.json')) == expected, 'TIMER_PLAN_DRIFT'
-    for unit, _ in timer_bindings(p):
-        assert call(['systemctl', 'show', unit + '.timer', '--property=ActiveState', '--value']).strip() == 'active', 'CLOSE_TIMER_REQUIRED'
+    for unit, cutoff in timer_bindings(p):
+        show = lambda name, key: call(['systemctl', 'show', name, '--property=' + key, '--value']).strip()
+        assert show(unit + '.timer', 'ActiveState') == 'active', 'CLOSE_TIMER_REQUIRED'
+        assert show(unit + '.timer', 'Unit') == unit + '.service', 'TIMER_SERVICE_MISMATCH'
+        calendar = dt.datetime.fromtimestamp(cutoff, dt.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        calendars = re.findall(r'OnCalendar=([^;]+);', show(unit + '.timer', 'TimersCalendar'))
+        assert len(calendars) == 1 and calendars[0].strip() == calendar, 'TIMER_CALENDAR_MISMATCH'
+        observed = re.fullmatch(r'[A-Za-z]{3} (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(?:\.\d{1,6})?) UTC', show(unit + '.timer', 'NextElapseUSecRealtime'))
+        assert observed and dt.datetime.fromisoformat(observed[1]).replace(tzinfo=dt.timezone.utc).timestamp() == int(cutoff), 'TIMER_DEADLINE_MISMATCH'
+        argv = re.findall(r'argv\[\]=([^;]+);', show(unit + '.service', 'ExecStart'))
+        assert len(argv) == 1 and shlex.split(argv[0]) == ['/usr/bin/python3', p['root'] + '/runtime.py', 'close', p['root'] + '/plan.json', plan_hash], 'TIMER_EXEC_MISMATCH'
+        assert show(unit + '.service', 'User') == 'root', 'TIMER_USER_MISMATCH'
 
 
 def qualify_recovery(p, state, plan_hash):
@@ -201,6 +212,7 @@ def qualify_recovery(p, state, plan_hash):
     active = inspect('otr-dev-backend')
     check_active(p, active, state)
     assert active['State'].get('Health', {}).get('Status') == 'healthy'
+    assert active['State'].get('Running') is True and active['Name'] == '/otr-dev-backend', 'RECOVERY_RUNTIME_NOT_RUNNING'
     return {'status': 'AUTH_C04_RECOVERY_WINDOW_QUALIFIED', 'qaCase': p['qaCase'], 'executionMode': 'RECOVERY_ONLY', 'image': active['Image'], 'containerId': active['Id'], 'configSHA256': sha(active['Config']), 'planSHA256': plan_hash, 'businessMutationAuthorized': False}
 
 
@@ -213,7 +225,7 @@ def arm(p, plan_hash):
         calendar = dt.datetime.fromtimestamp(cutoff, dt.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         call(['systemd-run', '--unit=' + unit_name, '--on-calendar=' + calendar,
           '--timer-property=AccuracySec=1s', '--property=Type=oneshot', '--property=TimeoutStartSec=240s',
-          '--property=UMask=0077', '--property=Restart=on-failure', '--property=RestartSec=5s',
+          '--property=UMask=0077', '--property=User=root', '--property=Restart=on-failure', '--property=RestartSec=5s',
           '--property=StartLimitIntervalSec=0', '/usr/bin/python3', p['root'] + '/runtime.py',
           'close', p['root'] + '/plan.json', plan_hash])
         assert call(['systemctl', 'show', unit_name + '.timer', '--property=ActiveState', '--value']).strip() == 'active', 'TIMER_NOT_ARMED'
@@ -221,6 +233,7 @@ def arm(p, plan_hash):
     if p.get('executionMode') == 'RECOVERY_ONLY':
         record['normalUnit'] = timer_bindings(p)[1][0]
     save(Path(p['root']) / 'timer.json', record)
+    verify_timers(p, plan_hash)
     return {'status': 'INDEPENDENT_RUNTIME_CLOSE_ARMED', 'unit': unit, 'closesAt': p['qaCase']['closesAt']}
 
 
