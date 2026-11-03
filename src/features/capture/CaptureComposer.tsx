@@ -312,7 +312,13 @@ export function CaptureComposer({
                           !item.temporaryUri.startsWith("otr-capture-file://") &&
                           item.temporaryUri;
                         return (
-                          <View key={item.stagingId} style={styles.tile}>
+                          <View
+                            key={item.stagingId}
+                            style={[
+                              styles.tile,
+                              { width: Math.max(120, 88 * fontScale) },
+                            ]}
+                          >
                             <View style={styles.preview}>
                               {photo ? (
                                 <Image
@@ -322,31 +328,35 @@ export function CaptureComposer({
                                   accessibilityLabel={name}
                                 />
                               ) : (
-                                <AppIcon
-                                  name={
-                                    item.source === "magic_input"
-                                      ? "text.alignleft"
-                                      : item.typeHint?.startsWith("image/")
-                                        ? "photo"
-                                        : item.typeHint === "application/pdf"
-                                          ? "doc.richtext"
-                                          : "doc"
-                                  }
-                                  size={28}
-                                  color={colors.accent}
-                                />
+                                <View style={styles.fileContent}>
+                                  <AppIcon
+                                    name={
+                                      item.source === "magic_input"
+                                        ? "text.alignleft"
+                                        : item.typeHint?.startsWith("image/")
+                                          ? "photo"
+                                          : item.typeHint === "application/pdf"
+                                            ? "doc.richtext"
+                                            : "doc"
+                                    }
+                                    size={24}
+                                    color={colors.accent}
+                                  />
+                                  <UiText
+                                    numberOfLines={3}
+                                    style={styles.filename}
+                                    accessibilityLabel={name}
+                                  >
+                                    {name}
+                                  </UiText>
+                                </View>
                               )}
                             </View>
-                            <UiText
-                              numberOfLines={2}
-                              style={styles.filename}
-                              accessibilityLabel={name}
-                            >
-                              {name}
-                            </UiText>
                             <View style={styles.remove}>
+                              <View pointerEvents="none" style={styles.removeDisc} />
                               <OverlayDismissAction
                                 label={t("capture.remove", { name })}
+                                color={colors.mediaText}
                                 onPress={() => onRemove(item.stagingId)}
                               />
                             </View>
@@ -681,22 +691,31 @@ const createStyles = (c: UiColors) =>
     },
     preview: {
       width: "100%",
-      height: 72,
+      aspectRatio: 1,
       borderRadius: visual.radius.control,
       backgroundColor: c.background,
       alignItems: "center",
       justifyContent: "center",
-      overflow: "visible",
+      overflow: "hidden",
     },
+    fileContent: { alignSelf: "stretch", flex: 1, padding: 12, paddingTop: 16, gap: 8 },
     thumbnail: { ...StyleSheet.absoluteFill, borderRadius: visual.radius.control },
     filename: {
       ...visual.type.meta,
       alignSelf: "stretch",
-      paddingHorizontal: 3,
-      paddingVertical: 3,
+      flexShrink: 1,
       color: c.textPrimary,
     },
-    remove: { position: "absolute", top: -10, right: -10 },
+    remove: { position: "absolute", top: 0, right: 0 },
+    removeDisc: {
+      position: "absolute",
+      top: 8,
+      right: 8,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: c.mediaScrim,
+    },
     tileError: {
       ...visual.type.navigation,
       color: c.destructive,

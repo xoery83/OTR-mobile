@@ -1,0 +1,27 @@
+{
+  "request": "IMP-C01-COMPOSER-CARDS-20261104-06",
+  "candidate": "ba048e995513f1510a8f2633093816c88ec13150",
+  "base": "b437577295d673e289e34c0e14e1e0bbe3c2d5bd",
+  "files": {
+    "src/features/capture/CaptureComposer.tsx": "dea732e5c74d889918960a35e0cbd7d14ac40bd45f29a225e780755b79ff4c7f",
+    "src/features/capture/CaptureComposer.test.ts": "98441894c1b002c3c8d8bda542dff9296611b3c3d3bf186de59b81316d504b47"
+  },
+  "productScope": "Exactly two leaf blobs; match fixed candidate; old CURRENT/manifest excluded",
+  "independentReview": "NO_BLOCKER",
+  "actualMainChecks": {
+    "composer": 20,
+    "uiGuard": "473 legacy/168 representative PASS"
+  },
+  "unchanged": [
+    "Canonical44pt dismiss target",
+    "Full accessible material identity",
+    "Opaque Files named fallback",
+    "Original/lease/draft/body identities and data flow"
+  ],
+  "notRun": [
+    "Device visual acceptance",
+    "iPad installation/relaunch",
+    "Submit/Source/Provider/Save"
+  ],
+  "existingIpadDraftTouched": false
+}

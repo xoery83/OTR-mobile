@@ -394,7 +394,7 @@ it("long Tray copy stays compact while its complete identity and remove target r
   const { props } = render({ ...empty, items: [item] }, 1);
   const title = state.nodes.find((node) => node.accessibilityLabel === name);
   expect(title.children).toBe(name);
-  expect(title.numberOfLines).toBe(2);
+  expect(title.numberOfLines).toBe(3);
   expect(state.nodes.some((node) => node.horizontal)).toBe(true);
   state.buttons
     .find((button) => button.label === t("capture.remove", { name }))
@@ -410,7 +410,7 @@ it("an added multiline text card keeps its complete draft content without growin
     text,
   );
   expect(state.nodes.find((node) => node.accessibilityLabel === text).numberOfLines).toBe(
-    2,
+    3,
   );
   expect(
     state.buttons.find((button) => button.label === t("capture.composer.submit"))
@@ -597,4 +597,28 @@ it("keyboard reduces editor height with attachments and restores it without chan
   state.keyboardListeners.keyboardDidHide();
   render(draft, 2);
   expect(state.nodes.find((n) => n.multiline).style[1].maxHeight).toBe(expanded);
+});
+
+it("photo cards show the image without a visible filename and retain named removal", () => {
+  const item = {
+    source: "photos" as const,
+    temporaryUri: "file://sample.png",
+    name: "sample.png",
+    typeHint: "image/png",
+    stagingId: 93,
+    availability: "unverified" as const,
+  };
+  const { props } = render({ ...empty, items: [item] }, 1);
+  expect(
+    state.nodes.some(
+      (n) => n.source?.uri === item.temporaryUri && n.accessibilityLabel === item.name,
+    ),
+  ).toBe(true);
+  expect(state.nodes.some((n) => n.children === item.name)).toBe(false);
+  expect(state.nodes.some((n) => n.style?.aspectRatio === 1)).toBe(true);
+  state.buttons
+    .find((b) => b.label === t("capture.remove", { name: item.name }))
+    .onPress();
+  expect(props.onRemove).toHaveBeenCalledWith(93);
+  expect(props.onSubmit).not.toHaveBeenCalled();
 });

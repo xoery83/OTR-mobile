@@ -1,0 +1,29 @@
+{
+  "eventId": "IMP-C01-COMPOSER-CARDS-20261104-06",
+  "status": "LOCAL_PASS_DEVICE_RECHECK_PENDING",
+  "changes": [
+    "Square attachment previews, scaled with accessibility font size",
+    "File filename inside card, three lines; photo preview has no visible filename",
+    "Semantic dark circular dismiss backdrop with white x; existing 44pt canonical target retained"
+  ],
+  "validation": {
+    "composerTests": 20,
+    "strictTypecheckRoots": 2,
+    "eslint": "PASS",
+    "uiGuard": "PASS: 473 legacy / 168 representative files",
+    "diffCheck": "PASS"
+  },
+  "dataPathChecklist": {
+    "ownership": "Draft/Transient display only",
+    "localStorage": "Unchanged",
+    "syncBackendContract": "Unchanged",
+    "conflictOfflineBehavior": "Unchanged; no new reads/writes",
+    "requiredEvidence": "L1 scoped component checks PASS; real device visual check pending",
+    "integrationDelta": "Root1 review/source integration, then coordinated Native build and visual check"
+  },
+  "limits": [
+    "Current iPad mixed draft preserved; no install, relaunch or submit",
+    "Opaque Files lease images still use named fallback; displayable Photos URIs use thumbnail",
+    "No parser, Provider, Runtime or save changes"
+  ]
+}

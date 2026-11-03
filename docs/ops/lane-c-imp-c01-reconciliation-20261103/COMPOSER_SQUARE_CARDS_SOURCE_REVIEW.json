@@ -1,0 +1,35 @@
+{
+  "requestId": "IMP-C01-COMPOSER-CARDS-20261104-06",
+  "status": "NO_BLOCKER_SOURCE_REVIEW_ONLY",
+  "commit": "ba048e995513f1510a8f2633093816c88ec13150",
+  "mainTarget": "b437577295d673e289e34c0e14e1e0bbe3c2d5bd",
+  "parentMatchesTarget": {
+    "src/features/capture/CaptureComposer.tsx": true,
+    "src/features/capture/CaptureComposer.test.ts": true
+  },
+  "sha256": {
+    "src/features/capture/CaptureComposer.tsx": "dea732e5c74d889918960a35e0cbd7d14ac40bd45f29a225e780755b79ff4c7f",
+    "src/features/capture/CaptureComposer.test.ts": "98441894c1b002c3c8d8bda542dff9296611b3c3d3bf186de59b81316d504b47"
+  },
+  "evidenceSHA256": "22afd7fd400241169abbb833c7263256cce9e31bbc08f6e37b90f0286b231837",
+  "findings": [],
+  "verified": [
+    "Square aspectRatio and width scaling retain existing fontScale. Files/inline text show max3 caption lines; full accessible names retained. Photos keep accessible image name without visible filename.",
+    "Opaque otr-capture-file lease retains named photo-icon fallback: no original read, decoding, URI resolution, lease or draft changes.",
+    "OverlayDismissAction remains canonical44pt named button. PointerEvents=none28pt disc is centered inside it at8pt inset. mediaText/mediaScrim are semantic theme tokens, retaining white x contrast.",
+    "Only styles/display and tests change. Staging identity, removal/submit behavior, locale and Authority unchanged.",
+    "Both parent product blobs match b4375772; minimal two-file integration compatible."
+  ],
+  "validationReused": {
+    "composerTests": 20,
+    "strictTypecheckRoots": 2,
+    "eslint": "PASS",
+    "uiGuard": "PASS: 473 legacy / 168 representative files",
+    "diffCheck": "PASS"
+  },
+  "notRun": [
+    "No repeated stable suites.",
+    "Real device pixels and large-text layout pending; no Native acceptance claimed.",
+    "No device/Host/SQL/Provider or author-tree edits."
+  ]
+}
