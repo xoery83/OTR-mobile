@@ -1,0 +1,21 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE",
+  "candidate": "58e4dbed1a7cede927c507d80c23536d00acdbeb",
+  "sourceSHA256": "450a4bfc585be406d98b7181ff98f4696564c07ab706d05729a73d17aeb7af7b",
+  "independentChecks": {
+    "priorNegativeNowGreen": 2,
+    "focusedControllerTests": 6,
+    "timerDriftSubcases": 12
+  },
+  "resolved": [
+    "Actual timer calendar/next-deadline/close argv/plan hash/User=root binding",
+    "Running=true and exact active Name"
+  ],
+  "gateDraft": "Read current Root stable tree; exact recovery-only scope accepted; not approval",
+  "remaining": [
+    "Fixed executable normal-session driver qualification callback and return binding tests",
+    "Exact new execution approval",
+    "Actual fresh CAS/dual timers/normal Auth/Hosted recovery"
+  ],
+  "notRepeated": "Old isolatedPG/old Auth/remaining stable controller suites; no external IO"
+}

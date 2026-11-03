@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_PASS_ROOT_DRIVER_REVIEW_PENDING_NOT_AUTHORIZED_NOT_ARMED",
+  "entry": "recoverMemberClaimQaIssue",
+  "qualification": "createRootMemberClaimQaRecoveryWindowQualifier combines fixed SSH reader with owning strict wire qualifier; callback passed directly as qualifyRecoveryWindow",
+  "files": {
+    "scripts/auth/member-claim-qa-recovery.ts": "54a71e5128e328ed244a452742cf4049db364008817c15c61f6799aa46bf5d8b",
+    "scripts/auth/member-claim-qa-recovery-window.ts": "841ae57d5b36f24ea3d4f4ab470d36b8726a012f0f16ae76cee828c33cc41b10",
+    "scripts/auth/member-claim-qa-control-read.ts": "baf627e376ca44c6dcee3383cac84aa359cea90929240b627189062261f4912a",
+    "backend/src/tripMemberClaimQaRecoveryOnly.ts": "5e40d1f97463ea6446a316c3acee14211ccacad746bbbbfa2303b64d497980e9",
+    "backend/src/tripMemberClaimQaRuntime.ts": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "450a4bfc585be406d98b7181ff98f4696564c07ab706d05729a73d17aeb7af7b"
+  },
+  "expectedSource": "Fixed approved plan qaCase/image/planSHA plus independently checked staged candidateID/configSHA; never learned from actual qualify wire",
+  "validation": "48 combined entry/owning qualifier/Root SSH tests PASS; scoped strict and ESLint PASS. 21 controller tests and Auth independent re-review NO_BLOCKER reused.",
+  "actualHostReadbackSHA256": "a63cc8d5669b05309f8417afb68b9ee979253b8736b96bf906fa7ce7d34cb654",
+  "normalSession": "Existing Auth withOwnerSession callback only; no B/no Session transfer. No normal login performed.",
+  "remaining": "Root SSH reader independent review; exact Owner finite runtime recovery approval; fresh CAS+normal A Session+absolute timers; no execution or receipt outcome inferred"
+}

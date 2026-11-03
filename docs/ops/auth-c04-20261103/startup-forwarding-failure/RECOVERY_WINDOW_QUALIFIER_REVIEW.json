@@ -1,0 +1,33 @@
+{
+  "status": "SCOPED_NO_BLOCKER_LOCAL_CANDIDATE",
+  "source": "scripts/auth/member-claim-qa-recovery-window.ts",
+  "sourceSHA256": "841ae57d5b36f24ea3d4f4ab470d36b8726a012f0f16ae76cee828c33cc41b10",
+  "testSHA256": "aa3a6f3286feab2f2d52f47059da4edb7adf371cf78402788a718b474f7adf22",
+  "authorValidation": {
+    "initialFocusedTests": 28,
+    "validButDifferentHashStrengthening": {
+      "passed": 7,
+      "stableSkipped": 21
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "independentReview": {
+    "reviewer": "/root/auth_phase1_review",
+    "initialTestsPassed": 28,
+    "lastTestStrengthening": "Static diff/hash checked; production unchanged; no repeat28"
+  },
+  "wireFields": [
+    "status",
+    "qaCase",
+    "executionMode",
+    "image",
+    "containerId",
+    "configSHA256",
+    "planSHA256",
+    "businessMutationAuthorized"
+  ],
+  "binding": "Expected parsed/snapshotted from independent frozen plan and actual stage CID before read; strict response, exact QA fields/image/CID/config/plan; pre/post current time within open/close and constructor expiry; max900s recovery/max600s expiry; fixed error, no retries",
+  "remaining": "Root provides exact bounded readControl via existing SSH and pinned controller; qualification source/actual mode/CAS/timers/approval not self-proven by this adapter",
+  "externalActions": 0
+}
