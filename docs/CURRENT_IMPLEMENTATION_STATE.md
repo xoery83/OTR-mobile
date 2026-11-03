@@ -232,3 +232,12 @@ See original-id-resume/RESUME_DRIVER_REVIEW.json and DRIVER_HANDOFF.md. Tests mo
 Auth/scenario, not realOTP/cleanup. Launcher still must prove exact approval/pins,
 receivers durable leases, in-memory safe config, custody and actual active Root
 window. Root control dependency is unchanged e282 SHAca8, already mainb16.
+
+Root fixed complete Gate candidatec91a27ca (Gate24d32ad0 / manifeste188a6f9).
+Auth scoped Review NO_BLOCKER: all9 source hashes and fixed case/IDs/digest match;
+conditional original submits/UNKNOWN/inviteexpiry/closure agree with driver. See
+original-id-resume/C91_GATE_SCOPED_REVIEW.json. No actual new timing/authorization
+was created. Source94 compatibility preserves only separately approved same-image
+config, grants no Source authority and still requires Root actual conflict/CAS
+checks. Next: Root submits this single precise approval request, then actual plan/
+normalA/B/Hosted execution only after approval. Do not replay consumed windows.
