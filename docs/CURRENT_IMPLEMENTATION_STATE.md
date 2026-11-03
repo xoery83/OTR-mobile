@@ -1,3 +1,15 @@
+# Auth D continuation checkpoint — 3 November 2026
+
+Actual MC supported GET_NEXT_WORK after COMPLETEDrev45 returns next=null and
+candidates=[]; primary remains AUTH-C04. PLAT-C03/C05/C06 local-prep completed
+with evidence0bab3de6/b581fcc8/b7a4db3e, PENDING_VERIFICATION only. No BetaReady,
+restore/capacity or Web delivery inferred. C04a0245ba2 scenario and precise Root
+handoff are ready locally; exact activation/controller/freshCAS and formal Core
+member-revoke/cache-denial producer remain external dependencies. Hosted A/B,
+member revoke and Native cold are NOT_RUN. Resume cursor/evidence/blockers stored
+in ops/auth-platform-20261103/MC_READY_QUEUE_EXHAUSTED.json; no fake new claim
+or protected runtime activation was made. No modified product code left unstaged.
+
 # C04 scenario / MC local continuation — 3 November 2026
 
 DEV-only fixed A/B scenario now composes existing normal Session scopes, Claim

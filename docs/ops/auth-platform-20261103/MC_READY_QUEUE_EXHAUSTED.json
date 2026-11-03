@@ -1,0 +1,98 @@
+{
+  "plan_revision": 2,
+  "claim_revision": 45,
+  "primary_assignment": "AUTH-C04",
+  "current_claim": null,
+  "next": null,
+  "candidates": [],
+  "resume_cursor": {
+    "package_id": "PLAT-C06",
+    "slice_id": "PLAT-C06:LOCAL_PREP",
+    "claim_id": "auth-plat-c06-local-prep-20261103-v1",
+    "plan_revision": 2,
+    "next_package_ids": [],
+    "dependencies": [],
+    "last_evidence": [
+      "b7a4db3e",
+      "docs/ops/auth-platform-20261103/FIXED_CANDIDATE_QUALIFICATION_MATRIX.json"
+    ],
+    "last_event_id": "auth-plat-c06-local-prep-completed-20261103-v1",
+    "stop_reason": null,
+    "updated_at": "2026-11-03T01:36:12.399Z"
+  },
+  "observedAt": "2026-11-03T01:36:54.998267+00:00",
+  "blocked": [
+    {
+      "package": "AUTH-C04",
+      "slice": "AUTH-C04:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "IF-AUTH-PEOPLE",
+          "release_condition": "所属接口/外部资格获得正式可核查资格"
+        }
+      ]
+    },
+    {
+      "package": "SYNC-C02",
+      "slice": "SYNC-C02:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "IF-CORE-SAVE",
+          "release_condition": "所属接口/外部资格获得正式可核查资格"
+        },
+        {
+          "id": "SYNC-C02",
+          "release_condition": "Auth/Core 所属接口交接精确、当前、可核查的合法 A/B 绑定与正常登录/权限资格包；不借用 Session，不自行授权。"
+        }
+      ]
+    },
+    {
+      "package": "SYNC-C03",
+      "slice": "SYNC-C03:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "IF-AUTH-PEOPLE",
+          "release_condition": "所属接口/外部资格获得正式可核查资格"
+        }
+      ]
+    },
+    {
+      "package": "LED-C04",
+      "slice": "LED-C04:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "GATE-OWNER-UX-RULES",
+          "release_condition": "Owner UX rules qualification"
+        }
+      ]
+    },
+    {
+      "package": "PLAT-C01",
+      "slice": "PLAT-C01:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "SERVICE_CURRENT_ACCOUNT_SNAPSHOT",
+          "release_condition": "Authorized redacted current per-service environment/plan/allowance/usage/balance/renewal/payment-state source+time; no Secret/card/Production access inferred"
+        }
+      ]
+    },
+    {
+      "package": "PLAT-C04",
+      "slice": "PLAT-C04:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "EXT-APPLE-DEVELOPER",
+          "release_condition": "所属接口/外部资格获得正式可核查资格"
+        }
+      ]
+    }
+  ],
+  "authC04Actual": {
+    "localScenario": "a0245ba2 scoped PASS",
+    "hostedAB": "NOT_RUN",
+    "memberRevoke": "NOT_RUN",
+    "nativeColdRestore": "NOT_RUN",
+    "runtimeAuthorization": "No new activation approval; current Root controller/freshCAS still required"
+  },
+  "resume": "Existing completed claim resume_cursor persists last Evidence and no next package; SAVE_RESUME requires active claim so no artificial new claim was created. Re-query when actual qualifying interface/approval evidence arrives."
+}
