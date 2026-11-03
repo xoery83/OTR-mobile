@@ -1,0 +1,11 @@
+test_original_resume_uses_existing_fixed_authority_and_distinct_qualified_wire (test_runtime.Controller.test_original_resume_uses_existing_fixed_authority_and_distinct_qualified_wire) ... ok
+test_resume_requires_its_own_mode_and_recovery_stays_false_fifteen_minutes (test_runtime.Controller.test_resume_requires_its_own_mode_and_recovery_stays_false_fifteen_minutes) ... ok
+test_resume_missing_normal_timer_blocks_before_start (test_runtime.Controller.test_resume_missing_normal_timer_blocks_before_start) ... ok
+test_resume_rejects_foreign_case_and_short_tail (test_runtime.Controller.test_resume_rejects_foreign_case_and_short_tail) ... ok
+test_resume_health_failure_restores_exact_default (test_runtime.Controller.test_resume_health_failure_restores_exact_default) ... ok
+test_unapproved_resume_stays_closed_before_mutation (test_runtime.Controller.test_unapproved_resume_stays_closed_before_mutation) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.018s
+
+OK

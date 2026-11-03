@@ -1,0 +1,2 @@
+PASS: actual Backend MODE=RECOVERY_ONLY cannot qualify plan-only resume
+PASS: actual Backend MODE=ORIGINAL_ID_RESUME cannot qualify plan-only resume

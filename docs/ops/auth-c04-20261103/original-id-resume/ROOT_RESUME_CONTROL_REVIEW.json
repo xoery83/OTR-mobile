@@ -1,0 +1,33 @@
+{
+  "status": "SCOPED_NO_BLOCKER_DORMANT_CANDIDATE",
+  "candidate": "7c7c0dab8048e542b445238b14f41ad15b35f650",
+  "sourceHashes": {
+    "docs/ops/auth-c04-finite-runtime-20261103/runtime.py": "da0a18b452aceb7bf6d11c32e82cd5b717b6d80979d9ad45c08f99bd1f2a0a10",
+    "scripts/auth/member-claim-qa-control-read.ts": "ca8e7295f23104fb4d780c45afa4403bb9862ffe12c889ebde63780a69fe1a10",
+    "docs/ops/auth-c04-finite-runtime-20261103/test_runtime.py": "e65858b994a1906516ee6ddc38995bff08f1f285101307733ce87346f613a989",
+    "backend/src/authMemberClaimQaControlRead.test.ts": "397cbb78d301670e7ce9c5b47354b95084997bcce306156cda4c0f785ed65c08"
+  },
+  "independentValidation": {
+    "newControllerTests": 6,
+    "newSSHQualifierTests": 6,
+    "stableSSHTestsSkipped": 9,
+    "additionalActualModeDriftNegativeCases": 2,
+    "oldQualifyRecoveryBody": "BYTE_IDENTICAL",
+    "RootFF08AuthSourceTests": "6/6 exact byte match411ceee5"
+  },
+  "review": "Root plan-only ORIGINAL_ID_RESUME binds active fixed QA selector and MODE absence via full Config equality, fixed-case/window/approval plan validation, actual timers and Running/Name. Resume wire true is distinct from unchanged read-only false. Default selectors/roles/SQL unchanged. Bounded SSH private action union only selects fixed recovery/resume command; UUID/SHA input checks retained.",
+  "findings": [],
+  "remaining": [
+    "Actual finite Gate approval/Source pins",
+    "Fresh actual default/staged CID/image/config/plan/timers and normal A/B sessions",
+    "One actual qualified Golden Slice; no consumed window reuse"
+  ],
+  "notRun": [
+    "Host/SSH",
+    "SQL",
+    "OTP",
+    "Runtime activation",
+    "Business requests",
+    "Old PG or Auth64 suites"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "status": "MAIN_CONTEXT_LOCAL_PASS_DORMANT_NOT_AUTHORIZED",
+  "authCandidate": "411ceee5",
+  "authIntegration": "ff08dedf",
+  "rootCandidate": "7c7c0dab",
+  "rootIntegration": "e2821670",
+  "independentRootReview": "1a29cad1",
+  "fixedSourceBytes": "All10 Auth/Root source/tests match independent reviewed hashes",
+  "rootActualChecks": {
+    "controller": "27PASS",
+    "SSHWithActualAuthQualifier": "15PASS"
+  },
+  "authority": "None active; old713/e930/a2f8 consumed and CLOSED. New Gate required for actual conditional original submissions. Rootplanmode only, BackendModeabsent required.",
+  "next": "Auth DRI concrete normal A/B runner+review; one exact original-ID execution package, Root stages/arms/starts/restores then returns sharedWriter immediately. No replacement IDs or old UNKNOWN resets."
+}
