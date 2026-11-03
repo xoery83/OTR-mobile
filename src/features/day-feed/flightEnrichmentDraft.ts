@@ -41,6 +41,20 @@ export function applyFlightLookup(
     response.references.some((r) => r.reason === "IDENTITY_CONFLICT")
   )
     return null;
+  for (const [airportField, zoneField, currentCode] of [
+    ["departureAirport", "departureTimezone", value.originCode],
+    ["arrivalAirport", "arrivalTimezone", value.destinationCode],
+  ] as const) {
+    const offered = (field: typeof airportField | typeof zoneField) =>
+      response.suggestions.find(
+        (s) => s.field === field && !s.referenceOnly && s.eligibility !== "UNCHANGED",
+      )?.value;
+    const code = currentCode || offered(airportField);
+    const exact = code ? airportSuggestions(code).filter((a) => a.iata === code) : [];
+    const catalogZone = exact.length === 1 ? airportTimeZone(exact[0]) : null;
+    if (catalogZone && offered(zoneField) && catalogZone !== offered(zoneField))
+      return null;
+  }
   const changes: Partial<FlightSegmentDraft> = {};
   for (const suggestion of response.suggestions) {
     if (suggestion.referenceOnly || suggestion.eligibility !== "ADOPT") continue;

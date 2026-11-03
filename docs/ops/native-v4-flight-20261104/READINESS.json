@@ -1,0 +1,27 @@
+{
+  "status": "NATIVE_LOCAL_READY / EXTERNAL_PROVIDER_GATE_PENDING",
+  "main_verified": "eb692ad3a52ade8674fa30e945175dc7e804084d",
+  "reused_candidate": "fc9ad9da59b4c5aabf5e6c3cccc66954bb7195e9",
+  "source_delta": "8 src files:7 byte-exact fc9 leaves/tests; catalogs preserve5534 unrelated main values",
+  "current_main_gap": "Old consumer lacked full explicit per-field evidence/adoption and retired Account/Trip callback fences",
+  "host_source_check": "39 retained Host family files;35 exact90b4b1ce,4 old SQL/operator tests absent; all production family leaves present and exact. Current main app normal-account fence/startup runtime/body limit present. Not live deployment proof.",
+  "terminal_contract": "Strict otr-flight-enrichment/1 remains11 fields. Manual terminals reuse128char Core fields. No Provider terminal output enabled. Shared versioned DTO/prompt change belongsRoot1; retain disabled until approved.",
+  "checks": {
+    "local_tests": "4suites38PASS current composition; prior52 evidence reused, not added",
+    "scoped_types": "PASS after explicit typeRoots configuration; initial temp config failed type resolution, not product defect",
+    "lint": "PASS affected product files",
+    "ui_guard": "PASS 168representative",
+    "catalog_preservation": "5534 unrelated values assertPASS",
+    "leaf_identity": "7leaves exactfc9 assertPASS",
+    "independent_review": "apple_place_form_mapping NO_BLOCKER current contents/baseeb692ad3"
+  },
+  "not_run": [
+    "Hosted request",
+    "Provider",
+    "Cloud",
+    "Device",
+    "full repo typecheck"
+  ],
+  "private_realtime": "POST_BETA_CLOSED_NO_ACTIVE_WORK",
+  "public_cache": "CLOSED_DEFAULT_MISS"
+}

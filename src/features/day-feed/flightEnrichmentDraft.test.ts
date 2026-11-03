@@ -108,3 +108,34 @@ it("never overwrites an entered zone while adopting an airport", () => {
     }),
   ).not.toHaveProperty("departureZone");
 });
+
+it("holds a timezone suggestion that contradicts the exact airport catalog instead of adopting its clock", () => {
+  expect(
+    applyFlightLookup(
+      response({
+        suggestions: [
+          {
+            field: "departureAirport",
+            value: "AKL",
+            eligibility: "ADOPT",
+            referenceOnly: false,
+          },
+          {
+            field: "departureTimezone",
+            value: "America/Los_Angeles",
+            eligibility: "ADOPT",
+            referenceOnly: false,
+          },
+          {
+            field: "departureLocalTime",
+            value: "12:00",
+            eligibility: "ADOPT",
+            referenceOnly: false,
+          },
+        ],
+      }),
+      request,
+      value(),
+    ),
+  ).toBeNull();
+});

@@ -106,6 +106,8 @@ it("puts both airports before two local clocks and does not prompt for known air
     "calendar",
     "airport",
     "airport",
+    "input",
+    "input",
     "row",
     "row",
     "button",
@@ -172,4 +174,25 @@ it("clearing an automatic arrival clock does not leave a fabricated populated en
   f.render();
   state.nodes.find((n) => n.label === "tripCreate.clearTime").onPress();
   expect(f.value()).toMatchObject({ arrivalTime: "", arrivalDate: "" });
+});
+
+it("keeps optional terminal fields visible, editable and independent without inventing values", () => {
+  const form = setup();
+  form.render();
+  const origin = state.nodes.find(
+    (n) => n.kind === "input" && n.accessibilityLabel === "manualFlight.originTerminal",
+  );
+  const destination = state.nodes.find(
+    (n) =>
+      n.kind === "input" && n.accessibilityLabel === "manualFlight.destinationTerminal",
+  );
+  expect(origin.value).toBe("");
+  expect(destination.value).toBe("");
+  expect(origin.maxLength).toBe(128);
+  origin.onChangeText("Synthetic T1");
+  form.render();
+  expect(form.value().originTerminal).toBe("Synthetic T1");
+  expect(form.value().destinationTerminal).toBe("");
+  expect(form.value().originCode).toBe("AKL");
+  expect(form.value().departureZone).toBe("Pacific/Auckland");
 });

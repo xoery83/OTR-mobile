@@ -1,4 +1,30 @@
 export const en = {
+  "flightLookup.adopt": "Use {field}: {value}",
+  "flightLookup.review": "Review suggestions before updating your form.",
+  "flightLookup.budget": "Lookup allowance reached. You can continue manually.",
+  "flightLookup.marketingCarrier": "Marketing carrier",
+  "flightLookup.operatingCarrier": "Operating carrier",
+  "manualFlight.originTerminal": "Departure terminal (optional)",
+  "manualFlight.destinationTerminal": "Arrival terminal (optional)",
+  "flightLookup.inconsistent":
+    "These details disagree. Your form is unchanged; check the sources before entering manually.",
+  "flightLookup.source": "Source: {value}",
+  "flightLookup.observed": "Observed: {value}",
+  "flightLookup.applies": "Departure dates covered: {from} – {to}",
+  "flightLookup.dateUnconfirmed":
+    "Departure date coverage is not confirmed. Check before entering manually.",
+  "flightLookup.reason.DATE_NEEDS_CHECK":
+    "This source is not confirmed for your departure date.",
+  "flightLookup.reason.MULTIPLE_LEGS":
+    "More than one flight may match. Check the flight before entering details.",
+  "flightLookup.reason.IDENTITY_CONFLICT":
+    "The source describes a different flight. Your flight is unchanged.",
+  "flightLookup.reason.EXISTING_VALUE_CONFLICT":
+    "This differs from your entered details. Keep them or edit manually after checking.",
+  "flightLookup.unknown":
+    "The lookup outcome and usage are not yet confirmed. It will not retry automatically. You can continue manually.",
+  "flightLookup.usagePending":
+    "Usage is still being recorded. You can continue editing and save this flight.",
   "formAutofill.checkinDate": "Check-in date",
   "formAutofill.checkoutDate": "Check-out date",
   "formAutofill.choose":
@@ -1111,10 +1137,10 @@ export const en = {
   "flightLookup.replace": "Use suggested time",
   "flightLookup.suggestion": "{field}: suggested {value}",
   "flightLookup.references": "Reference only — check before entering manually.",
-  "flightLookup.reference": "Reference: {value}",
+  "flightLookup.reference": "{field}: {value} (reference only)",
   "flightLookup.find": "Find flight details",
   "flightLookup.loading": "Finding flight details…",
-  "flightLookup.filled": "Available details filled in. Check them before saving.",
+  "flightLookup.filled": "Your choices are applied to this draft. Save to keep them.",
   "flightLookup.manual": "No usable details found. You can enter them manually.",
   "flightLookup.stale": "The form changed. Suggestions were not applied.",
   "bookingRead.mapUnavailable": "Map is unavailable right now",
@@ -3114,6 +3140,25 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "flightLookup.adopt": "使用{field}：{value}",
+  "flightLookup.review": "请确认建议后再更新表单。",
+  "flightLookup.budget": "查询额度已用完，你仍可手动填写。",
+  "flightLookup.marketingCarrier": "销售航司",
+  "flightLookup.operatingCarrier": "实际承运航司",
+  "manualFlight.originTerminal": "出发航站楼（可选）",
+  "manualFlight.destinationTerminal": "到达航站楼（可选）",
+  "flightLookup.inconsistent": "这些信息存在矛盾，表单未更改。请核对来源后手工填写。",
+  "flightLookup.source": "来源：{value}",
+  "flightLookup.observed": "查询来源的时间：{value}",
+  "flightLookup.applies": "适用出发日期：{from} – {to}",
+  "flightLookup.dateUnconfirmed": "尚未确认来源适用于该出发日期，请核对后手工填写。",
+  "flightLookup.reason.DATE_NEEDS_CHECK": "尚未确认此来源适用于你的出发日期。",
+  "flightLookup.reason.MULTIPLE_LEGS": "可能匹配多个航班，请核对后再填写。",
+  "flightLookup.reason.IDENTITY_CONFLICT": "来源描述的是另一个航班，你的航班未更改。",
+  "flightLookup.reason.EXISTING_VALUE_CONFLICT":
+    "这与你已填的信息不同，请保留原值，或核对后手工修改。",
+  "flightLookup.unknown": "查询结果和用量尚未确认，不会自动重试。你仍可手动填写。",
+  "flightLookup.usagePending": "用量仍在记录中，你可以继续编辑并保存此航班。",
   "formAutofill.checkinDate": "入住日期",
   "formAutofill.checkoutDate": "退房日期",
   "formAutofill.choose": "请选择一项预订进行审核，其他预订不会保存。",
@@ -4126,10 +4171,10 @@ export const zhHans: Record<MessageKey, string> = {
   "flightLookup.replace": "使用建议时间",
   "flightLookup.suggestion": "{field}：建议 {value}",
   "flightLookup.references": "仅供参考，请核对后手工填写。",
-  "flightLookup.reference": "参考信息：{value}",
+  "flightLookup.reference": "{field}：{value}（仅供参考）",
   "flightLookup.find": "查看航班",
   "flightLookup.loading": "正在查询航班…",
-  "flightLookup.filled": "已补入可用信息，请核对后保存。",
+  "flightLookup.filled": "已按你的选择更新草稿，请保存以保留。",
   "flightLookup.manual": "未查到可用信息，可继续手工填写。",
   "flightLookup.stale": "表单已更改，未应用查询结果。",
   "bookingRead.mapUnavailable": "地图暂时无法打开",

@@ -169,9 +169,11 @@ export function FlightSegmentFields({
       | "flightNumberLiteral"
       | "originCode"
       | "originName"
+      | "originTerminal"
       | "departureZone"
       | "destinationCode"
       | "destinationName"
+      | "destinationTerminal"
       | "arrivalZone",
     label: string,
     capitals = false,
@@ -182,7 +184,9 @@ export function FlightSegmentFields({
         accessibilityLabel={label}
         placeholder={label}
         value={value[field]}
-        maxLength={255}
+        maxLength={
+          field === "originTerminal" || field === "destinationTerminal" ? 128 : 255
+        }
         autoCapitalize={capitals ? "characters" : "none"}
         autoCorrect={false}
         editable={!disabled}
@@ -229,6 +233,14 @@ export function FlightSegmentFields({
               })
             }
           />
+          <View style={[styles.times, fontScale > 1.5 && styles.stacked]}>
+            <View style={styles.cell}>
+              {text("originTerminal", t("manualFlight.originTerminal"))}
+            </View>
+            <View style={styles.cell}>
+              {text("destinationTerminal", t("manualFlight.destinationTerminal"))}
+            </View>
+          </View>
           {(value.originCode || value.originName) &&
           !selectedAirportZone(value.originCode, value.originName)
             ? text("departureZone", t("manualFlight.departureZone"))
