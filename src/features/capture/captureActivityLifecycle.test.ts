@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { CaptureActivity } from "./CaptureActivity";
+import { announceCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
 // Native diagnostic controls are outside this UI lifecycle suite.
@@ -30,9 +31,13 @@ vi.mock("react", () => ({
       },
     ];
   },
-  useEffect(effect: () => (() => void) | void) {
-    ui.effect = effect;
+  useEffect(effect: () => (() => void) | void, deps?: unknown[]) {
+    if (deps === undefined) effect();
+    else ui.effect = effect;
   },
+}));
+vi.mock("@/data/operations/universalActivityReader", () => ({
+  readDefaultUniversalActivities: async () => ({}),
 }));
 vi.mock("@/data/operations/defaultCaptureSubmission", () => ({
   listDefaultCaptureJobs: ui.list,
@@ -188,5 +193,55 @@ it.each(["onMore", "onRefresh"] as const)(
     expect(ui.list.mock.calls.length).toBe(calls);
     expect(render().jobs).toEqual(page(1, "current"));
     expect(render().loading).toBe(false);
+  },
+);
+
+it("does not lose a completed Batch notification while the Activity list is still loading", async () => {
+  let finish!: (jobs: CaptureJobReadModel[]) => void;
+  const before = page(1, "new-batch");
+  before[0].allInputsAccepted = false;
+  const completed = structuredClone(before);
+  completed[0].allInputsAccepted = true;
+  ui.list.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  ui.list.mockResolvedValueOnce(completed);
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(ui.list).toHaveBeenCalledOnce());
+  announceCaptureProcessingActivity("current-account", "new-batch-0");
+  announceCaptureProcessingActivity("current-account", "new-batch-0");
+  expect(ui.list).toHaveBeenCalledOnce();
+  finish(before);
+  await vi.waitFor(() => expect(render().jobs[0]?.allInputsAccepted).toBe(true));
+  expect(ui.list).toHaveBeenCalledTimes(2);
+  expect(ui.list).toHaveBeenLastCalledWith({ limit: 20, before: undefined });
+});
+
+it.each(["close", "scope"] as const)(
+  "drops a coalesced Activity refresh after %s invalidation",
+  async (boundary) => {
+    let finish!: (jobs: CaptureJobReadModel[]) => void;
+    let valid = true;
+    const current = () => valid;
+    ui.list.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(current);
+    ui.cleanup = ui.effect!() ?? null;
+    await vi.waitFor(() => expect(ui.list).toHaveBeenCalledOnce());
+    announceCaptureProcessingActivity("current-account", "new-batch-0");
+    if (boundary === "close") ui.cleanup!();
+    else valid = false;
+    finish(page(1));
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(ui.list).toHaveBeenCalledOnce();
+    expect(render(current).jobs).toEqual([]);
   },
 );

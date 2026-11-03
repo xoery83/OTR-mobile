@@ -1,0 +1,19 @@
+{
+  "status": "LOCAL_PASS_NOT_AI_E2E",
+  "base": "58e4dbed1a7cede927c507d80c23536d00acdbeb",
+  "focusedTests": 27,
+  "suites": 3,
+  "redOnBase": true,
+  "notification": "existing process-local announceCaptureProcessingActivity",
+  "checks": {
+    "scopedTypes": "PASS",
+    "eslint": "PASS",
+    "uiGuard": "PASS 473 legacy/167 representative",
+    "diff": "PASS"
+  },
+  "externalActions": 0,
+  "files": {
+    "src/features/capture/CaptureActivity.tsx": "f1a9e839f00db272a1402ec3cf8e7f3bb904c24ada85b557cef9cff096025123",
+    "src/features/capture/captureActivityLifecycle.test.ts": "34d1f7c5c6bec27fc8451aea2a7b874c276dcb80cef2f166e58fb308a61029e4"
+  }
+}

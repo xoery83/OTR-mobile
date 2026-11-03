@@ -66,10 +66,20 @@ export function CaptureActivity({
   const epoch = useRef(0);
   const active = useRef(false);
   const running = useRef(false);
+  const pendingActivityRefresh = useRef(false);
   const refresh = useRef<() => void>(() => undefined);
-  const load = async (older = false) => {
-    if (!active.current || !isCurrent() || running.current || jobs !== inventory.current)
+  const load = async (older = false, activityChanged = false) => {
+    if (
+      !active.current ||
+      !isCurrent() ||
+      (!activityChanged && jobs !== inventory.current)
+    )
       return;
+    if (running.current) {
+      if (activityChanged) pendingActivityRefresh.current = true;
+      return;
+    }
+    pendingActivityRefresh.current = false;
     running.current = true;
     const request = ++epoch.current;
     const current = () => active.current && request === epoch.current && isCurrent();
@@ -108,12 +118,18 @@ export function CaptureActivity({
     } finally {
       if (request === epoch.current) {
         running.current = false;
-        if (current()) setLoading(false);
+        const refreshAfterRead = pendingActivityRefresh.current;
+        pendingActivityRefresh.current = false;
+        if (current()) {
+          setLoading(false);
+          // A settled Capture change must survive the read it overlapped; never dispatch work here.
+          if (refreshAfterRead) void load(false, true);
+        }
       }
     }
   };
   useEffect(() => {
-    refresh.current = () => void load();
+    refresh.current = () => void load(false, true);
   });
   useEffect(() => {
     active.current = true;
@@ -129,6 +145,7 @@ export function CaptureActivity({
       active.current = false;
       ++requests.current;
       running.current = false;
+      pendingActivityRefresh.current = false;
       unsubscribe();
     };
     // Host remounts on Account/context/focus changes; locale and theme keep the list.
