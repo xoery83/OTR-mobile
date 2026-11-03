@@ -1,0 +1,24 @@
+{
+  "request": "NATIVE-VN02-PREPARATION-20261104-03",
+  "candidate": "f925f45a5cfeef2f5aaab2411ee9f94835a89ba5",
+  "base": "8b4ef686b9ad4d588e958ea7053f3535ab317829",
+  "sourceCommit": "2a01ed7b",
+  "files": {
+    "src/data/auth/guestLocalPreparation.test.ts": "01b75bdf0802cc1aff2675fe12a5333fad082c8c55df3dafd9b086698d2edcd6",
+    "src/data/auth/guestLocalWorkspace.ts": "cd7013c218e516566351879d66bfbc95348b54cd6ea25828339d51249d498df1",
+    "src/data/repositories/tripPreparationRepository.test.ts": "aed585142fb7c7c47d4c2f8fb8008100021a89d9c0def425a4ce0de2d6416edc",
+    "src/data/repositories/tripPreparationRepository.ts": "9b587d50ab1b76ce69e4985c304194fd2efe1c31c041ea14c6a1ff858e221dfe",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "a3309e4accf805eeb9500115b2b5324f5fd236ba3fb207fed50fcab1f3a23e3e",
+    "src/features/day-feed/LocalTripWorkspace.tsx": "1ed563fe097a6ead75abe57bd1c33bc0b97826e117c6c2f23f9e7d5240fb4951"
+  },
+  "scope": "Exact7fixedfiles only;6source/testblobs match candidate",
+  "independentCompatibilityReview": "NO_BLOCKER; existing84/232evidence reused",
+  "actualMainChecks": "3suites84PASS/UIguard473/168PASS",
+  "dataTruth": "ExistingGuestlocalfacts, LOCAL_MANUALfingerprint/epochnull, no fabricatedAccepted/financezero; existingMetadataeligibility only",
+  "notRun": [
+    "Device/Vision UX",
+    "Hosted",
+    "Provider",
+    "New business operation"
+  ]
+}
