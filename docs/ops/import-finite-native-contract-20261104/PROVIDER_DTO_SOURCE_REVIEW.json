@@ -1,0 +1,20 @@
+{
+  "request": "IMP-C01-FINITE-NATIVE-20261104-13A",
+  "candidate": "860166d9fe6f47a08435d06cc5c7813fb2f93b67",
+  "reviewer": "Root1 independent of LaneC author",
+  "status": "NO_BLOCKER_INTERNAL_DTO_SOURCE_REVIEW_CODE_NOT_MERGED",
+  "sha256": {
+    "backend/src/universalBatchSource.ts": "103eca65851ec853788af8590c9a9a031e812cb42e9e7858e6272ca7d7da1db1",
+    "backend/src/universalBatchSource.test.ts": "9ac4ed3259da702380ca7d251e3e112290305989b6dcfc53f4fe967322d3a1b2",
+    "backend/src/universalContinuousHost.ts": "93d9a5d097f74d58095332d16151641f32bdebc1c20a2ce752912d43126dfe1d"
+  },
+  "checks": [
+    "Strict existing input schema before metadata selection; unknown client finite flag rejects",
+    "Authenticated actor/trip plus deterministic run/task and submission/ordered original pins explicit",
+    "Queued context validates exact derived identities and keeps complete owning normalized/pdfSource binding",
+    "No scope SQL/runtime permission or Provider reserve enabled; current sustained selector unchanged",
+    "Original approval projection is inert metadata, not Source proof; actual owning SQL must independently validate facts"
+  ],
+  "reusedTests": "Lane fixed2suites10PASS/strict3/lint; no stable rerun",
+  "domainBoundary": "Source/hash matching helper still requires concrete focused candidate and protected approval; no scope mutation"
+}

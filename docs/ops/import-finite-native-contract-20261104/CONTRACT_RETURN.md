@@ -25,3 +25,13 @@ Finite Source/provider scope table CHECKs already cap duration at 15 minutes. Ch
 5. Bound uncertainty: delegated custody/proof/CP14 helper behavior remains subject to this candidate's narrow real PG tests. A helper-level refusal is not permission to add broad policy, relax source validity or reset an old operation. No six-type Golden Slice rerun.
 
 Return trigger: Lane C fixed adapter + exact SQL/proof delta and focused evidence → Root1 scoped review → Root2 independently qualified finite installation/execution → Lane C normal user E2E. No Hosted/SQL/Provider/device action occurred in this contract review.
+
+## ORIGINAL approval hash and normalized Run hash (13A clarification)
+
+Source scope `input_sha256` remains the approved ORIGINAL-pin hash. The actual Run `input_sha256` remains the normalized DERIVED-input hash computed from the actual Run inputs. Neither may overwrite or masquerade as the other; runtime must not update the scope row to obtain admission.
+
+The minimum owning seam is finite normalization composition plus a narrow shared begin/read matching helper. No existing aggregate verified-original projection/hash helper has been established. Reuse actual `trip_source_universal_pdf_material` proof/facts to project the original representation/hash/bytes while preserving input ID/Source/material revision/observed row revision/history; never trust caller-provided `pdfSource` as authority. PNG/TXT pins remain unchanged. All original/derived Source lineage, transform/seal/currentness checks stay mandatory. Both finite begin checks use the same exact tuple/clock/verified ORIGINAL approval comparison; normalized inputs and Run hash are validated independently. Sustained behavior stays unchanged.
+
+Finite lookup/read during active prepare/dispatch must reconcile the approved tuple and actual owning pins. Existing accepted Run/Task/Results reads after closing use their original normal Auth/Source ACL/durable binding recovery path; the temporary singleton scope must not become a permanent cold-recovery prerequisite or a new paid-work authority. Existing finite Provider binding continues to validate actual Task/Attempt/request/input hashes independently, not a substituted Source approval hash.
+
+`860166d9` internal DTO candidate is reviewed without blocker, code NOT_MERGED by this review: strict inputs before inert selection, deterministic Run/Task, queued owning-binding validation, separate original projection with complete derived/pdfSource retained. Existing three-argument sustained selector and execution gates remain unchanged. This is not approval of an unimplemented finite SQL helper or Provider dispatch.
