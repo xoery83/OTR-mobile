@@ -21,6 +21,7 @@ import {
 import type { UniversalSourceTask, UniversalSourceMetadata } from "./universalSourceRead";
 import type { UniversalManifest } from "./universalImport";
 import { createUniversalSourceReader } from "./universalSourceRead";
+import { universalBindingDiagnostic } from "./universalBindingDiagnostic";
 import {
   buildUniversalRegisteredTaskDraft,
   type universalContinuousSelectionSchema,
@@ -45,7 +46,7 @@ import {
 import { recoverSettledUniversalTask } from "./universalSettledRecovery";
 import { createUniversalTaskReceiptChecks } from "./universalTaskReceipt";
 import type { UniversalPriceSchedule } from "./universalDeepSeekProvider";
-import { ZodError, type z } from "zod";
+import { ZodError, z } from "zod";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 const immutable = (value: Task | Attempt, mutable: readonly string[]) =>
@@ -182,6 +183,7 @@ export function createUniversalContinuousHost(deps: {
     return state;
   }
   async function readBoundTask(batch: string, taskId?: string) {
+    const startedAt = Date.now();
     let stage: "AUTH" | "BINDING" | "TASK" = "AUTH";
     try {
       await current();
@@ -217,6 +219,12 @@ export function createUniversalContinuousHost(deps: {
             event: "universal_task_binding_read_failed",
             stage,
             category,
+            ...(z.uuid().safeParse(deps.sourceReadRequestId).success
+              ? { requestId: deps.sourceReadRequestId }
+              : {}),
+            readKind: taskId ? "TASK" : "CONTEXT",
+            durationMs: Date.now() - startedAt,
+            ...universalBindingDiagnostic(error),
           }),
         );
       } catch {

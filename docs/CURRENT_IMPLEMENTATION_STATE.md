@@ -1,3 +1,14 @@
+# Import future-failure correlation — source integration, 4 November 2026
+
+Lane C20187f7b adds safe UUID requestId, CONTEXT/TASK readKind, duration and the
+existing allowlisted error classifier to the existing binding-failure event.
+Root1 independent Source review and current-main Host smoke3 PASS; original
+exception/Source/Task/Provider behavior unchanged. No Hosted deployment or new
+paid call. Historical first Photo503 remains OPEN_UNPROVEN; investigate a future
+actual recurrence only. See ops/import-log-source-integration-20261104/.
+Mixed PNG+PDF-derived+typed TEXT binding contract request LC-C01-MIXED-CORE-20261104-01
+is separate; this log change neither qualifies mixed intake nor renews authority.
+
 # Core sparse Stay owning port — 4 November 2026
 
 Request MCP-C02-S2-CORE-SPARSE-20261104-001 adds MANUAL-only sparse input to the

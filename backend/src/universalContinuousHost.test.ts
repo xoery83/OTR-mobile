@@ -580,18 +580,52 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
     sourceQuery.mockImplementation(async (q) => {
       if (failBinding && q.includes("trip_source_find_sustained_universal_binding")) {
         failBinding = false;
-        throw Error("BINDING_READ_FIXTURE_UNAVAILABLE");
+        throw Object.assign(Error("BINDING_READ_FIXTURE_UNAVAILABLE"), { code: "57014" });
       }
       return bindingRead(q);
     });
+    const requestId = randomUUID();
     const retainedOperation = await operation(),
-      coldHost = createUniversalContinuousHost(hostDeps),
+      coldHost = createUniversalContinuousHost({
+        ...hostDeps,
+        sourceReadRequestId: requestId,
+      }),
       bindingFailureLog = vi.spyOn(console, "info").mockImplementation(() => {});
     try {
-      await expect(coldHost.readContext(batch)).rejects.toThrow("BINDING_READ_FIXTURE_UNAVAILABLE");
+      await expect(coldHost.readContext(batch)).rejects.toThrow(
+        "BINDING_READ_FIXTURE_UNAVAILABLE",
+      );
       expect(bindingFailureLog).toHaveBeenCalledWith(
         expect.stringContaining('"stage":"BINDING","category":"FAILED"'),
       );
+      const diagnostic = JSON.parse(bindingFailureLog.mock.calls[0][0]);
+      expect(diagnostic).toEqual({
+        event: "universal_task_binding_read_failed",
+        stage: "BINDING",
+        category: "FAILED",
+        requestId,
+        readKind: "CONTEXT",
+        durationMs: expect.any(Number),
+        kind: "Error",
+        code: "UNKNOWN",
+        sqlState: "57014",
+      });
+      expect(diagnostic.durationMs).toBeGreaterThanOrEqual(0);
+      expect(JSON.stringify(diagnostic)).not.toContain(
+        "BINDING_READ_FIXTURE_UNAVAILABLE",
+      );
+      failBinding = true;
+      bindingFailureLog.mockImplementationOnce(() => {
+        throw Error("SYNTHETIC_LOGGER_FAILURE");
+      });
+      await expect(coldHost.readResult(batch, taskId)).rejects.toThrow(
+        "BINDING_READ_FIXTURE_UNAVAILABLE",
+      );
+      expect(JSON.parse(bindingFailureLog.mock.calls.at(-1)![0])).toMatchObject({
+        requestId,
+        readKind: "TASK",
+        stage: "BINDING",
+      });
       expect(await coldHost.readContext(batch)).toMatchObject({
         batchId: batch,
         taskId,
