@@ -1,0 +1,22 @@
+{
+  "status": "NO_BLOCKER_READ_ONLY_RETAINED_ASSIGNMENT",
+  "base": "f15ff0ab",
+  "candidate": "d6fa6d4e",
+  "reviewedAt": "2026-11-03T00:13:35.467573+00:00",
+  "reviewScope": "All production f15..944 diff and bounded944..dc8 delta; immediate repository/auth dependencies only",
+  "checks": [
+    "Only currently bound Account reads retained accepted Capture tuples",
+    "Capture/payload/SHA/byteCount exact; single consistent Trip; immutable batchcontext untouched",
+    "getForSourceHandoff performs actual originalIO/hash; for-of bounds cross-job reads to1, keeps order",
+    "Retained hint only for Context/Results GET; start/dispatch explicitly refuses hint-only model",
+    "Account/Trip/generation scope includes hint and remountkey; stale response discarded",
+    "Actual server Auth/Trip/Source qualification remains mandatory; missing originals cannot invent hint",
+    "P3 extracted dependency factory and latest Auth/Updates/control/503 source preserved"
+  ],
+  "validationReused": "108focused/16roots strict/scopedlint; narrow2job inFlight test. No historic golden rerun",
+  "limits": [
+    "Local original absent/server-only assignment still unavailable",
+    "No newSourceTask/Provider/Authority/Reader platform",
+    "Not NativeE2E or official server assignedTrip DTO"
+  ]
+}
