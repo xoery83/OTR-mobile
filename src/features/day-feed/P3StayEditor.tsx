@@ -1,5 +1,5 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -37,6 +37,14 @@ import {
   currentP3PlaceSelection,
   type P3PlaceSelectionDraft,
 } from "./p3PlaceSelectionDraft";
+
+import { createUuid } from "@/domain/localId";
+import {
+  createP3SourceScanConsumer,
+  type P3SourceInterpreter,
+} from "./p3SourceSuggestions";
+import { P3SyntheticScan } from "./P3SyntheticScan";
+import type { StaySuggestionBinding, SyntheticStayResult } from "./p3FormSuggestions";
 
 type Opened = { repository: ManualStayRepository; draft: ManualStayDraft };
 
@@ -150,6 +158,8 @@ export function P3StayEditor({
   onChoosePlan,
   onChooseRental,
   onChooseTransport,
+  syntheticScan,
+  sourceScan,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -159,6 +169,8 @@ export function P3StayEditor({
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
+  sourceScan?: P3SourceInterpreter;
+  syntheticScan?: import("./formScanResponse").FormScanConsumer<SyntheticStayResult>;
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
@@ -166,15 +178,38 @@ export function P3StayEditor({
   onChooseTransport?(): void;
 }) {
   useUiLocale();
+  // A prop refresh must not replace this Form's retained UNKNOWN intake session.
+  const [sourcePort] = useState(() => sourceScan);
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
+  const formId = useRef(createUuid());
+  const formRevision = useRef(0);
+  const scanContext = useRef<StaySuggestionBinding | null>(null);
   const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
   const [fields, setFields] = useState<ManualStayFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
   );
+  const scanSourceScope = useRef(
+    opened ? JSON.stringify([tripId, itemId ?? null, generation]) : null,
+  );
   const fieldsRef = useRef(fields);
+  useLayoutEffect(() => {
+    scanContext.current =
+      source &&
+      scanSourceScope.current === JSON.stringify([tripId, itemId ?? null, generation])
+        ? {
+            formId: formId.current,
+            tripId,
+            itemId: source.draft.itemId,
+            generation,
+            revision: formRevision.current,
+            mode: source.draft.mode,
+            itemRevision: source.draft.baseRevision ?? null,
+          }
+        : null;
+  }, [source, tripId, itemId, generation]);
   const locationInputRevision = useRef(0);
   const selectedPlaceDraft = useRef<P3PlaceSelectionDraft | null>(null);
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
@@ -183,6 +218,22 @@ export function P3StayEditor({
   const firstAttemptRef = useRef<ManualStayFields | null>(null);
   const firstPlaceAttemptRef = useRef<P3PlaceSelectionDraft | null>(null);
   const unavailableRef = useRef(false);
+  const sourceConsumer = useCallback(
+    async (...args: Parameters<ReturnType<typeof createP3SourceScanConsumer>>) => {
+      if (!sourcePort) throw Error("FORM_SCAN_UNAVAILABLE");
+      return createP3SourceScanConsumer(sourcePort, () =>
+        alive.current &&
+        !closedRef.current &&
+        generation === getAccountGeneration() &&
+        !busyRef.current &&
+        !frozenRef.current &&
+        !unavailableRef.current
+          ? scanContext.current
+          : null,
+      )(...args);
+    },
+    [sourcePort, generation],
+  );
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
@@ -223,7 +274,9 @@ export function P3StayEditor({
           if (!alive.current || generation !== getAccountGeneration()) return;
           const value = structuredClone(draft.fields);
           if (!itemId && initialDate) value.startDate = initialDate;
+          scanSourceScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
           setSource({ repository, draft });
+          formRevision.current++;
           fieldsRef.current = value;
           setFields(value);
           initialRef.current = JSON.stringify(value);
@@ -246,6 +299,9 @@ export function P3StayEditor({
       locationInputRevision.current++;
       selectedPlaceDraft.current = null;
     }
+    formRevision.current++;
+    if (scanContext.current)
+      scanContext.current = { ...scanContext.current, revision: formRevision.current };
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -413,6 +469,26 @@ export function P3StayEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
+                  <P3SyntheticScan
+                    scan={sourcePort ? sourceConsumer : syntheticScan}
+                    sourceMode={!!sourcePort}
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                    context={() =>
+                      current() &&
+                      !busyRef.current &&
+                      !frozenRef.current &&
+                      !unavailableRef.current
+                        ? scanContext.current
+                        : null
+                    }
+                    fields={() => fieldsRef.current}
+                    currentFields={fields}
+                    onApply={(next) => {
+                      const { location, ...rest } = next;
+                      change(location === fieldsRef.current?.location ? rest : next);
+                      setNameQuery(null);
+                    }}
+                  />
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.stayName")}</Text>
                     <UiTextInput

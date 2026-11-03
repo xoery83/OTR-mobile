@@ -10,6 +10,8 @@ import {
 import {
   listDefaultCaptureJobs,
   reopenDefaultCaptureJob,
+  createDefaultCaptureSubmissionSession,
+  getDefaultCaptureSubmissionDependencies,
 } from "./defaultCaptureSubmission";
 
 const state = vi.hoisted(() => ({
@@ -18,13 +20,19 @@ const state = vi.hoisted(() => ({
   list: vi.fn(),
   reopen: vi.fn(),
   handoff: vi.fn(),
+  session: vi.fn(),
+  uri: vi.fn(),
 }));
 vi.mock("expo-crypto", () => ({ randomUUID: vi.fn() }));
 vi.mock("react-native", () => ({
   AppState: { currentState: "active", addEventListener: () => ({ remove() {} }) },
 }));
 vi.mock("@/native/capturePicker", () => ({ pickCaptureMaterial: vi.fn() }));
-vi.mock("@/native/captureUriReader", () => ({ openCaptureUriReader: vi.fn() }));
+vi.mock("@/native/captureUriReader", () => ({ openCaptureUriReader: state.uri }));
+vi.mock("./captureSubmission", () => ({
+  createCaptureSubmissionSession: state.session,
+  createCaptureRecoveryAction: vi.fn(),
+}));
 vi.mock("@/data/auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
 }));
@@ -47,6 +55,30 @@ beforeEach(() => {
   vi.resetAllMocks();
   state.account = "A";
 });
+
+it("shared dependency extraction preserves URI reading and original session context/lineage arguments", async () => {
+  const context = { accountId: "A", tripId: "trip", generation: getAccountGeneration() };
+  const lineage = { "original-input": 7 };
+  const reader = { read: vi.fn(), close: vi.fn() };
+  state.uri.mockResolvedValue(reader);
+  const deps = await getDefaultCaptureSubmissionDependencies();
+  expect(
+    await deps.open({
+      source: "files",
+      temporaryUri: "file:///fixture.txt",
+      name: "fixture.txt",
+      typeHint: "text/plain",
+    }),
+  ).toEqual({ reader });
+  expect(state.uri).toHaveBeenCalledExactlyOnceWith("file:///fixture.txt");
+  await createDefaultCaptureSubmissionSession(context, lineage);
+  expect(state.session.mock.calls[0][0]).toMatchObject({
+    context,
+    lineageRevisions: lineage,
+  });
+  expect(state.session.mock.calls[0][0].context).toBe(context);
+  expect(state.session.mock.calls[0][0].lineageRevisions).toBe(lineage);
+});
 it.each(["list", "reopen"] as const)(
   "%s binds invocation before DB initialization and rejects A→B→A without refreshing generation",
   async (action) => {
@@ -63,7 +95,11 @@ it.each(["list", "reopen"] as const)(
         await assertAccountRequestContext(context, async () => state.account);
         return action === "list"
           ? []
-          : { batch: { jobId: "same-job" }, processing: { capability: "NOT_INSTALLED" } };
+          : {
+              batch: { jobId: "same-job", context: { tripPrior: null } },
+              allInputsAccepted: false,
+              processing: { capability: "NOT_INSTALLED" },
+            };
       },
     );
     const generation = getAccountGeneration();

@@ -7,3 +7,5 @@ Activity/Updates/Results may use the hint only for authorized reads. New interpr
 106 tests / 7 files, scoped strict16 roots, scoped lint and UI guard pass. Baseec57; later mainf15 P3 dependency extraction touches a different region of defaultCaptureSubmission. Root owns final latest-main alignment, independent review and serial integration. This candidate has no Hosted or Native acceptance. Existing126.14 source-lane receipt remains applicable only to that version; Photo first503 stays OPEN_UNPROVEN.
 
 The remaining server-only attribution case cannot be solved by inventing local metadata; it needs the existing Owning reader to return a formally validated mapping. No new Authority is proposed here.
+
+Ordinary merge of mainf15 preserves all P3 seams. Two manual conflict resolutions retained both handoffs and both test mocks; production auto-merged unchanged intended adapter. Post-merge107 checks/16-root strict/conflict-file lint pass; source digests in LATEST_MAIN_RECHECK.json. Independent review/Root serial integration still pending.

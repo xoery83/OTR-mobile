@@ -1,0 +1,34 @@
+{
+  "status": "LOCAL_PREPARED_NOT_INTEGRATED",
+  "ordinaryMergedMain": "f15ff0ab",
+  "productionResolution": "defaultCaptureSubmission auto-merged: retained original withLocalProcessing adapter plus current P3 dependency factory extraction",
+  "manualResolutions": [
+    "CURRENT_IMPLEMENTATION_STATE preserves both P3 and Import blocks",
+    "defaultCaptureSubmission.test preserves handoff + session/uri mocks and P3 case"
+  ],
+  "checks": {
+    "tests": 107,
+    "testFiles": 7,
+    "strictRoots": 16,
+    "scopedConflictFileLint": "PASS",
+    "uiGuard": "reused unchanged original423 UI proof"
+  },
+  "files": {
+    "src/data/operations/defaultCaptureSubmission.test.ts": "77c26c4ab1697eddac86a8de99dfa6461b31f4698bd782c482a88101b33328b7",
+    "src/data/operations/defaultCaptureSubmission.ts": "671325556d386802cd2914ae66e8ad351d77a4b2e3dd0512be1caf5d5ba56dab",
+    "src/data/operations/universalActivityReader.test.ts": "3572f9e58c3f99998876edcc93cfceca0db5b2e6528f0490dbbe8609c662bf2d",
+    "src/data/operations/universalActivityReader.ts": "146e0d46d9e6d48bf798c0283be1060a5d554a85bce311c8e1cb32834b7bd6b2",
+    "src/data/operations/universalCaptureConsumer.test.ts": "515b8cf2a32999979b75def064c1e7dc9f4c42af25510ab2e69651455a173e5d",
+    "src/data/operations/universalCaptureConsumer.ts": "e4d090d0045ee50c8aaab02a307b14ee8803e4caa1eee16008ba25ff7903d55d",
+    "src/data/operations/universalImportUpdates.test.ts": "68a280fca15b68c57b5ba1e544433ae170862a1d50200481eebe26364ba7b0be",
+    "src/data/operations/universalImportUpdates.ts": "ecbd92995ad9be6fd6ff4b8b151be8ce6564dc927dddb4687e4eb9f677e9f250",
+    "src/domain/capture/captureSubmission.ts": "4225e610ec61cb42ec68e19363ef785627c5c37bb1bc6b04a18eb0109cb7fdad",
+    "src/features/capture/CaptureProgress.tsx": "b5d9156672d6d1d165245e368e5c9b26f97e17d2e32a8b930fb4e7e5d31d0d06",
+    "src/features/capture/useUniversalCapture.test.ts": "cff681e643899b526b31044a63abef96d0f73810a5fba208455a3ed7c7ecdf28",
+    "src/features/capture/useUniversalCapture.ts": "ef16bf9b62abe45394afaa87324135e71fc117c1b32c717924bac56c79b244dd",
+    "src/features/capture/useUniversalP1Admission.test.ts": "b7ec40f44ce0b77c2a21f92c3536aa2a4ed3975044c7a4add18847d8ee74fc1e",
+    "src/features/capture/useUniversalP1Admission.ts": "187a437f9bf6a03c9d69ae866e9d3237754cdece9945d174fb7a421d7c7d2f05",
+    "src/data/operations/captureJobAssignment.ts": "5311216ab1033f1fd0f086d8c8e7af6d5df106f16b1cd6d6e98373c0503ef4f6",
+    "src/data/operations/captureJobAssignment.test.ts": "2737244e1a9d8b0f86745a04c3393522fd3421977a0150a710968a84a45d6569"
+  }
+}
