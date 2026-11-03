@@ -1,0 +1,25 @@
+{
+  "status": "SCOPED_NO_BLOCKER_FRESH_OPERATOR",
+  "reviewer": "auth_phase1_review",
+  "runSHA256": "0267c78aa7cba7bde2114f23ff7301eda4be2b5185749dc71541a21b12903df7",
+  "selfCheckNegativeCases": 5,
+  "bundleImportFetchForbidden": "PASS",
+  "issueIntentDigest": "1cde6722504959f99eada52024f7fbe8f26fc8ae7e377ad3fbcc9e96670cdf0c",
+  "buildPins": {
+    "driver.mjs": "70acb8c8f3783bbb9e073377469c35fd83d2ed90867bd0e119d889dfc510bff7",
+    "query.py": "21f7ebd63762679fc081a2c7117628a78ce783f98dd80a6733c3a8266289971f",
+    "entry.ts": "231a82cb139877a86ae830168e41950f9da1e83836e9bc56a47d2fd598ab1763",
+    "SOURCE_MANIFEST.json": "a6c6ca13d4de3f2d4d267622535c474d676bd70e1880bd11231255ceb2e0b8f1"
+  },
+  "checks": [
+    "Four build pins and12 fixed source blobs match",
+    "Direct exact approval and Gate hash match",
+    "READY before any credential/OTP/Session",
+    "Immutable binding ACK before Root ACTIVE",
+    "Active+binding recheck then durable started before Keychain",
+    "Each A/B challenge exclusive+fsync; original owned session cleanup retained",
+    "Old Claim/window rejected, UNKNOWN never resubmitted"
+  ],
+  "externalCallsByReview": 0,
+  "windowQualifiedByReview": false
+}

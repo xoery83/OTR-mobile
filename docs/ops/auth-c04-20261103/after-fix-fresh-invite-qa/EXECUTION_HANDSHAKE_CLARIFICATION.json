@@ -1,0 +1,20 @@
+{
+  "reason": "Fixed controller stage requires T<=now and only staging creates candidate CID; complete binding cannot exist before T",
+  "withdrawnExtraRequirement": "Complete CID binding ACK before T; this was an Auth coordination preference, not a Gate requirement",
+  "requiredSequence": [
+    "Both operators READY and Root fresh legal/PG/software/CAS qualification",
+    "Bind single immutable T/D within approved bounds",
+    "At T stage candidate, not started",
+    "Direct local0600PLAN_BINDING delivery, Auth durable binding ACK",
+    "Root independently reads ACK, arms/verifies both absolute timers",
+    "Root starts runtime and delivers immutable matching ROOT_ACTIVE",
+    "Auth actualwindow qualifier before normalOTP and againafterlogin"
+  ],
+  "noChange": [
+    "Fixed Gate/controller/source bytes",
+    "No clockreset/extension",
+    "ACK remains required before actualruntime start",
+    "No added authority or oldUNKNOWN replay"
+  ],
+  "actualWindowStartedAtRecord": null
+}
