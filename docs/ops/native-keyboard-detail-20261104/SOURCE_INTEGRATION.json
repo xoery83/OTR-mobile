@@ -1,0 +1,24 @@
+{
+  "requestId": "NATIVE-KEYBOARD-DETAIL-20261104-01",
+  "status": "MAIN_SOURCE_INTEGRATED_NOT_DEVICE",
+  "main": "74f182c92b2939dac0f2d8f3dbafbcf8174d6562",
+  "candidate": "db9b4c6ad5813c2d855e7252a75f7296a1d2a0fa",
+  "beforeMain": "eb692ad3a52ade8674fa30e945175dc7e804084d",
+  "changedProductFiles": {
+    "src/features/day-feed/P1Detail.tsx": "12153208ea6aee4113dea99faca3479499dc468d8132096ab92273df912d2a08",
+    "src/features/day-feed/P2Detail.tsx": "a01cc24e77d6dce116b62c98051599189d8ac1c8b726a52fa87827051fd46b4b",
+    "src/features/day-feed/P3Detail.tsx": "97232ac1e1446d563e25562106d42fa8ddbf61713185be04e215f90dcc67beea",
+    "src/features/day-feed/P4Detail.tsx": "9a06c2342f262c57f4d3a4f67ea2ba3ef28dd94d68b6e850e0ef22dab1723c1c"
+  },
+  "preimageCAS": "All four main blobs matched candidate parent exactly",
+  "independentReview": "Native reported native_sprint_independent_review NO_BLOCKER; Root1 independently reviewed exact four handled props against mandatory UI foundation, no handlers/routes/readers/save changed",
+  "actualMainValidation": {
+    "keyboardTapPolicy": "1/1 PASS",
+    "uiGuard": "PASS473/168; baseline unchanged",
+    "author28TestsAffectedLint": "REUSED"
+  },
+  "deviceAcceptance": "NOT_RUN",
+  "hostedChanges": false,
+  "readerSaveNavAuthDbChanges": false,
+  "resource": "MAIN_RELEASED"
+}
