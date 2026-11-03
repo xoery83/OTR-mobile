@@ -16,7 +16,7 @@ import { coreDefaults } from "@/domain/trip/tripCoreV2";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn(), readCommittedLocalPrincipal: vi.fn(async () => null) }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 it("Preparation normal Repository uses local creator empty state, installed canonical certificates, cold reopen and tap authority", async () => {
   const folder = mkdtempSync(join(tmpdir(), "otr-journey-snapshot-")),

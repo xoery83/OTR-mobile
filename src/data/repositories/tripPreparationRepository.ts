@@ -1,4 +1,4 @@
-import { requireActiveUserId } from "../auth/authRepository";
+import { readCommittedLocalPrincipal, requireActiveUserId } from "../auth/authRepository";
 import {
   assertAccountRequestContext,
   type AccountRequestContext,
@@ -149,6 +149,10 @@ export function createTripPreparationReader(
   };
 }
 export async function readTripPreparation() {
+  if ((await readCommittedLocalPrincipal())?.kind === "GUEST") {
+    const { openGuestLocalWorkspace } = await import("../auth/guestLocalWorkspace");
+    return (await openGuestLocalWorkspace()).preparation;
+  }
   const database = await readInitializedDatabase();
   const core = createTripCoreV2Repository(
     database,

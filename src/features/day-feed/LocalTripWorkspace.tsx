@@ -935,7 +935,7 @@ function LocalTripContent({
           : null;
   const preparation = useTripPreparationWidget({
     refreshKey,
-    tripId: guest === false ? (metadata?.id ?? null) : null,
+    tripId: guest !== null ? (metadata?.id ?? null) : null,
     metadata: metadata
       ? {
           startDate: metadata.startDate,

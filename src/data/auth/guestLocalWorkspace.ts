@@ -42,6 +42,7 @@ import {
 } from "../repositories/tripCoreV2Repository";
 import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { createTripRepository } from "../repositories/tripRepository";
+import { createTripPreparationReader } from "../repositories/tripPreparationRepository";
 import { createGuestTripCurrencyRepository } from "../repositories/guestTripCurrencyRepository";
 import { createTripPhotoRepository } from "../repositories/tripPhotoRepository";
 import { createTripPersonalCoverRepository } from "../repositories/tripPersonalCoverRepository";
@@ -328,6 +329,15 @@ export function createGuestLocalWorkspaceOpener(deps: {
         });
       },
       trips,
+      preparation: createTripPreparationReader(
+        core,
+        async (tripId) => {
+          const local = await trips.getTrip(tripId);
+          return local ? { ...local, canPlan: await trips.canUpdateMetadata(tripId) } : null;
+        },
+        repositoryOwner,
+        localManual,
+      ),
       currency: createGuestTripCurrencyRepository(database, repositoryOwner),
       photos: createTripPhotoRepository(database, repositoryOwner),
       personalCover: createTripPersonalCoverRepository(database, repositoryOwner),

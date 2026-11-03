@@ -93,7 +93,7 @@ vi.mock("./P5TransportEditor", () => ({
 vi.mock("./useTripPreparationWidget", () => ({
   useTripPreparationWidget: (props: any) => {
     state.preparation = props;
-    return null;
+    return props.tripId ? state.preparationWidget : null;
   },
 }));
 vi.mock("./TripMembersSheet", () => ({
@@ -150,6 +150,7 @@ const state = vi.hoisted(() => ({
   foreground: null as null | ((state: string) => void),
   finance: null as TripHomeWidget | null,
   preparation: null as any,
+  preparationWidget: null as TripHomeWidget | null,
   personal: { selection: null as any, open: vi.fn(), select: vi.fn() },
 }));
 vi.mock("@/data/repositories/tripPersonCloudCreateRepository", async (original) => ({
@@ -398,6 +399,7 @@ function input(label: string, value: string) {
   state.nodes.find((node) => node.accessibilityLabel === label)!.onChangeText(value);
 }
 beforeEach(() => {
+  state.preparationWidget = null;
   guestCurrency.readSetup.mockReset().mockResolvedValue(null);
   vi.mocked(readLocalTripPrincipal)
     .mockReset()
@@ -1845,7 +1847,7 @@ it("opens a genuine Guest principal without a formal Session and skips Account d
   const html = render();
   expect(props.onKnownTrip).toHaveBeenCalledWith("LOCAL");
   expect(state.discovery).not.toHaveBeenCalled();
-  expect(state.preparation.tripId).toBeNull();
+  expect(state.preparation.tripId).toBe(local.id);
   expect(html).not.toContain("data-trip-photos");
   expect(state.nodes.find((node) => node.frame)?.frame.title).toBe("Guest local trip");
 });
@@ -2321,5 +2323,26 @@ it("opens the same Guest Trip local currency without enabling Account preparatio
   currency.onPress();
   render();
   expect(state.nodes.find((node) => node.currencyScreen)?.currencyScreen.journeyId).toBe(id);
-  expect(state.preparation.tripId).toBeNull();
+  expect(state.preparation.tripId).toBe(id);
+});
+
+
+it.each(["Upcoming", "Undated"])("shows existing Guest %s Preparation without Account-only modules", async (lifecycle) => {
+  const local = { ...trip("guest-preparation", "Guest preparation"), syncFormatVersion: 2 as const,
+    startDate: lifecycle === "Upcoming" ? "2099-11-08" : null,
+    endDate: lifecycle === "Upcoming" ? "2099-11-10" : null,
+  };
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "GUEST", localId: "00000000-0000-4000-8000-000000000001" });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  state.repo.mockResolvedValue(repository([local]));
+  state.preparationWidget = { id: "preparation", title: "Prepare", content: createElement("div", null, "Existing preparation") };
+  props.tripId = local.id;
+  render();
+  await flush();
+  const html = render();
+  expect(state.preparation.tripId).toBe(local.id);
+  expect(state.preparation.undated).toBe(lifecycle === "Undated");
+  expect(state.nodes.find((node) => node.frame)?.frame.widgets.map((widget: TripHomeWidget) => widget.id)).toContain("preparation");
+  expect(html).not.toContain("data-trip-photos");
+  expect(state.discovery).not.toHaveBeenCalled();
 });
