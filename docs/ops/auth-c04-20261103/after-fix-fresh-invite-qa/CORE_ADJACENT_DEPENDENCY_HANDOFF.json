@@ -1,0 +1,33 @@
+{
+  "status": "DIRECT_READER_DEPENDENCIES_METADATA_VERIFIED_NO_OWNER_ONLY_GUARD",
+  "observedAt": "2026-11-03T21:31:32.557862+00:00",
+  "privatePath": "/private/tmp/otr-root2-core-member-read-567576cd/READER_ADJACENT_DEPENDENCIES.private.json",
+  "privateSHA256": "0f9492a8a959b9fc7f7f8f76ea5eb90775b7e1f394ef402d5a367e77eb98d19d",
+  "functions": [
+    {
+      "signature": "trip_core_lock_actor_scope(uuid,uuid)",
+      "bodyMD5": "e721c5fc82c5b1bbd43ce6ac6a4c4334",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ]
+    },
+    {
+      "signature": "trip_core_read_person_bindings(uuid,uuid)",
+      "bodyMD5": "748b40be147aeb80d42db69c471dce87",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ]
+    }
+  ],
+  "findings": [
+    "trip_core_lock_actor_scope validates Gateway session and exact otr.core.actor/trip; linked journey_members row for Actor sets active=true and personId independently of ownership. canManageShared remains owner-only. Duplicate Actor Person binding raises error.",
+    "trip_core_read_person_bindings calls the existing lock helper and requires active=true; it has no separate Owner/write predicate. Existing row projection and 20000-row limit remain."
+  ],
+  "scope": "Metadata only. No Actor function execution, new session, business request or installation. No change to fixed ff8143 install required by these definitions."
+}

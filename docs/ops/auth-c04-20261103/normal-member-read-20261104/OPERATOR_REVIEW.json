@@ -1,0 +1,14 @@
+{
+  "status": "SCOPED_NO_BLOCKER_NORMAL_MEMBER_READ_OPERATOR",
+  "reviewer": "auth_phase1_review",
+  "sourceProbe": "d7ac98e1",
+  "runSHA256": "d5a514e9911f23c55b25f9447468842bcda897669b60d86c6162ee033faa2882",
+  "entrySHA256": "ffa0fb20855759241cddb8abe0d70f5f8eae1009022c4f91e78b7a13e49b1bc3",
+  "bundleSHA256": "5dfbaf0f43d14a265ed446e39b7398e9d427b3b1935e60cb8a2748851644e5cf",
+  "manifestSHA256": "d89a124c247d16251342a0a61958678624e0070e87946466c1a5c12b3015052f",
+  "fixedPinIssue": "Resolved by hardcodedmanifestSHA beforeparse/import/Keychain",
+  "selfCheckNegatives": 5,
+  "headlessImportFetchForbidden": "PASS",
+  "preAuthQualifyDenied": "PASS",
+  "initialReviewDidNotExecuteExternalIO": true
+}

@@ -1,0 +1,17 @@
+{
+  "status": "ACTUAL_ROOT2_CORE_READ_SOFTWARE_VERIFIED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "helperBodyMD5": "882997ee273bded9f32e7b70868e2afb",
+  "nativeBReleased": true,
+  "nativeBReleaseSource": "Native directhandoff 0OTP/Key/Session/Host and Authpriority granted",
+  "closedRuntimeVerified": true,
+  "sourceIncludesCoreCaller": true,
+  "sourceMain": "5936318992c4d903db1985656f1ba4d8db134ae8",
+  "image": "sha256:0e7586fcfacd8278df0cc7c025500ab633a375f104a0cabff805892538107db5",
+  "containerId": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569",
+  "observedAt": "2026-11-03T22:27:28.113632+00:00",
+  "root2ReceiptCommit": "b5b50539",
+  "root2ReceiptSHA256": "05ba02952114c8d27b899b94873eaad53d945cdd1e5342d74cf45146c4a7a52d",
+  "freshReceiptSHA256": "00e3d5d701f37105abff9dd2cb57d188d6a3ae8837c824f2f7ebe597c986e760"
+}

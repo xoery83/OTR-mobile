@@ -1,0 +1,65 @@
+{
+  "status": "SERVER_VERIFIED_CORE_READER_LATEST_MAIN_CLOSED",
+  "observedAt": "2026-11-03T22:20:22.657340+00:00",
+  "containerId": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569",
+  "image": "sha256:0e7586fcfacd8278df0cc7c025500ab633a375f104a0cabff805892538107db5",
+  "configSHA256": "a63ead70ffbf9409b76630b39f5ea79d061c2df5d0da40e48790b1c9448fc770",
+  "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa",
+  "closedFlags": {
+    "OTR_DEV_UNIVERSAL_PDF_RUNTIME": "disabled",
+    "OTR_DEV_UNIVERSAL_PNG_RUNTIME": "disabled"
+  },
+  "configFilesVerified": 18,
+  "mountedFilesVerified": 5,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "server-capture.mjs": "36e34613443fac9729acf22f5a139931fae82e77a11b5bc866442576f828501e",
+    "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb"
+  },
+  "http": [
+    {
+      "origin": "http://127.0.0.1:8787",
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:8787",
+      "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    },
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    }
+  ],
+  "originalRetained": "37ce8a90680ce2a3cbbc434d5ea0595f41f737734b9487088af9da111496ec05",
+  "lockAvailable": true,
+  "protectedTimerCount": 0,
+  "businessCalls": 0,
+  "providerCalls": 0,
+  "profileActivated": false,
+  "sourceMain": "5936318992c4d903db1985656f1ba4d8db134ae8",
+  "sourceReadCallerCommit": "5bb59e6a8df685fcfa1c8139cbd72ae239384b3f",
+  "readerTestsPassed": 22,
+  "compiledHelperCallPresent": true,
+  "helper": {
+    "bodyMD5": "882997ee273bded9f32e7b70868e2afb",
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "owner": "postgres",
+    "securityDefiner": true
+  },
+  "issuerDenyAllMD5": "b0f7eae14599bd32cb9430a59832c837",
+  "sqlInstalledAgain": false,
+  "normalABGet": "PENDING_AUTH_OWN_SESSION_AND_NATIVE_MAILBOX_RELEASE",
+  "qaWindowStarted": false,
+  "nextOwningAction": "Auth normal A/B GET-only driver after Native ownSession cleanup; no Claim/old4028 retry."
+}

@@ -1,0 +1,4 @@
+{"phase":"MEMBER_READ_RESPONSE","accountId":"26876e6e-a919-457d-bc00-78d76ba08043","status":200,"requestId":"140f0edf-96d1-4e60-9f3c-9230946ed5c8","durationMs":13635}
+{"phase":"MEMBER_COLLECTION_VALIDATED","accountId":"26876e6e-a919-457d-bc00-78d76ba08043","recordCount":2}
+{"phase":"MEMBER_READ_RESPONSE","accountId":"1f3d7935-1bdc-4952-8d7f-0f72077368c1","status":200,"requestId":"4b549679-99a2-4379-9353-47e0cc17a3b0","durationMs":21046}
+{"phase":"MEMBER_COLLECTION_VALIDATED","accountId":"1f3d7935-1bdc-4952-8d7f-0f72077368c1","recordCount":2}

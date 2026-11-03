@@ -1,0 +1,26 @@
+{
+  "status": "AUTH_FIXED_SQL_AND_INSTALLED_METADATA_MATCH_CALLER_ON_MAIN_SOFTWARE_PENDING",
+  "actualMain": "5bb59e6a8df685fcfa1c8139cbd72ae239384b3f",
+  "matchedManifestFiles": 13,
+  "root2InstallCommit": "cb34214d4118950c19f34d8b7d5fda81e9ac0bed",
+  "exactSqlBodyMd5MatchesActualHelper": "882997ee273bded9f32e7b70868e2afb",
+  "ownerOnlyGatewayNarrowExecute": [
+    {
+      "grantable": false,
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "privilege": "EXECUTE"
+    },
+    {
+      "grantable": false,
+      "grantee": "otr_trip_core_v2_gateway",
+      "grantor": "postgres",
+      "privilege": "EXECUTE"
+    }
+  ],
+  "existingWriteFunctionsRolesAclRlsUnchanged": true,
+  "hostedCallerDeployment": "PENDING_ROOT2_AFTER_CONFLICTING_MCP_WINDOW",
+  "normalMemberRead": "NOT_RUN",
+  "normalBConcurrency": "NativeDF-C02_D2normalOwnTripread beforeAuth; waitownSessioncleanup",
+  "oldClaim4028": "UNKNOWN_NOT_RETRIED"
+}

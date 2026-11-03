@@ -7,6 +7,31 @@ and the evidence directories below; do not reconstruct it or rerun stable suites
 
 ## Actual Golden Slice
 
+**Latest actual flow: PASS_NORMAL_A_B_MEMBER_READ_ONLY**. NormalA/B each1real
+EmailOTP+/user, CorecollectionA20013.635s/B20021.046s with exactrequestIDs;
+existinghash/actor/Trip/accountfences anduniqueBPersonbcdbindingPASS. Source59363189
+includes5bbcaller/helper882997, current22ba/0e7586 independentlyRoot2verified.
+OwnA/BlocalLogout+refreshrejectionPASS22:29:17.586Z; BmailboxreturnedNativeD2.
+Bothcollections only2Personrecords: noSharedItem/privatefixture, so notdata
+isolationPASS. Nativecoldrestore/revoke remainNOT_RUN; wholeC04IN_PROGRESS.
+See normal-member-read-20261104/ACTUAL_OUTCOME.json. Next: qualifiedshared/private
+fixture viaexistingNormalOwnerP1producer+Nativecoldread (LaneCdeviceclaimrelease),
+andCoreRevokeformalpacket (10e35gapreturn) while noClaim replay/writewindow.
+
+
+**Latest integration checkpoint:** approved READ SQL installed and independently
+verified atcb34214d (helperbody882997ee…, Owner/GatewayonlyEXEC, old3functions/
+roles/graph31 ACL-RLS unchanged). Auth directly matched exactSQLbody and all13
+manifestfiles on actualmain5bb59e6a; callerintegration/sourceWriterreleased.
+No repeatedSQLapproval is needed. Root2 owns latestcompatible softwaredeployment
+after currentMCPeed8 conflict safelycloses. HostedMemberRead stillNOT_RUN.
+AuthnormalA/B GET-onlydriver ready; Nativecurrentlyprepares independentnormalB
+OWNTrip2a70…D2read. Authhas0newOTP/noactiveBsession and willwaitNativeowncleanup
+before its nextBOTP. No token/sessiontransfer. NativeiPadcurrentUUIDstillnot
+proved bynickname; ordinaryAuth/useridentity must verify it. See
+CORE_INSTALLED_SOURCE_CONSUMPTION.json/CORE_PRECALL_INSTALL_RECEIPT.json.
+
+
 **PARTIAL_PASS_INVITE_CLAIM / MEMBER_READ_TIMEOUT** — latest actual Gate2fad,
 window1bf81c2c, immutableT20:21:35Z/D20:51:35Z. A/B each one realEmailOTP and
 normal identity readbackPASS. New0b8927c2 ISSUE/ba97129d CLAIM have independent

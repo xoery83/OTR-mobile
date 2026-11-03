@@ -1,0 +1,8 @@
+{
+  "status": "CURRENT_CORE_READER_HEALTHY_UNCHANGED",
+  "observedAt": "2026-11-03T22:27:28.113632+00:00",
+  "containerId": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569",
+  "image": "sha256:0e7586fcfacd8278df0cc7c025500ab633a375f104a0cabff805892538107db5",
+  "health": "healthy",
+  "mutations": 0
+}

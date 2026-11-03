@@ -1,0 +1,42 @@
+{
+  "goldenSlice": "PASS_NORMAL_A_B_MEMBER_READ_ONLY",
+  "startedAt": "2026-11-03T22:28:23.080Z",
+  "completedAt": "2026-11-03T22:29:17.586Z",
+  "actualBackendSource": "5936318992c4d903db1985656f1ba4d8db134ae8",
+  "coreCaller": "5bb59e6a8df685fcfa1c8139cbd72ae239384b3f",
+  "coreHelperBodyMD5": "882997ee273bded9f32e7b70868e2afb",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "normalEmailOtpA": "PASS_ONE_REQUEST",
+  "normalEmailOtpB": "PASS_ONE_REQUEST",
+  "normalIdentityAccountReadback": "PASS_EXACT_DISTINCT_A_B",
+  "coreCollectionHashActorTripAndAccountFenceValidation": "PASS",
+  "uniqueActiveBPersonBinding": "PASS_bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+  "responses": [
+    {
+      "phase": "MEMBER_READ_RESPONSE",
+      "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "status": 200,
+      "requestId": "140f0edf-96d1-4e60-9f3c-9230946ed5c8",
+      "durationMs": 13635
+    },
+    {
+      "phase": "MEMBER_READ_RESPONSE",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "status": 200,
+      "requestId": "4b549679-99a2-4379-9353-47e0cc17a3b0",
+      "durationMs": 21046
+    }
+  ],
+  "privateItemNegative": "NO_QUALIFIED_PRIVATE_FIXTURE_NOT_PASS",
+  "sharedItemRead": "NO_ITEM_FIXTURE_NOT_VERIFIED",
+  "ownSessionCleanupAandB": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "nativeMailbox": "B_RETURNED_TO_NATIVE_D2_AFTER_OWN_CLEANUP",
+  "nativeColdRestore": "NOT_RUN_WAIT_DEVICE_LANEC_RELEASE",
+  "memberRevoke": "CONTRACT_PACKET_PENDING_CORE_IMPLEMENTATION",
+  "claimReplay": false,
+  "newBusinessWrites": 0,
+  "newRuntimeWindow": false,
+  "providerCalls": 0,
+  "ordinaryNativeDefault15sBudget": "Bmeasured21.046s; Nativeinformed_notclaimingperformancefix",
+  "wholeC04": "IN_PROGRESS_NOT_PASS"
+}
