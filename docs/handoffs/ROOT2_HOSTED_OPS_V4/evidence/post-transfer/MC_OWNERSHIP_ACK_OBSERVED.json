@@ -1,0 +1,23 @@
+{
+  "event_id": "root2-hosted-writer-accepted-v4-20261103-01",
+  "ack_status": "REGISTERED_OPS_OWNER_WRITES_FROZEN_PENDING_POST_CHECK",
+  "registered_at": "2026-11-03T10:26:39.544Z",
+  "receiver_thread_id": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "acceptance_commit": "200a2aa61f22c432b31aed5ab44affb0fa945ef3",
+  "release_event_id": "root1-hosted-writer-release-v4-20261103-01",
+  "release_commit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "resource": {
+    "environment": "DEV",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "service": "otr-dev-backend",
+    "container": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc"
+  },
+  "registered_ops_owner": "Root2",
+  "current_executable_writer": null,
+  "root1_mutations_allowed": false,
+  "root2_mutations_allowed": false,
+  "required_remaining": "Root2 independently reads this ACK and performs no-business health/default-close readback; MC verifies exact resource and evidence before write-enabled status. Every later operation still needs its own precise valid Gate.",
+  "new_business_authority": false,
+  "product_acceptance_changed": false
+}

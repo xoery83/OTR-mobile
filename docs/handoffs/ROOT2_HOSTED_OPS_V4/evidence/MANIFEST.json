@@ -95,6 +95,30 @@
       "bytes": 4420,
       "sha256": "4920c7ce97f238ef0726cee4fe4d3fe00863daaf0f9290d1d0284167a37efb2f",
       "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
+    },
+    {
+      "path": "POST_TRANSFER_VERIFIED.json",
+      "bytes": 2548,
+      "sha256": "9f1f3a85e3157990599dc1a299bcadf16d32eca154a9de0fbd4227c4c819634e",
+      "origin": "Root2 post-registration independent no-business-write readback or observed MC registration ACK"
+    },
+    {
+      "path": "evidence/post-transfer/HOST_INDEPENDENT.json",
+      "bytes": 5884,
+      "sha256": "f19071119d1cbece8a06fcb1ef13a52591b76550ba569feacf9cd5967baabf91",
+      "origin": "Root2 post-registration independent no-business-write readback or observed MC registration ACK"
+    },
+    {
+      "path": "evidence/post-transfer/MC_OWNERSHIP_ACK_OBSERVED.json",
+      "bytes": 1206,
+      "sha256": "446548b4e0b7876463dd5441e947856c10d46d0be8420dd8b888a405f37a4110",
+      "origin": "Root2 post-registration independent no-business-write readback or observed MC registration ACK"
+    },
+    {
+      "path": "evidence/post-transfer/PG_INDEPENDENT.json",
+      "bytes": 9245,
+      "sha256": "b7f8ed6d057ffd7fb09ee5c4082be986f330baa79b9ca9cac1789d18e53a49af",
+      "origin": "Root2 post-registration independent no-business-write readback or observed MC registration ACK"
     }
   ],
   "containsCredentials": false

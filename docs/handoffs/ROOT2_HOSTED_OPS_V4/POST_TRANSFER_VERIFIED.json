@@ -1,0 +1,49 @@
+{
+  "status": "POST_TRANSFER_VERIFIED",
+  "eventId": "root2-hosted-post-transfer-verified-v4-20261103-01",
+  "recordedAt": "2026-11-03T10:28:37.883713+00:00",
+  "acceptanceCommit": "200a2aa61f22c432b31aed5ab44affb0fa945ef3",
+  "releaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "ownershipAckSHA256": "446548b4e0b7876463dd5441e947856c10d46d0be8420dd8b888a405f37a4110",
+  "ownershipAckStatus": "REGISTERED_OPS_OWNER_WRITES_FROZEN_PENDING_POST_CHECK",
+  "ownershipAckSource": "/Users/xoery/.codex/visualizations/2026/11/02/01a19a2c-de35-72d2-96b7-e66333286e13/otr-mission-control/docs/v4/ROOT2_OWNERSHIP_ACK.json",
+  "ownershipAckSourceDurability": "Observed MC working-tree ACK; not yet confirmed committed; no mutation permission inferred",
+  "resources": {
+    "environment": "DEV",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "service": "otr-dev-backend",
+    "container": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc"
+  },
+  "hostObservedAt": "2026-11-03T10:28:00.681401+00:00",
+  "pgObservedAt": "2026-11-03T10:28:01.045639+00:00",
+  "checks": {
+    "sameContainerImageConfigEnvHostMountBundles": true,
+    "sameFiveMountedConfigFiles": true,
+    "releaseMechanismUnchanged": true,
+    "localAndPublicHealth": true,
+    "loopback8787": [
+      "LISTEN 0      511        127.0.0.1:8787       0.0.0.0:*          "
+    ],
+    "finiteSelectorsAbsent": true,
+    "exactLockNoHolder": true,
+    "otrTimersEmpty": true,
+    "pdfPngWorkersInactive": true,
+    "importFlightScopesGrantsPricesExpired": true,
+    "sourcePdfPngClosed": true,
+    "issuerClosedFingerprint": true,
+    "maintenanceAdminNoLoginSessions0": true,
+    "schemaTailAndFiveSourceDefinitionsUnchanged": true,
+    "historicalRollbackRetained": true
+  },
+  "limits": [
+    "OAuth console OFF/Site URL/DCR current values UNKNOWN; existing historical proof not refreshed",
+    "Scoped point-in-time metadata, not complete schema/global session/business UNKNOWN certification",
+    "No deployment/restart/config write/SQL mutation/business/Provider call or rollback drill"
+  ],
+  "registeredOpsOwner": "Root2",
+  "root1MutationsAllowed": false,
+  "hostedMutationAllowedNow": false,
+  "newBusinessAuthority": false,
+  "remaining": "MC independently verifies this fixed receipt and commits final same-resource write-enabled ownership record; Root2 must read final record before any Hosted mutation. Later tasks each need complete Release Packet and exact valid Gate."
+}

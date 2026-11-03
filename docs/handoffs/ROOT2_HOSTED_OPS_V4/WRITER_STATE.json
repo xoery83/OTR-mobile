@@ -1,5 +1,5 @@
 {
-  "status": "ROOT2_ACCEPTED_PENDING_MC_AND_READBACK",
+  "status": "POST_TRANSFER_VERIFIED_PENDING_MC_FINAL_RECORD",
   "resource": "DEV tuqigdxrvrerfewsxqgm /178.105.151.143 /otr-dev-backend /runtime and protected install execution",
   "writer": "Root2 01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
   "receiver": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
@@ -7,8 +7,8 @@
   "independentVerification": "ROOT2_READ_ONLY_VERIFIED e179481e; host10:20:02Z/PG10:19:31Z; no unexplained drift or active scoped window",
   "root1Released": true,
   "root2Accepted": true,
-  "mcOwnershipRecorded": false,
-  "postTransferNoBusinessWriteCheck": "PENDING",
+  "mcOwnershipRecorded": true,
+  "postTransferNoBusinessWriteCheck": "POST_TRANSFER_VERIFIED",
   "newBusinessAuthorization": false,
   "root1ReleasedAt": "2026-11-03T10:22:53.286453+00:00",
   "root1FurtherHostedMutationsAllowed": false,
@@ -17,5 +17,9 @@
   "root2AcceptedAt": "2026-11-03T10:24:26.808594+00:00",
   "acceptanceEventId": "root2-hosted-writer-accepted-v4-20261103-01",
   "root1ReleaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
-  "hostedMutationAllowedNow": false
+  "hostedMutationAllowedNow": false,
+  "mcOwnershipAckSHA256": "446548b4e0b7876463dd5441e947856c10d46d0be8420dd8b888a405f37a4110",
+  "mcOwnershipAckDurability": "WORKTREE_OBSERVED_NOT_COMMIT_CONFIRMED",
+  "postTransferEventId": "root2-hosted-post-transfer-verified-v4-20261103-01",
+  "postTransferVerifiedAt": "2026-11-03T10:28:37.883713+00:00"
 }

@@ -1,6 +1,6 @@
 # Root1 → Root2 Hosted Operations V4
 
-Status: **ROOT2_HOSTED_WRITER_ACCEPTED; Hosted writes FROZEN pending MC registration and post-registration readback.**
+Status: **POST_TRANSFER_VERIFIED; Hosted writes FROZEN pending MC final ownership record.**
 Root2 independently verified e179481e at10:19–10:20Z, with no unexplained drift or active scoped window. See WRITER_STATE and evidence/ROOT2_READ_ONLY_VERIFIED.json. Root1 performs no further Hosted mutation.
 Receiving chat: **OTR-ROOT2-HOSTED-OPS**, `01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232`.
 The other chat titled Root2 created that receiver; it is not a second resource owner.
@@ -36,3 +36,5 @@ Business lanes remain E2E DRIs. Normal source integration is not Hosted deployme
 Do not infer root access from this document. Existing machine-local authentication is not copied; Root2 must have independently permitted transport and action authority.
 
 Root2 acceptance is fixed in `ROOT2_HOSTED_WRITER_ACCEPTED.json`, bound to Root1 release9e411ee8 and independent verificatione179. Responsibility acceptance grants no business or standing protected-action authority.
+
+Post-registration no-business check is fixed in `POST_TRANSFER_VERIFIED.json`; the observed MC ACK names Root2 but keeps mutations false. No Hosted write is enabled by this readback alone.
