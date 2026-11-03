@@ -1,0 +1,29 @@
+{
+  "status": "ROOT_REPORTED_READONLY_PREFLIGHT_NOT_EXECUTION_AUTHORITY",
+  "receivedAt": "2026-11-03T02:49:53.778591+00:00",
+  "sourceThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "reported": {
+    "backendCIDPrefix": "3def",
+    "backendImagePrefix": "fbc",
+    "health": "HEALTHY",
+    "qaConfig": "ABSENT_CLOSED",
+    "selectorCandidate": "a403549f",
+    "selectorOnOriginMain": true,
+    "review": "30 focused PASS / NO_BLOCKER",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "createdBy": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "personConnected": false,
+    "originalIssueReceiptCount": 0,
+    "originalClaimReceiptCount": 0,
+    "claimFunctionExists": true
+  },
+  "qualification": "Root message report only; original machine receipt/hash/time/full deployment identities requested, not independently read by Auth",
+  "remainingBeforeExactGate": [
+    "Fixed finite config/independent close+restore controller and actual verification",
+    "Original sanitized preflight receipt/hash/time/full current CID/image/main",
+    "Fresh B no existing same-Trip Person and exact Ledger history/grant count",
+    "Exact finite activation approval; formal open requires another fresh CAS"
+  ],
+  "businessWritesPerformedByAuth": false
+}
