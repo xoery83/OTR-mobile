@@ -10,7 +10,7 @@ import {
   withAccountApplyGate,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
-import { requireActiveUserId } from "../auth/authRepository";
+import { readCommittedLocalPrincipal, requireActiveUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import {
   createPersonalTripCoverAccess,
@@ -178,6 +178,10 @@ export function createTripPersonalCoverRepository(
 }
 
 export async function readLocalTripPersonalCoverRepository() {
+  if ((await readCommittedLocalPrincipal())?.kind === "GUEST") {
+    const { openGuestLocalWorkspace } = await import("../auth/guestLocalWorkspace");
+    return (await openGuestLocalWorkspace()).personalCover;
+  }
   return createTripPersonalCoverRepository(
     await readInitializedDatabase(),
     requireActiveUserId,

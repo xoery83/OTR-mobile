@@ -21,7 +21,10 @@ import {
   isRetainedTripPhotoLocation,
 } from "../files/tripPhotoFileStore";
 
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(),
+  readCommittedLocalPrincipal: vi.fn(async () => null),
+}));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("../files/tripPhotoFileStore", () => ({
   retainTripPhoto: vi.fn(),

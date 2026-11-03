@@ -42,6 +42,8 @@ import {
 } from "../repositories/tripCoreV2Repository";
 import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { createTripRepository } from "../repositories/tripRepository";
+import { createTripPhotoRepository } from "../repositories/tripPhotoRepository";
+import { createTripPersonalCoverRepository } from "../repositories/tripPersonalCoverRepository";
 import { createManualPlanRepository } from "../repositories/manualPlanRepository";
 import { createTripLocalManualReader } from "../repositories/tripLocalManualReadRepository";
 import { createTripDayFeedReader } from "../repositories/tripDayFeedRepository";
@@ -325,6 +327,8 @@ export function createGuestLocalWorkspaceOpener(deps: {
         });
       },
       trips,
+      photos: createTripPhotoRepository(database, repositoryOwner),
+      personalCover: createTripPersonalCoverRepository(database, repositoryOwner),
       plan: createManualPlanRepository(database, repositoryOwner, core),
       days: createTripDayFeedReader({
         account: localOwner,

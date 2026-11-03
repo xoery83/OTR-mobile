@@ -10,3 +10,7 @@ Base main `0a75b4ba`; exact UI comparison against QA143/source533b749a: TripScre
 - Guest Cover NULL means auto; no legal Guest None selector. Auto image/cold can be verified; explicit image-vs-None coverage is still a product/fixture limit, not manufactured by deleting assets or DB edits.
 - Vision exclusively owns simulator D473A895-F340-426C-B16D-CB1A574E48E9 and both existing sandboxes. Native performs no install or device operation. Planned dual artifacts14510/14511 use same source/JS and retained126NativeABI, not current-main fullNative compile. Preserve old143 packages/fixtures/data. Fixture/asset/device/Owner acceptance remains pending until actual handoff/retest.
 - No Backend/SQL/Provider/Account authority changes. FORM-C03 stays primary while Root prepares protected qualification. Root default-closed deployment is independently reported, not a paid lookup grant.
+
+## Owner supplement supersedes intermediate build plan
+
+Owner chose full Guest local Cover support before the complete retest, and clarified the final environment must be fixed latest integrated main. No intermediate d220/retained126ABI App is delivered as main acceptance. Vision is build/install/fixture/Smoke DRI and is performing a full Native simulator baseline compile. Native supplies final reviewed source and exact Root integration request; no duplicate intermediate dual builds or device operations. Guest path detail and unchanged Adoption limits are in GUEST_COVER_READINESS.json.

@@ -192,7 +192,7 @@ function LocalTripContent({
   >(null);
   const deferredMetadataActionId = useRef<string | null>(null);
   const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
-  const personalCover = useTripPersonalCover(guest === false ? tripId : null);
+  const personalCover = useTripPersonalCover(guest !== null ? tripId : null);
   const [editorSaving, setEditorSaving] = useState(false);
   const editorBusy = useRef(false);
   const editorDismiss = useRef<(() => void) | null>(null);
@@ -1196,7 +1196,7 @@ function LocalTripContent({
                   }}
                   setup={setup?.context.tripId === selected.id ? setup : null}
                   currencyAvailable={guest === false}
-                  coverAvailable={guest === false}
+                  coverAvailable={guest !== null}
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}
                   onSaveMetadata={async (
@@ -1211,54 +1211,64 @@ function LocalTripContent({
                     const repo = await readLocalTripRepository();
                     if (!alive.current || generation !== getAccountGeneration())
                       throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    if (selected.syncFormatVersion === 2) {
-                      const deferred = deferredMetadataEditBase.current;
-                      const actionId = deferredMetadataActionId.current;
-                      const base = metadataEditBase.current;
-                      if (deferred && actionId) {
-                        await repo.deferMetadataUpdate({
-                          localActionVersion: 1,
-                          actionId,
-                          operationId,
-                          tripId: selected.id,
-                          before: deferred,
-                          after: {
-                            ...after,
-                            destination: null,
-                            destinations: [
-                              ...(destinations?.after ?? deferred.destinations),
-                            ],
-                          },
-                          ...(cover ? { cover } : {}),
-                        });
-                      } else {
-                        if (!base || base.tripId !== selected.id)
-                          throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
-                        await repo.updateMetadata(
-                          {
-                            formatVersion: 3,
+                    // Guest cover choice stays in the existing local preference, never metadata sync.
+                    const metadataCover = guest === true ? undefined : cover;
+                    if (
+                      guest !== true ||
+                      canonicalCoreJson(before as Json) !==
+                        canonicalCoreJson(after as Json) ||
+                      destinations !== undefined
+                    ) {
+                      if (selected.syncFormatVersion === 2) {
+                        const deferred = deferredMetadataEditBase.current;
+                        const actionId = deferredMetadataActionId.current;
+                        const base = metadataEditBase.current;
+                        if (deferred && actionId) {
+                          await repo.deferMetadataUpdate({
+                            localActionVersion: 1,
+                            actionId,
                             operationId,
                             tripId: selected.id,
-                            expectedMetadataRevision: base.metadataRevision,
-                            before: base.metadata,
+                            before: deferred,
                             after: {
                               ...after,
                               destination: null,
                               destinations: [
-                                ...(destinations?.after ?? base.metadata.destinations),
+                                ...(destinations?.after ?? deferred.destinations),
                               ],
                             },
-                          },
-                          cover,
+                            ...(metadataCover ? { cover: metadataCover } : {}),
+                          });
+                        } else {
+                          if (!base || base.tripId !== selected.id)
+                            throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+                          await repo.updateMetadata(
+                            {
+                              formatVersion: 3,
+                              operationId,
+                              tripId: selected.id,
+                              expectedMetadataRevision: base.metadataRevision,
+                              before: base.metadata,
+                              after: {
+                                ...after,
+                                destination: null,
+                                destinations: [
+                                  ...(destinations?.after ?? base.metadata.destinations),
+                                ],
+                              },
+                            },
+                            metadataCover,
+                          );
+                        }
+                      } else {
+                        await repo.updateMetadata(
+                          { operationId, tripId: selected.id, before, after },
+                          metadataCover,
+                          destinations,
                         );
                       }
-                    } else {
-                      await repo.updateMetadata(
-                        { operationId, tripId: selected.id, before, after },
-                        cover,
-                        destinations,
-                      );
                     }
+                    if (guest === true && cover) await personalCover.select(cover.after);
                     void kickLocalTripSync().catch(() => undefined);
                     const committed = await repo.getTrip(selected.id);
                     if (alive.current && generation === getAccountGeneration()) {

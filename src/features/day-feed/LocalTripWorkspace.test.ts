@@ -2186,3 +2186,104 @@ it.each(["Guest", "Account"])(
     expect(render()).not.toContain("Private old Guest trip");
   },
 );
+
+it.each([
+  ["city", false, false],
+  [null, false, false],
+  ["photo-00000000-0000-4000-8000-000000000123", false, false],
+  ["city", true, false],
+  ["city", true, true],
+] as const)(
+  "stages Guest Cover %s (metadata %s, retry %s) through the local preference",
+  async (choice, metadataEdit, retry) => {
+    vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+      kind: "GUEST",
+      localId: "00000000-0000-4000-8000-000000000001",
+    });
+    vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+    const local = {
+      ...trip("guest-cover", "Guest Cover"),
+      syncFormatVersion: 2 as const,
+      selectedCoverAssetIdRaw: "coast",
+      selectedCoverAssetId: "coast" as const,
+    };
+    const repo = repository([local]);
+    const metadata = {
+      name: local.name,
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    };
+    vi.mocked(repo.readDeferredMetadataEditBase).mockResolvedValue({ metadata } as any);
+    state.personal.selection = { raw: "coast" };
+    state.repo.mockResolvedValue(repo);
+    props.tripId = local.id;
+    render();
+    await flush();
+    render();
+    await button("tripHome.edit").onPress();
+    await flush();
+    render();
+    const picker = state.nodes.find((n) => n.coverPicker)!.coverPicker;
+    await picker.onSelect(choice);
+    render();
+    expect(state.personal.select).not.toHaveBeenCalled();
+    expect(repo.deferMetadataUpdate).not.toHaveBeenCalled();
+    if (metadataEdit) {
+      input("tripCreate.name", "Guest renamed");
+      render();
+    }
+    if (retry) state.personal.select.mockRejectedValueOnce(Error("LOCAL_COVER_FAILED"));
+    button("ui.save").onPress();
+    await flush();
+    const failed = render();
+    if (retry) {
+      expect(failed).toContain("tripCreate.saveFailed");
+      expect(state.nodes.some((n) => n.coverPicker)).toBe(true);
+      button("ui.save").onPress();
+      await flush();
+      render();
+      expect(vi.mocked(repo.deferMetadataUpdate).mock.calls[1][0]).toEqual(
+        vi.mocked(repo.deferMetadataUpdate).mock.calls[0][0],
+      );
+    }
+    if (metadataEdit) {
+      expect(repo.deferMetadataUpdate).toHaveBeenCalledTimes(retry ? 2 : 1);
+      expect(vi.mocked(repo.deferMetadataUpdate).mock.calls[0][0]).not.toHaveProperty(
+        "cover",
+      );
+    } else expect(repo.deferMetadataUpdate).not.toHaveBeenCalled();
+    expect(state.personal.select).toHaveBeenCalledTimes(retry ? 2 : 1);
+    expect(state.personal.select).toHaveBeenLastCalledWith(choice);
+    expect(state.discovery).not.toHaveBeenCalled();
+  },
+);
+
+it("Guest Cover Cancel discards the staged choice without a preference or metadata write", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  const local = trip("guest-cover-cancel", "Guest Cover Cancel");
+  const repo = repository([local]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = local.id;
+  render();
+  await flush();
+  render();
+  await button("tripHome.edit").onPress();
+  await flush();
+  render();
+  await state.nodes.find((n) => n.coverPicker)!.coverPicker.onSelect("city");
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  render();
+  button("common.cancel").onPress();
+  state.alert.mock.lastCall![2][1].onPress();
+  render();
+  expect(state.personal.select).not.toHaveBeenCalled();
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
+});

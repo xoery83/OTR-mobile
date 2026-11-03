@@ -878,3 +878,8 @@ and `GUEST_B_ATOMIC_PORT_CANDIDATE.md`; prior detailed state is preserved in Git
 
 Reviewed d220f1df adds quiet MyTrips local-loading placeholders and compact empty
 Trip Home guidance. No schema/Hosted change or final-main device/Owner acceptance.
+
+Reviewed db06bad2 adds Guest local Cover through the existing database/repository
+factory seams. Auto retains the photo; fileless Adoption remains blocked by census.
+Combined metadata/Cover save is sequential, not atomic. Native/Vision owns final
+integrated-main build/device acceptance; this isolated rehearsal performs neither.

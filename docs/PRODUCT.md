@@ -362,3 +362,15 @@ Downstream; no MCP database, parser, sync engine or domain authority. Owner's re
 Nelson plan remains preview-only until explicit target/operation confirmation.
 Public DEV OAuth and physical/client acceptance require their owning contracts
 and exact protected windows; Production and other domain mutations are excluded.
+
+
+### Guest local Cover — Owner supplement, 3 November 2026
+
+Owner explicitly approved the existing local Cover picker in Guest Trip Home/Edit:
+curated bundled images, a retained device photo, and automatic fallback after removing
+a personal choice. Reuse the Guest-scoped SQLite, existing Photo/File Store and Cover
+preference; no Cover upload or new cloud contract. NULL remains Auto, not None. Cancel
+must not commit a staged choice; process restart must retain a saved choice. Guest
+publication/adoption qualification for retained photos is unchanged and may remain
+blocked until its separate owning contract is qualified; never drop those files to
+force adoption. Final Owner acceptance uses a fixed integrated-main Native build.

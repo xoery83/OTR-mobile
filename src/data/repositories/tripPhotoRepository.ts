@@ -19,7 +19,7 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { readInitializedDatabase } from "../db/database";
-import { requireActiveUserId } from "../auth/authRepository";
+import { readCommittedLocalPrincipal, requireActiveUserId } from "../auth/authRepository";
 import { createPersonalTripCoverAccess } from "./tripPersonalCoverAccess";
 
 type Database = Pick<
@@ -391,5 +391,9 @@ export function createTripPhotoRepository(
 }
 
 export async function readLocalTripPhotoRepository() {
+  if ((await readCommittedLocalPrincipal())?.kind === "GUEST") {
+    const { openGuestLocalWorkspace } = await import("../auth/guestLocalWorkspace");
+    return (await openGuestLocalWorkspace()).photos;
+  }
   return createTripPhotoRepository(await readInitializedDatabase(), requireActiveUserId);
 }
