@@ -1,0 +1,29 @@
+{
+  "status": "PREPARED_EXISTING_NORMAL_OWNER_QA_NOT_EXECUTED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "ownerPersonId": "b90c34ba-96d7-4b64-874a-b4f5525d64d8",
+  "memberAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "memberPersonId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+  "qaDate": "2026-11-04",
+  "items": [
+    {
+      "kind": "Shared",
+      "itemId": "44887b12-f1ec-43a9-8ef5-394675746f4d",
+      "operationId": "f5e13639-4240-4817-bf43-c60a1ea46361",
+      "title": "OTR QA C04 Shared P1 20261104",
+      "visibility": "GROUP"
+    },
+    {
+      "kind": "Private",
+      "itemId": "e14d8ece-0396-496f-b6e8-09c64676270a",
+      "operationId": "12161d34-eed8-4204-922e-dd2370eca0ae",
+      "title": "OTR QA C04 Private P1 20261104",
+      "visibility": "PRIVATE"
+    }
+  ],
+  "authority": "ExistingnormalSyntheticQAOwnerA only; serverfreshcapability+typedManualCoreSave; no admin/SQL/runtime/Gate reuse",
+  "normalProducerReference": "Native59363189 tripCoreV2PgStorage verifyAdmission578-641; existingcreateCoreV2Transport.submit/receipt",
+  "notNewPermissions": true
+}

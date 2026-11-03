@@ -1,0 +1,19 @@
+{
+  "status": "SCOPED_NO_BLOCKER_FINAL_ITEM_FIXTURE",
+  "reviewer": "auth_phase1_review",
+  "sourceSHA256": "59e042fa76aa4314706e2dac44924c459c202fe072806ddc4b3d06a45177239c",
+  "testSHA256": "204c1df0282acea13803f9b236f4cee6dbf0f211e9e53e894d58d026a41f5f30",
+  "checks": [
+    "6 targeted tests PASS",
+    "typecheck PASS",
+    "targeted eslint PASS",
+    "independent 2 changed cases PASS;4 stable skipped"
+  ],
+  "actualHosted": "NOT_RUN",
+  "limits": [
+    "Existing Core transport and normal Owner authorization only",
+    "One POST per fixed command even on401; UNKNOWN queries original receipt only",
+    "Private journal beforePOST; processmemory OTP/token and own-local cleanup",
+    "Root2 metadata is not authenticated capabilities; reject unavailable at runtime"
+  ]
+}
