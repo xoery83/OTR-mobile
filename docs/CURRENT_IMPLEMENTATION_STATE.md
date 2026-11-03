@@ -897,3 +897,8 @@ follow-up read. Existing stale-handler/scope guards remain; no Task dispatch,
 Save or shared Navigation change.27 targeted checks/scoped strict/lint/UI guard
 pass. See `ops/imp-c01-activity-refresh-20261103/HANDOFF.md`; LOCAL_PASS, actual
 native Results/Review/Documents/Updates acceptance and Root integration pending.
+
+
+# MCP C02 loader repair — 3 November 2026 / main integration
+
+Main e2da9d13 preserves all existing Auth/Native/Import content. Fixed0dd guarded C02 loader plus the existing review_travel_materials safe logger enum is integrated default closed. Logger RED1FAIL to GREEN40PASS (new/legacy loader suites); scoped strict/lint and both local bundles PASS. Original90 affected tests remain prior evidence. Root reports fixed6c9 Host module present in actual039 image; Root/MCP final review and fresh-window qualification remain required. No deployment/issuer/session/business action. See `ops/mcp-c02-loader-repair-20261103/HANDOFF.md`.

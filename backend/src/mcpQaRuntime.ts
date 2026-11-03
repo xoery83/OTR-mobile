@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { createMcpAccountReadBinding } from "./mcpAccountReadBinding";
+import { createMcpAccountReadBinding, type ReadPorts } from "./mcpAccountReadBinding";
 import {
   createMcpAccountWriteBinding,
   type CommandRequest,
@@ -92,6 +92,9 @@ const requestLogSchema = z.object({
   durationMs: z.number().min(0).max(120000),
   tool: z
     .enum([
+      "get_otr_operating_guide",
+      "get_trip_item_edit_base",
+      "review_travel_materials",
       "list_trips",
       "get_trip",
       "list_trip_items",
@@ -119,11 +122,22 @@ const requestLogSchema = z.object({
     .enum(["EXPIRED_BEFORE_BACKEND", "EXPIRED_AFTER_BACKEND", "BACKEND_401"])
     .optional(),
 });
+type C02ModulePort = {
+  createC02ConfiguredHost(input: {
+    rawConfig: string;
+    ports: ReadPorts;
+    publishableKey: string;
+    consentJavascript: Uint8Array;
+    log(event: unknown): void;
+  }): (request: Request) => Promise<Response | null>;
+};
 type RuntimeIo = {
+  c02Module?(): Promise<C02ModulePort>;
   module(): Promise<ModulePort>;
   asset(): Promise<Uint8Array>;
 };
 const io: RuntimeIo = {
+  c02Module: () => import(new URL("./mcp/c02-host.mjs", import.meta.url).href),
   module: () => import(new URL("./mcp/runtime.mjs", import.meta.url).href),
   asset: () => readFile(new URL("./auth-consent/app.js", import.meta.url)),
 };
@@ -137,6 +151,41 @@ export async function loadMcpQaRuntime(
 ) {
   const readRaw = env.OTR_DEV_MCP_READ_QA_CONFIG;
   const writeRaw = env.OTR_DEV_MCP_WRITE_QA_CONFIG;
+  const c02Raw = env.OTR_DEV_MCP_C02_QA_CONFIG;
+  if (c02Raw !== undefined) {
+    const publicKey = env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "";
+    if (
+      readRaw !== undefined ||
+      writeRaw !== undefined ||
+      typeof gateway.discoverTrips !== "function" ||
+      typeof gateway.canReadTrip !== "function" ||
+      !core?.read ||
+      typeof core.commands?.withLockedCommand !== "function" ||
+      env.OTR_DEV_SUPABASE_URL !== issuer.replace(/\/auth\/v1$/, "") ||
+      !isSupabaseDevPublicKey(publicKey)
+    )
+      throw Error("C02_HOST_PORT_CLOSED");
+    const [library, script] = await Promise.all([
+      (files.c02Module ?? io.c02Module!)(),
+      files.asset(),
+    ]);
+    if (script.byteLength === 0 || script.byteLength > 2097152)
+      throw Error("MCP_QA_ASSET_INVALID");
+    return library.createC02ConfiguredHost({
+      rawConfig: c02Raw,
+      ports: {
+        discovery: { discoverTrips: gateway.discoverTrips.bind(gateway) },
+        canReadTrip: gateway.canReadTrip.bind(gateway),
+        core,
+      },
+      publishableKey: publicKey,
+      consentJavascript: script,
+      log: (event) => {
+        const safe = requestLogSchema.safeParse(event);
+        if (safe.success) console.info("MCP_QA_REQUEST", JSON.stringify(safe.data));
+      },
+    });
+  }
   if (readRaw === undefined && writeRaw === undefined) return undefined;
   if (readRaw !== undefined && writeRaw !== undefined)
     throw Error("MCP_QA_CONFIG_CONFLICT");

@@ -1,0 +1,94 @@
+{
+  "status": "LOCAL_PASS_DEFAULT_CLOSED_NOT_DEPLOYED",
+  "actualFailure": {
+    "image": "sha256:039810d82ad18344afc9b4ddade1e352b340792b3ffea6f384acf28ef3725058",
+    "captureSHA256": "4d8c895b39c8539294982b92898970cd78f1ac241a6bcd264d8656150c992814",
+    "missing": [
+      "OTR_DEV_MCP_C02_QA_CONFIG",
+      "./mcp/c02-host.mjs"
+    ],
+    "receiptSHA256": "a63cc8d5669b05309f8417afb68b9ee979253b8736b96bf906fa7ce7d34cb654"
+  },
+  "files": {
+    "backend/src/mcpQaRuntime.ts": "c9ac09b1b9e54e05ae2ecae9b260d4772139ce8b2010d42643300c74e9bb4d85",
+    "backend/src/mcpQaRuntimeC02.test.ts": "c00ae57ea9b32bfb94b21bcd7ea8e8a5f974aed688a300db87bb16fc4acd96d2"
+  },
+  "red": {
+    "suite": "mcpQaRuntimeC02.test.ts",
+    "failed": 14,
+    "passed": 1,
+    "source": "Unchanged58134238 loader; newselector returnedundefined/legacy policy instead of C02 host"
+  },
+  "green": {
+    "files": 5,
+    "passed": 90,
+    "newSuite": 15,
+    "oldLoader": 24,
+    "readWriteBindings": 36,
+    "serverStartup": 15,
+    "scopedStrict": "PASS",
+    "scopedLint": "PASS"
+  },
+  "fixedDependency": {
+    "path": "/app/mcp/c02-host.mjs",
+    "sha256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "currentImageFileHash": "Root actual read of defaultc213/image039: present exact fixed6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d; no child Host call",
+    "localABI": "PASS: factory and schema exports; missing input returns dormanthandler/null, no network",
+    "newCopyOrMountRequired": false
+  },
+  "independentReview": "PENDING_ROOT_AND_MCP",
+  "actions": {
+    "host": 0,
+    "sql": 0,
+    "oauthIssuer": 0,
+    "session": 0,
+    "provider": 0,
+    "device": 0,
+    "mainPush": 0
+  },
+  "consentAsset": {
+    "actualSourcePath": "new URL(\"./auth-consent/app.js\", import.meta.url)",
+    "resolvedPath": "/app/auth-consent/app.js",
+    "freshImageHash": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "evidence": "Root fresh sha-only read of actual /app/auth-consent/app.js on defaultc213/image039; no child Host call"
+  },
+  "originalCandidate": "0ddf0459a5197b229f5d797913ee44b4a33465c6",
+  "originalBaseCommit": "581342387bee5f5e55f4fe3cee166a7d57a96f45",
+  "baseCommit": "e2da9d13d4b7340b3bd9ec171051ed85a598fe11",
+  "originalBuilds": {
+    "server.mjs": {
+      "path": "/private/tmp/otr-mcp-c02-loader-validation-20261103/server.mjs",
+      "sha256": "2d89b0364fdb20f8893224a8f832ba4c9c1c973f5a666f07b24d437ba74cc585",
+      "containsC02SelectorAndFixedModuleImport": true
+    },
+    "server-capture.mjs": {
+      "path": "/private/tmp/otr-mcp-c02-loader-validation-20261103/server-capture.mjs",
+      "sha256": "70350b124443a3529a6e09d6ae213452752341cc11d4d7c447279ba9a353a989",
+      "containsC02SelectorAndFixedModuleImport": true
+    }
+  },
+  "integration": {
+    "loggerRegression": {
+      "tool": "review_travel_materials",
+      "redFailed": 1,
+      "greenPassed": 40,
+      "suites": 2
+    },
+    "scopedStrict": "PASS",
+    "scopedLint": "PASS",
+    "mainCurrentStatePrefixSHA256": "a8fabd137b3edb3934e241d6ede6bc588ad3a35f835e510d4ca9d5d459e4b3d8",
+    "otherAuthNativeImportFiles": "UNCHANGED",
+    "productionBeyondOriginal": "one existing tool enum only",
+    "prior90": "REUSED_NOT_RERUN"
+  },
+  "builds": {
+    "server.mjs": {
+      "path": "/private/tmp/otr-mcp-c02-main-integration-20261103/server.mjs",
+      "sha256": "7cbfdad34dbac6f12b31c69f0579690b43ad0dffcf73af8f51c4038a5aa36a7e"
+    },
+    "server-capture.mjs": {
+      "path": "/private/tmp/otr-mcp-c02-main-integration-20261103/server-capture.mjs",
+      "sha256": "6f4c4cdcd9fd225379e572f24ebd72a274052d65b3e4c5c5d58cb630b14210c3"
+    }
+  }
+}
