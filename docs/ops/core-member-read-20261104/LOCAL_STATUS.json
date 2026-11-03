@@ -1,0 +1,14 @@
+{
+  "status": "LOCAL_READER_RED_TO_GREEN_SQL_CANDIDATE_UNINSTALLED",
+  "base": "4bafb36f34f3eeb097752fd7e81b90e3304b22d3",
+  "actualFailureReceipt": "c885bc35",
+  "red": "Corrected P1 fixture: baseline3failed/19passed",
+  "green": "22passed; Owner/write capability still closed for Member",
+  "fixtureCorrection": "Initial positive test lacked mandatory P1 schedule; corrected before final baseline RED/22GREEN",
+  "sourceChanges": "Sustained snapshot only; legacy finite and command capability branches unchanged",
+  "sql": "Single new independent readonly predicate; no replacement of shared write scope",
+  "sqlValidation": "PENDING_OWNED_ISOLATED_PG",
+  "hosted": "NOT_RUN",
+  "authority": "EXACT_PROTECTED_GATE_REQUIRED",
+  "candidateSQLSHA256": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844"
+}
