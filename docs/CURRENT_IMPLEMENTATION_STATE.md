@@ -1,3 +1,19 @@
+# Current shared checkpoint — 3 November 2026
+
+Remote main `ded9e962` now includes the reviewed Import Updates, bounded retained
+Trip read, P3 Form Scan software, Core non Everyone edit guard, default-closed Auth
+Claim QA selector, Import Results copy fix and Native Today pending-scope fix.
+DEV Backend image `sha256:6c6678694c10406dd27c851b39f79a617123e8301a50f0a1637f94e1d165e992`
+is healthy with the original environment and mounts; Auth Claim QA remains CLOSED.
+AD5 build 126.15 has only a retained-Batch read-only Import UX preview; it is not
+the newest main or a fresh paid Import PASS. The exact Owner preview is at
+`docs/ops/import-beta-20261103/owner-ux-preview/README.md`. Source/Provider/Actor/
+price authority expired Nov1; the single PDF/PNG/P3 renewal Gate is prepared in
+`/Users/xoery/Project/otr-mobile-import/import-unified-renewal-20261103` and has
+not been approved or executed. Member Revoke PG remains an uninstalled candidate.
+The dated entries below are historical candidate snapshots; consult the current
+main, fixed receipts and shared queue before acting on an older “pending” line.
+
 # Import retained Trip read preparation — 3 November 2026
 
 Isolated `codex/imp-c01-retained-trip-read-20261103` prepares a read-only retained
