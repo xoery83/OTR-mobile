@@ -1,0 +1,20 @@
+{
+  "eventId": "IMP-C01-FILES-PREVIEW-20261104-07",
+  "status": "LOCAL_PASS_NATIVE_BUILD_AND_DEVICE_PENDING",
+  "sourceBaseline": "origin/main CaptureFileModule existing implementation; unchanged intake ports",
+  "validation": {
+    "vitest": 48,
+    "suites": 3,
+    "strictRoots": 6,
+    "eslint": "PASS",
+    "uiGuard": "473/168 PASS",
+    "swift": "Real ImageIO decode/dimensions/original bytes/no original stream open/expired lease/corrupt fallback PASS outside sandbox; sandbox UTType unavailable"
+  },
+  "scope": "Transient display-only memory JPEG; no cache, payload upload, Provider or Source changes",
+  "device": "QA145 old ABI, no installation or draft mutation yet",
+  "limits": [
+    "384px / JPEG <=256KiB / input <=20MiB",
+    "Old hosts and decoder errors retain named fallback",
+    "Actual iPad and full mixed E2E not yet run"
+  ]
+}

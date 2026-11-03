@@ -1,7 +1,8 @@
 import Foundation
 import UniformTypeIdentifiers
+import ImageIO
 
-// Metadata staging never opens, copies, hashes or persists file content.
+// Staging retains metadata; explicit preview decodes only a bounded, transient thumbnail.
 enum CaptureFileFailure: String, Error, LocalizedError {
   case limit = "CAPTURE_FILE_LIMIT", invalid = "CAPTURE_FILE_INVALID"
   case expired = "CAPTURE_FILE_LEASE_EXPIRED", opened = "CAPTURE_FILE_ALREADY_OPEN"
@@ -59,6 +60,27 @@ final class CaptureFileLeaseStore {
       throw CaptureFileFailure.invalid
     }
   }
+  func preview(_ token: String) throws -> String? {
+    lock.lock(); defer { lock.unlock() }
+    guard let lease = leases[token] else { throw CaptureFileFailure.expired }
+    guard UTType(filenameExtension: lease.url.pathExtension)?.conforms(to: .image) == true,
+      let size = try? lease.url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+      size > 0, size <= 20 * 1024 * 1024 else { return nil }
+    // Downsample without a full-resolution decode; never expose the provider URL.
+    guard let source = CGImageSourceCreateWithURL(lease.url as CFURL,
+      [kCGImageSourceShouldCache: false] as CFDictionary),
+      let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceCreateThumbnailWithTransform: true,
+        kCGImageSourceThumbnailMaxPixelSize: 384,
+        kCGImageSourceShouldCacheImmediately: true
+      ] as CFDictionary) else { return nil }
+    let data = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil) else { return nil }
+    CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.75] as CFDictionary)
+    guard CGImageDestinationFinalize(destination), data.length <= 256 * 1024 else { return nil }
+    return "data:image/jpeg;base64," + (data as Data).base64EncodedString()
+  }
   @discardableResult func open(_ token: String) throws -> Int {
     lock.lock(); defer { lock.unlock() }
     guard let lease = leases[token] else { throw CaptureFileFailure.expired }
@@ -114,6 +136,10 @@ public final class CaptureFileModule: Module {
       }
       self.picker.pick(from: presenter, promise: promise)
     }.runOnQueue(.main)
+    AsyncFunction("preview") { [weak self] (token: String) -> String? in
+      guard let self else { throw CaptureFileFailure.expired }
+      return try self.picker.store.preview(token)
+    }
     AsyncFunction("open") { [weak self] (token: String) -> [String: Int] in
       guard let self else { throw CaptureFileFailure.expired }
       return ["size": try self.picker.store.open(token)]

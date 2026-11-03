@@ -1,0 +1,33 @@
+{
+  "request": "IMP-C01-FILES-PREVIEW-20261104-07",
+  "candidate": "f76e7ee1fa4f6e65ffe07431f6b20b7d8d6a681c",
+  "base": "59dc124f461aba67c121a90c8cd095c967c229a0",
+  "files": {
+    "modules/local-dictation/ios/CaptureFileModule.swift": "f63ba501ecae1bebf0f3f900c5be26e5c1381a291e71ff48cfbaa6b563c54a3b",
+    "modules/local-dictation/tests/capture-file/main.swift": "0a657909f1294216e43fde6a6bf41432115a96b172d4412fc8d691291c959078",
+    "src/features/capture/CaptureComposer.test.ts": "ed7bce6f5c9d1184c1cdee63d9bbffa99294e442568ad71c4f197d7854b1c5a5",
+    "src/features/capture/CaptureComposer.tsx": "c86e1d48f8ebc9d96f366eb534a6c766322e7198e7b10a338502b48cdf44f63b",
+    "src/features/capture/captureStaging.ts": "0677ce3dc4196607fe6a81fae2ee532ca80167f171a40e325fac21c176ba5b42",
+    "src/native/captureFileLease.test.ts": "18ab69d37514ec54adfc2467696b0c6bf61ae52d84c8c249a10d35c69974e909",
+    "src/native/captureFileLease.ts": "9421784ed66d42a7ebefbd6c0596c1c1a430fac45742f3debb69c05fce23c1ce",
+    "src/native/capturePicker.ts": "27d109b0076646099ae75086cdc1a11aee67647aee481d41a2e47affc9f883f9"
+  },
+  "eightBeforeImages": "EXACT_MAIN_MATCH",
+  "eightFinalBlobs": "EXACT_FIXED_CANDIDATE",
+  "independentReview": "NO_BLOCKER",
+  "actualMainChecks": {
+    "suites": 3,
+    "tests": 48,
+    "uiGuard": "473 legacy/168 representative PASS"
+  },
+  "swiftEvidence": "Author real ImageIO encode/decode/dimensions/exact original/no intake open/expired/corrupt; reused, not independently rerun",
+  "nativeABI": "New optional OTRCaptureFiles.preview; full Native rebuild mandatory before actual preview verification",
+  "originalPipeline": "Existing opaque original URI/intake registration/stream preserved; previewUri only transient display, no payload/custody/Source changes",
+  "notRun": [
+    "Full Native/iOS ABI build",
+    "Installed device/picker/visual acceptance",
+    "Submit/Provider/Cloud Save"
+  ],
+  "existingIpadDraftTouched": false,
+  "integrationBoundary": "Only8 leaves+ADR+scoped evidence; oldCURRENT/manifest excluded"
+}

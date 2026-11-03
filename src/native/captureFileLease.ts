@@ -9,6 +9,7 @@ type NativeFiles = {
     canceled: boolean;
     assets?: { token: string; name: string; mimeType: string | null; size?: number }[];
   }>;
+  preview?(token: string): Promise<string | null>;
   open(token: string): Promise<{ size: number }>;
   read(token: string, maxBytes: number): Promise<string>;
   close(token: string): Promise<void>;
@@ -67,9 +68,31 @@ export async function pickLeasedCaptureFiles(
     );
     throw new LocalCaptureError("READER_FAILURE");
   }
-  return assets.map((a) => ({
+  const previews = await Promise.all(
+    assets.map(async (a) => {
+      if (!a.mimeType?.startsWith("image/") || !api.preview) return undefined;
+      try {
+        const uri = await api.preview(a.token);
+        return typeof uri === "string" &&
+          uri.length <= 349550 &&
+          /^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+            uri,
+          )
+          ? uri
+          : undefined;
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+  if (!isCurrent()) {
+    await api.release(assets.map((a) => a.token));
+    return [];
+  }
+  return assets.map((a, index) => ({
     source: "files",
     temporaryUri: `${prefix}${a.token}`,
+    previewUri: previews[index],
     name: a.name,
     typeHint: a.mimeType,
     size: a.size,

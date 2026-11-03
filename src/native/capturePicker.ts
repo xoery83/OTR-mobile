@@ -3,7 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import type { CapturePicker, CaptureSelection } from "@/features/capture/captureStaging";
 
-// Only metadata is retained. No byte read/hash, cache copy, upload or classification.
+// Session-only selection and optional native thumbnail; no payload copy, upload or classification.
 export const pickCaptureMaterial: CapturePicker = async (
   source,
   isCurrent = () => true,

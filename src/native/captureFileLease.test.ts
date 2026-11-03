@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { openCaptureFileLease, pickLeasedCaptureFiles } from "./captureFileLease";
 const sdk = vi.hoisted(() => ({
   pick: vi.fn(),
+  preview: vi.fn(),
   open: vi.fn(),
   read: vi.fn(),
   close: vi.fn(),
@@ -83,4 +84,43 @@ it("account generation changes invalidate every native lease and pending picker"
   const { advanceAccountGeneration } = await import("@/data/auth/accountGeneration");
   advanceAccountGeneration();
   expect(sdk.releaseAll).toHaveBeenCalledOnce();
+});
+
+it("keeps native preview separate from the original lease without opening the payload", async () => {
+  sdk.pick.mockResolvedValue({
+    canceled: false,
+    assets: [{ token: id, name: "QA.png", mimeType: "image/png" }],
+  });
+  sdk.preview.mockResolvedValue("data:image/jpeg;base64,AQID");
+  const selected = await pickLeasedCaptureFiles(() => true);
+  expect(selected?.[0]).toMatchObject({
+    previewUri: "data:image/jpeg;base64,AQID",
+    temporaryUri: `otr-capture-file://${id}`,
+  });
+  expect(sdk.open).not.toHaveBeenCalled();
+  expect(sdk.read).not.toHaveBeenCalled();
+});
+it("preview failure or malformed output preserves selection; stale results release leases", async () => {
+  sdk.pick.mockResolvedValue({
+    canceled: false,
+    assets: [{ token: id, name: "QA.png", mimeType: "image/png" }],
+  });
+  for (const output of [
+    "file:///private/source.png",
+    "data:image/jpeg;base64," + "A".repeat(350000),
+  ]) {
+    sdk.preview.mockResolvedValue(output);
+    expect((await pickLeasedCaptureFiles(() => true))?.[0].previewUri).toBeUndefined();
+  }
+  sdk.preview.mockRejectedValue(new Error("unavailable"));
+  expect((await pickLeasedCaptureFiles(() => true))?.[0].temporaryUri).toBe(
+    `otr-capture-file://${id}`,
+  );
+  let current = true;
+  sdk.preview.mockImplementation(async () => {
+    current = false;
+    return "data:image/jpeg;base64,AQID";
+  });
+  expect(await pickLeasedCaptureFiles(() => current)).toEqual([]);
+  expect(sdk.release).toHaveBeenLastCalledWith([id]);
 });

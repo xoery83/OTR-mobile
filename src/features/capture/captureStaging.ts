@@ -4,6 +4,8 @@ export type CaptureSelection = Readonly<{
   // Only a native provider may supply verified selection identity/revision.
   identity?: Readonly<{ key: string; revision: string }>;
   temporaryUri: string | null;
+  // Local display only; never the original submitted payload.
+  previewUri?: string;
   name: string | null;
   typeHint: string | null;
   size?: number;

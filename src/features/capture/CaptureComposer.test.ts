@@ -622,3 +622,19 @@ it("photo cards show the image without a visible filename and retain named remov
   expect(props.onRemove).toHaveBeenCalledWith(93);
   expect(props.onSubmit).not.toHaveBeenCalled();
 });
+
+it("Files image uses its local preview while retaining the opaque source lease", () => {
+  const item = {
+    source: "files" as const,
+    temporaryUri: "otr-capture-file://original",
+    previewUri: "data:image/jpeg;base64,AQID",
+    name: "QA.png",
+    typeHint: "image/png",
+    stagingId: 94,
+    availability: "unverified" as const,
+  };
+  render({ ...empty, items: [item] }, 1);
+  expect(state.nodes.some((n) => n.source?.uri === item.previewUri)).toBe(true);
+  expect(state.nodes.some((n) => n.source?.uri === item.temporaryUri)).toBe(false);
+  expect(state.nodes.some((n) => n.children === item.name)).toBe(false);
+});

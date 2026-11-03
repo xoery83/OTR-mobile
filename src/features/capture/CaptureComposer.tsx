@@ -308,9 +308,10 @@ export function CaptureComposer({
                         const photo =
                           item.source !== "magic_input" &&
                           item.typeHint?.startsWith("image/") &&
-                          item.temporaryUri &&
-                          !item.temporaryUri.startsWith("otr-capture-file://") &&
-                          item.temporaryUri;
+                          (("previewUri" in item && item.previewUri) ||
+                            (item.temporaryUri &&
+                              !item.temporaryUri.startsWith("otr-capture-file://") &&
+                              item.temporaryUri));
                         return (
                           <View
                             key={item.stagingId}

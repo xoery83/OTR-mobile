@@ -1,0 +1,49 @@
+{
+  "requestId": "IMP-C01-FILES-PREVIEW-20261104-07",
+  "status": "NO_BLOCKER_SOURCE_REVIEW_ONLY",
+  "commit": "f76e7ee1fa4f6e65ffe07431f6b20b7d8d6a681c",
+  "target": "59dc124f461aba67c121a90c8cd095c967c229a0",
+  "parentMatchesMain": {
+    "modules/local-dictation/ios/CaptureFileModule.swift": true,
+    "modules/local-dictation/tests/capture-file/main.swift": true,
+    "src/features/capture/CaptureComposer.test.ts": true,
+    "src/features/capture/CaptureComposer.tsx": true,
+    "src/features/capture/captureStaging.ts": true,
+    "src/native/captureFileLease.test.ts": true,
+    "src/native/captureFileLease.ts": true,
+    "src/native/capturePicker.ts": true
+  },
+  "scopeSHA256": {
+    "modules/local-dictation/ios/CaptureFileModule.swift": "f63ba501ecae1bebf0f3f900c5be26e5c1381a291e71ff48cfbaa6b563c54a3b",
+    "modules/local-dictation/tests/capture-file/main.swift": "0a657909f1294216e43fde6a6bf41432115a96b172d4412fc8d691291c959078",
+    "src/features/capture/CaptureComposer.test.ts": "ed7bce6f5c9d1184c1cdee63d9bbffa99294e442568ad71c4f197d7854b1c5a5",
+    "src/features/capture/CaptureComposer.tsx": "c86e1d48f8ebc9d96f366eb534a6c766322e7198e7b10a338502b48cdf44f63b",
+    "src/features/capture/captureStaging.ts": "0677ce3dc4196607fe6a81fae2ee532ca80167f171a40e325fac21c176ba5b42",
+    "src/native/captureFileLease.test.ts": "18ab69d37514ec54adfc2467696b0c6bf61ae52d84c8c249a10d35c69974e909",
+    "src/native/captureFileLease.ts": "9421784ed66d42a7ebefbd6c0596c1c1a430fac45742f3debb69c05fce23c1ce",
+    "src/native/capturePicker.ts": "27d109b0076646099ae75086cdc1a11aee67647aee481d41a2e47affc9f883f9"
+  },
+  "evidenceSHA256": "9f807ae4ca1dd666e6a6688fae45da365c784c84407394fcae9ae051fdb713fb",
+  "findings": [],
+  "review": [
+    "Native preview takes existing opaque token only, never caller URL. Existing lease lock/security scope is retained. Expired token throws; unsupported/corrupt/oversized input returns nil. No persistent file/cache added.",
+    "ImageIO source cache disabled, thumbnail longest dimension384 with transform; input metadata cap20MiB; only in-memory JPEG finalized and returned when <=256KiB. It reads selected image for display but does not open or advance the separate owning intake FileHandle.",
+    "JS accepts bounded JPEG data URI only, falls back for older missing Native preview or errors. After all preview awaits isCurrent is checked again and all selected leases released if stale. Existing account-generation releaseAll/removal release retained.",
+    "previewUri is volatile selection/display metadata. Composer uses it only as Image source. Existing immutable submission declaration whitelists original name/MIME/source; payload reader still opens temporaryUri original lease, never previewUri. Source hashes/original bytes unaffected.",
+    "Existing canonical Image/AppIcon/Ui primitives and named fallback remain; no Provider, Source/Task/Admission/Sync/Nav or permission change.",
+    "All eight product/test parent blobs match 59dc124f; minimal integration has no current baseline conflict."
+  ],
+  "validationReused": {
+    "vitest": 48,
+    "suites": 3,
+    "strictRoots": 6,
+    "eslint": "PASS",
+    "uiGuard": "473/168 PASS",
+    "swift": "Real ImageIO decode/dimensions/original bytes/no original stream open/expired lease/corrupt fallback PASS outside sandbox; sandbox UTType unavailable"
+  },
+  "notRun": [
+    "No duplicate full suites or actual device/Native build.",
+    "Real Files picker/preview interaction on rebuilt Native host remains pending; old ABI should use fallback.",
+    "No Host/SQL/Provider/paid execution or writer-tree edits."
+  ]
+}
