@@ -214,3 +214,11 @@ Affected3suites64PASS; independent new7+9PASS, old tests reused appropriately.
 See original-id-resume/INDEPENDENT_REVIEW.json and EXECUTION_SCOPE_CANDIDATE.md.
 Root must deliver the mode/controller/qualify-resume SSH binding, exact new Gate
 and fresh plan/CAS/timers before any actual resume. No new OTP/Host/business call.
+
+Root7c7c0dab plan-only ORIGINAL_ID_RESUME/controller/SSH composition independently
+reviewed NO_BLOCKER: newController6 + SSH/actualqualifier6 + actualModeDrift2 PASS;
+old readonly qualifier body byte-identical, ff08 Auth source/tests6/6 match411.
+Evidence original-id-resume/ROOT_RESUME_CONTROL_REVIEW.json. Root integration
+candidate is no longer missing. Actual exact new approval/fresh CAS/plan/timers/
+normalA/B/Hosted execution still pending; reported latest closed0c723/68aa is not
+a permanent baseline. No external operation occurred in this review.
