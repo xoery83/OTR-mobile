@@ -1,0 +1,21 @@
+{
+  "scope": "PURE_LOCAL_DOMAIN_ONLY_SYNTHETIC_ACTOR_NOT_HOSTED_CONTEXT",
+  "schema": "PASS",
+  "probes": [
+    {
+      "canManageShared": false,
+      "result": "PURE_DOMAIN_APPLIED",
+      "changedTables": [
+        "ITEM"
+      ]
+    },
+    {
+      "canManageShared": true,
+      "result": "PURE_DOMAIN_APPLIED",
+      "changedTables": [
+        "ITEM"
+      ]
+    }
+  ],
+  "hostedOrDbActions": 0
+}

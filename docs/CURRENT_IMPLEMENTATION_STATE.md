@@ -44,6 +44,10 @@ no two fixed Item/receipt rows at that observation, still not NoCommit. Existing
 safe server COMMAND event adjacent to exact request is OTHER/42501; function/phase
 not logged. Core request AUTH-C04-NORMAL-P1-42501-20261104-01 asks for exact guard/ACL
 diagnosis and minimal isolated reproduction boundary, no blind GRANT or replay.
+Core pure-local probe validated the original intent and applied it for synthetic
+canManageShared false/true; no schema/date/WHOLE_GROUP error reproduced. This is
+not a Hosted Actor snapshot or PG admission proof. Actual SQL-stage diagnosis
+remains pending; no request-field change or original POST replay is justified.
 Next is actual failure diagnosis → minimal repair → focused validation;
 never blindly replay the original operation. Native has released its earlier B
 normalOTP slot; no QA Session is borrowed or kept by Auth.
