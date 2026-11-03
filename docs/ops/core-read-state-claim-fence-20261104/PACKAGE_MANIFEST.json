@@ -1,0 +1,20 @@
+{
+  "request": "AUTH-C04-NORMAL-P1-42501-20261104-01",
+  "status": "FOCUSED_REPAIR_CANDIDATE_LOCAL_PG_AND_REVIEW_PASS_INSTALL_APPROVAL_REQUIRED",
+  "sourceBase": "bb7373e9b752ed3a09e7b770a18031b67ad0abbc",
+  "singleProtectedFunction": "public.trip_core_finite_read_state_guard() OID65713",
+  "newSchemaRlsGrantRoleOrAuthority": false,
+  "newBusinessOrHostedActions": 0,
+  "originalOperation": "UNKNOWN_NO_REPLAY",
+  "rawFunctionDefinitionsInGit": false,
+  "files": {
+    "docs/ops/core-read-state-claim-fence-20261104/HANDOFF.md": "fc317cc6c5526d70ef5e112059a9b9dc45630bcd5e73fdd73127fd60ad539330",
+    "docs/ops/core-read-state-claim-fence-20261104/INDEPENDENT_REVIEW.json": "599bc33ab0117969f13e968dc4d8dea6e0fc43b6fadac0c85215b6b2e676fd22",
+    "docs/ops/core-read-state-claim-fence-20261104/CAS_GENERATOR_REVIEW.json": "c9176259654a27711370bacdd89b3a13db389768b90247bcf98268f98a6be916",
+    "docs/ops/core-read-state-claim-fence-20261104/GENERATED_MANIFEST.json": "e0a5d576126612085b34ab2b90347aa14b105101de1725e5ffefa6c9de2b7c31",
+    "docs/ops/core-read-state-claim-fence-20261104/POSITIVE_READ_STATE_RESULT.json": "af3a1919e7e67b456ddaafe1fd7318919e6ecbe5209ca9a0cb19c953401f1739",
+    "docs/ops/core-read-state-claim-fence-20261104/DOMAIN_PROBE.json": "3032f865452ae23229a6ff4312baf60f88c5f6cc6c11fc3b426c749d2b4e0dfe",
+    "scripts/trip/core-read-state-claim-fence-repair.py": "df28ecbcada0e9767d382f045f7d4f7bdac66ea8154d30528c6ef7d8bb13ae7c",
+    "scripts/trip/core-read-state-claim-fence-isolated-pg.py": "eac7efc7bd60a6f2ba1c2367f66288d20287801b11af4165bfce58a43051ac4b"
+  }
+}

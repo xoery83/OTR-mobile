@@ -1,3 +1,7 @@
+## Core normal-write read-state Claim fence source integration — 4 November 2026
+
+Reviewed candidate `0f230995` source/SQL generator and isolated evidence integrated. The actual read_state trigger can prematurely check a postgres-only Claim helper for ordinary writer; nested original role/session IF fixes this without GRANT/ACL change. Normal/foreign/fault-CAS/rollback and metadata/data preservation pass. Auth consumer Review has no blocker. Source only: Root2 protected install still needs fresh CAS and new precise approval; original P1 Operation remains UNKNOWN with no replay. No full Hosted P1 Save claim. See `docs/ops/core-read-state-claim-fence-20261104/SOURCE_MAIN_VALIDATION.json`.
+
 ## Universal exact Flash response version — 4 November 2026
 
 Reviewed `4fcfaea7` accepts only the current official `DeepSeek-V4.1-Flash-1017` as one additional Universal returned-model identifier. Requested alias, Flight conformance, prompt/caps/retry and execution qualifications remain unchanged. Eight focused provider tests/type/lint reused on exact files; official model page independently read. Source-only, no Provider call/registration/budget change. Receipt: `docs/ops/lane-c-imp-c01-reconciliation-20261103/FLASH_ALIAS_ROOT1_SOURCE_REVIEW.json`. Root2 runtime qualification remains separate.

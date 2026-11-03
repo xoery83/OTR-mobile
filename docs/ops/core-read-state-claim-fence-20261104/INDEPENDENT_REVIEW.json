@@ -1,0 +1,26 @@
+{
+  "requestId": "AUTH-C04-NORMAL-P1-42501-20261104-01",
+  "status": "NO_BLOCKER_MINIMAL_PRIVATE_GUARD_SOURCE_REVIEW",
+  "sha256": {
+    "beforeGuard": "5e7decd9c757920210013bf7de8004f7ef13945414f1580a18c6dfefea3f921d",
+    "afterGuard": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+    "unchangedClaimHelper": "e2b8d26256bdb6bd5a74918a55f43d7d3436a172ed7fcc11076f19e16af3f8fd",
+    "minimalResult": "9836ab584430d1a57fdee18ed697aad07515daf018ceccd04cc7ff93a9611f04",
+    "runner": "a7a53989737bfa9de1109137858168dacb3208669824fa2099c79e73d4492eb8"
+  },
+  "findings": [],
+  "verified": [
+    "Mechanical comparison proves only one change: original privileged Claim conjunction is nested under the same postgres/current-session outer IF. Original inner UPDATE/Trip/epoch/revision/access-revision/Claim helper predicates are byte-preserved; all later ordinary/Guest/finite branches unchanged.",
+    "Guard remains existing invoker function. Ordinary SET ROLE writer no longer evaluates an ACL-denied privileged helper outside its role branch. It must still satisfy original ordinary writer scope and mutation constraints; failure reaches existing CORE_V2_CAPABILITY_CLOSED, not unconditional success.",
+    "Privileged Claim path still requires the original postgres+Gateway identity and every original condition. No helper EXECUTE, role, membership, table, RLS, schema, owner/search_path or capability changes are added by this source correction.",
+    "Minimal local experiment uses real Gateway LOGIN + SET writer and trigger INSERT ON CONFLICT path. Before42501 names helper permission; after42501 names original finite capability rejection. Helper EXECUTE remainsfalse, positive scope stubs0."
+  ],
+  "localExperiment": "OWNED_LOCAL_MINIMAL_TRIGGER_PERMISSION_REPRO_NOT_FULL_CORE_ADMISSION",
+  "limits": [
+    "No repeated Docker run performed by reviewer.",
+    "Minimal experiment proves removal of premature privileged helper evaluation only; it does not prove full positive CoreSave, Hosted original operation stage, APPLIED/readback or concurrent Claim/Revoke behavior.",
+    "Follow-up focused positive isolated PG and Root2 exact protected function installation Gate/preimage/Owner/ACL verification remain required.",
+    "Private definitions remain private evidence and were not copied to Git; review receipt contains hashes/semantic findings only.",
+    "No Host/SQL/Provider/device execution or source edits by reviewer."
+  ]
+}

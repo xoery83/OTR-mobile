@@ -1,0 +1,12 @@
+{
+  "request": "AUTH-C04-NORMAL-P1-42501-20261104-01",
+  "candidate": "0f230995a717aba751b5a4528dab08191f5756b8",
+  "baseMain": "bb7373e9b752ed3a09e7b770a18031b67ad0abbc",
+  "status": "SOURCE_INTEGRATED_INSTALL_APPROVAL_AND_HOSTED_PENDING",
+  "candidateManifestExact": 8,
+  "authConsumerReview": "AUTH_CONSUMER_NO_BLOCKER_FOR_FIXED_CANDIDATE0f230995; owning Auth thread confirms8hashes",
+  "verification": "Exact already tested/reviewed candidate blobs reused; no repeatedPG suites",
+  "protectedInstall": false,
+  "originalOperation": "UNKNOWN_NO_REPLAY",
+  "root2Request": "AUTH-C04-READ-STATE-ONE-FUNCTION-INSTALL-PREP-20261104-01"
+}

@@ -1,0 +1,46 @@
+{
+  "requestId": "AUTH-C04-NORMAL-P1-42501-20261104-01",
+  "status": "NO_BLOCKER_CAS_GENERATOR_SOURCE_REVIEW",
+  "generatorSHA256": "df28ecbcada0e9767d382f045f7d4f7bdac66ea8154d30528c6ef7d8bb13ae7c",
+  "manifestSHA256": "e0a5d576126612085b34ab2b90347aa14b105101de1725e5ffefa6c9de2b7c31",
+  "generatedHashes": {
+    "GUARD_AFTER.private.sql": {
+      "sha256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+      "bytes": 5618
+    },
+    "INSTALL.private.sql": {
+      "sha256": "9300320f3bfa8a49ea26d2466eb940a154e8d8aff827cdb081f64549f2a22990",
+      "bytes": 8476
+    },
+    "ROLLBACK.private.sql": {
+      "sha256": "8204912d7217ec3a93ab1a341ff00250ad68676fc16f2b9dd1ed7ebf58c8f391",
+      "bytes": 8462
+    }
+  },
+  "beforeDefinitionSHA256": "5e7decd9c757920210013bf7de8004f7ef13945414f1580a18c6dfefea3f921d",
+  "afterDefinitionSHA256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+  "findings": [],
+  "verified": [
+    "Pure regeneration from exact private preimage matches all three frozen packet files byte-for-byte and all manifest hashes. Added newline preimage drift is rejected. No generator main/DB/Host execution by reviewer.",
+    "Generator requires exact before hash and exactly one start/end anchor, validates exact after hash. Generated forward/reverse transactions perform symmetric before/after pg_get_functiondef SHA checks.",
+    "Both directions check targetOID65713, postgres owner, invoker, exact search_path/ACL; unchanged privileged helperOID67419/hash/owner/definer/search_path/postgres-only ACL and writerEXECfalse are checked before and after. Missing or altered function/metadata aborts.",
+    "Only original CREATE OR REPLACE function definition is inside BEGIN/check/change/check/COMMIT. No business DML, GRANT, role/membership mutation, new helper or privilege restoration. Existing function OID/ACL must remain exact.",
+    "Rollback restores exact original guard definition, preserving original denial behavior. It grants no privileged Claim helper access to writer.",
+    "Pure generator has no DB/network/subprocess port. New outputs use exclusive-create0600; existing output content drift fails rather than overwrite. Raw definitions remain private packet files, not tracked source."
+  ],
+  "positiveEvidence": {
+    "sha256": "a81bc57a727be0ba8327513de36ca87da372216d566686abbaf884c8c1434f17",
+    "normalUpsert": "PASS_LOCAL_TRUE_GATEWAY_LOGIN_REAL_PREDICATES",
+    "foreignDenied": true,
+    "metadataAndRolledBackStateUnchanged": true,
+    "reverseRestoresDenial": true,
+    "writerHelperEXEC": false,
+    "positiveScopeStubs": 0
+  },
+  "limits": [
+    "Generated SQL isolated execution/fault-drift rollback validation is in progress separately; no result assumed by this review.",
+    "Exact protected Owner Gate + Root2 fresh DEV/preimage qualification required before install; generator review is not execution authorization.",
+    "No full P1 Item+receipt mutation, Hosted original operation stage, real APPLIED/readback or Native E2E proven.",
+    "No test rerun/Docker/Host/SQL/Provider execution by reviewer."
+  ]
+}
