@@ -1,0 +1,18 @@
+{
+  "request_id": "VISION-VA01-UX-R1-20261104-001",
+  "source_package": "V-A01 round1",
+  "candidate_sha": "085306960179d413cda77e2848ae0f8869f402a7",
+  "blocker": "Owner requests Account UX redesign and reports false-empty historicalTrip restoration",
+  "unique_capability": "Auth domain implementation/restore diagnosis; Native owns shared UI/navigation only",
+  "evidence": [
+    "OWNER_FEEDBACK.json",
+    "OWNER_DESIGN_SPEC.md",
+    "OWNER_DESIGN_REFERENCE_1.png",
+    "OWNER_DESIGN_REFERENCE_2.png",
+    "OWNER_DESIGN_REFERENCE_3.png",
+    "OWNER_DESIGN_REFERENCE_4.png"
+  ],
+  "minimum_delivery": "Independent review, exact candidateSHA/evidence, normal synthetic returning-account E2E, integration request when needed, main receipt; four Vision retest slices",
+  "boundaries": "No Vision business source edits; existing Auth/Sync/Adoption contracts; no Owner/otherAgent secrets; no AUTH-C04 window preemption; Apple only qualified; no automatic Consent/business writes",
+  "acceptance_release": "Current verifiedmain and ownFixture pass Vision precheck then Owner explicitly accepts each slice; historicalTrip state must not flash false empty"
+}

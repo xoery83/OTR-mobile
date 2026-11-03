@@ -1,0 +1,65 @@
+{
+  "request": "VISION-VA01-UX-R1-20261104-001",
+  "status": "QUEUED_AFTER_CURRENT_AUTH_C04_HOSTED_ACCEPTANCE_SLICE",
+  "started": false,
+  "primaryAssignmentUnchanged": "AUTH-C04",
+  "sourceDirectory": "/Users/xoery/Documents/Codex/2026-11-03/otr-vision-qa/outputs/batch-02/V-A01-owner-feedback-r1",
+  "sourceFilesSHA256": {
+    "OWNER_DESIGN_SPEC.md": "6882c880ecc5e81bd4c12d7f50e1c908cb9c911ea3f4d1cb5b567e45bf537cb6",
+    "OWNER_FEEDBACK.json": "2ee4d258d9bb279008fe9eef035b76490ff97d63982ab5b9ab9524ec054669d9",
+    "CROSS_LANE_REQUEST.json": "51247ccf8f2277eba5a5d9f5af5cf36ed0c7145546832243ea1f7dd62457b746",
+    "OWNER_DESIGN_REFERENCE_1.png": "903a9f2f301581b5259d1dcde1f884f8709cd4c571adb6d4ca196bca046576f2",
+    "OWNER_DESIGN_REFERENCE_2.png": "428f4879b1abecd429a8d902698a7c7b1306038046f274b1c26279de3fb1b707",
+    "OWNER_DESIGN_REFERENCE_3.png": "cf78d37f3e5eec2e03a26538769b95521b54c913c5d6f4abdb7ebef6723131db",
+    "OWNER_DESIGN_REFERENCE_4.png": "9631d936d25cda8054d7aa58397c1ed0b9a27f593b582690ace9a8e5dcd0753c"
+  },
+  "fourReferencesVisuallyInspected": true,
+  "textOverridesReferenceExamples": [
+    "Formal8digitOTP, notmock6digits",
+    "Appleonlyformallyqualified",
+    "SyncAIstatusrequireactualevidence; nofakegreenstate",
+    "ExistingcanonicalUIFoundation/branding controls, notimagecopiedassets"
+  ],
+  "ownership": {
+    "businessDRI": "Auth Lane D",
+    "sharedPagesNavigationWriter": "Native",
+    "mainIntegration": "Root1",
+    "hostedOperationsIfActuallyNeeded": "Root2",
+    "precheckAndOwnerAcceptance": "Vision+Owner"
+  },
+  "scope": [
+    "F01Guest-firstBetaSingleAccountUX within existingLogin/Account",
+    "F02SyntheticreturningaccountfalseemptyTriprestore diagnosis/repair",
+    "FourexistingVA01retestSlices1GuestSignedout2EmailOTP3SignedinSignout4Adoption"
+  ],
+  "executionOrder": [
+    "CompletecurrentC04Hostedreadacceptance slice andpreserve pendingRevoke/Coldstate",
+    "F02syntheticreturningaccountfirstactualreproduction andminimalAuth/Nativeh hydrationstatefix",
+    "F01existingAuthflow/approvedUIfoundation changes withNativefilehandoff",
+    "Focusedtests independentReview fixedcandidate/main evidence",
+    "Visionnewmainprecheck thenexplicitOwnerAcceptance"
+  ],
+  "boundaries": [
+    "NoOwnerorotherAgentSession/Token/data fixture",
+    "NoHostedrights/SQL/Providerconfigurationinferred",
+    "BetaSingleAccountUXdoesnotenableHostedSingleSessionPerUserornewSessionAuthority",
+    "ValidlocalcachedSession mustretainofflineaccess; no networkloginlaunchgate",
+    "Unknown/restoring isnotconfirmedempty; failure/offlineboundedrecovery ratherthaninfiniteLoading",
+    "ReuseexistingAuthGuestAdoptionSyncRepositories; no silentmerge/discard/automaticbusinesswriteorConsent",
+    "Nativeuniquewriter forsharedUI/nav; Authdomaincodeownedhere"
+  ],
+  "acceptance": "V-A01CHANGES_REQUESTED_NOT_OWNER_ACCEPTED",
+  "baseline": {
+    "main_sha": "085306960179d413cda77e2848ae0f8869f402a7",
+    "build": "14631",
+    "bundle_id": "com.xoery.otrmobile.visionmanual",
+    "device": "D473A895-F340-426C-B16D-CB1A574E48E9",
+    "auth_version": "v2.197.0",
+    "auth_project_ref": "tuqigdxrvrerfewsxqgm"
+  },
+  "ownerObservedBuild": "NOT_INDEPENDENTLY_PROVEN",
+  "newBetaPackage": false,
+  "productCodeChanged": false,
+  "otpRequests": 0,
+  "sessionsCreated": 0
+}

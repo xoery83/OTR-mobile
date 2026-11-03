@@ -1,0 +1,91 @@
+{
+  "event_id": "vision-qa-v-a01-owner-feedback-r1-20261104-001",
+  "event_type": "OWNER_FEEDBACK",
+  "agent_id": "OTR-VISION-QA",
+  "thread_id": "01a19fcb-7e3b-79c1-8ed4-dd6141603116",
+  "package_id": "V-A01",
+  "reported_at": "2026-11-03T21:58:38.894779+00:00",
+  "authority": "Direct Owner feedback and approved specification in Vision chat2026-11-04",
+  "owner_state": "CHANGES_REQUESTED",
+  "owner_accepted": false,
+  "owner_original_feedback": [
+    "请参考gpt的设计，请Auth条线重新完善用户登录界面流程。",
+    "我登录了一个之前已经创建过的email，进入mytrips后一开始仍然显示没有任何trip的初始化界面。但是过了几秒之后以前创建的trip过来了，这个对用户产生了误导，以为自己的trip丢掉了，这个loading的过程应该是在my trips界面展示之前就知道用户是否有历史的trips。"
+  ],
+  "delivery_baseline": {
+    "main_sha": "085306960179d413cda77e2848ae0f8869f402a7",
+    "build": "14631",
+    "bundle_id": "com.xoery.otrmobile.visionmanual",
+    "device": "D473A895-F340-426C-B16D-CB1A574E48E9",
+    "auth_version": "v2.197.0",
+    "auth_project_ref": "tuqigdxrvrerfewsxqgm"
+  },
+  "owner_observed_build": "Owner did not provide runtime tag;14631 is delivered baseline, not independent proof of observation build",
+  "issues": [
+    {
+      "id": "V-A01-F01",
+      "classification": "OWNER_APPROVED_UX_DESIGN_DELTA",
+      "title": "Guest-first single-account Sign-in / Account flow",
+      "business_dri": "Lane D Auth",
+      "support": "Native shared pages/navigation",
+      "status": "OPEN",
+      "owner_confirmed": true,
+      "spec": "OWNER_DESIGN_SPEC.md",
+      "slices": [
+        "V-A01-1",
+        "V-A01-2",
+        "V-A01-3",
+        "V-A01-4"
+      ]
+    },
+    {
+      "id": "V-A01-F02",
+      "classification": "BUG_OWNER_OBSERVED_PENDING_REPRODUCTION",
+      "title": "Returning account briefly shown false-empty My Trips before historical Trips restore",
+      "business_dri": "Lane D Auth",
+      "support": "Native My Trips/navigation",
+      "status": "OPEN",
+      "owner_confirmed": true,
+      "operation": "Login with previously created Email containing historical Trips → My Trips",
+      "actual": "Empty initialization shown, historical Trips appear after several seconds",
+      "expected": "Resolve account restoration state before presenting My Trips empty/list content; Loading while unresolved, empty only after confirmed completion; existing error/recovery and account-isolation contracts remain",
+      "root_cause": "UNDETERMINED",
+      "observed_duration": "Owner: several seconds; no fixed timing receipt",
+      "fixture": "Independent synthetic returning account required; no borrowing Owner or another Agent Session/Token"
+    }
+  ],
+  "media": [
+    {
+      "path": "OWNER_DESIGN_REFERENCE_1.png",
+      "source_filename": "ChatGPT 图像 2026年11月4日 10_53_38-1.png",
+      "sha256": "903a9f2f301581b5259d1dcde1f884f8709cd4c571adb6d4ca196bca046576f2",
+      "role": "VISUAL_REFERENCE_NOT_IMPLEMENTATION_OR_AUTHORIZATION"
+    },
+    {
+      "path": "OWNER_DESIGN_REFERENCE_2.png",
+      "source_filename": "ChatGPT 图像 2026年11月4日 10_53_39-2.png",
+      "sha256": "428f4879b1abecd429a8d902698a7c7b1306038046f274b1c26279de3fb1b707",
+      "role": "VISUAL_REFERENCE_NOT_IMPLEMENTATION_OR_AUTHORIZATION"
+    },
+    {
+      "path": "OWNER_DESIGN_REFERENCE_3.png",
+      "source_filename": "ChatGPT 图像 2026年11月4日 10_53_41-3.png",
+      "sha256": "cf78d37f3e5eec2e03a26538769b95521b54c913c5d6f4abdb7ebef6723131db",
+      "role": "VISUAL_REFERENCE_NOT_IMPLEMENTATION_OR_AUTHORIZATION"
+    },
+    {
+      "path": "OWNER_DESIGN_REFERENCE_4.png",
+      "source_filename": "ChatGPT 图像 2026年11月4日 10_53_42-4.png",
+      "sha256": "9631d936d25cda8054d7aa58397c1ed0b9a27f593b582690ace9a8e5dcd0753c",
+      "role": "VISUAL_REFERENCE_NOT_IMPLEMENTATION_OR_AUTHORIZATION"
+    }
+  ],
+  "scheduling": "Follow-up after current AUTH-C04 Hosted acceptance; no preemption or new Hosted authorization",
+  "related_packages": [
+    "AUTH-C01",
+    "AUTH-C03",
+    "TRIP-C03"
+  ],
+  "business_code_modified": false,
+  "device_state_mutated": false
+}
