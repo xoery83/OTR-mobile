@@ -11,6 +11,7 @@ import {
   listTripsInput,
   tripInput,
   itemInput,
+  itemEditBaseOutput,
 } from "./contract";
 
 // The host binds this GET-only port to its verified actor. No token or actor override is a tool argument.
@@ -109,6 +110,36 @@ export function createReadTools(
     async get_trip_item(raw: unknown) {
       const q = itemInput.parse(raw);
       return { ...envelopeValue, item: await item(q.trip_id, q.item_id) };
+    },
+    async get_trip_item_edit_base(raw: unknown) {
+      const q = itemInput.parse(raw);
+      const wire = z
+        .object({ manifest: z.unknown(), pages: z.array(z.unknown()).max(100) })
+        .parse(await json(`/v2/trips/${q.trip_id}/core/collection`));
+      const current = await validateCoreReadCollection(
+        wire.manifest,
+        wire.pages,
+        accountId,
+        q.trip_id,
+        async (bytes) => digest(bytes),
+      );
+      const record = current.records.find((r) => r.kind === "ITEM" && r.id === q.item_id);
+      if (!record) throw new ReadError("NOT_VISIBLE");
+      const view = await item(q.trip_id, q.item_id);
+      if (record.revision !== view.itemRevision) throw new ReadError("STALE_CURSOR");
+      return itemEditBaseOutput.parse({
+        version: "otr.mcp.edit-base/1",
+        state: "SERVER_CONFIRMED",
+        item: view,
+        record,
+        basis: {
+          epoch: current.manifest.epoch,
+          revision: current.manifest.revision,
+          access_revision: current.manifest.accessRevision,
+          manifest_sha256: current.manifest.manifestSha256,
+        },
+        evidence_visibility: "BACKEND_AUTHORIZED_REDACTED_NOT_PROOF_OF_ABSENCE",
+      });
     },
     async list_trip_items(raw: unknown) {
       const q = listItemsInput.parse(raw);

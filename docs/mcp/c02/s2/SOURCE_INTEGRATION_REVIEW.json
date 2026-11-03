@@ -1,0 +1,63 @@
+{
+  "status": "NO_BLOCKER_MINIMAL_MAIN_SOURCE_INTEGRATION_DEFAULT_CLOSED",
+  "reviewer": "/root/c02_s3_review",
+  "at": "2026-11-03T18:12:46.300806+00:00",
+  "candidate_root": "/private/tmp/otr-mcp-c02-s2-source-20261104",
+  "base_main": "74f182c92b2939dac0f2d8f3dbafbcf8174d6562",
+  "upstream_reviewed_candidate": "cc9997fc",
+  "reviewed_sha256": {
+    "mcp/contract.ts": "5ad4e1e0441d5f44965885a954b08c46dcb3047b0c497e81195d0eb3f466d48d",
+    "mcp/read.ts": "a0509bd8d192b83e9d8e7e0e5fe5b57875f837112e90b2b8f47bf9b81b763655",
+    "mcp/mutation.ts": "065365b83409d44ef931db4635d2922071411d82d3416947a5a731e85db8a221",
+    "mcp/goldenReadback.ts": "a947fba9a5e2142aa7ab77ca65e8e4becb3cf917c283e2d905da871f49cb0f1a",
+    "mcp/sparseStay.ts": "fd7e0f129cec8f661e5ea02e035781634831bb568a172fe4f8a191829f8bfc96",
+    "mcp/sparseStayAdapter.ts": "85c5aa97e36e4293d2bb029457f90f31493c749378e6dde25592e61e2307a9f3",
+    "mcp/sparseStay.test.ts": "fe06a09872dd5c6f731fa382df2a0b96273afc39055b950760ed70be39c918ce"
+  },
+  "scope": "Minimal S2 transplant only: private lawful full-Base reader/schema, sparse mapper and standalone adapter, default-closed guarded execution, matching formal Receipt/readback and isolated tests. No Phase4B/P4/public tools or Hosted integration.",
+  "relocation_equivalence": {
+    "mapper_file_exact_upstream_bytes": true,
+    "adapter_function_body_exact_upstream": true,
+    "executor_sparse_guard_exact_upstream": true,
+    "full_base_contract_and_reader_block_exact_upstream": true,
+    "fixture_adjustment": "Clean main Create tool schema has no rooms input; isolated setup adds rooms through validateCoreCommand, preserving formal command intent/Receipt. This does not expose a Create capability."
+  },
+  "unchanged_public_files_equal_base": {
+    "mcp/server.ts": true,
+    "mcp/index.ts": true,
+    "mcp/mutationContract.ts": true,
+    "mcp/batch.ts": true
+  },
+  "independent_checks": [
+    "New S2 suite16 PASS",
+    "MCP Typecheck PASS",
+    "Diff Check PASS",
+    "Reviewed full minimal diff and compared relocation blocks with original cc9997fc",
+    "Verified all seven source hashes match SOURCE_COMPATIBILITY.json"
+  ],
+  "verified_boundaries": [
+    "sparseStaySupported defaults false, is not a public tool argument, and no existing server mount passes it. No unqualified new sparse POST can proceed.",
+    "Qualified internal execution requires the immutable original DTO/full-record digest and room IDs, then remaps the original payload against the authenticated fresh read before POST.",
+    "Exact trusted confirmation and original formal Receipt recovery remain before live-state/software gates; response loss recovers the original operation rather than creating a duplicate.",
+    "Sparse property/PATCH/null/ADD/REMOVE semantics use the existing owning schema and Core command; omitted source/protected/evidence facts stay untouched in isolated before/after assertions.",
+    "Every nonhistorical readback checks exact expected room IDs, uniqueness and Item/Trip parents; requested child values are verified, including negative incomplete/foreign/duplicate proofs.",
+    "NO_CHANGE has a distinct result bound to original base revision/current requested values with no invented audit; historical Receipt results do not assert current child state.",
+    "Public server/index/schema/batch are byte-identical to clean main; Phase4B fieldAdapter and P4 components were not transplanted."
+  ],
+  "unresolved_blockers": [],
+  "limits": [
+    "Golden requested-field verification is not standalone proof of every unchanged provenance leaf; separate full before/after local tests cover preservation.",
+    "This review is source integration only, not new public SDK/consumer capability, Hosted qualification or execution authorization."
+  ],
+  "not_run": [
+    "Whole Core131 Gate",
+    "Whole repo tests/audit",
+    "Hosted/Root/Host operations",
+    "Real PG/Supabase",
+    "Consumer OAuth/Apply",
+    "Native",
+    "Historical UNKNOWN operations"
+  ],
+  "reviewer_changed_code": false,
+  "reviewer_committed": false
+}

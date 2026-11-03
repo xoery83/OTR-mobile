@@ -1,3 +1,4 @@
+import { coreReadRecordSchema } from "../src/domain/trip/tripCoreV2Read";
 import { z } from "zod";
 import { tripDiscoverySummarySchema } from "../src/domain/trip/tripDiscoveryContract";
 
@@ -197,3 +198,17 @@ export const envelopeValue = {
   version: "otr.mcp.read/1",
   state: "SERVER_CONFIRMED",
 } as const;
+
+export const itemEditBaseOutput = z.object({
+  version: z.literal("otr.mcp.edit-base/1"),
+  state: z.literal("SERVER_CONFIRMED"),
+  item: itemSchema,
+  record: coreReadRecordSchema,
+  basis: z.object({
+    epoch: uuid,
+    revision: z.number().int().nonnegative(),
+    access_revision: z.number().int().nonnegative(),
+    manifest_sha256: z.string(),
+  }),
+  evidence_visibility: z.literal("BACKEND_AUTHORIZED_REDACTED_NOT_PROOF_OF_ABSENCE"),
+});

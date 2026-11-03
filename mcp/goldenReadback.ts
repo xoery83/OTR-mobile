@@ -8,7 +8,10 @@ import {
   normalizeCoreClock,
   type CoreBoundary,
 } from "../src/domain/trip/tripCoreV2Temporal";
-import { corePayloadSchemas } from "../src/domain/trip/tripCoreV2Commands";
+import {
+  coreSparseStayPayloadSchema,
+  corePayloadSchemas,
+} from "../src/domain/trip/tripCoreV2Commands";
 import { sha, contentDigest, type PreparedMutation } from "./mutation";
 function expectedFields(
   actual: Record<string, unknown> | null | undefined,
@@ -55,6 +58,7 @@ export async function verifyGoldenReadback(
               itemCount: z.number(),
               items: z.array(z.record(z.string(), z.unknown())),
               stay: z.record(z.string(), z.unknown()).nullable(),
+              stayRooms: z.array(z.record(z.string(), z.unknown())).optional(),
               receipt: z.unknown(),
               transportEndpoints: z.array(z.record(z.string(), z.unknown())).optional(),
               transportServices: z.array(z.record(z.string(), z.unknown())).optional(),
@@ -78,7 +82,13 @@ export async function verifyGoldenReadback(
   assert.equal(receipt.operationId, p.operationId);
   assert.equal(receipt.actorAccountId, accountId);
   assert.equal(receipt.tripId, p.tripId);
-  assert.equal(receipt.outcome, "APPLIED");
+  assert(
+    receipt.outcome === "APPLIED" ||
+      (p.command === "SET_STAY_DETAILS" &&
+        prepared.sparseStay &&
+        receipt.outcome === "NO_CHANGE"),
+    "INDEPENDENT_SUCCESS_RECEIPT_REQUIRED",
+  );
   assert.equal(
     receipt.intentSha256,
     await coreHashValue("otr-trip-core-intent-v2", p, async (bytes) => sha(bytes)),
@@ -87,11 +97,21 @@ export async function verifyGoldenReadback(
     (v) => v.kind === "ITEM" && v.id === p.target.id,
   )?.committedRevision;
   assert(committed);
+  const noChange = receipt.outcome === "NO_CHANGE";
+  if (noChange)
+    assert.equal(
+      committed,
+      p.baseVector.find((v) => v.kind === "ITEM" && v.id === p.target.id)?.revision,
+      "INDEPENDENT_NO_CHANGE_REVISION_MISMATCH",
+    );
   const historical = Number(row.semantic_revision) > committed;
   const audit = z
     .record(z.string(), z.unknown())
     .parse(
-      receipt.audit.after.find((v) => v.kind === "ITEM" && v.id === p.target.id)?.facts,
+      noChange
+        ? row
+        : receipt.audit.after.find((v) => v.kind === "ITEM" && v.id === p.target.id)
+            ?.facts,
     );
   assert.equal(audit.id, p.target.id);
   assert.equal(audit.owner_account_id, accountId);
@@ -151,6 +171,59 @@ export async function verifyGoldenReadback(
         }
       }
     }
+  } else if (p.command === "SET_STAY_DETAILS" && prepared.sparseStay) {
+    const payload = coreSparseStayPayloadSchema.parse(p.payload);
+    if (!historical) {
+      assert(evidence.stayRooms, "INDEPENDENT_STAY_ROOMS_REQUIRED");
+      const expectedIds = new Set(prepared.sparseStay.roomIds);
+      assert.equal(
+        expectedIds.size,
+        prepared.sparseStay.roomIds.length,
+        "INDEPENDENT_DUPLICATE_BASE_ROOM",
+      );
+      for (const change of payload.roomChanges ?? []) {
+        if (change.operation === "ADD") expectedIds.add(change.room.room_id);
+        if (change.operation === "REMOVE") expectedIds.delete(change.room_id);
+      }
+      assert.equal(
+        new Set(evidence.stayRooms.map((r) => r.room_id)).size,
+        evidence.stayRooms.length,
+        "INDEPENDENT_DUPLICATE_ROOM",
+      );
+      assert.deepEqual(
+        evidence.stayRooms.map((r) => r.room_id).sort(),
+        [...expectedIds].sort(),
+        "INDEPENDENT_COMPLETE_ROOM_SET_REQUIRED",
+      );
+      for (const room of evidence.stayRooms)
+        expectedFields(room, { event_id: p.target.id, trip_id: p.tripId });
+      if (payload.details && Object.keys(payload.details).length)
+        expectedFields(evidence.stay, {
+          event_id: p.target.id,
+          trip_id: p.tripId,
+          ...payload.details,
+        });
+      if (payload.roomChanges?.length) {
+        for (const change of payload.roomChanges) {
+          const id = change.operation === "ADD" ? change.room.room_id : change.room_id;
+          const matches: Record<string, unknown>[] = evidence.stayRooms.filter(
+            (r) => r.room_id === id,
+          );
+          assert.equal(
+            matches.length,
+            change.operation === "REMOVE" ? 0 : 1,
+            "INDEPENDENT_ROOM_IDENTITY_REQUIRED",
+          );
+          if (change.operation !== "REMOVE")
+            expectedFields(matches[0], {
+              event_id: p.target.id,
+              trip_id: p.tripId,
+              room_id: id,
+              ...(change.operation === "ADD" ? change.room : change.changes),
+            });
+        }
+      }
+    }
   } else if (p.command === "SET_ITEM_TEXT") {
     const payload = corePayloadSchemas.SET_ITEM_TEXT.parse(p.payload);
     if (payload.title !== undefined) assert.equal(audit.title, payload.title);
@@ -169,7 +242,7 @@ export async function verifyGoldenReadback(
   assert.equal(row.owner_account_id, accountId);
   assert.equal(typeof row.semantic_revision, "number");
   assert(Number(row.semantic_revision) >= committed);
-  if (!historical)
+  if (!historical && !noChange)
     for (const key of Object.keys(audit).filter(
       (k) => !["created_at", "updated_at", "field_state"].includes(k),
     )) {
@@ -198,7 +271,9 @@ export async function verifyGoldenReadback(
   return {
     status: historical
       ? "HISTORICAL_RECEIPT_VERIFIED_CURRENT_ADVANCED"
-      : "SERVER_VERIFIED",
+      : noChange
+        ? "NO_CHANGE_RECEIPT_AND_CURRENT_FIELDS_VERIFIED"
+        : "SERVER_VERIFIED",
     itemCount: 1,
     operationId: p.operationId,
     itemId: p.target.id,

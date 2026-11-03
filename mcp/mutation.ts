@@ -1,5 +1,6 @@
 import { itemSchema } from "./contract";
-import type { BackendRead } from "./read";
+import { createReadTools, type BackendRead } from "./read";
+import { mapSparseStay } from "./sparseStay";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -59,7 +60,13 @@ function targetId(...parts: string[]) {
   return `${s.slice(0, 8)}-${s.slice(8, 12)}-4${s.slice(13, 16)}-a${s.slice(17, 20)}-${s.slice(20, 32)}`;
 }
 export type PreparedMutation =
-  | { kind: "ITEM"; command: CoreCommand; summary: string }
+  | {
+      kind: "ITEM";
+      command: CoreCommand;
+      summary: string;
+      readBase?: z.infer<typeof itemSchema>;
+      sparseStay?: { baseDigest: string; change: unknown; roomIds: string[] };
+    }
   | { kind: "TRIP"; command: TripCreateWireRequest; summary: string };
 function authoredPlace(label: string, address?: string) {
   return corePlaceSchema.parse({
@@ -301,7 +308,44 @@ export function createMutationTools(context: {
   read?: BackendRead;
   confirm?: ConfirmChanges;
   signal?: AbortSignal;
+  // Trusted owning Host qualification only; never a tool parameter.
+  sparseStaySupported?: boolean;
 }) {
+  async function sparseStayGuard(p: PreparedMutation): Promise<string | null> {
+    if (
+      p.kind !== "ITEM" ||
+      p.command.command !== "SET_STAY_DETAILS" ||
+      "rooms" in (p.command.payload as Record<string, unknown>)
+    )
+      return null;
+    if (context.sparseStaySupported !== true) return "SPARSE_STAY_BACKEND_NOT_QUALIFIED";
+    if (!p.sparseStay || !p.readBase || !context.read)
+      return "SPARSE_STAY_ORIGINAL_FULL_BASE_REQUIRED";
+    try {
+      const base = await createReadTools(
+        context.accountId,
+        context.read,
+        context.signal,
+      ).get_trip_item_edit_base({
+        trip_id: p.command.tripId,
+        item_id: p.command.target.id,
+      });
+      if (
+        contentDigest(base.item) !== contentDigest(p.readBase) ||
+        contentDigest(base.record) !== p.sparseStay.baseDigest
+      )
+        return "SPARSE_STAY_CURRENT_FULL_BASE_CONFLICT";
+      const mapped = mapSparseStay(base, p.sparseStay.change);
+      if (
+        contentDigest(mapped.payload) !== contentDigest(p.command.payload) ||
+        contentDigest(mapped.roomIds) !== contentDigest(p.sparseStay.roomIds)
+      )
+        return "SPARSE_STAY_PAYLOAD_MISMATCH";
+      return null;
+    } catch {
+      return "SPARSE_STAY_FULL_BASE_UNAVAILABLE";
+    }
+  }
   async function request(
     method: "GET" | "POST",
     path: string,
@@ -455,7 +499,7 @@ export function createMutationTools(context: {
   ): Promise<MutationResult> {
     const identity = mutationIdentity(context.accountId, p);
     if (mode === "PREVIEW") {
-      const error = await dateEditGuard(p);
+      const error = (await sparseStayGuard(p)) ?? (await dateEditGuard(p));
       return error
         ? { ...identity, outcome: "REJECTED", error_code: error }
         : { ...identity, outcome: "PREVIEW" };
@@ -491,7 +535,7 @@ export function createMutationTools(context: {
     }
     if (!known || known.status !== 404)
       return { ...identity, outcome: "UNKNOWN", error_code: "RECOVERY_UNAVAILABLE" };
-    const guard = await dateEditGuard(p);
+    const guard = (await sparseStayGuard(p)) ?? (await dateEditGuard(p));
     if (guard) return { ...identity, outcome: "REJECTED", error_code: guard };
     const posted = await request(
       "POST",

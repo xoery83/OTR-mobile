@@ -1,0 +1,48 @@
+{
+  "package": "MCP-C02",
+  "slice": "C02-S2",
+  "status": "LOCAL_PASS_DEFAULT_CLOSED_SOURCE_INTEGRATION_PENDING",
+  "tested_at": "2026-11-03T18:11:01.346929+00:00",
+  "base_main": "74f182c92b2939dac0f2d8f3dbafbcf8174d6562",
+  "owning_port_main": "4c8d0fd9dc4d0210f02b6bfaace5ced0f59f454a",
+  "upstream_mcp_reviewed_candidate": "cc9997fc",
+  "scope": "Minimal latest-main transplant; no Phase4B/P4/public-tool/Host/Auth/Core changes",
+  "checks": {
+    "focused_suites": {
+      "files": 3,
+      "tests": 59,
+      "new_sparse_tests_included": 16,
+      "command": "npx vitest run --config mcp/vitest.config.mts mcp/sparseStay.test.ts mcp/mutation.test.ts mcp/read.test.ts",
+      "result": "PASS"
+    },
+    "typecheck": "PASS",
+    "scoped_eslint": "PASS",
+    "build": "PASS",
+    "diff_check": "PASS"
+  },
+  "review": "SOURCE_INTEGRATION_REVIEW.json final required",
+  "file_sha256": {
+    "mcp/contract.ts": "5ad4e1e0441d5f44965885a954b08c46dcb3047b0c497e81195d0eb3f466d48d",
+    "mcp/read.ts": "a0509bd8d192b83e9d8e7e0e5fe5b57875f837112e90b2b8f47bf9b81b763655",
+    "mcp/mutation.ts": "065365b83409d44ef931db4635d2922071411d82d3416947a5a731e85db8a221",
+    "mcp/goldenReadback.ts": "a947fba9a5e2142aa7ab77ca65e8e4becb3cf917c283e2d905da871f49cb0f1a",
+    "mcp/sparseStay.ts": "fd7e0f129cec8f661e5ea02e035781634831bb568a172fe4f8a191829f8bfc96",
+    "mcp/sparseStayAdapter.ts": "85c5aa97e36e4293d2bb029457f90f31493c749378e6dde25592e61e2307a9f3",
+    "mcp/sparseStay.test.ts": "fe06a09872dd5c6f731fa382df2a0b96273afc39055b950760ed70be39c918ce"
+  },
+  "activation": {
+    "public_schema_changed": false,
+    "server_registration_changed": false,
+    "default_sparseStaySupported": false,
+    "hosted": "NOT_RUN",
+    "consumer": "NOT_RUN",
+    "native": "NOT_RUN"
+  },
+  "preservation": [
+    "REMOVE complete expected room ID set and all parents; empty/foreign/omitted/duplicate rows reject",
+    "Source provenance and omitted protected children retained; explicit null clears",
+    "NO_CHANGE returns original revision and distinct current-fields proof without fake audit",
+    "Revision/CAS and original Receipt-first recovery; no duplicate POST",
+    "Authoritative canonical files unchanged from base main"
+  ]
+}
