@@ -1,0 +1,76 @@
+{
+  "rows": [
+    {
+      "result": {
+        "dispatcher": {
+          "definitionMD5": "96ed7a086acfcdeb2bd238f652ae6274",
+          "owner": "postgres",
+          "securityDefiner": true,
+          "signature": "trip_member_claim_transaction(text,jsonb)"
+        },
+        "triggers": [
+          {
+            "definitionMD5": "41677c20317494a0da6135d0b7e311ca",
+            "enabled": "O",
+            "function": "trip_directed_invite_legacy_guard()",
+            "owner": "postgres",
+            "securityDefiner": true,
+            "table": "journey_invites",
+            "trigger": "directed_invite_legacy_guard",
+            "triggerDefinition": "CREATE TRIGGER directed_invite_legacy_guard BEFORE DELETE OR UPDATE ON public.journey_invites FOR EACH ROW EXECUTE FUNCTION trip_directed_invite_legacy_guard()"
+          },
+          {
+            "definitionMD5": "fe4f7c17097cee981b4fdad278b7f066",
+            "enabled": "O",
+            "function": "trip_core_invalidate_actor_read()",
+            "owner": "postgres",
+            "securityDefiner": true,
+            "table": "journey_members",
+            "trigger": "core_v2_person_read_invalidation",
+            "triggerDefinition": "CREATE TRIGGER core_v2_person_read_invalidation AFTER INSERT OR DELETE OR UPDATE ON public.journey_members FOR EACH ROW EXECUTE FUNCTION trip_core_invalidate_actor_read()"
+          },
+          {
+            "definitionMD5": "12aae4ee71a38d16e268025779d5bfc8",
+            "enabled": "O",
+            "function": "guard_trip_person_participation()",
+            "owner": "postgres",
+            "securityDefiner": false,
+            "table": "journey_members",
+            "trigger": "journey_members_participation_guard",
+            "triggerDefinition": "CREATE TRIGGER journey_members_participation_guard BEFORE INSERT OR UPDATE ON public.journey_members FOR EACH ROW EXECUTE FUNCTION guard_trip_person_participation()"
+          },
+          {
+            "definitionMD5": "9c73748ad2ced470e9c4b0f8455e6abe",
+            "enabled": "O",
+            "function": "ledger_grant_linked_personal_payment_history_1a()",
+            "owner": "postgres",
+            "securityDefiner": true,
+            "table": "journey_members",
+            "trigger": "journey_members_personal_payment_history_grant",
+            "triggerDefinition": "CREATE TRIGGER journey_members_personal_payment_history_grant AFTER UPDATE OF user_id, status ON public.journey_members FOR EACH ROW EXECUTE FUNCTION ledger_grant_linked_personal_payment_history_1a()"
+          },
+          {
+            "definitionMD5": "36b361748baaa4dabcaebd894ad4e734",
+            "enabled": "O",
+            "function": "touch_updated_at()",
+            "owner": "postgres",
+            "securityDefiner": false,
+            "table": "journey_members",
+            "trigger": "journey_members_touch_updated_at",
+            "triggerDefinition": "CREATE TRIGGER journey_members_touch_updated_at BEFORE UPDATE ON public.journey_members FOR EACH ROW EXECUTE FUNCTION touch_updated_at()"
+          },
+          {
+            "definitionMD5": "3ccb27e30aa8d06137a938e9ad7b335c",
+            "enabled": "O",
+            "function": "trip_person_transition_evidence_guard()",
+            "owner": "postgres",
+            "securityDefiner": true,
+            "table": "journey_members",
+            "trigger": "trip_person_transition_evidence_guard",
+            "triggerDefinition": "CREATE CONSTRAINT TRIGGER trip_person_transition_evidence_guard AFTER UPDATE ON public.journey_members DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN (((old.participation_active IS DISTINCT FROM new.participation_active) OR (old.participation_revision IS DISTINCT FROM new.participation_revision))) EXECUTE FUNCTION trip_person_transition_evidence_guard()"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -28,10 +28,28 @@
   "privateItemNegative": "NOT_RUN",
   "nativeColdRestore": "NOT_RUN",
   "memberRevoke": "NOT_RUN",
-  "earlyClose": "REQUESTED_WAITING_ROOT2_INDEPENDENT_READBACK",
+  "earlyClose": "INDEPENDENTLY_VERIFIED_DEFAULT_RESTORED_TIMERS_DISARMED",
   "notes": [
     "Original local10min pre-execution wait expired with0OTP/0Session/no operation marker. Retained receipts, restored reception under same approved plan/T, not new window.",
     "Initial generic POST telemetry was mistakenly attributed to ISSUE; actual command journal proves CLAIM failure. Corrected before diagnosis.",
     "No receipt absence is NoCommit; preserve CLAIM UNKNOWN until authoritative readback."
-  ]
+  ],
+  "diagnostic": {
+    "source": "ROOT_SAFE_CLAIM_DIAGNOSTICS.json",
+    "sha256": "4b0c2542040b0e82156d0c42d694b0dc55c572a5d02a9d34632d569405a49d7d",
+    "stage": "RPC",
+    "lastRpcMethod": "link",
+    "sqlState": "42501",
+    "claimRequestId": "664b31a9-8e6e-49da-a4e4-e9e9b8589cd8",
+    "claimDurationMs": 7226,
+    "limit": "SQL error event has no requestId; aligned by controlled-container adjacency and exact operation journal; exact denying SQL statement/trigger not yet proved"
+  },
+  "coreRequestId": "AUTH-C04-CLAIM-LINK42501-PREIMAGE-20261104",
+  "closeEvidence": "ROOT_FINAL_CLOSE_RECEIPT.json",
+  "independentSqlReadback": {
+    "file": "ROOT_ORIGINAL_RECEIPTS_READONLY.json",
+    "issue": "ISSUED_EXACT_ORIGINAL_IDS_DIGEST",
+    "claim": "RECEIPT_NOT_OBSERVED_NOT_NOCOMMIT",
+    "connectionAggregate": "One core gateway idle-in-transaction observed; not killed or attributed to a specific request"
+  }
 }

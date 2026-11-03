@@ -1,0 +1,38 @@
+{
+  "status": "AUTH_C04_EARLY_CLOSED_INDEPENDENTLY_VERIFIED_TIMERS_DISARMED",
+  "observedAt": "2026-11-03T18:20:15.302123+00:00",
+  "windowId": "9ce410c7-aa59-4a03-aff3-c350dc03b2f6",
+  "planSHA256": "e1f901c039bb56bf2ae99959a071e18b7b82a4f386655a9f080506f69f22b5d6",
+  "restore": {
+    "status": "AUTH_C04_RUNTIME_CLOSED_VERIFIED",
+    "runtimeClosed": true,
+    "containerId": "d5ed2ea737f4ef6221301eb17ec64f87f4bf6efec7f3f1bc8487c5b1fa3d9c15",
+    "image": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+    "selectorAbsent": true,
+    "environmentSHA256": "1f63f946d5713e38418b4210f59acd033c206e7a20f242818f418978fc8fa020",
+    "businessOutcome": "NOT_INFERRED"
+  },
+  "ownUnitStates": {
+    "otr-auth-c04-close-9ce410c7-aa59-4a03-aff3-c350dc03b2f6.timer": {
+      "LoadState": "not-found",
+      "ActiveState": "inactive"
+    },
+    "otr-auth-c04-close-9ce410c7-aa59-4a03-aff3-c350dc03b2f6.service": {
+      "LoadState": "not-found",
+      "ActiveState": "inactive"
+    },
+    "otr-auth-c04-resume-close-9ce410c7-aa59-4a03-aff3-c350dc03b2f6.timer": {
+      "LoadState": "not-found",
+      "ActiveState": "inactive"
+    },
+    "otr-auth-c04-resume-close-9ce410c7-aa59-4a03-aff3-c350dc03b2f6.service": {
+      "LoadState": "not-found",
+      "ActiveState": "inactive"
+    }
+  },
+  "disarmCorrection": "Prior stop removed timers; transient services were already not-loaded. Read-only reconciled inactive/not-found, no restart/rearm or secondwindow.",
+  "AuthCleanupEvidence": "5bd3283a ownA/B PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "windowConsumed": true,
+  "furtherExecutionAllowed": false,
+  "businessDataReversed": false
+}

@@ -14,8 +14,12 @@ passed; actual inviteeb671ca9-8610-4b93-aa1d-3e92a7bdbe65. CLAIM4028 was actuall
 submitted, returned503 at2026-11-03T18:13:33.584Z, and only one original recovery
 was attempted. Final outcome remainsUNKNOWN; no replay. Both newly owned Sessions
 have PASS_LOCAL_SCOPE_REFRESH_REVOKED. MemberRead/privateItemNegative/NativeCold/
-MemberRevoke NOT_RUN. Root2 earlyclose requested; independent closed readback and
-redacted failure diagnostics pending. See hosted-original-resume-20261104.
+MemberRevoke NOT_RUN. Root2 earlyclose independently verified: d5ed/3f02 healthy default restored,
+selectors absent and own timers/services inactive. Independent SQL confirms exact
+ISSUE receipt; CLAIM absent remainsUNKNOWN. Exact denying object still pending. Actual Root2 safe diagnostics show RPC/link/
+SQLSTATE42501, aligned with Claim request664b31a9…/7226ms. Core request
+AUTH-C04-CLAIM-LINK42501-PREIMAGE-20261104 asks only affected UPDATE trigger/
+authority preimages; no permission expansion or retry. See hosted-original-resume-20261104.
 Do not reuse this consumed window or create replacement operations/invitation.
 
 Independent operator review passed after hardcoded software-pin repair. Initial

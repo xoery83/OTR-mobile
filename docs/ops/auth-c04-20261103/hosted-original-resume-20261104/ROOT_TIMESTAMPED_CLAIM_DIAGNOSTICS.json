@@ -1,0 +1,53 @@
+{
+  "observedAt": "2026-11-03T18:17:53.124929+00:00",
+  "rows": [
+    {
+      "event": "request",
+      "requestId": "a340a803-bfbd-4672-b1cd-5ad6a9f30787",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 202,
+      "durationMs": 5605,
+      "dockerTimestamp": "2026-11-03T18:12:49.937261812Z"
+    },
+    {
+      "event": "request",
+      "requestId": "e176beed-17c8-4475-83d4-0004fe020047",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 201,
+      "durationMs": 7010,
+      "dockerTimestamp": "2026-11-03T18:12:57.872047503Z"
+    },
+    {
+      "event": "request",
+      "requestId": "acb21eb8-effd-4ffb-be37-748cfa0e08fc",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 202,
+      "durationMs": 13901,
+      "dockerTimestamp": "2026-11-03T18:13:19.427674676Z"
+    },
+    {
+      "event": "member_claim_pg_failed",
+      "stage": "RPC",
+      "lastRpcMethod": "link",
+      "sqlState": "42501",
+      "dockerTimestamp": "2026-11-03T18:13:33.518305398Z"
+    },
+    {
+      "event": "request",
+      "requestId": "664b31a9-8e6e-49da-a4e4-e9e9b8589cd8",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 503,
+      "durationMs": 7226,
+      "dockerTimestamp": "2026-11-03T18:13:33.519305456Z"
+    },
+    {
+      "event": "request",
+      "requestId": "e9763b1d-4950-4724-b528-e6f597ec56c9",
+      "route": "/v2/trips/:tripId/member-claim-operations/:resource",
+      "status": 202,
+      "durationMs": 19053,
+      "dockerTimestamp": "2026-11-03T18:13:53.628392657Z"
+    }
+  ],
+  "scope": "Only fixed diagnostic/request fields; no rawSQL/error/payload/token"
+}

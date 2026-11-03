@@ -1,0 +1,24 @@
+{
+  "connections": [
+    {
+      "count": 1,
+      "state": "idle in transaction",
+      "usename": "otr_trip_core_v2_gateway"
+    }
+  ],
+  "observedAt": "2026-11-03T18:20:18.607589+00:00",
+  "receipts": [
+    {
+      "actorAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "intentDigest": "27da9414669e8ecd83c826d39438c09f2ad9049bfcfcb829c6b300975164e7d1",
+      "inviteId": "eb671ca9-8610-4b93-aa1d-3e92a7bdbe65",
+      "operationId": "b3299bda-8939-4e49-8377-338f8e619869",
+      "outcome": "ISSUED",
+      "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+    }
+  ],
+  "transactionReadOnly": "on",
+  "scope": "Independent read-only immutable metadata of only approved original ISSUE/CLAIM plus aggregate role connection state; no endpoint/function invocation or further recovery submission.",
+  "absenceIsNotNoCommit": true
+}
