@@ -1,0 +1,63 @@
+{
+  "status": "ROOT2_HOSTED_WRITER_ACCEPTED",
+  "eventId": "root2-hosted-writer-accepted-v4-20261103-01",
+  "acceptedAt": "2026-11-03T10:24:26.808594+00:00",
+  "receiverThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "releaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "releaseEventId": "root1-hosted-writer-release-v4-20261103-01",
+  "verifiedPacketCommit": "e179481e206010309fa5590300693be51f7b6867",
+  "verificationSHA256": "69d4e6059fd1db8e54b1607a909fbdd06cc9cac7b1b297c9ce91d3d884869f0d",
+  "resources": {
+    "environment": "DEV",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "host": "178.105.151.143",
+    "service": "otr-dev-backend",
+    "listener": "127.0.0.1:8787",
+    "endpoint": "https://api-dev.xoery.art",
+    "containerId": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+    "configSHA256": "eb99ebf60049e076085f517d9dc06a69440749de0d02ee553ebacaf46413cedf"
+  },
+  "responsibility": [
+    "DEV Hosted deployment/image/container/runtime Env/config/mount/CAS",
+    "Default-close/shutdown/restore/rollback/health/independent readback",
+    "Protected window/environment and exact approved installation execution only"
+  ],
+  "root1Retains": [
+    "Core contract/canonical owning ports",
+    "Schema/migration design and review",
+    "main source integration/cross-module interface coordination"
+  ],
+  "excluded": [
+    "Business Source/Task/Custody mutation and lifecycle",
+    "Standing OAuth/Issuer expansion or Apply permission",
+    "Paid Provider or arbitrary SQL/RLS/GRANT/role action",
+    "Native/Vision resource ownership",
+    "Production"
+  ],
+  "noActiveScopedWindowEvidence": {
+    "hostObservedAt": "2026-11-03T10:20:02.372310+00:00",
+    "pgObservedAt": "2026-11-03T10:19:31.958884+00:00",
+    "lockHolders": [],
+    "otrTimers": [],
+    "authMcpEnrichmentSelectors": "ABSENT",
+    "pdfPngWorkers": "INACTIVE_PID0",
+    "importFlightScopesAndPrices": "EXPIRED",
+    "issuerFingerprint": "CLOSED",
+    "unexplainedDrift": [],
+    "limit": "Point-in-time bounded observations; Console toggle/SiteURL/DCR not freshly observed."
+  },
+  "writerResponsibility": "Root2 accepted same-resource sole Hosted Writer responsibility; Hosted writes remain frozen pending MC and post-registration readback",
+  "root1FurtherHostedMutationsAllowed": false,
+  "mcOwnershipRecorded": false,
+  "postTransferNoBusinessWriteCheck": "PENDING_MC_REGISTRATION",
+  "hostedMutationAllowedNow": false,
+  "newBusinessAuthorization": false,
+  "remaining": [
+    "MC records same resource and Root2 unique ownership using release and acceptance Event IDs",
+    "Root2 independently verifies MC ACK then performs no-business health/default-close readback",
+    "Each later task still requires full Release Packet, fresh CAS and valid exact action Gate"
+  ],
+  "failureRule": "Keep Hosted writes frozen on any unmet transition; ownership reversal must be explicit and recorded before Root1 resumes. Never dual Writer.",
+  "coordination": "No send_message_to_thread call; receipt exposed only in owning files and normal chat output."
+}

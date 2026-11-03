@@ -1,3 +1,7 @@
+# Root2 Hosted ownership acceptance — 3 November 2026
+
+Root2 accepted same DEV Hosted resources after Root1 release9e411ee8 and independent verificatione179 (33 checks). Hosted writes remain FROZEN pending MC ownership registration and post-registration no-business health/default-close readback. No deployment, restart, config/SQL/business/Provider operation occurred. See `handoffs/ROOT2_HOSTED_OPS_V4/ROOT2_HOSTED_WRITER_ACCEPTED.json`. Root1 retains Core/schema design/main; all exact action Gates remain separate.
+
 # Hosted Operations V4 transfer — 3 November 2026
 
 Read `docs/handoffs/ROOT2_HOSTED_OPS_V4/README.md` and WRITER_STATE before any

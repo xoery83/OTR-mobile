@@ -1,0 +1,36 @@
+{
+  "packetCommit": "e179481e206010309fa5590300693be51f7b6867",
+  "artifacts": [
+    {
+      "path": "HOST_INDEPENDENT.json",
+      "bytes": 5884,
+      "sha256": "1a38c87437161d739a88e8d1a619c746a87ead93da85f60fa7c1bbb7b3650243"
+    },
+    {
+      "path": "PG_INDEPENDENT.json",
+      "bytes": 9245,
+      "sha256": "975965f0369dd70a01a6d19e0c65dbb50f945fbbf4f0d87d03becba17a56146d"
+    },
+    {
+      "path": "READ_ONLY_RECONCILIATION.txt",
+      "bytes": 8105,
+      "sha256": "0452aa99a3b901e456b82911ffdf54f4984111566d019f4741353dca39002a32"
+    },
+    {
+      "path": "ROOT2_READ_ONLY_VERIFIED.json",
+      "bytes": 3704,
+      "sha256": "69d4e6059fd1db8e54b1607a909fbdd06cc9cac7b1b297c9ce91d3d884869f0d"
+    },
+    {
+      "path": "otr-root2-host-readonly-20261103.py",
+      "bytes": 3608,
+      "sha256": "200911f1f2e7c683c6e9baee350a46b36664f2eea3f0c23a39abb7bd0549dc5e"
+    },
+    {
+      "path": "otr-root2-pg-readonly-20261103.py",
+      "bytes": 4420,
+      "sha256": "4920c7ce97f238ef0726cee4fe4d3fe00863daaf0f9290d1d0284167a37efb2f"
+    }
+  ],
+  "scope": "Independent Root2 read-only verification; responsibility acceptance is recorded separately"
+}

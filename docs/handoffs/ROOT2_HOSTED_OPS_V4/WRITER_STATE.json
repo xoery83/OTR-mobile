@@ -1,17 +1,21 @@
 {
-  "status": "ROOT1_RELEASED_PENDING_ROOT2_ACCEPTANCE",
+  "status": "ROOT2_ACCEPTED_PENDING_MC_AND_READBACK",
   "resource": "DEV tuqigdxrvrerfewsxqgm /178.105.151.143 /otr-dev-backend /runtime and protected install execution",
-  "writer": "TRANSFER_FROZEN_NO_ACTIVE_WRITER",
+  "writer": "Root2 01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
   "receiver": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
   "root1NewProtectedWritesPaused": true,
   "independentVerification": "ROOT2_READ_ONLY_VERIFIED e179481e; host10:20:02Z/PG10:19:31Z; no unexplained drift or active scoped window",
   "root1Released": true,
-  "root2Accepted": false,
+  "root2Accepted": true,
   "mcOwnershipRecorded": false,
   "postTransferNoBusinessWriteCheck": "PENDING",
   "newBusinessAuthorization": false,
   "root1ReleasedAt": "2026-11-03T10:22:53.286453+00:00",
   "root1FurtherHostedMutationsAllowed": false,
   "releaseEventId": "root1-hosted-writer-release-v4-20261103-01",
-  "failureRule": "No dual takeover. If acceptance/MC/check fails keep writes frozen; explicitly record original Root1 ownership reversion before any mutation. Root2 may not write before all acceptance steps complete."
+  "failureRule": "No dual takeover. If acceptance/MC/check fails keep writes frozen; explicitly record original Root1 ownership reversion before any mutation. Root2 may not write before all acceptance steps complete.",
+  "root2AcceptedAt": "2026-11-03T10:24:26.808594+00:00",
+  "acceptanceEventId": "root2-hosted-writer-accepted-v4-20261103-01",
+  "root1ReleaseCommit": "9e411ee87bf8000d391b4965ab7200af1601c780",
+  "hostedMutationAllowedNow": false
 }

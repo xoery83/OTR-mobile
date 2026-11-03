@@ -59,6 +59,42 @@
       "bytes": 8105,
       "sha256": "0452aa99a3b901e456b82911ffdf54f4984111566d019f4741353dca39002a32",
       "origin": "Root2 independent read-only exact e179 package reconciliation"
+    },
+    {
+      "path": "ROOT2_HOSTED_WRITER_ACCEPTED.json",
+      "bytes": 3157,
+      "sha256": "5b2f019900ffddf8f933223e9a4975401a9e34c83de0e4b3ba9423c7dfc45363",
+      "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
+    },
+    {
+      "path": "evidence/HOST_INDEPENDENT.json",
+      "bytes": 5884,
+      "sha256": "1a38c87437161d739a88e8d1a619c746a87ead93da85f60fa7c1bbb7b3650243",
+      "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
+    },
+    {
+      "path": "evidence/PG_INDEPENDENT.json",
+      "bytes": 9245,
+      "sha256": "975965f0369dd70a01a6d19e0c65dbb50f945fbbf4f0d87d03becba17a56146d",
+      "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
+    },
+    {
+      "path": "evidence/EVIDENCE_MANIFEST.json",
+      "bytes": 1166,
+      "sha256": "cfce408b2f2b64735ea5522b2c4227e1205100811e7fbb2e23ede27924db6c05",
+      "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
+    },
+    {
+      "path": "evidence/otr-root2-host-readonly-20261103.py",
+      "bytes": 3608,
+      "sha256": "200911f1f2e7c683c6e9baee350a46b36664f2eea3f0c23a39abb7bd0549dc5e",
+      "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
+    },
+    {
+      "path": "evidence/otr-root2-pg-readonly-20261103.py",
+      "bytes": 4420,
+      "sha256": "4920c7ce97f238ef0726cee4fe4d3fe00863daaf0f9290d1d0284167a37efb2f",
+      "origin": "Root2 independent measured readback or same-resource responsibility acceptance; no Hosted mutation"
     }
   ],
   "containsCredentials": false
