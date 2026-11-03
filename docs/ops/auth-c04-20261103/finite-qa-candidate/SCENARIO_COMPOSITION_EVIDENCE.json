@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_SCENARIO_COMPOSITION_PASS_HOSTED_NOT_RUN",
+  "files": [
+    {
+      "path": "scripts/auth/member-claim-qa-scenario.ts",
+      "sha256": "b9a9cd721b453a37a41e3146bc5fec9fbd283a483b02de5e7744c5c74cbec34c"
+    },
+    {
+      "path": "backend/src/authMemberClaimQaScenario.test.ts",
+      "sha256": "0c0085d0adb6fce3086eed59eddc4e281e86c3384b96fb592154e1cdfbeec14d"
+    }
+  ],
+  "checks": {
+    "focusedTests": "8/8 PASS",
+    "independentReview": "SCOPED_NO_BLOCKER_CANDIDATE; independent8/8PASS; receipt command aliasing and pre-cancel findings repaired",
+    "typecheck": "PASS",
+    "changedFileEslint": "PASS"
+  },
+  "scope": "DEV-only injected orchestration; existing registered own-session helper, normal MemberClaim repository and hash-validated Core transport; no startup/CLI invocation or Native bundle inclusion",
+  "retainedOriginal": "Original command/digest must be durably retained by operator before each initial mutation. No new operation on UNKNOWN; one read-only recovery only, absence stops. Explicit duplicate only after confirmed receipt",
+  "operatorInputsStillRequired": [
+    "Current exact Owner-approved finite A/B activation Gate",
+    "Root qualified fresh CAS/config installer/independent close and retained-default restore controller",
+    "Fresh metadata preflight for exact owner/target/registered Accounts and Ledger linked-history footprint",
+    "Normal own Session scopes using generic runRegisteredQaHostSession and explicit cases, current dedicated Resend QA receiving readiness/quota",
+    "Independent read-only receipt callback with fixed actor/op/digest and safe custody retention callback"
+  ],
+  "notRun": [
+    "Actual OTP/Google session or Hosted A/B",
+    "Member Revoke",
+    "Native Cold Restore",
+    "Private Item negative without qualified actual private fixture"
+  ],
+  "reviewLimits": "Injected callbacks are owning operator trust boundaries, not proof of permissions or real Sessions; tests use mock HTTP, do not constitute real E2E"
+}

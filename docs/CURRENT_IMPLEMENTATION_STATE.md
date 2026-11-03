@@ -1,3 +1,14 @@
+# C04 scenario / MC local continuation — 3 November 2026
+
+DEV-only fixed A/B scenario now composes existing normal Session scopes, Claim
+Repository and hash-validated Core Reader. Eight focused + independent eight
+PASS, types/lint PASS; reader command aliasing and pre-cancel findings repaired.
+No invocation/OTP/Hosted write; operator preflight, exact activation Gate,
+independent controller and readback still required. Revoke/Native cold NOT_RUN.
+MC Companion local-prep completed rev39; safety local-prep completed rev42.
+These are bounded source/evidence contracts, not Website/restore/capacity PASS.
+C04 remains primary and resumes as soon as qualified interfaces arrive.
+
 # C04 interface closure / normal QA preparation — 3 November 2026
 
 Returned to C04 on actual main2606c8dd delivery. Root's selector reuses Auth pure
