@@ -1,0 +1,29 @@
+{
+  "status": "BOUNDED_EXISTING_SAFE_DIAGNOSTICS",
+  "observedAt": "2026-11-03T23:09:41.702245+00:00",
+  "containerId": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569",
+  "requestId": "ee6c661a-855f-4f66-8fb1-f1b46a077ad3",
+  "operationId": "f5e13639-4240-4817-bf43-c60a1ea46361",
+  "since": "2026-11-03T23:08:40Z",
+  "until": "2026-11-03T23:09:25Z",
+  "records": [
+    {
+      "timestamp": "2026-11-03T23:08:47.667541598Z",
+      "correlation": "BOUNDED_TIME_ONLY_NO_REQUEST_FIELD",
+      "event": "core_execution_failed",
+      "resource": "COMMAND",
+      "category": "OTHER",
+      "driverCode": "42501"
+    },
+    {
+      "timestamp": "2026-11-03T23:08:47.667616690Z",
+      "correlation": "EXACT_REQUEST_ID",
+      "event": "request",
+      "status": 503,
+      "durationMs": 12027,
+      "requestId": "ee6c661a-855f-4f66-8fb1-f1b46a077ad3"
+    }
+  ],
+  "rawPayloadsRetained": false,
+  "mutationCount": 0
+}

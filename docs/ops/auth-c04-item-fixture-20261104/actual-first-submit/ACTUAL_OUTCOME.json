@@ -19,10 +19,16 @@
   "memberOTPRequests": 0,
   "memberSharedPrivateRead": "NOT_RUN",
   "ownerSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
-  "independentMetadataRead": "TRANSPORT_UNKNOWN_NO_RESULT",
+  "independentMetadataRead": "ROOT2_EXACT_IDS_NO_ITEMS_OR_RECEIPTS_AT_OBSERVATION_NOT_NO_COMMIT",
   "nativeColdRestore": "NOT_RUN",
   "protectedChanges": 0,
   "runSHA256": "1c3e109734c97e1cb87c9015fb2646851b226aa7011ff44c4fed1d47a1d88c55",
   "operatorReview": "SCOPED_NO_BLOCKER_PRE_EXECUTION_IMPORT_REPAIR",
-  "next": "Root2 exact readonly request diagnostic; Auth minimal repair after actual cause; preserve originalOperation without replay"
+  "next": "Core exact guard/ACL diagnosis request AUTH-C04-NORMAL-P1-42501-20261104-01; no blind GRANT or replay",
+  "safeServerDiagnostic": {
+    "correlation": "BOUNDED_TIME_ONLY_COMMAND_EVENT_ADJACENT_TO_EXACT_REQUEST",
+    "driverCode": "42501",
+    "category": "OTHER",
+    "phaseAndFunction": "NOT_LOGGED"
+  }
 }

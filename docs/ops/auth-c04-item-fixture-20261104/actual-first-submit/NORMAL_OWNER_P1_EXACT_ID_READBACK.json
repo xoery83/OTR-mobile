@@ -1,0 +1,16 @@
+{
+  "rows": [
+    {
+      "result": {
+        "items": [],
+        "observedAt": "2026-11-03T23:10:52.798076+00:00",
+        "receipts": [],
+        "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+      }
+    }
+  ],
+  "queryCorrection": "itinerary_events.revision does not exist; selected semantic_revision under revision output label",
+  "querySHA256": "618a3475ea9b8cee4dae5f57b90ebb147e560b3d3ec4f5960c66c654ac7d0a1f",
+  "businessMutationCount": 0,
+  "noCommitInferred": false
+}

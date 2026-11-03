@@ -39,9 +39,12 @@ B OTP0, both Item isolation and Native cold remain NOT_RUN. A own-local logout a
 refresh rejection PASS. Root2 stable coordination released after cleanup.
 
 Evidence: `docs/ops/auth-c04-item-fixture-20261104/actual-first-submit/`.
-Auth READ ONLY management metadata query returned transport UNKNOWN, not empty
-rows. Root2 was asked for the exact server failure and two fixed Item/receipt
-metadata. Next is actual failure diagnosis → minimal repair → focused validation;
+Auth READ ONLY management query failed; Root2 later returned exact metadata:
+no two fixed Item/receipt rows at that observation, still not NoCommit. Existing
+safe server COMMAND event adjacent to exact request is OTHER/42501; function/phase
+not logged. Core request AUTH-C04-NORMAL-P1-42501-20261104-01 asks for exact guard/ACL
+diagnosis and minimal isolated reproduction boundary, no blind GRANT or replay.
+Next is actual failure diagnosis → minimal repair → focused validation;
 never blindly replay the original operation. Native has released its earlier B
 normalOTP slot; no QA Session is borrowed or kept by Auth.
 
