@@ -1,0 +1,77 @@
+{
+  "status": "LOCAL_INTEGRATION_REHEARSAL_PASS_NOT_MAIN_NOT_DEVICE",
+  "base": "581342387bee5f5e55f4fe3cee166a7d57a96f45",
+  "productCommits": ["d220f1df", "db06bad2"],
+  "cherryPickedCommits": ["1b8aaf78", "449128c3"],
+  "codeCandidate": "449128c305bfc78d5f30030f866d8c3af390cda8",
+  "nativeReviewSource": "6034483e:FINAL_REVIEW.json",
+  "authReviewSource": "7052b7d2:GUEST_COVER_NATIVE_DATA_REVIEW.json",
+  "conflicts": [
+    {
+      "commit": "d220f1df",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "resolution": "Keep whole latest main text byte prefix, append short true Native status only"
+    },
+    {
+      "commit": "db06bad2",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "resolution": "Keep whole latest main text byte prefix, append short true Native status only"
+    }
+  ],
+  "productConflicts": 0,
+  "allFinalSrcBlobsMatchFixedNative": true,
+  "sourceAllowlist": [
+    "src/data/auth/guestLocalCover.test.ts",
+    "src/data/auth/guestLocalWorkspace.ts",
+    "src/data/repositories/tripPersonalCoverRepository.ts",
+    "src/data/repositories/tripPhotoRepository.test.ts",
+    "src/data/repositories/tripPhotoRepository.ts",
+    "src/features/day-feed/DayReadSkeleton.test.ts",
+    "src/features/day-feed/LocalTripWorkspace.test.ts",
+    "src/features/day-feed/LocalTripWorkspace.tsx",
+    "src/features/day-feed/MyTripsListSkeleton.tsx",
+    "src/features/day-feed/TripScreen.tsx",
+    "src/features/trip/TripHomeWidgetHost.test.ts",
+    "src/features/trip/TripHomeWidgetHost.tsx",
+    "src/ui/catalogs.ts"
+  ],
+  "import53aActivityIntersection": [],
+  "mainAuthMcpImportUnrelatedFilesChanged": false,
+  "adoptionCensusAndSchemaUnchanged": true,
+  "checks": {
+    "scopedTests": "3 suites17 + LocalTripWorkspace list5 PASS (72 unselected)",
+    "reusedNativeEvidence": "12 suites369 plus GuestUI6; not rerun",
+    "scopedStrict": "five production roots/transitive PASS",
+    "scopedLint": "8 production files PASS",
+    "uiGuard": "PASS 473 legacy/168 representative",
+    "diffCheck": "PASS"
+  },
+  "sourceSHA256": {
+    "src/data/auth/guestLocalCover.test.ts": "3642e2ea52f2454a1f7267c21dd9f227a92451c97b5ad1041d25474d2cef07df",
+    "src/data/auth/guestLocalWorkspace.ts": "e37aa61e807b876ddb50f61b56faf0951e71bbe32975915cfbb1a8f86983197d",
+    "src/data/repositories/tripPersonalCoverRepository.ts": "d85abdcd1efc3c321b39b9896c8c00ae2f82b6ebd8f15499c0d1083de26f786a",
+    "src/data/repositories/tripPhotoRepository.test.ts": "0028b9370aa3099bb7d92bb5025aa113930c9c6ab01a433b1912cff8382ec211",
+    "src/data/repositories/tripPhotoRepository.ts": "9c64a320daef4a299bebb27c82b496844dc6261c33eff757d00f61ffc68fd198",
+    "src/features/day-feed/DayReadSkeleton.test.ts": "136fdad602e0b3f2dec353018b457f50cd0c33ae93f64e8f9de1012cb8ed4478",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "06656d3ae2420ba38a64125c075f206261b7cc3441e27ab425848336ca94cc63",
+    "src/features/day-feed/LocalTripWorkspace.tsx": "f22048077341d847abaa42d040accaa917a17e80fe74b2385d8ac31f759fa8ee",
+    "src/features/day-feed/MyTripsListSkeleton.tsx": "8f0ff8f1a73403caf9a8f152456f1fcaaeab88b9a5d84d227da280111a4c665b",
+    "src/features/day-feed/TripScreen.tsx": "164912d855416e29851b89ac9dc3b6bbf10dd64305d273ba34fcbb0dc17908e7",
+    "src/features/trip/TripHomeWidgetHost.test.ts": "2f6937616810ca38b10a8a6da691f714353bf08aa27d866b6034ea3e4053a5ef",
+    "src/features/trip/TripHomeWidgetHost.tsx": "47b049ce3c065d32839c18ca3c3691f086c3c303c87cac8aec06cc5d539a60ab",
+    "src/ui/catalogs.ts": "e6a3cd2ac5cc1b82c18b6585ffca94557c0033ec6c0d0801eab27278421f2742"
+  },
+  "reviewReceiptSHA256": {
+    "NATIVE_FINAL_REVIEW.json": "16e48834722dee8d080674328797a24c63a336109a44a61bb2484e65e8d28148",
+    "AUTH_DATA_REVIEW.json": "8a86b3aa1210bddef12223f5a68081ca5b6e0b6848c7d06e3be31d6ddf9d4a3d"
+  },
+  "notPerformed": [
+    "push/main update",
+    "Host/SQL/Session access",
+    "device/build/install",
+    "Hosted/Provider calls",
+    "full369 suite rerun",
+    "Owner acceptance"
+  ],
+  "next": "Root serial main integration; Native/Vision full-main build/schema/assets/device and explicit Owner acceptance"
+}

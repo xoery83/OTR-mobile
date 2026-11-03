@@ -1,0 +1,23 @@
+{
+  "status": "SCOPED_NO_BLOCKER_READY_FOR_SERIAL_MAIN_INTEGRATION",
+  "productCommits": [
+    "d220f1df",
+    "db06bad2"
+  ],
+  "uiReview": {
+    "reviewer": "native_sprint_independent_review",
+    "result": "NO_BLOCKER",
+    "independentTests": "GuestUI6PASS /71notselected",
+    "scope": "Guest Cover UI delta only; sameoperation retry, Cancel, generation/remount, Account path preserved"
+  },
+  "authReview": {
+    "reviewer": "Auth owning writer",
+    "result": "SCOPED_NO_BLOCKER_LOCAL_DATA_CANDIDATE",
+    "reportedEvidence": "7052b7d2:docs/ops/auth-c04-20261103/GUEST_COVER_NATIVE_DATA_REVIEW.json",
+    "independentTests": "3new dataPASS plus isolated1censusPASS",
+    "census": "Photo retained afterAuto, UNSUPPORTED_TABLE:local_trip_photos, readyForServerPreflight=false; Adoption unchanged"
+  },
+  "failureSemantics": "CombinedGuestmetadata and Cover save sequentially. Cover failure preserves draft and original metadata intent for exact retry; already successful metadata is not rolled back. Cover-only has no metadata operation. Not atomic.",
+  "finalAcceptance": "NOT_RUN_ON_FINAL_MAIN_DEVICE_NOT_OWNER_ACCEPTED",
+  "next": "Root exact serial main integration; Vision full-main build/paired existing sandboxes/resource verification/device repeat; then explicit Owner review"
+}

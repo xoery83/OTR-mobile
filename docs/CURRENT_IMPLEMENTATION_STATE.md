@@ -883,3 +883,8 @@ Reviewed db06bad2 adds Guest local Cover through the existing database/repositor
 factory seams. Auto retains the photo; fileless Adoption remains blocked by census.
 Combined metadata/Cover save is sequential, not atomic. Native/Vision owns final
 integrated-main build/device acceptance; this isolated rehearsal performs neither.
+
+Isolated main581 rehearsal:22 targeted checks, five-root strict types, product lint
+and UI guard473/168 PASS. Fixed Native603 FINAL_REVIEW/Auth705 review retained in
+`ops/root-native-round1-integration-20261103/`; Root serial main and Native/Vision
+full-main build/device/Owner acceptance remain pending. No Host/device/build action.
