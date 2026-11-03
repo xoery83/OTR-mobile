@@ -1,0 +1,35 @@
+{
+  "requestId": "ROOT1-HOSTED-SPARSE-STAY-20261104-001",
+  "sourcePackage": "MCP-C02",
+  "sourceSlice": "C02-S2 Core Sparse Stay Owning Port",
+  "receiver": "Root2 Hosted Ops",
+  "status": "READY_FOR_BUILD_QUALIFICATION_NOT_BUSINESS_EXECUTION",
+  "sourceMain": "4c8d0fd9dc4d0210f02b6bfaace5ced0f59f454a",
+  "candidateCode": "5393cbaf77397c07d103b793035152d7e7a763fa",
+  "requiredResource": "Existing DEV otr-dev-backend software only; do not touch PG schema/config/roles/authority or request Consumer actions",
+  "minimumDeliverable": "Build/pin nonexpanding default-compatible DEV image from fixed source; fresh actual CAS/release/health/protected HTTP boundary/independent readback/retained default rollback receipt. Exact image and plan are Root2 build outputs, not fabricated by this packet.",
+  "evidence": [
+    "docs/ops/core-sparse-stay-20261104/LOCAL_VALIDATION.json",
+    "docs/ops/core-sparse-stay-20261104/INDEPENDENT_REVIEW.json",
+    "docs/ops/core-sparse-stay-20261104/SOURCE_INTEGRATION.json"
+  ],
+  "codeDifference": "Existing SET_STAY_DETAILS gains strict MANUAL sparse payload. Legacy rooms/Create/Source branch unchanged. Actual changed leaves only update Item revision/provenance; no-op keeps revision; receipt wire/operation identity remains existing v2.",
+  "runtimeConfigDifference": "NONE. Preserve exact fresh config/env/mounts/Source expiry and all closed/expired flags. No timer, scope, Issuer or confirmation activation.",
+  "schemaRlsGrantRoleSecretBudgetDifference": "NONE",
+  "priorKnownDefaultReferenceOnly": {
+    "image": "sha256:68aa588ffd16f11b93e59e1fd3dafc54306dd995b2fadc476947768fbe9dd9fc",
+    "container": "0c723151aae5f6802066d3798be6b0ee35726bbe0cb45ae57f45e699127ade3f",
+    "note": "Handoff reference, not a fresh live preimage. Root2 must use actual current healthy default and keep it as rollback; drift is not reset by this request."
+  },
+  "buildOwner": "Root2; target image digest/complete runtime hashes pending Root2 build and fresh baseline",
+  "gates": "Ordinary nonexpanding DEV software standing authorization only if Root2 independently proves conditions; no new SQL/OAuth/Provider/Consumer/business authority",
+  "acceptance": "Return real deployed image/CID/config/bundle/health/close receipt or exact unmet qualification. MCP then owns Adapter+Consumer E2E under its separate precise valid scope; Native unaffected until it chooses owning DTO.",
+  "stopConditions": [
+    "Conflicting actual service Writer/window",
+    "Unexpected main/source/config/mount/permission drift",
+    "Any inability to preserve current closure/rollback",
+    "Any new protected mutation requirement"
+  ],
+  "businessWritesAuthorized": false,
+  "unknownPolicy": "No read/replay/change of any historic operation or retained receipt required"
+}
