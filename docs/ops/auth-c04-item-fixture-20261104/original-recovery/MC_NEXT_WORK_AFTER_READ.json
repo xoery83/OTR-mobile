@@ -1,0 +1,74 @@
+{
+  "lane": "D",
+  "primary_assignment": "AUTH-C04",
+  "current_claim": null,
+  "next": null,
+  "candidates": [],
+  "blocked": [
+    {
+      "package_id": "AUTH-C04",
+      "slice_id": "AUTH-C04:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "IF-AUTH-PEOPLE",
+          "release_condition": "\u6240\u5c5e\u63a5\u53e3/\u5916\u90e8\u8d44\u683c\u83b7\u5f97\u6b63\u5f0f\u53ef\u6838\u67e5\u8d44\u683c"
+        }
+      ]
+    },
+    {
+      "package_id": "SYNC-C02",
+      "slice_id": "SYNC-C02:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "IF-CORE-SAVE",
+          "release_condition": "\u6240\u5c5e\u63a5\u53e3/\u5916\u90e8\u8d44\u683c\u83b7\u5f97\u6b63\u5f0f\u53ef\u6838\u67e5\u8d44\u683c"
+        },
+        {
+          "id": "SYNC-C02",
+          "release_condition": "Auth/Core \u6240\u5c5e\u63a5\u53e3\u4ea4\u63a5\u7cbe\u786e\u3001\u5f53\u524d\u3001\u53ef\u6838\u67e5\u7684\u5408\u6cd5 A/B \u7ed1\u5b9a\u4e0e\u6b63\u5e38\u767b\u5f55/\u6743\u9650\u8d44\u683c\u5305\uff1b\u4e0d\u501f\u7528 Session\uff0c\u4e0d\u81ea\u884c\u6388\u6743\u3002"
+        }
+      ]
+    },
+    {
+      "package_id": "SYNC-C03",
+      "slice_id": "SYNC-C03:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "IF-AUTH-PEOPLE",
+          "release_condition": "\u6240\u5c5e\u63a5\u53e3/\u5916\u90e8\u8d44\u683c\u83b7\u5f97\u6b63\u5f0f\u53ef\u6838\u67e5\u8d44\u683c"
+        }
+      ]
+    },
+    {
+      "package_id": "LED-C04",
+      "slice_id": "LED-C04:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "GATE-OWNER-UX-RULES",
+          "release_condition": "Owner UX rules qualification"
+        }
+      ]
+    },
+    {
+      "package_id": "PLAT-C01",
+      "slice_id": "PLAT-C01:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "SERVICE_CURRENT_ACCOUNT_SNAPSHOT",
+          "release_condition": "Authorized redacted current per-service environment/plan/allowance/usage/balance/renewal/payment-state source+time; no Secret/card/Production access inferred"
+        }
+      ]
+    },
+    {
+      "package_id": "PLAT-C04",
+      "slice_id": "PLAT-C04:LOCAL_PREP",
+      "dependencies": [
+        {
+          "id": "EXT-APPLE-DEVELOPER",
+          "release_condition": "\u6240\u5c5e\u63a5\u53e3/\u5916\u90e8\u8d44\u683c\u83b7\u5f97\u6b63\u5f0f\u53ef\u6838\u67e5\u8d44\u683c"
+        }
+      ]
+    }
+  ],
+  "qualification": "Queue has no READY claim; historical local preparation already delivered; cannot infer new Cloud write"
+}
