@@ -1,0 +1,25 @@
+{
+  "request": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
+  "candidate": "5ff52046070ae0be54b507edb786cd814b641ecb",
+  "status": "AUTH_CONSUMER_REVIEW_ONE_CACHE_CASE_PENDING_NATIVE_REPRO",
+  "verifiedArtifactHashes": 6,
+  "scope": "Account/private-cache/generation/DTO only; not Native full review",
+  "positiveFindings": [
+    "Frozen Auth helper blobs unchanged",
+    "Confirmation only after actual complete discovery/cache apply and current scope guard",
+    "Bootstrap cache invalidation does not confirm empty",
+    "Account/generation observations fenced and trigger existing local reread",
+    "Cached local Trips win during offline/failed observation"
+  ],
+  "firstFinding": {
+    "id": "F02_REMOTE_ONLY_CACHE_ON_INNER_READ_FAILURE",
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "condition": "Same qualified principal displayed remote-only Trip; subsequent listTrips=[] and discovery.readMerged throws",
+    "sourceResult": "inner catch continues with null discovery then clears remoteTrips and visibleTripCount before outer cached-list preservation can run",
+    "expected": "retain same-scope previously qualified remote summary plus unavailable feedback; never confirm empty; fresh/foreign scope still clears",
+    "validation": "Native asked for one actual current harness regression; not yet independently executed by Auth"
+  },
+  "testsRerunByAuth": 0,
+  "externalActions": 0,
+  "productUiOrCoreFilesEditedByAuth": false
+}
