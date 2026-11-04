@@ -1,4 +1,8 @@
 import {
+  CoreInstructionScopeError,
+  resolveCoreInstructionParentForSubmit,
+} from "../../domain/trip/tripCoreInstructionParent";
+import {
   createSyncOperationRepository,
   type SyncQueueDatabase,
 } from "./syncOperationRepository";
@@ -74,6 +78,7 @@ export function createCoreV2SyncWorker(
   transport: CoreSyncTransport,
   getAccountId: () => Promise<string>,
   hash: ImportHash,
+  instructionSubmissionEnabled: () => boolean = () => false,
 ): SyncWorker {
   return {
     async push(operation) {
@@ -133,8 +138,49 @@ export function createCoreV2SyncWorker(
           throw new SyncDependencyError("CORE_CAPABILITY_CLOSED");
         if (command.admission.mode !== "MANUAL" && !capabilities.sourceEvidenceAvailable)
           throw new SyncDependencyError("CORE_SOURCE_EVIDENCE_CLOSED");
-        const family =
-          command.command === "CREATE_SPARSE_FLIGHT"
+        const isInstruction = command.target.kind === "INSTRUCTION";
+        let instructionFamily: string | undefined;
+        if (isInstruction) {
+          if (!instructionSubmissionEnabled())
+            throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+          const accepted = await repository.acceptedSnapshot(context);
+          await assertAccountRequestContext(context, getAccountId);
+          if (
+            !accepted ||
+            accepted.actor.accountId !== context.accountId ||
+            accepted.actor.tripId !== context.tripId
+          )
+            throw new SyncDependencyError("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
+          let scope;
+          try {
+            scope = resolveCoreInstructionParentForSubmit(
+              accepted.graph,
+              accepted.actor,
+              command,
+              new Date().toISOString(),
+            );
+          } catch (error) {
+            if (error instanceof CoreInstructionScopeError)
+              throw new SyncDependencyError(error.code);
+            throw error;
+          }
+          const parent = accepted.graph.itinerary_events.find(
+            (r) => r.id === scope.parentItemId,
+          );
+          if (
+            scope.family !== "P3" ||
+            !["ARRIVAL", "DEPARTURE"].includes(scope.section) ||
+            parent?.owner_account_id !== context.accountId ||
+            !command.baseVector.some(
+              (b) => b.kind === "ITEM" && b.id === scope.parentItemId,
+            )
+          )
+            throw new SyncDependencyError("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
+          instructionFamily = scope.family;
+        }
+        const family = isInstruction
+          ? instructionFamily
+          : command.command === "CREATE_SPARSE_FLIGHT"
             ? "P2"
             : command.command === "CREATE_ITEM"
               ? (command.payload as { family: string }).family
@@ -163,6 +209,23 @@ export function createCoreV2SyncWorker(
         }
         if (family && !capabilities.enabledFamilies.includes(family as never))
           throw new SyncDependencyError("CORE_FAMILY_CLOSED");
+        // Parent/family identity is not correction provenance or dispatch-phase proof.
+        if (isInstruction) {
+          // UI eligibility observes a pending-replayed graph and cannot prove
+          // the dispatch phase of an already claimed correction. Until Core
+          // provides that narrow binding, no NEW correction is submitted.
+          if (command.command === "CORRECT_INSTRUCTION")
+            throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+          if (
+            command.command === "APPEND_INSTRUCTION" &&
+            (command.payload as { sourceRepresentationId: string | null })
+              .sourceRepresentationId !== null
+          )
+            throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+          await assertAccountRequestContext(context, getAccountId);
+          if (!instructionSubmissionEnabled())
+            throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+        }
         result = await corePhase("CORE_SUBMIT", () => transport.submit(context, command));
         await assertAccountRequestContext(context, getAccountId);
       }

@@ -1,0 +1,32 @@
+{
+  "status": "EXISTING_HOOKS_CONFIRMED / CORE_ATOMIC_CLAIM_CONSUME_API_PENDING",
+  "baseline": "ffa053c815e17293da9ca0432390805457d2d305",
+  "file": "src/data/sync/syncEngine.ts",
+  "blob": "890fcd3b24024d9131f54bf69e78c6ce11737728",
+  "citations": [
+    {
+      "line": 22,
+      "source": "claimOperation?(operation: SyncOperation): Promise<boolean>;"
+    },
+    {
+      "line": 23,
+      "source": "settleOperation?("
+    },
+    {
+      "line": 207,
+      "source": "!(await repository.claimOperation(operation))"
+    },
+    {
+      "line": 212,
+      "source": "await worker.push(operation);"
+    },
+    {
+      "line": 215,
+      "source": "if (repository.settleOperation) await repository.settleOperation(operation);"
+    }
+  ],
+  "fact": "The generic engine already awaits optional claimOperation(operation) before push and settleOperation(operation,error,nextAttemptAt) after push/failed attempt. The Core factory currently passes the original boolean-claim queue; no Core-specific atomic instruction claim/consume is mounted yet.",
+  "clarificationTo92e": "The missing interface is the Core owning atomic bridge for the existing hooks, not absence of generic async hooks. No new engine or Schema is necessary according to Root1 design.",
+  "next": "Wait for fixed reviewed Root1 atomic claim+consume API. Only then wire existing hooks, preserve exact original operation/claim, account/cert/chain fences, receipt-only recovery and original intent IN_FLIGHT CAS. Do not use preclaim-negative status/UI boolean/count0 as permit.",
+  "notChanged": "No product changes or hook implementation in this receipt; NEW CORRECT still closed and default Instruction integration remains false."
+}

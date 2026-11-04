@@ -1,3 +1,4 @@
+import type { CoreInstructionParentScope } from "@/domain/trip/tripCoreInstructionParent";
 import {
   personCloudCreateKind,
   personCloudCreateSchema,
@@ -34,6 +35,9 @@ type Row = {
   payload_json: string;
   attempt_count?: number;
   intent_state?: string;
+  status?: string;
+  claim_owner?: string | null;
+  last_attempt_at?: string | null;
 };
 export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state FROM sync_operations op
        LEFT JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
@@ -46,6 +50,29 @@ export function cloudSourceP1Command(operation: Row): CoreCommand | null {
   return cloudCommand(operation, false);
 }
 export const acceptedEditFamilies = ["P3", "P4", "P6"] as const;
+export function isManualInstructionEditCommand(command: CoreCommand) {
+  return (
+    command.target.kind === "INSTRUCTION" &&
+    command.admission.mode === "MANUAL" &&
+    ["APPEND_INSTRUCTION", "CORRECT_INSTRUCTION"].includes(command.command)
+  );
+}
+// Positive prior-claim evidence only selects original receipt recovery. Its
+// absence is never proof that a new submission is allowed (in particular count0).
+function instructionNeedsReceiptRecovery(operation: Row) {
+  return (
+    (operation.attempt_count ?? 0) > 0 ||
+    operation.intent_state === "IN_FLIGHT" ||
+    operation.status === "PROCESSING" ||
+    !!operation.claim_owner ||
+    !!operation.last_attempt_at
+  );
+}
+function cloudManualInstructionCommand(operation: Row): CoreCommand | null {
+  const command = cloudCommand(operation, true, true);
+  return command && isManualInstructionEditCommand(command) ? command : null;
+}
+
 export function isManualAcceptedEditCommand(
   command: CoreCommand,
   family?: (typeof acceptedEditFamilies)[number],
@@ -76,7 +103,11 @@ export function cloudManualP6EditCommand(operation: Row): CoreCommand | null {
 function cloudManualAcceptedEditCommand(operation: Row): CoreCommand | null {
   return cloudCommand(operation, true);
 }
-function cloudCommand(operation: Row, manualEdit: boolean): CoreCommand | null {
+function cloudCommand(
+  operation: Row,
+  manualEdit: boolean,
+  instruction = false,
+): CoreCommand | null {
   try {
     const command = validateCoreCommand(JSON.parse(operation.payload_json));
     if (
@@ -86,9 +117,11 @@ function cloudCommand(operation: Row, manualEdit: boolean): CoreCommand | null {
       command.operationId !== operation.id ||
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
-      command.target.kind !== "ITEM" ||
+      (command.target.kind !== "ITEM" &&
+        !(instruction && isManualInstructionEditCommand(command))) ||
       !(manualEdit
-        ? isManualAcceptedEditCommand(command)
+        ? isManualAcceptedEditCommand(command) ||
+          (instruction && isManualInstructionEditCommand(command))
         : isReviewedSourceCreate(command))
     )
       return null;
@@ -119,6 +152,12 @@ type Deps = {
     family: "P1" | "P2" | "P3" | "P4" | "P5" | "P6",
   ): Promise<boolean>;
   participantsReady(tripId: string, command: CoreCommand): Promise<boolean>;
+  // Separate integration switch, default absent/closed. Never a business capability.
+  instructionSubmissionEnabled?(): boolean;
+  resolveInstructionParent?(
+    tripId: string,
+    command: CoreCommand,
+  ): Promise<CoreInstructionParentScope | null>;
 };
 // One wake composes existing exact-target runners; no timer, retry loop or historical replay.
 export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope) {
@@ -244,17 +283,38 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             } catch {
               continue;
             }
+            const instruction = isManualInstructionEditCommand(command);
+            const recoveringInstruction =
+              instruction &&
+              !!deps.instructionSubmissionEnabled?.() &&
+              instructionNeedsReceiptRecovery(operation);
             if (
               operation.entity_type !== "TRIP_CORE_V2" ||
               command.operationId !== operation.id ||
               command.tripId !== row.trip_id ||
               command.target.id !== operation.entity_id ||
-              command.target.kind !== "ITEM" ||
+              (command.target.kind !== "ITEM" &&
+                !(instruction && deps.instructionSubmissionEnabled?.())) ||
               (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command)) ||
               (adopted.manualOnly === true && command.admission.mode !== "MANUAL")
             )
               continue;
+            const instructionScope =
+              instruction &&
+              !recoveringInstruction &&
+              deps.instructionSubmissionEnabled?.()
+                ? await deps.resolveInstructionParent?.(row.trip_id, command)
+                : null;
             const manual =
+              (instruction &&
+                (recoveringInstruction ||
+                  (instructionScope?.family === "P3" &&
+                    ["ARRIVAL", "DEPARTURE"].includes(instructionScope.section) &&
+                    (await deps.isManualItem(
+                      row.trip_id,
+                      instructionScope.parentItemId,
+                      "P3",
+                    ))))) ||
               isReviewedSourceCreate(command) ||
               (command.admission.mode === "MANUAL" &&
                 command.command === "CREATE_SPARSE_FLIGHT") ||
@@ -309,7 +369,9 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                 (await deps.isManualItem(row.trip_id, command.target.id, "P6")));
             await guard();
             if (manual) {
-              const ready = await deps.participantsReady(row.trip_id, command);
+              const ready =
+                recoveringInstruction ||
+                (await deps.participantsReady(row.trip_id, command));
               await guard();
               if (ready) {
                 await deps.runP1(selected);
@@ -332,7 +394,10 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
     );
     await guard();
     for (const operation of sourceRows) {
-      const manual = cloudManualAcceptedEditCommand(operation);
+      const instruction = deps.instructionSubmissionEnabled?.()
+        ? cloudManualInstructionCommand(operation)
+        : null;
+      const manual = cloudManualAcceptedEditCommand(operation) ?? instruction;
       const command =
         manual ?? (adopted.manualOnly ? null : cloudSourceP1Command(operation));
       if (!command) continue;
@@ -340,8 +405,22 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         // Retained attempts reach receipt/status recovery even after the target disappears.
         const recovering =
           !!manual &&
-          ((operation.attempt_count ?? 0) > 0 || operation.intent_state === "IN_FLIGHT");
-        if (manual && !recovering) {
+          ((operation.attempt_count ?? 0) > 0 ||
+            operation.intent_state === "IN_FLIGHT" ||
+            (!!instruction && instructionNeedsReceiptRecovery(operation)));
+        if (instruction && !recovering) {
+          const parent = await deps.resolveInstructionParent?.(
+            operation.trip_id,
+            instruction,
+          );
+          if (
+            !parent ||
+            parent.family !== "P3" ||
+            !["ARRIVAL", "DEPARTURE"].includes(parent.section) ||
+            !(await deps.isManualItem(operation.trip_id, parent.parentItemId, "P3"))
+          )
+            continue;
+        } else if (manual && !recovering) {
           let eligible = false;
           for (const family of acceptedEditFamilies) {
             if (

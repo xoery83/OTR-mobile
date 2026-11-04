@@ -1,0 +1,37 @@
+{
+  "status": "SOURCE_ONLY_DEFAULT_CLOSED_SYNC_INTEGRATION_PASS",
+  "parentMain": "45eee0f5df3f891cf75cecfae427b25d2d9237e4",
+  "candidate": "ccf45bfe45009a0ab02e03045c1e4fe6d5866cf2",
+  "packetSHA256": "6898ea7628990776b52dc7bc6888d20b4ff26c822835f68c72f297227039e193",
+  "reviewSHA256": "900af2cbc0e52a20fb87b7d7f8b6d7aa3fe4f9baf731ed836bd8976f06fe2bf0",
+  "sixLeafSHA256": {
+    "src/data/sync/tripCoreV2SyncWorker.ts": "2fc525246c111e3859d65c42a1f708f9ed0eab500654e7464a06fe62ec12bb62",
+    "src/data/sync/tripCoreV2SyncWorker.test.ts": "8eba615f4af5f2dce95d8ba242249fecdf363e47e3d0264f0556bd68e0bef574",
+    "src/data/sync/tripNormalSync.ts": "f3776903e487ecd783ed86d76745819f2ce99b06ae3ad1324c0f1419745ecb6a",
+    "src/data/sync/tripNormalSync.test.ts": "fb7389fadf214ff72ca97190c66ced90b21ce2beb6d27c4899689ed3bd49e9c2",
+    "src/data/sync/tripNormalCoordinator.ts": "39f0b5b5f7c743d9ebdaaf2e31834dd4e2eeb68ff4d844cc455ce7aef5912c1e",
+    "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts": "8d0ff70018ce08920764037289209f1244076eacc3aa0e139f79f7d945cb8c87"
+  },
+  "actualChecks": {
+    "threeSuiteSelectedSecurityRegression": "8 PASS101skipped /661ms",
+    "sixRootScopedTypes": "PASS",
+    "sixRootLint": "PASS",
+    "diffCheck": "PASS",
+    "sevenCanonicalAccountQueueDependencies": "BYTE_IDENTICAL_AUTHOR"
+  },
+  "dependencyDelta": "Core repository equals reviewed candidate24f1c526, differs from Native fixture only by PRECLAIM query/type narrowing. Not consumed by new Sync paths; actual assembly types/selected checks passed.",
+  "reused": "Author124 and independent15 security evidence retained; exact six source bytes/canonical deps, no full124 rerun",
+  "boundaries": [
+    "Ordinary Instruction integration absent/false by default across worker/selectors/coordinator",
+    "NEW CORRECT always closed; no PRECLAIM/UI hint/count0 proof consumed",
+    "Actual P3 parent/family/section and command identity mandatory; no target-entry ITEM fallback",
+    "Original FULL receipt recovery precedes new-submit gates; original identities/UNKNOWN preserved",
+    "Existing APPLIED typed Instruction may use authorized refresh without fabricated local CREATE"
+  ],
+  "unchanged": [
+    "HeaderSave/Core/Import leaves",
+    "Generic sync engine/claim semantics",
+    "Schema/Hosted/SQL/Source/Provider/device"
+  ],
+  "cloudStatus": "CLOSED_NOT_QUALIFIED_NO_POSTCLAIM_BRIDGE"
+}

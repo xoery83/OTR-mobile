@@ -1,3 +1,4 @@
+import { resolveCoreInstructionParentForSubmit } from "@/domain/trip/tripCoreInstructionParent";
 import { createAccountProfileRepository } from "../auth/accountProfileRepository";
 import { coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
@@ -18,6 +19,7 @@ import { createTripMetadataRepository } from "../repositories/tripMetadataReposi
 import {
   createNormalTripSyncWake,
   isManualAcceptedEditCommand,
+  isManualInstructionEditCommand,
   acceptedEditFamilies,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
@@ -44,6 +46,7 @@ export function createNativeNormalTripSyncRunner(
   input: NormalTripSyncScope,
   enabled: () => boolean = () => false,
   manualRetry = false,
+  instructionSubmissionEnabled: () => boolean = () => false,
 ) {
   return async (authState: string) => {
     if (!enabled() || authState !== "AUTHENTICATED_ONLINE")
@@ -88,6 +91,36 @@ export function createNativeNormalTripSyncRunner(
         coreCanManage(snapshot.graph, snapshot.actor, "ITEM", item)
         ? item
         : null;
+    };
+    const instructionParent = async (
+      tripId: string,
+      command: Parameters<typeof isManualInstructionEditCommand>[0],
+    ) => {
+      if (!instructionSubmissionEnabled() || !isManualInstructionEditCommand(command))
+        return null;
+      const context = await core.captureContext(tripId);
+      const accepted = await core.acceptedSnapshot(context);
+      await assertAccountRequestContext(account, requireActiveUserId);
+      if (
+        !accepted ||
+        accepted.actor.accountId !== context.accountId ||
+        accepted.actor.tripId !== context.tripId
+      )
+        return null;
+      const parent = resolveCoreInstructionParentForSubmit(
+        accepted.graph,
+        accepted.actor,
+        command,
+        new Date().toISOString(),
+      );
+      if (
+        parent.family !== "P3" ||
+        !["ARRIVAL", "DEPARTURE"].includes(parent.section) ||
+        accepted.graph.itinerary_events.find((r) => r.id === parent.parentItemId)
+          ?.owner_account_id !== context.accountId
+      )
+        return null;
+      return parent;
     };
     const persons = createTripPersonRepository(database, requireActiveUserId);
     const readback = createTripNormalReadbackRepository(database, requireActiveUserId);
@@ -238,7 +271,21 @@ export function createNativeNormalTripSyncRunner(
                 context.tripId,
               );
               await assertAccountRequestContext(account, requireActiveUserId);
-              if (!local?.create_operation_id && !isReviewedSourceCreate(command)) {
+              if (isManualInstructionEditCommand(command)) {
+                const parent = await instructionParent(context.tripId, command);
+                if (
+                  !parent ||
+                  !(await acceptedEditableItem(context, parent.parentItemId, "P3"))
+                )
+                  throw Error("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
+                if (command.command === "CORRECT_INSTRUCTION")
+                  throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
+                if (!instructionSubmissionEnabled())
+                  throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
+              } else if (
+                !local?.create_operation_id &&
+                !isReviewedSourceCreate(command)
+              ) {
                 let item = null;
                 for (const family of acceptedEditFamilies) {
                   if (isManualAcceptedEditCommand(command, family)) {
@@ -272,6 +319,7 @@ export function createNativeNormalTripSyncRunner(
               guardedTransport,
               requireActiveUserId,
               tripCoreSha256Hex,
+              instructionSubmissionEnabled,
             ),
             core,
             target.tripId,
@@ -296,7 +344,8 @@ export function createNativeNormalTripSyncRunner(
               const command = intent.command;
               if (
                 !isReviewedSourceCreate(command) &&
-                !isManualAcceptedEditCommand(command)
+                !isManualAcceptedEditCommand(command) &&
+                !isManualInstructionEditCommand(command)
               )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
@@ -306,6 +355,8 @@ export function createNativeNormalTripSyncRunner(
           }
           return result;
         },
+        instructionSubmissionEnabled,
+        resolveInstructionParent: instructionParent,
         isManualItem: async (tripId, itemId, family) => {
           const context = await core.captureContext(tripId);
           const pending = await core.pending(context);
@@ -345,7 +396,14 @@ export function createNativeNormalTripSyncRunner(
         },
         participantsReady: async (tripId, command) => {
           const context = await core.captureContext(tripId);
-          const pending = await core.pending(context, command.operationId);
+          const instruction = isManualInstructionEditCommand(command)
+            ? await instructionParent(tripId, command)
+            : null;
+          if (isManualInstructionEditCommand(command) && !instruction) return false;
+          const pending = await core.pending(
+            context,
+            instruction ? undefined : command.operationId,
+          );
           const index = pending.findIndex(
             (intent) => intent.command.operationId === command.operationId,
           );
@@ -355,7 +413,12 @@ export function createNativeNormalTripSyncRunner(
               .slice(0, index)
               .some(
                 (intent) =>
-                  intent.command.target.id === command.target.id &&
+                  (intent.command.target.id === command.target.id ||
+                    (instruction &&
+                      intent.command.baseVector.some(
+                        (base) =>
+                          base.kind === "ITEM" && base.id === instruction.parentItemId,
+                      ))) &&
                   intent.state !== "APPLIED",
               )
           )

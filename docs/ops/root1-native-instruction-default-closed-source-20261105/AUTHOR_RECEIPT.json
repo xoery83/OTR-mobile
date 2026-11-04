@@ -1,0 +1,54 @@
+{
+  "status": "NATIVE_PARENT_SCOPE_CONSUMER_LOCAL_L2_PASS / DEFAULT_CLOSED / NEW_CORRECT_BLOCKED",
+  "sourceCoreResolver": "Actual main a795cd09515344a8f83803544ed6851e270d319a consumed unchanged at1424d421; no public Core changes",
+  "sourceLocalHeader": "ddfd366b reviewed/local SQLite+component, independently integrated actual main1062fb43c5c8f2b8743ec4d6efd7e932ad131754 per parent/Root1; no Device/Cloud promotion",
+  "firstActualFailure": "b5621694 recorded APPEND and CORRECT Instruction target ID as Item ID -> family undefined -> disabled actual P3 family gate skipped. Fixed worker uses formal actual parent resolver, not UI hint.",
+  "implementation": {
+    "worker": "For NEW Instruction submit only, separate integration switch defaults false. Receipt-first precedes this gate. Uses coherent authorized acceptedSnapshot actor+precommand mirror, formal Core resolver, pinned ITEM base and self-owned P3 ARRIVAL/DEPARTURE, actual nonempty family capability. Expected scope errors stay dependency blocked. No optimistic graph/rebase/fallback. New CORRECT unconditionally closed pending formal postclaim provenance/dispatch binding; does not call UI eligibility as proof.",
+    "normalSelectors": "Optional Instruction integration switch absent/false by default, both normal-newTrip and cloud-only queues remain unselected. Controlled local adapter consumes resolver result parent ID for existing isManualItem, preserves true entry queue entity and original operation. Missing/invalid scope and queue binding fail closed. Retained original attempt routes receipt recovery, never new identity. PROCESSING/count0 is treated as prior-claim recovery evidence, not unsent proof.",
+    "coordinator": "Normal runner fourth switch defaults false, propagated to worker. Formal parent resolver uses current Accepted snapshot for guarded submit and existing parent ACL/lifecycle. Prior same-parent command must settle before dependent Instruction. APPLIED typed Instruction may invoke existing authorized collection readback even without local CREATE history; no fabricated local root. NEW CORRECT guarded submit remains closed."
+  },
+  "tests": {
+    "scopedCommand": "vitest run tripCoreV2SyncWorker.test.ts tripNormalSync.test.ts tripNormalCoordinator.acceptedP6.test.ts tripNormalCoordinator.manualFlight.test.ts --maxWorkers=1",
+    "result": "4 suites 124 PASS",
+    "actualScope": [
+      "APPEND/CORRECT actual P3 denied under P1-only capability (real Core resolver on deterministic valid graph)",
+      "Separate default-close switch blocks new submit even if mocked remote capability includes instruction",
+      "Typed APPEND preserves entry/operation identity on controlled mocked transport",
+      "Missing/untrusted/optimistic post-command graph rejected without second graph or rebase",
+      "CORRECT remains closed and UI eligibility is not called as submit proof",
+      "Original FULL receipt recovery before capability, parent read or closed new-submit gate",
+      "Normal selectors use parent rather than entry IDs, remain closed by default; unresolved and invalid queue identity refused",
+      "Dependent mixed-batch Instruction waits for prior parent operation",
+      "PROCESSING with count0 preserves original receipt recovery, not new-submit qualification",
+      "Existing finite P1/P2/P3/P4/P5/P6 worker and normal coordinator regressions"
+    ],
+    "typecheck": "Scoped changed roots and dependencies PASS (confirmed separately before commit)",
+    "lint": "Scoped changed roots PASS",
+    "diffCheck": "PASS",
+    "greenLog": "INSTRUCTION_SYNC_CONSUMER_GREEN.log",
+    "greenLogSha256": "6806b4533cc2efbc15a77b3fdc4e24fcadfb4f41924711e45eeff457fc949a89"
+  },
+  "remainingHardGap": {
+    "receipt": "QUEUED_CORRECT_DISPATCH_PHASE_CALLER_GAP.json@92e7ff0b",
+    "fact": "Existing generic Queue claims before worker.push. PRECLAIM status alone cannot prove postclaim original-command/chain/dispatch phase. PROCESSING, owner/lease/lastAttempt with attempt_count0 is not proof of unsent request.",
+    "owner": "Root1 Core exact preclaim/claim binding; parent reports PRECLAIM candidate24f1c526 in Review, no postclaim bridge approved. Not consumed as authority here.",
+    "consumerSafety": "NEW CORRECT stays unconditionally closed; local Header Save still commits pending instructions and immutable local corrections correctly. Scope resolution is not provenance authority."
+  },
+  "notClaimed": [
+    "Hosted dispatch",
+    "Backend accepted instruction",
+    "Supabase/Cloud readback",
+    "Device UI",
+    "Real queued CORRECT submit readiness",
+    "Postclaim provenance proof",
+    "Independent review for this new Sync diff"
+  ],
+  "unchanged": [
+    "Core public engine/claim semantics",
+    "SyncEngine and syncOperationRepository",
+    "Hosted/Runtime/SQL/Authority/Provider",
+    "P3 UI after approved Header Save freeze",
+    "actual original UNKNOWN Operation identities"
+  ]
+}

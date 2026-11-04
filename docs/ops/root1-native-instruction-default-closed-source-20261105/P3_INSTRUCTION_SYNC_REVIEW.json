@@ -1,0 +1,42 @@
+{
+  "status": "NO_BLOCKER_LOCAL_L2_DEFAULT_CLOSED_ONLY",
+  "candidate": "ccf45bfe45009a0ab02e03045c1e4fe6d5866cf2",
+  "base": "92e7ff0b",
+  "sourceScope": "3Syncsource leaves+3tests; actualdiff8filesincluding2receipt/log, not5files",
+  "fixedReviewWorktree": "p3-sync-source detachedccf45bfe; no laterauthorchanges",
+  "resolverBinding": "tripCoreInstructionParent.tsb624a3111d0bea53273ea7f3cd91b4d6cea3a8ce exact1424d421; Corea795 consumer only",
+  "findings": [],
+  "independentValidation": {
+    "targeted": "3suites15PASS94skip;648ms;2026-11-05 11:27:33 local",
+    "selected": [
+      "ActualP3 parentfamily P1onlycapabilitydeny APPEND/CORRECT",
+      "Defaultclosedworker/normalTrip/cloudonly/coordinator",
+      "CoherentprecommandAPPEND trueInstructiontargetID",
+      "Missing/optimistic/invalidqueuescope refusals",
+      "NEW CORRECT unconditionallyclosed/noUIeligibilitycall",
+      "OriginalFULLreceipt recoveredbeforeclosedgate/currentparent/capability",
+      "PROCESSING count0 routesoriginalrecovery notunsentproof",
+      "Dependentmixedbatch waitsforparentmutation"
+    ],
+    "lint": "3changedsourceleavesPASS",
+    "types": "Author scopedPASS retained, notindependentrepeated/fulltscPASS",
+    "authorGreenLogHash": "6806b4533cc2efbc15a77b3fdc4e24fcadfb4f41924711e45eeff457fc949a89 exact"
+  },
+  "sourceChecks": [
+    "Queue binding operation/idempotency/trip/entrytarget andintenthash checkedbeforereceipt",
+    "Originalreceiptfirst thenexistingapplyReceipt; projectionmustFULL; nofallback/rebase/newID",
+    "Newsubmit instruction switch defaultfalse inworker/coordinator/normal selectors; capabilitystillrequired",
+    "Officialresolver usestrustedaccepted actor/Trip+precommandgraph, immutableparent/section/currentfamily/CAS/ACL; nonP3/notselfowner/unresolved failclosed",
+    "No rawITEM lookup ofInstructiontarget forfamily; no postapplyoptimisticgraph accepted",
+    "NEW CORRECT closed regardless hints/PROCESSING/attemptcount0/timeout; APPEND knownsource also closed",
+    "APPLIEDInstruction allows existingauthorizedrefresh withnoretainedlocalCreate; nofabricatedroot",
+    "Signal/queue engine/receipt/Coreauthority notmodified"
+  ],
+  "limits": [
+    "Deterministiclocalfixtures/mockedtransport only, notqueuedCloud/BackendAccepted/readback/devicePASS",
+    "Root1PRECLAIM mainffa053 andpostclaimbinding notconsumed; formalpostclaimCORRECT gap remains",
+    "No hosted Gates/Instructiondispatch enabled",
+    "Greenlog EOFblankline makes diffcheck reportdocwhitespace; no productcorrectnessfinding",
+    "No full124rerun/newNativebuild/metadata/Device/Host actions"
+  ]
+}

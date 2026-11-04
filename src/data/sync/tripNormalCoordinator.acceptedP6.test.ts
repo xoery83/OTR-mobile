@@ -16,6 +16,10 @@ const f = vi.hoisted(() => ({
   accepted: vi.fn(),
   first: vi.fn(),
   graph: vi.fn(),
+  eligibility: vi.fn(),
+  parent: null as null | ((tripId: string, command: any) => Promise<any>),
+  ready: null as null | ((tripId: string, command: any) => Promise<boolean>),
+  pendingRows: null as null | any[],
   command: {} as any,
   operation: {} as any,
   state: "IN_FLIGHT",
@@ -43,7 +47,8 @@ vi.mock("../repositories/tripCoreV2Repository", () => ({
   createTripCoreV2Repository: () => ({
     captureContext: (id: string) =>
       captureAccountRequestContext(id, async () => accountId),
-    pending: async () => [{ command: f.command, state: f.state }],
+    pending: async () => f.pendingRows ?? [{ command: f.command, state: f.state }],
+    manualInstructionEligibility: f.eligibility,
     readGraph: f.graph,
     acceptedSnapshot: f.accepted,
     refresh: f.refresh,
@@ -63,6 +68,8 @@ vi.mock("./tripNormalSync", async (actual) => ({
   ...(await actual<typeof import("./tripNormalSync")>()),
   createNormalTripSyncWake: (deps: any) => {
     f.choose = deps.isManualItem;
+    f.parent = deps.resolveInstructionParent;
+    f.ready = deps.participantsReady;
     return () => deps.runP1({ accountId, tripId, operationId });
   },
 }));
@@ -94,6 +101,8 @@ function snapshot(family = "P6", owner = accountId, revision = 3) {
 beforeEach(() => {
   vi.resetAllMocks();
   f.state = "IN_FLIGHT";
+  f.pendingRows = null;
+  f.eligibility.mockResolvedValue({ status: "UNPROVEN" });
   f.command = {
     contractVersion: 2,
     intentVersion: 2,
@@ -251,3 +260,143 @@ it.each([
     expect(f.apply).not.toHaveBeenCalled();
   },
 );
+
+async function prepareInstructionCoordinator() {
+  const { emptyCoreGraph, applyCoreCommand } =
+    await import("@/domain/trip/tripCoreV2Mutation");
+  const { coreDefaults } = await import("@/domain/trip/tripCoreV2");
+  const { coreDateBoundary } = await import("@/domain/trip/tripCoreV2Temporal");
+  const actor = {
+    accountId,
+    tripId,
+    active: true,
+    canManageShared: false,
+    personId: null,
+    personIds: [],
+  };
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: "10000000-0000-4000-8000-000000000008",
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P3",
+        core: { title: "QA stay" },
+        schedule: {
+          start: coreDateBoundary("2026-11-05"),
+          end: coreDateBoundary("2026-11-07"),
+        },
+        ...coreDefaults("member"),
+      },
+    },
+    actor,
+    "2026-11-05T00:00:00Z",
+  ).graph;
+  const entry = "10000000-0000-4000-8000-000000000007";
+  f.command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId,
+    tripId,
+    command: "APPEND_INSTRUCTION",
+    target: { kind: "INSTRUCTION", id: entry },
+    baseVector: [
+      { kind: "INSTRUCTION", id: entry, revision: null },
+      { kind: "ITEM", id: itemId, revision: 1 },
+    ],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      itemId,
+      section: "ARRIVAL",
+      body: "Ring reception",
+      sensitivity: "NORMAL",
+      sourceRepresentationId: null,
+      acl: { visibility: "GROUP", people: [] },
+    },
+  };
+  f.operation = {
+    ...f.operation,
+    entityId: entry,
+    payloadJson: JSON.stringify(f.command),
+  };
+  f.accepted.mockResolvedValue({ graph, actor, certificate: { complete: 1 } });
+  f.capabilities.mockResolvedValue({
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["APPEND_INSTRUCTION"],
+    enabledAdmissionModes: ["MANUAL"],
+    enabledFamilies: ["P3"],
+  });
+}
+const runInstruction = () =>
+  createNativeNormalTripSyncRunner(
+    { accountId, newTripsFrom: "2026-10-29T00:00:00Z" },
+    () => true,
+    false,
+    () => true,
+  )("AUTHENTICATED_ONLINE");
+it("normal Coordinator keeps new Instruction dispatch off by default", async () => {
+  await prepareInstructionCoordinator();
+  await expect(run()).rejects.toThrow("CORE_INSTRUCTION_SYNC_CLOSED");
+  expect(f.submit).not.toHaveBeenCalled();
+});
+it("normal Coordinator resolves the actual P3 parent for guarded submit without replacing the true target", async () => {
+  await prepareInstructionCoordinator();
+  await runInstruction();
+  expect(await f.parent!(tripId, f.command)).toEqual({
+    parentItemId: itemId,
+    family: "P3",
+    section: "ARRIVAL",
+  });
+  expect(f.submit).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId, tripId }),
+    f.command,
+  );
+  expect(f.command.target.kind).toBe("INSTRUCTION");
+  expect(f.command.target.id).not.toBe(itemId);
+});
+it("normal Coordinator keeps dependent mixed-batch Instruction behind an earlier parent mutation", async () => {
+  await prepareInstructionCoordinator();
+  // Capture the normal consumer callbacks without starting a new instruction POST.
+  f.receipt.mockResolvedValue({
+    projection: "FULL",
+    domainReceiptId: operationId,
+    receipt: { outcome: "APPLIED" },
+  });
+  await runInstruction();
+  f.pendingRows = [
+    {
+      command: {
+        ...f.command,
+        operationId: "10000000-0000-4000-8000-000000000009",
+        command: "SET_ITEM_TEXT",
+        payload: { title: "Predecessor edit" },
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+      },
+      state: "IN_FLIGHT",
+    },
+    { command: f.command, state: "PENDING" },
+  ];
+  expect(await f.ready!(tripId, f.command)).toBe(false);
+});
+it("normal Coordinator preserves Instruction receipt-first recovery after parent removal and a closed integration switch", async () => {
+  await prepareInstructionCoordinator();
+  f.accepted.mockResolvedValue(null);
+  f.receipt.mockResolvedValue({
+    projection: "FULL",
+    domainReceiptId: operationId,
+    receipt: { operationId, outcome: "APPLIED" },
+  });
+  await run();
+  expect(f.accepted).not.toHaveBeenCalled();
+  expect(f.capabilities).not.toHaveBeenCalled();
+  expect(f.submit).not.toHaveBeenCalled();
+  expect(f.apply).toHaveBeenCalledOnce();
+});

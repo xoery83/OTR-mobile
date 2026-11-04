@@ -931,3 +931,180 @@ it.each(["P3", "P4"] as const)(
     }
   },
 );
+
+function instructionQueueRow(f: ReturnType<typeof fixture>) {
+  const itemId = randomUUID(),
+    entryId = randomUUID(),
+    operationId = randomUUID();
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId,
+    tripId: f.tripId,
+    command: "APPEND_INSTRUCTION",
+    target: { kind: "INSTRUCTION", id: entryId },
+    baseVector: [
+      { kind: "INSTRUCTION", id: entryId, revision: null },
+      { kind: "ITEM", id: itemId, revision: 1 },
+    ],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      itemId,
+      section: "ARRIVAL",
+      body: "Reception bell",
+      sensitivity: "NORMAL",
+      sourceRepresentationId: null,
+      acl: { visibility: "GROUP", people: [] },
+    },
+  };
+  return {
+    itemId,
+    entryId,
+    command,
+    row: {
+      id: operationId,
+      trip_id: f.tripId,
+      entity_id: entryId,
+      idempotency_key: operationId,
+      entity_type: "TRIP_CORE_V2",
+      operation_type: "CORE_V2_COMMAND",
+      payload_json: JSON.stringify(command),
+    },
+  };
+}
+it("keeps typed Instruction rows closed by default for both normal Trip and cloud-only selectors", async () => {
+  for (const localTrip of [true, false]) {
+    const f = fixture(),
+      i = instructionQueueRow(f);
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValueOnce(localTrip ? [f.create] : [])
+      .mockResolvedValueOnce([i.row])
+      .mockResolvedValue([]);
+    f.deps.isManualItem.mockResolvedValue(true);
+    f.deps.participantsReady.mockResolvedValue(true);
+    await f.run();
+    expect(f.deps.runP1).not.toHaveBeenCalled();
+  }
+});
+it("uses the resolved parent for existing P3 checks and retains true entry/operation identity", async () => {
+  for (const localTrip of [true, false]) {
+    const f = fixture(),
+      i = instructionQueueRow(f);
+    const resolver = vi
+      .fn()
+      .mockResolvedValue({ parentItemId: i.itemId, family: "P3", section: "ARRIVAL" });
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValueOnce(localTrip ? [f.create] : [])
+      .mockResolvedValueOnce([i.row])
+      .mockResolvedValue([]);
+    f.deps.isManualItem.mockImplementation(
+      async (_trip, itemId, family) => itemId === i.itemId && family === "P3",
+    );
+    f.deps.participantsReady.mockResolvedValue(true);
+    await createNormalTripSyncWake(
+      {
+        ...f.deps,
+        instructionSubmissionEnabled: () => true,
+        resolveInstructionParent: resolver,
+      },
+      {
+        accountId: f.accountId,
+        newTripsFrom: "2026-10-24T00:00:00.000Z",
+      },
+    )("AUTHENTICATED_ONLINE");
+    expect(resolver).toHaveBeenCalledWith(f.tripId, i.command);
+    expect(f.deps.isManualItem).toHaveBeenCalledWith(f.tripId, i.itemId, "P3");
+    expect(f.deps.isManualItem).not.toHaveBeenCalledWith(f.tripId, i.entryId, "P3");
+    expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+      accountId: f.accountId,
+      tripId: f.tripId,
+      operationId: i.row.id,
+    });
+  }
+});
+it("refuses unresolved Instruction scope and invalid queue identity without an ITEM fallback", async () => {
+  for (const wrongIdentity of [false, true]) {
+    const f = fixture(),
+      i = instructionQueueRow(f);
+    const resolver = vi.fn().mockResolvedValue(null);
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { ...i.row, ...(wrongIdentity ? { entity_id: randomUUID() } : {}) },
+      ])
+      .mockResolvedValue([]);
+    f.deps.isManualItem.mockResolvedValue(true);
+    await createNormalTripSyncWake(
+      {
+        ...f.deps,
+        instructionSubmissionEnabled: () => true,
+        resolveInstructionParent: resolver,
+      },
+      { accountId: f.accountId, newTripsFrom: "2026-10-24T00:00:00.000Z" },
+    )("AUTHENTICATED_ONLINE");
+    expect(f.deps.runP1).not.toHaveBeenCalled();
+    if (wrongIdentity) expect(resolver).not.toHaveBeenCalled();
+  }
+});
+it("retained Instruction recovery reaches the exact worker without requiring a new parent scope", async () => {
+  const f = fixture(),
+    i = instructionQueueRow(f);
+  const resolver = vi.fn().mockRejectedValue(new Error("parent unavailable"));
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce([{ ...i.row, attempt_count: 1, intent_state: "IN_FLIGHT" }])
+    .mockResolvedValue([]);
+  await createNormalTripSyncWake(
+    {
+      ...f.deps,
+      instructionSubmissionEnabled: () => true,
+      resolveInstructionParent: resolver,
+    },
+    { accountId: f.accountId, newTripsFrom: "2026-10-24T00:00:00.000Z" },
+  )("AUTHENTICATED_ONLINE");
+  expect(resolver).not.toHaveBeenCalled();
+  expect(f.deps.participantsReady).not.toHaveBeenCalled();
+  expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+    accountId: f.accountId,
+    tripId: f.tripId,
+    operationId: i.row.id,
+  });
+});
+
+it("PROCESSING with attempt_count zero is original receipt recovery, never an unsent authorization proof", async () => {
+  const f = fixture(),
+    i = instructionQueueRow(f);
+  const resolver = vi.fn().mockRejectedValue(new Error("no current parent"));
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce([
+      {
+        ...i.row,
+        status: "PROCESSING",
+        attempt_count: 0,
+        intent_state: "PENDING",
+        claim_owner: "existing-claim",
+        last_attempt_at: "2026-11-05T00:00:00Z",
+      },
+    ])
+    .mockResolvedValue([]);
+  await createNormalTripSyncWake(
+    {
+      ...f.deps,
+      instructionSubmissionEnabled: () => true,
+      resolveInstructionParent: resolver,
+    },
+    { accountId: f.accountId, newTripsFrom: "2026-10-24T00:00:00.000Z" },
+  )("AUTHENTICATED_ONLINE");
+  expect(resolver).not.toHaveBeenCalled();
+  expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+    accountId: f.accountId,
+    tripId: f.tripId,
+    operationId: i.row.id,
+  });
+});
