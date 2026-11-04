@@ -176,7 +176,7 @@ Revoke in stable core-member-revoke-v2-20261104/base6ec33559 with fixed6d91b6e9
 contract. No fixed candidate/Hosted install/Member Revoke PASS yet. Auth will consume
 the versioned Port when delivered, not duplicate its Core implementation.
 
-## Bounded support and queued Owner feedback
+## Bounded support and active Owner feedback
 
 - MCP diagnostic support is delivered and returned to C04. Auth6b985946 reuses
   reviewed f1 four-stage write diagnostics, adding only safe GET/POST and Core
@@ -184,9 +184,14 @@ the versioned Port when delivered, not duplicate its Core implementation.
   binding/test files and owns latest Runtime/logger/collector integration at
   978f0200. Do not overwrite current Create with old Notes runtime or infer eed8
   commit/expiry from new logs. Original a8c1 remains UNKNOWN; no retry/new window.
-- Vision requestVISION-VA01-UX-R1-20261104-001 is queued after the current C04
-  Hosted acceptance slice, **not STARTED**. Three authoritative feedback/spec
-  files and four reference images were read/hashed. F02: independently reproduce
+- Vision requestVISION-VA01-UX-R1-20261104-001 is actually STARTED locally while
+  C04 waits its external protected Gate. F02 Authhelperf808 is delivered; Native
+  caller91ff fixes remote-only cache loss, but same-root mixed local+remote cache
+  preservation still needs its targeted regression/fix before Auth NO_BLOCKER.
+  A01-2 eight-digit input leafb068/e846 is reviewed, Source integration pending;
+  no actual OTP or complete new Email UX acceptance. F01 remains pending shared
+  Account UI delivery. Three feedback/spec files and four references were read.
+  F02: independently reproduce
   returning-account false-empty My Trips; UNKNOWN/restoring must not mean empty,
   while valid cached sessions retain offline access. F01: Guest-first Beta
   single-account UI, separate Email/8digitOTP steps, truthful Provider/Sync/AI,

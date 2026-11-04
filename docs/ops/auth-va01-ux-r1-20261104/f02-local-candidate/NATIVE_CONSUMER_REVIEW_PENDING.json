@@ -1,7 +1,7 @@
 {
   "request": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
-  "candidate": "5ff52046070ae0be54b507edb786cd814b641ecb",
-  "status": "AUTH_CONSUMER_REVIEW_ONE_CACHE_CASE_PENDING_NATIVE_REPRO",
+  "candidate": "91ff498dc23ae8e76dd31a2af3469dc5cc680f3e",
+  "status": "PARTIAL_FIX_REVIEWED_SAME_ROOT_MIXED_CACHE_CASE_OPEN",
   "verifiedArtifactHashes": 6,
   "scope": "Account/private-cache/generation/DTO only; not Native full review",
   "positiveFindings": [
@@ -16,10 +16,13 @@
     "path": "src/features/day-feed/LocalTripWorkspace.tsx",
     "condition": "Same qualified principal displayed remote-only Trip; subsequent listTrips=[] and discovery.readMerged throws",
     "sourceResult": "inner catch continues with null discovery then clears remoteTrips and visibleTripCount before outer cached-list preservation can run",
-    "expected": "retain same-scope previously qualified remote summary plus unavailable feedback; never confirm empty; fresh/foreign scope still clears",
-    "validation": "Native asked for one actual current harness regression; not yet independently executed by Auth"
+    "expected": "Retain same-scope qualified remote memory summaries and accept fresh local rows with ID deduplication; UNAVAILABLE, no false confirmation; new scope still clears",
+    "validation": "Native requested one mixed-cache targeted regression and root-cause fix, not broad rerun",
+    "remainingSameRootCondition": "Same Account shows local1+remote1; listTrips returns local1, readMerged throws; !list.length guard skips preservation, so remote1 still cleared"
   },
   "testsRerunByAuth": 0,
   "externalActions": 0,
-  "productUiOrCoreFilesEditedByAuth": false
+  "productUiOrCoreFilesEditedByAuth": false,
+  "remoteOnlyCorrection": "Verified new early same-principal error routes through original Session/principal/generation/ticket preservation; foreign/new Account path still clears",
+  "nativeReportedFocusedRegression": "10 F02 PASS/80 stable skipped; no Auth test rerun"
 }
