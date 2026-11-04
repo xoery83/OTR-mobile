@@ -232,6 +232,10 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       administrativeArea: placemark.administrativeArea, country: placemark.country,
       countryCode: placemark.isoCountryCode)
     if !components.isEmpty { result["addressComponents"] = components }
+    // MapKit location metadata only; never a device-zone fallback or temporal proof.
+    if let timeZone = item.timeZone ?? placemark.timeZone {
+      result["timeZoneIdentifier"] = timeZone.identifier
+    }
     if let area {
       result["area"] = area.payload
       result["title"] = area.label

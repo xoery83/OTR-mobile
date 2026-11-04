@@ -1,0 +1,41 @@
+{
+  "request": "NATIVE-VN04-TIMEZONE-UI-HINT-SOURCE-20261104",
+  "capability": "Exact Source/main integration only; no Hosted/permissions/DB",
+  "candidate": "2d555b42db4ed110bb8aa97e8bee1683e0b6dfe2",
+  "base": "df79fc37",
+  "sourceLeafCount": 6,
+  "countCorrection": "Prior seven-leaf wording included EVIDENCE.json. Actual source/test delta is SIX, plus one evidence doc. No product scope changed.",
+  "dependency": "main869846af contains d3abc514 Form and sevenpairedcopykeys",
+  "files": [
+    {
+      "path": "modules/place-search/ios/ApplePlaceSearchEngine.swift",
+      "sha256": "9250d23e25b792e39acd664bf7678ee697fb2e5bee1be8c71128e6255311dfcf"
+    },
+    {
+      "path": "src/data/places/applePlaceProvider.test.ts",
+      "sha256": "194ebca28f3351f71892a5f81dfdb52eb4445ae58267dad89601c0116bc99acd"
+    },
+    {
+      "path": "src/data/places/applePlaceProvider.ts",
+      "sha256": "b30ff920afcde918fac4ceea3a3214d6af17e2693d7d3072a08432dd2fa04939"
+    },
+    {
+      "path": "src/features/day-feed/P1PlanEditor.test.ts",
+      "sha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795"
+    },
+    {
+      "path": "src/features/day-feed/P1PlanEditor.tsx",
+      "sha256": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "e015ecdc307583e82861cf2f1aa789c45228c6aa4006a62ba324ff4c4322a603"
+    }
+  ],
+  "independentReview": "c96c812e",
+  "reviewSHA256": "d66619ce1b230b2d1cbc69f04bac9b589a317b2eb23b18cc286947aa79d69763",
+  "checks": "author69PASS/SwiftSDKtypecheck/UIguard/lint; independent16focusedPASS/NO_BLOCKER_LOCAL_SOURCE_ONLY",
+  "noCanonicalPersistence": "Temporary selected-place UI hint never enters ManualPlanFields/canonical evidence/Core/zone/instant; optional absence remains floating",
+  "release": "Six exactsourcehashes + checks; fullNative+JS device validation separate, QA151850/Vision869 immutable",
+  "communication": "Original longSourcehandoff automaticreview timedout twice. Narrow read-only metadata succeeded; Root1 acknowledged and requested formal exact Source packet. This packet corrects total-file vs source-leaf count."
+}

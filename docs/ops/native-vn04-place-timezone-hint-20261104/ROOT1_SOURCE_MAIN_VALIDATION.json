@@ -1,0 +1,54 @@
+{
+  "request": "NATIVE-VN04-TIMEZONE-UI-HINT-SOURCE-20261104",
+  "status": "SOURCE_MAIN_VERIFIED_FULL_NATIVE_DEVICE_PENDING",
+  "candidate": "2d555b42db4ed110bb8aa97e8bee1683e0b6dfe2",
+  "requestCommit": "3666bd63a0aedc29141224f14a438fba92162132",
+  "preMain": "32722f7a43e4cd6f1ec57ede0a542a74872be8f1",
+  "exactSourceLeaves": [
+    {
+      "path": "modules/place-search/ios/ApplePlaceSearchEngine.swift",
+      "sha256": "9250d23e25b792e39acd664bf7678ee697fb2e5bee1be8c71128e6255311dfcf"
+    },
+    {
+      "path": "src/data/places/applePlaceProvider.test.ts",
+      "sha256": "194ebca28f3351f71892a5f81dfdb52eb4445ae58267dad89601c0116bc99acd"
+    },
+    {
+      "path": "src/data/places/applePlaceProvider.ts",
+      "sha256": "b30ff920afcde918fac4ceea3a3214d6af17e2693d7d3072a08432dd2fa04939"
+    },
+    {
+      "path": "src/features/day-feed/P1PlanEditor.test.ts",
+      "sha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795"
+    },
+    {
+      "path": "src/features/day-feed/P1PlanEditor.tsx",
+      "sha256": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "e015ecdc307583e82861cf2f1aa789c45228c6aa4006a62ba324ff4c4322a603"
+    }
+  ],
+  "actualMainTests": {
+    "suites": 4,
+    "passed": 82
+  },
+  "scopedCompiler": "PASS5TSroots plus imports",
+  "uiGuard": "PASS168/473",
+  "lintErrors": 0,
+  "swiftSdkTypecheck": "Reused author and independent SDK evidence for exact Swift blob; not rerun a full Native build",
+  "directWhitelistConsumers": "P3 provider draft and TripDestination selection do not copy the new timezone hint",
+  "noPersistence": "Only selected/current mapItem memory reference caption; ManualPlanFields/Core/zone/instant/Repository/SQLite untouched",
+  "deploymentRequirement": "New Swift payload must be paired with updated JS strict DTO via a distinct full Native build. Do not mix new Native with old strict JS on rollback/OTA. Old Native with new JS may have no hint.",
+  "installedArtifacts": "QA151850 and Vision869 unchanged; Source commit alone does not install feature",
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "providerRequests": 0,
+  "scopeUnchanged": [
+    "six reviewed source/test leaves only",
+    "paired bilingual caption only, no whole catalog replacement",
+    "canonical zone/IANA ownership remains unresolved/floating",
+    "current Import finite Source and Core/Auth integrations retained"
+  ]
+}

@@ -34,6 +34,21 @@ export const applePlaceAddressComponentsSchema = z.strictObject({
 export type ApplePlaceAddressComponents = Readonly<
   z.infer<typeof applePlaceAddressComponentsSchema>
 >;
+// A transient MapKit hint, not a saved zone, temporal proof or inferred offset.
+export function readApplePlaceTimeZoneHint(value: unknown): string | undefined {
+  if (
+    typeof value !== "string" ||
+    value.length > 128 ||
+    !(value === "UTC" || /^[A-Za-z_]+(?:\/[A-Za-z0-9_+.-]+)+$/.test(value))
+  )
+    return undefined;
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value }).format(0);
+    return value;
+  } catch {
+    return undefined;
+  }
+}
 const candidateSchema = z.strictObject({
   provider: z.literal("apple"),
   handle: z.uuid(),
@@ -44,6 +59,7 @@ const candidateSchema = z.strictObject({
   point: point.optional(),
   category: z.string().max(256).optional(),
   providerPlaceId: z.string().min(1).max(1024).optional(),
+  timeZoneIdentifier: z.unknown().transform(readApplePlaceTimeZoneHint).optional(),
   // Attributed raw provider components, never a Canonical qualification or Day label.
   addressComponents: applePlaceAddressComponentsSchema.optional(),
   area: z

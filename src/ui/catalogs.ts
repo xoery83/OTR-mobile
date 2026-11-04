@@ -1012,6 +1012,7 @@ export const en = {
   "tripCreate.endDate": "End date (optional)",
   "tripCreate.endTime": "End time (optional)",
   "tripCreate.clearTime": "Clear time",
+  "tripCreate.placeTimeZoneHint": "Place time zone · {zone} (reference)",
   "tripCreate.planLocation": "Location (optional)",
   "tripCreate.findPlace": "Find a place",
   "tripCreate.planManualPlace":
@@ -4069,6 +4070,7 @@ export const zhHans: Record<MessageKey, string> = {
   "tripCreate.endDate": "结束日期（可选）",
   "tripCreate.endTime": "结束时间（可选）",
   "tripCreate.clearTime": "清除时间",
+  "tripCreate.placeTimeZoneHint": "地点时区 · {zone}（参考）",
   "tripCreate.planLocation": "地点（可选）",
   "tripCreate.findPlace": "查找地点",
   "tripCreate.planManualPlace": "可手动输入地点；此处暂不提供地点建议。",

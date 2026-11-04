@@ -2,7 +2,10 @@ import {
   PlaceSearchSheet,
   type PlaceSearchResult,
 } from "@/features/place-search/PlaceSearchSheet";
-import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
+import {
+  readApplePlaceTimeZoneHint,
+  type PlaceSearchBinding,
+} from "@/data/places/applePlaceProvider";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -44,6 +47,7 @@ function TimeField({
   label,
   value,
   defaultTime,
+  zoneHint,
   disabled,
   onChange,
   onOpenChange,
@@ -51,6 +55,7 @@ function TimeField({
   label: string;
   value: string | null;
   defaultTime?: string;
+  zoneHint?: string;
   disabled: boolean;
   onChange(value: string | null): void;
   onOpenChange?(open: boolean): boolean | void;
@@ -122,6 +127,11 @@ function TimeField({
                   if (date) setSelected(date);
                 }}
               />
+              {open && zoneHint ? (
+                <Text style={styles.meta}>
+                  {t("tripCreate.placeTimeZoneHint", { zone: zoneHint })}
+                </Text>
+              ) : null}
               <UiButton
                 label={t("tripCreate.clearTime")}
                 variant="text"
@@ -196,6 +206,22 @@ export function P1PlanEditor({
         : null,
   );
   const fieldsRef = useRef(fields);
+  const [placeZoneHint, setPlaceZoneHint] = useState<{
+    draft: ManualPlanDraft;
+    tripId: string;
+    generation: number;
+    address: string;
+    zone: string;
+  } | null>(null);
+  const visiblePlaceZone =
+    placeZoneHint &&
+    placeZoneHint.tripId === tripId &&
+    placeZoneHint.generation === generation &&
+    generation === getAccountGeneration() &&
+    placeZoneHint.draft === source?.draft &&
+    fields?.location === placeZoneHint.address
+      ? placeZoneHint.zone
+      : undefined;
   const initialRef = useRef(
     opened
       ? JSON.stringify(opened.draft.initialFields ?? opened.draft.fields)
@@ -333,6 +359,7 @@ export function P1PlanEditor({
       !fieldsRef.current
     )
       return;
+    if (Object.prototype.hasOwnProperty.call(next, "location")) setPlaceZoneHint(null);
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -410,6 +437,18 @@ export function P1PlanEditor({
       if (!result.place.address?.trim() || result.place.address.length > 500) return;
       closePlaceSearch();
       change({ location: result.place.address });
+      const zone =
+        result.place.provider === "apple" && result.place.kind === "mapItem"
+          ? readApplePlaceTimeZoneHint(result.place.timeZoneIdentifier)
+          : undefined;
+      if (zone && source)
+        setPlaceZoneHint({
+          draft: source.draft,
+          tripId,
+          generation,
+          address: result.place.address,
+          zone,
+        });
     }
   };
   const close = (then = onClose) => {
@@ -651,6 +690,7 @@ export function P1PlanEditor({
                   <TimeField
                     label={t("tripCreate.startTime")}
                     onOpenChange={(open) => changePickerOpen("start", open)}
+                    zoneHint={visiblePlaceZone}
                     value={fields.startTime}
                     disabled={saving || frozen}
                     onChange={(startTime) => change({ startTime })}
@@ -658,6 +698,7 @@ export function P1PlanEditor({
                   <TimeField
                     label={t("tripCreate.endTime")}
                     onOpenChange={(open) => changePickerOpen("end", open)}
+                    zoneHint={visiblePlaceZone}
                     value={fields.endTime}
                     defaultTime={
                       fields.startTime

@@ -1,0 +1,40 @@
+{
+  "candidate": "2d555b42db4ed110bb8aa97e8bee1683e0b6dfe2",
+  "base": "df79fc37",
+  "verdict": "NO_BLOCKER_LOCAL_SOURCE_ONLY",
+  "findings": [],
+  "scope": "V-N04 05 read-only transient MapKit IANA picker hint",
+  "verified": [
+    "Current local Apple SDK MKMapItem.h:41 declares public nullable NSTimeZone timeZone available iOS9; CLPlacemark.h:67 declares public readonly nullable fallback timeZone",
+    "Native exports item.timeZone or actual placemark.timeZone only; never device zone, inferred offset, or Core proof",
+    "DTO optional unknown transform strips invalid/unsupported/offset/abbreviation hints while retaining valid original address; supplied IANA identifier validated with explicit Intl timeZone, not device default",
+    "P1 only accepts hint from selected current resolved Apple mapItem; existing request ticket, exact fields snapshot, Account generation and Trip binding gates retained",
+    "Hint is per mounted draft object/Trip/generation/exact selected address in memory; changing location clears it and account/trip/draft changes hide it",
+    "Only picker reference caption receives zone; UiDatePicker has no timezone override and ManualPlanFields/Canonical/Core/proof/instant are unchanged",
+    "Reopen has no persisted hint and remains existing floating civil-time behavior; no timezone caption fallback",
+    "Paired English/Chinese reference caption uses canonical UiText/theme"
+  ],
+  "independent_validation": {
+    "suites": 2,
+    "passed": 16,
+    "intentionally_skipped": 53,
+    "log": "INDEPENDENT_TEST.log",
+    "diff_check": "PASS",
+    "officialSDKDeclarations": "Read actual installed iPhoneOS SDK headers; no network or provider request",
+    "author_reused": "EVIDENCE records 69 full tests and isolated SDK Swift typecheck; not rerun full build"
+  },
+  "source_sha256": {
+    "modules/place-search/ios/ApplePlaceSearchEngine.swift": "9250d23e25b792e39acd664bf7678ee697fb2e5bee1be8c71128e6255311dfcf",
+    "src/data/places/applePlaceProvider.ts": "b30ff920afcde918fac4ceea3a3214d6af17e2693d7d3072a08432dd2fa04939",
+    "src/data/places/applePlaceProvider.test.ts": "194ebca28f3351f71892a5f81dfdb52eb4445ae58267dad89601c0116bc99acd",
+    "src/features/day-feed/P1PlanEditor.tsx": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8",
+    "src/features/day-feed/P1PlanEditor.test.ts": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795",
+    "src/ui/catalogs.ts": "e015ecdc307583e82861cf2f1aa789c45228c6aa4006a62ba324ff4c4322a603"
+  },
+  "limits": [
+    "No actual device, Provider, Hosted, Core mutation or DB operation by reviewer",
+    "Native module change requires a subsequent distinct full Native build and device acceptance; installed QA151/source850 is unchanged",
+    "Reference hint is not persistent timezone qualification, DST conversion or temporal authority",
+    "Existing unrelated OAuth TS7016 is not claimed fixed; no clean whole-repo typecheck assertion"
+  ]
+}

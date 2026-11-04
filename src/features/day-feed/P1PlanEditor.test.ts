@@ -1046,3 +1046,53 @@ it.each(["09:30", "23:30"])(
     );
   },
 );
+
+it("shows a selected MapKit zone only as a transient picker reference, never a saved field", async () => {
+  const { p, repo } = await withPlace();
+  const sheet = await search(p);
+  const result = placeResult();
+  sheet.onConfirm({
+    ...result,
+    place: { ...result.place, timeZoneIdentifier: "Pacific/Auckland" },
+  });
+  render(p);
+  node("tripCreate.startTime").onPress();
+  expect(render(p)).toContain("tripCreate.placeTimeZoneHint");
+  state.nodes
+    .find((entry) => entry.header?.title === "tripCreate.startTime")!
+    .header.onLeft();
+  render(p);
+  node("ui.save").onPress();
+  await new Promise((resolve) => setImmediate(resolve));
+  const saved = (repo.save.mock.calls as unknown as unknown[][])[0][1] as Record<
+    string,
+    unknown
+  >;
+  expect(saved).not.toHaveProperty("timeZoneIdentifier");
+  expect(saved).not.toHaveProperty("zoneId");
+  expect(saved).not.toHaveProperty("instant");
+});
+it.each(["manual", "clear", "account", "trip"])(
+  "removes the transient place-zone reference on %s context changes",
+  async (reason) => {
+    const { p } = await withPlace();
+    const sheet = await search(p);
+    const result = placeResult();
+    sheet.onConfirm({
+      ...result,
+      place: { ...result.place, timeZoneIdentifier: "Pacific/Auckland" },
+    });
+    render(p);
+    node("tripCreate.startTime").onPress();
+    expect(render(p)).toContain("tripCreate.placeTimeZoneHint");
+    if (reason === "manual")
+      node("tripCreate.planLocation").onChangeText("Manual address");
+    if (reason === "clear") node("tripCreate.clearLocation").onPress();
+    if (reason === "account") state.generation++;
+    expect(
+      render(
+        reason === "trip" ? { ...p, tripId: "00000000-0000-4000-8000-000000000022" } : p,
+      ),
+    ).not.toContain("tripCreate.placeTimeZoneHint");
+  },
+);

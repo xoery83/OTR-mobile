@@ -20,7 +20,10 @@ function fixture() {
     address: "Victoria Street, Auckland",
     point: { latitude: -36.848, longitude: 174.762 },
   };
-  const reply = (input: Record<string, unknown>, rows = [row]) => ({
+  const reply = (
+    input: Record<string, unknown>,
+    rows: Record<string, unknown>[] = [row],
+  ) => ({
     provider: "apple",
     status: "READY",
     sessionId: input.sessionId,
@@ -341,4 +344,58 @@ it("shows an area completion but requires its explicit resolve before returning 
   expect(f.native.complete).toHaveBeenCalledOnce();
   expect(f.native.resolve).toHaveBeenCalledOnce();
   expect(f.native.search).not.toHaveBeenCalled();
+});
+
+it("preserves a resolved MapKit IANA hint without creating temporal authority", async () => {
+  const f = fixture();
+  f.native.resolve.mockImplementation(async (input) =>
+    f.reply(input, [{ ...f.row, timeZoneIdentifier: "Pacific/Auckland" }]),
+  );
+  const [candidate] = await f.provider.complete({ text: "Tower" });
+  const result = await f.provider.resolve(candidate, { text: "Tower" });
+  expect(result).toMatchObject({ timeZoneIdentifier: "Pacific/Auckland" });
+  expect(result).not.toHaveProperty("instant");
+  expect(result).not.toHaveProperty("zoneProof");
+});
+
+it.each(["Pacific/Auckland", "America/New_York", "UTC"])(
+  "accepts only supplied valid IANA location hints (%s)",
+  async (zone) => {
+    const f = fixture();
+    f.native.search.mockImplementation(async (input) =>
+      f.reply(input, [{ ...f.row, timeZoneIdentifier: zone }]),
+    );
+    expect((await f.provider.search({ text: "Place" }))[0].timeZoneIdentifier).toBe(zone);
+  },
+);
+it.each([
+  "GMT+13",
+  "+13:00",
+  "EST",
+  "Pacific/Invented",
+  " Pacific/Auckland ",
+  { secret: "invalid" },
+])("omits an invalid zone hint without blocking the real address (%s)", async (zone) => {
+  const f = fixture();
+  f.native.search.mockImplementation(async (input) =>
+    f.reply(input, [{ ...f.row, timeZoneIdentifier: zone }]),
+  );
+  const [result] = await f.provider.search({ text: "Place" });
+  expect(result.address).toBe(f.row.address);
+  expect(result.timeZoneIdentifier).toBeUndefined();
+});
+it("discards a late timezone-bearing response after its Trip binding expires", async () => {
+  const f = fixture();
+  let finish!: () => void;
+  f.native.search.mockImplementation(
+    (input) =>
+      new Promise((resolve) => {
+        finish = () =>
+          resolve(f.reply(input, [{ ...f.row, timeZoneIdentifier: "Pacific/Auckland" }]));
+      }),
+  );
+  const pending = f.provider.search({ text: "Place" });
+  f.invalidate();
+  finish();
+  await expect(pending).rejects.toThrow("CANCELLED");
 });
