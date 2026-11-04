@@ -30,6 +30,7 @@ import { validateCoreReceipt } from "../../domain/trip/tripCoreV2Receipt";
 import {
   emptyCoreGraph,
   applyCoreCommand,
+  coreCanManage,
   type CoreActor,
   type CoreGraph,
 } from "../../domain/trip/tripCoreV2Mutation";
@@ -613,6 +614,350 @@ export function createTripCoreV2Repository(
     announceLedgerQueueWorkAvailable();
     return result!;
   }
+  async function manualInstructionOriginWithinTransaction(
+    ctx: AccountRequestContext,
+    snapshot: NonNullable<
+      Awaited<ReturnType<typeof readLocalManualSnapshotWithinTransaction>>
+    >,
+    acceptedIds: ReadonlySet<string>,
+    entryId: string,
+  ) {
+    const seen = new Set<string>();
+    let id: string | null = entryId;
+    while (id !== null) {
+      if (seen.has(id)) return false;
+      seen.add(id);
+      const entry = snapshot.graph.trip_instruction_entries.find((r) => r.id === id);
+      const state = entry?.field_state as Record<string, { origin?: string }> | undefined;
+      if (
+        !entry ||
+        entry.owner_account_id !== ctx.accountId ||
+        entry.source_representation_id !== null ||
+        state?.["trip_instruction_entries.body"]?.origin !== "MANUAL"
+      )
+        return false;
+      const rows = await database.getAllAsync<{
+        operation_id: string;
+        canonical_intent_text: string;
+        intent_sha256: string;
+        state: string;
+        reconciled_revision: number | null;
+        receipt_body: string | null;
+        receipt_sha256: string | null;
+      }>(
+        `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,i.state,i.reconciled_revision,
+         r.body_json AS receipt_body,r.receipt_sha256 FROM trip_core_pending_intents i
+         LEFT JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id
+         AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
+         WHERE i.account_id=? AND i.trip_id=? AND
+         ((json_extract(i.canonical_intent_text,'$.command')='APPEND_INSTRUCTION'
+           AND json_extract(i.canonical_intent_text,'$.target.id')=?) OR
+          (json_extract(i.canonical_intent_text,'$.command')='CORRECT_INSTRUCTION'
+           AND json_extract(i.canonical_intent_text,'$.payload.newEntryId')=?))`,
+        ctx.accountId,
+        ctx.tripId,
+        id,
+        id,
+      );
+      let origin: ReturnType<typeof validateCoreCommand> | undefined;
+      for (const row of rows) {
+        const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+        const payload = command.payload as {
+          itemId?: string;
+          section?: string;
+          body: string;
+          sensitivity: string;
+          newEntryId?: string;
+          sourceRepresentationId?: string | null;
+        };
+        if (
+          command.tripId !== ctx.tripId ||
+          command.operationId !== row.operation_id ||
+          command.admission.mode !== "MANUAL" ||
+          payload.body !== entry.body ||
+          payload.sensitivity !== entry.sensitivity ||
+          (command.command === "APPEND_INSTRUCTION"
+            ? command.target.id !== id ||
+              payload.itemId !== entry.event_id ||
+              payload.section !== entry.section ||
+              payload.sourceRepresentationId !== null ||
+              entry.supersedes_id !== null
+            : command.command !== "CORRECT_INSTRUCTION" ||
+              payload.newEntryId !== id ||
+              command.target.id !== entry.supersedes_id)
+        )
+          continue;
+        const digest = await coreHashValue("otr-trip-core-intent-v2", command, hash);
+        if (digest !== row.intent_sha256) throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+        if (acceptedIds.has(id)) {
+          if (
+            row.state !== "APPLIED" ||
+            !row.receipt_body ||
+            !snapshot.cert ||
+            row.reconciled_revision === null ||
+            row.reconciled_revision > Number(snapshot.cert.revision)
+          )
+            continue;
+          const receipt = await validateCoreReceipt(JSON.parse(row.receipt_body), hash);
+          const after = receipt.audit.after.find(
+            (a) => a.kind === "INSTRUCTION" && a.id === id,
+          )?.facts as Record<string, unknown> | undefined;
+          if (
+            receipt.actorAccountId !== ctx.accountId ||
+            receipt.tripId !== ctx.tripId ||
+            receipt.operationId !== command.operationId ||
+            receipt.command !== command.command ||
+            receipt.intentSha256 !== digest ||
+            receipt.receiptSha256 !== row.receipt_sha256 ||
+            receipt.outcome !== "APPLIED" ||
+            !receipt.result.created.some(
+              (r) => r.kind === "INSTRUCTION" && r.id === id,
+            ) ||
+            !after ||
+            [
+              "id",
+              "trip_id",
+              "event_id",
+              "owner_account_id",
+              "section",
+              "body",
+              "sensitivity",
+              "source_representation_id",
+              "supersedes_id",
+              "created_at",
+            ].some((k) => after[k] !== entry[k])
+          )
+            continue;
+        } else if (
+          !snapshot.operations.some(
+            (op) => op.operationId === command.operationId && op.sha256 === digest,
+          )
+        )
+          continue;
+        origin = command;
+        break;
+      }
+      if (!origin) return false;
+      id = origin.command === "APPEND_INSTRUCTION" ? null : origin.target.id;
+    }
+    return true;
+  }
+  async function manualInstructionEligibility(
+    ctx: AccountRequestContext,
+    itemId: string,
+    entryId: string,
+  ) {
+    coreUuid.parse(itemId);
+    coreUuid.parse(entryId);
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let eligible = false;
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        const accepted = await acceptedWithinTransaction(ctx);
+        const snapshot = await readLocalManualSnapshotWithinTransaction(
+          database,
+          getAccountId,
+          { manualReadSnapshot },
+          ctx,
+          accepted,
+        );
+        const parent = snapshot?.graph.itinerary_events.find((r) => r.id === itemId);
+        const entry = snapshot?.graph.trip_instruction_entries.find(
+          (r) => r.id === entryId,
+        );
+        if (
+          snapshot &&
+          parent?.experience_family === "P3" &&
+          parent.owner_account_id === ctx.accountId &&
+          parent.hidden_at === null &&
+          parent.status !== "cancelled" &&
+          parent.status !== "skipped" &&
+          entry?.event_id === itemId &&
+          entry.hidden_at === null &&
+          ["ARRIVAL", "DEPARTURE"].includes(String(entry.section)) &&
+          !snapshot.graph.trip_instruction_entries.some(
+            (r) => r.supersedes_id === entryId,
+          ) &&
+          coreCanManage(snapshot.graph, snapshot.actor, "ITEM", parent) &&
+          coreCanManage(snapshot.graph, snapshot.actor, "INSTRUCTION", entry)
+        )
+          eligible = await manualInstructionOriginWithinTransaction(
+            ctx,
+            snapshot,
+            new Set(
+              accepted?.graph.trip_instruction_entries.map((r) => String(r.id)) ?? [],
+            ),
+            entryId,
+          );
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return { status: eligible ? ("ELIGIBLE" as const) : ("UNPROVEN" as const) };
+    });
+  }
+  async function validateManualInstructionsWithinTransaction(
+    ctx: AccountRequestContext,
+    commands: readonly ReturnType<typeof validateCoreCommand>[],
+  ) {
+    const accepted = await acceptedWithinTransaction(ctx);
+    const snapshot = await readLocalManualSnapshotWithinTransaction(
+      database,
+      getAccountId,
+      { manualReadSnapshot },
+      ctx,
+      accepted,
+    );
+    if (
+      !snapshot ||
+      new Set(commands.map((c) => c.operationId)).size !== commands.length ||
+      commands.filter((c) => c.target.kind === "ITEM").length > 5
+    )
+      throw new Error("MANUAL_BATCH_INVALID");
+    let graph = snapshot.graph,
+      parentId: string | undefined;
+    const acceptedIds = new Set(
+      accepted?.graph.trip_instruction_entries.map((r) => String(r.id)) ?? [],
+    );
+    const fresh: ReturnType<typeof validateCoreCommand>[] = [];
+    const sections = new Set<string>();
+    for (const command of commands) {
+      const instruction =
+        command.command === "APPEND_INSTRUCTION" ||
+        command.command === "CORRECT_INSTRUCTION";
+      if (
+        command.tripId !== ctx.tripId ||
+        command.admission.mode !== "MANUAL" ||
+        (!instruction &&
+          (command.target.kind !== "ITEM" ||
+            ![
+              "SET_ITEM_TEXT",
+              "SET_ITEM_SCHEDULE",
+              "SET_ITEM_PLACE",
+              "SET_ITEM_PARTICIPATION",
+              "SET_STAY_DETAILS",
+            ].includes(command.command)))
+      )
+        throw new Error("MANUAL_BATCH_INVALID");
+      const payload = command.payload as {
+        itemId?: string;
+        newEntryId?: string;
+        section?: string;
+        body: string;
+        sourceRepresentationId?: string | null;
+      };
+      const previous = graph.trip_instruction_entries.find(
+        (r) => r.id === command.target.id,
+      );
+      const itemId = !instruction
+        ? command.target.id
+        : command.command === "APPEND_INSTRUCTION"
+          ? payload.itemId
+          : previous?.event_id;
+      const parent = graph.itinerary_events.find((r) => r.id === itemId);
+      if (
+        !parent ||
+        parent.experience_family !== "P3" ||
+        parent.owner_account_id !== ctx.accountId ||
+        parent.hidden_at !== null ||
+        parent.status === "cancelled" ||
+        parent.status === "skipped" ||
+        (parentId !== undefined && parentId !== parent.id)
+      )
+        throw new Error("MANUAL_BATCH_INVALID");
+      parentId = String(parent.id);
+      if (!coreCanManage(graph, snapshot.actor, "ITEM", parent))
+        throw new Error("NOT_VISIBLE");
+      if (instruction) {
+        const section =
+          command.command === "APPEND_INSTRUCTION" ? payload.section : previous?.section;
+        if (
+          !["ARRIVAL", "DEPARTURE"].includes(String(section)) ||
+          sections.has(String(section))
+        )
+          throw new Error("MANUAL_BATCH_INVALID");
+        sections.add(String(section));
+        if (
+          command.command === "APPEND_INSTRUCTION" &&
+          payload.sourceRepresentationId !== null
+        )
+          throw new Error("MANUAL_INSTRUCTION_UNPROVEN");
+        if (
+          command.command === "CORRECT_INSTRUCTION" &&
+          (!previous ||
+            !coreCanManage(graph, snapshot.actor, "INSTRUCTION", previous) ||
+            !(await manualInstructionOriginWithinTransaction(
+              ctx,
+              snapshot,
+              acceptedIds,
+              command.target.id,
+            )))
+        )
+          throw new Error("MANUAL_INSTRUCTION_UNPROVEN");
+      }
+      const prior = await database.getFirstAsync<{
+        intent_sha256: string;
+        state: string;
+      }>(
+        "SELECT intent_sha256,state FROM trip_core_pending_intents WHERE account_id=? AND operation_id=?",
+        ctx.accountId,
+        command.operationId,
+      );
+      if (prior) {
+        const digest = await coreHashValue("otr-trip-core-intent-v2", command, hash);
+        if (prior.intent_sha256 !== digest) throw new Error("OPERATION_REUSE_MISMATCH");
+        const created = instruction
+          ? graph.trip_instruction_entries.find(
+              (r) =>
+                r.id ===
+                (command.command === "APPEND_INSTRUCTION"
+                  ? command.target.id
+                  : payload.newEntryId),
+            )
+          : parent;
+        if (
+          !["BLOCKED", "PENDING", "IN_FLIGHT", "APPLIED"].includes(prior.state) ||
+          (!snapshot.operations.some(
+            (op) => op.operationId === command.operationId && op.sha256 === digest,
+          ) &&
+            prior.state !== "APPLIED") ||
+          !created ||
+          (instruction &&
+            (created.event_id !== parent.id ||
+              created.body !== payload.body ||
+              created.source_representation_id !== null ||
+              (command.command === "CORRECT_INSTRUCTION" &&
+                created.supersedes_id !== previous?.id)))
+        )
+          throw new Error("MANUAL_INSTRUCTION_RETRY_UNAVAILABLE");
+        continue;
+      }
+      if (
+        command.command === "APPEND_INSTRUCTION" &&
+        graph.trip_instruction_entries.some(
+          (r) =>
+            r.event_id === parent.id &&
+            r.section === payload.section &&
+            r.hidden_at === null &&
+            !graph.trip_instruction_entries.some((next) => next.supersedes_id === r.id),
+        )
+      )
+        throw new Error("MANUAL_INSTRUCTION_UNPROVEN");
+      if (command.command === "CORRECT_INSTRUCTION" && previous?.hidden_at !== null)
+        throw new Error("MANUAL_INSTRUCTION_UNPROVEN");
+      graph = applyCoreCommand(
+        graph,
+        command,
+        snapshot.actor,
+        clock(),
+        false,
+        undefined,
+        true,
+      ).graph;
+      fresh.push(command);
+    }
+    return fresh;
+  }
   // Both preparation reads and post-write verification share this owning transaction.
   async function commitManualBatch<T>(
     ctx: AccountRequestContext,
@@ -628,10 +973,19 @@ export function createTripCoreV2Repository(
       await database.withTransactionAsync(async () => {
         await scope(ctx);
         const prepared = await prepare();
-        if (prepared.commands.length > 5) throw new Error("MANUAL_BATCH_INVALID");
+        if (prepared.commands.length > 7) throw new Error("MANUAL_BATCH_INVALID");
         const commands = prepared.commands.map(validateCoreCommand);
+        const instructions = commands.some(
+          (c) =>
+            c.command === "APPEND_INSTRUCTION" || c.command === "CORRECT_INSTRUCTION",
+        );
+        if (!instructions && commands.length > 5) throw new Error("MANUAL_BATCH_INVALID");
+        const toEnqueue = instructions
+          ? await validateManualInstructionsWithinTransaction(ctx, commands)
+          : commands;
         if (
-          commands.some(
+          !instructions &&
+          (commands.some(
             (c) =>
               c.tripId !== ctx.tripId ||
               c.target.kind !== "ITEM" ||
@@ -654,10 +1008,10 @@ export function createTripCoreV2Repository(
                   (c.payload as { family: string }).family,
                 )),
           ) ||
-          new Set(commands.map((c) => c.target.id)).size > 1
+            new Set(commands.map((c) => c.target.id)).size > 1)
         )
           throw new Error("MANUAL_BATCH_INVALID");
-        if (commands.length) {
+        if (!instructions && commands.length) {
           const isCreation = (c: (typeof commands)[number]) =>
             c.command === "CREATE_ITEM" || c.command === "CREATE_SPARSE_FLIGHT";
           const creation = commands.find(isCreation);
@@ -708,8 +1062,8 @@ export function createTripCoreV2Repository(
           )
             throw new Error("MANUAL_BATCH_INVALID");
         }
-        for (const command of commands) await enqueueWithinTransaction(ctx, command);
-        queued = commands.length > 0;
+        for (const command of toEnqueue) await enqueueWithinTransaction(ctx, command);
+        queued = toEnqueue.length > 0;
         result = await prepared.result();
         await assertContext(ctx);
       });
@@ -1432,6 +1786,7 @@ export function createTripCoreV2Repository(
     resume,
     enqueue,
     commitManualBatch,
+    manualInstructionEligibility,
     pending,
     beginRefresh,
     install,

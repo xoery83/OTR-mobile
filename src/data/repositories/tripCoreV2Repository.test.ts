@@ -1,3 +1,4 @@
+import { isManualAcceptedEditCommand } from "../sync/tripNormalSync";
 import { coreAccessLossSchema } from "../../domain/trip/tripCoreMemberAccess";
 import { subscribeLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import {
@@ -23,7 +24,6 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it, expect, vi } from "vitest";
-vi.mock("react-native", () => ({ AppState: { currentState: "active" } }));
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import {
@@ -44,6 +44,7 @@ import {
 import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
+vi.mock("react-native", () => ({ AppState: { currentState: "active" } }));
 const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
 const account = randomUUID(),
   trip = randomUUID(),
@@ -1676,4 +1677,257 @@ it("manual batch wakes the existing queue only after durable commit, never for r
   } finally {
     unsubscribe();
   }
+});
+
+function p3InstructionCommands(id = randomUUID()) {
+  const create = {
+    ...sparse(),
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    payload: {
+      family: "P3",
+      core: { title: "Accepted Stay" },
+      schedule: {
+        start: coreDateBoundary("2026-12-14"),
+        end: coreDateBoundary("2026-12-17"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const entry = randomUUID();
+  const append = {
+    ...create,
+    operationId: randomUUID(),
+    command: "APPEND_INSTRUCTION",
+    target: { kind: "INSTRUCTION", id: entry },
+    baseVector: [
+      { kind: "INSTRUCTION", id: entry, revision: null },
+      { kind: "ITEM", id, revision: 1 },
+    ],
+    payload: {
+      itemId: id,
+      section: "ARRIVAL",
+      body: "Call at reception.",
+      sensitivity: "NORMAL",
+      sourceRepresentationId: null,
+      acl: { visibility: "GROUP", people: [] },
+    },
+  };
+  return { create, append, id, entry };
+}
+it("P3 Instruction-only pending dirties an Accepted parent without becoming fake ITEM or Synced", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    q = p3InstructionCommands();
+  const graph = applyCoreCommand(emptyCoreGraph(), q.create, actor, stamp).graph;
+  const bundle = await collection(true, graph);
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  expect((await f.repo.item(ctx, actor, q.id))?.localState).toBe("ACCEPTED");
+  await f.repo.commitManualBatch(ctx, async () => ({
+    commands: [q.append],
+    result: async () => true,
+  }));
+  expect((await f.repo.item(ctx, actor, q.id))?.localState).toBe("PENDING");
+  const pending = await f.repo.pending(ctx);
+  expect(pending).toHaveLength(1);
+  expect(pending[0].command.target).toEqual({ kind: "INSTRUCTION", id: q.entry });
+  expect(pending[0].state).toBe("BLOCKED");
+  expect(
+    f.sql
+      .prepare("SELECT entity_id,status,idempotency_key FROM sync_operations WHERE id=?")
+      .get(q.append.operationId),
+  ).toEqual({
+    entity_id: q.entry,
+    status: "DEPENDENCY_BLOCKED",
+    idempotency_key: q.append.operationId,
+  });
+  // Native must extend the existing typed selector before enabling cloud dispatch.
+  expect(isManualAcceptedEditCommand(pending[0].command, "P3")).toBe(false);
+  let wakes = 0;
+  const unsubscribe = subscribeLedgerQueueWorkAvailable(() => {
+    wakes += 1;
+  });
+  try {
+    await f.repo.commitManualBatch(ctx, async () => ({
+      commands: [q.append],
+      result: async () => true,
+    }));
+    expect(wakes).toBe(0); // Recovery does not wake or recreate an existing operation.
+  } finally {
+    unsubscribe();
+  }
+});
+it("P3 instruction seam uses parent and entry ACL and never strips existing Source identity", async () => {
+  for (const failure of [
+    "parent-management",
+    "entry-management",
+    "source-correction",
+    "wrong-family",
+  ] as const) {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      q = p3InstructionCommands();
+    let graph = applyCoreCommand(emptyCoreGraph(), q.create, actor, stamp).graph;
+    let command: unknown = q.append;
+    if (failure === "entry-management" || failure === "source-correction") {
+      graph = applyCoreCommand(graph, q.append, actor, stamp).graph;
+      if (failure === "entry-management")
+        graph.trip_instruction_entries[0].owner_account_id = randomUUID();
+      else graph.trip_instruction_entries[0].source_representation_id = randomUUID();
+      const newEntry = randomUUID();
+      command = {
+        ...q.append,
+        command: "CORRECT_INSTRUCTION",
+        operationId: randomUUID(),
+        baseVector: [
+          { kind: "INSTRUCTION", id: q.entry, revision: 1 },
+          { kind: "INSTRUCTION", id: newEntry, revision: null },
+          { kind: "ITEM", id: q.id, revision: 2 },
+        ].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)),
+        payload: {
+          newEntryId: newEntry,
+          body: "Changed by hand",
+          sensitivity: "NORMAL",
+          acl: { visibility: "GROUP", people: [] },
+        },
+      };
+    }
+    if (failure === "parent-management")
+      graph.itinerary_events[0].owner_account_id = randomUUID();
+    if (failure === "wrong-family") {
+      graph = applyCoreCommand(
+        emptyCoreGraph(),
+        { ...q.create, payload: { ...q.create.payload, family: "P1" } },
+        actor,
+        stamp,
+      ).graph;
+    }
+    const bundle = await collection(true, graph);
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const before = (await f.repo.acceptedSnapshot(ctx))!.graph;
+    const outcome = await f.repo
+      .commitManualBatch(ctx, async () => ({
+        commands: [command],
+        result: async () => true,
+      }))
+      .then(
+        () => "UNEXPECTED_ALLOWED_" + failure,
+        () => "DENIED",
+      );
+    expect(outcome).toBe("DENIED");
+    expect(
+      f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n,
+    ).toBe(0);
+    expect((await f.repo.acceptedSnapshot(ctx))!.graph).toEqual(before);
+  }
+});
+
+it("P3 provenance never infers unsourced from a redacted null or a pending command over an Accepted entry", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    q = p3InstructionCommands();
+  let server = applyCoreCommand(emptyCoreGraph(), q.create, actor, stamp).graph;
+  const initial = await collection(true, server);
+  const bindings = [
+    {
+      person_id: person,
+      account_id: account,
+      active: true,
+      participating: true,
+      revision: 1,
+    },
+  ];
+  await f.repo.install(
+    await f.repo.beginRefresh(ctx, 1),
+    initial.manifest,
+    initial.pages,
+  );
+  await f.repo.commitManualBatch(ctx, async () => ({
+    commands: [q.append],
+    result: async () => true,
+  }));
+  expect(await f.repo.manualInstructionEligibility(ctx, q.id, q.entry)).toEqual({
+    status: "ELIGIBLE",
+  });
+  expect(await f.repo.manualInstructionEligibility(ctx, q.id, randomUUID())).toEqual({
+    status: "UNPROVEN",
+  });
+  const storage: CoreCommandStorage = {
+    withLockedCommand: async (_scope, work) =>
+      work({
+        actor,
+        readReceipt: async () => null,
+        hasLegacyOperation: async () => false,
+        canReadReceipt: async () => true,
+        enabledCommands: async () => ["APPEND_INSTRUCTION"],
+        readLockedGraph: async () => server,
+        verifyAdmission: async () => {},
+        lifecycleGraphHash: async () => undefined,
+        commit: async (mutation) => {
+          if (mutation) server = mutation.graph;
+          return randomUUID();
+        },
+      }),
+  };
+  const applied = await executeCoreCommandV2(
+    storage,
+    account,
+    trip,
+    q.append,
+    hash,
+    () => stamp,
+  );
+  if (applied.projection !== "FULL") throw Error("TEST_EXPECTED_FULL");
+  const bundle = async (revision: number) =>
+    buildCoreActorCollection(
+      server,
+      actor,
+      { epoch: initial.manifest.epoch, revision, accessRevision: 1, generatedAt: stamp },
+      bindings,
+      hash,
+    );
+  f.sql
+    .prepare(
+      "UPDATE trip_core_pending_intents SET state='IN_FLIGHT' WHERE operation_id=?",
+    )
+    .run(q.append.operationId);
+  f.sql
+    .prepare("UPDATE sync_operations SET status='RETRYABLE' WHERE id=?")
+    .run(q.append.operationId);
+  const accepted = await bundle(2);
+  await f.repo.install(
+    await f.repo.beginRefresh(ctx, 1),
+    accepted.manifest,
+    accepted.pages,
+  );
+  expect(await f.repo.manualInstructionEligibility(ctx, q.id, q.entry)).toEqual({
+    status: "UNPROVEN",
+  });
+  await f.repo.applyReceipt(ctx, applied.receipt);
+  const refreshed = await bundle(3);
+  await f.repo.install(
+    await f.repo.beginRefresh(ctx, 1),
+    refreshed.manifest,
+    refreshed.pages,
+  );
+  expect(await f.repo.manualInstructionEligibility(ctx, q.id, q.entry)).toEqual({
+    status: "ELIGIBLE",
+  });
+  // Immutable receipts cannot be rewritten. A refreshed accepted row with a
+  // different immutable identity must not borrow the old receipt as proof.
+  server.trip_instruction_entries[0].created_at = "2026-10-11T00:00:00Z";
+  const differentRecord = await bundle(4);
+  await f.repo.install(
+    await f.repo.beginRefresh(ctx, 1),
+    differentRecord.manifest,
+    differentRecord.pages,
+  );
+  expect(await f.repo.manualInstructionEligibility(ctx, q.id, q.entry)).toEqual({
+    status: "UNPROVEN",
+  });
 });

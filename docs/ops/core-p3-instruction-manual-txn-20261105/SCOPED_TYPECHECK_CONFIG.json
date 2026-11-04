@@ -1,0 +1,18 @@
+{
+  "extends": "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-main-20261105/tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": [
+      "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-main-20261105/node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-main-20261105/src/data/repositories/tripCoreV2Repository.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-main-20261105/src/data/repositories/tripCoreV2Repository.test.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-main-20261105/src/data/repositories/manualStayRepository.test.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-main-20261105/expo-env.d.ts"
+  ],
+  "exclude": []
+}

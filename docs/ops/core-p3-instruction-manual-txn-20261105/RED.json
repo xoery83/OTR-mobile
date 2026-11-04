@@ -1,0 +1,1 @@
+{"source":"Native exact REPRO_TEST_SNIPPET reproduced on isolated af2f","test":"manualStayRepository.test.ts -t owning manual transaction","result":"1 failed19 skipped","error":"MANUAL_BATCH_INVALID at tripCoreV2Repository.ts:659","database":"actual node:sqlite with all existing migrations; transaction not mocked"}

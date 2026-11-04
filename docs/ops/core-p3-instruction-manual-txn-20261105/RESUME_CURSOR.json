@@ -1,0 +1,9 @@
+{
+  "next": "Parent independent review fixed diff, then Root1 authorized source integration; Native owns caller/Sync adapter per CONTRACT.md",
+  "worktree": "/Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-manual-txn-20261105",
+  "branch": "codex/core-p3-instruction-manual-txn-20261105",
+  "noRetry": [
+    "No Hosted/Provider/Source/actual UNKNOWN operations were run or authorized here."
+  ],
+  "untrackedPreserve": "node_modules symlink is existing dependency access, intentionally not committed; no cleanup."
+}

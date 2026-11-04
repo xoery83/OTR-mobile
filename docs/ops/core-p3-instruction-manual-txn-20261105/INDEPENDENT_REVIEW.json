@@ -1,0 +1,55 @@
+{
+  "requestId": "NATIVE-P3-INSTRUCTION-MANUAL-TXN-20261105-01",
+  "status": "NO_BLOCKER_CORE_LOCAL_SOURCE_ONLY_INDEPENDENT_SQLITE_PASS",
+  "authorDri": "/root/p3_instruction_manual_txn_20261105",
+  "reviewer": "/root/p3_renewal_current_delta",
+  "productCommit": "faefa01c99592dd2949f3ac3e753fde45e4fa30a",
+  "evidenceHead": "f57efdba93504ef027c19b1adf972af9e806c717",
+  "base": "af2f80968b9adcf95814994b8be8ee8e6e23b6a5",
+  "scopeSHA256": {
+    "src/data/repositories/tripCoreV2Repository.ts": "1029b7f287ca2acad89be15ff9e38972ed69c224f3e0b13d6d5d4a51093ffd7c",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "785ca259ddfa0269c3506a00177afeabcf3bbead384ae8db357adc8f037db154",
+    "src/data/repositories/manualStayRepository.test.ts": "94935d74539608273f7a22237a4c050bc2aee04781bf13dfb1d27346ad16bcea"
+  },
+  "nativeFixedEvidenceSHA256": {
+    "OWNING_PORT_GAP.json": "e90bf695b4a0ae1c5d833504630d7f58b38685a1c9a57d2725cca7051422e8bf",
+    "OWNING_TRANSACTION_RED.log": "9bf67bd75366adfa2d8ed7ade9c05afca06ce42c61da5fc4b2a001b5621e0ccc",
+    "REPRO_TEST_SNIPPET.txt": "97582c3db82b9be2305c3c171857fc2ec12f19e5d48372d24d82ef2e3fd81473",
+    "HEADER_SAVE_CALLER_ADDENDUM.json": "c0f704fd4287c9f48e6b653bce1c3bc396e3ecb7a52ee8651bb5d864b067b7dc"
+  },
+  "findings": [],
+  "verified": [
+    "Existing commitManualBatch Account gate/SQLite transaction/Queue reused. ITEM-only max5/family rules preserved; Instruction branch limited to existing self-owned visible live same P3, at most5existing ITEM edits +1ARRIVAL+1DEPARTURE. CREATE+Instruction/crossparent/unsupportedfamily rejected.",
+    "Real INSTRUCTION targets, parent/oldentry/newentry/null bases pass unchanged canonical applyCoreCommand sequentially with current actor, so staged parent CAS is checked; no UI-driven rebase or fake ITEM identity.",
+    "Null redacted SourceRef alone is insufficient: correction origin requires MANUAL field state and exact local canonical unsourced APPEND/CORRECT immutable chain, exact Actor/Trip/owner/parent/body/sensitivity/entry identity and intent hash. Accepted entries additionally match original APPLIED full receipt/hash/created record/audit immutable facts/current certificate and reconciled revision. Pending/UNKNOWN or colliding old command cannot prove a different accepted entry.",
+    "APPEND cannot replace known current section head; CORRECT checks current management/chain provenance. Remote manual entry lacking local proof and known SOURCE state remain UNPROVEN. Eligibility returns only neutral hint and save rechecks same transaction.",
+    "Duplicate/replay branch requires original canonical digest/current projected target; original Queue entity remains actual Instruction. Existing PENDING/IN_FLIGHT/APPLIED identities are not re-enqueued or reawakened. New commands remain DEPENDENCY_BLOCKED/PENDING local projection; no server acceptance inferred.",
+    "Any final canonical command, queue write, result projection callback or Account generation failure rolls back full owning transaction. Original receipt/UNKNOWN identities and ids are retained.",
+    "No obvious removable validation duplication warrants sacrificing accepted-provenance and transaction checks; eligibility vs commit intentionally recheck different trust boundaries."
+  ],
+  "independentValidation": {
+    "command": "Command: node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts src/data/repositories/manualStayRepository.test.ts --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "result": "PASS",
+    "suites": 2,
+    "tests": 84,
+    "durationSeconds": 14.58,
+    "exitCode": 0,
+    "logSHA256": "d571e57a508e1eef362b88aa9191d9b0f99c344b33aa613b248328ef3590297c",
+    "productBlobsUnchangedBeforeAfter": true
+  },
+  "authorEvidenceReused": {
+    "eslint": "0errors/0warnings reported",
+    "wholeTypecheck": "NOT_PASS: existing browser/auth-consent/main.tsx TS7016 react-dom/client; not rerun or represented as full type PASS"
+  },
+  "requiredNativeFollowUp": [
+    "Native must extend existing DraftState/firstAttempt/fields and result validation with frozen Instruction selections/IDs/commands, then one Header Save calls one commitManualBatch. Current consumer/ManualStay DTO integration remains unmounted; do not claim Header Save ready.",
+    "Native tripNormalSync ITEM-only selector and generic worker Instruction-target familyundefined gap must be repaired through exact parent resolver/failclosed gating + original receipt recovery before dispatch. No Native files changed here.",
+    "Core local hint does not grant cloud Instruction capability or Source mutation authority."
+  ],
+  "limits": [
+    "Only fixed repository delta, direct local snapshot/receipt/queue/canonical apply dependencies and pinned Native RED/caller evidence reviewed; no repositorywide audit.",
+    "No Schema/Backend/Host/Provider/Source/device/main/push or actual UNKNOWN execution.",
+    "No cloud APPLIED/readback or Native UI/cold device E2E acceptance; review covers local transaction candidate only.",
+    "No author product/source changes by reviewer."
+  ]
+}

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-manual-txn-20261105
+
+
+ Test Files  2 passed (2)
+      Tests  84 passed (84)
+   Start at  10:02:44
+   Duration  12.49s (transform 548ms, setup 0ms, import 663ms, tests 11.69s, environment 0ms)
+

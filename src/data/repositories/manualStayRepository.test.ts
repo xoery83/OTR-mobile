@@ -1,3 +1,7 @@
+import { corePlaceSchema } from "../../domain/trip/tripCoreV2";
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
+import { withAccountApplyGate } from "../auth/accountRequestContext";
+import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import {
   dayHeaderDestinationRead,
   resolveDayHeaderDestination,
@@ -13,7 +17,10 @@ import {
 } from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
-import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
+import {
+  createTripLocalManualReader,
+  readLocalManualSnapshotWithinTransaction,
+} from "./tripLocalManualReadRepository";
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
 import {
   createManualStayRepository,
@@ -132,8 +139,8 @@ const inputFor = (fields: ManualStayFields): ManualStayFields => ({
   location: "Nelson city centre",
   description: "Quiet room, arrive after lunch",
 });
-const count = (sql: DatabaseSync) =>
-  sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n;
+const count = (sql: DatabaseSync): number =>
+  Number(sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n);
 it("creates one normal MANUAL Stay with required dates, optional clocks and Notes; every day resolves the same ID after cold read", async () => {
   const f = await fixture(),
     repo = f.repo(),
@@ -909,4 +916,431 @@ it("fresh P3 details retain every room ID/quantity and unchanged permitted-clock
     details: { property_name: "Correct Lodge", permitted_checkin_from: "14:00:30" },
     rooms: [{ room_id: roomId, category: "Suite", quantity: 2, capacity: 3 }],
   });
+});
+
+it("commits a valid handwritten P3 ARRIVAL instruction through the owning manual transaction", async () => {
+  const f = await fixture(),
+    repo = f.repo();
+  const draft = await repo.createDraft(f.tripId);
+  await repo.save(draft, inputFor(draft.fields));
+  const ctx = await f.core.captureContext(f.tripId);
+  const entryId = randomUUID();
+  const instruction = validateCoreCommand({
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "APPEND_INSTRUCTION",
+    target: { kind: "INSTRUCTION", id: entryId },
+    baseVector: [
+      { kind: "INSTRUCTION", id: entryId, revision: null },
+      { kind: "ITEM", id: draft.itemId, revision: 1 },
+    ],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      itemId: draft.itemId,
+      section: "ARRIVAL",
+      body: "Ring the reception bell.",
+      sensitivity: "NORMAL",
+      sourceRepresentationId: null,
+      acl: { visibility: "GROUP", people: [] },
+    },
+  });
+  await expect(
+    f.core.commitManualBatch(ctx, async () => ({
+      commands: [instruction],
+      result: async () => entryId,
+    })),
+  ).resolves.toBe(entryId);
+  expect((await f.core.pending(ctx)).map((x) => x.command.target.kind)).toEqual([
+    "ITEM",
+    "INSTRUCTION",
+  ]);
+});
+
+async function instructionFixture() {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  await repo.save(draft, inputFor(draft.fields));
+  const ctx = await f.core.captureContext(f.tripId);
+  // Build the target's null base only after allocating its stable identity.
+  const command = (itemId = draft.itemId, revision = 1) => {
+    const id = randomUUID();
+    return validateCoreCommand({
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId: f.tripId,
+      command: "APPEND_INSTRUCTION",
+      target: { kind: "INSTRUCTION", id },
+      baseVector: [
+        { kind: "INSTRUCTION", id, revision: null },
+        { kind: "ITEM", id: itemId, revision },
+      ],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        itemId,
+        section: "ARRIVAL",
+        body: "Ring reception.",
+        sensitivity: "NORMAL",
+        sourceRepresentationId: null,
+        acl: { visibility: "GROUP", people: [] },
+      },
+    });
+  };
+  const commit = (commands: readonly unknown[], result = async () => true) =>
+    f.core.commitManualBatch(ctx, async () => ({ commands, result }));
+  const graph = async () => {
+    const current = await f.core.captureContext(f.tripId);
+    let snapshot: Awaited<ReturnType<typeof readLocalManualSnapshotWithinTransaction>>;
+    await withAccountApplyGate(async () =>
+      f.coreDatabase.withTransactionAsync(async () => {
+        snapshot = await readLocalManualSnapshotWithinTransaction(
+          f.coreDatabase,
+          f.identity,
+          f.core,
+          current,
+          await f.core.readAcceptedSnapshotWithinTransaction(current),
+        );
+      }),
+    );
+    return snapshot!.graph;
+  };
+  return { ...f, ctx, draft, command, commit, graph };
+}
+function departure(command: ReturnType<typeof validateCoreCommand>) {
+  return validateCoreCommand({
+    ...command,
+    payload: {
+      ...(command.payload as object),
+      section: "DEPARTURE",
+      body: "Leave key at reception.",
+    },
+  });
+}
+function correctedInstruction(
+  f: Awaited<ReturnType<typeof instructionFixture>>,
+  oldId: string,
+  itemRevision = 2,
+  entryRevision = 1,
+  newId = randomUUID(),
+) {
+  return validateCoreCommand({
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "CORRECT_INSTRUCTION",
+    target: { kind: "INSTRUCTION", id: oldId },
+    baseVector: [
+      { kind: "INSTRUCTION", id: oldId, revision: entryRevision },
+      { kind: "INSTRUCTION", id: newId, revision: null },
+      { kind: "ITEM", id: f.draft.itemId, revision: itemRevision },
+    ].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)),
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      newEntryId: newId,
+      body: "Use the side reception bell.",
+      sensitivity: "NORMAL",
+      acl: { visibility: "GROUP", people: [] },
+    },
+  });
+}
+it("P3 instruction transaction corrects immutably and retains genuine Queue target/blocked state on duplicate or UNKNOWN", async () => {
+  const f = await instructionFixture(),
+    append = f.command();
+  await f.commit([append]);
+  const correction = correctedInstruction(f, append.target.id);
+  await f.commit([correction]);
+  const graph = await f.graph();
+  expect(graph.trip_instruction_entries).toHaveLength(2);
+  expect(
+    graph.trip_instruction_entries.find((r) => r.id === append.target.id),
+  ).toMatchObject({
+    body: "Ring reception.",
+    source_representation_id: null,
+  });
+  expect(
+    graph.trip_instruction_entries.find(
+      (r) => r.id === (correction.payload as { newEntryId: string }).newEntryId,
+    ),
+  ).toMatchObject({
+    body: "Use the side reception bell.",
+    supersedes_id: append.target.id,
+  });
+  expect(graph.itinerary_events[0].semantic_revision).toBe(3);
+  const rows = f.sql
+    .prepare(
+      "SELECT id,entity_id,status,payload_json FROM sync_operations WHERE operation_type='CORE_V2_COMMAND' ORDER BY created_at",
+    )
+    .all();
+  expect(rows).toHaveLength(3);
+  expect(rows.slice(1).map((r) => r.entity_id)).toEqual([
+    append.target.id,
+    append.target.id,
+  ]);
+  expect(rows.every((r) => r.status === "DEPENDENCY_BLOCKED")).toBe(true);
+  const n = count(f.sql);
+  await f.commit([append]);
+  await f.commit([correction]);
+  expect(count(f.sql)).toBe(n);
+  f.sql
+    .prepare(
+      "UPDATE trip_core_pending_intents SET state='IN_FLIGHT' WHERE operation_id=?",
+    )
+    .run(correction.operationId);
+  f.sql
+    .prepare("UPDATE sync_operations SET status='RETRYABLE' WHERE id=?")
+    .run(correction.operationId);
+  await f.commit([correction]);
+  expect(count(f.sql)).toBe(n);
+  expect(
+    f.sql
+      .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+      .get(correction.operationId)!.state,
+  ).toBe("IN_FLIGHT");
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(correction.operationId)!.status,
+  ).toBe("RETRYABLE");
+  expect((await f.core.pending(f.ctx)).map((r) => r.command.operationId)).toContain(
+    correction.operationId,
+  );
+});
+it("P3 instruction transaction atomically rejects stale parent/entry/new-entry bases, mixed target families and missing correction identity", async () => {
+  const f = await instructionFixture(),
+    append = f.command();
+  await f.commit([append]);
+  const n = count(f.sql);
+  for (const command of [
+    f.command(f.draft.itemId, 1),
+    correctedInstruction(f, append.target.id, 1),
+    correctedInstruction(f, append.target.id, 2, 2),
+    correctedInstruction(f, randomUUID(), 2, 1),
+  ]) {
+    await expect(f.commit([command])).rejects.toThrow();
+    expect(count(f.sql)).toBe(n);
+  }
+});
+it("P3 instruction transaction rejects cross-Trip, source-backed/manual laundering, wrong scope and changed original operation", async () => {
+  const f = await instructionFixture(),
+    append = f.command();
+  const n = count(f.sql);
+  for (const command of [
+    { ...append, tripId: randomUUID() },
+    {
+      ...append,
+      payload: { ...(append.payload as object), sourceRepresentationId: randomUUID() },
+    },
+    {
+      ...append,
+      admission: {
+        mode: "REVIEWED_SOURCE",
+        sourceIntentId: randomUUID(),
+        policyVersion: null,
+      },
+    },
+    { ...append, payload: { ...(append.payload as object), section: "DURING" } },
+  ]) {
+    await expect(f.commit([command])).rejects.toThrow();
+    expect(count(f.sql)).toBe(n);
+  }
+  await f.commit([append]);
+  await expect(
+    f.commit([
+      { ...append, payload: { ...(append.payload as object), body: "Different" } },
+    ]),
+  ).rejects.toThrow("OPERATION_REUSE_MISMATCH");
+  expect(count(f.sql)).toBe(n + 1);
+  f.switchAccount();
+  await expect(f.commit([f.command()])).rejects.toThrow();
+  expect(count(f.sql)).toBe(n + 1);
+});
+it("P3 instruction transaction rolls back queue and projection for second-write/result failures and account-generation changes", async () => {
+  for (const failure of ["write", "result", "generation"] as const) {
+    const f = await instructionFixture(),
+      a = f.command(),
+      b = departure(f.command(f.draft.itemId, 2));
+    const n = count(f.sql);
+    if (failure === "write") f.failNext(2);
+    const result = async () => {
+      if (failure === "result") throw Error("TEST_RESULT_FAILURE");
+      if (failure === "generation") {
+        advanceAccountGeneration();
+        advanceAccountGeneration();
+      }
+      return true;
+    };
+    await expect(f.commit([a, b], result)).rejects.toThrow();
+    expect(count(f.sql)).toBe(n);
+    expect((await f.graph()).trip_instruction_entries).toHaveLength(0);
+  }
+});
+
+function p3TextEdit(f: Awaited<ReturnType<typeof instructionFixture>>, revision = 1) {
+  return validateCoreCommand({
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "SET_ITEM_TEXT",
+    target: { kind: "ITEM", id: f.draft.itemId },
+    baseVector: [{ kind: "ITEM", id: f.draft.itemId, revision }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { title: "Updated Stay" },
+  });
+}
+it("P3 mixed Edit stages parent revisions and commits ITEM plus both section entries once", async () => {
+  const f = await instructionFixture(),
+    edit = p3TextEdit(f),
+    a = f.command(f.draft.itemId, 2),
+    raw = f.command(f.draft.itemId, 3);
+  const b = validateCoreCommand({
+    ...raw,
+    payload: {
+      ...(raw.payload as object),
+      section: "DEPARTURE",
+      body: "Leave key at reception.",
+    },
+  });
+  const n = count(f.sql);
+  await f.commit([edit, a, b]);
+  const graph = await f.graph();
+  expect(graph.itinerary_events[0]).toMatchObject({
+    title: "Updated Stay",
+    semantic_revision: 4,
+  });
+  expect(graph.trip_instruction_entries.map((r) => r.section).sort()).toEqual([
+    "ARRIVAL",
+    "DEPARTURE",
+  ]);
+  expect(count(f.sql)).toBe(n + 3);
+  await f.commit([edit, a, b]);
+  expect(count(f.sql)).toBe(n + 3);
+  expect(
+    await f.core.manualInstructionEligibility(f.ctx, f.draft.itemId, a.target.id),
+  ).toEqual({ status: "ELIGIBLE" });
+});
+it("P3 mixed Edit failure at the final Instruction rolls back all ITEM and Queue effects without rebasing", async () => {
+  for (const kind of ["stale", "write"] as const) {
+    const f = await instructionFixture(),
+      edit = p3TextEdit(f),
+      a = f.command(f.draft.itemId, 2),
+      b = departure(f.command(f.draft.itemId, kind === "stale" ? 2 : 3));
+    const before = await f.graph(),
+      n = count(f.sql);
+    if (kind === "write") f.failNext(3);
+    await expect(f.commit([edit, a, b])).rejects.toThrow();
+    expect(count(f.sql)).toBe(n);
+    expect(await f.graph()).toEqual(before);
+  }
+});
+it("P3 Header Save rejects two writes to the same section without partial intents", async () => {
+  const f = await instructionFixture(),
+    n = count(f.sql);
+  await expect(f.commit([f.command(), f.command(f.draft.itemId, 2)])).rejects.toThrow(
+    "MANUAL_BATCH_INVALID",
+  );
+  expect(count(f.sql)).toBe(n);
+  expect((await f.graph()).trip_instruction_entries).toHaveLength(0);
+});
+it("P3 instruction batch refuses other parents, Create mixed with Append, missing new-entry base and forked correction", async () => {
+  const f = await instructionFixture(),
+    repo = f.repo(),
+    other = await repo.createDraft(f.tripId);
+  await repo.save(other, inputFor(other.fields));
+  const n = count(f.sql);
+  await expect(f.commit([f.command(), f.command(other.itemId)])).rejects.toThrow(
+    "MANUAL_BATCH_INVALID",
+  );
+  const create = (await f.core.pending(f.ctx))[0].command;
+  await expect(f.commit([create, f.command()])).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(count(f.sql)).toBe(n);
+  const a = f.command();
+  await f.commit([a]);
+  await expect(f.commit([f.command(f.draft.itemId, 2)])).rejects.toThrow(
+    "MANUAL_INSTRUCTION_UNPROVEN",
+  );
+  const c = correctedInstruction(f, a.target.id);
+  await expect(
+    f.commit([
+      {
+        ...c,
+        baseVector: c.baseVector.filter(
+          (v) => v.kind !== "INSTRUCTION" || v.id === a.target.id,
+        ),
+      },
+    ]),
+  ).rejects.toThrow("INVALID_BASE_VECTOR");
+  await f.commit([c]);
+  await expect(f.commit([correctedInstruction(f, a.target.id, 3)])).rejects.toThrow(
+    "REVISION_CONFLICT",
+  );
+  expect(count(f.sql)).toBe(n + 2);
+});
+
+it("P3 mixed Edit permits the existing five ITEM edits plus two Instruction commands without widening ITEM-only batches", async () => {
+  const f = await instructionFixture(),
+    graph = await f.graph(),
+    row = graph.itinerary_events[0];
+  const item = (command: string, revision: number, payload: unknown) =>
+    validateCoreCommand({
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId: f.tripId,
+      command,
+      target: { kind: "ITEM", id: f.draft.itemId },
+      baseVector: [{ kind: "ITEM", id: f.draft.itemId, revision }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload,
+    });
+  const commands = [
+    p3TextEdit(f),
+    item("SET_ITEM_SCHEDULE", 2, {
+      schedule: {
+        start: coreDateBoundary("2026-10-21"),
+        end: coreDateBoundary("2026-10-24"),
+      },
+    }),
+    item("SET_ITEM_PLACE", 3, {
+      place: Object.fromEntries(
+        Object.keys(corePlaceSchema.shape).map((k) => [k, row[k]]),
+      ),
+    }),
+    item("SET_ITEM_PARTICIPATION", 4, {
+      participation: { mode: "SELF", people: [], selfPersonId: row.self_person_id },
+    }),
+    item("SET_STAY_DETAILS", 5, {
+      details: { property_name: "Literal property" },
+      rooms: [],
+    }),
+    f.command(f.draft.itemId, 6),
+  ];
+  const last = f.command(f.draft.itemId, 7);
+  commands.push(
+    validateCoreCommand({
+      ...last,
+      payload: { ...(last.payload as object), section: "DEPARTURE" },
+    }),
+  );
+  const n = count(f.sql);
+  await f.commit(commands);
+  expect(count(f.sql)).toBe(n + 7);
+  const after = await f.graph();
+  expect(after.itinerary_events[0].semantic_revision).toBe(8);
+  expect(after.trip_instruction_entries).toHaveLength(2);
+  expect(after.trip_stay_details[0].property_name).toBe("Literal property");
+  await expect(
+    f.commit(Array.from({ length: 6 }, () => p3TextEdit(f, 8))),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  await expect(
+    f.commit([
+      ...Array.from({ length: 6 }, (_, i) => p3TextEdit(f, 8 + i)),
+      f.command(f.draft.itemId, 14),
+    ]),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(count(f.sql)).toBe(n + 7);
 });

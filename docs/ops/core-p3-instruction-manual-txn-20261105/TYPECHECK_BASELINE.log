@@ -1,0 +1,2 @@
+browser/auth-consent/main.tsx(1,28): error TS7016: Could not find a declaration file for module 'react-dom/client'. '/Users/xoery/Project/otr-mobile/node_modules/react-dom/client.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-dom` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-dom/client';`

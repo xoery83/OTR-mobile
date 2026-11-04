@@ -1,0 +1,41 @@
+{
+  "requestId": "NATIVE-P3-INSTRUCTION-MANUAL-TXN-20261105-01",
+  "sourceIntegrator": "/root/p3_instruction_manual_txn_20261105 (delegated sole main writer)",
+  "baseRemoteMain": "af2f80968b9adcf95814994b8be8ee8e6e23b6a5",
+  "authorCode": "faefa01c99592dd2949f3ac3e753fde45e4fa30a",
+  "authorEvidence": "f57efdba93504ef027c19b1adf972af9e806c717",
+  "status": "VALIDATED_FOR_NONFORCE_MAIN_PUBLICATION",
+  "scopeSHA256": {
+    "src/data/repositories/tripCoreV2Repository.ts": "1029b7f287ca2acad89be15ff9e38972ed69c224f3e0b13d6d5d4a51093ffd7c",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "785ca259ddfa0269c3506a00177afeabcf3bbead384ae8db357adc8f037db154",
+    "src/data/repositories/manualStayRepository.test.ts": "94935d74539608273f7a22237a4c050bc2aee04781bf13dfb1d27346ad16bcea"
+  },
+  "independentReview": {
+    "file": "INDEPENDENT_REVIEW.json",
+    "sha256": "10be1c0386a2693b99b1f194bb8a1f8ec8337b420152b230b87a07ffc15f5cab",
+    "gitReviewCommit": null,
+    "result": "NO_BLOCKER_CORE_LOCAL_SOURCE_ONLY_INDEPENDENT_SQLITE_PASS"
+  },
+  "checks": {
+    "threeReviewedLeaves": "BYTE_IDENTICAL",
+    "allOtherSourceBackendPackageAndConfig": "UNCHANGED_FROM_REVIEW_BASE",
+    "sqlite": "REUSED_INDEPENDENT_84_PASS_14.58_SECONDS_NO_REDUNDANT_RERUN",
+    "scopedTypecheck": "PASS, three roots with transitive imports; no project config edit",
+    "scopedEslint": "PASS, zero errors/warnings",
+    "diffCheck": "PASS for product/source/docs; exact retained SQLITE_GREEN.log stdout has its original final blank line and is excluded from whitespace formatting check",
+    "wholeProjectTypecheck": "NOT_PASS; preserved existing TS7016 react-dom/client declaration gap"
+  },
+  "consumerContract": "CONTRACT.md",
+  "nativeSyncState": {
+    "status": "BLOCKED_NOT_CLOUD_READY",
+    "nativeRedCommit": "b562169409eba47e969eb0907b30a5fe9a0937ee",
+    "evidenceOrigin": "Native fixed evidence reported by Root1; not rerun by integrator",
+    "required": "Instruction selector plus exact real parent resolver/failclosed family gate and original receipt recovery; separate Native Writer slice",
+    "queue": "real INSTRUCTION target; parent PENDING, operation DEPENDENCY_BLOCKED; no fake ITEM target/SYNCED"
+  },
+  "changedAuthority": "NONE",
+  "schema": "NONE",
+  "backendHostedSourceProviderDeviceOtpActualUnknown": "NOT_TOUCHED",
+  "publication": "Must still fresh-CAS remote main, nonforce push and independent fetched remote readback; resulting SHA reported separately, never self-referenced in this commit",
+  "validatedAtUTC": "2026-11-04T21:29:17.002546+00:00"
+}

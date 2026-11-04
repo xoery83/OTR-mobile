@@ -1,0 +1,58 @@
+{
+  "requestId": "NATIVE-P3-INSTRUCTION-MANUAL-TXN-20261105-01",
+  "baseSha": "af2f80968b9adcf95814994b8be8ee8e6e23b6a5",
+  "status": "LOCAL_PASS / INDEPENDENT_REVIEW_PENDING / SOURCE_MAIN_NOT_INTEGRATED",
+  "files": [
+    "src/data/repositories/tripCoreV2Repository.ts",
+    "src/data/repositories/tripCoreV2Repository.test.ts",
+    "src/data/repositories/manualStayRepository.test.ts"
+  ],
+  "actualRed": {
+    "nativeFixedSha": "e3b25c33",
+    "test": "manualStayRepository exact owning manual transaction",
+    "error": "MANUAL_BATCH_INVALID",
+    "database": "node:sqlite actual existing migrations and transaction"
+  },
+  "finalChecks": {
+    "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts src/data/repositories/manualStayRepository.test.ts --maxWorkers=1",
+    "tests": 84,
+    "files": 2,
+    "result": "PASS",
+    "durationSeconds": 12.49,
+    "eslint": "PASS / 0 errors / 0 warnings",
+    "diffCheck": "PASS",
+    "wholeProjectTypecheck": "BLOCKED_BASELINE: browser/auth-consent/main.tsx TS7016 missing react-dom/client declaration; changed roots no diagnostics"
+  },
+  "covered": [
+    "real Native RED -> GREEN",
+    "APPEND/CORRECT/newEntry null base",
+    "same P3 mixed five ITEM and two section commands",
+    "staged parent revisions, no rebase",
+    "final command/write/result/generation failure entire transaction rollback",
+    "parent/entry management and Trip/Actor guards",
+    "Source ref cannot be dropped or inferred absent from redacted null",
+    "accepted entry requires FULL reconciled local receipt and exact immutable identity",
+    "pending UNKNOWN cannot prove Accepted entry",
+    "old operation duplicate preserves Queue/IN_FLIGHT and does not wake new work",
+    "real INSTRUCTION Queue entity identity and parent PENDING / DEPENDENCY_BLOCKED",
+    "other family/parent/Create mixed and widened ITEM-only limits rejected",
+    "fresh APPEND cannot replace an existing current section head to bypass CORRECT provenance"
+  ],
+  "qualification": {
+    "schema": "NONE",
+    "newAuthority": "NONE",
+    "hosted": "NOT_TOUCHED",
+    "nativeDevice": "NOT_RUN",
+    "cloud": "NOT_RUN",
+    "backendReceiptTest": "isolated canonical command engine in test storage; not remote proof",
+    "independentReview": "PENDING",
+    "main": "NOT_INTEGRATED",
+    "push": "NOT_PUSHED"
+  },
+  "knownLimit": "Native Form consumer and Sync must consume fixed contract before UI mounting or cloud-save claims. Remote manual entries without local trustworthy origin remain readonly.",
+  "nonProductFailures": [
+    "Sandbox first test run could not write existing dependency .vite-temp; one authorized normal test retry succeeded.",
+    "Provenance negative initially tried mutating immutable receipt and correctly failed CORE_RECEIPT_IMMUTABLE; test now refreshes a different record and verifies original receipt cannot prove it."
+  ],
+  "resourceState": "No main/Hosted/device locks acquired; no active tests at completion; local worktree preserved."
+}
