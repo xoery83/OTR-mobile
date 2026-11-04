@@ -1,0 +1,13 @@
+{
+  "status": "DOC_ONLY_SOURCE_INTEGRATED",
+  "candidate": "7be57c8611f9310d17bc6a4d519ff67ba77a75a3",
+  "receiptCommit": "4a6c0aee",
+  "preMain": "e851bcae231bc920f91daa3e4a6b70ea2e1b3f2a",
+  "scope": "17-line private provenance contract and exact reviewed handoff evidence only",
+  "hostSourceImported": false,
+  "hostBundleSHA256ReportedByRoot2": "68a54bb4eacbc0a74b7832e04751cc1ca5fcbcb82858141d143797175bcbe973",
+  "hostBundleNotRebuiltByRoot1": true,
+  "testsNotRepeated": "Documentation-only main delta; exact prior source review retained",
+  "executionAuthorityGranted": false,
+  "historicalUnknownUntouched": true
+}

@@ -1,0 +1,11 @@
+{
+  "requestId": "MCP-C02-S1-OWNER-PROVENANCE-20261104-001",
+  "candidate": "7be57c8611f9310d17bc6a4d519ff67ba77a75a3",
+  "reviewReceiptPath": "docs/mcp/c02/controlled-replay-20261104/SOURCE_REVIEW.json",
+  "reviewReceiptSHA256": "6de4af9d918f8be597805d3ac2fac247126cb4c004ae6fa9f98a35459c8df274",
+  "reviewScope": "Private Host source provenance change only; not full controlled replay execution packet review",
+  "hostSHA256": "68a54bb4eacbc0a74b7832e04751cc1ca5fcbcb82858141d143797175bcbe973",
+  "hostHashEvidence": "Local source/build manifest; independently rebuilt and matched by Root2 BUILD_RECEIPT.json",
+  "integrationScope": "Only 17-line MCP_AUTH_CONTRACT delta and this handoff receipt; no Host/test/dependencies requested in main",
+  "protectedExecutionAuthorized": false
+}

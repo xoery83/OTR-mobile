@@ -131,3 +131,20 @@ own any exact protected restriction delta; no RLS/GRANT or issuance is changed
 here. Those initial P0 activation blockers were resolved for finite Synthetic
 QA Read; general-account/Write and full Data/Storage qualification remain outside
 that result. The active test window is now independently closed.
+
+## C02 private confirmation provenance — Root2 execution approval
+
+The private confirmation table's sourceThreadId/sourceMessageId/evidence hash refer
+to the actual human Owner confirmation source, not the consumer agent or model.
+Do not relabel Root2-chat approvals as MCP-chat approvals. The smallest candidate
+contract update permits exactly the existing MCP Owner chat and the Root2 Owner
+chat, with the real user message ID and verified wire hash. This private metadata
+is never an MCP Tool input and does not itself authorize an operation.
+
+Root2 must independently verify the current user source and bind the exact Gate,
+Actor/Trip/operation/target, original canonical command/intent, Preview digest and
+CAS/close plan before installing a singleton confirmation. UNKNOWN same-ID replay
+can perform the first real Create and requires explicit new Owner approval covering
+that risk. GET-only approval and absent rows cannot authorize replay. No Source
+activation or deployment follows from this local candidate; scopes, TTL, ACL,
+Core authority, Receipt/CAS and no-automatic-retry semantics remain unchanged.
