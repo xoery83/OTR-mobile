@@ -1,0 +1,17 @@
+{
+  "extends": "/Users/xoery/Project/otr-mobile-temporal/core-instruction-parent-scope-main-20261105/tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": [
+      "/Users/xoery/Project/otr-mobile-temporal/core-instruction-parent-scope-main-20261105/node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "/Users/xoery/Project/otr-mobile-temporal/core-instruction-parent-scope-main-20261105/src/domain/trip/tripCoreInstructionParent.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-instruction-parent-scope-main-20261105/src/domain/trip/tripCoreInstructionParent.test.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-instruction-parent-scope-main-20261105/expo-env.d.ts"
+  ],
+  "exclude": []
+}

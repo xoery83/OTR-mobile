@@ -1,0 +1,47 @@
+{
+  "requestId": "NATIVE-CORE-INSTRUCTION-PARENT-SCOPE-20261105",
+  "status": "NO_BLOCKER_PURE_CORE_HELPER_SOURCE_ONLY_INDEPENDENT32PASS",
+  "authorDri": "/root/p3_instruction_manual_txn_20261105",
+  "productCommit": "2c329bbc7b112ddb237452ba95b56d8960cdc81f",
+  "base": "c98821fe16931bfe2fd79869178f0f8e8ac87445",
+  "scopeSHA256": {
+    "src/domain/trip/tripCoreInstructionParent.ts": "606f3a4d9ebc3d69555788c9805bcd74ab32db02d049f4f8458f48086fa5060e",
+    "src/domain/trip/tripCoreInstructionParent.test.ts": "04a132ca0777fbb15c51db71aff84bdee0ad200f6f034a25eace28a3b54de2d2",
+    "docs/ops/core-instruction-parent-scope-20261105/CONTRACT.md": "430bf22b4d2c5bae59af1f38866c70e6844df1734b83c47283fbe5fa3970b357"
+  },
+  "findings": [],
+  "verified": [
+    "APPEND parent is unique actual payload.itemId ITEM; CORRECT parent/section comes from unique actual target entry and complete sameTrip/parent/section visible immutable ancestor chain. Missing/duplicate/fork/cycle/nonhead identities fail closed. No UI family hint or treating Instruction ID as ITEM.",
+    "Discarded canonical applyCoreCommand preview validates current Actor/Trip management, payload, original/null/new-entry bases and actual CAS/head constraints on the given raw pre-command graph. Structured cloned preview is not persisted and no given graph/command mutation occurs.",
+    "Return is actual parentItemId/family/section only; nonempty known Core family lets Native enforce enabledFamilies. Source-bound records may classify, but no handwritten/unsourced eligibility, Source rights, receipt or dispatch authority returned.",
+    "Expected Zod/finite canonical scope errors map to neutral typed CoreInstructionScopeError without body/Source/hidden details. Unexpected programmer errors propagate unchanged and still prevent submit.",
+    "Only new pure domain helper/test/docs/currentstate. Existing Repo/Queue/Native3Sync/Schema/Backend unchanged. Native fixedb562 actual undefined-family RED and direct callers were read; no claim its worker is fixed by an unmounted helper."
+  ],
+  "independentValidation": {
+    "command": "node node_modules/vitest/vitest.mjs run src/domain/trip/tripCoreInstructionParent.test.ts --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "exitCode": 0,
+    "suites": 1,
+    "tests": 32,
+    "durationSeconds": 0.272,
+    "testSeconds": 0.05,
+    "fixedWorkingProductDiff": "empty"
+  },
+  "authorValidationReused": {
+    "scopedTypes": "PASS reported; not rerun",
+    "scopedLint": "PASS reported; not rerun",
+    "wholeTypes": "NOT_PASS/NOT_RERUN existing baseline TS7016 remains separate"
+  },
+  "nativeConsumptionConditions": [
+    "Original Receipt lookup/recovery must precede this NEW-submit-only resolver. Do not use it to reauthorize or resend an applied/UNKNOWN original operation.",
+    "Worker must pair raw pre-command cache-account/Trip mirror with trusted current Actor under same owning context/access/generation. Coordinator uses certified accepted graph+actor; if that pair cannot be established block, do not fabricate Actor or use pending-replayed graph.",
+    "Missing predecessor mirror state requires original receipt recovery/legal refresh, never rebased command or alternate optimistic graph.",
+    "Native must compare actual family to enabledFamilies, retain pinned original parent intent, real Instruction Queue target and own P3 ARRIVAL/DEPARTURE allowlist; same-family item is not substitute.",
+    "Separate local MANUAL/null-source chain/receipt eligibility and commit transaction recheck remain mandatory for CORRECT; graph-null provenance is not proof."
+  ],
+  "limits": [
+    "Only new32focused tests independently run; old84SQLite and fullrepo suite not repeated.",
+    "No Native dispatch/UI/Cloud/APPLIED/device/Hosted/SQL/Provider or actual UNKNOWN action.",
+    "No product/main/source edit or push by reviewer.",
+    "Review artifact fixed by SHA256; no separate review Git commit claimed."
+  ]
+}

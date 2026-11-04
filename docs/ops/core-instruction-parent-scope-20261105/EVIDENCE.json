@@ -1,0 +1,49 @@
+{
+  "request": "Native b562 Instruction parent/family fail-closed resolver",
+  "status": "CORE_HELPER_LOCAL_PASS / INDEPENDENT_REVIEW_PENDING / NO_MAIN_INTEGRATION",
+  "baseMain": "c98821fe16931bfe2fd79869178f0f8e8ac87445",
+  "scopeSHA256": {
+    "src/domain/trip/tripCoreInstructionParent.ts": "606f3a4d9ebc3d69555788c9805bcd74ab32db02d049f4f8458f48086fa5060e",
+    "src/domain/trip/tripCoreInstructionParent.test.ts": "04a132ca0777fbb15c51db71aff84bdee0ad200f6f034a25eace28a3b54de2d2",
+    "docs/ops/core-instruction-parent-scope-20261105/CONTRACT.md": "430bf22b4d2c5bae59af1f38866c70e6844df1734b83c47283fbe5fa3970b357"
+  },
+  "nativeFixedEvidence": {
+    "commit": "b562169409eba47e969eb0907b30a5fe9a0937ee",
+    "file": "NATIVE_PARENT_RESOLVER_GAP.json",
+    "sha256": "5f046530a4c3cf253287960608d19c9ce38965af4805d227e272a2e507bfb398",
+    "actualFailure": "Native worker uses INSTRUCTION target id to lookup ITEM family; undefined family bypasses enabledFamilies check. Native worker remains unchanged."
+  },
+  "checks": {
+    "testCommand": "node node_modules/vitest/vitest.mjs run src/domain/trip/tripCoreInstructionParent.test.ts --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "tests": 32,
+    "durationSeconds": 0.254,
+    "result": "PASS",
+    "stdout": "\n RUN  v4.1.11 /Users/xoery/Project/otr-mobile-temporal/core-p3-instruction-parent-scope-20261105\n\n\n Test Files  1 passed (1)\n      Tests  32 passed (32)\n   Start at  10:38:12\n   Duration  254ms (transform 77ms, setup 0ms, import 134ms, tests 54ms, environment 0ms)\n\n",
+    "scopedTypecheck": "PASS with transitive dependencies",
+    "scopedEslint": "PASS zero errors/warnings",
+    "wholeProjectTypecheck": "NOT_RERUN / existing TS7016 known from c988 receipt, not claimed PASS",
+    "old84SQLite": "NOT_RERUN / unrelated local transaction seam unchanged"
+  },
+  "coverage": [
+    "actual legacy familyundefined expression vs actual P3 scope, APPEND and CORRECT",
+    "canonical preview graph/command unchanged",
+    "same-family wrong parent, Actor/Trip management, missing/duplicate parent or entry",
+    "stale parent/entry, existing new entry, old operation post-apply graph",
+    "cycle/missing/mismatched/forked immutable chain",
+    "new entry null base and unrelated extra base",
+    "source-bound classification not manual provenance authority",
+    "malformed input maps neutral typed error without bodies; unexpected programmer errors remain diagnosable"
+  ],
+  "firstFocusedFailure": "After narrowing broad error mapping, extra-base case returned canonical UNUSED_BASE_VECTOR; added that finite refusal code and reran 32 PASS. No validation relaxed.",
+  "unchanged": [
+    "tripCoreV2SyncWorker.ts",
+    "tripNormalSync.ts",
+    "tripNormalCoordinator.ts",
+    "Core Repository/Queue",
+    "Schema/Backend/Hosted",
+    "Source/Provider/device/actual UNKNOWN operations"
+  ],
+  "dispatch": "BLOCKED_NATIVE_WIRING_NOT_CHANGED",
+  "authority": "NONE",
+  "review": "PENDING"
+}

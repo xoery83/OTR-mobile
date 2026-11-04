@@ -1,0 +1,45 @@
+{
+  "requestId": "NATIVE-CORE-INSTRUCTION-PARENT-SCOPE-20261105",
+  "status": "VALIDATED_FOR_NONFORCE_MAIN_PUBLICATION_SOURCE_ONLY",
+  "baseRemoteMain": "c98821fe16931bfe2fd79869178f0f8e8ac87445",
+  "fixedCandidate": "2c329bbc7b112ddb237452ba95b56d8960cdc81f",
+  "soleDelegatedSourceWriter": "/root/p3_instruction_manual_txn_20261105",
+  "scopeSHA256": {
+    "src/domain/trip/tripCoreInstructionParent.ts": "606f3a4d9ebc3d69555788c9805bcd74ab32db02d049f4f8458f48086fa5060e",
+    "src/domain/trip/tripCoreInstructionParent.test.ts": "04a132ca0777fbb15c51db71aff84bdee0ad200f6f034a25eace28a3b54de2d2",
+    "docs/ops/core-instruction-parent-scope-20261105/CONTRACT.md": "430bf22b4d2c5bae59af1f38866c70e6844df1734b83c47283fbe5fa3970b357"
+  },
+  "independentReview": {
+    "file": "INDEPENDENT_REVIEW.json",
+    "sha256": "1769b0436c71e9658f82d8c7381681f913a576399692e28de5d7dc2c4127fba5",
+    "gitReviewCommit": null,
+    "result": "NO_BLOCKER_PURE_CORE_HELPER_SOURCE_ONLY_INDEPENDENT32PASS"
+  },
+  "assemblyChecks": {
+    "helperTestContract": "BYTE_IDENTICAL_TO_FIXED_REVIEW",
+    "allOtherCanonicalSourceBackendPackagesConfig": "UNCHANGED_FROM_C988_REVIEW_BASE",
+    "scopedTypecheck": "PASS / no diagnostics",
+    "scopedEslint": "PASS / no errors or warnings",
+    "diffCheck": "PASS",
+    "independentTests": "REUSED_32_PASS_272MS; unchanged roots and canonical dependencies, no redundant rerun",
+    "old84SQLite": "NOT_RERUN",
+    "wholeProjectTypes": "NOT_CLAIMED_PASS / existing TS7016 baseline remains separate"
+  },
+  "validationOutput": {
+    "types": "",
+    "lint": ""
+  },
+  "nativeState": "NOT_WIRED / NOT_WORKER_GREEN / NOT_CLOUD_OR_NATIVE_E2E",
+  "requiredNativeContract": "CONTRACT.md: receipt first; actual pre-command raw mirror plus trusted same-scope Actor; enabledFamilies comparison; stale blocks awaiting original receipt/legal refresh, never rebase/post-op replay; separate unsourced eligibility",
+  "unchanged": [
+    "tripCoreV2SyncWorker.ts",
+    "tripNormalSync.ts",
+    "tripNormalCoordinator.ts",
+    "Core Repository/Queue",
+    "Schema/Backend/Hosted",
+    "Source/Provider/device/actual UNKNOWN"
+  ],
+  "authorityChange": "NONE",
+  "publication": "Commit followed by fresh remote CAS, nonforce push and independently fetched source/review hash readback required; publication SHA returned separately, not self-referenced",
+  "validatedAtUTC": "2026-11-04T21:53:14.489388+00:00"
+}

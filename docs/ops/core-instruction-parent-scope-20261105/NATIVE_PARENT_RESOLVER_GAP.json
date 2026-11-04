@@ -1,0 +1,62 @@
+{
+  "status": "NARROW_SYNC_SAFETY_RED / NO_DISPATCH_ENABLED",
+  "baseline": "ecc2ab771abe626ae41de8e3543c945fd8afa5c9",
+  "sourceBlobs": {
+    "src/data/sync/tripCoreV2SyncWorker.ts": "8037e2e42338260e5d6e30e47ece7d12fcedb355",
+    "src/data/sync/tripNormalSync.ts": "3366ad8dde85d107896a4f9c444bc24144440be1",
+    "src/data/sync/tripNormalCoordinator.ts": "1c2883f021d4910b21bfea81caa1759d7eb78ac5",
+    "src/data/repositories/acceptedManualCreate.ts": "99acda3179c2bac020f01c4d03b74e28899a8949"
+  },
+  "actualRed": {
+    "command": "vitest run src/data/sync/tripCoreV2SyncWorker.test.ts -t \"actual parent P3 family\" --maxWorkers=1",
+    "result": "Two schema-valid MANUAL INSTRUCTION commands, APPEND and CORRECT, dispatch and resolve despite only P1 family enabled and actual parent P3. Expected CORE_FAMILY_CLOSED. Transport is deterministic stub, no network/Hosted request.",
+    "log": "INSTRUCTION_FAMILY_GATE_RED.log",
+    "logSha256": "3792829d8a060269ed4eb6395df40d7f8331dceb7a07f2c3205ea7811d27e7c5",
+    "testSnippet": "INSTRUCTION_FAMILY_GATE_REPRO.txt"
+  },
+  "exactCallers": [
+    {
+      "file": "src/data/sync/tripCoreV2SyncWorker.ts",
+      "lines": "136-164",
+      "fact": "CREATE family is declared payload; non-CREATE family is itinerary_events.find(id===command.target.id).experience_family. INSTRUCTION target identifies entry, not parent, so family undefined. The family&& guard skips enabledFamilies. Receipt-first at116 and exact command/queue binding at90-105 precede this; preserve them."
+    },
+    {
+      "file": "src/data/sync/tripNormalSync.ts",
+      "lines": "49-67,82-93,247-253,335-353",
+      "fact": "Accepted-edit helper and queue selectors currently require ITEM target, then isManualItem(tripId,command.target.id,family). They are closed to Instructions. Only opening ITEM selector would expose the Worker family skip without a parent resolver."
+    },
+    {
+      "file": "src/data/sync/tripNormalCoordinator.ts",
+      "lines": "71-92,230-260,309-343",
+      "fact": "Existing isManualItem resolver and guarded submit accept a parent ITEM ID. acceptedEditableItem uses exact accepted certificate/account/actor/trip/family/owner/lifecycle/coreCanManage. Current guarded submit uses command.target.id as parent and ITEM base match. This is an additional direct consumer of the same parent-identity resolution, not a separate new permission system."
+    }
+  ],
+  "existingResolverLimits": {
+    "isManualItem": "Validates parent ITEM provenance/family and sparse qualification, not an INSTRUCTION entry or immutable chain. Reuse after formal parent resolution, never pass entry target ID as ITEM.",
+    "acceptedManualCreate": "Retained APPLIED MANUAL parent CREATE command/receipt provenance. It does not prove current Instruction correction eligibility or replace Root1 chain-bound local MANUAL/null-source proof.",
+    "publicCore": "No existing typed Instruction parent resolver found in these immediate consumers; await Root1 fixed eligibility/envelope rather than inventing proof."
+  },
+  "minimalNativeOwningHookup": {
+    "expectedFiles": [
+      "src/data/sync/tripCoreV2SyncWorker.ts",
+      "src/data/sync/tripNormalSync.ts",
+      "src/data/sync/tripNormalCoordinator.ts",
+      "their existing focused tests",
+      "a narrow shared Native resolver helper only if Root1 contract makes one necessary"
+    ],
+    "append": "Use Root1 validated APPEND declaration payload.itemId plus actual current authorized parent graph/family and exact command/Trip/parent base binding. Do not trust an unverified UI family/parent hint.",
+    "correct": "Use Root1 verified current entry+immutable chain+actor/Trip/parent binding to resolve true parent, not target.id interpreted as ITEM; preserve existing correction eligibility proof. Missing/ambiguous/mismatched/stale parent or entry fails closed.",
+    "worker": "For new submission resolve a nonempty lawful family before enabledFamilies check for Instruction; unknown must not skip admission. Receipt-first recovery remains receipt-first and never becomes a new submit permission.",
+    "selectors": "Only after formal owning envelope is available, narrowly recognize typed INSTRUCTION candidates, resolve parent for existing isManualItem/acceptedEditableItem, preserve target entry queue identity and exact original operation. No global acceptedEdit family opening or default-enabled Hosted profile.",
+    "proof": "Do not infer handwritten status from Reader-null provenance, local UI fields, or a caller boolean. Actual eligibility/errorcode/receipt semantics await Root1."
+  },
+  "notChanged": [
+    "Sync product source",
+    "Core owning seam",
+    "UI",
+    "Hosted capability/profile",
+    "Queue rows",
+    "Authority/Schema/Provider"
+  ],
+  "next": "Root1 fixed contract then focused Native resolver wiring and RED-to-GREEN; independent review. Current receipt is diagnosis/actual safety RED only."
+}
