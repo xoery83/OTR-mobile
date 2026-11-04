@@ -1,0 +1,67 @@
+{
+  "request": "IMP-C01-UI-SOURCE-INTEGRATION-20261104-09",
+  "status": "SOURCE_MAIN_VERIFIED_QA152_DEVICE_PENDING",
+  "preMain": "1c5fe789c68fb9f5a9379abdc48e86ea75c1b3dd",
+  "candidate": "8142e049f8a45f3961485c5fe4a566bb6b531661",
+  "evidenceCommit": "37f731da",
+  "evidenceSHA256": "5a6893a873fd657471db7a25bcadcb094e193e3abfb7fa5b1c0710868ac077d6",
+  "sourceLeaves": [
+    {
+      "path": "src/features/capture/CaptureProgress.test.ts",
+      "sha256": "ca0e33f42f874d3c940b79beb2c96a3460118b684f88f6c68aa60351b646dfcd"
+    },
+    {
+      "path": "src/features/capture/CaptureProgress.tsx",
+      "sha256": "7564dc1537340eb1d43b5cf940aed99087506e5a1d9862f91fc781e9e316ebce"
+    },
+    {
+      "path": "src/features/capture/UniversalCaptureResults.test.ts",
+      "sha256": "714d49745de4097d3b771a78fbd0fd6a2f22d71fdcb83eb1df7659474883e64c"
+    },
+    {
+      "path": "src/features/capture/UniversalCaptureResults.tsx",
+      "sha256": "48b7b99458e2bce7e9ec24777aba9d9a030ed0dc99114329c87f354f6a6a4a18"
+    },
+    {
+      "path": "src/features/capture/UniversalPhotoRelevanceRow.test.ts",
+      "sha256": "a8a966b0a66c9e2d75d61e93120631558be71baa714c86f48f15ca508d72ed03"
+    },
+    {
+      "path": "src/features/capture/UniversalPhotoRelevanceRow.tsx",
+      "sha256": "99728158fe0a3249291c42fb42ccb05083786aa9438e31fb1b2f73bc41642b67"
+    }
+  ],
+  "allSixExact": true,
+  "independentReview": {
+    "reviewer": "Lane C read-only Worker /root/ui08_review",
+    "fixedCandidate": "8142e049f8a45f3961485c5fe4a566bb6b531661",
+    "verdict": "SCOPED_NO_BLOCKER",
+    "scope": "Three components, direct tests and connected photo hook/projection; no actionable correctness/accessibility/data-safety defects",
+    "limits": "No test rerun, device or Cloud check by reviewer",
+    "nativeDispatch": "Two App-thread message attempts timed out in automatic approval service, no rejection/no delivery assumed. Internal read-only review restores Owner-requested Worker work; no external identities/private artifacts sent."
+  },
+  "root1IntegrationReview": "Scoped current-main diff/direct projection/hook review: no actionable blocker; only parent-owned duplicate complete list removed, standalone default retained; field sources and actual result unprocessed subset retained; persisted-choice opposite action explicit with unchanged guards; diagnostic paging explicit existing flag only.",
+  "actualMainTests": {
+    "suites": 6,
+    "passed": 112,
+    "scope": "3 UI components +photo hook +foundation+keyboard"
+  },
+  "scopedCompiler": "PASS6roots plus imports",
+  "uiGuard": "PASS168/473, baseline unchanged",
+  "lintErrors": 0,
+  "format": "Exact reviewed formatted source bytes reused",
+  "noChanges": [
+    "Parser/interpretation/CoreSave",
+    "DTO/Repository/SQLite76/Queue",
+    "Backend/Source/Provider/AuthAuthority",
+    "unrelated main Native/Core/Auth source",
+    "installedQA151850/Vision869 artifacts"
+  ],
+  "deviceBuildBoundary": "UI08 is JS-only and adds no Native dependency. QA152 may keep151 native ABI with SQLite76; selected MapKit hint introduced elsewhere still requires new paired full Native build and must not be claimed active on151. Native/LaneC own exact bundle/ABI installation verification.",
+  "sourceCalls": 0,
+  "providerCalls": 0,
+  "coreSaves": 0,
+  "deviceActions": 0,
+  "hostedActions": 0,
+  "returnTo": "LaneC sole installer for QA152 actual Originals/choice/paging/error/cold recovery and Owner UX check"
+}

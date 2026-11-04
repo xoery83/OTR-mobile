@@ -648,9 +648,7 @@ it("shows the owning accepted receipt even when save controls are closed, withou
   const f = fixture();
   const result = {
     ...f.result,
-    candidates: [
-      { ...f.result.candidates[0], presentationTier: "INCOMPLETE" as const },
-    ],
+    candidates: [{ ...f.result.candidates[0], presentationTier: "INCOMPLETE" as const }],
   };
   const confirm = vi.fn(async () => {});
   const html = renderToStaticMarkup(
@@ -669,9 +667,7 @@ it("shows the owning accepted receipt even when save controls are closed, withou
   );
   expect(html).toContain(t("capture.ai.p1Accepted"));
   expect(html).not.toContain(t("capture.ai.incomplete"));
-  expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(
-    false,
-  );
+  expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
   expect(confirm).not.toHaveBeenCalled();
 });
 
@@ -692,8 +688,7 @@ it("shows an unresolved Save read and blocks confirmation instead of treating it
   );
   expect(html).toContain(t("capture.ai.p1Unavailable"));
   expect(
-    state.buttons.find((b) => b.label === t("capture.ai.p1OpenOriginal"))
-      ?.disabled,
+    state.buttons.find((b) => b.label === t("capture.ai.p1OpenOriginal"))?.disabled,
   ).toBe(false);
 });
 
@@ -726,9 +721,7 @@ it.each([
         },
       }),
     );
-    const button = state.buttons.find(
-      (b) => b.label === t("tripHome.preparation.day"),
-    );
+    const button = state.buttons.find((b) => b.label === t("tripHome.preparation.day"));
     expect(Boolean(button)).toBe(shown);
     if (button) {
       button.onPress();
@@ -760,3 +753,52 @@ it.each(["en", "zh-Hans"] as const)(
     expect(f.props.start).not.toHaveBeenCalled();
   },
 );
+
+it("leaves the sole original list to CaptureProgress before Results without creating an outcome", () => {
+  const f = fixture();
+  const model = {
+    ...f.props.model,
+    inputs: [
+      {
+        ...f.props.model.inputs[0],
+        originalFilename: "Original.pdf",
+        declaredContentType: "application/pdf",
+      },
+    ],
+  } as CaptureJobReadModel;
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, {
+      ...f.props,
+      model,
+      result: null,
+      originalsListedElsewhere: true,
+    }),
+  );
+  expect(html).not.toContain(t("capture.ai.originals"));
+  expect(html).not.toContain("Original.pdf");
+  expect(html).toContain(t("capture.ai.previewOnly"));
+  expect(f.props.start).not.toHaveBeenCalled();
+});
+it("keeps real result evidence names and unprocessed warnings when the parent lists originals", () => {
+  const f = fixture();
+  f.props.model.inputs = [
+    ...f.props.model.inputs,
+    {
+      id: randomUUID(),
+      kind: "FILE",
+      originalFilename: "Retained-only.pdf",
+      declaredContentType: "application/pdf",
+    } as CaptureJobReadModel["inputs"][number],
+  ];
+  const before = JSON.stringify(f.result);
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, { ...f.props, originalsListedElsewhere: true }),
+  );
+  expect(html).not.toContain(t("capture.ai.originals"));
+  expect(html).toContain("Not processed (1)");
+  expect(html).toContain("Retained-only.pdf");
+  expect(html).toContain("行程.txt");
+  expect(html).toContain("Museum walk");
+  expect(JSON.stringify(f.result)).toBe(before);
+  expect(f.props.start).not.toHaveBeenCalled();
+});

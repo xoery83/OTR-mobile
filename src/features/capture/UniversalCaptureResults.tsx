@@ -26,10 +26,12 @@ export function UniversalCaptureResults({
   isCurrent,
   readTripTargets,
   onOpenAcceptedItem,
+  originalsListedElsewhere = false,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
+  originalsListedElsewhere?: boolean;
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
@@ -41,6 +43,7 @@ export function UniversalCaptureResults({
       admission={admission}
       readTripTargets={readTripTargets}
       onOpenAcceptedItem={onOpenAcceptedItem}
+      originalsListedElsewhere={originalsListedElsewhere}
       {...state}
     />
   );
@@ -61,6 +64,7 @@ export function UniversalResultView({
   admission,
   queued = false,
   activity,
+  originalsListedElsewhere = false,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
@@ -78,6 +82,7 @@ export function UniversalResultView({
   admission?: P1AdmissionActions;
   queued?: boolean;
   activity?: UniversalTaskActivity | null;
+  originalsListedElsewhere?: boolean;
 }) {
   useUiLocale();
   const s = useThemedStyles(styles);
@@ -107,7 +112,7 @@ export function UniversalResultView({
       ) : queued ? (
         <UiText style={s.meta}>{t("capture.ai.queued")}</UiText>
       ) : null}
-      {unprocessed.length ? (
+      {unprocessed.length && (result || !originalsListedElsewhere) ? (
         <View style={s.group}>
           <UiText style={s.heading}>
             {result
@@ -128,29 +133,37 @@ export function UniversalResultView({
       ) : null}
       {result ? (
         <>
-          <UiText style={s.heading}>{t("capture.ai.originals")}</UiText>
-          {model.inputs
-            .filter((input) => result.sourceBindings.some((b) => b.inputId === input.id))
-            .map((input) => {
-              const binding = result.sourceBindings.find((b) => b.inputId === input.id)!;
-              return (
-                <View key={input.id} style={s.source}>
-                  <AppIcon
-                    name={
-                      binding.mime.startsWith("image/")
-                        ? "photo"
-                        : binding.pdfSource || binding.mime === "application/pdf"
-                          ? "doc.richtext"
-                          : "doc.text"
-                    }
-                    color={colors.textSecondary}
-                  />
-                  <UiText style={[s.copy, s.filename]}>
-                    {sourceName(binding.alias)}
-                  </UiText>
-                </View>
-              );
-            })}
+          {!originalsListedElsewhere ? (
+            <>
+              <UiText style={s.heading}>{t("capture.ai.originals")}</UiText>
+              {model.inputs
+                .filter((input) =>
+                  result.sourceBindings.some((b) => b.inputId === input.id),
+                )
+                .map((input) => {
+                  const binding = result.sourceBindings.find(
+                    (b) => b.inputId === input.id,
+                  )!;
+                  return (
+                    <View key={input.id} style={s.source}>
+                      <AppIcon
+                        name={
+                          binding.mime.startsWith("image/")
+                            ? "photo"
+                            : binding.pdfSource || binding.mime === "application/pdf"
+                              ? "doc.richtext"
+                              : "doc.text"
+                        }
+                        color={colors.textSecondary}
+                      />
+                      <UiText style={[s.copy, s.filename]}>
+                        {sourceName(binding.alias)}
+                      </UiText>
+                    </View>
+                  );
+                })}
+            </>
+          ) : null}
           <UiText style={s.meta}>
             {t(
               result.providerOutcome === "LOCAL_FIXTURE"

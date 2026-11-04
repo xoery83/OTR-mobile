@@ -1,0 +1,71 @@
+{
+  "requestId": "IMP-C01-UI-DELTA-20261104-08",
+  "agent": "Lane C — Import / Documents / Form AI",
+  "candidateSha": "8142e049f8a45f3961485c5fe4a566bb6b531661",
+  "baseMain": "7541d146b8488cffaf3730f622ef79729ac428aa",
+  "recordedAt": "2026-11-04T08:14:07.074464+00:00",
+  "status": "SCOPED_CODE_REVIEW_PASS_DEVICE_PENDING",
+  "uniqueWriter": {
+    "implementation": "Lane C",
+    "handoffFrom": "Lane A / Native",
+    "scope": "CaptureProgress, UniversalCaptureResults, UniversalPhotoRelevanceRow and direct tests only; Native explicitly released these leaves and did not edit them"
+  },
+  "problemEvidence": "QA151 physical iPad landscape/portrait screenshots: repeated complete Originals list and redundant confirmed-choice actions; original batch preserved",
+  "changes": [
+    "Parent owns sole complete Originals list; standalone Results default unchanged. Actual result field sourceName/evidence and unprocessed subset warning remain.",
+    "Confirmed current persisted Photo choice retains relevance/local preference and only opposite explicit action. Unchecked, originalChanged, unavailable, busy and current-account hook behavior retained; no render OCR/choice. Choice status politely announced.",
+    "Existing QA paging remains available only through explicit EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING=true; __DEV__ no longer automatically exposes diagnostic buttons. No new control/flag/dependency."
+  ],
+  "leaves": [
+    {
+      "path": "src/features/capture/CaptureProgress.test.ts",
+      "sha256": "ca0e33f42f874d3c940b79beb2c96a3460118b684f88f6c68aa60351b646dfcd"
+    },
+    {
+      "path": "src/features/capture/CaptureProgress.tsx",
+      "sha256": "7564dc1537340eb1d43b5cf940aed99087506e5a1d9862f91fc781e9e316ebce"
+    },
+    {
+      "path": "src/features/capture/UniversalCaptureResults.test.ts",
+      "sha256": "714d49745de4097d3b771a78fbd0fd6a2f22d71fdcb83eb1df7659474883e64c"
+    },
+    {
+      "path": "src/features/capture/UniversalCaptureResults.tsx",
+      "sha256": "48b7b99458e2bce7e9ec24777aba9d9a030ed0dc99114329c87f354f6a6a4a18"
+    },
+    {
+      "path": "src/features/capture/UniversalPhotoRelevanceRow.test.ts",
+      "sha256": "a8a966b0a66c9e2d75d61e93120631558be71baa714c86f48f15ca508d72ed03"
+    },
+    {
+      "path": "src/features/capture/UniversalPhotoRelevanceRow.tsx",
+      "sha256": "99728158fe0a3249291c42fb42ccb05083786aa9438e31fb1b2f73bc41642b67"
+    }
+  ],
+  "checks": {
+    "captureUiAndHook": "107 PASS in4 suites",
+    "uiFoundationAndKeyboard": "5 PASS in2 suites",
+    "strict": "6 roots; inherited diagnostics0",
+    "uiGuard": "PASS;168 representative files;baseline not regenerated",
+    "lint": "6 changed leaves PASS",
+    "format": "6 changed leaves PASS"
+  },
+  "independentReview": {
+    "reviewer": "Lane C read-only Worker /root/ui08_review",
+    "fixedCandidate": "8142e049f8a45f3961485c5fe4a566bb6b531661",
+    "verdict": "SCOPED_NO_BLOCKER",
+    "scope": "Three components, direct tests and connected photo hook/projection; no actionable correctness/accessibility/data-safety defects",
+    "limits": "No test rerun, device or Cloud check by reviewer",
+    "nativeDispatch": "Two App-thread message attempts timed out in automatic approval service, no rejection/no delivery assumed. Internal read-only review restores Owner-requested Worker work; no external identities/private artifacts sent."
+  },
+  "dataPathChecklist": {
+    "1DataOwnership": "Presentation-only transient prop; existing local-private Photo choice unchanged; no new persistent field",
+    "2LocalStorage": "No repository/SQLite/migration changes; existing Drafts/original IDs/choice retained",
+    "3SyncBackendContract": "No queue/DTO/Backend/Source/Parser/Core Save changes",
+    "4ConflictOffline": "Existing isCurrent/account generation/originalChanged/error/busy behavior retained; no automatic action",
+    "5RequiredEvidence": "L1 code/markup/Hook checks now; integrated QA152 physical visual and cold recovery pending. No new L2/L3 contract required for display delta.",
+    "6IntegrationDelta": "Independent code review done; Root1 exact6-leaf source integration, signed QA152 on persistent151 native ABI, LaneC sole install and physical check pending"
+  },
+  "noProviderSourceSave": true,
+  "primaryUnchanged": "IMP-C01 Fresh Import User Beta Closure"
+}

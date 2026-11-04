@@ -140,29 +140,43 @@ it("an unchecked image offers a local check and not a paid action", () => {
   expect(h.choose).not.toHaveBeenCalled();
 });
 it.each(["CONTINUE_WITH_AI", "SKIP"])(
-  "records the %s choice as local preference, never model progress",
+  "shows confirmed %s once and preserves only the opposite explicit action",
   (choice) => {
     h.hook.mockReturnValue(state("UNCERTAIN", choice));
     const html = render();
     expect(html).toContain(choice === "SKIP" ? copy.skipSelected : copy.continueSelected);
-    expect(html).toContain(copy.localOnly);
-    expect(
-      h.buttons.find((p) => p.label === (choice === "SKIP" ? copy.skip : copy.chooseAi))
-        .disabled,
-    ).toBe(true);
+    expect(html).not.toContain(copy.localOnly);
+    expect(h.buttons.map((p) => p.label)).toEqual([
+      choice === "SKIP" ? copy.chooseAi : copy.skip,
+    ]);
+    expect(h.screen).not.toHaveBeenCalled();
+    expect(h.choose).not.toHaveBeenCalled();
+    h.buttons[0].onPress();
+    expect(h.choose).toHaveBeenCalledExactlyOnceWith(
+      choice === "SKIP" ? "CONTINUE_WITH_AI" : "SKIP",
+    );
   },
 );
-it("keeps an explicit local recheck available after Continue without inheriting or repeating consent", () => {
-  h.hook.mockReturnValue(state("RELEVANT", "CONTINUE_WITH_AI"));
-  const html = render();
-  expect(html).toContain(copy.continueSelected);
-  expect(h.screen).not.toHaveBeenCalled();
-  const recheck = h.buttons.find((p) => p.label === copy.screen);
-  expect(recheck.disabled).toBe(false);
-  recheck.onPress();
-  expect(h.screen).toHaveBeenCalledOnce();
+it("keeps the opposite action disabled while a confirmed choice is being changed", () => {
+  h.hook.mockReturnValue({ ...state("RELEVANT", "CONTINUE_WITH_AI"), busy: "CHOOSE" });
+  render();
+  expect(h.buttons.map((p) => [p.label, p.disabled])).toEqual([[copy.skip, true]]);
   expect(h.choose).not.toHaveBeenCalled();
-  expect(h.read).not.toHaveBeenCalled();
+});
+it("does not compact an unavailable confirmed choice or hide its recovery check", () => {
+  h.hook.mockReturnValue({
+    ...state("RELEVANT", "CONTINUE_WITH_AI"),
+    unavailable: true,
+    canChoose: false,
+  });
+  const html = render();
+  expect(html).toContain(copy.unavailable);
+  expect(html).toContain(copy.localOnly);
+  expect(h.buttons.find((p) => p.label === copy.screen).disabled).toBe(true);
+  h.buttons.find((p) => p.label === t("common.tryAgain")).onPress();
+  expect(h.read).toHaveBeenCalledOnce();
+  expect(h.screen).not.toHaveBeenCalled();
+  expect(h.choose).not.toHaveBeenCalled();
 });
 it("stale persisted choices are not displayed as current or enabled until checked again", () => {
   h.hook.mockReturnValue({

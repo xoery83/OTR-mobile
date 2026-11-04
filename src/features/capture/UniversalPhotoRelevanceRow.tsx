@@ -47,12 +47,13 @@ export function UniversalPhotoRelevanceRow({
   const choice =
     value?.persisted && !value.originalChanged ? value.decision.choice : "UNDECIDED";
   const relevance = value?.decision.relevance.status;
+  const confirmed = choice !== "UNDECIDED" && !state.unavailable;
   return (
     <View style={styles.body}>
       <UiText accessibilityRole="header" style={styles.title}>
         {copy.title}
       </UiText>
-      <UiText style={styles.meta}>{copy.localOnly}</UiText>
+      {!confirmed ? <UiText style={styles.meta}>{copy.localOnly}</UiText> : null}
       {blocked ? (
         <UiText accessibilityLiveRegion="polite" style={styles.meta}>
           {t("common.loading")}
@@ -86,43 +87,49 @@ export function UniversalPhotoRelevanceRow({
               : copy.notChecked}
       </UiText>
       {choice !== "UNDECIDED" ? (
-        <UiText style={styles.meta}>
+        <UiText accessibilityLiveRegion="polite" style={styles.meta}>
           {choice === "CONTINUE_WITH_AI" ? copy.continueSelected : copy.skipSelected}
         </UiText>
       ) : null}
-      <UiButton
-        label={copy.screen}
-        variant="secondary"
-        disabled={blocked || state.unavailable}
-        onPress={() => {
-          void state.screen();
-        }}
-      />
+      {!confirmed ? (
+        <UiButton
+          label={copy.screen}
+          variant="secondary"
+          disabled={blocked || state.unavailable}
+          onPress={() => {
+            void state.screen();
+          }}
+        />
+      ) : null}
       {value ? (
         <>
-          <UiButton
-            label={copy.chooseAi}
-            variant="secondary"
-            disabled={
-              blocked ||
-              state.unavailable ||
-              !state.canChoose ||
-              choice === "CONTINUE_WITH_AI"
-            }
-            onPress={() => {
-              void state.choose("CONTINUE_WITH_AI");
-            }}
-          />
-          <UiButton
-            label={copy.skip}
-            variant="text"
-            disabled={
-              blocked || state.unavailable || !state.canChoose || choice === "SKIP"
-            }
-            onPress={() => {
-              void state.choose("SKIP");
-            }}
-          />
+          {!confirmed || choice !== "CONTINUE_WITH_AI" ? (
+            <UiButton
+              label={copy.chooseAi}
+              variant="secondary"
+              disabled={
+                blocked ||
+                state.unavailable ||
+                !state.canChoose ||
+                choice === "CONTINUE_WITH_AI"
+              }
+              onPress={() => {
+                void state.choose("CONTINUE_WITH_AI");
+              }}
+            />
+          ) : null}
+          {!confirmed || choice !== "SKIP" ? (
+            <UiButton
+              label={copy.skip}
+              variant="text"
+              disabled={
+                blocked || state.unavailable || !state.canChoose || choice === "SKIP"
+              }
+              onPress={() => {
+                void state.choose("SKIP");
+              }}
+            />
+          ) : null}
         </>
       ) : null}
     </View>

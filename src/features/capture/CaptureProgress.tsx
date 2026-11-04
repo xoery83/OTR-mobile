@@ -165,6 +165,7 @@ export function CaptureProgress({
               }
             >
               <UniversalResults
+                originalsListedElsewhere
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
                 key={`${model.batch.accountId}:${model.batch.batchId}:${model.batch.context.tripPrior?.id ?? model.assignedTripId ?? ""}`}
@@ -360,8 +361,7 @@ export function CaptureProgress({
   );
   return (
     <>
-      {(typeof __DEV__ !== "undefined" && __DEV__) ||
-      process.env.EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING === "true" ? (
+      {process.env.EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING === "true" ? (
         <View style={styles.paging}>
           <UiButton
             variant="secondary"

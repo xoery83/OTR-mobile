@@ -19,12 +19,17 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 const state = vi.hoisted(() => ({
   buttons: [] as any[],
   photoRows: [] as any[],
+  universalViews: [] as any[],
   scrollProps: null as any,
   scrollTo: vi.fn(),
   detailsOpen: false,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  lazy: () => (props: any) => {
+    state.universalViews.push(props);
+    return createElement("aside");
+  },
   useState: () => [
     state.detailsOpen,
     (value: boolean | ((open: boolean) => boolean)) => {
@@ -65,6 +70,7 @@ beforeEach(() => {
   vi.restoreAllMocks();
   state.buttons = [];
   state.photoRows = [];
+  state.universalViews = [];
   state.scrollTo.mockClear();
   state.detailsOpen = false;
   setUiLocale("en");
@@ -75,10 +81,12 @@ afterEach(() => {
 });
 
 it.each([
-  [true, undefined, true],
+  [true, undefined, false],
   [false, undefined, false],
   [false, "true", true],
   [false, "false", false],
+  [true, "true", true],
+  [true, "false", false],
 ] as const)(
   "offers bounded paging for DEV=%s with QA opt-in %s",
   (dev, optIn, enabled) => {
@@ -498,6 +506,7 @@ it.each([
     const html = renderToStaticMarkup(createElement(CaptureProgress, props));
     expect(html).toContain(copy.title);
     expect(state.photoRows).toHaveLength(1);
+    expect(state.universalViews).toHaveLength(0);
     expect(state.photoRows[0]).toMatchObject({
       model,
       input: model.inputs[0],
@@ -649,4 +658,37 @@ it("Show Details remains read-only even when the finite local-prepare action is 
   state.buttons.find((b) => b.label === t("capture.progress.showDetails")).onPress();
   await vi.waitFor(() => expect(exported).toHaveBeenCalledTimes(1));
   expect(prepare).not.toHaveBeenCalled();
+});
+
+it("gives the current Results view one shared original list while preserving all local rows", async () => {
+  const f = fixture(),
+    request = await f.submit(3),
+    model = await f.submissions.reopen(request.jobId);
+  model.inputs[0].originalFilename = "one.png";
+  model.inputs[1].originalFilename = "two.pdf";
+  const html = renderToStaticMarkup(
+    createElement(CaptureProgress, {
+      model,
+      accountId: model.batch.accountId,
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      isCurrent: () => true,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+    }),
+  );
+  expect(state.universalViews).toHaveLength(1);
+  expect(state.universalViews[0]).toMatchObject({
+    model,
+    originalsListedElsewhere: true,
+  });
+  expect(html).toContain("one.png");
+  expect(html).toContain("two.pdf");
+  expect(html).toContain(t("capture.ai.submittedText"));
+  expect(html.split(t("capture.ai.originals"))).toHaveLength(2);
 });
