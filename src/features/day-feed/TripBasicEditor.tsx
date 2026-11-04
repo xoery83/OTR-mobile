@@ -309,24 +309,31 @@ export function TripBasicEditor({
       if (draftHandoff.current) handoffNotify.current?.(false);
     };
   }, [guestLocal, generation, openedTripId, editorId]);
+  const currencyRead = useRef(0);
+  const refreshCurrency = useCallback(async () => {
+    if (!current()) return;
+    const request = ++currencyRead.current;
+    try {
+      const reader = await readTripPreparationSetupRepository();
+      if (!current() || request !== currencyRead.current) return;
+      const facts = await reader.read(openedTripId);
+      if (
+        current() &&
+        request === currencyRead.current &&
+        facts.context.tripId === openedTripId &&
+        facts.context.generation === generation
+      )
+        setCurrencySetup(facts);
+    } catch {
+      /* Keep the last authoritative currency presentation on read failure. */
+    }
+  }, [current, generation, openedTripId]);
+  useEffect(() => {
+    if (currencyAvailable) void Promise.resolve().then(refreshCurrency);
+  }, [currencyAvailable, refreshCurrency]);
   const closeCurrency = () => {
     setCurrencyOpen(false);
-    void (async () => {
-      try {
-        const reader = await readTripPreparationSetupRepository();
-        if (!alive.current || generation !== getAccountGeneration()) return;
-        const facts = await reader.read(trip.id);
-        if (
-          alive.current &&
-          generation === getAccountGeneration() &&
-          facts.context.tripId === trip.id &&
-          facts.context.generation === generation
-        )
-          setCurrencySetup(facts);
-      } catch {
-        /* Keep the last authoritative currency presentation on read failure. */
-      }
-    })();
+    void refreshCurrency();
   };
   const save = () => {
     if (

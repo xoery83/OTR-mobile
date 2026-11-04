@@ -1,0 +1,25 @@
+{
+  "request": "VISION-VN02-CURRENCY-SUMMARY-20261104-001",
+  "candidate": "001acce16e7a03844ef2210865b7ac17c8969302",
+  "base": "5ebb8f2e1d18baaa7115287f49ec0a9bf3723eb8",
+  "tree": "/private/tmp/otr-native-guest-currency-summary-20261104",
+  "branch": "codex/native-guest-currency-summary-20261104",
+  "rootCause": "Currency summary refresh existed only on Currency child Back and was transient per editor mount. A new Edit fell back to retained parent setup NZD without reading current Journey currency USD. Repository authority was not reset.",
+  "change": "Read existing TripPreparationSetupRepository on qualified Edit mount and child Back; retain Account generation/current Trip/lifecycle checks and request ticket to reject late older read. No currency model/config/Core mutations.",
+  "red": "Original source new reopen regression expected USD but received NZD: 25 existing PASS,1 new FAIL.",
+  "green": "2suites35PASS: TripBasicEditor29 + TripSetupRows6, four new focused tests.",
+  "checks": {
+    "uiGuard": "PASS168files",
+    "productAndTestESLint": "0errors13 existing import/first warnings in test structure",
+    "diffCheck": "PASS"
+  },
+  "files": {
+    "src/features/day-feed/TripBasicEditor.tsx": "9753687463db874a8db6a121c615930262966f498d91ef3dfbad38dd273e70de",
+    "src/features/day-feed/TripBasicEditor.test.ts": "61374ca7fcd5f0d3bd784d081112ce69044649fa9c7b87d11f7d5d8ff9ae1260"
+  },
+  "evidenceScope": "Deterministic UI/Repository-port fixture; actual Vision issue separately reproduced in source5ebb dedicatedSimulator14640. Fix not yet device retested or Cloud/Owner accepted.",
+  "deviceActions": 0,
+  "hostedActions": 0,
+  "protectedFilesChanged": [],
+  "independentReview": "NO_BLOCKER; see REVIEW.json"
+}

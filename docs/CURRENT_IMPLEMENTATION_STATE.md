@@ -1,3 +1,7 @@
+## Reopened Trip Edit currency summary — 4 November 2026
+
+Native `001acce1` / independent `2e2ffc8d`: Edit mount and Currency Back reuse the existing setup Repository reader. Current Account generation/Trip/lifecycle and latest-read ticket reject late responses; configured currency is not rewritten. Actual-main2 suites35 PASS, UIguard PASS, scoped lint0errors/13 existing test warnings, compiler passes with unchanged OAuth missing-type exception. Device/Vision recheck remains pending. Receipt: `docs/ops/native-currency-summary-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## P3/P4 fresh Accepted Edit consumer — 4 November 2026
 
 Native `4fc5bcba` extends the reviewed P6 three-leaf consumer only to own certified P3/P4 with truly absent original Create history. Exact command/family and receipt-first recovery remain; P3 rooms/seconds and P4 PICKUP/RETURN facts retained. Fresh edits cannot rewrite Source temporal facts through an unqualified Manual path. Actual-main4 suites78 PASS; scoped lint/compiler pass with the unchanged OAuth browser missing-type exception. No device/Cloud/Hosted acceptance or original78f2 replay. Receipt: `docs/ops/df-c02-p3p4-accepted-edit-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.

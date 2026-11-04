@@ -1,3 +1,7 @@
+import {
+  readTripPreparationSetupRepository,
+  type TripPreparationSetup,
+} from "@/data/repositories/tripPreparationSetupRepository";
 import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
 import {
   advanceAccountGeneration,
@@ -136,6 +140,7 @@ const render = (
   capabilities: Pick<
     Parameters<typeof TripBasicEditor>[0],
     | "currencyAvailable"
+    | "setup"
     | "coverAvailable"
     | "guestLocal"
     | "readGuestRecoveryContext"
@@ -162,6 +167,7 @@ beforeEach(() => {
   state.effectCursor = 0;
   vi.mocked(ImagePicker.launchImageLibraryAsync).mockClear();
   vi.mocked(readLocalTripPhotoRepository).mockClear();
+  vi.mocked(readTripPreparationSetupRepository).mockReset();
   state.alert.mockReset();
   state.values = [];
   state.refs = [];
@@ -852,3 +858,116 @@ it.each(["onQueryDirty", "onBusy"])(
     ).rejects.toThrow("GUEST_TRIP_EDIT_DRAFT_NOT_READY");
   },
 );
+
+const currencyFacts = (code: string, tripId = trip.id): TripPreparationSetup => ({
+  context: {
+    accountId: "00000000-0000-4000-8000-000000000099",
+    tripId,
+    generation: getAccountGeneration(),
+  },
+  currency: {
+    state: "AVAILABLE",
+    code,
+    scale: 2,
+    permission: "OWNER",
+    lock: "NOT_OBSERVED",
+  },
+  members: { state: "UNKNOWN" },
+  invitations: "UNKNOWN",
+  connections: "UNKNOWN",
+});
+it("reopened Guest Edit reads persisted Journey currency instead of the retained pre-edit setup summary", async () => {
+  const persisted = currencyFacts("USD"),
+    staleParent = currencyFacts("NZD");
+  const read = vi.fn().mockResolvedValue(persisted);
+  vi.mocked(readTripPreparationSetupRepository).mockResolvedValue({ read });
+  const save = vi.fn().mockResolvedValue(undefined);
+  render(save, undefined, trip, {
+    guestLocal: true,
+    currencyAvailable: true,
+    setup: staleParent,
+  });
+  await flush();
+  const nodes = render(save, undefined, trip, {
+    guestLocal: true,
+    currencyAvailable: true,
+    setup: staleParent,
+  });
+  expect(nodes.find((n) => n.type === TripCurrencyRow)!.props.setup).toEqual(persisted);
+  expect(read).toHaveBeenCalledWith(trip.id);
+  expect(save).not.toHaveBeenCalled();
+});
+it("a late initial currency read cannot replace the newer currency-screen Back result", async () => {
+  let initial!: (value: TripPreparationSetup) => void;
+  let returned!: (value: TripPreparationSetup) => void;
+  const first = new Promise<TripPreparationSetup>((resolve) => {
+    initial = resolve;
+  });
+  const second = new Promise<TripPreparationSetup>((resolve) => {
+    returned = resolve;
+  });
+  const read = vi
+    .fn()
+    .mockReturnValueOnce(first)
+    .mockReturnValueOnce(second)
+    .mockReturnValue(new Promise(() => {}));
+  vi.mocked(readTripPreparationSetupRepository).mockResolvedValue({ read });
+  const options = {
+    guestLocal: true,
+    currencyAvailable: true,
+    setup: currencyFacts("NZD"),
+  };
+  const nodes = render(undefined, undefined, trip, options);
+  await flush();
+  (
+    nodes.find((n) => n.type === SheetHeader && n.props.leftLabel === "common.back")!
+      .props.onLeft as () => void
+  )();
+  await flush();
+  returned(currencyFacts("USD"));
+  await flush();
+  initial(currencyFacts("NZD"));
+  await flush();
+  expect(
+    (
+      render(undefined, undefined, trip, options).find((n) => n.type === TripCurrencyRow)!
+        .props.setup as TripPreparationSetup
+    ).currency,
+  ).toMatchObject({ code: "USD" });
+});
+it("currency summary discards an in-flight read after Account generation changes", async () => {
+  let finish!: (value: TripPreparationSetup) => void;
+  const pending = new Promise<TripPreparationSetup>((resolve) => {
+    finish = resolve;
+  });
+  vi.mocked(readTripPreparationSetupRepository).mockResolvedValue({
+    read: vi.fn().mockReturnValue(pending),
+  });
+  const old = currencyFacts("USD"),
+    parent = currencyFacts("NZD");
+  render(undefined, undefined, trip, { currencyAvailable: true, setup: parent });
+  await flush();
+  advanceAccountGeneration();
+  finish(old);
+  await flush();
+  expect(
+    render(undefined, undefined, trip, { currencyAvailable: true, setup: parent }).find(
+      (n) => n.type === TripCurrencyRow,
+    )!.props.setup,
+  ).toEqual(parent);
+});
+it("currency summary keeps the existing presentation on read failure without writing metadata", async () => {
+  const parent = currencyFacts("USD"),
+    save = vi.fn();
+  vi.mocked(readTripPreparationSetupRepository).mockResolvedValue({
+    read: vi.fn().mockRejectedValue(Error("unavailable")),
+  });
+  render(save, undefined, trip, { currencyAvailable: true, setup: parent });
+  await flush();
+  expect(
+    render(save, undefined, trip, { currencyAvailable: true, setup: parent }).find(
+      (n) => n.type === TripCurrencyRow,
+    )!.props.setup,
+  ).toEqual(parent);
+  expect(save).not.toHaveBeenCalled();
+});
