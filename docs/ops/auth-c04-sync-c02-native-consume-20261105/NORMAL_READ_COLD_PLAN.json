@@ -156,5 +156,22 @@
     "B_cloudConsumerEligible": false,
     "old14674EmptyMyTrips": "Not proof of empty SQLite/Guest principal/assets",
     "existingGuestP3": "Retain saved P3; unsupported Adoption continues to block; never clear or bypass for login"
-  }
+  },
+  "contextOptionContract": {
+    "path": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json",
+    "verdict": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
+    "sourceCandidate": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+    "installOrIdentityAuthority": false,
+    "actualNativeBinding": "UNBOUND; same C0 independent QA package is only a conditional source-compatible option, not proven empty or signed-compatible"
+  },
+  "formalReadQualificationRefs": [
+    {
+      "path": "Root2 AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01/QUALIFICATION_RETURN.json",
+      "sha256": "21eec5523a2f883970bcc9437c929548a257fe04b131b13183f30df4a9e0cec2"
+    },
+    {
+      "path": "Root2 AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01/MINIMUM_NATIVE_QA_BINDING.json",
+      "sha256": "c30b4ba2eb5d2cdb5735605cb77edec32461e8a150fb50ee962ae65e32f02820"
+    }
+  ]
 }

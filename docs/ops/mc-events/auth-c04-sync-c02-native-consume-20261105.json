@@ -23,5 +23,7 @@
   "evidence": "docs/ops/auth-c04-sync-c02-native-consume-20261105/EVIDENCE.json",
   "current_unique_gap": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
   "scope_acceptance": "SOURCE_PLAN_ONLY; no Hosted/Device/OwnerUX upgrade",
-  "secondary_consumer_package_id": "SYNC-C02"
+  "secondary_consumer_package_id": "SYNC-C02",
+  "context_option_result": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
+  "context_option_contract": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json"
 }

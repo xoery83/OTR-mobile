@@ -27,3 +27,11 @@ Native must supply a lawful existing B context or an existing QA context proved 
 7. Close only this current Native scope as authorized, retaining Item/receipt/reservation and historical UNKNOWN. Both A and B legitimately read this Item: its presence after a later authorized switch is not a private leak, nor proof of proper cache scope. Check actual Account/Person/certificate and stale-generation rejection. Private isolation has no qualified fixture here and remains unproved.
 
 No source/UI/shared file, test, credential, network, SQL, device or business action was performed for this plan. Native alone coordinates downstream/UI/Startup/SQLite files. No Auth patch is being requested. `NORMAL_READ_COLD_PLAN.json` is the machine-readable acceptance/qualification packet; parent coordinates the one remaining context/read qualification.
+
+## Same-C0 independent QA package option
+
+`CONTEXT_OPTION_CONTRACT.json` confirms conditional source compatibility of normal Email OTP on a genuinely isolated QA package. It does not certify same0e native binary re-signing. Native owns appidentifier/entitlements/default keychain groups/private sandbox/embedded Expo config + complete JS/API/runtime/URL registration and actual empty proof; a CFBundleIdentifier rename alone is insufficient.
+
+Source0e Email uses direct OTP code verify, not Magic Link/OAuth callback/nonce. But source still offers Google with fixed original clients and no inspected Email-only disable gate; do not claim app-level Google disabled. The permitted QA sequence must make no Google action, and new package must not duplicate original Google/generic URL registrations. No new Google client or Secret is required/authorized.
+
+Normal bootstrap can resume manual/Trip/Ledger mutation queues. A fresh bundle label is not a read-only guard: prove private namespace and actual empty/no-outbound eligibility through existing qualification, retain normal discovery, and bind current B-only scope. Old126/149 and Guest14750 remain unavailable as evidence of safe emptiness. No new flag, reset, copy or execution is authorized.

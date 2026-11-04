@@ -67,8 +67,19 @@
   "next": "Return fixed plan to Auth parent; parent Native/Root2 handoff supplies exact initialprincipal/build/device/read eligibility. Do not create code/tasks while waiting.",
   "artifacts": {
     "IDENTITY_REFERENCE.json": "6482b6e9902b57718cfec471e95f64d9370cc2f2c46218f29c35cf37db4a0843",
-    "NORMAL_READ_COLD_PLAN.json": "ce381cb5c503e6ee5e56e04e8a877c52003d38282f5ebff6c727a5a1857bbdce",
+    "NORMAL_READ_COLD_PLAN.json": "f0b1b81000e77a439e8497403dd96b7afadcf11d62b6d440282704764ffd1416",
     "SOURCE_BINDINGS.json": "55b59d167e72ba388be7eebe73c73aea4255e366fda4dca681eb9c28d0f2ee01",
-    "CONSUMER_PLAN.md": "71b0f496618d294f7a7f37ca3dce6d5d347f6b95a872e2c0bd963bdf78d23cb6"
+    "CONSUMER_PLAN.md": "b21211fbe433d3f097c9f60a0159e11afcad5c39718be6e684f804b5d68e09ed",
+    "CONTEXT_OPTION_CONTRACT.json": "1791c3dd528c0456f8ebc9a5eaaf9113caaa834a9db11bd3ebce98c145864f97"
+  },
+  "contextOption": {
+    "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01-CONTEXT-OPTION",
+    "contract": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json",
+    "verdict": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
+    "sourceCandidate": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+    "codeChanges": 0,
+    "tests": 0,
+    "actualRoleOwnerNativeQualification": "PENDING",
+    "readOnlySourceCheckOnly": true
   }
 }

@@ -2,7 +2,7 @@
   "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "WAITING_NATIVE_B_CONTEXT_AND_CURRENT_READ_QUALIFICATION",
+  "status": "WAITING_NATIVE_ACTUAL_B_CONTEXT_BINDING",
   "recordedAt": "2026-11-04T18:47:03.514676+00:00",
   "actualStartedRecordPhase": "Local plan artifact drafting after read-only source/context inspection",
   "codeDelta": false,
@@ -60,5 +60,16 @@
   },
   "evidence": "docs/ops/auth-c04-sync-c02-native-consume-20261105/EVIDENCE.json",
   "noIndependentLegalCodeDelta": true,
-  "resumeTrigger": "Parent supplies necessary Native fixed B/empty context and current read/build/device qualification, or an exact new local Auth delta. No busy loop."
+  "resumeTrigger": "Parent supplies necessary Native fixed B/empty context and current read/build/device qualification, or an exact new local Auth delta. No busy loop.",
+  "subtaskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01-CONTEXT-OPTION",
+  "contextOptionContract": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json",
+  "contextOptionVerdict": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
+  "roleOwnerNativeQualification": {
+    "ROLE": "Current normal B identity/member permission pending actual qualifying run; historical Host proof only",
+    "Owner": "Existing exact matching Native B scope may be reused only if actually supplied; otherwise one minimal scope request. This contract grants no install/OTP/device/identity authority.",
+    "Native": "0e binary reuse, exact QA identity/signature/URL/embeddedConfig/container/empty proof UNBOUND, Native DRI",
+    "clock": "UNBOUND_NOT_A_WINDOW",
+    "shorterSafeContext": "None currently verified in supplied metadata: old C0 126/149 are historical and unknown today; Guest14750 remains ineligible; do not guess or launch old app."
+  },
+  "sourceCodeChanges": 0
 }

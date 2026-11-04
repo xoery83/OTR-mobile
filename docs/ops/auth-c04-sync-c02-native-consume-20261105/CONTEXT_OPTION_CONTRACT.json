@@ -1,0 +1,169 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01-CONTEXT-OPTION",
+  "primary": "AUTH-C04",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "verdict": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
+  "answer": "A genuinely independent QA package on existing C0 can be a candidate empty context for normal Email OTP; no Auth protocol requires Google OAuth or a new native compile. This does not prove safely reusing/re-signing0e. Native artifact owner must establish actual binary/config/signing/container isolation; changing CFBundleIdentifier alone is insufficient.",
+  "sourceCandidate": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "email": {
+    "protocol": "POST /auth/v1/otp {email,create_user}; POST /auth/v1/verify {email,token,type:email} -> normal provisional Session -> existing qualified install",
+    "uiDigits": 8,
+    "apiValidator": "6\u20138 digits, native approved UI exact8",
+    "OAuthCallbackOrNonceRequired": false,
+    "note": "No redirectTo/emailRedirectTo/AuthSession callback in this Email path; nonce belongs to separate Google ID-token flow. No new OAuth client/Secret or Supabase callback change needed for Email.",
+    "registrationCaveat": "Normal UI request defaults create_user=true; future QA must bind the exact existing B email and resulting immutable B Account ID. A new bundle does not authorize another registration."
+  },
+  "currentSourceDefaults": {
+    "bundleIdentifier": "com.xoery.otrmobile",
+    "expoScheme": "otrmobile",
+    "googleReversedScheme": "com.googleusercontent.apps.580120713844-sone6c0f8bd6srkr25v6fvnc8jmjj824",
+    "GoogleConfiguration": "googleSignIn.ts fixed original iOS/Web public Client IDs; no inspected email-only disable flag",
+    "GoogleUI": "EmailOtpSignIn.tsx:146 shows Google before challenge; RNGoogleSignin/OtrGoogleSignIn capability can remain available in same compiled binary",
+    "GoogleScopeMeaning": "Email-only QA scope may prohibit all Google actions, but cannot be described as app-level disabled from bundle rename, absent secret or URL removal alone. If capability-level disabling is required, Native must supply an existing qualified mechanism; this contract adds no flag/code/client.",
+    "URLConstraint": "New QA package must omit old Google reversed URL registration and omit or independently register generic otrmobile deep-link scheme consistently with effective Expo config; no duplicate registration/routing to old apps. Email itself needs neither. Native owns actual Info.plist/URL handling proof."
+  },
+  "storage": {
+    "adapter": "authRepository SecureStore get/set/delete pass no keychainService/accessGroup options",
+    "keyNames": [
+      "otr.mobile.session.v1",
+      "otr.mobile.accounts.v2",
+      "otr.mobile.session.v2.<accountId>",
+      "otr.mobile.launch.v1",
+      "otr.mobile.guest-verification.v1.<guestLocalId>"
+    ],
+    "secureStoreDependency": "Source0e declares expo-secure-store~57.0.3; inspected installed iOS source defaults keychainService to app (auth/no-auth suffix); accessGroup added only if explicitly supplied. This is source evidence, not codesign/runtime isolation proof.",
+    "nativeRequired": "Effective signed application-identifier/AppIdentifierPrefix and accessible keychain groups must be the new independent identity, with no old/shared group; do not infer from CFBundleIdentifier. No old restore/backup/credential transfer.",
+    "sqlite": "openDatabaseAsync(otr-mobile.db), Guest openDatabaseAsync(otr-guest-<localId>.db); no custom directory/group in these callers. Same filenames are safe only when Native proves a distinct private app data container, no shared file group or copied/restored DB.",
+    "guestRecovery": "Existing app Documents/auth-guest-adoption/<guestLocalId> must likewise not be copied/shared.",
+    "initialProof": "After safe artifact/container binding, normal existing principal/empty-inventory/handoff qualification must actually pass before B login. No fresh-bundle/UI-empty inference. New launch can legitimately create Guest marker/schema; use original current-schema zero-data/draft/recovery qualification, never delete rows."
+  },
+  "normalConfig": {
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE": "absent/empty; nonempty expired/malformed or string false still quarantines and makes general gate false",
+    "EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED": "true",
+    "EXPO_PUBLIC_OTR_SYNC_TRANSPORT": "dev",
+    "EXPO_PUBLIC_OTR_API_BASE_URL": "https://api-dev.xoery.art",
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "existing public DEV channel, value not read/exported here",
+    "constraint": "These existing environment values must be evidenced in actual embedded JS/effective config, not just shell env or Info rename. Do not disable General gate or use old QA_SCOPE to fake normal My Trips entry."
+  },
+  "binaryReuseNativeProofFields": [
+    "Actual unique QA bundle/application identifier, signing identity and effective entitlements; no shared/old keychain or app group",
+    "Mach-O/native ABI/module hash provenance from0e compiled program; Native owner decides re-sign/repackage compatibility, Auth does not codesign/build attest",
+    "Complete actual main.jsbundle/update ID/hash and source/API/runtime config; effective embedded Expo config, Info URL schemes and appidentifier consistent",
+    "OTRFormsQAEmbeddedBundle true selects embedded main.jsbundle in existing AppDelegate plugin; prove actual selection and no unintended Metro/update artifact",
+    "Existing C0 device and exclusive lawful claim; new independent app data/keychain namespace, no old app launch/modification/backup import",
+    "Normal current-principal, empty Guest assets/drafts/recovery, and account DB/pending queue proof; current exact B-only login/read/cold scope"
+  ],
+  "bootstrapReadOnlyBoundary": {
+    "source": "Account bootstrap opens/migrates normal DB, adoptLegacyAccountState, resumes operational sync; bootstrapActivatedAccount/reconnect/lifecycle also resume; normal cycle includes native manual queue, trip-create/metadata and Ledger queues",
+    "notReadOnlyByDefault": true,
+    "requiredActualGuard": "Native must prove new private context has no migrated/seeded/unfinished outgoing queues and no business/source/provider action is eligible or triggered, and bind/observe approved normal Auth/bootstrap/read requests versus forbidden mutation endpoints. Existing selectors/guards remain authoritative; default normal bootstrap is not an automatic read-only guarantee. If guard/current queue state cannot be proved, keep execution unqualified. Do not clear old queues, add a flag, use old QA_SCOPE, or turn General gate off.",
+    "scope": "B max normal OTP1/noresend when current authority allows; no A login/switch/POST/private fixture/Claim/Revoke/Provider/Source; normal Auth POSTs are not blanket-banned as business writes. Existing read-like bootstrap side effects need their owning current scope, not assumed from this contract."
+  },
+  "actualQualification": {
+    "ROLE": "Current normal B identity/member permission pending actual qualifying run; historical Host proof only",
+    "Owner": "Existing exact matching Native B scope may be reused only if actually supplied; otherwise one minimal scope request. This contract grants no install/OTP/device/identity authority.",
+    "Native": "0e binary reuse, exact QA identity/signature/URL/embeddedConfig/container/empty proof UNBOUND, Native DRI",
+    "clock": "UNBOUND_NOT_A_WINDOW",
+    "shorterSafeContext": "None currently verified in supplied metadata: old C0 126/149 are historical and unknown today; Guest14750 remains ineligible; do not guess or launch old app."
+  },
+  "metadataRefs": [
+    {
+      "commit": "2dd93a6d2098aab653d19aa27a1e304a3f5d62ea",
+      "path": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-b-read-binding-20261105/docs/ops/native-b-read-binding-20261105/B_CONTEXT_BINDING_PROPOSAL.json",
+      "sha256": "22552ac9da370dfb49cd8ba4f215dec1cd458cee5bfc0b7f50079e2a34762d5a"
+    },
+    {
+      "path": "Root2 AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01/QUALIFICATION_RETURN.json",
+      "sha256": "21eec5523a2f883970bcc9437c929548a257fe04b131b13183f30df4a9e0cec2"
+    },
+    {
+      "path": "Root2 AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01/MINIMUM_NATIVE_QA_BINDING.json",
+      "sha256": "c30b4ba2eb5d2cdb5735605cb77edec32461e8a150fb50ee962ae65e32f02820"
+    }
+  ],
+  "sourceRefs": [
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "app.json",
+      "sha256": "258120e354b2c8ed824a2442a70e0f50bdf95d7adcb20935d29088031bfe0dd7"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "plugins/withFormsQaEmbeddedBundle.js",
+      "sha256": "8ed8cd056e921916e4340e67f98e167cd8790ae751c262e18d875952c231c1d6"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/devSupabaseAuth.ts",
+      "sha256": "01f56a4adb0e6d14be7e6a378dd9d4420bdc2667e844953eae38eac34890cce3"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/devProvisionalSignIn.ts",
+      "sha256": "0f7ffa235d39dbe49d1b8b621e236cfc9e2a101b651f64377b3533b590ba1784"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/features/auth/EmailOtpSignIn.tsx",
+      "sha256": "dc5b986dab9983c974284cbf0e7c85e4c07ddd2b51ef2eb30b02c61d051b88db"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/googleSignIn.ts",
+      "sha256": "fea12c796c5499f48f6a4da3d2bacc7be09926d89b9a076af7f6e73f00789073"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/authRepository.ts",
+      "sha256": "845394340dd5686538fd301f5589e180fb87c07e3087f8dad89b7b8ada0add9d"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/authSessionRepository.ts",
+      "sha256": "c58b23ea52f88ab0750d01791fb9df036ad2458e5f9367b979cd89106fe9b09e"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/guestPrincipalRepository.ts",
+      "sha256": "c10671cbe8b165272bff7086bbf7a3dafc0872c022e584587c0e366fcdfb919b"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/auth/guestLocalWorkspace.ts",
+      "sha256": "6ce46745ab9d781dc3f34d8c7a434e6fc5a95a7e8643b80e50d21f6f3dfe73cd"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/db/database.ts",
+      "sha256": "260e2f6ef8fbbe35099dfc5a061206d163f188ddb1102b55a9b2b65005b43b9c"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/bootstrap/bootstrapApplication.ts",
+      "sha256": "711420509c39acc75b19629877716afcbe69363c2d7da22f445ae438c27629bd"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/bootstrap/defaultBootstrapDependencies.ts",
+      "sha256": "6127892125453f0bc10bb31d5590c6995435c09ccaf3f4a0c1479a1efeda93bd"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/sync/ledgerOperationalSync.ts",
+      "sha256": "c194bcaae99e9868cb071ce447b369b069d378d125d43f92bb7f00d18bdb9806"
+    },
+    {
+      "commit": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+      "path": "src/data/sync/nativeTripQaScope.ts",
+      "sha256": "3b8cb6057f0b2026f7e85d4464a35143b7470ed2868b4e0d550e8867f7b8f3a6"
+    }
+  ],
+  "codeChanges": 0,
+  "testsRun": 0,
+  "liveOrDeviceActions": 0,
+  "credentialReads": 0,
+  "otherLaneMessages": 0,
+  "uniqueGap": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
+  "status": "WAITING_NATIVE_ACTUAL_BINDING"
+}
