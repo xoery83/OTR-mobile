@@ -171,10 +171,12 @@ No producer/caller/timer is added here; Native sole Writer ACKed shared UI/coord
 mount after its Source QA tail. Hand-off: docs/ops/auth-va01-ux-r1-20261104/f02-local-candidate.
 No OTP/Host/device/Owner data. Actual UI repair and Vision retest remain NOT_READY.
 
-Root1 additionally reported actual STARTED_CORE_IMPLEMENTATION for formal Member
-Revoke in stable core-member-revoke-v2-20261104/base6ec33559 with fixed6d91b6e9
-contract. No fixed candidate/Hosted install/Member Revoke PASS yet. Auth will consume
-the versioned Port when delivered, not duplicate its Core implementation.
+Formal Member Revoke is source integrated at main29d77b31. Auth B-self access-loss
+consumer adapter is implemented with6 focused tests PASS, scoped lint and full typecheck PASS;
+independent Review remains pending. It reuses canonical Core DTO
+and existing Repository.revoke, with no Startup caller or Hosted enablement. Root2
+owns exact protected install qualification; Hosted revoke/cold restore NOT_RUN.
+Recovery evidence: docs/ops/auth-c04-member-access-consumer-20261104.
 
 ## Bounded support and active Owner feedback
 
@@ -187,10 +189,11 @@ the versioned Port when delivered, not duplicate its Core implementation.
 - Vision requestVISION-VA01-UX-R1-20261104-001 is actually STARTED locally while
   C04 waits its external protected Gate. F02 Authhelperf808 is delivered; Native
   caller81bde5ec fixes both remote-only and mixed local+remote cache loss; Auth
-  incremental identity/private-cache/generation review is NO_BLOCKER. Native
-  independent incremental Review/final manifest then Root1 exact integration
-  remain, not a main/device/Owner UX acceptance.
-  A01-2 eight-digit input leafb068/e846 is reviewed, Source integration pending;
+  incremental identity/private-cache/generation review is NO_BLOCKER. Native final Review and Root1 source integration are complete at main3c20ad0c;
+  Auth independently matched all five consumed source/test artifacts. Actual
+  device cold restore and Owner UX acceptance remain NOT_RUN.
+  A01-2 eight-digit input leafb068/e846 is source integrated at maine851bcae;
+  Auth independently matched the exact component and test blobs;
   no actual OTP or complete new Email UX acceptance. F01 remains pending shared
   Account UI delivery. Three feedback/spec files and four references were read.
   F02: independently reproduce

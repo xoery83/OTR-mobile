@@ -1,0 +1,23 @@
+{
+  "recoveryRecord": "MC-POWER-RECOVERY-20261104-01-Auth",
+  "status": "LOCAL_TEST_PASS_INDEPENDENT_REVIEW_PENDING",
+  "sourceDependencyMain": "29d77b31371ad7122eb5d95dd269856a7f61b353",
+  "files": {
+    "src/data/api/memberAccessLossAdapter.ts": "510331fac1f7fce3a457572ccea41d433330eca20c02e7d7ed8998da47c50cc3",
+    "src/data/api/memberAccessLossAdapter.test.ts": "ba12ecbc0793169be07b1c6c418ec58c5cddf3da9a6daae5609fdd2199b6b532",
+    "src/domain/trip/tripCoreMemberAccess.ts": "92b197034409b3496d165d3e312e26cf22ad2db015102b875b5cecff47740016"
+  },
+  "validation": {
+    "focusedVitest": {
+      "passed": 6,
+      "exitCode": 0
+    },
+    "scopedEslint": "PASS",
+    "typecheck": "PASS",
+    "diffCheck": "PASS"
+  },
+  "hostedActions": 0,
+  "otpRequests": 0,
+  "nativeDeviceAcceptance": "NOT_RUN",
+  "next": "Independent review then source handoff; no Startup injection or Hosted enablement"
+}

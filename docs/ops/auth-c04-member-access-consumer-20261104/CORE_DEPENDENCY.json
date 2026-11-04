@@ -1,0 +1,12 @@
+{
+  "status": "EXACT_ROOT1_OWNED_SOURCE_DEPENDENCY_NOT_AUTH_AUTHORED",
+  "candidate": "3d62f641",
+  "path": "src/domain/trip/tripCoreMemberAccess.ts",
+  "sha256": "92b197034409b3496d165d3e312e26cf22ad2db015102b875b5cecff47740016",
+  "source": "Root1 supplied fixed public Core contract for independent consumer preparation",
+  "editedByAuth": false,
+  "hostedAuthority": false,
+  "sourceIntegration": "Root1 canonical file already main; Auth snapshot is unchanged dependency, never overwrite owning file",
+  "sourceMain": "29d77b31371ad7122eb5d95dd269856a7f61b353",
+  "finalMainArtifactMatched": true
+}

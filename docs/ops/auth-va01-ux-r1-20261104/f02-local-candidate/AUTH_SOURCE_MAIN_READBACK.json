@@ -1,0 +1,19 @@
+{
+  "status": "EXACT_SOURCE_ARTIFACTS_PASS_DEVICE_PENDING",
+  "sourceMain": "3c20ad0cca535b455127beaa10fbe8fbfc10ee52",
+  "checks": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": true,
+    "src/features/day-feed/LocalTripWorkspace.test.ts": true,
+    "src/data/sync/tripDownstreamCoordinator.ts": true,
+    "src/features/auth/accountTripRestorePresentation.ts": true,
+    "src/features/auth/accountTripRestorePresentation.test.ts": true
+  },
+  "otpMain": "e851bcae231bc920f91daa3e4a6b70ea2e1b3f2a",
+  "otpChecks": {
+    "src/features/auth/EmailOtpSignIn.tsx": true,
+    "src/features/auth/EmailOtpSignIn.test.ts": true
+  },
+  "testsRerun": 0,
+  "deviceAcceptance": "NOT_RUN",
+  "hostedActions": 0
+}
