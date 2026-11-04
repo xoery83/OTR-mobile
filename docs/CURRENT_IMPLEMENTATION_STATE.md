@@ -139,7 +139,12 @@ and `recovery-timeout-20261103`; do not rerun them without a changed failure.
    Five Auth-owned Profile dependencies absent from that main are pinned for exact
    blob integration, never whole old app replacement. No Startup/config/port
    injection, SQL installation or Cloud save. Runtime package is in
-   `docs/ops/auth-c03-20261104/runtime-candidate/`; Root1 source integration next.
+   `docs/ops/auth-c03-20261104/runtime-candidate/`. Source integrated main82eb70d0;
+   Auth independently checked11 module/test hashes plus exact patched app. Root1
+   new8tests/lint/local bundle PASS; full typecheck blocked by missing react-dom
+   types in an unchanged browser/auth-consent entry. Its exclusion-only compiler
+   check passed, not a full typecheck PASS. No Hosted activation follows source
+   integration.
    Private storage c84671f4 still needs separate protected qualification; Nickname
    self-Person CAS Port and AKA lifecycle remain explicit gaps. Bootstrap/Claim
    authority is not Profile update. Member Revoke is CONTRACT_READY_FOR_CORE_IMPLEMENTATION,

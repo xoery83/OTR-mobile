@@ -1,0 +1,18 @@
+{
+  "status": "SOURCE_MAIN_EXACT_ARTIFACT_READBACK_PASS_NOT_CLOUD_E2E",
+  "sourceMain": "82eb70d010aee2c5624cbc8e148ee5ceeb94b9c3",
+  "moduleAndTestHashesChecked": 11,
+  "patchedAppSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+  "root1ReceiptSHA256": "a29c5be87449a4ac62f6627b410de298be1eec7c35bb2fff49343df02c369f91",
+  "fullTypecheck": "NOT_PASS_UNCHANGED_BROWSER_AUTH_CONSENT_MISSING_REACT_DOM_TYPES",
+  "scopedSourceVerification": "Root1 new8tests/lint/diff/localbundlePASS; compiler excluding unchanged page PASS with temporary config removed",
+  "defaultRuntime": "NO_STARTUP_OR_PORT_INJECTION_PROFILE_CLOSED",
+  "hostedActions": 0,
+  "businessReplay": false,
+  "independentRemoteReadback": {
+    "command": "git ls-remote origin refs/heads/main",
+    "observedMain": "82eb70d010aee2c5624cbc8e148ee5ceeb94b9c3",
+    "matchesRelease": true
+  },
+  "root1EmbeddedReceiptStatus": "Pre-push local-ready snapshot retained; actual remote release separately verified by Auth"
+}
