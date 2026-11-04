@@ -164,7 +164,7 @@ it.each([
     if (kind === "inactive") value.actor.active = false;
     if (kind === "uncertified") value.certificate = null as never;
     f.accepted.mockResolvedValue(value);
-    await expect(run()).rejects.toThrow("CORE_FRESH_P6_EDIT_UNAVAILABLE");
+    await expect(run()).rejects.toThrow("CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
     expect(f.submit).not.toHaveBeenCalled();
     expect(f.apply).not.toHaveBeenCalled();
   },
@@ -203,6 +203,51 @@ it("closed current normal profile forbids new POST before the local consumer gua
 it("a cloud summary row with no local Create identity cannot bypass the P6 POST gate", async () => {
   f.first.mockResolvedValue({ create_operation_id: null });
   f.accepted.mockResolvedValue(snapshot("P5"));
-  await expect(run()).rejects.toThrow("CORE_FRESH_P6_EDIT_UNAVAILABLE");
+  await expect(run()).rejects.toThrow("CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
   expect(f.submit).not.toHaveBeenCalled();
 });
+
+it.each(["P3", "P4"])(
+  "fresh own %s new POST and APPLIED refresh use original Worker with current normal capability",
+  async (family) => {
+    f.accepted.mockResolvedValue(snapshot(family));
+    f.capabilities.mockResolvedValue({
+      ...coreClosedCapabilities,
+      activationState: "ENABLED",
+      enabledCommands: ["SET_ITEM_TEXT"],
+      enabledAdmissionModes: ["MANUAL"],
+      enabledFamilies: [family],
+    });
+    await run();
+    expect(f.receipt).toHaveBeenCalledBefore(f.capabilities);
+    expect(f.submit).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ accountId, tripId }),
+      f.command,
+    );
+    expect(f.refresh).toHaveBeenCalledOnce();
+    expect(await f.choose!(tripId, itemId, family)).toBe(true);
+  },
+);
+
+it.each([
+  ["P3", "SET_RENTAL_DETAILS", { details: { supplier: "Wrong family" }, places: {} }],
+  ["P4", "SET_STAY_DETAILS", { details: { property_name: "Wrong family" }, rooms: [] }],
+] as const)(
+  "current %s does not POST foreign subtype command %s",
+  async (family, command, payload) => {
+    f.command.command = command;
+    f.command.payload = payload;
+    f.operation.payloadJson = JSON.stringify(f.command);
+    f.accepted.mockResolvedValue(snapshot(family));
+    f.capabilities.mockResolvedValue({
+      ...coreClosedCapabilities,
+      activationState: "ENABLED",
+      enabledCommands: [command],
+      enabledAdmissionModes: ["MANUAL"],
+      enabledFamilies: [family],
+    });
+    await expect(run()).rejects.toThrow("CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
+    expect(f.submit).not.toHaveBeenCalled();
+    expect(f.apply).not.toHaveBeenCalled();
+  },
+);

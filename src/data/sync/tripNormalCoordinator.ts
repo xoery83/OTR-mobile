@@ -17,7 +17,8 @@ import { createTripMetadataTransport } from "./tripMetadataTransport";
 import { createTripMetadataRepository } from "../repositories/tripMetadataRepository";
 import {
   createNormalTripSyncWake,
-  isManualP6EditCommand,
+  isManualAcceptedEditCommand,
+  acceptedEditFamilies,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
 import { createNativeTripCreateSyncRunner } from "./tripCreateCoordinator";
@@ -67,12 +68,16 @@ export function createNativeNormalTripSyncRunner(
       requireActiveUserId,
       tripCoreSha256Hex,
     );
-    const acceptedP6 = async (context: AccountRequestContext, itemId: string) => {
+    const acceptedEditableItem = async (
+      context: AccountRequestContext,
+      itemId: string,
+      family: (typeof acceptedEditFamilies)[number],
+    ) => {
       const snapshot = await core.acceptedSnapshot(context);
       await assertAccountRequestContext(account, requireActiveUserId);
       const item = snapshot?.graph.itinerary_events.find((row) => row.id === itemId);
       return snapshot?.certificate &&
-        item?.experience_family === "P6" &&
+        item?.experience_family === family &&
         item.owner_account_id === context.accountId &&
         item.hidden_at === null &&
         item.status !== "cancelled" &&
@@ -234,9 +239,13 @@ export function createNativeNormalTripSyncRunner(
               );
               await assertAccountRequestContext(account, requireActiveUserId);
               if (!local?.create_operation_id && !isReviewedSourceCreate(command)) {
-                const item = isManualP6EditCommand(command)
-                  ? await acceptedP6(context, command.target.id)
-                  : null;
+                let item = null;
+                for (const family of acceptedEditFamilies) {
+                  if (isManualAcceptedEditCommand(command, family)) {
+                    item = await acceptedEditableItem(context, command.target.id, family);
+                    if (item) break;
+                  }
+                }
                 if (
                   !item ||
                   !command.baseVector.some(
@@ -246,7 +255,7 @@ export function createNativeNormalTripSyncRunner(
                       base.revision === item.semantic_revision,
                   )
                 )
-                  throw Error("CORE_FRESH_P6_EDIT_UNAVAILABLE");
+                  throw Error("CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
               }
               return transport.submit(context, command);
             },
@@ -285,7 +294,10 @@ export function createNativeNormalTripSyncRunner(
               await recoverReadback(target.tripId, row.create_operation_id);
             else {
               const command = intent.command;
-              if (!isReviewedSourceCreate(command) && !isManualP6EditCommand(command))
+              if (
+                !isReviewedSourceCreate(command) &&
+                !isManualAcceptedEditCommand(command)
+              )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
               await core.refresh(context, transport);
@@ -309,7 +321,8 @@ export function createNativeNormalTripSyncRunner(
             )
           )
             return true;
-          if (family === "P6") return !!(await acceptedP6(context, itemId));
+          if (family === "P3" || family === "P4" || family === "P6")
+            return !!(await acceptedEditableItem(context, itemId, family));
           const graph = await core.readGraph(context);
           const item = graph.itinerary_events.find(
             (item) => item.id === itemId && item.experience_family === family,

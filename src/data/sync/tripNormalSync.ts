@@ -45,23 +45,38 @@ export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state F
 export function cloudSourceP1Command(operation: Row): CoreCommand | null {
   return cloudCommand(operation, false);
 }
-export function isManualP6EditCommand(command: CoreCommand) {
+export const acceptedEditFamilies = ["P3", "P4", "P6"] as const;
+export function isManualAcceptedEditCommand(
+  command: CoreCommand,
+  family?: (typeof acceptedEditFamilies)[number],
+) {
   return (
     command.target.kind === "ITEM" &&
     command.admission.mode === "MANUAL" &&
-    [
-      "SET_ITEM_TEXT",
-      "SET_ITEM_SCHEDULE",
-      "SET_ITEM_PLACE",
-      "SET_ITEM_PARTICIPATION",
-      "SET_ACTIVITY_DETAILS",
-    ].includes(command.command)
+    (["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE", "SET_ITEM_PARTICIPATION"].includes(
+      command.command,
+    ) ||
+      (family !== "P4" && command.command === "SET_ITEM_PLACE") ||
+      ((family === undefined || family === "P3") &&
+        command.command === "SET_STAY_DETAILS") ||
+      ((family === undefined || family === "P4") &&
+        command.command === "SET_RENTAL_DETAILS") ||
+      ((family === undefined || family === "P6") &&
+        command.command === "SET_ACTIVITY_DETAILS"))
   );
 }
+// Preserve the published P6-only helpers for existing consumers.
+export function isManualP6EditCommand(command: CoreCommand) {
+  return isManualAcceptedEditCommand(command, "P6");
+}
 export function cloudManualP6EditCommand(operation: Row): CoreCommand | null {
+  const command = cloudManualAcceptedEditCommand(operation);
+  return command && isManualP6EditCommand(command) ? command : null;
+}
+function cloudManualAcceptedEditCommand(operation: Row): CoreCommand | null {
   return cloudCommand(operation, true);
 }
-function cloudCommand(operation: Row, manualP6: boolean): CoreCommand | null {
+function cloudCommand(operation: Row, manualEdit: boolean): CoreCommand | null {
   try {
     const command = validateCoreCommand(JSON.parse(operation.payload_json));
     if (
@@ -72,7 +87,9 @@ function cloudCommand(operation: Row, manualP6: boolean): CoreCommand | null {
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
       command.target.kind !== "ITEM" ||
-      !(manualP6 ? isManualP6EditCommand(command) : isReviewedSourceCreate(command))
+      !(manualEdit
+        ? isManualAcceptedEditCommand(command)
+        : isReviewedSourceCreate(command))
     )
       return null;
     return command;
@@ -307,7 +324,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         if (!blockedTripIds.includes(row.trip_id)) blockedTripIds.push(row.trip_id);
       }
     }
-    // A reviewed Source can target an authorized cloud Trip without a local Create operation.
+    // Authorized cloud-only edits and reviewed Source Creates reuse the exact existing queue.
     const sourceRows = await deps.database.getAllAsync<Row>(
       cloudSourceP1QueueSql,
       scope.accountId,
@@ -315,7 +332,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
     );
     await guard();
     for (const operation of sourceRows) {
-      const manual = cloudManualP6EditCommand(operation);
+      const manual = cloudManualAcceptedEditCommand(operation);
       const command =
         manual ?? (adopted.manualOnly ? null : cloudSourceP1Command(operation));
       if (!command) continue;
@@ -324,12 +341,19 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         const recovering =
           !!manual &&
           ((operation.attempt_count ?? 0) > 0 || operation.intent_state === "IN_FLIGHT");
-        if (
-          manual &&
-          !recovering &&
-          !(await deps.isManualItem(operation.trip_id, command.target.id, "P6"))
-        )
-          continue;
+        if (manual && !recovering) {
+          let eligible = false;
+          for (const family of acceptedEditFamilies) {
+            if (
+              isManualAcceptedEditCommand(command, family) &&
+              (await deps.isManualItem(operation.trip_id, command.target.id, family))
+            ) {
+              eligible = true;
+              break;
+            }
+          }
+          if (!eligible) continue;
+        }
         await guard();
         const ready =
           recovering || (await deps.participantsReady(operation.trip_id, command));

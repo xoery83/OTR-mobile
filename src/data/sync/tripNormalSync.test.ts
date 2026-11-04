@@ -869,3 +869,65 @@ it("retained IN_FLIGHT intent reaches receipt recovery even if queue attempt cou
   });
   expect(f.deps.isManualItem).not.toHaveBeenCalled();
 });
+
+it.each(["P3", "P4"] as const)(
+  "cloud-only own %s finite edit commands use the original normal queue",
+  async (family) => {
+    for (const commandType of [
+      "SET_ITEM_TEXT",
+      family === "P3" ? "SET_STAY_DETAILS" : "SET_RENTAL_DETAILS",
+    ]) {
+      const f = fixture(),
+        operationId = randomUUID(),
+        itemId = randomUUID();
+      const payload =
+        commandType === "SET_ITEM_TEXT"
+          ? { title: "Own accepted edit", description: null }
+          : family === "P3"
+            ? { details: { property_name: "Own lodge" }, rooms: [] }
+            : { details: { supplier: "Own rental" }, places: {} };
+      const command = {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId,
+        tripId: f.tripId,
+        command: commandType,
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload,
+      };
+      f.deps.database.getAllAsync
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValue([
+          {
+            ...f.create,
+            id: operationId,
+            entity_id: itemId,
+            idempotency_key: operationId,
+            entity_type: "TRIP_CORE_V2",
+            operation_type: "CORE_V2_COMMAND",
+            payload_json: JSON.stringify(command),
+            attempt_count: 0,
+            intent_state: "PENDING",
+          },
+        ]);
+      f.deps.isManualItem.mockImplementation(
+        async (_trip, _item, requested) => requested === family,
+      );
+      f.deps.participantsReady.mockResolvedValue(true);
+      await createNormalTripSyncWake(f.deps, {
+        accountId: f.accountId,
+        newTripsFrom: "2026-10-24T00:00:00Z",
+        manualOnly: true,
+      })("AUTHENTICATED_ONLINE");
+      expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+        accountId: f.accountId,
+        tripId: f.tripId,
+        operationId,
+      });
+      expect(f.deps.runCreate).not.toHaveBeenCalled();
+    }
+  },
+);

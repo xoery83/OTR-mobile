@@ -29,12 +29,12 @@ vi.mock("../files/tripPhotoFileStore", () => ({
 }));
 const opened: DatabaseSync[] = [];
 afterEach(() => opened.splice(0).forEach((s) => s.close()));
-async function fixture() {
+async function fixture(fresh?: { accountId: string; tripId: string }) {
   const sql = new DatabaseSync(":memory:");
   opened.push(sql);
   sql.exec("PRAGMA foreign_keys=ON");
   for (const m of migrations) sql.exec(m.sql);
-  let accountId = randomUUID(),
+  let accountId = fresh?.accountId ?? randomUUID(),
     failAt = 0,
     inserts = 0,
     aba = false;
@@ -78,15 +78,16 @@ async function fixture() {
     clock,
   );
   const trips = createTripRepository(database, identity, core, clock);
-  const tripId = randomUUID();
-  await trips.createTrip({
-    tripId,
-    operationId: randomUUID(),
-    name: "Winter trip",
-    destination: null,
-    startDate: "2026-12-30",
-    endDate: "2027-04-28",
-  });
+  const tripId = fresh?.tripId ?? randomUUID();
+  if (!fresh)
+    await trips.createTrip({
+      tripId,
+      operationId: randomUUID(),
+      name: "Winter trip",
+      destination: null,
+      startDate: "2026-12-30",
+      endDate: "2027-04-28",
+    });
   const repo = () => createManualStayRepository(database, identity, core, clock);
   const read = createTripLocalManualReader(database, identity, core);
   const days = createTripDayFeedReader({
@@ -723,4 +724,189 @@ it("reuses the exact reviewed Place after first SQLite insert rollback and a cha
     },
   });
   expect(await repo.save(draft, input, request)).toEqual(saved);
+});
+
+async function freshAcceptedFixture(
+  decorate?: (graph: import("@/domain/trip/tripCoreV2Mutation").CoreGraph) => void,
+) {
+  const source = await fixture(),
+    repository = source.repo(),
+    draft = await repository.createDraft(source.tripId);
+  await repository.save(draft, inputFor(draft.fields));
+  const context = await source.core.captureContext(source.tripId);
+  const { readLocalManualSnapshotWithinTransaction } =
+    await import("./tripLocalManualReadRepository");
+  const local = (await readLocalManualSnapshotWithinTransaction(
+    source.coreDatabase,
+    source.identity,
+    source.core,
+    context,
+    null,
+  ))!;
+  const { executeCoreCommandV2 } =
+    await import("../../../backend/src/tripCoreV2Commands");
+  const { emptyCoreGraph } = await import("@/domain/trip/tripCoreV2Mutation");
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
+  let graph = emptyCoreGraph();
+  const create = (await source.core.pending(context))[0].command;
+  await executeCoreCommandV2(
+    {
+      withLockedCommand: async (_scope, work) =>
+        work({
+          actor: local.actor,
+          readReceipt: async () => null,
+          hasLegacyOperation: async () => false,
+          canReadReceipt: async () => true,
+          enabledCommands: async () => ["CREATE_ITEM"],
+          readLockedGraph: async () => graph,
+          verifyAdmission: async () => {},
+          lifecycleGraphHash: async () => undefined,
+          commit: async (mutation) => {
+            if (mutation) graph = mutation.graph;
+            return randomUUID();
+          },
+        }),
+    },
+    source.originalAccount,
+    source.tripId,
+    create,
+    hash,
+    () => "2026-10-20T00:00:00Z",
+  );
+  decorate?.(graph);
+  const bundle = await buildCoreActorCollection(
+    graph,
+    local.actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-20T00:00:00Z",
+    },
+    local.participatingPersonIds.map((id) => ({
+      person_id: id,
+      account_id: source.originalAccount,
+      active: true,
+      participating: true,
+      revision: 1,
+    })),
+    hash,
+  );
+  const fresh = await fixture({
+    accountId: source.originalAccount,
+    tripId: source.tripId,
+  });
+  await fresh.core.refresh(await fresh.core.captureContext(fresh.tripId), {
+    collection: async () => bundle,
+  });
+  return { ...fresh, itemId: draft.itemId };
+}
+it("fresh Accepted own P3 edits via original finite MANUAL batch with no local Create history", async () => {
+  const f = await freshAcceptedFixture(),
+    repo = f.repo();
+  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()).toEqual({ n: 0 });
+  const draft = await repo.read(f.tripId, f.itemId, 1);
+  const saved = await repo.save(draft, { ...draft.fields, title: "Fresh P3 edit" });
+  expect(saved.itemId).toBe(f.itemId);
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending).toHaveLength(1);
+  expect(pending[0].command).toMatchObject({
+    command: "SET_ITEM_TEXT",
+    admission: { mode: "MANUAL" },
+    target: { id: f.itemId },
+    baseVector: [{ revision: 1 }],
+  });
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()).toEqual({
+    n: 0,
+  });
+});
+
+it.each(["SOURCE_INSTANT", "INTERPRETED_CIVIL"])(
+  "fresh P3 title edit preserves %s facts; unsupported schedule re-authoring is refused without queue writes",
+  async (kind) => {
+    const { coreBoundarySchema, coreDateBoundary } =
+      await import("@/domain/trip/tripCoreV2Temporal");
+    const boundary = coreBoundarySchema.parse({
+      ...coreDateBoundary("2026-10-20"),
+      local_time: "09:00:00",
+      clock_precision: 0,
+      instant: "2026-10-20T09:00:00Z",
+      quality: "EXACT",
+      basis: kind === "SOURCE_INSTANT" ? "SOURCE_INSTANT" : "DERIVED_CIVIL",
+      source_instant: kind === "SOURCE_INSTANT" ? "2026-10-20T09:00:00Z" : null,
+      source_instant_precision: kind === "SOURCE_INSTANT" ? 0 : null,
+      zone_id: "Etc/UTC",
+      civil_resolution: kind === "SOURCE_INSTANT" ? "PENDING" : "UNIQUE",
+      resolution_offset_seconds: kind === "SOURCE_INSTANT" ? null : 0,
+      interpretation_key:
+        kind === "SOURCE_INSTANT" ? null : "synthetic-retained-interpretation",
+      interpretation_input_sha256: kind === "SOURCE_INSTANT" ? null : "a".repeat(64),
+      provenance_refs: null,
+    });
+    const f = await freshAcceptedFixture((graph) =>
+      Object.assign(
+        graph.itinerary_events[0],
+        Object.fromEntries(
+          Object.entries(boundary).map(([key, value]) => [
+            key === "instant" ? "planned_start" : `start_${key}`,
+            value,
+          ]),
+        ),
+      ),
+    );
+    const repository = f.repo(),
+      draft = await repository.read(f.tripId, f.itemId, 1);
+    await expect(
+      repository.save(draft, { ...draft.fields, endDate: "2026-10-24" }),
+    ).rejects.toThrow("MANUAL_PLAN_TEMPORAL_AUTHORITY_REQUIRED");
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()).toEqual({
+      n: 0,
+    });
+    await repository.save(draft, {
+      ...draft.fields,
+      title: "Preserve qualified Source clock",
+    });
+    const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+    expect(pending.map((intent) => intent.command.command)).toEqual(["SET_ITEM_TEXT"]);
+    const { coreStoredBoundary } = await import("@/domain/trip/tripCoreV2Temporal");
+    expect(
+      coreStoredBoundary(
+        (await f.core.acceptedSnapshot(await f.core.captureContext(f.tripId)))!.graph
+          .itinerary_events[0],
+        "start",
+      ),
+    ).toEqual(boundary);
+  },
+);
+
+it("fresh P3 details retain every room ID/quantity and unchanged permitted-clock precision", async () => {
+  const roomId = randomUUID();
+  const f = await freshAcceptedFixture((graph) => {
+    Object.assign(graph.trip_stay_details[0], {
+      property_name: "Original Lodge",
+      permitted_checkin_from: "14:00:30",
+    });
+    graph.trip_stay_rooms.push({
+      event_id: graph.itinerary_events[0].id,
+      trip_id: graph.itinerary_events[0].trip_id,
+      room_id: roomId,
+      category: "Suite",
+      quantity: 2,
+      capacity: 3,
+    });
+  });
+  const repository = f.repo(),
+    draft = await repository.read(f.tripId, f.itemId, 1);
+  await repository.save(draft, {
+    ...draft.fields,
+    stayDetails: { ...draft.fields.stayDetails, propertyName: "Correct Lodge" },
+  });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending.map((p) => p.command.command)).toEqual(["SET_STAY_DETAILS"]);
+  expect(pending[0].command.payload).toMatchObject({
+    details: { property_name: "Correct Lodge", permitted_checkin_from: "14:00:30" },
+    rooms: [{ room_id: roomId, category: "Suite", quantity: 2, capacity: 3 }],
+  });
 });

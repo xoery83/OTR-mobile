@@ -1,0 +1,40 @@
+{
+  "requestId": "NATIVE-DF-C02-ACCEPTED-EDIT-P3P4-20261104-04",
+  "status": "EXACT_SOURCE_INTEGRATION_CHECKS_AND_ROOT1_NARROW_REVIEW_PASS_BEFORE_REMOTE_PUBLISH",
+  "candidate": "4fc5bcba1d3e5299b43527e0ad7e4c41b35fa823",
+  "baseMain": "e46be2d5dbdfb1a763796fee35082147b94c9b63",
+  "hashes": {
+    "src/data/repositories/manualPlanRepository.ts": "00e6fbabfc1f3e40e8b21712bf4b0c593724371429f83b14b06cbe84679d083b",
+    "src/data/sync/tripNormalSync.ts": "fe54f460c694443bcd0566af8f3fff2e5f18fb40fa941844c1d769c0e14529ad",
+    "src/data/sync/tripNormalCoordinator.ts": "94d87e82c2e0f0289e72be571e991cb93833baf50ee2920749ad1335bc53ec40",
+    "src/data/repositories/manualStayRepository.test.ts": "f92724492169cf0a30e0da67c3660e59b85337fe671b7a2b718458e234f57fdc",
+    "src/data/repositories/manualRentalRepository.test.ts": "ebc6242f4278cc5144feb949356c73a13b8d9e87acbd8afb866d25c358b0a8fe",
+    "src/data/sync/tripNormalSync.test.ts": "65c820fee20e72812e83fbc26bb26625f350545e30d29457c81cb9bb90e9efde",
+    "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts": "1e154e56b97f7156de468ab91a4faeb5472bdc27c68792623d59d21a90efb6c7"
+  },
+  "review": {
+    "NativeIndependent": "narrow_version_review NO_BLOCKER relayed in pinned request; original log4 suites19PASS/59stableSkip independently read",
+    "independentLogSHA256": "13d71d9e477c8e323ef68d0bd865ac979b6b9918ff3d9080f75b7309ed334e30",
+    "Root1": "Narrow independent-of-author contract/diff/callers review NO_BLOCKER; exact7files match, code author Native and integrator/reviewer Root1",
+    "originalLocalCandidatePending": "Historical pre-review state retained as received; not current conclusion. Native requested doc-only supplement, no test rerun required."
+  },
+  "actualMainTests": "4 suites78 PASS including existingP6 and P3/P4 targeted cases",
+  "reusedValidation": "Author9s230/scopedtypes/UIguard PASS; independent19 checks reused not rerun as another independent session",
+  "types": "Compiler PASS excluding only unchanged browser/auth-consent/main.tsx missing installed react-dom/client types; no full typecheck PASS claimed",
+  "lint": "PASS scoped7",
+  "diffCheck": "PASS",
+  "preserved": [
+    "P1/P2/P5 fallback boundaries and P2 proof helper",
+    "priorP6 public helper semantics/receipt-firstWorker",
+    "client e46b UUID correlation",
+    "Auth optional default-closed Profile routes",
+    "source proof and both retained original identities"
+  ],
+  "temporalLimit": "FreshP3/P4 schedule changes with source_instant or interpretation_key are refused with zero queue writes; text/details retain evidence",
+  "nativeCloud": "NOT_RUN; Native owns device/consumer acceptance",
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "businessPosts": 0,
+  "original78f2": "UNKNOWN_NO_REPLAY",
+  "claim": "Owner-approved soleRoot1 source Writer/freshremote CAS/nonforce publish; no fabricated MC claim"
+}

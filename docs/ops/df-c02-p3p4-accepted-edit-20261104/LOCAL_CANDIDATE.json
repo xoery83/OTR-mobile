@@ -1,0 +1,49 @@
+{
+  "status": "LOCAL_CANDIDATE_PASS / INDEPENDENT_REVIEW_PENDING / NOT_INTEGRATED / DEVICE_HOSTED_NOT_RUN",
+  "baseSHA": "5ebb8f2e1d18baaa7115287f49ec0a9bf3723eb8",
+  "contract": "Root1 NATIVE-DF-C02-ACCEPTED-EDIT-P3P4-20261104-04 NO_BLOCKER, relayed by parent; no new Backend authority.",
+  "scope": "Only P3/P4 fresh Accepted own-Creator consumer extension, inheriting published P6 three-leaf behavior. P1/P2/P5 fresh Accepted fallback remains closed. Original operation78f2 untouched.",
+  "goldenSlice": "Verified Accepted own P3/P4 -> existing Native repository Edit -> existing finite MANUAL batch/queue -> original receipt-first Worker with fresh normal capabilities -> existing authorized collection refresh. Never claim original Create was MANUAL.",
+  "actualFailure": "2 RED /22 PASS: fresh own P3 and P4 each rejected MANUAL_PLAN_UNAVAILABLE despite a verified Accepted collection and no original local Create history.",
+  "minimumDelta": [
+    "Reuse exact P6 history-absence/partial-history/certificate/own Creator/ACL/revision/fingerprint/no-unreconciled-intent gate for explicitly P3/P4/P6; no broad family default or proof deletion.",
+    "Exact family-scoped MANUAL command selection: common text/schedule/participation, P3 place+stay details, P4 rental details with separate PICKUP/RETURN dictionary, existing P6 place/activity. Keep the prior P6-only exported helpers as strict wrappers.",
+    "Reuse original receipt-first Worker and actual-submit guard; only P3/P4/P6 current own Accepted target permits a new cloud-only POST. Wrong details family cannot POST. Existing attempted/IN_FLIGHT operation recovery remains before new current-target authority.",
+    "New fresh P3/P4 drafts refuse schedule changes if either existing boundary contains source_instant or interpretation_key. Text/details edits retain original tuple and do not manufacture Source evidence or clear proof to bypass admission.verify. Existing history-qualified paths unchanged."
+  ],
+  "validation": {
+    "focusedSuites": 9,
+    "passed": 230,
+    "scopedTypecheck": "PASS; seven changed source/test roots plus imported dependencies; temporary tsconfig removed.",
+    "scopedESLint": "PASS",
+    "uiGuard": "PASS;473 legacy occurrences;168 representative UI files",
+    "diffCheck": "PASS",
+    "P3": "Fresh SQLite Accepted/no original Create -> title edit original queue; SOURCE_INSTANT and interpreted-civil title-only preservation; unsupported schedule change rejects with zero queue writes; changed property name retains existing room UUID/category/quantity/capacity and14:00:30 permitted check-in precision.",
+    "P4": "Fresh SQLite Accepted/no original Create -> title edit original queue; SOURCE_INSTANT and interpreted-civil preservation/schedule refusal; RETURN-only patch retains PICKUP and unknown/null vehicle fields, no generic Place substitution.",
+    "dispatch": "Both P3/P4 text+details exact cloud-only queue commands select in manualOnly. Actual original Worker runs receipt -> capabilities -> submit -> apply -> authorized refresh. Cross-family detail command is denied before POST. Existing receipt503/removed-target/closed-capability/account/family/P2/source regressions reused in same focused run."
+  },
+  "preserved": [
+    "No acceptedManualCreate helper modification",
+    "No Worker/capability/admission authority change",
+    "No Source base-vector or evidence stripping",
+    "No P2 Sparse/Qualified/Booking/Ticket extension",
+    "No P3 Contact/Instructions or new Room operation",
+    "No new repository/queue/schema/cache/Provider/OTP",
+    "No device/Host/API/SQL or actual78f2 operation"
+  ],
+  "limits": [
+    "Local/isolated candidate only; not Hosted or Native-device Cloud acceptance.",
+    "Fresh P3/P4 Source-qualified schedule edits intentionally remain blocked until a formally qualified temporal owning port can preserve and re-author those facts.",
+    "P3/P4 fixture collection construction uses isolated existing backend command/collection helpers, not a claim about currently deployed capabilities.",
+    "Optional cached independent-client P3/P4 lookup not performed; no account/body/credential dumps."
+  ],
+  "sha256": {
+    "src/data/repositories/manualPlanRepository.ts": "00e6fbabfc1f3e40e8b21712bf4b0c593724371429f83b14b06cbe84679d083b",
+    "src/data/sync/tripNormalSync.ts": "fe54f460c694443bcd0566af8f3fff2e5f18fb40fa941844c1d769c0e14529ad",
+    "src/data/sync/tripNormalCoordinator.ts": "94d87e82c2e0f0289e72be571e991cb93833baf50ee2920749ad1335bc53ec40",
+    "src/data/repositories/manualStayRepository.test.ts": "f92724492169cf0a30e0da67c3660e59b85337fe671b7a2b718458e234f57fdc",
+    "src/data/repositories/manualRentalRepository.test.ts": "ebc6242f4278cc5144feb949356c73a13b8d9e87acbd8afb866d25c358b0a8fe",
+    "src/data/sync/tripNormalSync.test.ts": "65c820fee20e72812e83fbc26bb26625f350545e30d29457c81cb9bb90e9efde",
+    "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts": "1e154e56b97f7156de468ab91a4faeb5472bdc27c68792623d59d21a90efb6c7"
+  }
+}

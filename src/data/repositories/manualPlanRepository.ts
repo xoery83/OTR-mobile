@@ -181,6 +181,7 @@ type DraftState = {
   fingerprint: string;
   actor: string;
   revision: number | null;
+  freshAcceptedEdit?: boolean;
   // Private pre-first-save evidence, never a persisted authority or certificate.
   firstCreateRead?: { graph: string; operations: string; personId: string };
   original: ManualItemFields;
@@ -301,7 +302,7 @@ function editable(
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
     row.status === "cancelled" ||
-    (family === "P6" && row.status === "skipped") ||
+    (["P3", "P4", "P6"].includes(family) && row.status === "skipped") ||
     !coreCanManage(snapshot.graph, snapshot.actor, "ITEM", row)
   )
     throw new Error("MANUAL_PLAN_UNAVAILABLE");
@@ -390,8 +391,8 @@ export function createManualItemRepository(
     if (!snapshot) throw new Error("MANUAL_PLAN_UNAVAILABLE");
     return snapshot;
   }
-  async function freshAcceptedP6(context: AccountRequestContext, itemId: string) {
-    if (family !== "P6") return false;
+  async function freshAcceptedItem(context: AccountRequestContext, itemId: string) {
+    if (!["P3", "P4", "P6"].includes(family)) return false;
     if ((await core.pending(context)).some((p) => p.command.target.id === itemId))
       return false;
     // Missing proof is not fresh history: orphaned or malformed Create records remain denied.
@@ -485,6 +486,7 @@ export function createManualItemRepository(
           row.semantic_revision !== expectedRevision
         )
           throw new Error("MANUAL_PLAN_CONFLICT");
+        let freshAcceptedEdit = false;
         if (
           row &&
           !(await core.pending(context)).some(
@@ -498,7 +500,7 @@ export function createManualItemRepository(
             ["P1", "P3", "P4", "P6"].includes(family) &&
             snapshot.cert &&
             ((await hasAcceptedManualCreate(database, context, itemId!, family)) ||
-              (await freshAcceptedP6(context, itemId!)))
+              (freshAcceptedEdit = await freshAcceptedItem(context, itemId!)))
           )
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");
@@ -599,6 +601,7 @@ export function createManualItemRepository(
           fingerprint: snapshot.fingerprint,
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
+          freshAcceptedEdit,
           ...(family === "P1" &&
           !itemId &&
           !recovery &&
@@ -930,6 +933,17 @@ export function createManualItemRepository(
                 state.original[k as keyof ManualPlanFields],
             )
           ) {
+            // This consumer cannot re-author Source temporal proof; never erase it to pass MANUAL.
+            if (
+              state.freshAcceptedEdit &&
+              ["P3", "P4"].includes(family) &&
+              [coreStoredBoundary(row!, "start"), coreStoredBoundary(row!, "end")].some(
+                (boundary) =>
+                  boundary.source_instant !== null ||
+                  boundary.interpretation_key !== null,
+              )
+            )
+              throw Error("MANUAL_PLAN_TEMPORAL_AUTHORITY_REQUIRED");
             // Date changes invalidate resolution, not an unchanged authored clock's precision.
             if (fields.startTime === state.original.startTime) {
               schedule.start.local_time = row!.start_local_time as string | null;
