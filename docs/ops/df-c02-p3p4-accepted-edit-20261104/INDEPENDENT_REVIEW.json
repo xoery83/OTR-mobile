@@ -1,0 +1,15 @@
+{
+  "candidate": "4fc5bcba1d3e5299b43527e0ad7e4c41b35fa823",
+  "reviewer": "/root/narrow_version_review",
+  "verdict": "NO_BLOCKER",
+  "sourceSHA256": {
+    "src/data/repositories/manualPlanRepository.ts": "00e6fbabfc1f3e40e8b21712bf4b0c593724371429f83b14b06cbe84679d083b",
+    "src/data/sync/tripNormalSync.ts": "fe54f460c694443bcd0566af8f3fff2e5f18fb40fa941844c1d769c0e14529ad",
+    "src/data/sync/tripNormalCoordinator.ts": "94d87e82c2e0f0289e72be571e991cb93833baf50ee2920749ad1335bc53ec40"
+  },
+  "independentChecks": "4 suites19 focused PASS;59 existing deliberately skipped; diff-check PASS",
+  "log": "/private/tmp/otr-p3p4-accepted-edit-independent-review.log",
+  "verified": "True history absence/orphan rejection inherited; P2 immutable proof unchanged; P3 room IDs/count/precision and P4 endpoint/null preservation; existing receipt-first and actual-submit authority guards retained",
+  "limit": "Fresh Source-qualified schedule changes intentionally rejected with zero queue; local candidate only, no device/Hosted/newPOST or original78f2 mutation",
+  "authorEvidenceReused": "9 suites230 PASS; scoped types/lint/UIguard"
+}
