@@ -10,5 +10,6 @@
   "originalOperation": "f5e13639-4240-4817-bf43-c60a1ea46361",
   "independentReview": "REQUESTED_BEFORE_EXECUTION",
   "sourcePersistent": true,
-  "credentials": "Process-only exact QA Keychain reader; no stored value"
+  "credentials": "Process-only exact QA Keychain reader; no stored value",
+  "scopedTypecheck": "PASS_NEW_MTS_ROOT_AND_IMPORTS"
 }

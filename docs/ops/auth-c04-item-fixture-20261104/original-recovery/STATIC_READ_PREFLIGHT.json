@@ -1,0 +1,13 @@
+{
+  "status": "PUBLIC_DEV_CONFIG_AND_RECEIVER_PROOF_MATCH_NO_IO",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "hashes": {
+    "resend-inbound-otp.ts": true,
+    "resend-inbound-otp-e2e.ts": true,
+    "otp-test-vault.ts": true,
+    "otp-test-cleanup.ts": true
+  },
+  "credentialRead": false,
+  "otpRequests": 0,
+  "networkRequests": 0
+}
