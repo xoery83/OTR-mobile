@@ -1,0 +1,74 @@
+{
+  "status": "FOCUSED_PREACQUIRE_VISIBILITY_READ_PG_PASS",
+  "image": "sha256:6942962433a569e87f228b4d4ab7e11db5deca64e43babb3a038443ad6c4f1bb",
+  "network": "none",
+  "checks": [
+    "GREEN exact active global-missing Source/representation/Run returns NULL with zero Source/representation/Run/Input creation",
+    "global other Run with same Actor/Trip/Batch rejected",
+    "global same-Actor Task collision on another Trip rejected",
+    "existing global Run wrong owner rejected",
+    "existing failed Run is not missing",
+    "SourceWriter ownership with FORCE RLS and filtered policy cannot prove absence",
+    "extra protected command pin key rejected",
+    "nonarray complete input shape rejected",
+    "missing protected command digest key rejected",
+    "Collision probes restored only own synthetic fixture; final exact empty read still NULL and zero data created by GET",
+    "Actual58577 full definition unchanged across read fix; no 503 catch/404 conversion in SQL or Backend"
+  ],
+  "checkCount": 11,
+  "actual58577FullDefinitionSHA256": "9747298d0ca132f77833671a703d3b90d3e303d4cbc5e5d987eff7ff8494d36a",
+  "prospectiveInputSHA256": "9cc2ee9c2c06b9f989b6b34f35bd01e8f010817ab2720f390422dcb7e11008c5",
+  "sourceCommand": {
+    "contract_version": 1,
+    "command": "ACQUIRE_SOURCE",
+    "operation_id": "d6339f72-48d3-4e4e-9960-49d6e5d5d6f8",
+    "operation_key": "universal:d6339f72-48d3-4e4e-9960-49d6e5d5d6f8",
+    "actor_account_id": "10000000-0000-4000-8000-000000000001",
+    "trip_id": "10000000-0000-4000-8000-000000000002",
+    "source_id": "1275641b-ce93-46c9-8dd1-1f1e5c38e165",
+    "operation_sha256": "9f2d5103ba72ae780c8e9a6ded9136f7be52f5ecbbeecb088356ada723bf3d16",
+    "payload": {
+      "acquisition_key": "universal:d6339f72-48d3-4e4e-9960-49d6e5d5d6f8",
+      "acquisition_sha256": "a30e1aa4db6eca335ab4d263f4c2d58cd470d01cae1d84d64042a4176f8e8895",
+      "source_input": {
+        "source_kind": "FILE",
+        "acquisition_channel": "FILES",
+        "captured_at": null,
+        "capture_time_basis": "UNKNOWN"
+      },
+      "capture": {
+        "completeness": "AS_SUPPLIED",
+        "capture_sha256": "8d9126d8e35a379125a3eb08743380d020401580664d07b67a39eedf995fe1fd"
+      },
+      "original": {
+        "id": "05d6ae4b-eb5a-4e40-aa7d-5c6fa855fcff",
+        "material_kind": "TEXT",
+        "original_filename": "lantern-qa-garden-walk.txt",
+        "part_key": null,
+        "mime_type": null,
+        "encoding": "UTF-8",
+        "payload_sha256": "54ad166d421325cb12dad3fee8ebfe2d64a81e2980eef2e9115abde87254d647",
+        "byte_count": 77,
+        "text_content": "Synthetic QA only\nActivity: Lantern QA Garden Walk\nActivity date: 2026-11-06\n",
+        "locator_uri": null
+      }
+    }
+  },
+  "runInput": {
+    "id": "fe1933ee-beaf-4830-b1eb-8948d493cad8",
+    "source_id": "1275641b-ce93-46c9-8dd1-1f1e5c38e165",
+    "material_revision": 1,
+    "representation_id": "05d6ae4b-eb5a-4e40-aa7d-5c6fa855fcff",
+    "payload_sha256": "54ad166d421325cb12dad3fee8ebfe2d64a81e2980eef2e9115abde87254d647",
+    "byte_count": 77,
+    "observed_source_row_revision": 1,
+    "historical_selection": false
+  },
+  "scope": "Boundary fixture: actual public canonical hash/58577/input_valid; normal registered Actor/material lock helpers are explicit qa_acl/noop test doubles; Source/representation existing rows are synthetic negative/retained fixtures, not accepted originals or real receipts. Reuse Root2 V2 actual14 separately. No Provider/Hosted/device/oldc420 runner.",
+  "ProviderCalls": 0,
+  "HostedCalls": 0,
+  "SourceBusinessCalls": 0,
+  "constraints": "Only one find candidate changed; global RLS policy guards are actual PG catalog/current role checks; ownerpostgres/non-bypass SourceWriter FORCE RLS true.",
+  "oldFindDefinitionSHA256": "48fa464f61a2b0b3fd58a2a88e1b4a9454dab925395f37ff8a8898dda98b1bc5",
+  "newFindDefinitionSHA256": "7344d44d970bd6784444f281642fb2b5bd8b30749a28e16f17fc90e584c85f38"
+}

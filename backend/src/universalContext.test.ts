@@ -78,6 +78,7 @@ it("reports an authorized unprepared Batch as missing, not an unavailable servic
   expect(f.port.read).not.toHaveBeenCalled();
 });
 it.each([
+  "INVALID_IMPORT_INPUT",
   "CORE_CONNECTION_BUSY",
   "UNIVERSAL_AUTH_REJECTED",
   "OWNING_TASK_READER_UNAVAILABLE",

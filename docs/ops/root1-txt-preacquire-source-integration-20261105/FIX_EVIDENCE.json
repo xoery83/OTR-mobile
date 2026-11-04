@@ -1,0 +1,163 @@
+{
+  "requestId": "IMP-C01-TXT-PREACQUIRE-READ-FIX-20261105-01",
+  "priorContractRequestId": "IMP-C01-TXT-PREACQUIRE-READ-CONTRACT-20261105-01",
+  "recordedAt": "2026-11-04T21:56:25.177602+00:00",
+  "child": "/root/txt_input_accounting_20261105",
+  "parent": "/root",
+  "status": "SOURCE_CANDIDATE_LOCAL_FOCUSED_PASS_INDEPENDENT_REVIEW_PENDING",
+  "candidateSha": "b54ca15e8fd36e5210fc143ec782e9def354afde",
+  "baseMain": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "implementation": {
+    "onlyFunction": "trip_source_find_finite_universal_binding",
+    "identityAndScope": "ExistingnormalGateway/SourceWriter/Actor/Triplocks+finite_identity globalRun/RLSclock then exactBatch/Task/Run/submission and full strictsingleinput/storedpin. OtherBatch/TaskRun conflictsreject.",
+    "profile": "OnlyprotectedScope array1strict8key OTR_UTF8_TEXT_FILE_V1 pin; actor/trip/Source/rep/currentcanonicaltype constraints checked. Nofilename/MIME/localtag authority. ValidopaqueopID/key/digest are protectedserver commitments; realcodec/intakebinding remainsqualification, notguessedfromrequest.",
+    "visibility": "Within actualSourceWritertransaction requireexistingtableSELECT androw_security_active=false or directcurrentrolepermissiveSELECT literaltrue withno restrictivepolicy; Sourceandrep globalUUIDexists observedinoneSQLstatement snapshot. Owner alone/FORCEfiltered/unknownvisibility failclosed.",
+    "missing": "BothglobalUUIDsmissing+sameexistingv1prospective8values+[1,ORIGINAL,TEXT,null,null,null,[]] hashmustmatchstoredscopeinputhash; currentclockrechecked; returnNULL onlypoint-in-timeRun/Taskabsent, notSourceAPPLIED/NoCommit/UNKNOWNretry.",
+    "present": "Eitherpresent requiresbothsameOwnerTrip/key/FILEFILES/initialoriginalTEXTUTF8/noTransformsParents+existingactualinput_valid+normalmateriallocks+actual58577; partial/foreign/stale/hashmismatchreject.",
+    "existingPaths": "ExistingRun/retainedbranch byteidentical, other4routefunctions/helpers/originalscope/sharedhash/begin/endpoint/ACL untouched. NoGETprepare/Sourcewrite/Provider call."
+  },
+  "contractReceipt": {
+    "path": "ROOT1_CONTRACT_RETURN.json",
+    "sha256": "32340db18dc17a0df910fdf931599f6a1221ee089138e09ff10bf3642ec8c79f"
+  },
+  "currentVisibilityMetadata": {
+    "path": "ROOT2_VISIBILITY_METADATA.json",
+    "sha256": "f277ab9aaaf8765dc95abba85c43d54e8cf03fe7eea7d7166bdceef029e8aa1d",
+    "limit": "Timestampedcurrentqualification, notsubstituteforfreshruntimeguardorrealrowabsenceproof"
+  },
+  "staticProof": {
+    "changedFunction": "trip_source_find_finite_universal_binding",
+    "oldSourceDefinitionTextSHA256": "48fa464f61a2b0b3fd58a2a88e1b4a9454dab925395f37ff8a8898dda98b1bc5",
+    "newSourceDefinitionTextSHA256": "518906ef2984937f55b596cb0b0c965a6327dffda27687e202fa4627120bd976",
+    "canonicalOldGetFunctionDefSHA256FromRoot1": "2831a7c638859440cd5496645eb52d2ae97d170aef420e86231812e3625d0182",
+    "definitionHashKinds": "SourceText hashes above are exact CREATE FUNCTION source snippets, not pg_get_functiondef normalized form. Test JSON newFindDefinitionSHA uses its CREATE OR REPLACE SQL source string, also not normalized PG metadata.",
+    "sqlFileSHA256": "3b219d2720af5d94c91ec1480bbfd7101475cef7b96f2707e5122e48648b540b",
+    "existingRunRetainedBranchUnchangedSHA256": "d3f62446ad49ff11c4ab6274b38a7138ad0e9c74eeb4123a0bcd08fc290112b4",
+    "otherRouteFunctionsUnchanged": {
+      "trip_source_finite_native_material": "b51c380d2e56db6fec29c4536d141b8e85682aacd851e7fd542df867805cce5f",
+      "trip_source_finite_native_png_material": "79cff5f08447eb52daa561116c220ec4971753ddc6d2fbc7c7edf40298b2c618",
+      "trip_source_begin_finite_universal_inputs": "510d2f48fb3ba1a4aabc9b9d25f68a0095688e62f4667df286504aaba4822a6e",
+      "trip_source_finite_native_run_row": "b61f2cdeeb5854e4be10031582e54cf5b38053ef2046b68280eefddbde79cece"
+    },
+    "helperFileUnchangedSHA256": "0f512752cf58b00e08bcb7a35a39d8c0b3fdc39b95004bbfa0b13d8868fb2e4c",
+    "actual58577FullGetFunctionDefSHA256VerifiedInBothLocalRuns": "9747298d0ca132f77833671a703d3b90d3e303d4cbc5e5d987eff7ff8494d36a",
+    "noShared58577OriginalScopeBeginRetainedAclBackendEndpointChanges": true
+  },
+  "tests": {
+    "focused48": {
+      "path": "PREACQUIRE_FOCUSED_PG.json",
+      "sha256": "1fd5258e48cfdb76b6d9c28587ba16fe5157e8cf8ce966bb52b51baaf64a5d29",
+      "personallyRun": true,
+      "result": "PASS",
+      "checks": [
+        "RED oldfind with exact current58577 throws INVALID_IMPORT_INPUT before any Source/representation exists",
+        "GREEN exact active global-missing Source/representation/Run returns NULL with zero Source/representation/Run/Input creation",
+        "wrong actor rejected",
+        "wrong trip rejected",
+        "wrong batch rejected",
+        "wrong task rejected",
+        "wrong run_id rejected",
+        "wrong submission rejected",
+        "input id mismatch rejected",
+        "input source_id mismatch rejected",
+        "input representation_id mismatch rejected",
+        "input payload_sha256 mismatch rejected",
+        "input byte_count mismatch rejected",
+        "input material_revision mismatch rejected",
+        "input observed_source_row_revision mismatch rejected",
+        "input historical_selection mismatch rejected",
+        "invalid input byte_count 77 rejected",
+        "invalid input byte_count 0 rejected",
+        "invalid input byte_count 262145 rejected",
+        "invalid input id not-uuid rejected",
+        "extra input key rejected",
+        "multiple input rejected",
+        "protected command pin actorId mismatch rejected",
+        "protected command pin tripId mismatch rejected",
+        "protected command pin sourceId mismatch rejected",
+        "protected command pin representationId mismatch rejected",
+        "protected command pin operationId mismatch rejected",
+        "protected command pin operationKey mismatch rejected",
+        "protected command pin operationSha256 mismatch rejected",
+        "protected command pin profile mismatch rejected",
+        "future scope rejected",
+        "expired scope rejected",
+        "revoked/unlinked normal Actor helper denies",
+        "RLS hidden trip_sources rejected",
+        "RLS hidden trip_source_representations rejected",
+        "RLS hidden trip_source_runs rejected",
+        "restrictive policy even with true cannot qualify global absence",
+        "missing existing SELECT rejects",
+        "partial source without representation rejected",
+        "partial/foreign representation UUID without source rejected",
+        "Already present valid original uses actual58577/input validation and returns TaskAbsent without re-ACQUIRE",
+        "same hash wrong Source owner rejected",
+        "same hash wrong Source Trip rejected",
+        "stale Source revision rejected",
+        "actual source hash mismatch rejected",
+        "Existing retained Run branch still works after removing positive scope; synthetic Actor/Source lock fixture only",
+        "retained wrong Task remains rejection",
+        "Actual58577 full definition unchanged across read fix; no 503 catch/404 conversion in SQL or Backend"
+      ]
+    },
+    "additional11": {
+      "path": "PREACQUIRE_COLLISION_INCREMENT.json",
+      "sha256": "68b626ba9ba5470b8ec12ac53cc20967dd20b8159553e33c8e6a5894d7ba88f8",
+      "personallyRun": true,
+      "result": "PASS",
+      "checks": [
+        "GREEN exact active global-missing Source/representation/Run returns NULL with zero Source/representation/Run/Input creation",
+        "global other Run with same Actor/Trip/Batch rejected",
+        "global same-Actor Task collision on another Trip rejected",
+        "existing global Run wrong owner rejected",
+        "existing failed Run is not missing",
+        "SourceWriter ownership with FORCE RLS and filtered policy cannot prove absence",
+        "extra protected command pin key rejected",
+        "nonarray complete input shape rejected",
+        "missing protected command digest key rejected",
+        "Collision probes restored only own synthetic fixture; final exact empty read still NULL and zero data created by GET",
+        "Actual58577 full definition unchanged across read fix; no 503 catch/404 conversion in SQL or Backend"
+      ]
+    },
+    "scopeLimits": "BareacceptedPG17image694networknone,1CPU/512MB/tmpfs; actualpubliccanonicalhash/58577/input_valid. qa_aclActor/helperandmateriallocknoop are explicittest doubles; existingSource/Runnegativefixtures are syntheticnotreceipts. RuntimeRLS/role/visibility checksareactualPG. ActualnormalSourceACQUIRE/P6/Hostednotrun.",
+    "Root2Existing14Reused": {
+      "packageSHA256": "ac2c023f76dd53a9c6a9a8276f92a7851e4f96511c9d0f77a282745ff31e1694",
+      "summarySHA256": "9bfc7c60cb6871b100e175f632b6ab20efd6dfa030585f5b5ce9a179e56db216",
+      "notRerunOrRelabeled": true
+    },
+    "HTTPGuard14": "PASS; noarbitraryINVALID_INPUT/503→404catch",
+    "syntaxLintDiff": "PASS",
+    "independentReview": "PENDING"
+  },
+  "harnessCorrections": "Beforeboundaryruns: waitfinalTCPpostmaster notinitdbtemporarysocket; reusepreinstalledextensions/pgcrypto; DROPisolatedhash/input_validstubs beforeactualparameter-signatures; setupassupabase_admin andGatewayactualTCPLOGIN, noSETSESSIONasNOSUPERpostgres. Owner/FORCEincrementrestoresoriginalexplicitSourceWriterSELECTafterownerroundtrip. Thesearefixturecorrectionsnotproductionpermissionchanges; finallydeleted eachowncontainer. NoPGpassclaimedfromfailedsetupattempts.",
+  "dataPathChecklist": {
+    "1Ownership": "Existingread-onlyTaskabsence/Sourcecommitment; noSourceAPPLIED/provenanceornewpersistentfield/privacypolicy.",
+    "2LocalStorage": "NoSQLite/custody/device/Taskmutation; localPGfixturesonly.",
+    "3BackendContract": "Onefind-absentcandidateunderRoot1exactcontractC1-C8; shared58577/normalSourcepermissions/endpointunchanged.",
+    "4ConflictOffline": "Exactpin/scope/globalcollisionguardsfailclosed; no404frominvalidscope/hash, noSourcecreation/re-ACQUIRE/UNKNOWNreplay.",
+    "5Evidence": "59newscopedPGchecks+14HTTPguardPASS; distinctRoot2real14reused; independentreview/actualDEVE2Epending.",
+    "6IntegrationDelta": "Independentreview→Root1exact3leafsourceCAS/readback→Root2newexactSQL/runtimepackage/currentmetadata qualification+approvedactualGate; priorc420PGpendingnotclosedbythiswork."
+  },
+  "layers": {
+    "SOURCE": "Candidateonly;notreviewed/integrated",
+    "HOSTED": "NoSQLinstalled/noRuntimewrites",
+    "CONSUMER": "Actualsourcebusiness/Provider/Save0; localReadfunctiontestedonly",
+    "DEVICE": "Noactions/claim; otherchildlocalwindownotused",
+    "OWNER_UX": "Notrun"
+  },
+  "oldImmutableProofs": "Accountingd5b/ee758/c420/3c8/P6/closediPad/39fe/UNKNOWN unchanged",
+  "protectedActions": {
+    "Hosted": 0,
+    "ActualSourceBusiness": 0,
+    "Provider": 0,
+    "Save": 0,
+    "Device": 0,
+    "OTP": 0,
+    "costUSD": "0.00"
+  },
+  "resourcesHeld": [],
+  "packet": {
+    "path": "SOURCE_INTEGRATION_PACKET.json",
+    "sha256": "dc5977573b149f43bee2367f181f3e403ea333dbe646a57750a64b3c93651440"
+  }
+}

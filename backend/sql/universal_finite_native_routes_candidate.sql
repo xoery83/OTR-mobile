@@ -116,15 +116,79 @@ END $$;
 
 CREATE FUNCTION public.trip_source_find_finite_universal_binding(actor uuid,trip uuid,batch uuid,task uuid,run uuid,submission text,originals jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE r public.trip_source_runs;p public.trip_source_inputs;rep public.trip_source_representations;facts jsonb;v jsonb;pins jsonb:='[]';projected jsonb:='[]';
+DECLARE r public.trip_source_runs;p public.trip_source_inputs;rep public.trip_source_representations;facts jsonb;v jsonb;pins jsonb:='[]';projected jsonb:='[]';scope_row public.trip_source_universal_scope;command_pin jsonb;relation regclass;source_row public.trip_sources;source_found boolean;representation_found boolean;prospective_hash text;
 BEGIN
  IF current_user<>'otr_trip_source_writer' OR session_user<>'otr_trip_source_command_gateway' THEN RAISE EXCEPTION 'SOURCE_ACCESS_DENIED';END IF;
  PERFORM public.trip_import_scope_lock(actor,trip);
  IF public.trip_source_lock_universal_actor(actor,trip,false) IS NOT TRUE THEN RAISE EXCEPTION 'SOURCE_ACCESS_DENIED';END IF;
  SELECT * INTO r FROM public.trip_source_runs WHERE id=run;
  IF NOT FOUND THEN
+  IF public.trip_source_finite_native_identity(actor,trip,run) IS NOT TRUE
+  OR EXISTS(SELECT 1 FROM public.trip_source_runs x WHERE x.actor_account_id=actor
+    AND (x.trip_id=trip AND x.capture_batch_id=batch OR x.interpretation_task_id=task))
+  THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
+  SELECT * INTO scope_row FROM public.trip_source_universal_scope s WHERE s.singleton AND s.actor_id=actor AND s.trip_id=trip
+   AND s.batch_id=batch AND s.task_id=task AND s.run_id=run AND s.submission_sha256=submission
+   AND clock_timestamp()>=s.starts_at AND clock_timestamp()<s.expires_at;
+  IF NOT FOUND THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
+  -- Protected server profile, never a caller MIME/filename/local-status inference.
+  IF jsonb_typeof(scope_row.source_command_pins)='array' AND jsonb_array_length(scope_row.source_command_pins)=1
+   AND scope_row.source_command_pins->0->>'profile'='OTR_UTF8_TEXT_FILE_V1' THEN
+   command_pin:=scope_row.source_command_pins->0;
+   IF jsonb_typeof(originals) IS DISTINCT FROM 'array' OR jsonb_array_length(originals)<>1
+   OR public.trip_event_keys(command_pin,ARRAY['profile','actorId','tripId','sourceId','representationId','operationId','operationKey','operationSha256']) IS NOT TRUE
+   THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
+   v:=originals->0;
+   IF public.trip_event_keys(v,ARRAY['id','source_id','material_revision','representation_id','payload_sha256','byte_count','observed_source_row_revision','historical_selection']) IS NOT TRUE
+   OR jsonb_typeof(v->'id') IS DISTINCT FROM 'string' OR v->>'id' !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+   OR jsonb_typeof(v->'source_id') IS DISTINCT FROM 'string' OR v->>'source_id' !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+   OR jsonb_typeof(v->'representation_id') IS DISTINCT FROM 'string' OR v->>'representation_id' !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+   OR jsonb_typeof(v->'payload_sha256') IS DISTINCT FROM 'string' OR v->>'payload_sha256' !~ '^[0-9a-f]{64}$'
+   OR jsonb_typeof(v->'byte_count') IS DISTINCT FROM 'number' OR v->>'byte_count' !~ '^[1-9][0-9]{0,5}$'
+   OR (v->>'byte_count')::bigint>262144 OR v->'material_revision' IS DISTINCT FROM '1'::jsonb
+   OR v->'observed_source_row_revision' IS DISTINCT FROM '1'::jsonb OR v->'historical_selection' IS DISTINCT FROM 'false'::jsonb
+   OR command_pin->>'actorId' IS DISTINCT FROM actor::text OR command_pin->>'tripId' IS DISTINCT FROM trip::text
+   OR command_pin->'sourceId' IS DISTINCT FROM v->'source_id' OR command_pin->'representationId' IS DISTINCT FROM v->'representation_id'
+   OR jsonb_typeof(command_pin->'operationId') IS DISTINCT FROM 'string' OR command_pin->>'operationId' !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+   OR jsonb_typeof(command_pin->'operationKey') IS DISTINCT FROM 'string' OR command_pin->>'operationKey' !~ '^[A-Za-z0-9._:-]{1,128}$'
+   OR jsonb_typeof(command_pin->'operationSha256') IS DISTINCT FROM 'string' OR command_pin->>'operationSha256' !~ '^[a-f0-9]{64}$'
+   THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
+   -- Check effective visibility in this actual SourceWriter transaction, not a metadata snapshot.
+   FOREACH relation IN ARRAY ARRAY['public.trip_sources'::regclass,'public.trip_source_representations'::regclass] LOOP
+    IF NOT has_table_privilege(current_user,relation,'SELECT') OR row_security_active(relation) AND (
+     NOT EXISTS(SELECT 1 FROM pg_policy policy WHERE policy.polrelid=relation AND policy.polpermissive
+       AND policy.polcmd IN ('r','*') AND current_user::regrole=ANY(policy.polroles) AND pg_get_expr(policy.polqual,policy.polrelid)='true')
+     OR EXISTS(SELECT 1 FROM pg_policy policy WHERE policy.polrelid=relation AND NOT policy.polpermissive)
+    ) THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
+   END LOOP;
+   -- Observe both global UUIDs in one statement snapshot, not two independent absence reads.
+   SELECT EXISTS(SELECT 1 FROM public.trip_sources WHERE id=(v->>'source_id')::uuid),
+     EXISTS(SELECT 1 FROM public.trip_source_representations WHERE id=(v->>'representation_id')::uuid)
+    INTO source_found,representation_found;
+   IF NOT source_found AND NOT representation_found THEN
+    -- Prospective initial-original descriptor only; never stored/returned as Source facts.
+    prospective_hash:=public.trip_source_hash('otr-source-run-input-v1',jsonb_build_array(1,jsonb_build_array(jsonb_build_array(
+     v->'id',v->'source_id',v->'material_revision',v->'representation_id',v->'payload_sha256',v->'byte_count',
+     v->'observed_source_row_revision',v->'historical_selection',1,'ORIGINAL','TEXT',NULL,NULL,NULL,'[]'::jsonb))));
+    IF scope_row.input_sha256 IS DISTINCT FROM prospective_hash OR clock_timestamp()<scope_row.starts_at OR clock_timestamp()>=scope_row.expires_at
+    THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
+    RETURN NULL; -- Exact Task/Run absent only: not Source acceptance/NoCommit/retry authority.
+   END IF;
+   -- An existing/partial/colliding identity is never projected into a missing original.
+   SELECT * INTO source_row FROM public.trip_sources WHERE id=(v->>'source_id')::uuid;
+   SELECT * INTO rep FROM public.trip_source_representations WHERE id=(v->>'representation_id')::uuid;
+   p:=jsonb_populate_record(NULL::public.trip_source_inputs,v||jsonb_build_object('run_id',run,'confirmation_id',NULL));
+   IF NOT source_found OR NOT representation_found OR source_row.id IS NULL OR rep.id IS NULL OR source_row.trip_id IS DISTINCT FROM trip OR source_row.acquired_by IS DISTINCT FROM actor
+   OR source_row.source_kind IS DISTINCT FROM 'FILE' OR source_row.acquisition_channel IS DISTINCT FROM 'FILES'
+   OR source_row.acquisition_key IS DISTINCT FROM command_pin->>'operationKey'
+   OR rep.source_id IS DISTINCT FROM p.source_id OR rep.introduced_revision IS DISTINCT FROM 1
+   OR rep.role IS DISTINCT FROM 'ORIGINAL' OR rep.material_kind IS DISTINCT FROM 'TEXT' OR rep.encoding IS DISTINCT FROM 'UTF-8'
+   OR rep.transform_key IS NOT NULL OR rep.transform_version IS NOT NULL OR rep.transform_options_sha256 IS NOT NULL OR cardinality(rep.parent_ids) IS DISTINCT FROM 0
+   OR public.trip_import_input_valid(p,actor,trip,true) IS NOT TRUE
+   THEN RAISE EXCEPTION 'INPUT_STALE';END IF;
+   PERFORM public.trip_source_lock_universal_materials(actor,trip,ARRAY[p.source_id]);
+  END IF;
   IF public.trip_source_finite_native_original_scope(actor,trip,batch,task,run,submission,originals) IS NOT TRUE
-  OR EXISTS(SELECT 1 FROM public.trip_source_runs x WHERE x.actor_account_id=actor AND x.trip_id=trip AND x.capture_batch_id=batch)
   THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_RUN_UNAVAILABLE';END IF;
   RETURN NULL;
  END IF;

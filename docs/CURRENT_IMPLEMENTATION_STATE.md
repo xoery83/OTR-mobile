@@ -1,3 +1,7 @@
+## TXT pre-acquire lookup source — 5 November 2026
+
+LaneC fixedb54ca15e exact three-leaf packet preserves the other four route functions and retained Run suffix. A protected single-TXT initial pin can report point-in-time Task/Run unprepared only after exact identity/hash and effective SourceWriter visibility checks; this is not Source acceptance, NoCommit or retry authority. Independent scoped reviews reused; actual-main HTTP14, scoped types/lint/Python AST pass. SQL remains an uninstalled candidate; real Auth/locks/concurrency/Hosted/Provider/Native and c420 PG_PENDING_DONT_DEPLOY remain unqualified. Receipt: `docs/ops/root1-txt-preacquire-source-integration-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`. No runtime, SQL install, device or paid action.
+
 ## Import Updates local-first source — 5 November 2026
 
 LaneC fixed47dccc36 four exact Updates operation/UI/test leaves reuse independent45PASS. Existing repository-local registered intake appears before sequential remote Task hydration; real projected Task replaces same-Batch local row. Account/Trip/generation/focus/reopen guards and in-flight Refresh lock remain. No persisted Task/Source success is invented. Source integration checks are recorded in `docs/ops/import-updates-local-first-source-integration-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`; device/cold-read and Cloud/Provider acceptance remain pending. No Backend/SQL/Source/Provider/device/Session action.

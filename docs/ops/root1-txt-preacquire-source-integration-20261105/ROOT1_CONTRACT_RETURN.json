@@ -1,0 +1,168 @@
+{
+  "requestId": "IMP-C01-TXT-PREACQUIRE-READ-CONTRACT-20261105-01",
+  "upstreamAlias": "PREACQUIRE READ GAP is this same request, not a second review/work item",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "status": "SUPPORTED_WITH_EXACT_CONDITIONS",
+  "requestCommit": "96af06a212be6288db2dba65bdbbc0769210fd17",
+  "requestSHA256": "13f5c5e90666fa3dd20b9d9bf8cdcf6ff8336b173d57b7f72fb087bfa34daa1d",
+  "allowedDelta": "Only the global Run-absent branch of the existing seven-argument trip_source_find_finite_universal_binding candidate. No implementation or activation granted by this record.",
+  "fixedBindings": {
+    "findCandidateCanonicalDefinitionSHA256": "2831a7c638859440cd5496645eb52d2ae97d170aef420e86231812e3625d0182",
+    "actual58577FullDefinitionSHA256": "9747298d0ca132f77833671a703d3b90d3e303d4cbc5e5d987eff7ff8494d36a",
+    "actual58577Unchanged": true,
+    "Source5Return": "ac2c023f76dd53a9c6a9a8276f92a7851e4f96511c9d0f77a282745ff31e1694",
+    "focusedPG14Summary": "9bfc7c60cb6871b100e175f632b6ab20efd6dfa030585f5b5ce9a179e56db216"
+  },
+  "conditions": [
+    {
+      "id": "C1_TASK_ONLY_ABSENCE",
+      "rule": "Qualified NULL is only a point-in-time observation that the exact requested Run/Task is not prepared. Existing host maps that to TASK_NOT_FOUND404/no-store. It is not Source ACQUIRE/APPLIED, NoCommit for any operation, byte verification, Admission, charge/refund authorization or permission to allocate new IDs/retry UNKNOWN."
+    },
+    {
+      "id": "C2_NORMAL_SCOPE",
+      "rule": "Retain normal Backend Auth/Trip authorization before/after read, SourceWriter SECURITY DEFINER/current trusted SourceCommandGateway identity, existing import/registered Actor+Trip read locks and finite close/shared lock. The active protected server scope must match all seven arguments: Actor,Trip,Batch,Task,Run,submissionSha256 and complete original input array. Closed/revoked/unregistered/wrong/future/expired scope cannot use this absence path."
+    },
+    {
+      "id": "C3_GLOBAL_RUN",
+      "rule": "Only truly globally absent requested Run plus no conflicting same-Actor/Trip Batch Run may enter. Reuse existing finite_identity normal visibility/collision logic before deciding absence; hidden/wrong-owner/wrong-state/superseded/colliding Run is not absence. Check and observe within existing transaction/locks, not from a cached metadata snapshot."
+    },
+    {
+      "id": "C4_GLOBAL_SOURCE_REP",
+      "rule": "Prove global committed absence of both exact Source and representation UUIDs under the actual runtime SourceWriter role, not only an Actor/Trip-filtered NOT EXISTS. A legal proof uses already-authorized SELECT plus either row_security_active=false for that relation under this same current role, or verified effective unconditional SELECT visibility with no applicable restrictive/filtering policy (the current finite_identity Run-policy guard is the reusable pattern). Table ownership alone is insufficient when FORCE RLS is set. An already-approved helper may provide this guarantee only with exact current metadata/EXEC/body qualification; no new helper/GRANT/role/BYPASS/GUC RLS disable is authorized. Unproven visibility must reject, not return NULL. Retain locks/stable visibility through the read result."
+    },
+    {
+      "id": "C5_TRUSTED_INITIAL_PROFILE",
+      "rule": "Exactly one supported OTR_UTF8_TEXT_FILE_V1 initial FILE/FILES Source is eligible. Profile must come from exact protected server scope/config and its strict eight-field Source-command pin, matched to actual normal intake/codec commitment and original Account/Trip/Source/representation/operation identity. Client MIME, filename, readerVersion, local proposal label or coincidental hash is not profile authority. Require the existing initial Source/representation invariant: material revision1, observed Source row revision1, historical_selection=false, introduced revision1/ORIGINAL/TEXT, no transforms or parents. No PNG/PDF/PASTE/multiple-input or existing replacement/derived extension."
+    },
+    {
+      "id": "C6_FULL_COMMITMENT",
+      "rule": "Strict complete eight-key run-input identity, UUID/digest/byte count/current codec constraints and exact protected server eight-key Source-command pin must match; scope.input_sha256 remains the server commitment. Prospective descriptor uses the input eight values unchanged plus [1,ORIGINAL,TEXT,null,null,null,[]], canonical existing descriptor sort/type rules, domain otr-source-run-input-v1 and envelope [1,descriptors]. Reuse the existing hash primitive/canonical algorithm; do not call or change58577 to manufacture metadata, omit a pin, silently normalize different bytes, or accept client expectedHash as authority. The descriptor is labelled prospective and never stored/returned as accepted Source facts."
+    },
+    {
+      "id": "C7_PRESENT_OR_PARTIAL",
+      "rule": "If either Source or representation exists, do not synthesize any missing side. Use the existing actual58577/owning validation path, preserving normal Source ownership/permission/retention and exact actual material. Partial rows, foreign/global ID collisions, stale revisions or matching digest with wrong Source/Trip/Actor must not become NULL via this proposal. Legitimate already-ACQUIRED matching Source+representation may return TaskAbsent through the existing path; no re-ACQUIRE or collision concealment."
+    },
+    {
+      "id": "C8_RETAIN_EXISTING_PATHS",
+      "rule": "Existing Run/Task/retained reads remain byte/semantically unchanged, including normal reads after positive close. original_scope/begin/retained/58577/endpoint/ACL/other profiles are unchanged. Do not move active finite-profile checks outside the new absence branch and thereby disable retained existing Run reads. Do not catch INVALID_IMPORT_INPUT, permission failures or generic503 as404; no GET side-effect/prepare/write probe."
+    }
+  ],
+  "root2ExactQualificationNeeded": {
+    "status": "RUNTIME_GLOBAL_VISIBILITY_NOT_ESTABLISHED_BY_SUPPLIED_PACKET",
+    "why": "ac2c/9bfc explicitly do not prove current full Hosted table/policy equivalence. Function metadata/old snapshots and synthetic PG success do not prove present global Source/representation visibility.",
+    "supply": [
+      "Exact current SourceWriter and trusted Gateway role/owner/function execution metadata; only existing privileges may be used",
+      "For trip_sources, trip_source_representations, trip_source_runs: actual relation identity/owner/relrowsecurity/relforcerowsecurity, relevant SELECT/column privileges, applicable effective SELECT policies including restrictive conditions",
+      "A fixed runtime guard/proof in the actual SourceWriter read transaction (or an already-authorized exact helper) that refuses hidden-row uncertainty before concluding absence; no added permissions",
+      "Current protected scope exact tuple/input hash/profile-pin and approved UTF8 initial codec/config identity; data classification remains commitment, not acceptance",
+      "Independent implementation review and focused affected qualification before exact protected install/execution; supplied Source5 still not installed by this record"
+    ]
+  },
+  "focusedAcceptanceGate": [
+    "Exact active registered tuple + authoritative globally absent Run/Source/representation + trusted initialUTF8 commitment => NULL/404, zero created rows and no Provider/prepare",
+    "Each Actor/Trip/Batch/Run/Task/submission/inputID/sourceID/representationID/hash/bytes/revision/historical/profile/shape/type/pin mismatch => reject, not fake404",
+    "Closed/revoked/not-started/expired/normalAuth denied/unlinked Actor => reject",
+    "RLS-hidden or foreign collision/partial Source-representation/Run IDs => reject; include equal-hash-but-wrong-owner/Trip case",
+    "Existing matching Source+representation after legal ACQUIRE => existing actual58577 path; mismatched actual metadata rejects",
+    "Existing retained Run/Task after close unchanged; old Source5 begin/retained/original scope behavior and58577 definition unchanged",
+    "INVALID_IMPORT_INPUT and ordinary errors remain503/appropriate current denial; only contract-qualified absent binding maps404; no UNKNOWN replay or substitute IDs"
+  ],
+  "citations": [
+    {
+      "path": "backend/sql/universal_finite_native_routes_candidate.sql",
+      "lines": [
+        117,
+        153
+      ],
+      "meaning": "Existing role/Actor locks, Run absence/collision and retained branch"
+    },
+    {
+      "path": "backend/sql/universal_finite_native_helpers_candidate.sql",
+      "lines": [
+        3,
+        40
+      ],
+      "meaning": "Runtime Run global visibility and active exact original scope; original_scope calls actual hash"
+    },
+    {
+      "path": "backend/src/universalExecutionProposal.ts",
+      "lines": [
+        19,
+        28
+      ],
+      "meaning": "Strict8 Source-command profile pin; this operator proposal alone is not authority"
+    },
+    {
+      "path": "backend/src/universalExecutionProposal.ts",
+      "lines": [
+        103,
+        141
+      ],
+      "meaning": "Existing UTF8 bytes/type/profile binding"
+    },
+    {
+      "path": "backend/src/universalExecutionProposal.ts",
+      "lines": [
+        157,
+        190
+      ],
+      "meaning": "Input eight values, prospective initial descriptor and same domain hash"
+    },
+    {
+      "path": "backend/src/universalBatchSource.ts",
+      "lines": [
+        156,
+        184
+      ],
+      "meaning": "Normal current Auth scope and finite7tuple lookup"
+    },
+    {
+      "path": "backend/src/universalContinuousHost.ts",
+      "lines": [
+        200,
+        213
+      ],
+      "meaning": "Only absent binding becomes BatchNotPrepared"
+    },
+    {
+      "path": "supabase/migrations/20261005000400_trip_import_admission_catalogs.sql",
+      "lines": [
+        241,
+        246
+      ],
+      "meaning": "Historical Run/table SourceWriter global read policy pattern; not proof of current table policy"
+    },
+    {
+      "path": "supabase/migrations/20261004000300_trip_source_protected_foundation.sql",
+      "lines": [
+        258,
+        262
+      ],
+      "meaning": "FORCE RLS defeats simple owner-implies-global assumption"
+    }
+  ],
+  "sourceHashes": {
+    "backend/sql/universal_finite_native_routes_candidate.sql": "bec2507aaf61fe1f703c2a6cb37309c73a9b5f8182cf7fee6c9dfb3fced78b8d",
+    "backend/sql/universal_finite_native_helpers_candidate.sql": "0f512752cf58b00e08bcb7a35a39d8c0b3fdc39b95004bbfa0b13d8868fb2e4c",
+    "backend/src/universalExecutionProposal.ts": "39c8d68c0b8cb817519b37e3528ecdb8142cb38df195b8710d0d8efe397db4ae",
+    "backend/src/universalBatchSource.ts": "dc86c6d528f75470eca1274008776b8790a703b3430dbd21d5dc04e91f47d9cf",
+    "backend/src/universalContinuousHost.ts": "4bdae7935d9cb6d005fdd555778ba5d50ad84a9c63cbb51dcc9d1d71749d3846",
+    "backend/src/universalContext.test.ts": "a9a5e046138da4a90a5bb1501efdc76a0d23dd57b145da29ac701806498e4284"
+  },
+  "implementationOwner": "Import: smallest existing find candidate change and focused tests; Root1 does not implement ordinary Import Backend. Root2 supplies exact runtime visibility/install qualification.",
+  "testsAndExecution": {
+    "newTests": 0,
+    "PG": 0,
+    "Hosted": 0,
+    "Source": 0,
+    "Provider": 0,
+    "device": 0,
+    "OTP": 0,
+    "credentials": 0,
+    "mainWrites": 0,
+    "UNKNOWNReplay": 0,
+    "blockedC420ScriptRetried": false
+  },
+  "scopeBoundary": "Conditional Source read semantics confirmation only. Not unconditional runtime visibility, not installation approval, not future Source/Provider/business activation. No new read system/profile/permissions.",
+  "completion": "RETURN_TO_PARENT_THEN_CHILD_STOP"
+}

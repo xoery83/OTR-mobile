@@ -1,0 +1,63 @@
+{
+  "requestId": "IMP-C01-TXT-PREACQUIRE-READ-FIX-20261105-01",
+  "recordedAt": "2026-11-04T21:56:25.177602+00:00",
+  "candidateSha": "b54ca15e8fd36e5210fc143ec782e9def354afde",
+  "baseMain": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "scope": "Exactly three source/test leaves; only one SQL find function body changed. Other production SQL, Backend endpoints and owning contracts unchanged.",
+  "leaves": {
+    "backend/sql/universal_finite_native_routes_candidate.sql": {
+      "preimageSHA256": "bec2507aaf61fe1f703c2a6cb37309c73a9b5f8182cf7fee6c9dfb3fced78b8d",
+      "preimageState": "EXISTS",
+      "candidateSHA256": "3b219d2720af5d94c91ec1480bbfd7101475cef7b96f2707e5122e48648b540b",
+      "candidateGitBlob": "d2b732970a02a5ce047863fd373c57d92e6504df"
+    },
+    "backend/src/universalContext.test.ts": {
+      "preimageSHA256": "0e790fa51da2aaa96f95909ed5c1855f9969ca618652ee0b6d5805ca3df3bcb5",
+      "preimageState": "EXISTS",
+      "candidateSHA256": "a9a5e046138da4a90a5bb1501efdc76a0d23dd57b145da29ac701806498e4284",
+      "candidateGitBlob": "45ee18e41df88566b1cdecfd1259d2f5b52d19ae"
+    },
+    "scripts/import/test_txt_preacquire_read.py": {
+      "preimageSHA256": null,
+      "preimageState": "ABSENT",
+      "candidateSHA256": "c5c1c6b6c27a06654554a94e1e26c445ebd691d3af2dae0505b03709a0a861c5",
+      "candidateGitBlob": "530444ab0dfeb943d32bfd73034b606d513fe7a5"
+    }
+  },
+  "contract": {
+    "commit": "95ecc859f22df4b040b7bc24d0818ba43bbe39e8",
+    "receipt": "ROOT1_CONTRACT_RETURN.json",
+    "sha256": "32340db18dc17a0df910fdf931599f6a1221ee089138e09ff10bf3642ec8c79f",
+    "status": "SUPPORTED_WITH_EXACT_CONDITIONS",
+    "authority": "Parent directed implementation under these exact conditions; receipt alone grants no install/business authority"
+  },
+  "sourceDefinitionProof": {
+    "path": "STATIC_DEFINITION_PROOF.json",
+    "sha256": "b2ec7a7221eebd8f8264363c7c8ac4b334ad3717eadb32a5c11c7df48a6607bc"
+  },
+  "validation": {
+    "newChildFocusedPG": "48checksPASS, actual58577+canonicalhash+input_valid; Actor/lock helpers explicit boundaryfixture doubles",
+    "additionalOnlyPG": "11checksPASS on newlyidentifiedRun collision/ownerFORCERLS/pinshape cases; frozen48notrerun",
+    "HTTPGuard": "14testsPASS inclINVALID_IMPORT_INPUT remains503, onlyBATCH_NOT_PREPARED404",
+    "oldRoot2V2": "Separateexisting14actualSourceowningPG checksreused,notrerunorcountedasour59",
+    "Source58577": "FullcurrentdefinitionSHA exactbefore/after bothnewtests; sharedhashfunctionunchanged",
+    "syntax": "Pythonpy_compilePASS; SQLcompiled/executed inbothscopedPG",
+    "lintDiff": "ChangedContexttesteslint/diffPASS",
+    "independentReview": {
+      "path": "INDEPENDENT_REVIEW.json",
+      "sha256": "9fa347ec60c5491e5a5a2496845773748d0223468bbb4c84ddf49284ebce2849",
+      "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER_UNDER_ROOT1_CONDITIONS",
+      "personallyRun": "HTTP14 and source definition hashes; author PG48+11 referenced, not independently rerun",
+      "remaining": "Actual normal Auth/lock/concurrency/Hosted not executed. Source+representation are one statement snapshot; Run checks earlier in same existing transaction/locks."
+    }
+  },
+  "unclosedBoundaries": [
+    "Actual currentHost/software/config/freshSourceWriterPolicy/scope/version Gate notsuppliedbyisolation",
+    "NewSourceSQLcandidate mustbeindependentlyreviewed/integratedthenRoot2exactpackagequalification; Node/source mergeisnotSQLinstall",
+    "NoCloudrealSource/ACQUIRE/P6/Provider/Native/device/OwnerUXclaim",
+    "Existingc420PG_PENDING_PLATFORM_REVIEW_TIMEOUT retainedindependently; thisnewtestdidnotrunoldc420script orcircumventitsblockedapproval"
+  ],
+  "noNewPermissionSchemaModeProfileOrEndpoint": true,
+  "resourcesHeld": [],
+  "pointInTimeAbsenceBoundary": "Source and representation global UUID absence are observed in one SQL statement snapshot. Run visibility/absence/collisions are checked earlier under existing transaction/locks, not in that statement. NULL means Task/Run not prepared only; no NoCommit or Source success assertion."
+}

@@ -1,0 +1,95 @@
+{
+  "requestId": "IMP-C01-TXT-PREACQUIRE-READ-CONTRACT-20261105-01",
+  "reviewKind": "BOUNDED_OWNING_CONTRACT_IMPLEMENTATION_REVIEW",
+  "actualReviewer": "/root/import_sql_independent_review_20261105",
+  "recordedAt": "2026-11-04T22:02:13.954365+00:00",
+  "candidateSha": "b54ca15e8fd36e5210fc143ec782e9def354afde",
+  "evidenceSha": "f5204ed54b5194a423cf3db3f9531d3227462f3a",
+  "baseMain": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "packetSHA256": "899e5fafd42540e44fb535d013bf1e47c7ff100fe478ce5e3c50b57edc5b7329",
+  "verdict": "NO_SOURCE_BLOCKER_WITH_EXACT_RUNTIME_CONDITIONS",
+  "findings": [],
+  "verifiedLeaves": {
+    "backend/sql/universal_finite_native_routes_candidate.sql": {
+      "sha256": "3b219d2720af5d94c91ec1480bbfd7101475cef7b96f2707e5122e48648b540b",
+      "gitBlob": "d2b732970a02a5ce047863fd373c57d92e6504df"
+    },
+    "backend/src/universalContext.test.ts": {
+      "sha256": "a9a5e046138da4a90a5bb1501efdc76a0d23dd57b145da29ac701806498e4284",
+      "gitBlob": "45ee18e41df88566b1cdecfd1259d2f5b52d19ae"
+    },
+    "scripts/import/test_txt_preacquire_read.py": {
+      "sha256": "c5c1c6b6c27a06654554a94e1e26c445ebd691d3af2dae0505b03709a0a861c5",
+      "gitBlob": "530444ab0dfeb943d32bfd73034b606d513fe7a5"
+    }
+  },
+  "fixedEvidence": {
+    "ROOT1_CONTRACT_RETURN.json": "32340db18dc17a0df910fdf931599f6a1221ee089138e09ff10bf3642ec8c79f",
+    "ROOT2_VISIBILITY_METADATA.json": "f277ab9aaaf8765dc95abba85c43d54e8cf03fe7eea7d7166bdceef029e8aa1d",
+    "INDEPENDENT_REVIEW.json": "9fa347ec60c5491e5a5a2496845773748d0223468bbb4c84ddf49284ebce2849",
+    "STATIC_DEFINITION_PROOF.json": "b2ec7a7221eebd8f8264363c7c8ac4b334ad3717eadb32a5c11c7df48a6607bc"
+  },
+  "contractAssessment": [
+    {
+      "condition": "C1/C2",
+      "result": "SUPPORTED",
+      "citation": "backend/sql/universal_finite_native_routes_candidate.sql:121-140,173-175",
+      "reason": "Existing trusted SourceWriter/Gateway, normal Actor and import lock remain. Active protected exact Actor/Trip/Batch/Task/Run/submission and finite clock checked; NULL is only absent Task/Run observation, no Source/NoCommit/retry authority."
+    },
+    {
+      "condition": "C3 global Run",
+      "result": "SUPPORTED_POINT_IN_TIME_NOT_ATOMIC_THREE_RELATION_SNAPSHOT",
+      "citation": "routes:124-133; backend/sql/universal_finite_native_helpers_candidate.sql:9-28",
+      "reason": "Existing finite_identity checks actual global Run RLS visibility and exact present Run ownership/state/tuple; explicit collision query covers same-Actor same-Trip Batch and same-Actor Task. Present hidden/foreign/stale/colliding rows cannot be treated as absent at the respective checked snapshot. Source/rep absence later is not a claimed single atomic Run+Source+rep observation."
+    },
+    {
+      "condition": "C4 visibility",
+      "result": "SUPPORTED_FAIL_CLOSED_RUNTIME_GUARD",
+      "citation": "routes:156-167",
+      "reason": "Both Source/representation require actual SELECT and either inactive RLS or directly named current-role unconditional permissive policy with no restrictive policies. Uses a single SELECT for both global UUIDs. f277 catalog satisfies this pattern at its timestamp, not perpetual runtime qualification; unknown privilege/policy visibility raises rather than NULL."
+    },
+    {
+      "condition": "C5/C6 profile and commitments",
+      "result": "SUPPORTED",
+      "citation": "routes:134-155,170-174",
+      "reason": "Only protected one-pin UTF8 FILE profile enters new path. Strict eight-key pin and eight-key original types/IDs/digests/byte bound/revision1/nonhistorical are bound. Existing hash domain/envelope and fixed ORIGINAL/TEXT tail recompute protected input hash. Single input has no sorting ambiguity; no prospective facts stored/returned."
+    },
+    {
+      "condition": "C7 existing/partial material",
+      "result": "SUPPORTED",
+      "citation": "routes:177-193",
+      "reason": "Present/partial path validates exact global ownership/Trip/acquisition key/FILE+FILES/initial UTF8/no-transform/no-parent/input_valid, then existing material lock and original_scope/actual58577. Partial or collision raises; actual58577 is not changed."
+    },
+    {
+      "condition": "C8 retained paths and errors",
+      "result": "SUPPORTED_BYTE_PRESERVATION_CHECKED",
+      "citation": "routes:195-236; backend/src/universalContext.test.ts:78-89",
+      "reason": "Byte comparison confirms production text before changed find and existing Run branch onward unchanged against fixed6879. Only HTTP test adds INVALID_IMPORT_INPUT to failures remaining503. No generic503-to404 adapter change, endpoint/ACL/new mode/other-profile changes."
+    }
+  ],
+  "concurrencyDecision": {
+    "decision": "Do not block this read-only source candidate solely because Run reads precede the Source/rep statement. Contract is qualified point-in-time TaskAbsent, not a serializable negative certificate or reservation. A concurrent new Run after a genuinely absent checked snapshot can make any read stale; that is not evidence of accepting a foreign Run or proof of NoCommit.",
+    "existingLocks": "Caller retains trip_import_scope_lock(actor,trip), normal registered Actor read lock and finite_identity shared close lock (714024,2). Independently pinned actual import helper58578 acquires transaction-level shared close locks then actor/trip-exclusive admission key. These serialize cooperating same-Actor/Trip admission, not every foreign Actor UUID insertion or direct privileged writer. No new global Run-ID lock is claimed.",
+    "mustNotClaim": "No single snapshot or all-Writer global exclusion is proved for Run+Source+rep. A foreign/stale/hidden Run already visible when checked must reject. Earlier successful NULL must never authorize replacement identity, paid retry, ACQUIRE success, or skipping begin/owning guard revalidation. Subsequent normal prepare/acquire retains independent identity/uniqueness/CAS checks.",
+    "remainingQualification": "Runtime normal Actor/lock definitions/EXEC, policy equivalence, close/shared-lock protocol and affected normal producer coverage must be pinned by Root2. Concurrency tests48+11 use no-op scope/material locks and do not establish real lock behavior. If deployment consumers require a serializable three-relation no-commit certificate, that is unsupported by this candidate and must not be inferred; this contract does not request such expansion."
+  },
+  "validationReuse": {
+    "existingIndependentReview": "9fa347ec60c5491e5a5a2496845773748d0223468bbb4c84ddf49284ebce2849; reviewer personally ran HTTP14, no PG rerun",
+    "authorPG": "48+11 checks referenced, Actor/material/import lock fixture doubles explicit; actual58577/canonical hash/input_valid exercised and unchanged full hash9747298d…",
+    "personallyRunTests": 0,
+    "staticChecks": "Packet/leaf/blob/evidence hashes, direct SQL diff and byte-preserved surrounding/retained paths"
+  },
+  "integrationBoundary": "Only the three packet product/test leaves are eligible for later controlled source integration. Candidate ancestry also contains docs/events; do not whole-branch merge or infer those three leaves equal all branch changes. This child holds no Source/main rights.",
+  "runtimeBoundary": "Definitions-only candidate, NOT_INSTALLED/NOT_HOSTED/NOT_E2E. No new grants/Actor/Source/Provider authority. Exact SQL envelope, fresh effective visibility/config and protected install qualification remain Root2. c420 Adapter PG_PENDING/DONT_DEPLOY remains independent and unchanged.",
+  "actions": {
+    "SQLInstall": 0,
+    "Hosted": 0,
+    "database": 0,
+    "tests": 0,
+    "business": 0,
+    "Provider": 0,
+    "main": 0,
+    "unknownReplay": 0
+  },
+  "resume": "Return fixed review to parent; no author change requested. Parent may continue qualified Source integration independently of Root2 install gate. Child stops."
+}

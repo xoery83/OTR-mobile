@@ -1,0 +1,65 @@
+{
+  "reviewer": "/root/ui08_review",
+  "candidateSha": "b54ca15e8fd36e5210fc143ec782e9def354afde",
+  "sourceBase": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER_UNDER_ROOT1_CONDITIONS",
+  "scope": "Three integration source/test leaves across fixed b54ca15e and prior96af guard; independent static review against Root1 C1-C8 plus direct HTTP test run. No PG container or Hosted actions.",
+  "actionableDefects": [],
+  "sourceLeafSHA256": {
+    "backend/sql/universal_finite_native_routes_candidate.sql": "3b219d2720af5d94c91ec1480bbfd7101475cef7b96f2707e5122e48648b540b",
+    "scripts/import/test_txt_preacquire_read.py": "c5c1c6b6c27a06654554a94e1e26c445ebd691d3af2dae0505b03709a0a861c5",
+    "backend/src/universalContext.test.ts": "a9a5e046138da4a90a5bb1501efdc76a0d23dd57b145da29ac701806498e4284"
+  },
+  "contractEvidence": {
+    "Root1Commit": "95ecc859f22df4b040b7bc24d0818ba43bbe39e8",
+    "Root1ContractSHA256": "32340db18dc17a0df910fdf931599f6a1221ee089138e09ff10bf3642ec8c79f",
+    "Root2VisibilityMetadataSHA256": "f277ab9aaaf8765dc95abba85c43d54e8cf03fe7eea7d7166bdceef029e8aa1d",
+    "Root2StaticFacts": "Writer role effective tableSELECT and all listed columnSELECT true for Source/representation/Run; FORCE RLS tables have applicable direct unconditional permissive policies and no restrictive policies. Gateway has no Writer inheritance. Metadata is not a business-read or deployment proof."
+  },
+  "personallyVerified": [
+    "SQL file exact SHA3b219d2720af5d94c91ec1480bbfd7101475cef7b96f2707e5122e48648b540b. Only find function changes; other four definitions and existingRun/retained branch byte-identical to6879.",
+    "Existing current trusted role/session checks, scope/Actor read locks and finite_identity visibility/close lock remain before new path. Existing scope-lock implementation inspected; normal Actor/material lock fixture doubles do not independently prove these real locks.",
+    "GlobalRun absence and sameActor Batch/Task collisions checked through existing transaction/locks and finite_identity. This follows Root1 C3; no extra all-three-tables-in-one-statement condition assumed.",
+    "Protected exact server scope matches Actor/Trip/Batch/Task/Run/submission/clock. Eight-key command pin plus strict eight-key input, UUID/hash/bytecount/revision/historical constraints checked.",
+    "Only protected single OTR_UTF8_TEXT_FILE_V1 initial-original profile qualifies; prospective descriptor uses existing input values and fixed initial descriptor tail/domain/envelope; no Source facts or rows created.",
+    "Runtime SourceWriter tableSELECT/RLS visibility guard precedes global Source and representation UUID checks; unproven visibility/restrictive policy rejects. Existing finite_identity provides Run visibility guard.",
+    "Source+representation absence is observed in one SELECT snapshot. Run visibility/collisions are checked earlier within existing transaction/locks, not that same SELECT. NULL means point-in-time Task/Run not prepared, never NoCommit or Source success.",
+    "Any present/partial Source or representation is validated against exact ownership/Trip/key/FILE/FILES/initial UTF8/no-transform/parents and input_valid, then existing actual58577/original_scope path; stale/foreign/collision does not become missing.",
+    "No SQL ACL/new grant/helper/write path added. Invalid input/permission failures remain failures; no generic503-to404 catch.",
+    "Fixture Python parsed without execution; author receipt old/new find-definition hashes match extracted fixed definitions."
+  ],
+  "testsPersonallyRun": [
+    {
+      "command": "./node_modules/.bin/vitest run backend/src/universalContext.test.ts",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "includes": "INVALID_IMPORT_INPUT remains503"
+    }
+  ],
+  "authorReferencedPG": {
+    "personallyRerun": false,
+    "focusedChecks": 48,
+    "collisionIncrementChecks": 11,
+    "focusedReceiptSHA256": "1fd5258e48cfdb76b6d9c28587ba16fe5157e8cf8ce966bb52b51baaf64a5d29",
+    "collisionReceiptSHA256": "68b626ba9ba5470b8ec12ac53cc20967dd20b8159553e33c8e6a5894d7ba88f8",
+    "definitionPinsMatchCandidate": true,
+    "actual58577DefinitionSHA256": "9747298d0ca132f77833671a703d3b90d3e303d4cbc5e5d987eff7ff8494d36a",
+    "boundary": "Isolated network-none PG visibility/absence fixture with actual canonical hash/58577/input_valid. Normal Actor is qa_acl double and scope/material lock functions are no-op doubles. Synthetic existing Source/Run rows are not real ACQUIRE receipts. Not full Source/P6/Host E2E."
+  },
+  "remainingQualification": [
+    "Root2 actual installed ownership/ACL/column/RLS/definition CAS and exact protected scope must match when qualifying runtime.",
+    "Real normal Actor/Source locking and concurrent race behavior not independently executed; no concurrency proof inferred from48+11 fixture checks.",
+    "No real ACQUIRE/P6/Host/Provider or after-close Cloud/readback qualification claimed.",
+    "SQL remains definitions-only candidate; code review grants no install/deployment, new permissions or execution authority.",
+    "No oldc420 PG runner retried."
+  ],
+  "notRun": [
+    "PG container creation or author48/11 repeats",
+    "Hosted/Source/Provider/device calls",
+    "Broad repo audit or full suites",
+    "Concurrency stress/race test"
+  ],
+  "mutations": "Only this independent report written under/private/tmp. No author/product/SQL installation/device/credential/Hosted mutation.",
+  "readiness": "SCOPED_SOURCE_CANDIDATE_REVIEW_PASS_NOT_HOSTED_OR_CLOUD_E2E_PASS_NOT_APP_READY"
+}

@@ -1,0 +1,29 @@
+{
+  "status": "SOURCE_ONLY_INTEGRATION_PASS_NOT_INSTALL_OR_EXECUTION_APPROVAL",
+  "parentMain": "7c103acf9802e3c149cdbadf03aca978fada6568",
+  "candidate": "b54ca15e8fd36e5210fc143ec782e9def354afde",
+  "packetSHA256": "899e5fafd42540e44fb535d013bf1e47c7ff100fe478ce5e3c50b57edc5b7329",
+  "exactThreeLeafHashes": {
+    "backend/sql/universal_finite_native_routes_candidate.sql": "3b219d2720af5d94c91ec1480bbfd7101475cef7b96f2707e5122e48648b540b",
+    "backend/src/universalContext.test.ts": "a9a5e046138da4a90a5bb1501efdc76a0d23dd57b145da29ac701806498e4284",
+    "scripts/import/test_txt_preacquire_read.py": "c5c1c6b6c27a06654554a94e1e26c445ebd691d3af2dae0505b03709a0a861c5"
+  },
+  "verification": {
+    "HTTP": "14 PASS / 250ms",
+    "scopedTypecheck": "PASS",
+    "scopedESLint": "PASS",
+    "PythonAST": "PASS",
+    "diffCheck": "PASS",
+    "otherFourFunctionsAndRetainedRunSuffix": "BYTE_IDENTICAL"
+  },
+  "reused": "Independent HTTP14 review and author PG48+11, actual58577/canonicalhash/input_valid with explicit Actor/material/lock fixture doubles; no PG rerun",
+  "notTested": [
+    "Actual Auth/SourceWriter qualification",
+    "Real lock/concurrency",
+    "Hosted SQL install",
+    "c420 adapter PG_PENDING_DONT_DEPLOY",
+    "Provider/Save/Native/device"
+  ],
+  "semantics": "NULL is point-in-time Task/Run unprepared only; Source and representation absence share one SQL snapshot, Run checks earlier under existing transaction/locks; no NoCommit or retry/paid authority.",
+  "protectedOperationsPerformed": []
+}
