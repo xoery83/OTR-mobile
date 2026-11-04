@@ -1,0 +1,11 @@
+{
+  "requestId": "MC-SLOW-START-20261105-IMPORT-SOURCE-INTEGRATION",
+  "status": "STOP_AFTER_PUBLICATION_OR_AUTH_BLOCK",
+  "autoResume": false,
+  "preMain": "88c09c9fd9d2786a747d6c100ab6b5c1ab29d46a",
+  "candidate": "920696dc78c7c46d45fdadc455ca2a61cbe7b78d",
+  "cancelExcluded": true,
+  "sourceWriter": "Release immediately after bounded publication outcome",
+  "heldHostedOrDevices": [],
+  "nextAction": "Return actual final source SHA and remote outcome to MC; stop. No next queue, Cancel push, Hosted or business execution."
+}

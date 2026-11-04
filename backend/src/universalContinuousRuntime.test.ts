@@ -18,6 +18,9 @@ const f = vi.hoisted(() => ({
   coreSource: vi.fn(),
   pdfConfig: vi.fn(),
   pdfPorts: vi.fn(),
+  pngConfig: vi.fn(),
+  pngPorts: vi.fn(),
+  pngRead: vi.fn(),
 }));
 vi.mock("node:sqlite", () => ({
   DatabaseSync: class {
@@ -57,6 +60,10 @@ vi.mock("./universalContinuousHost", () => ({
 vi.mock("./sourcePdfRuntime", () => ({
   readSourcePdfRuntimeConfig: f.pdfConfig,
   createSourcePdfRuntimePorts: f.pdfPorts,
+}));
+vi.mock("./sourcePngRuntime", () => ({
+  readSourcePngRuntimeConfig: f.pngConfig,
+  createSourcePngRuntimePorts: f.pngPorts,
 }));
 vi.mock("../../src/data/sync/syncOperationRepository", () => ({
   createSyncOperationRepository: () => ({ recoverInterrupted: f.recover }),
@@ -513,3 +520,94 @@ it.each(["active", "before", "expired"])(
     }
   },
 );
+
+it("retained PNG wiring keeps Host/Source guards after positive config close and rejects changed pins", async () => {
+  const actor = randomUUID(),
+    trip = randomUUID(),
+    batch = randomUUID(),
+    task = randomUUID();
+  const image = {
+    accountId: actor,
+    tripId: trip,
+    sourceId: randomUUID(),
+    representationId: randomUUID(),
+    sha256: "a".repeat(64),
+    byteCount: 3,
+    mimeType: "image/png",
+  };
+  const bytes = Uint8Array.from([1, 2, 3]);
+  f.pngConfig.mockResolvedValue({});
+  f.pngPorts.mockImplementation((_config, deps) => ({
+    close: vi.fn(),
+    originalMetadataAllowed: () => false,
+    readOriginal: async (...args: unknown[]) => {
+      deps.assertReadEnabled();
+      return f.pngRead(...args);
+    },
+  }));
+  f.pngRead.mockResolvedValue(bytes);
+  f.coreSource.mockReturnValue({
+    lookup: vi.fn(async () => ({
+      actorId: actor,
+      tripId: trip,
+      batchId: batch,
+      taskId: task,
+      inputs: [
+        {
+          source_id: image.sourceId,
+          representation_id: image.representationId,
+          payload_sha256: image.sha256,
+          byte_count: image.byteCount,
+        },
+      ],
+    })),
+  });
+  f.host.mockReturnValue({ readPublished: vi.fn(async () => ({})) });
+  const env = {
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    OTR_DEV_UNIVERSAL_PNG_RUNTIME: "enabled",
+    OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256: "a".repeat(64),
+  };
+  const runtime = await loadDevUniversalContinuousRuntime(env);
+  try {
+    env.OTR_DEV_UNIVERSAL_PNG_RUNTIME = "disabled";
+    env.OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256 = "closed";
+    const deps = f.pngPorts.mock.calls[0][1];
+    expect(() => deps.assertEnabled()).toThrow("SOURCE_CAPABILITY_CLOSED");
+    const result = await runtime!.readPublished(
+      { actorAccountId: actor, tripId: trip, batchId: batch, taskId: task },
+      { query: vi.fn(), retire: vi.fn() },
+    );
+    expect(await result!.readBinary(image)).toEqual(bytes);
+    for (const field of [
+      "accountId",
+      "tripId",
+      "sourceId",
+      "representationId",
+      "sha256",
+      "byteCount",
+    ] as const) {
+      await expect(
+        result!.readBinary({
+          ...image,
+          [field]:
+            field === "byteCount"
+              ? 4
+              : field === "sha256"
+                ? "b".repeat(64)
+                : randomUUID(),
+        }),
+      ).rejects.toThrow("SOURCE_ACCESS_DENIED");
+    }
+    expect(f.pngRead).toHaveBeenCalledOnce();
+    env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST = "disabled";
+    await expect(result!.readBinary(image)).rejects.toThrow(
+      "UNIVERSAL_CONTINUOUS_CLOSED",
+    );
+    expect(f.pngRead).toHaveBeenCalledOnce();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.claim).not.toHaveBeenCalled();
+  } finally {
+    await runtime?.close();
+  }
+});

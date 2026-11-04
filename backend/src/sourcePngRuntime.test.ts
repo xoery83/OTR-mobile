@@ -5,10 +5,14 @@ import {
   sourcePngRuntimeSchema,
   createSourcePngRuntimePorts,
 } from "./sourcePngRuntime";
-const f = vi.hoisted(() => ({ open: vi.fn(), lease: vi.fn() }));
+const f = vi.hoisted(() => ({ open: vi.fn(), lease: vi.fn(), readOriginal: vi.fn() }));
 vi.mock("node:fs/promises", async (original) => ({
   ...(await original<typeof import("node:fs/promises")>()),
   open: f.open,
+}));
+vi.mock("./sourcePngStorageProducer", async (original) => ({
+  ...(await original<typeof import("./sourcePngStorageProducer")>()),
+  createSourcePngStorageProducer: () => ({ readOriginal: f.readOriginal }),
 }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -55,6 +59,7 @@ function fixture() {
     connection: { withLease: f.lease },
     storageToken: "synthetic",
     assertEnabled: vi.fn(),
+    assertReadEnabled: vi.fn(),
   };
   return { config, env, stat, close, deps, gateway };
 }
@@ -146,4 +151,76 @@ it("binds current hashed profile without accepting old or foreign scope", async 
   expect(
     sourcePngRuntimeSchema.safeParse({ ...config, expiresAt: "infinity" }).success,
   ).toBe(false);
+});
+
+it.each(["expired", "execution-scope-closed"])(
+  "retained PNG read rechecks normal Source permission after %s without execution authority",
+  async (phase) => {
+    const q = fixture(),
+      p = createSourcePngRuntimePorts(q.config, q.deps);
+    const scope = {
+      accountId: q.config.actorId,
+      tripId: q.config.tripId,
+      sourceId: randomUUID(),
+      representationId: randomUUID(),
+      sha256: "a".repeat(64),
+      byteCount: 3,
+    };
+    const bytes = Uint8Array.from([1, 2, 3]);
+    f.readOriginal.mockResolvedValue(bytes);
+    const authorize = vi.fn(async () => {});
+    if (phase === "expired") vi.setSystemTime(new Date(q.config.expiresAt));
+    else
+      q.deps.assertEnabled.mockImplementation(() => {
+        throw Error("SOURCE_CAPABILITY_CLOSED");
+      });
+    expect(p.originalMetadataAllowed(scope.accountId, scope.tripId)).toBe(false);
+    await expect(p.readOriginal(scope, authorize)).resolves.toEqual(bytes);
+    expect(authorize).toHaveBeenCalledTimes(2);
+    expect(f.readOriginal).toHaveBeenCalledExactlyOnceWith(scope);
+    const req = new Request(
+      `https://dev.example.invalid/v2/trips/${scope.tripId}/universal-source-originals/png/result`,
+    );
+    await expect(p.sourcePngPreparationForRequest(req, scope.accountId)).rejects.toThrow(
+      "SOURCE_CAPABILITY_CLOSED",
+    );
+    expect(f.lease).not.toHaveBeenCalled();
+  },
+);
+
+it.each([
+  "unauthorized",
+  "revoked",
+  "non-retained",
+  "host-closed",
+  "runtime-closed",
+  "revoked-after-read",
+])("retained read still denies %s without Source lease or preparation", async (kind) => {
+  const q = fixture(),
+    p = createSourcePngRuntimePorts(q.config, q.deps);
+  vi.setSystemTime(new Date(q.config.expiresAt));
+  const scope = {
+    accountId: q.config.actorId,
+    tripId: q.config.tripId,
+    sourceId: randomUUID(),
+    representationId: randomUUID(),
+    sha256: "a".repeat(64),
+    byteCount: 3,
+  };
+  const authorize = vi.fn(async () => {});
+  f.readOriginal.mockResolvedValue(Uint8Array.from([1, 2, 3]));
+  if (["unauthorized", "revoked", "non-retained"].includes(kind))
+    authorize.mockRejectedValue(Error("SOURCE_ACCESS_DENIED"));
+  if (kind === "revoked-after-read")
+    authorize
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValue(Error("SOURCE_ACCESS_DENIED"));
+  if (kind === "host-closed")
+    q.deps.assertReadEnabled.mockImplementation(() => {
+      throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
+    });
+  if (kind === "runtime-closed") p.close();
+  await expect(p.readOriginal(scope, authorize)).rejects.toThrow();
+  expect(f.readOriginal).toHaveBeenCalledTimes(kind === "revoked-after-read" ? 1 : 0);
+  expect(f.lease).not.toHaveBeenCalled();
 });

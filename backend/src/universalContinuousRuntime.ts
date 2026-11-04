@@ -128,6 +128,7 @@ export async function loadDevUniversalContinuousRuntime(
           gateway,
           connection: sourceConnection,
           storageToken: env.OTR_DEV_SUPABASE_SECRET_KEY ?? "",
+          assertReadEnabled: guard,
           assertEnabled() {
             guard();
             if (

@@ -1,0 +1,38 @@
+{
+  "requestId": "MC-SLOW-START-20261105-IMPORT-SOURCE-INTEGRATION",
+  "preMain": "88c09c9fd9d2786a747d6c100ab6b5c1ab29d46a",
+  "candidate": "920696dc78c7c46d45fdadc455ca2a61cbe7b78d",
+  "independentReview": "73578aaf3c826fb27c3993fdd1231afc4fa2c545:docs/ops/root1-directed-reviews-20261105/IMPORT_REVIEW.json",
+  "status": "SOURCE_COMPOSITION_VERIFIED_NO_HOSTED_EXECUTION",
+  "sourceLeaves": {
+    "backend/src/sourcePngRuntime.ts": "97b54edf13b27639a920161a276384fe77b7d28f03b8013caf9369ac3548b125",
+    "backend/src/universalContinuousRuntime.ts": "769ee288b1ae6d51d2d53bba80214cda45b2ce7a4dc3a4e8f578f41c1c7517ce",
+    "backend/src/sourcePngRuntime.test.ts": "c5832e56bc32d2c21c6718945b60d5475fdd137b706eb98175ef2e90e1d9c87e",
+    "backend/src/universalContinuousRuntime.test.ts": "7669657adabb91318090ab2e0c37559b4485e0b7049966a38aaa7cdb0a2a1c5b"
+  },
+  "checks": {
+    "actualMainMockSuites": 2,
+    "testsPassed": 44,
+    "strictCompiler": "PASS four affected roots and imports",
+    "eslint": "PASS four leaves",
+    "diffCheck": "PASS",
+    "exactCandidateLeaves": "PASS",
+    "candidateParentFourLeavesEqualPreMain": true,
+    "cancelE422Excluded": true
+  },
+  "boundary": "Only retained PNG read lifetime separated from positive execution expiry. Normal Source ACL/retention/proof/pins/storage integrity preserved; Host/full runtime close denies. Cold restart requires existing explicit hashed custody configuration; no automatic fallback guarantee. PDF four-argument enter and paired SQL qualification unchanged.",
+  "reusedEvidence": [
+    "31dcf5be",
+    "ae548dc7",
+    "73578aaf"
+  ],
+  "notPerformed": [
+    "Hosted deployment/readback",
+    "SQL/GRANT/runtime activation",
+    "Source or Provider execution",
+    "OTP/credentials",
+    "Native/device/Owner UX",
+    "historical UNKNOWN replay"
+  ],
+  "remaining": "MC delivers fixed source receipt to Root2 for separately directed paired executable package qualification. Source integration does not grant expired Source/Provider or business authority."
+}

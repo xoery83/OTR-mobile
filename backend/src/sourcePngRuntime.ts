@@ -66,6 +66,7 @@ export function createSourcePngRuntimePorts(
     connection: CorePgConnection;
     storageToken: string;
     assertEnabled(): void;
+    assertReadEnabled(): void;
   },
 ) {
   const config = sourcePngRuntimeSchema.parse(raw);
@@ -135,10 +136,15 @@ export function createSourcePngRuntimePorts(
       },
       assertCurrent: () => Promise<void>,
     ) {
+      // Retained bytes use normal Source ACL, not the positive execution clock.
+      const assertReadEnabled = () => {
+        deps.assertReadEnabled();
+        if (closed) throw Error("SOURCE_CAPABILITY_CLOSED");
+      };
       const current = async () => {
-        assertEnabled();
+        assertReadEnabled();
         await assertCurrent();
-        assertEnabled();
+        assertReadEnabled();
       };
       await current();
       const producer = createSourcePngStorageProducer(
@@ -147,7 +153,7 @@ export function createSourcePngRuntimePorts(
           throw Error("PNG_READ_CANNOT_EXECUTE_WORKER");
         },
         custody,
-        { assertRequestCurrent: assertEnabled, assertCurrent: current },
+        { assertRequestCurrent: assertReadEnabled, assertCurrent: current },
       );
       const { accountId, tripId, sourceId, representationId, sha256, byteCount } = scope;
       const bytes = await producer.readOriginal({
