@@ -1,0 +1,27 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01-CONTEXT-OPTION",
+  "candidate": "d5216b213ab097312e0a8bfe8a9a14b2b43ce744",
+  "contractSha256": "1791c3dd528c0456f8ebc9a5eaaf9113caaa834a9db11bd3ebce98c145864f97",
+  "parentResult": "CONDITIONAL_AUTH_CONTRACT_VERIFIED_NOT_EXECUTION_AUTHORITY",
+  "fixedSourceRefsMatch": {
+    "app.json": true,
+    "plugins/withFormsQaEmbeddedBundle.js": true,
+    "src/data/auth/devSupabaseAuth.ts": true,
+    "src/data/auth/devProvisionalSignIn.ts": true,
+    "src/features/auth/EmailOtpSignIn.tsx": true,
+    "src/data/auth/googleSignIn.ts": true,
+    "src/data/auth/authRepository.ts": true,
+    "src/data/auth/authSessionRepository.ts": true,
+    "src/data/auth/guestPrincipalRepository.ts": true,
+    "src/data/auth/guestLocalWorkspace.ts": true,
+    "src/data/db/database.ts": true,
+    "src/data/bootstrap/bootstrapApplication.ts": true,
+    "src/data/bootstrap/defaultBootstrapDependencies.ts": true,
+    "src/data/sync/ledgerOperationalSync.ts": true,
+    "src/data/sync/nativeTripQaScope.ts": true
+  },
+  "conditions": "Email protocol/storage/default configuration only; Native actual signing/embedded runtime/config/container/empty proof and current B-only scope remain UNBOUND",
+  "noCodeOrTestOrLiveActionByParent": true,
+  "status": "WAITING_NATIVE_ACTUAL_BINDING",
+  "recordedAt": "2026-11-04T19:30:29.475310+00:00"
+}
