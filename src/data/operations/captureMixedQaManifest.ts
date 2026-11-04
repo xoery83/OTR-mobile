@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
@@ -80,6 +81,69 @@ export function projectMixedQaManifest(model: CaptureJobReadModel) {
     })),
   };
 }
+// Same local QA action, separate independent TXT fixture; never widens the mixed pins.
+function projectTxtQaManifest(model: CaptureJobReadModel) {
+  const tripId = model.assignedTripId ?? model.batch.context.tripPrior?.id;
+  const input = model.inputs[0];
+  if (
+    process.env.EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE !==
+      "com.xoery.otrmobile.ipadqa" ||
+    model.batch.accountId !== "1f3d7935-1bdc-4952-8d7f-0f72077368c1" ||
+    tripId !== "8b5ceb55-b3c2-462a-9a15-59de91fdabe5" ||
+    model.batch.context.tripPrior?.id !== tripId ||
+    model.batch.batchId === "39fe2a07-f946-47ff-b152-ebdfdaacda42" ||
+    model.batch.jobId === "8930950b-1722-4553-b937-fe3a6fd8709c" ||
+    !model.allInputsAccepted ||
+    model.inputs.length !== 1 ||
+    input.kind !== "FILE" ||
+    input.acquisitionSource !== "files" ||
+    input.state !== "ACCEPTED" ||
+    input.originalFilename !== "lantern-qa-garden-walk.txt" ||
+    input.declaredContentType !== "text/plain" ||
+    input.contentByteCount !== 77 ||
+    input.contentSha256 !==
+      "54ad166d421325cb12dad3fee8ebfe2d64a81e2980eef2e9115abde87254d647" ||
+    !z
+      .array(z.uuid())
+      .length(5)
+      .safeParse([
+        model.batch.batchId,
+        model.batch.jobId,
+        input.id,
+        input.captureId,
+        input.payloadId,
+      ]).success ||
+    !z.iso.datetime().safeParse(model.batch.createdAt).success ||
+    !Number.isSafeInteger(input.revision) ||
+    input.revision < 1 ||
+    !Number.isSafeInteger(input.captureRevision) ||
+    !input.captureRevision ||
+    input.captureRevision < 1
+  )
+    return null;
+  return {
+    accountId: model.batch.accountId,
+    tripId,
+    batchId: model.batch.batchId,
+    jobId: model.batch.jobId,
+    createdAt: model.batch.createdAt,
+    inputs: [
+      {
+        id: input.id,
+        kind: input.kind,
+        contentSha256: input.contentSha256,
+        contentByteCount: input.contentByteCount,
+        revision: input.revision,
+        captureId: input.captureId,
+        payloadId: input.payloadId,
+        captureRevision: input.captureRevision,
+      },
+    ],
+  };
+}
+function projectLocalQaManifest(model: CaptureJobReadModel) {
+  return projectMixedQaManifest(model) ?? projectTxtQaManifest(model);
+}
 export async function exportMixedQaManifest(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
@@ -91,13 +155,18 @@ export async function exportMixedQaManifest(
     !isCurrent()
   )
     return;
-  const manifest = projectMixedQaManifest(model);
+  const manifest = projectLocalQaManifest(model);
   if (!manifest) return;
   const sourcePins = await readPins(model);
   if (!isCurrent() || !matchesMixedQaPins(manifest, sourcePins)) return;
   const { File, Paths } = await import("expo-file-system");
   if (!isCurrent()) return;
-  const file = new File(Paths.cache, "otr-mixed-qa-manifest.json");
+  const file = new File(
+    Paths.cache,
+    manifest.inputs.length === 1
+      ? "otr-txt-qa-manifest.json"
+      : "otr-mixed-qa-manifest.json",
+  );
   file.create({ overwrite: true });
   file.write(JSON.stringify({ ...manifest, sourcePins }));
 }
@@ -113,7 +182,8 @@ function matchesMixedQaPins(
     sourcePins.jobId !== manifest.jobId ||
     sourcePins.createdAt !== manifest.createdAt ||
     sourcePins.inputs.length !== manifest.inputs.length ||
-    new Set(sourcePins.inputs.map((input) => input.inputId)).size !== 3 ||
+    new Set(sourcePins.inputs.map((input) => input.inputId)).size !==
+      manifest.inputs.length ||
     sourcePins.inputs.some(
       (input) =>
         !manifest.inputs.some(
@@ -192,7 +262,7 @@ async function readDefaultMixedQaSourcePins(model: CaptureJobReadModel) {
 export function canPrepareMixedQaSourceProposals(model: CaptureJobReadModel) {
   return (
     process.env.EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE ===
-      "com.xoery.otrmobile.ipadqa" && projectMixedQaManifest(model) !== null
+      "com.xoery.otrmobile.ipadqa" && projectLocalQaManifest(model) !== null
   );
 }
 
@@ -226,7 +296,7 @@ export async function prepareMixedQaSourceProposals(
 ) {
   if (!isCurrent() || !canPrepareMixedQaSourceProposals(model))
     throw Error("QA_SOURCE_PREPARE_SCOPE");
-  const manifest = projectMixedQaManifest(model)!;
+  const manifest = projectLocalQaManifest(model)!;
   const pins = await readPins(model);
   if (!isCurrent() || !matchesMixedQaPins(manifest, pins))
     throw Error("QA_SOURCE_PREPARE_SCOPE");

@@ -1,0 +1,57 @@
+{
+  "requestId": "IMP-C01-TXT-LOCAL-PIN-INTEGRATION-20261105-01",
+  "businessRequest": "IMP-C01-TXT-SHORTEST-20261105-01",
+  "executionChild": "/root/txt_local_pins_source_integration_20261105",
+  "preMain": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "fixedCandidate": "37119bf488ef5c0e851845850d081119ffe39092",
+  "status": "SOURCE_COMPOSITION_VERIFIED",
+  "sourceLeaves": {
+    "src/data/operations/captureMixedQaManifest.ts": "975aff4b607568906cfb70349859fdca95775685f55fd8291c9d2fe8c62ce464",
+    "src/data/operations/captureMixedQaManifest.test.ts": "4ce34a879cf9151caccf452bb0a2b4ff4ddefa91e140e410ce7b353a3efd36aa"
+  },
+  "preimageBlobs": {
+    "src/data/operations/captureMixedQaManifest.ts": "44205f4ddab4ef14a29482d21f77e85caa8a44d1",
+    "src/data/operations/captureMixedQaManifest.test.ts": "7d7aded5fa78595d15feea553722049ae648d6f0"
+  },
+  "packetSHA256": "286c2117e3958bbc100f9b028007d9fb73897521b6360263c81e80dcb22c2382",
+  "independentReview": {
+    "reviewer": "/root/ui08_review",
+    "fixedCommit": "3b10ecb8fe38c3c7ecf132d773b0c1e525616228",
+    "sha256": "e255bcfb88ebdb1687ca8c5bf2f3f8bc60e4a5c63e0c8feecb1fb886c65a127d",
+    "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER",
+    "mainArchive": "SOURCE_INDEPENDENT_REVIEW.json"
+  },
+  "actualMainChecks": {
+    "helperTests": 50,
+    "directCaptureProgressCallerTests": 3,
+    "callerSkipped": 19,
+    "strictTypecheck": "PASS two changed roots and direct imports",
+    "eslint": "PASS two leaves",
+    "uiGuard": "PASS168/473 unchanged baseline",
+    "diffCheck": "PASS",
+    "candidateLeavesByteExact": true,
+    "oldMixedProjectorByteUnchanged": true
+  },
+  "reused": "Prior independent2 pure-local owner composition checks, author RED3->GREEN50, fixed packet logs; no79/127/full Golden rerun",
+  "scope": "Exact QA77B TXT uses current explicit Prepare action and pure-local owning ports; separate TXT cache, old39fe strict projector/cache retained, no new UI/copy or bootstrap/transport. PREPARED identities reuse; UNKNOWN/currentActor/original/CAS fences remain.",
+  "notClaimed": [
+    "Actual future Intake tuple",
+    "Device or new QA154 artifact",
+    "Remote Source/Run/Task/Review receipt",
+    "Hosted/Provider/price/Actor qualification",
+    "CoreP6 Save or Cloud/OwnerUX PASS"
+  ],
+  "actions": {
+    "Hosted": 0,
+    "SQL": 0,
+    "Source": 0,
+    "Provider": 0,
+    "CanonicalSave": 0,
+    "OTP": 0,
+    "credentials": 0,
+    "device": 0,
+    "unknownReplay": 0
+  },
+  "remaining": "LaneC may consume actual final source SHA for new JS/static qualification. Device/local-proposal scope and normal remote Task GET recovery remain separately qualified; Root2 finite Source/Provider/CoreP6/current price/grant are independent. No oldwindow reuse.",
+  "publication": "Fresh CAS/non-force push and independent remote readback required; final source SHA is the commit containing this receipt."
+}

@@ -1208,3 +1208,7 @@ scope and real timer/session qualification still required; consumed windows stay
 ## Same-route Trip Create Cancel source integration — 5 November 2026
 
 Exact reviewed Native9e633/e422 two-leaf fix applied on fresh main561030a6; Guest88c and all Import retained-read leaves preserved. Same-route Create Cancel uses params, retaining real Trip Home back/fallback and generation guard. Prior192 tests reused; fresh focused13 navigation checks, scoped types/lint/UIguard PASS. Historical Native14674 simulator result is separate; no new Root1 device/Cloud/Owner UX acceptance. Receipt: `docs/ops/native-vn01-cancel-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
+## Exact TXT local proposal QA helper — 5 November 2026
+
+Reviewed LaneC37119 two-leaf helper/test integrated on fresh main0e7a39da. Existing strict39fe mixed projection/cache unchanged; exact new77B TXT reuses current explicit pure-local preparation and separate diagnostic cache. Actual-main50 helper +3caller tests, scoped types/lint/UIguard PASS. Proposed pins are not remote Source/Run/Task or receipts; QA154/device and finite Source/Provider/CoreP6/current qualification remain separate. Receipt: `docs/ops/root1-txt-local-pins-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

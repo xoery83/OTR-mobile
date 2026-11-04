@@ -1,11 +1,18 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
 import {
+  canPrepareMixedQaSourceProposals,
   exportMixedQaManifest,
   prepareMixedQaSourceProposals,
   projectMixedQaManifest,
 } from "./captureMixedQaManifest";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 const disk = vi.hoisted(() => ({ construct: vi.fn(), create: vi.fn(), write: vi.fn() }));
+const local = vi.hoisted(() => ({ prepare: vi.fn(), account: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({ requireActiveUserId: local.account }));
+vi.mock("./defaultUniversalOriginalSource", () => ({
+  prepareDefaultUniversalLocalSourceProposals: local.prepare,
+}));
 vi.mock("expo-file-system", () => ({
   Paths: { cache: "file:///qa-cache/" },
   File: function (...args: unknown[]) {
@@ -15,6 +22,8 @@ vi.mock("expo-file-system", () => ({
 }));
 beforeEach(() => {
   vi.clearAllMocks();
+  local.prepare.mockReset();
+  local.account.mockReset().mockResolvedValue(ACTUAL.accountId);
   vi.stubEnv("EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE", "com.xoery.otrmobile.ipadqa");
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -407,4 +416,371 @@ it("never prepares retained UNKNOWN or repeats already prepared proposals", asyn
     async () => pins,
   );
   expect(prepare).not.toHaveBeenCalled();
+});
+
+// Isolated synthetic C3 identities, never a device/runtime tuple.
+const txtFixture = () =>
+  ({
+    batch: {
+      accountId: ACTUAL.accountId,
+      batchId: "11111111-1111-4111-8111-111111111111",
+      jobId: "22222222-2222-4222-8222-222222222222",
+      createdAt: "2026-11-05T00:00:00.000Z",
+      context: { tripPrior: { id: ACTUAL.tripId } },
+    },
+    allInputsAccepted: true,
+    inputs: [
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        kind: "FILE",
+        acquisitionSource: "files",
+        originalFilename: "lantern-qa-garden-walk.txt",
+        declaredContentType: "text/plain",
+        contentSha256: "54ad166d421325cb12dad3fee8ebfe2d64a81e2980eef2e9115abde87254d647",
+        contentByteCount: 77,
+        state: "ACCEPTED",
+        revision: 3,
+        captureId: "44444444-4444-4444-8444-444444444444",
+        payloadId: "55555555-5555-4555-8555-555555555555",
+        captureRevision: 1,
+      },
+    ],
+  }) as unknown as CaptureJobReadModel;
+function txtPins() {
+  const model = txtFixture(),
+    i = model.inputs[0];
+  return {
+    ...pinFixture(),
+    batchId: model.batch.batchId,
+    jobId: model.batch.jobId,
+    createdAt: model.batch.createdAt,
+    inputs: [
+      {
+        ...pinFixture().inputs[0],
+        inputId: i.id,
+        kind: i.kind,
+        sha256: i.contentSha256,
+        byteCount: i.contentByteCount,
+        inputRevision: i.revision,
+        captureId: i.captureId,
+        payloadId: i.payloadId,
+        captureRevision: i.captureRevision,
+        currentCaptureRevision: i.captureRevision,
+        intakeCaptureRevision: i.captureRevision,
+      },
+    ],
+  } as ReturnType<typeof pinFixture>;
+}
+it("reuses the explicit local QA action for exactly one independent TXT and exports a separate cache", async () => {
+  const model = txtFixture(),
+    pins = txtPins(),
+    prepare = vi.fn(async () => {});
+  expect(projectMixedQaManifest(model)).toBeNull();
+  expect(canPrepareMixedQaSourceProposals(model)).toBe(true);
+  await exportMixedQaManifest(
+    model,
+    () => true,
+    async () => pins,
+  );
+  expect(prepare).not.toHaveBeenCalled();
+  expect(disk.construct).toHaveBeenCalledExactlyOnceWith(
+    "file:///qa-cache/",
+    "otr-txt-qa-manifest.json",
+  );
+  const exported = JSON.parse(disk.write.mock.calls[0][0]);
+  expect(exported.inputs).toHaveLength(1);
+  expect(exported.batchId).toBe(model.batch.batchId);
+  expect(exported.sourcePins.inputs[0].sourceCommand).toBeNull();
+  await prepareMixedQaSourceProposals(
+    model,
+    () => true,
+    prepare,
+    async () => pins,
+  );
+  expect(prepare).toHaveBeenCalledExactlyOnceWith(model, expect.any(Function));
+});
+it.each([
+  "account",
+  "trip",
+  "prior",
+  "hash",
+  "name",
+  "mime",
+  "kind",
+  "acquisition",
+  "bytes",
+  "count",
+  "state",
+  "accepted",
+  "batch",
+  "job",
+  "capture",
+  "payload",
+  "revision",
+  "captureRevision",
+])(
+  "TXT QA action refuses changed %s before local preparation or cache export",
+  async (field) => {
+    const model = txtFixture(),
+      i = model.inputs[0],
+      prepare = vi.fn();
+    if (field === "account") model.batch.accountId = "foreign";
+    if (field === "trip") model.assignedTripId = "foreign";
+    if (field === "prior")
+      model.batch.context.tripPrior = {
+        id: "foreign",
+        origin: "PRIOR",
+        observedAt: model.batch.createdAt,
+      };
+    if (field === "hash") i.contentSha256 = "0".repeat(64);
+    if (field === "name") i.originalFilename = "renamed.txt";
+    if (field === "mime") i.declaredContentType = "application/pdf";
+    if (field === "kind") i.kind = "TEXT";
+    if (field === "acquisition") i.acquisitionSource = "magic_input";
+    if (field === "bytes") i.contentByteCount = 78;
+    if (field === "count") model.inputs = [...model.inputs, { ...i }];
+    if (field === "state") i.state = "FAILED";
+    if (field === "accepted") model.allInputsAccepted = false;
+    if (field === "batch") model.batch.batchId = ACTUAL.batchId;
+    if (field === "job") model.batch.jobId = ACTUAL.jobId;
+    if (field === "capture") i.captureId = null;
+    if (field === "payload") i.payloadId = null;
+    if (field === "revision") i.revision = 0;
+    if (field === "captureRevision") i.captureRevision = 0;
+    expect(canPrepareMixedQaSourceProposals(model)).toBe(false);
+    await exportMixedQaManifest(
+      model,
+      () => true,
+      async () => txtPins(),
+    );
+    await expect(
+      prepareMixedQaSourceProposals(
+        model,
+        () => true,
+        prepare,
+        async () => txtPins(),
+      ),
+    ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+    expect(prepare).not.toHaveBeenCalled();
+    expect(disk.write).not.toHaveBeenCalled();
+  },
+);
+it("TXT action preserves stale, owning-CAS and UNKNOWN fences and reuses prepared command IDs", async () => {
+  const model = txtFixture(),
+    prepare = vi.fn(async () => {});
+  const pins = txtPins();
+  pins.inputs[0].sourceState = "OUTCOME_UNKNOWN";
+  await expect(
+    prepareMixedQaSourceProposals(
+      model,
+      () => true,
+      prepare,
+      async () => pins,
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_UNCERTAIN");
+  pins.inputs[0].sourceState = "PREPARED";
+  await prepareMixedQaSourceProposals(
+    model,
+    () => true,
+    prepare,
+    async () => pins,
+  );
+  expect(prepare).not.toHaveBeenCalled();
+  pins.inputs[0].inputRevision++;
+  await expect(
+    prepareMixedQaSourceProposals(
+      model,
+      () => true,
+      prepare,
+      async () => pins,
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+  pins.inputs[0].inputRevision--;
+  let current = true;
+  await expect(
+    prepareMixedQaSourceProposals(
+      model,
+      () => current,
+      prepare,
+      async () => {
+        current = false;
+        return pins;
+      },
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+  expect(prepare).not.toHaveBeenCalled();
+});
+it("TXT cache export cannot run outside its QA bundle or bypass a failed owning bytes reader", async () => {
+  const read = vi.fn(async () => txtPins());
+  vi.stubEnv("EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE", "ordinary");
+  expect(canPrepareMixedQaSourceProposals(txtFixture())).toBe(false);
+  await exportMixedQaManifest(txtFixture(), () => true, read);
+  expect(read).not.toHaveBeenCalled();
+  vi.stubEnv("EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE", "com.xoery.otrmobile.ipadqa");
+  await expect(
+    exportMixedQaManifest(
+      txtFixture(),
+      () => true,
+      async () => {
+        throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+      },
+    ),
+  ).rejects.toThrow("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+  expect(disk.write).not.toHaveBeenCalled();
+});
+
+it("the default TXT button calls only the existing pure-local owner and propagates missing Actor", async () => {
+  await prepareMixedQaSourceProposals(
+    txtFixture(),
+    () => true,
+    undefined,
+    async () => txtPins(),
+  );
+  expect(local.prepare).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId: ACTUAL.accountId, tripId: ACTUAL.tripId }),
+    expect.objectContaining({
+      batch: expect.objectContaining({ batchId: txtFixture().batch.batchId }),
+    }),
+    expect.objectContaining({
+      getAccountId: local.account,
+      assertCurrent: expect.any(Function),
+    }),
+  );
+  local.prepare.mockRejectedValue(Error("CAPTURE_SOURCE_TRIP_ACCESS"));
+  await expect(
+    prepareMixedQaSourceProposals(
+      txtFixture(),
+      () => true,
+      undefined,
+      async () => txtPins(),
+    ),
+  ).rejects.toThrow("CAPTURE_SOURCE_TRIP_ACCESS");
+  local.prepare.mockClear();
+  local.account.mockResolvedValue("00000000-0000-4000-8000-000000000099");
+  await expect(
+    prepareMixedQaSourceProposals(
+      txtFixture(),
+      () => true,
+      undefined,
+      async () => txtPins(),
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+  expect(local.prepare).not.toHaveBeenCalled();
+});
+
+it("real local TXT proposal/cache survives disk reopen with the same command and no Run/Task proof", async () => {
+  const {
+    fixture: captureFixture,
+    sha256,
+    now,
+  } = await import("../repositories/__fixtures__/captureBatchAssessment");
+  const { createCaptureSourceAdmissionRepository } =
+    await import("../repositories/captureSourceAdmissionRepository");
+  const { UTF8_TEXT_FILE_PROFILE } = await import("@/domain/capture/utf8TextFile");
+  const {
+    prepareUniversalOriginalBatch,
+    recoverUniversalOriginalPlans,
+    readUniversalOriginalPins,
+  } = await import("./universalOriginalBatch");
+  const f = captureFixture(true, 76);
+  await f.switchTo(ACTUAL.accountId);
+  const request = f.request();
+  request.context.tripPrior = {
+    id: ACTUAL.tripId,
+    origin: "PRIOR",
+    observedAt: request.createdAt,
+  };
+  Object.assign(request.inputs[0], {
+    kind: "FILE",
+    acquisitionSource: "files",
+    originalFilename: "lantern-qa-garden-walk.txt",
+    declaredContentType: "text/plain",
+  });
+  // Exact approved77B specimen, self-contained: integration needs no docs fixture leaf.
+  const bytes = new TextEncoder().encode(
+    "Synthetic QA only\nActivity: Lantern QA Garden Walk\nActivity date: 2026-11-06\n",
+  );
+  const model = await f.submissions.submit(
+    request,
+    new Map([[request.inputs[0].id, async () => ({ bytes })]]),
+  );
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'group_member','{}',?)",
+    )
+    .run(ACTUAL.accountId, ACTUAL.tripId, now());
+  const sources = createCaptureSourceAdmissionRepository(f.db, f.getAccount, {
+    sha256,
+    now,
+    newId: randomUUID,
+    handoff: f.captures.getForSourceHandoff,
+    readSelectedMaterial: async () => null,
+    utf8FileProfile: UTF8_TEXT_FILE_PROFILE,
+  });
+  const context = await sources.captureContext(ACTUAL.tripId);
+  const deps = {
+    getAccountId: f.getAccount,
+    hash: sha256,
+    submissions: f.submissions,
+    captures: f.captures,
+    sources,
+    newId: randomUUID,
+  };
+  const readPins = async () =>
+    readUniversalOriginalPins(context, request.jobId, {
+      ...deps,
+      includeSourceCommands: true,
+    });
+  const prepare = vi.fn(async () => {
+    await prepareUniversalOriginalBatch(
+      context,
+      request.jobId,
+      await recoverUniversalOriginalPlans(context, request.jobId, deps),
+      deps,
+    );
+  });
+  expect(canPrepareMixedQaSourceProposals(model)).toBe(true);
+  await prepareMixedQaSourceProposals(model, () => true, prepare, readPins);
+  await exportMixedQaManifest(model, () => true, readPins);
+  const first = disk.write.mock.calls.at(-1)![0];
+  const parsed = JSON.parse(first);
+  expect(parsed.sourcePins.qualification).toBe(
+    "LOCAL_C3_AND_EXISTING_COMMANDS_ONLY_NOT_SOURCE_PROOF",
+  );
+  expect(parsed.sourcePins.inputs[0]).toMatchObject({
+    sourceState: "PREPARED",
+    intakeCaptureRevision: 1,
+    currentCaptureRevision: 2,
+    sha256: txtFixture().inputs[0].contentSha256,
+  });
+  const command = parsed.sourcePins.inputs[0].sourceCommand;
+  expect(command.payload.source_input).toMatchObject({
+    source_kind: "FILE",
+    acquisition_channel: "FILES",
+  });
+  expect(command.payload.original).toMatchObject({
+    byte_count: 77,
+    text_content: new TextDecoder().decode(bytes),
+  });
+  f.reopen();
+  await prepareMixedQaSourceProposals(model, () => true, prepare, readPins);
+  await exportMixedQaManifest(model, () => true, readPins);
+  expect(disk.write.mock.calls.at(-1)![0]).toEqual(first);
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE operation_type='C_ADMIT_CAPTURE_SOURCE'",
+      )
+      .get()!.n,
+  ).toBe(1);
+  expect(f.sql.prepare("SELECT count(*) AS n FROM trip_source_runs").get()!.n).toBe(0);
+  const bindingId = parsed.sourcePins.inputs[0].bindingId;
+  await sources.markUnknown(context, bindingId, 1);
+  await expect(
+    prepareMixedQaSourceProposals(model, () => true, prepare, readPins),
+  ).rejects.toThrow();
+  expect(prepare).toHaveBeenCalledOnce();
+  await f.switchTo(randomUUID());
+  await expect(exportMixedQaManifest(model, () => true, readPins)).rejects.toThrow();
 });

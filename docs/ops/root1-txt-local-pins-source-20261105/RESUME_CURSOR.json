@@ -1,0 +1,10 @@
+{
+  "requestId": "IMP-C01-TXT-LOCAL-PIN-INTEGRATION-20261105-01",
+  "executionChild": "/root/txt_local_pins_source_integration_20261105",
+  "preMain": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "candidate": "37119bf488ef5c0e851845850d081119ffe39092",
+  "status": "STOP_AFTER_BOUNDED_PUBLICATION_RESULT",
+  "heldHostedDeviceTimers": [],
+  "autoResume": false,
+  "nextAction": "Return actual mainSHA/remote readback to Root1 parent then release Source Writer. No next integration, device, Source/Provider or business execution."
+}
