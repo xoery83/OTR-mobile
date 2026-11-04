@@ -1,0 +1,46 @@
+{
+  "requestId": "NATIVE-VN01-CANCEL-SOURCE-20261105",
+  "executionChild": "/root/cancel_source_integration_20261105",
+  "status": "SOURCE_COMPOSITION_VERIFIED",
+  "preMain": "561030a641f3bfaf5a505730d5124459af13c391",
+  "nativeCandidate": "9e633ce83283368b590474d7852da54995ee5d5f",
+  "previousUnpushedComposition": "e4225a8c456b59ec0a35c4ec175069573408b2a6",
+  "reviewCommit": "6eb3af093ed2b9b0673bce771be3151c0fbe0463",
+  "reviewSha256": "9185815c47766cffb084c3b51e6484b2bde08c2e0ae84ba43b7c6934fb3ff636",
+  "productLeaves": {
+    "src/features/day-feed/TripScreen.tsx": "dec6213b6d86db1430448434179c9af46a12a4e96702867bdd6bc4f48e7f9862",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts": "78f8fd2e3b8bd225a35e538718de9483426636fcfe92630d1bd0bdecde1605e1"
+  },
+  "composition": "Fresh main561030a6 plus only two exact already-composed Cancel leaves; not whole old branch. Guest88c getter/Source-off and test mock remain. All four Import561030a6 leaves byte-identical.",
+  "validation": {
+    "priorFullCombination": "Reuse old e422 receipt: TripScreen/LocalTripWorkspace 192 PASS; no unchanged full rerun",
+    "currentFocusedNavigation": "12 PASS89skipped; additionally existing actual Home native back/fallback1 PASS100skipped; no overlapping selected test",
+    "scopedCompiler": "PASS two changed roots and direct imports",
+    "eslint": "PASS0errors",
+    "uiGuard": "PASS168representative/473legacy unchanged",
+    "diffCheck": "PASS",
+    "exactPriorComposedLeaves": true,
+    "preservedImportFourLeaves": true
+  },
+  "nativeSimulatorEvidence": {
+    "reportedFixedCommit": "87bb715b",
+    "reportedAfter": "14674 controlled FormsQA Simulator NAV_RETURN_PASS",
+    "scope": "Native-owned historical proof; not a new Root1 device/Owner UX verification"
+  },
+  "sourceFix": "Only same /trip+view=create restores trips via setParams; actual /trip-home back/fallbackreplace and generation guards retained.",
+  "protectedActions": {
+    "Hosted": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "Source": 0,
+    "business": 0,
+    "device": 0,
+    "unknownReplay": 0
+  },
+  "notClaimed": [
+    "New Native/physical-device verification",
+    "Hosted/Cloud E2E",
+    "Owner final UX acceptance"
+  ],
+  "publication": "Normal fresh remote CAS/nonforce push and independent readback required; actual final SHA is the commit containing this receipt."
+}

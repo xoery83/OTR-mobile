@@ -86,7 +86,8 @@ const state = vi.hoisted(() => ({
   replace: vi.fn(),
   canGoBack: true,
   routeTrip: null as string | null,
-  routeMode: "home" as "home" | "day",
+  routeMode: "home" as "home" | "day" | "create" | "trips",
+  pathname: "/trip-home",
   headerHeight: 103,
   shellNavigationVisible: true,
   shellVisibleDates: null as null | { first: string; last: string },
@@ -192,7 +193,7 @@ vi.mock("expo-router/react-navigation", () => ({
 }));
 vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
-  usePathname: () => "/trip-home",
+  usePathname: () => state.pathname,
   useNavigation: () => state.navigation,
   useFocusEffect: (callback: () => void) => {
     state.focusEffect = callback;
@@ -341,6 +342,7 @@ beforeEach(() => {
     dispatch: state.dispatch,
   };
   state.routeMode = "home";
+  state.pathname = "/trip-home";
   state.headerHeight = 103;
   state.shellVisibleDates = null;
   state.shellNavigationVisible = true;
@@ -2165,4 +2167,34 @@ it.each(["foreign", "fingerprint", "generation"])("Guest Past withholds an unbou
   if (kind === "fingerprint") state.snapshot.localSource.source = { ...state.snapshot.localSource.source, fingerprint: "wrong" };
   if (kind === "generation") state.snapshot.scope = { ...state.snapshot.scope, generation: 4 };
   expect(page(await loaded())).toBeUndefined();
+});
+
+it("empty Guest My Trips Create then Cancel restores only route params, without a second native page replacement", async () => {
+  guestRead(true);
+  state.pathname = "/trip";
+  state.routeMode = "trips";
+  state.view.tripId = "";
+  find(await loaded(), LocalTripWorkspace).onCreate();
+  expect(state.params).toHaveBeenCalledExactlyOnceWith({ tripId: "", date: "", zone: "", view: "create" });
+  state.routeMode = "create";
+  state.params.mockClear();
+  const workspace = find(render(), LocalTripWorkspace);
+  expect(workspace.mode).toBe("CREATE");
+  workspace.onBackToTrips();
+  expect(state.replace).not.toHaveBeenCalled();
+  expect(state.params).toHaveBeenCalledExactlyOnceWith({ view: "trips", tripId: "", date: "", zone: "" });
+  expect(state.back).not.toHaveBeenCalled();
+  expect(state.push).not.toHaveBeenCalled();
+});
+it("a retired Create Cancel callback cannot navigate the next Account", async () => {
+  state.pathname = "/trip";
+  state.routeMode = "create";
+  state.view.tripId = "";
+  const cancel = find(await loaded(), LocalTripWorkspace).onBackToTrips;
+  state.liveGeneration++;
+  state.params.mockClear();
+  cancel();
+  expect(state.params).not.toHaveBeenCalled();
+  expect(state.replace).not.toHaveBeenCalled();
+  expect(state.back).not.toHaveBeenCalled();
 });

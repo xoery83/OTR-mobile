@@ -1,0 +1,9 @@
+{
+  "requestId": "NATIVE-VN01-CANCEL-SOURCE-20261105",
+  "executionChild": "/root/cancel_source_integration_20261105",
+  "preMain": "561030a641f3bfaf5a505730d5124459af13c391",
+  "status": "STOP_AFTER_BOUNDED_PUBLICATION_RESULT",
+  "autoResume": false,
+  "heldHostedDevicesTimers": [],
+  "nextAction": "Return actual final sourceSHA/remote readback to Root1 parent; release Source Writer; no next task or business execution."
+}

@@ -1204,3 +1204,7 @@ ORIGINAL_ID_RESUME through existing fixed A/B authority; old RECOVERY_ONLY false
 pass. See `ops/root-auth-original-resume-20261103/HANDOFF.md`.
 Dormant/unapproved: no Host/OTP/SQL/stage/arm or main action. New exact execution
 scope and real timer/session qualification still required; consumed windows stay closed.
+
+## Same-route Trip Create Cancel source integration — 5 November 2026
+
+Exact reviewed Native9e633/e422 two-leaf fix applied on fresh main561030a6; Guest88c and all Import retained-read leaves preserved. Same-route Create Cancel uses params, retaining real Trip Home back/fallback and generation guard. Prior192 tests reused; fresh focused13 navigation checks, scoped types/lint/UIguard PASS. Historical Native14674 simulator result is separate; no new Root1 device/Cloud/Owner UX acceptance. Receipt: `docs/ops/native-vn01-cancel-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

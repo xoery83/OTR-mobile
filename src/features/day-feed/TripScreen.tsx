@@ -559,13 +559,16 @@ function TripContent({
     if (generation !== getAccountGeneration()) return;
     leavingTrip.current = true;
     select(null);
-    if (pathname === "/trip-home" && router.canGoBack()) router.back();
+    // Create is an in-place sheet; replacing its route would animate My Trips again.
+    if (pathname === "/trip" && params.view === "create")
+      router.setParams({ view: "trips", tripId: "", date: "", zone: "" });
+    else if (pathname === "/trip-home" && router.canGoBack()) router.back();
     else
       router.replace({
         pathname: "/trip",
         params: { view: "trips", tripId: "" },
       });
-  }, [select, generation, pathname]);
+  }, [select, generation, pathname, params.view]);
   const createTrip = () => {
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "create" });
