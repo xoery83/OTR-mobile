@@ -8,6 +8,7 @@ import type { createCapturePhotoImportDecisionRepository } from "../repositories
 import {
   resolvePhotoImportDecision,
   photoImportPinSchema,
+  isPhotoImportMaterial,
 } from "@/domain/capture/photoImportRelevance";
 
 // Read-only pre-paid fence. Source Start owns Trip assignment; this never rebinds consent.
@@ -35,7 +36,11 @@ export async function assertPngPhotoConsent(
   await current();
   const job = await dependencies.submissions.reopen(jobId, context);
   await current();
-  const images = job.inputs.filter((input) => input.kind === "IMAGE");
+  const images = job.inputs.filter(
+    (input) =>
+      input.kind === "IMAGE" ||
+      (input.kind === "FILE" && input.declaredContentType === "image/png"),
+  );
   const input = images[0];
   if (
     job.batch.accountId !== context.accountId ||
@@ -43,7 +48,7 @@ export async function assertPngPhotoConsent(
     images.length !== 1 ||
     !input ||
     input.state !== "ACCEPTED" ||
-    input.kind !== "IMAGE" ||
+    !isPhotoImportMaterial(input) ||
     input.declaredContentType !== "image/png" ||
     !input.captureId ||
     !input.payloadId
@@ -62,7 +67,8 @@ export async function assertPngPhotoConsent(
     capture.payloadId !== input.payloadId ||
     capture.sha256 !== input.contentSha256 ||
     capture.byteCount !== input.contentByteCount ||
-    capture.kind !== "IMAGE" ||
+    !isPhotoImportMaterial(capture) ||
+    capture.kind !== input.kind ||
     capture.declaredContentType !== "image/png"
   )
     throw Error("UNIVERSAL_PHOTO_SCOPE_CHANGED");

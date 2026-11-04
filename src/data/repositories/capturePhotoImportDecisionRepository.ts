@@ -13,6 +13,7 @@ import { createCaptureSubmissionTransactionStore } from "./captureSubmissionRepo
 import {
   photoImportDecisionSchema,
   photoImportPinSchema,
+  isPhotoImportMaterial,
   resolvePhotoImportDecision,
   type PhotoImportDecision,
 } from "@/domain/capture/photoImportRelevance";
@@ -67,14 +68,15 @@ export function createCapturePhotoImportDecisionRepository(
     const input = job.inputs.find((i) => i.id === inputId);
     if (
       !input ||
-      input.kind !== "IMAGE" ||
+      !isPhotoImportMaterial(input) ||
       input.state !== "ACCEPTED" ||
       !input.captureId
     )
       return fail("PHOTO_IMPORT_INPUT_UNAVAILABLE");
     const { capture } = await captures.load(context.accountId, input.captureId);
     if (
-      capture.kind !== "IMAGE" ||
+      !isPhotoImportMaterial(capture) ||
+      capture.kind !== input.kind ||
       capture.payloadId !== input.payloadId ||
       capture.sha256 !== input.contentSha256 ||
       capture.byteCount !== input.contentByteCount ||

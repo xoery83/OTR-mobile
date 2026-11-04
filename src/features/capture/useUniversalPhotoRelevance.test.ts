@@ -378,3 +378,44 @@ it("ignores non-image/non-accepted inputs without creating a factory", async () 
   await renderPhoto().screen();
   expect(h.factory).not.toHaveBeenCalled();
 });
+
+it("Files PNG reuses passive read then explicit screen and Continue without changing Capture kind", async () => {
+  Object.assign(input(), {
+    kind: "FILE",
+    acquisitionSource: "files",
+    declaredContentType: "image/png",
+  });
+  expect(renderPhoto().eligible).toBe(true);
+  const view = await recovered();
+  expect(h.choose).not.toHaveBeenCalled();
+  expect(h.screen).not.toHaveBeenCalled();
+  const row = stored();
+  h.screen.mockResolvedValue({
+    revision: row.revision,
+    decision: row.decision,
+    persisted: true,
+  });
+  await view.screen();
+  h.choose.mockResolvedValue({ ...row, revision: 2 });
+  await renderPhoto().choose("CONTINUE_WITH_AI");
+  expect(h.choose).toHaveBeenCalledExactlyOnceWith(
+    model.batch.jobId,
+    row.revision,
+    row.decision,
+    "CONTINUE_WITH_AI",
+  );
+  expect(input().kind).toBe("FILE");
+});
+it.each([
+  ["FILE", "image/jpeg"],
+  ["FILE", "image/heic"],
+  ["FILE", "application/pdf"],
+  ["TEXT", "text/plain"],
+  ["IMAGE", "image/heic"],
+])("does not widen photo consent for %s %s", async (kind, mime) => {
+  Object.assign(input(), { kind, declaredContentType: mime });
+  expect(renderPhoto().eligible).toBe(false);
+  await Promise.resolve();
+  expect(h.factory).not.toHaveBeenCalled();
+  expect(h.choose).not.toHaveBeenCalled();
+});

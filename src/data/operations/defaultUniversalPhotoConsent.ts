@@ -7,6 +7,7 @@ import {
   captureStorageDependencies,
 } from "../repositories/defaultLocalCaptureInboxRepository";
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
+import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
 import { assertPngPhotoConsent } from "./universalPhotoConsent";
 
 // Explicit Prepare/Resume fence only. No OCR, assignment, decisions write or network.
@@ -17,7 +18,8 @@ export async function assertDefaultUniversalPhotoConsent(
 ) {
   if (
     !model.inputs.some(
-      (input) => input.kind === "IMAGE" && input.declaredContentType === "image/png",
+      (input) =>
+        isPhotoImportMaterial(input) && input.declaredContentType === "image/png",
     )
   )
     return;

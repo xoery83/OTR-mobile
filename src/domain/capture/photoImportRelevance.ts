@@ -6,6 +6,19 @@ import {
   sha256Schema,
 } from "./localCapture";
 
+// Files PNG keeps its FILE provenance while using the existing photo review.
+export function isPhotoImportMaterial(input: {
+  kind: string;
+  declaredContentType?: string | null;
+}) {
+  return (
+    (input.kind === "IMAGE" ||
+      (input.kind === "FILE" && input.declaredContentType === "image/png")) &&
+    (input.declaredContentType === "image/jpeg" ||
+      input.declaredContentType === "image/png")
+  );
+}
+
 export const photoImportPinSchema = z.strictObject({
   accountId: captureIdSchema,
   batchId: z.uuid(),

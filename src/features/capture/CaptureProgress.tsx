@@ -1,3 +1,4 @@
+import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
 import {
   canPrepareMixedQaSourceProposals,
   prepareMixedQaSourceProposals,
@@ -279,7 +280,9 @@ export function CaptureProgress({
               {photoRelevanceCopy && isCurrent && model && !reading && !error
                 ? (() => {
                     const input = model.inputs.find((input) => input.id === item.inputId);
-                    return input?.kind === "IMAGE" && input.state === "ACCEPTED" ? (
+                    return input &&
+                      isPhotoImportMaterial(input) &&
+                      input.state === "ACCEPTED" ? (
                       <UniversalPhotoRelevanceRow
                         model={model}
                         input={input}

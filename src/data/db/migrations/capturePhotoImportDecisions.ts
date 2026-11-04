@@ -1,7 +1,7 @@
 import type { Migration } from "../migrations";
 
 // Unregistered: the unique migration Writer assigns an ID against current main.
-const currentOriginal = `SELECT 1 FROM capture_submission_inputs i
+export const capturePhotoDecisionCurrentOriginalSql = `SELECT 1 FROM capture_submission_inputs i
  JOIN local_capture_inbox c ON c.account_id=i.account_id AND c.id=i.capture_id
  JOIN local_capture_payloads p ON p.account_id=c.account_id AND p.id=c.payload_id
  WHERE i.account_id=NEW.account_id AND i.input_id=NEW.input_id
@@ -36,9 +36,9 @@ CREATE TABLE capture_photo_import_decisions (
 CREATE TRIGGER capture_photo_decision_initial BEFORE INSERT ON capture_photo_import_decisions
  WHEN NEW.decision_revision!=1 BEGIN SELECT RAISE(ABORT,'PHOTO_DECISION_INITIAL'); END;
 CREATE TRIGGER capture_photo_decision_scope_insert BEFORE INSERT ON capture_photo_import_decisions
- WHEN NOT EXISTS(${currentOriginal}) BEGIN SELECT RAISE(ABORT,'PHOTO_DECISION_ORIGINAL_CHANGED'); END;
+ WHEN NOT EXISTS(${capturePhotoDecisionCurrentOriginalSql}) BEGIN SELECT RAISE(ABORT,'PHOTO_DECISION_ORIGINAL_CHANGED'); END;
 CREATE TRIGGER capture_photo_decision_scope_update BEFORE UPDATE ON capture_photo_import_decisions
- WHEN NOT EXISTS(${currentOriginal}) BEGIN SELECT RAISE(ABORT,'PHOTO_DECISION_ORIGINAL_CHANGED'); END;
+ WHEN NOT EXISTS(${capturePhotoDecisionCurrentOriginalSql}) BEGIN SELECT RAISE(ABORT,'PHOTO_DECISION_ORIGINAL_CHANGED'); END;
 CREATE TRIGGER capture_photo_decision_update BEFORE UPDATE ON capture_photo_import_decisions
  WHEN NEW.account_id IS NOT OLD.account_id OR NEW.input_id IS NOT OLD.input_id
  OR NEW.decision_revision!=OLD.decision_revision+1 OR NEW.body_json IS OLD.body_json

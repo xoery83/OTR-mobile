@@ -8,16 +8,19 @@ import {
 } from "../repositories/__fixtures__/captureBatchAssessment";
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
 import { createUniversalPhotoRelevanceActions } from "./universalPhotoRelevanceActions";
+import { captureFilePngPhotoDecisionsDefinition } from "../db/migrations/captureFilePngPhotoDecisions";
 import { assertPngPhotoConsent } from "./universalPhotoConsent";
 
-async function setup(mixed = false) {
+async function setup(mixed = false, files = false) {
   const f = fixture(true, 75),
     request = f.request(mixed ? 3 : 1),
     trip = randomUUID();
+  if (files) f.sql.exec(captureFilePngPhotoDecisionsDefinition.sql);
   request.context.tripPrior = { id: trip, origin: "PRIOR", observedAt: now() };
   Object.assign(request.inputs[0], {
-    kind: "IMAGE",
-    acquisitionSource: "photos",
+    kind: files ? "FILE" : "IMAGE",
+    acquisitionSource: files ? "files" : "photos",
+    originalFilename: files ? "material.png" : null,
     declaredContentType: "image/png",
   });
   const bytes = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
@@ -27,7 +30,10 @@ async function setup(mixed = false) {
       request.inputs.map((input) => [
         input.id,
         async () => ({
-          bytes: input.kind === "IMAGE" ? bytes : new TextEncoder().encode("typed note"),
+          bytes:
+            input.declaredContentType === "image/png"
+              ? bytes
+              : new TextEncoder().encode("typed note"),
         }),
       ]),
     ),
@@ -167,4 +173,43 @@ it("rejects a newer choice or cancellation that arrives during the original read
       controller.signal,
     ),
   ).rejects.toThrow("PHOTO_IMPORT_CANCELLED");
+});
+
+it("mixed Files PNG screens and persists the existing explicit choice with FILE identity and exact revision", async () => {
+  const x = await setup(true, true),
+    id = x.request.inputs[0].id;
+  expect(x.job.inputs[0].kind).toBe("FILE");
+  await x.f.captures.assign(x.job.inputs[0].captureId!, x.trip, 1);
+  const before = x.f.sql.prepare("SELECT * FROM sync_operations").all();
+  await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
+  const screened = await x.actions.screen(x.request.jobId, id);
+  expect(screened.decision.pin.captureRevision).toBe(2);
+  const saved = await x.actions.choose(
+    x.request.jobId,
+    screened.revision,
+    screened.decision,
+    "CONTINUE_WITH_AI",
+  );
+  expect(await x.check()).toMatchObject({ captureRevision: 2, inputId: id });
+  expect(
+    (await x.f.captures.getForSourceHandoff(x.job.inputs[0].captureId!)).capture.kind,
+  ).toBe("FILE");
+  await expect(
+    assertPngPhotoConsent(x.context, x.request.jobId, {
+      ...x.deps,
+      captures: {
+        getForSourceHandoff: async (captureId) => {
+          const original = await x.f.captures.getForSourceHandoff(captureId);
+          return {
+            ...original,
+            capture: { ...original.capture, kind: "IMAGE" as const },
+          };
+        },
+      },
+    }),
+  ).rejects.toThrow("UNIVERSAL_PHOTO_SCOPE_CHANGED");
+  await x.actions.choose(x.request.jobId, saved.revision, saved.decision, "SKIP");
+  await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_SKIPPED");
+  expect(x.f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
+  expect(x.extract).toHaveBeenCalledOnce();
 });

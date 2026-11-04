@@ -444,69 +444,80 @@ it("offers exact-session local retry only when its owning host retains a retryab
   }
 });
 
-it("accepted IMAGE rows receive local Photo controls even when another Source is not accepted", async () => {
-  const f = fixture();
-  const request = f.request(2);
-  request.inputs[0].kind = "IMAGE";
-  request.inputs[0].acquisitionSource = "photos";
-  request.inputs[0].declaredContentType = "image/jpeg";
-  request.inputs[0].originalFilename = "Retained photo.jpg";
-  const { LocalCaptureError } = await import("@/domain/capture/localCapture");
-  await f.submissions.submit(
-    request,
-    new Map(
-      request.inputs.map((input, i) => [
-        input.id,
-        async () => {
-          if (i) throw new LocalCaptureError("READER_FAILURE");
-          return { bytes: Uint8Array.of(255, 216, 255, 1, 2) };
-        },
-      ]),
-    ),
-  );
-  const model = await f.submissions.reopen(request.jobId);
-  expect(model.allInputsAccepted).toBe(false);
-  const current = () => true;
-  const copy = {
-    title: "Local photo controls",
-  } as import("./UniversalPhotoRelevanceRow").UniversalPhotoRelevanceCopy;
-  const props = {
-    model,
-    accountId: await f.getAccount(),
-    busy: false,
-    reading: false,
-    error: false,
-    canRetry: false,
-    onRetry: vi.fn(),
-    onRecover: vi.fn(),
-    onOpenJob: vi.fn(),
-    onActivity: vi.fn(),
-    onNewImport: vi.fn(),
-    isCurrent: current,
-    photoRelevanceCopy: copy,
-  };
-  const html = renderToStaticMarkup(createElement(CaptureProgress, props));
-  expect(html).toContain(copy.title);
-  expect(state.photoRows).toHaveLength(1);
-  expect(state.photoRows[0]).toMatchObject({
-    model,
-    input: model.inputs[0],
-    isCurrent: current,
-    copy,
-  });
-  expect(html).toContain(t("capture.failed"));
-  for (const update of [
-    { photoRelevanceCopy: undefined },
-    { isCurrent: undefined },
-    { reading: true },
-    { error: true },
-    { accountId: "foreign" },
-  ]) {
-    state.photoRows = [];
-    renderToStaticMarkup(createElement(CaptureProgress, { ...props, ...update }));
-    expect(state.photoRows).toHaveLength(0);
-  }
-});
+it.each([
+  ["IMAGE", "image/jpeg", "photos", "Retained photo.jpg"],
+  ["FILE", "image/png", "files", "Retained photo.png"],
+] as const)(
+  "accepted %s %s rows receive existing Photo controls when another Source is not accepted",
+  async (kind, mime, acquisition, filename) => {
+    const f = fixture();
+    const request = f.request(2);
+    request.inputs[0].kind = kind;
+    request.inputs[0].acquisitionSource = acquisition;
+    request.inputs[0].declaredContentType = mime;
+    request.inputs[0].originalFilename = filename;
+    const { LocalCaptureError } = await import("@/domain/capture/localCapture");
+    await f.submissions.submit(
+      request,
+      new Map(
+        request.inputs.map((input, i) => [
+          input.id,
+          async () => {
+            if (i) throw new LocalCaptureError("READER_FAILURE");
+            return {
+              bytes:
+                mime === "image/png"
+                  ? Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10)
+                  : Uint8Array.of(255, 216, 255, 1, 2),
+            };
+          },
+        ]),
+      ),
+    );
+    const model = await f.submissions.reopen(request.jobId);
+    expect(model.allInputsAccepted).toBe(false);
+    const current = () => true;
+    const copy = {
+      title: "Local photo controls",
+    } as import("./UniversalPhotoRelevanceRow").UniversalPhotoRelevanceCopy;
+    const props = {
+      model,
+      accountId: await f.getAccount(),
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+      isCurrent: current,
+      photoRelevanceCopy: copy,
+    };
+    const html = renderToStaticMarkup(createElement(CaptureProgress, props));
+    expect(html).toContain(copy.title);
+    expect(state.photoRows).toHaveLength(1);
+    expect(state.photoRows[0]).toMatchObject({
+      model,
+      input: model.inputs[0],
+      isCurrent: current,
+      copy,
+    });
+    expect(html).toContain(t("capture.failed"));
+    for (const update of [
+      { photoRelevanceCopy: undefined },
+      { isCurrent: undefined },
+      { reading: true },
+      { error: true },
+      { accountId: "foreign" },
+    ]) {
+      state.photoRows = [];
+      renderToStaticMarkup(createElement(CaptureProgress, { ...props, ...update }));
+      expect(state.photoRows).toHaveLength(0);
+    }
+  },
+);
 
 it("identifies current Activity batches by retained filenames without exposing stale metadata", async () => {
   const f = fixture();

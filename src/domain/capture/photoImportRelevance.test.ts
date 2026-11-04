@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   photoImportDecisionSchema,
+  isPhotoImportMaterial,
   resolvePhotoImportDecision,
   screenPhotoImportRelevance,
   type PhotoImportDecision,
@@ -159,3 +160,23 @@ describe("explicit Photo decisions remain bound to the exact original", () => {
     ).toThrow();
   });
 });
+
+it.each([
+  ["IMAGE", "image/png", true],
+  ["IMAGE", "image/jpeg", true],
+  ["FILE", "image/png", true],
+  ["FILE", "image/jpeg", false],
+  ["FILE", "application/pdf", false],
+  ["IMAGE", "image/heic", false],
+  ["TEXT", "image/png", false],
+] as const)(
+  "photo review material %s/%s has eligibility %s",
+  (kind, declaredContentType, eligible) => {
+    expect(
+      isPhotoImportMaterial({
+        kind,
+        declaredContentType,
+      }),
+    ).toBe(eligible);
+  },
+);

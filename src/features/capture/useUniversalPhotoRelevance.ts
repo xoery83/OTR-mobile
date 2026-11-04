@@ -1,3 +1,4 @@
+import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import {
@@ -74,11 +75,10 @@ export function useUniversalPhotoRelevance(
   const generation = getAccountGeneration(),
     visible = isCurrent();
   const eligible =
-    input.kind === "IMAGE" &&
+    isPhotoImportMaterial(input) &&
     input.state === "ACCEPTED" &&
     !!input.captureId &&
-    !!input.payloadId &&
-    ["image/jpeg", "image/png"].includes(input.declaredContentType ?? "");
+    !!input.payloadId;
   const latest = useRef({ key, view: isCurrent });
   const owner = useRef<Scope | null>(null);
   const [view, setView] = useState<View>(empty);
