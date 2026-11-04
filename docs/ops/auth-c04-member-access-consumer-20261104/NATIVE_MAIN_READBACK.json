@@ -1,0 +1,19 @@
+{
+  "status": "SOURCE_CONSUMER_READY_HOSTED_DEVICE_PENDING",
+  "main": "32722f7a43e4cd6f1ec57ede0a542a74872be8f1",
+  "candidate": "50aa8e76bd572045555cf859794f385592bef8c1",
+  "reviewCommit": "43c480905c82e3c925be295b71ba0195f66d2012",
+  "checks": {
+    "src/data/sync/tripDownstreamCoordinator.ts": true,
+    "src/data/sync/tripDownstreamAccessLoss.test.ts": true,
+    "src/data/api/memberAccessLossAdapter.ts": true,
+    "src/data/repositories/tripCoreV2Repository.ts": true
+  },
+  "authConsumerReview": "NO_BLOCKER_SCOPE_CONFIRMED",
+  "testsReused": "Root1 actualmain3suites34PASS; no Auth rerun",
+  "http403404": "Starts self-loss GET only, never direct revoke",
+  "revocationProof": "Canonical current Account/Trip/generation ACCESS_REVOKED plus existing Repository transaction",
+  "pendingQueue": "Existing DEPENDENCY_BLOCKED with original operation payload/receipt retained",
+  "hostedRevoke": "NOT_RUN",
+  "nativeDevice": "NOT_RUN"
+}

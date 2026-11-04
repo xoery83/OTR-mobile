@@ -181,7 +181,9 @@ No OTP/Host/device/Owner data. Actual UI repair and Vision retest remain NOT_REA
 Formal Member Revoke is source integrated at main29d77b31. Auth B-self access-loss
 consumer adapter is implemented with6 focused tests PASS, scoped lint and full typecheck PASS;
 Root1 independent Review and source integration PASS at maine3154b9f; Auth
-independently matched both consumed files. Native lifecycle caller remains pending.
+independently matched both consumed files. Native lifecycle caller is source integrated at main32722f7a; Auth matched both
+caller/test plus unchanged adapter/repository hashes against independent Review.
+Only real403/404 triggers formal self-loss read; it never itself proves revocation.
 It reuses canonical Core DTO
 and existing Repository.revoke, with no Startup caller or Hosted enablement. Root2
 owns exact protected install qualification; Hosted revoke/cold restore NOT_RUN.

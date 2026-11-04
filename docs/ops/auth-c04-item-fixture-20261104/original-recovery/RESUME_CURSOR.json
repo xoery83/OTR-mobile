@@ -15,5 +15,7 @@
   ],
   "independentLocalWork": "Original-only recovery/operator/consumer/readback preparation complete; Native lifecycle caller independently underway",
   "credentialsPersisted": false,
-  "sessionActive": false
+  "sessionActive": false,
+  "reviewPreservationCommit": "f9513a8d",
+  "attemptLockSemantics": "Protects uncertain OTP/current-run session cleanup. Confirmed own cleanup may release attempt lock even while historical business operation remains UNKNOWN. Release grants no replay/new operation, automatic OTP or repeated read authority."
 }
