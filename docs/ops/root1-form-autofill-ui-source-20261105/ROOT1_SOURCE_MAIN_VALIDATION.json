@@ -1,0 +1,44 @@
+{
+  "status": "SOURCE_ONLY_UI_ADAPTER_INTEGRATION_PASS_DEVICE_CLOUD_PENDING",
+  "parentMain": "8fe4c5dc16f45c3603d130cced2a3f62fd79f00e",
+  "candidate": "5701ad78536f58813e844d83611e612f9501f7dc",
+  "packetSHA256": "5fa5c8bc65f4fc587332e7791b96feeec76f1c0be221b064b6f0d09c92a225be",
+  "formalReviewCommit": "f7f4e2e6030b07bd203dec97a1db466f6560d6cb",
+  "formalReviewSHA256": "447a9b90c370c081a4c65a23d33f5f1c30fe34ffaa0746ffb645836922eead06",
+  "packetReviewPendingText": "Historical frozen packet unchanged; superseded by exact fixed formal NO_BLOCKER_LOCAL_UI_ADAPTER_ONLY review archive, not edited to invent author approval.",
+  "elevenLeafSHA256": {
+    "src/features/day-feed/ManualFlightForm.test.ts": "5c2e1ff3bc341a43574aefc9f4f79523cbe6e337099c7fb050ebfa4c5dfa77a6",
+    "src/features/day-feed/ManualFlightForm.tsx": "9a77d5b64a84fe1c2d2783111a7a43deb817da9d24e04a64aa27b203e4e25c6c",
+    "src/features/day-feed/P3StayEditor.test.ts": "d323a7684c91053e49a91c56978fd50b4c5b98beb2e7c5f5a3f8cd3caa983dab",
+    "src/features/day-feed/P3SyntheticScan.tsx": "b981328b2603c6c6bc2e479c05df27b8f6937c425d0a9c914e8de39bcd245b71",
+    "src/features/day-feed/P4RentalEditor.test.ts": "44afe3bcc104785d00d12587b1e2b76413bee67e6fc8373d9b52a18af4ac2f73",
+    "src/features/day-feed/P4RentalEditor.tsx": "4881b3af15c965dcda92ac6da7c32ff92c9b0b966293a28357935ce9a4e86845",
+    "src/features/day-feed/P5TransportEditor.test.ts": "04e3e66bd895f3b3dcd42163518ffd91ae8f1a6f79d76c27b07563ee551ac8cb",
+    "src/features/day-feed/P5TransportEditor.tsx": "52dfbdf3db1afe98d9e9ddb5ff2d555077454f83b319fbb4ac16e46f61274a51",
+    "src/features/day-feed/SyntheticFormScan.test.ts": "c40f5eccc4ab357aa867cd2a71a08d2f9d338ec8f17e89940e87c25dbfb001cd",
+    "src/features/day-feed/SyntheticFormScan.tsx": "53f23f5ecd7a247f5a11034ce917172aed383f96f3e769d19ecef36cd7160815",
+    "src/ui/catalogs.ts": "9c4a9fafac2c7ba584abf157520a4962196c4ae60599050f9179912da501a2d7"
+  },
+  "actualChecks": {
+    "sharedUIAndP3AvailabilityKeepReplaceCancelUnknown": "2 suites16PASS39skip /2.39s",
+    "PNGNullMimePDFFlagOffMaterialRejection": "3PASS48skip /406ms",
+    "twelveRootScopedTypes": "PASS including unchanged P3StayEditor product and current Core/Native source closure",
+    "elevenRootESLint": "PASS",
+    "uiGuard": "PASS473legacy168representative no baseline forgiveness",
+    "diffCheck": "PASS",
+    "preserved": "P3StayEditor product + four Import preflight leaves BYTE_IDENTICAL parent/candidate"
+  },
+  "reused": "Author108 and independent22 plus15 overlapping cases archived; not37 unique, no full108 repeat",
+  "semantics": [
+    "Canonical compact whole-row chooser; P2/P4/P5 no consumer/all choices disabled",
+    "P3 actual software preflight before picker, selected-material check before retain/Source and recheck before scan",
+    "Rejected temporary material release and empty Cancel; current draft/KeepReplace/UNKNOWN identity preserved",
+    "No Core/Auth/Factory/Task/Provider/SQL authority expansion"
+  ],
+  "remaining": [
+    "Real Camera/Photos/Files device operation",
+    "Owner/Vision visual acceptance",
+    "Source/Task/Provider and actual P3 AI/Cloud golden slice"
+  ],
+  "actions": "Git Source only; no Hosted/Auth/Provider/device."
+}

@@ -1,3 +1,14 @@
+import { createElement, type ReactNode } from "react";
+import { createRequire } from "node:module";
+import { beforeEach, expect, it, vi } from "vitest";
+import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
+import { ManualFlightForm, ManualFlightEditor } from "./ManualFlightForm";
+vi.mock("./SyntheticFormScan", () => ({
+  FormScanEntry: (p: any) => {
+    state.nodes.push({ ...p, label: "formAutofill.scan" });
+    return null;
+  },
+}));
 vi.mock("./FlightEnrichmentAction", () => ({ FlightEnrichmentAction: () => null }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
 vi.mock("@/components/SheetHeader", () => ({
@@ -18,11 +29,6 @@ vi.mock("./ManualEditorPresentation", () => ({
   },
 }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: (make: any) => make({}) }));
-import { createElement, type ReactNode } from "react";
-import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
-import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
-import { ManualFlightForm, ManualFlightEditor } from "./ManualFlightForm";
 const state = vi.hoisted(() => ({
   values: [] as any[],
   refs: [] as any[],

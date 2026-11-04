@@ -1,3 +1,4 @@
+import { getP3SourceScanAvailability } from "@/native/p3FormScan";
 import type { ComponentProps } from "react";
 import { t } from "@/ui/locale";
 import { SyntheticFormScan } from "./SyntheticFormScan";
@@ -38,6 +39,7 @@ export function P3SyntheticScan(
   return (
     <SyntheticFormScan
       {...props}
+      availability={props.sourceMode ? getP3SourceScanAvailability : undefined}
       validateResult={props.sourceMode ? isSourceStayResult : undefined}
       emptyMessage={(result) =>
         t(

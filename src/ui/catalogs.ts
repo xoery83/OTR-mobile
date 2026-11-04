@@ -46,6 +46,8 @@ export const en = {
     "Choose which extracted details to use. Save the form to save your changes.",
   "formAutofill.sample": "Preview synthetic sample · No upload",
   "formAutofill.scan": "Scan booking",
+  "formAutofill.subtitle": "Review details before filling",
+  "formAutofill.chooseSource": "Choose a source",
   "formAutofill.selected": "Selected material",
   "formAutofill.sourceText": "Source text: {value}",
   "formAutofill.stale":
@@ -3190,6 +3192,8 @@ export const zhHans: Record<MessageKey, string> = {
   "formAutofill.reviewSource": "选择要采用的提取信息，保存表单后才会保存更改。",
   "formAutofill.sample": "预览合成示例 · 不上传",
   "formAutofill.scan": "扫描预订",
+  "formAutofill.subtitle": "核对后再填入",
+  "formAutofill.chooseSource": "选择来源",
   "formAutofill.selected": "已选择的材料",
   "formAutofill.sourceText": "来源文字：{value}",
   "formAutofill.stale": "表单已改变，请重新选择材料获取建议。",

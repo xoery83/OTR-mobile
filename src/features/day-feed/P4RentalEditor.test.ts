@@ -3,6 +3,12 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { ManualRentalFields } from "@/data/repositories/manualRentalRepository";
 import { P4RentalEditor } from "./P4RentalEditor";
+vi.mock("./SyntheticFormScan", () => ({
+  FormScanEntry: (p: any) => {
+    state.nodes.push({ ...p, label: "formAutofill.scan" });
+    return null;
+  },
+}));
 
 const state = vi.hoisted(() => ({
   hooks: [] as unknown[],

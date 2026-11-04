@@ -3,6 +3,17 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { ManualStayFields } from "@/data/repositories/manualStayRepository";
 import { P3StayEditor } from "./P3StayEditor";
+vi.mock("@/data/operations/defaultCaptureSubmission", () => ({
+  getDefaultCaptureSubmissionDependencies: vi.fn(() => {
+    throw Error("UNEXPECTED_DEFAULT_SOURCE_FACTORY");
+  }),
+}));
+vi.mock("@/data/operations/defaultUniversalOriginalSource", () => ({
+  prepareDefaultUniversalCaptureSources: vi.fn(() => {
+    throw Error("UNEXPECTED_DEFAULT_SOURCE_PREPARATION");
+  }),
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 
 vi.mock("@/data/auth/localTripAccess", () => ({
   createDefaultManualStayRepository: () => state.repository(),
@@ -243,6 +254,9 @@ function chooseDate(p: ReturnType<typeof props>, label: string, date: Date) {
   render(p);
 }
 beforeEach(() => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "true");
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://fixture.invalid");
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED", "true");
   state.hooks = [];
   state.refs = [];
   state.effects = [];
@@ -1065,9 +1079,14 @@ vi.mock("@/native/capturePicker", () => ({
   ]),
 }));
 async function scanFile(p: ReturnType<typeof props>) {
+  node("formAutofill.scan").onPress();
+  render(p);
   await node("formAutofill.files").onPress();
   render(p);
-  void node("formAutofill.scan").onPress();
+  void state.nodes
+    .filter((entry) => entry.label === "formAutofill.scan")
+    .at(-1)!
+    .onPress();
   render(p);
 }
 
@@ -1395,8 +1414,11 @@ it("normal P3 entry is visibly unavailable and cannot open a picker or submit AI
     save: vi.fn(),
   };
   await open(p, repo);
+  node("formAutofill.scan").onPress();
   expect(render(p)).toContain("formAutofill.unavailable");
   expect(node("formAutofill.files").disabled).toBe(true);
+  node("formAutofill.scan").onPress();
+  render(p);
   await node("formAutofill.files").onPress();
   expect(picker).not.toHaveBeenCalled();
   expect(repo.save).not.toHaveBeenCalled();
@@ -1486,6 +1508,8 @@ it("Cancel during native selection releases late material and preserves user inp
   });
   node("tripCreate.stayName").onChangeText("My current draft");
   render(p);
+  node("formAutofill.scan").onPress();
+  render(p);
   const picking = node("formAutofill.files").onPress();
   await new Promise((resolve) => setImmediate(resolve));
   render(p);
@@ -1531,7 +1555,10 @@ it("explicit synthetic sample has no file URI/identity and never invokes the rea
   });
   node("formAutofill.sample").onPress();
   render(p);
-  await node("formAutofill.scan").onPress();
+  await state.nodes
+    .filter((entry) => entry.label === "formAutofill.scan")
+    .at(-1)!
+    .onPress();
   render(p);
   expect(picker).not.toHaveBeenCalled();
   const sample = (
@@ -1551,6 +1578,8 @@ it("Scan status text uses the theme foreground instead of native black in Dark M
       participantOptions: [],
     })),
   });
+  node("formAutofill.scan").onPress();
+  render(p);
   const status = state.nodes.find(
     (entry) => entry.textNode && entry.children === "formAutofill.unavailable",
   );
@@ -1598,7 +1627,10 @@ it("pins one Source interpreter per Form so prop refresh cannot replace UNKNOWN'
   expect(unknown).not.toContain("formAutofill.empty");
   p.sourceScan = replacement;
   render(p);
-  await node("formAutofill.scan").onPress();
+  await state.nodes
+    .filter((entry) => entry.label === "formAutofill.scan")
+    .at(-1)!
+    .onPress();
   await vi.waitFor(() => expect(first).toHaveBeenCalledTimes(2));
   expect(replacement).not.toHaveBeenCalled();
 });
@@ -1832,4 +1864,125 @@ it("does not add manual instruction fields to ordinary P3 Create", async () => {
   });
   expect(node("p3.instructions")).toBeUndefined();
   expect(node("p3.checkoutInstructions")).toBeUndefined();
+});
+
+it.each(["image/png", null, "application/pdf"])(
+  "releases unsupported formal selection %s before invoking Source and preserves the manual draft",
+  async (typeHint) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED", "false");
+    const release = vi.fn();
+    const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+    vi.mocked(picker).mockResolvedValueOnce([
+      {
+        source: "files",
+        name: "Unsupported material",
+        temporaryUri: "synthetic://unsupported",
+        typeHint,
+        release,
+      },
+    ]);
+    const sourceScan = vi.fn();
+    const p = { ...props(), sourceScan };
+    const repo = {
+      createDraft: vi.fn(async () => ({
+        mode: "CREATE",
+        itemId: "stay",
+        fields: fields(),
+        participantOptions: [],
+      })),
+      save: vi.fn(),
+    };
+    await open(p, repo);
+    node("tripCreate.stayName").onChangeText("Keep my manual stay");
+    render(p);
+    node("formAutofill.scan").onPress();
+    render(p);
+    await node("formAutofill.files").onPress();
+    expect(render(p)).toContain("formAutofill.manualInputNeeded");
+    expect(release).toHaveBeenCalledOnce();
+    expect(sourceScan).not.toHaveBeenCalled();
+    expect(repo.save).not.toHaveBeenCalled();
+    expect(node("tripCreate.stayName").value).toBe("Keep my manual stay");
+  },
+);
+it("formal software availability prevents opening native sources before acquisition", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "false");
+  const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+  vi.mocked(picker).mockClear();
+  const sourceScan = vi.fn();
+  const p = { ...props(), sourceScan };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  node("formAutofill.scan").onPress();
+  render(p);
+  for (const key of ["ui.camera", "formAutofill.photos", "formAutofill.files"]) {
+    expect(node(key).disabled).toBe(true);
+    node(key).onPress();
+  }
+  expect(picker).not.toHaveBeenCalled();
+  expect(sourceScan).not.toHaveBeenCalled();
+});
+it("a native selection Cancel preserves the formal Form without error or Source invocation", async () => {
+  const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+  vi.mocked(picker).mockResolvedValueOnce([]);
+  const sourceScan = vi.fn();
+  const p = { ...props(), sourceScan };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  node("tripCreate.stayName").onChangeText("My draft");
+  render(p);
+  node("formAutofill.scan").onPress();
+  render(p);
+  await node("formAutofill.files").onPress();
+  const html = render(p);
+  expect(html).not.toContain("formAutofill.manualInputNeeded");
+  expect(sourceScan).not.toHaveBeenCalled();
+  expect(node("tripCreate.stayName").value).toBe("My draft");
+});
+it("rechecks formal eligibility before invoking an already selected material", async () => {
+  const release = vi.fn();
+  const picker = (await import("@/native/capturePicker")).pickCaptureMaterial;
+  vi.mocked(picker).mockResolvedValueOnce([
+    {
+      source: "files",
+      name: "Booking text",
+      temporaryUri: "synthetic://text",
+      typeHint: "text/plain",
+      release,
+    },
+  ]);
+  const sourceScan = vi.fn();
+  const p = { ...props(), sourceScan };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  node("formAutofill.scan").onPress();
+  render(p);
+  await node("formAutofill.files").onPress();
+  render(p);
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "false");
+  await state.nodes
+    .filter((entry) => entry.label === "formAutofill.scan")
+    .at(-1)!
+    .onPress();
+  expect(render(p)).toContain("formAutofill.manualInputNeeded");
+  expect(sourceScan).not.toHaveBeenCalled();
+  expect(release).toHaveBeenCalledOnce();
 });

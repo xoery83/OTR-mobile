@@ -1,0 +1,108 @@
+{
+  "requestId": "VISION-FORM-AUTOFILL-ENTRY-20261105-001",
+  "candidateSha": "5701ad78536f58813e844d83611e612f9501f7dc",
+  "integrationBaseMain": "45eee0f5df3f891cf75cecfae427b25d2d9237e4",
+  "worktree": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-form-autofill-entry-20261105",
+  "status": "LOCAL_UI_AND_PREFLIGHT_PASS / INDEPENDENT_REVIEW_PENDING / DEVICE_NOT_RUN",
+  "exactNativeLeaves": {
+    "src/features/day-feed/ManualFlightForm.test.ts": {
+      "preimageSha256": "1f7cf8b12525db635d232ffc3b45064755f6742ab9a6b4d8e01436f54cbc7ded",
+      "candidateSha256": "5c2e1ff3bc341a43574aefc9f4f79523cbe6e337099c7fb050ebfa4c5dfa77a6",
+      "candidateBlob": "e934fb6abc96045546366a2ad1cdf27426af96f9"
+    },
+    "src/features/day-feed/ManualFlightForm.tsx": {
+      "preimageSha256": "7a179058157615244b862f449a54cc1e06008e44cd61e20e53297462319059b4",
+      "candidateSha256": "9a77d5b64a84fe1c2d2783111a7a43deb817da9d24e04a64aa27b203e4e25c6c",
+      "candidateBlob": "0211decc7e351d72b072d02e7464c76b03930a46"
+    },
+    "src/features/day-feed/P3StayEditor.test.ts": {
+      "preimageSha256": "88b3fe920a280c536c2e95dbdfac17c03e4e38adb2eec9e3673a91c8495c53be",
+      "candidateSha256": "d323a7684c91053e49a91c56978fd50b4c5b98beb2e7c5f5a3f8cd3caa983dab",
+      "candidateBlob": "e3691543a22b422a90bd927b31af6f3c3bd400f2"
+    },
+    "src/features/day-feed/P3SyntheticScan.tsx": {
+      "preimageSha256": "678ffa1fe7b2a97e77a89d4504187dedbab5cd3745f332b762c1d14533393fe1",
+      "candidateSha256": "b981328b2603c6c6bc2e479c05df27b8f6937c425d0a9c914e8de39bcd245b71",
+      "candidateBlob": "c572a6b81fbdf24bd284f368a2ebcfcb23658e70"
+    },
+    "src/features/day-feed/P4RentalEditor.test.ts": {
+      "preimageSha256": "6b5193f3f8c64c9d213e9e4de25c6cc691b85611de1e1e6900e6d662da87db85",
+      "candidateSha256": "44afe3bcc104785d00d12587b1e2b76413bee67e6fc8373d9b52a18af4ac2f73",
+      "candidateBlob": "2698cad5e21d198f14c26951f2fd68a91f818db7"
+    },
+    "src/features/day-feed/P4RentalEditor.tsx": {
+      "preimageSha256": "2ab701a54c38e2c5353bb47adf7ce702bcd13ea184eaf487dcabed3d8c9c3705",
+      "candidateSha256": "4881b3af15c965dcda92ac6da7c32ff92c9b0b966293a28357935ce9a4e86845",
+      "candidateBlob": "1d546cac50594013b6375efa4e0f2c79949d12c0"
+    },
+    "src/features/day-feed/P5TransportEditor.test.ts": {
+      "preimageSha256": "2f98f03f5c9f6e4084ef3ad855cff39cd0848404bf47a9fb459e9182bc3e9f02",
+      "candidateSha256": "04e3e66bd895f3b3dcd42163518ffd91ae8f1a6f79d76c27b07563ee551ac8cb",
+      "candidateBlob": "13d111a65767553a038c07a8820db4c1f8d03cc7"
+    },
+    "src/features/day-feed/P5TransportEditor.tsx": {
+      "preimageSha256": "2a8ebd6df17cd3b7bce4e919ee0e122177cb33bfc3acc3496bdddb90435b5868",
+      "candidateSha256": "52dfbdf3db1afe98d9e9ddb5ff2d555077454f83b319fbb4ac16e46f61274a51",
+      "candidateBlob": "b23cc00247dc72355c2f56f52e0e1953bc9ebb50"
+    },
+    "src/features/day-feed/SyntheticFormScan.test.ts": {
+      "preimageSha256": null,
+      "candidateSha256": "c40f5eccc4ab357aa867cd2a71a08d2f9d338ec8f17e89940e87c25dbfb001cd",
+      "candidateBlob": "c0f20e8581c0c52c31bb60a51514d4c919455f85"
+    },
+    "src/features/day-feed/SyntheticFormScan.tsx": {
+      "preimageSha256": "3c98065e3bb5a6cbc01b51979a12f17f38f2897c0dbff23f2cb4b87c4c559560",
+      "candidateSha256": "53f23f5ecd7a247f5a11034ce917172aed383f96f3e769d19ecef36cd7160815",
+      "candidateBlob": "fca4c722ce63bf4e43b27d1cbe3bd30bf890e5f9"
+    },
+    "src/ui/catalogs.ts": {
+      "preimageSha256": "e015ecdc307583e82861cf2f1aa789c45228c6aa4006a62ba324ff4c4322a603",
+      "candidateSha256": "9c4a9fafac2c7ba584abf157520a4962196c4ae60599050f9179912da501a2d7",
+      "candidateBlob": "364106e38f5cb1fd820fb0baa17f3b058ebed8ce"
+    }
+  },
+  "importDependency": {
+    "upstreamCandidate": "8351971ca37e554ef589b7d9138fcbf937057cc5",
+    "ownImportCommit": "f81db377",
+    "actualMain": "45eee0f5df3f891cf75cecfae427b25d2d9237e4",
+    "preservedByteExact": true,
+    "sourcePaths": [
+      "src/native/p3FormScan.ts",
+      "src/native/p3FormScan.test.ts",
+      "src/data/operations/defaultUniversalP3SourceInterpreter.ts",
+      "src/data/operations/defaultUniversalP3SourceInterpreter.test.ts"
+    ],
+    "notNativeAuthored": true
+  },
+  "actualChecks": {
+    "initialEntryRed": "4 FAIL before FormScanEntry existed",
+    "preflightRed": "5 FAIL / 1 PASS / 45 skipped against stage08cea933 lacking owning preflight",
+    "final": "7 suites /108 PASS:51P3+4sharedUI+30otherFormCaller+23Import owning adapter",
+    "types": "Only unchanged browser/auth-consent TS7016; no changed-source error",
+    "scopedLint": "0 errors / 0 warnings",
+    "uiGuard": "PASS168",
+    "diffCheck": "PASS"
+  },
+  "newBehavior": [
+    "P2/P3/P4/P5 reuse one compact UiFormRow action; complete row opens canonical chooser",
+    "P2/P4/P5 lack formal consumer: all three choices disabled, no P3 capability borrowing or material acquisition",
+    "P3 wrapper injects real Import preflight; shared UI imports its type only",
+    "Formal source eligibility checked before picker, full selected material checked before retaining or invoking consumer, eligibility rechecked on Scan",
+    "Rejected material released, empty Cancel silent, manual draft/KeepReplace/Save/UNKNOWN identity paths preserved",
+    "Original P3StayEditor product, Instructions header transaction and Core permissions unchanged"
+  ],
+  "limits": [
+    "Software preflight is not Auth, admission or Provider authority",
+    "P3 Camera/Photos unsupported and disabled; Files supports allTXT or existing flag exactsinglePDF only",
+    "P2/P4/P5 formal scan consumer remains missing",
+    "No real device/AppleCamera/Photos/Files operation, Source upload/Task, Hosted or paid Provider executed",
+    "Owner targeted visual acceptance remains pending"
+  ],
+  "logsSha256": {
+    "PREFLIGHT_RED.log": "160c634b1da8a840a3989e86735a1555e4fd7d0d07487cf013fc9640410a3474",
+    "FINAL_TESTS.log": "1b9ad32d1f756706dc407ce080c473256e47cbd31cf3baf3ceba31bd48b62bc0",
+    "FINAL_TYPES.log": "7bc44883c06b4ba39249e74d5eb1799a6ede06dd9cb48f6f4204205364a62241",
+    "FINAL_LINT.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "FINAL_UI_GUARD.log": "1d69f43a5da418d1f82b2321a80cea6ab26be54f1e055f397443ad15c188b74e"
+  }
+}

@@ -2,6 +2,12 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { P5TransportEditor } from "./P5TransportEditor";
+vi.mock("./SyntheticFormScan", () => ({
+  FormScanEntry: (p: any) => {
+    state.nodes.push({ ...p, label: "formAutofill.scan" });
+    return null;
+  },
+}));
 
 const state = vi.hoisted(() => ({
   hooks: [] as unknown[],

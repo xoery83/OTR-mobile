@@ -1,3 +1,4 @@
+import { FormScanEntry } from "./SyntheticFormScan";
 import { FlightEnrichmentAction } from "./FlightEnrichmentAction";
 import {
   useCallback,
@@ -249,6 +250,7 @@ export function ManualFlightForm({
   };
   return (
     <View style={styles.form}>
+      <FormScanEntry disabled={frozen || saving || picking} />
       {itemId && !ready ? (
         <UiText style={styles.meta}>
           {t(error ? "manualFlight.readUnavailable" : "dayFeed.loading")}

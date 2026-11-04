@@ -1,3 +1,4 @@
+import { FormScanEntry } from "./SyntheticFormScan";
 import { AppIcon } from "@/components/AppIcon";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
@@ -462,6 +463,9 @@ export function P4RentalEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
+                  <FormScanEntry
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                  />
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.rentalName")}</Text>
                     <UiTextInput

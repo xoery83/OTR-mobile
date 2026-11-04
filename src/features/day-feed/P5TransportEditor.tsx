@@ -1,3 +1,4 @@
+import { FormScanEntry } from "./SyntheticFormScan";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -428,6 +429,9 @@ export function P5TransportEditor({
                   />
                 ) : null}
                 <View style={styles.form}>
+                  <FormScanEntry
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                  />
                   <UiFormRow
                     variant="field"
                     label={t("tripCreate.transportType")}

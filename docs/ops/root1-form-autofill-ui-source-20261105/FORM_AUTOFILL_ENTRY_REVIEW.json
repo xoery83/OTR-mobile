@@ -1,0 +1,41 @@
+{
+  "status": "NO_BLOCKER_LOCAL_UI_ADAPTER_ONLY",
+  "requestId": "VISION-FORM-AUTOFILL-ENTRY-20261105-001",
+  "source": "5701ad78536f58813e844d83611e612f9501f7dc",
+  "packet": "92870c07860e81fd1eff43eefb947b55b5bcddca",
+  "base": "45eee0f5df3f891cf75cecfae427b25d2d9237e4",
+  "findings": [],
+  "fixedReview": "Own detachedautofill-source exact5701; noauthorworkingchanges",
+  "inputChecks": [
+    "All11Native leaves candidateSHA/blob andexistingpreimage hashes exactpacket",
+    "FourImportleaves byteexact45eee, notNativeauthored",
+    "P3StayEditor productbyteexact45eee/1062;InstructionHeaderSave preserved; onlytesthelpersadapted"
+  ],
+  "UI": [
+    "WholecanonicalUiFormRow actioncompact openscanonicalSheetHeader chooser; Camera/Photos/Files fixedorder",
+    "Theme semanticcolors/nohardcodedUIcolors; newcopy en+zhHans catalogs; readUIfoundation/glossary",
+    "P2/P4/P5 supplynoonPick/availability, allsourcesdisabled/nopicker; sharedcomponent P3onlytypeimport noRuntimecapabilityborrowing",
+    "P3wrapper aloneinjectsactualgetP3SourceScanAvailability; preflight softwareonlynotProviderauthority"
+  ],
+  "safety": [
+    "Prepicker availability;postpicker exactmaterial check beforematerialretention/Sourcecall;beforeScan recheckdynamicconfig",
+    "PNG/nullMIME/PDFflagoff releaseonlyrejectedtemporarymaterial, noSourcefactory/upload/Task/Save andmanualDraftpreserved",
+    "EmptyPickerCancel silent; latebinding/requestgeneration resultdiscard andmaterialrelease preserved",
+    "PerfieldKeepReplace/currentDraft/applytarget binding unchanged; noautosave",
+    "OriginalP3Form interpreter reference retained acrossproprefresh/UNKNOWN; fixedresultstaleness andCancelcontracts preserved; Importcustodyport unchanged"
+  ],
+  "independentValidation": {
+    "run1": "3suites22PASS66skip;2.66s;2026-11-05 11:53:42;sharedUI/P3preflight+release/KeepCancelUNKNOWN/HeaderSQLite compatibility",
+    "run2": "2suites15PASS49skip;578ms;11:54:23;lateCancelDraftAccountTrip results + actualImportpureportpreflight rules; somecases overlaprun1, notclaim37unique",
+    "lint": "6changedproductrootsPASS",
+    "types": "Existingbrowser/auth-consent TS7016 retained; nofulltscPASS",
+    "notRepeated": "Author108/fullrepo/device/SDK/Provider tests"
+  },
+  "limits": [
+    "NoactualCameraPhotosFilesdeviceoperation,HostedSourceTask orpaidProvider",
+    "P2/P4/P5 lackformalconsumer,allthreechoicesstaydisabled",
+    "P3CameraPhotosunsupporteddisabled,FilesonlyexactTXT/existingflagPDF",
+    "NoDeviceAI/Cloud/Ownervisualacceptance; compactnessactualrender remainsVision/Owner",
+    "NoAuth/Core/Queue/schema/providerauthority changes; no metadata/product/device/Host actions"
+  ]
+}
