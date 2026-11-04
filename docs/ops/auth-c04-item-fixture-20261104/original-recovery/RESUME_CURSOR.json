@@ -13,9 +13,13 @@
     "Fixed operation/target/payload binding for that intent",
     "Current execution bounds and owning readback/recovery qualification"
   ],
-  "independentLocalWork": "Original-only recovery/operator/consumer/readback preparation complete; Native lifecycle caller independently underway",
+  "independentLocalWork": "Original recovery and consumer preparation complete; Native lifecycle caller SOURCE_MAIN32722f7a. Guest Stay narrow support completed. No READY claim returned.",
   "credentialsPersisted": false,
   "sessionActive": false,
   "reviewPreservationCommit": "f9513a8d",
-  "attemptLockSemantics": "Protects uncertain OTP/current-run session cleanup. Confirmed own cleanup may release attempt lock even while historical business operation remains UNKNOWN. Release grants no replay/new operation, automatic OTP or repeated read authority."
+  "attemptLockSemantics": "Protects uncertain OTP/current-run session cleanup. Confirmed own cleanup may release attempt lock even while historical business operation remains UNKNOWN. Release grants no replay/new operation, automatic OTP or repeated read authority.",
+  "status": "INTENTIONAL_STOP",
+  "stoppedAt": "2026-11-04T22:19:40.083378+13:00",
+  "autoResumeBusiness": false,
+  "dayClose": "docs/ops/auth-day-close-20261104/DAY_CLOSE.json"
 }

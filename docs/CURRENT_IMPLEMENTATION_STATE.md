@@ -1,6 +1,11 @@
 # Auth Lane D — current handoff, 4 November 2026
 
-Primary: **AUTH-C04 — Invite / Claim / Multi-member**. Read this first; follow only
+Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
+
+**INTENTIONAL_STOP — Owner day-close, 4 November NZDT.** No automatic business
+continuation tonight. Own Sessions/receiver/attempt lock released; no Hosted window,
+device or timer held. Resume: docs/ops/auth-day-close-20261104/DAY_CLOSE.json.
+ Read this first; follow only
 this slice's code/evidence. Historical handoffs are preserved in Git71da1578 and
 the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.
 
