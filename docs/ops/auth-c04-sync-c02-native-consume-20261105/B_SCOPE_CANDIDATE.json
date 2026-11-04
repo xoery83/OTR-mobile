@@ -2,7 +2,7 @@
   "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
   "recordedAt": "2026-11-04T20:32:47.363400+00:00",
-  "status": "CANDIDATE_NOT_AUTHORIZATION_WAITING_CURRENT_NATIVE_EXECUTION_QUALIFICATION",
+  "status": "WAITING_NATIVE_ACTUAL_EXECUTION_BINDING",
   "permissionGranted": false,
   "clock": {
     "T": null,
@@ -221,10 +221,10 @@
     ]
   },
   "qualificationLayers": {
-    "SOURCE": "EXISTING_BOOTSTRAP_CONTRACT_SUPPORTED;14752_STATIC_REVIEW_REUSED",
-    "HOSTED": "PRIOR_SCOPED_CORE_PASS_REUSED;THIS_NATIVE_BOOTSTRAP_DISCOVERY_NOT_RUN",
-    "CONSUMER": "SCOPE_CANDIDATE_READY;NATIVE_NOT_RUN",
-    "DEVICE": "STATIC_NAMESPACE_PASS;ACTUALINSTALL_EMPTY_CLAIM_NOT_RUN",
+    "SOURCE": "14752 static namespace reviewed; bootstrap backend contract equals deployed-source7c130; explicit normal Auth/bootstrap request delta supported",
+    "HOSTED": "Existing c826 normal route/port provenance verified at saved observation; real own B bootstrap/RLS response NOT_RUN",
+    "CONSUMER": "ecc ensure contract supports exact{} POST and same-account response; actual normalMyTrips/acceptedRepository/cold NOT_RUN",
+    "DEVICE": "C0 tool/directOwner device scope/exclusiveclaim/install/firstlaunch census UNBOUND",
     "OWNER_UX": "NOT_PROVED"
   },
   "actionsThisTask": {
@@ -235,5 +235,20 @@
     "device": 0,
     "otherLaneMessages": 0
   },
-  "frozen": "41e8APPLIED/Hostconsumed/ATTEMPTretained;f5e4028UNKNOWNuntouched"
+  "frozen": "41e8APPLIED/Hostconsumed/ATTEMPTretained;f5e4028UNKNOWNuntouched",
+  "root2BootstrapQualificationDelta": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01/NATIVE14752_BOOTSTRAP_QUALIFICATION_DELTA.json",
+    "sha256": "85f2f48d04ad0ea2074878d09ffcd4e71c1e4a0e325aa5447986cb30b0ebfad7",
+    "status": "STATIC_14752_AND_OWN_BOOTSTRAP_QUALIFIED_ACTUAL_NATIVE_EXECUTION_UNBOUND",
+    "basis": "Fixed Root2 delta; parent verified hash. Static saved provenance only, no fresh Host observation or availability proof."
+  },
+  "actualBootstrapAvailability": "NOT_DEMONSTRATED: current B profiles/RLS acceptance and real ready:true response require qualified normal B call; static/source/prior Core PASS do not establish availability.",
+  "deployedProvenanceReference": {
+    "sourceMain": "7c1301c6a2ac7bdfe22e3c00f31f747db2810977",
+    "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+    "savedObservation": "2026-11-04T21:05:57.199294+00:00",
+    "savedCaptureSHA256": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "newObservationThisTask": false,
+    "interpretation": "Matching fixed c826 build/source and saved normal default bundle snapshot establish existing static route/port composition, not a fresh HTTP availability/getUser/profile-RLS/ready response. No reinstall/software gap identified; current-response availability remains unproved."
+  }
 }
