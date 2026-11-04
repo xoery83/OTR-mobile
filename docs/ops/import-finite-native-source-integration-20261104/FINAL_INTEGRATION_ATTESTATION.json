@@ -1,0 +1,42 @@
+{
+  "requestId": "IMP-C01-SOURCE-INTEGRATION-20261104-07-FINAL-ATTESTATION",
+  "status": "NO_BLOCKER_EXACT_SOURCE_ONLY_NOT_INSTALL_OR_EXECUTION_APPROVAL",
+  "commit": "9104a167cdf4ba05bc625c075dcc724dbe2f9eb9",
+  "parent": "869846afaea2f687b14695c8f30ba52d8e0e1a52",
+  "candidate": "26a6e76b2c87ea111b51a0261ee5f76cd85ddb02",
+  "packetCommit": "51d1110430808dd3ac99e84dc4bbdeca9d7a9cc1",
+  "packetSHA256": "f8ffd97c001616ad57e754e318068b894a4e4e4769af8715efbce90679c6c256",
+  "verifiedExactCandidateLeaves": 39,
+  "verifiedExactMainPreimages": 39,
+  "actualChangedFiles": 48,
+  "allChangesWithinApprovedUnionAndReviewDocs": true,
+  "allFourReviewReceiptsByteExact": true,
+  "mandatoryPdf4ArgBoundarySHA256": "35273d194801d93ca856fd6b52cc5d3b9e335ec73348a3e8104a356998eb69c4",
+  "findings": [],
+  "attestation": [
+    "All39SQL/code/test/tool leaves are byte-exact26a6 and match LaneC51d packet hashes; target869 preimage hashes match for every existing/new leaf.",
+    "Changes consist only39reviewed leaves+8integration/review documents+incrementalCURRENT_STATE. No unrelated Native/SQLite/Core/Auth product file changed.",
+    "Four prior reviewJSONs retained byte-exact. Root2 boundary explicitly requires paired4argPDFoverload/helpers/OwnerACL/EXEC qualification before any affected continuousSourceScope PDF caller is enabled, regardlessfiniteNative.",
+    "No runtime env/config/mount, SQL install/activation, Source/Provider/device/business operation or fresh execution authority contained."
+  ],
+  "validationReused": {
+    "configRuntimeSourcePlannerSdk": {
+      "suites": 9,
+      "passed": 98
+    },
+    "registrationAdapters": {
+      "suites": 2,
+      "passed": 25
+    }
+  },
+  "otherValidation": {
+    "compiler": "PASS20 TS/MTS roots plus imports",
+    "lint": "PASS19 TS roots; repository ESLint excludes MTS, covered by compiler/planner tests",
+    "python": "PASS four changed files, no SQL generation/installation performed"
+  },
+  "conditions": [
+    "Root1 must freshly CAS main and publish nonforce serially; this attestation does not update main.",
+    "Root2 full protected installation/metadata/forward-reverse CAS and fresh execution qualification remain pending; keep affected PDF paths closed until paired PG verified.",
+    "No new test/PG/Hosted/device run or business/author/main edit by reviewer."
+  ]
+}
