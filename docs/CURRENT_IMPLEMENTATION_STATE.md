@@ -186,8 +186,10 @@ the versioned Port when delivered, not duplicate its Core implementation.
   commit/expiry from new logs. Original a8c1 remains UNKNOWN; no retry/new window.
 - Vision requestVISION-VA01-UX-R1-20261104-001 is actually STARTED locally while
   C04 waits its external protected Gate. F02 Authhelperf808 is delivered; Native
-  caller91ff fixes remote-only cache loss, but same-root mixed local+remote cache
-  preservation still needs its targeted regression/fix before Auth NO_BLOCKER.
+  caller81bde5ec fixes both remote-only and mixed local+remote cache loss; Auth
+  incremental identity/private-cache/generation review is NO_BLOCKER. Native
+  independent incremental Review/final manifest then Root1 exact integration
+  remain, not a main/device/Owner UX acceptance.
   A01-2 eight-digit input leafb068/e846 is reviewed, Source integration pending;
   no actual OTP or complete new Email UX acceptance. F01 remains pending shared
   Account UI delivery. Three feedback/spec files and four references were read.
