@@ -3,7 +3,7 @@
   "primary": "AUTH-C04",
   "secondaryConsumerPackage": "SYNC-C02",
   "goldenSlice": "B normal App login or lawful own cached B restore -> My Trips normal discovery -> existing shared Trip -> original Reader/Repository -> 6Nov shared P1 -> same B App restart/offline accepted-cache readback",
-  "status": "LOCAL_PLAN_READY_WAITING_NATIVE_B_CONTEXT_AND_READ_QUALIFICATION",
+  "status": "WAITING_CURRENT_NATIVE_EXECUTION_QUALIFICATION",
   "codeDelta": "NONE_FOUND_IN_AUTH_OWNING_PORTS; no new adapter/repository/discovery/sync/permission system",
   "writer": {
     "nativeSharedFiles": "Native parent sole coordinator Writer; no handoff to Auth",
@@ -130,18 +130,29 @@
   },
   "firstRealFailure": "NOT_OBSERVED_FOR_NATIVE; normal B discovery + original Repository/device cold path has not been executed under current qualification",
   "uniqueGap": {
-    "id": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
+    "id": "NATIVE_CURRENT_TOOL_CONTEXT_AND_B_EXECUTION_QUALIFICATION",
     "requestId": "AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01",
-    "DRI": "Native parent owns source/build/device/normal UI execution; Root2 supplies current normal reader/resource qualification where needed; Auth parent coordinates identity contract",
-    "release": "Native supplies an existing qualified B or proven-empty lawful QA context, a fixed full Native+JS build/device claim and current normal B login/restore/discovery/pull/restart/read-only qualification. Planned14750 Guest-only bundle is excluded; UI empty14674 is not emptiness proof. Root2 request remains pending these Native fields.",
-    "notMissing": "No Auth DTO/adapter/discovery/Repository port missing in inspected source. Existing source supports linked-member discovery. Need actual B context/build/device and current normal-read qualification, not Revoke/Import/Profile Cloud/d136 reinstallation.",
-    "authority": "Not granted by this plan or consumed Host grant"
+    "DRI": "Native parent/deviceOwner: legal tool access, claim, actual context and execution; Auth parent: unified identity scope handoff; Root2: current Auth/bootstrap/reader resource boundary where needed",
+    "unifiedFields": [
+      "14752 fixed artifact/source/JS/config/runtime hashes",
+      "Current lawful deviceOwner/tool+exclusiveclaim; install/firstlaunch/initialcensus qualification",
+      "ExactexistingB mailbox/immutableUUID/maxOTP1/noresend",
+      "Explicit own POST /v1/account/profile/bootstrap {} and conditional minimal own ensure",
+      "Normal discovery/sharedCoreReader/sameBcold/approvedoffline/owncleanup",
+      "Current Host observation/inbox/quota/resources; realT/D only when ready"
+    ],
+    "authorityPolicy": "Reuse existing exact matching current authority if actually supplied. FixedNative binding has null currentexecutionreference; no matching execution authority found here. Otherwise parent consolidates ONE precise B scope; not per-field Owner prompts. Candidate grants none.",
+    "notPrerequisites": [
+      "NewCoresoftware/SQL/d136reinstall",
+      "FullRevoke",
+      "Import/MCP/ProfileCloud completion"
+    ]
   },
   "qualificationLayers": {
-    "SOURCE": "Existing formal identity/discovery/pull/recovery source contract supported; Native current B-target fixed build not yet supplied",
-    "HOSTED": "Prior scoped A-write/Receipt/A+B Core read PASS reused; B normal Discovery in this Native case NOT_RUN",
-    "CONSUMER": "LOCAL_PLAN_READY; actual Native accepted-cache/cold consumer NOT_RUN",
-    "DEVICE": "B-context/build/device qualification PENDING; Native planned14750 is Guest-only and NOT_ELIGIBLE_FOR_THIS_B_SLICE",
+    "SOURCE": "EXISTING_BOOTSTRAP_CONTRACT_SUPPORTED;14752_STATIC_REVIEW_REUSED",
+    "HOSTED": "PRIOR_SCOPED_CORE_PASS_REUSED;THIS_NATIVE_BOOTSTRAP_DISCOVERY_NOT_RUN",
+    "CONSUMER": "SCOPE_CANDIDATE_READY;NATIVE_NOT_RUN",
+    "DEVICE": "STATIC_NAMESPACE_PASS;ACTUALINSTALL_EMPTY_CLAIM_NOT_RUN",
     "OWNER_UX": "NOT_PROVED"
   },
   "liveActionsThisTask": 0,
@@ -162,7 +173,7 @@
     "verdict": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
     "sourceCandidate": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
     "installOrIdentityAuthority": false,
-    "actualNativeBinding": "UNBOUND; same C0 independent QA package is only a conditional source-compatible option, not proven empty or signed-compatible"
+    "actualNativeBinding": "14752 staticbound/reviewPASS;actualinstall/empty/identity/executionUNBOUND"
   },
   "formalReadQualificationRefs": [
     {
@@ -173,5 +184,14 @@
       "path": "Root2 AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01/MINIMUM_NATIVE_QA_BINDING.json",
       "sha256": "c30b4ba2eb5d2cdb5735605cb77edec32461e8a150fb50ee962ae65e32f02820"
     }
-  ]
+  ],
+  "B_scope_candidate": "docs/ops/auth-c04-sync-c02-native-consume-20261105/B_SCOPE_CANDIDATE.json",
+  "nativeStatic14752": {
+    "authorCommit": "aba6fec4fb1d28d0a298d7c9dbc139e391774de0",
+    "bindingSHA256": "73e8852bcae3c87bed31e5513fff1e97637b54c09dc208d2c308b9057af016cd",
+    "reviewCommit": "ec57145f0d529653634c06ab713afc85c2d34027",
+    "verdict": "NO_BLOCKER_STATIC_NAMESPACE_ONLY",
+    "actualEmptyOrExecutionPermission": false
+  },
+  "executionScopeSupersession": "B_SCOPE_CANDIDATE supplies current14752 metadata and exactnecessary AuthbootstrapPOST. Earlier14750 fields remain historical excludedGuest target."
 }

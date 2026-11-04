@@ -35,3 +35,7 @@ No source/UI/shared file, test, credential, network, SQL, device or business act
 Source0e Email uses direct OTP code verify, not Magic Link/OAuth callback/nonce. But source still offers Google with fixed original clients and no inspected Email-only disable gate; do not claim app-level Google disabled. The permitted QA sequence must make no Google action, and new package must not duplicate original Google/generic URL registrations. No new Google client or Secret is required/authorized.
 
 Normal bootstrap can resume manual/Trip/Ledger mutation queues. A fresh bundle label is not a read-only guard: prove private namespace and actual empty/no-outbound eligibility through existing qualification, retain normal discovery, and bind current B-only scope. Old126/149 and Guest14750 remain unavailable as evidence of safe emptiness. No new flag, reset, copy or execution is authorized.
+
+## 14752 static binding and B scope candidate
+
+Native author `aba6fec4` and review `ec57145f` bind static14752 namespace/config/ABI only. Actual install, initial principal/assets/outboxes, B identity and current authority remain NOT_RUN. `B_SCOPE_CANDIDATE.json` explicitly includes normal own `POST /v1/account/profile/bootstrap` with `{}`: state-idempotent minimal profile ensure, not arbitrary Profile edits. Scope also needs exact Email Auth, normal discovery/Reader, sameB cold/approved offline and own cleanup. Resolve tool/claim and unified current scope before device actions; prove original clean context before OTP. No code or historical test rerun.

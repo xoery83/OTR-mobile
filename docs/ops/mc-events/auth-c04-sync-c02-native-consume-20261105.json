@@ -15,15 +15,28 @@
       "summary": "Actual local consumer plan prepared from sealed Host fixture and existing Discovery/Reader/Repository source; no new DTO or code model",
       "next_action": "Return precise B-only normal discovery/pull/cold scope plan to parent; await Native-owned current qualification; do not reuse consumed Host authority",
       "task_id": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01"
+    },
+    {
+      "event_id": "auth-c04-native-b-scope14752-prepared-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "EVIDENCE",
+      "reported_at": "2026-11-04T20:32:47.363400+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "14752static author/review hashes matched; exact own AuthbootstrapPOST bound in candidate; no live/device/code actions, currenttool/context/authority UNBOUND",
+      "task_id": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01"
     }
   ],
   "local_deliverable": "docs/ops/auth-c04-sync-c02-native-consume-20261105/NORMAL_READ_COLD_PLAN.json",
   "qualification": "LOCAL_PREP_ONLY_NO_LIVE_OR_PACKAGE_ACCEPTANCE",
-  "local_result": "LOCAL_CONSUMER_PLAN_READY_NO_AUTH_CODE_DELTA",
+  "local_result": "B_SCOPE_CANDIDATE_READY_STATIC14752_BOUND_NO_LIVE_AUTHORITY",
   "evidence": "docs/ops/auth-c04-sync-c02-native-consume-20261105/EVIDENCE.json",
-  "current_unique_gap": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
+  "current_unique_gap": "NATIVE_CURRENT_TOOL_CONTEXT_AND_B_EXECUTION_QUALIFICATION",
   "scope_acceptance": "SOURCE_PLAN_ONLY; no Hosted/Device/OwnerUX upgrade",
   "secondary_consumer_package_id": "SYNC-C02",
   "context_option_result": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
-  "context_option_contract": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json"
+  "context_option_contract": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json",
+  "B_scope_candidate": "docs/ops/auth-c04-sync-c02-native-consume-20261105/B_SCOPE_CANDIDATE.json"
 }

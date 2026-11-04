@@ -1,0 +1,239 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "recordedAt": "2026-11-04T20:32:47.363400+00:00",
+  "status": "CANDIDATE_NOT_AUTHORIZATION_WAITING_CURRENT_NATIVE_EXECUTION_QUALIFICATION",
+  "permissionGranted": false,
+  "clock": {
+    "T": null,
+    "D": null,
+    "status": "UNBOUND_NOT_A_WINDOW"
+  },
+  "fixedTarget": {
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "sharedItemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+    "apiBase": "https://api-dev.xoery.art",
+    "projectRef": "tuqigdxrvrerfewsxqgm"
+  },
+  "nativeStaticEvidence": {
+    "authorCommit": "aba6fec4fb1d28d0a298d7c9dbc139e391774de0",
+    "artifact": {
+      "path": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-b-read-binding-20261105/docs/ops/native-b-read-binding-20261105/14752_ARTIFACT.json",
+      "sha256": "c272c71585b6a907ab8c712c6ba8f90ce541cdaf8136e28ae02c04cbd67c0e90"
+    },
+    "binding": {
+      "path": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-b-read-binding-20261105/docs/ops/native-b-read-binding-20261105/14752_ACTUAL_STATIC_BINDING.json",
+      "sha256": "73e8852bcae3c87bed31e5513fff1e97637b54c09dc208d2c308b9057af016cd"
+    },
+    "review": {
+      "commit": "ec57145f0d529653634c06ab713afc85c2d34027",
+      "path": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-readiness-review-20261105/docs/ops/native-readiness-review-20261105/ARTIFACT_14752_REVIEW.json",
+      "sha256": "30169efe24dd134bc24be15f0f9db70db0510c05b209f730cd9ddb789ae3732d",
+      "verdict": "NO_BLOCKER_STATIC_NAMESPACE_ONLY"
+    },
+    "program": {
+      "sourceCommit": "ecc2ab771abe626ae41de8e3543c945fd8afa5c9",
+      "NativeBuildNumber": 14752,
+      "nativeArtifactSHA256": "ba0108d4b10b5160843fc4830c6b0fee4e9631a86e62994f7ca9a65b411a5863",
+      "nativeArtifactArchive": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-b-read-binding-20261105/qa-artifacts/14752/OTRBReadQA14752.app.zip",
+      "JSBundleOrUpdateIdAndSHA256": {
+        "JSProductSource": "ecc2ab771abe626ae41de8e3543c945fd8afa5c9",
+        "SHA256": "bc2e6d2c8e69066b1fdf554f537073e37caa76105c416fc70b45fce648311562",
+        "expoUpdateId": null
+      },
+      "bundleIdAndRuntimeVersion": {
+        "bundleId": "com.xoery.otrmobile.nativereadb20261105",
+        "CFBundleVersion": "14752",
+        "CFBundleShortVersionString": "0.1.0",
+        "expoRuntimeVersion": null,
+        "actualNativeSource": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+        "hermesBytecodeVersion": 98,
+        "nativeInputFingerprint": "d8a3e654bb82d30d9d80e97ffd74afa833378e766c73d41223a9903189018e3e",
+        "platform": "iphonesimulator",
+        "SDK": "iphonesimulator27.2"
+      },
+      "APIConfigSHA256OrValidatedExactTarget": {
+        "apiBase": "https://api-dev.xoery.art",
+        "supabaseProjectRef": "tuqigdxrvrerfewsxqgm",
+        "actualCompiledEnvProofSHA256": "c3907afffa2f973c7a35ff25f3c1bc0127a893176f7ae308df36f037bf1b8bf2",
+        "QA_SCOPE": "ACTUAL_COMPILED_UNDEFINED",
+        "GeneralGate": "ACTUAL_COMPILED_TRUE"
+      },
+      "deviceOrSimulatorId": "C0C23E00-5016-4289-B806-92C5484BD5BA (proposed existing target, not queried/claimed)",
+      "exclusiveClaimIdAndOwner": null,
+      "currentExistingNativeQAExecutionAuthorityReference": null,
+      "safeBOrIndependentlyProvenEmptyQAContext": null,
+      "existingBEmailOrAuthManagedMailboxReference": null,
+      "HostRuntimeIdentityAndObservation": null,
+      "independentArtifactReview": null
+    },
+    "namespace": {
+      "signedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile.nativereadb20261105",
+      "AppIdentifierPrefix": "U9D5C58Z94.",
+      "onlyKeychainGroup": [
+        "U9D5C58Z94.com.xoery.otrmobile.nativereadb20261105"
+      ],
+      "sharedAppGroups": [],
+      "CodeDirectoryIdentifier": "com.xoery.otrmobile.nativereadb20261105",
+      "actualSignedXMLSHA256": "a7c532e50af94f61fdd21a33777bef87fbf24fc91d573c109a09e8af8d9eb9c6",
+      "actualSignedDERSHA256": "8459b4562553d8bde04c791cccaef2fdf8db44dcf9aab04b21175323b53b2125",
+      "signing": "Simulator ad-hoc; real own namespace prefix derived from existing public signedQA151 metadata, not physical AppleDevelopment signing or a new profile",
+      "sourceProgramUnchanged": true,
+      "privateContextProof": "NOT_INSTALLED_NOT_QUERIED; static namespace is not actual empty DB/Keychain/Session proof",
+      "signedDERSemanticCheck": "Platform openssl ASN.1 decoded signed DER: exact new application-identifier and only new keychain group, identity occurs twice; developer-team identifier exact source-owned prefix. XML/DER/codeDirectory all bind the new namespace."
+    },
+    "acceptance": "STATIC_NAMESPACE_PASS_ONLY; installation/actualemptiness/currentidentity/executionauthority NOT_PROVED"
+  },
+  "mailboxReference": {
+    "commit": "5fee89da00f4e6d046d3311d19df22349a407749",
+    "path": "docs/ops/auth-c04-distinct-p1-e2e-20261105/RUN.json",
+    "jsonPointer": "/actors/B/challenge/email",
+    "sha256": "0c39e0177511415916e32602dd9000c3dea38ccd8db18517d1969df9e4e4f992",
+    "policy": "Use exact existingB email. UI create_user=true does not authorize replacement registration. Normal nonanonymous getUser must match immutableB UUID. Label/maskedemail not current-sub proof. MaxOTP1/noresend. Google actions excluded, button/SDK not disabled."
+  },
+  "requests": {
+    "auth": [
+      "Supabase POST /auth/v1/otp exactexistingB max1/noresend",
+      "Supabase POST /auth/v1/verify normal Email code",
+      "Supabase GET /auth/v1/user",
+      "Supabase POST /auth/v1/token ordinary sameB refresh only as currently qualified",
+      "Supabase POST /auth/v1/logout own-session local-scope cleanup only as currently qualified"
+    ],
+    "necessaryAuthOwnedPOST": {
+      "url": "https://api-dev.xoery.art/v1/account/profile/bootstrap",
+      "method": "POST",
+      "body": {},
+      "response": {
+        "schemaId": "otr.auth.account-profile-bootstrap/1",
+        "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+        "ready": true
+      },
+      "boundary": "Strict empty JSON object; no query or caller accountId/name/profile fields. Authenticated subject and same normal own Bearer;256byte body,15second boundary. No service role.",
+      "ensure": "Server revalidates nonanonymous getUser matching authenticatedAccount; reads own profiles.id; only if absent inserts {id:accountId,display_name:\"\"}; concurrent23505 tolerated only with own successful readback. Existing row/fields not patched.",
+      "idempotency": "State-idempotent by existing primary key/read-before-insert/concurrent23505+reread. No operationId/Idempotency-Key/business Receipt or general Profile-edit authority.",
+      "client": "ensure checks account scope before/after and response identity; online sync preflight only, offline launch must not await.",
+      "scopeDelta": "Explicitly include this necessary Auth-owned POST and its backend same-user validation/minimal own profile read/conditionalinsert under existing permissions. This run is not all-GET; no new SQL/GRANT or optionalProfile fields."
+    },
+    "read": [
+      "GET https://api-dev.xoery.art/v2/trips with existing bounded paging, normalMyTrips entry",
+      "Existing exactTrip Core capabilities/collection GET through original formal Reader/Repository; current actor/Person/schema/hash/certificate checks, no knownUUID-only shortcut"
+    ],
+    "forbidden": [
+      "Core commands, Trip create/metadata, Person, Adoption, Invite/Claim/Revoke, Ledger",
+      "Account-private Profile patch/operations or discretionary fields",
+      "Source/Provider/upload/import/save",
+      "41e8 replay or oldf5e/4028 query/replay/replacement"
+    ],
+    "notBlanketPostBan": "Exact normal Auth/bootstrap requests above are distinct from forbidden business mutation; no arbitrary POST authority."
+  },
+  "sequence": [
+    {
+      "stage": 0,
+      "action": "Current qualification BEFORE any device action",
+      "requires": [
+        "Resolve Native directOwner/tool permission without auto-review bypass; exclusive device claim + matching currentB scope",
+        "Bind exact14752 archive/Native/JS/config/API/runtime and current Host Auth/bootstrap/Reader observation",
+        "Inbox/quota/resources ready then realT/D; no consumedHost authority reuse"
+      ]
+    },
+    {
+      "stage": 1,
+      "action": "Qualified new-package install/firstlaunch + existing original empty/handoff census BEFORE OTP",
+      "requires": [
+        "Only when install/launch qualified; if exactbundle alreadyexists with unknown context stop without overwrite/reset",
+        "Actual initial principal/accountindex/Session + Guest assets/drafts/recovery + all relevant unfinished/outgoingqueues evidenced via original lawful diagnostics; no inherited/copied/restored/seeded data/actions",
+        "NewGuest marker/schema is not savedasset; UIempty/freshbundlename is not proof",
+        "General stays eligible/QA_SCOPE absent; bootstrap may dispatchqueues so no unauthorized work may be eligible; stop unexpectedaction, never clearqueues",
+        "Preserve all oldApps/GuestP3, no adoption/erase/bypass/sessioncopy/newflag"
+      ]
+    },
+    {
+      "stage": 2,
+      "action": "Normal exactexistingB Email login/getUser/ownbootstrap",
+      "requires": [
+        "OTPmax1/noresend/noGoogle; exactnonanonymousB then currentTrip/Person membership",
+        "Stop mismatch/429/uncertainty; no replacementAccount",
+        "Exact Auth/bootstrapPOSTs only, no other businessmutation"
+      ]
+    },
+    {
+      "stage": 3,
+      "action": "NormalMyTrips discovery -> target sharedTrip -> originalReader/acceptedRepository -> existingP1",
+      "requires": [
+        "Actual new server response/Account/Person/revision/certificate; no syntheticDTO or hardcodedrevision"
+      ]
+    },
+    {
+      "stage": 4,
+      "action": "SameB process termination/relaunch + only approved offline acceptedcache read",
+      "requires": [
+        "Original offlineAuth semantics; no forced network login with validcachedSession",
+        "No newlogin/switch or clockchange; offline mechanism only as qualified",
+        "Existing silentvalidation/Reader on recovery when qualified"
+      ]
+    },
+    {
+      "stage": 5,
+      "action": "Own qualified cleanup/release",
+      "requires": [
+        "Existing own-session local logout/refreshinvalid only; no global revoke/otherSession cleanup",
+        "No Trip/Item deletion; retain41e8ATTEMPT/Receipt and oldUNKNOWN/Guest; preserve unexpectedstate, no blindretry"
+      ]
+    }
+  ],
+  "sourceRefs": [
+    {
+      "commit": "ecc2ab771abe626ae41de8e3543c945fd8afa5c9",
+      "path": "backend/src/accountProfileBootstrap.ts",
+      "sha256": "ac818fa40f855a8a10095f86190e0c00aa673b30b8201e75ebf3f8865649bcc3"
+    },
+    {
+      "commit": "ecc2ab771abe626ae41de8e3543c945fd8afa5c9",
+      "path": "src/data/api/accountProfileContracts.ts",
+      "sha256": "1700d08a28eb5690a4bcfe600059c4d3aece06dfd9df769e1e690b44c9d36e06"
+    },
+    {
+      "commit": "ecc2ab771abe626ae41de8e3543c945fd8afa5c9",
+      "path": "src/data/auth/accountProfileRepository.ts",
+      "sha256": "2570de3bbbee11caf31c5de7f2a27e0f4bf0be2b4c39e25e878c548a10ae8987"
+    }
+  ],
+  "sourceDeltaNote": "Native ecc accountProfileRepository has same ensure implementation; Auth HEAD adds optional private APIs outside this scope. No need to port them or authorize them.",
+  "uniqueQualification": {
+    "id": "NATIVE_CURRENT_TOOL_CONTEXT_AND_B_EXECUTION_QUALIFICATION",
+    "requestId": "AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01",
+    "DRI": "Native parent/deviceOwner: legal tool access, claim, actual context and execution; Auth parent: unified identity scope handoff; Root2: current Auth/bootstrap/reader resource boundary where needed",
+    "unifiedFields": [
+      "14752 fixed artifact/source/JS/config/runtime hashes",
+      "Current lawful deviceOwner/tool+exclusiveclaim; install/firstlaunch/initialcensus qualification",
+      "ExactexistingB mailbox/immutableUUID/maxOTP1/noresend",
+      "Explicit own POST /v1/account/profile/bootstrap {} and conditional minimal own ensure",
+      "Normal discovery/sharedCoreReader/sameBcold/approvedoffline/owncleanup",
+      "Current Host observation/inbox/quota/resources; realT/D only when ready"
+    ],
+    "authorityPolicy": "Reuse existing exact matching current authority if actually supplied. FixedNative binding has null currentexecutionreference; no matching execution authority found here. Otherwise parent consolidates ONE precise B scope; not per-field Owner prompts. Candidate grants none.",
+    "notPrerequisites": [
+      "NewCoresoftware/SQL/d136reinstall",
+      "FullRevoke",
+      "Import/MCP/ProfileCloud completion"
+    ]
+  },
+  "qualificationLayers": {
+    "SOURCE": "EXISTING_BOOTSTRAP_CONTRACT_SUPPORTED;14752_STATIC_REVIEW_REUSED",
+    "HOSTED": "PRIOR_SCOPED_CORE_PASS_REUSED;THIS_NATIVE_BOOTSTRAP_DISCOVERY_NOT_RUN",
+    "CONSUMER": "SCOPE_CANDIDATE_READY;NATIVE_NOT_RUN",
+    "DEVICE": "STATIC_NAMESPACE_PASS;ACTUALINSTALL_EMPTY_CLAIM_NOT_RUN",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "actionsThisTask": {
+    "sourceCode": 0,
+    "tests": 0,
+    "credentials": 0,
+    "network": 0,
+    "device": 0,
+    "otherLaneMessages": 0
+  },
+  "frozen": "41e8APPLIED/Hostconsumed/ATTEMPTretained;f5e4028UNKNOWNuntouched"
+}
