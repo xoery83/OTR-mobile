@@ -1,3 +1,4 @@
+import { retainGuestStayEditor } from "./guestStayEditorLease";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
 import {
@@ -13,10 +14,14 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
-import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import {
+  readLocalTripRepository,
+  createDefaultManualStayRepository,
+  readLocalTripPrincipal,
+  confirmGuestStaySaved,
+} from "@/data/auth/localTripAccess";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
-  createDefaultManualStayRepository,
   manualStayFieldsSchema,
   type ManualStayDraft,
   type ManualStayFields,
@@ -188,6 +193,12 @@ export function P3StayEditor({
   const scanContext = useRef<StaySuggestionBinding | null>(null);
   const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
+  const sourceRef = useRef<Opened | null>(opened ?? null);
+  const [loadedScope, setLoadedScope] = useState<{ key: string; guest: boolean } | null>(
+    null,
+  );
+  const principalScope = useRef<string | null>(null);
+  const guestLease = useRef<ReturnType<typeof retainGuestStayEditor> | null>(null);
   const [fields, setFields] = useState<ManualStayFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
   );
@@ -235,7 +246,7 @@ export function P3StayEditor({
     [sourcePort, generation],
   );
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
-    opened ? "READY" : "LOADING",
+    "LOADING",
   );
   const [tripRange, setTripRange] = useState({
     start: tripStartDate ?? "",
@@ -264,35 +275,88 @@ export function P3StayEditor({
   const [frozen, setFrozen] = useState(false);
   useEffect(() => {
     alive.current = true;
-    if (!opened) {
-      void (async () => {
-        try {
-          const repository = await createDefaultManualStayRepository();
-          const draft = itemId
+    let active = true;
+    let mountedLease: ReturnType<typeof retainGuestStayEditor> | null = null;
+    void (async () => {
+      try {
+        const principal = await readLocalTripPrincipal();
+        if (!active || !alive.current || generation !== getAccountGeneration()) return;
+        if (!principal) throw Error("LOCAL_TRIP_PRINCIPAL_REQUIRED");
+        principalScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
+        const lease =
+          principal.kind === "GUEST"
+            ? retainGuestStayEditor(
+                { kind: "GUEST", localId: principal.localId, generation },
+                tripId,
+                itemId,
+              )
+            : null;
+        lease?.acquire();
+        mountedLease = lease;
+        guestLease.current = lease;
+        const retained = lease?.recover();
+        const repository =
+          retained?.source.repository ??
+          opened?.repository ??
+          (await createDefaultManualStayRepository());
+        const draft =
+          retained?.source.draft ??
+          opened?.draft ??
+          (itemId
             ? await repository.read(tripId, itemId)
-            : await repository.createDraft(tripId);
-          if (!alive.current || generation !== getAccountGeneration()) return;
-          const value = structuredClone(draft.fields);
-          if (!itemId && initialDate) value.startDate = initialDate;
-          scanSourceScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
-          setSource({ repository, draft });
-          formRevision.current++;
-          fieldsRef.current = value;
-          setFields(value);
-          initialRef.current = JSON.stringify(value);
-          setStatus("READY");
-        } catch {
-          if (alive.current && generation === getAccountGeneration())
-            setStatus("UNAVAILABLE");
-        }
-      })();
-    }
+            : await repository.createDraft(tripId));
+        if (!active || !alive.current || generation !== getAccountGeneration()) return;
+        const value = structuredClone(retained?.fields ?? draft.fields);
+        if (!retained && !opened && !itemId && initialDate) value.startDate = initialDate;
+        const nextSource = { repository, draft };
+        sourceRef.current = nextSource;
+        scanSourceScope.current = JSON.stringify([tripId, itemId ?? null, generation]);
+        setSource(nextSource);
+        formRevision.current++;
+        fieldsRef.current = value;
+        setFields(value);
+        initialRef.current = retained?.initial ?? JSON.stringify(value);
+        firstAttemptRef.current = retained?.firstAttempt ?? null;
+        firstPlaceAttemptRef.current = retained?.firstPlaceAttempt ?? null;
+        selectedPlaceDraft.current = retained?.selectedPlace ?? null;
+        locationInputRevision.current = retained?.inputRevision ?? 0;
+        frozenRef.current = retained?.frozen ?? false;
+        setFrozen(frozenRef.current);
+        lease?.retain(() =>
+          sourceRef.current && fieldsRef.current
+            ? {
+                source: sourceRef.current,
+                fields: fieldsRef.current,
+                initial: initialRef.current,
+                firstAttempt: firstAttemptRef.current,
+                firstPlaceAttempt: firstPlaceAttemptRef.current,
+                selectedPlace: selectedPlaceDraft.current,
+                inputRevision: locationInputRevision.current,
+                frozen: frozenRef.current,
+              }
+            : null,
+        );
+        setLoadedScope({
+          key: JSON.stringify([tripId, itemId ?? null, generation]),
+          guest: principal.kind === "GUEST",
+        });
+        setStatus(retained?.firstAttempt ? "ERROR" : "READY");
+      } catch {
+        if (alive.current && generation === getAccountGeneration())
+          setStatus("UNAVAILABLE");
+      }
+    })();
     return () => {
+      active = false;
+      mountedLease?.detach();
       alive.current = false;
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
-    alive.current && !closedRef.current && generation === getAccountGeneration();
+    alive.current &&
+    !closedRef.current &&
+    generation === getAccountGeneration() &&
+    principalScope.current === JSON.stringify([tripId, itemId ?? null, generation]);
   const change = (next: Partial<ManualStayFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
     if (Object.hasOwn(next, "location")) {
@@ -313,6 +377,7 @@ export function P3StayEditor({
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
       closedRef.current = true;
+      guestLease.current?.release();
       then();
       return;
     }
@@ -324,6 +389,7 @@ export function P3StayEditor({
         onPress: () => {
           if (current() && !busyRef.current) {
             closedRef.current = true;
+            guestLease.current?.release();
             then();
           }
         },
@@ -363,6 +429,11 @@ export function P3StayEditor({
             draft: placeAttempt,
           })
         : await source.repository.save(source.draft, attempt);
+      if (guestLease.current) {
+        await confirmGuestStaySaved(tripId, result.itemId);
+        guestLease.current.release();
+        guestLease.current = null;
+      }
       if (current()) onSaved(result.itemId);
     } catch (error) {
       if (current()) {
@@ -396,7 +467,12 @@ export function P3StayEditor({
   }, []);
   const valid = manualStayFieldsSchema.safeParse(fields).success;
   const saveDisabled =
-    !valid || saving || status === "UNAVAILABLE" || (frozen && status !== "ERROR");
+    loadedScope?.key !== JSON.stringify([tripId, itemId ?? null, generation]) ||
+    !valid ||
+    saving ||
+    status === "LOADING" ||
+    status === "UNAVAILABLE" ||
+    (frozen && status !== "ERROR");
   return (
     <ManualEditorPresentation
       embedded={embedded}
@@ -442,7 +518,10 @@ export function P3StayEditor({
                 {t("tripCreate.stayRetrySame")}
               </Text>
             ) : null}
-            {fields && source ? (
+            {status !== "LOADING" &&
+            loadedScope?.key === JSON.stringify([tripId, itemId ?? null, generation]) &&
+            fields &&
+            source ? (
               <>
                 {onChoosePlan ? (
                   <UiButton
@@ -470,8 +549,14 @@ export function P3StayEditor({
                 ) : null}
                 <View style={styles.form}>
                   <P3SyntheticScan
-                    scan={sourcePort ? sourceConsumer : syntheticScan}
-                    sourceMode={!!sourcePort}
+                    scan={
+                      loadedScope?.guest
+                        ? undefined
+                        : sourcePort
+                          ? sourceConsumer
+                          : syntheticScan
+                    }
+                    sourceMode={!loadedScope?.guest && !!sourcePort}
                     disabled={saving || frozen || status === "UNAVAILABLE"}
                     context={() =>
                       current() &&

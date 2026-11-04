@@ -342,6 +342,7 @@ export function LocalManualDayRows({
         if (item && row.family === "P3")
           return (
             <LocalStayRow
+              localOnly={localOnly}
               key={JSON.stringify(row.rowKey)}
               item={item}
               rowKey={`local:${JSON.stringify(row.rowKey)}`}
@@ -430,6 +431,7 @@ export function LocalManualDayRows({
   );
 }
 function LocalStayRow({
+  localOnly = false,
   item,
   rowKey,
   date,
@@ -441,6 +443,7 @@ function LocalStayRow({
   context,
   onInsert,
 }: {
+  localOnly?: boolean;
   onInsert?(side: "BEFORE" | "AFTER"): void;
   item: LocalManualRead["items"][number];
   rowKey: string;
@@ -465,7 +468,7 @@ function LocalStayRow({
   const moveId = `${item.itemId}:${role}`;
   const content = (
     <StayReadRow
-      stay={stay}
+      stay={{ ...stay, pending: !localOnly && stay.pending }}
       role={role}
       focused={focused}
       context={context}

@@ -1,0 +1,60 @@
+{
+  "request": "NATIVE-VN05-SOURCE-INTEGRATION-20261104",
+  "status": "SOURCE_MAIN_VERIFIED_LOCAL_ONLY_DEVICE_PENDING",
+  "preMain": "91e36865d92f759b746f834232cc7156374e47bb",
+  "candidate": "3bc140bc3488fcefed9a64f020617eaa2918c9ff",
+  "nativeReview": "293088bd",
+  "authReview": "17b05fc7",
+  "exact18Leaves": {
+    "src/data/auth/guestLocalStay.test.ts": "5603afdcf1aaded6f47220a98ff7d1b08939b82dc2f07828edd15a7f4ae10cc1",
+    "src/data/auth/guestLocalWorkspace.ts": "6ce46745ab9d781dc3f34d8c7a434e6fc5a95a7e8643b80e50d21f6f3dfe73cd",
+    "src/data/auth/localTripAccess.test.ts": "789f7102c4e9eb3e6ac86331aa1137bc8b5bddb74fd7b5c9b6d6f7784c8ebf6c",
+    "src/data/auth/localTripAccess.ts": "dee8b08fe2b856573a082aa6a930f2fd8a76ea7c8d39c01c3c74605a2429b7e0",
+    "src/features/day-feed-lab/useP1FixtureMove.test.ts": "9f9d1ad2e137f0b0e5a8470ec450110a2ea8629ebcca1a28a30e28f332b5ea34",
+    "src/features/day-feed/LocalManualDayFeed.tsx": "25613de46cc5d39f6e107352729bd9e144ba74eb4a61b261d61f0e34b2ab4e27",
+    "src/features/day-feed/ManualItineraryContent.test.ts": "b2efbd0ddd705c937852b901a85afbccd6d0b1e09ee981e2f43f7d4630caaada",
+    "src/features/day-feed/ManualItineraryContent.tsx": "216bb3981187e41b7ea8b11c7bd9ae405fcb2e086be2ebbaba6e53d32e568dd3",
+    "src/features/day-feed/P3Detail.tsx": "23f2cb5f685173c66cfaf5f458139e98395a3235a04d6190e22a1ba4fce117bf",
+    "src/features/day-feed/P3StayEditor.test.ts": "e04fc751e042bedf0cd2bf8746b512e8eea4863f3eebad04e2d7d05defe7dd54",
+    "src/features/day-feed/P3StayEditor.tsx": "f07aa36d60f0346cbf94badf44e8e0b7c6fabff2a232320a5564be94327a5386",
+    "src/features/day-feed/P3StayLocationField.test.ts": "24ed64d88fc7912a69c755c4e2206aad4a53603ddbe84aee2abc491836113987",
+    "src/features/day-feed/P3StayLocationField.tsx": "014caf29da49ef6784700c5491a560ccfe492050b162f4bdbbb02d42c931472b",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts": "697ddd679c3069c6565ec353a3fa75d7f83a75e6aad9624da7eda7d595e9c014",
+    "src/features/day-feed/TripScreen.tsx": "e4846d14da2856ddd811117f7ddb3aac15790132b96982f0b318951b2ac82726",
+    "src/features/day-feed/guestStayEditorLease.test.ts": "09ff57575951619e5c47626cc6cc1b05eb40a5d217476e2db67312eb119f1728",
+    "src/features/day-feed/guestStayEditorLease.ts": "1017155c4e7ad46a1e7e11f0b334fb93c90710d969d16fa7c0723cc130b33c28",
+    "src/features/day-feed/useP1CivilMove.ts": "5b327f091f3c806c0df574fe3f780b4b75a69bc7444d9893955c2c1b18142122"
+  },
+  "actualMainTests": {
+    "changedConsumersSQLiteLease": {
+      "suites": 8,
+      "passed": 191
+    },
+    "owningBeforeAuthInventory": {
+      "suites": 1,
+      "passed": 8
+    }
+  },
+  "scopedCompiler": "PASS18roots plus imports",
+  "uiGuard": "PASS168/473",
+  "lintErrors": 0,
+  "scope": "Only existing isolated Guest P1/P3 factories; Guest Source/Cloud/AdoptionP3 and otherfamilies remain closed",
+  "draftProtection": "Pure-throw beforeAuth blocker never serializes as P1; in-process same Guest/Trip/item/generation memory lease retains original Draft/attempt across exceptional remount; duplicate attachment rejected",
+  "savedProtection": "Verified exact Stay read plus unchanged census UNSUPPORTED_CORE_FAMILY before lease release. Saved P3 still blocks Adoption; census failure retains blocker/firstattempt.",
+  "preserved": [
+    "Actual PENDING local state and queue",
+    "Core/Auth/Session/Adoption authority/schema/SQLite76",
+    "TripScreen except exact Staygetter import and GuestSourceoff hunks",
+    "Cancel9e633 candidate excluded",
+    "all earlier main Import/Native/Source changes"
+  ],
+  "knownLimits": [
+    "No saved Native device acceptance",
+    "No Guest Cloud/P3 Adoption",
+    "Unsaved process-cold recovery unsupported; memory-only remount protection",
+    "Saved SQLite cold same identity verified locally, not app ColdRestorePASS"
+  ],
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "providerCalls": 0
+}

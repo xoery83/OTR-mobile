@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import {
   createDefaultManualPlanRepository,
+  createDefaultManualStayRepository,
   readLocalTripRepository,
   readTripDayFeed,
   kickLocalTripSync,
@@ -12,6 +13,7 @@ const state = vi.hoisted(() => ({
   accountTrips: vi.fn(),
   accountDays: vi.fn(),
   accountPlan: vi.fn(),
+  accountStay: vi.fn(),
   sync: vi.fn(),
 }));
 vi.mock("./authRepository", () => ({
@@ -26,6 +28,9 @@ vi.mock("../repositories/tripDayFeedRepository", () => ({
 }));
 vi.mock("../repositories/manualPlanRepository", () => ({
   createDefaultManualPlanRepository: state.accountPlan,
+}));
+vi.mock("../repositories/manualStayRepository", () => ({
+  createDefaultManualStayRepository: state.accountStay,
 }));
 vi.mock("../sync/nativeTripQaScope", () => ({ kickNativeTripQaSync: state.sync }));
 beforeEach(() => {
@@ -79,4 +84,16 @@ it("does not fall back to Account access for a signed-out, unchosen or failing G
   await expect(readLocalTripRepository()).rejects.toThrow("GUEST_STORAGE_FAILURE");
   for (const forbidden of [state.accountTrips, state.accountDays, state.accountPlan])
     expect(forbidden).not.toHaveBeenCalled();
+});
+
+it("uses only the current Guest Stay factory and rejects missing principals", async () => {
+  state.principal = { kind: "GUEST", localId: "guest-local" };
+  const stay = {};
+  state.guest.mockResolvedValue({ stay });
+  expect(await createDefaultManualStayRepository()).toBe(stay);
+  expect(state.accountStay).not.toHaveBeenCalled();
+  state.principal = null;
+  await expect(createDefaultManualStayRepository()).rejects.toThrow(
+    "LOCAL_TRIP_PRINCIPAL_REQUIRED",
+  );
 });

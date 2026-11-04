@@ -64,7 +64,10 @@ vi.mock("react-native", () => ({
 vi.mock("expo-network", () => ({ useNetworkState: () => ({ isConnected: true }) }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/data/auth/accountRequestContext", () => ({
-  captureAccountScope: () => state.capture(),
+  captureAccountScope: (reader: () => Promise<string>) => state.capture(reader),
+}));
+vi.mock("@/data/auth/localTripAccess", () => ({
+  readLocalTripPrincipal: vi.fn(async () => ({ kind: "ACCOUNT", accountId: "account" })),
 }));
 vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("@/data/auth/accountGeneration", () => ({
@@ -301,4 +304,23 @@ it("restarts suggestions when the hotel name is edited after keeping that same a
   render(p);
   expect(node("Park Hyatt Auckland, Auckland")).toBeDefined();
   expect(p.onSelectHotel).not.toHaveBeenCalled();
+});
+
+it("binds Guest MapKit to the real committed local principal without requiring an Account", async () => {
+  const { readLocalTripPrincipal } = await import("@/data/auth/localTripAccess");
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "guest-owned-local",
+  } as never);
+  state.capture.mockImplementation(async (read) => ({
+    accountId: await read(),
+    generation: 1,
+  }));
+  render(props());
+  await tick();
+  render(props());
+  expect(state.read.mock.calls[0][0]).toMatchObject({
+    accountId: "guest-owned-local",
+    accountGeneration: 1,
+  });
 });

@@ -36,13 +36,13 @@ import { P4RentalEditor } from "./P4RentalEditor";
 import { P5TransportEditor } from "./P5TransportEditor";
 import {
   createDefaultManualPlanRepository,
+  createDefaultManualStayRepository,
   type ManualPlanDraft,
   type ManualPlanRepository,
   readTripDayFeed,
   type createTripDayFeedReader,
 } from "@/data/auth/localTripAccess";
 import {
-  createDefaultManualStayRepository,
   type ManualStayDraft,
   type ManualStayRepository,
 } from "@/data/repositories/manualStayRepository";
@@ -1341,7 +1341,7 @@ function TripContent({
   const stayEditor =
     stayEdit?.tripId === requested && stayEdit.generation === generation ? (
       <P3StayEditor
-        sourceScan={createP3SourceScanPort()}
+        sourceScan={guest ? undefined : createP3SourceScanPort()}
         key={`${stayEdit.tripId}:${stayEdit.draft.itemId}:${generation}`}
         tripId={stayEdit.tripId}
         itemId={stayEdit.draft.itemId}

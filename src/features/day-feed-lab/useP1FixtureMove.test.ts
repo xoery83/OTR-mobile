@@ -83,6 +83,11 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/manualPlanRepository", () => ({
   createDefaultManualPlanRepository: async () => ({ read: real.read, save: real.save }),
 }));
+vi.mock("@/data/auth/localTripAccess", () => ({
+  createDefaultManualPlanRepository: async () => ({ read: real.read, save: real.save }),
+  createDefaultManualStayRepository: async () => ({ read: real.read, save: real.save }),
+  readTripDayFeed: vi.fn(),
+}));
 vi.mock("@/data/repositories/manualStayRepository", () => ({
   createDefaultManualStayRepository: async () => ({ read: real.read, save: real.save }),
 }));

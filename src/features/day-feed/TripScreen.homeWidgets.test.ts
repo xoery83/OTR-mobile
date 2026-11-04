@@ -1922,6 +1922,7 @@ vi.mock("@/data/auth/localTripAccess", async () => ({
   ...(await import("@/data/repositories/tripRepository")),
   ...(await import("@/data/repositories/tripDayFeedRepository")),
   ...(await import("@/data/repositories/manualPlanRepository")),
+  ...(await import("@/data/repositories/manualStayRepository")),
   kickLocalTripSync: vi.fn(async () => {}),
 }));
 

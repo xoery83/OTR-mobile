@@ -374,3 +374,7 @@ must not commit a staged choice; process restart must retain a saved choice. Gue
 publication/adoption qualification for retained photos is unchanged and may remain
 blocked until its separate owning contract is qualified; never drop those files to
 force adoption. Final Owner acceptance uses a fixed integrated-main Native build.
+
+## Guest local Stay — bounded V-N05 source slice, 4 November 2026
+
+The Owner V-N05 Guest entry slice exposes only the existing local P1/P3 factories. Guest Stay Create/Edit uses the isolated Guest database, existing Core/Repository/Reader and original identities. Guest P2/P4/P5/P6, real Source Scan, Cloud publication and P3 Adoption remain closed. A saved P3 must continue to make the authoritative Guest census reject Adoption as UNSUPPORTED_CORE_FAMILY; no P1 snapshot disguise or inventory omission is allowed. An unsaved P3 registers a pure failing beforeAuth blocker and may retain its original draft/attempt only in-process across exceptional modal remount. This does not promise unsaved process-cold restore. Explicit discard or verified durable Save plus blocking census can release the in-memory lease; saved data must cold reopen under the same identity. No schema, Session, Canonical authority or sync entitlement is added. Device and Owner UX acceptance remain separate.

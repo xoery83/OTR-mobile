@@ -47,6 +47,7 @@ import { createTripJourneySnapshotReader } from "../repositories/tripJourneySnap
 import { createGuestTripCurrencyRepository } from "../repositories/guestTripCurrencyRepository";
 import { createTripPhotoRepository } from "../repositories/tripPhotoRepository";
 import { createTripPersonalCoverRepository } from "../repositories/tripPersonalCoverRepository";
+import { createManualStayRepository } from "../repositories/manualStayRepository";
 import { createManualPlanRepository } from "../repositories/manualPlanRepository";
 import { createTripLocalManualReader } from "../repositories/tripLocalManualReadRepository";
 import { createTripDayFeedReader } from "../repositories/tripDayFeedRepository";
@@ -344,6 +345,7 @@ export function createGuestLocalWorkspaceOpener(deps: {
       photos: createTripPhotoRepository(database, repositoryOwner),
       personalCover: createTripPersonalCoverRepository(database, repositoryOwner),
       plan: createManualPlanRepository(database, repositoryOwner, core),
+      stay: createManualStayRepository(database, repositoryOwner, core),
       days: createTripDayFeedReader({
         account: localOwner,
         localManual,

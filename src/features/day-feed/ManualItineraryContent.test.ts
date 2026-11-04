@@ -218,7 +218,7 @@ vi.mock("@/data/auth/localTripAccess", async () => ({
   kickLocalTripSync: vi.fn(async () => {}),
 }));
 
-it("Guest local slice exposes only the existing P1 writer and preserves normal Account chooser capabilities", () => {
+it("Guest local slice exposes only the approved P1/P3 writers and preserves normal Account chooser capabilities", () => {
   props.localOnly = true;
   render();
   const plan = state.buttons.find(
@@ -228,15 +228,11 @@ it("Guest local slice exposes only the existing P1 writer and preserves normal A
     (button) => button.accessibilityLabel === "formEntry.stay",
   );
   expect(plan.disabled).toBe(false);
-  expect(stay.disabled).toBe(true);
+  expect(stay.disabled).toBe(false);
   stay.onPress();
   render();
-  expect(state.editor).toBeNull();
-  state.buttons
-    .find((button) => button.accessibilityLabel === "formEntry.plan")
-    .onPress();
-  render();
-  expect(state.editor.family).toBe("P1");
+  expect(state.editor.family).toBe("P3");
+  expect(state.editor.sourceScan).toBeUndefined();
 });
 
 it("mounts the lazy existing Source port only for the enabled normal P3 entry", async () => {

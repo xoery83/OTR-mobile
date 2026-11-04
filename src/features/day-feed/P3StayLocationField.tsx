@@ -3,7 +3,7 @@ import { Keyboard, Pressable, StyleSheet, View } from "react-native";
 import { useNetworkState } from "expo-network";
 import { AppIcon } from "@/components/AppIcon";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
-import { requireActiveUserId } from "@/data/auth/authRepository";
+import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   readApplePlaceProvider,
@@ -104,7 +104,12 @@ export function P3StayLocationField(props: Props) {
       latest.current.value === value;
     if (disabled || !nameQuery?.trim() || search) return;
     void (async () => {
-      const account = await captureAccountScope(requireActiveUserId);
+      const account = await captureAccountScope(async () => {
+        const principal = await readLocalTripPrincipal();
+        if (principal?.kind === "ACCOUNT") return principal.accountId;
+        if (principal?.kind === "GUEST") return principal.localId;
+        throw Error("LOCAL_TRIP_PRINCIPAL_REQUIRED");
+      });
       if (!valid() || account.generation !== generation) return;
       const binding: PlaceSearchBinding = {
         accountId: account.accountId,
@@ -204,7 +209,12 @@ export function P3StayLocationField(props: Props) {
       snapshot = latest.current;
     setContextError(false);
     try {
-      const account = await captureAccountScope(requireActiveUserId);
+      const account = await captureAccountScope(async () => {
+        const principal = await readLocalTripPrincipal();
+        if (principal?.kind === "ACCOUNT") return principal.accountId;
+        if (principal?.kind === "GUEST") return principal.localId;
+        throw Error("LOCAL_TRIP_PRINCIPAL_REQUIRED");
+      });
       const valid = () =>
         current() &&
         request === ticket.current.value &&

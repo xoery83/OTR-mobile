@@ -1,0 +1,28 @@
+{
+  "candidate": "3bc140bc3488fcefed9a64f020617eaa2918c9ff",
+  "base": "1c5fe789c68fb9f5a9379abdc48e86ea75c1b3dd",
+  "reviewer": "apple_place_form_mapping",
+  "conclusion": "NO_BLOCKER_LOCAL_CONSUMER_ONLY",
+  "scope": [
+    "Guest P1/P3 chooser and original Stay factory/repository/Reader/Edit callers",
+    "local principal MapKit binding; Guest Source Scan remains disabled",
+    "pure-throw unsupported adoption participant; same-scope in-process lease and duplicate-editor refusal",
+    "generation cleanup, stale asynchronous result guards, explicit discard",
+    "durable-save census failure retains original attempt and adoption blocker; saved dataset census remains authoritative"
+  ],
+  "findings": [],
+  "independentValidation": {
+    "command": "node node_modules/vitest/vitest.mjs run src/features/day-feed/guestStayEditorLease.test.ts src/data/auth/guestLocalStay.test.ts src/features/day-feed/P3StayEditor.test.ts --maxWorkers 1 -t \"Guest P3 reuses|blocks beforeAuth|another Trip or generation|blocks Guest adoption|opened Stay non-editable|Guest blocker\"",
+    "result": "3 suites / 6 PASS / 39 skipped",
+    "log": "independent-focused.log",
+    "sha256": "dc6850c67aea28100f0a3ba3205f4a239457aa6391ce4eec5b943224ff727feb"
+  },
+  "reusedAuthorEvidence": "EVIDENCE.json: 9 suites / 199 PASS; not rerun wholesale",
+  "limits": [
+    "No device, Hosted, Provider or Cloud execution",
+    "Unsaved editor recovery is in-process only, not process-cold persistence",
+    "P3 Guest adoption and Cloud remain unsupported and fail-closed; no Auth/Core authority extension",
+    "Real Guest UI and MapKit selection must still be qualified on the intended Native build"
+  ],
+  "productChangesByReviewer": false
+}

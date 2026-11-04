@@ -4,6 +4,14 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ManualStayFields } from "@/data/repositories/manualStayRepository";
 import { P3StayEditor } from "./P3StayEditor";
 
+vi.mock("@/data/auth/localTripAccess", () => ({
+  createDefaultManualStayRepository: () => state.repository(),
+  readLocalTripPrincipal: () => state.principalRead(),
+  confirmGuestStaySaved: (...args: unknown[]) => state.confirmGuestSave(...args),
+  readLocalTripRepository: vi.fn(async () => ({
+    getTrip: vi.fn(async () => ({ startDate: "2027-12-30", endDate: "2028-01-09" })),
+  })),
+}));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: vi.fn(async () => ({
     getTrip: vi.fn(async () => ({ startDate: "2027-12-30", endDate: "2028-01-09" })),
@@ -42,6 +50,12 @@ const state = vi.hoisted(() => ({
   mount: true,
   generation: 1,
   repository: vi.fn(),
+  confirmGuestSave: vi.fn(),
+  principalRead: vi.fn(),
+  principal: {
+    kind: "ACCOUNT",
+    accountId: "00000000-0000-4000-8000-000000000099",
+  } as any,
   alert: vi.fn(),
   dismissKeyboard: vi.fn(),
   scrollToEnd: vi.fn(),
@@ -72,11 +86,13 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
+  subscribeAccountGeneration: () => () => {},
 }));
 vi.mock("expo/fetch", () => ({ fetch: vi.fn() }));
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("@/data/auth/authRepository", () => ({
   requireActiveUserId: vi.fn(),
+  requireCommittedGuestPrincipal: async () => state.principal,
   requireAdoptedUserId: vi.fn(),
 }));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
@@ -234,6 +250,12 @@ beforeEach(() => {
   state.mount = true;
   state.generation = 1;
   state.repository.mockReset();
+  state.confirmGuestSave.mockReset().mockResolvedValue(undefined);
+  state.principalRead.mockReset().mockImplementation(async () => state.principal);
+  state.principal = {
+    kind: "ACCOUNT",
+    accountId: "00000000-0000-4000-8000-000000000099",
+  };
   state.alert.mockReset();
   state.dismissKeyboard.mockReset();
 });
@@ -480,6 +502,7 @@ it("edits an existing P3 through its original repository draft and preserves the
   render(p);
   for (const effect of state.effects) effect();
   state.mount = false;
+  await new Promise((resolve) => setImmediate(resolve));
   render(p);
   expect(node("tripCreate.stayArrivalFrom")).toBeUndefined();
   expect(node("tripCreate.stayArrivalUntil")).toBeUndefined();
@@ -1017,7 +1040,12 @@ it.each(["Cancel", "Draft", "Account", "Trip"] as const)(
     await new Promise((resolve) => setImmediate(resolve));
     render(p);
     expect(node("formAutofill.keep")).toBeUndefined();
-    expect(node("tripCreate.stayName").value).toBe(change === "Draft" ? "My input" : "");
+    if (change === "Account" || change === "Trip")
+      expect(node("tripCreate.stayName")).toBeUndefined();
+    else
+      expect(node("tripCreate.stayName").value).toBe(
+        change === "Draft" ? "My input" : "",
+      );
     expect(repo.save).not.toHaveBeenCalled();
     if (change === "Cancel") {
       expect(signal.aborted).toBe(true);
@@ -1573,4 +1601,130 @@ it("pins one Source interpreter per Form so prop refresh cannot replace UNKNOWN'
   await node("formAutofill.scan").onPress();
   await vi.waitFor(() => expect(first).toHaveBeenCalledTimes(2));
   expect(replacement).not.toHaveBeenCalled();
+});
+
+it("blocks Guest adoption, retains the same unsaved Stay across modal unmount and releases only explicit discard", async () => {
+  const { guestP1DraftInventory } = await import("@/data/auth/guestP1DraftInventory");
+  state.principal = { kind: "GUEST", localId: "00000000-0000-4000-8000-000000000099" };
+  const scope = { ...state.principal, generation: state.generation };
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "00000000-0000-4000-8000-000000000077",
+    fields: {
+      ...fields(),
+      title: "Initial stay",
+      startDate: "2027-02-08",
+      endDate: "2027-02-10",
+    },
+    participantOptions: [],
+  };
+  const repo = { createDraft: vi.fn(async () => draft), save: vi.fn() };
+  const unmount = await open(p, repo);
+  node("tripCreate.stayName").onChangeText("Unsaved local hotel");
+  render(p);
+  await expect(guestP1DraftInventory.freeze(scope)).rejects.toThrow(
+    "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+  );
+  unmount();
+  state.hooks = [];
+  state.refs = [];
+  state.effects = [];
+  state.mount = true;
+  const cleanup = await open(p, repo);
+  expect(repo.createDraft).toHaveBeenCalledOnce();
+  expect(node("tripCreate.stayName").value).toBe("Unsaved local hotel");
+  await expect(guestP1DraftInventory.freeze(scope)).rejects.toThrow(
+    "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+  );
+  node("common.cancel").onPress();
+  const choices = state.alert.mock.calls.at(-1)![2];
+  choices.find((choice: any) => choice.style === "destructive").onPress();
+  const empty = await guestP1DraftInventory.freeze(scope);
+  expect(empty.entries).toEqual([]);
+  await empty.resume();
+  expect(repo.save).not.toHaveBeenCalled();
+  cleanup();
+});
+
+it("keeps an opened Stay non-editable until the committed principal and Guest blocker are ready", async () => {
+  const { guestP1DraftInventory } = await import("@/data/auth/guestP1DraftInventory");
+  state.principal = { kind: "GUEST", localId: "00000000-0000-4000-8000-000000000099" };
+  let finish!: (value: any) => void;
+  state.principalRead.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const draft = {
+    mode: "EDIT",
+    itemId: "00000000-0000-4000-8000-000000000088",
+    fields: {
+      ...fields(),
+      title: "Saved stay",
+      startDate: "2027-02-08",
+      endDate: "2027-02-10",
+    },
+    participantOptions: [],
+  };
+  const p = {
+    ...props(),
+    itemId: draft.itemId,
+    opened: { repository: { save: vi.fn() }, draft },
+  };
+  render(p);
+  expect(node("tripCreate.stayName")).toBeUndefined();
+  expect(node("headerSave").disabled).toBe(true);
+  for (const effect of state.effects) effect();
+  state.effects = [];
+  state.mount = false;
+  finish(state.principal);
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  expect(node("tripCreate.stayName").value).toBe("Saved stay");
+  await expect(
+    guestP1DraftInventory.freeze({ ...state.principal, generation: state.generation }),
+  ).rejects.toThrow("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+  node("common.cancel").onPress();
+});
+
+it("does not release the Guest blocker until durable Save and the unchanged census rejection are confirmed", async () => {
+  const { guestP1DraftInventory } = await import("@/data/auth/guestP1DraftInventory");
+  state.principal = { kind: "GUEST", localId: "00000000-0000-4000-8000-000000000099" };
+  const scope = { ...state.principal, generation: state.generation };
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "00000000-0000-4000-8000-000000000076",
+    fields: {
+      ...fields(),
+      title: "Guest save",
+      startDate: "2027-02-08",
+      endDate: "2027-02-10",
+    },
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn(async () => ({ itemId: draft.itemId })),
+  };
+  state.confirmGuestSave.mockRejectedValueOnce(Error("CENSUS_UNAVAILABLE"));
+  await open(p, repo);
+  node("headerSave").onPress();
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  expect(p.onSaved).not.toHaveBeenCalled();
+  await expect(guestP1DraftInventory.freeze(scope)).rejects.toThrow(
+    "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+  );
+  node("headerSave").onPress();
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  expect(repo.save.mock.calls[0]).toEqual(repo.save.mock.calls[1]);
+  expect(state.confirmGuestSave).toHaveBeenLastCalledWith(p.tripId, draft.itemId);
+  expect(p.onSaved).toHaveBeenCalledWith(draft.itemId);
+  const empty = await guestP1DraftInventory.freeze(scope);
+  expect(empty.entries).toEqual([]);
+  await empty.resume();
 });

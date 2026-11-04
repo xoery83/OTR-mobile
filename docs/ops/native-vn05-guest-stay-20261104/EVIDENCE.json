@@ -1,0 +1,66 @@
+{
+  "requestId": "VISION-VN05-GUEST-ENTRY-20261104-001",
+  "base": "1c5fe789c68fb9f5a9379abdc48e86ea75c1b3dd",
+  "status": "LOCAL_SQLITE_AND_NATIVE_CALLER_TEST_PASS / DEVICE_NOT_RUN",
+  "rootCause": [
+    "Guest workspace exposed Plan but not the existing Stay factory",
+    "normal Stay production consumers and MapKit still used Account-only getters",
+    "non-P1 editor had no legal Guest live-draft blocking/recovery participant"
+  ],
+  "implementation": [
+    "Guest composition adds only existing createManualStayRepository + .stay",
+    "localTripAccess selects legal principal Stay factory; all production P3 editor/detail/drag callers use it; same Guest MapKit owner path as P1",
+    "Chooser enables only P1 and P3 for Guest; P2/P4/P5/P6 remain closed; Guest real Source Scan not enabled",
+    "existing guestP1DraftInventory receives pure never-returning P3 blocker; no P1 snapshot or P3 adoption snapshot",
+    "small Native-only memory lease preserves original ManualStayDraft/repository/current fields/first attempt across exceptional modal unmount; no durable draft store; competing attached editor rejected",
+    "principal resolved locally before editable READY, generation/Trip/item guards preserved; explicit discard releases lease",
+    "durable local Save is followed by exact Stay read plus unchanged dataset census UNSUPPORTED_CORE_FAMILY confirmation before releasing blocker; failure retains original attempt/blocker",
+    "Guest P3 read-only pending display guard propagated to Day Feed and Details; true pending Queue unchanged"
+  ],
+  "actualRed": [
+    "old chooser assertion disabled=true vs expected false",
+    "old editor freeze resolved empty snapshot rather than rejecting, opened fields exposed before principal resolution"
+  ],
+  "checks": {
+    "focused": "9 suites199 PASS",
+    "uiGuard": "PASS168representativefiles",
+    "scopedLint": "0errors0warnings",
+    "compiler": "only unchanged browser/auth-consent/main.tsx TS7016 missing react-dom/client declaration; no changed-source errors",
+    "diffCheck": "PASS"
+  },
+  "realSQLiteFixture": [
+    "normal Guestfactory CreateTrip and existing Stay create/save",
+    "Day Reader local P3, same original Item ID and PENDING",
+    "reopen/edit notes; opening/cancel writes no new queue row",
+    "same current Person options, no generated Person",
+    "dataset census rejects UNSUPPORTED_CORE_FAMILY, syncAllowed=false",
+    "close SQLite and reopen own test DB restores original Item ID/dates/checkin/checkout/notes",
+    "real confirmGuestStaySaved reuses Stay read + census; no AccountDB/network call"
+  ],
+  "callerFixture": [
+    "Guest unsaved fields survive failed beforeAuth freeze, modal unmount/remount restores same Draft ID without second createDraft",
+    "explicit discard leaves inventory empty and does not Save",
+    "unknown principal opened editor starts non-editable until local proof + blocker ready",
+    "durable-save census failure keeps blocker, original attempt retry preserved; successful confirmation permits normal close",
+    "scope/generation cleanup, otherTrip memory isolation and duplicate attached editor refusal",
+    "Guest MapKit derives existing local principal, no Account requirement",
+    "all production Stay getter callers compiled and closest original tests pass"
+  ],
+  "boundaries": {
+    "GuestAdoptionP3": "STILL_UNSUPPORTED_AND_BLOCKED",
+    "GuestCloudP3": "NOT_ENABLED",
+    "unsavedProcessColdRestore": "NOT_SUPPORTED; memory-only recovery, saved cold SQLite is tested",
+    "device": "NOT_RUN",
+    "hosted": "NOT_RUN",
+    "schemaOrAuthorityChange": false,
+    "nativeModuleChange": false
+  },
+  "logDigests": {
+    "vn05-entry-red.log": "9129695341c5373b4a2363aedc7e6faf45333efb76b6402978edb6551a7b1968",
+    "vn05-draft-blocker-red.log": "8689545b7a95cb1210952442d2123ee45c870ab8e3ab790f4c5d7ed147ae60bf",
+    "vn05-final-tests.log": "e7960481d01da09a68cece63ba5ab0f82dbc908957423c0cef3ad6ede9ce3157",
+    "vn05-types-final.log": "7bc44883c06b4ba39249e74d5eb1799a6ede06dd9cb48f6f4204205364a62241",
+    "vn05-lint-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "vn05-ui-guard.log": "1d69f43a5da418d1f82b2321a80cea6ab26be54f1e055f397443ad15c188b74e"
+  }
+}

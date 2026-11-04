@@ -93,7 +93,7 @@ export function ManualItineraryContent({
     ) : family === "P1" ? (
       <P1PlanEditor {...props} initialStartTime={initialStartTime} />
     ) : family === "P3" ? (
-      <P3StayEditor {...props} sourceScan={createP3SourceScanPort()} />
+      <P3StayEditor {...props} sourceScan={localOnly ? undefined : createP3SourceScanPort()} />
     ) : family === "P4" ? (
       <P4RentalEditor {...props} />
     ) : family === "P5" ? (
@@ -107,7 +107,7 @@ export function ManualItineraryContent({
       localOnly={localOnly}
       onClose={onClose}
       onChoose={(id) => {
-        if (generation === getAccountGeneration() && (!localOnly || id === "P1"))
+        if (generation === getAccountGeneration() && (!localOnly || id === "P1" || id === "P3"))
           setFamily(id as Family);
       }}
     />
@@ -129,7 +129,7 @@ export function ManualItineraryChooser({
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const choice = (type: (typeof manualItineraryTypes)[number], compact: boolean) => {
-    const enabled = type.enabled && (!localOnly || type.id === "P1");
+    const enabled = type.enabled && (!localOnly || type.id === "P1" || type.id === "P3");
     const hint =
       "reasonKey" in type
         ? t(type.reasonKey)

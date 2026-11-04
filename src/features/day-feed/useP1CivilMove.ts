@@ -2,10 +2,10 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "re
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   createDefaultManualPlanRepository,
+  createDefaultManualStayRepository,
   type ManualPlanFields,
   readTripDayFeed,
 } from "@/data/auth/localTripAccess";
-import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
 import { localStayMoveItem } from "./localStayPresentation";
 import { stayMoveProposal } from "./bookingReadPresentation";
 import type { DayListHandle } from "./WindowedDayList";

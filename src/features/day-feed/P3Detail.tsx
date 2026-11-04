@@ -9,8 +9,11 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
-import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
+import {
+  readTripDayFeed,
+  createDefaultManualStayRepository,
+  readLocalTripPrincipal,
+} from "@/data/auth/localTripAccess";
 import { loadP3Detail, type P3DetailState } from "./p3DetailRead";
 import { UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -41,6 +44,7 @@ export function P3Detail() {
   const { reportManualOutcome } = useTripView();
   const [state, setState] = useState<P3DetailState | null>(null);
   const [editing, setEditing] = useState(false);
+  const [localOnly, setLocalOnly] = useState(false);
   const [revision, setRevision] = useState(0);
   const [failed, setFailed] = useState(false);
   const colors = useUiTheme(),
@@ -65,7 +69,12 @@ export function P3Detail() {
                 : "CHECKIN",
         },
         {
-          read: async (id) => (await readTripDayFeed()).trip(id),
+          read: async (id) => {
+            const principal = await readLocalTripPrincipal();
+            if (active && generation === getAccountGeneration())
+              setLocalOnly(principal?.kind === "GUEST");
+            return (await readTripDayFeed()).trip(id);
+          },
           repository: createDefaultManualStayRepository,
           generation: getAccountGeneration,
           onReadable: (next) => {
@@ -129,6 +138,7 @@ export function P3Detail() {
   const presentation = visible
     ? {
         ...visible.presentation,
+        pending: !localOnly && visible.presentation.pending,
         addExpense: () =>
           router.push({
             pathname: "/trip-item-expense",
@@ -190,7 +200,7 @@ export function P3Detail() {
       </NavigationContentFrame>
       {editing && visible?.editor ? (
         <P3StayEditor
-          sourceScan={createP3SourceScanPort()}
+          sourceScan={localOnly ? undefined : createP3SourceScanPort()}
           tripId={tripId}
           itemId={itemId}
           opened={visible.editor}
