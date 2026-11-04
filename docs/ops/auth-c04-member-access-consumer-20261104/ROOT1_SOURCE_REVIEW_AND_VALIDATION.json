@@ -1,0 +1,33 @@
+{
+  "request": "AUTH-C04-B-SELF-LOSS-CONSUMER-20261104-01",
+  "status": "ROOT1_INDEPENDENT_NO_BLOCKER_SOURCE_MAIN_LOCAL_PASS",
+  "reviewer": "Root1 (independent of Auth implementation author)",
+  "candidate": "6c14d822",
+  "preMain": "3c20ad0cca535b455127beaa10fbe8fbfc10ee52",
+  "files": {
+    "src/data/api/memberAccessLossAdapter.ts": "510331fac1f7fce3a457572ccea41d433330eca20c02e7d7ed8998da47c50cc3",
+    "src/data/api/memberAccessLossAdapter.test.ts": "ba12ecbc0793169be07b1c6c418ec58c5cddf3da9a6daae5609fdd2199b6b532"
+  },
+  "checks": [
+    "Only existing authenticated GET with4096B bound/redirecterror; no POST or Queue",
+    "Canonical self access-loss schema, Account/Trip equality and generation/currentAccount checks beforeIO andcacheapply",
+    "ForeignAccount/Trip, malformedstate and Ownerreceipt rejected",
+    "Generic404 ABSENT_UNCONFIRMED,503/network propagate with zero revocation",
+    "Actual positive accessRevision passed to existing CoreRepository.revoke under owning Account transactional gate",
+    "Local cache failure propagates and never claims success",
+    "Factory only, no Startup or Native lifecycle injection"
+  ],
+  "canonicalCoreModuleSHA256": "92b197034409b3496d165d3e312e26cf22ad2db015102b875b5cecff47740016",
+  "canonicalDependency": "Integrated main29d77 reused unchanged, not imported/overwritten from Auth branch",
+  "validation": {
+    "adapterTestsPassed": 6,
+    "scopedCompiler": "PASS two roots plus imports",
+    "lintErrors": 0,
+    "diffCheck": "PASS"
+  },
+  "evidenceReused": "Core atomicPG29 and repository cold-revoke tests remain applicable; not rerun for unchanged layers",
+  "hostedRequestCount": 0,
+  "deviceAcceptance": "NOT_RUN",
+  "consumerMount": "Native owns lifecycle caller",
+  "protectedInstallAndRuntime": "Root2 pending; no new authority granted"
+}
