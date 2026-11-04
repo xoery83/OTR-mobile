@@ -1,0 +1,16 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "candidate": "d8d4e64b07b1fa70721c43c442e1e23b987af5ab",
+  "scopeSha256": "1c601ca51eb3b388f964d52344b1593972776db564a91d711cc5d2d02004c946",
+  "result": "UNIFIED_SCOPE_WITH_ROOT2_STATIC_PROVENANCE_VERIFIED_NOT_AUTHORITY",
+  "baseCandidate": "96eed166046a9c3066eb82b7363c9d16e347bf8f",
+  "Root2DeltaSha256": "85f2f48d04ad0ea2074878d09ffcd4e71c1e4a0e325aa5447986cb30b0ebfad7",
+  "permissionGranted": false,
+  "clockUnbound": true,
+  "nativeLatestToolFact": "Native reports C0 prepare/menu restored and released; Owner separately approved14751 Guest-only local QA, NOT14752/B action authority",
+  "nativeReadinessFact": "14751 first launch Guest TripList unavailable under Native focused diagnosis; no business Save reported. No Auth diagnostic/oldApp launch requested.",
+  "remaining": "Actual14752-specific current scope/claim/initialstate/outbox/B identity/quota/runtime ready response/clock; existingCore and bootstrap source support is not live proof",
+  "parentLiveActions": 0,
+  "status": "WAITING_NATIVE_ACTUAL_EXECUTION_BINDING",
+  "recordedAt": "2026-11-04T21:19:46.914842+00:00"
+}
