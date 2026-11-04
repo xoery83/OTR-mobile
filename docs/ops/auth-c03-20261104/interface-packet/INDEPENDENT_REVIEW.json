@@ -1,0 +1,11 @@
+{
+  "status": "SCOPED_NO_BLOCKER_C03_INTERFACE_PACKET",
+  "reviewer": "auth_phase1_review",
+  "handoffSHA256": "85f2cbbfc2d2941de6c5ce7217cc827c24884305dc56e6e1f3dcbf79f7561ee5",
+  "packetSHA256": "fe18bc334adeb51b673d68a2040e7b066f3768c3d70fc18074f56a0aef0ecdd4",
+  "sourceFileHashesVerified": 11,
+  "scope": "Documents and direct source semantics only; omission/clear/CAS/UNKNOWN/private-vs-Person/closed-runtime accurately describe existing candidates",
+  "testsRerun": false,
+  "hostedActions": 0,
+  "newPermissionOrProductPolicy": false
+}
