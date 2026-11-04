@@ -1,3 +1,6 @@
+import { mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
@@ -8,6 +11,7 @@ import {
   runRegisteredQaHostSession,
   registeredHostQa,
   createNormalRegisteredQaHostDependencies,
+  createRegisteredQaChallengeReservation,
   type RegisteredQaHostContext,
 } from "../../scripts/auth/registered-qa-host-session";
 function setup() {
@@ -310,4 +314,136 @@ it("extracted normal callbacks snapshot validated DEV options before sending a S
     }));
     expect(options.persistSession).not.toHaveBeenCalled();
   } finally { vi.unstubAllGlobals(); }
+});
+
+it("admits exactly one metadata-only browser challenge in the active proven context and rejects released use", async () => {
+  const f = setup(),
+    reserveBrowserChallenge = vi.fn();
+  let saved: RegisteredQaHostContext | undefined;
+  const input = {
+    accountId: String(registeredHostQa.accountId),
+    email: String(registeredHostQa.email),
+    requestedAt: new Date().toISOString(),
+  };
+  await runRegisteredQaHostSession(
+    { ...f.deps, reserveBrowserChallenge },
+    async (context) => {
+      saved = context;
+      expect(context.reserveBrowserChallenge!(input)).toEqual({
+        status: "RESERVED_LOCK_RETAINED",
+      });
+      expect(() => context.reserveBrowserChallenge!(input)).toThrow("ALREADY_ATTEMPTED");
+    },
+  );
+  expect(reserveBrowserChallenge).toHaveBeenCalledExactlyOnceWith({
+    email: input.email,
+    requestedAt: input.requestedAt,
+  });
+  expect(() => saved!.reserveBrowserChallenge!(input)).toThrow("SCOPE_RELEASED");
+  expect(f.request).toHaveBeenCalledOnce();
+});
+
+it.each(["account", "email", "expired", "future", "extra"])(
+  "rejects invalid browser metadata before reservation: %s",
+  async (mode) => {
+    const f = setup(),
+      reserveBrowserChallenge = vi.fn();
+    await runRegisteredQaHostSession(
+      { ...f.deps, reserveBrowserChallenge },
+      async (context) => {
+        const input = {
+          accountId: String(registeredHostQa.accountId),
+          email: String(registeredHostQa.email),
+          requestedAt: new Date().toISOString(),
+          ...(mode === "extra" ? { token: "forbidden" } : {}),
+        };
+        if (mode === "account") input.accountId = randomUUID();
+        if (mode === "email")
+          input.email = `otr-qa-${randomUUID()}@eldouzileu.resend.app`;
+        if (mode === "expired")
+          input.requestedAt = new Date(Date.now() - 120000).toISOString();
+        if (mode === "future")
+          input.requestedAt = new Date(Date.now() + 60000).toISOString();
+        expect(() => context.reserveBrowserChallenge!(input)).toThrow();
+      },
+    );
+    expect(reserveBrowserChallenge).not.toHaveBeenCalled();
+  },
+);
+
+it("does not supply browser capability for ordinary injected sessions or retry a failed reservation", async () => {
+  const f = setup();
+  await runRegisteredQaHostSession(f.deps, async (context) => {
+    expect(() =>
+      context.reserveBrowserChallenge!({
+        accountId: String(registeredHostQa.accountId),
+        email: String(registeredHostQa.email),
+        requestedAt: new Date().toISOString(),
+      }),
+    ).toThrow("UNAVAILABLE");
+  });
+  const g = setup(),
+    reserveBrowserChallenge = vi.fn(() => {
+      throw Error("durable write unknown");
+    });
+  await runRegisteredQaHostSession(
+    { ...g.deps, reserveBrowserChallenge },
+    async (context) => {
+      const input = {
+        accountId: String(registeredHostQa.accountId),
+        email: String(registeredHostQa.email),
+        requestedAt: new Date().toISOString(),
+      };
+      expect(() => context.reserveBrowserChallenge!(input)).toThrow(
+        "durable write unknown",
+      );
+      expect(() => context.reserveBrowserChallenge!(input)).toThrow("ALREADY_ATTEMPTED");
+    },
+  );
+  expect(reserveBrowserChallenge).toHaveBeenCalledOnce();
+});
+
+it("reuses durable reservation with the original cooldown and fails closed after losing its lock", () => {
+  const base = mkdtempSync(join(tmpdir(), "otr-browser-reserve-unit-")),
+    notes: Record<string, unknown>[] = [];
+  mkdirSync(join(base, "active.lock"), { mode: 0o700 });
+  try {
+    const reserve = createRegisteredQaChallengeReservation(base, (v) => notes.push(v));
+    const host = {
+      email: String(registeredHostQa.email),
+      requestedAt: new Date(Date.now() - 60001).toISOString(),
+    };
+    reserve(host, "HOST_UNIT");
+    const browser = {
+      email: String(registeredHostQa.email),
+      requestedAt: new Date().toISOString(),
+    };
+    const beforeWrite = vi.fn();
+    reserve(browser, "BROWSER_UNIT", beforeWrite);
+    expect(beforeWrite).toHaveBeenCalledOnce();
+    expect(JSON.parse(readFileSync(join(base, "last-request.json"), "utf8"))).toEqual(
+      browser,
+    );
+    expect(() => reserve(browser, "REPEAT", beforeWrite)).toThrow("COOLDOWN");
+    expect(beforeWrite).toHaveBeenCalledOnce();
+    rmSync(join(base, "active.lock"), { recursive: true });
+    expect(() => reserve(browser, "LATE")).toThrow();
+    expect(notes).toHaveLength(2);
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
+});
+
+it("marks the retention boundary before a durable reservation whose journal acknowledgement fails", () => {
+  const base = mkdtempSync(join(tmpdir(), "otr-browser-uncertain-unit-"));
+  mkdirSync(join(base, "active.lock"), { mode: 0o700 });
+  try {
+    const note = vi.fn(() => { throw Error("journal failed after write"); });
+    const reserve = createRegisteredQaChallengeReservation(base, note);
+    let unresolved = false;
+    const browser = { email: registeredHostQa.email, requestedAt: new Date().toISOString() };
+    expect(() => reserve(browser, "BROWSER", () => { unresolved = true; })).toThrow("journal failed");
+    expect(unresolved).toBe(true);
+    expect(JSON.parse(readFileSync(join(base, "last-request.json"), "utf8"))).toEqual(browser);
+  } finally { rmSync(base, { recursive: true, force: true }); }
 });

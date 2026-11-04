@@ -39,10 +39,19 @@ export const registeredHostQa = Object.freeze({
   createdAt: "2026-10-30T00:09:11.910404Z",
 });
 type Receiver = ReturnType<typeof createAcceptedHostQaReceiver>;
+export type RegisteredQaBrowserChallenge = Readonly<{
+  accountId: string;
+  email: string;
+  requestedAt: string;
+}>;
 export type RegisteredQaHostContext = Readonly<{
   accountId: string;
   tripId: string;
   readSession(): Promise<LocalSession>;
+  // Metadata only; successful admission retains the owning lock after Host cleanup.
+  reserveBrowserChallenge?(input: RegisteredQaBrowserChallenge): Readonly<{
+    status: "RESERVED_LOCK_RETAINED";
+  }>;
 }>;
 export type RegisteredQaHostCase = Readonly<{
   accountId: string;
@@ -66,6 +75,7 @@ function requireQa(ok: unknown, code: string): asserts ok {
 export async function runRegisteredQaHostSession(
   deps: {
     receiver: Receiver;
+    reserveBrowserChallenge?(value: { email: string; requestedAt: string }): void;
     request(email: string): Promise<void>;
     verify(email: string, code: string): Promise<LocalSession>;
     readUser(session: LocalSession): Promise<unknown>;
@@ -94,6 +104,7 @@ export async function runRegisteredQaHostSession(
   const repo = createAuthRepository(storage),
     revoker = createQaSessionRevoker(deps.revoke);
   let session: LocalSession | undefined,
+    browserAttempted = false,
     active = false,
     failed = false,
     completed = false,
@@ -146,6 +157,38 @@ export async function runRegisteredQaHostSession(
       Object.freeze({
         accountId: qaCase.accountId,
         tripId: qaCase.tripId,
+        reserveBrowserChallenge(input: RegisteredQaBrowserChallenge) {
+          requireQa(active, "REGISTERED_HOST_SCOPE_RELEASED");
+          requireQa(
+            deps.reserveBrowserChallenge,
+            "REGISTERED_BROWSER_RESERVATION_UNAVAILABLE",
+          );
+          const value = z
+            .strictObject({
+              accountId: z.literal(registeredHostQa.accountId),
+              email: z.literal(registeredHostQa.email),
+              requestedAt: z.iso.datetime(),
+            })
+            .safeParse(input);
+          requireQa(
+            value.success &&
+              qaCase.accountId === registeredHostQa.accountId &&
+              qaCase.email === registeredHostQa.email,
+            "REGISTERED_BROWSER_CASE_MISMATCH",
+          );
+          const age = Date.now() - Date.parse(value.data.requestedAt);
+          requireQa(age >= 0 && age < 120000, "REGISTERED_BROWSER_CHALLENGE_EXPIRED");
+          requireQa(!browserAttempted, "REGISTERED_BROWSER_ALREADY_ATTEMPTED");
+          browserAttempted = true;
+          deps.reserveBrowserChallenge(
+            Object.freeze({
+              email: value.data.email,
+              requestedAt: value.data.requestedAt,
+            }),
+          );
+          requireQa(active, "REGISTERED_HOST_SCOPE_RELEASED");
+          return Object.freeze({ status: "RESERVED_LOCK_RETAINED" as const });
+        },
         async readSession() {
           requireQa(active, "REGISTERED_HOST_SCOPE_RELEASED");
           const current = await repo.readAdoptedLocalSession();
@@ -252,6 +295,58 @@ export function createNormalRegisteredQaHostDependencies(
   };
 }
 
+// The existing lease owner supplies its original lock identity; no lock is acquired here.
+export function createRegisteredQaChallengeReservation(
+  base: string,
+  note: (value: Record<string, unknown>) => void,
+) {
+  const lock = join(base, "active.lock"),
+    owned = lstatSync(lock);
+  requireQa(
+    owned.isDirectory() &&
+      !owned.isSymbolicLink() &&
+      owned.uid === process.getuid?.() &&
+      (owned.mode & 0o777) === 0o700,
+    "REGISTERED_HOST_DIRECTORY_UNSAFE",
+  );
+  return (
+    value: { email: string; requestedAt: string },
+    phase: string,
+    beforeWrite?: () => void,
+  ) => {
+    const current = lstatSync(lock);
+    requireQa(
+      current.dev === owned.dev &&
+        current.ino === owned.ino &&
+        current.isDirectory() &&
+        !current.isSymbolicLink() &&
+        current.uid === owned.uid &&
+        (current.mode & 0o777) === 0o700,
+      "REGISTERED_HOST_SCOPE_RELEASED",
+    );
+    const previous = join(base, "last-request.json");
+    if (existsSync(previous)) {
+      const st = lstatSync(previous);
+      requireQa(
+        st.isFile() &&
+          !st.isSymbolicLink() &&
+          st.uid === process.getuid?.() &&
+          (st.mode & 0o777) === 0o600,
+        "REGISTERED_HOST_DIRECTORY_UNSAFE",
+      );
+      const last = JSON.parse(readFileSync(previous, "utf8"));
+      requireQa(
+        Number.isFinite(Date.parse(last.requestedAt)) &&
+          Date.now() - Date.parse(last.requestedAt) >= 60000,
+        "REGISTERED_HOST_COOLDOWN",
+      );
+    }
+    beforeWrite?.();
+    writeFileSync(previous, JSON.stringify(value) + "\n", { mode: 0o600, flush: true });
+    note({ phase, ...value });
+  };
+}
+
 // Only the registered DEV QA case. Importing this file performs no IO. The caller
 // must first hold the coordinated DEV business window; this flag grants no authority.
 export async function withRegisteredQaHostSession(
@@ -322,13 +417,15 @@ export async function withRegisteredQaHostSession(
     secretsOrOtpRecorded: false,
   };
   let clean = false,
-    requestAttempted = false;
+    requestAttempted = false,
+    browserReservationUnresolved = false;
   const note = (value: Record<string, unknown>) => {
     if (value.phase === "OTP_REQUEST_ATTEMPTED") requestAttempted = true;
     Object.assign(record, value);
     clean = value.ownSessionCleanup === "PASS_LOCAL_SCOPE_REFRESH_REVOKED" || clean;
     writeFileSync(journal, JSON.stringify(record, null, 2) + "\n", { mode: 0o600 });
   };
+  const reserveChallenge = createRegisteredQaChallengeReservation(base, note);
   try {
     let key = process.env.OTR_QA_RESEND_API_KEY;
     if (!key) {
@@ -346,37 +443,48 @@ export async function withRegisteredQaHostSession(
       key,
       scope: "dedicated-qa-team",
       reserve(value) {
-        const previous = join(base, "last-request.json");
-        if (existsSync(previous)) {
-          const st = lstatSync(previous);
-          requireQa(
-            st.isFile() &&
-              !st.isSymbolicLink() &&
-              st.uid === process.getuid?.() &&
-              (st.mode & 0o777) === 0o600,
-            "REGISTERED_HOST_DIRECTORY_UNSAFE",
-          );
-          const last = JSON.parse(readFileSync(previous, "utf8"));
-          requireQa(
-            Number.isFinite(Date.parse(last.requestedAt)) &&
-              Date.now() - Date.parse(last.requestedAt) >= 60000,
-            "REGISTERED_HOST_COOLDOWN",
-          );
-        }
-        note({ phase: "CHALLENGE_RESERVED_BEFORE_NORMAL_HOST_SEND", ...value });
-        writeFileSync(previous, JSON.stringify(value) + "\n", { mode: 0o600 });
+        reserveChallenge(value, "CHALLENGE_RESERVED_BEFORE_NORMAL_HOST_SEND");
       },
     });
     const result = await runRegisteredQaHostSession(
-      createNormalRegisteredQaHostDependencies(receiver, note, options),
+      {
+        ...createNormalRegisteredQaHostDependencies(receiver, note, options),
+        reserveBrowserChallenge(value) {
+          // A failed write may be UNKNOWN; never release this lease for another sender.
+          try {
+            reserveChallenge(
+              value,
+              "BROWSER_CHALLENGE_RESERVED_BEFORE_NORMAL_APP_SEND",
+              () => {
+                browserReservationUnresolved = true;
+              },
+            );
+          } catch (error) {
+            if (browserReservationUnresolved)
+              throw new OtpQaError(
+                "REGISTERED_BROWSER_RESERVATION_UNCONFIRMED_LOCK_RETAINED",
+              );
+            throw error;
+          }
+        },
+      },
       action,
     );
     note({ status: "PASS" });
-    return { ...result, runId, journal };
+    return {
+      ...result,
+      runId,
+      journal,
+      browserReservation: browserReservationUnresolved
+        ? ("UNRESOLVED_LOCK_RETAINED_NO_AUTOMATIC_RELEASE" as const)
+        : ("NOT_RESERVED" as const),
+    };
   } catch {
     note({ status: "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY" });
     throw new OtpQaError("REGISTERED_HOST_RUN_FAILED");
   } finally {
-    if (clean || !requestAttempted) rmSync(lock, { recursive: true });
+    if (browserReservationUnresolved) {
+      note({ browserReservation: "UNRESOLVED_LOCK_RETAINED_NO_AUTOMATIC_RELEASE" });
+    } else if (clean || !requestAttempted) rmSync(lock, { recursive: true });
   }
 }

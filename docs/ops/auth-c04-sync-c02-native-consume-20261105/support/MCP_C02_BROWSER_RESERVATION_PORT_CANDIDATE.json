@@ -1,0 +1,35 @@
+{
+  "requestId": "MCP-C02-BROWSER-RESERVATION-PORT-20261105-001",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "LOCAL_CANDIDATE_REVIEW_PENDING_NOT_LIVE_READY",
+  "recordedAt": "2026-11-04T23:28:35.370469+00:00",
+  "baseCommit": "b64015abd5fb534639c2623ded3ff445b38570dd",
+  "signature": "RegisteredQaHostContext.reserveBrowserChallenge?(input: Readonly<{accountId:string;email:string;requestedAt:string}>): Readonly<{status:\"RESERVED_LOCK_RETAINED\"}>",
+  "implementation": "withRegisteredQaHostSession wires only its own existing synchronous durable reservation callback into action-scoped context. Injected runRegisteredQaHostSession without capability explicitly throws REGISTERED_BROWSER_RESERVATION_UNAVAILABLE. Browser metadata is strict exact registeredHostQa Account/email and recent<=120s nonfuture ISO time. Separate browser one-attempt budget, independent of initial Host OTP.",
+  "existingGuardReuse": "Same current lock identity checked; same last-request0600 safety+60second cooldown and journal; reservation flushes file before success ACK. No alternate activelease or reentrant host wrapper. Wrongidentity/expired/unsupported/prewrite cooldown do not trigger unresolved-lock state. Reservation attempt itself cannot retry.",
+  "retention": "At durable write boundary mark browser unresolved BEFORE write. Successful reservation returns RESERVED_LOCK_RETAINED; wrapper return/journal explicitly mark UNRESOLVED_LOCK_RETAINED_NO_AUTOMATIC_RELEASE. Write/journal uncertainty fails closed with REGISTERED_BROWSER_RESERVATION_UNCONFIRMED_LOCK_RETAINED. Host normal local Session cleanup still runs, but automatic lock deletion is suppressed after this boundary. No browser finish/unlock port introduced.",
+  "consumerGap": "MCP must supply its actual existing browser termination/UNKNOWN recovery contract and own scoped request/ACK adapter. No inferred finish/timeout/logoff may clear retained lock. This candidate alone is NOT_LIVE_READY or a new Gate/window. Parent arranges independent review before consumption.",
+  "validation": {
+    "target": "npx vitest run backend/src/authRegisteredHostSession.test.ts",
+    "result": "28PASS",
+    "meaning": "Normal host behavior and new metadata admission single-use/identity/future-expired/released/unsupported/failure guards; real local temp-files test original cooldown/lock loss/durablewrite-before-ACK uncertainty. All Auth/Receiving IO mocked; no live network/security/credential/device.",
+    "scopedTypecheck": "PASS tmp config extends project, includes helper + directtest and dependencies",
+    "scopedEslint": "PASS",
+    "gitDiffCheck": "PASS",
+    "knownLimit": "No actual MCP normalcontrol caller or Live lease finalization exercised; no new finalization authority."
+  },
+  "sourceHashes": {
+    "scripts/auth/registered-qa-host-session.ts": "0d91a18fab1416179daca912761034121be0556dbc81de61e79f52c450112a3b",
+    "backend/src/authRegisteredHostSession.test.ts": "b347ff7d2e83cbcdcea4a1bd9c278a7860e216890102383ef50189211bd4efc7"
+  },
+  "sourceChangeScope": "Host-only QA helper and directtest; no Native client/Backend/SQL/UI changes. Current AUTH-C04 Native consume assignment unchanged.",
+  "liveActions": 0,
+  "newScopeAuthority": false,
+  "independentReview": "PENDING_PARENT_EXISTING_REVIEWER",
+  "notImplemented": [
+    "MCP fileRPC/requestACK",
+    "Browserfinish or unlockAuthority",
+    "New QA registration/recipient flexibility",
+    "LiveOTP/credentials/Keychain/Hosted/Device"
+  ]
+}
