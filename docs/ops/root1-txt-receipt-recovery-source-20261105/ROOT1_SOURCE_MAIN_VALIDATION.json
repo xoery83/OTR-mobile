@@ -1,0 +1,79 @@
+{
+  "requestId": "IMP-C01-TXT-RECEIPT-RECOVERY-SOURCE-20261105-01",
+  "businessRequest": "IMP-C01-TXT-SHORTEST-20261105-01",
+  "executionChild": "/root/txt_local_pins_source_integration_20261105",
+  "status": "SOURCE_COMPOSITION_VERIFIED_PG_PENDING_DONT_DEPLOY",
+  "preMain": "e3f76b6363ec2d1f8629abbafd6436aff0cc69ed",
+  "reviewedCandidate": "c4207843e4eb89643e2f999d3ca19b12ea796e60",
+  "sourceBase": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "integrationSelection": "Only two final c420 total-diff blobs; not interim071c/whole author history",
+  "sourceLeaves": {
+    "backend/src/universalOriginalSource.ts": "e1b58fb8dca791f546934843424971c56014baec12d18f81fd14133ac5db3923",
+    "backend/src/universalOriginalSource.test.ts": "a426c23c57e24deecc31b50b8a2e9b21d2027d8e5a1fbc28136794d7934f1b20"
+  },
+  "preimageSHA256": {
+    "backend/src/universalOriginalSource.ts": "2d5325c55442d8121012c726ea9dfaa7f0cc2ccf8cf0f944a8852a6f9daf1b97",
+    "backend/src/universalOriginalSource.test.ts": "d79134650ce8b35fba532bac5fa1f30446bcc71e46041335f187cddcdcc7ea02"
+  },
+  "packet": {
+    "archiveCommit": "3c8b45b8e85ebd5a5503f4434125ca000a261d1e",
+    "sha256": "a1c77bcd0a9e53555551e49041c08c61c46f00f3b5e65d511ed273108b716d21"
+  },
+  "authorEvidence": {
+    "frozenCommit": "810db8bc",
+    "sha256": "6520adbbd86f366f275dea671e1d653aada8bff7111c88bfdb6cb87a4e3f42b3",
+    "note": "Current author working EVIDENCE appended review/packet metadata; not falsely compared with frozen810db bytes."
+  },
+  "independentReview": {
+    "reviewer": "/root/ui08_review",
+    "reviewedCandidate": "c4207843e4eb89643e2f999d3ca19b12ea796e60",
+    "reviewArchiveCommit": "3c8b45b8e85ebd5a5503f4434125ca000a261d1e",
+    "sha256": "5fba185da3b08921b33dc03643d9312b287b2404ededd991414466ec1ef2109b",
+    "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER_PG_PENDING",
+    "archive": "SOURCE_INDEPENDENT_REVIEW.json"
+  },
+  "actualMainValidation": {
+    "directMockTests": 37,
+    "strictTypecheck": "PASS two affected roots and direct imports",
+    "eslint": "PASS two affected leaves",
+    "diffCheck": "PASS",
+    "exactCandidateLeaves": "PASS",
+    "samePreimagesAs6879": "PASS",
+    "uiGuard": "NOT_REQUIRED no UI/copy change"
+  },
+  "reused": "Author3suites54 and fixed independent37 scope; no unrelated Golden rerun",
+  "behavior": "Only validated UTF8 FILE/TEXT and exact wrapper UNIVERSAL_SOURCE_SCOPE_CLOSED enters same-six-pin existing receipt SELECT after first failed transaction rollback/lease release. New transaction preserves normal READ COMMITTED; nonnull full existing receipt verification unchanged. Missing after-close rethrows original CLOSED. No auth/hash/IO/UNKNOWN/typed-text/binary fallback or ACQUIRE retry/newID.",
+  "owningPortMetadata": {
+    "source": "Root2 existing c5fbde5c qualification; reused, no new live query",
+    "signature": "trip_source_operation_lookup(uuid,uuid,uuid,uuid,text,text)",
+    "oid": "58757",
+    "definitionSHA256": "c6a07e84db68bb842e261c58577b2776cdcd630677856f44e4a46ce636b56d43",
+    "authority": "Existing normal SourceGateway EXEC and Source ACL/retention/exact immutable receipt; no new SQL/GRANT"
+  },
+  "deploymentQualification": {
+    "status": "PG_PENDING_PLATFORM_REVIEW_TIMEOUT / DONT_DEPLOY_THIS_RECOVERY_SLICE",
+    "missing": "Real isolated after-close receipt read and PostgreSQL failed-tx rollback/fresh-lease lifecycle proof; Root2 runtime/normalAuth/current exact owning port qualification",
+    "failurePreservation": "First setup/fixture assertion failure is not PG PASS; corrected script two platform deadline timeouts did not run. No retry or command/container substitution by this child.",
+    "releaseCondition": "Only legitimate fresh platform permission/parent direction for the same bounded corrected PG evidence plus Root2 runtime qualification; source integration does not close this condition."
+  },
+  "actions": {
+    "PGOrDockerExecuted": 0,
+    "Hosted": 0,
+    "SQLInstall": 0,
+    "Source": 0,
+    "Provider": 0,
+    "Save": 0,
+    "device": 0,
+    "OTP": 0,
+    "credentials": 0,
+    "UNKNOWNReplay": 0
+  },
+  "notClaimed": [
+    "PG_PASS",
+    "Actual after-close Source recovery",
+    "Hosted or Cloud E2E",
+    "QA154/device or Owner UX",
+    "Provider or Save authority"
+  ],
+  "publication": "Normal fresh main CAS/nonforce push and independent readback required; final source SHA is the commit containing this receipt."
+}

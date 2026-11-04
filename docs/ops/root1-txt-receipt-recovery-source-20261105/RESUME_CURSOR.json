@@ -1,0 +1,10 @@
+{
+  "requestId": "IMP-C01-TXT-RECEIPT-RECOVERY-SOURCE-20261105-01",
+  "executionChild": "/root/txt_local_pins_source_integration_20261105",
+  "preMain": "e3f76b6363ec2d1f8629abbafd6436aff0cc69ed",
+  "reviewedCandidate": "c4207843e4eb89643e2f999d3ca19b12ea796e60",
+  "state": "STOP_AFTER_BOUNDED_SOURCE_PUBLICATION_RESULT",
+  "heldHostedDeviceTimers": [],
+  "autoResume": false,
+  "nextAction": "Return actual source main/readback and release Writer immediately. No PG retry, runtime activation, device or business execution; carry PG_PENDING/DONT_DEPLOY."
+}

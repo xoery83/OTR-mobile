@@ -130,10 +130,28 @@ export function createUniversalOriginalSourceConnection(
     },
     async lookup(actor: string, trip: string, raw: unknown) {
       const q = await input(actor, trip, raw);
-      const r = (await execute(
-        "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
-        [actor, canonicalEventJson(q as Json)],
-      )) as Record<string, Json> | null;
+      let r: Record<string, Json> | null;
+      try {
+        r = (await execute(
+          "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+          [actor, canonicalEventJson(q as Json)],
+        )) as Record<string, Json> | null;
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          error.message !== "UNIVERSAL_SOURCE_SCOPE_CLOSED" ||
+          q.payload.source_input.source_kind !== "FILE" ||
+          q.payload.original.material_kind !== "TEXT"
+        )
+          throw error;
+        // execute has rolled back/released the failed lease; this port only reads an existing receipt.
+        r = (await execute(
+          "SELECT public.trip_source_operation_lookup($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6) AS result",
+          [actor, trip, q.source_id, q.operation_id, q.operation_key, q.operation_sha256],
+        )) as Record<string, Json> | null;
+        // Absence after close must not invite another ACQUIRE or replace an UNKNOWN intent.
+        if (r === null) throw error;
+      }
       if (r !== null)
         await verifySourceAcquisitionResult(
           q,

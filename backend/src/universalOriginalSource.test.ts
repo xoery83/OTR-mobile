@@ -387,3 +387,165 @@ it("pending PNG capability does not open PDF intake", async () => {
   );
   expect(f.lease).not.toHaveBeenCalled();
 });
+
+it("recovers an expired UTF8 receipt only in a fresh transaction after rollback and lease release", async () => {
+  const q = await envelope(true),
+    receipt = await result(q),
+    trace: string[] = [];
+  let leaseNumber = 0;
+  const c = createUniversalOriginalSourceConnection(
+    {
+      withLease: async (work) => {
+        const lease = ++leaseNumber;
+        trace.push(`lease:${lease}`);
+        try {
+          return await work({
+            retire: vi.fn(),
+            query: async (sql, parameters) => {
+              trace.push(`${lease}:${sql}`);
+              if (sql.includes("trip_source_lookup_universal_original"))
+                throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+              if (sql.includes("trip_source_operation_lookup")) {
+                expect(parameters).toEqual([
+                  actor,
+                  trip,
+                  q.source_id,
+                  q.operation_id,
+                  q.operation_key,
+                  q.operation_sha256,
+                ]);
+                return { rows: [{ result: receipt }] };
+              }
+              return { rows: [] };
+            },
+          });
+        } finally {
+          trace.push(`release:${lease}`);
+        }
+      },
+    },
+    hash,
+  );
+  expect(await c.lookup(actor, trip, q)).toEqual(receipt);
+  expect(trace).toEqual([
+    "lease:1",
+    "1:BEGIN ISOLATION LEVEL READ COMMITTED",
+    "1:SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+    "1:ROLLBACK",
+    "release:1",
+    "lease:2",
+    "2:BEGIN ISOLATION LEVEL READ COMMITTED",
+    "2:SELECT public.trip_source_operation_lookup($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6) AS result",
+    "2:COMMIT",
+    "release:2",
+  ]);
+});
+
+it.each([
+  "SOURCE_ACCESS_DENIED",
+  "INVALID_SOURCE_COMMAND",
+  "INVALID_SOURCE_HASH",
+  "SOURCE_IO_UNAVAILABLE",
+  "UNKNOWN",
+])("does not turn %s into receipt recovery or another command", async (code) => {
+  const q = await envelope(true),
+    queries: string[] = [];
+  const c = createUniversalOriginalSourceConnection(
+    {
+      withLease: async (work) =>
+        work({
+          retire: vi.fn(),
+          query: async (sql) => {
+            queries.push(sql);
+            if (sql.startsWith("SELECT")) throw Error(code);
+            return { rows: [] };
+          },
+        }),
+    },
+    hash,
+  );
+  await expect(c.lookup(actor, trip, q)).rejects.toThrow(code);
+  expect(queries).toEqual([
+    "BEGIN ISOLATION LEVEL READ COMMITTED",
+    "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+    "ROLLBACK",
+  ]);
+});
+
+it.each([
+  "absent",
+  "denied",
+  "wrong-representation",
+  "bad-proof",
+  "non-final",
+  "not-retained",
+])("expired UTF8 recovery refuses %s instead of inviting a new ACQUIRE", async (kind) => {
+  const q = await envelope(true),
+    receipt = await result(q),
+    queries: string[] = [];
+  if (kind === "wrong-representation") receipt.representation_id = randomUUID();
+  if (kind === "bad-proof") receipt.result_sha256 = "f".repeat(64);
+  if (kind === "not-retained") receipt.result_retention_state = "PURGED";
+  const c = createUniversalOriginalSourceConnection(
+    {
+      withLease: async (work) =>
+        work({
+          retire: vi.fn(),
+          query: async (sql) => {
+            queries.push(sql);
+            if (sql.includes("trip_source_lookup_universal_original"))
+              throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+            if (sql.includes("trip_source_operation_lookup")) {
+              if (kind === "denied") throw Error("SOURCE_ACCESS_DENIED");
+              return {
+                rows: [
+                  {
+                    result:
+                      kind === "absent"
+                        ? null
+                        : kind === "non-final"
+                          ? { phase: "IO_UNKNOWN" }
+                          : receipt,
+                  },
+                ],
+              };
+            }
+            return { rows: [] };
+          },
+        }),
+    },
+    hash,
+  );
+  await expect(c.lookup(actor, trip, q)).rejects.toThrow(
+    kind === "absent"
+      ? "UNIVERSAL_SOURCE_SCOPE_CLOSED"
+      : kind === "denied"
+        ? "SOURCE_ACCESS_DENIED"
+        : "REPLAY_UNAVAILABLE",
+  );
+  expect(
+    queries.filter((sql) => sql.includes("trip_source_operation_lookup")),
+  ).toHaveLength(1);
+  expect(queries.some((sql) => sql.includes("trip_source_acquire"))).toBe(false);
+});
+
+it("does not widen the UTF8 receipt recovery to a submitted-text profile", async () => {
+  const q = await envelope(false),
+    queries: string[] = [];
+  const c = createUniversalOriginalSourceConnection(
+    {
+      withLease: async (work) =>
+        work({
+          retire: vi.fn(),
+          query: async (sql) => {
+            queries.push(sql);
+            if (sql.startsWith("SELECT")) throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+            return { rows: [] };
+          },
+        }),
+    },
+    hash,
+  );
+  await expect(c.lookup(actor, trip, q)).rejects.toThrow("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+  expect(queries.some((sql) => sql.includes("trip_source_operation_lookup"))).toBe(false);
+});
