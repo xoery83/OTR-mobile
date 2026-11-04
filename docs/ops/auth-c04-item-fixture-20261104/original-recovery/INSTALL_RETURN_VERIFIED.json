@@ -1,0 +1,18 @@
+{
+  "status": "EXACT_INSTALL_RECEIPT_VERIFIED_NO_REINSTALL",
+  "source": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/AUTH-C04-READ-STATE-ONE-FUNCTION-INSTALL-PREP-20261104-01/AUTH_ORIGINAL_REQUEST_READONLY_RETURN.json",
+  "checks": {
+    "directOwnerApproval": true,
+    "installAndIndependentReadback": true,
+    "postInstallHostLockReadback": true,
+    "subsequentReadonlyCatalog": true
+  },
+  "installedAt": "2026-11-04T01:47:36.372278+00:00",
+  "lastObservedAt": "2026-11-04T06:34:42.725728+00:00",
+  "guardDefinitionSHA256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+  "originalOperation": "f5e13639-4240-4817-bf43-c60a1ea46361",
+  "outcome": "UNKNOWN_NO_REPLAY",
+  "next": "Prepare normal A-own original receipt and collection GET reconciliation; verify current normal login/read resource qualification separately",
+  "newRuntimeAuthority": false,
+  "networkActions": 0
+}

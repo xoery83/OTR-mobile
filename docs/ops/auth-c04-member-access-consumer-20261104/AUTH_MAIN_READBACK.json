@@ -1,0 +1,12 @@
+{
+  "status": "SOURCE_MAIN_ARTIFACT_MATCH",
+  "main": "e3154b9f3938dffd59b468b1d7bb14cebd4b5251",
+  "candidate": "6c14d822",
+  "checks": {
+    "src/data/api/memberAccessLossAdapter.ts": true,
+    "src/data/api/memberAccessLossAdapter.test.ts": true
+  },
+  "testsRerun": 0,
+  "nativeLifecycle": "NOT_MOUNTED",
+  "hostedRevoke": "NOT_RUN"
+}

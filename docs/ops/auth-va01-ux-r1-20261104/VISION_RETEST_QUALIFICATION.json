@@ -1,0 +1,32 @@
+{
+  "request": "VISION-VA01-RETEST-QUALIFY-20261104-002",
+  "status": "SOURCE_BUILD_PRECHECK_ONLY",
+  "buildMain": "e3154b9f3938dffd59b468b1d7bb14cebd4b5251",
+  "slices": [
+    {
+      "scope": "F02 returning-account restore presentation",
+      "integratedMain": "3c20ad0cca535b455127beaa10fbe8fbfc10ee52",
+      "evidence": "f02-local-candidate/AUTH_SOURCE_MAIN_READBACK.json",
+      "remaining": "Native/device cold restore and Owner UX"
+    },
+    {
+      "scope": "V-A01-2 existing Email OTP input accepts exactly8 digits",
+      "integratedMain": "e851bcae231bc920f91daa3e4a6b70ea2e1b3f2a",
+      "remaining": "Full separate-step UX and actual device OTP recheck"
+    }
+  ],
+  "otherSlices": "Existing Guest/signout/adoption baselines reusable; no new full Owner UX release claimed",
+  "email": {
+    "releasedHelper": "scripts/auth/resend-inbound-otp-e2e.ts",
+    "firstUserReceipt": "docs/ops/auth-inbound-otp-20261030/FIRST_USER_E2E.json",
+    "instructions": "docs/ops/auth-inbound-otp-20261030/README.md",
+    "receivingBoundary": "Owner confirmed dedicated OTR QA team, full access key not mailbox prefix isolation",
+    "mailbox": "Fresh otr-qa-<uuid>@eldouzileu.resend.app via released helper",
+    "provider": "Last proven DEV SMTP Resend; no fresh configuration inspection this check",
+    "currentQuota": "UNKNOWN; Owner reported100/day exhausted previously; reset time unconfirmed",
+    "sendQualification": "Conditional normal QA only after source/hash/credential/resource/rate readiness; do not reuse C04 A/B mailbox/session or finite business window",
+    "nativeRule": "App sends and verifies normally; never inject host Session; one send, bounded receiver, stop429/uncertain result"
+  },
+  "otpSent": 0,
+  "hostedChanges": 0
+}

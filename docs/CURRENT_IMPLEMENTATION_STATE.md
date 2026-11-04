@@ -58,10 +58,13 @@ HEAD+8 manifest files and consumer boundary; no repeated tests. Full Item+Receip
 Save remains unproven. Root1 integrated main1e563567; Auth independently verified
 all8 manifest artifacts from that Git object, source lock released. Root2 request
 AUTH-C04-READ-STATE-ONE-FUNCTION-INSTALL-PREP-20261104-01 prepares one-function
-protected Gate, not yet approved or installed. No image/runtime/GRANT changes.
+protected Gate d136 was directly approved and installed at01:47:36Z; Auth now
+verified the returned approval/install/lock/catalog hashes. Last catalog06:34:42Z
+retains guard15fb and helper e2b8. No reinstall needed; this is not new runtime
+or login/write authority. Evidence original-recovery/INSTALL_RETURN_VERIFIED.json.
 This is a proven current blocker, not proof of the original Hosted unique phase.
 Auth runner and original operation stay unchanged; no automatic resubmit.
-Next is minimal Core guard repair → positive focused validation → exact install Gate;
+Next is current normal-login/read qualification → original receipt-only reconciliation;
 never blindly replay the original operation. Native has released its earlier B
 normalOTP slot; no QA Session is borrowed or kept by Auth.
 
@@ -173,7 +176,9 @@ No OTP/Host/device/Owner data. Actual UI repair and Vision retest remain NOT_REA
 
 Formal Member Revoke is source integrated at main29d77b31. Auth B-self access-loss
 consumer adapter is implemented with6 focused tests PASS, scoped lint and full typecheck PASS;
-independent Review remains pending. It reuses canonical Core DTO
+Root1 independent Review and source integration PASS at maine3154b9f; Auth
+independently matched both consumed files. Native lifecycle caller remains pending.
+It reuses canonical Core DTO
 and existing Repository.revoke, with no Startup caller or Hosted enablement. Root2
 owns exact protected install qualification; Hosted revoke/cold restore NOT_RUN.
 Recovery evidence: docs/ops/auth-c04-member-access-consumer-20261104.
