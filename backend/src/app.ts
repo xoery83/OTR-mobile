@@ -8,6 +8,12 @@ import {
   type AccountProfileBootstrapPort,
 } from "./accountProfileBootstrap";
 import { accountProfileBootstrapPath } from "@/data/api/accountProfileContracts";
+import { privateAccountProfilePath } from "@/data/api/privateAccountProfileContracts";
+import {
+  isPrivateAccountProfilePath,
+  privateAccountProfileBoundary,
+  type PrivateAccountProfilePort,
+} from "./privateAccountProfile";
 import { sourcePdfV4PreparationBoundary } from "./sourcePdfV4PreparationHttp";
 import { sourcePdfV2Boundary } from "./sourcePdfV2Http";
 import {
@@ -681,6 +687,7 @@ export type BackendDependencies = {
   flightEnrichmentAvailable?: Parameters<typeof createFlightEnrichmentBoundary>[0]["available"];
   captureMaterialCustody?: CaptureMaterialCustody;
   accountProfileBootstrapPort?: AccountProfileBootstrapPort;
+  privateAccountProfilePort?: PrivateAccountProfilePort;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
   tripMetadataV2Port?: TripMetadataV2Port;
@@ -2468,6 +2475,7 @@ export function createDevBackendHandler({
   universalOriginalSourcePort,
   captureMaterialCustody,
   accountProfileBootstrapPort,
+  privateAccountProfilePort,
   tripCreatePort,
   tripMetadataPort,
   tripMetadataV2Port,
@@ -2572,6 +2580,14 @@ export function createDevBackendHandler({
             ? guestAdoptionRuntime.ports
             : undefined,
         ))!;
+      } else if (isPrivateAccountProfilePath(url.pathname)) {
+        route = privateAccountProfilePath;
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await privateAccountProfileBoundary(
+          request,
+          actor,
+          privateAccountProfilePort,
+        );
       } else if (url.pathname === accountProfileBootstrapPath) {
         route = accountProfileBootstrapPath;
         const actor = await authenticateNormalAccount(request, gateway);

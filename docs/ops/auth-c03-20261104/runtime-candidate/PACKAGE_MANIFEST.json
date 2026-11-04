@@ -1,0 +1,39 @@
+{
+  "status": "REVIEWED_DEFAULT_CLOSED_SOURCE_CANDIDATE_NOT_HOSTED_READY",
+  "requestId": "AUTH-C03-DEFAULT-CLOSED-PRIVATE-PROFILE-MOUNT-20261104-01",
+  "authoringBase": {
+    "authoringBase": "2394b935fdb7311cc3dbf799bea10b6d2f2e2581",
+    "root1ReferenceMain": "43280495efdb2b0229a53d566d8dffde2012088f",
+    "appPreimageSHA256": "79139b471312788f4a9deb40314e51232f6170be9a0cb252e244ef30fe6c2e28",
+    "scope": "AUTHORING_ONLY_SHARED_APP_CANDIDATE; Root1 remains sole main Writer; only PrivateProfile optionaldependency/import/exactroute branch; no whole-file replacement",
+    "root1ReferenceAppSHA256": "f022c448f8b1e1ffcc125c2b306f2afc4872a0e6a8cf1c4646f280f5b12ad188",
+    "sharedPatchBase": "43280495efdb2b0229a53d566d8dffde2012088f",
+    "sharedPatchSHA256": "8643fb0d8d1b6c4e7b485ac850becb12b14be28114fd6637a681fd92e689cb63",
+    "same16AddedLinesAsAuthTestedApp": true,
+    "root1ReferencePatchCheck": "PASS_READ_ONLY_DRY_RUN",
+    "root1ReferencePatchedAppSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+    "privateSnapshotPatchAppliedOnly": true
+  },
+  "sharedFileIntegration": "Root1 SHARED_APP.patch only; preserve all concurrent main changes, no whole app blob replacement",
+  "productFiles": {
+    "backend/src/app.ts": "1a16c5570b7aec0cd608d3161191814b06307130edc8b56ce9e0b42a85021942",
+    "backend/src/privateAccountProfile.ts": "f8e52042dd9dd6ed5bde84fcb96f17022b7dac717be14d1851974564ba26c49a",
+    "backend/src/privateAccountProfileSupabase.ts": "85ffc35b1acea0b0f065bfeccb406f68698ad7939e7a87276767271fb22f6abb",
+    "backend/src/privateAccountProfileRuntime.ts": "674b671c4cb2436a9431ccefab53746925e23264b0718e5d5771c8b88f64a006",
+    "src/data/api/privateAccountProfileContracts.ts": "4eadd4fed34bf17b84b98f9297e560f7d3ca10ac1297fe42cc7ba30fbe6ac970",
+    "src/domain/auth/privateAccountProfile.ts": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a"
+  },
+  "focusedAndExistingDirectTests": {
+    "backend/src/privateAccountProfile.route.test.ts": "3776aa96351f85a30fdc91c02716068e7afc51f79efc83821c19104b2336ae0e",
+    "backend/src/privateAccountProfileRuntime.test.ts": "adf006b49db57b7d0fe2d7d7a1cb9abe062e33e2138f98098b3ed26414d0626d",
+    "backend/src/privateAccountProfile.test.ts": "32ec655dfae24073a0b29b96c93a3b31eeb3628a8c1e9e82547195cafa0dc26e",
+    "backend/src/privateAccountProfileSupabase.test.ts": "317fe82e9408d43639c67b036537b477918832a28dbc5168f27bfaac6af149a8",
+    "src/domain/auth/privateAccountProfile.test.ts": "8a4ee8eb7db51487123009d3f68ecd7a71d6a5c46ab5d28f08ab199364c5eb6b",
+    "src/domain/auth/privateAccountProfileAka.test.ts": "8b288f83515b8bbb03e6269adad028795bdfef7c6c7a690b37a4e1d3ab23227b"
+  },
+  "existingDirectTestsRerun": false,
+  "runtimeNotWiredInServerCaptureOrStartup": true,
+  "sqlCandidateNotIncludedInIntegration": true,
+  "hostedActions": 0,
+  "executionAuthorization": false
+}

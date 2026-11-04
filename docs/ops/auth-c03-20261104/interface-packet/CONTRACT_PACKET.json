@@ -1,0 +1,66 @@
+{
+  "requestId": "AUTH-C03-PRIVATE-PROFILE-PORT-PACKET-20261104-01",
+  "package": "AUTH-C03",
+  "primaryAssignment": "AUTH-C04_UNCHANGED",
+  "status": "EXISTING_CONTRACT_RECONCILIATION_NOT_RUNTIME_READY",
+  "sourceBase": "9373fc2cd0aa208c34632271857df4961db1d099",
+  "approvedBasis": [
+    "Owner Auth delivery Phase3.2/3.3 approved optional DisplayName, independent TravelDocumentName Unicode split/unsplit, AKA and distinct TripNickname",
+    "Owner IndependentClientSprint2026-11-01: private drafts/account isolation; cloud truthfulness; no automatic identity link",
+    "Owner2026-11-03 C03 independent ProfileCloud/Person preparation while C04 protected integration pending",
+    "People V1 approved historical intake a7282e4; current write/identity rules retained"
+  ],
+  "target": {
+    "kind": "ACCOUNT_PRIVATE_PROFILE",
+    "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "targetMeaning": "One synthetic contract example only, not a live operation or qualification",
+    "tripId": null,
+    "personId": null
+  },
+  "sampleMutation": {
+    "operationId": "3f550c66-9a8e-4871-9c77-2171b6abb63c",
+    "expectedRevision": 0,
+    "changes": {
+      "displayName": "OTR QA Profile"
+    }
+  },
+  "sampleStatus": "NOT_SUBMITTED_NOT_A_QA_EXECUTION_PLAN_EXPECTED_REVISION_IS_ONLY_EXAMPLE",
+  "scopeBoundary": {
+    "privateFields": ["displayName", "travelDocumentName", "globalAka"],
+    "tripPersonFields": [
+      "personId",
+      "tripId",
+      "displayName as Trip Nickname",
+      "participation independent revision"
+    ],
+    "connection": "Only accepted owning Account/Person binding; no name/email/AKA matching",
+    "ordinaryRoster": "Existing TripPersonRepository and accepted People Reader, not private profile upload"
+  },
+  "endpointGap": "Existing self-profile Boundary/Port/Repository/SQL candidates exist but application dependency/mount and Runtime composition are absent; bootstrap ensure is not an update API",
+  "nicknameGap": "No qualified self-Person nickname Patch/Clear/owning CAS+receipt endpoint. Do not use AddTraveler, global Profile save, participationRevision or Core accessRevision as nickname edit authority. Needs separate exact owning Port before coding or publishing this mutation.",
+  "akaGap": "Exact private string array candidate only; confirmed provenance/correction/inactive lifecycle and cloud UI publication are not established by this array. Keep local AKA private and no automatic upload.",
+  "sourceBoundary": "Auth owns DTO/Repository/Controller/Adapter and subsequent composition candidate; Native owns shared UI/SQLite; Root1 only canonical/self-Person Port and precise shared app mount integration/review. This packet requests no domain development handoff.",
+  "hostedBoundary": "Root2 owns exact future private-profile Schema/RLS/GRANT installation/fresh preimage and runtime rollout. Candidate c84671f4 is NOT authorized by C04/read-state Gates. No metadata/query/install/runtime enablement requested in this packet.",
+  "newPermissions": false,
+  "hostedActions": 0,
+  "testsRerun": false,
+  "existingEvidence": [
+    "docs/ops/auth-private-profile-aka-20261102/INDEPENDENT_REVIEW.json",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/INDEPENDENT_REVIEW.json",
+    "docs/ops/auth-c03-20261103/PROFILE_RECOVERY_EVIDENCE.json",
+    "docs/ops/auth-c03-20261103/NATIVE_READER_ACCEPTANCE.json"
+  ],
+  "files": {
+    "src/domain/auth/privateAccountProfile.ts": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a",
+    "src/data/api/privateAccountProfileContracts.ts": "4eadd4fed34bf17b84b98f9297e560f7d3ca10ac1297fe42cc7ba30fbe6ac970",
+    "src/data/auth/accountProfileRepository.ts": "5bea43e5daa9bfd67f3ed2d2fef54ef7520c1ea9e73a9ff44694946e6fa2b81c",
+    "src/data/auth/privateAccountProfileLocal.ts": "c996f6b31d132ed537137703941bda68c106aa2627ca5264730c42974adbd235",
+    "backend/src/privateAccountProfile.ts": "0a245c66f8644b2f6f284f08285a2d7acc72c039ae4a6960668abf999494a1e5",
+    "backend/src/privateAccountProfileSupabase.ts": "85ffc35b1acea0b0f065bfeccb406f68698ad7939e7a87276767271fb22f6abb",
+    "src/domain/trip/person.ts": "dcacf54c8ab58c73b254d07972061786435bff8738e835a5e8727c6b773ac722",
+    "src/features/people/peopleConnectionProjection.ts": "a81ddc9715efb95cad9cd06cd3b6d0c72c87879034ec983228f6769017c00943",
+    "docs/ops/auth-private-profile-aka-20261102/hosted-install-candidate/CANDIDATE_MANIFEST.json": "e15286a80f25c185bf314600029f23153913151f2c6d6d50f092c4b16a55cbc3",
+    "docs/ops/auth-c03-20261103/PROFILE_RECOVERY_EVIDENCE.json": "3876301377dfbb922bc947b57fd8ec7fe037556522ceed117bfd591052e50e38",
+    "docs/ops/auth-c03-20261103/NATIVE_READER_ACCEPTANCE.json": "bfeff16ccd7961a52ee35e8dfedc63d5fd25082b176f154a991b06f7ccb5d779"
+  }
+}
