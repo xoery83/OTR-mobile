@@ -1,0 +1,46 @@
+{
+  "requestId": "IMP-C01-CORE-FINITE-REVIEW-20261104-06",
+  "status": "SCOPED_NO_BLOCKER_NOT_INSTALL_OR_EXECUTION_APPROVAL",
+  "commit": "26a6e76b2c87ea111b51a0261ee5f76cd85ddb02",
+  "reviewedBase": "ab16d85bac392c5b8e19b4f4c9331a9e7bff36d5",
+  "priorReview": "/private/tmp/otr-import-finite-native-core-source-review-20261104.json",
+  "scopeSHA256": {
+    "backend/sql/universal_finite_native_pdf_scope_candidate.sql": "79ea5bbff73fd4504c74733bedf7321a6074fd8a2d0241289a3d8812d1bf1a52",
+    "backend/src/sourcePdfV2Authority.ts": "f4d609d31923ec768ce035e405a757aafacec3756fe1b445aa307ecda799ff66",
+    "backend/src/sourcePdfContinuousScope.ts": "393b8b477bc3ad5023a9958ee9ae3189120767783a8184298dd5b2e0232346a7",
+    "scripts/import/initial_native_command_plan.mts": "b2055b900f48b0a1d6fd239b09a3d272260e086e205393f464b8dc247ae9ca56",
+    "src/domain/trip/sourceBinaryOriginalCommands.ts": "ad399463301f9f8f9f91c1c19e934a212a4796f9190334a9fd0362895411ab3c",
+    "src/domain/trip/sourcePdfPreparationCommands.ts": "ddc99eea2302bdc854f019e51d72c8b41f72c690e6b96ebcff58e87e47eed0df"
+  },
+  "evidenceSHA256": "277984785c86ebfd7c48c1f037e77e74b1d2b6e98cc0793afb03e5707e85f44e",
+  "findings": [],
+  "verified": [
+    "Only live command arithmetic is shared into private builders. Existing live createPending functions retain actual acquisition reference/receipt identity, outcome/revision/material checks and checkResult/checkBinaryOriginalResult before invoking builders. No live call site imports projectInitial functions; those produce commands, never receipts.",
+    "Offline planner binds prepared Native proposal account/trip/bytes/hash and fresh expectedSourceRevisionnull/materialRevision1, exactly onePDF/PNG/TEXT with uniqueinputs/sources. It deterministically prefreezes9fullcommands plus unique registration and seal template, and labels fresh1/1/1 as precondition rather than observed admission.",
+    "Actual Source/Operation ABSENT and real successful1/1/1 receipt qualification remain Root2 execution preconditions. Changed actual receipt revisions generate different commands and fail exact frozen scope; no scope rewrite/regrant added.",
+    "V2 seal now supplies explicit pdfSeal request on its own Source transaction. It does not rely on registration transaction GUC inheritance. Existing prior seal receipt recovery, context/worker/commit/body-hash path unchanged.",
+    "SQL seal frame requires exact keyset/source and exact Actor/Trip/Batch/Task/Run/submission seal template. A unique matching registration template must exist. Existing pdf_request validates unique actual FINAL/APPLIED VERIFY operation and actual immutable resultSHA.",
+    "Seal further uses actual registration lookup bound to actor/trip/operation and hashed request; body.request equality and immutable registration body hash required. Missing registration, different IDs/CAS/extra keys, expired scope or removed scope cannot qualify new seal. Existing Source context/commit checks still decide actual minting.",
+    "Prior command/proof tails, PNG authority and post-close negative-only UNKNOWN implementation remain unchanged from reviewedab16. No new bridge/role/EXEC/Provider activation in this delta."
+  ],
+  "validationReused": {
+    "liveAndProposalAndAdapter": "60 PASS (6 suites)",
+    "planner": "5 PASS",
+    "strict": "19 roots, inherited0",
+    "lint": "8 changed TS leaves PASS; .mts not included by repository ESLint config; strict and planner tests cover it",
+    "actualPgRunning": "/Users/xoery/Project/otr-mobile-import/lane-c-private-artifacts-20261104/pg-reports/otr-core-v2-test-df850fba5e87/result.txt",
+    "actualPgLimits": "Seeded registration/upload/execution facts; actual owning codec/hash/lookup/frame tests, no physical worker or Hosted E2E",
+    "initialSandboxAttempt": "37 passed; 12 local HTTP tests blocked by localhost listen EPERM; rerun same scoped tests with approved local listener completed PASS",
+    "actualPgStartingFinalDeletedScope": "/Users/xoery/Project/otr-mobile-import/lane-c-private-artifacts-20261104/pg-reports/otr-core-v2-test-1ba883e3fd15/result.txt"
+  },
+  "conditions": [
+    "Final Root2 full preimage/OID/Owner/ACL/config forward/reverse CAS, current V2 context/commit metadata and exactly2ExecutionWriter bridge qualification remain pending.",
+    "Actual fresh ABSENT proof and exact registered full plan must be qualified before window; projections are not real receipts or Authority.",
+    "Fresh Owner execution/Actor/Source/Provider/Price/budget/expiry/close qualification required; old expired approval is not extended.",
+    "Seeded actual PG tests are not physical Worker/Hosted/Native parse-Review-Save/readback E2E."
+  ],
+  "reviewerActions": [
+    "Only requested fixeddelta, direct live-builder call sites and immediate test/evidence read.",
+    "No big test rerun, Hosted query/install/SQL execution, Provider/device call or LaneC/main change."
+  ]
+}
