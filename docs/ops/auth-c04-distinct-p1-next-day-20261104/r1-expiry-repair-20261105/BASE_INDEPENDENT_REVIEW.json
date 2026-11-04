@@ -1,0 +1,90 @@
+{
+  "requestId": "MC-SLOW-START-20261105-AUTH-INDEPENDENT-REVIEW",
+  "reviewedCommit": "43469419dfdf1765d8083117267975c026767b39",
+  "status": "CHANGES_REQUIRED_BEFORE_EXECUTION",
+  "scope": "Changed runner, independent shared P1 packet, projection, original-operation isolation, reservation/receipt/readback and qualification boundary only",
+  "reviewedWorktree": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical",
+  "fixedSourceHashes": {
+    "scripts/auth/distinct-shared-p1-next-day.ts": "58e11af07a7a0700ddf0b6ce24c32daddd47b7194071cfd1712cb1f21b4bd01d",
+    "scripts/auth/member-claim-qa-item-fixtures.ts": "339bb627811c28ff18c9dfe0c09fe164eecdb1b936770180d0548e441d12976f",
+    "scripts/auth/member-claim-qa-member-read.ts": "93e344f96bd527d1fd48100fc5307a11239424884bbe3cbeaa9306eeb1c6dd2f",
+    "backend/src/authDistinctSharedP1Packet.test.ts": "f125efcb181bd6febd88b4a11438ad38e712d4e5bba69612229dd6026f86d4fd"
+  },
+  "sourceUnchangedFromFixedCandidate": true,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P2",
+      "file": "scripts/auth/member-claim-qa-item-fixtures.ts",
+      "lines": [
+        362,
+        370
+      ],
+      "relatedFile": "scripts/auth/distinct-shared-p1-next-day.ts:50",
+      "title": "Revalidate the bounded execution qualification before starting B and its read",
+      "actual": "beforeDistinctRun is checked before the overall run, A capabilities/preflight and A submit. No check occurs after successful A cleanup and before withMemberSession or its collection. The real wrapper immediately starts the normal B OTP session. An execution that expires during A or cleanup can start B outside the approved window and still return PASS. POST wire guard does not protect B GET/session.",
+      "reproduction": "expiry-boundary-repro.test.ts uses only mocked Core transport/session callbacks. Qualifier is made expired after A cleanup; B starts and sharedItemRead returns PASS. Reproduction passed, confirming the gap; it is not an execution safety PASS.",
+      "minimalFix": "Auth add the existing qualifier immediately before starting B session, and recheck inside the B action before its collection (OTP/identity verification may itself cross deadline). Keep unconditional own-session cleanup on expiry. No new permission system.",
+      "expectedRegression": "Expired after A cleanup => no B session callback. Expired during B OTP/getUser => no B Core collection, own cleanup still runs. Valid flow unchanged.",
+      "owner": "Auth business runner; MC routes this review; Root1 made no candidate changes"
+    }
+  ],
+  "confirmed": [
+    {
+      "topic": "Projection strip",
+      "result": "NO_FINDING",
+      "reason": "Only local QA visibility projection strips extra fields. Both required visibility and owner_account_id are still parsed. Private IDs are collected from unchanged original owner record IDs and checked against original claimant records; strip does not remove them. Formal collection path first calls validateCoreReadCollection and full record/body schema/hash/scope validation; receipt path still uses validateCoreReceipt."
+    },
+    {
+      "topic": "Independent intent and historical UNKNOWN",
+      "result": "NO_FINDING",
+      "reason": "New date/title/substantive description, Item and Operation41e8f597 are fixed and differ from original f5e. Registered distinct case allows only its exact POST body/new receipt path; B allows collection GET only. No old f5e or4028 writes/relabeling."
+    },
+    {
+      "topic": "At most once and recovery",
+      "result": "NO_FINDING_WITH_QUALIFIED_EXECUTION_OPERATOR_REQUIRED",
+      "reason": "Frozen validated command; exclusive O_CREAT/O_EXCL/O_NOFOLLOW ATTEMPT with fsync before submit; reservation retained on uncertainty; wire submitted Set blocks automatic401 duplicate POST. Lost response reads same new receipt once, null/status-only remains UNKNOWN; exact FULL APPLIED intent/target plus independent A/B field/revision reads required."
+    },
+    {
+      "topic": "Current identity/resource/hash binding",
+      "result": "NOT_EXECUTION_READY",
+      "reason": "Normal getUser/account/email/nonanonymous/session cleanup reused. Current reviewed manifest/command, Root2 resource/runtime and start/end evidence are explicitly required external owning qualifier inputs and remain unset. This callback/preparation is not authority. Review cannot attest a future operator binding."
+    }
+  ],
+  "validation": {
+    "existingScopedSuites": 3,
+    "existingTestsPassed": 23,
+    "adversarialMockReproduction": {
+      "tests": 1,
+      "result": "GAP_REPRODUCED",
+      "physicalNetworkRequests": 0
+    },
+    "existingRunnerRegression": "Reused original fixtures and member-read suites; no full architecture or historical audit"
+  },
+  "remainingExecutionGate": {
+    "id": "CURRENT_EXACT_BUSINESS_EXECUTION_QUALIFICATION_FOR_THIS_DISTINCT_CASE",
+    "preconditions": [
+      "Auth minimal R1 correction and focused expiry regressions; re-fix candidate/manifest and bounded delta review",
+      "Exact Owner-approved one new CREATE_ITEM/P1/MANUAL intent, operation/target/intent/wire hash; no old UNKNOWN replay",
+      "Current normal A/B identity and actual Owner/member/capability checks",
+      "Current Root2 software/runtime/resource/read-retention and exact finite start/end binding; required safe cleanup, existing quota",
+      "At most one normal OTP per account and one physical POST; no automatic resend/retry; original reservation and receipt recovery only"
+    ],
+    "notGrantedByReview": true,
+    "sqlOrBusinessActivationPerformed": false
+  },
+  "boundaries": {
+    "authCandidateModified": false,
+    "sharedMainWrites": 0,
+    "hostedRequests": 0,
+    "otpRequests": 0,
+    "credentialsRead": 0,
+    "businessPosts": 0,
+    "sqlOrRuntimeMutations": 0,
+    "deviceActions": 0,
+    "paidProviderCalls": 0,
+    "historicalUnknownsUntouched": true
+  },
+  "finish": "INTENTIONAL_STOP_NO_NEXT_TASK_CHAIN",
+  "resume": "Only MC-routed Auth correction review or explicitly authorized next assignment; do not resume Cancel or Core queue."
+}

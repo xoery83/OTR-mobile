@@ -1,0 +1,62 @@
+{
+  "taskId": "MC-SLOW-START-20261105-AUTH-R1-REPAIR",
+  "primary": "AUTH-C04",
+  "baseCandidate": "43469419dfdf1765d8083117267975c026767b39",
+  "baseReviewCommit": "991434b914a7e58ca52fced4c06289a2407dcf4a",
+  "result": "R1_LOCAL_REPAIR_PASS_PENDING_DELTA_REVIEW",
+  "productionLogicDelta": "Exactly two existing qualifier awaits: after A cleanup before B Session, and inside B action before collection",
+  "red": {
+    "tests": 2,
+    "failed": 2,
+    "result": "Both expiry scenarios returned false PASS before repair"
+  },
+  "green": {
+    "tests": 2,
+    "passed": 2,
+    "validPath": "Still-current full mock path explicitly retained inside first regression",
+    "expiredAfterA": "No B session callback and no B Core collection",
+    "expiredDuringB": "Mock OTP/getUser completes, no B Core collection, actual existing Session driver invokes injected own revoke + refresh-invalid assertion"
+  },
+  "validation": {
+    "scopedCompiler": "PASS driver/new-test roots plus imports; temp config removed",
+    "scopedLint": "PASS0errors0warnings",
+    "diffCheck": "PASS",
+    "packetSelfCheck": "LOCAL_PACKET_VALID_NOT_SENT",
+    "manifestFiles": 14,
+    "old23TestBaseline": "Reused unchanged scope evidence; not rerun this repair"
+  },
+  "unchangedBindings": {
+    "CASE.json": true,
+    "COMMAND.json": true,
+    "WIRE_BODY.json": true,
+    "PERMISSION_DELTA.json": true
+  },
+  "intentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+  "wireSha256": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+  "manifestSha256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+  "logSha256": {
+    "TEST.log": "4517a833dccc7fe70540291cc53c612c3146e4e7963737b5d55d8170f00eb0a6",
+    "LINT.log": "3a92ac015b34c3f14acc059194d0ecca35c53c94521637a6201738994f54c83e"
+  },
+  "liveCounters": {
+    "otp": 0,
+    "credentialReads": 0,
+    "network": 0,
+    "Hosted": 0,
+    "businessWrites": 0,
+    "new41e8Posts": 0,
+    "sql": 0,
+    "device": 0,
+    "Provider": 0,
+    "otherLaneRequests": 0
+  },
+  "remainingGate": "CURRENT_EXACT_BUSINESS_EXECUTION_QUALIFICATION_FOR_THIS_DISTINCT_CASE",
+  "gateDetails": "MC routes narrow R1 delta review, then reviewed fixed candidate/manifest and actual approved A/B execution/resource/clock qualification. Neither local test nor prior preparation grants execution.",
+  "unknownsPreserved": [
+    "f5e13639-4240-4817-bf43-c60a1ea46361 UNKNOWN_NO_REPLAY",
+    "4028b673-9032-41c8-807e-c7d3592eae93 UNKNOWN_NO_REPLAY"
+  ],
+  "newOperation": "41e8f597-cdba-4892-93a2-2ce77e95522e NOT_SENT",
+  "completedAt": "2026-11-04T17:29:04.638681+00:00",
+  "status": "INTENTIONAL_STOP"
+}

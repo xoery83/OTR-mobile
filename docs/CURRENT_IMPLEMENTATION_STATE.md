@@ -1,4 +1,4 @@
-# Auth Lane D — current handoff, 4 November 2026
+# Auth Lane D — current handoff, 5 November 2026
 
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 
@@ -9,6 +9,11 @@ Owner-released single overtime preparation is now complete and stopped: distinct
 P1 next-day packet,23 focused tests/scoped types/lint PASS, all live commands NOT_SENT.
 Cursor: docs/ops/auth-day-close-20261104/OVERTIME_RESUME_CURSOR.json.
 Remaining: current exact reviewed execution authority, not a new installation.
+5 November bounded R1 repair: existing qualifier now rechecked before B Session
+and before B collection. Two expiry regressions RED→GREEN plus retained valid path,
+scoped types/lint PASS; baseline23 reused. INTENTIONAL_STOP pending MC-routed
+delta review/current exact execution qualification; new41e8 still NOT_SENT.
+Cursor: docs/ops/auth-c04-distinct-p1-next-day-20261104/r1-expiry-repair-20261105/RESUME_CURSOR.json.
  Read this first; follow only
 this slice's code/evidence. Historical handoffs are preserved in Git71da1578 and
 the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.

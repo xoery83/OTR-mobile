@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  06:26:33
+   Duration  272ms (transform 126ms, setup 0ms, import 197ms, tests 17ms, environment 0ms)
+

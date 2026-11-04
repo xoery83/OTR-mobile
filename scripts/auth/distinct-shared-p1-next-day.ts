@@ -63,6 +63,7 @@ const packetFiles = [
   "scripts/auth/resend-inbound-otp-native-relogin.ts",
   "src/data/api/tripCoreV2Transport.ts",
   "backend/src/authDistinctSharedP1Packet.test.ts",
+  "backend/src/authDistinctSharedP1Expiry.test.ts",
   "docs/ops/auth-c04-distinct-p1-next-day-20261104/CASE.json",
   "docs/ops/auth-c04-distinct-p1-next-day-20261104/COMMAND.json",
   "docs/ops/auth-c04-distinct-p1-next-day-20261104/WIRE_BODY.json",

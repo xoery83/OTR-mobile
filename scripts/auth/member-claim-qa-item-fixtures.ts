@@ -359,10 +359,12 @@ export async function runItemFixtureProbe(input: {
     }),
     qa.ownerAccountId,
   );
+  if (input.caseId) await input.beforeDistinctRun!();
   checkCleanup(
     await input.withMemberSession(async (context) => {
       if (context.accountId !== qa.memberAccountId)
         throw Error("C04_FIXTURE_MEMBER_SESSION_MISMATCH");
+      if (input.caseId) await input.beforeDistinctRun!();
       member = (
         await fixtureTransport(context, input.note, input.caseId, input.beforeDistinctRun).collection(
           await captureAccountRequestContext(qa.tripId, async () => context.accountId),

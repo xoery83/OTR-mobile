@@ -1,0 +1,8 @@
+{
+  "base": "43469419dfdf1765d8083117267975c026767b39",
+  "tests": 2,
+  "failed": 2,
+  "actual": "Both expiry scenarios incorrectly resolved sharedItemRead PASS before the repair; valid path in first scenario also resolved PASS",
+  "liveNetworkRequests": 0,
+  "normalSessionDriverInSecondCase": "Real runRegisteredQaHostSession using injected mocked request/verify/getUser/revoke/receiver"
+}

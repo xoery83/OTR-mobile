@@ -1,0 +1,20 @@
+{
+  "taskId": "MC-SLOW-START-20261105-AUTH-R1-REPAIR",
+  "primary": "AUTH-C04",
+  "status": "INTENTIONAL_STOP",
+  "startedAt": "2026-11-04T17:26:14.214375+00:00",
+  "baseCandidate": "43469419dfdf1765d8083117267975c026767b39",
+  "reviewCommit": "991434b914a7e58ca52fced4c06289a2407dcf4a",
+  "scope": "Only B pre-session and pre-collection qualifier expiry repair plus focused mock regressions and manifest refresh",
+  "liveActions": 0,
+  "replayAllowed": false,
+  "completedAt": "2026-11-04T17:29:04.638681+00:00",
+  "result": "R1_LOCAL_REPAIR_PASS_PENDING_DELTA_REVIEW",
+  "remainingGate": "CURRENT_EXACT_BUSINESS_EXECUTION_QUALIFICATION_FOR_THIS_DISTINCT_CASE",
+  "manifestSha256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+  "autoResumeBusiness": false,
+  "resourcesReleased": true,
+  "newOperationStatus": "41e8 NOT_SENT",
+  "unknownReplayAllowed": false,
+  "evidence": "docs/ops/auth-c04-distinct-p1-next-day-20261104/r1-expiry-repair-20261105/EVIDENCE.json"
+}

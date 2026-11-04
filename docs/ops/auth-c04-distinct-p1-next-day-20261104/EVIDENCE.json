@@ -54,5 +54,11 @@
     "Private isolation without actual qualified private fixture",
     "Native cold restore or Owner UX"
   ],
-  "statusAfterCompletion": "INTENTIONAL_STOP"
+  "statusAfterCompletion": "INTENTIONAL_STOP",
+  "latestCorrection": {
+    "taskId": "MC-SLOW-START-20261105-AUTH-R1-REPAIR",
+    "result": "R1_LOCAL_REPAIR_PASS_PENDING_DELTA_REVIEW",
+    "path": "docs/ops/auth-c04-distinct-p1-next-day-20261104/r1-expiry-repair-20261105/EVIDENCE.json",
+    "baselineEvidenceAbove": "Historical434 preparation only; changed runner now requires MC-routed R1 delta review"
+  }
 }

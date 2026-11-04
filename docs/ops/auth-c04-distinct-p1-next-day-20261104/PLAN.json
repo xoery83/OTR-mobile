@@ -64,7 +64,8 @@
     {
       "step": 8,
       "actor": "B",
-      "action": "One normal existing-account OTP/getUser; only collection GET; exact B-Person and same Item/revision/Owner/visibility/family/title/description/date/participation"
+      "action": "Requalify before starting B Session; one normal existing-account OTP/getUser; requalify inside B action before its collection GET; exact B-Person and same Item/revision/Owner/visibility/family/title/description/date/participation",
+      "onExpiry": "Before B Session: no B OTP. During B OTP/getUser: no Core read, existing own Session cleanup still runs."
     },
     {
       "step": 9,
