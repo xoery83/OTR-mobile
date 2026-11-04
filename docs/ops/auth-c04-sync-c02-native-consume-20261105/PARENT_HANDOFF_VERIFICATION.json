@@ -1,0 +1,45 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "candidate": "396fcf2be1ae91d73d49ccc0a4eb5f66050035f4",
+  "parentResult": "VERIFIED_LOCAL_HANDOFF_READY_NO_AUTH_CODE_DELTA",
+  "checks": {
+    "sealedEvidence": true,
+    "planArtifactHashes": true,
+    "noCodeDelta": true,
+    "noLiveActions": true,
+    "normalDiscoveryNotUuidBypass": true,
+    "sameSpecificGap": true,
+    "guestTargetExplicitlyIneligible": true,
+    "noServerDtoOrRevisionFabrication": true
+  },
+  "Root2QualificationReturnSha256": "21eec5523a2f883970bcc9437c929548a257fe04b131b13183f30df4a9e0cec2",
+  "Root2MinimumBindingSha256": "c30b4ba2eb5d2cdb5735605cb77edec32461e8a150fb50ee962ae65e32f02820",
+  "status": "WAITING_NATIVE_B_CONTEXT_AND_CURRENT_READ_QUALIFICATION",
+  "unblock": "Native supplies an existing qualified B or proven-empty lawful QA context, a fixed full Native+JS build/device claim and current normal B login/restore/discovery/pull/restart/read-only qualification. Planned14750 Guest-only bundle is excluded; UI empty14674 is not emptiness proof. Root2 request remains pending these Native fields.",
+  "nativeWriter": "Native parent owns downstream/localReader/UI/device; no source file handoff to Auth",
+  "scopeQualification": {
+    "SOURCE": "Existing formal identity/discovery/pull/recovery source contract supported; Native current B-target fixed build not yet supplied",
+    "HOSTED": "Prior scoped A-write/Receipt/A+B Core read PASS reused; B normal Discovery in this Native case NOT_RUN",
+    "CONSUMER": "LOCAL_PLAN_READY; actual Native accepted-cache/cold consumer NOT_RUN",
+    "DEVICE": "B-context/build/device qualification PENDING; Native planned14750 is Guest-only and NOT_ELIGIBLE_FOR_THIS_B_SLICE",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "parentLiveActions": 0,
+  "testsRerun": 0,
+  "recordedAt": "2026-11-04T18:54:25.462039+00:00",
+  "fixedSourceBindingsMatch": {
+    "src/data/sync/tripDownstreamCoordinator.ts": true,
+    "src/data/api/memberAccessLossAdapter.ts": true,
+    "src/features/auth/accountTripRestorePresentation.ts": true,
+    "src/data/sync/tripDiscoveryTransport.ts": true,
+    "src/data/repositories/tripDiscoveryRepository.ts": true,
+    "src/data/repositories/tripCoreV2Repository.ts": true,
+    "src/data/repositories/tripDayFeedRepository.ts": true,
+    "src/domain/trip/tripCoreV2P1P3DayFeed.ts": true,
+    "src/domain/trip/tripCoreV2P6DayFeed.ts": true,
+    "backend/src/tripDiscovery.ts": true,
+    "backend/src/supabaseGateway.ts": true,
+    "backend/src/app.ts": true
+  }
+}
