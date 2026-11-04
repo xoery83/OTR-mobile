@@ -1,0 +1,21 @@
+{
+  "sourceCandidate": "3d62f641 plus rollback-review repair fixed in next commit",
+  "contractHttpPgTests": {
+    "suites": 5,
+    "passed": 51
+  },
+  "nativeRepositoryRevocationColdDisk": {
+    "passed": 3,
+    "unrelatedSkipped": 49
+  },
+  "isolatedPgChecks": 29,
+  "scopedLint": {
+    "errors": 0,
+    "existingRepositoryTestImportWarnings": 8
+  },
+  "compiler": "PASS excluding only unchanged browser/auth-consent/main.tsx with unavailable local react-dom type dependency",
+  "hostedInstall": "NOT_RUN",
+  "businessAbRevoke": "NOT_RUN",
+  "deviceCacheConsumer": "NOT_RUN",
+  "historicalUnknownUntouched": true
+}

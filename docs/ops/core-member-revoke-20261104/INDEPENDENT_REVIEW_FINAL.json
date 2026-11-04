@@ -1,0 +1,38 @@
+{
+  "requestId": "AUTH-C04-MEMBER-REVOKE-V2-FINAL-CORRECTION-20261104",
+  "status": "NO_BLOCKER_FIXED_SOURCE_INSTALL_CANDIDATE_ONLY",
+  "commit": "fc65a094d55ce0ad91a2327c86728f2c7960a9ae",
+  "reviewedBase": "3d62f641bfcbef04d3e4f6a75ff8d9ce6c0807a5",
+  "priorFinding": "/private/tmp/otr-core-member-access-final-delta-review-20261104.json",
+  "priorFindingStatus": "CLOSED_BY_EXACT_NEW_OBJECT_CAS",
+  "scopeSHA256": {
+    "docs/CURRENT_IMPLEMENTATION_STATE.md": "6d7281e889cd8d8100291560a1be8446e3330fdcd27fd4fbdf7090c4239db164",
+    "docs/ops/core-member-revoke-20261104/CONTRACT.md": "f8c3969175311598b9e5be3f5451ee41474295d719e69b5f633ac5ae2cabcb92",
+    "docs/ops/core-member-revoke-20261104/INDEPENDENT_REVIEW_FINDING_3d62.json": "41e6446e9673480926525b71b85d98199e0cd7f2bb841972d54ca341b22e55c9",
+    "docs/ops/core-member-revoke-20261104/ISOLATED_PG_EVIDENCE.json": "30ac1ed6f1a22d0499293e48fe9fed0743fca6287c9a48518093504c14d00a33",
+    "docs/ops/core-member-revoke-20261104/LOCAL_VALIDATION.json": "20fc63a1404a9c86b758b99514c5785d0cb5cdf7f46fe831245ea3448e13fdbe",
+    "scripts/trip/core-member-access-install-package.py": "1905374e5f520c950cfbc85fe8a722f9f1906dae1f9d5f4c7a7b1dcb398157f9",
+    "scripts/trip/core-member-access-isolated-pg.py": "05d12bc859fb03da6b9b8b3dced14b1901fe9d99ad14edf003e62f4801c30dce"
+  },
+  "findings": [],
+  "verified": [
+    "No business SQL body, HTTP/PG port or domain-command/receipt changes in correction. Prior e36 and3d62 read-safety reviews reused.",
+    "new_objects_cas derives each of4known function source hashes from frozen DDL. Both install postcheck and rollback precheck require exact postgres owner, expected definer/config/owner-only ACL, language/default function attributes, return type and body hash.",
+    "Both trigger relations/name/function/type/enabled/nonconstraint/noqual/noargs shape and boolean capability column type/notnull/nongenerated/defaultfalse are checked before destructive reverse. Drift raises within transaction before restoration/DROP.",
+    "Rollback still requires no member receipt and capabilityclosed, rechecks unchanged privileged Claim helper and3patched-function exact metadata/body, and restores old15fb nested Claim fix. Accepted history still forbids reverse.",
+    "Correction directly resolves previous stale inverse risk without new GRANT, business authority or runtime activation."
+  ],
+  "validationReused": {
+    "isolatedStatus": "LOCAL_PG_PASS",
+    "checks": 29,
+    "newDriftCheck": "NEW_FUNCTION_BODY_ACL_TRIGGER_COLUMN_DRIFT_BLOCKS_REVERSE",
+    "noHistoryReverseCheck": "GENERATED_NO_HISTORY_ROLLBACK_RESTORES_ALL_ORIGINALS_AND_CLAIM_FIX",
+    "acceptedHistoryCheck": "ACCEPTED_HISTORY_BLOCKS_REVERSE_ROLLBACK",
+    "evidenceSHA256": "30ac1ed6f1a22d0499293e48fe9fed0743fca6287c9a48518093504c14d00a33"
+  },
+  "limits": [
+    "Readonly delta review; no test/PG rerun or code/main/Hosted/device/Provider write.",
+    "Source/runtime composition remains absent by default; new Root2 exact protected Gate/fresh metadata/installation required.",
+    "29PG checks are isolated local evidence, not full Hosted/Auth/Native Revoke E2E."
+  ]
+}

@@ -1,4 +1,10 @@
 import {
+  validateCoreOwningCommand,
+  coreAccessLossSchema,
+  validateCoreMemberRevokeReceipt,
+} from "../../src/domain/trip/tripCoreMemberAccess";
+import type { CoreMemberAccessPort } from "./tripCoreMemberAccess";
+import {
   coreUniversalP1PublishRequestSchema,
   coreUniversalP1PublishResultSchema,
   coreSourceFinalizeV2Schema,
@@ -10,7 +16,6 @@ import {
   corePayloadSchemas,
   coreClosedCapabilities,
   coreCapabilitiesSchema,
-  validateCoreCommand,
 } from "../../src/domain/trip/tripCoreV2Commands";
 import { parseCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
@@ -79,6 +84,7 @@ const validationFields = new Set([
   "slotId",
 ]);
 export type CoreHttpConnection = {
+  memberAccess?: CoreMemberAccessPort;
   publishUniversalP1?(actor: string, trip: string, input: unknown): Promise<unknown>;
   finalizeUniversalP1Operation?(
     actor: string,
@@ -199,10 +205,39 @@ export async function coreHttpBoundary(
     if (operation && request.method === "GET") {
       coreUuid.parse(operation[1]);
       if (!connection) return failure(503, "CORE_REPLAY_UNAVAILABLE");
+      const member = await connection.memberAccess?.readOperation(
+        actor,
+        trip,
+        operation[1],
+      );
+      if (member) {
+        coreUuid.parse(member.domainReceiptId);
+        const verified = await validateCoreMemberRevokeReceipt(
+          member.receipt,
+          actor,
+          trip,
+          operation[1],
+          connection.hash,
+        );
+        return reply(200, {
+          projection: "FULL",
+          domainReceiptId: member.domainReceiptId,
+          receipt: verified,
+        });
+      }
       const r = await connection.readOperation(actor, trip, operation[1]);
       return r
         ? reply(200, await receipt(r, actor, trip, operation[1], connection.hash))
         : failure(404, "NOT_VISIBLE");
+    }
+    if (path === "access-loss" && request.method === "GET") {
+      if (!connection?.memberAccess) return failure(503, "CORE_CAPABILITY_CLOSED");
+      const loss = await connection.memberAccess.observeAccessLoss(actor, trip);
+      if (!loss) return failure(404, "NOT_VISIBLE");
+      const parsed = coreAccessLossSchema.parse(loss);
+      if (parsed.accountId !== actor || parsed.tripId !== trip)
+        throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+      return reply(200, parsed);
     }
     if (!(await canReadTrip(actor, trip))) return failure(404, "NOT_VISIBLE");
     if (path === "capabilities" && request.method === "GET") {
@@ -229,7 +264,26 @@ export async function coreHttpBoundary(
       const input = await body(request);
       if (unsupportedVersion(input, "contractVersion"))
         return failure(426, "UNSUPPORTED_CLIENT");
-      const q = validateCoreCommand(input);
+      const q = validateCoreOwningCommand(input);
+      if (q.command === "REVOKE_LINKED_MEMBER_ACCESS") {
+        if (q.tripId !== trip) return failure(404, "NOT_VISIBLE");
+        if (!connection?.memberAccess) return failure(503, "CORE_CAPABILITY_CLOSED");
+        const result = await connection.memberAccess.execute(actor, trip, q);
+        coreUuid.parse(result.domainReceiptId);
+        const verified = await validateCoreMemberRevokeReceipt(
+          result.receipt,
+          actor,
+          trip,
+          q.operationId,
+          connection.hash,
+          q,
+        );
+        return reply(200, {
+          projection: "FULL",
+          domainReceiptId: result.domainReceiptId,
+          receipt: verified,
+        });
+      }
       if (q.tripId !== trip) return failure(404, "NOT_VISIBLE");
       if (!connection) return failure(503, "CORE_CAPABILITY_CLOSED");
       const result = await executeCoreCommandV2(

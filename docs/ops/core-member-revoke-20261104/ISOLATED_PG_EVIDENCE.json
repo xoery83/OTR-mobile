@@ -1,0 +1,102 @@
+{
+  "status": "LOCAL_PG_PASS",
+  "checks": [
+    "GENERATED_WRONG_CAS_NO_PARTIAL_INSTALL",
+    "UNKNOWN_DEFAULT_GRANTEE_ABORTS_INSTALL",
+    "NEW_FUNCTION_BODY_ACL_TRIGGER_COLUMN_DRIFT_BLOCKS_REVERSE",
+    "GENERATED_NO_HISTORY_ROLLBACK_RESTORES_ALL_ORIGINALS_AND_CLAIM_FIX",
+    "DEFAULT_CLOSED",
+    "APPLIED_ATOMIC_10_7_TO_11_8",
+    "EXACT_REPLAY_SAME_RECEIPT",
+    "STALE_ACCESS_CAS_CONFLICT",
+    "REBOUND_OPERATION_REJECTED",
+    "SECOND_INTENT_NO_ACCESS_ADVANCE",
+    "RECEIPT_AFTER_WRITE_CLOSE",
+    "B_SELF_SCOPED_ACCESS_LOSS",
+    "ORIGINAL_CORE_ACTOR_READER_DENIES_B_KEEPS_OWNER",
+    "B_OTHER_TRIP_UNAFFECTED",
+    "B_RECEIPT_DENIED",
+    "LEGACY_MARKER_ERASE_DENIED",
+    "PERSON_ACCOUNT_MISMATCH_REJECTED_WITHOUT_MUTATION",
+    "SELF_OWNER_TARGET_PROTECTED",
+    "QUALIFIED_NONOWNER_DENIED",
+    "CURRENT_LINKED_OWNER_NOT_CREATED_BY",
+    "CONCURRENT_IDENTICAL_OPERATION_ONE_RECEIPT_ONE_ADVANCE",
+    "POST_RECEIPT_FAILURE_ROLLS_BACK_DENIAL_STATE_AND_RECEIPT",
+    "EXPIRED_SCOPE_NO_EFFECT",
+    "AMBIGUOUS_OWNER_NO_EFFECT",
+    "FOREIGN_EPOCH_CONFLICT_NO_EFFECT",
+    "ORDINARY_WRITER_HAS_NO_INTERNAL_PROOF_EXECUTE",
+    "FAULTED_ORIGINAL_RECEIPT_LOOKUP_ONLY",
+    "LEGACY_JOIN_RACING_REVOKE_CANNOT_ERASE_DENIAL",
+    "ACCEPTED_HISTORY_BLOCKS_REVERSE_ROLLBACK"
+  ],
+  "receipt": {
+    "receipt": {
+      "audit": {
+        "after": [],
+        "before": [],
+        "evidenceRefs": [],
+        "authorizationRefs": []
+      },
+      "result": {
+        "changed": [],
+        "created": [],
+        "replacement": null,
+        "retiredEdges": [],
+        "custodyGrantId": null
+      },
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "command": "REVOKE_LINKED_MEMBER_ACCESS",
+      "outcome": "APPLIED",
+      "errorCode": null,
+      "committedAt": "2026-11-04T05:50:00.620571Z",
+      "operationId": "50d269d5-dbcb-4c73-9360-6288afd14e55",
+      "intentSha256": "2ca5e72cfa6acfc4ec7b060ac662d06c8949242ce642124ade2c4fc9e47ebeab",
+      "targetVector": [
+        {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "kind": "TRIP_ACCESS",
+          "baseRevision": 7,
+          "committedRevision": 8
+        }
+      ],
+      "intentVersion": 2,
+      "receiptSha256": "c2b495d6ac8913ce5fea7f9e502ba560ff7b35a890245f01d9c99b4c7675d4ab",
+      "actorAccountId": "00000000-0000-4000-8000-000000000001",
+      "commandVersion": 2,
+      "receiptVersion": 2,
+      "accessTransition": {
+        "after": {
+          "epoch": "a83b06a4-e977-4c06-a4e6-3b382e972520",
+          "revision": 11,
+          "accessRevision": 8
+        },
+        "before": {
+          "epoch": "a83b06a4-e977-4c06-a4e6-3b382e972520",
+          "revision": 10,
+          "accessRevision": 7
+        },
+        "personId": "18025ac1-cfd9-432e-9013-9d017bb52911",
+        "targetAccountId": "3b6e41ae-c8f6-49d7-8aea-46b057bd46e9"
+      }
+    },
+    "projection": "FULL",
+    "domainReceiptId": "b73c58e2-8f85-4e39-922e-9ffd5a3e1f8e"
+  },
+  "loss": {
+    "state": "ACCESS_REVOKED",
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "personId": "18025ac1-cfd9-432e-9013-9d017bb52911",
+    "schemaId": "otr.trip.core-access-loss/1",
+    "accountId": "3b6e41ae-c8f6-49d7-8aea-46b057bd46e9",
+    "coreReference": {
+      "epoch": "a83b06a4-e977-4c06-a4e6-3b382e972520",
+      "revision": 11,
+      "accessRevision": 8
+    }
+  },
+  "fixtureImage": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "hostedActions": 0,
+  "limits": "Actual Core tables and write/read-state guards with real SQL Owner/target/policy and local synthetic Auth; no Hosted install or consumer E2E."
+}

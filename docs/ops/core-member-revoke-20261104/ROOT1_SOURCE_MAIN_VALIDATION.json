@@ -1,0 +1,42 @@
+{
+  "status": "SOURCE_MAIN_VERIFIED_DEFAULT_CLOSED",
+  "preMain": "2fa4562aaa4e4398a5553537eb6ccc4d7b7247fc",
+  "fixedCandidate": "fc65a094d55ce0ad91a2327c86728f2c7960a9ae",
+  "independentReview": "INDEPENDENT_REVIEW_FINAL.json",
+  "actualMainTests": {
+    "suites": 6,
+    "passed": 103
+  },
+  "isolatedPg": {
+    "checks": 29,
+    "evidence": "ISOLATED_PG_EVIDENCE.json"
+  },
+  "scope": "Existing Core namespace and receipts; one current linked Owner revokes one same-Trip linked non-Owner Account/Person; preserve membership/private ownership/history",
+  "sourceLeaves": {
+    "backend/sql/tripCoreMemberAccess.sql": "bbd9a76ed2bba4cb1913b25fae416eff6f505c48f4a537d7aa70159bfb07c2a3",
+    "backend/src/__fixtures__/tripCoreMemberAccess.ts": "5b2e7c757a41a9b8aad0f5054209111d648a867b1c50c3cb2a8d912a8c587023",
+    "backend/src/tripCoreMemberAccess.test.ts": "1b79b0b6470a6689979b578093a77ab37f75b2b9779537b4d1b9f08891372acc",
+    "backend/src/tripCoreMemberAccess.ts": "d5c9622cef1015c90dedf225c4bd83f3002589d951f86d0bf429fe60d0f75fec",
+    "backend/src/tripCoreMemberAccessPort.test.ts": "33ab6e3b6da8dd19436ad8873e852d7f0dc8296185525d93f648e5bd3f44b7f5",
+    "backend/src/tripCoreV2Http.ts": "7e1aea9e56719bfb807fb53c6d98a9fae622f6b2d6b242b4f88be296fa66b555",
+    "backend/src/tripCoreV2PgHttpConnection.ts": "aab01d96b2c5f583dbed8bae7672be6b84d9cf6a5ebe3932e13a2bb2cd72ddd1",
+    "docs/API_CONTRACT.md": "c3063c9052d442f10e331c2b5355b933be2dc7e4681fdf4457fd72b6a0fe7746",
+    "docs/ops/core-member-revoke-20261104/CONTRACT.md": "f8c3969175311598b9e5be3f5451ee41474295d719e69b5f633ac5ae2cabcb92",
+    "docs/ops/core-member-revoke-20261104/INDEPENDENT_REVIEW_FINDING_3d62.json": "41e6446e9673480926525b71b85d98199e0cd7f2bb841972d54ca341b22e55c9",
+    "docs/ops/core-member-revoke-20261104/ISOLATED_PG_EVIDENCE.json": "30ac1ed6f1a22d0499293e48fe9fed0743fca6287c9a48518093504c14d00a33",
+    "docs/ops/core-member-revoke-20261104/LOCAL_VALIDATION.json": "20fc63a1404a9c86b758b99514c5785d0cb5cdf7f46fe831245ea3448e13fdbe",
+    "docs/ops/core-member-revoke-20261104/ROOT2_INSTALL_REQUEST.json": "f5bb17c36cb8ec1290756231b20e078c18137a2fb93cd7ad9afccd42c143bd4a",
+    "scripts/trip/core-member-access-install-package.py": "1905374e5f520c950cfbc85fe8a722f9f1906dae1f9d5f4c7a7b1dcb398157f9",
+    "scripts/trip/core-member-access-isolated-pg.py": "05d12bc859fb03da6b9b8b3dced14b1901fe9d99ad14edf003e62f4801c30dce",
+    "scripts/trip/core-member-access-patches.py": "70ec1968b93416e8ee83b05353d029b1832f8b554389b3543a1351de9b823d5e",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "1c0ade70f7d5fc88716d268e9ce6d5e589d7faf41dfaacf53dc8d87058dcb27c",
+    "src/domain/trip/tripCoreMemberAccess.test.ts": "1ca20d952595f8e705d5ca2a5a29c8748115026e13aa3dfae6e04cd35ad19de6",
+    "src/domain/trip/tripCoreMemberAccess.ts": "92b197034409b3496d165d3e312e26cf22ad2db015102b875b5cecff47740016"
+  },
+  "runtimeDefault": "No startup injection or new Gateway EXEC; SQL flag defaultfalse",
+  "hostedInstall": "NOT_RUN",
+  "businessAbE2E": "NOT_RUN",
+  "nativeDevice": "NOT_RUN",
+  "remaining": "Root2 fresh actor-scope metadata/private preimage + exact protected default-closed installation/EXEC qualification, then normal Auth and Native consumers with authorized A/B validation",
+  "historicalUnknownOperationsUntouched": true
+}

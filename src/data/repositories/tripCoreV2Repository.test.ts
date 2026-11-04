@@ -1,3 +1,4 @@
+import { coreAccessLossSchema } from "../../domain/trip/tripCoreMemberAccess";
 import { subscribeLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import {
   ordinaryFixture,
@@ -629,6 +630,49 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
     );
     const fresh = await f.repo.captureContext(trip);
     expect(await f.repo.pending(fresh)).toEqual([]);
+  });
+  it("verified self access loss survives disk reopen and cannot install a delayed old collection", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "otr-core-member-loss-"));
+    folders.push(dir);
+    const file = join(dir, "recipient.sqlite"),
+      f = fixture(file),
+      ctx = await f.repo.captureContext(trip);
+    const before = await f.repo.beginRefresh(ctx, 1),
+      bundle = await collection();
+    await f.repo.install(before, bundle.manifest, bundle.pages);
+    await f.repo.enqueue(ctx, sparse());
+    const loss = coreAccessLossSchema.parse({
+      schemaId: "otr.trip.core-access-loss/1",
+      accountId: account,
+      tripId: trip,
+      personId: person,
+      state: "ACCESS_REVOKED",
+      coreReference: { epoch: bundle.manifest.epoch, revision: 11, accessRevision: 8 },
+    });
+    expect(loss.accountId).toBe(ctx.accountId);
+    await f.repo.revoke(ctx, loss.coreReference.accessRevision);
+    f.sql.close();
+    const reopened = fixture(file, false),
+      fresh = await reopened.repo.captureContext(trip);
+    await expect(reopened.repo.readGraph(fresh)).rejects.toThrow("CORE_ACCESS_REVOKED");
+    await expect(
+      reopened.repo.install(before, bundle.manifest, bundle.pages),
+    ).rejects.toThrow("CORE_ACCESS_REVOKED");
+    await expect(reopened.repo.beginRefresh(fresh, 1)).rejects.toThrow(
+      "CORE_ACCESS_REVOKED",
+    );
+    expect(
+      reopened.sql
+        .prepare(
+          "SELECT revoked,access_revision FROM trip_core_scopes WHERE account_id=? AND trip_id=?",
+        )
+        .get(account, trip),
+    ).toMatchObject({ revoked: 1, access_revision: 8 });
+    expect(
+      reopened.sql
+        .prepare("SELECT status FROM sync_operations WHERE owner_user_id=? AND trip_id=?")
+        .get(account, trip),
+    ).toMatchObject({ status: "DEPENDENCY_BLOCKED" });
   });
   it("revocation withholds accepted cache and blocks old pending delivery", async () => {
     const f = fixture(),

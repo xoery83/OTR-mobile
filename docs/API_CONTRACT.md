@@ -1497,3 +1497,14 @@ Admission or writes. Those retain `trip_core_finite_scope_allowed` and existing
 write capabilities. Finite non-sustained readers retain the original checks.
 Installing the new protected function/EXECUTE requires its exact Owner Gate;
 missing support fails closed, with no fallback to write authorization.
+
+
+## Core Member Access v2 — dormant source contract (2026-11-04)
+
+The existing normal-auth Core namespace accepts `REVOKE_LINKED_MEMBER_ACCESS` with a single `TRIP_ACCESS` target/vector and the existing v2 hash domains/immutable Core receipt table. Only the current unique linked Owner can revoke a linked non-Owner; historical creator status grants no permission. The vector uses Core accessRevision, not general revision or Person participation revision.
+
+The optional `CoreHttpConnection.memberAccess` owns this branch. It is absent by default and does not expand ordinary Item capability profiles. POST `/v2/trips/:trip/core/commands` executes only through this owning port. GET `/v2/trips/:trip/core/operations/:operation` returns the original scoped receipt, and GET `/v2/trips/:trip/core/access-loss` returns only the authenticated recipient's explicit denial plus actual Core epoch/revision/accessRevision. It never takes a target Account from a query/body.
+
+Native validates the self-scoped observation and uses its own AccountRequestContext with the existing repository revoke transaction; Owner receipts cannot be installed under another Account. Original UNKNOWNs keep their operation/intent and are queried only;404/503 is not NoCommit.
+
+Definitions, exact closed installation/rollback renderer and acceptance boundaries: `docs/ops/core-member-revoke-20261104/CONTRACT.md`. This is Source-only: no protected Schema/EXEC installation, runtime activation, real member mutation or Native-device E2E is implied.
