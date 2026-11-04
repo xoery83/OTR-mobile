@@ -12,13 +12,33 @@ Remaining: current exact reviewed execution authority, not a new installation.
 5 November bounded R1 repair: existing qualifier now rechecked before B Session
 and before B collection. Two expiry regressions RED→GREEN plus retained valid path,
 scoped types/lint PASS; baseline23 reused. INTENTIONAL_STOP pending MC-routed
-delta review/current exact execution qualification; new41e8 still NOT_SENT.
+delta review/current exact execution qualification was subsequently received;
+new41e8 is now APPLIED under the single approved subagent execution below.
 Cursor: docs/ops/auth-c04-distinct-p1-next-day-20261104/r1-expiry-repair-20261105/RESUME_CURSOR.json.
  Read this first; follow only
 this slice's code/evidence. Historical handoffs are preserved in Git71da1578 and
 the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.
 
 ## Latest actual Golden Slice
+
+**PASS_HOSTED_DISTINCT_SHARED_P1_A_WRITE_RECEIPT_A_B_READ**, not whole C04 PASS.
+Fixed source04bf6c90/review73578aaf/Root2 qualification1d3b9ccc were used by the sole
+executor `/root/auth_distinct_p1_e2e_20261105`. Actual T18:14:37.543Z,
+D18:24:37.543Z on4Nov (=5Nov07:14–07:24NZDT); completed18:16:04.129Z in86.586s.
+Normal A/B each1OTP/getUser; A physicalPOST exactly1. Operation41e8f597… created
+Item1a0d7aa8…; immutable FULL receipt validation passed, domainReceipt4402369b…,
+receiptSHAac435311…. Independent A/B normal collections validated the exact shared
+P1 fields/date/owner/Person binding and equal revision. Both own local logout and
+refresh rejection PASS; execution qualifier consumed/closed, no resources held.
+Source packet remains frozen; current outcome is in evidence5fee89da, not its old
+NOT_SENT preparation label. ATTEMPT.json retained permanently; no replay/new IDs.
+
+Evidence/cursor: `docs/ops/auth-c04-distinct-p1-e2e-20261105/`.
+No private fixture existed, so private isolation is NOT_PASS. No Native/device,
+Owner UX or Member Revoke acceptance. Old f5e/4028 remain UNKNOWN and untouched.
+INTENTIONAL_STOP after this one approved task; no automatic next Slice.
+
+### Prior qualified membership read baseline
 
 **PASS_NORMAL_A_B_MEMBER_READ_ONLY**, not whole C04 PASS.
 
