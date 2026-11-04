@@ -1,0 +1,9 @@
+{
+  "status": "PASS_NO_SQL_EXECUTION",
+  "preimageSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
+  "candidateDefinitionSHA256": "186eb090bfd0152142208e74d2c0cfd4d96e9c2b2f61d3a073e41c89c884cada",
+  "oldBytesRestoredByRemovingOnlyBranch": true,
+  "newlineAndTruncatedPreimageDenied": true,
+  "pythonAST": "PASS2roots",
+  "fullPrivateDefinitionsCopiedToGit": false
+}

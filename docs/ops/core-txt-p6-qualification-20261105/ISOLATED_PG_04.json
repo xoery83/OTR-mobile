@@ -1,0 +1,12 @@
+{
+  "status": "LOCAL_CAPABILITY_PG_NOT_PASS",
+  "phase": "before-new-branch",
+  "failureClass": "RuntimeError",
+  "checksCompleted": [
+    "EXACT_PATCH_OLD_BRANCH_BYTES_UNCHANGED",
+    "PREIMAGE_DRIFT_FAIL_CLOSED"
+  ],
+  "preimageSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
+  "candidateDefinitionSHA256": "358b2f800030d614f2ee293e632a5a892b76661179d370eaa7fff3775621e384",
+  "noHosted": true
+}

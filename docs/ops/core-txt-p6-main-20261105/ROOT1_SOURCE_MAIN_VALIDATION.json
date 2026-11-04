@@ -1,0 +1,54 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-SOURCE-MAIN-20261105",
+  "executionChild": "/root/cancel_source_integration_20261105",
+  "candidate": "f90492d24ca04d932a7c0a66c2bef1647a99deef",
+  "independentReview": "5e4e9c4664c072a26dbf8802398934138cbae8ea",
+  "independentReviewSHA256": "654bf59230a7f33b4309b2196b595f6c0d0ce40fcd071c5d3d4573d09c89aa41",
+  "preMain": "8eb349790711e321b379b59b64db8cc786f89b91",
+  "status": "SOURCE_MAIN_COMPOSITION_VERIFIED_NOT_INSTALLED",
+  "fourExactLeaves": {
+    "backend/sql/universal_txt_p6_capability_branch.sql": "d7a570fd0869e8f0654a04210b43169b0e7321aebe8ea6a06f759c43f016d829",
+    "scripts/trip/core-txt-p6-capability-patch.py": "b26979ac8c2639a19a9529cfa61ad9e7bd2d38d4eddb3e741d795999c35b7179",
+    "scripts/trip/core-txt-p6-capability-isolated-pg.py": "595bd46d40b001585c8adc6f7f7c46a73c9b64c1969f149e24e7e0dba6b51ff3",
+    "backend/src/universalTxtP6ReviewedScope.test.ts": "ee268e5e859e972766843eccadb243f5c31480a0294a5a16dbeac7f02aafc091"
+  },
+  "checks": {
+    "actualMainUnit": {
+      "suites": 1,
+      "passed": 11,
+      "log": "FOCUSED_UNIT.log"
+    },
+    "scopedTypecheck": "PASS newroot/imports",
+    "scopedEslint": "PASS0errors",
+    "pythonAST": "PASS2roots",
+    "offlinePatch": "PASS exactpreimage186eb090/removebranchrestoresbytes/driftdenied, OFFLINE_CHECK.json",
+    "diffCheck": "PASS",
+    "sourceExactReviewBinding": true,
+    "otherCurrentStatePrefixPreserved": true
+  },
+  "reused": {
+    "finalCapabilityPG": "ISOLATED_PG_06.json59checks; normalACL fixturestub; not rerun unchanged",
+    "intermediate": "ISOLATED_PG_05.json61checks earlier16-key draft and01-04 setup failures retained",
+    "unitSetup": "UNIT_REVIEW_01.json preserved; original independent11tests/guard7metadata checks not broad rerun"
+  },
+  "scope": "Default-closed exact newQA finite P6 capability-source branch and offline patch only. No Backend bootstrap, installer, Schema/RLS/GRANT/Role, policy data or runtime activation. All other old function bytes/families/P2 constraints unchanged. No private preimage/generated completeDDL in Git.",
+  "notProved": [
+    "Complete canonical normalActor/RLS/helperEXEC and SourceReview/Plan/slot/trigger mutation/receipt PG chain",
+    "Protected actual SQL/runtime installation",
+    "NewQA Source/Provider/price/Actor grant/business execution",
+    "Native/Cloud/OwnerUX"
+  ],
+  "remaining": "Root2 exact default-closed installation forward/inverse envelope and real metadata/qualified complete chain under separately precise authorization. Source publication grants no business authority and does not itself prove a second guard must change.",
+  "actions": {
+    "Hosted": 0,
+    "SQLExecution": 0,
+    "Source": 0,
+    "Provider": 0,
+    "business": 0,
+    "OTP": 0,
+    "credentials": 0,
+    "device": 0,
+    "UNKNOWN": 0
+  },
+  "publication": "Fresh remote CAS, normal nonforcepush and independent ls-remote required; exact finalSourceSHA is commit containing this receipt."
+}

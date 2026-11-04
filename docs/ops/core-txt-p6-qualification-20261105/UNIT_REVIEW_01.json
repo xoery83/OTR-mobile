@@ -1,0 +1,6 @@
+{
+  "status": "TEST_SETUP_FAILURE_NOT_PRODUCT_RESULT",
+  "passed": 9,
+  "failed": 2,
+  "cause": "Negative actor/trip cases attempted to mutate the existing frozen account request context; qualifier was not reached for those2. Fix test by replacing input context with a copied context. No production change."
+}

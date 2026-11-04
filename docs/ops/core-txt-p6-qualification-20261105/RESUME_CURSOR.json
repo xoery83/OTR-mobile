@@ -1,0 +1,17 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-LOCAL-CANDIDATE-20261105",
+  "executionChild": "/root/cancel_source_integration_20261105",
+  "worktree": "/Users/xoery/Project/otr-mobile-temporal/core-txt-p6-qualification-20261105",
+  "status": "LOCAL_CANDIDATE_FIXED_PENDING_INDEPENDENT_REVIEW_AND_DIRECT_GUARD_FACTS",
+  "base": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "autoResume": false,
+  "resourcesHeld": [],
+  "remaining": [
+    "Whole canonical normal ACL/Source/Plan/Slot/actual mutation-trigger path needs qualified integration verification; current seven direct function hashes/active bindings and P6 candidate compatibility are statically checked, not an identified required second body change.",
+    "Independent review by a different child; this execution child is author, self-test is not independent acceptance",
+    "Root2 exact default-closed installation envelope against real preimage/OID/Owner/ACL/config; no new policy or activation until a separately approved precise gate",
+    "Import/Root2 exact actual Intake/Review fields, selected finiteBatch Source/Provider qualification, current price/Actor grant/budget and finite execution authorization"
+  ],
+  "nextAction": "Return exact local candidate to parent for a different independent review child and Root2 qualified integration; no extra body changes without real failure.",
+  "finalValidation": "59 capability PG +11 owning Review unit; direct7 function hashes and active P6 path statically checked"
+}

@@ -1,0 +1,133 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-LOCAL-CANDIDATE-20261105",
+  "businessRequest": "IMP-C01-TXT-SHORTEST-20261105-01",
+  "authorExecutionChild": "/root/cancel_source_integration_20261105",
+  "base": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "status": "IMPLEMENTED_LOCAL_CAPABILITY_PG_PASS_NOT_INSTALL_READY",
+  "privateInputBinding": {
+    "qualificationReturnSHA256": "9831853014ab5d28968860a30198768a74ead02e5d806aa210e94226ef074cca",
+    "metadataSHA256": "6fc6f29c2602358a348e81b0877d5fe2a653575f451606822a8e78a0abeab10e",
+    "functionOID": "66408",
+    "function": "public.trip_sustained_import_p1_capabilities(uuid,uuid)",
+    "preimageDefinitionSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
+    "candidateDefinitionSHA256": "186eb090bfd0152142208e74d2c0cfd4d96e9c2b2f61d3a073e41c89c884cada"
+  },
+  "sourceLeaves": {
+    "backend/sql/universal_txt_p6_capability_branch.sql": "d7a570fd0869e8f0654a04210b43169b0e7321aebe8ea6a06f759c43f016d829",
+    "scripts/trip/core-txt-p6-capability-patch.py": "b26979ac8c2639a19a9529cfa61ad9e7bd2d38d4eddb3e741d795999c35b7179",
+    "scripts/trip/core-txt-p6-capability-isolated-pg.py": "595bd46d40b001585c8adc6f7f7c46a73c9b64c1969f149e24e7e0dba6b51ff3",
+    "backend/src/universalTxtP6ReviewedScope.test.ts": "ee268e5e859e972766843eccadb243f5c31480a0294a5a16dbeac7f02aafc091"
+  },
+  "change": "Only a new exact QA1f3/8b5 finite P6 negotiation branch in existing66408 definition. All previous bytes preserved after removing this branch. No data/schema/ACL/runtime update generated.",
+  "contract": {
+    "newQAActor": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "newQATrip": "8b5ceb55-b3c2-462a-9a15-59de91fdabe5",
+    "commands": [
+      "CREATE_ITEM"
+    ],
+    "families": [
+      "P6"
+    ],
+    "admission": [
+      "REVIEWED_SOURCE"
+    ],
+    "scopeFields": [
+      "family",
+      "tripId",
+      "sourceId",
+      "batchId",
+      "taskId",
+      "token",
+      "resultSha256",
+      "candidateId",
+      "targetId",
+      "operationId",
+      "slotId",
+      "title",
+      "localDate",
+      "startsAt",
+      "expiresAt"
+    ],
+    "bounds": "Explicit finite startsAt/expiresAt, current clock and maximum900seconds; policy enabled/not-revoked and existing universal_p1_import_enabled required. Candidate does not create/enable any policy.",
+    "preflight": "Caller publishUniversalP1Candidate asserts capability before projecting and before setUniversalP1WriteContext. A valid capability negotiation must not require an existing Source slot or pretend proposed IDs are accepted facts. Generic capability query may omit requested_family and returns only P6 under this exact scope.",
+    "writeContext": "Any nonempty command/family/admission/target/operation/source_intent must equal CREATE_ITEM/P6/REVIEWED_SOURCE and scope targetId/operationId/slotId. The actual mutation still requires existing Source Review, Plan, slot and family guard; capability alone is never evidence or Admission.",
+    "reviewBoundary": "Missing/malformed policy review scope, title/date/pins or mismatched context are covered here; real Native sourceReview original/trip/NEW/evidence and candidate-body/title/date mismatch rejection remain the existing owning guard and must be proven with Root2 fresh direct guard metadata/targeted downstream test before installation.",
+    "proposals": "Test fixture Source/Run/Task/slot UUIDs are synthetic proposals only; no actual Source/Item created. Future scope IDs must originate from legitimate owning intake/interpretation/review projections.",
+    "unchanged": "Old QA, all preexisting families/P2/continuous-minimums branches and accepted-recovery/receipt semantics unchanged byte-for-byte. No newQA continuous-all-minimums branch, no MANUAL path.",
+    "runBinding": "Reuse the existing finite P6 review-scope fields; Run identity belongs to the independently exact Source/Provider tuple and existing Source proof/Batch+Task binding, not an unused extra capability-policy field. No new Source table SELECT privilege added."
+  },
+  "callerEvidence": {
+    "preflight": "backend/src/universalP1SourcePg.ts:630-671 and708-714",
+    "normalScopeAndContext": "backend/src/universalP1SourcePg.ts:105-135",
+    "mutationContext": "backend/src/tripCoreV2PgStorage.ts:675-684",
+    "existingReviewGuard": "docs/ops/universal-product-20261028/authority/CONTINUOUS_REVIEW_INSTALL_CANDIDATE.sql:263-304,328-347"
+  },
+  "validation": {
+    "isolatedPG": {
+      "checks": 59,
+      "evidence": "ISOLATED_PG_06.json",
+      "result": "PASS capability negotiation only; normal ACL helper is a scoped test stub, not actual Hosted Owner/RLS validation",
+      "metadata": "same function OID/Owner/ACL/config/security after CREATE OR REPLACE in isolated fixture"
+    },
+    "offlinePatch": "Exact preimage required, one anchor; changed preimage denied; removing branch restores every original byte",
+    "pythonAST": "PASS two source roots",
+    "diffCheck": "PASS",
+    "firstFailuresPreserved": [
+      {
+        "file": "ISOLATED_PG_01.json",
+        "stage": "fixture setup",
+        "cause": "Disposable database was owned by supabase_admin; postgres lacked public schema CREATE"
+      },
+      {
+        "file": "ISOLATED_PG_02.json",
+        "stage": "fixture setup",
+        "cause": "Base image has no canonical Core roles until migrations; minimal synthetic roles needed"
+      },
+      {
+        "file": "ISOLATED_PG_03.json",
+        "stage": "fixture setup",
+        "cause": "Captured pg_get_functiondef needs an external delimiter before next psql statement"
+      },
+      {
+        "file": "ISOLATED_PG_04.json",
+        "stage": "original baseline prepare",
+        "cause": "Preserved legacy P2 expression requires an empty airport relation at plan time"
+      }
+    ],
+    "privateFailureLogs": "Private tmp directories01-05 retained; no private preimage/body copied into Git. Only sanitized failure-class/stage/hash files public.",
+    "resources": "Sequential single network-none container,256MB/cpu1/no published ports; all removed on success/failure",
+    "owningReviewQualifier": {
+      "tests": 11,
+      "passed": 11,
+      "scope": "Existing real P6 qualifier with exact newQA context, no Admission/SQL/Provider; invalid Review and scopes reject. This is not whole PG mutation chain."
+    },
+    "owningReviewFirstFailure": "UNIT_REVIEW_01.json preserves9passed/2 frozen-context setup failures; fixed test-only context construction then11PASS.",
+    "preliminaryGreen": "ISOLATED_PG_05.json retains61 checks for the earlier extra-runId scope draft. Final minimal branch removes that unused policy field; final06 has59 checks. Do not report61 as final candidate validation.",
+    "scopedCompiler": "PASS new Review-test root/direct imports",
+    "scopedEslint": "PASS0errors",
+    "finalTotal": "59 isolated capability checks +11 real owning Review qualifier tests; not formal Admission."
+  },
+  "remaining": [
+    "Whole canonical normal ACL/Source/Plan/Slot/actual mutation-trigger path needs qualified integration verification; current seven direct function hashes/active bindings and P6 candidate compatibility are statically checked, not an identified required second body change.",
+    "Independent review by a different child; this execution child is author, self-test is not independent acceptance",
+    "Root2 exact default-closed installation envelope against real preimage/OID/Owner/ACL/config; no new policy or activation until a separately approved precise gate",
+    "Import/Root2 exact actual Intake/Review fields, selected finiteBatch Source/Provider qualification, current price/Actor grant/budget and finite execution authorization"
+  ],
+  "protectedBoundary": "No installer or Gate controller added. Generated private function definition alone is not authorized to execute. Any accepted Source/Core Item/receipt requires positive closure and retained compatible readers; do not reverse/delete accepted facts. Root2 must derive qualified rollback under its normal protections.",
+  "actions": {
+    "mainWrites": 0,
+    "pushes": 0,
+    "Hosted": 0,
+    "Source": 0,
+    "Provider": 0,
+    "business": 0,
+    "OTP": 0,
+    "credentials": 0,
+    "device": 0,
+    "UNKNOWNReplay": 0
+  },
+  "independentReview": "PENDING_PARENT_ASSIGNMENT",
+  "resume": "Parent should consume fixed candidate and direct guard return; no self-deployment or cross-Lane action by this child.",
+  "directGuardHandoff": "990faaa47d6fe5901e38ea7c1b2c6ac8baf42d7bae61216fcb7c3ce364caa736",
+  "directGuardCompatibility": "DIRECT_GUARD_COMPATIBILITY.json"
+}

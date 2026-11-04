@@ -1,0 +1,108 @@
+{
+  "status": "CURRENT_DIRECT_GUARD_STATIC_COMPATIBILITY_CHECK_NOT_FULL_CHAIN_PG",
+  "handoffSHA256": "990faaa47d6fe5901e38ea7c1b2c6ac8baf42d7bae61216fcb7c3ce364caa736",
+  "catalogObservedAt": "2026-11-04T19:30:37.306078+00:00",
+  "oneHopObservedAt": "2026-11-04T19:32:03.412176+00:00",
+  "functions": [
+    {
+      "oid": "65263",
+      "name": "trip_core_guard_write",
+      "definitionSHA256": "90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef"
+    },
+    {
+      "oid": "65649",
+      "name": "trip_core_publication_guard",
+      "definitionSHA256": "a3ca54f50f9b6f9df27addba705283110e09341b568c6a8b01c5f35d823442aa"
+    },
+    {
+      "oid": "65660",
+      "name": "trip_core_guard_historical_source_association",
+      "definitionSHA256": "e95c3fe18de978988a2a8bbd95385399b255b3406b61b3246b5465ead11c5ecb"
+    },
+    {
+      "oid": "65713",
+      "name": "trip_core_finite_read_state_guard",
+      "definitionSHA256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97"
+    },
+    {
+      "oid": "66408",
+      "name": "trip_sustained_import_p1_capabilities",
+      "definitionSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9"
+    },
+    {
+      "oid": "66410",
+      "name": "trip_sustained_import_p1_guard",
+      "definitionSHA256": "1b325a95da38f2976a7ac857abfd13c6cdc1fcccf42f096a7db6677984996a99"
+    },
+    {
+      "oid": "66041",
+      "name": "trip_core_source_review_row_allowed",
+      "definitionSHA256": "659861c0895a41958934cdf95303de467150f904125c980347de4f7e4153bd61"
+    }
+  ],
+  "path": [
+    {
+      "step": "Publish reviewed P6 candidate",
+      "source": "backend/src/universalP1SourcePg.ts:630-735",
+      "fact": "assert capability before setUniversalP1WriteContext; INSERT only trip_source_core_v2_candidates. P6 body schemaId is universal-p6-source/1, no version2 or publicationId."
+    },
+    {
+      "step": "Active candidate write trigger",
+      "oid": "65263",
+      "privateLines": [
+        10,
+        13,
+        14
+      ],
+      "fact": "Existing Source review shortcut is tried first; otherwise REVIEWED_SOURCE with normal Core permission invokes66410."
+    },
+    {
+      "step": "Shortcut66041",
+      "privateLines": [
+        30,
+        33,
+        38,
+        41,
+        44
+      ],
+      "fact": "Candidate special allowance handles version2 P2 or kindBOOKING, otherwise false. P6 candidate has neither shape. Existing scope/material checks must retain their actual normal permission/EXEC qualification."
+    },
+    {
+      "step": "Actual P6 guard66410",
+      "privateLines": [
+        195,
+        204,
+        233,
+        236,
+        266,
+        305,
+        324,
+        332,
+        349,
+        360
+      ],
+      "fact": "Normal scope/capability/admission/target/op/slot checks, source/candidate/Batch/Task binding, active retained Source/Run, evidence hashes/spans and explicit reviewer/NEW/original/trip/title/date validate P6. Only oldQA restrictions in generic evidence are full-English-month normalization and DERIVED PDF; this exact original TXT ISO-date slice uses neither."
+    },
+    {
+      "step": "Publication65649",
+      "fact": "Active on trip_source_core_v2_publications; this P6 direct candidate path does not insert that table. Its P2 constraint is not relaxed/changed or represented as the P6 path."
+    },
+    {
+      "step": "Association65660 and state65713",
+      "fact": "Actual associations table binding and d136 read-state15fb retained. No code/ACL change proposed; later finalization/receipt/readback still needs qualified normal Core execution."
+    }
+  ],
+  "localReviewContractTests": {
+    "file": "backend/src/universalTxtP6ReviewedScope.test.ts",
+    "tests": 11,
+    "result": "PASS newQA real existing owning qualifier: stable P6 ReviewedSource proposal, no admission grant; missing/wrong explicit Review/account/trip rejected before persistence",
+    "firstFailure": "UNIT_REVIEW_01.json: test tried mutating frozen context,9PASS2setup failures; replaced copied context then11PASS. No product code changed."
+  },
+  "necessaryAdditionalBodyDelta": "No demonstrated need to change another existing function for this exact original TXT/ISO-date path. Do not expand the candidate without an actual failure. This is static current-guard compatibility plus actual owning qualifier and standalone-capability isolation, not proof of whole PG Source/Plan/Save trigger chain.",
+  "notRun": [
+    "Whole existing mutation-trigger chain with all canonical normal ACL/RLS and Source/Plan state",
+    "Actual Entry→Interpretation→Review→Admission→Core/Receipt→readback/cold restore",
+    "Actual installed runtime behavior for the candidate"
+  ],
+  "futureStopCondition": "Any mismatch/missing normal permission/helper EXEC or actual guard failure during Root2 qualification blocks installation or positive execution; fix only the precise demonstrated owning delta."
+}

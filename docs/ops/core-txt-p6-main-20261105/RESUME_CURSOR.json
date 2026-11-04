@@ -1,0 +1,11 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-SOURCE-MAIN-20261105",
+  "executionChild": "/root/cancel_source_integration_20261105",
+  "preMain": "8eb349790711e321b379b59b64db8cc786f89b91",
+  "candidate": "f90492d24ca04d932a7c0a66c2bef1647a99deef",
+  "status": "STOP_AFTER_SOURCE_PUBLICATION_RESULT",
+  "autoResume": false,
+  "sourceWriter": "Release immediately after publication/readback or exact blocker",
+  "heldHostedOrDevices": [],
+  "nextAction": "Immediately return actual SourceSHA/4hashes to parent for Root2/Import; then local event/finalcursor only. No main followup or protected execution."
+}

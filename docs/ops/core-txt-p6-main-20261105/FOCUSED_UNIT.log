@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-temporal/core-txt-p6-main-20261105
+
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  08:59:16
+   Duration  354ms (transform 163ms, setup 0ms, import 259ms, tests 28ms, environment 0ms)
+

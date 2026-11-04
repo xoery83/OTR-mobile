@@ -1,0 +1,112 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-LOCAL-CANDIDATE-20261105",
+  "businessRequest": "IMP-C01-TXT-SHORTEST-20261105-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "author": "/root/cancel_source_integration_20261105",
+  "independent": true,
+  "candidateCommit": "f90492d24ca04d932a7c0a66c2bef1647a99deef",
+  "candidateBase": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "status": "PASS_FIXED_CORE_SOURCE_CANDIDATE_NOT_INSTALL_READY",
+  "findings": [],
+  "fixedSourceLeaves": {
+    "backend/sql/universal_txt_p6_capability_branch.sql": "d7a570fd0869e8f0654a04210b43169b0e7321aebe8ea6a06f759c43f016d829",
+    "scripts/trip/core-txt-p6-capability-patch.py": "b26979ac8c2639a19a9529cfa61ad9e7bd2d38d4eddb3e741d795999c35b7179",
+    "scripts/trip/core-txt-p6-capability-isolated-pg.py": "595bd46d40b001585c8adc6f7f7c46a73c9b64c1969f149e24e7e0dba6b51ff3",
+    "backend/src/universalTxtP6ReviewedScope.test.ts": "ee268e5e859e972766843eccadb243f5c31480a0294a5a16dbeac7f02aafc091"
+  },
+  "privateBindings": {
+    "qualificationReturnSHA256": "9831853014ab5d28968860a30198768a74ead02e5d806aa210e94226ef074cca",
+    "metadataSHA256": "6fc6f29c2602358a348e81b0877d5fe2a653575f451606822a8e78a0abeab10e",
+    "functionOID": "66408",
+    "function": "public.trip_sustained_import_p1_capabilities(uuid,uuid)",
+    "preimageDefinitionSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
+    "candidateDefinitionSHA256": "186eb090bfd0152142208e74d2c0cfd4d96e9c2b2f61d3a073e41c89c884cada"
+  },
+  "verified": [
+    {
+      "topic": "Exact offline patch",
+      "result": "Fixed e8c1 preimage and single anchor are required. Independent in-memory generation produced exact186eb090 candidate; removal of only55line branch restored all original bytes. Changed preimage +newline/truncation rejected. No installer, activation or privilege statements emitted."
+    },
+    {
+      "topic": "Normal identity and scope",
+      "result": "New branch is only actor1f3/trip8b5, requested familyP6 or omitted. It independently requires postgres definer/current authenticated Core gateway session, exact actor/trip transaction context, existing trip_sustained_dev_scope_allowed(...,CORE), enabled/not-revoked policy and universal_p1_import_enabled. It does not substitute a positive ACL stub for actual normal Core qualification."
+    },
+    {
+      "topic": "Finite policy and context",
+      "result": "Exactly15 existing finite review fields includingstartsAt/expiresAt, no newrunId. Required UUID pins/token/result hash/title/canonical civil date and finite current window<=900s are checked; missing/invalid/extra mode closes. Existing nonempty command/family/admission/target/op/slot context must match CREATE_ITEM/P6/REVIEWED_SOURCE and exact policy tuple. Blank context is permitted for legitimate capability negotiation before first slot/target/op creation; this is not Admission."
+    },
+    {
+      "topic": "No widening",
+      "result": "No newQA continuous-all-minimums or MANUAL/other-family path. Original bytes preserve oldQA/P2/other family/recovery logic, OID/Owner/ACL/config/security header and metadata; no table/role/grant/policy row change generated. Normal install authority remains separate."
+    },
+    {
+      "topic": "Actual owning mutation chain",
+      "result": "Checked exact Root2 seven function hashes and active candidate/association/read-state/event bindings. Source caller preflights atuniversalP1SourcePg:651 before setting target/op/slot context at708-714 and inserts onlytrip_source_core_v2_candidates. P6 output has no version2/publicationId: no P2 publication-table exemption is claimed. Direct candidate trigger65263 delegates reviewedP6 to66410; existing explicit sourceReview/NEW/original/trip/reviewer/pins/SourceRun/evidence/title/date/target/op/slot checks remain unchanged. Exact Original TXT ISO-date path does not invoke oldQA-only derivedPDF/full-month exceptions."
+    }
+  ],
+  "validation": {
+    "independentOfflineChecks": [
+      "exact four source leaf hashes againstfixedGit",
+      "exact e8c1 preimage and186eb090 generated candidate",
+      "singlebranch removal restores prior bytes",
+      "changedpreimage+newline/truncation rejects",
+      "seven exact direct guard definition hashes and active binding handoff match"
+    ],
+    "independentFocusedUnit": {
+      "command": "vitest run backend/src/universalTxtP6ReviewedScope.test.ts --maxWorkers=1",
+      "suites": 1,
+      "passed": 11,
+      "meaning": "Existing real owning qualifier and exact newQA Review contract; no formal PG Admission or real Actor/RLS"
+    },
+    "authorEvidenceReused": {
+      "finalCapabilityPG": {
+        "file": "ISOLATED_PG_06.json",
+        "count": 59,
+        "result": "network-none scoped fixture capability only",
+        "normalACL": "scoped fixture boolean stub; not actual Hosted ACL proof"
+      },
+      "preliminary": "ISOLATED_PG_05 earlier16-key/61checks preserved, not finalcandidate;01-04fixture failures andUNIT_REVIEW_01 frozencontext setup failures retained",
+      "roleMetadata": "Author isolation keeps samefunctionOID/Owner/ACL/config/security; source private definition header unchanged independently"
+    },
+    "notRerun": "No full59 PG rerun, historical P1-P6/Golden Slice or existing direct guards full-chain suite"
+  },
+  "directGuardFacts": {
+    "handoffSHA256": "990faaa47d6fe5901e38ea7c1b2c6ac8baf42d7bae61216fcb7c3ce364caa736",
+    "functionCount": 7,
+    "definitionHashesVerified": true,
+    "activeTriggerBindingSnapshot": "Captured Root2 evidence, not newly queried Hosted state",
+    "staticCompatibilityOnly": true
+  },
+  "remainingGate": [
+    "Root2 fresh real preimage/OID/Owner/ACL/config/security and exact default-closed forward/inverse/privilege restoration envelope, independent packet checks and precise protected install approval. This reviewed definition alone is not executable installation authorization.",
+    "Before positive release, verify complete canonical normal Actor/RLS/helper EXEC + actual Source Review/Plan/slot/trigger mutation chain and missing/mismatched Native Review/payload negatives; current capability fixture and11real qualifier unit tests do not prove that whole PG chain. No demonstrated adjacent body delta is justified solely from this review.",
+    "Actual lawful new TXT Intake/Source/Task/Run/result/review tuple plus exact finite policy, Source/Provider/model/price/Actor/budget and finite business execution authority remain Import/Root2 qualifications. No automatic runId-policy extension.",
+    "Accepted facts/UNKNOWN/receipts remain original identity; close positives and retain compatible Readers. No blind inverse/delete after accepted or uncertain history."
+  ],
+  "acceptance": {
+    "SOURCE": "Independent fixed-candidate review PASS; not main integration",
+    "INSTALL": "NOT_PERFORMED_NOT_AUTHORIZED",
+    "ADMISSION_E2E": "NOT_PROVED",
+    "NATIVE_OWNER_UX": "NOT_RUN"
+  },
+  "limits": [
+    "Private SQL/preimage full text is not copied into public review evidence.",
+    "Normal Core ACL is only statically retained here; scoped test stub is explicitly not promoted to actual authorization evidence.",
+    "Author direct guard snapshot/active bindings and final59 isolation evidence are reused; no fresh live metadata or database mutation by reviewer."
+  ],
+  "actions": {
+    "authorSourceEdits": 0,
+    "mainWrites": 0,
+    "Hosted": 0,
+    "SQLExecution": 0,
+    "Provider": 0,
+    "Source": 0,
+    "business": 0,
+    "OTP": 0,
+    "credentials": 0,
+    "device": 0,
+    "UNKNOWNReplay": 0,
+    "crossLaneMessages": 0
+  },
+  "completion": "RETURN_TO_PARENT_THEN_CHILD_STOP"
+}

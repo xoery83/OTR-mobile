@@ -1,0 +1,10 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-LOCAL-CANDIDATE-20261105",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "candidate": "f90492d24ca04d932a7c0a66c2bef1647a99deef",
+  "status": "CHILD_COMPLETED_STOPPED",
+  "autoResume": false,
+  "result": "PASS_FIXED_CORE_SOURCE_CANDIDATE_NOT_INSTALL_READY",
+  "resourcesHeld": [],
+  "nextAction": "Parent verifies fixed review and returns exact source candidate to Root2/Import; protected install and positive business scope still require qualification. No child follow-up execution."
+}

@@ -1,0 +1,21 @@
+{
+  "requestId": "IMP-C01-TXT-P6-CORE-LOCAL-CANDIDATE-20261105",
+  "status": "LOCAL_CANDIDATE_ONLY_NOT_INSTALLATION_AUTHORIZATION",
+  "target": {
+    "qualificationReturnSHA256": "9831853014ab5d28968860a30198768a74ead02e5d806aa210e94226ef074cca",
+    "metadataSHA256": "6fc6f29c2602358a348e81b0877d5fe2a653575f451606822a8e78a0abeab10e",
+    "functionOID": "66408",
+    "function": "public.trip_sustained_import_p1_capabilities(uuid,uuid)",
+    "preimageDefinitionSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9",
+    "candidateDefinitionSHA256": "186eb090bfd0152142208e74d2c0cfd4d96e9c2b2f61d3a073e41c89c884cada"
+  },
+  "protectedDifference": "One existing postgres-owned function body branch; no new function/table/column/RLS/GRANT/Role/Secret/Provider change. Existing policy JSON needs exact finite15-key shape; no row is changed in this candidate.",
+  "defaultClosed": "Missing policy/flagfalse/revoked/null scope denies; apply while exact newQA positive scope CLOSED. No activation data or timer supplied.",
+  "freshChecks": [
+    "Actual66408 OID/full definition/owner/ACL/config/security exact fresh preimage",
+    "Recheck actual direct metadata/normal ACL/helper EXEC at installation time and verify the exact complete mutation/receipt/retained-reader chain; no proven second body delta for this TXT case.",
+    "Forward and inverse require standard Root2 CAS/privilege restoration. After accepted history close only; no inverse/deletion of accepted facts."
+  ],
+  "remainingAuthority": "Separate exact protected installation/eligibility approval and later actual finite business scope; no approval inherited from this local candidate.",
+  "directGuardMetadata": "DIRECT_GUARD_COMPATIBILITY.json: all7 current function hashes and active P6 candidate trigger mapping checked"
+}
