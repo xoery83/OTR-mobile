@@ -1,0 +1,50 @@
+{
+  "requestId": "ROOT1-SQLITE76-PNG-REGISTRY-20261104",
+  "status": "NO_BLOCKER_SOURCE_REGISTRY_REVIEW_ONLY",
+  "commit": "90ef45843e9dee8885bf71463c6b206a0be4a59f",
+  "parent": "e3154b9f3938dffd59b468b1d7bb14cebd4b5251",
+  "localMainAtReview": "5648818e8eabc7d1930cbf74ff8f019054e4dbdb",
+  "parentMatchesCurrentMain": {
+    "src/data/db/migrations.ts": true,
+    "src/data/db/database.test.ts": true
+  },
+  "reviewedOnly": [
+    "src/data/db/migrations.ts",
+    "src/data/db/database.test.ts"
+  ],
+  "sha256": {
+    "src/data/db/migrations.ts": "1e02331a901f2f523bafad386e42cf6c0cc83e8c44704babdb40705dbc269e18",
+    "src/data/db/database.test.ts": "09a83157267a128bd271c8f585f57b788b5f9a15461e49ec2c90c325af7606a8"
+  },
+  "findings": [],
+  "verified": [
+    "Registry imports one existing reviewed definition and appends exactly one id76 after unchanged75. No duplicate76 or historical renumbering. Candidate parent matches recorded main e3154b9f.",
+    "Expanded historical75 SQL is byte-identical across export/variable rename; SHA25645a7e26d82aaddd99100bcff64bb2b8591ba1365351931bfdbf0f966b2a18b1f independently recomputed.",
+    "All14 prior-reviewed PNG leaves are byte-exact8fb681cf and match fixed manifest; source logic review reused rather than repeated.",
+    "database tests now assert full1..76 sequence, preserve explicit id74/name identity, correct44..76 and56..76 upgrade ranges, cold-reopen idempotence. No old assertion weakened.",
+    "Existing76 fault fixture genuinely injects after DDL or migration marker inside migration transaction, verifies75/triggers/original rows preserved, then successful76/reopen; restores mutable registry in finally."
+  ],
+  "validationReused": {
+    "consentUiRepositoryMigration": {
+      "suites": 6,
+      "passed": 102
+    },
+    "migrationConnectionBootstrap": {
+      "suites": 4,
+      "passed": 31
+    },
+    "includes": "v75 upgrade, cold reopen, DDL/marker fault atomic rollback and actual registry chain"
+  },
+  "knownUnchangedFailure": {
+    "suite": "defaultBootstrapDependencies.test.ts",
+    "error": "ReferenceError __DEV__ is not defined in Expo module",
+    "prePngStableCoreBranchSameFailure": true,
+    "counts": "main29 failures in suite; baseline single-case failed identically, no PASS claimed"
+  },
+  "limits": [
+    "No full suite rerun or device/Host/SQL/Provider action.",
+    "Shared main must still be rechecked serially immediately before integration; no main mutation by reviewer.",
+    "Default bootstrap Expo __DEV__ failure remains a declared reproduced baseline failure, not PASS.",
+    "No Native build/cold device or real PNG E2E claimed by registry source review."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "candidate": "8fb681cfd9ae0fbd9e359147fd502733c07a5835",
+  "reviewer": "narrow_version_review",
+  "verdict": "NO_BLOCKER",
+  "scope": "Files PNG UI and local consent migration candidate",
+  "findings": [],
+  "verified": [
+    "FILE PNG retains FILE identity; IMAGE JPEG/PNG remain supported",
+    "FILE JPEG/HEIC and IMAGE HEIC remain excluded",
+    "Rendering performs passive read only; screening and Continue require explicit actions",
+    "Account generation, request key and stale-response guards remain intact",
+    "Both replacement triggers retain the complete v75 predicate and require matching input/capture kinds",
+    "SQLite upgrade preserves originals, decisions and queue; DDL/marker failures roll back atomically; cold reopen and repeat migration pass"
+  ],
+  "independent_tests": {
+    "suites": 3,
+    "passed": 63,
+    "originalLog": "/private/tmp/otr-files-png-independent-review.log",
+    "diff_check": "PASS"
+  },
+  "migration_sha256": "a592c09e84c939b2aeade28cbd8e4249dc51338e92d3c3c2c284221668a6d3fa",
+  "remaining": [
+    "Unique Registry Writer must assign and register the migration before normal app use",
+    "Upgrade-failure rollback is verified; post-upgrade schema downgrade is not claimed",
+    "No device, Hosted, Provider or Source POST validation performed"
+  ],
+  "retention": "Exact findings and validation received directly from independent reviewer; parent serialized this receipt, no new verdict or extra test claim."
+}

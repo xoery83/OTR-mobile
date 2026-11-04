@@ -1,0 +1,74 @@
+{
+  "request": "NATIVE-FILES-PNG-CONSENT-SOURCE-20261104-09",
+  "status": "SOURCE_MAIN_VERIFIED_SQLITE76_DEVICE_PENDING",
+  "preMain": "e3154b9f3938dffd59b468b1d7bb14cebd4b5251",
+  "candidate": "8fb681cfd9ae0fbd9e359147fd502733c07a5835",
+  "all14LeavesExact": true,
+  "files": {
+    "src/data/db/migrations/captureFilePngPhotoDecisions.test.ts": "b1dda8123a5de40c749fd52467dc5ccbdf7391560e3c6b8db7b85fc64485661c",
+    "src/data/db/migrations/captureFilePngPhotoDecisions.ts": "a592c09e84c939b2aeade28cbd8e4249dc51338e92d3c3c2c284221668a6d3fa",
+    "src/data/db/migrations/capturePhotoImportDecisions.ts": "98a0030fbf47f3a371a6434885ab1dce1abf99667250a6d90e4a2635edc4257a",
+    "src/data/operations/defaultUniversalPhotoConsent.ts": "5aa4ca5e05296e055c8672d23684063a599d3bb90e0fd18e003aa7f6a4093356",
+    "src/data/operations/universalPhotoConsent.test.ts": "5d2db9e5e69699e83460206626d1df5800a207f1ac70b00bf5021da4da0e7a2d",
+    "src/data/operations/universalPhotoConsent.ts": "8a79f5a0d1157cbaaa11034f28b2b9729ee5319cf29692740bbb2713a0d0fd6f",
+    "src/data/operations/universalPhotoRelevance.ts": "89a85235548d6bbc2f46304f80170111a44413f75839a7f9ed10ea6db8968231",
+    "src/data/repositories/capturePhotoImportDecisionRepository.ts": "04d4ca8898aa5b42e3ba7a79299872b36a5064b7e5e7c56f40a55a8af91f7509",
+    "src/domain/capture/photoImportRelevance.test.ts": "d98b922e119e0a6e690eef06b4f89e0446e94ed78b19e282094365f4df1ba22e",
+    "src/domain/capture/photoImportRelevance.ts": "7a5422348b771fdf9f24c30c4abddb6278aa87c9128aa9edbdbb44fb7b8eccbc",
+    "src/features/capture/CaptureProgress.test.ts": "c311f70cfb8dd4388b819b8fc6d3b811c0134600ab4b8c91ee78a48bf37ec02d",
+    "src/features/capture/CaptureProgress.tsx": "9000866635cd92638142bcc1f83fa3ddfea60c0ea1e09b832e073d07dcd15547",
+    "src/features/capture/useUniversalPhotoRelevance.test.ts": "fd636093a5af5c17ae3a35f79e76d0696b0da4132af45606de153d8a0d1d0475",
+    "src/features/capture/useUniversalPhotoRelevance.ts": "62f531f12377cc581b9c9f05abecf1ee2969115c3372b439e02c0836873ff267"
+  },
+  "root1OnlyChanges": [
+    "src/data/db/migrations.ts register76",
+    "src/data/db/database.test.ts current chain tail76 and preserve74 historical assertions"
+  ],
+  "sqlite": {
+    "from": 75,
+    "to": 76,
+    "name": "capture_file_png_photo_decisions",
+    "migration75SqlSHA256": "45a7e26d82aaddd99100bcff64bb2b8591ba1365351931bfdbf0f966b2a18b1f",
+    "only76Changes": "Two scope triggers; no table/row/queue/capture identity rewrite"
+  },
+  "tests": {
+    "consentUiRepositoryMigration": {
+      "suites": 6,
+      "passed": 102
+    },
+    "migrationConnectionBootstrap": {
+      "suites": 4,
+      "passed": 31
+    },
+    "includes": "v75 upgrade, cold reopen, DDL/marker fault atomic rollback and actual registry chain"
+  },
+  "knownUnchangedFailure": {
+    "suite": "defaultBootstrapDependencies.test.ts",
+    "error": "ReferenceError __DEV__ is not defined in Expo module",
+    "prePngStableCoreBranchSameFailure": true,
+    "counts": "main29 failures in suite; baseline single-case failed identically, no PASS claimed"
+  },
+  "backendSqlProviderDeviceActions": 0,
+  "sourceAccepted": false,
+  "providerCall": false,
+  "qa151": "New JS must carry SQLite76; LaneC only device installer",
+  "rollback": "No automatic schema downgrade/trigger reversal or database reset after FILE consent rows. Preserve originals/decisions and evaluate retained data before source downgrade.",
+  "root1FixedSourceCandidate": "90ef45843e9dee8885bf71463c6b206a0be4a59f",
+  "actualRemotePreMain": "e3154b9f3938dffd59b468b1d7bb14cebd4b5251",
+  "nativeIndependentReview": {
+    "commit": "b6cffe26",
+    "sha256": "7b1b0cd08f818f00a650b814b7a3e74badd4dbb9925fa179db6c0e2840bc3ed0",
+    "reviewed": "14 exact8fb leaves"
+  },
+  "registryIndependentReview": {
+    "candidate": "90ef4584",
+    "sha256": "b56a8a11b18cd0d763fb7d9300c0831d18af46d66b0983207ad32a870ff1e48b",
+    "reviewed": "Root1 two registry/test leaves only; reviewer local main5648818e is not actual remote main"
+  },
+  "scopedCompiler": "PASS16 roots plus imports",
+  "uiGuard": "PASS168checked/473legacy",
+  "lintErrors": 0,
+  "deviceInstaller": "LaneC only",
+  "qa151BuildAndDevice": "NOT_RUN",
+  "sourceTaskProviderAuthority": "Unchanged; expired windows remain closed"
+}
