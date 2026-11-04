@@ -1931,3 +1931,275 @@ it("P3 provenance never infers unsourced from a redacted null or a pending comma
     status: "UNPROVEN",
   });
 });
+
+async function queuedCorrectionFixture() {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    q = p3InstructionCommands();
+  let server = applyCoreCommand(emptyCoreGraph(), q.create, actor, stamp).graph;
+  const initial = await collection(true, server);
+  await f.repo.install(
+    await f.repo.beginRefresh(ctx, 1),
+    initial.manifest,
+    initial.pages,
+  );
+  await f.repo.commitManualBatch(ctx, async () => ({
+    commands: [q.append],
+    result: async () => true,
+  }));
+  const storage: CoreCommandStorage = {
+    withLockedCommand: async (_scope, work) =>
+      work({
+        actor,
+        readReceipt: async () => null,
+        hasLegacyOperation: async () => false,
+        canReadReceipt: async () => true,
+        enabledCommands: async () => ["APPEND_INSTRUCTION", "CORRECT_INSTRUCTION"],
+        readLockedGraph: async () => server,
+        verifyAdmission: async () => {},
+        lifecycleGraphHash: async () => undefined,
+        commit: async (mutation) => {
+          if (mutation) server = mutation.graph;
+          return randomUUID();
+        },
+      }),
+  };
+  const rootReceipt = await executeCoreCommandV2(
+    storage,
+    account,
+    trip,
+    q.append,
+    hash,
+    () => stamp,
+  );
+  if (rootReceipt.projection !== "FULL") throw Error("TEST_EXPECTED_FULL");
+  await f.repo.applyReceipt(ctx, rootReceipt.receipt);
+  const refresh = async (revision: number) => {
+    const bundle = await buildCoreActorCollection(
+      server,
+      actor,
+      { epoch: initial.manifest.epoch, revision, accessRevision: 1, generatedAt: stamp },
+      [
+        {
+          person_id: person,
+          account_id: account,
+          active: true,
+          participating: true,
+          revision: 1,
+        },
+      ],
+      hash,
+    );
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+  };
+  await refresh(3);
+  expect(await f.repo.manualInstructionEligibility(ctx, q.id, q.entry)).toEqual({
+    status: "ELIGIBLE",
+  });
+  const newEntryId = randomUUID();
+  const command = {
+    ...q.append,
+    operationId: randomUUID(),
+    command: "CORRECT_INSTRUCTION",
+    baseVector: [
+      { kind: "INSTRUCTION", id: q.entry, revision: 1 },
+      { kind: "INSTRUCTION", id: newEntryId, revision: null },
+      { kind: "ITEM", id: q.id, revision: 2 },
+    ].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)),
+    payload: {
+      newEntryId,
+      body: "Use side reception bell.",
+      sensitivity: "NORMAL",
+      acl: { visibility: "GROUP", people: [] },
+    },
+  };
+  await f.repo.commitManualBatch(ctx, async () => ({
+    commands: [command],
+    result: async () => true,
+  }));
+  return { ...f, ctx, q, command, server, refresh, storage };
+}
+it("queued CORRECT provenance must qualify its original pre-command accepted head", async () => {
+  const f = await queuedCorrectionFixture();
+  // Actual Native caller uses this old UI hint after pending replay. It sees its
+  // own queued successor, although the original accepted head is still valid.
+  expect(await f.repo.manualInstructionEligibility(f.ctx, f.q.id, f.q.entry)).toEqual({
+    status: "UNPROVEN",
+  });
+  expect(
+    await f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
+  ).toEqual({ status: "ELIGIBLE" });
+});
+
+function correctionDurableState(f: Awaited<ReturnType<typeof queuedCorrectionFixture>>) {
+  return {
+    intents: f.sql
+      .prepare("SELECT * FROM trip_core_pending_intents ORDER BY operation_id")
+      .all(),
+    queue: f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all(),
+    receipts: f.sql
+      .prepare("SELECT * FROM trip_core_trip_core_command_receipts ORDER BY operation_id")
+      .all(),
+  };
+}
+it("queued CORRECT preclaim query is read-only, repeatable and rejects ambiguous PROCESSING", async () => {
+  const f = await queuedCorrectionFixture(),
+    before = correctionDurableState(f);
+  let wakes = 0;
+  const stop = subscribeLedgerQueueWorkAvailable(() => {
+    wakes++;
+  });
+  try {
+    for (let i = 0; i < 2; i++)
+      expect(
+        await f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
+      ).toEqual({ status: "ELIGIBLE" });
+    expect(correctionDurableState(f)).toEqual(before);
+    expect(wakes).toBe(0);
+    for (const command of [
+      { ...f.command, operationId: randomUUID() },
+      { ...f.command, tripId: randomUUID() },
+      {
+        ...f.command,
+        payload: { ...f.command.payload, body: "Different original payload" },
+      },
+    ])
+      expect(
+        await f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, command),
+      ).toEqual({ status: "UNPROVEN" });
+    expect(correctionDurableState(f)).toEqual(before);
+    await f.repo.resume(f.ctx, f.command.operationId);
+    f.sql
+      .prepare("UPDATE sync_operations SET status='PROCESSING' WHERE id=?")
+      .run(f.command.operationId);
+    // PROCESSING/count0 is ambiguous: this readonly port cannot prove whether
+    // the current claim has already submitted a request. Never authorize it.
+    expect(
+      await f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
+    ).toEqual({ status: "UNPROVEN" });
+  } finally {
+    stop();
+  }
+});
+it.each([
+  "intent-inflight",
+  "queue-unknown",
+  "interrupted",
+  "attempted",
+  "original-applied",
+  "prior-claim-washed-to-dependency",
+] as const)("queued CORRECT preserves %s without reauthorizing submit", async (kind) => {
+  const f = await queuedCorrectionFixture();
+  if (kind === "intent-inflight")
+    f.sql
+      .prepare(
+        "UPDATE trip_core_pending_intents SET state='IN_FLIGHT' WHERE operation_id=?",
+      )
+      .run(f.command.operationId);
+  if (kind === "queue-unknown")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='RETRYABLE',failure_category='UNKNOWN',attempt_count=1 WHERE id=?",
+      )
+      .run(f.command.operationId);
+  if (kind === "interrupted")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='PROCESSING',last_error_message='INTERRUPTED' WHERE id=?",
+      )
+      .run(f.command.operationId);
+  if (kind === "attempted")
+    f.sql
+      .prepare("UPDATE sync_operations SET attempt_count=1 WHERE id=?")
+      .run(f.command.operationId);
+  if (kind === "prior-claim-washed-to-dependency")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='PENDING',attempt_count=0,failure_category='DEPENDENCY',last_error_message='Waiting for an earlier operation.',last_attempt_at=? WHERE id=?",
+      )
+      .run(stamp, f.command.operationId);
+  if (kind === "original-applied") {
+    const applied = await executeCoreCommandV2(
+      f.storage,
+      account,
+      trip,
+      f.command,
+      hash,
+      () => stamp,
+    );
+    if (applied.projection !== "FULL") throw Error("TEST_EXPECTED_FULL");
+    await f.repo.applyReceipt(f.ctx, applied.receipt);
+  }
+  const before = correctionDurableState(f);
+  expect(
+    await f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
+  ).toEqual({ status: "UNPROVEN" });
+  expect(correctionDurableState(f)).toEqual(before);
+});
+it.each([
+  "queue-identity",
+  "origin-not-applied",
+  "stale-parent",
+  "source-redaction",
+  "missing-ancestor",
+] as const)(
+  "queued CORRECT rejects %s without changing original identities",
+  async (kind) => {
+    const f = await queuedCorrectionFixture();
+    if (kind === "queue-identity")
+      f.sql
+        .prepare("UPDATE sync_operations SET entity_id=? WHERE id=?")
+        .run(randomUUID(), f.command.operationId);
+    if (kind === "origin-not-applied")
+      f.sql
+        .prepare(
+          "UPDATE trip_core_pending_intents SET state='IN_FLIGHT' WHERE operation_id=?",
+        )
+        .run(f.q.append.operationId);
+    if (kind === "stale-parent") {
+      f.server.itinerary_events[0].semantic_revision = 3;
+      await f.refresh(4);
+    }
+    if (kind === "source-redaction") {
+      const row = f.server.trip_instruction_entries[0];
+      row.source_representation_id = randomUUID();
+      row.field_state = {
+        "trip_instruction_entries.body": {
+          state: "KNOWN",
+          origin: "SOURCE",
+          protected: false,
+          changed_revision: 1,
+          evidence_ref: null,
+        },
+      };
+      await f.refresh(4);
+      // The authorized Reader still redacts this Source reference to null.
+      expect(
+        (await f.repo.acceptedSnapshot(f.ctx))!.graph.trip_instruction_entries[0]
+          .source_representation_id,
+      ).toBeNull();
+    }
+    if (kind === "missing-ancestor") {
+      f.server.trip_instruction_entries[0].supersedes_id = randomUUID();
+      await f.refresh(4);
+    }
+    const before = correctionDurableState(f);
+    expect(
+      await f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
+    ).toEqual({ status: "UNPROVEN" });
+    expect(correctionDurableState(f)).toEqual(before);
+  },
+);
+it("queued CORRECT query keeps Account fences and does not turn another Actor into provenance", async () => {
+  const f = await queuedCorrectionFixture(),
+    before = correctionDurableState(f);
+  f.switchTo(randomUUID());
+  await expect(
+    f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
+  ).rejects.toThrow();
+  expect(correctionDurableState(f)).toEqual(before);
+});

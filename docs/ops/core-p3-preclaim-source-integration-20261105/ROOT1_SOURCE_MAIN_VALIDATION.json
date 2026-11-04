@@ -1,0 +1,30 @@
+{
+  "status": "SOURCE_ONLY_PRECLAIM_READ_PORT_INTEGRATION_PASS",
+  "parentMain": "1062fb43c5c8f2b8743ec4d6efd7e932ad131754",
+  "candidate": "24f1c52667204c06983476bd0470c4748a475df3",
+  "exactLeafSHA256": {
+    "src/data/repositories/tripCoreV2Repository.ts": "dbcca719e652ab0341d6ca05615453bc82bfd03e05cdea38389a3b965067d2bc",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "c0fe309fe7620a7b3f79228a1ab40fb02bbd02d52700c24fbbf5c04333c064e3"
+  },
+  "independentReviewSHA256": "e73f782fc573fe709d4bb49d185e3e8ae9650288f0de8088029c4cb5efd7a004",
+  "actualAssemblyChecks": {
+    "sixRootScopedTypesIncludingCurrentNativeHeaderSaveCaller": "PASS",
+    "twoChangedRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "eightDirectCanonicalAccountQueueDependencies": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reusedIndependentSQLite": "14 PASS /55 skipped /1.82s with actual SQLite, same exact two leaf bytes and direct deps; no second14 or old84/32 rerun",
+  "phase": "PRECLAIM provenance only; neverclaimed PENDING/DEPENDENCY_BLOCKED with last_attempt_at NULL. PROCESSING, prior attempt, UNKNOWN, IN_FLIGHT, own receipt/APPLIED refuse. Query is read-only, not persisted dispatch permit.",
+  "remaining": "Native trusted preclaim/Runner consumption bridge not mounted; Instruction Cloud remains CLOSED. Receipt-first recovery must not be gated by this query.",
+  "unchanged": [
+    "Native six HeaderSave leaves",
+    "Import Source/UI",
+    "Existing UI eligibility hint/save behavior",
+    "Native3Sync",
+    "Schema/Backend/Hosted/Source/Provider/device"
+  ],
+  "actions": [
+    "Source-only Git integration"
+  ],
+  "runtimeAuthorityChanged": false
+}

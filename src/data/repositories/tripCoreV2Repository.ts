@@ -1,4 +1,8 @@
 import {
+  resolveCoreInstructionParentForSubmit,
+  CoreInstructionScopeError,
+} from "../../domain/trip/tripCoreInstructionParent";
+import {
   createLocalCoreCommitRepository,
   type LocalCoreAuthorityDependencies,
   type LocalCoreBaseline,
@@ -616,8 +620,9 @@ export function createTripCoreV2Repository(
   }
   async function manualInstructionOriginWithinTransaction(
     ctx: AccountRequestContext,
-    snapshot: NonNullable<
-      Awaited<ReturnType<typeof readLocalManualSnapshotWithinTransaction>>
+    snapshot: Pick<
+      NonNullable<Awaited<ReturnType<typeof readLocalManualSnapshotWithinTransaction>>>,
+      "graph" | "cert" | "operations"
     >,
     acceptedIds: ReadonlySet<string>,
     entryId: string,
@@ -790,6 +795,111 @@ export function createTripCoreV2Repository(
             ),
             entryId,
           );
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return { status: eligible ? ("ELIGIBLE" as const) : ("UNPROVEN" as const) };
+    });
+  }
+  // Read-only PRECLAIM qualification of the exact original queued command.
+  // Never use the optimistic UI head hint here, or reauthorize an UNKNOWN op.
+  async function manualInstructionCorrectionPreclaimEligibility(
+    ctx: AccountRequestContext,
+    input: unknown,
+  ) {
+    const command = validateCoreCommand(input);
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let eligible = false;
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        if (
+          command.tripId !== ctx.tripId ||
+          command.command !== "CORRECT_INSTRUCTION" ||
+          command.admission.mode !== "MANUAL"
+        )
+          return;
+        const row = await database.getFirstAsync<{
+          canonical_intent_text: string;
+          intent_sha256: string;
+          state: string;
+          reconciled_revision: number | null;
+          queue_id: string;
+          entity_id: string;
+          payload_json: string;
+          idempotency_key: string;
+          queue_status: string;
+          attempt_count: number;
+          failure_category: string | null;
+          last_error_message: string | null;
+          last_attempt_at: string | null;
+          receipt_sha256: string | null;
+        }>(
+          `SELECT i.canonical_intent_text,i.intent_sha256,i.state,i.reconciled_revision,
+           op.id AS queue_id,op.entity_id,op.payload_json,op.idempotency_key,
+           op.status AS queue_status,op.attempt_count,op.failure_category,op.last_error_message,op.last_attempt_at,
+           r.receipt_sha256 FROM trip_core_pending_intents i
+           JOIN sync_operations op ON op.id=i.queue_operation_id
+           AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
+           AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND'
+           LEFT JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id
+           AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id
+           WHERE i.account_id=? AND i.trip_id=? AND i.operation_id=?`,
+          ctx.accountId,
+          ctx.tripId,
+          command.operationId,
+        );
+        const canonical = canonicalCoreJson(command as Json);
+        if (
+          !row ||
+          row.queue_id !== command.operationId ||
+          row.idempotency_key !== command.operationId ||
+          row.entity_id !== command.target.id ||
+          row.canonical_intent_text !== canonical ||
+          row.payload_json !== canonical ||
+          row.intent_sha256 !==
+            (await coreHashValue("otr-trip-core-intent-v2", command, hash)) ||
+          !["BLOCKED", "PENDING"].includes(row.state) ||
+          row.reconciled_revision !== null ||
+          row.receipt_sha256 !== null ||
+          !["PENDING", "DEPENDENCY_BLOCKED"].includes(row.queue_status) ||
+          row.attempt_count !== 0 ||
+          row.last_attempt_at !== null ||
+          (row.failure_category !== null && row.failure_category !== "DEPENDENCY") ||
+          row.last_error_message === "INTERRUPTED"
+        )
+          return;
+        const accepted = await acceptedWithinTransaction(ctx);
+        if (!accepted) return;
+        let parent;
+        try {
+          parent = resolveCoreInstructionParentForSubmit(
+            accepted.graph,
+            accepted.actor,
+            command,
+            clock(),
+          );
+        } catch (error) {
+          if (error instanceof CoreInstructionScopeError) return;
+          throw error;
+        }
+        if (
+          parent.family !== "P3" ||
+          !["ARRIVAL", "DEPARTURE"].includes(parent.section) ||
+          accepted.graph.itinerary_events.find((r) => r.id === parent.parentItemId)
+            ?.owner_account_id !== ctx.accountId
+        )
+          return;
+        eligible = await manualInstructionOriginWithinTransaction(
+          ctx,
+          {
+            graph: accepted.graph,
+            cert: accepted.certificate,
+            operations: [],
+          },
+          new Set(accepted.graph.trip_instruction_entries.map((r) => String(r.id))),
+          command.target.id,
+        );
         await assertContext(ctx);
       });
       await assertContext(ctx);
@@ -1787,6 +1897,7 @@ export function createTripCoreV2Repository(
     enqueue,
     commitManualBatch,
     manualInstructionEligibility,
+    manualInstructionCorrectionPreclaimEligibility,
     pending,
     beginRefresh,
     install,

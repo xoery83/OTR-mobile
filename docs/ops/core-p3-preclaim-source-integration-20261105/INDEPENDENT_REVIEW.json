@@ -1,0 +1,44 @@
+{
+  "verdict": "NO_BLOCKER_PRECLAIM_LOCAL_OWNING_READ_PORT_ONLY",
+  "candidate": "24f1c52667204c06983476bd0470c4748a475df3",
+  "base": "7c103acf9802e3c149cdbadf03aca978fada6568",
+  "author": "/root/p3_instruction_manual_txn_20261105",
+  "reviewer": "/root/p3_renewal_current_delta",
+  "scope": [
+    "tripCoreV2Repository.ts new manualInstructionCorrectionPreclaimEligibility and private proof Pick type narrowing",
+    "new queued CORRECT tests",
+    "CONTRACT/EVIDENCE",
+    "direct acceptedWithinTransaction/scope/account gate",
+    "a795 canonical parent helper and existing immutable MANUAL FULL APPLIED proof",
+    "existing syncEngine claim-before-push and queue last_attempt_at semantics"
+  ],
+  "fixedSHA256": {
+    "repository": "dbcca719e652ab0341d6ca05615453bc82bfd03e05cdea38389a3b965067d2bc",
+    "tests": "c0fe309fe7620a7b3f79228a1ab40fb02bbd02d52700c24fbbf5c04333c064e3",
+    "contract": "69f3a1c92cc21f1a6421e564afae8d004bb3c9d97efca83bf04dfcd50d08d5f6"
+  },
+  "findings": [],
+  "independentValidation": {
+    "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts -t queued CORRECT --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "actualResult": "14 PASS /55 skipped /1.82s / actual node:sqlite",
+    "diffCheck": "PASS",
+    "old84And32": "NOT_RERUN",
+    "authorTypesLint": "Referenced only; not independently rerun"
+  },
+  "reasoning": [
+    "Exact account/trip journal JOIN Queue/target/op/canonical payload/digest required before trusted accepted Actor/certificate and canonical precommand parent/head/CAS check; pending successor is not replayed.",
+    "Only PENDING/BLOCKED journal with PENDING/DEPENDENCY_BLOCKED Queue, zero attempts, null last_attempt_at and no own receipt/reconciled revision can qualify. PROCESSING count0 and interrupted/washed errors remain refused.",
+    "Accepted immutable chain still requires real original MANUAL/null-source provenance and matching FULL APPLIED hashed receipt/created facts; redacted null or SOURCE field state never proves eligibility.",
+    "Account gate plus same SQLite transaction and final assertContext protect stale account generation; no claim/Queue/receipt/intent mutation or wake is introduced. Existing UI hint/save logic unchanged except private parameter type narrowing."
+  ],
+  "remainingTechnicalBlocker": "Existing generic engine claims before worker.push; this preclaim-only query cannot replace a postclaim guard. Native needs legitimate existing trusted preclaim consumption/atomic phase seam; query result is not a durable dispatch permit. Receipt recovery remains first and UNKNOWN is never reauthorized.",
+  "limits": [
+    "No postclaim bridge or Instruction Cloud dispatch qualification",
+    "No Native UI/device/Hosted/Source/Provider action",
+    "No actual historical UNKNOWN operation used",
+    "No new Schema/Authority or main integration approval",
+    "SQLite FULL receipt fixture generated using isolated canonical command engine, not real Cloud APPLIED"
+  ],
+  "productEdits": false,
+  "mainRightsHeld": false
+}
