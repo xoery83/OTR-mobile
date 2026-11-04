@@ -1,0 +1,20 @@
+{
+  "request": "AUTH-C04-ORIGINAL-READ-OPERATOR-20261104-01",
+  "commit": "82dab468a335633edb625e144d9df0a999a1a6e9",
+  "verdict": "SCOPED_NO_BLOCKER",
+  "files": {
+    "scripts/auth/member-claim-original-read.mts": "7a7f154e1258f272dcc4fb1bc9e5cd3d01956247680d746d95cd06b985d9a301",
+    "docs/ops/auth-c04-item-fixture-20261104/original-recovery/OPERATOR_PREPARATION.json": "d42858aa926c193dda77d50d1771b30a25f9dbf8dbb89f3751f7f28c27f299c0"
+  },
+  "checks": [
+    "Business transport hard boundary permits only exact original operation receipt GET and exact trip collection GET; shared original helper has no submit call and validates actor/trip/operation/intent/item binding.",
+    "Existing normal OTP uses allowRegistration=false and actual getUser identity check before action. One challenge/request per run, no 429 retry.",
+    "Persistent mkdir attempt lock precedes receiving credential/Auth IO; uncertain request or cleanup keeps lock. Session cleanup revokes only proven run session and verifies refresh rejection.",
+    "Receiving credential, OTP and session tokens stay process-only; preparation accurately states not executed and MTS lint exclusion."
+  ],
+  "validation": "Read-only fixed source and direct existing helper review. Reused reported route self-check 2 allow/4 deny; did not execute tests/selfcheck/operator/network/OTP/Hosted queries.",
+  "limits": [
+    "Does not authorize execution, installation or renewal of an expired Gate/window. Runtime eligibility remains Auth/Root2 responsibility.",
+    "No fresh runtime/Hosted qualification or end-to-end PASS claimed."
+  ]
+}
