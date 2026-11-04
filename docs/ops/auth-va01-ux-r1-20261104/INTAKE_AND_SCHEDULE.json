@@ -1,7 +1,7 @@
 {
   "request": "VISION-VA01-UX-R1-20261104-001",
-  "status": "QUEUED_AFTER_CURRENT_AUTH_C04_HOSTED_ACCEPTANCE_SLICE",
-  "started": false,
+  "status": "STARTED_F02_LOCAL_WHILE_C04_EXTERNAL_PROTECTED_GATE_PENDING",
+  "started": true,
   "primaryAssignmentUnchanged": "AUTH-C04",
   "sourceDirectory": "/Users/xoery/Documents/Codex/2026-11-03/otr-vision-qa/outputs/batch-02/V-A01-owner-feedback-r1",
   "sourceFilesSHA256": {
@@ -59,7 +59,11 @@
   },
   "ownerObservedBuild": "NOT_INDEPENDENTLY_PROVEN",
   "newBetaPackage": false,
-  "productCodeChanged": false,
+  "productCodeChanged": true,
   "otpRequests": 0,
-  "sessionsCreated": 0
+  "sessionsCreated": 0,
+  "activeSlice": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
+  "actualGoldenSlice": "FAIL_SHARED_UI_NOT_FIXED",
+  "nativeWiring": "ACK_SHARED_WRITER_PENDING_LOCAL_CONSUMER",
+  "retestQualification": "NOT_READY_FOR_VISION"
 }

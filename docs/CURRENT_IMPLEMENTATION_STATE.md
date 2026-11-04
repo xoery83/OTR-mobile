@@ -155,6 +155,27 @@ Latest actual MC GET_NEXT_WORK D returned PrimaryC04, nextnull/candidates[]; no
 new unrelated claim was fabricated. Send milestones with fixed evidence to MC
 01a19a2c-de35-72d2-96b7-e66333286e13. Do not wait ordinary MC ACK to continue.
 
+## V-A01 F02 local continuation / Native handoff
+
+Owner-approved VISION-VA01-UX-R1 has actually started while C04 awaits its external
+protected Gate; C04 remains Primary. One new headless Auth-branch Workspace + real
+MyTripsList reproduction fails (65 stable skipped): initial unknown empty cache
+shows first-Trip empty UI, later the same synthetic Account shows history. Main6ec
+static path remains, but Native's newer skeleton/error-cache preservation must be
+reused; this is not a latest-main or device reproduction.
+
+Auth pure accountTripRestorePresentation candidate has5 focused/independent PASS,
+Auth-worktree typecheck/scopedlint/ui:guard PASS. Qualified cached Trips always show;
+only matching Account/generation actual discovery+cache success can confirm empty.
+No producer/caller/timer is added here; Native sole Writer ACKed shared UI/coordinator
+mount after its Source QA tail. Hand-off: docs/ops/auth-va01-ux-r1-20261104/f02-local-candidate.
+No OTP/Host/device/Owner data. Actual UI repair and Vision retest remain NOT_READY.
+
+Root1 additionally reported actual STARTED_CORE_IMPLEMENTATION for formal Member
+Revoke in stable core-member-revoke-v2-20261104/base6ec33559 with fixed6d91b6e9
+contract. No fixed candidate/Hosted install/Member Revoke PASS yet. Auth will consume
+the versioned Port when delivered, not duplicate its Core implementation.
+
 ## Bounded support and queued Owner feedback
 
 - MCP diagnostic support is delivered and returned to C04. Auth6b985946 reuses

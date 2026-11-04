@@ -1,0 +1,39 @@
+{
+  "request": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
+  "status": "LOCAL_REPRO_AND_PRESENTATION_CANDIDATE_SHARED_NATIVE_WIRING_PENDING",
+  "primaryAssignment": "AUTH-C04_UNCHANGED",
+  "sourceBase": "60608f2de53763140f7e45d7077f7d7faef2ad66",
+  "actualGoldenSlice": "FAIL_NATIVE_UI_NOT_FIXED",
+  "actualRepro": {
+    "scope": "AUTH_BRANCH_WORKSPACE_HARNESS_WITH_REAL_MYTRIPSLIST_SYNTHETIC_NORMAL_ACCOUNT",
+    "failed": 1,
+    "stableSkipped": 65,
+    "test": "F02 actual returning Account list never reports first-trip empty before history restore",
+    "assertion": "First cache read without discovery snapshot renders myTrips.emptyTitle; same synthetic Account later renders historical Trip; no-false-empty assertion fails",
+    "privateHarnessSHA256": "7b2a8a53d715ef64a8b1340f140dafbb6cd8fb4447f2092acf6735f0c11da9a8",
+    "temporaryRepositoryTestRemoved": true
+  },
+  "mainSourceCheck": {
+    "reference": "6ec335598bf77952c99883b11d80b0119725d261",
+    "scope": "STATIC_SOURCE_CHAIN_ONLY_NOT_MAIN_OR_DEVICE_REPRO",
+    "sameFailureChain": "No discovery completion/cachedAt qualification before READY; MyTripsList uses empty arrays",
+    "existingNativeImprovementsToReuse": [
+      "MyTripsListSkeleton",
+      "same-principal cached rows preserved on refresh error"
+    ]
+  },
+  "helperTests": "5_PASS",
+  "independentReview": "SCOPED_NO_BLOCKER_F02_PRESENTATION_HELPER_5_PASS",
+  "uiGuard": "PASS_473_BASELINE_166_REPRESENTATIVE_FILES",
+  "scopedLint": "PASS",
+  "providerOrOtpOrHostedOrDeviceActions": 0,
+  "newRepositoryOrSyncEngine": false,
+  "sharedUiEdited": false,
+  "files": {
+    "src/features/auth/accountTripRestorePresentation.ts": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce",
+    "src/features/auth/accountTripRestorePresentation.test.ts": "76153ff18d94f5e78a73986a21eb367b7cf3d17732f60f4d2631714971ba83e1"
+  },
+  "retestQualification": "NOT_READY_FOR_VISION_OR_OWNER; new shared Native caller/checkpoint and actual fixed main/build/fixture required",
+  "typecheck": "PASS_AUTH_WORKTREE_NOT_A_MAIN_ENVIRONMENT_CLAIM",
+  "independentReviewSourceSHA256": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce"
+}
