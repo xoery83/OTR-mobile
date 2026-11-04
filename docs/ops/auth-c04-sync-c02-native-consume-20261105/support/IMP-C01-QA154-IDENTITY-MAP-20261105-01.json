@@ -1,0 +1,22 @@
+{
+  "requestId": "IMP-C01-QA154-IDENTITY-MAP-20261105-01",
+  "status": "CLOSED_DUPLICATE_SUPPORT_REQUEST_RESOLVED_BY_REQUESTER",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "staticResult": "MATCH_EXISTING_EMAIL_TO_ACCOUNT_ONLY",
+  "email": "otr-qa-fde969f2-2dc5-4a33-83a1-268ac5fd6424@eldouzileu.resend.app",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "existingProof": {
+    "commit": "5fee89da00f4e6d046d3311d19df22349a407749",
+    "path": "docs/ops/auth-c04-distinct-p1-e2e-20261105/RUN.json",
+    "sha256": "0c39e0177511415916e32602dd9000c3dea38ccd8db18517d1969df9e4e4f992",
+    "normalGetUserVerifiedAt": "2026-11-04T18:15:53.763Z"
+  },
+  "currentWarmSessionSubject": "NOT_PROVED_BY_THIS_STATIC_LOOKUP; displayName and masked email are not immutable identity",
+  "requesterClosedReason": "Import reports Root2 existing roster/B-driver MATCH140c4500\u2026 and asks no duplicate reply or further audit",
+  "additionalReplySent": false,
+  "newCredentialSessionDeviceNetworkOrTestActions": 0,
+  "newAuthority": false,
+  "primaryUnchanged": "AUTH-C04",
+  "currentPrimaryWait": "NATIVE_ACTUAL_BINDING",
+  "recordedAt": "2026-11-04T20:28:43.574131+00:00"
+}

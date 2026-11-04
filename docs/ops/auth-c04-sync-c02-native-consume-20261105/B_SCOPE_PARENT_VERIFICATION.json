@@ -1,0 +1,21 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "candidate": "96eed166046a9c3066eb82b7363c9d16e347bf8f",
+  "result": "VERIFIED_SCOPE_CANDIDATE_NOT_AUTHORITY",
+  "checks": {
+    "candidateHash": true,
+    "sealedCandidate": true,
+    "native_artifact": true,
+    "native_binding": true,
+    "native_review": true,
+    "backend/src/accountProfileBootstrap.ts": true,
+    "src/data/api/accountProfileContracts.ts": true,
+    "src/data/auth/accountProfileRepository.ts": true
+  },
+  "scopeDelta": "Explicit own POST /v1/account/profile/bootstrap {} normal ensure; no arbitrary profile patch or other business mutation",
+  "status": "WAITING_CURRENT_NATIVE_TOOL_CONTEXT_AND_EXECUTION_QUALIFICATION",
+  "actualT": null,
+  "actualD": null,
+  "parentLiveActions": 0,
+  "recordedAt": "2026-11-04T20:34:54.884503+00:00"
+}
