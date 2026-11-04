@@ -2,17 +2,21 @@ import { randomUUID, createHash } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
-import { prepareDefaultUniversalCaptureSources } from "./defaultUniversalOriginalSource";
+import {
+  prepareDefaultUniversalLocalSourceProposals,
+  prepareDefaultUniversalCaptureSources,
+} from "./defaultUniversalOriginalSource";
 const f = vi.hoisted(() => ({
   database: { getFirstAsync: vi.fn() },
   bootstrap: vi.fn(),
-  captures: { getForSourceHandoff: vi.fn() },
+  captures: { getForSourceHandoff: vi.fn(), assign: vi.fn() },
   submissions: {},
   source: vi.fn(),
   imports: vi.fn(),
   native: vi.fn(),
   plans: vi.fn(),
   run: vi.fn(),
+  prepare: vi.fn(),
   sourceTransport: vi.fn(),
   catalog: vi.fn(),
   pdf: vi.fn(),
@@ -47,6 +51,7 @@ vi.mock("./universalOriginalBatch", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./universalOriginalBatch")>()),
   recoverUniversalOriginalPlans: f.plans,
   runUniversalOriginalBatch: f.run,
+  prepareUniversalOriginalBatch: f.prepare,
 }));
 vi.mock("../sync/ledgerReportingCoordinator", () => ({
   revalidateJourneyLedger: f.bootstrap,
@@ -573,3 +578,113 @@ it.each([false, true])(
     expect(prepareTask).not.toHaveBeenCalled();
   },
 );
+
+it("explicit local proposals reuse existing local preparation without remote factories or bootstrap", async () => {
+  const account = randomUUID(),
+    getAccountId = async () => account;
+  const context = await captureAccountRequestContext(randomUUID(), getAccountId);
+  const model = {
+    batch: { jobId: randomUUID() },
+    inputs: [],
+  } as unknown as CaptureJobReadModel;
+  const plans = [{ inputId: randomUUID() }],
+    result = { batchId: randomUUID() };
+  f.plans.mockResolvedValue(plans);
+  f.prepare.mockResolvedValue(result);
+  expect(
+    await prepareDefaultUniversalLocalSourceProposals(context, model, {
+      getAccountId,
+      assertCurrent() {},
+    }),
+  ).toBe(result);
+  expect(f.prepare).toHaveBeenCalledWith(
+    context,
+    model.batch.jobId,
+    plans,
+    expect.objectContaining({ captures: f.captures }),
+  );
+  for (const remote of [
+    f.native,
+    f.bootstrap,
+    f.run,
+    f.sourceTransport,
+    f.catalog,
+    f.imports,
+    f.pdfTransport,
+    f.pdf,
+  ])
+    expect(remote).not.toHaveBeenCalled();
+});
+it("local preparation refuses missing local Actor instead of bootstrapping it", async () => {
+  const account = randomUUID(),
+    getAccountId = async () => account;
+  const context = await captureAccountRequestContext(randomUUID(), getAccountId);
+  f.database.getFirstAsync.mockResolvedValue(null);
+  await expect(
+    prepareDefaultUniversalLocalSourceProposals(
+      context,
+      { inputs: [] } as unknown as CaptureJobReadModel,
+      { getAccountId, assertCurrent() {} },
+    ),
+  ).rejects.toThrow("CAPTURE_SOURCE_TRIP_ACCESS");
+  for (const remote of [
+    f.bootstrap,
+    f.plans,
+    f.prepare,
+    f.run,
+    f.native,
+    f.sourceTransport,
+  ])
+    expect(remote).not.toHaveBeenCalled();
+});
+
+it("same account with a stale UI after handoff cannot assign a capture or admit a Source", async () => {
+  const actual = await vi.importActual<typeof import("./universalOriginalBatch")>(
+    "./universalOriginalBatch",
+  );
+  const account = randomUUID(),
+    getAccountId = async () => account;
+  const context = await captureAccountRequestContext(randomUUID(), getAccountId);
+  let live = true;
+  const input = {
+    id: randomUUID(),
+    captureId: randomUUID(),
+    payloadId: randomUUID(),
+    state: "ACCEPTED",
+    kind: "TEXT",
+  };
+  const model = {
+    batch: { accountId: account, jobId: randomUUID(), batchId: randomUUID() },
+    inputs: [input],
+    allInputsAccepted: true,
+  } as unknown as CaptureJobReadModel;
+  Object.assign(f.submissions, { reopen: async () => model });
+  const admit = vi.fn();
+  f.source.mockReturnValue({ admit });
+  f.plans.mockResolvedValue([
+    {
+      inputId: input.id,
+      bindingId: randomUUID(),
+      sourceId: randomUUID(),
+      representationId: randomUUID(),
+      operationId: randomUUID(),
+      operationKey: "synthetic-local",
+    },
+  ]);
+  f.prepare.mockImplementation(actual.prepareUniversalOriginalBatch);
+  f.captures.getForSourceHandoff.mockImplementation(async () => {
+    live = false;
+    return { capture: { accountId: account, tripId: null }, bytes: new Uint8Array() };
+  });
+  await expect(
+    prepareDefaultUniversalLocalSourceProposals(context, model, {
+      getAccountId,
+      assertCurrent() {
+        if (!live) throw Error("QA_VIEW_STALE");
+      },
+    }),
+  ).rejects.toThrow("QA_VIEW_STALE");
+  expect(f.captures.getForSourceHandoff).toHaveBeenCalledOnce();
+  expect(f.captures.assign).not.toHaveBeenCalled();
+  expect(admit).not.toHaveBeenCalled();
+});

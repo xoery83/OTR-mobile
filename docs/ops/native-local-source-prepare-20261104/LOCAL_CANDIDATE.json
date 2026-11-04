@@ -1,0 +1,29 @@
+{
+  "request": "IMP-C01-LOCAL-PREPARE-20261104-04",
+  "base": "6ec335598bf77952c99883b11d80b0119725d261",
+  "status": "LOCAL_COMBINED_PASS / INDEPENDENT_REVIEW_NO_BLOCKER / NOT_INSTALLED",
+  "firstFailure": "Actual iPadQA149 continuous context503 stops before Source preparation; all3inputs remain NOT_PREPARED/current1/tripNULL",
+  "change": "Exact QA explicit Details button only; normal Account context, owning readPins/CAS preflight, UNKNOWN/conflict refusal, allprepared no-op and singleflight. Separate local-only domain wrapper then readonly export. ShowDetails/render never prepare.",
+  "domainDependency": "Exact LaneC32db61bc+0edd6113 imported preserving attribution; final7source/test leaves reviewed together; no longbranch",
+  "checks": {
+    "native": "2s45PASS",
+    "independentConsumer": "2s44PASS before latest same-source ShowDetails test",
+    "lint": "PASS5leaves",
+    "uiGuard": "PASS168",
+    "diff": "PASS",
+    "types": "PASS parent scoped4roots/importdeps and independent same-scope exit0",
+    "combined": "3s61PASS with final UI-stale-fenced domainwrapper"
+  },
+  "hashes": {
+    "src/data/operations/captureMixedQaManifest.ts": "2bab4156f76c8c5fb746ac3ba4d2d5d600b13b1e2ff78a5288f2cdb3f8103c62",
+    "src/data/operations/captureMixedQaManifest.test.ts": "f9496e1a5bca8806ae9716eb746a90c5096b5effd1458a9a9a3e2a38385f5fbe",
+    "src/features/capture/CaptureProgress.tsx": "b3c56d7583a7e85aa188e444812e776fe577566a0bbf0273a5dbb38332e1acfd",
+    "src/features/capture/CaptureProgress.test.ts": "88b78ebe7e24363915516ddafb6ad9e83bb32566efd65db0bcf3507aa0b2ffb2",
+    "src/ui/catalogs.ts": "f5e111782539afeccc7a0f67fb08b0a6d809a782004a71b1003c882f10188881"
+  },
+  "safety": "No device/install/relaunch/claim or Backend/SourcePOST/Provider/Canonical invocation; no deadline/budget/Gate extension; keep503failclosed and all original identities",
+  "limits": "QA READY means local proposal preparation only; actual file/export/SourceAccepted require independent evidence",
+  "rollback": "Remove QA consumer only; retain all localSourcebinding/queue/IDs/UNKNOWN",
+  "independentReview": "NO_BLOCKER_LOCAL_ONLY fixedNative6e481922 + domain0edd6113 exactblobs; wrapper3PASS13deliberateSkip; INDEPENDENT_REVIEW.json",
+  "deadlines": "Source/Provider window expired; no extension or activation by local code/review/sourceintegration. No deviceactions."
+}

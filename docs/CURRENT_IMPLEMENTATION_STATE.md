@@ -1,3 +1,7 @@
+## Exact QA explicit local Source proposals — 4 November 2026
+
+Native/LaneC76eff0c3 fixes stale Job fencing via0edd6113 and adds one exact-QA explicit Details action for existing local Source proposals. It reuses Repo/verifiers, requires existing Actor, refuses UNKNOWN and creates no transport/Provider/Task work; render and ShowDetails stay read-only. Seven fixed source/test/catalog leaves, actual-main3 suites61PASS and UIguardPASS; independent NO_BLOCKER. Paid/Source windows remain closed and expired, no device/Hosted acceptance. Receipt: docs/ops/native-local-source-prepare-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json.
+
 ## Exact mixed QA Source pin export — 4 November 2026
 
 Native `1dc4a4d2` + independent `667cf4c8` combine the reviewed LaneC PNG Files mapping and retained pin reader with fixed-QA-only ShowDetails export. No new ID/Prepare/transport; default reader omits commands. Intake1/current2 is accepted only with proven same-Trip assignment and complete retained CAS/binding. Actual-main4 suites48 PASS, scoped lint/compiler pass with unchanged OAuth browser missing-type exception. Device export/normal preparation/Hosted proof remain NOT_RUN; proposals are not Source receipts. Receipt: `docs/ops/native-source-pin-export-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.

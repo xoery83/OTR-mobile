@@ -94,8 +94,19 @@ export async function exportMixedQaManifest(
   const manifest = projectMixedQaManifest(model);
   if (!manifest) return;
   const sourcePins = await readPins(model);
-  if (
-    !isCurrent() ||
+  if (!isCurrent() || !matchesMixedQaPins(manifest, sourcePins)) return;
+  const { File, Paths } = await import("expo-file-system");
+  if (!isCurrent()) return;
+  const file = new File(Paths.cache, "otr-mixed-qa-manifest.json");
+  file.create({ overwrite: true });
+  file.write(JSON.stringify({ ...manifest, sourcePins }));
+}
+
+function matchesMixedQaPins(
+  manifest: NonNullable<ReturnType<typeof projectMixedQaManifest>>,
+  sourcePins: Awaited<ReturnType<typeof readDefaultMixedQaSourcePins>>,
+) {
+  return !(
     sourcePins.accountId !== manifest.accountId ||
     sourcePins.tripId !== manifest.tripId ||
     sourcePins.batchId !== manifest.batchId ||
@@ -129,13 +140,7 @@ export async function exportMixedQaManifest(
                 input.bindingCas?.captureRevision === 2)),
         ),
     )
-  )
-    return;
-  const { File, Paths } = await import("expo-file-system");
-  if (!isCurrent()) return;
-  const file = new File(Paths.cache, "otr-mixed-qa-manifest.json");
-  file.create({ overwrite: true });
-  file.write(JSON.stringify({ ...manifest, sourcePins }));
+  );
 }
 
 async function readDefaultMixedQaSourcePins(model: CaptureJobReadModel) {
@@ -182,4 +187,64 @@ async function readDefaultMixedQaSourcePins(model: CaptureJobReadModel) {
   });
   await scope.assertAccountRequestContext(context, auth.requireActiveUserId);
   return pins;
+}
+
+export function canPrepareMixedQaSourceProposals(model: CaptureJobReadModel) {
+  return (
+    process.env.EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE ===
+      "com.xoery.otrmobile.ipadqa" && projectMixedQaManifest(model) !== null
+  );
+}
+
+export async function prepareMixedQaSourceProposals(
+  model: CaptureJobReadModel,
+  isCurrent: () => boolean,
+  prepare = async (job: CaptureJobReadModel, current: () => boolean) => {
+    const [auth, scope, api] = await Promise.all([
+      import("../auth/authRepository"),
+      import("../auth/accountRequestContext"),
+      import("./defaultUniversalOriginalSource"),
+    ]);
+    const tripId = job.assignedTripId ?? job.batch.context.tripPrior?.id;
+    if (!tripId) throw Error("QA_SOURCE_PREPARE_SCOPE");
+    const context = await scope.captureAccountRequestContext(
+      tripId,
+      auth.requireActiveUserId,
+    );
+    if (context.accountId !== job.batch.accountId || !current())
+      throw Error("QA_SOURCE_PREPARE_SCOPE");
+    await api.prepareDefaultUniversalLocalSourceProposals(context, job, {
+      getAccountId: auth.requireActiveUserId,
+      assertCurrent: () => {
+        if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+      },
+      pendingPdfProfile: PDF_CAPTURE_ORIGINAL_PROFILE,
+      pendingPngProfile: PNG_CAPTURE_ORIGINAL_PROFILE,
+    });
+  },
+  readPins = readDefaultMixedQaSourcePins,
+) {
+  if (!isCurrent() || !canPrepareMixedQaSourceProposals(model))
+    throw Error("QA_SOURCE_PREPARE_SCOPE");
+  const manifest = projectMixedQaManifest(model)!;
+  const pins = await readPins(model);
+  if (!isCurrent() || !matchesMixedQaPins(manifest, pins))
+    throw Error("QA_SOURCE_PREPARE_SCOPE");
+  if (
+    pins.inputs.some(
+      (input) =>
+        !["SOURCE_OPERATION_NOT_PREPARED", "PREPARED", "ADMITTED"].some(
+          (state) => input.sourceState === state,
+        ),
+    )
+  )
+    throw Error("QA_SOURCE_PREPARE_UNCERTAIN");
+  if (
+    pins.inputs.every(
+      (input) => input.sourceState === "PREPARED" || input.sourceState === "ADMITTED",
+    )
+  )
+    return;
+  await prepare(model, isCurrent);
+  if (!isCurrent()) throw Error("UNIVERSAL_CAPTURE_STALE");
 }

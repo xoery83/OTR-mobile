@@ -1,4 +1,9 @@
 import {
+  canPrepareMixedQaSourceProposals,
+  prepareMixedQaSourceProposals,
+  exportMixedQaManifest,
+} from "@/data/operations/captureMixedQaManifest";
+import {
   UniversalPhotoRelevanceRow,
   type UniversalPhotoRelevanceCopy,
 } from "./UniversalPhotoRelevanceRow";
@@ -56,6 +61,8 @@ export function CaptureProgress({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [qaPrepareState, setQaPrepareState] = useState("IDLE");
+  const qaPreparing = useRef(false);
   const scroll = useRef<ScrollView>(null);
   const position = useRef({ y: 0, height: 0, contentHeight: 0 });
   const page = (direction: number) => {
@@ -181,6 +188,41 @@ export function CaptureProgress({
               }
             }}
           />
+          {detailsOpen &&
+          model &&
+          isCurrent &&
+          canPrepareMixedQaSourceProposals(model) ? (
+            <>
+              <UiButton
+                label={t("capture.qa.prepareLocalProposals")}
+                variant="text"
+                disabled={busy || reading || qaPrepareState === "BUSY"}
+                onPress={async () => {
+                  if (qaPreparing.current || !isCurrent()) return;
+                  qaPreparing.current = true;
+                  setQaPrepareState("BUSY");
+                  try {
+                    await prepareMixedQaSourceProposals(model, isCurrent);
+                    await exportMixedQaManifest(model, isCurrent);
+                    if (isCurrent()) setQaPrepareState("READY");
+                  } catch {
+                    if (isCurrent()) setQaPrepareState("ERROR");
+                  } finally {
+                    qaPreparing.current = false;
+                  }
+                }}
+              />
+              {qaPrepareState === "READY" || qaPrepareState === "ERROR" ? (
+                <UiText style={styles.secondary}>
+                  {t(
+                    qaPrepareState === "READY"
+                      ? "capture.qa.localProposalsReady"
+                      : "capture.qa.localProposalsUnavailable",
+                  )}
+                </UiText>
+              ) : null}
+            </>
+          ) : null}
           {detailsOpen ? (
             <View style={styles.details}>
               <UiText accessibilityRole="header" style={styles.copy}>

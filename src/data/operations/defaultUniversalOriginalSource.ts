@@ -25,57 +25,24 @@ import {
   isEnabledPdf,
   recoverUniversalOriginalPlans,
   runUniversalOriginalBatch,
+  prepareUniversalOriginalBatch,
 } from "./universalOriginalBatch";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
-// Invoked only by explicit Start after an exact missing Backend context; never by recovery.
-// All remote Source mutations remain behind the existing finite owning SQL/HTTP capability.
-export async function prepareDefaultUniversalCaptureSources(
-  context: AccountRequestContext,
+type LocalProposalOptions = {
+  getAccountId(): Promise<string>;
+  assertCurrent(): void;
+  pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
+  pendingPngProfile?: typeof PNG_CAPTURE_ORIGINAL_PROFILE;
+};
+async function createLocalSourceDependencies(
   model: CaptureJobReadModel,
-  options: {
-    baseUrl: string;
-    getAccountId(): Promise<string>;
-    assertCurrent(): void;
-    pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
-    pendingPngProfile?: typeof PNG_CAPTURE_ORIGINAL_PROFILE;
-    // Existing owning upload/verify/seal continuation must be supplied; void is not a receipt.
-    preparePngOriginal?(
-      context: AccountRequestContext,
-      input: {
-        acquisition: unknown;
-        acquisitionReceipt: unknown;
-        binding: CaptureMaterialBinding;
-        bytes: Uint8Array;
-      },
-    ): Promise<void>;
-    prepareTask?(
-      input: import("../api/universalImportContracts").UniversalBatchPrepare,
-    ): Promise<void>;
-  },
+  options: LocalProposalOptions,
 ) {
-  options.assertCurrent();
   const database = await openDatabase();
   const captures = await getDefaultLocalCaptureInboxRepository();
   const submissions = await getDefaultCaptureSubmissionRepository();
-  const fetchImplementation = await createPublicationCatalogNativeFetch().catch(
-    (error) => {
-      if (typeof __DEV__ !== "undefined" && __DEV__)
-        console.info(
-          JSON.stringify({
-            event: "universal_source_native_receiver",
-            state: "UNAVAILABLE",
-          }),
-        );
-      throw error;
-    },
-  );
-  if (typeof __DEV__ !== "undefined" && __DEV__)
-    console.info(
-      JSON.stringify({ event: "universal_source_native_receiver", state: "READY" }),
-    );
-  options.assertCurrent();
   const { sha256, now, newId } = captureStorageDependencies;
   const hasPng = model.inputs.some((input) =>
     isEnabledPng(input, options.pendingPngProfile),
@@ -104,6 +71,104 @@ export async function prepareDefaultUniversalCaptureSources(
         }
       : pdfVerifier,
   });
+  return {
+    database,
+    captures,
+    submissions,
+    sources,
+    hasPng,
+    getAccountId: options.getAccountId,
+    hash: sha256,
+    pendingPdfProfile: options.pendingPdfProfile,
+    pendingPngProfile: options.pendingPngProfile,
+    newId,
+  };
+}
+
+// Explicit QA preparation only: existing local repositories, no transport or Actor bootstrap.
+export async function prepareDefaultUniversalLocalSourceProposals(
+  context: AccountRequestContext,
+  model: CaptureJobReadModel,
+  options: LocalProposalOptions,
+) {
+  options.assertCurrent();
+  const getAccountId = async () => {
+    options.assertCurrent();
+    const id = await options.getAccountId();
+    options.assertCurrent();
+    return id;
+  };
+  const deps = await createLocalSourceDependencies(model, { ...options, getAccountId });
+  const { assertAccountRequestContext } = await import("../auth/accountRequestContext");
+  await assertAccountRequestContext(context, getAccountId);
+  options.assertCurrent();
+  if (
+    !(await deps.database.getFirstAsync(
+      "SELECT 1 FROM ledger_actor_context WHERE user_id=? AND journey_id=?",
+      context.accountId,
+      context.tripId,
+    ))
+  )
+    throw Error("CAPTURE_SOURCE_TRIP_ACCESS");
+  const plans = await recoverUniversalOriginalPlans(context, model.batch.jobId, deps);
+  options.assertCurrent();
+  const result = await prepareUniversalOriginalBatch(
+    context,
+    model.batch.jobId,
+    plans,
+    deps,
+  );
+  options.assertCurrent();
+  return result;
+}
+
+// Invoked only by explicit Start after an exact missing Backend context; never by recovery.
+// All remote Source mutations remain behind the existing finite owning SQL/HTTP capability.
+export async function prepareDefaultUniversalCaptureSources(
+  context: AccountRequestContext,
+  model: CaptureJobReadModel,
+  options: {
+    baseUrl: string;
+    getAccountId(): Promise<string>;
+    assertCurrent(): void;
+    pendingPdfProfile?: typeof PDF_CAPTURE_ORIGINAL_PROFILE;
+    pendingPngProfile?: typeof PNG_CAPTURE_ORIGINAL_PROFILE;
+    // Existing owning upload/verify/seal continuation must be supplied; void is not a receipt.
+    preparePngOriginal?(
+      context: AccountRequestContext,
+      input: {
+        acquisition: unknown;
+        acquisitionReceipt: unknown;
+        binding: CaptureMaterialBinding;
+        bytes: Uint8Array;
+      },
+    ): Promise<void>;
+    prepareTask?(
+      input: import("../api/universalImportContracts").UniversalBatchPrepare,
+    ): Promise<void>;
+  },
+) {
+  options.assertCurrent();
+  const fetchImplementation = await createPublicationCatalogNativeFetch().catch(
+    (error) => {
+      if (typeof __DEV__ !== "undefined" && __DEV__)
+        console.info(
+          JSON.stringify({
+            event: "universal_source_native_receiver",
+            state: "UNAVAILABLE",
+          }),
+        );
+      throw error;
+    },
+  );
+  if (typeof __DEV__ !== "undefined" && __DEV__)
+    console.info(
+      JSON.stringify({ event: "universal_source_native_receiver", state: "READY" }),
+    );
+  options.assertCurrent();
+  const local = await createLocalSourceDependencies(model, options);
+  const { database, captures, submissions, sources, hasPng, hash: sha256, newId } = local;
+  const { now } = captureStorageDependencies;
   const deps = {
     database,
     captures,

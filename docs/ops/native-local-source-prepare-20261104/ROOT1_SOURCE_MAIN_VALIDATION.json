@@ -1,0 +1,53 @@
+{
+  "requestId": "IMP-C01-LOCAL-PREPARE-20261104-04",
+  "candidate": "76eff0c3e35a753546a9fa653d69319d3a802dcf",
+  "baseMain": "6ec335598bf77952c99883b11d80b0119725d261",
+  "status": "LOCAL_ONLY_SOURCE_CHECKS_PASS_BEFORE_REMOTE_PUBLISH",
+  "files": [
+    {
+      "path": "src/data/operations/captureMixedQaManifest.ts",
+      "sha256": "2bab4156f76c8c5fb746ac3ba4d2d5d600b13b1e2ff78a5288f2cdb3f8103c62",
+      "mainWorkingBlobMatchesCandidateBase": true
+    },
+    {
+      "path": "src/data/operations/captureMixedQaManifest.test.ts",
+      "sha256": "f9496e1a5bca8806ae9716eb746a90c5096b5effd1458a9a9a3e2a38385f5fbe",
+      "mainWorkingBlobMatchesCandidateBase": true
+    },
+    {
+      "path": "src/features/capture/CaptureProgress.tsx",
+      "sha256": "b3c56d7583a7e85aa188e444812e776fe577566a0bbf0273a5dbb38332e1acfd",
+      "mainWorkingBlobMatchesCandidateBase": true
+    },
+    {
+      "path": "src/features/capture/CaptureProgress.test.ts",
+      "sha256": "88b78ebe7e24363915516ddafb6ad9e83bb32566efd65db0bcf3507aa0b2ffb2",
+      "mainWorkingBlobMatchesCandidateBase": true
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "f5e111782539afeccc7a0f67fb08b0a6d809a782004a71b1003c882f10188881",
+      "mainWorkingBlobMatchesCandidateBase": true
+    },
+    {
+      "path": "src/data/operations/defaultUniversalOriginalSource.ts",
+      "sha256": "96d0ae72c41e84137c98ee5aabe00aa59122106aabb6f3f773bd03d1e020a8df",
+      "mainWorkingBlobMatchesCandidateBase": true
+    },
+    {
+      "path": "src/data/operations/defaultUniversalOriginalSource.test.ts",
+      "sha256": "99aee8ac194b21e89536f27e2b1542374a0e2bb3528b6d6ea464dfff6efa2289",
+      "mainWorkingBlobMatchesCandidateBase": true
+    }
+  ],
+  "independentReview": "NO_BLOCKER final76eff plus separateRoot1read-only review; stale32dbHOLD fixed by0edd before integration",
+  "actualMainTests": "3 suites61 PASS",
+  "uiGuard": "PASS168representative",
+  "types": "Final Native scoped4roots/importdeps PASS reused on exact source blobs; existing OAuth type dependency remains, no fulltypecheck PASS claimed",
+  "boundaries": "Explicit exact-QA Details local prepare only; render/ShowDetails0prepare; no bootstrap/transport/provider/Core; UNKNOWN/current-CAS/singleflight preserved; no source/paid window renewal",
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "sourcePosts": 0,
+  "modelCalls": 0,
+  "root1Primary": "MemberRevoke development remains in separate stabletree"
+}

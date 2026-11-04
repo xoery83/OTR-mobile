@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { exportMixedQaManifest, projectMixedQaManifest } from "./captureMixedQaManifest";
+import {
+  exportMixedQaManifest,
+  prepareMixedQaSourceProposals,
+  projectMixedQaManifest,
+} from "./captureMixedQaManifest";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 const disk = vi.hoisted(() => ({ construct: vi.fn(), create: vi.fn(), write: vi.fn() }));
 vi.mock("expo-file-system", () => ({
@@ -315,4 +319,92 @@ it("rejects foreign current capture Trip even before assignment at revision1", a
     async () => pins,
   );
   expect(disk.write).not.toHaveBeenCalled();
+});
+
+it("prepares only after an explicit exact QA request, never during export", async () => {
+  const prepare = vi.fn(async () => {});
+  await prepareMixedQaSourceProposals(
+    fixture(),
+    () => true,
+    prepare,
+    async () => pinFixture(),
+  );
+  expect(prepare).toHaveBeenCalledExactlyOnceWith(
+    expect.anything(),
+    expect.any(Function),
+  );
+  const bad = fixture();
+  bad.batch.jobId = "foreign";
+  await expect(
+    prepareMixedQaSourceProposals(
+      bad,
+      () => true,
+      prepare,
+      async () => pinFixture(),
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+  await expect(
+    prepareMixedQaSourceProposals(
+      fixture(),
+      () => false,
+      prepare,
+      async () => pinFixture(),
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+  vi.stubEnv("EXPO_PUBLIC_OTR_FORM_SCAN_FIXTURE_BUNDLE", "ordinary");
+  await expect(
+    prepareMixedQaSourceProposals(
+      fixture(),
+      () => true,
+      prepare,
+      async () => pinFixture(),
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_SCOPE");
+  expect(prepare).toHaveBeenCalledTimes(1);
+});
+it("drops stale preparation completion and preserves the owning failure", async () => {
+  let current = true;
+  await expect(
+    prepareMixedQaSourceProposals(
+      fixture(),
+      () => current,
+      async () => {
+        current = false;
+      },
+      async () => pinFixture(),
+    ),
+  ).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+  await expect(
+    prepareMixedQaSourceProposals(
+      fixture(),
+      () => true,
+      async () => {
+        throw Error("LOCAL_ONLY_FAILURE");
+      },
+      async () => pinFixture(),
+    ),
+  ).rejects.toThrow("LOCAL_ONLY_FAILURE");
+  expect(disk.write).not.toHaveBeenCalled();
+});
+
+it("never prepares retained UNKNOWN or repeats already prepared proposals", async () => {
+  const prepare = vi.fn(async () => {});
+  const pins = pinFixture();
+  Object.assign(pins.inputs[0], { sourceState: "OUTCOME_UNKNOWN" });
+  await expect(
+    prepareMixedQaSourceProposals(
+      fixture(),
+      () => true,
+      prepare,
+      async () => pins,
+    ),
+  ).rejects.toThrow("QA_SOURCE_PREPARE_UNCERTAIN");
+  for (const i of pins.inputs) Object.assign(i, { sourceState: "PREPARED" });
+  await prepareMixedQaSourceProposals(
+    fixture(),
+    () => true,
+    prepare,
+    async () => pins,
+  );
+  expect(prepare).not.toHaveBeenCalled();
 });

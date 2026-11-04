@@ -1,0 +1,45 @@
+{
+  "status": "NO_BLOCKER_COMBINED_LOCAL_PREPARATION_ONLY",
+  "reviewer": "narrow_version_review",
+  "nativeHead": "6e4819228d9875716579f3568eb2a4dfca86d848",
+  "nativeParent": "eb4cbc73",
+  "laneCOwningCommit": "0edd61136ec833ed6e6a9673dbb02efc1c888463",
+  "laneCPredecessor": "32db61bc",
+  "actualWorkingTreeHashes": {
+    "src/data/operations/captureMixedQaManifest.ts": "2bab4156f76c8c5fb746ac3ba4d2d5d600b13b1e2ff78a5288f2cdb3f8103c62",
+    "src/data/operations/captureMixedQaManifest.test.ts": "f9496e1a5bca8806ae9716eb746a90c5096b5effd1458a9a9a3e2a38385f5fbe",
+    "src/features/capture/CaptureProgress.tsx": "b3c56d7583a7e85aa188e444812e776fe577566a0bbf0273a5dbb38332e1acfd",
+    "src/features/capture/CaptureProgress.test.ts": "88b78ebe7e24363915516ddafb6ad9e83bb32566efd65db0bcf3507aa0b2ffb2",
+    "src/ui/catalogs.ts": "f5e111782539afeccc7a0f67fb08b0a6d809a782004a71b1003c882f10188881",
+    "src/data/operations/defaultUniversalOriginalSource.ts": "96d0ae72c41e84137c98ee5aabe00aa59122106aabb6f3f773bd03d1e020a8df",
+    "src/data/operations/defaultUniversalOriginalSource.test.ts": "99aee8ac194b21e89536f27e2b1542374a0e2bb3528b6d6ea464dfff6efa2289"
+  },
+  "resolvedFindings": [
+    "Native adapter now awaits and ignores local result, inferring Promise<void>; no cast or Domain return weakening. Independent scoped tsc exited0.",
+    "Local-wrapper-only getAccountId checks assertCurrent before/after original account read, propagating stale UI fencing through existing owning preparation checks. Actual prepareUniversalOriginalBatch stale handoff test proves same Account UI invalidation causes zero assign/admit. Normal remote path unchanged."
+  ],
+  "checks": [
+    "Exact fixed QA account/trip/batch/job/input/CAS preflight; UNKNOWN/conflicted denied; already prepared no-op.",
+    "Preparation only explicit independent Details UiButton; render and ShowDetails export remain read-only.",
+    "Single-flight handler; stale callback cannot report READY; final export is a local proposal not remote acceptance.",
+    "Local wrapper requires existing local Actor and rejects missing Actor instead of bootstrapping. No remote factories/transport/run/provider called.",
+    "Reuses existing capture/source repositories and binary verifiers, local recover IDs/preparation only; no Parser, Source authority or alternate Queue.",
+    "New strings localized EN/Chinese through canonical UiButton."
+  ],
+  "validation": {
+    "independentWrapper": "3 PASS/13 unrelated skipped; /private/tmp/otr-local-prepare-wrapper-final-independent-review.log",
+    "independentTypes": "npx tsc --noEmit -p tsconfig.qa-local-prepare.json exit0; /private/tmp/otr-local-prepare-final-independent-types.log empty",
+    "parentCombinedLogObserved": "/private/tmp/otr-local-prepare-final-combined.log:3suites61PASS at17:37:16",
+    "earlierConsumerIndependent": "2suites44PASS; /private/tmp/otr-local-prepare-consumer-independent-review.log",
+    "diffCheck": "PASS"
+  },
+  "integration": "LaneC owning two leaves are still working-tree exact blobs; Root must integrate both owners exact leaves together, not Native commit alone.",
+  "limits": [
+    "No actual iPad local preparation or exported file verified by reviewer",
+    "503 Provider/Source gate unchanged;17:30 shared window closed, no release authority inferred",
+    "No Source POST, Provider, Hosted, device or Auth operation",
+    "READY UI means local preparation finished; actual export requires checking resulting pins file",
+    "No Hosted E2E/SourceAccepted claim"
+  ],
+  "reviewerChanges": "This receipt only, no source/commit/device/Host changes"
+}

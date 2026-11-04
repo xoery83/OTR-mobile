@@ -1,3 +1,4 @@
+import * as mixedQa from "@/data/operations/captureMixedQaManifest";
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -61,6 +62,7 @@ vi.mock("@/ui/controls", () => ({
   },
 }));
 beforeEach(() => {
+  vi.restoreAllMocks();
   state.buttons = [];
   state.photoRows = [];
   state.scrollTo.mockClear();
@@ -533,4 +535,107 @@ it("identifies current Activity batches by retained filenames without exposing s
       createElement(CaptureActivityList, { ...props, isCurrent: () => false }),
     ),
   ).not.toContain("Harbour-stay-confirmation.pdf");
+});
+
+it("QA preparation is an explicit single-flight action; render and details never prepare", async () => {
+  state.detailsOpen = true;
+  const f = fixture();
+  const request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  vi.spyOn(mixedQa, "canPrepareMixedQaSourceProposals").mockReturnValue(true);
+  let done!: () => void;
+  const pending = new Promise<void>((r) => {
+    done = r;
+  });
+  const prepare = vi
+    .spyOn(mixedQa, "prepareMixedQaSourceProposals")
+    .mockReturnValue(pending);
+  const exported = vi
+    .spyOn(mixedQa, "exportMixedQaManifest")
+    .mockResolvedValue(undefined);
+  const isCurrent = () => true;
+  renderToStaticMarkup(
+    createElement(CaptureProgress, {
+      model,
+      accountId: model.batch.accountId,
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+      isCurrent,
+    }),
+  );
+  expect(prepare).not.toHaveBeenCalled();
+  const button = state.buttons.find(
+    (b) => b.label === t("capture.qa.prepareLocalProposals"),
+  );
+  expect(button).toBeTruthy();
+  const first = button.onPress();
+  await button.onPress();
+  expect(prepare).toHaveBeenCalledTimes(1);
+  done();
+  await first;
+  expect(exported).toHaveBeenCalledExactlyOnceWith(model, isCurrent);
+});
+it("ordinary input never shows the finite QA preparation action", async () => {
+  state.detailsOpen = true;
+  const f = fixture();
+  const request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  renderToStaticMarkup(
+    createElement(CaptureProgress, {
+      model,
+      accountId: model.batch.accountId,
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+      isCurrent: () => true,
+    }),
+  );
+  expect(
+    state.buttons.some((b) => b.label === t("capture.qa.prepareLocalProposals")),
+  ).toBe(false);
+});
+
+it("Show Details remains read-only even when the finite local-prepare action is available", async () => {
+  const f = fixture();
+  const request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  vi.spyOn(mixedQa, "canPrepareMixedQaSourceProposals").mockReturnValue(true);
+  const prepare = vi
+    .spyOn(mixedQa, "prepareMixedQaSourceProposals")
+    .mockResolvedValue(undefined);
+  const exported = vi
+    .spyOn(mixedQa, "exportMixedQaManifest")
+    .mockResolvedValue(undefined);
+  renderToStaticMarkup(
+    createElement(CaptureProgress, {
+      model,
+      accountId: model.batch.accountId,
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+      isCurrent: () => true,
+    }),
+  );
+  state.buttons.find((b) => b.label === t("capture.progress.showDetails")).onPress();
+  await vi.waitFor(() => expect(exported).toHaveBeenCalledTimes(1));
+  expect(prepare).not.toHaveBeenCalled();
 });
