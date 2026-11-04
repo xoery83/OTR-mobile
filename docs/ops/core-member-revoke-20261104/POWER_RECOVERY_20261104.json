@@ -1,0 +1,38 @@
+{
+  "eventId": "MC-POWER-RECOVERY-20261104-01-Root1",
+  "status": "ROOT1_PERSISTENT_SOURCE_AND_RECEIPTS_VERIFIED",
+  "main": "3c20ad0cca535b455127beaa10fbe8fbfc10ee52",
+  "sourceCandidate": "fc65a094d55ce0ad91a2327c86728f2c7960a9ae",
+  "remoteReadback": "Both exact main and candidate refs confirmed independently after recovery",
+  "trackedChanges": 0,
+  "untrackedCaches": "Preserved unchanged; no cleanup/prune/reset",
+  "receipts": {
+    "member": {
+      "path": "docs/ops/core-member-revoke-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json",
+      "sha256": "0c74a503c9d0a8556191804023465bb8c7a9f988c3408d5c657ad6b23dc70d08",
+      "status": "SOURCE_MAIN_VERIFIED_DEFAULT_CLOSED"
+    },
+    "otp": {
+      "path": "docs/ops/auth-va01-ux-r1-20261104/otp-input-candidate/ROOT1_SOURCE_MAIN_VALIDATION.json",
+      "sha256": "a39716da8933c39aed8ca1148126024d6e43b1c5974e383fa85cf0ad748d1fd8",
+      "status": "SOURCE_MAIN_PASS"
+    },
+    "mcp": {
+      "path": "docs/mcp/c02/controlled-replay-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json",
+      "sha256": "4f61246389dd15855f0c7e6cc5053ceff6372f5c3af05da64d433b9060007c42",
+      "status": "DOC_ONLY_SOURCE_INTEGRATED"
+    },
+    "nativeF02": {
+      "path": "docs/ops/auth-va01-f02-native-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json",
+      "sha256": "438ce3ac220d20ea2ba0015432de6a1068e8e79744fd952db1cbde77ad64230d",
+      "status": "SOURCE_MAIN_VERIFIED_DEVICE_PENDING"
+    }
+  },
+  "nativeIndependentGitObjectRecovered": "4f6b5b3d original hash36cc matches main archive exactly",
+  "tests": "Only previously completed results retained; no new test run claimed by this recovery",
+  "root1SourceWriter": "RELEASED",
+  "root1HostedWrites": 0,
+  "otherWorktreesModified": false,
+  "privateRuntimeMaterials": "Root2-owned temporary preimages may be missing; not restored or sampled by Root1, must freshly qualify before installation",
+  "next": "Member Revoke protected installation to Root2; Auth/Native consumers. Other Core ports wait owning packets. MC GET_NEXT_WORK failed missing historical temp worktree, not a no-work result; MC owns stable-object reconciliation."
+}
