@@ -1,3 +1,4 @@
+import { createCoreMemberAccessPort } from "./tripCoreMemberAccess";
 import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 import type { CoreGateMode } from "./tripSustainedGate";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -22,6 +23,7 @@ export function createCorePgHttpConnection(
   documentStorage?: SupabaseClient["storage"],
   gateMode?: CoreGateMode,
   readUniversalP1?: PublishedUniversalP1Reader,
+  options: { memberAccess?: true } = {},
 ): CoreHttpConnection & { documentOriginalReader?: DocumentOriginalReader } {
   const authority = createCoreSourcePgAuthority(connection, hash, { readUniversalP1 });
   const baseReader = createCorePgReader(connection, hash, undefined, gateMode);
@@ -112,6 +114,9 @@ export function createCorePgHttpConnection(
     gateMode,
   );
   return {
+    ...(options.memberAccess
+      ? { memberAccess: createCoreMemberAccessPort(connection, hash) }
+      : {}),
     commands,
     source: authority.source,
     ...(readUniversalP1
