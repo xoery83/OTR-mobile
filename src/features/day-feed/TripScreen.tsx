@@ -1045,6 +1045,7 @@ function TripContent({
           title: t("tripHome.today.title"),
           content: (
             <TodaysJourneyWidget
+              localOnly={guest}
               key={JSON.stringify([generation, requested])}
               tripId={requested}
               loadReader={guest ? readGuestTodaysJourney : undefined}
@@ -1249,6 +1250,7 @@ function TripContent({
   const localPreview =
     visibleLocalItem && !planEdit && !stayEdit && !rentalEdit && !transportEdit ? (
       <LocalCoreItemPreview
+        localOnly={guest}
         item={visibleLocalItem.item}
         onClose={() => setLocalItem(null)}
         editError={planEditError}
@@ -1747,6 +1749,7 @@ function TripContent({
           <DayFeed
             bottomInset={bottomBarHeight}
             presentation={{
+              localOnly: guest,
               scrollEnabled: dayActive && !move.active,
               p1Move: moveInteraction,
               localContextForDate: (date) =>

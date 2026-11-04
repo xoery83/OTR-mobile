@@ -119,6 +119,7 @@ export function LocalManualDayFeed({
         date: day,
         value: () => (
           <LocalManualDayRows
+            localOnly={presentation?.localOnly}
             read={read}
             date={day}
             onlyRow={row}
@@ -188,6 +189,7 @@ export function LocalManualDayFeed({
 }
 // Row-only contribution for the existing Day scroll; it never renders accepted Items.
 export function LocalManualDayRows({
+  localOnly = false,
   onlyRow,
   context = "UNKNOWN",
   p1Focus,
@@ -198,6 +200,7 @@ export function LocalManualDayRows({
   onOpenItem,
   onInsert,
 }: {
+  localOnly?: boolean;
   read: LocalManualRead;
   onInsert?: DayFeedPresentation["onLocalInsert"];
   context?: BookingContext;
@@ -365,6 +368,7 @@ export function LocalManualDayRows({
         if (item && row.family === "P1")
           return (
             <LocalP1Row
+              localOnly={localOnly}
               context={context}
               onInsert={
                 onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
@@ -391,7 +395,9 @@ export function LocalManualDayRows({
             key={JSON.stringify(row.rowKey)}
             accessibilityRole="button"
             accessibilityLabel={row.title}
-            accessibilityValue={{ text: t("tripCreate.itemPending") }}
+            accessibilityValue={
+              localOnly ? undefined : { text: t("tripCreate.itemPending") }
+            }
             accessibilityState={{ disabled: !onOpenItem }}
             disabled={!onOpenItem}
             style={styles.row}
@@ -399,7 +405,7 @@ export function LocalManualDayRows({
           >
             <Text style={styles.title}>
               {row.title}
-              <PendingSyncDot />
+              {!localOnly ? <PendingSyncDot /> : null}
             </Text>
             {roleLabel ? <Text style={styles.meta}>{roleLabel}</Text> : null}
             {row.family === "P3" &&
@@ -491,6 +497,7 @@ function LocalStayRow({
   return move ? move.wrapRow(rowKey, date, content) : content;
 }
 function LocalP1Row({
+  localOnly = false,
   context,
   onInsert,
   item,
@@ -502,6 +509,7 @@ function LocalP1Row({
   focused,
   onFocus,
 }: {
+  localOnly?: boolean;
   context: BookingContext;
   onInsert?(side: "BEFORE" | "AFTER"): void;
   move?: P1MoveInteraction;
@@ -518,6 +526,7 @@ function LocalP1Row({
   const content = presentation ? (
     <P1Row
       {...presentation}
+      facts={{ ...presentation.facts, pending: !localOnly && presentation.facts.pending }}
       context={context}
       onInsert={onInsert}
       occurrence={occurrence}

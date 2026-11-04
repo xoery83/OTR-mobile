@@ -313,3 +313,40 @@ it("floating accepted Focus exposes quick-add from an explicit appearance date o
     ),
   ).toBe(true);
 });
+
+it.each([false, true])(
+  "keeps pending facts but only Account presentation shows cloud waiting (%s)",
+  (localOnly) => {
+    const date = "2026-11-05";
+    const row = {
+      itemRef: "local-p1",
+      rowKey: { itemId: "local-p1", projectionRole: "START", localDate: date },
+      family: "P1",
+      title: "Guest plan",
+      position: "TNS",
+    };
+    const item = {
+      itemId: "local-p1",
+      itemRevision: 1,
+      family: "P1",
+      status: "planned",
+      hidden: false,
+      title: "Guest plan",
+      localState: "PENDING",
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+      schedule: { start: { localDate: date, localTime: "07:00:00", comparable: false } },
+    };
+    const html = renderToStaticMarkup(
+      createElement(LocalManualDayRows, {
+        localOnly,
+        read: { items: [item], rows: () => [row] } as any,
+        onlyRow: row as any,
+        date,
+        context: "UNKNOWN",
+      }),
+    );
+    expect(html.includes("●")).toBe(!localOnly);
+    expect(item.localState).toBe("PENDING");
+  },
+);

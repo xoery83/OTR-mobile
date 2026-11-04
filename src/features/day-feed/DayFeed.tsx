@@ -82,6 +82,7 @@ function ImmersiveHeaderSlot({
 }
 
 export type DayFeedPresentation = {
+  localOnly?: boolean;
   p1Move?: P1MoveInteraction;
   localContextForDate?: (
     date: string,
@@ -662,6 +663,7 @@ function AcceptedDayFeed({
         date: section.date,
         value: () => (
           <LocalManualDayRows
+            localOnly={presentation?.localOnly}
             read={localManual!}
             context={section.stream.context}
             date={section.date}

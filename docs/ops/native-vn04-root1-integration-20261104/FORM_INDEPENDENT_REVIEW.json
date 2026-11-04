@@ -1,0 +1,39 @@
+{
+  "candidate": "d3abc514d118290628346ebbc0f6a260cb248c1f",
+  "verdict": "NO_BLOCKER",
+  "scope": "V-N04 05–07 plus seven Place catalog keys; incremental source review only",
+  "findings": [],
+  "verified": [
+    "Unset Start seeds current whole hour only in picker state; Cancel does not apply; existing value takes precedence over default",
+    "Unset End seeds Start plus one civil hour; midnight nextCalendarDate only applied on Done when no explicit endDate; existing endTime and explicit endDate remain authoritative",
+    "No new IANA/device zone or instant is authored; wall-clock fields remain floating without a trusted IANA owning port",
+    "Existing current Actor Person receives display-only You for blank name; Person IDs, participation and repository write authority unchanged",
+    "Guest-only localOnly propagates from TripScreen through both local DayFeed paths, P1 row facts, local details and Today widget; default Account pending presentation retained; stored PENDING and Queue unchanged",
+    "Seven Place keys contain matching English/Simplified Chinese placeholders and preserve name/address distinction"
+  ],
+  "independent_validation": {
+    "suites": 4,
+    "passed": 7,
+    "intentionally_skipped": 56,
+    "log": "INDEPENDENT_TEST.log",
+    "diff_check": "PASS",
+    "author_evidence": "EVIDENCE.json reports 6 suites / 139 PASS; not rerun in full"
+  },
+  "source_sha256": {
+    "src/data/repositories/manualPlanRepository.ts": "ca8387607b57434165c27bd9b06ccad594b041ac547800fbc8be9c7ebb60714e",
+    "src/features/day-feed/P1PlanEditor.tsx": "11dc5f8225729b90f138f9d007d7977177dba0cf5ac8399fe6e8bd28eded724a",
+    "src/features/day-feed/PlanParticipantsField.tsx": "9119253c25ac0e7e2f7917252c7c7731c5b76138a22255c806f552cf4c06ff1c",
+    "src/features/day-feed/LocalManualDayFeed.tsx": "dba707d881501754e047b7ef0f2df262694f119ab0562ef8e53b9ae008521076",
+    "src/features/day-feed/LocalCoreItemPreview.tsx": "4bef76a786a7667eb3f03712db703f014f54f0a692df3148cf5b1d9715430425",
+    "src/features/day-feed/TodaysJourneyWidget.tsx": "d23eea0c0d85a25e60b21c69f5e73b4089442068d2a51328ff810899510eca38",
+    "src/features/day-feed/TripScreen.tsx": "66b222c9d7abe24c72baa3604e760f24664749a310256c4d5bc78bfe7de451b5",
+    "src/features/day-feed/DayFeed.tsx": "730a3d67273a5056a2b46b3f0ff81a7c61302b307cb6b1b8fa8565ecd9cdf387",
+    "src/ui/catalogs.ts": "7e5008bcb7ab0914ac3b9137543063f14f6374a5572acb6ddf9cfe382a658570"
+  },
+  "limits": [
+    "No device/Hosted/Cloud operation performed",
+    "Compact modal geometry, keyboard and Safe Area need normal device QA; source-level canonical controls, themed overlay and SafeAreaView reviewed",
+    "No trustworthy IANA port is added; this is not timezone qualification or cloud synchronization validation",
+    "Full typecheck has author-reported pre-existing browser/auth-consent TS7016; not claimed clean by this review"
+  ]
+}

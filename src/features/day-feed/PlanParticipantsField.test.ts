@@ -100,3 +100,21 @@ it("disables application while parent is busy and prevents empty Done", () => {
   find("SheetHeader", true).onRight();
   expect(change).not.toHaveBeenCalled();
 });
+
+it("labels only the existing unnamed current Actor as You without changing Person identity", () => {
+  state.cursor = 0;
+  const tree = nodes(
+    PlanParticipantsField({
+      ...props(),
+      options: [{ personId: "existing-self", displayName: "", isCurrentActor: true }],
+    }),
+  );
+  const row = tree.find((n) => n.props.accessibilityRole === "checkbox")!;
+  expect(row.props.accessibilityLabel).toBe("common.you");
+  tree.find((n) => n.type === "SheetHeader")!.props.onRight();
+  expect(change).toHaveBeenCalledWith({
+    mode: "WHOLE_GROUP",
+    people: [],
+    selfPersonId: null,
+  });
+});

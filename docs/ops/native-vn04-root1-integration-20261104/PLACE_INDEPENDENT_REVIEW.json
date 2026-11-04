@@ -1,0 +1,53 @@
+{
+  "request": "VISION-VN04-OWNER-R1-20261104-001 issues01–04 only",
+  "candidate": "aae6113505fd622869c85c3488f647ea64b68b4c",
+  "evidence_commit": "24d24343",
+  "verdict": "NO_BLOCKER_WITH_REQUIRED_CATALOG_PAIR",
+  "findings": [],
+  "sourceFilesSha256": {
+    "src/features/place-search/PlaceSearchSheet.tsx": "0cd82630d134515ab8522c207ae9761514c9560b15abae9d98bf0bf9f8f76903",
+    "src/features/place-search/PlaceSearchSheet.test.ts": "17255a3e635c0412646b9b679e4a862521b6e9309528f9fd2217d47c944b6ef2",
+    "src/features/place-search/placeSearchSession.ts": "68c285ba154d44cafa61c88e0c874609c5c8f1369a9d0b33999b6cf2d8feb4ee",
+    "src/features/place-search/placeSearchSession.test.ts": "c39a2f73916e07f5989c8713ab94e04d64c86e146b9b89d969c2464072ca55c9",
+    "src/features/place-search/placeSearchTripRegions.ts": "a532a1461b2813853fc909c1481157e1f63cda9371875bbed237debf93700022",
+    "src/features/place-search/placeSearchTripRegions.test.ts": "39c93cb05db055c762ba3d9976b656ca29c80275eca94bc6a3b8d7b34044c795"
+  },
+  "requiredCatalogDependency": {
+    "owner": "apple_place_provider_diagnosis / parent unique catalog Writer",
+    "commit": "d3abc514d118290628346ebbc0f6a260cb248c1f",
+    "path": "src/ui/catalogs.ts",
+    "sha256": "7e5008bcb7ab0914ac3b9137543063f14f6374a5572acb6ddf9cfe382a658570",
+    "scope": "Exact14line bilingual seven-key leaf consumed as validation overlay only; NOT part of Native source commits. Must pair during integration.",
+    "keys": [
+      "placeSearch.chooseRegion",
+      "placeSearch.regionQuery",
+      "placeSearch.originalQuery",
+      "placeSearch.activeRegion",
+      "placeSearch.useQueryAsAddress",
+      "placeSearch.useQueryAsName",
+      "placeSearch.partialMatch"
+    ]
+  },
+  "verified": [
+    "Worldwide partial fallback only follows empty exact Apple completion, performs at most one conservative trailing intent removal, preserves original query, and labels partial results; destinationArea searches never relax",
+    "Trip context uses existing principal-aware local repository, exact account/generation/current binding; no coordinates inferred from text or device location",
+    "Single-destination auto bias requires one unique actual Apple mapItem with qualified area, all normalized label tokens and valid point; multiple or unresolved destinations require explicit region/Worldwide choice",
+    "Existing provider request/session/generation and Session query-sequence checks remain; new region requests retain current/request/abort checks and cleanup closes both provider leases, including pending initialization",
+    "Region Back and Worldwide restore authored place query; More entry hidden; manual result remains MANUAL and follows at most five result rows without modifying query",
+    "Result rows have minHeight44 and full accessibility labels while visual text is one line"
+  ],
+  "independent_validation": {
+    "suites": 3,
+    "passed": 31,
+    "log": "INDEPENDENT_TEST.log",
+    "diff_check": "PASS",
+    "catalog_bytes_equal": "Compared directly with durable d3abc514 product clone; exact hash 7e5008bcb7ab0914ac3b9137543063f14f6374a5572acb6ddf9cfe382a658570",
+    "source_hashes": "All six source/test hashes independently matched fixed evidence",
+    "author_remaining_suite": "Existing Apple provider17 PASS reused from EVIDENCE; not rerun"
+  },
+  "limits": [
+    "Seven-key catalog leaf must be paired during integration; it is only a validation overlay in this clone",
+    "No actual Apple/Provider request, device/Vision/Hosted operation or business mutation by reviewer",
+    "Real keyboard/Safe Area/five-row first-screen fit and global search coverage are not validated; region is search bias, not a hard geographic filter"
+  ]
+}

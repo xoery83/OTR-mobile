@@ -1,5 +1,12 @@
 import { useNetworkState } from "expo-network";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   Modal,
   KeyboardAvoidingView,
@@ -29,6 +36,10 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+import {
+  readTripPlaceSearchRegions,
+  uniqueTripSearchRegion,
+} from "./placeSearchTripRegions";
 import { PlaceSearchSession, type PlaceSearchState } from "./placeSearchSession";
 export type PlaceSearchResult =
   | { kind: "SELECTED"; place: ApplePlaceCandidate; usePlaceName: boolean }
@@ -73,7 +84,28 @@ export function PlaceSearchSheet({
   const region = useRef<{ latitude: number; longitude: number } | undefined>(undefined),
     targetQuery = useRef(initialQuery);
   const [inputError, setInputError] = useState(false);
+  const [authoredQuery, setAuthoredQuery] = useState(initialQuery);
   const regionMode = useRef(false);
+  const regionOwner = useRef(
+    JSON.stringify([
+      binding.accountId,
+      binding.accountGeneration,
+      binding.tripId ?? binding.draftId,
+      binding.editorId,
+    ]),
+  );
+  const regionTouched = useRef(false),
+    regionRequest = useRef(0);
+  const regionProvider = useRef<Awaited<
+    ReturnType<typeof readApplePlaceProvider>
+  > | null>(null);
+  const regionAbort = useRef<AbortController | null>(null);
+  const [tripRegions, setTripRegions] = useState<readonly string[]>([]);
+  const [regionBusy, setRegionBusy] = useState(false);
+  const cancelRegion = useCallback(() => {
+    regionRequest.current++;
+    regionAbort.current?.abort();
+  }, []);
   const providerLease = useMemo(
     () => Object.freeze({ binding, online }),
     [binding, online],
@@ -99,10 +131,82 @@ export function PlaceSearchSheet({
       online,
     );
   };
+  const selectTripRegion = async (label: string) => {
+    if (!current() || !online || !regionProvider.current) return;
+    regionTouched.current = true;
+    regionAbort.current?.abort();
+    const abort = new AbortController(),
+      request = ++regionRequest.current;
+    regionAbort.current = abort;
+    setRegionBusy(true);
+    session.current?.update({ text: "", locale: getFormatLocale() }, 0, online);
+    text.current = label;
+    regionMode.current = true;
+    setQuery(label);
+    setSelection(null);
+    setInputError(false);
+    try {
+      const rows = await regionProvider.current.search(
+        { text: label, locale: getFormatLocale(), intent: "destinationArea" },
+        abort.signal,
+      );
+      if (!current() || request !== regionRequest.current || abort.signal.aborted) return;
+      const match = uniqueTripSearchRegion(label, rows);
+      if (!match?.point) {
+        setInputError(true);
+        return;
+      }
+      region.current = match.point;
+      setRegionName(`${match.title} · ${match.secondary}`);
+      setRegionSearch(false);
+      update(targetQuery.current, false);
+    } catch {
+      if (current() && request === regionRequest.current) setInputError(true);
+    } finally {
+      if (current() && request === regionRequest.current) setRegionBusy(false);
+    }
+  };
+  const worldwide = () => {
+    regionTouched.current = true;
+    regionRequest.current++;
+    regionAbort.current?.abort();
+    setRegionBusy(false);
+    region.current = undefined;
+    setRegionName(null);
+    setRegionSearch(false);
+    update(regionMode.current ? targetQuery.current : text.current, false);
+  };
   useEffect(() => {
     let alive = true;
+    let closeUnready = () => {};
     void (async () => {
+      await Promise.resolve();
+      if (!alive) return;
+      const owner = JSON.stringify([
+        binding.accountId,
+        binding.accountGeneration,
+        binding.tripId ?? binding.draftId,
+        binding.editorId,
+      ]);
+      if (regionOwner.current !== owner) {
+        regionOwner.current = owner;
+        region.current = undefined;
+        regionTouched.current = false;
+        regionMode.current = false;
+        targetQuery.current = initialQuery;
+        setAuthoredQuery(initialQuery);
+        text.current = initialQuery;
+        setQuery(initialQuery);
+        setRegionName(null);
+        setRegionSearch(false);
+        setSelection(null);
+      }
       const provider = await readApplePlaceProvider(binding);
+      closeUnready = () => provider.close();
+      if (!alive || !binding.isCurrent()) {
+        provider.close();
+        return;
+      }
       let moreProvider;
       try {
         moreProvider = await readApplePlaceProvider(binding);
@@ -110,10 +214,62 @@ export function PlaceSearchSheet({
         provider.close();
         throw error;
       }
+      closeUnready = () => {
+        provider.close();
+        moreProvider.close();
+      };
       if (!alive || !binding.isCurrent()) {
         provider.close();
         moreProvider.close();
         return;
+      }
+      regionProvider.current = moreProvider;
+      let labels: readonly string[] = [];
+      try {
+        labels = await readTripPlaceSearchRegions(binding);
+      } catch {
+        /* Unavailable context cannot invent a region. */
+      }
+      if (!alive || !binding.isCurrent()) {
+        provider.close();
+        moreProvider.close();
+        return;
+      }
+      setTripRegions(labels);
+      if (!regionTouched.current && online && labels.length) {
+        let match: ApplePlaceCandidate | null = null;
+        if (labels.length === 1) {
+          setState({ status: "LOADING", rows: [], more: false });
+          try {
+            const abort = new AbortController();
+            regionAbort.current = abort;
+            const rows = await moreProvider.search(
+              { text: labels[0], locale: getFormatLocale(), intent: "destinationArea" },
+              abort.signal,
+            );
+            match = uniqueTripSearchRegion(labels[0], rows);
+          } catch {
+            /* Keep unqualified region explicit; manual entry remains available. */
+          }
+        }
+        if (!alive || !binding.isCurrent()) {
+          provider.close();
+          moreProvider.close();
+          return;
+        }
+        if (!regionTouched.current) {
+          if (match?.point) {
+            region.current = match.point;
+            setRegionName(`${match.title} · ${match.secondary}`);
+          } else {
+            targetQuery.current = text.current;
+            setAuthoredQuery(text.current);
+            regionMode.current = true;
+            setRegionSearch(true);
+            text.current = labels.length === 1 ? labels[0] : "";
+            setQuery(text.current);
+          }
+        }
       }
       const controller = new PlaceSearchSession(provider, moreProvider, (next) => {
         if (alive && binding.isCurrent()) setState(next);
@@ -141,12 +297,17 @@ export function PlaceSearchSheet({
     });
     return () => {
       alive = false;
-      session.current?.close();
+      if (session.current) session.current.close();
+      else closeUnready();
       session.current = null;
+      regionProvider.current = null;
+      cancelRegion();
     };
-  }, [binding, online, providerLease]);
+  }, [binding, cancelRegion, initialQuery, online, providerLease]);
   const back = () => {
     if (regionSearch) {
+      cancelRegion();
+      setRegionBusy(false);
       setRegionSearch(false);
       update(targetQuery.current, false);
       return;
@@ -204,7 +365,7 @@ export function PlaceSearchSheet({
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <SheetHeader
-            title={t(regionSearch ? "placeSearch.region" : "placeSearch.title")}
+            title={t(regionSearch ? "placeSearch.chooseRegion" : "placeSearch.title")}
             leftLabel={t(state.more || regionSearch ? "common.back" : "common.cancel")}
             onLeft={back}
           />
@@ -212,8 +373,12 @@ export function PlaceSearchSheet({
             <UiTextInput
               ref={input}
               autoFocus
-              accessibilityLabel={t("placeSearch.query")}
-              placeholder={t("placeSearch.query")}
+              accessibilityLabel={t(
+                regionSearch ? "placeSearch.regionQuery" : "placeSearch.query",
+              )}
+              placeholder={t(
+                regionSearch ? "placeSearch.regionQuery" : "placeSearch.query",
+              )}
               value={query}
               maxLength={2048}
               onChangeText={update}
@@ -251,7 +416,10 @@ export function PlaceSearchSheet({
                   label={regionName ?? t("placeSearch.region")}
                   selected={!!regionName}
                   onPress={() => {
+                    cancelRegion();
+                    regionTouched.current = true;
                     targetQuery.current = text.current;
+                    setAuthoredQuery(text.current);
                     setRegionSearch(true);
                     update("", true);
                     input.current?.focus();
@@ -261,18 +429,47 @@ export function PlaceSearchSheet({
                   compact
                   label={t("placeSearch.worldwide")}
                   selected={!regionName}
-                  onPress={() => {
-                    region.current = undefined;
-                    setRegionName(null);
-                    update(text.current);
-                  }}
+                  onPress={worldwide}
                 />
               </View>
             ) : null}
             {regionSearch ? (
-              <UiText style={styles.meta}>{t("placeSearch.regionHint")}</UiText>
+              <View style={styles.regionContext}>
+                <UiText style={styles.meta}>
+                  {t("placeSearch.originalQuery", { query: authoredQuery })}
+                </UiText>
+                <UiText style={styles.meta}>{t("placeSearch.regionHint")}</UiText>
+                <View style={styles.actions}>
+                  {tripRegions.map((label) => (
+                    <UiButton
+                      key={label}
+                      variant="secondary"
+                      label={label}
+                      disabled={!providerReady || !online || regionBusy}
+                      onPress={() => {
+                        void selectTripRegion(label);
+                      }}
+                    />
+                  ))}
+                  <UiChoiceChip
+                    compact
+                    label={t("placeSearch.worldwide")}
+                    selected={!regionName}
+                    onPress={worldwide}
+                  />
+                </View>
+              </View>
+            ) : regionName ? (
+              <UiText style={styles.meta}>
+                {t("placeSearch.activeRegion", { region: regionName })}
+              </UiText>
             ) : null}
-            {state.status === "LOADING" ? (
+            {state.partialQuery ? (
+              <UiText style={styles.meta}>
+                {t("placeSearch.partialMatch", { query: state.partialQuery })}
+              </UiText>
+            ) : null}
+            {state.status === "LOADING" || regionBusy ? (
               <UiText accessibilityLiveRegion="polite" style={styles.meta}>
                 {t("placeSearch.loading")}
               </UiText>
@@ -303,21 +500,42 @@ export function PlaceSearchSheet({
                 {t("placeSearch.shorten")}
               </UiText>
             ) : null}
-            {state.rows.map((candidate) => (
-              <Pressable
-                key={`${candidate.sessionId}:${candidate.generation}:${candidate.handle}`}
-                accessibilityRole="button"
-                accessibilityLabel={`${candidate.title}, ${candidate.secondary}`}
-                disabled={state.status === "LOADING"}
-                onPress={() => {
-                  void choose(candidate);
-                }}
-                style={styles.row}
-              >
-                <UiText style={styles.title}>{candidate.title}</UiText>
-                <UiText style={styles.meta}>{candidate.secondary}</UiText>
-              </Pressable>
-            ))}
+            <View style={styles.results}>
+              {state.rows.map((candidate) => (
+                <Pressable
+                  key={`${candidate.sessionId}:${candidate.generation}:${candidate.handle}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${candidate.title}, ${candidate.secondary}`}
+                  disabled={state.status === "LOADING"}
+                  onPress={() => {
+                    void choose(candidate);
+                  }}
+                  style={styles.row}
+                >
+                  <UiText numberOfLines={1} style={styles.title}>
+                    {candidate.title}
+                  </UiText>
+                  <UiText numberOfLines={1} style={styles.meta}>
+                    {candidate.secondary}
+                  </UiText>
+                </Pressable>
+              ))}
+              {!regionSearch ? (
+                <UiButton
+                  label={t(
+                    nameChoice
+                      ? "placeSearch.useQueryAsName"
+                      : "placeSearch.useQueryAsAddress",
+                    { query },
+                  )}
+                  variant="secondary"
+                  disabled={!query.trim() || tooLong}
+                  onPress={() => {
+                    if (current()) onConfirm({ kind: "MANUAL", text: query.trim() });
+                  }}
+                />
+              ) : null}
+            </View>
             {selection ? (
               <View style={styles.selected}>
                 <UiText style={styles.title}>{selection.title}</UiText>
@@ -339,39 +557,8 @@ export function PlaceSearchSheet({
                 />
               </View>
             ) : null}
-            {!state.more ? (
-              <UiButton
-                label={t("placeSearch.more")}
-                variant="text"
-                disabled={
-                  query.trim().length < 2 ||
-                  state.status === "LOADING" ||
-                  !providerReady ||
-                  !online
-                }
-                onPress={() => {
-                  setSelection(null);
-                  void session.current?.searchMore();
-                }}
-              />
-            ) : null}
           </ScrollView>
-          <SafeAreaView edges={["bottom"]} style={styles.footer}>
-            {!regionSearch ? (
-              <UiButton
-                label={t(
-                  nameChoice
-                    ? "placeSearch.useEnteredName"
-                    : "placeSearch.useEnteredAddress",
-                )}
-                variant="secondary"
-                disabled={!query.trim() || tooLong}
-                onPress={() => {
-                  if (current()) onConfirm({ kind: "MANUAL", text: query.trim() });
-                }}
-              />
-            ) : null}
-          </SafeAreaView>
+          <SafeAreaView edges={["bottom"]} />
         </KeyboardAvoidingView>
       </SafeAreaProvider>
     </Modal>
@@ -395,19 +582,20 @@ const createStyles = (colors: UiColors) =>
     },
     content: {
       padding: visual.space.page,
-      gap: visual.space.card,
+      gap: visual.space.heading,
       paddingBottom: visual.space.page * 2,
     },
-    footer: { padding: visual.space.page, backgroundColor: colors.background },
+    results: { gap: 0 },
+    regionContext: { gap: visual.space.heading },
     actions: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
     meta: { ...visual.type.meta, color: colors.textSecondary },
     title: { ...visual.type.row, color: colors.textPrimary },
     row: {
-      paddingVertical: visual.space.heading,
+      paddingVertical: visual.space.heading / 2,
       minHeight: 44,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: colors.separator,
-      gap: visual.space.heading,
+      gap: 0,
     },
     selected: {
       backgroundColor: colors.surface,

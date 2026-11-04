@@ -50,6 +50,7 @@ export type TodaysJourneyCopy = {
   chooseDay?: string;
 };
 export type TodaysJourneyWidgetProps = {
+  localOnly?: boolean;
   loadReader?: typeof readTripTodaysJourney;
   tripId: string;
   zone: string | null;
@@ -81,6 +82,7 @@ const formatTime = (instant: string, zone: string) =>
     timeZone: zone,
   });
 export function TodaysJourneyWidget({
+  localOnly = false,
   tripId,
   zone,
   planningDate,
@@ -245,7 +247,9 @@ export function TodaysJourneyWidget({
             <TodayRow
               item={visible.today.primary}
               pending={
-                localRead(visible) && visible.today.primary.certificateGeneration === 0
+                !localOnly &&
+                localRead(visible) &&
+                visible.today.primary.certificateGeneration === 0
               }
               onOpen={open}
             />
@@ -261,7 +265,9 @@ export function TodaysJourneyWidget({
                 <TodayRow
                   key={item.itemRef}
                   item={item}
-                  pending={localRead(visible) && item.certificateGeneration === 0}
+                  pending={
+                    !localOnly && localRead(visible) && item.certificateGeneration === 0
+                  }
                   onOpen={open}
                 />
               ))}
@@ -278,6 +284,7 @@ export function TodaysJourneyWidget({
                 <TodayRow
                   item={visible.today.tonight}
                   pending={
+                    !localOnly &&
                     localRead(visible) &&
                     visible.today.tonight.certificateGeneration === 0
                   }

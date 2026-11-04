@@ -1,0 +1,31 @@
+{
+  "preMain": "850b253cf4cb7ec917cecf0b2f106233ebccc259",
+  "placeCandidate": "aae6113505fd622869c85c3488f647ea64b68b4c",
+  "formCandidate": "d3abc514d118290628346ebbc0f6a260cb248c1f",
+  "base": "2fa4562aaa4e4398a5553537eb6ccc4d7b7247fc",
+  "exactSourceLeaves": {
+    "src/features/place-search/PlaceSearchSheet.test.ts": "17255a3e635c0412646b9b679e4a862521b6e9309528f9fd2217d47c944b6ef2",
+    "src/features/place-search/PlaceSearchSheet.tsx": "0cd82630d134515ab8522c207ae9761514c9560b15abae9d98bf0bf9f8f76903",
+    "src/features/place-search/placeSearchSession.test.ts": "c39a2f73916e07f5989c8713ab94e04d64c86e146b9b89d969c2464072ca55c9",
+    "src/features/place-search/placeSearchSession.ts": "68c285ba154d44cafa61c88e0c874609c5c8f1369a9d0b33999b6cf2d8feb4ee",
+    "src/features/place-search/placeSearchTripRegions.test.ts": "39c93cb05db055c762ba3d9976b656ca29c80275eca94bc6a3b8d7b34044c795",
+    "src/features/place-search/placeSearchTripRegions.ts": "a532a1461b2813853fc909c1481157e1f63cda9371875bbed237debf93700022",
+    "src/data/repositories/manualPlanRepository.ts": "ca8387607b57434165c27bd9b06ccad594b041ac547800fbc8be9c7ebb60714e",
+    "src/features/day-feed/DayFeed.tsx": "730a3d67273a5056a2b46b3f0ff81a7c61302b307cb6b1b8fa8565ecd9cdf387",
+    "src/features/day-feed/LocalCoreItemPreview.test.ts": "2f9331aa7b3f670b1c97b6e3908cc630788e624aaec31762582061a0456a74b0",
+    "src/features/day-feed/LocalCoreItemPreview.tsx": "4bef76a786a7667eb3f03712db703f014f54f0a692df3148cf5b1d9715430425",
+    "src/features/day-feed/LocalManualDayFeed.tsx": "dba707d881501754e047b7ef0f2df262694f119ab0562ef8e53b9ae008521076",
+    "src/features/day-feed/P1PlanEditor.test.ts": "cd1ce01816e91fd92e13065a53e5f09f0eec6fa4ef615ebdb16f65a5dcbda9c8",
+    "src/features/day-feed/P1PlanEditor.tsx": "11dc5f8225729b90f138f9d007d7977177dba0cf5ac8399fe6e8bd28eded724a",
+    "src/features/day-feed/P1Row.test.ts": "bfb241c3e177ce015fd639a3193968c7ceaf9d1be3f7295ad80271738f11ac7c",
+    "src/features/day-feed/PlanParticipantsField.test.ts": "9d65a141208d4f4a003693d1313d04423b916bc8fb81fe032d11fd4ac32be50d",
+    "src/features/day-feed/PlanParticipantsField.tsx": "9119253c25ac0e7e2f7917252c7c7731c5b76138a22255c806f552cf4c06ff1c",
+    "src/features/day-feed/TodaysJourneyWidget.tsx": "d23eea0c0d85a25e60b21c69f5e73b4089442068d2a51328ff810899510eca38",
+    "src/features/day-feed/TripScreen.tsx": "66b222c9d7abe24c72baa3604e760f24664749a310256c4d5bc78bfe7de451b5",
+    "src/ui/catalogs.ts": "7e5008bcb7ab0914ac3b9137543063f14f6374a5572acb6ddf9cfe382a658570"
+  },
+  "total": 19,
+  "catalogMode": "Only exact14-line seven-key bilingual patch; existing main content retained",
+  "catalogSHA256": "7e5008bcb7ab0914ac3b9137543063f14f6374a5572acb6ddf9cfe382a658570",
+  "sharedSourceWriter": "Root1 only; no donor worktree modification"
+}

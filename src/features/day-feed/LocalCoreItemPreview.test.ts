@@ -271,3 +271,14 @@ it("renders a real P5 origin and preserves unknown arrival", () => {
   expect(markup).toContain("Use platform signs.");
   expect(projected.schedule).not.toHaveProperty("destination.time.localDate");
 });
+
+it("does not describe a saved Guest item as waiting for Cloud while preserving Account pending", () => {
+  const value = item("P1", "Guest note");
+  const render = (localOnly: boolean) =>
+    renderToStaticMarkup(
+      createElement(LocalCoreItemPreview, { item: value, localOnly, onClose() {} }),
+    );
+  expect(render(false)).toContain("●");
+  expect(render(true)).not.toContain("●");
+  expect(value.localState).toBe("PENDING");
+});

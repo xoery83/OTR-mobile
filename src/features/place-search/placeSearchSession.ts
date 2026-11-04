@@ -10,6 +10,7 @@ export type PlaceSearchState = Readonly<{
   rows: readonly ApplePlaceCandidate[];
   more: boolean;
   error?: string;
+  partialQuery?: string;
 }>;
 const empty: PlaceSearchState = { status: "IDLE", rows: [], more: false };
 
@@ -70,6 +71,7 @@ export function relaxedPlaceQuery(query: ApplePlaceQuery) {
     words = normalized.phrase.split(" ");
   const tail = normalized.tokens.at(-1);
   if (
+    query.intent === "destinationArea" ||
     words.length < 2 ||
     !tail ||
     ![
@@ -78,7 +80,8 @@ export function relaxedPlaceQuery(query: ApplePlaceQuery) {
       "nearby",
       "location",
       "address",
-      ...(query.region ? ["tour"] : []),
+      "tour",
+      "tours",
     ].includes(tail)
   )
     return null;
@@ -164,17 +167,20 @@ export class PlaceSearchSession {
       let rows = await this.provider.complete(this.query, controller.signal);
       if (!current()) return;
       const relaxed = relaxedPlaceQuery(this.query);
+      let partialQuery: string | undefined;
       if (!rows.length && relaxed) {
         rows = await this.provider.complete(
           { ...this.query, text: relaxed },
           controller.signal,
         );
         if (!current()) return;
+        if (rows.length) partialQuery = this.query.text;
       }
       this.quick = {
         status: rows.length ? "READY" : "EMPTY",
         rows: rows.slice(0, 5),
         more: false,
+        ...(partialQuery ? { partialQuery } : {}),
       };
       this.publish(this.quick);
     } catch (error) {

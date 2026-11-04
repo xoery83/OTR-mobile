@@ -1,0 +1,47 @@
+{
+  "request": "NATIVE-VN04-OWNER-R1-SOURCE-20261104",
+  "status": "SOURCE_MAIN_VERIFIED_VISION_PENDING",
+  "preMain": "850b253cf4cb7ec917cecf0b2f106233ebccc259",
+  "sourceCandidates": [
+    "aae6113505fd622869c85c3488f647ea64b68b4c",
+    "d3abc514d118290628346ebbc0f6a260cb248c1f"
+  ],
+  "exactLeaves": 19,
+  "catalog": "Seven bilingual keys paired, existing content retained; hash matches author fixed leaf",
+  "actualMainTests": {
+    "changedUiPlace": {
+      "suites": 8,
+      "passed": 111
+    },
+    "manualRepositoryTodayTripScreenCallers": {
+      "suites": 3,
+      "passed": 175
+    }
+  },
+  "scopedCompiler": "PASS19 roots plus imports",
+  "uiGuard": "PASS168/473",
+  "lint": {
+    "errors": 0,
+    "existingPlaceTestImportWarnings": 4
+  },
+  "reviews": [
+    "PLACE_INDEPENDENT_REVIEW.json",
+    "FORM_INDEPENDENT_REVIEW.json"
+  ],
+  "preserved": [
+    "Canonical repository/queue and participation/person identity",
+    "Account pending presentation default",
+    "Source/Provider/Backend/SQLite76",
+    "Native current My Trips root and F02 restoration source"
+  ],
+  "knownLimits": [
+    "No trusted IANA owning port: clock fields remain floating, no device-zone/instant inference",
+    "Real Apple results, keyboard, Safe Area and compact sheet geometry await Vision",
+    "Source tests are not device/Owner UX acceptance",
+    "Guest P3 inventory/Adoption gap excluded; no button enabled"
+  ],
+  "deviceActions": 0,
+  "hostedActions": 0,
+  "providerCalls": 0,
+  "returnTo": "Native/Vision normal installed build and bounded Owner01\u201307 retest"
+}

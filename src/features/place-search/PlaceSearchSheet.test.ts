@@ -22,6 +22,8 @@ const state = vi.hoisted(() => ({
   connected: true,
   memo: null as null | { deps: unknown[]; value: unknown },
   focus: vi.fn(),
+  regions: [] as string[],
+  translations: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -45,6 +47,10 @@ vi.mock("react", async (original) => ({
     ];
   },
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
+}));
+vi.mock("./placeSearchTripRegions", async (original) => ({
+  ...(await original<typeof import("./placeSearchTripRegions")>()),
+  readTripPlaceSearchRegions: async () => state.regions,
 }));
 vi.mock("@/data/places/applePlaceProvider", async (original) => ({
   ...(await original<typeof import("@/data/places/applePlaceProvider")>()),
@@ -95,7 +101,7 @@ vi.mock("@/ui/forms", () => ({
     return createElement("input", { value: p.value, readOnly: true });
   },
 }));
-vi.mock("@/ui/locale", () => ({ t: (key: string) => key, getFormatLocale: () => "en" }));
+vi.mock("@/ui/locale", () => ({ t: (key: string, params?: unknown) => { state.translations(key, params); return key; }, getFormatLocale: () => "en" }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/theme", () => ({
   useUiTheme: () => ({}),
@@ -135,23 +141,23 @@ const provider = () => ({
   cancel: vi.fn(),
   close: vi.fn(),
 });
-function render() {
+function render(overrides: Partial<typeof props> = {}) {
   state.cursor = 0;
   state.refCursor = 0;
   state.nodes = [];
-  return renderToStaticMarkup(createElement(PlaceSearchSheet, props));
+  return renderToStaticMarkup(createElement(PlaceSearchSheet, { ...props, ...overrides }));
 }
 const node = (key: string) =>
   state.nodes.find((p) => p.label === key || p.accessibilityLabel === key)!;
 const flush = async () => {
   for (let i = 0; i < 12; i++) await Promise.resolve();
 };
-async function mount() {
-  render();
+async function mount(overrides: Partial<typeof props> = {}) {
+  render(overrides);
   state.mount = false;
   state.effects.splice(0).forEach((effect) => effect());
   await flush();
-  render();
+  render(overrides);
 }
 beforeEach(() => {
   vi.useFakeTimers();
@@ -162,6 +168,8 @@ beforeEach(() => {
   state.generation = 1;
   state.current = true;
   state.connected = true;
+  state.regions = [];
+  state.translations.mockReset();
   state.memo = null;
   state.factory.mockReset();
   props.onConfirm.mockReset();
@@ -192,7 +200,7 @@ it("native failure retains explicit manual fallback without masquerading as an A
   state.factory.mockRejectedValue(new Error("NATIVE_UNAVAILABLE"));
   await mount();
   expect(render()).toContain("placeSearch.nativeUnavailable");
-  node("placeSearch.useEnteredName").onPress();
+  node("placeSearch.useQueryAsName").onPress();
   expect(props.onConfirm).toHaveBeenCalledWith({ kind: "MANUAL", text: "Sky Tower" });
 });
 it("selecting/resolve does not fill until explicit confirmation, and Name adoption is opt-in", async () => {
@@ -219,7 +227,7 @@ it("selecting/resolve does not fill until explicit confirmation, and Name adopti
 it("a stale binding cannot confirm or preserve an overlay after account generation changes", async () => {
   state.factory.mockRejectedValue(new Error("NATIVE_UNAVAILABLE"));
   await mount();
-  const manual = node("placeSearch.useEnteredName").onPress;
+  const manual = node("placeSearch.useQueryAsName").onPress;
   state.current = false;
   manual();
   expect(props.onConfirm).not.toHaveBeenCalled();
@@ -237,8 +245,8 @@ it("known offline keeps manual confirmation available without an Apple dispatch"
   await vi.advanceTimersByTimeAsync(500);
   expect(quick.complete).not.toHaveBeenCalled();
   expect(more.search).not.toHaveBeenCalled();
-  expect(node("placeSearch.useEnteredName").disabled).toBe(false);
-  node("placeSearch.useEnteredName").onPress();
+  expect(node("placeSearch.useQueryAsName").disabled).toBe(false);
+  node("placeSearch.useQueryAsName").onPress();
   expect(props.onConfirm).toHaveBeenCalledWith({ kind: "MANUAL", text: "Sky Tower" });
 });
 
@@ -260,7 +268,7 @@ it("region picker searches geographic areas, returns to authored query and World
   node("placeSearch.region").onPress();
   render();
   expect(render()).toContain("placeSearch.regionHint");
-  node("placeSearch.query").onChangeText("Auckland");
+  node("placeSearch.regionQuery").onChangeText("Auckland");
   await vi.advanceTimersByTimeAsync(450);
   render();
   expect(quick.complete).toHaveBeenLastCalledWith(
@@ -287,6 +295,120 @@ it("region picker searches geographic areas, returns to authored query and World
     { text: "Sky Tower", locale: "en" },
     expect.anything(),
   );
-  expect(node("placeSearch.useEnteredName").variant).toBe("secondary");
+  expect(node("placeSearch.useQueryAsName").variant).toBe("secondary");
+  expect(props.onConfirm).not.toHaveBeenCalled();
+});
+const regionCandidate = (title = "Auckland", latitude = -36.8) => ({
+  ...row, kind: "mapItem", title, secondary: "New Zealand", address: `${title}, New Zealand`,
+  point: { latitude, longitude: 174.7 }, area: { kind: "locality", label: title, qualifier: "New Zealand" },
+});
+it("applies a single Trip destination's real unique Apple point to the actual place query", async () => {
+  state.regions = ["Auckland, New Zealand"];
+  const quick = provider(), more = provider();
+  more.search.mockResolvedValue([regionCandidate()] as any);
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  await mount();
+  expect(more.search).toHaveBeenCalledExactlyOnceWith({ text: "Auckland, New Zealand", locale: "en", intent: "destinationArea" }, expect.anything());
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(quick.complete).toHaveBeenLastCalledWith({ text: "Sky Tower", locale: "en", region: { latitude: -36.8, longitude: 174.7 } }, expect.anything());
+  expect(state.translations).toHaveBeenCalledWith("placeSearch.activeRegion", { region: "Auckland · New Zealand" });
+  expect(props.onConfirm).not.toHaveBeenCalled();
+});
+it("requires explicit selection for multiple Trip regions while retaining the authored place query", async () => {
+  state.regions = ["Auckland, New Zealand", "Nelson, New Zealand"];
+  const quick = provider(), more = provider();
+  more.search.mockResolvedValue([regionCandidate("Nelson", -41.27)] as any);
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  await mount();
+  expect(render()).toContain("placeSearch.chooseRegion");
+  expect(node("placeSearch.regionQuery").value).toBe("");
+  expect(state.translations).toHaveBeenCalledWith("placeSearch.originalQuery", { query: "Sky Tower" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).not.toHaveBeenCalled();
+  expect(more.search).not.toHaveBeenCalled();
+  node("Nelson, New Zealand").onPress();
+  await flush();
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(node("placeSearch.query").value).toBe("Sky Tower");
+  expect(quick.complete).toHaveBeenLastCalledWith(expect.objectContaining({ text: "Sky Tower", region: { latitude: -41.27, longitude: 174.7 } }), expect.anything());
+  expect(more.search).toHaveBeenCalledOnce();
+});
+it("never guesses an ambiguous Trip region, and explicit Worldwide restores the place query", async () => {
+  state.regions = ["Auckland"];
+  const quick = provider(), more = provider();
+  more.search.mockResolvedValue([regionCandidate(), regionCandidate("Auckland", 40)] as any);
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  await mount();
+  expect(render()).toContain("placeSearch.chooseRegion");
+  expect(state.translations).not.toHaveBeenCalledWith("placeSearch.activeRegion", expect.anything());
+  node("placeSearch.worldwide").onPress();
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(quick.complete).toHaveBeenLastCalledWith({ text: "Sky Tower", locale: "en" }, expect.anything());
+});
+it("hides Beta More and puts explicit original-text manual fallback directly after five compact results", async () => {
+  const quick = provider(), more = provider();
+  quick.complete.mockResolvedValue(Array.from({ length: 5 }, (_, i) => ({ ...row, handle: `h${i}`, title: `Place ${i}` })));
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  await mount({ nameChoice: false });
+  await vi.advanceTimersByTimeAsync(450);
+  const html = render({ nameChoice: false });
+  expect(node("placeSearch.more")).toBeUndefined();
+  expect(state.translations).toHaveBeenCalledWith("placeSearch.useQueryAsAddress", { query: "Sky Tower" });
+  expect(html.indexOf("Place 4")).toBeLessThan(html.indexOf("placeSearch.useQueryAsAddress"));
+  const rows = state.nodes.filter((n) => n.accessibilityLabel?.startsWith("Place "));
+  expect(rows).toHaveLength(5);
+  expect(rows.every((n) => n.style.minHeight === 44 && n.style.gap === 0)).toBe(true);
+  node("placeSearch.useQueryAsAddress").onPress();
+  expect(props.onConfirm).toHaveBeenCalledExactlyOnceWith({ kind: "MANUAL", text: "Sky Tower" });
+});
+it("Back from region selection preserves the original query instead of adopting region text", async () => {
+  state.factory.mockResolvedValueOnce(provider()).mockResolvedValueOnce(provider());
+  await mount();
+  node("placeSearch.region").onPress();
+  render();
+  node("placeSearch.regionQuery").onChangeText("Wellington");
+  render();
+  expect(state.translations).toHaveBeenCalledWith("placeSearch.originalQuery", { query: "Sky Tower" });
+  node("common.back").onPress();
+  render();
+  expect(node("placeSearch.query").value).toBe("Sky Tower");
+  expect(props.onConfirm).not.toHaveBeenCalled();
+});
+it("a late default-region result cannot override a user's explicit Worldwide choice", async () => {
+  state.regions = ["Auckland"];
+  let finish!: (value: any[]) => void;
+  const quick = provider(), more = provider();
+  more.search.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  await mount();
+  node("placeSearch.worldwide").onPress();
+  finish([regionCandidate()]);
+  await flush();
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(quick.complete).toHaveBeenLastCalledWith({ text: "Sky Tower", locale: "en" }, expect.anything());
+  expect(state.translations).not.toHaveBeenCalledWith("placeSearch.activeRegion", expect.anything());
+});
+
+it("Cancel/unmount closes both provider leases even while the initial Trip-region lookup is pending", async () => {
+  state.regions = ["Auckland"];
+  let finish!: (value: any[]) => void;
+  const quick = provider(), more = provider();
+  more.search.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  render();
+  state.mount = false;
+  const cleanup = state.effects.splice(0).map((effect) => effect()).find((value) => typeof value === "function") as () => void;
+  await flush();
+  cleanup();
+  expect(quick.close).toHaveBeenCalledOnce();
+  expect(more.close).toHaveBeenCalledOnce();
+  finish([regionCandidate()]);
+  await flush();
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).not.toHaveBeenCalled();
   expect(props.onConfirm).not.toHaveBeenCalled();
 });

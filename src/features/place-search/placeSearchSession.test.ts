@@ -133,7 +133,7 @@ it("uses at most one conservative automatic trailing-intent relaxation", async (
   expect(quick.complete).toHaveBeenCalledTimes(2);
   expect(session.state.status).toBe("EMPTY");
   expect(relaxedPlaceQuery({ text: "Dinner with Friends" })).toBeNull();
-  expect(relaxedPlaceQuery({ text: "Sky Tower tour" })).toBeNull();
+  expect(relaxedPlaceQuery({ text: "Sky Tower tour" })).toBe("Sky Tower");
 });
 
 it("does not overlap explicit More with a pending quick request", async () => {
@@ -379,4 +379,26 @@ it("refreshes cancelled Quick completion handles when Back interrupts their reso
   expect(session.state.more).toBe(false);
   expect(session.state.rows[0].handle).not.toBe(original.handle);
   session.close();
+});
+
+it("empty Worldwide exact query retries a single trailing intent and preserves returned candidates and original query", async () => {
+  const quick = provider(), more = provider(), returned = candidate();
+  quick.complete.mockResolvedValueOnce([]).mockResolvedValueOnce([returned]);
+  const session = new PlaceSearchSession(quick, more, vi.fn());
+  session.update({ text: "sky tower tour" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).toHaveBeenCalledTimes(2);
+  expect(quick.complete).toHaveBeenNthCalledWith(1, { text: "sky tower tour" }, expect.anything());
+  expect(quick.complete).toHaveBeenNthCalledWith(2, { text: "sky tower" }, expect.anything());
+  expect(session.state.rows).toEqual([returned]);
+  expect(session.state.partialQuery).toBe("sky tower tour");
+  expect(relaxedPlaceQuery({ text: "Sky Tower tour", intent: "destinationArea" })).toBeNull();
+  expect(relaxedPlaceQuery({ text: "City tour" })).toBeNull();
+});
+it("never broadens a query that already has real provider candidates", async () => {
+  const quick = provider(), session = new PlaceSearchSession(quick, provider(), vi.fn());
+  session.update({ text: "Sky Tower tour" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).toHaveBeenCalledOnce();
+  expect(session.state.partialQuery).toBeUndefined();
 });

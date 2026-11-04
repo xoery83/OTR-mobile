@@ -36,18 +36,21 @@ import { visual } from "@/ui/visual";
 import { TripCalendarRangeField } from "./TripCalendarRangeField";
 import { PlanParticipantsField } from "./PlanParticipantsField";
 import { AppIcon } from "@/components/AppIcon";
+import { nextCalendarDate } from "@/domain/trip/dayReadModel";
 
 type Opened = { repository: ManualPlanRepository; draft: ManualPlanDraft };
 
 function TimeField({
   label,
   value,
+  defaultTime,
   disabled,
   onChange,
   onOpenChange,
 }: {
   label: string;
   value: string | null;
+  defaultTime?: string;
   disabled: boolean;
   onChange(value: string | null): void;
   onOpenChange?(open: boolean): boolean | void;
@@ -67,8 +70,15 @@ function TimeField({
         disabled={disabled}
         onPress={() => {
           if (onOpenChange?.(true) === false) return;
+          Keyboard.dismiss();
           const date = new Date();
-          if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
+          const clock = value ?? defaultTime;
+          date.setHours(
+            clock ? +clock.slice(0, 2) : date.getHours(),
+            clock ? +clock.slice(3, 5) : 0,
+            0,
+            0,
+          );
           setSelected(date);
           setOpen(true);
         }}
@@ -76,44 +86,54 @@ function TimeField({
       <Modal
         visible={open}
         animationType="slide"
-        presentationStyle="pageSheet"
-        allowSwipeDismissal
+        transparent
+        presentationStyle="overFullScreen"
         onRequestClose={() => changeOpen(false)}
       >
-        <SafeAreaView edges={["bottom"]} style={styles.timeSheet}>
-          <SheetHeader
-            category="picker"
-            safeTop={false}
-            title={label}
-            onLeft={() => changeOpen(false)}
-            onRight={() => {
-              if (!disabled)
-                onChange(
-                  `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-                );
-              changeOpen(false);
-            }}
-            rightDisabled={disabled}
-          />
-          <UiDatePicker
-            mode="time"
-            display="spinner"
-            value={selected}
-            accessibilityLabel={label}
-            onChange={(_, date) => {
-              if (date) setSelected(date);
-            }}
-          />
-          <UiButton
-            label={t("tripCreate.clearTime")}
-            variant="text"
-            disabled={disabled}
-            onPress={() => {
-              onChange(null);
-              changeOpen(false);
-            }}
-          />
-        </SafeAreaView>
+        <SafeAreaProvider style={styles.timeHost}>
+          <View style={styles.timeBackdrop}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("common.cancel")}
+              style={StyleSheet.absoluteFill}
+              onPress={() => changeOpen(false)}
+            />
+            <SafeAreaView edges={["bottom", "left", "right"]} style={styles.timeSheet}>
+              <SheetHeader
+                category="picker"
+                safeTop={false}
+                title={label}
+                onLeft={() => changeOpen(false)}
+                onRight={() => {
+                  if (!disabled)
+                    onChange(
+                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                    );
+                  changeOpen(false);
+                }}
+                rightDisabled={disabled}
+              />
+              <UiDatePicker
+                mode="time"
+                display="spinner"
+                value={selected}
+                accessibilityLabel={label}
+                onChange={(_, date) => {
+                  if (date) setSelected(date);
+                }}
+              />
+              <UiButton
+                label={t("tripCreate.clearTime")}
+                variant="text"
+                disabled={disabled}
+                onPress={() => {
+                  onChange(null);
+                  changeOpen(false);
+                }}
+              />
+            </SafeAreaView>
+          </View>
+        </SafeAreaProvider>
       </Modal>
     </View>
   );
@@ -639,12 +659,22 @@ export function P1PlanEditor({
                     label={t("tripCreate.endTime")}
                     onOpenChange={(open) => changePickerOpen("end", open)}
                     value={fields.endTime}
+                    defaultTime={
+                      fields.startTime
+                        ? `${String((Number(fields.startTime.slice(0, 2)) + 1) % 24).padStart(2, "0")}:${fields.startTime.slice(3, 5)}`
+                        : undefined
+                    }
                     disabled={saving || frozen || !fields.startDate}
                     onChange={(endTime) =>
                       change({
                         endTime,
                         ...(endTime && !fields.endDate
-                          ? { endDate: fields.startDate }
+                          ? {
+                              endDate:
+                                fields.startTime && endTime < fields.startTime
+                                  ? nextCalendarDate(fields.startDate)
+                                  : fields.startDate,
+                            }
                           : {}),
                       })
                     }
@@ -723,6 +753,18 @@ const createStyles = (colors: UiColors) =>
     },
     times: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.card },
     timeField: { flexGrow: 1, flexBasis: 140, minWidth: 0 },
-    timeSheet: { backgroundColor: colors.surface, flex: 1 },
+    timeHost: { flex: 1 },
+    timeBackdrop: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: colors.overlay,
+    },
+    timeSheet: {
+      backgroundColor: colors.surface,
+      maxHeight: "90%",
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      overflow: "hidden",
+    },
     notes: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },
   });

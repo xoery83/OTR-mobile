@@ -18,11 +18,13 @@ export function LocalCoreItemPreview({
   onClose,
   onEdit,
   editError = false,
+  localOnly = false,
 }: {
   item: NonNullable<ReturnType<typeof projectCoreItem>>;
   onClose(): void;
   onEdit?(): void;
   editError?: boolean;
+  localOnly?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -62,12 +64,12 @@ export function LocalCoreItemPreview({
             <FlightFidelityGrid
               flight={{ authored: flightSegmentFromRead(item) }}
               immersive
-              pending={item.localState === "PENDING"}
+              pending={!localOnly && item.localState === "PENDING"}
             />
           ) : (
             <Text style={styles.title}>
               {item.title as string}
-              {item.localState === "PENDING" ? <PendingSyncDot /> : null}
+              {!localOnly && item.localState === "PENDING" ? <PendingSyncDot /> : null}
             </Text>
           )}
           {item.family === "P3" ? (

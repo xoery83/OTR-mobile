@@ -132,7 +132,11 @@ export type ManualPlanDraft = Readonly<{
   baseRevision?: number | null;
   fields: ManualPlanFields;
   initialFields?: ManualPlanFields;
-  participantOptions: readonly { personId: string; displayName: string }[];
+  participantOptions: readonly {
+    personId: string;
+    displayName: string;
+    isCurrentActor?: boolean;
+  }[];
 }>;
 export type ManualPlanSaveResult = Readonly<{
   localStatus: "PENDING";
@@ -593,7 +597,11 @@ export function createManualItemRepository(
                     m.participation_active === 1 &&
                     authoredPersonIds.has(m.id))),
             )
-            .map((m) => ({ personId: m.id, displayName: m.display_name })),
+            .map((m) => ({
+              personId: m.id,
+              displayName: m.display_name,
+              ...(m.id === snapshot.actor.personId ? { isCurrentActor: true } : {}),
+            })),
         });
         drafts.set(draft, {
           guestRestoreScope: recovery?.scope,

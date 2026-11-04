@@ -21,7 +21,7 @@ export function PlanParticipantsField({
 }: {
   compact?: boolean;
   value: Participation;
-  options: readonly { personId: string; displayName: string }[];
+  options: readonly { personId: string; displayName: string; isCurrentActor?: boolean }[];
   disabled: boolean;
   onChange(value: Participation): void;
 }) {
@@ -33,9 +33,10 @@ export function PlanParticipantsField({
   const selected = (v: Participation, id: string) =>
     v.mode === "WHOLE_GROUP" ||
     (v.mode === "SELF" ? v.selfPersonId === id : v.people.includes(id));
-  const names = options
-    .filter((p) => selected(value, p.personId))
-    .map((p) => p.displayName);
+  const displayName = (person: (typeof options)[number]) =>
+    person.displayName.trim() ||
+    (person.isCurrentActor ? t("common.you") : person.displayName);
+  const names = options.filter((p) => selected(value, p.personId)).map(displayName);
   const count = options.filter((p) => selected(draft, p.personId)).length;
   const summary =
     value.mode === "WHOLE_GROUP"
@@ -119,7 +120,7 @@ export function PlanParticipantsField({
             </View>
             {options
               .filter((p) =>
-                p.displayName
+                displayName(p)
                   .toLocaleLowerCase()
                   .includes(query.trim().toLocaleLowerCase()),
               )
@@ -129,7 +130,7 @@ export function PlanParticipantsField({
                   <Pressable
                     key={person.personId}
                     accessibilityRole="checkbox"
-                    accessibilityLabel={person.displayName}
+                    accessibilityLabel={displayName(person)}
                     accessibilityState={{ checked, disabled }}
                     disabled={disabled}
                     style={[styles.person, checked && styles.selected]}
@@ -155,11 +156,11 @@ export function PlanParticipantsField({
                     />
                     <View style={styles.avatar}>
                       <UiText style={styles.initial}>
-                        {Array.from(person.displayName.trim())[0]?.toLocaleUpperCase() ??
+                        {Array.from(displayName(person).trim())[0]?.toLocaleUpperCase() ??
                           ""}
                       </UiText>
                     </View>
-                    <UiText style={styles.name}>{person.displayName}</UiText>
+                    <UiText style={styles.name}>{displayName(person)}</UiText>
                   </Pressable>
                 );
               })}

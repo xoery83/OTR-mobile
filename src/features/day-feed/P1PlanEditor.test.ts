@@ -985,3 +985,64 @@ it("P1 uses the real context double-read and refuses a changed local owner durin
   expect(sheet).toBeUndefined();
   expect(node("tripCreate.planLocation").value).toBe("Unchanged address");
 });
+
+it("seeds an unset start at the current whole hour without applying it", async () => {
+  vi.setSystemTime(new Date(2027, 0, 16, 14, 37, 42));
+  const { p, repo } = await withPlace();
+  node("tripCreate.startTime").onPress();
+  render(p);
+  const picker = state.nodes.find(
+    (entry) =>
+      entry.mode === "time" && entry.accessibilityLabel === "tripCreate.startTime",
+  )!;
+  expect(picker.value.getHours()).toBe(14);
+  expect(picker.value.getMinutes()).toBe(0);
+  expect(repo.save).not.toHaveBeenCalled();
+  state.nodes
+    .find((entry) => entry.header?.title === "tripCreate.startTime")!
+    .header.onLeft();
+  render(p);
+  expect(node("tripCreate.startTime").value).toBe("tripCreate.notSet");
+  vi.useRealTimers();
+});
+
+it.each(["09:30", "23:30"])(
+  "seeds End one civil hour after %s, applying only on Done",
+  async (startTime) => {
+    const p = props();
+    const value = { ...fields(), title: "Plan", startDate: "2027-12-31", startTime };
+    const repo = {
+      createDraft: vi.fn(async () => ({
+        mode: "CREATE",
+        itemId: "plan",
+        fields: value,
+        participantOptions: [],
+      })),
+      save: vi.fn(async () => ({ itemId: "plan" })),
+    };
+    await open(p, repo);
+    node("tripCreate.endTime").onPress();
+    render(p);
+    const picker = state.nodes.find(
+      (entry) =>
+        entry.mode === "time" && entry.accessibilityLabel === "tripCreate.endTime",
+    )!;
+    expect(picker.value.getHours()).toBe(startTime === "23:30" ? 0 : 10);
+    expect(picker.value.getMinutes()).toBe(30);
+    expect(value.endTime).toBeNull();
+    expect(repo.save).not.toHaveBeenCalled();
+    state.nodes
+      .find((entry) => entry.header?.title === "tripCreate.endTime")!
+      .header.onRight();
+    render(p);
+    node("ui.save").onPress();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(repo.save).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        endTime: startTime === "23:30" ? "00:30" : "10:30",
+        endDate: startTime === "23:30" ? "2028-01-01" : "2027-12-31",
+      }),
+    );
+  },
+);
