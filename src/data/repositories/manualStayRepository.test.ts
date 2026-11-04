@@ -155,7 +155,11 @@ it("creates one normal MANUAL Stay with required dates, optional clocks and Note
     authored_address: input.location,
   });
   const cold = await f.repo().read(f.tripId, draft.itemId);
-  expect(cold.fields).toEqual(input);
+  expect(cold.fields).toEqual({
+    ...input,
+    checkInInstruction: "",
+    checkOutInstruction: "",
+  });
   expect(cold.fields.stayDetails.propertyName).toBeNull();
   const local = (await f.read(f.tripId))!;
   expect(local.items[0]).toMatchObject({
@@ -1343,4 +1347,187 @@ it("P3 mixed Edit permits the existing five ITEM edits plus two Instruction comm
     ]),
   ).rejects.toThrow("MANUAL_BATCH_INVALID");
   expect(count(f.sql)).toBe(n + 7);
+});
+
+it("P3 Header Save appends both typed instructions atomically and reopens through the real SQLite reader", async () => {
+  const f = await fixture(),
+    repo = f.repo();
+  const created = await repo.createDraft(f.tripId);
+  await repo.save(created, inputFor(created.fields));
+  const draft = await repo.read(f.tripId, created.itemId);
+  expect(draft.instructions?.checkInInstruction.editable).toBe(true);
+  const fields = {
+    ...draft.fields,
+    checkInInstruction: "到店按门铃",
+    checkOutInstruction: "Leave keys at reception",
+  };
+  const result = await repo.save(draft, fields);
+  expect(result).toMatchObject({ itemId: created.itemId, localStatus: "PENDING" });
+  expect(result.operationIds).toHaveLength(2);
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  const instructions = pending.filter((r) =>
+    result.operationIds.includes(r.command.operationId),
+  );
+  expect(instructions.map((r) => r.command.command)).toEqual([
+    "APPEND_INSTRUCTION",
+    "APPEND_INSTRUCTION",
+  ]);
+  for (const row of instructions) {
+    expect(row.command.target.kind).toBe("INSTRUCTION");
+    expect(row.command.target.id).not.toBe(created.itemId);
+    expect(
+      f.sql
+        .prepare("SELECT entity_id,status FROM sync_operations WHERE id=?")
+        .get(row.command.operationId),
+    ).toMatchObject({ entity_id: row.command.target.id, status: "DEPENDENCY_BLOCKED" });
+  }
+  const reopenedRepo = f.repo();
+  const reopened = await reopenedRepo.read(f.tripId, created.itemId);
+  expect(reopened.fields).toMatchObject(fields);
+  expect(reopened.instructions?.checkInInstruction.editable).toBe(true);
+  // Original Header Save retry preserves the exact two operations and queue rows.
+  expect(await repo.save(draft, fields)).toEqual(result);
+  expect((await f.core.pending(await f.core.captureContext(f.tripId))).length).toBe(3);
+  const oldId = reopened.instructions!.checkInInstruction.entries[0].entryId;
+  const corrected = await reopenedRepo.save(reopened, {
+    ...reopened.fields,
+    checkInInstruction: "Use the side door",
+  });
+  expect(corrected.operationIds).toHaveLength(1);
+  const correction = (await f.core.pending(await f.core.captureContext(f.tripId))).find(
+    (r) => r.command.operationId === corrected.operationIds[0],
+  )!.command;
+  expect(correction).toMatchObject({
+    command: "CORRECT_INSTRUCTION",
+    target: { kind: "INSTRUCTION", id: oldId },
+  });
+  const latest = await f.repo().read(f.tripId, created.itemId);
+  expect(latest.fields.checkInInstruction).toBe("Use the side door");
+  expect(latest.instructions!.checkInInstruction.entries[0].supersedesId).toBe(oldId);
+});
+it("P3 mixed Header Save stages five ITEM edits and two Instructions in one owning SQLite transaction", async () => {
+  const f = await fixture(),
+    repo = f.repo();
+  const created = await repo.createDraft(f.tripId);
+  await repo.save(created, inputFor(created.fields));
+  const draft = await repo.read(f.tripId, created.itemId);
+  const fields = {
+    ...draft.fields,
+    title: "Updated stay",
+    startDate: "2026-10-21",
+    endDate: "2026-10-24",
+    location: "New location",
+    description: "Updated note",
+    participation: {
+      mode: "SELECTED_MEMBERS" as const,
+      people: [draft.participantOptions[0].personId],
+      selfPersonId: null,
+    },
+    stayDetails: { ...draft.fields.stayDetails, propertyName: "Confirmed property" },
+    checkInInstruction: "Reception",
+    checkOutInstruction: "Key box",
+  };
+  const before = count(f.sql);
+  f.failNext(7);
+  await expect(repo.save(draft, fields)).rejects.toThrow("TEST_WRITE_FAILURE");
+  expect(count(f.sql)).toBe(before);
+  expect((await f.repo().read(f.tripId, created.itemId)).fields.title).toBe(
+    draft.fields.title,
+  );
+  f.failNext(0);
+  const result = await repo.save(draft, fields);
+  expect(result.operationIds).toHaveLength(7);
+  expect(count(f.sql)).toBe(Number(before) + 7);
+  const reopened = await f.repo().read(f.tripId, created.itemId);
+  expect(reopened.fields).toEqual(fields);
+  const pending = (await f.core.pending(await f.core.captureContext(f.tripId))).filter(
+    (r) => result.operationIds.includes(r.command.operationId),
+  );
+  expect(
+    pending.map((r) => r.command.baseVector.find((b) => b.kind === "ITEM")!.revision),
+  ).toEqual([1, 2, 3, 4, 5, 6, 7]);
+});
+it("P3 Header Save keeps blank/omitted instructions, rejects stale drafts and never adds instructions during Create", async () => {
+  const f = await fixture(),
+    repo = f.repo();
+  const created = await repo.createDraft(f.tripId);
+  await expect(
+    repo.save(created, {
+      ...inputFor(created.fields),
+      checkInInstruction: "Unapproved create input",
+    }),
+  ).rejects.toThrow("EDIT_ONLY");
+  await repo.save(created, inputFor(created.fields));
+  const initial = await repo.read(f.tripId, created.itemId);
+  await repo.save(initial, {
+    ...initial.fields,
+    checkInInstruction: "Existing guidance",
+  });
+  const current = await repo.read(f.tripId, created.itemId);
+  const before = count(f.sql);
+  await repo.save(current, {
+    ...current.fields,
+    checkInInstruction: "   ",
+    checkOutInstruction: undefined,
+  });
+  expect(count(f.sql)).toBe(before);
+  expect((await repo.read(f.tripId, created.itemId)).fields.checkInInstruction).toBe(
+    "Existing guidance",
+  );
+  const stale = await repo.read(f.tripId, created.itemId);
+  const other = await repo.read(f.tripId, created.itemId);
+  await repo.save(other, { ...other.fields, description: "Concurrent change" });
+  await expect(
+    repo.save(stale, { ...stale.fields, checkInInstruction: "Stale replacement" }),
+  ).rejects.toThrow("MANUAL_PLAN_CONFLICT");
+});
+
+it("normal P3 Edit does not infer correction eligibility from a source reference redacted by the actual Reader", async () => {
+  const sourceId = randomUUID();
+  const f = await freshAcceptedFixture((graph) => {
+    const parent = graph.itinerary_events[0];
+    graph.trip_instruction_entries.push({
+      id: randomUUID(),
+      trip_id: parent.trip_id,
+      revision: 1,
+      owner_account_id: parent.owner_account_id,
+      visibility: "GROUP",
+      hidden_at: null,
+      created_at: parent.created_at,
+      updated_at: parent.updated_at,
+      field_state: {},
+      event_id: parent.id,
+      section: "ARRIVAL",
+      body: "Evidence-bound reception guidance",
+      sensitivity: "NORMAL",
+      supersedes_id: null,
+      source_representation_id: sourceId,
+    });
+  });
+  const repo = f.repo();
+  const draft = await repo.read(f.tripId, f.itemId);
+  expect(draft.fields.checkInInstruction).toBe("Evidence-bound reception guidance");
+  expect(
+    draft.instructions!.checkInInstruction.entries[0].sourceRepresentationId,
+  ).toBeNull();
+  expect(draft.instructions!.checkInInstruction.editable).toBe(false);
+  await expect(
+    repo.save(draft, {
+      ...draft.fields,
+      checkInInstruction: "Replace redacted-source head",
+    }),
+  ).rejects.toThrow("READ_ONLY");
+  expect(count(f.sql)).toBe(0);
+  const keep = await repo.save(draft, {
+    ...draft.fields,
+    description: "Independent user note",
+  });
+  expect(keep.operationIds).toHaveLength(1);
+  const command = (await f.core.pending(await f.core.captureContext(f.tripId)))[0]
+    .command;
+  expect(command.command).toBe("SET_ITEM_TEXT");
+  expect(
+    (await f.core.acceptedSnapshot(await f.core.captureContext(f.tripId)))!.graph
+      .trip_instruction_entries[0].body,
+  ).toBe("Evidence-bound reception guidance");
 });

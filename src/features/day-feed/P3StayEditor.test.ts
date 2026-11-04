@@ -1728,3 +1728,108 @@ it("does not release the Guest blocker until durable Save and the unchanged cens
   expect(empty.entries).toEqual([]);
   await empty.resume();
 });
+
+it("shows instruction controls only for Edit, freezes their existing Header Save attempt and returns parent identity", async () => {
+  const p = { ...props(), itemId: "stay-parent" };
+  const value = {
+    ...fields(),
+    title: "QA stay",
+    startDate: "2026-11-05",
+    endDate: "2026-11-07",
+    checkInInstruction: "",
+    checkOutInstruction: "",
+  };
+  const draft = {
+    mode: "EDIT",
+    itemId: p.itemId,
+    fields: value,
+    participantOptions: [],
+    instructions: {
+      checkInInstruction: { entries: [], editable: true, value: "" },
+      checkOutInstruction: { entries: [], editable: true, value: "" },
+    },
+  };
+  const save = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("TEST_TRANSIENT"))
+    .mockResolvedValue({
+      itemId: p.itemId,
+      localStatus: "PENDING",
+      operationIds: ["original-operation"],
+    });
+  await open(p, { read: vi.fn(async () => draft), save });
+  node("p3.instructions").onChangeText("到店按门铃");
+  render(p);
+  await node("headerSave").onPress();
+  render(p);
+  expect(node("p3.instructions").editable).toBe(false);
+  node("p3.instructions").onChangeText("late replacement");
+  await node("headerSave").onPress();
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(save.mock.calls[0][0]).toBe(draft);
+  expect(save.mock.calls[1][1]).toBe(save.mock.calls[0][1]);
+  expect(save.mock.calls[1][1].checkInInstruction).toBe("到店按门铃");
+  expect(p.onSaved).toHaveBeenCalledExactlyOnceWith(p.itemId);
+});
+it("keeps multi-chain instruction bodies separate and unproven/source heads read-only", async () => {
+  const p = { ...props(), itemId: "stay-parent" };
+  const value = {
+    ...fields(),
+    title: "QA stay",
+    startDate: "2026-11-05",
+    endDate: "2026-11-07",
+    checkInInstruction: "",
+    checkOutInstruction: "Source-visible body",
+  };
+  const save = vi.fn();
+  await open(p, {
+    read: vi.fn(async () => ({
+      mode: "EDIT",
+      itemId: p.itemId,
+      fields: value,
+      participantOptions: [],
+      instructions: {
+        checkInInstruction: {
+          entries: [
+            { entryId: "one", body: "Chain one" },
+            { entryId: "two", body: "Chain two" },
+          ],
+          editable: false,
+          value: "",
+        },
+        checkOutInstruction: {
+          entries: [{ entryId: "source", body: "Source-visible body" }],
+          editable: false,
+          value: "Source-visible body",
+        },
+      },
+    })),
+    save,
+  });
+  expect(
+    state.nodes
+      .filter((n) => n.accessibilityLabel === "p3.instructions")
+      .map((n) => [n.value, n.editable]),
+  ).toEqual([
+    ["Chain one", false],
+    ["Chain two", false],
+  ]);
+  expect(node("p3.checkoutInstructions").editable).toBe(false);
+  node("p3.checkoutInstructions").onChangeText("Forbidden overwrite");
+  node("common.cancel").onPress();
+  expect(p.onClose).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+});
+it("does not add manual instruction fields to ordinary P3 Create", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "new-stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  expect(node("p3.instructions")).toBeUndefined();
+  expect(node("p3.checkoutInstructions")).toBeUndefined();
+});

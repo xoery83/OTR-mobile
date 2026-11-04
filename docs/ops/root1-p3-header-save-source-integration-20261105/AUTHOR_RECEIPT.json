@@ -1,0 +1,45 @@
+{
+  "status": "EXISTING_P3_EDIT_HEADER_SAVE_LOCAL_SQLITE_PASS / HOSTED_PENDING / INDEPENDENT_REVIEW_PENDING",
+  "coreSource": "c98821fe16931bfe2fd79869178f0f8e8ac87445 exact three leaves and contract consumed at 9ed917c9; no Core seam modifications",
+  "previousSafetyFix": "6c2c90e3 remains conservative absent official owning eligibility; Reader-null never proves manual origin",
+  "actualUserCall": "P3StayEditor Header Save -> existing ManualStayRepository.save(draft,fields,optionalPlaceDraft) -> one existing commitManualBatch -> original queue; parent-centric existing result/onSaved unchanged",
+  "implementation": [
+    "manualStayFieldsSchema two optional instruction strings, Edit-only binding/readback",
+    "Original private DraftState pins instruction selection snapshot and two stable operation/new entry ID pairs; same existing firstAttempt freezes input",
+    "Core manualInstructionEligibility returns presentation hint outside read transaction; Core owning commit rechecks origin/receipt/chain within Save transaction; no local proof boolean added",
+    "No head: genuine ARRIVAL/DEPARTURE APPEND; one head: CORRECT only owning ELIGIBLE; source/unproven/multi readOnly; no duplicate append workaround",
+    "Existing ITEM payloads plus instruction payloads staged sequentially by original Repo Core preview factory, not UI bases/rebase; single Header Save transaction",
+    "Existing canonical P3 Edit inputs, existing p3.instructions/p3.checkoutInstructions localization keys; ordinary Create unchanged; no Contact/Notes workaround"
+  ],
+  "validation": {
+    "tests": "3 suites 88 PASS (includes exact existing Root1 P3 seam cases and 4 new real caller tests plus component caller cases)",
+    "typecheck": "PASS scoped changed roots and dependencies, extending unchanged canonical tsconfig",
+    "lint": "PASS changed roots",
+    "uiGuard": "PASS 473 legacy / 168 representative, no baseline forgiveness",
+    "realSqliteGolden": [
+      "existing P3 Edit instruction-only two APPENDs, true INSTRUCTION queue entity identity, DEPENDENCY_BLOCKED",
+      "readback through reconstructed existing repo/SQLite; originating local proof returns ELIGIBLE; immutable CORRECT and preserved predecessor",
+      "five ITEM plus two instruction commands; sequential parent bases1..7; failure on seventh insert rolls back all7, retry preserves exact original IDs",
+      "Keep/omitted/blank do not clear/hide/write; stale draft rejected; Create with nonempty instruction explicitly rejected",
+      "actual buildCoreActorCollection redacts source UUID; normal Edit exposes body but no correction eligibility; replacement rejected, independent note command preserves head",
+      "component Header Save retry pins instruction input, returns parent ID; Cancel/readOnly/multi separation and Create omission"
+    ]
+  },
+  "greenLog": "HEADER_SAVE_GREEN.log",
+  "greenLogSha256": "e9a08568ed9fd6728c0699f7988ab53434d0f2786e92af313594bbb61e43087f",
+  "remaining": [
+    "No Instruction Cloud dispatcher/profile/Gate enabled",
+    "No device test or unsaved process-cold assertion",
+    "Independent review pending",
+    "Root1 official parent resolver Native3Sync consumer hookup follows separately; b562 RED remains until fixed",
+    "Existing fresh remote accepted item with no retained manual CREATE may be blocked from reopening while its ITEM edit is pending by pre-existing freshAcceptedItem guard; this source-negative test asserts unchanged accepted instruction rather than claiming that unrelated reopening PASS."
+  ],
+  "notChanged": [
+    "Core public seam",
+    "Backend/AuthSession/SQLite registry",
+    "Hosted SQL/Authority/Provider",
+    "Contact",
+    "ordinary P3 Create instruction scope",
+    "Source provenance/admission"
+  ]
+}

@@ -668,6 +668,60 @@ export function P3StayEditor({
                       onChange={(endTime) => change({ endTime })}
                     />
                   </View>
+                  {source.draft.mode === "EDIT" && source.draft.instructions
+                    ? (["checkInInstruction", "checkOutInstruction"] as const).map(
+                        (field) => {
+                          const instruction = source.draft.instructions![field];
+                          const label = t(
+                            field === "checkInInstruction"
+                              ? "p3.instructions"
+                              : "p3.checkoutInstructions",
+                          );
+                          return (
+                            <View key={field} style={styles.field}>
+                              <Text style={styles.caption}>{label}</Text>
+                              {instruction.entries.length > 1 ? (
+                                instruction.entries.map((entry) => (
+                                  <UiTextInput
+                                    key={entry.entryId}
+                                    accessibilityLabel={label}
+                                    value={entry.body}
+                                    multiline
+                                    style={styles.notes}
+                                    editable={false}
+                                  />
+                                ))
+                              ) : (
+                                <UiTextInput
+                                  accessibilityLabel={label}
+                                  placeholder={label}
+                                  value={fields[field] ?? ""}
+                                  maxLength={5000}
+                                  multiline
+                                  style={styles.notes}
+                                  editable={
+                                    instruction.editable &&
+                                    !saving &&
+                                    !frozen &&
+                                    status !== "UNAVAILABLE"
+                                  }
+                                  onFocus={() => {
+                                    notesFocused.current = true;
+                                    formScroll.current?.scrollToEnd({ animated: true });
+                                  }}
+                                  onBlur={() => {
+                                    notesFocused.current = false;
+                                  }}
+                                  onChangeText={(value) => {
+                                    if (instruction.editable) change({ [field]: value });
+                                  }}
+                                />
+                              )}
+                            </View>
+                          );
+                        },
+                      )
+                    : null}
                   <View style={styles.field}>
                     <Text style={styles.caption}>{t("tripCreate.stayNotes")}</Text>
                     <UiTextInput

@@ -1,3 +1,7 @@
+## P3 Edit instruction Header Save local source — 5 November 2026
+
+Native exact six-leaf ddfd366b packet and independent1c164e18 reuse the already integrated owning Core c988/a795. Existing P3 Edit Header Save stages at most5 ITEM plus2 ARRIVAL/DEPARTURE INSTRUCTION commands in one original account transaction; operation/first-attempt freeze, immutable provenance eligibility and parent onSaved remain. Actual-main8 real SQLite/component caller cases plus10 adapter tests, scoped six-root types/lint and UIguard pass. No Create/Contact/three Sync files or Cloud dispatch enabled; instruction queue remains DEPENDENCY_BLOCKED, device/Cloud/cold UI unverified. Receipt: `docs/ops/root1-p3-header-save-source-integration-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## TXT pre-acquire lookup source — 5 November 2026
 
 LaneC fixedb54ca15e exact three-leaf packet preserves the other four route functions and retained Run suffix. A protected single-TXT initial pin can report point-in-time Task/Run unprepared only after exact identity/hash and effective SourceWriter visibility checks; this is not Source acceptance, NoCommit or retry authority. Independent scoped reviews reused; actual-main HTTP14, scoped types/lint/Python AST pass. SQL remains an uninstalled candidate; real Auth/locks/concurrency/Hosted/Provider/Native and c420 PG_PENDING_DONT_DEPLOY remain unqualified. Receipt: `docs/ops/root1-txt-preacquire-source-integration-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`. No runtime, SQL install, device or paid action.

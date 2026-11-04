@@ -1,0 +1,74 @@
+{
+  "candidate": "ddfd366b064007053beab613ba2c9e374731f867",
+  "preimageMain": "7c103acf9802e3c149cdbadf03aca978fada6568",
+  "status": "EXACT_SIX_NATIVE_LEAF_SOURCE_PACKET / LOCAL_ONLY / NO_SYNC_PATCH",
+  "leaves": [
+    {
+      "path": "src/data/repositories/manualPlanRepository.ts",
+      "preimageBlob": "7053598c513b5a72ce2e7fd53af7d3123fb05f5f",
+      "preimageSha256": "ca8387607b57434165c27bd9b06ccad594b041ac547800fbc8be9c7ebb60714e",
+      "outputBlob": "dc8b31c8d67eb591b006e001e920e2e1ce319ee7",
+      "outputSha256": "4b7f32c908a8c0fe4af240bbcec6176269821b91ffe7cad695f39f4b72a26827",
+      "snapshot": "snapshots/src__data__repositories__manualPlanRepository.ts.snapshot"
+    },
+    {
+      "path": "src/data/repositories/manualStayInstructions.ts",
+      "preimageBlob": "ABSENT",
+      "preimageSha256": "ABSENT",
+      "outputBlob": "4f7ef5ca98edcc90d83096efb9fb2fa51b66ed4e",
+      "outputSha256": "cfff4a4e706e79600a7210a33b5002b46063083bbd86128008a43483314281ef",
+      "snapshot": "snapshots/src__data__repositories__manualStayInstructions.ts.snapshot"
+    },
+    {
+      "path": "src/data/repositories/manualStayInstructions.test.ts",
+      "preimageBlob": "ABSENT",
+      "preimageSha256": "ABSENT",
+      "outputBlob": "d30358130d3e4a5b06b00f444a234952a67f8987",
+      "outputSha256": "bc93c285ead9a2d03a7ccc77972a1228220f05f5e265185f553604d0173b1b09",
+      "snapshot": "snapshots/src__data__repositories__manualStayInstructions.test.ts.snapshot"
+    },
+    {
+      "path": "src/data/repositories/manualStayRepository.test.ts",
+      "preimageBlob": "fa5fae528ba73c5bed57cd3aca6a4068e583f0e3",
+      "preimageSha256": "94935d74539608273f7a22237a4c050bc2aee04781bf13dfb1d27346ad16bcea",
+      "outputBlob": "7faa6d8a25532b238865b346173bc59ef6d48950",
+      "outputSha256": "3e17173699fc6e476638ef476c76b299ab31fa38590eff47678f0927600de4ef",
+      "snapshot": "snapshots/src__data__repositories__manualStayRepository.test.ts.snapshot"
+    },
+    {
+      "path": "src/features/day-feed/P3StayEditor.tsx",
+      "preimageBlob": "20b411ed21df0e54f83d84e826bd22684015a578",
+      "preimageSha256": "f07aa36d60f0346cbf94badf44e8e0b7c6fabff2a232320a5564be94327a5386",
+      "outputBlob": "c6ca40faf625bc4a687a9b9487ac86257f391347",
+      "outputSha256": "7ccc08809acb8a9dadad5aa7bc8cc441df529130d8c25303d6b6941635fa9839",
+      "snapshot": "snapshots/src__features__day-feed__P3StayEditor.tsx.snapshot"
+    },
+    {
+      "path": "src/features/day-feed/P3StayEditor.test.ts",
+      "preimageBlob": "7bec46d8ee61a84c7548a2499a36213c9910abfe",
+      "preimageSha256": "e04fc751e042bedf0cd2bf8746b512e8eea4863f3eebad04e2d7d05defe7dd54",
+      "outputBlob": "06b70d7b97696e4efab630c30b5c286aa4d61004",
+      "outputSha256": "88b3fe920a280c536c2e95dbdfac17c03e4e38adb2eec9e3673a91c8495c53be",
+      "snapshot": "snapshots/src__features__day-feed__P3StayEditor.test.ts.snapshot"
+    }
+  ],
+  "authorReceipt": {
+    "sha": "ddfd366b064007053beab613ba2c9e374731f867",
+    "path": "docs/ops/native-p3-instruction-consumer-20261105/HEADER_SAVE_LOCAL_RECEIPT.json",
+    "archive": "AUTHOR_RECEIPT.json",
+    "sha256": "2f5c59fce1bbcef68ce24c4053b81d98572b5a2bd381426203df01ef363ce52c"
+  },
+  "independentReview": {
+    "sha": "1c164e187bcb121ade4ea9c4bbb3b8fca72b178a",
+    "path": "docs/ops/native-readiness-review-20261105/P3_HEADER_SAVE_REVIEW.json",
+    "archive": "P3_HEADER_SAVE_REVIEW.json",
+    "sha256": "074ccab68abbc2c5434c42ffdb818ce5da5ac577c5db409d028db35a087ed615"
+  },
+  "excluded": [
+    "current uncommitted Worker/Sync source and tests",
+    "Core c988/a795 files already owning-integrated",
+    "Hosted/SQL/Authority/Provider",
+    "Root CURRENT_IMPLEMENTATION_STATE"
+  ],
+  "applyRule": "Exact preimage compare against specified actual main; if any leaf changed stop and refresh packet, do not overwrite or silently widen. Snapshot bytes equal fixed ddfd blobs, not working tree."
+}

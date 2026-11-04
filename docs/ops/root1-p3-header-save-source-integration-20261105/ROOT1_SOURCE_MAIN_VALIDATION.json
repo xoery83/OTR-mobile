@@ -1,0 +1,34 @@
+{
+  "status": "SOURCE_INTEGRATION_PASS_EXISTING_P3_EDIT_LOCAL_ONLY",
+  "parentMain": "5bbce512f5ae2a2a28ab89674342c729934a7f02",
+  "packetSHA256": "addca4d0b8431d31600383cac19d29e0dcba62c1fe0445f741607b092f31b1ae",
+  "candidate": "ddfd366b064007053beab613ba2c9e374731f867",
+  "sixExactLeafSHA256": {
+    "src/data/repositories/manualPlanRepository.ts": "4b7f32c908a8c0fe4af240bbcec6176269821b91ffe7cad695f39f4b72a26827",
+    "src/data/repositories/manualStayInstructions.ts": "cfff4a4e706e79600a7210a33b5002b46063083bbd86128008a43483314281ef",
+    "src/data/repositories/manualStayInstructions.test.ts": "bc93c285ead9a2d03a7ccc77972a1228220f05f5e265185f553604d0173b1b09",
+    "src/data/repositories/manualStayRepository.test.ts": "3e17173699fc6e476638ef476c76b299ab31fa38590eff47678f0927600de4ef",
+    "src/features/day-feed/P3StayEditor.tsx": "7ccc08809acb8a9dadad5aa7bc8cc441df529130d8c25303d6b6941635fa9839",
+    "src/features/day-feed/P3StayEditor.test.ts": "88b3fe920a280c536c2e95dbdfac17c03e4e38adb2eec9e3673a91c8495c53be"
+  },
+  "validation": {
+    "realSQLiteAndComponentCaller": "2 suites 8 PASS 70 skipped / 1.48s",
+    "instructionAdapter": "1 suite 10 PASS / 451ms",
+    "sixRootScopedTypes": "PASS",
+    "sixRootESLint": "PASS",
+    "UIGuard": "PASS 473 legacy / 168 representative without baseline forgiveness",
+    "diffCheck": "PASS",
+    "fiveDirectOwningCoreDependencies": "BYTE_IDENTICAL_TO_FIXED_DDFD"
+  },
+  "reusedEvidence": "Author88 and independent8 preserved with exact review SHA074ccab68abbc2c5434c42ffdb818ce5da5ac577c5db409d028db35a087ed615; no duplicate full88 run",
+  "semantics": "Existing P3 Edit only, maximum5ITEM+2INSTRUCTION one transaction; canonical original attempt/operation and immutable source eligibility remain owning; Cancel no Save, original parent result.",
+  "notIncluded": [
+    "Native three Sync/Worker files",
+    "Create instructions",
+    "Contact",
+    "Cloud dispatch or capability activation",
+    "Hosted SQL/Provider/device",
+    "unsaved process cold"
+  ],
+  "queue": "Instruction entries remain DEPENDENCY_BLOCKED; this Source integration does not qualify Cloud."
+}

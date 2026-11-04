@@ -1,4 +1,9 @@
 import {
+  readManualStayInstructions,
+  prepareManualStayInstruction,
+  type StayInstructionDraft,
+} from "./manualStayInstructions";
+import {
   guestP1DraftSnapshotSchema,
   type GuestP1DraftSnapshot,
 } from "@/domain/auth/guestP1Draft";
@@ -83,6 +88,8 @@ export const manualStayDetailsSchema = z.strictObject({
 export const manualStayFieldsSchema = manualPlanFieldsSchema.safeExtend({
   endDate: z.string().min(1),
   stayDetails: manualStayDetailsSchema,
+  checkInInstruction: z.string().max(5000).optional(),
+  checkOutInstruction: z.string().max(5000).optional(),
 });
 export type ManualStayFields = z.infer<typeof manualStayFieldsSchema>;
 export const manualRentalDetailsSchema = z.strictObject({
@@ -121,6 +128,8 @@ export type ManualActivityFields = z.infer<typeof manualActivityFieldsSchema>;
 type ManualItemFields = ManualPlanFields & {
   activityDetails?: ManualActivityFields["activityDetails"];
   stayDetails?: ManualStayFields["stayDetails"];
+  checkInInstruction?: string;
+  checkOutInstruction?: string;
   pickupLocation?: string;
   returnLocation?: string;
   rentalDetails?: ManualRentalFields["rentalDetails"];
@@ -128,6 +137,7 @@ type ManualItemFields = ManualPlanFields & {
 
 export type ManualPlanDraft = Readonly<{
   mode: "CREATE" | "EDIT";
+  instructions?: StayInstructionDraft;
   itemId: string;
   baseRevision?: number | null;
   fields: ManualPlanFields;
@@ -190,6 +200,12 @@ type DraftState = {
   firstCreateRead?: { graph: string; operations: string; personId: string };
   original: ManualItemFields;
   ids: string[];
+  instructionRead?: {
+    graph: Snapshot["graph"];
+    actor: Snapshot["actor"];
+    draft: StayInstructionDraft;
+  };
+  instructionIds?: { operationId: string; entryId: string }[];
   attempt?: {
     fields: string;
     placeDraft: string;
@@ -201,6 +217,7 @@ function fieldsFor(
   row: Record<string, unknown>,
   snapshot: Snapshot,
   family: "P1" | "P3" | "P4" | "P6",
+  includeInstructions = false,
 ): ManualItemFields {
   const stay = snapshot.graph.trip_stay_details.find((r) => r.event_id === row.id);
   const clockLabel = (v: unknown) => (typeof v === "string" ? v.slice(0, 5) : null);
@@ -251,6 +268,19 @@ function fieldsFor(
       : {}),
     ...(family === "P3"
       ? {
+          ...(includeInstructions
+            ? (() => {
+                const instructions = readManualStayInstructions(
+                  snapshot.graph,
+                  snapshot.actor,
+                  String(row.id),
+                );
+                return {
+                  checkInInstruction: instructions.checkInInstruction.value,
+                  checkOutInstruction: instructions.checkOutInstruction.value,
+                };
+              })()
+            : {}),
           stayDetails: {
             propertyName: stay?.property_name ?? null,
             permittedCheckinFrom: clockLabel(stay?.permitted_checkin_from),
@@ -509,7 +539,7 @@ export function createManualItemRepository(
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");
         const fields: ManualItemFields = row
-          ? fieldsFor(row, snapshot, family)
+          ? fieldsFor(row, snapshot, family, family === "P3")
           : {
               title: "",
               startDate: "",
@@ -623,6 +653,23 @@ export function createManualItemRepository(
                 },
               }
             : {}),
+          ...(family === "P3" && row
+            ? {
+                instructionRead: {
+                  graph: snapshot.graph,
+                  actor: snapshot.actor,
+                  draft: readManualStayInstructions(
+                    snapshot.graph,
+                    snapshot.actor,
+                    String(row.id),
+                  ),
+                },
+                instructionIds: Array.from({ length: 2 }, () => ({
+                  operationId: newId(),
+                  entryId: newId(),
+                })),
+              }
+            : {}),
           original: structuredClone(fields),
           ids: Array.from({ length: family === "P3" || family === "P6" ? 5 : 4 }, () =>
             newId(),
@@ -657,8 +704,42 @@ export function createManualItemRepository(
       return open(snapshot.tripId, undefined, undefined, { scope, snapshot });
     },
     createDraft: (tripId: string) => open(tripId),
-    read: (tripId: string, itemId: string, expectedRevision?: number) =>
-      open(tripId, itemId, expectedRevision),
+    read: async (tripId: string, itemId: string, expectedRevision?: number) => {
+      const draft = await open(tripId, itemId, expectedRevision);
+      const state = drafts.get(draft)!;
+      if (!state.instructionRead) return draft;
+      // Owning eligibility is read outside the existing account transaction; save
+      // rechecks exact current origin/chain inside its own atomic owning batch.
+      const read = state.instructionRead;
+      const hints = new Map<
+        string,
+        Awaited<ReturnType<Core["manualInstructionEligibility"]>>
+      >();
+      for (const field of ["checkInInstruction", "checkOutInstruction"] as const) {
+        const entries = read.draft[field].entries;
+        if (entries.length === 1)
+          hints.set(
+            entries[0].entryId,
+            await core.manualInstructionEligibility(
+              state.context,
+              itemId,
+              entries[0].entryId,
+            ),
+          );
+      }
+      await assertAccountRequestContext(state.context, account);
+      const instructions = readManualStayInstructions(
+        read.graph,
+        read.actor,
+        itemId,
+        hints,
+      );
+      state.instructionRead = { ...read, draft: instructions };
+      const bound = Object.freeze({ ...draft, instructions });
+      drafts.delete(draft);
+      drafts.set(bound, state);
+      return bound;
+    },
     async save(
       draft: ManualItemDraft,
       input: ManualItemFields,
@@ -681,6 +762,18 @@ export function createManualItemRepository(
         json(fields.participation) !== json(state.original.participation)
       )
         throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
+      if (family === "P3") {
+        for (const field of ["checkInInstruction", "checkOutInstruction"] as const) {
+          if (draft.mode === "CREATE") {
+            if (fields[field]?.trim())
+              throw new Error("MANUAL_STAY_INSTRUCTION_EDIT_ONLY");
+            delete fields[field];
+          } else if (!fields[field]?.trim()) {
+            // Blank is Keep, never Clear/HIDE. The original is the exact read value.
+            fields[field] = state.original[field] ?? "";
+          }
+        }
+      }
       fields.participation.people.sort();
       fields.location = fields.location || null;
       const review =
@@ -774,7 +867,28 @@ export function createManualItemRepository(
             : null;
         if (row && row.semantic_revision !== state.revision)
           throw new Error("MANUAL_PLAN_CONFLICT");
-        const payloads: { command: string; payload: unknown }[] = [];
+        const instructionCommands: Command[] = [];
+        if (state.instructionRead) {
+          for (const [index, field] of (
+            ["checkInInstruction", "checkOutInstruction"] as const
+          ).entries()) {
+            const command = prepareManualStayInstruction(
+              state.instructionRead.draft,
+              snapshot.graph,
+              snapshot.actor,
+              field,
+              fields[field],
+              state.instructionIds![index],
+            );
+            if (command) instructionCommands.push(command);
+          }
+        }
+        const payloads: {
+          command: string;
+          payload: unknown;
+          target?: Command["target"];
+          operationId?: string;
+        }[] = [];
         const schedule = {
           start: authoredBoundary(
             fields.startDate,
@@ -1023,19 +1137,53 @@ export function createManualItemRepository(
             command: "SET_ACTIVITY_DETAILS",
             payload: { details: activityDetails, entryPlace },
           });
+        // Only after validating the original draft do we stage the mixed Header
+        // Save. All bases are freshly constructed by this owning factory from the
+        // previous exact Core preview in this transaction, never a UI rebase.
+        payloads.push(
+          ...instructionCommands.map((command) => ({
+            command: command.command,
+            payload: command.payload,
+            target: command.target,
+            operationId: command.operationId,
+          })),
+        );
         let graph = snapshot.graph;
         const commands = payloads.map((p, i) => {
           const revision =
             graph.itinerary_events.find((r) => r.id === draft.itemId)
               ?.semantic_revision ?? null;
+          const target = p.target ?? { kind: "ITEM" as const, id: draft.itemId };
+          const baseVector =
+            target.kind === "ITEM"
+              ? [{ kind: "ITEM", id: draft.itemId, revision }]
+              : [
+                  {
+                    kind: "INSTRUCTION",
+                    id: target.id,
+                    revision:
+                      graph.trip_instruction_entries.find((r) => r.id === target.id)
+                        ?.revision ?? null,
+                  },
+                  ...(p.command === "CORRECT_INSTRUCTION"
+                    ? [
+                        {
+                          kind: "INSTRUCTION",
+                          id: (p.payload as { newEntryId: string }).newEntryId,
+                          revision: null,
+                        },
+                      ]
+                    : []),
+                  { kind: "ITEM", id: draft.itemId, revision },
+                ].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
           const command = validateCoreCommand({
             contractVersion: 2,
             intentVersion: 2,
-            operationId: state.ids[i],
+            operationId: p.operationId ?? state.ids[i],
             tripId: state.context.tripId,
             command: p.command,
-            target: { kind: "ITEM", id: draft.itemId },
-            baseVector: [{ kind: "ITEM", id: draft.itemId, revision }],
+            target,
+            baseVector,
             admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
             payload: p.payload,
           });
@@ -1075,7 +1223,16 @@ export function createManualItemRepository(
                 state.context.accountId,
                 family,
               );
-              if (json(fieldsFor(saved, projected, family)) !== fieldsText)
+              if (
+                json(
+                  fieldsFor(
+                    saved,
+                    projected,
+                    family,
+                    family === "P3" && draft.mode === "EDIT",
+                  ),
+                ) !== fieldsText
+              )
                 throw new Error("MANUAL_PLAN_PROJECTION_MISMATCH");
               await assertAccountRequestContext(state.context, account);
               return {
