@@ -1,0 +1,57 @@
+{
+  "kind": "IDENTITY_AND_EXPECTED_ASSERTION_REFERENCE_NOT_SERVER_DTO",
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "accounts": {
+    "A": {
+      "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "personId": "b90c34ba-96d7-4b64-874a-b4f5525d64d8",
+      "roleMeaning": "Existing Owner/Item creator reference; not fresh role proof"
+    },
+    "B": {
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "personId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+      "roleMeaning": "Existing linked member reference; current normal Session/authorization must be independently revalidated"
+    }
+  },
+  "itemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+  "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+  "receiptId": "4402369b-cf16-4ef3-8387-ae6baa15a04f",
+  "receiptSha256": "ac43531191a2af12515068a58b72beaba9837c201d74223b06ff61d59561fc43",
+  "hostOutcome": "APPLIED_VALIDATED",
+  "expectedItemAssertions": {
+    "title": "Synthetic shoreline safety briefing \u2014 6 Nov",
+    "description": "Independent synthetic group safety briefing for the next travel day. Discuss meeting-point safety and buddy check-in. This event is not the earlier 4 Nov Shared P1 smoke fixture and does not replace or retry it. No booking, ticket, document or ledger.",
+    "date": "2026-11-06",
+    "family": "P1",
+    "visibility": "GROUP",
+    "participation": "WHOLE_GROUP"
+  },
+  "actualServerDto": null,
+  "currentServerRevision": null,
+  "revisionPolicy": "Capture actual fresh normal server manifest/Item revision in the authorized Native run. Never hardcode1 or invent revision/epoch/accessRevision from report or receipt ID.",
+  "proofRefs": [
+    {
+      "commit": "5fee89da",
+      "path": "docs/ops/auth-c04-distinct-p1-e2e-20261105/EVIDENCE.json"
+    },
+    {
+      "commit": "75978389",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "docs/ops/auth-c04-distinct-p1-e2e-20261105/PARENT_VERIFICATION.json"
+    }
+  ],
+  "limit": "Raw FULL receipt and collection bytes were not retained; this object cannot be passed as CoreReadRecord, manifest, TripDiscoverySummary, receipt or Repository.refresh input.",
+  "hostAuthority": "CONSUMED_CLOSED_NO_REUSE",
+  "oldUnknownsFrozen": [
+    "f5e13639-4240-4817-bf43-c60a1ea46361",
+    "4028b673-9032-41c8-807e-c7d3592eae93"
+  ],
+  "newOperationReplayAllowed": false,
+  "hostSessionOrTokenAvailable": false,
+  "nativeContext": "Native owner must supply a lawful current B or verified empty QA context; no Native session assumed from Host proof"
+}

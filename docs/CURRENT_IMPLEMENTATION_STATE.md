@@ -2,22 +2,20 @@
 
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 
-**INTENTIONAL_STOP — Owner day-close, 4 November NZDT.** No automatic business
-continuation tonight. Own Sessions/receiver/attempt lock released; no Hosted window,
-device or timer held. Resume: docs/ops/auth-day-close-20261104/DAY_CLOSE.json.
-Owner-released single overtime preparation is now complete and stopped: distinct
-P1 next-day packet,23 focused tests/scoped types/lint PASS, all live commands NOT_SENT.
-Cursor: docs/ops/auth-day-close-20261104/OVERTIME_RESUME_CURSOR.json.
-Remaining: current exact reviewed execution authority, not a new installation.
-5 November bounded R1 repair: existing qualifier now rechecked before B Session
-and before B collection. Two expiry regressions RED→GREEN plus retained valid path,
-scoped types/lint PASS; baseline23 reused. INTENTIONAL_STOP pending MC-routed
-delta review/current exact execution qualification was subsequently received;
-new41e8 is now APPLIED under the single approved subagent execution below.
-Cursor: docs/ops/auth-c04-distinct-p1-next-day-20261104/r1-expiry-repair-20261105/RESUME_CURSOR.json.
- Read this first; follow only
-this slice's code/evidence. Historical handoffs are preserved in Git71da1578 and
-the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.
+**IN_PROGRESS — Owner restart5 November; AUTH-C04 remains Primary.**
+One fixed child `/root/auth_distinct_p1_e2e_20261105` completed local consumption
+plan `AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01`, with no Auth code delta or live
+activity. Original discovery/Reader/Repository, e315/32722 and F02 are reused.
+Current unique gap: Native must supply lawful B or proven-empty QA context and
+fixed complete build/device/current normal B discovery/pull/cold-read qualification.
+Planned14750/visionemptycurrent is Guest-only, not a B target; Guest P3 is preserved
+and unsupportedAdoption remains blocked. Empty14674 My Trips proves no DB emptiness.
+
+Plan/cursor: `docs/ops/auth-c04-sync-c02-native-consume-20261105/`.
+Parent request `AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01` is pending.
+Auth child is WAITING for that specific handoff, not running a background loop.
+The prior Host41e8 authority is consumed/closed; no current Token can be borrowed.
+No write/OTP/device authority follows from this local plan. Oldf5e/4028 stay UNKNOWN.
 
 ## Latest actual Golden Slice
 
@@ -61,7 +59,7 @@ Fixed evidence71da1578:
 `docs/ops/auth-c04-20261103/normal-member-read-20261104/ACTUAL_OUTCOME.json`,
 normal Auth logs, exact HTTP metadata, operator Review and Root2 readback.
 
-## Latest continuation: first normal P1 failure
+## Historical first normal P1 failure and repaired guard
 
 Candidate d5839d73 adds DEV-only existing normal Owner Core transport fixture runner,
 6 focused tests/typecheck/lint and independent Review PASS. A used one normal OTP,
@@ -147,32 +145,21 @@ and `recovery-timeout-20261103`; do not rerun them without a changed failure.
 
 ## Next approved slices / concrete dependencies
 
-1. **Shared/private Item + Native cold read.** Request
-   AUTH-C04-NATIVE-ITEM-COLD-FIXTURE-20261104-01 asks Native for the existing normal
-   OwnerA ManualP1/QA producer: one B-readable SharedItem and one A-private Item,
-   same synthetic Trip. Reuse current Form/Core Save and visibility/participation
-   contracts; do not build a Form or use admin SQL. First verify the existing
-   Owner capability. If PRIVATE UI is unavailable, request its existing typed
-   QA producer rather than add a new Form feature. No fixture has been created.
-2. **Native consumption.** Native confirmed current normal Discovery/Pull ports
-   `refreshAccountTripReads()` / `refreshTripFromCloud(tripId)`, verified at4bafb.
-   Existing LocalTripWorkspace/scoped roster/TripMembersSheet and account fences
-   are reused. Core qualification and Auth GET PASS are now satisfied. iPadQA146
-   belongs to LaneC's current mixed/preview claim; wait actual release. AD5 and
-   Vision D473 are not available for takeover. Record in
-   `after-fix-fresh-invite-qa/NATIVE_COLD_READ_READINESS.json`.
-3. **Formal Member Revoke.** Root1 gap return10e35b2e:66497/67e374 remain unmounted
-   candidates, without formal v2 producer/atomic PG/receipt/access-loss delivery.
-   Auth packet `docs/ops/auth-c04-member-revoke-packet-20261104/` supplies one actual
-   A/B Person/Account, observed epoch4907c5b0…/revision4/accessRevision4, explicit
-   cache/recovery/join-revoke requirements and independent Review. Metadata is not
-   execution authority; fresh normal Owner/Core reference is mandatory before any
-   submission. Current policy is valid linked role=owner only, not creator/admin/
-   Organizer fallback; preserve Person/link/role/participation/history. Reuse v2
-   receipt/hash domains. Do not invent after=5 or map Auth revision to Core.
-   Root1 owns canonical implementation; exact protected install belongs to Root2.
-   Generic404/503 is not revocation proof. Native must receive an authoritative
-   B-scoped loss observation and use its own context plus actual Core revision.
+1. **Normal Native B read/cold.** Shared Item1a0d7aa8… already exists from
+   approved41e8 APPLIED, receipt4402369b…; do not create/replay fixtures. Native
+   normal My Trips discovery must prove entry before known-Trip collection pull.
+   Source supports linked member discovery and original accepted Repository;
+   actual Native discovery/cold remains NOT_RUN. Use the local plan above.
+2. **Current Native qualification.** Native solely owns downstream/reader/UI/
+   Startup/SQLite; Auth has no shared-file write handoff. Fixed full B-target
+   build/device/initialprincipal/assets/current normal read eligibility is missing.
+   Guest-only planned14750 is excluded. No clearing GuestP3, skipping handoff,
+   Session/DB copying or new device. Same-B cold is first; A/B switch execution
+   and private fixture negatives need their own current scope, not new code.
+3. **Formal Member Revoke.** Core main29d77, Auth e315 and Native32722 are source
+   integrated. Hosted protected install/runtime/real revoke acceptance remains
+   separate; not a normal positive read prerequisite. Generic404/503 is not loss
+   proof; actual B-self observation and actual accessRevision remain mandatory.
 4. **C03/Profile.** Exact contract packet2394b935 accepted by Root1. Auth now
    has a reviewed default-closed Runtime + exact optional Profile route candidate
    (8 changed tests/typecheck/lint and independent8/8 PASS). Only16 shared app
@@ -188,8 +175,8 @@ and `recovery-timeout-20261103`; do not rerun them without a changed failure.
    integration.
    Private storage c84671f4 still needs separate protected qualification; Nickname
    self-Person CAS Port and AKA lifecycle remain explicit gaps. Bootstrap/Claim
-   authority is not Profile update. Member Revoke is CONTRACT_READY_FOR_CORE_IMPLEMENTATION,
-   not command/atomic-PG implementation READY.
+   authority is not Profile update. Member Revoke source implementation is integrated; its Hosted
+   qualification remains separate and is not this read slice's prerequisite.
    `docs/AUTH_CLIENT_INTEGRATION_GAPS.md` is the compact outstanding interface list.
 
 Latest actual MC GET_NEXT_WORK D returned PrimaryC04, nextnull/candidates[]; no

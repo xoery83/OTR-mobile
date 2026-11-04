@@ -1,0 +1,27 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c04-sync-c02-native-consume-started-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-04T18:47:03.514676+00:00",
+      "actual_started_at": "2026-11-04T18:47:03.514676+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "owner_slice_id": "auth-c04-shared-trip-native-consumer",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "Actual local consumer plan prepared from sealed Host fixture and existing Discovery/Reader/Repository source; no new DTO or code model",
+      "next_action": "Return precise B-only normal discovery/pull/cold scope plan to parent; await Native-owned current qualification; do not reuse consumed Host authority",
+      "task_id": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01"
+    }
+  ],
+  "local_deliverable": "docs/ops/auth-c04-sync-c02-native-consume-20261105/NORMAL_READ_COLD_PLAN.json",
+  "qualification": "LOCAL_PREP_ONLY_NO_LIVE_OR_PACKAGE_ACCEPTANCE",
+  "local_result": "LOCAL_CONSUMER_PLAN_READY_NO_AUTH_CODE_DELTA",
+  "evidence": "docs/ops/auth-c04-sync-c02-native-consume-20261105/EVIDENCE.json",
+  "current_unique_gap": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
+  "scope_acceptance": "SOURCE_PLAN_ONLY; no Hosted/Device/OwnerUX upgrade",
+  "secondary_consumer_package_id": "SYNC-C02"
+}

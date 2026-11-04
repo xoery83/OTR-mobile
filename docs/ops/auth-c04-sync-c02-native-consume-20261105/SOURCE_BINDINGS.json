@@ -1,0 +1,79 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "bindings": [
+    {
+      "commit": "32722f7a43e4cd6f1ec57ede0a542a74872be8f1",
+      "path": "src/data/sync/tripDownstreamCoordinator.ts",
+      "sha256": "e69ccd640badf7943d73d430dd0f973c85e55969d3a6a18740b9993dd84c18f3",
+      "kind": "Previously integrated formal source reused; no test rerun"
+    },
+    {
+      "commit": "e3154b9f3938dffd59b468b1d7bb14cebd4b5251",
+      "path": "src/data/api/memberAccessLossAdapter.ts",
+      "sha256": "510331fac1f7fce3a457572ccea41d433330eca20c02e7d7ed8998da47c50cc3",
+      "kind": "Previously integrated formal source reused; no test rerun"
+    },
+    {
+      "commit": "3c20ad0cca535b455127beaa10fbe8fbfc10ee52",
+      "path": "src/features/auth/accountTripRestorePresentation.ts",
+      "sha256": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce",
+      "kind": "Previously integrated formal source reused; no test rerun"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "src/data/sync/tripDiscoveryTransport.ts",
+      "sha256": "f7200d7f444abaf8dddb8a39928d6613f93136c5f4d7509101fd4514add72f9d",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "src/data/repositories/tripDiscoveryRepository.ts",
+      "sha256": "91d8a44e4f7d1f15a338217b6da484d0fe4a56961a41ef00c6983a915d2a6994",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "src/data/repositories/tripCoreV2Repository.ts",
+      "sha256": "12979a752f03bdfaeb0cd0d75a0ebac49666221d14c6affaca855b0758c8ee2b",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "src/data/repositories/tripDayFeedRepository.ts",
+      "sha256": "4df2eea9381a2b274f6ad0122880fefe740ac44463e21b941198b0fbe77cfa7b",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "src/domain/trip/tripCoreV2P1P3DayFeed.ts",
+      "sha256": "9eb3c671decf5287c95af2cd1e19d78ddb23dd0ef3f8561433fdd87707ef529d",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "src/domain/trip/tripCoreV2P6DayFeed.ts",
+      "sha256": "31bd81650e538ff91bb1f93cc33951eccac0a4277b7566e86a2d8f567909e692",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "backend/src/tripDiscovery.ts",
+      "sha256": "2ac9c11f61bf3d1cb89446e58d701fc2a4a8e8fba2e2919ddd158da4180d5d43",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "backend/src/supabaseGateway.ts",
+      "sha256": "66939cd89b4b81b1bec8ab6a044a34ded604ae930092d7bae5a81706b1923b30",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    },
+    {
+      "commit": "0dd51130",
+      "path": "backend/src/app.ts",
+      "sha256": "1a16c5570b7aec0cd608d3161191814b06307130edc8b56ce9e0b42a85021942",
+      "kind": "Task-relevant existing source contract inspected; not current Hosted/build proof"
+    }
+  ],
+  "sourceCodeChanges": 0,
+  "sharedFilesWritten": 0
+}

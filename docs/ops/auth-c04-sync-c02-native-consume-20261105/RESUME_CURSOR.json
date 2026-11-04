@@ -1,0 +1,64 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "primary": "AUTH-C04",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "WAITING_NATIVE_B_CONTEXT_AND_CURRENT_READ_QUALIFICATION",
+  "recordedAt": "2026-11-04T18:47:03.514676+00:00",
+  "actualStartedRecordPhase": "Local plan artifact drafting after read-only source/context inspection",
+  "codeDelta": false,
+  "goldenSlice": "B normal App login or lawful own cached B restore -> My Trips normal discovery -> existing shared Trip -> original Reader/Repository -> 6Nov shared P1 -> same B App restart/offline accepted-cache readback",
+  "uniqueGap": {
+    "id": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
+    "requestId": "AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01",
+    "DRI": "Native parent owns source/build/device/normal UI execution; Root2 supplies current normal reader/resource qualification where needed; Auth parent coordinates identity contract",
+    "release": "Native supplies an existing qualified B or proven-empty lawful QA context, a fixed full Native+JS build/device claim and current normal B login/restore/discovery/pull/restart/read-only qualification. Planned14750 Guest-only bundle is excluded; UI empty14674 is not emptiness proof. Root2 request remains pending these Native fields.",
+    "notMissing": "No Auth DTO/adapter/discovery/Repository port missing in inspected source. Existing source supports linked-member discovery. Need actual B context/build/device and current normal-read qualification, not Revoke/Import/Profile Cloud/d136 reinstallation.",
+    "authority": "Not granted by this plan or consumed Host grant"
+  },
+  "nextOwner": "Parent coordinates Native/Root2 return; child does not cross-Lane message",
+  "oldAuthority": "41e8 host case consumed/closed; no reuse",
+  "newOperation": "41e8 APPLIED; ATTEMPT retained; no resubmit",
+  "historicalUnknowns": [
+    "f5e13639-4240-4817-bf43-c60a1ea46361",
+    "4028b673-9032-41c8-807e-c7d3592eae93"
+  ],
+  "autoResumeLiveActions": false,
+  "resourcesHeld": false,
+  "liveActions": 0,
+  "testsRun": 0,
+  "nativeReportedBuildContext": {
+    "source": "Necessary Native parent fact relayed by Auth parent; not independently built/installed by Auth",
+    "candidate": "0e7a39da",
+    "plannedBuild": "14750",
+    "bundleId": "com.xoery.otrmobile.visionemptycurrent",
+    "purpose": "Guest-only QA; no B OTP/Google OAuth qualification",
+    "B_cloudConsumerEligible": false,
+    "old14674EmptyMyTrips": "Not proof of empty SQLite/Guest principal/assets",
+    "existingGuestP3": "Retain saved P3; unsupported Adoption continues to block; never clear or bypass for login"
+  },
+  "initialPrincipalAssetsRequirement": {
+    "requiredEvidence": [
+      "Committed principal kind/account/localId via existing lawful diagnostics or qualified Native context, not UI empty-list inference",
+      "Existing Guest asset/draft inventory status, including saved or live P3",
+      "Owned fixed full Native+JS build and device claim; no install/reset/Session-copy authority implied by build upgrade"
+    ],
+    "allowedContextOptions": [
+      "Native-owned already-qualified B context: restore its own valid cached Session without forced network reauth",
+      "An existing QA context proven lawfully empty via existing Guest handoff/empty-inventory qualification; normal B login only if current read/login scope permits"
+    ],
+    "blockedContext": "Guest assets/drafts including P3 must be preserved. A read-only B slice does not authorize adoption, clearing Guest data, bypassing handoff or manufacturing an Account. Existing Guest-P3 Build14750 is not this target.",
+    "ifUnavailable": "Return exact context/qualification gap; do not create a new device or reset another QA device."
+  },
+  "result": "LOCAL_CONSUMER_PLAN_READY_NO_AUTH_CODE_DELTA",
+  "preparedAt": "2026-11-04T18:50:29.883369+00:00",
+  "qualificationLayers": {
+    "SOURCE": "Existing formal identity/discovery/pull/recovery source contract supported; Native current B-target fixed build not yet supplied",
+    "HOSTED": "Prior scoped A-write/Receipt/A+B Core read PASS reused; B normal Discovery in this Native case NOT_RUN",
+    "CONSUMER": "LOCAL_PLAN_READY; actual Native accepted-cache/cold consumer NOT_RUN",
+    "DEVICE": "B-context/build/device qualification PENDING; Native planned14750 is Guest-only and NOT_ELIGIBLE_FOR_THIS_B_SLICE",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "evidence": "docs/ops/auth-c04-sync-c02-native-consume-20261105/EVIDENCE.json",
+  "noIndependentLegalCodeDelta": true,
+  "resumeTrigger": "Parent supplies necessary Native fixed B/empty context and current read/build/device qualification, or an exact new local Auth delta. No busy loop."
+}

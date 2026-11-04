@@ -1,0 +1,160 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "primary": "AUTH-C04",
+  "secondaryConsumerPackage": "SYNC-C02",
+  "goldenSlice": "B normal App login or lawful own cached B restore -> My Trips normal discovery -> existing shared Trip -> original Reader/Repository -> 6Nov shared P1 -> same B App restart/offline accepted-cache readback",
+  "status": "LOCAL_PLAN_READY_WAITING_NATIVE_B_CONTEXT_AND_READ_QUALIFICATION",
+  "codeDelta": "NONE_FOUND_IN_AUTH_OWNING_PORTS; no new adapter/repository/discovery/sync/permission system",
+  "writer": {
+    "nativeSharedFiles": "Native parent sole coordinator Writer; no handoff to Auth",
+    "nativeExecutionChild": "/root/native_formal_qa_20261105",
+    "auth": "Identity/accepted-member/reference/restore safety contract and local plan only"
+  },
+  "existingPorts": [
+    {
+      "layer": "Discovery entry",
+      "port": "refreshAccountTripReads()/refreshForegroundTripReads() -> createTripDiscoveryTransport.page",
+      "route": "GET /v2/trips?limit=25[&cursor=...]",
+      "ownership": "Native trigger; existing Backend normal Account boundary/gateway",
+      "sourceSupport": "Backend gateway includes journey_members user_id + status=linked, canReadTrip checks normal current membership; existing formal source support found. No new port needed."
+    },
+    {
+      "layer": "Discovery cache",
+      "port": "refreshTripDiscovery -> createTripDiscoveryRepository.replaceSnapshot/readMerged",
+      "contract": "Complete bounded page set + current Account/generation fence; account-scoped SQLite; remoteListed summary is not data authorization or local creator."
+    },
+    {
+      "layer": "Selected Trip read",
+      "port": "refreshTripFromCloud(tripId) -> refreshCoreDownstream -> createCoreV2Transport.collection",
+      "route": "GET /v2/trips/:tripId/core/collection",
+      "contract": "Normal current actor, full manifest/schema/hash/scope/binding validation; permission from existing reader, not known UUID or historical join."
+    },
+    {
+      "layer": "Persistence/recovery",
+      "port": "createTripCoreV2Repository.refresh/acceptedSnapshot/captureContext and existing Day/Item readers",
+      "contract": "Existing atomic SQLite Account gate/certificate/accessRevision/hash and account-partitioned mirrors; cold read through original Repository; no receipt/SQLite copying or synthetic localTripContainer for B."
+    },
+    {
+      "layer": "People",
+      "port": "readAcceptedPeopleConnections(context) and existing Native People Cache Read Port",
+      "contract": "Exact Account/Trip/Person scope, connected + isCurrentActor from authorized binding, never name/email equality."
+    },
+    {
+      "layer": "Loss condition",
+      "port": "e315 self access-loss adapter +32722 Native caller",
+      "contract": "Real403/404 only starts B-self formal observation. Only valid ACCESS_REVOKED may call own Repository.revoke(actual accessRevision); generic404/503/network never optimistic revoke or empty successful sync."
+    }
+  ],
+  "executionStages": [
+    {
+      "step": 0,
+      "owner": "Native + current qualification provider",
+      "assertions": [
+        "Fixed current complete Native+JS build, device owner and approved normal B read-only identity route are qualified before any login/device action",
+        "Normal rollout isGeneralAccountCloudSyncEnabled eligibility is evidenced, not changed by Auth; current principal must match own normal Session",
+        "No new business/source/provider dispatch or old UNKNOWN resubmit during this read slice; preserve queues; do not reset or copy devices/DB/Keychain",
+        "Actual current reader/resource/time/inbox scope provided; old10-minute Host authority and normal Host Sessions cannot be reused"
+      ],
+      "initialPrincipalAndAssets": {
+        "requiredEvidence": [
+          "Committed principal kind/account/localId via existing lawful diagnostics or qualified Native context, not UI empty-list inference",
+          "Existing Guest asset/draft inventory status, including saved or live P3",
+          "Owned fixed full Native+JS build and device claim; no install/reset/Session-copy authority implied by build upgrade"
+        ],
+        "allowedContextOptions": [
+          "Native-owned already-qualified B context: restore its own valid cached Session without forced network reauth",
+          "An existing QA context proven lawfully empty via existing Guest handoff/empty-inventory qualification; normal B login only if current read/login scope permits"
+        ],
+        "blockedContext": "Guest assets/drafts including P3 must be preserved. A read-only B slice does not authorize adoption, clearing Guest data, bypassing handoff or manufacturing an Account. Existing Guest-P3 Build14750 is not this target.",
+        "ifUnavailable": "Return exact context/qualification gap; do not create a new device or reset another QA device."
+      }
+    },
+    {
+      "step": 1,
+      "owner": "Native",
+      "action": "Normal B App login if needed, or lawful own cached B Session restore, using existing Auth repository; no forced network reauthentication at offline launch",
+      "assertions": [
+        "Current accountId=B from lawful own identity/session authority; normal background validation and Reader checks establish current cloud permission, never display-name/email-only matching",
+        "No imported Host Session or other QA device tokens"
+      ]
+    },
+    {
+      "step": 2,
+      "owner": "Native",
+      "action": "Enter My Trips through the normal App; run original discovery path and select the returned Trip",
+      "assertions": [
+        "Actual normal B GET /v2/trips contains exact TripId with bounded validated pages/cache apply",
+        "Record discovery request/status and matching current Account scope; cachedAt unknown/restoring is not confirmed-empty",
+        "Known Trip UUID/deep-link/collection direct-read does not prove normal entry reachability; if Trip missing, stop at discovery first failure"
+      ]
+    },
+    {
+      "step": 3,
+      "owner": "Native",
+      "action": "Select shared Trip and normal downstream pull; persist fresh server DTO via original Repository",
+      "assertions": [
+        "Formal validated collection actor B/Trip/exact active B Person binding",
+        "Capture actual certificate epoch/revision/accessRevision/binding/manifest hashes; do not insert reported values",
+        "Read correct Item ID, owner A, GROUP visibility, P1 family, expected frozen title/description/date6Nov and whole-group participation",
+        "GROUP visibility/whole-group participation does not grant B edit authority; this slice performs no B write"
+      ]
+    },
+    {
+      "step": 4,
+      "owner": "Native",
+      "action": "With accepted read persisted, terminate/restart only owned App normally; same B restores locally, then reopen same Trip/6Nov Item",
+      "assertions": [
+        "No uninstall/reset/new simulator/DB or Keychain copying",
+        "Valid cached Session permits offline launch, no network re-auth gate; background refresh failure pauses sync",
+        "Capture a fresh process AccountRequestContext; runtime generation may reset and must not be serialized/reused as a durable identity",
+        "Compare actual persisted AccountB scope/Item ID/fields/certificate from step3; offline cold read has no injected response or forged accepted state",
+        "On network recovery use original silent validation/pull; legitimate newer server revision may advance, never require hardcoded revision or +1"
+      ]
+    },
+    {
+      "step": 5,
+      "owner": "Native",
+      "action": "Own scope signout/cleanup and release according to the current Native read-only qualification",
+      "assertions": [
+        "No global logout/admin revoke/Trip or Item deletion/ATTEMPT deletion",
+        "Keep original operation/receipts/UNKNOWN identities intact; no auto follow-up write"
+      ]
+    }
+  ],
+  "accountSwitchContract": {
+    "actualExecution": "SEPARATE_CURRENT_QUALIFICATION_NOT_PRECONDITION_FOR_B_ONLY_GOLDEN",
+    "scope": "If later authorized A/B switch test: cancel/retire old generation, reject stale old-account responses before apply/notify, reopen fresh current-account cache and actor binding",
+    "criticalDistinction": "Both A and B legitimately read this same shared Item. Shared Item presence after switching is not a privacy failure, and matching content is not proof of correct scope. Check actual Account/certificate/Person binding and private-cache boundaries.",
+    "privateNegative": "No qualified private fixture exists in this scope. Do not manufacture private-isolation PASS or create a private Item to fill this gap.",
+    "GuestBoundary": "If switch uses Guest intermediate, preserve Guest local identity/data rules; no automatic formal Session/account adoption or cloud qualification."
+  },
+  "firstRealFailure": "NOT_OBSERVED_FOR_NATIVE; normal B discovery + original Repository/device cold path has not been executed under current qualification",
+  "uniqueGap": {
+    "id": "NATIVE_B_CONTEXT_AND_DEVICE_READ_QUALIFICATION",
+    "requestId": "AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01",
+    "DRI": "Native parent owns source/build/device/normal UI execution; Root2 supplies current normal reader/resource qualification where needed; Auth parent coordinates identity contract",
+    "release": "Native supplies an existing qualified B or proven-empty lawful QA context, a fixed full Native+JS build/device claim and current normal B login/restore/discovery/pull/restart/read-only qualification. Planned14750 Guest-only bundle is excluded; UI empty14674 is not emptiness proof. Root2 request remains pending these Native fields.",
+    "notMissing": "No Auth DTO/adapter/discovery/Repository port missing in inspected source. Existing source supports linked-member discovery. Need actual B context/build/device and current normal-read qualification, not Revoke/Import/Profile Cloud/d136 reinstallation.",
+    "authority": "Not granted by this plan or consumed Host grant"
+  },
+  "qualificationLayers": {
+    "SOURCE": "Existing formal identity/discovery/pull/recovery source contract supported; Native current B-target fixed build not yet supplied",
+    "HOSTED": "Prior scoped A-write/Receipt/A+B Core read PASS reused; B normal Discovery in this Native case NOT_RUN",
+    "CONSUMER": "LOCAL_PLAN_READY; actual Native accepted-cache/cold consumer NOT_RUN",
+    "DEVICE": "B-context/build/device qualification PENDING; Native planned14750 is Guest-only and NOT_ELIGIBLE_FOR_THIS_B_SLICE",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "liveActionsThisTask": 0,
+  "testsThisTask": 0,
+  "reasonNoTests": "No product/source logic changed; reuse previously accepted tests and reviews. This plan is not a mock E2E PASS.",
+  "nativeReportedBuildContext": {
+    "source": "Necessary Native parent fact relayed by Auth parent; not independently built/installed by Auth",
+    "candidate": "0e7a39da",
+    "plannedBuild": "14750",
+    "bundleId": "com.xoery.otrmobile.visionemptycurrent",
+    "purpose": "Guest-only QA; no B OTP/Google OAuth qualification",
+    "B_cloudConsumerEligible": false,
+    "old14674EmptyMyTrips": "Not proof of empty SQLite/Guest principal/assets",
+    "existingGuestP3": "Retain saved P3; unsupported Adoption continues to block; never clear or bypass for login"
+  }
+}
