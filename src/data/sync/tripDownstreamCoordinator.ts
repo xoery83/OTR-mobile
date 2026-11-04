@@ -1,3 +1,5 @@
+import { ApiClientError } from "../api/client";
+import type { createMemberAccessLossAdapter } from "../api/memberAccessLossAdapter";
 import { coreUuid, coreRevision } from "@/domain/trip/tripCoreV2";
 import { AppState } from "react-native";
 import {
@@ -20,9 +22,24 @@ export async function refreshCoreDownstream(
   >,
   context: AccountRequestContext,
   transport: CoreReadTransport,
+  readAccessLoss?: ReturnType<typeof createMemberAccessLossAdapter>,
 ) {
   const before = await core.acceptedSnapshot(context);
-  const result = await transport.collection(context);
+  let result;
+  try {
+    result = await transport.collection(context);
+  } catch (error) {
+    if (
+      readAccessLoss &&
+      error instanceof ApiClientError &&
+      error.kind === "http" &&
+      (error.status === 403 || error.status === 404)
+    ) {
+      const loss = await readAccessLoss(context);
+      if (loss.status === "ACCESS_REVOKED") return true;
+    }
+    throw error;
+  }
   const m = result.manifest,
     c = before?.certificate;
   if (
@@ -314,11 +331,13 @@ async function nativeCoordinator() {
         { createTripCoreV2Repository },
         { createCoreV2Transport },
         { tripCoreSha256Hex },
+        { createMemberAccessLossAdapter },
       ] = await Promise.all([
         import("../db/database"),
         import("../repositories/tripCoreV2Repository"),
         import("../api/tripCoreV2Transport"),
         import("../repositories/tripCoreSha256"),
+        import("../api/memberAccessLossAdapter"),
       ]);
       const core = createTripCoreV2Repository(
         await readInitializedDatabase(),
@@ -330,6 +349,9 @@ async function nativeCoordinator() {
         core,
         context,
         createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+          timeoutMs: 20_000,
+        }),
+        createMemberAccessLossAdapter(requireAdoptedUserId, core, {
           timeoutMs: 20_000,
         }),
       );
