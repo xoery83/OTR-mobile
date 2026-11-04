@@ -17,6 +17,7 @@ import {
   recoverUniversalOriginalPlans,
 } from "./universalOriginalBatch";
 import { UTF8_TEXT_FILE_PROFILE } from "@/domain/capture/utf8TextFile";
+import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 async function setup(approved = false, mixedPdf = false) {
   const f = fixture(true, 73),
     q = f.request(3),
@@ -142,6 +143,18 @@ it("reads exactly existing Source pins after normal preparation and cold reopen 
     UTF8_TEXT_FILE_PROFILE,
     "OTR_SUBMITTED_TEXT_V1",
   ]);
+  expect(first.inputs.every((i) => !("sourceCommand" in i))).toBe(true);
+  const withCommands = await readUniversalOriginalPins(x.context, x.q.jobId, {
+    ...x.deps,
+    includeSourceCommands: true,
+  });
+  expect(withCommands.inputs.map((i) => i.sourceCommand)).toEqual(
+    prepared.inputs.map((i) => i.sourceCommand),
+  );
+  expect(withCommands.inputs.every((i) => i.bindingCas?.materialRevision === 1)).toBe(
+    true,
+  );
+  expect(x.changes()).toBe(before);
   expect(x.f.sql.prepare("SELECT count(*) AS n FROM trip_source_runs").get()!.n).toBe(0);
 });
 it("account and Trip mismatches are rejected without a mutation", async () => {
@@ -290,4 +303,17 @@ it("prepares only existing text profiles in a mixed Batch and preserves the PDF 
   expect(await recoverUniversalOriginalPlans(x.context, x.q.jobId, x.deps)).toEqual(
     plans,
   );
+});
+it("reads approved retained PDF metadata without UTF8 decoding, preparing Source or generating IDs", async () => {
+  const x = await setup(false, true),
+    before = x.changes();
+  const pins = await readUniversalOriginalPins(x.context, x.q.jobId, {
+    ...x.deps,
+    pendingPdfProfile: PDF_CAPTURE_ORIGINAL_PROFILE,
+  });
+  expect(pins.inputs).toHaveLength(3);
+  expect(pins.inputs[0].sourceState).toBe("SOURCE_OPERATION_NOT_PREPARED");
+  expect(pins.inputs[0].sourceCommandPin).toBeNull();
+  expect(x.changes()).toBe(before);
+  expect(JSON.stringify(pins)).not.toContain("typed secret phrase");
 });

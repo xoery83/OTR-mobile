@@ -1,0 +1,45 @@
+{
+  "requestId": "IMP-C01-NATIVE-SOURCE-PIN-EXPORT-20261104",
+  "status": "EXACT_SOURCE_CHECKS_PASS_BEFORE_REMOTE_PUBLISH",
+  "candidate": "1dc4a4d287516453d16a411adfe71247b71b41eb",
+  "finalReview": "667cf4c823d8feb2cf2f66d9672cfd4f8d204b0f",
+  "baseMain": "91e40d048e20c97a356b4bc906aaf712a6a4db7b",
+  "files": {
+    "src/data/operations/captureMixedQaManifest.test.ts": "f82ec9d0e73313d5db734058ac4a5cb58c41717f6b18a917dc7f335ec8d5d48d",
+    "src/data/operations/captureMixedQaManifest.ts": "959394046860af0f07f5b0a3e7cab31e7910540ea1e02ce5bc053d3d949d4a4f",
+    "src/data/operations/defaultUniversalOriginalSource.ts": "ec52dac34a2fc065798b6ddc867f78702a428db7934194520d33da185a215d8b",
+    "src/data/operations/universalCapturePins.test.ts": "c1312f758fe1d04b2ba05ccf5df678ec3161705944b74ac3f82e5df5cc9d6d20",
+    "src/data/operations/universalOriginalBatch.ts": "72331bddce97706aa43d636ea26b20a5c915606107610984a96cdcb08be0a2fa",
+    "src/data/repositories/capturePngSource.test.ts": "9d198d74bdc0d8d07a799ebe24e64ead636ddc4360f45c0196147716ba87d25f",
+    "src/data/repositories/captureSourceAdmissionRepository.ts": "316322b9c66c4aee2b6512969fffb62ac26b9e993080ea9034fa46608bc5eb9f"
+  },
+  "owningCommits": [
+    "ffc5d006",
+    "5474962a",
+    "08341afe",
+    "6353b701"
+  ],
+  "root1Review": "NO_BLOCKER narrow exact-scope/dependencies/read-only/FILE-PNG and typed assignment CAS check; preserve default body omission and real Source proof boundary",
+  "actualMainTests": "4 suites48 PASS",
+  "compiler": "PASS excluding only unchanged OAuth browser entry lacking installed react-dom/client declarations; no full typecheck PASS claimed",
+  "lint": "PASS scoped7",
+  "diffCheck": "PASS",
+  "independentEvidence": "Final Native narrow_version_review fixed667cf4c8 2s30PASS reused, prior0e9 review retained",
+  "exportBoundary": "Only fixed Synthetic QA Actor/Trip/Batch/Job/3 original inputs and QA build marker; ShowDetails retained read with current/generation checks; no UUID generation/prepare/transport",
+  "cas": "Original intake1 retained; current2 only proven sameTripPREPARED/ADMITTED completebinding/queue/pin/command+bindingCAS2; foreign/current3/missing/unknown reject",
+  "formatBoundary": "Capture FILE remains FILE; existing Source IMAGE mapping for PNG only when existing PNG profile enabled; proposals are not Server Accepted proof",
+  "untouched": [
+    "CaptureProgress/UI/navigation",
+    "Root2 Hosted/SQL/runtime authority",
+    "P3/P4/P6 edit consumers",
+    "Auth Profile defaultclosure",
+    "client UUID correlation",
+    "Trip currency fix",
+    "existing Source IDs/materials/Queue/UNKNOWNs"
+  ],
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "sourcePosts": 0,
+  "providerCalls": 0,
+  "nativeHostE2E": "NOT_RUN, LaneC/Native/Root2 retain execution and deadline qualification"
+}

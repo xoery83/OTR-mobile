@@ -1,3 +1,7 @@
+## Exact mixed QA Source pin export — 4 November 2026
+
+Native `1dc4a4d2` + independent `667cf4c8` combine the reviewed LaneC PNG Files mapping and retained pin reader with fixed-QA-only ShowDetails export. No new ID/Prepare/transport; default reader omits commands. Intake1/current2 is accepted only with proven same-Trip assignment and complete retained CAS/binding. Actual-main4 suites48 PASS, scoped lint/compiler pass with unchanged OAuth browser missing-type exception. Device export/normal preparation/Hosted proof remain NOT_RUN; proposals are not Source receipts. Receipt: `docs/ops/native-source-pin-export-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Reopened Trip Edit currency summary — 4 November 2026
 
 Native `001acce1` / independent `2e2ffc8d`: Edit mount and Currency Back reuse the existing setup Repository reader. Current Account generation/Trip/lifecycle and latest-read ticket reject late responses; configured currency is not rewritten. Actual-main2 suites35 PASS, UIguard PASS, scoped lint0errors/13 existing test warnings, compiler passes with unchanged OAuth missing-type exception. Device/Vision recheck remains pending. Receipt: `docs/ops/native-currency-summary-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.

@@ -5,21 +5,23 @@ import { fixture, sha256, now } from "./__fixtures__/captureBatchAssessment";
 import { createCaptureSourceAdmissionRepository } from "./captureSourceAdmissionRepository";
 import {
   prepareUniversalOriginalBatch,
+  readUniversalOriginalPins,
   recoverUniversalOriginalPlans,
 } from "../operations/universalOriginalBatch";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import { createPendingPngOriginalIntakeVerifier } from "@/native/pendingPngOriginal";
 
-async function setup(acquisitionSource: "photos" | "camera" = "photos") {
+async function setup(acquisitionSource: "photos" | "camera" | "files" = "photos") {
   const f = fixture(true, 75),
     r = f.request(),
     trip = randomUUID();
   r.context.tripPrior = { id: trip, origin: "PRIOR", observedAt: now() };
   Object.assign(r.inputs[0], {
-    kind: "IMAGE",
+    kind: acquisitionSource === "files" ? "FILE" : "IMAGE",
     acquisitionSource,
     declaredContentType: "image/png",
+    ...(acquisitionSource === "files" ? { originalFilename: "retained.png" } : {}),
   });
   // Intentionally only a PNG signature: this is not a qualified/decoded PNG fixture.
   const bytes = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
@@ -54,7 +56,7 @@ async function setup(acquisitionSource: "photos" | "camera" = "photos") {
   });
   return { f, r, trip, bytes, job, repo, context, deps };
 }
-it.each(["photos", "camera"] as const)(
+it.each(["photos", "camera", "files"] as const)(
   "single PNG from %s is closed by omission; pending intake retains existing IDs and bytes",
   async (source) => {
     const x = await setup(source);
@@ -76,6 +78,15 @@ it.each(["photos", "camera"] as const)(
       )
       .get()!;
     const command = JSON.parse(row.payload_json as string).source_command;
+    const proposal = await readUniversalOriginalPins(x.context, x.r.jobId, {
+      ...x.deps(true),
+      includeSourceCommands: true,
+    });
+    expect(proposal.inputs[0].kind).toBe(source === "files" ? "FILE" : "IMAGE");
+    expect(proposal.inputs[0].sourceCommand).toEqual(command);
+    expect(proposal.inputs[0].sourceCommandPin?.profile).toBe(
+      PNG_CAPTURE_ORIGINAL_PROFILE,
+    );
     expect(command.payload.original).toMatchObject({
       material_kind: "BINARY",
       mime_type: "image/png",

@@ -1,0 +1,48 @@
+{
+  "status": "NO_BLOCKER_WITH_EXACT_LANEC_DEPENDENCIES",
+  "reviewer": "narrow_version_review",
+  "request": "IMP-C01-NATIVE-SOURCE-PIN-EXPORT-20261104",
+  "nativeCommit": "0e9da6a96477ff2a68b73cc88c81f1ab9a402f43",
+  "nativeHashes": {
+    "src/data/operations/captureMixedQaManifest.ts": "961d58ac3d569140e465d468c2f3cb151fab7920de7b7ce1f6d76e7977c44d6f",
+    "src/data/operations/captureMixedQaManifest.test.ts": "aee9eab5345898792a9c610e739cdd6c206762a33ecaf93214dd92c27120a789"
+  },
+  "requiredOwningCommits": [
+    "ffc5d006",
+    "5474962a",
+    "08341afe"
+  ],
+  "owningWorkingTreeHashes": {
+    "src/data/operations/universalOriginalBatch.ts": "0446d474586a4c0910a8c9aa345b09d6f96a7b795e968691ad30fcceb73afb76",
+    "src/data/operations/universalCapturePins.test.ts": "c1312f758fe1d04b2ba05ccf5df678ec3161705944b74ac3f82e5df5cc9d6d20",
+    "src/data/operations/defaultUniversalOriginalSource.ts": "ec52dac34a2fc065798b6ddc867f78702a428db7934194520d33da185a215d8b",
+    "src/data/repositories/captureSourceAdmissionRepository.ts": "316322b9c66c4aee2b6512969fffb62ac26b9e993080ea9034fa46608bc5eb9f",
+    "src/data/repositories/capturePngSource.test.ts": "9d198d74bdc0d8d07a799ebe24e64ead636ddc4360f45c0196147716ba87d25f"
+  },
+  "integrationRequirement": "Native commit deliberately excludes Owning working-tree patches. Root1 must integrate exact approved LaneC leaves and Native leaves together; no standalone export-ready claim.",
+  "resolvedFindings": [
+    "Initial gate pins FILE/FILE/TEXT and original account/trip/batch/job/createdAt/inputIDs/hash/bytes/capture/payload/revisions.",
+    "Fresh owning DTO returns inputRevision/captureId/payloadId/captureRevision; exporter compares all four plus kind and material hashes. Missing or same-byte changed CAS fails closed before file construction/write."
+  ],
+  "checks": [
+    "Only existing ShowDetails read/export call; no new UI Prepare action.",
+    "Account/generation fences in normal owning context and after read retained; current-page callback rechecked after owning read and filesystem import.",
+    "Original Repository recovery is read-only retained queue lookup, not recoverUniversalOriginalPlans/prepare/run/transport; newId factory throws.",
+    "Full command is opt-in only for exact gated QA consumer. Default read pins exclude full command body; unprepared/null statuses remain explicit.",
+    "Capture FILE remains FILE for approved PNG; existing Source source_kind mapping uses IMAGE. No new format/parser/provider.",
+    "Export is local command proposal, never Server Accepted Source or Admission proof. Canonical command/identity comes from retained owning queue, no generated IDs."
+  ],
+  "validation": {
+    "independent": "2 suites20 PASS and git diff --check PASS",
+    "log": "/private/tmp/otr-source-pin-export-final-independent-review.log",
+    "reusedAuthor": "Combined4 suites38 PASS; scoped types over Native plus owning imported dependencies/lint/diff PASS per parent, not repeated broadly"
+  },
+  "reviewerChanges": "This JSON only; no source edits/commit/device/Hosted/Auth/Provider/queue mutations.",
+  "notClaimed": [
+    "Actual iPad export",
+    "Hosted Source acquisition",
+    "Paid Provider calls",
+    "Current backend Source permission",
+    "New preparation action or ID creation"
+  ]
+}

@@ -476,7 +476,7 @@ export function createCaptureSourceAdmissionRepository(
             dependencies.pendingPngProfile === PNG_CAPTURE_ORIGINAL_PROFILE &&
             proof.profileId === PNG_CAPTURE_ORIGINAL_PROFILE &&
             proof.mimeType === "image/png" &&
-            capture.kind === "IMAGE" &&
+            (capture.kind === "IMAGE" || capture.kind === "FILE") &&
             capture.declaredContentType === "image/png" &&
             bytes.byteLength <= 4194304) ||
           (plan.intent_kind === "NEW" &&

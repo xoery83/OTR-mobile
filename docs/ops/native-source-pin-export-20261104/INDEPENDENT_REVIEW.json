@@ -1,0 +1,41 @@
+{
+  "status": "NO_BLOCKER_FINAL_TYPED_ASSIGNMENT_CAS",
+  "reviewer": "narrow_version_review",
+  "reviewedCommit": "1dc4a4d287516453d16a411adfe71247b71b41eb",
+  "previousReview": "INDEPENDENT_REVIEW_0E9DA6A9.json preserved; not overwritten",
+  "filesSha256": {
+    "src/data/operations/captureMixedQaManifest.ts": "959394046860af0f07f5b0a3e7cab31e7910540ea1e02ce5bc053d3d949d4a4f",
+    "src/data/operations/captureMixedQaManifest.test.ts": "f82ec9d0e73313d5db734058ac4a5cb58c41717f6b18a917dc7f335ec8d5d48d",
+    "src/data/operations/universalOriginalBatch.ts": "72331bddce97706aa43d636ea26b20a5c915606107610984a96cdcb08be0a2fa",
+    "src/data/operations/defaultUniversalOriginalSource.ts": "ec52dac34a2fc065798b6ddc867f78702a428db7934194520d33da185a215d8b",
+    "src/data/repositories/captureSourceAdmissionRepository.ts": "316322b9c66c4aee2b6512969fffb62ac26b9e993080ea9034fa46608bc5eb9f"
+  },
+  "requiredOwningOriginalCommits": [
+    "ffc5d006",
+    "5474962a",
+    "08341afe",
+    "6353b701"
+  ],
+  "checks": [
+    "Original exact QA scope/kind/input/payload/hash/bytes/revision pins remain mandatory, including createdAt.",
+    "Typed owning DTO distinguishes intakeCaptureRevision from currentCaptureRevision; captureRevision alias equals current. No arbitrary revision acceptance.",
+    "Only proven intake1->current2 assignment exception: same target Trip, PREPARED/ADMITTED, retained binding/queue/pin/full command and bindingCas.captureRevision2. Original manifest keeps intake1.",
+    "Baseline and exception both reject foreign captureTripId; only null or exact manifest Trip allowed, assigned exception requires exact Trip.",
+    "Revision3, changed intake, foreign Trip, UNKNOWN state, missing retained proof or wrong binding CAS remain refused.",
+    "Default owning reader does not expose full body; exact gated Native consumer opts in. Export remains read-only proposal, no generated ID/preparation/dispatch/network/Source proof.",
+    "Capture FILE for PNG remains FILE; existing Source kind IMAGE mapping preserved."
+  ],
+  "independentValidation": {
+    "focused": "2 suites30 PASS",
+    "log": "/private/tmp/otr-source-pin-assignment-final-review.log",
+    "diffCheck": "PASS",
+    "broaderEvidenceReused": "Author4 suites48, scoped2roots/importdeps types/lint PASS; not mechanically rerun"
+  },
+  "limits": [
+    "Not installed or exercised on device",
+    "Not Server Accepted Source/Hosted E2E",
+    "No new Prepare UI or Parser; original ShowDetails exporter only",
+    "No Source POST/Provider/Auth/device/Host/source changes by reviewer"
+  ],
+  "reviewerChanges": "Added this JSON only, no commit"
+}

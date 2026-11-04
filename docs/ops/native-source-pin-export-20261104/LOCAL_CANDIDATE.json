@@ -1,0 +1,42 @@
+{
+  "request": "IMP-C01-NATIVE-SOURCE-PIN-EXPORT-20261104",
+  "base": "91e40d048e20c97a356b4bc906aaf712a6a4db7b",
+  "status": "LOCAL_CANDIDATE_PASS / INDEPENDENT_REVIEW_NO_BLOCKER / NOT_INSTALLED",
+  "scope": "Fixed original QA account/trip/batch/job and exactly3original Inputs, kind, IDs, hashes, bytes and revisions; existing ShowDetails only",
+  "nativeFiles": {
+    "src/data/operations/captureMixedQaManifest.ts": "959394046860af0f07f5b0a3e7cab31e7910540ea1e02ce5bc053d3d949d4a4f",
+    "src/data/operations/captureMixedQaManifest.test.ts": "f82ec9d0e73313d5db734058ac4a5cb58c41717f6b18a917dc7f335ec8d5d48d"
+  },
+  "requiredLaneCCommits": [
+    "ffc5d006",
+    "5474962a",
+    "08341afe",
+    "6353b701"
+  ],
+  "dependencyHandling": "Four exact LaneC owning commits imported on isolated Native branch with original attribution; no long branch merge. Native export source remains separately authored. Root1 must integrate both owners seven source/test leaves together.",
+  "readOnly": "Original Repository readUniversalOriginalPins includeSourceCommands true; no recover/prepare/run/transport and UUID factory throws. Unprepared status/null retained. Account generation and original UI/input CAS rechecked before existing cache write.",
+  "actualChecks": {
+    "red": "Original exporter4FAIL/4PASS with new cases",
+    "green": "Native24PASS; combined4suites48PASS",
+    "types": "PASS scoped2Native roots plus final owning importeddependencies; exact literal state comparisons preserve unknown-type safety",
+    "lint": "Native2files PASS",
+    "diff": "PASS"
+  },
+  "independentReview": "Final fixed1dc4a4d2 NO_BLOCKER_FINAL_TYPED_ASSIGNMENT_CAS; independent2suites30PASS/diffPASS; see INDEPENDENT_REVIEW.json. Prior0e9 review preserved separately.",
+  "sourcePreparation": "Not in ShowDetails; no new Prepare button. LaneC owns exact current binary-beforelookup proof and explicit existing normal local-only preparation qualification.",
+  "safety": {
+    "deviceActions": 0,
+    "sourcePosts": 0,
+    "providerCalls": 0,
+    "authActions": 0,
+    "schemaChanges": 0,
+    "changedCaptureKind": false
+  },
+  "rollback": "Native exporter revert only; original captures/queue/Source IDs and retained commands remain.",
+  "limits": [
+    "Local compatibility only, no actual iPad readout or Hosted acquisition",
+    "Canonical Source proposals are not Server Accepted Source proof",
+    "Actual binary flags and resource/QA deadline qualification belongs LaneC/Root2"
+  ],
+  "assignment": "Original intake Capture revision1 retained; current revision1/null or target Trip allowed. Current2 only with same intake1, targetTrip, existingPREPARED/ADMITTED binding+queue+command/pin and bindingCAS2. Rev3, foreignTrip at1or2, unknown/missing evidence reject. No capture mutations in exporter."
+}

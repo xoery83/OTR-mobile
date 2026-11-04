@@ -45,7 +45,7 @@ export function isEnabledPng(
 ) {
   return (
     profile === PNG_CAPTURE_ORIGINAL_PROFILE &&
-    input.kind === "IMAGE" &&
+    (input.kind === "IMAGE" || input.kind === "FILE") &&
     input.declaredContentType === "image/png"
   );
 }
@@ -60,7 +60,7 @@ export async function recoverUniversalOriginalPlans(
   const job = await deps.submissions.reopen(jobId, context);
   if (
     deps.pendingPngProfile === PNG_CAPTURE_ORIGINAL_PROFILE &&
-    job.inputs.filter((input) => input.kind === "IMAGE").length > 1
+    job.inputs.filter((input) => isEnabledPng(input, deps.pendingPngProfile)).length > 1
   )
     throw Error("UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE");
   const supported = job.inputs.filter(
@@ -122,7 +122,9 @@ export async function recoverUniversalOriginalPlans(
 export async function readUniversalOriginalPins(
   context: AccountRequestContext,
   jobId: string,
-  deps: Parameters<typeof prepareUniversalOriginalBatch>[3],
+  deps: Parameters<typeof prepareUniversalOriginalBatch>[3] & {
+    includeSourceCommands?: true;
+  },
 ) {
   const current = () => assertAccountRequestContext(context, deps.getAccountId);
   await current();
@@ -146,7 +148,11 @@ export async function readUniversalOriginalPins(
       (await deps.hash(retained.bytes)) !== input.contentSha256
     )
       throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
-    if (input.kind === "FILE")
+    const pdf = isEnabledPdf(input, deps.pendingPdfProfile),
+      png = isEnabledPng(input, deps.pendingPngProfile);
+    if (pdf || png) {
+      // Read proposals only; retained digest is checked above, Source owns format proof.
+    } else if (input.kind === "FILE")
       verifyUtf8TextFile(
         retained.bytes,
         input.originalFilename,
@@ -191,12 +197,20 @@ export async function readUniversalOriginalPins(
         original?.payload_sha256 !== input.contentSha256 ||
         original?.byte_count !== input.contentByteCount ||
         original?.original_filename !== input.originalFilename ||
-        sourceInput?.source_kind !== input.kind ||
-        sourceInput?.acquisition_channel !== (input.kind === "FILE" ? "FILES" : "PASTE"))
+        sourceInput?.source_kind !== (png ? "IMAGE" : input.kind) ||
+        sourceInput?.acquisition_channel !==
+          (input.kind === "FILE" || png ? "FILES" : "PASTE"))
     )
       throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
     inputs.push({
       inputId: input.id,
+      inputRevision: input.revision,
+      captureId: input.captureId,
+      payloadId: input.payloadId,
+      captureRevision: retained.capture.revision,
+      intakeCaptureRevision: input.captureRevision,
+      currentCaptureRevision: retained.capture.revision,
+      captureTripId: retained.capture.tripId,
       ordinal: input.ordinal,
       kind: input.kind,
       acquisitionSource: input.acquisitionSource,
@@ -208,8 +222,13 @@ export async function readUniversalOriginalPins(
       queueOperationId: recovery?.operationId ?? null,
       sourceCommandPin: binding
         ? {
-            profile:
-              input.kind === "FILE" ? "OTR_UTF8_TEXT_FILE_V1" : "OTR_SUBMITTED_TEXT_V1",
+            profile: png
+              ? PNG_CAPTURE_ORIGINAL_PROFILE
+              : pdf
+                ? PDF_CAPTURE_ORIGINAL_PROFILE
+                : input.kind === "FILE"
+                  ? "OTR_UTF8_TEXT_FILE_V1"
+                  : "OTR_SUBMITTED_TEXT_V1",
             actorId: context.accountId,
             tripId: context.tripId,
             sourceId: binding.source_id,
@@ -219,6 +238,18 @@ export async function readUniversalOriginalPins(
             operationSha256: binding.source_operation_sha256,
           }
         : null,
+      ...(deps.includeSourceCommands
+        ? {
+            sourceCommand: binding ? command : null,
+            bindingCas: binding
+              ? {
+                  captureRevision: binding.capture_revision,
+                  materialRevision: binding.material_revision,
+                  expectedSourceRevision: binding.expected_source_revision,
+                }
+              : null,
+          }
+        : {}),
     });
   }
   const submissionSha256 = await deps.hash(
