@@ -5,6 +5,10 @@ Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 **INTENTIONAL_STOP — Owner day-close, 4 November NZDT.** No automatic business
 continuation tonight. Own Sessions/receiver/attempt lock released; no Hosted window,
 device or timer held. Resume: docs/ops/auth-day-close-20261104/DAY_CLOSE.json.
+Owner-released single overtime preparation is now complete and stopped: distinct
+P1 next-day packet,23 focused tests/scoped types/lint PASS, all live commands NOT_SENT.
+Cursor: docs/ops/auth-day-close-20261104/OVERTIME_RESUME_CURSOR.json.
+Remaining: current exact reviewed execution authority, not a new installation.
  Read this first; follow only
 this slice's code/evidence. Historical handoffs are preserved in Git71da1578 and
 the evidence directories below. Do not repeat stable Login/Guest/Claim PG tests.

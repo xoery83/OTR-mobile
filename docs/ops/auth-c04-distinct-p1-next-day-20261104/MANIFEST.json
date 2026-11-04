@@ -1,0 +1,19 @@
+{
+  "status": "FIXED_PREPARATION_ARTIFACTS_NOT_EXECUTION_AUTHORITY",
+  "caseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106",
+  "files": {
+    "scripts/auth/distinct-shared-p1-next-day.ts": "58e11af07a7a0700ddf0b6ce24c32daddd47b7194071cfd1712cb1f21b4bd01d",
+    "scripts/auth/member-claim-qa-item-fixtures.ts": "339bb627811c28ff18c9dfe0c09fe164eecdb1b936770180d0548e441d12976f",
+    "scripts/auth/member-claim-qa-member-read.ts": "93e344f96bd527d1fd48100fc5307a11239424884bbe3cbeaa9306eeb1c6dd2f",
+    "scripts/auth/registered-qa-host-session.ts": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d",
+    "scripts/auth/resend-inbound-otp-native-relogin.ts": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce",
+    "src/data/api/tripCoreV2Transport.ts": "32097f0c8e92ec099bdc4e1287d23eb8b2b84605a23d7f02e70ae8777e1eb856",
+    "backend/src/authDistinctSharedP1Packet.test.ts": "f125efcb181bd6febd88b4a11438ad38e712d4e5bba69612229dd6026f86d4fd",
+    "docs/ops/auth-c04-distinct-p1-next-day-20261104/CASE.json": "b1e4f6ca6d9678dd738933d0e94dd72301e346d920d229e404ba0a12c555473a",
+    "docs/ops/auth-c04-distinct-p1-next-day-20261104/COMMAND.json": "9816d4a9f06027dd05a032c5e6a99b8bcfbfb3b4bfdeee5109fc9fcb641fc898",
+    "docs/ops/auth-c04-distinct-p1-next-day-20261104/WIRE_BODY.json": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+    "docs/ops/auth-c04-distinct-p1-next-day-20261104/PLAN.json": "8a1861af3e6a9c2f8bb3bb3d060aa8236cd43a1509ac7abcbd12c490bb49af1b",
+    "docs/ops/auth-c04-distinct-p1-next-day-20261104/PERMISSION_DELTA.json": "9d3650ea6a8c4970caa8d784279b79fc2b7a9633d3975e1fc9320befa911488a",
+    "docs/ops/auth-c04-distinct-p1-next-day-20261104/RUNBOOK.md": "117b79ef7507bc513e539e52477c170aa15c7e59c08c11cbc2d99d4da1ac2414"
+  }
+}

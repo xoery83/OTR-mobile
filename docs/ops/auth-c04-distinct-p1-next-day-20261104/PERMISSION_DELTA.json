@@ -1,0 +1,44 @@
+{
+  "status": "REQUIRED_NOT_GRANTED",
+  "caseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106",
+  "permissionDelta": {
+    "newSchema": 0,
+    "newRLS": 0,
+    "newGrantOrRole": 0,
+    "newIdentityConnection": 0,
+    "newOAuthOrProviderAuthority": 0,
+    "runtimeConfigChanges": 0,
+    "newReaderEndpoint": 0,
+    "nativeOrKeychainTransfer": 0
+  },
+  "exactBusinessAuthorityRequestedNextDay": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "writerAccount": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "readOnlyMemberAccount": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "command": "CREATE_ITEM/P1/MANUAL",
+    "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+    "targetItemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+    "intentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+    "wireSha256": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+    "maxPhysicalPosts": 1,
+    "auth": "At most one normal OTP per exact account with independent receiving scope and own local cleanup",
+    "approved": false
+  },
+  "currentQualificationRequired": [
+    "Exact Owner-approved distinct business scope and reviewed candidate/manifest hash; preparation approval does not cover execution",
+    "Current normal A Owner/Actor/Person and B membership authorization, actual capability/reader checks; past71da is baseline not live proof",
+    "Current Root2 software/runtime/resource/read-retaining recovery qualification; if any enablement is needed it must have its own exact authority, not implicit in this packet",
+    "Current email/Resend quota and QA inbox ownership, bounded receiving; no resend on429 or uncertainty",
+    "Exact start/end binding, closes promptly at completion; no old MCP c7fe/d74c, old invite or expired time window"
+  ],
+  "installedBaseline": {
+    "d136": "Already approved/installed; no reinstall needed",
+    "readStateGuardSHA256": "15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97",
+    "sourceEvidence": "../auth-c04-item-fixture-20261104/original-recovery/INSTALL_RETURN_VERIFIED.json"
+  },
+  "ownerApprovalRef": null,
+  "reviewedCandidateSha": null,
+  "root2CurrentBindingRef": null,
+  "newPermissionsExecutedTonight": 0
+}

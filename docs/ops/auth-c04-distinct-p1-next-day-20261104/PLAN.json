@@ -1,0 +1,106 @@
+{
+  "status": "FIXED_LOCAL_PLAN_NOT_SENT",
+  "caseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106",
+  "taskId": "OT-AUTH-DISTINCT-P1-WRITE-PACKET-20261104-01",
+  "commandArtifact": "COMMAND.json",
+  "wireBytesArtifact": "WIRE_BODY.json",
+  "intentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+  "wireSha256": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+  "entrypoint": {
+    "localOnlyCommand": "node --import tsx scripts/auth/distinct-shared-p1-next-day.ts --check",
+    "nextDayCallable": "runDistinctSharedP1NextDay(input)",
+    "module": "scripts/auth/distinct-shared-p1-next-day.ts",
+    "existingRunner": "scripts/auth/member-claim-qa-item-fixtures.ts::runItemFixtureProbe",
+    "caseSelector": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106",
+    "executionMode": "PROGRAMMATIC_EXISTING_NORMAL_HOST_PORTS_REQUIRED; CLI has no execute option"
+  },
+  "requiredInputs": {
+    "receivers.A/B": "Existing createAcceptedHostQaReceiver for each exact authorized QA email, independent QA Receiving key process-only; never SMTP key",
+    "publicOptions": "Existing publicConfiguration exact DEV URL/publishable key",
+    "qualify": "Owning approved operator assertion of exact current approval/candidate/command hash/resource/clock bounds. Required before sessions and before POST including actual wire guard; callback is not itself authority",
+    "noteAuth/noteCore": "Sanitized metadata only; never tokens, OTP, raw mail or headers"
+  },
+  "stages": [
+    {
+      "step": 1,
+      "action": "Verify exact execution qualification before any OTP; no inherited old window/approval",
+      "stopIf": "Missing scope, wrong hash/target, old or expired window, resource conflict, quota unavailable/429"
+    },
+    {
+      "step": 2,
+      "actor": "A",
+      "action": "One normal existing-account OTP, normal getUser exact Account/email/nonanonymous; use existing memory session only"
+    },
+    {
+      "step": 3,
+      "actor": "A",
+      "routes": [
+        "GET /v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/capabilities",
+        "GET /v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+        "GET /v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/operations/41e8f597-cdba-4892-93a2-2ce77e95522e"
+      ],
+      "assert": "CREATE_ITEM/P1/MANUAL enabled; exact active A-Person; new Item absent, new operation unattempted. Receipt404 alone never proves historical NoCommit"
+    },
+    {
+      "step": 4,
+      "action": "Exclusive fsynced ATTEMPT.json before the first POST; never delete after logout; repeat reservation fails closed"
+    },
+    {
+      "step": 5,
+      "actor": "A",
+      "route": "POST /v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/commands",
+      "wire": "Exact WIRE_BODY.json; one physical POST including automatic401 retry protection; current qualifier rechecked at wire boundary"
+    },
+    {
+      "step": 6,
+      "action": "Existing transport validates immutable receipt hash/scope/operation/intent. Require FULL APPLIED and exactly one created ITEM 1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+      "onResponseLoss": "One GET of same new operation only, no second POST, no alternate operation"
+    },
+    {
+      "step": 7,
+      "actor": "A",
+      "action": "Independent normal collection; then own local logout and refresh rejection before B session"
+    },
+    {
+      "step": 8,
+      "actor": "B",
+      "action": "One normal existing-account OTP/getUser; only collection GET; exact B-Person and same Item/revision/Owner/visibility/family/title/description/date/participation"
+    },
+    {
+      "step": 9,
+      "actor": "B",
+      "action": "Own local logout + refresh rejection; return only truthful shared-item/member result",
+      "notClaimed": "No qualified private Item fixture is not private-isolation PASS; no Native cold/OwnerUX/Revoke PASS"
+    }
+  ],
+  "recovery": {
+    "sameNewOperation": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+    "port": "readOriginalFixtureOutcome(pickReceiptAndCollection, AContext, distinctSharedP1CaseId)",
+    "preconditions": "Separate lawful read qualification and own normal Session; no auto read/OTP rerun",
+    "fullApplied": "Exact receipt plus exact A Item readback required; later B read separate",
+    "nullStatusOnly404OrItemOnly": "UNKNOWN_NO_REPLAY",
+    "conflictRejectedNoChange": "Report actual immutable terminal outcome; never overwrite/retry under new ID",
+    "reservation": "Keep ATTEMPT.json across cleanup/crash; absence of session lock is not business replay permission"
+  },
+  "oldProtectedOperations": [
+    "f5e13639-4240-4817-bf43-c60a1ea46361",
+    "4028b673-9032-41c8-807e-c7d3592eae93"
+  ],
+  "neverInvoke": "Old shared/private fixture command list, Invite/Claim/Revoke, Provider/Source/OAuth/SQL/role/config mutation",
+  "cleanup": {
+    "authority": "Only current run proven Session; scope=local then refresh rejection",
+    "noProvenIdentity": "Never revoke another Session/admin cleanup; retain uncertain QA lease",
+    "onFailure": "Stop, persist operation/receipt/attempt and local cleanup state; no automatic OTP, B session or business retry",
+    "noDeletion": "Do not delete Trip, created Item, Person, historical receipt or reservation as cleanup"
+  },
+  "remainingGate": "CURRENT_EXACT_BUSINESS_EXECUTION_QUALIFICATION_FOR_THIS_DISTINCT_CASE",
+  "proposedExecutionBounds": {
+    "minutes": 10,
+    "maxBusinessPosts": 1,
+    "otpA": 1,
+    "otpB": 1,
+    "opensAt": null,
+    "closesAt": null,
+    "approved": false
+  }
+}

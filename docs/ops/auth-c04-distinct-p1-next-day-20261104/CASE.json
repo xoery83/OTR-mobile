@@ -1,0 +1,61 @@
+{
+  "caseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106",
+  "status": "PREPARED_NOT_SENT_NOT_EXECUTION_AUTHORIZATION",
+  "taskId": "OT-AUTH-DISTINCT-P1-WRITE-PACKET-20261104-01",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "apiBase": "https://api-dev.xoery.art",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "ownerAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "ownerPersonId": "b90c34ba-96d7-4b64-874a-b4f5525d64d8",
+  "memberAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "memberPersonId": "bcd1d48e-a9f7-445a-911b-0452ff8dc55a",
+  "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+  "itemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+  "intent": {
+    "title": "Synthetic shoreline safety briefing — 6 Nov",
+    "description": "Independent synthetic group safety briefing for the next travel day. Discuss meeting-point safety and buddy check-in. This event is not the earlier 4 Nov Shared P1 smoke fixture and does not replace or retry it. No booking, ticket, document or ledger.",
+    "date": "2026-11-06",
+    "family": "P1",
+    "visibility": "GROUP",
+    "participation": "WHOLE_GROUP"
+  },
+  "distinctFromOriginal": {
+    "originalOperationId": "f5e13639-4240-4817-bf43-c60a1ea46361",
+    "originalItemId": "44887b12-f1ec-43a9-8ef5-394675746f4d",
+    "originalDate": "2026-11-04",
+    "originalTitle": "OTR QA C04 Shared P1 20261104",
+    "differences": [
+      "A separate next-day group briefing, not recreation of the earlier smoke fixture",
+      "Different business date, title and substantive description; explicitly independent intent",
+      "Original Item and Operation retain UNKNOWN status regardless of this new result"
+    ],
+    "originalReplayAllowed": false,
+    "operationReplacementAllowed": false
+  },
+  "scope": {
+    "maxBusinessPosts": 1,
+    "allowedWriter": "A_ONLY",
+    "memberRole": "B_READ_ONLY",
+    "maxOtpPerAccount": 1,
+    "automaticOtpResend": false,
+    "automaticBusinessRetry": false,
+    "receiptGetAfterUnknown": "SAME_NEW_OPERATION_ONLY_ONCE",
+    "privateFixtureWrites": 0,
+    "memberRevokeOperations": 0,
+    "sqlOrRuntimeChanges": 0,
+    "providerCalls": 0
+  },
+  "prerequisites": [
+    "Fresh exact normal A and B getUser identities and registered nonanonymous classification",
+    "A current legal Owner binding and CREATE_ITEM/P1/MANUAL capability; B exact current membership",
+    "Explicit approval for this distinct intent and fixed command hash; closed prior execution resources",
+    "One current bounded execution qualification and own cleanup; not inherited from d136/oldInvite/MCP windows",
+    "Target Item and Operation not previously attempted, verified before POST; durable at-most-once reservation"
+  ],
+  "fixedInputs": [
+    "71da1578",
+    "d136 guard15fb",
+    "16793193",
+    "6af4ade4"
+  ]
+}

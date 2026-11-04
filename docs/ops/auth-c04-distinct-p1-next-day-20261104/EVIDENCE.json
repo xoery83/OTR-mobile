@@ -1,0 +1,58 @@
+{
+  "taskId": "OT-AUTH-DISTINCT-P1-WRITE-PACKET-20261104-01",
+  "result": "PREPARATION_PASS_RUNNABLE_WITH_CURRENT_QUALIFIED_INPUTS",
+  "businessStatus": "NOT_SENT_NOT_HOSTED_E2E_PASS",
+  "recordedAt": "2026-11-04T10:15:28.060668+00:00",
+  "checks": {
+    "packetCommand": "LOCAL_PACKET_VALID_NOT_SENT",
+    "canonicalIntentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+    "wireSha256": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+    "fixedManifestArtifacts": 13,
+    "tests": {
+      "suites": 3,
+      "passed": 23,
+      "logSha256": "e0a2b8a2c8c167bcb7c3aa04fa2ab73e2b224c33bc3e3c27fb49a194ff87b0ec"
+    },
+    "scopedCompiler": "PASS new driver + new test roots and direct imports; temporary config removed",
+    "scopedEslint": "PASS0errors0warnings",
+    "lintLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "actualLiveReservationFile": "ABSENT",
+    "diffCheck": "PASS"
+  },
+  "minimalRepair": {
+    "firstFailure": "Existing QA private visibility projection rejected legitimate additional canonical Item fields",
+    "change": "Only projection pick(...).strip(); full business schema and formal Core transport validation unchanged",
+    "regression": "Rich shared/private canonical fields accepted, private leak still rejected; original caller suite reused with scoped rerun because helper changed"
+  },
+  "reuse": [
+    "Existing runItemFixtureProbe now has exactly one closed registered case; original defaults unchanged",
+    "Existing normal OTP/getUser/session/local logout+refresh rejection driver",
+    "Existing Core capabilities/collection/typed command/hash/receipt/fences/at-most-once wire guard",
+    "Existing same-operation read-only recovery; explicit new case never queries old UNKNOWN"
+  ],
+  "testBoundary": "Unit/mock normal IO and own isolated temporary reservation filesystem only; child-process restart test uses no Auth/network/credentials",
+  "counters": {
+    "otpRequests": 0,
+    "receivingApiRequests": 0,
+    "credentialReads": 0,
+    "hostedRequests": 0,
+    "businessPosts": 0,
+    "sqlChanges": 0,
+    "runtimeWindows": 0,
+    "otherLaneRequests": 0
+  },
+  "remainingGate": {
+    "id": "CURRENT_EXACT_BUSINESS_EXECUTION_QUALIFICATION_FOR_THIS_DISTINCT_CASE",
+    "description": "Reviewed fixed candidate/manifest + explicit distinct single A-write scope + current normal A/B identities, resources and clock/read-retention binding. No actual qualification or business approval claimed",
+    "reference": "PERMISSION_DELTA.json",
+    "notRequired": "No d136 reinstall/reapproval, no new RLS/GRANT/roles; full Member Revoke not prerequisite"
+  },
+  "independentReview": "No new other-Lane review requested during this isolated preparation; existing review is reused only for unchanged dependencies. Review of fixed changed runner belongs in the future execution qualification, not assumed PASS.",
+  "notProved": [
+    "Hosted single write and immutable Receipt",
+    "Actual B shared Item read",
+    "Private isolation without actual qualified private fixture",
+    "Native cold restore or Owner UX"
+  ],
+  "statusAfterCompletion": "INTENTIONAL_STOP"
+}

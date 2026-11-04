@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import qa from "../../docs/ops/auth-c04-item-fixture-20261104/CASE.json";
+import distinct from "../../docs/ops/auth-c04-distinct-p1-next-day-20261104/CASE.json";
 import { createCoreV2Transport } from "../../src/data/api/tripCoreV2Transport";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
 import {
@@ -28,6 +29,7 @@ function freeze(value: unknown) {
   }
 }
 freeze(qa);
+freeze(distinct);
 export const fixtureCommands = qa.items.map((item) =>
   validateCoreCommand({
     contractVersion: 2,
@@ -48,6 +50,55 @@ export const fixtureCommands = qa.items.map((item) =>
   }),
 );
 freeze(fixtureCommands);
+
+// Closed next-day preparation case; never a replacement for the old UNKNOWN.
+export const distinctSharedP1Command = validateCoreCommand({
+  contractVersion: 2,
+  intentVersion: 2,
+  operationId: distinct.operationId,
+  tripId: distinct.tripId,
+  command: "CREATE_ITEM",
+  target: { kind: "ITEM", id: distinct.itemId },
+  baseVector: [{ kind: "ITEM", id: distinct.itemId, revision: null }],
+  admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+  payload: {
+    family: "P1",
+    core: { title: distinct.intent.title, description: distinct.intent.description },
+    schedule: { start: coreDateBoundary(distinct.intent.date) },
+    participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+    acl: { visibility: "GROUP", people: [] },
+  },
+});
+freeze(distinctSharedP1Command);
+export const distinctSharedP1CaseId = "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106";
+function commandsFor(caseId?: string) {
+  if (caseId === undefined) return fixtureCommands;
+  if (
+    caseId !== distinctSharedP1CaseId || distinct.caseId !== caseId ||
+    distinct.tripId !== qa.tripId || distinct.ownerAccountId !== qa.ownerAccountId ||
+    distinct.memberAccountId !== qa.memberAccountId
+  ) throw Error("C04_FIXTURE_CASE_NOT_REGISTERED");
+  return [distinctSharedP1Command];
+}
+function requireDistinctItem(rows: CoreReadRecord[]) {
+  const items = rows.filter((r) => r.kind === "ITEM" && r.id === distinct.itemId);
+  if (items.length !== 1) throw Error("C04_DISTINCT_ITEM_READ_MISMATCH");
+  const body = items[0].body as Record<string, unknown>;
+  if (body.id !== distinct.itemId || body.trip_id !== qa.tripId ||
+      body.owner_account_id !== qa.ownerAccountId || body.visibility !== "GROUP" ||
+      body.title !== distinct.intent.title || body.description !== distinct.intent.description ||
+      body.experience_family !== "P1" || body.start_local_date !== distinct.intent.date ||
+      body.participation_mode !== "WHOLE_GROUP")
+    throw Error("C04_DISTINCT_ITEM_READ_MISMATCH");
+  return items[0];
+}
+export function checkDistinctSharedP1Read(owner: CoreReadRecord[], member: CoreReadRecord[]) {
+  requireBinding(owner, qa.ownerAccountId, qa.ownerPersonId);
+  const result = checkMemberRead(owner, member);
+  if (requireDistinctItem(owner).revision !== requireDistinctItem(member).revision)
+    throw Error("C04_DISTINCT_ITEM_REVISION_MISMATCH");
+  return { ...result, sharedItemRead: "PASS", distinctCaseId: distinct.caseId };
+}
 
 function requireBinding(records: CoreReadRecord[], accountId: string, personId: string) {
   const own = records
@@ -78,11 +129,18 @@ export function checkFixtureIsolation(owner: CoreReadRecord[], member: CoreReadR
 // Journal must durably reserve each original command before its only POST. UNKNOWN only reads that operation.
 export async function createOwnerItemFixtures(input: {
   transport: Pick<Transport, "capabilities" | "collection" | "receipt" | "submit">;
+  caseId?: typeof distinctSharedP1CaseId;
+  qualifyDistinct?(): Promise<void>;
   context: Context;
   reserve(command: (typeof fixtureCommands)[number], intentSha256: string): Promise<void>;
   note(value: Record<string, unknown>): void;
 }) {
   const { transport: t, context: ctx } = input;
+  const commands = commandsFor(input.caseId);
+  if (input.caseId) {
+    if (!input.qualifyDistinct) throw Error("C04_DISTINCT_EXECUTION_QUALIFICATION_REQUIRED");
+    await input.qualifyDistinct();
+  }
   if (ctx.accountId !== qa.ownerAccountId || ctx.tripId !== qa.tripId)
     throw Error("C04_FIXTURE_SCOPE_MISMATCH");
   const caps = coreCapabilitiesSchema.parse(await t.capabilities(ctx));
@@ -95,13 +153,14 @@ export async function createOwnerItemFixtures(input: {
     throw Error("C04_FIXTURE_NORMAL_CREATE_NOT_AVAILABLE");
   const before = (await t.collection(ctx)).pages.flatMap((p) => p.records);
   requireBinding(before, qa.ownerAccountId, qa.ownerPersonId);
-  if (before.some((r) => qa.items.some((i) => i.itemId === r.id)))
+  if (before.some((r) => commands.some((c) => c.target.id === r.id)))
     throw Error("C04_FIXTURE_ALREADY_EXISTS");
-  for (const command of fixtureCommands) {
+  for (const command of commands) {
     if (await t.receipt(ctx, command.operationId))
       throw Error("C04_FIXTURE_OPERATION_ALREADY_EXISTS");
     const intentSha256 = await coreHashValue("otr-trip-core-intent-v2", command, hash);
     await input.reserve(structuredClone(command), intentSha256);
+    if (input.caseId) await input.qualifyDistinct!();
     let response: CoreReceiptProjection | null;
     try {
       response = await t.submit(ctx, command);
@@ -135,14 +194,15 @@ export async function createOwnerItemFixtures(input: {
   return (await t.collection(ctx)).pages.flatMap((p) => p.records);
 }
 
-// Original shared POST only: absence is UNKNOWN, and this port has no submit capability.
+// Same selected operation only: absence is UNKNOWN; this recovery port has no submit capability.
 export async function readOriginalFixtureOutcome(
   transport: Pick<Transport, "receipt" | "collection">,
   context: Context,
+  caseId?: typeof distinctSharedP1CaseId,
 ) {
+  const command = commandsFor(caseId)[0];
   if (context.accountId !== qa.ownerAccountId || context.tripId !== qa.tripId)
     throw Error("C04_FIXTURE_SCOPE_MISMATCH");
-  const command = fixtureCommands[0];
   const receipt = await transport.receipt(context, command.operationId);
   const records = (await transport.collection(context)).pages.flatMap((p) => p.records);
   requireBinding(records, qa.ownerAccountId, qa.ownerPersonId);
@@ -168,6 +228,7 @@ export async function readOriginalFixtureOutcome(
         .length !== 1)
   )
     throw Error("C04_FIXTURE_APPLIED_READBACK_MISMATCH");
+  if (caseId && r.outcome === "APPLIED") requireDistinctItem(records);
   return {
     outcome: r.outcome,
     itemObserved: items.length > 0,
@@ -179,7 +240,10 @@ export async function readOriginalFixtureOutcome(
 export function fixtureTransport(
   context: RegisteredQaHostContext,
   note: (value: Record<string, unknown>) => void,
+  caseId?: typeof distinctSharedP1CaseId,
+  qualifyDistinct?: () => Promise<void>,
 ) {
+  const commands = commandsFor(caseId);
   if (
     context.tripId !== qa.tripId ||
     ![qa.ownerAccountId, qa.memberAccountId].includes(context.accountId)
@@ -201,8 +265,10 @@ export function fixtureTransport(
             method === "GET" &&
             [
               base + "/collection",
-              base + "/capabilities",
-              ...qa.items.map((i) => base + "/operations/" + i.operationId),
+              ...(caseId && context.accountId === qa.memberAccountId ? [] : [
+                base + "/capabilities",
+                ...commands.map((c) => base + "/operations/" + c.operationId),
+              ]),
             ].includes(String(url))
           ) &&
           !(
@@ -214,13 +280,17 @@ export function fixtureTransport(
           throw Error("C04_FIXTURE_ROUTE_DENIED");
         if (
           method === "POST" &&
-          !fixtureCommands.some((command) => init?.body === JSON.stringify(command))
+          !commands.some((command) => init?.body === JSON.stringify(command))
         )
           throw Error("C04_FIXTURE_COMMAND_DENIED");
         if (method === "POST") {
           const body = String(init?.body);
           if (submitted.has(body)) throw Error("C04_FIXTURE_POST_ALREADY_ATTEMPTED");
           submitted.add(body);
+          if (caseId) {
+            if (!qualifyDistinct) throw Error("C04_DISTINCT_EXECUTION_QUALIFICATION_REQUIRED");
+            await qualifyDistinct();
+          }
         }
         const started = Date.now(),
           response = await fetch(url, init);
@@ -244,6 +314,9 @@ export function fixtureTransport(
 }
 
 export async function runItemFixtureProbe(input: {
+  caseId?: typeof distinctSharedP1CaseId;
+  // Owning operator must verify exact current authority/resources before any session.
+  beforeDistinctRun?(): Promise<void>;
   withOwnerSession(
     work: (context: RegisteredQaHostContext) => Promise<void>,
   ): Promise<unknown>;
@@ -253,6 +326,11 @@ export async function runItemFixtureProbe(input: {
   reserve: Parameters<typeof createOwnerItemFixtures>[0]["reserve"];
   note(value: Record<string, unknown>): void;
 }) {
+  commandsFor(input.caseId);
+  if (input.caseId) {
+    if (!input.beforeDistinctRun) throw Error("C04_DISTINCT_EXECUTION_QUALIFICATION_REQUIRED");
+    await input.beforeDistinctRun();
+  }
   let owner: CoreReadRecord[] | undefined, member: CoreReadRecord[] | undefined;
   const checkCleanup = (value: unknown, accountId: string) =>
     z
@@ -268,7 +346,9 @@ export async function runItemFixtureProbe(input: {
       if (context.accountId !== qa.ownerAccountId)
         throw Error("C04_FIXTURE_OWNER_SESSION_MISMATCH");
       owner = await createOwnerItemFixtures({
-        transport: fixtureTransport(context, input.note),
+        transport: fixtureTransport(context, input.note, input.caseId, input.beforeDistinctRun),
+        caseId: input.caseId,
+        qualifyDistinct: input.beforeDistinctRun,
         context: await captureAccountRequestContext(
           qa.tripId,
           async () => context.accountId,
@@ -284,7 +364,7 @@ export async function runItemFixtureProbe(input: {
       if (context.accountId !== qa.memberAccountId)
         throw Error("C04_FIXTURE_MEMBER_SESSION_MISMATCH");
       member = (
-        await fixtureTransport(context, input.note).collection(
+        await fixtureTransport(context, input.note, input.caseId, input.beforeDistinctRun).collection(
           await captureAccountRequestContext(qa.tripId, async () => context.accountId),
         )
       ).pages.flatMap((p) => p.records);
@@ -292,5 +372,7 @@ export async function runItemFixtureProbe(input: {
     qa.memberAccountId,
   );
   if (!owner || !member) throw Error("C04_FIXTURE_READ_INCOMPLETE");
-  return checkFixtureIsolation(owner, member);
+  return input.caseId
+    ? checkDistinctSharedP1Read(owner, member)
+    : checkFixtureIsolation(owner, member);
 }

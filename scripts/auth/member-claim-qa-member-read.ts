@@ -13,7 +13,7 @@ const qa = template.qaCase;
 const itemScope = itinerary_eventsSchema.pick({
   visibility: true,
   owner_account_id: true,
-});
+}).strip();
 type SessionRun = (
   work: (context: RegisteredQaHostContext) => Promise<void>,
 ) => Promise<unknown>;

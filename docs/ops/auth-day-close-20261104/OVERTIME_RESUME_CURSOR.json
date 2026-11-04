@@ -1,0 +1,53 @@
+{
+  "taskId": "OT-AUTH-DISTINCT-P1-WRITE-PACKET-20261104-01",
+  "coordinationId": "MC-OVERTIME-20261104-01",
+  "status": "INTENTIONAL_STOP",
+  "primary": "AUTH-C04",
+  "releaseReceived": true,
+  "startedAt": "2026-11-04T09:54:36.692253+00:00",
+  "runtimeBudgetMinutes": 60,
+  "absoluteStop": "2026-11-05T00:30:00+13:00",
+  "objective": "One truly distinct synthetic shared P1 intent; fixed existing qualified target, operation/payload, A write/Receipt/B read/recovery assertions, existing runner mapping, exact needed authority and own cleanup; preparation only",
+  "inputs": [
+    "71da1578",
+    "d136 installed guard15fb",
+    "16793193",
+    "6af4ade4"
+  ],
+  "scope": "Own Auth worktree local preparation only; no other Lane requests or shared resources",
+  "notAllowed": [
+    "OTP",
+    "Hosted or business writes",
+    "SQL or Gate execution",
+    "Shared container changes",
+    "OAuth/Provider/Source execution",
+    "Reuse closed MCP windows",
+    "Replay or relabel original UNKNOWN",
+    "Background polling or lock acquisition before RELEASE",
+    "Next Slice after completion"
+  ],
+  "completion": "Fixed runnable-next-day command/plan packet and exact needed authority; fixed SHA, one result, RemainingGate, machine ResumeCursor, then INTENTIONAL_STOP",
+  "ifPlatformApprovalBlocked": "Record AUTO_APPROVAL_BLOCKED with exact action/reason and completed deliverable; no bypass/retry/wait for click",
+  "rulesSource": "MC docs/ops/mc-flow/OWNER_OVERTIME_20261104.json",
+  "resourcesAcquired": false,
+  "workExecuted": true,
+  "releaseKey": "MC-OVERTIME-20261104-01-Auth-RELEASE",
+  "releaseAt": "2026-11-04T09:53:17.279282Z",
+  "hardStopUTC": "2026-11-04T10:53:17.279282+00:00",
+  "executionScope": "LOCAL_PREPARATION_ONLY",
+  "commandsSent": 0,
+  "completedAt": "2026-11-04T10:15:28.060668+00:00",
+  "actualElapsedSeconds": 1251,
+  "result": "PREPARATION_PASS_RUNNABLE_WITH_CURRENT_QUALIFIED_INPUTS",
+  "packet": "docs/ops/auth-c04-distinct-p1-next-day-20261104",
+  "manifestSha256": "d8c2ac26ad2bef1b29ff1c45fbde262eb69b56359d653eae9a43363a3afdc258",
+  "remainingGate": "CURRENT_EXACT_BUSINESS_EXECUTION_QUALIFICATION_FOR_THIS_DISTINCT_CASE",
+  "resourcesReleased": true,
+  "autoResumeBusiness": false,
+  "unfinishedOperations": [
+    "f5e13639-4240-4817-bf43-c60a1ea46361 UNKNOWN_FROZEN_NO_REPLAY",
+    "4028b673-9032-41c8-807e-c7d3592eae93 UNKNOWN_FROZEN_NO_REPLAY",
+    "41e8f597-cdba-4892-93a2-2ce77e95522e NEW_DISTINCT_NOT_SENT"
+  ],
+  "delivery": "LOCAL_FIXED_COMMIT_ONLY_NOT_PUSHED_NO_REMOTE_OR_HOSTED_ACTION"
+}
