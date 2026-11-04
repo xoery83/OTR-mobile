@@ -1,3 +1,7 @@
+## Normal Account first-trip restore presentation — 4 November 2026
+
+Native fixed `81bde5ec` plus final Auth/Native scoped NO_BLOCKER: current full discovery/cache apply confirms empty; unknown cold cache uses a bounded skeleton and failures remain unavailable. Same-scope qualified remote rows survive cache failure while fresh local rows win deduplication; generation/ticket fences and Guest path retained. Six exact leaves; actual-main3 suites113 PASS, scoped compiler/UIguard pass, lint0errors16 existing test warnings. No Session/schema/Hosted changes; device/Owner UX remains Native/Vision pending. Receipt: `docs/ops/auth-va01-f02-native-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Eight-digit Email OTP input contract — 4 November 2026
 
 Auth fixed `b06808b4` only aligns existing Verify enablement to the approved eight-digit OTP; maxLength8 and request/Session lifecycle unchanged. Independent scoped Review NO_BLOCKER, actual-main3 component tests/UIguard/lint pass. No OTP/network/device test. Receipt: `docs/ops/auth-va01-ux-r1-20261104/otp-input-candidate/ROOT1_SOURCE_MAIN_VALIDATION.json`.

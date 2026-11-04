@@ -41,15 +41,25 @@ export async function refreshCoreDownstream(
   return true;
 }
 
+export type TripDiscoveryReadObservation = Readonly<{
+  scope: AccountScope;
+  status: "RESTORING" | "CONFIRMED" | "UNAVAILABLE";
+}>;
 type Dependencies = {
   scope(): Promise<AccountScope | null>;
   account(): Promise<string>;
   discover(scope: AccountScope): Promise<string[]>;
   pull(scope: AccountScope, tripId: string): Promise<boolean>;
   notify(scope: AccountScope, tripIds: string[], discoveryChanged: boolean): void;
+  observeDiscovery?(observation: TripDiscoveryReadObservation): void;
   now?: () => number;
 };
-type ReadState = { next: number; failures: number; running?: Promise<void> };
+type ReadState = {
+  next: number;
+  failures: number;
+  running?: Promise<void>;
+  observation?: TripDiscoveryReadObservation;
+};
 
 // Ephemeral read coalescing only. Certificates and Pending/UNKNOWN remain owned by Core.
 export function createTripDownstreamCoordinator(deps: Dependencies) {
@@ -80,6 +90,15 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     reads.set(key, state);
     const current = state;
     let skipped = false;
+    const observe = (status: TripDiscoveryReadObservation["status"]) => {
+      if (id !== "discovery") return;
+      current.observation = { scope: { ...scope }, status };
+      try {
+        deps.observeDiscovery?.(current.observation);
+      } catch {
+        /* A view cannot invalidate the read checkpoint. */
+      }
+    };
     current.running = serial(async () => {
       const live = await deps.scope();
       if (
@@ -93,6 +112,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
         skipped = true;
         return;
       }
+      observe("RESTORING");
       await work();
       await assertAccountRequestContext(scope, deps.account);
     })
@@ -101,10 +121,12 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
           if (skipped) return;
           current.failures = 0;
           current.next = now() + 15_000;
+          observe("CONFIRMED");
         },
         (error: unknown) => {
           current.next =
             now() + [15_000, 30_000, 60_000][Math.min(current.failures++, 2)];
+          observe("UNAVAILABLE");
           throw error;
         },
       )
@@ -142,6 +164,12 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     return ids;
   }
   return {
+    discoveryObservation(scope: AccountScope) {
+      if (scope.generation !== getAccountGeneration()) return null;
+      return (
+        reads.get(`${scope.generation}:${scope.accountId}:discovery`)?.observation ?? null
+      );
+    },
     async discovery() {
       const scope = await deps.scope();
       if (scope) await discover(scope);
@@ -200,6 +228,20 @@ export function observeForegroundTrip(context: AccountRequestContext) {
     if (foregroundTrip !== lease) return;
     foregroundTrip = null;
   };
+}
+const discoveryObservationListeners = new Set<
+  (value: TripDiscoveryReadObservation) => void
+>();
+export function subscribeTripDiscoveryReadObservation(
+  listener: (value: TripDiscoveryReadObservation) => void,
+) {
+  discoveryObservationListeners.add(listener);
+  return () => {
+    discoveryObservationListeners.delete(listener);
+  };
+}
+export function readTripDiscoveryReadObservation(scope: AccountScope) {
+  return coordinator?.discoveryObservation(scope) ?? null;
 }
 async function nativeCoordinator() {
   if (coordinator) return coordinator;
@@ -291,6 +333,16 @@ async function nativeCoordinator() {
           timeoutMs: 20_000,
         }),
       );
+    },
+    observeDiscovery(observation) {
+      if (observation.scope.generation !== getAccountGeneration()) return;
+      for (const listener of discoveryObservationListeners) {
+        try {
+          listener(observation);
+        } catch {
+          /* Preserve successful cache apply. */
+        }
+      }
     },
     notify(scope, journeyIds, discoveryChanged) {
       notifyLedgerReadCompletion({ ...scope, journeyIds, discoveryChanged });

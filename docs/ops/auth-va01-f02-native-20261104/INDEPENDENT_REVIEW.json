@@ -1,0 +1,38 @@
+{
+  "status": "NO_BLOCKER_NATIVE_MIXED_CACHE_INCREMENT",
+  "reviewer": "narrow_version_review",
+  "request": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
+  "reviewedCommit": "81bde5ecfd329b5cc65872b16ed5ca7124198225",
+  "historicalReviews": [
+    "INDEPENDENT_REVIEW_5FF52046.json",
+    "INDEPENDENT_REVIEW_91FF498D.json"
+  ],
+  "sourceSha256": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": "5a18ed22c7545d98c6766654929fed45d92df643bc10e08de7cf85c84f0defc0",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "d6026d3b2ec04692c31023364acf7537834d3f56599ee9fafe6cfff78f3c5b2b",
+    "src/data/sync/tripDownstreamCoordinator.ts": "ebd577a714ddcc3925448321abf2ef5aaaf2fc3ac4c74f69650566a93c0d6a20",
+    "src/features/auth/accountTripRestorePresentation.ts": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce",
+    "src/features/auth/accountTripRestorePresentation.test.ts": "76153ff18d94f5e78a73986a21eb367b7cf3d17732f60f4d2631714971ba83e1"
+  },
+  "resolvedFinding": "Same-scope mixed local+remote cache failure now retains qualified prior remote rows while applying fresh local rows; IDs that become local are de-duplicated. Remote-only fix alone was insufficient and is historical.",
+  "checks": [
+    "Prior remote snapshot is bound to exact principal string plus captured generation. It is written only from fenced normal local/discovery reads.",
+    "On failed discovery read, original outer catch rereads current principal and Session; alive/generation/request-ticket checks precede merging. Fresh local rows replace local view; only prior same-scope/current-generation remote rows survive and local IDs win.",
+    "Presentation is UNAVAILABLE, never CONFIRMED; qualified cached data stays accessible without false first-Trip empty UI.",
+    "Account/generation switch or no valid Session clears cached remote ref and rows. Guest remains on original independent path; no Guest discovery confirmation introduced.",
+    "No new Repo/Sync/identity or authorization. Existing full-discovery checkpoint and bounded restore/retry logic retained."
+  ],
+  "validation": {
+    "independent": "1suite5focusedPASS/86 stable skipped",
+    "log": "/private/tmp/otr-f02-mixed-cache-final-review.log",
+    "diffCheck": "PASS",
+    "historyReused": "Prior5ff31PASS and91ff4PASS retained only for respective historical scope; no broad115-case rerun"
+  },
+  "separateAuthReview": "Native source review NO_BLOCKER; separate Auth identity-boundary final response remains independently required, not replaced by this receipt.",
+  "limits": [
+    "No device/Hosted/Vision PASS",
+    "Not a comprehensive cache redesign or server authorization proof",
+    "Root must preserve concurrent shared-file changes during exact integration"
+  ],
+  "reviewerActions": "Archived prior91ff receipt unchanged and wrote this JSON only; no source changes/commit/device/Hosted/Auth/network."
+}

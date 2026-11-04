@@ -1,3 +1,13 @@
+import {
+  accountTripListPresentation,
+  type AccountTripRestoreObservation,
+} from "@/features/auth/accountTripRestorePresentation";
+import type { AccountScope } from "@/data/auth/accountRequestContext";
+import {
+  readTripDiscoveryReadObservation,
+  subscribeTripDiscoveryReadObservation,
+  refreshAccountTripReads,
+} from "@/data/sync/tripDownstreamCoordinator";
 import { readGuestTripCurrencyRepository } from "@/data/repositories/guestTripCurrencyRepository";
 import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
 import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
@@ -166,6 +176,27 @@ function LocalTripContent({
     [eligibleToday, setEligibleToday] = useState<Record<string, TodayEntry>>({});
   const [guest, setGuest] = useState<boolean | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
+  const [accountRestore, setAccountRestore] = useState<{
+    scope: AccountScope;
+    visibleTripCount: number;
+    observation: AccountTripRestoreObservation | null;
+  } | null>(null);
+  const [restoreWaitExpired, setRestoreWaitExpired] = useState(false);
+  const accountListPresentation = accountRestore
+    ? accountTripListPresentation({
+        current: { ...accountRestore.scope, generation },
+        cache: {
+          scope: accountRestore.scope,
+          visibleTripCount: accountRestore.visibleTripCount,
+        },
+        observation: accountRestore.observation,
+        waitExpired: restoreWaitExpired,
+      })
+    : null;
+  const showTripList = accountListPresentation
+    ? accountListPresentation === "SHOW_TRIPS" ||
+      accountListPresentation === "CONFIRMED_EMPTY"
+    : status === "READY" || trips.length > 0 || remoteTrips.length > 0;
   const [name, setName] = useState(""),
     [start, setStart] = useState(""),
     [end, setEnd] = useState("");
@@ -228,6 +259,11 @@ function LocalTripContent({
   const [menuMembersTrip, setMenuMembersTrip] = useState<string | null>(null);
   const loadedGuest = useRef<string | null>(null);
   const loadedListScope = useRef<string | null>(null);
+  const loadedRemoteList = useRef<{
+    scope: string;
+    generation: number;
+    rows: TripListSummary[];
+  } | null>(null);
   const request = useRef(0),
     busy = useRef(false),
     tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() });
@@ -368,6 +404,8 @@ function LocalTripContent({
       ticket = ++request.current;
     let guestLocalId: string | null = null;
     let principalScope: string | null = null;
+    let discoveryReadFailed = false;
+    let refreshedLocalList: Trip[] | null = null;
     setStatus((previous) => (previous === "UNAVAILABLE" ? "LOADING" : previous));
     try {
       const session = await readCommittedLocalSession();
@@ -389,6 +427,8 @@ function LocalTripContent({
       setGuest(isGuest);
       if (!session?.identity && !isGuest) {
         setMetadataEditable(false);
+        setAccountRestore(null);
+        loadedRemoteList.current = null;
         setTrips([]);
         setRemoteTrips([]);
         setSelected(null);
@@ -406,18 +446,24 @@ function LocalTripContent({
         : isGuest
           ? await repo.listTrips()
           : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
+      refreshedLocalList = list;
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
-      const guestCurrencySetup = isGuest && local
-        ? await readGuestTripCurrencyRepository().then((reader) => reader.readSetup(local.id))
-            .catch(() => null)
-        : null;
+      const guestCurrencySetup =
+        isGuest && local
+          ? await readGuestTripCurrencyRepository()
+              .then((reader) => reader.readSetup(local.id))
+              .catch(() => null)
+          : null;
       // A local Repository result already wins; discovery is only needed for list/remote fallback.
       const discovery =
         local || isGuest
           ? null
           : await readLocalTripDiscoveryRepository()
               .then((reader) => reader.readMerged())
-              .catch(() => null);
+              .catch(() => {
+                discoveryReadFailed = true;
+                return null;
+              });
       const cached =
         tripId && !local
           ? (discovery?.trips.find(
@@ -431,27 +477,55 @@ function LocalTripContent({
         ticket !== request.current
       )
         return;
+      // An unavailable remote cache is not an empty replacement for this principal's visible list.
+      if (
+        discoveryReadFailed &&
+        !tripId &&
+        mode === "LIST" &&
+        principalScope &&
+        loadedListScope.current === principalScope
+      )
+        throw Error("TRIP_DISCOVERY_CACHE_UNAVAILABLE");
       loadedGuest.current = guestLocalId;
       loadedListScope.current = principalScope;
       if (isGuest) setSetup(guestCurrencySetup);
       setMetadataEditable(canEditMetadata);
       setTrips(list);
-      setRemoteTrips(
-        tripId
-          ? []
-          : [
-              ...filterNativeTripQaList(
-                qaAccountId,
-                discovery?.trips.filter(
-                  (trip) => trip.localStatus === null && !localIds.has(trip.id),
-                ) ?? [],
-              ),
-            ],
-      );
+      const remoteList = tripId
+        ? []
+        : [
+            ...filterNativeTripQaList(
+              qaAccountId,
+              discovery?.trips.filter(
+                (trip) => trip.localStatus === null && !localIds.has(trip.id),
+              ) ?? [],
+            ),
+          ];
+      setRemoteTrips(remoteList);
+      loadedRemoteList.current =
+        !tripId && mode === "LIST" && principalScope
+          ? { scope: principalScope, generation: captured, rows: remoteList }
+          : null;
+      if (
+        !tripId &&
+        principal?.kind === "ACCOUNT" &&
+        principalScope === `ACCOUNT:${principal.accountId}`
+      ) {
+        const scope = { accountId: principal.accountId, generation: captured };
+        setAccountRestore({
+          scope,
+          visibleTripCount: list.length + remoteList.length,
+          observation: discoveryReadFailed
+            ? { scope, status: "UNAVAILABLE" }
+            : readTripDiscoveryReadObservation(scope),
+        });
+      } else setAccountRestore(null);
       setEligibleToday({});
       setSelected(local);
       setRemoteSelected(cached);
-      setStatus("READY");
+      setStatus(
+        discoveryReadFailed && !tripId && mode === "LIST" ? "UNAVAILABLE" : "READY",
+      );
       onKnownTrip(local ? "LOCAL" : cached ? "CACHED" : "NONE");
       if (!tripId && list.length) {
         const possible = possibleTodayTrips(list, calendarDate(new Date()));
@@ -539,12 +613,43 @@ function LocalTripContent({
               ? `ACCOUNT:${currentPrincipal.accountId}`
               : null;
         if (currentScope === principalScope) {
+          let retainedVisibleCount: number | undefined;
+          const cached = loadedRemoteList.current;
+          if (
+            discoveryReadFailed &&
+            refreshedLocalList &&
+            cached?.scope === currentScope &&
+            cached.generation === captured
+          ) {
+            const localIds = new Set(refreshedLocalList.map((trip) => trip.id));
+            const remote = cached.rows.filter((trip) => !localIds.has(trip.id));
+            setTrips(refreshedLocalList);
+            setEligibleToday({});
+            setRemoteTrips(remote);
+            loadedRemoteList.current = { ...cached, rows: remote };
+            retainedVisibleCount = refreshedLocalList.length + remote.length;
+          }
+          setAccountRestore((prior) =>
+            prior &&
+            prior.scope.generation === captured &&
+            currentScope === `ACCOUNT:${prior.scope.accountId}`
+              ? {
+                  ...prior,
+                  ...(retainedVisibleCount !== undefined
+                    ? { visibleTripCount: retainedVisibleCount }
+                    : {}),
+                  observation: { scope: prior.scope, status: "UNAVAILABLE" },
+                }
+              : null,
+          );
           setStatus("UNAVAILABLE");
           return;
         }
       }
       loadedGuest.current = null;
       loadedListScope.current = null;
+      loadedRemoteList.current = null;
+      setAccountRestore(null);
       setTrips([]);
       setRemoteTrips([]);
       setSelected(null);
@@ -554,15 +659,48 @@ function LocalTripContent({
       onKnownTrip("NONE");
     }
   }, [tripId, mode, onKnownTrip, generation]);
+  const restoreAccountId = accountRestore?.scope.accountId;
+  useEffect(() => {
+    if (!restoreAccountId || tripId || mode !== "LIST") return;
+    let active = true;
+    void refreshAccountTripReads()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) void load();
+      });
+    return () => {
+      active = false;
+    };
+  }, [restoreAccountId, tripId, mode, generation, load]);
+  useEffect(() => {
+    if (accountListPresentation !== "RESTORING") return;
+    const timer = setTimeout(() => setRestoreWaitExpired(true), 20_000);
+    return () => clearTimeout(timer);
+  }, [accountListPresentation, generation, restoreAccountId]);
+  const retryList = async () => {
+    setRestoreWaitExpired(false);
+    if (accountRestore) await refreshAccountTripReads().catch(() => undefined);
+    if (alive.current && generation === getAccountGeneration()) await load();
+  };
   useFocusEffect(
     useCallback(() => {
       // Retained My Trips must reread durable edits when navigation returns.
+      const stopDiscovery = subscribeTripDiscoveryReadObservation((event) => {
+        if (
+          !tripId &&
+          mode === "LIST" &&
+          event.scope.generation === generation &&
+          generation === getAccountGeneration()
+        )
+          void load();
+      });
       void Promise.resolve().then(load);
       const sub = AppState.addEventListener("change", (state) => {
         if (state === "active") void load();
       });
       return () => {
         request.current += 1;
+        stopDiscovery();
         sub.remove();
       };
       // Normal sync completion must also invalidate the focused local read.
@@ -1394,7 +1532,7 @@ function LocalTripContent({
         </>
       ) : mode === "LIST" ? (
         <>
-          {status === "UNAVAILABLE" ? (
+          {status === "UNAVAILABLE" || accountListPresentation === "UNAVAILABLE" ? (
             <View>
               <Text accessibilityRole="alert" style={styles.status}>
                 {t("myTrips.loadFailed")}
@@ -1402,11 +1540,11 @@ function LocalTripContent({
               <UiButton
                 label={t("common.tryAgain")}
                 variant="text"
-                onPress={() => void load()}
+                onPress={() => void retryList()}
               />
             </View>
           ) : null}
-          {status === "READY" || trips.length || remoteTrips.length ? (
+          {showTripList ? (
             <MyTripsList
               trips={trips}
               remoteTrips={remoteTrips}
@@ -1416,7 +1554,7 @@ function LocalTripContent({
               onOpenToday={(id) => void openToday(id)}
               onCreate={onCreate}
             />
-          ) : status === "LOADING" ? (
+          ) : status === "LOADING" || accountListPresentation === "RESTORING" ? (
             <MyTripsListSkeleton />
           ) : null}
         </>

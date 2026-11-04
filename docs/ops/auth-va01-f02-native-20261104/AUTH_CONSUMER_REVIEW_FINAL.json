@@ -1,0 +1,32 @@
+{
+  "request": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
+  "candidate": "81bde5ecfd329b5cc65872b16ed5ca7124198225",
+  "status": "AUTH_SCOPED_CONSUMER_NO_BLOCKER_FINAL_MIXED_CACHE_FIX",
+  "scope": "Incremental Account/private-cache/generation and frozen DTO semantics only",
+  "findingClosed": "F02_REMOTE_ONLY_AND_MIXED_CACHE_ON_INNER_READ_FAILURE",
+  "verified": [
+    "Same-principal failed discovery cache read enters existing recovery before overwriting visible remote rows",
+    "Recovery rechecks current principal and committed Session then alive/generation/request ticket before any retained data is installed",
+    "Scoped generation-bound remote memory is combined with fresh qualified local rows and local UUIDs win deduplication",
+    "Retained row count follows actual combined rows; observation remains UNAVAILABLE, never fake CONFIRMED",
+    "New Account/generation/Guest scope cannot reuse prior remote memory; existing clear paths reset it",
+    "Fresh local rows still display when there is no old matching remote cache",
+    "Frozen Auth helper blobs unchanged; no Session/permission/Repository/Sync authority added"
+  ],
+  "nativeReportedFocusedValidation": "Mixed RED then15 focused PASS; Auth reused result and read actual test cases, no rerun",
+  "authTestsRerun": 0,
+  "externalActions": 0,
+  "sharedProductEditsByAuth": false,
+  "files": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": "5a18ed22c7545d98c6766654929fed45d92df643bc10e08de7cf85c84f0defc0",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "d6026d3b2ec04692c31023364acf7537834d3f56599ee9fafe6cfff78f3c5b2b",
+    "src/data/sync/tripDownstreamCoordinator.ts": "ebd577a714ddcc3925448321abf2ef5aaaf2fc3ac4c74f69650566a93c0d6a20",
+    "src/features/auth/accountTripRestorePresentation.ts": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce",
+    "src/features/auth/accountTripRestorePresentation.test.ts": "76153ff18d94f5e78a73986a21eb367b7cf3d17732f60f4d2631714971ba83e1"
+  },
+  "limits": [
+    "Native independent incremental review and fixed final source manifest still required for Root1 integration",
+    "No main/device/Hosted or Owner UX acceptance proved by this review",
+    "Not a new OTP, Provider, migration or protected-runtime permission"
+  ]
+}

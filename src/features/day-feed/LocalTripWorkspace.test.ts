@@ -1,3 +1,20 @@
+const restore = vi.hoisted(() => ({
+  observation: null as any,
+  refresh: vi.fn(),
+  listeners: new Set<(event: any) => void>(),
+}));
+vi.mock("@/data/sync/tripDownstreamCoordinator", () => ({
+  readTripDiscoveryReadObservation: (scope: any) =>
+    restore.observation?.scope.accountId === scope.accountId &&
+    restore.observation?.scope.generation === scope.generation
+      ? restore.observation
+      : null,
+  subscribeTripDiscoveryReadObservation: (listener: (event: any) => void) => {
+    restore.listeners.add(listener);
+    return () => restore.listeners.delete(listener);
+  },
+  refreshAccountTripReads: () => restore.refresh(),
+}));
 const guestCurrency = vi.hoisted(() => ({ readSetup: vi.fn() }));
 vi.mock("@/data/repositories/guestTripCurrencyRepository", () => ({
   readGuestTripCurrencyRepository: async () => ({ readSetup: guestCurrency.readSetup }),
@@ -141,6 +158,7 @@ const state = vi.hoisted(() => ({
   repo: vi.fn(),
   saveTraveler: vi.fn(),
   discovery: vi.fn(),
+  realTripList: false,
   serial: 0,
   alert: vi.fn(),
   publish: vi.fn(),
@@ -275,25 +293,29 @@ vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
 vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
   readTripDayFeed: vi.fn(),
 }));
-vi.mock("./MyTripsList", () => ({
-  MyTripsList: (p: any) => {
-    state.nodes.push({ tripList: p });
-    return createElement(
-      "div",
-      null,
-      p.trips.map((trip: Trip) => {
-        const node = { label: trip.name, onPress: () => p.onOpen(trip.id) };
-        state.nodes.push(node);
-        return createElement("button", { key: trip.id }, trip.name);
-      }),
-      p.remoteTrips.map((trip: { id: string; name: string }) => {
-        const node = { label: trip.name, onPress: () => p.onOpen(trip.id) };
-        state.nodes.push(node);
-        return createElement("button", { key: trip.id }, trip.name);
-      }),
-    );
-  },
-}));
+vi.mock("./MyTripsList", async (original) => {
+  const actual = await original<typeof import("./MyTripsList")>();
+  return {
+    MyTripsList: (p: any) => {
+      if (state.realTripList) return createElement(actual.MyTripsList, p);
+      state.nodes.push({ tripList: p });
+      return createElement(
+        "div",
+        null,
+        p.trips.map((trip: Trip) => {
+          const node = { label: trip.name, onPress: () => p.onOpen(trip.id) };
+          state.nodes.push(node);
+          return createElement("button", { key: trip.id }, trip.name);
+        }),
+        p.remoteTrips.map((trip: { id: string; name: string }) => {
+          const node = { label: trip.name, onPress: () => p.onOpen(trip.id) };
+          state.nodes.push(node);
+          return createElement("button", { key: trip.id }, trip.name);
+        }),
+      );
+    },
+  };
+});
 vi.mock("./LocalTripPhotos", () => ({
   LocalTripPhotos: (p: { tripId: string }) =>
     createElement("div", { "data-trip-photos": p.tripId }),
@@ -305,7 +327,11 @@ vi.mock("./TripCoverPicker", () => ({
   },
 }));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: () => null }));
-vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1, tripCoverId: () => "coast" }));
+vi.mock("./tripCovers", () => ({
+  tripCoverSource: () => 1,
+  builtInTripCoverSource: () => 1,
+  tripCoverId: () => "coast",
+}));
 
 const trip = (id: string, name: string): Trip => ({
   id,
@@ -399,6 +425,9 @@ function input(label: string, value: string) {
   state.nodes.find((node) => node.accessibilityLabel === label)!.onChangeText(value);
 }
 beforeEach(() => {
+  restore.observation = null;
+  restore.refresh.mockReset().mockResolvedValue(undefined);
+  restore.listeners.clear();
   state.preparationWidget = null;
   guestCurrency.readSetup.mockReset().mockResolvedValue(null);
   vi.mocked(readLocalTripPrincipal)
@@ -431,6 +460,7 @@ beforeEach(() => {
   state.focusReturned = false;
   state.repo.mockReset();
   state.saveTraveler.mockReset();
+  state.realTripList = false;
   state.discovery.mockReset();
   state.discovery.mockResolvedValue({
     readMerged: async () => ({ cachedAt: null, trips: [] }),
@@ -838,6 +868,7 @@ it("non-Creator Home opens the independent preference Gallery without metadata a
 });
 
 vi.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: "div",
   SafeAreaView: "div",
 }));
@@ -2295,21 +2326,41 @@ it("Guest Cover Cancel discards the staged choice without a preference or metada
   expect(repo.updateMetadata).not.toHaveBeenCalled();
 });
 
-
 it("opens the same Guest Trip local currency without enabling Account preparation modules", async () => {
   const id = "guest-currency";
-  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "GUEST", localId: "00000000-0000-4000-8000-000000000001" });
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
   vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
   const local = { ...trip(id, "Guest currency"), syncFormatVersion: 2 as const };
   const repo = repository([local]);
-  vi.mocked(repo.readDeferredMetadataEditBase).mockResolvedValue({ metadata: {
-    name: local.name, destination: null, startDate: null, endDate: null, destinations: [],
-  } } as any);
+  vi.mocked(repo.readDeferredMetadataEditBase).mockResolvedValue({
+    metadata: {
+      name: local.name,
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    },
+  } as any);
   state.repo.mockResolvedValue(repo);
   guestCurrency.readSetup.mockResolvedValue({
-    context: { accountId: "00000000-0000-4000-8000-000000000001", tripId: id, generation: getAccountGeneration() },
-    currency: { state: "AVAILABLE", code: "NZD", scale: 2, permission: "OWNER", lock: "NOT_OBSERVED" },
-    members: { state: "UNKNOWN" }, invitations: "UNKNOWN", connections: "UNKNOWN",
+    context: {
+      accountId: "00000000-0000-4000-8000-000000000001",
+      tripId: id,
+      generation: getAccountGeneration(),
+    },
+    currency: {
+      state: "AVAILABLE",
+      code: "NZD",
+      scale: 2,
+      permission: "OWNER",
+      lock: "NOT_OBSERVED",
+    },
+    members: { state: "UNKNOWN" },
+    invitations: "UNKNOWN",
+    connections: "UNKNOWN",
   });
   props.tripId = id;
   render();
@@ -2322,27 +2373,327 @@ it("opens the same Guest Trip local currency without enabling Account preparatio
   expect(currency.disabled).toBe(false);
   currency.onPress();
   render();
-  expect(state.nodes.find((node) => node.currencyScreen)?.currencyScreen.journeyId).toBe(id);
+  expect(state.nodes.find((node) => node.currencyScreen)?.currencyScreen.journeyId).toBe(
+    id,
+  );
   expect(state.preparation.tripId).toBe(id);
 });
 
+it.each(["Upcoming", "Undated"])(
+  "shows existing Guest %s Preparation without Account-only modules",
+  async (lifecycle) => {
+    const local = {
+      ...trip("guest-preparation", "Guest preparation"),
+      syncFormatVersion: 2 as const,
+      startDate: lifecycle === "Upcoming" ? "2099-11-08" : null,
+      endDate: lifecycle === "Upcoming" ? "2099-11-10" : null,
+    };
+    vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+      kind: "GUEST",
+      localId: "00000000-0000-4000-8000-000000000001",
+    });
+    vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+    state.repo.mockResolvedValue(repository([local]));
+    state.preparationWidget = {
+      id: "preparation",
+      title: "Prepare",
+      content: createElement("div", null, "Existing preparation"),
+    };
+    props.tripId = local.id;
+    render();
+    await flush();
+    const html = render();
+    expect(state.preparation.tripId).toBe(local.id);
+    expect(state.preparation.undated).toBe(lifecycle === "Undated");
+    expect(
+      state.nodes
+        .find((node) => node.frame)
+        ?.frame.widgets.map((widget: TripHomeWidget) => widget.id),
+    ).toContain("preparation");
+    expect(html).not.toContain("data-trip-photos");
+    expect(state.discovery).not.toHaveBeenCalled();
+  },
+);
 
-it.each(["Upcoming", "Undated"])("shows existing Guest %s Preparation without Account-only modules", async (lifecycle) => {
-  const local = { ...trip("guest-preparation", "Guest preparation"), syncFormatVersion: 2 as const,
-    startDate: lifecycle === "Upcoming" ? "2099-11-08" : null,
-    endDate: lifecycle === "Upcoming" ? "2099-11-10" : null,
+it("F02 actual Account caller never shows first-Trip empty while cold history restore is unknown", async () => {
+  state.realTripList = true;
+  const accountId = "10000000-0000-4000-8000-000000000001";
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "ACCOUNT", accountId });
+  const local = repository();
+  state.repo.mockResolvedValue(local);
+  let rows: any[] = [];
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: null, trips: rows }),
+  });
+  render();
+  await flush();
+  const unknown = render();
+  expect(unknown).not.toContain("myTrips.emptyTitle");
+  expect(unknown).toContain("data-my-trips-skeleton");
+  rows = [
+    { ...trip("history-trip", "Historical Trip"), localStatus: null, remoteListed: true },
+  ];
+  emitRestore("CONFIRMED");
+  await flush();
+  const ready = render();
+  expect(ready).toContain("Historical Trip");
+  expect(ready).not.toContain("myTrips.emptyTitle");
+});
+
+function normalRestoreList() {
+  state.realTripList = true;
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "ACCOUNT",
+    accountId: "10000000-0000-4000-8000-000000000001",
+  });
+  state.repo.mockResolvedValue(repository());
+}
+function emitRestore(status: "RESTORING" | "CONFIRMED" | "UNAVAILABLE") {
+  restore.observation = {
+    scope: {
+      accountId: "10000000-0000-4000-8000-000000000001",
+      generation: getAccountGeneration(),
+    },
+    status,
   };
-  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "GUEST", localId: "00000000-0000-4000-8000-000000000001" });
-  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
-  state.repo.mockResolvedValue(repository([local]));
-  state.preparationWidget = { id: "preparation", title: "Prepare", content: createElement("div", null, "Existing preparation") };
-  props.tripId = local.id;
+  for (const listener of restore.listeners) listener(restore.observation);
+}
+it("F02 historical cachedAt and cache-only refresh cannot confirm a cold empty Account", async () => {
+  normalRestoreList();
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: "2026-10-31T00:00:00Z", trips: [] }),
+  });
+  render();
+  await flush();
+  expect(render()).toContain("data-my-trips-skeleton");
+  state.focusReturned = true;
+  render();
+  state.focusReturned = false;
+  await flush();
+  expect(render()).not.toContain("myTrips.emptyTitle");
+  emitRestore("CONFIRMED");
+  await flush();
+  expect(render()).toContain("myTrips.emptyTitle");
+});
+it("F02 cached Trips remain visible during unavailable/offline restore", async () => {
+  normalRestoreList();
+  state.repo.mockResolvedValue(repository([trip("cached", "Offline cached Trip")]));
+  emitRestore("UNAVAILABLE");
   render();
   await flush();
   const html = render();
-  expect(state.preparation.tripId).toBe(local.id);
-  expect(state.preparation.undated).toBe(lifecycle === "Undated");
-  expect(state.nodes.find((node) => node.frame)?.frame.widgets.map((widget: TripHomeWidget) => widget.id)).toContain("preparation");
-  expect(html).not.toContain("data-trip-photos");
-  expect(state.discovery).not.toHaveBeenCalled();
+  expect(html).toContain("Offline cached Trip");
+  expect(html).not.toContain("myTrips.emptyTitle");
+  expect(html).not.toContain("data-my-trips-skeleton");
+});
+it("F02 restore failure offers the existing retry and invokes account Downstream before reload", async () => {
+  normalRestoreList();
+  render();
+  await flush();
+  render();
+  emitRestore("UNAVAILABLE");
+  await flush();
+  const failed = render();
+  expect(failed).toContain("myTrips.loadFailed");
+  expect(failed).not.toContain("myTrips.emptyTitle");
+  restore.refresh.mockImplementation(async () => emitRestore("CONFIRMED"));
+  button("common.tryAgain").onPress();
+  await flush();
+  expect(restore.refresh).toHaveBeenCalledOnce();
+  expect(render()).toContain("myTrips.emptyTitle");
+});
+it("F02 unresolved restore has a bounded wait and does not become first-Trip empty", async () => {
+  vi.useFakeTimers();
+  try {
+    normalRestoreList();
+    restore.refresh.mockReturnValue(new Promise(() => {}));
+    render();
+    await flush();
+    state.forceEffects = true;
+    render();
+    state.forceEffects = false;
+    await flush();
+    await vi.advanceTimersByTimeAsync(20_001);
+    const html = render();
+    expect(html).toContain("myTrips.loadFailed");
+    expect(html).not.toContain("myTrips.emptyTitle");
+    state.cleanups.forEach((cleanup) => cleanup());
+    state.cleanups = [];
+  } finally {
+    vi.useRealTimers();
+  }
+});
+it("F02 old Account confirmation and cached list do not survive a generation switch", async () => {
+  normalRestoreList();
+  state.repo.mockResolvedValue(repository([trip("a", "Private Account A Trip")]));
+  emitRestore("CONFIRMED");
+  render();
+  await flush();
+  expect(render()).toContain("Private Account A Trip");
+  advanceAccountGeneration();
+  const accountId = "20000000-0000-4000-8000-000000000002";
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "ACCOUNT", accountId });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue({
+    identity: { userId: accountId },
+  } as never);
+  state.repo.mockResolvedValue(repository());
+  render();
+  await flush();
+  const next = render();
+  expect(next).not.toContain("Private Account A Trip");
+  expect(next).not.toContain("myTrips.emptyTitle");
+  expect(next).toContain("data-my-trips-skeleton");
+});
+it("F02 a confirmed network checkpoint cannot conceal a failed local discovery cache read", async () => {
+  normalRestoreList();
+  emitRestore("CONFIRMED");
+  state.discovery.mockResolvedValue({
+    readMerged: async () => {
+      throw Error("CACHE_READ_FAILED");
+    },
+  });
+  render();
+  await flush();
+  const html = render();
+  expect(html).toContain("myTrips.loadFailed");
+  expect(html).not.toContain("myTrips.emptyTitle");
+});
+
+it("F02 failed refresh of a previously confirmed empty list becomes unavailable, not first-Trip empty", async () => {
+  normalRestoreList();
+  emitRestore("CONFIRMED");
+  const local = repository();
+  state.repo.mockResolvedValue(local);
+  render();
+  await flush();
+  expect(render()).toContain("myTrips.emptyTitle");
+  vi.mocked(local.listTrips).mockRejectedValue(Error("LOCAL_READ_FAILED"));
+  state.focusReturned = true;
+  render();
+  state.focusReturned = false;
+  await flush();
+  const html = render();
+  expect(html).toContain("myTrips.loadFailed");
+  expect(html).not.toContain("myTrips.emptyTitle");
+});
+
+it("F02 discovery completion rereads cache and fences a late earlier empty read", async () => {
+  normalRestoreList();
+  const earlier = deferred<{ cachedAt: string | null; trips: any[] }>();
+  const readMerged = vi
+    .fn()
+    .mockReturnValueOnce(earlier.promise)
+    .mockResolvedValue({
+      cachedAt: "2026-11-04T00:00:00Z",
+      trips: [
+        {
+          ...trip("history", "Restored current history"),
+          localStatus: null,
+          remoteListed: true,
+        },
+      ],
+    });
+  state.discovery.mockResolvedValue({ readMerged });
+  render();
+  await flush();
+  expect(readMerged).toHaveBeenCalledOnce();
+  emitRestore("CONFIRMED");
+  await flush();
+  expect(render()).toContain("Restored current history");
+  earlier.resolve({ cachedAt: null, trips: [] });
+  await flush();
+  const html = render();
+  expect(html).toContain("Restored current history");
+  expect(html).not.toContain("myTrips.emptyTitle");
+});
+
+it("F02 same-scope remote-only cache survives a discovery read failure without leaking into a new Account", async () => {
+  normalRestoreList();
+  const readMerged = vi.fn().mockResolvedValue({
+    cachedAt: "2026-11-04T00:00:00Z",
+    trips: [
+      {
+        ...trip("remote-only", "Qualified remote cached Trip"),
+        localStatus: null,
+        remoteListed: true,
+      },
+    ],
+  });
+  state.discovery.mockResolvedValue({ readMerged });
+  render();
+  await flush();
+  expect(render()).toContain("Qualified remote cached Trip");
+  readMerged.mockRejectedValue(Error("DISCOVERY_CACHE_READ_FAILED"));
+  state.focusReturned = true;
+  render();
+  state.focusReturned = false;
+  await flush();
+  await flush(); // The preserved-list path rechecks principal and Session after the failed read.
+  const failed = render();
+  expect(failed).toContain("Qualified remote cached Trip");
+  expect(failed).toContain("myTrips.loadFailed");
+  expect(failed).not.toContain("myTrips.emptyTitle");
+  advanceAccountGeneration();
+  const accountId = "20000000-0000-4000-8000-000000000002";
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({ kind: "ACCOUNT", accountId });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue({
+    identity: { userId: accountId },
+  } as never);
+  state.repo.mockResolvedValue(repository([trip("fresh-local", "Fresh local B Trip")]));
+  render();
+  await flush();
+  const next = render();
+  expect(next).toContain("Fresh local B Trip");
+  expect(next).not.toContain("Qualified remote cached Trip");
+  expect(next).not.toContain("myTrips.emptyTitle");
+});
+
+it("F02 mixed cache failure retains same-scope remote Trips while applying fresh local rows and ID deduplication", async () => {
+  normalRestoreList();
+  const local = repository([trip("local-a", "Original mixed local")]);
+  state.repo.mockResolvedValue(local);
+  const readMerged = vi
+    .fn()
+    .mockResolvedValue({
+      cachedAt: "2026-11-04T00:00:00Z",
+      trips: [
+        {
+          ...trip("remote-r", "Qualified mixed remote Trip"),
+          localStatus: null,
+          remoteListed: true,
+        },
+      ],
+    });
+  state.discovery.mockResolvedValue({ readMerged });
+  render();
+  await flush();
+  expect(render()).toContain("Qualified mixed remote Trip");
+  vi.mocked(local.listTrips).mockResolvedValue([
+    trip("local-a", "Fresh mixed local"),
+    trip("local-new", "Newly added local"),
+  ]);
+  readMerged.mockRejectedValue(Error("DISCOVERY_CACHE_READ_FAILED"));
+  state.focusReturned = true;
+  render();
+  state.focusReturned = false;
+  await flush();
+  await flush(); // Existing failure retention revalidates the current principal and Session.
+  const mixed = render();
+  expect(mixed).toContain("Qualified mixed remote Trip");
+  expect(mixed).toContain("Fresh mixed local");
+  expect(mixed).toContain("Newly added local");
+  expect(mixed).toContain("myTrips.loadFailed");
+  expect(mixed).not.toContain("myTrips.emptyTitle");
+  vi.mocked(local.listTrips).mockResolvedValue([
+    trip("local-a", "Fresh mixed local"),
+    trip("remote-r", "Remote now local"),
+  ]);
+  state.focusReturned = true;
+  render();
+  state.focusReturned = false;
+  await flush();
+  await flush();
+  const deduplicated = render();
+  expect(deduplicated).toContain("Remote now local");
+  expect(deduplicated).not.toContain("Qualified mixed remote Trip");
 });

@@ -1,0 +1,29 @@
+{
+  "status": "SOURCE_MAIN_VERIFIED_DEVICE_PENDING",
+  "request": "NATIVE-F02-SOURCE-INTEGRATION-20261104",
+  "candidate": "81bde5ecfd329b5cc65872b16ed5ca7124198225",
+  "preMain": "b502cb7f11548e72499470e30f63e7cb1c0087d8",
+  "allSixExactHashesMatch": true,
+  "nativeReviewSHA256": "36ccbe170e899f9ee2535b5f3d3e10c231469d8e62be6e494ad6c07fa7bdb5ac",
+  "nativeReviewRetention": "Original file was read before its private temporary worktree disappeared; restored exact observed content and verified original SHA256 before archiving. No new reviewer verdict created.",
+  "authReviewSHA256": "d35b3314b6e172ff41aac5d2e788a284734451372f1050032d2e0e9eff83772e",
+  "actualMainTests": {
+    "suites": 3,
+    "passed": 113
+  },
+  "scopedCompiler": "PASS six roots plus imports",
+  "uiGuard": "PASS",
+  "lint": {
+    "errors": 0,
+    "existingTestImportWarnings": 16
+  },
+  "scope": "UI observation of existing complete discovery/cache checkpoint; retain qualified same-scope mixed cache with fresh local rows, reject old generation/tickets; Guest independent",
+  "noChanges": [
+    "Session/ACL/Core authority",
+    "SQLite schema",
+    "Hosted/Provider",
+    "other Native/Capture source leaves"
+  ],
+  "deviceAcceptance": "NOT_RUN",
+  "ownerUx": "NOT_RUN"
+}

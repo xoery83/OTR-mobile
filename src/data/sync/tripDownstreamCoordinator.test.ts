@@ -22,6 +22,7 @@ function fixture() {
     discover: vi.fn(async () => [first, second]),
     pull: vi.fn(async (_scope: AccountScope, _tripId: string) => true),
     notify: vi.fn(),
+    observeDiscovery: vi.fn(),
     now: () => now,
   };
   return {
@@ -229,3 +230,40 @@ it.each(["blur", "another Trip"])(
     expect(f.deps.pull).toHaveBeenCalledTimes(2);
   },
 );
+
+it("discovery observation confirms only a completed current discovery/cache apply, including truly empty results", async () => {
+  const f = fixture(),
+    scope = await f.deps.scope();
+  let finish!: (ids: Awaited<ReturnType<typeof f.deps.discover>>) => void;
+  f.deps.discover.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  expect(f.read.discoveryObservation(scope)).toBeNull();
+  const pending = f.read.discovery();
+  await vi.waitFor(() => expect(f.deps.discover).toHaveBeenCalledOnce());
+  expect(f.read.discoveryObservation(scope)?.status).toBe("RESTORING");
+  f.deps.notify(scope, [], true); // A bootstrap/cache-only notification is not discovery success.
+  expect(f.read.discoveryObservation(scope)?.status).toBe("RESTORING");
+  finish([]);
+  await pending;
+  expect(f.read.discoveryObservation(scope)).toEqual({ scope, status: "CONFIRMED" });
+  expect(f.deps.observeDiscovery.mock.calls.map(([event]) => event.status)).toEqual([
+    "RESTORING",
+    "CONFIRMED",
+  ]);
+});
+it("failed discovery stays unavailable without replacing cache and old-generation confirmation is inaccessible", async () => {
+  const f = fixture(),
+    scope = await f.deps.scope();
+  await f.read.discovery();
+  f.tick(15_001);
+  f.deps.discover.mockRejectedValueOnce(Error("DISCOVERY_FAILED"));
+  await expect(f.read.discovery()).rejects.toThrow("DISCOVERY_FAILED");
+  expect(f.read.discoveryObservation(scope)?.status).toBe("UNAVAILABLE");
+  expect(f.deps.notify).toHaveBeenCalledTimes(1);
+  f.switchAccount();
+  expect(f.read.discoveryObservation(scope)).toBeNull();
+  expect(f.read.discoveryObservation(await f.deps.scope())).toBeNull();
+});

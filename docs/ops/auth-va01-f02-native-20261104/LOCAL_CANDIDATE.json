@@ -1,0 +1,96 @@
+{
+  "request": "AUTH-VA01-F02-RESTORE-EMPTY-20261104-01",
+  "status": "LOCAL_REAL_CALLER_PASS / INDEPENDENT_REVIEW_PENDING / NOT_INTEGRATED / NOT_DEVICE_HOSTED_PASS",
+  "primary": "DF-C02 unchanged; bounded shared Native collaboration for Auth F02",
+  "baseSHA": "6ec335598bf77952c99883b11d80b0119725d261",
+  "authExactSource": {
+    "commit": "f808ec9d",
+    "copiedOnly": [
+      "src/features/auth/accountTripRestorePresentation.ts",
+      "src/features/auth/accountTripRestorePresentation.test.ts"
+    ],
+    "sourceSHA256": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce",
+    "testSHA256": "76153ff18d94f5e78a73986a21eb367b7cf3d17732f60f4d2631714971ba83e1",
+    "matchesFrozenAuthBlobs": true
+  },
+  "goldenSlice": "Normal Account -> My Trips -> unknown cold cache does not render first-Trip empty -> current scoped complete Discovery/cache apply -> reread -> historical Trips or genuinely confirmed empty. Existing qualified cached Trips remain immediately visible offline.",
+  "actualRed": {
+    "test": "F02 actual Account caller never shows first-Trip empty while cold history restore is unknown",
+    "harness": "Current main LocalTripWorkspace with real MyTripsList; only platform, cover and Repository transports mocked.",
+    "result": "1 failed /80 stable skipped, actual rendered myTrips.emptyTitle before any Discovery success. Initial platform harness missing useSafeAreaInsets was corrected before recording the real assertion RED."
+  },
+  "minimumChanges": [
+    "Extend existing coordinator ReadState with scope/status UI observation only. RESTORING begins actual discovery work; CONFIRMED follows existing full discover/cache apply plus final scope guard; failed discovery is UNAVAILABLE. No persisted confirmation, queue, new Reader or permission authority.",
+    "Small coordinator-local view subscription/getter; generation fences reject retired scope. Generic/bootstrap local notifyLedgerReadCompletion never writes this observation.",
+    "Normal Account LIST caller feeds the frozen Auth pure helper current scope, qualified cache count, scoped observation and bounded20s UI wait. cachedAt is deliberately not confirmation. Guest path stays independent.",
+    "Success/status changes cause fenced local reread, not direct observation-to-empty rendering; original request ticket drops an older cache read that completes later. Retry invokes existing account Downstream/coalescing/backoff before reload.",
+    "Reuse existing MyTripsListSkeleton, loadFailed/tryAgain and same-principal cached-list preservation. Failed local cache reads cannot masquerade as confirmed empty. MyTripsList product source remains unchanged."
+  ],
+  "validation": {
+    "suites": 5,
+    "passed": 115,
+    "command": "npx vitest run src/features/day-feed/LocalTripWorkspace.test.ts src/data/sync/tripDownstreamCoordinator.test.ts src/features/auth/accountTripRestorePresentation.test.ts src/data/sync/tripDiscoveryTransport.test.ts src/data/repositories/tripDiscoveryRepository.test.ts --maxWorkers=1 --reporter=dot",
+    "scopedTypecheck": "PASS, six changed source/test roots and imported dependencies; temporary config removed.",
+    "scopedLint": "0 errors;16 import-order warnings in the existing hoisted Workspace test style. No disables added.",
+    "uiGuard": "PASS;473 legacy occurrences;168 representative UI files",
+    "diffCheck": "PASS",
+    "coverage": [
+      "Unknown cache to historical Trip through real MyTripsList",
+      "Historical cachedAt and cache-only focus reload do not confirm cold empty",
+      "Current complete Discovery with true empty enables empty UI",
+      "Cached nonempty Trips remain visible offline/unavailable",
+      "Failure feedback plus retry uses existing account Downstream",
+      "Unresolved restore times out at20s without first-Trip empty",
+      "Account/generation switch discards old confirmation/private list",
+      "Confirmed network observation does not hide local cache failure",
+      "Late prior empty cache read cannot replace newly restored history",
+      "Previously confirmed empty plus failed refresh becomes unavailable",
+      "Coordinator actual completion/failure and bootstrap-notification separation",
+      "Existing Workspace Guest/metadata/same-principal-cache/ABA regressions retained"
+    ]
+  },
+  "unchanged": [
+    "Auth Session/Core/Actor/permission authority",
+    "SQLite registry/schema",
+    "Trip discovery pagination/cache transaction",
+    "Existing Downstream coalescing/backoff and transport",
+    "MyTripsList renderer",
+    "CaptureProgress/captureMixedQaManifest/catalogs",
+    "Source QA worktree and all device/Session/SQLite data"
+  ],
+  "notPerformed": [
+    "No device/Host/Hosted/API/OTP/Provider operations",
+    "No full repository audit",
+    "No full typecheck rerun or OAuth-browser dependency repair",
+    "No Source/Cloud Beta PASS claimed"
+  ],
+  "sha256": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": "5a18ed22c7545d98c6766654929fed45d92df643bc10e08de7cf85c84f0defc0",
+    "src/data/sync/tripDownstreamCoordinator.ts": "ebd577a714ddcc3925448321abf2ef5aaaf2fc3ac4c74f69650566a93c0d6a20",
+    "src/features/auth/accountTripRestorePresentation.ts": "069f3b98577ec7d3401bd66b2aa44ee9de189f6aacb1cb391b32dafe00da23ce",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "d6026d3b2ec04692c31023364acf7537834d3f56599ee9fafe6cfff78f3c5b2b",
+    "src/data/sync/tripDownstreamCoordinator.test.ts": "e099919d259d2e5700afffe7c6003789ad4693b19b4d53fafb9c4e2e39cb9137",
+    "src/features/auth/accountTripRestorePresentation.test.ts": "76153ff18d94f5e78a73986a21eb367b7cf3d17732f60f4d2631714971ba83e1"
+  },
+  "authNarrowReviewRepair": {
+    "finding": "Already-visible same-scope remote-only cache could be erased when listTrips remained empty and a later readMerged threw, because the inner catch continued with an empty replacement.",
+    "red": "One actual Workspace + real MyTripsList case failed /89 other cases skipped: previously visible Qualified remote cached Trip disappeared.",
+    "minimumFix": "Before replacing list state, same-principal LIST + empty current local list + failed discovery cache read reuses the original outer failed-refresh cache-retention path. That path rechecks current principal/Session, generation and request ticket. No global fallback or new cache.",
+    "green": "Focused F02 tests10PASS /80 stable non-F02 cases skipped; preceding5suites115PASS retained as historical evidence, not rerun or aggregated.",
+    "newCase": "Retains the same-scope remote-only cached Trip with loadFailed feedback and no first-Trip empty; after new Account/generation, old remote data is absent while a fresh local B Trip is still shown even if discovery cache read fails.",
+    "checks": "Scoped two-root TypeScript PASS; ESLint0errors/16 import-order warnings; UIguard168/473PASS; diff-checkPASS.",
+    "scope": "Only LocalTripWorkspace.tsx and its direct test changed after5ff52046, plus evidence. No Coordinator/Auth/helper/catalog/Capture/Source/Host/device changes.",
+    "review": "Awaiting Auth final narrowReview and parent independent integration.",
+    "supersededBy": "mixedCacheRootRepair; remote-only condition generalized to preserve same-scope prior remote rows and accept fresh local rows, not an unconditional whole-list fallback."
+  },
+  "mixedCacheRootRepair": {
+    "finding": "Same-scope mixed local+remote list still lost remote rows on discovery cache failure while local list remained nonempty.",
+    "red": "One actual Workspace + real MyTripsList mixed case failed /90 skipped: prior Qualified mixed remote Trip vanished while Fresh mixed local and Newly added local were shown.",
+    "minimumFix": "One local viewRef reuses the already-displayed remote array, tagged with principal scope and generation. On cache read failure, original outer principal+Session+generation+ticket revalidation accepts fresh local rows and preserves only qualified same-scope prior remote rows, with local-ID deduplication; status and observation are UNAVAILABLE. Fresh scopes never inherit it; initial fresh-local data remains visible.",
+    "memoryBoundary": "A reference to the existing UI array only, not a Repo, Store, authorization cache or Sync engine. Generic clear/no-Session paths discard it; generation keyed remount resets it. No old empty whole-list fallback hides new local rows.",
+    "green": "Focused15PASS /76 skipped: F02 cases plus prior same-Account refresh, Guest/principal change and old-A callback fences. New mixed case proves updated+new local rows, retained remote row, error feedback and later local-wins-ID deduplication.",
+    "checks": "Scoped2root TypeScriptPASS; ESLint0errors/16 import-order warnings; UIguard168/473PASS; diff-checkPASS.",
+    "history": "Prior115 full focused checks and10 remote-only checks remain historical, not rerun or summed.",
+    "review": "Final Auth/Native narrowReview pending on repaired source hash."
+  }
+}
