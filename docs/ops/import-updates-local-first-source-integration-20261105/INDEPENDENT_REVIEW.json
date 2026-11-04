@@ -1,0 +1,52 @@
+{
+  "reviewer": "/root/ui08_review",
+  "candidateSha": "47dccc362752c502af640c5d4508e68f35e44a3f",
+  "evidenceCommit": "1df14914",
+  "packetSHA256": "03cbf197b9ec1a254adbc3fe4f98f4358a21303b3b1126cd96d6df30b6961174",
+  "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER",
+  "scope": "Fixed four Updates operation/component/test leaves and direct existing reader/reopen/caller. Existing UI foundation and terminology consulted. Separate mechanical frozen-tuple/provider-body equivalence check; no tokenizer rerun.",
+  "actionableDefects": [],
+  "personallyVerified": [
+    "Local snapshot is emitted from existing repository listing after account/generation/current checks and before sequential remote Task hydration.",
+    "UI uses existing registered/open labels and canonical controls; local rows do not invent Task/Cloud/Source success.",
+    "Real projected terminal Task cards suppress local rows with the same Batch; no duplicate local+Task row.",
+    "Remote callback retains same-scope local jobs; local snapshot retains loading=true so Refresh remains disabled during the existing read. Local open remains available subject busy/canReopen.",
+    "Account/trip filtering, generation/focus ticket checks and reopening exact account/batch/job/trip through existing Repository guards retained. Parent route also checks generation/current intent.",
+    "Optional fourth callback preserves existing three-argument callers. Reopen accepts existing four identity fields without weakening validation.",
+    "No transport timeout, concurrency, retry, schema, queue, Task, Source, Provider or persistent contract change."
+  ],
+  "testsPersonallyRun": {
+    "command": "./node_modules/.bin/vitest run src/data/operations/universalImportUpdates.test.ts src/features/updates/ImportUpdatesSection.test.ts src/features/updates/UpdatesInboxScreen.test.ts src/data/operations/universalActivityReader.test.ts",
+    "suitesPassed": 4,
+    "testsPassed": 45,
+    "failed": 0
+  },
+  "mechanicalEquivalence": {
+    "receiptSHA256": "ab6259122aa73367af1b4f38772a067675f71787b3def7ed0e9322cf8409314e",
+    "preparedManifestSHA256": "c6f06e8a8afedcd61ae37316246fa894922257e3b1905a46fe702c9ee1a60317",
+    "checks": [
+      "Receipt, packet and all four source-leaf SHA pins verified.",
+      "Prepared manifest hash, builder hash and prompt hash match receipt.",
+      "Actual account/trip/batch/job/source/representation/operation/digest tuple matches frozen prepared manifest.",
+      "Exact original77B/hash verified; existing builder with index0/S0 TEXT reproduces actual-tuple body.",
+      "Actual-tuple body equals original body byte-for-byte, including model/messages/framing/generation/json_object config."
+    ],
+    "bodyBytes": 6271,
+    "bodySHA256": "0dc2afe3dfa02fb0b1c60df3bc203d04d4313825ce6b297092a31a4fb4d82816",
+    "textBytes": 5896,
+    "images": 0,
+    "serverTaskId": null,
+    "tokenProofReuse": "Original1514-token offline proof reusable only for these exact body bytes with its previously recorded explicit model mapping/tokenizer/outer-framing equivalence conditions unchanged. No new token bound or current Hosted framing/model/pricing qualification inferred.",
+    "providerCalls": 0
+  },
+  "limitations": [
+    "Tests include mocked component state and operation dependencies; no installed-device/focus/visual acceptance claimed.",
+    "Existing sequential context GETs may include older accepted jobs; current/focus fences suppress late callbacks/next work but do not cancel already in-flight HTTP. Existing closed-window HTTP scope remains UNKNOWN.",
+    "Initial local rows intentionally retain registered-intake semantics until qualifying real terminal Task observations are projected.",
+    "No actual Server Task, Source receipt, Provider call, price/grant, Cloud Save/readback or Owner UX acceptance.",
+    "Did not rerun tokenizer, strict/lint/format/UIguard or broad repository suites; author checks remain author evidence.",
+    "Did not read active uncommitted SQL."
+  ],
+  "readiness": "SCOPED_LOCAL_CODE_REVIEW_PASS_DEVICE_L1_PENDING_NOT_CLOUD_E2E_PASS_NOT_APP_READY",
+  "mutations": "Only independent report under/private/tmp; product/author files, device, PG, credentials, network and Hosted state untouched."
+}

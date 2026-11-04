@@ -1,0 +1,98 @@
+{
+  "requestId": "IMP-C01-UPDATES-LOCAL-FIRST-WRITER-20261105-01",
+  "candidateSha": "47dccc362752c502af640c5d4508e68f35e44a3f",
+  "executionChild": "/root/txt_shortest_execution_20261105",
+  "parent": "/root",
+  "sourceReference": {
+    "localOriginMainAtCheck": "c98821fe16931bfe2fd79869178f0f8e8ac87445",
+    "fourLeavesMatchedBeforeEdit": true,
+    "networkReadbackClaim": false,
+    "latestLeafHistoryCommit": "423fd9f9e4cbec7b0f6fc9416a27553fdd9816a3"
+  },
+  "uniqueWriter": {
+    "owner": "LaneC child from Native confirmation relayed by parent",
+    "leaves": [
+      "src/data/operations/universalImportUpdates.ts",
+      "src/data/operations/universalImportUpdates.test.ts",
+      "src/features/updates/ImportUpdatesSection.tsx",
+      "src/features/updates/ImportUpdatesSection.test.ts"
+    ],
+    "return": "Parent returnsNative after independentreview/Root1 exactintegration; author freezescandidate now"
+  },
+  "integrationLeaves": [
+    {
+      "path": "src/data/operations/universalImportUpdates.ts",
+      "sha256": "0622e19745cb0c5699969ccdf1a690a771df0d92adbfa64ec2dcd5e8c837e284",
+      "beforeSHA256AtMain": "ecbd92995ad9be6fd6ff4b8b151be8ce6564dc927dddb4687e4eb9f677e9f250"
+    },
+    {
+      "path": "src/data/operations/universalImportUpdates.test.ts",
+      "sha256": "9d6f1bb69805e0df9ac2006b8328cc313b3c9b6e39c4caf126a483bd790d7f9d",
+      "beforeSHA256AtMain": "68a280fca15b68c57b5ba1e544433ae170862a1d50200481eebe26364ba7b0be"
+    },
+    {
+      "path": "src/features/updates/ImportUpdatesSection.tsx",
+      "sha256": "a275b6f243f50727be993a6b72eabb0134dfa4046b66ca93aa2e9c553a2ebbb2",
+      "beforeSHA256AtMain": "d5929e10c156e872536d8fa95c615ccf172b1718197fb8cd7888f63b8455f81e"
+    },
+    {
+      "path": "src/features/updates/ImportUpdatesSection.test.ts",
+      "sha256": "49c41faaf1267c651c7f1e69c4368a78029243eaeb3715268c5ab66be2b056b0",
+      "beforeSHA256AtMain": "3c561e5d9ab0a394fcf30d4de160b2317c9315febf1c4da88830204565ad5944"
+    }
+  ],
+  "problem": "NormalUpdates withheld repository-local intake while sequential90s Taskcontext reads completed, preventing nativecoldrecordreopen.",
+  "change": "Same reader emits account/trip-scoped existing localjobs before hydration. Samecomponent displays existing Submissionregistered/open labels and stops blockinglocaldisplay, while Refresh remains disabled during existinginflightread. RealTaskcards replace localrow bysameBatch. No syntheticTaskstate/Sourceproof. SameexistingexactRepository reopen validation accepts identityPick for localorremotecard.",
+  "callerChain": "UpdatesInboxScreen → ImportUpdatesSection → readDefaultUniversalImportUpdates/listDefaultCaptureJobs → optionaltransientlocalcallback → existingreopenDefaultUniversalImportUpdate → repositoryreopen and sameexisting /capture route; remotehydration unchanged.",
+  "exportChanges": [
+    "ExistingreadDefaultUniversalImportUpdates adds optional fourthlocalcallback; old3argumentcallers remain compatible.",
+    "ExistingreopenDefaultUniversalImportUpdate argument narrowed to Pick of its4existingidentityfields; validation unchanged."
+  ],
+  "noChanges": [
+    "Persistedfields/schema/DTO/Corecontract/receipt",
+    "APItransport/universalActivityReader/networktimeouts/concurrency/retry",
+    "CaptureQAhelper/Source/Provider/Save",
+    "Native/flags/config/dependencies/catalogs/routes/fixtures"
+  ],
+  "ordinaryAutomaticReadScope": "Unchanged: nearest20 localjobs filtered sameaccount and actualtrip if selected; sequentialcontextGET for everyacceptedjob withtrip, then RESULTS_READY result/accepteditemreadback. Canincludeold39fe. Focus/generationfences suppresslatecallbacks/nextjobs; do not claim cancellationofalreadyinflightHTTP. Actualclosedwindow HTTP_SCOPE_UNKNOWN, not NOT_OBSERVED.",
+  "checks": {
+    "red": "Newdeferredremote test failed1/pass1/skipped14 beforepatch: localcallback0 while Taskpending.",
+    "green": "4existing suites45PASS: operation17, component2 plus UpdatesInbox/Activityreader regressions combined45.",
+    "scopedTypes": "Strict4roots tscPASS inheriteddiagnostics0; temporaryconfig explicitly resolvesprojectnode/vitesttypes (initial/tmptype-resolutionfailure corrected, not productfailure).",
+    "eslint": "4changedleavesPASS",
+    "prettier": "4changedleavesformatted",
+    "uiGuard": "PASS 473legacy/168representativeroots unchanged baseline",
+    "device": "NOT_RUN; bothwindowsCLOSED; QA154immutable no newbundle",
+    "independentReview": "PENDING authornotreviewer"
+  },
+  "dataPathChecklist": {
+    "DataOwnership": "OnlytransientUI projection ofexistinglocalCapturejobs, trueTaskobservations remainauthoritative. NoCloud/persistentfield added.",
+    "LocalStorage": "ExistingRepository read/reopen only, no write/fixturechange.",
+    "SyncBackendContract": "Noqueue/DTO/Backend/CoreorSourcecontractchange.",
+    "ConflictOfflineBehavior": "Preservesaccount/trip/generation/focusepoch and exactBatchreopen guard; no replay/retry/overwrite.",
+    "RequiredEvidence": "ScopedL2/deferredread/UIprojectionPASS; actualdevicecoldreadL1pending freshapprovedwindow; no newL3 contract introduced or claimed.",
+    "RemainingIntegrationDelta": "Independentreview→Root1exact4leafintegration→NativefixedJS/build ifrequired→freshboundeddevicecoldread on existinge2f75batch, neverresubmit/reprepare."
+  },
+  "providerEquivalence": {
+    "path": "/Users/xoery/Project/otr-mobile-import/lane-c-imp-c01-txt-shortest-20261105/docs/ops/lane-c-imp-c01-txt-shortest-20261105/zip-device-execution/ACTUAL_TUPLE_PROVIDER_BODY_EQUIVALENCE.json",
+    "sha256": "ab6259122aa73367af1b4f38772a067675f71787b3def7ed0e9322cf8409314e",
+    "bodySHA256": "0dc2afe3dfa02fb0b1c60df3bc203d04d4313825ce6b297092a31a4fb4d82816",
+    "byteCount": 6271,
+    "textBytes": 5896,
+    "sameAliasAndFraming": true,
+    "actualServerTaskId": null,
+    "costUSD": "0.00"
+  },
+  "root2References": [
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/IMP-C01-TXT-SHORTEST-20261105-01/TXT_FROZEN_TUPLE_QUALIFICATION_RETURN.json",
+      "sha256": "f0ccd7e0fb4f0b1721880a901598f131f4c8d1dd81d6c398801f08da52b92e06",
+      "status": "LOCAL_TUPLE_BOUND only; parentverifiedpublichash no filecopy"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/IMP-C01-TXT-SHORTEST-20261105-01/TXT_CLOSED_DEVICE_WINDOW_SCOPE_AUDIT.json",
+      "sha256": "e080966aae6b812d536d2ccdb0e2962f1df2c791c68f384793eeabd39d344398",
+      "status": "HTTP_SCOPE_UNKNOWN; no usablebatch/method/actor/requestID proof; no extraHTTPprobe/logread"
+    }
+  ]
+}

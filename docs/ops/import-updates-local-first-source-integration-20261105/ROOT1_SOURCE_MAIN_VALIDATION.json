@@ -1,0 +1,73 @@
+{
+  "requestId": "IMP-C01-UPDATES-LOCAL-FIRST-INTEGRATION-20261105-01",
+  "status": "ACTUAL_MAIN_SOURCE_PASS_DEVICE_L1_PENDING_NOT_CLOUD_E2E",
+  "recordedAt": "2026-11-04T21:57:35.497247+00:00",
+  "preMain": "a795cd09515344a8f83803544ed6851e270d319a",
+  "candidateSha": "47dccc362752c502af640c5d4508e68f35e44a3f",
+  "evidenceHead": "1df14914b9792e8d1c87adeb88a18c61a92248ad",
+  "exactProductLeaves": [
+    {
+      "path": "src/data/operations/universalImportUpdates.ts",
+      "sha256": "0622e19745cb0c5699969ccdf1a690a771df0d92adbfa64ec2dcd5e8c837e284",
+      "beforeSHA256AtMain": "ecbd92995ad9be6fd6ff4b8b151be8ce6564dc927dddb4687e4eb9f677e9f250"
+    },
+    {
+      "path": "src/data/operations/universalImportUpdates.test.ts",
+      "sha256": "9d6f1bb69805e0df9ac2006b8328cc313b3c9b6e39c4caf126a483bd790d7f9d",
+      "beforeSHA256AtMain": "68a280fca15b68c57b5ba1e544433ae170862a1d50200481eebe26364ba7b0be"
+    },
+    {
+      "path": "src/features/updates/ImportUpdatesSection.tsx",
+      "sha256": "a275b6f243f50727be993a6b72eabb0134dfa4046b66ca93aa2e9c553a2ebbb2",
+      "beforeSHA256AtMain": "d5929e10c156e872536d8fa95c615ccf172b1718197fb8cd7888f63b8455f81e"
+    },
+    {
+      "path": "src/features/updates/ImportUpdatesSection.test.ts",
+      "sha256": "49c41faaf1267c651c7f1e69c4368a78029243eaeb3715268c5ab66be2b056b0",
+      "beforeSHA256AtMain": "3c561e5d9ab0a394fcf30d4de160b2317c9315febf1c4da88830204565ad5944"
+    }
+  ],
+  "packetSHA256": "03cbf197b9ec1a254adbc3fe4f98f4358a21303b3b1126cd96d6df30b6961174",
+  "independentReviewSHA256": "725e4dad025591b271cb99f0581c4cc8c02bb4948532a9cc0cbdef2c4d5a0489",
+  "independentReviewGitCommit": "NOT_CLAIMED; exact external receipt archived",
+  "actualIntegratedValidation": {
+    "changedOwningSuites": 2,
+    "testsPassed": 19,
+    "durationSeconds": 0.857,
+    "scopedTypes": "PASS4roots+transitive imports, no diagnostics",
+    "scopedEslint": "PASS4leaves, no diagnostics",
+    "uiGuard": "PASS473legacy/168representative, baseline unchanged"
+  },
+  "reusedIndependentValidation": "45PASS4suites; unchanged direct dependencies independently hash-compared, no redundant repeat45",
+  "unchangedDirectDependencies": {
+    "src/data/operations/universalActivityReader.ts": true,
+    "src/features/updates/UpdatesInboxScreen.tsx": true,
+    "src/data/operations/defaultCaptureSubmission.ts": true,
+    "src/data/auth/accountGeneration.ts": true,
+    "src/data/auth/accountRequestContext.ts": true
+  },
+  "preserved": [
+    "All main Native/Core/Auth/SQLite/P3instruction transaction and parent helper source untouched",
+    "Existing normal Account/Trip/generation/focus/reopen and inflight Refresh lock",
+    "Existing sequential remote context/result/receipt hydration; no transport/Task/Source/Provider/config/schema changes"
+  ],
+  "device": "NOT_RUN; cold local Updates reopen/installed artifact remain LaneC/Native acceptance",
+  "closedWindowHttpScope": "UNKNOWN retained, no new probes",
+  "businessActions": {
+    "backend": 0,
+    "sql": 0,
+    "sourcePosts": 0,
+    "providerCalls": 0,
+    "device": 0,
+    "session": 0
+  },
+  "publication": "Parent main must freshly match preMain before nonforce push; exact remote readback recorded separately after actual publication",
+  "dataPathChecklist": {
+    "DataOwnership": "OnlytransientUI projection ofexistinglocalCapturejobs, trueTaskobservations remainauthoritative. NoCloud/persistentfield added.",
+    "LocalStorage": "ExistingRepository read/reopen only, no write/fixturechange.",
+    "SyncBackendContract": "Noqueue/DTO/Backend/CoreorSourcecontractchange.",
+    "ConflictOfflineBehavior": "Preservesaccount/trip/generation/focusepoch and exactBatchreopen guard; no replay/retry/overwrite.",
+    "RequiredEvidence": "ScopedL2/deferredread/UIprojectionPASS; actualdevicecoldreadL1pending freshapprovedwindow; no newL3 contract introduced or claimed.",
+    "RemainingIntegrationDelta": "Independentreview\u2192Root1exact4leafintegration\u2192NativefixedJS/build ifrequired\u2192freshboundeddevicecoldread on existinge2f75batch, neverresubmit/reprepare."
+  }
+}

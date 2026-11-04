@@ -108,6 +108,7 @@ export async function readDefaultUniversalImportUpdates(
   tripId: string | null,
   isCurrent: () => boolean,
   onObservation: (cards: UniversalImportUpdate[], context: AccountRequestContext) => void,
+  onLocalIntake?: (jobs: CaptureJobReadModel[], context: AccountRequestContext) => void,
 ) {
   const { requireActiveUserId } = await import("../auth/authRepository");
   const context = await captureAccountRequestContext("", requireActiveUserId);
@@ -128,6 +129,11 @@ export async function readDefaultUniversalImportUpdates(
       (!tripId || (job.batch.context.tripPrior?.id ?? job.assignedTripId) === tripId),
   );
   await assertAccountRequestContext(context, requireActiveUserId);
+  if (!current()) return;
+  onLocalIntake?.(
+    jobs.filter((job) => job.batch.context.tripPrior?.id ?? job.assignedTripId),
+    context,
+  );
   if (!current()) return;
   const { readDefaultUniversalActivities } = await import("./universalActivityReader");
   const observations: Record<string, UniversalTaskActivity> = {};
@@ -208,7 +214,7 @@ export async function readDefaultUniversalImportUpdates(
 
 export async function reopenDefaultUniversalImportUpdate(
   context: AccountRequestContext,
-  card: UniversalImportUpdate,
+  card: Pick<UniversalImportUpdate, "accountId" | "tripId" | "batchId" | "jobId">,
 ) {
   const { requireActiveUserId } = await import("../auth/authRepository");
   await assertAccountRequestContext(context, requireActiveUserId);

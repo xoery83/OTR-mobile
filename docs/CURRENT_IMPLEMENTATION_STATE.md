@@ -1,3 +1,7 @@
+## Import Updates local-first source — 5 November 2026
+
+LaneC fixed47dccc36 four exact Updates operation/UI/test leaves reuse independent45PASS. Existing repository-local registered intake appears before sequential remote Task hydration; real projected Task replaces same-Batch local row. Account/Trip/generation/focus/reopen guards and in-flight Refresh lock remain. No persisted Task/Source success is invented. Source integration checks are recorded in `docs/ops/import-updates-local-first-source-integration-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`; device/cold-read and Cloud/Provider acceptance remain pending. No Backend/SQL/Source/Provider/device/Session action.
+
 ## Guest P1 Detail pending presentation — 5 November 2026
 
 Native21a4 scoped Guest-only presentation fix reuses independent100a60d0; Account/null/otherGuest markers and principal/generation failure fences retained. Actual-main direct-route7 tests, two-root scoped types/lint and UI guard pass. Reader facts, Queue, receipts and authority unchanged. Source only: matching JS artifact/device/OwnerUX remain Native/Vision pending; no Hosted/Source/Provider action. Receipt: `docs/ops/native-p1-detail-dot-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

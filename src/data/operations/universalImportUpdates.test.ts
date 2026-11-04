@@ -389,3 +389,82 @@ it("keeps assigned Account intake visible only in its actual Journey Updates", (
     projectUniversalImportUpdates(f.accountId, randomUUID(), [f.job], f.observations),
   ).toEqual([]);
 });
+
+it("publishes scoped local intake before an unresolved Task read and reopens it without inventing a Task", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  source.list.mockResolvedValue([
+    f.job,
+    { ...f.job, batch: { ...f.job.batch, accountId: randomUUID() } },
+    { ...f.job, batch: { ...f.job.batch, context: { tripPrior: { id: randomUUID() } } } },
+  ]);
+  let finish!: () => void;
+  source.read.mockImplementation(
+    () => new Promise<void>((resolve) => (finish = resolve)),
+  );
+  const local = vi.fn(),
+    observed = vi.fn();
+  const reading = readDefaultUniversalImportUpdates(
+    f.tripId,
+    () => true,
+    observed,
+    local,
+  );
+  await vi.waitFor(() => expect(local).toHaveBeenCalledOnce());
+  expect(local.mock.calls[0][0]).toEqual([f.job]);
+  expect(observed).not.toHaveBeenCalled();
+  expect(projectUniversalImportUpdates(f.accountId, f.tripId, [f.job], {})).toEqual([]);
+  source.reopen.mockResolvedValue(f.job);
+  await expect(
+    reopenDefaultUniversalImportUpdate(local.mock.calls[0][1], {
+      accountId: f.accountId,
+      tripId: f.tripId,
+      batchId: f.batchId,
+      jobId: f.job.batch.jobId,
+    }),
+  ).resolves.toBe(f.job);
+  finish();
+  await reading;
+});
+
+it("does not publish a local snapshot after a late Account switch or a closed view", async () => {
+  for (const changed of ["account", "view"]) {
+    const f = fixture();
+    source.account = f.accountId;
+    let current = true;
+    source.list.mockImplementationOnce(async () => {
+      if (changed === "account") {
+        source.account = randomUUID();
+        advanceAccountGeneration();
+      } else current = false;
+      return [f.job];
+    });
+    const local = vi.fn();
+    await readDefaultUniversalImportUpdates(
+      f.tripId,
+      () => current,
+      vi.fn(),
+      local,
+    ).catch(() => {});
+    expect(local).not.toHaveBeenCalled();
+    expect(source.read).not.toHaveBeenCalled();
+  }
+});
+
+it("does not start Task hydration when the local snapshot callback closes its view", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  source.list.mockResolvedValue([f.job]);
+  let current = true;
+  const observed = vi.fn();
+  await readDefaultUniversalImportUpdates(
+    f.tripId,
+    () => current,
+    observed,
+    () => {
+      current = false;
+    },
+  );
+  expect(source.read).not.toHaveBeenCalled();
+  expect(observed).not.toHaveBeenCalled();
+});

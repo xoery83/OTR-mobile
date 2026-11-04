@@ -9,6 +9,7 @@ import {
   type UniversalImportUpdate,
 } from "@/data/operations/universalImportUpdates";
 import type { UpdatesFilter } from "@/domain/updates/updatesInbox";
+import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 
@@ -27,6 +28,7 @@ export function ImportUpdatesSection({
   const [observed, setObserved] = useState<{
     scope: string;
     cards: UniversalImportUpdate[];
+    localJobs: readonly CaptureJobReadModel[];
     context: AccountRequestContext;
   } | null>(null);
   const [loading, setLoading] = useState(false),
@@ -51,7 +53,16 @@ export function ImportUpdatesSection({
           filter.currentTripId,
           () => current(ticket),
           (cards, context) => {
-            if (current(ticket)) setObserved({ scope, cards, context });
+            if (current(ticket))
+              setObserved((previous) => ({
+                scope,
+                cards,
+                context,
+                localJobs: previous?.scope === scope ? previous.localJobs : [],
+              }));
+          },
+          (localJobs, context) => {
+            if (current(ticket)) setObserved({ scope, cards: [], localJobs, context });
           },
         )
           .catch(() => {
@@ -72,7 +83,9 @@ export function ImportUpdatesSection({
   );
   if (!visible) return null;
   const loaded = observed?.scope === scope ? observed : null;
-  const open = async (card: UniversalImportUpdate) => {
+  const open = async (
+    card: Pick<UniversalImportUpdate, "accountId" | "tripId" | "batchId" | "jobId">,
+  ) => {
     if (!loaded || opening.current === epoch.current || !current(epoch.current)) return;
     const ticket = epoch.current;
     opening.current = ticket;
@@ -92,6 +105,15 @@ export function ImportUpdatesSection({
       ? t("updates.importSaved", { count: card.savedItemCount })
       : t(`capture.ai.task.${card.state}`);
   const query = filter.query.trim().toLocaleLowerCase();
+  const localTitle = (job: CaptureJobReadModel) =>
+    (job.batch.inputs?.length === 1 && job.batch.inputs[0].originalFilename) ||
+    t("capture.progress.batchTitle", { count: job.counts.selected });
+  const localJobs =
+    loaded?.localJobs.filter(
+      (job) =>
+        !loaded.cards.some((card) => card.batchId === job.batch.batchId) &&
+        localTitle(job).toLocaleLowerCase().includes(query),
+    ) ?? [];
   const cards =
     loaded?.cards.filter((card) =>
       `${t("updates.importActivity")} ${label(card)} ${card.sourceDisplayName ?? ""} ${card.submittedText ? t("capture.ai.submittedText") : ""}`
@@ -101,12 +123,33 @@ export function ImportUpdatesSection({
   return (
     <UiSection title={t("updates.importActivity")}>
       <UiText>{t("updates.importCoverage")}</UiText>
-      {loading ? (
+      {loading && !loaded ? (
         <UiText accessibilityLiveRegion="polite">{t("common.loading")}</UiText>
       ) : null}
       {failed ? (
         <UiText accessibilityRole="alert">{t("updates.unavailable")}</UiText>
       ) : null}
+      {localJobs.map((job) => (
+        <View key={job.batch.batchId}>
+          <UiText>{localTitle(job)}</UiText>
+          <UiText>{t("capture.progress.registered")}</UiText>
+          <UiButton
+            label={t("capture.jobView", { summary: localTitle(job) })}
+            variant="text"
+            disabled={busy || !job.availableActions.canReopen}
+            onPress={() => {
+              const tripId = job.batch.context.tripPrior?.id ?? job.assignedTripId;
+              if (tripId)
+                void open({
+                  accountId: job.batch.accountId,
+                  tripId,
+                  batchId: job.batch.batchId,
+                  jobId: job.batch.jobId,
+                });
+            }}
+          />
+        </View>
+      ))}
       {cards.map((card) => (
         <View key={card.id}>
           {card.sourceDisplayName || card.submittedText ? (
