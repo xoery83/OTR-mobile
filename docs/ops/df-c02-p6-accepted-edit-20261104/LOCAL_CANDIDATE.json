@@ -1,0 +1,65 @@
+{
+  "status": "LOCAL_CANDIDATE_PASS / INDEPENDENT_REVIEW_PENDING / NOT_INTEGRATED / NO_NEW_HOSTED_DEVICE_PASS",
+  "baseSHA": "0943ce4654c007fec01f7ef67e91045834b8484d",
+  "proposalSHA256": "b680c53c20232d25662bbac1de4cae853bbf7ecaf33d1756ae562237348e439f",
+  "approvedContract": "Root1 NARROW_CONSUMER_CONTRACT_NO_BLOCKER, parent delegation; P6 only",
+  "goldenSlice": "Fresh verified Accepted own-Creator P6 -> local Edit -> existing finite MANUAL command queue -> existing receipt-first Worker + current normal capabilities -> authorized collection refresh. No claim about original Create admission.",
+  "actualFailure": {
+    "red": "3 failed /45 passed: fresh own P6 Repo Edit unavailable; cloud-only selector never dispatches with manualOnly false or true.",
+    "secondRed": "Orphan Create receipt with missing original queue+intent must remain history, not fresh: 1 failed /27 passed before minimal receipt-history guard."
+  },
+  "minimumChanges": [
+    "Repository P6-only fallback requires existing verified certificate + own editable row, exact revision and unchanged existing actor/fingerprint/field CAS; no unreconciled target intent; no retained original Create in intent/queue/receipt. Partial or malformed history denied.",
+    "Normal cloud queue exact MANUAL edit selection checks current own P6 for unattempted operations. Retained attempted/IN_FLIGHT generic edits reach original receipt/status recovery without current-row prefilter.",
+    "Coordinator wraps only actual submit for cloud-only manual edits: verified current Accepted P6/own Actor/ACL/visibility/revision required. Existing Worker still checks receipt before current capabilities and dispatch. Other-family new POST denied. APPLIED reuses existing Core refresh, never fabricates a local Trip Create."
+  ],
+  "validation": {
+    "focusedSuites": 9,
+    "passed": 216,
+    "command": "npx vitest run src/data/repositories/manualActivityRepository.test.ts src/data/repositories/manualPlanRepository.test.ts src/data/repositories/manualStayRepository.test.ts src/data/repositories/manualRentalRepository.test.ts src/data/sync/tripNormalSync.test.ts src/data/sync/tripNormalCoordinator.acceptedP6.test.ts src/data/sync/tripNormalCoordinator.manualFlight.test.ts src/data/sync/tripNormalSourceItem.test.ts src/data/sync/tripCoreV2SyncWorker.test.ts --maxWorkers=1 --reporter=dot",
+    "scopedTypecheck": "PASS: three source leaves + three test roots and direct imported graph; temporary tsconfig removed.",
+    "fullTypecheck": "BLOCKED_BY_PREEXISTING browser/auth-consent/main.tsx TS7016 missing react-dom/client declaration. No changed-path diagnostics.",
+    "scopedESLint": "PASS, no output",
+    "uiGuard": "PASS;473 legacy occurrences;168 representative UI files",
+    "diffCheck": "PASS",
+    "receiptBoundary": "Actual existing Worker exercised: removed target + FULL original receipt recovers without capabilities/POST; receipt503 retains IN_FLIGHT; receipt-null then closed cap or current removed/hidden/foreign/stale/P5/inactive/no certificate denies POST.",
+    "sqlite": "Real SQLite current migrations: no local Trip/Create row; accepted collection install; original finite Save inserts exact queue; normal wake selects the actual row. Competing draft and orphan Create history denial preserve queue bytes."
+  },
+  "compatibilityObservation": {
+    "rootObservedSHA": "581342387bee5f5e55f4fe3cee166a7d57a96f45",
+    "normalSyncAndCoordinator": "approved base blobs equal observed Root1 files",
+    "manualPlan": "Root1 has independent P1 firstCreateRead removal. Integrate exact hunks only; do not replace whole file/reintroduce removed P1 code. No Root1 file modified."
+  },
+  "unchanged": [
+    "acceptedManualCreate.ts including P2 proof",
+    "tripCoreV2SyncWorker.ts receipt-first and capability authority",
+    "Core/Backend/Schema/RLS/GRANT",
+    "Forms/UI",
+    "Source/Admission",
+    "actual Remote78f2 UNKNOWN and all device/session/database state"
+  ],
+  "limits": [
+    "No Hosted/API/SQL/device execution",
+    "No new P6 Cloud PASS claimed",
+    "Current normal capability remains fresh Worker/Backend authority; UI eligibility is local only",
+    "No automatic P1/P2/P3/P4/P5 fresh-Accepted Edit extension",
+    "Fresh fallback fails closed on malformed retained history in scoped Trip; no cleanup or rewriting history"
+  ],
+  "sha256": {
+    "src/data/repositories/manualPlanRepository.ts": "e07469d409ee9c238529eadd9fbe94f44346d45ac75fd8935020f244e282aa54",
+    "src/data/sync/tripNormalSync.ts": "8f371a6089e7cbf517c3c90d9126b9dbf90f6e06e5800d659ed4cba99428d4cf",
+    "src/data/sync/tripNormalCoordinator.ts": "ea898acb50cda422b86e7c421ef789c25810ea69ceb54b95eeb324d816c7362d",
+    "src/data/repositories/manualActivityRepository.test.ts": "497756275288bba1e337e753e37e8c0bf183aa2c40e46e0330f37000d063af22",
+    "src/data/sync/tripNormalSync.test.ts": "7c3d869bb0740a9dd95071be778a0351f40c7521fe19337742b7cddc2e74a823",
+    "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts": "56f5f03a59fce55f1983871f614b603f612db6efa05eb38011df323e98b3a3bb"
+  },
+  "independentReviewRepair": {
+    "finding": "A queue-only orphan Create with damaged/null entity_id was excluded by the original target-filtered history SQL, incorrectly allowing fresh fallback.",
+    "red": "Real SQLite two cases wrong-id/null-id:2 failed /28 passed before the fix.",
+    "fix": "Read only same Account/Trip Core entity/optype candidates; parse canonical target; explicit INTENT/QUEUE provenance; queue entity binding NULL/wrong or Core entity/optype mismatch fails closed. No cross-Account read.",
+    "green": "9 suites216PASS, scoped types + scoped ESLint + diff-check PASS. New outside-Account/outside-Trip corrupt-row fixtures remain excluded.",
+    "fixtureQualification": "wrong-id uses current SQLite schema; current NOT NULL forbids legal NULL entity_id, so null-id explicitly uses a deliberately corrupt-legacy nullable shadow queue table in disposable in-memory SQLite. No product/schema/migration change.",
+    "scope": "Only manualPlanRepository + direct manualActivityRepository tests and evidence changed after0e472add. Other two product leaves unchanged; actual78f2 untouched.",
+    "review": "Awaiting independent narrow re-review of the repaired candidate."
+  }
+}

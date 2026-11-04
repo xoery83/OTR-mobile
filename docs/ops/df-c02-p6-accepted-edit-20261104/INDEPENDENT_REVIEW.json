@@ -1,0 +1,51 @@
+{
+  "status": "NO_BLOCKER_AFTER_ORPHAN_HISTORY_FIX",
+  "reviewer": "narrow_version_review",
+  "reviewedCommit": "ca4888d412ca7fee54acdba1addee42537e2350e",
+  "scope": "Three-leaf P6 fresh Accepted own-creator Native Edit consumer; not original MANUAL Create provenance or new Backend authority",
+  "sourceHashes": {
+    "src/data/repositories/manualPlanRepository.ts": "e07469d409ee9c238529eadd9fbe94f44346d45ac75fd8935020f244e282aa54",
+    "src/data/sync/tripNormalSync.ts": "8f371a6089e7cbf517c3c90d9126b9dbf90f6e06e5800d659ed4cba99428d4cf",
+    "src/data/sync/tripNormalCoordinator.ts": "ea898acb50cda422b86e7c421ef789c25810ea69ceb54b95eeb324d816c7362d"
+  },
+  "resolvedFinding": {
+    "problem": "Queue entity_id filtering could hide orphan CREATE payload targeting this Item when entity binding was wrong/NULL",
+    "fix": "Scan same Account/Trip candidate Core queues by entity_type OR operation_type; parse original command and enforce QUEUE binding_valid and exact target/entity_id. Malformed candidates fail closed; foreign Account/Trip excluded.",
+    "proof": "2 author RED before fix then GREEN. Independent 5 targeted cases PASS: wrong-id orphan, corrupt-legacy NULL orphan, two foreign-scope exclusions, fresh Accepted positive. NULL shadow table exists only in test; product NOT NULL/schema unchanged."
+  },
+  "boundaryChecks": [
+    "Verified Accepted certificate, same active Actor/Account/Trip, own owner_account_id, existing Core ACL, revision/fingerprint CAS and current field validation remain required.",
+    "Fresh fallback does not replace retained exact Create provenance; original acceptedManualCreate helper and P2 path unchanged.",
+    "New draft no conflicting target pending; original IDs/fields frozen on attempt, shared commit transaction/gate remain unchanged.",
+    "Retained attempts/IN_FLIGHT reach existing receipt-first Worker without current target/participation availability precheck. New POST alone is guarded by current own Accepted P6/baseRevision plus original fresh MANUAL/P6/command capabilities and final Backend authorization.",
+    "No synthetic local Trip CREATE, Source admission, permission cache, alternate Queue or new Sync Engine. APPLIED remote P6 refresh reuses existing authorized Core transport.",
+    "Non-P6 retained receipt retrieval does not authorize a new non-P6 POST via this remote fallback.",
+    "Actual UNKNOWN operation78f2 unchanged; this candidate has not executed it."
+  ],
+  "independentValidation": [
+    {
+      "commandScope": "manualActivityRepository + tripNormalSync + tripNormalCoordinator.acceptedP6 (before orphan fix)",
+      "result": "3 suites70 PASS",
+      "log": "/private/tmp/otr-p6-accepted-edit-independent-review.log"
+    },
+    {
+      "commandScope": "manualActivityRepository targeted orphan/foreign-scope/fresh-positive after ca4888d4",
+      "result": "5 PASS;27 unrelated cases intentionally skipped",
+      "log": "/private/tmp/otr-p6-orphan-fix-independent-review.log"
+    },
+    {
+      "check": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "reusedAuthorValidation": "9 suites216 PASS; scoped types/lint/diff-check PASS per author, not independently repeated in full",
+  "notClaimed": [
+    "New P6 Native Form device PASS",
+    "Hosted/Cloud E2E",
+    "Resolution of UNKNOWN78f2 or Hosted503",
+    "Other-family expanded permissions",
+    "Any original Create MANUAL provenance for fresh remote Item"
+  ],
+  "reviewerActions": "Read source and focused local tests; added this receipt only. No product/source edits, commit, device, Host, API, SQL or Auth actions.",
+  "integration": "Root1 must apply exact three-leaf hunks to current main preserving concurrent P1 deletion delta."
+}

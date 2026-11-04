@@ -1,3 +1,7 @@
+## P6 fresh Accepted own-creator Edit source integration — 4 November 2026
+
+Native `ca4888d4` / independent `354eed73`: P6-only fallback opens a certified own editable Item when original Create history is truly absent; corrupt or partial history stays denied. Cloud-only normal queue uses original receipt-first Worker, fresh POST authority and existing authorized refresh. P2 proof and current P1 behavior preserved. Three actual-main suites74 PASS; scoped compiler/lint pass with unchanged OAuth browser missing-type exception recorded. No device/Hosted/Cloud execution or original78f2 replay. Receipt: `docs/ops/df-c02-p6-accepted-edit-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Private Account Profile default-closed source mount — 4 November 2026
 
 Auth `1c7f9688` integrates five exact domain modules and the reviewed 16-line main route patch; normal Account auth, Bootstrap separation, receipt/UNKNOWN semantics and default closure retained. Eight changed tests, lint and capture bundle pass. Full typecheck encounters missing local `@types/react-dom` in unchanged OAuth browser entry; compilation excluding only that entry passes. No startup injection, Hosted/SQL execution or Profile Cloud acceptance. Self-Person nickname port remains separate. Receipt: `docs/ops/auth-c03-20261104/runtime-candidate/ROOT1_SOURCE_MAIN_VALIDATION.json`.

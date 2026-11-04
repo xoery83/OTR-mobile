@@ -25,12 +25,15 @@ vi.mock("../files/tripPhotoFileStore", () => ({
 }));
 const opened: DatabaseSync[] = [];
 afterEach(() => opened.splice(0).forEach((s) => s.close()));
-async function fixture(structured = false) {
+async function fixture(
+  structured = false,
+  fresh?: { accountId: string; tripId: string },
+) {
   const sql = new DatabaseSync(":memory:");
   opened.push(sql);
   sql.exec("PRAGMA foreign_keys=ON");
   for (const m of migrations) sql.exec(m.sql);
-  let accountId = randomUUID(),
+  let accountId = fresh?.accountId ?? randomUUID(),
     failAt = 0,
     inserts = 0,
     aba = false;
@@ -73,16 +76,17 @@ async function fixture(structured = false) {
     clock,
   );
   const trips = createTripRepository(database, identity, core, clock);
-  const tripId = randomUUID();
-  await trips.createTrip({
-    tripId,
-    operationId: randomUUID(),
-    name: "Winter trip",
-    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
-    destination: null,
-    startDate: "2026-12-30",
-    endDate: "2027-04-28",
-  });
+  const tripId = fresh?.tripId ?? randomUUID();
+  if (!fresh)
+    await trips.createTrip({
+      tripId,
+      operationId: randomUUID(),
+      name: "Winter trip",
+      ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
+      destination: null,
+      startDate: "2026-12-30",
+      endDate: "2027-04-28",
+    });
   const repo = () => createManualActivityRepository(database, identity, core, clock);
   const read = createTripLocalManualReader(database, identity, core);
   const days = createTripDayFeedReader({
@@ -672,3 +676,200 @@ it.each([
   ).rejects.toThrow();
   expect(count()).toBe(before);
 });
+
+async function freshAcceptedActivityFixture() {
+  const source = await acceptedActivityFixture();
+  const snapshot = (await source.core.acceptedSnapshot(
+    await source.core.captureContext(source.tripId),
+  ))!;
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const bundle = await buildCoreActorCollection(
+    snapshot.graph,
+    snapshot.actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-20T00:00:00Z",
+    },
+    snapshot.participatingPersonIds.map((id) => ({
+      person_id: id,
+      account_id: source.originalAccount,
+      active: true,
+      participating: true,
+      revision: 1,
+    })),
+    hash,
+  );
+  const fresh = await fixture(true, {
+    accountId: source.originalAccount,
+    tripId: source.tripId,
+  });
+  await fresh.core.refresh(await fresh.core.captureContext(fresh.tripId), {
+    collection: async () => bundle,
+  });
+  return { ...fresh, itemId: source.itemId };
+}
+it("fresh Accepted own P6 edits through the original finite batch without inventing local Create provenance", async () => {
+  const f = await freshAcceptedActivityFixture();
+  expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toEqual({
+    n: 0,
+  });
+  const repo = f.repo();
+  const draft = await repo.read(f.tripId, f.itemId, 1);
+  const result = await repo.save(draft, { ...draft.fields, title: "Fresh device edit" });
+  expect(result.itemId).toBe(f.itemId);
+  const operations = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(operations).toHaveLength(1);
+  expect(operations[0].command).toMatchObject({
+    command: "SET_ITEM_TEXT",
+    admission: { mode: "MANUAL" },
+    target: { id: f.itemId },
+    baseVector: [{ revision: 1 }],
+  });
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get()).toEqual({
+    n: 0,
+  });
+});
+
+it("fresh Accepted P6 refuses a second draft while the first target intent remains unreconciled", async () => {
+  const f = await freshAcceptedActivityFixture(),
+    repo = f.repo();
+  const draft = await repo.read(f.tripId, f.itemId, 1);
+  await repo.save(draft, { ...draft.fields, title: "Pending frozen change" });
+  const original = f.sql.prepare("SELECT id,payload_json FROM sync_operations").all();
+  await expect(f.repo().read(f.tripId, f.itemId)).rejects.toThrow(
+    "MANUAL_PLAN_UNAVAILABLE",
+  );
+  expect(f.sql.prepare("SELECT id,payload_json FROM sync_operations").all()).toEqual(
+    original,
+  );
+});
+it.each(["missing-queue", "missing-intent", "tampered-queue", "orphan-receipt"])(
+  "fresh fallback does not rescue partial local Create history: %s",
+  async (kind) => {
+    const f = await acceptedActivityFixture();
+    if (kind === "missing-queue")
+      f.sql.exec("DELETE FROM sync_operations WHERE operation_type='CORE_V2_COMMAND'");
+    if (kind === "missing-intent") f.sql.exec("DELETE FROM trip_core_pending_intents");
+    if (kind === "orphan-receipt") {
+      f.sql.exec("DELETE FROM trip_core_pending_intents");
+      f.sql.exec("DELETE FROM sync_operations WHERE operation_type='CORE_V2_COMMAND'");
+    }
+    if (kind === "tampered-queue")
+      f.sql.exec(
+        "UPDATE sync_operations SET payload_json='{}' WHERE operation_type='CORE_V2_COMMAND'",
+      );
+    await expect(f.repo().read(f.tripId, f.itemId, 1)).rejects.toThrow();
+  },
+);
+
+it("real fresh Accepted P6 SQLite queue is selected without a local Trip Create root", async () => {
+  const f = await freshAcceptedActivityFixture(),
+    repo = f.repo();
+  const draft = await repo.read(f.tripId, f.itemId, 1);
+  const saved = await repo.save(draft, { ...draft.fields, title: "SQLite selected" });
+  const { createNormalTripSyncWake } = await import("../sync/tripNormalSync");
+  const runP1 = vi.fn();
+  const result = await createNormalTripSyncWake(
+    {
+      database: f.coreDatabase,
+      account: f.identity,
+      enabled: () => true,
+      deferred: { materializeDeferredMetadata: vi.fn() },
+      recoverP1Readback: vi.fn(),
+      recoverTripReadback: vi.fn(),
+      runCreate: vi.fn(),
+      runMetadata: vi.fn(),
+      runPerson: vi.fn(),
+      runP1,
+      isManualItem: async (_trip, _item, family) => family === "P6",
+      participantsReady: async () => true,
+    },
+    {
+      accountId: f.originalAccount,
+      newTripsFrom: "2026-10-19T00:00:00Z",
+      manualOnly: true,
+    },
+  )("AUTHENTICATED_ONLINE");
+  expect(result.runnerCalls).toBe(1);
+  expect(runP1).toHaveBeenCalledExactlyOnceWith({
+    accountId: f.originalAccount,
+    tripId: f.tripId,
+    operationId: saved.operationIds[0],
+  });
+});
+it("another fresh P6 draft cannot overwrite the first frozen Save", async () => {
+  const f = await freshAcceptedActivityFixture(),
+    repo = f.repo();
+  const first = await repo.read(f.tripId, f.itemId, 1),
+    second = await repo.read(f.tripId, f.itemId, 1);
+  await repo.save(first, { ...first.fields, title: "First pending edit" });
+  const before = f.sql.prepare("SELECT id,payload_json FROM sync_operations").all();
+  await expect(
+    repo.save(second, { ...second.fields, title: "Competing edit" }),
+  ).rejects.toThrow();
+  expect(f.sql.prepare("SELECT id,payload_json FROM sync_operations").all()).toEqual(
+    before,
+  );
+});
+
+it.each(["wrong-id", "null-id"])(
+  "orphan Create payload cannot become fresh history when queue entity binding is %s",
+  async (kind) => {
+    const f = await acceptedActivityFixture();
+    f.sql.exec("DELETE FROM trip_core_pending_intents");
+    f.sql.exec("DROP TRIGGER trip_core_receipt_immutable");
+    f.sql.exec("DELETE FROM trip_core_trip_core_command_receipts");
+    if (kind === "null-id") {
+      // Current schema rejects NULL; a deliberately corrupt legacy table tests fail-closed reads.
+      f.sql.exec("ALTER TABLE sync_operations RENAME TO old_queue");
+      f.sql.exec("CREATE TABLE sync_operations AS SELECT * FROM old_queue");
+      f.sql.exec("DROP TABLE old_queue");
+    }
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET entity_id=? WHERE operation_type='CORE_V2_COMMAND'",
+      )
+      .run(kind === "null-id" ? null : randomUUID());
+    const before = f.sql
+      .prepare("SELECT id,entity_id,payload_json FROM sync_operations ORDER BY id")
+      .all();
+    await expect(f.repo().read(f.tripId, f.itemId, 1)).rejects.toThrow(
+      "MANUAL_PLAN_UNAVAILABLE",
+    );
+    expect(
+      f.sql
+        .prepare("SELECT id,entity_id,payload_json FROM sync_operations ORDER BY id")
+        .all(),
+    ).toEqual(before);
+  },
+);
+
+it.each(["other-account", "other-trip"])(
+  "corrupt Core queue outside the active %s scope is not read by fresh P6 eligibility",
+  async (kind) => {
+    const f = await freshAcceptedActivityFixture(),
+      other = await acceptedActivityFixture();
+    const row = other.sql
+      .prepare("SELECT * FROM sync_operations WHERE operation_type='CORE_V2_COMMAND'")
+      .get()!;
+    row.owner_user_id = kind === "other-account" ? randomUUID() : f.originalAccount;
+    row.trip_id = kind === "other-trip" ? randomUUID() : f.tripId;
+    row.entity_id = f.itemId;
+    row.payload_json = "invalid foreign-scope queue";
+    const columns = Object.keys(row);
+    f.sql
+      .prepare(
+        `INSERT INTO sync_operations (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")})`,
+      )
+      .run(...Object.values(row));
+    await expect(f.repo().read(f.tripId, f.itemId, 1)).resolves.toMatchObject({
+      itemId: f.itemId,
+      mode: "EDIT",
+    });
+  },
+);

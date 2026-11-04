@@ -5,6 +5,7 @@ import {
 import type { GuestDraftScope } from "../auth/guestDraftInventory";
 import { assertGuestPublicationNotRequested } from "../auth/guestPublicationHold";
 import { hasAcceptedManualCreate } from "./acceptedManualCreate";
+import { validateCoreReceipt } from "@/domain/trip/tripCoreV2Receipt";
 import { z } from "zod";
 import { createUuid } from "@/domain/localId";
 import {
@@ -300,6 +301,7 @@ function editable(
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
     row.status === "cancelled" ||
+    (family === "P6" && row.status === "skipped") ||
     !coreCanManage(snapshot.graph, snapshot.actor, "ITEM", row)
   )
     throw new Error("MANUAL_PLAN_UNAVAILABLE");
@@ -388,6 +390,65 @@ export function createManualItemRepository(
     if (!snapshot) throw new Error("MANUAL_PLAN_UNAVAILABLE");
     return snapshot;
   }
+  async function freshAcceptedP6(context: AccountRequestContext, itemId: string) {
+    if (family !== "P6") return false;
+    if ((await core.pending(context)).some((p) => p.command.target.id === itemId))
+      return false;
+    // Missing proof is not fresh history: orphaned or malformed Create records remain denied.
+    const history = await database.getAllAsync<{
+      body: string;
+      entity_id: string | null;
+      source: "INTENT" | "QUEUE";
+      binding_valid: number;
+    }>(
+      `SELECT canonical_intent_text AS body,NULL AS entity_id,'INTENT' AS source,1 AS binding_valid FROM trip_core_pending_intents WHERE account_id=? AND trip_id=?
+       UNION ALL SELECT payload_json AS body,entity_id,'QUEUE' AS source,(entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND') AS binding_valid FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND (entity_type='TRIP_CORE_V2' OR operation_type='CORE_V2_COMMAND')`,
+      context.accountId,
+      context.tripId,
+      context.accountId,
+      context.tripId,
+    );
+    for (const entry of history) {
+      try {
+        const command = validateCoreCommand(JSON.parse(entry.body));
+        if (
+          command.tripId !== context.tripId ||
+          (entry.source === "QUEUE" &&
+            (entry.binding_valid !== 1 || command.target.id !== entry.entity_id)) ||
+          (command.target.id === itemId &&
+            ["CREATE_ITEM", "CREATE_SPARSE_FLIGHT"].includes(command.command))
+        )
+          return false;
+      } catch {
+        return false;
+      }
+    }
+    const receipts = await database.getAllAsync<{ body_json: string }>(
+      "SELECT body_json FROM trip_core_trip_core_command_receipts WHERE account_id=? AND trip_id=?",
+      context.accountId,
+      context.tripId,
+    );
+    for (const entry of receipts) {
+      try {
+        const receipt = await validateCoreReceipt(
+          JSON.parse(entry.body_json),
+          tripCoreSha256Hex,
+        );
+        if (
+          receipt.tripId !== context.tripId ||
+          receipt.actorAccountId !== context.accountId ||
+          (["CREATE_ITEM", "CREATE_SPARSE_FLIGHT"].includes(receipt.command) &&
+            receipt.targetVector.some(
+              (target) => target.kind === "ITEM" && target.id === itemId,
+            ))
+        )
+          return false;
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  }
   async function open(
     tripId: string,
     itemId?: string,
@@ -436,7 +497,8 @@ export function createManualItemRepository(
           !(
             ["P1", "P3", "P4", "P6"].includes(family) &&
             snapshot.cert &&
-            (await hasAcceptedManualCreate(database, context, itemId!, family))
+            ((await hasAcceptedManualCreate(database, context, itemId!, family)) ||
+              (await freshAcceptedP6(context, itemId!)))
           )
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");

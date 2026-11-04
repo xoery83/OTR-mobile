@@ -1,4 +1,6 @@
 import { createAccountProfileRepository } from "../auth/accountProfileRepository";
+import { coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
+import type { AccountRequestContext } from "../auth/accountRequestContext";
 import { hasAcceptedManualCreate } from "../repositories/acceptedManualCreate";
 import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
@@ -13,7 +15,11 @@ import { createTripNormalReadbackRepository } from "../repositories/tripNormalRe
 import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { createTripMetadataTransport } from "./tripMetadataTransport";
 import { createTripMetadataRepository } from "../repositories/tripMetadataRepository";
-import { createNormalTripSyncWake, type NormalTripSyncScope } from "./tripNormalSync";
+import {
+  createNormalTripSyncWake,
+  isManualP6EditCommand,
+  type NormalTripSyncScope,
+} from "./tripNormalSync";
 import { createNativeTripCreateSyncRunner } from "./tripCreateCoordinator";
 import { createNativeTripMetadataSyncRunner } from "./tripMetadataCoordinator";
 import {
@@ -61,6 +67,23 @@ export function createNativeNormalTripSyncRunner(
       requireActiveUserId,
       tripCoreSha256Hex,
     );
+    const acceptedP6 = async (context: AccountRequestContext, itemId: string) => {
+      const snapshot = await core.acceptedSnapshot(context);
+      await assertAccountRequestContext(account, requireActiveUserId);
+      const item = snapshot?.graph.itinerary_events.find((row) => row.id === itemId);
+      return snapshot?.certificate &&
+        item?.experience_family === "P6" &&
+        item.owner_account_id === context.accountId &&
+        item.hidden_at === null &&
+        item.status !== "cancelled" &&
+        item.status !== "skipped" &&
+        snapshot.actor.active &&
+        snapshot.actor.accountId === context.accountId &&
+        snapshot.actor.tripId === context.tripId &&
+        coreCanManage(snapshot.graph, snapshot.actor, "ITEM", item)
+        ? item
+        : null;
+    };
     const persons = createTripPersonRepository(database, requireActiveUserId);
     const readback = createTripNormalReadbackRepository(database, requireActiveUserId);
     const recoverReadback = async (tripId: string, createOperationId: string) => {
@@ -198,6 +221,36 @@ export function createNativeNormalTripSyncRunner(
             tripCoreSha256Hex,
             { timeoutMs: 60_000 },
           );
+          const guardedTransport = {
+            ...transport,
+            submit: async (
+              context: AccountRequestContext,
+              command: Parameters<typeof transport.submit>[1],
+            ) => {
+              const local = await database.getFirstAsync<{ create_operation_id: string }>(
+                "SELECT create_operation_id FROM local_trip_containers WHERE account_id=? AND id=?",
+                context.accountId,
+                context.tripId,
+              );
+              await assertAccountRequestContext(account, requireActiveUserId);
+              if (!local?.create_operation_id && !isReviewedSourceCreate(command)) {
+                const item = isManualP6EditCommand(command)
+                  ? await acceptedP6(context, command.target.id)
+                  : null;
+                if (
+                  !item ||
+                  !command.baseVector.some(
+                    (base) =>
+                      base.kind === "ITEM" &&
+                      base.id === item.id &&
+                      base.revision === item.semantic_revision,
+                  )
+                )
+                  throw Error("CORE_FRESH_P6_EDIT_UNAVAILABLE");
+              }
+              return transport.submit(context, command);
+            },
+          };
           const result = await createCoreV2SyncCoordinator(
             createSyncOperationRepository(
               database,
@@ -207,7 +260,7 @@ export function createNativeNormalTripSyncRunner(
             ),
             createCoreV2SyncWorker(
               core,
-              transport,
+              guardedTransport,
               requireActiveUserId,
               tripCoreSha256Hex,
             ),
@@ -228,10 +281,11 @@ export function createNativeNormalTripSyncRunner(
               target.tripId,
             );
             await assertAccountRequestContext(account, requireActiveUserId);
-            if (row) await recoverReadback(target.tripId, row.create_operation_id);
+            if (row?.create_operation_id)
+              await recoverReadback(target.tripId, row.create_operation_id);
             else {
               const command = intent.command;
-              if (!isReviewedSourceCreate(command))
+              if (!isReviewedSourceCreate(command) && !isManualP6EditCommand(command))
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
               await core.refresh(context, transport);
@@ -255,6 +309,7 @@ export function createNativeNormalTripSyncRunner(
             )
           )
             return true;
+          if (family === "P6") return !!(await acceptedP6(context, itemId));
           const graph = await core.readGraph(context);
           const item = graph.itinerary_events.find(
             (item) => item.id === itemId && item.experience_family === family,

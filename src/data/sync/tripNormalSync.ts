@@ -32,8 +32,10 @@ type Row = {
   entity_type: string;
   operation_type: string;
   payload_json: string;
+  attempt_count?: number;
+  intent_state?: string;
 };
-export const cloudSourceP1QueueSql = `SELECT op.* FROM sync_operations op
+export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state FROM sync_operations op
        LEFT JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
        JOIN trip_core_pending_intents intent ON intent.queue_operation_id=op.id AND intent.account_id=op.owner_user_id AND intent.trip_id=op.trip_id
        WHERE op.owner_user_id=? AND op.created_at>=? AND trip.create_operation_id IS NULL
@@ -41,6 +43,25 @@ export const cloudSourceP1QueueSql = `SELECT op.* FROM sync_operations op
        AND op.status NOT IN ('FAILED','CONFLICT') AND (op.status<>'COMPLETED' OR (intent.state='APPLIED' AND intent.reconciled_revision IS NULL))
        ORDER BY op.created_at,op.id`;
 export function cloudSourceP1Command(operation: Row): CoreCommand | null {
+  return cloudCommand(operation, false);
+}
+export function isManualP6EditCommand(command: CoreCommand) {
+  return (
+    command.target.kind === "ITEM" &&
+    command.admission.mode === "MANUAL" &&
+    [
+      "SET_ITEM_TEXT",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+      "SET_ITEM_PARTICIPATION",
+      "SET_ACTIVITY_DETAILS",
+    ].includes(command.command)
+  );
+}
+export function cloudManualP6EditCommand(operation: Row): CoreCommand | null {
+  return cloudCommand(operation, true);
+}
+function cloudCommand(operation: Row, manualP6: boolean): CoreCommand | null {
   try {
     const command = validateCoreCommand(JSON.parse(operation.payload_json));
     if (
@@ -51,7 +72,7 @@ export function cloudSourceP1Command(operation: Row): CoreCommand | null {
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
       command.target.kind !== "ITEM" ||
-      !isReviewedSourceCreate(command)
+      !(manualP6 ? isManualP6EditCommand(command) : isReviewedSourceCreate(command))
     )
       return null;
     return command;
@@ -287,19 +308,31 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
       }
     }
     // A reviewed Source can target an authorized cloud Trip without a local Create operation.
-    const sourceRows = adopted.manualOnly
-      ? []
-      : await deps.database.getAllAsync<Row>(
-          cloudSourceP1QueueSql,
-          scope.accountId,
-          adopted.newTripsFrom,
-        );
+    const sourceRows = await deps.database.getAllAsync<Row>(
+      cloudSourceP1QueueSql,
+      scope.accountId,
+      adopted.newTripsFrom,
+    );
     await guard();
     for (const operation of sourceRows) {
-      const command = cloudSourceP1Command(operation);
+      const manual = cloudManualP6EditCommand(operation);
+      const command =
+        manual ?? (adopted.manualOnly ? null : cloudSourceP1Command(operation));
       if (!command) continue;
       try {
-        const ready = await deps.participantsReady(operation.trip_id, command);
+        // Retained attempts reach receipt/status recovery even after the target disappears.
+        const recovering =
+          !!manual &&
+          ((operation.attempt_count ?? 0) > 0 || operation.intent_state === "IN_FLIGHT");
+        if (
+          manual &&
+          !recovering &&
+          !(await deps.isManualItem(operation.trip_id, command.target.id, "P6"))
+        )
+          continue;
+        await guard();
+        const ready =
+          recovering || (await deps.participantsReady(operation.trip_id, command));
         await guard();
         if (!ready) continue;
         await deps.runP1({

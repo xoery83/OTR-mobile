@@ -1,0 +1,34 @@
+{
+  "requestId": "NATIVE-DF-C02-P6-ACCEPTED-EDIT-20261104-03",
+  "status": "EXACT_SOURCE_INTEGRATION_CHECKS_PASS_BEFORE_REMOTE_PUBLISH",
+  "baseMain": "82eb70d010aee2c5624cbc8e148ee5ceeb94b9c3",
+  "candidate": "ca4888d412ca7fee54acdba1addee42537e2350e",
+  "independentReview": "354eed73e3929d00f804bf27aa12f0e0347360be",
+  "scope": "3 product leaves / 3 direct tests; exact candidate hunks only, not whole branch",
+  "hashes": {
+    "src/data/repositories/manualPlanRepository.ts": "e07469d409ee9c238529eadd9fbe94f44346d45ac75fd8935020f244e282aa54",
+    "src/data/sync/tripNormalSync.ts": "8f371a6089e7cbf517c3c90d9126b9dbf90f6e06e5800d659ed4cba99428d4cf",
+    "src/data/sync/tripNormalCoordinator.ts": "ea898acb50cda422b86e7c421ef789c25810ea69ceb54b95eeb324d816c7362d",
+    "src/data/repositories/manualActivityRepository.test.ts": "497756275288bba1e337e753e37e8c0bf183aa2c40e46e0330f37000d063af22",
+    "src/data/sync/tripNormalSync.test.ts": "7c3d869bb0740a9dd95071be778a0351f40c7521fe19337742b7cddc2e74a823",
+    "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts": "56f5f03a59fce55f1983871f614b603f612db6efa05eb38011df323e98b3a3bb"
+  },
+  "baseCompatibility": "All 3 product+2 preexisting test blobs at0943 equal main82eb preimages; P1 current baseline preserved",
+  "focusedTests": "3 suites /74 PASS on actual integrated main tree",
+  "reusedTests": "Author9 suites216 / independent70 +5 orphan checks, UI guard PASS on unchanged UI",
+  "compiler": "PASS excluding only unchanged browser/auth-consent/main.tsx; full typecheck still limited by missing installed @types/react-dom TS7016, not represented as full PASS",
+  "lint": "PASS scoped6files",
+  "diffCheck": "PASS",
+  "unchanged": [
+    "acceptedManualCreate.ts / P2 exact proof",
+    "tripCoreV2SyncWorker.ts / receipt-first + current capability",
+    "Auth Profile route app.ts82eb",
+    "Core/Backend/SQL/Schema/RLS/GRANT",
+    "original remote78f2 UNKNOWN"
+  ],
+  "nativeCloudAcceptance": "NOT_RUN; returned to Native/Vision",
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "businessPosts": 0,
+  "sourceLock": "Root1 sole Writer/fresh remote main CAS/non-force publish; release after remote verification"
+}

@@ -734,3 +734,138 @@ it.each([true, false])(
     }
   },
 );
+
+it.each([false, true])(
+  "dispatches a fresh cloud-only own P6 Edit through existing queue (manualOnly %s)",
+  async (manualOnly) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "SET_ITEM_TEXT",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: { title: "Fresh P6", description: null },
+    };
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValue([
+        {
+          ...f.create,
+          id: operationId,
+          entity_id: itemId,
+          idempotency_key: operationId,
+          entity_type: "TRIP_CORE_V2",
+          operation_type: "CORE_V2_COMMAND",
+          payload_json: JSON.stringify(command),
+          attempt_count: 0,
+          intent_state: "PENDING",
+        },
+      ]);
+    f.deps.isManualItem.mockImplementation(
+      async (_trip, _item, family) => family === "P6",
+    );
+    f.deps.participantsReady.mockResolvedValue(true);
+    await createNormalTripSyncWake(f.deps, {
+      accountId: f.accountId,
+      newTripsFrom: "2026-10-24T00:00:00Z",
+      manualOnly,
+    })("AUTHENTICATED_ONLINE");
+    expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+      accountId: f.accountId,
+      tripId: f.tripId,
+      operationId,
+    });
+    expect(f.deps.runCreate).not.toHaveBeenCalled();
+  },
+);
+
+it.each([0, 1])(
+  "cloud-only non-P6 MANUAL row is new-POST denied, retained attempts reach receipt recovery: attempts %s",
+  async (attempts) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "SET_ITEM_TEXT",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: { title: "Retained", description: null },
+    };
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValue([
+        {
+          ...f.create,
+          id: operationId,
+          entity_id: itemId,
+          idempotency_key: operationId,
+          entity_type: "TRIP_CORE_V2",
+          operation_type: "CORE_V2_COMMAND",
+          payload_json: JSON.stringify(command),
+          attempt_count: attempts,
+          intent_state: attempts ? "IN_FLIGHT" : "PENDING",
+        },
+      ]);
+    f.deps.isManualItem.mockResolvedValue(false);
+    f.deps.participantsReady.mockResolvedValue(false);
+    await f.run();
+    expect(f.deps.runP1).toHaveBeenCalledTimes(attempts);
+    if (attempts) {
+      expect(f.deps.isManualItem).not.toHaveBeenCalled();
+      expect(f.deps.participantsReady).not.toHaveBeenCalled();
+    }
+  },
+);
+
+it("retained IN_FLIGHT intent reaches receipt recovery even if queue attempt count has not advanced", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    itemId = randomUUID();
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId,
+    tripId: f.tripId,
+    command: "SET_ITEM_TEXT",
+    target: { kind: "ITEM", id: itemId },
+    baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { title: "Original", description: null },
+  };
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockResolvedValueOnce([])
+    .mockResolvedValue([
+      {
+        ...f.create,
+        id: operationId,
+        entity_id: itemId,
+        idempotency_key: operationId,
+        entity_type: "TRIP_CORE_V2",
+        operation_type: "CORE_V2_COMMAND",
+        payload_json: JSON.stringify(command),
+        attempt_count: 0,
+        intent_state: "IN_FLIGHT",
+      },
+    ]);
+  await f.run();
+  expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+    accountId: f.accountId,
+    tripId: f.tripId,
+    operationId,
+  });
+  expect(f.deps.isManualItem).not.toHaveBeenCalled();
+});
