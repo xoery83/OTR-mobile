@@ -252,8 +252,16 @@ export function createApiClient(options: ApiClientOptions = {}) {
       );
       if (!response.ok) {
         const error = z
-          .object({ error: z.object({ code: z.string() }) })
+          .object({
+            error: z.object({
+              code: z.string(),
+              requestId: z.uuid().optional().catch(undefined),
+            }),
+          })
           .safeParse(payload);
+        const requestId =
+          (error.success ? error.data.error.requestId : undefined) ??
+          z.uuid().safeParse(response.headers?.get?.("x-request-id")).data;
         if (
           error.success &&
           [
@@ -298,6 +306,8 @@ export function createApiClient(options: ApiClientOptions = {}) {
           "http",
           response.status,
           code,
+          undefined,
+          requestId,
         );
       }
       stage = "VALIDATE";
@@ -337,6 +347,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
         kind: failure.kind,
         status: failure.status,
         code: failure.code ?? diagnosticHttpCode,
+        requestId: failure.requestId,
         stage,
         errorName:
           error instanceof Error &&

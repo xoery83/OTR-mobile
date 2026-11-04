@@ -203,6 +203,62 @@ describe("OTR API client", () => {
 describe("bounded API metadata-only diagnostics", () => {
   const route =
     "/v2/trips/10000000-0000-4000-8000-000000000001/core/operations/10000000-0000-4000-8000-000000000002?private=secret";
+  it.each([
+    [
+      "30000000-0000-4000-8000-000000000001",
+      undefined,
+      "30000000-0000-4000-8000-000000000001",
+    ],
+    [
+      "PRIVATE_TOKEN",
+      "30000000-0000-4000-8000-000000000002",
+      "30000000-0000-4000-8000-000000000002",
+    ],
+    [{ token: "PRIVATE_TOKEN" }, "PRIVATE_HEADER", undefined],
+  ])(
+    "retains only a valid response request ID (%#)",
+    async (bodyId, headerId, expected) => {
+      const log = vi.spyOn(console, "info").mockImplementation(() => {});
+      try {
+        const client = createApiClient({
+          baseUrl: "https://api.example.com",
+          accessToken: "PRIVATE_TOKEN",
+          maxResponseBytes: 1024,
+          fetchImplementation: async () =>
+            new Response(
+              JSON.stringify({
+                error: {
+                  code: "CORE_EXECUTION_UNAVAILABLE",
+                  requestId: bodyId,
+                  message: "PRIVATE_BODY",
+                },
+              }),
+              {
+                status: 503,
+                headers: headerId ? { "x-request-id": headerId } : undefined,
+              },
+            ),
+        });
+        await expect(
+          client.post(route, { token: "PRIVATE_INTENT" }, responseSchema),
+        ).rejects.toMatchObject({
+          kind: "http",
+          status: 503,
+          requestId: expected,
+          details: undefined,
+        });
+        expect(readLastApiFailure()).toMatchObject({
+          requestId: expected,
+          code: "CORE_EXECUTION_UNAVAILABLE",
+        });
+        expect(JSON.stringify([readLastApiFailure(), log.mock.calls])).not.toMatch(
+          /PRIVATE_|private=/,
+        );
+      } finally {
+        log.mockRestore();
+      }
+    },
+  );
   it("retains safe Core HTTP status/code without changing original error mapping", async () => {
     const log = vi.spyOn(console, "info").mockImplementation(() => {});
     try {

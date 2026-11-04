@@ -1,0 +1,31 @@
+{
+  "request": "NATIVE-DF-C02-BOUNDED-CORRELATION-20261104-05",
+  "base": "5ebb8f2e1d18baaa7115287f49ec0a9bf3723eb8",
+  "status": "LOCAL_PASS_REVIEW_NO_BLOCKER",
+  "change": "Preserve validated UUID response requestId in bounded ApiClientError and existing Queue last_request_id; no new retry or Queue",
+  "checks": {
+    "direct": "2 suites20 PASS",
+    "expanded": "4 suites39 PASS; tripCoreV2Transport2 failures reproduce unchanged baseline8/10",
+    "lint": "three scoped files PASS",
+    "diff": "PASS",
+    "fullTypes": "existing browser/auth-consent/main.tsx TS7016 react-dom/client; not full PASS"
+  },
+  "independentReview": {
+    "agent": "narrow_version_review",
+    "status": "NO_BLOCKER",
+    "tests": "2 suites20 PASS",
+    "log": "/private/tmp/otr-bounded-correlation-independent-review.log"
+  },
+  "responseContract": {
+    "source": "backend/src/app.ts:2562,2990-3030: UUID generated, error body and X-Request-Id",
+    "historicHosted503": "NOT_OBSERVED; nearby Root2 log is not unique operation correlation"
+  },
+  "safety": {
+    "hostedRequests": 0,
+    "deviceActions": 0,
+    "businessWrites": 0,
+    "unknownOperation": "78f2b68d-ddd1-4cef-8f1b-54d0081384eb untouched",
+    "privatePayloadLogged": false
+  },
+  "rollback": "Revert only client.ts consumer change; existing Queue rows/identities unchanged"
+}

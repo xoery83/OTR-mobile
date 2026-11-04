@@ -1,0 +1,23 @@
+{
+  "requestId": "NATIVE-DF-C02-BOUNDED-CORRELATION-20261104-05",
+  "status": "SOURCE_CHECKS_PASS_BEFORE_REMOTE_PUBLISH",
+  "candidate": "ea40091465f48516ed663e5a3c193c3de1d5a1ea",
+  "baseMain": "5ebb8f2e1d18baaa7115287f49ec0a9bf3723eb8",
+  "files": {
+    "src/data/api/client.ts": "49ba913312db6388b289519da69dd99f29fc9a96483a165dab041223bbf59fe8",
+    "src/data/api/client.test.ts": "51e8295d0c1e583ce07cb04ac8b1a6ee2e13cadaaa1729bf70d0bd0f4fc57b23",
+    "src/data/sync/targetedSyncQueue.test.ts": "75cbd912bb972c6190d4aa0a5fb215bedecb2344ca88e375beded6ae76752259"
+  },
+  "review": "Fixed Native RESULT.json independent narrow_version_review NO_BLOCKER; Root1 narrow diff/callers review no blocker",
+  "actualMainTests": "2 suites20 PASS including bounded UUID privacy and SQLite close/reopen unchanged queue identity",
+  "lint": "PASS scoped3",
+  "diffCheck": "PASS",
+  "types": "Candidate reports only unchanged OAuth browser TS7016 missing react-dom/client types; no full typecheck rerun or full PASS claimed",
+  "reusedExpandedEvidence": "Native4s39 PASS; two transport failures reproduced unchanged base8/10, not silently represented as all-green",
+  "unchanged": "Queue source/Auth/error-code/retry/operation identity/Hosted/Core API; no older requestId invented",
+  "hostedActions": 0,
+  "deviceActions": 0,
+  "businessPosts": 0,
+  "original78f2": "UNKNOWN_FROZEN",
+  "rollback": "Consumer-only revert; queue data retained"
+}

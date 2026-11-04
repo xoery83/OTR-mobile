@@ -1,3 +1,7 @@
+## Bounded API error correlation — 4 November 2026
+
+Native `ea400914`: bounded HTTP errors retain only a valid UUID from the response body or X-Request-Id header, flowing through existing ApiClientError and Queue metadata. Two actual-main suites20 PASS including privacy and disk SQLite reopen; scoped lint/diff pass. No new retry, permission, Queue or operation identity; original78f2 remains UNKNOWN and historical request ID is not reconstructed. Existing OAuth type dependency and transport baseline failures remain documented. Receipt: `docs/ops/native-bounded-correlation-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## P6 fresh Accepted own-creator Edit source integration — 4 November 2026
 
 Native `ca4888d4` / independent `354eed73`: P6-only fallback opens a certified own editable Item when original Create history is truly absent; corrupt or partial history stays denied. Cloud-only normal queue uses original receipt-first Worker, fresh POST authority and existing authorized refresh. P2 proof and current P1 behavior preserved. Three actual-main suites74 PASS; scoped compiler/lint pass with unchanged OAuth browser missing-type exception recorded. No device/Hosted/Cloud execution or original78f2 replay. Receipt: `docs/ops/df-c02-p6-accepted-edit-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.

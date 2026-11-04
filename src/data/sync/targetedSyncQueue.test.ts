@@ -3,7 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiClientError } from "../api/client";
+import { ApiClientError, createApiClient } from "../api/client";
+import { z } from "zod";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createSyncEngine } from "./syncEngine";
 import {
@@ -57,6 +58,59 @@ const history = () => JSON.stringify(db.prepare("SELECT * FROM sync_operations W
 afterEach(() => {
   db?.close();
   if (directory) rmSync(directory, { recursive: true, force: true });
+});
+it("preserves bounded HTTP request correlation through failure and SQLite reopen", async () => {
+  const queue = fixture(),
+    before = history();
+  const requestId = "30000000-0000-4000-8000-000000000003";
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const fetchImplementation = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { code: "CORE_EXECUTION_UNAVAILABLE", message: "PRIVATE_BODY" },
+          }),
+          { status: 503, headers: { "x-request-id": requestId } },
+        ),
+    );
+    const api = createApiClient({
+      baseUrl: "https://api.example.com",
+      maxResponseBytes: 1024,
+      fetchImplementation,
+    });
+    const push = async () => {
+      await api.post("/v2/trips/new-trip/core/commands", {}, z.unknown());
+    };
+    await createSyncEngine(
+      queue,
+      { push },
+      () => now,
+      (op) => op.id === target.operationId,
+    ).run("AUTHENTICATED_ONLINE");
+    expect(
+      db
+        .prepare(
+          "SELECT status,attempt_count,last_request_id,payload_json FROM sync_operations WHERE id='new-op'",
+        )
+        .get(),
+    ).toMatchObject({
+      status: "RETRYABLE",
+      attempt_count: 1,
+      last_request_id: requestId,
+      payload_json: "{}",
+    });
+    expect(history()).toBe(before);
+    db.close();
+    open();
+    expect(
+      db.prepare("SELECT last_request_id FROM sync_operations WHERE id='new-op'").get(),
+    ).toMatchObject({ last_request_id: requestId });
+    expect(fetchImplementation).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_BODY");
+  } finally {
+    log.mockRestore();
+  }
 });
 it("allows one claimed push and preserves history across retry and actual SQLite reopen", async () => {
   const queue = fixture(), before = history();
