@@ -5,7 +5,10 @@ import type { createUniversalP3SourceInterpreter } from "./universalP3SourceInte
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
 import type { UniversalBatchPrepare } from "../api/universalImportContracts";
-import { createDefaultUniversalP3SourceInterpreter } from "./defaultUniversalP3SourceInterpreter";
+import {
+  createDefaultUniversalP3SourceInterpreter,
+  supportsUniversalP3FormMaterial,
+} from "./defaultUniversalP3SourceInterpreter";
 
 const f = vi.hoisted(() => ({
   adopted: vi.fn(),
@@ -206,3 +209,44 @@ it("each Form factory retains its own invocation transport", async () => {
   expect(ta.prepare).toHaveBeenCalledOnce();
   expect(tb.prepare).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  "shared material predicate and runtime agree for all input shapes (PDF=%s)",
+  async (pdfEnabled) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED", String(pdfEnabled));
+    const interpreter = await createDefaultUniversalP3SourceInterpreter();
+    const cases: readonly [readonly CaptureSelection[], boolean][] = [
+      [[], false],
+      [txt, true],
+      [[...txt, ...txt], true],
+      [[{ ...txt[0], typeHint: null }], false],
+      [[{ ...txt[0], typeHint: "image/png" }], false],
+      [[{ ...txt[0], source: "photos" }], false],
+      [[{ ...txt[0], source: "camera" }], false],
+      [pdf, pdfEnabled],
+      [[...pdf, ...pdf], false],
+      [[...pdf, ...txt], false],
+    ];
+    for (const [material, supported] of cases) {
+      f.invoke.mockClear();
+      expect(supportsUniversalP3FormMaterial(material, pdfEnabled)).toBe(supported);
+      if (supported) {
+        await interpreter(context, new AbortController().signal, material, () => context);
+        expect(f.invoke).toHaveBeenCalledExactlyOnceWith(
+          context,
+          expect.any(AbortSignal),
+          material,
+          expect.any(Function),
+        );
+      } else {
+        expect(() =>
+          interpreter(context, new AbortController().signal, material, () => context),
+        ).toThrow("UNIVERSAL_FORM_INPUT_UNSUPPORTED");
+        expect(f.invoke).not.toHaveBeenCalled();
+      }
+    }
+    expect(f.adopted).not.toHaveBeenCalled();
+    expect(f.transport).not.toHaveBeenCalled();
+    expect(f.prepare).not.toHaveBeenCalled();
+  },
+);

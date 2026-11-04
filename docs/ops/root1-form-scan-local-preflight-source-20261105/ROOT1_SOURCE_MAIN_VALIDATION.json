@@ -1,0 +1,29 @@
+{
+  "status": "SOURCE_ONLY_LOCAL_PREFLIGHT_INTEGRATED_NOT_UI_READY_NOT_CLOUD",
+  "parentMain": "ffa053c815e17293da9ca0432390805457d2d305",
+  "candidate": "8351971ca37e554ef589b7d9138fcbf937057cc5",
+  "packetSHA256": "05c8378152666406ea5e32a6bbd9edbf6659495c215249eed59bf5cd939bdf41",
+  "reviewSHA256": "342de82a8969805851f45f97de874ace75ca7f7717aa32cd9d5ddde674ca4af1",
+  "fourLeafSHA256": {
+    "src/native/p3FormScan.ts": "dcb8d5b795760d0299da4a065d49e8044186e9511f1c6f13b33b745fe221a3c5",
+    "src/native/p3FormScan.test.ts": "58cb35dc74a099964d400ce3b8d772ef782fb65c96a764714fb4d1a4fc396388",
+    "src/data/operations/defaultUniversalP3SourceInterpreter.ts": "da9e50b067babf76710434e314b6545716045fc6504bf4a67a95dacc61a50833",
+    "src/data/operations/defaultUniversalP3SourceInterpreter.test.ts": "c30c2a6ecda80a41ea0f3de17e26aa3b9fb3c30d565d5a622cb54ee476ffa045"
+  },
+  "actualChecks": {
+    "fiveRootScopedTypesIncludingCurrentP3EditorCaller": "PASS",
+    "fourRootESLint": "PASS",
+    "currentP3EditorUnavailableAndPinnedUnknownInterpreter": "2 PASS43skipped /527ms",
+    "sevenDirectDependencies": "BYTE_IDENTICAL_CANDIDATE",
+    "diffCheck": "PASS"
+  },
+  "reused": "Independent two-suite23 mock tests; exact four leaves and direct dependencies preserved, not rerun",
+  "semantics": "Pure existing continuous/APIbase/software material readiness only; Files before selection is not MIME or auth promise; selected TXT and existing singlePDF flag use same shared runtime predicate. Camera/Photos unsupported. No Source/Task/Provider/Auth/DB action or authority.",
+  "notIncluded": [
+    "Native UI mounting/release/draft integration",
+    "P3Editor changes",
+    "format/family/permission expansion",
+    "real Source upload/parser/provider/device"
+  ],
+  "noHostedAuthGate": true
+}

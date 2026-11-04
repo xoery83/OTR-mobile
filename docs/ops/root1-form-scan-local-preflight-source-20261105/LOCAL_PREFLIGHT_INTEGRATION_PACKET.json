@@ -1,0 +1,46 @@
+{
+  "requestId": "VISION-FORM-AUTOFILL-ENTRY-20261105-001",
+  "candidateSha": "8351971ca37e554ef589b7d9138fcbf937057cc5",
+  "baseMain": "1062fb43c5c8f2b8743ec4d6efd7e932ad131754",
+  "worktree": "/Users/xoery/Project/otr-mobile-import/lane-c-form-autofill-preflight-20261105",
+  "exactLeaves": {
+    "src/native/p3FormScan.ts": {
+      "preimageSHA256": "a9a97559cf4e1508cf627228a9f2749fc21c9aea62698a16754a37ce53db06a5",
+      "candidateSHA256": "dcb8d5b795760d0299da4a065d49e8044186e9511f1c6f13b33b745fe221a3c5",
+      "candidateBlob": "3cea4ff5e8994bb68c7e2a43083eb484654b7c63"
+    },
+    "src/native/p3FormScan.test.ts": {
+      "preimageSHA256": "1c8a43ea46da20189f742c20efdb94ccd9faa6308cdc27c1e8de24e36652cc12",
+      "candidateSHA256": "58cb35dc74a099964d400ce3b8d772ef782fb65c96a764714fb4d1a4fc396388",
+      "candidateBlob": "7e77815f017c2afd6764d7678ccadecd289d54a8"
+    },
+    "src/data/operations/defaultUniversalP3SourceInterpreter.ts": {
+      "preimageSHA256": "d0ef778a0a1c80da7d7e3cf4dbd1c30fc85e95aea16b5a6a64b9dae867e9fc15",
+      "candidateSHA256": "da9e50b067babf76710434e314b6545716045fc6504bf4a67a95dacc61a50833",
+      "candidateBlob": "530daacb3d639739fcb248b42c835228f5963887"
+    },
+    "src/data/operations/defaultUniversalP3SourceInterpreter.test.ts": {
+      "preimageSHA256": "0cfce4e0ae28f724c89dc4d70e6a6a8feb4eb1d13730fb78e0df1e6b943a6af4",
+      "candidateSHA256": "c30c2a6ecda80a41ea0f3de17e26aa3b9fb3c30d565d5a622cb54ee476ffa045",
+      "candidateBlob": "74afdab6af2c951c8f3788a94f468888e9caa607"
+    }
+  },
+  "integration": "Exact four leaves only. No prior SQL/receipt/input-proof history carried in this branch. ExistingNativeInstructions1062 is base. Do not overwrite Native sharedUI/callers.",
+  "readiness": "LOCAL_ADAPTER_REVIEW_PASS_NATIVE_UI_INTEGRATION_PENDING",
+  "checks": {
+    "RED": "2 files failed:7FAIL/16PASS, missingnewexports; RED.log",
+    "GREEN": "2 files23PASS: prior16 plus new7; GREEN.log. New2 parameterized runtime cases each assert10 material shapes:empty/TXT/multipleTXT/nullMIME/PNG/photo/camera/singlePDF/multiplePDF/PDF+TXT under PDF false/true.",
+    "native": "Config flag disabled/missing origin; selected-material predicate delegation and PDF flag; beforeselection Files ready does not callpredicate/factory, CameraPhotosunsupported. Existing native suite retains rejectedfactory/UNKNOWN and stale/cancel fences.",
+    "types": "4-root scoped tsc --noEmit PASS using ephemeral own-tree config extending existing strict tsconfig; dependency closure included. Initial config under /private/tmp could notresolve node/vitest types; corrected config location without changing product settings. TYPES.log final empty success.",
+    "lint": "4leaf eslintPASS, prettierwrite and gitdiffcheckPASS",
+    "notRun": "No UI changed so ui:guard/device visual not run. No paid/Hosted/Source/runtime qualification/fullrepo suite. Tests mocked dependencies, not real upload/parser."
+  },
+  "remaining": "Independent review, source integration, Native UI consumer integration; no runtime or execution authority implied.",
+  "independentReview": {
+    "path": "LOCAL_PREFLIGHT_INDEPENDENT_REVIEW.json",
+    "sha256": "342de82a8969805851f45f97de874ace75ca7f7717aa32cd9d5ddde674ca4af1",
+    "verdict": "SCOPED_REVIEW_PASS",
+    "independentlyRun": "23 tests",
+    "boundary": "UI release/draft integration not exercised by local adapter proof; no device or runtime acceptance."
+  }
+}

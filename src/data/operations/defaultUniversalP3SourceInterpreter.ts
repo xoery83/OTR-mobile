@@ -1,9 +1,25 @@
+import type { CaptureSelection } from "@/features/capture/captureStaging";
 import { requireAdoptedUserId } from "../auth/authRepository";
 import { createUniversalImportTransport } from "../api/universalImportTransport";
 import { PDF_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePdfPreparation";
 import { getDefaultCaptureSubmissionDependencies } from "./defaultCaptureSubmission";
 import { prepareDefaultUniversalCaptureSources } from "./defaultUniversalOriginalSource";
 import { createUniversalP3SourceInterpreter } from "./universalP3SourceInterpreter";
+
+// Shared software input rule; Source/Task admission still owns execution authority.
+export function supportsUniversalP3FormMaterial(
+  material: readonly CaptureSelection[],
+  pdfEnabled: boolean,
+): boolean {
+  return (
+    (material.length > 0 &&
+      material.every((m) => m.source === "files" && m.typeHint === "text/plain")) ||
+    (pdfEnabled &&
+      material.length === 1 &&
+      material[0].source === "files" &&
+      material[0].typeHint === "application/pdf")
+  );
+}
 
 // Unmounted composition only. Backend Source/Task capability still decides authorization.
 export async function createDefaultUniversalP3SourceInterpreter() {
@@ -47,15 +63,8 @@ export async function createDefaultUniversalP3SourceInterpreter() {
   });
   return (...args: Parameters<typeof interpret>) => {
     const material = args[2];
-    const textOnly =
-      material.length > 0 &&
-      material.every((m) => m.source === "files" && m.typeHint === "text/plain");
-    const singlePdf =
-      pdfEnabled &&
-      material.length === 1 &&
-      material[0].source === "files" &&
-      material[0].typeHint === "application/pdf";
-    if (!textOnly && !singlePdf) throw Error("UNIVERSAL_FORM_INPUT_UNSUPPORTED");
+    if (!supportsUniversalP3FormMaterial(material, pdfEnabled))
+      throw Error("UNIVERSAL_FORM_INPUT_UNSUPPORTED");
     return interpret(...args);
   };
 }

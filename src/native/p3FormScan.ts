@@ -1,4 +1,8 @@
-import { createDefaultUniversalP3SourceInterpreter } from "@/data/operations/defaultUniversalP3SourceInterpreter";
+import type { CaptureSelection } from "@/features/capture/captureStaging";
+import {
+  createDefaultUniversalP3SourceInterpreter,
+  supportsUniversalP3FormMaterial,
+} from "@/data/operations/defaultUniversalP3SourceInterpreter";
 import { isCurrentUniversalP3FormContext } from "@/data/operations/universalP3FormInterpretation";
 import type { P3SourceInterpreter } from "@/features/day-feed/p3SourceSuggestions";
 
@@ -27,4 +31,31 @@ export function createP3SourceScanPort(
     current();
     return interpret(context, signal, material, getCurrentContext);
   };
+}
+
+// Software preflight only: available Files still require selection and owning admission.
+export function getP3SourceScanAvailability(
+  source: CaptureSelection["source"],
+  material?: readonly CaptureSelection[],
+):
+  | { available: true }
+  | {
+      available: false;
+      reason: "UNAVAILABLE" | "UNSUPPORTED_SOURCE" | "UNSUPPORTED_SELECTION";
+    } {
+  if (
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED !== "true" ||
+    !process.env.EXPO_PUBLIC_OTR_API_BASE_URL
+  )
+    return { available: false, reason: "UNAVAILABLE" };
+  if (source !== "files") return { available: false, reason: "UNSUPPORTED_SOURCE" };
+  if (
+    material !== undefined &&
+    !supportsUniversalP3FormMaterial(
+      material,
+      process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED === "true",
+    )
+  )
+    return { available: false, reason: "UNSUPPORTED_SELECTION" };
+  return { available: true };
 }

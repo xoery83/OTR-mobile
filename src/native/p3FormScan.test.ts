@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { createP3SourceScanPort } from "./p3FormScan";
-import { createDefaultUniversalP3SourceInterpreter } from "@/data/operations/defaultUniversalP3SourceInterpreter";
+import { createP3SourceScanPort, getP3SourceScanAvailability } from "./p3FormScan";
+import {
+  createDefaultUniversalP3SourceInterpreter,
+  supportsUniversalP3FormMaterial,
+} from "@/data/operations/defaultUniversalP3SourceInterpreter";
 import type {
   UniversalP3FormContext,
   UniversalP3FormInterpretation,
 } from "@/data/operations/universalP3FormInterpretation";
 vi.mock("@/data/operations/defaultUniversalP3SourceInterpreter", () => ({
+  supportsUniversalP3FormMaterial: vi.fn(),
   createDefaultUniversalP3SourceInterpreter: vi.fn(async () => {
     throw Error("OWNING_TASK_PREPARATION_UNAVAILABLE");
   }),
@@ -109,4 +113,54 @@ it("already invalid context cannot open any factory", async () => {
     ),
   ).rejects.toThrow("FORM_SCAN_STALE");
   expect(factory).not.toHaveBeenCalled();
+});
+
+it("preflight is software-only and Files without material is not a MIME promise", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://fixture.invalid");
+  const factory = vi.mocked(createDefaultUniversalP3SourceInterpreter);
+  factory.mockClear();
+  const predicate = vi.mocked(supportsUniversalP3FormMaterial);
+  predicate.mockClear();
+  expect(getP3SourceScanAvailability("files")).toEqual({ available: true });
+  for (const source of ["camera", "photos"] as const)
+    expect(getP3SourceScanAvailability(source)).toEqual({
+      available: false,
+      reason: "UNSUPPORTED_SOURCE",
+    });
+  expect(predicate).not.toHaveBeenCalled();
+  expect(factory).not.toHaveBeenCalled();
+});
+it.each([undefined, "false"])(
+  "preflight continuous=%s fails before factory",
+  (enabled) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://fixture.invalid");
+    vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", enabled);
+    expect(getP3SourceScanAvailability("files")).toEqual({
+      available: false,
+      reason: "UNAVAILABLE",
+    });
+  },
+);
+it("preflight missing Backend origin is unavailable", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", undefined);
+  expect(getP3SourceScanAvailability("files")).toEqual({
+    available: false,
+    reason: "UNAVAILABLE",
+  });
+});
+it("selection preflight delegates exact material and existing PDF flag to runtime predicate", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://fixture.invalid");
+  const material = [] as const;
+  const predicate = vi.mocked(supportsUniversalP3FormMaterial);
+  predicate.mockReturnValue(false);
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED", "false");
+  expect(getP3SourceScanAvailability("files", material)).toEqual({
+    available: false,
+    reason: "UNSUPPORTED_SELECTION",
+  });
+  expect(predicate).toHaveBeenLastCalledWith(material, false);
+  predicate.mockReturnValue(true);
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED", "true");
+  expect(getP3SourceScanAvailability("files", material)).toEqual({ available: true });
+  expect(predicate).toHaveBeenLastCalledWith(material, true);
 });
