@@ -450,3 +450,243 @@ it.each(["close", "expiry"])(
     ]);
   },
 );
+
+async function verifiedCloseFixture(mode = "rejected") {
+  const q = fixture();
+  const segment = (value: unknown) =>
+    Buffer.from(JSON.stringify(value)).toString("base64url");
+  const access = [
+    segment({ alg: "ES256", typ: "JWT" }),
+    segment({ sub: id, exp: Math.floor(Date.now() / 1000) + 3600 }),
+    segment("unit-signature"),
+  ].join(".");
+  const newAccess = [
+    segment({ alg: "ES256", typ: "JWT" }),
+    segment({ sub: id, exp: Math.floor(Date.now() / 1000) + 3600 }),
+    segment("unit-new-signature"),
+  ].join(".");
+  let deliver!: (response: Response) => void;
+  const paths: string[] = [];
+  const wire = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    const u = new URL(String(input));
+    paths.push(u.pathname + u.search);
+    expect(init?.credentials).toBe("omit");
+    if (u.pathname === "/auth/v1/verify")
+      return new Promise<Response>((resolve) => {
+        deliver = resolve;
+      });
+    if (u.pathname === "/auth/v1/user") {
+      if (mode === "identity-network") throw Error("identity read failed");
+      expect(new Headers(init?.headers).get("Authorization")).toBe(`Bearer ${access}`);
+      return Response.json({
+        id: mode === "foreign" ? other : id,
+        is_anonymous: false,
+        email: q.config.qaEmail,
+      });
+    }
+    if (u.pathname === "/auth/v1/logout") {
+      expect(u.search).toBe("?scope=local");
+      const afterRefresh = paths.some((path) =>
+        path.includes("grant_type=refresh_token"),
+      );
+      expect(new Headers(init?.headers).get("Authorization")).toBe(
+        `Bearer ${afterRefresh ? newAccess : access}`,
+      );
+      if (
+        mode === "logout-unknown" ||
+        (mode === "accepted-cleanup-unknown" && afterRefresh)
+      )
+        throw Error("logout response lost");
+      return mode === "logout-failed"
+        ? Response.json({ code: "bad_jwt" }, { status: 401 })
+        : new Response(null, { status: 204 });
+    }
+    expect(u.pathname + u.search).toBe("/auth/v1/token?grant_type=refresh_token");
+    expect(JSON.parse(String(init?.body))).toEqual({
+      refresh_token: "unit-browser-refresh",
+    });
+    if (mode === "network") throw Error("network failed");
+    if (mode === "local-closed") throw Error("CLOSED");
+    if (mode.startsWith("accepted"))
+      return Response.json({
+        access_token: newAccess,
+        refresh_token: "unit-new-refresh",
+        expires_in: 3600,
+        token_type: "bearer",
+        user: { id, is_anonymous: false },
+      });
+    if (mode === "rate")
+      return Response.json({ code: "over_request_rate_limit" }, { status: 429 });
+    if (mode === "ambiguous") return Response.json({ code: "bad_jwt" }, { status: 401 });
+    if (mode === "mixed")
+      return Response.json(
+        { code: "refresh_token_not_found", error_code: "bad_jwt" },
+        { status: 400 },
+      );
+    return Response.json({ code: "refresh_token_not_found" }, { status: 400 });
+  });
+  const repo = createMcpOAuthConsentRepository(q.config, "unit-authorization");
+  const pending = repo.verifyCode(q.config.qaEmail, "12345678");
+  await vi.waitFor(() => expect(wire).toHaveBeenCalledOnce());
+  const binding = {
+    runId: "e81520d0-12fa-4374-97e1-5cae5ba899e1",
+    accountId: id,
+    requestedAt: new Date().toISOString(),
+  };
+  const closing = repo.closeVerified(binding);
+  // Install the late successful Session only after close has fenced new work.
+  deliver(
+    Response.json({
+      access_token: access,
+      refresh_token: "unit-browser-refresh",
+      token_type: "bearer",
+      expires_in: 3600,
+      user: { id, is_anonymous: false },
+    }),
+  );
+  await expect(pending).rejects.toMatchObject({ code: "CLOSED" });
+  return { repo, binding, closing, paths };
+}
+
+it("QA verified-close drains late verify and observes exact own logout plus actual server refresh rejection without exporting Session", async () => {
+  const q = await verifiedCloseFixture();
+  const result = await q.closing;
+  expect(result).toEqual({
+    kind: "BROWSER_LOCAL_CLEANUP_VERIFIED",
+    binding: q.binding,
+    localLogout: "COMPLETED",
+    refresh: "SERVER_REJECTED",
+    hostUnlockAuthorized: false,
+  });
+  expect(q.paths).toEqual([
+    "/auth/v1/verify",
+    "/auth/v1/user",
+    "/auth/v1/logout?scope=local",
+    "/auth/v1/token?grant_type=refresh_token",
+  ]);
+  expect(JSON.stringify(result)).not.toMatch(
+    /access_token|refresh_token|unit-browser-refresh|12345678/,
+  );
+  expect(q.repo.closeVerified({ ...q.binding })).toBe(q.closing);
+  await expect(
+    q.repo.closeVerified({ ...q.binding, runId: "82ff9b61-a4fc-43dd-b5f1-8cdb83c667d1" }),
+  ).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  await q.repo.close();
+  await expect(q.repo.requestCode("unit@example.invalid")).rejects.toMatchObject({
+    code: "CLOSED",
+  });
+  expect(q.paths).toHaveLength(4);
+});
+
+it.each([
+  "network",
+  "local-closed",
+  "accepted",
+  "rate",
+  "ambiguous",
+  "mixed",
+  "logout-failed",
+  "foreign",
+  "identity-network",
+  "logout-unknown",
+  "accepted-cleanup-unknown",
+])("QA verified-close cannot turn %s into a cleanup proof or retry it", async (mode) => {
+  const q = await verifiedCloseFixture(mode);
+  await expect(q.closing).rejects.toMatchObject({ code: "CLEANUP_UNPROVEN" });
+  await expect(q.repo.closeVerified(q.binding)).rejects.toMatchObject({
+    code: "CLEANUP_UNPROVEN",
+  });
+  await expect(q.repo.close()).rejects.toMatchObject({ code: "CLEANUP_UNPROVEN" });
+  expect(
+    q.paths.filter((path) => path.includes("grant_type=refresh_token")),
+  ).toHaveLength(
+    ["foreign", "identity-network", "logout-failed", "logout-unknown"].includes(mode)
+      ? 0
+      : 1,
+  );
+  expect(q.paths.filter((path) => path.startsWith("/auth/v1/logout"))).toHaveLength(
+    mode.startsWith("accepted") ? 2 : 1,
+  );
+});
+
+it("ordinary close does not gain a refresh probe and cannot later be upgraded to a verified receipt", async () => {
+  const q = fixture();
+  await q.repo.close();
+  expect(q.auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: "local" });
+  expect(() =>
+    q.repo.closeVerified({
+      runId: "e81520d0-12fa-4374-97e1-5cae5ba899e1",
+      accountId: id,
+      requestedAt: new Date().toISOString(),
+    }),
+  ).toThrow("CLOSED");
+  expect(q.auth.getUser).not.toHaveBeenCalled();
+});
+
+it("does not trust an injected SDK signOut success without observing the actual same-token logout response", async () => {
+  const q = fixture();
+  const getSession = vi.fn(async () => ({
+    data: {
+      session: {
+        access_token: "unit-access",
+        refresh_token: "unit-refresh",
+        user: { id },
+      },
+    },
+    error: null,
+  }));
+  const repo = createMcpOAuthConsentRepository(q.config, "unit-authorization", {
+    auth: { ...q.auth, getSession },
+  } as unknown as SupabaseClient);
+  const wire = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    Response.json({
+      id,
+      email: q.config.qaEmail,
+      is_anonymous: false,
+    }),
+  );
+  await expect(
+    repo.closeVerified({
+      runId: "e81520d0-12fa-4374-97e1-5cae5ba899e1",
+      accountId: id,
+      requestedAt: new Date().toISOString(),
+    }),
+  ).rejects.toMatchObject({ code: "CLEANUP_UNPROVEN" });
+  expect(q.auth.signOut).toHaveBeenCalledOnce();
+  expect(wire).toHaveBeenCalledOnce();
+});
+
+it("rejects foreign binding before closing or touching the owned Session", async () => {
+  const q = fixture();
+  await expect(
+    q.repo.closeVerified({
+      runId: "e81520d0-12fa-4374-97e1-5cae5ba899e1",
+      accountId: other,
+      requestedAt: new Date().toISOString(),
+    }),
+  ).rejects.toMatchObject({ code: "CLEANUP_UNPROVEN" });
+  expect(q.auth.signOut).not.toHaveBeenCalled();
+  await q.repo.close();
+  expect(q.auth.signOut).toHaveBeenCalledOnce();
+});
+
+it("QA proof getSession failure still runs original own local cleanup once without a probe", async () => {
+  const q = fixture();
+  const repo = createMcpOAuthConsentRepository(q.config, "unit-authorization", {
+    auth: {
+      ...q.auth,
+      getSession: vi.fn(async () => {
+        throw Error("SDK read failed");
+      }),
+    },
+  } as unknown as SupabaseClient);
+  const failed = repo.closeVerified({
+    runId: "e81520d0-12fa-4374-97e1-5cae5ba899e1",
+    accountId: id,
+    requestedAt: new Date().toISOString(),
+  });
+  await expect(failed).rejects.toMatchObject({ code: "CLEANUP_UNPROVEN" });
+  expect(q.auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: "local" });
+  await expect(repo.close()).rejects.toMatchObject({ code: "CLEANUP_UNPROVEN" });
+  expect(q.auth.signOut).toHaveBeenCalledOnce();
+});

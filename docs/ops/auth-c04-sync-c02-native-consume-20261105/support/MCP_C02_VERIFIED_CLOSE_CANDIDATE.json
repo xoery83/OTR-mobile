@@ -1,0 +1,35 @@
+{
+  "requestId": "MCP-C02-BROWSER-RESERVATION-PORT-20261105-001",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "BROWSER_LOCAL_VERIFIED_CLOSE_CANDIDATE_REVIEW_PENDING_NOT_INTEGRATED",
+  "signature": "repository.closeVerified(binding:{runId:UUID,accountId:UUID,requestedAt:ISO}):Promise<McpVerifiedCloseResult>",
+  "result": "{kind:BROWSER_LOCAL_CLEANUP_VERIFIED,binding,localLogout:COMPLETED,refresh:SERVER_REJECTED,hostUnlockAuthorized:false}; no Session/token/OTP or credential fingerprint fields",
+  "normalCompatibility": "Ordinary close() unchanged when QA entry unused: fence/drain, one normal local SDKsignOut, abort; no extra getUser/refresh probe. main/UI untouched and still use normalclose. No new global flag/config/SQL/backend/client authority.",
+  "proofBoundary": "QA entry fences/drains existing actions; reads Session inside same SDK; normal getUser with same access token proves exact configured nonanonymous Account/email; observes actual SDK scope=local logout204 with exact captured access token. SDK refreshSession uses captured same refresh token, adapter allows at most ONE physical matchingPOST; only actual received400/401/403 plus explicit refresh_token_not_found/session_not_found establishes refresh rejection. Local CLOSED/network/429/badJWT/ambiguous/malformed/200 never proves cleanup.",
+  "retryBoundary": "SDK retries thrown transport errors. QA-only adapter converts transport failure or blocked duplicate to INTERNAL qa_cleanup_unproven SDK error response to stop SDK retry; this is never recorded as a real server denial and cannot satisfy actual-response proof state. No second physical refreshPOST. Normal adapter behavior unchanged outside QA probe.",
+  "failureCleanup": "getSession/getUser/identity/proof failure must still run original best-effort ownlocal SDKsignOut if no logout was attempted. Already-attempted/UNKNOWN logout is not repeated. Verified-close Promise cached; subsequentclose or verifiedclose cannot retry.",
+  "unexpected200": "SDK receives/retains actual successful refresh through its normal Session handling; if returnedSession belongs to captured Account, attempt once its own normal local cleanup (different newly received Session, not retry of originallogout), no extra refreshprobe. Regardless outcome return CLEANUP_UNPROVEN; failed cleanup leaves SDK-owned memory and original lock/context unresolved, no credentials exported or automaticunlock.",
+  "integrationGap": "NOT_INTEGRATED: main/UI/QA binding not wired. No trusted crossHost publication/receipt bridge exists here; output is browser-local observation only and explicitly hostUnlockAuthorized=false. MCP must settle actual sender/termination/UNKNOWN contract and verifiable bridge or choose separately scoped Host SDK Consent reuse; this patch grants neither.",
+  "error": "CLEANUP_UNPROVEN for unproven QA cleanup; CLOSED when beginning after normalclose/expiry; REQUEST_CHANGED on changed binding after QA start. Invalid binding rejected by strict schema. No caller-provided complete/success accepted.",
+  "validation": {
+    "directTests": "52PASS src/data/auth/mcpOAuthConsentRepository.test.ts",
+    "scopedTypecheck": "PASS",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "coverage": "Real Supabase SDK with mock fetch, lateverify/drain, exact actual localLogout+same-refresh denial, noSession/getSession or getUser failure still owncleanup, no repeated UNKNOWNlogout, unexpectedrefresh200 normalSDK acceptance+newowncleanup once, mismatch, network/localCLOSED/rate/ambiguous codes, metadata/result no secret fields. Existing normalclose tests reused in changed direct suite.",
+    "notRun": "No Live/OTP/keychain/credentials/network/device/other28helper suite"
+  },
+  "sourceHashes": {
+    "src/data/auth/mcpOAuthConsentRepository.ts": "c4d4ff7c9cb01c63e9db774126244e28290bee453ec4cb16c8625706bea5c170",
+    "src/data/auth/mcpOAuthConsentRepository.test.ts": "765cc24f3815a3bc1c7e3101e7224843d598e5965ee76487469e76c34f1bd709"
+  },
+  "review": "PENDING_PARENT",
+  "actions": {
+    "live": 0,
+    "keychainOrCredentialReads": 0,
+    "sharedMainUIWrites": 0,
+    "newWindow": 0,
+    "crossLaneMessages": 0
+  },
+  "primary": "AUTH-C04 Native consumer remains Primary, not replaced by this support"
+}

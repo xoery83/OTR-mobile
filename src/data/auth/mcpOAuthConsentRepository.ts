@@ -1,6 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { createRequestBoundary, readBoundedBytes } from "../api/requestBoundary";
+import {
+  createRequestBoundary,
+  readBoundedBytes,
+  readBoundedJson,
+} from "../api/requestBoundary";
 import { isSupabaseDevPublicKey } from "./devSupabasePublicKey";
 
 const origin = "https://tuqigdxrvrerfewsxqgm.supabase.co";
@@ -32,7 +36,13 @@ export type McpConsentConfig = z.infer<typeof mcpConsentConfigSchema>;
 export class McpConsentError extends Error {
   constructor(
     public readonly code:
-      "CLOSED" | "BUSY" | "UNAVAILABLE" | "OTP_FAILED" | "RATE_LIMIT" | "REQUEST_CHANGED",
+      | "CLOSED"
+      | "BUSY"
+      | "UNAVAILABLE"
+      | "OTP_FAILED"
+      | "RATE_LIMIT"
+      | "REQUEST_CHANGED"
+      | "CLEANUP_UNPROVEN",
   ) {
     super(code);
   }
@@ -45,6 +55,20 @@ export type McpConsentView =
       businessAccess?: "READ_WRITE";
     }>
   | Readonly<{ kind: "REDIRECT"; url: string }>;
+
+export const mcpVerifiedCloseBindingSchema = z.strictObject({
+  runId: z.uuid(),
+  accountId: z.uuid(),
+  requestedAt: z.iso.datetime(),
+});
+export type McpVerifiedCloseBinding = z.infer<typeof mcpVerifiedCloseBindingSchema>;
+export type McpVerifiedCloseResult = Readonly<{
+  kind: "BROWSER_LOCAL_CLEANUP_VERIFIED";
+  binding: Readonly<McpVerifiedCloseBinding>;
+  localLogout: "COMPLETED";
+  refresh: "SERVER_REJECTED";
+  hostUnlockAuthorized: false;
+}>;
 
 // Browser-only facade over the SAME Supabase Auth SDK, with its normal OTP/session.
 // Memory-only SDK storage; no token is returned to UI or another backend audience.
@@ -61,7 +85,14 @@ export function createMcpOAuthConsentRepository(
   let busy = false,
     closed = false;
   let closeTask: Promise<void> | undefined;
+  let verifiedCloseTask: Promise<McpVerifiedCloseResult> | undefined;
+  let verifiedCloseBinding: McpVerifiedCloseBinding | undefined;
   let activeTask: Promise<unknown> | undefined;
+  let verifiedLogoutAccessToken: string | undefined;
+  let verifiedLogoutObserved = false;
+  let verifiedRefresh:
+    | { token: string; attempted: boolean; rejected: boolean; accepted: boolean }
+    | undefined;
   let expectedRedirect: string | undefined;
   let presentedWriteAccount: string | undefined;
   const write = config.businessAccess === "READ_WRITE";
@@ -83,7 +114,28 @@ export function createMcpOAuthConsentRepository(
           const sessionResponse = ["/auth/v1/verify", "/auth/v1/token"].includes(
             target.pathname,
           );
-          if (!logout) current();
+          const cleanupRefresh = Boolean(
+            verifiedRefresh &&
+            target.pathname === "/auth/v1/token" &&
+            target.search === "?grant_type=refresh_token",
+          );
+          if (cleanupRefresh) {
+            const body = z
+              .strictObject({ refresh_token: z.literal(verifiedRefresh!.token) })
+              .safeParse(JSON.parse(String(init?.body)));
+            if (verifiedRefresh!.attempted || init?.method !== "POST" || !body.success)
+              return Response.json({ code: "qa_cleanup_unproven" }, { status: 400 });
+            verifiedRefresh!.attempted = true;
+          } else if (!logout) current();
+          if (
+            logout &&
+            verifiedLogoutAccessToken &&
+            (target.search !== "?scope=local" ||
+              init?.method !== "POST" ||
+              new Headers(init.headers).get("Authorization") !==
+                `Bearer ${verifiedLogoutAccessToken}`)
+          )
+            throw new McpConsentError("CLEANUP_UNPROVEN");
           const boundary = createRequestBoundary(10000, lifetime.signal);
           try {
             const response = await boundary.run(() =>
@@ -98,6 +150,30 @@ export function createMcpOAuthConsentRepository(
               response.status === 204 || response.status === 205
                 ? null
                 : await readBoundedBytes(response, 65536, boundary);
+            if (logout && verifiedLogoutAccessToken && response.status === 204)
+              verifiedLogoutObserved = true;
+            if (cleanupRefresh && verifiedRefresh) {
+              verifiedRefresh.accepted = response.status === 200;
+              try {
+                const error = z
+                  .object({
+                    code: z.string().optional(),
+                    error_code: z.string().optional(),
+                  })
+                  .parse(JSON.parse(new TextDecoder().decode(bytes ?? new Uint8Array())));
+                const codes = [error.code, error.error_code].filter(
+                  (v): v is string => v !== undefined,
+                );
+                verifiedRefresh.rejected =
+                  [400, 401, 403].includes(response.status) &&
+                  codes.length > 0 &&
+                  codes.every((code) =>
+                    ["refresh_token_not_found", "session_not_found"].includes(code),
+                  );
+              } catch {
+                /* A malformed response cannot establish revocation. */
+              }
+            }
             // Let an already-sent session response reach the SDK so close can revoke it.
             if (!logout && !sessionResponse) current();
             return new Response(bytes ? new Uint8Array(bytes).buffer : null, {
@@ -105,6 +181,11 @@ export function createMcpOAuthConsentRepository(
               statusText: response.statusText,
               headers: response.headers,
             });
+          } catch (error) {
+            // SDK retries thrown fetch errors. This internal marker stops retry, never proves revocation.
+            if (cleanupRefresh)
+              return Response.json({ code: "qa_cleanup_unproven" }, { status: 400 });
+            throw error;
           } finally {
             boundary.close();
           }
@@ -212,6 +293,7 @@ export function createMcpOAuthConsentRepository(
     return view;
   }
   function close() {
+    if (verifiedCloseTask) return verifiedCloseTask.then(() => undefined);
     if (closeTask) return closeTask;
     closed = true;
     const pending = activeTask;
@@ -228,6 +310,123 @@ export function createMcpOAuthConsentRepository(
       }
     })();
     return closeTask;
+  }
+  // QA-only opt-in; result is local observation, not a Host-verifiable receipt.
+  function closeVerified(
+    input: McpVerifiedCloseBinding,
+  ): Promise<McpVerifiedCloseResult> {
+    const binding = mcpVerifiedCloseBindingSchema.parse(input);
+    if (verifiedCloseTask) {
+      if (JSON.stringify(binding) !== JSON.stringify(verifiedCloseBinding))
+        return Promise.reject(new McpConsentError("REQUEST_CHANGED"));
+      return verifiedCloseTask;
+    }
+    current();
+    if (closeTask || !config.accountIds.includes(binding.accountId))
+      return Promise.reject(new McpConsentError("CLEANUP_UNPROVEN"));
+    verifiedCloseBinding = Object.freeze({ ...binding });
+    closed = true;
+    const pending = activeTask;
+    verifiedCloseTask = (async () => {
+      let logoutAttempted = false;
+      try {
+        await pending?.catch(() => undefined);
+        const { data, error } = await client.auth.getSession();
+        const captured = z
+          .object({
+            access_token: z.string().min(1),
+            refresh_token: z.string().min(1),
+            user: z.object({ id: z.literal(binding.accountId) }),
+          })
+          .safeParse(data.session);
+        if (error || !captured.success) throw new McpConsentError("CLEANUP_UNPROVEN");
+        const ownSession = captured.data;
+        // Narrow cleanup requests bypass CLOSED, never reopen normal repository work.
+        const identityBoundary = createRequestBoundary(10000, lifetime.signal);
+        let identity: { status: number; body: unknown };
+        try {
+          const response = await identityBoundary.run(() =>
+            fetch(origin + "/auth/v1/user", {
+              method: "GET",
+              credentials: "omit",
+              redirect: "error",
+              signal: identityBoundary.signal,
+              headers: {
+                apikey: config.publishableKey,
+                Authorization: `Bearer ${ownSession.access_token}`,
+              },
+            }),
+          );
+          identity = {
+            status: response.status,
+            body: await readBoundedJson(response, 65536, identityBoundary),
+          };
+        } finally {
+          identityBoundary.close();
+        }
+        const own = z
+          .object({
+            id: z.literal(binding.accountId),
+            is_anonymous: z.literal(false),
+            email: z.email(),
+          })
+          .safeParse(identity.body);
+        if (
+          identity.status !== 200 ||
+          !own.success ||
+          own.data.email.toLowerCase() !== config.qaEmail.toLowerCase()
+        )
+          throw new McpConsentError("CLEANUP_UNPROVEN");
+        verifiedLogoutAccessToken = ownSession.access_token;
+        logoutAttempted = true;
+        const { error: logoutError } = await client.auth.signOut({ scope: "local" });
+        verifiedLogoutAccessToken = undefined;
+        if (logoutError || !verifiedLogoutObserved)
+          throw new McpConsentError("CLEANUP_UNPROVEN");
+        const refreshObservation = {
+          token: ownSession.refresh_token,
+          attempted: false,
+          rejected: false,
+          accepted: false,
+        };
+        verifiedRefresh = refreshObservation;
+        const refreshed = await client.auth.refreshSession({
+          refresh_token: ownSession.refresh_token,
+        });
+        verifiedRefresh = undefined;
+        if (refreshObservation.accepted) {
+          // SDK retains an unexpected successful refresh; clean only that new own Session once.
+          const unexpected = refreshed.data.session;
+          if (unexpected?.user.id === binding.accountId) {
+            verifiedLogoutAccessToken = unexpected.access_token;
+            await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+            verifiedLogoutAccessToken = undefined;
+          }
+          throw new McpConsentError("CLEANUP_UNPROVEN");
+        }
+        if (!refreshObservation.rejected || !refreshed.error)
+          throw new McpConsentError("CLEANUP_UNPROVEN");
+        return Object.freeze({
+          kind: "BROWSER_LOCAL_CLEANUP_VERIFIED" as const,
+          binding: verifiedCloseBinding!,
+          localLogout: "COMPLETED" as const,
+          refresh: "SERVER_REJECTED" as const,
+          hostUnlockAuthorized: false as const,
+        });
+      } catch {
+        throw new McpConsentError("CLEANUP_UNPROVEN");
+      } finally {
+        verifiedRefresh = undefined;
+        verifiedLogoutAccessToken = undefined;
+        // Proof failure must not suppress the original close's best-effort own cleanup.
+        if (!logoutAttempted) {
+          logoutAttempted = true;
+          await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+        }
+        lifetime.abort();
+      }
+    })();
+    return verifiedCloseTask;
   }
   return Object.freeze({
     requestCode(email: string) {
@@ -283,5 +482,6 @@ export function createMcpOAuthConsentRepository(
       });
     },
     close,
+    closeVerified,
   });
 }
