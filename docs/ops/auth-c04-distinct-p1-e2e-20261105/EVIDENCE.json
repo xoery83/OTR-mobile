@@ -1,0 +1,162 @@
+{
+  "taskId": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E",
+  "agentId": "/root/auth_distinct_p1_e2e_20261105",
+  "result": "PASS_HOSTED_DISTINCT_SHARED_P1_A_WRITE_RECEIPT_A_B_READ",
+  "status": "INTENTIONAL_STOP",
+  "candidateAtExecution": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+  "manifestSha256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+  "root2QualificationSha256": "1d3b9ccc51bdaf369e450f72e3e2b17b662b814622489bfec1669815cc311a30",
+  "independentReviewCommit": "73578aaf3c826fb27c3993fdd1231afc4fa2c545",
+  "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+  "itemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "window": {
+    "T": "2026-11-04T18:14:37.543Z",
+    "D": "2026-11-04T18:24:37.543Z",
+    "completedAt": "2026-11-04T18:16:04.129Z",
+    "elapsedSeconds": 86.586,
+    "closedAt": "2026-11-04T18:16:04.129Z",
+    "authority": "CONSUMED_CLOSED_NO_REUSE",
+    "serverRuntimeMutationOrTimer": false
+  },
+  "normalIdentity": {
+    "A": "One real existing-account OTP/verify/getUser with exact26876e6e Account and approved recipient",
+    "B": "One real existing-account OTP/verify/getUser with exact1f3d7935 Account and approved recipient/creation timestamp",
+    "copiedSessions": false,
+    "borrowedCredentials": false,
+    "otpRequestsPerActor": {
+      "A": 1,
+      "B": 1
+    },
+    "emailQuotaEvidence": "Both normal OTP requests accepted200 and delivered; no claim of remaining daily allowance or admin sending quota lookup"
+  },
+  "farthestReached": "Normal B independent validated collection and own local logout/refresh rejection completed",
+  "write": {
+    "physicalPosts": 1,
+    "postResponse": {
+      "at": "2026-11-04T18:15:34.373Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/commands",
+      "status": 200,
+      "requestId": "3acd8582-310b-40c9-a221-dbb41b126d02",
+      "durationMs": 15241
+    },
+    "wireSha256": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+    "intentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+    "durableAttemptFile": "docs/ops/auth-c04-distinct-p1-next-day-20261104/ATTEMPT.json",
+    "durableAttemptSha256": "93b5f3af4f7b635102df511c120ba9121c5b1ec993f7e417cf68a96224e5a518",
+    "reservationRetained": true,
+    "responseLoss": false,
+    "afterPostReceiptRecoveryGets": 0
+  },
+  "receipt": {
+    "outcome": "APPLIED",
+    "domainReceiptId": "4402369b-cf16-4ef3-8387-ae6baa15a04f",
+    "receiptSha256": "ac43531191a2af12515068a58b72beaba9837c201d74223b06ff61d59561fc43",
+    "validation": "Existing fixed transport validateCoreReceipt FULL schema/hash/Account/Trip/operation; creator checks intentSha, outcome and exactly one created target ITEM before FIXTURE_APPLIED event",
+    "evidenceLimit": "Raw FULL receipt response bytes were not retained; validated domain receipt ID/hash and fixed-runner checks are retained. No extra read/login was performed to reconstruct it."
+  },
+  "readback": {
+    "A_beforeWrite": {
+      "at": "2026-11-04T18:15:11.053Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+      "status": 200,
+      "requestId": "8604eda1-9482-4a8e-92d0-1a7461cdba7c",
+      "durationMs": 9736
+    },
+    "A_afterWrite": {
+      "at": "2026-11-04T18:15:45.332Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+      "status": 200,
+      "requestId": "b539c1f3-83ad-4b4b-97f2-8b880dfb1f4f",
+      "durationMs": 10779
+    },
+    "B_independent": {
+      "at": "2026-11-04T18:16:03.787Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+      "status": 200,
+      "requestId": "9f693920-11e7-474a-8d50-08cf8f57739a",
+      "durationMs": 9741
+    },
+    "assertions": "Fixed checkDistinctSharedP1Read verifies exact active A/B Person bindings; one matching Item on both reads; A owner, GROUP visibility, P1, exact title/description/date/WHOLE_GROUP participation and equal A/B revision",
+    "result": {
+      "memberRead": "PASS",
+      "privateItemNegative": "NO_QUALIFIED_PRIVATE_FIXTURE",
+      "qualifiedPrivateItemCount": 0,
+      "sharedItemRead": "PASS",
+      "distinctCaseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106"
+    },
+    "evidenceLimit": "Raw collection bodies not retained; formal collection hash/schema/scope validation and exact frozen source return assertions passed"
+  },
+  "R1Qualifier": {
+    "implementation": "operator.mts::qualify validates unchanged fixed Git/manifest/Root2 bindings and real T/D; passed to fixed runDistinctSharedP1NextDay, not stub true",
+    "preBSessionAndPreBRead": "Actually invoked by reviewed R1 source; B request/read times are within bound and conservative remaining-time guard passed",
+    "extraWireGuards": "Exact single wire POST and A-only body; B collection GET only; no Auth/business action after D; own local cleanup exemptions only",
+    "qualifierClosed": true
+  },
+  "ownCleanup": {
+    "A": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "B": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "refreshRejectedBoth": true,
+    "sessionActive": false,
+    "receiverActive": false,
+    "executionLockRemoved": true,
+    "noHostedTimerOrWindowOwned": true
+  },
+  "qualificationLayers": {
+    "SOURCE": "PASS_FIXED_04BF_REVIEWED_MANIFEST14",
+    "HOSTED": "PASS_ONE_NORMAL_OWNER_P1_RECEIPT_AND_A_B_MEMBER_READ_ONLY",
+    "CONSUMER": "PASS_PROGRAMMATIC_HOST_RUNNER_NOT_NATIVE",
+    "DEVICE": "NOT_RUN_NOT_REQUIRED_FOR_THIS_HOST_CASE",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "notClaimed": [
+    "No qualified private fixture: NOT private-isolation PASS",
+    "No Member Revoke/regrant or Native cold restore PASS",
+    "No new Invite/Claim run: prior membership baseline reused",
+    "No whole AUTH-C04 or Beta/Owner UX completion"
+  ],
+  "remainingGate": null,
+  "failureLayer": null,
+  "historicalUnknowns": [
+    {
+      "operationId": "f5e13639-4240-4817-bf43-c60a1ea46361",
+      "state": "UNKNOWN_FROZEN_NO_REPLAY_UNTOUCHED"
+    },
+    {
+      "operationId": "4028b673-9032-41c8-807e-c7d3592eae93",
+      "state": "UNKNOWN_FROZEN_NO_REPLAY_UNTOUCHED"
+    }
+  ],
+  "otherChanges": {
+    "SQL": 0,
+    "RLS_GRANT_roles": 0,
+    "runtimeConfiguration": 0,
+    "device": 0,
+    "otherBusiness": 0,
+    "otherLaneRequests": 0,
+    "OAuth_AIProvider_SourceMutations": 0
+  },
+  "resources": "OWN_SCOPE_RELEASED; no next Slice or auto resume",
+  "artifactHashes": {
+    "operator.mts": "27c2a9dada1af3f2e6746efde0791e946e8b7324987a2d9c91b14be48f2a126c",
+    "PREFLIGHT.json": "7074cb5d3baa4065520ae023920ca79f020a4aa4a3e0a01a25d0bd2725bef347",
+    "RUN.json": "0c39e0177511415916e32602dd9000c3dea38ccd8db18517d1969df9e4e4f992",
+    "EXECUTION_STARTED.json": "f3c666d18ff8afcaafc2de73f6c900cf816add41a4ec7f1ca1053828113856d1"
+  }
+}

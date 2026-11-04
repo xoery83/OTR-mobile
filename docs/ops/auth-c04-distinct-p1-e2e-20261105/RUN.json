@@ -1,0 +1,677 @@
+{
+  "taskId": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E",
+  "agentId": "/root/auth_distinct_p1_e2e_20261105",
+  "candidate": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+  "qualificationSHA256": "1d3b9ccc51bdaf369e450f72e3e2b17b662b814622489bfec1669815cc311a30",
+  "manifestSHA256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+  "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+  "itemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+  "status": "HOSTED_DISTINCT_SHARED_P1_PASS",
+  "T": "2026-11-04T18:14:37.543Z",
+  "D": "2026-11-04T18:24:37.543Z",
+  "ownerApprovalSource": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E explicit Owner-approved fixed scope; preparation file alone does not grant execution",
+  "actors": {
+    "A": {
+      "otpAttempts": 1,
+      "challenge": {
+        "email": "otr-qa-3f43c81b-500b-4e59-b0a8-c7ffdbd19a31@eldouzileu.resend.app",
+        "requestedAt": "2026-11-04T18:14:37.776Z"
+      },
+      "identityVerified": true,
+      "cleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+    },
+    "B": {
+      "otpAttempts": 1,
+      "challenge": {
+        "email": "otr-qa-fde969f2-2dc5-4a33-83a1-268ac5fd6424@eldouzileu.resend.app",
+        "requestedAt": "2026-11-04T18:15:46.008Z"
+      },
+      "identityVerified": true,
+      "cleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+    }
+  },
+  "events": [
+    {
+      "at": "2026-11-04T18:14:37.136Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": null,
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving"
+    },
+    {
+      "at": "2026-11-04T18:14:37.538Z",
+      "phase": "HTTP",
+      "actor": null,
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 402
+    },
+    {
+      "at": "2026-11-04T18:14:37.776Z",
+      "channel": "AUTH",
+      "actor": "A",
+      "phase": "OTP_REQUEST_ATTEMPTED",
+      "requestedAt": "2026-11-04T18:14:37.776Z",
+      "otpRequestAttempts": 1
+    },
+    {
+      "at": "2026-11-04T18:14:37.940Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/otp"
+    },
+    {
+      "at": "2026-11-04T18:14:42.223Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/otp",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 4283
+    },
+    {
+      "at": "2026-11-04T18:14:42.227Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving"
+    },
+    {
+      "at": "2026-11-04T18:14:43.003Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 775
+    },
+    {
+      "at": "2026-11-04T18:14:46.014Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving"
+    },
+    {
+      "at": "2026-11-04T18:14:46.254Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 240
+    },
+    {
+      "at": "2026-11-04T18:14:49.258Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving"
+    },
+    {
+      "at": "2026-11-04T18:14:49.560Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 301
+    },
+    {
+      "at": "2026-11-04T18:14:49.562Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving/acb2878a-c4ff-43c1-a9c1-00258a080278"
+    },
+    {
+      "at": "2026-11-04T18:14:49.846Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving/acb2878a-c4ff-43c1-a9c1-00258a080278",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 284
+    },
+    {
+      "at": "2026-11-04T18:14:49.850Z",
+      "channel": "AUTH",
+      "actor": "A",
+      "phase": "OTP_RECEIVED",
+      "messageId": "acb2878a-c4ff-43c1-a9c1-00258a080278",
+      "receivedAt": "2026-11-04T18:14:48.895Z"
+    },
+    {
+      "at": "2026-11-04T18:14:50.028Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/verify"
+    },
+    {
+      "at": "2026-11-04T18:14:50.856Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/verify",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 828
+    },
+    {
+      "at": "2026-11-04T18:14:51.026Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user"
+    },
+    {
+      "at": "2026-11-04T18:14:51.199Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 173
+    },
+    {
+      "at": "2026-11-04T18:14:51.201Z",
+      "channel": "AUTH",
+      "actor": "A",
+      "phase": "HOST_IDENTITY_VERIFIED",
+      "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+    },
+    {
+      "at": "2026-11-04T18:14:51.541Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/capabilities"
+    },
+    {
+      "at": "2026-11-04T18:15:01.148Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/capabilities",
+      "status": 200,
+      "requestId": "e097a53b-ab6f-4396-afba-428d8d5dfb13",
+      "durationMs": 9607
+    },
+    {
+      "at": "2026-11-04T18:15:01.148Z",
+      "channel": "CORE",
+      "phase": "CORE_RESPONSE",
+      "method": "GET",
+      "status": 200,
+      "requestId": "e097a53b-ab6f-4396-afba-428d8d5dfb13",
+      "durationMs": 9764
+    },
+    {
+      "at": "2026-11-04T18:15:01.316Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection"
+    },
+    {
+      "at": "2026-11-04T18:15:11.053Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+      "status": 200,
+      "requestId": "8604eda1-9482-4a8e-92d0-1a7461cdba7c",
+      "durationMs": 9736
+    },
+    {
+      "at": "2026-11-04T18:15:11.054Z",
+      "channel": "CORE",
+      "phase": "CORE_RESPONSE",
+      "method": "GET",
+      "status": 200,
+      "requestId": "8604eda1-9482-4a8e-92d0-1a7461cdba7c",
+      "durationMs": 9902
+    },
+    {
+      "at": "2026-11-04T18:15:11.235Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/operations/41e8f597-cdba-4892-93a2-2ce77e95522e"
+    },
+    {
+      "at": "2026-11-04T18:15:18.624Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/operations/41e8f597-cdba-4892-93a2-2ce77e95522e",
+      "status": 404,
+      "requestId": "d0ae2810-2391-4ec3-b394-471aba7acc8b",
+      "durationMs": 7389
+    },
+    {
+      "at": "2026-11-04T18:15:18.625Z",
+      "channel": "CORE",
+      "phase": "CORE_RESPONSE",
+      "method": "GET",
+      "status": 404,
+      "requestId": "d0ae2810-2391-4ec3-b394-471aba7acc8b",
+      "durationMs": 7563
+    },
+    {
+      "at": "2026-11-04T18:15:19.132Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/commands"
+    },
+    {
+      "at": "2026-11-04T18:15:34.373Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/commands",
+      "status": 200,
+      "requestId": "3acd8582-310b-40c9-a221-dbb41b126d02",
+      "durationMs": 15241
+    },
+    {
+      "at": "2026-11-04T18:15:34.374Z",
+      "channel": "CORE",
+      "phase": "CORE_RESPONSE",
+      "method": "POST",
+      "status": 200,
+      "requestId": "3acd8582-310b-40c9-a221-dbb41b126d02",
+      "durationMs": 15390
+    },
+    {
+      "at": "2026-11-04T18:15:34.382Z",
+      "channel": "CORE",
+      "phase": "FIXTURE_APPLIED",
+      "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+      "itemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+      "intentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+      "receiptSha256": "ac43531191a2af12515068a58b72beaba9837c201d74223b06ff61d59561fc43",
+      "domainReceiptId": "4402369b-cf16-4ef3-8387-ae6baa15a04f"
+    },
+    {
+      "at": "2026-11-04T18:15:34.553Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection"
+    },
+    {
+      "at": "2026-11-04T18:15:45.332Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+      "status": 200,
+      "requestId": "b539c1f3-83ad-4b4b-97f2-8b880dfb1f4f",
+      "durationMs": 10779
+    },
+    {
+      "at": "2026-11-04T18:15:45.332Z",
+      "channel": "CORE",
+      "phase": "CORE_RESPONSE",
+      "method": "GET",
+      "status": 200,
+      "requestId": "b539c1f3-83ad-4b4b-97f2-8b880dfb1f4f",
+      "durationMs": 10949
+    },
+    {
+      "at": "2026-11-04T18:15:45.344Z",
+      "channel": "AUTH",
+      "actor": "A",
+      "phase": "HOST_ACTION_COMPLETED"
+    },
+    {
+      "at": "2026-11-04T18:15:45.345Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/logout"
+    },
+    {
+      "at": "2026-11-04T18:15:45.655Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/logout",
+      "status": 204,
+      "requestId": null,
+      "durationMs": 310
+    },
+    {
+      "at": "2026-11-04T18:15:45.656Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/token"
+    },
+    {
+      "at": "2026-11-04T18:15:45.817Z",
+      "phase": "HTTP",
+      "actor": "A",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/token",
+      "status": 400,
+      "requestId": null,
+      "durationMs": 160
+    },
+    {
+      "at": "2026-11-04T18:15:45.820Z",
+      "channel": "AUTH",
+      "actor": "A",
+      "phase": "HOST_SESSION_CLEANUP",
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+      "actionCompleted": true
+    },
+    {
+      "at": "2026-11-04T18:15:46.008Z",
+      "channel": "AUTH",
+      "actor": "B",
+      "phase": "OTP_REQUEST_ATTEMPTED",
+      "requestedAt": "2026-11-04T18:15:46.008Z",
+      "otpRequestAttempts": 1
+    },
+    {
+      "at": "2026-11-04T18:15:46.149Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/otp"
+    },
+    {
+      "at": "2026-11-04T18:15:48.900Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/otp",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 2751
+    },
+    {
+      "at": "2026-11-04T18:15:48.900Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving"
+    },
+    {
+      "at": "2026-11-04T18:15:49.327Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 427
+    },
+    {
+      "at": "2026-11-04T18:15:52.331Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving"
+    },
+    {
+      "at": "2026-11-04T18:15:52.726Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 394
+    },
+    {
+      "at": "2026-11-04T18:15:52.729Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving/ccbd696a-ae38-4f19-8347-d9d348c151a4"
+    },
+    {
+      "at": "2026-11-04T18:15:53.079Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api.resend.com",
+      "path": "/emails/receiving/ccbd696a-ae38-4f19-8347-d9d348c151a4",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 349
+    },
+    {
+      "at": "2026-11-04T18:15:53.083Z",
+      "channel": "AUTH",
+      "actor": "B",
+      "phase": "OTP_RECEIVED",
+      "messageId": "ccbd696a-ae38-4f19-8347-d9d348c151a4",
+      "receivedAt": "2026-11-04T18:15:52.041Z"
+    },
+    {
+      "at": "2026-11-04T18:15:53.254Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/verify"
+    },
+    {
+      "at": "2026-11-04T18:15:53.523Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/verify",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 269
+    },
+    {
+      "at": "2026-11-04T18:15:53.690Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user"
+    },
+    {
+      "at": "2026-11-04T18:15:53.762Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/user",
+      "status": 200,
+      "requestId": null,
+      "durationMs": 72
+    },
+    {
+      "at": "2026-11-04T18:15:53.763Z",
+      "channel": "AUTH",
+      "actor": "B",
+      "phase": "HOST_IDENTITY_VERIFIED",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45"
+    },
+    {
+      "at": "2026-11-04T18:15:54.046Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection"
+    },
+    {
+      "at": "2026-11-04T18:16:03.787Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "GET",
+      "origin": "https://api-dev.xoery.art",
+      "path": "/v2/trips/fb2f0820-e429-404a-b4dd-7adcad814e45/core/collection",
+      "status": 200,
+      "requestId": "9f693920-11e7-474a-8d50-08cf8f57739a",
+      "durationMs": 9741
+    },
+    {
+      "at": "2026-11-04T18:16:03.789Z",
+      "channel": "CORE",
+      "phase": "CORE_RESPONSE",
+      "method": "GET",
+      "status": 200,
+      "requestId": "9f693920-11e7-474a-8d50-08cf8f57739a",
+      "durationMs": 9880
+    },
+    {
+      "at": "2026-11-04T18:16:03.794Z",
+      "channel": "AUTH",
+      "actor": "B",
+      "phase": "HOST_ACTION_COMPLETED"
+    },
+    {
+      "at": "2026-11-04T18:16:03.794Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/logout"
+    },
+    {
+      "at": "2026-11-04T18:16:04.006Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/logout",
+      "status": 204,
+      "requestId": null,
+      "durationMs": 211
+    },
+    {
+      "at": "2026-11-04T18:16:04.008Z",
+      "phase": "HTTP_ATTEMPT",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/token"
+    },
+    {
+      "at": "2026-11-04T18:16:04.124Z",
+      "phase": "HTTP",
+      "actor": "B",
+      "method": "POST",
+      "origin": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      "path": "/auth/v1/token",
+      "status": 400,
+      "requestId": null,
+      "durationMs": 116
+    },
+    {
+      "at": "2026-11-04T18:16:04.126Z",
+      "channel": "AUTH",
+      "actor": "B",
+      "phase": "HOST_SESSION_CLEANUP",
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+      "actionCompleted": true
+    }
+  ],
+  "corePhysicalPosts": 1,
+  "credentialReads": 1,
+  "networkRequests": 24,
+  "receivingPreflight": "PASS_200_PERMISSION; sending daily quota is not exposed by this read; actual normal one-shot OTP acceptance is required within T/D",
+  "qualifierBinding": {
+    "ownerTask": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E",
+    "candidate": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+    "manifestSHA256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+    "root2SHA256": "1d3b9ccc51bdaf369e450f72e3e2b17b662b814622489bfec1669815cc311a30",
+    "scope": {
+      "caseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106",
+      "projectRef": "tuqigdxrvrerfewsxqgm",
+      "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+      "writerAccount": "26876e6e-a919-457d-bc00-78d76ba08043",
+      "readerAccount": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+      "itemId": "1a0d7aa8-11d3-4e88-9599-dd5d4d68f6ee",
+      "intentSha256": "4c2efd64aa6537a2694da25dfe44ebb2c96c3a734f48083b15b78b43382858b5",
+      "wireSha256": "fbe0a0d7bd6b3be1893c7a13ab0e2beac97bc2224fb22a0a44332a187dda652b",
+      "candidate": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+      "manifestSHA256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+      "maxMinutes": 10,
+      "maxPhysicalPosts": 1,
+      "OTPMaxPerExactAccount": 1,
+      "normalAWriteThenOwnCleanupThenNormalBReadThenOwnCleanup": true,
+      "sameNewOperationGETAfterResponseLoss": 1,
+      "noAutomaticPostOrOTPRetry": true,
+      "noSQLOrRuntimeMutation": true,
+      "startAt": null,
+      "hardDeadline": null,
+      "permissionGrantedByThisPreparation": false
+    },
+    "softwareSnapshot": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+    "quotaPolicy": "Bounded one normal OTP per exact Account; stop on refusal/429; no resend",
+    "historicalTypicalBudgetSeconds": 180
+  },
+  "result": {
+    "memberRead": "PASS",
+    "privateItemNegative": "NO_QUALIFIED_PRIVATE_FIXTURE",
+    "qualifiedPrivateItemCount": 0,
+    "sharedItemRead": "PASS",
+    "distinctCaseId": "AUTH_C04_DISTINCT_SHARED_BRIEFING_20261106"
+  },
+  "completedAt": "2026-11-04T18:16:04.129Z",
+  "historicalUnknown": "f5e/4028 FROZEN_NO_REPLAY",
+  "ownResourceRelease": "PASS_OWN_SCOPE_RELEASED"
+}

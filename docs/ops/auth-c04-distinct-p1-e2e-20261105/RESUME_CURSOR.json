@@ -1,0 +1,30 @@
+{
+  "taskId": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E",
+  "agentId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "INTENTIONAL_STOP",
+  "result": "PASS_HOSTED_DISTINCT_SHARED_P1_A_WRITE_RECEIPT_A_B_READ",
+  "candidateAtExecution": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+  "T": "2026-11-04T18:14:37.543Z",
+  "D": "2026-11-04T18:24:37.543Z",
+  "completedAt": "2026-11-04T18:16:04.129Z",
+  "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+  "operationOutcome": "APPLIED_VALIDATED",
+  "receiptId": "4402369b-cf16-4ef3-8387-ae6baa15a04f",
+  "receiptSha256": "ac43531191a2af12515068a58b72beaba9837c201d74223b06ff61d59561fc43",
+  "physicalPosts": 1,
+  "A_OTP": 1,
+  "B_OTP": 1,
+  "cleanup": "PASS_BOTH_OWN_LOCAL_REFRESH_REJECTED",
+  "executionAuthority": "CLOSED_CONSUMED",
+  "businessReservationMustBeRetained": "docs/ops/auth-c04-distinct-p1-next-day-20261104/ATTEMPT.json",
+  "unresolvedOperations": [
+    "f5e13639-4240-4817-bf43-c60a1ea46361",
+    "4028b673-9032-41c8-807e-c7d3592eae93"
+  ],
+  "newOperationRetryAllowed": false,
+  "oldUnknownReplayAllowed": false,
+  "remainingGate": null,
+  "autoResume": false,
+  "resourcesReleased": true,
+  "evidence": "docs/ops/auth-c04-distinct-p1-e2e-20261105/EVIDENCE.json"
+}

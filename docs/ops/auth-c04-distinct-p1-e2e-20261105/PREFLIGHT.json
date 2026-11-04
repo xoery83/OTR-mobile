@@ -1,0 +1,18 @@
+{
+  "taskId": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E",
+  "agentId": "/root/auth_distinct_p1_e2e_20261105",
+  "stage": "LOCAL_BINDING_READY",
+  "candidate": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+  "manifestSha256": "bd4e40ae3cdeba45eb1a34d48d518cdd52b5c3a51abb9dc05303cf61a7a48dc7",
+  "root2QualificationSha256": "1d3b9ccc51bdaf369e450f72e3e2b17b662b814622489bfec1669815cc311a30",
+  "operatorSha256": "27c2a9dada1af3f2e6746efde0791e946e8b7324987a2d9c91b14be48f2a126c",
+  "operatorSelfCheck": "PASS fixed binding/clock pre-start/expiry, no network or credential",
+  "scopedTypecheck": "PASS operator root plus imports",
+  "fixedCommandUnchanged": true,
+  "T": null,
+  "D": null,
+  "otpRequests": 0,
+  "credentialReads": 0,
+  "businessPosts": 0,
+  "at": "2026-11-04T18:14:13.864227+00:00"
+}
