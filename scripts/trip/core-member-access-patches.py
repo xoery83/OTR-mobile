@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Offline transformations of private preimages; never connects to a database."""
 from pathlib import Path
-import argparse, hashlib, json, os
+import argparse, hashlib, json, os, re
 CLAIM_FIXED='15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97'
 sha=lambda b:hashlib.sha256(b).hexdigest()
 PREFIX="""
@@ -18,9 +18,21 @@ def patch(raw,kind):
  elif kind=='write':
   anchor=" if tg_op='UPDATE' then old_json:=to_jsonb(old);end if;\n"
  elif kind=='actor':
-  anchor=" return jsonb_build_object('accountId',actor,'tripId',trip,'active',coalesce(is_active,false),'canManageShared',coalesce(owner=actor,false),'personId',self_id,'personIds',case when is_active then known else '[]'::jsonb end);"
-  if text.count(anchor)!=1:raise ValueError('ACTOR_SCOPE_DRIFT')
-  return text.replace(anchor," if exists(select 1 from public.journey_removed_users where trip_id=trip and user_id=actor) then is_active:=false;self_id:=null;known:='[]'::jsonb;end if;\n"+anchor.replace('coalesce(owner=actor,false)','coalesce(owner=actor and is_active,false)'),1).encode()
+  # Explicit denial precedes every legacy/Guest/Claim fallback, without changing grants.
+  opening=re.search(r"\bAS\s+(\$[A-Za-z_0-9]*\$)",text,re.I)
+  if not opening:raise ValueError('ACTOR_BODY_DRIFT')
+  first=re.search(r"\bbegin\b",text[opening.end():],re.I)
+  if not first:raise ValueError('ACTOR_BEGIN_DRIFT')
+  pos=opening.end()+first.end()
+  deny="""
+ if session_user='otr_trip_core_v2_gateway'
+ and actor is not distinct from nullif(current_setting('otr.core.actor',true),'')::uuid
+ and trip is not distinct from nullif(current_setting('otr.core.trip',true),'')::uuid
+ and exists(select 1 from public.journey_removed_users where trip_id=trip and user_id=actor) then
+ return jsonb_build_object('accountId',actor,'tripId',trip,'active',false,'canManageShared',false,'personId',null,'personIds','[]'::jsonb);
+ end if;
+"""
+  return (text[:pos]+deny+text[pos:]).encode()
  else:raise ValueError('UNKNOWN_PATCH')
  if text.count(anchor)!=1:raise ValueError('GUARD_ANCHOR_DRIFT')
  return text.replace(anchor,anchor+PREFIX,1).encode()

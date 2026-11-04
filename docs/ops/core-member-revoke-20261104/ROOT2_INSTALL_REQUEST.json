@@ -1,0 +1,39 @@
+{
+  "requestId": "CORE-MEMBER-REVOKE-V2-20261104",
+  "sourceStatus": "IMPLEMENTED_LOCAL_PASS_NOT_HOSTED",
+  "businessContract": "Auth 6d91b6e9 and Owner current linked journey_members.role=owner decision",
+  "receiver": "Root2 Hosted Operations",
+  "operationsRequested": "Qualify fresh private preimages and prepare protected default-closed installation; do not activate or execute without precise authorization",
+  "files": [
+    "backend/sql/tripCoreMemberAccess.sql",
+    "scripts/trip/core-member-access-patches.py",
+    "scripts/trip/core-member-access-install-package.py"
+  ],
+  "protectedDifferences": [
+    "one default-false column on existing trip_core_activation_gate",
+    "four new Owner-owned functions; only exact RPC needs separately approved Gateway EXEC",
+    "two denial/serialization triggers on existing membership and removed-user tables",
+    "three existing actor/write/read-state function body patches preserving Owner/OID/ACL/config and nested Claim fix"
+  ],
+  "preconditions": [
+    "DEV identity only; no active protected writer",
+    "current actor-scope metadata/hash from Root2; do not substitute a synthetic preimage",
+    "write guard 90457991 and read-state 15fb1641 exact full hashes enforced by renderer",
+    "Claim helper e2b8d262 remains identical",
+    "private install/rollback output hash and independent review before execution",
+    "new protected Owner Gate required; no Source acceptance implies SQL or business execution permission"
+  ],
+  "runtime": "Explicit optional memberAccess composition; no startup wiring. Compatible receipt/access-loss reader must remain after write closure.",
+  "close": "Set only owned member_revoke_enabled=false under exact CAS; existing bounded Actor/Trip/time columns also gate new writes. Retain accepted denials and receipts.",
+  "rollback": "Generated rollback only before any member receipt and while capability closed; accepted history forbids reverse installation.",
+  "authReturn": "POST normal-auth core/commands; GET original operations/:id; removed Account B GET self core/access-loss then own repository.revoke with actual accessRevision.",
+  "consumerAcceptancePending": [
+    "Root2 default-closed installation and independent metadata readback",
+    "separately authorized finite normal A/B execution",
+    "Auth normal command/receipt recovery consumer",
+    "Native own Account cache invalidation on self access loss and cold restart"
+  ],
+  "hostedActions": 0,
+  "businessWrites": 0,
+  "historicalUnknownOperationsUntouched": true
+}

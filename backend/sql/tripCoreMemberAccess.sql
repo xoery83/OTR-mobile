@@ -1,5 +1,16 @@
 -- Candidate definitions, not an installation grant. Root2 installs only under an exact Gate.
 -- The existing Core capability row owns the separate, default-closed write switch.
+DO $member_install_pre$
+BEGIN
+ IF current_user<>'postgres'
+ OR current_setting('otr.auth.approved_project_ref',true) IS DISTINCT FROM 'tuqigdxrvrerfewsxqgm'
+ OR current_setting('otr.core.member_revoke_install_gate',true) IS DISTINCT FROM 'OTR_MEMBER_REVOKE_V2_DEFAULT_CLOSED_INSTALL'
+ THEN RAISE EXCEPTION 'MEMBER_REVOKE_PROTECTED_INSTALL_REQUIRED';END IF;
+ IF to_regprocedure('public.trip_core_member_access(uuid,uuid,text,jsonb)') IS NOT NULL
+ OR EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.trip_core_activation_gate'::regclass AND attname='member_revoke_enabled' AND NOT attisdropped)
+ THEN RAISE EXCEPTION 'MEMBER_REVOKE_INSTALL_PREIMAGE_DRIFT';END IF;
+END $member_install_pre$;
+
 ALTER TABLE public.trip_core_activation_gate ADD COLUMN member_revoke_enabled boolean NOT NULL DEFAULT false;
 
 CREATE FUNCTION public.trip_core_member_scope_allowed(actor uuid, trip uuid)
@@ -83,11 +94,19 @@ BEGIN
  IF current_user<>'postgres' OR session_user<>'otr_trip_core_v2_gateway'
  OR actor IS NULL OR trip IS NULL OR method IS NULL OR method NOT IN ('EXECUTE','RECEIPT','ACCESS_LOSS')
  OR jsonb_typeof(payload) IS DISTINCT FROM 'object' THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
- IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND is_anonymous IS FALSE AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()))
- THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
  IF method='EXECUTE' THEN PERFORM 1 FROM public.trips WHERE id=trip FOR UPDATE;
  ELSE PERFORM 1 FROM public.trips WHERE id=trip FOR SHARE;END IF;
  IF NOT FOUND THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
+ PERFORM 1 FROM auth.users WHERE id=actor AND is_anonymous IS FALSE AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()) FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
+ -- A non-member receipt delegates to the existing graph-only reader, not a new membership prerequisite.
+ IF method='RECEIPT' THEN
+  IF public.trip_event_keys(payload,ARRAY['operationId']) IS NOT TRUE THEN RAISE EXCEPTION 'INVALID_PAYLOAD';END IF;
+  IF EXISTS(SELECT 1 FROM public.journey_removed_users WHERE trip_id=trip AND user_id=actor) THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
+  operation:=(payload->>'operationId')::uuid;
+  SELECT * INTO prior FROM public.trip_core_command_receipts WHERE actor_account_id=actor AND operation_id=operation AND trip_id=trip AND body->>'command'='REVOKE_LINKED_MEMBER_ACCESS';
+  IF NOT FOUND THEN RETURN NULL;END IF;
+ END IF;
  SELECT min(id::text)::uuid,count(*) INTO member_person,owner_count FROM public.journey_members
  WHERE trip_id=trip AND user_id=actor AND status='linked';
  IF owner_count<>1 THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
@@ -100,13 +119,7 @@ BEGIN
  END IF;
  IF EXISTS(SELECT 1 FROM public.journey_removed_users WHERE trip_id=trip AND user_id=actor)
  THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
- IF method='RECEIPT' THEN
-  IF public.trip_event_keys(payload,ARRAY['operationId']) IS NOT TRUE THEN RAISE EXCEPTION 'INVALID_PAYLOAD';END IF;
-  operation:=(payload->>'operationId')::uuid;
-  SELECT * INTO prior FROM public.trip_core_command_receipts WHERE actor_account_id=actor AND operation_id=operation AND trip_id=trip AND body->>'command'='REVOKE_LINKED_MEMBER_ACCESS';
-  IF NOT FOUND THEN RETURN NULL;END IF;
-  RETURN jsonb_build_object('projection','FULL','domainReceiptId',prior.id,'receipt',prior.body);
- END IF;
+ IF method='RECEIPT' THEN RETURN jsonb_build_object('projection','FULL','domainReceiptId',prior.id,'receipt',prior.body);END IF;
  IF public.trip_event_keys(payload,ARRAY['command','canonicalIntent','intentSha256']) IS NOT TRUE THEN RAISE EXCEPTION 'INVALID_PAYLOAD';END IF;
  q:=payload->'command';raw:=payload->>'canonicalIntent';digest:=payload->>'intentSha256';
  IF raw IS NULL OR octet_length(raw)>32768 OR raw IS DISTINCT FROM public.trip_event_canonical_json(q::json)
@@ -136,10 +149,7 @@ BEGIN
  -- Normal access and this explicit switch are both required; no inheritance from a P-type gate.
  IF public.trip_core_member_scope_allowed(actor,trip) IS NOT TRUE THEN RAISE EXCEPTION 'CORE_CAPABILITY_CLOSED';END IF;
  SELECT count(*),min(m.id::text)::uuid INTO owner_count,owner_person
- FROM public.journey_members m JOIN auth.users u ON u.id=m.user_id
- WHERE m.trip_id=trip AND m.status='linked' AND m.role='owner' AND u.is_anonymous IS FALSE AND u.deleted_at IS NULL
- AND (u.banned_until IS NULL OR u.banned_until<=clock_timestamp())
- AND NOT EXISTS(SELECT 1 FROM public.journey_removed_users d WHERE d.trip_id=trip AND d.user_id=m.user_id);
+ FROM public.journey_members m WHERE m.trip_id=trip AND m.status='linked' AND m.role='owner';
  IF owner_count<>1 OR owner_person IS DISTINCT FROM member_person THEN RAISE EXCEPTION 'NOT_VISIBLE' USING ERRCODE='42501';END IF;
  SELECT * INTO STRICT current_state FROM public.trip_core_read_state WHERE trip_id=trip FOR UPDATE;
  after_state:=current_state;outcome:='NO_CHANGE';error_code:=NULL;
@@ -178,3 +188,24 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.trip_core_member_access(uuid,uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role,otr_trip_core_v2_gateway,otr_trip_core_v2_writer;
 -- Deliberately no GRANT/activation here. Exact installation/EXEC and compatible reader cutover require Root2's protected Gate.
+
+DO $member_install_post$
+DECLARE item record;f pg_proc;
+BEGIN
+ FOR item IN SELECT * FROM (VALUES
+  ('public.trip_core_member_scope_allowed(uuid,uuid)',false),
+  ('public.trip_core_member_write_allowed(text,text,jsonb,jsonb)',false),
+  ('public.trip_core_member_denial_guard()',true),
+  ('public.trip_core_member_access(uuid,uuid,text,jsonb)',true)
+ ) v(signature,definer) LOOP
+  SELECT * INTO STRICT f FROM pg_proc WHERE oid=to_regprocedure(item.signature);
+  IF f.proowner<>'postgres'::regrole OR f.prosecdef IS DISTINCT FROM item.definer
+  OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+   WHERE a.grantee<>f.proowner OR a.grantor<>f.proowner OR a.privilege_type<>'EXECUTE' OR a.is_grantable)
+  OR has_function_privilege('otr_trip_core_v2_gateway',f.oid,'EXECUTE')
+  OR has_function_privilege('otr_trip_core_v2_writer',f.oid,'EXECUTE')
+  THEN RAISE EXCEPTION 'MEMBER_REVOKE_FUNCTION_ACL_DRIFT';END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM public.trip_core_activation_gate WHERE member_revoke_enabled)
+ THEN RAISE EXCEPTION 'MEMBER_REVOKE_EXPECTED_CLOSED';END IF;
+END $member_install_post$;
