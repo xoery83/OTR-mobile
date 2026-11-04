@@ -1,0 +1,13 @@
+{
+  "status": "SOURCE_MAIN_PASS",
+  "candidate": "b06808b4c0cff465a8cf05214d78af47917e962b",
+  "preMain": "29d77b31371ad7122eb5d95dd269856a7f61b353",
+  "scope": "Only existing EmailOtpSignIn verifier button requires approved eight digits; existing input maxLength8, Send/Resend/Auth/Session unchanged",
+  "tests": {
+    "componentPassed": 3,
+    "uiGuard": "PASS",
+    "scopedLint": "PASS"
+  },
+  "actualOtpRequests": 0,
+  "deviceAcceptance": "NOT_RUN"
+}

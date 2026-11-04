@@ -161,7 +161,7 @@ export function EmailOtpSignIn({
           />
           <UiButton
             label={busy ? t("account.signingIn") : t("auth.verify")}
-            disabled={busy || !/^\d{6,8}$/.test(code.trim())}
+            disabled={busy || !/^\d{8}$/.test(code.trim())}
             onPress={() => void submit(true)}
           />
           <UiButton

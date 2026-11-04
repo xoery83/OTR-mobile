@@ -1,3 +1,7 @@
+## Eight-digit Email OTP input contract — 4 November 2026
+
+Auth fixed `b06808b4` only aligns existing Verify enablement to the approved eight-digit OTP; maxLength8 and request/Session lifecycle unchanged. Independent scoped Review NO_BLOCKER, actual-main3 component tests/UIguard/lint pass. No OTP/network/device test. Receipt: `docs/ops/auth-va01-ux-r1-20261104/otp-input-candidate/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Core Member Revoke owning source — 4 November 2026
 
 Formal normal-auth Core membership command, existing immutable receipt, actual accessRevision CAS and atomic retained denial are implemented behind optional default-closed composition. Current linked Owner authorizes; creator metadata does not. Existing Actor reader denies revoked members, legacy Claim cannot erase accepted denial; self access-loss observation feeds the existing Native repository revoke. Isolated PG verifies generated CAS install/no-history rollback, concurrency, transaction faults and privilege negatives (29 checks). Scoped contract/HTTP/PG tests and disk cache recovery are recorded under `docs/ops/core-member-revoke-20261104/`. No Hosted install, activation or A/B business execution. Root2 needs fresh actor preimage, precise protected installation approval and compatible reader retention; Auth/Native consume existing Core namespace. Historical UNKNOWN operations untouched.

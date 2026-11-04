@@ -127,3 +127,20 @@ it("shows a rate-limited resend visibly and preserves the existing challenge", a
   expect(render().some((n) => n.props.accessibilityLabel === "auth.code")).toBe(true);
   expect(state.verify).not.toHaveBeenCalled();
 });
+it("enables verification only for the approved eight-digit OTP", async () => {
+  input("account.email", "qa@example.invalid");
+  press("auth.sendCode");
+  await vi.waitFor(() => expect(props.onBusyChange).toHaveBeenLastCalledWith(false));
+  for (const code of ["", "123456", "1234567", "123456789", "abcdefgh"]) {
+    input("auth.code", code);
+    expect(render().find((n) => n.props.label === "auth.verify")!.props.disabled).toBe(
+      true,
+    );
+  }
+  input("auth.code", "12345678");
+  expect(render().find((n) => n.props.label === "auth.verify")!.props.disabled).toBe(
+    false,
+  );
+  expect(state.verify).not.toHaveBeenCalled();
+  expect(props.onAuthenticated).not.toHaveBeenCalled();
+});

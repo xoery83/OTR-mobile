@@ -1,0 +1,22 @@
+{
+  "status": "NO_BLOCKER",
+  "reviewer": "p1_source_review_independent",
+  "candidate": "b06808b4c0cff465a8cf05214d78af47917e962b",
+  "mainAtCompletedReview": "2fa4562aaa4e4398a5553537eb6ccc4d7b7247fc",
+  "files": {
+    "src/features/auth/EmailOtpSignIn.tsx": "dc5b986dab9983c974284cbf0e7c85e4c07ddd2b51ef2eb30b02c61d051b88db",
+    "src/features/auth/EmailOtpSignIn.test.ts": "3fba755daa6905392cef1a410cc738bcc120d1d96c4c18c9e3b6044f7fbd5f8c"
+  },
+  "completedChecks": [
+    "Both source/test main working blobs matched candidate preimage exactly; no leaf conflict at reviewed main.",
+    "SOURCE.patch exactly matched the fixed two-leaf diff.",
+    "Only Verify button length changed from6..8 to8; existing maxLength8, normal verification/session interfaces unchanged.",
+    "Fixed commit Evidence retained its historical REQUESTED_PENDING state; later reviewer acceptance is this separate receipt."
+  ],
+  "validation": "Existing author3componentPASS and prior independent1newPASS reused. No tests rerun.",
+  "integration": "Two source/test leaf changes only; no long-branch merge or auth authority change. Recheck current main leaf pins at integration.",
+  "limits": [
+    "This receipt records the already completed review; no new source review/tests/OTP/device/Host/network actions.",
+    "Not Email OTP E2E, Session/Hosted/Provider qualification or deployment approval."
+  ]
+}
