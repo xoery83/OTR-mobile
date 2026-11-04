@@ -17,6 +17,8 @@
     "src/features/auth/EmailOtpSignIn.tsx": "dc5b986dab9983c974284cbf0e7c85e4c07ddd2b51ef2eb30b02c61d051b88db",
     "src/features/auth/EmailOtpSignIn.test.ts": "3fba755daa6905392cef1a410cc738bcc120d1d96c4c18c9e3b6044f7fbd5f8c"
   },
-  "independentReview": "REQUESTED_PENDING_NO_PASS_CLAIM",
-  "sourceIntegration": "NOT_REQUESTED_BEFORE_FIXED_CANDIDATE"
+  "independentReview": "SCOPED_NO_BLOCKER_OTP_8_DIGIT_UI_GATE",
+  "sourceIntegration": "REQUESTED_ROOT1_SERIAL_SOURCE_ONLY_NOT_MERGED",
+  "independentChangedTests": "1_PASS_2_STABLE_SKIPPED",
+  "reviewedCandidate": "b06808b4"
 }
