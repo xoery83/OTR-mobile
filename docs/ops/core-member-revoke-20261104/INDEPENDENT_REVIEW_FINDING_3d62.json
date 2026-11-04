@@ -1,0 +1,80 @@
+{
+  "requestId": "AUTH-C04-MEMBER-REVOKE-V2-FINAL-DELTA-20261104",
+  "status": "ONE_INSTALL_ROLLBACK_CAS_BLOCKER",
+  "commit": "3d62f641bfcbef04d3e4f6a75ff8d9ce6c0807a5",
+  "reviewedBase": "e36c1ba8bd3c6c67e37923960734470725f23bb6",
+  "priorReview": "/private/tmp/otr-core-member-access-independent-review-20261104.json",
+  "scopeSHA256": {
+    "backend/sql/tripCoreMemberAccess.sql": "bbd9a76ed2bba4cb1913b25fae416eff6f505c48f4a537d7aa70159bfb07c2a3",
+    "backend/src/tripCoreMemberAccess.test.ts": "1b79b0b6470a6689979b578093a77ab37f75b2b9779537b4d1b9f08891372acc",
+    "docs/API_CONTRACT.md": "c3063c9052d442f10e331c2b5355b933be2dc7e4681fdf4457fd72b6a0fe7746",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md": "d12e397e74cb0e28b8c132397b8b2a340c3e35ef8a68ae7de26e5cf6630bc7b6",
+    "docs/ops/core-member-revoke-20261104/CONTRACT.md": "95bdedd118b5e71696682cdc673704aac1b96976f02896cf17757bdba329144e",
+    "docs/ops/core-member-revoke-20261104/ISOLATED_PG_EVIDENCE.json": "877acce3c7a0de736a17d465d27eedc1f3ec876f57a8f2d9f80b0a7db3bd607a",
+    "docs/ops/core-member-revoke-20261104/ROOT2_INSTALL_REQUEST.json": "f5bb17c36cb8ec1290756231b20e078c18137a2fb93cd7ad9afccd42c143bd4a",
+    "scripts/trip/core-member-access-install-package.py": "12b6bb0cdf1b4e36a312181f55d423ff0b49b455180489788f42f7b27d039d6c",
+    "scripts/trip/core-member-access-isolated-pg.py": "aac2320d84be4dfa624e58728d929fe0cae6895b5e0f80eec2eda49b326abb65",
+    "scripts/trip/core-member-access-patches.py": "70ec1968b93416e8ee83b05353d029b1832f8b554389b3543a1351de9b823d5e",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "1c0ade70f7d5fc88716d268e9ce6d5e589d7faf41dfaacf53dc8d87058dcb27c"
+  },
+  "findings": [
+    {
+      "priority": 1,
+      "file": "scripts/trip/core-member-access-install-package.py",
+      "area": "generated ROLLBACK_NO_HISTORY.private.sql before DROP statements",
+      "issue": "Rollback CAS validates only three patched preexisting functions. It does not verify the installed four new functions, two triggers or capability-column shape before dropping them. With no member receipt and switchfalse, a stale inverse packet could delete a later modified new RPC/denial guard/trigger while restoring the old three functions.",
+      "minimumFix": "Before destructive DROP, require exact installed postimage definition/Owner/ACL/config for the four new functions, matching trigger definitions/target/timing and exact defaultfalse column shape; drift aborts. Retain no-history and capabilityclosed conditions. This is a private packet correction, no new privilege required.",
+      "scope": "Blocks treating this exact generated inverse as fully drift-safe installation/rollback packet. No new live-execution or normal-owner predicate blocker found."
+    }
+  ],
+  "otherDeltaVerified": [
+    "Normal auth row now locked FOR SHARE after Trip lock; Owner count considers all linked Owners, then exact normal authenticated actor must be the unique Owner. This is conservative and does not use historical creator.",
+    "Absent non-member revoke receipt now returnsnull before new membership requirement so existing ordinary operation reader can handle its own receipt. Removed actor still denied, no A-to-B receipt projection.",
+    "Actor denial patch inserted at early function BEGIN before legacy/Guest/Claim fallbacks. It returnsinactive/personnull/empty only on exact server Actor/Trip GUC and explicit removed marker; grants unchanged.",
+    "New SQL preflight requires exact DEV/gate marker and absent function/column. Footer enforces new postgres owners, intended definer bits, no Gateway/Writer/default-ACL EXEC, and memberflagfalse. Runtime remains unmounted by default.",
+    "Renderer enforces actual write904579/readstate15fb exact hashes and metadata, claim helper unchanged, symmetric old-guard forward/reverse CAS; no grants/activation. 15fb nested Claim fix is retained.",
+    "Existing repository cold-disk test consumes self loss in own Account context, blocks accepted read/old refresh/install/queue and remains denied after reopen; it is repository evidence, not actual Native network-consumer integration."
+  ],
+  "validationReused": {
+    "fixedEvidenceSHA256": "877acce3c7a0de736a17d465d27eedc1f3ec876f57a8f2d9f80b0a7db3bd607a",
+    "isolatedPGStatus": "LOCAL_PG_PASS",
+    "isolatedPGChecks": [
+      "GENERATED_WRONG_CAS_NO_PARTIAL_INSTALL",
+      "UNKNOWN_DEFAULT_GRANTEE_ABORTS_INSTALL",
+      "GENERATED_NO_HISTORY_ROLLBACK_RESTORES_ALL_ORIGINALS_AND_CLAIM_FIX",
+      "DEFAULT_CLOSED",
+      "APPLIED_ATOMIC_10_7_TO_11_8",
+      "EXACT_REPLAY_SAME_RECEIPT",
+      "STALE_ACCESS_CAS_CONFLICT",
+      "REBOUND_OPERATION_REJECTED",
+      "SECOND_INTENT_NO_ACCESS_ADVANCE",
+      "RECEIPT_AFTER_WRITE_CLOSE",
+      "B_SELF_SCOPED_ACCESS_LOSS",
+      "ORIGINAL_CORE_ACTOR_READER_DENIES_B_KEEPS_OWNER",
+      "B_OTHER_TRIP_UNAFFECTED",
+      "B_RECEIPT_DENIED",
+      "LEGACY_MARKER_ERASE_DENIED",
+      "PERSON_ACCOUNT_MISMATCH_REJECTED_WITHOUT_MUTATION",
+      "SELF_OWNER_TARGET_PROTECTED",
+      "QUALIFIED_NONOWNER_DENIED",
+      "CURRENT_LINKED_OWNER_NOT_CREATED_BY",
+      "CONCURRENT_IDENTICAL_OPERATION_ONE_RECEIPT_ONE_ADVANCE",
+      "POST_RECEIPT_FAILURE_ROLLS_BACK_DENIAL_STATE_AND_RECEIPT",
+      "EXPIRED_SCOPE_NO_EFFECT",
+      "AMBIGUOUS_OWNER_NO_EFFECT",
+      "FOREIGN_EPOCH_CONFLICT_NO_EFFECT",
+      "ORDINARY_WRITER_HAS_NO_INTERNAL_PROOF_EXECUTE",
+      "FAULTED_ORIGINAL_RECEIPT_LOOKUP_ONLY",
+      "LEGACY_JOIN_RACING_REVOKE_CANNOT_ERASE_DENIAL",
+      "ACCEPTED_HISTORY_BLOCKS_REVERSE_ROLLBACK"
+    ],
+    "focusedBackendDomain": "5suites51PASS reported by Root",
+    "existingRepositorySelfLoss": "3PASS reported by Root"
+  },
+  "limits": [
+    "Did not rerun suites/PG or execute SQL/Hosted/device/Provider.",
+    "r11 SQL fixture concurrency/fault/rollback checks are local evidence only, not Hosted or Native E2E.",
+    "New Root2 exact protected Gate/fresh private preimages/generated packet qualification required; no source approval grants authority.",
+    "No broad re-audit or product/source edits."
+  ]
+}

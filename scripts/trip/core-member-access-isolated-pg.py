@@ -71,6 +71,17 @@ try:
  assert sql("SELECT to_regprocedure('public.trip_core_member_access(uuid,uuid,text,jsonb)') IS NULL;").stdout.strip()=='t';checks.append('UNKNOWN_DEFAULT_GRANTEE_ABORTS_INSTALL')
  sql("ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE EXECUTE ON FUNCTIONS FROM member_fixture_unexpected;DROP ROLE member_fixture_unexpected;")
  sql(qualify+install)
+ # An old reverse packet must preserve any later lawful protection revision.
+ rpc='public.trip_core_member_access(uuid,uuid,text,jsonb)'
+ original_rpc=sql('SELECT pg_get_functiondef('+quote(rpc)+'::regprocedure);').stdout
+ changes=[('GRANT EXECUTE ON FUNCTION '+rpc+' TO otr_trip_core_v2_gateway;','REVOKE EXECUTE ON FUNCTION '+rpc+' FROM otr_trip_core_v2_gateway;'),('ALTER TABLE public.journey_members DISABLE TRIGGER core_member_revoke_serialize;','ALTER TABLE public.journey_members ENABLE TRIGGER core_member_revoke_serialize;'),('ALTER TABLE public.trip_core_activation_gate ALTER COLUMN member_revoke_enabled DROP NOT NULL;','ALTER TABLE public.trip_core_activation_gate ALTER COLUMN member_revoke_enabled SET NOT NULL;'),(original_rpc.replace('DECLARE q jsonb;','DECLARE q jsonb;\n -- later revision\n'),original_rpc)]
+ for mutate,restore in changes:
+  sql('SET ROLE postgres;'+mutate)
+  rejected=sql('SET ROLE postgres;'+rollback,fail=True)
+  assert rejected.returncode and 'MEMBER_REVOKE_NEW_' in rejected.stderr
+  assert sql('SELECT to_regprocedure('+quote(rpc)+') IS NOT NULL;').stdout.strip()=='t'
+  sql('SET ROLE postgres;'+restore)
+ checks.append('NEW_FUNCTION_BODY_ACL_TRIGGER_COLUMN_DRIFT_BLOCKS_REVERSE')
  sql('SET ROLE postgres;'+rollback)
  for key,signature in sigs.items():
   value=sql("SELECT encode(sha256(convert_to(pg_get_functiondef("+quote(signature)+"::regprocedure),'UTF8')),'hex');").stdout.strip();assert value==inputs[key]['definitionSHA256']

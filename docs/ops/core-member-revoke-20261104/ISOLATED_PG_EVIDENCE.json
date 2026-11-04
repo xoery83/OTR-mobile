@@ -3,6 +3,7 @@
   "checks": [
     "GENERATED_WRONG_CAS_NO_PARTIAL_INSTALL",
     "UNKNOWN_DEFAULT_GRANTEE_ABORTS_INSTALL",
+    "NEW_FUNCTION_BODY_ACL_TRIGGER_COLUMN_DRIFT_BLOCKS_REVERSE",
     "GENERATED_NO_HISTORY_ROLLBACK_RESTORES_ALL_ORIGINALS_AND_CLAIM_FIX",
     "DEFAULT_CLOSED",
     "APPLIED_ATOMIC_10_7_TO_11_8",
@@ -49,9 +50,9 @@
       "command": "REVOKE_LINKED_MEMBER_ACCESS",
       "outcome": "APPLIED",
       "errorCode": null,
-      "committedAt": "2026-11-04T05:29:19.819884Z",
-      "operationId": "478e829b-f6cc-4f29-aa35-762b1bea21d1",
-      "intentSha256": "b9f72c4eba41e4a3b1437668ad3dc0dfc17387df55f10bee824bd1bb728940ae",
+      "committedAt": "2026-11-04T05:50:00.620571Z",
+      "operationId": "50d269d5-dbcb-4c73-9360-6288afd14e55",
+      "intentSha256": "2ca5e72cfa6acfc4ec7b060ac662d06c8949242ce642124ade2c4fc9e47ebeab",
       "targetVector": [
         {
           "id": "10000000-0000-4000-8000-000000000001",
@@ -61,36 +62,36 @@
         }
       ],
       "intentVersion": 2,
-      "receiptSha256": "90b0a5f292ec88ecd97d32d689f20500e4c295ac9140c22b391ed78d09e88911",
+      "receiptSha256": "c2b495d6ac8913ce5fea7f9e502ba560ff7b35a890245f01d9c99b4c7675d4ab",
       "actorAccountId": "00000000-0000-4000-8000-000000000001",
       "commandVersion": 2,
       "receiptVersion": 2,
       "accessTransition": {
         "after": {
-          "epoch": "1ecb6e69-57d4-4907-87f4-8b8e5f13cba1",
+          "epoch": "a83b06a4-e977-4c06-a4e6-3b382e972520",
           "revision": 11,
           "accessRevision": 8
         },
         "before": {
-          "epoch": "1ecb6e69-57d4-4907-87f4-8b8e5f13cba1",
+          "epoch": "a83b06a4-e977-4c06-a4e6-3b382e972520",
           "revision": 10,
           "accessRevision": 7
         },
-        "personId": "e3f18450-709a-49a8-9c52-e866294c2804",
-        "targetAccountId": "15a060cb-b0c6-4eb4-a277-6e0c52d01f70"
+        "personId": "18025ac1-cfd9-432e-9013-9d017bb52911",
+        "targetAccountId": "3b6e41ae-c8f6-49d7-8aea-46b057bd46e9"
       }
     },
     "projection": "FULL",
-    "domainReceiptId": "5943c159-e9c2-423a-8558-08cf8f121968"
+    "domainReceiptId": "b73c58e2-8f85-4e39-922e-9ffd5a3e1f8e"
   },
   "loss": {
     "state": "ACCESS_REVOKED",
     "tripId": "10000000-0000-4000-8000-000000000001",
-    "personId": "e3f18450-709a-49a8-9c52-e866294c2804",
+    "personId": "18025ac1-cfd9-432e-9013-9d017bb52911",
     "schemaId": "otr.trip.core-access-loss/1",
-    "accountId": "15a060cb-b0c6-4eb4-a277-6e0c52d01f70",
+    "accountId": "3b6e41ae-c8f6-49d7-8aea-46b057bd46e9",
     "coreReference": {
-      "epoch": "1ecb6e69-57d4-4907-87f4-8b8e5f13cba1",
+      "epoch": "a83b06a4-e977-4c06-a4e6-3b382e972520",
       "revision": 11,
       "accessRevision": 8
     }
