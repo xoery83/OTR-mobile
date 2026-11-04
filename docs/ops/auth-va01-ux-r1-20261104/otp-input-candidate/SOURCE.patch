@@ -1,0 +1,38 @@
+diff --git a/src/features/auth/EmailOtpSignIn.test.ts b/src/features/auth/EmailOtpSignIn.test.ts
+index 67392cb9..7e43ae3d 100644
+--- a/src/features/auth/EmailOtpSignIn.test.ts
++++ b/src/features/auth/EmailOtpSignIn.test.ts
+@@ -127,3 +127,20 @@ it("shows a rate-limited resend visibly and preserves the existing challenge", a
+   expect(render().some((n) => n.props.accessibilityLabel === "auth.code")).toBe(true);
+   expect(state.verify).not.toHaveBeenCalled();
+ });
++it("enables verification only for the approved eight-digit OTP", async () => {
++  input("account.email", "qa@example.invalid");
++  press("auth.sendCode");
++  await vi.waitFor(() => expect(props.onBusyChange).toHaveBeenLastCalledWith(false));
++  for (const code of ["", "123456", "1234567", "123456789", "abcdefgh"]) {
++    input("auth.code", code);
++    expect(render().find((n) => n.props.label === "auth.verify")!.props.disabled).toBe(
++      true,
++    );
++  }
++  input("auth.code", "12345678");
++  expect(render().find((n) => n.props.label === "auth.verify")!.props.disabled).toBe(
++    false,
++  );
++  expect(state.verify).not.toHaveBeenCalled();
++  expect(props.onAuthenticated).not.toHaveBeenCalled();
++});
+diff --git a/src/features/auth/EmailOtpSignIn.tsx b/src/features/auth/EmailOtpSignIn.tsx
+index 06ba53b6..e6399783 100644
+--- a/src/features/auth/EmailOtpSignIn.tsx
++++ b/src/features/auth/EmailOtpSignIn.tsx
+@@ -161,7 +161,7 @@ export function EmailOtpSignIn({
+           />
+           <UiButton
+             label={busy ? t("account.signingIn") : t("auth.verify")}
+-            disabled={busy || !/^\d{6,8}$/.test(code.trim())}
++            disabled={busy || !/^\d{8}$/.test(code.trim())}
+             onPress={() => void submit(true)}
+           />
+           <UiButton
