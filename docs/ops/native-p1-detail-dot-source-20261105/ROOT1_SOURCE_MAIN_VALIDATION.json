@@ -1,0 +1,32 @@
+{
+  "requestId": "NATIVE-VN04-P1-DETAIL-DOT-SOURCE-20261105",
+  "preMain": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "candidate": "21a4e4dc4bdcb2b5cc34cb75560d153dc8a29a59",
+  "authorEvidence": "9dba231d",
+  "reviewCommit": "100a60d0deb64891e4a22589cacb6bb9b9d8e4b8",
+  "reviewSHA256": "976f7a860a33d0202fab9d021332dc10fb28e8d5a89b4586eea542d4a68924ac",
+  "status": "SOURCE_MAIN_COMPOSITION_VERIFIED",
+  "sourceLeaves": {
+    "src/features/day-feed/P1Detail.tsx": "e6d2222f629e0549306dee2d41194c5e9d66f6efe6767ff3bd0f56449d093d73",
+    "src/features/day-feed/P1Detail.test.ts": "b4f8f129f6f2012b1229da6c05d545b900e97e226b6e02609f3c592cdab088e4"
+  },
+  "actualMainChecks": {
+    "directRouteSuites": 1,
+    "testsPassed": 7,
+    "scopedTypecheck": "PASS two roots and imports",
+    "scopedLint": "PASS two leaves",
+    "uiGuard": "PASS168 representative/473 legacy unchanged",
+    "diffCheck": "PASS",
+    "allSourceLeavesMatchReviewedCandidate": true
+  },
+  "scope": "Only presentation-copy pending flag suppressed for exact current Guest/localId/Reader scope/generation. Account/null/other Guest keep marker; retired generation/focus cannot publish; principal errors remain unavailable. Raw facts/localState/Queue/loader/Auth/Core/Native/TripScreen unchanged.",
+  "composition": "Fresh6879 main preserves TXT local Source leaves, Cancel/Guest/Import and existing ScrollView configuration. Only two reviewed product/test increments applied; no author branch wholesale cherry-pick.",
+  "reusedEvidence": "Author4 suites43/scoped types/lint/UI; detached independent exact21a7tests. Full project known OAuth TS7016 remains NOT_PASS, not rerun.",
+  "notPerformed": [
+    "Native rebuild or new JS artifact",
+    "device/Simulator/OwnerUX",
+    "Hosted/SQL/OTP/Provider/Source/business",
+    "UNKNOWN replay"
+  ],
+  "returnCondition": "After freshCAS/nonforce publication and remote readback, release Source Writer and hand exact SHA to parent immediately; Native owns matching JS/device confirmation."
+}

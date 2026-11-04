@@ -1,0 +1,32 @@
+{
+  "reviewer": "/root/native_readiness_review_20261105",
+  "candidate": "21a4e4dc4bdcb2b5cc34cb75560d153dc8a29a59",
+  "base": "0e7a39daf9ad6d6e5c46587fafeddf5e9befc1d5",
+  "verdict": "NO_BLOCKER_SCOPED_PRESENTATION_FIX",
+  "whatThisChangeDoes": "Uses the existing committed local principal to hide the cloud-pending marker only for the matching current Guest P1 detail. Original read facts and Queue state stay unchanged.",
+  "sourceScope": [
+    "src/features/day-feed/P1Detail.tsx",
+    "src/features/day-feed/P1Detail.test.ts"
+  ],
+  "connectedCode": [
+    "P1Detail normal route calls loadP1Detail and real P1Row; it previously passed pending facts unchanged",
+    "readLocalTripPrincipal is the existing readCommittedLocalPrincipal alias, not a new identity inference",
+    "loadP1Detail still validates current generation, read/local/accepted scopes, target Trip and Item, and separate read/edit authority",
+    "Existing LocalManualDayFeed already uses presentation-only !localOnly && pending; this follows that convention"
+  ],
+  "checks": {
+    "guestQualification": "GUEST kind + principal.localId === read.scope.accountId + read.scope.generation === current generation; callback active and live generation checks remain",
+    "nonGuest": "Account/null/other-Guest retain pending; errors become unavailable, never Guest",
+    "lateResults": "retired focus and changed generation cannot publish old Guest presentation over next Account",
+    "mutation": "No loader/Repository/Queue/source fact/localState/receipt/schema/Native changes; copied facts override presentation only",
+    "independentTestCommand": "Node24 vitest run src/features/day-feed/P1Detail.test.ts --maxWorkers=1 in detached exact21a4 review worktree",
+    "independentTestResult": "1 suite / 7 PASS / exit0; actual2026-11-05 local08:28:47; full43 not repeated"
+  },
+  "findings": [],
+  "limits": [
+    "No device, Simulator, Hosted or Owner UX execution by reviewer",
+    "The parent must arrange the actual fixed-main JS artifact before device qualification",
+    "No Source/API/Cloud/Guest-Adoption authority is implied"
+  ],
+  "artifactStage": "Separate pending static14750 review; known original0e Guest dot remains in that older JS until a paired new JS is built"
+}

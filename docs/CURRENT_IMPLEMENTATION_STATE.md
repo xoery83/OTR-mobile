@@ -1,3 +1,7 @@
+## Guest P1 Detail pending presentation — 5 November 2026
+
+Native21a4 scoped Guest-only presentation fix reuses independent100a60d0; Account/null/otherGuest markers and principal/generation failure fences retained. Actual-main direct-route7 tests, two-root scoped types/lint and UI guard pass. Reader facts, Queue, receipts and authority unchanged. Source only: matching JS artifact/device/OwnerUX remain Native/Vision pending; no Hosted/Source/Provider action. Receipt: `docs/ops/native-p1-detail-dot-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Guest P3 bounded local source — 4 November 2026
 
 Native fixed3bc140bc18 exact leaves; Native293088bd and Auth17b05fc7 scoped Reviews no blocker. Existing Guest-only Stay factory/Reader enables local P1/P3 only; Source/otherfamilies/Cloud remain closed. P3 dirty editor uses pure failing beforeAuth participant and in-process original-draft/attempt lease, not a P1/Adoption snapshot. Saved P3 must remain UNSUPPORTED_CORE_FAMILY in authoritative census; failure retains blocker. Actual-main8 suites191 plus owningInventory8 PASS, scoped18root types/UIguard/lint pass. Existing SQLite same-ID saved cold is verified; unsaved process-cold and device/Cloud/Adoption are NOT_PASS/unsupported. TripScreen only Staygetter/GuestSourceoff hunks; Cancel candidate not mixed. No Schema/Authority/Hosted/device action. Product bounds documented. Receipt: `docs/ops/native-vn05-guest-stay-20261104/ROOT1_SOURCE_MAIN_VALIDATION.json`.

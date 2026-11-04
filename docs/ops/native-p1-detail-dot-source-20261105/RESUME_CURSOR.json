@@ -1,0 +1,8 @@
+{
+  "requestId": "NATIVE-VN04-P1-DETAIL-DOT-SOURCE-20261105",
+  "status": "STOP_AFTER_PUBLISH_OR_GENUINE_BLOCKER",
+  "autoResume": false,
+  "candidate": "21a4e4dc4bdcb2b5cc34cb75560d153dc8a29a59",
+  "preMain": "6879b323654520423208d9cb0b42265b0d1e23cc",
+  "nextAction": "Parent returns actual Source main receipt to Native; child releases Writer after bounded publication and stops. No device/Hosted/task queue continuation."
+}

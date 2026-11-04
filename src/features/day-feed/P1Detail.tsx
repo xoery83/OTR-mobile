@@ -11,6 +11,7 @@ import {
 import {
   readTripDayFeed,
   createDefaultManualPlanRepository,
+  readLocalTripPrincipal,
 } from "@/data/auth/localTripAccess";
 import { loadP1Detail, type P1DetailState } from "./p1DetailRead";
 import { UiText } from "@/ui/controls";
@@ -39,6 +40,7 @@ export function P1Detail() {
   const { reportManualOutcome } = useTripView();
   const [state, setState] = useState<P1DetailState | null>(null);
   const [editing, setEditing] = useState(false);
+  const [localOnly, setLocalOnly] = useState(false);
   const [revision, setRevision] = useState(0);
   const [failed, setFailed] = useState(false);
   const colors = useUiTheme(),
@@ -58,7 +60,17 @@ export function P1Detail() {
           occurrence: params.occurrence === "END" ? "END" : "START",
         },
         {
-          read: async (id) => (await readTripDayFeed()).trip(id),
+          read: async (id) => {
+            const principal = await readLocalTripPrincipal();
+            const read = await (await readTripDayFeed()).trip(id);
+            if (active && generation === getAccountGeneration())
+              setLocalOnly(
+                principal?.kind === "GUEST" &&
+                  principal.localId === read.scope.accountId &&
+                  read.scope.generation === generation,
+              );
+            return read;
+          },
           repository: createDefaultManualPlanRepository,
           generation: getAccountGeneration,
           onReadable: (next) => {
@@ -118,6 +130,10 @@ export function P1Detail() {
           {visible ? (
             <P1Row
               {...visible.presentation}
+              facts={{
+                ...visible.presentation.facts,
+                pending: !localOnly && visible.presentation.facts.pending,
+              }}
               actions={{
                 addExpense: () =>
                   router.push({
