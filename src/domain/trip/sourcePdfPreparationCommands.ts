@@ -89,6 +89,41 @@ export async function createPendingPdfCommandProposals(
   )
     throw Error("PDF_SOURCE_RECEIPT_MISMATCH");
   await checkResult(r, hash);
+  return buildPdfCommandProposals(scope, q, r, hash);
+}
+
+// Planning only: fresh ACQUIRE must yield revisions 1/1/1; live calls still require its real receipt.
+export async function projectInitialPdfCommandProposals(
+  scope: { actorId: string; tripId: string },
+  rawAcquisition: unknown,
+  hash: ImportHash,
+) {
+  const q = acquisitionReference.parse(rawAcquisition);
+  if (q.actor_account_id !== scope.actorId || q.trip_id !== scope.tripId)
+    throw Error("INITIAL_SOURCE_PLAN_SCOPE_MISMATCH");
+  return buildPdfCommandProposals(
+    scope,
+    q,
+    {
+      result_material_revision: 1,
+      result_source_row_revision: 1,
+      result_representation_row_revision: 1,
+    },
+    hash,
+  );
+}
+
+async function buildPdfCommandProposals(
+  scope: { actorId: string; tripId: string },
+  q: z.infer<typeof acquisitionReference>,
+  r: Pick<
+    z.infer<typeof acquisitionReceipt>,
+    | "result_material_revision"
+    | "result_source_row_revision"
+    | "result_representation_row_revision"
+  >,
+  hash: ImportHash,
+) {
   async function identity(purpose: string) {
     const digest = coreHash.parse(
       await hash(

@@ -5,6 +5,7 @@ import {
 } from "../../data/operations/__fixtures__/pdfOriginalPreparation";
 import {
   createPendingPdfCommandProposals,
+  projectInitialPdfCommandProposals,
   createPdfDerivativeRequests,
 } from "./sourcePdfPreparationCommands";
 
@@ -67,4 +68,26 @@ it("cannot construct a derivative request from an unverified or altered receipt"
       pdfProtocolHash,
     ),
   ).rejects.toThrow("PDF_SOURCE_RECEIPT_MISMATCH");
+});
+
+it("freezes fresh PDF commands without manufacturing an acquisition receipt", async () => {
+  const f = await pdfPreparationFixture([]);
+  const scope = { actorId: f.context.accountId, tripId: f.context.tripId };
+  expect(
+    await projectInitialPdfCommandProposals(scope, f.input.acquisition, pdfProtocolHash),
+  ).toEqual(
+    await createPendingPdfCommandProposals(
+      scope,
+      f.input.acquisition,
+      f.input.acquisitionReceipt,
+      pdfProtocolHash,
+    ),
+  );
+  await expect(
+    projectInitialPdfCommandProposals(
+      { ...scope, actorId: scope.tripId },
+      f.input.acquisition,
+      pdfProtocolHash,
+    ),
+  ).rejects.toThrow("INITIAL_SOURCE_PLAN_SCOPE_MISMATCH");
 });

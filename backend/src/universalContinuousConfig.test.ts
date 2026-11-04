@@ -78,6 +78,73 @@ function configFixture() {
     catalogPg: pg,
   };
 }
+it("bounds private finite Native metadata to one batch, USD0.05 and fifteen minutes", () => {
+  const config = configFixture(),
+    actorId = randomUUID(),
+    tripId = randomUUID();
+  const finiteNative = {
+    version: 1,
+    startsAt: "2026-11-04T03:00:00Z",
+    expiresAt: "2026-11-04T03:15:00Z",
+    batch: {
+      actorId,
+      tripId,
+      batchId: randomUUID(),
+      submissionSha256: "a".repeat(64),
+      inputs: [
+        {
+          id: randomUUID(),
+          source_id: randomUUID(),
+          material_revision: 1,
+          representation_id: randomUUID(),
+          payload_sha256: "b".repeat(64),
+          byte_count: 20,
+          observed_source_row_revision: 1,
+          historical_selection: false,
+        },
+      ],
+    },
+    selection: {
+      integrationId: config.integrationId,
+      configVersion: 2,
+      configurationSha256: "c".repeat(64),
+      providerConfigId: randomUUID(),
+      priceScheduleId: randomUUID(),
+      providerId: "DeepSeek",
+      modelId: "deepseek-flash",
+      modelVersion: "DeepSeek-V4.1-Flash",
+      adapterVersion: "fixture",
+      region: "fixture",
+      route: "fixture",
+      maxCostNanos: "50000000",
+      taskLifetimeMs: 900000,
+    },
+  };
+  expect(
+    universalContinuousConfigSchema.parse({ ...config, finiteNative }).finiteNative?.batch
+      .actorId,
+  ).toBe(actorId);
+  for (const changed of [
+    { ...finiteNative, expiresAt: "2026-11-04T03:15:01Z" },
+    { ...finiteNative, expiresAt: finiteNative.startsAt },
+    {
+      ...finiteNative,
+      selection: { ...finiteNative.selection, maxCostNanos: "50000001" },
+    },
+    { ...finiteNative, selection: { ...finiteNative.selection, integrationId: "other" } },
+  ])
+    expect(
+      universalContinuousConfigSchema.safeParse({ ...config, finiteNative: changed })
+        .success,
+    ).toBe(false);
+  expect(
+    universalContinuousConfigSchema.safeParse({
+      ...config,
+      finiteNative,
+      qaExecutionFence: { version: 1, accountId: randomUUID(), tripId },
+    }).success,
+  ).toBe(false);
+});
 
 it.each([false, true])(
   "optional execution fence follows the same private configuration hash boundary: %s",

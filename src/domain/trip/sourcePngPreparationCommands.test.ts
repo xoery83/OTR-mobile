@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+import { projectInitialBinaryOriginalCommandProposals } from "./sourceBinaryOriginalCommands";
 import {
   pdfPreparationFixture,
   pdfProtocolHash,
@@ -69,3 +70,32 @@ it.each(["scope", "mime", "receipt", "state"])(
     ).rejects.toThrow();
   },
 );
+
+it("freezes only fresh PNG commands using the live command arithmetic", async () => {
+  const f = await pdfPreparationFixture([]);
+  const scope = { actorId: f.context.accountId, tripId: f.context.tripId };
+  const acquisition = structuredClone(f.input.acquisition);
+  acquisition.payload.original.mime_type = "image/png";
+  const p = await projectInitialBinaryOriginalCommandProposals(
+    scope,
+    acquisition,
+    pdfProtocolHash,
+    "PNG",
+  );
+  expect({ prepare: p.prepare, upload: p.upload, verify: p.verify }).toEqual(
+    await createPendingPngCommandProposals(
+      scope,
+      acquisition,
+      f.input.acquisitionReceipt,
+      pdfProtocolHash,
+    ),
+  );
+  await expect(
+    projectInitialBinaryOriginalCommandProposals(
+      scope,
+      f.input.acquisition,
+      pdfProtocolHash,
+      "PNG",
+    ),
+  ).rejects.toThrow("INITIAL_SOURCE_PLAN_SCOPE_MISMATCH");
+});

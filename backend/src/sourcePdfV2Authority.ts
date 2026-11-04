@@ -68,6 +68,7 @@ export function createSourcePdfV2Authority(
               actorAccountId: accountId,
               tripId,
               sourceId: request.sourceId,
+              commandFrame: { pdfSeal: request },
             });
           const context = (
             await lease.query(

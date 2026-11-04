@@ -1,0 +1,60 @@
+{
+  "requestId": "IMP-C01-SOURCE-INTEGRATION-20261104-07",
+  "status": "DEFAULT_CLOSED_NO_BLOCKER_NARROW_SOURCE_INTEGRATION_ONLY",
+  "candidate": "26a6e76b2c87ea111b51a0261ee5f76cd85ddb02",
+  "targetMain": "869846afaea2f687b14695c8f30ba52d8e0e1a52",
+  "reviewedScopeSHA256": {
+    "backend/src/universalContinuousConfig.ts": {
+      "candidate": "c4ab4c39ee9b871a3a8b7f9bb9589533975dfdd007a3ae6f66a008e2cf7471c2",
+      "target": "50f07b4080362a1b81851bd89dc8f851ef679a7be988688676c5f46ef66f3ca3"
+    },
+    "backend/src/universalContinuousHost.ts": {
+      "candidate": "4bdae7935d9cb6d005fdd555778ba5d50ad84a9c63cbb51dcc9d1d71749d3846",
+      "target": "9965a9e00676b34a5a847d22dd45aab98d2c96cd164d0262109d6d6b81362008"
+    },
+    "backend/src/universalContinuousRuntime.ts": {
+      "candidate": "448d59dc449235dc0e1553be511af6bff85405b3d12343dab8400cd583c4b30d",
+      "target": "532287e8d3795115d868089627852acd5564adc10f782d28f82748d127ce3513"
+    },
+    "backend/src/universalBatchSource.ts": {
+      "candidate": "dc86c6d528f75470eca1274008776b8790a703b3430dbd21d5dc04e91f47d9cf",
+      "target": "5ba4001d61752d0ff7460f473c19f3a8a899b5e93e426fe1d41e66bf36fdda45"
+    },
+    "backend/src/universalRegisteredTaskDraft.ts": {
+      "candidate": "e65c33a63d73c3a2e8c4c5616fdef897dbed84636ec5a1cc1e451bab278f1dc9",
+      "target": "87833428fd192ad66fd60f59206338331236adcc64194caeb70c385863eb008c"
+    }
+  },
+  "unionListSHA256": "8c0705597d2f541003cf13adadb274cd3c1e6f89f029da6e37c234795dd46c28",
+  "findings": [],
+  "verified": [
+    "finiteNative is optional and absent by default. Existing host env enable, private mount path, root0440/gid999/singlelink/NOFOLLOW/hash/DEV project checks unchanged. No startup/env/profile/SQL install activation file changed by this branch.",
+    "Explicit finite config binds integrationId and optional QA fence to exact Actor/Trip, max15min and max50m costnanos. Trusted config only; HTTP cannot set finiteBatch or provider selection. Source methods still require deps.enabled===true and normal current auth.",
+    "Without finiteNative, BatchSource uses existing sustained lookup/begin SQL; Host retains continuous Source reader and continuousProvider metadata. New finite SQL methods selected only on actual finiteBatch presence, not merely deploying new source.",
+    "With finiteNative, context rebuild derives exact Run/Task identity and compares canonical Actor/Trip/Batch/Task/Run/submission/full input roster against config before Source prepare or Provider selection; real Source binding is verified/denormalized from actual ownership proof for replay.",
+    "Normal session revalidation, QA execution fence, Core-held Source read lease, sourceReadRequestId and retainedResultsEnabled remain. New execution additionally enforces finite clock. Task deadline can only shorten existing policy deadline.",
+    "Provider selection remains versioned DeepSeek-V4.1-Flash/registeredUniversalModelProfile; config metadata does not skip actual finite reserve/dispatch, admitted price, Task policy, receipt or Usage/Budget authority. Continuous branch still reads actual existing selector SQL.",
+    "Main divergences identified below have no discarded current-main behavior in target->candidate diff: imports move only, retained request/Results/PNG wiring retained, prior draft and PNG tests retained, live binary receipt validation retained before shared arithmetic."
+  ],
+  "divergedLeavesToPreserve": [
+    "backend/src/universalContinuousHost.ts",
+    "backend/src/universalContinuousRuntime.ts",
+    "backend/src/universalRegisteredTaskDraft.test.ts",
+    "src/domain/trip/sourceBinaryOriginalCommands.ts",
+    "src/domain/trip/sourcePngPreparationCommands.test.ts"
+  ],
+  "integrationRules": [
+    "Apply minimal union patch onto latest main rather than long-branch merge/whole history restore. Preserve current main shared behavior and newer unrelated files.",
+    "Root must pin actual integrated source and run targeted integration checks before publication; this receipt reviews author26a6 vs target869, not a future unknown integrated blob."
+  ],
+  "reusedCoreReviews": [
+    "/private/tmp/otr-import-finite-native-core-source-review-20261104.json",
+    "/private/tmp/otr-import-finite-native-seal-plan-review-20261104.json"
+  ],
+  "limits": [
+    "No PG/SQL authority re-audit or test rerun.",
+    "No Hosted query/deploy/install/device/Provider/business operation or main/author change.",
+    "Definitions-only SQL, final forward/reverse OID/Owner/ACL/config CAS, two ExecutionWriter EXECs, fresh Actor/Provider/price/budget/Owner execution/close qualification remain Root2 pending.",
+    "No package ReleaseReady, install or execution approval; no real mixed Worker/Native/Hosted E2E PASS claimed."
+  ]
+}

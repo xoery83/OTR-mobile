@@ -239,7 +239,20 @@ function createAuthority<
         action,
         proof === null ? null : canonicalCoreJson(proof),
       ],
-      c.binding,
+      policy.version === 4 && action === "UNKNOWN"
+        ? {
+            ...c.binding,
+            commandFrame: {
+              negativeUnknown: {
+                operationId: c.binding.operationId,
+                operationSha256: c.binding.operationSha256,
+                attemptId: c.binding.attemptId,
+                ownerRun: c.ownerRun,
+                ownerFence: c.ownerFence,
+              },
+            },
+          }
+        : c.binding,
     );
   };
   function context(
@@ -591,7 +604,12 @@ function createAuthority<
       if (policy.continuousSourceScope) {
         const q = sourcePdfV2UploadCommandSchema.parse(JSON.parse(raw));
         if (q.actor_account_id !== actorId) throw Error("PDF_SCOPE_FORBIDDEN");
-        scope = { actorAccountId: actorId, tripId: q.trip_id, sourceId: q.source_id };
+        scope = {
+          actorAccountId: actorId,
+          tripId: q.trip_id,
+          sourceId: q.source_id,
+          commandFrame: { command: q as unknown as Json },
+        };
       }
       const reply = await rpc<{ journal?: Journal; receipt?: Json }>(
         `${policy.rpcPrefix}_begin`,

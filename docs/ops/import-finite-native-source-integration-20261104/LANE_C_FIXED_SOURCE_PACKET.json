@@ -1,0 +1,255 @@
+{
+  "requestId": "IMP-C01-SOURCE-INTEGRATION-20261104-07",
+  "package": "IMP-C01 Fresh Import User Beta Closure",
+  "businessDri": "Lane C — Import / Documents / Form AI",
+  "sourceIntegrator": "Root1",
+  "hostedOpsOwner": "Root2",
+  "candidateSha": "26a6e76b2c87ea111b51a0261ee5f76cd85ddb02",
+  "reviewedBaseSha": "ab16d85bac392c5b8e19b4f4c9331a9e7bff36d5",
+  "cumulativeDependencies": [
+    "860166d9",
+    "ed8e9ed4",
+    "0b150c45",
+    "6197c3cd",
+    "3c38710d",
+    "ab16d85b",
+    "26a6e76b"
+  ],
+  "remoteMainReadOnlyVerified": "869846afaea2f687b14695c8f30ba52d8e0e1a52",
+  "recordedAt": "2026-11-04T07:19:32.918199+00:00",
+  "operation": "Controlled main integration of these exact final Import code/test/SQL-candidate leaves only, preserving current-main unrelated edits; do not merge the long branch",
+  "leaves": [
+    {
+      "path": "backend/sql/universal_finite_native_commands_candidate.sql",
+      "candidateFileSha256": "d3b56e75b8969bf9d28c434fe78a1b9a275682e19fa4182042644a1ac9612e9c",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/sql/universal_finite_native_helpers_candidate.sql",
+      "candidateFileSha256": "0f512752cf58b00e08bcb7a35a39d8c0b3fdc39b95004bbfa0b13d8868fb2e4c",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/sql/universal_finite_native_pdf_scope_candidate.sql",
+      "candidateFileSha256": "79ea5bbff73fd4504c74733bedf7321a6074fd8a2d0241289a3d8812d1bf1a52",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/sql/universal_finite_native_routes_candidate.sql",
+      "candidateFileSha256": "bec2507aaf61fe1f703c2a6cb37309c73a9b5f8182cf7fee6c9dfb3fced78b8d",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeHelperAssertions.sql",
+      "candidateFileSha256": "370336f204f26acee24fce5f2d43d91f1d0de6191a662363c6cd9a6efddefce4",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeHelperBootstrap.sql",
+      "candidateFileSha256": "1703c5c3c3f5a4396322d22cb9d3c0e45da9698e144d73fb4ceb10ea079b27da",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningAcquireAssertions.sql",
+      "candidateFileSha256": "d02348f69b93a2d4684f61c7fd187a96a8adbab43a6b706fcb615e38d18e9820",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningCommandAssertions.sql",
+      "candidateFileSha256": "cee4a575f5e3161545f19b0cec4eaa4c1382e56f739dc513cb02ff56ae2ca592",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningMixedAssertions.sql",
+      "candidateFileSha256": "1d59d916ad5203ddfd686bd3c16e7cd1e5d3179777fc6c8afc687ff0849c49da",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningPdfAssertions.sql",
+      "candidateFileSha256": "86a218b65f6eecdafa2518073d5fc32c3eebe6f962a73009320330e695a7360b",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningPdfFrameAssertions.sql",
+      "candidateFileSha256": "528a4a5b706e815c42870695d017c2974ef1eb782fd2300be9f40d4504c2e583",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningPdfUnknownAssertions.sql",
+      "candidateFileSha256": "2241fa37d737a12a55d41b973a7173ca962ebe7e879a3febc23833352c70dd91",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningPngAssertions.sql",
+      "candidateFileSha256": "9ae5c90fdf9f9f796c23e4cf6f4b31cf6f4323194ce4f9abedd3c3a0885f775e",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeOwningPngCloseAssertions.sql",
+      "candidateFileSha256": "39e8aac2a8d1cbfdf12974abb324400a963c963e963ee8caf7655da36951a5b3",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/__fixtures__/finiteNativeRouteAssertions.sql",
+      "candidateFileSha256": "9c56f2d54a3cf9ac0f0ce826d8f737a18758cdbabcdb07fbf3a52e377c68fe38",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/initialNativeCommandPlan.test.ts",
+      "candidateFileSha256": "a6032dab3594a1193d24a9db0b00f07043bd40f7f1fb7de0d22bfb6b3ee15022",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "backend/src/sourcePdfCausalAuthority.ts",
+      "candidateFileSha256": "7a090bdff85d1af32f3d9d1cc55e51d51277d38fc9e9b830a552b5ebf45c4169",
+      "integrationBaseFileSha256": "c5ca18fe60b298af79ce15574f20b3f3b75e2387b9d5e5cdf1587c61ec9ba160"
+    },
+    {
+      "path": "backend/src/sourcePdfContinuousScope.test.ts",
+      "candidateFileSha256": "5b30988145b4ed038f91fd5432da941ddae39ca772022627289ce03c4e962e6f",
+      "integrationBaseFileSha256": "5be5029bfd7132079941f3818027c20277d4672b290f528ddafccfce10263013"
+    },
+    {
+      "path": "backend/src/sourcePdfContinuousScope.ts",
+      "candidateFileSha256": "393b8b477bc3ad5023a9958ee9ae3189120767783a8184298dd5b2e0232346a7",
+      "integrationBaseFileSha256": "ba4b9f15849ec377363724bff2c5194ab857ecf57ba7bda70572ef395230574d"
+    },
+    {
+      "path": "backend/src/sourcePdfV2Authority.ts",
+      "candidateFileSha256": "f4d609d31923ec768ce035e405a757aafacec3756fe1b445aa307ecda799ff66",
+      "integrationBaseFileSha256": "c281cd6af997b9bf6ee2e745788c6366dab9585af80f7086b3458b34a5926c22"
+    },
+    {
+      "path": "backend/src/sourcePdfV2Registration.ts",
+      "candidateFileSha256": "9ce12dc171a6edb0b062320537bef8da43ace734fe2dd90e5940c6e4f2f4a038",
+      "integrationBaseFileSha256": "b554453f7b8f2975ca68c6c2e80deec5eae060ba798dbdb596e7dcc63bd42566"
+    },
+    {
+      "path": "backend/src/universalBatchSource.test.ts",
+      "candidateFileSha256": "fd6f249f588d8ee7d0ab557965825607160e8fb337242fffbc847c315500b2dd",
+      "integrationBaseFileSha256": "a0614f7682ca68fadef3980d343ca67db99085b78a822ab67a0b5e283b0ed860"
+    },
+    {
+      "path": "backend/src/universalBatchSource.ts",
+      "candidateFileSha256": "dc86c6d528f75470eca1274008776b8790a703b3430dbd21d5dc04e91f47d9cf",
+      "integrationBaseFileSha256": "5ba4001d61752d0ff7460f473c19f3a8a899b5e93e426fe1d41e66bf36fdda45"
+    },
+    {
+      "path": "backend/src/universalContinuousConfig.test.ts",
+      "candidateFileSha256": "69fbf6007dd11b94927e6bfaa60a0be9c8e975c9f1f8186b90a325c1a08a81dc",
+      "integrationBaseFileSha256": "de578563e7c72c746274357743cc59dbe7a03be1a11f56a04aa0e0d67f0c9321"
+    },
+    {
+      "path": "backend/src/universalContinuousConfig.ts",
+      "candidateFileSha256": "c4ab4c39ee9b871a3a8b7f9bb9589533975dfdd007a3ae6f66a008e2cf7471c2",
+      "integrationBaseFileSha256": "50f07b4080362a1b81851bd89dc8f851ef679a7be988688676c5f46ef66f3ca3"
+    },
+    {
+      "path": "backend/src/universalContinuousHost.ts",
+      "candidateFileSha256": "4bdae7935d9cb6d005fdd555778ba5d50ad84a9c63cbb51dcc9d1d71749d3846",
+      "integrationBaseFileSha256": "9965a9e00676b34a5a847d22dd45aab98d2c96cd164d0262109d6d6b81362008"
+    },
+    {
+      "path": "backend/src/universalContinuousRuntime.test.ts",
+      "candidateFileSha256": "e4b4fd049383c14187ce29a27f82b8f9afac6dc7780aa54a92b9d71a2a6282f9",
+      "integrationBaseFileSha256": "dc3b2f997e97385a4fdb16070abb7daba547a684e51644bbbd63b8fed8920422"
+    },
+    {
+      "path": "backend/src/universalContinuousRuntime.ts",
+      "candidateFileSha256": "448d59dc449235dc0e1553be511af6bff85405b3d12343dab8400cd583c4b30d",
+      "integrationBaseFileSha256": "532287e8d3795115d868089627852acd5564adc10f782d28f82748d127ce3513"
+    },
+    {
+      "path": "backend/src/universalRegisteredTaskDraft.test.ts",
+      "candidateFileSha256": "47a1b4e928311e584ddf15640fdc9534d2c6f9768efb449cc23aee654b93034d",
+      "integrationBaseFileSha256": "5b70e6ca9dcd7f76c2676ff5789d1443e3d3bcc72d9f8a39d86e48247894ddc4"
+    },
+    {
+      "path": "backend/src/universalRegisteredTaskDraft.ts",
+      "candidateFileSha256": "e65c33a63d73c3a2e8c4c5616fdef897dbed84636ec5a1cc1e451bab278f1dc9",
+      "integrationBaseFileSha256": "87833428fd192ad66fd60f59206338331236adcc64194caeb70c385863eb008c"
+    },
+    {
+      "path": "scripts/import/build_finite_native_proof_candidate.py",
+      "candidateFileSha256": "67e192cbc8a652bc67418836bf44191fcfa33ed7f43508e24bafb92533914c49",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "scripts/import/initial_native_command_plan.mts",
+      "candidateFileSha256": "b2055b900f48b0a1d6fd239b09a3d272260e086e205393f464b8dc247ae9ca56",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "scripts/import/test_finite_native_helpers.py",
+      "candidateFileSha256": "b744f9061542803b102bddac7d985725bb3aa32aaafbeb79aea42bda6abbf064",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "scripts/import/test_finite_native_owning_pg.py",
+      "candidateFileSha256": "97ac343ccb65c02974f328ced957c0b3118a08c80ecffc6297b89a120ef01960",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "scripts/import/test_finite_native_proof_candidate.py",
+      "candidateFileSha256": "b0d68c4321c40652296a157be74f9f8fd58c1ae2b816420b6483402c4a4b25e9",
+      "integrationBaseFileSha256": null
+    },
+    {
+      "path": "src/domain/trip/sourceBinaryOriginalCommands.ts",
+      "candidateFileSha256": "ad399463301f9f8f9f91c1c19e934a212a4796f9190334a9fd0362895411ab3c",
+      "integrationBaseFileSha256": "3b2023ff842c0c2c7a53dc9e5b47931149d68f237703da120f2e86010ee805d1"
+    },
+    {
+      "path": "src/domain/trip/sourcePdfPreparationCommands.test.ts",
+      "candidateFileSha256": "123b519b236183a3688a0d9024dfdd4b393cf57e4ad3a10ad17bef65b7e24499",
+      "integrationBaseFileSha256": "8e252fa5b37e8c92561db3a2b6cd0fdce3538f6fe9d7aaaa1136a6e7c20997a2"
+    },
+    {
+      "path": "src/domain/trip/sourcePdfPreparationCommands.ts",
+      "candidateFileSha256": "ddc99eea2302bdc854f019e51d72c8b41f72c690e6b96ebcff58e87e47eed0df",
+      "integrationBaseFileSha256": "4db4f3ead5e21d437d7442f374f6340ed3a91f6d925ba73661bdfa354596d4a8"
+    },
+    {
+      "path": "src/domain/trip/sourcePngPreparationCommands.test.ts",
+      "candidateFileSha256": "9567e30b5b8a6de30b2945dc342ed84d370f3a74fbebf373ae00f38a14f96d0f",
+      "integrationBaseFileSha256": "9c76216b1c790cf0d2f2c89d50cb931f313389deaad448d08cff140c9b6fb2ad"
+    }
+  ],
+  "defaultClosedCompatibility": [
+    "finiteNative runtime config remains optional and absent by default; no ENV/deployment/config activation in packet",
+    "Existing continuous selection/Source paths remain unchanged when finite config absent",
+    "SQL files are definitions candidates only, not migrations/startup installation; protected SQL/EXEC/config installation belongs to Root2",
+    "Shared SDK arithmetic extraction adds offline projection only, actual live receipt hash/scope/CAS validation unchanged; Native QA151 stays fixed850b and produces identical commands",
+    "No Parser/Core Save/schema/ACL/Revision/Receipt product contract expansion; exactly same original synthetic batch/actor/trip",
+    "No broad grant, wildcard Source-only gate, or execution-time Scope fit rewrite; fresh preconditions must use authoritative ABSENT read, never RLS-hidden false absence"
+  ],
+  "evidence": {
+    "domainTests": "104 Backend prior package; 60 live/proposal/adapter +5planner follow-up; see prior qualification and frozen plan evidence for exact scope",
+    "strict": "19 follow-up roots inherited0; prior21 roots inherited0",
+    "independentCoreReviews": [
+      {
+        "file": "ROOT1_SCOPED_REVIEW_AB16.json",
+        "sha256": "3e939f89f4b7a06355588efff501cc9a270797f8c47a1af9647ab4106f77e585"
+      },
+      {
+        "file": "ROOT1_SCOPED_REVIEW_26A6.json",
+        "sha256": "3ce7ccddbebb4db5f46e3a71607dc9345aae752dd9291b74157408a0ac223952"
+      }
+    ],
+    "reviewLimit": "Scoped Core/Source boundary review, not physical Worker or Hosted acceptance. Root1 must perform its controlled main integration review for cumulative runtime composition.",
+    "actualOwningPg": "Seeded proof facts + actual codec/hash/mutators/roles/RLS/close tests; no physical upload/parser",
+    "currentNative": "QA151 installed in place; original3 pins exactly equal to before; Files PNG local OCR and explicit choice saved; cold choice readback in progress"
+  },
+  "excluded": [
+    "Do not overwrite main docs/CURRENT_IMPLEMENTATION_STATE.md from LaneC historical branch",
+    "No Native UI changes from other Lane included",
+    "No raw private command export, Source function preimages, Session, Token or full app container included",
+    "No deployment, SQL installation, clock, Provider call, Source POST or Canonical Save authorized by integration"
+  ],
+  "acceptance": [
+    "Fixed remote main SHA",
+    "Independent integration review and relevant scoped contract checks",
+    "Default-closed runtime compatibility",
+    "Return Trigger: Source release receipt to Lane C and Root2; Hosted execution remains separate exact Gate"
+  ]
+}

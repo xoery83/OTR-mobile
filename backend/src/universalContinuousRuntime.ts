@@ -1,4 +1,7 @@
-import { readSourcePngRuntimeConfig, createSourcePngRuntimePorts } from "./sourcePngRuntime";
+import {
+  readSourcePngRuntimeConfig,
+  createSourcePngRuntimePorts,
+} from "./sourcePngRuntime";
 import {
   readSourcePdfRuntimeConfig,
   createSourcePdfRuntimePorts,
@@ -36,6 +39,8 @@ import { readUniversalContinuousConfig } from "./universalContinuousConfig";
 import { createUniversalContinuousHost } from "./universalContinuousHost";
 import { universalContinuousSelectionSchema } from "./universalRegisteredTaskDraft";
 import { universalPriceScheduleFromUnits } from "./universalPersistenceHost";
+import { universalProviderBatchContext } from "./universalBatchSource";
+import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 // Explicit V2 private configuration only. Never opens App SQLite or stores App tokens.
@@ -45,6 +50,14 @@ export async function loadDevUniversalContinuousRuntime(
   const config = await readUniversalContinuousConfig(env);
   if (!config) return undefined;
   const executionFence = config.qaExecutionFence;
+  const finite = config.finiteNative;
+  const finiteBatch = finite
+    ? universalProviderBatchContext(finite.batch.actorId, finite.batch.tripId, {
+        batchId: finite.batch.batchId,
+        submissionSha256: finite.batch.submissionSha256,
+        inputs: finite.batch.inputs,
+      })
+    : undefined;
   let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
   let png: ReturnType<typeof createSourcePngRuntimePorts> | undefined;
   let closed = false,
@@ -187,12 +200,20 @@ export async function loadDevUniversalContinuousRuntime(
       });
       return createUniversalContinuousHost({
         enabled: true,
+        finiteBatch,
+        finiteDeadline: finite?.expiresAt,
         context,
         db,
         catalogConnection,
         assertCurrentAuth,
         assertNewExecutionAllowed: () => {
           guard();
+          if (
+            finite &&
+            (Date.now() < Date.parse(finite.startsAt) ||
+              Date.now() >= Date.parse(finite.expiresAt))
+          )
+            throw Error("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
           if (
             executionFence &&
             (executionFence.accountId !== actor || executionFence.tripId !== trip)
@@ -203,9 +224,19 @@ export async function loadDevUniversalContinuousRuntime(
         sourceReadRequestId,
         retainedResultsEnabled: true,
         bootstrapLedger: () => gateway.bootstrapLedger(actor, trip),
-        async selectProvider() {
+        async selectProvider(binding) {
           guard();
           await assertCurrentAuth();
+          if (finite && finiteBatch) {
+            const { owningBinding: _, ...original } = binding;
+            if (
+              canonicalEventJson(original as Json) !==
+              canonicalEventJson(finiteBatch as Json)
+            )
+              throw Error("UNIVERSAL_BINDING_SCOPE");
+            // Inert private metadata only; actual reserve/dispatch still uses finite owning SQL.
+            return finite.selection;
+          }
           const raw = await universalPgTransaction(
             taskConnection,
             async (lease) =>

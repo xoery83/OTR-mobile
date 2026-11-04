@@ -75,7 +75,6 @@ export async function createPendingBinaryOriginalCommandProposals(
   hash: ImportHash,
   format: "PDF" | "PNG",
 ) {
-  const prefix = format === "PDF" ? "pdf" : "png";
   const mimeType = format === "PDF" ? "application/pdf" : "image/png";
   const errorCode = format + "_SOURCE_RECEIPT_MISMATCH";
   const q = acquisitionReference.parse(rawAcquisition),
@@ -100,6 +99,51 @@ export async function createPendingBinaryOriginalCommandProposals(
   )
     throw Error(errorCode);
   await checkBinaryOriginalResult(r, hash, errorCode);
+  return buildBinaryOriginalCommandProposals(scope, q, r, hash, format);
+}
+
+// Planning only: fresh ACQUIRE must yield revisions 1/1/1; live calls still require its real receipt.
+export async function projectInitialBinaryOriginalCommandProposals(
+  scope: { actorId: string; tripId: string },
+  rawAcquisition: unknown,
+  hash: ImportHash,
+  format: "PDF" | "PNG",
+) {
+  const q = acquisitionReference.parse(rawAcquisition);
+  if (
+    q.payload.original.mime_type !==
+      (format === "PDF" ? "application/pdf" : "image/png") ||
+    q.actor_account_id !== scope.actorId ||
+    q.trip_id !== scope.tripId
+  )
+    throw Error("INITIAL_SOURCE_PLAN_SCOPE_MISMATCH");
+  return buildBinaryOriginalCommandProposals(
+    scope,
+    q,
+    {
+      result_material_revision: 1,
+      result_source_row_revision: 1,
+      result_representation_row_revision: 1,
+    },
+    hash,
+    format,
+  );
+}
+
+async function buildBinaryOriginalCommandProposals(
+  scope: { actorId: string; tripId: string },
+  q: z.infer<typeof acquisitionReference>,
+  r: Pick<
+    z.infer<typeof acquisitionReceipt>,
+    | "result_material_revision"
+    | "result_source_row_revision"
+    | "result_representation_row_revision"
+  >,
+  hash: ImportHash,
+  format: "PDF" | "PNG",
+) {
+  const prefix = format === "PDF" ? "pdf" : "png";
+  const mimeType = format === "PDF" ? "application/pdf" : "image/png";
   async function identity(purpose: string) {
     const digest = coreHash.parse(
       await hash(

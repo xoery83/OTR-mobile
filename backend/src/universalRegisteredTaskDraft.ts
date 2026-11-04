@@ -40,6 +40,7 @@ export async function buildUniversalRegisteredTaskDraft(
   binding: UniversalRunBinding,
   manifest: UniversalManifest,
   rawSelection: z.infer<typeof universalContinuousSelectionSchema>,
+  finiteDeadline?: string,
 ) {
   binding = universalRunBindingSchema.parse(binding);
   const selection = universalContinuousSelectionSchema.parse(rawSelection);
@@ -94,9 +95,17 @@ export async function buildUniversalRegisteredTaskDraft(
   ) as Record<string, string>;
   ids.taskId = binding.taskId;
   ids.runId = binding.runId;
+  const requestedDeadline = Date.parse(binding.createdAt) + selection.taskLifetimeMs;
   const expiresAt = new Date(
-    Date.parse(binding.createdAt) + selection.taskLifetimeMs,
+    finiteDeadline === undefined
+      ? requestedDeadline
+      : Math.min(
+          requestedDeadline,
+          Date.parse(z.iso.datetime({ offset: true }).parse(finiteDeadline)),
+        ),
   ).toISOString();
+  if (Date.parse(expiresAt) <= Date.parse(binding.createdAt))
+    throw Error("UNIVERSAL_TASK_EXPIRED");
   const f = { ...selection, startsAt: createdAt, expiresAt };
   const representations = manifest.representations;
   const inputPins = binding.inputs.map((p) => ({

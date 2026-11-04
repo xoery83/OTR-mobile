@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
   createUniversalBatchSource,
+  universalProviderBatchContext,
+  universalProviderOwningContext,
   universalBatchIdentity,
 } from "./universalBatchSource";
-function fixture() {
+function fixture(finite = false) {
   const actor = randomUUID(),
     trip = randomUUID(),
     batchId = randomUUID();
@@ -28,8 +30,9 @@ function fixture() {
   let binding: unknown = null;
   const authorize = vi.fn(async () => {}),
     query = vi.fn(async (sql: string) => {
-      if (sql.includes("find_sustained")) return { rows: [{ binding }] };
-      if (sql.includes("begin_sustained")) {
+      if (sql.includes("find_sustained") || sql.includes("find_finite"))
+        return { rows: [{ binding }] };
+      if (sql.includes("begin_sustained") || sql.includes("begin_finite")) {
         binding = {
           actorId: actor,
           tripId: trip,
@@ -43,7 +46,13 @@ function fixture() {
       return { rows: [] };
     });
   const connection = { withLease: async (work: any) => work({ query, retire: vi.fn() }) };
-  const source = createUniversalBatchSource({ connection, authorize, enabled: true });
+  const finiteBatch = universalProviderBatchContext(actor, trip, input);
+  const source = createUniversalBatchSource({
+    connection,
+    authorize,
+    enabled: true,
+    ...(finite ? { finiteBatch } : {}),
+  });
   return {
     actor,
     trip,
@@ -52,11 +61,57 @@ function fixture() {
     query,
     source,
     connection,
+    finiteBatch,
     setBinding: (b: unknown) => {
       binding = b;
     },
   };
 }
+it("uses only finite owning ports for the frozen server batch and keeps lookup inert", async () => {
+  const f = fixture(true);
+  expect(await f.source.lookup(f.actor, f.trip, f.input.batchId)).toBeNull();
+  const call = f.query.mock.calls.find(([sql]) => sql.includes("find_finite"));
+  expect(call).toBeDefined();
+  expect(f.query.mock.calls.some(([sql]) => sql.includes("begin_"))).toBe(false);
+  const first = await f.source.prepare(f.actor, f.trip, f.input);
+  expect(await f.source.prepare(f.actor, f.trip, f.input)).toEqual(first);
+  expect(f.query.mock.calls.filter(([sql]) => sql.includes("begin_finite"))).toHaveLength(
+    1,
+  );
+  expect(f.query.mock.calls.some(([sql]) => sql.includes("sustained"))).toBe(false);
+});
+it("rejects finite actor, trip, batch, digest and source pin changes before owning SQL", async () => {
+  const f = fixture(true);
+  for (const [actor, trip, input] of [
+    [randomUUID(), f.trip, f.input],
+    [f.actor, randomUUID(), f.input],
+    [f.actor, f.trip, { ...f.input, batchId: randomUUID() }],
+    [f.actor, f.trip, { ...f.input, submissionSha256: "c".repeat(64) }],
+    [f.actor, f.trip, { ...f.input, inputs: [{ ...f.input.inputs[0], byte_count: 21 }] }],
+  ] as const)
+    await expect(f.source.prepare(actor, trip, input)).rejects.toThrow("SCOPE");
+  expect(f.query).not.toHaveBeenCalled();
+  await expect(
+    f.source.prepare(f.actor, f.trip, { ...f.input, finite: true }),
+  ).rejects.toThrow();
+  expect(f.query).not.toHaveBeenCalled();
+});
+it("validates finite config identities and owning readback instead of treating either as authority", async () => {
+  const f = fixture(true);
+  expect(() =>
+    createUniversalBatchSource({
+      connection: f.connection,
+      authorize: f.authorize,
+      enabled: true,
+      finiteBatch: { ...f.finiteBatch, taskId: randomUUID() },
+    }),
+  ).toThrow("SCOPE");
+  const b = await f.source.prepare(f.actor, f.trip, f.input);
+  f.setBinding({ ...b, inputs: [{ ...b.inputs[0], payload_sha256: "c".repeat(64) }] });
+  await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toThrow(
+    "SCOPE",
+  );
+});
 it("is CLOSED by default before any SQL and read never creates a Run", async () => {
   const f = fixture();
   await expect(
@@ -131,6 +186,12 @@ it("reuses a sealed PDF Run for the same immutable original without another begi
         },
       ],
     };
+  const selected = universalProviderOwningContext(derived);
+  expect(selected.inputs).toEqual(f.input.inputs);
+  expect(selected.owningBinding.inputs[0]).toEqual(derived.inputs[0]);
+  expect(selected.owningBinding.inputs[0].representation_id).not.toBe(
+    selected.inputs[0].representation_id,
+  );
   f.setBinding(derived);
   expect(await f.source.prepare(f.actor, f.trip, f.input)).toEqual(derived);
   expect(f.query.mock.calls.filter(([q]) => q.includes("begin_sustained"))).toHaveLength(
@@ -184,4 +245,34 @@ it("rejects malformed owning PDF normalization before reuse", async () => {
     f.setBinding({ ...base, inputs: [bad] });
     await expect(f.source.lookup(f.actor, f.trip, f.input.batchId)).rejects.toThrow();
   }
+});
+
+it("passes validated exact batch context with deterministic identities to provider selection", () => {
+  const q = fixture();
+  const context = universalProviderBatchContext(q.actor, q.trip, q.input);
+  expect(context.runId).toBe(
+    universalBatchIdentity(q.actor, q.trip, q.input.batchId, "run"),
+  );
+  expect(context.taskId).toBe(
+    universalBatchIdentity(q.actor, q.trip, q.input.batchId, "task"),
+  );
+  expect(context.inputs).toEqual(q.input.inputs);
+  expect(context.submissionSha256).toBe(q.input.submissionSha256);
+  expect(() =>
+    universalProviderBatchContext(q.actor, q.trip, { ...q.input, finite: true }),
+  ).toThrow();
+  expect(() =>
+    universalProviderBatchContext(q.actor, q.trip, {
+      ...q.input,
+      submissionSha256: "bad",
+    }),
+  ).toThrow();
+  const owning = { ...context, generation: 1, createdAt: new Date().toISOString() };
+  expect(universalProviderOwningContext(owning).owningBinding).toEqual(owning);
+  expect(() =>
+    universalProviderOwningContext({ ...owning, runId: randomUUID() }),
+  ).toThrow("UNIVERSAL_BINDING_SCOPE");
+  expect(() =>
+    universalProviderOwningContext({ ...owning, taskId: randomUUID() }),
+  ).toThrow("UNIVERSAL_BINDING_SCOPE");
 });

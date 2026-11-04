@@ -1,0 +1,19 @@
+{
+  "requestId": "IMP-C01-SOURCE-INTEGRATION-20261104-07-DEPLOYMENT-ADDENDUM",
+  "status": "SOURCE_NO_BLOCKER_WITH_PAIRED_PDF_SQL_DEPLOYMENT_PREREQUISITE",
+  "candidate": "26a6e76b2c87ea111b51a0261ee5f76cd85ddb02",
+  "target": "869846af",
+  "priorReview": "/private/tmp/otr-import-source07-default-closure-review-20261104.json",
+  "clarification": [
+    "Prior five-file default-closure statement applies to finite Batch lookup/begin SQL, Source reader mode and Provider selector. It must not be read as claiming every preexisting enabled PDF path keeps its old three-argument wire.",
+    "sourcePdfCausalAuthority, sourcePdfV2Registration and sourcePdfV2Authority attach explicit command/registration/seal/negativeUnknown frames when their existing continuousSourceScope path runs. enterSourcePdfContinuousScope chooses four-argument trip_source_universal_pdf_enter whenever frame exists, independently of finiteNative presence.",
+    "Before any such PDF caller is enabled on the new software, Root2 must first install and independently verify the new four-argument overload, all required Source helper/proof definitions and exact approved Owner/ACL/EXEC dependencies. Definitions-only installation without required ACL is not sufficient.",
+    "Closed-source main integration does not require live Host metadata. During later software deployment Root2 must verify affected PDF paths remain closed until paired PG installation/metadata qualification has passed.",
+    "No automatic four-to-three argument fallback or authorization workaround should be inferred. Missing overload/ACL fails closed but would break an already enabled PDF path.",
+    "This is a code/deployment compatibility prerequisite, not an execution approval or authority renewal. Full protected Gate/forward-reverse CAS/fresh execution qualification remain pending."
+  ],
+  "reviewerActions": [
+    "Bounded readonly confirmation of fixed26a6 helper and three direct PDF caller diffs only.",
+    "No source edits, tests, Hosted/SQL/Provider/device actions."
+  ]
+}

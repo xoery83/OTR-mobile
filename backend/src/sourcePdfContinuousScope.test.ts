@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { createSourcePdfV2Authority } from "./sourcePdfV2Authority";
+import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { enterSourcePdfContinuousScope } from "./sourcePdfContinuousScope";
 import { createSourcePdfV2CausalAuthority } from "./sourcePdfCausalAuthority";
@@ -199,4 +200,66 @@ it("explicit PREPARE uses the same held transaction and remains closed without o
     expect.stringContaining("trip_source_prepare_representation"),
     [scope.actorAccountId, raw],
   );
+});
+
+it("negative UNKNOWN metadata stays on the held Source lease without granting a general PDF scope", async () => {
+  const scope = identity();
+  const negativeUnknown = {
+    operationId: randomUUID(),
+    operationSha256: "a".repeat(64),
+    attemptId: randomUUID(),
+    ownerRun: randomUUID(),
+    ownerFence: 1,
+  };
+  const query = vi.fn(async () => ({ rows: [{ entered: true }] }));
+  await enterSourcePdfContinuousScope({ query } as never, {
+    ...scope,
+    commandFrame: { negativeUnknown },
+  });
+  const [sql, args] = query.mock.calls[0] as unknown as [string, string[]];
+  expect(sql).toContain("$4::jsonb");
+  expect(args.slice(0, 3)).toEqual([scope.actorAccountId, scope.tripId, scope.sourceId]);
+  expect(JSON.parse(args[3])).toEqual({ negativeUnknown });
+});
+
+it("forwards the complete seal frame on the same new Source transaction", async () => {
+  const scope = identity();
+  const request = {
+    derivativeVersion: 2 as const,
+    operationId: randomUUID(),
+    sourceId: scope.sourceId,
+    sourceRevision: 1,
+    sourceRowRevision: 1,
+    originalRepresentationId: randomUUID(),
+    originalRowRevision: 2,
+    derivedRepresentationId: randomUUID(),
+  };
+  const read = vi.fn();
+  const query = vi.fn(async (sql: string) => {
+    if (sql.includes("trip_source_pdf_v2_context")) throw Error("STOP_BEFORE_WORKER");
+    return { rows: [{ receipt: null, entered: false }] };
+  });
+  const authority = createSourcePdfV2Authority(
+    { withLease: async (work: (lease: unknown) => unknown) => work({ query }) } as never,
+    async (b) => createHash("sha256").update(b).digest("hex"),
+    read,
+    undefined,
+    { continuousSourceScope: true },
+  );
+  await expect(
+    authority.seal(scope.actorAccountId, scope.tripId, request),
+  ).rejects.toThrow("STOP_BEFORE_WORKER");
+  expect(query).toHaveBeenCalledWith(expect.stringContaining("$4::jsonb"), [
+    scope.actorAccountId,
+    scope.tripId,
+    scope.sourceId,
+    expect.any(String),
+  ]);
+  const frameCall = query.mock.calls.find(([sql]) =>
+    sql.includes("trip_source_universal_pdf_enter"),
+  );
+  expect(JSON.parse((frameCall as unknown as [string, string[]])[1][3])).toEqual({
+    pdfSeal: request,
+  });
+  expect(read).not.toHaveBeenCalled();
 });

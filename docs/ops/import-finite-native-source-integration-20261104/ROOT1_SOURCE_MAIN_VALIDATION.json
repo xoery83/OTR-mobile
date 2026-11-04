@@ -1,0 +1,44 @@
+{
+  "request": "IMP-C01-SOURCE-INTEGRATION-20261104-07",
+  "status": "SOURCE_MAIN_VERIFIED_DEFAULT_CLOSED_NOT_DEPLOYED",
+  "preMain": "869846afaea2f687b14695c8f30ba52d8e0e1a52",
+  "candidate": "26a6e76b2c87ea111b51a0261ee5f76cd85ddb02",
+  "sourcePacketCommit": "51d11104",
+  "sourcePacketSHA256": "f8ffd97c001616ad57e754e318068b894a4e4e4769af8715efbce90679c6c256",
+  "exactCodeSqlTestLeaves": 39,
+  "allCandidateAndMainPreimageHashesVerified": true,
+  "independentReviews": [
+    "CORE_AB16_REVIEW.json",
+    "CORE_26A6_REVIEW.json",
+    "DEFAULT_CLOSED_INTEGRATION_REVIEW.json",
+    "PDF_DEPLOYMENT_PREREQUISITE_REVIEW.json"
+  ],
+  "actualMainTests": {
+    "configRuntimeSourcePlannerSdk": {
+      "suites": 9,
+      "passed": 98
+    },
+    "registrationAdapters": {
+      "suites": 2,
+      "passed": 25
+    }
+  },
+  "scopedCompiler": "PASS20 TS/MTS roots plus imports",
+  "scopedLint": "PASS19 TS roots; repository ESLint excludes MTS, covered by compiler/planner tests",
+  "pythonSyntax": "PASS four changed files, no SQL generation/installation performed",
+  "priorPgEvidence": "Reused reviewed seeded actual owning PG/codec/hash/negative-close evidence; no rerun or Worker/Hosted PASS inferred",
+  "mandatoryDeploymentDependency": "Existing enabled continuousSourceScope PDF callers now require new4argenter/helpers/Owner/ACL/EXEC independently of finiteNative; Root2 must keep these paths closed until pairedPGverified",
+  "runtimeConfigChanges": 0,
+  "sqlInstallations": 0,
+  "providerCalls": 0,
+  "sourcePosts": 0,
+  "canonicalSaves": 0,
+  "deviceActions": 0,
+  "preservedMain": [
+    "NativeVN04 paired19leaves/catalog",
+    "SQLite76 and FilesPNGconsent",
+    "CoreMemberRevoke/Auth/Native Source integrations",
+    "retainedResults/requestId/PNG compatibility"
+  ],
+  "returnTo": "LaneC exact default-closed release package and Root2 protected paired installation/qualification; no automatic deployment"
+}

@@ -1,0 +1,63 @@
+{
+  "requestId": "IMP-C01-CORE-FINITE-REVIEW-20261104-05",
+  "status": "NO_BLOCKER_SCOPED_CORE_SOURCE_CANDIDATE_NOT_RELEASE_READY",
+  "commit": "ab16d85bac392c5b8e19b4f4c9331a9e7bff36d5",
+  "cumulativeDependencies": [
+    "860166d9",
+    "ed8e9ed4",
+    "0b150c45",
+    "6197c3cd",
+    "3c38710d"
+  ],
+  "reviewedScopeSHA256": {
+    "backend/sql/universal_finite_native_helpers_candidate.sql": "0f512752cf58b00e08bcb7a35a39d8c0b3fdc39b95004bbfa0b13d8868fb2e4c",
+    "backend/sql/universal_finite_native_routes_candidate.sql": "bec2507aaf61fe1f703c2a6cb37309c73a9b5f8182cf7fee6c9dfb3fced78b8d",
+    "backend/sql/universal_finite_native_commands_candidate.sql": "d3b56e75b8969bf9d28c434fe78a1b9a275682e19fa4182042644a1ac9612e9c",
+    "backend/sql/universal_finite_native_pdf_scope_candidate.sql": "164835cb4a18718ef7052dc43bcc6bf6af78b37254b3c8aa23a97a6c190c925b",
+    "scripts/import/build_finite_native_proof_candidate.py": "67e192cbc8a652bc67418836bf44191fcfa33ed7f43508e24bafb92533914c49"
+  },
+  "evidenceSHA256": "df16c48f47a51c738c628c64909b616b44df44427865c5c6fa41940df16da2a3",
+  "findings": [],
+  "verified": [
+    "Finite identity compares actual Actor/Trip/Run and scope Batch/Task/submission/input hash, clock and run retained/non-superseded state. Shared close lock is retained; existence checks explicitly refuse row-policy-hidden ABSENT.",
+    "Full codec-validated ACQUIRE/PREPARE/UPLOAD/VERIFY commands must equal exact frozen command frames including Actor/Trip and CAS fields. Seven-binding finite scope is not inferred from filename/MIME/Native selection alone. Existing Source admission/Actor/material locks and hash/proof tails remain mandatory.",
+    "PDF normalized derived pins are resolved from Source-owned seal/material and original representation; unnormalized PDF cannot create Run. Run/Input insert guard accepts only exact initial rows, full normalized set and scope hash. Existing retained reads require real durable Run/input equality and current Source ACL/material, not live write authority.",
+    "PDF registration requires exactly one frozen VERIFY command and actual matching FINAL/APPLIED successful immutable operation with correct actor/trip/source/original/key/digest/revisions/VERIFIED state. Only its actual result SHA is filled; all other registration template fields remain frozen. No forged TXT offset or Source identity introduced.",
+    "PNG finite path retains actual original-facts/execution proof and Source operation identity. New writes require current finite command scope; retained receipt/proof reads do not mint fresh execution or terminal authority.",
+    "Post-close PDF exception requires exact existing attempt/ownerRun/fence/actor/trip/source/operation/digest and binding, PDF profile, outstanding termination, no beta GET, nonterminal IO and no outcome. It only permits UNKNOWN with proofNULL; Source guard only accepts IO_ACTIVE->IO_UNKNOWN with all other fields unchanged and no finished time. No broader terminal mutation, provider resend, reset or new attempt is authorized.",
+    "Definitions stay SourceWriter-owned/internal with explicit ACL checks. New boolean bridges are ExecutionWriter-only, not Gateway EXECallow. These new EXEC differences remain protected installation scope, not ordinary coding permission.",
+    "Proof renderer verifies22exact private preimage definition SHA values, derives precise overload identity, validates unchanged prosrcMD5 and single-match substitutions, then CREATE OR REPLACE via current definition. Pinned tails/identity logic retained; final OID/Owner/ACL full installation envelope is still separately required.",
+    "All six candidate manifest hashes independently match fixed Git blobs;22local private function hashes verified without copying raw definitions into Git."
+  ],
+  "validationReused": {
+    "focusedBackendTests": 104,
+    "strictRoots": 21,
+    "seededOwningPG": [
+      "Source actual codec/hash and exact command qualification",
+      "SELECT-only scope shared/exclusive close concurrency and postclose deny",
+      "PDF actual Source enter frozen-command/durable-operation frame, forged digest/expiry deny",
+      "seeded actual PDF seal/map/hash/current-material and immutable VERIFY-result registration-slot proof",
+      "seeded actual PNG upload/VERIFY/execution proof, tamper and postclose positive-write deny",
+      "actual mixed Run/Input insert guards and retained reader after scope removal",
+      "Actual PDF/PNG/TEXT ACQUIRE Source/Representation/journal/immutable receipts, exact replay and independent row readback; retained receipt after scope removal",
+      "Actual PDF RUNNING and STARTING execute -> ExecutionWriter -> Source observe -> journal guard post-close UNKNOWN-only with current CHECKs/triggers",
+      "All three QA150 real command immutable codecs/hash/bindings; no real Actor grant/write",
+      "Generated exact three-argument function replacement with four-argument overload present"
+    ],
+    "seededOwningPGLimits": [
+      "Seeded upload/seal/execution proof records; no physical upload/Worker/Hosted E2E",
+      "Current metadata reproduced only for tested columns/CHECKs/triggers/RLS; not complete PDF V4 schema installation acceptance",
+      "No Native parse/Review/Save E2E"
+    ]
+  },
+  "releaseAndExecutionConditions": [
+    "Freeze the complete actual post-ACQUIRE future command/CAS plan and unique PDF registration slot before execution; current evidence explicitly says this remains pending.",
+    "Root2 must provide final exact installation forward/reverse CAS: current function full preimages/OID/Owner/ACL/config, two intended ExecutionWriter bridges, table scope configuration, failure rollback and safe close. Definitions-only renderer is not this envelope.",
+    "Fresh precise Owner execution authorization and actual normal Actor/Trip/Source/Provider/price/budget/expiry/timer/close qualification are required. Old expired window is not reusable.",
+    "No Worker physical IO, Hosted mixed Source->Interpretation->Review->Save, Independent readback or Native recovery PASS inferred from seeded PG/local tests."
+  ],
+  "reviewerActions": [
+    "Only fixed SQL/renderer, direct Source proof/registration/lookup/negative-scope callers and bounded safe evidence inspected.",
+    "No suite/large-test rerun, Hosted query/install/deploy/SQL/business/Provider/device action or LaneC/main edit."
+  ]
+}

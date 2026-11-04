@@ -148,6 +148,10 @@ export function createSourcePdfV2Registration(
             actorAccountId: accountId,
             tripId,
             sourceId: q.source_id,
+            commandFrame: {
+              command:
+                q as unknown as import("../../src/domain/trip/tripCoreV2Json").Json,
+            },
           });
         const attempt = randomUUID();
         const context = (
@@ -218,6 +222,10 @@ export function createSourcePdfV2Registration(
             actorAccountId: accountId,
             tripId,
             sourceId: request.sourceId,
+            commandFrame: {
+              pdfRegistration:
+                request as unknown as import("../../src/domain/trip/tripCoreV2Json").Json,
+            },
           });
         const original = (
           await lease.query(

@@ -219,7 +219,9 @@ it.each(["matching", "other-account", "other-trip"])(
         );
         expect(prepare).not.toHaveBeenCalled();
       }
-      expect(await ports.universalImportPort.read(actor, "batch", "task")).toEqual(result);
+      expect(await ports.universalImportPort.read(actor, "batch", "task")).toEqual(
+        result,
+      );
     } finally {
       await runtime?.close();
     }
@@ -377,7 +379,6 @@ it.each(["enabled", "closed", "invalid", "foreign", "expired"])(
   },
 );
 
-
 it("binds retained read-only recovery to request diagnostics and the original Core-held Source port", async () => {
   const actor = randomUUID(),
     trip = randomUUID(),
@@ -437,3 +438,78 @@ it("binds retained read-only recovery to request diagnostics and the original Co
     await runtime?.close();
   }
 });
+
+it.each(["active", "before", "expired"])(
+  "finite private batch chooses existing finite ports and enforces its clock: %s",
+  async (phase) => {
+    const actor = randomUUID(),
+      trip = randomUUID(),
+      now = Date.now();
+    const batch = {
+      actorId: actor,
+      tripId: trip,
+      batchId: randomUUID(),
+      submissionSha256: "a".repeat(64),
+      inputs: [
+        {
+          id: randomUUID(),
+          source_id: randomUUID(),
+          material_revision: 1,
+          representation_id: randomUUID(),
+          payload_sha256: "b".repeat(64),
+          byte_count: 92,
+          observed_source_row_revision: 1,
+          historical_selection: false,
+        },
+      ],
+    };
+    const selection = { priceScheduleId: randomUUID() };
+    f.auth.mockResolvedValue({ id: actor });
+    f.config.mockResolvedValue({
+      taskDatabase: "/unused-test.db",
+      finiteNative: {
+        version: 1,
+        batch,
+        selection,
+        startsAt: new Date(now + (phase === "before" ? 60000 : -60000)).toISOString(),
+        expiresAt: new Date(now + (phase === "expired" ? -1000 : 120000)).toISOString(),
+      },
+    });
+    const runtime = await loadDevUniversalContinuousRuntime({
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    });
+    try {
+      await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer LOCAL_FIXTURE_ONLY" },
+        }),
+        actor,
+        trip,
+      );
+      const options = f.host.mock.calls.at(-1)![0];
+      expect(options.finiteBatch).toMatchObject(batch);
+      expect(options.finiteDeadline).toBeDefined();
+      if (phase === "active")
+        expect(() => options.assertNewExecutionAllowed()).not.toThrow();
+      else
+        expect(() => options.assertNewExecutionAllowed()).toThrow(
+          "UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED",
+        );
+      // Metadata selection is inert even after expiry; reserve/dispatch remain owning gates.
+      expect(
+        await options.selectProvider({ ...options.finiteBatch, owningBinding: {} }),
+      ).toBe(selection);
+      await expect(
+        options.selectProvider({
+          ...options.finiteBatch,
+          batchId: randomUUID(),
+          owningBinding: {},
+        }),
+      ).rejects.toThrow("UNIVERSAL_BINDING_SCOPE");
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(f.claim).not.toHaveBeenCalled();
+    } finally {
+      await runtime?.close();
+    }
+  },
+);

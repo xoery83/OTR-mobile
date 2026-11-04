@@ -16,10 +16,19 @@ import { ledgerBootstrapResponseSchema } from "../../src/data/api/ledgerReadCont
 import type { PublicationCatalogConnection } from "./tripPublicationCatalogRead";
 import {
   createUniversalBatchSource,
+  universalProviderBatchContext,
+  universalProviderOwningContext,
+  type UniversalProviderBatchContext,
   type UniversalRunBinding,
 } from "./universalBatchSource";
 import type { UniversalSourceTask, UniversalSourceMetadata } from "./universalSourceRead";
-import type { UniversalManifest } from "./universalImport";
+import {
+  type UniversalManifest,
+  prepareUniversalDispatch,
+  sealedUniversalDispatchMarker,
+  UNIVERSAL_IMPORT_VERSION,
+  type UniversalResult,
+} from "./universalImport";
 import { createUniversalSourceReader } from "./universalSourceRead";
 import { universalBindingDiagnostic } from "./universalBindingDiagnostic";
 import {
@@ -37,12 +46,6 @@ import {
 import { createUniversalContinuationHost } from "./universalContinuationHost";
 import { readUniversalCatalog } from "./universalCatalog";
 import { persistenceDigest } from "./externalIntegrationPersistence";
-import {
-  prepareUniversalDispatch,
-  sealedUniversalDispatchMarker,
-  UNIVERSAL_IMPORT_VERSION,
-  type UniversalResult,
-} from "./universalImport";
 import { recoverSettledUniversalTask } from "./universalSettledRecovery";
 import { createUniversalTaskReceiptChecks } from "./universalTaskReceipt";
 import type { UniversalPriceSchedule } from "./universalDeepSeekProvider";
@@ -73,13 +76,17 @@ export type UniversalPublishedResult = {
 // SQLite/WakeQueue and protected Source/Provider authorities. No timer or parallel queue.
 export function createUniversalContinuousHost(deps: {
   enabled?: boolean;
+  finiteBatch?: ReturnType<typeof universalProviderBatchContext>;
+  finiteDeadline?: string;
   context: AccountRequestContext;
   assertCurrentAuth(): Promise<void>;
   assertNewExecutionAllowed?(): void;
   db: ReturnType<typeof universalTaskDatabase>;
   catalogConnection: PublicationCatalogConnection;
   bootstrapLedger(): Promise<unknown>;
-  selectProvider(): Promise<z.infer<typeof universalContinuousSelectionSchema>>;
+  selectProvider(
+    binding: UniversalProviderBatchContext,
+  ): Promise<z.infer<typeof universalContinuousSelectionSchema>>;
   runtime: Runtime & {
     stores: Runtime["stores"] &
       Pick<
@@ -118,6 +125,7 @@ export function createUniversalContinuousHost(deps: {
   };
   const source = createUniversalBatchSource({
     enabled: deps.enabled,
+    finiteBatch: deps.finiteBatch,
     connection: deps.runtime.sourceConnection,
     authorize: async (a, t) => {
       if (a !== actor || t !== trip) throw Error("SOURCE_ACCESS_DENIED");
@@ -126,7 +134,7 @@ export function createUniversalContinuousHost(deps: {
   });
   const sourceReader = createUniversalSourceReader({
     connection: deps.runtime.sourceConnection,
-    continuous: true,
+    continuous: !deps.finiteBatch,
     diagnosticRequestId: deps.sourceReadRequestId,
     readBinary: deps.runtime.readBinary,
   });
@@ -405,7 +413,9 @@ export function createUniversalContinuousHost(deps: {
   return {
     async prepare(raw: unknown) {
       await executionCurrent();
-      const selection = await deps.selectProvider();
+      const selection = await deps.selectProvider(
+        universalProviderBatchContext(actor, trip, raw),
+      );
       await executionCurrent();
       const binding = await source.prepare(actor, trip, raw),
         prior = await existing(binding);
@@ -436,7 +446,12 @@ export function createUniversalContinuousHost(deps: {
           transform_sha256: p.pdfSource?.transformOptionsSha256 ?? null,
         })),
       });
-      const draft = await buildUniversalRegisteredTaskDraft(binding, manifest, selection);
+      const draft = await buildUniversalRegisteredTaskDraft(
+        binding,
+        manifest,
+        selection,
+        deps.finiteDeadline,
+      );
       if (Date.parse(draft.task.policy_snapshot.deadline!) <= Date.now())
         throw Error("UNIVERSAL_TASK_EXPIRED");
       const catalog = await readUniversalCatalog(
@@ -603,12 +618,15 @@ export function createUniversalContinuousHost(deps: {
         phase = "MANIFEST_READ";
         const manifest = await readManifest(state.task);
         phase = "PROVIDER_SELECTION";
-        const selection = await deps.selectProvider();
+        const selection = await deps.selectProvider(
+          universalProviderOwningContext(state.binding),
+        );
         phase = "TASK_DRAFT";
         const draft = await buildUniversalRegisteredTaskDraft(
           state.binding,
           manifest,
           selection,
+          deps.finiteDeadline,
         );
         if (
           immutable(draft.task, taskMutableColumns) !==
@@ -651,11 +669,13 @@ export function createUniversalContinuousHost(deps: {
           repository: repository(state.task, admitted),
           requestMaterialByteCount: draft.marker.length,
           ...deps.runtime,
-          continuousSource: true,
-          continuousProvider: {
-            priceScheduleId: draft.selection.priceScheduleId,
-            providerRequestSha256: request.requestSha256,
-          },
+          continuousSource: !deps.finiteBatch,
+          continuousProvider: deps.finiteBatch
+            ? undefined
+            : {
+                priceScheduleId: draft.selection.priceScheduleId,
+                providerRequestSha256: request.requestSha256,
+              },
           assertCurrentAuth: executionCurrent,
         });
         if (!runtime.universalImportPort) throw Error("UNIVERSAL_PROVIDER_CLOSED");

@@ -69,6 +69,28 @@ function fixture(n = 1) {
     selection,
   };
 }
+it("caps both preparation and replay at the same private finite deadline", async () => {
+  const f = fixture(),
+    deadline = new Date(Date.parse(f.binding.createdAt) + 120000).toISOString();
+  const first = await buildUniversalRegisteredTaskDraft(
+    f.binding,
+    f.manifest,
+    f.selection,
+    deadline,
+  );
+  expect(first.task.policy_snapshot.deadline).toBe(deadline);
+  expect(
+    await buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection, deadline),
+  ).toEqual(first);
+  await expect(
+    buildUniversalRegisteredTaskDraft(
+      f.binding,
+      f.manifest,
+      f.selection,
+      f.binding.createdAt,
+    ),
+  ).rejects.toThrow("EXPIRED");
+});
 it.each([1, 3, 6])(
   "constructs deterministic %s-Source normal Task using actual Run identities without finite QA assumptions",
   async (n) => {
