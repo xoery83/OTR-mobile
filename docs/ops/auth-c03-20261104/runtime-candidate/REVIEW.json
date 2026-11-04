@@ -1,0 +1,18 @@
+{
+  "status": "SCOPED_NO_BLOCKER_C03_DEFAULT_CLOSED_RUNTIME_ROUTE",
+  "independentReviewer": "auth_phase1_review",
+  "newFocusedTests": 8,
+  "independentTestsPassed": 8,
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "diffCheck": "PASS",
+  "defaultPort": "ABSENT_PROFILE_CLOSED",
+  "runtimeBootstrapInvocations": 0,
+  "hostedActions": 0,
+  "newPermissions": false,
+  "sharedPatch": "Same16 tested added lines rebased mechanically onto Root1 reference main; git apply --check PASS in disposable snapshot only; no main change",
+  "finalArtifactReview": "SCOPED_NO_BLOCKER_C03_FINAL_HANDOFF_ARTIFACT",
+  "manifestSHA256": "1435bc0c8de8db49222947e39b36500c2d7fed0e29e4ab89ed5063f81ea48693",
+  "independentPatchReplay": "Same16 additions and exact reference-main result in memory; no test rerun",
+  "productAndTestHashesVerified": 12
+}

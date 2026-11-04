@@ -1,0 +1,50 @@
+{
+  "referenceMain": "43280495efdb2b0229a53d566d8dffde2012088f",
+  "files": [
+    {
+      "path": "backend/src/privateAccountProfile.ts",
+      "candidateSHA256": "f8e52042dd9dd6ed5bde84fcb96f17022b7dac717be14d1851974564ba26c49a",
+      "root1Reference": "ABSENT"
+    },
+    {
+      "path": "backend/src/privateAccountProfileSupabase.ts",
+      "candidateSHA256": "85ffc35b1acea0b0f065bfeccb406f68698ad7939e7a87276767271fb22f6abb",
+      "root1Reference": "ABSENT"
+    },
+    {
+      "path": "backend/src/privateAccountProfileRuntime.ts",
+      "candidateSHA256": "674b671c4cb2436a9431ccefab53746925e23264b0718e5d5771c8b88f64a006",
+      "root1Reference": "ABSENT"
+    },
+    {
+      "path": "src/data/api/privateAccountProfileContracts.ts",
+      "candidateSHA256": "4eadd4fed34bf17b84b98f9297e560f7d3ca10ac1297fe42cc7ba30fbe6ac970",
+      "root1Reference": "ABSENT"
+    },
+    {
+      "path": "src/domain/auth/privateAccountProfile.ts",
+      "candidateSHA256": "ef018e22bedf29d7fe4fd0a8933154f9684524c7d28d14dd13d9f78b0c00542a",
+      "root1Reference": "ABSENT"
+    },
+    {
+      "path": "backend/src/authResourceTokenBoundary.ts",
+      "candidateSHA256": "36dce66d1132d5fe66fb808bd0e87a9e73d41c1602277e2af1278d16edd1cfa7",
+      "root1Reference": "SAME",
+      "root1ReferenceSHA256": "36dce66d1132d5fe66fb808bd0e87a9e73d41c1602277e2af1278d16edd1cfa7"
+    },
+    {
+      "path": "src/data/auth/devSupabasePublicKey.ts",
+      "candidateSHA256": "84a8427641a40a7cc9ad0c21ba980337ea825f0f1fadbbe31804b65a6856a664",
+      "root1Reference": "SAME",
+      "root1ReferenceSHA256": "84a8427641a40a7cc9ad0c21ba980337ea825f0f1fadbbe31804b65a6856a664"
+    },
+    {
+      "path": "backend/src/authAccountQualification.ts",
+      "candidateSHA256": "f3b70789e5dcb4012b056bc6df3264c71e40c5783657f0b09965c3fa0e3498b3",
+      "root1Reference": "SAME",
+      "root1ReferenceSHA256": "f3b70789e5dcb4012b056bc6df3264c71e40c5783657f0b09965c3fa0e3498b3"
+    }
+  ],
+  "notWholeAppReplacement": true,
+  "rawDependencyBlobsSource": "Fixed Auth candidate Git objects, no copying from other Worktree or uncommitted main"
+}

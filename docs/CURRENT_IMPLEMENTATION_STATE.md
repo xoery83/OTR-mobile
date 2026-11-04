@@ -132,9 +132,18 @@ and `recovery-timeout-20261103`; do not rerun them without a changed failure.
    Root1 owns canonical implementation; exact protected install belongs to Root2.
    Generic404/503 is not revocation proof. Native must receive an authoritative
    B-scoped loss observation and use its own context plus actual Core revision.
-4. **C03/Profile.** Local Profile/AKA and operation recovery/connection projection
-   candidates are preserved; private Cloud Profile/TripNickname mutation remains
-   a separate owning/permission gap. Do not substitute bootstrap/Claim authority.
+4. **C03/Profile.** Exact contract packet2394b935 accepted by Root1. Auth now
+   has a reviewed default-closed Runtime + exact optional Profile route candidate
+   (8 changed tests/typecheck/lint and independent8/8 PASS). Only16 shared app
+   insertions; reference-main43280495 patch replay/result verified independently.
+   Five Auth-owned Profile dependencies absent from that main are pinned for exact
+   blob integration, never whole old app replacement. No Startup/config/port
+   injection, SQL installation or Cloud save. Runtime package is in
+   `docs/ops/auth-c03-20261104/runtime-candidate/`; Root1 source integration next.
+   Private storage c84671f4 still needs separate protected qualification; Nickname
+   self-Person CAS Port and AKA lifecycle remain explicit gaps. Bootstrap/Claim
+   authority is not Profile update. Member Revoke is CONTRACT_READY_FOR_CORE_IMPLEMENTATION,
+   not command/atomic-PG implementation READY.
    `docs/AUTH_CLIENT_INTEGRATION_GAPS.md` is the compact outstanding interface list.
 
 Latest actual MC GET_NEXT_WORK D returned PrimaryC04, nextnull/candidates[]; no

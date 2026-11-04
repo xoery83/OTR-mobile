@@ -42,6 +42,17 @@ const reply = (status: number, body: unknown) =>
 const failure = (status: number, code: string) =>
   reply(status, { error: { code, message: code } });
 
+export function isPrivateAccountProfilePath(path: string) {
+  if (
+    path === privateAccountProfilePath ||
+    path === privateAccountProfilePath + "/operations"
+  )
+    return true;
+  const operation =
+    /^\/v1\/account\/private-profile\/operations\/([^/]+)(?:\/recovery)?$/.exec(path);
+  return operation !== null && coreUuid.safeParse(operation[1]).success;
+}
+
 // Optional owning port only; this module is not mounted by Bootstrap.
 export async function privateAccountProfileBoundary(
   request: Request,
