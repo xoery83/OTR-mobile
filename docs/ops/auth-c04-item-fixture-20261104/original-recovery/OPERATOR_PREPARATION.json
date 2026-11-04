@@ -1,14 +1,14 @@
 {
-  "status": "PREPARED_NOT_EXECUTED",
+  "status": "EXECUTED_GET_ONLY_ORIGINAL_UNKNOWN_RETAINED",
   "script": "scripts/auth/member-claim-original-read.mts",
   "sha256": "7a7f154e1258f272dcc4fb1bc9e5cd3d01956247680d746d95cd06b985d9a301",
   "routeSelfCheck": "PASS_2_ALLOWED_4_DENIED_NO_IO",
   "eslint": "NOT_CHECKED_MTS_OUTSIDE_EXISTING_CONFIG",
   "uses": "Existing normal registered QA Host Session and original-only receipt qualification",
-  "otpRequests": 0,
+  "otpRequests": 1,
   "businessPosts": 0,
   "originalOperation": "f5e13639-4240-4817-bf43-c60a1ea46361",
-  "independentReview": "REQUESTED_BEFORE_EXECUTION",
+  "independentReview": "SCOPED_NO_BLOCKER_FIXED_82DAB468",
   "sourcePersistent": true,
   "credentials": "Process-only exact QA Keychain reader; no stored value",
   "scopedTypecheck": "PASS_NEW_MTS_ROOT_AND_IMPORTS"

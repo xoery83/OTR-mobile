@@ -1,0 +1,32 @@
+{
+  "scope": "NORMAL_OWNER_ORIGINAL_RECEIPT_GET_ONLY",
+  "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+  "operationId": "f5e13639-4240-4817-bf43-c60a1ea46361",
+  "startedAt": "2026-11-04T07:24:23.807Z",
+  "secretsOrOtpRecorded": false,
+  "businessPosts": 0,
+  "phase": "HOST_SESSION_CLEANUP",
+  "requestedAt": "2026-11-04T07:24:23.829Z",
+  "otpRequestAttempts": 1,
+  "messageId": "4e746b2e-65c9-4223-a477-c2eda3b19525",
+  "receivedAt": "2026-11-04T07:24:34.101Z",
+  "method": "GET",
+  "status": "READ_COMPLETED_NO_REPLAY",
+  "requestId": "192ecaeb-2efc-424c-ba29-597fd0d07bee",
+  "durationMs": 10520,
+  "originalRead": {
+    "outcome": "UNKNOWN",
+    "itemObserved": false,
+    "automaticRetry": false
+  },
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "actionCompleted": true,
+  "sessionResult": {
+    "status": "PASS",
+    "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "tripId": "fb2f0820-e429-404a-b4dd-7adcad814e45",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  },
+  "completedAt": "2026-11-04T07:24:55.014Z"
+}

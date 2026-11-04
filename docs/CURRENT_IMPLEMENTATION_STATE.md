@@ -64,7 +64,11 @@ retains guard15fb and helper e2b8. No reinstall needed; this is not new runtime
 or login/write authority. Evidence original-recovery/INSTALL_RETURN_VERIFIED.json.
 This is a proven current blocker, not proof of the original Hosted unique phase.
 Auth runner and original operation stay unchanged; no automatic resubmit.
-Next is current normal-login/read qualification → original receipt-only reconciliation;
+Actual07:24:23–07:24:55Z normal A oneOTP/getUser/read-only recovery completed.
+Original receipt404/NOT_VISIBLE, collection200 qualified Owner binding and no original
+Item; f5e remains UNKNOWN_NO_REPLAY. Own local logout+refresh rejection PASS.
+No businessPOST/window/Revoke. Persistent original-recovery/RECONCILIATION_EVIDENCE.json.
+Next is separate current new-intent/write qualification; never relabel old intent;
 never blindly replay the original operation. Native has released its earlier B
 normalOTP slot; no QA Session is borrowed or kept by Auth.
 
