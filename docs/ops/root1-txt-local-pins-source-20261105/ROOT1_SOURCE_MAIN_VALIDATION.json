@@ -16,10 +16,11 @@
   "packetSHA256": "286c2117e3958bbc100f9b028007d9fb73897521b6360263c81e80dcb22c2382",
   "independentReview": {
     "reviewer": "/root/ui08_review",
-    "fixedCommit": "3b10ecb8fe38c3c7ecf132d773b0c1e525616228",
     "sha256": "e255bcfb88ebdb1687ca8c5bf2f3f8bc60e4a5c63e0c8feecb1fb886c65a127d",
     "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER",
-    "mainArchive": "SOURCE_INDEPENDENT_REVIEW.json"
+    "mainArchive": "SOURCE_INDEPENDENT_REVIEW.json",
+    "reviewedCandidate": "37119bf488ef5c0e851845850d081119ffe39092",
+    "reviewArchiveCommit": "3b10ecb8fe38c3c7ecf132d773b0c1e525616228"
   },
   "actualMainChecks": {
     "helperTests": 50,
