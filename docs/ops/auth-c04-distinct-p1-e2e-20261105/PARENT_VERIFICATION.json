@@ -1,0 +1,52 @@
+{
+  "taskId": "MC-SUBAGENT-20261105-AUTH-DISTINCT-E2E",
+  "executorId": "/root/auth_distinct_p1_e2e_20261105",
+  "result": "PARENT_VERIFIED_SCOPED_HOSTED_E2E_PASS",
+  "verification": "One local evidence/source verification only; no new Auth/HTTP/Receipt request or test",
+  "candidateAtExecution": "04bf6c908617e4135ec2a21e9a8c73698d02aa0d",
+  "childEvidenceCommit": "5fee89da",
+  "childHandoffCommit": "75978389",
+  "checks": {
+    "fixedCandidateManifest": true,
+    "all14SourceArtifacts": true,
+    "sealedChildEvidence": true,
+    "sealedArtifacts": true,
+    "reservationRetained": true,
+    "formalRoot2Qualification": true,
+    "window600sAndCompletedInside": true,
+    "oneExactPhysicalPost": true,
+    "noOldUnknownRequests": true,
+    "allBusinessAuthCallsInsideWindow": true,
+    "twoDistinctNormalIdentities": true,
+    "singleOtpEach": true,
+    "ownCleanupHttp": true,
+    "validatedReceiptEvent": true,
+    "threeIndependentReadResponses": true,
+    "fixedRunnerSemanticReadAssertions": true,
+    "cursorClosedAndNoActiveLock": true
+  },
+  "recordedAt": "2026-11-04T18:25:46.462046+00:00",
+  "actualT": "2026-11-04T18:14:37.543Z",
+  "actualD": "2026-11-04T18:24:37.543Z",
+  "completedAt": "2026-11-04T18:16:04.129Z",
+  "operationId": "41e8f597-cdba-4892-93a2-2ce77e95522e",
+  "receiptId": "4402369b-cf16-4ef3-8387-ae6baa15a04f",
+  "receiptSha256": "ac43531191a2af12515068a58b72beaba9837c201d74223b06ff61d59561fc43",
+  "evidenceSha256": "e26ce832516c0dc5f093e565c7415e91c09577aa96128ad2948a01fdaa9c1c22",
+  "limitations": [
+    "Raw FULL receipt/collection response bytes not retained; cannot independently recompute receipt/collection hashes from raw bytes. Parent matched sealed trace to unchanged typed transport and semantic assertion source, not a new server read.",
+    "Private Item isolation not proved without qualified fixture",
+    "Native cold restore/Device/Owner UX NOT_RUN",
+    "Not whole AUTH-C04 PASS"
+  ],
+  "remainingGateForThisFixedHostCase": null,
+  "scopeQualification": {
+    "SOURCE": "PASS_FIXED_04BF_REVIEWED_MANIFEST14",
+    "HOSTED": "PASS_ONE_NORMAL_OWNER_P1_RECEIPT_AND_A_B_MEMBER_READ_ONLY",
+    "CONSUMER": "PASS_PROGRAMMATIC_HOST_RUNNER_NOT_NATIVE",
+    "DEVICE": "NOT_RUN_NOT_REQUIRED_FOR_THIS_HOST_CASE",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "parentLiveActions": 0,
+  "status": "INTENTIONAL_STOP"
+}
