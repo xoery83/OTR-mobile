@@ -1,0 +1,42 @@
+{
+  "candidate": "9cc8ea930bf2eae237b3c286d526eb4d99ccdb4e",
+  "origin": "Native source tree native-guest-readonly-owner-20261105",
+  "reviewer": "Auth parent",
+  "reviewerThread": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "verdict": "NO_BLOCKER_FOR_READONLY_INITIALIZED_GUEST_OWNER_SOURCE_ONLY",
+  "receiptGeneratedAt": "2026-11-05T03:21:58.501980+00:00",
+  "originalReviewTime": null,
+  "basis": "Auth parent previously actually read CANDIDATE.json, complete EXACT_SOURCE_DIFF hunks,5newtests, getterbody and original databaseConnection.readInitialized. This child only persists that completed review, does not rerun/review.",
+  "hashVerificationByParent": {
+    "src/data/auth/guestLocalWorkspace.ts": "beee5df2e9536f902438877ba23127d710de69895177be58d2e66b0edad4dcac",
+    "directTest": "2428af8647745df168d7c87210ddcc505fdedfbedbc042dc460488838c8d7bb6",
+    "EXACT_SOURCE_DIFF": "f45667de9ec0e21515aedad22868445a00d49fca531b1b1062f7f057d5076f64",
+    "result": "MATCH"
+  },
+  "confirmed": [
+    "Samefactory/singleton/databasesmap, no newMap",
+    "readInitialized throws if no existingpromise; otherwise returns that exact existingpromise, may await already-started initialization but never starts one",
+    "Principal/generation/publication/freeze guards before/after acquisition and each reader",
+    "Returnsurface only scope/readCensus/readCaptureInventory, no rawDB/Session",
+    "No open/migrate/recovery/freeze mutation",
+    "Normalopen body unchanged according to parentcomplete diff review; no independently recomputed ddb bodySHA claim"
+  ],
+  "tests": {
+    "authorTestsReused": 9,
+    "ParenttestsRerun": false,
+    "childTestsRerun": false
+  },
+  "actionsThisReceipt": {
+    "NativeTreeCodeWrites": 0,
+    "actualDB": 0,
+    "device": 0,
+    "network": 0,
+    "credentials": 0
+  },
+  "limitations": [
+    "Not emptydataset/Adoption/Bidentity/QAauthority proof",
+    "Source-only Nativegetter review; actualconsumer/runtime acceptance separate",
+    "App9linepatch not integrated: last confirmedmaina857; Root1approval reevaluation not bypassed"
+  ],
+  "SourceIntegrationAuthority": "No new deployment/SQL/runtime/window authority. Native uniqueWriter retained."
+}
