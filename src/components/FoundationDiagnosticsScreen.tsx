@@ -5,11 +5,28 @@ import type { UiColors } from "@/ui/palette";
 import { UiTextInput as TextInput } from "@/ui/forms";
 import { LocalOperationsDiagnostics } from "./LocalOperationsDiagnostics";
 import { UiFoundationFixture } from "@/ui/UiFoundationFixture";
-import { lazy, Suspense, useCallback, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useFocusEffect } from "expo-router";
 import { readDiagnosticsDebugMode } from "@/data/repositories/defaultLedgerReportingRepository";
 import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import { UiButton, UiSection, UiText } from "@/ui/controls";
+import {
+  readCurrentNativeQaPreOtpCensus,
+  projectNativeQaPreOtpCensus,
+} from "@/data/operations/nativeQaPreOtpCensus";
 
 import { useFoundationDiagnostics } from "@/hooks/useFoundationDiagnostics";
 
@@ -18,6 +35,83 @@ const NativeTripQaDiagnostics = lazy(() =>
     default: module.NativeTripQaDiagnostics,
   })),
 );
+
+// Independent explicit QA read. Never shares the normal refresh/sync/Auth handler.
+export function NativeReadonlyQaCensusSection() {
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+    getAccountGeneration,
+  );
+  const [result, setResult] = useState<{
+    generation: number;
+    projection: ReturnType<typeof projectNativeQaPreOtpCensus>;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const state = useRef({ active: false, ticket: 0, busy: false });
+  useFocusEffect(
+    useCallback(() => {
+      const current = state.current;
+      current.active = generation === getAccountGeneration();
+      current.ticket++;
+      current.busy = false;
+      setBusy(false);
+      setResult(null);
+      return () => {
+        current.active = false;
+        current.ticket++;
+      };
+    }, [generation]),
+  );
+  async function read() {
+    const current = state.current;
+    if (!current.active || current.busy) return;
+    current.busy = true;
+    const ticket = ++current.ticket;
+    const expectedGeneration = getAccountGeneration();
+    setBusy(true);
+    setResult(null);
+    try {
+      const value = projectNativeQaPreOtpCensus(await readCurrentNativeQaPreOtpCensus());
+      if (
+        current.active &&
+        current.ticket === ticket &&
+        expectedGeneration === getAccountGeneration()
+      )
+        setResult({ generation: expectedGeneration, projection: value });
+    } catch {
+      if (
+        current.active &&
+        current.ticket === ticket &&
+        expectedGeneration === getAccountGeneration()
+      )
+        setResult({
+          generation: expectedGeneration,
+          projection: projectNativeQaPreOtpCensus({
+            status: "UNKNOWN",
+            reason: "OWNER_READ_FAILED",
+          }),
+        });
+    } finally {
+      if (current.ticket === ticket) {
+        current.busy = false;
+        if (current.active) setBusy(false);
+      }
+    }
+  }
+  return (
+    <UiSection title={t("diagnostics.title")}>
+      <UiButton
+        label={t("operations.refresh")}
+        disabled={busy}
+        onPress={() => void read()}
+      />
+      {result?.generation === generation ? (
+        <UiText selectable>{JSON.stringify(result.projection, null, 2)}</UiText>
+      ) : null}
+    </UiSection>
+  );
+}
 
 export function FoundationDiagnosticsScreen() {
   useUiLocale();
@@ -68,6 +162,9 @@ export function FoundationDiagnosticsScreen() {
       >
         {transportMode === "dev" && debugMode ? <UiFoundationFixture /> : null}
         <Text style={styles.title}>{t("diagnostics.title")}</Text>
+        {process.env.EXPO_PUBLIC_OTR_NATIVE_READONLY_CENSUS_ENABLED === "true" ? (
+          <NativeReadonlyQaCensusSection />
+        ) : null}
         {error ? <Text style={styles.value}>{error}</Text> : null}
         {diagnostics ? (
           <View style={styles.list}>

@@ -1,0 +1,53 @@
+{
+  "status": "LOCAL_PREPARED_NOT_PUSHED",
+  "base": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+  "candidate": "5408b12004a04b06047550a3d710d7503dc3bf9b",
+  "exactProductLeaves": [
+    {
+      "path": "src/data/operations/nativeQaPreOtpCensus.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "f7cdd6030de2e6b58dd500709272baac4a56a88c",
+      "candidateSha256": "bc24deeab0b3c304c81d1446b1b0d4d2b59cd0be958fc579d85a308a1589bc39"
+    },
+    {
+      "path": "src/data/operations/nativeQaPreOtpCensus.test.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "d7d3c74f5e995413caa6219f7b5f81f642476ccb",
+      "candidateSha256": "b022ab072ca15cec3bd2c932fb4e77dbb511e4e574258aeeaf1b5fbdd974dac1"
+    },
+    {
+      "path": "src/components/FoundationDiagnosticsScreen.tsx",
+      "baseBlob": "44a06e35fd6d401234aebd1ed55e8d5561e78c1d",
+      "candidateBlob": "cea68821f88c49dd4de3d402dcf182dbc12ad7ef",
+      "candidateSha256": "2232b545572a356fc621e9ffe63877e18202e18bfc9eb09268d758701f9f6400"
+    },
+    {
+      "path": "src/components/FoundationDiagnosticsScreen.readonlyQa.test.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "8abae3be614ae5332d70674eb02adebd55a5cf85",
+      "candidateSha256": "9d77dd5b4e55791d1e8a2c4f9885a5cef644f9e41077c95a10529211e4ebab6f"
+    }
+  ],
+  "currentOwnerDependenciesSHA256": {
+    "src/data/auth/guestDraftInventory.ts": "14e17b6c33c422df8d90c885c6b36304263790c6bd7f9a2e27f1b6e5615f0099",
+    "src/data/auth/guestLocalWorkspace.ts": "beee5df2e9536f902438877ba23127d710de69895177be58d2e66b0edad4dcac",
+    "src/data/sync/syncOperationRepository.ts": "d7d5f351c334715eb6f19a79ce450f455582bd0a4b8536f93bd560745a819f61",
+    "src/data/repositories/corePendingIntentCensus.ts": "9518c87d9556dd665561fc490a15ad3becce4c7700d4be15e307aef8b680db88"
+  },
+  "sourceManifestSHA256": "5d928e4c2ac3c7c5fe70eaf11818c367b348b7cadaec9e257d15357e0939cef4",
+  "independentReviewSHA256": "2a9ff87d6d577989b0c79cc601de9be136c2d0271d3f931526c93c5090495007",
+  "actualAssembly": {
+    "focused4rootTypes": "PASS",
+    "focused4rootLint": "PASS",
+    "uiGuard": "PASS 473legacy/168representative",
+    "diff": "PASS",
+    "testsRerun": false,
+    "reused": "Author20; independent2suites5PASS15skip, not20independent",
+    "initialTypesSetup": "tmp config type resolution TS2688; relocated focused config under worktree resolves installed types; actual rerun PASS"
+  },
+  "noSourceBeyondFourLeaves": "No new AuthStartup/Wrapper/CoreComposition/activation artifacts; base includes only already published dependencies",
+  "offlineBuildUse": "Native may read this fixed tree/commit for isolated offline JS build; may not modify this tree or push it",
+  "mainRefOrPush": false,
+  "hostedSqlProviderDeviceActions": false,
+  "deviceOrCloudPass": false
+}

@@ -1,3 +1,7 @@
+## Native read-only QA diagnostics census source — 5 November 2026
+
+Native 126bbf6b four product files and fixed review evidence are assembled with the published owning readers. The diagnostics census requires the explicit opt-in flag and a manual refresh. Unavailable observations remain unknown. Local scoped types, lint and UI guard passed. See `docs/ops/root1-r3-source-main-20261105/STAGE2_VALIDATION.json`.
+
 ## Self nickname explicit port composition source — 5 November 2026
 
 Core 7c19 and the reviewed Auth startup and wrapper patches form the explicit port path. Runtime selection remains default off. The final lease and method guards preserve original-operation recovery after a commit with an unavailable response. R1 independent closure cases and original probe passed. Actual assembled six-root types and lint passed. Root2 qualification remains separate. See `docs/ops/root1-r3-source-main-20261105/STAGE1_VALIDATION.json`.

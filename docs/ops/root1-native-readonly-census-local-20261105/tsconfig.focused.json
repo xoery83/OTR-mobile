@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "../../../src/data/operations/nativeQaPreOtpCensus.ts",
+    "../../../src/data/operations/nativeQaPreOtpCensus.test.ts",
+    "../../../src/components/FoundationDiagnosticsScreen.tsx",
+    "../../../src/components/FoundationDiagnosticsScreen.readonlyQa.test.ts"
+  ],
+  "exclude": [
+    "../../../node_modules"
+  ]
+}

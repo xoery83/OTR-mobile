@@ -1,0 +1,62 @@
+{
+  "base": "aba6fec4fb1d28d0a298d7c9dbc139e391774de0",
+  "candidate": "5408b12004a04b06047550a3d710d7503dc3bf9b",
+  "nativeSourceLeaves": [
+    {
+      "path": "src/data/operations/nativeQaPreOtpCensus.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "f7cdd6030de2e6b58dd500709272baac4a56a88c",
+      "candidateSha256": "bc24deeab0b3c304c81d1446b1b0d4d2b59cd0be958fc579d85a308a1589bc39"
+    },
+    {
+      "path": "src/data/operations/nativeQaPreOtpCensus.test.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "d7d3c74f5e995413caa6219f7b5f81f642476ccb",
+      "candidateSha256": "b022ab072ca15cec3bd2c932fb4e77dbb511e4e574258aeeaf1b5fbdd974dac1"
+    },
+    {
+      "path": "src/components/FoundationDiagnosticsScreen.tsx",
+      "baseBlob": "44a06e35fd6d401234aebd1ed55e8d5561e78c1d",
+      "candidateBlob": "cea68821f88c49dd4de3d402dcf182dbc12ad7ef",
+      "candidateSha256": "2232b545572a356fc621e9ffe63877e18202e18bfc9eb09268d758701f9f6400"
+    },
+    {
+      "path": "src/components/FoundationDiagnosticsScreen.readonlyQa.test.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "8abae3be614ae5332d70674eb02adebd55a5cf85",
+      "candidateSha256": "9d77dd5b4e55791d1e8a2c4f9885a5cef644f9e41077c95a10529211e4ebab6f"
+    }
+  ],
+  "requiredOwnerDependencies": [
+    {
+      "owner": "Auth participant census",
+      "sourceMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+      "source": "41208b2239dc56e50053d2dd527c76d56ebe9105",
+      "exactDependencyCommit": "5ffcafd4",
+      "sourceSHA256": "14e17b6c33c422df8d90c885c6b36304263790c6bd7f9a2e27f1b6e5615f0099"
+    },
+    {
+      "owner": "Native sync operations metadata",
+      "sourceMain": "7ec44ffbe6114746b4489f75976443d33da5d0c3",
+      "source": "8c744b9b1cd06612780239a85140406bb32efdb4",
+      "exactDependencyCommit": "25ecbe91",
+      "binding": "Exact helper/test hunks on older local base; unrelated existing functions retained, not whole-main-file equality"
+    },
+    {
+      "owner": "Auth-delegated initialized Guest owner",
+      "sourceMain": "b94d13290dfcd126c4e85aac10e16e8c1a539684",
+      "source": "9cc8ea930bf2eae237b3c286d526eb4d99ccdb4e",
+      "exactDependencyCommit": "25ecbe91",
+      "binding": "Exact readonly getter/test hunks; no normal opener body changes"
+    },
+    {
+      "owner": "Core pending intent metadata",
+      "sourceMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+      "source": "57d43a837d6d3b6e126c9b03bbef1ed634cbff11",
+      "exactDependencyCommit": "9cb8d2fc",
+      "sourceSHA256": "9518c87d9556dd665561fc490a15ad3becce4c7700d4be15e307aef8b680db88",
+      "testSHA256": "91ba8676e411f7d6726c837a0c87d99bc578fa34c2e364a7092553f42c15a219"
+    }
+  ],
+  "checkedBinding": "Authregistry/Corefilesexacthash;Queueexacthelperhunkmatchesindependent8c;Guestgetterdirectsourceonly,noownerreaudit"
+}

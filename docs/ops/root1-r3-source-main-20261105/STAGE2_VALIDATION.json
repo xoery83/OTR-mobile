@@ -1,0 +1,18 @@
+{
+  "status": "SOURCE_ONLY_ASSEMBLY_MATCH",
+  "approvedLocalCandidate": "126bbf6b5226e3fa0e4aaa50a9740ed5974a219e",
+  "productFiles": {
+    "src/data/operations/nativeQaPreOtpCensus.ts": "bc24deeab0b3c304c81d1446b1b0d4d2b59cd0be958fc579d85a308a1589bc39",
+    "src/data/operations/nativeQaPreOtpCensus.test.ts": "b022ab072ca15cec3bd2c932fb4e77dbb511e4e574258aeeaf1b5fbdd974dac1",
+    "src/components/FoundationDiagnosticsScreen.tsx": "2232b545572a356fc621e9ffe63877e18202e18bfc9eb09268d758701f9f6400",
+    "src/components/FoundationDiagnosticsScreen.readonlyQa.test.ts": "9d77dd5b4e55791d1e8a2c4f9885a5cef644f9e41077c95a10529211e4ebab6f"
+  },
+  "directDependencies": {
+    "src/data/auth/guestDraftInventory.ts": "14e17b6c33c422df8d90c885c6b36304263790c6bd7f9a2e27f1b6e5615f0099",
+    "src/data/auth/guestLocalWorkspace.ts": "beee5df2e9536f902438877ba23127d710de69895177be58d2e66b0edad4dcac",
+    "src/data/sync/syncOperationRepository.ts": "d7d5f351c334715eb6f19a79ce450f455582bd0a4b8536f93bd560745a819f61",
+    "src/data/repositories/corePendingIntentCensus.ts": "9518c87d9556dd665561fc490a15ad3becce4c7700d4be15e307aef8b680db88"
+  },
+  "testEvidence": "Reused actual local candidate types/lint/UIguard and independent5PASS15skip. No product or dependency drift.",
+  "defaultFlag": false
+}

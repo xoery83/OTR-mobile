@@ -1,0 +1,35 @@
+{
+  "status": "NO_BLOCKER_SOURCE_ONLY_READONLY_QA_CONSUMER",
+  "candidate": "5408b12004a04b06047550a3d710d7503dc3bf9b",
+  "manifestSHA256": "5d928e4c2ac3c7c5fe70eaf11818c367b348b7cadaec9e257d15357e0939cef4",
+  "findings": [],
+  "sourceChecks": [
+    "FourNativeleaves exacthashmanifest; noRoute/Startupchanges; Authregistry/Coreformalreaderhashesexact/Queuehunkmatchesindependent8c; Guestinitializedgetterdirectread reviewedwithoutreauditingownerports",
+    "ExistingFoundationDiagnostics DEVroute unchanged; QAflag explicittrueonly/defaultfalse; noQA_SCOPE/generalsync/Login/OTPchange",
+    "IndependentexplicitRefreshonly/noobserveronmount; focus/generation/ticket+singleflight preventsstaleorlateprojection,normalrefreshhandleruntouched",
+    "DefaultconsumerborrowsactualreadInitializedGuestOwner/readInitializedDatabase andrealallaccountQueue/Coremetadatareaders; noneopens/migrates/claims/restores/freezes/snapshotsdrafts/network",
+    "Accountuninitialized/schema/drivererrors\u2192AccountUNKNOWN/null only whilelegitimateGuestcoveragepreserved;actualscopechange stilldiscardsallGuestfacts",
+    "Repeatedprincipal+generationchecks afterownerawaits; datasettablecomparison/registryregistrationVersionrejectABA,wronghandle/missingprincipal/HANDOFFfailunknown",
+    "Registryonly notfullDraft,CoretotalincludesreconciledAPPLIED; UNKNOWN/zero neverNoCommit/wholeappempty/Adoptionauthority",
+    "UIallowlistdropsGuestUUID/AccountIDs/registrycontext/rawerrors/ownerbody; onlyfixedreason/status/KIND/safeGeneration/booleans/counts+coverage",
+    "Hostfactsneverreadorinserted;externalfilesmissingUnknownpreserved; noAdoptionlease/crossprocessscopeinference"
+  ],
+  "independentValidation": {
+    "result": "2suites5PASS15skip;333ms;2026-11-05 17:04:43local",
+    "cases": [
+      "Releaseflagdefaultoff/noreadmount",
+      "ActualdefaultcompositionusesbothrealQueue/Coremetadatafunctionswithownedmockhandle",
+      "MissinginitializedAccountDBkeepsGuestfacts+AccountUNKNOWN/null",
+      "UIaccountgenerationswitchdropslateresponse",
+      "PrivacyprojectiondropsIDs/context/unknownrawreason"
+    ],
+    "notCounted": "Author20/types/lint/UIguard reusednotindependent; noAuthhistoricalorHosthelperrerun"
+  },
+  "limits": [
+    "Sourceonlynotbundled/installed/calledin14752; noactualdevice/privateDB/physicalFS/OTP/Hostread",
+    "InitializedGuestowner/Core/privatecache/wholeAppemptycompletecoverage notcreatedbyconsumer",
+    "Fiveobserverchecksarenottransactional/globalquiescenceorcrossprocesslease",
+    "Requiredownerportsmustbeintegratedbeforefourleafconsumer; manifestlistsdependencyqualification",
+    "NoProductedits/metadata/main/build/Source/Provider/Cloudauthority"
+  ]
+}
