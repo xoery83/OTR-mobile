@@ -1,0 +1,36 @@
+{
+  "status": "SOURCE_ONLY_UNMOUNTED_DEFAULT_CLOSED_AUTH_HTTP_PASS",
+  "parentMain": "2f53ffc9cbd8839791e89d05c6933a9bd35dad59",
+  "candidate": "1831018a57da204a63526a96d90c7627df608911",
+  "AuthDocs": "d32862fd",
+  "packetSHA256": "60a9d7ecf34a3d23b73a2a73dc45b471e857d33b62ae17ddc82d82a546122401",
+  "reviewSHA256": "dd13bf0a4e9e8ea0e0240a28ab30e6b894a849a97fd26b81980fcee9ccfa0b32",
+  "twoAuthLeafSHA256": {
+    "backend/src/selfTripNicknameHttp.ts": "329d473cca69a285b68244f7e365e055f72c9ccd2ff3bd7a603310c650dc6e88",
+    "backend/src/selfTripNicknameHttp.test.ts": "1af6503f3c8f603457eb0080773ed29181da92df81786045a080c88d790077cc"
+  },
+  "publishedPGDependency": {
+    "main": "2f53ffc9cbd8839791e89d05c6933a9bd35dad59",
+    "path": "backend/src/tripPersonSelfNicknamePg.ts",
+    "SHA256": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+    "preservedNotAuthOwned": true
+  },
+  "canonicalSHA256": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+  "actualChecks": {
+    "twoRootScopedTypesWithActualAppGatewayAndPGPort": "PASS",
+    "twoRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "normalAuthRuntimeFunction": "Exact exported authenticateNormalAccount byte-identical Auth candidate; actual Gateway validateAccessToken(token)->Promise<AuthenticatedUser|null>, normal qualifier unchanged",
+    "threeDirectQualificationBoundaryCoreSchemaDeps": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reused": "Author38 direct HTTP mocks plus independent static parentReview; no actual ABI drift so no repetitive38 rerun. Not claimed independently executed here.",
+  "semantics": "Only two unmounted handler/test leaves. Existing normal JWT verifier selects actor; strict original canonical command/recovery and typed Core read/execute/recover dispatch. Optional port absent returns closed; canceled/unavailable/UNKNOWN never fallback write or new operation.",
+  "preserved": [
+    "app.ts/authenticate/bootstrap/startup/config unchanged",
+    "PG port and SQL source unchanged",
+    "canonical domain files unchanged",
+    "Auth Draft/Repo and all Native/Import product unchanged"
+  ],
+  "Root2Install": "NOT_READY, actual preimages/ACL/defaultpriv/trigger/gate/EXEC and precise protected authorization still pending. Source integration is not install or Hosted acceptance.",
+  "actions": "Git Source only. No SQL/Host/Auth session/Provider/device/Gate/Cloud business call."
+}

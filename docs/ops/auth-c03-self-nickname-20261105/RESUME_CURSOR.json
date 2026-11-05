@@ -2,7 +2,7 @@
   "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "AUTH_LOCAL_MOCK_PASS_PARENT_REVIEWED_WAITING_FORMAL_CORE_BACKEND_PORT_AND_NATIVE_INTEGRATION",
+  "status": "AUTH_HTTP_SOURCE_PARENT_REVIEWED_WAITING_ROOT1_SERIAL_SOURCE_INTEGRATION",
   "evidenceSHA256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
   "sourceHashes": {
     "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
@@ -20,5 +20,27 @@
     "path": "docs/ops/auth-c03-self-nickname-20261105/PARENT_REVIEW.json",
     "verdict": "NO_BLOCKER_FOR_LOCAL_AUTH_CONSUMER_SOURCE_ONLY",
     "candidate": "a2ba2bec07b74602664b9010e87aea609802242c"
+  },
+  "httpSlice": {
+    "status": "NO_BLOCKER_FOR_UNMOUNTED_AUTH_HTTP_SOURCE_ONLY",
+    "AuthFiles": [
+      "backend/src/selfTripNicknameHttp.ts",
+      "backend/src/selfTripNicknameHttp.test.ts"
+    ],
+    "evidence": "docs/ops/auth-c03-self-nickname-20261105/HTTP_LOCAL_PREPARATION.json",
+    "evidenceSHA256": "f1ba31ecbce732775af791a3a28b99b51b5f1e225977e861c4fb508c6b5f648a",
+    "CoretypedPort": "FIXED_SIGNATURE_CONSUMED50f0333f read/execute/recover; noABIquestions",
+    "Root1CanonicalMain": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+    "Auth4ConsumerMain": "98e1d3daead2b6d6661a5a477ffc5857591f6ddb",
+    "mount": "NONE_DEFAULTCLOSED",
+    "next": "Root1serialSourceintegration receipt; Root2exactprotectedqualification after actualdependencies and Ownergate, independently from C04freshBprep",
+    "candidate": "1831018a57da204a63526a96d90c7627df608911",
+    "sourceHandoff": "docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json",
+    "freshPreimageRequirements": [
+      "Root1soleSourceWriter confirms currentmain app.authenticateNormalAccount runtime export and DevBackendGateway type; preserve its currentnormalAuth semantics",
+      "Confirm Canonical leaf ac707 and Coretypedport50f or resolve owning revision withRoot1 before consuming; no guessedGatewayABI",
+      "Apply exact2AuthHTTPfiles+docs, not wholeAuthbranch. PGleaf is Root1own dependency: exclude if already onmain, do not overwrite",
+      "No sharedapp/startup/route mount or runtimeconfig/SQL/install/activation is part of thispacket"
+    ]
   }
 }

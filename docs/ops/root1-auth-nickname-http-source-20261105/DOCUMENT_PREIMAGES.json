@@ -1,0 +1,8 @@
+{
+  "docs/ops/auth-c03-self-nickname-20261105/HTTP_LOCAL_PREPARATION.json": null,
+  "docs/ops/auth-c03-self-nickname-20261105/HTTP_UPSTREAM_DEPENDENCY.json": null,
+  "docs/ops/auth-c03-self-nickname-20261105/HTTP_PARENT_REVIEW.json": null,
+  "docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json": null,
+  "docs/ops/auth-c03-self-nickname-20261105/RESUME_CURSOR.json": "371660974fa06ca9f84e8a0c1c9ec6b74f42c55f873b4063324aebf022f7f831",
+  "docs/ops/mc-events/auth-c03-self-nickname-local-20261105.json": "634b1637bd8f94f362e0b22aa33bad1064af612fb3a49d5425db7150684d7621"
+}

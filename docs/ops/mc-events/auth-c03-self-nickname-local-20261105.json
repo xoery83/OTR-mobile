@@ -11,19 +11,36 @@
       "child_id": "/root/auth_distinct_p1_e2e_20261105",
       "summary": "ActuallocalAuthdraft/omission/originalinput/receiptbinding candidate implemented.17directtests/scopedTS/lintPASS. Canonicalexportpending; noHTTP/Hosted/device;C04Primaryunchanged.",
       "evidence_sha256": "990085189b4b6ed90f03906c74f93d62b8ac74024f8976d63b6c5e4c7088d26d",
-      "commit_status": "AUTO_APPROVAL_TIMEOUT_UNCOMMITTED_NO_RETRY"
+      "commit_status": "AUTO_APPROVAL_TIMEOUT_UNCOMMITTED_NO_RETRY",
+      "actual_started_at": null,
+      "next_action": "Consume the fixed Root1 Canonical ABI when delivered; continue only Auth local Adapter preparation, with no Hosted/device activation."
     },
     {
       "event_id": "auth-c03-self-nickname-canonical-consumer-pass-20261105-v1",
       "agent": "Auth",
       "package_id": "AUTH-C03",
       "execution_slice_id": "AUTH-C03:LOCAL_PREP",
-      "transition": "EVIDENCE",
+      "transition": "PROGRESS",
       "reported_at": "2026-11-05T02:09:14.024514+00:00",
       "scope_kind": "SLICE_ONLY",
       "child_id": "/root/auth_distinct_p1_e2e_20261105",
-      "summary": "ActualAuth read/execute/recover Adapter+draft consumes exactRoot1Canonical leaf;38Mocktests/scopedTS/lintPASS, no Runtime/SQL/Hosted/Native/device activation. Parentreviewpending;C04Primaryunchanged.",
-      "evidence_sha256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192"
+      "summary": "Auth read/execute/recover Adapter and draft consume exact Root1 Canonical leaf; 38 Mock tests, scoped TS and lint PASS. SOURCE_ONLY; no Hosted/device/runtime/SQL activation. Parent review pending at this report; C04 Primary unchanged.",
+      "evidence_sha256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
+      "supersedes_event_id": "auth-c03-self-nickname-local-started-20261105-v1",
+      "next_action": "Obtain parent static source review and hand off exact Auth files with Root1 Canonical dependency separate; formal Backend port and Native integration remain unverified."
+    },
+    {
+      "event_id": "auth-c03-self-nickname-http-dispatch-local-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "PROGRESS",
+      "reported_at": "2026-11-05T02:39:00.694275+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "supersedes_event_id": "auth-c03-self-nickname-canonical-consumer-pass-20261105-v1",
+      "summary": "AuthHTTP actualnormalJWTverifier→typedCoreport read/execute/recover→strictCanonicalresponse localMock PASS38tests/typeslint. SOURCE_ONLY, defaultclosed/unmounted; noSQL/Hosted/device acceptanceupgrade. C04Primaryunchanged.",
+      "next_action": "Parentreview exactHTTP2Authfiles, then Root1sourceintegration withPGdependencyseparate. Noactivation/window/OTP from thiscandidate.",
+      "evidence_sha256": "f1ba31ecbce732775af791a3a28b99b51b5f1e225977e861c4fb508c6b5f648a"
     }
   ],
   "parent_review": {
@@ -32,5 +49,13 @@
     "testsRerun": false,
     "scope": "SOURCE_ONLY",
     "handoff": "docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json"
+  },
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "http_parent_review": {
+    "candidate": "1831018a57da204a63526a96d90c7627df608911",
+    "verdict": "NO_BLOCKER_FOR_UNMOUNTED_AUTH_HTTP_SOURCE_ONLY",
+    "testsRerun": false,
+    "scope": "SOURCE_ONLY_UNMOUNTED",
+    "handoff": "docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json"
   }
 }
