@@ -1,3 +1,7 @@
+## Self nickname activation constraint candidate archive — 5 November 2026
+
+The reviewed e20bcb85 candidate and its nine fixed evidence files are archived with independent review 974ef2. The candidate remains uninstalled. Root2 owns fresh qualification and protected authorization before execution. See `docs/ops/root1-r3-source-main-20261105/R3_SQL_ARCHIVE_MANIFEST.json`.
+
 ## Native read-only QA diagnostics census source — 5 November 2026
 
 Native 126bbf6b four product files and fixed review evidence are assembled with the published owning readers. The diagnostics census requires the explicit opt-in flag and a manual refresh. Unavailable observations remain unknown. Local scoped types, lint and UI guard passed. See `docs/ops/root1-r3-source-main-20261105/STAGE2_VALIDATION.json`.

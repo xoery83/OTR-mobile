@@ -1,0 +1,59 @@
+{
+  "status": "VERIFIED_FIXED_ARCHIVE_LIST_LOCAL_ONLY",
+  "candidate": "e20bcb85d1c9df83d34d7de5de0165522a23ec65",
+  "base": "09a6e719bd45cdf3ff40ff9a5b062f91b01e30390",
+  "nineArchiveFiles": {
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/ACTUAL_INPUT_METADATA.json": {
+      "preimage": "ABSENT",
+      "sha256": "284381890d0753b48f254c8bcc29ed36c74c8b6c77f68bfe484b3314c31eda9e",
+      "sizeBytes": 7853
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/FORWARD_CANDIDATE.sql": {
+      "preimage": "ABSENT",
+      "sha256": "b539a7f0c64e57f718e09b5e0e173f5022e8459c38776bdff3c705055e2e5888",
+      "sizeBytes": 11598
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/LOCAL_PG.log": {
+      "preimage": "ABSENT",
+      "sha256": "7d54dcaba8c3ce68c38d1f6c3ac5eccbcadf73d74914b9b6987c0fa192525302",
+      "sizeBytes": 81840
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/MANIFEST.json": {
+      "preimage": "ABSENT",
+      "sha256": "c147d5ccba6d6bdc06434e5b55d720896742cfb709819d32f889c91d933d0855",
+      "sizeBytes": 2130
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/README.md": {
+      "preimage": "ABSENT",
+      "sha256": "86b7c79749d9cbfabca1be3856fd3479aaeef825dff374497d0c3adba79ffa4c",
+      "sizeBytes": 4975
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/RESULT.json": {
+      "preimage": "ABSENT",
+      "sha256": "2a78842b4e10021299c7576f697e178f1445f84e09bf5d08cf0230d38d4c22cb",
+      "sizeBytes": 3590
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/ROLLBACK_CANDIDATE.sql": {
+      "preimage": "ABSENT",
+      "sha256": "ab637bece68376933eb4af23aa92d5dce994610f206a95a643988ef484732c00",
+      "sizeBytes": 11075
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/render_shape.py": {
+      "preimage": "ABSENT",
+      "sha256": "9f4a6a115fb096062a8f79bd2b9fba45fa93c0c2d2222f8180df01b35731e07d",
+      "sizeBytes": 5659
+    },
+    "docs/ops/core-self-trip-nickname-contract-20261105/activation/run_shape_isolated.py": {
+      "preimage": "ABSENT",
+      "sha256": "78cf5c2f382547ee259b43ba7d9371567534fafbb86e5ddea60bb010e5f411b1",
+      "sizeBytes": 19750
+    }
+  },
+  "independentReview": {
+    "path": "/Users/xoery/Project/otr-mobile-temporal/core-member-revoke-v2-20261104/docs/ops/root1-self-trip-nickname-activation-shape-review-20261105/REVIEW.json",
+    "sha256": "974ef293aaf69fb516b7ebd26328b7a8fc0db40f2d54e8e558ae4a205df01f4d",
+    "verdict": "NO_BLOCKER_SCOPED_CONSTRAINT_SOURCE_CANDIDATE"
+  },
+  "scope": "Archive frozen source and evidence bytes only. No execution, database connection or deployment.",
+  "next": "After direct precise source approval and fresh Writer assignment, recheck preimages and copy these nine bytes plus review. Preserve fixed raw log whitespace."
+}

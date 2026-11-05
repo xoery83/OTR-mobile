@@ -1,0 +1,215 @@
+{
+  "returnSha256": "09fdd588df02a710aa03b1b0bb15357b86058077d43712c007ed6a00a769b967",
+  "rawCatalogSha256": "a5ec1017c296ac20c0b83cb893ba21e27d7b629aefe62700ceb8ea5517fc2d06",
+  "observedAt": "2026-11-05T03:16:57.615185+00:00",
+  "relationMetadata": {
+    "acl": [
+      "postgres=arwdDxtm/postgres",
+      "otr_trip_core_v2_gateway=r/postgres",
+      "otr_trip_core_v2_writer=r/postgres"
+    ],
+    "forceRLS": false,
+    "oid": "65052",
+    "owner": "postgres",
+    "rls": false
+  },
+  "constraints": [
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "CHECK (((NOT source_review_enabled) OR ((source_review_actor IS NOT NULL) AND (source_review_trip IS NOT NULL) AND (source_review_source IS NOT NULL) AND (source_review_started_at IS NOT NULL) AND (source_review_expires_at IS NOT NULL) AND isfinite(source_review_started_at) AND isfinite(source_review_expires_at) AND (source_review_expires_at > source_review_started_at) AND (source_review_expires_at <= (source_review_started_at + '24:00:00'::interval)))))",
+      "name": "core_source_review_scope_shape",
+      "oid": "66038",
+      "type": "c",
+      "validated": true,
+      "definitionSHA256": "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470"
+    },
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "CHECK ((((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))",
+      "name": "finite_core_scope_contract",
+      "oid": "65711",
+      "type": "c",
+      "validated": true,
+      "definitionSHA256": "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73"
+    },
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "CHECK ((capture_version = 2))",
+      "name": "trip_core_activation_gate_capture_version_check",
+      "oid": "65067",
+      "type": "c",
+      "validated": true,
+      "definitionSHA256": "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9"
+    },
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "CHECK ((command_version = 2))",
+      "name": "trip_core_activation_gate_command_version_check",
+      "oid": "65065",
+      "type": "c",
+      "validated": true,
+      "definitionSHA256": "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e"
+    },
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "PRIMARY KEY (singleton)",
+      "name": "trip_core_activation_gate_pkey",
+      "oid": "65074",
+      "type": "p",
+      "validated": true,
+      "definitionSHA256": "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b"
+    },
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "CHECK ((read_version = 2))",
+      "name": "trip_core_activation_gate_read_version_check",
+      "oid": "65066",
+      "type": "c",
+      "validated": true,
+      "definitionSHA256": "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e"
+    },
+    {
+      "deferrable": false,
+      "deferred": false,
+      "definition": "CHECK (singleton)",
+      "name": "trip_core_activation_gate_singleton_check",
+      "oid": "65063",
+      "type": "c",
+      "validated": true,
+      "definitionSHA256": "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41"
+    }
+  ],
+  "functions": [
+    {
+      "oid": "65712",
+      "name": "trip_core_finite_scope_allowed",
+      "identityArguments": "actor uuid, trip uuid",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres",
+        "otr_trip_create_gateway=X/postgres"
+      ],
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a"
+    },
+    {
+      "oid": "65263",
+      "name": "trip_core_guard_write",
+      "identityArguments": "",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "securityDefiner": false,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef"
+    },
+    {
+      "oid": "65415",
+      "name": "trip_core_service_statement_guard",
+      "identityArguments": "",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "securityDefiner": false,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772"
+    },
+    {
+      "oid": "66181",
+      "name": "trip_sustained_core_capabilities",
+      "identityArguments": "actor uuid, trip uuid",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53"
+    },
+    {
+      "oid": "67421",
+      "name": "trip_sustained_core_read_scope_allowed",
+      "identityArguments": "actor uuid, trip uuid",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5"
+    },
+    {
+      "oid": "66180",
+      "name": "trip_sustained_dev_scope_allowed",
+      "identityArguments": "actor uuid, trip uuid, operation uuid, kind text",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618"
+    },
+    {
+      "oid": "66408",
+      "name": "trip_sustained_import_p1_capabilities",
+      "identityArguments": "actor uuid, trip uuid",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "securityDefiner": true,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "v",
+      "language": "plpgsql",
+      "definitionSHA256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9"
+    }
+  ],
+  "sourceOnly": true,
+  "notRuntimeRows": "No current runtime state queried by this author; metadata return contained no business rows."
+}

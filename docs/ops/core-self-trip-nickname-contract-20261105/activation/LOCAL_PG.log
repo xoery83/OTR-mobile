@@ -1,0 +1,1290 @@
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+3b143951-2d61-4954-8447-3ff8f0202683
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, c5a1c1e9-bcdd-4db4-a5b2-6dea58f77243, 504b47cb-a68b-43e9-ada2-07bd5d0ae2c2, 2026-11-05 03:27:40.155536+00, 2026-11-05 03:37:41.155541+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+ERROR:  NICKNAME_PARENT_FUNCTION_DRIFT
+CONTEXT:  PL/pgSQL function inline_code_block line 11 at RAISE
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+fcbd9f6e-b66c-4a6e-8e21-8ce294ab5623
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_create_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_event_semantic_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","anon=X/postgres","authenticated=X/postgres","service_role=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 14e9506c-7164-48a0-b1c0-45ce1e83e060, 8996172a-413a-463c-a43f-c8a9e2d9186c, 2026-11-05 03:28:24.657518+00, 2026-11-05 03:38:25.657523+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+ERROR:  NICKNAME_PARENT_FUNCTION_DRIFT
+CONTEXT:  PL/pgSQL function inline_code_block line 11 at RAISE
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+2dce39f7-dc8a-459b-a7ce-91fb8fe552b0
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_create_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_event_semantic_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:45.480117+00, 2026-11-05 03:38:46.48012+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {CREATE_ITEM}, {P1,P3}, {MANUAL}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:46.725321+00, 2026-11-05 03:33:46.725321+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+f
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+f
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:45.85003+00, 2026-11-05 03:44:45.85003+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {}, {}, {}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:45.85003+00, 2026-11-05 03:38:46.850031+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {CREATE_ITEM}, {}, {}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:45.85003+00, 2026-11-05 03:38:46.850031+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "core_source_review_scope_shape"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:45.85003+00, 2026-11-05 03:38:46.850031+00, t, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+ERROR:  CORE_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_sustained_core_capabilities(uuid,uuid) line 2 at RAISE
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "1c9cfd74-efb0-4cb3-ac91-509d3d58dada", "outcome": "APPLIED", "personId": "a7b78865-d560-43fd-bc58-ea03ae25e1a4", "receiptId": "9b791e9f-cc7c-4ad2-b41a-3f487bc41e9c", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T03:28:47.399636Z", "operationId": "03e6c588-dd82-41ab-88be-2c1970ecf9cf", "intentDigest": "bd09335e16b7577104a65d418584146398bae41fad76adfb79e0bc0baa31345e", "actorAccountId": "091fe3da-ab25-40d5-8b8c-1ebb462d08c8", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 091fe3da-ab25-40d5-8b8c-1ebb462d08c8, 1c9cfd74-efb0-4cb3-ac91-509d3d58dada, 2026-11-05 03:28:46.357796+00, 2026-11-05 03:38:47.357797+00, f, null, null, null, null, null, f).
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+{"tripId": "1c9cfd74-efb0-4cb3-ac91-509d3d58dada", "nickname": null, "personId": "a7b78865-d560-43fd-bc58-ea03ae25e1a4", "accountId": "091fe3da-ab25-40d5-8b8c-1ebb462d08c8", "observedAt": "2026-11-05T03:28:47.508704Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[exact-forward-inverse-closed]
+091fe3da-ab25-40d5-8b8c-1ebb462d08c8|1c9cfd74-efb0-4cb3-ac91-509d3d58dada
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "1c9cfd74-efb0-4cb3-ac91-509d3d58dada", "outcome": "APPLIED", "personId": "a7b78865-d560-43fd-bc58-ea03ae25e1a4", "receiptId": "9b791e9f-cc7c-4ad2-b41a-3f487bc41e9c", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T03:28:47.399636Z", "operationId": "03e6c588-dd82-41ab-88be-2c1970ecf9cf", "intentDigest": "bd09335e16b7577104a65d418584146398bae41fad76adfb79e0bc0baa31345e", "actorAccountId": "091fe3da-ab25-40d5-8b8c-1ebb462d08c8", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[exact-forward-inverse-closed]
+ERROR:  NICKNAME_HISTORY_FORBIDS_SHAPE_REVERSE_OR_REINSTALL
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[exact-forward-inverse-closed]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[exact-forward-inverse-closed]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[exact-forward-inverse-closed]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[exact-forward-inverse-closed]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[exact-forward-inverse-closed]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[exact-forward-inverse-closed]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+e05deed3-cc56-4402-b546-a3114dcc229b
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_create_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_event_semantic_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 90b4e622-1bc5-407b-9178-1805df46d50b, ef160ff4-9d2c-43b3-bcb6-794214469e38, 2026-11-05 03:30:34.815975+00, 2026-11-05 03:40:35.81598+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {CREATE_ITEM}, {P1,P3}, {MANUAL}, 90b4e622-1bc5-407b-9178-1805df46d50b, ef160ff4-9d2c-43b3-bcb6-794214469e38, 2026-11-05 03:30:36.086255+00, 2026-11-05 03:35:36.086255+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+90b4e622-1bc5-407b-9178-1805df46d50b|ef160ff4-9d2c-43b3-bcb6-794214469e38
+f
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+90b4e622-1bc5-407b-9178-1805df46d50b|ef160ff4-9d2c-43b3-bcb6-794214469e38
+f
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 90b4e622-1bc5-407b-9178-1805df46d50b, ef160ff4-9d2c-43b3-bcb6-794214469e38, 2026-11-05 03:30:35.219622+00, 2026-11-05 03:46:35.219622+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {}, {}, {}, 90b4e622-1bc5-407b-9178-1805df46d50b, ef160ff4-9d2c-43b3-bcb6-794214469e38, 2026-11-05 03:30:35.219622+00, 2026-11-05 03:40:36.219622+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {CREATE_ITEM}, {}, {}, 90b4e622-1bc5-407b-9178-1805df46d50b, ef160ff4-9d2c-43b3-bcb6-794214469e38, 2026-11-05 03:30:35.219622+00, 2026-11-05 03:40:36.219622+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "core_source_review_scope_shape"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 90b4e622-1bc5-407b-9178-1805df46d50b, ef160ff4-9d2c-43b3-bcb6-794214469e38, 2026-11-05 03:30:35.219622+00, 2026-11-05 03:40:36.219622+00, t, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+90b4e622-1bc5-407b-9178-1805df46d50b|ef160ff4-9d2c-43b3-bcb6-794214469e38
+ERROR:  CORE_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_sustained_core_capabilities(uuid,uuid) line 2 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+90b4e622-1bc5-407b-9178-1805df46d50b|ef160ff4-9d2c-43b3-bcb6-794214469e38|CREATE_ITEM|P1|MANUAL
+ERROR:  function public.trip_core_source_review_row_allowed(name, text, jsonb) does not exist
+LINE 1: ...v2_candidates','trip_source_core_v2_intents') and public.tri...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  tg_op='INSERT' and tg_table_name in ('trip_source_core_v2_publications','trip_source_core_v2_candidates','trip_source_core_v2_intents') and public.trip_core_source_review_row_allowed(tg_table_name,tg_op,new_json)
+CONTEXT:  PL/pgSQL function public.trip_core_guard_write() line 6 at IF
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+087ba485-fd57-4395-bb22-d588db765e5a
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_create_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_event_semantic_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 5e8567ff-7afb-4702-93c0-395b9c972767, 4d0686b6-0397-45fb-810b-8bf5ceaab341, 2026-11-05 03:31:34.83223+00, 2026-11-05 03:41:35.832236+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {CREATE_ITEM}, {P1,P3}, {MANUAL}, 5e8567ff-7afb-4702-93c0-395b9c972767, 4d0686b6-0397-45fb-810b-8bf5ceaab341, 2026-11-05 03:31:36.082334+00, 2026-11-05 03:36:36.082334+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+5e8567ff-7afb-4702-93c0-395b9c972767|4d0686b6-0397-45fb-810b-8bf5ceaab341
+f
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+5e8567ff-7afb-4702-93c0-395b9c972767|4d0686b6-0397-45fb-810b-8bf5ceaab341
+f
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 5e8567ff-7afb-4702-93c0-395b9c972767, 4d0686b6-0397-45fb-810b-8bf5ceaab341, 2026-11-05 03:31:35.212111+00, 2026-11-05 03:47:35.212111+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {}, {}, {}, 5e8567ff-7afb-4702-93c0-395b9c972767, 4d0686b6-0397-45fb-810b-8bf5ceaab341, 2026-11-05 03:31:35.212111+00, 2026-11-05 03:41:36.212112+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {CREATE_ITEM}, {}, {}, 5e8567ff-7afb-4702-93c0-395b9c972767, 4d0686b6-0397-45fb-810b-8bf5ceaab341, 2026-11-05 03:31:35.212111+00, 2026-11-05 03:41:36.212112+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "core_source_review_scope_shape"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, 5e8567ff-7afb-4702-93c0-395b9c972767, 4d0686b6-0397-45fb-810b-8bf5ceaab341, 2026-11-05 03:31:35.212111+00, 2026-11-05 03:41:36.212112+00, t, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+5e8567ff-7afb-4702-93c0-395b9c972767|4d0686b6-0397-45fb-810b-8bf5ceaab341
+ERROR:  CORE_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_sustained_core_capabilities(uuid,uuid) line 2 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+5e8567ff-7afb-4702-93c0-395b9c972767|4d0686b6-0397-45fb-810b-8bf5ceaab341|CREATE_ITEM|P1|MANUAL
+ERROR:  CORE_V2_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_core_guard_write() line 100 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+5e8567ff-7afb-4702-93c0-395b9c972767|4d0686b6-0397-45fb-810b-8bf5ceaab341|CREATE_ITEM|P1|MANUAL
+ERROR:  permission denied for table trip_core_activation_gate
+CONTEXT:  SQL expression "tg_op='TRUNCATE' or (not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled) AND NOT ((
+    tg_op='INSERT' AND current_setting('otr.core.command',true)='CREATE_ITEM'
+    AND current_setting('otr.core.family',true)='P5' AND current_setting('otr.core.admission',true)='REVIEWED_SOURCE'
+    AND current_setting('otr.core.actor',true)='f4b059c5-8241-4ffb-aa15-37fa25474543'
+    AND current_setting('otr.core.trip',true)='825f79b2-4a9d-4535-a62e-43000ca50c4a'
+    AND EXISTS(SELECT 1 FROM public.trip_sustained_import_p1_capabilities('f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid,'825f79b2-4a9d-4535-a62e-43000ca50c4a'::uuid) c WHERE c.runtime_enabled AND c.enabled_families=ARRAY['P5']::text[] AND c.enabled_commands=ARRAY['CREATE_ITEM']::text[] AND c.enabled_admission_modes=ARRAY['REVIEWED_SOURCE']::text[])
+  ) IS TRUE OR (
+    tg_op IN ('INSERT','UPDATE') AND current_setting('otr.core.command',true) IN ('CREATE_ITEM','SET_TRANSPORT_DETAILS')
+    AND current_setting('otr.core.family',true)='P5' AND current_setting('otr.core.admission',true)='MANUAL'
+    AND nullif(current_setting('otr.core.target_item',true),'') IS NOT NULL
+    AND public.trip_sustained_dev_scope_allowed(nullif(current_setting('otr.core.actor',true),'')::uuid,nullif(current_setting('otr.core.trip',true),'')::uuid,null,'CORE_P5')
+  ) IS TRUE))"
+PL/pgSQL function public.trip_core_service_statement_guard() line 3 at IF
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+66f4fd02-c77d-436b-bca6-14c12518248b
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_create_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_event_semantic_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:31:59.122277+00, 2026-11-05 03:42:00.12231+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {CREATE_ITEM}, {P1,P3}, {MANUAL}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:32:00.400523+00, 2026-11-05 03:37:00.400523+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+f
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+f
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:31:59.530713+00, 2026-11-05 03:47:59.530713+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {}, {}, {}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:31:59.530713+00, 2026-11-05 03:42:00.530714+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {CREATE_ITEM}, {}, {}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:31:59.530713+00, 2026-11-05 03:42:00.530714+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "core_source_review_scope_shape"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:31:59.530713+00, 2026-11-05 03:42:00.530714+00, t, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+ERROR:  CORE_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_sustained_core_capabilities(uuid,uuid) line 2 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849|CREATE_ITEM|P1|MANUAL
+ERROR:  CORE_V2_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_core_guard_write() line 100 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849|CREATE_ITEM|P1|MANUAL
+ERROR:  CORE_V2_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_core_service_statement_guard() line 14 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "88ef2cc3-b684-458a-a812-b2bface7d849", "outcome": "APPLIED", "personId": "9e91d143-6ebb-454d-a4b0-e09c80fa8af0", "receiptId": "acf0513d-39c4-452f-9573-6e184b2c51fe", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T03:32:01.212487Z", "operationId": "61b17ad5-029b-454d-9b44-83b88592abea", "intentDigest": "ab15989d0168eea702aaf27177c0c4e7e12cb4b6aa1875c5ae60b62a0d5726e9", "actorAccountId": "ea3c3d42-8235-47a6-b4bb-3048dda765ae", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[actual-old-core-row-and-statement-guards]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, ea3c3d42-8235-47a6-b4bb-3048dda765ae, 88ef2cc3-b684-458a-a812-b2bface7d849, 2026-11-05 03:32:00.175557+00, 2026-11-05 03:42:01.175558+00, f, null, null, null, null, null, f).
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+{"tripId": "88ef2cc3-b684-458a-a812-b2bface7d849", "nickname": null, "personId": "9e91d143-6ebb-454d-a4b0-e09c80fa8af0", "accountId": "ea3c3d42-8235-47a6-b4bb-3048dda765ae", "observedAt": "2026-11-05T03:32:01.309097Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[actual-old-core-row-and-statement-guards]
+ea3c3d42-8235-47a6-b4bb-3048dda765ae|88ef2cc3-b684-458a-a812-b2bface7d849
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "88ef2cc3-b684-458a-a812-b2bface7d849", "outcome": "APPLIED", "personId": "9e91d143-6ebb-454d-a4b0-e09c80fa8af0", "receiptId": "acf0513d-39c4-452f-9573-6e184b2c51fe", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T03:32:01.212487Z", "operationId": "61b17ad5-029b-454d-9b44-83b88592abea", "intentDigest": "ab15989d0168eea702aaf27177c0c4e7e12cb4b6aa1875c5ae60b62a0d5726e9", "actorAccountId": "ea3c3d42-8235-47a6-b4bb-3048dda765ae", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[actual-old-core-row-and-statement-guards]
+ERROR:  NICKNAME_HISTORY_FORBIDS_SHAPE_REVERSE_OR_REINSTALL
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[actual-old-core-row-and-statement-guards]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-old-core-row-and-statement-guards]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-old-core-row-and-statement-guards]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-old-core-row-and-statement-guards]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-old-core-row-and-statement-guards]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-old-core-row-and-statement-guards]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-old-core-row-and-statement-guards]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+1057660a-c25a-4cea-89cd-c946609f8495
+
+[minimal-canonical-dependency-fixture]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_create_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres","otr_trip_event_semantic_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+
+[actual-seven-constraints-and-predicates]
+["postgres=X/postgres","otr_trip_core_v2_gateway=X/postgres","otr_trip_core_v2_writer=X/postgres"]
+
+[actual-seven-constraints-and-predicates]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9
+
+[actual-seven-constraints-and-predicates]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+
+[nickname-source-prerequisite]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:58.408134+00, 2026-11-05 03:42:59.408138+00, f, null, null, null, null, null, t).
+
+[nickname-source-prerequisite]
+CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {CREATE_ITEM}, {P1,P3}, {MANUAL}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:59.650949+00, 2026-11-05 03:37:59.650949+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+1330bd4d-a450-482d-94c4-2ea9a2f3e93b|311e0d53-627e-4473-a1d2-e440dd41b3c3
+{"runtime_enabled":true,"enabled_commands":["CREATE_ITEM","SET_ITEM_TEXT","SET_ITEM_SCHEDULE","SET_ITEM_PLACE","SET_ITEM_PARTICIPATION","SET_STAY_DETAILS","SET_RENTAL_DETAILS","SET_TRANSPORT_DETAILS","SET_ACTIVITY_DETAILS","CREATE_SPARSE_FLIGHT","SET_AUTHORED_FLIGHT_DETAILS"],"enabled_families":["P1","P2","P3","P4","P5","P6"],"enabled_admission_modes":["MANUAL"]}
+
+[exact-forward-inverse-closed]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+f
+
+[exact-forward-inverse-closed]
+
+[exact-forward-inverse-closed]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+f
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:58.808624+00, 2026-11-05 03:48:58.808624+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, t, 2, 2, 2, {}, {}, {}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:58.808624+00, 2026-11-05 03:42:59.808625+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {CREATE_ITEM}, {}, {}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:58.808624+00, 2026-11-05 03:42:59.808625+00, f, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "core_source_review_scope_shape"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:58.808624+00, 2026-11-05 03:42:59.808625+00, t, null, null, null, null, null, t).
+
+[exact-forward-inverse-closed]
+1330bd4d-a450-482d-94c4-2ea9a2f3e93b|311e0d53-627e-4473-a1d2-e440dd41b3c3
+{"runtime_enabled":true,"enabled_commands":["CREATE_ITEM","SET_ITEM_TEXT","SET_ITEM_SCHEDULE","SET_ITEM_PLACE","SET_ITEM_PARTICIPATION","SET_STAY_DETAILS","SET_RENTAL_DETAILS","SET_TRANSPORT_DETAILS","SET_ACTIVITY_DETAILS","CREATE_SPARSE_FLIGHT","SET_AUTHORED_FLIGHT_DETAILS"],"enabled_families":["P1","P2","P3","P4","P5","P6"],"enabled_admission_modes":["MANUAL"]}
+
+[exact-forward-inverse-closed]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+ERROR:  CORE_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_sustained_core_capabilities(uuid,uuid) line 2 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3|CREATE_ITEM|P1|MANUAL
+ERROR:  CORE_V2_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_core_guard_write() line 100 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3|CREATE_ITEM|P1|MANUAL
+ERROR:  CORE_V2_CAPABILITY_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_core_service_statement_guard() line 14 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "311e0d53-627e-4473-a1d2-e440dd41b3c3", "outcome": "APPLIED", "personId": "a346f7ce-8dfe-45d8-a5ea-67dd31c211bd", "receiptId": "f3a0af0b-4fa3-4b54-8c03-5be2968898b7", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T03:33:00.761647Z", "operationId": "ebab2c90-85fe-416b-8d65-a7ad00035bbd", "intentDigest": "47c8841eaea983584e46824b55ff5d0973da7a96a678c4fc3196457ec347ba5f", "actorAccountId": "bd9767b7-1f71-486e-b1aa-20ef46841990", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[actual-old-core-row-and-statement-guards]
+ERROR:  new row for relation "trip_core_activation_gate" violates check constraint "finite_core_scope_contract"
+DETAIL:  Failing row contains (t, f, 2, 2, 2, {}, {}, {}, bd9767b7-1f71-486e-b1aa-20ef46841990, 311e0d53-627e-4473-a1d2-e440dd41b3c3, 2026-11-05 03:32:59.720614+00, 2026-11-05 03:43:00.720615+00, f, null, null, null, null, null, f).
+
+[actual-old-core-row-and-statement-guards]
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+{"tripId": "311e0d53-627e-4473-a1d2-e440dd41b3c3", "nickname": null, "personId": "a346f7ce-8dfe-45d8-a5ea-67dd31c211bd", "accountId": "bd9767b7-1f71-486e-b1aa-20ef46841990", "observedAt": "2026-11-05T03:33:00.867617Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[actual-old-core-row-and-statement-guards]
+bd9767b7-1f71-486e-b1aa-20ef46841990|311e0d53-627e-4473-a1d2-e440dd41b3c3
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "311e0d53-627e-4473-a1d2-e440dd41b3c3", "outcome": "APPLIED", "personId": "a346f7ce-8dfe-45d8-a5ea-67dd31c211bd", "receiptId": "f3a0af0b-4fa3-4b54-8c03-5be2968898b7", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T03:33:00.761647Z", "operationId": "ebab2c90-85fe-416b-8d65-a7ad00035bbd", "intentDigest": "47c8841eaea983584e46824b55ff5d0973da7a96a678c4fc3196457ec347ba5f", "actorAccountId": "bd9767b7-1f71-486e-b1aa-20ef46841990", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[actual-old-core-row-and-statement-guards]
+ERROR:  NICKNAME_HISTORY_FORBIDS_SHAPE_REVERSE_OR_REINSTALL
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
+
+[actual-old-core-row-and-statement-guards]
+{ "core_source_review_scope_shape" : "cc7e2eb03a58b4bdfebe48aa2b5e95fe7ee04a69df0f8a49669b00ab6ac25470", "finite_core_scope_contract" : "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de", "trip_core_activation_gate_capture_version_check" : "1d1d63bbfcffe9291f8e184cfd31ecb959ed0fb0c8c759b2c2308868e2b09db9", "trip_core_activation_gate_command_version_check" : "cc432fc7e35700856b7b28a629b36e0bcd3e194e22da976c80387b2893cd282e", "trip_core_activation_gate_pkey" : "d004b3efcdc4a0108ecbe83c93408f63eebecc563529a3941a4c59667835f25b", "trip_core_activation_gate_read_version_check" : "7ce2a17e98253ead50df3d5494c8526283218db4b7ee8187a5bf07c36ebfe30e", "trip_core_activation_gate_singleton_check" : "0a780c77dfabbc15def3d17957997d352de196c1233a0d25fccc97a40d2d6f41" }
+
+[actual-old-core-row-and-statement-guards]
+0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a
+
+[actual-old-core-row-and-statement-guards]
+90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef
+
+[actual-old-core-row-and-statement-guards]
+9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772
+
+[actual-old-core-row-and-statement-guards]
+35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53
+
+[actual-old-core-row-and-statement-guards]
+57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5
+
+[actual-old-core-row-and-statement-guards]
+cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618
+
+[actual-old-core-row-and-statement-guards]
+e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9

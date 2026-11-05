@@ -1,0 +1,31 @@
+{
+  "requestId": "SELF-NICKNAME-ACTUAL-ACTIVATION-SHAPE-01",
+  "status": "SOURCE_LOCAL_PASS_REVIEW_PENDING_NOT_INSTALLED",
+  "parentSourceCommit": "956bf47087289f95f01342526859413efc9f65fc",
+  "beforeConstraintSha256": "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73",
+  "afterConstraintSha256": "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de",
+  "unchangedActualFunctions": {
+    "trip_core_finite_scope_allowed": "0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a",
+    "trip_core_guard_write": "90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef",
+    "trip_core_service_statement_guard": "9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772",
+    "trip_sustained_core_capabilities": "35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53",
+    "trip_sustained_core_read_scope_allowed": "57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5",
+    "trip_sustained_dev_scope_allowed": "cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618",
+    "trip_sustained_import_p1_capabilities": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9"
+  },
+  "checks": 15,
+  "files": {
+    "render_shape.py": "9f4a6a115fb096062a8f79bd2b9fba45fa93c0c2d2222f8180df01b35731e07d",
+    "run_shape_isolated.py": "78cf5c2f382547ee259b43ba7d9371567534fafbb86e5ddea60bb010e5f411b1",
+    "FORWARD_CANDIDATE.sql": "b539a7f0c64e57f718e09b5e0e173f5022e8459c38776bdff3c705055e2e5888",
+    "ROLLBACK_CANDIDATE.sql": "ab637bece68376933eb4af23aa92d5dce994610f206a95a643988ef484732c00",
+    "RESULT.json": "2a78842b4e10021299c7576f697e178f1445f84e09bf5d08cf0230d38d4c22cb",
+    "LOCAL_PG.log": "7d54dcaba8c3ce68c38d1f6c3ac5eccbcadf73d74914b9b6987c0fa192525302",
+    "README.md": "86b7c79749d9cbfabca1be3856fd3479aaeef825dff374497d0c3adba79ffa4c",
+    "ACTUAL_INPUT_METADATA.json": "284381890d0753b48f254c8bcc29ed36c74c8b6c77f68bfe484b3314c31eda9e"
+  },
+  "noHosted": true,
+  "noOld23Rerun": true,
+  "rollback": "Closed exact preimage only, no receipt/nonzero counter; no history/object deletion",
+  "independentReview": "PENDING"
+}

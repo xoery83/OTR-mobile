@@ -1,0 +1,35 @@
+{
+  "status": "LOCAL_ACTUAL_SHAPE_PASS_NOT_INSTALLED",
+  "checks": [
+    "ALL_7_ACTUAL_FUNCTION_BODIES_IDENTICAL",
+    "ALL_7_ACTUAL_CONSTRAINTS_EXACT",
+    "ACTUAL_PREIMAGE_RED_NICKNAME_ONLY_SHAPE_DENIED",
+    "EXACT_FORWARD_INVERSE_NO_HISTORY_RESTORES_7_CONSTRAINTS",
+    "OLD_FINITE_ARM_PRESERVED_NO_MIXED_NICKNAME_CORE",
+    "NICKNAME_SCOPE_DOES_NOT_ENABLE_ACTUAL_FINITE_PREDICATE",
+    "NICKNAME_ARM_REJECTS_OVERLEASE_RUNTIME_COMMANDS_SOURCE_REVIEW",
+    "EXISTING_NORMAL_OWNER_CAPABILITIES_UNCHANGED_NOT_GLOBALLY_DISABLED",
+    "ACTUAL_SUSTAINED_CAPABILITY_NONOWNER_STAYS_CLOSED",
+    "ACTUAL_ROW_AND_STATEMENT_GUARDS_DENY_OLD_CORE_WRITE",
+    "ACTUAL_FULL_SHAPE_EXPIRED_WRONG_ACTOR_TRIP_DENY",
+    "ACTUAL_FULL_SHAPE_NICKNAME_ONLY_APPLIED",
+    "ATOMIC_CLOSED_SCOPE_READ_RECOVER_RETAINED",
+    "ACCEPTED_HISTORY_BLOCKS_INVERSE_NO_PARTIAL_CHANGE",
+    "ALL_7_PREDICATES_UNCHANGED_POST_SHAPE_AND_NICKNAME"
+  ],
+  "beforeDefinitionSHA256": "c33aa0e9dea62038daf06bcb42a05583f37a08965427d63ed52e1de5b6f00b73",
+  "afterDefinition": "CHECK ((((NOT self_nickname_enabled) AND (((NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (scope_actor_account_id IS NULL) AND (scope_trip_id IS NULL) AND (scope_started_at IS NULL) AND (scope_expires_at IS NULL)) OR (runtime_enabled AND (enabled_commands = ARRAY['CREATE_ITEM'::text]) AND (enabled_families = ARRAY['P1'::text, 'P3'::text]) AND (enabled_admission_modes = ARRAY['MANUAL'::text]) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval))))) OR (self_nickname_enabled AND (NOT runtime_enabled) AND (enabled_commands = '{}'::text[]) AND (enabled_families = '{}'::text[]) AND (enabled_admission_modes = '{}'::text[]) AND (NOT source_review_enabled) AND (scope_actor_account_id IS NOT NULL) AND (scope_trip_id IS NOT NULL) AND (scope_started_at IS NOT NULL) AND (scope_expires_at IS NOT NULL) AND isfinite(scope_started_at) AND isfinite(scope_expires_at) AND (scope_expires_at > scope_started_at) AND (scope_expires_at <= (scope_started_at + '00:15:00'::interval)))))",
+  "afterDefinitionSHA256": "9d4fc9aa5f5416d232808ec34b41d62ad192a65fde3f9fe7a6cc8836e45986de",
+  "allSevenFunctionHashes": {
+    "trip_core_finite_scope_allowed": "0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a",
+    "trip_core_guard_write": "90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef",
+    "trip_core_service_statement_guard": "9a80322edd45fc65b64e1a39194bd2177f4409c011f47288787d4032ce0c2772",
+    "trip_sustained_core_capabilities": "35e54664a1fae7a2d7f90904528cf12a7e87d93475dc12946e43087333bbec53",
+    "trip_sustained_core_read_scope_allowed": "57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5",
+    "trip_sustained_dev_scope_allowed": "cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618",
+    "trip_sustained_import_p1_capabilities": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9"
+  },
+  "catalogReturnSHA256": "09fdd588df02a710aa03b1b0bb15357b86058077d43712c007ed6a00a769b967",
+  "imageId": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "limits": "Real all7 constraints and all7 function bodies/ACLs loaded unchanged. Synthetic minimal dependencies, not Hosted parity. No old23 rerun."
+}

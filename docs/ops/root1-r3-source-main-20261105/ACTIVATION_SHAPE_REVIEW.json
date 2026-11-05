@@ -1,0 +1,101 @@
+{
+  "requestId": "SELF-NICKNAME-ACTUAL-ACTIVATION-SHAPE-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "recordedAt": "2026-11-05T03:44:03.367601+00:00",
+  "candidate": "e20bcb85d1c9df83d34d7de5de0165522a23ec65",
+  "parentSource": "956bf47087289f95f01342526859413efc9f65fc",
+  "verdict": "NO_BLOCKER_SCOPED_CONSTRAINT_SOURCE_CANDIDATE",
+  "findings": [],
+  "manifestSHA256": "c147d5ccba6d6bdc06434e5b55d720896742cfb709819d32f889c91d933d0855",
+  "fixedFiles": {
+    "render_shape.py": "9f4a6a115fb096062a8f79bd2b9fba45fa93c0c2d2222f8180df01b35731e07d",
+    "run_shape_isolated.py": "78cf5c2f382547ee259b43ba7d9371567534fafbb86e5ddea60bb010e5f411b1",
+    "FORWARD_CANDIDATE.sql": "b539a7f0c64e57f718e09b5e0e173f5022e8459c38776bdff3c705055e2e5888",
+    "ROLLBACK_CANDIDATE.sql": "ab637bece68376933eb4af23aa92d5dce994610f206a95a643988ef484732c00",
+    "RESULT.json": "2a78842b4e10021299c7576f697e178f1445f84e09bf5d08cf0230d38d4c22cb",
+    "LOCAL_PG.log": "7d54dcaba8c3ce68c38d1f6c3ac5eccbcadf73d74914b9b6987c0fa192525302",
+    "README.md": "86b7c79749d9cbfabca1be3856fd3479aaeef825dff374497d0c3adba79ffa4c",
+    "ACTUAL_INPUT_METADATA.json": "284381890d0753b48f254c8bcc29ed36c74c8b6c77f68bfe484b3314c31eda9e"
+  },
+  "actualMetadata": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/CORE-SELF-NICKNAME-SOURCE-QUALIFICATION-20261105-01/ACTIVATION_CATALOG_RETURN.json",
+    "sha256": "09fdd588df02a710aa03b1b0bb15357b86058077d43712c007ed6a00a769b967",
+    "all7ConstraintDefinitionsHashed": true,
+    "all7PrivateFunctionDefinitionsHashed": true,
+    "noPrivateBodiesCopied": true
+  },
+  "verified": [
+    {
+      "topic": "One exact new arm",
+      "citation": "render_shape.py:inputs/definition/ARM; FORWARD_CANDIDATE.sql:ALTER TABLE",
+      "result": "Actual old finite_core_scope_contract c33aa0\u2026 expression is byte-preserved under NOT self_nickname_enabled. New9d4\u2026 arm requires self_nickname_enabled=true, runtime_enabled=false, empty command/family/admission arrays, source_review_enabled=false, nonnull Actor/Trip, nonnull finite start/end, positive interval<=15min. Old two-arm combinations remain when new bitfalse; mixed nickname/runtime/command profiles are not introduced."
+    },
+    {
+      "topic": "CAS and unchanged dependencies",
+      "citation": "FORWARD_CANDIDATE.sql and ROLLBACK_CANDIDATE.sql pre/post DO blocks",
+      "result": "Both directions require existing default-closed row plus exact named current7 constraint count/target hash and other6 validated hashes, exact full7 function definitions/Owner/ACL hashes. Target posthash checked and other6 preserved. No function replacement, role/membership/ACL/EXEC grant or runtime-row mutation occurs; sole DDL is target constraint drop/add. All9 source leaves/manifest bindings verified."
+    },
+    {
+      "topic": "History-safe inverse and transaction",
+      "citation": "FORWARD/ROLLBACK lines2-15; ROLLBACK ALTER TABLE",
+      "result": "One transaction with bounded lock/statement timeouts holds activation ACCESS EXCLUSIVE and nickname receipt/Person SHARE relation locks through the history precheck and DDL. Either direction conservatively rejects any nickname receipt or global nonzero nickname counter and any active/malformed shared scope. Inverse restores only original constraint and never deletes receipt/Person/reader/guard objects. Unknown/failed history check raises; there is no catch to infer zero. New install receipt/OID/fresh actual executor qualification are separate."
+    },
+    {
+      "topic": "Close semantics",
+      "citation": "README.md Close contract; run_shape_isolated.py:155-161",
+      "result": "Clearing only bit while shared scope remains is rejected by the resulting constraint. Correct closer must fresh-CAS the owned bit and same owned Actor/Trip/start/end atomically to closed shape, retaining empty arrays/runtimefalse/sourceReviewfalse and compatible current read/original recovery. It must not clear another session scope. No closer or activation is implemented by this candidate."
+    },
+    {
+      "topic": "Existing authority unchanged",
+      "citation": "run_shape_isolated.py:111-145; actual7 function hash pins",
+      "result": "Author proves already-qualified normal Owner sustained capability remains positive/unchanged before/after, while separate nonowner nickname actor remains closed for sustained/finite old writes. Actual row+statement guard test demands CORE_V2_CAPABILITY_CLOSED, not missing EXEC/table/function error. The independent existing sustained policy is not represented as a new grant from this constraint."
+    }
+  ],
+  "validation": {
+    "independentActions": "Static source, exact fixed-commit/manifest/hash and direct actual catalog/private-definition hash validation only. No function calls, DB queries, Docker or PG rerun.",
+    "authorReused": {
+      "checks": 15,
+      "status": "LOCAL_ACTUAL_SHAPE_PASS_NOT_INSTALLED",
+      "resultSHA256": "2a78842b4e10021299c7576f697e178f1445f84e09bf5d08cf0230d38d4c22cb",
+      "logSHA256": "7d54dcaba8c3ce68c38d1f6c3ac5eccbcadf73d74914b9b6987c0fa192525302",
+      "imageId": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+      "scope": "All7 actual constraint definitions and7 function bodies/ACLs in one network-none256MiB local fixture; minimal synthetic dependent tables/normal Actor setup, not Hosted parity. Actual finite/sustained/read/row/statement predicates exercised; seventh Import capability remains loaded/hash-pinned, no paid Source positive claim.",
+      "preservedFailures": "Raw log preserves earlier fixture default-grantee/missing unreachable helper/SELECT setup failures. Final old-write negative requires exact Core capability error; no missing-permission false success.",
+      "checksInclude": [
+        "Original actual constraint RED",
+        "Exact closed forward/inverse restores7",
+        "Old finite and existing Owner capability preserved",
+        "Overlease/mixed profile/SourceReview rejects",
+        "Actual old Core row/statement mutation rejects",
+        "Nickname APPLIED, expiry/wrong ActorTrip rejects",
+        "Atomic close plus READ/original RECOVER",
+        "Accepted history denies inverse without partial metadata change"
+      ]
+    }
+  },
+  "requiredRoot2ExecutionBoundaries": [
+    "This is source review, not a protected SQL installation approval or ready runtime controller. Root2 must pin fresh full relation/schema/default ACLs, companion nickname source installation/trigger order, role graph, exact dependency identities and actual installation receipt/OIDs under the authorized executor. Timestamped09fdd metadata is not perpetual qualification.",
+    "Actual protected source changes may have occurred since catalog capture; any function/constraint drift aborts rather than rebasing this frozen packet. No old Owner permission automatically covers new constraint.",
+    "Root2 serializes conflicting shared writers and closes/drains actual ingress before held table locks; lock timeout/deadlock/error must roll back safely. Snapshot process counts alone do not prove drain.",
+    "No positive runtime field update or permanent authorization is included. Timer/absolute-expiry/owned-scope fresh-CAS close and independent actual readback are Root2 work before activation. History/UNKNOWN retains compatible objects; no destructive retry/reset."
+  ],
+  "notClaimed": [
+    "Independent execution of15PG checks",
+    "Actual Hosted readiness/SQL install/activation",
+    "Full dependency/trigger/ACL live parity",
+    "Source/Provider/Native/Auth user E2E"
+  ],
+  "actions": {
+    "sourceEdits": 0,
+    "Hosted": 0,
+    "SQLInstall": 0,
+    "DBQueries": 0,
+    "Docker": 0,
+    "tests": 0,
+    "Provider": 0,
+    "main": 0,
+    "GitMetadata": 0
+  },
+  "fileOnly": "Review fixed by SHA in existing stable evidence tree; no source/main mutation by reviewer.",
+  "resume": "Return fixed source review to parent for controlled source integration and Root2 installation-candidate preparation. Protected execution remains separately authorized; child stops."
+}
