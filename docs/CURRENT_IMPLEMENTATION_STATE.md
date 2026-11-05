@@ -13,9 +13,13 @@ C03 same-Account AKA binding/recovery narrow check is complete: **NO_NEW_DELTA**
 existing DTO/Repository/account fences/recovery evidence reused, no tests rerun.
 Reconciliation `fc8776e8…e1361`:
 `docs/ops/auth-c03-20261104/interface-packet/AKA_BINDING_SOURCE_RECONCILIATION_20261105.json`.
-Root1 request `AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01` awaits the formal
-self-Person Patch/Clear/Revision/Receipt port. Auth owns subsequent DTO/Adapter;
-no ordinary Backend work is outsourced. Existing2394 packet explicitly records this gap.
+C03 Self Trip Nickname Auth consumer is now local Mock PASS at `a2ba2bec`:
+4 Auth-owned Draft/Repository/test files consume Root1 exact Canonical leaf.
+38 direct tests/scoped TS/lint passed; parent static Review has no local-source blocker,
+without rerunning or upgrading Mock evidence. Formal Core Backend/PG port and Native
+integration remain pending under request `AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01`.
+Handoff `docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json` selects4 Auth
+files+docs; Canonical2leaf is Root1 dependency, never whole-branch overwrite or activation.
 MC actual next=null/candidates=[]; no new Ready task was claimed or invented.
 
 MCP support47a3d2ee/fad82f42 is source-only reviewed, NOT_INTEGRATED/NOT_LIVE_READY;

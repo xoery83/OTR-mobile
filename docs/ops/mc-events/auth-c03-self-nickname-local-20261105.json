@@ -25,5 +25,12 @@
       "summary": "ActualAuth read/execute/recover Adapter+draft consumes exactRoot1Canonical leaf;38Mocktests/scopedTS/lintPASS, no Runtime/SQL/Hosted/Native/device activation. Parentreviewpending;C04Primaryunchanged.",
       "evidence_sha256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192"
     }
-  ]
+  ],
+  "parent_review": {
+    "candidate": "a2ba2bec07b74602664b9010e87aea609802242c",
+    "verdict": "NO_BLOCKER_FOR_LOCAL_AUTH_CONSUMER_SOURCE_ONLY",
+    "testsRerun": false,
+    "scope": "SOURCE_ONLY",
+    "handoff": "docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json"
+  }
 }
