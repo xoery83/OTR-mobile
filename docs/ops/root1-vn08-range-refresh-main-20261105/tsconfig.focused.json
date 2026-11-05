@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "../../../src/features/day-feed/LocalTripWorkspace.tsx",
+    "../../../src/features/day-feed/TripScreen.tsx",
+    "../../../src/features/day-feed/LocalTripWorkspace.test.ts",
+    "../../../src/features/day-feed/TripScreen.homeWidgets.test.ts"
+  ],
+  "exclude": [
+    "../../../node_modules",
+    "../../../mcp"
+  ]
+}

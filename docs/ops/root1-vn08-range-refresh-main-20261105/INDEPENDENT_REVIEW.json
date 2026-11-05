@@ -1,0 +1,57 @@
+{
+  "verdict": "NO_BLOCKER",
+  "scope": "Independent exact-four-leaf review ce054e16→83a259f9; not merely last commit or superseded988",
+  "candidate": "83a259f9bcc6e906340f17b9e395f03293a79b34",
+  "packet": "dd5d490ba6b5a3808fbd33c4a35169915814ab41",
+  "base": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "fileSha256": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": "ad1f1a1719dd13bbdc20e87bdef6dfdc9939e5543a4a7984f14bfdfb57f8eab8",
+    "src/features/day-feed/TripScreen.tsx": "752b9bfbd703809e2c547a623e0deb294e0403af00e755fa5c360f5a41455278",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "41cee69106342c0f822933b891e21d9aecc245929134bd90a41e6edaf178e4e1",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts": "c26e1d1c1f84886fa737bf59a19cea0f8cf24e2c456d1a8708ee60881deaf976"
+  },
+  "sourceFindings": [
+    {
+      "source": "LocalTripWorkspace.tsx:1419–1438",
+      "finding": "Parent notification follows successful existing metadata write and getTrip read, and same-generation/alive guard. Write failure, Cancel, retired child/scope do not qualify notification."
+    },
+    {
+      "source": "TripScreen.tsx:817–831",
+      "finding": "Callback checks Trip and current generation then reuses original load and revision. No new Pull/Queue/Reader authority or route/list replacement."
+    },
+    {
+      "source": "tripDiscoveryRepository.ts:111–131; TripScreen.tsx:1416–1429,1469–1479",
+      "finding": "PENDING_CREATE/SYNCED mark an existing account-local container; localStatus null remains remote-only. Local row date precedence already exists in readMerged, including after acceptance. This patch aligns calendar consumers to that existing local-first source, not a new Canonical version claim."
+    },
+    {
+      "source": "tripMetadataRepository.ts:108–137; OFFLINE_SYNC.md:3–17",
+      "finding": "A current formally retained metadata Snapshot updates the same local container when no pending metadata and allowed revision. Therefore preferring a SYNCED local container does not by itself block legitimate remote metadata installation. localStatus is not treated as latest-server-revision proof; downstream installation remains the owning contract."
+    },
+    {
+      "source": "TripScreen.tsx:304–309,1410–1479",
+      "finding": "dayFacts stays generation/Trip-bound; qualified Snapshot epoch/account scope checks remain. Remote-only uses original qualified Snapshot, and clearing local bounds does not revive old Snapshot full range."
+    },
+    {
+      "source": "TripScreen/LocalTripWorkspace keyed child plus current lifecycle; WindowedDayList existing contracts",
+      "finding": "Current selected day, projection/localManual, focus and stable-list contracts retained. Collapsed topbar still uses visible viewport dates, not newly enlarged full trip range."
+    }
+  ],
+  "independentChecks": {
+    "actualCallerCases": "2 suites11PASS/192skipped; localcommit/realSQLite callback, Guest empty items, pending→SYNCED simulation, remoteOnly, clear, foreignTrip/Accountgen, Cancel/failure and visible collapsed header",
+    "anchorCases": "1 suite3PASS/43skipped; stable Focus/sync anchors, prepend same list, continuous scrolling no restore",
+    "sourceHashes": "all4exactmatch",
+    "productModifications": false,
+    "deviceBuildOrOperations": false,
+    "backendCloudOrProvider": false
+  },
+  "limitations": [
+    "LOCAL_CALLER_REPAIR only, not Device/Cloud/Owner acceptance",
+    "ACK case is a simulated existing Reader boundary, not new SERVER_ACCEPTED/independent Cloud readback",
+    "No claim localStatus proves latest remote revision; existing authorized metadata snapshot installation is still required",
+    "No new performance or device latency measurement"
+  ],
+  "testLogHashes": {
+    "vn08-independent-tests.log": "afd7f3ffd92c0a90e6288d15eb905f540d51622b2d4f679f94b741f5e47e1634",
+    "vn08-independent-anchors.log": "2bbfde1d5391201c8e6c24a6f5080543e683ff808d2e80f61388c83a3427fb58"
+  }
+}

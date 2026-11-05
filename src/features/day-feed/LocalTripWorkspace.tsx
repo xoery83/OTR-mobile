@@ -135,6 +135,7 @@ type Props = {
   onHomeHeroHeight?: (height: number) => void;
   onChooseDay?: (date?: string | null) => void;
   onManualItemSaved?: (tripId: string, generation: number) => void;
+  onTripMetadataSaved?: (tripId: string, generation: number) => void;
 };
 export function LocalTripWorkspace(props: Props) {
   const generation = useSyncExternalStore(
@@ -161,6 +162,7 @@ function LocalTripContent({
   onHomeHeroHeight,
   onChooseDay,
   onManualItemSaved,
+  onTripMetadataSaved,
   widgetsForHome,
   onOpenHomeItem,
   onOpenLocalHomeItem,
@@ -1432,7 +1434,8 @@ function LocalTripContent({
                           : {}),
                       });
                       setCoverOpen(false);
-                      // The committed value is visible now; normal focus reads refresh later.
+                      // Retained Day/Home consumers must observe this local commit too.
+                      onTripMetadataSaved?.(selected.id, generation);
                     }
                   }}
                 />

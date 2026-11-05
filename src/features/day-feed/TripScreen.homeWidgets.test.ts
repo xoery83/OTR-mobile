@@ -5,6 +5,7 @@ import { Children, isValidElement, type ReactNode, type ReactElement } from "rea
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { TripScreen } from "./TripScreen";
 import { DayFeed } from "./DayFeed";
+import { DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
 import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
@@ -31,7 +32,7 @@ vi.mock("./useP1CivilMove", () => ({
 vi.mock("./useP1Move", () => ({ P1MeasuredMoveRegion: "MeasuredRegion" }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: async () => ({
-    getTrip: async () => ({ destinations: [{ displayLabel: "Auckland, New Zealand" }] }),
+    getTrip: async () => state.localMetadata ?? ({ destinations: [{ displayLabel: "Auckland, New Zealand" }] }),
   }),
 }));
 vi.mock("./ManualFlightForm", () => ({
@@ -71,6 +72,7 @@ const state = vi.hoisted(() => ({
   result: null as any,
   read: vi.fn(),
   discovery: [] as any[],
+  localMetadata: null as any,
   snapshot: null as any,
   snapshotRead: vi.fn(),
   resolveLocalItem: vi.fn(),
@@ -334,6 +336,7 @@ beforeEach(() => {
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
   state.discovery = [];
+  state.localMetadata = null;
   state.quickActions = null;
   state.focused = true;
   state.navigation = {
@@ -2197,4 +2200,173 @@ it("a retired Create Cancel callback cannot navigate the next Account", async ()
   expect(state.params).not.toHaveBeenCalled();
   expect(state.replace).not.toHaveBeenCalled();
   expect(state.back).not.toHaveBeenCalled();
+});
+
+it("refreshes retained Day range and calendar from local metadata commit while accepted snapshot is older", async () => {
+  const original = {
+    id: reference,
+    name: "Range Trip",
+    localStatus: "SYNCED",
+    startDate: "2026-11-05",
+    endDate: "2026-11-08",
+    destination: null,
+  };
+  state.discovery = [original];
+  const retainedLocal = localRead();
+  state.result.localManual = retainedLocal;
+  const retainedProjection = state.result.observed.projection;
+  state.snapshot.trip = original;
+  state.snapshot.candidateDays = ["2026-11-05"];
+  state.view = { ...state.view, date: "2026-11-05" };
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  expect(workspace.onTripMetadataSaved).toBeTypeOf("function");
+  state.discovery = [{ ...original, startDate: "2026-11-02" }];
+  const originalView = state.view;
+  workspace.onTripMetadataSaved(reference, 5);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  state.routeMode = "day";
+  const tree = render();
+  const feed = find(tree, DayFeed);
+  expect(feed.dates).toEqual([
+    "2026-11-02",
+    "2026-11-03",
+    "2026-11-04",
+    "2026-11-05",
+    "2026-11-06",
+    "2026-11-07",
+    "2026-11-08",
+  ]);
+  expect(feed.date).toBe("2026-11-05");
+  expect(find(tree, DayFeedCalendarSheet).tripStart).toBe("2026-11-02");
+  expect(find(tree, DayFeedCalendarSheet).tripEnd).toBe("2026-11-08");
+  expect(state.view).toBe(originalView);
+  expect(state.snapshot.trip.startDate).toBe("2026-11-05");
+  expect(feed.localManual).toBe(retainedLocal);
+  expect(feed.projection).toBe(retainedProjection);
+  feed.presentation.header.props.onLayout({ nativeEvent: { layout: { height: 303 } } });
+  feed.presentation.onOffsetChange(500);
+  state.shellVisibleDates = { first: "2026-11-05", last: "2026-11-06" };
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe("visible dates");
+});
+
+it("ignores metadata notifications from a different Trip or Account generation", async () => {
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  state.read.mockClear();
+  workspace.onTripMetadataSaved("another-trip", 5);
+  workspace.onTripMetadataSaved(reference, 4);
+  state.liveGeneration = 6;
+  workspace.onTripMetadataSaved(reference, 5);
+  await Promise.resolve();
+  expect(state.read).not.toHaveBeenCalled();
+  expect(find(render(), LocalTripWorkspace).refreshKey).toBe(0);
+});
+
+it("does not resurrect an older accepted date range after a local clear", async () => {
+  const original = {
+    id: reference,
+    name: "Range Trip",
+    localStatus: "SYNCED",
+    startDate: "2026-11-05",
+    endDate: "2026-11-08",
+    destination: null,
+  };
+  state.discovery = [original];
+  state.snapshot.trip = original;
+  state.snapshot.candidateDays = ["2026-11-05"];
+  state.view = { ...state.view, date: "2026-11-05" };
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  state.discovery = [{ ...original, startDate: null, endDate: null }];
+  workspace.onTripMetadataSaved(reference, 5);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  state.routeMode = "day";
+  const tree = render();
+  expect(find(tree, DayFeed).dates).toEqual(["2026-11-05"]);
+  expect(find(tree, DayFeedCalendarSheet).tripStart).toBeNull();
+  expect(find(tree, DayFeedCalendarSheet).tripEnd).toBeNull();
+});
+
+it("keeps a newer qualified Snapshot range ahead of remote-only stale Discovery", async () => {
+  state.discovery = [
+    {
+      id: reference,
+      name: "Remote Trip",
+      localStatus: null,
+      startDate: "2026-11-05",
+      endDate: "2026-11-08",
+      destination: null,
+    },
+  ];
+  state.localMetadata = null;
+  state.snapshot.trip = { ...state.discovery[0], startDate: "2026-11-02" };
+  state.snapshot.candidateDays = ["2026-11-05"];
+  state.view = { ...state.view, date: "2026-11-05" };
+  state.routeMode = "day";
+  const feed = find(await loaded(), DayFeed);
+  expect(feed.dates[0]).toBe("2026-11-02");
+  expect(feed.dates.at(-1)).toBe("2026-11-08");
+});
+
+it("keeps committed local dates when metadata pending clears before the retained Snapshot catches up", async () => {
+  const original = {
+    id: reference,
+    name: "Local Trip",
+    localStatus: "SYNCED",
+    startDate: "2026-11-05",
+    endDate: "2026-11-08",
+    destination: null,
+  };
+  state.discovery = [original];
+  state.localMetadata = { ...original, syncStatus: "SYNCED" };
+  state.snapshot.trip = original;
+  state.snapshot.candidateDays = ["2026-11-05"];
+  state.view = { ...state.view, date: "2026-11-05" };
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  state.discovery = [{ ...original, startDate: "2026-11-02" }];
+  state.localMetadata = { ...state.discovery[0], syncStatus: "PENDING_UPDATE" };
+  workspace.onTripMetadataSaved(reference, 5);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  state.routeMode = "day";
+  expect(find(render(), DayFeed).dates[0]).toBe("2026-11-02");
+  state.localMetadata = { ...state.localMetadata, syncStatus: "SYNCED" };
+  state.appActive!();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const tree = render();
+  expect(find(tree, DayFeed).dates[0]).toBe("2026-11-02");
+  expect(find(tree, DayFeedCalendarSheet).tripStart).toBe("2026-11-02");
+  expect(state.snapshot.trip.startDate).toBe("2026-11-05");
+  expect(state.localMetadata.syncStatus).toBe("SYNCED");
+});
+
+it("refreshes the Owner Guest date range locally without an accepted Snapshot or a new Item", async () => {
+  const local = guestRead(true);
+  state.view = { ...state.view, date: "2026-11-05", zone: "" };
+  state.localMetadata = {
+    id: reference,
+    name: "Guest range",
+    startDate: "2026-11-05",
+    endDate: "2026-11-08",
+    destinations: [],
+  };
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  state.localMetadata = { ...state.localMetadata, startDate: "2026-11-02" };
+  workspace.onTripMetadataSaved(reference, 5);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  state.routeMode = "day";
+  const tree = render();
+  expect(find(tree, DayFeed).dates).toEqual([
+    "2026-11-02",
+    "2026-11-03",
+    "2026-11-04",
+    "2026-11-05",
+    "2026-11-06",
+    "2026-11-07",
+    "2026-11-08",
+  ]);
+  expect(find(tree, DayFeedCalendarSheet).tripStart).toBe("2026-11-02");
+  expect(find(tree, DayFeed).localManual).toBe(local);
+  expect(find(tree, DayFeed).projection).toBeUndefined();
+  expect(local.items).toEqual([]);
+  expect(state.view.date).toBe("2026-11-05");
 });

@@ -1,0 +1,73 @@
+{
+  "status": "LOCAL_PASS_NARROWED_READY_FOR_INDEPENDENT_REVIEW",
+  "issue": "V-N08-02",
+  "candidate": "83a259f9bcc6e906340f17b9e395f03293a79b34",
+  "baseMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "supersedes": "988475d4 source /037add28 firstpacket; retainhistoricalreceipt butdonotintegrate it",
+  "exactSourcePacket": [
+    "src/features/day-feed/LocalTripWorkspace.tsx",
+    "src/features/day-feed/TripScreen.tsx",
+    "src/features/day-feed/LocalTripWorkspace.test.ts",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts"
+  ],
+  "fileSha256": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": "ad1f1a1719dd13bbdc20e87bdef6dfdc9939e5543a4a7984f14bfdfb57f8eab8",
+    "src/features/day-feed/TripScreen.tsx": "752b9bfbd703809e2c547a623e0deb294e0403af00e755fa5c360f5a41455278",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "41cee69106342c0f822933b891e21d9aecc245929134bd90a41e6edaf178e4e1",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts": "c26e1d1c1f84886fa737bf59a19cea0f8cf24e2c456d1a8708ee60881deaf976"
+  },
+  "rootCause": "TripEdit localcommit updated childselected only; parentDay facts/load not notified. Original accepted-calendar path could retainolderSnapshotrange.",
+  "fix": "Successful current-scope localmetadata commit/readback notifies existingparent; parentTrip/generationguard reloads existinglocalReaders +revision withoutclearingfocus/router/listkey/cloudpull. ExistingreadMerged localStatus nonnull identifies accountlocalcontainer and winsolderSnapshot. Remote-onlyDiscovery localStatusnull retainsoriginalqualifiedSnapshot precedence.",
+  "existingSourceSemantics": {
+    "TripListSummaryLocalStatus": "PENDING_CREATE/SYNCED/null only; no inventedPENDING_UPDATE orrevisionfield",
+    "readMerged": "LocalRowaccepted_at choosesSYNCED, elsePENDING_CREATE; localrootmetadatawinsbyexistingaccountkey contract before/aftermetadataACK",
+    "pendingAckBoundary": "DirectReactcaller supplies getTrip PENDING_UPDATE\u2192SYNCED with readMergedlocalStatusSYNCED andolderSnapshotretained; datesremainnew. ThisisnotrealCloudACK/L3proof."
+  },
+  "ownerFixture": {
+    "readyEvent": "/Users/xoery/Documents/Codex/2026-11-03/otr-vision-qa/outputs/batch-02/V-N08-mainffa0-14683/VISION_READY_EVENT.json",
+    "sha256": "95dbd1cd02610402a9397bd448ab4c4091498978e109f459b9bb89d65d47ec0c",
+    "fixture": "DayFeedVisionQA,4days/P1/P3/emptyday ownGuest normalUI",
+    "identityConclusion": "Owner/Visionactualreadyreceipt confirmsownGuest; noguessingfromC0Accountpage"
+  },
+  "validation": {
+    "RED": "2actualcaller failuresbeforefix",
+    "GREEN": "3suites215PASSfinal",
+    "anchorRegression": "3selectedPASS/43skipped, existingWindowedDayList contracts",
+    "types": "finalfourrootsPASS",
+    "lint": "0errors16existingimport/firstwarnings",
+    "UIGuard": "PASS473legacy168representative",
+    "diffCheck": "PASS"
+  },
+  "actualLocalCases": [
+    "NormalTripEditorSQLitedatecommitNov5\u20138\u2192Nov2\u20138; originalCREATEpayloadretained; metadataqueueone; nonewItem/Coreenqueue",
+    "Guestcallerupdatesfullrange/dates/calendarwithoutacceptedSnapshot/newItem; sameReaderandselecteddate",
+    "Accountlocallysourcednewrange/clearwinolderSnapshot; remoteonlynewSnapshotwinsstaleDiscovery",
+    "Pendingmetadata\u2192ACKSYNCEDsimulatedreaderboundarydoesnotrollbacklocalrange",
+    "Cancel/writefailure/generationdriftnonotify;wrongTrip/oldAccountgenerationignored",
+    "Sameprojection/localManualreferences/viewcontext; collapsedheaderstillvisibleviewportdates; stablelistkeyuntouched"
+  ],
+  "scopeExclusions": [
+    "V-N08-01destinationotherchild",
+    "V-N08-03P1captionotherchild",
+    "Hosted/Cloud/Provider/Sourceactions",
+    "Canonical/Core/Schema/Authority/Queuechanges",
+    "Nativebuild/QApackage/device/OwnerUXacceptance"
+  ],
+  "nativeInputChanges": [],
+  "integration": "NOT_MAIN_INTEGRATED",
+  "independentReview": "PENDING_NOT_AUTHOR_PASS_AS_REVIEW",
+  "knownSeparate": "C0SecureStoreERR_KEY_CHAIN/UNKNOWN remains397b2fd3 platformblocked, notcausalwithOwnerGuestV-N08",
+  "next": "IndependentReviewexact4leaves\u2192Root1serialintegrationwithotherchild\u2192Owner/Visiontargetedretetest; norepeatedCloudtests",
+  "evidenceHashes": {
+    "FOCUSED_TESTS.log": "c19845e8ae24a14f531db5ae4a2c2d1a738bda608130c70ad0ea4d11bf427e5a",
+    "ANCHOR_REGRESSION.log": "3d1a09485a5a01f879fc36086e9e915528d5d85d64ddc91d564b5da0726bb103",
+    "SCOPED_TYPES_NARROWED.log": "0c242af07a25c5466712e7e1a9ed40a96ee60134b49993e242d387bb227e48c7",
+    "SCOPED_TYPES_FINAL.log": "0c242af07a25c5466712e7e1a9ed40a96ee60134b49993e242d387bb227e48c7",
+    "FOCUSED_TESTS_FINAL.log": "fb2fc46aede8e99478b5a22b876c743c3d84b2fd8847aa4268398aa73813c920",
+    "ESLINT_NARROWED.log": "52e3d870342fe39d1e3673d6b8fb199c1add448a980d8ae0dce0b4295593c07a",
+    "FOCUSED_TESTS_NARROWED.log": "ae15a7b64cdb4010d528dc9ca27f0a0a43e35b3e93897e9b7ad83b316640fe65",
+    "ESLINT_FINAL.log": "52e3d870342fe39d1e3673d6b8fb199c1add448a980d8ae0dce0b4295593c07a",
+    "SCOPED_TYPES.log": "0c242af07a25c5466712e7e1a9ed40a96ee60134b49993e242d387bb227e48c7"
+  },
+  "at": "2026-11-04T23:59:57.514699+00:00"
+}

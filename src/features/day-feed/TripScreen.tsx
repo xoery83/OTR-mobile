@@ -814,6 +814,19 @@ function TripContent({
     },
     [requested, generation, load],
   );
+  const tripMetadataSaved = useCallback(
+    (tripId: string, captured: number) => {
+      if (
+        tripId !== requested ||
+        captured !== generation ||
+        captured !== getAccountGeneration()
+      )
+        return;
+      setRevision((value) => value + 1);
+      void load();
+    },
+    [requested, generation, load],
+  );
   const handledManualOutcome = useRef<typeof manualOutcome>(null);
   useEffect(() => {
     if (
@@ -1400,6 +1413,9 @@ function TripContent({
     homeSnapshot.scope.accountId === visibleTrip.scope.accountId &&
     homeSnapshot.scope.generation === generation &&
     homeSnapshot.epoch === visibleTrip.observed.projection.source.epoch;
+  // Non-null readMerged localStatus identifies the existing local container,
+  // including after metadata ACK. Remote-only Discovery cannot replace a newer Snapshot.
+  const localCalendarFacts = dayFacts?.localStatus ? dayFacts : null;
   const firstKnownDate =
     homeSnapshot?.candidateDays[0] ??
     homeSnapshot?.trip?.startDate ??
@@ -1407,7 +1423,7 @@ function TripContent({
   const dateChoices =
     homeContextCurrent && firstKnownDate
       ? wholeTripCalendarDates(
-          homeSnapshot!.trip,
+          localCalendarFacts ?? homeSnapshot!.trip,
           homeSnapshot!.candidateDays,
           firstKnownDate,
         )
@@ -1452,7 +1468,7 @@ function TripContent({
     homeSnapshot.scope.generation === generation &&
     homeSnapshot.epoch === visibleTrip.observed.projection.source.epoch
       ? wholeTripCalendarDates(
-          homeSnapshot.trip,
+          localCalendarFacts ?? homeSnapshot.trip,
           homeSnapshot.candidateDays,
           dayContext.date,
         )
@@ -1665,6 +1681,7 @@ function TripContent({
           onOpenToday={openToday}
           onKnownTrip={knownTrip}
           onManualItemSaved={manualItemSaved}
+          onTripMetadataSaved={tripMetadataSaved}
           onBackToTrips={backToTrips}
           onChooseDay={canChooseDay ? chooseDay : undefined}
           homePerspective={homePerspective}

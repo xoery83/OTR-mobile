@@ -1,0 +1,29 @@
+{
+  "baseMain": "8a776e0e824bb4b51737eadb455dad660459fa64",
+  "candidate": "83a259f9bcc6e906340f17b9e395f03293a79b34",
+  "packetSHA256": "ab186152a0cfbd5937cb8e0df5a51556d72b6336e28cbe4673629b26cca473d5",
+  "reviewCommit": "d573080d6714350d879d924d68b2f7c4b1f23aa6",
+  "reviewSHA256": "efc92b33d4599289e7c1c1c0a6d1e5e4e7109c9b732a35ebdee2f1d0180b4f0d",
+  "fourLeaves": {
+    "src/features/day-feed/LocalTripWorkspace.tsx": {
+      "preimageSHA256": "5a18ed22c7545d98c6766654929fed45d92df643bc10e08de7cf85c84f0defc0",
+      "candidateSHA256": "ad1f1a1719dd13bbdc20e87bdef6dfdc9939e5543a4a7984f14bfdfb57f8eab8",
+      "blob": "78b0a7eeccd1d0a04ee2806a7fc659eb5259df21"
+    },
+    "src/features/day-feed/TripScreen.tsx": {
+      "preimageSHA256": "dec6213b6d86db1430448434179c9af46a12a4e96702867bdd6bc4f48e7f9862",
+      "candidateSHA256": "752b9bfbd703809e2c547a623e0deb294e0403af00e755fa5c360f5a41455278",
+      "blob": "1cbe49047495dc85318fd5cc8d18e53e8e14afc5"
+    },
+    "src/features/day-feed/LocalTripWorkspace.test.ts": {
+      "preimageSHA256": "d6026d3b2ec04692c31023364acf7537834d3f56599ee9fafe6cfff78f3c5b2b",
+      "candidateSHA256": "41cee69106342c0f822933b891e21d9aecc245929134bd90a41e6edaf178e4e1",
+      "blob": "314ea01976eb1ced13c00058393d7fa432212fc7"
+    },
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts": {
+      "preimageSHA256": "78f8fd2e3b8bd225a35e538718de9483426636fcfe92630d1bd0bdecde1605e1",
+      "candidateSHA256": "c26e1d1c1f84886fa737bf59a19cea0f8cf24e2c456d1a8708ee60881deaf976",
+      "blob": "1d4dbc934ebaf4c03e6a74188c161184303d6b85"
+    }
+  }
+}

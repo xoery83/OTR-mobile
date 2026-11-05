@@ -80,7 +80,10 @@ vi.mock("@/features/ledger/CurrencySettingsScreen", () => ({
   },
 }));
 vi.mock("./TripCalendarRangeField", () => ({
-  TripCalendarRangeField: () => null,
+  TripCalendarRangeField: (props: any) => {
+    state.nodes.push({ calendarRange: props });
+    return null;
+  },
   tripRangeLabel: () => "range",
 }));
 vi.mock("./P1PlanEditor", () => ({
@@ -393,6 +396,7 @@ const props = {
   onCreate: vi.fn(),
   onOpenToday: vi.fn(),
   onKnownTrip: vi.fn(),
+  onTripMetadataSaved: vi.fn(),
   onBackToTrips: vi.fn(),
   widgetsForHome: vi.fn(
     (_id: string, _lifecycle: string): readonly TripHomeWidget[] => [],
@@ -475,6 +479,7 @@ beforeEach(() => {
   props.mode = "LIST";
   props.onOpen.mockReset();
   props.onKnownTrip.mockClear();
+  props.onTripMetadataSaved.mockReset();
   props.onBackToTrips.mockClear();
   advanceAccountGeneration();
 });
@@ -2697,3 +2702,174 @@ it("F02 mixed cache failure retains same-scope remote Trips while applying fresh
   expect(deduplicated).toContain("Remote now local");
   expect(deduplicated).not.toContain("Qualified mixed remote Trip");
 });
+
+it("notifies the retained parent only after the original Trip dates commit without adding an Item", async () => {
+  const current = {
+    ...trip("range-trip", "Range Trip"),
+    startDate: "2026-11-05",
+    endDate: "2026-11-08",
+  };
+  const repo = repository([current]);
+  vi.mocked(repo.updateMetadata).mockImplementation(async (edit) => {
+    Object.assign(current, edit.after);
+  });
+  state.repo.mockResolvedValue(repo);
+  props.tripId = current.id;
+  render();
+  await flush();
+  render();
+  await button("tripHome.edit").onPress();
+  await flush();
+  render();
+  state.nodes
+    .find((node) => node.calendarRange)!
+    .calendarRange.onChange({ start: "2026-11-02", end: "2026-11-08" });
+  render();
+  button("ui.save").onPress();
+  await flush();
+  render();
+  expect(await repo.getTrip(current.id)).toMatchObject({
+    startDate: "2026-11-02",
+    endDate: "2026-11-08",
+  });
+  expect(props.onTripMetadataSaved).toHaveBeenCalledExactlyOnceWith(
+    current.id,
+    getAccountGeneration(),
+  );
+  expect(repo.addItem).not.toHaveBeenCalled();
+});
+
+it("commits date range through real SQLite and notifies before any Item creation or cloud acceptance", async () => {
+  const sql = new DatabaseSync(":memory:");
+  try {
+    for (const migration of migrations) sql.exec(migration.sql);
+    const database = {
+      async getFirstAsync<T>(query: string, ...args: unknown[]) {
+        return (sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+      },
+      async getAllAsync<T>(query: string, ...args: unknown[]) {
+        return sql.prepare(query).all(...(args as never[])) as T[];
+      },
+      async runAsync(query: string, ...args: unknown[]) {
+        return sql.prepare(query).run(...(args as never[])) as never;
+      },
+      async withTransactionAsync(work: () => Promise<void>) {
+        sql.exec("BEGIN");
+        try {
+          await work();
+          sql.exec("COMMIT");
+        } catch (error) {
+          sql.exec("ROLLBACK");
+          throw error;
+        }
+      },
+    };
+    const { createTripRepository } = await vi.importActual<
+      typeof import("@/data/repositories/tripRepository")
+    >("@/data/repositories/tripRepository");
+    const core = { captureContext: vi.fn(), enqueue: vi.fn(), pending: vi.fn() };
+    const repo = createTripRepository(
+      database,
+      async () => account,
+      core,
+      () => "2026-11-05T00:00:00Z",
+      async () => "QA Creator",
+    );
+    const account = randomUUID();
+    const operationId = randomUUID();
+    const current = await repo.createTrip({
+      tripId: randomUUID(),
+      operationId,
+      name: "SQLite range",
+      startDate: "2026-11-05",
+      endDate: "2026-11-08",
+    });
+    const originalCreate = sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(operationId)?.payload_json;
+    const addItem = vi.spyOn(repo, "addItem");
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await vi.waitFor(() => {
+      render();
+      expect(button("tripHome.edit")).toBeDefined();
+    });
+    await button("tripHome.edit").onPress();
+    await flush();
+    render();
+    state.nodes
+      .find((node) => node.calendarRange)!
+      .calendarRange.onChange({ start: "2026-11-02", end: "2026-11-08" });
+    render();
+    button("ui.save").onPress();
+    await vi.waitFor(() =>
+      expect(props.onTripMetadataSaved).toHaveBeenCalledExactlyOnceWith(
+        current.id,
+        getAccountGeneration(),
+      ),
+    );
+    expect(await repo.getTrip(current.id)).toMatchObject({
+      id: current.id,
+      startDate: "2026-11-02",
+      endDate: "2026-11-08",
+      syncStatus: "PENDING_CREATE",
+    });
+    expect(
+      sql.prepare("SELECT payload_json FROM sync_operations WHERE id=?").get(operationId)
+        ?.payload_json,
+    ).toBe(originalCreate);
+    expect(
+      sql
+        .prepare(
+          "SELECT COUNT(*) AS count FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+        )
+        .get()?.count,
+    ).toBe(1);
+    expect(addItem).not.toHaveBeenCalled();
+    expect(core.enqueue).not.toHaveBeenCalled();
+  } finally {
+    sql.close();
+  }
+});
+
+it.each(["cancel", "failure", "generation"])(
+  "does not notify a Trip metadata commit on %s",
+  async (kind) => {
+    const current = {
+      ...trip("guarded-range", "Guarded range"),
+      startDate: "2026-11-05",
+      endDate: "2026-11-08",
+    };
+    const repo = repository([current]);
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await flush();
+    render();
+    await button("tripHome.edit").onPress();
+    await flush();
+    render();
+    state.nodes
+      .find((node) => node.calendarRange)!
+      .calendarRange.onChange({ start: "2026-11-02", end: "2026-11-08" });
+    render();
+    if (kind === "cancel") {
+      button("common.cancel").onPress();
+      state.alert.mock.lastCall![2][1].onPress();
+    } else if (kind === "failure") {
+      vi.mocked(repo.updateMetadata).mockRejectedValueOnce(new Error("write rejected"));
+      button("ui.save").onPress();
+      await flush();
+    } else {
+      const pending = deferred<void>();
+      vi.mocked(repo.updateMetadata).mockImplementationOnce(() => pending.promise);
+      button("ui.save").onPress();
+      await flush();
+      advanceAccountGeneration();
+      pending.resolve();
+      await flush();
+    }
+    expect(props.onTripMetadataSaved).not.toHaveBeenCalled();
+  },
+);
