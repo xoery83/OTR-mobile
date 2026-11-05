@@ -1,0 +1,26 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01",
+  "candidate": "b132e56976733e0136bca1f4f47737f61d42c657",
+  "review": "NO_BLOCKER_FOR_EXPLICIT_INTERNAL_OPTION_SOURCE_ONLY",
+  "patch": "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/EXPLICIT_NICKNAME_OPTION.patch",
+  "patchSHA256": "6490fe5c7670bc9e3d7dc4dafa41e2fe993445f30e10c7907edce8c1b7c2797b",
+  "target": "backend/src/tripMemberClaimQaRuntime.ts",
+  "sourceBaseMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+  "preSHA256": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+  "postSHA256": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d",
+  "testFiles": [
+    "backend/src/selfTripNicknameQaComposition.test.ts"
+  ],
+  "testSHA256": "4c81198bb389cb6cca9cff0f75470e8e2f7333ac2c45bb551971116fe9fe577f",
+  "docs": [
+    "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/PREIMAGE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/LOCAL_EVIDENCE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/UPSTREAM_DEPENDENCY.json",
+    "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/PARENT_REVIEW.json",
+    "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/SOURCE_HANDOFF.json"
+  ],
+  "dependencyOrder": "Root1accepts/integratesCore0fc4files first and pinsactualmain; thenfreshpreimage/CAS appliesexactAuthwrapperpatch and checksactualwrappertypes. Do not replaceCore4files or wholebranch/sharedsource. Base09a is fixedpatchbase, notproofCore0fcmain.",
+  "runtimeBoundary": "Futurequalifiedoperator must explicitly choose thirdoption true and forwardactualreturnedport toStartupslot. CurrentserverCapture default2argentryunchanged. No selection/Portforward/liveRoot2window or protectedpermission granted bythissource.",
+  "checksReused": "9authorMock+test-onlyscopedtypeslintPASS; staticparentreview no repeats",
+  "next": "Root1serialsourceintegrationafterdependency, thenRoot2qualificationseparate. No newoperator/framework/envflag."
+}

@@ -1,0 +1,26 @@
+{
+  "reviewer": "/root parent",
+  "candidate": "b132e56976733e0136bca1f4f47737f61d42c657",
+  "verdict": "NO_BLOCKER_FOR_EXPLICIT_INTERNAL_OPTION_SOURCE_ONLY",
+  "method": "Staticexactpatch/all9Mocktests/LOCAL_EVIDENCE/upstreamhash review;9tests andCore46 notrerun",
+  "confirmed": [
+    "Onlyliteraltrue selects; noenvinference",
+    "OriginalselectedClaim/recoverystripping/ownerclose preserved",
+    "Sameprovider1call, defaultentryunchanged",
+    "Upstreamomittedport never synthesized"
+  ],
+  "typecheckLimit": "Author scopedTS is testonly. Actualpatchedwrapper types requireCore0fc integrated first, thenRoot1freshmaincheck. Not wholemainPASS.",
+  "preimage": {
+    "sourceMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+    "target": "backend/src/tripMemberClaimQaRuntime.ts",
+    "preSHA256": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+    "postSHA256": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d",
+    "patchSHA256": "6490fe5c7670bc9e3d7dc4dafa41e2fe993445f30e10c7907edce8c1b7c2797b",
+    "sourceFileWritten": false,
+    "CoreDependencyCommit": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+    "CoreRuntimeSHA256": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "CorePgSHA256": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a"
+  },
+  "upstream": "Root1Core0fc candidate dependency notclaimedmain",
+  "qualification": "SOURCE_ONLY_NOT_EXECUTABLE_QA_WINDOW"
+}
