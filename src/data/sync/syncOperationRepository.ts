@@ -767,6 +767,68 @@ export async function readSyncOperationDiagnostics(
   );
   return rows.map((row) => syncDiagnosticSchema.parse(row));
 }
+export type SyncQueueCensusV1 = Readonly<{
+  contractVersion: 1;
+  coverage: "ALL_ACCOUNTS_SYNC_OPERATIONS_ONLY";
+  corePendingIntents: "NOT_INCLUDED";
+  sqliteSchemaVersion: "NOT_ASSERTED";
+  countsByStatus: Readonly<Record<SyncOperationStatus, number>>;
+  totalRows: number;
+  allNonCompletedRows: number;
+  unknownFailureRows: number;
+  nonCompletedUnknownFailureRows: number;
+}>;
+
+// Caller supplies its already initialized/owned handle; this is not whole-App emptiness.
+export async function readUnfinishedSyncQueueCensus(
+  database: Pick<SQLite.SQLiteDatabase, "getAllAsync">,
+): Promise<SyncQueueCensusV1> {
+  const rows = await database.getAllAsync(
+    `SELECT status, COUNT(*) AS count,
+      SUM(CASE WHEN failure_category='UNKNOWN' THEN 1 ELSE 0 END) AS unknownFailures
+     FROM sync_operations GROUP BY status`,
+  );
+  const countsByStatus: Record<SyncOperationStatus, number> = {
+    PENDING: 0, PROCESSING: 0, RETRYABLE: 0, DEPENDENCY_BLOCKED: 0,
+    FAILED: 0, CONFLICT: 0, COMPLETED: 0,
+  };
+  const rowSchema = z.object({
+    status: z.enum(["PENDING", "PROCESSING", "RETRYABLE", "DEPENDENCY_BLOCKED", "FAILED", "CONFLICT", "COMPLETED"]),
+    count: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    unknownFailures: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  }).refine((row) => row.unknownFailures <= row.count);
+  const seen = new Set<SyncOperationStatus>();
+  let totalRows = 0;
+  let unknownFailureRows = 0;
+  let nonCompletedUnknownFailureRows = 0;
+  for (const raw of rows) {
+    const parsed = rowSchema.safeParse(raw);
+    // Never echo an unexpected status or driver value into census diagnostics.
+    if (!parsed.success || seen.has(parsed.data.status)) {
+      throw new Error("SYNC_QUEUE_CENSUS_INVALID_METADATA");
+    }
+    const row = parsed.data;
+    seen.add(row.status);
+    countsByStatus[row.status] = row.count;
+    totalRows += row.count;
+    unknownFailureRows += row.unknownFailures;
+    if (row.status !== "COMPLETED") nonCompletedUnknownFailureRows += row.unknownFailures;
+    if (!Number.isSafeInteger(totalRows)) throw new Error("SYNC_QUEUE_CENSUS_INVALID_METADATA");
+  }
+  return {
+    contractVersion: 1,
+    coverage: "ALL_ACCOUNTS_SYNC_OPERATIONS_ONLY",
+    corePendingIntents: "NOT_INCLUDED",
+    sqliteSchemaVersion: "NOT_ASSERTED",
+    countsByStatus,
+    totalRows,
+    // FAILED/CONFLICT remain unresolved for this conservative QA census.
+    allNonCompletedRows: totalRows - countsByStatus.COMPLETED,
+    unknownFailureRows,
+    nonCompletedUnknownFailureRows,
+  };
+}
+
 export async function readPendingSyncCounts(
   database: Pick<SQLite.SQLiteDatabase, "getFirstAsync">,
   accountId: string,

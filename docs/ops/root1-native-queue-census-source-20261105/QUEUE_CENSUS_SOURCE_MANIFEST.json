@@ -1,0 +1,19 @@
+{
+  "base": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "candidate": "8c744b9b1cd06612780239a85140406bb32efdb4",
+  "evidence": "593464b82b20c79bd63304db0f90d8c62953995b",
+  "sourceLeaves": [
+    {
+      "path": "src/data/sync/syncOperationRepository.ts",
+      "preimageBlob": "f2d1f825a7b503e846f3c5cae209c5ab4e79512e",
+      "outputBlob": "2c2af5e26a3453437ce375a37dc188672a322eb5",
+      "sha256": "d7d5f351c334715eb6f19a79ce450f455582bd0a4b8536f93bd560745a819f61"
+    },
+    {
+      "path": "src/data/sync/syncOperationRepository.census.test.ts",
+      "preimageBlob": "ABSENT",
+      "outputBlob": "5c9f7350da273fb196030bb7885960846749168e",
+      "sha256": "3c4003cfaf7f179b2f47ca052a38272850684f6839e864f885517995671e3c13"
+    }
+  ]
+}

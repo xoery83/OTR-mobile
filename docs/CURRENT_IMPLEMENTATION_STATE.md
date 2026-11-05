@@ -1,3 +1,7 @@
+## Native Queue Census exact source — 5 November 2026
+
+Native8c744/local480 exact2 leaves and ff9c Review integrated after direct Owner call5d95 three-package source approval. Single metadata-only all-account7status SELECT, no payload/open/init/mutate; invalid/unknown errors neverempty, no wholeApp/CoreIntent/schemaVersion claim. Existing Sync methods and relevant dependencies remain byte-identical; local480 types/lint and author7/independent3PASS4skip reused without relabeling. Fresh main0f43 Auth hook preserved separately, no new runtime/OTP/Hosted/DB action. Receipt: `docs/ops/root1-native-queue-census-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Self nickname optional app hook and qualification supplement — 5 November 2026
 
 Auth869 exact9line app patch applied only at pre6cbd→postb6a; optional port undefined retains original404/no JWT/Core connection for three paths. Explicit separately qualified port routes through existing normal JWT; no startup/env/default connection injection. Fixed six temporary mount cases/81d4 parent Review reused, actual-main types/lint/diff pass; disposable harness stays author evidence, not main. Core956 two docs supplement only: known historical finite Gate constraint does not qualify nickname-only activation, actual constraints/effective predicates require Root2 proof and any minimal incompatible change remains separate. No SQL/EXEC/runtime/Hosted activation; install NOT_READY. Receipt: `docs/ops/root1-nickname-optional-app-hook-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

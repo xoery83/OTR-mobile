@@ -1,0 +1,33 @@
+{
+  "status": "SOURCE_ONLY_NATIVE_READONLY_QUEUE_CENSUS_INTEGRATION_PASS",
+  "parentMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a",
+  "candidate": "8c744b9b1cd06612780239a85140406bb32efdb4",
+  "evidenceHead": "593464b82b20c79bd63304db0f90d8c62953995b",
+  "manifestSHA256": "422be459e8a71c7c631d395a4b6e2634d7656b8e4bcc38160e8fe0928d192642",
+  "reviewSHA256": "6d0deecbca5c711b0594487b3968ce1b69f192bd37bb4d5f0ae478ffd7174de7",
+  "twoLeafSHA256": {
+    "src/data/sync/syncOperationRepository.ts": "d7d5f351c334715eb6f19a79ce450f455582bd0a4b8536f93bd560745a819f61",
+    "src/data/sync/syncOperationRepository.census.test.ts": "3c4003cfaf7f179b2f47ca052a38272850684f6839e864f885517995671e3c13"
+  },
+  "actualChecks": {
+    "twoRootTypes": "Prior local480 PASS reused: exact2source/test and all relevant dependencies unchanged; independent app9line/docs change does not enter this source type closure",
+    "twoRootESLint": "Prior local480 PASS reused with exact unchanged2source leaves",
+    "diffCheck": "PASS",
+    "existingSyncMethods": "BYTE_IDENTICAL after removing only new type/function insertion",
+    "CoreEngineAccountDependencies": "BYTE_IDENTICAL_CANDIDATE",
+    "appSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf separately approved published parent0f43, untouched by this package"
+  },
+  "reused": "Author7 actualSQLite plus independent3PASS4skip retained honestly; exact source/dependencies, not rerun, not seven independent.",
+  "contract": "Caller provides already initialized/owned SQLite handle. Single metadata SELECT GROUPBY all7 statuses/allAccounts/noLIMIT; FAILED/CONFLICT unresolved, UNKNOWNfailure counts separate. Invalid/duplicate/unsafe/nonnumeric/error metadata reject, successful zero rows only returns0. No identity/payload/open/init/migrate/recover/mutation.",
+  "notProved": [
+    "Core pending intents",
+    "SQLite schema version",
+    "Whole App empty/Guest assets",
+    "Auth or Adoption permission",
+    "Actual private App DB/device read"
+  ],
+  "independentScope": "Curated Native2source only atop actual approved Auth0f43 parent; no replay of blocked old branch, no Auth product change in this diff. Earlier rejected Native action preserved separately; exact new human approval changes authorization condition.",
+  "actions": "Source Git only; no Hosted/SQL/AuthSession/OTP/device/Source/Provider.",
+  "OwnerExactApprovalCall": "call_5d95ae8e99924fa2a5a539c99a4b0657",
+  "humanAnswerExact": "\u6279\u51c6\u8fd9\u4e09\u4efd\u7cbe\u786e\u53ea\u8bfb\u6e90\u7801\u5408\u5165\u4e0e\u63a8\u9001"
+}

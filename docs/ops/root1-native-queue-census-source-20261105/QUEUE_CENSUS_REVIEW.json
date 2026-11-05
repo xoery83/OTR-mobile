@@ -1,0 +1,33 @@
+{
+  "status": "NO_BLOCKER_READ_ONLY_DATA_LAYER_ONLY",
+  "candidate": "8c744b9b1cd06612780239a85140406bb32efdb4",
+  "evidence": "593464b82b20c79bd63304db0f90d8c62953995b",
+  "base": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "manifestSHA256": "422be459e8a71c7c631d395a4b6e2634d7656b8e4bcc38160e8fe0928d192642",
+  "findings": [],
+  "sourceChecks": [
+    "Twoexactleafmanifestmatchesauthorhash05dadb996b93de42f051ad3b60c32f1e24183d5d550eec39fbfc0a748be84d1b",
+    "Additiveexportonly; existingSyncfunctions unchanged. No runtimecallersinstalled, onlynewtestcallers; Composerb981outsideReview",
+    "OnegetAllAsync SELECTstatus/COUNT/SUM GROUPBYstatus; noWHERE/accountfilter/LIMIT/ID/payload/privatebody, noopen/init/migration/update/claim/recovery",
+    "Sevenactualstatuses counted,FAILED/CONFLICTincludednoncompleted; UNKNOWN failurecategory countedseparately includingnoncompletedsubtotal",
+    "Unexpectedstatuses/duplicategroups/noninteger/unsafeornegativecounts/countsumoverflow/unknownFailures>count rejectfixedmetadataerror,never0",
+    "Driver/schema/queryfailurepropagates, successfulzerorows onlyreturnszeros",
+    "Summedunknowncounts boundedbyvalidatedtotalRows, noidentity/privatepayloadprojection"
+  ],
+  "independentValidation": {
+    "result": "1suite3PASS4skip;373ms;2026-11-05 16:14:55local",
+    "cases": [
+      "ActualSQLite66rows/allaccounts/7statuses/noLIMIT+total_changesunchanged/nosensitiveoutput",
+      "Missingtable/missingcolumn/drivererror refusalwithnomutation/noinitialization",
+      "Stringnumericcountmetadata rejectednotcoerced"
+    ],
+    "notCounted": "Author7SQLite/types/lintreused, notindependentcount; nohistoricalCore/bridge rerun"
+  },
+  "limitations": [
+    "Alreadyinitialized/ownedDBhandle iscallerprecondition; thisfunctiondoesnotqualifyhandleprovenance/Accountprincipal",
+    "Coverssync_operationsonly;Corependingintents/privatecache/SQLiteversion/wholeAppemptyNOT_ASSERTED",
+    "Allaccountmetadata internalQAreader isnotnewAuthauthority/Cloudqualification",
+    "NoactualprivateAppDBread/device/OTP/Hosted/network/Source/Provider",
+    "NoComposerb981review, productedits ormetadataupdates"
+  ]
+}
