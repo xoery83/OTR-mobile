@@ -1,0 +1,61 @@
+{
+  "reviewer": "/root/ui08_review",
+  "candidateSha": "2c7ec1c52dab43d9df9edaed6f73e326476f892f",
+  "sourceBase": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "verdict": "SCOPED_CODE_REVIEW_NO_BLOCKER",
+  "scope": "Fixed universalImportTransport.ts and direct test; minimal connected shared-client/Activity-reader/Capture-consumer inspection. No product changes or real HTTP.",
+  "actionableDefects": [],
+  "personallyVerified": [
+    "Only CONTEXT and RESULTS GETs enter new diagnostic wrapper after existing UUID/binding validation; prepare/resume/execute POST logic and API/DTO remain unchanged.",
+    "New info event has only fixed event/method/phase/category, validated integer100-599 status, existing server requestId revalidated as UUID, and domain-separated SHA256 of validated normalized Batch UUID.",
+    "No Actor/Trip/Batch/Task raw identity, body, filename, query, URL, token/session, stack/message or Provider response included in the new event. No warn/error/LogBox added.",
+    "SameBatch correlation stable across Context/Results; differentBatch correlation differs. Explicit otr.import.batch-diagnostic/1 NUL domain and lowercased UUID prevent accidental reuse as raw-content/other-domain hash.",
+    "Missing/malicious requestId omitted rather than invented. Logging/hash failures swallowed inside diagnostic-only try; exact caught original is rethrown.",
+    "scoped current generation/account checks, signal/API timeout/cancellation behavior and call count unchanged. No diagnostic fetch, retry, persistence, setting or framework added.",
+    "Connected consumer still interprets exact ApiClientError status/code: continuous503 remains uncertainty, only existing qualified404 TASK_NOT_FOUND allows its existing preparation path; no error mapping changed.",
+    "Existing Activity reader still swallows unavailable observations without fabricating Task failure; no new request or dispatch introduced."
+  ],
+  "testsPersonallyRun": [
+    {
+      "command": "./node_modules/.bin/vitest run src/data/api/universalImportTransport.test.ts",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "In-process Backend/mock fetch/local fixture provider only; no real network or paid Provider."
+    }
+  ],
+  "diagnosticFieldBoundary": {
+    "newEvent": "universal_import_read_failed",
+    "newFields": [
+      "event",
+      "method",
+      "phase",
+      "category",
+      "status when valid",
+      "requestId when valid",
+      "batchCorrelation"
+    ],
+    "templatedRoute": "Not present in the new event. Existing shared-client api_request_failed info event provides query-free UUID-templated route; same legitimate requestId links both events on actual HTTP errors. Fixed CONTEXT/RESULTS phase also identifies read shape.",
+    "missingRequestIdLimit": "When server requestId is absent, no server join is fabricated. Batch hash+phase remain available; this does not reconstruct historical Root2e080 correlation.",
+    "sourceLines": "src/data/api/universalImportTransport.ts:76-129; existing shared client diagnostic remains unchanged."
+  },
+  "sourceLeafSHA256": {
+    "src/data/api/universalImportTransport.ts": "5558504c0f86feb436a295ac8666993168be79f846e7139c115bb1c10f909046",
+    "src/data/api/universalImportTransport.test.ts": "f59bacb8bdc12947adb2cc7e55cc0a57035bb93ef43ca334bf276e912dcb9012"
+  },
+  "authorOnlyValidation": [
+    "RED5failed9passed",
+    "Scoped types2roots",
+    "Lint/diff checks"
+  ],
+  "limitations": [
+    "This prepares bounded diagnostics for the next authorized reproduction; no actual future503 or requestId-to-Hosted log linkage demonstrated.",
+    "No cancellation/timeout real device reproduction; unchanged cancellation semantics assessed from wrapper and connected client plus existing generation test.",
+    "Existing client401 refresh behavior is unchanged; no claim all possible authenticated GETs can only send once. New failure-path tests verify no additional diagnostic retry for tested503/unknown cases.",
+    "Underlying shared-client logger behavior was not modified; new wrapper protects its own hashing/logging from changing its caught error.",
+    "No broad suites, historical golden, HTTP probe, device, Hosted/Source/Provider action or token/session read.",
+    "No independent type/lint rerun; author packet not required for direct fixed-code verdict."
+  ],
+  "readiness": "SCOPED_LOCAL_DIAGNOSTIC_CODE_REVIEW_PASS_NOT_REPRODUCTION_OR_CLOUD_PASS",
+  "mutations": "Only this independent report written under/private/tmp; author product files/worktree unmodified."
+}

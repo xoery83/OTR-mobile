@@ -1,0 +1,32 @@
+{
+  "status": "SOURCE_ONLY_CLIENT_CORRELATION_INTEGRATION_PASS_NOT_503_REPRODUCTION",
+  "ownerScope": "MC-IMPORT-INTEGRATION-OPTIMIZATION-20261105-01",
+  "parentMain": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+  "candidate": "2c7ec1c52dab43d9df9edaed6f73e326476f892f",
+  "finalDocsEvidence": "158e8c0425ddf3b6fbce1be687d794d9961531aa",
+  "twoLeafSHA256": {
+    "src/data/api/universalImportTransport.ts": "5558504c0f86feb436a295ac8666993168be79f846e7139c115bb1c10f909046",
+    "src/data/api/universalImportTransport.test.ts": "f59bacb8bdc12947adb2cc7e55cc0a57035bb93ef43ca334bf276e912dcb9012"
+  },
+  "loggingDoc": "docs/ops/photo-first-cold-503-20261103/NEXT_OCCURRENCE_LOGGING.md",
+  "loggingDocSHA256": "71ff31dc7d58ad550e42e05421572bc8ef45594a18add42e2c905bc53de8a613",
+  "packetSHA256": "52039dcb6af3491ba8926d6d514db7b4305f2f2bfac4695c178682a3a76bf3d8",
+  "independentReviewSHA256": "565ed46f702b0c022bd6470e8b35e45c820e82f67022944dd109cf1df3467308",
+  "actualAssemblyChecks": {
+    "transportErrorGenerationCorrelationAndLoggerHashNegatives": "5PASS9skipped /679ms",
+    "twoRootScopedTypes": "PASS",
+    "twoRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "fourActualSharedClientAuthDTODeps": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reused": "Independent full14 transport tests retained; exact TS and dependencies, not full14 repeated. No UI changed, no UIguard requirement for this slice.",
+  "privacyAndUsability": [
+    "New info event only CONTEXT/RESULTS GET failure, fixed phase/category, bounded status, revalidated server UUID requestId and domainSHA of normalized validated Batch UUID.",
+    "No raw identities/body/name/URL/query/token/session/header/error message/stack; no warn/error LogBox. Batch correlation is an identifier, not anonymous data.",
+    "New event has NO ROUTE. Existing shared-client query-free UUID-templated api_request_failed route/time joins only when same legitimate requestId exists. Missing/invalid requestId omitted; server/HTTP association remains unknown.",
+    "Own hash/log failure rethrows exact original; no new retry/request/DTO/status404 or cancellation mapping. Existing underlying shared-client behavior is unchanged."
+  ],
+  "remaining": "Historical firstPhoto503 OPEN_UNPROVEN. This only prepares next authorized actual observation; matching Native bundle/device and actual Hosted request correlation unverified.",
+  "c420": "PG_PENDING_DONT_DEPLOY_UNCHANGED",
+  "actions": "Source Git only; no Host/SQL/Provider/device/503 reproduction/new authority."
+}

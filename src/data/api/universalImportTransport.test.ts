@@ -1,3 +1,4 @@
+import { ApiClientError } from "./client";
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
@@ -240,3 +241,157 @@ it("resumes only the exact server-bound Task through the real API client", async
   expect(fetcher).toHaveBeenCalledTimes(3);
   expect(f.interpret).not.toHaveBeenCalled();
 });
+
+it("correlates injected 503 context/results reads to one safe Batch hash without retry", async () => {
+  const f = await fixture(),
+    requestId = randomUUID();
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const fetcher = vi.fn(async () =>
+      Response.json(
+        { error: { code: "SECRET_CODE", message: "private body", requestId } },
+        { status: 503 },
+      ),
+    );
+    const transport = createUniversalImportTransport(async () => f.account, {
+      baseUrl: "https://api.example",
+      tokenProvider: async () => ({ userId: f.account, token: "private-token" }),
+      fetchImplementation: fetcher,
+    });
+    for (const read of [
+      () => transport.context(f.context, f.batch),
+      () => transport.result(f.context, f.binding),
+    ])
+      await expect(read()).rejects.toMatchObject({ status: 503, requestId });
+    const other = randomUUID();
+    await expect(transport.context(f.context, other)).rejects.toMatchObject({
+      status: 503,
+    });
+    const logs = info.mock.calls
+      .map(([line]) => JSON.parse(String(line)))
+      .filter((event) => event.event === "universal_import_read_failed");
+    const hash = (id: string) =>
+      createHash("sha256")
+        .update(`otr.import.batch-diagnostic/1\0${id.toLowerCase()}`)
+        .digest("hex");
+    expect(logs).toEqual([
+      {
+        event: "universal_import_read_failed",
+        method: "GET",
+        phase: "CONTEXT",
+        category: "HTTP_UNAVAILABLE",
+        status: 503,
+        requestId,
+        batchCorrelation: hash(f.batch),
+      },
+      {
+        event: "universal_import_read_failed",
+        method: "GET",
+        phase: "RESULTS",
+        category: "HTTP_UNAVAILABLE",
+        status: 503,
+        requestId,
+        batchCorrelation: hash(f.batch),
+      },
+      {
+        event: "universal_import_read_failed",
+        method: "GET",
+        phase: "CONTEXT",
+        category: "HTTP_UNAVAILABLE",
+        status: 503,
+        requestId,
+        batchCorrelation: hash(other),
+      },
+    ]);
+    const text = JSON.stringify(logs);
+    for (const secret of [
+      f.account,
+      f.trip,
+      f.batch,
+      f.task,
+      other,
+      "private-token",
+      "private body",
+      "SECRET_CODE",
+      "?tripId=",
+      "filename",
+    ])
+      expect(text).not.toContain(secret);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(f.interpret).not.toHaveBeenCalled();
+  } finally {
+    info.mockRestore();
+  }
+});
+it.each([undefined, "not-a-uuid private-token"])(
+  "does not invent or log a missing/malicious requestId (%s)",
+  async (requestId) => {
+    const f = await fixture();
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      const fetcher = vi.fn(async () =>
+        Response.json(
+          { error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE", requestId } },
+          { status: 503, headers: requestId ? { "x-request-id": requestId } : {} },
+        ),
+      );
+      const transport = createUniversalImportTransport(async () => f.account, {
+        baseUrl: "https://api.example",
+        tokenProvider: async () => ({ userId: f.account, token: "test" }),
+        fetchImplementation: fetcher,
+      });
+      await expect(transport.context(f.context, f.batch)).rejects.toMatchObject({
+        status: 503,
+      });
+      const logs = info.mock.calls
+        .map(([line]) => JSON.parse(String(line)))
+        .filter((event) => event.event === "universal_import_read_failed");
+      expect(logs).toHaveLength(1);
+      expect(logs[0]).not.toHaveProperty("requestId");
+      expect(JSON.stringify(logs)).not.toContain("private-token");
+      expect(fetcher).toHaveBeenCalledOnce();
+    } finally {
+      info.mockRestore();
+    }
+  },
+);
+it.each(["logger", "hash"])(
+  "diagnostic %s failure preserves the exact original error without another request",
+  async (broken) => {
+    const f = await fixture(),
+      original = new ApiClientError(
+        "private original",
+        "http",
+        503,
+        "private code",
+        { body: "private" },
+        randomUUID(),
+      );
+    const info = vi.spyOn(console, "info").mockImplementation(() => {
+      if (broken === "logger") throw Error("logger failed");
+    });
+    const encode =
+      broken === "hash"
+        ? vi.spyOn(TextEncoder.prototype, "encode").mockImplementation(() => {
+            throw Error("hash encoding failed");
+          })
+        : null;
+    try {
+      const fetcher = vi.fn();
+      const transport = createUniversalImportTransport(async () => f.account, {
+        baseUrl: "https://api.example",
+        assertCurrent: () => {
+          throw original;
+        },
+        fetchImplementation: fetcher,
+      });
+      await expect(transport.context(f.context, f.batch)).rejects.toBe(original);
+      if (broken === "logger") expect(info).toHaveBeenCalledOnce();
+      if (broken === "hash") expect(encode).toHaveBeenCalledOnce();
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {
+      info.mockRestore();
+      encode?.mockRestore();
+    }
+  },
+);

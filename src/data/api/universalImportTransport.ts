@@ -1,5 +1,6 @@
 import { fetch as expoFetch } from "expo/fetch";
-import { createApiClient } from "./client";
+import { sha256 } from "@noble/hashes/sha256";
+import { ApiClientError, createApiClient } from "./client";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
 import {
   assertAccountRequestContext,
@@ -72,6 +73,62 @@ export function createUniversalImportTransport(
     await current();
     return result;
   }
+  async function read<T>(
+    context: AccountRequestContext,
+    batchId: string,
+    phase: "CONTEXT" | "RESULTS",
+    work: (api: ReturnType<typeof createApiClient>) => Promise<T>,
+  ) {
+    try {
+      return await scoped(context, work);
+    } catch (error) {
+      try {
+        const failure = error instanceof ApiClientError ? error : undefined;
+        const requestId = universalContextSchema.shape.batchId.safeParse(
+          failure?.requestId,
+        );
+        const category =
+          failure?.kind === "http"
+            ? failure.status === 503
+              ? "HTTP_UNAVAILABLE"
+              : "HTTP_FAILURE"
+            : failure?.kind === "network"
+              ? "NETWORK"
+              : failure?.kind === "timeout"
+                ? "TIMEOUT"
+                : failure?.kind === "validation"
+                  ? "VALIDATION"
+                  : "UNKNOWN";
+        const status = failure?.status;
+        console.info(
+          JSON.stringify({
+            event: "universal_import_read_failed",
+            method: "GET",
+            phase,
+            category,
+            ...(typeof status === "number" &&
+            Number.isInteger(status) &&
+            status >= 100 &&
+            status <= 599
+              ? { status }
+              : {}),
+            ...(requestId.success ? { requestId: requestId.data } : {}),
+            batchCorrelation: Array.from(
+              sha256(
+                new TextEncoder().encode(
+                  `otr.import.batch-diagnostic/1\0${batchId.toLowerCase()}`,
+                ),
+              ),
+              (byte) => byte.toString(16).padStart(2, "0"),
+            ).join(""),
+          }),
+        );
+      } catch {
+        // Hashing/logging must not change the owning error or recovery decision.
+      }
+      throw error;
+    }
+  }
   function pin(context: AccountRequestContext, raw: UniversalExecutionContext) {
     const binding = universalContextSchema.parse(raw);
     if (
@@ -126,7 +183,7 @@ export function createUniversalImportTransport(
     async context(context: AccountRequestContext, batchId: string) {
       // UUID validation before constructing a route; Native never authors a Task ID.
       const id = universalContextSchema.shape.batchId.parse(batchId);
-      return scoped(context, async (api) => {
+      return read(context, id, "CONTEXT", async (api) => {
         const binding = pin(
           context,
           await api.get(
@@ -140,7 +197,7 @@ export function createUniversalImportTransport(
     },
     async result(context: AccountRequestContext, raw: UniversalExecutionContext) {
       const b = pin(context, raw);
-      return scoped(context, async (api) => {
+      return read(context, b.batchId, "RESULTS", async (api) => {
         const r = await api.get(
           `${path(b.batchId)}/${b.taskId}?tripId=${b.tripId}`,
           universalResultSchema,

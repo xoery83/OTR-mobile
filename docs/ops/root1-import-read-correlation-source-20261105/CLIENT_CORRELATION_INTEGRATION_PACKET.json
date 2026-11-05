@@ -1,0 +1,36 @@
+{
+  "requestId": "IMP-C01-NEXT-OCCURRENCE-READ-CORRELATION-20261105-01",
+  "candidateSha": "2c7ec1c52dab43d9df9edaed6f73e326476f892f",
+  "baseMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "worktree": "/Users/xoery/Project/otr-mobile-import/lane-c-import-read-correlation-20261105",
+  "exactSourceLeaves": {
+    "src/data/api/universalImportTransport.ts": {
+      "preimageSHA256": "fa5ea0abfdf5451d50e4d8d5d782a5bb6827ac8e7a39882bd99402618914e042",
+      "candidateSHA256": "5558504c0f86feb436a295ac8666993168be79f846e7139c115bb1c10f909046",
+      "candidateBlob": "edda3d2737e5ecc424af3dae2bbecf369b7d160b"
+    },
+    "src/data/api/universalImportTransport.test.ts": {
+      "preimageSHA256": "889a48208303c198147a93ffb7a394830d3a5b21ab0074058327d60d60501d95",
+      "candidateSHA256": "f59bacb8bdc12947adb2cc7e55cc0a57035bb93ef43ca334bf276e912dcb9012",
+      "candidateBlob": "804d57fb151c36431b5ac72f1cc4b6e96c2ba4a6"
+    }
+  },
+  "documentationLeaf": "docs/ops/photo-first-cold-503-20261103/NEXT_OCCURRENCE_LOGGING.md",
+  "status": "LOCAL_PASS_INDEPENDENT_REVIEW_PENDING",
+  "checks": {
+    "RED": "5 new failures/9 existingPASS; missing correlation event (CLIENT_CORRELATION_RED.log)",
+    "GREEN": "14PASS: original9 plus5 new parameterized cases; existingtransportregression run once afterfix (CLIENT_CORRELATION_GREEN.log)",
+    "cases": [
+      "Injected503 context and results: same Batch has same hash; different Batch hash differs",
+      "Valid serverrequestId retained and raw sensitive identity/body/token/code/query absent",
+      "Missing or malicious requestId omitted; one request each, nogeneratedID",
+      "Logger throws: original error object identity retained",
+      "Hash encoding throws: original error object identity retained"
+    ],
+    "types": "2-root scoped existing strict config/transitive closure PASS; CLIENT_CORRELATION_TYPES.log empty successful output",
+    "lint": "Twoleaf eslint+prettier+gitdiffcheck PASS",
+    "network": "Only injected fetch/Response or existing in-process Backendfixture, no network/Hosted/Providercalls",
+    "notRun": "No historical503 reproduction, device, realSource/Provider, SQL, fullsuite or UIguard; no UIchanged."
+  },
+  "remaining": "Independentreview/sourceintegration/matchingNativeusage; noHosted/Provider/deviceauthority."
+}
