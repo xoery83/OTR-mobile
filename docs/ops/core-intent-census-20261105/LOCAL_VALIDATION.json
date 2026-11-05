@@ -1,0 +1,30 @@
+{
+  "requestId": "NATIVE-B-QA-CORE-INTENT-CENSUS-20261105-01",
+  "status": "LOCAL_PASS_PENDING_INDEPENDENT_REVIEW",
+  "baseMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "api": "readCorePendingIntentCensus(database: Pick<CoreDatabase, \"getAllAsync\">, accountId: string): Promise<CorePendingIntentCensus>",
+  "sourceSHA256": {
+    "src/data/repositories/corePendingIntentCensus.ts": "5a258fc1945abd6ef31cdb886704c7eaf016cf5907dba0e8ef94002869bed7fc",
+    "src/data/repositories/corePendingIntentCensus.test.ts": "a442aeb0e718476aaabbe2c8c59c5b5c0b5cfec528f995a8f99503a32fab0852"
+  },
+  "checks": {
+    "directSQLite": "5 PASS; existing canonical migrations; query_only + unchanged total_changes",
+    "scopedTypes": "PASS",
+    "scopedLint": "PASS 0 errors/0 warnings",
+    "diffCheck": "PASS"
+  },
+  "output": "total and groups state/reconciledRevision/count only; Account UUID bound filter not selected/returned",
+  "limits": [
+    "Caller owns initialized connection/current Account scope; syntax validation not authority",
+    "No UNKNOWN inference or orphan classification; retained orphan rows included",
+    "Zero not NoCommit/global-empty/Adoption clearance",
+    "No Auth/Schema/runtime/UI/transport changes; no real business operation"
+  ],
+  "actions": {
+    "Hosted": 0,
+    "Provider": 0,
+    "Device": 0,
+    "mainPush": 0
+  },
+  "independentReview": "PENDING_NOT_AUTHOR_PASS"
+}

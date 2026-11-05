@@ -1,0 +1,56 @@
+{
+  "requestId": "NATIVE-B-QA-CORE-INTENT-CENSUS-20261105-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "reviewKind": "ALL_LOCAL_NAMESPACES_AND_SAFE_COUNT_DELTA_ONLY",
+  "recordedAt": "2026-11-05T03:24:13.959689+00:00",
+  "candidate": "57d43a837d6d3b6e126c9b03bbef1ed634cbff11",
+  "supersedesUnpublishedCandidate": "3a5f15ed134dc3a2cc793fc777414fb80b5e1f8f",
+  "verdict": "NO_BLOCKER_SCOPED_ALL_LOCAL_METADATA_SOURCE",
+  "findings": [],
+  "sourceHashes": {
+    "src/data/repositories/corePendingIntentCensus.ts": "9518c87d9556dd665561fc490a15ad3becce4c7700d4be15e307aef8b680db88",
+    "src/data/repositories/corePendingIntentCensus.test.ts": "91ba8676e411f7d6726c837a0c87d99bc578fa34c2e364a7092553f42c15a219",
+    "docs/ops/core-intent-census-20261105/CONTRACT.md": "de3fb953e9432ea4d10ba753e0882bee8d7247747b5f6432a9624e6dd315ea0b",
+    "docs/ops/core-intent-census-20261105/ALL_NAMESPACE_VALIDATION.json": "d58c64372aba3b51ca2fffb6e6a6fdc7a3ba1256427ae5a985d780cac84369a8"
+  },
+  "priorReviewSHA256": "870c3503b3aaf525cf39a9dbf2bddf58d03f9e95a0a423aa14db94c18f1e8ed8",
+  "priorReviewBoundary": "Prior870c was Account-filtered and does not qualify this candidate. This delta explicitly accepts parent/Native clarified ALL_LOCAL_ACCOUNT_NAMESPACES pre-OTP metadata scope; no old Account-filtered compatibility port remains.",
+  "verifiedDelta": [
+    "API now takes only caller-held initialized DB getAllAsync; no Account/session getter/parameter, no WHERE or bound values. One SELECT observes every local namespace/Trip/orphan in this one held table. Coverage constant ALL_LOCAL_ACCOUNT_NAMESPACES prevents implying a current-Account census.",
+    "No account/Trip/operation IDs, payloads, receipts or hashes selected/returned; only state/reconciledRevision/count plus coverage/total. Existing six-state/null-revision coverage and no JOIN/filter loss remain unchanged.",
+    "Every grouped count must be a positive safe integer. NaN,Infinity,fractional,negative,zero,unsafe integers and total overflow throw CORE_INTENT_CENSUS_INVALID_COUNT, never coerce/default to zero. Empty rows alone produce total0.",
+    "No DB open/migration/inspection/recovery/transport/Cloud query/mutation or Auth identity selection added. Caller owns the existing held connection; this does not grant access to another DB or cross-Account Cloud data.",
+    "Zero remains only local table metadata at one statement, never NoCommit, global/Cloud emptiness, adoption/migration clearance or retry/delete authority. UNKNOWN is not derived from IN_FLIGHT/APPLIED-null."
+  ],
+  "independentValidation": {
+    "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/corePendingIntentCensus.test.ts --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 0.521,
+    "testSeconds": 0.377,
+    "accurateClassification": "Four actual SQLite scenarios using canonical migrations (empty/query-only, all6states+orphans, multiple local Accounts/Trips and separate held connection, missing schema/closed errors). Fifth case injects invalid aggregate numbers/overflow; it is not an actual enormous-SQLite count test."
+  },
+  "integrationConditions": [
+    "Use this exact two-leaf source/test version57d43, not unpublished3a5 or oldAccount API. Parent must perform fresh main CAS and necessary combined source checks separately.",
+    "Native pre-OTP/Guest caller passes only already-held initialized App connection; no implicit opening, session retrieval, cross-DB probing or real UNKNOWN recovery. All-namespace metadata is not a normal Account/Cloud authorization interface.",
+    "Current canonical initialized table constrains the six states; this port does not introduce a new interpretation/state validator or classify unresolved outcomes."
+  ],
+  "notRun": [
+    "PG/Hosted/container/device/Provider/business operations",
+    "P3/P6/full historical regressions",
+    "Author scoped type/lint repeated",
+    "Actual huge-count database creation"
+  ],
+  "actions": {
+    "sourceEdits": 0,
+    "main": 0,
+    "Hosted": 0,
+    "SQL": 0,
+    "device": 0,
+    "newAgents": 0,
+    "GitMetadata": 0
+  },
+  "fileOnly": "Fixed by file SHA; no Source integration performed by reviewer.",
+  "resume": "Return exact delta review to parent for controlled integration and Native handoff; child stops."
+}

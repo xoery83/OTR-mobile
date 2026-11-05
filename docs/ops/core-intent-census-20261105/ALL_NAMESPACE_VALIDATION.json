@@ -1,0 +1,23 @@
+{
+  "requestId": "NATIVE-B-QA-CORE-INTENT-CENSUS-20261105-01",
+  "status": "LOCAL_PASS_SCOPE_CORRECTED_PENDING_DELTA_REVIEW",
+  "supersedesUnpublishedSource": "3a5f15ed134dc3a2cc793fc777414fb80b5e1f8f",
+  "api": "readCorePendingIntentCensus(database: Pick<CoreDatabase, \"getAllAsync\">)",
+  "coverage": "ALL_LOCAL_ACCOUNT_NAMESPACES",
+  "sourceSHA256": {
+    "src/data/repositories/corePendingIntentCensus.ts": "9518c87d9556dd665561fc490a15ad3becce4c7700d4be15e307aef8b680db88",
+    "src/data/repositories/corePendingIntentCensus.test.ts": "91ba8676e411f7d6726c837a0c87d99bc578fa34c2e364a7092553f42c15a219"
+  },
+  "checks": {
+    "SQLiteRegression": "5 PASS: four real SQLite scenarios plus one aggregate validation case",
+    "scopedTypes": "PASS",
+    "scopedLint": "PASS 0 errors/0 warnings",
+    "diffCheck": "PASS"
+  },
+  "guard": "safe positive integer per grouped count and safe total; error never becomes zero",
+  "accountIdentityReads": 0,
+  "accountParameters": 0,
+  "authorityChange": false,
+  "mainPush": false,
+  "independentReview": "Prior Account-scoped review does not qualify this delta; pending"
+}

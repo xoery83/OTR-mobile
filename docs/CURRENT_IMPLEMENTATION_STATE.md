@@ -1,3 +1,7 @@
+## All-local Core intent census source — 5 November 2026
+
+Core57d43 exact2 new leaves and f35 all-namespace independent Review integrated under direct5d95 approval. Existing caller-held initialized connection only; API no Account/session/filter/WHERE, coverage ALL_LOCAL_ACCOUNT_NAMESPACES, one grouped metadata SELECT includes orphans/all6states/reconciled revisions. Safe counts/errors neverzero. Independent5 accurately4 actualSQLite+1 aggregate injection reused; actual-main types/lint/diff pass. Old3a5 LOCAL_VALIDATION remains historical Account-filtered evidence, not current57 acceptance; no old overload. No Queue/receipt/UNKNOWN/NoCommit/global-empty/Adoption authority inferred, no DB/Hosted/OTP/Provider/device action. Receipt: `docs/ops/root1-core-intent-census-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Guest initialized readonly owner source — 5 November 2026
 
 Native9cc8 exact2 leaves and formalAuthb901 review integrated under direct5d95 source approval. Same private opener/map returns only current scope/census/capture readers from existing readInitialized promise, no open/migrate/retry/recovery/Adoption authority or rawDB/Session. Scope/gen/publication/freeze fences retained; missing neverempty. Actual normalopen body byte-equal and types/lint/product-diff pass; exact patch evidence retains original context whitespace; author9 evidence reused, no new privateDB/device/OTP/Cloud assertion. Receipt: `docs/ops/root1-native-guest-readonly-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "../../../src/data/repositories/corePendingIntentCensus.ts",
+    "../../../src/data/repositories/corePendingIntentCensus.test.ts"
+  ],
+  "exclude": [
+    "../../../node_modules",
+    "../../../mcp"
+  ]
+}
