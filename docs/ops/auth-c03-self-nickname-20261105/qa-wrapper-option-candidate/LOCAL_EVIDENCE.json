@@ -1,0 +1,39 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01",
+  "primary": "AUTH-C04_UNCHANGED",
+  "status": "LOCAL_QA_OPTION_FORWARD_PATCH_PASS_PARENT_REVIEW_PENDING",
+  "preimage": {
+    "sourceMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+    "target": "backend/src/tripMemberClaimQaRuntime.ts",
+    "preSHA256": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+    "postSHA256": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d",
+    "patchSHA256": "6490fe5c7670bc9e3d7dc4dafa41e2fe993445f30e10c7907edce8c1b7c2797b",
+    "sourceFileWritten": false,
+    "CoreDependencyCommit": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+    "CoreRuntimeSHA256": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "CorePgSHA256": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a"
+  },
+  "patch": "EXPLICIT_NICKNAME_OPTION.patch",
+  "actualDelta": "ExistingAuthQAloader accepts3rd internal Pick<Coreoptions,selfTripNickname> and merges exacttrue with existingselectedMemberClaimloweroptions. DefaulttwoargumentserverCapture path unchanged/absent. Returnedordinaryspread already retainsCoreselectednicknameport and originalownerclose.",
+  "noRedundancy": "No newoperator/runtimewrapper/module/Envflag/API/Actorselector/connection; no Core4files, serverCapture/app/Startup/index edits. No repeated46Coretests.",
+  "futureExplicitCallContract": [
+    "OnlyafterfutureRoot2qualification: loadDevTripCreateWithMemberClaimQaRuntime(approvedEnvironment,existingReader,{selfTripNickname:true})",
+    "Require actualreturnedselfTripNicknamePort (v3only), forward exactreference via existingstartDevBackend({selfTripNicknamePort:port,...existingQualifiedOptions}) slot; noHTTP→PG cast",
+    "CurrentserverCapture entry stillcalls2args and doesnotselecttrue. No executableoperator ordefaultentry change supplied. FuturefiniteQAoperator owns explicitchoice, portforwarding/normalcleanup and qualification.",
+    "UnderlyingCoreSQLgate/normalJWT/selflink/lifecycle stillauthoritative; optiontrue is NOT permission/runtimeenablement"
+  ],
+  "tests": {
+    "direct": "9PASS backend/src/selfTripNicknameQaComposition.test.ts",
+    "scopedTypecheck": "PASS test+deps; actualpatchedQAloader withnewCoreABI fulltypes remainsRoot1integrationcheck",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "temporaryTarget": "Exactmain09a QAwrapper patched in/private/tmp; pre/post/patchhash checked. Missingexisting recoveryhelper copied onlyto temporarytarget; Coreloader mocked, noCorefile changes.",
+    "coverage": "Defaultabsent despiteunrelatedenv; exacttrue independentinvalid/missingClaimconfig; false/string/undefined noselect; existingClaim-only twoargloweroptions unchanged; mergedClaim/recovery-only; nosynthesizedport whenupstreamfinite/v2 resultomits it; sameprovider1call and existingclose forwarding. ActualCorev2/finite/closedleases proof reused46tests, notrerun.",
+    "testSHA256": "4c81198bb389cb6cca9cff0f75470e8e2f7333ac2c45bb551971116fe9fe577f"
+  },
+  "upstream": "UPSTREAM_DEPENDENCY.json",
+  "limits": "NoactualPG/network/runtimefile/env/credential/Session/OTP/Device reads. Mockenvironment is explicittestinput, notprocessENV. SOURCE_ONLY, notHostE2E/QAwindowqualification.",
+  "review": "PENDING_PARENT",
+  "next": "Parentreview then Root1freshCAS afterCorecandidate accepted/integrated; no wholebranch overwrite. Startup2lineforward and futurequalifiedexplicitoperator remainseparate; do not choose true indefaultsource.",
+  "recordedAt": "2026-11-05T03:58:11.516371+00:00"
+}

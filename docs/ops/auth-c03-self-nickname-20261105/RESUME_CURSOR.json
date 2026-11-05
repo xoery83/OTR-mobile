@@ -2,7 +2,7 @@
   "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "STARTUP_EXPLICIT_TWO_LINE_FORWARD_LOCAL_PASS_WAITING_PARENT_REVIEW_AND_QUALIFIED_CAPABILITY_ABI",
+  "status": "EXPLICIT_QA_OPTION_FORWARD_LOCAL_PASS_WAITING_PARENT_REVIEW_CORE_DEPENDENCY_SOURCE_INTEGRATION",
   "evidenceSHA256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
   "sourceHashes": {
     "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
@@ -88,5 +88,23 @@
     "SourceGetterMain": "b94d",
     "basis": "Reported/providedSourceReceipt only; nochildrecheck"
   },
-  "HostResourcePrecondition": "Root2 maintenance175fc stage/load127 PRECHECK_REFUSED;SQLnot sent, restoration independentlyinprogress perparent. Not evidence currentHost continuallydown or Authcodefailure. FutureB needs latestrestore/close+freshmetadata; saved02:01health notReady; Auth no livewindow. Local source/tests do not depend onHost."
+  "HostResourcePrecondition": "Root2 maintenance175fc stage/load127 PRECHECK_REFUSED;SQLnot sent, restoration independentlyinprogress perparent. Not evidence currentHost continuallydown or Authcodefailure. FutureB needs latestrestore/close+freshmetadata; saved02:01health notReady; Auth no livewindow. Local source/tests do not depend onHost.",
+  "compositionSelection": {
+    "evidence": "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/LOCAL_EVIDENCE.json",
+    "evidenceSHA256": "c6e0470f511eacd2f6c489a5e6983a69ffd8b0fee9664ecaa3c1d29bc84ffd67",
+    "preimage": {
+      "sourceMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+      "target": "backend/src/tripMemberClaimQaRuntime.ts",
+      "preSHA256": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+      "postSHA256": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d",
+      "patchSHA256": "6490fe5c7670bc9e3d7dc4dafa41e2fe993445f30e10c7907edce8c1b7c2797b",
+      "sourceFileWritten": false,
+      "CoreDependencyCommit": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+      "CoreRuntimeSHA256": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+      "CorePgSHA256": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a"
+    },
+    "CoreDependency": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+    "defaultEntry": "Unchanged2args, no select",
+    "next": "Parentreview then Root1freshCAS afterCorecandidate accepted/integrated; no wholebranch overwrite. Startup2lineforward and futurequalifiedexplicitoperator remainseparate; do not choose true indefaultsource."
+  }
 }
