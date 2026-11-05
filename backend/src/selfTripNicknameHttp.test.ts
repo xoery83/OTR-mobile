@@ -1,7 +1,10 @@
+import type { DevBackendGateway } from "./app";
+import { SelfNicknamePgError } from "./tripPersonSelfNicknamePg";
 import { randomUUID } from "node:crypto";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { selfNicknameIntentDigest } from "@/domain/trip/tripPersonSelfNickname";
 import {
+  createSelfTripNicknameHttpHandler,
   decodeSelfTripNicknameRequest,
   encodeSelfTripNicknameResponse,
   isSelfTripNicknamePath,
@@ -239,4 +242,183 @@ it("bounds request size and preserves cancellation rather than producing an empt
   await expect(decodeSelfTripNicknameRequest(cancelled, user)).rejects.toMatchObject({
     status: 503,
   });
+});
+
+function handlerFixture() {
+  const validateAccessToken = vi.fn(async (token: string) =>
+    token === "bad" || token === "revoked"
+      ? null
+      : token === "guest"
+        ? { id: user.id, accountClass: "ANONYMOUS" as const }
+        : token === "unknown"
+          ? { id: user.id, accountClass: "UNKNOWN" as const }
+          : user,
+  );
+  const gateway = { validateAccessToken } as unknown as DevBackendGateway;
+  const port = {
+    read: vi
+      .fn()
+      .mockResolvedValue({
+        contractVersion: 1,
+        accountId: user.id,
+        tripId,
+        personId,
+        nickname: null,
+        nicknameRevision: 7,
+        observedAt: "2026-11-05T00:00:00Z",
+      }),
+    execute: vi.fn().mockResolvedValue({ receipt, idempotentReplay: false }),
+    recover: vi.fn().mockResolvedValue({ kind: "EXACT_RECEIPT", receipt }),
+  };
+  return {
+    gateway,
+    validateAccessToken,
+    port,
+    handle: createSelfTripNicknameHttpHandler(gateway, port),
+  };
+}
+it("handler actually validates normalBearer then dispatches precisely read/execute/recover to Coretypedport", async () => {
+  const f = handlerFixture();
+  expect((await f.handle(request()))?.status).toBe(200);
+  expect((await f.handle(request("/commands", command)))?.status).toBe(200);
+  const recovery = await f.handle(
+    request(`/operations/${operationId}/recover`, { intentDigest: command.intentDigest }),
+  );
+  expect(await recovery!.json()).toEqual({ kind: "EXACT_RECEIPT", receipt });
+  expect(f.validateAccessToken).toHaveBeenCalledTimes(3);
+  expect(f.validateAccessToken).toHaveBeenNthCalledWith(1, "unit-normal-token");
+  const context = { accountId: user.id, tripId, personId };
+  expect(f.port.read).toHaveBeenCalledExactlyOnceWith(context);
+  expect(f.port.execute).toHaveBeenCalledExactlyOnceWith(context, command);
+  expect(f.port.recover).toHaveBeenCalledExactlyOnceWith(context, operationId, {
+    intentDigest: command.intentDigest,
+  });
+});
+it.each([
+  ["bad", 401],
+  ["revoked", 401],
+  ["guest", 403],
+  ["unknown", 403],
+] as const)("handler rejects %s Auth before Coreauthority", async (token, status) => {
+  const f = handlerFixture();
+  const result = await f.handle(
+    request("/commands", command, { Authorization: `Bearer ${token}` }),
+  );
+  expect(result?.status).toBe(status);
+  expect(f.validateAccessToken).toHaveBeenCalledExactlyOnceWith(token);
+  expect(f.port.execute).not.toHaveBeenCalled();
+  expect(f.port.read).not.toHaveBeenCalled();
+});
+it("requires actualBearer validation, remains defaultclosed and returns null for unrelatedpaths", async () => {
+  const f = handlerFixture();
+  expect(
+    (await f.handle(request("/commands", command, { Authorization: "" })))?.status,
+  ).toBe(401);
+  expect(f.validateAccessToken).not.toHaveBeenCalled();
+  expect((await createSelfTripNicknameHttpHandler(f.gateway)(request()))?.status).toBe(
+    503,
+  );
+  expect(f.port.read).not.toHaveBeenCalled();
+  expect(await f.handle(new Request("https://api.example.test/v1/unrelated"))).toBeNull();
+});
+it("never derives actor from headers/body and leaves current linkedself decisions to Core", async () => {
+  const f = handlerFixture();
+  await f.handle(request("", undefined, { "X-Account-ID": randomUUID() }));
+  expect(f.port.read).toHaveBeenCalledWith({ accountId: user.id, tripId, personId });
+  expect(
+    (await f.handle(request("/commands", { ...command, actorAccountId: randomUUID() })))
+      ?.status,
+  ).toBe(400);
+  expect(f.port.execute).not.toHaveBeenCalled();
+  f.port.read.mockRejectedValueOnce(
+    new SelfNicknamePgError(403, "SELF_NICKNAME_FORBIDDEN"),
+  );
+  const denied = await f.handle(request());
+  expect(denied?.status).toBe(403);
+});
+it.each([
+  [400, "SELF_NICKNAME_INVALID"],
+  [403, "SELF_NICKNAME_FORBIDDEN"],
+  [409, "SELF_NICKNAME_OPERATION_REUSED"],
+  [503, "SELF_NICKNAME_RESULT_INVALID"],
+  [503, "SELF_NICKNAME_UNAVAILABLE"],
+] as const)("maps typedCore %s/%s without SQLdetails", async (status, code) => {
+  const f = handlerFixture();
+  f.port.execute.mockRejectedValueOnce(new SelfNicknamePgError(status, code));
+  const response = await f.handle(request("/commands", command));
+  expect(response?.status).toBe(status);
+  expect(await response!.json()).toEqual({ error: { code, message: code } });
+});
+it("treats invalid produceroutput as serverunavailable, not badclient or missingreceipt", async () => {
+  const f = handlerFixture();
+  f.port.read.mockResolvedValueOnce(null);
+  expect((await f.handle(request()))?.status).toBe(503);
+  f.port.execute.mockResolvedValueOnce({
+    receipt: { ...receipt, actorAccountId: randomUUID() },
+    idempotentReplay: false,
+  });
+  const bad = await f.handle(request("/commands", command));
+  expect(bad?.status).toBe(503);
+  expect(await bad!.json()).toMatchObject({
+    error: { code: "SELF_NICKNAME_RESULT_INVALID" },
+  });
+  f.port.recover.mockResolvedValueOnce(null);
+  expect(
+    (
+      await f.handle(
+        request(`/operations/${operationId}/recover`, {
+          intentDigest: command.intentDigest,
+        }),
+      )
+    )?.status,
+  ).toBe(503);
+});
+it("unknowncommit failure never triggers a replacementwrite/read and recovery absence staysunconfirmed", async () => {
+  const f = handlerFixture();
+  f.port.execute.mockRejectedValueOnce(
+    new SelfNicknamePgError(503, "SELF_NICKNAME_UNAVAILABLE"),
+  );
+  expect((await f.handle(request("/commands", command)))?.status).toBe(503);
+  expect(f.port.execute).toHaveBeenCalledOnce();
+  expect(f.port.read).not.toHaveBeenCalled();
+  expect(f.port.recover).not.toHaveBeenCalled();
+  f.port.recover.mockResolvedValueOnce({ kind: "ABSENT_UNCONFIRMED" });
+  const result = await f.handle(
+    request(`/operations/${operationId}/recover`, { intentDigest: command.intentDigest }),
+  );
+  expect(await result!.json()).toEqual({ kind: "ABSENT_UNCONFIRMED" });
+  expect(f.port.execute).toHaveBeenCalledOnce();
+});
+it("cancellation after dispatch is unavailable/UNKNOWN and never invokes a fallbackoperation", async () => {
+  const f = handlerFixture(),
+    abort = new AbortController();
+  f.port.execute.mockImplementationOnce(async () => {
+    abort.abort();
+    return { receipt, idempotentReplay: false };
+  });
+  const response = await f.handle(
+    new Request(request("/commands", command), { signal: abort.signal }),
+  );
+  expect(response?.status).toBe(503);
+  expect(f.port.execute).toHaveBeenCalledOnce();
+  expect(f.port.recover).not.toHaveBeenCalled();
+  expect(f.port.read).not.toHaveBeenCalled();
+});
+it("does not leak unknownSQL/auth infrastructure errors or trust forged typedstatus", async () => {
+  const f = handlerFixture();
+  for (const error of [
+    Object.assign(Error("privateSQLsecret"), { code: "42501", status: 403 }),
+    new SelfNicknamePgError(400, "INTERNAL_SQL_DETAIL"),
+  ]) {
+    f.port.execute.mockRejectedValueOnce(error);
+    const result = await f.handle(request("/commands", command));
+    expect(result?.status).toBe(503);
+    expect(await result!.text()).not.toMatch(
+      /privateSQLsecret|42501|INTERNAL_SQL_DETAIL/,
+    );
+  }
+  f.validateAccessToken.mockRejectedValueOnce(Error("privateAuthdetail"));
+  const result = await f.handle(request());
+  expect(result?.status).toBe(503);
+  expect(await result!.text()).not.toContain("privateAuthdetail");
 });

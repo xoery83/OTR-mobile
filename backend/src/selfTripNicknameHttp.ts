@@ -1,3 +1,8 @@
+import { authenticateNormalAccount, type DevBackendGateway } from "./app";
+import {
+  SelfNicknamePgError,
+  type createTripPersonSelfNicknamePgPort,
+} from "./tripPersonSelfNicknamePg";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
   selfNicknameRecoverRequestSchema,
@@ -104,7 +109,7 @@ export async function decodeSelfTripNicknameRequest(
     boundary.close();
   }
 }
-// No port dispatch/mount here until the Core producer's exact typed signature is supplied.
+// Strict response encoding is independent of port dispatch; malformed producer data is not a client error.
 export function encodeSelfTripNicknameResponse(
   input: SelfTripNicknameRequest,
   raw: unknown,
@@ -139,4 +144,85 @@ export function encodeSelfTripNicknameResponse(
     status: 200,
     headers: { "Cache-Control": "private, no-store", Vary: "Authorization" },
   });
+}
+
+export type SelfTripNicknamePort = Pick<
+  ReturnType<typeof createTripPersonSelfNicknamePgPort>,
+  "read" | "execute" | "recover"
+>;
+const fail = (status: number, code: string) =>
+  Response.json(
+    { error: { code, message: code } },
+    {
+      status,
+      headers: { "Cache-Control": "private, no-store", Vary: "Authorization" },
+    },
+  );
+const portErrors: Record<string, number> = {
+  SELF_NICKNAME_INVALID: 400,
+  SELF_NICKNAME_FORBIDDEN: 403,
+  SELF_NICKNAME_OPERATION_REUSED: 409,
+  SELF_NICKNAME_RESULT_INVALID: 503,
+  SELF_NICKNAME_UNAVAILABLE: 503,
+};
+// Unmounted source candidate. No startup caller, connection creation or activation here.
+export function createSelfTripNicknameHttpHandler(
+  gateway: DevBackendGateway,
+  port?: SelfTripNicknamePort,
+) {
+  return async (request: Request): Promise<Response | null> => {
+    if (!isSelfTripNicknamePath(new URL(request.url).pathname)) return null;
+    const boundary = createRequestBoundary(15000, request.signal);
+    try {
+      let user;
+      try {
+        user = await boundary.run(() => authenticateNormalAccount(request, gateway));
+      } catch (error) {
+        const e = error as { status?: number; code?: string };
+        if (
+          e?.status === 401 &&
+          ["AUTH_REQUIRED", "INVALID_SESSION"].includes(e.code ?? "")
+        )
+          return fail(401, e.code!);
+        if (e?.status === 403 && e.code === "NORMAL_ACCOUNT_REQUIRED")
+          return fail(403, e.code);
+        return fail(503, "SELF_NICKNAME_UNAVAILABLE");
+      }
+      const decoded = await boundary.run(() =>
+        decodeSelfTripNicknameRequest(request, user),
+      );
+      if (!port) return fail(503, "SELF_NICKNAME_CLOSED");
+      let raw: unknown;
+      try {
+        raw = await boundary.run<unknown>(() =>
+          decoded.kind === "READ"
+            ? port.read(decoded.context)
+            : decoded.kind === "EXECUTE"
+              ? port.execute(decoded.context, decoded.command)
+              : port.recover(decoded.context, decoded.operationId, {
+                  intentDigest: decoded.intentDigest,
+                }),
+        );
+      } catch (error) {
+        if (
+          error instanceof SelfNicknamePgError &&
+          portErrors[error.code] === error.status
+        )
+          return fail(error.status, error.code);
+        return fail(503, "SELF_NICKNAME_UNAVAILABLE");
+      }
+      try {
+        boundary.assertCurrent();
+        return encodeSelfTripNicknameResponse(decoded, raw);
+      } catch {
+        return fail(503, "SELF_NICKNAME_RESULT_INVALID");
+      }
+    } catch (error) {
+      if (error instanceof SelfTripNicknameHttpError)
+        return fail(error.status, error.code);
+      return fail(503, "SELF_NICKNAME_UNAVAILABLE");
+    } finally {
+      boundary.close();
+    }
+  };
 }

@@ -28,6 +28,19 @@
       "evidence_sha256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
       "supersedes_event_id": "auth-c03-self-nickname-local-started-20261105-v1",
       "next_action": "Obtain parent static source review and hand off exact Auth files with Root1 Canonical dependency separate; formal Backend port and Native integration remain unverified."
+    },
+    {
+      "event_id": "auth-c03-self-nickname-http-dispatch-local-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "PROGRESS",
+      "reported_at": "2026-11-05T02:39:00.694275+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "supersedes_event_id": "auth-c03-self-nickname-canonical-consumer-pass-20261105-v1",
+      "summary": "AuthHTTP actualnormalJWTverifier→typedCoreport read/execute/recover→strictCanonicalresponse localMock PASS38tests/typeslint. SOURCE_ONLY, defaultclosed/unmounted; noSQL/Hosted/device acceptanceupgrade. C04Primaryunchanged.",
+      "next_action": "Parentreview exactHTTP2Authfiles, then Root1sourceintegration withPGdependencyseparate. Noactivation/window/OTP from thiscandidate.",
+      "evidence_sha256": "f1ba31ecbce732775af791a3a28b99b51b5f1e225977e861c4fb508c6b5f648a"
     }
   ],
   "parent_review": {

@@ -2,7 +2,7 @@
   "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "AUTH_LOCAL_MOCK_PASS_PARENT_REVIEWED_WAITING_FORMAL_CORE_BACKEND_PORT_AND_NATIVE_INTEGRATION",
+  "status": "AUTH_CONSUMER_AND_HTTP_LOCAL_PASS_WAITING_FULL_HTTP_PARENT_REVIEW_SOURCE_INTEGRATION",
   "evidenceSHA256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
   "sourceHashes": {
     "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
@@ -22,15 +22,17 @@
     "candidate": "a2ba2bec07b74602664b9010e87aea609802242c"
   },
   "httpSlice": {
-    "status": "22_DIRECT_TESTS_PASS_STATIC_NO_BLOCKER_DECODER_ENCODER_ONLY",
-    "files": [
+    "status": "38_DIRECT_TESTS_PASS_FULL_HTTP_TYPED_PORT_CANDIDATE_REVIEW_PENDING",
+    "AuthFiles": [
       "backend/src/selfTripNicknameHttp.ts",
       "backend/src/selfTripNicknameHttp.test.ts"
     ],
     "evidence": "docs/ops/auth-c03-self-nickname-20261105/HTTP_LOCAL_PREPARATION.json",
-    "singleGap": "FixedCoretypedport signature/return/errors pending, no dispatch/no mount",
-    "canonicalMain": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
-    "Auth4leafSourceIntegration": "WAITING_ROOT1_STAGE2_FINAL_RETURN; do not overwritemain",
-    "next": "Resume sameHTTPslice upon fixedCorepacket delivery; actualtrustedJWTverification and badproducer503 mapping required; no extra work invented"
+    "evidenceSHA256": "f1ba31ecbce732775af791a3a28b99b51b5f1e225977e861c4fb508c6b5f648a",
+    "CoretypedPort": "FIXED_SIGNATURE_CONSUMED50f0333f read/execute/recover; noABIquestions",
+    "Root1CanonicalMain": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+    "Auth4ConsumerMain": "98e1d3daead2b6d6661a5a477ffc5857591f6ddb",
+    "mount": "NONE_DEFAULTCLOSED",
+    "next": "Parent independentreview, exactAuth2files+docs sourcehandoff throughRoot1; producerRoot1snapshot separately owned/excludeifmain. Later sourceintegration/Hostruntime/migration protectedqualification/Nativeintegration remain explicit; no activation from codecandidate."
   }
 }

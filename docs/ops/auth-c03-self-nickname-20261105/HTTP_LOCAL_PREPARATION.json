@@ -2,41 +2,54 @@
   "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
   "primary": "AUTH-C04_UNCHANGED",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "STRICT_HTTP_PREPARATION_PASS_WAITING_EXACT_CORE_PORT_ABI",
-  "sourceHashes": {
-    "backend/src/selfTripNicknameHttp.ts": "07a411e301128081b397d1fe04c496aaf2f0daf15afa7b1edd882d540da298a5",
-    "backend/src/selfTripNicknameHttp.test.ts": "8039c8905292f8d9aa5eda3ab9102ea0e6fe32b28b0f969d1a49f05aa3cae369"
-  },
+  "status": "FULL_HTTP_TYPED_PORT_LOCAL_CANDIDATE_PASS_PARENT_REVIEW_PENDING_UNMOUNTED",
   "functions": [
     "isSelfTripNicknamePath",
     "decodeSelfTripNicknameRequest",
-    "encodeSelfTripNicknameResponse"
+    "encodeSelfTripNicknameResponse",
+    "createSelfTripNicknameHttpHandler"
   ],
-  "localBehavior": "Exact3routes, methods/noquery/normalAccount, boundedbody/cancellation, path+command+digest/IdempotencyKey binding, recoverystrictdigestbody; Canonicalstrict response/receipt binding. No Coredispatch/SQL/wire/route mount.",
-  "trustBoundary": "Decoder expects existingtrusted normalJWTverifier result, Bearerpresence is only a syntaxcheck not authentication. Futurehandler must actually invoke trustedverifier. Contextstructure is not linkedselfauthority; Coreport must authorize. Encoderinvalidproducerresponse must be serverunavailable not client400.",
-  "canonicalDependency": {
-    "main": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
-    "file": "src/domain/trip/tripPersonSelfNickname.ts",
-    "sha256": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
-    "ownership": "Root1 uniqueWriter, unchanged"
+  "AuthOwningFiles": [
+    "backend/src/selfTripNicknameHttp.ts",
+    "backend/src/selfTripNicknameHttp.test.ts"
+  ],
+  "sourceHashes": {
+    "backend/src/selfTripNicknameHttp.ts": "329d473cca69a285b68244f7e365e055f72c9ccd2ff3bd7a603310c650dc6e88",
+    "backend/src/selfTripNicknameHttp.test.ts": "1af6503f3c8f603457eb0080773ed29181da92df81786045a080c88d790077cc",
+    "backend/src/tripPersonSelfNicknamePg.ts": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614"
   },
+  "upstream": "HTTP_UPSTREAM_DEPENDENCY.json",
+  "trustedActor": "Actual existing app.authenticateNormalAccount(request,gateway) called per matchedrequest, invokes normal gateway.validateAccessToken then normalclass validation. Tests mock Gateway method, not authenticator. Headerpresence is not validation; no localJWTdecode/bodyactor/sourceIdentityoverride/new Session authority.",
+  "dispatch": "Exact Coretyped Pick port read/execute/recover, no SQL/GatewayABI reconstruction. EntireAuth/decoder/port lifecycle bounded; methodreceives trustedAccount+pathTripPerson; Core independently rechecks currentlinkedself/access. Contextschema is not authority. Optionalport absent yields503CLOSED; factory not mounted/called by Startup.",
+  "recovery": "StrictPOSTdigestbody + pathoperation; never fallbackmutation/NoCommit inference. CoreCOMMITUNKNOWN/timeout/cancellation remain503UNAVAILABLE. Historicalreceipt hash/operation/actor/CAS verified throughCanonicalcodec; currentname onlyfromread. No automatic operationretry/rewrite.",
+  "errors": "ExistingAuth401/403safe codes; typedCoreINVALID400/FORBIDDEN403/OPERATION_REUSED409/RESULT_INVALID503/UNAVAILABLE503 exactclass+whitelist. UnknownSQL/auth details suppressed503; badproduceroutput maps503RESULT_INVALID notclient400. No implicit ABSENT on404/null/error.",
+  "response": "Canonicalstrict output, private/no-store,VaryAuthorization; unchangedstrictdecoder/query/path/idempotency/bodylimit/cancellation",
   "validation": {
-    "directTests": "22PASS backend/src/selfTripNicknameHttp.test.ts",
+    "directTests": "38PASS backend/src/selfTripNicknameHttp.test.ts (original22decoder +16handler)",
     "scopedTypecheck": "PASS",
     "scopedEslint": "PASS",
-    "oldSuitesRerun": false
+    "diffCheck": "PASS",
+    "coverage": "Actual normalverifier→MockCoretypedport→strict3route response; bad/revoked/anonymous/unknownidentity denied; actoroverride/path/idempotency/body negatives; typederror mapping, badreceipt→503, no leakedSQL, defaultclosed/unrelatedpath, originalrecover/UNKNOWN no fallback, cancel afterdispatch no fallback.",
+    "oldSuites": "No Profile/C04/38consumer/23PG/14Core rerun"
   },
-  "singleGap": "Core backend/src/tripPersonSelfNicknamePg.ts exactfixed readSelfContext/execute/recover signature/return/error packet not yet delivered. No args/PG/Gateway guessed; complete sameHTTPslice once naturally delivered.",
-  "next": "Consume exactfixedtypedport, add defaultclosed unmounted normalJWTboundary+Mockport checks, then fixedfullcandidate/parentreview. No additionalframework/BackendSQL/queue/UI scope.",
-  "integration": "UNMOUNTED_NO_STARTUP_NO_RUNTIME",
+  "integration": "NO_APP_BOOTSTRAP_OR_RUNTIME_CHANGE_NO_ROUTE_MOUNT",
+  "qualificationLayers": {
+    "SOURCE": "LOCAL_FULL_HTTP_CANDIDATE_PASS_PENDING_PARENT_REVIEW",
+    "HOSTED": "NOT_RUN_NOT_ENABLED",
+    "CONSUMER": "MOCK_HTTP_PASS_NOT_APP_ACCEPTANCE",
+    "DEVICE": "NOT_RUN",
+    "OWNER_UX": "NOT_PROVED"
+  },
   "actions": {
-    "liveHTTP": 0,
-    "SessionOrCredentials": 0,
-    "SQL": 0,
+    "realHTTP": 0,
+    "SQL_RLS_GRANT": 0,
+    "PGcalls": 0,
+    "credentialsSessionOTP": 0,
     "device": 0,
-    "RootSharedFiles": 0,
-    "main": 0
+    "sharedAppStartup": 0,
+    "mainPush": 0
   },
-  "storage": "SMALL_AUTH_ONLY_SOURCE_CANDIDATE_NO_DISPATCH_NO_MOUNT",
-  "parentStaticReview": "STATIC_NO_BLOCKER_DECODER_ENCODER_ONLY; parent read source, not fullhandlerreview, tests notrerun"
+  "next": "Parent independentreview, exactAuth2files+docs sourcehandoff throughRoot1; producerRoot1snapshot separately owned/excludeifmain. Later sourceintegration/Hostruntime/migration protectedqualification/Nativeintegration remain explicit; no activation from codecandidate.",
+  "earlierReview": "79f68d69 decoder-only parentstaticreview reused; NEWfullhandler needs separateparentreview",
+  "recordedAt": "2026-11-05T02:39:00.694275+00:00"
 }

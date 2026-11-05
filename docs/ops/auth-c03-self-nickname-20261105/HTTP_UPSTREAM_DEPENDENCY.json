@@ -1,0 +1,15 @@
+{
+  "kind": "ROOT1_UPSTREAM_PG_DEPENDENCY_EXACT_UNMODIFIED_SNAPSHOT_NOT_AUTH_SOURCE",
+  "origin": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/backend/src/tripPersonSelfNicknamePg.ts",
+  "file": "backend/src/tripPersonSelfNicknamePg.ts",
+  "sha256": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+  "handOff": "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_HANDOFF.md",
+  "typedPort": "Pick<ReturnType<typeof createTripPersonSelfNicknamePgPort>,read|execute|recover>",
+  "signature": [
+    "read(context)",
+    "execute(context,originalCommand)",
+    "recover(context,originalOperationId,{intentDigest})"
+  ],
+  "CoreEvidenceReused": "Root1 isolated23PG/14adapter+independentreview passed per parent; NOT_RERUN",
+  "integration": "Root1owns producer and anyPGintegration. This snapshot contains no SQL/install/runtimeactivation. IfmainalreadyhasRoot1producer, exclude thisfile and verifyhash ratherthan overwrite. Canonicalmain8907 unchangedac707; Auth4consumer nowmain98e1d3da."
+}
