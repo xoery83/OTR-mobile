@@ -38,16 +38,30 @@ function classify(error: unknown): never {
  * SQL independently rechecks the exact existing Gateway and current self link.
  * APPLIED is historical receipt truth; read() is the separate current observation.
  */
-export function createTripPersonSelfNicknamePgPort(connection: CorePgConnection) {
+export function createTripPersonSelfNicknamePgPort(
+  connection: CorePgConnection,
+  assertOpen: () => void = () => {},
+) {
+  const checkOpen = () => {
+    try {
+      assertOpen();
+    } catch (error) {
+      classify(error);
+    }
+  };
   async function run(context: SelfNicknameContext, method: string, payload: unknown) {
     try {
-      return await connection.withLease(async (lease) => {
+      checkOpen();
+      const result = await connection.withLease(async (lease) => {
+        checkOpen();
         await lease.query("BEGIN");
         try {
+          checkOpen();
           await lease.query(
             "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
             [context.accountId, context.tripId],
           );
+          checkOpen();
           const result = await lease.query(
             "SELECT public.trip_person_self_nickname($1::uuid,$2::uuid,$3::uuid,$4::text,$5::jsonb) AS result",
             [
@@ -99,6 +113,7 @@ export function createTripPersonSelfNicknamePgPort(connection: CorePgConnection)
               parsed = absent.parse(raw);
             }
           }
+          checkOpen();
           await lease.query("COMMIT");
           return parsed;
         } catch (error) {
@@ -106,6 +121,10 @@ export function createTripPersonSelfNicknamePgPort(connection: CorePgConnection)
           throw error;
         }
       });
+      // The transaction may already be committed: closure here is uncertainty,
+      // not a rollback or permission to replace/retry the original operation.
+      checkOpen();
+      return result;
     } catch (error) {
       classify(error);
     }
@@ -113,16 +132,16 @@ export function createTripPersonSelfNicknamePgPort(connection: CorePgConnection)
   return {
     async read(input: SelfNicknameContext) {
       const context = selfNicknameContextSchema.parse(input);
-      return parseSelfNicknameObservation(await run(context, "READ", {}), context);
+      const result = await run(context, "READ", {});
+      checkOpen();
+      return parseSelfNicknameObservation(result, context);
     },
     async execute(input: SelfNicknameContext, raw: SelfNicknameCommand) {
       const context = selfNicknameContextSchema.parse(input);
       const command = parseSelfNicknameCommand(raw, context);
-      return parseSelfNicknameMutationResponse(
-        await run(context, "EXECUTE", command),
-        command,
-        context,
-      );
+      const result = await run(context, "EXECUTE", command);
+      checkOpen();
+      return parseSelfNicknameMutationResponse(result, command, context);
     },
     async recover(
       input: SelfNicknameContext,
@@ -133,9 +152,12 @@ export function createTripPersonSelfNicknamePgPort(connection: CorePgConnection)
       const operation = coreUuid.parse(operationId);
       const { intentDigest } = selfNicknameRecoverRequestSchema.parse(body);
       coreHash.parse(intentDigest);
-      return selfNicknameRecoverResponseSchema.parse(
-        await run(context, "RECEIPT", { operationId: operation, intentDigest }),
-      );
+      const result = await run(context, "RECEIPT", {
+        operationId: operation,
+        intentDigest,
+      });
+      checkOpen();
+      return selfNicknameRecoverResponseSchema.parse(result);
     },
   };
 }

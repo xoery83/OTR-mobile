@@ -52,6 +52,7 @@ export function startDevBackend(
     | "tripCreatePort"
     | "tripPersonCloudCreatePort"
     | "memberClaimPort"
+    | "selfTripNicknamePort"
     | "tripMetadataPort"
     | "tripMetadataV2Port"
     | "coreConnection"
@@ -126,6 +127,7 @@ export function startDevBackend(
     tripCreatePort: startOptions.tripCreatePort,
     tripPersonCloudCreatePort: startOptions.tripPersonCloudCreatePort,
     memberClaimPort: startOptions.memberClaimPort,
+    selfTripNicknamePort: startOptions.selfTripNicknamePort,
     tripMetadataPort: startOptions.tripMetadataPort,
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,

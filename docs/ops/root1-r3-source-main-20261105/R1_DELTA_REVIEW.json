@@ -1,0 +1,66 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "reviewKind": "NICKNAME_COMPOSITION_R1_ONLY_DELTA",
+  "recordedAt": "2026-11-05T04:12:22.687588+00:00",
+  "candidate": "7c19b5d394e06056b4b22b307a3fce04a12881d3",
+  "parentCandidate": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+  "sourceHashes": {
+    "backend/src/tripCreateRuntime.ts": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "backend/src/tripCreateRuntime.test.ts": "1a0c91b3623156e4c199e40e7e1001e2c97691b55453f86aa619b76221c31df5",
+    "backend/src/tripPersonSelfNicknamePg.ts": "3a8758f7f38b2d899269fe2dd3b609939f396f8c2eaafd2e33eff3a268560369",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "545cf06cff0fad61a74f7675bfbcfa3dc6d1fddc943eb2faf740cd4fd8f6f7b4"
+  },
+  "repairEvidenceSHA256": "1b9d11400b330c94ea53224ec4b349c5e90ff6aed7af5ad1fe455e090cf42563",
+  "priorFindingReviewSHA256": "e5543b57cb67f09903153147e85891a7fc527826a9bc78f333ee64bbc75d04ce",
+  "verdict": "NO_BLOCKER_SCOPED_R1_COMPOSITION_DELTA",
+  "findings": [],
+  "closedFinding": {
+    "id": "NICKNAME-COMPOSITION-R1",
+    "status": "CLOSED_BY_FINAL_PUBLIC_AND_LEASE_AWAIT_FENCES",
+    "citations": [
+      "backend/src/tripPersonSelfNicknamePg.ts:45-61,122-129,133-160"
+    ],
+    "verified": [
+      "checkOpen normalizes lifecycle errors using the same sanitized classification; optional default-noop preserves previous direct factory behavior and does not create SQL authority.",
+      "After whole connection.withLease awaits, run checks lifecycle outside the transaction try/catch. Each public read/execute/recover also checks after its final awaited run result and before synchronous parse/return; COMMIT/lease/public await race cannot return accepted output when already closed.",
+      "Closure before commit retains rollback path. Closure after successful COMMIT is rejected outside the transaction catch, so it sends no bogus ROLLBACK, invents no no-commit result and invokes no replacement mutation. Original operation/digest can be read through separately qualified new lifecycle recovery.",
+      "Typed ABI, receipt validation/original uncertainty, explicit version3 option/default absence, same raw connection and no new Env/actor/connection/SQL/role changes remain unchanged."
+    ]
+  },
+  "independentTests": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run backend/src/tripPersonSelfNicknamePg.test.ts -t 'rejects closure at' --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 16,
+      "durationSeconds": 0.209,
+      "covers": "COMMIT and callback-after-successful-work-before-lease-return x public READ/EXECUTE/RECOVER; each one COMMIT/no ROLLBACK/one dispatch; subsequent original RECEIPT recovery with unchanged digest."
+    },
+    {
+      "command": "Unchanged temporary REVIEW_ONLY closure probe from initial review; imports resolve corrected production source",
+      "path": "/var/folders/8g/ztcbxp0n3ts4hb0j0r918h500000gp/T/otr-nickname-composition-review-0hbq0bu6/probe.test.ts",
+      "sha256": "d769f03a0272b4671d0ffde14edd5996d459ee729fe226d215c73729908b1e52",
+      "fileUnchangedFromOriginalRed": true,
+      "prior": "1 FAILED/16 skipped at0fc; accepted APPLIED resolved after close",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 16,
+      "durationSeconds": 0.209
+    }
+  ],
+  "validationReuse": "Initial reviewer46PASS and author repaired52PASS preserved; no full52 rerun needed for this two-leaf R1 delta. Existing precommit rollback/noop/uncertain COMMIT tests unchanged and author52PASS reused. No old PG/codec suites or contract re-audit.",
+  "remaining": "Source-only. Auth startup/QA wrapper explicit selection/forwarding and actual mount remain separate/default absent. No SQL install, activation, Hosted or user E2E qualification implied.",
+  "integrationBinding": "Only corrected formal source combination7c19 is reviewed; old0fc finding is retained and cannot be represented as the current accepted candidate. Parent owns fresh main CAS/integration.",
+  "actions": {
+    "sourceEdits": 0,
+    "Hosted": 0,
+    "SQL": 0,
+    "main": 0,
+    "Provider": 0,
+    "device": 0,
+    "GitMetadata": 0
+  },
+  "fileOnly": "Fixed by SHA in existing stable reviewer tree, no source commit by reviewer.",
+  "resume": "Return exact delta closure to parent for controlled source integration; child stops."
+}

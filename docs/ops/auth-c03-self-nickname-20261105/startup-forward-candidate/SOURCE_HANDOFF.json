@@ -1,0 +1,26 @@
+{
+  "request": "AUTH-C03-NICKNAME-STARTUP-EXPLICIT-FORWARD-20261105",
+  "candidate": "7e4349fa9c2a30ef3dd39c2128c40edef989b2bb",
+  "review": "NO_BLOCKER_FOR_EXPLICIT_UNDEFINED_DEFAULT_STARTUP_FORWARD_SOURCE_ONLY",
+  "patch": "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/STARTUP_EXPLICIT_PORT.patch",
+  "patchSHA256": "0ac3090703116bae8429b09072f7e4735d6a3208dcabab7397a7dad55e929e08",
+  "sourceMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a",
+  "target": "backend/src/serverStartup.ts",
+  "preSHA256": "ef6255a856ab9991dcf56a50be8ed2431bf4c08edb77e0465f1bcbbc7f40baae",
+  "postSHA256": "347e163caa92c899ed674f090a3c6c713aeb85f23e472caad818ad149e2c2023",
+  "testFiles": [
+    "backend/src/selfTripNicknameStartupForward.test.ts"
+  ],
+  "testHash": "dc0f97f5da7ce84fc6aac8e13baf2582abdd612d06c87b750e9c7ebcf9f82b60",
+  "docs": [
+    "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/PREIMAGE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/LOCAL_EVIDENCE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/RUNTIME_CAPABILITY_ABI_REQUEST.json",
+    "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/PARENT_REVIEW.json",
+    "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/SOURCE_HANDOFF.json"
+  ],
+  "apply": "Root1uniqueWriter freshpreimage/CAS, exact2linepatch only; verifyposthash, actualmain typed integrationchecks. No wholebranch overwrite/sharedStartup editing byAuth.",
+  "runtime": "Noenv/connection/Startup enablement inferred. Explicitqualifiedconnection/capability ABI now Coredevelopment under parentrequest AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01; do not guess fields. Root2installNOT_READY.",
+  "sourcePinUpdate": "Native readonlygetter SourceGetter reported/provided receipt says actualmain b94d; not rereviewed or independentlyqueried by thischild.",
+  "resourceNote": "Root2 maintenance175fc stage/load127 PRECHECK_REFUSED;SQLnot sent, restoration independentlyinprogress perparent. Not evidence currentHost continuallydown or Authcodefailure. FutureB needs latestrestore/close+freshmetadata; saved02:01health notReady; Auth no livewindow. Local source/tests do not depend onHost."
+}

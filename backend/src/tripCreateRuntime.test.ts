@@ -12,6 +12,7 @@ const f = vi.hoisted(() => ({
   metadata: vi.fn(),
   person: vi.fn(),
   claim: vi.fn(),
+  nickname: vi.fn(),
 }));
 vi.mock("node:fs/promises", () => ({ open: f.open }));
 vi.mock("./tripCoreV2PgConnection", () => ({
@@ -27,6 +28,10 @@ vi.mock("./tripCoreV2PgHttpConnection", () => ({ createCorePgHttpConnection: f.c
 vi.mock("./tripCreatePgStorage", () => ({ createTripPgStorage: f.storage }));
 vi.mock("./tripPersonCloudCreatePg", () => ({
   createTripPersonCloudCreatePgPort: f.person,
+}));
+vi.mock("./tripPersonSelfNicknamePg", async (original) => ({
+  ...(await original<typeof import("./tripPersonSelfNicknamePg")>()),
+  createTripPersonSelfNicknamePgPort: f.nickname,
 }));
 vi.mock("./tripMemberClaimPg", () => ({ createTripMemberClaimPgPort: f.claim }));
 const environment = {
@@ -430,4 +435,42 @@ it("a queued Claim transaction cannot start work after runtime close", async () 
   await expect(pending).rejects.toThrow("MEMBER_CLAIM_RUNTIME_CLOSED");
   expect(work).not.toHaveBeenCalled();
   expect(atomic).toHaveBeenCalledOnce();
+});
+
+it("does not expose nickname merely because sustained Core exists or an Env flag is present", async () => {
+  claimFixture();
+  const runtime = await loadDevTripCreateRuntime({
+    ...environment,
+    OTR_DEV_SELF_TRIP_NICKNAME: "enabled",
+  });
+  expect(runtime).not.toHaveProperty("selfTripNicknamePort");
+  expect(f.nickname).not.toHaveBeenCalled();
+  expect(f.pg).toHaveBeenCalledTimes(4);
+});
+it("explicit nickname composition exports the existing typed port on the same Core connection with a close fence", async () => {
+  const v = claimFixture();
+  const port = { read: vi.fn(), execute: vi.fn(), recover: vi.fn() };
+  f.nickname.mockReturnValue(port);
+  const runtime = await loadDevTripCreateRuntime(environment, undefined, {
+    selfTripNickname: true,
+  });
+  if (!runtime || !("selfTripNicknamePort" in runtime))
+    throw Error("MISSING_NICKNAME_PORT");
+  expect(runtime.selfTripNicknamePort).toBe(port);
+  expect(f.nickname).toHaveBeenCalledExactlyOnceWith(v.connection, expect.any(Function));
+  expect(f.pg).toHaveBeenCalledTimes(4);
+  expect(runtime).not.toHaveProperty("rawCoreConnection");
+  const assertOpen = f.nickname.mock.calls[0][1] as () => void;
+  expect(assertOpen).not.toThrow();
+  await runtime.close();
+  expect(assertOpen).toThrow("SELF_NICKNAME_RUNTIME_CLOSED");
+});
+it("finite runtime does not acquire or export nickname even with explicit selection", async () => {
+  fixture();
+  const runtime = await loadDevTripCreateRuntime(environment, undefined, {
+    selfTripNickname: true,
+  });
+  expect(runtime).not.toHaveProperty("selfTripNicknamePort");
+  expect(f.nickname).not.toHaveBeenCalled();
+  expect(f.pg).toHaveBeenCalledOnce();
 });

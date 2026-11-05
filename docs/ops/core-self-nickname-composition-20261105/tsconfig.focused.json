@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "../../../backend/src/tripCreateRuntime.ts",
+    "../../../backend/src/tripCreateRuntime.test.ts",
+    "../../../backend/src/tripPersonSelfNicknamePg.ts",
+    "../../../backend/src/tripPersonSelfNicknamePg.test.ts"
+  ],
+  "exclude": [
+    "../../../node_modules",
+    "../../../mcp"
+  ]
+}

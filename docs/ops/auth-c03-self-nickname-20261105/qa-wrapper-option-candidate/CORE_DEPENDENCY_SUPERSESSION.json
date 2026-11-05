@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-05T04:15:23.218540+00:00",
+  "task": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01",
+  "status": "DEPENDENCY_SUPERSESSION_SOURCE_INSPECTION_ONLY_NOT_AUTHORIZATION",
+  "frozenReferencesUnmodified": {
+    "SOURCE_HANDOFF.json": "ef607b96920cc33206f5b5974356cd1b47b8250fa9afa0a01602723d65fd1a01",
+    "PARENT_REVIEW.json": "1234ec12eb1c656755af6c230db7d502dc8070537929da5287af4ff23a49bfe0"
+  },
+  "oldCoreCandidate": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+  "newCoreCandidate": "7c19b5d394e06056b4b22b307a3fce04a12881d3",
+  "actualParentMatchesOld": true,
+  "sourceHashes": {
+    "backend/src/tripCreateRuntime.ts": {
+      "old": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+      "new": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749"
+    },
+    "backend/src/tripPersonSelfNicknamePg.ts": {
+      "old": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a",
+      "new": "3a8758f7f38b2d899269fe2dd3b609939f396f8c2eaafd2e33eff3a268560369"
+    },
+    "backend/src/tripPersonSelfNicknamePg.test.ts": {
+      "old": "6484757552df4b7a28f6b5ea12f56bcb0e77c3452790952ebb8a139e3853c3eb",
+      "new": "545cf06cff0fad61a74f7675bfbcfa3dc6d1fddc943eb2faf740cd4fd8f6f7b4"
+    }
+  },
+  "actualInspection": [
+    "Read complete product-source diff old..new for tripCreateRuntime.ts and tripPersonSelfNicknamePg.ts; loader had no diff.",
+    "Read complete new PG source and loader exact option/optional-return snippets.",
+    "Read complete 80-line added PG test diff (six COMMIT/LEASE_RETURN cases across READ/EXECUTE/RECOVER).",
+    "Read overall diff stat only for other documentation; did not audit documentation or execute tests."
+  ],
+  "abi": {
+    "unchanged": true,
+    "selection": "options?.selfTripNickname === true, existing v3 explicit internal option only",
+    "port": "optional selfTripNicknamePort, same raw Core connection",
+    "methods": [
+      "read(context)",
+      "execute(context, originalCommand) -> {receipt,idempotentReplay}",
+      "recover(context, originalOperationId, {intentDigest}) -> EXACT_RECEIPT | ABSENT_UNCONFIRMED"
+    ],
+    "newEnvironmentFlag": false,
+    "newConnection": false
+  },
+  "delta": "checkOpen classifies closure; checks after withLease resolves and after each public final await prevent returning success after provider closure. Original canonical parsers and method arguments remain unchanged.",
+  "postCommitSemantics": "Closure after successful COMMIT is unavailable/UNKNOWN, not rollback or authority for replacement/retry. Added tests assert one COMMIT, no ROLLBACK, one original dispatch, then original-operation RECEIPT recovery only under a separately qualified lifecycle.",
+  "validation": {
+    "localTestsRun": false,
+    "reportedAuthorResult": "prior RED 6 -> 52 PASS (parent-reported, not independently rerun)",
+    "independentCoreRereview": "PENDING_AT_RECORDING",
+    "wrapper9TestsRerun": false,
+    "startup2TestsRerun": false
+  },
+  "integrationBoundary": {
+    "oldApprovalsDoNotAutomaticallyCoverNewRange": [
+      "380777",
+      "5d95"
+    ],
+    "required": "Root1 must obtain new exact Source-range approval for the new Core/Startup/Wrapper batch before integration. Frozen prior packet remains unchanged; this companion supersedes its Core dependency metadata only.",
+    "hostedPermissionGranted": false,
+    "installPerformed": false,
+    "explicitSelectionExecuted": false,
+    "sharedSourceWritten": false
+  }
+}

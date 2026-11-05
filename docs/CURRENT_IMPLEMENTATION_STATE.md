@@ -1,3 +1,7 @@
+## Self nickname explicit port composition source — 5 November 2026
+
+Core 7c19 and the reviewed Auth startup and wrapper patches form the explicit port path. Runtime selection remains default off. The final lease and method guards preserve original-operation recovery after a commit with an unavailable response. R1 independent closure cases and original probe passed. Actual assembled six-root types and lint passed. Root2 qualification remains separate. See `docs/ops/root1-r3-source-main-20261105/STAGE1_VALIDATION.json`.
+
 ## All-local Core intent census source — 5 November 2026
 
 Core57d43 exact2 new leaves and f35 all-namespace independent Review integrated under direct5d95 approval. Existing caller-held initialized connection only; API no Account/session/filter/WHERE, coverage ALL_LOCAL_ACCOUNT_NAMESPACES, one grouped metadata SELECT includes orphans/all6states/reconciled revisions. Safe counts/errors neverzero. Independent5 accurately4 actualSQLite+1 aggregate injection reused; actual-main types/lint/diff pass. Old3a5 LOCAL_VALIDATION remains historical Account-filtered evidence, not current57 acceptance; no old overload. No Queue/receipt/UNKNOWN/NoCommit/global-empty/Adoption authority inferred, no DB/Hosted/OTP/Provider/device action. Receipt: `docs/ops/root1-core-intent-census-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

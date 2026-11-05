@@ -1,0 +1,19 @@
+{
+  "kind": "ROOT1_CORE_UPSTREAM_DEPENDENCY_NOT_AUTH_SOURCE",
+  "candidate": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+  "origin": "/Users/xoery/Project/otr-mobile-temporal/core-self-nickname-composition-20261105",
+  "manifest": "docs/ops/core-self-nickname-composition-20261105/LOCAL_VALIDATION.json",
+  "manifestSHA256": "f59a1b99eedb81eb5807035582661c84cb395b4bb74fd722a0d8ae0469867387",
+  "sourceHashes": {
+    "backend/src/tripCreateRuntime.ts": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "backend/src/tripPersonSelfNicknamePg.ts": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a"
+  },
+  "sourceHashActualRead": "MATCH two source files+manifest; exports/contract inspected",
+  "testHashesDeclaredByManifest": {
+    "backend/src/tripCreateRuntime.test.ts": "1a0c91b3623156e4c199e40e7e1001e2c97691b55453f86aa619b76221c31df5",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "6484757552df4b7a28f6b5ea12f56bcb0e77c3452790952ebb8a139e3853c3eb"
+  },
+  "reusedValidation": "Core46tests/typeslintPASS perfixedmanifest/parent; NOT_RERUN; lifecycle/version3/rawconnection rights remainCoreowned",
+  "ABI": "loadDevTripCreateRuntime(env,reader,options?). options.selfTripNickname===true returns optionalselfTripNicknamePort onlyexistingv3, on sameexistingrawPG+closedguard; no rawexport/newconn/envselection. finite/v2 unchanged.",
+  "integration": "Require exactacceptedCoredependency beforetypecheck/integrating QAoption patch. WhenCorelandsmain, replace thiscandidatepointer byactualmainreceipt; never alterCore4files or importoldblob overnewmain."
+}

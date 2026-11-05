@@ -1,0 +1,18 @@
+{
+  "status": "SOURCE_ONLY_ACTUAL_ASSEMBLY_PASS",
+  "base": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+  "sourceHashes": {
+    "backend/src/tripCreateRuntime.ts": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "backend/src/tripCreateRuntime.test.ts": "1a0c91b3623156e4c199e40e7e1001e2c97691b55453f86aa619b76221c31df5",
+    "backend/src/tripPersonSelfNicknamePg.ts": "3a8758f7f38b2d899269fe2dd3b609939f396f8c2eaafd2e33eff3a268560369",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "545cf06cff0fad61a74f7675bfbcfa3dc6d1fddc943eb2faf740cd4fd8f6f7b4",
+    "backend/src/serverStartup.ts": "347e163caa92c899ed674f090a3c6c713aeb85f23e472caad818ad149e2c2023",
+    "backend/src/tripMemberClaimQaRuntime.ts": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d"
+  },
+  "scopeApproval": "Direct Owner reply 批准 to the pending exact R3 batch SHA570c3c75",
+  "types": "PASS after resolving existing pg through already installed backend dependencies",
+  "lint": "PASS",
+  "diff": "Product diff PASS. Frozen raw patch evidence retained byte-exact.",
+  "testEvidence": "R1 independent 6 closure cases plus original RED probe passed. Author 52 and Auth 2+9 mock cases reused, not rerun.",
+  "runtime": "Default off. The ordinary caller does not select the port."
+}

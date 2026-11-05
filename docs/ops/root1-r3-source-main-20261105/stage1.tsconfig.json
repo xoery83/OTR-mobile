@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "../../../backend/src/tripCreateRuntime.ts",
+    "../../../backend/src/tripCreateRuntime.test.ts",
+    "../../../backend/src/tripPersonSelfNicknamePg.ts",
+    "../../../backend/src/tripPersonSelfNicknamePg.test.ts",
+    "../../../backend/src/serverStartup.ts",
+    "../../../backend/src/tripMemberClaimQaRuntime.ts"
+  ],
+  "exclude": [
+    "../../../node_modules"
+  ]
+}

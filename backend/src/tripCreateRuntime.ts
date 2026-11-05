@@ -1,3 +1,7 @@
+import {
+  createTripPersonSelfNicknamePgPort,
+  SelfNicknamePgError,
+} from "./tripPersonSelfNicknamePg";
 import { loadDevGuestAdoptionRuntime } from "./guestAdoptionRuntime";
 import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 import { createHash } from "node:crypto";
@@ -88,7 +92,10 @@ export const tripCreateRuntimeSchema = z.union([
 export async function loadDevTripCreateRuntime(
   environment: Record<string, string | undefined>,
   readUniversalP1?: PublishedUniversalP1Reader,
-  options?: Readonly<{ memberClaim?: Readonly<{ inviteExpiresAt: string }> }>,
+  options?: Readonly<{
+    memberClaim?: Readonly<{ inviteExpiresAt: string }>;
+    selfTripNickname?: true;
+  }>,
 ) {
   let file;
   try {
@@ -173,6 +180,14 @@ export async function loadDevTripCreateRuntime(
     const claim = options?.memberClaim
       ? createTripMemberClaimPgPort(rawCoreConnection, options.memberClaim)
       : undefined;
+    // Explicit internal composition only; config/connection presence never selects it.
+    const selfTripNicknamePort =
+      options?.selfTripNickname === true
+        ? createTripPersonSelfNicknamePgPort(rawCoreConnection, () => {
+            if (closed)
+              throw new SelfNicknamePgError(503, "SELF_NICKNAME_RUNTIME_CLOSED");
+          })
+        : undefined;
     const claimGuard = () => {
       if (closed) throw Error("MEMBER_CLAIM_RUNTIME_CLOSED");
     };
@@ -207,6 +222,7 @@ export async function loadDevTripCreateRuntime(
       ...sustained,
       guestAdoptionRuntime,
       ...(memberClaimPort ? { memberClaimPort } : {}),
+      ...(selfTripNicknamePort ? { selfTripNicknamePort } : {}),
       tripPersonCloudCreatePort,
       async close() {
         closed = true;

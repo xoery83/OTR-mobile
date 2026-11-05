@@ -1,0 +1,30 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01",
+  "status": "SOURCE_LOCAL_PASS_DEFAULT_ABSENT_PENDING_REVIEW",
+  "baseMain": "b94d13290dfcd126c4e85aac10e16e8c1a539684",
+  "sourceSHA256": {
+    "backend/src/tripCreateRuntime.ts": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "backend/src/tripCreateRuntime.test.ts": "1a0c91b3623156e4c199e40e7e1001e2c97691b55453f86aa619b76221c31df5",
+    "backend/src/tripPersonSelfNicknamePg.ts": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "6484757552df4b7a28f6b5ea12f56bcb0e77c3452790952ebb8a139e3853c3eb"
+  },
+  "explicitSelection": "loadDevTripCreateRuntime(env, reader, {selfTripNickname:true}) version3 only",
+  "output": "selfTripNicknamePort: existing createTripPersonSelfNicknamePgPort result; raw connection not exported",
+  "default": "ABSENT; no mount/Env/connection inference",
+  "checks": {
+    "focusedTests": "46 PASS / 2 suites / mock leases only",
+    "scopedTypes": "PASS four roots plus dependencies",
+    "scopedLint": "PASS 0 errors/0 warnings",
+    "diffCheck": "PASS"
+  },
+  "pending": "Auth-owned explicit startup/QA-wrapper selection and forwarding; separate protected installation/runtime approval",
+  "actions": {
+    "newConnections": 0,
+    "Hosted": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "Device": 0,
+    "mainPush": 0
+  },
+  "independentReview": "PENDING_NOT_AUTHOR_PASS"
+}

@@ -149,3 +149,144 @@ describe("Self nickname Core PG adapter (no runtime mounting)", () => {
     ).toHaveLength(1);
   });
 });
+
+it("a selected nickname port refuses a queued lease after its provider closes without issuing SQL", async () => {
+  let open = true;
+  let enter!: () => void;
+  const queued = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const query = vi.fn(),
+    retire = vi.fn();
+  const connection = {
+    withLease: vi.fn(async (work) => {
+      await queued;
+      return work({ query, retire });
+    }),
+  };
+  const port = createTripPersonSelfNicknamePgPort(connection, () => {
+    if (!open) throw new Error("closed");
+  });
+  const pending = port.read(ctx);
+  open = false;
+  enter();
+  await expect(pending).rejects.toMatchObject({ code: "SELF_NICKNAME_UNAVAILABLE" });
+  expect(query).not.toHaveBeenCalled();
+  await expect(port.read(ctx)).rejects.toMatchObject({
+    code: "SELF_NICKNAME_UNAVAILABLE",
+  });
+  expect(connection.withLease).toHaveBeenCalledOnce();
+});
+it("provider closure before COMMIT rolls back and cannot return accepted nickname data", async () => {
+  let open = true;
+  const query = vi.fn(async (sql: string) => {
+    if (sql.includes("trip_person_self_nickname(")) {
+      open = false;
+      return {
+        rows: [
+          {
+            result: {
+              ...ctx,
+              contractVersion: 1,
+              nickname: null,
+              nicknameRevision: 0,
+              observedAt: "2026-11-05T00:00:00Z",
+            },
+          },
+        ],
+      };
+    }
+    return { rows: [] };
+  });
+  const port = createTripPersonSelfNicknamePgPort(
+    { withLease: async (work) => work({ query, retire: vi.fn() }) },
+    () => {
+      if (!open) throw new Error("closed");
+    },
+  );
+  await expect(port.read(ctx)).rejects.toMatchObject({
+    code: "SELF_NICKNAME_UNAVAILABLE",
+  });
+  expect(query.mock.calls.map(([sql]) => sql)).toContain("ROLLBACK");
+  expect(query.mock.calls.map(([sql]) => sql)).not.toContain("COMMIT");
+});
+
+it.each([
+  ["COMMIT", "READ"],
+  ["COMMIT", "EXECUTE"],
+  ["COMMIT", "RECOVER"],
+  ["LEASE_RETURN", "READ"],
+  ["LEASE_RETURN", "EXECUTE"],
+  ["LEASE_RETURN", "RECOVER"],
+] as const)(
+  "rejects closure at %s before public %s returns without pretending committed work rolled back",
+  async (boundary, method) => {
+    let open = true;
+    const query = vi.fn(async (sql: string, params?: readonly unknown[]) => {
+      if (sql.includes("trip_person_self_nickname(")) {
+        const selected = params?.[3];
+        return {
+          rows: [
+            {
+              result:
+                selected === "READ"
+                  ? {
+                      ...ctx,
+                      contractVersion: 1,
+                      nickname: null,
+                      nicknameRevision: 1,
+                      observedAt: "2026-11-05T00:00:00Z",
+                    }
+                  : selected === "EXECUTE"
+                    ? { receipt, idempotentReplay: false }
+                    : { kind: "EXACT_RECEIPT", receipt },
+            },
+          ],
+        };
+      }
+      if (sql === "COMMIT" && boundary === "COMMIT") open = false;
+      return { rows: [] };
+    });
+    const connection = {
+      withLease: vi.fn(async (work) => {
+        const result = await work({ query, retire: vi.fn() });
+        if (boundary === "LEASE_RETURN") open = false;
+        return result;
+      }),
+    };
+    const port = createTripPersonSelfNicknamePgPort(connection, () => {
+      if (!open) throw Error("closed");
+    });
+    const pending =
+      method === "READ"
+        ? port.read(ctx)
+        : method === "EXECUTE"
+          ? port.execute(ctx, command)
+          : port.recover(ctx, command.operationId, {
+              intentDigest: command.intentDigest,
+            });
+    await expect(pending).rejects.toMatchObject({ code: "SELF_NICKNAME_UNAVAILABLE" });
+    expect(query.mock.calls.filter(([sql]) => sql === "COMMIT")).toHaveLength(1);
+    expect(query.mock.calls.some(([sql]) => sql === "ROLLBACK")).toBe(false);
+    expect(connection.withLease).toHaveBeenCalledOnce();
+    expect(
+      query.mock.calls.filter(([sql]) => sql.includes("trip_person_self_nickname(")),
+    ).toHaveLength(1);
+    // New independently qualified lifecycle only reads the original receipt; no replacement command.
+    const recovered = createTripPersonSelfNicknamePgPort(connection, () => {});
+    await expect(
+      recovered.recover(ctx, command.operationId, { intentDigest: command.intentDigest }),
+    ).resolves.toEqual({ kind: "EXACT_RECEIPT", receipt });
+    const dispatches = query.mock.calls.filter(([sql]) =>
+      sql.includes("trip_person_self_nickname("),
+    );
+    expect(dispatches.map(([, params]) => params?.[3])).toEqual([
+      method === "RECOVER" ? "RECEIPT" : method,
+      "RECEIPT",
+    ]);
+    expect(JSON.parse(dispatches[1][1]?.[4] as string)).toEqual({
+      operationId: command.operationId,
+      intentDigest: command.intentDigest,
+    });
+  },
+);

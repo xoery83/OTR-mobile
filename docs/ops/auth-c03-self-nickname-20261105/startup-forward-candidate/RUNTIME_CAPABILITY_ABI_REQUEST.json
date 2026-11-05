@@ -1,0 +1,21 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-QUALIFIED-RUNTIME-CAPABILITY-ABI-20261105-01",
+  "from": "Auth AUTH-C03 explicitStartupPortcomposition",
+  "requestTo": "Root2 existingRuntimequalification + Core existingconnection/capability owner, throughAuthparent",
+  "actualGap": "Startup can forward an explicit SelfTripNicknamePort after2linepatch, but actualserverCapture/bootstrap does not currently supply it. Existingtrip.coreConnection is CoreHTTPadapter, NOT a qualified CorePgConnection. No safe deploymentconstruction is inferred.",
+  "requestedUniqueCapability": "Identify alreadyqualified existing CorePgConnection and existing explicitnickname capability-selection source, or provide an alreadyqualified SelfTripNicknamePort to the existing startOptions path. No second connectionengine/Role/flags or wrapper design requested.",
+  "minimumReturn": [
+    "Actual existing connection/port owningprovider and typed getter/reference, lifetime/cleanup ownership; no credentialsvalues",
+    "Existing explicit capability/config ABI and defaultundefined/closed selection; scope must match approved protectedinstall and current qualification, no newActor/Trip/Productpolicy fromAuth",
+    "Protectedinstall/read/write qualification provenance and residual preconditions; SQLgate/normalJWT/currentlinkedself remain independent",
+    "Exactcaller where existing qualifiedport would be passed to startDevBackend; no autoactivation from coreConnection/envpresence"
+  ],
+  "notRequested": [
+    "NewOwnerpricing/productdecision",
+    "NewSQL/GRANT/role installation execution",
+    "Newwindow/OTP/runtimeenablement",
+    "Credentials/envvalues or anySession",
+    "Genericruntimeframework/duplicatedPGengine"
+  ],
+  "authority": "REQUEST_FOR_ABI_ONLY_NOT_AN_INSTALL_OR_EXECUTION_GATE"
+}

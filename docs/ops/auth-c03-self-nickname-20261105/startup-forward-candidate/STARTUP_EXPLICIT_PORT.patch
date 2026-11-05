@@ -1,0 +1,18 @@
+--- a/backend/src/serverStartup.ts
++++ b/backend/src/serverStartup.ts
+@@ -52,6 +52,7 @@
+     | "tripCreatePort"
+     | "tripPersonCloudCreatePort"
+     | "memberClaimPort"
++    | "selfTripNicknamePort"
+     | "tripMetadataPort"
+     | "tripMetadataV2Port"
+     | "coreConnection"
+@@ -126,6 +127,7 @@
+     tripCreatePort: startOptions.tripCreatePort,
+     tripPersonCloudCreatePort: startOptions.tripPersonCloudCreatePort,
+     memberClaimPort: startOptions.memberClaimPort,
++    selfTripNicknamePort: startOptions.selfTripNicknamePort,
+     tripMetadataPort: startOptions.tripMetadataPort,
+     tripMetadataV2Port: startOptions.tripMetadataV2Port,
+     coreConnection: startOptions.coreConnection,

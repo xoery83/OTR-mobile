@@ -1,0 +1,178 @@
+{
+  "status": "PREPARED_REVIEWED_SOURCE_ONLY_AWAITING_DIRECT_OWNER_PUBLICATION_APPROVAL",
+  "observedLocalRemoteTrackingMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+  "remoteFreshCASStillRequired": true,
+  "startup": {
+    "candidate": "7e4349fa9c2a30ef3dd39c2128c40edef989b2bb",
+    "docsCommit": "96f7e2a236128281396edea4d3d852639a4ae66f",
+    "target": "backend/src/serverStartup.ts",
+    "preimageMatches": true,
+    "preSHA256": "ef6255a856ab9991dcf56a50be8ed2431bf4c08edb77e0465f1bcbbc7f40baae",
+    "postSHA256": "347e163caa92c899ed674f090a3c6c713aeb85f23e472caad818ad149e2c2023",
+    "patchSHA256": "0ac3090703116bae8429b09072f7e4735d6a3208dcabab7397a7dad55e929e08",
+    "temporaryMockHarnessExcluded": true,
+    "actualPatchedMainTypesPending": true
+  },
+  "composition": {
+    "candidate": "7c19b5d394e06056b4b22b307a3fce04a12881d3",
+    "leaves": [
+      {
+        "path": "backend/src/tripCreateRuntime.ts",
+        "currentSHA256": "ca1a4af1125f85c2c9d603ed4bf4fcdbf7e6807ce7d76fcad21bdfdd80f7b814",
+        "candidatePreSHA256": "ca1a4af1125f85c2c9d603ed4bf4fcdbf7e6807ce7d76fcad21bdfdd80f7b814",
+        "preimageMatches": true,
+        "postSHA256": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749"
+      },
+      {
+        "path": "backend/src/tripCreateRuntime.test.ts",
+        "currentSHA256": "8f08ccdf23d803420499588ad31c260d7d77224a83139af9e4658d94358b5ede",
+        "candidatePreSHA256": "8f08ccdf23d803420499588ad31c260d7d77224a83139af9e4658d94358b5ede",
+        "preimageMatches": true,
+        "postSHA256": "1a0c91b3623156e4c199e40e7e1001e2c97691b55453f86aa619b76221c31df5"
+      },
+      {
+        "path": "backend/src/tripPersonSelfNicknamePg.ts",
+        "currentSHA256": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+        "candidatePreSHA256": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+        "preimageMatches": true,
+        "postSHA256": "3a8758f7f38b2d899269fe2dd3b609939f396f8c2eaafd2e33eff3a268560369"
+      },
+      {
+        "path": "backend/src/tripPersonSelfNicknamePg.test.ts",
+        "currentSHA256": "33cadbe936065ec1080b1f9be9dc9e1a113c2a4cdb7ffa2e26cb250925e0c5e3",
+        "candidatePreSHA256": "33cadbe936065ec1080b1f9be9dc9e1a113c2a4cdb7ffa2e26cb250925e0c5e3",
+        "preimageMatches": true,
+        "postSHA256": "545cf06cff0fad61a74f7675bfbcfa3dc6d1fddc943eb2faf740cd4fd8f6f7b4"
+      }
+    ],
+    "independentReviewPending": false,
+    "status": "FIXED_R1_INDEPENDENT_REVIEW_NO_BLOCKER_SOURCE_ONLY",
+    "reviewIssue": "e554: close after COMMIT/lease return lacks final lifecycle guard; await author correction and fixed independent review",
+    "supersededCandidate": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+    "correction": "Post-COMMIT/withLease return and public method await assertOpen, original0fc/e554 retained",
+    "ABIUnchangedVs0fc": true,
+    "actualAuthorTests": "52 author PASS, not independent",
+    "independentR1Review": {
+      "path": "/Users/xoery/Project/otr-mobile-temporal/core-member-revoke-v2-20261104/docs/ops/root1-self-nickname-composition-review-20261105/R1_DELTA_REVIEW.json",
+      "sha256": "8dff73d87832a5601aab08a262f92f64d934946c9256d42ae3090efb87141d53",
+      "validation": "6 new close tests PASS + unchanged original RED probe1 PASS; each209ms; not52 independent"
+    }
+  },
+  "activationArtifacts": {
+    "candidate": "e20bcb85d1c9df83d34d7de5de0165522a23ec65",
+    "files": [
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/ACTUAL_INPUT_METADATA.json",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/FORWARD_CANDIDATE.sql",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/LOCAL_PG.log",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/MANIFEST.json",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/README.md",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/RESULT.json",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/ROLLBACK_CANDIDATE.sql",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/render_shape.py",
+      "docs/ops/core-self-trip-nickname-contract-20261105/activation/run_shape_isolated.py"
+    ],
+    "reviewSHA256": "974ef293aaf69fb516b7ebd26328b7a8fc0db40f2d54e8e558ae4a205df01f4d",
+    "installOrExecutionApproved": false
+  },
+  "overlappingProductLeaves": [],
+  "nextMinimalSteps": [
+    "Await direct Owner approval and explicit parent Source Writer assignment for exact10 product leaves +9 artifact leaves +necessary fixed docs",
+    "Fresh remote CAS; revalidate all product preimages and direct dependency hashes",
+    "Apply exact reviewed bytes/patches only; preserve frozen old reviews and supersession receipt",
+    "Actual assembled scoped types/lint/UIguard plus only change-risk selected cases; reuse prior evidence without relabeling",
+    "Nonforce publication/readback and immediate Writer release only if authorized; Root2 install/runtime separate"
+  ],
+  "runtimeGap": "No actual startup caller supplies the port; options.selfTripNickname===true selects only explicit v3 path. Undefined stays closed. Shared CoreHTTP connection is not PG capability. No wrapper/flag/connection inference.",
+  "wrapper": {
+    "candidate": "b132e56976733e0136bca1f4f47737f61d42c657",
+    "docsCommit": "e95c104a",
+    "path": "backend/src/tripMemberClaimQaRuntime.ts",
+    "preSHA256": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+    "postSHA256": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d",
+    "preimageMatches": true,
+    "patchSHA256": "6490fe5c7670bc9e3d7dc4dafa41e2fe993445f30e10c7907edce8c1b7c2797b",
+    "handoffSHA256": "ef607b96920cc33206f5b5974356cd1b47b8250fa9afa0a01602723d65fd1a01",
+    "reviewSHA256": "1234ec12eb1c656755af6c230db7d502dc8070537929da5287af4ff23a49bfe0",
+    "selection": "Only explicit third argument selfTripNickname===true merges into existing options; current 2-arg serverCapture caller unchanged",
+    "tests": "9 author mock reused, not independently rerun; harness not proposed main product leaf",
+    "dependencyStatus": "EXPLICITLY_SUPERSEDED_TO_7c19_BY_AUTH_681a6edc; old frozen handoff/review retained",
+    "actualPatchedMainTypes": "PENDING_AFTER_FIXED_CORE",
+    "dependencySupersession": {
+      "commit": "681a6edc",
+      "path": "docs/ops/auth-c03-self-nickname-20261105/qa-wrapper-option-candidate/CORE_DEPENDENCY_SUPERSESSION.json",
+      "sha256": "5cf5914acfd9d17895890ed7e50e4e430ed8983466f214fc268a6e8ca79f54dd"
+    }
+  },
+  "minimalBatchProductLeaves": [
+    "backend/src/serverStartup.ts",
+    "backend/src/tripCreateRuntime.ts",
+    "backend/src/tripCreateRuntime.test.ts",
+    "backend/src/tripPersonSelfNicknamePg.ts",
+    "backend/src/tripPersonSelfNicknamePg.test.ts",
+    "backend/src/tripMemberClaimQaRuntime.ts"
+  ],
+  "nativeReadonlyConsumer": {
+    "candidate": "5408b12004a04b06047550a3d710d7503dc3bf9b",
+    "manifestSHA256": "5d928e4c2ac3c7c5fe70eaf11818c367b348b7cadaec9e257d15357e0939cef4",
+    "reviewSHA256": "2a9ff87d6d577989b0c79cc601de9be136c2d0271d3f931526c93c5090495007",
+    "leaves": [
+      {
+        "path": "src/data/operations/nativeQaPreOtpCensus.ts",
+        "baseBlob": "ABSENT",
+        "candidateBlob": "f7cdd6030de2e6b58dd500709272baac4a56a88c",
+        "candidateSha256": "bc24deeab0b3c304c81d1446b1b0d4d2b59cd0be958fc579d85a308a1589bc39",
+        "currentBlob": "ABSENT",
+        "currentSHA256": "ABSENT",
+        "preimageMatches": true
+      },
+      {
+        "path": "src/data/operations/nativeQaPreOtpCensus.test.ts",
+        "baseBlob": "ABSENT",
+        "candidateBlob": "d7d3c74f5e995413caa6219f7b5f81f642476ccb",
+        "candidateSha256": "b022ab072ca15cec3bd2c932fb4e77dbb511e4e574258aeeaf1b5fbdd974dac1",
+        "currentBlob": "ABSENT",
+        "currentSHA256": "ABSENT",
+        "preimageMatches": true
+      },
+      {
+        "path": "src/components/FoundationDiagnosticsScreen.tsx",
+        "baseBlob": "44a06e35fd6d401234aebd1ed55e8d5561e78c1d",
+        "candidateBlob": "cea68821f88c49dd4de3d402dcf182dbc12ad7ef",
+        "candidateSha256": "2232b545572a356fc621e9ffe63877e18202e18bfc9eb09268d758701f9f6400",
+        "currentBlob": "44a06e35fd6d401234aebd1ed55e8d5561e78c1d",
+        "currentSHA256": "d00e80bc0f767bd764489a59d987d97ab64ef188eaf7303e50cfba2d554115d9",
+        "preimageMatches": true
+      },
+      {
+        "path": "src/components/FoundationDiagnosticsScreen.readonlyQa.test.ts",
+        "baseBlob": "ABSENT",
+        "candidateBlob": "8abae3be614ae5332d70674eb02adebd55a5cf85",
+        "candidateSha256": "9d77dd5b4e55791d1e8a2c4f9885a5cef644f9e41077c95a10529211e4ebab6f",
+        "currentBlob": "ABSENT",
+        "currentSHA256": "ABSENT",
+        "preimageMatches": true
+      }
+    ],
+    "review": "NO_BLOCKER_SOURCE_ONLY_READONLY_QA_CONSUMER",
+    "validationReused": "author20; independent2 suites5PASS15skip, not20 independent",
+    "defaultFlag": false,
+    "explicitRefreshOnly": true,
+    "noHostOrOtpOrSyncEffects": true,
+    "uiPrimitives": "Existing UiSection/UiButton/UiText and existing localized diagnostics/refresh labels; no new colors or navigation",
+    "newScopeApprovalRequired": true
+  },
+  "batchProductLeaves": [
+    "backend/src/serverStartup.ts",
+    "backend/src/tripCreateRuntime.ts",
+    "backend/src/tripCreateRuntime.test.ts",
+    "backend/src/tripPersonSelfNicknamePg.ts",
+    "backend/src/tripPersonSelfNicknamePg.test.ts",
+    "backend/src/tripMemberClaimQaRuntime.ts",
+    "src/data/operations/nativeQaPreOtpCensus.ts",
+    "src/data/operations/nativeQaPreOtpCensus.test.ts",
+    "src/components/FoundationDiagnosticsScreen.tsx",
+    "src/components/FoundationDiagnosticsScreen.readonlyQa.test.ts"
+  ],
+  "allNativePreimagesMatch": true,
+  "authority": "No new main Writer rights; exact human approval request pending; do not infer call ID or approval from parent preparation"
+}

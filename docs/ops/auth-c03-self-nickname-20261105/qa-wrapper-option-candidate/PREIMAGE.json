@@ -1,0 +1,11 @@
+{
+  "sourceMain": "09a6e719bd45cdf3ff40ff9a5b62f91b01e30390",
+  "target": "backend/src/tripMemberClaimQaRuntime.ts",
+  "preSHA256": "522dbcdc3f53b24880a1df2040d19db4233034eda15c0cde592a61bb03310356",
+  "postSHA256": "25bc9d9f2315b2020dd5173170529bc63651062f3898c7aa7aabdea593ea111d",
+  "patchSHA256": "6490fe5c7670bc9e3d7dc4dafa41e2fe993445f30e10c7907edce8c1b7c2797b",
+  "sourceFileWritten": false,
+  "CoreDependencyCommit": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+  "CoreRuntimeSHA256": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+  "CorePgSHA256": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a"
+}

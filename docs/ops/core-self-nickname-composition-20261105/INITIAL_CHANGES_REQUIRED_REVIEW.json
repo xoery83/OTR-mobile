@@ -1,0 +1,72 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "recordedAt": "2026-11-05T03:51:58.600246+00:00",
+  "candidate": "0fc0723b0e39fcfe0eeb51b5a058de87f0c2f4a8",
+  "sourceHashes": {
+    "backend/src/tripCreateRuntime.ts": "7cc37ef0165e5b44d9f6d7f30c070072a155bcdc57044d0f3b76447b63daf749",
+    "backend/src/tripCreateRuntime.test.ts": "1a0c91b3623156e4c199e40e7e1001e2c97691b55453f86aa619b76221c31df5",
+    "backend/src/tripPersonSelfNicknamePg.ts": "e042ee8d23dabbeb5f5a4f680e0ecd3ee021b0dae5f708c02232a8fadd4e504a",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "6484757552df4b7a28f6b5ea12f56bcb0e77c3452790952ebb8a139e3853c3eb"
+  },
+  "verdict": "CHANGES_REQUIRED_ONE_POST_AWAIT_CLOSE_FENCE",
+  "findings": [
+    {
+      "id": "NICKNAME-COMPOSITION-R1",
+      "priority": "P2",
+      "file": "backend/src/tripPersonSelfNicknamePg.ts",
+      "lines": [
+        109,
+        116,
+        122,
+        146
+      ],
+      "title": "A provider closed during COMMIT/lease completion can still return accepted output",
+      "rootCause": "assertOpen guards entry, queued lease and pre-SQL/pre-COMMIT, but no lifecycle assertion runs after await COMMIT, after await withLease, or at the final public read/execute/recover return boundary. Closing after the callback has committed but before withLease resolves therefore escapes the selected provider close fence. The existing provider Person and MemberClaim methods perform an await-result/guard-return check, so this is a concrete missing lifecycle edge rather than a new Auth policy.",
+      "reproduction": "A mock existing withLease awaits the real port callback (including successful COMMIT), sets its lifecycle open=false, then returns that callback result. Port.execute resolves the validated APPLIED receipt envelope instead of rejecting closed. Author source/test unchanged; probe is one appended case in a temporary copy with absolute author-source imports.",
+      "minimalDelta": "Add lifecycle checks after the final awaited result at the public typed-method boundary, covering COMMIT and whole lease completion. Keep existing early/precommit checks so closure before commit rolls back. If COMMIT already succeeded, do not pretend ROLLBACK removes the effect: propagate sanitized runtime-closed/unavailable, preserve original operation/digest/receipt and require original read-only recovery; never retry/replay. Preserve optional default-noop direct factory compatibility and same existing connection/SQL authority. This can be implemented in the current factory or a minimal typed existing-provider wrapper, without new environment flag/connection/raw DB export/framework.",
+      "focusedAcceptance": "Keep46. Add closure during successful COMMIT and after callback-before-lease-return cases for public execute/read/recover, showing no accepted return once the selected runtime is closed. Precommit closure still rolls back; after successful commit no false rollback/no resubmit, original-operation recovery on qualified fresh runtime remains available."
+    }
+  ],
+  "independentValidation": {
+    "existingSuites": {
+      "command": "node node_modules/vitest/vitest.mjs run backend/src/tripCreateRuntime.test.ts backend/src/tripPersonSelfNicknamePg.test.ts --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+      "passed": 46,
+      "failed": 0,
+      "durationSeconds": 0.452
+    },
+    "boundedProbe": {
+      "path": "/var/folders/8g/ztcbxp0n3ts4hb0j0r918h500000gp/T/otr-nickname-composition-review-0hbq0bu6/probe.test.ts",
+      "sha256": "d769f03a0272b4671d0ffde14edd5996d459ee729fe226d215c73729908b1e52",
+      "case": "REVIEW_ONLY closure after successful lease work cannot return accepted",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 16,
+      "durationSeconds": 0.182,
+      "actual": "Promise resolved validated APPLIED envelope instead of rejecting",
+      "hosted": false
+    }
+  },
+  "reviewedSafeProperties": [
+    "Only exact internal options.selfTripNickname===true in version3 selects the typed factory port; default absent/irrelevant Env/finite exclusions and same raw connection tests pass.",
+    "No HTTP-facade cast, new connection, raw DB/config/actor selector export, startup/QA wrapper or Env auto-selection added. Auth composition remains explicitly missing and cannot be inferred from this ABI.",
+    "Optional lifecycle hook defaults to noop for old direct factory callers and does not change SQL admission/roles/linked-self authority. Current early/queued/pre-dispatch/precommit close checks rollback safely before commit.",
+    "Canonical typed method/response shapes and original recover semantics unchanged; SQL body/gates/grants are untouched. Existing COMMIT uncertainty sanitizes error without automatic retry."
+  ],
+  "notReviewed": [
+    "Auth startup/wrapper source or its selected behavior",
+    "Protected SQL installation/activation/actual Hosted",
+    "Old codec33/PG23/P3/P6 suites or unrelated domains"
+  ],
+  "actions": {
+    "authorEdits": 0,
+    "main": 0,
+    "Hosted": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "device": 0,
+    "GitMetadata": 0
+  },
+  "fileOnly": "Fixed by file SHA; reviewer did not integrate or alter source.",
+  "resume": "Return one focused lifecycle finding to parent/author. Revise/test only this boundary, then independent delta review; no new Owner decision or authority needed."
+}
