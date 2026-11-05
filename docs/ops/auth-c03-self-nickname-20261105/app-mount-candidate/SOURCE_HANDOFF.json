@@ -1,0 +1,25 @@
+{
+  "request": "AUTH-C03-NICKNAME-DEFAULT-CLOSED-APP-HOOK-20261105",
+  "candidate": "869146f557391277815e1c566107a1f665ddc509",
+  "review": "NO_BLOCKER_FOR_DEFAULT_OFF_SOURCE_PATCH_ONLY",
+  "patch": "docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/APP_OPTIONAL_PORT.patch",
+  "patchSHA256": "dbb443ed2a18325a2503d86f532f828c672e2e45945e81a102e47c6edd3f7763",
+  "sourceMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "target": "backend/src/app.ts",
+  "preSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+  "postSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf",
+  "testFiles": [
+    "backend/src/__fixtures__/selfTripNicknameMountCandidate.ts",
+    "backend/src/selfTripNicknameMount.test.ts"
+  ],
+  "docs": [
+    "docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/PREIMAGE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/LOCAL_EVIDENCE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/PARENT_REVIEW.json",
+    "docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/SOURCE_HANDOFF.json"
+  ],
+  "applyRule": "Root1soleSourceWriter freshpreimage/CAS against actualmain; applyexactpatch onlyafterprehashmatch, verifyposthash andownrequiredscopechecks. No wholeAuthbranch overwrite. Preserveparallelwork; changedpreimage requires Root1targetedreconciliation, never forceoldappblob.",
+  "callBoundary": "Optional app.option selfTripNicknamePort only; noStartup caller/envderive/defaultCoreconnection. No liveportinjection orHostpermission fromsourcehook. Root2installNOT_READY; noSQL/runtime/Windowactivation.",
+  "validationReused": "6temporarytarget Mocktests/scopedTS/lint/diffPASS; independentparentstaticreview no rerun",
+  "currentReadiness": "DEFAULT_OFF_SOURCE_PATCH_ONLY_NOT_HOSTED_ACCEPTANCE"
+}
