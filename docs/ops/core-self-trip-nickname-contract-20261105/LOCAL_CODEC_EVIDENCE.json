@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_CODEC_PASS_NOT_OWNING_MUTATION_OR_HOSTED",
+  "files": {
+    "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+  },
+  "tests": {
+    "command": "./node_modules/.bin/vitest run src/domain/trip/tripPersonSelfNickname.test.ts --configLoader runner",
+    "result": "33 PASS / 157ms; after final ABI addition, before import-only lint autofix",
+    "goldenSha256": "82476a4b28f8275ab5b77f8e906987a59d76965d949e68c5bcace4861bb9412c",
+    "independentGoldenGenerator": "Python hashlib SHA256 over compact UTF8 JSON with literal newline separator"
+  },
+  "scope": "Pure validation/identity binding/intent bytes only. No linked-self admission enforcement, SQL mutation, current-access capability, route or permission installed.",
+  "metadata": "No Git operation after two worktree approval review deadlines. New files only, parent explicitly authorized existing stable tree.",
+  "checks": {
+    "scopedTypecheck": "PASS: tsc --noEmit -p docs/ops/core-self-trip-nickname-contract-20261105/SCOPED_TYPECHECK_CONFIG.json",
+    "lint": "PASS: eslint exact two new canonical files, 0 warnings after import ordering fix",
+    "diffCheck": "PASS: git diff --check; existing tracked files unchanged"
+  }
+}

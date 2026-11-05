@@ -1,0 +1,31 @@
+{
+  "status": "SOURCE_ONLY_CANONICAL_CODEC_LOCAL_PASS_NOT_AUTHORITY",
+  "parentMain": "353c3e9b7185c59b02536c37a1d51bf9b44b41bb",
+  "candidate": "f4746ba0a3754918db8ef44865bef268351729b5",
+  "twoLeafSHA256": {
+    "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+  },
+  "producerContractSHA256": "e28df17e0e44fc16a77292264bed404abaa68ffbe6ab26f69e6f989002ec1a39",
+  "contractReviewSHA256": "b7f827744d9aaffcd0414d1d0ec806553a93a189456e8b20b85f6db5b535b871",
+  "codecReviewSHA256": "a56044d6859782aca78e5a512ed610d2dbeb2bb0d611ac3165704ee6149ca042",
+  "goldenDocSHA256": "ccfa4494e6605c39b93897060d3447f366534c30a015cf2c1684e18b880ca5a5",
+  "goldenUTF8IntentDigest": "82476a4b28f8275ab5b77f8e906987a59d76965d949e68c5bcace4861bb9412c",
+  "actualChecks": {
+    "newline0aGoldenTextHexHash": "PASS",
+    "goldenAndExactMutationRecoveryUnion": "2PASS31skip /179ms",
+    "twoRootScopedTypes": "PASS",
+    "twoRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "coreSchemaDependency": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reused": "Independent33 pure codec tests; exact source/dependency, no full33 rerun. Both independent reviews are exact file-hash reviews; no invented Git review commit.",
+  "abi": "Strict current Actor/Trip/Person/op/nickname revision and explicit nickname. PATCH {receipt,idempotentReplay}; recover {intentDigest} -> EXACT_RECEIPT+receipt or ABSENT_UNCONFIRMED. Trusted Actor required after actual server selection; structural context parse is not authority.",
+  "bounds": [
+    "No Profile/globalName/AKA/participation/accessRevision borrowing",
+    "No Backend/SQL/PG/live reader or revision0 substitution",
+    "No role/authority/runtime/Gate/Source/device/Provider change",
+    "Six fixed docs from f474 only; excluded author untracked PG candidates and whole old P3 branch"
+  ],
+  "next": "After this source is independently read back, Auth exact consumer may consume canonical imports in separate serial source package. Actual PG field/writer/receipt/ACL installation still separate."
+}

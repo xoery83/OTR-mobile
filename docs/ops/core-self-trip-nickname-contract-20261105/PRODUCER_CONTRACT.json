@@ -1,0 +1,127 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "status": "ROOT1_TECHNICAL_ACCEPTED_CANONICAL_ABI_V1_INDEPENDENT_REVIEW_PENDING_NO_RUNTIME",
+  "version": 1,
+  "sourceBase": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+  "fixedBy": "file SHA256; no Git commit claimed",
+  "approvedBusiness": {
+    "source": "docs/people/design-v1-20261024/originals/OTR_People_Identity_Permissions_Product_Delta_20261024.docx, Identity, names and privacy",
+    "rule": "After Claim, person edits own Trip nickname; organizer notes cannot overwrite self-selected name. Account global profile/AKA remain independent.",
+    "ownerRequest": "Self linked Trip Person nickname only, Patch/Clear/omitted Keep; no edit of other connected persons."
+  },
+  "actualGap": {
+    "existing": "TripPerson.displayName reads journey_members.display_name; create-only cloud name command and independent participation revision/receipt exist.",
+    "missing": [
+      "self linked Person nickname mutation",
+      "nickname-specific CAS revision",
+      "typed nickname receipt and exact original-operation lookup",
+      "nickname readback observation"
+    ],
+    "notReusableAuthority": [
+      "AccountPrivateProfile expectedRevision/sample mutation",
+      "participationRevision",
+      "Core accessRevision",
+      "Trip Person create receipt",
+      "PERSON_BINDING account/participating record"
+    ]
+  },
+  "ports": {
+    "read": {
+      "proposedRoute": "GET /v1/trips/:tripId/persons/:personId/self-nickname",
+      "result": {
+        "contractVersion": 1,
+        "accountId": "trusted authenticated Account",
+        "tripId": "UUID",
+        "personId": "UUID",
+        "nickname": "string|null",
+        "nicknameRevision": "safe integer >=0",
+        "observedAt": "server UTC ISO"
+      },
+      "authority": "Current exact linked self identity and current Trip access; no lookup by displayName/email/AKA."
+    },
+    "patch": {
+      "proposedRoute": "POST /v1/trips/:tripId/persons/:personId/self-nickname/commands",
+      "command": {
+        "contractVersion": 1,
+        "command": "SET_SELF_TRIP_NICKNAME",
+        "operationId": "stable UUID",
+        "tripId": "UUID",
+        "personId": "UUID",
+        "expectedNicknameRevision": "safe integer >=0",
+        "nickname": "nonblank trimmed Unicode string <=256 OR null for explicit Clear",
+        "intentDigest": "lowercase SHA256 of canonical tuple"
+      },
+      "actor": "Derived only from validated Backend session. No client actor override/account guess. Digest includes trusted actorAccountId.",
+      "omitted": "Auth PATCH.nickname omitted => KEEP, no operation queued/submitted. Wire command requires nickname key. Empty string is not SET and not implicitly CLEAR.",
+      "response": {
+        "receipt": "NicknameReceipt",
+        "idempotentReplay": "boolean"
+      },
+      "responseShape": "Strict exactly two keys, no wrapper. HTTP method remains proposed command POST (PATCH refers to semantic nickname mutation, not an invented transport change)."
+    },
+    "recover": {
+      "proposedRoute": "POST /v1/trips/:tripId/persons/:personId/self-nickname/operations/:operationId/recover",
+      "request": {
+        "intentDigest": "lowercase SHA256 hex64"
+      },
+      "result": "EXACT_RECEIPT or ABSENT_UNCONFIRMED; null/404/503 never proves no commit. Current linked-self access required; revoked identity denies without new write.",
+      "receiptBinding": "actorAccountId+tripId+personId+operationId+intentDigest, full original request equality; mismatched operation/digest is IDEMPOTENCY_KEY_REUSED.",
+      "responseShape": "Strict {kind:'EXACT_RECEIPT',receipt:NicknameReceipt} OR {kind:'ABSENT_UNCONFIRMED'}; no idempotentReplay/null receipt/ok/data wrapper. Errors use existing HTTP error path."
+    }
+  },
+  "storageProposal": {
+    "canonicalValue": "Preserve journey_members.display_name as the sole Trip nickname. No parallel self_nickname override or account profile fallback.",
+    "clear": "Wire null is explicit cleared nickname; canonical display_name becomes empty string (existing NOT NULL preserved). Read maps empty display_name to nickname:null; legacy displayName projection remains string, potentially empty. No previous-name restoration/global-name replacement.",
+    "newRevision": "journey_members.nickname_revision bigint NOT NULL DEFAULT 0, safe integer bound; increments exactly once only on actual name change. Initial existing rows revision0. Independent of participation/account/access revisions.",
+    "receipt": "Dedicated immutable typed nickname command receipts, following existing Person receipt pattern; not reuse participation/create receipt schemas or create a generic save subsystem. New table/column/functions/ACL are DESIGN ONLY, exact protected install package remains required.",
+    "otherWriters": "All existing/future display_name UPDATE paths must increment nickname revision atomically or be rejected by owning transition guard. INSERT retains initial revision0; linking/role/participation changes alone never bump nickname revision. Exact writer/guard interaction must be reviewed before implementation/install.",
+    "legacyObservations": "SET validation is trimmed nonblank Unicode <=256 scalars, but existing/prior read values have no length/trim bound. Never truncate or reject legacy long/whitespace nickname merely to read, recover history or clear. Empty canonical storage maps null wire; no implicit clear from an empty SET."
+  },
+  "atomicSemantics": [
+    "Authenticate and qualify same current linked self Person within Trip, reject missing/ambiguous/revoked/foreign binding. Never use role=Owner to edit another person.",
+    "Lock operation identity and Person row under existing PostgreSQL transaction patterns; revalidate linked identity/access under lock.",
+    "Look up exact original receipt before attempting new mutation; return original result for identical request without CAS reapply. A stored receipt is historical result, not proof of current roster value.",
+    "Mismatch expected revision => immutable REVISION_CONFLICT receipt, no name change; desired equal current with correct revision => UNCHANGED and no increment; otherwise APPLIED revision+1 and nickname update+receipt atomically.",
+    "No partial row or receipt on failure. No counter rollover; exhausted revisions reject. No automatic rebase/new operation on conflict.",
+    "Only authoritative fresh read can establish current nickname value/revision. Local draft and accepted server snapshot remain distinct."
+  ],
+  "receipt": {
+    "receiptVersion": 1,
+    "receiptId": "UUID",
+    "actorAccountId": "UUID",
+    "tripId": "UUID",
+    "personId": "UUID",
+    "operationId": "UUID",
+    "intentDigest": "SHA256",
+    "expectedNicknameRevision": "integer",
+    "desiredNickname": "string|null",
+    "outcome": "APPLIED|UNCHANGED|REVISION_CONFLICT",
+    "prior": "{nickname:string|null,nicknameRevision:integer}",
+    "resulting": "{nickname:string|null,nicknameRevision:integer}",
+    "acceptedAt": "server UTC ISO",
+    "validation": "APPLIED => result revision prior+1, value changed and equals desired. UNCHANGED => revision/value unchanged and desired equals prior. CONFLICT => expected!=prior revision, resulting=prior. Identical replay returns same receipt; only response envelope idempotentReplay changes."
+  },
+  "intentBytes": "UTF-8 prefix otr-self-trip-nickname-intent-v1 followed by ACTUAL U+000A (byte 0a), then compact JSON.stringify([1,\"SET_SELF_TRIP_NICKNAME\",operationId,trustedActorAccountId,tripId,personId,String(expectedNicknameRevision),nickname]); no Unicode normalization or locale casing.",
+  "ownership": {
+    "Auth": "Profile/Person consumer DTO, draft/omission, controller/Adapter, account isolation, existing queue consumption and recovery UI. No database direct access.",
+    "Root1": "Canonical command/codec/revision/receipt, self identity admission, SQL DESIGN/guard, shared reader projection differences.",
+    "Native": "Existing Person mirror/normal downstream/blank display compatibility and public integration only via unique Writer.",
+    "Root2": "Protected install, Runtime default-closed deployment, CAS/rollback/finite activation once exact authorization obtained."
+  },
+  "defaultClosed": "No executable route/function installed by this docs-only package; no permissions, Actor identity, SQL, Hosted, Provider or business activation.",
+  "nextImplementation": [
+    "Parent technical acceptance of storage/clear/revision+receipt contract and independent bounded contract review.",
+    "Root1 local domain codec+default-closed Backend owning adapter and isolated PG transaction candidate with exact installation/rollback package.",
+    "Auth independently builds consumer against fixed contract; Native evaluates existing displayName empty-string presentation, no new UI placeholder semantics invented by Core.",
+    "Root2 protected installation only after explicit approved package; Auth actual local/cloud/readback/recovery qualification follows."
+  ],
+  "validationPlan": [
+    "Schema and canonical intent/receipt binding tests; no account-private/participation revision borrowing.",
+    "Real isolated PG self-linked success, foreign Account/Trip/Person, ambiguous/missing/revoked link, duplicate operation changed payload, parallel same-base revision conflicts, rollback/no partial receipts, exact UNKNOWN original receipt recovery.",
+    "SET/CLEAR/omitted KEEP, UNCHANGED, Unicode and max bound, no globalProfile/AKA/participation/link/role mutation.",
+    "Legacy display_name writer transition compatibility and Native normal reader blank-name handling before runtime activation."
+  ],
+  "platformBlocker": "Two approved worktree-creation review deadlines; mutation did not execute. Parent expressly allowed only new docs folder in existing stable author tree. No metadata fallback attempted. No commit/push/main claim.",
+  "readiness": "AUTH_CONSUMER_CONTRACT_DRAFT_READY; CORE_IMPLEMENTATION_NOT_STARTED; SQL_NOT_INSTALLED; HOSTED_NOT_ENABLED; CLOUD_NOT_VERIFIED",
+  "technicalAcceptance": "Parent accepted sole display_name/Clear empty storage/independent nickname_revision; 2026-11-05. Local canonical codec only allowed while bounded independent contract review runs. No PG/backend mutation implementation yet."
+}

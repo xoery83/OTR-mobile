@@ -1,0 +1,66 @@
+{
+  "sourceBase": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+  "lookupScope": "Person domain/repository, Person create/participation receipt implementation, approved People intake/original only; no whole-repository absence claim",
+  "files": [
+    {
+      "path": "src/domain/trip/person.ts",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "dcacf54c8ab58c73b254d07972061786435bff8738e835a5e8727c6b773ac722",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "src/data/repositories/tripPersonRepository.ts",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "8b5c515379b03f8897a896e54992e43a10948dcac32397a5524de9c9131dcf7e",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "src/domain/trip/tripPersonCloudCreate.ts",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "3ef5a0f4cc191964be373b056f5e9c324bc2643c4633f0d3f1ee03939fa2491b",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "src/domain/trip/personParticipationCommand.ts",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "55be5d6106a7da633ca3165f0335a07140f72521a5b6d63e5945a36d96d01ee8",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "backend/src/tripPersonParticipationRuntime.ts",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "41c79825a85669f1d85f120b3784617d57b05954d38f473fbc958c6422eb2bbe",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "895f8bcca3ae3f5e9f630b3b7c57df36d16ce9898ee6756376b58dbcbf7a1f64",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "c347362be54875b951b2f1bdc51c2c1869cce4af644b2740b2d2c8584665752f",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "bdac8861e65a73af72ff27c39161be40e21dadd10fb9c269c79289d5f12a5f09",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "docs/people/design-v1-20261024/INTAKE_AND_GAPS.md",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "924e7a2af36ecc2ed72d4cbe60cbf6aa69043338b4c4092c917fd09c8a98e2af",
+      "workingTreeByteIdentical": true
+    },
+    {
+      "path": "docs/people/design-v1-20261024/originals/OTR_People_Identity_Permissions_Product_Delta_20261024.docx",
+      "sourceCommit": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+      "sha256": "ccb0ecf4bf60accb628225f14117fd3a3e541b180c5a116e824888b5ada03fb8",
+      "workingTreeByteIdentical": true
+    }
+  ]
+}

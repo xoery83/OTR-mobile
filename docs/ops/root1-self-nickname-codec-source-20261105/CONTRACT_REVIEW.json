@@ -1,0 +1,42 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "recordedAt": "2026-11-05T01:59:38.265507+00:00",
+  "verdict": "NO_BLOCKER_LOCAL_CONTRACT",
+  "producerContractPath": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/docs/ops/core-self-trip-nickname-contract-20261105/PRODUCER_CONTRACT.json",
+  "producerSHA256": "e28df17e0e44fc16a77292264bed404abaa68ffbe6ab26f69e6f989002ec1a39",
+  "repin": "Parent explicitly repinned e28 after disclosed5864 drift; old requested hash is not represented as reviewed. PIN_OBSERVATION retained.",
+  "sourceBase": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+  "sourceManifestSHA256": "1bc3441f16f9c5f8dca2e94d3c55ea46b098fbd37c2550297dbf922da587068a",
+  "sourceValidation": "All10 directly referenced files individually hashed against fixedmain3ab5, no full Profile audit.",
+  "findings": [],
+  "contractSupported": {
+    "selfAuthority": "Approved People original docx paragraph7 allows post-Claim own Trip nickname; paragraph8 leaves Global Name/AKA independent. Exactly current linked Account/Trip/Person and not removed/ambiguous; Owner role never authorizes editing another connected Person.",
+    "soleValue": "journey_members.display_name remains sole nickname; explicit null Clear stores empty NOT NULL string, empty maps null on new wire read. No overlay, restoring an old name or globalProfile fallback. Legacy displayName string reader may observe empty.",
+    "stateAndReceipts": "Independent nickname_revision and immutable typed command receipt are necessary differences: existing Person create is create-only and participation has distinct authority/state/outcome schema. Reuse their transaction/receipt/codec patterns, not revisions/ACL or another Person/Queue/GenericSave system.",
+    "abi": "Strict PATCH semantic command POST requires nickname key; omitted is KEEP/no operation, empty string invalid SET. Exact response {receipt,idempotentReplay}; recover request {intentDigest}, response EXACT_RECEIPT+receipt or ABSENT_UNCONFIRMED only. Canonical prefix contains actual newline byte0a; actor included only after trusted session selection.",
+    "currentVsHistorical": "Immutable replay is original historical result; only new qualified read establishes current value/revision. Missing/filtered/error/null is not NoCommit. Recovery still checks current linked-self access and never dispatches an operation."
+  },
+  "mandatoryImplementationConditions": [
+    "Root1 owns exact codec/SQL/ACL/reader differences; Auth owns consumer DTO/controller/adapter. Do not bounce producer CAS/row mapping/receipt design to Auth. Routes in JSON are proposed logical ports, not qualified existing APIs.",
+    "Derive trusted normal Actor server-side; atomically revalidate current exact unique linked self Person/Trip and denial/access under compatible locks. No created_by, name/email/AKA guess or Owner-edit-others fallback. Account/Trip generation guards remain in consumers.",
+    "nickname_revision independently safe nonnegative integer; actual name change increments once, equal valid desired value no bump, stale expected yields immutable conflict. INSERT starts0; role/link/participation-only changes do not bump. Counter overflow rejects and row+receipt roll back together.",
+    "Every existing effective display_name writer, including formal Claim and legacy direct paths, must participate in row serialization and a compatible transition counter guard (atomic bump or explicit refusal). No silent untracked update or independent revision grant. Pin actual active writer/trigger definitions and precise preimages before SQL installation; current10source set is not an exhaustive live writer inventory.",
+    "Baseline legacy linking function sets display_name=coalesce(nullif(display_name,empty),profile_name,Traveler), source baseline20260910000100:2084-2115. Preserve approved FIRST Claim mapping; do not change it as part of nickname work without Auth review. Already-linked self nickname/Clear must not be silently restored from Global Profile or organizer notes. Compatible counter guard handles any actual name transition without inventing new Claim policy.",
+    "SET validates nonblank trimmed Unicode scalar string <=256 with shared deterministic bytes; no silent normalization/rebase. Prior/current historical nickname observations must accept unbounded legacy values/whitespace for read, recovery and explicit Clear, never truncate to SET limits. Empty canonical string alone maps null.",
+    "Original operation binds trusted actor/trip/person/full request+digest before replay; changed command/digest refuses. All outcomes stored immutable; APPLIED/UNCHANGED/conflict semantics and safe revisions validated. Unknown stays original-operation read-only reconciliation; no null/404-to-NoCommit, replacement ID or repeated mutation.",
+    "Current gate closure refuses new mutations but must preserve qualified compatible receipt lookup/history and current-authorized reader. New column/functions/receipt table/ACL remain DESIGN ONLY until exact protected install authorization and Root2 execution. Never fabricate nicknameRevision0 before actual installed column/reader qualification; disabled/unqualified must be explicit.",
+    "Privacy changes limited to Trip nickname shared field. Global Profile/AKA/contacts, Person participation, private ownership and accessRevision are not mutated/borrowed. Native handles blank legacy display presentation under its unique Writer; no Core UI fallback policy invented."
+  ],
+  "implementationAcceptance": "Root1 may prepare local canonical codec/default-closed backend/SQL design using this fixed contract. Actual code/security tests and isolated PG/writer compatibility remain later acceptance; this is neither SQL install nor Hosted activation.",
+  "noNewOwnerDecision": true,
+  "actions": {
+    "sourceEdits": 0,
+    "tests": 0,
+    "Hosted": 0,
+    "SQL": 0,
+    "GitMetadata": 0,
+    "newWorktrees": 0
+  },
+  "next": "Return contract immediately to parent/Auth; optional narrow pure-codec review follows separately and cannot delay this ABI decision."
+}
