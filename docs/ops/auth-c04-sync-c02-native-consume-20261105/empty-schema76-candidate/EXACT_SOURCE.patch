@@ -1,0 +1,249 @@
+diff --git a/src/data/auth/guestLocalWorkspace.ts b/src/data/auth/guestLocalWorkspace.ts
+--- a/src/data/auth/guestLocalWorkspace.ts
++++ b/src/data/auth/guestLocalWorkspace.ts
+@@ -35,6 +35,7 @@
+   runMigrations,
+   type MigrationDatabase,
+ } from "../db/migrationRunner";
++import { migrations } from "../db/migrations";
+ import { coreUuid } from "@/domain/trip/tripCoreV2";
+ import {
+   createTripCoreV2Repository,
+@@ -53,6 +54,43 @@
+ import { createTripDayFeedReader } from "../repositories/tripDayFeedRepository";
+ 
+ type GuestDatabase = CoreDatabase & MigrationDatabase;
++
++async function isEmptySessionGuestSchema(database: GuestDatabase, version: number) {
++  if (version !== 76) return isKnownGuestSqliteSchema(database, version);
++  // Migration 76 only changes two Photo75 triggers. This is not Adoption qualification.
++  const registered = migrations.filter(({ id }) => id <= 76);
++  const png = registered.at(-1);
++  if (
++    png?.id !== 76 ||
++    png.name !== "capture_file_png_photo_decisions" ||
++    !(await isKnownGuestSqliteSchema(database, 75))
++  )
++    return false;
++  const applied = await database.getAllAsync<{ id: number; name: string }>(
++    "SELECT id, name FROM schema_migrations ORDER BY id",
++  );
++  if (
++    applied.length !== registered.length ||
++    registered.some(({ id, name }, index) => {
++      const entry = applied[index];
++      return entry?.id !== id || entry.name !== name;
++    })
++  )
++    return false;
++  const expectedTriggers = png.sql
++    .trim()
++    .split(/\n(?=CREATE TRIGGER )/)
++    .slice(1)
++    .map((statement) => statement.trimEnd().replace(/;$/, ""));
++  const actualTriggers = await database.getAllAsync<{ sql: string }>(
++    "SELECT sql FROM sqlite_master WHERE type='trigger' AND tbl_name='capture_photo_import_decisions' AND name IN ('capture_photo_decision_scope_insert','capture_photo_decision_scope_update') ORDER BY name",
++  );
++  return (
++    expectedTriggers.length === 2 &&
++    actualTriggers.length === 2 &&
++    expectedTriggers.every((sql, index) => actualTriggers[index]?.sql === sql)
++  );
++}
+ export async function preparePublishedGuestSession(
+   localId: string,
+   targetAccountId: string,
+@@ -198,7 +236,7 @@
+               throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+             await database.withTransactionAsync(async () => {
+               const version = await getSchemaVersion(database);
+-              if (!(await isKnownGuestSqliteSchema(database, version)))
++              if (!(await isEmptySessionGuestSchema(database, version)))
+                 throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
+               const tables = await database.getAllAsync<{ name: string }>(
+                 "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
+@@ -363,7 +401,9 @@
+   // Observe only this opener's existing initialization; never create/recover a workspace.
+   async function readInitializedGuestOwner(): Promise<
+     Pick<Awaited<ReturnType<typeof openGuestLocalWorkspace>>,
+-      "scope" | "readCensus" | "readCaptureInventory">
++      "scope" | "readCensus" | "readCaptureInventory"> & {
++        readEmptySessionInstallLayout(): Promise<Readonly<{ sqliteVersion: number; knownLayout: boolean }>>;
++      }
+   > {
+     const generation = getAccountGeneration();
+     const principal = await deps.readPrincipal();
+@@ -389,6 +429,19 @@
+       scope,
+       readCensus: createGuestDatasetCensus(database, localOwner, scope),
+       readCaptureInventory: createGuestCaptureInventory(database, localOwner, scope),
++      async readEmptySessionInstallLayout() {
++        await localOwner();
++        let layout!: { sqliteVersion: number; knownLayout: boolean };
++        await database.withTransactionAsync(async () => {
++          const sqliteVersion = await getSchemaVersion(database);
++          layout = {
++            sqliteVersion,
++            knownLayout: await isEmptySessionGuestSchema(database, sqliteVersion),
++          };
++        });
++        await localOwner();
++        return Object.freeze(layout);
++      },
+     });
+   }
+   return Object.assign(openGuestLocalWorkspace, { readInitializedGuestOwner });
+diff --git a/src/data/auth/guestLocalWorkspace.test.ts b/src/data/auth/guestLocalWorkspace.test.ts
+--- a/src/data/auth/guestLocalWorkspace.test.ts
++++ b/src/data/auth/guestLocalWorkspace.test.ts
+@@ -2169,6 +2169,122 @@
+   await inventory.resumeGuestBeforePublication();
+ });
+ 
++async function useRegisteredSchema76() {
++  const actual = await vi.importActual<typeof import("../db/migrations")>(
++    "../db/migrations",
++  );
++  const registered = actual.migrations.filter(({ id }) => id <= 76);
++  expect(registered.at(-1)).toMatchObject({
++    id: 76,
++    name: "capture_file_png_photo_decisions",
++  });
++  const previous = migrations.splice(0, migrations.length, ...registered);
++  cleanups.push(() => {
++    migrations.splice(0, migrations.length, ...previous);
++  });
++}
++
++it("installs and cold-restores a normal local Session from an empty migrated schema76 Guest", async () => {
++  await useRegisteredSchema76();
++  const { createAuthRepository } = await import("./authSessionRepository");
++  const { createAccountSwitchCoordinator } = await import("./accountSwitchCoordinator");
++  const f = fixture();
++  const values = new Map<string, string>();
++  const storage = {
++    getItem: async (key: string) => values.get(key) ?? null,
++    setItem: async (key: string, value: string) => {
++      values.set(key, value);
++    },
++    deleteItem: async (key: string) => {
++      values.delete(key);
++    },
++  };
++  const open = f.newOpener();
++  const repo = createAuthRepository(storage, () => f.guestId, {
++    async prepareEmptyGuest(localId) {
++      expect(localId).toBe(f.guestId);
++      return (await open()).prepareEmptySessionInstall();
++    },
++  });
++  expect((await repo.readLocalAuthSnapshot()).principal).toEqual({
++    kind: "GUEST",
++    localId: f.guestId,
++  });
++  const workspace = await open();
++  const observer = await open.readInitializedGuestOwner();
++  expect(await observer.readEmptySessionInstallLayout()).toEqual({
++    sqliteVersion: 76,
++    knownLayout: true,
++  });
++  expect(
++    f.opened[0].sql.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all(),
++  ).toEqual(migrations.map(({ id, name }) => ({ id, name })));
++  expect(
++    (await workspace.readCensus(completeExternalInventory(workspace))).blockers,
++  ).toContain("SQLITE_SCHEMA_UNSUPPORTED");
++
++  const accountId = randomUUID();
++  const coordinator = createAccountSwitchCoordinator({
++    pauseSync: async () => {},
++    restartSync: async () => {},
++    readSession: repo.readLocalSession,
++    writeSession: repo.writeLocalSession,
++    prepareSessionInstall: repo.prepareSessionInstall,
++    clearSession: repo.clearLocalSession,
++    selectAccount: repo.selectAccount,
++    adoptLocalState: vi.fn(),
++    clearInMemoryState: vi.fn(),
++    bootstrapAccount: async () => {},
++  });
++  await coordinator.activateSession({
++    accessToken: "unit-no-network",
++    refreshToken: "unit-no-network",
++    expiresAt: "2026-11-06T00:00:00Z",
++    identity: { userId: accountId, displayName: "", email: "qa@example.test" },
++  });
++  expect((await createAuthRepository(storage).readLocalAuthSnapshot()).principal).toEqual({
++    kind: "ACCOUNT",
++    accountId,
++  });
++});
++
++it.each([
++  "wrong migration name",
++  "missing prior migration",
++  "missing trigger",
++  "altered trigger",
++  "saved Trip",
++] as const)("rejects a migrated schema76 Guest with %s", async (kind) => {
++  await useRegisteredSchema76();
++  const f = fixture();
++  const opener = f.newOpener();
++  const workspace = await opener();
++  const observer = await opener.readInitializedGuestOwner();
++  const { sql } = f.opened[0];
++  if (kind === "wrong migration name")
++    sql.exec("UPDATE schema_migrations SET name='unqualified' WHERE id=76");
++  if (kind === "missing prior migration")
++    sql.exec("DELETE FROM schema_migrations WHERE id=74");
++  if (kind === "missing trigger" || kind === "altered trigger")
++    sql.exec("DROP TRIGGER capture_photo_decision_scope_insert");
++  if (kind === "altered trigger")
++    sql.exec(
++      "CREATE TRIGGER capture_photo_decision_scope_insert BEFORE INSERT ON capture_photo_import_decisions BEGIN SELECT 1; END",
++    );
++  if (kind === "saved Trip") await workspace.trips.createTrip(tripInput());
++
++  expect(await observer.readEmptySessionInstallLayout()).toEqual({
++    sqliteVersion: 76,
++    knownLayout: kind === "saved Trip",
++  });
++  const before = sql.prepare("SELECT * FROM local_trip_containers").all();
++  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
++    "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
++  );
++  expect(sql.prepare("SELECT * FROM local_trip_containers").all()).toEqual(before);
++  expect(await workspace.trips.listTrips()).toHaveLength(kind === "saved Trip" ? 1 : 0);
++});
++
+ it("qualifies only real empty schema74 under the exact transition without nested gate", async () => {
+   const { beginAccountTransition, endAccountTransition } =
+     await import("./accountRequestContext");
+@@ -2492,7 +2608,12 @@
+   const before = sql.prepare("SELECT total_changes() AS n").get();
+   const schema = sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
+   const owner = await opener.readInitializedGuestOwner();
+-  expect(Object.keys(owner).sort()).toEqual(["readCaptureInventory", "readCensus", "scope"]);
++  expect(Object.keys(owner).sort()).toEqual([
++    "readCaptureInventory",
++    "readCensus",
++    "readEmptySessionInstallLayout",
++    "scope",
++  ]);
+   expect(owner.scope).toEqual(workspace.scope);
+   expect((await owner.readCensus()).totals.trips).toBe(1);
+   expect(await owner.readCaptureInventory()).toEqual(await workspace.readCaptureInventory());
+@@ -2513,9 +2634,13 @@
+   const owner = await opener.readInitializedGuestOwner();
+   f.setPrincipal({ kind: "GUEST", localId: randomUUID() });
+   await expect(owner.readCensus()).rejects.toThrow("GUEST_LOCAL_SCOPE_CHANGED");
++  await expect(owner.readEmptySessionInstallLayout()).rejects.toThrow(
++    "GUEST_LOCAL_SCOPE_CHANGED",
++  );
+   f.setPrincipal({ kind: "GUEST", localId: f.guestId });
+   advanceAccountGeneration();
+   await expect(owner.readCaptureInventory()).rejects.toThrow("Account changed");
++  await expect(owner.readEmptySessionInstallLayout()).rejects.toThrow("Account changed");
+   expect(f.open).toHaveBeenCalledTimes(1);
+ });
+ 

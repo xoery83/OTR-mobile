@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-05T06:09:21.346329+00:00",
+  "status": "LOCAL_EXACT_BASE_SQLITE_PASS_SOURCE_PATCH_ONLY",
+  "baseCommit": "126bbf6b5226e3fa0e4aaa50a9740ed5974a219e",
+  "nativeReferenceBuild": 14758,
+  "patch": {
+    "path": "EXACT_SOURCE.patch",
+    "sha256": "be7186fae226d14c3b43c20e80f3b643e62af14de93adda12cc0420e23e4a302",
+    "reverseApplyCheckOnExactCandidate": true,
+    "files": {
+      "src/data/auth/guestLocalWorkspace.ts": {
+        "beforeSha256": "beee5df2e9536f902438877ba23127d710de69895177be58d2e66b0edad4dcac",
+        "afterSha256": "685906aea0e39205077c526552abb9cedf38f87b2fd33893e2215f7f7fe48b03"
+      },
+      "src/data/auth/guestLocalWorkspace.test.ts": {
+        "beforeSha256": "2428af8647745df168d7c87210ddcc505fdedfbedbc042dc460488838c8d7bb6",
+        "afterSha256": "1cd64d8d545953836f9fd51806bdab2805fefa3033db79a85c39d9ea7575779f"
+      }
+    }
+  },
+  "realSqliteRegistry": {
+    "src/data/db/migrations.ts": "1e02331a901f2f523bafad386e42cf6c0cc83e8c44704babdb40705dbc269e18",
+    "src/data/db/migrationRunner.ts": "47c222de6ec4e99beb33cbb8abbacea91721aa853eb1a443fa31d26beac891fe",
+    "src/data/db/migrations/captureFilePngPhotoDecisions.ts": "a592c09e84c939b2aeade28cbd8e4249dc51338e92d3c3c2c284221668a6d3fa"
+  },
+  "red": {
+    "test": "installs and cold-restores a normal local Session from an empty migrated schema76 Guest",
+    "exactBaseWithTestOnly": true,
+    "actual": "GUEST_ADOPTION_PREFLIGHT_REQUIRED at guestLocalWorkspace.ts:202 after actual migrations and before account visibility commit",
+    "testFailures": 1
+  },
+  "green": {
+    "target": "exact base plus candidate patch",
+    "testsPassed": 20,
+    "testFiles": [
+      "guestLocalWorkspace.test.ts",
+      "emptyGuestSessionInstall.test.ts"
+    ],
+    "eslintExactFilesPassed": true,
+    "normalPath": "coordinator.activateSession -> repository.prepareSessionInstall -> workspace.prepareEmptySessionInstall -> original transition lease qualification -> account index visibility commit -> fresh repository cold snapshot",
+    "secureStorage": "synthetic in-memory adapter",
+    "sqlite": "real node:sqlite on temporary Guest database using complete registered migrations through 76"
+  },
+  "contract": {
+    "emptyInstallOnly": "For exact 76, the complete applied migration ledger must match the registry, the Photo75 table check must pass, and both actual PNG photo trigger SQL definitions must match registered 76. The original all-table row count and scope, draft, recovery, publication, and transition checks still execute.",
+    "readonlyMethod": "readInitializedGuestOwner().readEmptySessionInstallLayout() -> frozen { sqliteVersion, knownLayout }",
+    "readOnlyScope": "Existing initialized SQLite only, checked principal/generation/publication/freeze before and after transaction. Known layout alone is not empty, a Session authorization, or an Adoption qualification.",
+    "guestDatasetCensus76": "SQLITE_SCHEMA_UNSUPPORTED remains an Adoption blocker."
+  },
+  "negativeEvidence": [
+    "wrong 76 migration name",
+    "missing earlier migration",
+    "missing and altered migration trigger",
+    "real saved Trip with known layout cannot install an empty Guest Session",
+    "old principal and generation reject layout observation",
+    "legacy 74/75 checks and existing transition/recovery negatives passed"
+  ],
+  "operations": {
+    "sourceReview": "PENDING_PARENT_REVIEW",
+    "mainIntegrated": false,
+    "nativeDeviceRun": false,
+    "hostedRun": false,
+    "otpSent": false
+  }
+}
