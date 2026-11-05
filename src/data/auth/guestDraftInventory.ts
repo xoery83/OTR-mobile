@@ -22,7 +22,38 @@ export function createGuestDraftInventory<
   let revision = 0;
   let active = false;
   let emptyFrozen = false;
+  let handoffVersion = 0;
   return {
+    // Registration metadata only; no editor snapshots, freeze, dirty-data or empty-install authority.
+    async readParticipantCensus(input: GuestDraftScope) {
+      const scope = Object.freeze({
+        kind: input.kind,
+        localId: coreUuid.parse(input.localId),
+        generation: input.generation,
+      });
+      await assertScope(scope);
+      if (active || emptyFrozen) throw Error("GUEST_DRAFT_HANDOFF_ACTIVE");
+      const registrationVersion = revision,
+        registeredParticipantCount = participants.size,
+        observedHandoffVersion = handoffVersion;
+      await assertScope(scope);
+      if (
+        revision !== registrationVersion ||
+        participants.size !== registeredParticipantCount ||
+        active ||
+        emptyFrozen ||
+        handoffVersion !== observedHandoffVersion
+      )
+        throw Error("GUEST_DRAFT_CENSUS_CHANGED");
+      return Object.freeze({
+        schemaId: "otr.auth.guest-draft-participant-census/1" as const,
+        registrySchemaId: schemaId,
+        scope,
+        registeredParticipantCount,
+        registrationVersion,
+        handoffActive: false as const,
+      });
+    },
     register(participant: GuestDraftParticipant<Snapshot>) {
       if (emptyFrozen) {
         revision++;
@@ -40,6 +71,7 @@ export function createGuestDraftInventory<
         throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
       active = true;
       emptyFrozen = true;
+      handoffVersion++;
       const version = revision;
       let released = false;
       return {
@@ -58,6 +90,7 @@ export function createGuestDraftInventory<
           released = true;
           emptyFrozen = false;
           active = false;
+          handoffVersion++;
         },
       };
     },
@@ -65,6 +98,7 @@ export function createGuestDraftInventory<
       scope = Object.freeze({ ...scope, localId: coreUuid.parse(scope.localId) });
       if (active) throw Error("GUEST_DRAFT_HANDOFF_ACTIVE");
       active = true;
+      handoffVersion++;
       let released = false;
       const frozen: ReturnType<GuestDraftParticipant<Snapshot>["freeze"]>[] = [];
       const resumeAll = () => {
@@ -79,6 +113,7 @@ export function createGuestDraftInventory<
           }
         }
         active = false;
+        handoffVersion++;
         if (failure) throw failure;
       };
       try {
