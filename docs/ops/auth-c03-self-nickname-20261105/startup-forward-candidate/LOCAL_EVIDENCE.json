@@ -1,0 +1,47 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-STARTUP-EXPLICIT-FORWARD-20261105",
+  "primary": "AUTH-C04_UNCHANGED",
+  "status": "LOCAL_EXACT_TWO_LINE_PATCH_PASS_PARENT_REVIEW_PENDING",
+  "preimage": {
+    "sourceMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a",
+    "target": "backend/src/serverStartup.ts",
+    "preSHA256": "ef6255a856ab9991dcf56a50be8ed2431bf4c08edb77e0465f1bcbbc7f40baae",
+    "postSHA256": "347e163caa92c899ed674f090a3c6c713aeb85f23e472caad818ad149e2c2023",
+    "patchSHA256": "0ac3090703116bae8429b09072f7e4735d6a3208dcabab7397a7dad55e929e08",
+    "insertedLines": 2,
+    "sharedFileWritten": false
+  },
+  "patch": "STARTUP_EXPLICIT_PORT.patch",
+  "existingHook": "startDevBackend(startOptions:Pick<BackendDependencies,...>) already explicittypedfeature injection; addselfTripNicknamePort toPick andforward exactreference into createDevBackendHandler. No newmodule/wrapper/flag/connection needed.",
+  "callContract": "startDevBackend({selfTripNicknamePort:explicitAlreadyQualifiedPort}); nooption meansundefined and apphook remains baselineclosed. Ordinaryserver.ts startDevBackend() unchanged.",
+  "actualDeployGap": "RUNTIME_CAPABILITY_ABI_REQUEST.json onequalifiedconnection/explicitcapability-source request; serverCapture notmodified, its trip.coreConnection is HTTPnotPG and cannot be cast or used as implicitnickname enablement.",
+  "testFile": "backend/src/selfTripNicknameStartupForward.test.ts",
+  "testSHA256": "dc0f97f5da7ce84fc6aac8e13baf2582abdd612d06c87b750e9c7ebcf9f82b60",
+  "validation": {
+    "direct": "2PASS temporaryexactmain Startup applied withgitapply--check/apply andpre/posthash assertions",
+    "default": "undefinedport forwarded; no capabilitycreated",
+    "explicit": "Exactsuppliedport reference forwarded, noportmethods invoked; coreHTTPconnection unchanged",
+    "mocks": "Existing normalstartupunitmock pattern reused: nodehttpcreateServer/listen/on, gateway, mcp, flightHost, OCR andscanner mocked; synthetictestconfig only; no actual socket/provider/DB/network. Mockgateway/MCP factories confirmedcalled.",
+    "scopedTypecheck": "PASS testanddependencies",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "notRerun": "No6mount/38HTTP/consumer/PG/GuestE2E rerun"
+  },
+  "sharedStartupWritten": false,
+  "sourcePins": {
+    "actualMainAppHook": "0f43dd17e548833f9722caa882bd3ad92ffbe56a",
+    "appPostSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf",
+    "StartupInjectionCurrent": "NONE"
+  },
+  "sourceBoundary": "Onlypatch/test/docs. Root1sharedStartupWriter mustfreshCAS/apply; no backendindex/config/Actorflag orNativeowningfiles touched.",
+  "protected": "Root2installNOT_READY;Sourceforwarding is not permission to construct/inject liveport oractivateSQL/runtime. Actor remainsnormalJWT and SQLgate independent.",
+  "review": "PENDING_PARENT",
+  "actions": {
+    "HostedHTTP_SQL": 0,
+    "RuntimeConfigChanges": 0,
+    "liveCredentialsSession": 0,
+    "deviceOTPwindow": 0,
+    "sharedsourceWrites": 0
+  },
+  "recordedAt": "2026-11-05T03:45:34.042902+00:00"
+}

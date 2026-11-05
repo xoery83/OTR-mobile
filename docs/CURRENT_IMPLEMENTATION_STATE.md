@@ -26,15 +26,16 @@ without rerunning or upgrading Mock evidence. Formal Core Backend/PG port and Na
 integration remain pending under request `AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01`.
 Handoff `docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json` selects4 Auth
 files+docs; Canonical2leaf is Root1 dependency, never whole-branch overwrite or activation.
-Auth source pins are actual main receipts: Canonical `8907fb7b`, Auth4consumer
-`98e1d3da`, Core PG `2f53ffc9`, HTTP `a36bf988`, Guest observer/latest `a857481b`.
-No unchanged suites rerun. The optional app mount now has an exact9-line sourcepatch
-candidate against actuala857 app (pre6cbdfafa/postb6a020b6),6 Mock mount tests/types/lint
-PASS. Portundefined retains priorroute404; no Handler/connection/env write activation.
-Patch only, sharedapp/Startup untouched; parentreview and Root1serialfreshCAS pending.
-Root2 install remains NOT_READY, no runtime/SQL activation authority follows.
-Packet: `docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/`.
-C04freshB preparation and Native's delegated readonlyworkspace leaf remain independent.
+Auth source pins are actual main: Canonical8907, Authconsumer98e1, CorePG2f53,
+HTTPa36 and appoptionalhook/latest `0f43dd17` (postb6a020b6, no Startupinjection).
+The nextcandidate is only2 Startupforward lines, reusing explicit startOptions;
+2temporarytarget Mocktests/types/lint PASS, sharedStartup/index/env untouched.
+Default remainsundefined/closed. Parentreview/Root1freshCAS pending.
+Actual deploymentconstruction awaits one Core/Root2 qualifiedexistingPGconnection +
+explicitcapability ABI request; existingtrip.coreConnection is HTTP, notPG.
+Root2installNOT_READY: no SQL/runtime/OTP/window activation follows.
+Packet: `docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/`.
+C04freshB/Native consumer engineering continues independently.
 
 MC actual next=null/candidates=[]; no new Ready task was claimed or invented.
 

@@ -54,6 +54,19 @@
       "summary": "Exact9line optionalnicknameport apppatch on freshmaina857;6temporary-target Mocktests/typeslintPASS. Undefinedport baseline404/noauth/noHandler preserved. SOURCE_ONLY, sharedapp notwritten, noRuntime/SQL/Hosted/deviceactivation. C04Primaryindependent.",
       "next_action": "Parentreview exactpatch then Root1uniqueWriter freshpreimageCAS/sourceintegration. Root2installNOT_READY; do not inject liveport or openwindow.",
       "evidence_sha256": "a487f62e6b478fbd203526d42522218ced2d902f01476668fe83f090604023fa"
+    },
+    {
+      "event_id": "auth-c03-nickname-startup-explicit-forward-local-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "PROGRESS",
+      "reported_at": "2026-11-05T03:45:34.042902+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "supersedes_event_id": "auth-c03-nickname-optional-apphook-local-20261105-v1",
+      "summary": "Apphook actualmain0f43; new2line Startupexplicitportforward patch local2Mocktests/typeslintPASS. SOURCE_ONLY/defaultundefined, sharedStartupunwritten. NoRuntimewrapper/env/connectionengine/SQL/Hostedactivation. C04Primaryindependent.",
+      "next_action": "Parentreview/Root1freshCAS sourcepatch; resolve singleexistingqualifiedPGconnection+explicitcapabilityABI withCore/Root2, noautoenable ornewwindow.",
+      "evidence_sha256": "3ef3df9aa5f7d1e880cd9e92d1ac34c87ce94395f2da2149a7b71e08617a8635"
     }
   ],
   "parent_review": {

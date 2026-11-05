@@ -2,7 +2,7 @@
   "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "DEFAULT_CLOSED_APP_PATCH_LOCAL_PASS_WAITING_PARENT_REVIEW_ROOT1_FRESH_CAS",
+  "status": "STARTUP_EXPLICIT_TWO_LINE_FORWARD_LOCAL_PASS_WAITING_PARENT_REVIEW_AND_QUALIFIED_CAPABILITY_ABI",
   "evidenceSHA256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
   "sourceHashes": {
     "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
@@ -60,6 +60,25 @@
     "AuthConsumer": "98e1d3daead2b6d6661a5a477ffc5857591f6ddb",
     "CorePG": "2f53ffc9cbd8839791e89d05c6933a9bd35dad59",
     "AuthHTTP": "a36bf98806c5000e732d1f4ae9eba89326b9afdb",
-    "GuestCensusLatestMain": "a857481b446fbad8ec8eff34fea174f3f966de43"
+    "GuestCensusLatestMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+    "AppOptionalHookLatestMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a"
+  },
+  "composition": {
+    "status": "LOCAL_EXACT_TWO_LINE_PATCH_PASS_PARENT_REVIEW_PENDING",
+    "evidence": "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/LOCAL_EVIDENCE.json",
+    "evidenceSHA256": "3ef3df9aa5f7d1e880cd9e92d1ac34c87ce94395f2da2149a7b71e08617a8635",
+    "preimage": {
+      "sourceMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a",
+      "target": "backend/src/serverStartup.ts",
+      "preSHA256": "ef6255a856ab9991dcf56a50be8ed2431bf4c08edb77e0465f1bcbbc7f40baae",
+      "postSHA256": "347e163caa92c899ed674f090a3c6c713aeb85f23e472caad818ad149e2c2023",
+      "patchSHA256": "0ac3090703116bae8429b09072f7e4735d6a3208dcabab7397a7dad55e929e08",
+      "insertedLines": 2,
+      "sharedFileWritten": false
+    },
+    "explicitExistingHook": "startDevBackend startOptions",
+    "remainingUniqueRequest": "AUTH-C03-NICKNAME-QUALIFIED-RUNTIME-CAPABILITY-ABI-20261105-01",
+    "newRuntimeFlagsOrConnections": 0,
+    "next": "Parentreview then Root1exactsourcepatch; Root2/Core suppliesexistingqualifiedconnection/capabilityABI beforeactualdeploymentcomposition. Noautoactivation."
   }
 }
