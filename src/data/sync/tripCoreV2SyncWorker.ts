@@ -1,3 +1,4 @@
+import type { CoreCorrectionSyncOperation } from "./tripInstructionCorrectionLifecycle";
 import {
   CoreInstructionScopeError,
   resolveCoreInstructionParentForSubmit,
@@ -73,12 +74,66 @@ async function corePhase<T>(phase: string, read: () => Promise<T>): Promise<T> {
   }
 }
 
+// Read-only current NEW-submit checks. The lifecycle calls this before claim;
+// the Core-owned final callback repeats it as a negative last guard, not a permit.
+export async function assertCoreInstructionNewSubmit(
+  repository: Repository,
+  transport: CoreSyncTransport,
+  context: AccountRequestContext,
+  command: CoreCommand,
+  getAccountId: () => Promise<string>,
+  enabled: () => boolean,
+) {
+  if (!enabled()) throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+  const capabilities = coreCapabilitiesSchema.parse(
+    await transport.capabilities(context),
+  );
+  await assertAccountRequestContext(context, getAccountId);
+  if (
+    capabilities.activationState !== "ENABLED" ||
+    !capabilities.enabledCommands.includes(command.command) ||
+    !capabilities.enabledAdmissionModes.includes(command.admission.mode)
+  )
+    throw new SyncDependencyError("CORE_CAPABILITY_CLOSED");
+  const accepted = await repository.acceptedSnapshot(context);
+  await assertAccountRequestContext(context, getAccountId);
+  if (
+    !accepted ||
+    accepted.actor.accountId !== context.accountId ||
+    accepted.actor.tripId !== context.tripId
+  )
+    throw new SyncDependencyError("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
+  let scope;
+  try {
+    scope = resolveCoreInstructionParentForSubmit(
+      accepted.graph,
+      accepted.actor,
+      command,
+      new Date().toISOString(),
+    );
+  } catch (error) {
+    if (error instanceof CoreInstructionScopeError)
+      throw new SyncDependencyError(error.code);
+    throw error;
+  }
+  if (
+    scope.family !== "P3" ||
+    !["ARRIVAL", "DEPARTURE"].includes(scope.section) ||
+    accepted.graph.itinerary_events.find((r) => r.id === scope.parentItemId)
+      ?.owner_account_id !== context.accountId
+  )
+    throw new SyncDependencyError("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
+  if (!capabilities.enabledFamilies.includes(scope.family))
+    throw new SyncDependencyError("CORE_FAMILY_CLOSED");
+  if (!enabled()) throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+}
 export function createCoreV2SyncWorker(
   repository: Repository,
   transport: CoreSyncTransport,
   getAccountId: () => Promise<string>,
   hash: ImportHash,
   instructionSubmissionEnabled: () => boolean = () => false,
+  noteCorrectionSubmit?: (operation: CoreCorrectionSyncOperation) => Promise<void>,
 ): SyncWorker {
   return {
     async push(operation) {
@@ -119,6 +174,47 @@ export function createCoreV2SyncWorker(
         transport.receipt(context, operation.id),
       );
       await assertAccountRequestContext(context, getAccountId);
+      if (
+        !result &&
+        command.command === "CORRECT_INSTRUCTION" &&
+        command.target.kind === "INSTRUCTION" &&
+        command.admission.mode === "MANUAL"
+      ) {
+        const claimed = operation as CoreCorrectionSyncOperation;
+        if (
+          !instructionSubmissionEnabled() ||
+          !claimed.coreCorrectionClaim ||
+          !noteCorrectionSubmit
+        )
+          throw new SyncDependencyError("CORE_INSTRUCTION_SYNC_CLOSED");
+        const execution = await corePhase("CORE_CORRECTION_CONSUME", () =>
+          repository.consumeAndSubmitManualInstructionCorrection(
+            context,
+            claimed.coreCorrectionClaim!,
+            {
+              receipt: (ctx, id) => transport.receipt(ctx, id),
+              submit: async (ctx, canonical) => {
+                await assertCoreInstructionNewSubmit(
+                  repository,
+                  transport,
+                  ctx,
+                  canonical,
+                  getAccountId,
+                  instructionSubmissionEnabled,
+                );
+                // The owning port has committed original IN_FLIGHT before this
+                // callback. Only now may a real POST attempt change queue metadata.
+                await noteCorrectionSubmit(claimed);
+                return transport.submit(ctx, canonical);
+              },
+            },
+          ),
+        );
+        if (execution.kind === "RECEIPT_ONLY")
+          throw new SyncDependencyError("CORE_INSTRUCTION_RECEIPT_RECOVERY_PENDING");
+        result = execution.result;
+        await assertAccountRequestContext(context, getAccountId);
+      }
       if (!result && sourceItem && intent.state === "APPLIED")
         throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
       if (!result) {

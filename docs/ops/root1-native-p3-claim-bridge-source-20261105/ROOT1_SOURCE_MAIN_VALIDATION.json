@@ -1,0 +1,45 @@
+{
+  "status": "SOURCE_ONLY_NATIVE_CLAIM_BRIDGE_LOCAL_L2_DEFAULT_OFF",
+  "parentMain": "09bb098614c78436bc758ac64bc54433f957dcef",
+  "candidate": "70fe9f15e6e79dc63c5990bc43956630247119b1",
+  "evidenceHead": "89fb2307621bdd72c855fa5cc272b6e2929adc6d",
+  "manifestSHA256": "534160273c29d21b53657bcefad9fc65509d3993fd822dce269cf481cc48b872",
+  "independentReviewCommit": "041941bde4c34b5d0c04443d8de645021c5cb179",
+  "independentReviewSHA256": "9d2e0d0ec1a23883cf0faeef808689a2945784e53b04301a5f3179f963331dd4",
+  "fiveLeafSHA256": {
+    "src/data/sync/syncOperationRepository.ts": "e784166f3e43cd02915b078539650a2a474a7f78370b6f4140158d9557a70b90",
+    "src/data/sync/tripCoreV2SyncWorker.ts": "bd59fbb4da9a51f82a92c1356ef04701c3463d1f7727ca423e335dc13e349f69",
+    "src/data/sync/tripInstructionCorrectionLifecycle.test.ts": "c2a3055c3a2bdf036129ba7ed2fb7a44ded91c0875af90f610118b916ed8dd1b",
+    "src/data/sync/tripInstructionCorrectionLifecycle.ts": "470f6a2b17e9a4b8c68ffbc71a0290490f397593c0bb2f30bd02e92ae6565314",
+    "src/data/sync/tripNormalCoordinator.ts": "de7c629268cf1e7e8655acfddaaa6310557b84bffe6c2d971834fa0eb1a3d244"
+  },
+  "actualChecks": {
+    "SQLiteLifecycleEngineLostResponseMetadataReceiptOnlyNormalFactory": "6PASS16skip /1.47s",
+    "ordinaryP1ParticipantP3RefreshAndInstructionDefaultOff": "2 suites3PASS54skip /487ms",
+    "fiveRootScopedTypes": "PASS",
+    "fiveRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "eightCoreEngineAccountCanonicalDependencies": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reused": "Native author22 risk/39 ordinary/separate P1Source evidence and independent17risk+2default/P1+1P3 evidence retained, not summed as unique and not full historical34/124 rerun",
+  "boundaries": [
+    "Same actual owning Core supplies exact opaque claim and consume; no caller-created permit or owner-prefix parsing for positive qualification",
+    "Actual minted metadata rechecked by unchanged Core8a, once IN_FLIGHT handoff to existing guarded original transport; no ordinary or recursive fallback",
+    "Durable validated same-operation receipt plus same claim-owner/current row CAS required for terminal settlement; RECEIPT_ONLY/status/null nonterminal, no false COMPLETED",
+    "Generic recovery retains existing account predicate and only conservatively excludes Core-command opaque owner prefix; exact lifecycle handles original CORRECT and does not steal live claims",
+    "Default instruction flags/production call-site activation unchanged/off. This enables only source composition, not NEW CORRECT business activation or Instruction Cloud qualification."
+  ],
+  "preserved": [
+    "Core claim-consume8a exact",
+    "generic SyncEngine",
+    "Auth/Schema",
+    "Form/Import/VN08/Guest/other Native product"
+  ],
+  "notRun": [
+    "Hosted/SQL/Provider/device",
+    "real UNKNOWN replay",
+    "actual network exactly-once",
+    "Instruction Cloud accepted/readback"
+  ],
+  "resources": "Source Writer only; release immediately after remote readback."
+}

@@ -1,3 +1,12 @@
+import type {
+  CoreDatabase,
+  CoreCorrectionClaim,
+} from "../repositories/tripCoreV2Repository";
+import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
+import { validateCoreReceipt } from "@/domain/trip/tripCoreV2Receipt";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import { coreHashValue } from "@/domain/trip/tripCoreV2Read";
+import type { ImportHash } from "@/domain/trip/flightImportReview";
 import type * as SQLite from "expo-sqlite";
 import { createLocalId } from "@/domain/localId";
 import { z } from "zod";
@@ -106,6 +115,8 @@ export function createSyncOperationRepository(
           lease_expires_at = NULL, updated_at = ? WHERE status = 'PROCESSING'
           AND owner_user_id = ?
           AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
+          AND NOT (operation_type='CORE_V2_COMMAND' AND entity_type='TRIP_CORE_V2'
+            AND COALESCE(claim_owner,'') LIKE '["otr-core-correction-claim/%')
           AND operation_type NOT IN (?,?)
           AND (claim_owner IS NULL OR
             (claim_owner <> ? AND NOT (operation_type=? AND substr(claim_owner,1,?)=?))
@@ -766,4 +777,274 @@ export async function readPendingSyncCounts(
      FROM sync_operations WHERE owner_user_id=? AND status IN ('PENDING','RETRYABLE')`,
     accountId,
   );
+}
+
+// Bounded lifecycle for the existing Core CORRECT queue. This validates queue /
+// receipt identity only; Core owns all provenance, eligibility and consume proof.
+export function createCoreCorrectionQueueLifecycle(
+  db: CoreDatabase,
+  getAccountId: () => Promise<string>,
+  hash: ImportHash,
+  now: () => string = () => new Date().toISOString(),
+) {
+  type Row = SyncOperation & {
+    canonicalIntent: string;
+    intentHash: string;
+    intentState: string;
+    baseVector: string;
+    receiptBody: string | null;
+    receiptHash: string | null;
+    lease: string | null;
+    lastAttempt: string | null;
+    failure: string | null;
+    errorCode: string | null;
+    errorMessage: string | null;
+    requestId: string | null;
+    firstFailed: string | null;
+  };
+  const select = `SELECT op.id,op.owner_user_id AS ownerUserId,op.trip_id AS tripId,
+    op.entity_type AS entityType,op.entity_id AS entityId,op.operation_type AS operationType,
+    op.idempotency_key AS idempotencyKey,op.base_version AS baseVersion,op.payload_json AS payloadJson,
+    op.status,op.attempt_count AS attemptCount,op.next_attempt_at AS nextAttemptAt,
+    op.dependency_operation_id AS dependencyOperationId,op.claim_owner AS claimOwner,
+    op.created_at AS createdAt,op.updated_at AS updatedAt,op.lease_expires_at AS lease,
+    op.last_attempt_at AS lastAttempt,op.failure_category AS failure,op.last_error_code AS errorCode,
+    op.last_error_message AS errorMessage,op.last_request_id AS requestId,op.first_failed_at AS firstFailed,
+    i.canonical_intent_text AS canonicalIntent,i.intent_sha256 AS intentHash,i.state AS intentState,
+    i.base_vector AS baseVector,r.body_json AS receiptBody,r.receipt_sha256 AS receiptHash
+    FROM sync_operations op JOIN trip_core_pending_intents i ON i.queue_operation_id=op.id
+    AND i.operation_id=op.id AND i.account_id=op.owner_user_id AND i.trip_id=op.trip_id
+    LEFT JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id AND r.trip_id=i.trip_id
+    AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256 WHERE op.id=?`;
+  const immutable = {
+    id: "id",
+    ownerUserId: "owner_user_id",
+    tripId: "trip_id",
+    entityType: "entity_type",
+    entityId: "entity_id",
+    operationType: "operation_type",
+    idempotencyKey: "idempotency_key",
+    baseVersion: "base_version",
+    payloadJson: "payload_json",
+    createdAt: "created_at",
+  } as const;
+  const mutable = {
+    status: "status",
+    claimOwner: "claim_owner",
+    attemptCount: "attempt_count",
+    nextAttemptAt: "next_attempt_at",
+    dependencyOperationId: "dependency_operation_id",
+    updatedAt: "updated_at",
+    lease: "lease_expires_at",
+    lastAttempt: "last_attempt_at",
+    failure: "failure_category",
+    errorCode: "last_error_code",
+    errorMessage: "last_error_message",
+    requestId: "last_request_id",
+    firstFailed: "first_failed_at",
+  } as const;
+  const identity = { ...immutable, ...mutable };
+  const keys = Object.keys(identity) as (keyof typeof identity)[];
+  const cas = keys.map((k) => `${identity[k]} IS ?`).join(" AND ");
+  async function gated<T>(ctx: AccountRequestContext, work: () => Promise<T>) {
+    return withAccountApplyGate(async () => {
+      await assertAccountRequestContext(ctx, getAccountId);
+      let value!: T;
+      await db.withTransactionAsync(async () => {
+        value = await work();
+        await assertAccountRequestContext(ctx, getAccountId);
+      });
+      return value;
+    });
+  }
+  async function bound(ctx: AccountRequestContext, observed: SyncOperation) {
+    const row = await db.getFirstAsync<Row>(select, observed.id);
+    if (!row) return null;
+    if (
+      ctx.accountId !== row.ownerUserId ||
+      ctx.tripId !== row.tripId ||
+      (Object.keys(immutable) as (keyof typeof immutable)[]).some(
+        (k) => (row[k] ?? null) !== (observed[k] ?? null),
+      )
+    )
+      throw Error("CORE_CORRECTION_QUEUE_BINDING");
+    const command = validateCoreCommand(JSON.parse(row.canonicalIntent));
+    if (
+      command.command !== "CORRECT_INSTRUCTION" ||
+      command.target.kind !== "INSTRUCTION" ||
+      command.admission.mode !== "MANUAL" ||
+      command.operationId !== row.id ||
+      row.idempotencyKey !== row.id ||
+      command.tripId !== ctx.tripId ||
+      command.target.id !== row.entityId ||
+      row.entityType !== "TRIP_CORE_V2" ||
+      row.operationType !== "CORE_V2_COMMAND" ||
+      row.payloadJson !== row.canonicalIntent ||
+      canonicalCoreJson(command as Json) !== row.canonicalIntent ||
+      canonicalCoreJson(command.baseVector as Json) !== row.baseVector ||
+      (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !== row.intentHash
+    )
+      throw Error("CORE_CORRECTION_QUEUE_BINDING");
+    const scope = await db.getFirstAsync<{ revoked: number }>(
+      "SELECT revoked FROM trip_core_scopes WHERE account_id=? AND trip_id=?",
+      ctx.accountId,
+      ctx.tripId,
+    );
+    if (!scope || scope.revoked) return null;
+    return { row, command };
+  }
+  function journalParams(ctx: AccountRequestContext, row: Row) {
+    return [
+      ctx.accountId,
+      ctx.tripId,
+      row.id,
+      row.canonicalIntent,
+      row.intentHash,
+      row.baseVector,
+      row.intentState,
+    ];
+  }
+  const journalCas = `EXISTS(SELECT 1 FROM trip_core_pending_intents i WHERE i.account_id=? AND i.trip_id=?
+    AND i.operation_id=? AND i.queue_operation_id=sync_operations.id AND i.canonical_intent_text=?
+    AND i.intent_sha256=? AND i.base_vector=? AND i.state=?)`;
+  return {
+    async noteSubmit(
+      ctx: AccountRequestContext,
+      observed: SyncOperation,
+      claim: CoreCorrectionClaim,
+    ) {
+      return gated(ctx, async () => {
+        const b = await bound(ctx, observed);
+        if (!b) return false;
+        const { row } = b;
+        if (
+          claim.version !== 1 ||
+          claim.operationId !== row.id ||
+          claim.intentSha256 !== row.intentHash ||
+          row.claimOwner !== claim.claimOwner ||
+          row.status !== "PROCESSING" ||
+          row.lease === null ||
+          !Number.isFinite(Date.parse(row.lease)) ||
+          !Number.isFinite(Date.parse(now())) ||
+          Date.parse(row.lease) <= Date.parse(now()) ||
+          row.intentState !== "IN_FLIGHT" ||
+          row.receiptBody !== null
+        )
+          return false;
+        const update = await db.runAsync(
+          `UPDATE sync_operations SET attempt_count=attempt_count+1,updated_at=? WHERE ${cas} AND ${journalCas}`,
+          now(),
+          ...keys.map((k) => row[k] ?? null),
+          ...journalParams(ctx, row),
+        );
+        return update.changes === 1;
+      });
+    },
+    async settle(
+      ctx: AccountRequestContext,
+      observed: SyncOperation,
+      claim: CoreCorrectionClaim,
+      error?: Error,
+      nextAttemptAt?: string,
+    ) {
+      return gated(ctx, async () => {
+        const b = await bound(ctx, observed);
+        if (!b) return false;
+        const { row, command } = b;
+        if (
+          claim.version !== 1 ||
+          claim.operationId !== row.id ||
+          claim.intentSha256 !== row.intentHash ||
+          row.claimOwner !== claim.claimOwner ||
+          row.status !== "PROCESSING"
+        )
+          return false;
+        let outcome: "APPLIED" | "NO_CHANGE" | "CONFLICT" | "REJECTED" | null = null;
+        if (row.receiptBody !== null) {
+          const receipt = await validateCoreReceipt(JSON.parse(row.receiptBody), hash);
+          if (
+            receipt.actorAccountId !== ctx.accountId ||
+            receipt.tripId !== ctx.tripId ||
+            receipt.operationId !== row.id ||
+            receipt.command !== command.command ||
+            receipt.intentSha256 !== row.intentHash ||
+            receipt.receiptSha256 !== row.receiptHash
+          )
+            throw Error("CORE_CORRECTION_QUEUE_RECEIPT_BINDING");
+          const expected =
+            receipt.outcome === "CONFLICT"
+              ? "CONFLICT"
+              : receipt.outcome === "REJECTED"
+                ? "REVIEW"
+                : "APPLIED";
+          if (row.intentState !== expected)
+            throw Error("CORE_CORRECTION_QUEUE_RECEIPT_STATE");
+          outcome = receipt.outcome;
+        }
+        const details = error ? errorDetails(error) : null;
+        const status =
+          outcome === "APPLIED" || outcome === "NO_CHANGE"
+            ? "COMPLETED"
+            : outcome === "CONFLICT"
+              ? "CONFLICT"
+              : outcome === "REJECTED"
+                ? "FAILED"
+                : "DEPENDENCY_BLOCKED";
+        const code =
+          outcome === "REJECTED"
+            ? "CORE_RECEIPT_REJECTED"
+            : outcome === "CONFLICT"
+              ? "CORE_RECEIPT_CONFLICT"
+              : outcome
+                ? null
+                : (details?.code ?? "CORE_INSTRUCTION_RECEIPT_RECOVERY_PENDING");
+        const update = await db.runAsync(
+          `UPDATE sync_operations SET status=?,next_attempt_at=?,failure_category=?,last_error_code=?,last_error_message=?,
+          last_request_id=?,first_failed_at=COALESCE(first_failed_at,?),claim_owner=NULL,lease_expires_at=NULL,updated_at=? WHERE ${cas} AND ${journalCas}`,
+          status,
+          outcome ? null : (nextAttemptAt ?? null),
+          outcome
+            ? status === "COMPLETED"
+              ? null
+              : status === "CONFLICT"
+                ? "CONFLICT"
+                : "VALIDATION"
+            : (details?.category ?? "DEPENDENCY"),
+          code,
+          outcome
+            ? null
+            : (details?.message ?? "CORE_INSTRUCTION_RECEIPT_RECOVERY_PENDING"),
+          outcome ? null : (details?.requestId ?? row.requestId),
+          outcome && status === "COMPLETED" ? null : now(),
+          now(),
+          ...keys.map((k) => row[k] ?? null),
+          ...journalParams(ctx, row),
+        );
+        return update.changes === 1;
+      });
+    },
+    async recoverExpired(ctx: AccountRequestContext, observed: SyncOperation) {
+      return gated(ctx, async () => {
+        const b = await bound(ctx, observed);
+        if (!b) return false;
+        const { row } = b;
+        if (
+          row.status !== "PROCESSING" ||
+          row.lease === null ||
+          !Number.isFinite(Date.parse(row.lease)) ||
+          !Number.isFinite(Date.parse(now())) ||
+          Date.parse(row.lease) > Date.parse(now())
+        )
+          return false;
+        const update = await db.runAsync(
+          `UPDATE sync_operations SET status='RETRYABLE',next_attempt_at=?,last_error_message='INTERRUPTED',claim_owner=NULL,lease_expires_at=NULL,updated_at=? WHERE ${cas} AND ${journalCas}`,
+          now(),
+          now(),
+          ...keys.map((k) => row[k] ?? null),
+          ...journalParams(ctx, row),
+        );
+        return update.changes === 1;
+      });
+    },
+  };
 }

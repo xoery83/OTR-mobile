@@ -1,3 +1,4 @@
+import { createTripInstructionCorrectionLifecycle } from "./tripInstructionCorrectionLifecycle";
 import { resolveCoreInstructionParentForSubmit } from "@/domain/trip/tripCoreInstructionParent";
 import { createAccountProfileRepository } from "../auth/accountProfileRepository";
 import { coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
@@ -28,6 +29,7 @@ import { createNativeTripMetadataSyncRunner } from "./tripMetadataCoordinator";
 import {
   createCoreV2SyncCoordinator,
   createCoreV2SyncWorker,
+  assertCoreInstructionNewSubmit,
 } from "./tripCoreV2SyncWorker";
 import { createSyncOperationRepository } from "./syncOperationRepository";
 import { createCoreV2Transport } from "../api/tripCoreV2Transport";
@@ -278,8 +280,6 @@ export function createNativeNormalTripSyncRunner(
                   !(await acceptedEditableItem(context, parent.parentItemId, "P3"))
                 )
                   throw Error("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
-                if (command.command === "CORRECT_INSTRUCTION")
-                  throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
                 if (!instructionSubmissionEnabled())
                   throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
               } else if (
@@ -307,19 +307,56 @@ export function createNativeNormalTripSyncRunner(
               return transport.submit(context, command);
             },
           };
+          const claimContext = instructionSubmissionEnabled()
+            ? await core.captureContext(target.tripId)
+            : null;
+          const selected = claimContext
+            ? (await core.pending(claimContext, target.operationId)).find(
+                (row) => row.command.operationId === target.operationId,
+              )?.command
+            : undefined;
+          const baseQueue = createSyncOperationRepository(
+            database,
+            requireActiveUserId,
+            undefined,
+            target,
+          );
+          const correction =
+            claimContext &&
+            instructionSubmissionEnabled() &&
+            selected?.command === "CORRECT_INSTRUCTION" &&
+            selected.target.kind === "INSTRUCTION" &&
+            selected.admission.mode === "MANUAL"
+              ? createTripInstructionCorrectionLifecycle({
+                  database,
+                  core,
+                  queue: baseQueue,
+                  transport: guardedTransport,
+                  account: requireActiveUserId,
+                  hash: tripCoreSha256Hex,
+                  operationId: target.operationId,
+                  tripId: target.tripId,
+                  context: claimContext,
+                  preflight: () =>
+                    assertCoreInstructionNewSubmit(
+                      core,
+                      guardedTransport,
+                      claimContext,
+                      selected,
+                      requireActiveUserId,
+                      instructionSubmissionEnabled,
+                    ),
+                })
+              : null;
           const result = await createCoreV2SyncCoordinator(
-            createSyncOperationRepository(
-              database,
-              requireActiveUserId,
-              undefined,
-              target,
-            ),
+            correction?.queue ?? baseQueue,
             createCoreV2SyncWorker(
               core,
               guardedTransport,
               requireActiveUserId,
               tripCoreSha256Hex,
               instructionSubmissionEnabled,
+              correction?.noteSubmit,
             ),
             core,
             target.tripId,

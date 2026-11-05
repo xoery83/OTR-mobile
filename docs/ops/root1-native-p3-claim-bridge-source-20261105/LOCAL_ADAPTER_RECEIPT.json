@@ -1,0 +1,88 @@
+{
+  "status": "NATIVE_EXACT_CORRECT_LIFECYCLE_LOCAL_L2_PASS / INDEPENDENT_REVIEW_PENDING / DEFAULT_OFF / NO_CLOUD",
+  "baseMain": "8a776e0e824bb4b51737eadb455dad660459fa64",
+  "coreInterface": "docs/ops/root1-core-p3-claim-consume-source-20261105/INTERFACE_AND_NATIVE_REQUIREMENTS.md and actual ROOT1_SOURCE_MAIN_VALIDATION.json at8a; Core public claim/consume/types used unchanged",
+  "owningFiles": [
+    {
+      "path": "src/data/sync/syncOperationRepository.ts",
+      "sha256": "e784166f3e43cd02915b078539650a2a474a7f78370b6f4140158d9557a70b90",
+      "baseBlob": "b396521a62ecc66cded8679e18553516cd0a8fb7"
+    },
+    {
+      "path": "src/data/sync/tripCoreV2SyncWorker.ts",
+      "sha256": "bd59fbb4da9a51f82a92c1356ef04701c3463d1f7727ca423e335dc13e349f69",
+      "baseBlob": "b99df0a089b9b6617f9dafbb04629d15e32b6ddc"
+    },
+    {
+      "path": "src/data/sync/tripNormalCoordinator.ts",
+      "sha256": "de7c629268cf1e7e8655acfddaaa6310557b84bffe6c2d971834fa0eb1a3d244",
+      "baseBlob": "6fb74b88780fa1085092ee14f98effe380ec8db1"
+    },
+    {
+      "path": "src/data/sync/tripInstructionCorrectionLifecycle.ts",
+      "sha256": "470f6a2b17e9a4b8c68ffbc71a0290490f397593c0bb2f30bd02e92ae6565314",
+      "baseBlob": "ABSENT"
+    },
+    {
+      "path": "src/data/sync/tripInstructionCorrectionLifecycle.test.ts",
+      "sha256": "c2a3055c3a2bdf036129ba7ed2fb7a44ded91c0875af90f610118b916ed8dd1b",
+      "baseBlob": "ABSENT"
+    }
+  ],
+  "firstActualRed": {
+    "log": "SETTLEMENT_RED.log",
+    "sha256": "1cb40698cbb5b3f889d565b8feee4f89aa3e50fcda948d38dcbbf5122c31115e",
+    "fact": "Actual SQLite old id-only markCompleted overwrote a newer claim owner. Existing generic method remains unchanged; exact correction now uses claim-bound CAS instead."
+  },
+  "actualGolden": "Existing original Engine claimOperation -> Core atomic claim -> same-operation actual CoreCorrectionClaim carrier -> existing worker receipt-first -> Core one-shot consume -> original guarded transport once -> validated durable applyReceipt -> same-account/original-intent/actual-owner Queue settlement CAS -> existing accepted collection refresh. Same actual Core factory; no second Engine/Queue/permit ledger.",
+  "normalEntryEvidence": "One test injects only Auth/database/transport and normal wake target; actual Native normal factory, real Core owning instance, existing Queue/Engine, guarded submit and accepted refresh execute against real SQLite and canonical in-memory command engine. Normal selector authority is unchanged/default false.",
+  "lifecycle": [
+    "New-submit read-only capability/family/Actor checks before claim; final callback repeats negative guards after consume",
+    "Actual POST-attempt metadata changes only after Core committed original IN_FLIGHT and live claim CAS; receipt GET never increments POST count",
+    "Core-returned opaque claim carried on same operation; no path/prefix/boolean grants authority or reconstructs Core private provenance",
+    "Queue settle CAS binds current Account/Trip, original operation/idempotency/entity/payload/base/journal digest, actual claim owner and full current metadata; terminal only durable validated original receipt with expected journal outcome",
+    "APPLIED/NO_CHANGE -> existing APPLIED/completion, CONFLICT -> CONFLICT, REJECTED -> REVIEW/failed queue. No receipt/error-free return cannot mean Synced",
+    "RECEIPT_ONLY/null stays dependency/recovery nonterminal, no ordinary submit fallback or identity replacement; failure retains original IN_FLIGHT",
+    "Scoped expired-claim recovery preserves original attempt/receipt/intent; live opaque Core claim not stolen. Generic recovery only conservatively excludes Core prefix; prefix never authorizes",
+    "Account generation change retains Engine skip-settle. Adapter uses original AccountRequestContext; old factory/claim remains receipt-only after cold reopen."
+  ],
+  "validation": {
+    "newRiskSuite": "tripInstructionCorrectionLifecycle.test.ts:22 PASS /2.73s",
+    "newRiskLog": "ADAPTER_GREEN.log",
+    "newRiskLogSha256": "e6fb7d62b308d95cad399e09b8d0a4c1a57e9ff90dd10904a9b6d253434832d3",
+    "coverage": [
+      "actual Engine and actual normal factory claim-consume-submit-receipt-settle Golden",
+      "lost response, concurrent wakes, receipt-null, status-only/error, genuine formal conflict/rejection",
+      "real SQLite close/reopen, live vs expired claims, generation switch, Trip revoke",
+      "postclaim request metadata tamper, changed owner before POST, lease expiry after consume",
+      "wrong owner/account/trip/digest/original payload and wrong-operation receipt; error-free settle without receipt",
+      "ordinary ITEM owner-null recovery unchanged and generic recovery does not steal opaque Core claim",
+      "NO_CHANGE is a canonical schema/hash mapping fixture, not a real Hosted or canonical-CORRECT no-change execution claim"
+    ],
+    "ordinaryRegression": "3 affected suites39 PASS: syncOperationRepository + normal Coordinator P3/P4/P6 and manual P2; plus 1 scoped existing manual P1 participant/target selector PASS. Not a new P1 Cloud rerun.",
+    "reviewedSourceCompatibility": "1 scoped Reviewed Source worker PASS; no Source/Provider call",
+    "sourceLog": "SOURCE_COMPATIBILITY_GREEN.log",
+    "sourceLogSha256": "89d33127799a0d3bf5c5570cdfb4b7119c64d9a4a5db0300d766f356760ff800",
+    "scopedTypes": "PASS changed5 roots and dependencies",
+    "scopedLint": "PASS 0 errors/warnings",
+    "diffCheck": "PASS",
+    "historicalEvidenceReused": "Core independent34 and prior Native124 retained; not rerun as new evidence",
+    "p1CompatibilityLog": "P1_COMPATIBILITY_GREEN.log",
+    "p1CompatibilityLogSha256": "574bce07b3168f619ef986811752273e85244f0a788c88872d2998f103ffadf8"
+  },
+  "notChanged": [
+    "Core repository/public contract/private origin proof",
+    "Generic SyncEngine",
+    "SQLite schema/migration registry",
+    "UI/P1-P6 Form/Reader authority",
+    "Auth Session/Guest/Source/Provider/Backend/Hosted/default flags",
+    "original actual UNKNOWN operations"
+  ],
+  "remaining": [
+    "Independent security review and Source integration pending",
+    "No Hosted business authority/dispatch activation, Provider/device/Cloud verification",
+    "Conservative claim-before-consume interruption remains original-receipt-only; never infer unsent/retry permission from count0 or lease age",
+    "No Beta/Cloud/physical-cold PASS claim from SQLite tests"
+  ],
+  "next": "Parent schedules independent review of fixed candidate, then Root1 exact source integration if review clears. Instruction App flags remain false; no automatic Cloud activation."
+}

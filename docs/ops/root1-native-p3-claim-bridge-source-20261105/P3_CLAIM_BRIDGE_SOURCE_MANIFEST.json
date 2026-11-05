@@ -1,0 +1,37 @@
+{
+  "base": "8a776e0e824bb4b51737eadb455dad660459fa64",
+  "candidate": "70fe9f15e6e79dc63c5990bc43956630247119b1",
+  "evidenceHead": "89fb2307621bdd72c855fa5cc272b6e2929adc6d",
+  "sourceLeaves": [
+    {
+      "path": "src/data/sync/syncOperationRepository.ts",
+      "baseBlob": "b396521a62ecc66cded8679e18553516cd0a8fb7",
+      "candidateBlob": "f2d1f825a7b503e846f3c5cae209c5ab4e79512e",
+      "candidateSha256": "e784166f3e43cd02915b078539650a2a474a7f78370b6f4140158d9557a70b90"
+    },
+    {
+      "path": "src/data/sync/tripCoreV2SyncWorker.ts",
+      "baseBlob": "b99df0a089b9b6617f9dafbb04629d15e32b6ddc",
+      "candidateBlob": "46c2182793af729d8fee33106a1b4ff71b3c6039",
+      "candidateSha256": "bd59fbb4da9a51f82a92c1356ef04701c3463d1f7727ca423e335dc13e349f69"
+    },
+    {
+      "path": "src/data/sync/tripInstructionCorrectionLifecycle.test.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "e7395c6fd96535aeefa0920088d2dbe8d283bced",
+      "candidateSha256": "c2a3055c3a2bdf036129ba7ed2fb7a44ded91c0875af90f610118b916ed8dd1b"
+    },
+    {
+      "path": "src/data/sync/tripInstructionCorrectionLifecycle.ts",
+      "baseBlob": "ABSENT",
+      "candidateBlob": "d2cb3d005f0a0deceeecc9e39f4a68e411cced44",
+      "candidateSha256": "470f6a2b17e9a4b8c68ffbc71a0290490f397593c0bb2f30bd02e92ae6565314"
+    },
+    {
+      "path": "src/data/sync/tripNormalCoordinator.ts",
+      "baseBlob": "6fb74b88780fa1085092ee14f98effe380ec8db1",
+      "candidateBlob": "12d350d343aa5fe1a9cdb2e0d4be22530810dfe2",
+      "candidateSha256": "de7c629268cf1e7e8655acfddaaa6310557b84bffe6c2d971834fa0eb1a3d244"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "status": "NO_BLOCKER_LOCAL_L2_DEFAULT_OFF_ONLY",
+  "candidate": "70fe9f15e6e79dc63c5990bc43956630247119b1",
+  "evidenceHead": "89fb2307621bdd72c855fa5cc272b6e2929adc6d",
+  "base": "8a776e0e824bb4b51737eadb455dad660459fa64",
+  "sourceManifestSHA256": "534160273c29d21b53657bcefad9fc65509d3993fd822dce269cf481cc48b872",
+  "fixedReviewWorktree": "ownclaim-bridge-source detached70fe; noauthorworkingtree",
+  "findings": [],
+  "sixAssertions": [
+    {
+      "assertion": "Actualsealedidentity",
+      "result": "PASS_LOCAL",
+      "evidence": "ExactMANUAL CORRECT/INSTRUCTION op/idempotency/Trip/entry matcher;ctxAccount/genasserts;normalfactorysameCoreinstance suppliesatomicclaim andworkerconsume;opaqueCoreclaim onoriginaloperation only,noownerparsinggrant."
+    },
+    {
+      "assertion": "Originalpostimage/precommand/currentincarnation",
+      "result": "PASS_LOCAL",
+      "evidence": "UnmodifiedCore8a revalidatesoriginalintent/acceptedactor/chain/privateincarnation/fullqueuepostimage. Adapterpreflightreadonly beforeclaim;finalnegativeguardafterCoreconsume,notUIhint/pendingreplay/rebase. NewsubmitmetadataonlyafterIN_FLIGHT."
+    },
+    {
+      "assertion": "Receiptfirst/onePOST",
+      "result": "PASS_LOCAL",
+      "evidence": "Recover/claim/worker/Coreconsume queryoriginalreceipt. Presence/status/errornotnullfallback;Coreoncehandoff only path toguardedtransport;noteSubmitCAS incrementactualattemptafterIN_FLIGHT;lostresponse/cold/concurrency testsnosecondPOST."
+    },
+    {
+      "assertion": "DurablereceiptCASsettlement",
+      "result": "PASS_LOCAL",
+      "evidence": "Exactqueueimmutable+journaldigest/base+actualclaimowner/fullcurrentmetadataCAS;validatedoriginalreceiptactor/trip/op/command/hash+intentstate required forterminalmapping. RECEIPT_ONLY/null throwsdependency/nonterminal;IN_FLIGHT retained,noop returnnotSynced."
+    },
+    {
+      "assertion": "Recovery/staleowners",
+      "result": "PASS_LOCAL",
+      "evidence": "Genericrecover conservativelyexcludesopaqueCoreprefix onlynegative;exactrecoverleasedcurrentrowCAS,doesnotstealliveclaim. Wrong/staleowner/Account/gen/payload/revokedTrip cannotcompleteoroverwrite. Enginegenerationchange skipsettlementretained."
+    },
+    {
+      "assertion": "Normalfactory/defaultoff/ordinarypaths",
+      "result": "PASS_LOCAL",
+      "evidence": "ActualNormalTripfactory mountsclaimOperation/settleOperation/recoverInterrupted onexactCORRECT onlyusingexistingEngine;ordinaryITEM/Source staybasequeuepath. Existinginstructionflagdefaultsfalse, noAppcallsiteflagschanged. Normalfactorytruefixture isnotCloudqualification."
+    }
+  ],
+  "independentValidation": {
+    "riskTests": "1suite17PASS5skip;2.32s;2026-11-05 14:51:58 local",
+    "ordinaryDefaultTests": "2suites2PASS55skip;448ms;14:54:47 local P1participant andInstructiondefaultoff",
+    "ordinaryP3": "1suite1PASS19skip;317ms;14:55:07 local originalnormalP3worker/refresh",
+    "lint": "FivechangedrootsPASS",
+    "scopedTypes": "Fivechangedroots+dependenciesPASS extendingcanonicaltsconfig fromownroot; first/tmpconfigresolutionfailedTS2688 thenfixedharnessroot,notproductdefect; nofulltypecheckclaim",
+    "notCounted": "Author22+39+1+1 referencedonly; Corehistoricaltests notrerun"
+  },
+  "integration": "Fiveleafexactmanifestprovided; Corepublicrepo/SyncEngine/Auth/Schema unchanged; sourceintegrationpending",
+  "limits": [
+    "LOCAL SQLite/deterministiccanonicalserver/mocktransport only;notHostedreceipt/networkexactlyonce/Device/Cloud/OwnerPASS",
+    "DefaultInstructionflagsremainoff; noauthority/deploymentgrant",
+    "OriginalrealUNKNOWNopsuntouched; noautomatedreplay/newID",
+    "Conservativeclaiminterruptionmayremainreceipt-only;lease/count0notunsentproof",
+    "NoSource/Provider/newQueue/ledger/permitpersistencesystem; no metadata/product/device/Host edits"
+  ]
+}
