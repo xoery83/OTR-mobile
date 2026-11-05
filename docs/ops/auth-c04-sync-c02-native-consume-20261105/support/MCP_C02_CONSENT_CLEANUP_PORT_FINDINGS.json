@@ -1,0 +1,65 @@
+{
+  "requestId": "MCP-C02-BROWSER-RESERVATION-PORT-20261105-001",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "SOURCE_LOCATED_REUSABLE_CLOSE_DRAIN_EXISTS_REFRESH_PROOF_AND_TRUSTED_RESULT_PORT_MISSING",
+  "codeChanged": false,
+  "refs": [
+    {
+      "path": "src/data/auth/mcpOAuthConsentRepository.ts",
+      "sha256": "be9a9c847c2c8c7b2c84f5b13cae1af42b52b82f945e6484c0e62828b3ccf6f9"
+    },
+    {
+      "path": "src/data/auth/mcpOAuthConsentRepository.test.ts",
+      "sha256": "9f3984cd07b09bc086bc94a807cfeaa39e9ad6b639aa95560d63c5d970697c9d"
+    },
+    {
+      "path": "src/features/auth/McpOAuthConsent.tsx",
+      "sha256": "d1a6aafb7524945ebeda1fc31b929b8ccbebdc58462a8e362bd14c2ee956bc98"
+    },
+    {
+      "path": "browser/auth-consent/main.tsx",
+      "sha256": "85929e255b0c829e575ba665f16750fe653901fbe7229d778684d042a7ae38ea"
+    },
+    {
+      "path": "backend/src/mcpConsentPage.ts",
+      "sha256": "3aa45a14d38ca18c5beceed7c3d04b5d3467599ec41818ec57c40304419c7ad8"
+    },
+    {
+      "path": "backend/src/mcpQaRuntime.ts",
+      "sha256": "bb6870521ec510cc7493fd7a0438553172f3c48fff228afef97d1f230c235a8b"
+    }
+  ],
+  "actualPageChain": "browser/auth-consent/main.tsx creates createMcpOAuthConsentRepository(config,authorization_id), renders McpOAuthConsent. backend mcpQaRuntime composes createMcpConsentPage; page serves only GET /oauth/consent, /config, /app.js.",
+  "reusableFunctions": {
+    "createMcpOAuthConsentRepository": "Browser-only Supabase SDK with persistSession=false/autoRefreshToken=false/detectSessionInUrl=false; credentials remain memory-only. requestCode uses normal exactqaEmail shouldCreateUser:false; verifyCode type=email8digits; details normalgetUser nonanonymous/configaccount/client/authorization/redirect/scope validation.",
+    "run/current": "busy guard, activeTask, closed/expiresAt checks; stops queued work after close. Customfetch bounds Auth calls and allows in-flight verify/token response to settle into SDK for cleanup.",
+    "close": "Sets closed BEFORE waiting activeTask; waits lateverify then client.auth.signOut({scope:\"local\"}); closes once through closeTask; throws UNAVAILABLE on failure, finally aborts lifetime. Promise<void> only.",
+    "McpOAuthConsent.finish": "Awaits repository.close before redirect. Unmount invokes close but catches/ignores rejection; neither is a refreshrevocation proof.",
+    "existingTests": "Repository tests cover no queuedOTP afterclose, lateverify/sessioninstallation then local signOut, actualSDK mockverify→scope=local logout. Tests not rerun; none asserts refresh rejection."
+  },
+  "exactMissingDelta": {
+    "browserAuthRepository": "No getSession capture/refreshSession rejection check, no same-browser cleanup receipt, no wire-send attempt/outcome proof, no originalrun/reservation binding/exported nonsecret terminal observer. Current closed transport denies nonlogout calls, including token refresh, so simply adding refreshSession after current close would be blocked and must NOT be misreported as server rejection. lifetime abort on close likewise is not revocation.",
+    "pageOrBackend": "Current page only3GET resources and normal repository construction; no terminal-result sink/readback route, browserregistration binding or authenticated observation bridge to Host lease owner. No normal handler for host to independently verify browsercleanup without UI/caller self-claim.",
+    "distinction": "Local close/drain is already owned by actual page repository, so MCP need not invent it from CUA. However local signOut success alone is weaker than sameSession refresh rejection and host-verifiable evidence."
+  },
+  "minimumNormalPortContract": {
+    "AuthWriter": "Auth unique Writer for src/data/auth/mcpOAuthConsentRepository.ts and its direct tests. UI integration src/features/auth/McpOAuthConsent.tsx is Auth component; any changed UI must follow UIFoundation.",
+    "sharedWriter": "Existing MCP/base-page/runtime Writer owns browser/auth-consent/main.tsx + shared backend mcpConsentPage/mcpQaRuntime integration. Auth supplies precise port, does not overwrite shared files. Root2 only needed for later qualified deployment/config, not local development.",
+    "browserLocalProposal": "Extend the EXISTING repository close/drain internally, not another Session authority. Before erasing SDK memory, bind trusted getUser exactAccount and the same owned browserSession internally; close fence/drain as today; normal scope=local signOut then actual normal refresh rejection for that SAME refresh session, all credentials remaining browser closure memory. Only real invalid/revoked server response qualifies; network/timeout/CLOSED/abort/ordinary401 unrelatedSession are UNKNOWN. If refresh succeeds, never silently reportclean or retry; retain unresolved state and original ownership for approved recovery.",
+    "requiredTransportBoundary": "Provide a narrow internal cleanup path for the one captured ownsession refresh check after closed without reopening OTP/verify/OAuth/arbitrary requests; failclosed if response cannot be observed. Do not generalize logout exception to arbitrary token traffic.",
+    "nonsecretResultProposal": "Original run/reservation/authorization binding + subjectAccount + sender fence/drain outcome + actual localLogout outcome + actual sameSession refreshRejection outcome; no session/token/OTP or sensitive fingerprints. Result must originate from actual code observations, not input to complete(status).",
+    "trustedDeliveryGap": "Host cannot authenticate a result from ordinary CUA text or mutable callerJSON. Need concrete existing trusted observation/publication mechanism, or a minimal owning page/runtime port whose binding/provenance the lease owner can validate. No such mechanism found here; do not add generic unsigned proofPOST and call it trusted. Its actual contract must be settled with shared Writer before implementing any lockrelease consumer.",
+    "noNewAuthority": "This is a proposed missing port contract, not approval for new scope/window/refresh/Host route or Live execution. No Admin/globalrevoke/SQL, no browsercredentials transferred to Host, no counters refunded."
+  },
+  "ready": "NOT_LIVE_READY; source-level route/owner identified;47a3 conservative lock retention remains. No safe completeBrowserChallenge from current exposed ports.",
+  "actions": {
+    "network": 0,
+    "security": 0,
+    "credentialSessionReads": 0,
+    "tests": 0,
+    "code": 0,
+    "newGate": 0,
+    "crossLaneMessages": 0
+  },
+  "storage": "WORKSPACE_ONLY_UNCOMMITTED"
+}

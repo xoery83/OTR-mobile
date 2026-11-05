@@ -1,0 +1,94 @@
+{
+  "requestId": "MCP-C02-BROWSER-RESERVATION-PORT-20261105-001",
+  "candidate": "47a3d2ee",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "NOT_LIVE_READY_NO_TRUSTED_BROWSER_TERMINATION_PORT",
+  "codeDelta": false,
+  "testsRerun": 0,
+  "refs": [
+    {
+      "path": "scripts/auth/registered-qa-host-session.ts",
+      "sha256": "0d91a18fab1416179daca912761034121be0556dbc81de61e79f52c450112a3b"
+    },
+    {
+      "path": "scripts/auth/otp-test-cleanup.ts",
+      "sha256": "8d12dbc76eb131aa78f62475b86be5b02ed0e081913e37f41b943c09280085cc"
+    },
+    {
+      "path": "scripts/auth/resend-inbound-otp-native-relogin.ts",
+      "sha256": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce"
+    },
+    {
+      "path": "src/data/auth/devSupabaseAuth.ts",
+      "sha256": "01f56a4adb0e6d14be7e6a378dd9d4420bdc2667e844953eae38eac34890cce3"
+    }
+  ],
+  "existingAuthority": {
+    "host": "runRegisteredQaHostSession proves exact own Account via normal getUser and binds only that Host token into revoker; normal own local logout plus refresh rejection produces Host cleanup proof. This cannot revoke or prove cleanup of independent browser Session.",
+    "browser": "Reservation metadata and Receiving lease track recipient/requestedAt/one-time retrieval only. No browser Session handle, server-backed terminal receipt, wire send/verify outcome observer or fenced cancellation capability is exposed to Host wrapper.",
+    "currentRelease": "Before browser durable-write boundary: original Hostcleanup/noHostRequest conditions may release ownlock. At or after browserwrite boundary: lock retained irrespective of Hostclean. No complete/recovery/unlock method exists. Parent reviewed this conservative local candidate only."
+  },
+  "stateMatrix": [
+    {
+      "browserState": "OTP_VERIFIED",
+      "sufficientExistingEvidence": false,
+      "meaning": "Even true browser login/getUser proves Session creation, not Session invalidation or completion. SameAccount is not sameSession. Host normal cleanup applies only its own Session.",
+      "currentAction": "Keep reservation/active.lock; no automatic terminal release."
+    },
+    {
+      "browserState": "NOT_SENT_AFTER_RESERVATION",
+      "sufficientExistingEvidence": false,
+      "meaning": "Caller status/FINISH/file boolean/absence of HTTP log is not proof no pending UI action can send. Receiver reservation and ACK do not provide a revocable send capability or trusted transport no-attempt fence.",
+      "currentAction": "Keep lock. Requires actual owning sender cancellation/quiescence proof bound to this reservation before any no-send terminal release; no such port now."
+    },
+    {
+      "browserState": "SEND_UNKNOWN",
+      "sufficientExistingEvidence": false,
+      "meaning": "Could have sent, or verified separately; no qualified request outcome or browser Session proof. Timeout/OTPexpiry/Receiving status does not prove cancellation or cleanup.",
+      "currentAction": "Keep lock and original identities; no automatic resend/refund/newlease. Owning observer must resolve actual attempt without recreating it; unresolved stays retained."
+    },
+    {
+      "browserState": "BROWSER_LOGOUT_REPORTED",
+      "sufficientExistingEvidence": false,
+      "meaning": "UI/text/local storage clear/FINISH or HTTP404 does not prove own browser refresh revoked. Host token cleanup or sameAccount logout of another Session is insufficient.",
+      "currentAction": "Keep lock. Need trusted normal own-browser Session-bound logout result plus sameSession refresh rejection and sender quiescence; no token transfer or admin/global revoke."
+    },
+    {
+      "browserState": "REJECTED_BEFORE_DURABLE_WRITE",
+      "sufficientExistingEvidence": "Existing in-process exact validation/cooldown failure before beforeWrite marker",
+      "meaning": "No browser ACK from helper; wrapper did not mark browserReservationUnresolved. This is not a successful admission or permission to send. Original Host cleanup semantics unchanged.",
+      "currentAction": "Original Host cleanup/noHostRequest rule only; no new complete needed."
+    }
+  ],
+  "minimumMissingOwningPort": {
+    "owner": "MCP browser execution/session owner; Auth only consumes a trustworthy confined result once real capability exists",
+    "boundary": "An actual code-owned sender/session lifecycle observer, bound to original runId/reservation metadata and an opaque own-browser session identity. Must stop further send/verify/callback work and drain/fence in-flight actions before a terminal result. No generic caller-provided complete(status) or self-attested evidence.",
+    "terminalNotSent": "Observer proves no attempted send/verify and irrevocably cancels outstanding action generation for this reservation, with no pending capability able to submit later. Must be machine-observed/enforced, not a model assertion.",
+    "terminalSessionClean": "Observer proves exact same normal browser subject+session, uses that browser own in-memory credential for normal scope=local logout and actual sameSession refresh rejection, then quiesces sender. Only nonsecret verified result crosses owner boundary; raw Session/token/OTP never goes to Host.",
+    "unknown": "Failed/ambiguous send, verify, logout or refresh proof is nonterminal; retain lock/original reservation. Do not invent a retry budget or admin recovery.",
+    "consumptionConstraint": "Existing helpers contain no verifiable producer/authentication/fencing mechanism for such browser result. Therefore no safe completeBrowserChallenge implementation can be added from currently supplied ports alone. Parent/MCP must identify concrete owning capability before Auth designs minimal release consumer. This is a capability gap, not a new Gate request."
+  },
+  "explicitlyInsufficient": [
+    "Model FINISH or timeout",
+    "UI login/logout label",
+    "Caller editable file/JSON asserted status",
+    "Receiving delivery or absence/OTP expiration",
+    "Empty404 or cleared browser storage",
+    "Host Session logout or Account-level inference",
+    "Lock deletion/reentry/newwrapper",
+    "Administrator/global logout"
+  ],
+  "actions": {
+    "newCode": 0,
+    "tests": 0,
+    "network": 0,
+    "security": 0,
+    "credentialOrSessionReads": 0,
+    "OTP": 0,
+    "device": 0,
+    "newWindowOrGate": 0,
+    "crossLaneMessages": 0
+  },
+  "next": "Return matrix to parent; preserve47a3 conservative candidate and retainedlock semantics. No completion/unlock code fabricated.",
+  "storage": "WORKSPACE_ONLY_UNCOMMITTED"
+}

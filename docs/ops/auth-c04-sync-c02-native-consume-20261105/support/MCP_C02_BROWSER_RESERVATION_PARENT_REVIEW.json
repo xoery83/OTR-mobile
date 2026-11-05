@@ -1,0 +1,25 @@
+{
+  "requestId": "MCP-C02-BROWSER-RESERVATION-PORT-20261105-001",
+  "reviewer": "/root parent",
+  "candidate": "47a3d2ee",
+  "helperPath": "scripts/auth/registered-qa-host-session.ts",
+  "helperSHA256": "0d91a18fab1416179daca912761034121be0556dbc81de61e79f52c450112a3b",
+  "verdict": "NO_BLOCKER_FOR_LOCAL_CONSUMER_ADAPTER_ONLY",
+  "liveReadiness": "NOT_LIVE_READY",
+  "reviewScope": "Parent independently read final helper/test diff, guards/cleanup and support evidence. No tests rerun for this review record.",
+  "remainingGap": "MCP browser termination/UNKNOWN lifecycle contract; no automatic clearing of retained lock. No execution authority follows from review.",
+  "credentialProvenance": {
+    "READINESS": "Historical metadata success and exact source locator recorded; does not explicitly identify env versus Keychain for each execution.",
+    "run5fee": "credentialReads1 recorded, no actual credential source field.",
+    "currentActualSource": "NOT_RECORDED_NOT_QUERIED",
+    "limit": "CUA default login.keychain-db and reported exactselector exit44 do not establish alternate selector or provenance. No environment/Keychain/network read performed."
+  },
+  "actionsThisRecord": {
+    "tests": 0,
+    "environmentReads": 0,
+    "security": 0,
+    "network": 0,
+    "commitEscalation": 0
+  },
+  "storage": "WORKSPACE_ONLY_UNCOMMITTED"
+}

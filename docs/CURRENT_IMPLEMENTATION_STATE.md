@@ -2,20 +2,28 @@
 
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 
-**IN_PROGRESS — Owner restart5 November; AUTH-C04 remains Primary.**
-One fixed child `/root/auth_distinct_p1_e2e_20261105` completed local consumption
-plan `AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01`, with no Auth code delta or live
-activity. Original discovery/Reader/Repository, e315/32722 and F02 are reused.
-Current unique gap: Native must supply lawful B or proven-empty QA context and
-fixed complete build/device/current normal B discovery/pull/cold-read qualification.
-Planned14750/visionemptycurrent is Guest-only, not a B target; Guest P3 is preserved
-and unsupportedAdoption remains blocked. Empty14674 My Trips proves no DB emptiness.
+**IN_PROGRESS — current checkpoint, 5 November.**
+Native14752 B consumer run early-closed at first launch (`NSPOSIX3`, no handle,
+`LAUNCH_UNKNOWN`); principal/empty context not proved. OTP/getUser/bootstrap/Reader
+and key reads were0; own Session/C0 claim/daemon released. Native unique Writer's
+startup repair is STARTED. This is separate from14755 Keychain failure; no reset or
+new execution window follows. Receipt SHA `b6cdd2e7…8afc4c` is in the consumer cursor.
 
+C03 same-Account AKA binding/recovery narrow check is complete: **NO_NEW_DELTA**;
+existing DTO/Repository/account fences/recovery evidence reused, no tests rerun.
+Reconciliation `fc8776e8…e1361`:
+`docs/ops/auth-c03-20261104/interface-packet/AKA_BINDING_SOURCE_RECONCILIATION_20261105.json`.
+Root1 request `AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01` awaits the formal
+self-Person Patch/Clear/Revision/Receipt port. Auth owns subsequent DTO/Adapter;
+no ordinary Backend work is outsourced. Existing2394 packet explicitly records this gap.
+MC actual next=null/candidates=[]; no new Ready task was claimed or invented.
+
+MCP support47a3d2ee/fad82f42 is source-only reviewed, NOT_INTEGRATED/NOT_LIVE_READY;
+main/UI/credible cross-Host completion bridge remain absent. This does not replace C04.
 Plan/cursor: `docs/ops/auth-c04-sync-c02-native-consume-20261105/`.
-Parent request `AUTH-C04-NATIVE-B-READ-COLD-QUALIFICATION-20261105-01` is pending.
-Auth child is WAITING for that specific handoff, not running a background loop.
-The prior Host41e8 authority is consumed/closed; no current Token can be borrowed.
-No write/OTP/device authority follows from this local plan. Oldf5e/4028 stay UNKNOWN.
+Host41e8 authority remains consumed/closed; ATTEMPT retained. No borrowed Session,
+new window/OTP/write/device or protected Profile install authority follows here.
+Guest data are preserved; oldf5e/4028 remain UNKNOWN and frozen.
 
 ## Latest actual Golden Slice
 
@@ -34,7 +42,8 @@ NOT_SENT preparation label. ATTEMPT.json retained permanently; no replay/new IDs
 Evidence/cursor: `docs/ops/auth-c04-distinct-p1-e2e-20261105/`.
 No private fixture existed, so private isolation is NOT_PASS. No Native/device,
 Owner UX or Member Revoke acceptance. Old f5e/4028 remain UNKNOWN and untouched.
-INTENTIONAL_STOP after this one approved task; no automatic next Slice.
+Historical Host case intentionally stopped after its one approved execution; that authority
+is closed. Current Lane work continues only through separately qualified legal slices.
 
 ### Prior qualified membership read baseline
 

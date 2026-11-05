@@ -2,7 +2,7 @@
   "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "WAITING_NATIVE_ACTUAL_EXECUTION_BINDING",
+  "status": "WAITING_NATIVE_FIRST_LAUNCH_REPAIR_AND_CURRENT_EXECUTION_QUALIFICATION",
   "recordedAt": "2026-11-04T18:47:03.514676+00:00",
   "actualStartedRecordPhase": "Local plan artifact drafting after read-only source/context inspection",
   "codeDelta": false,
@@ -26,7 +26,7 @@
       "Import/MCP/ProfileCloud completion"
     ]
   },
-  "nextOwner": "Parent coordinates Native/Root2 return; child does not cross-Lane message",
+  "nextOwner": "Native owns14752startuprepair/currentqualification; Root1 owes exactNicknameCorePort; no MCReady",
   "oldAuthority": "41e8 host case consumed/closed; no reuse",
   "newOperation": "41e8 APPLIED; ATTEMPT retained; no resubmit",
   "historicalUnknowns": [
@@ -71,7 +71,7 @@
   },
   "evidence": "docs/ops/auth-c04-sync-c02-native-consume-20261105/EVIDENCE.json",
   "noIndependentLegalCodeDelta": true,
-  "resumeTrigger": "Native actual lawful tool/directOwner/claim/install-firstlaunch-census + exact existingB mailbox/quota/current unified scope and real T/D. Root2 static bootstrap provenance complete; no new deploy/SQL/software prerequisite.",
+  "resumeTrigger": "Native minimal launchrepair and exact current qualification; Auth does not touch device or reset/appdata",
   "subtaskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01-CONTEXT-OPTION",
   "contextOptionContract": "docs/ops/auth-c04-sync-c02-native-consume-20261105/CONTEXT_OPTION_CONTRACT.json",
   "contextOptionVerdict": "CONDITIONALLY_SOURCE_COMPATIBLE_OPTION_NOT_ACTUAL_ARTIFACT_OR_EXECUTION_QUALIFIED",
@@ -96,5 +96,55 @@
     "status": "STATIC_14752_AND_OWN_BOOTSTRAP_QUALIFIED_ACTUAL_NATIVE_EXECUTION_UNBOUND",
     "basis": "Fixed Root2 delta; parent verified hash. Static saved provenance only, no fresh Host observation or availability proof."
   },
-  "actualBootstrapAvailability": "NOT_DEMONSTRATED: current B profiles/RLS acceptance and real ready:true response require qualified normal B call; static/source/prior Core PASS do not establish availability."
+  "actualBootstrapAvailability": "NOT_DEMONSTRATED: current B profiles/RLS acceptance and real ready:true response require qualified normal B call; static/source/prior Core PASS do not establish availability.",
+  "mailboxReadiness": {
+    "path": "docs/ops/auth-c04-sync-c02-native-consume-20261105/B_MAILBOX_READINESS.json",
+    "sha256": "0b7ad029476f8cb7e0c4cc4bb3bd06fe265ef7a12ee758d31684ee3cd361348f",
+    "status": "LOCAL_CHANNEL_PREPARED_CONDITIONAL_CURRENT_PREFLIGHT",
+    "currentQuota": "NOT_QUERIED_UNKNOWN",
+    "ownResourcesHeld": [],
+    "closure": "AUTO_APPROVAL_BLOCKED: combined write+Git escalation timed out before execution. No same escalation retry. Workspace-only artifact preserved; commit pending."
+  },
+  "nativeFirstFailure": {
+    "source": "Native fixed finalreceipt SHA verified by parent; not rerun by Auth",
+    "path": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-b-read-execution-20261105/FINAL_EXECUTION_RECEIPT.json",
+    "sha256": "b6cdd2e7db68fb4a1bdbbb8db0329e8a8148bc9f5b94bf53f746dde88f8afc4c",
+    "result": "EARLY_CLOSED_FIRST_FAILURE",
+    "closedAt": "2026-11-04T23:34:33.971240Z",
+    "deadline": "2026-11-04T23:41:59Z",
+    "firstFailure": "14752 firstopen NSPOSIX3/nohandle/LAUNCH_UNKNOWN; install0 returned but empty/principal not proved",
+    "notSameCause": "Do not conflate with14755 ERR_KEY_CHAIN/defaultUNKNOWN",
+    "notReached": [
+      "OTP",
+      "getUser",
+      "bootstrap",
+      "Reader",
+      "keyread"
+    ],
+    "resources": "No receiver/mailbox/newSession; ownsession+C0claim+daemon release proved by Native receipt; all existing data andUNKNOWN preserved",
+    "DRI": "Native unique Writer diagnoses firstlaunch under current legal tooling/qualification; no implicit reopen/retry window",
+    "returnTrigger": "Native minimal launchrepair and exact current qualification; Auth does not touch device or reset/appdata"
+  },
+  "localC03Checkpoint": {
+    "status": "NO_NEW_DELTA",
+    "evidence": "docs/ops/auth-c03-20261104/interface-packet/AKA_BINDING_SOURCE_RECONCILIATION_20261105.json",
+    "sha256": "fc8776e87510984e7851537033c67fd687aebce1ea2e946f33200e13fa3e1361",
+    "root1Request": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+    "owningPort": "NOT_DELIVERED; existing2394 explicitly missing selfPersonNicknamePatchClear/CAS/Receipt",
+    "AuthNext": "DTO/Adapter/controller after formalowningport; no Hosted/privateinstall activation"
+  },
+  "mcReadyQueue": {
+    "next": null,
+    "candidates": [],
+    "basis": "Actual MC return relayed/read by parent; no new claim"
+  },
+  "secondaryMcpSupport": {
+    "sourceCandidates": [
+      "47a3d2ee",
+      "fad82f42"
+    ],
+    "status": "PARENT_REVIEWED_SOURCE_ONLY_NOT_INTEGRATED_NOT_LIVE_READY",
+    "primaryUnchanged": "AUTH-C04",
+    "noNewWork": "No continued MCP support without new precisebug"
+  }
 }

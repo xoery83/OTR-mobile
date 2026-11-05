@@ -39,6 +39,44 @@
       "child_id": "/root/auth_distinct_p1_e2e_20261105",
       "summary": "Root2 fixed static14752/ownbootstrap provenance merged; endpoints/target unchanged, no authority or freshHost response implied; no code/test/live actions",
       "task_id": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01"
+    },
+    {
+      "event_id": "auth-c04-native-b-mailbox-static-readiness-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "EVIDENCE",
+      "reported_at": "2026-11-04T23:09:00.552454+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "Exact existingB mailbox/factory release and historicalOTP times fixed; no key/server/device action. Currentquota UNKNOWN; localconditional readiness only. Commit escalation approval timed out; no retry.",
+      "task_id": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01"
+    },
+    {
+      "event_id": "auth-c04-native14752-firstlaunch-blocked-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "EVIDENCE",
+      "reported_at": "2026-11-04T23:42:53.541707+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "Native fixedreceipt earlyclose firstlaunch NSPOSIX3/LAUNCH_UNKNOWN, emptyprincipal notproved; OTP/Auth/bootstrap/Reader0; resourcesreleased. Native uniqueWriter nextrepair/currentqualification; no window reopened. Separate from14755Keychain failure.",
+      "evidence_sha256": "b6cdd2e7db68fb4a1bdbbb8db0329e8a8148bc9f5b94bf53f746dde88f8afc4c"
+    },
+    {
+      "event_id": "auth-d-current-c03-nodelta-nickname-handoff-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "EVIDENCE",
+      "reported_at": "2026-11-05T01:35:46.585109+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "PrimaryC04 Nativefirstlaunch earlyclosed/OTP0/resourcesreleased; Native startuprepairSTARTED. C03AKA NO_NEW_DELTA fc8776; Root1exactNicknameport request notdelivered; MCnextnull. MCPsupportsourceonly reviewed does not replacePrimary.",
+      "root1_request": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+      "tests_rerun": 0,
+      "new_authority": false
     }
   ],
   "local_deliverable": "docs/ops/auth-c04-sync-c02-native-consume-20261105/NORMAL_READ_COLD_PLAN.json",
@@ -56,5 +94,10 @@
     "sha256": "85f2f48d04ad0ea2074878d09ffcd4e71c1e4a0e325aa5447986cb30b0ebfad7",
     "status": "STATIC_14752_AND_OWN_BOOTSTRAP_QUALIFIED_ACTUAL_NATIVE_EXECUTION_UNBOUND",
     "basis": "Fixed Root2 delta; parent verified hash. Static saved provenance only, no fresh Host observation or availability proof."
+  },
+  "mailbox_readiness": {
+    "path": "docs/ops/auth-c04-sync-c02-native-consume-20261105/B_MAILBOX_READINESS.json",
+    "sha256": "0b7ad029476f8cb7e0c4cc4bb3bd06fe265ef7a12ee758d31684ee3cd361348f",
+    "status": "LOCAL_CHANNEL_PREPARED_CONDITIONAL_CURRENT_PREFLIGHT"
   }
 }

@@ -1,0 +1,57 @@
+{
+  "request": "MCP-C02-DIRECTED-KEYCHAIN-RESERVATION-SUPPORT",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "STATIC_SELECTORS_CONFIRMED_ACTIVE_LEASE_BROWSER_ADMISSION_NOT_PROVED",
+  "sourceRelease": "5fee89da00f4e6d046d3311d19df22349a407749",
+  "references": [
+    {
+      "path": "scripts/auth/resend-inbound-otp-e2e.ts",
+      "sha256": "d85a134817d827caf34461f01050e0ebb50edc9357f66b7d1554b4bd38951358"
+    },
+    {
+      "path": "scripts/auth/resend-inbound-otp-native-relogin.ts",
+      "sha256": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce"
+    },
+    {
+      "path": "scripts/auth/registered-qa-host-session.ts",
+      "sha256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d"
+    },
+    {
+      "path": "docs/ops/auth-inbound-otp-20261030/READINESS.json",
+      "sha256": "0fa90f70e6c0338f479208a673ddcec9de7f3cb1f6884462e07ac8816729af7d"
+    }
+  ],
+  "selectors": {
+    "env": "OTR_QA_RESEND_API_KEY",
+    "keychain": {
+      "class": "generic-password",
+      "service": "OTR_QA_RESEND_API_KEY",
+      "account": "resend",
+      "label": "OTR-QA-Inbound"
+    },
+    "safeLoaderConvention": "Existing loader first checks approved process env, then exact find-generic-password service/account/label, value returned only into process and never logged. All lookup errors become RECEIVING_CREDENTIAL_REQUIRED. No broad search or alternate service/SMTP fallback.",
+    "registrationEvidence": "READINESS.json records lastHostMetadataLookupStatus0 and exact triple; README explicitly corrects old PREFLIGHT service OTR-QA-Inbound to service OTR_QA_RESEND_API_KEY/label OTR-QA-Inbound. No current key query performed.",
+    "reportedErrorLimit": "MCP parameter-invalid/not-found reports do not prove a different registered selector. Cannot distinguish command invocation syntax, access/keychain context or missing item from static code; do not mutate selectors or search arbitrary items."
+  },
+  "reservation": {
+    "factory": "createAcceptedHostQaReceiver(config)",
+    "createChallenge": "Builds exact recipient/requestedAt lease; synchronously calls config.reserve(metadata) before returning challenge. It does not itself acquire/check registered-native04 active.lock. If reserve throws, challenge is not returned; do not try same receiver again to evade rejection.",
+    "wait": "waitForOtp requires same object identity as returned challenge, single consumption, exact recipient/time/sender/subject and bounded reads.",
+    "existingHostWrapper": "withRegisteredQaHostSession exclusively mkdirs /private/tmp/otr-hosted-otp-qa/registered-native04/active.lock BEFORE factory use. Any already-existing lock is REGISTERED_HOST_UNRESOLVED_OR_CONCURRENT_RUN, without special same-owner reentry. Its reserve checks protected last-request.json and60second cooldown, records CHALLENGE_RESERVED_BEFORE_NORMAL_HOST_SEND, writes reservation0600 before normal send. Finally releases only after owncleanup or no attempted request.",
+    "oldNativeWrapper": "openRegisteredNativeReloginReceiver is old fixed interruptedNative case; reserve O_EXCL/NOFOLLOW writes auth-native-relogin-once.json+fsync under original case/window. Not a fresh-browser attach API.",
+    "existingLegalInvocationLimit": "Factory accepts a REAL owner-supplied synchronous reserve callback; only valid if current MCP lease owner actually exposes a verified admission/reservation operation that durably binds this exact email/requestedAt/new-browser challenge, one-shot budget/cooldown, activelease ownership and current scope before UI send. A no-op, second host wrapper, foreign Session or deleting/replacing active.lock is not valid.",
+    "actualGap": "Inspected Auth helpers expose no attach/reentrant API to admit a browser challenge onto MCP normalcontrol registeredNative04 active lease. No static code for that particular MCP owner was supplied/found in targeted Auth callers; cannot certify its own-reservation behavior. Parent should obtain exact MCP lease-owning admission function/path; if absent, minimal owning caller adapter is needed, preserving existing lock/cooldown/one-shot scope. No need to invent new authority or bypass guard."
+  },
+  "actions": {
+    "securityCommands": 0,
+    "credentialReads": 0,
+    "network": 0,
+    "OTP": 0,
+    "Session": 0,
+    "tests": 0,
+    "codeChanges": 0,
+    "newT": 0
+  },
+  "previousReadinessHashVerified": "0b7ad029476f8cb7e0c4cc4bb3bd06fe265ef7a12ee758d31684ee3cd361348f",
+  "commitStatus": "WORKSPACE_ONLY_UNCOMMITTED_NO_GIT_ESCALATION"
+}

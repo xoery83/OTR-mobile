@@ -1,0 +1,100 @@
+{
+  "taskId": "AUTH-C04-SYNC-C02-NATIVE-CONSUME-20261105-01",
+  "supportId": "B-MAILBOX-CHANNEL-READINESS-20261105",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "recordedAt": "2026-11-04T23:09:00.552454+00:00",
+  "status": "LOCAL_CHANNEL_PREPARED_CONDITIONAL_CURRENT_PREFLIGHT",
+  "permissionGranted": false,
+  "mailbox": {
+    "commit": "5fee89da00f4e6d046d3311d19df22349a407749",
+    "path": "docs/ops/auth-c04-distinct-p1-e2e-20261105/RUN.json",
+    "sha256": "0c39e0177511415916e32602dd9000c3dea38ccd8db18517d1969df9e4e4f992",
+    "jsonPointer": "/actors/B/challenge/email",
+    "email": "otr-qa-fde969f2-2dc5-4a33-83a1-268ac5fd6424@eldouzileu.resend.app",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "limit": "Exact existing recipient only; normal getUser must prove exact nonanonymous B. UI label/mask do not prove current subject. No replacement account."
+  },
+  "existingFactory": {
+    "symbol": "scripts/auth/resend-inbound-otp-native-relogin.ts::createAcceptedHostQaReceiver",
+    "refs": [
+      {
+        "commit": "5fee89da00f4e6d046d3311d19df22349a407749",
+        "path": "scripts/auth/resend-inbound-otp-native-relogin.ts",
+        "sha256": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce",
+        "matchesCurrent": true
+      },
+      {
+        "commit": "5fee89da00f4e6d046d3311d19df22349a407749",
+        "path": "scripts/auth/resend-inbound-otp-e2e.ts",
+        "sha256": "d85a134817d827caf34461f01050e0ebb50edc9357f66b7d1554b4bd38951358",
+        "matchesCurrent": true
+      },
+      {
+        "commit": "5fee89da00f4e6d046d3311d19df22349a407749",
+        "path": "scripts/auth/registered-qa-host-session.ts",
+        "sha256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d",
+        "matchesCurrent": true
+      }
+    ],
+    "contract": "Exact recipient/request-time single lease; sender noreply@auth.xoery.art, subject Your OTR verification code; bounded120second receiving wait, max12polls/24reads. Factory receives OTP only. Native uses its qualified operator; do not invoke old interrupted-case openers or Host E2E executor. No new runner."
+  },
+  "credentialLocator": {
+    "env": "OTR_QA_RESEND_API_KEY",
+    "scopeEnv": "OTR_QA_RESEND_SCOPE=dedicated-qa-team",
+    "keychain": {
+      "service": "OTR_QA_RESEND_API_KEY",
+      "account": "resend",
+      "label": "OTR-QA-Inbound"
+    },
+    "currentPresence": "NOT_QUERIED; historical use proved, no new missing-credential evidence",
+    "boundary": "Independent Inbound QA-team key only, never SMTP. Owner-confirmed dedicated OTR QA team; prefix is not server permission isolation. No key value or metadata read this task."
+  },
+  "quota": {
+    "historicalAcceptedDelivered": [
+      {
+        "actor": "A",
+        "accepted200At": "2026-11-04T18:14:42.223Z",
+        "deliveredAt": "2026-11-04T18:14:48.895Z",
+        "observedAt": "2026-11-04T18:14:49.850Z"
+      },
+      {
+        "actor": "B",
+        "accepted200At": "2026-11-04T18:15:48.900Z",
+        "deliveredAt": "2026-11-04T18:15:52.041Z",
+        "observedAt": "2026-11-04T18:15:53.083Z"
+      }
+    ],
+    "meaning": "Closed5fee historical channel proof only. Receiving200 never proves Sending/SMTP balance.",
+    "currentDailySMTPBalance": "NOT_QUERIED_UNKNOWN",
+    "resetTime": "NOT_QUERIED_UNKNOWN",
+    "policy": "Current scope/tool/context/resources first; at most1 exact B OTP/noresend. Stop429/refusal/uncertainty/nonreceipt without repeated OTP. Unknown balance alone is not evidence of code failure/newservice or missing Owner materials."
+  },
+  "ownResources": {
+    "evidenceCommit": "5fee89da00f4e6d046d3311d19df22349a407749",
+    "evidencePath": "docs/ops/auth-c04-distinct-p1-e2e-20261105/EVIDENCE.json",
+    "field": "ownCleanup",
+    "historicalResult": "A/B own local logout+refresh rejection, session/receiver/lock released",
+    "currentTask": "Local-only; no Session/receiver/mailbox lease/finitewindow/deviceclaim opened",
+    "held": [],
+    "globalLimit": "No attestation of otherLane/global mailbox occupancy; no known own conflicting lease."
+  },
+  "returnTrigger": "Native lawful tool/device claim/initialprincipal+Guest+unfinished-outgoing census and matching14752 B-only authority, then qualified normal channel/resource preflight and realT/D. No new per-field Owner question.",
+  "clock": {
+    "T": null,
+    "D": null
+  },
+  "actions": {
+    "credentials": 0,
+    "keychainMetadata": 0,
+    "OTP": 0,
+    "getUser": 0,
+    "network": 0,
+    "device": 0,
+    "tests": 0,
+    "newAccounts": 0,
+    "sourceChanges": 0
+  },
+  "frozen": "41e8 consumed/ATTEMPT retained; oldf5e4028UNKNOWN/Guest untouched",
+  "readiness": "LOCAL prepared; current credential/quota/delivery NOT_QUERIED; no new Hosted/Native/Device/OwnerUX evidence",
+  "closure": "AUTO_APPROVAL_BLOCKED: combined write+Git escalation timed out before execution. No same escalation retry. Workspace-only artifact preserved; commit pending."
+}
