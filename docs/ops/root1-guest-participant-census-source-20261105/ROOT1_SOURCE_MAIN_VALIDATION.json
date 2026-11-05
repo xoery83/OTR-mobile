@@ -1,0 +1,34 @@
+{
+  "status": "SOURCE_ONLY_READ_ONLY_GUEST_REGISTRATION_CENSUS_PASS",
+  "parentMain": "a36bf98806c5000e732d1f4ae9eba89326b9afdb",
+  "candidate": "41208b2239dc56e50053d2dd527c76d56ebe9105",
+  "docsEvidence": "f5d13f44",
+  "packetSHA256": "239c9e28e4979e800f19eb501adc6597a42d1d0a5512ec90e23a73affdaeda92",
+  "parentReviewSHA256": "9524ac17f555dc4b8ef2c7dc0ec2322b17561d5db36f6a628865169898c2e6d4",
+  "twoSourceLeafSHA256": {
+    "src/data/auth/guestDraftInventory.ts": "14e17b6c33c422df8d90c885c6b36304263790c6bd7f9a2e27f1b6e5615f0099",
+    "src/data/auth/guestDraftParticipantCensus.test.ts": "7adf407606bb362dbc95a966ece3ccddda562d5055316f24d2495694be1067b6"
+  },
+  "actualChecks": {
+    "fourRootTypesIncludingTripP1FactoryCallers": "PASS",
+    "twoRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "sixDirectWrapperGenerationCoreHashDependencies": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reused": "10 new observer tests plus8 prior registry tests/types/lint evidence; exact source and dependencies, no redundant test rerun. Parent additionally read fixed35line diff, no blocker.",
+  "meaning": [
+    "readParticipantCensus copies/whitelists/freezes existing Guest scope, validates production current committed Guest and generation before/after",
+    "Returns registration count/version only; count0 is NOT proof of complete empty assets/drafts/files or Adoption/session-install permission",
+    "Registration/handoff/scope/ABA errors propagate; no null/0 fallback or stale Account/Guest observation",
+    "New private handoffVersion increments existing freeze/release transitions only; registrationVersion semantics unchanged",
+    "Observer invokes no participant freeze/resume/isCurrent or content snapshot, does not mutate registration/handoff state"
+  ],
+  "preserved": [
+    "Ordinary OTP/Adoption order",
+    "Session/Auth principal/credentials",
+    "Native consumer/shared files",
+    "PG/HTTP nickname sources",
+    "No DB/network/Provider/device/Hosted action"
+  ],
+  "scope": "SOURCE ONLY; Native actual aggregate census/driver/runtime and qualified session acceptance remain independently owned, not proven here."
+}

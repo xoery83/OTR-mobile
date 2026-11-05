@@ -1,0 +1,44 @@
+{
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "events": [
+    {
+      "event_id": "auth-c04-guestparticipant-census-local-started-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-05T02:51:11.456295+00:00",
+      "actual_started_at": null,
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "Actual Auth-onlyreadonly registry participantcensus leaf implemented; noNativecaller/data/runtimeaction. Actualstartclock not retained, no synthetic starttime.",
+      "next_action": "Parentreview leaf then Native uniqueWriter scopedcensus consumption; noOTP/device fromcode."
+    },
+    {
+      "event_id": "auth-c04-guestparticipant-census-local-progress-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "PROGRESS",
+      "reported_at": "2026-11-05T02:51:11.456295+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "supersedes_event_id": "auth-c04-guestparticipant-census-local-started-20261105-v1",
+      "summary": "SOURCE_ONLY10new+8existingdirect tests/scopedTS/lintPASS. Countsregisterededitors notGuestempty; handoff/race reject, nofreeze/readcontents. No Hosted/deviceacceptance.",
+      "next_action": "Independentparentreview exactAuthleaf; Native suppliesnormalcensusconsumer ifqualified, preserveunknown andexistingGuestOTPAdoption semantics.",
+      "evidence_sha256": "6f728c4c280389669e225fbb27969518dfe9591b1a5508f1623b80e59b335d20"
+    },
+    {
+      "event_id": "auth-c04-guestparticipant-census-reviewed-handoff-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C04",
+      "execution_slice_id": "AUTH-C04:LOCAL_PREP",
+      "transition": "PROGRESS",
+      "reported_at": "2026-11-05T02:52:38.066876+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "supersedes_event_id": "auth-c04-guestparticipant-census-local-progress-20261105-v1",
+      "summary": "Parentstaticreview NO_BLOCKER_READ_ONLY_REGISTRATION_METADATA_ONLY for41208b22; no18testrepeat/noNativeintegration or empty/Adoption claim. ExactNativecall handoff source-onlyready.",
+      "next_action": "NativeuniqueWriter consumes fixedsingletonmethod in qualifiedcensusAdapter; parent coordinatesRoot1exact2sourcefileintegration, noLive/OTP authority.",
+      "evidence_sha256": "239c9e28e4979e800f19eb501adc6597a42d1d0a5512ec90e23a73affdaeda92"
+    }
+  ]
+}

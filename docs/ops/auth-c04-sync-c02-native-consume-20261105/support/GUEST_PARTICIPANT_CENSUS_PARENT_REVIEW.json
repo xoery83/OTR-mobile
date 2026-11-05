@@ -1,0 +1,11 @@
+{
+  "reviewer": "/root parent",
+  "candidate": "41208b2239dc56e50053d2dd527c76d56ebe9105",
+  "verdict": "NO_BLOCKER_READ_ONLY_REGISTRATION_METADATA_ONLY",
+  "method": "Final35line source and complete10newtests staticreview, sourceSHA matched;18directtests notrerun",
+  "sourceHashes": {
+    "src/data/auth/guestDraftInventory.ts": "14e17b6c33c422df8d90c885c6b36304263790c6bd7f9a2e27f1b6e5615f0099",
+    "src/data/auth/guestDraftParticipantCensus.test.ts": "7adf407606bb362dbc95a966ece3ccddda562d5055316f24d2495694be1067b6"
+  },
+  "limits": "Only registrationmetadata, not dirtydraft/allassets/empty/Adoption qualification; no normalOTP change or Nativecaller modification."
+}

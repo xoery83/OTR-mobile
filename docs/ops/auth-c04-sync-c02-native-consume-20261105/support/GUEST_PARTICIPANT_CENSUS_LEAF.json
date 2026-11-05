@@ -1,0 +1,43 @@
+{
+  "request": "AUTH-C04-GUEST-DRAFT-PARTICIPANT-CENSUS-LEAF-20261105",
+  "primary": "AUTH-C04",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "LOCAL_AUTH_LEAF_PASS_PARENT_REVIEW_PENDING_NOT_NATIVE_INTEGRATED",
+  "method": "readParticipantCensus(scope:GuestDraftScope):Promise<Readonly<{schemaId:\"otr.auth.guest-draft-participant-census/1\",registrySchemaId,scope,registeredParticipantCount,registrationVersion,handoffActive:false}>>",
+  "calls": [
+    "guestTripDraftInventory.readParticipantCensus(scope)",
+    "guestP1DraftInventory.readParticipantCensus(scope)"
+  ],
+  "scope": "{kind:GUEST,localId,generation}; copied/whitelisted/frozen. ProductionexistingassertGuestDraftScope validates actualcommittedGuest+generation before/after. Unknown/stale throws, never0 fallback.",
+  "readOnly": "Reads existingparticipantSet/revision/handoffstate and reuses established local scope assertions only. Never calls participant.freeze/resume/isCurrent or reads content/snapshot; no registration/freeze/lease/write/data dispatch. No Session/credential fields returned; productionassertScope may perform its existing committedprincipal localreads. No new Auth/network IO or normalOTP/caller changes.",
+  "races": "Busyhandoff throws GUEST_DRAFT_HANDOFF_ACTIVE. Registration/count/handoffchange betweenScopeawaits throws GUEST_DRAFT_CENSUS_CHANGED. PrivatehandoffVersion incremented only by existingfreeze/release actualstate transitions includingfailure cleanup detects ABA. registrationVersion remains solelyexistingregistration semantics. Census never increments either.",
+  "meaning": "Count is registerededitors only, NOT dirtydraft count/persistentrows/files/completeGuestempty or Accountassets. 0 cannot authorize sessioninstall/adoption or bypass preOTPqualification. Failures/unknown retained, not null→0.",
+  "sourceHashes": {
+    "src/data/auth/guestDraftInventory.ts": "14e17b6c33c422df8d90c885c6b36304263790c6bd7f9a2e27f1b6e5615f0099",
+    "src/data/auth/guestDraftParticipantCensus.test.ts": "7adf407606bb362dbc95a966ece3ccddda562d5055316f24d2495694be1067b6"
+  },
+  "validation": {
+    "newLeafSuite": "10PASS",
+    "existingDirectRegistrySuite": "8PASS guestP1DraftInventory.test.ts",
+    "scopedTypecheck": "PASS",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "coverage": "0/1/version/idempotent unregister; frozen metadata; noeditor callbacks; observe thennormalregister/freeze/release; stalebefore/after scope, registration/removal/active/ABA races; busyhandoff; copiedcaller scope/noextrafields; Trip/P1factoryautoexposure; failedfreeze cleanup.",
+    "oldE2E_PG_GuestMatrix": "NOT_RERUN"
+  },
+  "producerFiles": [
+    "src/data/auth/guestDraftInventory.ts",
+    "src/data/auth/guestDraftParticipantCensus.test.ts"
+  ],
+  "next": "Parentreviews exactleaf/test; Native uniqueWriter consumes this method inside its own scopedcensusAdapter. Existing availableprincipal/Guesttable/file/recovery ports remain narrow; NO_AGGREGATE_RUNTIME_PORT still true, no sharedNative code or readonlydriver invented here.",
+  "productBoundary": "StrictfreshB QApreOTPqualification only. OrdinaryGuest normalOTP→legitimateAdoption order unchanged. No data clearing or new generalGuestlogin gate.",
+  "actions": {
+    "NativeCallerWrites": 0,
+    "device": 0,
+    "DBFiles": 0,
+    "networkOTP": 0,
+    "KeychainTokenSession": 0,
+    "HostedSQL": 0
+  },
+  "recordedAt": "2026-11-05T02:51:11.456295+00:00"
+}
