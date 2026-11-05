@@ -2461,3 +2461,95 @@ it.each(["wrong-name", "missing-table", "unknown76"])(
     await vault.release();
   },
 );
+
+
+it("readonly owner refuses uninitialized and wrong-scope owners without opening or recovery", async () => {
+  const f = fixture();
+  let principal: LaunchIdentity | null = { kind: "GUEST", localId: f.guestId };
+  const recoveryFiles = vi.fn(() => { throw Error("RECOVERY_FORBIDDEN"); });
+  const opener = createGuestLocalWorkspaceOpener({
+    readPrincipal: async () => principal, open: f.open, recoveryFiles,
+  });
+  await expect(opener.readInitializedGuestOwner()).rejects.toThrow("DATABASE_NOT_INITIALIZED");
+  principal = null;
+  await expect(opener.readInitializedGuestOwner()).rejects.toThrow("GUEST_LOCAL_SCOPE_REQUIRED");
+  principal = { kind: "GUEST", localId: randomUUID() };
+  await expect(opener.readInitializedGuestOwner()).rejects.toThrow("DATABASE_NOT_INITIALIZED");
+  expect(f.open).not.toHaveBeenCalled();
+  expect(recoveryFiles).not.toHaveBeenCalled();
+});
+
+it("readonly owner reuses initialized SQLite and reads census without writes, migration or recovery", async () => {
+  const f = fixture();
+  const recoveryFiles = vi.fn(() => f.files);
+  const opener = createGuestLocalWorkspaceOpener({
+    readPrincipal: async () => ({ kind: "GUEST", localId: f.guestId }),
+    open: f.open, recoveryFiles,
+  });
+  const workspace = await opener();
+  await workspace.trips.createTrip(tripInput());
+  const sql = f.opened[0].sql;
+  const before = sql.prepare("SELECT total_changes() AS n").get();
+  const schema = sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
+  const owner = await opener.readInitializedGuestOwner();
+  expect(Object.keys(owner).sort()).toEqual(["readCaptureInventory", "readCensus", "scope"]);
+  expect(owner.scope).toEqual(workspace.scope);
+  expect((await owner.readCensus()).totals.trips).toBe(1);
+  expect(await owner.readCaptureInventory()).toEqual(await workspace.readCaptureInventory());
+  expect(sql.prepare("SELECT total_changes() AS n").get()).toEqual(before);
+  expect(sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all()).toEqual(schema);
+  expect(f.open).toHaveBeenCalledTimes(1);
+  expect(recoveryFiles).toHaveBeenCalledTimes(1);
+  const freeze = await workspace.freezeForInventory();
+  await expect(opener.readInitializedGuestOwner()).rejects.toThrow("GUEST_INVENTORY_FROZEN");
+  expect(await freeze.assertCurrent()).toBeUndefined();
+  await freeze.release();
+});
+
+it("readonly owner fences an existing handle after principal or generation changes", async () => {
+  const f = fixture();
+  const opener = f.newOpener();
+  await opener();
+  const owner = await opener.readInitializedGuestOwner();
+  f.setPrincipal({ kind: "GUEST", localId: randomUUID() });
+  await expect(owner.readCensus()).rejects.toThrow("GUEST_LOCAL_SCOPE_CHANGED");
+  f.setPrincipal({ kind: "GUEST", localId: f.guestId });
+  advanceAccountGeneration();
+  await expect(owner.readCaptureInventory()).rejects.toThrow("Account changed");
+  expect(f.open).toHaveBeenCalledTimes(1);
+});
+
+it("readonly owner observes pending initialization but rejects a generation change across its await", async () => {
+  const f = fixture();
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  const open = vi.fn(async (name: string) => { await pending; return f.connect(name); });
+  const readPrincipal = vi.fn(async (): Promise<LaunchIdentity> => ({ kind: "GUEST", localId: f.guestId }));
+  const opener = createGuestLocalWorkspaceOpener({
+    readPrincipal, open, recoveryFiles: () => f.files,
+  });
+  const opening = opener();
+  await vi.waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+  const principalReads = readPrincipal.mock.calls.length;
+  const observing = opener.readInitializedGuestOwner();
+  await vi.waitFor(() => expect(readPrincipal).toHaveBeenCalledTimes(principalReads + 2));
+  // Observe the original promise only; do not start a second database initialization.
+  const openingResult = expect(opening).rejects.toThrow("Account changed");
+  const observingResult = expect(observing).rejects.toThrow("Account changed");
+  advanceAccountGeneration();
+  release();
+  await Promise.all([openingResult, observingResult]);
+  expect(open).toHaveBeenCalledTimes(1);
+});
+
+it("readonly owner never retries a failed initialization", async () => {
+  const f = fixture();
+  const open = vi.fn(async () => { throw Error("SYNTHETIC_OPEN_FAILED"); });
+  const opener = createGuestLocalWorkspaceOpener({
+    readPrincipal: async () => ({ kind: "GUEST", localId: f.guestId }),
+    open, recoveryFiles: () => f.files,
+  });
+  await expect(opener()).rejects.toThrow("SYNTHETIC_OPEN_FAILED");
+  await expect(opener.readInitializedGuestOwner()).rejects.toThrow("DATABASE_NOT_INITIALIZED");
+  expect(open).toHaveBeenCalledTimes(1);
+});

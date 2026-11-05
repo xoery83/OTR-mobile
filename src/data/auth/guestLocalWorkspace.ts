@@ -76,7 +76,7 @@ export function createGuestLocalWorkspaceOpener(deps: {
     string,
     ReturnType<typeof createMigratedDatabaseOpener<GuestDatabase>>
   >();
-  return async function openGuestLocalWorkspace() {
+  async function openGuestLocalWorkspace() {
     const generation = getAccountGeneration();
     const principal = await deps.readPrincipal();
     if (principal?.kind !== "GUEST") throw new Error("GUEST_LOCAL_SCOPE_REQUIRED");
@@ -358,7 +358,40 @@ export function createGuestLocalWorkspaceOpener(deps: {
         services: async () => ({}),
       }),
     });
-  };
+  }
+
+  // Observe only this opener's existing initialization; never create/recover a workspace.
+  async function readInitializedGuestOwner(): Promise<
+    Pick<Awaited<ReturnType<typeof openGuestLocalWorkspace>>,
+      "scope" | "readCensus" | "readCaptureInventory">
+  > {
+    const generation = getAccountGeneration();
+    const principal = await deps.readPrincipal();
+    if (principal?.kind !== "GUEST") throw new Error("GUEST_LOCAL_SCOPE_REQUIRED");
+    const localId = coreUuid.parse(principal.localId);
+    const scope = Object.freeze({ kind: "GUEST" as const, localId, generation });
+    async function localOwner() {
+      assertAccountRequestGeneration({ accountId: localId, generation });
+      const current = await deps.readPrincipal();
+      if (current?.kind !== "GUEST" || current.localId !== localId)
+        throw new Error("GUEST_LOCAL_SCOPE_CHANGED");
+      assertAccountRequestGeneration({ accountId: localId, generation });
+      assertGuestPublicationNotRequested(localId);
+      if (inventoryFreezes.has(localId)) throw Error("GUEST_INVENTORY_FROZEN");
+      return localId;
+    }
+    await localOwner();
+    const existing = databases.get(localId);
+    if (!existing) throw new Error("DATABASE_NOT_INITIALIZED");
+    const database = await existing.readInitialized();
+    await localOwner();
+    return Object.freeze({
+      scope,
+      readCensus: createGuestDatasetCensus(database, localOwner, scope),
+      readCaptureInventory: createGuestCaptureInventory(database, localOwner, scope),
+    });
+  }
+  return Object.assign(openGuestLocalWorkspace, { readInitializedGuestOwner });
 }
 
 export type GuestLocalWorkspace = Awaited<
@@ -375,3 +408,7 @@ export const openGuestLocalWorkspace = createGuestLocalWorkspaceOpener({
     return SQLite.openDatabaseAsync(name);
   },
 });
+
+// Same process-local owner/map as normal opening; no new opener or database.
+export const readInitializedGuestOwner =
+  openGuestLocalWorkspace.readInitializedGuestOwner;

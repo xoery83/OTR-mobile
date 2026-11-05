@@ -1,3 +1,7 @@
+## Guest initialized readonly owner source — 5 November 2026
+
+Native9cc8 exact2 leaves and formalAuthb901 review integrated under direct5d95 source approval. Same private opener/map returns only current scope/census/capture readers from existing readInitialized promise, no open/migrate/retry/recovery/Adoption authority or rawDB/Session. Scope/gen/publication/freeze fences retained; missing neverempty. Actual normalopen body byte-equal and types/lint/product-diff pass; exact patch evidence retains original context whitespace; author9 evidence reused, no new privateDB/device/OTP/Cloud assertion. Receipt: `docs/ops/root1-native-guest-readonly-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
 ## Native Queue Census exact source — 5 November 2026
 
 Native8c744/local480 exact2 leaves and ff9c Review integrated after direct Owner call5d95 three-package source approval. Single metadata-only all-account7status SELECT, no payload/open/init/mutate; invalid/unknown errors neverempty, no wholeApp/CoreIntent/schemaVersion claim. Existing Sync methods and relevant dependencies remain byte-identical; local480 types/lint and author7/independent3PASS4skip reused without relabeling. Fresh main0f43 Auth hook preserved separately, no new runtime/OTP/Hosted/DB action. Receipt: `docs/ops/root1-native-queue-census-source-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

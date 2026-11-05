@@ -1,0 +1,29 @@
+{
+  "status": "SOURCE_ONLY_INITIALIZED_GUEST_READONLY_OWNER_PASS",
+  "parentMain": "7ec44ffbe6114746b4489f75976443d33da5d0c3",
+  "candidate": "9cc8ea930bf2eae237b3c286d526eb4d99ccdb4e",
+  "evidence": "1a79031c",
+  "twoLeafSHA256": {
+    "src/data/auth/guestLocalWorkspace.ts": "beee5df2e9536f902438877ba23127d710de69895177be58d2e66b0edad4dcac",
+    "src/data/auth/guestLocalWorkspace.test.ts": "2428af8647745df168d7c87210ddcc505fdedfbedbc042dc460488838c8d7bb6"
+  },
+  "AuthOwnerReviewSHA256": "eb9cc0b8a3b137e3edb25e199c5cc429075a98edf3d088b8cce66829f33f396e",
+  "OwnerApprovalCall": "call_5d95ae8e99924fa2a5a539c99a4b0657",
+  "humanAnswer": "\u6279\u51c6\u8fd9\u4e09\u4efd\u7cbe\u786e\u53ea\u8bfb\u6e90\u7801\u5408\u5165\u4e0e\u63a8\u9001",
+  "actualChecks": {
+    "exactPrimaryPreimagesAndPostHashes": "PASS",
+    "normalOpenBody": "BYTE_IDENTICAL_TO_PREIMAGE excluding only function return wrapper",
+    "twoRootScopedTypes": "PASS",
+    "twoRootESLint": "PASS",
+    "diffCheck": "Product source/prose PASS; exact historical EXACT_SOURCE_DIFF.patch contains original trailing context-space at154. Frozen f456 patch retained unchanged and excluded from style check, not altered to fake clean raw evidence."
+  },
+  "reused": "Author9 scoped SQLite cases/types/lint and formal Auth fixed-source read review reused; no independent9 test rerun or device acceptance claimed. No primary leaf drift.",
+  "semantics": "Same existing opener/private database Map. Only existing.readInitialized, no start/retry/open/migrate/recovery or lease/freeze modification. Current Guest/principal/generation/publication/freeze guards before/after awaits and each reader. Returned scope/readCensus/readCaptureInventory only, not rawDB/session. Missing/failed initialization throws, neverzero/empty.",
+  "notProved": [
+    "Complete empty dataset",
+    "Adoption/B identity/QA permission",
+    "Native driver/actual private DB/device/OTP/cloud acceptance"
+  ],
+  "preserved": "Normal open body and prior Auth/Queue/Nickname sources unchanged; no blocked/unapproved code mixed.",
+  "actions": "Source Git only; no DB/Host/SQL/Auth Session/Provider/device."
+}

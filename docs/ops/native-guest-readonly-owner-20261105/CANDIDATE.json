@@ -1,0 +1,43 @@
+{
+  "status": "AUTHOR_LOCAL_PASS_PENDING_AUTH_IDENTITY_READONLY_REVIEW",
+  "base": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "source": "9cc8ea930bf2eae237b3c286d526eb4d99ccdb4e",
+  "leaves": {
+    "src/data/auth/guestLocalWorkspace.ts": "beee5df2e9536f902438877ba23127d710de69895177be58d2e66b0edad4dcac",
+    "src/data/auth/guestLocalWorkspace.test.ts": "2428af8647745df168d7c87210ddcc505fdedfbedbc042dc460488838c8d7bb6"
+  },
+  "diffSHA256": "f45667de9ec0e21515aedad22868445a00d49fca531b1b1062f7f057d5076f64",
+  "signature": "createGuestLocalWorkspaceOpener(...).readInitializedGuestOwner(): Promise<Pick<GuestLocalWorkspace, \"scope\" | \"readCensus\" | \"readCaptureInventory\">>; exported readInitializedGuestOwner binds same singleton opener",
+  "behavior": "Only existing closure databases.get(localId).readInitialized(); missing entry or absent initialization throws DATABASE_NOT_INITIALIZED, never returns an invented zero census. Committed Guest principal/generation rechecked across awaits and on every census invocation. Publication/freeze only read-side reject. No database/raw credentials/session exposed.",
+  "normalOpenBodyByteIdenticalSHA256": "ddb3938d42551a5950b6b8e015177a3ed149eafde5419f7b09e0ab7132d4359f",
+  "validation": {
+    "focusedNewTests": "5 PASS /116 skipped; real SQLite/direct factories",
+    "selectedRegressions": "9 PASS /112 skipped including all5 new + normal saved close/reopen/current scope + existing census paths;1.61s",
+    "scopeTypes": "Two-root TypeScript --noEmit PASS",
+    "eslint": "Two leaves PASS/zero output",
+    "diffCheck": "PASS"
+  },
+  "covered": [
+    "No initialized owner/no open or recovery factory calls",
+    "Wrong scope and foreign Guest refuse",
+    "Existing exact SQLite owner census/capture inventory; total_changes and schema rows unchanged",
+    "Inventory freeze rejected without retiring/releasing it",
+    "Stale handle principal/generation rejects",
+    "Pending init same promise: generation changed after both principal reads before resolved database refuses; no duplicate open",
+    "Failed initialization not retried by getter"
+  ],
+  "notPerformed": [
+    "Device/build/install/launch",
+    "OTP/Auth/Cloud/API",
+    "Guest init from getter",
+    "Migrations/recovery/publication inspection from getter",
+    "Freeze/resume or inventory lease creation from getter",
+    "New opener/map or DB/Session/Keychain copying"
+  ],
+  "limits": [
+    "Read-only handle is not complete empty/Adoption/Session install qualification",
+    "Existing census may report unsupported data/blockers, never coerced to zero",
+    "Auth owns review of identity/readonly two-leaf boundary; author PASS is not independent approval"
+  ],
+  "recordedAtUTC": "2026-11-05T03:13:36.426515+00:00"
+}
