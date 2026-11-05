@@ -41,6 +41,19 @@
       "summary": "AuthHTTP actualnormalJWTverifier→typedCoreport read/execute/recover→strictCanonicalresponse localMock PASS38tests/typeslint. SOURCE_ONLY, defaultclosed/unmounted; noSQL/Hosted/device acceptanceupgrade. C04Primaryunchanged.",
       "next_action": "Parentreview exactHTTP2Authfiles, then Root1sourceintegration withPGdependencyseparate. Noactivation/window/OTP from thiscandidate.",
       "evidence_sha256": "f1ba31ecbce732775af791a3a28b99b51b5f1e225977e861c4fb508c6b5f648a"
+    },
+    {
+      "event_id": "auth-c03-nickname-optional-apphook-local-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "PROGRESS",
+      "reported_at": "2026-11-05T03:05:54.998446+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "supersedes_event_id": "auth-c03-self-nickname-http-dispatch-local-20261105-v1",
+      "summary": "Exact9line optionalnicknameport apppatch on freshmaina857;6temporary-target Mocktests/typeslintPASS. Undefinedport baseline404/noauth/noHandler preserved. SOURCE_ONLY, sharedapp notwritten, noRuntime/SQL/Hosted/deviceactivation. C04Primaryindependent.",
+      "next_action": "Parentreview exactpatch then Root1uniqueWriter freshpreimageCAS/sourceintegration. Root2installNOT_READY; do not inject liveport or openwindow.",
+      "evidence_sha256": "a487f62e6b478fbd203526d42522218ced2d902f01476668fe83f090604023fa"
     }
   ],
   "parent_review": {

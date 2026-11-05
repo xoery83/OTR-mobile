@@ -1,0 +1,46 @@
+--- a/backend/src/app.ts
++++ b/backend/src/app.ts
+@@ -8,6 +8,7 @@
+   type AccountProfileBootstrapPort,
+ } from "./accountProfileBootstrap";
+ import { accountProfileBootstrapPath } from "@/data/api/accountProfileContracts";
++import { createSelfTripNicknameHttpHandler, isSelfTripNicknamePath, type SelfTripNicknamePort } from "./selfTripNicknameHttp";
+ import { privateAccountProfilePath } from "@/data/api/privateAccountProfileContracts";
+ import {
+   isPrivateAccountProfilePath,
+@@ -688,6 +689,7 @@
+   captureMaterialCustody?: CaptureMaterialCustody;
+   accountProfileBootstrapPort?: AccountProfileBootstrapPort;
+   privateAccountProfilePort?: PrivateAccountProfilePort;
++  selfTripNicknamePort?: SelfTripNicknamePort;
+   tripCreatePort?: TripCreatePort;
+   tripMetadataPort?: TripMetadataPort;
+   tripMetadataV2Port?: TripMetadataV2Port;
+@@ -2476,6 +2478,7 @@
+   captureMaterialCustody,
+   accountProfileBootstrapPort,
+   privateAccountProfilePort,
++  selfTripNicknamePort,
+   tripCreatePort,
+   tripMetadataPort,
+   tripMetadataV2Port,
+@@ -2488,6 +2491,9 @@
+   log,
+   now = Date.now,
+ }: BackendDependencies) {
++  const selfTripNicknameHttp = selfTripNicknamePort
++    ? createSelfTripNicknameHttpHandler(gateway, selfTripNicknamePort)
++    : undefined;
+   type MyLedgerFlight = {
+     promise: ReturnType<DevBackendGateway["readMyLedger"]>;
+     joinCount: number;
+@@ -2580,6 +2586,9 @@
+             ? guestAdoptionRuntime.ports
+             : undefined,
+         ))!;
++      } else if (selfTripNicknameHttp && isSelfTripNicknamePath(url.pathname)) {
++        route = "/v1/trips/:tripId/persons/:personId/self-nickname/:resource";
++        response = (await selfTripNicknameHttp(request))!;
+       } else if (isPrivateAccountProfilePath(url.pathname)) {
+         route = privateAccountProfilePath;
+         const actor = await authenticateNormalAccount(request, gateway);

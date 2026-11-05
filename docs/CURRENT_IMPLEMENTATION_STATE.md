@@ -26,14 +26,16 @@ without rerunning or upgrading Mock evidence. Formal Core Backend/PG port and Na
 integration remain pending under request `AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01`.
 Handoff `docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json` selects4 Auth
 files+docs; Canonical2leaf is Root1 dependency, never whole-branch overwrite or activation.
-Auth HTTP full typed-port Handler candidate `1831018a` is parent-reviewed
-`NO_BLOCKER_FOR_UNMOUNTED_AUTH_HTTP_SOURCE_ONLY`;38 direct Mock tests/TS/lint passed,
-not rerun during review. Existing normalJWT verifier is actually called; no route mount
-or activation. Auth4consumer is integrated on main `98e1d3da`, Canonical on `8907fb7b`.
-Next is Root1 serial Source integration of exact2 Auth HTTPfiles+docs, confirming fresh
-main Auth exports and separate Core PG dependency50f; later Root2 protected qualification
-is independent and not granted. C04 freshB preparation continues separately.
-Handoff: `docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json`.
+Auth source pins are actual main receipts: Canonical `8907fb7b`, Auth4consumer
+`98e1d3da`, Core PG `2f53ffc9`, HTTP `a36bf988`, Guest observer/latest `a857481b`.
+No unchanged suites rerun. The optional app mount now has an exact9-line sourcepatch
+candidate against actuala857 app (pre6cbdfafa/postb6a020b6),6 Mock mount tests/types/lint
+PASS. Portundefined retains priorroute404; no Handler/connection/env write activation.
+Patch only, sharedapp/Startup untouched; parentreview and Root1serialfreshCAS pending.
+Root2 install remains NOT_READY, no runtime/SQL activation authority follows.
+Packet: `docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/`.
+C04freshB preparation and Native's delegated readonlyworkspace leaf remain independent.
+
 MC actual next=null/candidates=[]; no new Ready task was claimed or invented.
 
 MCP support47a3d2ee/fad82f42 is source-only reviewed, NOT_INTEGRATED/NOT_LIVE_READY;

@@ -2,7 +2,7 @@
   "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
   "primary": "AUTH-C04",
   "childId": "/root/auth_distinct_p1_e2e_20261105",
-  "status": "AUTH_HTTP_SOURCE_PARENT_REVIEWED_WAITING_ROOT1_SERIAL_SOURCE_INTEGRATION",
+  "status": "DEFAULT_CLOSED_APP_PATCH_LOCAL_PASS_WAITING_PARENT_REVIEW_ROOT1_FRESH_CAS",
   "evidenceSHA256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192",
   "sourceHashes": {
     "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
@@ -42,5 +42,24 @@
       "Apply exact2AuthHTTPfiles+docs, not wholeAuthbranch. PGleaf is Root1own dependency: exclude if already onmain, do not overwrite",
       "No sharedapp/startup/route mount or runtimeconfig/SQL/install/activation is part of thispacket"
     ]
+  },
+  "appHook": {
+    "evidence": "docs/ops/auth-c03-self-nickname-20261105/app-mount-candidate/LOCAL_EVIDENCE.json",
+    "evidenceSHA256": "a487f62e6b478fbd203526d42522218ced2d902f01476668fe83f090604023fa",
+    "sourceMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+    "preSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+    "postSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf",
+    "sourceLines": 9,
+    "sharedAppWritten": false,
+    "defaultUndefined": "Baseline404/noauth/noHandler/noConnection",
+    "tests": "6MockPASS/typeslintPASS",
+    "next": "Parentreview exact9linepatch, then Root1onlyfreshCAS/sourceintegration; noRoot2activation whileinstallNOT_READY"
+  },
+  "actualSourcePins": {
+    "Canonical": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+    "AuthConsumer": "98e1d3daead2b6d6661a5a477ffc5857591f6ddb",
+    "CorePG": "2f53ffc9cbd8839791e89d05c6933a9bd35dad59",
+    "AuthHTTP": "a36bf98806c5000e732d1f4ae9eba89326b9afdb",
+    "GuestCensusLatestMain": "a857481b446fbad8ec8eff34fea174f3f966de43"
   }
 }

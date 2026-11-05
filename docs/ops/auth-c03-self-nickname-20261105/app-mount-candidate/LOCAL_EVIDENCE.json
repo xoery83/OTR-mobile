@@ -1,0 +1,51 @@
+{
+  "requestId": "AUTH-C03-NICKNAME-DEFAULT-CLOSED-APP-HOOK-20261105",
+  "primary": "AUTH-C04_UNCHANGED",
+  "status": "EXACT_PATCH_LOCAL_MOCK_PASS_PARENT_REVIEW_PENDING",
+  "preimage": {
+    "sourceMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+    "target": "backend/src/app.ts",
+    "preSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+    "postSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf",
+    "patchSHA256": "dbb443ed2a18325a2503d86f532f828c672e2e45945e81a102e47c6edd3f7763",
+    "sharedFileWritten": false,
+    "default": "Portundefined -> nohandler/noNicknamebranch; existing404/unrelatedbehavior preserved. No defaultconnection/env/Startup activation.",
+    "hook": "Existingfeature-specific optionalPort pattern; MCPexistinghook is ingressrestricted so not reused.",
+    "newSourceLines": 9
+  },
+  "patch": "APP_OPTIONAL_PORT.patch",
+  "actualDelta": "9insertedlines only: import existingHTTPfactory/matcher/type; one optional selfTripNicknamePort; destructure; oncefactory onlyifportexists; guardedbranch dispatching exact3routes. ExistingMCPhook ingressrestricted, not repurposed. No newruntimewrapper/authenticator/connection/env logic.",
+  "callContract": "createDevBackendHandler({gateway,selfTripNicknamePort:explicitQualifiedExistingPort,...otherexistingdeps}); caller must separately hold proper qualification. Undefinedport creates nohandler/nicknamebranch, preserving original404baseline and noAuthcall for these previouslyunknownpaths. Never derive from coreConnection/env/defaultPGfactory.",
+  "tests": {
+    "direct": "6PASS backend/src/selfTripNicknameMount.test.ts",
+    "scopedTypecheck": "PASS test/fixture andtheir dependencies",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "actualTemporaryApply": "gitapply--check+apply onfixedmainapp in/private/tmp; pre/posthashes asserted, actualpatchedModule imported and exercised alongside unpatchedbaseline; realapp unchanged. Tempfixture removed aftertests.",
+    "defaultClosed": "All3routes same404/errorbody asbaseline (perrequestUUID independently validated/normalized), no verifiercall, noportcall or coreConnection access. Explicitport:1normalJWTvalidation/request, exacttypedport method, requestID/noStore/safelog; invalidSession/anonymous denied; decoder/CoreUNKNOWN semantics retained; unrelatedroute unchanged.",
+    "testFixtureScope": "Exactmain app; existingownsource dependencies symlinked, only missingfixed-main SourcePng source dependencies extracted into disposabletarget. No source sync tosharedworktree or unrelatedproduct tests. Not wholemain integration/build proof.",
+    "notRerun": "No38HTTP/38consumer/23PG/14Core/GuestE2E reruns"
+  },
+  "sourceHashes": {
+    "backend/src/__fixtures__/selfTripNicknameMountCandidate.ts": "2658766f91f4946ddc89cf3d58e392947f72fb35dfe399cc1fd44bf62a687608",
+    "backend/src/selfTripNicknameMount.test.ts": "56ca15351a6412ab08277300639cf72563c8fa9e9cd8d896f49a54b8d7194fd2"
+  },
+  "sourcePins": {
+    "Canonical": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+    "AuthConsumer": "98e1d3daead2b6d6661a5a477ffc5857591f6ddb",
+    "CorePG": "2f53ffc9cbd8839791e89d05c6933a9bd35dad59",
+    "AuthHTTP": "a36bf98806c5000e732d1f4ae9eba89326b9afdb",
+    "GuestCensusLatestMain": "a857481b446fbad8ec8eff34fea174f3f966de43"
+  },
+  "Root1Integration": "UniqueWriterfreshpreimage must match beforehash; apply exactpatch serially, preserveallconcurrentSource/Native/MCP changes, no wholebranch overwrite. Scopedfreshmaintypes/tests remainRoot1 responsibility. This candidate contains no directappfile edit.",
+  "protectedBoundary": "Root2installNOT_READY. NoSQL/RLS/GRANT/runtimeconfig/activation/newWindow/OTP/device capability. Even sourcehook merged, Startupdoesnotinjectport; independentprotectedqualification required before providing liveport.",
+  "qualification": "SOURCEPATCH+MockONLY;notHosted/Native/OwnerUXPASS",
+  "review": "PENDING_PARENT",
+  "actions": {
+    "sharedAppWrites": 0,
+    "bootstrapEnvIndexChanges": 0,
+    "HostedSQL": 0,
+    "credentialSessionOTP": 0,
+    "device": 0
+  }
+}
