@@ -2169,6 +2169,198 @@ it("refuses to reuse a cancelled checkpoint as a fresh ready handoff and preserv
   await inventory.resumeGuestBeforePublication();
 });
 
+async function useRegisteredSchema76() {
+  const actual = await vi.importActual<typeof import("../db/migrations")>(
+    "../db/migrations",
+  );
+  const registered = actual.migrations.filter(({ id }) => id <= 76);
+  expect(registered.at(-1)).toMatchObject({
+    id: 76,
+    name: "capture_file_png_photo_decisions",
+  });
+  const previous = migrations.splice(0, migrations.length, ...registered);
+  cleanups.push(() => {
+    migrations.splice(0, migrations.length, ...previous);
+  });
+}
+
+it("installs and cold-restores a normal local Session from an empty migrated schema76 Guest", async () => {
+  await useRegisteredSchema76();
+  const { createAuthRepository } = await import("./authSessionRepository");
+  const { createAccountSwitchCoordinator } = await import("./accountSwitchCoordinator");
+  const f = fixture();
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: async (key: string) => values.get(key) ?? null,
+    setItem: async (key: string, value: string) => {
+      values.set(key, value);
+    },
+    deleteItem: async (key: string) => {
+      values.delete(key);
+    },
+  };
+  const open = f.newOpener();
+  const repo = createAuthRepository(storage, () => f.guestId, {
+    async prepareEmptyGuest(localId) {
+      expect(localId).toBe(f.guestId);
+      return (await open()).prepareEmptySessionInstall();
+    },
+  });
+  expect((await repo.readLocalAuthSnapshot()).principal).toEqual({
+    kind: "GUEST",
+    localId: f.guestId,
+  });
+  const workspace = await open();
+  const observer = await open.readInitializedGuestOwner();
+  expect(await observer.readEmptySessionInstallMetadata()).toEqual({
+    sqliteVersion: 76,
+    knownLayout: true,
+    nonBookkeepingTableCount: expect.any(Number),
+    anyNonempty: false,
+    capture: { status: "COUNTED", inboxRows: 0, payloadRows: 0 },
+  });
+  expect(
+    f.opened[0].sql.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all(),
+  ).toEqual(migrations.map(({ id, name }) => ({ id, name })));
+  expect(
+    (await workspace.readCensus(completeExternalInventory(workspace))).blockers,
+  ).toContain("SQLITE_SCHEMA_UNSUPPORTED");
+
+  const accountId = randomUUID();
+  const coordinator = createAccountSwitchCoordinator({
+    pauseSync: async () => {},
+    restartSync: async () => {},
+    readSession: repo.readLocalSession,
+    writeSession: repo.writeLocalSession,
+    prepareSessionInstall: repo.prepareSessionInstall,
+    clearSession: repo.clearLocalSession,
+    selectAccount: repo.selectAccount,
+    adoptLocalState: vi.fn(),
+    clearInMemoryState: vi.fn(),
+    bootstrapAccount: async () => {},
+  });
+  await coordinator.activateSession({
+    accessToken: "unit-no-network",
+    refreshToken: "unit-no-network",
+    expiresAt: "2026-11-06T00:00:00Z",
+    identity: { userId: accountId, displayName: "", email: "qa@example.test" },
+  });
+  expect((await createAuthRepository(storage).readLocalAuthSnapshot()).principal).toEqual({
+    kind: "ACCOUNT",
+    accountId,
+  });
+});
+
+it.each([
+  "wrong migration name",
+  "missing prior migration",
+  "missing trigger",
+  "altered trigger",
+  "saved Trip",
+] as const)("rejects a migrated schema76 Guest with %s", async (kind) => {
+  await useRegisteredSchema76();
+  const f = fixture();
+  const opener = f.newOpener();
+  const workspace = await opener();
+  const observer = await opener.readInitializedGuestOwner();
+  const { sql } = f.opened[0];
+  if (kind === "wrong migration name")
+    sql.exec("UPDATE schema_migrations SET name='unqualified' WHERE id=76");
+  if (kind === "missing prior migration")
+    sql.exec("DELETE FROM schema_migrations WHERE id=74");
+  if (kind === "missing trigger" || kind === "altered trigger")
+    sql.exec("DROP TRIGGER capture_photo_decision_scope_insert");
+  if (kind === "altered trigger")
+    sql.exec(
+      "CREATE TRIGGER capture_photo_decision_scope_insert BEFORE INSERT ON capture_photo_import_decisions BEGIN SELECT 1; END",
+    );
+  if (kind === "saved Trip") await workspace.trips.createTrip(tripInput());
+
+  expect(await observer.readEmptySessionInstallMetadata()).toMatchObject({
+    sqliteVersion: 76,
+    knownLayout: kind === "saved Trip",
+    anyNonempty: kind === "saved Trip",
+  });
+  const before = sql.prepare("SELECT * FROM local_trip_containers").all();
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+    "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+  );
+  expect(sql.prepare("SELECT * FROM local_trip_containers").all()).toEqual(before);
+  expect(await workspace.trips.listTrips()).toHaveLength(kind === "saved Trip" ? 1 : 0);
+});
+
+it("counts nonempty schema76 Capture tables without selecting any business data", async () => {
+  await useRegisteredSchema76();
+  const f = fixture();
+  const opener = f.newOpener();
+  const workspace = await opener();
+  await captureFixture(f);
+  await captureFixture(f, { orphan: true });
+  const observer = await opener.readInitializedGuestOwner();
+  const database: CoreDatabase & MigrationDatabase = await f.open.mock.results[0].value;
+  const first = vi.spyOn(database, "getFirstAsync");
+  const all = vi.spyOn(database, "getAllAsync");
+  const execute = vi.spyOn(database, "execAsync");
+  const run = vi.spyOn(database, "runAsync");
+  const transaction = vi.spyOn(database, "withTransactionAsync");
+  const metadata = await observer.readEmptySessionInstallMetadata();
+  expect(metadata).toEqual({
+    sqliteVersion: 76,
+    knownLayout: true,
+    nonBookkeepingTableCount: expect.any(Number),
+    anyNonempty: true,
+    capture: { status: "COUNTED", inboxRows: 1, payloadRows: 2 },
+  });
+  const selects = [...first.mock.calls, ...all.mock.calls].map(([sql]) => sql);
+  expect(selects).toContain('SELECT count(*) AS n FROM "local_capture_inbox"');
+  expect(selects).toContain('SELECT count(*) AS n FROM "local_capture_payloads"');
+  expect(selects.every((sql) =>
+    /^(SELECT MAX\(id\) AS id FROM schema_migrations|SELECT (?:id, )?name FROM schema_migrations|SELECT (?:1 AS present|name|sql) FROM sqlite_master|SELECT count\(\*\) AS n FROM ")/.test(sql),
+  )).toBe(true);
+  expect(transaction).toHaveBeenCalledOnce();
+  expect(execute).not.toHaveBeenCalled();
+  expect(run).not.toHaveBeenCalled();
+  expect(f.open).toHaveBeenCalledOnce();
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow(
+    "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+  );
+});
+
+it.each(["local_capture_inbox", "local_capture_payloads"] as const)(
+  "reports unknown schema76 Capture counts when %s is missing",
+  async (table) => {
+    await useRegisteredSchema76();
+    const f = fixture();
+    const opener = f.newOpener();
+    await opener();
+    const { sql } = f.opened[0];
+    sql.exec(`PRAGMA foreign_keys=OFF; DROP TABLE ${table}; PRAGMA foreign_keys=ON;`);
+    const observer = await opener.readInitializedGuestOwner();
+    expect(await observer.readEmptySessionInstallMetadata()).toMatchObject({
+      sqliteVersion: 76,
+      capture: { status: "UNKNOWN" },
+    });
+  },
+);
+
+it("rejects an unavailable schema76 business row count instead of reporting an empty result", async () => {
+  await useRegisteredSchema76();
+  const f = fixture();
+  const opener = f.newOpener();
+  await opener();
+  const observer = await opener.readInitializedGuestOwner();
+  const database: CoreDatabase & MigrationDatabase = await f.open.mock.results[0].value;
+  const original = database.getFirstAsync.bind(database);
+  vi.spyOn(database, "getFirstAsync").mockImplementation((sql, ...params) =>
+    sql === 'SELECT count(*) AS n FROM "local_capture_payloads"'
+      ? Promise.resolve(null)
+      : original(sql, ...params),
+  );
+  await expect(observer.readEmptySessionInstallMetadata()).rejects.toThrow(
+    "GUEST_EMPTY_SESSION_COUNT_UNAVAILABLE",
+  );
+});
+
 it("qualifies only real empty schema74 under the exact transition without nested gate", async () => {
   const { beginAccountTransition, endAccountTransition } =
     await import("./accountRequestContext");
@@ -2492,7 +2684,12 @@ it("readonly owner reuses initialized SQLite and reads census without writes, mi
   const before = sql.prepare("SELECT total_changes() AS n").get();
   const schema = sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
   const owner = await opener.readInitializedGuestOwner();
-  expect(Object.keys(owner).sort()).toEqual(["readCaptureInventory", "readCensus", "scope"]);
+  expect(Object.keys(owner).sort()).toEqual([
+    "readCaptureInventory",
+    "readCensus",
+    "readEmptySessionInstallMetadata",
+    "scope",
+  ]);
   expect(owner.scope).toEqual(workspace.scope);
   expect((await owner.readCensus()).totals.trips).toBe(1);
   expect(await owner.readCaptureInventory()).toEqual(await workspace.readCaptureInventory());
@@ -2513,9 +2710,13 @@ it("readonly owner fences an existing handle after principal or generation chang
   const owner = await opener.readInitializedGuestOwner();
   f.setPrincipal({ kind: "GUEST", localId: randomUUID() });
   await expect(owner.readCensus()).rejects.toThrow("GUEST_LOCAL_SCOPE_CHANGED");
+  await expect(owner.readEmptySessionInstallMetadata()).rejects.toThrow(
+    "GUEST_LOCAL_SCOPE_CHANGED",
+  );
   f.setPrincipal({ kind: "GUEST", localId: f.guestId });
   advanceAccountGeneration();
   await expect(owner.readCaptureInventory()).rejects.toThrow("Account changed");
+  await expect(owner.readEmptySessionInstallMetadata()).rejects.toThrow("Account changed");
   expect(f.open).toHaveBeenCalledTimes(1);
 });
 

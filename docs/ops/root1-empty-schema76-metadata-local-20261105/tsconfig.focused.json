@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "../../../src/data/auth/guestLocalWorkspace.ts",
+    "../../../src/data/auth/guestLocalWorkspace.test.ts"
+  ],
+  "exclude": [
+    "../../../node_modules"
+  ]
+}

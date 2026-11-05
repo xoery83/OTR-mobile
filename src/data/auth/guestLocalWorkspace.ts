@@ -35,6 +35,7 @@ import {
   runMigrations,
   type MigrationDatabase,
 } from "../db/migrationRunner";
+import { migrations } from "../db/migrations";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
   createTripCoreV2Repository,
@@ -53,6 +54,67 @@ import { createTripLocalManualReader } from "../repositories/tripLocalManualRead
 import { createTripDayFeedReader } from "../repositories/tripDayFeedRepository";
 
 type GuestDatabase = CoreDatabase & MigrationDatabase;
+type EmptySessionInstallMetadata = Readonly<{
+  sqliteVersion: number;
+  knownLayout: boolean;
+  nonBookkeepingTableCount: number;
+  anyNonempty: boolean;
+  capture: Readonly<
+    { status: "COUNTED"; inboxRows: number; payloadRows: number } | { status: "UNKNOWN" }
+  >;
+}>;
+
+async function listGuestBusinessTables(database: GuestDatabase) {
+  const tables = await database.getAllAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
+  );
+  return tables.filter(({ name }) => name !== "schema_migrations" && name !== "sqlite_sequence");
+}
+
+async function countGuestTableRows(database: GuestDatabase, name: string) {
+  const quoted = '"' + name.replaceAll('"', '""') + '"';
+  const row = await database.getFirstAsync<{ n: number }>(
+    `SELECT count(*) AS n FROM ${quoted}`,
+  );
+  return row && Number.isSafeInteger(row.n) && row.n >= 0 ? row.n : null;
+}
+
+async function isEmptySessionGuestSchema(database: GuestDatabase, version: number) {
+  if (version !== 76) return isKnownGuestSqliteSchema(database, version);
+  // Migration 76 only changes two Photo75 triggers. This is not Adoption qualification.
+  const registered = migrations.filter(({ id }) => id <= 76);
+  const png = registered.at(-1);
+  if (
+    png?.id !== 76 ||
+    png.name !== "capture_file_png_photo_decisions" ||
+    !(await isKnownGuestSqliteSchema(database, 75))
+  )
+    return false;
+  const applied = await database.getAllAsync<{ id: number; name: string }>(
+    "SELECT id, name FROM schema_migrations ORDER BY id",
+  );
+  if (
+    applied.length !== registered.length ||
+    registered.some(({ id, name }, index) => {
+      const entry = applied[index];
+      return entry?.id !== id || entry.name !== name;
+    })
+  )
+    return false;
+  const expectedTriggers = png.sql
+    .trim()
+    .split(/\n(?=CREATE TRIGGER )/)
+    .slice(1)
+    .map((statement) => statement.trimEnd().replace(/;$/, ""));
+  const actualTriggers = await database.getAllAsync<{ sql: string }>(
+    "SELECT sql FROM sqlite_master WHERE type='trigger' AND tbl_name='capture_photo_import_decisions' AND name IN ('capture_photo_decision_scope_insert','capture_photo_decision_scope_update') ORDER BY name",
+  );
+  return (
+    expectedTriggers.length === 2 &&
+    actualTriggers.length === 2 &&
+    expectedTriggers.every((sql, index) => actualTriggers[index]?.sql === sql)
+  );
+}
 export async function preparePublishedGuestSession(
   localId: string,
   targetAccountId: string,
@@ -198,21 +260,10 @@ export function createGuestLocalWorkspaceOpener(deps: {
               throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
             await database.withTransactionAsync(async () => {
               const version = await getSchemaVersion(database);
-              if (!(await isKnownGuestSqliteSchema(database, version)))
+              if (!(await isEmptySessionGuestSchema(database, version)))
                 throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
-              const tables = await database.getAllAsync<{ name: string }>(
-                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
-              );
-              for (const { name } of tables) {
-                if (name === "schema_migrations" || name === "sqlite_sequence") continue;
-                const quoted = '"' + name.replaceAll('"', '""') + '"';
-                if (
-                  (
-                    await database.getFirstAsync<{ n: number }>(
-                      `SELECT count(*) AS n FROM ${quoted}`,
-                    )
-                  )?.n !== 0
-                )
+              for (const { name } of await listGuestBusinessTables(database)) {
+                if ((await countGuestTableRows(database, name)) !== 0)
                   throw Error("GUEST_ADOPTION_PREFLIGHT_REQUIRED");
               }
             });
@@ -363,7 +414,9 @@ export function createGuestLocalWorkspaceOpener(deps: {
   // Observe only this opener's existing initialization; never create/recover a workspace.
   async function readInitializedGuestOwner(): Promise<
     Pick<Awaited<ReturnType<typeof openGuestLocalWorkspace>>,
-      "scope" | "readCensus" | "readCaptureInventory">
+      "scope" | "readCensus" | "readCaptureInventory"> & {
+        readEmptySessionInstallMetadata(): Promise<EmptySessionInstallMetadata>;
+      }
   > {
     const generation = getAccountGeneration();
     const principal = await deps.readPrincipal();
@@ -389,6 +442,38 @@ export function createGuestLocalWorkspaceOpener(deps: {
       scope,
       readCensus: createGuestDatasetCensus(database, localOwner, scope),
       readCaptureInventory: createGuestCaptureInventory(database, localOwner, scope),
+      async readEmptySessionInstallMetadata() {
+        await localOwner();
+        let metadata!: EmptySessionInstallMetadata;
+        await database.withTransactionAsync(async () => {
+          const sqliteVersion = await getSchemaVersion(database);
+          const knownLayout = await isEmptySessionGuestSchema(database, sqliteVersion);
+          const tables = await listGuestBusinessTables(database);
+          let anyNonempty = false;
+          let inboxRows: number | undefined;
+          let payloadRows: number | undefined;
+          for (const { name } of tables) {
+            const count = await countGuestTableRows(database, name);
+            if (count === null) throw Error("GUEST_EMPTY_SESSION_COUNT_UNAVAILABLE");
+            if (count > 0) anyNonempty = true;
+            if (name === "local_capture_inbox") inboxRows = count;
+            if (name === "local_capture_payloads") payloadRows = count;
+          }
+          const capture =
+            inboxRows === undefined || payloadRows === undefined
+              ? ({ status: "UNKNOWN" } as const)
+              : ({ status: "COUNTED", inboxRows, payloadRows } as const);
+          metadata = Object.freeze({
+            sqliteVersion,
+            knownLayout,
+            nonBookkeepingTableCount: tables.length,
+            anyNonempty,
+            capture: Object.freeze(capture),
+          });
+        });
+        await localOwner();
+        return metadata;
+      },
     });
   }
   return Object.assign(openGuestLocalWorkspace, { readInitializedGuestOwner });

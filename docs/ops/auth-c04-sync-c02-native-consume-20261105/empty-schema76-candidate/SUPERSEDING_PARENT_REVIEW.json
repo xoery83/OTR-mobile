@@ -1,0 +1,19 @@
+{
+  "candidate": "ed5178f1",
+  "supersedes": "75dac2ef",
+  "reviewer": "Auth parent",
+  "verdict": "NO_BLOCKER_FOR_EMPTY_SESSION_SCHEMA76_AND_METADATA_ONLY_SOURCE",
+  "patchSHA256": "beb33214476dbc5148cfeb021842e828aeddb38b5cde28cf852ea9845405148c",
+  "evidenceSHA256": "d3e11a03bb4967981d16b4e57615c8834952c7c023e9afd8d389fe0f2eaf4cd6",
+  "reviewed": [
+    "Exact source patch and added real SQLite cases",
+    "The normal empty install still stops at the first nonzero or unavailable business count",
+    "The observer uses only schema metadata and COUNT in one transaction and keeps existing principal, generation, publication and freeze checks",
+    "The result omits row contents, IDs and table names. Missing Capture tables yield UNKNOWN and unavailable counts reject",
+    "Adoption and Capture payload readers retain their original semantics"
+  ],
+  "testsRerunByParent": false,
+  "authorEvidence": "24 targeted tests, scoped TypeScript and exact-file ESLint passed. Real SQLite query tracing covered nonempty Capture.",
+  "integration": "Apply only the superseding exact patch to matching fresh main preimages. Native should consume the metadata observer in the scoped QA path.",
+  "acceptance": "Local source evidence. Device, real OTP and Hosted acceptance remain pending."
+}
