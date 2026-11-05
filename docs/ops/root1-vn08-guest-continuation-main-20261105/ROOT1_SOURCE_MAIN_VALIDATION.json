@@ -1,0 +1,46 @@
+{
+  "status": "SOURCE_ASSEMBLY_PASS_LOCAL_ACCOUNT_AND_GUEST_ADAPTER_ONLY",
+  "baseMain": "29e64bfdd08af76d1e0b6e6c35b01abc81eba391",
+  "candidate": "577cb45a909b86bfb1f395706f93251c39798f21",
+  "reviewCommit": "715f89028e4c524923ebe59caee77e64bee0396d",
+  "reviewSHA256": "f65cda6f10adbd980404b16be40ad549510bec22e4366eceb855606c6b707f01",
+  "changedLeaves": {
+    "src/data/auth/guestLocalStay.test.ts": {
+      "assemblyPreimage": "5603afdcf1aaded6f47220a98ff7d1b08939b82dc2f07828edd15a7f4ae10cc1",
+      "preimageSha256": "5603afdcf1aaded6f47220a98ff7d1b08939b82dc2f07828edd15a7f4ae10cc1",
+      "candidateSha256": "dab39abbca8583d7613e5758570edb91b16627c0f0cfc03ef9a0b440d2c93324",
+      "candidateBlob": "25757bc082729771dd41c7b438eb87a130646691"
+    },
+    "src/features/day-feed/P1PlanEditor.test.ts": {
+      "assemblyPreimage": "1df15ac3050bab66f2bcb8bef66bd22c446ced887e020eddfddb3120b2378e39",
+      "preimageSha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795",
+      "candidateSha256": "690c182e70bd4368cf60f30eda052bb2570e392ddaf4056e6d41e15d64a8307d",
+      "candidateBlob": "33fcd402339880cfe1b0118163b45dbdf6677b60"
+    }
+  },
+  "allSevenFinalSnapshotHashesMatched": true,
+  "productChanges": 0,
+  "checks": {
+    "vitest": "3 selected PASS / 46 skipped / 2 suites; two component caller cases + ONE real Guest SQLite scenario, not three SQLite cases",
+    "scopedTypes": "PASS; two roots plus dependencies, no full-repository claim",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS",
+    "UIguard": "Reused 29e64bfd PASS: product/UI bytes unchanged"
+  },
+  "reusedEvidence": "Independent 715f8902 and prior e02/256 evidence; no full 178 rerun.",
+  "proof": "Normal committed Guest facade/real Guest SQLite P1 same-ID Edit explicit Apple acceptance/Reader Header/cold reopen/principal UUID/syncAllowed=false/P3 census rejection unchanged. Component proof is caller-only.",
+  "limits": [
+    "Source/local adapter only; no Device or Owner VN08 acceptance",
+    "No Cloud/Adoption/actual Apple query",
+    "Historical text-only address requires explicit reselection and Save, no guess/backfill",
+    "VN08-02 excluded"
+  ],
+  "initialHarnessFailure": "EPERM Vite shared-cache startup preserved; authorized local test succeeded; not a product/test assertion failure",
+  "actions": {
+    "Hosted": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "Device": 0,
+    "CoreOrAuthProductChanges": 0
+  }
+}

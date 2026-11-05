@@ -1,3 +1,8 @@
+import { getAccountGeneration } from "./accountGeneration";
+import {
+  dayHeaderDestinationRead,
+  resolveDayHeaderDestination,
+} from "@/features/day-feed/dayHeaderDestinationRead";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -8,6 +13,8 @@ import { createGuestLocalWorkspaceOpener } from "./guestLocalWorkspace";
 import * as guestWorkspace from "./guestLocalWorkspace";
 import {
   createDefaultManualStayRepository,
+  createDefaultManualPlanRepository,
+  readTripDayFeed,
   confirmGuestStaySaved,
 } from "./localTripAccess";
 import type { LaunchIdentity } from "./guestPrincipalRepository";
@@ -155,4 +162,120 @@ it("Guest P3 reuses Stay/Core/Queue and preserves the same Item through disk reo
     endTime: "10:00",
   });
   expect(restored.itemId).toBe(saved.itemId);
+});
+
+it("normal Guest P1 same-address Apple confirmation shares P3 city projection and survives its own disk reopen", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const trip = { ...tripInput(), startDate: "2026-11-05", endDate: "2026-11-08" };
+  await workspace.trips.createTrip(trip);
+  const ownerBefore = structuredClone(state.principal);
+  const opened = vi
+    .spyOn(guestWorkspace, "openGuestLocalWorkspace")
+    .mockResolvedValue(workspace);
+  const plans = await createDefaultManualPlanRepository(),
+    draft = await plans.createDraft(trip.tripId);
+  const address = "181 Westhaven Dr, Westhaven, Auckland 1011, New Zealand";
+  const selection = (itemId: string) => ({
+    intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const,
+    draft: {
+      authority: "UNACCEPTED_PROVIDER_DRAFT" as const,
+      binding: {
+        tripId: trip.tripId,
+        itemId,
+        accountGeneration: getAccountGeneration(),
+        inputRevision: 1,
+        location: address,
+      },
+      provider: "apple" as const,
+      selectionSessionId: randomUUID(),
+      selectionGeneration: 1,
+      addressComponents: {
+        locality: "Auckland",
+        administrativeArea: "Auckland",
+        country: "New Zealand",
+        countryCode: "NZ",
+      },
+      point: { latitude: -36.836, longitude: 174.747 },
+    },
+  });
+  const input = {
+    ...draft.fields,
+    title: "Guest Harbour Walk",
+    startDate: "2026-11-05",
+    endDate: "2026-11-05",
+    location: address,
+  };
+  const legacy = await plans.save(draft, input);
+  const plainRead = await (await readTripDayFeed()).trip(trip.tripId);
+  expect(
+    resolveDayHeaderDestination(dayHeaderDestinationRead(plainRead)!, "2026-11-05").kind,
+  ).toBe("unresolved");
+  const edit = await plans.read(trip.tripId, legacy.itemId);
+  expect(edit.fields.location).toBe(address);
+  const selected = selection(edit.itemId),
+    saved = await plans.save(edit, edit.fields, selected);
+  expect(saved).toMatchObject({ itemId: draft.itemId, localStatus: "PENDING" });
+  expect(await plans.save(edit, edit.fields, selected)).toEqual(saved);
+  const days = await readTripDayFeed();
+  const read = await days.trip(trip.tripId);
+  expect(read.scope.accountId).toBe(f.guestId);
+  expect(
+    read.localManual?.items.find((item) => item.itemId === draft.itemId)?.place,
+  ).toMatchObject({
+    acceptedAddressLocality: "Auckland",
+    acceptedAddressCountry: "New Zealand",
+    spatialProvenanceRefs: {
+      source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
+      acceptance: "USER_CONFIRMED_SAVE",
+    },
+  });
+  expect(
+    resolveDayHeaderDestination(dayHeaderDestinationRead(read)!, "2026-11-05"),
+  ).toEqual({ kind: "single", source: "activity", label: "Auckland" });
+  expect(
+    resolveDayHeaderDestination(dayHeaderDestinationRead(read)!, "2026-11-06").kind,
+  ).toBe("unresolved");
+  const stay = await createDefaultManualStayRepository(),
+    sd = await stay.createDraft(trip.tripId);
+  await stay.save(
+    sd,
+    {
+      ...sd.fields,
+      title: "Guest Harbour Stay",
+      startDate: "2026-11-06",
+      endDate: "2026-11-08",
+      location: address,
+    },
+    selection(sd.itemId),
+  );
+  expect(
+    resolveDayHeaderDestination(
+      dayHeaderDestinationRead(await days.trip(trip.tripId))!,
+      "2026-11-06",
+    ),
+  ).toEqual({ kind: "single", source: "stay", label: "Auckland" });
+  const census = await workspace.readCensus();
+  expect(census.blockers).toContain("UNSUPPORTED_CORE_FAMILY");
+  expect(workspace.syncAllowed).toBe(false);
+  expect(state.principal).toEqual(ownerBefore);
+  f.close();
+  const reopened = await f.newOpener()();
+  opened.mockResolvedValue(reopened);
+  const recoveredPlans = await createDefaultManualPlanRepository();
+  expect((await recoveredPlans.read(trip.tripId, saved.itemId)).fields).toMatchObject(
+    input,
+  );
+  const recoveredRead = await (await readTripDayFeed()).trip(trip.tripId);
+  expect(
+    recoveredRead.localManual?.items.filter((item) => item.itemId === saved.itemId),
+  ).toHaveLength(1);
+  expect(
+    resolveDayHeaderDestination(dayHeaderDestinationRead(recoveredRead)!, "2026-11-05"),
+  ).toEqual({ kind: "single", source: "activity", label: "Auckland" });
+  expect(
+    resolveDayHeaderDestination(dayHeaderDestinationRead(recoveredRead)!, "2026-11-06"),
+  ).toEqual({ kind: "single", source: "stay", label: "Auckland" });
+  expect(reopened.syncAllowed).toBe(false);
+  expect(state.principal).toEqual(ownerBefore);
 });

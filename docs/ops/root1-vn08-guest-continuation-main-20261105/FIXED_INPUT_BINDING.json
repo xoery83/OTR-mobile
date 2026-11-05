@@ -1,0 +1,54 @@
+{
+  "baseMain": "29e64bfdd08af76d1e0b6e6c35b01abc81eba391",
+  "candidate": "577cb45a909b86bfb1f395706f93251c39798f21",
+  "reviewCommit": "715f89028e4c524923ebe59caee77e64bee0396d",
+  "reviewSHA256": "f65cda6f10adbd980404b16be40ad549510bec22e4366eceb855606c6b707f01",
+  "sevenLeaves": {
+    "src/data/auth/guestLocalStay.test.ts": {
+      "assemblyPreimage": "5603afdcf1aaded6f47220a98ff7d1b08939b82dc2f07828edd15a7f4ae10cc1",
+      "preimageSha256": "5603afdcf1aaded6f47220a98ff7d1b08939b82dc2f07828edd15a7f4ae10cc1",
+      "candidateSha256": "dab39abbca8583d7613e5758570edb91b16627c0f0cfc03ef9a0b440d2c93324",
+      "candidateBlob": "25757bc082729771dd41c7b438eb87a130646691"
+    },
+    "src/data/repositories/manualPlanRepository.test.ts": {
+      "assemblyPreimage": "dd17c26d89b7da894a96e488c234401a4f3bd45f71b047ef05d461fb2ce196a3",
+      "preimageSha256": "99b5f2480c2d9e3d0cdb3d1bc74e4bb15ca3cec6e7d0b480bf48774958b6cd2f",
+      "candidateSha256": "dd17c26d89b7da894a96e488c234401a4f3bd45f71b047ef05d461fb2ce196a3",
+      "candidateBlob": "81bbf12cf4c4fdfa97da6c1578dff94b750267a3"
+    },
+    "src/data/repositories/manualPlanRepository.ts": {
+      "assemblyPreimage": "a9c889ff85eb31c0007c80c3625779715926f1ccee1c493b143bbae3b6f82777",
+      "preimageSha256": "4b7f32c908a8c0fe4af240bbcec6176269821b91ffe7cad695f39f4b72a26827",
+      "candidateSha256": "a9c889ff85eb31c0007c80c3625779715926f1ccee1c493b143bbae3b6f82777",
+      "candidateBlob": "91ee9412080a95f0a537aecdd6ac26e3e18b3527"
+    },
+    "src/features/day-feed/P1PlanEditor.test.ts": {
+      "assemblyPreimage": "1df15ac3050bab66f2bcb8bef66bd22c446ced887e020eddfddb3120b2378e39",
+      "preimageSha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795",
+      "candidateSha256": "690c182e70bd4368cf60f30eda052bb2570e392ddaf4056e6d41e15d64a8307d",
+      "candidateBlob": "33fcd402339880cfe1b0118163b45dbdf6677b60"
+    },
+    "src/features/day-feed/P1PlanEditor.tsx": {
+      "assemblyPreimage": "a5435f11cd426929ae18b18f73d3acd5032aa5f8eaf62889d172d2cf1b362939",
+      "preimageSha256": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8",
+      "candidateSha256": "a5435f11cd426929ae18b18f73d3acd5032aa5f8eaf62889d172d2cf1b362939",
+      "candidateBlob": "365b209fc9378f4821980e49f06513c2ab925346"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.test.ts": {
+      "assemblyPreimage": "a942ef18f8ef3ba31f6d162134c77bbdc18c02dc42cec52ac263e42fdd286191",
+      "preimageSha256": "49db2c5b0176177d0e8a4cd5f4d92cbc53621d1e0ae93e838f86d9aa98ab4973",
+      "candidateSha256": "a942ef18f8ef3ba31f6d162134c77bbdc18c02dc42cec52ac263e42fdd286191",
+      "candidateBlob": "c08834f5e480c2e056e21f72b7801e7f1e77e8ab"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.ts": {
+      "assemblyPreimage": "fb871849ad1861f07e662253ebb92be439ad30c6d5d5f91ea129d7858cbae2f2",
+      "preimageSha256": "174ad992a2cbd74ed78075ed268dd78e8cfd929d16c8db7b0f5b88fced90fc75",
+      "candidateSha256": "fb871849ad1861f07e662253ebb92be439ad30c6d5d5f91ea129d7858cbae2f2",
+      "candidateBlob": "f7c7316e54d98854393c7d6b1e3c28ef54cdfa2f"
+    }
+  },
+  "onlyChangedLeaves": [
+    "src/data/auth/guestLocalStay.test.ts",
+    "src/features/day-feed/P1PlanEditor.test.ts"
+  ]
+}

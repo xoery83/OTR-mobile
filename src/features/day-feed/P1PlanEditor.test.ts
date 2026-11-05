@@ -1183,40 +1183,48 @@ it.each(["tripCreate.startTime", "tripCreate.endTime"])(
   },
 );
 
-it("allows an old plain-address P1 Edit to confirm the same Apple address and Save new geography", async () => {
-  const result = reviewedAppleResult(),
-    value = {
-      ...fields(),
-      title: "Legacy Plan",
-      startDate: "2026-11-05",
-      endDate: "2026-11-05",
-      location: result.place.address,
+it.each(["ACCOUNT", "GUEST"] as const)(
+  "allows an old plain-address P1 Edit to confirm the same Apple address and Save new geography (%s)",
+  async (kind) => {
+    if (kind === "GUEST")
+      state.principal = {
+        kind: "GUEST",
+        localId: "00000000-0000-4000-8000-000000000077",
+      };
+    const result = reviewedAppleResult(),
+      value = {
+        ...fields(),
+        title: "Legacy Plan",
+        startDate: "2026-11-05",
+        endDate: "2026-11-05",
+        location: result.place.address,
+      };
+    const draft = {
+      mode: "EDIT",
+      itemId: "00000000-0000-4000-8000-000000000011",
+      fields: value,
+      participantOptions: [],
     };
-  const draft = {
-    mode: "EDIT",
-    itemId: "00000000-0000-4000-8000-000000000011",
-    fields: value,
-    participantOptions: [],
-  };
-  const repo = {
-    save: vi.fn(async () => ({ localStatus: "PENDING", itemId: draft.itemId })),
-  };
-  const p = { ...props(), itemId: draft.itemId, opened: { repository: repo, draft } };
-  await open(p, repo);
-  const sheet = await search(p, "placeSearch.searchLocation");
-  sheet.onConfirm(result);
-  render(p);
-  expect(node("ui.save").disabled).toBe(false);
-  node("ui.save").onPress();
-  await new Promise((resolve) => setImmediate(resolve));
-  expect(repo.save).toHaveBeenCalledWith(
-    draft,
-    value,
-    expect.objectContaining({
-      intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
-      draft: expect.objectContaining({
-        addressComponents: expect.objectContaining({ locality: "Auckland" }),
+    const repo = {
+      save: vi.fn(async () => ({ localStatus: "PENDING", itemId: draft.itemId })),
+    };
+    const p = { ...props(), itemId: draft.itemId, opened: { repository: repo, draft } };
+    await open(p, repo);
+    const sheet = await search(p, "placeSearch.searchLocation");
+    sheet.onConfirm(result);
+    render(p);
+    expect(node("ui.save").disabled).toBe(false);
+    node("ui.save").onPress();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(repo.save).toHaveBeenCalledWith(
+      draft,
+      value,
+      expect.objectContaining({
+        intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+        draft: expect.objectContaining({
+          addressComponents: expect.objectContaining({ locality: "Auckland" }),
+        }),
       }),
-    }),
-  );
-});
+    );
+  },
+);

@@ -1264,3 +1264,7 @@ Reviewed `2c329bbc` pure helper/test integrated on remote-main c988. Exact revie
 ## VN08 Account P1 place + caption source — 5 November 2026
 
 Exact six-leaf `256f90d6` integrated from fresh main `ce054e16`, independent review `e02c5a95`. Real SQLite reopen/place-binding, Header priority and caption assembly: 9 targeted PASS; scoped types/lint/UI guard PASS. **PARTIAL_ACCOUNT_ONLY:** Account P1 selected-place Save adapter and VN08-03 caption source; Header factual fallback source only. Guest P1 Save/local geography/Header remain NOT PROVED and VN08-01 OPEN; Owner VN08 acceptance is not complete. No Core/Schema/Hosted/device change. Receipt: `docs/ops/root1-vn08-account-header-main-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.
+
+## VN08 Guest continuation qualification — 5 November 2026
+
+Tests-only `577cb45a` continuation on `29e64bfd`; prior Account-only statement is retained as historical scope. Independent review `715f8902`; actual assembly 3 selected PASS (two component callers + one real Guest SQLite scenario), scoped types/lint PASS. Seven final snapshots match; three product leaves unchanged, UI guard reused. **LOCAL_ACCOUNT_AND_GUEST_ADAPTER_ONLY:** normal Guest facade, same-ID explicit address reselection/Save, Reader/Header and own-disk cold reopen now covered locally. Device/Owner VN08, Cloud and Adoption remain NOT PASS; historical text-only address requires explicit reselection, no guessed geography. No Hosted/device/product changes. Receipt: `docs/ops/root1-vn08-guest-continuation-main-20261105/ROOT1_SOURCE_MAIN_VALIDATION.json`.

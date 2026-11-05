@@ -1,0 +1,76 @@
+{
+  "requestId": "VISION-VN08-OWNER-R1-20261105-001",
+  "candidateSha": "577cb45a909b86bfb1f395706f93251c39798f21",
+  "baseMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "previousCandidatePreserved": "256f90d66a568b0d3ce3b97399881e07910bc3aa",
+  "scopeCorrection": "Vision actual V-N08 fixture is ownGuest. Prior Account/Core proof alone was partial; this addendum proves the existing normal Guest store/reader seam using isolated Synthetic data, not Owner device acceptance.",
+  "status": "LOCAL_GUEST_AND_ACCOUNT_SEAMS_PASS / DEVICE_AND_OWNER_RETEST_NOT_RUN",
+  "actualTrace": [
+    "P1 component Guest principal search/save caller passes original same-address selection and explicit acceptance through existing Form repository (component mock caller test)",
+    "Guest real factory: localTripAccess.createDefaultManualPlanRepository -> openGuestLocalWorkspace().plan -> existing createManualPlanRepository using committed local Guest owner; no Account Session",
+    "Normal Guest pure-address P1 Create -> existing SQLite/Core/Queue -> normal readTripDayFeed .days -> Header unresolved",
+    "Read same original Guest P1 as Edit, explicitly select same address metadata and Save -> accepted structured city retained -> Header Auckland",
+    "Same request replay retains original Item/operations; same Guest P3 address next day Header Auckland as Stay",
+    "Own test Guest SQLite close/reopen -> same principal/localId, original P1 ID/fields and both day headers; no second object or Account DB",
+    "Guest syncAllowed false; existing saved P3 UNSUPPORTED_CORE_FAMILY census rejection unchanged"
+  ],
+  "actualChecks": {
+    "red": "Original ce054 Native P3-only place fence restored temporarily only in isolated tree: normal Guest same-address P1 Edit throws MANUAL_PLACE_DRAFT_BINDING; final product restored in finally",
+    "green": "2 suites /3selected PASS /46skipped: ACCOUNT and GUEST component caller plus real Guest store scenario",
+    "closestGuestSuite": "1 suite /2PASS including previous P3 Guest durability/census case",
+    "scopedLint": "0 errors /0 warnings",
+    "types": "Only unchanged browser/auth-consent TS7016, no changed roots",
+    "newProductChangesSincePriorCandidate": "NONE; only Guest store test + parameterized component test added",
+    "previousRegression": "Reuse 5s178 product checks and bounded legacy2check from previous packet; overlapping tests not added as unique total"
+  },
+  "notClaimed": [
+    "No real Apple query, Source/Provider/Hosted, device/Owner fixture or Cloud execution",
+    "No Guest adoption/publish qualification or inventory changes; unsaved Guest inventory still contains no fabricated placeSelection facts",
+    "Historically persisted P1 with trusted accepted geography can now display immediately; lost-city pure text needs explicit Apple reselection and Save",
+    "Guest Reader scope.accountId aliases existing local owner key; no Account is created or borrowed"
+  ],
+  "exactNativeLeaves": {
+    "src/data/auth/guestLocalStay.test.ts": {
+      "preimageSha256": "5603afdcf1aaded6f47220a98ff7d1b08939b82dc2f07828edd15a7f4ae10cc1",
+      "candidateSha256": "dab39abbca8583d7613e5758570edb91b16627c0f0cfc03ef9a0b440d2c93324",
+      "candidateBlob": "25757bc082729771dd41c7b438eb87a130646691"
+    },
+    "src/data/repositories/manualPlanRepository.test.ts": {
+      "preimageSha256": "99b5f2480c2d9e3d0cdb3d1bc74e4bb15ca3cec6e7d0b480bf48774958b6cd2f",
+      "candidateSha256": "dd17c26d89b7da894a96e488c234401a4f3bd45f71b047ef05d461fb2ce196a3",
+      "candidateBlob": "81bbf12cf4c4fdfa97da6c1578dff94b750267a3"
+    },
+    "src/data/repositories/manualPlanRepository.ts": {
+      "preimageSha256": "4b7f32c908a8c0fe4af240bbcec6176269821b91ffe7cad695f39f4b72a26827",
+      "candidateSha256": "a9c889ff85eb31c0007c80c3625779715926f1ccee1c493b143bbae3b6f82777",
+      "candidateBlob": "91ee9412080a95f0a537aecdd6ac26e3e18b3527"
+    },
+    "src/features/day-feed/P1PlanEditor.test.ts": {
+      "preimageSha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795",
+      "candidateSha256": "690c182e70bd4368cf60f30eda052bb2570e392ddaf4056e6d41e15d64a8307d",
+      "candidateBlob": "33fcd402339880cfe1b0118163b45dbdf6677b60"
+    },
+    "src/features/day-feed/P1PlanEditor.tsx": {
+      "preimageSha256": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8",
+      "candidateSha256": "a5435f11cd426929ae18b18f73d3acd5032aa5f8eaf62889d172d2cf1b362939",
+      "candidateBlob": "365b209fc9378f4821980e49f06513c2ab925346"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.test.ts": {
+      "preimageSha256": "49db2c5b0176177d0e8a4cd5f4d92cbc53621d1e0ae93e838f86d9aa98ab4973",
+      "candidateSha256": "a942ef18f8ef3ba31f6d162134c77bbdc18c02dc42cec52ac263e42fdd286191",
+      "candidateBlob": "c08834f5e480c2e056e21f72b7801e7f1e77e8ab"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.ts": {
+      "preimageSha256": "174ad992a2cbd74ed78075ed268dd78e8cfd929d16c8db7b0f5b88fced90fc75",
+      "candidateSha256": "fb871849ad1861f07e662253ebb92be439ad30c6d5d5f91ea129d7858cbae2f2",
+      "candidateBlob": "f7c7316e54d98854393c7d6b1e3c28ef54cdfa2f"
+    }
+  },
+  "logSha256": {
+    "GUEST_RED.log": "21a442d17bbd24d0b31907065830948cf2ac085a869566c22aa6ae0ef2160c68",
+    "GUEST_COMPONENT_AND_STORE_GREEN.log": "749feb3ff73034ec07a1e77c4d68798e0b94ce33f2e872e164aa22bdb5dd0051",
+    "GUEST_STORE_SUITE.log": "a2418c56af9df71eb27a2378d9bc6a8bf9b4055fed83640452b73d2cb5fa9795",
+    "GUEST_TYPES.log": "7bc44883c06b4ba39249e74d5eb1799a6ede06dd9cb48f6f4204205364a62241",
+    "GUEST_LINT.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
