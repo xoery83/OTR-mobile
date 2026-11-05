@@ -1,0 +1,11 @@
+{
+  "candidate": "16a4ab7f706d7eefeec98ea0dd7f64951ef32a42",
+  "originalTestFile": "src/data/repositories/tripCoreV2Repository.test.ts",
+  "sourceHash": "52690f980288d4bb703ec41c058c46d58db0de4e72b8be2c4640902ec7d49156",
+  "changeFrom": "UPDATE sync_operations SET failure_category='UNKNOWN',attempt_count=1 WHERE id=?",
+  "changeTo": "UPDATE sync_operations SET last_request_id='review-known-attempt',last_attempt_at='2026-10-12T00:00:01Z' WHERE id=?",
+  "selectedCase": "REVIEW_ONLY same owner new request evidence cannot authorize submit",
+  "remainingSource": "Identical author test/fixture and exact author production imports; all97 other cases skipped",
+  "result": "FAIL expected RECEIPT_ONLY actual RECEIPT/APPLIED",
+  "runAuthority": "Isolated local test only; no original UNKNOWN operation touched"
+}

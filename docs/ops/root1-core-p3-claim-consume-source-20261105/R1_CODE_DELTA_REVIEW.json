@@ -1,0 +1,78 @@
+{
+  "requestId": "P3-CORRECT-CLAIM-CONSUME-INDEPENDENT-CODE-REVIEW-20261105",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "reviewKind": "P3CODE_R1_ONLY_DELTA_WITH_SHARED_PATH_REGRESSION",
+  "recordedAt": "2026-11-05T00:12:33.859545+00:00",
+  "candidate": "0c1be7f55eb818870e8f29d2cddde0c655d59bd0",
+  "parent": "16a4ab7f706d7eefeec98ea0dd7f64951ef32a42",
+  "fixedSourceHashes": {
+    "src/data/repositories/tripCoreV2Repository.ts": "816d8c77116ba3ad6b161a4fde1cf7c2d433576af7e525bde1e3def7a4f719e5",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "39f493b915f44ccfbdbc7f4fe08bd78fe9ec8be28ea3595134623e0394a301d6",
+    "docs/ops/core-p3-claim-consume-impl-20261105/INTERFACE_AND_NATIVE_REQUIREMENTS.md": "7dadac644629d8d2efd8c79a8100ad1b52b6a0bc2c0f4bbf1a07ca776e3f1dcf"
+  },
+  "previousFindingCommit": "d148b8bb",
+  "previousReviewSHA256": "4c64c506b7b2bb1e12eeffc91dd0995aacc4dc56d2bc789d7674505ffe2df885",
+  "contractSecurityReviewSHA256": "212a4be747be4b0b556cb87ba6b6fae2689001dc35871af7854d9414a05ecab1",
+  "verdict": "NO_BLOCKER_SCOPED_CORE_CODE_DELTA",
+  "findings": [],
+  "closedFinding": {
+    "id": "P3CODE-R1",
+    "status": "CLOSED_BY_EXACT_MINTED_POSTIMAGE_CONTEXT_BINDING_AND_CAS",
+    "codeLines": {
+      "fingerprintPostimage": 1122,
+      "plannedPostimage": 1195,
+      "actualMintedReadback": 1256,
+      "consumeCurrentFingerprint": 1393,
+      "consumeCASMetadata": 1408
+    },
+    "verified": [
+      "Claim calculates the exact planned PROCESSING/lastAttempt/lease/updated timestamp postimage without washing existing legitimate dependency metadata. Its current private incarnation + accepted proof fingerprint now commits status, attempt count, all claim times/lease, next/dependency and failure/error/request/first-failed evidence.",
+      "Same SQLite transaction performs full original-row CAS, rereads the actual minted row, validates its actual owner and command, and recomputes fingerprint before returning candidate identity. Postimage drift throws and rolls the transaction back.",
+      "Consume first reads original receipt independently of claim-owner/incarnation eligibility. If null, it compares the current fingerprint to the minted owner commitment, rejects postclaim metadata drift and uses matching metadata in the original intent IN_FLIGHT CAS.",
+      "Private factory/module fence, once-only committed after-gate handoff, no reset on uncertainty and original-operation recovery remain unchanged. Receipt-only claim has null context and cannot pass candidateOwnerContext, so no new submit authority escapes through that route."
+    ]
+  },
+  "independentTests": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts -t 'claim-bound CORRECT' --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+      "passed": 34,
+      "skipped": 69,
+      "failed": 0,
+      "durationSeconds": 3.74,
+      "testSeconds": 3.28,
+      "includes": "Old29 plus exact request/attempt drift, lease extension, washed dependency metadata, legitimate preclaim dependency positive, actual minted postimage rollback; shared concurrency/cold/recovery/commit paths included."
+    },
+    {
+      "command": "Original temporary probe.test.ts, selected REVIEW_ONLY same owner; same file and config as prior RED, production imports now resolve fixed0c1be7f5",
+      "path": "/var/folders/8g/ztcbxp0n3ts4hb0j0r918h500000gp/T/otr-p3-review-probe-jxrbo3ca/probe.test.ts",
+      "probeSHA256": "e3446b43c6384a49b5d4c21670cd715397be02aa0d8467e620f4380c17052967",
+      "fileUnchangedFromPriorRed": true,
+      "priorResult": "1 FAILED/97 SKIPPED at16a4; expected RECEIPT_ONLY but received canonical APPLIED",
+      "passed": 1,
+      "skipped": 97,
+      "failed": 0,
+      "durationSeconds": 0.542,
+      "testSeconds": 0.132,
+      "currentResult": "Exact previous RED now GREEN; no submit and no durable state change on mismatch."
+    }
+  ],
+  "reviewScope": "Only53-line current-attempt postimage delta and associated5 regressions; earlier source/security reviews reused, not a whole-contract/domain audit. Full34 selected once because context hash is shared by claim/consume; one unchanged original probe specifically proves RED-to-GREEN.",
+  "remainingNativeDependency": "Native owns actual same-instance typed carrier, guarded worker callback without recursive/general submit, claim-bound durable-receipt terminal vs RECEIPT_ONLY nonterminal settle, and scoped interrupted/live-claim recovery. None implemented by this candidate. Default Instruction switches and unconditional CORRECT guarded close must remain closed until that source and review are ready.",
+  "authority": "Independent scoped Core source review PASS only; parent Source integration still separate. NOT Worker/Native/Hosted E2E, NOT deployment/SQL/Provider/business authority. No new Owner product decision required.",
+  "actions": {
+    "authorEdits": 0,
+    "main": 0,
+    "Hosted": 0,
+    "Schema": 0,
+    "Provider": 0,
+    "device": 0,
+    "unknownReplay": 0
+  },
+  "notChecked": [
+    "Native lifecycle implementation",
+    "Actual network/Hosted/Worker dispatch",
+    "Old84/32/full historical suites",
+    "Whole-project type/lint rerun"
+  ],
+  "resume": "Return fixed closure to parent for controlled source integration; parent delivers to Native. Reviewer stops."
+}

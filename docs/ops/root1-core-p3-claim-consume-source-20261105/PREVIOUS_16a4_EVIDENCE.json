@@ -1,0 +1,61 @@
+{
+  "status": "CORE_LOCAL_PASS / INDEPENDENT_CODE_REVIEW_PENDING / UNMERGED / NATIVE_ADAPTER_BLOCKED",
+  "baseActuallyReadRemoteMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "acceptedContract": "ac82ad1193c7455bda5ac4cbb138e6f111c67de5",
+  "contractDeltaReviewSha256": "212a4be747be4b0b556cb87ba6b6fae2689001dc35871af7854d9414a05ecab1",
+  "scopeSHA256": {
+    "src/data/repositories/tripCoreV2Repository.ts": "0f1c934263be33a943d469e5bbb2c77004e3cac60098de0ba93a214b457850a1",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "52690f980288d4bb703ec41c058c46d58db0de4e72b8be2c4640902ec7d49156",
+    "docs/ops/core-p3-claim-consume-impl-20261105/INTERFACE_AND_NATIVE_REQUIREMENTS.md": "4c5c9e7f09b534024e9b8b8459b46764b23965306c2f27b00b9d9e39067583ff"
+  },
+  "tests": {
+    "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts -t 'claim-bound CORRECT' --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "result": "29 PASS / 69 skipped",
+    "durationSeconds": 5.34,
+    "stdout": "\n RUN  v4.1.11 /Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105\n\n\n Test Files  1 passed (1)\n      Tests  29 passed | 69 skipped (98)\n   Start at  12:41:31\n   Duration  5.34s (transform 395ms, setup 0ms, import 538ms, tests 4.73s, environment 0ms)\n\n",
+    "sqlite": "Actual node:sqlite existing migrations/transaction, file-close/reopen and independent committed-state reader",
+    "receipts": "Existing canonical command engine in isolated test storage; callbacks are unit transports, NOT Hosted/Cloud proof",
+    "old84And32": "NOT_RERUN"
+  },
+  "checks": {
+    "scopedTypes": "PASS",
+    "scopedLint": "PASS zero errors/warnings",
+    "diffCheck": "PASS",
+    "wholeProjectTypes": "NOT_RERUN, not claimed PASS"
+  },
+  "covered": [
+    "atomic full Queue/journal observed CAS and rollback",
+    "two concurrent claims/consumes at most one existing submit invocation",
+    "complete multi-entry accepted MANUAL FULL receipt chain, Source/current Actor/head/certificate refusal",
+    "private same-process/new-factory and actual SQLite reopen old DTO/live lease/same generation rejection without prior cleanup",
+    "original receipt before new qualification and after owner/lease loss",
+    "status/redacted/error/invalid never null fallback",
+    "unknown/IN_FLIGHT/prior claim receipt-only, no false Core completion",
+    "generation drift/transaction rollback/uncertain commit no uncommitted handoff",
+    "bad submit response and throw retain IN_FLIGHT; original receipt recovery no resubmit",
+    "forged digest/operation/owner refusal; accepted graph unchanged"
+  ],
+  "remainingNativeRequirements": [
+    "exact CORRECT actual-identity carrier through existing claimOperation",
+    "claim-bound settleOperation with validated durable receipt and nonterminal RECEIPT_ONLY mapping",
+    "scoped lease/interruption adapter, no generic process-owner misclassification or global command changes",
+    "all existing guards and default closure; no ordinary/recursive submit fallback"
+  ],
+  "notPerformed": [
+    "main/push/source integration",
+    "Native3Sync/genericQueueRepo edits",
+    "Engine/Schema/role/permit-table changes",
+    "Hosted/Source/Provider/device/OTP/actual UNKNOWN operations"
+  ],
+  "paidProviderCalls": 0,
+  "authorityChange": "NONE",
+  "resources": "No main/Hosted/device lock held; local tests complete",
+  "recordedAtUTC": "2026-11-04T23:32:58.456955+00:00",
+  "additionalFocusedRepair": {
+    "case": "Same actual PROCESSING claim later carries known UNKNOWN/attempt evidence while original intent is still BLOCKED",
+    "localSQLiteRed": "1 failed / 97 skipped: old draft consumed and returned RECEIPT rather than RECEIPT_ONLY",
+    "redStdoutSha256": "684e0db90988a689bb503ed6a632560a7cde2d1cc008241c1a7b1c76f246e89a",
+    "minimalFix": "Recheck current attempt/failure/interrupted signals after receipt-first and include those mutable Queue fields in consume CAS preimage",
+    "scope": "Controlled local fixture only; no real UNKNOWN operation executed"
+  }
+}

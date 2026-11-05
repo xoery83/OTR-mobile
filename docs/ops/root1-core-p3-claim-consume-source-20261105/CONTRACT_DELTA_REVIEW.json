@@ -1,0 +1,60 @@
+{
+  "requestId": "P3-MANUAL-CORRECT-CLAIM-CONSUME-CONTRACT-SECURITY-REVIEW-20261105",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "reviewKind": "R1_R2_DOCS_ONLY_DELTA_REVIEW",
+  "recordedAt": "2026-11-04T23:03:42.624944+00:00",
+  "candidate": "ac82ad1193c7455bda5ac4cbb138e6f111c67de5",
+  "parent": "4e989d8fc79189f42576d7911b54bf611a8146e0",
+  "contractPath": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-contract-20261105/docs/ops/core-p3-claim-consume-20261105/CLAIM_CONSUME_CONTRACT.md",
+  "contractSHA256": "b60527ab035eba5d383c4a964e5e4d74564ebb03317e8c61c50f5813ce339631",
+  "previousReviewCommit": "9412226f",
+  "previousReviewSHA256": "161d7006d039344eb4ac1f4fdd93f29ac2f846ce476cdf44b1fa5fdc26c741e7",
+  "verdict": "NO_BLOCKER_R1_R2_CONTRACT_DELTA",
+  "findings": [],
+  "closed": [
+    {
+      "id": "P3CLAIM-R1",
+      "status": "CLOSED_AT_CONTRACT_LEVEL",
+      "lines": [
+        38,
+        40,
+        49
+      ],
+      "reason": "Private module/process plus per-owning-factory incarnation contributes to fingerprint; raw value is not persisted/returned/imported/hydrated or caller-selectable. Same actual owning ports recompute against current private context. Cold generation0 or new factory cannot revive old PROCESSING candidate even with same certificate/lease/DTO and before cleanup. Original receipt recovery does not require incarnation equality. It is a negative fence, never a permit or replacement for DB claim/Auth/current evidence checks."
+    },
+    {
+      "id": "P3CLAIM-R2",
+      "status": "CLOSED_AT_CONTRACT_LEVEL",
+      "lines": [
+        74,
+        75,
+        76
+      ],
+      "reason": "RECEIPT_ONLY/null cannot resolve worker success; existing SyncDependencyError/recovery path drives claim-CAS nonterminal deferral, not COMPLETED. Terminal dispatch settlement requires durable validated original receipt/outcome, not callback success. Same Account/Trip/operation/owner and immutable payload/digest/base are compared; stale owner does not mutate new claim. IN_FLIGHT/attempt evidence retained; generation change skips settle and original receipt recovery survives lease loss."
+    }
+  ],
+  "preservedRequiredBoundaries": {
+    "receiptAndSubmit": [
+      46,
+      51
+    ],
+    "statement": "Actual receipt dependency runs first. Definitely committed changes==1 is the only submit handoff; existing guarded generation-before-request and original immutable command are retained. Rollback/uncertain commit/throw/timeout/drift/crash never resets IN_FLIGHT or permits replacement submission. STATUS_ONLY/redacted is presence, not null. No generic Engine, schema, Source or authority expansion."
+  },
+  "nativeCompatibility": "a90e4dfdb5598ef75dd77a893bf21cae35e69b9b / af6a0ff4e93ef59d873f084e98a69dea6aaa3363b656f137d4221c74ca0d7d51 binding is recorded in fixed scope and parent-verified; not independently rerun/re-reviewed here. Existing8fe4 CORRECT cloud close remains unchanged.",
+  "verification": "Fixed contract SHA, exact docs-only two-path diff, and focused R1/R2 semantic review. Prior source and security analysis reused; no new source review/tests/runtime checks.",
+  "implementationAcceptanceStillNeeded": [
+    "Actual current private incarnation generation/encapsulation and same-instance wiring; copied old DTO/cold-generation/new-factory tests without recoverInterrupted dependency",
+    "Actual SQLite claim/consume committed changes==1, no post-crash/reset/repeated handoff; full current provenance/receipt checks",
+    "Native claim-bound no-receipt nonterminal and durable-receipt terminal mapping; stale/new owner, generation-change and lease-loss receipt recovery cases"
+  ],
+  "authority": "Contract security questions resolved only. Parent technical acceptance must precede implementation; later Core and Native source implementations still require targeted tests and independent review. No implementation, main rights, deployment, activation, new business authorization or Owner product decision is granted.",
+  "actions": {
+    "productChanges": 0,
+    "tests": 0,
+    "Hosted": 0,
+    "SQL": 0,
+    "business": 0,
+    "main": 0
+  },
+  "resume": "Return fixed delta closure to parent. No further work by child until parent assigns implementation review."
+}

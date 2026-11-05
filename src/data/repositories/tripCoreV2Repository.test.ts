@@ -1,3 +1,4 @@
+import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { isManualAcceptedEditCommand } from "../sync/tripNormalSync";
 import { coreAccessLossSchema } from "../../domain/trip/tripCoreMemberAccess";
 import { subscribeLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
@@ -15,7 +16,10 @@ import {
   createCoreV2SyncWorker,
   createCoreV2SyncCoordinator,
 } from "../sync/tripCoreV2SyncWorker";
-import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import {
+  createSyncOperationRepository,
+  type SyncOperation,
+} from "../sync/syncOperationRepository";
 import { coreClosedCapabilities } from "../../domain/trip/tripCoreV2Commands";
 import { ApiClientError } from "../api/client";
 import { createHash, randomUUID } from "node:crypto";
@@ -29,6 +33,7 @@ import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import {
   createTripCoreV2Repository,
   type CoreDatabase,
+  type CoreCorrectionClaim,
   type CoreTtrPublicationLease,
 } from "./tripCoreV2Repository";
 import {
@@ -1932,8 +1937,8 @@ it("P3 provenance never infers unsourced from a redacted null or a pending comma
   });
 });
 
-async function queuedCorrectionFixture() {
-  const f = fixture(),
+async function queuedCorrectionFixture(path = ":memory:") {
+  const f = fixture(path),
     ctx = await f.repo.captureContext(trip),
     q = p3InstructionCommands();
   let server = applyCoreCommand(emptyCoreGraph(), q.create, actor, stamp).graph;
@@ -2201,5 +2206,736 @@ it("queued CORRECT query keeps Account fences and does not turn another Actor in
   await expect(
     f.repo.manualInstructionCorrectionPreclaimEligibility(f.ctx, f.command),
   ).rejects.toThrow();
+  expect(correctionDurableState(f)).toEqual(before);
+});
+
+async function correctionObserved(
+  f: Awaited<ReturnType<typeof queuedCorrectionFixture>>,
+) {
+  await f.repo.resume(f.ctx, f.command.operationId);
+  return f.sql
+    .prepare(
+      `SELECT id,trip_id AS tripId,entity_type AS entityType,entity_id AS entityId,
+    operation_type AS operationType,idempotency_key AS idempotencyKey,base_version AS baseVersion,
+    payload_json AS payloadJson,owner_user_id AS ownerUserId,status,attempt_count AS attemptCount,
+    next_attempt_at AS nextAttemptAt,dependency_operation_id AS dependencyOperationId,
+    claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations WHERE id=?`,
+    )
+    .get(f.command.operationId) as unknown as SyncOperation;
+}
+async function correctionClaim(f: Awaited<ReturnType<typeof queuedCorrectionFixture>>) {
+  const result = await f.repo.claimQueuedManualInstructionCorrection(
+    f.ctx,
+    await correctionObserved(f),
+  );
+  if (result.kind !== "CLAIMED") throw Error("TEST_EXPECTED_CLAIM");
+  return result;
+}
+function correctionTransport(f: Awaited<ReturnType<typeof queuedCorrectionFixture>>) {
+  return {
+    receipt: vi.fn(async () => null),
+    submit: vi.fn(async () =>
+      executeCoreCommandV2(f.storage, account, trip, f.command, hash, () => stamp),
+    ),
+  };
+}
+it("claim-bound CORRECT concurrent claim and consume hand off the original command at most once", async () => {
+  const f = await queuedCorrectionFixture(),
+    observed = await correctionObserved(f);
+  const claims = await Promise.all([
+    f.repo.claimQueuedManualInstructionCorrection(f.ctx, observed),
+    f.repo.claimQueuedManualInstructionCorrection(f.ctx, { ...observed }),
+  ]);
+  expect(claims.filter((c) => c.kind === "CLAIMED")).toHaveLength(1);
+  const claimed = claims.find((c) => c.kind === "CLAIMED")!;
+  if (claimed.kind !== "CLAIMED") throw Error("TEST_EXPECTED_CLAIM");
+  expect(claimed.path).toBe("CANDIDATE");
+  const transport = correctionTransport(f);
+  const results = await Promise.all([
+    f.repo.consumeAndSubmitManualInstructionCorrection(f.ctx, claimed.claim, transport),
+    f.repo.consumeAndSubmitManualInstructionCorrection(
+      f.ctx,
+      structuredClone(claimed.claim),
+      transport,
+    ),
+  ]);
+  expect(transport.receipt).toHaveBeenCalledTimes(2);
+  expect(transport.submit).toHaveBeenCalledTimes(1);
+  expect(transport.submit).toHaveBeenCalledWith(
+    f.ctx,
+    expect.objectContaining({
+      operationId: f.command.operationId,
+      command: "CORRECT_INSTRUCTION",
+    }),
+  );
+  expect(results.map((r) => r.kind).sort()).toEqual(["RECEIPT", "RECEIPT_ONLY"]);
+  expect(
+    f.sql
+      .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+      .get(f.command.operationId)!.state,
+  ).toBe("IN_FLIGHT");
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(f.command.operationId)!.status,
+  ).toBe("PROCESSING");
+});
+it("claim-bound CORRECT recreated Core factory cannot revive copied DTO at the same generation/certificate and live lease", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    before = correctionDurableState(f);
+  const restarted = createTripCoreV2Repository(
+      f.database,
+      async () => account,
+      hash,
+      () => stamp,
+    ),
+    ctx = await restarted.captureContext(trip);
+  expect(ctx.generation).toBe(f.ctx.generation);
+  const transport = correctionTransport(f);
+  expect(
+    await restarted.consumeAndSubmitManualInstructionCorrection(
+      ctx,
+      structuredClone(claimed.claim),
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.receipt).toHaveBeenCalledTimes(1);
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(correctionDurableState(f)).toEqual(before);
+});
+it.each(["IN_FLIGHT", "UNKNOWN", "PRIOR_CLAIM"] as const)(
+  "claim-bound CORRECT %s reaches receipt-only and never false completion",
+  async (kind) => {
+    const f = await queuedCorrectionFixture();
+    if (kind === "IN_FLIGHT")
+      f.sql
+        .prepare(
+          "UPDATE trip_core_pending_intents SET state='IN_FLIGHT' WHERE operation_id=?",
+        )
+        .run(f.command.operationId);
+    if (kind === "UNKNOWN")
+      f.sql
+        .prepare(
+          "UPDATE sync_operations SET status='RETRYABLE',attempt_count=1,failure_category='UNKNOWN' WHERE id=?",
+        )
+        .run(f.command.operationId);
+    if (kind === "PRIOR_CLAIM")
+      f.sql
+        .prepare("UPDATE sync_operations SET last_attempt_at=? WHERE id=?")
+        .run(stamp, f.command.operationId);
+    const claimed = await correctionClaim(f);
+    expect(claimed.path).toBe("RECEIPT_ONLY");
+    const before = correctionDurableState(f),
+      transport = correctionTransport(f);
+    expect(
+      await f.repo.consumeAndSubmitManualInstructionCorrection(
+        f.ctx,
+        claimed.claim,
+        transport,
+      ),
+    ).toEqual({ kind: "RECEIPT_ONLY" });
+    expect(transport.submit).not.toHaveBeenCalled();
+    expect(correctionDurableState(f)).toEqual(before);
+  },
+);
+it("claim-bound CORRECT original valid receipt wins even after claim/lease loss and no new submit occurs", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f);
+  const receipt = await executeCoreCommandV2(
+    f.storage,
+    account,
+    trip,
+    f.command,
+    hash,
+    () => stamp,
+  );
+  f.sql
+    .prepare("UPDATE sync_operations SET claim_owner=?,lease_expires_at=? WHERE id=?")
+    .run("newer-claim", "2020-01-01T00:00:00Z", f.command.operationId);
+  const before = correctionDurableState(f),
+    transport = { receipt: vi.fn(async () => receipt), submit: vi.fn() };
+  expect(
+    await f.repo.consumeAndSubmitManualInstructionCorrection(
+      f.ctx,
+      claimed.claim,
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT", result: receipt });
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(correctionDurableState(f)).toEqual(before);
+});
+it.each(["status", "read-error", "bad-receipt"] as const)(
+  "claim-bound CORRECT %s is never null fallback or submit/completion",
+  async (kind) => {
+    const f = await queuedCorrectionFixture(),
+      claimed = await correctionClaim(f),
+      before = correctionDurableState(f);
+    const opaque = {
+      projection: "STATUS_ONLY" as const,
+      domainReceiptId: randomUUID(),
+      receiptSha256: "a".repeat(64),
+      operationId: f.command.operationId,
+      outcome: "APPLIED" as const,
+      targetRevision: null,
+    };
+    const transport = {
+      receipt: vi.fn(async () => {
+        if (kind === "read-error") throw Error("TEST_RECEIPT_UNAVAILABLE");
+        if (kind === "bad-receipt") return { ...opaque, operationId: randomUUID() };
+        return opaque;
+      }),
+      submit: vi.fn(),
+    };
+    if (kind === "status")
+      expect(
+        await f.repo.consumeAndSubmitManualInstructionCorrection(
+          f.ctx,
+          claimed.claim,
+          transport,
+        ),
+      ).toEqual({ kind: "RECEIPT", result: opaque });
+    else
+      await expect(
+        f.repo.consumeAndSubmitManualInstructionCorrection(
+          f.ctx,
+          claimed.claim,
+          transport,
+        ),
+      ).rejects.toThrow();
+    expect(transport.submit).not.toHaveBeenCalled();
+    expect(correctionDurableState(f)).toEqual(before);
+  },
+);
+it.each(["owner", "certificate", "source", "expired", "head"] as const)(
+  "claim-bound CORRECT rejects %s drift without changing the original intent",
+  async (kind) => {
+    const f = await queuedCorrectionFixture(),
+      claimed = await correctionClaim(f);
+    if (kind === "owner")
+      claimed.claim = { ...claimed.claim, claimOwner: "copied-wrong-owner" };
+    if (kind === "certificate") await f.refresh(4);
+    if (kind === "source") {
+      const row = f.server.trip_instruction_entries[0];
+      row.field_state = {
+        "trip_instruction_entries.body": {
+          state: "KNOWN",
+          origin: "SOURCE",
+          protected: false,
+          changed_revision: 1,
+          evidence_ref: null,
+        },
+      };
+      row.source_representation_id = randomUUID();
+      await f.refresh(4);
+    }
+    if (kind === "expired")
+      f.sql
+        .prepare("UPDATE sync_operations SET lease_expires_at=? WHERE id=?")
+        .run("2020-01-01T00:00:00Z", f.command.operationId);
+    if (kind === "head") {
+      f.server.itinerary_events[0].semantic_revision = 3;
+      await f.refresh(4);
+    }
+    const before = correctionDurableState(f),
+      transport = correctionTransport(f);
+    expect(
+      await f.repo.consumeAndSubmitManualInstructionCorrection(
+        f.ctx,
+        claimed.claim,
+        transport,
+      ),
+    ).toEqual({ kind: "RECEIPT_ONLY" });
+    expect(transport.submit).not.toHaveBeenCalled();
+    expect(correctionDurableState(f)).toEqual(before);
+  },
+);
+it("claim-bound CORRECT throw after IN_FLIGHT preserves may-have-submitted and duplicate call cannot submit", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f);
+  const transport = {
+    receipt: vi.fn(async () => null),
+    submit: vi.fn(async () => {
+      throw Error("TEST_UNKNOWN_SUBMIT");
+    }),
+  };
+  await expect(
+    f.repo.consumeAndSubmitManualInstructionCorrection(f.ctx, claimed.claim, transport),
+  ).rejects.toThrow("TEST_UNKNOWN_SUBMIT");
+  expect(
+    f.sql
+      .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+      .get(f.command.operationId)!.state,
+  ).toBe("IN_FLIGHT");
+  expect(
+    await f.repo.consumeAndSubmitManualInstructionCorrection(
+      f.ctx,
+      claimed.claim,
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.submit).toHaveBeenCalledTimes(1);
+});
+
+it("claim-bound CORRECT SQLite cold reopen with generation0/live lease/copied DTO stays receipt-only before cleanup", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-correction-cold-"));
+  folders.push(folder);
+  const path = join(folder, "local.sqlite");
+  const f = await queuedCorrectionFixture(path),
+    claimed = await correctionClaim(f),
+    copy = JSON.parse(JSON.stringify(claimed.claim)) as CoreCorrectionClaim;
+  const certificate = (await f.repo.acceptedSnapshot(f.ctx))!.certificate;
+  const originalGeneration = f.ctx.generation;
+  f.sql.close();
+  const cold = fixture(path, false),
+    ctx = await cold.repo.captureContext(trip),
+    before = cold.sql
+      .prepare("SELECT * FROM sync_operations WHERE id=?")
+      .get(f.command.operationId);
+  expect(ctx.generation).toBe(originalGeneration);
+  expect((await cold.repo.acceptedSnapshot(ctx))!.certificate).toEqual(certificate);
+  const transport = correctionTransport(f);
+  expect(
+    await cold.repo.consumeAndSubmitManualInstructionCorrection(ctx, copy, transport),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(
+    cold.sql
+      .prepare("SELECT * FROM sync_operations WHERE id=?")
+      .get(f.command.operationId),
+  ).toEqual(before);
+  const receipt = await executeCoreCommandV2(
+    f.storage,
+    account,
+    trip,
+    f.command,
+    hash,
+    () => stamp,
+  );
+  const recovery = { receipt: vi.fn(async () => receipt), submit: vi.fn() };
+  expect(
+    await cold.repo.consumeAndSubmitManualInstructionCorrection(ctx, copy, recovery),
+  ).toEqual({ kind: "RECEIPT", result: receipt });
+  expect(recovery.submit).not.toHaveBeenCalled();
+});
+it("claim-bound CORRECT committed IN_FLIGHT is independently readable before the single existing transport handoff", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-correction-handoff-"));
+  folders.push(folder);
+  const path = join(folder, "local.sqlite"),
+    f = await queuedCorrectionFixture(path),
+    claimed = await correctionClaim(f);
+  const accepted = (await f.repo.acceptedSnapshot(f.ctx))!.graph;
+  const transport = {
+    receipt: vi.fn(async () => null),
+    submit: vi.fn(async () => {
+      const reader = new DatabaseSync(path, { readOnly: true });
+      try {
+        expect(
+          reader
+            .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+            .get(f.command.operationId)!.state,
+        ).toBe("IN_FLIGHT");
+      } finally {
+        reader.close();
+      }
+      return executeCoreCommandV2(f.storage, account, trip, f.command, hash, () => stamp);
+    }),
+  };
+  expect(
+    (
+      await f.repo.consumeAndSubmitManualInstructionCorrection(
+        f.ctx,
+        claimed.claim,
+        transport,
+      )
+    ).kind,
+  ).toBe("RECEIPT");
+  expect(transport.submit).toHaveBeenCalledTimes(1);
+  expect((await f.repo.acceptedSnapshot(f.ctx))!.graph).toEqual(accepted);
+});
+it.each(["rollback", "uncertain-commit"] as const)(
+  "claim-bound CORRECT %s never hands off an unconfirmed consume",
+  async (mode) => {
+    const f = await queuedCorrectionFixture(),
+      claimed = await correctionClaim(f),
+      transport = correctionTransport(f);
+    const original = f.database.withTransactionAsync.bind(f.database);
+    let calls = 0;
+    const spy = vi
+      .spyOn(f.database, "withTransactionAsync")
+      .mockImplementation(async (work) => {
+        calls++;
+        const current = calls;
+        await original(async () => {
+          await work();
+          if (current === 2 && mode === "rollback") throw Error("TEST_CONSUME_ROLLBACK");
+        });
+        if (current === 2 && mode === "uncertain-commit")
+          throw Error("TEST_COMMIT_UNCERTAIN");
+      });
+    await expect(
+      f.repo.consumeAndSubmitManualInstructionCorrection(f.ctx, claimed.claim, transport),
+    ).rejects.toThrow();
+    spy.mockRestore();
+    expect(transport.submit).not.toHaveBeenCalled();
+    expect(
+      f.sql
+        .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+        .get(f.command.operationId)!.state,
+    ).toBe(mode === "rollback" ? "BLOCKED" : "IN_FLIGHT");
+    if (mode === "uncertain-commit")
+      expect(
+        await f.repo.consumeAndSubmitManualInstructionCorrection(
+          f.ctx,
+          claimed.claim,
+          transport,
+        ),
+      ).toEqual({ kind: "RECEIPT_ONLY" });
+  },
+);
+it("claim-bound CORRECT claim write rollback returns no reusable identity and preserves its exact original Queue", async () => {
+  const f = await queuedCorrectionFixture(),
+    observed = await correctionObserved(f),
+    before = correctionDurableState(f);
+  const run = f.database.runAsync.bind(f.database);
+  const spy = vi
+    .spyOn(f.database, "runAsync")
+    .mockImplementation(async (query, ...params) => {
+      const result = await run(query, ...params);
+      if (query.includes("UPDATE sync_operations SET status='PROCESSING'"))
+        throw Error("TEST_CLAIM_ROLLBACK");
+      return result;
+    });
+  await expect(
+    f.repo.claimQueuedManualInstructionCorrection(f.ctx, observed),
+  ).rejects.toThrow("TEST_CLAIM_ROLLBACK");
+  spy.mockRestore();
+  expect(correctionDurableState(f)).toEqual(before);
+});
+it("claim-bound CORRECT claim CAS refuses a changed observed Queue without consuming its original intent", async () => {
+  const f = await queuedCorrectionFixture(),
+    observed = await correctionObserved(f);
+  expect(
+    await f.repo.claimQueuedManualInstructionCorrection(f.ctx, {
+      ...observed,
+      payloadJson: observed.payloadJson + " ",
+    }),
+  ).toEqual({ kind: "NOT_CLAIMED" });
+  const run = f.database.runAsync.bind(f.database);
+  const spy = vi
+    .spyOn(f.database, "runAsync")
+    .mockImplementation(async (query, ...params) => {
+      if (query.includes("UPDATE sync_operations SET status='PROCESSING'"))
+        f.sql
+          .prepare("UPDATE sync_operations SET updated_at=? WHERE id=?")
+          .run("2026-11-05T01:00:00Z", observed.id);
+      return run(query, ...params);
+    });
+  expect(await f.repo.claimQueuedManualInstructionCorrection(f.ctx, observed)).toEqual({
+    kind: "NOT_CLAIMED",
+  });
+  spy.mockRestore();
+  expect(
+    f.sql
+      .prepare("SELECT status,claim_owner FROM sync_operations WHERE id=?")
+      .get(observed.id),
+  ).toEqual({ status: "PENDING", claim_owner: null });
+});
+it("claim-bound CORRECT changed generation/Account cannot turn the original candidate into new submit", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    transport = correctionTransport(f);
+  const lease = await beginAccountTransition();
+  endAccountTransition(lease);
+  const current = await f.repo.captureContext(trip);
+  expect(current.generation).not.toBe(f.ctx.generation);
+  expect(
+    await f.repo.consumeAndSubmitManualInstructionCorrection(
+      current,
+      claimed.claim,
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.submit).not.toHaveBeenCalled();
+  f.switchTo(randomUUID());
+  await expect(
+    f.repo.consumeAndSubmitManualInstructionCorrection(current, claimed.claim, transport),
+  ).rejects.toThrow();
+  expect(transport.submit).not.toHaveBeenCalled();
+});
+it("claim-bound CORRECT bad submit response retains IN_FLIGHT and the actual original receipt can later recover", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f);
+  let retained: Awaited<ReturnType<typeof executeCoreCommandV2>> | null = null;
+  const transport = {
+    receipt: vi.fn(async () => null),
+    submit: vi.fn(async () => {
+      retained = await executeCoreCommandV2(
+        f.storage,
+        account,
+        trip,
+        f.command,
+        hash,
+        () => stamp,
+      );
+      if (retained.projection !== "FULL") throw Error("TEST_EXPECTED_FULL");
+      return {
+        ...retained,
+        receipt: { ...retained.receipt, receiptSha256: "0".repeat(64) },
+      };
+    }),
+  };
+  await expect(
+    f.repo.consumeAndSubmitManualInstructionCorrection(f.ctx, claimed.claim, transport),
+  ).rejects.toThrow("CORE_RECEIPT_HASH_MISMATCH");
+  expect(
+    f.sql
+      .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+      .get(f.command.operationId)!.state,
+  ).toBe("IN_FLIGHT");
+  const recovery = { receipt: vi.fn(async () => retained), submit: vi.fn() };
+  expect(
+    (
+      await f.repo.consumeAndSubmitManualInstructionCorrection(
+        f.ctx,
+        claimed.claim,
+        recovery,
+      )
+    ).kind,
+  ).toBe("RECEIPT");
+  expect(recovery.submit).not.toHaveBeenCalled();
+  expect(transport.submit).toHaveBeenCalledTimes(1);
+});
+it("claim-bound CORRECT generation change during consume rolls back before any transport handoff", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    transport = correctionTransport(f);
+  const run = f.database.runAsync.bind(f.database);
+  const spy = vi
+    .spyOn(f.database, "runAsync")
+    .mockImplementation(async (query, ...params) => {
+      const result = await run(query, ...params);
+      if (query.includes("UPDATE trip_core_pending_intents SET state='IN_FLIGHT'"))
+        advanceAccountGeneration();
+      return result;
+    });
+  await expect(
+    f.repo.consumeAndSubmitManualInstructionCorrection(f.ctx, claimed.claim, transport),
+  ).rejects.toThrow();
+  spy.mockRestore();
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(
+    f.sql
+      .prepare("SELECT state FROM trip_core_pending_intents WHERE operation_id=?")
+      .get(f.command.operationId)!.state,
+  ).toBe("BLOCKED");
+});
+it("claim-bound CORRECT forged digest/operation cannot obtain a response or mutate the original Queue", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    before = correctionDurableState(f),
+    transport = correctionTransport(f);
+  for (const claim of [
+    { ...claimed.claim, intentSha256: "f".repeat(64) },
+    { ...claimed.claim, operationId: randomUUID() },
+  ])
+    await expect(
+      f.repo.consumeAndSubmitManualInstructionCorrection(f.ctx, claim, transport),
+    ).rejects.toThrow("CORE_CORRECTION_CLAIM_BINDING");
+  expect(transport.receipt).not.toHaveBeenCalled();
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(correctionDurableState(f)).toEqual(before);
+});
+async function chainedCorrectionFixture() {
+  const f = await queuedCorrectionFixture();
+  const first = await executeCoreCommandV2(
+    f.storage,
+    account,
+    trip,
+    f.command,
+    hash,
+    () => stamp,
+  );
+  if (first.projection !== "FULL") throw Error("TEST_EXPECTED_FULL");
+  await f.repo.applyReceipt(f.ctx, first.receipt);
+  await f.refresh(4);
+  const oldId = f.command.payload.newEntryId,
+    newEntryId = randomUUID();
+  const command = {
+    ...f.command,
+    operationId: randomUUID(),
+    target: { kind: "INSTRUCTION", id: oldId },
+    baseVector: [
+      { kind: "INSTRUCTION", id: oldId, revision: 1 },
+      { kind: "INSTRUCTION", id: newEntryId, revision: null },
+      { kind: "ITEM", id: f.q.id, revision: 3 },
+    ].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)),
+    payload: { ...f.command.payload, newEntryId, body: "Use rear reception bell." },
+  };
+  await f.repo.commitManualBatch(f.ctx, async () => ({
+    commands: [command],
+    result: async () => true,
+  }));
+  return { ...f, command };
+}
+it.each(["valid", "unproven-ancestor"] as const)(
+  "claim-bound CORRECT binds the complete %s immutable receipt chain",
+  async (kind) => {
+    const f = await chainedCorrectionFixture(),
+      claimed = await correctionClaim(f),
+      transport = correctionTransport(f);
+    expect(claimed.path).toBe("CANDIDATE");
+    if (kind === "unproven-ancestor")
+      f.sql
+        .prepare(
+          "UPDATE trip_core_pending_intents SET state='IN_FLIGHT' WHERE operation_id=?",
+        )
+        .run(f.q.append.operationId);
+    expect(
+      (
+        await f.repo.consumeAndSubmitManualInstructionCorrection(
+          f.ctx,
+          claimed.claim,
+          transport,
+        )
+      ).kind,
+    ).toBe(kind === "valid" ? "RECEIPT" : "RECEIPT_ONLY");
+    expect(transport.submit).toHaveBeenCalledTimes(kind === "valid" ? 1 : 0);
+  },
+);
+it("claim-bound CORRECT current Actor binding drift cannot borrow a previously minted claim", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    transport = correctionTransport(f);
+  f.sql
+    .prepare(
+      "UPDATE trip_core_person_bindings SET active=0 WHERE account_id=? AND trip_id=? AND linked_account_id=?",
+    )
+    .run(account, trip, account);
+  expect(
+    await f.repo.consumeAndSubmitManualInstructionCorrection(
+      f.ctx,
+      claimed.claim,
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.submit).not.toHaveBeenCalled();
+});
+it("claim-bound CORRECT current claim carrying known UNKNOWN cannot authorize a new submit", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    transport = correctionTransport(f);
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET failure_category='UNKNOWN',attempt_count=1 WHERE id=?",
+    )
+    .run(f.command.operationId);
+  const before = correctionDurableState(f);
+  expect(
+    await f.repo.consumeAndSubmitManualInstructionCorrection(
+      f.ctx,
+      claimed.claim,
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(correctionDurableState(f)).toEqual(before);
+});
+it("claim-bound CORRECT same-owner postclaim request and attempt drift remains receipt-only", async () => {
+  const f = await queuedCorrectionFixture(),
+    claimed = await correctionClaim(f),
+    transport = correctionTransport(f);
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET last_request_id='review-known-attempt',last_attempt_at='2026-10-12T00:00:01Z' WHERE id=?",
+    )
+    .run(f.command.operationId);
+  const before = correctionDurableState(f),
+    accepted = (await f.repo.acceptedSnapshot(f.ctx))!.graph;
+  expect(
+    await f.repo.consumeAndSubmitManualInstructionCorrection(
+      f.ctx,
+      claimed.claim,
+      transport,
+    ),
+  ).toEqual({ kind: "RECEIPT_ONLY" });
+  expect(transport.submit).not.toHaveBeenCalled();
+  expect(correctionDurableState(f)).toEqual(before);
+  expect((await f.repo.acceptedSnapshot(f.ctx))!.graph).toEqual(accepted);
+});
+it.each(["lease-extended", "washed-dependency"] as const)(
+  "claim-bound CORRECT minted postimage refuses %s with the same owner/count",
+  async (kind) => {
+    const f = await queuedCorrectionFixture(),
+      claimed = await correctionClaim(f),
+      transport = correctionTransport(f);
+    if (kind === "lease-extended")
+      f.sql
+        .prepare(
+          "UPDATE sync_operations SET lease_expires_at='2026-10-12T00:10:00Z' WHERE id=?",
+        )
+        .run(f.command.operationId);
+    else
+      f.sql
+        .prepare(
+          "UPDATE sync_operations SET failure_category='DEPENDENCY',last_error_code='DEPENDENCY_BLOCKED',last_error_message='Waiting for an earlier operation.',last_request_id='known-attempt-washed',first_failed_at=? WHERE id=?",
+        )
+        .run(stamp, f.command.operationId);
+    const before = correctionDurableState(f);
+    expect(
+      await f.repo.consumeAndSubmitManualInstructionCorrection(
+        f.ctx,
+        claimed.claim,
+        transport,
+      ),
+    ).toEqual({ kind: "RECEIPT_ONLY" });
+    expect(transport.submit).not.toHaveBeenCalled();
+    expect(correctionDurableState(f)).toEqual(before);
+  },
+);
+it("claim-bound CORRECT keeps legitimate preclaim dependency metadata intact and still hands off once", async () => {
+  const f = await queuedCorrectionFixture();
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET failure_category='DEPENDENCY',last_error_code='DEPENDENCY_BLOCKED',last_error_message='Waiting for an earlier operation.',last_request_id='existing-preclaim-dependency-read',first_failed_at=? WHERE id=?",
+    )
+    .run(stamp, f.command.operationId);
+  const claimed = await correctionClaim(f),
+    transport = correctionTransport(f);
+  expect(claimed.path).toBe("CANDIDATE");
+  const before = correctionDurableState(f);
+  expect(
+    (
+      await f.repo.consumeAndSubmitManualInstructionCorrection(
+        f.ctx,
+        claimed.claim,
+        transport,
+      )
+    ).kind,
+  ).toBe("RECEIPT");
+  expect(transport.submit).toHaveBeenCalledTimes(1);
+  expect(correctionDurableState(f).queue).toEqual(before.queue);
+});
+it("claim-bound CORRECT actual minted postimage drift rolls the whole claim back before returning identity", async () => {
+  const f = await queuedCorrectionFixture(),
+    observed = await correctionObserved(f),
+    before = correctionDurableState(f);
+  const run = f.database.runAsync.bind(f.database);
+  const spy = vi
+    .spyOn(f.database, "runAsync")
+    .mockImplementation(async (query, ...params) => {
+      const result = await run(query, ...params);
+      if (query.includes("UPDATE sync_operations SET status='PROCESSING'"))
+        f.sql
+          .prepare(
+            "UPDATE sync_operations SET last_request_id='postimage-trigger-drift' WHERE id=?",
+          )
+          .run(observed.id);
+      return result;
+    });
+  await expect(
+    f.repo.claimQueuedManualInstructionCorrection(f.ctx, observed),
+  ).rejects.toThrow("CORE_CORRECTION_CLAIM_POSTIMAGE_CHANGED");
+  spy.mockRestore();
   expect(correctionDurableState(f)).toEqual(before);
 });

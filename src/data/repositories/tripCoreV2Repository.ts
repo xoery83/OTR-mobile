@@ -1,3 +1,4 @@
+import { createUuid } from "../../domain/localId";
 import {
   resolveCoreInstructionParentForSubmit,
   CoreInstructionScopeError,
@@ -20,7 +21,12 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
-import { coreUuid, coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
+import {
+  coreUuid,
+  coreHash,
+  coreTableSchemas,
+  type CoreTable,
+} from "../../domain/trip/tripCoreV2";
 import {
   validateCoreCommand,
   isReviewedSourceCreate,
@@ -43,9 +49,76 @@ import { projectCoreItem } from "../../domain/trip/tripCoreV2Views";
 import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
-import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import {
+  createSyncOperationRepository,
+  type SyncOperation,
+} from "../sync/syncOperationRepository";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
+// Private negative replay fence. Never hydrate from a DTO or persisted claim.
+const correctionModuleIncarnation = createUuid();
+export type CoreCorrectionClaim = Readonly<{
+  version: 1;
+  operationId: string;
+  intentSha256: string;
+  claimOwner: string;
+}>;
+export type CoreCorrectionClaimResult =
+  | { kind: "NOT_CLAIMED" }
+  | { kind: "CLAIMED"; path: "CANDIDATE" | "RECEIPT_ONLY"; claim: CoreCorrectionClaim };
+export type CoreCorrectionTransport = {
+  receipt(
+    ctx: AccountRequestContext,
+    operationId: string,
+  ): Promise<CoreReceiptProjection | null>;
+  submit(
+    ctx: AccountRequestContext,
+    command: ReturnType<typeof validateCoreCommand>,
+  ): Promise<CoreReceiptProjection>;
+};
+export type CoreCorrectionExecutionResult =
+  { kind: "RECEIPT"; result: CoreReceiptProjection } | { kind: "RECEIPT_ONLY" };
+type CorrectionOriginPin = {
+  entryId: string;
+  operationId: string;
+  intentSha256: string;
+  receiptSha256: string | null;
+  reconciledRevision: number | null;
+};
+type CorrectionQueueRow = SyncOperation & {
+  canonicalIntentText: string;
+  intentSha256: string;
+  intentState: string;
+  reconciledRevision: number | null;
+  receiptSha256: string | null;
+  claimOwner: string | null;
+  dependencyOperationId: string | null;
+  lastAttemptAt: string | null;
+  leaseExpiresAt: string | null;
+  failureCategory: string | null;
+  lastErrorCode: string | null;
+  lastErrorMessage: string | null;
+  lastRequestId: string | null;
+  firstFailedAt: string | null;
+};
+const correctionObservedKeys = [
+  "id",
+  "tripId",
+  "entityType",
+  "entityId",
+  "operationType",
+  "idempotencyKey",
+  "baseVersion",
+  "payloadJson",
+  "ownerUserId",
+  "status",
+  "attemptCount",
+  "nextAttemptAt",
+  "dependencyOperationId",
+  "claimOwner",
+  "createdAt",
+  "updatedAt",
+] as const;
 export type CoreDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
@@ -157,6 +230,7 @@ export function createTripCoreV2Repository(
     "readBaselineWithinTransaction"
   > = {},
 ) {
+  const correctionFactoryIncarnation = createUuid();
   const captureContext = (tripId: string) =>
     captureAccountRequestContext(tripId, getAccountId);
   const assertContext = (ctx: AccountRequestContext) =>
@@ -626,6 +700,7 @@ export function createTripCoreV2Repository(
     >,
     acceptedIds: ReadonlySet<string>,
     entryId: string,
+    proof?: CorrectionOriginPin[],
   ) {
     const seen = new Set<string>();
     let id: string | null = entryId;
@@ -739,6 +814,13 @@ export function createTripCoreV2Repository(
           )
         )
           continue;
+        proof?.push({
+          entryId: id,
+          operationId: command.operationId,
+          intentSha256: digest,
+          receiptSha256: row.receipt_sha256,
+          reconciledRevision: row.reconciled_revision,
+        });
         origin = command;
         break;
       }
@@ -905,6 +987,477 @@ export function createTripCoreV2Repository(
       await assertContext(ctx);
       return { status: eligible ? ("ELIGIBLE" as const) : ("UNPROVEN" as const) };
     });
+  }
+  async function correctionQueueWithinTransaction(
+    ctx: AccountRequestContext,
+    operationId: string,
+  ) {
+    return database.getFirstAsync<CorrectionQueueRow>(
+      `SELECT op.id,op.trip_id AS tripId,op.entity_type AS entityType,op.entity_id AS entityId,
+       op.operation_type AS operationType,op.idempotency_key AS idempotencyKey,
+       op.base_version AS baseVersion,op.payload_json AS payloadJson,op.owner_user_id AS ownerUserId,
+       op.status,op.attempt_count AS attemptCount,op.next_attempt_at AS nextAttemptAt,
+       op.dependency_operation_id AS dependencyOperationId,op.claim_owner AS claimOwner,
+       op.created_at AS createdAt,op.updated_at AS updatedAt,op.last_attempt_at AS lastAttemptAt,
+       op.lease_expires_at AS leaseExpiresAt,op.failure_category AS failureCategory,
+       op.last_error_code AS lastErrorCode,op.last_error_message AS lastErrorMessage,
+       op.last_request_id AS lastRequestId,op.first_failed_at AS firstFailedAt,
+       i.canonical_intent_text AS canonicalIntentText,i.intent_sha256 AS intentSha256,
+       i.state AS intentState,i.reconciled_revision AS reconciledRevision,r.receipt_sha256 AS receiptSha256
+       FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id
+       AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
+       LEFT JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id
+       AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id
+       WHERE i.account_id=? AND i.trip_id=? AND i.operation_id=?`,
+      ctx.accountId,
+      ctx.tripId,
+      operationId,
+    );
+  }
+  async function boundCorrection(
+    ctx: AccountRequestContext,
+    row: CorrectionQueueRow | null,
+  ) {
+    if (!row) return null;
+    const command = validateCoreCommand(JSON.parse(row.canonicalIntentText));
+    if (
+      command.command !== "CORRECT_INSTRUCTION" ||
+      command.admission.mode !== "MANUAL" ||
+      command.tripId !== ctx.tripId ||
+      row.tripId !== ctx.tripId ||
+      row.ownerUserId !== ctx.accountId ||
+      row.entityType !== "TRIP_CORE_V2" ||
+      row.operationType !== "CORE_V2_COMMAND" ||
+      row.id !== command.operationId ||
+      row.idempotencyKey !== command.operationId ||
+      row.entityId !== command.target.id ||
+      row.payloadJson !== row.canonicalIntentText ||
+      row.canonicalIntentText !== canonicalCoreJson(command as Json) ||
+      row.baseVersion !==
+        command.baseVector.find(
+          (b) => b.kind === command.target.kind && b.id === command.target.id,
+        )?.revision ||
+      (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !== row.intentSha256
+    )
+      return null;
+    return command;
+  }
+  async function correctionContextHashWithinTransaction(
+    ctx: AccountRequestContext,
+    row: CorrectionQueueRow,
+    command: ReturnType<typeof validateCoreCommand>,
+  ) {
+    let accepted: CoreAcceptedSnapshot | null;
+    try {
+      accepted = await acceptedWithinTransaction(ctx);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        [
+          "CORE_READ_VERSION_MISMATCH",
+          "CORE_READ_ACCESS_MISMATCH",
+          "CORE_PERSON_BINDING_MISMATCH",
+        ].includes(error.message)
+      )
+        return null;
+      throw error;
+    }
+    if (!accepted) return null;
+    let parent;
+    try {
+      parent = resolveCoreInstructionParentForSubmit(
+        accepted.graph,
+        accepted.actor,
+        command,
+        clock(),
+      );
+    } catch (error) {
+      if (error instanceof CoreInstructionScopeError) return null;
+      throw error;
+    }
+    const item = accepted.graph.itinerary_events.find(
+      (r) => r.id === parent.parentItemId,
+    );
+    if (
+      parent.family !== "P3" ||
+      !["ARRIVAL", "DEPARTURE"].includes(parent.section) ||
+      item?.owner_account_id !== ctx.accountId
+    )
+      return null;
+    const proof: CorrectionOriginPin[] = [];
+    if (
+      !(await manualInstructionOriginWithinTransaction(
+        ctx,
+        { graph: accepted.graph, cert: accepted.certificate, operations: [] },
+        new Set(accepted.graph.trip_instruction_entries.map((r) => String(r.id))),
+        command.target.id,
+        proof,
+      ))
+    )
+      return null;
+    return coreHashValue(
+      "otr-core-correction-claim-context-v1",
+      {
+        moduleIncarnation: correctionModuleIncarnation,
+        factoryIncarnation: correctionFactoryIncarnation,
+        accountId: ctx.accountId,
+        tripId: ctx.tripId,
+        generation: ctx.generation,
+        intentSha256: row.intentSha256,
+        certificate: accepted.certificate,
+        actor: accepted.actor,
+        parent: item,
+        entries: proof.map((p) =>
+          accepted.graph.trip_instruction_entries.find((r) => r.id === p.entryId),
+        ),
+        proof,
+        queue: {
+          id: row.id,
+          entityType: row.entityType,
+          entityId: row.entityId,
+          operationType: row.operationType,
+          idempotencyKey: row.idempotencyKey,
+          baseVersion: row.baseVersion,
+        },
+        claimPostimage: {
+          status: row.status,
+          attemptCount: row.attemptCount,
+          lastAttemptAt: row.lastAttemptAt,
+          leaseExpiresAt: row.leaseExpiresAt,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          nextAttemptAt: row.nextAttemptAt,
+          dependencyOperationId: row.dependencyOperationId,
+          failureCategory: row.failureCategory,
+          lastErrorCode: row.lastErrorCode,
+          lastErrorMessage: row.lastErrorMessage,
+          lastRequestId: row.lastRequestId,
+          firstFailedAt: row.firstFailedAt,
+        },
+      } as unknown as Json,
+      hash,
+    );
+  }
+  function candidateOwnerContext(owner: string) {
+    try {
+      const value: unknown = JSON.parse(owner);
+      if (
+        !Array.isArray(value) ||
+        value.length !== 3 ||
+        value[0] !== "otr-core-correction-claim/1" ||
+        !coreUuid.safeParse(value[1]).success ||
+        !coreHash.safeParse(value[2]).success
+      )
+        return null;
+      return value[2] as string;
+    } catch {
+      return null;
+    }
+  }
+  async function claimQueuedManualInstructionCorrection(
+    ctx: AccountRequestContext,
+    observed: SyncOperation,
+  ): Promise<CoreCorrectionClaimResult> {
+    coreUuid.parse(observed.id);
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result: CoreCorrectionClaimResult = { kind: "NOT_CLAIMED" };
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        const row = await correctionQueueWithinTransaction(ctx, observed.id);
+        const command = await boundCorrection(ctx, row);
+        if (
+          !row ||
+          !command ||
+          !correctionObservedKeys.every(
+            (k) => (row[k] ?? null) === (observed[k] ?? null),
+          ) ||
+          !["PENDING", "RETRYABLE"].includes(row.status) ||
+          row.claimOwner !== null ||
+          (row.nextAttemptAt !== null &&
+            (!Number.isFinite(Date.parse(row.nextAttemptAt)) ||
+              Date.parse(row.nextAttemptAt) > Date.parse(clock())))
+        )
+          return;
+        const fresh =
+          ["BLOCKED", "PENDING"].includes(row.intentState) &&
+          row.reconciledRevision === null &&
+          row.receiptSha256 === null &&
+          row.status === "PENDING" &&
+          row.attemptCount === 0 &&
+          row.lastAttemptAt === null &&
+          (row.failureCategory === null || row.failureCategory === "DEPENDENCY") &&
+          row.lastErrorMessage !== "INTERRUPTED";
+        const now = clock(),
+          lease = new Date(Date.parse(now) + 5 * 60_000).toISOString();
+        // Commit the exact postimage this claim writes, preserving legitimate
+        // existing dependency/error metadata instead of assuming it was null.
+        const postimage: CorrectionQueueRow = {
+          ...row,
+          status: "PROCESSING",
+          lastAttemptAt: now,
+          leaseExpiresAt: lease,
+          updatedAt: now,
+        };
+        const contextHash = fresh
+          ? await correctionContextHashWithinTransaction(ctx, postimage, command)
+          : null;
+        const owner = canonicalCoreJson([
+          "otr-core-correction-claim/1",
+          createUuid(),
+          contextHash,
+        ] as Json);
+        const update = await database.runAsync(
+          `UPDATE sync_operations SET status='PROCESSING',claim_owner=?,lease_expires_at=?,last_attempt_at=?,updated_at=?
+           WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type=? AND entity_id=? AND operation_type=?
+           AND idempotency_key=? AND base_version IS ? AND payload_json=? AND status=? AND attempt_count=?
+           AND next_attempt_at IS ? AND dependency_operation_id IS ? AND claim_owner IS ?
+           AND lease_expires_at IS ? AND last_attempt_at IS ? AND created_at=? AND updated_at=?
+           AND failure_category IS ? AND last_error_code IS ? AND last_error_message IS ?
+           AND last_request_id IS ? AND first_failed_at IS ?
+           AND EXISTS(SELECT 1 FROM trip_core_pending_intents i WHERE i.account_id=? AND i.trip_id=?
+             AND i.operation_id=? AND i.queue_operation_id=sync_operations.id AND i.intent_sha256=?
+             AND i.canonical_intent_text=? AND i.state=?)`,
+          owner,
+          lease,
+          now,
+          now,
+          row.id,
+          ctx.accountId,
+          ctx.tripId,
+          row.entityType,
+          row.entityId,
+          row.operationType,
+          row.idempotencyKey,
+          row.baseVersion,
+          row.payloadJson,
+          row.status,
+          row.attemptCount,
+          row.nextAttemptAt,
+          row.dependencyOperationId ?? null,
+          row.claimOwner ?? null,
+          row.leaseExpiresAt,
+          row.lastAttemptAt,
+          row.createdAt,
+          row.updatedAt,
+          row.failureCategory,
+          row.lastErrorCode,
+          row.lastErrorMessage,
+          row.lastRequestId,
+          row.firstFailedAt,
+          ctx.accountId,
+          ctx.tripId,
+          command.operationId,
+          row.intentSha256,
+          row.canonicalIntentText,
+          row.intentState,
+        );
+        if (update.changes === 1) {
+          const minted = await correctionQueueWithinTransaction(ctx, command.operationId);
+          if (
+            !minted ||
+            minted.claimOwner !== owner ||
+            !(await boundCorrection(ctx, minted)) ||
+            (contextHash !== null &&
+              (await correctionContextHashWithinTransaction(ctx, minted, command)) !==
+                contextHash)
+          )
+            throw Error("CORE_CORRECTION_CLAIM_POSTIMAGE_CHANGED");
+          result = {
+            kind: "CLAIMED",
+            path: contextHash ? "CANDIDATE" : "RECEIPT_ONLY",
+            claim: {
+              version: 1,
+              operationId: command.operationId,
+              intentSha256: row.intentSha256,
+              claimOwner: owner,
+            },
+          };
+        }
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
+  }
+  async function validateCorrectionProjection(
+    ctx: AccountRequestContext,
+    command: ReturnType<typeof validateCoreCommand>,
+    digest: string,
+    input: CoreReceiptProjection,
+  ) {
+    coreUuid.parse(input.domainReceiptId);
+    if (input.projection === "STATUS_ONLY") {
+      coreHash.parse(input.receiptSha256);
+      if (
+        input.operationId !== command.operationId ||
+        input.targetRevision !== null ||
+        !["APPLIED", "NO_CHANGE", "CONFLICT", "REJECTED"].includes(input.outcome)
+      )
+        throw Error("CORE_CORRECTION_RECEIPT_BINDING");
+      return {
+        projection: "STATUS_ONLY" as const,
+        domainReceiptId: input.domainReceiptId,
+        receiptSha256: input.receiptSha256,
+        operationId: input.operationId,
+        outcome: input.outcome,
+        targetRevision: null,
+      };
+    }
+    if (input.projection !== "FULL") throw Error("CORE_CORRECTION_RECEIPT_BINDING");
+    const receipt = await validateCoreReceipt(input.receipt, hash);
+    if (
+      receipt.actorAccountId !== ctx.accountId ||
+      receipt.tripId !== ctx.tripId ||
+      receipt.operationId !== command.operationId ||
+      receipt.command !== command.command ||
+      receipt.intentSha256 !== digest
+    )
+      throw Error("CORE_CORRECTION_RECEIPT_BINDING");
+    return {
+      projection: "FULL" as const,
+      domainReceiptId: input.domainReceiptId,
+      receipt,
+    };
+  }
+  async function consumeAndSubmitManualInstructionCorrection(
+    ctx: AccountRequestContext,
+    claim: CoreCorrectionClaim,
+    transport: CoreCorrectionTransport,
+  ): Promise<CoreCorrectionExecutionResult> {
+    coreUuid.parse(claim.operationId);
+    coreHash.parse(claim.intentSha256);
+    if (
+      claim.version !== 1 ||
+      typeof claim.claimOwner !== "string" ||
+      claim.claimOwner.length > 1024
+    )
+      throw Error("CORE_CORRECTION_CLAIM_BINDING");
+    let command: ReturnType<typeof validateCoreCommand> | null = null;
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        const row = await correctionQueueWithinTransaction(ctx, claim.operationId);
+        command = await boundCorrection(ctx, row);
+        if (!row || !command || row.intentSha256 !== claim.intentSha256)
+          throw Error("CORE_CORRECTION_CLAIM_BINDING");
+        await assertContext(ctx);
+      });
+    });
+    if (!command) throw Error("CORE_CORRECTION_CLAIM_BINDING");
+    const originalCommand = command;
+    // Original receipt recovery precedes incarnation, lease and NEW eligibility.
+    const retained = await transport.receipt(ctx, claim.operationId);
+    await assertContext(ctx);
+    if (retained !== null) {
+      const result = await validateCorrectionProjection(
+        ctx,
+        originalCommand,
+        claim.intentSha256,
+        retained,
+      );
+      await assertContext(ctx);
+      return { kind: "RECEIPT", result };
+    }
+    let consumed = false;
+    let submission: Promise<CoreReceiptProjection> | null = null;
+    await withAccountApplyGate(
+      async () => {
+        await assertContext(ctx);
+        await database.withTransactionAsync(async () => {
+          await scope(ctx);
+          const row = await correctionQueueWithinTransaction(ctx, claim.operationId);
+          const current = await boundCorrection(ctx, row);
+          if (
+            !row ||
+            !current ||
+            row.intentSha256 !== claim.intentSha256 ||
+            row.claimOwner !== claim.claimOwner ||
+            row.status !== "PROCESSING" ||
+            row.attemptCount !== 0 ||
+            (row.failureCategory !== null && row.failureCategory !== "DEPENDENCY") ||
+            row.lastErrorMessage === "INTERRUPTED" ||
+            row.leaseExpiresAt === null ||
+            !Number.isFinite(Date.parse(row.leaseExpiresAt)) ||
+            !Number.isFinite(Date.parse(clock())) ||
+            Date.parse(row.leaseExpiresAt) <= Date.parse(clock()) ||
+            !["BLOCKED", "PENDING"].includes(row.intentState) ||
+            row.receiptSha256 !== null ||
+            row.reconciledRevision !== null
+          )
+            return;
+          const boundHash = candidateOwnerContext(row.claimOwner);
+          if (
+            !boundHash ||
+            (await correctionContextHashWithinTransaction(ctx, row, current)) !==
+              boundHash
+          )
+            return;
+          const update = await database.runAsync(
+            `UPDATE trip_core_pending_intents SET state='IN_FLIGHT'
+           WHERE account_id=? AND trip_id=? AND operation_id=? AND intent_sha256=? AND canonical_intent_text=?
+           AND state IN ('BLOCKED','PENDING') AND reconciled_revision IS NULL
+           AND NOT EXISTS(SELECT 1 FROM trip_core_trip_core_command_receipts r WHERE r.account_id=? AND r.trip_id=? AND r.operation_id=?)
+           AND EXISTS(SELECT 1 FROM sync_operations op WHERE op.id=trip_core_pending_intents.queue_operation_id
+             AND op.owner_user_id=? AND op.trip_id=? AND op.status='PROCESSING' AND op.claim_owner=?
+             AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND' AND op.entity_id=?
+             AND op.idempotency_key=? AND op.payload_json=? AND op.base_version IS ? AND op.lease_expires_at=?
+             AND op.attempt_count=? AND op.failure_category IS ? AND op.last_error_message IS ?
+             AND op.last_attempt_at IS ? AND op.updated_at=? AND op.created_at=?
+             AND op.next_attempt_at IS ? AND op.dependency_operation_id IS ?
+             AND op.last_error_code IS ? AND op.last_request_id IS ? AND op.first_failed_at IS ?)`,
+            ctx.accountId,
+            ctx.tripId,
+            claim.operationId,
+            claim.intentSha256,
+            row.canonicalIntentText,
+            ctx.accountId,
+            ctx.tripId,
+            claim.operationId,
+            ctx.accountId,
+            ctx.tripId,
+            claim.claimOwner,
+            current.target.id,
+            current.operationId,
+            row.canonicalIntentText,
+            row.baseVersion,
+            row.leaseExpiresAt,
+            row.attemptCount,
+            row.failureCategory,
+            row.lastErrorMessage,
+            row.lastAttemptAt,
+            row.updatedAt,
+            row.createdAt,
+            row.nextAttemptAt,
+            row.dependencyOperationId,
+            row.lastErrorCode,
+            row.lastRequestId,
+            row.firstFailedAt,
+          );
+          consumed = update.changes === 1;
+          await assertContext(ctx);
+        });
+        await assertContext(ctx);
+        return consumed;
+      },
+      (won) => {
+        // Synchronous handoff after committed transaction/gate release. Never
+        // export a permit; the existing transport retains its request fences.
+        if (won) submission = transport.submit(ctx, originalCommand);
+      },
+    );
+    if (submission === null) return { kind: "RECEIPT_ONLY" };
+    const result = await submission;
+    await assertContext(ctx);
+    const validated = await validateCorrectionProjection(
+      ctx,
+      originalCommand,
+      claim.intentSha256,
+      result,
+    );
+    await assertContext(ctx);
+    return { kind: "RECEIPT", result: validated };
   }
   async function validateManualInstructionsWithinTransaction(
     ctx: AccountRequestContext,
@@ -1898,6 +2451,8 @@ export function createTripCoreV2Repository(
     commitManualBatch,
     manualInstructionEligibility,
     manualInstructionCorrectionPreclaimEligibility,
+    claimQueuedManualInstructionCorrection,
+    consumeAndSubmitManualInstructionCorrection,
     pending,
     beginRefresh,
     install,

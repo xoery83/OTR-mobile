@@ -1,0 +1,77 @@
+{
+  "requestId": "P3-CORRECT-CLAIM-CONSUME-INDEPENDENT-CODE-REVIEW-20261105",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "recordedAt": "2026-11-04T23:59:05.107683+00:00",
+  "candidate": "16a4ab7f706d7eefeec98ea0dd7f64951ef32a42",
+  "base": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "sourceHashesVerified": {
+    "src/data/repositories/tripCoreV2Repository.ts": "0f1c934263be33a943d469e5bbb2c77004e3cac60098de0ba93a214b457850a1",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "52690f980288d4bb703ec41c058c46d58db0de4e72b8be2c4640902ec7d49156",
+    "docs/ops/core-p3-claim-consume-impl-20261105/INTERFACE_AND_NATIVE_REQUIREMENTS.md": "4c5c9e7f09b534024e9b8b8459b46764b23965306c2f27b00b9d9e39067583ff"
+  },
+  "acceptedContract": "ac82ad1193c7455bda5ac4cbb138e6f111c67de5",
+  "contractDeltaReviewSHA256": "212a4be747be4b0b556cb87ba6b6fae2689001dc35871af7854d9414a05ecab1",
+  "verdict": "CHANGES_REQUIRED_ONE_FOCUSED_CURRENT_ATTEMPT_BINDING_DELTA",
+  "findings": [
+    {
+      "id": "P3CODE-R1",
+      "priority": "P1",
+      "title": "An unchanged claim owner can still consume after new request/attempt evidence",
+      "file": "src/data/repositories/tripCoreV2Repository.ts",
+      "lines": [
+        1102,
+        1122,
+        1181,
+        1193,
+        1337,
+        1359,
+        1371,
+        1393
+      ],
+      "rootCause": "Candidate fingerprint binds static Queue identity but not its actual minted postclaim attempt/lease/error/request metadata. At consume, the current row guard only rejects nonzero attempt_count, failureCategory outside null/DEPENDENCY, or exact INTERRUPTED message. last_request_id/last_error_code/first_failed_at are not checked and last_attempt_at need not equal the time belonging to this claim. CAS compares freshly reread last_attempt_at/updated_at rather than a claim-mint commitment, so evidence changed before that read is accepted.",
+      "minimalReproduction": "After a genuine candidate claim, retain its owner/status/count/category and original BLOCKED intent; UPDATE only last_request_id to review-known-attempt and last_attempt_at to2026-10-12T00:00:01Z. Existing null receipt transport is used. Expected RECEIPT_ONLY with zero submit; actual RECEIPT/FULL/APPLIED from submit. Actual node:sqlite and existing canonical Core command fixture; not a real UNKNOWN/Hosted operation.",
+      "requiredDelta": "Bind the existing claim-context fingerprint to the exact actual postclaim attempt/lease/lastAttempt/error/request metadata created by the successful claim, then rederive that binding from the current PROCESSING row at consume. Any subsequent request/attempt/uncertainty drift must stay receipt-only even when the opaque owner, count0 and accepted graph remain unchanged. Alternatively an equally small exact anchored preimage check is acceptable if it cannot be rebuilt from changed current metadata. Include relevant fields in consume CAS too. Preserve legitimate already-existing dependency metadata exactly; do not blanket erase it, reset IN_FLIGHT, add a column/table/permit, alter Native/Queue globally or block original receipt recovery.",
+      "scopeLimit": "This is a proven local negative-state gap, not a claim that Hosted/Native CORRECT is activated or that another legal caller currently produces this exact drift combination. Native adapters remain missing/default closed; implementation must preserve the stronger stated current-uncertainty invariant before activation.",
+      "focusedAcceptance": "Retain original29. One same-owner postclaim attempt/request drift case must become RECEIPT_ONLY without modifying original intent/accepted graph; receipt-present recovery still works. Reuse normal untouched same-claim control to ensure exactly one handoff remains."
+    }
+  ],
+  "independentValidation": {
+    "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts -t 'claim-bound CORRECT' --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "result": "29 PASS /69 SKIPPED /0 FAILED",
+    "durationSeconds": 3.33,
+    "testsSeconds": 2.9,
+    "boundedExtraProbe": {
+      "reason": "Necessary one-case reproduction of newly identified current-attempt state gap; no old-suite execution",
+      "result": "1 FAILED /97 SKIPPED",
+      "durationSeconds": 0.558,
+      "assertion": "Expected kind RECEIPT_ONLY, received RECEIPT with canonical APPLIED receipt",
+      "authorTreeChanged": false,
+      "temporaryProbePath": "/var/folders/8g/ztcbxp0n3ts4hb0j0r918h500000gp/T/otr-p3-review-probe-jxrbo3ca/probe.test.ts",
+      "temporaryProbeSHA256": "e3446b43c6384a49b5d4c21670cd715397be02aa0d8467e620f4380c17052967",
+      "method": "Copy fixed author test source to temporary directory, rewrite relative imports to original source absolute paths, replace only the last UNKNOWN-case title and UPDATE string; run only that case. No product or author fixture edits."
+    }
+  },
+  "reviewedSafeProperties": [
+    "Module/factory incarnations private and non-hydratable; actual factory recreation and file-reopen tests preserve old generation/certificate/lease and refuse consume.",
+    "Receipt-first occurs after original journal binding and before owner/incarnation/lease/current eligibility. FULL exact digest/Actor/Trip/operation/command/hash checked; STATUS_ONLY presence retained, invalid/error no fallback null.",
+    "Current accepted P3 self-owned ARRIVAL/DEPARTURE and complete MANUAL FULL/APPLIED origin chain rerun, context hash binds certificates/Actor/parent/entries and proof receipt hashes, no pending graph authority.",
+    "Exactly one committed intent IN_FLIGHT CAS hands off in existing Account gate synchronous afterRelease; rollback/uncertain commit suppresses handoff, submit throw/bad response keeps IN_FLIGHT; duplicate consumes cannot resubmit.",
+    "Core port does not apply receipts or settle Queue, so no fake COMPLETED is added here. Native exact claim/settle/recover adapter remains an explicit missing dependency; ordinary submit/default CORRECT remains closed."
+  ],
+  "notQualified": [
+    "Native claimOperation typed carrier/worker routing and claim-owner terminal/nonterminal settlement",
+    "Generic recovery adaptation; current generic process owner would misclassify opaque live claims",
+    "Actual guarded network dispatch, Hosted/SQL/Provider/device/Worker E2E or source integration",
+    "Independent whole-project type/lint or historical84/32 suites"
+  ],
+  "actions": {
+    "authorEdits": 0,
+    "productEdits": 0,
+    "tests": "new29 once plus one necessary isolated reproduction",
+    "Hosted": 0,
+    "Schema": 0,
+    "main": 0,
+    "businessOrUnknownOperations": 0
+  },
+  "next": "Parent/author one focused Core fingerprint/current-attempt patch and regression, then independent delta review. No new architecture or Owner business decision required. Reviewer stops after returning findings."
+}

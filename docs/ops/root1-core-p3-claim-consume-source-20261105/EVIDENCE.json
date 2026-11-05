@@ -1,0 +1,83 @@
+{
+  "status": "CORE_LOCAL_PASS / INDEPENDENT_CODE_REVIEW_PENDING / UNMERGED / NATIVE_ADAPTER_BLOCKED",
+  "baseActuallyReadRemoteMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "acceptedContract": "ac82ad1193c7455bda5ac4cbb138e6f111c67de5",
+  "contractDeltaReviewSha256": "212a4be747be4b0b556cb87ba6b6fae2689001dc35871af7854d9414a05ecab1",
+  "scopeSHA256": {
+    "src/data/repositories/tripCoreV2Repository.ts": "816d8c77116ba3ad6b161a4fde1cf7c2d433576af7e525bde1e3def7a4f719e5",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "39f493b915f44ccfbdbc7f4fe08bd78fe9ec8be28ea3595134623e0394a301d6",
+    "docs/ops/core-p3-claim-consume-impl-20261105/INTERFACE_AND_NATIVE_REQUIREMENTS.md": "7dadac644629d8d2efd8c79a8100ad1b52b6a0bc2c0f4bbf1a07ca776e3f1dcf"
+  },
+  "tests": {
+    "command": "node node_modules/vitest/vitest.mjs run src/data/repositories/tripCoreV2Repository.test.ts -t 'claim-bound CORRECT' --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "result": "34 PASS / 69 skipped",
+    "durationSeconds": 4.42,
+    "stdout": "\n RUN  v4.1.11 /Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105\n\n\n Test Files  1 passed (1)\n      Tests  34 passed | 69 skipped (103)\n   Start at  13:06:31\n   Duration  4.42s (transform 252ms, setup 0ms, import 357ms, tests 4.00s, environment 0ms)\n\n",
+    "sqlite": "Actual node:sqlite existing migrations/transaction, file-close/reopen and independent committed-state reader",
+    "receipts": "Existing canonical command engine in isolated test storage; callbacks are unit transports, NOT Hosted/Cloud proof",
+    "old84And32": "NOT_RERUN"
+  },
+  "checks": {
+    "scopedTypes": "PASS",
+    "scopedLint": "PASS zero errors/warnings",
+    "diffCheck": "PASS",
+    "wholeProjectTypes": "NOT_RERUN, not claimed PASS"
+  },
+  "covered": [
+    "atomic full Queue/journal observed CAS and rollback",
+    "two concurrent claims/consumes at most one existing submit invocation",
+    "complete multi-entry accepted MANUAL FULL receipt chain, Source/current Actor/head/certificate refusal",
+    "private same-process/new-factory and actual SQLite reopen old DTO/live lease/same generation rejection without prior cleanup",
+    "original receipt before new qualification and after owner/lease loss",
+    "status/redacted/error/invalid never null fallback",
+    "unknown/IN_FLIGHT/prior claim receipt-only, no false Core completion",
+    "generation drift/transaction rollback/uncertain commit no uncommitted handoff",
+    "bad submit response and throw retain IN_FLIGHT; original receipt recovery no resubmit",
+    "forged digest/operation/owner refusal; accepted graph unchanged"
+  ],
+  "remainingNativeRequirements": [
+    "exact CORRECT actual-identity carrier through existing claimOperation",
+    "claim-bound settleOperation with validated durable receipt and nonterminal RECEIPT_ONLY mapping",
+    "scoped lease/interruption adapter, no generic process-owner misclassification or global command changes",
+    "all existing guards and default closure; no ordinary/recursive submit fallback"
+  ],
+  "notPerformed": [
+    "main/push/source integration",
+    "Native3Sync/genericQueueRepo edits",
+    "Engine/Schema/role/permit-table changes",
+    "Hosted/Source/Provider/device/OTP/actual UNKNOWN operations"
+  ],
+  "paidProviderCalls": 0,
+  "authorityChange": "NONE",
+  "resources": "No main/Hosted/device lock held; local tests complete",
+  "recordedAtUTC": "2026-11-04T23:32:58.456955+00:00",
+  "additionalFocusedRepair": {
+    "case": "Same actual PROCESSING claim later carries known UNKNOWN/attempt evidence while original intent is still BLOCKED",
+    "localSQLiteRed": "1 failed / 97 skipped: old draft consumed and returned RECEIPT rather than RECEIPT_ONLY",
+    "redStdoutSha256": "684e0db90988a689bb503ed6a632560a7cde2d1cc008241c1a7b1c76f246e89a",
+    "minimalFix": "Recheck current attempt/failure/interrupted signals after receipt-first and include those mutable Queue fields in consume CAS preimage",
+    "scope": "Controlled local fixture only; no real UNKNOWN operation executed"
+  },
+  "focusedCodeReviewRepair": {
+    "finding": "P3CODE-R1",
+    "reviewCommit": "d148b8bb",
+    "reviewSha256": "4c64c506b7b2bb1e12eeffc91dd0995aacc4dc56d2bc789d7674505ffe2df885",
+    "previousCandidate": "16a4ab7f706d7eefeec98ea0dd7f64951ef32a42",
+    "previousValidation": "Original author29 PASS/69skip preserved in PREVIOUS_16a4_EVIDENCE.json; independent reviewer29 PASS/69skip3.33s",
+    "independentDerivedRed": "1 FAILED/97skip558ms; same owner/count/category, new last_request_id+last_attempt_at bypassed old static fingerprint",
+    "independentProbeSha256": "e3446b43c6384a49b5d4c21670cd715397be02aa0d8467e620f4380c17052967",
+    "authorExactRed": "1 FAILED/98skip663ms after appending regression without replacing any original29",
+    "authorRedStdoutSha256": "a3612da5cbd1c820ebebdfe68127d867aa990a487694f66567829c1ea22d24bf",
+    "fix": "Hash exact minted postimage; same-transaction actual readback; consume matches committed postimage and CAS includes full attempt/error/request/lease/dependency evidence",
+    "preserved": "No clearing legitimate preclaim dependency metadata; receipt-first/IN_FLIGHT/cold incarnation unchanged",
+    "newCases": [
+      "exact reviewer same-owner request/attempt drift",
+      "lease extended while still valid",
+      "uncertainty washed to dependency/count0",
+      "legitimate preclaim dependency metadata exact positive control",
+      "actual minted-row drift causes full claim rollback"
+    ],
+    "review": "FOCUSED_DELTA_REVIEW_PENDING; not an overall code-review PASS",
+    "recordedAtUTC": "2026-11-05T00:10:11.980121+00:00"
+  }
+}

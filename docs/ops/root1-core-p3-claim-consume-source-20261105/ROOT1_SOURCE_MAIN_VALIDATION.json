@@ -1,0 +1,43 @@
+{
+  "status": "SOURCE_ONLY_CORE_CLAIM_CONSUME_INTEGRATION_PASS_NATIVE_LIFECYCLE_CLOSED",
+  "parentMain": "2736ce46b6a5b42bf804dd073ed6345da4c5d5ee",
+  "candidate": "0c1be7f55eb818870e8f29d2cddde0c655d59bd0",
+  "candidateBase": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "twoExactLeafSHA256": {
+    "src/data/repositories/tripCoreV2Repository.ts": "816d8c77116ba3ad6b161a4fde1cf7c2d433576af7e525bde1e3def7a4f719e5",
+    "src/data/repositories/tripCoreV2Repository.test.ts": "39f493b915f44ccfbdbc7f4fe08bd78fe9ec8be28ea3595134623e0394a301d6"
+  },
+  "interfaceSHA256": "7dadac644629d8d2efd8c79a8100ad1b52b6a0bc2c0f4bbf1a07ca776e3f1dcf",
+  "previousReviewSHA256": "4c64c506b7b2bb1e12eeffc91dd0995aacc4dc56d2bc789d7674505ffe2df885",
+  "fixedReviewSHA256": "67ef8e8ca4c4130d5c9e49858defcdc2fedae1b819b60ec4d1cbbd3d12d1c9b7",
+  "securityContractReviewSHA256": "212a4be747be4b0b556cb87ba6b6fae2689001dc35871af7854d9414a05ecab1",
+  "actualAssemblyChecks": {
+    "sevenRootScopedTypesCoreNativeSyncHeaderSaveP3Editor": "PASS",
+    "twoChangedRootESLint": "PASS",
+    "diffCheck": "PASS",
+    "nineDirectCanonicalAccountQueueUuidDependencies": "BYTE_IDENTICAL_CANDIDATE",
+    "unrelatedProduct": "ZERO_DIFF"
+  },
+  "reusedIndependentTests": "Fixed R1 reviewer34 actual SQLite PASS/3.74s plus unchanged original derived-RED probe now1PASS/0.542s. Exact source/test and direct dependencies; no repeated34,old84/32/full suites. Original failed review/derivedRED/previous29/current34 all preserved.",
+  "semantics": [
+    "Atomic exact original Queue/journal claim; private same factory/module incarnation; actual minted postimage fingerprint readback and consume CAS",
+    "Original receipt lookup first, no receipt/status/error null fallback",
+    "Only definitely committed same-op IN_FLIGHT CAS can synchronously once hand off existing guarded transport after account-gate release",
+    "Core port does not apply receipt or mark Queue COMPLETED; UNKNOWN/attempt/identity evidence retained"
+  ],
+  "requiredNativeBeforeAnySubmitReadiness": [
+    "Same-instance opaque claim carrier through existing async claimOperation",
+    "Existing guarded Worker callback without recursive or general-submit fallback",
+    "Actual claim-bound durable-receipt terminal vs RECEIPT_ONLY nonterminal settlement",
+    "Scoped interrupted/live-claim recovery; generic process owner is not opaque Core owner",
+    "Receipt recovery remains original-op first even after incarnation/lease loss"
+  ],
+  "defaultClosure": "Existing Native false switches and unconditional NEW CORRECT close preserved byte-for-byte; this source is not Worker/Cloud READY.",
+  "noChanges": [
+    "Schema/authority",
+    "Native3Sync/QueueEngine",
+    "Import/Form/Guest/HeaderSave",
+    "Hosted/SQL/Source/Provider/device/Gate"
+  ],
+  "resources": "Only Source main Writer, release immediately after remote readback."
+}
