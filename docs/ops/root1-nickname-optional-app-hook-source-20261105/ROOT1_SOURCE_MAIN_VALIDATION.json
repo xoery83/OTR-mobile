@@ -1,0 +1,27 @@
+{
+  "status": "SOURCE_ONLY_OPTIONAL_APP_HOOK_DEFAULT_OFF_WITH_CORE_DOC_SUPPLEMENT",
+  "parentMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "AuthCandidate": "869146f557391277815e1c566107a1f665ddc509",
+  "AuthDocs": "e1809a10",
+  "AuthProductScope": "Only exact9 added lines in backend/src/app.ts; optional port declaration/destructure, handler only when provided, guarded route label/dispatch. No whole branch.",
+  "patchSHA256": "dbb443ed2a18325a2503d86f532f828c672e2e45945e81a102e47c6edd3f7763",
+  "appPreSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+  "appPostSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf",
+  "AuthReviewSHA256": "81d4bc92a007cff675ff17266f5d0c4d38054deded7588762309be0a778ed637",
+  "AuthHandoffSHA256": "bc6b681c6517c49c022081e8e33eeafbaf40eda7449b060d33cc87e6e439ac15",
+  "actualChecks": {
+    "exactPrePatchPostHashAndGitApplyCheck": "PASS",
+    "twoRootScopedTypesAppAndPublishedHTTP": "PASS",
+    "appESLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "reusedTests": "Fixed869 six temporary exact-a857 patched-app mount mock tests and parent static Review reused because exact pre/post/patch unchanged. No six-test rerun; these are not tests newly run on this checkout.",
+  "temporaryHarnessScope": "The2 disposable git-show/patch fixture+test leaves stay in fixed Auth869 author tree; not added to main under minimal authorized app9line scope. Packet evidence paths remain historical author references, not a claim main has those2 files. Parent was informed of this minimal scope decision.",
+  "CoreDocsCommit": "956bf470",
+  "CoreSupplementSHA256": "b542f02a39a88387a466e641201b7e23e652cfad502240b01bc591d41ac1fcb8",
+  "CoreSupplementManifestSHA256": "3d21a47bf5524f0f8bb7444c321c7f5f5da5bc2f7dbc117309c3de85e94715e2",
+  "CoreDocsScope": "Exactly2 semantic/qualification documents, no SQL change. Historical finite gate constraint does not establish a nickname-only false-runtime row; Root2 must pin actual constraints/effective predicates and return exact incompatibility for separate owning difference. Do not set runtime_enabled/Manual arrays to bypass it. No claim actual Hosted constraint checked.",
+  "runtimeBoundary": "Undefined port preserves original three-route404/no verifier/no Core connection. Explicit separately qualified port uses existing normal JWT once/request. No startup/env/connection injection, no mounted live port or new capability.",
+  "install": "Root2 NOT_READY; source hook is neither install nor activation approval, Gate/EXEC/writer/trigger/defaultpriv/history checks remain separate.",
+  "actions": "Source Git only, no Hosted/SQL/runtimeconfig/Session/Provider/device."
+}

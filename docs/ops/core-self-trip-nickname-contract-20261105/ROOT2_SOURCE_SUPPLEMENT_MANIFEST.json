@@ -1,0 +1,23 @@
+{
+  "status": "DOCS_ONLY_SOURCE_SEMANTICS_NOT_READY_ACTIVATION",
+  "productCommit": "33de92963d1396f462dd40de7e64be2b674f2383",
+  "supplementSha256": "b542f02a39a88387a466e641201b7e23e652cfad502240b01bc591d41ac1fcb8",
+  "sourceHashes": {
+    "backend/sql/tripPersonSelfNickname.sql": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63",
+    "backend/sql/tripCoreMemberAccess.sql": "bbd9a76ed2bba4cb1913b25fae416eff6f505c48f4a537d7aa70159bfb07c2a3",
+    "backend/src/tripPersonSelfNicknamePg.ts": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+    "backend/src/tripSustainedGate.ts": "0f5088d38ddef849e4eea4fdffba3509faf06f0c22954ba708a03c5e42a0e119",
+    "backend/src/tripNormalP1Policy.ts": "bb0b960cd418bc58f41dcee115a7070a2b8e4a211dec27cdd69c107dab537138",
+    "supabase/migrations/20260910000100_canonical_production_baseline.sql": "895f8bcca3ae3f5e9f630b3b7c57df36d16ce9898ee6756376b58dbcbf7a1f64",
+    "supabase/migrations/20260913000500_ledger_stage_9_import.sql": "031a9356f23fb01399bf43f178690cc5a66eb89f0831c06227957cf860a64d46",
+    "supabase/migrations/20260914000100_ledger_ui_polish_fixture.sql": "02005c9c51f14a2126e4a7df01bd7ab18df3c655e181fb3086f03c8d6223e1c8",
+    "supabase/dev-forward/core-v2/20261014000300_trip_core_v2_finite_activation_contract.sql": "170e181f251844606689d61c989e620183a41b97f90a8763449588af61724224",
+    "supabase/dev-forward/trip-normal-sync/20261024000100_trip_normal_dev_scope.sql": "c49fd2b785cf45455803b00d1d24c91fdfa8a7389d4095a69964ce8eba7693b9",
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.sql": "c9215ce88face89967cb5d3e32b6609498168cfb45112e7d53697442304f3009",
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql": "bdac8861e65a73af72ff27c39161be40e21dadd10fb9c269c79289d5f12a5f09",
+    "docs/ops/auth-c04-20261103/pg-candidate/MEMBER_CLAIM_CANDIDATE.sql": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587"
+  },
+  "noTestsRerun": true,
+  "noHostedOrPermissionActions": true,
+  "gap": "Actual full shared Core Gate constraint/effective predicates must admit a nickname-only bounded row without newly enabling other commands; known historical constraint does not. Return actual incompatible expression/hash to Root1 before new activation."
+}

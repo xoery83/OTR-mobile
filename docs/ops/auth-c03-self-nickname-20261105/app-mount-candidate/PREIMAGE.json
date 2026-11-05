@@ -1,0 +1,11 @@
+{
+  "sourceMain": "a857481b446fbad8ec8eff34fea174f3f966de43",
+  "target": "backend/src/app.ts",
+  "preSHA256": "6cbdfafa6b9a7bb860d24f9fd9ecd5245dc79f0fc4dbefa3b96d16ab261ef190",
+  "postSHA256": "b6a020b6a453a30e90c86bda5ac59fe4933a4dd89c9a43cb16f6d0c67f660cdf",
+  "patchSHA256": "dbb443ed2a18325a2503d86f532f828c672e2e45945e81a102e47c6edd3f7763",
+  "sharedFileWritten": false,
+  "default": "Portundefined -> nohandler/noNicknamebranch; existing404/unrelatedbehavior preserved. No defaultconnection/env/Startup activation.",
+  "hook": "Existingfeature-specific optionalPort pattern; MCPexistinghook is ingressrestricted so not reused.",
+  "newSourceLines": 9
+}
