@@ -1,0 +1,23 @@
+{
+  "reviewer": "/root parent",
+  "candidate": "7e4349fa9c2a30ef3dd39c2128c40edef989b2bb",
+  "verdict": "NO_BLOCKER_FOR_EXPLICIT_UNDEFINED_DEFAULT_STARTUP_FORWARD_SOURCE_ONLY",
+  "method": "Staticexact2linepatch+complete2MockStartup tests+LOCAL_EVIDENCE review; tests notrerun",
+  "preimage": {
+    "sourceMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a",
+    "target": "backend/src/serverStartup.ts",
+    "preSHA256": "ef6255a856ab9991dcf56a50be8ed2431bf4c08edb77e0465f1bcbbc7f40baae",
+    "postSHA256": "347e163caa92c899ed674f090a3c6c713aeb85f23e472caad818ad149e2c2023",
+    "patchSHA256": "0ac3090703116bae8429b09072f7e4735d6a3208dcabab7397a7dad55e929e08",
+    "insertedLines": 2,
+    "sharedFileWritten": false
+  },
+  "testHash": "dc0f97f5da7ce84fc6aac8e13baf2582abdd612d06c87b750e9c7ebcf9f82b60",
+  "confirmed": [
+    "Defaultundefined/exactexplicitportreference forwarding",
+    "NoCoreHTTPconnection derive or newconnection/flag/wrapper",
+    "Mocklisten only, no actualIO;sharedStartup unwritten"
+  ],
+  "typecheckLimit": "Author scopedTS is test+deps only. Dynamicallypatched actualmain Startup fulltypecheck remains Root1integration responsibility, not wholemainPASS.",
+  "qualification": "SOURCE_ONLY_NO_RUNTIME_OR_HOSTED_ACTIVATION"
+}

@@ -64,7 +64,7 @@
     "AppOptionalHookLatestMain": "0f43dd17e548833f9722caa882bd3ad92ffbe56a"
   },
   "composition": {
-    "status": "LOCAL_EXACT_TWO_LINE_PATCH_PASS_PARENT_REVIEW_PENDING",
+    "status": "NO_BLOCKER_FOR_EXPLICIT_UNDEFINED_DEFAULT_STARTUP_FORWARD_SOURCE_ONLY",
     "evidence": "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/LOCAL_EVIDENCE.json",
     "evidenceSHA256": "3ef3df9aa5f7d1e880cd9e92d1ac34c87ce94395f2da2149a7b71e08617a8635",
     "preimage": {
@@ -79,6 +79,14 @@
     "explicitExistingHook": "startDevBackend startOptions",
     "remainingUniqueRequest": "AUTH-C03-NICKNAME-QUALIFIED-RUNTIME-CAPABILITY-ABI-20261105-01",
     "newRuntimeFlagsOrConnections": 0,
-    "next": "Parentreview then Root1exactsourcepatch; Root2/Core suppliesexistingqualifiedconnection/capabilityABI beforeactualdeploymentcomposition. Noautoactivation."
-  }
+    "next": "Parentreview then Root1exactsourcepatch; Root2/Core suppliesexistingqualifiedconnection/capabilityABI beforeactualdeploymentcomposition. Noautoactivation.",
+    "candidate": "7e4349fa9c2a30ef3dd39c2128c40edef989b2bb",
+    "handoff": "docs/ops/auth-c03-self-nickname-20261105/startup-forward-candidate/SOURCE_HANDOFF.json",
+    "ABIRequest": "AUTH-C03-NICKNAME-EXPLICIT-COMPOSITION-PORT-20261105-01; Coreauthor actualdevelopment perparent"
+  },
+  "providedSourcePin": {
+    "SourceGetterMain": "b94d",
+    "basis": "Reported/providedSourceReceipt only; nochildrecheck"
+  },
+  "HostResourcePrecondition": "Root2 maintenance175fc stage/load127 PRECHECK_REFUSED;SQLnot sent, restoration independentlyinprogress perparent. Not evidence currentHost continuallydown or Authcodefailure. FutureB needs latestrestore/close+freshmetadata; saved02:01health notReady; Auth no livewindow. Local source/tests do not depend onHost."
 }
