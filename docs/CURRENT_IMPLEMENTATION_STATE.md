@@ -3,11 +3,17 @@
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 
 **IN_PROGRESS — current checkpoint, 5 November.**
-Native14752 B consumer run early-closed at first launch (`NSPOSIX3`, no handle,
-`LAUNCH_UNKNOWN`); principal/empty context not proved. OTP/getUser/bootstrap/Reader
-and key reads were0; own Session/C0 claim/daemon released. Native unique Writer's
-startup repair is STARTED. This is separate from14755 Keychain failure; no reset or
-new execution window follows. Receipt SHA `b6cdd2e7…8afc4c` is in the consumer cursor.
+Native14752 first-launch repair is proved by parent-verified runtime receipt
+`5bee6244b92cd435e2a160c9c3daf5123dd454a459c0de05c045b4a8e8f6f7d0`:
+0e31/review0cbb/runtime dc91, same C0/BID, normalopen0/PID49593/MyTrips empty.
+Own session/claims/daemon released02:20:17Z. Principal/Guest/unfinished-outgoing
+queue census and actual B reads remain NOT_RUN. Automatic network was not observed;
+this is not totalHTTP0 proof, nor a14755Keychain cause. Old window stays closed.
+Native dedicated child has STARTED fresh B-only packet preparation via existing
+lawful census paths; no clearing/new diagnostic layer. T/D=null; no new OTP/device authority.
+Root2 requal02 SHA `ee45a2dd45fb7f874ec676a708a48a390a6006d97a3e56b4e8db79f744781694`
+adds no SQL/deploy prerequisite. Saved02:01:52 health is not fresh B/runtime proof;
+future Source5 execution must recheck runtime. No Root2 window is held.
 
 C03 same-Account AKA binding/recovery narrow check is complete: **NO_NEW_DELTA**;
 existing DTO/Repository/account fences/recovery evidence reused, no tests rerun.
@@ -20,6 +26,14 @@ without rerunning or upgrading Mock evidence. Formal Core Backend/PG port and Na
 integration remain pending under request `AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01`.
 Handoff `docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json` selects4 Auth
 files+docs; Canonical2leaf is Root1 dependency, never whole-branch overwrite or activation.
+Auth HTTP full typed-port Handler candidate `1831018a` is parent-reviewed
+`NO_BLOCKER_FOR_UNMOUNTED_AUTH_HTTP_SOURCE_ONLY`;38 direct Mock tests/TS/lint passed,
+not rerun during review. Existing normalJWT verifier is actually called; no route mount
+or activation. Auth4consumer is integrated on main `98e1d3da`, Canonical on `8907fb7b`.
+Next is Root1 serial Source integration of exact2 Auth HTTPfiles+docs, confirming fresh
+main Auth exports and separate Core PG dependency50f; later Root2 protected qualification
+is independent and not granted. C04 freshB preparation continues separately.
+Handoff: `docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json`.
 MC actual next=null/candidates=[]; no new Ready task was claimed or invented.
 
 MCP support47a3d2ee/fad82f42 is source-only reviewed, NOT_INTEGRATED/NOT_LIVE_READY;

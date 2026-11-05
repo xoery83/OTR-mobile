@@ -1,0 +1,45 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "candidate": "1831018a57da204a63526a96d90c7627df608911",
+  "AuthFiles": [
+    "backend/src/selfTripNicknameHttp.ts",
+    "backend/src/selfTripNicknameHttp.test.ts"
+  ],
+  "sourceHashes": {
+    "backend/src/selfTripNicknameHttp.ts": "329d473cca69a285b68244f7e365e055f72c9ccd2ff3bd7a603310c650dc6e88",
+    "backend/src/selfTripNicknameHttp.test.ts": "1af6503f3c8f603457eb0080773ed29181da92df81786045a080c88d790077cc"
+  },
+  "docs": [
+    "docs/ops/auth-c03-self-nickname-20261105/HTTP_LOCAL_PREPARATION.json",
+    "docs/ops/auth-c03-self-nickname-20261105/HTTP_UPSTREAM_DEPENDENCY.json",
+    "docs/ops/auth-c03-self-nickname-20261105/HTTP_PARENT_REVIEW.json",
+    "docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json",
+    "docs/ops/auth-c03-self-nickname-20261105/RESUME_CURSOR.json",
+    "docs/ops/mc-events/auth-c03-self-nickname-local-20261105.json"
+  ],
+  "review": "NO_BLOCKER_FOR_UNMOUNTED_AUTH_HTTP_SOURCE_ONLY",
+  "upstream": {
+    "kind": "ROOT1_UPSTREAM_PG_DEPENDENCY_EXACT_UNMODIFIED_SNAPSHOT_NOT_AUTH_SOURCE",
+    "origin": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/backend/src/tripPersonSelfNicknamePg.ts",
+    "file": "backend/src/tripPersonSelfNicknamePg.ts",
+    "sha256": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+    "handOff": "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_HANDOFF.md",
+    "typedPort": "Pick<ReturnType<typeof createTripPersonSelfNicknamePgPort>,read|execute|recover>",
+    "signature": [
+      "read(context)",
+      "execute(context,originalCommand)",
+      "recover(context,originalOperationId,{intentDigest})"
+    ],
+    "CoreEvidenceReused": "Root1 isolated23PG/14adapter+independentreview passed per parent; NOT_RERUN",
+    "integration": "Root1owns producer and anyPGintegration. This snapshot contains no SQL/install/runtimeactivation. IfmainalreadyhasRoot1producer, exclude thisfile and verifyhash ratherthan overwrite. Canonicalmain8907 unchangedac707; Auth4consumer nowmain98e1d3da."
+  },
+  "freshPreimageRequirements": [
+    "Root1soleSourceWriter confirms currentmain app.authenticateNormalAccount runtime export and DevBackendGateway type; preserve its currentnormalAuth semantics",
+    "Confirm Canonical leaf ac707 and Coretypedport50f or resolve owning revision withRoot1 before consuming; no guessedGatewayABI",
+    "Apply exact2AuthHTTPfiles+docs, not wholeAuthbranch. PGleaf is Root1own dependency: exclude if already onmain, do not overwrite",
+    "No sharedapp/startup/route mount or runtimeconfig/SQL/install/activation is part of thispacket"
+  ],
+  "integration": "SOURCE_ONLY_UNMOUNTED_DEFAULT_CLOSED_NOT_HOSTED_QUALIFIED",
+  "validationReused": "38HTTPdirectMocktests/scopedTS/lint/diffPASS;parentstaticreview,no repeats",
+  "next": "Root1serialSourceintegration receipt; Root2exactprotectedqualification after actualdependencies and Ownergate, independently from C04freshBprep"
+}

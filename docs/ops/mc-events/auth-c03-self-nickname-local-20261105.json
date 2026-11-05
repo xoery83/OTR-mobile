@@ -50,5 +50,12 @@
     "scope": "SOURCE_ONLY",
     "handoff": "docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json"
   },
-  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201"
+  "thread_id": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "http_parent_review": {
+    "candidate": "1831018a57da204a63526a96d90c7627df608911",
+    "verdict": "NO_BLOCKER_FOR_UNMOUNTED_AUTH_HTTP_SOURCE_ONLY",
+    "testsRerun": false,
+    "scope": "SOURCE_ONLY_UNMOUNTED",
+    "handoff": "docs/ops/auth-c03-self-nickname-20261105/HTTP_SOURCE_HANDOFF.json"
+  }
 }
