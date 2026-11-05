@@ -47,10 +47,17 @@ const hash = async (bytes: Uint8Array) =>
 export async function loadDevUniversalContinuousRuntime(
   env: Record<string, string | undefined>,
 ) {
-  const config = await readUniversalContinuousConfig(env);
+  let assertForwardConfig: (() => void) | undefined;
+  const config = await readUniversalContinuousConfig(env, (assertCurrent) => {
+    assertForwardConfig = assertCurrent;
+  });
   if (!config) return undefined;
   const executionFence = config.qaExecutionFence;
   const finite = config.finiteNative;
+  const forward = finite?.mixedBForwardRecovery;
+  const acquisition = config.mixedBInitialAcquisition;
+  if ((forward || acquisition) && !assertForwardConfig)
+    throw Error("MIXED_B_FORWARD_CONFIG_CHANGED");
   const finiteBatch = finite
     ? universalProviderBatchContext(finite.batch.actorId, finite.batch.tripId, {
         batchId: finite.batch.batchId,
@@ -150,6 +157,9 @@ export async function loadDevUniversalContinuousRuntime(
       publishedSource?: Parameters<
         typeof createUniversalContinuousHost
       >[0]["publishedSource"],
+      mixedBPristineSource?: Parameters<
+        typeof createUniversalContinuousHost
+      >[0]["mixedBPristineSource"],
     ) {
       z.uuid().parse(actor);
       z.uuid().parse(trip);
@@ -202,7 +212,23 @@ export async function loadDevUniversalContinuousRuntime(
       return createUniversalContinuousHost({
         enabled: true,
         finiteBatch,
-        finiteDeadline: finite?.expiresAt,
+        finiteDeadline: finite?.expiresAt ?? (mixedBPristineSource && acquisition?.expiresAt),
+        ...(mixedBPristineSource && acquisition
+          ? { mixedBInitial: acquisition.initial, mixedBPristineSource }
+          : {}),
+        ...(forward &&
+        assertForwardConfig &&
+        forward.initial.actorId === actor &&
+        forward.initial.tripId === trip
+          ? {
+              mixedBInitial: forward.initial,
+              mixedBForwardRecovery: {
+                taskDatabase: sql!,
+                materialInputSha256: forward.materialInputSha256,
+                assertConfigCurrent: assertForwardConfig,
+              },
+            }
+          : {}),
         context,
         db,
         catalogConnection,
@@ -215,6 +241,7 @@ export async function loadDevUniversalContinuousRuntime(
               Date.now() >= Date.parse(finite.expiresAt))
           )
             throw Error("UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED");
+          if (acquisition && mixedBPristineSource) assertInitialAcquisitionCurrent();
           if (
             executionFence &&
             (executionFence.accountId !== actor || executionFence.tripId !== trip)
@@ -294,6 +321,17 @@ export async function loadDevUniversalContinuousRuntime(
         },
       });
     }
+    function assertInitialAcquisitionCurrent() {
+      guard();
+      if (
+        !acquisition ||
+        !assertForwardConfig ||
+        Date.now() < Date.parse(acquisition.startsAt) ||
+        Date.now() >= Date.parse(acquisition.expiresAt)
+      )
+        throw Error("MIXED_B_WINDOW_CLOSED");
+      assertForwardConfig();
+    }
     async function forRequest(
       request: Request,
       verifiedActor: string,
@@ -315,11 +353,27 @@ export async function loadDevUniversalContinuousRuntime(
           throw Error("UNIVERSAL_AUTH_REJECTED");
         guard();
       };
-      const scoped = await host(verifiedActor, tripId, authorize, requestId),
-        original = createUniversalOriginalSourceConnection(sourceConnection, hash, {
-          pendingPdf: pdf?.originalMetadataAllowed(verifiedActor, tripId) === true,
-          pendingPng: png?.originalMetadataAllowed(verifiedActor, tripId) === true,
-        });
+      const originalOptions = {
+        pendingPdf: pdf?.originalMetadataAllowed(verifiedActor, tripId) === true,
+        pendingPng: png?.originalMetadataAllowed(verifiedActor, tripId) === true,
+      };
+      const initialOriginal =
+        acquisition &&
+        acquisition.initial.actorId === verifiedActor &&
+        acquisition.initial.tripId === tripId
+          ? createUniversalOriginalSourceConnection(sourceConnection, hash, {
+              ...originalOptions,
+              mixedBInitial: {
+                manifest: acquisition.initial,
+                taskDb: sql!,
+                assertCurrent: assertInitialAcquisitionCurrent,
+              },
+            })
+          : undefined;
+      const original = initialOriginal ??
+        createUniversalOriginalSourceConnection(sourceConnection, hash, originalOptions);
+      const scoped = await host(verifiedActor, tripId, authorize, requestId, undefined, initialOriginal);
+      let protectedPrepareReplay = false;
       return {
         universalOriginalSourcePort: {
           async acquire(actor: string, trip: string, raw: unknown) {
@@ -340,6 +394,10 @@ export async function loadDevUniversalContinuousRuntime(
           },
         },
         universalImportPort: {
+          readMaterialReady: async (actor: string, batch: string, trip: string) => {
+            if (actor !== verifiedActor || trip !== tripId) throw Error("SOURCE_ACCESS_DENIED");
+            return scoped.readMaterialReady(batch);
+          },
           readContext: async (actor: string, batch: string, trip: string) => {
             if (actor !== verifiedActor || trip !== tripId)
               throw Error("SOURCE_ACCESS_DENIED");
@@ -360,49 +418,83 @@ export async function loadDevUniversalContinuousRuntime(
             .passthrough()
             .parse(raw);
           const { tripId: _trip, ...input } = q;
-          return scoped.prepare(input);
+          const result = await scoped.prepare(input);
+          protectedPrepareReplay =
+            result.status === "EXISTING" &&
+            result.context.batchId === forward?.initial.batchId &&
+            result.context.taskId === forward.initial.taskId;
+          return result;
+        },
+        async resume(trip: string, batch: string, task: string) {
+          if (trip !== tripId) throw Error("SOURCE_ACCESS_DENIED");
+          return scoped.resume(batch, task);
         },
         readPublished: (batch: string, task: string) => scoped.readPublished(batch, task),
         async drainTargeted(batch: string, task: string) {
           await authorize();
+          if (protectedPrepareReplay && batch === forward?.initial.batchId && task === forward.initial.taskId)
+            return { status: "NOT_CLAIMED" as const };
+          const owner = `universal-${randomUUID()}`;
+          const mixed = await scoped.claimTargetedMixedBWake(batch, task, owner);
           const context = await captureAccountRequestContext(
             tripId,
             async () => verifiedActor,
           );
-          const owning = await db.getFirstAsync<{ sync_operation_id: string }>(
-            "SELECT sync_operation_id FROM intelligence_continuations WHERE account_id=? AND trip_id=? AND task_id=?",
-            verifiedActor,
-            tripId,
-            task,
-          );
-          if (!owning?.sync_operation_id) throw Error("UNIVERSAL_WAKE_MISSING");
-          await createSyncOperationRepository(db, async () => verifiedActor, undefined, {
-            accountId: verifiedActor,
-            tripId,
-            operationId: owning.sync_operation_id,
-          }).recoverInterrupted();
-          const operation = await db.getFirstAsync<SyncOperation>(
-            `SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,entity_type AS entityType,entity_id AS entityId,operation_type AS operationType,idempotency_key AS idempotencyKey,base_version AS baseVersion,payload_json AS payloadJson,status,attempt_count AS attemptCount,next_attempt_at AS nextAttemptAt,claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?`,
-            verifiedActor,
-            tripId,
-            task,
-          );
-          if (!operation || operation.operationType !== intelligenceWakeKind)
-            throw Error("UNIVERSAL_WAKE_MISSING");
-          const queue = createIntelligenceWakeQueue(db, {
+          const ordinaryQueueDb = {
+            ...db,
+            withTransactionAsync: (work: () => Promise<void>) =>
+              db.withImmediateTransactionAsync(async () => {
+                await scoped.assertOrdinaryWake(batch, task);
+                await work();
+              }),
+          };
+          let operation: SyncOperation;
+          if (mixed) {
+            operation = mixed.operation;
+          } else {
+            const owning = await db.getFirstAsync<{ sync_operation_id: string }>(
+              "SELECT sync_operation_id FROM intelligence_continuations WHERE account_id=? AND trip_id=? AND task_id=?",
+              verifiedActor,
+              tripId,
+              task,
+            );
+            if (!owning?.sync_operation_id) throw Error("UNIVERSAL_WAKE_MISSING");
+            await ordinaryQueueDb.withTransactionAsync(() =>
+              createSyncOperationRepository(db, async () => verifiedActor, undefined, {
+                accountId: verifiedActor,
+                tripId,
+                operationId: owning.sync_operation_id,
+              }).recoverInterrupted(),
+            );
+            const row = await db.getFirstAsync<SyncOperation>(
+              `SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,entity_type AS entityType,entity_id AS entityId,operation_type AS operationType,idempotency_key AS idempotencyKey,base_version AS baseVersion,payload_json AS payloadJson,status,attempt_count AS attemptCount,next_attempt_at AS nextAttemptAt,claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?`,
+              verifiedActor,
+              tripId,
+              task,
+            );
+            if (!row || row.operationType !== intelligenceWakeKind)
+              throw Error("UNIVERSAL_WAKE_MISSING");
+            operation = row;
+          }
+          const queue = createIntelligenceWakeQueue(mixed ? db : ordinaryQueueDb, {
             getAccountId: async () => verifiedActor,
             sha256: hash,
             now: () => new Date().toISOString(),
           });
-          const owner = `universal-${randomUUID()}`;
-          if (!(await queue.claim(context, operation, owner)))
+          if (!mixed && !(await queue.claim(context, operation, owner)))
             return { status: "NOT_CLAIMED" as const };
           try {
-            const result = await scoped.executeQueued(batch, task, {
-              operationId: operation.id,
-              owner,
-              baseVersion: operation.baseVersion!,
-            });
+            const result = await scoped.executeQueued(
+              batch,
+              task,
+              mixed?.claim ?? {
+                operationId: operation.id,
+                owner,
+                baseVersion: operation.baseVersion!,
+              },
+            );
+            if (mixed && result?.providerOutcome !== "SETTLED")
+              throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
             await queue.settle(context, operation);
             return { status: "SETTLED" as const, result };
           } catch (error) {
@@ -438,11 +530,13 @@ export async function loadDevUniversalContinuousRuntime(
             } catch {
               // Diagnostics must not interfere with queue settlement.
             }
-            await queue.settle(
-              context,
-              operation,
-              error instanceof Error ? error : Error("UNIVERSAL_EXECUTION_FAILED"),
-            );
+            // Exact B retains its claim for owning disposition on any failed forward fence.
+            if (!mixed)
+              await queue.settle(
+                context,
+                operation,
+                error instanceof Error ? error : Error("UNIVERSAL_EXECUTION_FAILED"),
+              );
             throw error;
           }
         },

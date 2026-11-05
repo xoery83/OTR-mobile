@@ -583,3 +583,133 @@ it("retained attribution alone cannot prepare or dispatch a new interpretation",
   expect(f.transport.execute).not.toHaveBeenCalled();
   expect(prepare).not.toHaveBeenCalled();
 });
+
+function continuationFixture() {
+  const f = fixture();
+  f.model.inputs = [{ ...f.model.inputs[0], contentByteCount: 66 }];
+  const input = f.model.inputs[0];
+  const response = {
+    version: "otr.backend.universal-material-ready/1" as const,
+    state: "MATERIAL_READY_NO_TASK" as const,
+    accountId: f.accountId,
+    actorId: f.accountId,
+    prepare: {
+      batchId: f.model.batch.batchId,
+      tripId: f.model.batch.context.tripPrior!.id,
+      submissionSha256: "b".repeat(64),
+      inputs: [
+        {
+          id: input.id,
+          source_id: randomUUID(),
+          representation_id: randomUUID(),
+          payload_sha256: input.contentSha256!,
+          byte_count: 66,
+          material_revision: 1,
+          observed_source_row_revision: 2,
+          historical_selection: false as const,
+        },
+      ],
+    },
+  };
+  const materialReady = vi.fn(async () => response);
+  const prepare = vi.fn(async () => ({
+    status: "QUEUED" as const,
+    context: await f.transport.context(),
+  }));
+  const verifyLocalSubmission = vi.fn(async () => "b".repeat(64));
+  const resumeTask = vi.fn(async () => {});
+  const prepareSources = vi.fn(async () => {});
+  const consumer = createUniversalCaptureConsumer({
+    getAccountId: async () => f.accountId,
+    isCurrent: () => true,
+    transport: f.transport,
+    continuous: true,
+    resumeTask,
+    prepareSources,
+    materialContinuation: {
+      transport: { materialReady, prepare },
+      verifyLocalSubmission,
+    },
+  });
+  return { ...f, consumer, response, materialReady, prepare, verifyLocalSubmission, resumeTask, prepareSources };
+}
+
+it("keeps passive Check on Context and explicitly prepares only the exact existing batch", async () => {
+  const f = continuationFixture();
+  f.transport.context.mockRejectedValueOnce(absent());
+  await expect(f.consumer.recover(f.model)).rejects.toMatchObject({ code: "TASK_NOT_FOUND" });
+  expect(f.materialReady).not.toHaveBeenCalled();
+  expect(f.prepare).not.toHaveBeenCalled();
+  f.transport.context.mockRejectedValueOnce(contextUnavailable());
+  f.transport.result.mockRejectedValueOnce(absent());
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(f.verifyLocalSubmission).toHaveBeenCalledOnce();
+  expect(f.prepare).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.response.prepare);
+  expect(f.prepareSources).not.toHaveBeenCalled();
+  expect(f.resumeTask).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+const contextUnavailable = () =>
+  new ApiClientError("unavailable", "http", 503, "UNIVERSAL_CONTEXT_UNAVAILABLE");
+
+it.each(["actor", "batch", "input", "digest", "bytes", "submission", "consent", "unavailable"] as const)(
+  "refuses a material continuation with %s mismatch or failure without falling back to Source",
+  async (reason) => {
+    const f = continuationFixture();
+    f.transport.context.mockRejectedValueOnce(contextUnavailable());
+    if (reason === "actor") f.response.actorId = randomUUID();
+    if (reason === "batch") f.response.prepare.batchId = randomUUID();
+    if (reason === "input") f.response.prepare.inputs[0].id = randomUUID();
+    if (reason === "digest") f.response.prepare.inputs[0].payload_sha256 = "c".repeat(64);
+    if (reason === "bytes") f.response.prepare.inputs[0].byte_count = 65;
+    if (reason === "submission") f.verifyLocalSubmission.mockResolvedValueOnce("c".repeat(64));
+    if (reason === "consent")
+      f.verifyLocalSubmission.mockRejectedValueOnce(Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED"));
+    if (reason === "unavailable")
+      f.materialReady.mockRejectedValueOnce(new ApiClientError("unavailable", "http", 503));
+    await expect(f.consumer.start(f.model)).rejects.toThrow();
+    f.transport.context.mockRejectedValueOnce(absent());
+    await expect(f.consumer.start(f.model)).rejects.toMatchObject({ code: "TASK_NOT_FOUND" });
+    expect(f.prepare).not.toHaveBeenCalled();
+    expect(f.prepareSources).not.toHaveBeenCalled();
+    expect(f.resumeTask).not.toHaveBeenCalled();
+  },
+);
+
+it("uses only passive recovery after an unconfirmed material Prepare in the current view", async () => {
+  const f = continuationFixture();
+  f.transport.context.mockRejectedValueOnce(contextUnavailable());
+  f.prepare.mockRejectedValueOnce(new TypeError("lost ACK"));
+  await expect(f.consumer.start(f.model)).rejects.toThrow("lost ACK");
+  f.transport.context.mockRejectedValueOnce(absent());
+  await expect(f.consumer.start(f.model)).rejects.toMatchObject({ code: "TASK_NOT_FOUND" });
+  f.transport.result.mockRejectedValueOnce(absent());
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(f.materialReady).toHaveBeenCalledOnce();
+  expect(f.prepare).toHaveBeenCalledOnce();
+  expect(f.prepareSources).not.toHaveBeenCalled();
+  expect(f.resumeTask).not.toHaveBeenCalled();
+});
+
+it("preserves ordinary existing Task and first Start 404, and ignores generic 503", async () => {
+  const f = continuationFixture();
+  f.transport.result.mockRejectedValueOnce(absent());
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(f.resumeTask).toHaveBeenCalledOnce();
+  expect(f.materialReady).not.toHaveBeenCalled();
+
+  const first = continuationFixture();
+  first.transport.context.mockRejectedValueOnce(absent());
+  expect(await first.consumer.start(first.model)).toBe(first.result);
+  expect(first.prepareSources).toHaveBeenCalledOnce();
+  expect(first.materialReady).not.toHaveBeenCalled();
+
+  const closed = continuationFixture();
+  closed.transport.context.mockRejectedValueOnce(
+    new ApiClientError("closed", "http", 503, "UNIVERSAL_IMPORT_CLOSED"),
+  );
+  await expect(closed.consumer.start(closed.model)).rejects.toMatchObject({ status: 503 });
+  expect(closed.materialReady).not.toHaveBeenCalled();
+  expect(closed.prepareSources).not.toHaveBeenCalled();
+});

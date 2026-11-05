@@ -8,6 +8,7 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import {
+  universalMaterialReadySchema,
   universalBatchPrepareSchema,
   universalTaskResumeSchema,
   universalBatchPreparedSchema,
@@ -193,6 +194,23 @@ export function createUniversalImportTransport(
         );
         if (binding.batchId !== id) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
         return binding;
+      });
+    },
+    async materialReady(context: AccountRequestContext, batchId: string) {
+      const id = universalContextSchema.shape.batchId.parse(batchId);
+      return read(context, id, "CONTEXT", async (api) => {
+        const response = await api.get(
+          `${path(id)}?tripId=${encodeURIComponent(context.tripId)}&materialReady=1`,
+          universalMaterialReadySchema,
+        );
+        if (
+          response.accountId !== context.accountId ||
+          response.actorId !== context.accountId ||
+          response.prepare.tripId !== context.tripId ||
+          response.prepare.batchId !== id
+        )
+          throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+        return response;
       });
     },
     async result(context: AccountRequestContext, raw: UniversalExecutionContext) {

@@ -1,11 +1,27 @@
 import { randomUUID } from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { expect, it, vi } from "vitest";
+import type { Json } from "../../src/domain/trip/eventIntentJson";
 import { importDigest } from "../../src/domain/trip/flightImportReview";
 import { publicationTestHash as hash } from "./__fixtures__/tripCoreV2CandidatePublication";
 import {
   createUniversalOriginalSourceConnection,
   universalOriginalSourceBoundary,
 } from "./universalOriginalSource";
+import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
+import { createUniversalContinuousHost } from "./universalContinuousHost";
+import { universalBoundary } from "./universalImport";
+import { universalBatchIdentity } from "./universalBatchSource";
+import { initializeUniversalTaskDatabase } from "./universalTaskBootstrap";
+import {
+  mixedBInitialDigest,
+  mixedBInitialManifestSchema,
+} from "./universalMixedBTaskReservation";
+import type { CorePgLease } from "./tripCoreV2PgStorage";
+
 const actor = randomUUID(),
   trip = randomUUID();
 async function envelope(file: boolean) {
@@ -47,7 +63,10 @@ async function envelope(file: boolean) {
   };
 }
 async function result(
-  q: Awaited<ReturnType<typeof envelope>>,
+  q: Pick<
+    Awaited<ReturnType<typeof envelope>>,
+    "operation_id" | "operation_key" | "command" | "operation_sha256" | "source_id"
+  > & { payload: { original: { id: string } } },
   remote = "NOT_APPLICABLE",
   verifiedAt: string | null = null,
 ) {
@@ -549,3 +568,349 @@ it("does not widen the UTF8 receipt recovery to a submitted-text profile", async
   await expect(c.lookup(actor, trip, q)).rejects.toThrow("UNIVERSAL_SOURCE_SCOPE_CLOSED");
   expect(queries.some((sql) => sql.includes("trip_source_operation_lookup"))).toBe(false);
 });
+
+async function withMixedBFirstFixture(
+  work: (fixture: Awaited<ReturnType<typeof mixedBSourceFixture>>) => Promise<void>,
+) {
+  const directory = mkdtempSync(join(tmpdir(), "otr-mixed-b-first-source-"));
+  const sql = new DatabaseSync(join(directory, "task.sqlite"));
+  const observer = new DatabaseSync(join(directory, "task.sqlite"));
+  try {
+    initializeUniversalTaskDatabase(sql);
+    sql.exec(
+      readFileSync(
+        new URL(
+          "../sql/universal_mixed_b_task_reservation_candidate.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    await work(await mixedBSourceFixture(sql, observer));
+  } finally {
+    observer.close();
+    sql.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+async function mixedBSourceFixture(sql: DatabaseSync, observer: DatabaseSync) {
+  const { q: pdf } = await pendingPdfFixture();
+  const text = await envelope(false);
+  const png = {
+    ...pdf,
+    source_id: randomUUID(),
+    operation_id: randomUUID(),
+    operation_key: randomUUID(),
+    payload: {
+      ...pdf.payload,
+      source_input: { ...pdf.payload.source_input, source_kind: "IMAGE" },
+      original: {
+        ...pdf.payload.original,
+        id: randomUUID(),
+        original_filename: "Original.png",
+        mime_type: "image/png",
+      },
+    },
+  };
+  const batchId = randomUUID();
+  const initial = mixedBInitialManifestSchema.parse({
+    version: "otr.import.mixed-b-initial/1",
+    actorId: actor,
+    tripId: trip,
+    batchId,
+    runId: universalBatchIdentity(actor, trip, batchId, "run"),
+    taskId: universalBatchIdentity(actor, trip, batchId, "task"),
+    submissionSha256: "c".repeat(64),
+    originals: [png, pdf, text].map((q, ordinal) => ({
+      ordinal,
+      profile: [
+        "OTR_PNG_CAPTURE_ORIGINAL_V1",
+        "OTR_PDF_CAPTURE_ORIGINAL_V1",
+        "OTR_SUBMITTED_TEXT_V1",
+      ][ordinal],
+      inputId: randomUUID(),
+      sourceId: q.source_id,
+      originalRepresentationId: q.payload.original.id,
+      sha256: q.payload.original.payload_sha256,
+      byteCount: q.payload.original.byte_count,
+      operationId: q.operation_id,
+      operationKey: q.operation_key,
+      operationSha256: q.operation_sha256,
+    })),
+  });
+  const reply = {
+    version: "otr.import.mixed-b-pristine/1",
+    initialManifestSha256: mixedBInitialDigest(initial),
+    firstCommandSha256: await importDigest(
+      "otr.import.mixed-b-first-acquire/1",
+      png as Json,
+      hash,
+    ),
+  };
+  const receipts = new Map([
+    [png.operation_id, await result(png, "PENDING")],
+    [pdf.operation_id, await result(pdf, "PENDING")],
+    [text.operation_id, await result(text)],
+  ]);
+  const phase = () =>
+    observer
+      .prepare("SELECT phase FROM universal_mixed_b_task_reservations WHERE task_id=?")
+      .get(initial.taskId)?.phase;
+  const calls: { sql: string; leaseId: number; phase: unknown }[] = [];
+  let leaseId = 0;
+  let checks = 0;
+  const assertCurrent = vi.fn();
+  const behavior = {
+    nextOrdinal: 0,
+    proof(_attempt: number, envelope?: { version?: string; command?: { operation_id: string } }): unknown {
+      if (envelope?.version === "otr.import.mixed-b-acquire-next/1" || envelope?.command) {
+        const ordinal = envelope.command
+          ? initial.originals.findIndex((pin) => pin.operationId === envelope.command?.operation_id)
+          : behavior.nextOrdinal;
+        return {
+          version: "otr.import.mixed-b-acquire-current/1",
+          initialManifestSha256: mixedBInitialDigest(initial),
+          ordinal,
+        };
+      }
+      return reply;
+    },
+    lookup(_operation: string): unknown { return null; },
+    beforeCommit() {},
+  };
+  const c = createUniversalOriginalSourceConnection(
+    {
+      withLease: async (work) => {
+        const current = ++leaseId;
+        return work({
+          retire: vi.fn(),
+          query: (async (statement: string, params?: readonly unknown[]) => {
+            calls.push({ sql: statement, leaseId: current, phase: phase() });
+            if (statement.includes("find_finite"))
+              return { rows: [{ result: behavior.proof(++checks, JSON.parse(String(params?.[6]))) }] };
+            if (statement.includes("lookup_universal"))
+              return { rows: [{ result: behavior.lookup(JSON.parse(String(params?.[1])).operation_id) }] };
+            if (statement.includes("acquire_universal"))
+              return { rows: [{ result: receipts.get(JSON.parse(String(params?.[1])).operation_id) }] };
+            if (statement === "COMMIT") behavior.beforeCommit();
+            return { rows: [] };
+          }) as CorePgLease["query"],
+        });
+      },
+    },
+    hash,
+    {
+      pendingPng: true,
+      pendingPdf: true,
+      mixedBInitial: { manifest: initial, taskDb: sql, assertCurrent },
+    },
+  );
+  return { c, png, pdf, text, initial, phase, calls, behavior, reply, assertCurrent, sql, receipts };
+}
+
+it("mixed B uses a passive Context proof, then reserves between two proofs on one PG lease", () =>
+  withMixedBFirstFixture(async ({ c, png, initial, calls, phase }) => {
+    await c.proveInitialMixedBTaskAbsent(
+      actor,
+      trip,
+      initial.batchId,
+      mixedBInitialDigest(initial),
+    );
+    expect(phase()).toBeUndefined();
+    expect(calls.map((x) => x.sql.startsWith("SELECT"))).toEqual([false, true, false]);
+    calls.length = 0;
+    await c.acquire(actor, trip, png);
+    expect(calls.map((x) => x.leaseId)).toEqual([2, 2, 2, 2, 2, 2]);
+    expect(calls.map((x) => x.phase)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      "RESERVED",
+      "RESERVED",
+      "RESERVED",
+    ]);
+    expect(calls[4].sql).toContain("trip_source_acquire_universal_original");
+    expect(phase()).toBe("RESERVED");
+  }));
+
+it("mixed B rejects a caller command with changed non-pin metadata before creating a reservation", () =>
+  withMixedBFirstFixture(async ({ c, png, pdf, initial, calls, phase }) => {
+    await expect(
+      c.proveInitialMixedBTaskAbsent(
+        actor,
+        trip,
+        randomUUID(),
+        mixedBInitialDigest(initial),
+      ),
+    ).rejects.toThrow("MIXED_B_INITIAL_BINDING");
+    await expect(
+      c.proveInitialMixedBTaskAbsent(actor, trip, initial.batchId, "f".repeat(64)),
+    ).rejects.toThrow("MIXED_B_INITIAL_BINDING");
+    await expect(c.acquire(actor, trip, pdf)).rejects.toThrow(
+      "MIXED_B_TASK_FENCE",
+    );
+    expect(calls.some(({ sql }) => sql.includes("acquire_universal"))).toBe(false);
+    const changed = {
+      ...png,
+      payload: {
+        ...png.payload,
+        original: { ...png.payload.original, original_filename: "Changed.png" },
+      },
+    };
+    await expect(c.acquire(actor, trip, changed)).rejects.toThrow(
+      "MIXED_B_SOURCE_NOT_PRISTINE",
+    );
+    expect(calls.at(-1)?.sql).toBe("ROLLBACK");
+    expect(phase()).toBeUndefined();
+    expect(initial.originals[0].operationSha256).toBe(changed.operation_sha256);
+  }));
+
+it("uses the same reservation for successor proofs and reads an exact FINAL replay by its original key", () =>
+  withMixedBFirstFixture(async ({ c, png, pdf, text, calls, phase, behavior, receipts }) => {
+    await c.acquire(actor, trip, png);
+    expect(phase()).toBe("RESERVED");
+    calls.length = 0;
+    behavior.lookup = (operation) => operation === png.operation_id ? receipts.get(operation) : null;
+    expect(await c.acquire(actor, trip, png)).toEqual(receipts.get(png.operation_id));
+    expect(calls.some(({ sql }) => sql.includes("acquire_universal"))).toBe(false);
+    await c.acquire(actor, trip, pdf);
+    await c.acquire(actor, trip, text);
+    expect(calls.filter(({ sql }) => sql.includes("acquire_universal")).map(({ phase }) => phase))
+      .toEqual(["RESERVED", "RESERVED"]);
+    behavior.lookup = () => ({ phase: "IO_UNKNOWN" });
+    const before = calls.length;
+    await expect(c.acquire(actor, trip, text)).rejects.toThrow();
+    expect(calls.slice(before).some(({ sql }) => sql.includes("acquire_universal"))).toBe(false);
+    expect(phase()).toBe("RESERVED");
+  }));
+
+it.each(["proof", "commit"])(
+  "mixed B preserves reservation across uncertain %s without a new ACQUIRE",
+  (point) =>
+    withMixedBFirstFixture(async ({ c, png, behavior, reply, phase, calls }) => {
+      if (point === "proof") behavior.proof = (attempt) => (attempt === 2 ? null : reply);
+      else
+        behavior.beforeCommit = () => {
+          throw Error("TEST_COMMIT_UNKNOWN");
+        };
+      await expect(c.acquire(actor, trip, png)).rejects.toThrow(
+        point === "proof" ? "MIXED_B_SOURCE_NOT_PRISTINE" : "TEST_COMMIT_UNKNOWN",
+      );
+      expect(phase()).toBe("RESERVED");
+      const acquisitions = () =>
+        calls.filter((x) => x.sql.includes("acquire_universal")).length;
+      expect(acquisitions()).toBe(point === "commit" ? 1 : 0);
+      await expect(c.acquire(actor, trip, png)).rejects.toThrow();
+      expect(acquisitions()).toBe(point === "commit" ? 1 : 0);
+      expect(phase()).toBe("RESERVED");
+    }),
+);
+
+it("normal Context GET maps only exact combined pristine proof to protected-B 404", () =>
+  withMixedBFirstFixture(
+    async ({ c, sql, initial, png, phase, calls, behavior, reply }) => {
+      const defaultProof = behavior.proof;
+      const forbidden = vi.fn(async () => {
+        throw Error("UNEXPECTED_IO");
+      });
+      const db = initializeUniversalTaskDatabase(sql);
+      const context = await captureAccountRequestContext(trip, async () => actor);
+      const ordinaryLookup = vi.fn<() => Promise<null>>(async () => null);
+      let active = true;
+      const host = createUniversalContinuousHost({
+        enabled: true,
+        context,
+        finiteDeadline: new Date(Date.now() + 60000).toISOString(),
+        mixedBInitial: initial,
+        mixedBPristineSource: c,
+        db,
+        assertCurrentAuth: async () => {},
+        assertNewExecutionAllowed() {
+          if (!active) throw Error("FIXTURE_SCOPE_CLOSED");
+        },
+        catalogConnection: { withLease: forbidden },
+        bootstrapLedger: forbidden,
+        selectProvider: forbidden,
+        runtime: {
+          stores: {} as never,
+          sourceConnection: { withLease: forbidden },
+          taskReceiptConnection: { withLease: forbidden },
+          gateway: {} as never,
+          readBinary: forbidden,
+          environment: () => undefined,
+        },
+        readAdmittedPrice: forbidden,
+        publishedSource: { lookup: ordinaryLookup, readManifest: forbidden },
+      });
+      const read = (batch = initial.batchId, readActor = actor) =>
+        universalBoundary(
+          new Request(
+            `http://local/v2/import-batches/${batch}/interpretations?tripId=${trip}`,
+          ),
+          readActor,
+          async (a, t) => a === actor && t === trip,
+          {
+            readContext: (_a, b) => host.readContext(b),
+            read: forbidden,
+            execute: forbidden,
+          },
+        );
+      const before = sql.prepare("SELECT total_changes() AS n").get();
+      const exact = await read();
+      expect(exact.status).toBe(404);
+      expect(await exact.json()).toEqual({ error: { code: "TASK_NOT_FOUND" } });
+      expect(ordinaryLookup).not.toHaveBeenCalled();
+      expect(sql.prepare("SELECT total_changes() AS n").get()).toEqual(before);
+      expect(phase()).toBeUndefined();
+
+      const proofCount = calls.length;
+      expect((await read(initial.batchId, randomUUID())).status).toBe(403);
+      expect((await read(randomUUID())).status).toBe(404);
+      expect(calls).toHaveLength(proofCount);
+
+      behavior.proof = () => null;
+      expect((await read()).status).toBe(503);
+      ordinaryLookup.mockRejectedValueOnce(Error("INVALID_IMPORT_INPUT"));
+      expect((await read()).status).toBe(503);
+      ordinaryLookup.mockRejectedValueOnce(Error("UNIVERSAL_BATCH_NOT_PREPARED"));
+      expect((await read()).status).toBe(503);
+      expect(sql.prepare("SELECT total_changes() AS n").get()).toEqual(before);
+
+      behavior.proof = () => {
+        active = false;
+        return reply;
+      };
+      expect((await read()).status).toBe(503);
+      expect(sql.prepare("SELECT total_changes() AS n").get()).toEqual(before);
+
+      behavior.proof = () => reply;
+      active = true;
+      await c.acquire(actor, trip, png);
+      const reserved = sql.prepare("SELECT total_changes() AS n").get();
+      expect((await read()).status).toBe(503);
+      expect(phase()).toBe("RESERVED");
+      expect(sql.prepare("SELECT total_changes() AS n").get()).toEqual(reserved);
+      behavior.proof = defaultProof;
+      behavior.nextOrdinal = 1;
+      expect((await read()).status).toBe(404);
+      expect(sql.prepare("SELECT total_changes() AS n").get()).toEqual(reserved);
+      behavior.nextOrdinal = 3;
+      expect((await read()).status).toBe(503);
+      expect(forbidden).not.toHaveBeenCalled();
+    },
+  ));
+
+
+it("keeps a closed protected mixed Source lookup on the original path", async () =>
+  withMixedBFirstFixture(async ({ c, text, behavior, calls }) => {
+    behavior.lookup = () => {
+      throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+    };
+    await expect(c.lookup(actor, trip, text)).rejects.toThrow("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+    expect(calls.map(({ sql }) => sql)).toEqual([
+      "BEGIN ISOLATION LEVEL READ COMMITTED",
+      "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+      "ROLLBACK",
+    ]);
+  }));

@@ -1,5 +1,5 @@
 import { projectUniversalVisualReview } from "./universalVisualReview";
-import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
+import { universalBatchPrepareSchema, universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -137,6 +137,7 @@ export type UniversalPort = {
     batchId: string,
     tripId: string,
   ): Promise<UniversalExecutionContext | null>;
+  readMaterialReady?(actorId: string, batchId: string, tripId: string): Promise<UniversalMaterialReady>;
   execute(
     actorId: string,
     batchId: string,
@@ -144,6 +145,14 @@ export type UniversalPort = {
   ): Promise<UniversalResult>;
   read(actorId: string, batchId: string, taskId: string): Promise<UniversalResult | null>;
 };
+const universalMaterialReadySchema = z.strictObject({
+  version: z.literal("otr.backend.universal-material-ready/1"),
+  state: z.literal("MATERIAL_READY_NO_TASK"),
+  accountId: uuid,
+  actorId: uuid,
+  prepare: universalBatchPrepareSchema,
+});
+export type UniversalMaterialReady = z.infer<typeof universalMaterialReadySchema>;
 export type UniversalExecutionContext = {
   activity?: import("../../src/data/api/universalImportContracts").UniversalTaskActivity;
   version: "otr.backend.universal-context/1";
@@ -753,6 +762,20 @@ export async function universalBoundary(
       return Response.json({ error: { code: "INVALID_TRIP_ID" } }, { status: 400 });
     if (!(await canReadTrip(actorId, tripId)))
       return Response.json({ error: { code: "TRIP_READ_FORBIDDEN" } }, { status: 403 });
+    if (url.searchParams.has("materialReady")) {
+      const flags = url.searchParams.getAll("materialReady");
+      if (flags.length !== 1 || flags[0] !== "1" || url.searchParams.size !== 2)
+        return Response.json({ error: { code: "INVALID_REQUEST" } }, { status: 400 });
+      try {
+        const ready = universalMaterialReadySchema.parse(await port.readMaterialReady?.(actorId, batchId, tripId));
+        if (ready.accountId !== actorId || ready.actorId !== actorId ||
+          ready.prepare.batchId !== batchId || ready.prepare.tripId !== tripId)
+          throw Error("MIXED_B_MATERIAL_BINDING");
+        return Response.json(ready, { headers: { "Cache-Control": "no-store" } });
+      } catch {
+        return Response.json({ error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } }, { status: 503 });
+      }
+    }
     if (!port.readContext)
       return Response.json(
         { error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } },

@@ -199,6 +199,40 @@ export function createUniversalBatchSource(deps: {
   }
   return {
     lookup,
+    async beginMixedB(
+      actor: string,
+      trip: string,
+      raw: unknown,
+      materialInputSha256: string,
+      normalizedInputSha256: string,
+      assertCurrent: () => void,
+    ) {
+      if (!finite) throw Error("MIXED_B_MATERIAL_BINDING");
+      await current(actor, trip);
+      const input = universalBatchInputsSchema.parse(raw);
+      finiteMatch(universalProviderBatchContext(actor, trip, input));
+      await universalPgTransaction(
+        deps.connection,
+        async (lease) => {
+          await lease.query(
+            "SELECT public.trip_source_begin_finite_universal_inputs($1::uuid,$2::uuid,$3) AS run",
+            [actor, trip, canonicalEventJson({
+              ...input,
+              runId: finite.runId,
+              taskId: finite.taskId,
+              materialInputSha256: digest.parse(materialInputSha256),
+              normalizedInputSha256: digest.parse(normalizedInputSha256),
+            } as Json)],
+          );
+        },
+        false,
+        assertCurrent,
+      );
+      const binding = await lookup(actor, trip, finite.batchId);
+      if (!binding) throw Error("MIXED_B_RUN_READBACK_UNAVAILABLE");
+      assertCurrent();
+      return binding;
+    },
     async prepare(actor: string, trip: string, raw: unknown) {
       await current(actor, trip);
       const q = universalBatchInputsSchema.parse(raw);

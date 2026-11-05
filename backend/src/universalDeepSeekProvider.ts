@@ -131,6 +131,7 @@ export function createUniversalDeepSeekProvider(deps: {
   custody: UniversalProviderCustody;
   send: Send;
   priceSchedule?: UniversalPriceSchedule;
+  beforeRemoteSend?(): Promise<{ readCurrentClaim(): Promise<() => void> }>;
 }): UniversalProvider {
   return {
     mode: "HOSTED",
@@ -153,7 +154,9 @@ export function createUniversalDeepSeekProvider(deps: {
           !/^[\x21-\x7e]{1,8192}$/.test(credential.secret)
         )
           throw new Error("UNIVERSAL_PROVIDER_CREDENTIAL_INVALID");
+        const sourceFence = deps.beforeRemoteSend && (await deps.beforeRemoteSend());
         await credential.assertCurrent();
+        if (sourceFence) (await sourceFence.readCurrentClaim())();
         const signal = AbortSignal.timeout(60000);
         phase = "SEND";
         const response = await deps.send({

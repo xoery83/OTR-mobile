@@ -54,7 +54,11 @@ const responseBytes = Buffer.from(
     },
   }),
 );
-function provider(status = 200, body = responseBytes) {
+function provider(
+  status = 200,
+  body = responseBytes,
+  beforeRemoteSend?: Parameters<typeof createUniversalDeepSeekProvider>[0]["beforeRemoteSend"],
+) {
   const custody = {
     acquire: vi.fn(async () => ({
       secret: "fixture-secret",
@@ -76,6 +80,7 @@ function provider(status = 200, body = responseBytes) {
     instance: createUniversalDeepSeekProvider({
       custody,
       send: send as never,
+      beforeRemoteSend,
       priceSchedule: {
         currency: "USD",
         inputNanosPerMillion: "1000000000",
@@ -85,6 +90,50 @@ function provider(status = 200, body = responseBytes) {
     }),
   };
 }
+it.each(["SOURCE", "CREDENTIAL", "CLAIM", "CURRENT"])(
+  "requires both Source and Provider custody to remain current before transport (%s)",
+  async (scenario) => {
+    let sourceCurrent = true;
+    const calls: string[] = [];
+    const x = provider(200, responseBytes, async () => {
+      calls.push("source-proof");
+      return {
+        async readCurrentClaim() {
+          calls.push("claim");
+          if (scenario === "CLAIM") throw Error("CLAIM_CLOSED");
+          return () => {
+            calls.push("source-recheck");
+            if (!sourceCurrent) throw Error("SOURCE_CLOSED");
+          };
+        },
+      };
+    });
+    x.custody.acquire.mockResolvedValueOnce({
+      secret: "fixture-secret",
+      assertCurrent: vi.fn(async () => {
+        calls.push("credential");
+        if (scenario === "SOURCE") sourceCurrent = false;
+        if (scenario === "CREDENTIAL") throw Error("CREDENTIAL_CLOSED");
+      }),
+    });
+    if (scenario === "CURRENT") {
+      await expect(x.instance.interpret(input)).resolves.toMatchObject({
+        providerReceipt: { outcome: "SETTLED" },
+      });
+      expect(x.send).toHaveBeenCalledOnce();
+    } else {
+      await expect(x.instance.interpret(input)).rejects.toThrow(`${scenario}_CLOSED`);
+      expect(x.send).not.toHaveBeenCalled();
+    }
+    expect(calls.slice(0, 4)).toEqual(
+      scenario === "CREDENTIAL"
+        ? ["source-proof", "credential"]
+        : scenario === "CLAIM"
+          ? ["source-proof", "credential", "claim"]
+          : ["source-proof", "credential", "claim", "source-recheck"],
+    );
+  },
+);
 it("builds frozen one-call Universal request, uses Backend custody and retains actual usage with fake HTTPS", async () => {
   const x = provider();
   const result = await x.instance.interpret(input);

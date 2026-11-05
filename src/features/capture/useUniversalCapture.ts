@@ -107,6 +107,29 @@ export function useUniversalCapture(
           transport,
           isCurrent: current,
           continuous: process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true",
+          materialContinuation: {
+            transport,
+            verifyLocalSubmission: async (context, job) => {
+              const [{ assertDefaultUniversalPhotoConsent }, { canonicalSubmission }, {
+                captureStorageDependencies,
+              }] = await Promise.all([
+                import("@/data/operations/defaultUniversalPhotoConsent"),
+                import("@/domain/capture/captureSubmission"),
+                import("@/data/repositories/defaultLocalCaptureInboxRepository"),
+              ]);
+              const assertCurrent = () => {
+                if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+              };
+              assertCurrent();
+              await assertDefaultUniversalPhotoConsent(context, job, {
+                getAccountId,
+                assertCurrent,
+              });
+              return captureStorageDependencies.sha256(
+                new TextEncoder().encode(canonicalSubmission(job.batch)),
+              );
+            },
+          },
           resumeTask: async (context, binding) => {
             const { assertDefaultUniversalPhotoConsent } =
               await import("@/data/operations/defaultUniversalPhotoConsent");

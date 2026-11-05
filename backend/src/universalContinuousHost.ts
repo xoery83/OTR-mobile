@@ -1,3 +1,17 @@
+import type { DatabaseSync } from "node:sqlite";
+import {
+  assertMixedBClaimCurrent,
+  assertMixedBTaskStaged,
+  claimMixedBTaskWake,
+  readProtectedMixedBReservation,
+  readMixedBRunBeginState,
+  spendMixedBRunBegin,
+  recoverMixedBTaskWake,
+  mixedBInitialDigest,
+  mixedBInitialManifestSchema,
+  type MixedBAttemptPhase,
+  type MixedBInitialManifest,
+} from "./universalMixedBTaskReservation";
 import { projectUniversalTaskActivity } from "./universalTaskActivity";
 import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
 import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
@@ -5,7 +19,10 @@ import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workb
 import { createHash } from "node:crypto";
 import type { AccountRequestContext } from "../../src/data/auth/accountRequestContext";
 import type { SyncOperation } from "../../src/data/sync/syncOperationRepository";
-import { createIntelligenceContinuationRepository } from "../../src/data/repositories/intelligenceContinuationRepository";
+import {
+  createIntelligenceContinuationRepository,
+  type ContinuationDatabase,
+} from "../../src/data/repositories/intelligenceContinuationRepository";
 import {
   taskMutableColumns,
   attemptMutableColumns,
@@ -24,6 +41,7 @@ import {
 import type { UniversalSourceTask, UniversalSourceMetadata } from "./universalSourceRead";
 import {
   type UniversalManifest,
+  type UniversalMaterialReady,
   prepareUniversalDispatch,
   sealedUniversalDispatchMarker,
   UNIVERSAL_IMPORT_VERSION,
@@ -35,10 +53,7 @@ import {
   buildUniversalRegisteredTaskDraft,
   type universalContinuousSelectionSchema,
 } from "./universalRegisteredTaskDraft";
-import {
-  bootstrapUniversalTask,
-  type universalTaskDatabase,
-} from "./universalTaskBootstrap";
+import { bootstrapUniversalTask, universalTaskDatabase } from "./universalTaskBootstrap";
 import {
   createUniversalBackendRuntime,
   type UniversalRuntimeProvisioning,
@@ -50,6 +65,11 @@ import { recoverSettledUniversalTask } from "./universalSettledRecovery";
 import { createUniversalTaskReceiptChecks } from "./universalTaskReceipt";
 import type { UniversalPriceSchedule } from "./universalDeepSeekProvider";
 import { ZodError, z } from "zod";
+import {
+  assertMixedBTaskFence,
+  createUniversalOriginalSourceConnection,
+  type MixedBPristineSource,
+} from "./universalOriginalSource";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 const immutable = (value: Task | Attempt, mutable: readonly string[]) =>
@@ -78,6 +98,14 @@ export function createUniversalContinuousHost(deps: {
   enabled?: boolean;
   finiteBatch?: ReturnType<typeof universalProviderBatchContext>;
   finiteDeadline?: string;
+  // Trusted exact B scope only. The default loader has no forward enrollment.
+  mixedBInitial?: MixedBInitialManifest;
+  mixedBPristineSource?: MixedBPristineSource;
+  mixedBForwardRecovery?: {
+    taskDatabase: DatabaseSync;
+    materialInputSha256: string;
+    assertConfigCurrent(): void;
+  };
   context: AccountRequestContext;
   assertCurrentAuth(): Promise<void>;
   assertNewExecutionAllowed?(): void;
@@ -115,6 +143,34 @@ export function createUniversalContinuousHost(deps: {
   const context = Object.freeze({ ...deps.context }),
     actor = context.accountId,
     trip = context.tripId;
+  const mixedBInitial =
+    deps.mixedBInitial && mixedBInitialManifestSchema.parse(deps.mixedBInitial);
+  if (mixedBInitial && (mixedBInitial.actorId !== actor || mixedBInitial.tripId !== trip))
+    throw Error("MIXED_B_INITIAL_BINDING");
+  const forward = deps.mixedBForwardRecovery;
+  if (
+    forward &&
+    (!mixedBInitial ||
+      !deps.finiteBatch ||
+      !deps.finiteDeadline ||
+      universalTaskDatabase(forward.taskDatabase) !== deps.db)
+  )
+    throw Error("MIXED_B_FORWARD_CONFIG_BINDING");
+  const mixedBOwner =
+    forward && mixedBInitial && deps.finiteDeadline
+      ? createUniversalOriginalSourceConnection(deps.runtime.sourceConnection, hash, {
+          mixedBInitial: {
+            manifest: mixedBInitial,
+            taskDb: forward.taskDatabase,
+            assertCurrent: assertMixedBForwardCurrent,
+            expectedMaterial: {
+              inputSha256: forward.materialInputSha256,
+              expiresAt: deps.finiteDeadline,
+            },
+          },
+        })
+      : undefined;
+
   const current = async () => {
     if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     await deps.assertCurrentAuth();
@@ -142,8 +198,12 @@ export function createUniversalContinuousHost(deps: {
   const withRetainedMetadata = deps.publishedSource
     ? deps.publishedSource.withRetainedMetadata?.bind(deps.publishedSource)
     : sourceReader.withRetainedMetadata;
-  const repository = (expected?: Task, admitted?: Attempt) =>
-    createIntelligenceContinuationRepository(deps.db, {
+  const repository = (
+    expected?: Task,
+    admitted?: Attempt,
+    db: ContinuationDatabase = deps.db,
+  ) =>
+    createIntelligenceContinuationRepository(db, {
       getAccountId: async () => actor,
       now: () => new Date().toISOString(),
       sha256: hash,
@@ -197,7 +257,18 @@ export function createUniversalContinuousHost(deps: {
       await current();
       stage = "BINDING";
       const binding = await (deps.publishedSource ?? source).lookup(actor, trip, batch);
-      if (!binding) throw Error("UNIVERSAL_BATCH_NOT_PREPARED");
+      const initial = mixedBInitial?.batchId === batch ? mixedBInitial : undefined;
+      if (!binding)
+        throw Error(
+          initial ? "MIXED_B_CONTEXT_UNPROVEN" : "UNIVERSAL_BATCH_NOT_PREPARED",
+        );
+      if (
+        initial &&
+        (binding.taskId !== initial.taskId ||
+          binding.runId !== initial.runId ||
+          binding.submissionSha256 !== initial.submissionSha256)
+      )
+        throw Error("MIXED_B_CONTEXT_UNPROVEN");
       if (taskId && binding.taskId !== taskId) throw Error("UNIVERSAL_TASK_UNAVAILABLE");
       stage = "TASK";
       const state = await existing(binding);
@@ -238,6 +309,8 @@ export function createUniversalContinuousHost(deps: {
       } catch {
         /* Diagnostics cannot replace the owning failure. */
       }
+      if (mixedBInitial?.batchId === batch && message === "UNIVERSAL_BATCH_NOT_PREPARED")
+        throw Error("MIXED_B_CONTEXT_UNPROVEN");
       throw error;
     }
   }
@@ -410,12 +483,241 @@ export function createUniversalContinuousHost(deps: {
     await current();
     return result;
   }
+  function executionContext(task: Task, batch: string, attemptCount: number) {
+    return {
+      version: "otr.backend.universal-context/1" as const,
+      actorId: actor,
+      accountId: actor,
+      tripId: trip,
+      batchId: batch,
+      taskId: task.task_id,
+      activity: projectUniversalTaskActivity(task, attemptCount),
+    };
+  }
+  function assertMixedBWindowCurrent() {
+    if (
+      deps.enabled !== true ||
+      !deps.assertNewExecutionAllowed ||
+      !deps.finiteDeadline ||
+      !(Date.parse(deps.finiteDeadline) > Date.now())
+    )
+      throw Error("MIXED_B_WINDOW_CLOSED");
+    deps.assertNewExecutionAllowed();
+  }
+  function assertMixedBForwardCurrent() {
+    assertMixedBWindowCurrent();
+    if (!forward) throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+    forward.assertConfigCurrent();
+  }
+
+  async function isProtectedMixedB(batch: string, taskId: string) {
+    const configured =
+      mixedBInitial?.batchId === batch || mixedBInitial?.taskId === taskId;
+    if (
+      configured &&
+      (mixedBInitial?.batchId !== batch || mixedBInitial.taskId !== taskId)
+    )
+      throw Error("MIXED_B_INITIAL_BINDING");
+    const row = await readProtectedMixedBReservation(deps.db, batch, taskId);
+    if (!row) return configured;
+    if (
+      row.account_id !== actor ||
+      row.trip_id !== trip ||
+      row.batch_id !== batch ||
+      row.task_id !== taskId
+    )
+      throw Error("MIXED_B_INITIAL_BINDING");
+    if (!configured) throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+    return true;
+  }
+
+  async function freshMixedBWake(
+    binding: UniversalRunBinding,
+    draft: Awaited<ReturnType<typeof buildUniversalRegisteredTaskDraft>>,
+  ) {
+    if (!mixedBOwner || !mixedBInitial || !deps.finiteBatch)
+      throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+    await current();
+    assertMixedBForwardCurrent();
+    const { owningBinding: _, ...expected } = universalProviderOwningContext(binding);
+    if (persistenceDigest(expected) !== persistenceDigest(deps.finiteBatch))
+      throw Error("MIXED_B_MATERIAL_BINDING");
+    const assertMaterial = await mixedBOwner.withCurrentMixedBMaterial(
+      {
+        batchId: binding.batchId,
+        submissionSha256: binding.submissionSha256,
+        inputs: expected.inputs,
+      },
+      binding,
+      async (assertCurrent) => assertCurrent,
+    );
+    await current();
+    assertMaterial();
+    return {
+      db: deps.db,
+      context,
+      reservation: { initial: mixedBInitial, finalRun: binding },
+      task: draft.task,
+      expectedWakeId: draft.attempt.sync_operation_id,
+      assertCurrent() {
+        assertMaterial();
+        if (!(Date.now() < Date.parse(draft.task.policy_snapshot.deadline ?? "")))
+          throw Error("MIXED_B_TASK_WINDOW_CLOSED");
+      },
+    };
+  }
+
+  async function reconstructMixedBWake(state: Awaited<ReturnType<typeof readBoundTask>>) {
+    if (!mixedBOwner || state.attempts.length)
+      throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+    assertMixedBForwardCurrent();
+    const draft = await buildUniversalRegisteredTaskDraft(
+      state.binding,
+      await readManifest(state.task),
+      await deps.selectProvider(universalProviderOwningContext(state.binding)),
+      deps.finiteDeadline,
+    );
+    if (
+      immutable(draft.task, taskMutableColumns) !==
+      immutable(state.task, taskMutableColumns)
+    )
+      throw Error("MIXED_B_TASK_BINDING");
+    return draft;
+  }
+
+  async function observeMaterialReady(batch: string) {
+    await executionCurrent();
+    if (!forward || !mixedBOwner || !mixedBInitial || !deps.finiteBatch ||
+      mixedBInitial.batchId !== batch || deps.finiteBatch.batchId !== batch)
+      throw Error("MIXED_B_MATERIAL_BINDING");
+    const { submissionSha256, inputs } = deps.finiteBatch;
+    const proof = await mixedBOwner.observeMixedBMaterialReady({ batchId: batch, submissionSha256, inputs });
+    const spent = await readMixedBRunBeginState(deps.db, mixedBInitial);
+    if (spent !== null && (spent !== forward.materialInputSha256 || proof.runState === "ABSENT"))
+      throw Error("MIXED_B_RUN_BEGIN_OUTCOME_UNQUALIFIED");
+    await current();
+    proof.assertCurrent();
+    return { ...proof, prepare: { tripId: trip, batchId: batch, submissionSha256, inputs } };
+  }
+
+  async function manifestForRun(binding: UniversalRunBinding) {
+    return readManifest({
+      account_id: actor,
+      trip_id: trip,
+      import_id: binding.batchId,
+      task_id: binding.taskId,
+      run_id: binding.runId,
+      manifest_sha256: binding.submissionSha256,
+      input_pins: binding.inputs.map((p) => ({
+        kind: "SOURCE",
+        source_id: p.source_id,
+        material_revision: p.material_revision,
+        representation_id: p.representation_id,
+        payload_sha256: p.payload_sha256,
+        byte_count: p.byte_count,
+        input_id: p.id,
+        transform_sha256: p.pdfSource?.transformOptionsSha256 ?? null,
+      })),
+    });
+  }
+
   return {
+    async readMaterialReady(batch: string): Promise<UniversalMaterialReady> {
+      const proof = await observeMaterialReady(batch);
+      return {
+        version: "otr.backend.universal-material-ready/1",
+        state: "MATERIAL_READY_NO_TASK",
+        accountId: actor,
+        actorId: actor,
+        prepare: proof.prepare,
+      };
+    },
     async prepare(raw: unknown) {
       await executionCurrent();
-      const selection = await deps.selectProvider(
-        universalProviderBatchContext(actor, trip, raw),
-      );
+      const batchContext = universalProviderBatchContext(actor, trip, raw);
+      if (await isProtectedMixedB(batchContext.batchId, batchContext.taskId)) {
+        const mixedB = mixedBInitial!;
+        if (
+          !deps.finiteBatch ||
+          batchContext.submissionSha256 !== mixedB.submissionSha256 ||
+          persistenceDigest(batchContext) !== persistenceDigest(deps.finiteBatch)
+        )
+          throw Error("MIXED_B_MATERIAL_BINDING");
+        assertMixedBWindowCurrent();
+        let binding = await source.lookup(actor, trip, mixedB.batchId);
+        if (!forward || !mixedBOwner) {
+          if (!binding) throw Error("MIXED_B_EXISTING_RUN_REQUIRED");
+          throw Error("MIXED_B_MATERIAL_LEASE_UNQUALIFIED");
+        }
+        const assertReserved = () => {
+          assertMixedBForwardCurrent();
+          assertMixedBTaskFence(forward.taskDatabase, mixedB, true);
+        };
+        assertMixedBForwardCurrent();
+        if (!binding) {
+          const ready = await observeMaterialReady(mixedB.batchId);
+          if (ready.runState === "PENDING") binding = await source.lookup(actor, trip, mixedB.batchId);
+          else {
+            await spendMixedBRunBegin(deps.db, mixedB, forward.materialInputSha256, ready.assertCurrent);
+            binding = await source.beginMixedB(
+              actor, trip, raw, forward.materialInputSha256, ready.normalizedInputSha256,
+              () => { ready.assertCurrent(); assertReserved(); },
+            );
+          }
+        }
+        if (!binding) throw Error("MIXED_B_RUN_READBACK_UNAVAILABLE");
+        const bindingContext = {
+          version: "otr.backend.universal-context/1" as const,
+          actorId: actor,
+          accountId: actor,
+          tripId: trip,
+          batchId: binding.batchId,
+          taskId: binding.taskId,
+        };
+        const priorTask = await existing(binding);
+        if (priorTask?.attempts.length) throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+        if (!priorTask && (await observeMaterialReady(mixedB.batchId)).runState !== "PENDING")
+          throw Error("MIXED_B_RUN_READBACK_UNAVAILABLE");
+        const draft = await buildUniversalRegisteredTaskDraft(
+          binding,
+          await manifestForRun(binding),
+          await deps.selectProvider(universalProviderOwningContext(binding)),
+          deps.finiteDeadline,
+        );
+        if (priorTask) {
+          if (immutable(priorTask.task, taskMutableColumns) !== immutable(draft.task, taskMutableColumns))
+            throw Error("MIXED_B_TASK_BINDING");
+          await freshMixedBWake(binding, draft);
+          return { status: "EXISTING" as const, context: bindingContext };
+        }
+        const reservation = { initial: mixedB, finalRun: binding };
+        const catalog = await readUniversalCatalog(deps.catalogConnection, draft.task, AbortSignal.timeout(5000));
+        const ledger = ledgerBootstrapResponseSchema.parse(await deps.bootstrapLedger());
+        await bootstrapUniversalTask({
+          db: deps.db,
+          task: draft.task,
+          attempt: draft.attempt,
+          catalog,
+          ledger,
+          getAccountId: async () => actor,
+          assertCurrent: assertMixedBForwardCurrent,
+          claimQueue: false,
+          mixedBReservation: reservation,
+          proveMixedBStage: async () => (await freshMixedBWake(binding, draft)).assertCurrent,
+        });
+        await assertMixedBTaskStaged(deps.db, reservation, draft.task);
+        const readback = await readBoundTask(binding.batchId, binding.taskId);
+        if (persistenceDigest(readback.binding) !== persistenceDigest(binding))
+          throw Error("MIXED_B_MATERIAL_BINDING");
+        const proof = await freshMixedBWake(readback.binding, draft);
+        await recoverMixedBTaskWake({
+          ...proof,
+          repository: (db) => repository(draft.task, undefined, db),
+          now: () => new Date().toISOString(),
+        });
+        return { status: "QUEUED" as const, context: bindingContext };
+      }
+      const selection = await deps.selectProvider(batchContext);
       await executionCurrent();
       const binding = await source.prepare(actor, trip, raw),
         prior = await existing(binding);
@@ -427,30 +729,13 @@ export function createUniversalContinuousHost(deps: {
         batchId: binding.batchId,
         taskId: binding.taskId,
       };
-      if (prior) return { status: "EXISTING" as const, context: bindingContext };
-      const manifest = await readManifest({
-        account_id: actor,
-        trip_id: trip,
-        import_id: binding.batchId,
-        task_id: binding.taskId,
-        run_id: binding.runId,
-        manifest_sha256: binding.submissionSha256,
-        input_pins: binding.inputs.map((p) => ({
-          kind: "SOURCE",
-          source_id: p.source_id,
-          material_revision: p.material_revision,
-          representation_id: p.representation_id,
-          payload_sha256: p.payload_sha256,
-          byte_count: p.byte_count,
-          input_id: p.id,
-          transform_sha256: p.pdfSource?.transformOptionsSha256 ?? null,
-        })),
-      });
+      if (prior) {
+        if (await isProtectedMixedB(binding.batchId, binding.taskId))
+          throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+        return { status: "EXISTING" as const, context: bindingContext };
+      }
       const draft = await buildUniversalRegisteredTaskDraft(
-        binding,
-        manifest,
-        selection,
-        deps.finiteDeadline,
+        binding, await manifestForRun(binding), selection, deps.finiteDeadline,
       );
       if (Date.parse(draft.task.policy_snapshot.deadline!) <= Date.now())
         throw Error("UNIVERSAL_TASK_EXPIRED");
@@ -478,17 +763,65 @@ export function createUniversalContinuousHost(deps: {
       return { status: "QUEUED" as const, context: bindingContext };
     },
     async readContext(batch: string) {
+      if (mixedBInitial?.batchId === batch && deps.mixedBPristineSource) {
+        await current();
+        let pristine = false;
+        try {
+          assertMixedBWindowCurrent();
+          const port = deps.mixedBPristineSource;
+          const digest = mixedBInitialDigest(mixedBInitial);
+          if (port.proveContinuationMixedBTaskAbsent)
+            await port.proveContinuationMixedBTaskAbsent(actor, trip, batch, digest);
+          else await port.proveInitialMixedBTaskAbsent(actor, trip, batch, digest);
+          pristine = true;
+        } catch {
+          // A retained binding may still be readable. A generic miss stays uncertain for B.
+        }
+        if (pristine) {
+          await current();
+          assertMixedBWindowCurrent();
+          throw Error("UNIVERSAL_BATCH_NOT_PREPARED");
+        }
+      }
       const state = await readBoundTask(batch);
       await current();
-      return {
-        version: "otr.backend.universal-context/1" as const,
-        actorId: actor,
-        accountId: actor,
-        tripId: trip,
-        batchId: batch,
-        taskId: state.task.task_id,
-        activity: projectUniversalTaskActivity(state.task, state.attempts.length),
-      };
+      return executionContext(state.task, batch, state.attempts.length);
+    },
+    // Normal authorized POST only. Passive Context/Results never bind or create a wake.
+    async resume(batch: string, taskId: string) {
+      const mixedB = await isProtectedMixedB(batch, taskId);
+      if (mixedB) assertMixedBForwardCurrent();
+      const state = await readBoundTask(batch, taskId);
+      if (mixedB) {
+        const draft = await reconstructMixedBWake(state);
+        const proof = await freshMixedBWake(state.binding, draft);
+        const task = await recoverMixedBTaskWake({
+          ...proof,
+          repository: (db) => repository(draft.task, undefined, db),
+          now: () => new Date().toISOString(),
+        });
+        return executionContext(task, batch, 0);
+      }
+      // A previously missing Task can be created by an independent writer during lookup.
+      if (await isProtectedMixedB(batch, taskId))
+        throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+      await current();
+      return executionContext(state.task, batch, state.attempts.length);
+    },
+    async claimTargetedMixedBWake(batch: string, taskId: string, owner: string) {
+      if (!(await isProtectedMixedB(batch, taskId))) return undefined;
+      assertMixedBForwardCurrent();
+      const state = await readBoundTask(batch, taskId);
+      const draft = await reconstructMixedBWake(state);
+      return claimMixedBTaskWake({
+        ...(await freshMixedBWake(state.binding, draft)),
+        owner,
+        now: () => new Date().toISOString(),
+      });
+    },
+    async assertOrdinaryWake(batch: string, taskId: string) {
+      if (await isProtectedMixedB(batch, taskId))
+        throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
     },
     readResult,
     async readPublished(
@@ -542,7 +875,10 @@ export function createUniversalContinuousHost(deps: {
     ) {
       let phase = "SOURCE_READ";
       try {
+        const mixedB = await isProtectedMixedB(batch, taskId);
         const state = await found(batch, taskId);
+        if (mixedB && state.attempts.length)
+          throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
         phase = "QUEUE_READ";
         const q = await deps.db.getFirstAsync<SyncOperation>(
           "SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,entity_type AS entityType,entity_id AS entityId,operation_type AS operationType,idempotency_key AS idempotencyKey,base_version AS baseVersion,payload_json AS payloadJson,status,attempt_count AS attemptCount,next_attempt_at AS nextAttemptAt,claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?",
@@ -559,7 +895,7 @@ export function createUniversalContinuousHost(deps: {
           q.baseVersion !== claim.baseVersion
         )
           throw Error("INTELLIGENCE_QUEUE_SCOPE");
-        if (!state.attempts.length) {
+        if (!mixedB && !state.attempts.length) {
           if (["FAILED", "CANCELED", "STALE"].includes(state.task.work_disposition))
             return null;
           if (
@@ -660,15 +996,100 @@ export function createUniversalContinuousHost(deps: {
         });
         const stamp = new Date().toISOString(),
           admitted = { ...draft.attempt, created_at: stamp, updated_at: stamp };
+        const taskRepository = repository(state.task, admitted);
+        let executionRepository = taskRepository;
+        let gateway = deps.runtime.gateway;
+        let beforeRemoteSend: UniversalRuntimeProvisioning["beforeRemoteSend"];
+        if (mixedB) {
+          const fresh = () => freshMixedBWake(state.binding, draft);
+          const readKnownAttempt = async (
+            proof: Awaited<ReturnType<typeof fresh>>,
+            phase: MixedBAttemptPhase,
+          ) => {
+            let assertSnapshot: (() => void) | undefined;
+            await deps.db.withTransactionAsync(async () => {
+              assertSnapshot = await assertMixedBClaimCurrent(proof, claim, {
+                expected: admitted,
+                phase,
+              });
+            });
+            if (!assertSnapshot) throw Error("MIXED_B_WAKE_STATE");
+            assertSnapshot();
+            return assertSnapshot;
+          };
+          const guardedAttemptRepository = (
+            proof: Awaited<ReturnType<typeof fresh>>,
+            before: MixedBAttemptPhase | undefined,
+            after: MixedBAttemptPhase,
+          ) =>
+            repository(state.task, admitted, {
+              ...deps.db,
+              withTransactionAsync(work: () => Promise<void>) {
+                return deps.db.withImmediateTransactionAsync(async () => {
+                  await assertMixedBClaimCurrent(
+                    proof,
+                    claim,
+                    before ? { expected: admitted, phase: before } : undefined,
+                  );
+                  await work();
+                  await assertMixedBClaimCurrent(proof, claim, {
+                    expected: admitted,
+                    phase: after,
+                  });
+                });
+              },
+            });
+          executionRepository = {
+            ...taskRepository,
+            async reserveAttempt(...args) {
+              return guardedAttemptRepository(
+                await fresh(),
+                undefined,
+                "RESERVED",
+              ).reserveAttempt(...args);
+            },
+            async beginExecution(...args) {
+              return guardedAttemptRepository(
+                await fresh(),
+                "RESERVED",
+                "RUNNING",
+              ).beginExecution(...args);
+            },
+            async admitExecution(...args) {
+              return guardedAttemptRepository(
+                await fresh(),
+                "RUNNING",
+                "START_ADMITTED",
+              ).admitExecution(...args);
+            },
+          };
+          const originalGateway = gateway;
+          gateway = {
+            async invoke(kind, raw) {
+              if (
+                kind === "universal_activation_reserve_call" ||
+                kind === "external_integration_mark_dispatch"
+              )
+                (await readKnownAttempt(await fresh(), "RESERVED"))();
+              return originalGateway.invoke(kind, raw);
+            },
+          };
+          beforeRemoteSend = async () => {
+            const proof = await fresh();
+            return { readCurrentClaim: () => readKnownAttempt(proof, "START_ADMITTED") };
+          };
+        }
         phase = "RUNTIME_PREPARATION";
         const runtime = await createUniversalBackendRuntime({
           context,
           batchId: batch,
           taskId,
           attempt: admitted,
-          repository: repository(state.task, admitted),
+          repository: executionRepository,
           requestMaterialByteCount: draft.marker.length,
           ...deps.runtime,
+          gateway,
+          beforeRemoteSend,
           continuousSource: !deps.finiteBatch,
           continuousProvider: deps.finiteBatch
             ? undefined

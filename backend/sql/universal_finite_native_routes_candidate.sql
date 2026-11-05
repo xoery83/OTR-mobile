@@ -46,16 +46,20 @@ END $$;
 CREATE FUNCTION public.trip_source_begin_finite_universal_inputs(actor uuid,trip uuid,raw text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE q jsonb;v jsonb;p public.trip_source_inputs;facts jsonb;normalized jsonb:='[]';sources uuid[];prior public.trip_source_runs;result jsonb;
+ material_hash jsonb;normalized_hash jsonb;scope_row public.trip_source_universal_scope;tag jsonb;tag_count integer;proof jsonb;
 BEGIN
  IF current_user<>'otr_trip_source_writer' OR session_user<>'otr_trip_source_command_gateway'
  OR current_setting('transaction_isolation')<>'read committed' THEN RAISE EXCEPTION 'SOURCE_ACCESS_DENIED';END IF;
  IF raw IS NULL OR octet_length(raw)>131072 THEN RAISE EXCEPTION 'INVALID_UNIVERSAL_INPUT';END IF;
  q:=public.trip_event_canonical_json(raw::json)::jsonb;
+ material_hash:=q->'materialInputSha256';
+ normalized_hash:=q->'normalizedInputSha256';
+ q:=q-'materialInputSha256'-'normalizedInputSha256';
+ PERFORM public.trip_import_scope_lock(actor,trip);
+ IF public.trip_source_lock_universal_actor(actor,trip,true) IS NOT TRUE THEN RAISE EXCEPTION 'SOURCE_ACCESS_DENIED';END IF;
  IF public.trip_event_keys(q,ARRAY['runId','batchId','taskId','submissionSha256','inputs']) IS NOT TRUE
  OR public.trip_source_finite_native_original_scope(actor,trip,(q->>'batchId')::uuid,(q->>'taskId')::uuid,(q->>'runId')::uuid,q->>'submissionSha256',q->'inputs') IS NOT TRUE
  THEN RAISE EXCEPTION 'UNIVERSAL_SOURCE_SCOPE_CLOSED';END IF;
- PERFORM public.trip_import_scope_lock(actor,trip);
- IF public.trip_source_lock_universal_actor(actor,trip,true) IS NOT TRUE THEN RAISE EXCEPTION 'SOURCE_ACCESS_DENIED';END IF;
  sources:=ARRAY(SELECT DISTINCT (i->>'source_id')::uuid FROM jsonb_array_elements(q->'inputs') i ORDER BY 1);
  PERFORM public.trip_source_lock_universal_materials(actor,trip,sources);
  SELECT * INTO prior FROM public.trip_source_runs WHERE id=(q->>'runId')::uuid;
@@ -66,8 +70,27 @@ BEGIN
   facts:=public.trip_source_universal_pdf_material(actor,trip,p,true,prior.id IS NULL);
   normalized:=normalized||jsonb_build_array(coalesce(facts->'input',v));
  END LOOP;
+ SELECT * INTO scope_row FROM public.trip_source_universal_scope s WHERE s.singleton AND s.run_id=(q->>'runId')::uuid;
+ IF FOUND AND jsonb_typeof(scope_row.source_command_pins)='array' THEN
+  SELECT count(*),jsonb_agg(x.v)->0 INTO tag_count,tag
+   FROM jsonb_array_elements(scope_row.source_command_pins) x(v) WHERE x.v ? 'mixedBInitial';
+ END IF;
+ IF coalesce(tag_count,0)>0 THEN
+  IF tag_count<>1 OR material_hash IS NULL OR jsonb_typeof(normalized_hash) IS DISTINCT FROM 'string'
+   OR (normalized_hash #>> '{}') !~ '^[a-f0-9]{64}$' OR prior.id IS NOT NULL
+  THEN RAISE EXCEPTION 'MIXED_B_RUN_WRITE_DENIED';END IF;
+  proof:=public.trip_source_find_finite_universal_binding(actor,trip,(q->>'batchId')::uuid,(q->>'taskId')::uuid,
+   (q->>'runId')::uuid,q->>'submissionSha256',jsonb_build_object('version','otr.import.mixed-b-pre-run/1',
+    'initialManifest',tag->'mixedBInitial'->'manifest','inputs',q->'inputs','normalizedInputs',normalized,'materialInputSha256',material_hash));
+  IF proof->'normalizedInputSha256' IS DISTINCT FROM normalized_hash
+   OR proof->>'normalizedInputSha256' IS DISTINCT FROM public.trip_import_run_input_hash(normalized)
+  THEN RAISE EXCEPTION 'MIXED_B_RUN_WRITE_DENIED';END IF;
+ ELSIF material_hash IS NOT NULL OR normalized_hash IS NOT NULL THEN RAISE EXCEPTION 'MIXED_B_RUN_WRITE_DENIED';END IF;
  PERFORM set_config('otr.universal.finite_normalized',normalized::text,true);
  result:=public.trip_source_begin_universal_inputs(actor,trip,jsonb_set(q,'{inputs}',normalized)::text);
+ IF proof IS NOT NULL AND (result->>'input_sha256' IS DISTINCT FROM proof->>'normalizedInputSha256'
+  OR clock_timestamp()<scope_row.starts_at OR clock_timestamp()>=scope_row.expires_at)
+ THEN RAISE EXCEPTION 'MIXED_B_RUN_WRITE_DENIED';END IF;
  PERFORM set_config('otr.universal.finite_batch','',true);
  PERFORM set_config('otr.universal.finite_normalized','',true);
  RETURN result;
@@ -76,7 +99,20 @@ END $$;
 CREATE FUNCTION public.trip_source_finite_native_run_row(tab text,op text,n jsonb)
 RETURNS boolean LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog AS $$
 DECLARE q jsonb;pins jsonb;r public.trip_source_runs;i public.trip_source_inputs;expected uuid[];
+ scope_row public.trip_source_universal_scope;tag jsonb;tag_count integer;proof jsonb;
 BEGIN
+ IF tab='trip_source_runs' AND op='INSERT' THEN
+  r:=jsonb_populate_record(NULL::public.trip_source_runs,n);
+  SELECT * INTO scope_row FROM public.trip_source_universal_scope s WHERE s.singleton
+   AND (s.run_id=r.id OR s.task_id=r.interpretation_task_id OR
+    (s.actor_id=r.actor_account_id AND s.trip_id=r.trip_id AND s.batch_id=r.capture_batch_id));
+  IF FOUND AND jsonb_typeof(scope_row.source_command_pins)='array' THEN
+   SELECT count(*),jsonb_agg(x.v)->0 INTO tag_count,tag
+    FROM jsonb_array_elements(scope_row.source_command_pins) x(v) WHERE x.v ? 'mixedBInitial';
+  END IF;
+  IF coalesce(tag_count,0)>0 AND (tag_count<>1 OR nullif(current_setting('otr.universal.finite_batch',true),'') IS NULL)
+  THEN RAISE EXCEPTION 'MIXED_B_RUN_WRITE_DENIED';END IF;
+ END IF;
  IF nullif(current_setting('otr.universal.finite_batch',true),'') IS NULL THEN RETURN false;END IF;
  IF current_user<>'otr_trip_source_writer' OR session_user<>'otr_trip_source_command_gateway'
  OR op IS DISTINCT FROM 'INSERT' OR tab NOT IN ('trip_source_runs','trip_source_inputs') THEN RAISE EXCEPTION 'UNIVERSAL_RUN_WRITE_DENIED';END IF;
@@ -104,6 +140,12 @@ BEGIN
  OR NOT EXISTS(SELECT 1 FROM public.trip_source_universal_scope s WHERE s.singleton AND s.run_id=r.id AND r.created_at>=s.starts_at)
  THEN RAISE EXCEPTION 'UNIVERSAL_RUN_WRITE_DENIED';END IF;
  IF tab='trip_source_runs' THEN
+  IF tag_count=1 THEN
+   proof:=public.trip_source_find_finite_universal_binding(r.actor_account_id,r.trip_id,r.capture_batch_id,r.interpretation_task_id,r.id,
+    r.capture_submission_sha256,jsonb_build_object('version','otr.import.mixed-b-pre-run/1','initialManifest',tag->'mixedBInitial'->'manifest',
+     'inputs',q->'inputs','normalizedInputs',pins,'materialInputSha256',scope_row.input_sha256));
+   IF proof->>'normalizedInputSha256' IS DISTINCT FROM r.input_sha256 THEN RAISE EXCEPTION 'MIXED_B_RUN_WRITE_DENIED';END IF;
+  END IF;
   IF to_jsonb(r) IS DISTINCT FROM n OR public.trip_source_finite_native_normalized_scope(r.actor_account_id,r.trip_id,r.capture_batch_id,r.interpretation_task_id,r.id,r.capture_submission_sha256,pins) IS NOT TRUE
   THEN RAISE EXCEPTION 'UNIVERSAL_RUN_WRITE_DENIED';END IF;
  ELSE

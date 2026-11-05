@@ -24,6 +24,13 @@ DECLARE q jsonb;p jsonb;profile text;trip uuid;original jsonb;
 BEGIN
  IF current_user<>'otr_trip_source_writer' OR session_user<>'otr_trip_source_command_gateway' OR raw IS NULL OR octet_length(raw)>2097152 THEN RETURN NULL;END IF;
  q:=public.trip_source_command_codec(raw);trip:=(q->>'trip_id')::uuid;original:=q->'payload'->'original';
+ IF q->>'command'='ACQUIRE_SOURCE' AND EXISTS(
+  SELECT 1 FROM public.trip_source_universal_scope s WHERE s.singleton AND s.actor_id=actor AND s.trip_id=trip
+   AND s.source_command_pins @? '$[*].mixedBInitial'
+ ) THEN
+  PERFORM public.trip_import_scope_lock(actor,trip);
+  IF public.trip_source_lock_universal_actor(actor,trip,true) IS NOT TRUE THEN RETURN NULL;END IF;
+ END IF;
  IF q->>'command' IS DISTINCT FROM 'ACQUIRE_SOURCE' OR public.trip_source_finite_native_command(actor,trip,raw) IS NOT TRUE THEN RETURN NULL;END IF;
  IF q->'payload'->'source_input'->>'source_kind'='IMAGE' AND q->'payload'->'source_input'->>'acquisition_channel'='FILES' AND original->>'material_kind'='BINARY' AND original->>'mime_type'='image/png' THEN
   RETURN jsonb_build_object('profile','OTR_PNG_CAPTURE_ORIGINAL_V1','access','ACQUIRE','actor',actor,'trip',trip,'source',q->>'source_id','representation',original->>'id',

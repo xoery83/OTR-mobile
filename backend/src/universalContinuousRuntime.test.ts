@@ -1,7 +1,15 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { chmodSync, lstatSync, mkdtempSync, renameSync, rmSync, writeFileSync, type Stats } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { beforeEach, expect, it, vi } from "vitest";
 import { intelligenceWakeKind } from "../../src/domain/intelligence/persistence";
 import { loadDevUniversalContinuousRuntime } from "./universalContinuousRuntime";
+import { universalBatchIdentity } from "./universalBatchSource";
+import {
+  prepareUniversalQueuedRuntime,
+  universalPrepareBoundary,
+} from "./universalPrepareHttp";
 
 const f = vi.hoisted(() => ({
   config: vi.fn(),
@@ -13,6 +21,7 @@ const f = vi.hoisted(() => ({
   settle: vi.fn(),
   recover: vi.fn(),
   execute: vi.fn(),
+  ordinary: vi.fn(),
   sourceConnection: vi.fn(),
   host: vi.fn(),
   coreSource: vi.fn(),
@@ -21,13 +30,55 @@ const f = vi.hoisted(() => ({
   pngConfig: vi.fn(),
   pngPorts: vi.fn(),
   pngRead: vi.fn(),
+  runtimeMount: undefined as string | undefined,
+  runtimeInodes: new Set<number>(),
 }));
+function mountedOwner(stat: Stats) {
+  if (!f.runtimeInodes.has(stat.ino)) return stat;
+  return Object.assign(stat, { uid: 0, gid: 999 });
+}
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  return {
+    ...actual,
+    fstatSync: (fd: number) => mountedOwner(actual.fstatSync(fd)),
+    lstatSync: (path: string) => mountedOwner(actual.lstatSync(path)),
+  };
+});
 vi.mock("node:sqlite", () => ({
   DatabaseSync: class {
+    prepare(statement: string) {
+      if (statement !== "PRAGMA foreign_keys") throw Error("UNEXPECTED_TEST_SQL");
+      return { get: () => ({ foreign_keys: 1 }) };
+    }
     close() {}
   },
 }));
-vi.mock("node:fs/promises", () => ({ lstat: f.stat }));
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return {
+    ...actual,
+    lstat: f.stat,
+    async open(path: string, flags: number) {
+      if (path !== f.runtimeMount) throw Error("UNEXPECTED_TEST_MOUNT");
+      const fd = await actual.open(path, flags);
+      return {
+        stat: async () => mountedOwner(await fd.stat()),
+        readFile: (encoding: "utf8") => fd.readFile(encoding),
+        close: () => fd.close(),
+      };
+    },
+  };
+});
+vi.mock("./universalFiniteConfig", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./universalFiniteConfig")>();
+  return {
+    ...actual,
+    get universalRuntimePath() {
+      return f.runtimeMount ?? actual.universalRuntimePath;
+    },
+  };
+});
 vi.mock("./universalContinuousConfig", () => ({
   readUniversalContinuousConfig: f.config,
 }));
@@ -48,9 +99,16 @@ vi.mock("./supabaseGateway", () => ({
     canReadTrip: f.canRead,
   }),
 }));
-vi.mock("./universalTaskBootstrap", () => ({
-  initializeUniversalTaskDatabase: () => ({ getFirstAsync: f.read }),
-}));
+vi.mock("./universalTaskBootstrap", () => {
+  const db = {
+    getFirstAsync: f.read,
+    withImmediateTransactionAsync: (work: () => Promise<void>) => work(),
+  };
+  return {
+    initializeUniversalTaskDatabase: () => db,
+    universalTaskDatabase: () => db,
+  };
+});
 vi.mock("./universalCoreSourceRead", () => ({
   createCoreUniversalSourceRead: f.coreSource,
 }));
@@ -71,6 +129,8 @@ vi.mock("../../src/data/sync/syncOperationRepository", () => ({
 }));
 beforeEach(() => {
   vi.resetAllMocks();
+  f.runtimeMount = undefined;
+  f.runtimeInodes.clear();
   f.config.mockResolvedValue({ taskDatabase: "/unused-test.db" });
   f.stat.mockResolvedValue({
     isFile: () => true,
@@ -82,11 +142,123 @@ beforeEach(() => {
     dev: 1,
   });
   f.sourceConnection.mockReturnValue({});
-  f.host.mockImplementation(() => ({ executeQueued: f.execute }));
+  f.host.mockImplementation(() => ({
+    executeQueued: f.execute,
+    claimTargetedMixedBWake: async () => undefined,
+    assertOrdinaryWake: f.ordinary,
+  }));
   f.canRead.mockResolvedValue(true);
   f.claim.mockResolvedValue(true);
   f.execute.mockResolvedValue({ status: "CANDIDATES_READY" });
 });
+
+it.each(["removal", "same-bytes replacement"])(
+  "loaded protected Host closes on mounted file %s with unchanged env",
+  async (action) => {
+    const configReader = await vi.importActual<typeof import("./universalContinuousConfig")>(
+      "./universalContinuousConfig",
+    );
+    const host = await vi.importActual<typeof import("./universalContinuousHost")>(
+      "./universalContinuousHost",
+    );
+    f.config.mockImplementation(configReader.readUniversalContinuousConfig);
+    f.host.mockImplementation(host.createUniversalContinuousHost);
+    const actor = randomUUID(), trip = randomUUID(), batch = randomUUID();
+    const task = universalBatchIdentity(actor, trip, batch, "task");
+    const originals = [
+      "OTR_PNG_CAPTURE_ORIGINAL_V1",
+      "OTR_PDF_CAPTURE_ORIGINAL_V1",
+      "OTR_SUBMITTED_TEXT_V1",
+    ].map((profile, ordinal) => ({
+      ordinal, profile, inputId: randomUUID(), sourceId: randomUUID(),
+      originalRepresentationId: randomUUID(), byteCount: 10, sha256: "b".repeat(64),
+      operationId: randomUUID(), operationKey: `fixture-${ordinal}`, operationSha256: "c".repeat(64),
+    }));
+    const initial = {
+      version: "otr.import.mixed-b-initial/1",
+      actorId: actor, tripId: trip, batchId: batch, taskId: task,
+      runId: universalBatchIdentity(actor, trip, batch, "run"),
+      submissionSha256: "a".repeat(64), originals,
+    };
+    const pg = {
+      host: "db.tuqigdxrvrerfewsxqgm.supabase.co", port: 5432, database: "postgres",
+      password: "LOCAL_FIXTURE_ONLY", ca: "LOCAL_FIXTURE_ONLY",
+    };
+    const body = JSON.stringify({
+      version: 2, environment: "DEV", project: "tuqigdxrvrerfewsxqgm",
+      enabled: true, integrationId: "fixture",
+      directory: "/var/lib/otr/universal-custody",
+      identity: { store_id: randomUUID(), device: "1", inode: "1" },
+      taskDatabase: "/var/lib/otr/universal-custody/continuations.db",
+      sourcePg: pg, taskPg: pg, catalogPg: pg,
+      finiteNative: {
+        version: 1,
+        startsAt: new Date(Date.now() - 1000).toISOString(),
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+        batch: {
+          actorId: actor, tripId: trip, batchId: batch, submissionSha256: initial.submissionSha256,
+          inputs: originals.map((pin) => ({
+            id: pin.inputId, source_id: pin.sourceId, material_revision: 1,
+            representation_id: pin.originalRepresentationId, payload_sha256: pin.sha256,
+            byte_count: pin.byteCount, observed_source_row_revision: 1, historical_selection: false,
+          })),
+        },
+        selection: {
+          integrationId: "fixture", configVersion: 2, configurationSha256: "d".repeat(64),
+          providerConfigId: randomUUID(), priceScheduleId: randomUUID(), providerId: "DeepSeek",
+          modelId: "deepseek-flash", modelVersion: "DeepSeek-V4.1-Flash",
+          adapterVersion: "fixture", region: "fixture", route: "fixture",
+          maxCostNanos: "50000000", taskLifetimeMs: 60000,
+        },
+        mixedBForwardRecovery: { initial, materialInputSha256: "e".repeat(64) },
+      },
+    });
+    const dir = mkdtempSync(join(tmpdir(), "otr-forward-runtime-config-"));
+    const mount = join(dir, "mount.json");
+    const replacement = join(dir, "replacement.json");
+    const env = {
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+      OTR_DEV_BACKEND_NETWORK_MODE: "host",
+      OTR_DEV_SUPABASE_URL: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      OTR_DEV_UNIVERSAL_RUNTIME_SHA256: createHash("sha256").update(body).digest("hex"),
+    };
+    let runtime: Awaited<ReturnType<typeof loadDevUniversalContinuousRuntime>>;
+    const source = vi.fn(async () => { throw Error("FIXTURE_SOURCE_READ"); });
+    f.sourceConnection.mockReturnValue({ withLease: source });
+    f.auth.mockResolvedValue({ id: actor });
+    f.read.mockResolvedValue({ present: 0 });
+    try {
+      for (const path of [mount, replacement]) {
+        writeFileSync(path, body);
+        chmodSync(path, 0o440);
+        f.runtimeInodes.add(lstatSync(path).ino);
+      }
+      f.runtimeMount = mount;
+      runtime = await loadDevUniversalContinuousRuntime(env);
+      expect(runtime).toBeDefined();
+      const ports = await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer synthetic-test-only" },
+        }),
+        actor,
+        trip,
+      );
+      await expect(ports.resume(trip, batch, task)).rejects.toThrow("FIXTURE_SOURCE_READ");
+      expect(source).toHaveBeenCalledOnce();
+      if (action === "removal") rmSync(mount);
+      else renameSync(replacement, mount);
+      await expect(ports.resume(trip, batch, task)).rejects.toThrow("MIXED_B_FORWARD_CONFIG_CHANGED");
+      await expect(ports.drainTargeted(batch, task)).rejects.toThrow("MIXED_B_FORWARD_CONFIG_CHANGED");
+      expect(source).toHaveBeenCalledOnce();
+      expect(f.recover).not.toHaveBeenCalled();
+      expect(f.claim).not.toHaveBeenCalled();
+      expect(f.execute).not.toHaveBeenCalled();
+    } finally {
+      await runtime?.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+);
 for (const kind of [intelligenceWakeKind, "INTELLIGENCE_CONTINUATION"]) {
   it(`targeted drain validates the owning queue operation kind: ${kind}`, async () => {
     const actor = randomUUID(),
@@ -129,6 +301,144 @@ for (const kind of [intelligenceWakeKind, "INTELLIGENCE_CONTINUATION"]) {
     }
   });
 }
+
+it("checks for a newly protected reservation inside the ordinary recover writer", async () => {
+  const actor = randomUUID(), trip = randomUUID(), batch = randomUUID(), task = randomUUID();
+  f.auth.mockResolvedValue({ id: actor });
+  f.read.mockResolvedValueOnce({ sync_operation_id: "icw:fixture" });
+  f.ordinary.mockRejectedValueOnce(Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED"));
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+  });
+  try {
+    const ports = await runtime!.forRequest(
+      new Request("https://example.test", {
+        headers: { Authorization: "Bearer synthetic-test-only" },
+      }),
+      actor,
+      trip,
+    );
+    await expect(ports.drainTargeted(batch, task)).rejects.toThrow(
+      "MIXED_B_TASK_OUTCOME_UNQUALIFIED",
+    );
+    expect(f.ordinary).toHaveBeenCalledWith(batch, task);
+    expect(f.recover).not.toHaveBeenCalled();
+    expect(f.claim).not.toHaveBeenCalled();
+    expect(f.execute).not.toHaveBeenCalled();
+  } finally {
+    await runtime?.close();
+  }
+});
+
+it.each(["REFUSED", "UNKNOWN", "SETTLED"])(
+  "an exact protected claim bypasses ordinary recovery and only settles a settled result (%s)",
+  async (outcome) => {
+    const actor = randomUUID(), trip = randomUUID(), batch = randomUUID(), task = randomUUID();
+    const operation = { id: "icw:fixture", operationType: intelligenceWakeKind, baseVersion: 1 };
+    f.auth.mockResolvedValue({ id: actor });
+    f.host.mockImplementation(() => ({
+      executeQueued: f.execute,
+      async claimTargetedMixedBWake(b: string, t: string, owner: string) {
+        expect([b, t]).toEqual([batch, task]);
+        return { operation, claim: { operationId: operation.id, baseVersion: 1, owner } };
+      },
+    }));
+    if (outcome === "REFUSED") f.execute.mockRejectedValue(Error("FIXTURE_STALE_PROOF"));
+    else f.execute.mockResolvedValue({ providerOutcome: outcome });
+    const runtime = await loadDevUniversalContinuousRuntime({
+      OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    });
+    try {
+      const ports = await runtime!.forRequest(
+        new Request("https://example.test", {
+          headers: { Authorization: "Bearer synthetic-test-only" },
+        }),
+        actor,
+        trip,
+      );
+      const work = ports.drainTargeted(batch, task);
+      if (outcome === "SETTLED") {
+        await expect(work).resolves.toMatchObject({ status: "SETTLED" });
+        expect(f.settle).toHaveBeenCalledOnce();
+      } else {
+        await expect(work).rejects.toThrow();
+        expect(f.settle).not.toHaveBeenCalled();
+      }
+      expect(f.execute).toHaveBeenCalledWith(
+        batch, task, expect.objectContaining({ operationId: operation.id }),
+      );
+      expect(f.read).not.toHaveBeenCalled();
+      expect(f.recover).not.toHaveBeenCalled();
+      expect(f.claim).not.toHaveBeenCalled();
+    } finally {
+      await runtime?.close();
+    }
+  },
+);
+
+it("a normal Resume accepted before close does not recover or claim after its deferred window closes", async () => {
+  const actor = randomUUID(),
+    trip = randomUUID(),
+    batch = randomUUID(),
+    task = randomUUID();
+  f.auth.mockResolvedValue({ id: actor });
+  let active = true;
+  f.host.mockImplementation(() => ({
+    executeQueued: f.execute,
+    async resume(b: string, t: string) {
+      expect([b, t]).toEqual([batch, task]);
+      return {
+        version: "otr.backend.universal-context/1",
+        actorId: actor,
+        accountId: actor,
+        tripId: trip,
+        batchId: batch,
+        taskId: task,
+      };
+    },
+    async claimTargetedMixedBWake(b: string, t: string) {
+      expect([b, t]).toEqual([batch, task]);
+      if (!active) throw Error("TEST_MIXED_B_CLOSED");
+    },
+  }));
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+  });
+  const diagnostics = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const request = new Request(
+      `https://example.test/v2/import-batches/${batch}/interpretations/prepare`,
+      {
+        method: "POST",
+        headers: { Authorization: "Bearer synthetic-test-only", "Idempotency-Key": task },
+        body: JSON.stringify({
+          version: "otr.backend.universal-resume/1",
+          tripId: trip,
+          batchId: batch,
+          taskId: task,
+        }),
+      },
+    );
+    const ports = await runtime!.forRequest(request, actor, trip);
+    const response = await universalPrepareBoundary(
+      request,
+      actor,
+      async () => true,
+      (t, input) => prepareUniversalQueuedRuntime(actor, t, input, ports),
+    );
+    expect(response.status).toBe(202);
+    active = false;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(diagnostics).toHaveBeenCalledWith("UNIVERSAL_TARGETED_WAKE_FAILED");
+    expect(f.read).not.toHaveBeenCalled();
+    expect(f.recover).not.toHaveBeenCalled();
+    expect(f.claim).not.toHaveBeenCalled();
+    expect(f.execute).not.toHaveBeenCalled();
+  } finally {
+    diagnostics.mockRestore();
+    await runtime?.close();
+  }
+});
 
 it("overlapping activity and batch reads do not share an occupied Source connection", async () => {
   const actor = randomUUID(),

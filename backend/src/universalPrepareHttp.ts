@@ -10,6 +10,43 @@ import {
   RequestBoundaryError,
 } from "../../src/data/api/requestBoundary";
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
+// The existing continuous server path. Only a verified owning context can schedule a wake.
+export async function prepareUniversalQueuedRuntime(
+  actor: string,
+  trip: string,
+  input: unknown,
+  ports: {
+    resume(trip: string, batch: string, task: string): Promise<unknown>;
+    prepare(trip: string, input: unknown): Promise<unknown>;
+    drainTargeted(batch: string, task: string): Promise<unknown>;
+  },
+) {
+  const resume = universalTaskResumeSchema.safeParse(input);
+  const result = universalBatchPreparedSchema.parse(
+    resume.success
+      ? {
+          status: "EXISTING",
+          context: await ports.resume(trip, resume.data.batchId, resume.data.taskId),
+        }
+      : await ports.prepare(trip, input),
+  );
+  if (
+    (resume.success &&
+      (result.context.taskId !== resume.data.taskId ||
+        result.context.batchId !== resume.data.batchId)) ||
+    result.context.actorId !== actor ||
+    result.context.accountId !== actor ||
+    result.context.tripId !== trip
+  )
+    throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+  setImmediate(() => {
+    void ports
+      .drainTargeted(result.context.batchId, result.context.taskId)
+      .catch(() => console.info("UNIVERSAL_TARGETED_WAKE_FAILED"));
+  });
+  return result;
+}
+
 // Explicit authenticated preparation; owning Source/Task qualifies pins. HTTP never awaits Provider.
 export async function universalPrepareBoundary(
   request: Request,

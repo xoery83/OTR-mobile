@@ -3,7 +3,9 @@ import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { createUniversalImportTransport } from "../api/universalImportTransport";
 import { ApiClientError } from "../api/client";
+import { universalMaterialReadySchema } from "../api/universalImportContracts";
 import type {
+  UniversalMaterialReady,
   UniversalTaskActivity,
   UniversalExecutionContext,
   UniversalImportResult,
@@ -55,6 +57,16 @@ export function createUniversalCaptureConsumer(dependencies: {
     ReturnType<typeof createUniversalImportTransport>,
     "context" | "result" | "execute"
   >;
+  materialContinuation?: {
+    transport: Pick<
+      ReturnType<typeof createUniversalImportTransport>,
+      "materialReady" | "prepare"
+    >;
+    verifyLocalSubmission(
+      context: import("../auth/accountRequestContext").AccountRequestContext,
+      model: CaptureJobReadModel,
+    ): Promise<string>;
+  };
   continuous?: boolean;
   isCurrent(): boolean;
   resumeTask?(
@@ -67,6 +79,9 @@ export function createUniversalCaptureConsumer(dependencies: {
   ): Promise<void>;
 }) {
   let dispatchUncertain = false;
+  let materialContinuationSelected = false;
+  let materialPrepareAttempted = false;
+  let observedTask = false;
   let queued = false;
   let activity: UniversalTaskActivity | null = null;
   const terminalActivity = () =>
@@ -87,59 +102,132 @@ export function createUniversalCaptureConsumer(dependencies: {
     current();
     if (context.accountId !== model.batch.accountId)
       throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
-    let binding;
+    let found: UniversalExecutionContext | UniversalMaterialReady;
     let preparedThisAction = false;
+    const continuation =
+      allowDispatch &&
+      dependencies.continuous &&
+      !dispatchUncertain &&
+      !materialPrepareAttempted &&
+      !observedTask
+        ? dependencies.materialContinuation
+        : undefined;
     try {
-      binding = await dependencies.transport.context(context, model.batch.batchId);
+      found = await dependencies.transport.context(context, model.batch.batchId);
     } catch (error) {
       current();
       if (
-        !allowDispatch ||
-        dispatchUncertain ||
-        terminalActivity() ||
-        !dependencies.prepareSources ||
-        !(
-          error instanceof ApiClientError &&
-          ((!dependencies.continuous &&
-            error.status === 503 &&
-            ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
-              error.code ?? "",
-            )) ||
-            (dependencies.continuous &&
-              error.status === 404 &&
-              error.code === "TASK_NOT_FOUND"))
-        )
-      )
-        throw error;
-      // Continuous 503 is uncertainty; only an owning 404 permits Source preparation.
-      await dependencies.prepareSources(context, model);
-      preparedThisAction = true;
-      current();
-      // Only owning Backend context can supply the Task, including after Source preparation.
-      try {
-        binding = await dependencies.transport.context(context, model.batch.batchId);
-      } catch (error) {
-        current();
+        continuation &&
+        error instanceof ApiClientError &&
+        error.status === 503 &&
+        error.code === "UNIVERSAL_CONTEXT_UNAVAILABLE"
+      ) {
+        materialContinuationSelected = true;
+        found = await continuation.transport.materialReady(context, model.batch.batchId);
+      } else {
         if (
-          error instanceof ApiClientError &&
-          ((error.status === 503 &&
-            ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
-              error.code ?? "",
-            )) ||
-            (dependencies.continuous &&
-              error.status === 404 &&
-              error.code === "TASK_NOT_FOUND"))
+          !allowDispatch ||
+          dispatchUncertain ||
+          materialContinuationSelected ||
+          terminalActivity() ||
+          !dependencies.prepareSources ||
+          !(
+            error instanceof ApiClientError &&
+            ((!dependencies.continuous &&
+              error.status === 503 &&
+              ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
+                error.code ?? "",
+              )) ||
+              (dependencies.continuous &&
+                error.status === 404 &&
+                error.code === "TASK_NOT_FOUND"))
+          )
         )
-          throw new ApiClientError(
-            "OWNING_TASK_READER_UNAVAILABLE",
-            "http",
-            503,
-            "OWNING_TASK_READER_UNAVAILABLE",
-          );
-        throw error;
+          throw error;
+        // Continuous 503 is uncertainty; only an owning 404 permits Source preparation.
+        await dependencies.prepareSources(context, model);
+        preparedThisAction = true;
+        current();
+        // Only owning Backend context can supply the Task, including after Source preparation.
+        try {
+          found = await dependencies.transport.context(context, model.batch.batchId);
+        } catch (error) {
+          current();
+          if (
+            error instanceof ApiClientError &&
+            ((error.status === 503 &&
+              ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
+                error.code ?? "",
+              )) ||
+              (dependencies.continuous &&
+                error.status === 404 &&
+                error.code === "TASK_NOT_FOUND"))
+          )
+            throw new ApiClientError(
+              "OWNING_TASK_READER_UNAVAILABLE",
+              "http",
+              503,
+              "OWNING_TASK_READER_UNAVAILABLE",
+            );
+          throw error;
+        }
       }
     }
     current();
+    let binding: UniversalExecutionContext;
+    if (found.version === "otr.backend.universal-material-ready/1") {
+      const { accountId, actorId, prepare } = universalMaterialReadySchema.parse(found);
+      if (
+        !continuation ||
+        materialPrepareAttempted ||
+        observedTask ||
+        accountId !== context.accountId ||
+        actorId !== context.accountId ||
+        prepare.tripId !== context.tripId ||
+        prepare.batchId !== model.batch.batchId
+      )
+        throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
+      const originals = new Map(model.inputs.map((input) => [input.id, input]));
+      if (
+        originals.size !== model.inputs.length ||
+        prepare.inputs.length !== originals.size ||
+        new Set(prepare.inputs.map((pin) => pin.id)).size !== originals.size ||
+        new Set(prepare.inputs.map((pin) => pin.source_id)).size !== originals.size ||
+        new Set(prepare.inputs.map((pin) => pin.representation_id)).size !== originals.size ||
+        prepare.inputs.some((pin) => {
+          const original = originals.get(pin.id);
+          return (
+            !original ||
+            original.state !== "ACCEPTED" ||
+            original.contentSha256 !== pin.payload_sha256 ||
+            original.contentByteCount !== pin.byte_count
+          );
+        })
+      )
+        throw Error("UNIVERSAL_CAPTURE_ORIGINALS_MISMATCH");
+      const submissionSha256 = await continuation.verifyLocalSubmission(context, model);
+      current();
+      if (submissionSha256 !== prepare.submissionSha256)
+        throw Error("UNIVERSAL_CAPTURE_ORIGINALS_MISMATCH");
+      // From this point a lost response permits only passive reads in this view.
+      materialPrepareAttempted = true;
+      dispatchUncertain = true;
+      const prepared = await continuation.transport.prepare(context, prepare);
+      current();
+      binding = prepared.context;
+      if (
+        binding.accountId !== context.accountId ||
+        binding.actorId !== context.accountId ||
+        binding.tripId !== context.tripId ||
+        binding.batchId !== model.batch.batchId
+      )
+        throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
+      dispatchUncertain = false;
+      preparedThisAction = true;
+    } else {
+      binding = found;
+    }
+    observedTask = true;
     activity = binding.activity ?? null;
     let result: UniversalImportResult;
     try {
@@ -157,6 +245,7 @@ export function createUniversalCaptureConsumer(dependencies: {
         // Recovery GET never prepares work or resends a Provider call.
         if (
           allowDispatch &&
+          !dispatchUncertain &&
           !terminalActivity() &&
           !preparedThisAction &&
           (dependencies.resumeTask || dependencies.prepareSources)
@@ -181,7 +270,7 @@ export function createUniversalCaptureConsumer(dependencies: {
       result.providerOutcome === "UNKNOWN" &&
       activity &&
       ["PENDING", "WAITING", "PROCESSING"].includes(activity.state) &&
-      (!allowDispatch || !dependencies.resumeTask || preparedThisAction)
+      (!allowDispatch || dispatchUncertain || !dependencies.resumeTask || preparedThisAction)
     ) {
       // Passive reads keep the marker pending; explicit resume may reconcile a retained call.
       queued = true;
@@ -189,6 +278,7 @@ export function createUniversalCaptureConsumer(dependencies: {
     }
     if (
       allowDispatch &&
+      !dispatchUncertain &&
       !terminalActivity() &&
       dependencies.continuous &&
       !preparedThisAction &&

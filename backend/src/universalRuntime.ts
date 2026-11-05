@@ -34,6 +34,7 @@ export type UniversalRuntimeProvisioning = {
   taskReceiptConnection: CorePgConnection;
   readBinary: Parameters<typeof createUniversalSourceReader>[0]["readBinary"];
   gateway: ReturnType<typeof createClosedPersistenceGateway>;
+  beforeRemoteSend?: Parameters<typeof createUniversalDeepSeekProvider>[0]["beforeRemoteSend"];
   environment(key: string): string | undefined;
 };
 
@@ -106,6 +107,7 @@ export async function createUniversalBackendRuntime(
   const provider = createUniversalDeepSeekProvider({
     custody: lifecycle.custody,
     priceSchedule,
+    beforeRemoteSend: p.beforeRemoteSend,
     send: createFlightHttpsSend(),
   });
   return {

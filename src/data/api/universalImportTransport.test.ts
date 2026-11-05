@@ -395,3 +395,49 @@ it.each(["logger", "hash"])(
     }
   },
 );
+
+it("uses the opt-in query only on explicit Analyze and sends the original Prepare with Batch idempotency", async () => {
+  const f = await fixture();
+  const ready = {
+    version: "otr.backend.universal-material-ready/1",
+    state: "MATERIAL_READY_NO_TASK",
+    accountId: f.account,
+    actorId: f.account,
+    prepare: {
+      tripId: f.trip,
+      batchId: f.batch,
+      submissionSha256: "a".repeat(64),
+      inputs: [{
+        id: randomUUID(),
+        source_id: randomUUID(),
+        representation_id: randomUUID(),
+        material_revision: 1,
+        payload_sha256: "b".repeat(64),
+        byte_count: 66,
+        observed_source_row_revision: 2,
+        historical_selection: false as const,
+      }],
+    },
+  };
+  const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+    if (init?.method === "POST") return Response.json({ status: "QUEUED", context: f.binding });
+    return Response.json(new URL(String(url)).searchParams.has("materialReady") ? ready : f.binding);
+  });
+  const transport = createUniversalImportTransport(async () => f.account, {
+    baseUrl: "https://api.example",
+    tokenProvider: async () => ({ userId: f.account, token: "synthetic" }),
+    fetchImplementation: fetcher,
+  });
+  expect(await transport.context(f.context, f.batch)).toEqual(f.binding);
+  expect(await transport.materialReady(f.context, f.batch)).toEqual(ready);
+  await transport.prepare(f.context, ready.prepare);
+  expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.has("materialReady")).toBe(false);
+  expect(new URL(String(fetcher.mock.calls[1][0])).searchParams.get("materialReady")).toBe("1");
+  const [, post] = fetcher.mock.calls[2];
+  expect(new Headers(post?.headers).get("Idempotency-Key")).toBe(f.batch);
+  expect(JSON.parse(String(post?.body))).toEqual(ready.prepare);
+  ready.actorId = randomUUID();
+  await expect(transport.materialReady(f.context, f.batch)).rejects.toThrow("MISMATCH");
+  fetcher.mockResolvedValueOnce(Response.json(f.binding));
+  await expect(transport.materialReady(f.context, f.batch)).rejects.toThrow();
+});

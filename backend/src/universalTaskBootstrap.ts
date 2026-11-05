@@ -8,7 +8,6 @@ import { createIntelligenceContinuationRepository } from "../../src/data/reposit
 import {
   createIntelligenceWakeQueue,
   signalIntelligenceWake,
-  type SyncOperation,
 } from "../../src/data/sync/syncOperationRepository";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
 import {
@@ -20,9 +19,19 @@ import {
 } from "../../src/domain/intelligence/persistence";
 import type { LedgerBootstrapResponse } from "../../src/data/api/ledgerReadContracts";
 import { persistenceDigest } from "./externalIntegrationPersistence";
+import {
+  assertTaskForeignKeys,
+  createReservedMixedBTask,
+  mixedBTaskReservationState,
+  readExactTaskWake,
+  readProtectedMixedBReservation,
+  recoverMixedBTaskWake,
+  type MixedBTaskReservation,
+} from "./universalMixedBTaskReservation";
 
 const sharedDatabases = new WeakMap<DatabaseSync, ReturnType<typeof makeDatabase>>();
 export function universalTaskDatabase(sql: DatabaseSync) {
+  assertTaskForeignKeys(sql);
   let db = sharedDatabases.get(sql);
   if (!db) {
     db = makeDatabase(sql);
@@ -32,7 +41,8 @@ export function universalTaskDatabase(sql: DatabaseSync) {
 }
 function makeDatabase(sql: DatabaseSync) {
   let inTransaction = false;
-  return serializeDatabaseTransactions({
+  const immediate = new WeakSet<() => Promise<void>>();
+  const db = serializeDatabaseTransactions({
     async getFirstAsync<T>(q: string, ...p: unknown[]) {
       return (sql.prepare(q).get(...(p as never[])) ?? null) as T | null;
     },
@@ -46,7 +56,8 @@ function makeDatabase(sql: DatabaseSync) {
       return inTransaction;
     },
     async withTransactionAsync(work: () => Promise<void>) {
-      sql.exec("BEGIN");
+      assertTaskForeignKeys(sql);
+      sql.exec(immediate.has(work) ? "BEGIN IMMEDIATE" : "BEGIN");
       inTransaction = true;
       try {
         await work();
@@ -57,6 +68,13 @@ function makeDatabase(sql: DatabaseSync) {
       } finally {
         inTransaction = false;
       }
+    },
+  });
+  return Object.assign(db, {
+    withImmediateTransactionAsync(work: () => Promise<void>) {
+      const run = () => work();
+      immediate.add(run);
+      return db.withTransactionAsync(run);
     },
   });
 }
@@ -92,6 +110,11 @@ export async function bootstrapUniversalTask(input: {
   getAccountId(): Promise<string>;
   assertCurrent(): void;
   claimQueue?: boolean;
+  mixedBReservation?: MixedBTaskReservation;
+  proveMixedBStage?(): Promise<() => void>;
+  withMixedBMaterial?<T>(
+    use: (assertLockedCurrent: () => void) => Promise<T>,
+  ): Promise<T>;
 }) {
   const t = taskSchema.parse(input.task),
     a = attemptSchema.parse(input.attempt);
@@ -112,19 +135,14 @@ export async function bootstrapUniversalTask(input: {
   const context = await captureAccountRequestContext(t.trip_id, input.getAccountId);
   if (context.accountId !== t.account_id) throw Error("UNIVERSAL_BOOTSTRAP_ACTOR");
   input.assertCurrent();
-  await createLedgerReadRepository(input.db, input.getAccountId).applyBootstrap(
-    input.ledger,
-    context,
-  );
-  await createTripImportAdmissionRepository(
-    input.db,
-    input.getAccountId,
-    hash,
-    now,
-    () => {
-      throw Error("UNIVERSAL_READ_ONLY_CATALOG");
-    },
-  ).applyUniversalCatalogs(context, input.catalog);
+  const mixedBReservation = input.mixedBReservation;
+  if (mixedBReservation && input.claimQueue !== false)
+    throw Error("MIXED_B_TASK_BOOTSTRAP_SCOPE");
+  if (input.proveMixedBStage && (!mixedBReservation || input.withMixedBMaterial))
+    throw Error("MIXED_B_TASK_BOOTSTRAP_SCOPE");
+  const mixedBState = mixedBReservation
+    ? await mixedBTaskReservationState(input.db, mixedBReservation, t)
+    : null;
   const immutableAttempt = (value: Attempt) =>
     persistenceDigest(
       Object.fromEntries(
@@ -135,7 +153,7 @@ export async function bootstrapUniversalTask(input: {
     );
   const taskIdentity = persistenceDigest(t),
     attemptIdentity = immutableAttempt(a);
-  const repo = createIntelligenceContinuationRepository(input.db, {
+  const repositoryDeps: Parameters<typeof createIntelligenceContinuationRepository>[1] = {
     getAccountId: input.getAccountId,
     now,
     sha256: hash,
@@ -167,31 +185,94 @@ export async function bootstrapUniversalTask(input: {
     async verifyRecovery() {
       throw Error("UNIVERSAL_EXACT_RECOVERY_REQUIRED");
     },
-  });
-  const created = await repo.create(context, t);
+  };
+  const repo = createIntelligenceContinuationRepository(input.db, repositoryDeps);
+  const ordinaryDb = {
+    ...input.db,
+    withTransactionAsync(work: () => Promise<void>) {
+      return input.db.withImmediateTransactionAsync(async () => {
+        if (await readProtectedMixedBReservation(input.db, t.import_id, t.task_id))
+          throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+        await work();
+      });
+    },
+  };
+  const ordinaryRepo = createIntelligenceContinuationRepository(ordinaryDb, repositoryDeps);
+  const repairMixedBWake = (reservation: MixedBTaskReservation) =>
+    recoverMixedBTaskWake({
+      db: input.db,
+      repository: (db = input.db) =>
+        createIntelligenceContinuationRepository(db, repositoryDeps),
+      context,
+      reservation,
+      task: t,
+      expectedWakeId: a.sync_operation_id,
+      assertCurrent: input.assertCurrent,
+      now,
+    });
+  if (mixedBReservation && mixedBState === "CONSUMED")
+    throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+  const materialLease = input.withMixedBMaterial;
+  if (mixedBReservation && !materialLease && !input.proveMixedBStage)
+    throw Error("MIXED_B_MATERIAL_SCOPE_UNAVAILABLE");
+  await createLedgerReadRepository(input.db, input.getAccountId).applyBootstrap(
+    input.ledger,
+    context,
+  );
+  await createTripImportAdmissionRepository(
+    input.db,
+    input.getAccountId,
+    hash,
+    now,
+    () => {
+      throw Error("UNIVERSAL_READ_ONLY_CATALOG");
+    },
+  ).applyUniversalCatalogs(context, input.catalog);
+  if (mixedBReservation && input.proveMixedBStage) {
+    const assertCurrentMaterial = await input.proveMixedBStage();
+    await createReservedMixedBTask(
+      input.db, repositoryDeps, context, t, mixedBReservation, assertCurrentMaterial, input.assertCurrent,
+    );
+    return { repository: repo, context };
+  }
+  const created =
+    mixedBReservation && materialLease
+      ? await materialLease((assertLockedCurrent) =>
+          createReservedMixedBTask(
+            input.db,
+            repositoryDeps,
+            context,
+            t,
+            mixedBReservation,
+            assertLockedCurrent,
+            input.assertCurrent,
+          ),
+        )
+      : await ordinaryRepo.create(context, t);
   if (persistenceDigest(t) !== taskIdentity)
     throw Error("UNIVERSAL_BOOTSTRAP_TASK_CHANGED");
+  if (mixedBReservation) {
+    await repairMixedBWake(mixedBReservation);
+    return { repository: repo, context };
+  }
   let task = created;
   if (!task.sync_operation_id) {
     let operationId!: string;
-    await input.db.withTransactionAsync(async () => {
+    await ordinaryDb.withTransactionAsync(async () => {
       operationId = await signalIntelligenceWake(input.db, task, hash, now());
     });
-    task = await repo.bindQueue(context, t.task_id, task.row_revision, operationId);
+    task = await ordinaryRepo.bindQueue(context, t.task_id, task.row_revision, operationId);
   }
   if (task.sync_operation_id !== a.sync_operation_id)
     throw Error("UNIVERSAL_BOOTSTRAP_QUEUE_CHANGED");
-  const operation = await input.db.getFirstAsync<SyncOperation>(
-    `SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,entity_type AS entityType,entity_id AS entityId,operation_type AS operationType,idempotency_key AS idempotencyKey,base_version AS baseVersion,payload_json AS payloadJson,status,attempt_count AS attemptCount,next_attempt_at AS nextAttemptAt,claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations WHERE id=?`,
-    task.sync_operation_id,
-  );
+  const operation = await readExactTaskWake(input.db, task.sync_operation_id);
   if (!operation) throw Error("UNIVERSAL_BOOTSTRAP_QUEUE_MISSING");
   if (input.claimQueue === false) {
     if (!["PENDING", "RETRYABLE", "PROCESSING", "COMPLETED"].includes(operation.status))
       throw Error("UNIVERSAL_BOOTSTRAP_QUEUE_STATE");
   } else if (["PENDING", "RETRYABLE"].includes(operation.status)) {
     if (
-      !(await createIntelligenceWakeQueue(input.db, {
+      !(await createIntelligenceWakeQueue(ordinaryDb, {
         getAccountId: input.getAccountId,
         sha256: hash,
         now,

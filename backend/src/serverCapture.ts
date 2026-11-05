@@ -1,10 +1,7 @@
 import { reportEnrichmentDiagnostic } from "./flight-enrichment/diagnostics";
 import { loadDevFlightEnrichmentRuntime } from "./flight-enrichment/devRuntime";
 import { loadDevUniversalContinuousRuntime } from "./universalContinuousRuntime";
-import {
-  universalBatchPreparedSchema,
-  universalTaskResumeSchema,
-} from "../../src/data/api/universalImportContracts";
+import { prepareUniversalQueuedRuntime } from "./universalPrepareHttp";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { loadDevTripMetadataV2Runtime } from "./tripMetadataRuntime";
 import { loadDevCaptureCustody } from "./captureCustodyRuntime";
@@ -146,39 +143,9 @@ async function main() {
                   },
                 },
                 async prepare(trip, input) {
-                  const ports = await scoped(trip),
-                    resume = universalTaskResumeSchema.safeParse(input),
-                    result = universalBatchPreparedSchema.parse(
-                      resume.success
-                        ? {
-                            status: "EXISTING",
-                            context: await ports.universalImportPort.readContext(
-                              actor,
-                              resume.data.batchId,
-                              trip,
-                            ),
-                          }
-                        : await ports.prepare(trip, input),
-                    );
-                  if (
-                    resume.success &&
-                    (result.context.taskId !== resume.data.taskId ||
-                      result.context.batchId !== resume.data.batchId)
-                  )
-                    throw Error("UNIVERSAL_CONTEXT_MISMATCH");
-                  if (
-                    result.context.actorId !== actor ||
-                    result.context.accountId !== actor ||
-                    result.context.tripId !== trip
-                  )
-                    throw Error("UNIVERSAL_CONTEXT_MISMATCH");
-                  // Detach only targeted existing Queue work. HTTP returns 202 before Provider I/O.
-                  setImmediate(() => {
-                    void ports
-                      .drainTargeted(result.context.batchId, result.context.taskId)
-                      .catch(() => console.info("UNIVERSAL_TARGETED_WAKE_FAILED"));
-                  });
-                  return result;
+                  return prepareUniversalQueuedRuntime(
+                    actor, trip, input, await scoped(trip),
+                  );
                 },
               };
             },
