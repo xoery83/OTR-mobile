@@ -1,0 +1,71 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "status": "REVIEWED_SCOPED_SOURCE_CANDIDATE_NOT_HOSTED",
+  "canonicalPrerequisiteCommit": "f4746ba0",
+  "independentReviewSha256": "2918b5256ab371860db161c9e8a44beb083366f472b9a35017023b034511e729",
+  "reviewScope": "Independent14 adapter tests; author23 isolated PG checks reused, not independently rerun. Actual Root2 preimage/ACL/trigger/gate constraints and protected install authorization remain outstanding.",
+  "sourceCommit": "The commit containing this manifest; not an invented pre-commit SHA",
+  "files": [
+    {
+      "path": "backend/sql/tripPersonSelfNickname.sql",
+      "sha256": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63",
+      "bytes": 14285
+    },
+    {
+      "path": "backend/src/tripPersonSelfNicknamePg.ts",
+      "sha256": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+      "bytes": 5588
+    },
+    {
+      "path": "backend/src/tripPersonSelfNicknamePg.test.ts",
+      "sha256": "33cadbe936065ec1080b1f9be9dc9e1a113c2a4cdb7ffa2e26cb250925e0c5e3",
+      "bytes": 5635
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/PG_SCOPED_TYPECHECK_CONFIG.json",
+      "sha256": "5e1bef6028089a42c2d4d5b641a45d3b233b4afc623e3945cd4f92c997680386",
+      "bytes": 947
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_EVIDENCE.json",
+      "sha256": "97d43414a05bb7529383b1257aabbce87cc7cf0c6dbbf05a8348b8fb9be281c3",
+      "bytes": 4152
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_HANDOFF.md",
+      "sha256": "a7b113b76c113f27f86d1dc3abed73a413fb29a2a0d0d301fbedf979ca4337f1",
+      "bytes": 4777
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/PG_INDEPENDENT_REVIEW.json",
+      "sha256": "2918b5256ab371860db161c9e8a44beb083366f472b9a35017023b034511e729",
+      "bytes": 9520
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/pg/run_isolated.py",
+      "sha256": "67230754da5f9cc5056b16cf2e7fe39122d3c6f39a1d55381d4034fa941ce99b",
+      "bytes": 14490
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/pg/RESULT.json",
+      "sha256": "cd8afeb3ebf1da7af8d2d22bced7d496ae570bde0d4b7cddaf143e44b77adbcd",
+      "bytes": 1496
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/pg/LOCAL_PG.log",
+      "sha256": "e50f2e8554675117d45d3140d53175a5c670e4eb81f3e8703d79248359309b72",
+      "bytes": 73758
+    },
+    {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/pg/ADAPTER_TEST.log",
+      "sha256": "c618c4562e8476c557d5f901abac1c6ae1530a758a676554597c1ecf4efeb735",
+      "bytes": 261
+    }
+  ],
+  "excluded": [
+    "preexisting node_modules symlink",
+    "generated pg/__pycache__ bytecode",
+    "all old P3 files and canonical codec files already fixed at f4746ba0"
+  ],
+  "resources": "No main/Hosted authority used; local self-nickname fixture containers were finally removed and independently label-checked empty."
+}

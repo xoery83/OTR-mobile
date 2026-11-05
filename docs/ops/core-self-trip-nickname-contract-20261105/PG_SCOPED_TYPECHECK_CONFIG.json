@@ -1,0 +1,19 @@
+{
+  "extends": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": [
+      "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/src/domain/trip/tripPersonSelfNickname.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/src/domain/trip/tripPersonSelfNickname.test.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/expo-env.d.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/backend/src/tripPersonSelfNicknamePg.ts",
+    "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105/backend/src/tripPersonSelfNicknamePg.test.ts"
+  ],
+  "exclude": []
+}

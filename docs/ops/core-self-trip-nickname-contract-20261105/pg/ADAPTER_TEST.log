@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105
+
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  15:25:30
+   Duration  188ms (transform 48ms, setup 0ms, import 107ms, tests 11ms, environment 0ms)
+

@@ -1,0 +1,33 @@
+{
+  "status": "SOURCE_ONLY_DEFAULT_CLOSED_PG_CANDIDATE_NOT_INSTALL_READY",
+  "parentMain": "98e1d3daead2b6d6661a5a477ffc5857591f6ddb",
+  "candidate": "33de92963d1396f462dd40de7e64be2b674f2383",
+  "manifestPath": "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_MANIFEST.json",
+  "manifestSHA256": "aa27020ad6cb8a33daf2534c93c90dbe1bd9449bd9047cf2f47ca275dcae76d7",
+  "curated12LeafHashes": {
+    "backend/sql/tripPersonSelfNickname.sql": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63",
+    "backend/src/tripPersonSelfNicknamePg.ts": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "33cadbe936065ec1080b1f9be9dc9e1a113c2a4cdb7ffa2e26cb250925e0c5e3",
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_SCOPED_TYPECHECK_CONFIG.json": "5e1bef6028089a42c2d4d5b641a45d3b233b4afc623e3945cd4f92c997680386",
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_EVIDENCE.json": "97d43414a05bb7529383b1257aabbce87cc7cf0c6dbbf05a8348b8fb9be281c3",
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_HANDOFF.md": "a7b113b76c113f27f86d1dc3abed73a413fb29a2a0d0d301fbedf979ca4337f1",
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_INDEPENDENT_REVIEW.json": "2918b5256ab371860db161c9e8a44beb083366f472b9a35017023b034511e729",
+    "docs/ops/core-self-trip-nickname-contract-20261105/pg/run_isolated.py": "67230754da5f9cc5056b16cf2e7fe39122d3c6f39a1d55381d4034fa941ce99b",
+    "docs/ops/core-self-trip-nickname-contract-20261105/pg/RESULT.json": "cd8afeb3ebf1da7af8d2d22bced7d496ae570bde0d4b7cddaf143e44b77adbcd",
+    "docs/ops/core-self-trip-nickname-contract-20261105/pg/LOCAL_PG.log": "e50f2e8554675117d45d3140d53175a5c670e4eb81f3e8703d79248359309b72",
+    "docs/ops/core-self-trip-nickname-contract-20261105/pg/ADAPTER_TEST.log": "c618c4562e8476c557d5f901abac1c6ae1530a758a676554597c1ecf4efeb735",
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_MANIFEST.json": "aa27020ad6cb8a33daf2534c93c90dbe1bd9449bd9047cf2f47ca275dcae76d7"
+  },
+  "reviewSHA256": "2918b5256ab371860db161c9e8a44beb083366f472b9a35017023b034511e729",
+  "actualChecks": {
+    "twoRootScopedTypes": "PASS",
+    "twoRootESLint": "PASS",
+    "isolatedDriverAST": "PASS",
+    "canonicalAndCorePgLeaseDirectDependencies": "BYTE_IDENTICAL_CANDIDATE"
+  },
+  "reused": "Independent14 adapter tests and author23 isolated PG checks retained; no rerun or new PG execution. All actual12 code/docs/log bytes exact; old P3 author history and untracked PG artifacts excluded.",
+  "rawEvidence": "ADAPTER_TEST.log preserved exact c618 including EOF blank; raw log whitespace is original evidence, not a product change. Staged product/docs/driver whitespace checked separately excluding raw logs, not reformatted.",
+  "installation": "Root2 NOT_READY. Actual helper preimages/Owner/ACL/EXEC/default privileges/role graph/trigger ordering/all nickname writers/exact activation scope and protected install approval remain required. Source existence/defaultclosed bit is not installation qualification.",
+  "composition": "No HTTP or app/bootstrap/runtime mount, no new connection configuration; newSQL definition source only, no SQL executed.",
+  "actions": "Git Source integration only; no Hosted/SQL/Auth/Provider/device/Source gate."
+}

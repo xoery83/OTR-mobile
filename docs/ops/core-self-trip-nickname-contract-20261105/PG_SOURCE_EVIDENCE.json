@@ -1,0 +1,58 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "status": "LOCAL_IMPLEMENTED_REVIEW_PENDING_NOT_INSTALLED_NOT_HOSTED",
+  "canonicalCommit": "f4746ba0",
+  "sourceBase": "3ab5fbd8c284c1234b6f2b63780b981cc0cc80f1",
+  "sourceHashes": {
+    "backend/sql/tripPersonSelfNickname.sql": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63",
+    "backend/src/tripPersonSelfNicknamePg.ts": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "33cadbe936065ec1080b1f9be9dc9e1a113c2a4cdb7ffa2e26cb250925e0c5e3"
+  },
+  "isolatedPg": {
+    "status": "LOCAL_ISOLATED_PG_PASS_NOT_HOSTED",
+    "checks": [
+      "DEFAULT_CLOSED_REAL_GATEWAY",
+      "NONOWNER_NONCREATOR_SELF_READ_LEGACY_UNBOUNDED",
+      "CLEAR_LONG_LEGACY_ATOMIC_REVISION1",
+      "EXACT_ORIGINAL_REPLAY_NO_ADVANCE",
+      "STALE_REVISION_CONFLICT_NO_REBASE",
+      "UNCHANGED_CLEAR_NO_ADVANCE",
+      "OPERATION_REUSE_CHANGED_INTENT_DENIED",
+      "OWNER_CANNOT_EDIT_OR_READ_OTHERS_SELF_PORT",
+      "FOREIGN_PERSON_DENIED",
+      "LINKED_PROFILE_REFILL_BLOCKED",
+      "EXISTING_UNLINKED_FIRST_CLAIM_NAME_CHANGE_COUNTER_ONLY",
+      "RECOVER_AFTER_WRITE_CLOSE_NO_CURRENT_STATE_SUBSTITUTION",
+      "ABSENT_UNCONFIRMED_NOT_SAFE_RETRY",
+      "NEW_MUTATION_AFTER_CLOSE_DENIED",
+      "CONCURRENT_SAME_BASE_ONE_APPLIED_ONE_CONFLICT",
+      "POST_RPC_FAULT_ROLLS_BACK_ROW_AND_RECEIPT",
+      "NONFINITE_EXPIRED_WRONG_TRIP_WRONG_ACTOR_SCOPE_DENIED",
+      "COUNTER_TAMPER_AND_RECEIPT_UPDATE_DELETE_TRUNCATE_DENIED",
+      "GATEWAY_NO_DIRECT_RECEIPT_TABLE_ACCESS",
+      "ACTUAL_SQL_UTF8_DIGEST_MATCH",
+      "SQL_SET_TRIM_REJECTS_WITHOUT_CHANGING_OBSERVATION",
+      "SQL_UUID_VARIANT_MATCHES_CANONICAL_CODEC",
+      "REVOKED_SELF_READ_AND_RECOVERY_DENIED_NO_NEW_WRITE"
+    ],
+    "imageId": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+    "scope": "minimal synthetic dependency fixture with actual normal admission function body, no Actor=true stub; production Root2 preimages/ACL/runtime not qualified",
+    "sourceSha256": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63"
+  },
+  "adapterTests": "14 PASS / 188ms; ADAPTER_TEST.log",
+  "scopedTypecheck": "PASS PG_SCOPED_TYPECHECK_CONFIG.json (canonical + adapter roots only)",
+  "lint": "PASS exact 2 adapter source/test files",
+  "diffCheck": "PASS existing tracked files unchanged",
+  "fixtureSetupFailuresPreserved": "LOCAL_PG.log retains first attempts: grantor cycle then baseline automatic Owner and same-account uniqueness fixture mistakes. None was a candidate product SQL failure; final actual candidate transactions pass.",
+  "normalAccessSource": "actual body from docs/ops/core-member-read-20261104/INSTALL_CANDIDATE.sql; real registered non-owner/non-creator Account, Role graph and linked/removed checks; no Actor=true fixture stub",
+  "fixtureParityLimit": "Minimal canonical dependent tables/role setup; not a qualification of Hosted preimages, full installed gate constraints, existing trigger ordering/ACL, downstream roster cache or Auth C04 full endpoint. Root2 must qualify those against actual environment, source-only does not authorize install.",
+  "root2ProtectedDifferences": [
+    "1 journey_members.nickname_revision column; sole name still display_name",
+    "1 existing trip_core_activation_gate.self_nickname_enabled column default false; bound to existing Actor/Trip/start/expiry, finite times required",
+    "1 immutable nickname receipt table with RLS/no gateway direct table grants",
+    "4 new functions: receipt guard, nickname transition guard, bounded scope helper, owning RPC",
+    "3 new triggers (receipt row immutable, receipt no truncate, Person nickname revision/transition)",
+    "No existing function replaced, no new role, no execution grant in candidate; exact Gateway RPC EXECUTE/activation need later protected authorization"
+  ],
+  "resourceState": "Self fixture containers finally stopped/removed. Independent Docker label-filter ps empty after 22-check run; later 23-check run same finally path. No Hosted/DEV/shared Writer resources acquired."
+}

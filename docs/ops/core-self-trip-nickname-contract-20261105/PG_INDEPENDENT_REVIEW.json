@@ -1,0 +1,106 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "reviewer": "/root/import_sql_independent_review_20261105",
+  "recordedAt": "2026-11-05T02:38:09.691279+00:00",
+  "verdict": "NO_BLOCKER_SCOPED_SOURCE_CANDIDATE",
+  "sourceHashes": {
+    "backend/sql/tripPersonSelfNickname.sql": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63",
+    "backend/src/tripPersonSelfNicknamePg.ts": "50f0333f68945a85d54a2d30eced99f7929a17042151f8aab6201afb3a809614",
+    "backend/src/tripPersonSelfNicknamePg.test.ts": "33cadbe936065ec1080b1f9be9dc9e1a113c2a4cdb7ffa2e26cb250925e0c5e3"
+  },
+  "directEvidenceHashes": {
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_HANDOFF.md": "a7b113b76c113f27f86d1dc3abed73a413fb29a2a0d0d301fbedf979ca4337f1",
+    "docs/ops/core-self-trip-nickname-contract-20261105/PG_SOURCE_EVIDENCE.json": "97d43414a05bb7529383b1257aabbce87cc7cf0c6dbbf05a8348b8fb9be281c3",
+    "docs/ops/core-self-trip-nickname-contract-20261105/pg/RESULT.json": "cd8afeb3ebf1da7af8d2d22bced7d496ae570bde0d4b7cddaf143e44b77adbcd",
+    "docs/ops/core-self-trip-nickname-contract-20261105/pg/run_isolated.py": "67230754da5f9cc5056b16cf2e7fe39122d3c6f39a1d55381d4034fa941ce99b",
+    "docs/ops/core-member-read-20261104/INSTALL_CANDIDATE.sql": "ff8143ba2c5a55a9009f3093e3c2a83c0c302c307b5fa029dbceb194e1dfe844",
+    "docs/ops/auth-c04-20261103/pg-candidate/MEMBER_CLAIM_CANDIDATE.sql": "2eec272c3551e4b8184621ec0728f7773cf2b363785ba08ba706c5189ce6d587",
+    "supabase/migrations/20261004000600_trip_person_command_foundation.sql": "c347362be54875b951b2f1bdc51c2c1869cce4af644b2740b2d2c8584665752f"
+  },
+  "findings": [],
+  "scope": "New nickname PG source, unmounted adapter and direct test/dependencies only. Existing canonical33/P3/P6 suites not rerun. Source review is distinct from a qualified actual installation packet.",
+  "verified": [
+    {
+      "topic": "Current linked-self authority",
+      "citations": [
+        "backend/sql/tripPersonSelfNickname.sql:98-108,156-157",
+        "docs/ops/core-member-read-20261104/INSTALL_CANDIDATE.sql:16-47"
+      ],
+      "result": "RPC requires exact normal Gateway, trusted Actor/Trip settings through the existing read-scope dependency, current registered non-guest/nonremoved unique linked Account and exact Person/Trip/user row. Trip locks and row revalidation prevent stale self linkage. Owner role does not authorize a different Person; no creator-only or participation grant is borrowed."
+    },
+    {
+      "topic": "Default-closed bounded writes",
+      "citations": [
+        "backend/sql/tripPersonSelfNickname.sql:19-21,78-88,145-157,174-179"
+      ],
+      "result": "Separate self_nickname bit defaultsfalse; existing singleton scope Actor/Trip/current clock and finite time bounds required. No EXECUTE granted. Original receipt replay and qualified read/recover bypass only new-write bit, never current self access. Other Core capabilities not activated by this source."
+    },
+    {
+      "topic": "Counter and writers",
+      "citations": [
+        "backend/sql/tripPersonSelfNickname.sql:47-76",
+        "docs/ops/auth-c04-20261103/pg-candidate/MEMBER_CLAIM_CANDIDATE.sql:178-186",
+        "supabase/migrations/20260910000100_canonical_production_baseline.sql:2084-2115",
+        "supabase/migrations/20261004000600_trip_person_command_foundation.sql:240-258"
+      ],
+      "result": "All ordinary INSERT/UPDATE names are subject to nickname trigger; direct counter changes reject, unchanged name retains revision, changed name incrementsonce and overflow rejects. Existing old-unlinked/invite_pending name transition preserves ACL/first-Claim policy and incrementscounter. Formal Claim183 only changes link fields, not name, so no bump. Already-linked name changes need exact same-transaction original-owner receipt witness and stable Trip/Person/link; legacy Profile refill fails rather than restoring a cleared linked nickname. Participation guard changes only its own fields, not nickname authority."
+    },
+    {
+      "topic": "Atomic immutable receipt and CAS",
+      "citations": [
+        "backend/sql/tripPersonSelfNickname.sql:22-42,62-72,145-175"
+      ],
+      "result": "Actor/operation advisory serializes immutable key; identical payload replay before new-write scope returns original result, reuse mismatches reject. Trip plus Person locks/current nickname revision decide APPLIED/UNCHANGED/conflict. Receipt is inserted before the witnessed name transition inside one transaction; trigger checks exact prior/result value+revision and actor/Person/Trip for linked names. Row/counter/receipt rollback together on SQL error; immutable row and truncate guards deny erase/rewrites. No caller proof flag or parallel nickname model introduced."
+    },
+    {
+      "topic": "ABI, historical/current and errors",
+      "citations": [
+        "backend/sql/tripPersonSelfNickname.sql:109-150,158-175",
+        "backend/src/tripPersonSelfNicknamePg.ts:25-35,42-110,114-138"
+      ],
+      "result": "Exact strict wire command, scalar/trim/UUID/digest checks match codec; null Clear storesempty and legacy observations retain length/whitespace. Original receipt and current observation are separate. recover binds original Actor/Trip/Person/operation/digest and returns ABSENT_UNCONFIRMED rather than NoCommit. Adapter parses/binds response before COMMIT, rolls back on failure, retires on failed rollback, does not retry uncertain COMMIT or expose raw SQL error body. It supplies context but owns no HTTP/JWT/identity selection or runtime mount."
+    }
+  ],
+  "independentValidation": {
+    "adapterCommand": "node node_modules/vitest/vitest.mjs run backend/src/tripPersonSelfNicknamePg.test.ts --configLoader runner --maxWorkers=1 --no-file-parallelism --no-cache",
+    "adapterPassed": 14,
+    "adapterFailed": 0,
+    "adapterDurationSeconds": 0.177,
+    "authorPgReused": {
+      "checks": 23,
+      "status": "LOCAL_ISOLATED_PG_PASS_NOT_HOSTED",
+      "imageId": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+      "sourceSha256": "f512abd58f33aadea9a6e26b36d2564ef0d7929b760518c70d38a0bb974aca63",
+      "fixtureLimit": "Minimal canonical tables plus actual normal read-admission body and registered synthetic linked/nonowner membership/denial/role graph, not Actor=true. Concurrency uses local admin sessions SET SESSION AUTHORIZATION Gateway to exercise SQL locks, not production pool concurrency."
+    },
+    "independentPgRerun": false,
+    "why": "Default Docker socket denied. One escalated read-only fixture-label ps request failed because automatic permission review did not finish before its deadline. Command not executed, no review container started. No retry/bypass or claim that action was unsafe. Parent explicitly accepted reuse of fixed author23."
+  },
+  "installationConditionsNotSourceFindings": [
+    "This file is source candidate, not an install-ready exact Root2 envelope. Root2 must pin actual normal read-scope/hash/time/keys helper bodies, Owners/ACL/EXEC, active role graph and table/schema/default ACLs; source existence checks alone are insufficient for trusted actual installation. Unknown default grantees must not receive new nickname authority.",
+    "Qualify complete actual journey_members trigger definitions/order, all effective display_name writer paths and compatible counter/receipt transitions before installation. Source first-Claim analysis is not a full live writer audit. Preserve approved FIRST Claim mapping; no already-linked nickname restoration from Profile/organizer notes.",
+    "Qualify actual Core activation-row constraints and exact nickname-only runtime/window so it cannot enable unrelated Core commands. Closing own nickname bit must preserve normal current-authorized read/recover and immutable accepted receipts; any global read-policy revocation still legitimately denies access.",
+    "Retain exact immutable installation/rollback history protection once any nickname receipt/counter fact exists; do not DROP accepted receipt/reader/guard or restore an incompatible runtime. Source candidate contains no reverse installer and grants no installation authority.",
+    "Auth must compose trusted context and existing request isolation; proposed route adapter remains unmounted. Native/downstream must consume current nickname/revision and blank display truth without global-name fallback. No revision0 fabrication before actual schema/reader qualification.",
+    "Bounded statement/lock/idle timeouts and actual service pool configuration remain runtime qualification; no Hosted resource or business call was exercised here."
+  ],
+  "unchangedAuthority": "No private Profile/AKA/participation/access revision ownership change, no new role/grant or generic queue/platform. No Owner product-policy conflict found.",
+  "notClaimed": [
+    "Independent PostgreSQL execution",
+    "Actual full Hosted preimages/ACL/trigger ordering/default privileges",
+    "Auth endpoint/Native mirror/Cloud recovery E2E",
+    "Root2 execution approval or activation"
+  ],
+  "actions": {
+    "productEdits": 0,
+    "main": 0,
+    "Hosted": 0,
+    "SQLInstall": 0,
+    "Provider": 0,
+    "device": 0,
+    "reviewContainersStarted": 0,
+    "GitMetadata": 0
+  },
+  "fileOnly": "Fixed by file SHA; no source commit or main update by reviewer.",
+  "resume": "Return scoped source review to parent/author for normal fixed source commit/integration. Root2 actual install qualification and Auth/Native delivery remain separate. Child stops."
+}

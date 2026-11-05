@@ -1,0 +1,887 @@
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+ERROR:  ADMIN option cannot be granted back to your own grantor
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+ERROR:  duplicate key value violates unique constraint "journey_members_trip_id_user_id_key"
+DETAIL:  Key (trip_id, user_id)=(9a30a5f7-5588-4b0b-9a08-3fd262721dfd, 5eab647d-553c-4c69-bfb6-cae2be8e776c) already exists.
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+15b72e54-d6f6-4368-b215-db2b393c4ef5
+
+[minimal-canonical-dependency-fixture]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[source-default-closed-install-local-only]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "personId": "739d41de-c58e-433e-844d-07144f401386", "accountId": "13f0a715-d012-4267-a6e0-79103de2f075", "observedAt": "2026-11-05T02:22:07.439296Z", "contractVersion": 1, "nicknameRevision": 0}
+
+[source-default-closed-install-local-only]
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "outcome": "APPLIED", "personId": "739d41de-c58e-433e-844d-07144f401386", "receiptId": "b60092b0-2160-404a-afcf-07290bddc9ab", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:07.517875Z", "operationId": "87697223-5b1c-431e-9142-8d4063c51603", "intentDigest": "861f9272dc8388c0a8e00d0e32554962836df85e15ce0b3506633d54e458d537", "actorAccountId": "13f0a715-d012-4267-a6e0-79103de2f075", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "outcome": "APPLIED", "personId": "739d41de-c58e-433e-844d-07144f401386", "receiptId": "b60092b0-2160-404a-afcf-07290bddc9ab", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:07.517875Z", "operationId": "87697223-5b1c-431e-9142-8d4063c51603", "intentDigest": "861f9272dc8388c0a8e00d0e32554962836df85e15ce0b3506633d54e458d537", "actorAccountId": "13f0a715-d012-4267-a6e0-79103de2f075", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": true}
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "outcome": "REVISION_CONFLICT", "personId": "739d41de-c58e-433e-844d-07144f401386", "receiptId": "ed0b03cf-a11d-40cf-92f3-744f0e4514d5", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:07.592410Z", "operationId": "9f1d6c4b-e8b5-4d19-a622-20d378b2f5d3", "intentDigest": "94d7322d01d020455053e3131ce6965e0bf9c206e988eda8f89845928c2841ec", "actorAccountId": "13f0a715-d012-4267-a6e0-79103de2f075", "receiptVersion": 1, "desiredNickname": "stale", "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "outcome": "UNCHANGED", "personId": "739d41de-c58e-433e-844d-07144f401386", "receiptId": "6ad87b0c-e551-44d1-acf1-2fec05645443", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:07.633476Z", "operationId": "11985fd1-7903-40e8-8657-1773eb829ab0", "intentDigest": "e80e7f10b41fdf1e837778ddf14531546b7bbce8c0c9adb046586f79e72a5feb", "actorAccountId": "13f0a715-d012-4267-a6e0-79103de2f075", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+ERROR:  SELF_NICKNAME_OPERATION_REUSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 59 at RAISE
+
+[self-clear-and-history]
+eb56ed6a-434a-4f76-bb29-a0457165326f|89d2339e-facc-4e60-91ad-94a430dc4935
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "nickname": null, "personId": "739d41de-c58e-433e-844d-07144f401386", "accountId": "13f0a715-d012-4267-a6e0-79103de2f075", "observedAt": "2026-11-05T02:22:07.769025Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+ERROR:  SELF_NICKNAME_OWNING_RECEIPT_REQUIRED
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 24 at RAISE
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "nickname": null, "personId": "739d41de-c58e-433e-844d-07144f401386", "accountId": "13f0a715-d012-4267-a6e0-79103de2f075", "observedAt": "2026-11-05T02:22:07.833296Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+13f0a715-d012-4267-a6e0-79103de2f075|89d2339e-facc-4e60-91ad-94a430dc4935
+{"tripId": "89d2339e-facc-4e60-91ad-94a430dc4935", "nickname": null, "personId": "739d41de-c58e-433e-844d-07144f401386", "accountId": "13f0a715-d012-4267-a6e0-79103de2f075", "observedAt": "2026-11-05T02:22:07.868239Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+ERROR:  duplicate key value violates unique constraint "journey_members_trip_id_user_id_key"
+DETAIL:  Key (trip_id, user_id)=(89d2339e-facc-4e60-91ad-94a430dc4935, eb56ed6a-434a-4f76-bb29-a0457165326f) already exists.
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+4b813479-536d-46ee-831b-78397e14a01d
+
+[minimal-canonical-dependency-fixture]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[source-default-closed-install-local-only]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "accountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "observedAt": "2026-11-05T02:22:27.730811Z", "contractVersion": 1, "nicknameRevision": 0}
+
+[source-default-closed-install-local-only]
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "APPLIED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "49b566f7-cdb8-44da-a810-bc57af9a454a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:27.806725Z", "operationId": "5bd9bf75-b745-4ad5-bbd7-b8dd01cd0951", "intentDigest": "f4f1bcf71085bcb9b5a8f387dcd430344b9ebb60e0cace32bde3e9e634fb3e2d", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "APPLIED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "49b566f7-cdb8-44da-a810-bc57af9a454a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:27.806725Z", "operationId": "5bd9bf75-b745-4ad5-bbd7-b8dd01cd0951", "intentDigest": "f4f1bcf71085bcb9b5a8f387dcd430344b9ebb60e0cace32bde3e9e634fb3e2d", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": true}
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "REVISION_CONFLICT", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "05294145-6ff2-4e8c-9489-889aba3f0d1a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:27.881549Z", "operationId": "fa37dc62-b8d9-4492-849b-e2e271a37955", "intentDigest": "d53ede5d8aff8f24bec8d8bebd1354a20be2e665db253cfdef1eb26603780702", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": "stale", "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "UNCHANGED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "886cde58-0818-48a8-9ff8-d511c0c2d942", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:27.919535Z", "operationId": "0dd0e7b9-9193-4fb0-98a5-37676133b1a3", "intentDigest": "34edf56938b8665e83e4f4caea8058947e02d4bccb62a19e817f02e810bef7bb", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_OPERATION_REUSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 59 at RAISE
+
+[self-clear-and-history]
+a5caed5e-9ac3-4407-9504-d8198ebc9248|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "nickname": null, "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "accountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "observedAt": "2026-11-05T02:22:28.062790Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+ERROR:  SELF_NICKNAME_OWNING_RECEIPT_REQUIRED
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 24 at RAISE
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "nickname": null, "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "accountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "observedAt": "2026-11-05T02:22:28.206735Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "nickname": null, "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "accountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "observedAt": "2026-11-05T02:22:28.255296Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+1
+
+[self-clear-and-history]
+
+[closure-and-original-recovery]
+
+[closure-and-original-recovery]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "APPLIED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "49b566f7-cdb8-44da-a810-bc57af9a454a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:22:27.806725Z", "operationId": "5bd9bf75-b745-4ad5-bbd7-b8dd01cd0951", "intentDigest": "f4f1bcf71085bcb9b5a8f387dcd430344b9ebb60e0cace32bde3e9e634fb3e2d", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[closure-and-original-recovery]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[closure-and-original-recovery]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[concurrency-rollback]
+
+[concurrency-rollback]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "APPLIED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "280e4d3f-4a8e-4920-9e5d-6dbbbdb074e7", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:22:28.649349Z", "operationId": "bc2d1887-c0d9-4636-b505-edc7e16e3604", "intentDigest": "9f76b16618b82e0bacbd0e032d105215ec9aebb6aef2fdf41cc33d96ad1534c2", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": "one", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "REVISION_CONFLICT", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "e93545b0-f521-4222-b410-91937ff5f689", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:22:28.654098Z", "operationId": "57c26d9f-c3cb-418a-8081-f507f070dcfa", "intentDigest": "d43591528a921d47959b85a43bea193828507d6fbbe1f8b8849017448e617982", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": "two", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "nickname": "one", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "accountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "observedAt": "2026-11-05T02:22:28.686414Z", "contractVersion": 1, "nicknameRevision": 2}
+
+[concurrency-rollback]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "APPLIED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "2534190b-a7a0-4da5-a281-b4325d37b2a6", "resulting": {"nickname": "rollback", "nicknameRevision": 3}, "acceptedAt": "2026-11-05T02:22:28.718748Z", "operationId": "81c0720c-f706-4082-b590-8203c545c34e", "intentDigest": "6d96d578c628477709462d891d9bf92735338d760cc6b1e34ab1fdd528628ac3", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": "rollback", "expectedNicknameRevision": 2}, "idempotentReplay": false}
+
+[concurrency-rollback]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "001c26c0-d2bd-447f-a43d-12a15dc1d777", "outcome": "APPLIED", "personId": "b79ec0a0-0a77-458b-86c6-c7312d71c5e7", "receiptId": "99a4a432-5b75-4c7b-9fc5-f5ec32500738", "resulting": {"nickname": "fault", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:22:28.760770Z", "operationId": "08192034-041c-4da2-a1be-d29b4126f089", "intentDigest": "4f0f5a823e5a61c81d81dccd4db9e904d42488ddffa8f44e1f8fe2bf9cce33e7", "actorAccountId": "e4ce54ff-779b-4b11-a595-4801dd1ea151", "receiptVersion": 1, "desiredNickname": "fault", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+ERROR:  division by zero
+
+[concurrency-rollback]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[authorization-negative]
+
+[authorization-negative]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[authorization-negative]
+e4ce54ff-779b-4b11-a595-4801dd1ea151|001c26c0-d2bd-447f-a43d-12a15dc1d777
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+a4abec20-ff56-4da1-a1c6-001b2cca371b
+
+[minimal-canonical-dependency-fixture]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[source-default-closed-install-local-only]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "accountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "observedAt": "2026-11-05T02:23:52.567650Z", "contractVersion": 1, "nicknameRevision": 0}
+
+[source-default-closed-install-local-only]
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "add74696-cd13-4db3-b24c-d44a5e9c0bb4", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:23:52.639307Z", "operationId": "7fedcf53-5158-45e0-9425-73fe57bfdd34", "intentDigest": "0ae791d81767f00a131e4cad237e1f5fe90c94a665c51d40fcc66fe4ad46cbaf", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "add74696-cd13-4db3-b24c-d44a5e9c0bb4", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:23:52.639307Z", "operationId": "7fedcf53-5158-45e0-9425-73fe57bfdd34", "intentDigest": "0ae791d81767f00a131e4cad237e1f5fe90c94a665c51d40fcc66fe4ad46cbaf", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": true}
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "REVISION_CONFLICT", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "83ee5e8e-3de8-41de-95c0-8d57b20a9600", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:23:52.714199Z", "operationId": "43b78937-9d6e-4286-85b4-467eaeb85687", "intentDigest": "6f1823a897522d8f7891f68dae7c898b14e98fde24f47bc8ac110205f58643d9", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": "stale", "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "UNCHANGED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "7932ce08-a884-4eed-b6dc-d0e11ba34092", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:23:52.760407Z", "operationId": "31bbd328-1e8a-4b69-b385-9af28d70e252", "intentDigest": "61617f3a584d5ce4e54fff7be38ae41b1f9e1ed50c930f857065d1363c439f09", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_OPERATION_REUSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 59 at RAISE
+
+[self-clear-and-history]
+120e73e0-f0ae-464b-84e0-8647c01eddd7|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "nickname": null, "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "accountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "observedAt": "2026-11-05T02:23:53.005590Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+ERROR:  SELF_NICKNAME_OWNING_RECEIPT_REQUIRED
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 24 at RAISE
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "nickname": null, "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "accountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "observedAt": "2026-11-05T02:23:53.093476Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "nickname": null, "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "accountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "observedAt": "2026-11-05T02:23:53.133612Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+1
+
+[self-clear-and-history]
+
+[closure-and-original-recovery]
+
+[closure-and-original-recovery]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "add74696-cd13-4db3-b24c-d44a5e9c0bb4", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:23:52.639307Z", "operationId": "7fedcf53-5158-45e0-9425-73fe57bfdd34", "intentDigest": "0ae791d81767f00a131e4cad237e1f5fe90c94a665c51d40fcc66fe4ad46cbaf", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[closure-and-original-recovery]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[closure-and-original-recovery]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[concurrency-rollback]
+
+[concurrency-rollback]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "72b2e66c-f97f-4959-a5f4-b19ee2ec2c3b", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:23:53.514421Z", "operationId": "6c00fa02-c15f-41cf-921e-84d3e05bd179", "intentDigest": "e50e986c5a13f461afb509aa81fea6cee5496b757517daf798d9339b9894ccf7", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": "one", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "REVISION_CONFLICT", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "d47cad41-4328-4d13-a734-ca0308614ab6", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:23:53.520187Z", "operationId": "ba63b726-a150-4f17-918d-47715f0b5cc5", "intentDigest": "0e0e20d2123298afa7a7c724ff789cb6d56b1835902a974400e320ef6a7a2a20", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": "two", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "nickname": "one", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "accountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "observedAt": "2026-11-05T02:23:53.555073Z", "contractVersion": 1, "nicknameRevision": 2}
+
+[concurrency-rollback]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "d7455bf0-6d20-452d-b863-a63b3f2acba9", "resulting": {"nickname": "rollback", "nicknameRevision": 3}, "acceptedAt": "2026-11-05T02:23:53.590622Z", "operationId": "da8f29d8-c945-47bc-a47e-482466ea9ff0", "intentDigest": "5b37e60222afbe61e4459966374335a141a3b201c184545cd391bc2e0367e41f", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": "rollback", "expectedNicknameRevision": 2}, "idempotentReplay": false}
+
+[concurrency-rollback]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "08e5f206-d5c3-4d46-a02e-6d22f071cd62", "resulting": {"nickname": "fault", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:23:53.624646Z", "operationId": "b1182966-e124-402f-a465-1e95227b788a", "intentDigest": "02e6f859b16a8e3f8deb7f37ddccb20215fcdce55f65f1be789f754850416c41", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": "fault", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+ERROR:  division by zero
+
+[concurrency-rollback]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_REVISION_WRITE_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 7 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  permission denied for table trip_person_nickname_receipts
+
+[bounded-scope-counter-and-privilege-negatives]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "nickname": "rollback", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "accountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "observedAt": "2026-11-05T02:23:54.164811Z", "contractVersion": 1, "nicknameRevision": 3}
+
+[bounded-scope-counter-and-privilege-negatives]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "59fb738b-c889-4dff-9726-2a93e6a6a3da", "outcome": "APPLIED", "personId": "a0f1089d-963e-4594-b16f-5ee960b6eb6d", "receiptId": "3fce7d8c-1dae-4c39-bb28-ba31b2235823", "resulting": {"nickname": "旅人 Jo", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:23:54.203769Z", "operationId": "a0d6f6c7-2779-4506-9f2c-b94fcae60ceb", "intentDigest": "8b3ca9f6e5150808939b8b2f7bd0c5e36899a282dad1db2aa199591a552d23cb", "actorAccountId": "e36deff2-04e3-45ad-93f6-b8ffeca9b190", "receiptVersion": 1, "desiredNickname": "旅人 Jo", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+
+[bounded-scope-counter-and-privilege-negatives]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_INVALID
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 50 at RAISE
+
+[authorization-negative]
+
+[authorization-negative]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[authorization-negative]
+e36deff2-04e3-45ad-93f6-b8ffeca9b190|59fb738b-c889-4dff-9726-2a93e6a6a3da
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+6ae7a756-7367-4ee0-ae95-a9492ffea464
+
+[minimal-canonical-dependency-fixture]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[source-default-closed-install-local-only]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "accountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "observedAt": "2026-11-05T02:25:11.791420Z", "contractVersion": 1, "nicknameRevision": 0}
+
+[source-default-closed-install-local-only]
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "5907e745-d8af-4393-9e64-73c797ea50bd", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:25:11.860086Z", "operationId": "ab4d795b-8a2f-4fcd-95d6-9b401657cd22", "intentDigest": "fc122c6e12c8f89831f4a2896f0546b12c5663a14524c49a59664bd67662f80b", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "5907e745-d8af-4393-9e64-73c797ea50bd", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:25:11.860086Z", "operationId": "ab4d795b-8a2f-4fcd-95d6-9b401657cd22", "intentDigest": "fc122c6e12c8f89831f4a2896f0546b12c5663a14524c49a59664bd67662f80b", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": true}
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "REVISION_CONFLICT", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "55fbad8e-2ff7-4b08-b33a-010e763bb395", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:25:11.938966Z", "operationId": "581a29b9-3d2b-45cf-9e4a-232327f1417c", "intentDigest": "df4bbe6349b7122f4f0987c86c27f0a36bb1f4e3952563ae6945837fde817bcb", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": "stale", "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "UNCHANGED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "1037bba8-408c-46b8-9441-cd67528f02b2", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:25:11.974057Z", "operationId": "02195b36-effc-4378-86ce-214b5cc309f7", "intentDigest": "38b7c79f47a65595f229318bf0bb9100652db9b5334554e40f9282966e4d6246", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_OPERATION_REUSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 59 at RAISE
+
+[self-clear-and-history]
+13b8c35b-a1f6-45e9-9bad-e35840c37708|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "nickname": null, "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "accountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "observedAt": "2026-11-05T02:25:12.112880Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+ERROR:  SELF_NICKNAME_OWNING_RECEIPT_REQUIRED
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 24 at RAISE
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "nickname": null, "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "accountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "observedAt": "2026-11-05T02:25:12.179301Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "nickname": null, "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "accountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "observedAt": "2026-11-05T02:25:12.211578Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+1
+
+[self-clear-and-history]
+
+[closure-and-original-recovery]
+
+[closure-and-original-recovery]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "5907e745-d8af-4393-9e64-73c797ea50bd", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:25:11.860086Z", "operationId": "ab4d795b-8a2f-4fcd-95d6-9b401657cd22", "intentDigest": "fc122c6e12c8f89831f4a2896f0546b12c5663a14524c49a59664bd67662f80b", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[closure-and-original-recovery]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[closure-and-original-recovery]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[concurrency-rollback]
+
+[concurrency-rollback]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "48ac5e2e-1977-4433-b298-344cdc1253c5", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:25:12.588989Z", "operationId": "70e83bcf-e088-445a-b5cc-9661f12fe2ea", "intentDigest": "7ceb3a2c31fadfe320505e387410a49ef51564dede276e31f45c04da0bdc03a1", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": "one", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "REVISION_CONFLICT", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "87fee118-da29-4f7a-b864-d313901102e9", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:25:12.593671Z", "operationId": "0d84b2d5-c5b8-46bf-b9f1-06914e46e212", "intentDigest": "577677deb04d1607f9e6a893081a76520d64c37536d5ab58ce2c306cba610c5a", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": "two", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "nickname": "one", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "accountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "observedAt": "2026-11-05T02:25:12.627613Z", "contractVersion": 1, "nicknameRevision": 2}
+
+[concurrency-rollback]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "aac305d2-d38c-4edb-bfdf-c0e174a186ae", "resulting": {"nickname": "rollback", "nicknameRevision": 3}, "acceptedAt": "2026-11-05T02:25:12.661353Z", "operationId": "02ea79e1-0087-4c0b-bca1-c943631dd401", "intentDigest": "dd79c6d8df65312ee5d19ed36fd63ebfe7e35ca720bb26b49d1074981ab71d7a", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": "rollback", "expectedNicknameRevision": 2}, "idempotentReplay": false}
+
+[concurrency-rollback]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "0a2278d1-c357-4332-a2d9-e616f3362213", "resulting": {"nickname": "fault", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:25:12.697293Z", "operationId": "56f9b6f8-7fb1-4b25-bc16-2e5daca601e8", "intentDigest": "b03e25fe4a20a046aee728f68bb7833664ba8f221cabc551cf82ae179fddf5cd", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": "fault", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+ERROR:  division by zero
+
+[concurrency-rollback]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_REVISION_WRITE_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 7 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  permission denied for table trip_person_nickname_receipts
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "nickname": "rollback", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "accountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "observedAt": "2026-11-05T02:25:13.316084Z", "contractVersion": 1, "nicknameRevision": 3}
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "3fb553c2-f043-4afd-9d22-3fef66595479", "outcome": "APPLIED", "personId": "d2d56ed8-b164-472b-be8a-a1ac8e2f21e3", "receiptId": "a997c7e6-a412-431e-9736-99fd3ed03764", "resulting": {"nickname": "旅人 Jo", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:25:13.352287Z", "operationId": "83ea93a9-22f0-41b0-8443-0830fc2b5243", "intentDigest": "631e1e7cadb287e61d098dca6263163c334b9d4bb2509bcd18bbddf97e6d822e", "actorAccountId": "2325f80d-0bd7-4e15-9a7f-8c1295ebee48", "receiptVersion": 1, "desiredNickname": "旅人 Jo", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+
+[bounded-scope-counter-and-privilege-negatives]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_INVALID
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 50 at RAISE
+
+[authorization-negative]
+
+[authorization-negative]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[authorization-negative]
+2325f80d-0bd7-4e15-9a7f-8c1295ebee48|3fb553c2-f043-4afd-9d22-3fef66595479
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[minimal-canonical-dependency-fixture]
+NOTICE:  column "is_anonymous" of relation "users" already exists, skipping
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+
+[minimal-canonical-dependency-fixture]
+ca494dba-1ee7-4b1e-9e33-ab47325ae744
+
+[minimal-canonical-dependency-fixture]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+
+[source-default-closed-install-local-only]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[source-default-closed-install-local-only]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "accountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "observedAt": "2026-11-05T02:26:24.136006Z", "contractVersion": 1, "nicknameRevision": 0}
+
+[source-default-closed-install-local-only]
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "0e8b476d-6ddb-4b21-b5e3-a931e34f7e4a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:26:24.202982Z", "operationId": "2dd24c47-7089-49e6-8866-7ee87deac59d", "intentDigest": "37e33e23315fecb8ea8caf445384e68a88d9f51d6ead0bfc9b3d3ec018493b79", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "0e8b476d-6ddb-4b21-b5e3-a931e34f7e4a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:26:24.202982Z", "operationId": "2dd24c47-7089-49e6-8866-7ee87deac59d", "intentDigest": "37e33e23315fecb8ea8caf445384e68a88d9f51d6ead0bfc9b3d3ec018493b79", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}, "idempotentReplay": true}
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "REVISION_CONFLICT", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "93c8101b-0161-49e7-8fb7-d069b22f6634", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:26:24.274499Z", "operationId": "2aac3136-215b-427f-9eb0-5f32eb884eb0", "intentDigest": "949f236c0940e56d9ead4f80da7ea7d9ddd61bed5b15128bdac72386b11ae3c0", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": "stale", "expectedNicknameRevision": 0}, "idempotentReplay": false}
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "UNCHANGED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "c516dcc5-538d-4cfe-8753-c5add3353168", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:26:24.309163Z", "operationId": "f05005fe-0861-47fa-9d45-8b583d0393f1", "intentDigest": "49ed73293cd9aee992d02b3c71c81365365fc82ae7de9fd98f62188ea70af7e7", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_OPERATION_REUSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 59 at RAISE
+
+[self-clear-and-history]
+4450b09d-afd0-4fa1-a13f-16282ee73446|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 18 at RAISE
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "nickname": null, "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "accountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "observedAt": "2026-11-05T02:26:24.438853Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+ERROR:  SELF_NICKNAME_OWNING_RECEIPT_REQUIRED
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 24 at RAISE
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "nickname": null, "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "accountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "observedAt": "2026-11-05T02:26:24.504522Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "nickname": null, "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "accountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "observedAt": "2026-11-05T02:26:24.538669Z", "contractVersion": 1, "nicknameRevision": 1}
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+
+[self-clear-and-history]
+1
+
+[self-clear-and-history]
+
+[closure-and-original-recovery]
+
+[closure-and-original-recovery]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"kind": "EXACT_RECEIPT", "receipt": {"prior": {"nickname": " old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old  old ", "nicknameRevision": 0}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "0e8b476d-6ddb-4b21-b5e3-a931e34f7e4a", "resulting": {"nickname": null, "nicknameRevision": 1}, "acceptedAt": "2026-11-05T02:26:24.202982Z", "operationId": "2dd24c47-7089-49e6-8866-7ee87deac59d", "intentDigest": "37e33e23315fecb8ea8caf445384e68a88d9f51d6ead0bfc9b3d3ec018493b79", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": null, "expectedNicknameRevision": 0}}
+
+[closure-and-original-recovery]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[closure-and-original-recovery]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[concurrency-rollback]
+
+[concurrency-rollback]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": null, "nicknameRevision": 1}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "65c0a117-d4d0-41aa-8918-681a2ffd3310", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:26:24.916139Z", "operationId": "daf5774f-13dc-412d-8ae1-562211aa9cd7", "intentDigest": "c21b028ef724891f380e0c68701077f5ce9a9444c0f22eb79e8df7428da09511", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": "one", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "REVISION_CONFLICT", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "d95bcce3-9575-4f89-9697-ae58a082855b", "resulting": {"nickname": "one", "nicknameRevision": 2}, "acceptedAt": "2026-11-05T02:26:24.921559Z", "operationId": "8718a8c5-2a74-42f9-ba90-dff2f48397f5", "intentDigest": "91549ed637ea530f8a3e5b953a9fb8d2a140aab0b18c5183a7757d266c15d5d7", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": "two", "expectedNicknameRevision": 1}, "idempotentReplay": false}
+
+[concurrency-rollback]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "nickname": "one", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "accountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "observedAt": "2026-11-05T02:26:24.954418Z", "contractVersion": 1, "nicknameRevision": 2}
+
+[concurrency-rollback]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": "one", "nicknameRevision": 2}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "939ac284-5aef-45d8-bbe6-e3389221afc4", "resulting": {"nickname": "rollback", "nicknameRevision": 3}, "acceptedAt": "2026-11-05T02:26:24.989025Z", "operationId": "68909602-08fd-41e3-927c-ad36a69e5581", "intentDigest": "cc7a2e574baabc2b1b05af5b9f2eb8a1efc84010c10fdeb33b7824058c71d732", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": "rollback", "expectedNicknameRevision": 2}, "idempotentReplay": false}
+
+[concurrency-rollback]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "5c2d585c-d374-48e6-9632-372bbd8007b0", "resulting": {"nickname": "fault", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:26:25.023868Z", "operationId": "4d4eb79f-317b-479d-9a98-e3f635fa7ae4", "intentDigest": "f5682a9db510c19a0b99f9a17673e10ac68d432cdef670dd087435736952e508", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": "fault", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+ERROR:  division by zero
+
+[concurrency-rollback]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"kind": "ABSENT_UNCONFIRMED"}
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_CLOSED
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 65 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_REVISION_WRITE_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_transition_guard() line 7 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  SELF_NICKNAME_RECEIPT_IMMUTABLE
+CONTEXT:  PL/pgSQL function public.trip_person_nickname_receipt_guard() line 5 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+ERROR:  permission denied for table trip_person_nickname_receipts
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "nickname": "rollback", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "accountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "observedAt": "2026-11-05T02:26:25.638765Z", "contractVersion": 1, "nicknameRevision": 3}
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+{"receipt": {"prior": {"nickname": "rollback", "nicknameRevision": 3}, "tripId": "43544a9b-5c27-482a-b397-43d0fa1ec2f3", "outcome": "APPLIED", "personId": "182d0c98-b08d-4b6d-92f0-9627c8d016ec", "receiptId": "9ca6e47e-1922-403c-9d0b-ce1c7ec028dd", "resulting": {"nickname": "旅人 Jo", "nicknameRevision": 4}, "acceptedAt": "2026-11-05T02:26:25.676635Z", "operationId": "b5b94c60-7564-4d55-883a-3dd22b274895", "intentDigest": "9a47806a57b05093386622090f16b559100b429824b7805c6a0bd4c0d125d7cd", "actorAccountId": "433297df-e7ed-499b-bf1f-12e369b0d76e", "receiptVersion": 1, "desiredNickname": "旅人 Jo", "expectedNicknameRevision": 3}, "idempotentReplay": false}
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_INVALID
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 50 at RAISE
+
+[bounded-scope-counter-and-privilege-negatives]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_INVALID
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 46 at RAISE
+
+[authorization-negative]
+
+[authorization-negative]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
+
+[authorization-negative]
+433297df-e7ed-499b-bf1f-12e369b0d76e|43544a9b-5c27-482a-b397-43d0fa1ec2f3
+ERROR:  SELF_NICKNAME_FORBIDDEN
+CONTEXT:  PL/pgSQL function public.trip_person_self_nickname(uuid,uuid,uuid,text,jsonb) line 16 at RAISE
