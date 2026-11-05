@@ -1,0 +1,56 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "primary": "AUTH-C04_UNCHANGED",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "LOCAL_AUTH_CONSUMER_GOLDEN_PASS_INDEPENDENT_REVIEW_PENDING",
+  "goldenSlice": "MOCK ONLY normal scopedread -> loadedselfcontext -> draftSET/CLEAR -> strictCanonicalcommand/receipt -> originaloperationrecover -> freshReader observation. Historicalreceipt leaves loadedbase/newerdraft unchanged.",
+  "actualFunctions": {
+    "createSelfTripNicknameRepository": "Exactly read/execute/recover, existing AuthHTTPclient and current AccountRequestFence; strictCanonicalread/command/receipt/envelope parsing; exactPersonpath, Idempotency-Key originalop; recoveryPOST carries only originalintentDigest, never commandPOST retransmit.",
+    "createSelfTripNicknameDraft": "Canonicalimports replace all temporary context/command/digest/receipt validation; originalfrozen before asyncwork; omittedKeep nooperation, explicitnullClear; submit reservesoneattemptbeforewire, failure remainsrecover-only; edits retained; no account/Personname matching or revision0guess."
+  },
+  "ABI": "Root1fixed e28df contract + exactac707 codec. No independenthashcodec, responsewrappers, Actoroverride or alternateCanonicalname field. Contextstructure is NOT linkedselfauthority; actualBackend still responsible for currentAuth/link/trip checks.",
+  "sourceHashes": {
+    "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
+    "src/data/auth/selfTripNicknameDraft.test.ts": "dbfb60351469fc2c1e3345469e02e9260055b9f1036c2d33ed348ec3226ef13f",
+    "src/data/repositories/selfTripNicknameRepository.ts": "b61db3880a16ec4004d395083e55902f7eac74be74a6071c1676e238f4005f53",
+    "src/data/repositories/selfTripNicknameRepository.test.ts": "6436a093adedc289f965b53d1dc2e454341a1125c5c2b5593b984441118825f9",
+    "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+  },
+  "AuthOwningFiles": [
+    "src/data/auth/selfTripNicknameDraft.ts",
+    "src/data/auth/selfTripNicknameDraft.test.ts",
+    "src/data/repositories/selfTripNicknameRepository.ts",
+    "src/data/repositories/selfTripNicknameRepository.test.ts"
+  ],
+  "upstreamDependency": "UPSTREAM_DEPENDENCY.json",
+  "validation": {
+    "directTests": "38PASS (18draft +20repository) with mocked fetch ONLY",
+    "scope": "Account/Trip/Person/operation/expectedRevision/digest/response mismatches, UNKNOWN503 then no commandsrePOST, ABSENT_UNCONFIRMED/404 keepunconfirmed, originalrecoverybody, sameAccount freshread, lateAccount/token-switch/ABA, immutableSave whiletyping",
+    "scopedTypecheck": "PASS",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "unmodifiedHistoricalSuites": "NOT_RERUN; Root1canonical33PASS trusted, not rerun"
+  },
+  "firstFailure": "NONE_IN_LOCAL_MOCK_GOLDEN; earlierfixture-only digest test used command rather thanintent and empty404body mismatch were corrected, no authority semantics changed.",
+  "boundaries": {
+    "backendChanges": 0,
+    "queuesOrTables": 0,
+    "sharedNativeUI": 0,
+    "HostedHTTP": 0,
+    "credentialsOrSession": 0,
+    "SQL_RLS_GRANT": 0,
+    "device": 0,
+    "RuntimeCallers": 0
+  },
+  "qualificationLayers": {
+    "SOURCE": "AUTH_CANDIDATE_PASS_WITH_ROOT1_EXACT_DEPENDENCY;PARENT_REVIEW_PENDING",
+    "HOSTED": "NOT_RUN_NOT_ENABLED",
+    "CONSUMER": "LOCAL_MOCK_GOLDEN_PASS_NOT_APP_INTEGRATED",
+    "DEVICE": "NOT_RUN",
+    "OWNER_UX": "NOT_PROVED"
+  },
+  "next": "Parent independentlyreviews exactcandidate. CoreproducerBackend/PG/runtime defaultclosed unavailable; no liveactivation requested. Nativeentry/sharedwriter integration and actualserver authorization/readback remain futurequalification. No newframework or Gate.",
+  "previousGitAttempt": "Earlier combineddocs+git on simpler17testcandidate timedout beforedispatch; not retried. This is a genuinely newCanonicalconsuming Adaptercandidate with newsource/test changes.",
+  "recordedAt": "2026-11-05T02:09:14.024514+00:00"
+}

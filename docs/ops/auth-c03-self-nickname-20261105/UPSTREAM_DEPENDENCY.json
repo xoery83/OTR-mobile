@@ -1,0 +1,20 @@
+{
+  "kind": "ROOT1_UPSTREAM_DEPENDENCY_EXACT_SNAPSHOT_NOT_AUTH_OWNING_SOURCE",
+  "originTree": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105",
+  "sourceGitPin": "No Gitpin claimed byproducer; exactfileSHA snapshot expresslyallowed byparent",
+  "files": {
+    "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+  },
+  "contract": {
+    "path": "docs/ops/core-self-trip-nickname-contract-20261105/PRODUCER_CONTRACT.json",
+    "sha256": "e28df17e0e44fc16a77292264bed404abaa68ffbe6ab26f69e6f989002ec1a39"
+  },
+  "goldenVector": {
+    "path": "docs/ops/core-self-trip-nickname-contract-20261105/GOLDEN_VECTOR.json",
+    "sha256": "ccfa4494e6605c39b93897060d3447f366534c30a015cf2c1684e18b880ca5a5",
+    "intentDigest": "82476a4b28f8275ab5b77f8e906987a59d76965d949e68c5bcace4861bb9412c",
+    "separator": "U+000A byte0a"
+  },
+  "rule": "Do not editRoot1codec. Integration sourcepacket takes Auth4files; ifCanonicalleaf already onmain, EXCLUDE these upstreamfiles rather than overwrite. Root1independent33PASS reused, notrerun."
+}

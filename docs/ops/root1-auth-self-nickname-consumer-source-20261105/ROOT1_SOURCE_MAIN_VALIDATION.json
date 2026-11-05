@@ -1,0 +1,45 @@
+{
+  "status": "SOURCE_ONLY_AUTH_CONSUMER_INTEGRATION_PASS_NOT_HOSTED_NATIVE",
+  "parentMain": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+  "candidate": "a2ba2bec07b74602664b9010e87aea609802242c",
+  "handoff": "49f63841",
+  "handoffSHA256": "6e811472d0158436c2b92adc21f93d089a8dee491e5a0b08b2d57a98f3962d75",
+  "parentReviewSHA256": "0507955670635f6aca25c4cf41407ae6a6fe1457836ee9aa9c57241593a769f1",
+  "fourAuthLeafSHA256": {
+    "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
+    "src/data/auth/selfTripNicknameDraft.test.ts": "dbfb60351469fc2c1e3345469e02e9260055b9f1036c2d33ed348ec3226ef13f",
+    "src/data/repositories/selfTripNicknameRepository.ts": "b61db3880a16ec4004d395083e55902f7eac74be74a6071c1676e238f4005f53",
+    "src/data/repositories/selfTripNicknameRepository.test.ts": "6436a093adedc289f965b53d1dc2e454341a1125c5c2b5593b984441118825f9"
+  },
+  "canonicalUpstreamPreserved": {
+    "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+  },
+  "actualChecks": {
+    "allNewAuthMockTests": "2 suites38PASS /324ms",
+    "fourRootScopedTypes": "PASS",
+    "fourRootESLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "dependencyDelta": {
+    "file": "src/data/api/client.ts",
+    "fixedAuthSHA256": "1791f4fbbabdb466b158c770af58ba3fb2fd553956ebe8af345a310bd05f4082",
+    "actualMainSHA256": "49ba913312db6388b289519da69dd99f29fc9a96483a165dab041223bbf59fe8",
+    "scope": "Only3 bounded-HTTP-failure diagnostic hunks: valid body/header requestId propagation and diagnostic requestId; no submit/retry/Auth/context semantics changed. Main bytes preserved, not overwritten.",
+    "verification": "Because direct dependency differs, all38 new Auth mocks run once on actual assembly rather than relying only on author38. Initial failclosed preflight stopped before docs/tool setup; subsequent missing node_modules attempts did not run tests or type/lint and are not counted PASS.",
+    "unchangedDirectDependencies": [
+      "authenticatedClient.ts",
+      "accountRequestContext.ts",
+      "tripCoreV2.ts",
+      "canonical nickname two files"
+    ]
+  },
+  "abi": "Canonical imports only; no duplicate hash, rev0 fallback, actor override or upstream snapshot overwrite. Draft immutable original+one submit, UNKNOWN original recover/read only; historical receipt does not replace fresh draft/readback.",
+  "notIncluded": [
+    "UI/Native entry",
+    "Backend/routes/PG/schema/ACL/runtime",
+    "Queue/Source/Provider",
+    "fresh linked-self authority or actual Cloud readback"
+  ],
+  "actions": "Source Git only; no Hosted/SQL/Auth session/device/Provider."
+}

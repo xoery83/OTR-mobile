@@ -1,0 +1,29 @@
+{
+  "reviewer": "/root parent",
+  "candidate": "a2ba2bec07b74602664b9010e87aea609802242c",
+  "verdict": "NO_BLOCKER_FOR_LOCAL_AUTH_CONSUMER_SOURCE_ONLY",
+  "method": "Static finalDraft/Repository/allnewdirecttests+candidatehash/upstream-boundary review;38Mocktests not rerun",
+  "qualification": "SOURCE_ONLY; Mockevidence not upgraded to Hosted/Native/OwnerUX",
+  "confirmed": [
+    "Canonical Root1 exactleaf dependency not Auth-owned",
+    "Do not overwrite Root1 codec when mainleaf exists",
+    "Parsed HTTP/context structure does not establish linkedselfauthority; Backend must authenticate+qualify currentownPerson",
+    "Original command snapshotbeforeawait, generation fences, strictresponse/receipt binding",
+    "One submit attempt, originaloperation recover only; receipt not freshreadback or draft overwrite"
+  ],
+  "remaining": [
+    "Formal CoreBackend/PGport and defaultclosed runtime qualification",
+    "Native sharedentry/Reader integration and actual scoped acceptance"
+  ],
+  "sourceHashes": {
+    "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
+    "src/data/auth/selfTripNicknameDraft.test.ts": "dbfb60351469fc2c1e3345469e02e9260055b9f1036c2d33ed348ec3226ef13f",
+    "src/data/repositories/selfTripNicknameRepository.ts": "b61db3880a16ec4004d395083e55902f7eac74be74a6071c1676e238f4005f53",
+    "src/data/repositories/selfTripNicknameRepository.test.ts": "6436a093adedc289f965b53d1dc2e454341a1125c5c2b5593b984441118825f9"
+  },
+  "sharedCanonicalHashes": {
+    "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+  },
+  "noNewActions": true
+}

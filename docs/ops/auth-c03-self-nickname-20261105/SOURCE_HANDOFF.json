@@ -1,0 +1,48 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "candidate": "a2ba2bec07b74602664b9010e87aea609802242c",
+  "AuthOwningSourceFiles": [
+    "src/data/auth/selfTripNicknameDraft.ts",
+    "src/data/auth/selfTripNicknameDraft.test.ts",
+    "src/data/repositories/selfTripNicknameRepository.ts",
+    "src/data/repositories/selfTripNicknameRepository.test.ts"
+  ],
+  "documentationFiles": [
+    "docs/ops/auth-c03-self-nickname-20261105/LOCAL_CANDIDATE.json",
+    "docs/ops/auth-c03-self-nickname-20261105/UPSTREAM_DEPENDENCY.json",
+    "docs/ops/auth-c03-self-nickname-20261105/PARENT_REVIEW.json",
+    "docs/ops/auth-c03-self-nickname-20261105/RESUME_CURSOR.json",
+    "docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json",
+    "docs/ops/mc-events/auth-c03-self-nickname-local-20261105.json"
+  ],
+  "sourceHashes": {
+    "src/data/auth/selfTripNicknameDraft.ts": "8859bacf91e3eb605456c77e4f1c5cbf02cf935098a4b43f9f744dcbf9662fca",
+    "src/data/auth/selfTripNicknameDraft.test.ts": "dbfb60351469fc2c1e3345469e02e9260055b9f1036c2d33ed348ec3226ef13f",
+    "src/data/repositories/selfTripNicknameRepository.ts": "b61db3880a16ec4004d395083e55902f7eac74be74a6071c1676e238f4005f53",
+    "src/data/repositories/selfTripNicknameRepository.test.ts": "6436a093adedc289f965b53d1dc2e454341a1125c5c2b5593b984441118825f9"
+  },
+  "independentUpstream": {
+    "kind": "ROOT1_UPSTREAM_DEPENDENCY_EXACT_SNAPSHOT_NOT_AUTH_OWNING_SOURCE",
+    "originTree": "/Users/xoery/Project/otr-mobile-temporal/core-p3-claim-consume-impl-20261105",
+    "sourceGitPin": "No Gitpin claimed byproducer; exactfileSHA snapshot expresslyallowed byparent",
+    "files": {
+      "src/domain/trip/tripPersonSelfNickname.ts": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+      "src/domain/trip/tripPersonSelfNickname.test.ts": "3cdae206c97e9694619479e3688f2329214ad96394085b72d79a095ca993e36d"
+    },
+    "contract": {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/PRODUCER_CONTRACT.json",
+      "sha256": "e28df17e0e44fc16a77292264bed404abaa68ffbe6ab26f69e6f989002ec1a39"
+    },
+    "goldenVector": {
+      "path": "docs/ops/core-self-trip-nickname-contract-20261105/GOLDEN_VECTOR.json",
+      "sha256": "ccfa4494e6605c39b93897060d3447f366534c30a015cf2c1684e18b880ca5a5",
+      "intentDigest": "82476a4b28f8275ab5b77f8e906987a59d76965d949e68c5bcace4861bb9412c",
+      "separator": "U+000A byte0a"
+    },
+    "rule": "Do not editRoot1codec. Integration sourcepacket takes Auth4files; ifCanonicalleaf already onmain, EXCLUDE these upstreamfiles rather than overwrite. Root1independent33PASS reused, notrerun."
+  },
+  "integrationRule": "Apply exact4 Authfiles+relevantdocs only under freshsource coordination. No wholeAuthbranch cherry-pick. Root1canonical2files are exactdependency snapshots, not Auth changes; exclude if mainalreadyhasRoot1leaf, preserve Root1Writer and verify compatibility. No route/startup/NativeUI/storage activation included.",
+  "reviewVerdict": "NO_BLOCKER_FOR_LOCAL_AUTH_CONSUMER_SOURCE_ONLY",
+  "validationReused": "38Mocktests/scopedTS/lint/diffPASS froma2ba2bec; staticparentreview only, no repeats",
+  "readiness": "LOCAL_SOURCE_ONLY_NOT_HOSTED_OR_NATIVE_ACCEPTANCE"
+}

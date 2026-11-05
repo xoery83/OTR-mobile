@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "event_id": "auth-c03-self-nickname-local-started-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "STARTED",
+      "reported_at": "2026-11-05T01:57:16.076616+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "ActuallocalAuthdraft/omission/originalinput/receiptbinding candidate implemented.17directtests/scopedTS/lintPASS. Canonicalexportpending; noHTTP/Hosted/device;C04Primaryunchanged.",
+      "evidence_sha256": "990085189b4b6ed90f03906c74f93d62b8ac74024f8976d63b6c5e4c7088d26d",
+      "commit_status": "AUTO_APPROVAL_TIMEOUT_UNCOMMITTED_NO_RETRY"
+    },
+    {
+      "event_id": "auth-c03-self-nickname-canonical-consumer-pass-20261105-v1",
+      "agent": "Auth",
+      "package_id": "AUTH-C03",
+      "execution_slice_id": "AUTH-C03:LOCAL_PREP",
+      "transition": "EVIDENCE",
+      "reported_at": "2026-11-05T02:09:14.024514+00:00",
+      "scope_kind": "SLICE_ONLY",
+      "child_id": "/root/auth_distinct_p1_e2e_20261105",
+      "summary": "ActualAuth read/execute/recover Adapter+draft consumes exactRoot1Canonical leaf;38Mocktests/scopedTS/lintPASS, no Runtime/SQL/Hosted/Native/device activation. Parentreviewpending;C04Primaryunchanged.",
+      "evidence_sha256": "89b51bd2f6a420b12567413a5995141b35e41409b7ba40d6b4c2f025f2a13192"
+    }
+  ],
+  "parent_review": {
+    "candidate": "a2ba2bec07b74602664b9010e87aea609802242c",
+    "verdict": "NO_BLOCKER_FOR_LOCAL_AUTH_CONSUMER_SOURCE_ONLY",
+    "testsRerun": false,
+    "scope": "SOURCE_ONLY",
+    "handoff": "docs/ops/auth-c03-self-nickname-20261105/SOURCE_HANDOFF.json"
+  }
+}
