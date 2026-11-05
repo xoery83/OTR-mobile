@@ -20,5 +20,17 @@
     "path": "docs/ops/auth-c03-self-nickname-20261105/PARENT_REVIEW.json",
     "verdict": "NO_BLOCKER_FOR_LOCAL_AUTH_CONSUMER_SOURCE_ONLY",
     "candidate": "a2ba2bec07b74602664b9010e87aea609802242c"
+  },
+  "httpSlice": {
+    "status": "22_DIRECT_TESTS_PASS_STATIC_NO_BLOCKER_DECODER_ENCODER_ONLY",
+    "files": [
+      "backend/src/selfTripNicknameHttp.ts",
+      "backend/src/selfTripNicknameHttp.test.ts"
+    ],
+    "evidence": "docs/ops/auth-c03-self-nickname-20261105/HTTP_LOCAL_PREPARATION.json",
+    "singleGap": "FixedCoretypedport signature/return/errors pending, no dispatch/no mount",
+    "canonicalMain": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+    "Auth4leafSourceIntegration": "WAITING_ROOT1_STAGE2_FINAL_RETURN; do not overwritemain",
+    "next": "Resume sameHTTPslice upon fixedCorepacket delivery; actualtrustedJWTverification and badproducer503 mapping required; no extra work invented"
   }
 }

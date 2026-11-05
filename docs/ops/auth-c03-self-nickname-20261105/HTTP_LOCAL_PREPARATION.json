@@ -1,0 +1,42 @@
+{
+  "requestId": "AUTH-C03-TRIP-NICKNAME-OWNING-PORT-20261105-01",
+  "primary": "AUTH-C04_UNCHANGED",
+  "childId": "/root/auth_distinct_p1_e2e_20261105",
+  "status": "STRICT_HTTP_PREPARATION_PASS_WAITING_EXACT_CORE_PORT_ABI",
+  "sourceHashes": {
+    "backend/src/selfTripNicknameHttp.ts": "07a411e301128081b397d1fe04c496aaf2f0daf15afa7b1edd882d540da298a5",
+    "backend/src/selfTripNicknameHttp.test.ts": "8039c8905292f8d9aa5eda3ab9102ea0e6fe32b28b0f969d1a49f05aa3cae369"
+  },
+  "functions": [
+    "isSelfTripNicknamePath",
+    "decodeSelfTripNicknameRequest",
+    "encodeSelfTripNicknameResponse"
+  ],
+  "localBehavior": "Exact3routes, methods/noquery/normalAccount, boundedbody/cancellation, path+command+digest/IdempotencyKey binding, recoverystrictdigestbody; Canonicalstrict response/receipt binding. No Coredispatch/SQL/wire/route mount.",
+  "trustBoundary": "Decoder expects existingtrusted normalJWTverifier result, Bearerpresence is only a syntaxcheck not authentication. Futurehandler must actually invoke trustedverifier. Contextstructure is not linkedselfauthority; Coreport must authorize. Encoderinvalidproducerresponse must be serverunavailable not client400.",
+  "canonicalDependency": {
+    "main": "8907fb7b3f8ff289eacfabec8e5159728fc67982",
+    "file": "src/domain/trip/tripPersonSelfNickname.ts",
+    "sha256": "ac707ecf57dc67401d7d0ee36a90c1c2c8b355ea2f65211e5bd84da85a41e0fb",
+    "ownership": "Root1 uniqueWriter, unchanged"
+  },
+  "validation": {
+    "directTests": "22PASS backend/src/selfTripNicknameHttp.test.ts",
+    "scopedTypecheck": "PASS",
+    "scopedEslint": "PASS",
+    "oldSuitesRerun": false
+  },
+  "singleGap": "Core backend/src/tripPersonSelfNicknamePg.ts exactfixed readSelfContext/execute/recover signature/return/error packet not yet delivered. No args/PG/Gateway guessed; complete sameHTTPslice once naturally delivered.",
+  "next": "Consume exactfixedtypedport, add defaultclosed unmounted normalJWTboundary+Mockport checks, then fixedfullcandidate/parentreview. No additionalframework/BackendSQL/queue/UI scope.",
+  "integration": "UNMOUNTED_NO_STARTUP_NO_RUNTIME",
+  "actions": {
+    "liveHTTP": 0,
+    "SessionOrCredentials": 0,
+    "SQL": 0,
+    "device": 0,
+    "RootSharedFiles": 0,
+    "main": 0
+  },
+  "storage": "SMALL_AUTH_ONLY_SOURCE_CANDIDATE_NO_DISPATCH_NO_MOUNT",
+  "parentStaticReview": "STATIC_NO_BLOCKER_DECODER_ENCODER_ONLY; parent read source, not fullhandlerreview, tests notrerun"
+}
