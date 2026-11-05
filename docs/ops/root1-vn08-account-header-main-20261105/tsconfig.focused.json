@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "../../../src/data/repositories/manualPlanRepository.test.ts",
+    "../../../src/data/repositories/manualPlanRepository.ts",
+    "../../../src/features/day-feed/P1PlanEditor.test.ts",
+    "../../../src/features/day-feed/P1PlanEditor.tsx",
+    "../../../src/features/day-feed/dayHeaderDestinationRead.test.ts",
+    "../../../src/features/day-feed/dayHeaderDestinationRead.ts"
+  ],
+  "exclude": [
+    "../../../node_modules",
+    "../../../mcp"
+  ]
+}

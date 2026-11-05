@@ -788,7 +788,7 @@ export function createManualItemRepository(
             );
       if (
         placeDraft &&
-        (family !== "P3" ||
+        (!["P1", "P3"].includes(family) ||
           placeDraft.binding.tripId !== state.context.tripId ||
           placeDraft.binding.itemId !== draft.itemId ||
           placeDraft.binding.accountGeneration !== state.context.generation ||

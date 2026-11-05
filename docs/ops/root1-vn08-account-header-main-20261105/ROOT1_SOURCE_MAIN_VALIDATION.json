@@ -1,0 +1,60 @@
+{
+  "status": "SOURCE_ASSEMBLY_PASS_PARTIAL_ACCOUNT_ONLY",
+  "baseMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "candidate": "256f90d66a568b0d3ce3b97399881e07910bc3aa",
+  "independentReview": "e02c5a955a428d5a80fbeae0a8a86aadad81d6f8",
+  "exactSixLeaves": {
+    "src/data/repositories/manualPlanRepository.test.ts": {
+      "preimageSha256": "99b5f2480c2d9e3d0cdb3d1bc74e4bb15ca3cec6e7d0b480bf48774958b6cd2f",
+      "candidateSha256": "dd17c26d89b7da894a96e488c234401a4f3bd45f71b047ef05d461fb2ce196a3",
+      "candidateBlob": "81bbf12cf4c4fdfa97da6c1578dff94b750267a3"
+    },
+    "src/data/repositories/manualPlanRepository.ts": {
+      "preimageSha256": "4b7f32c908a8c0fe4af240bbcec6176269821b91ffe7cad695f39f4b72a26827",
+      "candidateSha256": "a9c889ff85eb31c0007c80c3625779715926f1ccee1c493b143bbae3b6f82777",
+      "candidateBlob": "91ee9412080a95f0a537aecdd6ac26e3e18b3527"
+    },
+    "src/features/day-feed/P1PlanEditor.test.ts": {
+      "preimageSha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795",
+      "candidateSha256": "1df15ac3050bab66f2bcb8bef66bd22c446ced887e020eddfddb3120b2378e39",
+      "candidateBlob": "71312aff2399d2fc4ec72f5bdd4324e9d59b5b98"
+    },
+    "src/features/day-feed/P1PlanEditor.tsx": {
+      "preimageSha256": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8",
+      "candidateSha256": "a5435f11cd426929ae18b18f73d3acd5032aa5f8eaf62889d172d2cf1b362939",
+      "candidateBlob": "365b209fc9378f4821980e49f06513c2ab925346"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.test.ts": {
+      "preimageSha256": "49db2c5b0176177d0e8a4cd5f4d92cbc53621d1e0ae93e838f86d9aa98ab4973",
+      "candidateSha256": "a942ef18f8ef3ba31f6d162134c77bbdc18c02dc42cec52ac263e42fdd286191",
+      "candidateBlob": "c08834f5e480c2e056e21f72b7801e7f1e77e8ab"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.ts": {
+      "preimageSha256": "174ad992a2cbd74ed78075ed268dd78e8cfd929d16c8db7b0f5b88fced90fc75",
+      "candidateSha256": "fb871849ad1861f07e662253ebb92be439ad30c6d5d5f91ea129d7858cbae2f2",
+      "candidateBlob": "f7c7316e54d98854393c7d6b1e3c28ef54cdfa2f"
+    }
+  },
+  "checks": {
+    "focusedVitest": "9 PASS / 110 skipped / 3 files",
+    "focusedTypes": "PASS; six roots and transitive dependencies only; no full-repo typecheck claim",
+    "eslintSixLeaves": "PASS",
+    "uiGuard": "PASS 168 representative files / 473 legacy occurrences",
+    "diffCheck": "PASS"
+  },
+  "reusedEvidence": "Author 178 and independent 16 targeted; candidate differs from exact main base only in six reviewed leaves; no repeat full suite. Counts are not summed.",
+  "scope": "PARTIAL_ACCOUNT_ONLY; VN08-03 caption Source; Header factual fallback Source only",
+  "notQualified": [
+    "Guest P1 Save/localgeography/Header not proved; VN08-01 OPEN",
+    "VN08-02 excluded",
+    "Owner VN08/device acceptance not complete"
+  ],
+  "actions": {
+    "Hosted": 0,
+    "SQL": 0,
+    "Provider": 0,
+    "Device": 0,
+    "CoreContract": 0
+  },
+  "coreExistingPlaceFamilies": "tripCoreV2Mutation.ts:877-880 already P1/P3/P6; unchanged"
+}

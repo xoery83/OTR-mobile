@@ -1,0 +1,92 @@
+{
+  "requestId": "VISION-VN08-OWNER-R1-20261105-001",
+  "issues": [
+    "V-N08-01",
+    "V-N08-03"
+  ],
+  "candidateSha": "256f90d66a568b0d3ce3b97399881e07910bc3aa",
+  "productCommit": "1c79f214f732f215aa9a8d2c4aa43cda486d1930",
+  "baseMain": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "worktree": "/Users/xoery/.codex/worktrees/native-universal-integration/otr-mobile-canonical/native-vn08-header-destination-20261105",
+  "status": "LOCAL_FORM_SQLITE_READER_PASS / DEVICE_NOT_RUN / REVIEW_PENDING",
+  "actualFailures": [
+    "P1 SELECTED callback kept address text and transient zone only; Save omitted the existing Apple selection argument",
+    "Native manualPlanRepository explicitly limited that argument to P3; real P1 test threw MANUAL_PLACE_DRAFT_BINDING",
+    "Header resolver supported Stay only and returned unresolved for reviewed group P1 place facts",
+    "TimeField used left-aligned meta style for both unchanged timezone-reference captions"
+  ],
+  "minimalFix": [
+    "P1 retains only explicitly selected Apple structured candidate through existing selection draft helper; manual address input invalidates selection and input revision",
+    "First Save freezes original fields and matching place draft; same opaque Item/draft/attempt preserved on retry",
+    "Native selection adapter permits exactly P1/P3; all Trip/Item/generation/address binding and original Core/ACL/receipt remain",
+    "P1 city fallback only after no eligible Stay; requires reviewed accepted locality/region+country and matching input revision, GROUP and WHOLE_GROUP, current Trip, eligible status and explicit civil span; unique area only",
+    "Both Start/End timezone reference captions centered; no zone/date/instant/wording changes"
+  ],
+  "exactLeaves": {
+    "src/data/repositories/manualPlanRepository.test.ts": {
+      "preimageSha256": "99b5f2480c2d9e3d0cdb3d1bc74e4bb15ca3cec6e7d0b480bf48774958b6cd2f",
+      "candidateSha256": "dd17c26d89b7da894a96e488c234401a4f3bd45f71b047ef05d461fb2ce196a3",
+      "candidateBlob": "81bbf12cf4c4fdfa97da6c1578dff94b750267a3"
+    },
+    "src/data/repositories/manualPlanRepository.ts": {
+      "preimageSha256": "4b7f32c908a8c0fe4af240bbcec6176269821b91ffe7cad695f39f4b72a26827",
+      "candidateSha256": "a9c889ff85eb31c0007c80c3625779715926f1ccee1c493b143bbae3b6f82777",
+      "candidateBlob": "91ee9412080a95f0a537aecdd6ac26e3e18b3527"
+    },
+    "src/features/day-feed/P1PlanEditor.test.ts": {
+      "preimageSha256": "9b1477a9a91ac8e8918ef3dd7ffeb1f5a24ca295d632ffc1f5e223ae9996f795",
+      "candidateSha256": "1df15ac3050bab66f2bcb8bef66bd22c446ced887e020eddfddb3120b2378e39",
+      "candidateBlob": "71312aff2399d2fc4ec72f5bdd4324e9d59b5b98"
+    },
+    "src/features/day-feed/P1PlanEditor.tsx": {
+      "preimageSha256": "70ebffd41813ca7ff80c35838500f99c6857df099a721d53a97ef932e82094a8",
+      "candidateSha256": "a5435f11cd426929ae18b18f73d3acd5032aa5f8eaf62889d172d2cf1b362939",
+      "candidateBlob": "365b209fc9378f4821980e49f06513c2ab925346"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.test.ts": {
+      "preimageSha256": "49db2c5b0176177d0e8a4cd5f4d92cbc53621d1e0ae93e838f86d9aa98ab4973",
+      "candidateSha256": "a942ef18f8ef3ba31f6d162134c77bbdc18c02dc42cec52ac263e42fdd286191",
+      "candidateBlob": "c08834f5e480c2e056e21f72b7801e7f1e77e8ab"
+    },
+    "src/features/day-feed/dayHeaderDestinationRead.ts": {
+      "preimageSha256": "174ad992a2cbd74ed78075ed268dd78e8cfd929d16c8db7b0f5b88fced90fc75",
+      "candidateSha256": "fb871849ad1861f07e662253ebb92be439ad30c6d5d5f91ea129d7858cbae2f2",
+      "candidateBlob": "f7c7316e54d98854393c7d6b1e3c28ef54cdfa2f"
+    }
+  },
+  "checks": {
+    "redHeader": "2 FAIL /12PASS",
+    "redEditor": "3FAIL /1PASS /41skipped",
+    "redRealSQLite": "MANUAL_PLACE_DRAFT_BINDING at P3-only Native adapter guard",
+    "productRegression": "5 suites /178PASS before final test-only extension: P1Editor, destination resolver, header presentation, original Manual Plan and Stay Repositories",
+    "finalLegacyBoundary": "2 suites /2selectedPASS /103skipped, one extended existing real SQLite case plus one new UI caller case; do not add overlap to178",
+    "types": "Only unchanged browser/auth-consent TS7016; no changed-root diagnostics",
+    "scopedLint": "0 errors /0 warnings; final test-only extension scoped lint also0",
+    "uiGuard": "PASS168",
+    "diffCheck": "PASS"
+  },
+  "realSQLiteEvidence": [
+    "Existing P1 explicit reviewed Save creates same Item ID/PENDING, original Queue/Core and Reader retain accepted Auckland fields",
+    "Original request replay returns same operation result",
+    "Same structured address P3 supplies next-day Stay while P1 supplies only its explicit day",
+    "Process DB close/reopen preserves original Item/fields and reader-derived header",
+    "Old plain-address P1 is initially unresolved; explicit same-address Apple reselect plus Edit saves new geography under same ID; reopened Header then Auckland",
+    "Four wrong Trip/Item/generation/address bindings rejected with unchanged queue count"
+  ],
+  "limits": [
+    "Existing P1 with trusted accepted area is immediately eligible for resolver; historic text-only P1 needs explicit reselect and Save, no guessed/backfilled city",
+    "In-process Guest selection is not added to Guest inventory/adoption snapshots; restored text-only draft has no fabricated geography",
+    "No device, D473/container/Session, Hosted, Provider, paid geocoder, Google or Cloud execution",
+    "No Core authority/Schema/command/Native ABI change; Native-input diff empty outside these six TypeScript leaves",
+    "Vision targeted precheck and Owner visual acceptance pending"
+  ],
+  "logSha256": {
+    "HEADER_RED.log": "d7497c6638f99b111fa89303a0cd14847db72d57c6288aeec6adf37d3a271b6e",
+    "EDITOR_RED.log": "1f6a530f327ce039adff2b696990aee9b09f98c95c5fd35e6443b35cc2ce2a12",
+    "SQLITE_RED.log": "24b1818729e3e860f24c5581a77342bb9b0fe890957f9d14ca3d50c658b93ce1",
+    "GREEN_178.log": "40cf61ecdc930f9be14e3f50884d17b44a76bf09a19ae788459ad6005d057c82",
+    "LEGACY_RECONFIRM.log": "c67be6b920f601d3ab0288b705bec6b1baa3b5cf6067b791388a5bd0d323a684",
+    "UI_GUARD.log": "1d69f43a5da418d1f82b2321a80cea6ab26be54f1e055f397443ad15c188b74e",
+    "LINT.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

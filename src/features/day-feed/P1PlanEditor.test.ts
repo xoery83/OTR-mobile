@@ -127,7 +127,10 @@ vi.mock("@/components/SheetHeader", () => ({
   },
 }));
 vi.mock("@/ui/controls", () => ({
-  UiText: (p: any) => createElement("span", null, p.children),
+  UiText: (p: any) => {
+    state.nodes.push({ ...p, textNode: true });
+    return createElement("span", null, p.children);
+  },
   UiSection: (p: any) => createElement("section", null, p.title, p.children),
   UiButton: (p: any) => {
     state.nodes.push(p);
@@ -157,7 +160,10 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}), useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({
+  useUiTheme: () => ({}),
+  useThemedStyles: (make: any) => make({}),
+}));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -1096,3 +1102,121 @@ it.each(["manual", "clear", "account", "trip"])(
     ).not.toContain("tripCreate.placeTimeZoneHint");
   },
 );
+
+const reviewedAppleResult = () => ({
+  ...placeResult(),
+  place: {
+    ...placeResult().place,
+    sessionId: "00000000-0000-4000-8000-000000000044",
+    address: "181 Westhaven Dr, Westhaven, Auckland 1011, New Zealand",
+    addressComponents: {
+      locality: "Auckland",
+      administrativeArea: "Auckland",
+      country: "New Zealand",
+      countryCode: "NZ",
+    },
+    point: { latitude: -36.836, longitude: 174.747 },
+  },
+});
+it("freezes the selected Apple geography with the original P1 fields for same-ID Save and retry", async () => {
+  const { p, repo } = await withPlace();
+  repo.save.mockRejectedValueOnce(Error("MANUAL_PLAN_UNKNOWN"));
+  const sheet = await search(p);
+  sheet.onConfirm(reviewedAppleResult());
+  render(p);
+  const save = node("ui.save").onPress;
+  save();
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  expect(repo.save.mock.calls[0]).toHaveLength(3);
+  const first = (repo.save.mock.calls as unknown as unknown[][])[0];
+  expect(first[2]).toMatchObject({
+    intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+    draft: {
+      binding: {
+        tripId: p.tripId,
+        itemId: "00000000-0000-4000-8000-000000000011",
+        location: reviewedAppleResult().place.address,
+        inputRevision: 1,
+      },
+      addressComponents: { locality: "Auckland" },
+    },
+  });
+  node("tripCreate.planLocation").onChangeText("Queued edit must be ignored");
+  save();
+  await new Promise((resolve) => setImmediate(resolve));
+  const retry = (repo.save.mock.calls as unknown as unknown[][])[1];
+  expect(retry[0]).toBe(first[0]);
+  expect(retry[1]).toBe(first[1]);
+  expect((retry[2] as any).draft).toBe((first[2] as any).draft);
+});
+it("drops selected geography after a manual address edit and keeps the existing two-argument Save", async () => {
+  const { p, repo } = await withPlace();
+  const sheet = await search(p);
+  sheet.onConfirm(reviewedAppleResult());
+  render(p);
+  node("tripCreate.planLocation").onChangeText("181 Westhaven Dr, Auckland (manual)");
+  render(p);
+  node("ui.save").onPress();
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(repo.save.mock.calls[0]).toHaveLength(2);
+});
+it.each(["tripCreate.startTime", "tripCreate.endTime"])(
+  "centers the unchanged transient MapKit reference in %s picker",
+  async (label) => {
+    const { p } = await withPlace();
+    const sheet = await search(p);
+    const result = reviewedAppleResult();
+    sheet.onConfirm({
+      ...result,
+      place: { ...result.place, timeZoneIdentifier: "Pacific/Auckland" },
+    });
+    render(p);
+    node(label).onPress();
+    render(p);
+    const caption = state.nodes.find(
+      (entry) => entry.textNode && entry.children === "tripCreate.placeTimeZoneHint",
+    );
+    expect([caption?.style].flat()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ textAlign: "center" })]),
+    );
+  },
+);
+
+it("allows an old plain-address P1 Edit to confirm the same Apple address and Save new geography", async () => {
+  const result = reviewedAppleResult(),
+    value = {
+      ...fields(),
+      title: "Legacy Plan",
+      startDate: "2026-11-05",
+      endDate: "2026-11-05",
+      location: result.place.address,
+    };
+  const draft = {
+    mode: "EDIT",
+    itemId: "00000000-0000-4000-8000-000000000011",
+    fields: value,
+    participantOptions: [],
+  };
+  const repo = {
+    save: vi.fn(async () => ({ localStatus: "PENDING", itemId: draft.itemId })),
+  };
+  const p = { ...props(), itemId: draft.itemId, opened: { repository: repo, draft } };
+  await open(p, repo);
+  const sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onConfirm(result);
+  render(p);
+  expect(node("ui.save").disabled).toBe(false);
+  node("ui.save").onPress();
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    value,
+    expect.objectContaining({
+      intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+      draft: expect.objectContaining({
+        addressComponents: expect.objectContaining({ locality: "Auckland" }),
+      }),
+    }),
+  );
+});

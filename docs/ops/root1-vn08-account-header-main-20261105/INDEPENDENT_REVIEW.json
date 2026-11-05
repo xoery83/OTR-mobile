@@ -1,0 +1,47 @@
+{
+  "status": "NO_BLOCKER_LOCAL_NATIVE_ADAPTER_ONLY",
+  "requestId": "VISION-VN08-OWNER-R1-20261105-001",
+  "issues": [
+    "V-N08-01",
+    "V-N08-03"
+  ],
+  "candidate": "256f90d66a568b0d3ce3b97399881e07910bc3aa",
+  "product": "1c79f214f732f215aa9a8d2c4aa43cda486d1930",
+  "packet": "e7b749ff650f20a0c192c45f360a84f3e286f319",
+  "base": "ce054e1607b00ee30e9ec7599cced1c4e2c3dc2f",
+  "findings": [],
+  "referenceReview": [
+    "ReadOwnerV-N08feedback14683request andbothPNG; scope01P1missingcity/03captiononly; Tripdate02separate",
+    "Readfrozen20261027DayHeaderResolverDelta privacy/priority/fallback; noaddressstringcityparsing"
+  ],
+  "sourceChecks": [
+    "Sixcandidate/preimage/blob identitiesexactpacket; noCore/Nativeinputchanges",
+    "P1onexplicitAppleSELECTED storesexistingimmutableplaceDraft afterchange() inputrevision bump; manualinput clears it; currentbindingTrip/Item/generation/revision/address checked",
+    "FirstSave freezesmatchingplaceDraft andfields; originalopaqueRepoDraft/sameItem/sameattemptthirdparam retainedonretry",
+    "NativeRepo fence allows exactlyP1/P3 notP6 orotherfamily; existingacceptintent/validator/CoreACL/receipt/provenance unchanged",
+    "Same-addressApple reselect leavesFormSaveenabled andwritesstructuredmetadata underexistingID; text-onlyhistoricP1 remainsunresolved until explicitSave",
+    "Headerfallback onlyafterzeroqualifiedStays; GROUP/WHOLE_GROUP/currentTrip/visibleactiveP1/validexplicitcivilspan/uniqueacceptedarea required",
+    "Country+locality/region identity andreviewedspatialrefs/inputrevisionrequired; conflictingunqualifiedStay notoverridden; no nearbydayextrapolation orprivate/selectedgroup leak",
+    "StartandEndcaption onlytheme/styletextAligncenter/padding; samewording/zonehint/timeauthority untouched"
+  ],
+  "independentValidation": {
+    "tests": "3suites16PASS103skip;1.22s;2026-11-05 12:48:36local",
+    "paths": [
+      "ActualSQLiteP1reviewedselection\u2192sameID/PENDING/Queue/ReaderHeader/DBclose-reopen/replay",
+      "Oldtextaddresssame-stringreselect+metadataSave/coldread",
+      "FourwrongTrip/Item/generation/address bindingsqueueunchanged",
+      "Selectionfrozenattempt/manualeditclear andCaptionbothpickers",
+      "P1Headerowncivilspan/Staypriority/conflict/private/staleprovenance filtering"
+    ],
+    "lint": "3productleavesPASS",
+    "notRepeated": "Author178/finaloverlap notadded; nofulltscPASS;existingbrowserTS7016 remains"
+  },
+  "limits": [
+    "Guestinventory/Adoptionsnapshot hasnoacceptedcitybackfill; restoredtextonlymustnotgainfabricatedmetadata",
+    "Historicaltext-onlyfixturesnotautomaticallyrepaired; explicitreselectandSave required",
+    "NoactualAppleProvider/SDK/network/device/Cloud/Ownervisualverification",
+    "Root1Sourceintegration andOwnerindependentretest pending",
+    "V-N08-02Tripdatecache issue notcovered; noweGlobalHeaderformat redesign",
+    "NoCoreauthority/Schema/ABI/Queue/Provider changes; noproducedSourceedit"
+  ]
+}

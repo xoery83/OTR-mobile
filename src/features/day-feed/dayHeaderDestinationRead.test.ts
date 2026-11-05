@@ -149,3 +149,58 @@ it("overlays by stable Item ID, keeps viewer scope and has no cross-Account deri
   expect(resolveDayHeaderDestination(result, "2026-10-28").label).toBe("Auckland");
   expect(resolveDayHeaderDestination(read([]), "2026-10-28")).toEqual(none);
 });
+
+const plan = (id = "plan", city = "Auckland", date = "2026-11-05") => ({
+  ...stay(id, date, date, city, city),
+  family: "P1",
+  title: "Harbour Walk QA",
+});
+it("uses reviewed P1 locality for its own day like P3 without reading street text", () => {
+  expect(resolveDayHeaderDestination(read([plan()]), "2026-11-05")).toEqual({
+    kind: "single",
+    source: "activity",
+    label: "Auckland",
+  });
+  expect(resolveDayHeaderDestination(read([plan()]), "2026-11-06")).toEqual(none);
+});
+it("keeps a qualified Stay base ahead of P1 and refuses conflicting or private activity cities", () => {
+  expect(
+    resolveDayHeaderDestination(
+      read([stay("base", "2026-11-05", "2026-11-07"), plan()]),
+      "2026-11-05",
+    ),
+  ).toEqual({ kind: "single", source: "stay", label: "Nelson" });
+  expect(
+    resolveDayHeaderDestination(
+      read([plan(), plan("other", "Wellington")]),
+      "2026-11-05",
+    ),
+  ).toEqual(none);
+  for (const change of [
+    { visibility: "PRIVATE" },
+    { visibility: "SELECTED_PERSONS" },
+    { participation: { mode: "SELF" } },
+    { participation: { mode: "SELECTED_MEMBERS" } },
+    { hidden: true },
+    { status: "cancelled" },
+    { status: "skipped" },
+    { tripId: "foreign" },
+    {
+      place: {
+        authoredLabel: "181 Westhaven Dr, Auckland",
+        acceptedAddress: "181 Westhaven Dr, Auckland",
+      },
+    },
+    { place: { ...plan().place, locationInputRevision: 2 } },
+  ])
+    expect(
+      resolveDayHeaderDestination(read([{ ...plan(), ...change }]), "2026-11-05"),
+    ).toEqual(none);
+});
+it("resolves only the explicit P1 civil span, never an inferred nearby day or invalid end", () => {
+  const item = plan();
+  item.schedule.end.localDate = "2026-11-07";
+  expect(resolveDayHeaderDestination(read([item]), "2026-11-06").label).toBe("Auckland");
+  item.schedule.end.localDate = "2026-11-04";
+  expect(resolveDayHeaderDestination(read([item]), "2026-11-05")).toEqual(none);
+});

@@ -86,9 +86,40 @@ export function resolveDayHeaderDestination(
     if (!start || !end || start > date || end < date || end < start) return [];
     return [{ start, end, area: acceptedArea(item) }];
   });
-  // No fabricated explicit-Day, transport-Journey order or confirmed-activity port.
-  if (!stays.length || stays.some((stay) => !stay.area))
-    return unresolvedDayHeaderDestination;
+  if (!stays.length) {
+    const activities = read.items.flatMap((item) => {
+      if (
+        item.tripId !== read.tripId ||
+        item.family !== "P1" ||
+        item.hidden ||
+        ["cancelled", "skipped"].includes(String(item.status)) ||
+        item.visibility !== "GROUP" ||
+        item.participation.mode !== "WHOLE_GROUP"
+      )
+        return [];
+      const schedule = item.schedule as {
+        start?: { localDate?: string };
+        end?: { localDate?: string };
+      };
+      const start = schedule.start?.localDate,
+        end = schedule.end?.localDate ?? start;
+      try {
+        validateCalendarDate(start!);
+        validateCalendarDate(end!);
+      } catch {
+        return [];
+      }
+      if (!start || !end || start > date || end < date || end < start) return [];
+      const area = acceptedArea(item);
+      return area ? [area] : [];
+    });
+    const areas = new Map(activities.map((area) => [area.identity, area]));
+    return areas.size === 1
+      ? { kind: "single", source: "activity", label: areas.values().next().value!.label }
+      : unresolvedDayHeaderDestination;
+  }
+  // A conflicting/unqualified Stay cannot be displaced by a lower-priority activity.
+  if (stays.some((stay) => !stay.area)) return unresolvedDayHeaderDestination;
   const places = new Map(stays.map((stay) => [stay.area!.identity, stay.area!]));
   const single = (area: Area): DayHeaderDestination => ({
     kind: "single",

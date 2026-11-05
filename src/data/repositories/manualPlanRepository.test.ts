@@ -1587,3 +1587,150 @@ it("VN04 retries the same rebound Create after SQL rollback with original Item/O
   expect(accepted?.actor.canManageShared).toBe(false);
   writes.mockRestore();
 });
+
+it("persists reviewed P1 Apple city through original SQLite Save and Day Reader into Header across reopen", async () => {
+  const { dayHeaderDestinationRead, resolveDayHeaderDestination } =
+    await import("@/features/day-feed/dayHeaderDestinationRead");
+  const f = await fixture(false, true),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const address = "181 Westhaven Dr, Westhaven, Auckland 1011, New Zealand";
+  const input = {
+    ...values(draft.fields, "Harbour Walk QA"),
+    startDate: "2026-11-05",
+    endDate: "2026-11-05",
+    location: address,
+  };
+  const selection = (itemId: string) => ({
+    authority: "UNACCEPTED_PROVIDER_DRAFT" as const,
+    binding: {
+      tripId: f.tripId,
+      itemId,
+      location: address,
+      accountGeneration: getAccountGeneration(),
+      inputRevision: 1,
+    },
+    provider: "apple" as const,
+    selectionSessionId: randomUUID(),
+    selectionGeneration: 1,
+    addressComponents: {
+      locality: "Auckland",
+      administrativeArea: "Auckland",
+      country: "New Zealand",
+      countryCode: "NZ",
+    },
+    point: { latitude: -36.836, longitude: 174.747 },
+  });
+  const reviewed = {
+    intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const,
+    draft: selection(draft.itemId),
+  };
+  const saved = await repo.save(draft, input, reviewed);
+  const replay = await repo.save(draft, input, reviewed);
+  expect(replay).toEqual(saved);
+  expect(saved.itemId).toBe(draft.itemId);
+  const projected = (await f.read(f.tripId))!.items.find(
+    (item) => item.itemId === draft.itemId,
+  )!;
+  expect(projected.place).toMatchObject({
+    acceptedAddressLocality: "Auckland",
+    acceptedAddressCountry: "New Zealand",
+    spatialProvenanceRefs: {
+      source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
+      acceptance: "USER_CONFIRMED_SAVE",
+    },
+  });
+  const header = async (date: string) =>
+    resolveDayHeaderDestination(
+      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
+      date,
+    );
+  expect(await header("2026-11-05")).toEqual({
+    kind: "single",
+    source: "activity",
+    label: "Auckland",
+  });
+  expect((await header("2026-11-06")).kind).toBe("unresolved");
+  const stays = createManualStayRepository(
+      f.coreDatabase,
+      f.identity,
+      f.core,
+      () => "2026-10-20T00:00:00.000Z",
+    ),
+    stay = await stays.createDraft(f.tripId);
+  await stays.save(
+    stay,
+    {
+      ...stay.fields,
+      title: "Harbour Stay QA",
+      startDate: "2026-11-06",
+      endDate: "2026-11-08",
+      location: address,
+    },
+    { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1", draft: selection(stay.itemId) },
+  );
+  expect(await header("2026-11-06")).toEqual({
+    kind: "single",
+    source: "stay",
+    label: "Auckland",
+  });
+  f.reopenDatabase();
+  expect((await f.repo().read(f.tripId, draft.itemId)).fields).toMatchObject(input);
+  expect(await header("2026-11-05")).toEqual({
+    kind: "single",
+    source: "activity",
+    label: "Auckland",
+  });
+  expect(await header("2026-11-06")).toEqual({
+    kind: "single",
+    source: "stay",
+    label: "Auckland",
+  });
+  const reopenedRepo = f.repo();
+  const manual = await reopenedRepo.createDraft(f.tripId);
+  await reopenedRepo.save(manual, {
+    ...input,
+    startDate: "2026-11-09",
+    endDate: "2026-11-09",
+  });
+  expect((await header("2026-11-09")).kind).toBe("unresolved");
+  // Re-selecting the identical address is an explicit new confirmation, not text inference.
+  const legacyEdit = await reopenedRepo.read(f.tripId, manual.itemId);
+  const repaired = await reopenedRepo.save(legacyEdit, legacyEdit.fields, {
+    intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+    draft: selection(manual.itemId),
+  });
+  expect(repaired.itemId).toBe(manual.itemId);
+  expect(await header("2026-11-09")).toEqual({
+    kind: "single",
+    source: "activity",
+    label: "Auckland",
+  });
+  f.reopenDatabase();
+  expect((await f.repo().read(f.tripId, manual.itemId)).fields.location).toBe(address);
+  expect(await header("2026-11-09")).toEqual({
+    kind: "single",
+    source: "activity",
+    label: "Auckland",
+  });
+  const untouched = await reopenedRepo.createDraft(f.tripId),
+    pendingBefore = count(f.sql);
+  const originalSelection = selection(untouched.itemId);
+  for (const invalid of [
+    { tripId: randomUUID() },
+    { itemId: randomUUID() },
+    { accountGeneration: getAccountGeneration() + 1 },
+    { location: "Different location" },
+  ]) {
+    await expect(
+      reopenedRepo.save(untouched, input, {
+        intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+        draft: {
+          ...originalSelection,
+          binding: { ...originalSelection.binding, ...invalid },
+        },
+      }),
+    ).rejects.toThrow("MANUAL_PLACE_DRAFT_BINDING");
+    expect(count(f.sql)).toBe(pendingBefore);
+  }
+});

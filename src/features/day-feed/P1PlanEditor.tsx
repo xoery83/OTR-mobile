@@ -1,4 +1,9 @@
 import {
+  p3PlaceSelectionDraft,
+  currentP3PlaceSelection,
+  type P3PlaceSelectionDraft,
+} from "./p3PlaceSelectionDraft";
+import {
   PlaceSearchSheet,
   type PlaceSearchResult,
 } from "@/features/place-search/PlaceSearchSheet";
@@ -128,7 +133,7 @@ function TimeField({
                 }}
               />
               {open && zoneHint ? (
-                <Text style={styles.meta}>
+                <Text style={[styles.meta, styles.timeZoneHint]}>
                   {t("tripCreate.placeTimeZoneHint", { zone: zoneHint })}
                 </Text>
               ) : null}
@@ -206,6 +211,9 @@ export function P1PlanEditor({
         : null,
   );
   const fieldsRef = useRef(fields);
+  const selectedPlaceDraft = useRef<P3PlaceSelectionDraft | null>(null);
+  const locationInputRevision = useRef(0);
+  const firstPlaceAttemptRef = useRef<P3PlaceSelectionDraft | null>(null);
   const [placeZoneHint, setPlaceZoneHint] = useState<{
     draft: ManualPlanDraft;
     tripId: string;
@@ -359,7 +367,11 @@ export function P1PlanEditor({
       !fieldsRef.current
     )
       return;
-    if (Object.prototype.hasOwnProperty.call(next, "location")) setPlaceZoneHint(null);
+    if (Object.prototype.hasOwnProperty.call(next, "location")) {
+      setPlaceZoneHint(null);
+      locationInputRevision.current++;
+      selectedPlaceDraft.current = null;
+    }
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -437,6 +449,14 @@ export function P1PlanEditor({
       if (!result.place.address?.trim() || result.place.address.length > 500) return;
       closePlaceSearch();
       change({ location: result.place.address });
+      if (source)
+        selectedPlaceDraft.current = p3PlaceSelectionDraft(result.place, {
+          tripId,
+          itemId: source.draft.itemId,
+          accountGeneration: generation,
+          inputRevision: locationInputRevision.current,
+          location: fieldsRef.current?.location ?? null,
+        });
       const zone =
         result.place.provider === "apple" && result.place.kind === "mapItem"
           ? readApplePlaceTimeZoneHint(result.place.timeZoneIdentifier)
@@ -484,6 +504,14 @@ export function P1PlanEditor({
       !current()
     )
       return;
+    if (firstAttemptRef.current === null)
+      firstPlaceAttemptRef.current = currentP3PlaceSelection(selectedPlaceDraft.current, {
+        tripId,
+        itemId: source.draft.itemId,
+        accountGeneration: generation,
+        inputRevision: locationInputRevision.current,
+        location: fieldsRef.current.location,
+      });
     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
     firstAttemptRef.current = attempt;
     busyRef.current = true;
@@ -492,7 +520,13 @@ export function P1PlanEditor({
     setFrozen(true);
     setStatus("READY");
     try {
-      const result = await source.repository.save(source.draft, attempt);
+      const placeAttempt = firstPlaceAttemptRef.current;
+      const result = placeAttempt
+        ? await source.repository.save(source.draft, attempt, {
+            intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+            draft: placeAttempt,
+          })
+        : await source.repository.save(source.draft, attempt);
       if (current()) onSaved(result.itemId);
     } catch (error) {
       if (current()) {
@@ -773,6 +807,7 @@ const createStyles = (colors: UiColors) =>
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
     meta: { ...visual.type.meta, color: colors.textSecondary },
+    timeZoneHint: { textAlign: "center", paddingHorizontal: visual.space.page },
     form: { gap: visual.space.section },
     field: { gap: visual.space.heading },
     caption: { ...visual.type.action, color: colors.textPrimary },
