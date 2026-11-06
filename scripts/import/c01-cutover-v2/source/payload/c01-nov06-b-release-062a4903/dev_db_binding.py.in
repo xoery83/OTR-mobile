@@ -1,0 +1,93 @@
+"""Exact linked PG transport boundary for the closed C01 driver."""
+import hashlib
+import json
+import re
+import time
+
+PROJECT='@DEV_PROJECT_REF@'
+
+DRAIN_SQL="""BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+SET LOCAL statement_timeout='5s';
+SET LOCAL lock_timeout='1s';
+SET LOCAL transaction_timeout='8s';
+SELECT jsonb_build_object(
+ 'sessionUser',session_user,'currentUser',current_user,
+ 'pgVersion',current_setting('server_version_num')::integer,
+ 'clock',extract(epoch FROM clock_timestamp()),
+ 'fullVisibility',pg_has_role(current_user,'pg_read_all_stats','USAGE'),
+ 'otherOpenClientTransactions',(SELECT count(*) FROM pg_stat_activity
+ WHERE datname=current_database() AND backend_type='client backend' AND pid<>pg_backend_pid()
+ AND (state IS NULL OR xact_start IS NOT NULL)),
+ 'writerAdvisoryEntries',(SELECT count(*) FROM pg_locks WHERE locktype='advisory'
+ AND database=(SELECT oid FROM pg_database WHERE datname=current_database())
+ AND classid=714024 AND objid=2 AND objsubid=2),
+ 'sourceScopes',(SELECT count(*) FROM public.trip_source_universal_scope),
+ 'providerScopes',(SELECT count(*) FROM public.universal_import_provider_scope)
+) AS result;
+ROLLBACK;
+"""
+
+class Refused(ValueError):
+    pass
+
+def need(condition,message):
+    if not condition:
+        raise Refused(message)
+
+def result_value(reply):
+    rows=reply['rows']
+    need(len(rows)==1 and set(rows[0])=={'result'},'EXACT_OBSERVATION_RESULT_REQUIRED')
+    value=rows[0]['result']
+    return json.loads(value) if isinstance(value,str) else value
+
+class LinkedPG:
+    def __init__(self,request,sql,dispatch,assert_stopped_lease,clock=time.time):
+        self.request=request
+        self.sql=sql
+        self.dispatch=dispatch
+        self.assert_stopped_lease=assert_stopped_lease
+        self.clock=clock
+        self.dispatched={}
+        ids=(request['executionId'],request['inverseExecutionId'])
+        hashes=(request['effectiveSQLSHA256'],request['effectiveInverseSHA256'])
+        need(request['project']==PROJECT and len(set(ids))==len(set(hashes))==2
+             and all(re.fullmatch('[a-f0-9]{32}',i) for i in ids)
+             and all(re.fullmatch('[a-f0-9]{64}',h) for h in hashes),'FIXED_PG_ENVELOPE_REQUIRED')
+        self.identities=dict(zip(hashes,ids))
+
+    def drain(self):
+        self.assert_stopped_lease()
+        r=result_value(self.sql(DRAIN_SQL))
+        need(r['sessionUser']==r['currentUser']=='postgres' and 170000<=r['pgVersion']<180000
+             and r['fullVisibility'] is True and 0<=self.clock()-float(r['clock'])<=5,
+             'PG_DRAIN_CONTEXT_UNPROVED')
+        self.assert_stopped_lease()
+        return all(r[k]==0 for k in ('otherOpenClientTransactions','writerAdvisoryEntries','sourceScopes','providerScopes'))
+
+    def send_once(self,frame):
+        digest=hashlib.sha256(frame).hexdigest()
+        key=self.identities.get(digest)
+        need(key is not None and key not in self.dispatched,'SQL_HASH_OR_ONE_SHOT_DRIFT')
+        cut=self.request['cutoff'] if key==self.request['executionId'] else self.request['D']-60
+        need(self.request['T']<=self.clock()<cut,'SQL_OUTSIDE_FIXED_CLOCK')
+        need(self.drain(),'DRAIN_UNPROVED')
+        need(self.clock()<cut,'SQL_CUTOFF_DURING_DRAIN')
+        self.dispatched[key]='UNKNOWN'
+        ack=self.dispatch(frame,key)
+        need(ack=={'disposition':'ACKNOWLEDGED','executionId':key,'effectiveSQLSHA256':digest},
+             'EXACT_MUTATION_ACK_UNPROVED')
+        self.dispatched[key]='ACKNOWLEDGED'
+
+    def terminated(self,key):
+        if self.dispatched.get(key)!='ACKNOWLEDGED':
+            return False
+        self.assert_stopped_lease()
+        tag='root2-p6-mutator-'+key
+        q=("BEGIN READ ONLY;SET LOCAL statement_timeout='5s';"
+           "SELECT jsonb_build_object('session',session_user,'principal',current_user,"
+           "'visibility',pg_has_role(current_user,'pg_read_all_stats','USAGE'),"
+           "'count',(SELECT count(*) FROM pg_stat_activity "
+           "WHERE datname=current_database() AND application_name='"+tag+"')) AS result;ROLLBACK;")
+        r=result_value(self.sql(q))
+        self.assert_stopped_lease()
+        return r=={'session':'postgres','principal':'postgres','visibility':True,'count':0}

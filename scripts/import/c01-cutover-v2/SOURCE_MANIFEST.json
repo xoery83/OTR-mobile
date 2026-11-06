@@ -1,0 +1,168 @@
+{
+  "baseMain": "0dcd08226fc415eb247c91114ca0f1969500727f",
+  "externalInputsSHA256": {
+    "payload/c01-nov06-b-closed-preimage/ACTUAL_POSTGRES.private.json": "ca11c6fce0f2e2ecd5a9127e324375c218ab476628114d4b5a207ccd02bbeabc",
+    "payload/c01-nov06-b-release-062a4903/SQL_DEFINITION_MATRIX_V4.json": "bbfbc97b0ba58220c5f3302314804dab7961cdebbe93fe20a701c4729ca49bf6"
+  },
+  "immutableAncestorSHA256": "2211486ec2e67a7fde469dc2c4904055e3da7acb58f9e2fb9dccb5262e5e3267",
+  "phasePatchSHA256": "3a26bb31743100333454e680c59a7a72f0d622eb937ff37f09abd65cd9f2c4e1",
+  "privateV2ArchiveSHA256": "43e38b99d4552325fb50c66424ef4020925e49da2e56e060989c6eaf5172b89e",
+  "sources": {
+    "source/host_install.py.in": {
+      "externalBindings": [
+        "DEV_PROJECT_REF"
+      ],
+      "restoredSHA256": "f385385dd06f29a9175dfe414af9b0de18585b6a8f817720baf4ee48fc2e2fe3",
+      "sourceSHA256": "7aa36b6ddb305c38c6a9ad3bbadfff37ed2e5d80c98931aa7f344014d0b06156"
+    },
+    "source/owning_host_probe.py.in": {
+      "externalBindings": [
+        "BASELINE_CONTAINER_ID",
+        "DEV_PROJECT_REF",
+        "TASK_STORE_PATH",
+        "V2_TARGET_IMAGE_ID"
+      ],
+      "restoredSHA256": "9a81bea3f864a5c5d32271bb3f369a6cc738832e5c850b20163f23c230855869",
+      "sourceSHA256": "7cd6d462a02af07ebb7464bbf6149862ebc25e66fb1b6b2311a296dc2c6cbef4"
+    },
+    "source/payload/c01-nov06-b-image-only-offline/controls.py.in": {
+      "externalBindings": [
+        "DEV_PUBLIC_VHOST"
+      ],
+      "restoredSHA256": "8cfd73a1f9aa8cbdfe9a815415bf6c5f6bcff1b81e12941b2e43b6b83364ca95",
+      "sourceSHA256": "29c363d23f21685ef4a866602d54cd47671f675e5036ed6f057e270803f65976"
+    },
+    "source/payload/c01-nov06-b-joined-seal/caddy_admin_cas.py": {
+      "restoredSHA256": "3cd0a18342ae3cf6fe00fa5dfba7328665be63e10b4e943598fe6111ffcfb578",
+      "sourceSHA256": "3cd0a18342ae3cf6fe00fa5dfba7328665be63e10b4e943598fe6111ffcfb578"
+    },
+    "source/payload/c01-nov06-b-joined-seal/joined_host_keep_v5.py": {
+      "restoredSHA256": "f74f1e5dfbc0dedae3ec99b4d766950e03f9d8ed02b08bb02bb8f200d71a5bb3",
+      "sourceSHA256": "f74f1e5dfbc0dedae3ec99b4d766950e03f9d8ed02b08bb02bb8f200d71a5bb3"
+    },
+    "source/payload/c01-nov06-b-joined-seal/keep_v5_choice.py": {
+      "restoredSHA256": "033d960f536810d8f6b4d897336e4a393f748d77f53dbbe9875be64773cc67f9",
+      "sourceSHA256": "033d960f536810d8f6b4d897336e4a393f748d77f53dbbe9875be64773cc67f9"
+    },
+    "source/payload/c01-nov06-b-joined-seal/keep_v5_resume.py": {
+      "restoredSHA256": "af27c094ba859d6f2867bd1be025b64d298a9d1f152d75ff5272f5737387db17",
+      "sourceSHA256": "af27c094ba859d6f2867bd1be025b64d298a9d1f152d75ff5272f5737387db17"
+    },
+    "source/payload/c01-nov06-b-joined-seal/keeper_systemd_binding.py": {
+      "restoredSHA256": "4d177243099358cfdf223c449a4f0be77b815e7084fb1d3c440eae243ea4d971",
+      "sourceSHA256": "4d177243099358cfdf223c449a4f0be77b815e7084fb1d3c440eae243ea4d971"
+    },
+    "source/payload/c01-nov06-b-joined-seal/preserve_import_routes.py": {
+      "restoredSHA256": "5939e0997cba49eb4bf9285ca1b480761ee783f613706a4d6851b197fce81f0c",
+      "sourceSHA256": "5939e0997cba49eb4bf9285ca1b480761ee783f613706a4d6851b197fce81f0c"
+    },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/cutover_read_aperture.py": {
+      "restoredSHA256": "2bad504e24f55cce8f8b3420d0b3fc7900fbe2bafe64e937ff057932655ab78f",
+      "sourceSHA256": "2bad504e24f55cce8f8b3420d0b3fc7900fbe2bafe64e937ff057932655ab78f"
+    },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/dispatcher.py.in": {
+      "externalBindings": [
+        "BASELINE_CONTAINER_ID",
+        "DEV_PROJECT_REF"
+      ],
+      "restoredSHA256": "3c877b747e6b5aaee3f5e4b1058f3655c8144fa4a722ddf55de8f6c4fb2761ac",
+      "sourceSHA256": "f17e71a7893999f890b045637164f4436331c1313684b50589082f96826037bd"
+    },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/host_adapter.py": {
+      "restoredSHA256": "9dd319d646375d2eaa15cbfa67179c8ed2e9381b7ebfb85ba366520f80e2822e",
+      "sourceSHA256": "9dd319d646375d2eaa15cbfa67179c8ed2e9381b7ebfb85ba366520f80e2822e"
+    },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/pg_readback.py.in": {
+      "externalBindings": [
+        "DEV_PROJECT_REF"
+      ],
+      "restoredSHA256": "74ba6c7736a5a323f34029b792d481b30ff31076f71e2118f54556a4f0deb8d4",
+      "sourceSHA256": "8f4c649b0c99840967578ee62248f52df680ae1dc9233b59564dc06a6936ad4a"
+    },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/seal_plan.py": {
+      "restoredSHA256": "fd7d7ba476099d74c651bbc84d87ee8cdaddd7bec49398e70fb67faefb930a63",
+      "sourceSHA256": "fd7d7ba476099d74c651bbc84d87ee8cdaddd7bec49398e70fb67faefb930a63"
+    },
+    "source/payload/c01-nov06-b-joined-seal/render_joined.py": {
+      "restoredSHA256": "10805f0a9602ce43c3df46ffc7830bc0a041f2c044f6565e3632d08e76d94e80",
+      "sourceSHA256": "10805f0a9602ce43c3df46ffc7830bc0a041f2c044f6565e3632d08e76d94e80"
+    },
+    "source/payload/c01-nov06-b-joined-seal/stage_writer.py.in": {
+      "externalBindings": [
+        "BASELINE_IMAGE_ID",
+        "V2_TARGET_IMAGE_ID"
+      ],
+      "restoredSHA256": "15eedc0110355c4ad36ca5b65dbe8e0a079edd32cd3a65ac4ef25b5b5c7d5659",
+      "sourceSHA256": "f01e3c7338c9e70ae3184830c2efc7157770caa7a872776354607765ee549f62"
+    },
+    "source/payload/c01-nov06-b-joined-seal/stage_writer_v2.py": {
+      "restoredSHA256": "f70115a5ad1ae48b72ab763443d537d52630cefbc3fe955bc74f81862248afa5",
+      "sourceSHA256": "f70115a5ad1ae48b72ab763443d537d52630cefbc3fe955bc74f81862248afa5"
+    },
+    "source/payload/c01-nov06-b-joined-seal/terminal_policy.py": {
+      "restoredSHA256": "fe502268ad5e7abbf9af2e298d195eddc7136db707280587aae2d4f89e8b67ff",
+      "sourceSHA256": "fe502268ad5e7abbf9af2e298d195eddc7136db707280587aae2d4f89e8b67ff"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/DDL_AUTHORITY_CANDIDATE_V4.json": {
+      "restoredSHA256": "da18a6ae6028fba08dda25f8e3b8eec20177bdb5900336bcf18a81a6455e3a00",
+      "sourceSHA256": "da18a6ae6028fba08dda25f8e3b8eec20177bdb5900336bcf18a81a6455e3a00"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/FORWARD_DEFINITIONS.review.sql": {
+      "restoredSHA256": "8bbc960657511dfc173bb16118d643def983fe79ac506efdfb68b4b4027b89b1",
+      "sourceSHA256": "8bbc960657511dfc173bb16118d643def983fe79ac506efdfb68b4b4027b89b1"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/closed_driver_v5.py.in": {
+      "externalBindings": [
+        "BASELINE_IMAGE_ID",
+        "LEGACY_TARGET_IMAGE_ID"
+      ],
+      "restoredSHA256": "f9b07b361b595717663cacbf2f3725133c5b2a9cd5edeafbb606f2f8fe51b687",
+      "sourceSHA256": "68c7764ea3da60f6e7b750bcebc837d3373bb95b8dacb3dc43576111b09036b8"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/dev_commit_ack.py": {
+      "restoredSHA256": "48219b20f6431ef872103301fd52c35f9d4991be7d9b829fe933678363ffd380",
+      "sourceSHA256": "48219b20f6431ef872103301fd52c35f9d4991be7d9b829fe933678363ffd380"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/dev_db_binding.py.in": {
+      "externalBindings": [
+        "DEV_PROJECT_REF"
+      ],
+      "restoredSHA256": "130082dda7d82ec01064166ad27cdd09ff442aeac2f34eac4bf108422bdcb7be",
+      "sourceSHA256": "8f623c6f4309b25fa74a18e726c120c220116727b1aac02994cf394cea0e7e28"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/dev_host_worker.py": {
+      "restoredSHA256": "b478c7d6a9fbf6db1dd57f48b19e6688d00d35df16fbc68085c771b21c5c841f",
+      "sourceSHA256": "b478c7d6a9fbf6db1dd57f48b19e6688d00d35df16fbc68085c771b21c5c841f"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/host_target_binding.py.in": {
+      "externalBindings": [
+        "BASELINE_IMAGE_ID",
+        "LEGACY_TARGET_IMAGE_ID"
+      ],
+      "restoredSHA256": "66cacf1be19be9829d6e5820b811736781fa56ac4f05eb944f2a803c2a23205f",
+      "sourceSHA256": "481cda780209591595992e1e25ec54a78c9fc7560b9b96bf2a91b27c828d3ef7"
+    },
+    "source/payload/c01-nov06-b-release-062a4903/writer_lease_binding_v5.py": {
+      "restoredSHA256": "7b6d701be738bd8452c0e1b190d304588541e939eca0004db2c0f2ba6254c320",
+      "sourceSHA256": "7b6d701be738bd8452c0e1b190d304588541e939eca0004db2c0f2ba6254c320"
+    },
+    "source/payload/core-p6-adapters-resume-v5-20261105/mutation_deadline.py": {
+      "restoredSHA256": "09537db32d7fff9db7f2fdd6c4b7fbfee865947d8c80d1574f146882a287fb72",
+      "sourceSHA256": "09537db32d7fff9db7f2fdd6c4b7fbfee865947d8c80d1574f146882a287fb72"
+    },
+    "source/payload/mcp-fresh-3586-qualification/static/c02-timers.py.in": {
+      "externalBindings": [
+        "TIMER_DEPENDENCY_CLOSE_SHA256",
+        "TIMER_DEPENDENCY_GATE_SHA256",
+        "TIMER_DEPENDENCY_WINDOW",
+        "TIMER_DEPENDENCY_WINDOW_UUID"
+      ],
+      "restoredSHA256": "3ad4967baea6bb30ded5dd8c4bd43b4e3ecc1372c8a259efc62dcf6690d015be",
+      "sourceSHA256": "3c3117653be7b8df6b37ab8ff631c9bd8da525130f35861e55dacc9974028f55"
+    },
+    "source/test_pg_fence_proof.py": {
+      "restoredSHA256": "ab4df6faae096e93379459ab1b12716d47d0fef26e838c06f26ca10e03c578c8",
+      "sourceSHA256": "ab4df6faae096e93379459ab1b12716d47d0fef26e838c06f26ca10e03c578c8"
+    }
+  }
+}

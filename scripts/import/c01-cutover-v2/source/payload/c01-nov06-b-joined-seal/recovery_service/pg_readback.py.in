@@ -1,0 +1,150 @@
+"""Bounded PostgreSQL evidence for the DEV-only C01 recovery process."""
+import hashlib
+import ipaddress
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+
+DEV_PROJECT = "@DEV_PROJECT_REF@"
+DEV_HOST = "db." + DEV_PROJECT + ".supabase.co"
+READER = "otr_c01_v5_recovery_reader"
+CREDENTIALS = {READER: "c01-pg-reader.pgpass", "postgres": "c01-pg-writer.pgpass"}
+ZERO_FIELDS = ("tagCount", "scope", "providerScope", "prepared", "writerAdvisoryEntries",
+               "relevantOpenTransactions", "relevantWaiters")
+CATALOG_FIELDS = {"identity", "oid", "owner", "acl", "security_definer", "volatility", "strict",
+                  "parallel", "config", "language", "body_sha256", "definition_sha256"}
+SIGNATURES = {
+    "public.trip_source_finite_native_original_context(uuid,text)",
+    "public.trip_source_begin_finite_universal_inputs(uuid,uuid,text)",
+    "public.trip_source_finite_native_run_row(text,text,jsonb)",
+    "public.trip_source_find_finite_universal_binding(uuid,uuid,uuid,uuid,uuid,text,jsonb)",
+    "public.trip_source_acquire_source(uuid,text)",
+}
+READ_ONLY = """BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY;
+SET LOCAL statement_timeout = '5s';
+SET LOCAL lock_timeout = '1s';
+SET LOCAL transaction_timeout = '8s';
+SET LOCAL search_path = pg_catalog;
+"""
+
+
+def require(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+
+
+def fixed_file(path, allowed_modes, max_size):
+    path = Path(path)
+    require(path.is_absolute() and path.resolve() == path, "PG_FILE_PATH_REFUSED")
+    for directory in path.parents:
+        info = directory.stat()
+        require(info.st_uid == 0 and info.st_mode & 0o022 == 0, "PG_FILE_DIRECTORY_REFUSED")
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb") as file:
+        info = os.fstat(file.fileno())
+        require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1
+                and stat.S_IMODE(info.st_mode) in allowed_modes and 0 < info.st_size <= max_size,
+                "PG_FILE_PERMISSIONS_REFUSED")
+        data = file.read(max_size + 1)
+    require(0 < len(data) <= max_size and path.stat().st_ino == info.st_ino
+            and path.stat().st_dev == info.st_dev, "PG_FILE_IDENTITY_DRIFT")
+    return data
+
+
+def run_psql(config, user, credential_name, sql):
+    """Run one fixed operation without ambient connection settings or raw error output."""
+    require(os.geteuid() == 0 and CREDENTIALS.get(user) == credential_name,
+            "PG_RECOVERY_CREDENTIAL_CLASS_REFUSED")
+    require(config["host"] == DEV_HOST and config["port"] == 5432 and config["database"] == "postgres",
+            "PG_DEV_ENDPOINT_DRIFT")
+    connect_address = ipaddress.ip_address(config["connectAddress"])
+    require(connect_address.is_global, "PG_DEV_CONNECT_ADDRESS_REFUSED")
+    certificate = config["rootCertificateFile"]
+    require(hashlib.sha256(fixed_file(certificate, (0o400, 0o444, 0o600, 0o644), 262144)).hexdigest()
+            == config["rootCertificateSHA256"], "PG_ROOT_CERTIFICATE_DRIFT")
+    credential_directory = Path(os.environ.get("CREDENTIALS_DIRECTORY", ""))
+    require(credential_directory.is_absolute(), "PG_SYSTEMD_CREDENTIAL_MISSING")
+    passfile = credential_directory / credential_name
+    raw = fixed_file(passfile, (0o400, 0o600), 4096)
+    prefix = f"{DEV_HOST}:5432:postgres:{user}:".encode()
+    lines = raw.splitlines()
+    require(len(lines) == 1 and lines[0].startswith(prefix) and len(lines[0]) > len(prefix)
+            and b"\x00" not in raw, "PG_EXACT_PASSFILE_REQUIRED")
+    del raw, lines
+    env = dict(
+        LC_ALL="C", PGHOST=DEV_HOST, PGHOSTADDR=str(connect_address), PGPORT="5432",
+        PGDATABASE="postgres", PGUSER=user,
+        PGPASSFILE=str(passfile), PGSSLMODE="verify-full", PGSSLROOTCERT=certificate,
+        PGGSSENCMODE="disable", PGCONNECT_TIMEOUT="3", PGAPPNAME="c01-v5-recovery",
+    )
+    try:
+        result = subprocess.run(
+            ["/usr/bin/psql", "-X", "-w", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-f", "-"],
+            input=sql.encode() if isinstance(sql, str) else sql, capture_output=True,
+            check=True, timeout=12, env=env,
+        )
+        require(len(result.stdout) <= 32768, "PG_RESULT_LIMIT_REFUSED")
+        value = json.loads(result.stdout)
+    except (OSError, subprocess.SubprocessError, UnicodeError, json.JSONDecodeError):
+        raise ValueError("PG_BOUNDED_TRANSPORT_REFUSED") from None
+    require(isinstance(value, dict), "PG_EXACT_RESULT_REQUIRED")
+    return value
+
+
+def verify_identity(config, result, user):
+    expected_address = ipaddress.ip_address(config["serverAddress"])
+    identifier = config["systemIdentifier"]
+    require(isinstance(identifier, str) and re.fullmatch(r"[1-9][0-9]{0,19}", identifier)
+            and result["systemIdentifier"] == identifier
+            and ipaddress.ip_address(result["serverAddress"]) == expected_address
+            and result["database"] == config["database"]
+            and result["principal"] == user
+            and result["transactionReadOnly"] is True
+            and type(result["serverVersion"]) is int and 170000 <= result["serverVersion"] < 180000,
+            "PG_DEV_SERVER_IDENTITY_DRIFT")
+
+
+def assert_server_identity(config, user, credential_name):
+    result = run_psql(config, user, credential_name, READ_ONLY + """
+SELECT jsonb_build_object(
+    'systemIdentifier', (pg_control_system()).system_identifier::text,
+    'serverAddress', host(inet_server_addr()), 'database', current_database(),
+    'principal', session_user, 'transactionReadOnly', current_setting('transaction_read_only') = 'on',
+    'serverVersion', current_setting('server_version_num')::integer);
+ROLLBACK;
+""")
+    verify_identity(config, result, user)
+
+
+def catalog_digest(rows):
+    require(isinstance(rows, list) and len(rows) == len(SIGNATURES), "PG_EXACT_CATALOG_REQUIRED")
+    indexed = {}
+    for row in rows:
+        require(isinstance(row, dict) and set(row) == CATALOG_FIELDS
+                and row["identity"] in SIGNATURES and row["identity"] not in indexed
+                and type(row["oid"]) is int and 0 < row["oid"] <= 4294967295
+                and isinstance(row["acl"], list) and all(isinstance(acl, str) for acl in row["acl"]),
+                "PG_CATALOG_METADATA_DRIFT")
+        indexed[row["identity"]] = {**row, "acl": sorted(row["acl"])}
+    return hashlib.sha256(json.dumps(indexed, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def observe(plan):
+    require(plan["project"] == DEV_PROJECT, "PG_DEV_PROJECT_DRIFT")
+    execution_id = plan["executionId"]
+    require(isinstance(execution_id, str) and re.fullmatch(r"[0-9a-f]{32}", execution_id),
+            "PG_EXECUTION_ID_DRIFT")
+    result = run_psql(plan["pgReadback"], READER, CREDENTIALS[READER], READ_ONLY +
+                      f"SELECT c01_v5_recovery.read_v5_state('{execution_id}');\nROLLBACK;\n")
+    verify_identity(plan["pgReadback"], result, READER)
+    require(result["executionId"] == execution_id and result["fullVisibility"] is True
+            and type(result["backendPid"]) is int and result["backendPid"] > 0
+            and type(result["observedAt"]) is int
+            and all(type(result[field]) is int and result[field] == 0 for field in ZERO_FIELDS),
+            "PG_TERMINAL_EVIDENCE_UNPROVED")
+    return dict(leaseId=plan["leaseId"], executionId=execution_id, principal=READER,
+                fullVisibility=True, backendPid=result["backendPid"], tagCount=result["tagCount"],
+                observedAt=result["observedAt"], catalogSHA256=catalog_digest(result["catalog"]),
+                **{field: result[field] for field in ZERO_FIELDS if field != "tagCount"})

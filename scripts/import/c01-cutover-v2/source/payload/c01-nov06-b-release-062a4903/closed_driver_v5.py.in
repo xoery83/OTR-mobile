@@ -1,0 +1,217 @@
+"""One default-closed maintenance flow. Live port binding is a separate release prerequisite."""
+import hashlib
+import json
+import math
+from pathlib import Path
+import re
+
+ROOT = Path(__file__).resolve().parent
+MATRIX_SHA = 'bbfbc97b0ba58220c5f3302314804dab7961cdebbe93fe20a701c4729ca49bf6'
+DDL_AUTHORITY_SHA = 'da18a6ae6028fba08dda25f8e3b8eec20177bdb5900336bcf18a81a6455e3a00'
+FORWARD_SHA = '8bbc960657511dfc173bb16118d643def983fe79ac506efdfb68b4b4027b89b1'
+ROLLBACK_SHA = '376d750af051286069b963a25e124c7dc2a6dc149a4be1c1d11ae5416a4cd892'
+RENDERER_SHA = '09537db32d7fff9db7f2fdd6c4b7fbfee865947d8c80d1574f146882a287fb72'
+OWNER = 'otr_trip_source_writer'
+GATEWAY = 'otr_trip_source_command_gateway'
+BASELINE = '@BASELINE_IMAGE_ID@'
+TARGET = '@LEGACY_TARGET_IMAGE_ID@'
+FIELDS = {'identity','oid','owner','acl','security_definer','volatility',
+          'strict','parallel','config','language','body_sha256','definition_sha256'}
+
+
+def require(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def fixed(path, expected):
+    raw = path.read_bytes()
+    require(sha(raw) == expected, 'FIXED_INPUT_DRIFT')
+    return raw
+
+
+def matrix():
+    return json.loads(fixed(ROOT/'SQL_DEFINITION_MATRIX_V4.json', MATRIX_SHA))
+
+
+def indexed(rows):
+    require(isinstance(rows, list) and len(rows) == 5, 'EXACT_FIVE_CATALOG_ROWS_REQUIRED')
+    result = {}
+    for row in rows:
+        require(set(row) == FIELDS, 'CATALOG_SHAPE_OR_OID_UNCONFIRMED')
+        oid = row['oid']
+        if type(oid) is str and re.fullmatch('[1-9][0-9]{0,9}', oid):
+            oid = int(oid)
+        require(type(oid) is int and 0 < oid <= 4294967295, 'CATALOG_SHAPE_OR_OID_UNCONFIRMED')
+        result[row['identity']] = {**row, 'oid':oid, 'acl':sorted(row['acl'])}
+    require(len(result) == 5, 'DUPLICATE_FUNCTION_IDENTITY')
+    return result
+
+
+def expected_catalog(before):
+    originals = indexed(before)
+    post = {}
+    for spec in matrix():
+        identity = spec['function']
+        row = originals.get(identity)
+        require(row is not None, 'FUNCTION_MISSING')
+        historical = spec['historicalCatalog']
+        require(row['body_sha256'] == spec['preBodySHA256'], 'FUNCTION_BODY_PREIMAGE_DRIFT')
+        if historical:
+            require(
+                row['oid'] == historical['oid'] and row['owner'] == historical['owner']
+                and row['acl'] == sorted(historical['acl']) and row['config'] == historical['config']
+                and row['security_definer'] == historical['securityDefiner']
+                and row['definition_sha256'] == historical['definitionSHA256']
+                and row['language'] == 'plpgsql',
+                'HISTORICAL_FUNCTION_METADATA_DRIFT',
+            )
+        else:
+            require(
+                row['owner'] == OWNER and row['config'] == ['search_path=pg_catalog']
+                and row['security_definer'] is True and row['language'] == 'sql'
+                and row['acl'] == sorted([f'{OWNER}=X/{OWNER}', f'{GATEWAY}=X/{OWNER}']),
+                'COMMON_ACQUIRE_FRESH_METADATA_DRIFT',
+            )
+        require((row['volatility'],row['strict'],row['parallel']) == ('v',False,'u'),
+                'FUNCTION_EXECUTION_ATTRIBUTES_DRIFT')
+        require(re.fullmatch('[0-9a-f]{64}',row['definition_sha256']) is not None,
+                'DEFINITION_FINGERPRINT_MISSING')
+        post[identity] = {**row, 'body_sha256':spec['postBodySHA256'], 'language':'plpgsql',
+                          'definition_sha256':spec['postDefinitionSHA256']}
+    return originals, post
+
+
+def matches_post(rows, expected):
+    try:
+        return indexed(rows) == expected
+    except (ValueError, TypeError):
+        return False
+
+
+def catalog_guard(rows):
+    statements = []
+    for identity, row in rows.items():
+        expected = json.dumps({**row,'acl':sorted(row['acl'])}, sort_keys=True).replace("'","''")
+        compare_definition = 'definition_sha256' in row
+        projection = (
+            "jsonb_build_object('identity',"+repr(identity)+",'oid',p.oid::bigint,'owner',pg_get_userbyid(p.proowner),"
+            "'acl',(SELECT jsonb_agg(a::text ORDER BY a::text) FROM unnest(p.proacl) a),"
+            "'security_definer',p.prosecdef,'volatility',p.provolatile,'strict',p.proisstrict,"
+            "'parallel',p.proparallel,'config',p.proconfig,'language',l.lanname,"
+            "'body_sha256',encode(sha256(convert_to(p.prosrc,'UTF8')),'hex')"
+        )
+        if compare_definition:
+            projection += ",'definition_sha256',encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')"
+        statements.append(
+            "IF (SELECT "+projection+") FROM pg_proc p JOIN pg_language l ON l.oid=p.prolang"
+            " WHERE p.oid=to_regprocedure("+repr(identity)+")) IS DISTINCT FROM '"+expected+"'::jsonb"
+            " THEN RAISE EXCEPTION 'C01_FIVE_FUNCTION_CAS_DRIFT'; END IF;"
+        )
+    return 'DO $c01catalog$ BEGIN\n'+'\n'.join(statements)+'\nEND $c01catalog$;\n'
+
+
+def build_frame(pre, post, request, inverse=False):
+    definition = fixed(
+        ROOT/('ROLLBACK_DEFINITIONS_V3.review.sql' if inverse else 'FORWARD_DEFINITIONS.review.sql'),
+        ROLLBACK_SHA if inverse else FORWARD_SHA,
+    )
+    authority = json.loads(fixed(ROOT/'DDL_AUTHORITY_CANDIDATE_V4.json', DDL_AUTHORITY_SHA))
+    definition = authority['start'].encode()+definition+authority['end'].encode()
+    renderer_path = ROOT.parent/'core-p6-adapters-resume-v5-20261105/mutation_deadline.py'
+    raw = fixed(renderer_path, RENDERER_SHA)
+    renderer = {'__file__':str(renderer_path)}
+    exec(compile(raw,str(renderer_path),'exec'),renderer)
+    start, cutoff, deadline = (request[key] for key in ('T','cutoff','D'))
+    require(all(type(v) in (int,float) and math.isfinite(v) for v in (start,cutoff,deadline))
+            and cutoff == start+810 and deadline == start+1200, 'EXACT_MAINTENANCE_CLOCK_REQUIRED')
+    send_cutoff = deadline-60 if inverse else cutoff
+    boundary = (
+        "SET LOCAL lock_timeout='3s';\nSELECT pg_advisory_xact_lock(714024,2);\n"
+        "DO $c01closed$ BEGIN IF extract(epoch FROM clock_timestamp()) >= "+str(send_cutoff)+
+        " OR EXISTS(SELECT 1 FROM public.trip_source_universal_scope)"
+        " OR EXISTS(SELECT 1 FROM public.universal_import_provider_scope)"
+        " THEN RAISE EXCEPTION 'C01_SCOPE_OR_CUTOFF'; END IF; END $c01closed$;\n"
+    )
+    first, last = (post,pre) if inverse else (pre,post)
+    primitive = ('BEGIN;\n'+boundary+catalog_guard(first)).encode()+definition+(
+        catalog_guard(last)+'COMMIT;\n').encode()
+    execution_id = request['inverseExecutionId'] if inverse else request['executionId']
+    frame = renderer['render'](primitive, send_cutoff, execution_id)
+    require(frame.startswith(b'BEGIN;\n'), 'RENDERER_TRANSACTION_PREFIX_DRIFT')
+    return b'BEGIN ISOLATION LEVEL READ COMMITTED;\n' + frame[len(b'BEGIN;\n'):]
+
+
+def run_held(port, request, ledger):
+    """The bound port must already own the fixed Writer lease and independent close safeguards."""
+    before = None
+    inverse = None
+    started_stop = False
+    sent = False
+    acknowledged = False
+    try:
+        port.require_writer_lease(request,ledger)
+        if port.has_intent():
+            return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
+        port.require_closed_writer(request)
+        before, post = expected_catalog(port.read_catalog())
+        frame = build_frame(before,post,request)
+        inverse = build_frame(before,post,request,inverse=True)
+        require(sha(frame) == request['effectiveSQLSHA256'], 'EFFECTIVE_FORWARD_NOT_APPROVED')
+        require(sha(inverse) == request['effectiveInverseSHA256'], 'EFFECTIVE_INVERSE_NOT_APPROVED')
+        port.check_timing(request['cutoff'], reserve_seconds=60)
+        try:
+            port.claim_intent('forward.intent',sha(frame))
+        except FileExistsError:
+            return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
+        started_stop = True
+        port.stop_exact_baseline_and_drain(BASELINE)
+        port.require_closed_writer(request)
+        require(indexed(port.read_catalog()) == before, 'FRESH_STOPPED_ACQUIRE_OR_CATALOG_DRIFT')
+        port.check_timing(request['cutoff'], reserve_seconds=60)
+        sent = True
+        port.send_sql_once(frame)
+        acknowledged = True
+        require(port.terminated(request['executionId']), 'MUTATOR_TERMINATION_UNPROVED')
+        require(matches_post(port.read_catalog(),post), 'INDEPENDENT_SQL_POSTIMAGE_DRIFT')
+        port.check_timing(request['cutoff'], reserve_seconds=60)
+        port.start_exact_closed_target(TARGET)
+        require(port.verify_running_closed(TARGET), 'INDEPENDENT_TARGET_CLOSE_UNPROVED')
+        return 'INSTALLED_DEFAULT_CLOSED'
+    except Exception:
+        if not started_stop:
+            return 'REFUSED_BEFORE_STOP'
+        # An uncertain SQL or start is never resent. A bound port must fence and preserve evidence.
+        try:
+            port.contain_closed()
+            if not sent:
+                port.require_closed_writer(request)
+                require(indexed(port.read_catalog()) == before, 'RESTORE_PREIMAGE_UNPROVED')
+            else:
+                port.require_closed_writer(request)
+                require(acknowledged and port.terminated(request['executionId']),
+                        'MUTATION_UNKNOWN_RECONCILE_ONLY')
+                require(matches_post(port.read_catalog(),post) and port.prove_zero_affected_history(),
+                        'INVERSE_HISTORY_OR_POSTIMAGE_UNPROVED')
+                port.check_timing(request['D'], reserve_seconds=60)
+                try:
+                    port.claim_intent('inverse.intent',sha(inverse))
+                except FileExistsError:
+                    return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
+                port.send_sql_once(inverse)
+                require(port.terminated(request['inverseExecutionId']) and indexed(port.read_catalog()) == before,
+                        'INVERSE_READBACK_UNPROVED')
+            port.check_timing(request['D'], reserve_seconds=60)
+            port.restore_exact_closed_baseline(BASELINE)
+            require(port.verify_running_closed(BASELINE), 'INDEPENDENT_BASELINE_CLOSE_UNPROVED')
+            return 'RESTORED_DEFAULT_CLOSED'
+        except Exception:
+            try:
+                port.contain_closed()
+            except Exception:
+                pass
+            return 'CONTAINED_OR_UNCONFIRMED_READ_ONLY_RECONCILIATION'

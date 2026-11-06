@@ -1,0 +1,185 @@
+"""Offline image-only control contracts. This module has no transport or mutation CLI."""
+from copy import deepcopy
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import stat
+import sys
+
+PRIVATE = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PRIVATE / "c01-nov06-b-release-062a4903"))
+from writer_lease_binding_v5 import WriterLease, identity
+
+timer_source = PRIVATE / "mcp-fresh-3586-qualification" / "static" / "c02-timers.py"
+timer_spec = importlib.util.spec_from_file_location("pinned_c02_timer", timer_source)
+timer_tools = importlib.util.module_from_spec(timer_spec)
+timer_spec.loader.exec_module(timer_tools)
+
+HOST = "@DEV_PUBLIC_VHOST@"
+UPSTREAM = "127.0.0.1:8787"
+FENCE = [{"handler": "static_response", "status_code": 503,
+          "headers": {"Cache-Control": ["no-store"]}}]
+ACTIONS = {"fence", "stop-baseline", "stage-candidate", "start-candidate",
+           "accept-candidate", "stop-candidate", "restore-baseline", "open-ingress"}
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def config_sha(config):
+    return digest(json.dumps(config, sort_keys=True, separators=(",", ":"),
+                             ensure_ascii=False, allow_nan=False).encode())
+
+def routes_below(value):
+    if isinstance(value, dict):
+        if "match" in value:
+            yield value
+        for child in value.values():
+            yield from routes_below(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from routes_below(child)
+
+def upstream_count(value):
+    if isinstance(value, dict):
+        return (sum(u.get("dial") == UPSTREAM for u in value.get("upstreams", []))
+                if value.get("handler") == "reverse_proxy" else 0) + sum(
+                    upstream_count(child) for child in value.values())
+    if isinstance(value, list):
+        return sum(upstream_count(child) for child in value)
+    return 0
+
+def route_plan(config):
+    servers = config["apps"]["http"]["servers"]
+    found = [(server, i, route) for server, body in servers.items()
+             for i, route in enumerate(body.get("routes", []))
+             if route.get("match") == [{"host": [HOST]}] and upstream_count(route) == 1]
+    if len(found) != 1 or upstream_count(servers) != 1:
+        raise ValueError("EXACT_DEV_VHOST_AND_UPSTREAM_REQUIRED")
+    server, index, old = found[0]
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", server) or old.get("terminal") is not True:
+        raise ValueError("UNQUALIFIED_ROUTE_PATH_OR_TERMINATION")
+    if any(not route.get("match") or any(not m.get("host") for m in route["match"])
+           for route in servers[server]["routes"][:index]):
+        raise ValueError("EARLIER_ROUTE_HOST_COVERAGE_UNCONFIRMED")
+    overlapping = [route for route in routes_below(servers) if any(
+        host.lower() == HOST or host.startswith("*.") and HOST.endswith(host[1:].lower())
+        for matcher in route["match"] for host in matcher.get("host", []))]
+    if len(overlapping) != 1 or overlapping[0] is not old:
+        raise ValueError("OVERLAPPING_DEV_MATCH")
+    fenced = deepcopy(config)
+    fenced["apps"]["http"]["servers"][server]["routes"][index]["handle"] = deepcopy(FENCE)
+    return {"path": f"/config/apps/http/servers/{server}/routes/{index}/handle",
+            "before": config_sha(config), "fenced": config_sha(fenced),
+            "forward": deepcopy(FENCE), "reverse": deepcopy(old["handle"])}
+
+def cas_request(plan, raw, etag, reverse=False):
+    # Caddy 2.6.2 GET /config hashes the raw JSON into the response ETag trailer.
+    expected = plan["fenced" if reverse else "before"]
+    if config_sha(json.loads(raw)) != expected:
+        raise ValueError("FULL_CONFIG_PREIMAGE_DRIFT")
+    fnv = 2166136261
+    for byte in raw:
+        fnv = ((fnv ^ byte) * 16777619) & 0xFFFFFFFF
+    if etag != f'"/config {fnv:08x}"':
+        raise ValueError("FULL_CONFIG_ETAG_TRAILER_UNCONFIRMED")
+    if not re.fullmatch(r"/config/apps/http/servers/[A-Za-z0-9_-]+/routes/[0-9]+/handle",
+                        plan["path"]):
+        raise ValueError("UNSAFE_PATCH_PATH")
+    return ("PATCH", plan["path"], {"Content-Type": "application/json", "If-Match": etag},
+            deepcopy(plan["reverse" if reverse else "forward"]))
+
+def verify_postimage(plan, raw, reverse=False):
+    expected = plan["before" if reverse else "fenced"]
+    return config_sha(json.loads(raw)) == expected
+
+DRAIN_KEYS = {"publicFence", "localIngressFenced", "relaunchExcluded",
+              "requestTerminals", "sameStoreHolders", "asyncWorkTerminal", "freshIdentity"}
+
+def can_stop(proof):
+    # Shortcut: owning attestations are passed in by the approved runner. Bind their
+    # identities and freshness there before using this offline policy on the host.
+    return set(proof) == DRAIN_KEYS and all(proof[k] is True for k in DRAIN_KEYS)
+
+class ImageLease(WriterLease):
+    def __init__(self, lock, lock_identity, ledger, ledger_identity, uid=0):
+        super().__init__(lock, ledger, ledger_identity, uid)
+        self.lock_identity = tuple(lock_identity)
+
+    def assert_current(self, ledger):
+        super().assert_current(ledger)
+        if identity(os.fstat(self._lockfd)) != self.lock_identity:
+            raise ValueError("EXACT_WRITER_LOCK_PREIMAGE_DRIFT")
+
+    def claim(self, action, payload_sha):
+        self._verify_record(action, payload_sha)
+        self.assert_current(self.ledger)
+        fd = os.open(action + ".intent", os.O_WRONLY | os.O_CREAT | os.O_EXCL |
+                     os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=self._ledgerfd)
+        with os.fdopen(fd, "wb") as out:
+            out.write((payload_sha + "\n").encode())
+            out.flush()
+            os.fsync(out.fileno())
+        os.fsync(self._ledgerfd)
+        self.assert_current(self.ledger)
+
+    def observe(self, action, payload_sha):
+        self._verify_record(action, payload_sha)
+        self.assert_current(self.ledger)
+        try:
+            fd = os.open(action + ".intent", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK |
+                         os.O_CLOEXEC, dir_fd=self._ledgerfd)
+        except FileNotFoundError:
+            return "UNCLAIMED"
+        except OSError:
+            return "RECONCILE_ONLY"
+        with os.fdopen(fd, "rb") as stream:
+            info = os.fstat(stream.fileno())
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid != self.uid
+                    or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1
+                    or stream.read(66) != (payload_sha + "\n").encode()):
+                return "RECONCILE_ONLY"
+        self.assert_current(self.ledger)
+        return "CLAIMED"
+
+    @staticmethod
+    def _verify_record(action, payload_sha):
+        if action not in ACTIONS or not re.fullmatch("[0-9a-f]{64}", payload_sha):
+            raise ValueError("EXACT_INTENT_REQUIRED")
+
+def keeper_decision(now, recovery_at, hard_at, *, prior_intents_resolved, accepted,
+                    candidate_running, baseline_running, fence_closed, remaining_budget):
+    if now < recovery_at:
+        return "NOT_DUE"
+    if (not prior_intents_resolved or type(accepted) is not bool
+            or type(candidate_running) is not bool or type(baseline_running) is not bool
+            or type(fence_closed) is not bool or candidate_running and baseline_running):
+        return "RECONCILE_ONLY"
+    if remaining_budget <= 0 or now + remaining_budget >= hard_at:
+        return "RECONCILE_ONLY"
+    if accepted:
+        return "RECONCILE_ACCEPTED_ROUTE_ONLY"
+    if not fence_closed:
+        return "RECONCILE_ONLY"
+    if candidate_running:
+        return "STOP_CANDIDATE_ONCE"
+    if not baseline_running:
+        return "RESTORE_BASELINE_ONCE"
+    return "VERIFY_BASELINE_BEFORE_INGRESS"
+
+
+def verify_timer(show, timeout_usec, unit, at_ms, expected_argv, service_budget_s):
+    # Reuse the established calendar and observed-time parsers without inheriting C02 actions.
+    timer, service = unit + ".timer", unit + ".service"
+    specs = re.findall(r"OnCalendar=([^;]+);", show(timer, "TimersCalendar"))
+    argv = re.findall(r"argv\[\]=([^;]+);", show(service, "ExecStart"))
+    actual_at = timer_tools.observed_ms(show(timer, "NextElapseUSecRealtime"))
+    return (show(timer, "ActiveState") == "active" and show(timer, "Unit") == service
+            and specs == [timer_tools.calendar(at_ms)] and at_ms % 1000 == 0
+            and actual_at == at_ms and len(argv) == 1
+            and shlex.split(argv[0]) == expected_argv
+            and show(service, "User") == "root" and show(service, "Restart") == "no"
+            and timeout_usec(service) == service_budget_s * 1000000)

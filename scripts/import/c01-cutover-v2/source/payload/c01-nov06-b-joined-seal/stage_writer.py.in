@@ -1,0 +1,93 @@
+"""Offline stage-scoped adapter over the existing one-flock Writer."""
+import os
+from pathlib import Path
+import re
+import sys
+from types import MappingProxyType
+
+PRIVATE = Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(PRIVATE/"c01-nov06-b-image-only-offline"))
+from controls import ACTIONS, ImageLease
+from render_joined import PROPOSED
+
+STAGES = MappingProxyType({
+    "latch": MappingProxyType({"forward.intent":"latch-forward"}),
+    "v5": MappingProxyType({"forward.intent":"v5-forward","inverse.intent":"v5-inverse"}),
+})
+SCOPED = frozenset(action for stage in STAGES.values() for action in stage.values())
+ALL_ACTIONS = frozenset(ACTIONS) | SCOPED
+BASELINE = "@BASELINE_IMAGE_ID@"
+TARGET = "@V2_TARGET_IMAGE_ID@"
+
+def joined_binding(start, baseline, target):
+    if type(start) is not int or start <= 0 or (baseline,target) != (BASELINE,TARGET):
+        raise ValueError("EXACT_JOINED_CLOCK_AND_IMAGE_PAIR_REQUIRED")
+    return {"T":start,"baselineImage":baseline,"targetImage":target,
+            **{key:start+offset for key,offset in PROPOSED.items()}}
+
+class StageWriter(ImageLease):
+    def __init__(self, lock, lock_identity, ledger, ledger_identity, *, pins, terminal, uid=0):
+        super().__init__(lock,lock_identity,ledger,ledger_identity,uid=uid)
+        if set(pins) != ALL_ACTIONS:
+            raise ValueError("COMPLETE_JOINED_ACTION_PINS_REQUIRED")
+        for action,digest in pins.items():
+            self._verify_record(action,digest)
+        self.pins = MappingProxyType(dict(pins))
+        self.terminal = terminal
+
+    @staticmethod
+    def _verify_record(action, payload_sha):
+        if action not in ALL_ACTIONS or not re.fullmatch("[0-9a-f]{64}",payload_sha):
+            raise ValueError("EXACT_JOINED_ACTION_INTENT_REQUIRED")
+
+    def view(self):
+        self.assert_current(self.ledger)
+        view = {action:self.observe(action,self.pins[action]) for action in sorted(ALL_ACTIONS)}
+        expected = {action + ".intent" for action in ALL_ACTIONS}
+        for name in os.listdir(self._ledgerfd):
+            if name.endswith(".intent") and name not in expected:
+                view[name] = "RECONCILE_ONLY"
+        self.assert_current(self.ledger)
+        return view
+
+    def unresolved(self, except_actions=()):
+        return any(
+            state == "RECONCILE_ONLY" or
+            state == "CLAIMED" and action not in except_actions
+            and self.terminal(action,self.pins[action]) is not True
+            for action,state in self.view().items()
+        )
+
+    def claim(self, action, payload_sha):
+        if action not in ACTIONS:
+            raise ValueError("JOINED_USE_STAGE_FOR_SQL_OR_LATCH")
+        self._claim_bound(action,payload_sha)
+
+    def _claim_bound(self, action, payload_sha):
+        if self.pins.get(action) != payload_sha:
+            raise ValueError("JOINED_ACTION_PAYLOAD_DRIFT")
+        if self.unresolved(except_actions=(action,)):
+            raise ValueError("JOINED_PRIOR_INTENT_UNRESOLVED")
+        super().claim(action,payload_sha)
+
+    def stage(self,name):
+        return Stage(self,STAGES[name])
+
+class Stage:
+    def __init__(self, writer, names):
+        self.writer, self.names = writer, names
+        self.ledger = writer.ledger
+
+    def assert_current(self, ledger):
+        self.writer.assert_current(ledger)
+        if self.writer.unresolved(except_actions=self.names.values()):
+            raise ValueError("JOINED_PRIOR_INTENT_UNRESOLVED")
+
+    def has_intent(self):
+        view = self.writer.view()
+        return self.writer.unresolved() or any(view[action] != "UNCLAIMED" for action in self.names.values())
+
+    def claim_intent(self, name, payload_sha):
+        if name not in self.names:
+            raise ValueError("JOINED_STAGE_INTENT_SCOPE")
+        self.writer._claim_bound(self.names[name],payload_sha)

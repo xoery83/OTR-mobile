@@ -1,0 +1,49 @@
+"""Exact Docker config projection used to stage the 71b6521f closed target."""
+import copy
+import http.client
+import json
+import re
+import socket
+
+BASELINE = '@BASELINE_IMAGE_ID@'
+TARGET = '@LEGACY_TARGET_IMAGE_ID@'
+
+def target_payload(baseline):
+    if baseline['Image'] != BASELINE:
+        raise ValueError('WRONG_RETAINED_IMAGE')
+    config = copy.deepcopy(baseline['Config'])
+    config['Image'] = TARGET
+    return {**config,'HostConfig':copy.deepcopy(baseline['HostConfig'])}
+
+def create_exact_target(path,name,baseline):
+    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{1,90}',name):
+        raise ValueError('INVALID_OWNED_TARGET_NAME')
+    class UnixDocker(http.client.HTTPConnection):
+        def connect(self):
+            self.sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+            self.sock.settimeout(15)
+            self.sock.connect(path)
+    with_connection=UnixDocker('localhost',timeout=15)
+    try:
+        with_connection.request('POST','/v1.47/containers/create?name='+name,
+                                body=json.dumps(target_payload(baseline)).encode(),
+                                headers={'Content-Type':'application/json'})
+        response=with_connection.getresponse()
+        body=response.read(131072)
+        if response.status!=201:
+            raise RuntimeError('CREATE_UNCONFIRMED_READ_ONLY_LOOKUP_REQUIRED')
+        cid=json.loads(body)['Id']
+        if not re.fullmatch('[0-9a-f]{64}',cid):
+            raise ValueError('TARGET_CID_UNCONFIRMED')
+        return cid
+    finally:
+        with_connection.close()
+
+def verify_target(baseline,candidate,cid):
+    expected=target_payload(baseline)
+    host_config=expected.pop('HostConfig')
+    if (candidate['Id'],candidate['Image'],candidate['Config'],candidate['HostConfig']) != (cid,TARGET,expected,host_config):
+        raise ValueError('TARGET_CONFIG_DRIFT')
+    fields=('Source','Destination','RW','Type','Propagation')
+    if sorted(tuple(m.get(k) for k in fields) for m in baseline['Mounts']) != sorted(tuple(m.get(k) for k in fields) for m in candidate['Mounts']):
+        raise ValueError('TARGET_MOUNT_DRIFT')

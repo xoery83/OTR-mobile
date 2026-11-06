@@ -1,0 +1,529 @@
+"""One-shot closed DEV release and independent KEEP_V5 takeover."""
+import argparse
+import hashlib
+import ipaddress
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import sys
+import time
+
+HERE = Path(__file__).resolve().parent
+PRIVATE = HERE.parents[1]
+sys.path.insert(0, str(PRIVATE / "c01-nov06-b-release-062a4903"))
+sys.path.insert(0, str(HERE.parent))
+
+from joined_host_keep_v5 import ARCHIVE_SHA256, ClosedJoinedHost
+from keep_v5_choice import REMAINING
+from keep_v5_resume import RetainedRestore, take_over
+from dev_host_worker import DEFAULT
+from render_joined import build_at_cutoff, fixed_preimage
+from stage_writer import ALL_ACTIONS, BASELINE, TARGET, joined_binding
+from stage_writer_v2 import JoinedStageWriter
+from terminal_policy import sql_terminal
+from dev_commit_ack import render as attach_ack
+from cutover_read_aperture import binding_valid, proof_pins
+
+VERSION = "otr.c01.keep-v5.service/2"
+READER = "otr_c01_v5_recovery_reader"
+LOCK = Path("/run/lock/otr-universal-finite-service.lock")
+LEDGER_ROOT = Path("/var/lib/otr/root2-c01-maintenance")
+BASELINE_CID = "@BASELINE_CONTAINER_ID@"
+HEX32 = re.compile(r"[0-9a-f]{32}")
+HEX64 = re.compile(r"[0-9a-f]{64}")
+LIMIT = 65536
+
+
+def require(value, reason):
+    if not value:
+        raise ValueError(reason)
+
+
+def dump(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_owned(path, mode, *, dir_fd=None, uid=0):
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=dir_fd)
+    with os.fdopen(fd, "rb") as stream:
+        info = os.fstat(stream.fileno())
+        require(stat.S_ISREG(info.st_mode) and info.st_uid == uid and info.st_nlink == 1
+                and stat.S_IMODE(info.st_mode) == mode and info.st_size <= LIMIT,
+                "UNSAFE_SEALED_FILE")
+        content = stream.read(LIMIT + 1)
+        require(len(content) == info.st_size, "SEALED_FILE_CHANGED")
+        return content
+
+
+def load_plan(path, digest):
+    require(HEX64.fullmatch(digest) and path.is_absolute() and path.resolve() == path, "INVALID_PLAN_PIN")
+    raw = read_owned(path, 0o400)
+    require(sha(raw) == digest, "SEALED_PLAN_DRIFT")
+    plan = json.loads(raw)
+    require(set(plan) == {"version", "executionId", "leaseId", "T", "lock", "ledger",
+                         "host", "sql", "pgReadback", "project"}
+            and plan["version"] == VERSION and plan["project"] == "@DEV_PROJECT_REF@", "EXACT_PLAN_REQUIRED")
+    for key in ("executionId", "leaseId"):
+        require(HEX32.fullmatch(plan[key]), "INVALID_WINDOW_ID")
+    require(plan["executionId"] != plan["leaseId"], "COLLIDING_WINDOW_IDS")
+    require(type(plan["T"]) is int and 0 < plan["T"] < 4102444800, "INVALID_WINDOW_CLOCK")
+    require(path == LEDGER_ROOT / plan["executionId"] / "plan.json", "EXACT_PLAN_PATH_REQUIRED")
+    for name, expected in (("lock", LOCK), ("ledger", path.parent)):
+        resource = plan[name]
+        require(set(resource) == {"path", "identity"} and resource["path"] == str(expected)
+                and type(resource["identity"]) is list and len(resource["identity"]) == 2
+                and all(type(n) is int and n >= 0 for n in resource["identity"]),
+                "UNBOUND_LOCK_OR_LEDGER")
+    host = plan["host"]
+    binding_valid(host["aperture"])
+    require(host["baselineCID"] == BASELINE_CID and host["stopAdmissionSeconds"] == 30
+            and host["healthReserveSeconds"] == 60, "EXACT_CLOSED_HOST_LIMITS_REQUIRED")
+    sql = plan["sql"]
+    require(set(sql) == {"frameSHA256", "wireSHA256", "preimageSHA256", "postimageSHA256",
+                         "forwardPassFile"} and all(HEX64.fullmatch(sql[key]) for key in sql
+                                                    if key.endswith("SHA256"))
+            and Path(sql["forwardPassFile"]).is_absolute(), "EXACT_FORWARD_SQL_PINS_REQUIRED")
+    return plan
+
+
+class Journal:
+    def __init__(self, plan, plan_sha, *, uid=0):
+        self.plan = plan
+        self.binding = {"leaseId": plan["leaseId"], "executionId": plan["executionId"],
+                        "planSHA256": plan_sha}
+        self.pins = {action: sha(dump([plan_sha, action])) for action in ALL_ACTIONS}
+        self.pins["v5-forward"] = plan["sql"]["frameSHA256"]
+        self.writer = JoinedStageWriter(plan["lock"]["path"], plan["lock"]["identity"],
+                                        plan["ledger"]["path"], plan["ledger"]["identity"],
+                                        pins=self.pins, terminal=self.terminal, uid=uid)
+
+    def read(self, name):
+        self.writer.assert_current(self.writer.ledger)
+        try:
+            raw = read_owned(name, 0o600, dir_fd=self.writer._ledgerfd, uid=self.writer.uid)
+        except FileNotFoundError:
+            return None
+        value = json.loads(raw)
+        require(all(value.get(k) == v for k, v in self.binding.items()), "JOURNAL_BINDING_DRIFT")
+        self.writer.assert_current(self.writer.ledger)
+        return value
+
+    def write(self, name, value):
+        self.writer.assert_current(self.writer.ledger)
+        content = dump({**value, **self.binding})
+        require(len(content) <= LIMIT, "JOURNAL_RECEIPT_TOO_LARGE")
+        fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                     0o600, dir_fd=self.writer._ledgerfd)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.fsync(self.writer._ledgerfd)
+        self.writer.assert_current(self.writer.ledger)
+
+    def receipt(self, action):
+        value = self.read(action + ".receipt")
+        if value is not None:
+            require(value["action"] == action and value["actionSHA256"] == self.pins[action]
+                    and type(value["observedAt"]) is int and value["observedAt"] >= self.plan["T"],
+                    "JOURNAL_ACTION_DRIFT")
+        return value
+
+    def terminal(self, action, digest):
+        return self.pins[action] == digest and self.receipt(action) is not None
+
+    def finish(self, action, evidence=None):
+        require(self.writer.observe(action, self.pins[action]) == "CLAIMED", "INTENT_REQUIRED")
+        self.write(action + ".receipt", {"action": action, "actionSHA256": self.pins[action],
+                                          "observedAt": int(time.time()), "evidence": evidence or {}})
+
+    def claim(self, action):
+        self.writer.claim(action, self.pins[action])
+
+
+def request(journal, clock):
+    host = journal.plan["host"]
+    return {**journal.binding, "T": clock["T"], "D": clock["hardEnd"],
+            "cutoff": clock["forwardSQLComplete"], "baselineCID": host["baselineCID"],
+            "archiveSHA256": ARCHIVE_SHA256, "effectiveSQLSHA256": journal.pins["v5-forward"],
+            "wireSHA256": journal.plan["sql"]["wireSHA256"],
+            "stopAdmissionSeconds": host["stopAdmissionSeconds"],
+            "healthReserveSeconds": host["healthReserveSeconds"]}
+
+
+def sql_plan(journal):
+    return {**journal.binding, **{k: v for k, v in journal.plan["sql"].items()
+                                  if k.endswith("SHA256")}}
+
+
+def sql_ledger(journal):
+    return {**journal.binding, "intent": journal.writer.view()["v5-forward"],
+            "wireSHA256": journal.plan["sql"]["wireSHA256"]}
+
+
+def forward_wire(journal, clock):
+    before, after = fixed_preimage()
+    frame = build_at_cutoff(before, after, clock["forwardSQLComplete"], journal.plan["executionId"])
+    wire = attach_ack(frame, journal.plan["executionId"])
+    pin = journal.plan["sql"]
+    require(sha(dump(before)) == pin["preimageSHA256"] and sha(dump(after)) == pin["postimageSHA256"]
+            and sha(frame) == pin["frameSHA256"] and sha(wire) == pin["wireSHA256"],
+            "RENDERED_V5_SQL_DRIFT")
+    return wire
+
+
+def guarded_wire(config, wire):
+    # psql checks the exact direct server in this same session before the pinned wire.
+    address = str(ipaddress.ip_address(config["serverAddress"]))
+    identifier = config["systemIdentifier"]
+    require(re.fullmatch(r"[1-9][0-9]{0,19}", identifier), "PG_SYSTEM_ID_UNBOUND")
+    guard = f"""BEGIN READ ONLY;
+SET LOCAL statement_timeout = '5s';
+DO $c01_target$ BEGIN
+  IF pg_catalog.current_database() <> 'postgres'
+     OR session_user <> 'postgres' OR current_user <> 'postgres'
+     OR pg_catalog.inet_server_addr() IS DISTINCT FROM '{address}'::inet
+     OR (pg_catalog.pg_control_system()).system_identifier::text IS DISTINCT FROM '{identifier}'
+     OR pg_catalog.current_setting('server_version_num')::int NOT BETWEEN 170000 AND 179999
+  THEN RAISE EXCEPTION 'C01_FIXED_WRITER_SERVER_DRIFT'; END IF;
+END $c01_target$;
+COMMIT;
+"""
+    return guard.encode() + wire
+
+
+def forward_ack(marker, plan):
+    require(set(marker) == {"marker", "frameSHA256", "backendPid", "sessionUser", "currentUser", "tagReset"}
+            and marker["marker"] == plan["executionId"] and marker["frameSHA256"] == plan["frameSHA256"]
+            and marker["sessionUser"] == marker["currentUser"] == "postgres"
+            and marker["tagReset"] is True and type(marker["backendPid"]) is int
+            and marker["backendPid"] > 0, "EXACT_POST_COMMIT_MARKER_UNPROVED")
+    return {**marker, "executionId": marker["marker"], "principal": marker["sessionUser"],
+            "observedAt": int(time.time()), "wireSHA256": plan["wireSHA256"]}
+
+
+def stopped_digest(ops, container):
+    return sha(dump(ops.stopped_instance(container)))
+
+
+def config_digest(container):
+    fields = {key: container[key] for key in ("Id", "Image", "Config", "HostConfig")}
+    return sha(dump({**fields, "Mounts": sorted(container["Mounts"], key=lambda mount: mount["Destination"])}))
+
+
+def release_terminal(journal, status, proof):
+    allowed = {"RELEASE_PASS", "RELEASE_RECOVERY", "RELEASE_ABORTED_BASELINE_INGRESS_RESTORED"}
+    require(status in allowed, "UNKNOWN_RELEASE_TERMINAL")
+    existing = journal.read("release-terminal.receipt")
+    require(proof == proof_pins(journal.plan["host"]["aperture"]), "C01_TERMINAL_PROOF_DRIFT")
+    evidence = {"status": status, "routeVerified": True, "preservationVerified": True, "cutover": proof}
+    if existing is None:
+        journal.write("release-terminal.receipt", {**evidence, "observedAt": int(time.time())})
+    else:
+        require(all(existing[key] == value for key, value in evidence.items()), "RELEASE_TERMINAL_DRIFT")
+
+
+def open_ordinary(journal, clock, adapter, status):
+    require(time.time() + 20 < clock["hardEnd"] and adapter.verify_fence() is True,
+            "IMPORT_FENCE_OPEN_UNPROVED")
+    journal.claim("open-ingress")
+    require(adapter.open_import_fenced() is True, "IMPORT_FENCE_RESTORE_UNPROVED")
+    proof = adapter.release_proof()
+    journal.finish("open-ingress", {"status": status, "cutover": proof})
+    release_terminal(journal, status, proof)
+
+
+def dispatch(journal, clock, adapter, observe, send, wire, verify_writer):
+    writer = journal.writer
+    require(journal.read("dispatch.claim") is None and
+            all(state == "UNCLAIMED" for state in writer.view().values()), "DISPATCH_ALREADY_CONSUMED")
+    require(clock["T"] <= time.time() < clock["forwardSQLComplete"], "WINDOW_NOT_OPEN")
+    sql = sql_plan(journal)
+    require(observe()["catalogSHA256"] == sql["preimageSHA256"], "FORWARD_PREIMAGE_UNPROVED")
+    verify_writer()
+    require(adapter.preflight() is True, "HOST_PREFLIGHT_UNPROVED")
+    host = ClosedJoinedHost(request(journal, clock), clock, writer, adapter.ops)
+    journal.write("dispatch.claim", {"observedAt": int(time.time())})
+    journal.claim("fence")
+    require(adapter.fence() is True and adapter.verify_fence() is True, "FENCE_UNPROVED")
+    journal.finish("fence")
+    require(adapter.drain() is True, "HOST_DRAIN_UNPROVED")
+    candidate = host.stage()
+    journal.finish("stage-candidate", {"candidateCID": candidate})
+    require(adapter.verify_fence() is True and adapter.drain() is True, "STOP_FENCE_OR_DRAIN_UNPROVED")
+    require(host.stop() == "STOPPED_CLOSED", "STOP_TERMINAL_UNPROVED")
+    stopped = adapter.ops.baseline(host.worker.before["Id"])
+    require(stopped_digest(adapter.ops, stopped) == sha(dump(host.worker.closed_instance)),
+            "STOP_TERMINAL_DRIFT")
+    journal.finish("stop-baseline", {"baselineCID": host.worker.before["Id"], "status": "STOPPED_CLOSED",
+                                     "startedAt": stopped["State"]["StartedAt"],
+                                     "finishedAt": stopped["State"]["FinishedAt"],
+                                     "stoppedSHA256": stopped_digest(adapter.ops, stopped),
+                                     "configSHA256": config_digest(host.worker.before)})
+    require(adapter.verify_fence() is True and adapter.drain() is True
+            and observe()["catalogSHA256"] == sql["preimageSHA256"]
+            and time.time() < clock["forwardSQLComplete"], "FORWARD_ADMISSION_UNPROVED")
+    verify_writer()
+    host.worker.guard(clock["forwardSQLComplete"])
+    require(adapter.verify_fence() is True, "FORWARD_FENCE_UNPROVED")
+    writer.stage("v5").claim_intent("forward.intent", journal.pins["v5-forward"])
+    # This file distinguishes a verified server ACK from a merely claimed intent.
+    ack = forward_ack(send(wire), sql)
+    journal.finish("v5-forward", ack)
+    seen = observe()
+    require(sql_terminal(sql, sql_ledger(journal), ack, seen, int(time.time()), reader=READER)
+            == "ACK_TERMINAL_POSTIMAGE" and adapter.verify_fence() is True,
+            "FORWARD_INDEPENDENT_POSTIMAGE_UNPROVED")
+    journal.write("v5-postimage.readback", seen)
+    require(host.start(sql, sql_ledger(journal), ack, seen, int(time.time()), reader=READER)
+            == "STARTED_OWNED", "CANDIDATE_START_UNPROVED")
+    journal.finish("start-candidate", {"candidateCID": candidate})
+    try:
+        adapter.ops.verify_running(candidate, host.worker.before, True, clock["hardEnd"])
+        require(adapter.verify_preserved(candidate) is True, "CANDIDATE_PRESERVATION_UNPROVED")
+        accepted_readback = observe()
+        require(sql_terminal(sql, sql_ledger(journal), ack, accepted_readback, int(time.time()), reader=READER)
+                == "ACK_TERMINAL_POSTIMAGE" and adapter.verify_fence() is True,
+                "FINAL_POSTIMAGE_UNPROVED")
+    except (OSError, ValueError, RuntimeError):
+        if adapter.verify_fence() is True and adapter.can_contain(candidate) is True:
+            require(host.contain() == "STOPPED_CLOSED", "CANDIDATE_CONTAINMENT_UNPROVED")
+            journal.finish("stop-candidate", {"candidateCID": candidate})
+        raise
+    host.worker.guard()
+    journal.claim("accept-candidate")
+    journal.finish("accept-candidate", {"candidateCID": candidate, "readback": accepted_readback})
+    host.worker.guard()
+    open_ordinary(journal, clock, adapter, "RELEASE_PASS")
+    return "RELEASE_PASS"
+
+
+def takeover(journal, clock, role, adapter, observe):
+    writer = journal.writer
+    due = clock["recoveryAt"] if role == "main" else clock["backupAt"]
+    if time.time() < due:
+        return "NOT_DUE"
+    if journal.read("dispatch.claim") is None:
+        return "NO_DISPATCH_OBSERVED"
+    view = writer.view()
+    if (writer.unresolved() or view["v5-inverse"] != "UNCLAIMED"
+            or view["fence"] != "CLAIMED"):
+        return "RECONCILE_ONLY"
+    if view["open-ingress"] == "CLAIMED":
+        proof = adapter.release_proof()
+        evidence = journal.receipt("open-ingress")["evidence"]
+        require(evidence["cutover"] == proof, "C01_TERMINAL_PROOF_DRIFT")
+        release_terminal(journal, evidence["status"], proof)
+        return "INGRESS_ALREADY_RELEASED"
+    if adapter.verify_fence() is not True:
+        return "RECONCILE_ONLY"
+    req = request(journal, clock)
+    sql = sql_plan(journal)
+    stage = journal.receipt("stage-candidate")
+    candidate = stage["evidence"]["candidateCID"] if stage is not None else None
+    if view["stop-baseline"] == "UNCLAIMED" and view["v5-forward"] == "UNCLAIMED":
+        require(all(view[key] == "UNCLAIMED" for key in ("start-candidate", "accept-candidate",
+                                                        "stop-candidate", "restore-baseline")),
+                "PRE_STOP_SEQUENCE_UNPROVED")
+        baseline = adapter.ops.running_baseline()
+        require(baseline["Id"] == req["baselineCID"] and baseline["State"]["Running"]
+                and observe()["catalogSHA256"] == sql["preimageSHA256"],
+                "PRE_STOP_BASELINE_OR_PREIMAGE_UNPROVED")
+        if candidate is not None:
+            staged = adapter.ops.lookup("otr-c01-candidate-" + req["executionId"])
+            require(staged is not None and staged["Id"] == candidate and not staged["State"]["Running"],
+                    "PRE_STOP_CANDIDATE_UNPROVED")
+            adapter.ops.verify_target(baseline, candidate)
+        adapter.ops.verify_running(req["baselineCID"], baseline, False, clock["hardEnd"])
+        require(adapter.verify_preserved(req["baselineCID"]) is True, "BASELINE_PRESERVATION_UNPROVED")
+        status = "RELEASE_ABORTED_BASELINE_INGRESS_RESTORED"
+        open_ordinary(journal, clock, adapter, status)
+        return status
+
+    stop = journal.receipt("stop-baseline")
+    if stop is None or stage is None:
+        return "RECONCILE_ONLY"
+    before = adapter.ops.baseline(req["baselineCID"])
+    require(stop["evidence"]["baselineCID"] == req["baselineCID"]
+            and stop["evidence"]["status"] == "STOPPED_CLOSED"
+            and config_digest(before) == stop["evidence"]["configSHA256"], "RETAINED_CONFIG_DRIFT")
+    if view["v5-forward"] == "UNCLAIMED":
+        if journal.plan["host"].get("allowNoSendRestore") is not True:
+            return "RECONCILE_ONLY"
+        return recover_no_send(journal, clock, role, adapter, observe, req, before, stop, candidate)
+    require(view["v5-forward"] == "CLAIMED", "FORWARD_INTENT_UNPROVED")
+    ack = journal.receipt("v5-forward")["evidence"]
+
+    def checked_postimage():
+        readback = observe()
+        require(sql_terminal(sql, sql_ledger(journal), ack, readback, int(time.time()), reader=READER)
+                == "ACK_TERMINAL_POSTIMAGE", "RECOVERY_POSTIMAGE_UNPROVED")
+        return readback
+
+    def verify_and_open(cid, target, status):
+        adapter.ops.verify_running(cid, before, target, clock["hardEnd"])
+        require(adapter.verify_preserved(cid) is True, "RESTORE_READBACK_UNPROVED")
+        checked_postimage()
+        open_ordinary(journal, clock, adapter, status)
+
+    if view["accept-candidate"] == "CLAIMED":
+        require(view["start-candidate"] == "CLAIMED" and view["stop-candidate"] == "UNCLAIMED"
+                and view["restore-baseline"] == "UNCLAIMED"
+                and journal.receipt("accept-candidate")["evidence"]["candidateCID"] == candidate
+                and journal.receipt("start-candidate")["evidence"]["candidateCID"] == candidate,
+                "ACCEPTED_CANDIDATE_SEQUENCE_UNPROVED")
+        verify_and_open(candidate, True, "RELEASE_PASS")
+        return "RELEASE_PASS"
+    if view["restore-baseline"] == "CLAIMED":
+        verify_and_open(req["baselineCID"], False, "RELEASE_RECOVERY")
+        return "RELEASE_RECOVERY_VERIFIED"
+
+    require(stopped_digest(adapter.ops, before) == stop["evidence"]["stoppedSHA256"],
+            "EXACT_STOPPED_INSTANCE_UNPROVED")
+    original_stop = adapter.ops.stopped_instance(before)
+    host = RetainedRestore(req, writer, adapter.ops, before, original_stop, candidate)
+    active = adapter.ops.lookup(DEFAULT)
+    if active is not None and active["State"]["Running"]:
+        require(active["Id"] == candidate and view["start-candidate"] == "CLAIMED"
+                and view["stop-candidate"] == "UNCLAIMED"
+                and journal.receipt("start-candidate")["evidence"]["candidateCID"] == candidate
+                and time.time() + REMAINING + 20 < clock["hardEnd"], "ACTIVE_TARGET_CONTAINMENT_UNPROVED")
+        checked_postimage()
+        require(adapter.can_contain(candidate) is True, "ACTIVE_TARGET_CONTAINMENT_UNPROVED")
+        adapter.ops.verify_target(before, candidate)
+        host.start_attempted, host.contain_attempted = True, False
+        host.guard()
+        journal.claim("stop-candidate")
+        require(host.contain() == "STOPPED_CLOSED", "CANDIDATE_CONTAINMENT_UNPROVED")
+        journal.finish("stop-candidate", {"candidateCID": candidate})
+
+    def fresh():
+        readback = observe()
+        evidence = adapter.observe_recovery()
+        return readback, evidence
+
+    result = take_over(host, role, sql, ack, fresh, reader=READER)
+    if result == "BASELINE_CLOSED_HEALTHY":
+        require(adapter.verify_fence() is True and adapter.verify_preserved(req["baselineCID"]) is True,
+                "RESTORE_READBACK_UNPROVED")
+        recovered_readback = checked_postimage()
+        journal.finish("restore-baseline", {"baselineCID": req["baselineCID"],
+                                             "keeper": role, "readback": recovered_readback})
+        open_ordinary(journal, clock, adapter, "RELEASE_RECOVERY")
+        return "RELEASE_RECOVERY"
+    return result
+
+
+def recover_no_send(journal, clock, role, adapter, observe, req, before, stop, candidate):
+    """Optional reviewed branch for a STOP with provably no possible SQL dispatch."""
+    writer = journal.writer
+    immutable = ("v5-forward", "v5-inverse", "start-candidate", "accept-candidate", "stop-candidate")
+    require(all(writer.view()[action] == "UNCLAIMED" for action in immutable)
+            and journal.read("dispatch.claim") is not None
+            and adapter.verify_fence() is True, "NO_SEND_EXCLUSION_UNPROVED")
+    sql = sql_plan(journal)
+    exclusion = {**sql_ledger(journal), "dispatcherExcluded": True}
+
+    def preimage():
+        seen = observe()
+        require(sql_terminal(sql, exclusion, None, seen, int(time.time()), reader=READER)
+                == "NO_SEND_PREIMAGE", "NO_SEND_PREIMAGE_UNPROVED")
+        return seen
+
+    if writer.view()["restore-baseline"] == "UNCLAIMED":
+        require(time.time() + REMAINING < clock["hardEnd"]
+                and stopped_digest(adapter.ops, before) == stop["evidence"]["stoppedSHA256"],
+                "NO_SEND_RESTORE_BUDGET_OR_STOP_DRIFT")
+        original_stop = adapter.ops.stopped_instance(before)
+        host = RetainedRestore(req, writer, adapter.ops, before, original_stop, candidate)
+        staged = adapter.ops.lookup(host.staged)
+        require(staged is not None and staged["Id"] == candidate and not staged["State"]["Running"]
+                and host.observe_closed() == "STOPPED_CLOSED", "NO_SEND_CANDIDATE_UNPROVED")
+        adapter.ops.verify_target(before, candidate)
+        host.guard()
+        evidence = adapter.observe_no_send_recovery()
+        require(adapter.verify_fence() is True, "NO_SEND_EXCLUSION_UNPROVED")
+        seen = preimage()
+        now = int(time.time())
+        require(all(evidence[key] == value for key, value in journal.binding.items())
+                and type(evidence["observedAt"]) is int and 0 <= now - evidence["observedAt"] <= 5
+                and sql_terminal(sql, exclusion, None, seen, now, reader=READER) == "NO_SEND_PREIMAGE"
+                and all(evidence[key] is True for key in ("noSendRestoreReady", "knownWorkDrained",
+                                                           "bClosedSinceStart", "zeroBEffects"))
+                and now + REMAINING < clock["hardEnd"], "NO_SEND_HOST_RESTORE_PROOF_UNBOUND")
+        journal.claim("restore-baseline")
+        require(host.restore() == "STARTED_OWNED", "NO_SEND_BASELINE_START_UNPROVED")
+        adapter.ops.verify_running(req["baselineCID"], before, False, clock["hardEnd"])
+        require(adapter.verify_preserved(req["baselineCID"]) is True, "NO_SEND_BASELINE_READBACK_UNPROVED")
+        journal.finish("restore-baseline", {"baselineCID": req["baselineCID"], "keeper": role,
+                                             "branch": "NO_SEND_PREIMAGE", "readback": preimage()})
+    else:
+        adapter.ops.verify_running(req["baselineCID"], before, False, clock["hardEnd"])
+        require(adapter.verify_preserved(req["baselineCID"]) is True, "NO_SEND_BASELINE_READBACK_UNPROVED")
+        preimage()
+    open_ordinary(journal, clock, adapter, "RELEASE_RECOVERY")
+    return "RELEASE_RECOVERY"
+
+
+def verify_arm(journal):
+    def load(name):
+        return json.loads(read_owned(name, 0o600, dir_fd=journal.writer._ledgerfd))
+
+    armed, intent = load("arm-verified.json"), load("arm.json")
+    require(set(armed) == {"manifestSHA256", "planSHA256", "T"}
+            and HEX64.fullmatch(armed["manifestSHA256"])
+            and armed["planSHA256"] == journal.binding["planSHA256"]
+            and armed["T"] == journal.plan["T"]
+            and all(intent[key] == value for key, value in armed.items()),
+            "SYSTEMD_ARM_READBACK_UNPROVED")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("role", choices=("dispatch", "main", "backup"))
+    parser.add_argument("--plan", required=True, type=Path)
+    parser.add_argument("--sha256", required=True)
+    args = parser.parse_args()
+    try:
+        require(os.geteuid() == 0, "ROOT_SERVICE_REQUIRED")
+        plan = load_plan(args.plan, args.sha256)
+        journal = Journal(plan, args.sha256)
+        clock = joined_binding(plan["T"], BASELINE, TARGET)
+        require(time.time() < clock["hardEnd"], "WINDOW_EXPIRED")
+        import host_adapter
+        from pg_readback import assert_server_identity, observe, run_psql
+
+        with journal.writer:
+            verify_arm(journal)
+            adapter = host_adapter.build({**plan, "planSHA256": args.sha256}, journal.writer)
+
+            def readback():
+                return observe(plan)
+
+            if args.role == "dispatch":
+                wire = forward_wire(journal, clock)
+                def send(sql):
+                    return run_psql(plan["pgReadback"], "postgres", "c01-pg-writer.pgpass",
+                                    guarded_wire(plan["pgReadback"], sql))
+                def verify_writer():
+                    assert_server_identity(plan["pgReadback"], "postgres", "c01-pg-writer.pgpass")
+                status = dispatch(journal, clock, adapter, readback, send, wire, verify_writer)
+            else:
+                status = takeover(journal, clock, args.role, adapter, readback)
+        print(json.dumps({"status": status}))
+    except Exception as error:
+        # The local durable ledger carries the phase; never emit transport stderr or business IDs.
+        reason = str(error) if type(error) is ValueError and re.fullmatch(r"[A-Z_]{3,64}", str(error)) else None
+        print(json.dumps({"status": "RECONCILE_ONLY", "category": type(error).__name__, "reason": reason}))
+        return 1
+    return int(status == "RECONCILE_ONLY")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

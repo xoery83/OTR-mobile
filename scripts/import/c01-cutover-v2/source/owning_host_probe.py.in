@@ -1,0 +1,532 @@
+"""Read-only C01 Host phase observer. Run as the fixed HostAdapter stdin program."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+import sys
+import time
+
+LEDGER = Path("/var/lib/otr/root2-c01-maintenance")
+OBSERVER_ROOT = Path("/run/otr/root2-c01-keep-v5-observer")
+WRITER = Path("/run/lock/otr-universal-finite-service.lock")
+TASK = Path("@TASK_STORE_PATH@")
+PDF = Path("/var/lib/otr/universal-pdf-stage")
+CUSTODY = Path("/var/lib/otr/universal-custody")
+CAPTURE_CUSTODY = Path("/var/lib/otr/capture-custody")
+CADDY = Path("/run/caddy-admin/admin.sock")
+BASELINE = "@BASELINE_CONTAINER_ID@"
+TARGET = "@V2_TARGET_IMAGE_ID@"
+DOCKER = ["/usr/bin/docker", "--host", "unix:///run/docker.sock"]
+SYSTEMD = "/usr/bin/systemctl"
+PYTHON = "/usr/bin/python3"
+SAFE_ENV = {"PATH": "/usr/bin:/bin", "LC_ALL": "C", "DOCKER_CONFIG": "/proc/self/fd"}
+PHASES = {"preflight", "drain", "preservation", "contain", "recovery", "no-send-recovery", "reopen"}
+DRAIN = {"publicFence", "localIngressFenced", "relaunchExcluded", "requestTerminals",
+         "sameStoreHolders", "asyncWorkTerminal", "freshIdentity"}
+HEX64 = re.compile(r"[0-9a-f]{64}")
+TASK_GUARD_SHA256 = "5a29c13c3fbbf351fac6c060972f8accd223a5e1776656bd054e63162a64e20a"
+LEGACY = "de84ec2637cf01aba03517a2344783f1bfa15026059c27157d90db5f5f36e70f"
+COUNTS = ("acceptedRequests", "asyncWriters", "pdfClients", "providerEffects", "sourceEffects",
+          "unboundLaunchers", "uncontrolledPrivilegedClients", "externalStoreWriters")
+
+
+def require(check, reason):
+    if not check:
+        raise ValueError(reason)
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                      allow_nan=False).encode()
+
+
+def private(path, mode, limit=262144):
+    path = Path(path)
+    require(path.is_absolute() and path.resolve() == path, "UNSAFE_HOST_EVIDENCE_PATH")
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, "rb") as stream:
+        info = os.fstat(stream.fileno())
+        require(stat.S_ISREG(info.st_mode) and (info.st_uid, info.st_gid) == (0, 0)
+                and info.st_nlink == 1 and stat.S_IMODE(info.st_mode) == mode
+                and info.st_size <= limit, "UNSAFE_HOST_EVIDENCE_FILE")
+        value = stream.read(limit + 1)
+    require(len(value) <= limit, "HOST_EVIDENCE_TOO_LARGE")
+    return value
+
+
+def identity(path):
+    row = path.stat()
+    return [row.st_dev, row.st_ino]
+
+
+def proc_start(pid):
+    require(type(pid) is int and pid > 1, "HOST_PID_UNCONFIRMED")
+    return int((Path("/proc") / str(pid) / "stat").read_text().rsplit(")", 1)[1].split()[19])
+
+
+def metadata(path):
+    row = path.lstat()
+    require(not stat.S_ISLNK(row.st_mode), "PROTECTED_PATH_SYMLINK")
+    return [row.st_dev, row.st_ino, row.st_uid, row.st_gid, row.st_mode,
+            row.st_nlink, row.st_size, row.st_mtime_ns, row.st_ctime_ns]
+
+
+class Observer:
+    def __init__(self, phase, execution, lease, plan_sha):
+        self.phase = phase
+        self.binding = {"executionId": execution, "leaseId": lease, "planSHA256": plan_sha}
+        self.ledger = LEDGER / execution
+        self.companion = OBSERVER_ROOT / execution
+        self.deadline = time.monotonic() + 4.7
+        raw = private(self.ledger / "plan.json", 0o400)
+        require(digest(raw) == plan_sha, "HOST_PLAN_DRIFT")
+        self.plan = json.loads(raw)
+        require(self.plan["executionId"] == execution and self.plan["leaseId"] == lease
+                and self.plan["project"] == "@DEV_PROJECT_REF@", "HOST_PLAN_BINDING_UNCONFIRMED")
+        self.host = self.plan["host"]
+        require(self.host["baselineCID"] == BASELINE, "HOST_BASELINE_DRIFT")
+        self.context = self.host.get("owningProbe")
+        require(isinstance(self.context, dict), "OWNING_PHASE_CONTROL_BINDING_UNBOUND")
+        require(self.context.get("windowStartEpoch") == self.plan["T"], "HOST_PROOF_WINDOW_DRIFT")
+        self.assert_identity()
+
+    def assert_identity(self):
+        require(self.plan["lock"] == {"path": str(WRITER), "identity": identity(WRITER)}
+                and self.plan["ledger"] == {"path": str(self.ledger), "identity": identity(self.ledger)}
+                and self.context.get("bootId") == Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+                and self.plan["T"] <= time.time() < self.plan["T"] + 1200,
+                "HOST_WINDOW_IDENTITY_DRIFT")
+
+    def run(self, argv, payload=None):
+        remaining = self.deadline - time.monotonic()
+        require(remaining > 0.15, "HOST_PHASE_DEADLINE")
+        result = subprocess.run(argv, input=payload, capture_output=True, check=False,
+                                env=SAFE_ENV, timeout=min(remaining, 2.0))
+        require(result.returncode == 0 and len(result.stdout) <= 1048576,
+                "HOST_OBSERVER_COMMAND_UNCONFIRMED")
+        return result.stdout
+
+    def unit(self, name):
+        require(re.fullmatch(r"[A-Za-z0-9_.@-]{1,110}\.service", name), "UNSAFE_HOST_UNIT")
+        raw = self.run([SYSTEMD, "show", name,
+                        "--property=Id,LoadState,ActiveState,UnitFileState,MainPID,ControlGroup,Restart"])
+        return dict(line.split("=", 1) for line in raw.decode().splitlines() if "=" in line)
+
+    def caddy(self):
+        meta = CADDY.lstat()
+        require(stat.S_ISSOCK(meta.st_mode) and self.context.get("caddySocketIdentity") ==
+                [meta.st_dev, meta.st_ino], "CADDY_ADMIN_SOCKET_DRIFT")
+        # Curl emits Caddy's response trailer separately from the private config body.
+        remaining = self.deadline - time.monotonic()
+        require(remaining > 0.25, "HOST_PHASE_DEADLINE")
+        response = subprocess.run(
+            ["/usr/bin/curl", "--disable", "--silent", "--fail", "--noproxy", "*",
+             "--unix-socket", str(CADDY), "--max-time", "2", "--max-filesize", "1048576",
+             "--dump-header", "/dev/stderr", "http://localhost/config/"],
+            capture_output=True, check=False, env=SAFE_ENV, timeout=min(remaining, 2.2))
+        require(response.returncode == 0 and len(response.stdout) <= 1048576,
+                "CADDY_READBACK_UNCONFIRMED")
+        tag = 2166136261
+        for byte in response.stdout:
+            tag = ((tag ^ byte) * 16777619) & 0xffffffff
+        tags = re.findall(rb"^etag:\s*(.+?)\r?$", response.stderr, re.M | re.I)
+        aperture = self.host["aperture"]
+        expected = (self.host["caddyFence"]["before"] if self.phase == "preflight"
+                    else aperture["scopedSHA256"] if self.phase == "reopen" else aperture["fullSHA256"])
+        require(tags == [f'"/config/ {tag:08x}"'.encode()]
+                and identity(CADDY) == self.context["caddySocketIdentity"]
+                and digest(canonical(json.loads(response.stdout))) == expected,
+                "CADDY_FENCE_OR_PREIMAGE_DRIFT")
+
+    def container(self, name):
+        row, = json.loads(self.run([*DOCKER, "inspect", "--type", "container", name]))
+        require(row["Id"] == name or row["Name"] == "/" + name, "DOCKER_IDENTITY_DRIFT")
+        return row
+
+    def live_backend(self, row):
+        pid = row["State"]["Pid"]
+        start = proc_start(pid)
+        proc = Path("/proc") / str(pid)
+        require(row["HostConfig"]["NetworkMode"] == "host"
+                and row["State"]["Running"] is True and row["State"]["Health"]["Status"] == "healthy"
+                and identity(proc / "ns/net") == identity(Path("/proc/self/ns/net")), "HOST_BACKEND_DRIFT")
+        expected = self.context.get("taskIdentity")
+        require(identity(TASK) == expected, "TASK_STORE_IDENTITY_DRIFT")
+        fds, task_matches = set(), 0
+        for fd in (proc / "fd").iterdir():
+            try:
+                if identity(fd) == expected:
+                    task_matches += 1
+                match = re.fullmatch(r"socket:\[(\d+)\]", os.readlink(fd))
+                if match:
+                    fds.add(match[1])
+            except FileNotFoundError:
+                continue
+        listeners = []
+        for family in ("tcp", "tcp6"):
+            for line in (proc / "net" / family).read_text().splitlines()[1:]:
+                fields = line.split()
+                host, port = fields[1].split(":")
+                if port.upper() == "2253" and fields[3] == "0A":
+                    listeners.append((family, host, fields[9] in fds))
+        require(listeners == [("tcp", "0100007F", True)] and task_matches >= 1
+                and proc_start(pid) == start and identity(TASK) == expected,
+                "EXACT_LISTENER_OR_TASK_FD_UNPROVED")
+        return [pid, start]
+
+    def baseline(self):
+        row = self.container("otr-dev-backend")
+        mounts = sorted((tuple(m.get(k) for k in ("Source", "Destination", "RW", "Type", "Propagation"))
+                         for m in row["Mounts"]), key=lambda mount: mount[1])
+        sha = digest(canonical({"config": row["Config"], "hostConfig": row["HostConfig"], "mounts": mounts}))
+        require(row["Id"] == BASELINE and sha == self.host["baselineFingerprintSHA256"]
+                and row["State"]["StartedAt"] == self.host["baselineStartedAt"]
+                and self.live_backend(row) == self.context.get("baselinePidStart"),
+                "BASELINE_HOST_PREIMAGE_DRIFT")
+        return row
+
+    def relaunch(self):
+        daemon = self.unit("docker.service")
+        require(daemon["ActiveState"] == "active" and
+                [int(daemon["MainPID"]), proc_start(int(daemon["MainPID"]))] ==
+                self.context.get("dockerDaemonPidStart"), "DOCKER_DAEMON_IDENTITY_DRIFT")
+        units = self.context.get("launcherUnits")
+        require(isinstance(units, list) and len(units) <= 8 and len(set(units)) == len(units),
+                "OWNING_RELAUNCH_INVENTORY_UNBOUND")
+        for name in units:
+            state = self.unit(name)
+            require(state["Id"] == name and state["LoadState"] == "masked"
+                    and state["ActiveState"] == "inactive" and state["MainPID"] == "0",
+                    "REGISTERED_RELAUNCHER_NOT_MASKED")
+        timers = self.run([SYSTEMD, "list-units", "--plain", "--all", "--no-legend",
+                           "--type=timer", "--state=active"])
+        require(not any(line.strip().startswith((b"otr-mcp-", b"otr-auth-", b"otr-universal-finite-"))
+                        for line in timers.splitlines()), "RELATED_RUNTIME_TIMER_ACTIVE")
+
+    def direct_ingress(self):
+        gate = self.host["aperture"]
+        require(isinstance(gate, dict) and type(gate.get("caddyUid")) is int and gate["caddyUid"] > 0,
+                "LIVE_8787_EXCLUSION_CONTROL_UNBOUND")
+        unit = self.unit("caddy.service")
+        pid = int(unit["MainPID"])
+        require(unit["ActiveState"] == "active" and unit["Restart"] == "no" and [pid, proc_start(pid)] == gate.get("caddyPidStart")
+                and unit["ControlGroup"] == "/" + gate["caddyCgroup"]
+                and (Path("/proc") / str(pid)).stat().st_uid == gate["caddyUid"],
+                "CADDY_ALLOWED_IDENTITY_DRIFT")
+        self.caddy_uid_isolated(gate["caddyUid"], unit["ControlGroup"])
+        table = "otr_c01_keep_v5"
+        if self.phase == "preflight":
+            raw = self.run(["/usr/sbin/nft", "-j", "list", "tables"])
+            require(not any(item.get("table",{}).get("name") == table
+                            and item["table"].get("family") == "inet"
+                            for item in json.loads(raw)["nftables"]), "C01_APERTURE_TABLE_ALREADY_PRESENT")
+            return
+        raw = self.run(["/usr/sbin/nft", "-j", "-s", "list", "table", "inet", table])
+        rows = [row for row in json.loads(raw)["nftables"] if "metainfo" not in row]
+        for row in rows:
+            for value in row.values():
+                value.pop("handle", None)
+        require(digest(canonical(rows)) == gate["nftSHA256"], "LIVE_8787_EXCLUSION_RULE_UNPROVED")
+
+    @staticmethod
+    def caddy_uid_isolated(uid, group):
+        require(group.startswith("/") and group.endswith("/caddy.service"), "CADDY_UNIT_CGROUP_UNBOUND")
+        for proc in Path("/proc").iterdir():
+            if not proc.name.isdigit():
+                continue
+            try:
+                if proc.stat().st_uid == uid:
+                    require((proc / "cgroup").read_text().strip() == "0::" + group,
+                            "CADDY_UID_HAS_OTHER_CALLER")
+            except FileNotFoundError:
+                continue
+
+    def activity(self):
+        reader = self.context.get("owningActivityReader")
+        require(isinstance(reader, dict) and set(reader) == {"path", "sha256"}
+                and isinstance(reader["sha256"], str) and HEX64.fullmatch(reader["sha256"]),
+                "OWNING_REQUEST_TERMINAL_SOURCE_UNBOUND")
+        payload = private(reader["path"], 0o400)
+        require(digest(payload) == reader["sha256"], "OWNING_ACTIVITY_READER_DRIFT")
+        observed = json.loads(self.run(
+            [PYTHON, "-I", "-B", "-", self.phase, self.binding["executionId"],
+             self.binding["leaseId"], self.binding["planSHA256"]], payload))
+        require(activity_bound(observed, self.binding, self.phase, self.context, int(time.time())),
+                "OWNING_REQUEST_TERMINAL_EVIDENCE_UNPROVED")
+        if self.phase == "preflight":
+            require(legacy_pg_preimage_bound(observed, self.context.get("legacyPGPreimageSHA256")),
+                    "C01_LEGACY_PG_PREIMAGE_UNPROVED")
+        else:
+            require(legacy_pg_fence_bound(observed, self.host["aperture"]["legacyPGFenceSHA256"]),
+                    "C01_LEGACY_PG_PDF_EXCLUSION_UNPROVED")
+        return observed
+
+    def task_pdf_digest(self):
+        armed = json.loads(private(self.ledger / "arm-verified.json", 0o600))
+        arm = json.loads(private(self.ledger / "arm.json", 0o600))
+        require(arm == armed and armed["planSHA256"] == self.binding["planSHA256"]
+                and armed["T"] == self.plan["T"] and HEX64.fullmatch(armed["manifestSHA256"]),
+                "TASK_GUARD_ARM_BINDING_UNPROVED")
+        raw = guard_payload(self.context.get("taskGuard"), self.companion)
+        return self.protected_snapshot(raw, self.context["taskIdentity"])
+
+    def protected_snapshot(self, guard, expected):
+        before = self.pdf_metadata()
+        task = json.loads(self.run([PYTHON, "-I", "-B", "-"], guard + b"\n" +
+                                   task_program(TASK, expected)))
+        require(self.pdf_metadata() == before, "PDF_PROTECTED_METADATA_DRIFT")
+        roots = {str(path): metadata(path)[:5] for path in (PDF, CUSTODY, CAPTURE_CUSTODY)}
+        return digest(canonical({"task": task, "pdf": before, "custody": roots}))
+
+    @staticmethod
+    def pdf_metadata():
+        entries = sorted(PDF.iterdir(), key=lambda path: path.name)
+        require(len(entries) <= 32, "PDF_PROTECTED_ENTRIES_OUT_OF_SCOPE")
+        result = {}
+        for item in entries:
+            require(re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", item.name),
+                    "PDF_PROTECTED_ENTRY_UNBOUND")
+            value = metadata(item)
+            require(stat.S_ISREG(value[4]) and value[5] == 1, "PDF_PROTECTED_ENTRY_UNSAFE")
+            result[item.name] = value
+        return result
+
+    def journal_receipt(self, action):
+        path = self.ledger / (action + ".intent")
+        receipt = self.ledger / (action + ".receipt")
+        if not path.exists() and not receipt.exists():
+            return None
+        expect = digest(canonical([self.binding["planSHA256"], action]))
+        require(private(path, 0o600) == (expect + "\n").encode(),
+                "HOST_ACTION_INTENT_DRIFT")
+        value = json.loads(private(receipt, 0o600))
+        require(value.get("action") == action and value.get("actionSHA256") == expect
+                and all(value.get(key) == want for key, want in self.binding.items())
+                and type(value.get("observedAt")) is int
+                and self.plan["T"] <= value["observedAt"] <= time.time(),
+                "HOST_ACTION_RECEIPT_DRIFT")
+        return value["evidence"]
+
+    def no_backend_listener(self):
+        for family in ("tcp", "tcp6"):
+            for line in (Path("/proc/net") / family).read_text().splitlines()[1:]:
+                fields = line.split()
+                require(not (fields[1].endswith(":2253") and fields[3] == "0A"),
+                        "UNEXPECTED_8787_LISTENER_AFTER_STOP")
+
+    def stopped_baseline(self, receipt):
+        row = self.container(BASELINE)
+        state = row["State"]
+        stopped = [state[key] for key in ("StartedAt", "FinishedAt", "ExitCode")]
+        config = {key: row[key] for key in ("Id", "Image", "Config", "HostConfig")}
+        config["Mounts"] = sorted(row["Mounts"], key=lambda mount: mount["Destination"])
+        wire = lambda value: json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+        require(state["Running"] is False and state["Pid"] == 0
+                and receipt["baselineCID"] == row["Id"] == BASELINE
+                and receipt["status"] == "STOPPED_CLOSED"
+                and receipt["startedAt"] == state["StartedAt"] == self.host["baselineStartedAt"]
+                and receipt["finishedAt"] == state["FinishedAt"]
+                and receipt["stoppedSHA256"] == digest(wire(stopped))
+                and receipt["configSHA256"] == digest(wire(config)), "STOP_TERMINAL_IDENTITY_DRIFT")
+        self.no_backend_listener()
+
+    def phase_result(self):
+        self.caddy()
+        self.direct_ingress()
+        self.relaunch()
+        observed = self.activity()
+        require(self.task_pdf_digest() == self.context.get("protectedHostSHA256")
+                and observed["protectedPgSHA256"] == self.context.get("protectedPgSHA256"),
+                "PROTECTED_TASK_PDF_STATE_DRIFT")
+        self.assert_identity()
+        require(time.monotonic() < self.deadline, "HOST_PHASE_DEADLINE")
+        if self.phase == "preflight":
+            require(self.journal_receipt("stop-baseline") is None, "BASELINE_ALREADY_STOPPED")
+            self.baseline()
+            return {"ready": True}
+        if self.phase == "drain":
+            stop = self.journal_receipt("stop-baseline")
+            if stop is None:
+                self.baseline()
+            else:
+                self.stopped_baseline(stop)
+            return {"drain": {key: True for key in DRAIN}}
+        if self.phase in {"preservation", "contain", "reopen"}:
+            row = self.container("otr-dev-backend")
+            if row["Id"] != BASELINE:
+                stage = self.journal_receipt("stage-candidate")
+                require(stage is not None and stage["candidateCID"] == row["Id"] and
+                        row["Image"] == TARGET, "CANDIDATE_BINDING_UNPROVED")
+            require(observed["observedCID"] == row["Id"], "OWNING_CONTAINER_EVIDENCE_DRIFT")
+            if self.phase in {"preservation", "reopen"}:
+                self.live_backend(row)
+                require(HEX64.fullmatch(self.context.get("ordinaryReadSHA256", ""))
+                        and observed["ordinaryReadSHA256"] == self.context["ordinaryReadSHA256"],
+                        "ORDINARY_OLD_READ_UNBOUND")
+                return {"cid": row["Id"], "preserved": True, "ordinaryRead": True}
+            return {"cid": row["Id"], "canContain": True}
+        return self.recovery(observed)
+
+    def recovery(self, observed):
+        def action(name):
+            path = self.ledger / (name + ".intent")
+            return path.exists()
+
+        before = self.container(BASELINE)
+        require(before["State"]["Running"] is False and not action("accept-candidate")
+                and not action("v5-inverse"), "RECOVERY_BASELINE_OR_INTENT_DRIFT")
+        stop = self.journal_receipt("stop-baseline")
+        stage = self.journal_receipt("stage-candidate")
+        require(stop is not None and stage is not None, "RECOVERY_LEDGER_EVIDENCE_DRIFT")
+        self.stopped_baseline(stop)
+        target = self.container(stage["candidateCID"])
+        require(target["Image"] == TARGET and target["State"]["Running"] is False
+                and stop["baselineCID"] == BASELINE
+                and observed["observedCID"] == target["Id"], "RECOVERY_CONTAINMENT_UNPROVED")
+        proof = {"knownWorkDrained": True, "bClosedSinceStart": True, "zeroBEffects": True}
+        if self.phase == "no-send-recovery":
+            require(not action("v5-forward"), "NO_SEND_INTENT_UNPROVED")
+            return {**proof, "noSendRestoreReady": True}
+        return {**proof, "targetFailureTerminal": True, "candidateContained": True,
+                "baselineRestoreReady": True, "noUnknownHostAction": True,
+                "durableAcceptance": "NOT_ACCEPTED", "inverseIntent": "UNCLAIMED",
+                "legacyCompatibilitySHA256": LEGACY}
+
+
+def legacy_pg_preimage_bound(row, expected):
+    proof = row.get("legacyPGPreimage")
+    pins = {"roleMatrixSHA256", "controlPreimageSHA256", "pdfPinsSHA256"}
+    return (isinstance(proof, dict) and proof.keys() == pins
+            and all(isinstance(value, str) and HEX64.fullmatch(value) for value in proof.values())
+            and digest(canonical(proof)) == row.get("legacyPGPreimageSHA256") == expected)
+
+
+def legacy_pg_fence_bound(row, expected):
+    proof = row.get("legacyPGFence")
+    if not isinstance(proof, dict):
+        return False
+    pins = ("roleMatrixSHA256", "controlSHA256", "pdfPinsSHA256")
+    required = {
+        "directSource": "DENIED",
+        "directModelTask": "DENIED",
+        "heldPool": "DENIED",
+        "freshPool": "DENIED",
+        "recheckoutPool": "DENIED",
+        "pdfA": "RECLAIM_AND_FINALIZE_DENIED",
+        "pdfB": "RECLAIM_AND_FINALIZE_DENIED",
+        "noAdmittedOrPreparedWork": True,
+    }
+    return (proof.keys() == {*pins, *required}
+            and all(isinstance(proof[key], str) and HEX64.fullmatch(proof[key]) for key in pins)
+            and proof["noAdmittedOrPreparedWork"] is True
+            and all(proof[key] == value for key, value in required.items())
+            and digest(canonical(proof)) == row.get("legacyPGFenceSHA256") == expected)
+
+
+def activity_bound(row, binding, phase, context, now):
+    if not isinstance(row, dict):
+        return False
+    stamp = row.get("observedAt")
+    if not (all(row.get(key) == value for key, value in binding.items())
+            and row.get("phase") == phase
+            and type(stamp) is int and 0 <= now - stamp <= 4
+            and isinstance(context.get("launcherInventorySHA256"), str)
+            and HEX64.fullmatch(context["launcherInventorySHA256"])
+            and row.get("launcherInventorySHA256") == context["launcherInventorySHA256"]
+            and isinstance(row.get("protectedPgSHA256"), str)
+            and HEX64.fullmatch(row["protectedPgSHA256"])):
+        return False
+    if phase == "preflight":
+        return row.get("activityAuthority") == "BASELINE_READ_ONLY"
+    return (row.get("terminalAuthority") == "BACKEND_REQUEST_TERMINAL_WATERMARK"
+            and type(row.get("acceptedSequence")) is int and row["acceptedSequence"] >= 0
+            and row.get("terminalSequence") == row["acceptedSequence"]
+            and type(row.get("terminalSequence")) is int
+            and type(row.get("coverageStartEpoch")) is int
+            and row["coverageStartEpoch"] <= context.get("windowStartEpoch", -1)
+            and row.get("bScope") == "CLOSED_THROUGH_WINDOW"
+            and all(type(row.get(key)) is int and row[key] == 0 for key in COUNTS))
+
+
+def guard_payload(binding, companion):
+    path = companion / "task_os_readonly.py"
+    require(binding == {"path": str(path), "sha256": TASK_GUARD_SHA256},
+            "TASK_READ_GUARD_BINDING_UNBOUND")
+    raw = private(path, 0o400)
+    require(digest(raw) == TASK_GUARD_SHA256, "TASK_READ_GUARD_DRIFT")
+    return raw
+
+
+def preimage_main(execution, device, inode):
+    require(os.geteuid() == 0 and re.fullmatch(r"[0-9a-f]{32}", execution)
+            and device.isdigit() and inode.isdigit(), "EXACT_HOST_PROBE_REQUIRED")
+    companion = OBSERVER_ROOT / execution
+    raw = guard_payload({"path": str(companion / "task_os_readonly.py"),
+                         "sha256": TASK_GUARD_SHA256}, companion)
+    probe = object.__new__(Observer)
+    probe.deadline = time.monotonic() + 4.7
+    value = probe.protected_snapshot(raw, [int(device), int(inode)])
+    print(json.dumps({"protectedHostSHA256": value, "status": "HOST_POINT_PREIMAGE_ONLY"}))
+
+
+def task_program(path, expected):
+    return (f"\npath=Path({str(path)!r})\nexpected={expected!r}\n" + '''
+import hashlib
+import json
+before = identities(path)
+if list(before[""][:2]) != expected:
+    raise ValueError("TASK_INODE_DRIFT")
+restrict_file_writes()
+with sqlite3.connect(path.as_uri()+"?mode=ro", uri=True, timeout=0.5) as conn:
+    conn.execute("PRAGMA query_only=ON")
+    conn.execute("BEGIN")
+    if conn.execute("PRAGMA user_version").fetchone() != (74,):
+        raise ValueError("TASK_SCHEMA_DRIFT")
+    digest = hashlib.sha256()
+    for query in (
+        "SELECT * FROM intelligence_continuations ORDER BY account_id,task_id LIMIT 4097",
+        "SELECT * FROM intelligence_continuation_attempts ORDER BY account_id,task_id,attempt_id LIMIT 4097",
+        """SELECT * FROM sync_operations WHERE entity_type='INTELLIGENCE_CONTINUATION'
+        AND operation_type='INTELLIGENCE_CONTINUATION_WAKE' ORDER BY owner_user_id,id LIMIT 4097""",
+    ):
+        digest.update(query.encode())
+        for count, row in enumerate(conn.execute(query), start=1):
+            if count > 4096:
+                raise ValueError("TASK_PROTECTED_ROWS_OUT_OF_SCOPE")
+            fields = [v.hex() if isinstance(v,bytes) else v for v in row]
+            digest.update(json.dumps([fields, [type(v).__name__ for v in row]],
+                                     separators=(",", ":"), allow_nan=False).encode())
+            digest.update(b"\\n")
+    conn.rollback()
+if identities(path) != before:
+    raise ValueError("TASK_SIDECAR_IDENTITY_DRIFT")
+print(json.dumps({"digest":digest.hexdigest(), "identity":before}))
+''').encode()
+
+
+def main():
+    phase, execution, lease, plan = sys.argv[1:]
+    if phase == "snapshot-preimage":
+        preimage_main(execution, lease, plan)
+        return
+    require(os.geteuid() == 0 and phase in PHASES and re.fullmatch(r"[0-9a-f]{32}", execution)
+            and re.fullmatch(r"[0-9a-f]{32}", lease) and HEX64.fullmatch(plan), "EXACT_HOST_PROBE_REQUIRED")
+    binding = {"executionId": execution, "leaseId": lease, "planSHA256": plan, "phase": phase}
+    try:
+        evidence = Observer(phase, execution, lease, plan).phase_result()
+    except (KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError) as error:
+        reason = str(error) if type(error) is ValueError and re.fullmatch(r"[A-Z0-9_]+", str(error)) else type(error).__name__
+        evidence = {"ready": False, "preserved": False, "ordinaryRead": False, "canContain": False,
+                    "drain": {key: False for key in DRAIN}, "reason": reason}
+    print(json.dumps({**binding, **evidence, "observedAt": int(time.time())}, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

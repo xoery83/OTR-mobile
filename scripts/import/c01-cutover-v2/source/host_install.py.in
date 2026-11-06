@@ -1,0 +1,500 @@
+#!/usr/bin/python3
+"""Install and arm only the reviewed C01 DEV window. Run on the designated Linux host."""
+import argparse
+from contextlib import contextmanager
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import stat
+import subprocess
+import sys
+import time
+
+RUNTIME = Path("/run/otr/root2-c01-keep-v5")
+LEDGER = Path("/var/lib/otr/root2-c01-maintenance")
+LOCK = Path("/run/lock/otr-universal-finite-service.lock")
+JOIN = Path("c01-nov06-b-joined-seal")
+DISPATCHER = JOIN / "recovery_service/dispatcher.py"
+REQUIRED_FILES = (
+    DISPATCHER, JOIN / "keeper_systemd_binding.py",
+    Path("c01-nov06-b-image-only-offline/controls.py"),
+    Path("c01-nov06-b-release-062a4903/writer_lease_binding_v5.py"),
+    Path("mcp-fresh-3586-qualification/static/c02-timers.py"),
+)
+OFFSETS = {"main": 780, "backup": 810, "dispatch": 0}
+BUDGETS = {"main": 420, "backup": 390, "dispatch": 770}
+SYSTEMCTL = "/usr/bin/systemctl"
+SYSTEMD_RUN = "/usr/bin/systemd-run"
+PYTHON = "/usr/bin/python3"
+MARGIN = 120
+PROJECT = "@DEV_PROJECT_REF@"
+sys.dont_write_bytecode = True
+
+
+def require(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def valid_sha(value):
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+
+
+def identity(value):
+    return [value.st_dev, value.st_ino]
+
+
+def stable_path(path):
+    require(path.is_absolute() and path.resolve() == path, "EXACT_ABSOLUTE_PATH_REQUIRED")
+    return path
+
+
+def private_directory(path):
+    stable_path(path)
+    info = path.lstat()
+    require(stat.S_ISDIR(info.st_mode) and (info.st_uid, info.st_gid) == (0, 0)
+            and stat.S_IMODE(info.st_mode) == 0o700, "ROOT_PRIVATE_DIRECTORY_REQUIRED")
+    return identity(info)
+
+
+def private_file(path, modes):
+    stable_path(path)
+    info = path.lstat()
+    require(stat.S_ISREG(info.st_mode) and (info.st_uid, info.st_gid) == (0, 0)
+            and info.st_nlink == 1 and stat.S_IMODE(info.st_mode) in modes,
+            "ROOT_PRIVATE_REGULAR_FILE_REQUIRED")
+
+
+def persist_directory(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def create_directory(path, *, fresh=False):
+    stable_path(path)
+    try:
+        path.mkdir(mode=0o700)
+        persist_directory(path.parent)
+    except FileExistsError:
+        require(not fresh, "WINDOW_PATH_ALREADY_EXISTS")
+    return private_directory(path)
+
+
+def exclusive(path, raw, mode=0o400):
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)
+    with os.fdopen(fd, "wb") as file:
+        file.write(raw)
+        file.flush()
+        os.fsync(file.fileno())
+    persist_directory(path.parent)
+
+
+@contextmanager
+def writer():
+    fd = os.open(stable_path(LOCK), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        current = os.fstat(fd)
+        require(stat.S_ISREG(current.st_mode) and current.st_uid == 0
+                and current.st_nlink == 1 and stat.S_IMODE(current.st_mode) & 0o022 == 0
+                and identity(current) == identity(LOCK.lstat()), "WRITER_IDENTITY_UNCONFIRMED")
+        yield identity(current)
+    finally:
+        os.close(fd)
+
+
+def pinned(path, expected):
+    require(valid_sha(expected), "EXACT_SHA256_REQUIRED")
+    raw = stable_path(path).read_bytes()
+    require(sha(raw) == expected, "PINNED_FILE_DRIFT")
+    return raw
+
+
+def manifest(raw):
+    value = json.loads(raw)
+    require(isinstance(value, dict) and set(value) == {"version", "files"}
+            and value["version"] == "otr.c01.keep-v5.bundle/1"
+            and isinstance(value["files"], dict), "EXACT_MANIFEST_REQUIRED")
+    files = value["files"]
+    require(all(str(path) in files for path in REQUIRED_FILES), "MANIFEST_ENTRYPOINT_REQUIRED")
+    for name, digest in files.items():
+        item = Path(name)
+        require(not item.is_absolute() and len(item.parts) >= 2 and str(item) == name
+                and all(re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", part) for part in item.parts)
+                and item.suffix in {".py", ".sql", ".json"} and valid_sha(digest),
+                "MANIFEST_FILE_SCOPE_REFUSED")
+    return files
+
+
+def plan(raw, execution_id, lock_identity, ledger):
+    value = json.loads(raw)
+    require(value["version"] == "otr.c01.keep-v5.service/2"
+            and value["project"] == PROJECT
+            and value["executionId"] == execution_id and type(value["T"]) is int
+            and 0 < value["T"] < 4102444800
+            and value["lock"] == {"path": str(LOCK), "identity": lock_identity}
+            and value["ledger"] == {"path": str(ledger), "identity": private_directory(ledger)},
+            "EXACT_WINDOW_PLAN_REQUIRED")
+    return value
+
+
+def credentials(config):
+    reader = Path(config["pgReadback"]["credentialSourceFile"])
+    writer_file = Path(config["sql"]["forwardPassFile"])
+    require(reader != writer_file, "INDEPENDENT_PG_READER_CREDENTIAL_REQUIRED")
+    for file in (reader, writer_file):
+        private_file(file, {0o400, 0o600})
+        require(re.fullmatch(r"/[A-Za-z0-9_./-]+", str(file)) is not None,
+                "CREDENTIAL_PATH_REFUSED")
+    return reader, writer_file
+
+
+def unit_name(role):
+    return "otr-c01-keep-v5-" + role
+
+
+def unit_argv(role, runtime, plan_path, plan_sha):
+    return [PYTHON, "-B", str(runtime / "payload" / DISPATCHER), role,
+            "--plan", str(plan_path), "--sha256", plan_sha]
+
+
+def call(*args):
+    result = subprocess.run(args, capture_output=True, text=True, timeout=6,
+                            env={"PATH": "/usr/bin:/bin", "LC_ALL": "C", "TZ": "UTC"})
+    require(result.returncode == 0, "SYSTEMD_COMMAND_REFUSED")
+    return result.stdout.strip()
+
+
+def show(unit, prop):
+    return call(SYSTEMCTL, "show", unit, "--property=" + prop, "--value")
+
+
+def timeout_usec(unit):
+    duration = show(unit, "TimeoutStartUSec")
+    scales = {"h": 3600, "min": 60, "s": 1}
+    fields = re.findall(r"([0-9]+)(h|min|s)", duration)
+    require(fields and " ".join(amount + suffix for amount, suffix in fields) == duration,
+            "SYSTEMD_TIMEOUT_UNCONFIRMED")
+    return sum(int(amount) * scales[suffix] for amount, suffix in fields) * 1_000_000
+
+
+def timer_helpers(payload):
+    sys.path.insert(0, str(payload / JOIN))
+    sys.path.insert(0, str(payload / "c01-nov06-b-image-only-offline"))
+    from keeper_systemd_binding import verify_systemd_keeper
+    from controls import timer_tools
+    return verify_systemd_keeper, timer_tools
+
+
+def verify_installed(runtime, manifest_sha):
+    private_directory(runtime)
+    manifest_path = runtime / "manifest.json"
+    private_file(manifest_path, {0o400})
+    files = manifest(pinned(manifest_path, manifest_sha))
+    payload = runtime / "payload"
+    entries = list(payload.rglob("*"))
+    require(not any(item.is_symlink() for item in entries), "INSTALLED_FILE_SET_DRIFT")
+    actual = {str(item.relative_to(payload)) for item in entries if not item.is_dir()}
+    directories = {str(item.relative_to(payload)) for item in entries if item.is_dir()}
+    expected = {str(parent) for name in files for parent in Path(name).parents if parent != Path(".")}
+    require(actual == set(files) and directories == expected, "INSTALLED_FILE_SET_DRIFT")
+    for name, digest in files.items():
+        path = payload / name
+        for directory in path.parents:
+            private_directory(directory)
+            if directory == payload:
+                break
+        private_file(path, {0o400})
+        pinned(path, digest)
+    return files
+
+
+def install(args, runtime, ledger, lock_identity):
+    config_raw = pinned(args.plan, args.plan_sha256)
+    config = plan(config_raw, args.execution_id, lock_identity, ledger)
+    credentials(config)
+    require(not any(ledger.iterdir()), "EXCLUSIVE_LEDGER_REQUIRED")
+    package = stable_path(args.bundle)
+    manifest_raw = pinned(package / "manifest.json", args.manifest_sha256)
+    files = manifest(manifest_raw)
+    for name, digest in files.items():
+        pinned(package / "payload" / name, digest)
+    # Refuse a different pre-existing execution, including a partial install.
+    create_directory(RUNTIME)
+    create_directory(runtime, fresh=True)
+    payload = runtime / "payload"
+    create_directory(payload, fresh=True)
+    exclusive(runtime / "manifest.json", manifest_raw)
+    for name, digest in files.items():
+        target = payload / name
+        for directory in reversed(target.parents):
+            if directory != payload and payload in directory.parents:
+                create_directory(directory)
+        exclusive(target, pinned(package / "payload" / name, digest))
+    exclusive(ledger / "plan.json", config_raw)
+    verify_installed(runtime, args.manifest_sha256)
+    return "INSTALLED_INACTIVE"
+
+
+def clock_bound(config):
+    require(time.time() + MARGIN <= config["T"] <= time.time() + 600,
+            "EXACT_ARM_MARGIN_UNAVAILABLE")
+    require(show("systemd-timesyncd.service", "LoadState") != "error",
+            "SYSTEMD_READBACK_UNAVAILABLE")
+    require(call("/usr/bin/timedatectl", "show", "--property=NTPSynchronized", "--value") == "yes",
+            "HOST_CLOCK_UNCONFIRMED")
+
+
+def credential_properties(role, reader, writer_file):
+    props = ["LoadCredential=c01-pg-reader.pgpass:" + str(reader)]
+    if role == "dispatch":
+        props += ["LoadCredential=c01-pg-writer.pgpass:" + str(writer_file)]
+    else:
+        props += ["InaccessiblePaths=" + str(writer_file)]
+    return props
+
+
+def read_service_credentials(service):
+    unit_path = "/org/freedesktop/systemd1/unit/" + re.sub(
+        r"[^A-Za-z0-9]", lambda ch: "_" + format(ord(ch[0]), "02x"), service)
+    value = json.loads(call("/usr/bin/busctl", "--json=short", "get-property",
+                            "org.freedesktop.systemd1", unit_path,
+                            "org.freedesktop.systemd1.Service", "LoadCredential"))
+    require(value["type"] == "a(ss)", "SYSTEMD_CREDENTIAL_READBACK_MISMATCH")
+    return sorted(value["data"])
+
+
+def verify_units(runtime, plan_path, args, config):
+    reader, writer_file = credentials(config)
+    verify, _ = timer_helpers(runtime / "payload")
+    for role, offset in OFFSETS.items():
+        unit = unit_name(role)
+        service, timer = unit + ".service", unit + ".timer"
+        argv = unit_argv(role, runtime, plan_path, args.plan_sha256)
+        expected_credentials = [["c01-pg-reader.pgpass", str(reader)]]
+        if role == "dispatch":
+            expected_credentials += [["c01-pg-writer.pgpass", str(writer_file)]]
+        else:
+            require(show(service, "InaccessiblePaths") == str(writer_file),
+                    "SYSTEMD_WRITER_CREDENTIAL_VISIBLE_TO_KEEPER")
+        require(read_service_credentials(service) == sorted(expected_credentials),
+                "SYSTEMD_CREDENTIAL_READBACK_MISMATCH")
+        require(verify(show, timeout_usec, unit, (config["T"] + offset) * 1000,
+                       argv, BUDGETS[role])
+                and show(service, "Type") == "oneshot"
+                and show(service, "KillMode") == "control-group"
+                and show(service, "NoNewPrivileges") == "yes"
+                and show(service, "TimeoutStopUSec") == "1s"
+                and show(timer, "AccuracyUSec") == "1us"
+                and show(timer, "Persistent") == "no"
+                and show(timer, "RemainAfterElapse") == "no",
+                "SYSTEMD_UNIT_READBACK_MISMATCH")
+
+
+def arm(args, runtime, ledger, config):
+    clock_bound(config)
+    plan_path = ledger / "plan.json"
+    reader, writer_file = credentials(config)
+    require({x.name for x in ledger.iterdir()} == {"plan.json"}, "WINDOW_ARM_OR_ACTION_ALREADY_RECORDED")
+    for role in OFFSETS:
+        for suffix in (".service", ".timer"):
+            require(show(unit_name(role) + suffix, "LoadState") == "not-found",
+                    "C01_UNIT_ALREADY_PRESENT")
+    _, tools = timer_helpers(runtime / "payload")
+    registration = json.dumps(
+        {"manifestSHA256": args.manifest_sha256, "planSHA256": args.plan_sha256,
+         "T": config["T"]}, sort_keys=True).encode()
+    exclusive(ledger / "arm.json", registration, 0o600)
+    attempted = []
+    try:
+        for role, offset in OFFSETS.items():
+            unit = unit_name(role)
+            attempted.append(unit)
+            call(SYSTEMD_RUN, "--quiet", "--unit=" + unit,
+                 "--on-calendar=" + tools.calendar((config["T"] + offset) * 1000),
+                 "--timer-property=AccuracySec=1us", "--timer-property=Persistent=no",
+                 "--timer-property=RemainAfterElapse=no", "--timer-property=RandomizedDelaySec=0",
+                 "--property=Type=oneshot", "--property=User=root", "--property=Group=root",
+                 "--property=UMask=0077", "--property=Restart=no", "--property=KillMode=control-group",
+                 "--property=NoNewPrivileges=yes", "--property=PrivateTmp=yes",
+                 "--property=ProtectHome=yes", "--property=TimeoutStopSec=1s",
+                 "--property=TimeoutStartSec=" + str(BUDGETS[role]) + "s",
+                 *["--property=" + prop for prop in credential_properties(role, reader, writer_file)],
+                 *unit_argv(role, runtime, plan_path, args.plan_sha256))
+        require(time.time() + 10 < config["T"], "DISPATCH_VERIFICATION_MARGIN_UNAVAILABLE")
+        verify_units(runtime, plan_path, args, config)
+        require(time.time() + 5 < config["T"], "DISPATCH_VERIFICATION_MARGIN_UNAVAILABLE")
+        exclusive(ledger / "arm-verified.json", registration, 0o600)
+    except (AssertionError, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+        if time.time() + 8 < config["T"] and attempted:
+            timers = [u + ".timer" for u in reversed(attempted)
+                      if show(u + ".timer", "LoadState") != "not-found"]
+            if timers:
+                call(SYSTEMCTL, "stop", *timers)
+        raise
+    return "TRANSIENT_UNITS_ARMED_AND_VERIFIED"
+
+
+def verify_arm_record(args, ledger):
+    arm_record = ledger / "arm.json"
+    private_file(arm_record, {0o600})
+    record = json.loads(arm_record.read_bytes())
+    require(record["manifestSHA256"] == args.manifest_sha256
+            and record["planSHA256"] == args.plan_sha256, "ARM_BINDING_DRIFT")
+
+
+def bound_inactive_units(args, runtime, ledger):
+    timers, services = [], []
+    for role in ("dispatch", "main", "backup"):
+        service, timer = unit_name(role) + ".service", unit_name(role) + ".timer"
+        require(show(service, "ActiveState") in {"inactive", "failed"},
+                "ACTIVE_EXECUTOR_RETAIN_RECOVERY")
+        loaded = show(service, "LoadState") != "not-found"
+        if show(timer, "LoadState") != "not-found":
+            require(loaded and show(timer, "Unit") == service, "UNBOUND_TIMER_RETAIN_RECOVERY")
+            timers.append(timer)
+        if loaded:
+            installed = re.findall(r"argv\[\]=([^;]+);", show(service, "ExecStart"))
+            expected = unit_argv(role, runtime, ledger / "plan.json", args.plan_sha256)
+            require(len(installed) == 1 and shlex.split(installed[0]) == expected,
+                    "UNBOUND_EXECUTOR_RETAIN_RECOVERY")
+            services.append(service)
+    return timers, services
+
+
+def remove_runtime(args, runtime, ledger, files):
+    timers, services = bound_inactive_units(args, runtime, ledger)
+    if (ledger / "arm.json").exists():
+        verify_arm_record(args, ledger)
+        if timers:
+            call(SYSTEMCTL, "stop", *timers)
+        for service in services:
+            # A transient inactive service may be unloaded as soon as its timer stops.
+            if show(service, "ActiveState") == "failed":
+                call(SYSTEMCTL, "reset-failed", service)
+        require(all(show(unit, "ActiveState") == "inactive" for unit in timers + services),
+                "SYSTEMD_RETIREMENT_UNCONFIRMED")
+    else:
+        require(not timers and not services, "UNBOUND_TIMER_RETAIN_RECOVERY")
+    payload = runtime / "payload"
+    for name in files:
+        (payload / name).unlink()
+    for directory in sorted((d for d in payload.rglob("*") if d.is_dir()),
+                            key=lambda path: len(path.parts), reverse=True):
+        directory.rmdir()
+    payload.rmdir()
+    (runtime / "manifest.json").unlink()
+    runtime.rmdir()
+    persist_directory(RUNTIME)
+
+
+def revoke(args, runtime, ledger, files):
+    require({x.name for x in ledger.iterdir()} <= {"plan.json", "arm.json", "arm-verified.json"},
+            "ACTION_EVIDENCE_PRESENT_RETAIN_RECOVERY")
+    remove_runtime(args, runtime, ledger, files)
+    return "REVOKED_BEFORE_ACTION_LEDGER_RETAINED"
+
+
+def verify_terminal(args, ledger, config):
+    terminal = ledger / "release-terminal.receipt"
+    ingress = ledger / "open-ingress.receipt"
+    for receipt in (terminal, ingress):
+        private_file(receipt, {0o600})
+    value = json.loads(pinned(terminal, args.terminal_receipt_sha256))
+    open_receipt = json.loads(ingress.read_bytes())
+    binding = {"executionId": args.execution_id, "leaseId": config["leaseId"],
+               "planSHA256": args.plan_sha256}
+    stamp = value.get("observedAt")
+    open_stamp = open_receipt.get("observedAt")
+    expected_action = sha(json.dumps([args.plan_sha256, "open-ingress"], separators=(",", ":")).encode())
+    proof = {key: config["host"]["aperture"][key]
+             for key in ("scopedSHA256", "nftSHA256", "legacyPGFenceSHA256")}
+    require(set(value) == {*binding, "status", "observedAt", "routeVerified", "preservationVerified", "cutover"}
+            and value["cutover"] == proof
+            and value["status"] in {"RELEASE_PASS", "RELEASE_RECOVERY",
+                                    "RELEASE_ABORTED_BASELINE_INGRESS_RESTORED"}
+            and value["routeVerified"] is True and value["preservationVerified"] is True
+            and all(value[k] == wanted and open_receipt.get(k) == wanted
+                    for k, wanted in binding.items())
+            and open_receipt.get("action") == "open-ingress"
+            and open_receipt.get("actionSHA256") == expected_action
+            and open_receipt.get("evidence") == {"status": value["status"], "cutover": proof}
+            and type(open_stamp) is int and type(stamp) is int
+            and config["T"] <= open_stamp <= stamp <= config["T"] + 1200
+            and stamp <= time.time(), "TERMINAL_RELEASE_EVIDENCE_UNPROVED")
+    return value["status"]
+
+
+def retire(args, runtime, ledger, files, config):
+    status = verify_terminal(args, ledger, config)
+    verify_arm_record(args, ledger)
+    remove_runtime(args, runtime, ledger, files)
+    exclusive(ledger / "runtime-retired.json", json.dumps(
+        {"releaseStatus": status, "planSHA256": args.plan_sha256,
+         "releaseReceiptSHA256": args.terminal_receipt_sha256}, sort_keys=True).encode(), 0o600)
+    return "TERMINAL_RUNTIME_RETIRED_LEDGER_RETAINED"
+
+
+def run(args):
+    require(sys.platform == "linux" and os.geteuid() == 0 and
+            Path("/proc/1/comm").read_text().strip() == "systemd", "ROOT_SYSTEMD_HOST_REQUIRED")
+    require(re.fullmatch(r"[0-9a-f]{32}", args.execution_id), "EXACT_EXECUTION_ID_REQUIRED")
+    runtime, ledger = RUNTIME / args.execution_id, LEDGER / args.execution_id
+    with writer() as lock_identity:
+        if args.mode == "enroll":
+            create_directory(LEDGER)
+            ledger_identity = create_directory(ledger, fresh=True)
+            return {"status": "EMPTY_LEDGER_ENROLLED", "executionId": args.execution_id,
+                    "lock": {"path": str(LOCK), "identity": lock_identity},
+                    "ledger": {"path": str(ledger), "identity": ledger_identity}}
+        if args.mode == "install":
+            require(args.bundle is not None and args.plan is not None, "BUNDLE_AND_PLAN_REQUIRED")
+            return {"status": install(args, runtime, ledger, lock_identity)}
+        files = verify_installed(runtime, args.manifest_sha256)
+        plan_path = ledger / "plan.json"
+        private_file(plan_path, {0o400})
+        config = plan(pinned(plan_path, args.plan_sha256), args.execution_id, lock_identity, ledger)
+        if args.mode == "revoke":
+            return {"status": revoke(args, runtime, ledger, files)}
+        if args.mode == "retire":
+            return {"status": retire(args, runtime, ledger, files, config)}
+        if args.mode == "arm":
+            return {"status": arm(args, runtime, ledger, config)}
+        credentials(config)
+        if args.armed:
+            verify_units(runtime, plan_path, args, config)
+        return {"status": "EXACT_INSTALL_VERIFIED", "files": len(files)}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("mode", choices=("enroll", "install", "check", "arm", "revoke", "retire"))
+    parser.add_argument("--execution-id", required=True)
+    parser.add_argument("--bundle", type=Path)
+    parser.add_argument("--manifest-sha256")
+    parser.add_argument("--plan", type=Path)
+    parser.add_argument("--plan-sha256")
+    parser.add_argument("--terminal-receipt-sha256")
+    parser.add_argument("--armed", action="store_true")
+    os.umask(0o077)
+    try:
+        print(json.dumps(run(parser.parse_args()), sort_keys=True))
+    except (AssertionError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        reason = str(error) if type(error) is ValueError and re.fullmatch(r"[A-Z0-9_]+", str(error)) else type(error).__name__
+        print(json.dumps({"status": "REFUSED", "reason": reason}), file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
