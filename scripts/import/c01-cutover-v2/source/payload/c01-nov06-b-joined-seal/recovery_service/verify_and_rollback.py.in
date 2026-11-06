@@ -1,0 +1,249 @@
+"""One V2 Writer window with only reversible Host/PG controls."""
+import argparse
+import json
+from pathlib import Path
+import subprocess
+import time
+
+from cutover_read_aperture import rollback_projection
+from dispatcher import (
+    HEX32, HEX64, LEDGER_ROOT, LOCK, Journal, dump, read_owned, require, sha,
+)
+from host_adapter import CompositeHostAdapter, config_sha, root_file, run
+from stage_writer import ImageLease
+
+ACTIONS = frozenset(("host-fence", "pg-fence", "host-reverse", "pg-reverse"))
+MODE = "VERIFY_AND_ROLLBACK"
+REVERSE_RESERVE = 120
+
+
+class VerificationWriter(ImageLease):
+    @staticmethod
+    def _verify_record(action, payload_sha):
+        require(action in ACTIONS and HEX64.fullmatch(payload_sha), "VERIFY_ACTION_NOT_ALLOWED")
+
+
+class VerificationJournal(Journal):
+    def __init__(self, plan, plan_sha):
+        self.plan = plan
+        self.binding = {key: plan[key] for key in ("leaseId", "executionId")}
+        self.binding["planSHA256"] = plan_sha
+        self.pins = {action: sha(dump([plan_sha, MODE, action])) for action in ACTIONS}
+        self.writer = VerificationWriter(
+            LOCK, plan["lock"]["identity"], plan["ledger"]["path"], plan["ledger"]["identity"],
+        )
+
+    def verify_ledger(self):
+        self.writer.assert_current(self.writer.ledger)
+        allowed = {action + ".intent" for action in ACTIONS}
+        for path in self.writer.ledger.iterdir():
+            require(not path.name.endswith(".intent") or path.name in allowed,
+                    "VERIFY_FOREIGN_INTENT")
+        complete = set()
+        for action, pin in self.pins.items():
+            state = self.writer.observe(action, pin)
+            receipt = self.receipt(action)
+            require((state == "UNCLAIMED" and receipt is None)
+                    or (state == "CLAIMED" and receipt is not None), "VERIFY_RECONCILE_ONLY")
+            if receipt is not None:
+                complete.add(action)
+        require(not complete or "host-fence" in complete, "VERIFY_ACTION_ORDER_DRIFT")
+        require("pg-reverse" not in complete or {"pg-fence", "host-reverse"} <= complete,
+                "VERIFY_ACTION_ORDER_DRIFT")
+
+
+class VerificationHost(CompositeHostAdapter):
+    def preflight(self):
+        self._caddy_owner()
+        self.ops.assert_timers_closed()
+        self.ops.running_baseline()
+        require(self.verify_preimage(), "VERIFY_HOST_PREIMAGE_DRIFT")
+        _, raw = self._config()
+        self._fenced_config(json.loads(raw))
+        return self._evidence("preflight").get("ready") is True
+
+    def verify_preimage(self):
+        self.writer.assert_current(self.writer.ledger)
+        self._caddy_owner()
+        _, raw = self._config()
+        return config_sha(json.loads(raw)) == self.route["before"] and self._nft_absent()
+
+    def verify_restored_read(self):
+        pin = self.plan["verification"]["restoredRead"]
+        payload = root_file(pin["path"], 262144, modes=(0o400,))
+        require(sha(payload) == pin["sha256"], "VERIFY_RESTORED_READER_DRIFT")
+        self.writer.assert_current(self.writer.ledger)
+        phase = "restored-read"
+        binding = {key: self.plan[key] for key in ("executionId", "leaseId", "planSHA256")}
+        result = json.loads(run(
+            ["/usr/bin/python3", "-I", "-B", "-", phase, *binding.values()], payload=payload,
+        ))
+        self.writer.assert_current(self.writer.ledger)
+        stamp = result.get("observedAt")
+        return (all(result.get(key) == value for key, value in binding.items())
+                and result.get("phase") == phase and type(stamp) is int
+                and 0 <= int(time.time()) - stamp <= 5
+                and result.get("observedCID") == self.host["baselineCID"]
+                and result.get("health") == "PASS"
+                and result.get("ordinaryReadSHA256") == self.host["owningProbe"]["ordinaryReadSHA256"]
+                and self.verify_preimage())
+
+    def reverse(self):
+        require(self.verify_fence(), "VERIFY_HOST_REVERSE_PREIMAGE_DRIFT")
+        self.ops.running_baseline()
+        _, raw = self._config()
+        restored, nft_delete = rollback_projection(
+            json.loads(raw), self.route, self.route["before"], self.aperture,
+        )
+        require(self._set_servers(self.aperture["fullSHA256"], restored, self.route["before"]),
+                "VERIFY_HOST_REVERSE_CADDY_UNKNOWN")
+        require(self._verify_nft(), "VERIFY_HOST_REVERSE_NFT_DRIFT")
+        run(["/usr/sbin/nft", "-f", "-"], payload=nft_delete.encode())
+        return self.verify_preimage()
+
+
+class PgControl:
+    """Run exact sealed PG actions and a separately sealed read-only verifier."""
+
+    def __init__(self, plan, writer):
+        self.plan, self.writer = plan, writer
+        pg = plan["verification"]["pg"]
+        require(set(pg) == {"forward", "reverse", "readback", "preimageSHA256", "fenceSHA256"},
+                "VERIFY_PG_BINDING_REQUIRED")
+        require(all(HEX64.fullmatch(pg[key]) for key in ("preimageSHA256", "fenceSHA256"))
+                and pg["preimageSHA256"] != pg["fenceSHA256"], "VERIFY_PG_STATE_PINS_REQUIRED")
+        self.pg = pg
+        self.programs = {}
+        for action in ("forward", "reverse", "readback"):
+            pin = pg[action]
+            require(set(pin) == {"path", "sha256"}, "VERIFY_PG_PROGRAM_PIN_REQUIRED")
+            payload = root_file(pin["path"], 262144, modes=(0o400,))
+            require(sha(payload) == pin["sha256"], "VERIFY_PG_PROGRAM_DRIFT")
+            self.programs[action] = payload
+
+    def _invoke(self, action, phase):
+        self.writer.assert_current(self.writer.ledger)
+        binding = {key: self.plan[key] for key in ("executionId", "leaseId", "planSHA256")}
+        result = json.loads(run(
+            ["/usr/bin/python3", "-I", "-B", "-", phase, *binding.values()],
+            payload=self.programs[action],
+        ))
+        self.writer.assert_current(self.writer.ledger)
+        stamp = result.get("observedAt")
+        require(all(result.get(key) == value for key, value in binding.items())
+                and result.get("phase") == phase and type(stamp) is int
+                and 0 <= int(time.time()) - stamp <= 5, "VERIFY_PG_RESULT_UNBOUND")
+        return result
+
+    def verify(self, phase, state):
+        row = self._invoke("readback", phase)
+        return (row.get("authority") == "PG_INDEPENDENT_READ_ONLY"
+                and row.get("stateSHA256") == self.pg[state]
+                and row.get("protectedPDFUnchanged") is True
+                and (state != "preimageSHA256" or row.get("defaultC01Closed") is True))
+
+    def apply(self, direction, state):
+        return (self._invoke(direction, direction).get("status") == "ACK_TERMINAL"
+                and self.verify(direction, state))
+
+
+def execute(journal, host, pg, role):
+    plan = journal.plan
+    now = time.time()
+    end = plan["verification"]["hardEnd"]
+    keeper_at = plan["verification"]["keeperAt"]
+    require(plan["T"] <= now < end, "VERIFY_WINDOW_CLOSED")
+    require((role == "dispatch" and now < keeper_at) or (role == "keeper" and now >= keeper_at),
+            "VERIFY_ROLE_NOT_DUE")
+    journal.verify_ledger()
+    if journal.read("verify-terminal.json") is not None:
+        return "ALREADY_TERMINAL"
+
+    def step(action, apply, check, reserve=0):
+        require(time.time() + reserve < end, "VERIFY_ACTION_BUDGET_EXHAUSTED")
+        require(check() is True, "VERIFY_ACTION_PREIMAGE_DRIFT")
+        require(time.time() + reserve < end, "VERIFY_ACTION_BUDGET_EXHAUSTED")
+        journal.claim(action)
+        require(apply() is True, "VERIFY_ACTION_OUTCOME_UNPROVED")
+        journal.finish(action)
+
+    if role == "dispatch":
+        require(all(journal.receipt(action) is None for action in ACTIONS)
+                and journal.read("verify-result.json") is None, "VERIFY_ALREADY_DISPATCHED")
+        require(time.time() + REVERSE_RESERVE < end, "VERIFY_REVERSE_BUDGET_UNAVAILABLE")
+        require(host.preflight() is True and pg.verify("preflight", "preimageSHA256"),
+                "VERIFY_PREFLIGHT_UNPROVED")
+        step("host-fence", host.fence, host.verify_preimage, REVERSE_RESERVE)
+        step("pg-fence", lambda: pg.apply("forward", "fenceSHA256"),
+             lambda: host.verify_fence() and pg.verify("before-forward", "preimageSHA256"),
+             REVERSE_RESERVE)
+        try:
+            passed = host.drain() is True and host.verify_preserved(plan["host"]["baselineCID"]) is True
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, subprocess.SubprocessError):
+            passed = False
+        journal.write("verify-result.json", {"runtimeProofPassed": passed})
+    else:
+        require(role == "keeper", "VERIFY_ROLE_NOT_ALLOWED")
+
+    # A completed fence with a failed observation is reversible. An unfinished
+    # write intent was rejected above and cannot enter the reverse path.
+    if journal.receipt("host-fence") is None:
+        return "NOT_DISPATCHED"
+    if journal.receipt("host-reverse") is None:
+        require(time.time() + 60 < end, "VERIFY_REVERSE_BUDGET_UNAVAILABLE")
+        pg_state = "fenceSHA256" if journal.receipt("pg-fence") is not None else "preimageSHA256"
+        step("host-reverse", host.reverse,
+             lambda: host.verify_fence() and pg.verify("before-host-reverse", pg_state), 60)
+    if journal.receipt("pg-fence") is not None and journal.receipt("pg-reverse") is None:
+        step("pg-reverse", lambda: pg.apply("reverse", "preimageSHA256"),
+             lambda: host.verify_preimage() and pg.verify("before-pg-reverse", "fenceSHA256"), 30)
+    require(host.verify_preimage() and host.ops.running_baseline()
+            and pg.verify("restored", "preimageSHA256") and host.verify_restored_read() and time.time() < end,
+            "VERIFY_RESTORATION_UNPROVED")
+    result = journal.read("verify-result.json") or {}
+    status = "VERIFIED_AND_RESTORED" if result.get("runtimeProofPassed") is True else "RESTORED_PROOF_INCOMPLETE"
+    journal.write("verify-terminal.json", {"status": status})
+    return status
+
+
+def main():
+    cli = argparse.ArgumentParser()
+    cli.add_argument("role", choices=("dispatch", "keeper"))
+    cli.add_argument("plan", type=Path)
+    cli.add_argument("plan_sha")
+    args = cli.parse_args()
+    raw = read_owned(args.plan, 0o400)
+    require(sha(raw) == args.plan_sha, "VERIFY_PLAN_DRIFT")
+    plan = json.loads(raw)
+    require(set(plan) == {"version", "executionId", "leaseId", "T", "lock", "ledger",
+                          "host", "verification", "project"}
+            and plan["version"] == MODE and plan["project"] == "@DEV_PROJECT_REF@"
+            and all(HEX32.fullmatch(plan[key]) for key in ("executionId", "leaseId"))
+            and plan["executionId"] != plan["leaseId"], "VERIFY_PLAN_REQUIRED")
+    require(args.plan == LEDGER_ROOT / plan["executionId"] / "plan.json", "VERIFY_PLAN_PATH_DRIFT")
+    for name, path in (("lock", LOCK), ("ledger", args.plan.parent)):
+        resource = plan[name]
+        require(set(resource) == {"path", "identity"} and resource["path"] == str(path)
+                and len(resource["identity"]) == 2
+                and all(type(n) is int and n >= 0 for n in resource["identity"]),
+                "VERIFY_WRITER_BINDING_DRIFT")
+    verify = plan["verification"]
+    require(set(verify) == {"hardEnd", "keeperAt", "pg", "restoredRead"}
+            and all(type(value) is int for value in (plan["T"], verify["keeperAt"], verify["hardEnd"]))
+            and plan["T"] < verify["keeperAt"] <= verify["hardEnd"] - REVERSE_RESERVE
+            and verify["hardEnd"] - plan["T"] <= 1200,
+            "VERIFY_CLOCK_REQUIRED")
+    require(set(verify["restoredRead"]) == {"path", "sha256"}
+            and HEX64.fullmatch(verify["restoredRead"]["sha256"])
+            and HEX64.fullmatch(plan["host"]["owningProbe"]["ordinaryReadSHA256"]),
+            "VERIFY_RESTORED_READ_PIN_REQUIRED")
+    journal = VerificationJournal(plan, args.plan_sha)
+    plan = {**plan, "planSHA256": args.plan_sha}
+    with journal.writer:
+        host = VerificationHost(plan, journal.writer)
+        pg = PgControl(plan, journal.writer)
+        print(execute(journal, host, pg, args.role))
+
+
+if __name__ == "__main__":
+    main()

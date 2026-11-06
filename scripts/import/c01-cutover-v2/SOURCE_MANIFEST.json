@@ -83,6 +83,13 @@
       "restoredSHA256": "fd7d7ba476099d74c651bbc84d87ee8cdaddd7bec49398e70fb67faefb930a63",
       "sourceSHA256": "fd7d7ba476099d74c651bbc84d87ee8cdaddd7bec49398e70fb67faefb930a63"
     },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/verify_and_rollback.py.in": {
+      "externalBindings": [
+        "DEV_PROJECT_REF"
+      ],
+      "restoredSHA256": "36a8edd8267852fdb1fd05e74490c33c9f3ea3acc7821a53772e891516a85e58",
+      "sourceSHA256": "056ea0b3fa8e6191fac0db03e831d876c96d127c8c52aaf72c4b4d32064d4d78"
+    },
     "source/payload/c01-nov06-b-joined-seal/render_joined.py": {
       "restoredSHA256": "10805f0a9602ce43c3df46ffc7830bc0a041f2c044f6565e3632d08e76d94e80",
       "sourceSHA256": "10805f0a9602ce43c3df46ffc7830bc0a041f2c044f6565e3632d08e76d94e80"
@@ -163,6 +170,10 @@
     "source/test_pg_fence_proof.py": {
       "restoredSHA256": "ab4df6faae096e93379459ab1b12716d47d0fef26e838c06f26ca10e03c578c8",
       "sourceSHA256": "ab4df6faae096e93379459ab1b12716d47d0fef26e838c06f26ca10e03c578c8"
+    },
+    "source/test_verify_and_rollback.py": {
+      "restoredSHA256": "c88032b5286e9b799f34451e13e01070d83cf03eb68c7e91bdb323df5a81ca0c",
+      "sourceSHA256": "c88032b5286e9b799f34451e13e01070d83cf03eb68c7e91bdb323df5a81ca0c"
     }
   }
 }
