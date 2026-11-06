@@ -67,11 +67,14 @@ class HostWorker:
         self.guard(self.req['cutoff'])
         need(self.clock()+self.req['stopAdmissionSeconds']<self.req['cutoff']
              and self.observe_closed()=='RUNNING_BASELINE_CLOSED','POST_STAGE_STOP_ADMISSION_DRIFT')
-        self.stop_attempted=True
-        self.ops.stop_once(self.before['Id'])
+        self.stop_original()
         s=self.ops.baseline(self.before['Id'])
         self.closed_instance=self.ops.stopped_instance(s)
         return self.observe_closed()
+
+    def stop_original(self):
+        self.stop_attempted=True
+        self.ops.stop_once(self.before['Id'])
 
     def start_target(self):
         self.guard(self.req['cutoff'])
@@ -174,10 +177,11 @@ class HostWorker:
 
 class DockerOps:
     """Adapt the pinned, previously qualified closed Host observations."""
-    def __init__(self,prior,plan,bundles):
+    def __init__(self,prior,plan,bundles,*,target=TARGET):
         self.prior=prior
         self.plan=plan
         self.bundles=bundles
+        self.target=target
 
     def inspect(self,cid):
         s,=json.loads(self.prior.invoke(['docker','inspect',cid]))
@@ -205,7 +209,7 @@ class DockerOps:
     def lookup(self,name): return self.prior.lookup_name(name)
 
     def target_present(self):
-        return self.prior.invoke(['docker','image','inspect',TARGET,'--format','{{.Id}}']).strip()==TARGET
+        return self.prior.invoke(['docker','image','inspect',self.target,'--format','{{.Id}}']).strip()==self.target
 
     def stop_once(self,cid):
         try:
@@ -214,7 +218,7 @@ class DockerOps:
             pass
         need(not self.inspect(cid)['State']['Running'],'STOP_OUTCOME_UNKNOWN')
 
-    def create(self,name,baseline): return create_exact_target(DOCKER_SOCKET,name,baseline)
+    def create(self,name,baseline): return create_exact_target(DOCKER_SOCKET,name,baseline,self.target)
     def verify_target(self,baseline,cid):
         candidate=self.inspect(cid)
         # Historical exact Docker cgroup-v2 inspect normalization, only while created.
@@ -222,7 +226,7 @@ class DockerOps:
         if (candidate['State']['Status']=='created' and baseline['HostConfig'].get('OomKillDisable') is None
             and actual.get('OomKillDisable') is False):
             candidate={**candidate,'HostConfig':{**actual,'OomKillDisable':None}}
-        verify_target(baseline,candidate,cid)
+        verify_target(baseline,candidate,cid,self.target)
     def rename(self,cid,name): self.prior.invoke(['docker','rename',cid,name])
     def start(self,cid): self.prior.invoke(['docker','start',cid])
 

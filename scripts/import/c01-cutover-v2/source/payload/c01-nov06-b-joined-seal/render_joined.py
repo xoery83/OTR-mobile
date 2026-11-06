@@ -10,9 +10,9 @@ sys.path.insert(0, str(PRIVATE / "c01-nov06-b-release-062a4903"))
 import closed_driver_v5 as v5
 from dev_commit_ack import render as attach_ack
 
-DRIVER_SHA = "f9b07b361b595717663cacbf2f3725133c5b2a9cd5edeafbb606f2f8fe51b687"
+DRIVER_SHA = "a4093abedb60b9002d992890d05ea656270e3fdb90c5ab1a77cdf50363039130"
 PREIMAGE_SHA = "ca11c6fce0f2e2ecd5a9127e324375c218ab476628114d4b5a207ccd02bbeabc"
-ACK_SHA = "48219b20f6431ef872103301fd52c35f9d4991be7d9b829fe933678363ffd380"
+ACK_SHA = "11805f6f5d62441f9de376e19ebe88fda1d214edbbeb3ee6bf6447a9ab32c88b"
 PROPOSED = {"forwardSQLComplete":480, "recoveryAt":780, "backupAt":810,
             "inverseSQLComplete":900, "hardEnd":1200}
 RECOVERY_BUDGET = {"contain":30,"terminalHistory":30,"inverse":60,"restoreNames":30,

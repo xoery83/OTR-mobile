@@ -116,6 +116,15 @@ def catalog_guard(rows):
 
 
 def build_frame(pre, post, request, inverse=False):
+    start, cutoff, deadline = (request[key] for key in ('T','cutoff','D'))
+    require(all(type(v) in (int,float) and math.isfinite(v) for v in (start,cutoff,deadline))
+            and cutoff == start+810 and deadline == start+1200, 'EXACT_MAINTENANCE_CLOCK_REQUIRED')
+    send_cutoff = deadline-60 if inverse else cutoff
+    execution_id = request['inverseExecutionId'] if inverse else request['executionId']
+    return build_at_cutoff(pre, post, send_cutoff, execution_id, inverse)
+
+
+def build_at_cutoff(pre, post, send_cutoff, execution_id, inverse=False):
     definition = fixed(
         ROOT/('ROLLBACK_DEFINITIONS_V3.review.sql' if inverse else 'FORWARD_DEFINITIONS.review.sql'),
         ROLLBACK_SHA if inverse else FORWARD_SHA,
@@ -126,10 +135,6 @@ def build_frame(pre, post, request, inverse=False):
     raw = fixed(renderer_path, RENDERER_SHA)
     renderer = {'__file__':str(renderer_path)}
     exec(compile(raw,str(renderer_path),'exec'),renderer)
-    start, cutoff, deadline = (request[key] for key in ('T','cutoff','D'))
-    require(all(type(v) in (int,float) and math.isfinite(v) for v in (start,cutoff,deadline))
-            and cutoff == start+810 and deadline == start+1200, 'EXACT_MAINTENANCE_CLOCK_REQUIRED')
-    send_cutoff = deadline-60 if inverse else cutoff
     boundary = (
         "SET LOCAL lock_timeout='3s';\nSELECT pg_advisory_xact_lock(714024,2);\n"
         "DO $c01closed$ BEGIN IF extract(epoch FROM clock_timestamp()) >= "+str(send_cutoff)+
@@ -140,13 +145,12 @@ def build_frame(pre, post, request, inverse=False):
     first, last = (post,pre) if inverse else (pre,post)
     primitive = ('BEGIN;\n'+boundary+catalog_guard(first)).encode()+definition+(
         catalog_guard(last)+'COMMIT;\n').encode()
-    execution_id = request['inverseExecutionId'] if inverse else request['executionId']
     frame = renderer['render'](primitive, send_cutoff, execution_id)
     require(frame.startswith(b'BEGIN;\n'), 'RENDERER_TRANSACTION_PREFIX_DRIFT')
     return b'BEGIN ISOLATION LEVEL READ COMMITTED;\n' + frame[len(b'BEGIN;\n'):]
 
 
-def run_held(port, request, ledger):
+def run_held(port, request, ledger, *, target=TARGET, m1=False):
     """The bound port must already own the fixed Writer lease and independent close safeguards."""
     before = None
     inverse = None
@@ -159,8 +163,13 @@ def run_held(port, request, ledger):
             return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
         port.require_closed_writer(request)
         before, post = expected_catalog(port.read_catalog())
-        frame = build_frame(before,post,request)
-        inverse = build_frame(before,post,request,inverse=True)
+        if m1:
+            frame = build_at_cutoff(before, post, request['cutoff'], request['executionId'])
+            inverse = build_at_cutoff(before, post, request['inverseCutoff'],
+                                      request['inverseExecutionId'], inverse=True)
+        else:
+            frame = build_frame(before,post,request)
+            inverse = build_frame(before,post,request,inverse=True)
         require(sha(frame) == request['effectiveSQLSHA256'], 'EFFECTIVE_FORWARD_NOT_APPROVED')
         require(sha(inverse) == request['effectiveInverseSHA256'], 'EFFECTIVE_INVERSE_NOT_APPROVED')
         port.check_timing(request['cutoff'], reserve_seconds=60)
@@ -169,18 +178,23 @@ def run_held(port, request, ledger):
         except FileExistsError:
             return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
         started_stop = True
-        port.stop_exact_baseline_and_drain(BASELINE)
+        stopped = port.stop_exact_baseline_and_drain(BASELINE)
+        if m1 and stopped == 'PRESTOP_INGRESS_RESTORED':
+            require(indexed(port.read_catalog()) == before, 'M1_PRESTOP_CATALOG_DRIFT')
+            return 'PRESTOP_INGRESS_RESTORED_NO_SEND'
         port.require_closed_writer(request)
         require(indexed(port.read_catalog()) == before, 'FRESH_STOPPED_ACQUIRE_OR_CATALOG_DRIFT')
         port.check_timing(request['cutoff'], reserve_seconds=60)
+        if m1:
+            port.assert_forward_admission()
         sent = True
         port.send_sql_once(frame)
         acknowledged = True
         require(port.terminated(request['executionId']), 'MUTATOR_TERMINATION_UNPROVED')
         require(matches_post(port.read_catalog(),post), 'INDEPENDENT_SQL_POSTIMAGE_DRIFT')
         port.check_timing(request['cutoff'], reserve_seconds=60)
-        port.start_exact_closed_target(TARGET)
-        require(port.verify_running_closed(TARGET), 'INDEPENDENT_TARGET_CLOSE_UNPROVED')
+        port.start_exact_closed_target(target)
+        require(port.verify_running_closed(target), 'INDEPENDENT_TARGET_CLOSE_UNPROVED')
         return 'INSTALLED_DEFAULT_CLOSED'
     except Exception:
         if not started_stop:

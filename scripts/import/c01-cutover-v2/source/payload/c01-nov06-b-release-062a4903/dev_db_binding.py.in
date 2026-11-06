@@ -21,6 +21,7 @@ SELECT jsonb_build_object(
  'writerAdvisoryEntries',(SELECT count(*) FROM pg_locks WHERE locktype='advisory'
  AND database=(SELECT oid FROM pg_database WHERE datname=current_database())
  AND classid=714024 AND objid=2 AND objsubid=2),
+ 'preparedTransactions',(SELECT count(*) FROM pg_prepared_xacts WHERE database=current_database()),
  'sourceScopes',(SELECT count(*) FROM public.trip_source_universal_scope),
  'providerScopes',(SELECT count(*) FROM public.universal_import_provider_scope)
 ) AS result;
@@ -62,13 +63,13 @@ class LinkedPG:
              and r['fullVisibility'] is True and 0<=self.clock()-float(r['clock'])<=5,
              'PG_DRAIN_CONTEXT_UNPROVED')
         self.assert_stopped_lease()
-        return all(r[k]==0 for k in ('otherOpenClientTransactions','writerAdvisoryEntries','sourceScopes','providerScopes'))
+        return all(r[k]==0 for k in ('otherOpenClientTransactions','preparedTransactions','writerAdvisoryEntries','sourceScopes','providerScopes'))
 
     def send_once(self,frame):
         digest=hashlib.sha256(frame).hexdigest()
         key=self.identities.get(digest)
         need(key is not None and key not in self.dispatched,'SQL_HASH_OR_ONE_SHOT_DRIFT')
-        cut=self.request['cutoff'] if key==self.request['executionId'] else self.request['D']-60
+        cut=self.request['cutoff'] if key==self.request['executionId'] else self.request.get('inverseCutoff', self.request['D']-60)
         need(self.request['T']<=self.clock()<cut,'SQL_OUTSIDE_FIXED_CLOCK')
         need(self.drain(),'DRAIN_UNPROVED')
         need(self.clock()<cut,'SQL_CUTOFF_DURING_DRAIN')

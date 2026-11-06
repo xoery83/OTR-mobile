@@ -1,0 +1,161 @@
+"""One foreground M1 HostWorker channel. Never reconnect or replay an exchange."""
+from contextlib import contextmanager
+import json
+import os
+import re
+import select
+import signal
+import subprocess
+import time
+
+from writer_lease_binding_v5 import WriterLease, identity
+
+DEV_HOST = "@DEV_HOST_SSH@"
+ENTRY = "/run/otr/root2-c01-keep-v5/{}/payload/c01-nov06-b-release-062a4903/m1_host_entry.py"
+LIMIT = 4096
+IDS = {"leaseId", "writerIdentity", "ledgerIdentity", "baselineCID"}
+COMMANDS = {
+    "assert_writer": set(),
+    "read_intents": set(),
+    "claim_intent": {"intent", "frameSHA256"},
+    "closed_observe": set(),
+    "retained_write_exclusion": set(),
+    "inverse_admission": set(),
+    "stop_baseline": set(),
+    "start_target": {"proof"},
+    "contain_owned": set(),
+    "restore_baseline": {"proof"},
+    "independent_running_observe": set(),
+}
+
+
+class ForegroundLost(RuntimeError):
+    pass
+
+
+def receive(stream, deadline):
+    # One request and one reply are in flight. Read at most one bounded frame.
+    fd = stream.fileno()
+    raw = bytearray()
+    while len(raw) <= LIMIT:
+        remaining = deadline - time.time()
+        if remaining <= 0 or not select.select([fd], [], [], remaining)[0]:
+            raise ForegroundLost("M1_CHANNEL_DEADLINE")
+        chunk = os.read(fd, LIMIT + 1 - len(raw))
+        if not chunk:
+            raise ForegroundLost("M1_CHANNEL_EOF")
+        raw.extend(chunk)
+        if b"\n" in raw:
+            if len(raw) > LIMIT or raw.count(b"\n") != 1 or not raw.endswith(b"\n"):
+                raise ForegroundLost("M1_FRAME_BOUNDARY")
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise ForegroundLost("M1_FRAME_TYPE")
+            return value
+    raise ForegroundLost("M1_FRAME_TOO_LARGE")
+
+
+def send(stream, row):
+    raw = json.dumps(row, separators=(",", ":"), allow_nan=False).encode() + b"\n"
+    if len(raw) > LIMIT or os.write(stream.fileno(), raw) != len(raw):
+        raise ForegroundLost("M1_FRAME_WRITE_UNCONFIRMED")
+
+
+def transcript(row, expected, sequence):
+    fields = COMMANDS.get(row.get("command"))
+    if (fields is None or set(row) != IDS | {"sequence", "command"} | fields
+            or type(row["sequence"]) is not int or row["sequence"] != sequence
+            or any(row[key] != value for key, value in expected.items())):
+        raise ForegroundLost("M1_HOST_TRANSCRIPT_DRIFT")
+
+
+def hello(request, expected):
+    binding = {"manifestSHA256": request["manifestSHA256"]}
+    if "hostBindingSHA256" in request:
+        binding["hostBindingSHA256"] = request["hostBindingSHA256"]
+    return {**expected, **binding, "status": "HELD"}
+
+
+class ForegroundLease(WriterLease):
+    @property
+    def lock_identity(self):
+        self.assert_current(self.ledger)
+        return identity(os.fstat(self._lockfd))
+
+
+def serve(request, lock, ledger, worker_factory, stdin, stdout, *, uid=0):
+    """Called by the reviewed Host entry after it binds the sealed M1 actions."""
+    # Losing the SSH transport must not release an in-flight SQL exclusion early.
+    previous = signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    try:
+        with ForegroundLease(lock, ledger, request["ledgerIdentity"], uid=uid) as lease:
+            actual = list(lease.lock_identity)
+            if actual != request["writerIdentity"]:
+                raise ForegroundLost("M1_WRITER_IDENTITY_DRIFT")
+            expected = {key: request[key] for key in IDS}
+            worker = worker_factory(request, lease)
+            if worker.expected != expected:
+                raise ForegroundLost("M1_WORKER_IDENTITY_DRIFT")
+            try:
+                send(stdout, hello(request, expected))
+                while True:
+                    row = receive(stdin, request["D"])
+                    transcript(row, expected, worker.sequence + 1)
+                    send(stdout, worker.handle(row))
+            finally:
+                # Forward intent is durable before stop. EOF after intent leaves the
+                # fence and any receipts alone and holds Writer through the SQL deadline.
+                if lease.has_intent():
+                    while (remaining := request["D"] - time.time()) > 0:
+                        time.sleep(remaining)
+    finally:
+        signal.signal(signal.SIGHUP, previous)
+
+
+class Exchange:
+    def __init__(self, child, request):
+        self.child = child
+        self.request = request
+        self.expected = {key: request[key] for key in IDS}
+        self.sequence = 0
+        self.broken = False
+        if receive(child.stdout, min(request["D"], time.time() + 12)) != hello(request, self.expected):
+            raise ForegroundLost("M1_HOST_HELLO_DRIFT")
+
+    def __call__(self, row):
+        if self.broken or self.child.poll() is not None:
+            raise ForegroundLost("M1_HOST_CHANNEL_LOST")
+        try:
+            transcript(row, self.expected, self.sequence + 1)
+            send(self.child.stdin, row)
+            reply = receive(self.child.stdout, min(self.request["D"], time.time() + 75))
+            if (type(reply.get("sequence")) is not int or reply["sequence"] != row["sequence"]
+                    or any(reply.get(key) != value for key, value in self.expected.items())
+                    or not isinstance(reply.get("status"), str)):
+                raise ForegroundLost("M1_HOST_REPLY_DRIFT")
+        except (OSError, ValueError, ForegroundLost) as exc:
+            self.broken = True
+            raise ForegroundLost("M1_HOST_CHANNEL_RECONCILE_ONLY") from exc
+        self.sequence += 1
+        return reply
+
+
+@contextmanager
+def ssh_exchange(request):
+    execution = request["executionId"]
+    digest = request["manifestSHA256"]
+    if not re.fullmatch(r"[a-f0-9]{32}", execution) or not re.fullmatch(r"[a-f0-9]{64}", digest) \
+            or not re.fullmatch(r"[a-f0-9]{64}", request["hostBindingSHA256"]):
+        raise ForegroundLost("M1_SSH_COMMAND_PIN_DRIFT")
+    args = ["/usr/bin/ssh", "-T", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes",
+            "-o", "ConnectTimeout=10", DEV_HOST, "/usr/bin/python3", "-B",
+            ENTRY.format(execution), execution, digest, request["hostBindingSHA256"]]
+    child = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.DEVNULL, bufsize=0)
+    try:
+        yield Exchange(child, request)
+    finally:
+        child.stdin.close()
+        child.stdout.close()
+        # Closing stdin signals EOF. Never kill the remote holder to recover a reply.
+        child.wait(timeout=max(1, request["D"] - time.time() + 2))

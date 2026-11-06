@@ -1,4 +1,4 @@
-"""Exact Docker config projection used to stage the 71b6521f closed target."""
+"""Exact Docker config projection used to stage an exact closed target."""
 import copy
 import http.client
 import json
@@ -8,14 +8,14 @@ import socket
 BASELINE = '@BASELINE_IMAGE_ID@'
 TARGET = '@LEGACY_TARGET_IMAGE_ID@'
 
-def target_payload(baseline):
+def target_payload(baseline, target=TARGET):
     if baseline['Image'] != BASELINE:
         raise ValueError('WRONG_RETAINED_IMAGE')
     config = copy.deepcopy(baseline['Config'])
-    config['Image'] = TARGET
+    config['Image'] = target
     return {**config,'HostConfig':copy.deepcopy(baseline['HostConfig'])}
 
-def create_exact_target(path,name,baseline):
+def create_exact_target(path,name,baseline,target=TARGET):
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{1,90}',name):
         raise ValueError('INVALID_OWNED_TARGET_NAME')
     class UnixDocker(http.client.HTTPConnection):
@@ -26,7 +26,7 @@ def create_exact_target(path,name,baseline):
     with_connection=UnixDocker('localhost',timeout=15)
     try:
         with_connection.request('POST','/v1.47/containers/create?name='+name,
-                                body=json.dumps(target_payload(baseline)).encode(),
+                                body=json.dumps(target_payload(baseline,target)).encode(),
                                 headers={'Content-Type':'application/json'})
         response=with_connection.getresponse()
         body=response.read(131072)
@@ -39,10 +39,10 @@ def create_exact_target(path,name,baseline):
     finally:
         with_connection.close()
 
-def verify_target(baseline,candidate,cid):
-    expected=target_payload(baseline)
+def verify_target(baseline,candidate,cid,target=TARGET):
+    expected=target_payload(baseline,target)
     host_config=expected.pop('HostConfig')
-    if (candidate['Id'],candidate['Image'],candidate['Config'],candidate['HostConfig']) != (cid,TARGET,expected,host_config):
+    if (candidate['Id'],candidate['Image'],candidate['Config'],candidate['HostConfig']) != (cid,target,expected,host_config):
         raise ValueError('TARGET_CONFIG_DRIFT')
     fields=('Source','Destination','RW','Type','Propagation')
     if sorted(tuple(m.get(k) for k in fields) for m in baseline['Mounts']) != sorted(tuple(m.get(k) for k in fields) for m in candidate['Mounts']):

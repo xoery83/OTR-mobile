@@ -22,6 +22,7 @@ class CommitAck:
         self.sql=sql
         self.pins=pins
         self.attempted=set()
+        self.backend_pid=None
 
     def __call__(self,frame,execution_id):
         wire=render(frame,execution_id)
@@ -33,4 +34,5 @@ class CommitAck:
         need(r['marker']==execution_id and r['frameSHA256']==frame_sha and r['sessionUser']==r['currentUser']=='postgres'
              and r['tagReset'] is True and type(r['backendPid']) is int and r['backendPid']>0,
              'EXACT_POST_COMMIT_MARKER_UNPROVED')
+        self.backend_pid=r['backendPid']
         return {'disposition':'ACKNOWLEDGED','executionId':execution_id,'effectiveSQLSHA256':frame_sha}

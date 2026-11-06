@@ -2,6 +2,7 @@
 """Install and arm only the reviewed C01 DEV window. Run on the designated Linux host."""
 import argparse
 from contextlib import contextmanager
+from datetime import datetime
 import fcntl
 import hashlib
 import json
@@ -36,6 +37,11 @@ SYSTEMCTL = "/usr/bin/systemctl"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
 PYTHON = "/usr/bin/python3"
 MARGIN = 120
+M1_KIND = "COMBINED_APPROVAL_REQUEST_NO_START_UNLESS_EXECUTION_ENTRY_QUALIFIES"
+M1_TARGET = "sha256:9fd700f36c625af47b5885fd3f2797db2903ba16b751af2845f8b13a0cea2125"
+M1_SOURCE = "bfa5c0fed3a7e80bb601b4814c984a3f4aa9075f"
+M1_ARCHIVE = "2be0b62d10f184d0cf2fad796cb68c7ec50c595a6f99ab0084015ea2c88190ba"
+M1_BASELINE = "sha256:127bc6ce0aa16dd7d40eb133e1ec077d14f65ad2f1688fd512c7bbfc992808e9"
 PROJECT = "@DEV_PROJECT_REF@"
 sys.dont_write_bytecode = True
 
@@ -140,6 +146,162 @@ def manifest(raw):
                 and item.suffix in {".py", ".sql", ".json"} and valid_sha(digest),
                 "MANIFEST_FILE_SCOPE_REFUSED")
     return files
+
+
+def m1_plan(raw, digest):
+    require(sha(raw) == digest, "M1_MANIFEST_PIN_DRIFT")
+    manifest = json.loads(raw)
+    require(manifest["status"] == M1_KIND and manifest["project"] == PROJECT
+            and manifest["operator"] == "Root2" and manifest["candidateImage"] == M1_TARGET
+            and manifest["source"] == M1_SOURCE and manifest["archiveSHA256"] == M1_ARCHIVE,
+            "M1_TARGET_OR_AUTHORITY_DRIFT")
+    host, pg, clock = (manifest[key] for key in ("host", "pg", "time"))
+    sql, scope = manifest["sql"], manifest["protected"]
+    require(host["baselineImage"] == M1_BASELINE and valid_sha(host["baselineCID"])
+            and host["writerPath"] == str(LOCK)
+            and isinstance(host["writerIdentity"], list) and len(host["writerIdentity"]) == 2
+            and all(type(part) is int and part > 0 for part in host["writerIdentity"])
+            and host["pdfStopOnly"] == "otr-universal-pdf-worker.service"
+            and host["png"] == "M2_FAILED_BASELINE_DO_NOT_START"
+            and pg["candidateTransport"] == "existing project-linked Supabase Management CLI"
+            and pg["forwardAndInversePrincipal"] == "session_user=current_user=postgres"
+            and pg["independentReader"] == "separate linked READ ONLY transaction, session_user=current_user=postgres"
+            and type(scope["deletes"]) is int and scope["deletes"] == 0
+            and type(scope["providerCalls"]) is int and scope["providerCalls"] == 0
+            and scope["historicalReplay"] is False and scope["qa158"] is False
+            and type(clock["USD"]) is int and clock["USD"] == 0,
+            "M1_SCOPE_DRIFT")
+    def epoch(value):
+        instant = datetime.fromisoformat(value)
+        require(instant.utcoffset() is not None and instant.microsecond == 0, "M1_CLOCK_UNBOUND")
+        return int(instant.timestamp())
+
+    start, cutoff, inverse_cutoff, end = (epoch(clock[key]) for key in ("T", "forwardBy", "inverseBy", "hardEnd"))
+    require(0 < start < 4102444800 and (cutoff-start, inverse_cutoff-start, end-start) == (480, 900, 1200)
+            and set(sql) == {"forward", "inverse"}, "M1_EXACT_WINDOW_REQUIRED")
+    forward, inverse = sql["forward"], sql["inverse"]
+    for name, spec, deadline in (("forward", forward, cutoff), ("inverse", inverse, inverse_cutoff)):
+        require(set(spec) == {"executionId", "frameSHA256", "wireSHA256", "cutoffNZDT"}
+                and re.fullmatch(r"[a-f0-9]{32}", spec["executionId"])
+                and valid_sha(spec["frameSHA256"]) and valid_sha(spec["wireSHA256"])
+                and spec["wireSHA256"] == pg[name + "WireSHA256"]
+                and epoch(spec["cutoffNZDT"]) == deadline, "M1_WIRE_PIN_DRIFT")
+    require(forward["executionId"] != inverse["executionId"]
+            and host["candidateName"] == "otr-c01-candidate-" + forward["executionId"]
+            and host["retainedName"] == "otr-c01-retained-" + forward["executionId"],
+            "M1_ONE_SHOT_ID_DRIFT")
+    return {"project": PROJECT, "manifestSHA256": digest, "targetImage": M1_TARGET,
+            "baselineCID": host["baselineCID"], "writerIdentity": host["writerIdentity"],
+            "T": start, "cutoff": cutoff, "inverseCutoff": inverse_cutoff, "D": end,
+            "stopAdmissionSeconds": 30, "healthReserveSeconds": 60,
+            "executionId": forward["executionId"], "inverseExecutionId": inverse["executionId"],
+            "effectiveSQLSHA256": forward["frameSHA256"], "effectiveInverseSHA256": inverse["frameSHA256"],
+            "wirePins": {spec["executionId"]: {"frameSHA256": spec["frameSHA256"],
+                     "wireSHA256": spec["wireSHA256"]} for spec in (forward, inverse)}}
+
+
+def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
+                  pg_system_identifier, clock=time.time):
+    """Run through the foreground Host holder and operator-side linked transport."""
+    import closed_driver_v5 as driver
+    from dev_commit_ack import CommitAck, render
+    from dev_db_binding import LinkedPG, result_value
+
+    config = m1_plan(raw, digest)
+    require(config["T"] <= clock() and clock() + 60 < config["cutoff"],
+            "M1_WINDOW_OR_RECOVERY_RESERVE_UNAVAILABLE")
+    require(read_sql is not write_sql, "M1_INDEPENDENT_READER_REQUIRED")
+    query_path = Path(driver.__file__).with_name("EXACT_FIVE_CATALOG.readonly.sql")
+    query = query_path.read_text()
+    require(sha(query.encode()) == "81bc86105718649576dbe7da3c274197421459fbb727765fa4cd2711c090e570", "M1_READBACK_QUERY_DRIFT")
+
+    require(re.fullmatch(r"[1-9][0-9]{0,19}", pg_system_identifier), "M1_DEV_PG_ID_UNBOUND")
+    ack = CommitAck(write_sql, config["wirePins"])
+
+    def catalog():
+        row = result_value(read_sql(query))
+        require(row["sessionUser"] == row["currentUser"] == "postgres"
+                and row["readOnly"] is True and row["database"] == "postgres"
+                and row["systemIdentifier"] == pg_system_identifier
+                and type(row["backendPid"]) is int and row["backendPid"] > 0
+                and row["backendPid"] != ack.backend_pid,
+                "M1_READBACK_SESSION_NOT_INDEPENDENT")
+        return row["catalog"]
+
+    pg = LinkedPG(config, read_sql, ack, None, clock)
+    port = bind_port(config, pg, catalog)
+    require(port.request is config and port.pg is pg and callable(pg.assert_stopped_lease),
+            "M1_SAME_WRITER_LINK_REQUIRED")
+    port.require_writer_lease(config, ledger)
+    if port.has_intent():
+        return "EXISTING_INTENT_READ_ONLY_RECONCILIATION"
+    before, after = driver.expected_catalog(port.read_catalog())
+    for inverse, name, cutoff in ((False, "executionId", "cutoff"),
+                                  (True, "inverseExecutionId", "inverseCutoff")):
+        execution_id = config[name]
+        frame = driver.build_at_cutoff(before, after, config[cutoff], execution_id, inverse)
+        require(config["wirePins"][execution_id] == {
+            "frameSHA256": sha(frame), "wireSHA256": sha(render(frame, execution_id)),
+        }, "M1_FORWARD_OR_INVERSE_WIRE_DRIFT")
+    return driver.run_held(port, config, ledger, target=M1_TARGET, m1=True)
+
+
+def run_m1_foreground(raw, digest, ledger, host_binding, host_binding_sha,
+                      *, operator_binding, pg_observation, private_dir):
+    """Connect once to the sealed Host entry and bind its exchange to the linked driver."""
+    payload = Path(__file__).resolve().parent / "payload" / "c01-nov06-b-release-062a4903"
+    require(payload.is_dir(), "M1_OPERATOR_PAYLOAD_REQUIRED")
+    sys.path.insert(0, str(payload))
+    from m1_foreground import DEV_HOST, ssh_exchange
+    from dev_joined_port_v2 import M1JoinedPort
+
+    config = m1_plan(raw, digest)
+    authority = json.loads(pinned(host_binding, host_binding_sha))
+    lease_id, ledger_identity = authority["leaseId"], authority["ledgerIdentity"]
+    require(authority["manifestSHA256"] == digest and authority["executionId"] == config["executionId"]
+            and valid_sha(authority["actionsSHA256"])
+            and re.fullmatch(r"[a-f0-9]{32}", lease_id) and lease_id != config["executionId"]
+            and isinstance(ledger_identity, list) and len(ledger_identity) == 2
+            and all(type(part) is int and part > 0 for part in ledger_identity)
+            and ledger == LEDGER / config["executionId"]
+            and config["T"] <= time.time() and time.time() + 60 < config["cutoff"],
+            "M1_FOREGROUND_BINDING_DRIFT")
+    config.update(leaseId=lease_id, ledgerIdentity=ledger_identity, ledgerPath=str(ledger),
+                  hostBindingSHA256=host_binding_sha)
+    operator = json.loads(pinned(operator_binding,
+                                "d957d852ce589ae28d89de6507f7752eaf45c208b300dad35ca8bf1237889f35"))
+    evidence = json.loads(pinned(pg_observation, json.loads(raw)["evidenceSHA256"]["pg"]))
+    system_identifier = evidence["rows"][0]["result"]["systemIdentifier"]
+
+    def fixed_operator_file(key):
+        pin = operator[key]
+        return pinned(Path(pin["path"]), pin["sha256"])
+
+    cli = Path(operator["cliEntry"])
+    fixed_operator_file("cliResolved")
+    require(cli.resolve() == Path(operator["cliResolved"]["path"])
+            and Path(operator["linkedCwd"]) / "supabase/.temp/project-ref" == Path(operator["linkedProject"]["path"])
+            and fixed_operator_file("linkedProject").decode().strip() == PROJECT
+            and re.findall(rb"^HOST = '(root@[0-9.]+)'$", fixed_operator_file("hostTransport"), re.M)
+                == [DEV_HOST.encode()], "M1_OPERATOR_TRANSPORT_DRIFT")
+    folder = stable_path(private_dir)
+    mode = folder.stat()
+    require(stat.S_ISDIR(mode.st_mode) and mode.st_uid == os.getuid()
+            and stat.S_IMODE(mode.st_mode) == 0o700, "M1_OPERATOR_PRIVATE_DIRECTORY_REQUIRED")
+    transport = {"__name__": "m1_linked_transport", "__file__": operator["sqlTransport"]["path"]}
+    exec(compile(fixed_operator_file("sqlTransport"), transport["__file__"], "exec"), transport)
+    write_sql, read_sql = (transport["SqlTransport"](str(cli), operator["linkedCwd"], str(folder))
+                           for _ in range(2))
+
+    def bind(request, pg, catalog):
+        request.update(leaseId=lease_id, ledgerIdentity=ledger_identity, ledgerPath=str(ledger))
+        port = M1JoinedPort(request, exchange, pg, catalog)
+        require(port.exchange is exchange and port.catalog is catalog, "M1_FOREGROUND_PORT_DRIFT")
+        return port
+
+    with ssh_exchange(config) as exchange:
+        return run_m1_linked(raw, digest, ledger, bind, write_sql=write_sql, read_sql=read_sql,
+                             pg_system_identifier=system_identifier, clock=time.time)
 
 
 def plan(raw, execution_id, lock_identity, ledger):
@@ -646,6 +808,18 @@ def refuse_prior_windows(root, execution_id):
 
 
 def run(args):
+    if args.mode == "m1-run":
+        raw = pinned(args.plan, args.plan_sha256)
+        config = m1_plan(raw, args.plan_sha256)
+        require(config["executionId"] == args.execution_id, "M1_ONE_SHOT_ID_DRIFT")
+        return {"status": run_m1_foreground(
+            raw, args.plan_sha256, LEDGER / args.execution_id, args.host_binding, args.host_binding_sha256,
+            operator_binding=args.operator_binding, pg_observation=args.pg_observation,
+            private_dir=args.private_dir)}
+    if args.mode == "m1-check":
+        config = m1_plan(pinned(args.plan, args.plan_sha256), args.plan_sha256)
+        require(config["executionId"] == args.execution_id, "M1_ONE_SHOT_ID_DRIFT")
+        return {"status": "M1_LINKED_PLAN_VALIDATED", "executionId": config["executionId"]}
     require(sys.platform == "linux" and os.geteuid() == 0 and
             Path("/proc/1/comm").read_text().strip() == "systemd", "ROOT_SYSTEMD_HOST_REQUIRED")
     require(re.fullmatch(r"[0-9a-f]{32}", args.execution_id), "EXACT_EXECUTION_ID_REQUIRED")
@@ -682,7 +856,7 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("enroll", "install", "check", "arm", "revoke", "retire"))
+    parser.add_argument("mode", choices=("enroll", "install", "check", "arm", "revoke", "retire", "m1-check", "m1-run"))
     parser.add_argument("--execution-id", required=True)
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--manifest-sha256")
@@ -690,6 +864,11 @@ def main():
     parser.add_argument("--plan-sha256")
     parser.add_argument("--terminal-receipt-sha256")
     parser.add_argument("--armed", action="store_true")
+    parser.add_argument("--host-binding", type=Path)
+    parser.add_argument("--host-binding-sha256")
+    parser.add_argument("--operator-binding", type=Path)
+    parser.add_argument("--pg-observation", type=Path)
+    parser.add_argument("--private-dir", type=Path)
     os.umask(0o077)
     try:
         print(json.dumps(run(parser.parse_args()), sort_keys=True))
