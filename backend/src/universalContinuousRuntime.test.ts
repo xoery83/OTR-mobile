@@ -1,5 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
+import { EventEmitter } from "node:events";
+import { PassThrough } from "node:stream";
 import { chmodSync, lstatSync, mkdtempSync, renameSync, rmSync, writeFileSync, type Stats } from "node:fs";
+import https from "node:https";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -30,6 +33,7 @@ const f = vi.hoisted(() => ({
   pngConfig: vi.fn(),
   pngPorts: vi.fn(),
   pngRead: vi.fn(),
+  custodyRead: vi.fn(),
   runtimeMount: undefined as string | undefined,
   runtimeInodes: new Set<number>(),
 }));
@@ -83,7 +87,7 @@ vi.mock("./universalContinuousConfig", () => ({
   readUniversalContinuousConfig: f.config,
 }));
 vi.mock("./flightPrivateCustody", () => ({
-  createFlightPrivateCustody: async () => ({ close: vi.fn() }),
+  createFlightPrivateCustody: async () => ({ close: vi.fn(), custody: { read: f.custodyRead } }),
 }));
 vi.mock("./tripPublicationCatalogPgConnection", () => ({
   createPublicationCatalogPgConnection: () => ({ close: vi.fn() }),
@@ -919,5 +923,101 @@ it("retained PNG wiring keeps Host/Source guards after positive config close and
     expect(f.claim).not.toHaveBeenCalled();
   } finally {
     await runtime?.close();
+  }
+});
+
+it("QA158 isolated composition preserves one pinned historical PNG and the normal B reader", async () => {
+  const bytes = Buffer.from([11, 22, 33]);
+  const make = () => ({
+    batchId: randomUUID(), taskId: randomUUID(),
+    image: {
+      accountId: randomUUID(), tripId: randomUUID(),
+      sourceId: randomUUID(), representationId: randomUUID(),
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      byteCount: bytes.length, mimeType: "image/png",
+    },
+  });
+  const old = make(), active = make(), other = make();
+  const sameOldPairWrongOriginal = make();
+  sameOldPairWrongOriginal.image.accountId = old.image.accountId;
+  sameOldPairWrongOriginal.image.tripId = old.image.tripId;
+  const { mimeType, ...retainedOriginalRead } = old.image;
+  expect(mimeType).toBe("image/png");
+  f.coreSource.mockReturnValue({
+    lookup: vi.fn(async (_actor, _trip, batchId) => {
+      const fixture = [old, active, other, sameOldPairWrongOriginal].find((item) => item.batchId === batchId);
+      if (!fixture) return null;
+      const { image, taskId } = fixture;
+      return {
+        actorId: image.accountId, tripId: image.tripId, batchId, taskId,
+        inputs: [{
+          source_id: image.sourceId, representation_id: image.representationId,
+          payload_sha256: image.sha256, byte_count: image.byteCount,
+        }],
+      };
+    }),
+  });
+  f.host.mockReturnValue({ readPublished: vi.fn(async () => ({})) });
+  const png = await vi.importActual<typeof import("./sourcePngRuntime")>("./sourcePngRuntime");
+  f.pngPorts.mockImplementation(png.createSourcePngRuntimePorts);
+  f.pngConfig.mockResolvedValue(png.sourcePngRuntimeSchema.parse({
+    version: "OTR_DEV_UNIVERSAL_PNG/1", enabled: true, environment: "DEV",
+    project: "tuqigdxrvrerfewsxqgm", actorId: active.image.accountId,
+    tripId: active.image.tripId, nodeId: randomUUID(),
+    expiresAt: new Date(Date.now() + 60_000).toISOString(), retainedOriginalRead,
+  }));
+  const seen: string[] = [];
+  const network = vi.spyOn(https, "request").mockImplementation((...args) => {
+    const [url, options, respond] = args as unknown as [
+      URL, { method: string }, (response: PassThrough) => void,
+    ];
+    expect(options.method).toBe("GET");
+    seen.push(url.pathname);
+    return Object.assign(new EventEmitter(), {
+      writableFinished: true,
+      end(body: unknown) {
+        expect(body).toBeUndefined();
+        const response = Object.assign(new PassThrough(), {
+          statusCode: 200, complete: true,
+          headers: { "content-type": "image/png" },
+          rawHeaders: ["Content-Type", "image/png"],
+        });
+        respond(response);
+        response.end(bytes);
+      },
+    }) as unknown as ReturnType<typeof https.request>;
+  });
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+    OTR_DEV_UNIVERSAL_PNG_RUNTIME: "enabled",
+    OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256: "a".repeat(64),
+    OTR_DEV_SUPABASE_SECRET_KEY: "synthetic-network-intercepted",
+  });
+  const load = ({ batchId, taskId, image }: ReturnType<typeof make>) =>
+    runtime!.readPublished(
+      { actorAccountId: image.accountId, tripId: image.tripId, batchId, taskId },
+      { query: vi.fn(), retire: vi.fn() },
+    );
+  try {
+    const oldResult = await load(old);
+    const activeResult = await load(active);
+    expect(await oldResult!.readBinary(old.image)).toEqual(Uint8Array.from(bytes));
+    expect(await activeResult!.readBinary(active.image)).toEqual(Uint8Array.from(bytes));
+    await expect(oldResult!.readBinary(active.image)).rejects.toThrow("SOURCE_ACCESS_DENIED");
+    const otherResult = await load(other);
+    await expect(otherResult!.readBinary(other.image)).rejects.toThrow("PDF_CUSTODY_SCOPE_DENIED");
+    const samePairResult = await load(sameOldPairWrongOriginal);
+    await expect(samePairResult!.readBinary(sameOldPairWrongOriginal.image))
+      .rejects.toThrow("PDF_CUSTODY_SCOPE_DENIED");
+    expect(seen).toEqual([old, active].map(({ image }) =>
+      "/storage/v1/object/authenticated/trip-source-material/v1/" +
+      `${image.tripId}/${image.sourceId}/${image.representationId}/payload`,
+    ));
+    expect(f.custodyRead).not.toHaveBeenCalled();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.claim).not.toHaveBeenCalled();
+  } finally {
+    await runtime?.close();
+    network.mockRestore();
   }
 });

@@ -21,6 +21,14 @@ export const sourcePngRuntimeSchema = z.strictObject({
   tripId: z.uuid(),
   expiresAt: z.iso.datetime(),
   nodeId: z.uuid(),
+  retainedOriginalRead: z.strictObject({
+    accountId: z.uuid(),
+    tripId: z.uuid(),
+    sourceId: z.uuid(),
+    representationId: z.uuid(),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    byteCount: z.number().int().positive().max(1048576),
+  }).optional(),
 });
 export async function readSourcePngRuntimeConfig(
   env: Record<string, string | undefined>,
@@ -147,12 +155,23 @@ export function createSourcePngRuntimePorts(
         assertReadEnabled();
       };
       await current();
+      const retained = config.retainedOriginalRead;
+      const readCustody =
+        retained &&
+        retained.accountId === scope.accountId &&
+        retained.tripId === scope.tripId &&
+        retained.sourceId === scope.sourceId &&
+        retained.representationId === scope.representationId &&
+        retained.sha256 === scope.sha256 &&
+        retained.byteCount === scope.byteCount
+          ? { accountId: retained.accountId, tripId: retained.tripId }
+          : custody;
       const producer = createSourcePngStorageProducer(
         storage,
         async () => {
           throw Error("PNG_READ_CANNOT_EXECUTE_WORKER");
         },
-        custody,
+        readCustody,
         { assertRequestCurrent: assertReadEnabled, assertCurrent: current },
       );
       const { accountId, tripId, sourceId, representationId, sha256, byteCount } = scope;
