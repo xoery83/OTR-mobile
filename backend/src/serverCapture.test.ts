@@ -273,6 +273,37 @@ it("selects one normal Catalog, lazily binds actual method Trip and wakes only e
   mocks.server.once.mock.calls[0][1]();
   expect(runtime.close).toHaveBeenCalledOnce();
 });
+it("forwards the explicit material-ready read through Capture startup without preparing", async () => {
+  vi.stubEnv("OTR_DEV_UNIVERSAL_CONTINUOUS_HOST", "enabled");
+  const actor = randomUUID();
+  const trip = randomUUID();
+  const batch = randomUUID();
+  const requestId = randomUUID();
+  const ready = { state: "MATERIAL_READY_NO_TASK" };
+  const readMaterialReady = vi.fn().mockResolvedValue(ready);
+  const prepare = vi.fn();
+  const drainTargeted = vi.fn();
+  const forRequest = vi.fn().mockResolvedValue({
+    universalImportPort: { readMaterialReady },
+    prepare,
+    drainTargeted,
+  });
+  mocks.continuous.mockResolvedValue({ forRequest, close: vi.fn() });
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+
+  const request = new Request(
+    `https://local/v2/import-batches/${batch}/interpretations?tripId=${trip}&materialReady=1`,
+  );
+  const { universalRuntimeForRequest } = mocks.start.mock.calls[0][0];
+  const bound = await universalRuntimeForRequest(request, actor, requestId);
+  expect(forRequest).not.toHaveBeenCalled();
+  await expect(bound.universalImportPort.readMaterialReady(actor, batch, trip)).resolves.toBe(ready);
+  expect(forRequest).toHaveBeenCalledExactlyOnceWith(request, actor, trip, requestId);
+  expect(readMaterialReady).toHaveBeenCalledExactlyOnceWith(actor, batch, trip);
+  expect(prepare).not.toHaveBeenCalled();
+  expect(drainTargeted).not.toHaveBeenCalled();
+});
 it("a selected continuous loader failure stays closed and never falls through to finite Catalog", async () => {
   vi.stubEnv("OTR_DEV_UNIVERSAL_CONTINUOUS_HOST", "enabled");
   mocks.continuous.mockRejectedValueOnce(Error("private-value"));

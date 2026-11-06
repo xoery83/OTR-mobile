@@ -129,6 +129,9 @@ async function main() {
                   },
                 },
                 universalImportPort: {
+                  async readMaterialReady(a, b, t) {
+                    return (await scoped(t)).universalImportPort.readMaterialReady(a, b, t);
+                  },
                   async readContext(a, b, t) {
                     return (await scoped(t)).universalImportPort.readContext(a, b, t);
                   },
