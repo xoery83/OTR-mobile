@@ -462,7 +462,17 @@ export function createUniversalOriginalSourceConnection(
         ? await importDigest("otr.import.mixed-b-first-acquire/1", q as Json, hash)
         : undefined;
       const canonical = canonicalEventJson(q as Json);
-      const r = (await transaction(async (lease) => {
+      const verify = async (result: unknown) => {
+        const receipt = result as Record<string, Json>;
+        await verifySourceAcquisitionResult(
+          q,
+          receipt,
+          hash,
+          q.payload.original.material_kind === "BINARY" ? "PENDING" : "NOT_APPLICABLE",
+        );
+        return receipt;
+      };
+      return transaction(async (lease) => {
         if (mixedB && initial) {
           mixedB.assertCurrent();
           const prior = await readOne(
@@ -470,7 +480,7 @@ export function createUniversalOriginalSourceConnection(
             "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
             [actor, canonical],
           );
-          if (prior !== null) return prior; // Verified by the same immutable receipt verifier below.
+          if (prior !== null) return verify(prior);
           if (ordinal === 0) {
             await proveMixedBPristine(lease, initial, firstCommandSha256);
             mixedB.assertCurrent();
@@ -493,21 +503,16 @@ export function createUniversalOriginalSourceConnection(
           mixedB.assertCurrent();
           assertMixedBTaskFence(mixedB.taskDb, initial, true);
         }
-        const result = await readOne(
-          lease,
-          "SELECT public.trip_source_acquire_universal_original($1::uuid,$2) AS result",
-          [actor, canonical],
+        const receipt = await verify(
+          await readOne(
+            lease,
+            "SELECT public.trip_source_acquire_universal_original($1::uuid,$2) AS result",
+            [actor, canonical],
+          ),
         );
         mixedB?.assertCurrent();
-        return result;
-      })) as Record<string, Json>;
-      await verifySourceAcquisitionResult(
-        q,
-        r,
-        hash,
-        q.payload.original.material_kind === "BINARY" ? "PENDING" : "NOT_APPLICABLE",
-      );
-      return r;
+        return receipt;
+      });
     },
     async lookup(actor: string, trip: string, raw: unknown) {
       const q = await input(actor, trip, raw);

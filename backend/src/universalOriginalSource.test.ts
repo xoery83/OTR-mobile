@@ -785,6 +785,19 @@ it("uses the same reservation for successor proofs and reads an exact FINAL repl
     expect(phase()).toBe("RESERVED");
   }));
 
+it("mixed B rolls back an ACQUIRE with an invalid receipt and keeps the original reservation", () =>
+  withMixedBFirstFixture(async ({ c, png, phase, calls, receipts }) => {
+    Object.assign(receipts.get(png.operation_id)!, { result_sha256: "0".repeat(64) });
+
+    await expect(c.acquire(actor, trip, png)).rejects.toThrow("REPLAY_UNAVAILABLE");
+    expect(calls.at(-1)?.sql).toBe("ROLLBACK");
+    expect(phase()).toBe("RESERVED");
+
+    await expect(c.acquire(actor, trip, png)).rejects.toThrow("MIXED_B_TASK_FENCE");
+    expect(calls.filter(({ sql }) => sql.includes("acquire_universal"))).toHaveLength(1);
+    expect(phase()).toBe("RESERVED");
+  }));
+
 it.each(["proof", "commit"])(
   "mixed B preserves reservation across uncertain %s without a new ACQUIRE",
   (point) =>
