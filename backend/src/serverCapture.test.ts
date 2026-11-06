@@ -210,6 +210,7 @@ it("selects one normal Catalog, lazily binds actual method Trip and wakes only e
   };
   const ports = {
     prepare: vi.fn(async () => ({ status: "QUEUED", context })),
+    resume: vi.fn(async () => context),
     drainTargeted: vi.fn(async () => ({ status: "SETTLED" })),
     universalImportPort: {
       read: vi.fn(async () => null),
@@ -229,7 +230,7 @@ it("selects one normal Catalog, lazily binds actual method Trip and wakes only e
   await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
   expect(mocks.universal).not.toHaveBeenCalled();
   expect(mocks.originals).not.toHaveBeenCalled();
-  expect(mocks.trip).toHaveBeenCalledWith(process.env);
+  expect(mocks.trip).toHaveBeenCalledWith(process.env, undefined, undefined);
   const options = mocks.start.mock.calls[0][0];
   expect(options.publicationCatalogConnection).toBe(runtime.catalogConnection);
   const request = new Request(
@@ -239,7 +240,7 @@ it("selects one normal Catalog, lazily binds actual method Trip and wakes only e
   const bound = await options.universalRuntimeForRequest(request, actor);
   expect(runtime.forRequest).not.toHaveBeenCalled();
   await bound.universalImportPort.read(actor, batch, task);
-  expect(runtime.forRequest).toHaveBeenLastCalledWith(request, actor, trip);
+  expect(runtime.forRequest).toHaveBeenLastCalledWith(request, actor, trip, undefined);
   expect(ports.drainTargeted).not.toHaveBeenCalled();
   expect(await bound.prepare(trip, { tripId: trip })).toEqual({
     status: "QUEUED",
@@ -258,11 +259,8 @@ it("selects one normal Catalog, lazily binds actual method Trip and wakes only e
   };
   expect(await bound.prepare(trip, resume)).toEqual({ status: "EXISTING", context });
   expect(ports.prepare).not.toHaveBeenCalled();
-  expect(ports.universalImportPort.readContext).toHaveBeenCalledExactlyOnceWith(
-    actor,
-    batch,
-    trip,
-  );
+  expect(ports.resume).toHaveBeenCalledExactlyOnceWith(trip, batch, task);
+  expect(ports.universalImportPort.readContext).not.toHaveBeenCalled();
   await vi.waitFor(() =>
     expect(ports.drainTargeted).toHaveBeenCalledExactlyOnceWith(batch, task),
   );
@@ -324,6 +322,6 @@ it("binds owning published P1 reads only with the explicit Source Review activat
   mocks.continuous.mockResolvedValue({ readPublished, close: vi.fn() });
   await import("./serverCapture");
   await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
-  expect(mocks.trip).toHaveBeenCalledWith(process.env, readPublished);
+  expect(mocks.trip).toHaveBeenCalledWith(process.env, readPublished, undefined);
   expect(readPublished).not.toHaveBeenCalled();
 });

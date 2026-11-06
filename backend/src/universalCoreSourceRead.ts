@@ -22,6 +22,7 @@ export function createCoreUniversalSourceRead(
   actor: string,
   trip: string,
   readBinary?: UniversalBinaryReader,
+  exactSourceId?: string,
 ) {
   z.uuid().parse(actor);
   z.uuid().parse(trip);
@@ -76,7 +77,11 @@ export function createCoreUniversalSourceRead(
       .min(1)
       .max(64)
       .parse((before[0].run as Record<string, unknown>).scope_source_ids);
-    if (new Set(ids).size !== ids.length) throw Error("UNIVERSAL_BINDING_SCOPE");
+    if (
+      new Set(ids).size !== ids.length ||
+      (exactSourceId !== undefined && (ids.length !== 1 || ids[0] !== exactSourceId))
+    )
+      throw Error("UNIVERSAL_BINDING_SCOPE");
     await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
     try {
       const row = (

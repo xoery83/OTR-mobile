@@ -1,3 +1,4 @@
+import { createCoreRetainedPngRead, type RetainedPngReader } from "./tripCoreV2RetainedPngRead";
 import { createCoreMemberAccessPort } from "./tripCoreMemberAccess";
 import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 import type { CoreGateMode } from "./tripSustainedGate";
@@ -23,7 +24,7 @@ export function createCorePgHttpConnection(
   documentStorage?: SupabaseClient["storage"],
   gateMode?: CoreGateMode,
   readUniversalP1?: PublishedUniversalP1Reader,
-  options: { memberAccess?: true } = {},
+  options: { memberAccess?: true; retainedPng?: RetainedPngReader } = {},
 ): CoreHttpConnection & { documentOriginalReader?: DocumentOriginalReader } {
   const authority = createCoreSourcePgAuthority(connection, hash, { readUniversalP1 });
   const baseReader = createCorePgReader(connection, hash, undefined, gateMode);
@@ -116,6 +117,9 @@ export function createCorePgHttpConnection(
   return {
     ...(options.memberAccess
       ? { memberAccess: createCoreMemberAccessPort(connection, hash) }
+      : {}),
+    ...(options.retainedPng
+      ? { readRetainedPng: createCoreRetainedPngRead(connection, options.retainedPng, gateMode) }
       : {}),
     commands,
     source: authority.source,

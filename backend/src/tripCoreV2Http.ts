@@ -84,6 +84,7 @@ const validationFields = new Set([
   "slotId",
 ]);
 export type CoreHttpConnection = {
+  readRetainedPng?: ReturnType<typeof import("./tripCoreV2RetainedPngRead").createCoreRetainedPngRead>;
   memberAccess?: CoreMemberAccessPort;
   publishUniversalP1?(actor: string, trip: string, input: unknown): Promise<unknown>;
   finalizeUniversalP1Operation?(

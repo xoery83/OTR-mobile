@@ -181,9 +181,21 @@ export function startDevBackend(
         new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
       );
       const mcpLimit = mcpIngressBodyLimit(new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,incoming.method ?? "");
+      const retainedUrl = new URL(incoming.url ?? "/", "http://127.0.0.1");
+      const retainedPngGet =
+        incoming.method === "GET" &&
+        /^\/v2\/import-batches\/[^/]+\/interpretations\/[^/]+$/.test(retainedUrl.pathname) &&
+        retainedUrl.searchParams.has("retainedOriginal");
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (retainedPngGet && byteCount > 0) {
+          outgoing.statusCode = 400;
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.setHeader("Vary", "Authorization");
+          outgoing.end();
+          return;
+        }
         if (flightEnrichmentRoute && byteCount > 8192) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");

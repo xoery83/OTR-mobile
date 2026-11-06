@@ -59,6 +59,19 @@ export function createSustainedDevTripPorts(
   };
   const core: CoreHttpConnection = {
     hash: ports.core.hash,
+    ...(ports.core.readRetainedPng
+      ? {
+          async readRetainedPng(scope, assertCurrent) {
+            guard(scope.accountId);
+            const bytes = await ports.core.readRetainedPng!(scope, async () => {
+              guard(scope.accountId);
+              await assertCurrent();
+            });
+            guard(scope.accountId);
+            return bytes;
+          },
+        }
+      : {}),
     ...(ports.core.publishUniversalP1 &&
     ports.core.finalizeUniversalP1Operation &&
     ports.core.source

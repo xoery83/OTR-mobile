@@ -32,6 +32,47 @@ export type CorePgReadAuthority = {
     sourceEvidenceRefs?: readonly string[];
   }>;
 };
+export async function setCoreReadIdentity(lease: CorePgLease, actorAccountId: string, tripId: string) {
+  const identity = (
+    await lease.query("SELECT session_user AS principal,current_user AS role")
+  ).rows[0];
+  if (
+    identity?.principal !== "otr_trip_core_v2_gateway" ||
+    identity.role !== "otr_trip_core_v2_gateway"
+  )
+    throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
+  await lease.query(
+    "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
+    [actorAccountId, tripId],
+  );
+}
+
+export async function assertCoreReadScope(lease: CorePgLease, actorAccountId: string, tripId: string, gateMode?: CoreGateMode) {
+  const allowed = (
+    await lease.query(
+      gateMode?.sustainedDev
+        ? "SELECT public.trip_sustained_core_read_scope_allowed($1::uuid,$2::uuid) AS allowed"
+        : "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
+      [actorAccountId, tripId],
+    )
+  ).rows[0]?.allowed;
+  if (allowed !== true) throw new Error("CORE_CAPABILITY_CLOSED");
+}
+
+export async function requireCoreReadActor(lease: CorePgLease, actorAccountId: string, tripId: string, gateMode?: CoreGateMode) {
+  await assertCoreReadScope(lease, actorAccountId, tripId, gateMode);
+  const actor = await lockCorePgActor(lease, actorAccountId, tripId);
+  if (!actor.active) throw new Error("NOT_VISIBLE");
+  if (
+    !gateMode?.sustainedDev &&
+    !(
+      await readCoreGate(lease, actorAccountId, tripId, gateMode, "runtime_enabled")
+    )?.runtime_enabled
+  )
+    throw new Error("CORE_CAPABILITY_CLOSED");
+  return actor;
+}
+
 export function createCorePgReader(
   connection: CorePgConnection,
   hash: ImportHash,
@@ -53,39 +94,8 @@ export function createCorePgReader(
         await lease.query("SET LOCAL statement_timeout='5000ms'");
         await lease.query("SET LOCAL lock_timeout='1000ms'");
         await lease.query("SET LOCAL TIME ZONE 'UTC'");
-        const identity = (
-          await lease.query("SELECT session_user AS principal,current_user AS role")
-        ).rows[0];
-        if (
-          identity?.principal !== "otr_trip_core_v2_gateway" ||
-          identity.role !== "otr_trip_core_v2_gateway"
-        )
-          throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
-        await lease.query(
-          "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
-          [actorAccountId, tripId],
-        );
-        const finiteScope = async () => {
-          const allowed = (
-            await lease.query(
-              gateMode?.sustainedDev
-                ? "SELECT public.trip_sustained_core_read_scope_allowed($1::uuid,$2::uuid) AS allowed"
-                : "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
-              [actorAccountId, tripId],
-            )
-          ).rows[0]?.allowed;
-          if (allowed !== true) throw new Error("CORE_CAPABILITY_CLOSED");
-        };
-        await finiteScope();
-        const actor = await lockCorePgActor(lease, actorAccountId, tripId);
-        if (!actor.active) throw new Error("NOT_VISIBLE");
-        if (
-          !gateMode?.sustainedDev &&
-          !(
-            await readCoreGate(lease, actorAccountId, tripId, gateMode, "runtime_enabled")
-          )?.runtime_enabled
-        )
-          throw new Error("CORE_CAPABILITY_CLOSED");
+        await setCoreReadIdentity(lease, actorAccountId, tripId);
+        const actor = await requireCoreReadActor(lease, actorAccountId, tripId, gateMode);
         const state = (
           await lease.query(
             "SELECT epoch,revision::float8 AS revision,access_revision::float8 AS access_revision FROM public.trip_core_read_state WHERE trip_id=$1::uuid",
@@ -139,7 +149,7 @@ export function createCorePgReader(
           rights.sourceEvidenceRefs,
           ordinaryOrderVersion,
         );
-        await finiteScope();
+        await assertCoreReadScope(lease, actorAccountId, tripId, gateMode);
         await lease.query("COMMIT");
         began = false;
         return { actor, graph, collection, rights, bindings };

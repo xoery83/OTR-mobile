@@ -83,7 +83,7 @@ import {
   type CanonicalEventRead,
   type EventOperationReceipt,
 } from "../../src/data/api/tripCanonicalReadContracts";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 
 import {
@@ -1137,6 +1137,69 @@ export async function authenticateNormalAccount(
       "A registered account is required.",
     );
   return user;
+}
+
+async function retainedPngBoundary(
+  request: Request,
+  url: URL,
+  gateway: DevBackendGateway,
+  read: CoreHttpConnection["readRetainedPng"],
+  requestId: string,
+) {
+  const headers = { "Cache-Control": "private, no-store", Vary: "Authorization" };
+  const denied = (status: number) => new Response(null, { status, headers });
+  const ids = /^\/v2\/import-batches\/([^/]+)\/interpretations\/([^/]+)$/.exec(url.pathname);
+  const tripId = url.searchParams.get("tripId");
+  if (request.method !== "GET") return denied(405);
+  if (
+    !ids || !uuidPattern.test(ids[1]) || !uuidPattern.test(ids[2]) ||
+    !tripId || !uuidPattern.test(tripId) ||
+    url.searchParams.size !== 2 || url.searchParams.get("retainedOriginal") !== "1" ||
+    request.body || request.headers.has("Range") || request.headers.has("Content-Encoding") ||
+    request.headers.has("Transfer-Encoding") ||
+    ![null, "0"].includes(request.headers.get("Content-Length"))
+  )
+    return denied(400);
+  try {
+    const actor = await authenticateNormalAccount(request, gateway);
+    const assertCurrent = async () => {
+      request.signal.throwIfAborted();
+      const current = await authenticateNormalAccount(request, gateway);
+      if (current.id !== actor.id || !(await gateway.canReadTrip(actor.id, tripId)))
+        throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read is forbidden.");
+      request.signal.throwIfAborted();
+    };
+    await assertCurrent();
+    if (!read) return denied(503);
+    const bytes = await read({ accountId: actor.id, tripId, batchId: ids[1], taskId: ids[2] }, assertCurrent);
+    if (!bytes) return denied(404);
+    await assertCurrent();
+    const body = Buffer.from(bytes);
+    return new Response(body, {
+      headers: {
+        ...headers,
+        "Content-Type": "image/png",
+        "Content-Length": String(body.byteLength),
+        ETag: '"' + createHash("sha256").update(body).digest("hex") + '"',
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch (error) {
+    if (error instanceof HttpError) return denied(error.status);
+    const message = error instanceof Error ? error.message : "";
+    const category =
+      message === "CORE_CAPABILITY_CLOSED" || message === "CORE_PRINCIPAL_UNAVAILABLE"
+        ? "CORE_GATE"
+        : message === "SOURCE_ACCESS_DENIED"
+          ? "SOURCE_ACCESS"
+          : message === "UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED" || message === "UNIVERSAL_SOURCE_CHANGED"
+            ? "SOURCE_INTEGRITY"
+            : message === "UNIVERSAL_PUBLICATION_CHANGED" || message === "UNIVERSAL_RESULT_UNAVAILABLE"
+              ? "PUBLICATION"
+              : "UNAVAILABLE";
+    console.info(JSON.stringify({ event: "universal_retained_png_read_failed", requestId, category }));
+    return denied(503);
+  }
 }
 
 function assertTripId(tripId: string) {
@@ -2645,21 +2708,26 @@ export function createDevBackendHandler({
         /^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)
       ) {
         route = "/v2/import-batches/:batchId/interpretations";
-        const actor = await authenticate(request, gateway);
-        const runtime = await universalRuntimeForRequest?.(request, actor.id, requestId);
-        response = url.pathname.endsWith("/prepare")
-          ? await universalPrepareBoundary(
-              request,
-              actor.id,
-              (a, t) => gateway.canReadTrip(a, t),
-              runtime?.prepare,
-            )
-          : await universalBoundary(
-              request,
-              actor.id,
-              (a, t) => gateway.canReadTrip(a, t),
-              runtime?.universalImportPort ?? universalImportPort,
-            );
+        if (url.searchParams.has("retainedOriginal")) {
+          route = "/v2/import-batches/:batchId/interpretations/:taskId/retained-original";
+          response = await retainedPngBoundary(request, url, gateway, coreConnection?.readRetainedPng, requestId);
+        } else {
+          const actor = await authenticate(request, gateway);
+          const runtime = await universalRuntimeForRequest?.(request, actor.id, requestId);
+          response = url.pathname.endsWith("/prepare")
+            ? await universalPrepareBoundary(
+                request,
+                actor.id,
+                (a, t) => gateway.canReadTrip(a, t),
+                runtime?.prepare,
+              )
+            : await universalBoundary(
+                request,
+                actor.id,
+                (a, t) => gateway.canReadTrip(a, t),
+                runtime?.universalImportPort ?? universalImportPort,
+              );
+        }
       } else if (
         /^\/v2\/trips\/[^/]+\/universal-source-originals\/png\/(?:result|execute|reconcile)$/.test(
           url.pathname,

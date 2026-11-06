@@ -95,6 +95,7 @@ export async function loadDevTripCreateRuntime(
   options?: Readonly<{
     memberClaim?: Readonly<{ inviteExpiresAt: string }>;
     selfTripNickname?: true;
+    retainedPng?: import("./tripCoreV2RetainedPngRead").RetainedPngReader;
   }>,
 ) {
   let file;
@@ -164,6 +165,7 @@ export async function loadDevTripCreateRuntime(
             ...(readUniversalP1 ? { reviewedP1: true as const } : {}),
           },
           readUniversalP1,
+          ...(options?.retainedPng ? [{ retainedPng: options.retainedPng }] as const : []),
         ),
       },
       true,

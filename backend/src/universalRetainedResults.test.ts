@@ -1,3 +1,11 @@
+import https from "node:https";
+import { EventEmitter } from "node:events";
+import { PassThrough } from "node:stream";
+import { createDevBackendHandler, type BackendDependencies } from "./app";
+import { createCorePgHttpConnection } from "./tripCoreV2PgHttpConnection";
+import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
+import { createRetainedPngReader } from "./universalRetainedPngRead";
+import { createSourcePngRuntimePorts } from "./sourcePngRuntime";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 // Network-none composition fixture: actual Task SQLite/Repository/Queue and
 // ContinuationHost. Source/Catalog/Provider/usage-proof ports are controlled
@@ -512,6 +520,349 @@ it.each(hostCases)(
       const attempt = sql
         .prepare("SELECT * FROM intelligence_continuation_attempts WHERE task_id=?")
         .get(taskId)!;
+      // Exercise the actual Capture router and sustained Core composition with a different
+      // active finite selection. Only storage transport and SQL responses are synthetic.
+      const target = {
+        accountId: actor,
+        tripId: trip,
+        batchId: batch,
+        taskId,
+        runId,
+        inputId: pin.id,
+        sourceId: source.id,
+        representationId: rep.id,
+        sourceRevision: pin.material_revision,
+        sourceRowRevision: pin.observed_source_row_revision,
+        representationRowRevision: 2,
+        sha256: pin.payload_sha256,
+        byteCount: pin.byte_count,
+      };
+      const finite = { accountId: randomUUID(), tripId: randomUUID() };
+      let role = "otr_trip_core_v2_gateway",
+        gate = true,
+        representationRevision = 2,
+        sourceRevisionValid = true,
+        coreScopeValid = true,
+        currentActor = actor,
+        tripAccess = true,
+        resultBytes = originalBytes,
+        onGet = () => {};
+      const coreRun = {
+        ...run,
+        capture_batch_id: batch,
+        interpretation_task_id: taskId,
+        capture_submission_sha256: binding.submissionSha256,
+        scope_source_ids: [source.id],
+      };
+      const coreQuery = vi.fn(async (q: string, args: unknown[] = []) => {
+        const rows = (value: Record<string, unknown>) => ({ rows: [value] });
+        if (/^(BEGIN|SET LOCAL|COMMIT|ROLLBACK)/.test(q)) {
+          if (q.startsWith("SET LOCAL ROLE")) role = q.split(" ").at(-1)!;
+          return { rows: [] };
+        }
+        if (q.includes("session_user"))
+          return rows({ principal: "otr_trip_core_v2_gateway", role, actor, trip });
+        if (q.includes("set_config")) {
+          expect(args).toEqual([actor, trip]);
+          return { rows: [] };
+        }
+        if (q.includes("trip_sustained_core_read_scope_allowed"))
+          return rows({ allowed: gate });
+        if (q.includes("trip_core_lock_actor_scope"))
+          return rows({ actor: { accountId: actor, tripId: trip, active: true } });
+        if (q.includes("trip_core_lock_source_scope")) {
+          expect(role).toBe("otr_trip_core_v2_gateway");
+          expect(args).toEqual([actor, trip, JSON.stringify([source.id])]);
+          return rows({ source_count: 1, allowed: coreScopeValid });
+        }
+        expect(role).toBe("otr_trip_core_v2_writer");
+        if (q.includes("WITH actual AS MATERIALIZED"))
+          return rows({
+            run: coreRun,
+            pins: [{ pin, valid: true, representationRole: "ORIGINAL" }],
+            checked_hash: coreRun.input_sha256,
+          });
+        if (q.includes("AS run FROM")) return rows({ run: coreRun });
+        if (q.includes("r.row_revision::float8 AS revision")) {
+          expect(args).toEqual([
+            actor,
+            trip,
+            source.id,
+            rep.id,
+            1,
+            1,
+            pin.payload_sha256,
+            pin.byte_count,
+          ]);
+          return sourceRevisionValid
+            ? rows({ revision: representationRevision })
+            : { rows: [] };
+        }
+        if (q.includes("material_kind,encoding")) return rows(rep);
+        if (q.includes("trip_source_read_sustained_png_proof"))
+          return rows({ proof: manifest.representations[0].pngSource });
+        throw Error("UNEXPECTED_CORE_SQL");
+      });
+      const coreConnection = {
+        withLease: async <T>(work: (lease: any) => Promise<T>) =>
+          work({ query: coreQuery, retire: vi.fn() }),
+      };
+      const {
+        batchId,
+        taskId: retainedTask,
+        runId: retainedRun,
+        inputId,
+        sourceRevision,
+        sourceRowRevision,
+        representationRowRevision,
+        ...oldSource
+      } = target;
+      const png = createSourcePngRuntimePorts(
+        {
+          version: "OTR_DEV_UNIVERSAL_PNG/1",
+          enabled: true,
+          environment: "DEV",
+          project: "tuqigdxrvrerfewsxqgm",
+          actorId: finite.accountId,
+          tripId: finite.tripId,
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          nodeId: randomUUID(),
+          retainedOriginalRead: {
+            ...oldSource,
+            publication: {
+              batchId,
+              taskId: retainedTask,
+              runId: retainedRun,
+              inputId,
+              sourceRevision,
+              sourceRowRevision,
+              representationRowRevision,
+            },
+          },
+        },
+        {
+          gateway: {} as never,
+          connection: sourceConnection,
+          storageToken: "offline-fixture",
+          assertEnabled: () => {
+            throw Error("NO_WORKER_EXPECTED");
+          },
+          assertReadEnabled: () => {},
+        },
+      );
+      const storage = vi.spyOn(https, "request").mockImplementation((...args) => {
+        const [url, options, respond] = args as unknown as [
+          URL,
+          { method: string },
+          (stream: PassThrough) => void,
+        ];
+        expect(options.method).toBe("GET");
+        expect(url.pathname).toMatch(
+          new RegExp(`/v1/${trip}/${source.id}/${rep.id}/payload$`),
+        );
+        return Object.assign(new EventEmitter(), {
+          writableFinished: true,
+          end(body: unknown) {
+            expect(body).toBeUndefined();
+            onGet();
+            const response = Object.assign(new PassThrough(), {
+              statusCode: 200,
+              complete: true,
+              headers: { "content-type": "image/png" },
+              rawHeaders: ["Content-Type", "image/png"],
+            });
+            respond(response);
+            response.end(resultBytes);
+          },
+        }) as unknown as ReturnType<typeof https.request>;
+      });
+      const retainedPng = createRetainedPngReader(
+        target,
+        db,
+        stores as never,
+        png.readOriginal,
+      );
+      const ordinaryRead = vi.fn(async () => result);
+      const forRequest = vi.fn(async () => ({
+        universalImportPort: { read: ordinaryRead },
+      }));
+      const start = vi.fn((_options: BackendDependencies) => ({
+        once: vi.fn(),
+        close: vi.fn(),
+      }));
+      vi.doMock("./serverStartup", () => ({ startDevBackend: start }));
+      vi.doMock("./flight-enrichment/devRuntime", () => ({
+        loadDevFlightEnrichmentRuntime: async () => undefined,
+      }));
+      vi.doMock("./captureCustodyRuntime", () => ({
+        loadDevCaptureCustody: async () => undefined,
+      }));
+      vi.doMock("./universalContinuousRuntime", () => ({
+        loadDevUniversalContinuousRuntime: async () => ({ retainedPng, forRequest }),
+      }));
+      vi.doMock("./tripMetadataRuntime", () => ({
+        loadDevTripMetadataV2Runtime: async () => undefined,
+      }));
+      vi.doMock("./tripCreateRuntime", () => ({
+        loadDevTripCreateRuntime: async (
+          _env: unknown,
+          p1: unknown,
+          options: { retainedPng: typeof retainedPng },
+        ) => {
+          expect(p1).toBeUndefined();
+          expect(options.retainedPng).toBe(retainedPng);
+          const core = createCorePgHttpConnection(
+            coreConnection,
+            async (b) => sha(b),
+            undefined,
+            { sustainedDev: true },
+            undefined,
+            options,
+          );
+          return {
+            ...createSustainedDevTripPorts(
+              { create: {} as never, metadata: {} as never, core },
+              true,
+            ),
+            tripMetadataV2Port: {},
+          };
+        },
+      }));
+      vi.stubEnv("OTR_DEV_UNIVERSAL_CONTINUOUS_HOST", "enabled");
+      vi.stubEnv("OTR_DEV_UNIVERSAL_SETTLED_RECOVERY", undefined);
+      vi.stubEnv("OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW", undefined);
+      const processOnce = vi.spyOn(process, "once").mockImplementation(() => process);
+      try {
+        await import("./serverCapture");
+        await vi.waitFor(() => expect(start).toHaveBeenCalledOnce());
+        const handle = createDevBackendHandler({
+          ...start.mock.calls[0][0],
+          gateway: {
+            async validateAccessToken() {
+              return { id: currentActor, accountClass: "NORMAL_ACCOUNT" };
+            },
+            async canReadTrip() {
+              return tripAccess;
+            },
+          } as unknown as BackendDependencies["gateway"],
+        });
+        const path = `https://local/v2/import-batches/${batch}/interpretations/${taskId}?tripId=${trip}`;
+        const get = (suffix = "&retainedOriginal=1", headers: HeadersInit = {}) =>
+          handle(
+            new Request(path + suffix, {
+              headers: { Authorization: "Bearer fixture", ...headers },
+            }),
+          );
+        const noBytes = async (response: Response, status: number) => {
+          expect(response.status).toBe(status);
+          expect(await response.arrayBuffer()).toHaveProperty("byteLength", 0);
+        };
+        const totalChanges = () => sql.prepare("SELECT total_changes() AS n").get()?.n;
+        const changes = totalChanges();
+        const response = await get();
+        expect(response.status).toBe(200);
+        expect(response.headers.get("content-type")).toBe("image/png");
+        expect(response.headers.get("cache-control")).toBe("private, no-store");
+        expect(response.headers.get("vary")).toBe("Authorization");
+        expect(response.headers.get("content-length")).toBe(String(originalBytes.length));
+        expect(response.headers.get("etag")).toBe('"' + sha(originalBytes) + '"');
+        expect(Buffer.from(await response.arrayBuffer())).toEqual(originalBytes);
+        expect(storage).toHaveBeenCalledOnce();
+        const statements = coreQuery.mock.calls.map(([q]) => q);
+        expect(statements.findIndex((q) => q.includes("trip_core_lock_source_scope")))
+          .toBeLessThan(statements.findIndex((q) => q.includes("trip_core_lock_actor_scope")));
+        expect(forRequest).not.toHaveBeenCalled();
+        expect(await (await get("")).json()).toEqual(result);
+        expect(ordinaryRead).toHaveBeenCalledOnce();
+        await noBytes(await get("&retainedOriginal=1&retainedOriginal=1"), 400);
+        await noBytes(await get(undefined, { Range: "bytes=0-8" }), 400);
+        await noBytes(await get(undefined, { "Content-Length": "1" }), 400);
+        await noBytes(
+          await handle(
+            new Request(path.replace(taskId, randomUUID()) + "&retainedOriginal=1", {
+              headers: { Authorization: "Bearer fixture" },
+            }),
+          ),
+          404,
+        );
+        currentActor = finite.accountId;
+        await noBytes(await get(), 404);
+        currentActor = actor;
+        tripAccess = false;
+        await noBytes(await get(), 403);
+        tripAccess = true;
+        gate = false;
+        await noBytes(await get(), 503);
+        gate = true;
+        coreScopeValid = false;
+        await noBytes(await get(), 503);
+        coreScopeValid = true;
+        representationRevision = 3;
+        await noBytes(await get(), 503);
+        representationRevision = 2;
+        sourceRevisionValid = false;
+        await noBytes(await get(), 503);
+        sourceRevisionValid = true;
+        expect(storage).toHaveBeenCalledOnce();
+        onGet = () => {
+          representationRevision = 3;
+        };
+        await noBytes(await get(), 503);
+        representationRevision = 2;
+        onGet = () => {
+          tripAccess = false;
+        };
+        await noBytes(await get(), 403);
+        tripAccess = true;
+        onGet = () => {};
+        resultBytes = Buffer.from(originalBytes);
+        resultBytes[25] ^= 1;
+        await noBytes(await get(), 503);
+        resultBytes = originalBytes;
+        expect(totalChanges()).toBe(changes);
+        expect(sends).toHaveBeenCalledTimes(1);
+        const first = db.getFirstAsync.bind(db);
+        let publicationChanged = false;
+        onGet = () => {
+          publicationChanged = true;
+        };
+        const drift = vi
+          .spyOn(db, "getFirstAsync")
+          .mockImplementation(async (q, ...args) => {
+            const row = await first<Record<string, unknown>>(q, ...args);
+            return publicationChanged &&
+              row &&
+              q.includes("FROM intelligence_continuations")
+              ? { ...row, publication_fence: Number(row.publication_fence) + 1 }
+              : row;
+          });
+        try {
+          await noBytes(await get(), 503);
+        } finally {
+          drift.mockRestore();
+        }
+        expect(totalChanges()).toBe(changes);
+        expect(storage).toHaveBeenCalledTimes(5);
+        expect(forRequest).toHaveBeenCalledOnce();
+        expect(
+          coreQuery.mock.calls.some(([q]) => /^(INSERT|UPDATE|DELETE)/.test(q)),
+        ).toBe(false);
+      } finally {
+        processOnce.mockRestore();
+        storage.mockRestore();
+        png.close();
+        vi.unstubAllEnvs();
+        for (const mod of [
+          "./serverStartup",
+          "./flight-enrichment/devRuntime",
+          "./captureCustodyRuntime",
+          "./universalContinuousRuntime",
+          "./tripMetadataRuntime",
+          "./tripCreateRuntime",
+        ])
+          vi.doUnmock(mod);
+      }
+
       // A metadata/Task pins and B binding/sealed marker/response each pass their own checks.
       // Their shared row revision must not substitute for checking every cross-boundary pin.
       const bindingA = structuredClone(binding.inputs[0]);

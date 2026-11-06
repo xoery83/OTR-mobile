@@ -114,6 +114,14 @@ async function chunked(url: string, method: string, parts: string[], rawPath?: s
   });
 }
 
+it("rejects a retained PNG GET carrying a body before Auth or Core", async () => {
+  const { startDevBackend } = await import("./serverStartup");
+  const base = await address(startDevBackend());
+  const path = `/v2/import-batches/${randomUUID()}/interpretations/${randomUUID()}?tripId=${input.tripId}&retainedOriginal=1`;
+  expect(await chunked(base + path, "GET", ["unexpected"])).toBe(400);
+  expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+});
+
 it("bounds anonymous chunked MCP before buffering/SDK and forbids bodies on public GET surfaces", async () => {
   const port = vi.fn(async () => new Response("unit"));
   fixtures.mcpRuntime.mockResolvedValue(port);

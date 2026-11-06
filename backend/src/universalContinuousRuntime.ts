@@ -7,6 +7,7 @@ import {
   createSourcePdfRuntimePorts,
 } from "./sourcePdfRuntime";
 import { serializeUniversalSourceConnections } from "./universalSourceConnection";
+import { createRetainedPngReader } from "./universalRetainedPngRead";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import type { CorePgLease } from "./tripCoreV2PgStorage";
 import { DatabaseSync } from "node:sqlite";
@@ -127,6 +128,7 @@ export async function loadDevUniversalContinuousRuntime(
     } catch {
       console.info("UNIVERSAL_PDF_RUNTIME_CLOSED");
     }
+    let retainedPng: ReturnType<typeof createRetainedPngReader> | undefined;
     try {
       const pngConfig = await readSourcePngRuntimeConfig(env);
       if (pngConfig) {
@@ -145,6 +147,26 @@ export async function loadDevUniversalContinuousRuntime(
               throw Error("SOURCE_CAPABILITY_CLOSED");
           },
         });
+        const retained = pngConfig.retainedOriginalRead;
+        if (retained?.publication) {
+          const { publication, ...scope } = retained;
+          const readOriginal = png.readOriginal;
+          retainedPng = createRetainedPngReader(
+            { ...scope, ...publication },
+            db,
+            stores,
+            (target, assertCurrent) =>
+              readOriginal(target, async () => {
+                guard();
+                if (
+                  env.OTR_DEV_UNIVERSAL_PNG_RUNTIME !== "enabled" ||
+                  env.OTR_DEV_UNIVERSAL_PNG_RUNTIME_SHA256 !== configSha
+                )
+                  throw Error("SOURCE_CAPABILITY_CLOSED");
+                await assertCurrent();
+              }),
+          );
+        }
       }
     } catch {
       console.info("UNIVERSAL_PNG_RUNTIME_CLOSED");
@@ -548,6 +570,7 @@ export async function loadDevUniversalContinuousRuntime(
     >();
     return {
       catalogConnection,
+      retainedPng,
       sourcePdfV4PreparationForRequest: pdf?.sourcePdfV4PreparationForRequest,
       sourcePngPreparationForRequest: png?.sourcePngPreparationForRequest,
       sourcePdfV2ForRequest: pdf?.sourcePdfV2ForRequest,

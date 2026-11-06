@@ -83,13 +83,20 @@ async function main() {
   try {
     try {
       // Source Review composition is opt-in; SQL capability and Actor checks still own admission.
-      trip =
-        continuous && process.env.OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW === "enabled"
-          ? await loadDevTripCreateWithMemberClaimQaRuntime(
-              process.env,
-              continuous.readPublished,
-            )
-          : await loadDevTripCreateWithMemberClaimQaRuntime(process.env);
+      const readPublished =
+        process.env.OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW === "enabled"
+          ? continuous?.readPublished
+          : undefined;
+      if (continuous?.retainedPng)
+        trip = await loadDevTripCreateWithMemberClaimQaRuntime(
+          process.env,
+          readPublished,
+          { retainedPng: continuous.retainedPng },
+        );
+      else if (readPublished)
+        trip = await loadDevTripCreateWithMemberClaimQaRuntime(process.env, readPublished);
+      else
+        trip = await loadDevTripCreateWithMemberClaimQaRuntime(process.env);
     } catch {
       console.info("TRIP_CREATE_RUNTIME_CLOSED");
     }

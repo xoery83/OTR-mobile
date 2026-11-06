@@ -43,7 +43,6 @@ import {
   type UniversalManifest,
   type UniversalMaterialReady,
   prepareUniversalDispatch,
-  sealedUniversalDispatchMarker,
   UNIVERSAL_IMPORT_VERSION,
   type UniversalResult,
 } from "./universalImport";
@@ -70,6 +69,7 @@ import {
   createUniversalOriginalSourceConnection,
   type MixedBPristineSource,
 } from "./universalOriginalSource";
+import { readRetainedPngReceipt } from "./universalRetainedPngRead";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 const immutable = (value: Task | Attempt, mutable: readonly string[]) =>
@@ -353,93 +353,14 @@ export function createUniversalContinuousHost(deps: {
     if (!withRetainedMetadata) throw Error("UNIVERSAL_RESULT_UNAVAILABLE");
     const result = await withRetainedMetadata(task, async (snapshot) => {
       // Other source kinds retain the existing full material read contract.
-      const representation = snapshot.representations[0],
-        pin = binding.inputs[0];
+      const representation = snapshot.representations[0];
       if (snapshot.representations.length !== 1 || representation.mime !== "image/png") {
         const state = await found(binding.batchId, task.task_id);
         return readState(state, state.sourceManifest);
       }
-      if (
-        binding.inputs.length !== 1 ||
-        pin.pdfSource !== undefined ||
-        representation.inputId !== pin.id ||
-        representation.sourceId !== pin.source_id ||
-        representation.representationId !== pin.representation_id ||
-        representation.revision !== pin.material_revision ||
-        representation.sha256 !== pin.payload_sha256 ||
-        representation.byteCount !== pin.byte_count ||
-        !representation.pngSource ||
-        representation.pngSource.sourceRowRevision !== pin.observed_source_row_revision
-      )
-        throw Error("UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED");
-      const host = createUniversalContinuationHost({
-        context,
-        batchId: binding.batchId,
-        taskId: task.task_id,
-        repository: repository(task, attempt),
-        ...deps.runtime.stores,
-        attempt,
-        publishedReadOnly: true,
-        readSourceManifest: readManifest,
-        async assertDurableStart() {
-          throw Error("UNIVERSAL_READ_ONLY");
-        },
-        async assertCompletion() {
-          throw Error("UNIVERSAL_READ_ONLY");
-        },
-      });
-      const value = await host.readReceipt(actor, binding.batchId, task.task_id);
-      if (
-        !value ||
-        value.providerOutcome !== "SETTLED" ||
-        value.sourceBindings.length !== 1
-      )
-        throw Error("UNIVERSAL_RESULT_UNAVAILABLE");
-      const resultPin = value.sourceBindings[0];
-      if (
-        resultPin.alias !== "S0" ||
-        resultPin.mime !== "image/png" ||
-        resultPin.status !== "READY" ||
-        resultPin.inputId !== pin.id ||
-        resultPin.sourceId !== pin.source_id ||
-        resultPin.representationId !== pin.representation_id ||
-        resultPin.revision !== pin.material_revision ||
-        resultPin.originalSha256 !== pin.payload_sha256 ||
-        resultPin.submittedSha256 !== pin.payload_sha256 ||
-        resultPin.pdfSource
-      )
-        throw Error("UNIVERSAL_SOURCE_BINDING_INVALID");
-      const requestSHA = await hash(
-        Buffer.from(
-          JSON.stringify({
-            version: UNIVERSAL_IMPORT_VERSION,
-            actorId: actor,
-            accountId: actor,
-            tripId: trip,
-            batchId: binding.batchId,
-            bindings: value.sourceBindings,
-          }),
-        ),
+      return readRetainedPngReceipt(
+        snapshot, binding, task, attempt, context, repository(task, attempt), deps.runtime.stores,
       );
-      const marker = Buffer.from(JSON.stringify(sealedUniversalDispatchMarker(value)));
-      if (
-        requestSHA !== attempt.request_sha256 ||
-        (await hash(marker)) !== attempt.request_material_sha256
-      )
-        throw Error("UNIVERSAL_TASK_CHANGED");
-      // Exact expected length is derived from the sealed marker and independently checked by custody.
-      const stored = await deps.runtime.stores.custody.read({
-        accountId: actor,
-        reference: attempt.request_material_reference!,
-        sha256: attempt.request_material_sha256!,
-        byteCount: marker.length,
-      });
-      if (
-        !Buffer.from(stored).equals(marker) ||
-        (await hash(stored)) !== attempt.request_material_sha256
-      )
-        throw Error("UNIVERSAL_RECEIPT_INTEGRITY");
-      return value;
     });
     const after = await readBoundTask(binding.batchId, task.task_id);
     if (JSON.stringify(after) !== JSON.stringify(before))

@@ -28,6 +28,15 @@ export const sourcePngRuntimeSchema = z.strictObject({
     representationId: z.uuid(),
     sha256: z.string().regex(/^[0-9a-f]{64}$/),
     byteCount: z.number().int().positive().max(1048576),
+    publication: z.strictObject({
+      batchId: z.uuid(),
+      taskId: z.uuid(),
+      runId: z.uuid(),
+      inputId: z.uuid(),
+      sourceRevision: z.number().int().positive().safe(),
+      sourceRowRevision: z.number().int().positive().safe(),
+      representationRowRevision: z.number().int().positive().safe(),
+    }).optional(),
   }).optional(),
 });
 export async function readSourcePngRuntimeConfig(
