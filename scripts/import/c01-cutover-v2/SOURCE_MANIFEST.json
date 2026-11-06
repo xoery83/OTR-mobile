@@ -12,8 +12,8 @@
       "externalBindings": [
         "DEV_PROJECT_REF"
       ],
-      "restoredSHA256": "f385385dd06f29a9175dfe414af9b0de18585b6a8f817720baf4ee48fc2e2fe3",
-      "sourceSHA256": "7aa36b6ddb305c38c6a9ad3bbadfff37ed2e5d80c98931aa7f344014d0b06156"
+      "restoredSHA256": "87645260ddec1479edc6fcac2b6b9a91af3cc9d12f2919ef3a5142c3c5e39c46",
+      "sourceSHA256": "4decb965ba8921cc7c1921ac22b01a4ec77a05f305f4510fa91f8bd65b405b7f"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [
@@ -89,6 +89,11 @@
       ],
       "restoredSHA256": "36a8edd8267852fdb1fd05e74490c33c9f3ea3acc7821a53772e891516a85e58",
       "sourceSHA256": "056ea0b3fa8e6191fac0db03e831d876c96d127c8c52aaf72c4b4d32064d4d78"
+    },
+    "source/payload/c01-nov06-b-joined-seal/recovery_service/verify_start_gate.py": {
+      "externalBindings": [],
+      "restoredSHA256": "9f3e7971e9f79afc7b632fd29920820897b56ffc7624ec4d69fa805c2d4c74e4",
+      "sourceSHA256": "9f3e7971e9f79afc7b632fd29920820897b56ffc7624ec4d69fa805c2d4c74e4"
     },
     "source/payload/c01-nov06-b-joined-seal/render_joined.py": {
       "restoredSHA256": "10805f0a9602ce43c3df46ffc7830bc0a041f2c044f6565e3632d08e76d94e80",
