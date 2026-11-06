@@ -117,7 +117,8 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout):
          and config["T"] <= time.time() and time.time() + 60 < config["cutoff"],
          "M1_HOST_ADMISSION_DRIFT")
     config.update(leaseId=authority["leaseId"], ledgerIdentity=authority["ledgerIdentity"],
-                  ledgerPath=str(ledger), hostBindingSHA256=binding_sha)
+                  ledgerPath=str(ledger), hostBindingSHA256=binding_sha,
+                  controlsSHA256=authority.get("controlsSHA256"))
     actions = load(runtime / "m1-host-actions.py", authority["actionsSHA256"])
 
     def worker(request, lease):

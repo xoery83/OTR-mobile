@@ -133,7 +133,7 @@ class DockerOps:
             self.assert_timers_closed()
             row = self.inspect(cid)
             if target:
-                verify_target(baseline, row, cid)
+                self.verify_target(baseline, cid)
             else:
                 self.baseline(cid)
             need(row["Name"] == "/" + DEFAULT and row["State"]["Running"], "RUNNING_INSTANCE_DRIFT")
