@@ -6,6 +6,8 @@ import re
 import select
 import signal
 import subprocess
+import sys
+import tempfile
 import time
 
 from writer_lease_binding_v5 import WriterLease, identity
@@ -151,12 +153,31 @@ def ssh_exchange(request):
     args = ["/usr/bin/ssh", "-T", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes",
             "-o", "ConnectTimeout=10", DEV_HOST, "/usr/bin/python3", "-B",
             ENTRY.format(execution), execution, digest, request["hostBindingSHA256"]]
-    child = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                             stderr=subprocess.DEVNULL, bufsize=0)
-    try:
-        yield Exchange(child, request)
-    finally:
-        child.stdin.close()
-        child.stdout.close()
-        # Closing stdin signals EOF. Never kill the remote holder to recover a reply.
-        child.wait(timeout=max(1, request["D"] - time.time() + 2))
+    with tempfile.TemporaryFile() as errors:
+        child = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                 stderr=errors, bufsize=0)
+        channel_failed = False
+        try:
+            yield Exchange(child, request)
+        except ForegroundLost:
+            channel_failed = True
+            raise
+        finally:
+            child.stdin.close()
+            child.stdout.close()
+            # Closing stdin signals EOF. Never kill the remote holder to recover a reply.
+            child.wait(timeout=max(1, request["D"] - time.time() + 2))
+            if channel_failed:
+                errors.seek(0)
+                reason = "UNREPORTED"
+                for line in errors.read(4096).splitlines():
+                    try:
+                        row = json.loads(line)
+                    except (ValueError, UnicodeError):
+                        continue
+                    if (isinstance(row, dict) and row.get("status") == "M1_HOST_REFUSED"
+                            and isinstance(row.get("reason"), str)
+                            and re.fullmatch(r"[A-Z][A-Z0-9_]{0,95}|[A-Za-z]+Error", row["reason"])):
+                        reason = row["reason"]
+                print(json.dumps({"status": "M1_HOST_CHANNEL_FAILURE",
+                                  "hostExitCode": child.returncode, "hostReason": reason}), file=sys.stderr)

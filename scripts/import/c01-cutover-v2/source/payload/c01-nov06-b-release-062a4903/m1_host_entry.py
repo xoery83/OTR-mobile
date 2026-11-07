@@ -11,7 +11,7 @@ import time
 from dev_db_binding import (M1_CATALOG_QUERY_SHA256, M1_PDF_QUERY_SHA256,
                             evidence_sha, validate_pdf_readback)
 from dev_host_worker import DEFAULT, HostWorker, need
-from m1_foreground import ForegroundLost, serve
+from m1_foreground import (ForegroundLease, ForegroundLost, IDS, receive, send, serve, transcript)
 
 RUNTIME = Path("/run/otr/root2-c01-keep-v5")
 LEDGER = Path("/var/lib/otr/root2-c01-maintenance")
@@ -213,7 +213,7 @@ class M1HostWorker(HostWorker):
         return reply
 
 
-def run(execution_id, manifest_sha, binding_sha, stdin, stdout):
+def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_deadline=None):
     need(re.fullmatch(r"[a-f0-9]{32}", execution_id), "M1_EXECUTION_ID_UNBOUND")
     runtime, ledger = RUNTIME / execution_id, LEDGER / execution_id
     authority = json.loads(fixed(runtime / "m1-binding.json", binding_sha))
@@ -224,12 +224,40 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout):
     config = installer["m1_plan"](raw, manifest_sha)
     need(config["executionId"] == execution_id
          and re.fullmatch(r"[a-f0-9]{32}", authority["leaseId"]) and authority["leaseId"] != execution_id
-         and config["T"] <= time.time() and time.time() + 60 < config["cutoff"],
+         and (preflight_deadline is not None or
+              config["T"] <= time.time() and time.time() + 60 < config["cutoff"]),
          "M1_HOST_ADMISSION_DRIFT")
+    if preflight_deadline is not None:
+        need(type(preflight_deadline) is int and time.time() < preflight_deadline <= time.time() + 60,
+             "M1_PREFLIGHT_DEADLINE_UNBOUND")
     config.update(leaseId=authority["leaseId"], ledgerIdentity=authority["ledgerIdentity"],
                   ledgerPath=str(ledger), hostBindingSHA256=binding_sha,
                   controlsSHA256=authority.get("controlsSHA256"))
     actions = load(runtime / "m1-host-actions.py", authority["actionsSHA256"])
+
+    if preflight_deadline is not None:
+        # Observation has its own deadline and never constructs a command-capable Worker.
+        execution_clock = {key: config[key] for key in ("T", "cutoff", "inverseCutoff", "D")}
+        observed = dict(config, T=time.time(), cutoff=preflight_deadline,
+                        inverseCutoff=preflight_deadline, D=preflight_deadline)
+        with ForegroundLease(LOCK, ledger, authority["ledgerIdentity"]) as lease:
+            need(list(lease.lock_identity) == config["writerIdentity"] and not lease.has_intent(),
+                 "M1_PREFLIGHT_WRITER_OR_INTENT_DRIFT")
+            ops = actions["build_ops"](observed, json.loads(raw)["host"], lease)
+            need(ops.preflight() is True and time.time() < preflight_deadline,
+                 "M1_HOST_PREFLIGHT_UNPROVED")
+            expected = {key: config[key] for key in IDS}
+            send(stdout, dict(expected, status="PREFLIGHT_HELD", mode="READ_ONLY",
+                              manifestSHA256=manifest_sha, hostBindingSHA256=binding_sha,
+                              observationDeadline=preflight_deadline, executionClock=execution_clock))
+            row = receive(stdin, preflight_deadline)
+            transcript(row, expected, 1)
+            need(row["command"] == "assert_writer", "M1_PREFLIGHT_MUTATION_REFUSED")
+            lease.assert_current(ledger)
+            need(not lease.has_intent() and time.time() < preflight_deadline,
+                 "M1_PREFLIGHT_INTENT_OR_DEADLINE_DRIFT")
+            send(stdout, dict(expected, sequence=1, status="PREFLIGHT_VERIFIED", mode="READ_ONLY"))
+        return
 
     def worker(request, lease):
         ops = actions["build_ops"](request, json.loads(raw)["host"], lease)
@@ -240,7 +268,16 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout):
 
 if __name__ == "__main__":
     try:
-        need(os.geteuid() == 0 and len(sys.argv) == 4, "M1_HOST_ROOT_REQUIRED")
-        run(*sys.argv[1:], sys.stdin.buffer, sys.stdout.buffer)
-    except (ForegroundLost, OSError, KeyError, ValueError, TypeError):
+        need(os.geteuid() == 0, "M1_HOST_ROOT_REQUIRED")
+        if len(sys.argv) == 6 and sys.argv[4] == "--preflight":
+            run(*sys.argv[1:4], sys.stdin.buffer, sys.stdout.buffer,
+                preflight_deadline=int(sys.argv[5]))
+        else:
+            need(len(sys.argv) == 4, "M1_HOST_ARGUMENTS_UNBOUND")
+            run(*sys.argv[1:], sys.stdin.buffer, sys.stdout.buffer)
+    except (ForegroundLost, OSError, KeyError, ValueError, TypeError) as error:
+        reason = str(error) if isinstance(error, (ValueError, ForegroundLost)) else ""
+        if not re.fullmatch(r"[A-Z][A-Z0-9_]{0,95}", reason):
+            reason = type(error).__name__
+        print(json.dumps({"status": "M1_HOST_REFUSED", "reason": reason}), file=sys.stderr)
         sys.exit(1)
