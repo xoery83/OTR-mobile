@@ -34,6 +34,88 @@ SELECT jsonb_build_object(
 ROLLBACK;
 """
 
+# Exact retained PDF scope accepted by Owner. Any identity drift loses the exemption.
+M1_PDF_SQL = """BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+SET LOCAL statement_timeout='5s';
+SET LOCAL lock_timeout='1s';
+SET LOCAL transaction_timeout='8s';
+SET LOCAL search_path=pg_catalog;
+SET LOCAL row_security=off;
+WITH accepted AS (
+ SELECT * FROM jsonb_to_recordset($m1_pdf$@M1_PDF_ACCEPTED_DISPATCHES@$m1_pdf$::jsonb)
+ AS x(operation_id uuid,attempt_id uuid,trip_id uuid,source_id uuid,representation_id uuid,
+      operation_sha256 text,object_key text)
+), dispatch AS (
+ SELECT a.*, EXISTS(
+  SELECT 1 FROM accepted x JOIN public.trip_source_operations o ON o.id=x.operation_id
+  JOIN public.trip_source_representations r ON r.id=x.representation_id
+  WHERE a.id=x.attempt_id AND a.operation_id=o.id AND a.canonical_generation=1
+   AND a.trip_id=x.trip_id AND a.source_id=x.source_id AND a.representation_id=x.representation_id
+   AND o.attempt_id=a.id AND o.attempt_generation=1 AND o.trip_id=x.trip_id
+   AND o.source_id=x.source_id AND o.representation_id=x.representation_id
+   AND o.operation_sha256=x.operation_sha256 AND o.command='UPLOAD_ORIGINAL'
+   AND r.source_id=x.source_id AND r.role='ORIGINAL' AND r.storage_provider='supabase_storage'
+   AND r.storage_bucket='trip-source-material' AND r.object_key=x.object_key
+   AND a.pdf_binding->>'operationId'=o.id::text AND a.pdf_binding->>'attemptId'=a.id::text
+   AND a.pdf_binding->>'operationSha256'=x.operation_sha256
+   AND a.pdf_binding->>'tripId'=x.trip_id::text AND a.pdf_binding->>'sourceId'=x.source_id::text
+   AND a.pdf_binding->>'representationId'=x.representation_id::text
+   AND a.pdf_binding->>'provider'='supabase_storage'
+   AND a.pdf_binding->>'bucket'='trip-source-material' AND a.pdf_binding->>'objectKey'=x.object_key
+ ) AS exempt
+ FROM public.trip_source_execution_attempts a WHERE a.pdf_dispatch_id IS NOT NULL
+), gate(sig,sha) AS (VALUES
+ ('public.trip_source_pdf_upload_v4_execute(uuid,uuid,bigint,text,jsonb)','d81ccd66be0ce26c66f85255b3e5854f2941c664daf6e8982090c42ad6585e3d'),
+ ('public.trip_source_pdf_upload_v4_recover_dispatch(uuid,uuid,bigint)','259738dafe9a2b6a010754d18a76a6dd0d1bf3edcde3fd718928009282325ead'),
+ ('public.trip_source_pdf_upload_v4_gate()','01d3321387ce574665671646220fe0d5fabe55509c1db47e637203633c539ffa'),
+ ('public.trip_source_pdf_upload_v4_scope()','3433f56de655aa15c9fe8b3ab03599d3bda94e27ed36118cd9a1c83eb5e9f85c'),
+ ('public.trip_source_universal_pdf_source_scope(uuid,uuid,uuid)','7fd904cc12474a22ef2bcee4093a1691411843aa1c302d1a0f4843a0920c1628'),
+ ('public.trip_sustained_universal_pdf_allowed(uuid,uuid)','ecaa1945ca2b650e5975ae94abdb3cde56f1fec5421a89f49845ff6b8c6964d0')
+)
+SELECT jsonb_build_object(
+ 'sessionUser',session_user,'currentUser',current_user,'database',current_database(),
+ 'readOnly',current_setting('transaction_read_only')='on',
+ 'systemIdentifier',(pg_control_system()).system_identifier::text,'backendPid',pg_backend_pid(),
+ 'clock',extract(epoch FROM clock_timestamp()),
+ 'admissionClosed',(
+   (SELECT count(*)=1 AND bool_and(NOT enabled AND NOT beta_enabled AND NOT causal_enabled AND NOT v4_enabled) FROM public.trip_source_pdf_upload_config)
+   AND clock_timestamp()>='2026-11-01T08:48:56Z'::timestamptz
+   AND (SELECT bool_and(COALESCE(encode(sha256(convert_to(pg_get_functiondef(to_regprocedure(sig)),'UTF8')),'hex')=sha,false)) FROM gate)
+ ),
+ 'unresolvedNonExempt',(SELECT count(*) FROM dispatch a WHERE NOT exempt AND NOT COALESCE(
+   (a.phase='TERMINAL' AND a.termination_outstanding=false
+    AND a.pdf_terminal_body->>'dispatchId'=a.pdf_dispatch_id::text
+    AND a.pdf_terminal_body->'binding'=a.pdf_binding
+    AND a.pdf_terminal_body->>'disposition'='WRITER_TERMINAL')
+   OR (a.pdf_beta_ack->>'dispatchId'=a.pdf_dispatch_id::text
+    AND a.pdf_beta_ack->'binding'=a.pdf_binding
+    AND a.pdf_beta_ack->'response'->'status'='200'::jsonb
+    AND a.pdf_beta_ack->'response'->'transportComplete'='true'::jsonb
+    AND a.pdf_beta_ack->'response'->'upsert'='false'::jsonb),false))
+) AS result;
+ROLLBACK;
+"""
+M1_PDF_QUERY_SHA256 = hashlib.sha256(M1_PDF_SQL.encode()).hexdigest()
+
+
+def validate_pdf_readback(proof, system_identifier, clock, writer_pid=None):
+    need(isinstance(proof, dict) and set(proof) == {
+         'sessionUser', 'currentUser', 'database', 'readOnly', 'systemIdentifier',
+         'backendPid', 'clock', 'admissionClosed', 'unresolvedNonExempt'},
+         'M1_PDF_READBACK_SHAPE_UNPROVED')
+    need(proof['sessionUser'] == proof['currentUser'] == 'postgres'
+         and proof['database'] == 'postgres' and proof['readOnly'] is True
+         and proof['systemIdentifier'] == system_identifier
+         and type(proof['backendPid']) is int and proof['backendPid'] > 0
+         and proof['backendPid'] != writer_pid
+         and type(proof['clock']) in (int, float) and 0 <= clock - proof['clock'] <= 15,
+         'M1_PDF_READBACK_CONTEXT_UNPROVED')
+    need(proof['admissionClosed'] is True, 'M1_PDF_NEW_DISPATCH_NOT_CLOSED')
+    need(type(proof['unresolvedNonExempt']) is int and proof['unresolvedNonExempt'] == 0,
+         'M1_NON_EXEMPT_PDF_DISPATCH_UNRESOLVED')
+    return proof
+
+
 class Refused(ValueError):
     pass
 

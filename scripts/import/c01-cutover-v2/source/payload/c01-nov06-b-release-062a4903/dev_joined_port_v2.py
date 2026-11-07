@@ -2,7 +2,7 @@
 import re
 import time
 from closed_driver_v5 import BASELINE, TARGET, expected_catalog, indexed
-from dev_db_binding import M1_CATALOG_QUERY_SHA256, evidence_sha, need
+from dev_db_binding import M1_CATALOG_QUERY_SHA256, M1_PDF_QUERY_SHA256, evidence_sha, need
 from dev_maintenance_gates import inverse_allowed, pre_stop
 
 class JoinedPort:
@@ -166,6 +166,7 @@ class M1JoinedPort(JoinedPort):
             self.require_writer_lease(self.request, self.request["ledgerPath"])
         started = self.clock()
         observation = self.pg.catalog_observation()
+        pdf = self.pg.pdf_observation()
         observed = self.clock()
         need(0 <= observed - started <= 8 and indexed(observation["catalog"]) == expected,
              "M1_PHASE_CATALOG_UNPROVED")
@@ -174,6 +175,7 @@ class M1JoinedPort(JoinedPort):
         else:
             self.require_writer_lease(self.request, self.request["ledgerPath"])
         return {"phase": phase, "querySHA256": M1_CATALOG_QUERY_SHA256,
+                "pdfQuerySHA256": M1_PDF_QUERY_SHA256, "pdf": pdf,
                 "catalogSHA256": evidence_sha(observation["catalog"]),
                 "systemIdentifier": observation["systemIdentifier"],
                 "readerPid": observation["backendPid"], "observedAt": observed,

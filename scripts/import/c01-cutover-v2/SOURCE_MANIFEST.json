@@ -17,8 +17,8 @@
         "M1_BOUNDED_LEGACY_PDF_KEYS_SHA256",
         "M1_MANUAL_RISK_OWNER_DECISION_ID"
       ],
-      "restoredSHA256": "e337f0d45dfec7caafd71003b6fc27b4497d378658f5150239cffc7c1e180505",
-      "sourceSHA256": "99cbe975101ab40da6220bf93fb120eed052dea477174db34b128a2e5c06caf2"
+      "restoredSHA256": "bd1da96633bdb3fa04b0fa9df5dcf016f9579ec710e3c0d631f4c03b9f56c3e2",
+      "sourceSHA256": "b01f92d6595a34ffe0bf711b1c729a729a3a0adc62453b9ea50a490206fa15d6"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [
@@ -146,18 +146,19 @@
     },
     "source/payload/c01-nov06-b-release-062a4903/dev_db_binding.py.in": {
       "externalBindings": [
-        "DEV_PROJECT_REF"
+        "DEV_PROJECT_REF",
+        "M1_PDF_ACCEPTED_DISPATCHES"
       ],
-      "restoredSHA256": "e895c16b0a9e95869a4c06c00a0bc83fdec7e21bccc25b1f8d3e705e2f687453",
-      "sourceSHA256": "da173fb8fa3773e9836c126a9633c10cefe208c7f00b8cd556059562f8ae6ae6"
+      "restoredSHA256": "0b0aae0855cb2476bb3e02d532be669b3671fece7275cb31265cdb09fbddfb2f",
+      "sourceSHA256": "539dc8d554b9b128a60447f1ce8e44cf4ca029791297768420bebf09d1124ee2"
     },
     "source/payload/c01-nov06-b-release-062a4903/dev_host_worker.py": {
       "restoredSHA256": "209cc11d15dbc59b3c7885d39f18a87124dd4687421f2c54f3d0d9cc4587f290",
       "sourceSHA256": "209cc11d15dbc59b3c7885d39f18a87124dd4687421f2c54f3d0d9cc4587f290"
     },
     "source/payload/c01-nov06-b-release-062a4903/dev_joined_port_v2.py": {
-      "sourceSHA256": "3dc8837b0faf86c53fec130215f8f155802a300cb0f2f17e2c921b4bb45a6618",
-      "restoredSHA256": "3dc8837b0faf86c53fec130215f8f155802a300cb0f2f17e2c921b4bb45a6618"
+      "sourceSHA256": "dca5628c6555a284008b2d42a691efd831ca46477dc1e3adaaca1c2dec46a96c",
+      "restoredSHA256": "dca5628c6555a284008b2d42a691efd831ca46477dc1e3adaaca1c2dec46a96c"
     },
     "source/payload/c01-nov06-b-release-062a4903/dev_maintenance_gates.py": {
       "sourceSHA256": "d977ec9ac5125f6230971bb16cc29dce3a4a21aaff929d94347c18cd03353411",
@@ -183,8 +184,8 @@
       "sourceSHA256": "f01bb8e283cea0d563872136e0ec4e23b9b493d346eedfff067f2c7bb1db294a"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_entry.py": {
-      "sourceSHA256": "d60c7b3a8d244bdfa0753ed470137f6925d396445074f6220d87c55368da6804",
-      "restoredSHA256": "d60c7b3a8d244bdfa0753ed470137f6925d396445074f6220d87c55368da6804"
+      "sourceSHA256": "38ae266764a4d4c7ea2f2cb79cdcf067f5152260e5671f3526223bff88261019",
+      "restoredSHA256": "38ae266764a4d4c7ea2f2cb79cdcf067f5152260e5671f3526223bff88261019"
     },
     "source/payload/c01-nov06-b-release-062a4903/writer_lease_binding_v5.py": {
       "restoredSHA256": "7b6d701be738bd8452c0e1b190d304588541e939eca0004db2c0f2ba6254c320",

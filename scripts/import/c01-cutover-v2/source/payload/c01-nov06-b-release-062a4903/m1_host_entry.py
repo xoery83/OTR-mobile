@@ -8,7 +8,8 @@ import stat
 import sys
 import time
 
-from dev_db_binding import M1_CATALOG_QUERY_SHA256, evidence_sha
+from dev_db_binding import (M1_CATALOG_QUERY_SHA256, M1_PDF_QUERY_SHA256,
+                            evidence_sha, validate_pdf_readback)
 from dev_host_worker import DEFAULT, HostWorker, need
 from m1_foreground import ForegroundLost, serve
 
@@ -129,9 +130,10 @@ class M1HostWorker(HostWorker):
         proof = row.get("readback")
         need(isinstance(proof, dict) and set(proof) == {
              "phase", "querySHA256", "catalogSHA256", "systemIdentifier",
-             "readerPid", "observedAt", "stoppedSHA256"}
+             "readerPid", "observedAt", "stoppedSHA256", "pdfQuerySHA256", "pdf"}
              and proof["phase"] == row["command"]
              and proof["querySHA256"] == M1_CATALOG_QUERY_SHA256
+             and proof["pdfQuerySHA256"] == M1_PDF_QUERY_SHA256
              and isinstance(proof["catalogSHA256"], str)
              and re.fullmatch(r"[a-f0-9]{64}", proof["catalogSHA256"])
              and proof["systemIdentifier"] == self.req["pgSystemIdentifier"]
@@ -141,6 +143,7 @@ class M1HostWorker(HostWorker):
              and self.closed_instance is not None
              and proof["stoppedSHA256"] == evidence_sha(self.closed_instance),
              "M1_INDEPENDENT_PHASE_READBACK_UNPROVED")
+        validate_pdf_readback(proof["pdf"], self.req["pgSystemIdentifier"], self.clock())
         return proof
 
     def handle(self, row):

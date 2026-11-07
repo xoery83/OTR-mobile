@@ -50,6 +50,7 @@ M1_INSTALL_REQUIRED_FILES = tuple(Path("m1-install") / name for name in M1_INSTA
     JOIN / "render_joined.py",
     JOIN / "terminal_policy.py",
     Path("c01-nov06-b-image-only-offline/controls.py"),
+    Path("mcp-fresh-3586-qualification/static/c02-timers.py"),
 )
 VERIFY_MODE = "VERIFY_AND_ROLLBACK"
 VERIFY_RUNNER = JOIN / "recovery_service/verify_and_rollback.py"
@@ -262,7 +263,8 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
     """Run through the foreground Host holder and operator-side linked transport."""
     import closed_driver_v5 as driver
     from dev_commit_ack import CommitAck, render
-    from dev_db_binding import LinkedPG, M1_CATALOG_QUERY_SHA256, result_value
+    from dev_db_binding import (LinkedPG, M1_CATALOG_QUERY_SHA256, M1_PDF_SQL,
+                                result_value, validate_pdf_readback)
 
     config = m1_plan(raw, digest)
     require(config["T"] <= clock() and clock() + 60 < config["cutoff"],
@@ -289,7 +291,12 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
         return catalog_observation()["catalog"]
 
     pg = LinkedPG(config, read_sql, ack, None, clock)
+    def pdf_observation():
+        row = result_value(read_sql(M1_PDF_SQL))
+        return validate_pdf_readback(row, pg_system_identifier, clock(), ack.backend_pid)
+
     pg.catalog_observation = catalog_observation
+    pg.pdf_observation = pdf_observation
     port = bind_port(config, pg, catalog)
     require(port.request is config and port.pg is pg and callable(pg.assert_stopped_lease),
             "M1_SAME_WRITER_LINK_REQUIRED")
