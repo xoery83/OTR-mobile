@@ -48,6 +48,15 @@ M1_MANUAL_RISK = {
     "ownerDecision": "@M1_MANUAL_RISK_OWNER_DECISION_ID@",
     "paths": ["HOST_ROOT_DOCKER_EXPLICIT_START", "PRIVILEGED_MANUAL_PREPARE_RESUME"],
 }
+M1_BOUNDED_LEGACY_EFFECTS = {
+    "disposition": "ACCEPTED_BOUNDED_LEGACY_EFFECTS",
+    "ownerDecision": "@M1_BOUNDED_LEGACY_OWNER_DECISION_ID@",
+    "threeHistoricalCallsSHA256": "@M1_BOUNDED_LEGACY_CALLS_SHA256@",
+    "twoOriginalPdfKeysSHA256": "@M1_BOUNDED_LEGACY_PDF_KEYS_SHA256@",
+    "alreadySubmittedProviderRequests": 3,
+    "newProviderCalls": 0,
+    "historicalReplay": False,
+}
 PROJECT = "@DEV_PROJECT_REF@"
 sys.dont_write_bytecode = True
 
@@ -163,6 +172,15 @@ def m1_plan(raw, digest):
             "M1_TARGET_OR_AUTHORITY_DRIFT")
     host, pg, clock = (manifest[key] for key in ("host", "pg", "time"))
     sql, scope = manifest["sql"], manifest["protected"]
+    bounded_legacy = scope.get("boundedLegacyEffects")
+    require(isinstance(bounded_legacy, dict) and bounded_legacy == M1_BOUNDED_LEGACY_EFFECTS
+            and type(bounded_legacy["alreadySubmittedProviderRequests"]) is int
+            and type(bounded_legacy["newProviderCalls"]) is int
+            and bounded_legacy["historicalReplay"] is False
+            and valid_sha(bounded_legacy["threeHistoricalCallsSHA256"])
+            and valid_sha(bounded_legacy["twoOriginalPdfKeysSHA256"])
+            and re.fullmatch(r"[0-9a-f-]{36}", bounded_legacy["ownerDecision"]),
+            "M1_BOUNDED_LEGACY_EFFECTS_SCOPE_DRIFT")
     manual_risk = host.get("manualRelaunchRisk")
     require(manual_risk == M1_MANUAL_RISK and host["baselineCID"] == M1_MANUAL_RISK["baselineCID"],
             "M1_MANUAL_RELAUNCH_RISK_SCOPE_DRIFT")
@@ -203,6 +221,7 @@ def m1_plan(raw, digest):
             "M1_ONE_SHOT_ID_DRIFT")
     return {"project": PROJECT, "manifestSHA256": digest, "targetImage": M1_TARGET,
             "baselineCID": host["baselineCID"], "writerIdentity": host["writerIdentity"],
+            "boundedLegacyEffects": bounded_legacy,
             "manualRelaunchRisk": manual_risk, "pgSystemIdentifier": pg["systemIdentifier"],
             "candidateContinuousHost": host["candidateContinuousHost"]["after"],
             "T": start, "cutoff": cutoff, "inverseCutoff": inverse_cutoff, "D": end,

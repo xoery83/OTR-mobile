@@ -10,12 +10,15 @@
   "sources": {
     "source/host_install.py.in": {
       "externalBindings": [
-        "DEV_PROJECT_REF",
         "BASELINE_CONTAINER_ID",
+        "DEV_PROJECT_REF",
+        "M1_BOUNDED_LEGACY_CALLS_SHA256",
+        "M1_BOUNDED_LEGACY_OWNER_DECISION_ID",
+        "M1_BOUNDED_LEGACY_PDF_KEYS_SHA256",
         "M1_MANUAL_RISK_OWNER_DECISION_ID"
       ],
-      "restoredSHA256": "b883026d2bb875742ff1376d197ab76cfadc6e04201faac02e7a54fe9cba53a3",
-      "sourceSHA256": "634996602fc8f13c639cd2a327525b2cf8473dfa669b842083002ff10feb929f"
+      "restoredSHA256": "951fadc3fd92b537edde12410138242960c5f9bafda39410f27382d672c4c078",
+      "sourceSHA256": "d2aabd889faa60bd7d3fb85b65bba7f36a0a634720321b2da6f53bd8d30c786c"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [
@@ -176,8 +179,8 @@
       "restoredSHA256": "7b2f6d0a25bbc0a94084557819a8cafe0fe3bd36dc1ca52c8920fc97c77c70d0"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_actions.py": {
-      "restoredSHA256": "40a34d3cce7b704fd465adba8a46303ab6a55ce5927b06499d203ab2b5af5284",
-      "sourceSHA256": "40a34d3cce7b704fd465adba8a46303ab6a55ce5927b06499d203ab2b5af5284"
+      "restoredSHA256": "f01bb8e283cea0d563872136e0ec4e23b9b493d346eedfff067f2c7bb1db294a",
+      "sourceSHA256": "f01bb8e283cea0d563872136e0ec4e23b9b493d346eedfff067f2c7bb1db294a"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_entry.py": {
       "sourceSHA256": "d60c7b3a8d244bdfa0753ed470137f6925d396445074f6220d87c55368da6804",

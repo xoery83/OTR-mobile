@@ -365,7 +365,7 @@ class M1HostActions(DockerOps):
         need(status in {"TARGET_CLOSED_HEALTHY", "BASELINE_CLOSED_HEALTHY"}
              and not self.pdf_start_attempted and self.verify_ingress_fenced()
              and self.verify_original_stopped(stopped)
-             and self.isolation.release_safe(status, self.manual_risk, readback) is True and self.pdf_inactive()
+             and self.isolation.release_safe(status, self.manual_risk, readback, self.request["boundedLegacyEffects"]) is True and self.pdf_inactive()
              and time.time() + 25 < self.request["D"], "M1_RELEASE_ADMISSION_UNPROVED")
         self.pdf_start_attempted = True
         systemctl("start", PDF, timeout=20)
@@ -375,7 +375,7 @@ class M1HostActions(DockerOps):
             if state["ActiveState"] == "active" and int(state["MainPID"]) > 0 and pdf_socket_owned(state["MainPID"]):
                 self.caddy_state()
                 if (not self.verify_original_stopped(stopped)
-                        or self.isolation.release_safe(status, self.manual_risk, readback) is not True
+                        or self.isolation.release_safe(status, self.manual_risk, readback, self.request["boundedLegacyEffects"]) is not True
                         or not self.aperture.open_import_fenced()):
                     return False
                 self.caddy_state()
@@ -395,4 +395,7 @@ def build_ops(request, host, lease):
     # The sealed owning port must bind actual DEV ingress/relaunch and write evidence.
     # Without it startup refuses before Caddy, Docker or systemd mutation.
     pins = load(runtime / "m1-retained-control.py", request.get("controlsSHA256") or "")
+    bounded = request.get("boundedLegacyEffects")
+    need(bounded is not None and pins.get("BOUNDED_LEGACY_EFFECTS") == bounded,
+         "M1_BOUNDED_LEGACY_PRODUCTION_BINDING_DRIFT")
     return M1HostActions(request, host, lease, pins["HOST_PINS"], pins["build_control"](request, lease))
