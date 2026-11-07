@@ -82,10 +82,12 @@ def replace_handler(config, route, key):
     return result
 
 
-def binding_valid(value):
-    if not isinstance(value,dict) or set(value) != {
-            "oldReads","caddyUid","caddyCgroup","caddyPidStart","nftSHA256","fullSHA256",
-            "scopedSHA256","legacyPGFenceSHA256"}:
+def binding_valid(value, *, require_legacy_pg=True):
+    hashes = {"nftSHA256", "fullSHA256", "scopedSHA256"}
+    if require_legacy_pg:
+        hashes.add("legacyPGFenceSHA256")
+    if not isinstance(value,dict) or set(value) != hashes | {
+            "oldReads","caddyUid","caddyCgroup","caddyPidStart"}:
         raise ValueError("C01_COMPOSITE_BINDING_REQUIRED")
     nft_rules(value["caddyUid"],value["caddyCgroup"])
     old=value["oldReads"]
@@ -94,7 +96,7 @@ def binding_valid(value):
         or not isinstance(value["caddyPidStart"],list) or len(value["caddyPidStart"])!=2
         or any(type(x) is not int or x<=0 for x in value["caddyPidStart"])
         or any(not isinstance(value[key],str) or not re.fullmatch(r"[0-9a-f]{64}",value[key])
-               for key in ("nftSHA256","fullSHA256","scopedSHA256","legacyPGFenceSHA256"))):
+               for key in hashes)):
         raise ValueError("C01_COMPOSITE_BINDING_DRIFT")
 
 

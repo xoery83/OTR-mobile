@@ -266,10 +266,10 @@ class HostAdapter:
 
 
 class CompositeHostAdapter(HostAdapter):
-    def __init__(self, plan, writer):
+    def __init__(self, plan, writer, *, require_legacy_pg=True):
         super().__init__(plan, writer)
         self.aperture = self.host["aperture"]
-        binding_valid(self.aperture)
+        binding_valid(self.aperture, require_legacy_pg=require_legacy_pg)
 
     def _caddy_owner(self):
         raw = run(["/usr/bin/systemctl", "show", "caddy.service",
@@ -296,11 +296,13 @@ class CompositeHostAdapter(HostAdapter):
                 value.pop("handle", None)
         return config_sha(rows) == self.aperture["nftSHA256"]
 
-    def _set_servers(self, before, after, after_sha):
+    def _set_servers(self, before, after, after_sha, *, before_patch=None):
         self.writer.assert_current(self.writer.ledger)
         need(config_sha(after) == after_sha, "C01_COMPOSITE_POSTIMAGE_PIN_DRIFT")
         etag, raw = self._config()
         path, headers, body = servers_cas(raw, etag, before, after)
+        if before_patch is not None and before_patch() is not True:
+            return False
         status, _, _ = caddy(path, "PATCH", headers, json.dumps(body).encode())
         need(status == 200, "C01_COMPOSITE_CADDY_ACK_UNKNOWN")
         _, post = self._config()

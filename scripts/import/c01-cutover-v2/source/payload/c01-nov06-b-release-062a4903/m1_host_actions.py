@@ -15,10 +15,11 @@ JOIN = PAYLOAD / "c01-nov06-b-joined-seal"
 for dependency in (PAYLOAD / "c01-nov06-b-image-only-offline", JOIN, JOIN / "recovery_service"):
     sys.path.insert(0, str(dependency))
 
-from caddy_admin_cas import CONFIG_ROOT, admin_cas_request
+from caddy_admin_cas import CONFIG_ROOT
 from controls import config_sha, route_plan
+from cutover_read_aperture import replace_handler
 from dev_host_worker import need
-from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, DockerOps, caddy
+from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, CompositeHostAdapter, DockerOps, caddy
 from host_target_binding import CONTINUOUS_HOST, create_exact_target, target_payload, verify_target
 from m1_host_entry import load
 from preserve_import_routes import route_after_maintenance
@@ -85,6 +86,7 @@ class M1HostActions(DockerOps):
         need(request["candidateContinuousHost"] == "disabled", "M1_CONTINUOUS_SELECTOR_REQUIRED")
         self.target = request["targetImage"]
         self.caddy_socket_identity = pins["caddySocketIdentity"]
+        self.aperture_pins = pins["aperture"]
         self.task_path = Path(pins["taskStorePath"])
         need(self.task_path.is_absolute() and self.task_path.resolve() == self.task_path,
              "M1_TASK_STORE_PATH_DRIFT")
@@ -152,13 +154,6 @@ class M1HostActions(DockerOps):
         need(status == 200 and etag is not None and socket_pinned(), "M1_CADDY_STATE_UNPROVED")
         return etag, raw
 
-    def patch_route(self, route, reverse=False):
-        etag, raw = self.caddy_state()
-        method, path, headers, body = admin_cas_request(route, raw, etag, reverse=reverse)
-        status, _, _ = caddy(path, method, headers, json.dumps(body).encode())
-        need(status == 200, "M1_CADDY_PATCH_UNKNOWN")
-        return config_sha(json.loads(self.caddy_state()[1])) == route["before" if reverse else "fenced"]
-
     def pdf_snapshot(self):
         self.held()
         state = pdf_state()
@@ -176,33 +171,66 @@ class M1HostActions(DockerOps):
         self.held(self.request["cutoff"])
         self.assert_timers_closed()
         target_payload(self.running_baseline(), self.target, disable_continuous=True)
-        original = json.loads(self.caddy_state()[1])
-        self.route, self.scoped = route_plan(original), route_after_maintenance(original)
+        self.original_routes = json.loads(self.caddy_state()[1])
+        self.route = route_plan(self.original_routes)
+        self.scoped = route_after_maintenance(self.original_routes)
+        self.aperture = CompositeHostAdapter(
+            {"host": {"caddyFence": self.route, "caddyImportFence": self.scoped,
+                      "aperture": self.aperture_pins}},
+            self.lease, require_legacy_pg=False)
+        self.composite_full = self.aperture._fenced_config(self.original_routes)
+        self.aperture._caddy_owner()
         expect = self.host_pins["routePins"]
         return (self.route["path"] == self.scoped["path"] == self.host_pins["routePath"]
                 and (self.route["before"], self.route["fenced"], self.scoped["fenced"])
                     == (expect["before"], expect["fullFence"], expect["importFence"])
+                and self.aperture._nft_absent()
                 and self.target_present() and self.verify_pdf_preimage()
                 and self.isolation.preflight() is True)
 
     def fence_before_stop(self):
         self.held(self.request["cutoff"])
-        return self.patch_route(self.route) and self.isolation.apply_direct_relaunch() is True and self.verify_ingress_fenced()
+        self.caddy_state()
+        self.aperture._caddy_owner()
+        if (not self.aperture._nft_absent()
+                or not self.aperture._set_servers(self.route["before"], self.composite_full,
+                                                  self.aperture_pins["fullSHA256"])):
+            return False
+        self.held(self.request["cutoff"])
+        return self.isolation.apply_direct_relaunch() is True and self.verify_ingress_fenced()
 
     def verify_ingress_fenced(self):
-        return (config_sha(json.loads(self.caddy_state()[1])) == self.route["fenced"]
-                and self.isolation.verify_direct_relaunch() is True)
+        self.caddy_state()
+        return self.aperture.verify_fence() and self.isolation.verify_direct_relaunch() is True
 
     def restore_ingress_before_stop(self):
         self.held()
         return (self.verify_ingress_fenced() and pdf_job_queue_empty()
-                and self.patch_route(self.route, reverse=True)
-                and self.reverse_direct_relaunch())
+                and self.reverse_composite(self.aperture_pins["fullSHA256"], self.original_routes,
+                                           self.route["before"], "PRESTOP_INGRESS_RESTORED"))
 
-    def reverse_direct_relaunch(self):
+    def reverse_composite(self, before, after, after_sha, status):
+        self.held()
+        self.caddy_state()
+        if (not self.aperture._composite(before)
+                or self.isolation.verify_direct_relaunch() is not True
+                or self.isolation.inverse_direct_relaunch_safe(status) is not True):
+            return False
+        self.held()
+        guard = self.prestop_inverse_admitted if status == "PRESTOP_INGRESS_RESTORED" else None
+        if not self.aperture._set_servers(before, after, after_sha, before_patch=guard):
+            return False
         self.held()
         return (self.isolation.reverse_direct_relaunch() is True
-                and self.isolation.verify_direct_relaunch_preimage() is True)
+                and self.aperture._nft_absent()
+                and self.isolation.verify_direct_relaunch_preimage() is True
+                and config_sha(json.loads(self.caddy_state()[1])) == after_sha)
+
+    def prestop_inverse_admitted(self):
+        self.held()
+        clear = pdf_job_queue_empty()
+        self.held()
+        return clear
 
     def pdf_inactive(self):
         state = self.pdf_snapshot()
@@ -244,7 +272,17 @@ class M1HostActions(DockerOps):
         while time.time() < until:
             state = self.pdf_snapshot()
             if state["ActiveState"] == "active" and int(state["MainPID"]) > 0 and pdf_socket_owned(state["MainPID"]):
-                return self.patch_route(self.scoped) and self.reverse_direct_relaunch()
+                self.caddy_state()
+                if not self.aperture.open_import_fenced():
+                    return False
+                self.caddy_state()
+                scoped = self.aperture_pins["scopedSHA256"]
+                if status == "BASELINE_CLOSED_HEALTHY":
+                    # The retained original can still dispatch old Wake through raw ingress.
+                    return self.aperture._composite(scoped) and self.isolation.verify_direct_relaunch() is True
+                return self.reverse_composite(
+                    scoped, replace_handler(self.original_routes, self.scoped, "forward"),
+                    self.scoped["fenced"], status)
             time.sleep(0.2)
         return False
 
