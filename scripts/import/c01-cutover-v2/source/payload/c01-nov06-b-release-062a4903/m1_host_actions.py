@@ -308,17 +308,24 @@ class M1HostActions(DockerOps):
         live = json.loads(self.caddy_state()[1])
         self.original_routes = live
         if self.resume:
-            need(config_sha(live) == self.aperture_pins["scopedSHA256"], "M1_RESUME_SCOPED_PREIMAGE_DRIFT")
+            phase = self.resume.get("caddyPreimage", "scoped")
+            need(config_sha(live) == self.aperture_pins[phase + "SHA256"], "M1_RESUME_CADDY_PREIMAGE_DRIFT")
             self.enroll_recovery_file()
             mount = PROC / str(baseline["State"]["Pid"]) / "root" / RUNTIME_DEST.lstrip("/")
             statinfo = mount.stat()
             need([statinfo.st_dev, statinfo.st_ino] == self.resume["recoveryIdentity"],
                  "M1_RESUME_PROCESS_MOUNT_IDENTITY_DRIFT")
-            server, index = self.host_pins["routePath"].split("/")[5:8:2]
-            handle = live["apps"]["http"]["servers"][server]["routes"][int(index)]["handle"][0]
-            self.original_routes = replace_handler(live, {"path": self.host_pins["routePath"],
-                "original": handle["routes"][1]["handle"]}, "original")
-            del self.original_routes["apps"]["http"]["servers"][APERTURE]
+            if phase == "full":
+                # The full fence contains no original handler. Read the pinned disk projection.
+                result = subprocess.run(["/usr/bin/caddy", "adapt", "--config", "/etc/caddy/Caddyfile",
+                                         "--adapter", "caddyfile"], capture_output=True, check=True, timeout=5)
+                self.original_routes = json.loads(result.stdout)
+            else:
+                server, index = self.host_pins["routePath"].split("/")[5:8:2]
+                handle = live["apps"]["http"]["servers"][server]["routes"][int(index)]["handle"][0]
+                self.original_routes = replace_handler(live, {"path": self.host_pins["routePath"],
+                    "original": handle["routes"][1]["handle"]}, "original")
+                del self.original_routes["apps"]["http"]["servers"][APERTURE]
             need(config_sha(self.original_routes) == self.host_pins["routePins"]["before"],
                  "M1_RESUME_ORIGINAL_ROUTE_PROJECTION_DRIFT")
         else:
@@ -346,6 +353,8 @@ class M1HostActions(DockerOps):
         self.caddy_state()
         self.aperture._caddy_owner()
         if self.resume:
+            if self.resume.get("caddyPreimage") == "full":
+                return self.historical_original_stopped() and self.verify_ingress_fenced()
             return (self.historical_original_stopped() and self.isolation.verify_direct_relaunch()
                     and self.aperture._set_servers(self.aperture_pins["scopedSHA256"], self.composite_full,
                                                   self.aperture_pins["fullSHA256"])
@@ -430,6 +439,8 @@ class M1HostActions(DockerOps):
              and self.isolation.release_safe(status, self.manual_risk, readback, self.request["boundedLegacyEffects"]) is True and self.pdf_inactive()
              and time.time() + 25 < self.request["D"], "M1_RELEASE_ADMISSION_UNPROVED")
         if self.resume:
+            if self.resume.get("caddyPreimage") == "full" and status == "BASELINE_CLOSED_HEALTHY":
+                return pdf_job_queue_empty() and self.verify_ingress_fenced()
             return (pdf_job_queue_empty() and self.aperture.open_import_fenced()
                     and self.aperture._composite(self.aperture_pins["scopedSHA256"])
                     and self.pdf_inactive() and self.isolation.verify_direct_relaunch())

@@ -17,8 +17,8 @@
         "M1_BOUNDED_LEGACY_PDF_KEYS_SHA256",
         "M1_MANUAL_RISK_OWNER_DECISION_ID"
       ],
-      "restoredSHA256": "5aaac3a0cf09ee42b55364e9150cee6f46cb44c18d7458e2e59d5538d9db25cb",
-      "sourceSHA256": "a1f35fba1dabdc74f56905b3738416fc8e1a07712ca34829680d70aa3181dff3"
+      "restoredSHA256": "777fe229a8222a06ebf3d24f8fca9261964fa0ba17583dbf3ddc3112094e5ed2",
+      "sourceSHA256": "535552560d64de8eca4d9503c719aa0f4bbd43731e935db53703d09cc093f12d"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [
@@ -180,8 +180,8 @@
       "restoredSHA256": "24df678936b3f677ee4f0ba72d93add54031ac4fa615e52f0b2a29b2722f808b"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_actions.py": {
-      "restoredSHA256": "b49189a0c36ee11b4459e6696871cd63d1d47000da8748a7033ca7d90cebf9fb",
-      "sourceSHA256": "b49189a0c36ee11b4459e6696871cd63d1d47000da8748a7033ca7d90cebf9fb"
+      "restoredSHA256": "f4f7ab2bc2f2a08b792f4d0726d5bdb1f84afa20d60c44d05e51bcbbf460718b",
+      "sourceSHA256": "f4f7ab2bc2f2a08b792f4d0726d5bdb1f84afa20d60c44d05e51bcbbf460718b"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_entry.py": {
       "sourceSHA256": "ea7a87ae47acaee3129d8f7af2cfe69b4b438ec0460b5efb7f32a28b29f24e02",
