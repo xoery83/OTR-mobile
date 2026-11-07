@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+import time
 import uuid
 
 ROLES={'otr_trip_source_command_gateway','otr_external_integration_call_gateway'}
@@ -111,11 +112,15 @@ class SqlTransport:
     # Same trusted CLI mechanism as existing finite control, with no credentials in argv/logs.
     def __init__(self,cli,linked_worktree,private_dir):
         self.cli,self.cwd,self.directory=cli,linked_worktree,private_dir
-    def __call__(self,text):
+    def __call__(self,text,*,timeout=35,on_exit=None,deadline=None):
         fd,path=tempfile.mkstemp(prefix='universal-close-',suffix='.sql',dir=self.directory);os.fchmod(fd,0o600)
         try:
             with os.fdopen(fd,'w') as f:f.write(text)
-            r=subprocess.run([self.cli,'db','query','--linked','--project-ref','tuqigdxrvrerfewsxqgm','--file',path,'--output','json'],cwd=self.cwd,capture_output=True,text=True,timeout=35)
+            if deadline is not None:
+                timeout=min(timeout,deadline-time.time())
+                if timeout<=0:raise TimeoutError('M1_PHASE_READBACK_TIMEOUT')
+            r=subprocess.run([self.cli,'db','query','--linked','--project-ref','tuqigdxrvrerfewsxqgm','--file',path,'--output','json'],cwd=self.cwd,capture_output=True,text=True,timeout=timeout)
+            if on_exit is not None:on_exit(r.returncode)
             if r.returncode:
                 # Never retain raw CLI output: it may echo credential-bearing SQL.
                 error=r.stderr+'\n'+r.stdout

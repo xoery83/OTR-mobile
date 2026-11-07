@@ -1,5 +1,8 @@
 """Join one authenticated foreground Host holder with the pinned linked PG port."""
+import json
 import re
+import subprocess
+import sys
 import time
 from closed_driver_v5 import BASELINE, TARGET, expected_catalog, indexed
 from dev_db_binding import M1_CATALOG_QUERY_SHA256, M1_PDF_QUERY_SHA256, evidence_sha, need
@@ -144,6 +147,12 @@ class JoinedPort:
         want={BASELINE:'BASELINE_CLOSED_HEALTHY',self.request.get('targetImage',TARGET):'TARGET_CLOSED_HEALTHY'}
         return image in want and self._host('independent_running_observe')['status']==want[image]
 
+# Hosted linked CLI calls were measured at 4.301 s and 4.195 s. Bound the
+# combined readback and each subprocess while keeping the phase cutoff.
+M1_PHASE_READBACK_SECONDS = 25
+M1_PHASE_QUERY_SECONDS = 15
+
+
 class M1JoinedPort(JoinedPort):
     def __init__(self, request, exchange, pg, catalog):
         super().__init__(request, exchange, pg, catalog, None, clock=pg.clock)
@@ -158,18 +167,50 @@ class M1JoinedPort(JoinedPort):
             self.stopped_sha = observed
         return result
 
+    def _phase_query(self, phase, name, observe, deadline):
+        started = self.clock()
+        timeout = min(M1_PHASE_QUERY_SECONDS, deadline - started)
+        exit_code = None
+        error_type = None
+
+        def on_exit(code):
+            nonlocal exit_code
+            exit_code = code
+
+        try:
+            need(timeout > 0, "M1_PHASE_READBACK_TIMEOUT")
+            return observe(timeout=timeout, on_exit=on_exit, deadline=deadline)
+        except Exception as error:
+            error_type = type(error).__name__
+            if isinstance(error, (subprocess.TimeoutExpired, TimeoutError)):
+                raise ValueError("M1_PHASE_READBACK_TIMEOUT") from error
+            raise
+        finally:
+            try:
+                print(json.dumps({"status": "M1_PHASE_QUERY", "phase": phase, "query": name,
+                                  "elapsedSeconds": round(self.clock() - started, 3),
+                                  "exitCode": exit_code, "errorType": error_type}),
+                      file=sys.stderr, flush=True)
+            except OSError:
+                pass
+
     def _phase_readback(self, phase, expected, *, stopped):
         need(self.stopped_sha is not None and expected is not None, "M1_PHASE_IDENTITY_UNBOUND")
+        cutoff = self.request[{"retained_write_exclusion": "cutoff",
+                               "inverse_admission": "inverseCutoff",
+                               "release_running": "D"}[phase]]
+        need(self.clock() < cutoff, "M1_PHASE_READBACK_TIMEOUT")
         if stopped:
-            need(self.pg.drain(), "M1_PHASE_DRAIN_UNPROVED")
+            need(self._phase_query(phase, "drain", self.pg.drain, cutoff), "M1_PHASE_DRAIN_UNPROVED")
         else:
             self.require_writer_lease(self.request, self.request["ledgerPath"])
         started = self.clock()
-        observation = self.pg.catalog_observation()
-        pdf = self.pg.pdf_observation()
+        deadline = min(started + M1_PHASE_READBACK_SECONDS, cutoff)
+        observation = self._phase_query(phase, "catalog", self.pg.catalog_observation, deadline)
+        need(indexed(observation["catalog"]) == expected, "M1_PHASE_CATALOG_UNPROVED")
+        pdf = self._phase_query(phase, "pdf", self.pg.pdf_observation, deadline)
         observed = self.clock()
-        need(0 <= observed - started <= 8 and indexed(observation["catalog"]) == expected,
-             "M1_PHASE_CATALOG_UNPROVED")
+        need(started <= observed <= deadline and observed < cutoff, "M1_PHASE_READBACK_TIMEOUT")
         if stopped:
             self.assert_stopped_lease()
         else:

@@ -199,7 +199,8 @@ def run_held(port, request, ledger, *, target=TARGET, m1=False):
             return 'PRESTOP_INGRESS_RESTORED_NO_SEND'
         phase = "stopped_catalog"
         port.require_closed_writer(request)
-        require(indexed(port.read_catalog()) == before, 'FRESH_STOPPED_ACQUIRE_OR_CATALOG_DRIFT')
+        if not m1:
+            require(indexed(port.read_catalog()) == before, 'FRESH_STOPPED_ACQUIRE_OR_CATALOG_DRIFT')
         port.check_timing(request['cutoff'], reserve_seconds=60)
         phase = "forward_admission"
         if m1:

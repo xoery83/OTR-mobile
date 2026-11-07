@@ -296,8 +296,8 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
     require(pg_system_identifier == config["pgSystemIdentifier"], "M1_DEV_PG_ID_UNBOUND")
     ack = CommitAck(write_sql, config["wirePins"])
 
-    def catalog_observation():
-        row = result_value(read_sql(query))
+    def catalog_observation(**options):
+        row = result_value(read_sql(query, **options))
         require(row["sessionUser"] == row["currentUser"] == "postgres"
                 and row["readOnly"] is True and row["database"] == "postgres"
                 and row["systemIdentifier"] == pg_system_identifier
@@ -310,8 +310,8 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
         return catalog_observation()["catalog"]
 
     pg = LinkedPG(config, read_sql, ack, None, clock)
-    def pdf_observation():
-        row = result_value(read_sql(M1_PDF_SQL))
+    def pdf_observation(**options):
+        row = result_value(read_sql(M1_PDF_SQL, **options))
         return validate_pdf_readback(row, pg_system_identifier, clock(), ack.backend_pid)
 
     pg.catalog_observation = catalog_observation
@@ -356,7 +356,7 @@ def run_m1_foreground(raw, digest, ledger, host_binding, host_binding_sha,
     config.update(leaseId=lease_id, ledgerIdentity=ledger_identity, ledgerPath=str(ledger),
                   hostBindingSHA256=host_binding_sha)
     operator = json.loads(pinned(operator_binding,
-                                "d957d852ce589ae28d89de6507f7752eaf45c208b300dad35ca8bf1237889f35"))
+                                'cc05465f114f8a570cc7c5afbcace109deaed15f181cea0625dac3845cc808ee'))
     evidence = json.loads(pinned(pg_observation, json.loads(raw)["evidenceSHA256"]["pg"]))
     system_identifier = evidence["rows"][0]["result"]["systemIdentifier"]
 

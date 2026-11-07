@@ -144,9 +144,9 @@ class LinkedPG:
              and all(re.fullmatch('[a-f0-9]{64}',h) for h in hashes),'FIXED_PG_ENVELOPE_REQUIRED')
         self.identities=dict(zip(hashes,ids))
 
-    def drain(self):
+    def drain(self, **options):
         self.assert_stopped_lease()
-        r=result_value(self.sql(DRAIN_SQL))
+        r=result_value(self.sql(DRAIN_SQL, **options))
         need(r['sessionUser']==r['currentUser']=='postgres' and 170000<=r['pgVersion']<180000
              and r['fullVisibility'] is True and 0<=self.clock()-float(r['clock'])<=5,
              'PG_DRAIN_CONTEXT_UNPROVED')
