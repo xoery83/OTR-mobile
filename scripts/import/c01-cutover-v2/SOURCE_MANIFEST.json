@@ -17,8 +17,8 @@
         "M1_BOUNDED_LEGACY_PDF_KEYS_SHA256",
         "M1_MANUAL_RISK_OWNER_DECISION_ID"
       ],
-      "restoredSHA256": "bd1da96633bdb3fa04b0fa9df5dcf016f9579ec710e3c0d631f4c03b9f56c3e2",
-      "sourceSHA256": "b01f92d6595a34ffe0bf711b1c729a729a3a0adc62453b9ea50a490206fa15d6"
+      "restoredSHA256": "4f70460f4fca945f73fee2747dca35f90cd13ac4802a2db7d0f855e1e68f6348",
+      "sourceSHA256": "9341e59ddd280a2b6dbeb3563e5e98bb8b57d9a02027a6f9607faea1230503d7"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [

@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import runpy
 import shlex
 import stat
 import subprocess
@@ -864,6 +865,176 @@ def retire(args, runtime, ledger, files, config):
     return "TERMINAL_RUNTIME_RETIRED_LEDGER_RETAINED"
 
 
+def m1_no_send_query(query, config):
+    require(sha(query.encode()) == "81bc86105718649576dbe7da3c274197421459fbb727765fa4cd2711c090e570",
+            "M1_READBACK_QUERY_DRIFT")
+    tags = ["'root2-p6-mutator-" + config[key] + "'" for key in ("executionId", "inverseExecutionId")]
+    fields = (" 'observedAt',extract(epoch FROM clock_timestamp()),\n"
+              " 'fullVisibility',pg_has_role(current_user,'pg_read_all_stats','USAGE'),\n"
+              " 'mutators',(SELECT count(*) FROM pg_stat_activity WHERE application_name IN (" +
+              ",".join(tags) + ")),\n"
+              " 'prepared',(SELECT count(*) FROM pg_prepared_xacts WHERE database=current_database()),\n")
+    return query.replace(" 'catalog',jsonb_agg", fields + " 'catalog',jsonb_agg", 1)
+
+
+M1_RECOVERY_FILE = "m1-legacy-closed-runtime.json"
+
+
+def m1_recovery_file(path, links):
+    info = stable_path(path).lstat()
+    require(stat.S_ISREG(info.st_mode) and (info.st_uid, info.st_gid) == (0, 999)
+            and stat.S_IMODE(info.st_mode) == 0o440 and info.st_nlink in links
+            and info.st_size == 3 and path.read_bytes() == b"{}\n", "M1_RETIRE_RECOVERY_FILE_DRIFT")
+    return identity(info)
+
+
+def m1_no_send_intent(ledger, config):
+    path = ledger / "forward.intent"
+    private_file(path, {0o600})
+    raw = path.read_bytes()
+    require(raw == (config["effectiveSQLSHA256"] + "\n").encode()
+            and not (ledger / "inverse.intent").exists(), "M1_RETIRE_INTENT_DRIFT")
+    return sha(raw)
+
+
+def verify_m1_no_send_terminal(ledger, raw, files):
+    require(files == {"plan.json", "forward.intent", "forward.receipt", M1_RECOVERY_FILE},
+            "C01_PRIOR_WINDOW_RECONCILE_ONLY")
+    config = m1_plan(raw, sha(raw))
+    receipt_path = ledger / "forward.receipt"
+    private_file(receipt_path, {0o600})
+    receipt = json.loads(receipt_path.read_bytes())
+    binding = receipt["binding"]
+    evidence = json.dumps(receipt["evidence"], sort_keys=True, separators=(",", ":")).encode()
+    require(receipt["status"] == "M1_NO_SEND_RETIRED" and config["executionId"] == ledger.name
+            and binding["executionId"] == ledger.name and binding["manifestSHA256"] == sha(raw)
+            and re.fullmatch(r"[0-9a-f]{32}", binding["leaseId"]) and binding["leaseId"] != ledger.name
+            and binding["ledgerIdentity"] == private_directory(ledger)
+            and receipt["writerIdentity"] == config["writerIdentity"]
+            and receipt["forwardIntentSHA256"] == m1_no_send_intent(ledger, config)
+            and receipt["evidenceSHA256"] == sha(evidence)
+            and config["D"] <= receipt["closedAt"] <= time.time()
+            and receipt["recoveryIdentity"] == m1_recovery_file(ledger / M1_RECOVERY_FILE, {1}),
+            "C01_PRIOR_RETIREMENT_BINDING_DRIFT")
+
+
+def retire_m1_no_send(args, runtime, ledger, raw, lock_identity):
+    config = m1_plan(raw, args.plan_sha256)
+    require(config["executionId"] == ledger.name == args.execution_id and time.time() >= config["D"]
+            and config["writerIdentity"] == lock_identity, "M1_RETIRE_EXECUTION_OR_WRITER_DRIFT")
+    pending = ledger / ".forward.receipt.pending"
+    names = {item.name for item in ledger.iterdir()} - {pending.name}
+    require(names in ({"plan.json", "forward.intent"}, {"plan.json", "forward.intent", M1_RECOVERY_FILE}),
+            "M1_RETIRE_LEDGER_UNRECONCILED")
+    if pending.exists() or pending.is_symlink():
+        private_file(pending, {0o600})
+    forward = m1_no_send_intent(ledger, config)
+    files = verify_installed(runtime, args.manifest_sha256, M1_INSTALL_REQUIRED_FILES)
+    binding_path = runtime / "m1-binding.json"
+    private_file(binding_path, {0o400})
+    binding = json.loads(pinned(binding_path, args.host_binding_sha256))
+    require(binding["executionId"] == config["executionId"] and binding["manifestSHA256"] == args.plan_sha256
+            and re.fullmatch(r"[0-9a-f]{32}", binding["leaseId"]) and binding["leaseId"] != ledger.name
+            and binding["ledgerIdentity"] == private_directory(ledger), "M1_RETIRE_BINDING_DRIFT")
+    for name, key in M1_INSTALL_ROOT_FILES.items():
+        path = runtime / name
+        private_file(path, {0o400})
+        require(files["m1-install/" + name] == binding[key], "M1_RETIRE_PROGRAM_PIN_DRIFT")
+        pinned(path, binding[key])
+
+    evidence_path = args.bundle / "m1-no-send-evidence.json"
+    private_file(evidence_path, {0o400})
+    evidence_raw = pinned(evidence_path, args.terminal_receipt_sha256)
+    evidence = json.loads(evidence_raw)
+    require(evidence_raw == json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode(),
+            "M1_RETIRE_EVIDENCE_FORMAT_DRIFT")
+    prior = json.loads(evidence["priorReceipt"])
+    require(sha(evidence["priorReceipt"].encode()) == evidence["priorReceiptSHA256"]
+            and prior["status"] == "M1_STOPPED_NO_SEND" and prior["executionId"] == config["executionId"]
+            and prior["planSHA256"] == args.plan_sha256
+            and prior["noSend"]["classification"] == "SQL_NO_SEND"
+            and prior["verifiedFailure"]["reason"] == "TARGET_CONFIG_DRIFT"
+            and prior["verifiedFailure"]["hostConfigKeys"] == ["OomKillDisable"],
+            "M1_RETIRE_PRIOR_NO_SEND_UNPROVED")
+
+    payload = runtime / "payload" / "c01-nov06-b-release-062a4903"
+    query = m1_no_send_query((payload / "EXACT_FIVE_CATALOG.readonly.sql").read_text(), config)
+    sys.path.insert(0, str(payload))
+    from dev_db_binding import evidence_sha
+    pg = evidence["pg"]
+    require(evidence["pgQuerySHA256"] == sha(query.encode()) and pg["readOnly"] is True
+            and pg["sessionUser"] == pg["currentUser"] == pg["database"] == "postgres"
+            and pg["systemIdentifier"] == config["pgSystemIdentifier"] and pg["fullVisibility"] is True
+            and type(pg["backendPid"]) is int and pg["backendPid"] > 0
+            and all(type(pg[key]) is int and pg[key] == 0 for key in ("mutators", "prepared"))
+            and evidence_sha(pg["catalog"]) == prior["noSend"]["catalogSHA256"],
+            "M1_RETIRE_PG_NO_SEND_UNPROVED")
+
+    actions = runpy.run_path(str(runtime / "m1-host-actions.py"))
+    host = json.loads(raw)["host"]
+    ops = actions["DockerOps"]({"baselineCID": host["baselineCID"],
+                               "baselineFingerprintSHA256": host["baselineConfigSHA256"],
+                               "baselineStartedAt": prior["service"]["default"]["startedAt"]})
+    baseline = ops.running_baseline()
+    pid = baseline["State"]["Pid"]
+    ticks = int((Path("/proc") / str(pid) / "stat").read_text().rsplit(")", 1)[1].split()[19])
+    candidate = ops.inspect(prior["verifiedFailure"]["candidate"]["cid"])
+    state = candidate["State"]
+    expected = actions["target_payload"](baseline, config["targetImage"], disable_continuous=True)
+    expected_host = expected.pop("HostConfig")
+    require(pid == host["baselinePid"] and ticks == host["baselineStartTicks"]
+            and candidate["Name"] == "/" + host["candidateName"] and candidate["Image"] == config["targetImage"]
+            and state["Status"] == "created" and state["Running"] is False and state["Pid"] == 0
+            and state["StartedAt"] == state["FinishedAt"] == "0001-01-01T00:00:00Z"
+            and candidate["Config"] == expected and expected_host["OomKillDisable"] is None
+            and candidate["HostConfig"]["OomKillDisable"] is False
+            and candidate["HostConfig"] == {**expected_host, "OomKillDisable": False}
+            and actions["mount_projection"](candidate) == actions["mount_projection"](baseline),
+            "M1_RETIRE_PRESTOP_NO_SEND_UNPROVED")
+    pdf = actions["pdf_state"]()
+    status, _, routes = actions["caddy"](actions["CONFIG_ROOT"])
+    tables = json.loads(call("/usr/sbin/nft", "-j", "list", "tables"))["nftables"]
+    require(all(pdf[key] == host["pdfPreimage"][key] for key in pdf)
+            and actions["pdf_job_queue_empty"]() and status == 200
+            and actions["config_sha"](json.loads(routes)) == host["routePins"]["before"]
+            and not any(item.get("table", {}).get("name") == "otr_c01_keep_v5"
+                        and item["table"]["family"] == "inet" for item in tables),
+            "M1_RETIRE_SERVICE_PREIMAGE_DRIFT")
+
+    require(0 <= time.time() - pg["observedAt"] <= 60 and identity(LOCK.lstat()) == lock_identity
+            and private_directory(ledger) == binding["ledgerIdentity"]
+            and m1_no_send_intent(ledger, config) == forward, "M1_RETIRE_FRESH_EVIDENCE_OR_WRITER_DRIFT")
+    active, archived = ledger.parent / M1_RECOVERY_FILE, ledger / M1_RECOVERY_FILE
+    if not archived.exists():
+        require(m1_recovery_file(active, {1}) == evidence["recoveryIdentity"], "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
+        os.link(active, archived, follow_symlinks=False)
+        persist_directory(ledger)
+    if active.exists() or active.is_symlink():
+        require(m1_recovery_file(active, {2}) == m1_recovery_file(archived, {2}) == evidence["recoveryIdentity"],
+                "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
+        active.unlink()
+        persist_directory(active.parent)
+    require(m1_recovery_file(archived, {1}) == evidence["recoveryIdentity"], "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
+    receipt = {"status": "M1_NO_SEND_RETIRED", "binding": binding, "closedAt": int(time.time()),
+               "writerIdentity": lock_identity, "forwardIntentSHA256": forward,
+               "evidenceSHA256": sha(evidence_raw), "evidence": evidence,
+               "recoveryIdentity": evidence["recoveryIdentity"]}
+    record = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+    terminal = ledger / "forward.receipt"
+    if pending.exists():
+        pending.unlink()
+    exclusive(pending, record, 0o600)
+    pending_identity = identity(pending.lstat())
+    subprocess.run(["/usr/bin/mv", "--no-clobber", "--no-target-directory", "--", str(pending), str(terminal)],
+                   check=True, timeout=6)
+    require(not pending.exists() and identity(terminal.lstat()) == pending_identity,
+            "M1_RETIRE_RECEIPT_PUBLISH_UNCONFIRMED")
+    persist_directory(ledger)
+    verify_m1_no_send_terminal(ledger, raw, {item.name for item in ledger.iterdir()})
+    return {"status": receipt["status"], "executionId": ledger.name, "receiptSHA256": sha(record),
+            "archivedRecovery": str(archived), "forwardIntentSHA256": forward}
+
+
 def refuse_prior_windows(root, execution_id):
     """Called under the existing Writer before enrolling or arming C01."""
     try:
@@ -891,15 +1062,18 @@ def refuse_prior_windows(root, execution_id):
             continue
         require(all(name.removesuffix(".intent") + ".receipt" in files
                     for name in files if name.endswith(".intent")), "C01_PRIOR_WINDOW_RECONCILE_ONLY")
-        require("runtime-retired.json" in files and "plan.json" in files,
-                "C01_PRIOR_WINDOW_RECONCILE_ONLY")
+        require("plan.json" in files, "C01_PRIOR_WINDOW_RECONCILE_ONLY")
         plan_path = ledger / "plan.json"
-        marker_path = ledger / "runtime-retired.json"
         private_file(plan_path, {0o400})
-        private_file(marker_path, {0o600})
         plan_bytes = plan_path.read_bytes()
-        plan_sha = sha(plan_bytes)
         prior = json.loads(plan_bytes)
+        if prior.get("status") == M1_KIND:
+            verify_m1_no_send_terminal(ledger, plan_bytes, files)
+            continue
+        require("runtime-retired.json" in files, "C01_PRIOR_WINDOW_RECONCILE_ONLY")
+        marker_path = ledger / "runtime-retired.json"
+        private_file(marker_path, {0o600})
+        plan_sha = sha(plan_bytes)
         marker = json.loads(marker_path.read_bytes())
         require(prior["executionId"] == ledger.name and marker["planSHA256"] == plan_sha,
                 "C01_PRIOR_RETIREMENT_BINDING_DRIFT")
@@ -947,10 +1121,13 @@ def run(args):
             require(args.bundle is not None and args.plan is not None, "BUNDLE_AND_PLAN_REQUIRED")
             result = install(args, runtime, ledger, lock_identity)
             return result if isinstance(result, dict) else {"status": result}
-        files = verify_installed(runtime, args.manifest_sha256)
         plan_path = ledger / "plan.json"
         private_file(plan_path, {0o400})
-        config = plan(pinned(plan_path, args.plan_sha256), args.execution_id, lock_identity, ledger)
+        raw = pinned(plan_path, args.plan_sha256)
+        if args.mode == "retire" and json.loads(raw).get("status") == M1_KIND:
+            return retire_m1_no_send(args, runtime, ledger, raw, lock_identity)
+        files = verify_installed(runtime, args.manifest_sha256)
+        config = plan(raw, args.execution_id, lock_identity, ledger)
         verify_mode_files(config, files)
         if args.mode == "revoke":
             return {"status": revoke(args, runtime, ledger, files, config)}
