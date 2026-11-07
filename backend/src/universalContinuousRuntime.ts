@@ -34,7 +34,11 @@ import {
   protectedCommands,
 } from "./externalIntegrationPersistence";
 import { createUniversalOriginalSourceConnection } from "./universalOriginalSource";
-import { universalPgTransaction } from "./universalPg";
+import {
+  isAiCostGuardEnabled,
+  universalProviderPgTransaction,
+  universalPgTransaction,
+} from "./universalPg";
 import { initializeUniversalTaskDatabase } from "./universalTaskBootstrap";
 import { readUniversalContinuousConfig } from "./universalContinuousConfig";
 import { createUniversalContinuousHost } from "./universalContinuousHost";
@@ -53,6 +57,7 @@ export async function loadDevUniversalContinuousRuntime(
     assertForwardConfig = assertCurrent;
   });
   if (!config) return undefined;
+  const costGuardEnabled = isAiCostGuardEnabled((key) => env[key]);
   const executionFence = config.qaExecutionFence;
   const finite = config.finiteNative;
   const forward = finite?.mixedBForwardRecovery;
@@ -219,8 +224,9 @@ export async function loadDevUniversalContinuousRuntime(
           guard();
           if (!protectedCommands.includes(kind))
             throw Error("UNIVERSAL_COMMAND_FORBIDDEN");
-          return universalPgTransaction(
+          return universalProviderPgTransaction(
             taskConnection,
+            costGuardEnabled,
             async (lease) =>
               (
                 await lease.query(`SELECT public.${kind}($1::jsonb,$2::jsonb) AS value`, [
@@ -285,10 +291,15 @@ export async function loadDevUniversalContinuousRuntime(
             )
               throw Error("UNIVERSAL_BINDING_SCOPE");
             // Inert private metadata only; actual reserve/dispatch still uses finite owning SQL.
-            return finite.selection;
+            if (costGuardEnabled && finite.selection.priceScheduleId === null)
+              throw Error("UNIVERSAL_PRICE_UNAVAILABLE");
+            return costGuardEnabled
+              ? finite.selection
+              : { ...finite.selection, priceScheduleId: null };
           }
-          const raw = await universalPgTransaction(
+          const raw = await universalProviderPgTransaction(
             taskConnection,
+            costGuardEnabled,
             async (lease) =>
               (
                 await lease.query(
@@ -299,6 +310,8 @@ export async function loadDevUniversalContinuousRuntime(
           );
           // Scope/grant metadata stays Backend-only; Task receives only immutable selection fields.
           const selected = raw as Record<string, unknown>;
+          if (costGuardEnabled && selected?.priceScheduleId === null)
+            throw Error("UNIVERSAL_PRICE_UNAVAILABLE");
           return universalContinuousSelectionSchema.parse(
             Object.fromEntries(
               Object.keys(universalContinuousSelectionSchema.shape).map((k) => [
@@ -320,7 +333,9 @@ export async function loadDevUniversalContinuousRuntime(
               ).rows[0]?.units,
             false,
           );
-          return universalPriceScheduleFromUnits(raw);
+          return Array.isArray(raw) && raw.length === 0
+            ? undefined
+            : universalPriceScheduleFromUnits(raw);
         },
         runtime: {
           stores: stores!,

@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
+import { isAiCostGuardEnabled } from "./universalPg";
 import { createUniversalDeepSeekProvider } from "./universalDeepSeekProvider";
 import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
 import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
@@ -57,7 +58,10 @@ const responseBytes = Buffer.from(
 function provider(
   status = 200,
   body = responseBytes,
-  beforeRemoteSend?: Parameters<typeof createUniversalDeepSeekProvider>[0]["beforeRemoteSend"],
+  beforeRemoteSend?: Parameters<
+    typeof createUniversalDeepSeekProvider
+  >[0]["beforeRemoteSend"],
+  costGuardDisabled = false,
 ) {
   const custody = {
     acquire: vi.fn(async () => ({
@@ -81,12 +85,15 @@ function provider(
       custody,
       send: send as never,
       beforeRemoteSend,
-      priceSchedule: {
-        currency: "USD",
-        inputNanosPerMillion: "1000000000",
-        cachedInputNanosPerMillion: "100000000",
-        outputNanosPerMillion: "2000000000",
-      },
+      costGuardDisabled,
+      priceSchedule: costGuardDisabled
+        ? undefined
+        : {
+            currency: "USD",
+            inputNanosPerMillion: "1000000000",
+            cachedInputNanosPerMillion: "100000000",
+            outputNanosPerMillion: "2000000000",
+          },
     }),
   };
 }
@@ -257,4 +264,47 @@ it("accepts the current official Flash alias version with one retained and settl
   expect(x.custody.retainResponse).toHaveBeenCalledOnce();
   expect(x.custody.settle).toHaveBeenCalledOnce();
   expect(JSON.parse(x.send.mock.calls[0][0].body).model).toBe("deepseek-flash");
+});
+
+it("only exact DEV false disables the server cost guard", () => {
+  const dev = "https://tuqigdxrvrerfewsxqgm.supabase.co";
+  for (const [url, value, expected] of [
+    [dev, undefined, true],
+    [dev, "true", true],
+    [dev, "False", true],
+    [dev, "false", false],
+    ["https://another-project.supabase.co", "false", true],
+  ] as const) {
+    expect(
+      isAiCostGuardEnabled((key) => (key === "OTR_DEV_SUPABASE_URL" ? url : value)),
+    ).toBe(expected);
+  }
+});
+
+it("OFF uses the authorized provider transport and retains actual usage with unknown cost", async () => {
+  const logged = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const f = provider(200, responseBytes, undefined, true);
+    const result = await f.instance.interpret(input);
+    expect(f.send).toHaveBeenCalledOnce();
+    expect(f.custody.retainResponse).toHaveBeenCalledOnce();
+    expect(f.custody.settle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usage: expect.objectContaining({ input_tokens: 100, output_tokens: 20 }),
+        costNanos: null,
+      }),
+    );
+    expect(result.providerReceipt).toMatchObject({ outcome: "SETTLED", costNanos: null });
+    expect(logged).toHaveBeenCalledWith(
+      expect.stringContaining('"providerChargesMayApply":true'),
+    );
+    const denied = provider(200, responseBytes, undefined, true);
+    denied.custody.acquire.mockRejectedValueOnce(Error("UNIVERSAL_PROVIDER_CLOSED"));
+    await expect(denied.instance.interpret(input)).rejects.toThrow(
+      "UNIVERSAL_PROVIDER_CLOSED",
+    );
+    expect(denied.send).not.toHaveBeenCalled();
+  } finally {
+    logged.mockRestore();
+  }
 });

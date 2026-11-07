@@ -138,7 +138,7 @@ export function createUniversalContinuousHost(deps: {
       read: (snapshot: UniversalSourceMetadata) => Promise<T>,
     ): Promise<T>;
   };
-  readAdmittedPrice(task: Task, attempt: Attempt): Promise<UniversalPriceSchedule>;
+  readAdmittedPrice(task: Task, attempt: Attempt): Promise<UniversalPriceSchedule | undefined>;
 }) {
   const context = Object.freeze({ ...deps.context }),
     actor = context.accountId,

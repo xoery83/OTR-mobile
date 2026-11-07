@@ -1,5 +1,5 @@
 import { readUniversalFiniteConfig } from "./universalFiniteConfig";
-import { universalPgTransaction } from "./universalPg";
+import { isAiCostGuardEnabled, universalProviderPgTransaction } from "./universalPg";
 import { lstat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
@@ -34,6 +34,7 @@ export async function loadDevUniversalRuntime(
 ) {
   const config = await readUniversalFiniteConfig(environment);
   if (!config) return undefined;
+  const costGuardEnabled = isAiCostGuardEnabled((key) => environment[key]);
   if (!config.task.trip_id) throw Error("UNIVERSAL_RUNTIME_CLOSED");
   let closed = false;
   const assertCurrent = () => {
@@ -161,8 +162,9 @@ export async function loadDevUniversalRuntime(
       async execute(kind, context, command) {
         assertCurrent();
         if (!protectedCommands.includes(kind)) throw Error("UNIVERSAL_COMMAND_FORBIDDEN");
-        return universalPgTransaction(
+        return universalProviderPgTransaction(
           taskConnection,
+          costGuardEnabled,
           async (lease) =>
             (
               await lease.query(`SELECT public.${kind}($1::jsonb,$2::jsonb) AS value`, [

@@ -131,6 +131,7 @@ export function createUniversalDeepSeekProvider(deps: {
   custody: UniversalProviderCustody;
   send: Send;
   priceSchedule?: UniversalPriceSchedule;
+  costGuardDisabled?: boolean;
   beforeRemoteSend?(): Promise<{ readCurrentClaim(): Promise<() => void> }>;
 }): UniversalProvider {
   return {
@@ -159,6 +160,16 @@ export function createUniversalDeepSeekProvider(deps: {
         if (sourceFence) (await sourceFence.readCurrentClaim())();
         const signal = AbortSignal.timeout(60000);
         phase = "SEND";
+        if (deps.costGuardDisabled)
+          console.info(
+            JSON.stringify({
+              event: "ai_provider_cost_guard_disabled",
+              internalBudgetControl: "OFF",
+              providerChargesMayApply: true,
+              taskId: input.taskId,
+              requestSha256: request.requestSha256,
+            }),
+          );
         const response = await deps.send({
           url: DEEPSEEK_FLIGHT_DESTINATION,
           method: "POST",

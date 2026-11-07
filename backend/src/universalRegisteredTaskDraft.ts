@@ -23,7 +23,7 @@ export const universalContinuousSelectionSchema = z.strictObject({
   configVersion: z.number().int().safe().min(2),
   configurationSha256: z.string().regex(/^[a-f0-9]{64}$/),
   providerConfigId: z.uuid(),
-  priceScheduleId: z.uuid(),
+  priceScheduleId: z.uuid().nullable(),
   providerId: z.literal("DeepSeek"),
   modelId: z.literal("deepseek-flash"),
   modelVersion: z.literal("DeepSeek-V4.1-Flash"),

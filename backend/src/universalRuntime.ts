@@ -13,6 +13,7 @@ import {
 } from "./universalImport";
 import { createUniversalDeepSeekProvider } from "./universalDeepSeekProvider";
 import { createFlightHttpsSend } from "./flightHttpsTransport";
+import { isAiCostGuardEnabled } from "./universalPg";
 import { createUniversalPersistenceHost } from "./universalPersistenceHost";
 import type { createClosedPersistenceGateway } from "./externalIntegrationPersistence";
 
@@ -30,11 +31,13 @@ export type UniversalRuntimeProvisioning = {
   >;
   sourceConnection: CorePgConnection;
   continuousSource?: boolean;
-  continuousProvider?: { priceScheduleId: string; providerRequestSha256: string };
+  continuousProvider?: { priceScheduleId: string | null; providerRequestSha256: string };
   taskReceiptConnection: CorePgConnection;
   readBinary: Parameters<typeof createUniversalSourceReader>[0]["readBinary"];
   gateway: ReturnType<typeof createClosedPersistenceGateway>;
-  beforeRemoteSend?: Parameters<typeof createUniversalDeepSeekProvider>[0]["beforeRemoteSend"];
+  beforeRemoteSend?: Parameters<
+    typeof createUniversalDeepSeekProvider
+  >[0]["beforeRemoteSend"];
   environment(key: string): string | undefined;
 };
 
@@ -49,6 +52,7 @@ export async function createUniversalBackendRuntime(
 > {
   if (!provisioning) return { status: "CLOSED" };
   const p = provisioning;
+  const costGuardEnabled = isAiCostGuardEnabled(p.environment);
   const readSourceManifest = createUniversalSourceReader({
     connection: p.sourceConnection,
     continuous: p.continuousSource,
@@ -56,6 +60,7 @@ export async function createUniversalBackendRuntime(
   });
   const lifecycle = createUniversalPersistenceHost({
     connection: p.taskReceiptConnection,
+    costGuardEnabled,
     continuous: p.continuousProvider,
     gateway: p.gateway,
     stores: p.stores,
@@ -107,6 +112,7 @@ export async function createUniversalBackendRuntime(
   const provider = createUniversalDeepSeekProvider({
     custody: lifecycle.custody,
     priceSchedule,
+    costGuardDisabled: !costGuardEnabled,
     beforeRemoteSend: p.beforeRemoteSend,
     send: createFlightHttpsSend(),
   });

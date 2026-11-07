@@ -1,4 +1,4 @@
-import { universalPgTransaction } from "./universalPg";
+import { universalProviderPgTransaction } from "./universalPg";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { Task, Attempt } from "../../src/domain/intelligence/persistence";
@@ -34,7 +34,7 @@ const scopeSchema = z.object({
   call_id: z.uuid(),
   integration_id: z.string(),
   provider_config_id: z.uuid(),
-  price_schedule_id: z.uuid(),
+  price_schedule_id: z.uuid().nullable(),
   request_sha256: z.string(),
   provider_request_sha256: z.string(),
   input_sha256: z.string(),
@@ -56,7 +56,8 @@ const scopeSchema = z.object({
         }),
       }),
     )
-    .length(3),
+    .length(3)
+    .nullable(),
 });
 type Scope = z.infer<typeof scopeSchema>;
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
@@ -77,10 +78,11 @@ function rate(price: string, quantity: string | number) {
   return String(numerator / denominator);
 }
 function schedule(scope: Pick<Scope, "priceUnits">): UniversalPriceSchedule {
-  if (new Set(scope.priceUnits.map((u) => u.unit)).size !== 3)
+  const units = scope.priceUnits;
+  if (!units || new Set(units.map((u) => u.unit)).size !== 3)
     throw Error("UNIVERSAL_PRICE_UNAVAILABLE");
-  const value = (unit: Scope["priceUnits"][number]["unit"]) => {
-    const u = scope.priceUnits.find((u) => u.unit === unit)!;
+  const value = (unit: NonNullable<Scope["priceUnits"]>[number]["unit"]) => {
+    const u = units.find((u) => u.unit === unit)!;
     return rate(u.price, u.quantity);
   };
   return {
@@ -99,7 +101,8 @@ export function universalPriceScheduleFromUnits(raw: unknown) {
 // custody, not an alternative Task store or issuer. Construction reads no key.
 export function createUniversalPersistenceHost(deps: {
   connection: CorePgConnection;
-  continuous?: { priceScheduleId: string; providerRequestSha256: string };
+  costGuardEnabled?: boolean;
+  continuous?: { priceScheduleId: string | null; providerRequestSha256: string };
   gateway: ReturnType<typeof createClosedPersistenceGateway>;
   stores: Pick<
     Awaited<ReturnType<typeof createFlightPrivateCustody>>,
@@ -111,6 +114,11 @@ export function createUniversalPersistenceHost(deps: {
   environment(key: string): string | undefined;
 }) {
   const a = structuredClone(deps.attempt);
+  const costGuardEnabled = deps.costGuardEnabled !== false;
+  const pricedContinuous = costGuardEnabled && deps.continuous;
+  const transaction = <T>(
+    work: Parameters<typeof universalProviderPgTransaction<T>>[2],
+  ) => universalProviderPgTransaction(deps.connection, costGuardEnabled, work);
   const checks = createUniversalTaskReceiptChecks(deps.connection);
   let admittedScope: Scope | null = null,
     secretValue: string | null = null;
@@ -120,7 +128,7 @@ export function createUniversalPersistenceHost(deps: {
     const task = await deps.currentTask();
     const legacy = deps.continuous
       ? undefined
-      : await universalPgTransaction(deps.connection, (lease) =>
+      : await transaction((lease) =>
           lease.query(
             "SELECT public.universal_import_read_scope($1::uuid,$2::uuid,$3::uuid,$4::uuid) AS scope",
             [a.account_id, a.task_id, a.attempt_id, a.usage_correlation_id],
@@ -147,7 +155,7 @@ export function createUniversalPersistenceHost(deps: {
       policy_snapshot: task.policy_snapshot,
       policy_sha256: task.policy_sha256,
     });
-    const rows = await universalPgTransaction(deps.connection, (lease) =>
+    const rows = await transaction((lease) =>
       deps.continuous
         ? lease.query(
             "SELECT public.universal_import_read_continuous_scope($1::jsonb,$2::jsonb,$3) AS scope",
@@ -162,7 +170,9 @@ export function createUniversalPersistenceHost(deps: {
                 call_id: a.usage_correlation_id,
                 integration_id: a.integration_id,
                 provider_config_id: a.provider_config_id,
-                price_schedule_id: deps.continuous.priceScheduleId,
+                price_schedule_id: costGuardEnabled
+                  ? deps.continuous.priceScheduleId
+                  : null,
                 config_version: Number(a.config_version),
                 configuration_sha256: a.configuration_sha256,
                 provider_id: a.provider_id,
@@ -187,6 +197,8 @@ export function createUniversalPersistenceHost(deps: {
         : Promise.resolve(legacy!),
     );
     const scope = scopeSchema.parse(rows.rows[0]?.scope);
+    if (costGuardEnabled !== (scope.price_schedule_id !== null))
+      throw Error("UNIVERSAL_COST_GUARD_SCOPE_MISMATCH");
     if (
       deps.continuous &&
       (!scope.scope_id ||
@@ -264,7 +276,7 @@ export function createUniversalPersistenceHost(deps: {
         task_class: "UNIVERSAL_IMPORT_V1",
         call_kind: "OUTBOUND_MODEL",
         shadow: false,
-        price_schedule_id: scope.price_schedule_id,
+        price_schedule_id: costGuardEnabled ? scope.price_schedule_id : null,
         admitted_at: a.created_at,
         admission_sha256: a.request_sha256,
         publication_fence: a.task_publication_fence,
@@ -292,8 +304,8 @@ export function createUniversalPersistenceHost(deps: {
         provider_extension: {},
         usage_quality: "UNKNOWN",
         unit_quality: {},
-        price_schedule_id: scope.price_schedule_id,
-        currency: "USD",
+        price_schedule_id: costGuardEnabled ? scope.price_schedule_id : null,
+        currency: costGuardEnabled ? "USD" : null,
         cost_quality: "UNKNOWN",
         observation_sha256: persistenceDigest({
           domain: "otr-universal-start-v1",
@@ -319,12 +331,12 @@ export function createUniversalPersistenceHost(deps: {
         })
         .parse(
           await deps.gateway.invoke(
-            deps.continuous
+            pricedContinuous
               ? "flight_activation_reserve_call"
               : "universal_activation_reserve_call",
             {
               ...body,
-              ...(deps.continuous
+              ...(pricedContinuous
                 ? {
                     scope_id: scope.scope_id,
                     scope_revision: scope.scope_revision,
@@ -337,7 +349,7 @@ export function createUniversalPersistenceHost(deps: {
                   }
                 : {}),
               request_sha256: commandDigest(
-                deps.continuous
+                pricedContinuous
                   ? {
                       ...body,
                       scope_id: scope.scope_id,
@@ -375,7 +387,7 @@ export function createUniversalPersistenceHost(deps: {
     async priceSchedule() {
       const { scope } = await currentScope();
       admittedScope = scope;
-      return schedule(scope);
+      return costGuardEnabled ? schedule(scope) : undefined;
     },
     custody: {
       async acquire(input) {
@@ -441,8 +453,10 @@ export function createUniversalPersistenceHost(deps: {
           input.accountId !== a.account_id ||
           input.taskId !== a.task_id ||
           input.requestSha256 !== scope.provider_request_sha256 ||
-          !input.costNanos ||
-          BigInt(input.costNanos) > BigInt(scope.max_cost_nanos) ||
+          (costGuardEnabled
+            ? input.costNanos === null ||
+              BigInt(input.costNanos) > BigInt(scope.max_cost_nanos)
+            : input.costNanos !== null) ||
           input.usage.usage_quality !== "ACTUAL_REPORTED" ||
           input.usage.input_tokens === null ||
           input.usage.output_tokens === null ||
@@ -477,11 +491,11 @@ export function createUniversalPersistenceHost(deps: {
           provider_extension: input.usage.provider_extension,
           usage_quality: input.usage.usage_quality,
           unit_quality: {},
-          price_schedule_id: scope.price_schedule_id,
+          price_schedule_id: costGuardEnabled ? scope.price_schedule_id : null,
           cost_nanos: input.costNanos,
-          currency: "USD",
-          cost_quality: "ESTIMATED",
-          cost_calculation_version: "SUM_THEN_CEIL_NANOS_V1",
+          currency: costGuardEnabled ? "USD" : null,
+          cost_quality: costGuardEnabled ? "ESTIMATED" : "UNKNOWN",
+          cost_calculation_version: costGuardEnabled ? "SUM_THEN_CEIL_NANOS_V1" : null,
           provider_request_id: null,
         };
         const usage = {

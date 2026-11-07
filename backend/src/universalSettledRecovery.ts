@@ -39,7 +39,7 @@ export async function recoverSettledUniversalTask(deps: {
     ReturnType<typeof createUniversalTaskReceiptChecks>,
     "assertCompletion"
   >;
-  priceSchedule: UniversalPriceSchedule;
+  priceSchedule: UniversalPriceSchedule | undefined;
   assertCurrentAuth(): Promise<void>;
   readSourceManifest(task: Readonly<Task>): Promise<UniversalManifest>;
 }) {
@@ -128,7 +128,8 @@ export async function recoverSettledUniversalTask(deps: {
   if (bytes.byteLength !== raw.pin.byteCount || sha(bytes) !== raw.pin.sha256)
     throw Error("UNIVERSAL_RECOVERY_RAW_INTEGRITY");
   const decoded = decodeUniversalDeepSeekResponse(bytes, deps.priceSchedule);
-  if (!decoded.costNanos) throw Error("UNIVERSAL_RECOVERY_USAGE_UNRESOLVED");
+  if (deps.priceSchedule && decoded.costNanos === null)
+    throw Error("UNIVERSAL_RECOVERY_USAGE_UNRESOLVED");
   const result = projectUniversalResponse(dispatch, {
     output: decoded.output,
     providerReceipt: {

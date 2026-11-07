@@ -108,7 +108,8 @@ export function createUniversalTaskReceiptChecks(connection: CorePgConnection) {
         c.status !== "SUCCEEDED" ||
         (c.outcome !== null && c.outcome !== "SUCCEEDED") ||
         c.response_sha256 !== result.providerReceipt.responseSha256 ||
-        String(c.cost_nanos) !== result.providerReceipt.costNanos
+        (c.cost_nanos === null ? null : String(c.cost_nanos)) !==
+          result.providerReceipt.costNanos
       )
         throw new Error("UNIVERSAL_COMPLETION_UNAVAILABLE");
     },

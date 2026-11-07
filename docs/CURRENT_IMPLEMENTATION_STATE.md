@@ -1,3 +1,7 @@
+## Universal DEV AI cost guard candidate — 8 November 2026
+
+Universal Analyze has a source candidate for the Owner-controlled Backend cost switch. The default is ON. Exact DEV `false` uses the existing unpriced call and usage path. Isolated PostgreSQL passed finite and sustained OFF and sustained ON. Hosted installation and actual Analyze remain pending. See `docs/ops/ai-cost-guard-dev-20261108/ROOT1_HANDOFF.md`.
+
 ## Self nickname activation constraint candidate archive — 5 November 2026
 
 The reviewed e20bcb85 candidate and its nine fixed evidence files are archived with independent review 974ef2. The candidate remains uninstalled. Root2 owns fresh qualification and protected authorization before execution. See `docs/ops/root1-r3-source-main-20261105/R3_SQL_ARCHIVE_MANIFEST.json`.

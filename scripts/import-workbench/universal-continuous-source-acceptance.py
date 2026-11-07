@@ -33,6 +33,11 @@ addition=r'''
  sql('set role postgres;'+(ROOT/'backend/sql/universal_provider_admission_candidate.sql').read_text())
  sql('set role postgres;'+(ROOT/'backend/sql/universal_task_read_candidate.sql').read_text())
  sql('set role postgres;'+(ROOT/'backend/sql/universal_sustained_provider_candidate.sql').read_text())
+ import os
+ cost_guard_mode=os.environ.get('OTR_TEST_AI_COST_GUARD')
+ cost_guard_off=cost_guard_mode=='off'
+ if cost_guard_mode in ('on','off'):
+  sql((ROOT/'backend/sql/universal_ai_cost_guard_candidate.sql').read_text())
  check('normal Provider candidate installs while Source policy remains CLOSED')
  sql("alter role otr_trip_source_command_gateway login connection limit 1 valid until 'infinity';")
  def source(q):return sql('set session authorization otr_trip_source_command_gateway;'+q)
@@ -94,7 +99,13 @@ addition+=r'''
  grant={'scope_id':scope['scope_id'],'account_id':ACTOR,'revision':1,'expires_at':P['FUTURE'],'revoked':False,'updated_by':P['actor']}
  invoke('flight_activation_account_grant',admin(integration_id=i['integration_id'],expected_version=0,row=grant))
  def meter(q):return sql('set session authorization otr_external_integration_call_gateway;'+q)
- selected=json.loads(meter("select public.universal_import_select_continuous('"+ACTOR+"','"+TRIP+"','"+i['integration_id']+"');"))
+ selection_sql="select public.universal_import_select_continuous('"+ACTOR+"','"+TRIP+"','"+i['integration_id']+"');"
+ selected=json.loads(meter(selection_sql))
+ if cost_guard_off:
+  default_meter=meter
+  def meter(q):return default_meter("SET otr.ai_cost_guard='off';"+q)
+  check('default keeps the price pin; OFF returns no price pin',
+        selected['priceScheduleId']==price['price_schedule_id'] and json.loads(meter(selection_sql))['priceScheduleId'] is None)
  check('real CP15 selection uses explicit Universal profile without Flight-global runtime',selected['modelId']=='deepseek-flash' and P['scalar']("select not runtime_enabled from external_integration_environment_state where environment='DEV';")=='t')
  inputpins=[{'kind':'SOURCE','source_id':q['source_id'],'material_revision':1,'representation_id':q['payload']['original']['id'],'payload_sha256':q['payload']['original']['payload_sha256'],'byte_count':q['payload']['original']['byte_count'],'input_id':pin['id'],'transform_sha256':None} for (q,_),pin in zip(records,inputs)]
  inputpins.sort(key=lambda q:q['input_id']);inputsha=digest(inputpins)
@@ -104,15 +115,51 @@ addition+=r'''
  usage=row('external_integration_usage_events');usage.update(call_id=c['call_id'],observation_key='start',observation_kind='START',measurement_mode='NONE',status='STARTED',usage_quality='UNKNOWN',cost_quality='UNKNOWN',price_schedule_id=price['price_schedule_id'],currency='USD');usage.pop('provider_request_id',None)
  req={'contract_version':'otr-model-task-v1','task_id':task,'logical_request_id':str(uuid.uuid4()),'logical_idempotency_key':str(uuid.uuid4()),'consumer_id':'import','consumer_version':1,'input':{'reference':str(uuid.uuid4()),'sha256':inputsha,'byte_count':sum(x['byte_count'] for x in inputs)},'schema':{'id':'UNIVERSAL_IMPORT_V1','version':1,'dialect':'OTR_TYPED_V1','sha256':profile['output_schema_sha256']},'policy_snapshot':policy,'policy_sha256':digest(policy)}
  binding={'version':1,'request':req,'request_sha256':digest(req),'profile':profile,'profile_sha256':digest(profile)}
- live=json.loads(meter("select public.universal_import_read_continuous_scope("+pliteral(c)+','+pliteral(binding)+",repeat('f',64));"))
- fields={'account_id':ACTOR,'integration_id':i['integration_id'],'scope_id':scope['scope_id'],'scope_revision':scope['revision'],'scope_sha256':scope['scope_sha256'],'grant_revision':1,'input_ceiling':32768,'output_ceiling':4096,'execution_pins':live['execution_pins'],'execution_pins_sha256':digest(live['execution_pins']),'row':c,'start':usage,'model_task_binding':binding}
- ctx={'verified_actor_id':ACTOR,'verified_account_id':ACTOR}
- reserve=lambda f:invoke('flight_activation_reserve_call',f,'call_gateway','TRUSTED_WORKLOAD',request_id=c['request_id'],ctx_updates=ctx)
- accepted=reserve(fields);check('real protected Model Task + CP15 hold admission succeeds',accepted['call_id']==c['call_id'])
- check('same protected reservation replays exact Call',reserve(fields)['call_id']==c['call_id'])
- marked=invoke('external_integration_mark_dispatch',{'account_id':ACTOR,'integration_id':i['integration_id'],'call_id':c['call_id'],'expected_revision':1,'publication_fence':1},'call_gateway','TRUSTED_WORKLOAD',ctx_updates=ctx)
- check('existing CP15 dispatch fence permits explicitly qualified Universal',marked['dispatch_state']=='MAY_HAVE_STARTED')
- check('actual immutable admitted price remains readable',len(json.loads(meter("select public.universal_import_read_admitted_price('"+ACTOR+"','"+task+"','"+c['attempt_id']+"','"+c['call_id']+"');")))==3)
+ if cost_guard_off:
+  c['price_schedule_id']=None
+  usage.update(price_schedule_id=None,currency=None)
+  scope_query="select public.universal_import_read_continuous_scope("+pliteral(c)+','+pliteral(binding)+",repeat('f',64));"
+  sql('set session authorization otr_external_integration_call_gateway;'+scope_query,failure='UNIVERSAL_MODEL_TASK_BINDING')
+  live=json.loads(meter(scope_query))
+  check('OFF retains Source/Task proof with no price units',live['price_schedule_id'] is None and live['priceUnits'] is None)
+  context={'verified_actor_id':ACTOR,'verified_account_id':ACTOR}
+  def off_command(kind,fields,request_id=None):
+   cmd,ctx=P['request'](kind,fields,'call_gateway','TRUSTED_WORKLOAD',context,request_id)
+   return json.loads(meter(f'select public.{kind}({pliteral(ctx)},{pliteral(cmd)});'))
+  fields={'account_id':ACTOR,'integration_id':i['integration_id'],'row':c,'start':usage,'model_task_binding':binding}
+  accepted=off_command('universal_activation_reserve_call',fields,c['request_id'])
+  check('durable call and START admit exactly once without a monetary hold',
+        accepted['call_id']==c['call_id'] and off_command('universal_activation_reserve_call',fields,c['request_id'])['call_id']==c['call_id']
+        and sql("select count(*) from public.flight_call_resource_holds where call_id='"+c['call_id']+"';")=='0')
+  mark={'account_id':ACTOR,'integration_id':i['integration_id'],'call_id':c['call_id'],'expected_revision':1,'publication_fence':1}
+  marked=off_command('external_integration_mark_dispatch',mark)
+  check('existing dispatch fence marks the unpriced call',marked['dispatch_state']=='MAY_HAVE_STARTED')
+  completion=row('external_integration_usage_events')
+  completion.update(call_id=c['call_id'],observation_key='universal-completion',observation_kind='COMPLETION',
+    measurement_mode='CUMULATIVE',status='SUCCEEDED',usage_quality='ACTUAL_REPORTED',cost_quality='UNKNOWN',
+    input_tokens=100,output_tokens=20,total_tokens=120,cached_input_tokens=0,response_sha256='a'*64)
+  invoke('external_integration_usage_append',{'integration_id':i['integration_id'],'call_id':c['call_id'],'row':completion},
+    'call_gateway','TRUSTED_WORKLOAD',ctx_updates=context)
+  invoke('external_integration_observe_call',{'integration_id':i['integration_id'],'call_id':c['call_id'],'expected_revision':2,
+    'publication_fence':1,'dispatch_state':'TERMINAL','execution_certainty':'TERMINAL','safe_reason':None,'recovery_sha256':None},
+    'call_gateway','TRUSTED_WORKLOAD',ctx_updates=context)
+  receipt_args="('"+ACTOR+"','"+task+"','"+c['attempt_id']+"','"+c['call_id']+"');"
+  receipt=json.loads(default_meter('select public.model_task_read_universal_receipt'+receipt_args))
+  check('ON or cold read still sees actual usage, unknown cost and terminal result',
+    receipt['completion']['input_tokens']==100 and receipt['completion']['cost_nanos'] is None
+    and receipt['call']['dispatch_state']=='TERMINAL'
+    and json.loads(default_meter('select public.universal_import_read_admitted_price'+receipt_args))==[])
+  c['price_schedule_id']=price['price_schedule_id']
+ else:
+  live=json.loads(meter("select public.universal_import_read_continuous_scope("+pliteral(c)+','+pliteral(binding)+",repeat('f',64));"))
+  fields={'account_id':ACTOR,'integration_id':i['integration_id'],'scope_id':scope['scope_id'],'scope_revision':scope['revision'],'scope_sha256':scope['scope_sha256'],'grant_revision':1,'input_ceiling':32768,'output_ceiling':4096,'execution_pins':live['execution_pins'],'execution_pins_sha256':digest(live['execution_pins']),'row':c,'start':usage,'model_task_binding':binding}
+  ctx={'verified_actor_id':ACTOR,'verified_account_id':ACTOR}
+  reserve=lambda f:invoke('flight_activation_reserve_call',f,'call_gateway','TRUSTED_WORKLOAD',request_id=c['request_id'],ctx_updates=ctx)
+  accepted=reserve(fields);check('real protected Model Task + CP15 hold admission succeeds',accepted['call_id']==c['call_id'])
+  check('same protected reservation replays exact Call',reserve(fields)['call_id']==c['call_id'])
+  marked=invoke('external_integration_mark_dispatch',{'account_id':ACTOR,'integration_id':i['integration_id'],'call_id':c['call_id'],'expected_revision':1,'publication_fence':1},'call_gateway','TRUSTED_WORKLOAD',ctx_updates=ctx)
+  check('existing CP15 dispatch fence permits explicitly qualified Universal',marked['dispatch_state']=='MAY_HAVE_STARTED')
+  check('actual immutable admitted price remains readable',len(json.loads(meter("select public.universal_import_read_admitted_price('"+ACTOR+"','"+task+"','"+c['attempt_id']+"','"+c['call_id']+"');")))==3)
  sql("set session authorization otr_external_integration_call_gateway;select public.universal_import_select_continuous('"+P['other']+"','"+TRIP+"','"+i['integration_id']+"');",failure='UNIVERSAL_PROVIDER_CLOSED');check('cross Account cannot select a normal Universal scope')
  sql("set session authorization otr_external_integration_call_gateway;select public.universal_import_read_continuous_scope("+pliteral(c)+','+pliteral(binding)+",null);",failure='UNIVERSAL_SCOPE_INVALID');check('missing exact Provider payload hash rejects')
  changed=dict(c);changed['task_id']=str(uuid.uuid4())
@@ -131,6 +178,36 @@ addition+=r'''
   check('combined normal Source/CP15 and P1 Source Prepare/Core/finalizer coexist')
  sql("update public.trip_sustained_dev_policy set universal_import_enabled=false where actor_account_id='"+ACTOR+"';")
  sql('set session authorization otr_trip_source_command_gateway;'+read,failure='UNIVERSAL_SOURCE_CLOSED');check('policy revoke closes normal owning read')
+ if cost_guard_off:
+  import copy
+  finite=copy.deepcopy(fields)
+  fc=finite['row']
+  fc['price_schedule_id']=None
+  for key in ('call_id','task_id','attempt_id','request_id'):
+   fc[key]=str(uuid.uuid4())
+  finite['start'].update(call_id=fc['call_id'],observation_id=fc['call_id'])
+  fr=finite['model_task_binding']['request']
+  fr.update(task_id=fc['task_id'],logical_request_id=str(uuid.uuid4()),logical_idempotency_key=str(uuid.uuid4()))
+  finite['model_task_binding']['request_sha256']=digest(fr)
+  literal_scope=pliteral(dict(singleton=True,actor_id=ACTOR,trip_id=TRIP,batch_id=fc['import_id'],
+    task_id=fc['task_id'],attempt_id=fc['attempt_id'],call_id=fc['call_id'],integration_id=i['integration_id'],
+    provider_config_id=p['provider_config_id'],price_schedule_id=price['price_schedule_id'],
+    request_sha256=fc['request_sha256'],provider_request_sha256='f'*64,input_sha256=fc['input_sha256'],
+    model_binding=finite['model_task_binding'],input_ceiling=32768,output_ceiling=4096,max_cost_nanos=1,
+    starts_at=started,expires_at=deadline))
+  sql("insert into public.universal_import_provider_scope select * from jsonb_populate_record(null::public.universal_import_provider_scope,"+literal_scope+");")
+  priced=copy.deepcopy(finite)
+  priced['row']['price_schedule_id']=price['price_schedule_id']
+  priced['start'].update(price_schedule_id=price['price_schedule_id'],currency='USD')
+  invoke('universal_activation_reserve_call',priced,'call_gateway','TRUSTED_WORKLOAD',request_id=fc['request_id'],
+    ctx_updates=context,expect_error='UNIVERSAL_MODEL_TASK_BUDGET')
+  finite_args="('"+ACTOR+"','"+fc['task_id']+"','"+fc['attempt_id']+"','"+fc['call_id']+"');"
+  finite_read=json.loads(meter('select public.universal_import_read_scope'+finite_args))
+  check('finite OFF returns exact scope without price and skips a budget that blocks ON',
+    finite_read['price_schedule_id'] is None and finite_read['priceUnits'] is None
+    and off_command('universal_activation_reserve_call',finite,fc['request_id'])['call_id']==fc['call_id'])
+  check('finite OFF retains actual mark-dispatch identity',
+    off_command('external_integration_mark_dispatch',{**mark,'call_id':fc['call_id']})['dispatch_state']=='MAY_HAVE_STARTED')
  print(json.dumps({'status':'CONTINUOUS_SOURCE_PROVIDER_ISOLATED_PG_ONLY','checks':checks,'hostedWrites':0,'providerCalls':0},indent=2))
 finally:
  if created:docker('rm','-f',NAME)
