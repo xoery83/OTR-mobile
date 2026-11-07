@@ -94,6 +94,7 @@ class M1HostActions(DockerOps):
         need(self.task_path.is_absolute() and self.task_path.resolve() == self.task_path,
              "M1_TASK_STORE_PATH_DRIFT")
         self.recovery_pins = pins["legacyRecovery"]
+        self.recovery_file_identity = None
         self.manual_risk = request["manualRelaunchRisk"]
         need(self.manual_risk["baselineCID"] == request["baselineCID"] == host["baselineCID"],
              "M1_MANUAL_RELAUNCH_RISK_SCOPE_DRIFT")
@@ -123,7 +124,7 @@ class M1HostActions(DockerOps):
     def verify_target(self, baseline, cid):
         verify_target(baseline, self.inspect(cid), cid, self.target, disable_continuous=True)
 
-    def recovery_projection(self, baseline):
+    def recovery_projection(self, baseline, *, require_enrollment=True):
         pins = self.recovery_pins
         payload, mounts = legacy_recovery_projection(baseline, pins)
         config = {k: v for k, v in payload.items() if k != "HostConfig"}
@@ -136,6 +137,42 @@ class M1HostActions(DockerOps):
         need(path.is_absolute() and path.resolve() == path and
              path == Path("/var/lib/otr/root2-c01-maintenance/m1-legacy-closed-runtime.json")
              and pins["sharedSource"] != str(path), "M1_RECOVERY_DEDICATED_PATH_REQUIRED")
+        if require_enrollment:
+            self.verify_recovery_file(path)
+        return payload, mounts
+
+    def enroll_recovery_file(self):
+        self.held(self.request["cutoff"])
+        path = Path(self.recovery_pins["dedicatedSource"])
+        raw = b"{}\n"
+        need(hashlib.sha256(raw).hexdigest() == self.recovery_pins["dedicatedSHA256"],
+             "M1_RECOVERY_DEDICATED_FILE_DRIFT")
+        parent = path.parent
+        info = parent.stat(follow_symlinks=False)
+        need(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and not info.st_mode & 0o022,
+             "M1_RECOVERY_ENROLLMENT_DIRECTORY_UNSAFE")
+        dfd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            state = os.fstat(dfd)
+            need((state.st_dev, state.st_ino) == (info.st_dev, info.st_ino),
+                 "M1_RECOVERY_ENROLLMENT_DIRECTORY_DRIFT")
+            fd = os.open(path.name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400, dir_fd=dfd)
+            with os.fdopen(fd, "wb") as stream:
+                os.fchown(stream.fileno(), 0, 999)
+                os.fchmod(stream.fileno(), 0o440)
+                stream.write(raw)
+                stream.flush()
+                os.fsync(stream.fileno())
+                state = os.fstat(stream.fileno())
+            os.fsync(dfd)
+        finally:
+            os.close(dfd)
+        self.recovery_file_identity = (state.st_dev, state.st_ino)
+        self.verify_recovery_file(path)
+        self.held(self.request["cutoff"])
+
+    def verify_recovery_file(self, path):
+        pins = self.recovery_pins
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         with os.fdopen(fd, "rb") as stream:
             info = os.fstat(stream.fileno())
@@ -150,7 +187,8 @@ class M1HostActions(DockerOps):
              "M1_RECOVERY_DEDICATED_FILE_CHANGED")
         need(raw == b"{}\n" and hashlib.sha256(raw).hexdigest() == pins["dedicatedSHA256"],
              "M1_RECOVERY_DEDICATED_FILE_DRIFT")
-        return payload, mounts
+        need(self.recovery_file_identity == (info.st_dev, info.st_ino),
+             "M1_RECOVERY_ENROLLMENT_IDENTITY_DRIFT")
 
     def create_recovery(self, name, baseline):
         self.held()
@@ -232,7 +270,7 @@ class M1HostActions(DockerOps):
         self.assert_timers_closed()
         baseline = self.running_baseline()
         target_payload(baseline, self.target, disable_continuous=True)
-        self.recovery_projection(baseline)
+        self.recovery_projection(baseline, require_enrollment=False)
         self.original_routes = json.loads(self.caddy_state()[1])
         self.route = route_plan(self.original_routes)
         self.scoped = route_after_maintenance(self.original_routes)
@@ -312,22 +350,22 @@ class M1HostActions(DockerOps):
             return False
         return True if self.pdf_inactive() else None
 
-    def assert_retained_write_exclusion(self, request, stopped):
+    def assert_retained_write_exclusion(self, request, stopped, readback):
         self.held(request["cutoff"])
         return (self.verify_ingress_fenced() and self.pdf_inactive()
-                and self.isolation.retained_write_exclusion(request, stopped) is True)
+                and self.isolation.retained_write_exclusion(request, stopped, readback) is True)
 
-    def assert_inverse_admission(self, request, stopped):
+    def assert_inverse_admission(self, request, stopped, readback):
         self.held(request["inverseCutoff"])
         return (self.verify_ingress_fenced() and self.pdf_inactive()
-                and self.isolation.inverse_admission(request, stopped) is True)
+                and self.isolation.inverse_admission(request, stopped, readback) is True)
 
-    def restore_pdf_and_routes(self, status, stopped):
+    def restore_pdf_and_routes(self, status, stopped, readback):
         self.held()
         need(status in {"TARGET_CLOSED_HEALTHY", "BASELINE_CLOSED_HEALTHY"}
              and not self.pdf_start_attempted and self.verify_ingress_fenced()
              and self.verify_original_stopped(stopped)
-             and self.isolation.release_safe(status, self.manual_risk) is True and self.pdf_inactive()
+             and self.isolation.release_safe(status, self.manual_risk, readback) is True and self.pdf_inactive()
              and time.time() + 25 < self.request["D"], "M1_RELEASE_ADMISSION_UNPROVED")
         self.pdf_start_attempted = True
         systemctl("start", PDF, timeout=20)
@@ -337,7 +375,7 @@ class M1HostActions(DockerOps):
             if state["ActiveState"] == "active" and int(state["MainPID"]) > 0 and pdf_socket_owned(state["MainPID"]):
                 self.caddy_state()
                 if (not self.verify_original_stopped(stopped)
-                        or self.isolation.release_safe(status, self.manual_risk) is not True
+                        or self.isolation.release_safe(status, self.manual_risk, readback) is not True
                         or not self.aperture.open_import_fenced()):
                     return False
                 self.caddy_state()

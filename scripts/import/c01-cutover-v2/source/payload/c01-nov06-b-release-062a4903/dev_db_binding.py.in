@@ -5,6 +5,12 @@ import re
 import time
 
 PROJECT='@DEV_PROJECT_REF@'
+M1_CATALOG_QUERY_SHA256 = '81bc86105718649576dbe7da3c274197421459fbb727765fa4cd2711c090e570'
+
+
+def evidence_sha(value):
+    raw = json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+    return hashlib.sha256(raw).hexdigest()
 
 DRAIN_SQL="""BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SET LOCAL statement_timeout='5s';

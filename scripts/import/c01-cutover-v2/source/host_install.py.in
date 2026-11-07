@@ -173,6 +173,7 @@ def m1_plan(raw, digest):
             and host["pdfStopOnly"] == "otr-universal-pdf-worker.service"
             and host["candidateContinuousHost"] == {"before": "enabled", "after": "disabled"}
             and host["png"] == "M2_FAILED_BASELINE_DO_NOT_START"
+            and re.fullmatch(r"[1-9][0-9]{0,19}", pg.get("systemIdentifier", ""))
             and pg["candidateTransport"] == "existing project-linked Supabase Management CLI"
             and pg["forwardAndInversePrincipal"] == "session_user=current_user=postgres"
             and pg["independentReader"] == "separate linked READ ONLY transaction, session_user=current_user=postgres"
@@ -202,7 +203,7 @@ def m1_plan(raw, digest):
             "M1_ONE_SHOT_ID_DRIFT")
     return {"project": PROJECT, "manifestSHA256": digest, "targetImage": M1_TARGET,
             "baselineCID": host["baselineCID"], "writerIdentity": host["writerIdentity"],
-            "manualRelaunchRisk": manual_risk,
+            "manualRelaunchRisk": manual_risk, "pgSystemIdentifier": pg["systemIdentifier"],
             "candidateContinuousHost": host["candidateContinuousHost"]["after"],
             "T": start, "cutoff": cutoff, "inverseCutoff": inverse_cutoff, "D": end,
             "stopAdmissionSeconds": 30, "healthReserveSeconds": 60,
@@ -217,7 +218,7 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
     """Run through the foreground Host holder and operator-side linked transport."""
     import closed_driver_v5 as driver
     from dev_commit_ack import CommitAck, render
-    from dev_db_binding import LinkedPG, result_value
+    from dev_db_binding import LinkedPG, M1_CATALOG_QUERY_SHA256, result_value
 
     config = m1_plan(raw, digest)
     require(config["T"] <= clock() and clock() + 60 < config["cutoff"],
@@ -225,12 +226,12 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
     require(read_sql is not write_sql, "M1_INDEPENDENT_READER_REQUIRED")
     query_path = Path(driver.__file__).with_name("EXACT_FIVE_CATALOG.readonly.sql")
     query = query_path.read_text()
-    require(sha(query.encode()) == "81bc86105718649576dbe7da3c274197421459fbb727765fa4cd2711c090e570", "M1_READBACK_QUERY_DRIFT")
+    require(sha(query.encode()) == M1_CATALOG_QUERY_SHA256, "M1_READBACK_QUERY_DRIFT")
 
-    require(re.fullmatch(r"[1-9][0-9]{0,19}", pg_system_identifier), "M1_DEV_PG_ID_UNBOUND")
+    require(pg_system_identifier == config["pgSystemIdentifier"], "M1_DEV_PG_ID_UNBOUND")
     ack = CommitAck(write_sql, config["wirePins"])
 
-    def catalog():
+    def catalog_observation():
         row = result_value(read_sql(query))
         require(row["sessionUser"] == row["currentUser"] == "postgres"
                 and row["readOnly"] is True and row["database"] == "postgres"
@@ -238,9 +239,13 @@ def run_m1_linked(raw, digest, ledger, bind_port, *, write_sql, read_sql,
                 and type(row["backendPid"]) is int and row["backendPid"] > 0
                 and row["backendPid"] != ack.backend_pid,
                 "M1_READBACK_SESSION_NOT_INDEPENDENT")
-        return row["catalog"]
+        return row
+
+    def catalog():
+        return catalog_observation()["catalog"]
 
     pg = LinkedPG(config, read_sql, ack, None, clock)
+    pg.catalog_observation = catalog_observation
     port = bind_port(config, pg, catalog)
     require(port.request is config and port.pg is pg and callable(pg.assert_stopped_lease),
             "M1_SAME_WRITER_LINK_REQUIRED")

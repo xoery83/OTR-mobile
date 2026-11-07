@@ -8,6 +8,7 @@ import stat
 import sys
 import time
 
+from dev_db_binding import M1_CATALOG_QUERY_SHA256, evidence_sha
 from dev_host_worker import DEFAULT, HostWorker, need
 from m1_foreground import ForegroundLost, serve
 
@@ -44,6 +45,8 @@ class M1HostWorker(HostWorker):
     def __init__(self, request, lease, ops, clock=time.time):
         super().__init__(request, lease, ops, clock)
         self.restored_ingress = False
+        self.running_status = None
+        self.recovery_enrolled = False
         self.recovery = None
         self.recovery_name = "otr-c01-recovery-" + request["executionId"]
         need(ops.preflight() is True, "M1_HOST_PREFLIGHT_UNPROVED")
@@ -122,19 +125,65 @@ class M1HostWorker(HostWorker):
     def running_cid(self, target):
         return self.candidate if target else self.recovery
 
+    def phase_readback(self, row):
+        proof = row.get("readback")
+        need(isinstance(proof, dict) and set(proof) == {
+             "phase", "querySHA256", "catalogSHA256", "systemIdentifier",
+             "readerPid", "observedAt", "stoppedSHA256"}
+             and proof["phase"] == row["command"]
+             and proof["querySHA256"] == M1_CATALOG_QUERY_SHA256
+             and isinstance(proof["catalogSHA256"], str)
+             and re.fullmatch(r"[a-f0-9]{64}", proof["catalogSHA256"])
+             and proof["systemIdentifier"] == self.req["pgSystemIdentifier"]
+             and type(proof["readerPid"]) is int and proof["readerPid"] > 0
+             and type(proof["observedAt"]) in (int, float)
+             and 0 <= self.clock() - proof["observedAt"] <= 15
+             and self.closed_instance is not None
+             and proof["stoppedSHA256"] == evidence_sha(self.closed_instance),
+             "M1_INDEPENDENT_PHASE_READBACK_UNPROVED")
+        return proof
+
     def handle(self, row):
         command = row["command"]
-        if command in ("retained_write_exclusion", "inverse_admission"):
+        if command == "claim_intent" and row.get("intent") == "forward.intent" and not self.recovery_enrolled:
+            self.guard(self.req["cutoff"])
+            need(all(row.get(key) == value for key, value in self.expected.items())
+                 and row["sequence"] == self.sequence + 1
+                 and row.get("frameSHA256") == self.req["effectiveSQLSHA256"]
+                 and not self.lease.has_intent() and self.observe_closed() == "RUNNING_BASELINE_CLOSED",
+                 "M1_RECOVERY_ENROLLMENT_ADMISSION_UNPROVED")
+            self.ops.enroll_recovery_file()
+            self.recovery_enrolled = True
+        if command == "stop_baseline":
+            need(self.recovery_enrolled, "M1_RECOVERY_ENROLLMENT_REQUIRED")
+        if command in ("retained_write_exclusion", "inverse_admission", "release_running"):
+            need(all(row.get(key) == value for key, value in self.expected.items())
+                 and row["sequence"] == self.sequence + 1, "HOST_TRANSCRIPT_DRIFT")
+            if command == "release_running":
+                self.guard()
+                need(self.running_status is not None and not self.restored_ingress,
+                     "M1_RELEASE_HEALTH_UNPROVED_OR_ATTEMPTED")
+                self.assert_retired_original()
+                target = self.running_status == "TARGET_CLOSED_HEALTHY"
+                self.ops.verify_running(self.running_cid(target), self.before, target, self.req["D"])
+                readback = self.phase_readback(row)
+                self.guard()
+                self.sequence += 1
+                self.restored_ingress = True
+                need(self.ops.restore_pdf_and_routes(self.running_status, self.closed_instance, readback) is True,
+                     "M1_PDF_ROUTE_RESTORE_UNPROVED")
+                return dict(self.expected, sequence=self.sequence, status="RELEASED_CLOSED")
             self.guard(self.req["cutoff" if command == "retained_write_exclusion" else "inverseCutoff"])
             need(row["sequence"] == self.sequence + 1 and self.observe_closed() == "STOPPED_CLOSED",
                  "M1_STOPPED_IDENTITY_UNPROVED")
+            readback = self.phase_readback(row)
             self.sequence += 1
             original_stopped = self.ops.verify_original_stopped(self.closed_instance) is True
             if command == "retained_write_exclusion":
-                ok = original_stopped and self.ops.assert_retained_write_exclusion(self.req, self.closed_instance)
+                ok = original_stopped and self.ops.assert_retained_write_exclusion(self.req, self.closed_instance, readback)
                 status = "RETAINED_WRITES_EXCLUDED" if ok is True else "RETAINED_WRITES_UNPROVED"
             else:
-                ok = original_stopped and self.ops.assert_inverse_admission(self.req, self.closed_instance)
+                ok = original_stopped and self.ops.assert_inverse_admission(self.req, self.closed_instance, readback)
                 status = "INVERSE_ADMISSIBLE" if ok is True else "INVERSE_UNPROVED"
             self.guard()
             return dict(self.expected, sequence=self.sequence, status=status)
@@ -155,8 +204,9 @@ class M1HostWorker(HostWorker):
             need(not self.restored_ingress, "M1_PDF_ROUTE_RESTORE_ALREADY_ATTEMPTED")
             self.assert_retired_original()
             self.guard()
-            self.restored_ingress = True
-            need(self.ops.restore_pdf_and_routes(reply["status"], self.closed_instance) is True, "M1_PDF_ROUTE_RESTORE_UNPROVED")
+            self.running_status = reply["status"]
+        if reply["status"] == "STOPPED_CLOSED":
+            reply["stoppedSHA256"] = evidence_sha(self.closed_instance)
         return reply
 
 

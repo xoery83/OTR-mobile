@@ -2,7 +2,7 @@
 import re
 import time
 from closed_driver_v5 import BASELINE, TARGET, expected_catalog, indexed
-from dev_db_binding import need
+from dev_db_binding import M1_CATALOG_QUERY_SHA256, evidence_sha, need
 from dev_maintenance_gates import inverse_allowed, pre_stop
 
 class JoinedPort:
@@ -147,6 +147,37 @@ class JoinedPort:
 class M1JoinedPort(JoinedPort):
     def __init__(self, request, exchange, pg, catalog):
         super().__init__(request, exchange, pg, catalog, None, clock=pg.clock)
+        self.stopped_sha = None
+
+    def _host(self, command, **body):
+        result = super()._host(command, **body)
+        if result["status"] == "STOPPED_CLOSED":
+            observed = result.get("stoppedSHA256", "")
+            need(re.fullmatch(r"[a-f0-9]{64}", observed) is not None
+                 and self.stopped_sha in (None, observed), "M1_STOPPED_READBACK_IDENTITY_DRIFT")
+            self.stopped_sha = observed
+        return result
+
+    def _phase_readback(self, phase, expected, *, stopped):
+        need(self.stopped_sha is not None and expected is not None, "M1_PHASE_IDENTITY_UNBOUND")
+        if stopped:
+            need(self.pg.drain(), "M1_PHASE_DRAIN_UNPROVED")
+        else:
+            self.require_writer_lease(self.request, self.request["ledgerPath"])
+        started = self.clock()
+        observation = self.pg.catalog_observation()
+        observed = self.clock()
+        need(0 <= observed - started <= 8 and indexed(observation["catalog"]) == expected,
+             "M1_PHASE_CATALOG_UNPROVED")
+        if stopped:
+            self.assert_stopped_lease()
+        else:
+            self.require_writer_lease(self.request, self.request["ledgerPath"])
+        return {"phase": phase, "querySHA256": M1_CATALOG_QUERY_SHA256,
+                "catalogSHA256": evidence_sha(observation["catalog"]),
+                "systemIdentifier": observation["systemIdentifier"],
+                "readerPid": observation["backendPid"], "observedAt": observed,
+                "stoppedSHA256": self.stopped_sha}
 
     def _pre_stop(self):
         self.require_writer_lease(self.request, self.request['ledgerPath'])
@@ -156,9 +187,18 @@ class M1JoinedPort(JoinedPort):
         return receipt['status']=='PRESTOP_INGRESS_RESTORED' and not self.pg.dispatched
 
     def assert_forward_admission(self):
-        need(self._host('retained_write_exclusion')['status']=='RETAINED_WRITES_EXCLUDED',
+        readback = self._phase_readback("retained_write_exclusion", self.pre, stopped=True)
+        need(self._host('retained_write_exclusion', readback=readback)['status']=='RETAINED_WRITES_EXCLUDED',
              'M1_RETAINED_WRITES_NOT_EXCLUDED')
 
     def prove_zero_affected_history(self):
         self.assert_stopped_lease()
-        return self._host('inverse_admission')['status']=='INVERSE_ADMISSIBLE'
+        readback = self._phase_readback("inverse_admission", self.post, stopped=True)
+        return self._host('inverse_admission', readback=readback)['status']=='INVERSE_ADMISSIBLE'
+
+    def verify_running_closed(self, image):
+        target = image == self.request["targetImage"]
+        if not super().verify_running_closed(image):
+            return False
+        readback = self._phase_readback("release_running", self.post if target else self.pre, stopped=False)
+        return self._host("release_running", readback=readback)["status"] == "RELEASED_CLOSED"

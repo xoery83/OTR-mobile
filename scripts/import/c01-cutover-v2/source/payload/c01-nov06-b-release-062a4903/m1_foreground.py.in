@@ -19,13 +19,14 @@ COMMANDS = {
     "read_intents": set(),
     "claim_intent": {"intent", "frameSHA256"},
     "closed_observe": set(),
-    "retained_write_exclusion": set(),
-    "inverse_admission": set(),
+    "retained_write_exclusion": {"readback"},
+    "inverse_admission": {"readback"},
     "stop_baseline": set(),
     "start_target": {"proof"},
     "contain_owned": set(),
     "restore_baseline": {"proof"},
     "independent_running_observe": set(),
+    "release_running": {"readback"},
 }
 
 
