@@ -8,7 +8,7 @@ import stat
 import sys
 import time
 
-from dev_host_worker import HostWorker, need
+from dev_host_worker import DEFAULT, HostWorker, need
 from m1_foreground import ForegroundLost, serve
 
 RUNTIME = Path("/run/otr/root2-c01-keep-v5")
@@ -44,6 +44,8 @@ class M1HostWorker(HostWorker):
     def __init__(self, request, lease, ops, clock=time.time):
         super().__init__(request, lease, ops, clock)
         self.restored_ingress = False
+        self.recovery = None
+        self.recovery_name = "otr-c01-recovery-" + request["executionId"]
         need(ops.preflight() is True, "M1_HOST_PREFLIGHT_UNPROVED")
 
     def stop_original(self):
@@ -68,6 +70,58 @@ class M1HostWorker(HostWorker):
         self.guard(self.req["cutoff"])
         super().stop_original()
 
+    def assert_retired_original(self):
+        need(self.closed_instance is not None and self.ops.verify_original_stopped(self.closed_instance) is True,
+             "M1_ORIGINAL_STOPPED_IDENTITY_UNPROVED")
+
+    def restore(self):
+        self.guard()
+        need(not self.restore_attempted and self.observe_closed() == "STOPPED_CLOSED",
+             "RESTORE_ONCE_STOPPED_REQUIRED")
+        need(self.clock() + self.req["healthReserveSeconds"] < self.req["D"],
+             "RESTORE_RESERVE_UNAVAILABLE")
+        self.assert_retired_original()
+        need(self.ops.lookup(self.recovery_name) is None, "M1_RECOVERY_NAME_COLLISION")
+        self.restore_attempted = True
+        self.guard()
+        self.recovery = self.ops.create_recovery(self.recovery_name, self.before)
+        need(self.recovery not in (self.before["Id"], self.candidate), "M1_RECOVERY_ID_COLLISION")
+        recovery = self.ops.verify_recovery(self.before, self.recovery)
+        need(recovery["Name"] == "/" + self.recovery_name and recovery["State"]["Status"] == "created",
+             "M1_RECOVERY_NOT_STAGED")
+        self.guard()
+        need(self.clock() + self.req["healthReserveSeconds"] < self.req["D"]
+             and self.observe_closed() == "STOPPED_CLOSED", "M1_RECOVERY_START_ADMISSION_DRIFT")
+        self.assert_retired_original()
+        current = self.ops.lookup(DEFAULT)
+        if current is not None:
+            if current["Id"] == self.before["Id"]:
+                retained_name = self.backup
+            else:
+                need(current["Id"] == self.candidate, "OWNED_TARGET_MOVE_UNPROVED")
+                self.ops.verify_target(self.before, self.candidate)
+                retained_name = self.staged
+            need(self.ops.lookup(retained_name) is None, "M1_RECOVERY_RETAINED_NAME_COLLISION")
+            self.guard()
+            self.ops.rename(current["Id"], retained_name)
+        else:
+            original = self.ops.baseline(self.before["Id"])
+            need(original["Name"] == "/" + self.backup, "RETAINED_NAME_DRIFT")
+        need(self.ops.lookup(DEFAULT) is None, "DEFAULT_RENAME_COLLISION")
+        self.guard()
+        self.ops.rename(self.recovery, DEFAULT)
+        recovery = self.ops.verify_recovery(self.before, self.recovery)
+        need(recovery["Name"] == "/" + DEFAULT and recovery["State"]["Status"] == "created"
+             and self.ops.baseline(self.before["Id"])["Name"] == "/" + self.backup,
+             "M1_RECOVERY_START_IDENTITY_DRIFT")
+        self.assert_retired_original()
+        self.guard()
+        self.ops.start(self.recovery)
+        return "STARTED_OWNED"
+
+    def running_cid(self, target):
+        return self.candidate if target else self.recovery
+
     def handle(self, row):
         command = row["command"]
         if command in ("retained_write_exclusion", "inverse_admission"):
@@ -75,11 +129,12 @@ class M1HostWorker(HostWorker):
             need(row["sequence"] == self.sequence + 1 and self.observe_closed() == "STOPPED_CLOSED",
                  "M1_STOPPED_IDENTITY_UNPROVED")
             self.sequence += 1
+            original_stopped = self.ops.verify_original_stopped(self.closed_instance) is True
             if command == "retained_write_exclusion":
-                ok = self.ops.assert_retained_write_exclusion(self.req, self.closed_instance)
+                ok = original_stopped and self.ops.assert_retained_write_exclusion(self.req, self.closed_instance)
                 status = "RETAINED_WRITES_EXCLUDED" if ok is True else "RETAINED_WRITES_UNPROVED"
             else:
-                ok = self.ops.assert_inverse_admission(self.req, self.closed_instance)
+                ok = original_stopped and self.ops.assert_inverse_admission(self.req, self.closed_instance)
                 status = "INVERSE_ADMISSIBLE" if ok is True else "INVERSE_UNPROVED"
             self.guard()
             return dict(self.expected, sequence=self.sequence, status=status)
@@ -98,8 +153,10 @@ class M1HostWorker(HostWorker):
         if command == "independent_running_observe":
             self.guard()
             need(not self.restored_ingress, "M1_PDF_ROUTE_RESTORE_ALREADY_ATTEMPTED")
+            self.assert_retired_original()
+            self.guard()
             self.restored_ingress = True
-            need(self.ops.restore_pdf_and_routes(reply["status"]) is True, "M1_PDF_ROUTE_RESTORE_UNPROVED")
+            need(self.ops.restore_pdf_and_routes(reply["status"], self.closed_instance) is True, "M1_PDF_ROUTE_RESTORE_UNPROVED")
         return reply
 
 

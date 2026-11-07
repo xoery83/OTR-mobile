@@ -127,12 +127,14 @@ class DockerOps:
     def start(self, cid):
         self.docker("start", cid, timeout=16)
 
-    def verify_running(self, cid, baseline, target, deadline):
+    def verify_running(self, cid, baseline, target, deadline, *, verify_config=None):
         until = min(deadline, time.time() + 60)
         while time.time() < until:
             self.assert_timers_closed()
             row = self.inspect(cid)
-            if target:
+            if verify_config is not None:
+                verify_config(baseline, cid)
+            elif target:
                 self.verify_target(baseline, cid)
             else:
                 self.baseline(cid)
@@ -152,9 +154,12 @@ class DockerOps:
                 finally:
                     conn.close()
                 current = self.inspect(cid)
-                need(current["State"]["StartedAt"] == row["State"]["StartedAt"]
-                     and current["State"]["Running"] and time.time() < until, "RUNNING_INSTANCE_DRIFT")
-                return
+                need(current["Name"] == row["Name"]
+                     and current["State"]["StartedAt"] == row["State"]["StartedAt"]
+                     and current["State"]["Pid"] == row["State"]["Pid"]
+                     and current["State"]["Running"] and current["State"]["Health"]["Status"] == "healthy"
+                     and time.time() < until, "RUNNING_INSTANCE_DRIFT")
+                return current
             time.sleep(0.2)
         raise ValueError("BACKEND_HEALTH_DEADLINE")
 

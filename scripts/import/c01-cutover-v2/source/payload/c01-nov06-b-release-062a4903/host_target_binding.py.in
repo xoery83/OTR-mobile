@@ -8,6 +8,8 @@ import socket
 BASELINE = '@BASELINE_IMAGE_ID@'
 TARGET = '@LEGACY_TARGET_IMAGE_ID@'
 CONTINUOUS_HOST = 'OTR_DEV_UNIVERSAL_CONTINUOUS_HOST'
+RUNTIME_HASH = 'OTR_DEV_UNIVERSAL_RUNTIME_SHA256'
+RUNTIME_DEST = '/run/otr/universal-runtime.json'
 
 def target_payload(baseline, target=TARGET, *, disable_continuous=False):
     if baseline['Image'] != BASELINE:
@@ -22,7 +24,40 @@ def target_payload(baseline, target=TARGET, *, disable_continuous=False):
         env[matches[0]] = CONTINUOUS_HOST + '=disabled'
     return {**config,'HostConfig':copy.deepcopy(baseline['HostConfig'])}
 
+def legacy_recovery_projection(baseline, pins):
+    config = target_payload(baseline, BASELINE, disable_continuous=True)
+    host = config['HostConfig']
+    old, new = pins['sharedSource'], pins['dedicatedSource']
+    binds = host.get('Binds') or []
+    matches = [i for i, bind in enumerate(binds) if bind.split(':')[1:2] == [RUNTIME_DEST]]
+    if (len(matches) != 1 or binds[matches[0]].split(':')[0] != old
+            or any(mount.get('Target') == RUNTIME_DEST for mount in host.get('Mounts') or [])):
+        raise ValueError('M1_RECOVERY_BIND_PREIMAGE_DRIFT')
+    index = matches[0]
+    binds[index] = new + binds[index][len(old):]
+    env = config['Env']
+    matches = [i for i, entry in enumerate(env) if entry.partition('=')[0] == RUNTIME_HASH]
+    if len(matches) != 1 or env[matches[0]] != RUNTIME_HASH + '=' + pins['sharedSHA256']:
+        raise ValueError('M1_RECOVERY_RUNTIME_HASH_PREIMAGE_DRIFT')
+    env[matches[0]] = RUNTIME_HASH + '=' + pins['dedicatedSHA256']
+    mounts = mount_projection(baseline)
+    actual = [m for m in mounts if m[1] == RUNTIME_DEST]
+    if len(actual) != 1 or actual[0][:4] != (old, RUNTIME_DEST, False, 'bind'):
+        raise ValueError('M1_RECOVERY_MOUNT_PREIMAGE_DRIFT')
+    mounts = [(new, *m[1:]) if m[1] == RUNTIME_DEST else m for m in mounts]
+    return config, mounts
+
+
+def mount_projection(row):
+    fields = ('Source', 'Destination', 'RW', 'Type', 'Propagation')
+    return sorted((tuple(m.get(k) for k in fields) for m in row['Mounts']), key=lambda m: m[1])
+
+
 def create_exact_target(path,name,baseline,target=TARGET, *, disable_continuous=False):
+    return create_from_payload(path, name, target_payload(baseline,target,disable_continuous=disable_continuous))
+
+
+def create_from_payload(path, name, payload):
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{1,90}',name):
         raise ValueError('INVALID_OWNED_TARGET_NAME')
     class UnixDocker(http.client.HTTPConnection):
@@ -33,7 +68,7 @@ def create_exact_target(path,name,baseline,target=TARGET, *, disable_continuous=
     with_connection=UnixDocker('localhost',timeout=15)
     try:
         with_connection.request('POST','/v1.47/containers/create?name='+name,
-                                body=json.dumps(target_payload(baseline,target,disable_continuous=disable_continuous)).encode(),
+                                body=json.dumps(payload).encode(),
                                 headers={'Content-Type':'application/json'})
         response=with_connection.getresponse()
         body=response.read(131072)

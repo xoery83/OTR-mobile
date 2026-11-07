@@ -42,6 +42,12 @@ M1_TARGET = "sha256:9fd700f36c625af47b5885fd3f2797db2903ba16b751af2845f8b13a0cea
 M1_SOURCE = "bfa5c0fed3a7e80bb601b4814c984a3f4aa9075f"
 M1_ARCHIVE = "2be0b62d10f184d0cf2fad796cb68c7ec50c595a6f99ab0084015ea2c88190ba"
 M1_BASELINE = "sha256:127bc6ce0aa16dd7d40eb133e1ec077d14f65ad2f1688fd512c7bbfc992808e9"
+M1_MANUAL_RISK = {
+    "disposition": "OWNER_ACCEPTED_MANUAL_RELAUNCH_RISK",
+    "baselineCID": "@BASELINE_CONTAINER_ID@",
+    "ownerDecision": "@M1_MANUAL_RISK_OWNER_DECISION_ID@",
+    "paths": ["HOST_ROOT_DOCKER_EXPLICIT_START", "PRIVILEGED_MANUAL_PREPARE_RESUME"],
+}
 PROJECT = "@DEV_PROJECT_REF@"
 sys.dont_write_bytecode = True
 
@@ -157,6 +163,9 @@ def m1_plan(raw, digest):
             "M1_TARGET_OR_AUTHORITY_DRIFT")
     host, pg, clock = (manifest[key] for key in ("host", "pg", "time"))
     sql, scope = manifest["sql"], manifest["protected"]
+    manual_risk = host.get("manualRelaunchRisk")
+    require(manual_risk == M1_MANUAL_RISK and host["baselineCID"] == M1_MANUAL_RISK["baselineCID"],
+            "M1_MANUAL_RELAUNCH_RISK_SCOPE_DRIFT")
     require(host["baselineImage"] == M1_BASELINE and valid_sha(host["baselineCID"])
             and host["writerPath"] == str(LOCK)
             and isinstance(host["writerIdentity"], list) and len(host["writerIdentity"]) == 2
@@ -193,6 +202,7 @@ def m1_plan(raw, digest):
             "M1_ONE_SHOT_ID_DRIFT")
     return {"project": PROJECT, "manifestSHA256": digest, "targetImage": M1_TARGET,
             "baselineCID": host["baselineCID"], "writerIdentity": host["writerIdentity"],
+            "manualRelaunchRisk": manual_risk,
             "candidateContinuousHost": host["candidateContinuousHost"]["after"],
             "T": start, "cutoff": cutoff, "inverseCutoff": inverse_cutoff, "D": end,
             "stopAdmissionSeconds": 30, "healthReserveSeconds": 60,

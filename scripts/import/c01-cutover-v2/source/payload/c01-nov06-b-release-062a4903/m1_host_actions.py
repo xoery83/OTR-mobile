@@ -1,6 +1,7 @@
 """M1's fixed Caddy, Docker and PDF actions, with a sealed owning isolation port."""
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shlex
@@ -20,7 +21,8 @@ from controls import config_sha, route_plan
 from cutover_read_aperture import replace_handler
 from dev_host_worker import need
 from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, CompositeHostAdapter, DockerOps, caddy
-from host_target_binding import CONTINUOUS_HOST, create_exact_target, target_payload, verify_target
+from host_target_binding import (CONTINUOUS_HOST, RUNTIME_DEST, create_exact_target, create_from_payload,
+                                 legacy_recovery_projection, mount_projection, target_payload, verify_target)
 from m1_host_entry import load
 from preserve_import_routes import route_after_maintenance
 
@@ -91,6 +93,10 @@ class M1HostActions(DockerOps):
         self.task_path = Path(pins["taskStorePath"])
         need(self.task_path.is_absolute() and self.task_path.resolve() == self.task_path,
              "M1_TASK_STORE_PATH_DRIFT")
+        self.recovery_pins = pins["legacyRecovery"]
+        self.manual_risk = request["manualRelaunchRisk"]
+        need(self.manual_risk["baselineCID"] == request["baselineCID"] == host["baselineCID"],
+             "M1_MANUAL_RELAUNCH_RISK_SCOPE_DRIFT")
         self.pdf_start_attempted = False
 
     def held(self, cutoff=None):
@@ -117,18 +123,66 @@ class M1HostActions(DockerOps):
     def verify_target(self, baseline, cid):
         verify_target(baseline, self.inspect(cid), cid, self.target, disable_continuous=True)
 
+    def recovery_projection(self, baseline):
+        pins = self.recovery_pins
+        payload, mounts = legacy_recovery_projection(baseline, pins)
+        config = {k: v for k, v in payload.items() if k != "HostConfig"}
+        projected = (config, payload["HostConfig"], mounts)
+        hashes = tuple(hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                       for value in projected)
+        need(hashes == (pins["projectedConfigSHA256"], pins["projectedHostConfigSHA256"], pins["projectedMountsSHA256"]),
+             "M1_RECOVERY_PROJECTION_DRIFT")
+        path = Path(pins["dedicatedSource"])
+        need(path.is_absolute() and path.resolve() == path and
+             path == Path("/var/lib/otr/root2-c01-maintenance/m1-legacy-closed-runtime.json")
+             and pins["sharedSource"] != str(path), "M1_RECOVERY_DEDICATED_PATH_REQUIRED")
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(fd, "rb") as stream:
+            info = os.fstat(stream.fileno())
+            need(stat.S_ISREG(info.st_mode) and (info.st_uid, info.st_gid, info.st_nlink) == (0, 999, 1)
+                 and stat.S_IMODE(info.st_mode) == 0o440 and info.st_size <= 131072,
+                 "M1_RECOVERY_DEDICATED_FILE_UNSAFE")
+            raw = stream.read(131073)
+            after = os.fstat(stream.fileno())
+        current = path.stat(follow_symlinks=False)
+        need((current.st_dev, current.st_ino, current.st_ctime_ns) ==
+             (info.st_dev, info.st_ino, info.st_ctime_ns) and after.st_ctime_ns == info.st_ctime_ns,
+             "M1_RECOVERY_DEDICATED_FILE_CHANGED")
+        need(raw == b"{}\n" and hashlib.sha256(raw).hexdigest() == pins["dedicatedSHA256"],
+             "M1_RECOVERY_DEDICATED_FILE_DRIFT")
+        return payload, mounts
+
+    def create_recovery(self, name, baseline):
+        self.held()
+        payload, _ = self.recovery_projection(baseline)
+        self.held()
+        return create_from_payload(DOCKER_SOCKET, name, payload)
+
+    def verify_recovery(self, baseline, cid):
+        need(cid != self.host["baselineCID"], "M1_RECOVERY_ORIGINAL_CID_REFUSED")
+        payload, mounts = self.recovery_projection(baseline)
+        host = payload.pop("HostConfig")
+        row = self.inspect(cid)
+        need(row["Image"] == baseline["Image"] and row["Config"] == payload and row["HostConfig"] == host
+             and mount_projection(row) == mounts, "M1_RECOVERY_CONFIG_DRIFT")
+        return row
+
+    def verify_original_stopped(self, stopped):
+        self.held()
+        return self.stopped_instance(self.baseline(self.host["baselineCID"])) == stopped
+
     def start(self, cid):
         self.held()
+        need(cid != self.host["baselineCID"], "M1_AUTOMATIC_ORIGINAL_START_REFUSED")
         need(self.verify_ingress_fenced(), "M1_RESTART_INGRESS_FENCE_UNPROVED")
         self.held()
         super().start(cid)
 
     def verify_running(self, cid, baseline, target, deadline):
-        super().verify_running(cid, baseline, target, deadline)
-        if not target:
-            return
+        healthy = super().verify_running(cid, baseline, target, deadline,
+                                         verify_config=None if target else self.verify_recovery)
         self.held(deadline)
-        before = self.inspect(cid)["State"]
+        before = healthy["State"]
         pid = before["Pid"]
         need(before["Running"] is True and type(pid) is int and pid > 0, "M1_TARGET_PROCESS_UNPROVED")
         proc = PROC / str(pid)
@@ -138,8 +192,13 @@ class M1HostActions(DockerOps):
             raw = stream.read(262145)
         need(len(raw) <= 262144, "M1_TARGET_PROCESS_ENV_TOO_LARGE")
         matching = [entry for entry in raw.split(b"\0") if entry.partition(b"=")[0] == key]
-        after = self.inspect(cid)["State"]
-        need(matching == [key + b"=disabled"] and after["Running"] is True
+        if not target:
+            actual = self.docker("exec", cid, "sha256sum", RUNTIME_DEST).split()[0].decode()
+            need(actual == self.recovery_pins["dedicatedSHA256"], "M1_RECOVERY_PROCESS_MOUNT_DRIFT")
+        current = self.inspect(cid)
+        after = current["State"]
+        need(matching == [key + b"=disabled"] and current["Name"] == healthy["Name"]
+             and after["Running"] is True and after["Health"]["Status"] == "healthy"
              and after["Pid"] == pid and after["StartedAt"] == before["StartedAt"]
              and (proc / "stat").read_text().rsplit(")", 1)[1].split()[19] == ticks,
              "M1_TARGET_PROCESS_SELECTOR_UNPROVED")
@@ -171,7 +230,9 @@ class M1HostActions(DockerOps):
     def preflight(self):
         self.held(self.request["cutoff"])
         self.assert_timers_closed()
-        target_payload(self.running_baseline(), self.target, disable_continuous=True)
+        baseline = self.running_baseline()
+        target_payload(baseline, self.target, disable_continuous=True)
+        self.recovery_projection(baseline)
         self.original_routes = json.loads(self.caddy_state()[1])
         self.route = route_plan(self.original_routes)
         self.scoped = route_after_maintenance(self.original_routes)
@@ -261,11 +322,12 @@ class M1HostActions(DockerOps):
         return (self.verify_ingress_fenced() and self.pdf_inactive()
                 and self.isolation.inverse_admission(request, stopped) is True)
 
-    def restore_pdf_and_routes(self, status):
+    def restore_pdf_and_routes(self, status, stopped):
         self.held()
         need(status in {"TARGET_CLOSED_HEALTHY", "BASELINE_CLOSED_HEALTHY"}
              and not self.pdf_start_attempted and self.verify_ingress_fenced()
-             and self.isolation.release_safe(status) is True and self.pdf_inactive()
+             and self.verify_original_stopped(stopped)
+             and self.isolation.release_safe(status, self.manual_risk) is True and self.pdf_inactive()
              and time.time() + 25 < self.request["D"], "M1_RELEASE_ADMISSION_UNPROVED")
         self.pdf_start_attempted = True
         systemctl("start", PDF, timeout=20)
@@ -274,12 +336,14 @@ class M1HostActions(DockerOps):
             state = self.pdf_snapshot()
             if state["ActiveState"] == "active" and int(state["MainPID"]) > 0 and pdf_socket_owned(state["MainPID"]):
                 self.caddy_state()
-                if not self.aperture.open_import_fenced():
+                if (not self.verify_original_stopped(stopped)
+                        or self.isolation.release_safe(status, self.manual_risk) is not True
+                        or not self.aperture.open_import_fenced()):
                     return False
                 self.caddy_state()
                 scoped = self.aperture_pins["scopedSHA256"]
                 if status == "BASELINE_CLOSED_HEALTHY":
-                    # The retained original can still dispatch old Wake through raw ingress.
+                    # Retain the scoped ingress fence for the dedicated baseline recovery.
                     return self.aperture._composite(scoped) and self.isolation.verify_direct_relaunch() is True
                 return self.reverse_composite(
                     scoped, replace_handler(self.original_routes, self.scoped, "forward"),

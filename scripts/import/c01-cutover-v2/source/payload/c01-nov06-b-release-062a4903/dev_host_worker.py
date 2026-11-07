@@ -125,6 +125,9 @@ class HostWorker:
         self.ops.start(original['Id'])
         return 'STARTED_OWNED'
 
+    def running_cid(self, target):
+        return self.candidate if target else self.before['Id']
+
     def handle(self,r):
         self.guard()
         seq=self.sequence+1
@@ -168,7 +171,7 @@ class HostWorker:
             status=self.restore()
         elif cmd=='independent_running_observe':
             target=not self.restore_attempted
-            cid=self.candidate if target else self.before['Id']
+            cid=self.running_cid(target)
             self.ops.verify_running(cid,self.before,target,self.req['D'])
             status='TARGET_CLOSED_HEALTHY' if target else 'BASELINE_CLOSED_HEALTHY'
         else:
