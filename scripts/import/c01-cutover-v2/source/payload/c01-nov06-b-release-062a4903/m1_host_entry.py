@@ -75,10 +75,15 @@ class M1HostWorker(HostWorker):
         super().stop_original()
 
     def assert_retired_original(self):
-        need(self.closed_instance is not None and self.ops.verify_original_stopped(self.closed_instance) is True,
+        restored = bool(self.req.get("resumedBaseline") and self.restore_attempted)
+        need(self.closed_instance is not None
+             and self.ops.verify_original_stopped(self.closed_instance, restored=restored) is True,
              "M1_ORIGINAL_STOPPED_IDENTITY_UNPROVED")
 
     def restore(self):
+        if self.req["resumedBaseline"]:
+            self.assert_retired_original()
+            return super().restore()
         self.guard()
         need(not self.restore_attempted and self.observe_closed() == "STOPPED_CLOSED",
              "RESTORE_ONCE_STOPPED_REQUIRED")
@@ -124,7 +129,7 @@ class M1HostWorker(HostWorker):
         return "STARTED_OWNED"
 
     def running_cid(self, target):
-        return self.candidate if target else self.recovery
+        return self.candidate if target else self.before["Id"] if self.req["resumedBaseline"] else self.recovery
 
     def phase_readback(self, row):
         proof = row.get("readback")
@@ -244,6 +249,7 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_dea
         with ForegroundLease(LOCK, ledger, authority["ledgerIdentity"]) as lease:
             need(list(lease.lock_identity) == config["writerIdentity"] and not lease.has_intent(),
                  "M1_PREFLIGHT_WRITER_OR_INTENT_DRIFT")
+            installer["verify_m1_resume"](ledger.parent, config)
             ops = actions["build_ops"](observed, json.loads(raw)["host"], lease)
             need(ops.preflight() is True and time.time() < preflight_deadline,
                  "M1_HOST_PREFLIGHT_UNPROVED")
@@ -262,6 +268,7 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_dea
         return
 
     def worker(request, lease):
+        installer["verify_m1_resume"](ledger.parent, request)
         ops = actions["build_ops"](request, json.loads(raw)["host"], lease)
         return M1HostWorker(request, lease, ops, clock=time.time)
 

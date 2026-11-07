@@ -17,8 +17,8 @@
         "M1_BOUNDED_LEGACY_PDF_KEYS_SHA256",
         "M1_MANUAL_RISK_OWNER_DECISION_ID"
       ],
-      "restoredSHA256": "4f70460f4fca945f73fee2747dca35f90cd13ac4802a2db7d0f855e1e68f6348",
-      "sourceSHA256": "9341e59ddd280a2b6dbeb3563e5e98bb8b57d9a02027a6f9607faea1230503d7"
+      "restoredSHA256": "7291a2e3a235973078956d1eee5f905867855c7263ae9c0ce0d781c8abf98241",
+      "sourceSHA256": "cb822e76853c8ee167ecd7371f99e9bf183a29127d2ea1b21367f807c78427e4"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [
@@ -169,8 +169,8 @@
         "BASELINE_IMAGE_ID",
         "LEGACY_TARGET_IMAGE_ID"
       ],
-      "restoredSHA256": "5efcfafe6ec1fc3afb413d0ac07383634b1e29fddf920d35af2c00df4fd78359",
-      "sourceSHA256": "dbcfb24eeb410d73b8b2e42da296b4e703a74f9e7b9c621bb87802bc47527642"
+      "restoredSHA256": "029cbba942de6ec8132d353c20b4ef923df0ac9c754ecbfae98bfc4357f53a01",
+      "sourceSHA256": "517a50fb2927aaf5307ea9e5d62a31ae20ed8ad110599d2a02412d16373ae54a"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_foreground.py.in": {
       "externalBindings": [
@@ -180,12 +180,12 @@
       "restoredSHA256": "24df678936b3f677ee4f0ba72d93add54031ac4fa615e52f0b2a29b2722f808b"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_actions.py": {
-      "restoredSHA256": "5b01cd10ef991f4129bf9d1aaad4582f84044b1d37926433193e9d6c60296294",
-      "sourceSHA256": "5b01cd10ef991f4129bf9d1aaad4582f84044b1d37926433193e9d6c60296294"
+      "restoredSHA256": "b49189a0c36ee11b4459e6696871cd63d1d47000da8748a7033ca7d90cebf9fb",
+      "sourceSHA256": "b49189a0c36ee11b4459e6696871cd63d1d47000da8748a7033ca7d90cebf9fb"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_entry.py": {
-      "sourceSHA256": "83bc7322b42bd8a9c7652897f8f35b9e618a379f2108a4a52643cd941a947b29",
-      "restoredSHA256": "83bc7322b42bd8a9c7652897f8f35b9e618a379f2108a4a52643cd941a947b29"
+      "sourceSHA256": "ea7a87ae47acaee3129d8f7af2cfe69b4b438ec0460b5efb7f32a28b29f24e02",
+      "restoredSHA256": "ea7a87ae47acaee3129d8f7af2cfe69b4b438ec0460b5efb7f32a28b29f24e02"
     },
     "source/payload/c01-nov06-b-release-062a4903/writer_lease_binding_v5.py": {
       "restoredSHA256": "7b6d701be738bd8452c0e1b190d304588541e939eca0004db2c0f2ba6254c320",

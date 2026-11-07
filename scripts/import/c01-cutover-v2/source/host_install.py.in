@@ -209,14 +209,30 @@ def m1_plan(raw, digest):
             and re.fullmatch(r"[0-9a-f-]{36}", bounded_legacy["ownerDecision"]),
             "M1_BOUNDED_LEGACY_EFFECTS_SCOPE_DRIFT")
     manual_risk = host.get("manualRelaunchRisk")
-    require(manual_risk == M1_MANUAL_RISK and host["baselineCID"] == M1_MANUAL_RISK["baselineCID"],
+    resume = host.get("resumedBaseline")
+    require(manual_risk == M1_MANUAL_RISK
+            and (host["baselineCID"] == M1_MANUAL_RISK["baselineCID"]) == (resume is None),
             "M1_MANUAL_RELAUNCH_RISK_SCOPE_DRIFT")
+    if resume is not None:
+        require(isinstance(resume, dict) and set(resume) == {"priorExecutionId", "receiptSHA256", "recoveryIdentity", "originalStop"}
+                and re.fullmatch(r"[0-9a-f]{32}", resume["priorExecutionId"])
+                and valid_sha(resume["receiptSHA256"]) and isinstance(resume["recoveryIdentity"], list)
+                and len(resume["recoveryIdentity"]) == 2
+                and all(type(part) is int and part > 0 for part in resume["recoveryIdentity"])
+                and isinstance(resume["originalStop"], dict)
+                and set(resume["originalStop"]) == {"name", "fingerprint", "startedAt", "finishedAt", "exitCode"}
+                and valid_sha(resume["originalStop"]["fingerprint"])
+                and all(isinstance(resume["originalStop"][key], str) and resume["originalStop"][key]
+                        for key in ("name", "startedAt", "finishedAt"))
+                and type(resume["originalStop"]["exitCode"]) is int,
+                "M1_RESUME_BINDING_REQUIRED")
     require(host["baselineImage"] == M1_BASELINE and valid_sha(host["baselineCID"])
             and host["writerPath"] == str(LOCK)
             and isinstance(host["writerIdentity"], list) and len(host["writerIdentity"]) == 2
             and all(type(part) is int and part > 0 for part in host["writerIdentity"])
             and host["pdfStopOnly"] == "otr-universal-pdf-worker.service"
-            and host["candidateContinuousHost"] == {"before": "enabled", "after": "disabled"}
+            and host["candidateContinuousHost"] == {"before": "enabled" if resume is None else "disabled",
+                                                        "after": "disabled"}
             and host["png"] == "M2_FAILED_BASELINE_DO_NOT_START"
             and re.fullmatch(r"[1-9][0-9]{0,19}", pg.get("systemIdentifier", ""))
             and pg["candidateTransport"] == "existing project-linked Supabase Management CLI"
@@ -248,7 +264,9 @@ def m1_plan(raw, digest):
             "M1_ONE_SHOT_ID_DRIFT")
     return {"project": PROJECT, "manifestSHA256": digest, "targetImage": M1_TARGET,
             "baselineCID": host["baselineCID"], "writerIdentity": host["writerIdentity"],
-            "boundedLegacyEffects": bounded_legacy,
+            "boundedLegacyEffects": bounded_legacy, "resumedBaseline": resume,
+            "baselineConfigSHA256": host["baselineConfigSHA256"], "baselinePid": host["baselinePid"],
+            "baselineStartTicks": host["baselineStartTicks"], "baselineStartedAt": host.get("baselineStartedAt"),
             "manualRelaunchRisk": manual_risk, "pgSystemIdentifier": pg["systemIdentifier"],
             "candidateContinuousHost": host["candidateContinuousHost"]["after"],
             "T": start, "cutoff": cutoff, "inverseCutoff": inverse_cutoff, "D": end,
@@ -529,6 +547,7 @@ def install(args, runtime, ledger, lock_identity):
         require(time.time() + config["healthReserveSeconds"] < config["cutoff"],
                 "M1_INSTALL_WINDOW_UNAVAILABLE")
         ledger_identity = private_directory(ledger)
+        verify_m1_resume(ledger.parent, config)
         require(args.host_binding is not None, "M1_INSTALL_BINDING_REQUIRED")
         authority = json.loads(pinned(args.host_binding, args.host_binding_sha256))
         require(set(authority) == {"executionId", "leaseId", "manifestSHA256", *M1_INSTALL_ROOT_FILES.values()}
@@ -898,15 +917,18 @@ def m1_no_send_intent(ledger, config):
 
 
 def verify_m1_no_send_terminal(ledger, raw, files):
-    require(files == {"plan.json", "forward.intent", "forward.receipt", M1_RECOVERY_FILE},
-            "C01_PRIOR_WINDOW_RECONCILE_ONLY")
+    base = {"plan.json", "forward.intent", "forward.receipt"}
+    require(files in (base, base | {M1_RECOVERY_FILE}), "C01_PRIOR_WINDOW_RECONCILE_ONLY")
     config = m1_plan(raw, sha(raw))
     receipt_path = ledger / "forward.receipt"
     private_file(receipt_path, {0o600})
     receipt = json.loads(receipt_path.read_bytes())
     binding = receipt["binding"]
     evidence = json.dumps(receipt["evidence"], sort_keys=True, separators=(",", ":")).encode()
-    require(receipt["status"] == "M1_NO_SEND_RETIRED" and config["executionId"] == ledger.name
+    post_stop = receipt["status"] == "M1_POST_STOP_NO_SEND_RETIRED"
+    require((post_stop and files == base or
+             receipt["status"] == "M1_NO_SEND_RETIRED" and files == base | {M1_RECOVERY_FILE})
+            and config["executionId"] == ledger.name
             and binding["executionId"] == ledger.name and binding["manifestSHA256"] == sha(raw)
             and re.fullmatch(r"[0-9a-f]{32}", binding["leaseId"]) and binding["leaseId"] != ledger.name
             and binding["ledgerIdentity"] == private_directory(ledger)
@@ -914,8 +936,84 @@ def verify_m1_no_send_terminal(ledger, raw, files):
             and receipt["forwardIntentSHA256"] == m1_no_send_intent(ledger, config)
             and receipt["evidenceSHA256"] == sha(evidence)
             and config["D"] <= receipt["closedAt"] <= time.time()
-            and receipt["recoveryIdentity"] == m1_recovery_file(ledger / M1_RECOVERY_FILE, {1}),
+            and (post_stop or receipt["recoveryIdentity"] == m1_recovery_file(ledger / M1_RECOVERY_FILE, {1})),
             "C01_PRIOR_RETIREMENT_BINDING_DRIFT")
+    if post_stop:
+        require(receipt["recoveryIdentity"] == receipt["evidence"]["recoveryIdentity"]
+                and receipt["baseline"]["cid"] == json.loads(receipt["evidence"]["priorReceipt"])["host"]["backendRecoveryCID"],
+                "M1_POST_STOP_TERMINAL_DRIFT")
+    return receipt
+
+
+def verify_m1_resume(root, config):
+    resume = config["resumedBaseline"]
+    if resume is None:
+        require(not (root / M1_RECOVERY_FILE).exists(), "M1_ACTIVE_RECOVERY_REQUIRES_RESUME")
+        return
+    prior = root / resume["priorExecutionId"]
+    raw = (prior / "plan.json").read_bytes()
+    receipt = verify_m1_no_send_terminal(prior, raw, {item.name for item in prior.iterdir()})
+    require(sha((prior / "forward.receipt").read_bytes()) == resume["receiptSHA256"]
+            and receipt["status"] == "M1_POST_STOP_NO_SEND_RETIRED"
+            and receipt["baseline"] == {"cid": config["baselineCID"], "fingerprint": config["baselineConfigSHA256"],
+                                         "pid": config["baselinePid"], "ticks": config["baselineStartTicks"],
+                                         "startedAt": config["baselineStartedAt"], "originalStop": resume["originalStop"]}
+            and receipt["recoveryIdentity"] == resume["recoveryIdentity"]
+            and m1_recovery_file(root / M1_RECOVERY_FILE, {1}) == resume["recoveryIdentity"],
+            "M1_RESUMED_BASELINE_AUTHORITY_DRIFT")
+
+
+def observe_m1_post_stop(runtime, actions, host, config, prior, recovery_identity):
+    from host_adapter import fingerprint
+    payload = runtime / "payload" / "c01-nov06-b-release-062a4903"
+    sys.path.insert(0, str(payload))
+    pins = runpy.run_path(str(runtime / "m1-retained-control.py"))["HOST_PINS"]
+    info = prior["host"]
+    ops = actions["DockerOps"]({})
+    original = ops.inspect(host["baselineCID"])
+    recovery = ops.inspect(info["backendRecoveryCID"])
+    candidate = ops.inspect(info["v5CandidateCID"])
+    original_state, recovery_state, candidate_state = (row["State"] for row in (original, recovery, candidate))
+    require(original_state["Running"] is False and original_state["Pid"] == 0
+            and original["Name"] == "/" + host["retainedName"]
+            and fingerprint(original) == host["baselineConfigSHA256"]
+            and original_state["StartedAt"] == pins["baselineStartedAt"]
+            and candidate["Name"] == "/" + host["candidateName"] and candidate_state["Status"] == "created"
+            and candidate_state["Running"] is False and candidate_state["Pid"] == 0
+            and candidate_state["StartedAt"] == candidate_state["FinishedAt"] == "0001-01-01T00:00:00Z",
+            "M1_POST_STOP_OWNED_CONTAINERS_DRIFT")
+    actions["verify_target"](original, candidate, candidate["Id"], config["targetImage"], disable_continuous=True)
+    projected, mounts = actions["legacy_recovery_projection"](original, pins["legacyRecovery"])
+    expect_host = projected.pop("HostConfig")
+    require(recovery["Name"] == "/otr-dev-backend" and recovery["Image"] == host["baselineImage"]
+            and recovery["Id"] not in (original["Id"], candidate["Id"])
+            and recovery_state["Running"] is True and recovery_state["Health"]["Status"] == "healthy"
+            and recovery["Config"] == projected and recovery["HostConfig"] == expect_host
+            and actions["mount_projection"](recovery) == mounts,
+            "M1_POST_STOP_RECOVERY_PROJECTION_DRIFT")
+    active = LEDGER / M1_RECOVERY_FILE
+    require(m1_recovery_file(active, {1}) == recovery_identity, "M1_POST_STOP_RECOVERY_INODE_DRIFT")
+    pid = recovery_state["Pid"]
+    require(type(pid) is int and pid > 0, "M1_POST_STOP_RECOVERY_PROCESS_UNPROVED")
+    proc = Path("/proc") / str(pid)
+    ticks = int((proc / "stat").read_text().rsplit(")", 1)[1].split()[19])
+    require(identity((proc / "root" / "run/otr/universal-runtime.json").stat()) == recovery_identity,
+            "M1_POST_STOP_RECOVERY_MOUNT_UNPROVED")
+    pdf = actions["pdf_state"]()
+    status, _, routes = actions["caddy"](actions["CONFIG_ROOT"])
+    control = runpy.run_path(str(runtime / "m1-retained-control.py"))
+    aperture = control["CompositeHostAdapter"]({"host": {"aperture": pins["aperture"],
+        "caddyFence": {}, "caddyImportFence": {}}}, None, require_legacy_pg=False, allow_health_only=True)
+    require(pdf["ActiveState"] == "inactive" and pdf["MainPID"] == "0"
+            and not actions["SOCKET"].exists() and actions["pdf_job_queue_empty"]()
+            and all(pdf[k] == pins["pdfPreimage"][k] for k in ("LoadState", "Restart", "unitSHA256", "entrypoints"))
+            and status == 200 and actions["config_sha"](json.loads(routes)) == pins["aperture"]["scopedSHA256"]
+            and aperture._verify_nft(), "M1_POST_STOP_BOUNDARIES_DRIFT")
+    return {"cid": recovery["Id"], "fingerprint": fingerprint(recovery), "pid": pid,
+            "ticks": ticks, "startedAt": recovery_state["StartedAt"],
+            "originalStop": {"name": original["Name"], "fingerprint": host["baselineConfigSHA256"],
+                             "startedAt": original_state["StartedAt"], "finishedAt": original_state["FinishedAt"],
+                             "exitCode": original_state["ExitCode"]}}
 
 
 def retire_m1_no_send(args, runtime, ledger, raw, lock_identity):
@@ -949,13 +1047,29 @@ def retire_m1_no_send(args, runtime, ledger, raw, lock_identity):
     require(evidence_raw == json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode(),
             "M1_RETIRE_EVIDENCE_FORMAT_DRIFT")
     prior = json.loads(evidence["priorReceipt"])
+    post_stop = prior["status"] == "M1_STOPPED_NO_SEND_RECOVERY_CONTAINED"
     require(sha(evidence["priorReceipt"].encode()) == evidence["priorReceiptSHA256"]
-            and prior["status"] == "M1_STOPPED_NO_SEND" and prior["executionId"] == config["executionId"]
-            and prior["planSHA256"] == args.plan_sha256
-            and prior["noSend"]["classification"] == "SQL_NO_SEND"
-            and prior["verifiedFailure"]["reason"] == "TARGET_CONFIG_DRIFT"
-            and prior["verifiedFailure"]["hostConfigKeys"] == ["OomKillDisable"],
-            "M1_RETIRE_PRIOR_NO_SEND_UNPROVED")
+            and prior["executionId"] == config["executionId"], "M1_RETIRE_PRIOR_NO_SEND_UNPROVED")
+    if post_stop:
+        approval = json.loads(evidence["priorApproval"])
+        require(sha(evidence["priorApproval"].encode()) == prior["fixedRequest"]["sha256"]
+                and approval["executionId"] == config["executionId"] and approval["plan"]["sha256"] == args.plan_sha256
+                and approval["bundle"]["sha256"] == args.manifest_sha256
+                and approval["writer"]["deviceInode"] == lock_identity,
+                "M1_POST_STOP_ORIGINAL_APPROVAL_DRIFT")
+        require(names == {"plan.json", "forward.intent"}
+                and prior["terminalStatus"] == "CONTAINED_OR_UNCONFIRMED_READ_ONLY_RECONCILIATION"
+                and prior["sql"]["disposition"] == "NO_SEND" and prior["sql"]["inverseIntent"] is False
+                and prior["host"]["originalStopped"] is True and prior["host"]["v5CandidateStarted"] is False,
+                "M1_RETIRE_POST_STOP_NO_SEND_UNPROVED")
+        catalog_sha = prior["sql"]["catalogSHA256"]
+    else:
+        require(prior["status"] == "M1_STOPPED_NO_SEND" and prior["planSHA256"] == args.plan_sha256
+                and prior["noSend"]["classification"] == "SQL_NO_SEND"
+                and prior["verifiedFailure"]["reason"] == "TARGET_CONFIG_DRIFT"
+                and prior["verifiedFailure"]["hostConfigKeys"] == ["OomKillDisable"],
+                "M1_RETIRE_PRIOR_NO_SEND_UNPROVED")
+        catalog_sha = prior["noSend"]["catalogSHA256"]
 
     payload = runtime / "payload" / "c01-nov06-b-release-062a4903"
     query = m1_no_send_query((payload / "EXACT_FIVE_CATALOG.readonly.sql").read_text(), config)
@@ -967,58 +1081,64 @@ def retire_m1_no_send(args, runtime, ledger, raw, lock_identity):
             and pg["systemIdentifier"] == config["pgSystemIdentifier"] and pg["fullVisibility"] is True
             and type(pg["backendPid"]) is int and pg["backendPid"] > 0
             and all(type(pg[key]) is int and pg[key] == 0 for key in ("mutators", "prepared"))
-            and evidence_sha(pg["catalog"]) == prior["noSend"]["catalogSHA256"],
+            and evidence_sha(pg["catalog"]) == catalog_sha,
             "M1_RETIRE_PG_NO_SEND_UNPROVED")
 
     actions = runpy.run_path(str(runtime / "m1-host-actions.py"))
     host = json.loads(raw)["host"]
-    ops = actions["DockerOps"]({"baselineCID": host["baselineCID"],
-                               "baselineFingerprintSHA256": host["baselineConfigSHA256"],
-                               "baselineStartedAt": prior["service"]["default"]["startedAt"]})
-    baseline = ops.running_baseline()
-    pid = baseline["State"]["Pid"]
-    ticks = int((Path("/proc") / str(pid) / "stat").read_text().rsplit(")", 1)[1].split()[19])
-    candidate = ops.inspect(prior["verifiedFailure"]["candidate"]["cid"])
-    state = candidate["State"]
-    expected = actions["target_payload"](baseline, config["targetImage"], disable_continuous=True)
-    expected_host = expected.pop("HostConfig")
-    require(pid == host["baselinePid"] and ticks == host["baselineStartTicks"]
-            and candidate["Name"] == "/" + host["candidateName"] and candidate["Image"] == config["targetImage"]
-            and state["Status"] == "created" and state["Running"] is False and state["Pid"] == 0
-            and state["StartedAt"] == state["FinishedAt"] == "0001-01-01T00:00:00Z"
-            and candidate["Config"] == expected and expected_host["OomKillDisable"] is None
-            and candidate["HostConfig"]["OomKillDisable"] is False
-            and candidate["HostConfig"] == {**expected_host, "OomKillDisable": False}
-            and actions["mount_projection"](candidate) == actions["mount_projection"](baseline),
-            "M1_RETIRE_PRESTOP_NO_SEND_UNPROVED")
-    pdf = actions["pdf_state"]()
-    status, _, routes = actions["caddy"](actions["CONFIG_ROOT"])
-    tables = json.loads(call("/usr/sbin/nft", "-j", "list", "tables"))["nftables"]
-    require(all(pdf[key] == host["pdfPreimage"][key] for key in pdf)
-            and actions["pdf_job_queue_empty"]() and status == 200
-            and actions["config_sha"](json.loads(routes)) == host["routePins"]["before"]
-            and not any(item.get("table", {}).get("name") == "otr_c01_keep_v5"
-                        and item["table"]["family"] == "inet" for item in tables),
-            "M1_RETIRE_SERVICE_PREIMAGE_DRIFT")
+    if post_stop:
+        post_stop_baseline = observe_m1_post_stop(runtime, actions, host, config, prior, evidence["recoveryIdentity"])
+    else:
+        ops = actions["DockerOps"]({"baselineCID": host["baselineCID"],
+                                   "baselineFingerprintSHA256": host["baselineConfigSHA256"],
+                                   "baselineStartedAt": prior["service"]["default"]["startedAt"]})
+        baseline = ops.running_baseline()
+        pid = baseline["State"]["Pid"]
+        ticks = int((Path("/proc") / str(pid) / "stat").read_text().rsplit(")", 1)[1].split()[19])
+        candidate = ops.inspect(prior["verifiedFailure"]["candidate"]["cid"])
+        state = candidate["State"]
+        expected = actions["target_payload"](baseline, config["targetImage"], disable_continuous=True)
+        expected_host = expected.pop("HostConfig")
+        require(pid == host["baselinePid"] and ticks == host["baselineStartTicks"]
+                and candidate["Name"] == "/" + host["candidateName"] and candidate["Image"] == config["targetImage"]
+                and state["Status"] == "created" and state["Running"] is False and state["Pid"] == 0
+                and state["StartedAt"] == state["FinishedAt"] == "0001-01-01T00:00:00Z"
+                and candidate["Config"] == expected and expected_host["OomKillDisable"] is None
+                and candidate["HostConfig"]["OomKillDisable"] is False
+                and candidate["HostConfig"] == {**expected_host, "OomKillDisable": False}
+                and actions["mount_projection"](candidate) == actions["mount_projection"](baseline),
+                "M1_RETIRE_PRESTOP_NO_SEND_UNPROVED")
+        pdf = actions["pdf_state"]()
+        status, _, routes = actions["caddy"](actions["CONFIG_ROOT"])
+        tables = json.loads(call("/usr/sbin/nft", "-j", "list", "tables"))["nftables"]
+        require(all(pdf[key] == host["pdfPreimage"][key] for key in pdf)
+                and actions["pdf_job_queue_empty"]() and status == 200
+                and actions["config_sha"](json.loads(routes)) == host["routePins"]["before"]
+                and not any(item.get("table", {}).get("name") == "otr_c01_keep_v5"
+                            and item["table"]["family"] == "inet" for item in tables),
+                "M1_RETIRE_SERVICE_PREIMAGE_DRIFT")
 
     require(0 <= time.time() - pg["observedAt"] <= 60 and identity(LOCK.lstat()) == lock_identity
             and private_directory(ledger) == binding["ledgerIdentity"]
             and m1_no_send_intent(ledger, config) == forward, "M1_RETIRE_FRESH_EVIDENCE_OR_WRITER_DRIFT")
-    active, archived = ledger.parent / M1_RECOVERY_FILE, ledger / M1_RECOVERY_FILE
-    if not archived.exists():
-        require(m1_recovery_file(active, {1}) == evidence["recoveryIdentity"], "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
-        os.link(active, archived, follow_symlinks=False)
-        persist_directory(ledger)
-    if active.exists() or active.is_symlink():
-        require(m1_recovery_file(active, {2}) == m1_recovery_file(archived, {2}) == evidence["recoveryIdentity"],
-                "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
-        active.unlink()
-        persist_directory(active.parent)
-    require(m1_recovery_file(archived, {1}) == evidence["recoveryIdentity"], "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
+    if not post_stop:
+        active, archived = ledger.parent / M1_RECOVERY_FILE, ledger / M1_RECOVERY_FILE
+        if not archived.exists():
+            require(m1_recovery_file(active, {1}) == evidence["recoveryIdentity"], "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
+            os.link(active, archived, follow_symlinks=False)
+            persist_directory(ledger)
+        if active.exists() or active.is_symlink():
+            require(m1_recovery_file(active, {2}) == m1_recovery_file(archived, {2}) == evidence["recoveryIdentity"],
+                    "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
+            active.unlink()
+            persist_directory(active.parent)
+        require(m1_recovery_file(archived, {1}) == evidence["recoveryIdentity"], "M1_RETIRE_RECOVERY_IDENTITY_DRIFT")
     receipt = {"status": "M1_NO_SEND_RETIRED", "binding": binding, "closedAt": int(time.time()),
                "writerIdentity": lock_identity, "forwardIntentSHA256": forward,
                "evidenceSHA256": sha(evidence_raw), "evidence": evidence,
                "recoveryIdentity": evidence["recoveryIdentity"]}
+    if post_stop:
+        receipt.update(status="M1_POST_STOP_NO_SEND_RETIRED", baseline=post_stop_baseline)
     record = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
     terminal = ledger / "forward.receipt"
     if pending.exists():
@@ -1032,16 +1152,23 @@ def retire_m1_no_send(args, runtime, ledger, raw, lock_identity):
     persist_directory(ledger)
     verify_m1_no_send_terminal(ledger, raw, {item.name for item in ledger.iterdir()})
     return {"status": receipt["status"], "executionId": ledger.name, "receiptSHA256": sha(record),
-            "archivedRecovery": str(archived), "forwardIntentSHA256": forward}
+            "archivedRecovery": None if post_stop else str(archived), "forwardIntentSHA256": forward}
 
 
-def refuse_prior_windows(root, execution_id):
+def refuse_prior_windows(root, execution_id, *, allow_active_recovery=False):
     """Called under the existing Writer before enrolling or arming C01."""
     try:
         private_directory(root)
     except FileNotFoundError:
         return
+    active_recovery = root / M1_RECOVERY_FILE
+    observed_recovery = None
     for ledger in sorted(root.iterdir()):
+        if ledger == active_recovery:
+            require(allow_active_recovery and observed_recovery is not None
+                    and m1_recovery_file(active_recovery, {1}) == observed_recovery,
+                    "C01_ACTIVE_RECOVERY_CUSTODY_UNPROVED")
+            continue
         if ledger.name == execution_id:
             continue
         require(re.fullmatch(r"[0-9a-f]{32}", ledger.name), "C01_PRIOR_LEDGER_UNRECOGNIZED")
@@ -1068,7 +1195,10 @@ def refuse_prior_windows(root, execution_id):
         plan_bytes = plan_path.read_bytes()
         prior = json.loads(plan_bytes)
         if prior.get("status") == M1_KIND:
-            verify_m1_no_send_terminal(ledger, plan_bytes, files)
+            receipt = verify_m1_no_send_terminal(ledger, plan_bytes, files)
+            if receipt["status"] == "M1_POST_STOP_NO_SEND_RETIRED":
+                require(observed_recovery is None, "C01_MULTIPLE_ACTIVE_RECOVERY_CUSTODIES")
+                observed_recovery = receipt["recoveryIdentity"]
             continue
         require("runtime-retired.json" in files, "C01_PRIOR_WINDOW_RECONCILE_ONLY")
         marker_path = ledger / "runtime-retired.json"
@@ -1110,7 +1240,7 @@ def run(args):
     runtime, ledger = RUNTIME / args.execution_id, LEDGER / args.execution_id
     with writer() as lock_identity:
         if args.mode in {"enroll", "arm"}:
-            refuse_prior_windows(LEDGER, args.execution_id)
+            refuse_prior_windows(LEDGER, args.execution_id, allow_active_recovery=args.mode == "enroll")
         if args.mode == "enroll":
             create_directory(LEDGER)
             ledger_identity = create_directory(ledger, fresh=True)

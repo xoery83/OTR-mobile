@@ -11,7 +11,7 @@ CONTINUOUS_HOST = 'OTR_DEV_UNIVERSAL_CONTINUOUS_HOST'
 RUNTIME_HASH = 'OTR_DEV_UNIVERSAL_RUNTIME_SHA256'
 RUNTIME_DEST = '/run/otr/universal-runtime.json'
 
-def target_payload(baseline, target=TARGET, *, disable_continuous=False):
+def target_payload(baseline, target=TARGET, *, disable_continuous=False, continuous_preimage="enabled"):
     if baseline['Image'] != BASELINE:
         raise ValueError('WRONG_RETAINED_IMAGE')
     config = copy.deepcopy(baseline['Config'])
@@ -19,7 +19,7 @@ def target_payload(baseline, target=TARGET, *, disable_continuous=False):
     if disable_continuous:
         env = config['Env']
         matches = [i for i, entry in enumerate(env) if entry.partition('=')[0] == CONTINUOUS_HOST]
-        if len(matches) != 1 or env[matches[0]] != CONTINUOUS_HOST + '=enabled':
+        if len(matches) != 1 or env[matches[0]] != CONTINUOUS_HOST + '=' + continuous_preimage:
             raise ValueError('M1_CONTINUOUS_SELECTOR_PREIMAGE_DRIFT')
         env[matches[0]] = CONTINUOUS_HOST + '=disabled'
     return {**config,'HostConfig':copy.deepcopy(baseline['HostConfig'])}
@@ -60,8 +60,9 @@ def m1_create_host_config(host):
     return host
 
 
-def create_exact_target(path,name,baseline,target=TARGET, *, disable_continuous=False):
-    payload = target_payload(baseline,target,disable_continuous=disable_continuous)
+def create_exact_target(path,name,baseline,target=TARGET, *, disable_continuous=False, continuous_preimage="enabled"):
+    payload = target_payload(baseline,target,disable_continuous=disable_continuous,
+                             continuous_preimage=continuous_preimage)
     if disable_continuous:
         payload['HostConfig'] = m1_create_host_config(payload['HostConfig'])
     return create_from_payload(path, name, payload)
@@ -91,12 +92,17 @@ def create_from_payload(path, name, payload):
     finally:
         with_connection.close()
 
-def verify_target(baseline,candidate,cid,target=TARGET, *, disable_continuous=False):
-    expected=target_payload(baseline,target,disable_continuous=disable_continuous)
+def verify_target(baseline,candidate,cid,target=TARGET, *, disable_continuous=False, continuous_preimage="enabled"):
+    expected=target_payload(baseline,target,disable_continuous=disable_continuous,
+                            continuous_preimage=continuous_preimage)
     host_config=expected.pop('HostConfig')
+    actual_host=candidate['HostConfig']
     if disable_continuous:
         host_config = m1_create_host_config(host_config)
-    if (candidate['Id'],candidate['Image'],candidate['Config'],candidate['HostConfig']) != (cid,target,expected,host_config):
+        # Docker renders the cgroup-v2 default as null again once the container has started.
+        if continuous_preimage == "disabled" and candidate["State"]["Status"] != "created":
+            actual_host = m1_create_host_config(actual_host)
+    if (candidate['Id'],candidate['Image'],candidate['Config'],actual_host) != (cid,target,expected,host_config):
         raise ValueError('TARGET_CONFIG_DRIFT')
     fields=('Source','Destination','RW','Type','Propagation')
     if sorted(tuple(m.get(k) for k in fields) for m in baseline['Mounts']) != sorted(tuple(m.get(k) for k in fields) for m in candidate['Mounts']):

@@ -18,9 +18,9 @@ for dependency in (PAYLOAD / "c01-nov06-b-image-only-offline", JOIN, JOIN / "rec
 
 from caddy_admin_cas import CONFIG_ROOT
 from controls import config_sha, route_plan
-from cutover_read_aperture import replace_handler
+from cutover_read_aperture import APERTURE, replace_handler
 from dev_host_worker import need
-from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, CompositeHostAdapter, DockerOps, caddy
+from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, CompositeHostAdapter, DockerOps, caddy, fingerprint
 from host_target_binding import (CONTINUOUS_HOST, RUNTIME_DEST, create_exact_target, create_from_payload,
                                  legacy_recovery_projection, m1_create_host_config, mount_projection,
                                  target_payload, verify_target)
@@ -80,9 +80,12 @@ def pdf_socket_owned(pid):
 
 class M1HostActions(DockerOps):
     def __init__(self, request, host, lease, pins, isolation):
+        self.resume = request["resumedBaseline"]
+        self.continuous_preimage = "disabled" if self.resume else "enabled"
         super().__init__({
             "baselineCID": host["baselineCID"], "baselineFingerprintSHA256": host["baselineConfigSHA256"],
-            "baselineStartedAt": pins["baselineStartedAt"], "baselineBundlePins": pins["baselineBundlePins"],
+            "baselineStartedAt": host["baselineStartedAt"] if self.resume else pins["baselineStartedAt"],
+            "baselineBundlePins": pins["baselineBundlePins"],
             "targetBundlePins": pins["targetBundlePins"],
         })
         self.request, self.lease, self.host_pins, self.isolation = request, lease, host, isolation
@@ -97,7 +100,8 @@ class M1HostActions(DockerOps):
         self.recovery_pins = pins["legacyRecovery"]
         self.recovery_file_identity = None
         self.manual_risk = request["manualRelaunchRisk"]
-        need(self.manual_risk["baselineCID"] == request["baselineCID"] == host["baselineCID"],
+        need(request["baselineCID"] == host["baselineCID"]
+             and (self.manual_risk["baselineCID"] == host["baselineCID"]) == (self.resume is None),
              "M1_MANUAL_RELAUNCH_RISK_SCOPE_DRIFT")
         self.pdf_start_attempted = False
 
@@ -120,10 +124,12 @@ class M1HostActions(DockerOps):
         return self.docker("image", "inspect", self.target, "--format", "{{.Id}}").decode().strip() == self.target
 
     def create(self, name, baseline):
-        return create_exact_target(DOCKER_SOCKET, name, baseline, self.target, disable_continuous=True)
+        return create_exact_target(DOCKER_SOCKET, name, baseline, self.target, disable_continuous=True,
+                                   continuous_preimage=self.continuous_preimage)
 
     def verify_target(self, baseline, cid):
-        verify_target(baseline, self.inspect(cid), cid, self.target, disable_continuous=True)
+        verify_target(baseline, self.inspect(cid), cid, self.target, disable_continuous=True,
+                      continuous_preimage=self.continuous_preimage)
 
     def recovery_projection(self, baseline, *, require_enrollment=True):
         pins = self.recovery_pins
@@ -145,6 +151,10 @@ class M1HostActions(DockerOps):
     def enroll_recovery_file(self):
         self.held(self.request["cutoff"])
         path = Path(self.recovery_pins["dedicatedSource"])
+        if self.resume:
+            self.recovery_file_identity = tuple(self.resume["recoveryIdentity"])
+            self.verify_recovery_file(path)
+            return
         raw = b"{}\n"
         need(hashlib.sha256(raw).hexdigest() == self.recovery_pins["dedicatedSHA256"],
              "M1_RECOVERY_DEDICATED_FILE_DRIFT")
@@ -207,20 +217,37 @@ class M1HostActions(DockerOps):
              and mount_projection(row) == mounts, "M1_RECOVERY_CONFIG_DRIFT")
         return row
 
-    def verify_original_stopped(self, stopped):
+    def historical_original_stopped(self):
+        old = self.inspect(self.manual_risk["baselineCID"])
+        state = old["State"]
+        if state["Running"] is not False or state["Pid"] != 0:
+            return False
+        return self.resume["originalStop"] == {
+            "name": old["Name"], "fingerprint": fingerprint(old), "startedAt": state["StartedAt"],
+            "finishedAt": state["FinishedAt"], "exitCode": state["ExitCode"]}
+
+    def verify_original_stopped(self, stopped, *, restored=False):
         self.held()
-        return self.stopped_instance(self.baseline(self.host["baselineCID"])) == stopped
+        current = self.baseline(self.host["baselineCID"])
+        if self.resume and not self.historical_original_stopped():
+            return False
+        if restored:
+            state = current["State"]
+            return (self.resume is not None and state["Running"] is True and state["Pid"] > 0
+                    and current["Name"] == "/otr-dev-backend"
+                    and state["StartedAt"] != self.host_pins["baselineStartedAt"])
+        return self.stopped_instance(current) == stopped
 
     def start(self, cid):
         self.held()
-        need(cid != self.host["baselineCID"], "M1_AUTOMATIC_ORIGINAL_START_REFUSED")
+        need(cid != self.manual_risk["baselineCID"], "M1_AUTOMATIC_ORIGINAL_START_REFUSED")
         need(self.verify_ingress_fenced(), "M1_RESTART_INGRESS_FENCE_UNPROVED")
         self.held()
         super().start(cid)
 
     def verify_running(self, cid, baseline, target, deadline):
         healthy = super().verify_running(cid, baseline, target, deadline,
-                                         verify_config=None if target else self.verify_recovery)
+                                         verify_config=None if target or self.resume else self.verify_recovery)
         self.held(deadline)
         before = healthy["State"]
         pid = before["Pid"]
@@ -232,9 +259,14 @@ class M1HostActions(DockerOps):
             raw = stream.read(262145)
         need(len(raw) <= 262144, "M1_TARGET_PROCESS_ENV_TOO_LARGE")
         matching = [entry for entry in raw.split(b"\0") if entry.partition(b"=")[0] == key]
-        if not target:
-            actual = self.docker("exec", cid, "sha256sum", RUNTIME_DEST).split()[0].decode()
+        if not target or self.resume:
+            mount = proc / "root" / RUNTIME_DEST.lstrip("/")
+            actual = hashlib.sha256(mount.read_bytes()).hexdigest()
             need(actual == self.recovery_pins["dedicatedSHA256"], "M1_RECOVERY_PROCESS_MOUNT_DRIFT")
+            if self.resume:
+                mounted = mount.stat()
+                need([mounted.st_dev, mounted.st_ino] == self.resume["recoveryIdentity"],
+                     "M1_RESUME_PROCESS_MOUNT_IDENTITY_DRIFT")
         current = self.inspect(cid)
         after = current["State"]
         need(matching == [key + b"=disabled"] and current["Name"] == healthy["Name"]
@@ -271,9 +303,26 @@ class M1HostActions(DockerOps):
         self.held(self.request["cutoff"])
         self.assert_timers_closed()
         baseline = self.running_baseline()
-        target_payload(baseline, self.target, disable_continuous=True)
-        self.recovery_projection(baseline, require_enrollment=False)
-        self.original_routes = json.loads(self.caddy_state()[1])
+        target_payload(baseline, self.target, disable_continuous=True,
+                       continuous_preimage=self.continuous_preimage)
+        live = json.loads(self.caddy_state()[1])
+        self.original_routes = live
+        if self.resume:
+            need(config_sha(live) == self.aperture_pins["scopedSHA256"], "M1_RESUME_SCOPED_PREIMAGE_DRIFT")
+            self.enroll_recovery_file()
+            mount = PROC / str(baseline["State"]["Pid"]) / "root" / RUNTIME_DEST.lstrip("/")
+            statinfo = mount.stat()
+            need([statinfo.st_dev, statinfo.st_ino] == self.resume["recoveryIdentity"],
+                 "M1_RESUME_PROCESS_MOUNT_IDENTITY_DRIFT")
+            server, index = self.host_pins["routePath"].split("/")[5:8:2]
+            handle = live["apps"]["http"]["servers"][server]["routes"][int(index)]["handle"][0]
+            self.original_routes = replace_handler(live, {"path": self.host_pins["routePath"],
+                "original": handle["routes"][1]["handle"]}, "original")
+            del self.original_routes["apps"]["http"]["servers"][APERTURE]
+            need(config_sha(self.original_routes) == self.host_pins["routePins"]["before"],
+                 "M1_RESUME_ORIGINAL_ROUTE_PROJECTION_DRIFT")
+        else:
+            self.recovery_projection(baseline, require_enrollment=False)
         self.route = route_plan(self.original_routes)
         self.scoped = route_after_maintenance(self.original_routes)
         self.aperture = CompositeHostAdapter(
@@ -283,17 +332,24 @@ class M1HostActions(DockerOps):
         self.composite_full = self.aperture._fenced_config(self.original_routes)
         self.aperture._caddy_owner()
         expect = self.host_pins["routePins"]
+        boundary = (self.historical_original_stopped() and self.pdf_inactive() and pdf_job_queue_empty()
+                    and self.isolation.verify_direct_relaunch()
+                    if self.resume else self.aperture._nft_absent() and self.verify_pdf_preimage()
+                    and self.isolation.preflight() is True)
         return (self.route["path"] == self.scoped["path"] == self.host_pins["routePath"]
                 and (self.route["before"], self.route["fenced"], self.scoped["fenced"])
                     == (expect["before"], expect["fullFence"], expect["importFence"])
-                and self.aperture._nft_absent()
-                and self.target_present() and self.verify_pdf_preimage()
-                and self.isolation.preflight() is True)
+                and self.target_present() and boundary)
 
     def fence_before_stop(self):
         self.held(self.request["cutoff"])
         self.caddy_state()
         self.aperture._caddy_owner()
+        if self.resume:
+            return (self.historical_original_stopped() and self.isolation.verify_direct_relaunch()
+                    and self.aperture._set_servers(self.aperture_pins["scopedSHA256"], self.composite_full,
+                                                  self.aperture_pins["fullSHA256"])
+                    and self.verify_ingress_fenced())
         if (not self.aperture._nft_absent()
                 or not self.aperture._set_servers(self.route["before"], self.composite_full,
                                                   self.aperture_pins["fullSHA256"])):
@@ -344,6 +400,9 @@ class M1HostActions(DockerOps):
 
     def stop_pdf(self):
         self.held(self.request["cutoff"])
+        if self.resume:
+            return True if (self.historical_original_stopped() and self.pdf_inactive()
+                            and pdf_job_queue_empty()) else None
         need(self.verify_pdf_preimage(), "M1_PDF_STOP_PREIMAGE_UNPROVED")
         result = systemctl("stop", PDF, timeout=20, check=False)
         if not pdf_job_queue_empty():
@@ -366,9 +425,14 @@ class M1HostActions(DockerOps):
         self.held()
         need(status in {"TARGET_CLOSED_HEALTHY", "BASELINE_CLOSED_HEALTHY"}
              and not self.pdf_start_attempted and self.verify_ingress_fenced()
-             and self.verify_original_stopped(stopped)
+             and self.verify_original_stopped(stopped,
+                 restored=bool(self.resume and status == "BASELINE_CLOSED_HEALTHY"))
              and self.isolation.release_safe(status, self.manual_risk, readback, self.request["boundedLegacyEffects"]) is True and self.pdf_inactive()
              and time.time() + 25 < self.request["D"], "M1_RELEASE_ADMISSION_UNPROVED")
+        if self.resume:
+            return (pdf_job_queue_empty() and self.aperture.open_import_fenced()
+                    and self.aperture._composite(self.aperture_pins["scopedSHA256"])
+                    and self.pdf_inactive() and self.isolation.verify_direct_relaunch())
         self.pdf_start_attempted = True
         systemctl("start", PDF, timeout=20)
         until = min(time.time() + 15, self.request["D"])
