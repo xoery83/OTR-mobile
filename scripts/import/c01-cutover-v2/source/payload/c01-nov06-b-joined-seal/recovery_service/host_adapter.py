@@ -266,10 +266,11 @@ class HostAdapter:
 
 
 class CompositeHostAdapter(HostAdapter):
-    def __init__(self, plan, writer, *, require_legacy_pg=True):
+    def __init__(self, plan, writer, *, require_legacy_pg=True, allow_health_only=False):
         super().__init__(plan, writer)
         self.aperture = self.host["aperture"]
-        binding_valid(self.aperture, require_legacy_pg=require_legacy_pg)
+        self.allow_health_only = allow_health_only
+        binding_valid(self.aperture, require_legacy_pg=require_legacy_pg, allow_health_only=allow_health_only)
 
     def _caddy_owner(self):
         raw = run(["/usr/bin/systemctl", "show", "caddy.service",
@@ -310,7 +311,8 @@ class CompositeHostAdapter(HostAdapter):
 
     def _fenced_config(self, original):
         full = replace_handler(original, self.route, "forward")
-        sealed = caddy_config(full, self.route["fenced"], self.aperture["oldReads"])
+        sealed = caddy_config(full, self.route["fenced"], self.aperture["oldReads"],
+                              allow_health_only=self.allow_health_only)
         scoped = replace_handler(sealed, self.import_route, "forward")
         need(config_sha(sealed) == self.aperture["fullSHA256"]
              and config_sha(scoped) == self.aperture["scopedSHA256"],

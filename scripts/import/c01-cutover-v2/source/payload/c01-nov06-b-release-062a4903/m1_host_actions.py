@@ -87,6 +87,7 @@ class M1HostActions(DockerOps):
         self.target = request["targetImage"]
         self.caddy_socket_identity = pins["caddySocketIdentity"]
         self.aperture_pins = pins["aperture"]
+        need(self.aperture_pins["oldReads"] == [], "M1_APERTURE_HEALTH_ONLY_REQUIRED")
         self.task_path = Path(pins["taskStorePath"])
         need(self.task_path.is_absolute() and self.task_path.resolve() == self.task_path,
              "M1_TASK_STORE_PATH_DRIFT")
@@ -177,7 +178,7 @@ class M1HostActions(DockerOps):
         self.aperture = CompositeHostAdapter(
             {"host": {"caddyFence": self.route, "caddyImportFence": self.scoped,
                       "aperture": self.aperture_pins}},
-            self.lease, require_legacy_pg=False)
+            self.lease, require_legacy_pg=False, allow_health_only=True)
         self.composite_full = self.aperture._fenced_config(self.original_routes)
         self.aperture._caddy_owner()
         expect = self.host_pins["routePins"]

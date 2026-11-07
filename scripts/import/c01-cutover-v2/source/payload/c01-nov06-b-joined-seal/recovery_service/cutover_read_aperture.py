@@ -21,11 +21,12 @@ def config_sha(config):
                                     ensure_ascii=False,allow_nan=False).encode()).hexdigest()
 
 
-def caddy_config(full_fence, full_fence_sha, old_reads):
+def caddy_config(full_fence, full_fence_sha, old_reads, *, allow_health_only=False):
     if (config_sha(full_fence) != full_fence_sha or
             BACKEND in json.dumps(full_fence["apps"]["http"]["servers"])):
         raise ValueError("C01_FULL_CADDY_FENCE_DRIFT")
-    if (not isinstance(old_reads,list) or not 1 <= len(old_reads) <= 3
+    minimum_reads = 0 if allow_health_only else 1
+    if (not isinstance(old_reads,list) or not minimum_reads <= len(old_reads) <= 3
             or any(not isinstance(uri,str) or not OLD_READ.fullmatch(uri) for uri in old_reads)
             or len(set(old_reads)) != len(old_reads)):
         raise ValueError("C01_EXACT_OLD_GET_PINS_REQUIRED")
@@ -82,7 +83,7 @@ def replace_handler(config, route, key):
     return result
 
 
-def binding_valid(value, *, require_legacy_pg=True):
+def binding_valid(value, *, require_legacy_pg=True, allow_health_only=False):
     hashes = {"nftSHA256", "fullSHA256", "scopedSHA256"}
     if require_legacy_pg:
         hashes.add("legacyPGFenceSHA256")
@@ -91,7 +92,8 @@ def binding_valid(value, *, require_legacy_pg=True):
         raise ValueError("C01_COMPOSITE_BINDING_REQUIRED")
     nft_rules(value["caddyUid"],value["caddyCgroup"])
     old=value["oldReads"]
-    if (not isinstance(old,list) or not 1<=len(old)<=3 or
+    minimum_reads = 0 if allow_health_only else 1
+    if (not isinstance(old,list) or not minimum_reads <= len(old) <= 3 or
         any(not isinstance(x,str) or not OLD_READ.fullmatch(x) for x in old) or len(set(old))!=len(old)
         or not isinstance(value["caddyPidStart"],list) or len(value["caddyPidStart"])!=2
         or any(type(x) is not int or x<=0 for x in value["caddyPidStart"])
