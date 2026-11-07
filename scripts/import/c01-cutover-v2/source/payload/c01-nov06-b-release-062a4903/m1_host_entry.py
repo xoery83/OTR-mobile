@@ -213,7 +213,7 @@ class M1HostWorker(HostWorker):
         return reply
 
 
-def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_deadline=None):
+def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_deadline=None, preflight_bundle_sha=None):
     need(re.fullmatch(r"[a-f0-9]{32}", execution_id), "M1_EXECUTION_ID_UNBOUND")
     runtime, ledger = RUNTIME / execution_id, LEDGER / execution_id
     authority = json.loads(fixed(runtime / "m1-binding.json", binding_sha))
@@ -236,6 +236,7 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_dea
     actions = load(runtime / "m1-host-actions.py", authority["actionsSHA256"])
 
     if preflight_deadline is not None:
+        installer["verify_installed"](runtime, preflight_bundle_sha, installer["M1_INSTALL_REQUIRED_FILES"])
         # Observation has its own deadline and never constructs a command-capable Worker.
         execution_clock = {key: config[key] for key in ("T", "cutoff", "inverseCutoff", "D")}
         observed = dict(config, T=time.time(), cutoff=preflight_deadline,
@@ -249,7 +250,8 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_dea
             expected = {key: config[key] for key in IDS}
             send(stdout, dict(expected, status="PREFLIGHT_HELD", mode="READ_ONLY",
                               manifestSHA256=manifest_sha, hostBindingSHA256=binding_sha,
-                              observationDeadline=preflight_deadline, executionClock=execution_clock))
+                              observationDeadline=preflight_deadline, executionClock=execution_clock,
+                              bundleSHA256=preflight_bundle_sha))
             row = receive(stdin, preflight_deadline)
             transcript(row, expected, 1)
             need(row["command"] == "assert_writer", "M1_PREFLIGHT_MUTATION_REFUSED")
@@ -269,9 +271,9 @@ def run(execution_id, manifest_sha, binding_sha, stdin, stdout, *, preflight_dea
 if __name__ == "__main__":
     try:
         need(os.geteuid() == 0, "M1_HOST_ROOT_REQUIRED")
-        if len(sys.argv) == 6 and sys.argv[4] == "--preflight":
+        if len(sys.argv) == 7 and sys.argv[4] == "--preflight":
             run(*sys.argv[1:4], sys.stdin.buffer, sys.stdout.buffer,
-                preflight_deadline=int(sys.argv[5]))
+                preflight_deadline=int(sys.argv[5]), preflight_bundle_sha=sys.argv[6])
         else:
             need(len(sys.argv) == 4, "M1_HOST_ARGUMENTS_UNBOUND")
             run(*sys.argv[1:], sys.stdin.buffer, sys.stdout.buffer)
