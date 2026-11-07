@@ -8,7 +8,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { universalFiniteConfigSchema } from "../universalFiniteConfig";
 import { createModelTaskPgConnection } from "../tripCoreV2PgConnection";
-import { universalPgTransaction } from "../universalPg";
+import { isAiCostGuardEnabled, universalProviderPgTransaction } from "../universalPg";
 import { createClosedPersistenceGateway } from "../externalIntegrationPersistence";
 import { createFlightPrivateCustody } from "../flightPrivateCustody";
 import { createFlightHttpsSend } from "../flightHttpsTransport";
@@ -65,6 +65,7 @@ export async function loadDevFlightEnrichmentRuntime(
     reportEnrichmentDiagnostic("LOAD_GUARD", Error("ENRICHMENT_RUNTIME_CLOSED"));
     throw Error("ENRICHMENT_RUNTIME_CLOSED");
   }
+  const costGuardEnabled = isAiCostGuardEnabled((key) => env[key]);
   let file;
   try {
     file = await open(
@@ -192,8 +193,9 @@ export async function loadDevFlightEnrichmentRuntime(
         if (!commands.includes(kind as (typeof commands)[number]))
           throw Error("ENRICHMENT_COMMAND_CLOSED");
         if (!settlement.has(kind)) guard();
-        return universalPgTransaction(
+        return universalProviderPgTransaction(
           connection,
+          costGuardEnabled,
           async (lease) =>
             (
               await lease.query(`SELECT public.${kind}($1::jsonb,$2::jsonb) AS value`, [
@@ -212,6 +214,7 @@ export async function loadDevFlightEnrichmentRuntime(
   }
   const ports = createPersistentFlightEnrichmentPorts({
     gateway,
+    costGuardEnabled,
     stores,
     now: () => new Date().toISOString(),
     async resolveCredential(reference, context) {

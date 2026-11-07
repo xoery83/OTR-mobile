@@ -16,9 +16,10 @@ const f = vi.hoisted(() => ({
 }));
 vi.mock("node:fs/promises", () => ({ open: f.open }));
 vi.mock("../flightPrivateCustody", () => ({ createFlightPrivateCustody: f.custody }));
-vi.mock("../tripCoreV2PgConnection", () => ({ createModelTaskPgConnection: () => ({}) }));
-vi.mock("../universalPg", () => ({
-  universalPgTransaction: (_: unknown, work: any) => work({ query: f.query }),
+vi.mock("../tripCoreV2PgConnection", () => ({
+  createModelTaskPgConnection: () => ({
+    withLease: (work: (lease: { query: typeof f.query }) => unknown) => work({ query: f.query }),
+  }),
 }));
 vi.mock("./persistentPorts", () => ({
   createPersistentFlightEnrichmentPorts: f.ports,
@@ -169,7 +170,8 @@ it("revalidates normal Auth for spend, permits bounded historical settlement aft
   await expect(
     gateway.invoke("external_integration_reserve_call", command),
   ).rejects.toThrow("COMMAND_CLOSED");
-  expect(f.query).toHaveBeenCalledTimes(2);
+  expect(f.query.mock.calls.filter(([sql]) => sql.includes("public.flight_enrichment_"))).toHaveLength(2);
+  expect(f.query.mock.calls.some(([sql]) => sql.includes("otr.ai_cost_guard"))).toBe(false);
   vi.advanceTimersByTime(60001);
   await expect(gateway.invoke("flight_enrichment_step_receipt", command)).rejects.toThrow(
     "COMMAND_CLOSED",
@@ -234,4 +236,28 @@ it("load and availability diagnostics identify fixed stages without private fiel
   } finally {
     log.mockRestore();
   }
+});
+
+
+it("uses the backend OFF value on the actual protected transaction", async () => {
+  const runtime = (await loadDevFlightEnrichmentRuntime({ ...env(), AI_COST_GUARD_ENABLED: "false" }))!;
+  const gateway = f.configure.mock.calls[0][0].gateway(context());
+  const fields = {
+    version: 1,
+    environment: "DEV",
+    request_id: trip,
+    integration_id: config.integrationId,
+    account_id: actor,
+    actor_id: actor,
+    trip_id: trip,
+  };
+  await gateway.invoke("flight_enrichment_runtime_scope", { ...fields, request_sha256: commandDigest(fields) });
+  expect(f.ports.mock.calls[0][0].costGuardEnabled).toBe(false);
+  expect(f.query.mock.calls.map(([sql]) => sql)).toEqual([
+    expect.stringContaining("BEGIN"),
+    expect.stringContaining("set_config('otr.ai_cost_guard', 'off', true)"),
+    expect.stringContaining("public.flight_enrichment_runtime_scope"),
+    "COMMIT",
+  ]);
+  await runtime.close();
 });

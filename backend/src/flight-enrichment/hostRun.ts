@@ -119,6 +119,14 @@ export function createFlightEnrichmentHostRun(deps: {
       await admission.assertCurrent();
       await context.assertCurrent();
       call.signal.throwIfAborted();
+      if (call.step.kind === "EXTRACTION" && prices.inputNanosPerMillion === null)
+        console.info(JSON.stringify({
+          event: "ai_provider_cost_guard_disabled",
+          internalBudgetControl: "OFF",
+          providerChargesMayApply: true,
+          callId: admission.callId,
+          requestSha256,
+        }));
       const result = await deps.send({
         url: expectedUrl,
         method: "POST",

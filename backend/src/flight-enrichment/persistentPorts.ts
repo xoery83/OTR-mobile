@@ -35,7 +35,7 @@ const callSchema = z.object({
   trip_id: z.uuid(),
   task_id: z.uuid(),
   input_sha256: digest,
-  price_schedule_id: z.uuid(),
+  price_schedule_id: z.uuid().nullable(),
   row_revision: z.number().int().positive(),
   publication_fence: z.number().int().positive(),
   dispatch_state: z.enum(["RESERVED", "MAY_HAVE_STARTED", "UNKNOWN", "TERMINAL"]),
@@ -81,6 +81,7 @@ function observationKey(eventSha: string) {
 // All activation and Auth remain in the owning gateway; this adapter cannot mint a grant or resolve an Import secret.
 export function createPersistentFlightEnrichmentPorts(deps: {
   gateway(context: TrustedContext): Gateway;
+  costGuardEnabled?: boolean;
   stores: Stores;
   resolveCredential(
     reference: typeof profile.credential_reference,
@@ -158,7 +159,10 @@ export function createPersistentFlightEnrichmentPorts(deps: {
       sha256: requestSha256,
       byteCount: bytes.length,
     });
-    const prices = universalPriceScheduleFromUnits(admittedScope.price_units);
+    const costGuardEnabled = deps.costGuardEnabled !== false;
+    const prices = costGuardEnabled
+      ? universalPriceScheduleFromUnits(admittedScope.price_units)
+      : null;
     const reserved = z
       .object({ call: callSchema, hold_nanos: z.string().regex(/^[0-9]+$/) })
       .parse(
@@ -187,7 +191,8 @@ export function createPersistentFlightEnrichmentPorts(deps: {
       r.trip_id !== context.tripId ||
       r.task_id !== admittedScope.logical_request_id ||
       r.input_sha256 !== requestSha256 ||
-      r.dispatch_state !== "RESERVED"
+      r.dispatch_state !== "RESERVED" ||
+      (r.price_schedule_id === null) !== (!costGuardEnabled && call.step.kind === "EXTRACTION")
     )
       throw Error("ENRICHMENT_ADMISSION_SCOPE");
     const secret = await deps.resolveCredential(profile.credential_reference, context);
@@ -205,9 +210,9 @@ export function createPersistentFlightEnrichmentPorts(deps: {
       credential: secret.value,
       prices: {
         searchNanosPerRequest: admittedScope.search_nanos_per_request,
-        inputNanosPerMillion: prices.inputNanosPerMillion,
-        cachedInputNanosPerMillion: prices.cachedInputNanosPerMillion,
-        outputNanosPerMillion: prices.outputNanosPerMillion,
+        inputNanosPerMillion: prices?.inputNanosPerMillion ?? null,
+        cachedInputNanosPerMillion: prices?.cachedInputNanosPerMillion ?? null,
+        outputNanosPerMillion: prices?.outputNanosPerMillion ?? null,
         acceptedReturnedModels: [...profile.accepted_returned_models],
       },
       async assertCurrent() {
@@ -284,7 +289,8 @@ export function createPersistentFlightEnrichmentPorts(deps: {
           plan.maxSearchCalls !== 1 ||
           plan.maxLlmCalls !== 1 ||
           plan.currency !== "USD" ||
-          BigInt(plan.estimatedNanos) > BigInt(profile.target_nanos)
+          BigInt(deps.costGuardEnabled === false ? plan.searchEstimateNanos : plan.estimatedNanos) >
+            BigInt(profile.target_nanos)
         )
           throw Error("ENRICHMENT_METER_PLAN");
         return { allowed: true, receiptId: current.logical_request_id };

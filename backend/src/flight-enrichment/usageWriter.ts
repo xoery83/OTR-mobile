@@ -23,7 +23,7 @@ export const enrichmentUsageReceiptSchema = z.strictObject({
   stepId: sha,
   kind: z.enum(["SEARCH", "EXTRACTION"]),
   callId: z.uuid(),
-  priceScheduleId: z.uuid(),
+  priceScheduleId: z.uuid().nullable(),
   rowRevision: z.number().int().positive().safe(),
   publicationFence: z.number().int().positive().safe(),
   dispatchState: z.enum(["RESERVED", "MAY_HAVE_STARTED", "UNKNOWN", "TERMINAL"]),
@@ -81,7 +81,8 @@ export async function appendFlightEnrichmentUsage(
     (event.stepReceiptId !== receipt.stepReceiptId &&
       event.stepReceiptId !== receipt.stepId) ||
     observation.providerId !== "deepseek" ||
-    (receipt.kind === "SEARCH" && observation.modelId !== null) ||
+    (receipt.kind === "SEARCH" && (observation.modelId !== null || receipt.priceScheduleId === null)) ||
+    (receipt.priceScheduleId === null && observation.execution !== "NOT_STARTED" && observation.cost_nanos !== null) ||
     (receipt.kind === "EXTRACTION" &&
       observation.cost_nanos !== null &&
       (observation.modelId === null ||
@@ -141,7 +142,7 @@ export async function appendFlightEnrichmentUsage(
         : {},
     price_schedule_id: receipt.priceScheduleId,
     cost_nanos: observation.cost_nanos,
-    currency: "USD",
+    currency: receipt.priceScheduleId === null ? null : "USD",
     cost_quality:
       observation.cost_quality === "ACTUAL"
         ? "ACTUAL_REPORTED"

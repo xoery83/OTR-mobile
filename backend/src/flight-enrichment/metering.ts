@@ -7,11 +7,14 @@ import type { Step } from "./ports";
 const rate = z.string().regex(/^\d{1,60}(?:\.\d{1,18})?$/);
 export const enrichmentPriceSchema = z.strictObject({
   searchNanosPerRequest: rate,
-  inputNanosPerMillion: rate,
-  cachedInputNanosPerMillion: rate,
-  outputNanosPerMillion: rate,
+  inputNanosPerMillion: rate.nullable(),
+  cachedInputNanosPerMillion: rate.nullable(),
+  outputNanosPerMillion: rate.nullable(),
   acceptedReturnedModels: z.array(z.string().min(1).max(128)).min(1).max(8),
-});
+}).refine((price) =>
+  (price.inputNanosPerMillion === null) === (price.cachedInputNanosPerMillion === null) &&
+  (price.inputNanosPerMillion === null) === (price.outputNanosPerMillion === null),
+);
 // Rates must come from the protected admitted schedule; neither a client price nor a promotion guess.
 export function measureFlightEnrichmentResponse(
   kind: Step,
@@ -82,6 +85,9 @@ export function measureFlightEnrichmentResponse(
     modelId !== null && price.acceptedReturnedModels.includes(modelId);
   const cost =
     modelAccepted &&
+    price.inputNanosPerMillion !== null &&
+    price.cachedInputNanosPerMillion !== null &&
+    price.outputNanosPerMillion !== null &&
     usage.usage_quality === "ACTUAL_REPORTED" &&
     usage.input_tokens !== null &&
     usage.cached_input_tokens !== null &&

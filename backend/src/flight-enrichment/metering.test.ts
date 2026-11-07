@@ -114,3 +114,26 @@ it("does not invent zero cost for inconsistent/missing Extraction usage", () => 
     cost_quality: "UNKNOWN",
   });
 });
+
+
+it("keeps Search price and actual Extraction usage when token pricing is disabled", () => {
+  const withoutExtractionPrice = {
+    ...prices,
+    inputNanosPerMillion: null,
+    cachedInputNanosPerMillion: null,
+    outputNanosPerMillion: null,
+  };
+  const search = measureFlightEnrichmentResponse("SEARCH", bytes({ results: [{}] }), 200, withoutExtractionPrice);
+  expect(search.observation.cost_nanos).toBe("750000");
+  const extraction = measureFlightEnrichmentResponse("EXTRACTION", bytes({
+    model: "deepseek-flash",
+    usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120, prompt_cache_hit_tokens: 10 },
+  }), 200, withoutExtractionPrice);
+  expect(extraction.modelAccepted).toBe(true);
+  expect(extraction.observation).toMatchObject({
+    input_tokens: 100,
+    output_tokens: 20,
+    cost_nanos: null,
+    cost_quality: "UNKNOWN",
+  });
+});
