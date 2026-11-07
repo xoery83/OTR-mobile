@@ -19,7 +19,7 @@ from caddy_admin_cas import CONFIG_ROOT, admin_cas_request
 from controls import config_sha, route_plan
 from dev_host_worker import need
 from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, DockerOps, caddy
-from host_target_binding import create_exact_target, verify_target
+from host_target_binding import CONTINUOUS_HOST, create_exact_target, target_payload, verify_target
 from m1_host_entry import load
 from preserve_import_routes import route_after_maintenance
 
@@ -82,6 +82,7 @@ class M1HostActions(DockerOps):
             "targetBundlePins": pins["targetBundlePins"],
         })
         self.request, self.lease, self.host_pins, self.isolation = request, lease, host, isolation
+        need(request["candidateContinuousHost"] == "disabled", "M1_CONTINUOUS_SELECTOR_REQUIRED")
         self.target = request["targetImage"]
         self.caddy_socket_identity = pins["caddySocketIdentity"]
         self.task_path = Path(pins["taskStorePath"])
@@ -108,10 +109,38 @@ class M1HostActions(DockerOps):
         return self.docker("image", "inspect", self.target, "--format", "{{.Id}}").decode().strip() == self.target
 
     def create(self, name, baseline):
-        return create_exact_target(DOCKER_SOCKET, name, baseline, self.target)
+        return create_exact_target(DOCKER_SOCKET, name, baseline, self.target, disable_continuous=True)
 
     def verify_target(self, baseline, cid):
-        verify_target(baseline, self.inspect(cid), cid, self.target)
+        verify_target(baseline, self.inspect(cid), cid, self.target, disable_continuous=True)
+
+    def start(self, cid):
+        self.held()
+        need(self.verify_ingress_fenced(), "M1_RESTART_INGRESS_FENCE_UNPROVED")
+        self.held()
+        super().start(cid)
+
+    def verify_running(self, cid, baseline, target, deadline):
+        super().verify_running(cid, baseline, target, deadline)
+        if not target:
+            return
+        self.held(deadline)
+        before = self.inspect(cid)["State"]
+        pid = before["Pid"]
+        need(before["Running"] is True and type(pid) is int and pid > 0, "M1_TARGET_PROCESS_UNPROVED")
+        proc = PROC / str(pid)
+        ticks = (proc / "stat").read_text().rsplit(")", 1)[1].split()[19]
+        key = CONTINUOUS_HOST.encode()
+        with (proc / "environ").open("rb") as stream:
+            raw = stream.read(262145)
+        need(len(raw) <= 262144, "M1_TARGET_PROCESS_ENV_TOO_LARGE")
+        matching = [entry for entry in raw.split(b"\0") if entry.partition(b"=")[0] == key]
+        after = self.inspect(cid)["State"]
+        need(matching == [key + b"=disabled"] and after["Running"] is True
+             and after["Pid"] == pid and after["StartedAt"] == before["StartedAt"]
+             and (proc / "stat").read_text().rsplit(")", 1)[1].split()[19] == ticks,
+             "M1_TARGET_PROCESS_SELECTOR_UNPROVED")
+        self.held(deadline)
 
     def caddy_state(self):
         self.held()
@@ -146,7 +175,7 @@ class M1HostActions(DockerOps):
     def preflight(self):
         self.held(self.request["cutoff"])
         self.assert_timers_closed()
-        self.running_baseline()
+        target_payload(self.running_baseline(), self.target, disable_continuous=True)
         original = json.loads(self.caddy_state()[1])
         self.route, self.scoped = route_plan(original), route_after_maintenance(original)
         expect = self.host_pins["routePins"]

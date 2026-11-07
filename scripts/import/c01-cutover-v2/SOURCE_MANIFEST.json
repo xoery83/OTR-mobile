@@ -12,8 +12,8 @@
       "externalBindings": [
         "DEV_PROJECT_REF"
       ],
-      "restoredSHA256": "2bf04a12178d4b4dd43b247510808513eca464bb70fbca98b3b7fab1b6239769",
-      "sourceSHA256": "9a6d2d579395bee85099742b3c7a272bc4de8a3f0fe06d41279a64bdfa954813"
+      "restoredSHA256": "c8a04f456231759cb01490794bc37b2843ecf36919bebfc79410863dad5d4262",
+      "sourceSHA256": "e96635be51b54cc73f7f8d7381e3449b476650f13c54754cc77a8f91878e80d6"
     },
     "source/owning_host_probe.py.in": {
       "externalBindings": [
@@ -163,8 +163,8 @@
         "BASELINE_IMAGE_ID",
         "LEGACY_TARGET_IMAGE_ID"
       ],
-      "restoredSHA256": "e057e649858086583923587f513f754e169ba3847d87e4b31cfa336077ae9ecf",
-      "sourceSHA256": "0400289d289d6084d8156ab5240e52cac9e6123c2d4d1d36a1df16a731e101ad"
+      "restoredSHA256": "a9901c9dd9d4fcbe9910392914d955115a42f74489d49c63c1095c8fb0aab360",
+      "sourceSHA256": "0a4f2338146ecc0ee7d60f8a00c043dd399a06663ff5c69a4b3cd240b0900222"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_foreground.py.in": {
       "externalBindings": [
@@ -174,8 +174,8 @@
       "restoredSHA256": "7419ef63620cfddda26987f4b4864f4fb11c1489b7906a13824ed8299cab5b08"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_actions.py": {
-      "sourceSHA256": "bedf71e4b5da0e0617181860cce564147505c695c279753bfab72945441f28dd",
-      "restoredSHA256": "bedf71e4b5da0e0617181860cce564147505c695c279753bfab72945441f28dd"
+      "sourceSHA256": "04711272ebbb327129fda4ddf3055a1024cbfab5e5ab82689b4928ee3a019e36",
+      "restoredSHA256": "04711272ebbb327129fda4ddf3055a1024cbfab5e5ab82689b4928ee3a019e36"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_entry.py": {
       "sourceSHA256": "04119bbc267c2e93c31f66cc473e6ce38ad6912f0ac9963c541fb31ae66930e2",

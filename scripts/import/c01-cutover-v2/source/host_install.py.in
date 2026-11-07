@@ -162,6 +162,7 @@ def m1_plan(raw, digest):
             and isinstance(host["writerIdentity"], list) and len(host["writerIdentity"]) == 2
             and all(type(part) is int and part > 0 for part in host["writerIdentity"])
             and host["pdfStopOnly"] == "otr-universal-pdf-worker.service"
+            and host["candidateContinuousHost"] == {"before": "enabled", "after": "disabled"}
             and host["png"] == "M2_FAILED_BASELINE_DO_NOT_START"
             and pg["candidateTransport"] == "existing project-linked Supabase Management CLI"
             and pg["forwardAndInversePrincipal"] == "session_user=current_user=postgres"
@@ -192,6 +193,7 @@ def m1_plan(raw, digest):
             "M1_ONE_SHOT_ID_DRIFT")
     return {"project": PROJECT, "manifestSHA256": digest, "targetImage": M1_TARGET,
             "baselineCID": host["baselineCID"], "writerIdentity": host["writerIdentity"],
+            "candidateContinuousHost": host["candidateContinuousHost"]["after"],
             "T": start, "cutoff": cutoff, "inverseCutoff": inverse_cutoff, "D": end,
             "stopAdmissionSeconds": 30, "healthReserveSeconds": 60,
             "executionId": forward["executionId"], "inverseExecutionId": inverse["executionId"],

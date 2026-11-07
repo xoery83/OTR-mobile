@@ -7,15 +7,22 @@ import socket
 
 BASELINE = '@BASELINE_IMAGE_ID@'
 TARGET = '@LEGACY_TARGET_IMAGE_ID@'
+CONTINUOUS_HOST = 'OTR_DEV_UNIVERSAL_CONTINUOUS_HOST'
 
-def target_payload(baseline, target=TARGET):
+def target_payload(baseline, target=TARGET, *, disable_continuous=False):
     if baseline['Image'] != BASELINE:
         raise ValueError('WRONG_RETAINED_IMAGE')
     config = copy.deepcopy(baseline['Config'])
     config['Image'] = target
+    if disable_continuous:
+        env = config['Env']
+        matches = [i for i, entry in enumerate(env) if entry.partition('=')[0] == CONTINUOUS_HOST]
+        if len(matches) != 1 or env[matches[0]] != CONTINUOUS_HOST + '=enabled':
+            raise ValueError('M1_CONTINUOUS_SELECTOR_PREIMAGE_DRIFT')
+        env[matches[0]] = CONTINUOUS_HOST + '=disabled'
     return {**config,'HostConfig':copy.deepcopy(baseline['HostConfig'])}
 
-def create_exact_target(path,name,baseline,target=TARGET):
+def create_exact_target(path,name,baseline,target=TARGET, *, disable_continuous=False):
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{1,90}',name):
         raise ValueError('INVALID_OWNED_TARGET_NAME')
     class UnixDocker(http.client.HTTPConnection):
@@ -26,7 +33,7 @@ def create_exact_target(path,name,baseline,target=TARGET):
     with_connection=UnixDocker('localhost',timeout=15)
     try:
         with_connection.request('POST','/v1.47/containers/create?name='+name,
-                                body=json.dumps(target_payload(baseline,target)).encode(),
+                                body=json.dumps(target_payload(baseline,target,disable_continuous=disable_continuous)).encode(),
                                 headers={'Content-Type':'application/json'})
         response=with_connection.getresponse()
         body=response.read(131072)
@@ -39,8 +46,8 @@ def create_exact_target(path,name,baseline,target=TARGET):
     finally:
         with_connection.close()
 
-def verify_target(baseline,candidate,cid,target=TARGET):
-    expected=target_payload(baseline,target)
+def verify_target(baseline,candidate,cid,target=TARGET, *, disable_continuous=False):
+    expected=target_payload(baseline,target,disable_continuous=disable_continuous)
     host_config=expected.pop('HostConfig')
     if (candidate['Id'],candidate['Image'],candidate['Config'],candidate['HostConfig']) != (cid,target,expected,host_config):
         raise ValueError('TARGET_CONFIG_DRIFT')
