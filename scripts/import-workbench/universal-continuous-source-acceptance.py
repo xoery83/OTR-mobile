@@ -38,6 +38,7 @@ addition=r'''
  cost_guard_off=cost_guard_mode=='off'
  if cost_guard_mode in ('on','off'):
   sql((ROOT/'backend/sql/universal_ai_cost_guard_candidate.sql').read_text())
+  sql((ROOT/'backend/sql/universal_ai_cost_guard_finite_nullable_candidate.sql').read_text())
  check('normal Provider candidate installs while Source policy remains CLOSED')
  sql("alter role otr_trip_source_command_gateway login connection limit 1 valid until 'infinity';")
  def source(q):return sql('set session authorization otr_trip_source_command_gateway;'+q)
@@ -201,6 +202,9 @@ addition+=r'''
   priced['start'].update(price_schedule_id=price['price_schedule_id'],currency='USD')
   invoke('universal_activation_reserve_call',priced,'call_gateway','TRUSTED_WORKLOAD',request_id=fc['request_id'],
     ctx_updates=context,expect_error='UNIVERSAL_MODEL_TASK_BUDGET')
+  sql("update public.universal_import_provider_scope set price_schedule_id=null;")
+  invoke('universal_activation_reserve_call',finite,'call_gateway','TRUSTED_WORKLOAD',request_id=fc['request_id'],
+    ctx_updates=context,expect_error='UNIVERSAL_PRICE_UNAVAILABLE')
   finite_args="('"+ACTOR+"','"+fc['task_id']+"','"+fc['attempt_id']+"','"+fc['call_id']+"');"
   finite_read=json.loads(meter('select public.universal_import_read_scope'+finite_args))
   check('finite OFF returns exact scope without price and skips a budget that blocks ON',
@@ -208,6 +212,12 @@ addition+=r'''
     and off_command('universal_activation_reserve_call',finite,fc['request_id'])['call_id']==fc['call_id'])
   check('finite OFF retains actual mark-dispatch identity',
     off_command('external_integration_mark_dispatch',{**mark,'call_id':fc['call_id']})['dispatch_state']=='MAY_HAVE_STARTED')
+  inverse=(ROOT/'backend/sql/universal_ai_cost_guard_finite_nullable_inverse.sql').read_text()
+  sql(inverse,failure='23502')
+  sql('delete from public.universal_import_provider_scope;')
+  sql(inverse)
+  check('finite DDL inverse requires scope closure and preserves the accepted call',
+    sql("select price_schedule_id is null from public.external_integration_calls where call_id='"+fc['call_id']+"';")=='t')
  print(json.dumps({'status':'CONTINUOUS_SOURCE_PROVIDER_ISOLATED_PG_ONLY','checks':checks,'hostedWrites':0,'providerCalls':0},indent=2))
 finally:
  if created:docker('rm','-f',NAME)
