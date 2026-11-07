@@ -65,11 +65,11 @@ WITH accepted AS (
  ) AS exempt
  FROM public.trip_source_execution_attempts a WHERE a.pdf_dispatch_id IS NOT NULL
 ), gate(sig,sha) AS (VALUES
- ('public.trip_source_pdf_upload_v4_execute(uuid,uuid,bigint,text,jsonb)','d81ccd66be0ce26c66f85255b3e5854f2941c664daf6e8982090c42ad6585e3d'),
+ ('public.trip_source_pdf_upload_v4_execute(uuid,uuid,bigint,text,jsonb)','136deaf8591e2418a292a29b08450d9c5cad046396dcf6b5b6c1b62490a254c2'),
  ('public.trip_source_pdf_upload_v4_recover_dispatch(uuid,uuid,bigint)','259738dafe9a2b6a010754d18a76a6dd0d1bf3edcde3fd718928009282325ead'),
  ('public.trip_source_pdf_upload_v4_gate()','01d3321387ce574665671646220fe0d5fabe55509c1db47e637203633c539ffa'),
  ('public.trip_source_pdf_upload_v4_scope()','3433f56de655aa15c9fe8b3ab03599d3bda94e27ed36118cd9a1c83eb5e9f85c'),
- ('public.trip_source_universal_pdf_source_scope(uuid,uuid,uuid)','7fd904cc12474a22ef2bcee4093a1691411843aa1c302d1a0f4843a0920c1628'),
+ ('public.trip_source_universal_pdf_source_scope(uuid,uuid,uuid)','aad7488033b6e120bb5a7181509a425233ba36368a690815ea91ecb5d571f4a3'),
  ('public.trip_sustained_universal_pdf_allowed(uuid,uuid)','ecaa1945ca2b650e5975ae94abdb3cde56f1fec5421a89f49845ff6b8c6964d0')
 )
 SELECT jsonb_build_object(

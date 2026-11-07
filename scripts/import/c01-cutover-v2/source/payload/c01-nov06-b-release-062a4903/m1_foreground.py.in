@@ -157,8 +157,10 @@ def ssh_exchange(request):
         child = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                  stderr=errors, bufsize=0)
         channel_failed = False
+        exchange = None
         try:
-            yield Exchange(child, request)
+            exchange = Exchange(child, request)
+            yield exchange
         except ForegroundLost:
             channel_failed = True
             raise
@@ -167,7 +169,7 @@ def ssh_exchange(request):
             child.stdout.close()
             # Closing stdin signals EOF. Never kill the remote holder to recover a reply.
             child.wait(timeout=max(1, request["D"] - time.time() + 2))
-            if channel_failed:
+            if channel_failed or (exchange is not None and exchange.broken):
                 errors.seek(0)
                 reason = "UNREPORTED"
                 for line in errors.read(4096).splitlines():

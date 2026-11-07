@@ -137,8 +137,8 @@
         "BASELINE_IMAGE_ID",
         "LEGACY_TARGET_IMAGE_ID"
       ],
-      "restoredSHA256": "a4093abedb60b9002d992890d05ea656270e3fdb90c5ab1a77cdf50363039130",
-      "sourceSHA256": "9c1c2a15af42430c8769812e3c1e89dc383d040acf32060307d933cb850c4d35"
+      "restoredSHA256": "7580bda20ed4ebb3019391069872b3ae8c21aa35074b52e4045d124bd831d12b",
+      "sourceSHA256": "1572e90257f88846cc9c79c14c5cac1a5da516627abee53d1d4f31ea9a788dd7"
     },
     "source/payload/c01-nov06-b-release-062a4903/dev_commit_ack.py": {
       "restoredSHA256": "11805f6f5d62441f9de376e19ebe88fda1d214edbbeb3ee6bf6447a9ab32c88b",
@@ -149,8 +149,8 @@
         "DEV_PROJECT_REF",
         "M1_PDF_ACCEPTED_DISPATCHES"
       ],
-      "restoredSHA256": "0b0aae0855cb2476bb3e02d532be669b3671fece7275cb31265cdb09fbddfb2f",
-      "sourceSHA256": "539dc8d554b9b128a60447f1ce8e44cf4ca029791297768420bebf09d1124ee2"
+      "restoredSHA256": "e4132bacb0fb9807bbc27ea3f2b60d22750a29dc1e55e44a0d7f157699306322",
+      "sourceSHA256": "1745b91e0b796a3e477c411f727ce915c28ff480c368cc985d29a16def696545"
     },
     "source/payload/c01-nov06-b-release-062a4903/dev_host_worker.py": {
       "restoredSHA256": "209cc11d15dbc59b3c7885d39f18a87124dd4687421f2c54f3d0d9cc4587f290",
@@ -176,8 +176,8 @@
       "externalBindings": [
         "DEV_HOST_SSH"
       ],
-      "sourceSHA256": "73b29678d2a80ca09980845fdd83a82d3d6ac9b7b085617f2c146b3a42657a71",
-      "restoredSHA256": "a6ee15b8e499396c3d6966658824cd5385845637dd913ef93520d8b71607f71a"
+      "sourceSHA256": "a3ecc36c0c64ba2b97db715f84e6778aed92b257f3094dfc54e70c9fde51ef2d",
+      "restoredSHA256": "24df678936b3f677ee4f0ba72d93add54031ac4fa615e52f0b2a29b2722f808b"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_actions.py": {
       "restoredSHA256": "5b01cd10ef991f4129bf9d1aaad4582f84044b1d37926433193e9d6c60296294",

@@ -1,6 +1,8 @@
 """One default-closed maintenance flow. Live port binding is a separate release prerequisite."""
 import hashlib
 import json
+import re
+import sys
 import math
 from pathlib import Path
 import re
@@ -150,6 +152,17 @@ def build_at_cutoff(pre, post, send_cutoff, execution_id, inverse=False):
     return b'BEGIN ISOLATION LEVEL READ COMMITTED;\n' + frame[len(b'BEGIN;\n'):]
 
 
+def report_m1_failure(phase, error):
+    reason = str(error)
+    if not re.fullmatch(r"[A-Z][A-Z0-9_]{1,95}", reason):
+        reason = type(error).__name__
+    try:
+        print(json.dumps({"status": "M1_PHASE_REFUSED", "phase": phase, "reason": reason}),
+              file=sys.stderr, flush=True)
+    except OSError:
+        pass
+
+
 def run_held(port, request, ledger, *, target=TARGET, m1=False):
     """The bound port must already own the fixed Writer lease and independent close safeguards."""
     before = None
@@ -157,6 +170,7 @@ def run_held(port, request, ledger, *, target=TARGET, m1=False):
     started_stop = False
     sent = False
     acknowledged = False
+    phase = "preflight"
     try:
         port.require_writer_lease(request,ledger)
         if port.has_intent():
@@ -178,30 +192,41 @@ def run_held(port, request, ledger, *, target=TARGET, m1=False):
         except FileExistsError:
             return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
         started_stop = True
+        phase = "stop_and_drain"
         stopped = port.stop_exact_baseline_and_drain(BASELINE)
         if m1 and stopped == 'PRESTOP_INGRESS_RESTORED':
             require(indexed(port.read_catalog()) == before, 'M1_PRESTOP_CATALOG_DRIFT')
             return 'PRESTOP_INGRESS_RESTORED_NO_SEND'
+        phase = "stopped_catalog"
         port.require_closed_writer(request)
         require(indexed(port.read_catalog()) == before, 'FRESH_STOPPED_ACQUIRE_OR_CATALOG_DRIFT')
         port.check_timing(request['cutoff'], reserve_seconds=60)
+        phase = "forward_admission"
         if m1:
             port.assert_forward_admission()
+        phase = "forward_dispatch"
         sent = True
         port.send_sql_once(frame)
         acknowledged = True
+        phase = "forward_readback"
         require(port.terminated(request['executionId']), 'MUTATOR_TERMINATION_UNPROVED')
         require(matches_post(port.read_catalog(),post), 'INDEPENDENT_SQL_POSTIMAGE_DRIFT')
         port.check_timing(request['cutoff'], reserve_seconds=60)
+        phase = "start_target"
         port.start_exact_closed_target(target)
+        phase = "release_target"
         require(port.verify_running_closed(target), 'INDEPENDENT_TARGET_CLOSE_UNPROVED')
         return 'INSTALLED_DEFAULT_CLOSED'
-    except Exception:
+    except Exception as error:
+        if m1:
+            report_m1_failure(phase, error)
         if not started_stop:
             return 'REFUSED_BEFORE_STOP'
         # An uncertain SQL or start is never resent. A bound port must fence and preserve evidence.
         try:
+            phase = "containment"
             port.contain_closed()
+            phase = "recovery_catalog"
             if not sent:
                 port.require_closed_writer(request)
                 require(indexed(port.read_catalog()) == before, 'RESTORE_PREIMAGE_UNPROVED')
@@ -209,6 +234,7 @@ def run_held(port, request, ledger, *, target=TARGET, m1=False):
                 port.require_closed_writer(request)
                 require(acknowledged and port.terminated(request['executionId']),
                         'MUTATION_UNKNOWN_RECONCILE_ONLY')
+                phase = "inverse_admission"
                 require(matches_post(port.read_catalog(),post) and port.prove_zero_affected_history(),
                         'INVERSE_HISTORY_OR_POSTIMAGE_UNPROVED')
                 port.check_timing(request['D'], reserve_seconds=60)
@@ -216,14 +242,20 @@ def run_held(port, request, ledger, *, target=TARGET, m1=False):
                     port.claim_intent('inverse.intent',sha(inverse))
                 except FileExistsError:
                     return 'EXISTING_INTENT_READ_ONLY_RECONCILIATION'
+                phase = "inverse_dispatch"
                 port.send_sql_once(inverse)
+                phase = "inverse_readback"
                 require(port.terminated(request['inverseExecutionId']) and indexed(port.read_catalog()) == before,
                         'INVERSE_READBACK_UNPROVED')
             port.check_timing(request['D'], reserve_seconds=60)
+            phase = "start_recovery"
             port.restore_exact_closed_baseline(BASELINE)
+            phase = "release_recovery"
             require(port.verify_running_closed(BASELINE), 'INDEPENDENT_BASELINE_CLOSE_UNPROVED')
             return 'RESTORED_DEFAULT_CLOSED'
-        except Exception:
+        except Exception as error:
+            if m1:
+                report_m1_failure(phase, error)
             try:
                 port.contain_closed()
             except Exception:
