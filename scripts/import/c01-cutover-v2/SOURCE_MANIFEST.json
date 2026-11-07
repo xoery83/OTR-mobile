@@ -169,8 +169,8 @@
         "BASELINE_IMAGE_ID",
         "LEGACY_TARGET_IMAGE_ID"
       ],
-      "restoredSHA256": "dc995fd5bd26fd4b84c58a69aec31a2942d0ac69d792912afae2ee4160e38a3a",
-      "sourceSHA256": "94c937c9a8277139c5292cae988fe4536049ae880c7d73f3b4fd0c4cc03d334d"
+      "restoredSHA256": "5efcfafe6ec1fc3afb413d0ac07383634b1e29fddf920d35af2c00df4fd78359",
+      "sourceSHA256": "dbcfb24eeb410d73b8b2e42da296b4e703a74f9e7b9c621bb87802bc47527642"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_foreground.py.in": {
       "externalBindings": [
@@ -180,8 +180,8 @@
       "restoredSHA256": "a6ee15b8e499396c3d6966658824cd5385845637dd913ef93520d8b71607f71a"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_actions.py": {
-      "restoredSHA256": "f01bb8e283cea0d563872136e0ec4e23b9b493d346eedfff067f2c7bb1db294a",
-      "sourceSHA256": "f01bb8e283cea0d563872136e0ec4e23b9b493d346eedfff067f2c7bb1db294a"
+      "restoredSHA256": "5b01cd10ef991f4129bf9d1aaad4582f84044b1d37926433193e9d6c60296294",
+      "sourceSHA256": "5b01cd10ef991f4129bf9d1aaad4582f84044b1d37926433193e9d6c60296294"
     },
     "source/payload/c01-nov06-b-release-062a4903/m1_host_entry.py": {
       "sourceSHA256": "83bc7322b42bd8a9c7652897f8f35b9e618a379f2108a4a52643cd941a947b29",

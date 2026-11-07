@@ -53,8 +53,18 @@ def mount_projection(row):
     return sorted((tuple(m.get(k) for k in fields) for m in row['Mounts']), key=lambda m: m[1])
 
 
+def m1_create_host_config(host):
+    # Docker materializes an explicit null as false when creating a container.
+    if host.get('OomKillDisable', False) is None:
+        return {**host, 'OomKillDisable': False}
+    return host
+
+
 def create_exact_target(path,name,baseline,target=TARGET, *, disable_continuous=False):
-    return create_from_payload(path, name, target_payload(baseline,target,disable_continuous=disable_continuous))
+    payload = target_payload(baseline,target,disable_continuous=disable_continuous)
+    if disable_continuous:
+        payload['HostConfig'] = m1_create_host_config(payload['HostConfig'])
+    return create_from_payload(path, name, payload)
 
 
 def create_from_payload(path, name, payload):
@@ -84,6 +94,8 @@ def create_from_payload(path, name, payload):
 def verify_target(baseline,candidate,cid,target=TARGET, *, disable_continuous=False):
     expected=target_payload(baseline,target,disable_continuous=disable_continuous)
     host_config=expected.pop('HostConfig')
+    if disable_continuous:
+        host_config = m1_create_host_config(host_config)
     if (candidate['Id'],candidate['Image'],candidate['Config'],candidate['HostConfig']) != (cid,target,expected,host_config):
         raise ValueError('TARGET_CONFIG_DRIFT')
     fields=('Source','Destination','RW','Type','Propagation')

@@ -22,7 +22,8 @@ from cutover_read_aperture import replace_handler
 from dev_host_worker import need
 from host_adapter import CADDY_SOCKET, DOCKER_SOCKET, CompositeHostAdapter, DockerOps, caddy
 from host_target_binding import (CONTINUOUS_HOST, RUNTIME_DEST, create_exact_target, create_from_payload,
-                                 legacy_recovery_projection, mount_projection, target_payload, verify_target)
+                                 legacy_recovery_projection, m1_create_host_config, mount_projection,
+                                 target_payload, verify_target)
 from m1_host_entry import load
 from preserve_import_routes import route_after_maintenance
 
@@ -193,13 +194,14 @@ class M1HostActions(DockerOps):
     def create_recovery(self, name, baseline):
         self.held()
         payload, _ = self.recovery_projection(baseline)
+        payload["HostConfig"] = m1_create_host_config(payload["HostConfig"])
         self.held()
         return create_from_payload(DOCKER_SOCKET, name, payload)
 
     def verify_recovery(self, baseline, cid):
         need(cid != self.host["baselineCID"], "M1_RECOVERY_ORIGINAL_CID_REFUSED")
         payload, mounts = self.recovery_projection(baseline)
-        host = payload.pop("HostConfig")
+        host = m1_create_host_config(payload.pop("HostConfig"))
         row = self.inspect(cid)
         need(row["Image"] == baseline["Image"] and row["Config"] == payload and row["HostConfig"] == host
              and mount_projection(row) == mounts, "M1_RECOVERY_CONFIG_DRIFT")
