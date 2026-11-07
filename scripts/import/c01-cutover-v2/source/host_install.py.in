@@ -26,6 +26,31 @@ REQUIRED_FILES = (
     Path("c01-nov06-b-release-062a4903/writer_lease_binding_v5.py"),
     Path("mcp-fresh-3586-qualification/static/c02-timers.py"),
 )
+M1_INSTALL_ROOT_FILES = {
+    "host_install.py": "installerSHA256",
+    "m1-host-actions.py": "actionsSHA256",
+    "m1-retained-control.py": "controlsSHA256",
+}
+M1_INSTALL_REQUIRED_FILES = tuple(Path("m1-install") / name for name in M1_INSTALL_ROOT_FILES) + (
+    Path("c01-nov06-b-release-062a4903/m1_host_entry.py"),
+    Path("c01-nov06-b-release-062a4903/m1_foreground.py"),
+    Path("c01-nov06-b-release-062a4903/dev_host_worker.py"),
+    Path("c01-nov06-b-release-062a4903/dev_db_binding.py"),
+    Path("c01-nov06-b-release-062a4903/host_target_binding.py"),
+    Path("c01-nov06-b-release-062a4903/closed_driver_v5.py"),
+    Path("c01-nov06-b-release-062a4903/dev_commit_ack.py"),
+    Path("c01-nov06-b-release-062a4903/writer_lease_binding_v5.py"),
+    JOIN / "recovery_service/host_adapter.py",
+    JOIN / "recovery_service/cutover_read_aperture.py",
+    JOIN / "caddy_admin_cas.py",
+    JOIN / "preserve_import_routes.py",
+    JOIN / "joined_host_keep_v5.py",
+    JOIN / "keep_v5_choice.py",
+    JOIN / "stage_writer.py",
+    JOIN / "render_joined.py",
+    JOIN / "terminal_policy.py",
+    Path("c01-nov06-b-image-only-offline/controls.py"),
+)
 VERIFY_MODE = "VERIFY_AND_ROLLBACK"
 VERIFY_RUNNER = JOIN / "recovery_service/verify_and_rollback.py"
 VERIFY_START = JOIN / "recovery_service/verify_start_gate.py"
@@ -147,13 +172,13 @@ def pinned(path, expected):
     return raw
 
 
-def manifest(raw):
+def manifest(raw, required_files=REQUIRED_FILES):
     value = json.loads(raw)
     require(isinstance(value, dict) and set(value) == {"version", "files"}
             and value["version"] == "otr.c01.keep-v5.bundle/1"
             and isinstance(value["files"], dict), "EXACT_MANIFEST_REQUIRED")
     files = value["files"]
-    require(all(str(path) in files for path in REQUIRED_FILES), "MANIFEST_ENTRYPOINT_REQUIRED")
+    require(all(str(path) in files for path in required_files), "MANIFEST_ENTRYPOINT_REQUIRED")
     for name, digest in files.items():
         item = Path(name)
         require(not item.is_absolute() and len(item.parts) >= 2 and str(item) == name
@@ -455,11 +480,11 @@ def timer_helpers(payload):
     return verify_systemd_keeper, timer_tools
 
 
-def verify_installed(runtime, manifest_sha):
+def verify_installed(runtime, manifest_sha, required_files=REQUIRED_FILES):
     private_directory(runtime)
     manifest_path = runtime / "manifest.json"
     private_file(manifest_path, {0o400})
-    files = manifest(pinned(manifest_path, manifest_sha))
+    files = manifest(pinned(manifest_path, manifest_sha), required_files)
     payload = runtime / "payload"
     entries = list(payload.rglob("*"))
     require(not any(item.is_symlink() for item in entries), "INSTALLED_FILE_SET_DRIFT")
@@ -486,14 +511,41 @@ def verify_mode_files(config, files):
 
 def install(args, runtime, ledger, lock_identity):
     config_raw = pinned(args.plan, args.plan_sha256)
-    config = plan(config_raw, args.execution_id, lock_identity, ledger)
-    verify_programs(config)
-    credential_bindings(config)
+    is_m1 = json.loads(config_raw).get("status") == M1_KIND
+    authority = None
+    if is_m1:
+        config = m1_plan(config_raw, args.plan_sha256)
+        require(config["executionId"] == args.execution_id and config["writerIdentity"] == lock_identity
+                and runtime == RUNTIME / args.execution_id and ledger == LEDGER / args.execution_id,
+                "M1_INSTALL_WRITER_OR_PATH_DRIFT")
+        require(time.time() + config["healthReserveSeconds"] < config["cutoff"],
+                "M1_INSTALL_WINDOW_UNAVAILABLE")
+        ledger_identity = private_directory(ledger)
+        require(args.host_binding is not None, "M1_INSTALL_BINDING_REQUIRED")
+        authority = json.loads(pinned(args.host_binding, args.host_binding_sha256))
+        require(set(authority) == {"executionId", "leaseId", "manifestSHA256", *M1_INSTALL_ROOT_FILES.values()}
+                and authority["executionId"] == args.execution_id
+                and authority["manifestSHA256"] == args.plan_sha256
+                and re.fullmatch(r"[0-9a-f]{32}", authority["leaseId"])
+                and authority["leaseId"] != args.execution_id
+                and all(valid_sha(authority[key]) for key in M1_INSTALL_ROOT_FILES.values()),
+                "M1_INSTALL_BINDING_DRIFT")
+        authority["ledgerIdentity"] = ledger_identity
+    else:
+        config = plan(config_raw, args.execution_id, lock_identity, ledger)
+        verify_programs(config)
+        credential_bindings(config)
     require(not any(ledger.iterdir()), "EXCLUSIVE_LEDGER_REQUIRED")
     package = stable_path(args.bundle)
     manifest_raw = pinned(package / "manifest.json", args.manifest_sha256)
-    files = manifest(manifest_raw)
-    verify_mode_files(config, files)
+    required_files = M1_INSTALL_REQUIRED_FILES if is_m1 else REQUIRED_FILES
+    files = manifest(manifest_raw, required_files)
+    if is_m1:
+        require(all(files["m1-install/" + name] == authority[key] for name, key in M1_INSTALL_ROOT_FILES.items()),
+                "M1_INSTALL_PROGRAM_PIN_DRIFT")
+        pinned(Path(__file__).resolve(), authority["installerSHA256"])
+    else:
+        verify_mode_files(config, files)
     for name, digest in files.items():
         pinned(package / "payload" / name, digest)
     # Refuse a different pre-existing execution, including a partial install.
@@ -509,6 +561,21 @@ def install(args, runtime, ledger, lock_identity):
                 create_directory(directory)
         exclusive(target, pinned(package / "payload" / name, digest))
     exclusive(ledger / "plan.json", config_raw)
+    if is_m1:
+        for name, key in M1_INSTALL_ROOT_FILES.items():
+            exclusive(runtime / name, pinned(payload / "m1-install" / name, authority[key]))
+            private_file(runtime / name, {0o400})
+            pinned(runtime / name, authority[key])
+        private_file(ledger / "plan.json", {0o400})
+        pinned(ledger / "plan.json", args.plan_sha256)
+        verify_installed(runtime, args.manifest_sha256, required_files)
+        binding = json.dumps(authority, sort_keys=True, separators=(",", ":"))
+        binding_raw = binding.encode()
+        exclusive(runtime / "m1-binding.json", binding_raw)
+        private_file(runtime / "m1-binding.json", {0o400})
+        pinned(runtime / "m1-binding.json", sha(binding_raw))
+        return {"status": "M1_INSTALLED_INACTIVE", "hostBindingJSON": binding,
+                "hostBindingSHA256": sha(binding_raw)}
     verify_installed(runtime, args.manifest_sha256)
     return "INSTALLED_INACTIVE"
 
@@ -871,7 +938,8 @@ def run(args):
                     "ledger": {"path": str(ledger), "identity": ledger_identity}}
         if args.mode == "install":
             require(args.bundle is not None and args.plan is not None, "BUNDLE_AND_PLAN_REQUIRED")
-            return {"status": install(args, runtime, ledger, lock_identity)}
+            result = install(args, runtime, ledger, lock_identity)
+            return result if isinstance(result, dict) else {"status": result}
         files = verify_installed(runtime, args.manifest_sha256)
         plan_path = ledger / "plan.json"
         private_file(plan_path, {0o400})
