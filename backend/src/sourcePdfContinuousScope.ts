@@ -7,7 +7,14 @@ export type PdfSourceScopeIdentity = {
   tripId: string;
   sourceId: string;
   commandFrame?:
-    | { command: Json }
+    | {
+        command: Json;
+        ordinaryReserve?: {
+          nodeId: string;
+          producerId: string;
+          providerInstanceSha256: string;
+        };
+      }
     | { pdfRegistration: Json }
     | { pdfSeal: Json }
     | {

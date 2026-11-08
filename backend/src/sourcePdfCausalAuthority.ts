@@ -106,7 +106,7 @@ export function createSourcePdfCausalAuthority(
 export function createSourcePdfV2CausalAuthority(
   connection: CorePgConnection,
   owner: PdfCausalOwner,
-  options: { continuousSourceScope?: true } = {},
+  options: { continuousSourceScope?: true; requestBoundReserve?: boolean } = {},
 ) {
   if (owner.authScopeKind && !options.continuousSourceScope)
     throw Error("SOURCE_CAPABILITY_CLOSED");
@@ -120,6 +120,7 @@ export function createSourcePdfV2CausalAuthority(
     digestPrefix: "otr-source-pdf-qpdf-poppler",
     digestSuffix: "v4",
     continuousSourceScope: options.continuousSourceScope,
+    requestBoundReserve: options.requestBoundReserve,
   });
 }
 function createAuthority<
@@ -142,6 +143,7 @@ function createAuthority<
     digestPrefix: "otr-source-pdf-beta" | "otr-source-pdf-qpdf-poppler";
     digestSuffix: "v3" | "v4";
     continuousSourceScope?: true;
+    requestBoundReserve?: boolean;
   },
 ) {
   const assertRequestCurrent = () => {
@@ -608,7 +610,18 @@ function createAuthority<
           actorAccountId: actorId,
           tripId: q.trip_id,
           sourceId: q.source_id,
-          commandFrame: { command: q as unknown as Json },
+          commandFrame: {
+            command: q as unknown as Json,
+            ...(policy.requestBoundReserve
+              ? {
+                  ordinaryReserve: {
+                    nodeId: resource.nodeId,
+                    producerId: owner.producerId,
+                    providerInstanceSha256: owner.providerInstanceSha256,
+                  },
+                }
+              : {}),
+          },
         };
       }
       const reply = await rpc<{ journal?: Journal; receipt?: Json }>(

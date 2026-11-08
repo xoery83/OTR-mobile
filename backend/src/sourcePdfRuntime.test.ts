@@ -130,6 +130,34 @@ it("exact QA still requires current normal bearer and Trip permission", async ()
   expect(f.lease).not.toHaveBeenCalled();
 });
 
+it("binds a normal PDF request to its verified actor and trip", async () => {
+  const q = fixture();
+  const { actorId, tripId, ...base } = q.config;
+  const ports = createSourcePdfRuntimePorts(
+    { ...base, version: "OTR_DEV_UNIVERSAL_PDF/2" },
+    q.deps,
+  );
+  const request = (trip: string) =>
+    new Request(`https://dev.example.invalid/v2/trips/${trip}/sources/pdf-v2/seal`, {
+      headers: { Authorization: "Bearer synthetic" },
+    });
+  const next = { actorId: randomUUID(), tripId: randomUUID() };
+  for (const scope of [{ actorId, tripId }, next]) {
+    q.gateway.validateAccessToken.mockResolvedValue({ id: scope.actorId });
+    q.gateway.canReadTrip.mockResolvedValue(true);
+    const opened = await ports.sourcePdfV2ForRequest(
+      request(scope.tripId),
+      scope.actorId,
+    );
+    expect(q.gateway.canReadTrip).toHaveBeenLastCalledWith(scope.actorId, scope.tripId);
+    opened.close();
+  }
+  await expect(
+    ports.sourcePdfV2ForRequest(request(next.tripId), actorId),
+  ).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(f.lease).not.toHaveBeenCalled();
+});
+
 it("original metadata shares the exact live PDF scope and closes independently of text", () => {
   const q = fixture();
   const ports = createSourcePdfRuntimePorts(q.config, q.deps);

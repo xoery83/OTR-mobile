@@ -342,15 +342,18 @@ export async function loadDevUniversalContinuousRuntime(
           sourceConnection,
           taskReceiptConnection: taskConnection,
           gateway: persistence,
-          readBinary: (scope) =>
-            scope.mimeType === "image/png" && png
+          readBinary: (scope) => {
+            if (scope.accountId !== actor || scope.tripId !== trip)
+              throw Error("SOURCE_ACCESS_DENIED");
+            return scope.mimeType === "image/png" && png
               ? png.readOriginal(scope, assertCurrentAuth)
               : stores!.custody.read({
                   accountId: scope.accountId,
                   reference: scope.representationId,
                   sha256: scope.sha256,
                   byteCount: scope.byteCount,
-                }),
+                });
+          },
           environment: (key) => {
             guard();
             return env[key];

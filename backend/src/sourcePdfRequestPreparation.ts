@@ -16,6 +16,7 @@ export function createSourcePdfRequestPreparation(deps: {
   connection: CorePgConnection;
   workload: Pick<PdfCausalOwner, "ownerRun" | "producerId" | "providerInstanceSha256">;
   nodeId: string;
+  requestBoundReserve?: boolean;
   stage: Parameters<typeof createSourcePdfV2BackendPreparation>[2];
   providerForRequest(
     guard: PdfSourceRequestIoGuard,
@@ -59,6 +60,7 @@ export function createSourcePdfRequestPreparation(deps: {
       const provider = deps.providerForRequest(guard);
       const authority = createSourcePdfV2CausalAuthority(deps.connection, scope.owner, {
         continuousSourceScope: true,
+        requestBoundReserve: deps.requestBoundReserve,
       });
       return {
         port: {

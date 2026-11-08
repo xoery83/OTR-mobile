@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { DevBackendGateway } from "./app";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
+import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { createSourcePdfRequestPreparation } from "./sourcePdfRequestPreparation";
 import { createSourcePdfRequestV2 } from "./sourcePdfRequestV2";
 import { createSourcePdfV2StorageProducer } from "./sourcePdfStorageProducer";
@@ -24,6 +25,12 @@ export const sourcePdfRuntimeSchema = z.strictObject({
   ownerRun: z.uuid(),
   producerId: z.uuid(),
 });
+const sourcePdfConfigSchema = z.discriminatedUnion("version", [
+  sourcePdfRuntimeSchema,
+  sourcePdfRuntimeSchema.omit({ actorId: true, tripId: true }).extend({
+    version: z.literal("OTR_DEV_UNIVERSAL_PDF/2"),
+  }),
+]);
 const sha256 = (bytes: Uint8Array | string) =>
   createHash("sha256").update(bytes).digest("hex");
 export async function readSourcePdfRuntimeConfig(
@@ -56,7 +63,7 @@ export async function readSourcePdfRuntimeConfig(
       sha256(text) !== env.OTR_DEV_UNIVERSAL_PDF_RUNTIME_SHA256
     )
       throw Error("PDF_RUNTIME_CONFIG_CLOSED");
-    return sourcePdfRuntimeSchema.parse(JSON.parse(text));
+    return sourcePdfConfigSchema.parse(JSON.parse(text));
   } finally {
     await file.close();
   }
@@ -64,7 +71,7 @@ export async function readSourcePdfRuntimeConfig(
 
 // Called only after an explicit hashed private config; no SQL/Host installation.
 export function createSourcePdfRuntimePorts(
-  raw: z.input<typeof sourcePdfRuntimeSchema>,
+  raw: z.input<typeof sourcePdfConfigSchema>,
   deps: {
     gateway: DevBackendGateway;
     connection: CorePgConnection;
@@ -72,7 +79,7 @@ export function createSourcePdfRuntimePorts(
     assertEnabled(): void;
   },
 ) {
-  const config = sourcePdfRuntimeSchema.parse(raw);
+  const config = sourcePdfConfigSchema.parse(raw);
   let closed = false;
   const assertEnabled = () => {
     deps.assertEnabled();
@@ -84,7 +91,6 @@ export function createSourcePdfRuntimePorts(
   const worker = createSourcePdfV2WorkerClient(
     "/run/otr/universal-pdf-worker/worker.sock",
   );
-  const custody = { accountId: config.actorId, tripId: config.tripId };
   const storage = {
     instanceId: "OTR_DEV_PDF_SOURCE_CUSTODY_V1",
     origin: "https://tuqigdxrvrerfewsxqgm.supabase.co",
@@ -92,56 +98,64 @@ export function createSourcePdfRuntimePorts(
     serviceToken: deps.storageToken,
     timeoutMs: 15000,
   };
-  const provider = createSourcePdfV2StorageProducer(storage, worker, custody);
-  const workload = {
-    ownerRun: config.ownerRun,
-    producerId: config.producerId,
-    providerInstanceSha256: provider.configurationSha256,
-  };
-  const prepare = createSourcePdfRequestPreparation({
-    gateway: deps.gateway,
-    connection,
-    workload,
-    nodeId: config.nodeId,
-    assertEnabled,
-    stage: createSourcePdfV2PrivateStage("/var/lib/otr/universal-pdf-stage", worker),
-    providerForRequest: (guard) =>
-      createSourcePdfV2StorageProducer(storage, worker, custody, guard),
-  });
-  const v2 = createSourcePdfRequestV2({
-    gateway: deps.gateway,
-    connection,
-    workload,
-    hash: async (bytes) => sha256(bytes),
-    assertEnabled,
-    runWorker: worker,
-    readOriginalForRequest: (guard) =>
-      createSourcePdfV2StorageProducer(storage, worker, custody, guard).readOriginal,
-  });
-  function check(request: Request, actor: string) {
+  const stage = createSourcePdfV2PrivateStage("/var/lib/otr/universal-pdf-stage", worker);
+  function portsForRequest(request: Request, actor: string) {
     assertEnabled();
+    const route = /^\/v2\/trips\/([^/]+)\/sources\//.exec(new URL(request.url).pathname);
+    const trip = coreUuid.safeParse(route?.[1]);
     if (
-      actor !== config.actorId ||
-      !new URL(request.url).pathname.startsWith(`/v2/trips/${config.tripId}/sources/`)
+      !trip.success ||
+      !coreUuid.safeParse(actor).success ||
+      (config.version === "OTR_DEV_UNIVERSAL_PDF/1" &&
+        (actor !== config.actorId || trip.data !== config.tripId))
     )
       throw Error("SOURCE_ACCESS_DENIED");
+    const custody = { accountId: actor, tripId: trip.data };
+    const provider = createSourcePdfV2StorageProducer(storage, worker, custody);
+    const workload = {
+      ownerRun: config.ownerRun,
+      producerId: config.producerId,
+      providerInstanceSha256: provider.configurationSha256,
+    };
+    return { custody, workload };
   }
   return {
     originalMetadataAllowed(actor: string, trip: string) {
       try {
         assertEnabled();
-        return actor === config.actorId && trip === config.tripId;
+        return config.version === "OTR_DEV_UNIVERSAL_PDF/2"
+          ? coreUuid.safeParse(actor).success && coreUuid.safeParse(trip).success
+          : actor === config.actorId && trip === config.tripId;
       } catch {
         return false;
       }
     },
     sourcePdfV4PreparationForRequest(request: Request, actor: string) {
-      check(request, actor);
-      return prepare(request, actor);
+      const { custody, workload } = portsForRequest(request, actor);
+      return createSourcePdfRequestPreparation({
+        gateway: deps.gateway,
+        connection,
+        workload,
+        nodeId: config.nodeId,
+        requestBoundReserve: config.version === "OTR_DEV_UNIVERSAL_PDF/2",
+        assertEnabled,
+        stage,
+        providerForRequest: (guard) =>
+          createSourcePdfV2StorageProducer(storage, worker, custody, guard),
+      })(request, actor);
     },
     sourcePdfV2ForRequest(request: Request, actor: string) {
-      check(request, actor);
-      return v2(request, actor);
+      const { custody, workload } = portsForRequest(request, actor);
+      return createSourcePdfRequestV2({
+        gateway: deps.gateway,
+        connection,
+        workload,
+        assertEnabled,
+        hash: async (bytes) => sha256(bytes),
+        runWorker: worker,
+        readOriginalForRequest: (guard) =>
+          createSourcePdfV2StorageProducer(storage, worker, custody, guard).readOriginal,
+      })(request, actor);
     },
     close() {
       closed = true;

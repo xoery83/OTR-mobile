@@ -31,9 +31,13 @@ it.each([null, undefined, 1, "true"])(
     ).rejects.toThrow("PDF_SCOPE_RESPONSE_INVALID");
   },
 );
-it.each([undefined, true] as const)(
-  "V4 admission scope opt-in %s preserves the same owning RPC/transaction",
-  async (enabled) => {
+it.each([
+  [undefined, false],
+  [true, false],
+  [true, true],
+] as const)(
+  "V4 admission scope %s and request binding %s preserve the owning RPC/transaction",
+  async (enabled, requestBoundReserve) => {
     const scope = identity(),
       operation = randomUUID(),
       representation = randomUUID();
@@ -64,7 +68,7 @@ it.each([undefined, true] as const)(
     };
     const trace: string[] = [];
     let xid = 0;
-    const query = vi.fn(async (sql: string) => {
+    const query = vi.fn(async (sql: string, _parameters?: readonly unknown[]) => {
       trace.push(sql);
       if (sql.includes("session_user AS principal"))
         return {
@@ -84,21 +88,24 @@ it.each([undefined, true] as const)(
       return { rows: [] };
     });
     const lease = { query, retire: vi.fn() };
+    const nodeId = randomUUID();
+    const producerId = randomUUID();
+    const providerInstanceSha256 = "c".repeat(64);
     const authority = createSourcePdfV2CausalAuthority(
       { withLease: async (work: (l: typeof lease) => unknown) => work(lease) } as never,
       {
         ownerRun: randomUUID(),
-        producerId: randomUUID(),
-        providerInstanceSha256: "c".repeat(64),
+        producerId,
+        providerInstanceSha256,
         accountGeneration: async () => 1,
       },
-      { continuousSourceScope: enabled },
+      { continuousSourceScope: enabled, requestBoundReserve },
     );
     expect(
       await authority.admit(scope.actorAccountId, JSON.stringify(command), 1, {
         attemptId: randomUUID(),
         resourceId: randomUUID(),
-        nodeId: randomUUID(),
+        nodeId,
         resourceKey: "d".repeat(64),
         runToken: randomUUID(),
       }),
@@ -112,7 +119,15 @@ it.each([undefined, true] as const)(
       expect(enter).toBeLessThan(
         trace.findIndex((sql) => sql.includes("trip_source_pdf_upload_v4_begin")),
       );
+      const frame = query.mock.calls[enter][1]?.[3];
+      expect(JSON.parse(String(frame))).toEqual(
+        requestBoundReserve
+          ? { command, ordinaryReserve: { nodeId, producerId, providerInstanceSha256 } }
+          : { command },
+      );
     }
+    const begin = query.mock.calls.find(([sql]) => sql.includes("trip_source_pdf_upload_v4_begin"));
+    expect(begin?.[1]?.[1]).toBe(JSON.stringify(command));
     expect(trace.at(-1)).toBe("COMMIT");
   },
 );
