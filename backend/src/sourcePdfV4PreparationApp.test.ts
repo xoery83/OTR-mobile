@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 function fixture() {
   const actor = randomUUID(),
     tripId = randomUUID(),
@@ -78,6 +79,45 @@ it("a supplied owning port receives the authenticated route identity, not a new 
     operationId: f.operationId,
     accountGeneration: 2,
   });
+});
+it("correlates a timed PDF failure without leaking request or SQL material", async () => {
+  const f = fixture();
+  f.preparation.upload.mockImplementation(() =>
+    measureSourcePdfPhase("pg_source_command", async () => {
+      throw Object.assign(Error("private SQL detail"), { code: "55P03" });
+    }),
+  );
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const r = await createDevBackendHandler({
+      gateway: f.gateway,
+      sourcePdfV4PreparationPort: { owner: f.owner, preparation: f.preparation } as never,
+    })(f.request());
+    expect(r.status).toBe(503);
+    expect(info).toHaveBeenCalledOnce();
+    const line = info.mock.calls[0][0] as string;
+    expect(JSON.parse(line)).toMatchObject({
+      event: "universal_source_pdf_timing",
+      requestId: r.headers.get("x-request-id"),
+      action: "dispatch",
+      status: 503,
+      phases: {
+        auth: { count: 1 },
+        trip_access: { count: 1 },
+        pg_source_command: { count: 1, failures: { lock_unavailable: 1 } },
+      },
+    });
+    for (const value of [
+      f.actor,
+      f.tripId,
+      f.sourceId,
+      "synthetic",
+      "private SQL detail",
+    ])
+      expect(line).not.toContain(value);
+  } finally {
+    info.mockRestore();
+  }
 });
 it.each([200, 503])(
   "request-scoped composition closes on business result %s",

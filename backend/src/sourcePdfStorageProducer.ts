@@ -13,6 +13,7 @@ import https from "node:https";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import { sourcePdfUploadBindingSchema } from "../../src/domain/trip/sourcePdfUploadAuthority";
 import { pdfHash, verifySourcePdf } from "./sourcePdfProfile";
+import { recordSourcePdfTiming, sourcePdfTimingStart } from "./sourcePdfTiming";
 
 export type PdfSourceRequestIoGuard = {
   signal?: AbortSignal;
@@ -160,6 +161,8 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
       rawHeaders: string[];
       body: Buffer;
     } | null>((resolve) => {
+      const requestStarted = sourcePdfTimingStart();
+      let responseStarted: number | undefined;
       let done = false;
       const finish = (
         value: {
@@ -172,6 +175,12 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
         if (!done) {
           done = true;
           clearTimeout(timer);
+          recordSourcePdfTiming("storage_http", requestStarted, value ? undefined : true);
+          recordSourcePdfTiming(
+            "storage_response_body",
+            responseStarted,
+            value ? undefined : true,
+          );
           resolve(value);
         }
       };
@@ -204,6 +213,8 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
           },
         },
         (r) => {
+          recordSourcePdfTiming("storage_response_headers", requestStarted);
+          responseStarted = sourcePdfTimingStart();
           const parts: Buffer[] = [];
           let count = 0;
           r.on("data", (p: Buffer) => {
@@ -239,9 +250,24 @@ export function createOriginalStorageProducer<B extends OriginalStorageBinding>(
         },
       );
       const timer = setTimeout(() => {
+        recordSourcePdfTiming("storage_timeout", requestStarted, true);
         q.destroy();
         finish(null);
       }, config.timeoutMs);
+      if (requestStarted !== undefined)
+        q.once("socket", (socket) => {
+          const socketStarted = sourcePdfTimingStart();
+          socket.once("lookup", (error) =>
+            recordSourcePdfTiming("storage_dns", socketStarted, error ?? undefined),
+          );
+          socket.once("connect", () =>
+            recordSourcePdfTiming("storage_tcp", socketStarted),
+          );
+          if (origin.protocol === "https:")
+            socket.once("secureConnect", () =>
+              recordSourcePdfTiming("storage_tls", socketStarted),
+            );
+        });
       q.on("error", () => finish(null));
       q.end(body);
     });

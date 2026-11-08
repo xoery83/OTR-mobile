@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { prepareAdmittedPdfOriginal } from "./universalPdfOriginalPreparation";
 import { pdfPreparationFixture } from "./__fixtures__/pdfOriginalPreparation";
@@ -6,7 +6,6 @@ it("continues one existing Source through real journal checkpoints without Task 
   const f = await pdfPreparationFixture([
     "NO_ACTIVE_ATTEMPT",
     "RESERVED",
-    "STAGED",
     "ACK_OBSERVED",
     "READ_OBSERVED",
   ]);
@@ -24,7 +23,25 @@ it("continues one existing Source through real journal checkpoints without Task 
     "seal",
   ] as const)
     expect(f.transport[action]).toHaveBeenCalledOnce();
-  expect(f.transport.status).toHaveBeenCalledTimes(5);
+  expect(f.transport.status).toHaveBeenCalledTimes(4);
+});
+it("allows upload to finish before waiting for the shared verification lease", async () => {
+  const f = await pdfPreparationFixture(["STAGED", "ACK_OBSERVED", "READ_OBSERVED"]);
+  let release!: () => void;
+  const ready = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const beforeVerification = vi.fn(() => ready);
+  const work = prepareAdmittedPdfOriginal(f.context, f.input, {
+    ...f.deps,
+    beforeVerification,
+  });
+  await vi.waitFor(() => expect(beforeVerification).toHaveBeenCalledOnce());
+  expect(f.transport.finish).toHaveBeenCalledOnce();
+  expect(f.transport.verifyOriginal).not.toHaveBeenCalled();
+  release();
+  await work;
+  expect(f.transport.verifyOriginal).toHaveBeenCalledOnce();
 });
 it.each(["UNKNOWN", "DISPATCH_RECORDED", "RECOVERY_REQUIRED"])(
   "%s never generates a replacement or redispatches",

@@ -184,8 +184,9 @@ function createAuthority<
           throw new Error("PDF_TOP_LEVEL_TRANSACTION_REQUIRED");
         }
         began = true;
-        await lease.query("SET LOCAL statement_timeout='5000ms'");
-        await lease.query("SET LOCAL lock_timeout='1000ms'");
+        await lease.query(
+          "SELECT pg_catalog.set_config('statement_timeout','5000ms',true),pg_catalog.set_config('lock_timeout','1000ms',true)",
+        );
         assertRequestCurrent();
         const result = await work(scopedLease);
         assertRequestCurrent();

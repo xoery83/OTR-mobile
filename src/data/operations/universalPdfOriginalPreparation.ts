@@ -35,6 +35,7 @@ export async function prepareAdmittedPdfOriginal(
     hash: ImportHash;
     transport: ReturnType<typeof createSourcePdfV4PreparationTransport>;
     assertCurrent?(): void;
+    beforeVerification?(): Promise<unknown>;
   },
 ) {
   const current = async () => {
@@ -101,7 +102,8 @@ export async function prepareAdmittedPdfOriginal(
   if (!uploadComplete) {
     if (state === "RESERVED") {
       await step(() => deps.transport.stage(context, identity, binding, bytes));
-      state = await status();
+      // STAGED is returned only after the owning Stage journal write.
+      state = "STAGED";
     }
     if (state === "STAGED") {
       await step(() => deps.transport.dispatch(context, identity));
@@ -118,6 +120,7 @@ export async function prepareAdmittedPdfOriginal(
     const receipt = sourcePdfUploadReceiptSchema.parse(finished.receipt);
     if (receipt.outcome !== "APPLIED") throw Error("PDF_SOURCE_PREPARATION_REJECTED");
   }
+  await deps.beforeVerification?.();
   const verification = await step(() =>
     deps.transport.verifyOriginal(context, proposals.verify),
   );

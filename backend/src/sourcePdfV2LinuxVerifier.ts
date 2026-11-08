@@ -7,6 +7,7 @@ import {
 } from "../../src/data/interpretation/flightPdfExtraction";
 import { profile } from "../../scripts/source-pdf-v2-linux/profile.mjs";
 import type { SourcePdfCustodyReader } from "./sourcePdfAuthority";
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import {
   runSourcePdfV2LinuxWorker,
   SOURCE_PDF_V2_LINUX_IMAGE,
@@ -72,7 +73,9 @@ export async function verifySourcePdfV2LinuxBytes(
   if (!owned.length || owned.length > profile.maxOriginalBytes)
     throw Error("PDF_V2_INPUT_LIMIT");
   const expected = { sha256: hash(owned), byteCount: owned.length };
-  const decoded = extractionSchema.parse(await runWorker(owned));
+  const decoded = extractionSchema.parse(
+    await measureSourcePdfPhase("pdf_worker", () => runWorker(owned)),
+  );
   const { toleratedUnreferencedZeroOffsetObjects, ...extraction } = decoded;
   const result = await validatePdfExtractionContent(extraction, expected, async (b) =>
     hash(b),

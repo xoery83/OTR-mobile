@@ -16,6 +16,7 @@ import {
   type PrivateAccountProfilePort,
 } from "./privateAccountProfile";
 import { sourcePdfV4PreparationBoundary } from "./sourcePdfV4PreparationHttp";
+import { measureSourcePdfPhase, runSourcePdfTimings } from "./sourcePdfTiming";
 import { sourcePdfV2Boundary } from "./sourcePdfV2Http";
 import {
   captureRemoteProcessingBoundary,
@@ -661,10 +662,7 @@ export type BackendDependencies = {
   sourcePdfV4PreparationForRequest?: (
     request: Request,
     actorId: string,
-  ) => Promise<
-    | { port: Parameters<typeof sourcePdfV4PreparationBoundary>[3]; close(): void }
-    | undefined
-  >;
+  ) => ReturnType<NonNullable<Parameters<typeof sourcePdfV4PreparationBoundary>[4]>>;
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   memberClaimPort?: MemberClaimAuthorityPort;
@@ -2748,16 +2746,23 @@ export function createDevBackendHandler({
       ) {
         route =
           "/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/:resource";
-        const actor = await authenticate(request, gateway);
-        response = await sourcePdfV4PreparationBoundary(
-          request,
-          actor.id,
-          (a, t) => gateway.canReadTrip(a, t),
-          sourcePdfV4PreparationPort,
-          sourcePdfV4PreparationForRequest
-            ? () => sourcePdfV4PreparationForRequest(request, actor.id)
-            : undefined,
-        );
+        const execute = async () => {
+          const actor = await measureSourcePdfPhase("auth", () => authenticate(request, gateway));
+          return sourcePdfV4PreparationBoundary(
+            request,
+            actor.id,
+            (a, t) => measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(a, t)),
+            sourcePdfV4PreparationPort,
+            sourcePdfV4PreparationForRequest
+              ? () => sourcePdfV4PreparationForRequest(request, actor.id)
+              : undefined,
+          );
+        };
+        const action = url.pathname.split("/").at(-1);
+        response =
+          action === "dispatch" || action === "observe-retained"
+            ? await runSourcePdfTimings(requestId, action, execute)
+            : await execute();
       } else if (
         /^\/v2\/trips\/[^/]+\/sources\/pdf-v2\/(?:verify-original|register-derived|seal)$/.test(
           url.pathname,

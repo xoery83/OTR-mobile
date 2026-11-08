@@ -70,7 +70,7 @@ export function createPrivateStage<
     );
     return { binding, header, path: join(root, binding.resourceId) };
   }
-  async function reopen(raw: B) {
+  async function readStaged(raw: B) {
     await directory();
     const { binding, header, path } = layout(raw);
     const f = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -98,7 +98,6 @@ export function createPrivateStage<
       if (!all.subarray(0, header.length).equals(header))
         throw new Error("STAGE_BINDING_MISMATCH");
       const bytes = all.subarray(header.length);
-      await verify(bytes);
       if (bytes.length !== binding.byteCount || pdfHash(bytes) !== binding.sha256)
         throw new Error("STAGE_INTEGRITY_MISMATCH");
       return bytes;
@@ -107,7 +106,11 @@ export function createPrivateStage<
     }
   }
   return {
-    reopen,
+    async reopen(raw: B) {
+      const bytes = await readStaged(raw);
+      await verify(bytes);
+      return bytes;
+    },
     async seal(raw: B, stream: AsyncIterable<Uint8Array>) {
       await directory();
       const { binding, header, path } = layout(raw);
@@ -148,7 +151,9 @@ export function createPrivateStage<
         } finally {
           await dir.close();
         }
-        await reopen(binding);
+        // The decoder accepted these exact bytes before publication. Read back the
+        // published identity and digest here, even if another writer linked it first.
+        await readStaged(binding);
         return {
           resourceId: binding.resourceId,
           resourceKey: binding.resourceKey,

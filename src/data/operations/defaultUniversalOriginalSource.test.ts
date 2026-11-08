@@ -373,7 +373,13 @@ it.each([false, true])(
       submissionSha256: "a".repeat(64),
       inputs: [prepared],
       unhandledInputIds: [],
-      results: [{ state: "ADMITTED" }],
+      results: [
+        {
+          inputId: prepared.inputId,
+          state: "ADMITTED",
+          receipt: '{"outcome":"APPLIED"}',
+        },
+      ],
     });
     f.pdf.mockImplementation(async () => {
       if (unresolved) throw Error("PDF_UPLOAD_OUTCOME_UNRESOLVED");
@@ -495,7 +501,11 @@ it.each([false, true])(
       submissionSha256: "b".repeat(64),
       unhandledInputIds: [],
       inputs: allPrepared,
-      results: allPrepared.map(() => ({ state: "ADMITTED" })),
+      results: allPrepared.map(({ inputId }) => ({
+        inputId,
+        state: "ADMITTED",
+        receipt: '{"receipt":"owning"}',
+      })),
     });
     f.source.mockReturnValue({
       readAdmittedInputPin: vi.fn(async (_context, _bindingId, id) => ({ id })),
@@ -543,7 +553,21 @@ it.each([false, true])(
     ).rejects.toThrow("PHOTO_REVIEW_REQUIRED");
     expect(preparePngOriginal).not.toHaveBeenCalled();
     expect(prepareTask).not.toHaveBeenCalled();
-    await prepareDefaultUniversalCaptureSources(context, model, options);
+    let finishPdf!: () => void;
+    if (mixed)
+      f.pdf.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishPdf = resolve;
+          }),
+      );
+    const preparation = prepareDefaultUniversalCaptureSources(context, model, options);
+    if (mixed) {
+      await vi.waitFor(() => expect(preparePngOriginal).toHaveBeenCalledTimes(1));
+      expect(prepareTask).not.toHaveBeenCalled();
+      finishPdf();
+    }
+    await preparation;
     expect(preparePngOriginal).toHaveBeenCalledExactlyOnceWith(
       context,
       expect.objectContaining({

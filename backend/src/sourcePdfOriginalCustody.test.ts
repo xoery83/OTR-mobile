@@ -5,6 +5,7 @@ import {
   createSourcePdfV2StorageProducer,
   createSourcePdfStorageProducer,
 } from "./sourcePdfStorageProducer";
+import { runSourcePdfTimings } from "./sourcePdfTiming";
 const closers: (() => Promise<void>)[] = [];
 afterEach(async () => {
   for (const close of closers.splice(0)) await close();
@@ -94,6 +95,29 @@ it("fresh exact bytes reuse bounded GET without parsing or producing a verificat
     ),
   );
   expect(f.worker).not.toHaveBeenCalled();
+});
+it("records raw Storage transport separately from request authority", async () => {
+  const f = await fixture();
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    await runSourcePdfTimings(randomUUID(), "observe-retained", async () => {
+      expect(await f.producer.readOriginal(f.scope)).toEqual(Uint8Array.from(f.bytes));
+      return new Response(null, { status: 200 });
+    });
+    const line = info.mock.calls[0][0] as string;
+    expect(JSON.parse(line)).toMatchObject({
+      phases: {
+        storage_http: { count: 1 },
+        storage_tcp: { count: 1 },
+        storage_response_headers: { count: 1 },
+        storage_response_body: { count: 1 },
+      },
+    });
+    expect(line).not.toContain(f.scope.sourceId);
+    expect(line).not.toContain(f.bytes.toString());
+  } finally {
+    info.mockRestore();
+  }
 });
 it.each(["actor", "trip", "size", "identity"])(
   "rejects %s mismatch before Storage IO",

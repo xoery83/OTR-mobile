@@ -234,9 +234,13 @@ export async function prepareDefaultUniversalCaptureSources(
     result.results.some((r) => r.state !== "ADMITTED")
   )
     throw new Error("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");
-  for (const input of model.inputs.filter((input) =>
+  const pdfs = model.inputs.filter((input) =>
     isEnabledPdf(input, options.pendingPdfProfile),
-  )) {
+  );
+  async function preparePdf(
+    input: (typeof pdfs)[number],
+    beforeVerification: () => Promise<unknown>,
+  ) {
     const prepared = result.inputs.find((prepared) => prepared.inputId === input.id);
     if (!input.captureId || !prepared || prepared.inputId !== input.id)
       throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
@@ -250,12 +254,12 @@ export async function prepareDefaultUniversalCaptureSources(
       retained.capture.byteCount !== input.contentByteCount
     )
       throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
-    const acquisitionReceipt = await deps.transport.lookup(
-      context,
-      prepared.sourceCommand,
-    );
+    const acquisitionReceipt = result.results.find(
+      (r) => r.inputId === input.id,
+    )?.receipt;
     options.assertCurrent();
-    if (acquisitionReceipt === null) throw Error("PDF_SOURCE_PREPARATION_UNCONFIRMED");
+    if (acquisitionReceipt === undefined)
+      throw Error("PDF_SOURCE_PREPARATION_UNCONFIRMED");
     const { createSourcePdfV4PreparationTransport } =
       await import("../api/sourcePdfV4PreparationTransport");
     options.assertCurrent();
@@ -284,19 +288,15 @@ export async function prepareDefaultUniversalCaptureSources(
         getAccountId: options.getAccountId,
         hash: sha256,
         assertCurrent: options.assertCurrent,
+        beforeVerification,
         transport: createSourcePdfV4PreparationTransport(options.getAccountId, {
           baseUrl: options.baseUrl,
           assertRequestCurrent: options.assertCurrent,
         }),
       },
     );
-    options.assertCurrent();
-    const raw = await deps.catalog.readUniversal(context);
-    options.assertCurrent();
-    await deps.imports.applyUniversalCatalogs(context, raw);
-    options.assertCurrent();
   }
-  if (hasPng) {
+  async function preparePng() {
     // Source Start may have assigned rev1→rev2. User must re-screen/re-choose that revision.
     const consent = await assertDefaultUniversalPhotoConsent(context, model, options);
     if (!options.preparePngOriginal) throw Error("UNIVERSAL_PNG_PREPARATION_UNAVAILABLE");
@@ -319,12 +319,12 @@ export async function prepareDefaultUniversalCaptureSources(
       retained.capture.byteCount !== input.contentByteCount
     )
       throw Error("UNIVERSAL_PHOTO_REVIEW_REQUIRED");
-    const acquisitionReceipt = await deps.transport.lookup(
-      context,
-      prepared.sourceCommand,
-    );
+    const acquisitionReceipt = result.results.find(
+      (r) => r.inputId === input.id,
+    )?.receipt;
     options.assertCurrent();
-    if (acquisitionReceipt === null) throw Error("PNG_SOURCE_PREPARATION_UNCONFIRMED");
+    if (acquisitionReceipt === undefined)
+      throw Error("PNG_SOURCE_PREPARATION_UNCONFIRMED");
     const binding: CaptureMaterialBinding = {
       version: 2,
       accountId: context.accountId,
@@ -349,6 +349,18 @@ export async function prepareDefaultUniversalCaptureSources(
       binding,
       bytes: retained.bytes,
     });
+  }
+  if (pdfs.length || hasPng) {
+    const pngPreparation = Promise.allSettled(hasPng ? [preparePng()] : []);
+    // PDF Verify/Seal can hold the shared Source lease across decoder I/O.
+    // Overlap upload preparation, then let PNG finish before that long lease.
+    const preparation = await Promise.allSettled([
+      (async () => {
+        for (const pdf of pdfs) await preparePdf(pdf, () => pngPreparation);
+      })(),
+    ]);
+    for (const result of [...preparation, ...(await pngPreparation)])
+      if (result.status === "rejected") throw result.reason;
     options.assertCurrent();
     const raw = await deps.catalog.readUniversal(context);
     options.assertCurrent();

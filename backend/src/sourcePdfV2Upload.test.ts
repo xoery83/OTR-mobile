@@ -110,8 +110,9 @@ it("seals/reopens >64KiB exact originals with independent validation, preserving
       yield f.bytes.subarray(30000);
     })(),
   );
+  expect(runSourcePdfV2LinuxWorker).toHaveBeenCalledTimes(1);
   expect(await stage.reopen(f.binding)).toEqual(f.bytes);
-  expect(runSourcePdfV2LinuxWorker).toHaveBeenCalledTimes(3);
+  expect(runSourcePdfV2LinuxWorker).toHaveBeenCalledTimes(2);
   await expect(
     stage.reopen({ ...f.binding, resourceKey: "d".repeat(64) }),
   ).rejects.toThrow("STAGE_BINDING_MISMATCH");

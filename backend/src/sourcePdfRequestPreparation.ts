@@ -9,6 +9,7 @@ import {
 import { createSourcePdfV2BackendPreparation } from "./sourcePdfBackendPreparation";
 import { createSourcePdfV4Reservation } from "./sourcePdfV4Reservation";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 
 // Explicit operator composition only; no Secret loading, listener or startup activation.
 export function createSourcePdfRequestPreparation(deps: {
@@ -39,14 +40,18 @@ export function createSourcePdfRequestPreparation(deps: {
       workload: deps.workload,
       async readCurrentAccess() {
         deps.assertEnabled();
-        const current = await authenticate(request, deps.gateway);
-        const canReadTrip = await deps.gateway.canReadTrip(current.id, tripId);
+        const current = await measureSourcePdfPhase("auth", () =>
+          authenticate(request, deps.gateway),
+        );
+        const canReadTrip = await measureSourcePdfPhase("trip_access", () =>
+          deps.gateway.canReadTrip(current.id, tripId),
+        );
         deps.assertEnabled();
         return { actorId: current.id, tripId, canReadTrip };
       },
     });
     try {
-      await scope.owner.accountGeneration(actorId);
+      const initialGeneration = await scope.owner.accountGeneration(actorId);
       const guard: PdfSourceRequestIoGuard = Object.freeze({
         signal: request.signal,
         assertRequestCurrent() {
@@ -63,6 +68,7 @@ export function createSourcePdfRequestPreparation(deps: {
         requestBoundReserve: deps.requestBoundReserve,
       });
       return {
+        initialGeneration,
         port: {
           owner: scope.owner,
           reservation: createSourcePdfV4Reservation(authority, scope.owner, deps.nodeId),

@@ -281,7 +281,10 @@ async function fixture() {
               }
               return { rows: [{ result: structuredClone(journal) }] };
             }
-            if (["COMMIT", "ROLLBACK"].includes(sql) || sql.startsWith("SET LOCAL"))
+            if (
+              ["COMMIT", "ROLLBACK"].includes(sql) ||
+              sql.startsWith("SELECT pg_catalog.set_config(")
+            )
               return { rows: [] };
             throw new Error("Unexpected test SQL: " + sql);
           },

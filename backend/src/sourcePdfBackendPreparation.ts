@@ -4,6 +4,7 @@ import {
   type SourcePdfV2UploadBinding,
 } from "../../src/domain/trip/sourcePdfV2Upload";
 import { authenticate, type DevBackendGateway } from "./app";
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import {
   sourcePdfBackendBindingSchema,
@@ -102,8 +103,14 @@ function createPreparation<B extends PreparationBinding>(
 ) {
   const busy = new Set<string>();
   async function context(request: Request, identity: PdfIngressIdentity) {
-    const actor = await authenticate(request, gateway);
-    if (!(await gateway.canReadTrip(actor.id, identity.tripId)))
+    const actor = await measureSourcePdfPhase("auth", () =>
+      authenticate(request, gateway),
+    );
+    if (
+      !(await measureSourcePdfPhase("trip_access", () =>
+        gateway.canReadTrip(actor.id, identity.tripId),
+      ))
+    )
       throw new Error("PDF_SCOPE_FORBIDDEN");
     const current = await authority.resolveReserved(actor.id, identity);
     const b = bindingSchema.parse(current.binding);
@@ -132,7 +139,9 @@ function createPreparation<B extends PreparationBinding>(
     busy.add(id);
     try {
       await authority.assertCurrent(current);
-      const bytes = await stage.reopen(current.binding);
+      const bytes = await measureSourcePdfPhase("private_stage_reopen", () =>
+        stage.reopen(current.binding),
+      );
       signal?.throwIfAborted();
       // Owning port must consume a durable grant before remote IO, including after restart.
       const grant = await authority.consumeDispatch(current);

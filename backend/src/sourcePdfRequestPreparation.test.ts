@@ -179,6 +179,19 @@ it("closed request ports reject reused asynchronous work and do not acquire anot
   ).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
   expect(f.query).not.toHaveBeenCalled();
 });
+it("rechecks access before SQL when Trip access changes after the initial request proof", async () => {
+  const f = fixture();
+  const response = await createDevBackendHandler({
+    gateway: f.gateway as never,
+    async sourcePdfV4PreparationForRequest(request, actor) {
+      const scoped = await f.factory(request, actor);
+      f.gateway.canReadTrip.mockResolvedValue(false);
+      return scoped;
+    },
+  })(f.request());
+  expect(response.status).toBe(403);
+  expect(f.query).not.toHaveBeenCalled();
+});
 it("Auth rejection after committed SQL withholds the response and never retries the write", async () => {
   const f = fixture();
   f.query.mockImplementation(async (sql: string) => {

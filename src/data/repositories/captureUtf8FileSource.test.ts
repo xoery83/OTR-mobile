@@ -332,7 +332,7 @@ it.each(["SIMULATED_CONNECTION_LOST", "SOURCE_REQUEST_UNCONFIRMED"])(
         ...dependencies,
         repository: x.repo(true),
       }),
-    ).toEqual({ state: "ADMITTED" });
+    ).toEqual({ state: "ADMITTED", receipt: retained });
     expect(
       x.f.sql
         .prepare(
@@ -402,7 +402,7 @@ it("recovers an interrupted pre-send claim only for the exact Source queue targe
         );
     },
   });
-  expect(result).toEqual({ state: "ADMITTED" });
+  expect(result).toEqual({ state: "ADMITTED", receipt: raw });
   expect(acquire).toHaveBeenCalledOnce();
   expect(
     x.f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(oldId)!.status,

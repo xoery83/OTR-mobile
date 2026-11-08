@@ -30,7 +30,8 @@ export async function sourcePdfV4PreparationBoundary(
   canReadTrip: (actor: string, trip: string) => Promise<boolean>,
   port?: PreparationPort,
   prepareForRequest?: () => Promise<
-    { port: PreparationPort | undefined; close(): void } | undefined
+    | { port: PreparationPort | undefined; initialGeneration?: number; close(): void }
+    | undefined
   >,
 ) {
   const reply = (status: number, body: unknown) =>
@@ -75,7 +76,9 @@ export async function sourcePdfV4PreparationBoundary(
       return fail(503, "SOURCE_CAPABILITY_CLOSED");
     if (!commandAction && route[5] !== "stage" && request.body !== null)
       return fail(422, "INVALID_SOURCE_COMMAND");
-    const generation = await port.owner.accountGeneration(actor);
+    // The request-scoped factory just proved this fence. Each owning step still rechecks it.
+    const generation =
+      scoped?.initialGeneration ?? (await port.owner.accountGeneration(actor));
     request.signal.throwIfAborted();
     if (!Number.isSafeInteger(generation) || generation < 1)
       return fail(403, "SOURCE_ACCESS_DENIED");

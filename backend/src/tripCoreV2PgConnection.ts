@@ -3,6 +3,7 @@ import type { Duplex } from "node:stream";
 import { Client } from "pg";
 import { z } from "zod";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 const configSchema = z.strictObject({
   host: z
     .string()
@@ -103,7 +104,7 @@ function createOwningPgConnection(
   }
   return {
     async withLease(work) {
-      await acquire();
+      await measureSourcePdfPhase("pg_lease_wait", acquire);
       let client: Client;
       try {
         client = new Client({
@@ -143,11 +144,13 @@ function createOwningPgConnection(
           }, budget.leaseMs);
         });
         const operation = async () => {
-          await client.connect();
+          await measureSourcePdfPhase("pg_connect", () => client.connect());
           if (retired) throw new Error("CORE_CONNECTION_RETIRED");
           const identity = (
-            await client.query(
-              "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
+            await measureSourcePdfPhase("pg_sql_setup", () =>
+              client.query(
+                "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
+              ),
             )
           ).rows;
           if (
@@ -164,7 +167,18 @@ function createOwningPgConnection(
                 throw new Error("CORE_CONNECTION_RETIRED");
               querying = true;
               try {
-                const result = await client.query(sql, [...parameters]);
+                const phase = sql.startsWith(
+                  "SELECT public.trip_source_universal_pdf_enter(",
+                )
+                  ? "pg_source_scope"
+                  : sql.startsWith("SELECT public.")
+                    ? "pg_source_command"
+                    : sql === "COMMIT" || sql === "ROLLBACK"
+                      ? "pg_sql_end"
+                      : "pg_sql_setup";
+                const result = await measureSourcePdfPhase(phase, () =>
+                  client.query(sql, [...parameters]),
+                );
                 if (retired) throw new Error("CORE_CONNECTION_RETIRED");
                 if (sql === "COMMIT" || sql === "ROLLBACK") finished = true;
                 return { rows: result.rows };

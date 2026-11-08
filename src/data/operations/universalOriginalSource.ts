@@ -78,5 +78,5 @@ export async function dispatchUniversalOriginalSource(
   await current();
   if (recovered.binding.state === "ADMITTED") await queue.markCompleted(r.operationId);
   await current();
-  return { state: recovered.binding.state as string };
+  return { state: recovered.binding.state as string, receipt };
 }
