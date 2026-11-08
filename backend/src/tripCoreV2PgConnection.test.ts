@@ -284,6 +284,7 @@ it("PDF decoding gets a bounded Source-only lease while normal Source timeouts r
     await lease.query("COMMIT");
   });
   expect(f.config.user).toBe("otr_trip_source_command_gateway");
+  expect(f.config.connectionTimeoutMillis).toBe(5000);
   expect(f.config.query_timeout).toBe(5000);
   expect(f.config.options).toBe(
     "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=65000",
@@ -292,6 +293,7 @@ it("PDF decoding gets a bounded Source-only lease while normal Source timeouts r
     await lease.query("BEGIN");
     await lease.query("COMMIT");
   });
+  expect(f.config.connectionTimeoutMillis).toBe(3000);
   expect(f.config.options).toBe(
     "-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
   );

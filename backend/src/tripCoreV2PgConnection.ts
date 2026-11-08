@@ -40,6 +40,8 @@ export function createSourcePdfPgConnection(input: CorePgConfig): CorePgConnecti
   return createOwningPgConnection(input, "otr_trip_source_command_gateway", {
     idleMs: 65000,
     leaseMs: 75000,
+    // Fresh TLS sessions on the PDF path can exceed the ordinary 3s connect budget.
+    connectMs: 5000,
   });
 }
 export function createTripPgConnection(input: CorePgConfig): CorePgConnection {
@@ -64,7 +66,10 @@ function createOwningPgConnection(
     | "otr_trip_create_gateway"
     | "otr_trip_metadata_gateway"
     | "otr_external_integration_call_gateway",
-  budget = { idleMs: 5000, leaseMs: 30000 },
+  budget: { idleMs: number; leaseMs: number; connectMs?: number } = {
+    idleMs: 5000,
+    leaseMs: 30000,
+  },
 ): CorePgConnection {
   const config = configSchema.parse(input);
   let occupied = false;
@@ -104,7 +109,7 @@ function createOwningPgConnection(
         client = new Client({
           ...config,
           user: principal,
-          connectionTimeoutMillis: 3000,
+          connectionTimeoutMillis: budget.connectMs ?? 3000,
           query_timeout: 5000,
           ssl: {
             rejectUnauthorized: true,
