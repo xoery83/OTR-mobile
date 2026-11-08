@@ -1,5 +1,6 @@
 import { FLIGHT_MODEL_CONFORMANCE } from "./flightHostProtocol";
 import { createHash } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import { z } from "zod";
 import { DEEPSEEK_FLIGHT_DESTINATION, mapDeepSeekFlightUsage } from "./deepSeekFlight";
 import { createFlightHttpsSend } from "./flightHttpsTransport";
@@ -138,6 +139,25 @@ export function createUniversalDeepSeekProvider(deps: {
     mode: "HOSTED",
     async interpret(input: Input) {
       let phase = "ACQUIRE";
+      let transportStarted: number | undefined;
+      function logTransport(
+        stage: "DISPATCH" | "RESPONSE" | "ERROR",
+        elapsedMs?: number,
+      ) {
+        try {
+          console.info(
+            JSON.stringify({
+              event: "universal_provider_transport",
+              taskId: input.taskId,
+              stage,
+              at: new Date().toISOString(),
+              ...(elapsedMs === undefined ? {} : { elapsedMs: Math.round(elapsedMs) }),
+            }),
+          );
+        } catch {
+          // Diagnostics must never change the result of the owning attempt.
+        }
+      }
       try {
         const request = buildUniversalDeepSeekRequest(input);
         const credential = await deps.custody.acquire({
@@ -170,6 +190,8 @@ export function createUniversalDeepSeekProvider(deps: {
               requestSha256: request.requestSha256,
             }),
           );
+        transportStarted = performance.now();
+        logTransport("DISPATCH");
         const response = await deps.send({
           url: DEEPSEEK_FLIGHT_DESTINATION,
           method: "POST",
@@ -190,6 +212,8 @@ export function createUniversalDeepSeekProvider(deps: {
           if (length > 131072) throw new Error("UNIVERSAL_RESPONSE_BOUND");
           chunks.push(chunk);
         }
+        logTransport("RESPONSE", performance.now() - transportStarted);
+        transportStarted = undefined;
         const bytes = Buffer.concat(chunks);
         phase = "RETAIN";
         await credential.assertCurrent();
@@ -232,6 +256,8 @@ export function createUniversalDeepSeekProvider(deps: {
           },
         };
       } catch (error) {
+        if (transportStarted !== undefined)
+          logTransport("ERROR", performance.now() - transportStarted);
         const failure =
           error instanceof Error ? error : new Error("UNIVERSAL_PROVIDER_FAILURE");
         const kind =

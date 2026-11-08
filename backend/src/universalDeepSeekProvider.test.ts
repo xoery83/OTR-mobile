@@ -174,6 +174,35 @@ it("builds frozen one-call Universal request, uses Backend custody and retains a
     }),
   );
 });
+it("records only Task-correlated dispatch and transport duration after permission checks", async () => {
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const x = provider();
+    await x.instance.interpret(input);
+    const events = log.mock.calls.map(([line]) => JSON.parse(line));
+    expect(events).toEqual([
+      {
+        event: "universal_provider_transport",
+        taskId: input.taskId,
+        stage: "DISPATCH",
+        at: expect.any(String),
+      },
+      {
+        event: "universal_provider_transport",
+        taskId: input.taskId,
+        stage: "RESPONSE",
+        at: expect.any(String),
+        elapsedMs: expect.any(Number),
+      },
+    ]);
+    log.mockClear();
+    x.custody.acquire.mockRejectedValueOnce(Error("CLOSED"));
+    await expect(x.instance.interpret(input)).rejects.toThrow("CLOSED");
+    expect(log).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
 it("does not send when credential is absent and retains failed HTTP for UNKNOWN reconciliation", async () => {
   const x = provider(503, Buffer.from("unavailable"));
   x.custody.acquire.mockResolvedValueOnce(null as never);
