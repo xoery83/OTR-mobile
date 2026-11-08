@@ -74,6 +74,8 @@ function checkSnapshotPins(
     task.input_pins.length !== first.representations.length
   )
     throw new Error("UNIVERSAL_SOURCE_BINDING_INVALID");
+  if (first.representations.filter((r) => r.mime === "image/png").length > 1)
+    throw Error("UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED");
 }
 function checkRepresentation(
   r: z.infer<typeof manifestSchema>["representations"][number],
@@ -97,7 +99,6 @@ function checkRepresentation(
     const proof = r.pngSource;
     if (
       !proof ||
-      first.representations.length !== 1 ||
       r.text !== null ||
       r.pdfSource ||
       pin.transform_sha256 != null ||

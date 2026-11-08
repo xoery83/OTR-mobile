@@ -5,6 +5,7 @@ import { expect, it, vi } from "vitest";
 import type { Task } from "../../src/domain/intelligence/persistence";
 import { createUniversalSourceReader } from "./universalSourceRead";
 import { createUniversalBackendRuntime } from "./universalRuntime";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 
 function fixture(binary = false) {
   const bytes = binary
@@ -222,6 +223,48 @@ it("discloses only original PNG bytes after two matching Source proof snapshots"
   expect(result.representations[0].bytes).toEqual(f.bytes);
   expect(result.representations[0].mime).toBe("image/png");
   expect(f.query.mock.calls.filter(([sql]) => sql.startsWith("SELECT"))).toHaveLength(2);
+});
+it("reads TXT, sealed PDF text and one verified PNG from the same snapshot", async () => {
+  const png = fixture(true);
+  const txt = fixture();
+  const pdf = fixture();
+  const pdfSource = {
+    original: { representationId: randomUUID(), sha256: "a".repeat(64), byteCount: 1700 },
+    sealSha256: "b".repeat(64),
+    pageMapSha256: "c".repeat(64),
+    transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+  };
+  Object.assign(pdf.r, { pdfSource });
+  Object.assign(pdf.task.input_pins[0], { transform_sha256: PDF_V2_OPTIONS_SHA });
+  png.manifest.representations.push(txt.r, pdf.r);
+  png.task.input_pins.push(txt.task.input_pins[0], pdf.task.input_pins[0]);
+
+  const result = await png.read(png.task);
+  expect(result.representations.map((r) => r.bytes)).toEqual([
+    png.bytes,
+    txt.bytes,
+    pdf.bytes,
+  ]);
+  expect(result.representations[2].pdfSource).toEqual(pdfSource);
+  expect(png.readBinary).toHaveBeenCalledOnce();
+  expect(png.query.mock.calls.filter(([sql]) => sql.startsWith("SELECT"))).toHaveLength(
+    2,
+  );
+});
+it("rejects two verified PNG representations before any binary read", async () => {
+  const first = fixture(true);
+  const second = fixture(true);
+  Object.assign(second.r.pngSource!, {
+    actorAccountId: first.manifest.accountId,
+    tripId: first.manifest.tripId,
+  });
+  first.manifest.representations.push(second.r);
+  first.task.input_pins.push(second.task.input_pins[0]);
+
+  await expect(first.read(first.task)).rejects.toThrow(
+    "UNIVERSAL_SOURCE_IMAGE_UNQUALIFIED",
+  );
+  expect(first.readBinary).not.toHaveBeenCalled();
 });
 it("withholds PNG after the owning execution witness changes during custody I/O", async () => {
   const f = fixture(true);
