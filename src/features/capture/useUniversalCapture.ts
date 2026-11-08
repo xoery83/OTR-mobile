@@ -110,9 +110,11 @@ export function useUniversalCapture(
           materialContinuation: {
             transport,
             verifyLocalSubmission: async (context, job) => {
-              const [{ assertDefaultUniversalPhotoConsent }, { canonicalSubmission }, {
-                captureStorageDependencies,
-              }] = await Promise.all([
+              const [
+                { assertDefaultUniversalPhotoConsent },
+                { canonicalSubmission },
+                { captureStorageDependencies },
+              ] = await Promise.all([
                 import("@/data/operations/defaultUniversalPhotoConsent"),
                 import("@/domain/capture/captureSubmission"),
                 import("@/data/repositories/defaultLocalCaptureInboxRepository"),
@@ -146,7 +148,7 @@ export function useUniversalCapture(
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
             const { prepareDefaultUniversalCaptureSources } =
               await import("@/data/operations/defaultUniversalOriginalSource");
-            await prepareDefaultUniversalCaptureSources(context, job, {
+            return prepareDefaultUniversalCaptureSources(context, job, {
               baseUrl,
               ...(process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED === "true"
                 ? {
@@ -196,7 +198,19 @@ export function useUniversalCapture(
                     prepareTask: async (
                       input: import("@/data/api/universalImportContracts").UniversalBatchPrepare,
                     ) => {
-                      await transport.prepare(context, input);
+                      try {
+                        return await transport.prepare(context, input);
+                      } catch (error) {
+                        if (
+                          !current() ||
+                          (error instanceof ApiClientError &&
+                            error.status !== undefined &&
+                            [400, 401, 403, 404, 405, 413, 422].includes(error.status))
+                        )
+                          throw error;
+                        // The owning GET reconciles a prepare whose receipt could not be confirmed.
+                        return null;
+                      }
                     },
                   }
                 : {}),
@@ -215,7 +229,6 @@ export function useUniversalCapture(
       if (current()) {
         setResult(next);
         if (next !== null) setPhotoReviewRequired(false);
-        setQueued(consumer.current.queued);
         setUnavailable(next === null && !consumer.current.queued);
       }
     } catch (error) {
@@ -281,6 +294,7 @@ export function useUniversalCapture(
       }
       if (current()) {
         setActivity(consumer.current?.activity ?? null);
+        setQueued(consumer.current?.queued ?? false);
         setCanStart(consumer.current?.canDispatch ?? true);
       }
       // Coalesce only a user's click; invalidation above discards it without any retry timer.
@@ -299,7 +313,9 @@ export function useUniversalCapture(
   useEffect(() => {
     const pending = () => {
       const state = current() ? consumer.current?.activity?.state : activity?.state;
-      return state && ["PENDING", "WAITING", "PROCESSING"].includes(state);
+      if (state) return ["PENDING", "WAITING", "PROCESSING"].includes(state);
+      // A QUEUED prepare receipt may bind the Task before activity is projected.
+      return current() ? consumer.current?.queued : queued;
     };
     // A sealed Result can arrive before the owning Task publishes its terminal activity.
     if (!pending()) return;
@@ -317,7 +333,7 @@ export function useUniversalCapture(
     };
     // This timer only schedules an owning GET; it never invents progress or retries a paid call.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, activity?.state]);
+  }, [result, activity?.state, queued]);
   return {
     activity,
     result,

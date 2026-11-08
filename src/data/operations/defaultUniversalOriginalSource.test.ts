@@ -173,8 +173,19 @@ it("supplies Task preparation only with owning admitted Source pins after all or
   const getAccountId = async () => account,
     context = await captureAccountRequestContext(trip, getAccountId),
     pin = { id: inputId, source_id: randomUUID() };
+  const receipt = {
+    status: "QUEUED",
+    context: {
+      version: "otr.backend.universal-context/1",
+      accountId: account,
+      actorId: account,
+      tripId: trip,
+      batchId: batch,
+      taskId: randomUUID(),
+    },
+  } as const;
   const readAdmittedInputPin = vi.fn(async () => pin),
-    prepareTask = vi.fn(async () => {});
+    prepareTask = vi.fn(async () => receipt);
   f.native.mockResolvedValue(vi.fn());
   f.source.mockReturnValue({ readAdmittedInputPin });
   f.plans.mockResolvedValue([]);
@@ -185,7 +196,7 @@ it("supplies Task preparation only with owning admitted Source pins after all or
     inputs: [{ inputId, bindingId }],
     results: [{ state: "ADMITTED" }],
   });
-  await prepareDefaultUniversalCaptureSources(
+  const prepared = await prepareDefaultUniversalCaptureSources(
     context,
     {
       batch: { batchId: batch, jobId: job },
@@ -198,6 +209,7 @@ it("supplies Task preparation only with owning admitted Source pins after all or
       prepareTask,
     },
   );
+  expect(prepared).toBe(receipt);
   expect(readAdmittedInputPin).toHaveBeenCalledExactlyOnceWith(
     context,
     bindingId,

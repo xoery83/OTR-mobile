@@ -93,6 +93,7 @@ export const universalBatchPreparedSchema = z.strictObject({
   status: z.enum(["QUEUED", "EXISTING"]),
   context: universalContextSchema,
 });
+export type UniversalBatchPrepared = z.infer<typeof universalBatchPreparedSchema>;
 export type UniversalBatchPrepare = z.infer<typeof universalBatchPrepareSchema>;
 
 const commonEvidence = {

@@ -28,6 +28,10 @@ import {
   prepareUniversalOriginalBatch,
 } from "./universalOriginalBatch";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
+import type {
+  UniversalBatchPrepare,
+  UniversalBatchPrepared,
+} from "../api/universalImportContracts";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
 type LocalProposalOptions = {
@@ -144,8 +148,8 @@ export async function prepareDefaultUniversalCaptureSources(
       },
     ): Promise<void>;
     prepareTask?(
-      input: import("../api/universalImportContracts").UniversalBatchPrepare,
-    ): Promise<void>;
+      input: UniversalBatchPrepare,
+    ): Promise<UniversalBatchPrepared | null | void>;
   },
 ) {
   options.assertCurrent();
@@ -377,12 +381,13 @@ export async function prepareDefaultUniversalCaptureSources(
     }
     options.assertCurrent();
     if (hasPng) await assertDefaultUniversalPhotoConsent(context, model, options);
-    await options.prepareTask({
+    const prepared = await options.prepareTask({
       tripId: context.tripId,
       batchId: result.batchId,
       submissionSha256: result.submissionSha256,
       inputs,
     });
     options.assertCurrent();
+    return prepared;
   }
 }

@@ -3,8 +3,12 @@ import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { createUniversalImportTransport } from "../api/universalImportTransport";
 import { ApiClientError } from "../api/client";
-import { universalMaterialReadySchema } from "../api/universalImportContracts";
+import {
+  universalBatchPreparedSchema,
+  universalMaterialReadySchema,
+} from "../api/universalImportContracts";
 import type {
+  UniversalBatchPrepared,
   UniversalMaterialReady,
   UniversalTaskActivity,
   UniversalExecutionContext,
@@ -76,12 +80,14 @@ export function createUniversalCaptureConsumer(dependencies: {
   prepareSources?(
     context: import("../auth/accountRequestContext").AccountRequestContext,
     model: CaptureJobReadModel,
-  ): Promise<void>;
+  ): Promise<UniversalBatchPrepared | null | void>;
 }) {
   let dispatchUncertain = false;
   let materialContinuationSelected = false;
   let materialPrepareAttempted = false;
   let observedTask = false;
+  let sourceTaskPrepareAttempted = false;
+  let sourcePreparedTaskId: string | undefined;
   let queued = false;
   let activity: UniversalTaskActivity | null = null;
   const terminalActivity = () =>
@@ -104,11 +110,13 @@ export function createUniversalCaptureConsumer(dependencies: {
       throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
     let found: UniversalExecutionContext | UniversalMaterialReady;
     let preparedThisAction = false;
+    let queuedReceiptUsed = false;
     const continuation =
       allowDispatch &&
       dependencies.continuous &&
       !dispatchUncertain &&
       !materialPrepareAttempted &&
+      !sourceTaskPrepareAttempted &&
       !observedTask
         ? dependencies.materialContinuation
         : undefined;
@@ -129,6 +137,7 @@ export function createUniversalCaptureConsumer(dependencies: {
           !allowDispatch ||
           dispatchUncertain ||
           materialContinuationSelected ||
+          sourceTaskPrepareAttempted ||
           terminalActivity() ||
           !dependencies.prepareSources ||
           !(
@@ -145,31 +154,53 @@ export function createUniversalCaptureConsumer(dependencies: {
         )
           throw error;
         // Continuous 503 is uncertainty; only an owning 404 permits Source preparation.
-        await dependencies.prepareSources(context, model);
+        const prepared = await dependencies.prepareSources(context, model);
         preparedThisAction = true;
         current();
-        // Only owning Backend context can supply the Task, including after Source preparation.
-        try {
-          found = await dependencies.transport.context(context, model.batch.batchId);
-        } catch (error) {
-          current();
+        let queuedContext: UniversalExecutionContext | undefined;
+        if (dependencies.continuous && prepared !== undefined) {
+          sourceTaskPrepareAttempted = true;
+          const receipt = universalBatchPreparedSchema.safeParse(prepared);
           if (
-            error instanceof ApiClientError &&
-            ((error.status === 503 &&
-              ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
-                error.code ?? "",
-              )) ||
-              (dependencies.continuous &&
-                error.status === 404 &&
-                error.code === "TASK_NOT_FOUND"))
-          )
-            throw new ApiClientError(
-              "OWNING_TASK_READER_UNAVAILABLE",
-              "http",
-              503,
-              "OWNING_TASK_READER_UNAVAILABLE",
-            );
-          throw error;
+            receipt.success &&
+            receipt.data.context.accountId === context.accountId &&
+            receipt.data.context.actorId === context.accountId &&
+            receipt.data.context.tripId === context.tripId &&
+            receipt.data.context.batchId === model.batch.batchId
+          ) {
+            sourcePreparedTaskId = receipt.data.context.taskId;
+            if (receipt.data.status === "QUEUED") queuedContext = receipt.data.context;
+          } else {
+            // An unconfirmed Task prepare may already have been applied.
+            dispatchUncertain = true;
+          }
+        }
+        if (queuedContext) {
+          found = queuedContext;
+          queuedReceiptUsed = true;
+        } else {
+          try {
+            found = await dependencies.transport.context(context, model.batch.batchId);
+          } catch (error) {
+            current();
+            if (
+              error instanceof ApiClientError &&
+              ((error.status === 503 &&
+                ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
+                  error.code ?? "",
+                )) ||
+                (dependencies.continuous &&
+                  error.status === 404 &&
+                  error.code === "TASK_NOT_FOUND"))
+            )
+              throw new ApiClientError(
+                "OWNING_TASK_READER_UNAVAILABLE",
+                "http",
+                503,
+                "OWNING_TASK_READER_UNAVAILABLE",
+              );
+            throw error;
+          }
         }
       }
     }
@@ -227,8 +258,11 @@ export function createUniversalCaptureConsumer(dependencies: {
     } else {
       binding = found;
     }
+    if (sourcePreparedTaskId && binding.taskId !== sourcePreparedTaskId)
+      throw Error("UNIVERSAL_CAPTURE_STALE");
     observedTask = true;
     activity = binding.activity ?? null;
+    if (queuedReceiptUsed && !activity) queued = true;
     let result: UniversalImportResult;
     try {
       result = await dependencies.transport.result(context, binding);
@@ -268,8 +302,9 @@ export function createUniversalCaptureConsumer(dependencies: {
       dependencies.continuous &&
       result.status === "EXECUTION_OUTCOME_UNKNOWN" &&
       result.providerOutcome === "UNKNOWN" &&
-      activity &&
-      ["PENDING", "WAITING", "PROCESSING"].includes(activity.state) &&
+      (activity
+        ? ["PENDING", "WAITING", "PROCESSING"].includes(activity.state)
+        : queuedReceiptUsed) &&
       (!allowDispatch || dispatchUncertain || !dependencies.resumeTask || preparedThisAction)
     ) {
       // Passive reads keep the marker pending; explicit resume may reconcile a retained call.

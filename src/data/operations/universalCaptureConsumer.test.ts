@@ -263,6 +263,83 @@ it("explicit normal Batch preparation queues once and GET-only recovery never ex
   expect(f.consumer.queued).toBe(false);
   expect(prepare).toHaveBeenCalledOnce();
 });
+it("uses a scoped QUEUED receipt for the result read and keeps read-only recovery", async () => {
+  const prepare = vi.fn(), resume = vi.fn(),
+    f = fixture(prepare, true, resume);
+  const binding = await f.transport.context();
+  f.transport.context.mockClear().mockRejectedValueOnce(absent());
+  prepare.mockResolvedValue({ status: "QUEUED", context: binding });
+  Object.assign(f.result, {
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+  });
+
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(f.consumer.queued).toBe(true);
+  expect(f.consumer.activity).toBeNull();
+  expect(f.transport.context).toHaveBeenCalledOnce();
+  expect(f.transport.result).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId: binding.accountId, tripId: binding.tripId }),
+    binding,
+  );
+  expect(resume).not.toHaveBeenCalled();
+
+  Object.assign(f.result, { status: "CANDIDATES_READY", providerOutcome: "COMPLETED" });
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(f.consumer.queued).toBe(false);
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+it.each(["accountId", "actorId", "tripId", "batchId", "taskId"] as const)(
+  "falls back to owning reads when a QUEUED receipt has an invalid %s",
+  async (field) => {
+    const prepare = vi.fn(), resume = vi.fn(),
+      f = fixture(prepare, true, resume);
+    const binding = await f.transport.context();
+    f.transport.context.mockClear().mockRejectedValueOnce(absent());
+    prepare.mockResolvedValue({
+      status: "QUEUED",
+      context: { ...binding, [field]: field === "taskId" ? "invalid-task" : randomUUID() },
+    });
+    expect(await f.consumer.start(f.model)).toBe(f.result);
+    expect(f.transport.context).toHaveBeenCalledTimes(2);
+    expect(f.transport.result).toHaveBeenCalledExactlyOnceWith(expect.anything(), binding);
+    expect(f.consumer.canDispatch).toBe(false);
+    expect(resume).not.toHaveBeenCalled();
+    expect(f.transport.execute).not.toHaveBeenCalled();
+  },
+);
+
+it("uses the owning context after EXISTING and rejects a different Task", async () => {
+  const prepare = vi.fn(), resume = vi.fn(),
+    f = fixture(prepare, true, resume);
+  const binding = await f.transport.context();
+  prepare.mockResolvedValue({ status: "EXISTING", context: binding });
+  f.transport.context.mockClear().mockRejectedValueOnce(absent())
+    .mockResolvedValueOnce({ ...binding, taskId: randomUUID() });
+  await expect(f.consumer.start(f.model)).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+  expect(f.transport.context).toHaveBeenCalledTimes(2);
+  expect(f.transport.result).not.toHaveBeenCalled();
+  expect(resume).not.toHaveBeenCalled();
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+it("reconciles a lost prepare receipt using only owning reads and never prepares again in that view", async () => {
+  const prepare = vi.fn(async () => null), resume = vi.fn(),
+    f = fixture(prepare, true, resume);
+  f.transport.context.mockRejectedValueOnce(absent()).mockRejectedValueOnce(absent());
+  await expect(f.consumer.start(f.model)).rejects.toThrow("OWNING_TASK_READER_UNAVAILABLE");
+  f.transport.context.mockRejectedValueOnce(absent());
+  await expect(f.consumer.start(f.model)).rejects.toThrow();
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(resume).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
 it("only a new explicit Start can wake a retained Task after a Backend restart", async () => {
   const prepare = vi.fn(async () => {}),
     f = fixture(prepare, true);

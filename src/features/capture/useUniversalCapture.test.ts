@@ -63,7 +63,7 @@ vi.mock("@/data/operations/universalCaptureConsumer", () => ({
       get activity() {
         return h.consumer.activity;
       },
-      queued: true,
+      get queued() { return h.consumer.queued; },
       canDispatch: true,
       recover: h.recover,
       start: h.start,
@@ -109,6 +109,7 @@ beforeEach(() => {
   h.generation = 1;
   h.consent.mockReset();
   h.consumer.activity = { state: "PROCESSING" };
+  h.consumer.queued = true;
   h.recover.mockResolvedValue(null);
   vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://dev.invalid");
 });
@@ -132,6 +133,39 @@ it("reopens with GET recovery and polls real pending state, never Start", async 
   expect(h.recover).toHaveBeenCalledTimes(3);
   expect(h.start).not.toHaveBeenCalled();
 });
+it("polls passively while the queued receipt has no activity, and stops on result", async () => {
+  h.consumer.activity = null;
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(Harness().queued).toBe(true);
+  const result = { status: "CANDIDATES_READY" };
+  h.recover.mockImplementationOnce(async () => {
+    h.consumer.queued = false;
+    return result;
+  });
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(h.recover).toHaveBeenCalledTimes(2);
+  expect(Harness().result).toBe(result);
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(h.recover).toHaveBeenCalledTimes(2);
+  expect(h.start).not.toHaveBeenCalled();
+});
+
+it("passes back the owning Task prepare receipt, including unconfirmed transport outcome", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "true");
+  const receipt = { status: "QUEUED", context: { taskId: "owning-task" } };
+  const prepare = vi.fn().mockResolvedValueOnce(receipt).mockRejectedValueOnce(Error("lost response"));
+  h.transport.mockReturnValueOnce({ prepare });
+  h.sourcePrepare.mockImplementationOnce((_context, _model, options) => options.prepareTask({}))
+    .mockImplementationOnce((_context, _model, options) => options.prepareTask({}));
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  const context = { accountId: "qa", tripId: "trip" };
+  expect(await h.options.prepareSources(context, {})).toBe(receipt);
+  expect(await h.options.prepareSources(context, {})).toBeNull();
+  expect(prepare).toHaveBeenCalledTimes(2);
+});
+
 it("stops retained polling on changed Batch or Account generation", async () => {
   Harness();
   await vi.advanceTimersByTimeAsync(0);
