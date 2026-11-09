@@ -1,3 +1,22 @@
+## QA176 Analyze hot-path candidate — 9 November 2026
+
+Shared DEV Start/Resume returned 409 in 65.882 s. PNG supplement returned
+503 in 81.949 s. The original PNG Attempt reached ATTACH_IDENTITY at
++75.770 s, never reached RUNNING, and has no object or receipt. The worker
+container is absent, but the owner termination flag and host marker remain.
+The deployed owner recovery rules do not admit this Attempt for retry.
+
+The candidate removes a duplicate pre-RUNNING broker STATUS, retains the
+RUNNING CAS and pre-Docker owner recheck, and checks for missing PNG bytes
+before unrelated PDF Seal. It emits bounded request and Wake timings and
+reuses Source PG sessions. In a paired local owning-PG run, the material
+preparation segment went from 218–332 ms to 74–76 ms (two runs each).
+In a local PostgreSQL TLS probe, 12 ordinary Source leases used one
+physical connection instead of 12, with 48 SQL commands in both cases.
+The existing Run still requires verified material. The missing-material
+response does not establish a durable pre-Run Task. Shared DEV timing and
+real DeepSeek remain pending.
+
 ## QA175 normal Analyze Start/Resume candidate — 9 November 2026
 
 The existing interpretation prepare route now has a candidate for ordinary
