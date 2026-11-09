@@ -14,7 +14,7 @@ const f = vi.hoisted(() => ({
   discardFailure: false,
   connect: vi.fn(),
   destroy: vi.fn(),
-  end: vi.fn(),
+  end: vi.fn<() => void | Promise<void>>(),
   queries: [] as string[],
 }));
 vi.mock("pg", () => ({
@@ -29,7 +29,7 @@ vi.mock("pg", () => ({
       f.connect();
     }
     async end() {
-      f.end();
+      await f.end();
     }
     async query(sql: string) {
       f.queries.push(sql);
@@ -423,4 +423,37 @@ it("reuses one clean PDF socket, then destroys it if session reset fails", async
     await connection.close();
   }
   expect(f.destroy).toHaveBeenCalledTimes(2);
+});
+
+it.each(["PDF", "ordinary Source"])("waits for an idle PDF socket to close before opening %s", async (path) => {
+  vi.useFakeTimers();
+  f.principal = "otr_trip_source_command_gateway";
+  const pdf = createSourcePdfPgConnection(config);
+  const source = createSourcePgConnection(config);
+  const work = async (
+    lease: Parameters<Parameters<typeof pdf.withLease>[0]>[0],
+  ) => {
+    await lease.query("BEGIN");
+    await lease.query("COMMIT");
+  };
+  let finishClose!: () => void;
+  try {
+    await pdf.withLease(work);
+    f.end.mockImplementationOnce(() => new Promise<void>((resolve) => { finishClose = resolve; }));
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(f.end).toHaveBeenCalledOnce();
+    const next = path === "PDF" ? pdf.withLease(work) : (async () => {
+      await pdf.discardIdle();
+      await source.withLease(work);
+    })();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.connect).toHaveBeenCalledOnce();
+    finishClose();
+    await next;
+    expect(f.connect).toHaveBeenCalledTimes(2);
+  } finally {
+    finishClose?.();
+    await pdf.close();
+    vi.useRealTimers();
+  }
 });

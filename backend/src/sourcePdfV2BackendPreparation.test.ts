@@ -35,7 +35,7 @@ afterEach(async () => {
   await Promise.all(cleanup.splice(0).map((f) => f()));
   vi.resetAllMocks();
 });
-async function fixture(continuous = false) {
+async function fixture(continuous = false, afterInventory?: () => void) {
   const bytes = Buffer.alloc(70000, 37),
     tripId = randomUUID(),
     sourceId = randomUUID(),
@@ -230,6 +230,7 @@ async function fixture(continuous = false) {
             }
             if (sql.includes("trip_source_pdf_upload_v4_inventory")) {
               calls.push("INVENTORY");
+              afterInventory?.();
               return { rows: [{ result: [structuredClone(journal)] }] };
             }
             if (sql.includes("trip_source_pdf_upload_v4_execute")) {
@@ -637,8 +638,31 @@ it("request-bound Advance reuses the durable dispatch for one upload and one ind
   expect(inventory(legacy.calls.slice(legacyBefore))).toHaveLength(11);
   expect(f.counts()).toEqual({ posts: 1, gets: 1 });
   expect(f.events.slice(-5)).toEqual(["DISPATCH", "CONFIRM", "ACK", "READ", "GET"]);
-  expect(verify).toHaveBeenCalledTimes(3);
+  expect(verify).toHaveBeenCalledTimes(4);
   verify.mockRejectedValueOnce(Error("PDF_SCOPE_FORBIDDEN"));
   await expect(adapter.advance!(request, f.identity)).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
   expect(f.counts()).toEqual({ posts: 1, gets: 1 });
+});
+
+it("rechecks authorization after the last inventory and before dispatch is consumed", async () => {
+  let remainingReads = Infinity, revoked = false;
+  const f = await fixture(true, () => {
+    if (--remainingReads === 0) revoked = true;
+  });
+  await f.adapter().ingress(f.request(), f.identity);
+  remainingReads = 2;
+  const request = new Request("http://local/unregistered", { method: "POST" });
+  const adapter = createSourcePdfV2BackendPreparation(f.gateway, f.authority, f.stage, f.provider, {
+    request,
+    actorId: f.binding.actorAccountId,
+    tripId: f.binding.tripId,
+    inspect: (identity) => f.authority.inspectAdvance(f.binding.actorAccountId, identity),
+    async reauthorize() {
+      if (revoked) throw Error("PDF_SCOPE_FORBIDDEN");
+    },
+  });
+  await expect(adapter.advance!(request, f.identity)).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(revoked).toBe(true);
+  expect(f.events).toEqual(["STAGE"]);
+  expect(f.counts()).toEqual({ posts: 0, gets: 0 });
 });

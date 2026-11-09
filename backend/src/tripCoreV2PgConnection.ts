@@ -77,13 +77,19 @@ function createOwningPgConnection(
   let occupied = false;
   let closed = false;
   let idle: { client: Client; retire(): Promise<void>; isRetired(): boolean } | undefined;
+  let closingIdle: Promise<void> | undefined;
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
   function discardIdle() {
     clearTimeout(idleTimer);
     idleTimer = undefined;
     const prior = idle;
     idle = undefined;
-    return prior?.retire();
+    if (prior) {
+      closingIdle = prior.retire().finally(() => {
+        closingIdle = undefined;
+      });
+    }
+    return closingIdle;
   }
   const waiters = new Set<() => void>();
   // The Core principal has one connection: bound contention without reusing actor sessions.
@@ -122,12 +128,15 @@ function createOwningPgConnection(
     async withLease<T>(work: (lease: CorePgLease) => Promise<T>) {
       if (closed) throw new Error("CORE_CONNECTION_RETIRED");
       await measureSourcePdfPhase("pg_lease_wait", acquire);
-      const reused = idle && !idle.isRetired() ? idle : undefined;
+      const prior = idle;
+      const reused = prior && !prior.isRetired() ? prior : undefined;
       clearTimeout(idleTimer);
       idleTimer = undefined;
       idle = undefined;
       let session: NonNullable<typeof reused>;
       try {
+        await closingIdle;
+        if (!reused) await prior?.retire();
         if (closed) throw new Error("CORE_CONNECTION_RETIRED");
         if (reused) session = reused;
         else {

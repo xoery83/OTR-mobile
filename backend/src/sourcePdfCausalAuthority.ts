@@ -210,6 +210,7 @@ function createAuthority<
     types: string[],
     values: readonly unknown[],
     scope?: PdfSourceScopeIdentity,
+    beforeWrite?: () => Promise<void>,
   ) => {
     const actor =
       scope?.actorAccountId ?? (typeof values[0] === "string" ? values[0] : "");
@@ -220,6 +221,7 @@ function createAuthority<
         else if (name !== `${policy.rpcPrefix}_inventory`)
           throw Error("PDF_SCOPE_IDENTITY_REQUIRED");
       }
+      await beforeWrite?.();
       return (
         await lease.query(
           `SELECT public.${name}(${types.map((t, i) => `$${i + 1}::${t}`).join(",")}) AS result`,
@@ -235,6 +237,7 @@ function createAuthority<
     c: PdfReservedContext<B>,
     action: string,
     proof: Json | null = null,
+    beforeWrite?: () => Promise<void>,
   ) => {
     if (c.ownerRun !== owner.ownerRun) throw new Error("PDF_SCOPE_FORBIDDEN");
     return rpc<Journal>(
@@ -261,6 +264,7 @@ function createAuthority<
             },
           }
         : c.binding,
+      beforeWrite,
     );
   };
   function context(
@@ -468,7 +472,7 @@ function createAuthority<
         );
       } else await execute(c, "STAGE", stageProof);
     },
-    async consumeDispatch(c) {
+    async consumeDispatch(c, beforeWrite) {
       const j = await current(c);
       if (j.phase !== "STARTING" || j.pdf_dispatch_id !== null) return null;
       if (policy.version === 4 && j.owner_fence > 1) {
@@ -478,18 +482,19 @@ function createAuthority<
           ["uuid", "uuid", "bigint"],
           [c.binding.attemptId, c.ownerRun, c.ownerFence],
           c.binding,
+          beforeWrite,
         );
         if (!recovered.pdf_dispatch_id) throw new Error("DISPATCH_ID_REQUIRED");
         return { dispatchId: recovered.pdf_dispatch_id };
       }
       if (j.owner_fence !== 1) return null;
-      const dispatched = await execute(c, "DISPATCH");
+      const dispatched = await execute(c, "DISPATCH", null, beforeWrite);
       if (!dispatched.pdf_dispatch_id) throw new Error("DISPATCH_ID_REQUIRED");
       // Only this live successful DISPATCH call gets a grant. Restart/replay can never confirm for writing.
-      await execute({ ...c, dispatchId: dispatched.pdf_dispatch_id }, "CONFIRM");
+      await execute({ ...c, dispatchId: dispatched.pdf_dispatch_id }, "CONFIRM", null, beforeWrite);
       return { dispatchId: dispatched.pdf_dispatch_id };
     },
-    async prepareRead(c) {
+    async prepareRead(c, beforeWrite) {
       const prior = await current(c);
       if (prior.pdf_beta_get) {
         const retained = policy.get.parse(prior.pdf_beta_get);
@@ -499,7 +504,7 @@ function createAuthority<
           retainedEvidenceSha256: retained.evidenceSha256,
         };
       }
-      const j = await execute(c, "READ"),
+      const j = await execute(c, "READ", null, beforeWrite),
         permit = j.pdf_causal_read_permit;
       if (
         !permit ||

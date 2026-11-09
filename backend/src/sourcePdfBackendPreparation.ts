@@ -52,12 +52,18 @@ export type PdfPreparationAuthority<B extends PreparationBinding = PdfBackendBin
     context: PdfReservedContext<B>,
     sealed: Awaited<ReturnType<SourcePdfPrivateStageFor<B>["seal"]>>,
   ): Promise<void>;
-  prepareRead?(context: PdfReservedContext<B>): Promise<{
+  prepareRead?(
+    context: PdfReservedContext<B>,
+    beforeWrite?: () => Promise<void>,
+  ): Promise<{
     readId: string;
     ackEvidenceSha256: string;
     retainedEvidenceSha256?: string;
   }>;
-  consumeDispatch(context: PdfReservedContext<B>): Promise<{ dispatchId: string } | null>;
+  consumeDispatch(
+    context: PdfReservedContext<B>,
+    beforeWrite?: () => Promise<void>,
+  ): Promise<{ dispatchId: string } | null>;
   recordObservation(
     context: PdfReservedContext<B>,
     observation:
@@ -166,8 +172,10 @@ function createPreparation<B extends PreparationBinding>(
       );
       signal?.throwIfAborted();
       // Owning port must consume a durable grant before remote IO, including after restart.
-      if (advance) await advanceAccess!.reauthorize();
-      const grant = await authority.consumeDispatch(current);
+      const grant = await authority.consumeDispatch(
+        current,
+        advance ? advanceAccess!.reauthorize : undefined,
+      );
       if (
         !grant ||
         (current.dispatchId !== null && current.dispatchId !== grant.dispatchId)
@@ -192,8 +200,10 @@ function createPreparation<B extends PreparationBinding>(
       !authority.prepareRead
     )
       throw new Error("PDF_CAUSAL_READ_PORT_REQUIRED");
-    if (advance) await advanceAccess!.reauthorize();
-    const permit = await authority.prepareRead?.(current);
+    const permit = await authority.prepareRead?.(
+      current,
+      advance ? advanceAccess!.reauthorize : undefined,
+    );
     if (permit?.retainedEvidenceSha256)
       return {
         kind: "PERSISTED_GET" as const,
