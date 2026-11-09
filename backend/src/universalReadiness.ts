@@ -15,7 +15,10 @@ const reviewedDate = (value: string) => {
     return false;
   }
 };
-export function projectUniversalMinimumFacts(candidate: Candidate) {
+export function projectUniversalMinimumFacts(
+  candidate: Candidate,
+  activityDates: "CIVIL" | "ISO_ONLY" = "CIVIL",
+) {
   const fields = new Map(candidate.fields.map((f) => [f.path, f.raw]));
   const has = (...paths: string[]) => paths.some((p) => !!fields.get(p)?.trim());
   const dated = (...paths: string[]) => paths.some((p) => date(fields.get(p) ?? ""));
@@ -26,7 +29,7 @@ export function projectUniversalMinimumFacts(candidate: Candidate) {
       if (!has("activity.name", "title")) missing.push("NAME");
       if (
         !["activity.date", "schedule.start.local_date"].some((path) =>
-          reviewedDate(fields.get(path) ?? ""),
+          (activityDates === "ISO_ONLY" ? date : reviewedDate)(fields.get(path) ?? ""),
         )
       )
         missing.push("START_DATE");

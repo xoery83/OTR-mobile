@@ -13,6 +13,18 @@ it.skipIf(process.platform !== "linux")(
   },
 );
 
+it.skipIf(process.platform !== "linux")(
+  "recovers immutable ISO-only activity readiness after adopting civil dates",
+  async () => {
+    const result = await runUniversalContinuationFixture(
+      "/custody-tests",
+      undefined,
+      "legacy-activity-date",
+    );
+    expect(result.realProviderCalls).toBe(0);
+  },
+);
+
 import { createUniversalSourceReader } from "./universalSourceRead";
 import type { Task } from "../../src/domain/intelligence/persistence";
 import { vi } from "vitest";

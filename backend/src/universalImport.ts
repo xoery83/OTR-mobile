@@ -415,6 +415,7 @@ export function prepareUniversalDispatch(
 export function projectUniversalResponse(
   dispatch: ReturnType<typeof prepareUniversalDispatch>,
   response: Awaited<ReturnType<UniversalProvider["interpret"]>>,
+  activityDates: Parameters<typeof projectUniversalMinimumFacts>[1] = "CIVIL",
 ): UniversalResult {
   const { prepared, ready, bindings, base } = dispatch;
   const envelope = envelopeSchema.safeParse(response.output);
@@ -476,8 +477,8 @@ export function projectUniversalResponse(
         reason,
       }))
     : [];
-  const minimumFacts = (inspection.proposals?.objects ?? []).map(
-    projectUniversalMinimumFacts,
+  const minimumFacts = (inspection.proposals?.objects ?? []).map((candidate) =>
+    projectUniversalMinimumFacts(candidate, activityDates),
   );
   const factsByToken = new Map(minimumFacts.map((f) => [f.token, f]));
   const advisory = validateUniversalAdvisory(

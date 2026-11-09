@@ -24,6 +24,7 @@ import { createUniversalContinuationHost } from "../universalContinuationHost";
 import {
   createUniversalPort,
   prepareUniversalDispatch,
+  projectUniversalResponse,
   UNIVERSAL_IMPORT_VERSION,
   type UniversalManifest,
 } from "../universalImport";
@@ -41,6 +42,7 @@ import {
   createSettledUniversalReadPort,
 } from "../universalSettledRecovery";
 import { buildUniversalDeepSeekRequest } from "../universalProviderRequest";
+import { decodeUniversalDeepSeekResponse } from "../universalDeepSeekProvider";
 import {
   universalInstruction,
   universalAdvisoryInstruction,
@@ -73,7 +75,7 @@ export async function runUniversalContinuationFixture(
       }[];
     };
   },
-  settledRecovery = false,
+  settledRecovery: boolean | "legacy-activity-date" = false,
 ) {
   assert.equal(
     process.platform,
@@ -107,6 +109,7 @@ export async function runUniversalContinuationFixture(
       taskId = sourceFixture?.manifest.taskId ?? randomUUID(),
       run = sourceFixture?.manifest.runId ?? randomUUID(),
       now = new Date().toISOString();
+    const legacyActivityDate = settledRecovery === "legacy-activity-date";
     const representations = sourceFixture
       ? sourceFixture.manifest.representations.map((r) => ({
           ...r,
@@ -116,7 +119,10 @@ export async function runUniversalContinuationFixture(
           originalSha256: r.sha256,
           bytes: Buffer.from(r.text),
         }))
-      : ["Museum walk", "Grand Hotel"].map((text) => ({
+      : [
+          legacyActivityDate ? "Museum walk\nNovember 2, 2026" : "Museum walk",
+          "Grand Hotel",
+        ].map((text) => ({
           accountId: account,
           tripId: trip,
           batchId: batch,
@@ -510,7 +516,19 @@ export async function runUniversalContinuationFixture(
               message: {
                 content: JSON.stringify({
                   v: 2,
-                  items: [],
+                  items: legacyActivityDate
+                    ? [
+                        {
+                          id: "activity",
+                          kind: "P6",
+                          subtype: "ACTIVITY",
+                          f: [
+                            [0, "activity.name", "Museum walk"],
+                            [0, "activity.date", "November 2, 2026"],
+                          ],
+                        },
+                      ]
+                    : [],
                   bookings: [],
                   tickets: [],
                   links: [],
@@ -623,6 +641,42 @@ export async function runUniversalContinuationFixture(
         () => recoverSettledUniversalTask({ ...deps, callId: randomUUID() }),
         /RECOVERY_BINDING/,
       );
+      if (legacyActivityDate) {
+        const decoded = decodeUniversalDeepSeekResponse(rawBytes, deps.priceSchedule);
+        const response = {
+          output: decoded.output,
+          providerReceipt: {
+            outcome: "SETTLED" as const,
+            requestId: decoded.providerRequestId,
+            requestSha256: providerRequest.requestSha256,
+            responseSha256: sha(rawBytes),
+            usage: decoded.usage,
+            costNanos: decoded.costNanos,
+          },
+        };
+        const legacy = projectUniversalResponse(plan, response, "ISO_ONLY");
+        assert.equal(legacy.candidates[0]?.presentationTier, "INCOMPLETE");
+        assert.notEqual(
+          projectUniversalResponse(plan, response).candidates[0]?.presentationTier,
+          "INCOMPLETE",
+        );
+        await createUniversalContinuationHost({
+          context,
+          batchId: batch,
+          taskId,
+          repository: repo,
+          custody: stores.custody,
+          retained: stores.retained,
+          requestMaterialByteCount: bytes.length,
+          attempt,
+          readSourceManifest: deps.readSourceManifest,
+          assertCompletion: deps.checks.assertCompletion,
+          async assertDurableStart() {
+            throw Error("UNIVERSAL_RECOVERY_DISPATCH_FORBIDDEN");
+          },
+        }).writeReceipt(legacy);
+        assert.deepEqual(await recoverSettledUniversalTask(deps), legacy);
+      }
       const result = await recoverSettledUniversalTask(deps);
       const state = await repo.snapshot(context, taskId);
       assert.equal(state.task.work_disposition, "PUBLISHED");

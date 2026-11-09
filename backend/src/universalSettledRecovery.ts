@@ -14,6 +14,7 @@ import {
   projectUniversalResponse,
   UNIVERSAL_IMPORT_VERSION,
   type UniversalManifest,
+  type UniversalProvider,
 } from "./universalImport";
 import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
 import {
@@ -130,7 +131,7 @@ export async function recoverSettledUniversalTask(deps: {
   const decoded = decodeUniversalDeepSeekResponse(bytes, deps.priceSchedule);
   if (deps.priceSchedule && decoded.costNanos === null)
     throw Error("UNIVERSAL_RECOVERY_USAGE_UNRESOLVED");
-  const result = projectUniversalResponse(dispatch, {
+  const response: Awaited<ReturnType<UniversalProvider["interpret"]>> = {
     output: decoded.output,
     providerReceipt: {
       outcome: "SETTLED",
@@ -140,7 +141,8 @@ export async function recoverSettledUniversalTask(deps: {
       usage: decoded.usage,
       costNanos: decoded.costNanos,
     },
-  });
+  };
+  let result = projectUniversalResponse(dispatch, response);
   await deps.assertCurrentAuth();
   const host = createUniversalContinuationHost({
     context: deps.context,
@@ -177,8 +179,13 @@ export async function recoverSettledUniversalTask(deps: {
       task.import_id!,
       task.task_id,
     );
-    if (JSON.stringify(existing) !== JSON.stringify(result))
-      throw Error("UNIVERSAL_RECOVERY_RESULT_CHANGED");
+    if (JSON.stringify(existing) !== JSON.stringify(result)) {
+      // Older immutable receipts used ISO-only activity readiness.
+      const legacy = projectUniversalResponse(dispatch, response, "ISO_ONLY");
+      if (JSON.stringify(existing) !== JSON.stringify(legacy))
+        throw Error("UNIVERSAL_RECOVERY_RESULT_CHANGED");
+      result = legacy;
+    }
   } else await host.writeReceipt(result);
   const after = await deps.repository.snapshot(deps.context, task.task_id);
   await deps.repository.authorizeResultDisclosure(
