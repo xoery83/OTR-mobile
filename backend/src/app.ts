@@ -662,6 +662,7 @@ export type BackendDependencies = {
   sourcePdfV4PreparationForRequest?: (
     request: Request,
     actorId: string,
+    verifiedAdvance?: import("./sourcePdfV4PreparationHttp").VerifiedPdfAdvance,
   ) => ReturnType<NonNullable<Parameters<typeof sourcePdfV4PreparationBoundary>[4]>>;
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
@@ -2765,7 +2766,9 @@ export function createDevBackendHandler({
               measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(a, t)),
             sourcePdfV4PreparationPort,
             sourcePdfV4PreparationForRequest
-              ? () => sourcePdfV4PreparationForRequest(pdfRequest, actor.id)
+              ? (proof) => proof
+                ? sourcePdfV4PreparationForRequest(pdfRequest, actor.id, proof)
+                : sourcePdfV4PreparationForRequest(pdfRequest, actor.id)
               : undefined,
           );
         };

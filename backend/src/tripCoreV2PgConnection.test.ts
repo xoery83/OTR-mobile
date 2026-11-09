@@ -11,6 +11,8 @@ const f = vi.hoisted(() => ({
   principal: "otr_trip_core_v2_gateway",
   recovery: false,
   constructorFailure: false,
+  discardFailure: false,
+  connect: vi.fn(),
   destroy: vi.fn(),
   end: vi.fn(),
   queries: [] as string[],
@@ -23,12 +25,15 @@ vi.mock("pg", () => ({
       f.config = config;
     }
     on() {}
-    async connect() {}
+    async connect() {
+      f.connect();
+    }
     async end() {
       f.end();
     }
     async query(sql: string) {
       f.queries.push(sql);
+      if (f.discardFailure && sql === "DISCARD ALL") throw Error("reset failed");
       return {
         rows: sql.includes("pg_is_in_recovery")
           ? [{ principal: f.principal, role: f.principal, recovery: f.recovery }]
@@ -47,6 +52,8 @@ beforeEach(() => {
   f.principal = "otr_trip_core_v2_gateway";
   f.recovery = false;
   f.constructorFailure = false;
+  f.discardFailure = false;
+  f.connect.mockClear();
   f.destroy.mockClear();
   f.end.mockClear();
   f.queries = [];
@@ -385,4 +392,35 @@ it("retires Core at its 60s hard deadline and rejects any late COMMIT", async ()
     release?.();
     vi.useRealTimers();
   }
+});
+
+it("reuses one clean PDF socket, then destroys it if session reset fails", async () => {
+  f.principal = "otr_trip_source_command_gateway";
+  const connection = createSourcePdfPgConnection(config);
+  const work = async (
+    lease: Parameters<Parameters<typeof connection.withLease>[0]>[0],
+  ) => {
+    expect(lease.verifiedSourceSession).toBe(true);
+    await lease.query("BEGIN");
+    await lease.query("SET LOCAL ROLE otr_trip_source_writer");
+    await lease.query("COMMIT");
+  };
+  try {
+    await connection.withLease(work);
+    await connection.withLease(work);
+    expect(f.connect).toHaveBeenCalledTimes(1);
+    expect(f.queries.filter((sql) => sql === "DISCARD ALL")).toHaveLength(1);
+    expect(f.queries.indexOf("DISCARD ALL")).toBeLessThan(f.queries.lastIndexOf("BEGIN"));
+    expect(f.destroy).not.toHaveBeenCalled();
+    f.discardFailure = true;
+    const blocked = vi.fn(work);
+    await expect(connection.withLease(blocked)).rejects.toThrow("reset failed");
+    expect(blocked).not.toHaveBeenCalled();
+    expect(f.destroy).toHaveBeenCalledOnce();
+    await connection.withLease(work);
+    expect(f.connect).toHaveBeenCalledTimes(2);
+  } finally {
+    await connection.close();
+  }
+  expect(f.destroy).toHaveBeenCalledTimes(2);
 });

@@ -71,6 +71,7 @@ export async function loadDevUniversalContinuousRuntime(
         inputs: finite.batch.inputs,
       })
     : undefined;
+  let pdfPg: ReturnType<typeof createSourcePdfPgConnection> | undefined;
   let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
   let png: ReturnType<typeof createSourcePngRuntimePorts> | undefined;
   let closed = false,
@@ -103,12 +104,19 @@ export async function loadDevUniversalContinuousRuntime(
       if (closed || env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST !== "enabled")
         throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     };
+    const sourcePg = createSourcePgConnection(config.sourcePg);
+    if (env.OTR_DEV_UNIVERSAL_PDF_RUNTIME === "enabled")
+      pdfPg = createSourcePdfPgConnection(config.sourcePg);
     const [sourceConnection, pdfConnection] = serializeUniversalSourceConnections(
       [
-        createSourcePgConnection(config.sourcePg),
-        ...(env.OTR_DEV_UNIVERSAL_PDF_RUNTIME === "enabled"
-          ? [createSourcePdfPgConnection(config.sourcePg)]
-          : []),
+        {
+          async withLease(work) {
+            // Both budgets share the existing one-session Source role.
+            await pdfPg?.discardIdle();
+            return sourcePg.withLease(work);
+          },
+        },
+        ...(pdfPg ? [pdfPg] : []),
       ],
       guard,
     );
@@ -692,6 +700,7 @@ export async function loadDevUniversalContinuousRuntime(
         closed = true;
         png?.close();
         pdf?.close();
+        await pdfPg?.close();
         sql?.close();
         sql = undefined;
         await stores?.close();
@@ -702,6 +711,7 @@ export async function loadDevUniversalContinuousRuntime(
     closed = true;
     png?.close();
     pdf?.close();
+    await pdfPg?.close();
     sql?.close();
     await stores?.close();
     await catalogConnection.close();

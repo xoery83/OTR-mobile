@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { VerifiedPdfAdvance } from "./sourcePdfV4PreparationHttp";
 import {
   sourcePdfV2UploadBindingSchema,
   type SourcePdfV2UploadBinding,
@@ -25,6 +26,13 @@ export type PdfIngressIdentity = {
   accountGeneration: number;
 };
 type PreparationBinding = PdfBackendBinding | SourcePdfV2UploadBinding;
+type PdfAdvanceAccess<B extends PreparationBinding> = VerifiedPdfAdvance & {
+  reauthorize(): Promise<void>;
+  inspect(identity: PdfIngressIdentity): Promise<
+    | { status: "STAGED" | "ACK_OBSERVED"; context: PdfReservedContext<B> }
+    | { status: "READ_OBSERVED" | "NO_ACTIVE_ATTEMPT" | "RECOVERY_REQUIRED" | "UNKNOWN" | "DISPATCH_RECORDED" | "RESERVED" }
+  >;
+};
 export type PdfReservedContext<B extends PreparationBinding = PdfBackendBinding> = {
   binding: B;
   accountGeneration: number;
@@ -83,6 +91,7 @@ export function createSourcePdfV2BackendPreparation(
     >,
   stage: SourcePdfPrivateStageFor<SourcePdfV2UploadBinding>,
   provider: SourcePdfStorageProducerFor<SourcePdfV2UploadBinding>,
+  advanceAccess?: PdfAdvanceAccess<SourcePdfV2UploadBinding>,
 ) {
   if (!authority.recordStage) throw new Error("PDF_CAUSAL_STAGE_PORT_REQUIRED");
   if (!authority.prepareRead) throw new Error("PDF_CAUSAL_READ_PORT_REQUIRED");
@@ -92,6 +101,7 @@ export function createSourcePdfV2BackendPreparation(
     stage,
     provider,
     sourcePdfV2UploadBindingSchema,
+    advanceAccess,
   );
 }
 function createPreparation<B extends PreparationBinding>(
@@ -100,22 +110,17 @@ function createPreparation<B extends PreparationBinding>(
   stage: SourcePdfPrivateStageFor<B>,
   provider: SourcePdfStorageProducerFor<B>,
   bindingSchema: z.ZodType<B>,
+  advanceAccess?: PdfAdvanceAccess<B>,
 ) {
   const busy = new Set<string>();
-  async function context(request: Request, identity: PdfIngressIdentity) {
-    const actor = await measureSourcePdfPhase("auth", () =>
-      authenticate(request, gateway),
-    );
-    if (
-      !(await measureSourcePdfPhase("trip_access", () =>
-        gateway.canReadTrip(actor.id, identity.tripId),
-      ))
-    )
-      throw new Error("PDF_SCOPE_FORBIDDEN");
-    const current = await authority.resolveReserved(actor.id, identity);
+  function validateContext(
+    current: PdfReservedContext<B>,
+    actorId: string,
+    identity: PdfIngressIdentity,
+  ) {
     const b = bindingSchema.parse(current.binding);
     if (
-      b.actorAccountId !== actor.id ||
+      b.actorAccountId !== actorId ||
       b.tripId !== identity.tripId ||
       b.sourceId !== identity.sourceId ||
       b.representationId !== identity.representationId ||
@@ -130,20 +135,38 @@ function createPreparation<B extends PreparationBinding>(
       b.providerInstanceSha256 !== provider.configurationSha256
     )
       throw new Error("PDF_PROVIDER_BINDING_CONFLICT");
+  }
+  async function context(request: Request, identity: PdfIngressIdentity) {
+    const actor = await measureSourcePdfPhase("auth", () =>
+      authenticate(request, gateway),
+    );
+    if (
+      !(await measureSourcePdfPhase("trip_access", () =>
+        gateway.canReadTrip(actor.id, identity.tripId),
+      ))
+    )
+      throw Error("PDF_SCOPE_FORBIDDEN");
+    const current = await authority.resolveReserved(actor.id, identity);
+    validateContext(current, actor.id, identity);
     await authority.assertCurrent(current);
     return current;
   }
-  async function dispatch(current: PdfReservedContext<B>, signal?: AbortSignal) {
+  async function dispatch(
+    current: PdfReservedContext<B>,
+    signal?: AbortSignal,
+    advance = false,
+  ) {
     const id = current.binding.attemptId;
     if (busy.has(id)) throw new Error("PDF_DUPLICATE_DISPATCH");
     busy.add(id);
     try {
-      await authority.assertCurrent(current);
+      if (!advance) await authority.assertCurrent(current);
       const bytes = await measureSourcePdfPhase("private_stage_reopen", () =>
         stage.reopen(current.binding),
       );
       signal?.throwIfAborted();
       // Owning port must consume a durable grant before remote IO, including after restart.
+      if (advance) await advanceAccess!.reauthorize();
       const grant = await authority.consumeDispatch(current);
       if (
         !grant ||
@@ -156,11 +179,39 @@ function createPreparation<B extends PreparationBinding>(
         bytes,
       );
       const evidenceReference = await authority.recordObservation(dispatched, ack);
-      await authority.assertCurrent(dispatched);
-      return { ...ack, evidenceReference };
+      if (!advance) await authority.assertCurrent(dispatched);
+      return { dispatched, sent: { ...ack, evidenceReference } };
     } finally {
       busy.delete(id);
     }
+  }
+  async function readRetained(current: PdfReservedContext<B>, advance = false) {
+    if (!current.dispatchId) throw new Error("DISPATCH_ID_REQUIRED");
+    if (
+      (current.binding.uploadVersion === 3 || current.binding.uploadVersion === 4) &&
+      !authority.prepareRead
+    )
+      throw new Error("PDF_CAUSAL_READ_PORT_REQUIRED");
+    if (advance) await advanceAccess!.reauthorize();
+    const permit = await authority.prepareRead?.(current);
+    if (permit?.retainedEvidenceSha256)
+      return {
+        kind: "PERSISTED_GET" as const,
+        evidenceReference: permit.retainedEvidenceSha256,
+      };
+    const observation = await provider.read({
+      binding: current.binding,
+      dispatchId: current.dispatchId,
+      ...permit,
+    });
+    const evidenceReference = await authority.recordObservation(current, observation);
+    if (!advance) await authority.assertCurrent(current);
+    if (
+      canonicalCoreJson(observation.request.binding) !==
+      canonicalCoreJson(current.binding)
+    )
+      throw new Error("PDF_SCOPE_FORBIDDEN");
+    return { ...observation, evidenceReference };
   }
   return {
     async ingress(request: Request, identity: PdfIngressIdentity) {
@@ -212,35 +263,40 @@ function createPreparation<B extends PreparationBinding>(
     async upload(request: Request, identity: PdfIngressIdentity, signal?: AbortSignal) {
       const current = await context(request, identity);
       signal?.throwIfAborted();
-      return dispatch(current, signal);
+      return (await dispatch(current, signal)).sent;
     },
     async observeRetained(request: Request, identity: PdfIngressIdentity) {
-      const current = await context(request, identity);
-      if (!current.dispatchId) throw new Error("DISPATCH_ID_REQUIRED");
-      if (
-        (current.binding.uploadVersion === 3 || current.binding.uploadVersion === 4) &&
-        !authority.prepareRead
-      )
-        throw new Error("PDF_CAUSAL_READ_PORT_REQUIRED");
-      const permit = await authority.prepareRead?.(current);
-      if (permit?.retainedEvidenceSha256)
-        return {
-          kind: "PERSISTED_GET" as const,
-          evidenceReference: permit.retainedEvidenceSha256,
-        };
-      const observation = await provider.read({
-        binding: current.binding,
-        dispatchId: current.dispatchId,
-        ...permit,
-      });
-      const evidenceReference = await authority.recordObservation(current, observation);
-      await authority.assertCurrent(current);
-      if (
-        canonicalCoreJson(observation.request.binding) !==
-        canonicalCoreJson(current.binding)
-      )
-        throw new Error("PDF_SCOPE_FORBIDDEN");
-      return { ...observation, evidenceReference };
+      return readRetained(await context(request, identity));
     },
+    ...(advanceAccess
+      ? {
+          async advance(request: Request, identity: PdfIngressIdentity) {
+            if (
+              advanceAccess.request !== request ||
+              advanceAccess.tripId !== identity.tripId
+            )
+              throw Error("PDF_SCOPE_FORBIDDEN");
+            const projection = await advanceAccess.inspect(identity);
+            const { status } = projection;
+            if (status === "READ_OBSERVED") {
+              await advanceAccess.reauthorize();
+              return true;
+            }
+            if (status !== "STAGED" && status !== "ACK_OBSERVED") return false;
+            let current = projection.context;
+            validateContext(current, advanceAccess.actorId, identity);
+            request.signal.throwIfAborted();
+            if (status === "STAGED") {
+              const { dispatched, sent } = await dispatch(current, request.signal, true);
+              if (sent.kind !== "COMPLETE_ACK") return false;
+              current = dispatched;
+            }
+            request.signal.throwIfAborted();
+            const observed = await readRetained(current, true);
+            await advanceAccess.reauthorize();
+            return observed.kind === "MATCH" || observed.kind === "PERSISTED_GET";
+          },
+        }
+      : {}),
   };
 }

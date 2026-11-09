@@ -1,3 +1,7 @@
+## Universal Import PDF Advance optimization candidate — 9 November 2026
+
+The hosted QA173 PDF Advance baseline was 142.479 seconds with 57 Auth checks, 57 Trip reads, 20 PG connections and 100 PG setup statements. The request-scoped candidate shares the owning upload projection and keeps fresh authorization at the Storage and dispatch boundaries. The existing PDF PG adapter reuses one physical connection with a session reset between leases. An isolated comparison reduced Source inventory queries from 11 to 4, with one PUT and one independent GET. The existing Finish contract requires that GET. Hosted timing, original QA173 Finish, and DeepSeek remain pending. The current Task/Wake contract requires material pins before registration, and automatic preparation of missing pins is a separate integration delta.
+
 ## Universal DEV AI cost guard candidate — 8 November 2026
 
 Universal Analyze has a source candidate for the Owner-controlled Backend cost switch. The default is ON. Exact DEV `false` uses the existing unpriced call and usage path. Isolated PostgreSQL passed finite and sustained OFF and sustained ON. Hosted installation and actual Analyze remain pending. See `docs/ops/ai-cost-guard-dev-20261108/ROOT1_HANDOFF.md`.

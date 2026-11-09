@@ -67,6 +67,7 @@ function fixture() {
     if (sql.includes("pg_current_xact_id")) return { rows: [{ xid: String(++xid) }] };
     if (sql.includes("trip_source_universal_pdf_enter"))
       return { rows: [{ entered: true }] };
+    if (sql.includes("trip_source_pdf_upload_v4_inventory")) return { rows: [{ result: [] }] };
     if (sql.includes("trip_source_prepare_representation"))
       return { rows: [{ result: receipt }] };
     return { rows: [] };
@@ -279,3 +280,35 @@ it.each(["lease-close", "lease-abort", "enter-close", "enter-abort"])(
     ).toHaveLength(0);
   },
 );
+
+it("uses the exact admitted Advance request locally and reads the owning journal once", async () => {
+  const f = fixture();
+  const q = new Request(f.request().url.replace(/prepare$/, "advance"), {
+    method: "POST",
+    headers: { Authorization: "Bearer synthetic" },
+  });
+  const scoped = await f.factory(q, f.actor, {
+    request: q,
+    actorId: f.actor,
+    tripId: f.trip,
+  });
+  const generation = await scoped.port.owner.accountGeneration(f.actor);
+  expect(await scoped.port.owner.accountGeneration(f.actor)).toBe(generation);
+  expect(f.gateway.validateAccessToken).not.toHaveBeenCalled();
+  const identity = {
+    tripId: f.trip,
+    sourceId: f.command.source_id,
+    representationId: f.command.payload.representation_id,
+    operationId: f.command.operation_id,
+    accountGeneration: generation,
+  };
+  await expect(
+    scoped.port.preparation.advance!(q.clone(), identity),
+  ).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(f.query).not.toHaveBeenCalled();
+  expect(await scoped.port.preparation.advance!(q, identity)).toBe(false);
+  expect(f.query.mock.calls.filter(([sql]) => sql.includes("_inventory"))).toHaveLength(1);
+  expect(f.gateway.validateAccessToken).not.toHaveBeenCalled();
+  expect(f.gateway.canReadTrip).not.toHaveBeenCalled();
+  scoped.close();
+});

@@ -1,3 +1,4 @@
+import type { VerifiedPdfAdvance } from "./sourcePdfV4PreparationHttp";
 import type { PdfSourceRequestIoGuard } from "./sourcePdfStorageProducer";
 import { authenticate, authenticateNormalAccount, type DevBackendGateway } from "./app";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
@@ -25,7 +26,7 @@ export function createSourcePdfRequestPreparation(deps: {
   assertEnabled(): void;
 }) {
   coreUuid.parse(deps.nodeId);
-  return async (request: Request, actorId: string) => {
+  return async (request: Request, actorId: string, proof?: VerifiedPdfAdvance) => {
     deps.assertEnabled();
     const path = new URL(request.url).pathname;
     const route =
@@ -37,11 +38,18 @@ export function createSourcePdfRequestPreparation(deps: {
     const authorize = path.endsWith("/advance")
       ? authenticateNormalAccount
       : authenticate;
+    const reuseVerifiedAccess =
+      path.endsWith("/advance") &&
+      proof?.request === request &&
+      proof.actorId === actorId &&
+      proof.tripId === tripId;
     const scope = createSourcePdfRequestScope({
       actorId,
       tripId,
       signal: request.signal,
       workload: deps.workload,
+      reuseVerifiedAccess,
+      assertEnabled: deps.assertEnabled,
       async readCurrentAccess() {
         deps.assertEnabled();
         const current = await measureSourcePdfPhase("auth", () =>
@@ -63,7 +71,7 @@ export function createSourcePdfRequestPreparation(deps: {
           scope.owner.assertRequestCurrent();
         },
         async assertCurrent() {
-          await scope.owner.accountGeneration(actorId);
+          await scope.reauthorize(actorId);
         },
       });
       const provider = deps.providerForRequest(guard);
@@ -81,6 +89,15 @@ export function createSourcePdfRequestPreparation(deps: {
             authority,
             deps.stage,
             provider,
+            reuseVerifiedAccess
+              ? {
+                  request,
+                  actorId,
+                  tripId,
+                  reauthorize: () => scope.reauthorize(actorId),
+                  inspect: (identity) => authority.inspectAdvance(actorId, identity),
+                }
+              : undefined,
           ),
         },
         close: scope.close,

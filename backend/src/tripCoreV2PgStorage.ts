@@ -38,6 +38,8 @@ import {
 } from "./tripCoreV2Commands";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
 export type CorePgLease = {
+  // Dedicated Source adapter verified the principal and started with a clean, idle session.
+  verifiedSourceSession?: true;
   retire(): void;
   query(sql: string, parameters?: readonly unknown[]): Promise<{ rows: CoreRow[] }>;
 };

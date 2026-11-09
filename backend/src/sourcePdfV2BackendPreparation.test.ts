@@ -35,7 +35,7 @@ afterEach(async () => {
   await Promise.all(cleanup.splice(0).map((f) => f()));
   vi.resetAllMocks();
 });
-async function fixture() {
+async function fixture(continuous = false) {
   const bytes = Buffer.alloc(70000, 37),
     tripId = randomUUID(),
     sourceId = randomUUID(),
@@ -171,6 +171,8 @@ async function fixture() {
         work({
           retire: vi.fn(),
           async query(sql, args = []) {
+            if (sql.includes("trip_source_universal_pdf_enter"))
+              return { rows: [{ entered: true }] };
             if (sql.startsWith("SELECT session_user"))
               return {
                 rows: [
@@ -291,6 +293,7 @@ async function fixture() {
         }),
     },
     owner,
+    continuous ? { continuousSourceScope: true } : {},
   );
   const gateway = {
     validateAccessToken: async () => ({ id: binding.actorAccountId }),
@@ -599,4 +602,43 @@ it("requires causal stage/read ports and exact provider configuration before V4 
     "PDF_PROVIDER_BINDING_CONFLICT",
   );
   expect(f.counts()).toEqual({ posts: 0, gets: 0 });
+});
+
+it("request-bound Advance reuses the durable dispatch for one upload and one independent read", async () => {
+  const legacy = await fixture(true);
+  await legacy.adapter().ingress(legacy.request(), legacy.identity);
+  const legacyBefore = legacy.calls.length;
+  await legacy.authority.status(legacy.binding.actorAccountId, legacy.identity);
+  await legacy.adapter().upload(legacy.request(), legacy.identity);
+  await legacy.adapter().observeRetained(legacy.request(), legacy.identity);
+  const f = await fixture(true);
+  await f.adapter().ingress(f.request(), f.identity);
+  const resolve = vi.spyOn(f.authority, "resolveReserved");
+  const verify = vi.fn(async () => {});
+  const callsBefore = f.calls.length;
+  const request = new Request("http://local/unregistered", { method: "POST" });
+  const adapter = createSourcePdfV2BackendPreparation(
+    f.gateway,
+    f.authority,
+    f.stage,
+    f.provider,
+    {
+      request,
+      actorId: f.binding.actorAccountId,
+      tripId: f.binding.tripId,
+      reauthorize: verify,
+      inspect: (identity) => f.authority.inspectAdvance(f.binding.actorAccountId, identity),
+    },
+  );
+  expect(await adapter.advance!(request, f.identity)).toBe(true);
+  expect(resolve).not.toHaveBeenCalled();
+  const inventory = (calls: string[]) => calls.filter((call) => call === "INVENTORY");
+  expect(inventory(f.calls.slice(callsBefore))).toHaveLength(4);
+  expect(inventory(legacy.calls.slice(legacyBefore))).toHaveLength(11);
+  expect(f.counts()).toEqual({ posts: 1, gets: 1 });
+  expect(f.events.slice(-5)).toEqual(["DISPATCH", "CONFIRM", "ACK", "READ", "GET"]);
+  expect(verify).toHaveBeenCalledTimes(3);
+  verify.mockRejectedValueOnce(Error("PDF_SCOPE_FORBIDDEN"));
+  await expect(adapter.advance!(request, f.identity)).rejects.toThrow("PDF_SCOPE_FORBIDDEN");
+  expect(f.counts()).toEqual({ posts: 1, gets: 1 });
 });

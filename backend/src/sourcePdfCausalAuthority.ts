@@ -165,28 +165,33 @@ function createAuthority<
         : lease;
       try {
         assertRequestCurrent();
-        const before = (
-          await lease.query(
-            "SELECT session_user AS principal,current_user AS role,pg_current_xact_id()::text AS xid",
+        if (lease.verifiedSourceSession) {
+          await lease.query("BEGIN");
+          began = true;
+        } else {
+          const before = (
+            await lease.query(
+              "SELECT session_user AS principal,current_user AS role,pg_current_xact_id()::text AS xid",
+            )
+          ).rows[0];
+          if (
+            before?.principal !== "otr_trip_source_command_gateway" ||
+            before.role !== before.principal
           )
-        ).rows[0];
-        if (
-          before?.principal !== "otr_trip_source_command_gateway" ||
-          before.role !== before.principal
-        )
-          throw new Error("PDF_PRINCIPAL_DENIED");
-        await lease.query("BEGIN");
-        const xid = (await lease.query("SELECT pg_current_xact_id()::text AS xid"))
-          .rows[0]?.xid;
-        if (!xid || xid === before.xid) {
-          // BEGIN inside a caller transaction is only a warning. Never accept a savepoint/outer transaction.
-          lease.retire();
-          throw new Error("PDF_TOP_LEVEL_TRANSACTION_REQUIRED");
+            throw new Error("PDF_PRINCIPAL_DENIED");
+          await lease.query("BEGIN");
+          const xid = (await lease.query("SELECT pg_current_xact_id()::text AS xid"))
+            .rows[0]?.xid;
+          if (!xid || xid === before.xid) {
+            // BEGIN inside a caller transaction is only a warning. Never accept a savepoint/outer transaction.
+            lease.retire();
+            throw new Error("PDF_TOP_LEVEL_TRANSACTION_REQUIRED");
+          }
+          began = true;
+          await lease.query(
+            "SELECT pg_catalog.set_config('statement_timeout','5000ms',true),pg_catalog.set_config('lock_timeout','1000ms',true)",
+          );
         }
-        began = true;
-        await lease.query(
-          "SELECT pg_catalog.set_config('statement_timeout','5000ms',true),pg_catalog.set_config('lock_timeout','1000ms',true)",
-        );
         assertRequestCurrent();
         const result = await work(scopedLease);
         assertRequestCurrent();
@@ -287,6 +292,51 @@ function createAuthority<
       ["uuid", "uuid", "uuid"],
       [actorId, identity.tripId, identity.sourceId],
     );
+  }
+  async function inspectAdvance(actorId: string, identity: PdfIngressIdentity) {
+    if (policy.version !== 4 || !policy.continuousSourceScope)
+      throw Error("SOURCE_CAPABILITY_CLOSED");
+    if ((await owner.accountGeneration(actorId)) !== identity.accountGeneration)
+      throw Error("PDF_SCOPE_FORBIDDEN");
+    const matches = (await inventory(actorId, identity)).filter(
+      (j) => j.operation_id === identity.operationId,
+    );
+    if ((await owner.accountGeneration(actorId)) !== identity.accountGeneration)
+      throw Error("PDF_SCOPE_FORBIDDEN");
+    // Cleaned terminal attempts are absent too; this never proves no prior receipt.
+    if (!matches.length) return { status: "NO_ACTIVE_ATTEMPT" as const };
+    if (matches.length !== 1) throw Error("PDF_UPLOAD_PLAN_CONFLICT");
+    const j = matches[0],
+      b = policy.binding.parse(j.pdf_binding);
+    if (
+      b.actorAccountId !== actorId ||
+      b.tripId !== identity.tripId ||
+      b.sourceId !== identity.sourceId ||
+      b.representationId !== identity.representationId ||
+      b.operationId !== identity.operationId
+    )
+      throw Error("PDF_SCOPE_FORBIDDEN");
+    if (
+      j.owner_run !== owner.ownerRun ||
+      b.producerId !== owner.producerId ||
+      b.providerInstanceSha256 !== owner.providerInstanceSha256
+    )
+      return { status: "RECOVERY_REQUIRED" as const };
+    if (j.pdf_beta_get) {
+      policy.get.parse(j.pdf_beta_get);
+      return { status: "READ_OBSERVED" as const };
+    }
+    if (j.pdf_beta_ack) {
+      policy.ack.parse(j.pdf_beta_ack);
+      return { status: "ACK_OBSERVED" as const, context: context(j, identity.accountGeneration) };
+    }
+    if (j.phase === "UNKNOWN") return { status: "UNKNOWN" as const };
+    if (j.phase === "RUNNING" && j.pdf_dispatch_id) return { status: "DISPATCH_RECORDED" as const };
+    if (j.phase !== "STARTING" || j.pdf_dispatch_id)
+      return { status: "RECOVERY_REQUIRED" as const };
+    return j.staged_resource?.pdf_sealed_at
+      ? { status: "STAGED" as const, context: context(j, identity.accountGeneration) }
+      : { status: "RESERVED" as const };
   }
   async function current(c: PdfReservedContext<B>) {
     const generation = await owner.accountGeneration(c.binding.actorAccountId);
@@ -523,50 +573,9 @@ function createAuthority<
   };
   return {
     ...authority,
+    inspectAdvance,
     async status(actorId: string, identity: PdfIngressIdentity) {
-      if (policy.version !== 4 || !policy.continuousSourceScope)
-        throw Error("SOURCE_CAPABILITY_CLOSED");
-      if ((await owner.accountGeneration(actorId)) !== identity.accountGeneration)
-        throw Error("PDF_SCOPE_FORBIDDEN");
-      const matches = (await inventory(actorId, identity)).filter(
-        (j) => j.operation_id === identity.operationId,
-      );
-      if ((await owner.accountGeneration(actorId)) !== identity.accountGeneration)
-        throw Error("PDF_SCOPE_FORBIDDEN");
-      // Cleaned terminal attempts are absent too; this never proves no prior receipt.
-      if (!matches.length) return "NO_ACTIVE_ATTEMPT" as const;
-      if (matches.length !== 1) throw Error("PDF_UPLOAD_PLAN_CONFLICT");
-      const j = matches[0],
-        b = policy.binding.parse(j.pdf_binding);
-      if (
-        b.actorAccountId !== actorId ||
-        b.tripId !== identity.tripId ||
-        b.sourceId !== identity.sourceId ||
-        b.representationId !== identity.representationId ||
-        b.operationId !== identity.operationId
-      )
-        throw Error("PDF_SCOPE_FORBIDDEN");
-      if (
-        j.owner_run !== owner.ownerRun ||
-        b.producerId !== owner.producerId ||
-        b.providerInstanceSha256 !== owner.providerInstanceSha256
-      )
-        return "RECOVERY_REQUIRED" as const;
-      if (j.pdf_beta_get) {
-        policy.get.parse(j.pdf_beta_get);
-        return "READ_OBSERVED" as const;
-      }
-      if (j.pdf_beta_ack) {
-        policy.ack.parse(j.pdf_beta_ack);
-        return "ACK_OBSERVED" as const;
-      }
-      if (j.phase === "UNKNOWN") return "UNKNOWN" as const;
-      if (j.phase === "RUNNING" && j.pdf_dispatch_id) return "DISPATCH_RECORDED" as const;
-      if (j.phase !== "STARTING" || j.pdf_dispatch_id)
-        return "RECOVERY_REQUIRED" as const;
-      return j.staged_resource?.pdf_sealed_at
-        ? ("STAGED" as const)
-        : ("RESERVED" as const);
+      return (await inspectAdvance(actorId, identity)).status;
     },
     async prepare(actorId: string, raw: string, generation: number) {
       if (policy.version !== 4 || !policy.continuousSourceScope)

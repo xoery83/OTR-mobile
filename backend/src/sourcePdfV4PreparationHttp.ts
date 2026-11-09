@@ -17,6 +17,12 @@ import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import type { createSourcePdfV2BackendPreparation } from "./sourcePdfBackendPreparation";
 import type { PdfCausalOwner } from "./sourcePdfCausalAuthority";
 
+export type VerifiedPdfAdvance = Readonly<{
+  request: Request;
+  actorId: string;
+  tripId: string;
+}>;
+
 type PreparationPort = {
   owner: Pick<PdfCausalOwner, "accountGeneration">;
   reservation?: ReturnType<typeof createSourcePdfV4Reservation>;
@@ -29,7 +35,9 @@ export async function sourcePdfV4PreparationBoundary(
   actor: string,
   canReadTrip: (actor: string, trip: string) => Promise<boolean>,
   port?: PreparationPort,
-  prepareForRequest?: () => Promise<
+  prepareForRequest?: (
+    verifiedAdvance?: VerifiedPdfAdvance,
+  ) => Promise<
     | { port: PreparationPort | undefined; initialGeneration?: number; close(): void }
     | undefined
   >,
@@ -66,7 +74,11 @@ export async function sourcePdfV4PreparationBoundary(
     if (!(await canReadTrip(actor, route[1]))) return fail(403, "SOURCE_ACCESS_DENIED");
     request.signal.throwIfAborted();
     if (prepareForRequest) {
-      scoped = await prepareForRequest();
+      scoped = await prepareForRequest(
+        route[5] === "advance"
+          ? { request, actorId: actor, tripId: route[1] }
+          : undefined,
+      );
       port = scoped?.port;
       request.signal.throwIfAborted();
     }
@@ -74,8 +86,8 @@ export async function sourcePdfV4PreparationBoundary(
     const commandAction =
       route[5] === "prepare" || route[5] === "reserve" || route[5] === "finish";
     if (
-      (commandAction || route[5] === "status" || route[5] === "advance") &&
-      !port.reservation
+      (commandAction || route[5] === "status" ||
+        (route[5] === "advance" && !port.preparation.advance)) && !port.reservation
     )
       return fail(503, "SOURCE_CAPABILITY_CLOSED");
     if (!commandAction && route[5] !== "stage" && request.body !== null)
@@ -164,21 +176,26 @@ export async function sourcePdfV4PreparationBoundary(
       observation = "DISPATCH_OBSERVED";
     } else if (route[5] === "advance") {
       // A fresh owning projection can resume an ACK without sending another PUT.
-      const status = sourcePdfUploadStatusSchema.parse(
-        await port.reservation!.status(actor, identity),
-      );
-      request.signal.throwIfAborted();
-      if (status === "STAGED") {
-        const sent = await port.preparation.upload(request, identity, request.signal);
-        if (sent.kind !== "COMPLETE_ACK") return fail(409, "SOURCE_OUTCOME_UNKNOWN");
-      } else if (status !== "ACK_OBSERVED" && status !== "READ_OBSERVED") {
-        return fail(409, "SOURCE_OUTCOME_UNKNOWN");
-      }
-      if (status !== "READ_OBSERVED") {
-        request.signal.throwIfAborted();
-        const observed = await port.preparation.observeRetained(request, identity);
-        if (observed.kind !== "MATCH" && observed.kind !== "PERSISTED_GET")
+      if (port.preparation.advance) {
+        if (!(await port.preparation.advance(request, identity)))
           return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+      } else {
+        const status = sourcePdfUploadStatusSchema.parse(
+          await port.reservation!.status(actor, identity),
+        );
+        request.signal.throwIfAborted();
+        if (status === "STAGED") {
+          const sent = await port.preparation.upload(request, identity, request.signal);
+          if (sent.kind !== "COMPLETE_ACK") return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+        } else if (status !== "ACK_OBSERVED" && status !== "READ_OBSERVED") {
+          return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+        }
+        if (status !== "READ_OBSERVED") {
+          request.signal.throwIfAborted();
+          const observed = await port.preparation.observeRetained(request, identity);
+          if (observed.kind !== "MATCH" && observed.kind !== "PERSISTED_GET")
+            return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+        }
       }
       observation = "READ_OBSERVED";
     } else {

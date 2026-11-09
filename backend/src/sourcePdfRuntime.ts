@@ -130,7 +130,11 @@ export function createSourcePdfRuntimePorts(
         return false;
       }
     },
-    sourcePdfV4PreparationForRequest(request: Request, actor: string) {
+    sourcePdfV4PreparationForRequest(
+      request: Request,
+      actor: string,
+      proof?: import("./sourcePdfV4PreparationHttp").VerifiedPdfAdvance,
+    ) {
       const { custody, workload } = portsForRequest(request, actor);
       return createSourcePdfRequestPreparation({
         gateway: deps.gateway,
@@ -142,7 +146,7 @@ export function createSourcePdfRuntimePorts(
         stage,
         providerForRequest: (guard) =>
           createSourcePdfV2StorageProducer(storage, worker, custody, guard),
-      })(request, actor);
+      })(request, actor, proof);
     },
     sourcePdfV2ForRequest(request: Request, actor: string) {
       const { custody, workload } = portsForRequest(request, actor);

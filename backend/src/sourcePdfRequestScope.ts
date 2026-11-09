@@ -10,6 +10,8 @@ export function createSourcePdfRequestScope(input: {
   tripId: string;
   signal: AbortSignal;
   workload: Pick<PdfCausalOwner, "ownerRun" | "producerId" | "providerInstanceSha256">;
+  reuseVerifiedAccess?: boolean;
+  assertEnabled?(): void;
   readCurrentAccess(): Promise<{ actorId: string; tripId: string; canReadTrip: boolean }>;
 }) {
   const actorId = coreUuid.parse(input.actorId),
@@ -24,6 +26,19 @@ export function createSourcePdfRequestScope(input: {
   let closed = false;
   function assertOpen() {
     if (closed || signal.aborted) throw Error("PDF_SCOPE_FORBIDDEN");
+    input.assertEnabled?.();
+  }
+  async function reauthorize(actor: string) {
+    assertOpen();
+    if (actor !== actorId) throw Error("PDF_SCOPE_FORBIDDEN");
+    const access = await readCurrentAccess();
+    assertOpen();
+    if (
+      access.actorId !== actorId ||
+      access.tripId !== tripId ||
+      access.canReadTrip !== true
+    )
+      throw Error("PDF_SCOPE_FORBIDDEN");
   }
   const owner: PdfCausalOwner = Object.freeze({
     authScopeKind: PDF_SOURCE_REQUEST_SCOPE,
@@ -35,19 +50,13 @@ export function createSourcePdfRequestScope(input: {
       // Legacy field name; this version explicitly means only this request's fence.
       assertOpen();
       if (actor !== actorId) throw Error("PDF_SCOPE_FORBIDDEN");
-      const access = await readCurrentAccess();
-      assertOpen();
-      if (
-        access.actorId !== actorId ||
-        access.tripId !== tripId ||
-        access.canReadTrip !== true
-      )
-        throw Error("PDF_SCOPE_FORBIDDEN");
+      if (!input.reuseVerifiedAccess) await reauthorize(actor);
       return fence;
     },
   });
   return {
     owner,
+    reauthorize,
     close() {
       closed = true;
     },

@@ -94,7 +94,7 @@ vi.mock("./tripPublicationCatalogPgConnection", () => ({
 }));
 vi.mock("./tripCoreV2PgConnection", () => ({
   createSourcePgConnection: f.sourceConnection,
-  createSourcePdfPgConnection: f.sourceConnection,
+  createSourcePdfPgConnection: () => ({ ...f.sourceConnection(), discardIdle: vi.fn(), close: vi.fn() }),
   createModelTaskPgConnection: () => ({}),
 }));
 vi.mock("./supabaseGateway", () => ({

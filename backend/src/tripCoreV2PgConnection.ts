@@ -37,12 +37,13 @@ export function createSourcePgConnection(input: CorePgConfig): CorePgConnection 
   return createOwningPgConnection(input, "otr_trip_source_command_gateway");
 }
 // Dormant PDF-only budget: two 15s custody reads + fixed 20s worker, under Native's 90s request.
-export function createSourcePdfPgConnection(input: CorePgConfig): CorePgConnection {
+export function createSourcePdfPgConnection(input: CorePgConfig) {
   return createOwningPgConnection(input, "otr_trip_source_command_gateway", {
     idleMs: 65000,
     leaseMs: 75000,
     // Fresh TLS sessions on the PDF path can exceed the ordinary 3s connect budget.
     connectMs: 5000,
+    reuse: true,
   });
 }
 export function createTripPgConnection(input: CorePgConfig): CorePgConnection {
@@ -67,13 +68,23 @@ function createOwningPgConnection(
     | "otr_trip_create_gateway"
     | "otr_trip_metadata_gateway"
     | "otr_external_integration_call_gateway",
-  budget: { idleMs: number; leaseMs: number; connectMs?: number } = {
+  budget: { idleMs: number; leaseMs: number; connectMs?: number; reuse?: boolean } = {
     idleMs: 5000,
     leaseMs: 30000,
   },
-): CorePgConnection {
+) {
   const config = configSchema.parse(input);
   let occupied = false;
+  let closed = false;
+  let idle: { client: Client; retire(): Promise<void>; isRetired(): boolean } | undefined;
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  function discardIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = undefined;
+    const prior = idle;
+    idle = undefined;
+    return prior?.retire();
+  }
   const waiters = new Set<() => void>();
   // The Core principal has one connection: bound contention without reusing actor sessions.
   async function acquire() {
@@ -103,38 +114,58 @@ function createOwningPgConnection(
     } else occupied = false;
   }
   return {
-    async withLease(work) {
+    discardIdle,
+    close() {
+      closed = true;
+      return discardIdle();
+    },
+    async withLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+      if (closed) throw new Error("CORE_CONNECTION_RETIRED");
       await measureSourcePdfPhase("pg_lease_wait", acquire);
-      let client: Client;
+      const reused = idle && !idle.isRetired() ? idle : undefined;
+      clearTimeout(idleTimer);
+      idleTimer = undefined;
+      idle = undefined;
+      let session: NonNullable<typeof reused>;
       try {
-        client = new Client({
-          ...config,
-          user: principal,
-          connectionTimeoutMillis: budget.connectMs ?? 3000,
-          query_timeout: 5000,
-          ssl: {
-            rejectUnauthorized: true,
-            ...(config.ca ? { ca: config.ca } : {}),
-            checkServerIdentity: (_host, certificate) =>
-              checkServerIdentity(config.host, certificate),
-          },
-          options: `-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=${budget.idleMs}`,
-        });
+        if (closed) throw new Error("CORE_CONNECTION_RETIRED");
+        if (reused) session = reused;
+        else {
+          const client = new Client({
+            ...config,
+            user: principal,
+            connectionTimeoutMillis: budget.connectMs ?? 3000,
+            query_timeout: 5000,
+            ssl: {
+              rejectUnauthorized: true,
+              ...(config.ca ? { ca: config.ca } : {}),
+              checkServerIdentity: (_host, certificate) =>
+                checkServerIdentity(config.host, certificate),
+            },
+            options: `-c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=${budget.idleMs}`,
+          });
+          let ending: Promise<void> | undefined;
+          const retire = () => {
+            if (ending) return ending;
+            (
+              client as Client & { connection?: { stream?: Duplex } }
+            ).connection?.stream?.destroy();
+            ending = client.end().catch(() => {});
+            return ending;
+          };
+          client.on("error", retire);
+          session = { client, retire, isRetired: () => ending !== undefined };
+        }
       } catch (error) {
+        await reused?.retire();
         release();
         throw error;
       }
-      let retired = false,
-        querying = false,
-        finished = false;
-      const retire = () => {
-        retired = true;
-        (
-          client as Client & { connection?: { stream?: Duplex } }
-        ).connection?.stream?.destroy();
-        void client.end().catch(() => {});
-      };
-      client.on("error", retire);
+      const { client, retire, isRetired } = session;
+      let querying = false;
+      let finished = false;
+      let failed = false;
+      let reusable = false;
       let timeout: ReturnType<typeof setTimeout> | undefined;
       try {
         const deadline = new Promise<never>((_, reject) => {
@@ -144,26 +175,33 @@ function createOwningPgConnection(
           }, budget.leaseMs);
         });
         const operation = async () => {
-          await measureSourcePdfPhase("pg_connect", () => client.connect());
-          if (retired) throw new Error("CORE_CONNECTION_RETIRED");
-          const identity = (
+          if (reused)
             await measureSourcePdfPhase("pg_sql_setup", () =>
-              client.query(
-                "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
-              ),
+              client.query("DISCARD ALL"),
+            );
+          else {
+            await measureSourcePdfPhase("pg_connect", () => client.connect());
+            if (isRetired()) throw new Error("CORE_CONNECTION_RETIRED");
+            const identity = (
+              await measureSourcePdfPhase("pg_sql_setup", () =>
+                client.query(
+                  "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
+                ),
+              )
+            ).rows;
+            if (
+              identity.length !== 1 ||
+              identity[0].principal !== principal ||
+              identity[0].role !== principal ||
+              identity[0].recovery !== false
             )
-          ).rows;
-          if (
-            identity.length !== 1 ||
-            identity[0].principal !== principal ||
-            identity[0].role !== principal ||
-            identity[0].recovery !== false
-          )
-            throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
+              throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
+          }
           const lease: CorePgLease = {
             retire,
+            ...(budget.reuse ? { verifiedSourceSession: true as const } : {}),
             async query(sql, parameters = []) {
-              if (retired || querying || finished)
+              if (isRetired() || querying || finished)
                 throw new Error("CORE_CONNECTION_RETIRED");
               querying = true;
               try {
@@ -179,10 +217,11 @@ function createOwningPgConnection(
                 const result = await measureSourcePdfPhase(phase, () =>
                   client.query(sql, [...parameters]),
                 );
-                if (retired) throw new Error("CORE_CONNECTION_RETIRED");
+                if (isRetired()) throw new Error("CORE_CONNECTION_RETIRED");
                 if (sql === "COMMIT" || sql === "ROLLBACK") finished = true;
                 return { rows: result.rows };
               } catch (error) {
+                failed = true;
                 if (
                   (error as { message?: string }).message?.includes("Query read timeout")
                 )
@@ -194,13 +233,18 @@ function createOwningPgConnection(
             },
           };
           const result = await work(lease);
-          if (!finished || retired) throw new Error("CORE_TRANSACTION_UNFINISHED");
+          if (!finished || isRetired()) throw new Error("CORE_TRANSACTION_UNFINISHED");
+          reusable = !failed;
           return result;
         };
         return await Promise.race([operation(), deadline]);
       } finally {
         if (timeout) clearTimeout(timeout);
-        retire();
+        if (budget.reuse && !closed && reusable && !isRetired()) {
+          idle = session;
+          idleTimer = setTimeout(discardIdle, 15000);
+          idleTimer.unref();
+        } else await retire();
         release();
       }
     },
