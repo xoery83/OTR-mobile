@@ -393,6 +393,20 @@ export async function readUniversalP1Catalog(
     published.result.batchId !== h.batchId
   )
     throw Error("UNIVERSAL_SELECTION_STALE");
+  if (
+    published.result.sourceBindings.some(
+      (b) => b.sourceId === scope.sourceId && b.pdfSource,
+    )
+  ) {
+    const candidate = universalResultSchema
+      .parse(published.result)
+      .candidates.find(({ token }) => token === h.token);
+    if (!candidate) throw Error("UNIVERSAL_SELECTION_STALE");
+    // PDF proof admission needs the candidate family before reloading its material.
+    await lease.query("SELECT set_config('otr.universal.requested_family',$1,true)", [
+      candidate.kind,
+    ]);
+  }
   const { catalog, checked } = await project(
     lease,
     scope,
