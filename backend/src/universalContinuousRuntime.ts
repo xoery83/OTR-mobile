@@ -304,7 +304,8 @@ export async function loadDevUniversalContinuousRuntime(
         publishedSource,
         sourceReadRequestId,
         retainedResultsEnabled: true,
-        bootstrapLedger: () => gateway.bootstrapLedger(actor, trip),
+        bootstrapLedger: () =>
+          measureSourcePdfPhase("ledger_bootstrap", () => gateway.bootstrapLedger(actor, trip)),
         async selectProvider(binding) {
           guard();
           await assertCurrentAuth();
