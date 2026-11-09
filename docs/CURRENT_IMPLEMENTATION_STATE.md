@@ -48,13 +48,24 @@ a simulated response at 54,000 nanos with a 14,745,600-nano immutable hold. It
 read back the V3 receipt and admitted price in an independent session. No Hosted
 writes or real Provider calls occurred.
 
+The joined internal acceptance now uses the ordinary Import and Core HTTP
+clients against the Backend handler. One TXT/two-page PDF/two-image analysis
+uses the real isolated decoder, disposable owning PostgreSQL, SQLite Wake and
+a synthetic Provider response. It reaches Review, saves one Item with four
+LOCAL_ONLY Documents, reads all six Core receipts in an independent session
+and restores the Item and links after reopening SQLite. The test exposed an
+intake replay defect after spool cleanup. The durable Task/Attempt now suppresses
+new upload requests after admission, and the same-ID Start and duplicate PUT
+preserve the same result, empty spool and one dispatch.
+
 Hosted status is CLOUD_PENDING. Remaining qualification includes the active
 DEV SQL/provider scope and effective price, the x64 sandbox probe under its
 actual host policy, real DeepSeek and the physical iPad. P1–P6 detail can open verified
 same-device originals through the existing private preview or inline text. File
 entries without current account/Trip access or a local original are hidden.
 P5 NEW and P2 title UPDATE remain existing Core compatibility limits. Historical
-QA176 UNKNOWN is independent.
+QA176 UNKNOWN is independent. Owner confirmed QA178 is installed. The intake
+repair is Backend-only, so the installed build can be reused for device testing.
 
 ## Universal Import durable material acceptance — 9 November 2026
 

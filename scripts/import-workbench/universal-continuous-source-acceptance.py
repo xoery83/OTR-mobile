@@ -293,8 +293,7 @@ finally:
  if created:docker('rm','-f',NAME)
 '''
 if os.environ.get('OTR_TEST_IMPORT_V3_PRICED')=='1':
- # Retain only the owning SQL and CP14/CP15 setup. The priced run does not replay
- # the legacy Source cases, the V3 OFF cases, or the Core Save acceptance.
+ # Retain only the owning SQL and CP14/CP15 setup before the joined V3 run.
  setup=addition[:addition.index(" check('normal Provider candidate installs")]
  setup=setup.replace("os.environ.get('OTR_TEST_AI_COST_GUARD')", "'on'")
  setup=setup.replace("os.environ.get('OTR_TEST_IMPORT_V3')=='1'", 'True')
@@ -307,12 +306,16 @@ if os.environ.get('OTR_TEST_IMPORT_V3_PRICED')=='1':
  provision={'ROOT'""")
  provision=provision.replace("call_cost_nanos='1000000000'","call_cost_nanos='500000000'")
  addition=setup+provision+r'''
+ import runpy
+ core_fixture=runpy.run_path(str(ROOT/'scripts/trip/core-v3-local-document-acceptance.py'))
+ core_fixture['install_core_local_document'](ROOT,sql)
  env=dict(os.environ,OTR_V3_PROVIDER_FIXTURE=NAME,OTR_V3_FIXTURE_ACTOR=ACTOR,OTR_V3_FIXTURE_TRIP=TRIP,
   OTR_V3_FIXTURE_INTEGRATION=i['integration_id'],OTR_V3_FIXTURE_PRICE=price['price_schedule_id'])
  result=subprocess.run([str(ROOT/'node_modules/.bin/vitest'),'run','--configLoader','runner','--no-cache',
   'backend/src/universalV3Execution.sql.test.ts'],cwd=ROOT,env=env,timeout=45)
  assert result.returncode==0
- print(json.dumps({'status':'V3_PRICED_MULTI_IMAGE_ISOLATED_PG','hostedWrites':0,'providerCalls':0}))
+ print(json.dumps({'status':'V3_PRICED_MULTI_IMAGE_CORE_SAVE_COLD_RESTORE_ISOLATED',
+  'realDecoders':bool(os.environ.get('OTR_V3_FIXTURE_DECODER_IMAGE')),'hostedWrites':0,'providerCalls':0}))
 finally:
  if created:docker('rm','-f',NAME)
 '''

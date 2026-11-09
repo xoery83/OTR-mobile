@@ -11,6 +11,7 @@ import {
 import type { UniversalV3Execution } from "./universalV3Execution";
 import type { Task } from "../../src/domain/intelligence/persistence";
 import type { universalTaskDatabase } from "./universalTaskBootstrap";
+import { universalBatchIdentity } from "./universalBatchSource";
 
 export const universalV3IntakePath =
   /^\/v2\/import-batches\/([^/]+)\/interpretations\/intake(?:\/files\/([^/]+)|(\/capability))?$/;
@@ -35,6 +36,10 @@ const spoolLimit = 512 * 1024 * 1024;
 const digest = (bytes: string | Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 const uuid = z.uuid();
+
+export function universalV3TaskId({ accountId, tripId, analysisId }: Scope) {
+  return universalBatchIdentity(accountId, tripId, analysisId, "local-first/task");
+}
 
 export function universalV3IntakePins(input: UniversalV3Manifest) {
   return input.files.map((file) => ({
@@ -160,7 +165,17 @@ export function createUniversalV3Intake(db: Db, root: string) {
       throw error;
     }
   }
+  async function hasAcceptedAttempt(scope: Scope) {
+    return Boolean(await db.getFirstAsync<{ accepted: number }>(
+      `SELECT 1 AS accepted FROM intelligence_continuations
+       WHERE account_id=? AND task_id=? AND trip_id=? AND import_id=?
+         AND (current_attempt_id IS NOT NULL OR work_disposition IN ('PUBLISHED','UNKNOWN'))`,
+      scope.accountId, universalV3TaskId(scope), scope.tripId, scope.analysisId,
+    ));
+  }
   async function status(scope: Scope, input: UniversalV3Manifest) {
+    // After admission, deleting temporary bytes cannot reopen this analysis for upload.
+    if (await hasAcceptedAttempt(scope)) return { analysisId: scope.analysisId, missingFiles: [] };
     const present = await Promise.all(input.files.map((file) => hasFile(scope, file)));
     return {
       analysisId: scope.analysisId,
@@ -246,6 +261,10 @@ export function createUniversalV3Intake(db: Db, root: string) {
         request.headers.get("content-type") !== "application/octet-stream"
       )
         return 400;
+      if (await hasAcceptedAttempt(scope)) {
+        await body.cancel().catch(() => {});
+        return 204;
+      }
       const target = path(scope, file);
       const uploads = [...active.values()];
       if (
@@ -280,6 +299,7 @@ export function createUniversalV3Intake(db: Db, root: string) {
             await handle.writeFile(value);
           }
           if (size !== file.length || hash.digest("hex") !== file.sha256) return 422;
+          if (await hasAcceptedAttempt(scope)) return 204;
           await handle.chmod(0o400);
           await handle.sync();
           await link(temporary, target).catch((error: NodeJS.ErrnoException) => {

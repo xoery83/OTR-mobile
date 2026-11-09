@@ -10,25 +10,12 @@ import { universalBatchIdentity } from "./universalBatchSource";
 import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
 import { universalContinuousSelectionSchema } from "./universalRegisteredTaskDraft";
 import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
-import { universalV3IntakePins } from "./universalV3Intake";
+import { universalV3IntakePins, universalV3TaskId } from "./universalV3Intake";
 import { bindUniversalV3ModelTask, universalV3Profile } from "./universalV3Profile";
 import type { UniversalProvider } from "./universalImport";
 
 const sha = (bytes: Uint8Array | string) =>
   createHash("sha256").update(bytes).digest("hex");
-export function universalV3TaskId(scope: {
-  accountId: string;
-  tripId: string;
-  analysisId: string;
-}) {
-  return universalBatchIdentity(
-    scope.accountId,
-    scope.tripId,
-    scope.analysisId,
-    "local-first/task",
-  );
-}
-
 export async function buildUniversalV3TaskDraft(
   scope: { accountId: string; analysisId: string },
   manifest: UniversalV3Manifest,

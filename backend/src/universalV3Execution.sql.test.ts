@@ -1,19 +1,26 @@
+import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
+import { buildSync } from "esbuild";
 import { expect, it, vi } from "vitest";
 import { session } from "./__fixtures__/tripCoreV2Sql";
+import { createDevBackendHandler, type DevBackendGateway } from "./app";
 import { createClosedPersistenceGateway } from "./externalIntegrationPersistence";
 import { initializeUniversalTaskDatabase } from "./universalTaskBootstrap";
-import { createUniversalV3Intake, universalV3IntakeBoundary } from "./universalV3Intake";
+import { createUniversalV3Intake } from "./universalV3Intake";
 import { createUniversalV3Execution } from "./universalV3Execution";
 import { universalProviderPgTransaction } from "./universalPg";
 import { universalContinuousSelectionSchema } from "./universalRegisteredTaskDraft";
 import { coreCapabilitiesSchema } from "../../src/domain/trip/tripCoreV2Commands";
 import { localImportDocumentId } from "../../src/domain/trip/universalImportIdentity";
 import { universalV3ExecutionStatus } from "../../src/data/api/universalV3Contracts";
+import { createUniversalImportTransport } from "../../src/data/api/universalImportTransport";
+import { createCoreV2Transport } from "../../src/data/api/tripCoreV2Transport";
+import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
 import type { CaptureJobReadModel } from "../../src/domain/capture/captureSubmission";
 import { planUniversalV3Review } from "../../src/data/operations/universalV3Review";
 import { runMigrations } from "../../src/data/db/migrationRunner";
@@ -27,15 +34,16 @@ import {
   createCoreV2SyncWorker,
 } from "../../src/data/sync/tripCoreV2SyncWorker";
 import { createSyncOperationRepository } from "../../src/data/sync/syncOperationRepository";
-import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { createCorePgReader } from "./tripCoreV2PgRead";
 import { createCorePgStorage, readCorePgOperation } from "./tripCoreV2PgStorage";
 import type { Attempt } from "../../src/domain/intelligence/persistence";
 
 vi.mock("react-native", () => ({ AppState: { currentState: "active" } }));
+vi.mock("expo/fetch", () => ({ fetch: vi.fn() }));
+vi.mock("../../src/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 
 async function saveAndReopen(
-  fixtureName: string,
+  transport: ReturnType<typeof createCoreV2Transport>,
   accountId: string,
   tripId: string,
   localPath: string,
@@ -45,30 +53,10 @@ async function saveAndReopen(
   >["candidates"][number],
   files: readonly { length: number; sha256: string; mediaType: string }[],
 ) {
-  const writer = session(fixtureName);
-  const reader = session(fixtureName);
   let native = new DatabaseSync(localPath);
   const hash = async (bytes: Uint8Array) => sha(bytes);
   const account = async () => accountId;
   try {
-    await writer.lease.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
-    await reader.lease.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
-    const connect = ({ lease }: typeof writer) => ({
-      withLease: async <T>(work: (current: typeof lease) => Promise<T>) => work(lease),
-    });
-    const mode = { sustainedDev: true as const };
-    const mutation = createCorePgStorage(connect(writer), hash, undefined, mode);
-    const independent = createCorePgStorage(connect(reader), hash, undefined, mode);
-    const collections = createCorePgReader(connect(reader), hash, undefined, mode);
-    const transport = {
-      capabilities: async () =>
-        coreCapabilitiesSchema.parse(await collections.capabilities(accountId, tripId)),
-      collection: () => collections.collection(accountId, tripId, undefined, true),
-      receipt: (_context: unknown, operationId: string) =>
-        readCorePgOperation(independent, accountId, tripId, operationId, hash),
-      submit: (_context: unknown, command: unknown) =>
-        executeCoreCommandV2(mutation, accountId, tripId, command, hash),
-    };
     const openCore = (database: DatabaseSync) => {
       const conn = serializeDatabaseTransactions({
         async execAsync(query: string) {
@@ -125,14 +113,12 @@ async function saveAndReopen(
       model,
       candidate,
       decision: { action: "NEW" },
-      capabilities: await transport.capabilities(),
+      capabilities: coreCapabilitiesSchema.parse(await transport.capabilities(ctx)),
       snapshot,
     });
     expect(plan.commands.map(({ command }) => command)).toEqual([
       "CREATE_ITEM",
-      "CREATE_DOCUMENT_METADATA",
-      "CREATE_DOCUMENT_METADATA",
-      "CREATE_DOCUMENT_METADATA",
+      ...files.map(() => "CREATE_DOCUMENT_METADATA"),
       "RECONCILE_ITEM_DOCUMENTS",
     ]);
     const operations = await repository.enqueueConfirmedItemDocuments(ctx, plan.commands);
@@ -189,7 +175,7 @@ async function saveAndReopen(
         start_local_date: "2026-12-14",
       }),
     ]);
-    expect(restored?.graph.trip_operational_documents).toHaveLength(3);
+    expect(restored?.graph.trip_operational_documents).toHaveLength(files.length);
     expect(
       restored?.graph.trip_operational_documents.every(
         (row) => row.custody === "LOCAL_ONLY" && row.storage_object_key === null,
@@ -200,11 +186,9 @@ async function saveAndReopen(
     ).toEqual([...candidate.documentIds].sort());
     expect(
       native.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count,
-    ).toBe(5);
+    ).toBe(files.length + 2);
   } finally {
     native.close();
-    writer.close();
-    reader.close();
   }
 }
 
@@ -214,22 +198,77 @@ const trip = process.env.OTR_V3_FIXTURE_TRIP;
 const integration = process.env.OTR_V3_FIXTURE_INTEGRATION;
 const priceId = process.env.OTR_V3_FIXTURE_PRICE;
 const priced = !!priceId;
+const decoderImage = process.env.OTR_V3_FIXTURE_DECODER_IMAGE;
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+
+function isolatedDecoders(image: string) {
+  if (!/^sha256:[a-f0-9]{64}$/.test(image)) throw Error("PINNED_DECODER_REQUIRED");
+  const entry = buildSync({
+    stdin: {
+      resolveDir: fileURLToPath(new URL(".", import.meta.url)),
+      contents: `
+        import { extractUniversalV3Pdf, normalizeUniversalV3Image } from './universalV3Decoders';
+        const [mime, input] = process.argv.slice(2);
+        const bytes = Buffer.from(input, 'base64');
+        if (mime === 'application/pdf') {
+          console.log(JSON.stringify(await extractUniversalV3Pdf(bytes)));
+        } else {
+          const normalized = await normalizeUniversalV3Image(mime, bytes);
+          console.log(JSON.stringify({ mediaType: normalized.mediaType, bytes: normalized.bytes.toString('base64') }));
+        }
+      `,
+    },
+    bundle: true,
+    platform: "node",
+    target: "node24",
+    format: "esm",
+    write: false,
+  }).outputFiles[0].text;
+  const decode = (mime: string, bytes: Uint8Array) =>
+    JSON.parse(execFileSync("docker", [
+      "run", "--rm", "--pull=never", "--network=none", "--read-only",
+      "--tmpfs", "/tmp:rw,size=16m,mode=1777", "--user", "10001:999",
+      "--cap-drop=ALL", "--security-opt=no-new-privileges", "-i",
+      "--entrypoint", "/usr/local/bin/node", image, "--input-type=module", "-",
+      mime, Buffer.from(bytes).toString("base64"),
+    ], { input: entry, encoding: "utf8", timeout: 6000 }));
+  return {
+    async validateImage(mime: string, bytes: Buffer) {
+      const result = decode(mime, bytes);
+      return { mediaType: result.mediaType, bytes: Buffer.from(result.bytes, "base64") };
+    },
+    async extractPdf(bytes: Uint8Array) {
+      const result = decode("application/pdf", bytes);
+      expect(sha(Buffer.from(result.text))).toBe("3b123e3e614785e19e6fa993b32a81aff7e2cbbb578e4baaa3fb5156fbaaf413");
+      return result;
+    },
+  } satisfies Pick<Parameters<typeof createUniversalV3Execution>[0], "validateImage" | "extractPdf">;
+}
 
 it.skipIf(!fixture || !actor || !trip || !integration)(
   priced
-    ? "settles one priced multi-image V3 call with independent receipt, immutable price and hold"
+    ? "runs one priced multi-image V3 Analyze through Core Save and SQLite reopen"
     : "runs mixed V3 HTTP input through durable Wake, synthetic Provider, Core Save and SQLite reopen",
   async () => {
     if (!/^otr-trip-sustained-[a-f0-9]{12}$/.test(fixture!))
       throw Error("OWNED_FIXTURE_REQUIRED");
     const pg = session(fixture!);
+    const coreWriter = session(fixture!);
+    const coreReader = session(fixture!);
     const root = await mkdtemp(join(tmpdir(), "otr-v3-pg-http-"));
     const local = new DatabaseSync(join(root, "task.db"));
     try {
       await pg.lease.query(
         "SET SESSION AUTHORIZATION otr_external_integration_call_gateway",
       );
+      await coreWriter.lease.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
+      await coreReader.lease.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
+      const connect = ({ lease }: typeof coreWriter) => ({
+        withLease: async <T>(work: (current: typeof lease) => Promise<T>) => work(lease),
+      });
+      const hash = async (bytes: Uint8Array) => sha(bytes);
+      const mode = { sustainedDev: true as const };
+      const independent = createCorePgStorage(connect(coreReader), hash, undefined, mode);
       const connection = {
         async withLease<T>(work: (lease: typeof pg.lease) => Promise<T>) {
           return work(pg.lease);
@@ -375,6 +414,7 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         })) as unknown as NonNullable<
           Parameters<typeof createUniversalV3Execution>[0]["extractPdf"]
         >,
+        ...(decoderImage ? isolatedDecoders(decoderImage) : {}),
         async provision(scope) {
           expect(scope.accountId).toBe(actor);
           expect(scope.tripId).toBe(trip);
@@ -406,9 +446,14 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         send,
       });
       const analysis = randomUUID();
-      const materials = [
+      const materials: { mediaType: "text/plain" | "application/pdf" | "image/png"; original: Buffer }[] = [
         { mediaType: "text/plain", original: Buffer.from("Arriving at the rail museum") },
-        { mediaType: "application/pdf", original: Buffer.from("%PDF-synthetic") },
+        {
+          mediaType: "application/pdf",
+          original: decoderImage
+            ? await readFile(new URL("./__fixtures__/source-pdf/synthetic-roundtrip.pdf", import.meta.url))
+            : Buffer.from("%PDF-synthetic"),
+        },
         {
           mediaType: "image/png",
           original: Buffer.from(
@@ -432,55 +477,42 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         sha256: sha(original),
         length: original.length,
       }));
-      const base =
-        "http://localhost/v2/import-batches/" + analysis + "/interpretations/intake";
-      const query = "?tripId=" + trip;
-      const call = (request: Request) =>
-        universalV3IntakeBoundary(
-          request,
-          actor!,
-          async (a, t) => a === actor && t === trip,
-          intake,
-          execution,
-        );
-      expect(
-        await (await call(new Request(base + "/capability" + query))).json(),
-      ).toEqual({
+      const auth = {
+        validateAccessToken: async (token: string) =>
+          token === "fixture-only" ? { id: actor, accountClass: "NORMAL_ACCOUNT" } : null,
+        canReadTrip: async (a: string, t: string) => a === actor && t === trip,
+      } as unknown as DevBackendGateway;
+      const handler = createDevBackendHandler({
+        gateway: auth, universalV3Intake: intake, universalV3Execution: execution,
+        coreConnection: {
+          hash,
+          commands: createCorePgStorage(connect(coreWriter), hash, undefined, mode),
+          read: createCorePgReader(connect(coreReader), hash, undefined, mode),
+          readOperation: (a, t, operation) => readCorePgOperation(independent, a, t, operation, hash),
+        },
+      });
+      const account = async () => actor!;
+      const api = {
+        baseUrl: "https://import-v3.fixture.invalid",
+        fetchImplementation: ((input, init) => handler(new Request(input, init))) as typeof fetch,
+      };
+      const tokenProvider = async () => ({ userId: actor!, token: "fixture-only" });
+      const transport = createUniversalImportTransport(account, { ...api, tokenProvider });
+      const ctx = await captureAccountRequestContext(trip!, account);
+      expect(await transport.localFirstCapability(ctx, analysis)).toEqual({
         localFirst: true,
         existing: null,
       });
-      const start = () =>
-        call(
-          new Request(base + query, {
-            method: "POST",
-            headers: { "Idempotency-Key": analysis },
-            body: JSON.stringify({
-              version: "otr.import.local-first/1",
-              tripId: trip,
-              mode: "UNIVERSAL",
-              files,
-            }),
-          }),
-        );
-      expect((await start()).status).toBe(202);
+      const start = () => transport.startLocalFirst(ctx, analysis, {
+        version: "otr.import.local-first/1", tripId: trip!, mode: "UNIVERSAL", files,
+      });
+      expect(await start()).toEqual({ analysisId: analysis, missingFiles: files.map((file) => file.fileId) });
       for (const [i, file] of files.entries()) {
-        const upload = await call(
-          new Request(base + "/files/" + file.fileId + query, {
-            method: "PUT",
-            headers: {
-              "content-type": "application/octet-stream",
-              "content-length": String(file.length),
-            },
-            body: new Uint8Array(materials[i].original),
-          }),
-        );
-        expect(upload.status).toBe(204);
+        await transport.uploadLocalFirst(ctx, analysis, file.fileId, new Uint8Array(materials[i].original));
       }
       await vi.waitFor(
         async () => {
-          const result = await (
-            await call(new Request(base + query + "&execution=1"))
-          ).json();
+          const result = await transport.readLocalFirstExecution(ctx, analysis);
           expect(result).toMatchObject({
             state: "REVIEW_READY",
             candidates: [
@@ -493,10 +525,8 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         },
         { timeout: 8000, interval: 100 },
       );
-      const ready = universalV3ExecutionStatus.parse(
-        await (await call(new Request(base + query + "&execution=1"))).json(),
-      );
-      if (ready.state !== "REVIEW_READY") throw Error("FIXTURE_V3_REVIEW_MISSING");
+      const ready = await transport.readLocalFirstExecution(ctx, analysis);
+      if (ready?.state !== "REVIEW_READY") throw Error("FIXTURE_V3_REVIEW_MISSING");
       if (priced) {
         const privileged = session(fixture!);
         const independent = session(fixture!);
@@ -560,21 +590,27 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
           privileged.close();
           independent.close();
         }
-      } else {
-        await saveAndReopen(
-          fixture!,
-          actor!,
-          trip!,
-          join(root, "native.sqlite"),
-          ready.candidates[0],
-          files,
-        );
       }
-      expect((await start()).status).toBe(202);
+      await saveAndReopen(
+        createCoreV2Transport(account, hash, api, tokenProvider),
+        actor!,
+        trip!,
+        join(root, "native.sqlite"),
+        ready.candidates[0],
+        files,
+      );
+      const spool = join(root, "spool");
+      await vi.waitFor(async () => expect(await readdir(spool)).toEqual([]));
+      expect(await start()).toEqual({ analysisId: analysis, missingFiles: [] });
+      await transport.uploadLocalFirst(ctx, analysis, files[0].fileId, new Uint8Array(materials[0].original));
+      expect(await readdir(spool)).toEqual([]);
+      expect(await transport.readLocalFirstExecution(ctx, analysis)).toEqual(ready);
       expect(send).toHaveBeenCalledTimes(1);
     } finally {
       local.close();
       pg.close();
+      coreWriter.close();
+      coreReader.close();
       await rm(root, { recursive: true, force: true });
     }
   },
