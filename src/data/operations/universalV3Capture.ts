@@ -1,3 +1,4 @@
+import { assertDefaultUniversalV3PhotoConsent } from "./defaultUniversalPhotoConsent";
 import { localImportDocumentId } from "../../domain/trip/universalImportIdentity";
 import {
   assertAccountRequestContext,
@@ -20,6 +21,7 @@ export async function stageLocalFirstCapture(
   model: CaptureJobReadModel,
   deps: {
     accountId(): Promise<string>;
+    assertCurrent(): void;
     transport: Pick<
       ReturnType<typeof createUniversalImportTransport>,
       "startLocalFirst" | "uploadLocalFirst" | "readLocalFirst"
@@ -27,10 +29,11 @@ export async function stageLocalFirstCapture(
   },
 ) {
   const current = () => assertAccountRequestContext(context, deps.accountId);
+  const tripPrior = model.batch.context?.tripPrior?.id;
   await current();
   if (
     context.accountId !== model.batch.accountId ||
-    context.tripId !== (model.batch.context?.tripPrior?.id ?? model.assignedTripId) ||
+    context.tripId !== (tripPrior ?? model.assignedTripId) ||
     model.inputs.length < 1 ||
     model.inputs.length > 5
   )
@@ -43,7 +46,8 @@ export async function stageLocalFirstCapture(
     const { capture, bytes } = await inbox.getForSourceHandoff(input.captureId);
     if (
       capture.accountId !== context.accountId ||
-      capture.tripId !== context.tripId ||
+      (capture.tripId !== context.tripId &&
+        !(capture.tripId === null && tripPrior === context.tripId)) ||
       capture.id !== input.captureId ||
       capture.payloadId !== input.payloadId ||
       capture.sha256 !== input.contentSha256 ||
@@ -76,6 +80,10 @@ export async function stageLocalFirstCapture(
       (file, index) =>
         files.findIndex((entry) => entry.documentId === file.documentId) === index,
     ),
+  });
+  await assertDefaultUniversalV3PhotoConsent(context, model, {
+    getAccountId: deps.accountId,
+    assertCurrent: deps.assertCurrent,
   });
   const analysis = model.batch.batchId;
   const intake = await deps.transport.startLocalFirst(context, analysis, manifest);

@@ -1,7 +1,10 @@
 import { join } from "node:path";
 import { createUniversalV3Intake } from "./universalV3Intake";
 import { createUniversalV3Execution } from "./universalV3Execution";
-import { createUniversalV3ImageValidator, universalV3DecodersPresent } from "./universalV3Png";
+import {
+  createUniversalV3ImageValidator,
+  universalV3DecodersPresent,
+} from "./universalV3Image";
 import { createUniversalMaterialIntake } from "./universalMaterialIntake";
 import { measureSourcePdfPhase, runSourcePdfTimings } from "./sourcePdfTiming";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
@@ -745,15 +748,16 @@ export async function loadDevUniversalContinuousRuntime(
       };
     }
     const v3Directory = join(config.directory, "universal-v3-spool");
+    const v3Image = env.OTR_IMPORT_V3_IMAGE_DECODER_ID ?? "";
     const v3Intake = !finite && !acquisition && !executionFence
       && env.OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT === "enabled"
-      && await universalV3DecodersPresent()
+      && await universalV3DecodersPresent(v3Image)
       ? createUniversalV3Intake(db, v3Directory) : undefined;
     const v3Execution = v3Intake && createUniversalV3Execution({
       intake: v3Intake,
       db,
       stores: stores!,
-      validateImage: createUniversalV3ImageValidator(v3Directory),
+      validateImage: createUniversalV3ImageValidator(v3Image),
       async provision(scope, request) {
         const token = /^Bearer ([^\s]+)$/i.exec(request.headers.get("Authorization") ?? "")?.[1];
         if (!token) throw Error("UNIVERSAL_AUTH_REQUIRED");

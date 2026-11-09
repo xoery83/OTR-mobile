@@ -99,7 +99,8 @@ public class ReceiptOcrModule: Module {
         } else if let image = CGImageSourceCreateWithData(data as CFData, nil),
           let type = CGImageSourceGetType(image) as String?,
           let ext = [UTType.jpeg.identifier: "jpg", UTType.png.identifier: "png",
-            UTType.heic.identifier: "heic", UTType.heif.identifier: "heif"][type] {
+            UTType.heic.identifier: "heic", UTType.heif.identifier: "heif",
+            UTType.webP.identifier: "webp", UTType.gif.identifier: "gif"][type] {
           suffix = ext
         } else { promise.reject("IMPORT_PREVIEW_UNSUPPORTED", "Unsupported original"); return }
         let file = FileManager.default.temporaryDirectory

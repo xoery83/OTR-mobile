@@ -25,7 +25,7 @@ const file = z
         ? MiB
         : mediaType === "application/pdf"
           ? 10 * MiB
-          : 2 * MiB),
+          : 12 * MiB),
   );
 export const universalV3Manifest = z
   .strictObject({

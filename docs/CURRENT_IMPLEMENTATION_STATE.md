@@ -5,9 +5,10 @@ The branch `codex/import-v3-local-first` binds a versioned manifest and private
 binary intake to existing SQLite Task/Wake. The ordinary Provider ledger
 admits a single attempt against the frozen V3 profile and request digest.
 Same-identity replay returns the result without a second send. UNKNOWN retains
-its original identity and does not resend. V3 uses a stateless PNG decoder and
-existing PDF extraction. Historical Source and Receipt reads remain on their
-existing routes.
+its original identity and does not resend. A fixed x64 V3 decoder prepares
+static PNG, JPEG, WebP and GIF inside one bounded network-isolated process.
+PDF uses the existing extractor. Historical Source and Receipt reads remain
+on their existing routes.
 
 Native retains originals in its app-private file store. A server capability
 selects V3 Analyze. Users explicitly choose NEW, LINK or UPDATE for supported
@@ -16,7 +17,10 @@ tracks the Item and Document association receipts. A pending association
 can finish without resending the accepted Item. Only LOCAL_ONLY metadata
 and Item associations enter Core. SQLite migration 77 preserves prior
 document metadata and permits a null custody receipt only for LOCAL_ONLY.
-Older collection clients omit the new documents and edges.
+Migration 78 extends the existing photo decision scope to the V3 formats.
+V3 validates each photo decision against the exact current input, original and
+Trip before staging bytes to Backend. Older collection clients omit the new
+documents and edges.
 
 One network-isolated fixture passed 55 checks. It drove the same three
 Document IDs through mixed HTTP intake, SQLite Wake, owning PostgreSQL
@@ -24,16 +28,24 @@ admission and independent receipt, a simulated Provider result, Native
 Review planning, five ordinary Core operation receipts and on-disk SQLite
 reopen. The joined fixture substitutes PDF/PNG decoders and the Provider
 transport. The actual pinned PDF decoder independently extracted two pages
-from the synthetic file. The pinned PNG image was unavailable locally.
-No Hosted writes or real Provider calls occurred.
+from the synthetic file. A separate real x64 sandbox fixture decoded all four
+static formats, kept transparency, applied JPEG orientation, stripped metadata
+and rejected animated GIF/WebP, damaged input and declared MIME mismatches.
+The x64 image is `sha256:c31fb8c4b80642e85d970b14bf9a2ff7410adff615690b716546f9ccea93da32`.
+The fixture measured PNG/JPEG/WebP/GIF at 851/935/884/957 ms including local
+container startup. This image is supplied through `OTR_IMPORT_V3_IMAGE_DECODER_ID`.
+The priced two-image fixture reserved one call, marked dispatch once and settled
+a simulated response at 54,000 nanos with a 14,745,600-nano immutable hold. It
+read back the V3 receipt and admitted price in an independent session. No Hosted
+writes or real Provider calls occurred.
 
-Hosted status is CLOUD_PENDING. Remaining qualification includes matching
-active SQL/provider scope, actual PNG execution, supported image formats
-and device-scale file transfers. P1–P6 detail can open verified same-device
-originals through the existing private preview or inline text. File entries
-without current account/Trip access or a local original are hidden. Physical
-iPad/Cloud validation, the priced V3 path and unsupported Core fields have no
-joined acceptance evidence. Historical QA176 UNKNOWN is independent.
+Hosted status is CLOUD_PENDING. Remaining qualification includes the active
+DEV SQL/provider scope and effective price, the fixed decoder image on its
+actual host, real DeepSeek and the physical iPad. P1–P6 detail can open verified
+same-device originals through the existing private preview or inline text. File
+entries without current account/Trip access or a local original are hidden.
+P5 NEW and P2 title UPDATE remain existing Core compatibility limits. Historical
+QA176 UNKNOWN is independent.
 
 ## Universal Import durable material acceptance — 9 November 2026
 

@@ -1,6 +1,6 @@
 # OTR Universal Import 3.0 — Local-First Engineering Design
 
-2026-11-09 NZDT · Owner Provenance 修订稿 · Root2 Design DRI · MC 协调 · Owner Architecture Approval 待定
+2026-11-09 NZDT · Owner Provenance 修订稿 · Root2 Design DRI · MC 协调 · Owner 已批准实施
 
 ## 1. 决策摘要
 
@@ -8,7 +8,7 @@
 
 App 长期保存原件，Document 默认 `LOCAL_ONLY`，云端原件为 `NOT_UPLOADED`。云端同步最小 Document 元数据和多对多关联。一次最多 5 个附件，PDF 提取多页文本，同批多图合入一次 DeepSeek 请求。Backend 临时接收，处理后清理，不转换 HEIC/HEIF、BMP、TIFF。重启或失败后允许用户主动重新上传，Provider UNKNOWN 保留原身份且不自动重发。未来 Ticket/Document 文件同步与存储区域策略独立。
 
-删除上一稿的 `LOCAL_ORIGINAL`、Source Evidence Snapshot、Representation VERIFIED、字段/页/像素证明和新 Core Source Proof Admission。保留现有 Core 业务校验、用户确认、权限、版本与幂等 Receipt。现有 Core **可以直接保存已支持的人工确认 Item 命令，也可关联已存在的 Document**。本地原件目前不能用现有 `CREATE_DOCUMENT` 直接注册云端元数据，最小适配见 §8。旧 Source、Receipt、UNKNOWN 继续原样读取。本轮只有文档修订，实施仍待 Owner Architecture Approval。
+删除上一稿的 `LOCAL_ORIGINAL`、Source Evidence Snapshot、Representation VERIFIED、字段/页/像素证明和新 Core Source Proof Admission。保留现有 Core 业务校验、用户确认、权限、版本与幂等 Receipt。现有 Core **可以直接保存已支持的人工确认 Item 命令，也可关联已存在的 Document**。本地原件目前不能用现有 `CREATE_DOCUMENT` 直接注册云端元数据，最小适配见 §8。旧 Source、Receipt、UNKNOWN 继续原样读取。Owner 已批准 V3 实施。最新验证范围见当前状态。
 
 ## 2. 基线与时序差异
 
@@ -147,6 +147,8 @@ sequenceDiagram
 ### 图片与 PDF 处理
 
 Backend 复用一个受限、无网络、无业务凭据的准备入口。PDF 使用现有提取工具逐页取文本，跨页保持顺序，标明提取不完整。扫描页缺文字时明确提醒改用有文本的 PDF 或选取单独支持的图片，不把自动栅格化、视觉 OCR 或页级证明纳入默认路径。JPEG、PNG、WebP、GIF 用有界签名/解码检查及必要的静态化、方向和尺寸处理。临时处理只服务模型输入，结果不保存页码、字符偏移或像素区域证明。
+
+本地实现选用独立镜像内固定的 Sharp/libvips，由同一个无网络、无挂载的短进程解码上述四种格式。依赖仅安装在该镜像内。输入最多 12 MiB、16 MP、单边 8,192 px。副本去除元数据并按 EXIF 自动校正方向，非透明内容输出至多 1,536 px 的 JPEG，透明内容输出至多 1,024 px 的 PNG，单份最多 2 MiB。动画及格式不匹配会拒绝；原件保留。这个取舍限制内存与 Provider 请求体，同时增加一个需要封存的隔离镜像制品。历史 PNG Worker 的镜像与合同沿用原路径。 [Sharp 输入合同](https://sharp.pixelplumbing.com/api-constructor/) · [Sharp 元数据合同](https://sharp.pixelplumbing.com/api-input/)
 
 | 格式 | 新路径行为 | 限额或失败体验 |
 | --- | --- | --- |
@@ -331,14 +333,14 @@ Trace 使用现有 request ID 与结构化日志，关联 `BatchId → analysisI
 
 ## 12. Migration、Rollout、Rollback
 
-1. **隔离验证。** Owner 批准后扩 Native 本地 Document 映射、统一 intake、多图 builder 和现有 Core 元数据合同。只使用合成 fixture 验证普通 Item Save 无 Source Proof 调用、同一 Document 多 Item/同一 Item 多 Document、关联失败与补齐、旧 DTO 兼容及历史读回。沿用已通过的旧保存/恢复证据，不重跑无变化的历史链。
+1. **隔离验证。** 扩 Native 本地 Document 映射、统一 intake、多图 builder 和现有 Core 元数据合同。只使用合成 fixture 验证普通 Item Save 无 Source Proof 调用、同一 Document 多 Item/同一 Item 多 Document、关联失败与补齐、旧 DTO 兼容及历史读回。沿用已通过的旧保存/恢复证据，不重跑无变化的历史链。
 2. **有界 DEV E2E。** 新旧路径在首次接纳时固定 `legacy / local-first` 和执行身份，复用现有唯一键，拒绝同意图走两次。新客户端读取旧 Batch 走历史合同；旧客户端无法理解新 Batch 时返回版本不支持，不能降级重新派发。以一组合成材料验证单次多图、PDF 多页文本、Review、Item Receipt、关联 Receipt/读回和跨设备冷恢复。实际 DEV、Provider、权限按现有批准执行。
 3. **回退与旧数据。** 关闭新接纳及新 Document 元数据写入，保留已接纳分析、原 Item/关联的安全读回及合法补齐能力。已落 LOCAL_ONLY 元数据的环境保留兼容读和数据库约束，禁止用旧回退包解释或清除新记录。历史 Source、Receipt、UNKNOWN 不回填、不改写，历史读路由继续独立。旧 Worker 正向能力只有在旧客户端和合法未决操作收敛后才另行退役。
 
 ## 13. 工作量与风险
 
-去掉 Source Proof、Evidence Admission 和格式专属恢复后，剩余四块：Native Document 与恢复、统一 intake/临时处理和单次多图、Core 元数据窄适配、跨设备与失败验证。可并行设计及实施，前提是 Owner 批准。上一稿包含 Source Proof 的工期估算已作废，待核实元数据及多图差量后重新估算。关键不确定性是多图 Provider 路由的实际能力、现有 Core 手动命令在目标环境的可用范围，以及 LOCAL_ONLY 元数据对旧 DTO 的兼容。§11 性能仍是设计目标。
+去掉 Source Proof、Evidence Admission 和格式专属恢复后，剩余四块：Native Document 与恢复、统一 intake/临时处理和单次多图、Core 元数据窄适配、跨设备与失败验证。可并行实施。上一稿包含 Source Proof 的工期估算已作废，待核实元数据及多图差量后重新估算。关键不确定性是多图 Provider 路由的实际能力、现有 Core 手动命令在目标环境的可用范围，以及 LOCAL_ONLY 元数据对旧 DTO 的兼容。§11 性能仍是设计目标。
 
 ## 14. Owner Architecture Approval
 
-Owner 已确定 Document 关联是唯一来源语义，以及 LOCAL_ONLY / NOT_UPLOADED、5 附件、多页 PDF 文本、单次多图、禁 Backend 转换 HEIC/BMP/TIFF、用户主动重传、UNKNOWN 不自动重发。上一稿关于 Source Proof、长期共享证据、扫描 PDF 默认视觉路径的提案撤回。系统备份范围、未来 Document/Ticket 文件同步和存储区域策略保留独立决策。此次只提交修订稿，等待唯一 Owner Architecture Approval；未执行功能代码、SQL、权限、部署、Worker 或真实 Provider 操作。
+Owner 已确定 Document 关联是唯一来源语义，以及 LOCAL_ONLY / NOT_UPLOADED、5 附件、多页 PDF 文本、单次多图、禁 Backend 转换 HEIC/BMP/TIFF、用户主动重传、UNKNOWN 不自动重发。上一稿关于 Source Proof、长期共享证据、扫描 PDF 默认视觉路径的提案撤回。系统备份范围、未来 Document/Ticket 文件同步和存储区域策略保留独立决策。Owner 已批准此架构实施。共享 DEV 部署和真实 Provider 验证仍沿用既有授权边界。

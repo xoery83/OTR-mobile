@@ -2,6 +2,7 @@
 No DEV/Auth/Provider/Native acceptance. Reuses existing Trip/SQL fixture setup.
 """
 from pathlib import Path
+import os
 import tempfile
 root=Path(__file__).resolve().parents[2]
 base=root/'scripts/trip/trip-sustained-sync-acceptance.py'
@@ -288,6 +289,30 @@ addition+=r'''
   check('finite DDL inverse requires scope closure and preserves the accepted call',
     sql("select price_schedule_id is null from public.external_integration_calls where call_id='"+fc['call_id']+"';")=='t')
  print(json.dumps({'status':'CONTINUOUS_SOURCE_PROVIDER_ISOLATED_PG_ONLY','checks':checks,'hostedWrites':0,'providerCalls':0},indent=2))
+finally:
+ if created:docker('rm','-f',NAME)
+'''
+if os.environ.get('OTR_TEST_IMPORT_V3_PRICED')=='1':
+ # Retain only the owning SQL and CP14/CP15 setup. The priced run does not replay
+ # the legacy Source cases, the V3 OFF cases, or the Core Save acceptance.
+ setup=addition[:addition.index(" check('normal Provider candidate installs")]
+ setup=setup.replace("os.environ.get('OTR_TEST_AI_COST_GUARD')", "'on'")
+ setup=setup.replace("os.environ.get('OTR_TEST_IMPORT_V3')=='1'", 'True')
+ setup=setup.replace(" if v3_mode and cost_guard_mode!='off':raise RuntimeError('V3_FIXTURE_EXPECTS_DEV_OFF')\n",'')
+ setup+=" sql(\"update public.trip_sustained_dev_policy set universal_import_enabled=true where actor_account_id='\"+ACTOR+\"';\")\n"
+ provision=addition[addition.index(' # Existing CP14/15 synthetic admin fixture'):addition.index(' def meter(q):')]
+ provision=provision.replace(" provision={'ROOT'", r""" rate_old="'unit_quantity':1000,'price_per_quantity':'0.000001'"
+ rate_new="'unit_quantity':1000000,'price_per_quantity':{'input_tokens':'0.30','cached_input_tokens':'0.006','output_tokens':'1.20'}[k]"
+ setup=setup.replace("ns={'__file__':", "source=source.replace("+repr(rate_old)+","+repr(rate_new)+")\nns={'__file__':")
+ provision={'ROOT'""")
+ provision=provision.replace("call_cost_nanos='1000000000'","call_cost_nanos='500000000'")
+ addition=setup+provision+r'''
+ env=dict(os.environ,OTR_V3_PROVIDER_FIXTURE=NAME,OTR_V3_FIXTURE_ACTOR=ACTOR,OTR_V3_FIXTURE_TRIP=TRIP,
+  OTR_V3_FIXTURE_INTEGRATION=i['integration_id'],OTR_V3_FIXTURE_PRICE=price['price_schedule_id'])
+ result=subprocess.run([str(ROOT/'node_modules/.bin/vitest'),'run','--configLoader','runner','--no-cache',
+  'backend/src/universalV3Execution.sql.test.ts'],cwd=ROOT,env=env,timeout=45)
+ assert result.returncode==0
+ print(json.dumps({'status':'V3_PRICED_MULTI_IMAGE_ISOLATED_PG','hostedWrites':0,'providerCalls':0}))
 finally:
  if created:docker('rm','-f',NAME)
 '''

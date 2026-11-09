@@ -61,7 +61,8 @@ async function saveAndReopen(
     const independent = createCorePgStorage(connect(reader), hash, undefined, mode);
     const collections = createCorePgReader(connect(reader), hash, undefined, mode);
     const transport = {
-      capabilities: async () => coreCapabilitiesSchema.parse(await collections.capabilities(accountId, tripId)),
+      capabilities: async () =>
+        coreCapabilitiesSchema.parse(await collections.capabilities(accountId, tripId)),
       collection: () => collections.collection(accountId, tripId, undefined, true),
       receipt: (_context: unknown, operationId: string) =>
         readCorePgOperation(independent, accountId, tripId, operationId, hash),
@@ -70,7 +71,9 @@ async function saveAndReopen(
     };
     const openCore = (database: DatabaseSync) => {
       const conn = serializeDatabaseTransactions({
-        async execAsync(query: string) { database.exec(query); },
+        async execAsync(query: string) {
+          database.exec(query);
+        },
         async getFirstAsync<T>(query: string, ...params: unknown[]) {
           return (database.prepare(query).get(...(params as never[])) ??
             null) as T | null;
@@ -92,7 +95,14 @@ async function saveAndReopen(
           }
         },
       });
-      return { conn, repository: createTripCoreV2Repository(conn satisfies CoreDatabase, account, hash) };
+      return {
+        conn,
+        repository: createTripCoreV2Repository(
+          conn satisfies CoreDatabase,
+          account,
+          hash,
+        ),
+      };
     };
     const { conn, repository } = openCore(native);
     await runMigrations(conn);
@@ -136,16 +146,32 @@ async function saveAndReopen(
       let dispatchError: unknown;
       await createCoreV2SyncCoordinator(
         queue,
-        { async push(operation) {
-          try { await worker.push(operation); } catch (error) { dispatchError = error; throw error; }
-        } },
+        {
+          async push(operation) {
+            try {
+              await worker.push(operation);
+            } catch (error) {
+              dispatchError = error;
+              throw error;
+            }
+          },
+        },
         repository,
         tripId,
         operationId,
       ).run("AUTHENTICATED_ONLINE");
       const receipt = await transport.receipt(ctx, operationId);
-      const queueState = native.prepare("SELECT status, last_error_code FROM sync_operations WHERE id=?").get(operationId);
-      expect(receipt, JSON.stringify({ command: plan.commands[index].command, queueState, dispatchError: String(dispatchError) })).toMatchObject({
+      const queueState = native
+        .prepare("SELECT status, last_error_code FROM sync_operations WHERE id=?")
+        .get(operationId);
+      expect(
+        receipt,
+        JSON.stringify({
+          command: plan.commands[index].command,
+          queueState,
+          dispatchError: String(dispatchError),
+        }),
+      ).toMatchObject({
         projection: "FULL",
         receipt: { operationId, outcome: "APPLIED" },
       });
@@ -186,10 +212,14 @@ const fixture = process.env.OTR_V3_PROVIDER_FIXTURE;
 const actor = process.env.OTR_V3_FIXTURE_ACTOR;
 const trip = process.env.OTR_V3_FIXTURE_TRIP;
 const integration = process.env.OTR_V3_FIXTURE_INTEGRATION;
+const priceId = process.env.OTR_V3_FIXTURE_PRICE;
+const priced = !!priceId;
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
 it.skipIf(!fixture || !actor || !trip || !integration)(
-  "runs mixed V3 HTTP input through durable Wake, synthetic Provider, Core Save and SQLite reopen",
+  priced
+    ? "settles one priced multi-image V3 call with independent receipt, immutable price and hold"
+    : "runs mixed V3 HTTP input through durable Wake, synthetic Provider, Core Save and SQLite reopen",
   async () => {
     if (!/^otr-trip-sustained-[a-f0-9]{12}$/.test(fixture!))
       throw Error("OWNED_FIXTURE_REQUIRED");
@@ -233,7 +263,7 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         async execute(kind, context, command) {
           return universalProviderPgTransaction(
             connection,
-            false,
+            priced,
             async (lease) =>
               (
                 await lease.query(`SELECT public.${kind}($1::jsonb,$2::jsonb) AS value`, [
@@ -252,7 +282,19 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         { reference: string; sha256: string; byteCount: number }
       >();
       const send = vi.fn(async (request: { body: string }) => {
-        expect(JSON.parse(request.body).messages[1].content).toHaveLength(5);
+        const parts = JSON.parse(request.body).messages[1].content;
+        expect(parts).toHaveLength(priced ? 7 : 5);
+        if (priced) {
+          const images = parts.filter(
+            (part: { type: string }) => part.type === "image_url",
+          );
+          expect(images).toHaveLength(2);
+          expect(
+            new Set(
+              images.map((part: { image_url: { url: string } }) => part.image_url.url),
+            ).size,
+          ).toBe(2);
+        }
         return {
           status: 200,
           redirected: false,
@@ -274,7 +316,7 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
                               "activity.name": "Rail museum",
                               "activity.date": "2026-12-14",
                             },
-                            inputs: [0, 1, 2],
+                            inputs: priced ? [0, 1, 2, 3] : [0, 1, 2],
                           },
                         ],
                       }),
@@ -325,7 +367,9 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
           },
           async retainRaw() {},
         } as unknown as Parameters<typeof createUniversalV3Execution>[0]["stores"],
-        async validateImage() {},
+        async validateImage(_mime, bytes) {
+          return { mediaType: "image/png", bytes };
+        },
         extractPdf: (async () => ({
           text: "PDF page 1\fPDF page 2",
         })) as unknown as NonNullable<
@@ -339,7 +383,7 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
             async selectProvider() {
               const raw = await universalProviderPgTransaction(
                 connection,
-                false,
+                priced,
                 async (lease) =>
                   (
                     await lease.query(
@@ -353,7 +397,7 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
             persistence: {
               gateway,
               connection,
-              costGuardEnabled: false,
+              costGuardEnabled: priced,
               environment: (key) =>
                 key === "OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT" ? "enabled" : "fixture-only",
             },
@@ -365,8 +409,22 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
       const materials = [
         { mediaType: "text/plain", original: Buffer.from("Arriving at the rail museum") },
         { mediaType: "application/pdf", original: Buffer.from("%PDF-synthetic") },
-        { mediaType: "image/png", original: Buffer.from("PNG synthetic") },
+        {
+          mediaType: "image/png",
+          original: Buffer.from(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgaDgBAAHMAUm4iA/rAAAAAElFTkSuQmCC",
+            "base64",
+          ),
+        },
       ];
+      if (priced)
+        materials.push({
+          mediaType: "image/png",
+          original: Buffer.from(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGM4oRAAAALsATlZGIz1AAAAAElFTkSuQmCC",
+            "base64",
+          ),
+        });
       const files = materials.map(({ mediaType, original }) => ({
         fileId: randomUUID(),
         documentId: localImportDocumentId(actor!, trip!, sha(original)),
@@ -439,14 +497,79 @@ it.skipIf(!fixture || !actor || !trip || !integration)(
         await (await call(new Request(base + query + "&execution=1"))).json(),
       );
       if (ready.state !== "REVIEW_READY") throw Error("FIXTURE_V3_REVIEW_MISSING");
-      await saveAndReopen(
-        fixture!,
-        actor!,
-        trip!,
-        join(root, "native.sqlite"),
-        ready.candidates[0],
-        files,
-      );
+      if (priced) {
+        const privileged = session(fixture!);
+        const independent = session(fixture!);
+        try {
+          const { rows } = await privileged.lease.query(
+            `SELECT c.call_id,c.attempt_id,c.dispatch_state,c.row_revision,
+                h.price_schedule_id,h.worst_cost_nanos::text AS worst
+              FROM public.external_integration_calls c
+              JOIN public.flight_call_resource_holds h USING (call_id)
+              WHERE c.task_id=$1::uuid`,
+            [ready.taskId],
+          );
+          expect(rows).toHaveLength(1);
+          expect(rows[0]).toMatchObject({
+            dispatch_state: "TERMINAL",
+            row_revision: 3,
+            price_schedule_id: priceId,
+            worst: "14745600",
+          });
+          const { attempt_id, call_id } = rows[0];
+          const args = [actor, ready.taskId, attempt_id, call_id];
+          await independent.lease.query(
+            "SET SESSION AUTHORIZATION otr_external_integration_call_gateway",
+          );
+          const settled = (
+            await independent.lease.query(
+              `SELECT r->'completion'->>'cost_nanos' AS cost,
+                r->'completion'->>'input_tokens' AS input, r->'completion'->>'output_tokens' AS output,
+                r->'call'->>'price_schedule_id' AS price, r->'call'->>'dispatch_state' AS state,
+                r->'admission'->'profile_snapshot'->>'execution_scope' AS profile
+              FROM public.model_task_read_universal_v3_receipt($1::uuid,$2::uuid,$3::uuid,$4::uuid) r`,
+              args,
+            )
+          ).rows;
+          expect(settled).toEqual([
+            {
+              cost: "54000",
+              input: "100",
+              output: "20",
+              price: priceId,
+              state: "TERMINAL",
+              profile: "UNIVERSAL_IMPORT_LOCAL_FIRST_V3",
+            },
+          ]);
+          expect(
+            (
+              await independent.lease.query(
+                "SELECT jsonb_array_length(public.universal_import_read_admitted_price($1::uuid,$2::uuid,$3::uuid,$4::uuid)) AS units",
+                args,
+              )
+            ).rows,
+          ).toEqual([{ units: 3 }]);
+          console.log(
+            JSON.stringify({
+              singleDispatch: true,
+              worstCostNanos: rows[0].worst,
+              ...settled[0],
+            }),
+          );
+        } finally {
+          privileged.close();
+          independent.close();
+        }
+      } else {
+        await saveAndReopen(
+          fixture!,
+          actor!,
+          trip!,
+          join(root, "native.sqlite"),
+          ready.candidates[0],
+          files,
+        );
+      }
       expect((await start()).status).toBe(202);
       expect(send).toHaveBeenCalledTimes(1);
     } finally {

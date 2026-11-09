@@ -8,13 +8,15 @@ import {
 } from "../repositories/defaultLocalCaptureInboxRepository";
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
 import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
-import { assertPngPhotoConsent } from "./universalPhotoConsent";
+import { assertPngPhotoConsent, assertV3PhotoConsent } from "./universalPhotoConsent";
 
-// Explicit Prepare/Resume fence only. No OCR, assignment, decisions write or network.
+type Options = { getAccountId(): Promise<string>; assertCurrent(): void };
+
+// Explicit Prepare/Resume fence only. No OCR, assignment, decision write or network.
 export async function assertDefaultUniversalPhotoConsent(
   context: AccountRequestContext,
   model: CaptureJobReadModel,
-  options: { getAccountId(): Promise<string>; assertCurrent(): void },
+  options: Options,
 ) {
   if (
     !model.inputs.some(
@@ -23,6 +25,32 @@ export async function assertDefaultUniversalPhotoConsent(
     )
   )
     return;
+  const pin = await assertPngPhotoConsent(
+    context,
+    model.batch.jobId,
+    await photoConsentDependencies(options),
+  );
+  options.assertCurrent();
+  return pin;
+}
+
+export async function assertDefaultUniversalV3PhotoConsent(
+  context: AccountRequestContext,
+  model: CaptureJobReadModel,
+  options: Options,
+) {
+  if (
+    !model.inputs.some(
+      (input) =>
+        input.kind === "IMAGE" || input.declaredContentType?.startsWith("image/"),
+    )
+  )
+    return;
+  await assertV3PhotoConsent(context, model, await photoConsentDependencies(options));
+  options.assertCurrent();
+}
+
+async function photoConsentDependencies(options: Options) {
   options.assertCurrent();
   const database = await openDatabase();
   options.assertCurrent();
@@ -36,7 +64,7 @@ export async function assertDefaultUniversalPhotoConsent(
     options.assertCurrent();
     return id;
   };
-  const pin = await assertPngPhotoConsent(context, model.batch.jobId, {
+  return {
     getAccountId: guardedAccount,
     submissions,
     captures,
@@ -45,7 +73,5 @@ export async function assertDefaultUniversalPhotoConsent(
       guardedAccount,
       captureStorageDependencies,
     ),
-  });
-  options.assertCurrent();
-  return pin;
+  };
 }

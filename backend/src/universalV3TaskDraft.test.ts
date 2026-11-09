@@ -62,7 +62,10 @@ it.each(["completed", "unknown"] as const)(
       }
       const retained = await intake.load(scope);
       if (!retained) throw Error("FIXTURE_INTAKE_MISSING");
-      const validateImage = vi.fn(async () => {});
+      const validateImage = vi.fn(async (mime: string, bytes: Buffer) => ({
+        mediaType: mime === "image/png" ? "image/png" as const : "image/jpeg" as const,
+        bytes,
+      }));
       const pdfText = "Page one: hotel\fPage two: late check-in";
       const extractPdf = vi.fn(async () => ({ text: pdfText }));
       const materials = await prepareUniversalV3Materials(

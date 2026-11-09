@@ -9,7 +9,7 @@ import {
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
 import { createUniversalPhotoRelevanceActions } from "./universalPhotoRelevanceActions";
 import { captureFilePngPhotoDecisionsDefinition } from "../db/migrations/captureFilePngPhotoDecisions";
-import { assertPngPhotoConsent } from "./universalPhotoConsent";
+import { assertPngPhotoConsent, assertV3PhotoConsent } from "./universalPhotoConsent";
 
 async function setup(mixed = false, files = false) {
   const f = fixture(true, 75),
@@ -212,4 +212,100 @@ it("mixed Files PNG screens and persists the existing explicit choice with FILE 
   await expect(x.check()).rejects.toThrow("UNIVERSAL_PHOTO_SKIPPED");
   expect(x.f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
   expect(x.extract).toHaveBeenCalledOnce();
+});
+
+it("V3 binds both actual image inputs to current local decisions before transport", async () => {
+  const f = fixture(true, 78);
+  const trip = randomUUID();
+  const request = f.request(2);
+  request.context.tripPrior = { id: trip, origin: "PRIOR", observedAt: now() };
+  const images = [
+    Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0),
+    new Uint8Array(Buffer.from("RIFF\x04\0\0\0WEBP", "binary")),
+  ];
+  Object.assign(request.inputs[0], {
+    kind: "IMAGE",
+    acquisitionSource: "photos",
+    declaredContentType: "image/png",
+  });
+  Object.assign(request.inputs[1], {
+    kind: "FILE",
+    acquisitionSource: "files",
+    originalFilename: "material.webp",
+    declaredContentType: "image/webp",
+  });
+  const job = await f.submissions.submit(
+    request,
+    new Map(
+      request.inputs.map((input, index) => [
+        input.id,
+        async () => ({ bytes: images[index] }),
+      ]),
+    ),
+  );
+  const context = await captureAccountRequestContext(trip, f.getAccount);
+  const decisions = createCapturePhotoImportDecisionRepository(f.db, f.getAccount, {
+    sha256,
+    now,
+    newId: randomUUID,
+  });
+  const deps = {
+    getAccountId: f.getAccount,
+    submissions: f.submissions,
+    captures: f.captures,
+    decisions,
+  };
+  const actions = createUniversalPhotoRelevanceActions(context, {
+    ...deps,
+    hash: sha256,
+    async extract() {
+      throw Error("SYNTHETIC_OCR_UNAVAILABLE");
+    },
+  });
+  const choice = async (inputId: string, action: "CONTINUE_WITH_AI" | "SKIP") => {
+    const shown = await actions.screen(request.jobId, inputId);
+    await actions.choose(request.jobId, shown.revision, shown.decision, action);
+  };
+  const first = request.inputs[0].id,
+    second = request.inputs[1].id;
+  await choice(first, "CONTINUE_WITH_AI");
+  await expect(assertV3PhotoConsent(context, job, deps)).rejects.toThrow(
+    "UNIVERSAL_PHOTO_REVIEW_REQUIRED",
+  );
+  await choice(second, "CONTINUE_WITH_AI");
+  const pins = await assertV3PhotoConsent(context, job, deps);
+  expect(pins.map(({ inputId, mediaType }) => [inputId, mediaType])).toEqual([
+    [first, "image/png"],
+    [second, "image/webp"],
+  ]);
+  await expect(assertPngPhotoConsent(context, request.jobId, deps)).rejects.toThrow(
+    "UNIVERSAL_PHOTO_SCOPE_CHANGED",
+  );
+  const altered = {
+    ...job,
+    inputs: [job.inputs[0], { ...job.inputs[1], contentSha256: "a".repeat(64) }],
+  };
+  await expect(assertV3PhotoConsent(context, altered, deps)).rejects.toThrow(
+    "UNIVERSAL_PHOTO_SCOPE_CHANGED",
+  );
+  await expect(
+    assertV3PhotoConsent(context, job, {
+      ...deps,
+      captures: {
+        async getForSourceHandoff(id) {
+          const retained = await f.captures.getForSourceHandoff(id);
+          return id === job.inputs[1].captureId
+            ? { ...retained, capture: { ...retained.capture, tripId: randomUUID() } }
+            : retained;
+        },
+      },
+    }),
+  ).rejects.toThrow("UNIVERSAL_PHOTO_SCOPE_CHANGED");
+  await choice(second, "SKIP");
+  await expect(assertV3PhotoConsent(context, job, deps)).rejects.toThrow(
+    "UNIVERSAL_PHOTO_SKIPPED",
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count,
+  ).toBe(0);
 });

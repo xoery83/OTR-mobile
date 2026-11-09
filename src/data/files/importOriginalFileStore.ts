@@ -31,7 +31,7 @@ export async function retainImportOriginal(
 ) {
   if (
     !bytes.length ||
-    bytes.length > 10 * 1024 * 1024 ||
+    bytes.length > 12 * 1024 * 1024 ||
     bytesToHex(sha256(bytes)) !== expectedSha
   )
     throw Error("IMPORT_ORIGINAL_INTEGRITY");
@@ -63,7 +63,7 @@ export function hasImportOriginal(account: string, sha: string, length: number) 
 }
 
 export async function readImportOriginal(account: string, sha: string, length: number) {
-  if (!Number.isSafeInteger(length) || length < 1 || length > 10 * 1024 * 1024)
+  if (!Number.isSafeInteger(length) || length < 1 || length > 12 * 1024 * 1024)
     throw Error("IMPORT_ORIGINAL_INTEGRITY");
   const { file } = localFile(account, sha);
   return file.exists ? checkedBytes(file, sha, length) : null;

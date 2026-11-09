@@ -1,4 +1,4 @@
-import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
+import { isPhotoImportMaterial, isV3PhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
 import {
   canPrepareMixedQaSourceProposals,
   prepareMixedQaSourceProposals,
@@ -282,7 +282,9 @@ export function CaptureProgress({
                 ? (() => {
                     const input = model.inputs.find((input) => input.id === item.inputId);
                     return input &&
-                      isPhotoImportMaterial(input) &&
+                      (isPhotoImportMaterial(input) ||
+                        (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
+                          isV3PhotoImportMaterial(input))) &&
                       input.state === "ACCEPTED" ? (
                       <UniversalPhotoRelevanceRow
                         model={model}

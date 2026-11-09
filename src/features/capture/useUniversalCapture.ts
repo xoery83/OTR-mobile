@@ -139,15 +139,12 @@ export function useUniversalCapture(
         if (v3) {
           const stage = localFirstState.current?.state;
           if (execute && stage !== "PROCESSING" && stage !== "REVIEW_READY" && stage !== "OUTCOME_UNKNOWN") {
-            const { assertDefaultUniversalPhotoConsent } =
-              await import("@/data/operations/defaultUniversalPhotoConsent");
-            await assertDefaultUniversalPhotoConsent(v3.context, model, {
-              getAccountId: v3.accountId,
-              assertCurrent: () => { if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE"); },
-            });
             if (!current()) return;
             const { stageLocalFirstCapture } = await import("@/data/operations/universalV3Capture");
-            await stageLocalFirstCapture(v3.context, model, v3);
+            await stageLocalFirstCapture(v3.context, model, {
+              ...v3,
+              assertCurrent: () => { if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE"); },
+            });
           }
           const state = await v3.transport.readLocalFirstExecution(v3.context, analysis);
           if (current()) {

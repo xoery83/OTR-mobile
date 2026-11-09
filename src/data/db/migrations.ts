@@ -1,3 +1,4 @@
+import { captureV3PhotoDecisionsMigration } from "./migrations/captureV3PhotoDecisions";
 import { tripCoreLocalDocumentMigration } from "./migrations/tripCoreLocalDocument";
 import { captureFilePngPhotoDecisionsDefinition } from "./migrations/captureFilePngPhotoDecisions";
 import { capturePhotoImportDecisionsDefinition } from "./migrations/capturePhotoImportDecisions";
@@ -1737,4 +1738,5 @@ export const migrations: Migration[] = [
   { ...capturePhotoImportDecisionsDefinition, id: 75 },
   { ...captureFilePngPhotoDecisionsDefinition, id: 76 },
   tripCoreLocalDocumentMigration,
+  captureV3PhotoDecisionsMigration,
 ];

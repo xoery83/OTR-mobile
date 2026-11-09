@@ -60,7 +60,13 @@ export async function prepareUniversalV3Materials(
   manifest: UniversalV3Manifest,
   readFile: (entry: UniversalV3Manifest["files"][number]) => Promise<Buffer>,
   // Image decoding belongs in an existing isolated processing port, never in the HTTP process.
-  validateStaticImage: (mediaType: string, bytes: Buffer) => Promise<void>,
+  normalizeStaticImage: (
+    mediaType: string,
+    bytes: Buffer,
+  ) => Promise<{
+    mediaType: "image/jpeg" | "image/png";
+    bytes: Buffer;
+  }>,
   extractPdf: typeof verifySourcePdfV2LinuxBytes = verifySourcePdfV2LinuxBytes,
 ): Promise<Parameters<UniversalProvider["interpret"]>[0]["sources"]> {
   const sources: Parameters<UniversalProvider["interpret"]>[0]["sources"] = [];
@@ -69,9 +75,13 @@ export async function prepareUniversalV3Materials(
     if (original.length !== entry.length || sha(original) !== entry.sha256)
       throw Error("UNIVERSAL_V3_FILE_MISMATCH");
     const image = entry.mediaType.startsWith("image/");
-    let bytes = original;
+    let bytes = original,
+      mime = "text/plain";
     if (image) {
-      await validateStaticImage(entry.mediaType, original);
+      ({ bytes, mediaType: mime } = await normalizeStaticImage(
+        entry.mediaType,
+        original,
+      ));
     } else if (entry.mediaType === "application/pdf") {
       if (original.subarray(0, 5).toString() !== "%PDF-")
         throw Error("UNIVERSAL_V3_FILE_TYPE");
@@ -90,7 +100,7 @@ export async function prepareUniversalV3Materials(
     sources.push({
       index,
       sourceId: `S${index}`,
-      mime: image ? entry.mediaType : "text/plain",
+      mime,
       modality: image ? "IMAGE" : "TEXT",
       sha256: sha(bytes),
       bytes,

@@ -43,10 +43,13 @@ function localItemImportDocuments(
       typeof byteCount !== "number" ||
       !Number.isSafeInteger(byteCount) ||
       byteCount < 1 ||
-      byteCount > 10 * 1024 * 1024 ||
+      byteCount > 12 * 1024 * 1024 ||
       (mediaType !== "text/plain" &&
         mediaType !== "application/pdf" &&
-        mediaType !== "image/png") ||
+        mediaType !== "image/png" &&
+        mediaType !== "image/jpeg" &&
+        mediaType !== "image/webp" &&
+        mediaType !== "image/gif") ||
       id !== localImportDocumentId(scope.accountId, scope.tripId, sha256)
     )
       return [];

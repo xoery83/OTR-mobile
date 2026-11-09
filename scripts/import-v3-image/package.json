@@ -1,0 +1,6 @@
+{
+  "name": "otr-import-v3-image-decoder",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": { "sharp": "0.35.5" }
+}

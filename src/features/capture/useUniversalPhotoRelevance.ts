@@ -1,4 +1,4 @@
-import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
+import { isPhotoImportMaterial, isV3PhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import {
@@ -75,7 +75,8 @@ export function useUniversalPhotoRelevance(
   const generation = getAccountGeneration(),
     visible = isCurrent();
   const eligible =
-    isPhotoImportMaterial(input) &&
+    (isPhotoImportMaterial(input) ||
+      (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" && isV3PhotoImportMaterial(input))) &&
     input.state === "ACCEPTED" &&
     !!input.captureId &&
     !!input.payloadId;
