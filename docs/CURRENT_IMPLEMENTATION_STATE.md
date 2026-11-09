@@ -1,3 +1,19 @@
+## Shared Mobile DEV execution autonomy — 10 November 2026
+
+The existing Writer closed-release entry now accepts feature-neutral packets
+with pinned Host, image, archive, preimages and independent readback. It has
+no CP14 Actor prerequisite. The Host custody helper renews the existing DEV
+CP14 Actor on demand and fences an ambiguous refresh. Both were checked in
+isolation. See the [DEV Backend Runbook](ops/DEV_BACKEND_RUNBOOK.md).
+
+Root2's guarded DEV catalog read at 08:02 NZDT found no active CONFIG_ADMIN
+or SECURITY_ADMIN grants and a closed workload scope. Existing grants cannot
+bind an exact model/command or synthetic Account/Trip. The
+[scoped contract delta](adr/2026-11-10-dev-execution-autonomy.md) awaits one
+Owner review. No DEV grant or V3 migration was applied in this checkpoint.
+The prior closed V3 install and four-image smoke remain valid. Real DeepSeek
+and QA178 physical E2E are pending.
+
 ## Import V3 Local-First source candidate — 10 November 2026
 
 Owner approved the [Local-First design](architecture/IMPORT_V3_LOCAL_FIRST_ENGINEERING_DESIGN.md).
@@ -40,8 +56,9 @@ launches a short child under filesystem, socket, process and resource
 restrictions. The native arm64 control verified isolation negatives and the
 four formats in 38–41 ms per file. The two-page PDF took 41 ms and retained
 the fixed text hash. The local emulated x64 runtime returns ENOSYS for
-Landlock and fails closed. The actual native x64 Backend runtime still needs
-its normal closed-health probe under the inherited production profile.
+Landlock and fails closed. The native amd64 DEV Backend passed the closed-state
+probe under its inherited host profile. The Landlock guard took 45 ms and
+all four image formats passed in 772 ms overall.
 See [decoder package](../scripts/import-v3-decoder/README.md).
 The priced two-image fixture reserved one call, marked dispatch once and settled
 a simulated response at 54,000 nanos with a 14,745,600-nano immutable hold. It
@@ -58,9 +75,13 @@ intake replay defect after spool cleanup. The durable Task/Attempt now suppresse
 new upload requests after admission, and the same-ID Start and duplicate PUT
 preserve the same result, empty spool and one dispatch.
 
-Hosted status is CLOUD_PENDING. Remaining qualification includes the active
-DEV SQL/provider scope and effective price, the x64 sandbox probe under its
-actual host policy, real DeepSeek and the physical iPad. P1–P6 detail can open verified
+Hosted Backend status is DEFAULT_CLOSED_INSTALLED. On 10 November 2026 at
+07:49 NZDT, the existing DEV Writer deployed source `78c0d76` and image
+`3ced7878` to CID `0e935f26`; independent health and closed-route checks passed.
+Original CID `50e5fbf1` remains the rollback target. The closed release had
+zero SQL writes and zero Provider calls. Remaining qualification includes DEV
+SQL, current database admin authority, Provider scope and price if enabled,
+real DeepSeek and QA178 physical E2E. P1–P6 detail can open verified
 same-device originals through the existing private preview or inline text. File
 entries without current account/Trip access or a local original are hidden.
 P5 NEW and P2 title UPDATE remain existing Core compatibility limits. Historical
