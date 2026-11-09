@@ -484,9 +484,9 @@ export async function loadDevUniversalContinuousRuntime(
               throw Error("UNIVERSAL_RETAINED_SOURCE_SCOPE");
             const batch = universalBatchInputsSchema.parse(input);
             const signal = AbortSignal.any([request.signal, AbortSignal.timeout(80000)]);
-            const sourceRequest = (path: string) =>
+            const sourceRequest = (path: string, method = "POST") =>
               new Request(new URL(path, request.url), {
-                method: "POST",
+                method,
                 headers: { Authorization: match[0] },
                 signal,
               });
@@ -520,10 +520,11 @@ export async function loadDevUniversalContinuousRuntime(
                   const q = commands.upload;
                   const base = `/v2/trips/${tripId}/sources/${q.source_id}/representations/${q.payload.representation_id}/pdf-v4/${q.operation_id}`;
                   await authorize(true);
-                  const advance = sourceRequest(`${base}/advance`);
-                  const owned = await openPdfUpload(advance, verifiedActor, {
-                    request: advance, actorId: verifiedActor, tripId,
-                  });
+                  // Reservation writes must retain the ordinary request's fresh Session checks.
+                  const owned = await openPdfUpload(
+                    sourceRequest(`${base}/status`, "GET"),
+                    verifiedActor,
+                  );
                   try {
                     const { preparation, reservation } = owned.port;
                     const identity = {
@@ -564,10 +565,24 @@ export async function loadDevUniversalContinuousRuntime(
                       status = "STAGED";
                     }
                     signal.throwIfAborted();
-                    if (status !== "READ_OBSERVED" &&
-                      (!(status === "STAGED" || status === "ACK_OBSERVED") ||
-                        !(await preparation.advance?.(advance, identity))))
-                      throw Error("PDF_UPLOAD_OUTCOME_UNRESOLVED");
+                    if (status !== "READ_OBSERVED") {
+                      if (status !== "STAGED" && status !== "ACK_OBSERVED")
+                        throw Error("PDF_UPLOAD_OUTCOME_UNRESOLVED");
+                      await authorize(true);
+                      const advance = sourceRequest(`${base}/advance`);
+                      const advancing = await openPdfUpload(advance, verifiedActor, {
+                        request: advance, actorId: verifiedActor, tripId,
+                      });
+                      try {
+                        if (!(await advancing.port.preparation.advance?.(advance, {
+                          ...identity,
+                          accountGeneration: advancing.initialGeneration,
+                        })))
+                          throw Error("PDF_UPLOAD_OUTCOME_UNRESOLVED");
+                      } finally {
+                        advancing.close();
+                      }
+                    }
                     signal.throwIfAborted();
                     return await reservation.finish(verifiedActor, raw, identity);
                   } finally {

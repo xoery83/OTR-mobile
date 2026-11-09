@@ -14,6 +14,10 @@ import {
   universalPrepareBoundary,
 } from "./universalPrepareHttp";
 
+import * as retainedPreparation from "./universalRetainedOriginalPreparation";
+import { pdfPreparationFixture, pdfProtocolHash } from "../../src/data/operations/__fixtures__/pdfOriginalPreparation";
+import { createPendingPdfCommandProposals } from "../../src/domain/trip/sourcePdfPreparationCommands";
+
 const f = vi.hoisted(() => ({
   config: vi.fn(),
   stat: vi.fn(),
@@ -1019,5 +1023,90 @@ it("QA158 isolated composition preserves one pinned historical PNG and the norma
   } finally {
     await runtime?.close();
     network.mockRestore();
+  }
+});
+
+it("uses the Advance proof only for Advance and keeps the exact PDF Operation across Auth scopes", async () => {
+  const fixture = await pdfPreparationFixture([]);
+  const { acquisition, acquisitionReceipt, binding, bytes } = fixture.input;
+  const actor = acquisition.actor_account_id, trip = acquisition.trip_id;
+  const commands = await createPendingPdfCommandProposals(
+    { actorId: actor, tripId: trip }, acquisition, acquisitionReceipt, pdfProtocolHash,
+  );
+  const status = vi.fn().mockResolvedValueOnce("NO_ACTIVE_ATTEMPT").mockResolvedValueOnce("RESERVED");
+  const prepare = vi.fn(async () => ({ outcome: "APPLIED" }));
+  const reserve = vi.fn(async () => ({ reserved: true }));
+  const finish = vi.fn(async () => "fixture-receipt");
+  const ingress = vi.fn();
+  const advance = vi.fn(async () => true);
+  const close = vi.fn();
+  const open = vi.fn(async (_request: Request, _actor: string, proof?: unknown) => proof
+    ? { initialGeneration: 2, port: { preparation: { advance } }, close }
+    : { initialGeneration: 1, port: { reservation: { status, prepare, reserve, finish }, preparation: { ingress } }, close });
+  f.auth.mockResolvedValue({ id: actor, accountClass: "NORMAL_ACCOUNT" });
+  f.pdfConfig.mockResolvedValue({});
+  f.pdfPorts.mockReturnValue({
+    originalMetadataAllowed: () => true, sourcePdfV4PreparationForRequest: open, close,
+  });
+  f.host.mockReturnValue({
+    prepare: async (_input: unknown, complete: () => Promise<unknown>) => {
+      await complete();
+      return { status: "QUEUED", context: {} };
+    },
+  });
+  const retained = vi.spyOn(retainedPreparation, "prepareUniversalRetainedOriginals")
+    .mockImplementation(async (_scope, _batch, _originals, deps) => {
+      expect(await deps.uploadPdf!(commands, () => Buffer.from(bytes))).toBe("fixture-receipt");
+    });
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled", OTR_DEV_UNIVERSAL_PDF_RUNTIME: "enabled",
+  });
+  try {
+    const ports = await runtime!.forRequest(new Request("https://example.test", {
+      headers: { Authorization: "Bearer synthetic" },
+    }), actor, trip);
+    await ports.prepare(trip, {
+      tripId: trip, batchId: binding.batchId, submissionSha256: "a".repeat(64),
+      inputs: [{
+        id: binding.inputId, source_id: acquisition.source_id,
+        representation_id: acquisition.payload.original.id, payload_sha256: binding.sha256,
+        byte_count: binding.byteCount, material_revision: 1,
+        observed_source_row_revision: 1, historical_selection: false,
+      }],
+      retainedOriginals: [{
+        inputId: binding.inputId,
+        acquisition: {
+          ...acquisition,
+          payload: {
+            acquisition_key: acquisition.operation_key, acquisition_sha256: "b".repeat(64),
+            source_input: { source_kind: "FILE", acquisition_channel: "FILES", captured_at: null, capture_time_basis: "UNKNOWN" },
+            capture: { completeness: "AS_SUPPLIED", capture_sha256: "c".repeat(64) },
+            original: { ...acquisition.payload.original, original_filename: "Fixture.pdf",
+              encoding: null, part_key: null, text_content: null, locator_uri: null },
+          },
+        },
+      }],
+    });
+    const [[reservationRequest, reservationActor, reservationProof], [advanceRequest, advanceActor, advanceProof]] = open.mock.calls;
+    expect(reservationRequest.method).toBe("GET");
+    expect(reservationRequest.url).toMatch(/\/status$/);
+    expect(reservationActor).toBe(actor);
+    expect(reservationProof).toBeUndefined();
+    expect(advanceRequest.url).toMatch(/\/advance$/);
+    expect(advanceActor).toBe(actor);
+    expect(advanceProof).toEqual({ request: advanceRequest, actorId: actor, tripId: trip });
+    const originalOperation = { operationId: commands.upload.operation_id, accountGeneration: 1 };
+    expect(prepare).toHaveBeenCalledWith(actor, expect.any(String), expect.objectContaining({
+      operationId: commands.prepare.operation_id, accountGeneration: 1,
+    }));
+    expect(reserve).toHaveBeenCalledWith(actor, expect.any(String), expect.objectContaining(originalOperation));
+    expect(ingress).toHaveBeenCalledWith(expect.any(Request), expect.objectContaining(originalOperation));
+    expect(advance).toHaveBeenCalledWith(advanceRequest, expect.objectContaining({
+      ...originalOperation, accountGeneration: 2,
+    }));
+    expect(finish).toHaveBeenCalledWith(actor, expect.any(String), expect.objectContaining(originalOperation));
+  } finally {
+    retained.mockRestore();
+    await runtime?.close();
   }
 });
