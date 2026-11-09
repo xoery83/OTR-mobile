@@ -128,6 +128,32 @@ it("keeps W HIGH separate from dated family minimum facts and does not require P
     missing: ["FLIGHT_NUMBER_OR_QUALIFIED_EXCEPTION"],
   });
 });
+it.each([
+  ["November 2, 2026", []],
+  ["November 31, 2026", ["START_DATE"]],
+  ["November 2", ["START_DATE"]],
+] as const)("uses the owning activity date grammar for %s", (raw, missing) => {
+  const fields = [
+    { path: "activity.name", raw: "Workshop" },
+    { path: "activity.date", raw },
+  ].map((field) => ({
+    ...field,
+    sourceId: "S0",
+    start: 0,
+    end: Buffer.byteLength(field.raw),
+  }));
+  expect(
+    projectUniversalMinimumFacts({
+      token: "i1",
+      kind: "P6",
+      subtype: "ACTIVITY",
+      fields,
+      bookingTokens: [],
+      ticketTokens: [],
+    }),
+  ).toMatchObject({ missing, createReady: false });
+  expect(fields[1].raw).toBe(raw);
+});
 it("retains one-call multi-label classification, cross-source corroboration and optional P3 evidence as Source observations", async () => {
   const a = source(
     "Property: Grand Hotel\nCheck in: 2026-10-14\nCheck out: 2026-10-15\nContact: Ann\nBooking confirmation\n",

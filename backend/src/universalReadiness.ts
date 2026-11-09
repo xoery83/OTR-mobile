@@ -1,10 +1,19 @@
 import type { LlmResponse } from "../frozen-workbench/scripts/import-workbench/llm-first";
+import { sourceReviewCivilDate } from "../../src/domain/trip/universalP1SourceReview";
 
 type Candidate = LlmResponse["objects"][number];
 const date = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const d = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(d.valueOf()) && d.toISOString().slice(0, 10) === value;
+};
+const reviewedDate = (value: string) => {
+  try {
+    sourceReviewCivilDate(value);
+    return true;
+  } catch {
+    return false;
+  }
 };
 export function projectUniversalMinimumFacts(candidate: Candidate) {
   const fields = new Map(candidate.fields.map((f) => [f.path, f.raw]));
@@ -15,7 +24,11 @@ export function projectUniversalMinimumFacts(candidate: Candidate) {
     case "P1":
     case "P6":
       if (!has("activity.name", "title")) missing.push("NAME");
-      if (!dated("activity.date", "schedule.start.local_date"))
+      if (
+        !["activity.date", "schedule.start.local_date"].some((path) =>
+          reviewedDate(fields.get(path) ?? ""),
+        )
+      )
         missing.push("START_DATE");
       break;
     case "P2":
