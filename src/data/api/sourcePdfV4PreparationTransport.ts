@@ -42,6 +42,7 @@ const observations = {
   stage: "STAGED",
   dispatch: "DISPATCH_OBSERVED",
   "observe-retained": "READ_OBSERVED",
+  advance: "READ_OBSERVED",
 } as const;
 
 // Explicit owning lifecycle only; no default caller, new IDs or automatic write retry.
@@ -109,10 +110,14 @@ export function createSourcePdfV4PreparationTransport(
       : derivative
         ? canonicalCoreJson(derivative)
         : undefined;
-    const boundary = createRequestBoundary(90000, options.signal, () => {
-      options.assertRequestCurrent?.();
-      assertAccountRequestGeneration(context);
-    });
+    const boundary = createRequestBoundary(
+      action === "advance" ? 185000 : 90000,
+      options.signal,
+      () => {
+        options.assertRequestCurrent?.();
+        assertAccountRequestGeneration(context);
+      },
+    );
     try {
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
       const session = await boundary.run(() =>
@@ -156,6 +161,18 @@ export function createSourcePdfV4PreparationTransport(
         }
       });
       if (response.status !== 200) {
+        if (action === "advance" && response.status === 409) {
+          const reason = z
+            .object({
+              error: z.object({
+                code: z.enum(["SOURCE_OUTCOME_UNKNOWN", "SOURCE_CAS_CONFLICT"]),
+              }),
+            })
+            .safeParse(await readBoundedJson(response, 4096, boundary).catch(() => null));
+          throw Error(
+            reason.success ? reason.data.error.code : "SOURCE_REQUEST_UNCONFIRMED",
+          );
+        }
         if (response.status === 503) {
           let closed = false;
           try {
@@ -250,7 +267,9 @@ export function createSourcePdfV4PreparationTransport(
       )
         throw Error("SOURCE_RESPONSE_INVALID");
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
-      return result;
+      return action === "status" && response.headers.get("OTR-Source-PDF-Advance") === "1"
+        ? { ...result, advanceAvailable: true as const }
+        : result;
     } finally {
       boundary.close();
     }
@@ -340,6 +359,8 @@ export function createSourcePdfV4PreparationTransport(
       context: AccountRequestContext,
       identity: SourcePdfV4PreparationIdentity,
     ) => request(context, identity, "dispatch"),
+    advance: (context: AccountRequestContext, identity: SourcePdfV4PreparationIdentity) =>
+      request(context, identity, "advance"),
     observeRetained: (
       context: AccountRequestContext,
       identity: SourcePdfV4PreparationIdentity,

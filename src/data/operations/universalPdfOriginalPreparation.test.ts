@@ -25,6 +25,27 @@ it("continues one existing Source through real journal checkpoints without Task 
     expect(f.transport[action]).toHaveBeenCalledOnce();
   expect(f.transport.status).toHaveBeenCalledTimes(4);
 });
+it.each([false, true])(
+  "uses the advertised Backend advance without phase polling or write fallback (unknown=%s)",
+  async (unknown) => {
+    const f = await pdfPreparationFixture(["STAGED"]);
+    const oldStatus = f.transport.status.getMockImplementation()!;
+    f.transport.status.mockImplementation(async (...args) => ({
+      ...(await oldStatus(...args)),
+      advanceAvailable: true,
+    }));
+    if (unknown)
+      f.transport.advance.mockRejectedValue(Error("SOURCE_REQUEST_UNCONFIRMED"));
+    const result = prepareAdmittedPdfOriginal(f.context, f.input, f.deps);
+    if (unknown) await expect(result).rejects.toThrow("SOURCE_REQUEST_UNCONFIRMED");
+    else await result;
+    expect(f.transport.status).toHaveBeenCalledOnce();
+    expect(f.transport.advance).toHaveBeenCalledOnce();
+    expect(f.transport.dispatch).not.toHaveBeenCalled();
+    expect(f.transport.observeRetained).not.toHaveBeenCalled();
+    expect(f.transport.finish).toHaveBeenCalledTimes(unknown ? 0 : 1);
+  },
+);
 it("allows upload to finish before waiting for the shared verification lease", async () => {
   const f = await pdfPreparationFixture(["STAGED", "ACK_OBSERVED", "READ_OBSERVED"]);
   let release!: () => void;

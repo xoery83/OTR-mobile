@@ -48,6 +48,35 @@ it("denied Trip does not disclose preparation capability", async () => {
   expect(r.status).toBe(403);
   expect(f.gateway.canReadTrip).toHaveBeenCalledExactlyOnceWith(f.actor, f.tripId);
 });
+it.each(["NORMAL_ACCOUNT", "ANONYMOUS"] as const)(
+  "routes advance only for a normal account (%s)",
+  async (accountClass) => {
+    const f = fixture();
+    vi.mocked(f.gateway.validateAccessToken).mockResolvedValue({
+      id: f.actor,
+      accountClass,
+    });
+    f.preparation.observeRetained.mockResolvedValue({ kind: "MATCH" });
+    const port = {
+      owner: f.owner,
+      preparation: f.preparation,
+      reservation: { status: vi.fn(async () => "ACK_OBSERVED") },
+    };
+    const close = vi.fn();
+    const factory = vi.fn(async () => ({ port: port as never, close }));
+    const q = new Request(f.request().url.replace(/dispatch$/, "advance"), f.request());
+    const response = await createDevBackendHandler({
+      gateway: f.gateway,
+      sourcePdfV4PreparationForRequest: factory,
+    })(q);
+    const allowed = accountClass === "NORMAL_ACCOUNT";
+    expect(response.status).toBe(allowed ? 200 : 403);
+    expect(factory).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(close).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(f.preparation.observeRetained).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(f.preparation.upload).not.toHaveBeenCalled();
+  },
+);
 it("omitted startup port remains private and closed without reading bytes", async () => {
   const f = fixture(),
     q = f.request();

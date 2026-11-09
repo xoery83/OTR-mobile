@@ -60,7 +60,7 @@ export function measureSourcePdfPhase<T>(
 
 export async function runSourcePdfTimings(
   requestId: string,
-  action: "dispatch" | "observe-retained",
+  action: "dispatch" | "observe-retained" | "advance",
   work: () => Promise<Response>,
 ) {
   return timing.run(new Map(), async () => {

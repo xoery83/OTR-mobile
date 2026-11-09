@@ -73,10 +73,16 @@ export async function prepareAdmittedPdfOriginal(
     await current();
     return value;
   }
-  const status = async () =>
-    sourcePdfV4StatusObservationSchema.parse(
-      await step(() => deps.transport.status(context, identity)),
-    ).status;
+  let advanceAvailable = false;
+  async function status() {
+    const response = await step(() => deps.transport.status(context, identity));
+    if ("advanceAvailable" in response) {
+      const { advanceAvailable: available, ...observation } = response;
+      advanceAvailable = available === true;
+      return sourcePdfV4StatusObservationSchema.parse(observation).status;
+    }
+    return sourcePdfV4StatusObservationSchema.parse(response).status;
+  }
   let state = await status(),
     uploadComplete = false;
   if (state === "NO_ACTIVE_ATTEMPT") {
@@ -104,6 +110,10 @@ export async function prepareAdmittedPdfOriginal(
       await step(() => deps.transport.stage(context, identity, binding, bytes));
       // STAGED is returned only after the owning Stage journal write.
       state = "STAGED";
+    }
+    if (advanceAvailable && (state === "STAGED" || state === "ACK_OBSERVED")) {
+      await step(() => deps.transport.advance(context, identity));
+      state = "READ_OBSERVED";
     }
     if (state === "STAGED") {
       await step(() => deps.transport.dispatch(context, identity));

@@ -85,7 +85,7 @@ it("stages owned bytes only under the existing context and durable identities", 
   expect(new Uint8Array(init!.body as ArrayBuffer)).toEqual(bytes);
   expect(JSON.stringify(init!.headers)).not.toMatch(/generation|runToken|resourceKey/);
 });
-it.each(["dispatch", "observeRetained"] as const)(
+it.each(["dispatch", "observeRetained", "advance"] as const)(
   "%s sends no body and preserves operation identity",
   async (action) => {
     const f = await fixture();
@@ -94,6 +94,46 @@ it.each(["dispatch", "observeRetained"] as const)(
     expect(f.fetcher.mock.calls[0][1]?.body).toBeUndefined();
   },
 );
+it("recognizes advance support only on the authenticated owning status response", async () => {
+  const f = await fixture();
+  f.fetcher.mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        ...f.identity,
+        observation: "STATUS_OBSERVED",
+        status: "STAGED",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, no-store",
+          Vary: "Authorization",
+          "OTR-Source-PDF-Advance": "1",
+        },
+      },
+    ),
+  );
+  expect(await f.transport.status(f.context, f.identity)).toEqual({
+    ...f.identity,
+    observation: "STATUS_OBSERVED",
+    status: "STAGED",
+    advanceAvailable: true,
+  });
+  f.fetcher.mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        error: {
+          code: "SOURCE_OUTCOME_UNKNOWN",
+        },
+      }),
+      { status: 409, headers: { "Content-Type": "application/json" } },
+    ),
+  );
+  await expect(f.transport.advance(f.context, f.identity)).rejects.toThrow(
+    "SOURCE_OUTCOME_UNKNOWN",
+  );
+  expect(f.fetcher).toHaveBeenCalledTimes(2);
+});
 it.each([401, 409, 503])(
   "HTTP %s never repeats dispatch or starts automatic read",
   async (status) => {

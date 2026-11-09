@@ -1,5 +1,5 @@
 import type { PdfSourceRequestIoGuard } from "./sourcePdfStorageProducer";
-import { authenticate, type DevBackendGateway } from "./app";
+import { authenticate, authenticateNormalAccount, type DevBackendGateway } from "./app";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 import { createSourcePdfRequestScope } from "./sourcePdfRequestScope";
 import {
@@ -27,12 +27,16 @@ export function createSourcePdfRequestPreparation(deps: {
   coreUuid.parse(deps.nodeId);
   return async (request: Request, actorId: string) => {
     deps.assertEnabled();
+    const path = new URL(request.url).pathname;
     const route =
-      /^\/v2\/trips\/([^/]+)\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained|status)$/.exec(
-        new URL(request.url).pathname,
+      /^\/v2\/trips\/([^/]+)\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained|advance|status)$/.exec(
+        path,
       );
     if (!route) throw Error("PDF_SCOPE_FORBIDDEN");
     const tripId = coreUuid.parse(route[1]);
+    const authorize = path.endsWith("/advance")
+      ? authenticateNormalAccount
+      : authenticate;
     const scope = createSourcePdfRequestScope({
       actorId,
       tripId,
@@ -41,7 +45,7 @@ export function createSourcePdfRequestPreparation(deps: {
       async readCurrentAccess() {
         deps.assertEnabled();
         const current = await measureSourcePdfPhase("auth", () =>
-          authenticate(request, deps.gateway),
+          authorize(request, deps.gateway),
         );
         const canReadTrip = await measureSourcePdfPhase("trip_access", () =>
           deps.gateway.canReadTrip(current.id, tripId),

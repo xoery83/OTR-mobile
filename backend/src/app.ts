@@ -2740,27 +2740,37 @@ export function createDevBackendHandler({
           sourcePngPreparationForRequest,
         );
       } else if (
-        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained|status)$/.test(
+        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:prepare|reserve|finish|stage|dispatch|observe-retained|advance|status)$/.test(
           url.pathname,
         )
       ) {
         route =
           "/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/:resource";
+        const action = url.pathname.split("/").at(-1);
+        const pdfRequest =
+          action === "advance"
+            ? new Request(request, {
+                signal: AbortSignal.any([request.signal, AbortSignal.timeout(180000)]),
+              })
+            : request;
         const execute = async () => {
-          const actor = await measureSourcePdfPhase("auth", () => authenticate(request, gateway));
+          const authorize = action === "advance" ? authenticateNormalAccount : authenticate;
+          const actor = await measureSourcePdfPhase("auth", () =>
+            authorize(pdfRequest, gateway),
+          );
           return sourcePdfV4PreparationBoundary(
-            request,
+            pdfRequest,
             actor.id,
-            (a, t) => measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(a, t)),
+            (a, t) =>
+              measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(a, t)),
             sourcePdfV4PreparationPort,
             sourcePdfV4PreparationForRequest
-              ? () => sourcePdfV4PreparationForRequest(request, actor.id)
+              ? () => sourcePdfV4PreparationForRequest(pdfRequest, actor.id)
               : undefined,
           );
         };
-        const action = url.pathname.split("/").at(-1);
         response =
-          action === "dispatch" || action === "observe-retained"
+          action === "dispatch" || action === "observe-retained" || action === "advance"
             ? await runSourcePdfTimings(requestId, action, execute)
             : await execute();
       } else if (

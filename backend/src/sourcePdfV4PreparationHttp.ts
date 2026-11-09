@@ -34,20 +34,21 @@ export async function sourcePdfV4PreparationBoundary(
     | undefined
   >,
 ) {
-  const reply = (status: number, body: unknown) =>
+  const reply = (status: number, body: unknown, headers?: Record<string, string>) =>
     new Response(JSON.stringify(body), {
       status,
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "private, no-store",
         Vary: "Authorization",
+        ...headers,
       },
     });
   const fail = (status: number, code: string) =>
     reply(status, { error: { code, message: code } });
   const url = new URL(request.url);
   const route =
-    /^\/v2\/trips\/([^/]+)\/sources\/([^/]+)\/representations\/([^/]+)\/pdf-v4\/([^/]+)\/(prepare|reserve|finish|stage|dispatch|observe-retained|status)$/.exec(
+    /^\/v2\/trips\/([^/]+)\/sources\/([^/]+)\/representations\/([^/]+)\/pdf-v4\/([^/]+)\/(prepare|reserve|finish|stage|dispatch|observe-retained|advance|status)$/.exec(
       url.pathname,
     );
   if (
@@ -72,7 +73,10 @@ export async function sourcePdfV4PreparationBoundary(
     if (!port) return fail(503, "SOURCE_CAPABILITY_CLOSED");
     const commandAction =
       route[5] === "prepare" || route[5] === "reserve" || route[5] === "finish";
-    if ((commandAction || route[5] === "status") && !port.reservation)
+    if (
+      (commandAction || route[5] === "status" || route[5] === "advance") &&
+      !port.reservation
+    )
       return fail(503, "SOURCE_CAPABILITY_CLOSED");
     if (!commandAction && route[5] !== "stage" && request.body !== null)
       return fail(422, "INVALID_SOURCE_COMMAND");
@@ -93,13 +97,17 @@ export async function sourcePdfV4PreparationBoundary(
       const status = sourcePdfUploadStatusSchema.parse(
         await port.reservation!.status(actor, identity),
       );
-      return reply(200, {
-        sourceId: identity.sourceId,
-        representationId: identity.representationId,
-        operationId: identity.operationId,
-        observation: "STATUS_OBSERVED",
-        status,
-      });
+      return reply(
+        200,
+        {
+          sourceId: identity.sourceId,
+          representationId: identity.representationId,
+          operationId: identity.operationId,
+          observation: "STATUS_OBSERVED",
+          status,
+        },
+        { "OTR-Source-PDF-Advance": "1" },
+      );
     }
     if (commandAction) {
       const boundary = createRequestBoundary(15000, request.signal);
@@ -154,6 +162,25 @@ export async function sourcePdfV4PreparationBoundary(
     } else if (route[5] === "dispatch") {
       await port.preparation.upload(request, identity, request.signal);
       observation = "DISPATCH_OBSERVED";
+    } else if (route[5] === "advance") {
+      // A fresh owning projection can resume an ACK without sending another PUT.
+      const status = sourcePdfUploadStatusSchema.parse(
+        await port.reservation!.status(actor, identity),
+      );
+      request.signal.throwIfAborted();
+      if (status === "STAGED") {
+        const sent = await port.preparation.upload(request, identity, request.signal);
+        if (sent.kind !== "COMPLETE_ACK") return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+      } else if (status !== "ACK_OBSERVED" && status !== "READ_OBSERVED") {
+        return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+      }
+      if (status !== "READ_OBSERVED") {
+        request.signal.throwIfAborted();
+        const observed = await port.preparation.observeRetained(request, identity);
+        if (observed.kind !== "MATCH" && observed.kind !== "PERSISTED_GET")
+          return fail(409, "SOURCE_OUTCOME_UNKNOWN");
+      }
+      observation = "READ_OBSERVED";
     } else {
       await port.preparation.observeRetained(request, identity);
       observation = "READ_OBSERVED";

@@ -110,6 +110,7 @@ export async function pdfPreparationFixture(states: string[]) {
     reserve: vi.fn(async (_context, id) => observation(id, "RESERVATION_OBSERVED")),
     stage: vi.fn(),
     dispatch: vi.fn(),
+    advance: vi.fn(),
     observeRetained: vi.fn(),
     finish: vi.fn(async (_context, id, q) =>
       observation(id, "FINISH_OBSERVED", { receipt: await receipt(q) }),

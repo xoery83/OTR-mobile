@@ -47,7 +47,7 @@ it("omitted preparation stays closed before body consumption or generation looku
   expect((await r.json()).error.code).toBe("SOURCE_CAPABILITY_CLOSED");
   expect(f.owner.accountGeneration).not.toHaveBeenCalled();
 });
-it.each(["stage", "dispatch", "observe-retained"])(
+it.each(["stage", "dispatch", "observe-retained", "advance"])(
   "denied Trip never reaches %s preparation",
   async (action) => {
     const f = fixture();
@@ -86,15 +86,75 @@ it.each([
     expect(r.headers.get("cache-control")).toBe("private, no-store");
   },
 );
-it.each(["dispatch", "observe-retained"])(
+it.each(["dispatch", "observe-retained", "advance"])(
   "%s refuses arbitrary metadata bodies",
   async (action) => {
     const f = fixture();
-    expect((await f.call(f.request(action, '{"actor":"OTHER"}'))).status).toBe(422);
+    const port = {
+      owner: f.owner,
+      preparation: f.preparation,
+      reservation: { status: vi.fn() },
+    };
+    expect((await f.call(f.request(action, '{"actor":"OTHER"}'), port)).status).toBe(422);
     for (const method of Object.values(f.preparation))
       expect(method).not.toHaveBeenCalled();
   },
 );
+it.each([
+  ["STAGED", 1, 1, 200],
+  ["ACK_OBSERVED", 0, 1, 200],
+  ["READ_OBSERVED", 0, 0, 200],
+  ["UNKNOWN", 0, 0, 409],
+  ["DISPATCH_RECORDED", 0, 0, 409],
+  ["RESERVED", 0, 0, 409],
+] as const)(
+  "advances an owning %s journal without inventing a second upload",
+  async (state, sends, reads, status) => {
+    const f = fixture();
+    const reservation = { status: vi.fn(async () => state) };
+    const port = { owner: f.owner, preparation: f.preparation, reservation };
+    f.preparation.upload.mockResolvedValue({ kind: "COMPLETE_ACK" });
+    f.preparation.observeRetained.mockResolvedValue({ kind: "MATCH" });
+    const result = await f.call(f.request("advance"), port);
+    expect(result.status).toBe(status);
+    expect(reservation.status).toHaveBeenCalledExactlyOnceWith(f.actor, f.identity);
+    expect(f.preparation.upload).toHaveBeenCalledTimes(sends);
+    expect(f.preparation.observeRetained).toHaveBeenCalledTimes(reads);
+    if (status === 200)
+      expect(await result.json()).toMatchObject({ observation: "READ_OBSERVED" });
+  },
+);
+it("does not read or report success after an unconfirmed Storage write", async () => {
+  const f = fixture();
+  f.preparation.upload.mockResolvedValue({ kind: "UNKNOWN" });
+  const result = await f.call(f.request("advance"), {
+    owner: f.owner,
+    preparation: f.preparation,
+    reservation: { status: async () => "STAGED" },
+  });
+  expect(result.status).toBe(409);
+  expect((await result.json()).error.code).toBe("SOURCE_OUTCOME_UNKNOWN");
+  expect(f.preparation.observeRetained).not.toHaveBeenCalled();
+});
+it("leaves the committed ACK for recovery when advance is aborted before readback", async () => {
+  const f = fixture();
+  const abort = new AbortController();
+  f.preparation.upload.mockImplementation(async () => {
+    abort.abort();
+    return { kind: "COMPLETE_ACK" };
+  });
+  const result = await f.call(
+    new Request(f.request("advance"), { signal: abort.signal }),
+    {
+      owner: f.owner,
+      preparation: f.preparation,
+      reservation: { status: async () => "STAGED" },
+    },
+  );
+  expect(result.status).toBe(503);
+  expect(f.preparation.upload).toHaveBeenCalledOnce();
+  expect(f.preparation.observeRetained).not.toHaveBeenCalled();
+});
 it("requires the existing owner's positive generation, never caller fallback", async () => {
   const f = fixture();
   f.owner.accountGeneration.mockResolvedValue(0);
