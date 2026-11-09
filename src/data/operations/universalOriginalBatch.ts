@@ -331,7 +331,7 @@ export async function prepareUniversalOriginalBatch(
       retained.capture.accountId !== context.accountId ||
       retained.capture.payloadId !== input.payloadId ||
       retained.bytes.length !== input.contentByteCount ||
-      (await deps.hash(retained.bytes)) !== input.contentSha256 ||
+      retained.capture.sha256 !== input.contentSha256 ||
       (retained.capture.tripId !== null && retained.capture.tripId !== context.tripId)
     )
       throw new Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");

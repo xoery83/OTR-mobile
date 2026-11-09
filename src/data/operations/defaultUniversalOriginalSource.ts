@@ -1,5 +1,5 @@
 import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
-import { createPendingPngOriginalIntakeVerifier } from "@/native/pendingPngOriginal";
+import { readPendingPngOriginalIntake } from "@/native/pendingPngOriginal";
 import { assertDefaultUniversalPhotoConsent } from "./defaultUniversalPhotoConsent";
 import {
   assertCaptureCustodyBytes,
@@ -57,7 +57,6 @@ async function createLocalSourceDependencies(
           await import("@/native/pendingPdfOriginal")
         ).createPendingPdfOriginalFormatVerifier()
       : undefined;
-  const pngVerifier = hasPng ? createPendingPngOriginalIntakeVerifier(sha256) : undefined;
   const sources = createCaptureSourceAdmissionRepository(database, options.getAccountId, {
     sha256,
     now,
@@ -67,13 +66,43 @@ async function createLocalSourceDependencies(
     utf8FileProfile: UTF8_TEXT_FILE_PROFILE,
     pendingPdfProfile: options.pendingPdfProfile,
     ...(hasPng ? { pendingPngProfile: options.pendingPngProfile } : {}),
-    verifyBinary: pngVerifier
-      ? (bytes, mimeType) => {
-          if (mimeType === "image/png") return pngVerifier(bytes);
-          if (mimeType === "application/pdf" && pdfVerifier) return pdfVerifier(bytes);
-          throw Error("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
-        }
-      : pdfVerifier,
+    verifyBinary: async (bytes, mimeType, capture) => {
+      if (mimeType === "image/png" && hasPng)
+        return { ...readPendingPngOriginalIntake(bytes), payloadSha256: capture.sha256 };
+      if (mimeType === "application/pdf" && pdfVerifier) {
+        // Reuse the repository-projected PDFKit result only for the exact retained original.
+        const input = model.inputs.find(
+          (i) =>
+            i.state === "ACCEPTED" &&
+            isEnabledPdf(i, options.pendingPdfProfile) &&
+            i.captureId === capture.id &&
+            i.payloadId === capture.payloadId &&
+            i.contentSha256 === capture.sha256 &&
+            i.contentByteCount === capture.byteCount,
+        );
+        const parsed = model.localInterpretationResults?.some(
+          (result) =>
+            input &&
+            model.batch.accountId === capture.accountId &&
+            result.inputId === input.id &&
+            result.version === 1 &&
+            result.engine === "apple-pdfkit" &&
+            Array.isArray(result.pages) &&
+            result.pages.length > 0 &&
+            result.originalSha256 === capture.sha256 &&
+            result.originalByteCount === capture.byteCount,
+        );
+        if (parsed)
+          return {
+            mimeType: "application/pdf",
+            profileId: PDF_CAPTURE_ORIGINAL_PROFILE,
+            payloadSha256: capture.sha256,
+            byteCount: capture.byteCount,
+          };
+        return pdfVerifier(bytes);
+      }
+      throw Error("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
+    },
   });
   return {
     database,

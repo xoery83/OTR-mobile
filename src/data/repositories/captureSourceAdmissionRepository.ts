@@ -76,6 +76,7 @@ export type CaptureSourceDependencies = {
   verifyBinary?(
     bytes: Uint8Array,
     declaredContentType: string | null,
+    verifiedCapture: Readonly<LocalCapture>,
   ): Promise<{
     mimeType:
       "application/pdf" | "image/jpeg" | "image/png" | "image/heic" | "image/heif";
@@ -468,6 +469,7 @@ export function createCaptureSourceAdmissionRepository(
         const proof = await dependencies.verifyBinary(
           new Uint8Array(bytes),
           capture.declaredContentType,
+          { ...capture, sha256: materialHash },
         );
         const allowedFormat =
           (proof.profileId === "PNG_STATIC_RGB8_RGBA8_V1" &&

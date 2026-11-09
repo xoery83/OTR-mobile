@@ -423,7 +423,6 @@ it.each([false, true])(
         readPin.mock.invocationCallOrder[0],
       );
     }
-    expect(f.source.mock.calls[0][2].verifyBinary).toBe(pdfVerifier);
     expect(f.photoConsent).not.toHaveBeenCalled();
     expect(f.pdf).toHaveBeenCalledWith(
       context,
@@ -723,4 +722,79 @@ it("same account with a stale UI after handoff cannot assign a capture or admit 
   expect(f.captures.getForSourceHandoff).toHaveBeenCalledOnce();
   expect(f.captures.assign).not.toHaveBeenCalled();
   expect(admit).not.toHaveBeenCalled();
+});
+
+it("reuses the exact retained PDFKit format result and the verified PNG digest", async () => {
+  const accountId = randomUUID();
+  const getAccountId = async () => accountId;
+  const context = await captureAccountRequestContext(randomUUID(), getAccountId);
+  const pdf = new TextEncoder().encode("%PDF-1.7");
+  const png = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0);
+  const sha256 = createHash("sha256").update(pdf).digest("hex");
+  const input = {
+    id: randomUUID(),
+    state: "ACCEPTED",
+    kind: "FILE",
+    declaredContentType: "application/pdf",
+    captureId: randomUUID(),
+    payloadId: randomUUID(),
+    contentSha256: sha256,
+    contentByteCount: pdf.length,
+  };
+  const model = {
+    batch: { accountId, jobId: randomUUID() },
+    inputs: [input, { kind: "IMAGE", declaredContentType: "image/png" }],
+    localInterpretationResults: [
+      {
+        version: 1,
+        inputId: input.id,
+        engine: "apple-pdfkit",
+        pages: [{ pageIndex: 0, start: 0, end: 1 }],
+        originalSha256: sha256,
+        originalByteCount: pdf.length,
+      },
+    ],
+  } as unknown as CaptureJobReadModel;
+  const fallback = vi.fn().mockResolvedValue({ proof: "fallback" });
+  f.pdfVerifier.mockReturnValue(fallback);
+  await prepareDefaultUniversalLocalSourceProposals(context, model, {
+    getAccountId,
+    assertCurrent() {},
+    pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1",
+    pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1",
+  });
+  const capture = {
+    accountId,
+    id: input.captureId,
+    payloadId: input.payloadId,
+    sha256,
+    byteCount: pdf.length,
+  };
+  const verify = f.source.mock.calls[0][2].verifyBinary;
+  await expect(verify(pdf, "application/pdf", capture)).resolves.toEqual({
+    mimeType: "application/pdf",
+    profileId: "OTR_PDF_CAPTURE_ORIGINAL_V1",
+    payloadSha256: sha256,
+    byteCount: pdf.length,
+  });
+  expect(fallback).not.toHaveBeenCalled();
+  for (const different of [
+    { ...capture, payloadId: randomUUID() },
+    { ...capture, accountId: randomUUID() },
+    { ...capture, sha256: "0".repeat(64) },
+  ]) {
+    await expect(verify(pdf, "application/pdf", different)).resolves.toEqual({
+      proof: "fallback",
+    });
+  }
+  expect(fallback).toHaveBeenCalledTimes(3);
+  const pngHash = createHash("sha256").update(png).digest("hex");
+  await expect(verify(png, "image/png", { sha256: pngHash })).resolves.toMatchObject({
+    payloadSha256: pngHash,
+    byteCount: png.length,
+    profileId: "OTR_PNG_CAPTURE_ORIGINAL_V1",
+  });
+  await expect(verify(pdf, "image/png", { sha256 })).rejects.toThrow(
+    "CAPTURE_SOURCE_FORMAT_UNAVAILABLE",
+  );
 });
