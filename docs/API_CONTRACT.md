@@ -1345,10 +1345,13 @@ immutable Source acquisition commands. For a new Run, the Backend checks the
 owning Source receipts, advances retained PDF and PNG independently, and uses
 the existing Run/Task/Wake and Provider attempt guard. For a missing PDF or PNG
 whose owning state permits upload, the route identifies one exact input with
-`409 UNIVERSAL_ORIGINAL_BYTES_REQUIRED`. Native rechecks local custody and
-consent before supplying only that input's bytes to the same route. A pending
-write cannot qualify a Source, and an unresolved upload uses its owning
-reconciliation path. Passive status reads do not start work.
+`409 UNIVERSAL_ORIGINAL_BYTES_REQUIRED`. For a missing PNG with no supplied
+bytes, this reply follows the owning PNG status check before work on the
+unrelated PDF seal. Native rechecks local custody and consent before supplying
+only that input's bytes to the same route. This reply represents a material
+request. Task acceptance follows verified material and the existing Run binding.
+A pending write cannot qualify a Source, and an unresolved upload uses its
+owning reconciliation path. Passive status reads do not start work.
 
 ## Universal Import — bounded Source P1 integration (2026-10-26)
 

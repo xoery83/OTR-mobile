@@ -236,7 +236,7 @@ it("binds the retained uploads to exact PDF and PNG operations and reads PNG Ver
 });
 
 it.each(["missing", "IO_UNKNOWN", "IO_ACTIVE", "IO_QUIESCENT"])(
-  "advances the independent PDF while %s PNG upload evidence prevents Run",
+  "requests missing PNG before PDF work and handles %s without starting a Run",
   async (state) => {
     const f = await fixture();
     const q = f.pngPlan.upload;
@@ -256,7 +256,9 @@ it.each(["missing", "IO_UNKNOWN", "IO_ACTIVE", "IO_QUIESCENT"])(
     await expect(f.complete()).rejects.toThrow(
       state === "missing" ? "UNIVERSAL_ORIGINAL_BYTES_REQUIRED" : "REPLAY_FORBIDDEN",
     );
-    expect(f.operations).toEqual(["PDF Verify", "PDF Register", "PDF Seal"]);
+    expect(f.operations).toEqual(
+      state === "missing" ? [] : ["PDF Verify", "PDF Register", "PDF Seal"],
+    );
     expect(f.deps.openPng).toHaveBeenCalledOnce();
   },
 );
@@ -370,7 +372,7 @@ it("accepts exact retained metadata at Prepare and wakes only when the original 
         }),
     );
   expect((await start()).status).toBe(409);
-  expect(f.operations).toEqual(["PDF Register", "PDF Seal"]);
+  expect(f.operations).toEqual([]);
   expect(drainTargeted).not.toHaveBeenCalled();
   f.journal.set(f.pngPlan.upload.operation_id, await f.receipt(f.pngPlan.upload));
   expect((await start()).status).toBe(202);

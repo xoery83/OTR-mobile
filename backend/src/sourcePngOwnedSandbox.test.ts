@@ -164,7 +164,10 @@ it("attaches and durably advances the owned journal before starting, proves clea
     result: { status: "PARSE_PASS" },
   });
   const events = fake.events;
-  expect(events.indexOf("attach")).toBeLessThan(events.indexOf("start"));
+  expect(events.slice(events.indexOf("attach"), events.indexOf("running") + 1)).toEqual([
+    "attach",
+    "running",
+  ]);
   expect(events.indexOf("running")).toBeLessThan(events.indexOf("start"));
   expect(events.indexOf("rm")).toBeLessThan(events.indexOf("terminal"));
   expect(events.indexOf("ps")).toBeLessThan(events.indexOf("terminal"));
@@ -219,6 +222,15 @@ it("failed journal attach cannot start the process or manufacture terminal proof
   await expect(f.run(f.binding, bytes)).rejects.toThrow("OWNER_CONFLICT");
   expect(fake.events).not.toContain("start");
   expect(f.owner.terminal).not.toHaveBeenCalled();
+  expect(await readdir(f.directory)).toEqual([]);
+});
+
+it("a rejected RUNNING fence never starts the attached container", async () => {
+  const f = await fixture();
+  f.owner.running.mockRejectedValue(Error("SOURCE_EXECUTION_FENCE_CONFLICT"));
+  await expect(f.run(f.binding, bytes)).rejects.toThrow("SOURCE_EXECUTION_FENCE_CONFLICT");
+  expect(f.owner.attach).toHaveBeenCalledOnce();
+  expect(fake.events).not.toContain("start");
   expect(await readdir(f.directory)).toEqual([]);
 });
 

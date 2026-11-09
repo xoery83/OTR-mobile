@@ -134,7 +134,10 @@ export async function prepareUniversalRetainedOriginals(
       throw Error("SOURCE_INTEGRITY_FAILURE");
   }
   await current();
-  async function complete({ acquisition, pin, format }: (typeof selected)[number]) {
+  async function complete(
+    { acquisition, pin, format }: (typeof selected)[number],
+    onPngUploadLocated?: () => void,
+  ) {
     const requireBytes = () => {
       if (upload?.inputId !== pin.id || !supplied)
         throw new OriginalBytesRequired(pin.id);
@@ -189,11 +192,12 @@ export async function prepareUniversalRetainedOriginals(
             pendingUpload.operation_sha256 !== commands.upload.operation_sha256)
         )
           throw Error("SOURCE_RECEIPT_MISMATCH");
-        if (
+        const needsBytes =
           upload === null ||
-          (pendingUpload?.phase === "ADMITTED" && pendingUpload.attempt_generation === 0)
-        ) {
-          const pngBytes = requireBytes();
+          (pendingUpload?.phase === "ADMITTED" && pendingUpload.attempt_generation === 0);
+        const pngBytes = needsBytes ? requireBytes() : undefined;
+        onPngUploadLocated?.();
+        if (pngBytes) {
           await applied(
             await step(
               async () =>
@@ -284,21 +288,27 @@ export async function prepareUniversalRetainedOriginals(
   }
   // The existing Source principal serializes PG leases. Only overlap the two worker lanes.
   const failures: unknown[] = [];
-  const settle = async (input: (typeof selected)[number]) => {
+  const settle = async (input: (typeof selected)[number], onPngUploadLocated?: () => void) => {
     try {
-      await complete(input);
+      await complete(input, onPngUploadLocated);
     } catch (error) {
       failures.push(error);
     }
   };
-  await Promise.all([
-    (async () => {
-      for (const input of selected) if (input.format !== "PNG") await settle(input);
-    })(),
-    (async () => {
-      for (const input of selected) if (input.format === "PNG") await settle(input);
-    })(),
-  ]);
+  const completeOtherInputs = async () => {
+    for (const input of selected) if (input.format !== "PNG") await settle(input);
+  };
+  const png = selected.find((input) => input.format === "PNG");
+  if (png && !upload) {
+    // A missing PNG challenge does not need to wait for a separate PDF seal.
+    let otherInputs: Promise<void> | undefined;
+    await settle(png, () => { otherInputs = completeOtherInputs(); });
+    if (otherInputs) await otherInputs;
+    else if (!failures.some((error) => error instanceof OriginalBytesRequired))
+      await completeOtherInputs();
+  } else {
+    await Promise.all([completeOtherInputs(), png && settle(png)]);
+  }
   await current();
   if (failures.length) {
     throw (

@@ -157,7 +157,7 @@ export function createSourcePngOwnedSandbox(
         .parse(output.trim());
       await owner.attach(binding, containerId);
       attached = true;
-      await owner.assertCurrent(binding);
+      // RUNNING checks the same owner fence and attached container before Docker start.
       await owner.running(binding);
       await owner.assertCurrent(binding);
       const request = {
