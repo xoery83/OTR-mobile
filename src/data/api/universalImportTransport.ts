@@ -10,6 +10,7 @@ import {
 import {
   universalMaterialReadySchema,
   universalBatchPrepareSchema,
+  universalRetainedOriginalPrepareSchema,
   universalTaskResumeSchema,
   universalBatchPreparedSchema,
   type UniversalBatchPrepare,
@@ -142,8 +143,13 @@ export function createUniversalImportTransport(
   }
   const path = (batchId: string) => `/v2/import-batches/${batchId}/interpretations`;
   return {
-    async prepare(context: AccountRequestContext, raw: UniversalBatchPrepare) {
-      const input = universalBatchPrepareSchema.parse(raw);
+    async prepare(
+      context: AccountRequestContext,
+      raw: UniversalBatchPrepare | import("./universalImportContracts").UniversalRetainedOriginalPrepare,
+    ) {
+      const input = "retainedOriginals" in raw
+        ? universalRetainedOriginalPrepareSchema.parse(raw)
+        : universalBatchPrepareSchema.parse(raw);
       if (input.tripId !== context.tripId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
       return scoped(context, async (api) => {
         const result = await api.post(

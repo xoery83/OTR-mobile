@@ -1,3 +1,4 @@
+import { ApiClientError } from "../api/client";
 import { PNG_CAPTURE_ORIGINAL_PROFILE } from "@/domain/trip/sourcePngPreparation";
 import { readPendingPngOriginalIntake } from "@/native/pendingPngOriginal";
 import { assertDefaultUniversalPhotoConsent } from "./defaultUniversalPhotoConsent";
@@ -31,6 +32,7 @@ import type { AccountRequestContext } from "../auth/accountRequestContext";
 import type {
   UniversalBatchPrepare,
   UniversalBatchPrepared,
+  UniversalRetainedOriginalPrepare,
 } from "../api/universalImportContracts";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
@@ -176,28 +178,35 @@ export async function prepareDefaultUniversalCaptureSources(
         bytes: Uint8Array;
       },
     ): Promise<void>;
+    startRetained?(
+      input: UniversalRetainedOriginalPrepare,
+    ): Promise<UniversalBatchPrepared>;
     prepareTask?(
       input: UniversalBatchPrepare,
     ): Promise<UniversalBatchPrepared | null | void>;
   },
 ) {
   options.assertCurrent();
-  const fetchImplementation = await createPublicationCatalogNativeFetch().catch(
-    (error) => {
-      if (typeof __DEV__ !== "undefined" && __DEV__)
-        console.info(
-          JSON.stringify({
-            event: "universal_source_native_receiver",
-            state: "UNAVAILABLE",
-          }),
-        );
-      throw error;
-    },
-  );
-  if (typeof __DEV__ !== "undefined" && __DEV__)
-    console.info(
-      JSON.stringify({ event: "universal_source_native_receiver", state: "READY" }),
+  const legacyReceiver = async () => {
+    const fetchImplementation = await createPublicationCatalogNativeFetch().catch(
+      (error) => {
+        if (typeof __DEV__ !== "undefined" && __DEV__)
+          console.info(
+            JSON.stringify({
+              event: "universal_source_native_receiver",
+              state: "UNAVAILABLE",
+            }),
+          );
+        throw error;
+      },
     );
+    if (typeof __DEV__ !== "undefined" && __DEV__)
+      console.info(
+        JSON.stringify({ event: "universal_source_native_receiver", state: "READY" }),
+      );
+    return fetchImplementation;
+  };
+  const fetchImplementation = options.startRetained ? undefined : await legacyReceiver();
   options.assertCurrent();
   const local = await createLocalSourceDependencies(model, options);
   const { database, captures, submissions, sources, hasPng, hash: sha256, newId } = local;
@@ -212,20 +221,6 @@ export async function prepareDefaultUniversalCaptureSources(
     pendingPdfProfile: options.pendingPdfProfile,
     pendingPngProfile: options.pendingPngProfile,
     newId,
-    transport: createUniversalOriginalSourceTransport(options.getAccountId, {
-      baseUrl: options.baseUrl,
-    }),
-    catalog: createTripPublicationCatalogTransport(options.getAccountId, {
-      baseUrl: options.baseUrl,
-      fetchImplementation,
-    }),
-    imports: createTripImportAdmissionRepository(
-      database,
-      options.getAccountId,
-      sha256,
-      now,
-      newId,
-    ),
   };
   const hasActor = () =>
     database.getFirstAsync(
@@ -248,7 +243,93 @@ export async function prepareDefaultUniversalCaptureSources(
   }
   const plans = await recoverUniversalOriginalPlans(context, model.batch.jobId, deps);
   options.assertCurrent();
-  const result = await runUniversalOriginalBatch(context, model.batch.jobId, plans, deps);
+  if (options.startRetained) {
+    const prepared = await prepareUniversalOriginalBatch(context, model.batch.jobId, plans, deps);
+    if (prepared.unhandledInputIds.length !== 0)
+      throw Error("UNIVERSAL_SOURCE_PREPARATION_BLOCKED");
+    await assertDefaultUniversalPhotoConsent(context, model, options);
+    const manifest: UniversalRetainedOriginalPrepare = {
+      tripId: context.tripId,
+      batchId: prepared.batchId,
+      submissionSha256: prepared.submissionSha256,
+      retainedOriginals: prepared.inputs.map((input) => ({
+        inputId: input.inputId,
+        acquisition: input.sourceCommand,
+      })),
+      inputs: prepared.inputs.map((input) => {
+        const local = model.inputs.find((entry) => entry.id === input.inputId);
+        if (!local?.contentSha256 || !local.contentByteCount)
+          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+        return {
+          id: input.inputId,
+          source_id: input.sourceId,
+          material_revision: 1,
+          representation_id: input.representationId,
+          payload_sha256: local.contentSha256,
+          byte_count: local.contentByteCount,
+          observed_source_row_revision: 1,
+          historical_selection: false,
+        };
+      }),
+    };
+    const sent = new Set<string>();
+    let input = manifest;
+    for (;;) {
+      options.assertCurrent();
+      try {
+        return await options.startRetained(input);
+      } catch (error) {
+        if (!(error instanceof ApiClientError && error.status === 409 &&
+          error.code === "UNIVERSAL_ORIGINAL_BYTES_REQUIRED")) throw error;
+        const inputId = (error.details as { inputId?: unknown } | undefined)?.inputId;
+        const original = model.inputs.find((entry) => entry.id === inputId);
+        if (!original?.captureId || sent.has(original.id))
+          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+        const png = isEnabledPng(original, options.pendingPngProfile);
+        if (!png && !isEnabledPdf(original, options.pendingPdfProfile))
+          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+        const consent = await assertDefaultUniversalPhotoConsent(context, model, options);
+        const { capture, bytes } = await captures.getForSourceHandoff(original.captureId);
+        options.assertCurrent();
+        if (capture.accountId !== context.accountId || capture.tripId !== context.tripId ||
+          capture.payloadId !== original.payloadId ||
+          (png && capture.revision !== consent?.captureRevision) ||
+          bytes.length !== original.contentByteCount ||
+          bytes.length > (png ? 1048576 : 4194304) ||
+          await sha256(bytes) !== original.contentSha256)
+          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+        const chunks: string[] = [];
+        for (let offset = 0; offset < bytes.length; offset += 16384)
+          chunks.push(String.fromCharCode(...bytes.subarray(offset, offset + 16384)));
+        sent.add(original.id);
+        input = {
+          ...manifest,
+          originalUpload: {
+            inputId: original.id,
+            base64: btoa(chunks.join("")),
+          },
+        };
+      }
+    }
+  }
+  const legacyDeps = {
+    ...deps,
+    transport: createUniversalOriginalSourceTransport(options.getAccountId, {
+      baseUrl: options.baseUrl,
+    }),
+    catalog: createTripPublicationCatalogTransport(options.getAccountId, {
+      baseUrl: options.baseUrl,
+      fetchImplementation,
+    }),
+    imports: createTripImportAdmissionRepository(
+      database,
+      options.getAccountId,
+      sha256,
+      now,
+      newId,
+    ),
+  };
+  const result = await runUniversalOriginalBatch(context, model.batch.jobId, plans, legacyDeps);
   options.assertCurrent();
   const unhandled = model.inputs
     .filter(
@@ -395,9 +476,9 @@ export async function prepareDefaultUniversalCaptureSources(
     for (const result of [...preparation, ...(await pngPreparation)])
       if (result.status === "rejected") throw result.reason;
     options.assertCurrent();
-    const raw = await deps.catalog.readUniversal(context);
+    const raw = await legacyDeps.catalog.readUniversal(context);
     options.assertCurrent();
-    await deps.imports.applyUniversalCatalogs(context, raw);
+    await legacyDeps.imports.applyUniversalCatalogs(context, raw);
     options.assertCurrent();
   }
   if (options.prepareTask) {

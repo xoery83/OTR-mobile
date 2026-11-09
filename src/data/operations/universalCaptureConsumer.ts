@@ -77,6 +77,10 @@ export function createUniversalCaptureConsumer(dependencies: {
     context: import("../auth/accountRequestContext").AccountRequestContext,
     binding: UniversalExecutionContext,
   ): Promise<void>;
+  startRetained?(
+    context: import("../auth/accountRequestContext").AccountRequestContext,
+    model: CaptureJobReadModel,
+  ): Promise<UniversalBatchPrepared>;
   prepareSources?(
     context: import("../auth/accountRequestContext").AccountRequestContext,
     model: CaptureJobReadModel,
@@ -121,7 +125,21 @@ export function createUniversalCaptureConsumer(dependencies: {
         ? dependencies.materialContinuation
         : undefined;
     try {
-      found = await dependencies.transport.context(context, model.batch.batchId);
+      if (allowDispatch && dependencies.startRetained && !dispatchUncertain &&
+        !terminalActivity()) {
+        sourceTaskPrepareAttempted = true;
+        const receipt = universalBatchPreparedSchema.parse(
+          await dependencies.startRetained(context, model),
+        );
+        found = receipt.context;
+        if (found.actorId !== context.accountId || found.accountId !== context.accountId ||
+          found.tripId !== context.tripId || found.batchId !== model.batch.batchId)
+          throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
+        preparedThisAction = true;
+        queuedReceiptUsed = receipt.status === "QUEUED";
+      } else {
+        found = await dependencies.transport.context(context, model.batch.batchId);
+      }
     } catch (error) {
       current();
       if (

@@ -1,3 +1,4 @@
+import { UNIVERSAL_PREPARE_MAX_BODY_BYTES } from "../../src/data/api/universalImportContracts";
 import { mcpIngressBodyLimit } from "./mcpIngress";
 import { loadMcpQaRuntime } from "./mcpQaRuntime";
 import { guestAdoptionBodyLimit } from "./guestAdoptionHttp";
@@ -186,9 +187,18 @@ export function startDevBackend(
         incoming.method === "GET" &&
         /^\/v2\/import-batches\/[^/]+\/interpretations\/[^/]+$/.test(retainedUrl.pathname) &&
         retainedUrl.searchParams.has("retainedOriginal");
+      const universalPrepare = incoming.method === "POST" &&
+        /^\/v2\/import-batches\/[^/]+\/interpretations\/prepare$/.test(retainedUrl.pathname);
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (universalPrepare && byteCount > UNIVERSAL_PREPARE_MAX_BODY_BYTES) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "BODY_LIMIT" } }));
+          return;
+        }
         if (retainedPngGet && byteCount > 0) {
           outgoing.statusCode = 400;
           outgoing.setHeader("Cache-Control", "private, no-store");

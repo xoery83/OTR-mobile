@@ -441,3 +441,36 @@ it("uses the opt-in query only on explicit Analyze and sends the original Prepar
   fetcher.mockResolvedValueOnce(Response.json(f.binding));
   await expect(transport.materialReady(f.context, f.batch)).rejects.toThrow();
 });
+
+it("carries only a scoped missing-input identity through the Start response", async () => {
+  const f = await fixture();
+  const context = await captureAccountRequestContext(f.binding.tripId, async () => f.binding.accountId);
+  const inputId = randomUUID();
+  const fetcher = vi.fn(async () => Response.json({
+    error: { code: "UNIVERSAL_ORIGINAL_BYTES_REQUIRED", details: { inputId } },
+  }, { status: 409 }));
+  const transport = createUniversalImportTransport(async () => f.binding.accountId, {
+    baseUrl: "https://local.test",
+    fetchImplementation: fetcher,
+    tokenProvider: async () => ({ token: "fixture", userId: f.binding.accountId }),
+  });
+  await expect(transport.prepare(context, {
+    tripId: f.binding.tripId,
+    batchId: f.binding.batchId,
+    submissionSha256: "a".repeat(64),
+    retainedOriginals: [{ inputId, acquisition: {} }],
+    inputs: [{
+      id: inputId,
+      source_id: randomUUID(),
+      material_revision: 1,
+      representation_id: randomUUID(),
+      payload_sha256: "b".repeat(64),
+      byte_count: 10,
+      observed_source_row_revision: 1,
+      historical_selection: false,
+    }],
+  })).rejects.toMatchObject({
+    status: 409, code: "UNIVERSAL_ORIGINAL_BYTES_REQUIRED", details: { inputId },
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+});

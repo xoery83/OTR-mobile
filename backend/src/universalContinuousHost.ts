@@ -616,11 +616,12 @@ export function createUniversalContinuousHost(deps: {
         prepare,
       };
     },
-    async prepare(raw: unknown) {
+    async prepare(raw: unknown, completeRetainedOriginals?: () => Promise<void>) {
       await executionCurrent();
       const batchContext = universalProviderBatchContext(actor, trip, raw);
       if (await isProtectedMixedB(batchContext.batchId, batchContext.taskId)) {
         const mixedB = mixedBInitial!;
+        if (completeRetainedOriginals) throw Error("MIXED_B_MATERIAL_BINDING");
         if (
           !deps.finiteBatch ||
           batchContext.submissionSha256 !== mixedB.submissionSha256 ||
@@ -703,7 +704,7 @@ export function createUniversalContinuousHost(deps: {
       }
       const selection = await deps.selectProvider(batchContext);
       await executionCurrent();
-      const binding = await source.prepare(actor, trip, raw),
+      const binding = await source.prepare(actor, trip, raw, completeRetainedOriginals),
         prior = await existing(binding);
       const bindingContext = {
         version: "otr.backend.universal-context/1" as const,

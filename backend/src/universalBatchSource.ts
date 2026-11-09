@@ -233,7 +233,9 @@ export function createUniversalBatchSource(deps: {
       assertCurrent();
       return binding;
     },
-    async prepare(actor: string, trip: string, raw: unknown) {
+    async prepare(
+      actor: string, trip: string, raw: unknown, completeOriginals?: () => Promise<void>,
+    ) {
       await current(actor, trip);
       const q = universalBatchInputsSchema.parse(raw);
       finiteMatch(universalProviderBatchContext(actor, trip, q));
@@ -262,6 +264,10 @@ export function createUniversalBatchSource(deps: {
         return b;
       };
       if (prior) return same(prior);
+      if (completeOriginals) {
+        await completeOriginals();
+        await current(actor, trip);
+      }
       const runId = universalBatchIdentity(actor, trip, q.batchId, "run"),
         taskId = universalBatchIdentity(actor, trip, q.batchId, "task");
       await universalPgTransaction(deps.connection, async (lease) =>

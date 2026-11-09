@@ -1,3 +1,4 @@
+import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import {
   readSourcePngRuntimeConfig,
   createSourcePngRuntimePorts,
@@ -44,7 +45,15 @@ import { readUniversalContinuousConfig } from "./universalContinuousConfig";
 import { createUniversalContinuousHost } from "./universalContinuousHost";
 import { universalContinuousSelectionSchema } from "./universalRegisteredTaskDraft";
 import { universalPriceScheduleFromUnits } from "./universalPersistenceHost";
-import { universalProviderBatchContext } from "./universalBatchSource";
+import {
+  universalBatchInputsSchema,
+  universalProviderBatchContext,
+} from "./universalBatchSource";
+import { isNormalAccount } from "./authAccountQualification";
+import {
+  prepareUniversalRetainedOriginals,
+  universalRetainedOriginalPrepareSchema,
+} from "./universalRetainedOriginalPreparation";
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -390,12 +399,13 @@ export async function loadDevUniversalContinuousRuntime(
       const match = /^Bearer ([^\s]+)$/i.exec(request.headers.get("Authorization") ?? "");
       if (!match) throw Error("UNIVERSAL_AUTH_REQUIRED");
       const token = match[1];
-      const authorize = async () => {
+      const authorize = async (normalOnly = false) => {
         guard();
         const user = await gateway.validateAccessToken(token);
         if (
           !user ||
           user.id !== verifiedActor ||
+          (normalOnly && !isNormalAccount(user)) ||
           !(await gateway.canReadTrip(verifiedActor, tripId))
         )
           throw Error("UNIVERSAL_AUTH_REJECTED");
@@ -465,8 +475,115 @@ export async function loadDevUniversalContinuousRuntime(
             .object({ tripId: z.literal(tripId) })
             .passthrough()
             .parse(raw);
-          const { tripId: _trip, ...input } = q;
-          const result = await scoped.prepare(input);
+          const { tripId: _trip, retainedOriginals, originalUpload: _upload, ...input } = q;
+          let completeRetainedOriginals: (() => Promise<void>) | undefined;
+          if (retainedOriginals !== undefined) {
+            if (finite || acquisition) throw Error("UNIVERSAL_RETAINED_SOURCE_UNAVAILABLE");
+            const retained = universalRetainedOriginalPrepareSchema.parse(q);
+            if (retained.retainedOriginals.length !== retained.inputs.length)
+              throw Error("UNIVERSAL_RETAINED_SOURCE_SCOPE");
+            const batch = universalBatchInputsSchema.parse(input);
+            const signal = AbortSignal.any([request.signal, AbortSignal.timeout(80000)]);
+            const sourceRequest = (path: string) =>
+              new Request(new URL(path, request.url), {
+                method: "POST",
+                headers: { Authorization: match[0] },
+                signal,
+              });
+            const openPdf = pdf?.sourcePdfV2ForRequest;
+            const openPdfUpload = pdf?.sourcePdfV4PreparationForRequest;
+            const openPng = png?.sourcePngPreparationForRequest;
+            await authorize(true);
+            completeRetainedOriginals = () => prepareUniversalRetainedOriginals(
+              { actorId: verifiedActor, tripId, signal },
+              batch,
+              retained.retainedOriginals,
+              {
+                hash,
+                assertCurrent: () => authorize(true),
+                originalUpload: retained.originalUpload,
+                acquire: (command) => original.acquire(verifiedActor, tripId, command),
+                lookupAcquisition: (command) => original.lookup(verifiedActor, tripId, command),
+                lookupOperation: (command) => universalPgTransaction(
+                  sourceConnection,
+                  async (lease) => (
+                    await lease.query(
+                      "SELECT public.trip_source_operation_lookup($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6) AS result",
+                      [verifiedActor, tripId, command.source_id, command.operation_id,
+                        command.operation_key, command.operation_sha256],
+                    )
+                  ).rows[0]?.result,
+                  true,
+                  () => signal.throwIfAborted(),
+                ),
+                uploadPdf: openPdfUpload && (async (commands, requireBytes) => {
+                  const q = commands.upload;
+                  const base = `/v2/trips/${tripId}/sources/${q.source_id}/representations/${q.payload.representation_id}/pdf-v4/${q.operation_id}`;
+                  await authorize(true);
+                  const advance = sourceRequest(`${base}/advance`);
+                  const owned = await openPdfUpload(advance, verifiedActor, {
+                    request: advance, actorId: verifiedActor, tripId,
+                  });
+                  try {
+                    const { preparation, reservation } = owned.port;
+                    const identity = {
+                      tripId,
+                      sourceId: q.source_id,
+                      representationId: q.payload.representation_id,
+                      operationId: q.operation_id,
+                      accountGeneration: owned.initialGeneration,
+                    };
+                    const raw = canonicalCoreJson(q);
+                    let status = await reservation.status(verifiedActor, identity);
+                    let bytes: Buffer | undefined;
+                    if (status === "NO_ACTIVE_ATTEMPT") {
+                      bytes = requireBytes();
+                      const prepared = await reservation.prepare(
+                        verifiedActor, canonicalCoreJson(commands.prepare),
+                        { ...identity, operationId: commands.prepare.operation_id },
+                      );
+                      if (prepared.outcome !== "APPLIED")
+                        throw Error("PDF_SOURCE_PREPARATION_REJECTED");
+                      const reserved = await reservation.reserve(verifiedActor, raw, identity);
+                      if ("receipt" in reserved) return reserved.receipt;
+                      status = await reservation.status(verifiedActor, identity);
+                    }
+                    if (status === "RESERVED") {
+                      bytes ??= requireBytes();
+                      const stage = new Request(new URL(`${base}/stage`, request.url), {
+                        method: "POST",
+                        headers: {
+                          Authorization: match[0],
+                          "Content-Type": "application/pdf",
+                          "Content-Length": String(bytes.length),
+                        },
+                        body: Uint8Array.from(bytes),
+                        signal,
+                      });
+                      await preparation.ingress(stage, identity);
+                      status = "STAGED";
+                    }
+                    signal.throwIfAborted();
+                    if (status !== "READ_OBSERVED" &&
+                      (!(status === "STAGED" || status === "ACK_OBSERVED") ||
+                        !(await preparation.advance?.(advance, identity))))
+                      throw Error("PDF_UPLOAD_OUTCOME_UNRESOLVED");
+                    signal.throwIfAborted();
+                    return await reservation.finish(verifiedActor, raw, identity);
+                  } finally {
+                    owned.close();
+                  }
+                }),
+                openPdf: openPdf && (() => openPdf(
+                  sourceRequest(`/v2/trips/${tripId}/sources/pdf-v2/verify-original`), verifiedActor,
+                )),
+                openPng: openPng && (() => openPng(
+                  sourceRequest(`/v2/trips/${tripId}/universal-source-originals/png/execute`), verifiedActor,
+                )),
+              },
+            );
+          }
+          const result = await scoped.prepare(input, completeRetainedOriginals);
           protectedPrepareReplay =
             result.status === "EXISTING" &&
             result.context.batchId === forward?.initial.batchId &&

@@ -1,3 +1,18 @@
+## QA175 normal Analyze Start/Resume candidate — 9 November 2026
+
+The existing interpretation prepare route now has a candidate for ordinary
+Native Start/Resume. It binds the local immutable acquisition commands, reuses
+owning PDF upload evidence to reach Seal, advances PNG independently, and
+requests bytes only when owning state proves they are needed. It reserves the
+same Run/Task/Wake after material is ready. The pre-Run work is still bounded by
+the HTTP request, so pre-Run re-entry must recover from Source receipts.
+With the existing deployed PNG compatibility overlay, isolated run
+`965e9a7c` used the owning PostgreSQL functions and local Worker/Storage test
+interfaces. It retained one PDF, uploaded one missing PNG, reserved one Run
+for three inputs, and returned P3/P6 candidates after one simulated Provider
+call. Save, independent readback, and cold restore evidence remains from prior
+isolated run `e4a572d2`. Shared DEV and device timing are unverified.
+
 ## Universal Import PDF Advance optimization candidate — 9 November 2026
 
 The hosted QA173 PDF Advance baseline was 142.479 seconds with 57 Auth checks, 57 Trip reads, 20 PG connections and 100 PG setup statements. The request-scoped candidate shares the owning upload projection and keeps fresh authorization at the Storage and dispatch boundaries. The existing PDF PG adapter reuses one physical connection with a session reset between leases. An isolated comparison reduced Source inventory queries from 11 to 4, with one PUT and one independent GET. The existing Finish contract requires that GET. Hosted timing, original QA173 Finish, and DeepSeek remain pending. The current Task/Wake contract requires material pins before registration, and automatic preparation of missing pins is a separate integration delta.

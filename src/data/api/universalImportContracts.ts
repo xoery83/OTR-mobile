@@ -81,6 +81,18 @@ export const universalBatchPrepareSchema = z.strictObject({
     .min(1)
     .max(64),
 });
+export const UNIVERSAL_PREPARE_MAX_BODY_BYTES = 8 * 1024 * 1024;
+export const universalRetainedOriginalPrepareSchema = universalBatchPrepareSchema.extend({
+  retainedOriginals: z.array(z.strictObject({
+    inputId: uuid,
+    acquisition: z.json(),
+  })).min(1).max(64),
+  originalUpload: z.strictObject({
+    inputId: uuid,
+    base64: z.string().min(4).max(5592408),
+  }).optional(),
+});
+export type UniversalRetainedOriginalPrepare = z.infer<typeof universalRetainedOriginalPrepareSchema>;
 export const universalMaterialReadySchema = z.strictObject({
   version: z.literal("otr.backend.universal-material-ready/1"),
   state: z.literal("MATERIAL_READY_NO_TASK"),

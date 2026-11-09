@@ -14,6 +14,7 @@ function fixture(
   prepareSources?: Parameters<typeof createUniversalCaptureConsumer>[0]["prepareSources"],
   continuous = false,
   resumeTask?: (context: unknown, binding: UniversalExecutionContext) => Promise<void>,
+  retainedStart = false,
 ) {
   const accountId = randomUUID(),
     tripId = randomUUID(),
@@ -49,6 +50,7 @@ function fixture(
     result: vi.fn(async () => result),
     execute: vi.fn(async () => result),
   };
+  const startRetained = vi.fn(async () => ({ status: "QUEUED" as const, context: binding }));
   let active = true;
   const consumer = createUniversalCaptureConsumer({
     getAccountId: async () => accountId,
@@ -57,6 +59,7 @@ function fixture(
     prepareSources,
     resumeTask,
     continuous,
+    ...(retainedStart ? { startRetained } : {}),
   });
   return {
     accountId,
@@ -64,6 +67,7 @@ function fixture(
     result,
     transport,
     consumer,
+    startRetained,
     close: () => {
       active = false;
     },
@@ -789,4 +793,17 @@ it("preserves ordinary existing Task and first Start 404, and ignores generic 50
   await expect(closed.consumer.start(closed.model)).rejects.toMatchObject({ status: 503 });
   expect(closed.materialReady).not.toHaveBeenCalled();
   expect(closed.prepareSources).not.toHaveBeenCalled();
+});
+
+
+it("starts through owning Prepare before reading progress and keeps reopen passive", async () => {
+  const f = fixture(undefined, true, undefined, true);
+  f.transport.result.mockRejectedValue(absent());
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(f.startRetained).toHaveBeenCalledOnce();
+  expect(f.transport.context).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+  expect(await f.consumer.recover(f.model)).toBeNull();
+  expect(f.transport.context).toHaveBeenCalledOnce();
+  expect(f.startRetained).toHaveBeenCalledOnce();
 });

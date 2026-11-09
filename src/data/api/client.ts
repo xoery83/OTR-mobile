@@ -256,6 +256,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
             error: z.object({
               code: z.string(),
               requestId: z.uuid().optional().catch(undefined),
+              details: z.strictObject({ inputId: z.uuid() }).optional().catch(undefined),
             }),
           })
           .safeParse(payload);
@@ -298,6 +299,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
             "UNIVERSAL_IMPORT_CLOSED",
             "UNIVERSAL_CONTEXT_UNAVAILABLE",
             "TASK_NOT_FOUND",
+            "UNIVERSAL_ORIGINAL_BYTES_REQUIRED",
           ].includes(error.data.error.code)
             ? error.data.error.code
             : undefined;
@@ -306,7 +308,9 @@ export function createApiClient(options: ApiClientOptions = {}) {
           "http",
           response.status,
           code,
-          undefined,
+          code === "UNIVERSAL_ORIGINAL_BYTES_REQUIRED" && error.success
+            ? error.data.error.details
+            : undefined,
           requestId,
         );
       }

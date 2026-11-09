@@ -1338,6 +1338,18 @@ known; reopen/status GET never wakes. Mismatched Task/context or QUEUED resume
 responses are rejected. Existing Attempts cannot get another Provider send; the
 normal expired-unstarted branch records its owning deadline failure.
 
+## Universal Import — retained-original Start/Resume
+
+The authenticated interpretation prepare route accepts the existing Batch ID and
+immutable Source acquisition commands. For a new Run, the Backend checks the
+owning Source receipts, advances retained PDF and PNG independently, and uses
+the existing Run/Task/Wake and Provider attempt guard. For a missing PDF or PNG
+whose owning state permits upload, the route identifies one exact input with
+`409 UNIVERSAL_ORIGINAL_BYTES_REQUIRED`. Native rechecks local custody and
+consent before supplying only that input's bytes to the same route. A pending
+write cannot qualify a Source, and an unresolved upload uses its owning
+reconciliation path. Passive status reads do not start work.
+
 ## Universal Import — bounded Source P1 integration (2026-10-26)
 
 Universal intake/results use authenticated `/v2/import-batches/{batchId}/interpretations` Context/Result/prepare routes and existing owning Source/Task repositories. Candidates and observations do not grant admission. Original text material is acquired/read only through the account/Trip-scoped original-source interface.

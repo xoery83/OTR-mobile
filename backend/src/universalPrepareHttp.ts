@@ -1,6 +1,8 @@
 import { z, ZodError } from "zod";
+import { OriginalBytesRequired, universalRetainedOriginalPrepareSchema } from "./universalRetainedOriginalPreparation";
 import {
   universalBatchPrepareSchema,
+  UNIVERSAL_PREPARE_MAX_BODY_BYTES,
   universalTaskResumeSchema,
   universalBatchPreparedSchema,
 } from "../../src/data/api/universalImportContracts";
@@ -69,16 +71,20 @@ export async function universalPrepareBoundary(
     try {
       parsed = await readBoundedJson(
         new Response(request.body),
-        65536,
+        UNIVERSAL_PREPARE_MAX_BODY_BYTES,
         boundary,
-        (text) => parseEventJson(text, 65536),
+        (text) => parseEventJson(text, UNIVERSAL_PREPARE_MAX_BODY_BYTES),
       );
     } catch (error) {
       if (error instanceof RequestBoundaryError) throw error;
       return failure(400, "INVALID_REQUEST");
     }
     const input = z
-      .union([universalBatchPrepareSchema, universalTaskResumeSchema])
+      .union([
+        universalBatchPrepareSchema,
+        universalRetainedOriginalPrepareSchema,
+        universalTaskResumeSchema,
+      ])
       .parse(parsed);
     const resume = "version" in input;
     if (
@@ -103,6 +109,12 @@ export async function universalPrepareBoundary(
   } catch (error) {
     if (error instanceof RequestBoundaryError)
       return failure(error.code === "BODY_LIMIT" ? 413 : 400, error.code);
+    if (error instanceof OriginalBytesRequired)
+      return reply(409, { error: {
+        code: error.message,
+        message: error.message,
+        details: { inputId: error.inputId },
+      } });
     if (error instanceof ZodError) return failure(400, "INVALID_REQUEST");
     return failure(503, "UNIVERSAL_PREPARATION_UNAVAILABLE");
   } finally {

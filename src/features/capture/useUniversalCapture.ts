@@ -4,6 +4,7 @@ import type {
   UniversalTaskActivity,
   UniversalImportResult,
 } from "@/data/api/universalImportContracts";
+import { universalBatchPreparedSchema } from "@/data/api/universalImportContracts";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { ApiClientError } from "@/data/api/client";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -69,12 +70,16 @@ export function useUniversalCapture(
       controller.current?.abort();
     };
   }, []);
+  const retainedStartEnabled = process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true" &&
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED === "true" &&
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED === "true";
   async function run(execute: boolean) {
     if (!current() || (execute && !model.batch.context?.tripPrior?.id)) return;
     if (running.current) {
       if (execute && !executing.current && !deferredStart.current) {
         deferredStart.current = true;
         setStartPending(true);
+        if (retainedStartEnabled) controller.current?.abort();
       }
       return;
     }
@@ -144,6 +149,26 @@ export function useUniversalCapture(
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
             await transport.resume(context, binding);
           },
+          ...(retainedStartEnabled
+            ? {
+                startRetained: async (context, job) => {
+                  const { prepareDefaultUniversalCaptureSources } =
+                    await import("@/data/operations/defaultUniversalOriginalSource");
+                  return universalBatchPreparedSchema.parse(
+                    await prepareDefaultUniversalCaptureSources(context, job, {
+                      baseUrl,
+                      getAccountId,
+                      assertCurrent: () => {
+                        if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                      },
+                      pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1",
+                      pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1",
+                      startRetained: (input) => transport.prepare(context, input),
+                    }),
+                  );
+                },
+              }
+            : {}),
           prepareSources: async (context, job) => {
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
             const { prepareDefaultUniversalCaptureSources } =
@@ -298,7 +323,10 @@ export function useUniversalCapture(
         setCanStart(consumer.current?.canDispatch ?? true);
       }
       // Coalesce only a user's click; invalidation above discards it without any retry timer.
-      if (continueExplicitStart) void run(true);
+      if (continueExplicitStart) {
+        if (controller.current?.signal.aborted) consumer.current = null;
+        void run(true);
+      }
     }
   }
   useEffect(() => {

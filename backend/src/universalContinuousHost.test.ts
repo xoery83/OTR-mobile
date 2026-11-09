@@ -466,7 +466,18 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf, orphanWake }) =>
         ),
       ).toHaveLength(1);
     } else {
-      expect((await host.prepare(prepare)).status).toBe("QUEUED");
+      const completeOriginals = vi.fn(async () => {
+        expect(registered).toBe(false);
+      }).mockRejectedValueOnce(Error("RETAINED_VERIFY_OUTCOME_UNCONFIRMED"));
+      await expect(host.prepare(prepare, completeOriginals)).rejects.toThrow(
+        "RETAINED_VERIFY_OUTCOME_UNCONFIRMED",
+      );
+      expect(registered).toBe(false);
+      expect(sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get()).toEqual({ n: 0 });
+      expect(sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toEqual({ n: 0 });
+      expect((await host.prepare(prepare, completeOriginals)).status).toBe("QUEUED");
+      expect((await host.prepare(prepare, completeOriginals)).status).toBe("EXISTING");
+      expect(completeOriginals).toHaveBeenCalledTimes(2);
     }
     expect((await host.prepare(prepare)).status).toBe("EXISTING");
     expect((await host.readContext(batch)).activity).toMatchObject({
