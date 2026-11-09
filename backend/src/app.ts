@@ -2723,6 +2723,8 @@ export function createDevBackendHandler({
           universalV3Execution && {
             ...universalV3Execution,
             async available(scope, currentRequest) {
+              if (universalV3Execution.ordinary)
+                return universalV3Execution.available(scope, currentRequest);
               const capability = await coreConnection?.read?.capabilities?.(scope.accountId, scope.tripId);
               return capability?.activationState === "ENABLED" &&
                 capability.enabledAdmissionModes.includes("MANUAL") &&
@@ -2730,6 +2732,11 @@ export function createDevBackendHandler({
                 await universalV3Execution.available(scope, currentRequest);
             },
           },
+          universalV3Execution?.ordinary
+            ? (account, trip) => isNormalAccount(actor)
+              ? gateway.canWriteTrip(account, trip)
+              : Promise.resolve(false)
+            : undefined,
         );
       } else if (
         /^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)

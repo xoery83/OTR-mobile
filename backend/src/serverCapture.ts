@@ -2,6 +2,7 @@ import { runSourcePdfTimings } from "./sourcePdfTiming";
 import { reportEnrichmentDiagnostic } from "./flight-enrichment/diagnostics";
 import { loadDevFlightEnrichmentRuntime } from "./flight-enrichment/devRuntime";
 import { loadDevUniversalContinuousRuntime } from "./universalContinuousRuntime";
+import { loadUniversalV3Runtime } from "./universalV3Execution";
 import { prepareUniversalQueuedRuntime } from "./universalPrepareHttp";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { loadDevTripMetadataV2Runtime } from "./tripMetadataRuntime";
@@ -47,6 +48,13 @@ async function main() {
       continuous = await loadDevUniversalContinuousRuntime(process.env);
   } catch {
     console.info("UNIVERSAL_CONTINUOUS_RUNTIME_CLOSED");
+  }
+  let v3: Awaited<ReturnType<typeof loadUniversalV3Runtime>>;
+  try {
+    if (process.env.OTR_DEV_UNIVERSAL_SETTLED_RECOVERY === undefined)
+      v3 = await loadUniversalV3Runtime(process.env);
+  } catch {
+    console.info("UNIVERSAL_V3_RUNTIME_CLOSED");
   }
   let universal: Awaited<ReturnType<typeof loadDevUniversalRuntime>>;
   try {
@@ -111,10 +119,10 @@ async function main() {
     }
     server = startDevBackend({
       ...(enrichment ? { flightEnrichmentService: enrichment.service, flightEnrichmentEnabled: true, flightEnrichmentAvailable: enrichment.available } : {}),
+      universalV3Intake: v3?.intake ?? continuous?.universalV3Intake,
+      universalV3Execution: v3?.execution ?? continuous?.universalV3Execution,
       ...(continuous
         ? {
-            universalV3Intake: continuous.universalV3Intake,
-            universalV3Execution: continuous.universalV3Execution,
             sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
             sourcePngPreparationForRequest: continuous.sourcePngPreparationForRequest,
             sourcePdfV2ForRequest: continuous.sourcePdfV2ForRequest,
@@ -210,6 +218,7 @@ async function main() {
     await enrichment?.close();
     await settled?.close();
     await continuous?.close();
+    await v3?.close();
     await originals?.close();
     await universal?.close();
     if (metadata !== trip) await metadata?.close();
@@ -221,6 +230,7 @@ async function main() {
     void enrichment?.close();
     void settled?.close();
     void continuous?.close();
+    void v3?.close();
     void originals?.close();
     void universal?.close();
     if (metadata !== trip) void metadata?.close();

@@ -166,16 +166,22 @@ export function createUniversalV3Intake(db: Db, root: string) {
     }
   }
   async function hasAcceptedAttempt(scope: Scope) {
-    return Boolean(await db.getFirstAsync<{ accepted: number }>(
-      `SELECT 1 AS accepted FROM intelligence_continuations
+    return Boolean(
+      await db.getFirstAsync<{ accepted: number }>(
+        `SELECT 1 AS accepted FROM intelligence_continuations
        WHERE account_id=? AND task_id=? AND trip_id=? AND import_id=?
          AND (current_attempt_id IS NOT NULL OR work_disposition IN ('PUBLISHED','UNKNOWN'))`,
-      scope.accountId, universalV3TaskId(scope), scope.tripId, scope.analysisId,
-    ));
+        scope.accountId,
+        universalV3TaskId(scope),
+        scope.tripId,
+        scope.analysisId,
+      ),
+    );
   }
   async function status(scope: Scope, input: UniversalV3Manifest) {
     // After admission, deleting temporary bytes cannot reopen this analysis for upload.
-    if (await hasAcceptedAttempt(scope)) return { analysisId: scope.analysisId, missingFiles: [] };
+    if (await hasAcceptedAttempt(scope))
+      return { analysisId: scope.analysisId, missingFiles: [] };
     const present = await Promise.all(input.files.map((file) => hasFile(scope, file)));
     return {
       analysisId: scope.analysisId,
@@ -338,6 +344,7 @@ export async function universalV3IntakeBoundary(
   canReadTrip: (account: string, trip: string) => Promise<boolean>,
   intake?: UniversalV3Intake,
   execution?: UniversalV3Execution,
+  canWriteTrip?: typeof canReadTrip,
 ) {
   const headers = { "Cache-Control": "private, no-store", Vary: "Authorization" };
   const reply = (status: number) =>
@@ -354,22 +361,25 @@ export async function universalV3IntakeBoundary(
   const tripId = uuid.safeParse(url.searchParams.get("tripId"));
   if (!analysisId.success || !tripId.success) return reply(400);
   if (!intake && !ids?.[3]) return reply(503);
-  if (!(await canReadTrip(actor, tripId.data))) return reply(404);
+  const writes = request.method === "POST" || request.method === "PUT";
+  if (writes && canWriteTrip) {
+    if (!(await canWriteTrip(actor, tripId.data))) return reply(403);
+  } else if (!(await canReadTrip(actor, tripId.data))) return reply(404);
   const scope = { accountId: actor, tripId: tripId.data, analysisId: analysisId.data };
   const advance = () =>
-    execution
-      ?.available(scope, request)
-      .then(async (allowed) => {
-        if (allowed) await execution.start(scope, request);
-      })
-      .catch(() => {
-        console.info(
-          JSON.stringify({
-            event: "universal_v3_start_unavailable",
-            analysisId: scope.analysisId,
-          }),
-        );
-      });
+    (execution?.ordinary
+      ? execution.start(scope, request)
+      : execution?.available(scope, request).then(async (allowed) => {
+          if (allowed) await execution.start(scope, request);
+        })
+    )?.catch(() => {
+      console.info(
+        JSON.stringify({
+          event: "universal_v3_start_unavailable",
+          analysisId: scope.analysisId,
+        }),
+      );
+    });
   if (request.method === "GET" && ids?.[3]) {
     const existing = await execution?.read(scope, request);
     const available =

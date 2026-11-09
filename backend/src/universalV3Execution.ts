@@ -1,3 +1,6 @@
+import { lstat } from "node:fs/promises";
+import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
@@ -13,13 +16,26 @@ import {
 import { createUniversalPersistenceHost } from "./universalPersistenceHost";
 import { prepareUniversalV3Materials } from "./universalV3Materials";
 import { buildUniversalV3TaskDraft } from "./universalV3TaskDraft";
-import { universalV3TaskId } from "./universalV3Intake";
+import { createUniversalV3Intake, universalV3TaskId } from "./universalV3Intake";
 import { runUniversalV3Wake } from "./universalV3Wake";
 import { readExactTaskWake } from "./universalMixedBTaskReservation";
 import { createFlightHttpsSend } from "./flightHttpsTransport";
-import type { createFlightPrivateCustody } from "./flightPrivateCustody";
+import { createFlightPrivateCustody } from "./flightPrivateCustody";
 import type { UniversalV3Intake } from "./universalV3Intake";
-import type { universalTaskDatabase } from "./universalTaskBootstrap";
+import {
+  initializeUniversalTaskDatabase,
+  type universalTaskDatabase,
+} from "./universalTaskBootstrap";
+import { readUniversalV3StoreConfig } from "./universalContinuousConfig";
+import {
+  extractUniversalV3Pdf,
+  normalizeUniversalV3Image,
+  universalV3DecodersPresent,
+} from "./universalV3Decoders";
+import { createSupabaseDevGateway } from "./supabaseGateway";
+import { isNormalAccount } from "./authAccountQualification";
+import { persistenceDigest } from "./externalIntegrationPersistence";
+import type { UniversalProviderCustody } from "./universalDeepSeekProvider";
 import type { universalContinuousSelectionSchema } from "./universalRegisteredTaskDraft";
 import type { Task } from "../../src/domain/intelligence/persistence";
 
@@ -34,13 +50,15 @@ export function createUniversalV3Execution(deps: {
   stores: Awaited<ReturnType<typeof createFlightPrivateCustody>>;
   validateImage: Parameters<typeof prepareUniversalV3Materials>[2];
   extractPdf?: Parameters<typeof prepareUniversalV3Materials>[3];
+  ordinaryProvider?: () => string | undefined;
   provision(
     scope: Scope,
     request: Request,
+    write: boolean,
   ): Promise<{
     assertCurrent(): Promise<void>;
-    selectProvider(): Promise<z.infer<typeof universalContinuousSelectionSchema>>;
-    persistence: Pick<
+    selectProvider?(): Promise<z.infer<typeof universalContinuousSelectionSchema>>;
+    persistence?: Pick<
       Persistence,
       "gateway" | "connection" | "environment" | "costGuardEnabled"
     >;
@@ -51,8 +69,8 @@ export function createUniversalV3Execution(deps: {
   const active = new Set<string>();
   const accountWork = new Set<string>();
 
-  async function current(scope: Scope, request: Request) {
-    const ownership = await deps.provision(scope, request);
+  async function current(scope: Scope, request: Request, write = false) {
+    const ownership = await deps.provision(scope, request, write);
     await ownership.assertCurrent();
     const getAccountId = async () => scope.accountId;
     const context = await captureAccountRequestContext(scope.tripId, getAccountId);
@@ -150,13 +168,16 @@ export function createUniversalV3Execution(deps: {
   }
   return {
     read,
+    ordinary: deps.ordinaryProvider !== undefined,
     async available(scope: Scope, request: Request) {
-      const owner = await current(scope, request);
-      await owner.ownership.selectProvider();
+      const owner = await current(scope, request, true);
+      if (deps.ordinaryProvider) return Boolean(deps.ordinaryProvider());
+      await owner.ownership.selectProvider!();
       return true;
     },
     async start(scope: Scope, request: Request) {
-      const owner = await current(scope, request);
+      const owner = await current(scope, request, true);
+      if (deps.ordinaryProvider && !deps.ordinaryProvider()) return;
       if (
         active.has(owner.taskId) ||
         accountWork.has(scope.accountId) ||
@@ -184,7 +205,9 @@ export function createUniversalV3Execution(deps: {
         accountWork.delete(scope.accountId);
       };
       try {
-        const selection = await owner.ownership.selectProvider();
+        const selection = deps.ordinaryProvider
+          ? undefined
+          : await owner.ownership.selectProvider!();
         const sources = await prepareUniversalV3Materials(
           retained.manifest,
           retained.readFile,
@@ -231,23 +254,36 @@ export function createUniversalV3Execution(deps: {
         launched = true;
         void (async () => {
           try {
-            const lifecycle = createUniversalPersistenceHost({
-              ...owner.ownership.persistence,
-              stores: deps.stores,
-              localFirst: true,
-              continuous: {
-                priceScheduleId: selection.priceScheduleId,
-                providerRequestSha256: draft.requestSha256,
-              },
-              attempt: draft.attempt,
-              requestMaterialByteCount: draft.marker.length,
-              async currentTask() {
-                await owner.ownership.assertCurrent();
-                const value = await snapshot(owner);
-                if (!value) throw Error("UNIVERSAL_V3_TASK_SCOPE");
-                return value.task;
-              },
-            });
+            const lifecycle =
+              selection &&
+              createUniversalPersistenceHost({
+                ...owner.ownership.persistence!,
+                stores: deps.stores,
+                localFirst: true,
+                continuous: {
+                  priceScheduleId: selection.priceScheduleId,
+                  providerRequestSha256: draft.requestSha256,
+                },
+                attempt: draft.attempt,
+                requestMaterialByteCount: draft.marker.length,
+                async currentTask() {
+                  await owner.ownership.assertCurrent();
+                  const value = await snapshot(owner);
+                  if (!value) throw Error("UNIVERSAL_V3_TASK_SCOPE");
+                  return value.task;
+                },
+              });
+            const ordinaryProvider = deps.ordinaryProvider;
+            const custody = lifecycle
+              ? lifecycle.custody
+              : ordinaryV3Custody(
+                  deps.stores,
+                  scope,
+                  owner.taskId,
+                  draft.attempt.usage_correlation_id!,
+                  draft.requestSha256,
+                  ordinaryProvider!,
+                );
             const result = await runUniversalV3Wake({
               context: owner.context,
               repository: owner.repository,
@@ -255,29 +291,56 @@ export function createUniversalV3Execution(deps: {
               manifest: retained.manifest,
               draft,
               provider: {
-                custody: lifecycle.custody,
-                priceSchedule: await lifecycle.priceSchedule(),
-                costGuardDisabled: owner.ownership.persistence.costGuardEnabled === false,
+                custody,
+                allowMissingUsage: ordinaryProvider !== undefined,
+                priceSchedule: await lifecycle?.priceSchedule(),
+                costGuardDisabled:
+                  ordinaryProvider !== undefined ||
+                  owner.ownership.persistence?.costGuardEnabled === false,
               },
               send: deps.send ?? createFlightHttpsSend(),
               assertCurrent: owner.ownership.assertCurrent,
-              assertDurableStart: lifecycle.assertDurableStart,
-              assertCompletion(result, attempt, task) {
-                return lifecycle.assertCompletion(
-                  {
-                    providerOutcome: "SETTLED",
-                    providerReceipt: {
-                      requestId: result.providerReceipt.requestId,
-                      requestSha256: result.providerReceipt.requestSha256 ?? null,
-                      responseSha256: result.providerReceipt.responseSha256,
-                      usage: result.providerReceipt.usage,
-                      costNanos: result.providerReceipt.costNanos ?? null,
+              assertDurableStart:
+                lifecycle?.assertDurableStart ??
+                (async (attempt, task) => {
+                  const retained = await snapshot(owner);
+                  const claimed = await readExactTaskWake(deps.db, operation.id, {
+                    ...scope,
+                    taskId: task.task_id,
+                  });
+                  if (
+                    !retained ||
+                    retained.task.manifest_sha256 !== draft.task.manifest_sha256 ||
+                    retained.task.publication_fence !== task.publication_fence ||
+                    retained.task.current_attempt_id !== attempt.attempt_id ||
+                    retained.attempts.length !== 1 ||
+                    persistenceDigest(retained.attempts[0]) !==
+                      persistenceDigest(attempt) ||
+                    attempt.request_sha256 !== draft.requestSha256 ||
+                    claimed?.status !== "PROCESSING" ||
+                    !claimed.claimOwner ||
+                    claimed.claimOwner !== operation.claimOwner
+                  )
+                    throw Error("UNIVERSAL_V3_START_NOT_DURABLE");
+                }),
+              ...(lifecycle && {
+                assertCompletion(result, attempt, task) {
+                  return lifecycle.assertCompletion(
+                    {
+                      providerOutcome: "SETTLED",
+                      providerReceipt: {
+                        requestId: result.providerReceipt.requestId,
+                        requestSha256: result.providerReceipt.requestSha256 ?? null,
+                        responseSha256: result.providerReceipt.responseSha256,
+                        usage: result.providerReceipt.usage,
+                        costNanos: result.providerReceipt.costNanos ?? null,
+                      },
                     },
-                  },
-                  attempt,
-                  task,
-                );
-              },
+                    attempt,
+                    task,
+                  );
+                },
+              }),
               async retainPublication(attempt, bytes, digest) {
                 const pin = {
                   reference: attempt.attempt_id,
@@ -314,3 +377,173 @@ export function createUniversalV3Execution(deps: {
 }
 
 export type UniversalV3Execution = ReturnType<typeof createUniversalV3Execution>;
+
+function ordinaryV3Custody(
+  stores: Awaited<ReturnType<typeof createFlightPrivateCustody>>,
+  scope: Scope,
+  taskId: string,
+  callId: string,
+  requestSha256: string,
+  providerKey: () => string | undefined,
+): UniversalProviderCustody {
+  function matches(input: { accountId: string; taskId: string; requestSha256: string }) {
+    return (
+      input.accountId === scope.accountId &&
+      input.taskId === taskId &&
+      input.requestSha256 === requestSha256
+    );
+  }
+  return {
+    async acquire(input) {
+      if (
+        !matches(input) ||
+        input.actorId !== scope.accountId ||
+        input.tripId !== scope.tripId ||
+        input.batchId !== scope.analysisId
+      )
+        return null;
+      const secret = providerKey();
+      if (!secret) return null;
+      return {
+        secret,
+        async assertCurrent() {
+          if (providerKey() !== secret) throw Error("UNIVERSAL_CREDENTIAL_CHANGED");
+        },
+      };
+    },
+    async retainResponse(input) {
+      if (!matches(input) || sha(input.bytes) !== input.responseSha256)
+        throw Error("UNIVERSAL_RAW_BINDING_INVALID");
+      const pin = {
+        reference: callId,
+        sha256: input.responseSha256,
+        byteCount: input.bytes.length,
+      };
+      await stores.custody.put({
+        ...pin,
+        accountId: scope.accountId,
+        reservationId: callId,
+        bytes: input.bytes,
+      });
+      await stores.retainRaw(scope.accountId, callId, pin, {
+        version: 1,
+        taskId,
+        requestSha256,
+        httpStatus: input.httpStatus,
+      });
+    },
+    async settle(input) {
+      if (!matches(input) || input.costNanos !== null)
+        throw Error("UNIVERSAL_RAW_BINDING_INVALID");
+      const raw = await stores.readRaw(scope.accountId, callId);
+      if (
+        raw.pin.reference !== callId ||
+        raw.pin.sha256 !== input.responseSha256 ||
+        persistenceDigest(raw.binding) !==
+          persistenceDigest({
+            version: 1,
+            taskId,
+            requestSha256,
+            httpStatus: 200,
+          })
+      )
+        throw Error("UNIVERSAL_RAW_BINDING_INVALID");
+      const bytes = await stores.custody.read({ ...raw.pin, accountId: scope.accountId });
+      if (sha(bytes) !== input.responseSha256)
+        throw Error("UNIVERSAL_RAW_BINDING_INVALID");
+    },
+  };
+}
+
+export async function loadUniversalV3Runtime(env: Record<string, string | undefined>) {
+  if (env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST !== "v3") return undefined;
+  const config = await readUniversalV3StoreConfig(env);
+  const providerKey = () => {
+    const value = env.OTR_DEV_DEEPSEEK_API_KEY;
+    return value &&
+      /^[\x21-\x7e]{1,8192}$/.test(value) &&
+      (env.OTR_DEV_DEEPSEEK_MODEL ?? "deepseek-flash") === "deepseek-flash"
+      ? value
+      : undefined;
+  };
+  if (!providerKey() || !(await universalV3DecodersPresent()))
+    throw Error("UNIVERSAL_V3_RUNTIME_CLOSED");
+  const gateway = createSupabaseDevGateway({
+    url: env.OTR_DEV_SUPABASE_URL!,
+    publishableKey: env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "",
+    secretKey: env.OTR_DEV_SUPABASE_SECRET_KEY ?? "",
+  });
+  const stores = await createFlightPrivateCustody(config.directory, config.identity);
+  let sql: DatabaseSync | undefined;
+  let closed = false;
+  const check = async () => {
+    const file = await lstat(config.taskDatabase);
+    if (
+      !file.isFile() ||
+      file.uid !== process.getuid?.() ||
+      (file.mode & 0o777) !== 0o600 ||
+      file.nlink !== 1
+    )
+      throw Error("UNIVERSAL_TASK_DATABASE_CLOSED");
+    return file;
+  };
+  async function close() {
+    if (closed) return;
+    closed = true;
+    sql?.close();
+    await stores.close();
+  }
+  try {
+    const before = await check();
+    sql = new DatabaseSync(config.taskDatabase);
+    const after = await check();
+    if (before.ino !== after.ino || before.dev !== after.dev)
+      throw Error("UNIVERSAL_TASK_DATABASE_CHANGED");
+    const requiredTables = sql
+      .prepare(
+        "SELECT count(*) AS count FROM sqlite_schema WHERE type='table' AND name IN ('intelligence_continuations','intelligence_continuation_attempts','sync_operations')",
+      )
+      .get();
+    if (requiredTables?.count !== 3) throw Error("UNIVERSAL_TASK_DATABASE_CLOSED");
+    const db = initializeUniversalTaskDatabase(sql);
+    const intake = createUniversalV3Intake(
+      db,
+      join(config.directory, "universal-v3-spool"),
+    );
+    const execution = createUniversalV3Execution({
+      intake,
+      db,
+      stores,
+      validateImage: normalizeUniversalV3Image,
+      extractPdf: extractUniversalV3Pdf,
+      ordinaryProvider: providerKey,
+      async provision(scope, request, write) {
+        const token = /^Bearer ([^\s]+)$/i.exec(
+          request.headers.get("Authorization") ?? "",
+        )?.[1];
+        return {
+          async assertCurrent() {
+            if (closed || !token || env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST !== "v3")
+              throw Error("UNIVERSAL_AUTH_REQUIRED");
+            const user = await gateway.validateAccessToken(token);
+            const allowed = write ? gateway.canWriteTrip : gateway.canReadTrip;
+            if (
+              user?.id !== scope.accountId ||
+              !isNormalAccount(user) ||
+              !(await allowed.call(gateway, scope.accountId, scope.tripId)) ||
+              closed
+            )
+              throw Error("UNIVERSAL_AUTH_REJECTED");
+            const retained = await check();
+            if (retained.ino !== before.ino || retained.dev !== before.dev)
+              throw Error("UNIVERSAL_TASK_DATABASE_CHANGED");
+          },
+        };
+      },
+    });
+    return { intake, execution, close };
+  } catch (error) {
+    await close();
+    throw error;
+  }
+}

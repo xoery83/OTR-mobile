@@ -6,18 +6,20 @@ import type { SyncOperation } from "../../src/data/sync/syncOperationRepository"
 import type { Attempt, Task } from "../../src/domain/intelligence/persistence";
 import type { UniversalV3Manifest } from "../../src/data/api/universalV3Contracts";
 import type { buildUniversalV3TaskDraft } from "./universalV3TaskDraft";
-import { createUniversalDeepSeekProvider } from "./universalDeepSeekProvider";
+import { createUniversalDeepSeekExecution } from "./universalDeepSeekProvider";
 import { universalBatchIdentity } from "./universalBatchSource";
 import { projectUniversalV3Candidates } from "./universalV3Materials";
 
 type Draft = Awaited<ReturnType<typeof buildUniversalV3TaskDraft>>;
-type ProviderPorts = Parameters<typeof createUniversalDeepSeekProvider>[0];
+type ProviderPorts = Parameters<typeof createUniversalDeepSeekExecution>[0];
 type ProviderResult = Awaited<
-  ReturnType<ReturnType<typeof createUniversalDeepSeekProvider>["interpret"]>
+  ReturnType<ReturnType<typeof createUniversalDeepSeekExecution>["interpret"]>
 >;
 type Publication = {
-  candidates: (ReturnType<typeof projectUniversalV3Candidates>[number] & { candidateId: string })[];
-  providerReceipt: ProviderResult["providerReceipt"];
+  candidates: (ReturnType<typeof projectUniversalV3Candidates>[number] & {
+    candidateId: string;
+  })[];
+  providerReceipt: ProviderResult["providerReceipt"] & { outcome?: "SETTLED" };
 };
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
@@ -31,7 +33,11 @@ export async function runUniversalV3Wake(input: {
   send: ProviderPorts["send"];
   assertCurrent(): Promise<void>;
   assertDurableStart(attempt: Attempt, task: Task): Promise<void>;
-  assertCompletion(result: ProviderResult, attempt: Attempt, task: Task): Promise<void>;
+  assertCompletion?(
+    result: ProviderResult & { providerReceipt: { outcome: "SETTLED" } },
+    attempt: Attempt,
+    task: Task,
+  ): Promise<void>;
   retainPublication(attempt: Attempt, bytes: Buffer, sha256: string): Promise<void>;
 }) {
   const { context, repository, wake, manifest, draft } = input;
@@ -60,13 +66,18 @@ export async function runUniversalV3Wake(input: {
     "START_DURABLE",
   );
 
-  const provider = createUniversalDeepSeekProvider({
+  const provider = createUniversalDeepSeekExecution({
     ...input.provider,
     requestProfile: "local-first",
     async send(request) {
       if (sha(Buffer.from(request.body)) !== draft.requestSha256)
         throw Error("UNIVERSAL_V3_CHANGED_REQUEST");
       await input.assertCurrent();
+      if (
+        !task.policy_snapshot.deadline ||
+        Date.parse(task.policy_snapshot.deadline) <= Date.now()
+      )
+        throw Error("UNIVERSAL_V3_TASK_EXPIRED");
       let response: ReturnType<ProviderPorts["send"]> | undefined;
       await repository.admitExecution(context, running, () => {
         response = input.send(request);
@@ -78,9 +89,15 @@ export async function runUniversalV3Wake(input: {
   let settled: ProviderResult;
   try {
     settled = await provider.interpret(draft.providerInput);
-    if (settled.providerReceipt.outcome !== "SETTLED")
-      throw Error("UNIVERSAL_V3_PROVIDER_RECEIPT_UNAVAILABLE");
-    await input.assertCompletion(settled, running, task);
+    if (input.assertCompletion)
+      await input.assertCompletion(
+        {
+          ...settled,
+          providerReceipt: { ...settled.providerReceipt, outcome: "SETTLED" },
+        },
+        running,
+        task,
+      );
   } catch {
     const retained = await repository.readAttempt(context, running.attempt_id);
     await repository.observeAttempt(context, retained.attempt_id, retained.row_revision, {
@@ -112,7 +129,15 @@ export async function runUniversalV3Wake(input: {
     // A verified billed response with invalid suggestions does not authorize another send.
     candidates = [];
   }
-  const publication = { candidates, providerReceipt: settled.providerReceipt };
+  const publication: Publication = {
+    candidates,
+    providerReceipt: {
+      ...settled.providerReceipt,
+      ...(input.assertCompletion ? { outcome: "SETTLED" } : {}),
+    },
+  };
+  const { provider_extension: _providerExtension, ...usage } =
+    settled.providerReceipt.usage;
   const bytes = Buffer.from(
     canonicalEventJson(publication as Parameters<typeof canonicalEventJson>[0]),
   );
@@ -130,7 +155,20 @@ export async function runUniversalV3Wake(input: {
       response_material_reference: retained.attempt_id,
       response_material_sha256: digest,
       response_sha256: digest,
-      reported_usage_summary: null,
+      reported_usage_summary: input.assertCompletion
+        ? null
+        : {
+            ...usage,
+            version: 1,
+            image_units: null,
+            audio_units: null,
+            call_count: 1,
+            bytes: null,
+            wall_ms: null,
+            cpu_ms: null,
+            gpu_ms: null,
+            accelerator_ms: null,
+          },
     },
   );
   await input.assertCurrent();

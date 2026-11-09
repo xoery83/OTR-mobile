@@ -16,16 +16,24 @@ import type { UniversalProvider } from "./universalImport";
 
 const sha = (bytes: Uint8Array | string) =>
   createHash("sha256").update(bytes).digest("hex");
+// Local technical binding for the one supported server-side Provider profile.
+const ordinaryConfiguration = {
+  route: "deepseek-flash",
+  profile: universalV3Profile,
+  adapter: "universal-v3.1",
+};
+const ordinaryConfigurationSha256 = persistenceDigest(ordinaryConfiguration);
 export async function buildUniversalV3TaskDraft(
   scope: { accountId: string; analysisId: string },
   manifest: UniversalV3Manifest,
   sources: Parameters<UniversalProvider["interpret"]>[0]["sources"],
-  rawSelection: z.infer<typeof universalContinuousSelectionSchema>,
+  rawSelection: z.infer<typeof universalContinuousSelectionSchema> | undefined,
   acceptedAt: string,
 ) {
   const { accountId, analysisId } = scope;
   const { tripId } = manifest;
-  const selection = universalContinuousSelectionSchema.parse(rawSelection);
+  const selection =
+    rawSelection && universalContinuousSelectionSchema.parse(rawSelection);
   const createdAt = z.iso.datetime().parse(acceptedAt);
   const id = (purpose: string) =>
     universalBatchIdentity(accountId, tripId, analysisId, "local-first/" + purpose);
@@ -49,13 +57,14 @@ export async function buildUniversalV3TaskDraft(
     version: 1,
     privacy: "REMOTE_ALLOWED",
     network_required: true,
-    region: selection.region,
-    budget_currency: "USD",
-    budget_nanos: selection.maxCostNanos,
-    route: selection.route,
+    region: selection?.region ?? "provider-managed",
+    budget_currency: selection ? "USD" : null,
+    budget_nanos: selection?.maxCostNanos ?? null,
+    route: selection?.route ?? ordinaryConfiguration.route,
     max_attempts: 1,
     deadline: new Date(
-      Date.parse(createdAt) + Math.min(60 * 60_000, selection.taskLifetimeMs),
+      Date.parse(createdAt) +
+        Math.min(60 * 60_000, selection?.taskLifetimeMs ?? Infinity),
     ).toISOString(),
   };
   const task = taskSchema.parse({
@@ -123,27 +132,30 @@ export async function buildUniversalV3TaskDraft(
       materials: sources.map(({ index, sha256 }) => ({ index, sha256 })),
     }),
   );
-  const binding = bindUniversalV3ModelTask({
-    contract_version: "otr-model-task-v1",
-    task_id: task.task_id,
-    logical_request_id: task.logical_request_id,
-    logical_idempotency_key: task.logical_idempotency_key,
-    consumer_id: task.consumer_id,
-    consumer_version: task.consumer_version,
-    input: {
-      reference: id("request-material"),
-      sha256: sha(marker),
-      byte_count: marker.length,
-    },
-    schema: {
-      id: task.schema_id,
-      version: task.schema_version,
-      dialect: task.schema_dialect,
-      sha256: task.schema_sha256,
-    },
-    policy_snapshot: task.policy_snapshot,
-    policy_sha256: task.policy_sha256,
-  });
+  const material = {
+    reference: id("request-material"),
+    sha256: sha(marker),
+    byte_count: marker.length,
+  };
+  const binding =
+    selection &&
+    bindUniversalV3ModelTask({
+      contract_version: "otr-model-task-v1",
+      task_id: task.task_id,
+      logical_request_id: task.logical_request_id,
+      logical_idempotency_key: task.logical_idempotency_key,
+      consumer_id: task.consumer_id,
+      consumer_version: task.consumer_version,
+      input: material,
+      schema: {
+        id: task.schema_id,
+        version: task.schema_version,
+        dialect: task.schema_dialect,
+        sha256: task.schema_sha256,
+      },
+      policy_snapshot: task.policy_snapshot,
+      policy_sha256: task.policy_sha256,
+    });
   const policyAdmission = {
     version: 1,
     policy_sha256: task.policy_sha256,
@@ -158,18 +170,19 @@ export async function buildUniversalV3TaskDraft(
     request_id: id("request"),
     idempotency_key: id("idempotency"),
     request_sha256: request.requestSha256,
-    request_material_reference: binding.request.input.reference,
-    request_material_sha256: binding.request.input.sha256,
+    request_material_reference: material.reference,
+    request_material_sha256: material.sha256,
     predecessor_attempt_id: null,
     predecessor_request_id: null,
-    integration_id: selection.integrationId,
-    provider_id: selection.providerId,
-    model_id: selection.modelId,
-    model_version: selection.modelVersion,
-    adapter_version: selection.adapterVersion,
-    provider_config_id: selection.providerConfigId,
-    config_version: String(selection.configVersion),
-    configuration_sha256: selection.configurationSha256,
+    integration_id: selection?.integrationId ?? "universal-import-v3",
+    provider_id: selection?.providerId ?? "DeepSeek",
+    model_id: selection?.modelId ?? ordinaryConfiguration.route,
+    model_version: selection?.modelVersion ?? ordinaryConfiguration.route,
+    adapter_version: selection?.adapterVersion ?? ordinaryConfiguration.adapter,
+    provider_config_id:
+      selection?.providerConfigId ?? "2bd8e235-16ae-58ca-ae6f-14ac84f40dde",
+    config_version: String(selection?.configVersion ?? 1),
+    configuration_sha256: selection?.configurationSha256 ?? ordinaryConfigurationSha256,
     descriptor_snapshot: {
       version: 1,
       provider_class: "COMMERCIAL_REMOTE",

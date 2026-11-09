@@ -101,6 +101,7 @@ it.each(["completed", "unknown"] as const)(
         retained.acceptedAt,
       );
       expect(draft.task.run_id).toBeNull();
+      if (!draft.binding) throw Error("FIXTURE_BINDING_MISSING");
       expect(draft.binding.request.input.sha256).toBe(sha(draft.marker));
       expect(draft.binding.profile.consumer_version).toBe(3);
       await intake.validateImportIntakePins(draft.task);
