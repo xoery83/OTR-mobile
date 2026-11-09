@@ -583,7 +583,7 @@ it.each([false, true])(
       context,
       expect.objectContaining({
         acquisition: prepared.sourceCommand,
-        acquisitionReceipt: '{"receipt":"owning"}',
+        acquisitionReceipt: { receipt: "owning" },
         binding: expect.objectContaining({
           captureRevision: 2,
           acquisitionSource: "photos",

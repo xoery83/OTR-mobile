@@ -378,7 +378,7 @@ export async function prepareDefaultUniversalCaptureSources(
     assertCaptureCustodyBytes(binding, retained.bytes);
     await options.preparePngOriginal(context, {
       acquisition: prepared.sourceCommand,
-      acquisitionReceipt,
+      acquisitionReceipt: JSON.parse(acquisitionReceipt),
       binding,
       bytes: retained.bytes,
     });
