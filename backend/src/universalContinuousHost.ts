@@ -52,7 +52,11 @@ import {
   buildUniversalRegisteredTaskDraft,
   type universalContinuousSelectionSchema,
 } from "./universalRegisteredTaskDraft";
-import { bootstrapUniversalTask, universalTaskDatabase } from "./universalTaskBootstrap";
+import {
+  bindOrdinaryUniversalTaskWake,
+  bootstrapUniversalTask,
+  universalTaskDatabase,
+} from "./universalTaskBootstrap";
 import {
   createUniversalBackendRuntime,
   type UniversalRuntimeProvisioning,
@@ -175,9 +179,13 @@ export function createUniversalContinuousHost(deps: {
     if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     await deps.assertCurrentAuth();
   };
+  const assertNewExecutionCurrent = () => {
+    if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
+    deps.assertNewExecutionAllowed?.();
+  };
   const executionCurrent = async () => {
     await current();
-    deps.assertNewExecutionAllowed?.();
+    assertNewExecutionCurrent();
   };
   const source = createUniversalBatchSource({
     enabled: deps.enabled,
@@ -542,15 +550,70 @@ export function createUniversalContinuousHost(deps: {
     });
   }
 
+  async function recoverOrdinaryWake(
+    binding: UniversalRunBinding,
+    prior: NonNullable<Awaited<ReturnType<typeof existing>>>,
+    selection?: z.infer<typeof universalContinuousSelectionSchema>,
+  ) {
+    if (prior.task.sync_operation_id) return prior.task;
+    if (
+      deps.finiteBatch ||
+      prior.attempts.length ||
+      prior.task.row_revision !== 1 ||
+      prior.task.work_disposition !== "PENDING"
+    )
+      throw Error("UNIVERSAL_WAKE_RECOVERY_UNQUALIFIED");
+    await executionCurrent();
+    const selected =
+      selection ?? (await deps.selectProvider(universalProviderOwningContext(binding)));
+    const draft = await buildUniversalRegisteredTaskDraft(
+      binding,
+      await manifestForRun(binding),
+      selected,
+      deps.finiteDeadline,
+    );
+    if (
+      immutable(prior.task, taskMutableColumns) !==
+      immutable(draft.task, taskMutableColumns)
+    )
+      throw Error("UNIVERSAL_TASK_CHANGED");
+    await executionCurrent();
+    return bindOrdinaryUniversalTaskWake({
+      db: deps.db,
+      context,
+      task: prior.task,
+      expectedWakeId: draft.attempt.sync_operation_id,
+      repository: (db) => repository(undefined, undefined, db),
+      assertCurrent: assertNewExecutionCurrent,
+    });
+  }
+
   return {
     async readMaterialReady(batch: string): Promise<UniversalMaterialReady> {
-      const proof = await observeMaterialReady(batch);
+      let prepare: UniversalMaterialReady["prepare"];
+      if (mixedBInitial?.batchId === batch) {
+        prepare = (await observeMaterialReady(batch)).prepare;
+      } else {
+        await executionCurrent();
+        if (deps.finiteBatch) throw Error("UNIVERSAL_MATERIAL_UNAVAILABLE");
+        const binding = await source.lookup(actor, trip, batch);
+        if (
+          !binding ||
+          (await isProtectedMixedB(batch, binding.taskId)) ||
+          (await existing(binding))
+        )
+          throw Error("UNIVERSAL_MATERIAL_UNAVAILABLE");
+        // Only the owning Run can restore the exact original pins after a lost Prepare.
+        const { inputs, submissionSha256 } = universalProviderOwningContext(binding);
+        prepare = { tripId: trip, batchId: batch, submissionSha256, inputs };
+        await executionCurrent();
+      }
       return {
         version: "otr.backend.universal-material-ready/1",
         state: "MATERIAL_READY_NO_TASK",
         accountId: actor,
         actorId: actor,
-        prepare: proof.prepare,
+        prepare,
       };
     },
     async prepare(raw: unknown) {
@@ -653,6 +716,7 @@ export function createUniversalContinuousHost(deps: {
       if (prior) {
         if (await isProtectedMixedB(binding.batchId, binding.taskId))
           throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+        await recoverOrdinaryWake(binding, prior, selection);
         return { status: "EXISTING" as const, context: bindingContext };
       }
       const draft = await buildUniversalRegisteredTaskDraft(
@@ -674,10 +738,7 @@ export function createUniversalContinuousHost(deps: {
         catalog,
         ledger,
         getAccountId: async () => actor,
-        assertCurrent() {
-          if (deps.enabled !== true) throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
-          deps.assertNewExecutionAllowed?.();
-        },
+        assertCurrent: assertNewExecutionCurrent,
         claimQueue: false,
       });
       await current();
@@ -726,8 +787,9 @@ export function createUniversalContinuousHost(deps: {
       // A previously missing Task can be created by an independent writer during lookup.
       if (await isProtectedMixedB(batch, taskId))
         throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+      const task = await recoverOrdinaryWake(state.binding, state);
       await current();
-      return executionContext(state.task, batch, state.attempts.length);
+      return executionContext(task, batch, state.attempts.length);
     },
     async claimTargetedMixedBWake(batch: string, taskId: string, owner: string) {
       if (!(await isProtectedMixedB(batch, taskId))) return undefined;

@@ -4,12 +4,19 @@ import { DatabaseSync } from "node:sqlite";
 import { migrations } from "../../src/data/db/migrations";
 import { createTripImportAdmissionRepository } from "../../src/data/repositories/tripImportAdmissionRepository";
 import { createLedgerReadRepository } from "../../src/data/repositories/ledgerReadRepository";
-import { createIntelligenceContinuationRepository } from "../../src/data/repositories/intelligenceContinuationRepository";
+import {
+  createIntelligenceContinuationRepository,
+  type ContinuationDatabase,
+} from "../../src/data/repositories/intelligenceContinuationRepository";
 import {
   createIntelligenceWakeQueue,
   signalIntelligenceWake,
+  validateIntelligenceWake,
 } from "../../src/data/sync/syncOperationRepository";
-import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
+import {
+  captureAccountRequestContext,
+  type AccountRequestContext,
+} from "../../src/data/auth/accountRequestContext";
 import {
   taskSchema,
   attemptSchema,
@@ -99,6 +106,81 @@ export function initializeUniversalTaskDatabase(sql: DatabaseSync) {
   }
   sql.exec("PRAGMA foreign_keys=ON");
   return universalTaskDatabase(sql);
+}
+
+export function bindOrdinaryUniversalTaskWake(input: {
+  db: ReturnType<typeof universalTaskDatabase>;
+  context: AccountRequestContext;
+  task: Task;
+  expectedWakeId: string;
+  repository(
+    db: ContinuationDatabase,
+  ): ReturnType<typeof createIntelligenceContinuationRepository>;
+  assertCurrent(): void;
+}) {
+  const { db, context, task, expectedWakeId } = input;
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const bindDb: ContinuationDatabase = {
+    ...db,
+    withTransactionAsync(work) {
+      return db.withImmediateTransactionAsync(async () => {
+        input.assertCurrent();
+        if (await readProtectedMixedBReservation(db, task.import_id, task.task_id))
+          throw Error("MIXED_B_TASK_OUTCOME_UNQUALIFIED");
+        const eligible = await db.getFirstAsync<{ present: number }>(
+          `SELECT EXISTS(SELECT 1 FROM intelligence_continuations t
+            WHERE t.account_id=? AND t.trip_id=? AND t.task_id=? AND t.row_revision=1
+              AND t.publication_fence=1 AND t.work_disposition='PENDING'
+              AND t.cancellation_disposition='NONE' AND t.sync_operation_id IS NULL
+              AND t.current_attempt_id IS NULL
+              AND NOT EXISTS(SELECT 1 FROM intelligence_continuation_attempts a
+                WHERE a.account_id=t.account_id AND a.task_id=t.task_id)
+              AND NOT EXISTS(SELECT 1 FROM sync_operations q
+                WHERE q.entity_type='INTELLIGENCE_CONTINUATION' AND q.entity_id=t.task_id
+                  AND q.id<>?)) AS present`,
+          context.accountId,
+          context.tripId,
+          task.task_id,
+          expectedWakeId,
+        );
+        if (
+          eligible?.present !== 1 ||
+          task.row_revision !== 1 ||
+          !(Date.parse(task.policy_snapshot.deadline ?? "") > Date.now())
+        )
+          throw Error("UNIVERSAL_WAKE_RECOVERY_UNQUALIFIED");
+        const prior = await readExactTaskWake(db, expectedWakeId);
+        if (prior) {
+          const payload = await validateIntelligenceWake(prior, hash);
+          if (
+            prior.ownerUserId !== context.accountId ||
+            prior.tripId !== context.tripId ||
+            prior.entityId !== task.task_id ||
+            payload.expected_publication_fence !== 1 ||
+            payload.wake_reason !== "REEVALUATE" ||
+            prior.status !== "PENDING" ||
+            prior.baseVersion !== 1 ||
+            prior.attemptCount !== 0 ||
+            prior.claimOwner !== null ||
+            prior.leaseExpiresAt !== null ||
+            prior.lastAttemptAt !== null ||
+            prior.nextAttemptAt !== null
+          )
+            throw Error("UNIVERSAL_WAKE_RECOVERY_UNQUALIFIED");
+        } else if (
+          (await signalIntelligenceWake(db, task, hash, new Date().toISOString())) !==
+          expectedWakeId
+        )
+          throw Error("UNIVERSAL_BOOTSTRAP_QUEUE_CHANGED");
+        await work();
+        input.assertCurrent();
+      });
+    },
+  };
+  return input
+    .repository(bindDb)
+    .bindQueue(context, task.task_id, task.row_revision, expectedWakeId);
 }
 
 export async function bootstrapUniversalTask(input: {
@@ -257,11 +339,14 @@ export async function bootstrapUniversalTask(input: {
   }
   let task = created;
   if (!task.sync_operation_id) {
-    let operationId!: string;
-    await ordinaryDb.withTransactionAsync(async () => {
-      operationId = await signalIntelligenceWake(input.db, task, hash, now());
+    task = await bindOrdinaryUniversalTaskWake({
+      db: input.db,
+      context,
+      task,
+      expectedWakeId: a.sync_operation_id,
+      repository: (db) => createIntelligenceContinuationRepository(db, repositoryDeps),
+      assertCurrent: input.assertCurrent,
     });
-    task = await ordinaryRepo.bindQueue(context, t.task_id, task.row_revision, operationId);
   }
   if (task.sync_operation_id !== a.sync_operation_id)
     throw Error("UNIVERSAL_BOOTSTRAP_QUEUE_CHANGED");

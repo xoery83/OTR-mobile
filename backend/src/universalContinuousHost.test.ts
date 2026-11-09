@@ -7,12 +7,16 @@ import { DatabaseSync } from "node:sqlite";
 import { expect, it, vi } from "vitest";
 import { z } from "zod";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
+import { intelligenceWakeKind } from "../../src/domain/intelligence/persistence";
 import {
   createIntelligenceWakeQueue,
+  intelligenceWakeIdentity,
   type SyncOperation,
 } from "../../src/data/sync/syncOperationRepository";
-import { tripImportCatalogSchemas } from "../../src/data/api/tripImportCatalogContracts";
-import { universalImportSnapshotSchema } from "../../src/data/api/tripImportCatalogContracts";
+import {
+  tripImportCatalogSchemas,
+  universalImportSnapshotSchema,
+} from "../../src/data/api/tripImportCatalogContracts";
 import catalogFixture from "../../src/data/repositories/__fixtures__/tripImportCatalogs.json";
 import { createUniversalContinuousHost } from "./universalContinuousHost";
 import { initializeUniversalTaskDatabase } from "./universalTaskBootstrap";
@@ -32,8 +36,9 @@ const hostCases = [
   { expired: false, pdf: false },
   { expired: true, pdf: false },
   { expired: false, pdf: true },
+  { expired: false, pdf: true, orphanWake: true },
 ];
-it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
+it.each(hostCases)("fences recovery %j", async ({ expired, pdf, orphanWake }) => {
   const sql = new DatabaseSync(":memory:"),
     db = initializeUniversalTaskDatabase(sql);
   try {
@@ -359,7 +364,110 @@ it.each(hostCases)("fences recovery %j", async ({ expired, pdf }) => {
       "UNIVERSAL_QA_EXECUTION_SCOPE_CLOSED",
     );
     expect(sends).not.toHaveBeenCalled();
-    expect((await host.prepare(prepare)).status).toBe("QUEUED");
+    if (pdf) {
+      manifestAvailable = false;
+      await expect(host.prepare(prepare)).rejects.toThrow(
+        "ORIGINAL_TEMPORARY_COPY_UNAVAILABLE",
+      );
+      expect(
+        sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
+      ).toEqual({ n: 0 });
+      expect(
+        sql
+          .prepare("SELECT count(*) AS n FROM sync_operations WHERE entity_id=?")
+          .get(taskId),
+      ).toEqual({ n: 0 });
+      expect(sends).not.toHaveBeenCalled();
+      await expect(host.readMaterialReady(batch)).resolves.toMatchObject({
+        state: "MATERIAL_READY_NO_TASK",
+        prepare: { ...prepare, tripId: trip },
+      });
+      manifestAvailable = true;
+      sql.exec(`CREATE TEMP TRIGGER reject_wake_bind
+        BEFORE UPDATE OF sync_operation_id ON intelligence_continuations
+        BEGIN SELECT RAISE(ABORT, 'FIXTURE_WAKE_BIND_INTERRUPTED'); END;`);
+      await expect(host.prepare(prepare)).rejects.toThrow(
+        "FIXTURE_WAKE_BIND_INTERRUPTED",
+      );
+      sql.exec("DROP TRIGGER reject_wake_bind");
+      expect(
+        sql
+          .prepare("SELECT task_id,sync_operation_id FROM intelligence_continuations")
+          .all(),
+      ).toEqual([{ task_id: taskId, sync_operation_id: null }]);
+      const wakes = () =>
+        sql.prepare("SELECT id FROM sync_operations WHERE entity_id=?").all(taskId);
+      expect(wakes()).toEqual([]);
+      await expect(host.readMaterialReady(batch)).rejects.toThrow(
+        "UNIVERSAL_MATERIAL_UNAVAILABLE",
+      );
+      manifestAvailable = false;
+      await expect(host.resume(batch, taskId)).rejects.toThrow(
+        "ORIGINAL_TEMPORARY_COPY_UNAVAILABLE",
+      );
+      await expect(host.prepare(prepare)).rejects.toThrow(
+        "ORIGINAL_TEMPORARY_COPY_UNAVAILABLE",
+      );
+      expect(wakes()).toEqual([]);
+      expect(sends).not.toHaveBeenCalled();
+      manifestAvailable = true;
+      if (orphanWake) {
+        const payload = {
+          version: 1 as const,
+          account_id: actor,
+          task_id: taskId,
+          expected_publication_fence: 1,
+          wake_reason: "REEVALUATE" as const,
+        };
+        const wakeId = await intelligenceWakeIdentity(payload, async (bytes) =>
+          sha(bytes),
+        );
+        sql
+          .prepare(
+            `INSERT INTO sync_operations
+          (id,owner_user_id,trip_id,entity_type,entity_id,operation_type,idempotency_key,
+           base_version,payload_json,status,attempt_count,created_at,updated_at)
+          VALUES(?,?,?,'INTELLIGENCE_CONTINUATION',?,?,?,1,?,'RETRYABLE',1,?,?)`,
+          )
+          .run(
+            wakeId,
+            actor,
+            trip,
+            taskId,
+            intelligenceWakeKind,
+            wakeId,
+            JSON.stringify(payload),
+            now,
+            now,
+          );
+        await expect(host.resume(batch, taskId)).rejects.toThrow(
+          "UNIVERSAL_WAKE_RECOVERY_UNQUALIFIED",
+        );
+        expect(
+          sql.prepare("SELECT sync_operation_id FROM intelligence_continuations").get(),
+        ).toEqual({ sync_operation_id: null });
+        sql
+          .prepare(
+            "UPDATE sync_operations SET status='PENDING',attempt_count=0 WHERE id=?",
+          )
+          .run(wakeId);
+        await expect(host.prepare(prepare)).resolves.toMatchObject({
+          status: "EXISTING",
+          context: { taskId },
+        });
+        expect(wakes()).toEqual([{ id: wakeId }]);
+      } else {
+        await expect(host.resume(batch, taskId)).resolves.toMatchObject({ taskId });
+        expect(wakes()).toHaveLength(1);
+      }
+      expect(
+        sourceQuery.mock.calls.filter(([q]) =>
+          q.includes("trip_source_begin_sustained_universal_inputs"),
+        ),
+      ).toHaveLength(1);
+    } else {
+      expect((await host.prepare(prepare)).status).toBe("QUEUED");
+    }
     expect((await host.prepare(prepare)).status).toBe("EXISTING");
     expect((await host.readContext(batch)).activity).toMatchObject({
       state: "PENDING",

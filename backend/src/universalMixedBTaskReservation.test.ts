@@ -1724,7 +1724,7 @@ it("normal mixed Resume and deferred claim require separate committed owning pro
   } finally {
     donor.close();
   }
-  for (const stage of ["create", "signal", "bind"] as const) {
+  for (const stage of ["create", "bind"] as const) {
     await withTaskStore(async (sql, db, path) => {
       sql.exec(ddl);
       materialCatalogue(sql, f);
@@ -1736,7 +1736,7 @@ it("normal mixed Resume and deferred claim require separate committed owning pro
       const interpose = vi.spyOn(db, "withImmediateTransactionAsync")
         .mockImplementation((work) => {
           writes++;
-          if (writes === ({ create: 1, signal: 2, bind: 3 })[stage]) {
+          if (writes === ({ create: 1, bind: 2 })[stage]) {
             if (stage === "create") {
               reserveMixedBTask(other, enrollment);
               other.exec("BEGIN IMMEDIATE");
@@ -1792,7 +1792,7 @@ it("normal mixed Resume and deferred claim require separate committed owning pro
         expect(sql.prepare("SELECT sync_operation_id FROM intelligence_continuations WHERE task_id=?")
           .get(taskId)).toEqual({ sync_operation_id: null });
         expect(sql.prepare("SELECT count(*) AS n FROM sync_operations").get())
-          .toEqual({ n: stage === "bind" ? 1 : 0 });
+          .toEqual({ n: 0 });
         expect(sql.prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts").get())
           .toEqual({ n: 0 });
       } finally {
