@@ -14,11 +14,14 @@ const pgCommandPhases = new Set([
   "pg_source_scope",
   "pg_source_command",
   "pg_task_command",
+  "pg_catalog_command",
 ]);
 const remotePhases = new Set([
   "auth",
   "trip_access",
   "pg_connect",
+  "pg_catalog_connect",
+  "ledger_bootstrap",
   "storage_http",
   "provider_http",
 ]);
@@ -61,20 +64,22 @@ export function recordSourcePdfTiming(
   phases.set(phase, entry);
   if (pgCommandPhases.has(phase)) {
     const stage =
-      phase === "pg_sql_setup" || phase === "pg_sql_end"
-        ? "session"
-        : phase === "pg_source_scope"
-          ? "source_scope"
-          : operation?.startsWith("trip_source_png_operation")
-            ? "png"
-            : operation?.startsWith("trip_source_pdf_")
-              ? "pdf"
-              : operation?.startsWith("trip_source_begin_") ||
-                  operation?.startsWith("trip_source_find_")
-                ? "run"
-                : phase === "pg_task_command"
-                  ? "task"
-                  : "source";
+      phase === "pg_catalog_command"
+        ? "catalog"
+        : phase === "pg_sql_setup" || phase === "pg_sql_end"
+          ? "session"
+          : phase === "pg_source_scope"
+            ? "source_scope"
+            : operation?.startsWith("trip_source_png_operation")
+              ? "png"
+              : operation?.startsWith("trip_source_pdf_")
+                ? "pdf"
+                : operation?.startsWith("trip_source_begin_") ||
+                    operation?.startsWith("trip_source_find_")
+                  ? "run"
+                  : phase === "pg_task_command"
+                    ? "task"
+                    : "source";
     pgCommandsByStage[stage] = (pgCommandsByStage[stage] ?? 0) + 1;
   }
   const remote = operation ?? (remotePhases.has(phase) ? phase : undefined);
@@ -146,9 +151,11 @@ export async function runSourcePdfTimings<T>(
                       0,
                     ),
                     pgCommandsByStage: active.pgCommandsByStage,
-                    pgConnectionAttempts: phases.pg_connect?.count ?? 0,
+                    pgSourceTaskConnectionAttempts: phases.pg_connect?.count ?? 0,
+                    pgCatalogConnectionsOpened: phases.pg_catalog_connect?.count ?? 0,
                     pgConnectionsOpened:
-                      (phases.pg_connect?.count ?? 0) -
+                      (phases.pg_connect?.count ?? 0) +
+                      (phases.pg_catalog_connect?.count ?? 0) -
                       Object.values(phases.pg_connect?.failures ?? {}).reduce(
                         (a, b) => a + b,
                         0,

@@ -2,6 +2,7 @@ import { checkServerIdentity } from "node:tls";
 import type { Duplex } from "node:stream";
 import { Pool, type PoolClient } from "pg";
 import { z } from "zod";
+import { measureSourcePdfPhase, recordSourcePdfTiming, sourcePdfTimingStart } from "./sourcePdfTiming";
 import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 import {
   PublicationCatalogError,
@@ -101,7 +102,10 @@ export function createPublicationCatalogPgConnection(
       };
       retireActive = retire;
       boundary.signal.addEventListener("abort", retire, { once: true });
+      const connectStarted = sourcePdfTimingStart();
       const pending = pool.connect().then((connected) => {
+        if (connected !== lastClient)
+          recordSourcePdfTiming("pg_catalog_connect", connectStarted);
         client = connected;
         lastClient = connected;
         if (retired || closed || checkout.signal.aborted) {
@@ -113,7 +117,7 @@ export function createPublicationCatalogPgConnection(
       });
       let acquired = false;
       try {
-        await checkout.run(() => pending);
+        await measureSourcePdfPhase("pg_catalog_checkout", () => checkout.run(() => pending));
         acquired = true;
         checkout.close();
         const query = async (
@@ -144,8 +148,9 @@ export function createPublicationCatalogPgConnection(
           queryBoundary.signal.addEventListener("abort", abort, { once: true });
           querying = true;
           try {
-            const result = await queryBoundary.run(() =>
-              client!.query(sql, [...parameters]),
+            const result = await measureSourcePdfPhase("pg_catalog_command", () =>
+              queryBoundary.run(() => client!.query(sql, [...parameters])),
+              sql === commands[4] ? "trip_source_read_import_catalogs" : "catalog_session",
             );
             boundary.assertCurrent();
             if (retired) throw unavailable();
@@ -176,8 +181,9 @@ export function createPublicationCatalogPgConnection(
             queryBoundary.close();
           }
         };
-        const primary = await boundary.run(() =>
-          client!.query("SELECT pg_is_in_recovery() AS recovery"),
+        const primary = await measureSourcePdfPhase("pg_catalog_command", () =>
+          boundary.run(() => client!.query("SELECT pg_is_in_recovery() AS recovery")),
+          "catalog_primary",
         );
         if (primary.rows.length !== 1 || primary.rows[0].recovery !== false)
           throw unavailable();

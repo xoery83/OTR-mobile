@@ -28,6 +28,13 @@ it("emits bounded remote timings and exact PG counts for Start/Resume and Wake",
         "task_rpc",
       );
       recordSourcePdfTiming("pg_sql_end", performance.now() - 1, undefined, "pg_sql_end");
+      recordSourcePdfTiming("pg_catalog_connect", performance.now() - 2);
+      recordSourcePdfTiming(
+        "pg_catalog_command",
+        performance.now() - 1,
+        undefined,
+        "catalog_session",
+      );
       await runSourcePdfTimings("safe-request-id", "run-wake", async () => {
         recordSourcePdfTiming("provider_http", performance.now() - 100);
       });
@@ -37,17 +44,18 @@ it("emits bounded remote timings and exact PG counts for Start/Resume and Wake",
     expect(wake).toMatchObject({
       action: "run-wake",
       pgCommands: 0,
-      pgConnectionAttempts: 0,
+      pgSourceTaskConnectionAttempts: 0,
       pgConnectionsOpened: 0,
       slowestRemote: [{ operation: "provider_http" }],
     });
     expect(start).toMatchObject({
       action: "start-resume",
       status: 409,
-      pgCommands: 11,
-      pgConnectionAttempts: 2,
-      pgConnectionsOpened: 1,
-      pgCommandsByStage: { session: 2, source: 8, task: 1 },
+      pgCommands: 12,
+      pgSourceTaskConnectionAttempts: 2,
+      pgConnectionsOpened: 2,
+      pgCatalogConnectionsOpened: 1,
+      pgCommandsByStage: { session: 2, source: 8, task: 1, catalog: 1 },
       phases: { pg_task_command: { failures: { lock_unavailable: 1 } } },
     });
     expect(
