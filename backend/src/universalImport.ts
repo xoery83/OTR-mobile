@@ -1,5 +1,5 @@
 import { projectUniversalVisualReview } from "./universalVisualReview";
-import { universalBatchPrepareSchema, universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
+import { universalBatchPrepareSchema, universalMaterialIntakeSchema, universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
 import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -137,6 +137,9 @@ export type UniversalPort = {
     batchId: string,
     tripId: string,
   ): Promise<UniversalExecutionContext | null>;
+  readMaterialIntake?(
+    actorId: string, batchId: string, tripId: string,
+  ): Promise<z.infer<typeof universalMaterialIntakeSchema> | null>;
   readMaterialReady?(actorId: string, batchId: string, tripId: string): Promise<UniversalMaterialReady>;
   execute(
     actorId: string,
@@ -763,6 +766,22 @@ export async function universalBoundary(
       return Response.json({ error: { code: "INVALID_TRIP_ID" } }, { status: 400 });
     if (!(await canReadTrip(actorId, tripId)))
       return Response.json({ error: { code: "TRIP_READ_FORBIDDEN" } }, { status: 403 });
+    if (url.searchParams.has("materialIntake")) {
+      if (url.searchParams.get("materialIntake") !== "1" || url.searchParams.size !== 2)
+        return Response.json({ error: { code: "INVALID_REQUEST" } }, { status: 400 });
+      try {
+        const raw = await port.readMaterialIntake?.(actorId, batchId, tripId);
+        if (!raw) return Response.json({ error: { code: "TASK_NOT_FOUND" } }, { status: 404 });
+        const intake = universalMaterialIntakeSchema.parse(raw);
+        const bound = intake.status === "WAITING_MATERIALS" ? intake : intake.context;
+        if (bound.accountId !== actorId || bound.tripId !== tripId || bound.batchId !== batchId ||
+            ("actorId" in bound && bound.actorId !== actorId))
+          throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+        return Response.json(intake, { headers: { "Cache-Control": "no-store" } });
+      } catch {
+        return Response.json({ error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } }, { status: 503 });
+      }
+    }
     if (url.searchParams.has("materialReady")) {
       const flags = url.searchParams.getAll("materialReady");
       if (flags.length !== 1 || flags[0] !== "1" || url.searchParams.size !== 2)

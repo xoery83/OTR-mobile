@@ -1,4 +1,5 @@
-import { measureSourcePdfPhase } from "./sourcePdfTiming";
+import { createUniversalMaterialIntake } from "./universalMaterialIntake";
+import { measureSourcePdfPhase, runSourcePdfTimings } from "./sourcePdfTiming";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import {
   readSourcePngRuntimeConfig,
@@ -105,6 +106,8 @@ export async function loadDevUniversalContinuousRuntime(
     if (before.ino !== after.ino || before.dev !== after.dev)
       throw Error("UNIVERSAL_TASK_DATABASE_CHANGED");
     const db = initializeUniversalTaskDatabase(sql),
+      materialIntake = !finite && !acquisition ? createUniversalMaterialIntake(db) : undefined,
+      intakeAbort = new AbortController(),
       taskConnection = createModelTaskPgConnection(config.taskPg);
     const gateway = createSupabaseDevGateway({
       url: env.OTR_DEV_SUPABASE_URL!,
@@ -478,7 +481,7 @@ export async function loadDevUniversalContinuousRuntime(
             throw Error("UNIVERSAL_QUEUED_PREPARE_REQUIRED");
           },
         },
-        async prepare(trip: string, raw: unknown) {
+        async prepare(trip: string, raw: unknown, onOriginalStaged?: () => void) {
           if (trip !== tripId) throw Error("SOURCE_ACCESS_DENIED");
           const q = z
             .object({ tripId: z.literal(tripId) })
@@ -511,6 +514,7 @@ export async function loadDevUniversalContinuousRuntime(
                 hash,
                 assertCurrent: () => authorize(true),
                 originalUpload: retained.originalUpload,
+                onOriginalStaged,
                 acquire: (command) => original.acquire(verifiedActor, tripId, command),
                 lookupAcquisition: (command) => original.lookup(verifiedActor, tripId, command),
                 lookupOperation: (command) => universalPgTransaction(
@@ -571,6 +575,8 @@ export async function loadDevUniversalContinuousRuntime(
                         signal,
                       });
                       await preparation.ingress(stage, identity);
+                      signal.throwIfAborted();
+                      onOriginalStaged?.();
                       status = "STAGED";
                     }
                     signal.throwIfAborted();
@@ -742,6 +748,39 @@ export async function loadDevUniversalContinuousRuntime(
       sourcePngPreparationForRequest: png?.sourcePngPreparationForRequest,
       sourcePdfV2ForRequest: pdf?.sourcePdfV2ForRequest,
       forRequest,
+      async startMaterialIntake(
+        request: Request, actor: string, trip: string, input: unknown,
+        advance: (
+          ports: Awaited<ReturnType<typeof forRequest>>,
+          manifest: unknown,
+          onStaged: () => void,
+        ) => Promise<import("../../src/data/api/universalImportContracts").UniversalBatchPrepared>,
+        requestId?: string,
+      ) {
+        guard();
+        const authorization = request.headers.get("Authorization");
+        if (!materialIntake || !authorization ||
+          (executionFence && (executionFence.accountId !== actor || executionFence.tripId !== trip)))
+          throw Error("UNIVERSAL_RETAINED_SOURCE_UNAVAILABLE");
+        request.signal.throwIfAborted();
+        // Only the already-authenticated, normal HTTP Actor reaches this port.
+        return materialIntake.start(actor, trip, input, (manifest, onStaged) => {
+          const run = async () => {
+            const detached = new Request(request.url, {
+              method: "POST", headers: { Authorization: authorization }, signal: intakeAbort.signal,
+            });
+            return advance(await forRequest(detached, actor, trip, requestId), manifest, onStaged);
+          };
+          return requestId ? runSourcePdfTimings(requestId, "material-intake", run) : run();
+        });
+      },
+      async readMaterialIntake(request: Request, actor: string, batch: string, trip: string) {
+        guard();
+        const intake = await materialIntake?.read(actor, trip, batch);
+        if (intake !== "READY") return intake ?? null;
+        const ports = await forRequest(request, actor, trip);
+        return { status: "EXISTING" as const, context: await ports.universalImportPort.readContext(actor, batch, trip) };
+      },
       // Called only by the existing Core Source authority after its normal Auth,
       // Actor/Trip locks and capability checks; it grants no mutation authority.
       async readPublished(
@@ -839,6 +878,7 @@ export async function loadDevUniversalContinuousRuntime(
       async close() {
         if (closed) return;
         closed = true;
+        intakeAbort.abort();
         png?.close();
         pdf?.close();
         await sourcePg?.close();

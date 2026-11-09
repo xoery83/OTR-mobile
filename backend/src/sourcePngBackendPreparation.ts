@@ -229,7 +229,9 @@ export function createSourcePngBackendPreparation(
       return (await call(scope, q, "STATUS")).operation;
     },
     reconcile,
-    async execute(scope: SourcePngBrokerScope, raw: Command, supplied?: Uint8Array) {
+    async execute(
+      scope: SourcePngBrokerScope, raw: Command, supplied?: Uint8Array, onStaged?: () => void,
+    ) {
       const q = sourcePngPreparationCommandSchema.parse(raw);
       let r = await call(scope, q, "REGISTER");
       if (!r.operation) throw Error("PNG_SOURCE_OPERATION_UNAVAILABLE");
@@ -341,6 +343,7 @@ export function createSourcePngBackendPreparation(
         await current(scope);
         const staged = await deps.stage.reopen(b);
         await current(scope);
+        onStaged?.();
         const provider = deps.providerForRequest(scope, (input) =>
           measureSourcePdfPhase("png_worker", () => deps.worker(b, input, owner, scope.signal)),
         );

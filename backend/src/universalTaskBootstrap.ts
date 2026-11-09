@@ -104,6 +104,15 @@ export function initializeUniversalTaskDatabase(sql: DatabaseSync) {
       throw e;
     }
   }
+  // Backend-only acceptance metadata is additive and readable by an older Task image.
+  sql.exec(`CREATE TABLE IF NOT EXISTS universal_material_intake (
+    account_id TEXT NOT NULL, trip_id TEXT NOT NULL, batch_id TEXT NOT NULL,
+    manifest_sha256 TEXT NOT NULL CHECK(length(manifest_sha256)=64),
+    state TEXT NOT NULL CHECK(state IN ('PREPARING','NEEDS_BYTES','RESUME_REQUIRED','READY')),
+    input_id TEXT, owner_run TEXT NOT NULL,
+    CHECK((state='NEEDS_BYTES')=(input_id IS NOT NULL)),
+    PRIMARY KEY(account_id,batch_id)
+  ) STRICT`);
   sql.exec("PRAGMA foreign_keys=ON");
   return universalTaskDatabase(sql);
 }

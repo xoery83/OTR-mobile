@@ -672,6 +672,7 @@ export type BackendDependencies = {
     request: Request,
     actorId: string,
     requestId?: string,
+    normalActor?: boolean,
   ): Promise<{
     universalImportPort?: UniversalPort;
     universalOriginalSourcePort?: ReturnType<
@@ -2714,7 +2715,9 @@ export function createDevBackendHandler({
           const prepare = url.pathname.endsWith("/prepare");
           const execute = async () => {
             const actor = await measureSourcePdfPhase("auth", () => authenticate(request, gateway));
-            const runtime = await universalRuntimeForRequest?.(request, actor.id, requestId);
+            const runtime = await universalRuntimeForRequest?.(
+              request, actor.id, requestId, isNormalAccount(actor),
+            );
             const canReadTrip = (a: string, t: string) =>
               measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(a, t));
             return prepare

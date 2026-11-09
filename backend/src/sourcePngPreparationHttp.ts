@@ -16,7 +16,7 @@ type Command = z.infer<typeof sourcePngPreparationCommandSchema>;
 type Scope = { actorId: string; tripId: string; signal: AbortSignal };
 export type SourcePngPreparationPort = {
   lookup(scope: Scope, command: Command): Promise<unknown | null>;
-  execute(scope: Scope, command: Command, bytes?: Uint8Array): Promise<unknown>;
+  execute(scope: Scope, command: Command, bytes?: Uint8Array, onStaged?: () => void): Promise<unknown>;
   reconcile(scope: Scope, command: Command): Promise<unknown>;
 };
 export type SourcePngPreparationForRequest = (

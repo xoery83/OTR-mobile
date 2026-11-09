@@ -83,6 +83,7 @@ export const universalBatchPrepareSchema = z.strictObject({
 });
 export const UNIVERSAL_PREPARE_MAX_BODY_BYTES = 8 * 1024 * 1024;
 export const universalRetainedOriginalPrepareSchema = universalBatchPrepareSchema.extend({
+  deferMaterials: z.literal(true).optional(),
   retainedOriginals: z.array(z.strictObject({
     inputId: uuid,
     acquisition: z.json(),
@@ -106,6 +107,24 @@ export const universalBatchPreparedSchema = z.strictObject({
   context: universalContextSchema,
 });
 export type UniversalBatchPrepared = z.infer<typeof universalBatchPreparedSchema>;
+
+export const universalWaitingMaterialsSchema = z.strictObject({
+  status: z.literal("WAITING_MATERIALS"),
+  accountId: uuid,
+  tripId: uuid,
+  batchId: uuid,
+  material: z.discriminatedUnion("state", [
+    z.strictObject({ state: z.literal("PREPARING") }),
+    z.strictObject({ state: z.literal("NEEDS_BYTES"), inputId: uuid }),
+    z.strictObject({ state: z.literal("RESUME_REQUIRED") }),
+  ]),
+});
+export type UniversalWaitingMaterials = z.infer<typeof universalWaitingMaterialsSchema>;
+export const universalMaterialIntakeSchema = z.union([
+  universalBatchPreparedSchema,
+  universalWaitingMaterialsSchema,
+]);
+
 export type UniversalBatchPrepare = z.infer<typeof universalBatchPrepareSchema>;
 
 const commonEvidence = {

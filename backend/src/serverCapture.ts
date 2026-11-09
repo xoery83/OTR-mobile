@@ -116,7 +116,7 @@ async function main() {
             sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
             sourcePngPreparationForRequest: continuous.sourcePngPreparationForRequest,
             sourcePdfV2ForRequest: continuous.sourcePdfV2ForRequest,
-            universalRuntimeForRequest: async (request, actor, requestId) => {
+            universalRuntimeForRequest: async (request, actor, requestId, normalActor) => {
               const scoped = (trip: string) =>
                 continuous!.forRequest(request, actor, coreUuid.parse(trip), requestId);
               return {
@@ -137,6 +137,9 @@ async function main() {
                   },
                 },
                 universalImportPort: {
+                  async readMaterialIntake(a, b, t) {
+                    return continuous!.readMaterialIntake(request, a, b, t);
+                  },
                   async readMaterialReady(a, b, t) {
                     return (await scoped(t)).universalImportPort.readMaterialReady(a, b, t);
                   },
@@ -154,14 +157,25 @@ async function main() {
                   },
                 },
                 async prepare(trip, input) {
-                  const ports = await scoped(trip);
-                  return prepareUniversalQueuedRuntime(actor, trip, input, {
-                    ...ports,
-                    drainTargeted: (batch, task) =>
-                      requestId
-                        ? runSourcePdfTimings(requestId, "run-wake", () => ports.drainTargeted(batch, task))
-                        : ports.drainTargeted(batch, task),
-                  });
+                  const advance = (
+                    ports: Awaited<ReturnType<typeof scoped>>, manifest: unknown, onStaged?: () => void,
+                  ) =>
+                    prepareUniversalQueuedRuntime(actor, trip, manifest, {
+                      ...ports,
+                      prepare: (t, value) => ports.prepare(t, value, onStaged),
+                      drainTargeted: (batch, task) =>
+                        requestId
+                          ? runSourcePdfTimings(requestId, "run-wake", () => ports.drainTargeted(batch, task))
+                          : ports.drainTargeted(batch, task),
+                    });
+                  if (typeof input === "object" && input && "deferMaterials" in input &&
+                    input.deferMaterials === true) {
+                    if (!normalActor) throw Error("UNIVERSAL_AUTH_REJECTED");
+                    return continuous!.startMaterialIntake(
+                      request, actor, trip, input, advance, requestId,
+                    );
+                  }
+                  return advance(await scoped(trip), input);
                 },
               };
             },

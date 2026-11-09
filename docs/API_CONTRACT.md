@@ -1340,6 +1340,17 @@ normal expired-unstarted branch records its owning deadline failure.
 
 ## Universal Import — retained-original Start/Resume
 
+An opt-in retained-original request with `deferMaterials: true` can return
+`202 WAITING_MATERIALS` after the Backend has bound the immutable batch
+manifest digest. This is a batch acceptance receipt. The existing Task and Wake
+are created only after owning Source material is verified. Read progress on
+the same batch resource using `?tripId=<uuid>&materialIntake=1`. The receipt
+can indicate preparation, a specific missing input, or the need for an
+authenticated resume. Resume uses the same manifest. A missing-input response
+alone permits a matching byte supplement. Bearer tokens and file bytes are
+never stored in the batch acceptance row. The upload keeps its owning
+custody, status reconciliation and idempotency checks.
+
 The authenticated interpretation prepare route accepts the existing Batch ID and
 immutable Source acquisition commands. For a new Run, the Backend checks the
 owning Source receipts, advances retained PDF and PNG independently, and uses

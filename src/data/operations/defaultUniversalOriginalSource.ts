@@ -33,6 +33,7 @@ import type {
   UniversalBatchPrepare,
   UniversalBatchPrepared,
   UniversalRetainedOriginalPrepare,
+  UniversalWaitingMaterials,
 } from "../api/universalImportContracts";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
@@ -180,7 +181,10 @@ export async function prepareDefaultUniversalCaptureSources(
     ): Promise<void>;
     startRetained?(
       input: UniversalRetainedOriginalPrepare,
-    ): Promise<UniversalBatchPrepared>;
+    ): Promise<UniversalBatchPrepared | UniversalWaitingMaterials>;
+    readMaterialIntake?(
+      batchId: string,
+    ): Promise<UniversalBatchPrepared | UniversalWaitingMaterials>;
     prepareTask?(
       input: UniversalBatchPrepare,
     ): Promise<UniversalBatchPrepared | null | void>;
@@ -274,42 +278,61 @@ export async function prepareDefaultUniversalCaptureSources(
     };
     const sent = new Set<string>();
     let input = manifest;
+    let resumed = false;
+    const deadline = Date.now() + 120000;
     for (;;) {
       options.assertCurrent();
+      let inputId: unknown;
       try {
-        return await options.startRetained(input);
+        let receipt = await options.startRetained(input);
+        while (receipt.status === "WAITING_MATERIALS" && receipt.material.state === "PREPARING") {
+          if (!options.readMaterialIntake || Date.now() >= deadline)
+            throw Error("UNIVERSAL_PREPARATION_UNAVAILABLE");
+          await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+          options.assertCurrent();
+          receipt = await options.readMaterialIntake(manifest.batchId);
+        }
+        if (receipt.status !== "WAITING_MATERIALS") return receipt;
+        if (receipt.material.state === "RESUME_REQUIRED" && !resumed) {
+          resumed = true;
+          input = manifest;
+          continue;
+        }
+        if (receipt.material.state !== "NEEDS_BYTES")
+          throw Error("UNIVERSAL_PREPARATION_UNAVAILABLE");
+        inputId = receipt.material.inputId;
       } catch (error) {
         if (!(error instanceof ApiClientError && error.status === 409 &&
           error.code === "UNIVERSAL_ORIGINAL_BYTES_REQUIRED")) throw error;
-        const inputId = (error.details as { inputId?: unknown } | undefined)?.inputId;
-        const original = model.inputs.find((entry) => entry.id === inputId);
-        if (!original?.captureId || sent.has(original.id))
-          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
-        const png = isEnabledPng(original, options.pendingPngProfile);
-        if (!png && !isEnabledPdf(original, options.pendingPdfProfile))
-          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
-        const consent = await assertDefaultUniversalPhotoConsent(context, model, options);
-        const { capture, bytes } = await captures.getForSourceHandoff(original.captureId);
-        options.assertCurrent();
-        if (capture.accountId !== context.accountId || capture.tripId !== context.tripId ||
-          capture.payloadId !== original.payloadId ||
-          (png && capture.revision !== consent?.captureRevision) ||
-          bytes.length !== original.contentByteCount ||
-          bytes.length > (png ? 1048576 : 4194304) ||
-          await sha256(bytes) !== original.contentSha256)
-          throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
-        const chunks: string[] = [];
-        for (let offset = 0; offset < bytes.length; offset += 16384)
-          chunks.push(String.fromCharCode(...bytes.subarray(offset, offset + 16384)));
-        sent.add(original.id);
-        input = {
-          ...manifest,
-          originalUpload: {
-            inputId: original.id,
-            base64: btoa(chunks.join("")),
-          },
-        };
+        inputId = (error.details as { inputId?: unknown } | undefined)?.inputId;
       }
+      const original = model.inputs.find((entry) => entry.id === inputId);
+      if (!original?.captureId || sent.has(original.id))
+        throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+      const png = isEnabledPng(original, options.pendingPngProfile);
+      if (!png && !isEnabledPdf(original, options.pendingPdfProfile))
+        throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+      const consent = await assertDefaultUniversalPhotoConsent(context, model, options);
+      const { capture, bytes } = await captures.getForSourceHandoff(original.captureId);
+      options.assertCurrent();
+      if (capture.accountId !== context.accountId || capture.tripId !== context.tripId ||
+        capture.payloadId !== original.payloadId ||
+        (png && capture.revision !== consent?.captureRevision) ||
+        bytes.length !== original.contentByteCount ||
+        bytes.length > (png ? 1048576 : 4194304) ||
+        await sha256(bytes) !== original.contentSha256)
+        throw Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+      const chunks: string[] = [];
+      for (let offset = 0; offset < bytes.length; offset += 16384)
+        chunks.push(String.fromCharCode(...bytes.subarray(offset, offset + 16384)));
+      sent.add(original.id);
+      input = {
+        ...manifest,
+        originalUpload: {
+          inputId: original.id,
+          base64: btoa(chunks.join("")),
+        },
+      };
     }
   }
   const legacyDeps = {

@@ -1,3 +1,10 @@
+import { DatabaseSync } from "node:sqlite";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createUniversalMaterialIntake } from "./universalMaterialIntake";
+import { initializeUniversalTaskDatabase } from "./universalTaskBootstrap";
+import { universalBoundary } from "./universalImport";
 import { createHash, randomUUID } from "node:crypto";
 import { setImmediate as nextTick } from "node:timers/promises";
 import { expect, it, vi } from "vitest";
@@ -11,6 +18,7 @@ import {
 } from "../../src/domain/trip/sourcePdfPreparationCommands";
 import { createPendingPngCommandProposals } from "../../src/domain/trip/sourcePngPreparationCommands";
 import {
+  OriginalBytesRequired,
   prepareUniversalRetainedOriginals,
   universalRetainedOriginalPrepareSchema,
 } from "./universalRetainedOriginalPreparation";
@@ -413,4 +421,126 @@ it("requests only the missing PNG, rejects changed bytes and reuses the complete
     "UPLOAD_ORIGINAL",
     "VERIFY_REPRESENTATION",
   ]);
+});
+
+it("commits batch acceptance before material work and resumes the exact challenge after SQLite reopen", async () => {
+  const f = await fixture();
+  const { actorId, tripId } = f.scope;
+  const { batchId } = f.batch;
+  const root = await mkdtemp(join(tmpdir(), "otr-material-intake-"));
+  const path = join(root, "task.sqlite");
+  let sql = new DatabaseSync(path);
+  const missing = f.retainedOriginals[1].inputId;
+  const manifest = { ...f.batch, tripId, deferMaterials: true, retainedOriginals: f.retainedOriginals };
+  const supplement = { ...manifest, originalUpload: { inputId: missing, base64: f.pngBytes.toString("base64") } };
+  const context = {
+    version: "otr.backend.universal-context/1" as const,
+    accountId: actorId, actorId, tripId, batchId, taskId: randomUUID(),
+  };
+  const checking = Promise.withResolvers<void>();
+  const worker = Promise.withResolvers<void>();
+  const drain = vi.fn(async () => {});
+  const continuation = vi.fn(async (_input: unknown, onStaged: () => void) => {
+    await checking.promise;
+    if (continuation.mock.calls.length === 1) throw new OriginalBytesRequired(missing);
+    onStaged();
+    await worker.promise;
+    return prepareUniversalQueuedRuntime(actorId, tripId, f.batch, {
+      resume: async () => context,
+      prepare: async () => ({ status: "QUEUED", context }),
+      drainTargeted: drain,
+    });
+  });
+  try {
+    let intake = createUniversalMaterialIntake(initializeUniversalTaskDatabase(sql));
+    const start = (value: unknown, actor = actorId) => universalPrepareBoundary(
+      new Request(`https://local/v2/import-batches/${batchId}/interpretations/prepare`, {
+        method: "POST", headers: { "Idempotency-Key": batchId }, body: JSON.stringify(value),
+      }),
+      actor, async () => true,
+      (trip, raw) => intake.start(actor, trip, raw, continuation),
+    );
+    const status = (actor = actorId) => universalBoundary(
+      new Request(`https://local/v2/import-batches/${batchId}/interpretations?tripId=${tripId}&materialIntake=1`),
+      actor, async () => true,
+      {
+        execute: async () => { throw Error("unexpected execution"); },
+        read: async () => null,
+        readMaterialIntake: async (a, b, t) => {
+          const receipt = await intake.read(a, t, b);
+          return receipt === "READY" ? { status: "EXISTING", context } : receipt;
+        },
+      },
+    );
+    const first = await start(manifest);
+    expect(first.status).toBe(202);
+    expect(await first.json()).toMatchObject({ status: "WAITING_MATERIALS", material: { state: "PREPARING" } });
+    expect(await (await start(manifest)).json()).toMatchObject({ material: { state: "PREPARING" } });
+    expect((await start({ ...manifest, submissionSha256: "b".repeat(64) })).status).toBe(503);
+    expect((await status(randomUUID())).status).toBe(404);
+    expect(drain).not.toHaveBeenCalled();
+
+    checking.resolve();
+    await vi.waitFor(async () => {
+      expect(await (await status()).json()).toMatchObject({ material: { state: "NEEDS_BYTES", inputId: missing } });
+    });
+    sql.close();
+    sql = new DatabaseSync(path);
+    intake = createUniversalMaterialIntake(initializeUniversalTaskDatabase(sql));
+    expect(await (await status()).json()).toMatchObject({ material: { state: "NEEDS_BYTES", inputId: missing } });
+    const upload = await start(supplement);
+    expect(upload.status).toBe(202);
+    expect(await upload.json()).toMatchObject({ material: { state: "PREPARING" } });
+    expect(await (await start(supplement)).json()).toMatchObject({ material: { state: "PREPARING" } });
+    expect(drain).not.toHaveBeenCalled();
+
+    worker.resolve();
+    await vi.waitFor(async () => {
+      expect(await (await status()).json()).toEqual({ status: "EXISTING", context });
+    });
+    expect(drain).toHaveBeenCalledExactlyOnceWith(batchId, context.taskId);
+    expect(continuation).toHaveBeenCalledTimes(2);
+    expect(sql.prepare("SELECT count(*) AS count FROM universal_material_intake").get()).toEqual({ count: 1 });
+    expect(await (await start(supplement)).json()).toMatchObject({ material: { state: "RESUME_REQUIRED" } });
+    expect(continuation).toHaveBeenCalledTimes(2);
+  } finally {
+    checking.resolve();
+    worker.resolve();
+    sql.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("keeps an uncertain supplement from replay and reopens only from a manifest-only Start", async () => {
+  const f = await fixture();
+  const { actorId, tripId } = f.scope;
+  const { batchId } = f.batch;
+  const manifest = { ...f.batch, tripId, deferMaterials: true, retainedOriginals: f.retainedOriginals };
+  const missing = f.retainedOriginals[1].inputId;
+  const supplement = { ...manifest, originalUpload: { inputId: missing, base64: f.pngBytes.toString("base64") } };
+  const sql = new DatabaseSync(":memory:");
+  try {
+    const db = initializeUniversalTaskDatabase(sql);
+    let intake = createUniversalMaterialIntake(db);
+    const challenge = async () => { throw new OriginalBytesRequired(missing); };
+    await intake.start(actorId, tripId, manifest, challenge);
+    await vi.waitFor(async () => expect(await intake.read(actorId, tripId, batchId))
+      .toMatchObject({ material: { state: "NEEDS_BYTES" } }));
+    await expect(intake.start(actorId, tripId, supplement, async () => {
+      throw Error("UNKNOWN_WRITE");
+    })).rejects.toThrow("UNKNOWN_WRITE");
+
+    intake = createUniversalMaterialIntake(db);
+    const recover = vi.fn(async (_input: unknown) => challenge());
+    expect(await intake.start(actorId, tripId, supplement, recover))
+      .toMatchObject({ material: { state: "RESUME_REQUIRED" } });
+    expect(recover).not.toHaveBeenCalled();
+    await intake.start(actorId, tripId, manifest, recover);
+    await vi.waitFor(async () => expect(await intake.read(actorId, tripId, batchId))
+      .toMatchObject({ material: { state: "NEEDS_BYTES" } }));
+    expect(recover).toHaveBeenCalledTimes(1);
+    expect(recover.mock.lastCall?.[0]).not.toHaveProperty("originalUpload");
+  } finally {
+    sql.close();
+  }
 });

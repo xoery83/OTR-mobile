@@ -163,7 +163,8 @@ export function useUniversalCapture(
                       },
                       pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1",
                       pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1",
-                      startRetained: (input) => transport.prepare(context, input),
+                      startRetained: (input) => transport.prepareRetained(context, input),
+                      readMaterialIntake: (batchId) => transport.materialIntake(context, batchId),
                     }),
                   );
                 },

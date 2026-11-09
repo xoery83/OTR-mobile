@@ -1,3 +1,23 @@
+## Universal Import durable material acceptance — 9 November 2026
+
+The retained-original Start opt-in returns a durable batch receipt before PDF
+Seal or PNG Worker. Batch acceptance binds the existing account, Trip, Batch
+and immutable manifest digest in Backend Task SQLite. Only the existing
+Source owner may accept a byte supplement, and the HTTP acknowledgment follows
+the existing private Stage seal. Native reads progress and supplies only the
+requested input. After process loss, a fresh authorized manifest-only Start
+reconciles the same Source operations. Task/Wake still require verified
+material and retain the existing Provider dispatch fence.
+
+One isolated HTTP-boundary run with real owning PostgreSQL, PNG Worker and
+loopback Storage measured 8.5 ms initial acceptance and 317.6 ms supplement
+acknowledgment. The same batch survived SQLite reopen, made one Storage POST,
+and entered one existing Wake and one simulated Provider call returning P3/P6.
+These timings exclude real DEV network and Auth. The original QA176 Attempt
+remains UNKNOWN because owner termination was never committed and the host
+marker remains. Existing cleanup is negative-only. Shared DEV release and
+real iPad/Provider acceptance are pending.
+
 ## QA176 Analyze hot-path candidate — 9 November 2026
 
 Shared DEV Start/Resume returned 409 in 65.882 s. PNG supplement returned

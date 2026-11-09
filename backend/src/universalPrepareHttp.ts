@@ -5,6 +5,7 @@ import {
   UNIVERSAL_PREPARE_MAX_BODY_BYTES,
   universalTaskResumeSchema,
   universalBatchPreparedSchema,
+  universalMaterialIntakeSchema,
 } from "../../src/data/api/universalImportContracts";
 import {
   createRequestBoundary,
@@ -96,7 +97,16 @@ export async function universalPrepareBoundary(
     if (!(await canReadTrip(actor, input.tripId)))
       return failure(404, "TRIP_READ_FORBIDDEN");
     if (!prepare) return failure(503, "UNIVERSAL_IMPORT_CLOSED");
-    const result = universalBatchPreparedSchema.parse(await prepare(input.tripId, input));
+    const rawResult = await prepare(input.tripId, input);
+    const result = "deferMaterials" in input && input.deferMaterials
+      ? universalMaterialIntakeSchema.parse(rawResult)
+      : universalBatchPreparedSchema.parse(rawResult);
+    if (result.status === "WAITING_MATERIALS") {
+      if (result.accountId !== actor || result.tripId !== input.tripId ||
+          result.batchId !== input.batchId)
+        return failure(503, "UNIVERSAL_CONTEXT_MISMATCH");
+      return reply(202, result);
+    }
     if (
       result.context.accountId !== actor ||
       result.context.actorId !== actor ||

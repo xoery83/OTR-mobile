@@ -111,7 +111,7 @@ export function measureSourcePdfPhase<T>(
 
 export async function runSourcePdfTimings<T>(
   requestId: string,
-  action: "dispatch" | "observe-retained" | "advance" | "start-resume" | "run-wake",
+  action: "dispatch" | "observe-retained" | "advance" | "start-resume" | "material-intake" | "run-wake",
   work: () => Promise<T>,
 ) {
   return timing.run(
@@ -144,7 +144,7 @@ export async function runSourcePdfTimings<T>(
               status,
               totalMs: Math.round(performance.now() - start),
               phases,
-              ...(action === "start-resume" || action === "run-wake"
+              ...(action === "start-resume" || action === "material-intake" || action === "run-wake"
                 ? {
                     pgCommands: Object.values(active.pgCommandsByStage).reduce(
                       (sum, count) => sum + count,

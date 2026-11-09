@@ -13,6 +13,8 @@ import {
   universalRetainedOriginalPrepareSchema,
   universalTaskResumeSchema,
   universalBatchPreparedSchema,
+  universalMaterialIntakeSchema,
+  type UniversalRetainedOriginalPrepare,
   type UniversalBatchPrepare,
   universalContextSchema,
   universalResultSchema,
@@ -141,6 +143,16 @@ export function createUniversalImportTransport(
       throw Error("UNIVERSAL_CONTEXT_MISMATCH");
     return binding;
   }
+  function assertIntakeScope(
+    context: AccountRequestContext,
+    batchId: string,
+    result: import("zod").infer<typeof universalMaterialIntakeSchema>,
+  ) {
+    const binding = result.status === "WAITING_MATERIALS" ? result : pin(context, result.context);
+    if (binding.accountId !== context.accountId || binding.tripId !== context.tripId ||
+        binding.batchId !== batchId)
+      throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+  }
   const path = (batchId: string) => `/v2/import-batches/${batchId}/interpretations`;
   return {
     async prepare(
@@ -160,6 +172,31 @@ export function createUniversalImportTransport(
         );
         const b = pin(context, result.context);
         if (b.batchId !== input.batchId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+        return result;
+      });
+    },
+    async prepareRetained(context: AccountRequestContext, raw: UniversalRetainedOriginalPrepare) {
+      const input = universalRetainedOriginalPrepareSchema.parse({ ...raw, deferMaterials: true });
+      if (input.tripId !== context.tripId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+      return scoped(context, async (api) => {
+        const result = await api.post(
+          `${path(input.batchId)}/prepare`,
+          input,
+          universalMaterialIntakeSchema,
+          { "Idempotency-Key": input.batchId },
+        );
+        assertIntakeScope(context, input.batchId, result);
+        return result;
+      });
+    },
+    async materialIntake(context: AccountRequestContext, rawBatchId: string) {
+      const batchId = universalContextSchema.shape.batchId.parse(rawBatchId);
+      return scoped(context, async (api) => {
+        const result = await api.get(
+          `${path(batchId)}?tripId=${encodeURIComponent(context.tripId)}&materialIntake=1`,
+          universalMaterialIntakeSchema,
+        );
+        assertIntakeScope(context, batchId, result);
         return result;
       });
     },

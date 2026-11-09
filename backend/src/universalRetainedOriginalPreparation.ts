@@ -47,6 +47,7 @@ export async function prepareUniversalRetainedOriginals(
     lookupAcquisition(raw: Original["acquisition"]): Promise<unknown>;
     acquire?(raw: Original["acquisition"]): Promise<unknown>;
     originalUpload?: z.infer<typeof wireSchema>["originalUpload"];
+    onOriginalStaged?(): void;
     uploadPdf?(plan: PdfPlan, requireBytes: () => Buffer): Promise<unknown>;
     lookupOperation(command: Operation): Promise<unknown>;
     openPdf?: () => ReturnType<
@@ -207,10 +208,10 @@ export async function prepareUniversalRetainedOriginals(
             commands.prepare,
           );
           await applied(
-            await step(() => port.execute(scope, commands.upload, pngBytes)),
+            await step(() => port.execute(scope, commands.upload, pngBytes, deps.onOriginalStaged)),
             commands.upload,
           );
-        } else if (typeof upload === "object" && "phase" in upload) {
+        } else if (upload && typeof upload === "object" && "phase" in upload) {
           // Reconcile an existing attempt through its owner; never resend bytes.
           await applied(
             await step(() => port.reconcile(scope, commands.upload)),
