@@ -52,6 +52,7 @@ export type CoreCommandStorage = {
       tripId: string;
       operationId: string;
       baseVector: CoreCommand["baseVector"];
+      manualCompatibility?: "MANUAL" | "READ";
     },
     work: (transaction: CoreCommandTransaction) => Promise<T>,
   ): Promise<T>;
@@ -114,6 +115,7 @@ export async function executeCoreCommandV2(
       tripId,
       operationId: command.operationId,
       baseVector: command.baseVector,
+      ...(command.admission.mode === "MANUAL" ? { manualCompatibility: "MANUAL" as const } : {}),
     },
     async (tx) => {
       if (tx.actor.accountId !== actorAccountId || tx.actor.tripId !== tripId)

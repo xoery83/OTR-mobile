@@ -890,3 +890,23 @@ it("P2 never enters through generic CREATE_ITEM despite union family membership"
   } as never;
   await expect(f.verify(c, emptyCoreGraph())).rejects.toThrow("CORE_CAPABILITY_CLOSED");
 });
+
+it("selects manual compatibility before scope only for a sustained manual transaction", async () => {
+  const f = fixture();
+  const storage = createCorePgStorage(
+    { withLease: async (work) => work(f.lease) },
+    hash,
+    undefined,
+    { sustainedDev: true, reviewedP1: true },
+  );
+  await storage.withLockedCommand(
+    { ...commandScope(), manualCompatibility: "MANUAL" },
+    (tx) => tx.enabledCommands(),
+  );
+  const marker = f.queries.findIndex((q) => q.sql.includes("otr.core.manual_compat"));
+  const scope = f.queries.findIndex((q) => q.sql.includes("trip_core_finite_scope_allowed"));
+  expect(marker).toBeGreaterThanOrEqual(0);
+  expect(marker).toBeLessThan(scope);
+  expect(f.queries[marker].params).toEqual(["MANUAL"]);
+  expect(f.queries.some((q) => q.sql.includes("trip_sustained_import_p1_capabilities"))).toBe(false);
+});

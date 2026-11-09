@@ -432,6 +432,8 @@ function createCorePgStorageOnLease(
         "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true),set_config('otr.core.operation',$3,true)",
         [scope.actorAccountId, scope.tripId, scope.operationId],
       );
+      if (gateMode?.sustainedDev && scope.manualCompatibility)
+        await lease.query("SELECT set_config('otr.core.manual_compat',$1,true)", [scope.manualCompatibility]);
       const finiteScope = async () => {
         const allowed = (
           await lease.query(
@@ -488,7 +490,7 @@ function createCorePgStorageOnLease(
           );
         },
         async enabledCommands() {
-          if (gateMode?.sustainedDev && gateMode.reviewedP1) {
+          if (gateMode?.sustainedDev && gateMode.reviewedP1 && scope.manualCompatibility !== "MANUAL") {
             const reviewed = await readReviewedP1Gate(
               lease,
               actor.accountId,
@@ -901,7 +903,7 @@ export async function readCorePgOperation(
 ) {
   for (const id of [actorAccountId, tripId, operationId]) coreUuid.parse(id);
   return storage.withLockedCommand(
-    { actorAccountId, tripId, operationId, baseVector: [] },
+    { actorAccountId, tripId, operationId, baseVector: [], manualCompatibility: "READ" },
     async (tx) => {
       const prior = await tx.readReceipt();
       if (!prior) return null;

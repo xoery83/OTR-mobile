@@ -96,6 +96,8 @@ export function createCorePgReader(
         await lease.query("SET LOCAL lock_timeout='1000ms'");
         await lease.query("SET LOCAL TIME ZONE 'UTC'");
         await setCoreReadIdentity(lease, actorAccountId, tripId);
+        if (gateMode?.sustainedDev)
+          await lease.query("SELECT set_config('otr.core.manual_compat','READ',true)");
         const actor = await requireCoreReadActor(lease, actorAccountId, tripId, gateMode);
         const state = (
           await lease.query(
@@ -193,6 +195,8 @@ export function createCorePgReader(
             await lease.query("SELECT set_config('otr.core.operation',$1,true)", [
               operationId,
             ]);
+          if (gateMode?.sustainedDev)
+            await lease.query("SELECT set_config('otr.core.manual_compat','READ',true)");
           const allowed = async () =>
             (
               await lease.query(
