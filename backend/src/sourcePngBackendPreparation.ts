@@ -1,3 +1,4 @@
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -122,6 +123,7 @@ export function createSourcePngBackendPreparation(
             command: q.command,
             action,
             phase,
+            requestAborted: scope.signal.aborted,
           }),
         );
       } catch {
@@ -340,7 +342,7 @@ export function createSourcePngBackendPreparation(
         const staged = await deps.stage.reopen(b);
         await current(scope);
         const provider = deps.providerForRequest(scope, (input) =>
-          deps.worker(b, input, owner, scope.signal),
+          measureSourcePdfPhase("png_worker", () => deps.worker(b, input, owner, scope.signal)),
         );
         const upload = await provider.upload(
           { binding: b, dispatchId: b.attemptId },

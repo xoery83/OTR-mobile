@@ -1,3 +1,4 @@
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 
@@ -27,7 +28,7 @@ export function serializeUniversalSourceConnections(
       });
       const wait = createRequestBoundary(10000);
       try {
-        await wait.run(() => previous);
+        await measureSourcePdfPhase("source_pg_queue_wait", () => wait.run(() => previous));
         wait.close();
         assertCurrent();
         return await connection.withLease(work);

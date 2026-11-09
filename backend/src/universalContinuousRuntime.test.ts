@@ -97,7 +97,7 @@ vi.mock("./tripPublicationCatalogPgConnection", () => ({
   createPublicationCatalogPgConnection: () => ({ close: vi.fn() }),
 }));
 vi.mock("./tripCoreV2PgConnection", () => ({
-  createSourcePgConnection: f.sourceConnection,
+  createSourcePgConnection: (...args: unknown[]) => ({ ...f.sourceConnection(...args), discardIdle: vi.fn(), close: vi.fn() }),
   createSourcePdfPgConnection: () => ({ ...f.sourceConnection(), discardIdle: vi.fn(), close: vi.fn() }),
   createModelTaskPgConnection: () => ({}),
 }));

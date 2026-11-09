@@ -33,8 +33,12 @@ export function createCorePgConnection(input: CorePgConfig): CorePgConnection {
     leaseMs: 60000,
   });
 }
-export function createSourcePgConnection(input: CorePgConfig): CorePgConnection {
-  return createOwningPgConnection(input, "otr_trip_source_command_gateway");
+export function createSourcePgConnection(input: CorePgConfig, reuse = false) {
+  return createOwningPgConnection(input, "otr_trip_source_command_gateway", {
+    idleMs: 5000,
+    leaseMs: 30000,
+    reuse,
+  });
 }
 // Dormant PDF-only budget: two 15s custody reads + fixed 20s worker, under Native's 90s request.
 export function createSourcePdfPgConnection(input: CorePgConfig) {
@@ -219,7 +223,7 @@ function createOwningPgConnection(
                 )
                   ? "pg_source_scope"
                   : sql.startsWith("SELECT public.")
-                    ? "pg_source_command"
+                    ? principal === "otr_external_integration_call_gateway" ? "pg_task_command" : "pg_source_command"
                     : sql === "COMMIT" || sql === "ROLLBACK"
                       ? "pg_sql_end"
                       : "pg_sql_setup";

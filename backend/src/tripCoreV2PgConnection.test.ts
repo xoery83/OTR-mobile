@@ -394,9 +394,9 @@ it("retires Core at its 60s hard deadline and rejects any late COMMIT", async ()
   }
 });
 
-it("reuses one clean PDF socket, then destroys it if session reset fails", async () => {
+it.each(["PDF", "ordinary Source"])("reuses one clean %s socket, then destroys it if session reset fails", async (kind) => {
   f.principal = "otr_trip_source_command_gateway";
-  const connection = createSourcePdfPgConnection(config);
+  const connection = kind === "PDF" ? createSourcePdfPgConnection(config) : createSourcePgConnection(config, true);
   const work = async (
     lease: Parameters<Parameters<typeof connection.withLease>[0]>[0],
   ) => {
@@ -425,11 +425,17 @@ it("reuses one clean PDF socket, then destroys it if session reset fails", async
   expect(f.destroy).toHaveBeenCalledTimes(2);
 });
 
-it.each(["PDF", "ordinary Source"])("waits for an idle PDF socket to close before opening %s", async (path) => {
+it.each([
+  { firstPath: "PDF", nextPath: "PDF" },
+  { firstPath: "PDF", nextPath: "ordinary Source" },
+  { firstPath: "ordinary Source", nextPath: "PDF" },
+])("waits for $firstPath retirement before opening $nextPath", async ({ firstPath, nextPath }) => {
   vi.useFakeTimers();
   f.principal = "otr_trip_source_command_gateway";
   const pdf = createSourcePdfPgConnection(config);
-  const source = createSourcePgConnection(config);
+  const source = createSourcePgConnection(config, true);
+  const first = firstPath === "PDF" ? pdf : source;
+  const nextConnection = nextPath === "PDF" ? pdf : source;
   const work = async (
     lease: Parameters<Parameters<typeof pdf.withLease>[0]>[0],
   ) => {
@@ -438,13 +444,13 @@ it.each(["PDF", "ordinary Source"])("waits for an idle PDF socket to close befor
   };
   let finishClose!: () => void;
   try {
-    await pdf.withLease(work);
+    await first.withLease(work);
     f.end.mockImplementationOnce(() => new Promise<void>((resolve) => { finishClose = resolve; }));
     await vi.advanceTimersByTimeAsync(15000);
     expect(f.end).toHaveBeenCalledOnce();
-    const next = path === "PDF" ? pdf.withLease(work) : (async () => {
-      await pdf.discardIdle();
-      await source.withLease(work);
+    const next = (async () => {
+      if (first !== nextConnection) await first.discardIdle();
+      await nextConnection.withLease(work);
     })();
     await vi.advanceTimersByTimeAsync(0);
     expect(f.connect).toHaveBeenCalledOnce();
@@ -453,6 +459,7 @@ it.each(["PDF", "ordinary Source"])("waits for an idle PDF socket to close befor
     expect(f.connect).toHaveBeenCalledTimes(2);
   } finally {
     finishClose?.();
+    await source.close();
     await pdf.close();
     vi.useRealTimers();
   }

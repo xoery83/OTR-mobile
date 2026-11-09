@@ -1,3 +1,4 @@
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import { authenticate, type DevBackendGateway } from "./app";
 import type {
   SourcePngPreparationForRequest,
@@ -32,9 +33,9 @@ export function createSourcePngRequestPreparation(deps: {
     };
     const assertCurrent = async () => {
       assertRequestCurrent();
-      const current = await authenticate(request, deps.gateway);
+      const current = await measureSourcePdfPhase("auth", () => authenticate(request, deps.gateway));
       assertRequestCurrent();
-      if (current.id !== actor || !(await deps.gateway.canReadTrip(actor, deps.tripId)))
+      if (current.id !== actor || !(await measureSourcePdfPhase("trip_access", () => deps.gateway.canReadTrip(actor, deps.tripId))))
         throw Error("SOURCE_ACCESS_DENIED");
       assertRequestCurrent();
     };

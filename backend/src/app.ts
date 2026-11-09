@@ -2711,21 +2711,21 @@ export function createDevBackendHandler({
           route = "/v2/import-batches/:batchId/interpretations/:taskId/retained-original";
           response = await retainedPngBoundary(request, url, gateway, coreConnection?.readRetainedPng, requestId);
         } else {
-          const actor = await authenticate(request, gateway);
-          const runtime = await universalRuntimeForRequest?.(request, actor.id, requestId);
-          response = url.pathname.endsWith("/prepare")
-            ? await universalPrepareBoundary(
-                request,
-                actor.id,
-                (a, t) => gateway.canReadTrip(a, t),
-                runtime?.prepare,
-              )
-            : await universalBoundary(
-                request,
-                actor.id,
-                (a, t) => gateway.canReadTrip(a, t),
-                runtime?.universalImportPort ?? universalImportPort,
-              );
+          const prepare = url.pathname.endsWith("/prepare");
+          const execute = async () => {
+            const actor = await measureSourcePdfPhase("auth", () => authenticate(request, gateway));
+            const runtime = await universalRuntimeForRequest?.(request, actor.id, requestId);
+            const canReadTrip = (a: string, t: string) =>
+              measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(a, t));
+            return prepare
+              ? universalPrepareBoundary(request, actor.id, canReadTrip, runtime?.prepare)
+              : universalBoundary(
+                  request, actor.id, canReadTrip, runtime?.universalImportPort ?? universalImportPort,
+                );
+          };
+          response = prepare
+            ? await runSourcePdfTimings(requestId, "start-resume", execute)
+            : await execute();
         }
       } else if (
         /^\/v2\/trips\/[^/]+\/universal-source-originals\/png\/(?:result|execute|reconcile)$/.test(

@@ -507,6 +507,7 @@ it.each([false, true])(
           command: "UPLOAD_ORIGINAL",
           action: "STATUS",
           phase: "BROKER",
+          requestAborted: false,
         }),
       );
       expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_ERROR_CANARY");

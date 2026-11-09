@@ -1,3 +1,4 @@
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import {
   readSourcePngRuntimeConfig,
@@ -80,6 +81,7 @@ export async function loadDevUniversalContinuousRuntime(
         inputs: finite.batch.inputs,
       })
     : undefined;
+  let sourcePg: ReturnType<typeof createSourcePgConnection> | undefined;
   let pdfPg: ReturnType<typeof createSourcePdfPgConnection> | undefined;
   let pdf: ReturnType<typeof createSourcePdfRuntimePorts> | undefined;
   let png: ReturnType<typeof createSourcePngRuntimePorts> | undefined;
@@ -113,7 +115,8 @@ export async function loadDevUniversalContinuousRuntime(
       if (closed || env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST !== "enabled")
         throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     };
-    const sourcePg = createSourcePgConnection(config.sourcePg);
+    const ordinarySourcePg = createSourcePgConnection(config.sourcePg, !finite && !acquisition);
+    sourcePg = ordinarySourcePg;
     if (env.OTR_DEV_UNIVERSAL_PDF_RUNTIME === "enabled")
       pdfPg = createSourcePdfPgConnection(config.sourcePg);
     const [sourceConnection, pdfConnection] = serializeUniversalSourceConnections(
@@ -122,10 +125,15 @@ export async function loadDevUniversalContinuousRuntime(
           async withLease(work) {
             // Both budgets share the existing one-session Source role.
             await pdfPg?.discardIdle();
-            return sourcePg.withLease(work);
+            return ordinarySourcePg.withLease(work);
           },
         },
-        ...(pdfPg ? [pdfPg] : []),
+        ...(pdfPg ? [{
+          async withLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+            await ordinarySourcePg.discardIdle();
+            return pdfPg!.withLease(work);
+          },
+        }] : []),
       ],
       guard,
     );
@@ -401,12 +409,12 @@ export async function loadDevUniversalContinuousRuntime(
       const token = match[1];
       const authorize = async (normalOnly = false) => {
         guard();
-        const user = await gateway.validateAccessToken(token);
+        const user = await measureSourcePdfPhase("auth", () => gateway.validateAccessToken(token));
         if (
           !user ||
           user.id !== verifiedActor ||
           (normalOnly && !isNormalAccount(user)) ||
-          !(await gateway.canReadTrip(verifiedActor, tripId))
+          !(await measureSourcePdfPhase("trip_access", () => gateway.canReadTrip(verifiedActor, tripId)))
         )
           throw Error("UNIVERSAL_AUTH_REJECTED");
         guard();
@@ -832,6 +840,7 @@ export async function loadDevUniversalContinuousRuntime(
         closed = true;
         png?.close();
         pdf?.close();
+        await sourcePg?.close();
         await pdfPg?.close();
         sql?.close();
         sql = undefined;
@@ -843,6 +852,7 @@ export async function loadDevUniversalContinuousRuntime(
     closed = true;
     png?.close();
     pdf?.close();
+    await sourcePg?.close();
     await pdfPg?.close();
     sql?.close();
     await stores?.close();
