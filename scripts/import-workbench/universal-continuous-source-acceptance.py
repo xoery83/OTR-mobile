@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 root=Path(__file__).resolve().parents[2]
 base=root/'scripts/trip/trip-sustained-sync-acceptance.py'
-s=base.read_text();s=s[:s.index(' person_id=str(uuid.uuid4())')]
+s=base.read_text();s=s[:s.index(' person_id=str(uuid.uuid4())')].replace("docker('run','--name'","docker('run','--pull=never','--name'")
 s=s.replace("packet=ROOT/'docs/ops/trip-p1-sustained-sync-20261024'", "packet=pathlib.Path(tempfile.mkdtemp(prefix='otr-continuous-source-preimage-'))")
 original=(root/'scripts/import-workbench/universal-original-source-sql-acceptance.py').read_text()
 command=original[original.index('canon=lambda'):original.index('created=False')]
@@ -35,10 +35,15 @@ addition=r'''
  sql('set role postgres;'+(ROOT/'backend/sql/universal_sustained_provider_candidate.sql').read_text())
  import os
  cost_guard_mode=os.environ.get('OTR_TEST_AI_COST_GUARD')
+ v3_mode=os.environ.get('OTR_TEST_IMPORT_V3')=='1'
+ if v3_mode and cost_guard_mode!='off':raise RuntimeError('V3_FIXTURE_EXPECTS_DEV_OFF')
  cost_guard_off=cost_guard_mode=='off'
  if cost_guard_mode in ('on','off'):
   sql((ROOT/'backend/sql/universal_ai_cost_guard_candidate.sql').read_text())
   sql((ROOT/'backend/sql/universal_ai_cost_guard_finite_nullable_candidate.sql').read_text())
+ if v3_mode:
+  sql('set role postgres;'+(ROOT/'backend/sql/universal_v3_task_read_candidate.sql').read_text())
+  sql('set role postgres;'+(ROOT/'backend/sql/universal_v3_provider_admission_candidate.sql').read_text())
  check('normal Provider candidate installs while Source policy remains CLOSED')
  sql("alter role otr_trip_source_command_gateway login connection limit 1 valid until 'infinity';")
  def source(q):return sql('set session authorization otr_trip_source_command_gateway;'+q)
@@ -86,6 +91,11 @@ addition+=r'''
  setup=fixture_source[fixture_source.index(' # Reuse the accepted CP14/CP15'):fixture_source.index(" sql((ROOT/'supabase/migrations/20261012000100",fixture_source.index(' # Reuse the accepted CP14/CP15'))]
  setup='\n'.join(line[1:] if line.startswith(' ') else line for line in setup.splitlines())
  setup=setup[:setup.index('globals().update')].replace('vault:otr/dev/deepseek/universal-import-v1','vault:otr/dev/backend/OTR_DEV_DEEPSEEK_API_KEY')
+ if v3_mode:
+  needle="capabilities=['EXTRACT'],modalities=['TEXT']"
+  expanded="capabilities=['EXTRACT'],modalities=['TEXT','IMAGE']"
+  setup=setup.replace("ns={'__file__':",f"source=source.replace({needle!r},{expanded!r})\nns={{'__file__':")
+  setup=setup.replace("{'id':'universal-import','version':1,'dialect':'otr'}", "{'id':'universal-import','version':1,'dialect':'otr'},{'id':'universal-import','version':3,'dialect':'otr'}")
  provision={'ROOT':ROOT,'NAME':NAME,'json':json,'uuid':uuid}
  exec(compile(setup,'existing-cp15-synthetic-fixture','exec'),provision)
  P=provision['ns'];row,invoke,digest=P['row'],P['invoke'],P['digest'];i,p,price=P['i'],P['p'],P['price'];admin=P['admin'];pliteral=P['literal']
@@ -169,6 +179,65 @@ addition+=r'''
  sql("set session authorization otr_external_integration_call_gateway;select public.universal_import_read_continuous_scope("+pliteral(c)+','+pliteral(changed_binding)+",repeat('f',64));",failure='UNIVERSAL_MODEL_TASK_BINDING');check('Flight profile cannot stand in for Universal')
  check('owning SourceRun remains PENDING after Model Task admission',json.loads(source(read))['taskId']==task and sql("select state from trip_source_runs where id='"+run+"';")=='PENDING')
  check('Meter gateway has no Source table read privilege',sql("select has_table_privilege('otr_external_integration_call_gateway','public.trip_source_representations','SELECT');")=='f')
+ if v3_mode:
+  profile_v3=json.loads(sql('select public.universal_import_v3_profile();'))
+  v3c=dict(c)
+  for key in ['call_id','task_id','import_id','attempt_id','request_id','idempotency_key','fallback_chain_id']:
+   v3c[key]=str(uuid.uuid4())
+  v3c.update(price_schedule_id=None,schema_sha256=profile_v3['output_schema_sha256'],request_sha256='d'*64)
+  v3policy={**policy,'deadline':(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(seconds=595)).isoformat(timespec='milliseconds').replace('+00:00','Z')}
+  v3req={**req,'task_id':v3c['task_id'],'logical_request_id':str(uuid.uuid4()),'logical_idempotency_key':str(uuid.uuid4()),
+   'consumer_version':3,'schema':{**req['schema'],'id':profile_v3['execution_scope'],'sha256':profile_v3['output_schema_sha256']},
+   'policy_snapshot':v3policy,'policy_sha256':digest(v3policy)}
+  v3binding={'version':1,'request':v3req,'request_sha256':digest(v3req),'profile':profile_v3,'profile_sha256':digest(profile_v3)}
+  v3read="select public.universal_import_read_continuous_scope("+pliteral(v3c)+','+pliteral(v3binding)+",repeat('d',64));"
+  check('V3 qualified current scope has no Source Run',json.loads(meter(v3read))['batch_id']==v3c['import_id'] and
+   sql("select count(*) from public.trip_source_runs where capture_batch_id='"+v3c['import_id']+"' or interpretation_task_id='"+v3c['task_id']+"';")=='0')
+  sql("set session authorization otr_external_integration_call_gateway;SET otr.ai_cost_guard='off';"+v3read.replace("repeat('d',64)","repeat('c',64)"),failure='UNIVERSAL_MODEL_TASK_BINDING')
+  wrong_trip=dict(v3c,trip_id=str(uuid.uuid4()))
+  sql("set session authorization otr_external_integration_call_gateway;SET otr.ai_cost_guard='off';"+
+   v3read.replace(pliteral(v3c),pliteral(wrong_trip)),failure='UNIVERSAL_SOURCE_CLOSED')
+  check('V3 same outbound digest cannot authorize another Trip',True)
+  v3fields={**fields,'row':v3c,'start':{**usage,'call_id':v3c['call_id'],'observation_id':v3c['call_id']},'model_task_binding':v3binding}
+  check('V3 uses existing durable ModelTask admission exactly once',
+   off_command('universal_activation_reserve_call',v3fields,v3c['request_id'])['call_id']==v3c['call_id']
+   and off_command('universal_activation_reserve_call',v3fields,v3c['request_id'])['call_id']==v3c['call_id'])
+  wrong_req={**v3req,'input':{**v3req['input'],'sha256':'b'*64}}
+  wrong_binding={**v3binding,'request':wrong_req,'request_sha256':digest(wrong_req)}
+  wrong_fields={**v3fields,'model_task_binding':wrong_binding}
+  wrong_cmd,wrong_ctx=P['request']('universal_activation_reserve_call',wrong_fields,'call_gateway',
+    'TRUSTED_WORKLOAD',context,v3c['request_id'])
+  sql("set session authorization otr_external_integration_call_gateway;SET otr.ai_cost_guard='off';"
+    +f"select public.universal_activation_reserve_call({pliteral(wrong_ctx)},{pliteral(wrong_cmd)});",
+    failure='CP14_CHANGED_REQUEST')
+  check('V3 fixed Task and Call refuse a changed request material digest',True)
+  check('V3 dispatch uses the existing mark fence',
+   off_command('external_integration_mark_dispatch',{**mark,'call_id':v3c['call_id']})['dispatch_state']=='MAY_HAVE_STARTED')
+  v3args="('"+ACTOR+"','"+v3c['task_id']+"','"+v3c['attempt_id']+"','"+v3c['call_id']+"');"
+  v3receipt=json.loads(default_meter('select public.model_task_read_universal_v3_receipt'+v3args))
+  check('independent V3 reader binds the durable V3 profile and START',
+   v3receipt['hasStart'] and v3receipt['admission']['profile_snapshot']==profile_v3
+   and default_meter('select public.model_task_read_universal_receipt'+v3args)=='')
+  v3completion={**completion,'observation_id':str(uuid.uuid4()),'call_id':v3c['call_id']}
+  invoke('external_integration_usage_append',{'integration_id':i['integration_id'],'call_id':v3c['call_id'],'row':v3completion},
+   'call_gateway','TRUSTED_WORKLOAD',ctx_updates=context)
+  invoke('external_integration_observe_call',{'integration_id':i['integration_id'],'call_id':v3c['call_id'],'expected_revision':2,
+   'publication_fence':1,'dispatch_state':'TERMINAL','execution_certainty':'TERMINAL','safe_reason':None,'recovery_sha256':None},
+   'call_gateway','TRUSTED_WORKLOAD',ctx_updates=context)
+  v3receipt=json.loads(default_meter('select public.model_task_read_universal_v3_receipt'+v3args))
+  check('independent V3 receipt retains usage and terminal response binding',
+   v3receipt['completion']['response_sha256']=='a'*64 and v3receipt['call']['dispatch_state']=='TERMINAL')
+  if os.environ.get('OTR_TEST_IMPORT_V3_HTTP')=='1':
+   import runpy
+   core_fixture=runpy.run_path(str(ROOT/'scripts/trip/core-v3-local-document-acceptance.py'))
+   core_fixture['install_core_local_document'](ROOT,sql)
+
+   env=dict(os.environ,OTR_V3_PROVIDER_FIXTURE=NAME,OTR_V3_FIXTURE_ACTOR=ACTOR,OTR_V3_FIXTURE_TRIP=TRIP,OTR_V3_FIXTURE_INTEGRATION=i['integration_id'])
+   result=subprocess.run([str(ROOT/'node_modules/.bin/vitest'),'run','--configLoader','runner','--no-cache',
+    'backend/src/universalV3Execution.sql.test.ts'],cwd=ROOT,env=env,timeout=45)
+   assert result.returncode==0
+   check('V3 HTTP mixed-model review, Core save, independent readback and Native SQLite reopen complete')
+
  # Optional combined Stage II installer regression on this same disposable DB.
  import os
  if os.environ.get('OTR_UNIVERSAL_INCLUDE_P1_SQL')=='1':

@@ -1,3 +1,4 @@
+import { LocalItemImportOriginals } from "./LocalItemImportOriginals";
 import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
 import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
@@ -174,6 +175,14 @@ export function P2Detail() {
           ) : (
             <DayReadSkeleton />
           )}
+          {visible ? (
+            <LocalItemImportOriginals
+              tripId={tripId}
+              itemId={itemId}
+              generation={generation}
+              revision={revision}
+            />
+          ) : null}
         </ScrollView>
       </NavigationContentFrame>
       {editing && visible?.editable ? (

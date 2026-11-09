@@ -497,19 +497,24 @@ export const trip_operational_documentsSchema = z.strictObject({
     "image/heic",
     "image/heif",
     "image/webp",
+    "image/gif",
     "text/plain",
     "application/vnd.apple.pkpass",
   ]),
   byte_size: z.number().int().min(0).max(2147483647),
   sha256: coreHash,
-  custody: z.enum(["PRIVATE_SOURCE_REFERENCE", "AUTHORIZED_COPY"]),
+  custody: z.enum(["PRIVATE_SOURCE_REFERENCE", "AUTHORIZED_COPY", "LOCAL_ONLY"]),
   source_representation_id: coreUuid.nullable(),
   storage_object_key: coreText(1024).nullable(),
   content_version: z.number().int().min(1).max(2147483647),
   ticket_face_index: z.number().int().min(0).max(2147483647).nullable(),
   qr_region: region.nullable(),
-  custody_receipt_id: coreUuid,
-});
+  custody_receipt_id: coreUuid.nullable(),
+}).refine((row) => row.custody === "LOCAL_ONLY"
+  ? row.custody_receipt_id === null && row.source_representation_id === null &&
+    row.storage_object_key === null && row.ticket_face_index === null && row.qr_region === null
+  : row.custody_receipt_id !== null,
+);
 export const trip_instruction_entriesSchema = z.strictObject({
   id: coreUuid,
   trip_id: coreUuid,

@@ -1,3 +1,5 @@
+import type { UniversalV3Execution } from "./universalV3Execution";
+import { universalV3IntakeBoundary, universalV3IntakePath, type UniversalV3Intake } from "./universalV3Intake";
 import { sourcePngPreparationBoundary, type SourcePngPreparationForRequest } from "./sourcePngPreparationHttp";
 import { mcpIngressBodyLimit } from "./mcpIngress";
 import { guestAdoptionBodyLimit, guestAdoptionHttpBoundary } from "./guestAdoptionHttp";
@@ -668,6 +670,8 @@ export type BackendDependencies = {
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   memberClaimPort?: MemberClaimAuthorityPort;
   universalImportPort?: UniversalPort;
+  universalV3Intake?: UniversalV3Intake;
+  universalV3Execution?: UniversalV3Execution;
   universalRuntimeForRequest?(
     request: Request,
     actorId: string,
@@ -2533,6 +2537,8 @@ export function createDevBackendHandler({
   tripPersonCloudCreatePort,
   memberClaimPort,
   universalImportPort,
+  universalV3Intake,
+  universalV3Execution,
   universalRuntimeForRequest,
   flightEnrichmentService,
   flightEnrichmentEnabled = false,
@@ -2703,6 +2709,27 @@ export function createDevBackendHandler({
           request,
           actor.id,
           captureRemoteProcessing,
+        );
+      } else if (universalV3IntakePath.test(url.pathname)) {
+        route = "/v2/import-batches/:batchId/interpretations/intake";
+        const actor = await authenticate(request, gateway);
+        response = await universalV3IntakeBoundary(
+          request,
+          actor.id,
+          (account, trip) => isNormalAccount(actor)
+            ? gateway.canReadTrip(account, trip)
+            : Promise.resolve(false),
+          universalV3Intake,
+          universalV3Execution && {
+            ...universalV3Execution,
+            async available(scope, currentRequest) {
+              const capability = await coreConnection?.read?.capabilities?.(scope.accountId, scope.tripId);
+              return capability?.activationState === "ENABLED" &&
+                capability.enabledAdmissionModes.includes("MANUAL") &&
+                capability.enabledCommands.includes("CREATE_ITEM") &&
+                await universalV3Execution.available(scope, currentRequest);
+            },
+          },
         );
       } else if (
         /^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)

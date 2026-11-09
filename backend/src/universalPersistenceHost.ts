@@ -13,6 +13,7 @@ import {
   bindUniversalModelTask,
   registeredUniversalModelProfile,
 } from "./universalModelProfile";
+import { bindUniversalV3ModelTask, universalV3Profile } from "./universalV3Profile";
 import { createUniversalTaskReceiptChecks } from "./universalTaskReceipt";
 import type {
   UniversalProviderCustody,
@@ -110,10 +111,16 @@ export function createUniversalPersistenceHost(deps: {
   >;
   attempt: Attempt;
   requestMaterialByteCount: number;
+  localFirst?: true;
   currentTask(): Promise<Task>;
   environment(key: string): string | undefined;
 }) {
+  if (deps.localFirst && !deps.continuous)
+    throw Error("UNIVERSAL_V3_CONTINUOUS_SCOPE_REQUIRED");
   const a = structuredClone(deps.attempt);
+  const bind = deps.localFirst ? bindUniversalV3ModelTask : bindUniversalModelTask;
+  const profile = deps.localFirst ? universalV3Profile : registeredUniversalModelProfile;
+  const schemaId = deps.localFirst ? universalV3Profile.execution_scope : UNIVERSAL_IMPORT_SCHEMA_ID;
   const costGuardEnabled = deps.costGuardEnabled !== false;
   const pricedContinuous = costGuardEnabled && deps.continuous;
   const transaction = <T>(
@@ -134,7 +141,7 @@ export function createUniversalPersistenceHost(deps: {
             [a.account_id, a.task_id, a.attempt_id, a.usage_correlation_id],
           ),
         );
-    const binding = bindUniversalModelTask({
+    const binding = bind({
       contract_version: "otr-model-task-v1",
       task_id: task.task_id,
       logical_request_id: task.logical_request_id,
@@ -147,10 +154,10 @@ export function createUniversalPersistenceHost(deps: {
         byte_count: deps.requestMaterialByteCount,
       },
       schema: {
-        id: UNIVERSAL_IMPORT_SCHEMA_ID,
+        id: schemaId,
         version: 1,
         dialect: "OTR_TYPED_V1",
-        sha256: registeredUniversalModelProfile.output_schema_sha256,
+        sha256: profile.output_schema_sha256,
       },
       policy_snapshot: task.policy_snapshot,
       policy_sha256: task.policy_sha256,
@@ -181,7 +188,7 @@ export function createUniversalPersistenceHost(deps: {
                 adapter_version: a.adapter_version,
                 request_sha256: a.request_sha256,
                 input_sha256: task.input_sha256,
-                schema_sha256: registeredUniversalModelProfile.output_schema_sha256,
+                schema_sha256: profile.output_schema_sha256,
                 capability: "EXTRACT",
                 task_class: "UNIVERSAL_IMPORT_V1",
                 call_kind: "OUTBOUND_MODEL",
@@ -211,6 +218,10 @@ export function createUniversalPersistenceHost(deps: {
     )
       throw Error("UNIVERSAL_CONTINUOUS_SCOPE_INVALID");
     if (
+      (deps.localFirst &&
+        (task.run_id !== null || task.schema_id !== schemaId ||
+          !task.input_pins.length ||
+          !task.input_pins.every(({ kind }) => kind === "IMPORT_INTAKE"))) ||
       task.account_id !== a.account_id ||
       task.task_id !== a.task_id ||
       task.cancellation_disposition !== "NONE" ||
@@ -271,7 +282,7 @@ export function createUniversalPersistenceHost(deps: {
         idempotency_key: a.idempotency_key,
         request_sha256: a.request_sha256,
         input_sha256: task.input_sha256,
-        schema_sha256: registeredUniversalModelProfile.output_schema_sha256,
+        schema_sha256: profile.output_schema_sha256,
         capability: "EXTRACT",
         task_class: "UNIVERSAL_IMPORT_V1",
         call_kind: "OUTBOUND_MODEL",

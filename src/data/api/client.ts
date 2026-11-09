@@ -202,6 +202,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
     schema: z.ZodType<T>,
     body?: unknown,
     headers?: Record<string, string>,
+    binary?: Uint8Array<ArrayBuffer>,
   ): Promise<T> {
     let diagnosticHttpCode: string | undefined;
     let stage: "AUTH" | "FETCH" | "READ" | "VALIDATE" = "AUTH";
@@ -230,7 +231,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
               ...headers,
             },
-            body: body === undefined ? undefined : JSON.stringify(body),
+            body: binary ?? (body === undefined ? undefined : JSON.stringify(body)),
           });
         });
       }
@@ -244,7 +245,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
         response = await send();
       }
       stage = "READ";
-      const payload = await readBoundedJson(
+      const payload = binary && response.status === 204 ? undefined : await readBoundedJson(
         response,
         response.ok ? maximum : 8192,
         boundary,
@@ -392,6 +393,11 @@ export function createApiClient(options: ApiClientOptions = {}) {
       responseSchema: z.ZodType<T>,
       headers?: Record<string, string>,
     ): Promise<T> {
+      if (body instanceof Uint8Array && headers?.["Content-Type"] === "application/octet-stream")
+        return boundedRequest("PUT", path, responseSchema, undefined, {
+          ...headers,
+          "Content-Length": String(body.byteLength),
+        }, new Uint8Array(body));
       return request("PUT", path, responseSchema, body, headers);
     },
     patch<T>(

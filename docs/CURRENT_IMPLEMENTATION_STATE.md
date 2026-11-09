@@ -1,3 +1,40 @@
+## Import V3 Local-First source candidate — 10 November 2026
+
+Owner approved the [Local-First design](architecture/IMPORT_V3_LOCAL_FIRST_ENGINEERING_DESIGN.md).
+The branch `codex/import-v3-local-first` binds a versioned manifest and private
+binary intake to existing SQLite Task/Wake. The ordinary Provider ledger
+admits a single attempt against the frozen V3 profile and request digest.
+Same-identity replay returns the result without a second send. UNKNOWN retains
+its original identity and does not resend. V3 uses a stateless PNG decoder and
+existing PDF extraction. Historical Source and Receipt reads remain on their
+existing routes.
+
+Native retains originals in its app-private file store. A server capability
+selects V3 Analyze. Users explicitly choose NEW, LINK or UPDATE for supported
+Core fields and targets. Save uses the ordinary Core queue and separately
+tracks the Item and Document association receipts. A pending association
+can finish without resending the accepted Item. Only LOCAL_ONLY metadata
+and Item associations enter Core. SQLite migration 77 preserves prior
+document metadata and permits a null custody receipt only for LOCAL_ONLY.
+Older collection clients omit the new documents and edges.
+
+One network-isolated fixture passed 55 checks. It drove the same three
+Document IDs through mixed HTTP intake, SQLite Wake, owning PostgreSQL
+admission and independent receipt, a simulated Provider result, Native
+Review planning, five ordinary Core operation receipts and on-disk SQLite
+reopen. The joined fixture substitutes PDF/PNG decoders and the Provider
+transport. The actual pinned PDF decoder independently extracted two pages
+from the synthetic file. The pinned PNG image was unavailable locally.
+No Hosted writes or real Provider calls occurred.
+
+Hosted status is CLOUD_PENDING. Remaining qualification includes matching
+active SQL/provider scope, actual PNG execution, supported image formats
+and device-scale file transfers. P1–P6 detail can open verified same-device
+originals through the existing private preview or inline text. File entries
+without current account/Trip access or a local original are hidden. Physical
+iPad/Cloud validation, the priced V3 path and unsupported Core fields have no
+joined acceptance evidence. Historical QA176 UNKNOWN is independent.
+
 ## Universal Import durable material acceptance — 9 November 2026
 
 The retained-original Start opt-in returns a durable batch receipt before PDF

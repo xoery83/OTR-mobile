@@ -1,3 +1,4 @@
+import { tripCoreLocalDocumentMigration } from "./migrations/tripCoreLocalDocument";
 import { captureFilePngPhotoDecisionsDefinition } from "./migrations/captureFilePngPhotoDecisions";
 import { capturePhotoImportDecisionsDefinition } from "./migrations/capturePhotoImportDecisions";
 import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
@@ -1735,4 +1736,5 @@ export const migrations: Migration[] = [
   tripPersonCloudCreateMigration,
   { ...capturePhotoImportDecisionsDefinition, id: 75 },
   { ...captureFilePngPhotoDecisionsDefinition, id: 76 },
+  tripCoreLocalDocumentMigration,
 ];

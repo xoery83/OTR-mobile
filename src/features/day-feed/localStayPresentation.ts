@@ -76,6 +76,7 @@ export function localStayPresentation(
         : [],
     ),
     documents: item.documentSummaries.flatMap((d) =>
+      d.custody !== "LOCAL_ONLY" &&
       typeof d.id === "string" &&
       typeof d.title === "string" &&
       typeof d.contentVersion === "number" &&

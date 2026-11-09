@@ -36,6 +36,7 @@ type Dependencies = {
   now(): string;
   sha256(bytes: Uint8Array): Promise<string>;
   validateAdmission(task: Task): Promise<void>;
+  validateImportIntakePins?(task: Task): Promise<void>;
   // Local owning policy checks only: never external I/O under the apply gate.
   validateAttemptAdmission(
     task: Task,
@@ -177,7 +178,17 @@ export function createIntelligenceContinuationRepository(
     )
       fail("INTELLIGENCE_DIGEST");
     await deps.validateAdmission(t); // Owning Import manifest/Trip admission, local only; never external I/O.
+    if (t.input_pins.some(({ kind }) => kind === "IMPORT_INTAKE")) {
+      if (
+        t.consumer_id !== "import" || t.consumer_version !== 3 ||
+        t.run_id !== null || t.schema_id !== "UNIVERSAL_IMPORT_LOCAL_FIRST_V3" ||
+        !t.input_pins.every(({ kind }) => kind === "IMPORT_INTAKE") ||
+        !deps.validateImportIntakePins
+      ) fail("INTELLIGENCE_IMPORT_INTAKE_CLOSED");
+      await deps.validateImportIntakePins!(t);
+    }
     for (const pin of t.input_pins) {
+      if (pin.kind === "IMPORT_INTAKE") continue;
       if (pin.kind === "CAPTURE") {
         const r = await db.getFirstAsync<{
           revision: number;

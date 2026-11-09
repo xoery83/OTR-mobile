@@ -24,7 +24,7 @@ export async function runMigrations(database: MigrationDatabase) {
 
     if (existing) continue;
 
-    const rebuild = migration.id === 73;
+    const rebuild = migration.id === 73 || migration.id === 77;
     const priorForeignKeys = rebuild
       ? await database.getFirstAsync<{ foreign_keys: number }>("PRAGMA foreign_keys")
       : null;
@@ -33,7 +33,9 @@ export async function runMigrations(database: MigrationDatabase) {
       await database.withTransactionAsync(async () => {
         await database.execAsync(migration.sql);
         if (rebuild && (await database.getFirstAsync("PRAGMA foreign_key_check")))
-          throw new Error("CAPTURE_MIXED_MIGRATION_INTEGRITY");
+          throw new Error(
+            migration.id === 73 ? "CAPTURE_MIXED_MIGRATION_INTEGRITY" : "CORE_LOCAL_DOCUMENT_MIGRATION_INTEGRITY",
+          );
         await database.runAsync(
           "INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)",
           migration.id,

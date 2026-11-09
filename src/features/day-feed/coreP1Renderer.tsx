@@ -41,6 +41,7 @@ export function createCoreP1Renderer(
       ...(typeof item.description === "string" ? { note: item.description } : {}),
       ...(participation ? { participation } : {}),
       documentIds: item.documentSummaries
+        .filter((document) => document.custody !== "LOCAL_ONLY")
         .map((document) => document.id)
         .filter((id): id is string => typeof id === "string"),
       pending:

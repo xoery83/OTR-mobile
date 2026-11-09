@@ -21,6 +21,7 @@ import {
   createNormalTripSyncWake,
   isManualAcceptedEditCommand,
   isManualInstructionEditCommand,
+  isManualLocalDocumentCommand,
   acceptedEditFamilies,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
@@ -284,7 +285,8 @@ export function createNativeNormalTripSyncRunner(
                   throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
               } else if (
                 !local?.create_operation_id &&
-                !isReviewedSourceCreate(command)
+                !isReviewedSourceCreate(command) &&
+                !isManualLocalDocumentCommand(command)
               ) {
                 let item = null;
                 for (const family of acceptedEditFamilies) {

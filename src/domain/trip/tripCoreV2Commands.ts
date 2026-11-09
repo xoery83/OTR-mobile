@@ -317,13 +317,17 @@ export const corePayloadSchemas = {
     documents: changeIds,
   }),
   CREATE_DOCUMENT: z.strictObject({
-    fields: f.trip_operational_documentsSchema.omit({
-      ...common,
-      storage_object_key: true,
-      custody_receipt_id: true,
-    }),
+    fields: z.strictObject(f.trip_operational_documentsSchema.shape)
+      .omit({ ...common, storage_object_key: true, custody_receipt_id: true })
+      .extend({ custody: z.enum(["PRIVATE_SOURCE_REFERENCE", "AUTHORIZED_COPY"]) }),
     acl: f.coreAclSchema,
     custodyProofId: f.coreUuid,
+  }),
+  CREATE_DOCUMENT_METADATA: z.strictObject({
+    title: f.trip_operational_documentsSchema.shape.title,
+    media_type: f.trip_operational_documentsSchema.shape.media_type,
+    byte_size: f.trip_operational_documentsSchema.shape.byte_size,
+    sha256: f.trip_operational_documentsSchema.shape.sha256,
   }),
   RECONCILE_ITEM_DOCUMENTS: changeIds,
   APPEND_INSTRUCTION: z.strictObject({
@@ -419,7 +423,7 @@ export function validateCoreCommand(input: unknown): CoreCommand {
         ? "BOOKING"
         : q.command.includes("ENTITLEMENT")
           ? "ENTITLEMENT"
-          : q.command === "CREATE_DOCUMENT"
+          : q.command === "CREATE_DOCUMENT" || q.command === "CREATE_DOCUMENT_METADATA"
             ? "DOCUMENT"
             : q.command === "APPEND_INSTRUCTION" || q.command === "CORRECT_INSTRUCTION"
               ? "INSTRUCTION"
@@ -451,7 +455,10 @@ export function validateCoreCommand(input: unknown): CoreCommand {
   )
     throw new Error("INVALID_BASE_VECTOR");
   const a = q.admission;
-  if (q.command === "SET_AUTHORED_FLIGHT_DETAILS" && a.mode !== "MANUAL")
+  if (
+    (q.command === "SET_AUTHORED_FLIGHT_DETAILS" || q.command === "CREATE_DOCUMENT_METADATA") &&
+    a.mode !== "MANUAL"
+  )
     throw new Error("INVALID_PROVENANCE");
   if (
     a.mode === "MANUAL"

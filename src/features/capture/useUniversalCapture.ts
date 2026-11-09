@@ -5,6 +5,8 @@ import type {
   UniversalImportResult,
 } from "@/data/api/universalImportContracts";
 import { universalBatchPreparedSchema } from "@/data/api/universalImportContracts";
+import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
+import { captureAccountRequestContext, type AccountRequestContext } from "@/data/auth/accountRequestContext";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { ApiClientError } from "@/data/api/client";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -15,6 +17,8 @@ export function useUniversalCapture(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
 ) {
+  const [localFirst, setLocalFirst] = useState<UniversalV3ExecutionStatus | null>(null);
+  const [localFirstSelected, setLocalFirstSelected] = useState(false);
   const [activity, setActivity] = useState<UniversalTaskActivity | null>(null);
   const [result, setResult] = useState<UniversalImportResult | null>(null);
   const [busy, setBusy] = useState(false),
@@ -57,6 +61,12 @@ export function useUniversalCapture(
     model.assignedTripId,
   ]);
   const controller = useRef<AbortController | null>(null);
+  const localFirstTransport = useRef<{
+    context: AccountRequestContext;
+    transport: ReturnType<typeof createUniversalImportTransport>;
+    accountId(): Promise<string>;
+  } | false | null>(null);
+  const localFirstState = useRef<UniversalV3ExecutionStatus | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const scopeCurrent = () =>
     alive.current &&
@@ -91,6 +101,62 @@ export function useUniversalCapture(
     if (execute) setPhotoReviewRequired(false);
     setAttempted(true);
     try {
+      const trip = model.batch.context?.tripPrior?.id ?? model.assignedTripId;
+      if (trip && process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
+          localFirstTransport.current !== false) {
+        const analysis = model.batch.batchId;
+        if (!localFirstTransport.current) {
+          const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
+          if (!baseUrl) throw Error("UNIVERSAL_BACKEND_UNAVAILABLE");
+          controller.current = new AbortController();
+          const accountId = async () => {
+            const id = (await readLocalSession())?.identity?.userId;
+            if (!id) throw Error("UNIVERSAL_ACCOUNT_UNAVAILABLE");
+            return id;
+          };
+          const context = await captureAccountRequestContext(trip, accountId);
+          if (!current() || context.accountId !== model.batch.accountId)
+            throw Error("UNIVERSAL_CAPTURE_STALE");
+          const transport = createUniversalImportTransport(accountId, {
+            baseUrl, signal: controller.current.signal,
+            assertCurrent: () => { if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE"); },
+          });
+          const capability = await transport.localFirstCapability(context, analysis).catch((error) => {
+            if (error instanceof ApiClientError && error.status === 404)
+              return { localFirst: false, existing: null };
+            throw error;
+          });
+          if (!current()) return;
+          localFirstTransport.current = capability.localFirst
+            ? { context, transport, accountId } : false;
+          if (capability.localFirst) {
+            localFirstState.current = capability.existing;
+            setLocalFirst(capability.existing);
+            setLocalFirstSelected(true);
+          }
+        }
+        const v3 = localFirstTransport.current;
+        if (v3) {
+          const stage = localFirstState.current?.state;
+          if (execute && stage !== "PROCESSING" && stage !== "REVIEW_READY" && stage !== "OUTCOME_UNKNOWN") {
+            const { assertDefaultUniversalPhotoConsent } =
+              await import("@/data/operations/defaultUniversalPhotoConsent");
+            await assertDefaultUniversalPhotoConsent(v3.context, model, {
+              getAccountId: v3.accountId,
+              assertCurrent: () => { if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE"); },
+            });
+            if (!current()) return;
+            const { stageLocalFirstCapture } = await import("@/data/operations/universalV3Capture");
+            await stageLocalFirstCapture(v3.context, model, v3);
+          }
+          const state = await v3.transport.readLocalFirstExecution(v3.context, analysis);
+          if (current()) {
+            localFirstState.current = state;
+            setLocalFirst(state);
+          }
+          return;
+        }
+      }
       if (!consumer.current) {
         const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
         if (!baseUrl) throw Error("UNIVERSAL_BACKEND_UNAVAILABLE");
@@ -341,6 +407,7 @@ export function useUniversalCapture(
   }, [model.assignedTripId]);
   useEffect(() => {
     const pending = () => {
+      if (localFirstTransport.current) return localFirstState.current?.state === "PROCESSING";
       const state = current() ? consumer.current?.activity?.state : activity?.state;
       if (state) return ["PENDING", "WAITING", "PROCESSING"].includes(state);
       // A QUEUED prepare receipt may bind the Task before activity is projected.
@@ -362,8 +429,10 @@ export function useUniversalCapture(
     };
     // This timer only schedules an owning GET; it never invents progress or retries a paid call.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, activity?.state, queued]);
+  }, [result, activity?.state, queued, localFirst?.state]);
   return {
+    localFirst,
+    localFirstSelected,
     activity,
     result,
     busy,

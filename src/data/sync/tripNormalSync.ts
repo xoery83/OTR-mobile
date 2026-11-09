@@ -73,6 +73,15 @@ function cloudManualInstructionCommand(operation: Row): CoreCommand | null {
   return command && isManualInstructionEditCommand(command) ? command : null;
 }
 
+export function isManualLocalDocumentCommand(command: CoreCommand) {
+  if (command.admission.mode !== "MANUAL") return false;
+  if (command.command === "CREATE_DOCUMENT_METADATA") return command.target.kind === "DOCUMENT";
+  if (command.command !== "RECONCILE_ITEM_DOCUMENTS" || command.target.kind !== "ITEM") return false;
+  const payload = command.payload as { add: string[]; remove: string[] };
+  return payload.add.length > 0 && payload.add.length <= 5 && payload.remove.length === 0 &&
+    payload.add.every((id) => command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id));
+}
+
 export function isManualAcceptedEditCommand(
   command: CoreCommand,
   family?: (typeof acceptedEditFamilies)[number],
@@ -117,10 +126,10 @@ function cloudCommand(
       command.operationId !== operation.id ||
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
-      (command.target.kind !== "ITEM" &&
+      (command.target.kind !== "ITEM" && !isManualLocalDocumentCommand(command) &&
         !(instruction && isManualInstructionEditCommand(command))) ||
       !(manualEdit
-        ? isManualAcceptedEditCommand(command) ||
+        ? isManualAcceptedEditCommand(command) || isManualLocalDocumentCommand(command) ||
           (instruction && isManualInstructionEditCommand(command))
         : isReviewedSourceCreate(command))
     )
@@ -293,7 +302,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               command.operationId !== operation.id ||
               command.tripId !== row.trip_id ||
               command.target.id !== operation.entity_id ||
-              (command.target.kind !== "ITEM" &&
+              (command.target.kind !== "ITEM" && !isManualLocalDocumentCommand(command) &&
                 !(instruction && deps.instructionSubmissionEnabled?.())) ||
               (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command)) ||
               (adopted.manualOnly === true && command.admission.mode !== "MANUAL")
@@ -315,7 +324,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                       instructionScope.parentItemId,
                       "P3",
                     ))))) ||
-              isReviewedSourceCreate(command) ||
+              isReviewedSourceCreate(command) || isManualLocalDocumentCommand(command) ||
               (command.admission.mode === "MANUAL" &&
                 command.command === "CREATE_SPARSE_FLIGHT") ||
               (command.admission.mode === "MANUAL" &&
@@ -420,7 +429,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             !(await deps.isManualItem(operation.trip_id, parent.parentItemId, "P3"))
           )
             continue;
-        } else if (manual && !recovering) {
+        } else if (manual && !recovering && !isManualLocalDocumentCommand(command)) {
           let eligible = false;
           for (const family of acceptedEditFamilies) {
             if (

@@ -83,6 +83,7 @@ export function createCorePgReader(
     actorAccountId: string,
     tripId: string,
     ordinaryOrderVersion?: 1,
+    localDocumentMetadata = false,
   ) {
     coreUuid.parse(actorAccountId);
     coreUuid.parse(tripId);
@@ -148,6 +149,7 @@ export function createCorePgReader(
           rights.ledgerExpenseIds,
           rights.sourceEvidenceRefs,
           ordinaryOrderVersion,
+          localDocumentMetadata,
         );
         await assertCoreReadScope(lease, actorAccountId, tripId, gateMode);
         await lease.query("COMMIT");
@@ -294,8 +296,13 @@ export function createCorePgReader(
         accessRevision: current.collection.manifest.accessRevision,
       };
     },
-    async collection(actorAccountId: string, tripId: string, ordinaryOrderVersion?: 1) {
-      return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion)).collection;
+    async collection(
+      actorAccountId: string,
+      tripId: string,
+      ordinaryOrderVersion?: 1,
+      localDocumentMetadata = false,
+    ) {
+      return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion, localDocumentMetadata)).collection;
     },
     async item(actorAccountId: string, tripId: string, itemId: string) {
       coreUuid.parse(itemId);

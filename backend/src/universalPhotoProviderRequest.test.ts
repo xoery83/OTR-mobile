@@ -67,3 +67,25 @@ it("preserves existing one-image and 4MiB limits", () => {
     "UNIVERSAL_IMAGE_BOUND",
   );
 });
+
+it("uses one local-first request for up to five documents without legacy evidence", () => {
+  const input = request();
+  const image = input.sources[0];
+  input.sources = Array.from({ length: 5 }, (_, index) => ({
+    ...image,
+    index,
+    sourceId: `S${index}`,
+  }));
+  const built = buildUniversalDeepSeekRequest(input, "local-first");
+  const messages = JSON.parse(built.body).messages;
+  expect(messages[0].content).toContain("indices of the related documents");
+  expect(
+    messages[1].content.filter((part: { type: string }) => part.type === "image_url"),
+  ).toHaveLength(5);
+  expect(built.body).not.toContain(image.sha256);
+  expect(() => buildUniversalDeepSeekRequest(input)).toThrow("UNIVERSAL_IMAGE_BOUND");
+  input.sources.push({ ...image, index: 5, sourceId: "S5" });
+  expect(() => buildUniversalDeepSeekRequest(input, "local-first")).toThrow(
+    "UNIVERSAL_REQUEST_BINDING_INVALID",
+  );
+});

@@ -114,7 +114,10 @@ export function createCoreV2Transport(
       tokenProvider,
       ctx,
     );
-  const headers = { "X-OTR-Core-Contract-Version": "2" };
+  const headers = {
+    "X-OTR-Core-Contract-Version": "2",
+    "X-OTR-Core-Local-Document": "1",
+  };
   const path = (ctx: AccountRequestContext) =>
     `/v2/trips/${coreUuid.parse(ctx.tripId)}/core`;
   async function validate(

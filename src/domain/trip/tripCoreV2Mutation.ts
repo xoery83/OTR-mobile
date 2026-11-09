@@ -1416,6 +1416,18 @@ function executeCoreMutation(
       );
       break;
     }
+    case "CREATE_DOCUMENT_METADATA": {
+      const row = create("DOCUMENT", q.target.id, {
+        title: p.title,
+        media_type: p.media_type,
+        byte_size: p.byte_size,
+        sha256: p.sha256,
+        custody: "LOCAL_ONLY",
+        content_version: 1,
+      });
+      setAcl("DOCUMENT", row, { visibility: "PRIVATE", people: [] });
+      break;
+    }
     // These need the owning verified custody/Source/Ledger capability, not a boolean from a caller.
     case "CREATE_DOCUMENT": {
       const proof = privateDocumentCustody;

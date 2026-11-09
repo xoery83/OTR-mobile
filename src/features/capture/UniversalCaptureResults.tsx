@@ -18,6 +18,8 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { useUniversalCapture } from "./useUniversalCapture";
+import { lazy, Suspense } from "react";
+const UniversalV3Review = lazy(() => import("./UniversalV3Review").then(({ UniversalV3Review }) => ({ default: UniversalV3Review })));
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 import { AppIcon } from "@/components/AppIcon";
 
@@ -36,6 +38,32 @@ export function UniversalCaptureResults({
 }) {
   const state = useUniversalCapture(model, isCurrent);
   const admission = useUniversalP1Admission(model, isCurrent, state.result);
+  if (state.localFirstSelected) {
+    const processing = state.localFirst?.state === "PROCESSING";
+    const unknown = state.localFirst?.state === "OUTCOME_UNKNOWN";
+    const result = state.localFirst?.state === "REVIEW_READY" ? state.localFirst : null;
+    return (
+      <UiSection title={t("capture.ai.title")}>
+        <UiText>{t("capture.ai.previewOnly")}</UiText>
+        {processing ? <UiText accessibilityLiveRegion="polite">{t("capture.ai.task.PROCESSING")}</UiText> : null}
+        {unknown ? <UiText>{t("capture.ai.unknown")}</UiText> : null}
+        {state.unavailable || state.localFirst?.state === "NEEDS_ACTION"
+          ? <UiText>{t("capture.ai.unavailable")}</UiText> : null}
+        {result?.candidates.map((candidate) => (
+          <Suspense key={candidate.candidateId} fallback={null}>
+            <UniversalV3Review model={model} candidate={candidate} isCurrent={isCurrent} />
+          </Suspense>
+        ))}
+        {result && !result.candidates.length ? <UiText>{t("capture.ai.noCandidates")}</UiText> : null}
+        {!result && !processing && !unknown ? (
+          <UiButton label={t("capture.ai.process")} disabled={state.busy || !state.canStart}
+            onPress={state.start} />
+        ) : null}
+        <UiButton label={t("capture.ai.check")} variant="secondary"
+          disabled={state.busy} onPress={state.recover} />
+      </UiSection>
+    );
+  }
   return (
     <UniversalResultView
       model={model}

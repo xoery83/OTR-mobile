@@ -254,11 +254,13 @@ export async function coreHttpBoundary(
         ...capabilities,
         enabledCommands: capabilities.enabledCommands.filter(
           (command) =>
-            command !== "SET_AUTHORED_FLIGHT_DETAILS" ||
-            request.headers.get("X-OTR-Core-Authored-Flight") === "1",
+            (command !== "SET_AUTHORED_FLIGHT_DETAILS" ||
+              request.headers.get("X-OTR-Core-Authored-Flight") === "1") &&
+            (command !== "CREATE_DOCUMENT_METADATA" ||
+              request.headers.get("X-OTR-Core-Local-Document") === "1"),
         ),
       });
-      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight");
+      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight, X-OTR-Core-Local-Document");
       return response;
     }
     if (path === "commands" && request.method === "POST") {
@@ -442,6 +444,7 @@ export async function coreHttpBoundary(
         actor,
         trip,
         orderVersion === "1" ? 1 : undefined,
+        request.headers.get("X-OTR-Core-Local-Document") === "1",
       );
       await validateCoreReadCollection(
         result.manifest,

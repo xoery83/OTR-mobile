@@ -1,3 +1,4 @@
+import { LocalItemImportOriginals } from "./LocalItemImportOriginals";
 import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
 import { useCallback, useState, useSyncExternalStore } from "react";
@@ -166,6 +167,14 @@ export function P5Detail() {
           ) : (
             <DayReadSkeleton />
           )}
+          {visible ? (
+            <LocalItemImportOriginals
+              tripId={tripId}
+              itemId={itemId}
+              generation={generation}
+              revision={revision}
+            />
+          ) : null}
         </ScrollView>
       </NavigationContentFrame>
       {editing && visible?.editor ? (

@@ -113,6 +113,10 @@ export function initializeUniversalTaskDatabase(sql: DatabaseSync) {
     CHECK((state='NEEDS_BYTES')=(input_id IS NOT NULL)),
     PRIMARY KEY(account_id,batch_id)
   ) STRICT`);
+  if (!sql.prepare("PRAGMA table_info(universal_material_intake)").all().some((c) => c.name === "v3_manifest_json"))
+    sql.exec("ALTER TABLE universal_material_intake ADD COLUMN v3_manifest_json TEXT");
+  if (!sql.prepare("PRAGMA table_info(universal_material_intake)").all().some((c) => c.name === "v3_accepted_at"))
+    sql.exec("ALTER TABLE universal_material_intake ADD COLUMN v3_accepted_at TEXT");
   sql.exec("PRAGMA foreign_keys=ON");
   return universalTaskDatabase(sql);
 }
@@ -201,6 +205,7 @@ export async function bootstrapUniversalTask(input: {
   getAccountId(): Promise<string>;
   assertCurrent(): void;
   claimQueue?: boolean;
+  validateImportIntakePins?(task: Task): Promise<void>;
   mixedBReservation?: MixedBTaskReservation;
   proveMixedBStage?(): Promise<() => void>;
   withMixedBMaterial?<T>(
@@ -248,6 +253,7 @@ export async function bootstrapUniversalTask(input: {
     getAccountId: input.getAccountId,
     now,
     sha256: hash,
+    validateImportIntakePins: input.validateImportIntakePins,
     async validateAdmission(value) {
       input.assertCurrent();
       if (

@@ -134,6 +134,7 @@ export function createUniversalDeepSeekProvider(deps: {
   send: Send;
   priceSchedule?: UniversalPriceSchedule;
   costGuardDisabled?: boolean;
+  requestProfile?: "local-first";
   beforeRemoteSend?(): Promise<{ readCurrentClaim(): Promise<() => void> }>;
 }): UniversalProvider {
   return {
@@ -160,7 +161,7 @@ export function createUniversalDeepSeekProvider(deps: {
         }
       }
       try {
-        const request = buildUniversalDeepSeekRequest(input);
+        const request = buildUniversalDeepSeekRequest(input, deps.requestProfile);
         const credential = await deps.custody.acquire({
           actorId: input.actorId,
           accountId: input.accountId,

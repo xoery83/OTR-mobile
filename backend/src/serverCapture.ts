@@ -113,6 +113,8 @@ async function main() {
       ...(enrichment ? { flightEnrichmentService: enrichment.service, flightEnrichmentEnabled: true, flightEnrichmentAvailable: enrichment.available } : {}),
       ...(continuous
         ? {
+            universalV3Intake: continuous.universalV3Intake,
+            universalV3Execution: continuous.universalV3Execution,
             sourcePdfV4PreparationForRequest: continuous.sourcePdfV4PreparationForRequest,
             sourcePngPreparationForRequest: continuous.sourcePngPreparationForRequest,
             sourcePdfV2ForRequest: continuous.sourcePdfV2ForRequest,

@@ -692,6 +692,29 @@ export function createTripCoreV2Repository(
     announceLedgerQueueWorkAvailable();
     return result!;
   }
+  async function enqueueConfirmedItemDocuments(ctx: AccountRequestContext, inputs: readonly unknown[]) {
+    const commands = inputs.map(validateCoreCommand);
+    const link = commands.at(-1);
+    if (
+      commands.length < 1 || commands.length > 7 ||
+      new Set(commands.map((command) => command.operationId)).size !== commands.length ||
+      link?.command !== "RECONCILE_ITEM_DOCUMENTS" ||
+      commands.some((command) => command.tripId !== ctx.tripId || command.admission.mode !== "MANUAL") ||
+      commands.slice(0, -1).some((command, index) =>
+        command.command !== "CREATE_DOCUMENT_METADATA" &&
+        (index !== 0 || command.target.id !== link.target.id ||
+          !["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "SET_ITEM_TEXT"].includes(command.command)))
+    ) throw Error("CORE_REVIEWED_DOCUMENT_COMMANDS");
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        for (const command of commands) await enqueueWithinTransaction(ctx, command);
+      });
+    });
+    await assertContext(ctx);
+    announceLedgerQueueWorkAvailable();
+    return commands.map(({ operationId }) => operationId);
+  }
   async function manualInstructionOriginWithinTransaction(
     ctx: AccountRequestContext,
     snapshot: Pick<
@@ -2448,6 +2471,7 @@ export function createTripCoreV2Repository(
     refresh,
     resume,
     enqueue,
+    enqueueConfirmedItemDocuments,
     commitManualBatch,
     manualInstructionEligibility,
     manualInstructionCorrectionPreclaimEligibility,

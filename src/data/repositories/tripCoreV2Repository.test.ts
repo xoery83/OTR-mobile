@@ -2939,3 +2939,44 @@ it("claim-bound CORRECT actual minted postimage drift rolls the whole claim back
   spy.mockRestore();
   expect(correctionDurableState(f)).toEqual(before);
 });
+
+it("retains the explicitly confirmed Item, Document and link operations across restart without creating another Item", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-v3-review-"));
+  folders.push(folder);
+  const path = join(folder, "core.db");
+  const initial = fixture(path);
+  const context = await initial.repo.captureContext(trip);
+  const created = sparse();
+  const document = randomUUID();
+  const metadata = {
+    ...created,
+    operationId: randomUUID(),
+    command: "CREATE_DOCUMENT_METADATA",
+    target: { kind: "DOCUMENT", id: document },
+    baseVector: [{ kind: "DOCUMENT", id: document, revision: null }],
+    payload: { title: "original.pdf", media_type: "application/pdf", sha256: "a".repeat(64), byte_size: 16 },
+  };
+  const link = {
+    ...created,
+    operationId: randomUUID(),
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    baseVector: [
+      { kind: "DOCUMENT", id: document, revision: 1 },
+      { kind: "ITEM", id: item, revision: 1 },
+    ],
+    payload: { add: [document], remove: [] },
+  };
+  const commands = [created, metadata, link];
+  const fixed = commands.map(({ operationId }) => operationId);
+  expect(await initial.repo.enqueueConfirmedItemDocuments(context, commands)).toEqual(fixed);
+  initial.sql.close();
+  const cold = fixture(path, false);
+  const recovered = await cold.repo.captureContext(trip);
+  expect((await cold.repo.pending(recovered)).map(({ command }) => command.operationId)).toEqual(fixed);
+  expect(await cold.repo.enqueueConfirmedItemDocuments(recovered, commands)).toEqual(fixed);
+  expect(cold.sql.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count).toBe(3);
+  const changed = { ...link, payload: { add: [randomUUID()], remove: [] } };
+  await expect(cold.repo.enqueueConfirmedItemDocuments(recovered, [created, metadata, changed]))
+    .rejects.toThrow();
+  expect((await cold.repo.pending(recovered)).map(({ command }) => command.operationId)).toEqual(fixed);
+});

@@ -88,6 +88,8 @@ function authorizedDocument(
   const row = parsed.data;
   if (
     row.trip_id !== request.tripId ||
+    row.custody === "LOCAL_ONLY" ||
+    row.custody_receipt_id === null ||
     row.hidden_at !== null ||
     row.content_version !== request.contentVersion ||
     row.sha256 !== request.sha256 ||

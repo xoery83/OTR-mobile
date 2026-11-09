@@ -1,3 +1,4 @@
+import { LocalItemImportOriginals } from "./LocalItemImportOriginals";
 import { createP3SourceScanPort } from "@/native/p3FormScan";
 import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
@@ -196,6 +197,14 @@ export function P3Detail() {
           ) : (
             <DayReadSkeleton />
           )}
+          {visible ? (
+            <LocalItemImportOriginals
+              tripId={tripId}
+              itemId={itemId}
+              generation={generation}
+              revision={revision}
+            />
+          ) : null}
         </ScrollView>
       </NavigationContentFrame>
       {editing && visible?.editor ? (

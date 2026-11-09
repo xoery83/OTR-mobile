@@ -553,6 +553,8 @@ function createCorePgStorageOnLease(
             : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
           const manual = normalManualCapabilities(activation);
           const normal = manual !== null;
+          const localMetadata = command.command === "CREATE_DOCUMENT_METADATA";
+          const documentLink = command.command === "RECONCILE_ITEM_DOCUMENTS";
           const finiteFamily =
             command.command === "CREATE_SPARSE_FLIGHT"
               ? "P2"
@@ -585,7 +587,7 @@ function createCorePgStorageOnLease(
                 command.admission.policyVersion !== null
               : normal
                 ? command.admission.mode !== "MANUAL" ||
-                  !manual!.families.includes(String(finiteFamily)) ||
+                  (!localMetadata && !documentLink && !manual!.families.includes(String(finiteFamily))) ||
                   !(manual!.commands as readonly string[]).includes(command.command) ||
                   (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
                   (command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
@@ -595,6 +597,7 @@ function createCorePgStorageOnLease(
                       "CREATE_SPARSE_FLIGHT",
                       "SET_AUTHORED_FLIGHT_DETAILS",
                       "SET_ITEM_PARTICIPATION",
+                      "RECONCILE_ITEM_DOCUMENTS",
                     ].includes(command.command)) ||
                   (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
                   (command.command === "SET_RENTAL_DETAILS" && finiteFamily !== "P4") ||
@@ -608,6 +611,7 @@ function createCorePgStorageOnLease(
             throw new Error("CORE_CAPABILITY_CLOSED");
           if (
             normal &&
+            !localMetadata &&
             command.command !== "CREATE_ITEM" &&
             command.command !== "CREATE_SPARSE_FLIGHT" &&
             graph.itinerary_events.find((item) => item.id === command.target.id)
@@ -616,6 +620,7 @@ function createCorePgStorageOnLease(
             throw new Error("CORE_CREATOR_REQUIRED");
           if (
             normal &&
+            !documentLink &&
             finiteFamily === "P2" &&
             command.command !== "CREATE_SPARSE_FLIGHT"
           ) {
@@ -732,7 +737,7 @@ function createCorePgStorageOnLease(
             !(gate.enabled_admission_modes as string[]).includes(
               command.admission.mode,
             ) ||
-            (family && !(gate.enabled_families as string[]).includes(family as string))
+            (family && !documentLink && !(gate.enabled_families as string[]).includes(family as string))
           )
             throw new Error("CORE_CAPABILITY_CLOSED");
           const requiresTemporalAuthority = (value: unknown): boolean => {
@@ -832,6 +837,7 @@ function createCorePgStorageOnLease(
             if (!coreCanRead(graph, actor, v.kind as CoreKind, row)) return false;
             if (
               v.kind === "DOCUMENT" &&
+              row.custody !== "LOCAL_ONLY" &&
               (!admission || !(await admission.canReadOriginal(lease, actor, row)))
             )
               return false;

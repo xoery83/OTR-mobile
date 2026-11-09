@@ -20,7 +20,7 @@ type IntakeRow = {
 
 export function createUniversalMaterialIntake(db: ReturnType<typeof universalTaskDatabase>) {
   const read = `SELECT trip_id,manifest_sha256,state,input_id,owner_run
-    FROM universal_material_intake WHERE account_id=? AND batch_id=?`;
+    FROM universal_material_intake WHERE account_id=? AND batch_id=? AND v3_manifest_json IS NULL`;
   const insert = `INSERT INTO universal_material_intake
     (account_id,trip_id,batch_id,manifest_sha256,state,input_id,owner_run)
     VALUES(?,?,?,?,'PREPARING',NULL,?) ON CONFLICT DO NOTHING`;

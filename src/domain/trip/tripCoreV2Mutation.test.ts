@@ -633,3 +633,68 @@ describe("People V1 Creator versus Everyone management", () => {
     ).toHaveLength(2);
   });
 });
+
+it("creates private local metadata and reuses the existing many-to-many Item relation", () => {
+  const item = randomUUID();
+  const document = randomUUID();
+  const graph = create(emptyCoreGraph(), "P1", item).result.graph;
+  const metadata = {
+    title: "Local ticket",
+    media_type: "application/pdf",
+    byte_size: 20,
+    sha256: "a".repeat(64),
+  };
+  const request = command(
+    graph,
+    "CREATE_DOCUMENT_METADATA",
+    document,
+    metadata,
+    "DOCUMENT",
+  );
+  expect(() =>
+    applyCoreCommand(
+      graph,
+      {
+        ...request,
+        payload: {
+          ...metadata,
+          storage_object_key: "would-be-proof",
+        },
+      },
+      actor,
+      now,
+    ),
+  ).toThrow();
+  const created = applyCoreCommand(graph, request, actor, now).graph;
+  expect(created.trip_operational_documents[0]).toMatchObject({
+    id: document,
+    owner_account_id: account,
+    trip_id: trip,
+    visibility: "PRIVATE",
+    custody: "LOCAL_ONLY",
+    source_representation_id: null,
+    custody_receipt_id: null,
+    storage_object_key: null,
+  });
+  const link = (state: CoreGraph, itemId: string) =>
+    command(
+      state,
+      "RECONCILE_ITEM_DOCUMENTS",
+      itemId,
+      { add: [document], remove: [] },
+      "ITEM",
+      [{ kind: "DOCUMENT", id: document, revision: 1 }],
+    );
+  const linked = applyCoreCommand(created, link(created, item), actor, now).graph;
+  expect(() => applyCoreCommand(linked, link(linked, item), actor, now)).toThrow(
+    "DUPLICATE_LINK",
+  );
+  const second = randomUUID();
+  const two = create(linked, "P1", second).result.graph;
+  expect(
+    applyCoreCommand(two, link(two, second), actor, now).graph.trip_item_document_links,
+  ).toMatchObject([
+    { item_id: item, document_id: document },
+    { item_id: second, document_id: document },
+  ]);
+});
