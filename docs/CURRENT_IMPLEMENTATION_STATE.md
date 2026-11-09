@@ -33,15 +33,24 @@ static formats, kept transparency, applied JPEG orientation, stripped metadata
 and rejected animated GIF/WebP, damaged input and declared MIME mismatches.
 The x64 image is `sha256:c31fb8c4b80642e85d970b14bf9a2ff7410adff615690b716546f9ccea93da32`.
 The fixture measured PNG/JPEG/WebP/GIF at 851/935/884/957 ms including local
-container startup. This image is supplied through `OTR_IMPORT_V3_IMAGE_DECODER_ID`.
+container startup. It now supplies the codec bytes at build time only.
+The actual Backend image has no Docker client. The Backend-only candidate
+packages the codec and the pinned QPDF/Poppler tools in the same image and
+launches a short child under filesystem, socket, process and resource
+restrictions. The native arm64 control verified isolation negatives and the
+four formats in 38–41 ms per file. The two-page PDF took 41 ms and retained
+the fixed text hash. The local emulated x64 runtime returns ENOSYS for
+Landlock and fails closed. The actual native x64 Backend runtime still needs
+its normal closed-health probe under the inherited production profile.
+See [decoder package](../scripts/import-v3-decoder/README.md).
 The priced two-image fixture reserved one call, marked dispatch once and settled
 a simulated response at 54,000 nanos with a 14,745,600-nano immutable hold. It
 read back the V3 receipt and admitted price in an independent session. No Hosted
 writes or real Provider calls occurred.
 
 Hosted status is CLOUD_PENDING. Remaining qualification includes the active
-DEV SQL/provider scope and effective price, the fixed decoder image on its
-actual host, real DeepSeek and the physical iPad. P1–P6 detail can open verified
+DEV SQL/provider scope and effective price, the x64 sandbox probe under its
+actual host policy, real DeepSeek and the physical iPad. P1–P6 detail can open verified
 same-device originals through the existing private preview or inline text. File
 entries without current account/Trip access or a local original are hidden.
 P5 NEW and P2 title UPDATE remain existing Core compatibility limits. Historical
