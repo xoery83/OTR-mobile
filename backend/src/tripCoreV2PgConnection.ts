@@ -191,6 +191,7 @@ function createOwningPgConnection(
           if (reused)
             await measureSourcePdfPhase("pg_sql_setup", () =>
               client.query("DISCARD ALL"),
+              "session_reset",
             );
           else {
             await measureSourcePdfPhase("pg_connect", () => client.connect());
@@ -200,6 +201,7 @@ function createOwningPgConnection(
                 client.query(
                   "SELECT session_user AS principal,current_user AS role,pg_is_in_recovery() AS recovery",
                 ),
+                "session_identity",
               )
             ).rows;
             if (
@@ -227,8 +229,15 @@ function createOwningPgConnection(
                     : sql === "COMMIT" || sql === "ROLLBACK"
                       ? "pg_sql_end"
                       : "pg_sql_setup";
-                const result = await measureSourcePdfPhase(phase, () =>
-                  client.query(sql, [...parameters]),
+                const rpc = /^SELECT public\.((?:trip_source_|universal_import_|external_integration_|model_task_)[a-z_0-9]{1,64})\(/.exec(sql)?.[1];
+                const pngAction = parameters[2];
+                const operation =
+                  rpc === "trip_source_png_operation" && typeof pngAction === "string" &&
+                  /^(STATUS|REGISTER|BEGIN|RECONCILE|UNKNOWN|FINALIZE|EXEC_(CLAIM|ATTACH|ADVANCE|TERMINAL|RELEASE|CLEANED))$/.test(pngAction)
+                    ? rpc + "." + pngAction
+                    : rpc ?? phase;
+                const result = await measureSourcePdfPhase(
+                  phase, () => client.query(sql, [...parameters]), operation,
                 );
                 if (isRetired()) throw new Error("CORE_CONNECTION_RETIRED");
                 if (sql === "COMMIT" || sql === "ROLLBACK") finished = true;

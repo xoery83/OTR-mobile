@@ -1,3 +1,4 @@
+import { recordSourcePdfTiming } from "./sourcePdfTiming";
 import { FLIGHT_MODEL_CONFORMANCE } from "./flightHostProtocol";
 import { createHash } from "node:crypto";
 import { performance } from "node:perf_hooks";
@@ -213,6 +214,7 @@ export function createUniversalDeepSeekProvider(deps: {
           chunks.push(chunk);
         }
         logTransport("RESPONSE", performance.now() - transportStarted);
+        recordSourcePdfTiming("provider_http", transportStarted);
         transportStarted = undefined;
         const bytes = Buffer.concat(chunks);
         phase = "RETAIN";
@@ -256,8 +258,10 @@ export function createUniversalDeepSeekProvider(deps: {
           },
         };
       } catch (error) {
-        if (transportStarted !== undefined)
+        if (transportStarted !== undefined) {
           logTransport("ERROR", performance.now() - transportStarted);
+          recordSourcePdfTiming("provider_http", transportStarted, error ?? true);
+        }
         const failure =
           error instanceof Error ? error : new Error("UNIVERSAL_PROVIDER_FAILURE");
         const kind =

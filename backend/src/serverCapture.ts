@@ -1,3 +1,4 @@
+import { runSourcePdfTimings } from "./sourcePdfTiming";
 import { reportEnrichmentDiagnostic } from "./flight-enrichment/diagnostics";
 import { loadDevFlightEnrichmentRuntime } from "./flight-enrichment/devRuntime";
 import { loadDevUniversalContinuousRuntime } from "./universalContinuousRuntime";
@@ -153,9 +154,14 @@ async function main() {
                   },
                 },
                 async prepare(trip, input) {
-                  return prepareUniversalQueuedRuntime(
-                    actor, trip, input, await scoped(trip),
-                  );
+                  const ports = await scoped(trip);
+                  return prepareUniversalQueuedRuntime(actor, trip, input, {
+                    ...ports,
+                    drainTargeted: (batch, task) =>
+                      requestId
+                        ? runSourcePdfTimings(requestId, "run-wake", () => ports.drainTargeted(batch, task))
+                        : ports.drainTargeted(batch, task),
+                  });
                 },
               };
             },
