@@ -311,6 +311,9 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
   const accepted = await refresh();
   const localCreate =
     (await (await readLocalTripRepository()).getTrip(trip))?.syncFormatVersion === 2;
+  // Accepted Core identity and capabilities also cover these families on older local Trips.
+  const newOnTrip = (candidate: Candidate) =>
+    localCreate || candidate.kind === "P3" || candidate.kind === "P6";
   async function check(candidate: Candidate) {
     const [item, link] = await Promise.all([
       core.pending(context, itemIntentId(candidate.candidateId)),
@@ -358,7 +361,13 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
       const flight = candidate.kind === "P2";
       return {
         NEW:
-          localCreate &&
+          newOnTrip(candidate) &&
+          accepted.actor.active &&
+          accepted.actor.accountId === context.accountId &&
+          accepted.actor.tripId === context.tripId &&
+          !!accepted.actor.personId &&
+          capabilities.activationState === "ENABLED" &&
+          capabilities.enabledAdmissionModes.includes("MANUAL") &&
           !!title &&
           !!start &&
           candidate.kind !== "P5" &&
@@ -393,7 +402,7 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
     check,
     async confirm(candidate: Candidate, decision: UniversalV3Decision) {
       if (
-        (decision.action === "NEW" && !localCreate) ||
+        (decision.action === "NEW" && !newOnTrip(candidate)) ||
         (decision.action === "UPDATE" &&
           !localCreate &&
           !["P3", "P4", "P6"].includes(candidate.kind))

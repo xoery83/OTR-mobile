@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
 import {
@@ -14,7 +14,33 @@ import {
 import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { localImportDocumentId } from "../../domain/trip/universalImportIdentity";
 import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository";
-import { planUniversalV3Review, projectUniversalV3SaveState } from "./universalV3Review";
+import { openUniversalV3Review, planUniversalV3Review, projectUniversalV3SaveState } from "./universalV3Review";
+
+const native = vi.hoisted(() => ({
+  account: vi.fn(),
+  getTrip: vi.fn(),
+  snapshot: vi.fn(),
+  capabilities: vi.fn(),
+  enqueue: vi.fn(),
+  enqueueDocuments: vi.fn(),
+}));
+vi.mock("../auth/authRepository", () => ({ requireAdoptedUserId: native.account }));
+vi.mock("../auth/localTripAccess", () => ({
+  readLocalTripRepository: async () => ({ getTrip: native.getTrip }),
+}));
+vi.mock("../db/database", () => ({ readInitializedDatabase: async () => ({}) }));
+vi.mock("../api/tripCoreV2Transport", () => ({
+  createCoreV2Transport: () => ({ capabilities: native.capabilities }),
+}));
+vi.mock("../repositories/tripCoreV2Repository", () => ({
+  createTripCoreV2Repository: () => ({
+    refresh: async () => {},
+    acceptedSnapshot: native.snapshot,
+    pending: async () => [],
+    enqueue: native.enqueue,
+    enqueueConfirmedItemDocuments: native.enqueueDocuments,
+  }),
+}));
 
 const stamp = "2026-11-10T02:00:00Z";
 function fixture() {
@@ -183,3 +209,61 @@ it("does not confuse an independently saved Item with unknown or rejected relati
     }),
   ).toBe("VERIFIED");
 });
+
+it.each(["P3", "P6"] as const)(
+  "opens and queues MANUAL %s NEW on a historical local Trip with authoritative Core eligibility",
+  async (kind) => {
+    const f = fixture();
+    const candidate = {
+      ...f.candidate,
+      kind,
+      fields: { ...f.candidate.fields, "check_out.date": "2026-12-15" },
+    };
+    native.account.mockResolvedValue(f.actor.accountId);
+    native.getTrip.mockResolvedValue({ syncFormatVersion: 1 });
+    native.snapshot.mockResolvedValue(f.snapshot());
+    native.capabilities.mockResolvedValue({ ...f.capabilities, enabledFamilies: [kind] });
+    native.enqueueDocuments.mockClear();
+    const review = await openUniversalV3Review(f.model);
+    expect(review.actions(candidate).NEW).toBe(true);
+    expect(await review.confirm(candidate, { action: "NEW" })).toBe("PENDING");
+    expect(native.enqueueDocuments).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ accountId: f.actor.accountId, tripId: f.actor.tripId }),
+      expect.arrayContaining([
+        expect.objectContaining({ command: "CREATE_ITEM", admission: expect.objectContaining({ mode: "MANUAL" }) }),
+        expect.objectContaining({ command: "RECONCILE_ITEM_DOCUMENTS" }),
+      ]),
+    );
+  },
+);
+
+it.each(["closed", "no manual", "no create command", "no person", "wrong account", "different family", "legacy P1", "unsupported P5"] as const)(
+  "rejects NEW before enqueue when the authoritative eligibility is %s",
+  async (reason) => {
+    const f = fixture();
+    const kind: "P1" | "P5" | "P6" = reason === "legacy P1" ? "P1" : reason === "unsupported P5" ? "P5" : "P6";
+    const candidate = { ...f.candidate, kind };
+    const actor = {
+      ...f.actor,
+      ...(reason === "no person" ? { personId: null } : {}),
+      ...(reason === "wrong account" ? { accountId: randomUUID() } : {}),
+    };
+    native.account.mockResolvedValue(f.actor.accountId);
+    native.getTrip.mockResolvedValue({ syncFormatVersion: 1 });
+    native.snapshot.mockResolvedValue({ ...f.snapshot(), actor });
+    native.capabilities.mockResolvedValue({
+      ...f.capabilities,
+      enabledFamilies: reason === "different family" ? ["P3"] : [kind],
+      ...(reason === "closed" ? coreClosedCapabilities : {}),
+      ...(reason === "no manual" ? { enabledAdmissionModes: [] } : {}),
+      ...(reason === "no create command" ? { enabledCommands: ["SET_ITEM_TEXT"] } : {}),
+    });
+    native.enqueue.mockClear();
+    native.enqueueDocuments.mockClear();
+    const review = await openUniversalV3Review(f.model);
+    expect(review.actions(candidate).NEW).toBe(false);
+    await expect(review.confirm(candidate, { action: "NEW" })).rejects.toThrow();
+    expect(native.enqueue).not.toHaveBeenCalled();
+    expect(native.enqueueDocuments).not.toHaveBeenCalled();
+  },
+);
