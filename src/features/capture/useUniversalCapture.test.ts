@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { useUniversalCapture } from "./useUniversalCapture";
+import { readLocalSession } from "@/data/auth/authRepository";
 const h = vi.hoisted(() => ({
   slots: [] as unknown[],
   cursor: 0,
@@ -10,6 +11,7 @@ const h = vi.hoisted(() => ({
   recover: vi.fn(),
   start: vi.fn(),
   transport: vi.fn(),
+  stageV3: vi.fn(),
   consent: vi.fn(),
   sourcePrepare: vi.fn(),
   pngPrepare: vi.fn(),
@@ -55,6 +57,9 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/auth/authRepository", () => ({ readLocalSession: vi.fn() }));
 vi.mock("@/data/api/universalImportTransport", () => ({
   createUniversalImportTransport: h.transport,
+}));
+vi.mock("@/data/operations/universalV3Capture", () => ({
+  stageLocalFirstCapture: h.stageV3,
 }));
 vi.mock("@/data/operations/universalCaptureConsumer", () => ({
   createUniversalCaptureConsumer: (options: any) => {
@@ -436,4 +441,46 @@ it.each([false, true])("restores the existing PNG continuation only under its ex
   visible = false;
   await expect(options.preparePngOriginal(context, input)).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
   expect(h.pngPrepare).toHaveBeenCalledOnce();
+});
+
+
+it("honors an explicit V3 Analyze once when tapped during the passive status read", async () => {
+  for (const flag of ["LOCAL_FIRST", "CONTINUOUS", "PDF", "PNG"])
+    vi.stubEnv(`EXPO_PUBLIC_OTR_UNIVERSAL_${flag}_ENABLED`, "true");
+  vi.mocked(readLocalSession)
+    .mockResolvedValueOnce({ identity: { userId: "qa" } } as never)
+    .mockResolvedValueOnce({ identity: { userId: "qa" } } as never);
+  let finishRead!: () => void;
+  const post = vi.fn();
+  const read = vi.fn();
+  h.transport.mockImplementationOnce((_account, options: { signal: AbortSignal }) => {
+    read.mockImplementationOnce(() => new Promise((resolve, reject) => {
+      finishRead = () => resolve(null);
+      options.signal.addEventListener("abort", () => reject(Error("REQUEST_CANCELED")), { once: true });
+    }));
+    read.mockResolvedValueOnce({ state: "PROCESSING", taskId: "task" });
+    return {
+      localFirstCapability: async () => ({ localFirst: true, existing: null }),
+      readLocalFirstExecution: read,
+      startLocalFirst: () => {
+        options.signal.throwIfAborted();
+        post();
+      },
+    };
+  });
+  h.stageV3.mockImplementationOnce(async (_context, _model, deps) => {
+    await deps.transport.startLocalFirst();
+  });
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(read).toHaveBeenCalledTimes(1);
+  expect(Harness().canStartDuringRead).toBe(true);
+  await Harness().start();
+  await Harness().start();
+  finishRead();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.stageV3).toHaveBeenCalledTimes(1);
+  expect(post).toHaveBeenCalledTimes(1);
+  expect(Harness().unavailable).toBe(false);
+  expect(Harness().localFirst?.state).toBe("PROCESSING");
 });

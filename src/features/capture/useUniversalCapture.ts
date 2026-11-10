@@ -89,7 +89,11 @@ export function useUniversalCapture(
       if (execute && !executing.current && !deferredStart.current) {
         deferredStart.current = true;
         setStartPending(true);
-        if (retainedStartEnabled) controller.current?.abort();
+        if (retainedStartEnabled &&
+            (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" ||
+              localFirstTransport.current === false)) {
+          controller.current?.abort();
+        }
       }
       return;
     }
