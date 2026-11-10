@@ -1,4 +1,56 @@
-## Shared Mobile DEV execution autonomy — 10 November 2026
+## Ordinary Import V3 on shared DEV — 10 November 2026
+
+Response custody fix `9c84ec8` is live on image `5ac7bbba` and Backend
+`7f4e4b5c`. The image-only replacement retained Caddy, environment,
+the original Task SQLite and rollback CID `fd96fee3`. Independent readback
+matched the full hashes of the original QA178 UNKNOWN Task `04d871a5`
+and Attempt `66ebb5af` across the restart. The new container logged zero
+dispatches for the original Task. QA178 previously made one real DeepSeek
+call. Its response was lost during strict custody validation. Review and
+Save for that attempt remain unavailable. Its UNKNOWN state is retained.
+
+The separately authorized synthetic batch `3380b730` reached Review from
+one real DeepSeek call (HTTP 200, 1,013 tokens, 9.33 s from Backend acceptance
+to dispatch, 2.78 s Provider response). QA179 is installed and restored the
+same batch and Review on cold launch. Image intake change `839b6c9` removes
+per-image OCR, relevance checks and confirmation for ordinary V3 Analyze.
+The removal was verified on QA179. The real call above used QA178.
+
+QA179 confirmed the P3 hotel Save once. Independent PG readback confirmed
+two LOCAL_ONLY document metadata receipts. As of 15:02 NZDT, Item operation
+`7933dfbd` and association operation `107d65e1` had no server receipt.
+The QA179 Review eligibility patch is committed as `20cdfd2`. Cloud-only
+MANUAL CREATE_ITEM queue selection, submission and readback are fixed in
+candidate `c452b45` (225 targeted tests passed). The candidate has not been
+installed. The PDF Workshop is a valid P1 Plan candidate. QA179 still did
+not offer its NEW action on this Trip.
+
+Work paused at the 10 November handoff. Resume by building and installing
+the candidate in place, keeping the QA179 account, SQLite and original queue.
+Use normal sync to continue the two original operation IDs. Verify the Item
+and both Document associations by receipt and independent PG readback, then
+verify cold recovery. Do not repeat Analyze or Confirm.
+
+The initial combined release used source `8aeeb6dc`, image `77343b54`
+and Backend `fbc265f7`. The ordinary V3 routes, anonymous rejection, Backend health,
+unchanged SQLite inode and released Writer passed independent Host readback.
+Retained Backend `0e935f26` is stopped and available for rollback. The
+two Core MANUAL predicates committed and all seven catalog checks passed
+independent LinkedPG readback. The original QA178 account is a normal linked
+Owner with an existing Core read-state row.
+
+## Earlier closed-state and deployment preparation — 10 November 2026
+
+Owner's original approval for V3 package `f2c9fb3e…` was read through the
+installed Codex App Server and checked against the sealed manifest. The new
+forward-send check revalidates the live approval, package files and Writer
+before the existing LinkedPG transport can send. The real DEV Writer was
+acquired, used for a guarded read-only PostgreSQL identity check, and released.
+The same-image priced runtime and Trip-only Caddy postimages were derived
+from the real closed baseline, and the installed Caddy binary validated the
+matchers. They still need to be consumed by the production stage and hard-close
+path under the same Writer. SQL writes, DeepSeek dispatch and QA178 execution
+remain pending.
 
 The existing Writer closed-release entry now accepts feature-neutral packets
 with pinned Host, image, archive, preimages and independent readback. It has
