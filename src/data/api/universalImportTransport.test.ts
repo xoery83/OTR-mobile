@@ -526,3 +526,32 @@ it("transports Local-First metadata and binary without legacy execution", async 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+
+it("reads the idle ordinary V3 analysis through the installed client's bounded transport", async () => {
+  const account = randomUUID(), trip = randomUUID(), analysis = randomUUID();
+  const identity = { id: account, accountClass: "NORMAL_ACCOUNT" as const };
+  const status = vi.fn(async () => null);
+  const start = vi.fn();
+  const handle = createDevBackendHandler({
+    gateway: {
+      validateAccessToken: async () => identity,
+      canReadTrip: async (id: string, t: string) => id === account && t === trip,
+      canWriteTrip: async (id: string, t: string) => id === account && t === trip,
+    } as DevBackendGateway,
+    universalV3Intake: {} as never,
+    universalV3Execution: { ordinary: true, read: status, start } as never,
+  });
+  const getAccountId = async () => account;
+  const context = await captureAccountRequestContext(trip, getAccountId);
+  const transport = createUniversalImportTransport(getAccountId, {
+    baseUrl: "https://api.example",
+    fetchImplementation: (async (url, init) => handle(new Request(url, init))) as typeof fetch,
+    tokenProvider: async () => ({ userId: account, token: "synthetic" }),
+  });
+  await expect(transport.readLocalFirstExecution(context, analysis)).resolves.toEqual({ state: "NEEDS_ACTION" });
+  expect(status).toHaveBeenCalledOnce();
+  status.mockRejectedValueOnce(Error("FIXTURE_STORE_UNAVAILABLE"));
+  await expect(transport.readLocalFirstExecution(context, analysis)).rejects.toBeInstanceOf(ApiClientError);
+  expect(start).not.toHaveBeenCalled();
+});

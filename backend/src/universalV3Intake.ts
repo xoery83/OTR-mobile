@@ -399,11 +399,16 @@ export async function universalV3IntakeBoundary(
     return reply(code);
   }
   if (request.method === "GET") {
-    const found =
-      url.searchParams.get("execution") === "1"
-        ? await execution?.read(scope, request)
-        : await intake.read(scope);
-    return found ? Response.json(found, { headers }) : reply(404);
+    const readsExecution = url.searchParams.get("execution") === "1";
+    const found = readsExecution
+      ? await execution?.read(scope, request)
+      : await intake.read(scope);
+    if (found) return Response.json(found, { headers });
+    // The installed client cannot distinguish the empty execution 404 from an API failure.
+    if (readsExecution && execution?.ordinary &&
+        canWriteTrip && await canWriteTrip(actor, tripId.data))
+      return Response.json({ state: "NEEDS_ACTION" }, { headers });
+    return reply(404);
   }
   if (request.method !== "POST") return reply(405);
   if (request.headers.get("Idempotency-Key") !== scope.analysisId) return reply(400);
