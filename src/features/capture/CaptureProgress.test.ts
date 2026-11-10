@@ -23,6 +23,7 @@ const state = vi.hoisted(() => ({
   scrollProps: null as any,
   scrollTo: vi.fn(),
   detailsOpen: false,
+  legacyPhotoScope: null as string | null,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -30,7 +31,10 @@ vi.mock("react", async (original) => ({
     state.universalViews.push(props);
     return createElement("aside");
   },
-  useState: () => [
+  useState: (initial: unknown) => initial === null ? [
+    state.legacyPhotoScope,
+    (value: string | null) => { state.legacyPhotoScope = value; },
+  ] : [
     state.detailsOpen,
     (value: boolean | ((open: boolean) => boolean)) => {
       state.detailsOpen = typeof value === "function" ? value(state.detailsOpen) : value;
@@ -73,6 +77,7 @@ beforeEach(() => {
   state.universalViews = [];
   state.scrollTo.mockClear();
   state.detailsOpen = false;
+  state.legacyPhotoScope = null;
   setUiLocale("en");
 });
 afterEach(() => {
@@ -691,4 +696,47 @@ it("gives the current Results view one shared original list while preserving all
   expect(html).toContain("two.pdf");
   expect(html).toContain(t("capture.ai.submittedText"));
   expect(html.split(t("capture.ai.originals"))).toHaveLength(2);
+});
+
+
+it("shows per-image controls only when the actual analysis route resolves to legacy", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED", "true");
+  const f = fixture();
+  const request = f.request(1);
+  const input = request.inputs[0];
+  input.kind = "IMAGE";
+  input.acquisitionSource = "photos";
+  input.declaredContentType = "image/jpeg";
+  input.originalFilename = "retained.jpg";
+  await f.submissions.submit(request, new Map([
+    [input.id, async () => ({ bytes: Uint8Array.of(255, 216, 255, 1, 2) })],
+  ]));
+  const model = {
+    ...await f.submissions.reopen(request.jobId),
+    assignedTripId: randomUUID(),
+  };
+  expect(model.allInputsAccepted).toBe(true);
+  const props = {
+    model,
+    accountId: await f.getAccount(),
+    busy: false,
+    reading: false,
+    error: false,
+    canRetry: false,
+    onRetry: vi.fn(),
+    onRecover: vi.fn(),
+    onOpenJob: vi.fn(),
+    onActivity: vi.fn(),
+    onNewImport: vi.fn(),
+    isCurrent: () => true,
+    photoRelevanceCopy: { title: "Local photo controls" } as import("./UniversalPhotoRelevanceRow").UniversalPhotoRelevanceCopy,
+  };
+  const render = () => renderToStaticMarkup(createElement(CaptureProgress, props));
+  const unresolved = render();
+  expect(unresolved).toContain("retained.jpg");
+  expect(unresolved).not.toContain("Local photo controls");
+  state.universalViews.at(-1).onLegacyPhotoReview(true);
+  expect(render()).toContain("Local photo controls");
+  state.universalViews.at(-1).onLegacyPhotoReview(false);
+  expect(render()).not.toContain("Local photo controls");
 });

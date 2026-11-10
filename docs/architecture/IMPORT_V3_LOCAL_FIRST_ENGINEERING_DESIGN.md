@@ -146,6 +146,8 @@ sequenceDiagram
 
 ### 图片与 PDF 处理
 
+用户明确点击 Analyze 后，已选批次内受支持的图片直接进入 V3 分析。App 不执行逐图本机 OCR、相关性判断或确认；单独的照片上传入口和旧 Import 路径沿用原规则。
+
 Backend 复用一个受限、无网络、无业务凭据的准备入口。PDF 使用现有提取工具逐页取文本，跨页保持顺序，标明提取不完整。扫描页缺文字时明确提醒改用有文本的 PDF 或选取单独支持的图片，不把自动栅格化、视觉 OCR 或页级证明纳入默认路径。JPEG、PNG、WebP、GIF 用有界签名/解码检查及必要的静态化、方向和尺寸处理。临时处理只服务模型输入，结果不保存页码、字符偏移或像素区域证明。
 
 本地实现选用独立镜像内固定的 Sharp/libvips，由同一个无网络、无挂载的短进程解码上述四种格式。依赖仅安装在该镜像内。输入最多 12 MiB、16 MP、单边 8,192 px。副本去除元数据并按 EXIF 自动校正方向，非透明内容输出至多 1,536 px 的 JPEG，透明内容输出至多 1,024 px 的 PNG，单份最多 2 MiB。动画及格式不匹配会拒绝；原件保留。这个取舍限制内存与 Provider 请求体，同时增加一个需要封存的隔离镜像制品。历史 PNG Worker 的镜像与合同沿用原路径。 [Sharp 输入合同](https://sharp.pixelplumbing.com/api-constructor/) · [Sharp 元数据合同](https://sharp.pixelplumbing.com/api-input/)

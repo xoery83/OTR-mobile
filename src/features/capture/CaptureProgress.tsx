@@ -9,7 +9,7 @@ import {
   type UniversalPhotoRelevanceCopy,
 } from "./UniversalPhotoRelevanceRow";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import { UiButton, UiText } from "@/ui/controls";
@@ -63,6 +63,15 @@ export function CaptureProgress({
   const styles = useThemedStyles(createStyles);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [qaPrepareState, setQaPrepareState] = useState("IDLE");
+  const [legacyPhotoScope, setLegacyPhotoScope] = useState<string | null>(null);
+  const trip = model?.batch.context.tripPrior?.id ?? model?.assignedTripId;
+  const universalScope = model
+    ? `${model.batch.accountId}:${model.batch.batchId}:${trip ?? ""}`
+    : null;
+  const reportLegacyPhotoReview = useCallback(
+    (enabled: boolean) => setLegacyPhotoScope(enabled ? universalScope : null),
+    [universalScope],
+  );
   const qaPreparing = useRef(false);
   const scroll = useRef<ScrollView>(null);
   const position = useRef({ y: 0, height: 0, contentHeight: 0 });
@@ -82,6 +91,9 @@ export function CaptureProgress({
     error = true;
   }
   const hasUniversalReader = Boolean(isCurrent && model?.allInputsAccepted);
+  const canSelectV3 = hasUniversalReader && !!trip &&
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true";
+  const showLegacyPhotoReview = !canSelectV3 || legacyPhotoScope === universalScope;
   const body = (
     <ScrollView
       ref={scroll}
@@ -168,7 +180,8 @@ export function CaptureProgress({
                 originalsListedElsewhere
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
-                key={`${model.batch.accountId}:${model.batch.batchId}:${model.batch.context.tripPrior?.id ?? model.assignedTripId ?? ""}`}
+                key={universalScope}
+                onLegacyPhotoReview={reportLegacyPhotoReview}
                 model={model}
                 isCurrent={isCurrent}
               />
@@ -278,7 +291,7 @@ export function CaptureProgress({
                       : "capture.pending",
                 )}
               </UiText>
-              {photoRelevanceCopy && isCurrent && model && !reading && !error
+              {showLegacyPhotoReview && photoRelevanceCopy && isCurrent && model && !reading && !error
                 ? (() => {
                     const input = model.inputs.find((input) => input.id === item.inputId);
                     return input &&

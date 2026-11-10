@@ -18,10 +18,11 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { useUniversalCapture } from "./useUniversalCapture";
-import { lazy, Suspense } from "react";
-const UniversalV3Review = lazy(() => import("./UniversalV3Review").then(({ UniversalV3Review }) => ({ default: UniversalV3Review })));
+import { lazy, Suspense, useEffect } from "react";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 import { AppIcon } from "@/components/AppIcon";
+
+const UniversalV3Review = lazy(() => import("./UniversalV3Review").then(({ UniversalV3Review }) => ({ default: UniversalV3Review })));
 
 export function UniversalCaptureResults({
   model,
@@ -29,14 +30,19 @@ export function UniversalCaptureResults({
   readTripTargets,
   onOpenAcceptedItem,
   originalsListedElsewhere = false,
+  onLegacyPhotoReview,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   originalsListedElsewhere?: boolean;
+  onLegacyPhotoReview?(enabled: boolean): void;
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
+  useEffect(() => {
+    onLegacyPhotoReview?.(state.localFirstSelected === false);
+  }, [onLegacyPhotoReview, state.localFirstSelected]);
   const admission = useUniversalP1Admission(model, isCurrent, state.result);
   if (state.localFirstSelected) {
     const processing = state.localFirst?.state === "PROCESSING";

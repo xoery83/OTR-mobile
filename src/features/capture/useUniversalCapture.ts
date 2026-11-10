@@ -18,7 +18,9 @@ export function useUniversalCapture(
   isCurrent: () => boolean,
 ) {
   const [localFirst, setLocalFirst] = useState<UniversalV3ExecutionStatus | null>(null);
-  const [localFirstSelected, setLocalFirstSelected] = useState(false);
+  const [localFirstSelected, setLocalFirstSelected] = useState<boolean | null>(
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" ? null : false,
+  );
   const [activity, setActivity] = useState<UniversalTaskActivity | null>(null);
   const [result, setResult] = useState<UniversalImportResult | null>(null);
   const [busy, setBusy] = useState(false),
@@ -133,10 +135,10 @@ export function useUniversalCapture(
           if (!current()) return;
           localFirstTransport.current = capability.localFirst
             ? { context, transport, accountId } : false;
+          setLocalFirstSelected(capability.localFirst);
           if (capability.localFirst) {
             localFirstState.current = capability.existing;
             setLocalFirst(capability.existing);
-            setLocalFirstSelected(true);
           }
         }
         const v3 = localFirstTransport.current;

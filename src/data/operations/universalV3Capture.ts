@@ -1,4 +1,3 @@
-import { assertDefaultUniversalV3PhotoConsent } from "./defaultUniversalPhotoConsent";
 import { localImportDocumentId } from "../../domain/trip/universalImportIdentity";
 import {
   assertAccountRequestContext,
@@ -28,7 +27,11 @@ export async function stageLocalFirstCapture(
     >;
   },
 ) {
-  const current = () => assertAccountRequestContext(context, deps.accountId);
+  const current = async () => {
+    deps.assertCurrent();
+    await assertAccountRequestContext(context, deps.accountId);
+    deps.assertCurrent();
+  };
   const tripPrior = model.batch.context?.tripPrior?.id;
   await current();
   if (
@@ -81,10 +84,7 @@ export async function stageLocalFirstCapture(
         files.findIndex((entry) => entry.documentId === file.documentId) === index,
     ),
   });
-  await assertDefaultUniversalV3PhotoConsent(context, model, {
-    getAccountId: deps.accountId,
-    assertCurrent: deps.assertCurrent,
-  });
+  await current();
   const analysis = model.batch.batchId;
   const intake = await deps.transport.startLocalFirst(context, analysis, manifest);
   for (const missing of intake.missingFiles) {

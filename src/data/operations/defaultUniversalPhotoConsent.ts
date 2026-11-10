@@ -8,7 +8,7 @@ import {
 } from "../repositories/defaultLocalCaptureInboxRepository";
 import { createCapturePhotoImportDecisionRepository } from "../repositories/capturePhotoImportDecisionRepository";
 import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
-import { assertPngPhotoConsent, assertV3PhotoConsent } from "./universalPhotoConsent";
+import { assertPngPhotoConsent } from "./universalPhotoConsent";
 
 type Options = { getAccountId(): Promise<string>; assertCurrent(): void };
 
@@ -32,22 +32,6 @@ export async function assertDefaultUniversalPhotoConsent(
   );
   options.assertCurrent();
   return pin;
-}
-
-export async function assertDefaultUniversalV3PhotoConsent(
-  context: AccountRequestContext,
-  model: CaptureJobReadModel,
-  options: Options,
-) {
-  if (
-    !model.inputs.some(
-      (input) =>
-        input.kind === "IMAGE" || input.declaredContentType?.startsWith("image/"),
-    )
-  )
-    return;
-  await assertV3PhotoConsent(context, model, await photoConsentDependencies(options));
-  options.assertCurrent();
 }
 
 async function photoConsentDependencies(options: Options) {
