@@ -1108,3 +1108,52 @@ it("PROCESSING with attempt_count zero is original receipt recovery, never an un
     operationId: i.row.id,
   });
 });
+
+it.each(["P3", "P6", "P1", "GROUP", "NOT_READY"])(
+  "selects only the retained, ready private SELF P3/P6 cloud-only create (%s)",
+  async (variant) => {
+    const f = fixture();
+    const operationId = randomUUID();
+    const itemId = randomUUID();
+    const defaults = coreDefaults("member");
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: variant === "P6" || variant === "P1" ? variant : "P3",
+        core: { title: "Retained review" },
+        schedule: { start: coreDateBoundary("2026-11-02"), end: coreDateBoundary("2026-11-03") },
+        participation: { ...defaults.participation, selfPersonId: randomUUID() },
+        acl: { ...defaults.acl, visibility: variant === "GROUP" ? "GROUP" : "PRIVATE" },
+      },
+    };
+    f.deps.database.getAllAsync.mockReset().mockResolvedValueOnce([]).mockResolvedValue([{
+      ...f.create,
+      id: operationId,
+      idempotency_key: operationId,
+      entity_id: itemId,
+      entity_type: "TRIP_CORE_V2",
+      operation_type: "CORE_V2_COMMAND",
+      payload_json: JSON.stringify(command),
+      attempt_count: 0,
+      intent_state: "PENDING",
+    }]);
+    f.deps.participantsReady.mockResolvedValue(variant !== "NOT_READY");
+    await f.run();
+    if (variant === "P3" || variant === "P6") {
+      expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
+        accountId: f.accountId, tripId: f.tripId, operationId,
+      });
+    } else {
+      expect(f.deps.runP1).not.toHaveBeenCalled();
+    }
+    expect(f.deps.runCreate).not.toHaveBeenCalled();
+    expect(f.deps.isManualItem).not.toHaveBeenCalled();
+  },
+);

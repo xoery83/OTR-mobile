@@ -82,6 +82,29 @@ export function isManualLocalDocumentCommand(command: CoreCommand) {
     payload.add.every((id) => command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id));
 }
 
+// The historical-Trip Review emits only private, self-owned P3/P6 creates.
+export function cloudManualCreatePerson(command: CoreCommand): string | null {
+  if (
+    command.command !== "CREATE_ITEM" ||
+    command.target.kind !== "ITEM" ||
+    command.admission.mode !== "MANUAL" ||
+    command.baseVector.length !== 1
+  ) return null;
+  const [base] = command.baseVector;
+  if (base.kind !== "ITEM" || base.id !== command.target.id || base.revision !== null)
+    return null;
+  const { family, participation, acl } = command.payload as {
+    family: string;
+    participation: { mode: string; selfPersonId: string | null; people: unknown[] };
+    acl: { visibility: string; people: unknown[] };
+  };
+  return (family === "P3" || family === "P6") &&
+    participation.mode === "SELF" && participation.people.length === 0 &&
+    acl.visibility === "PRIVATE" && acl.people.length === 0
+    ? participation.selfPersonId
+    : null;
+}
+
 export function isManualAcceptedEditCommand(
   command: CoreCommand,
   family?: (typeof acceptedEditFamilies)[number],
@@ -106,15 +129,12 @@ export function isManualP6EditCommand(command: CoreCommand) {
   return isManualAcceptedEditCommand(command, "P6");
 }
 export function cloudManualP6EditCommand(operation: Row): CoreCommand | null {
-  const command = cloudManualAcceptedEditCommand(operation);
+  const command = cloudCommand(operation, true);
   return command && isManualP6EditCommand(command) ? command : null;
-}
-function cloudManualAcceptedEditCommand(operation: Row): CoreCommand | null {
-  return cloudCommand(operation, true);
 }
 function cloudCommand(
   operation: Row,
-  manualEdit: boolean,
+  manual: boolean,
   instruction = false,
 ): CoreCommand | null {
   try {
@@ -128,8 +148,9 @@ function cloudCommand(
       command.target.id !== operation.entity_id ||
       (command.target.kind !== "ITEM" && !isManualLocalDocumentCommand(command) &&
         !(instruction && isManualInstructionEditCommand(command))) ||
-      !(manualEdit
+      !(manual
         ? isManualAcceptedEditCommand(command) || isManualLocalDocumentCommand(command) ||
+          !!cloudManualCreatePerson(command) ||
           (instruction && isManualInstructionEditCommand(command))
         : isReviewedSourceCreate(command))
     )
@@ -395,7 +416,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         if (!blockedTripIds.includes(row.trip_id)) blockedTripIds.push(row.trip_id);
       }
     }
-    // Authorized cloud-only edits and reviewed Source Creates reuse the exact existing queue.
+    // Authorized cloud-only Manual and reviewed Source commands reuse the exact existing queue.
     const sourceRows = await deps.database.getAllAsync<Row>(
       cloudSourceP1QueueSql,
       scope.accountId,
@@ -406,7 +427,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
       const instruction = deps.instructionSubmissionEnabled?.()
         ? cloudManualInstructionCommand(operation)
         : null;
-      const manual = cloudManualAcceptedEditCommand(operation) ?? instruction;
+      const manual = cloudCommand(operation, true) ?? instruction;
       const command =
         manual ?? (adopted.manualOnly ? null : cloudSourceP1Command(operation));
       if (!command) continue;
@@ -429,7 +450,8 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             !(await deps.isManualItem(operation.trip_id, parent.parentItemId, "P3"))
           )
             continue;
-        } else if (manual && !recovering && !isManualLocalDocumentCommand(command)) {
+        } else if (manual && !recovering &&
+          !isManualLocalDocumentCommand(command) && !cloudManualCreatePerson(command)) {
           let eligible = false;
           for (const family of acceptedEditFamilies) {
             if (

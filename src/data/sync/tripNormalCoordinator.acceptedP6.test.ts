@@ -1,4 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { coreClosedCapabilities } from "@/domain/trip/tripCoreV2Commands";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { createNativeNormalTripSyncRunner } from "./tripNormalCoordinator";
@@ -399,4 +401,102 @@ it("normal Coordinator preserves Instruction receipt-first recovery after parent
   expect(f.capabilities).not.toHaveBeenCalled();
   expect(f.submit).not.toHaveBeenCalled();
   expect(f.apply).toHaveBeenCalledOnce();
+});
+
+it.each(["fresh", "lost-response", "wrong-person", "inactive", "uncertified"])(
+  "resumes the retained cloud-only P3 create with receipt-first and actor fences (%s)",
+  async (variant) => {
+    const defaults = coreDefaults("member");
+    const personId = "10000000-0000-4000-8000-000000000005";
+    const accepted = snapshot("P3");
+    f.accepted.mockResolvedValue({
+      ...accepted,
+      certificate: variant === "uncertified" ? null : accepted.certificate,
+      actor: {
+        ...accepted.actor,
+        active: variant !== "inactive",
+        personId: variant === "wrong-person" ? itemId : personId,
+      },
+      graph: { itinerary_events: [] },
+    });
+    f.first.mockResolvedValue({ create_operation_id: null });
+    f.command = {
+      ...f.command,
+      command: "CREATE_ITEM",
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      payload: {
+        family: "P3",
+        core: { title: "Retained stay" },
+        schedule: { start: coreDateBoundary("2026-11-02"), end: coreDateBoundary("2026-11-03") },
+        ...defaults,
+        participation: { ...defaults.participation, selfPersonId: personId },
+      },
+    };
+    f.operation.payloadJson = JSON.stringify(f.command);
+    f.capabilities.mockResolvedValue({
+      ...coreClosedCapabilities,
+      activationState: "ENABLED",
+      enabledCommands: ["CREATE_ITEM"],
+      enabledAdmissionModes: ["MANUAL"],
+      enabledFamilies: ["P3"],
+    });
+    if (variant === "lost-response") {
+      f.receipt.mockResolvedValue({
+        projection: "FULL", domainReceiptId: operationId, receipt: { outcome: "APPLIED" },
+      });
+    }
+    if (variant === "fresh" || variant === "lost-response") {
+      await run();
+      expect(f.receipt).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ accountId, tripId }), operationId);
+      if (variant === "fresh") {
+        expect(f.receipt).toHaveBeenCalledBefore(f.submit);
+        expect(f.submit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ accountId, tripId }), f.command);
+      } else {
+        expect(f.submit).not.toHaveBeenCalled();
+      }
+      expect(f.refresh).toHaveBeenCalledOnce();
+      expect(await f.ready!(tripId, f.command)).toBe(true);
+    } else {
+      await expect(run()).rejects.toThrow("CORE_FRESH_ACCEPTED_CREATE_UNAVAILABLE");
+      expect(f.submit).not.toHaveBeenCalled();
+      expect(f.refresh).not.toHaveBeenCalled();
+    }
+  },
+);
+
+it.each([false, true])("uses the original P3 document link once the accepted parent exists (%s)", async (ready) => {
+  const documentId = "10000000-0000-4000-8000-000000000006";
+  const accepted = snapshot("P3", accountId, 1);
+  f.accepted.mockResolvedValue({
+    ...accepted,
+    graph: {
+      itinerary_events: ready ? accepted.graph.itinerary_events : [],
+      trip_operational_documents: [{ id: documentId, revision: 1 }],
+    },
+  });
+  f.command = {
+    ...f.command,
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    baseVector: [
+      { kind: "DOCUMENT", id: documentId, revision: 1 },
+      { kind: "ITEM", id: itemId, revision: 1 },
+    ],
+    payload: { add: [documentId], remove: [] },
+  };
+  f.operation.payloadJson = JSON.stringify(f.command);
+  f.capabilities.mockResolvedValue({
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["RECONCILE_ITEM_DOCUMENTS"],
+    enabledAdmissionModes: ["MANUAL"],
+    enabledFamilies: ["P3"],
+  });
+  if (!ready) {
+    await expect(run()).rejects.toThrow("CORE_DOCUMENT_DEPENDENCY_PENDING");
+    expect(f.submit).not.toHaveBeenCalled();
+    return;
+  }
+  await run();
+  expect(f.submit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ accountId, tripId }), f.command);
+  expect(f.refresh).toHaveBeenCalledOnce();
 });

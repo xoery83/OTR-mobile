@@ -22,6 +22,7 @@ import {
   isManualAcceptedEditCommand,
   isManualInstructionEditCommand,
   isManualLocalDocumentCommand,
+  cloudManualCreatePerson,
   acceptedEditFamilies,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
@@ -274,6 +275,7 @@ export function createNativeNormalTripSyncRunner(
                 context.tripId,
               );
               await assertAccountRequestContext(account, requireActiveUserId);
+              const createPerson = cloudManualCreatePerson(command);
               if (isManualInstructionEditCommand(command)) {
                 const parent = await instructionParent(context.tripId, command);
                 if (
@@ -283,6 +285,17 @@ export function createNativeNormalTripSyncRunner(
                   throw Error("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
                 if (!instructionSubmissionEnabled())
                   throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
+              } else if (!local?.create_operation_id && createPerson) {
+                const snapshot = await core.acceptedSnapshot(context);
+                await assertAccountRequestContext(context, requireActiveUserId);
+                if (
+                  !snapshot?.certificate ||
+                  !snapshot.actor.active ||
+                  snapshot.actor.accountId !== context.accountId ||
+                  snapshot.actor.tripId !== context.tripId ||
+                  snapshot.actor.personId !== createPerson
+                )
+                  throw Error("CORE_FRESH_ACCEPTED_CREATE_UNAVAILABLE");
               } else if (
                 !local?.create_operation_id &&
                 !isReviewedSourceCreate(command) &&
@@ -384,7 +397,9 @@ export function createNativeNormalTripSyncRunner(
               if (
                 !isReviewedSourceCreate(command) &&
                 !isManualAcceptedEditCommand(command) &&
-                !isManualInstructionEditCommand(command)
+                !isManualInstructionEditCommand(command) &&
+                !isManualLocalDocumentCommand(command) &&
+                !cloudManualCreatePerson(command)
               )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
@@ -462,6 +477,8 @@ export function createNativeNormalTripSyncRunner(
               )
           )
             return false;
+          // The private SELF create is bound to the accepted Person at submit.
+          if (cloudManualCreatePerson(command)) return true;
           return p1SharedParticipantsReady(
             command,
             await persons.listTripPersons(tripId),
