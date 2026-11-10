@@ -538,7 +538,7 @@ it("reads the idle ordinary V3 analysis through the installed client's bounded t
       validateAccessToken: async () => identity,
       canReadTrip: async (id: string, t: string) => id === account && t === trip,
       canWriteTrip: async (id: string, t: string) => id === account && t === trip,
-    } as DevBackendGateway,
+    } as unknown as DevBackendGateway,
     universalV3Intake: {} as never,
     universalV3Execution: { ordinary: true, read: status, start } as never,
   });
