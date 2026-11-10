@@ -8,6 +8,7 @@ import { createDevBackendHandler, type DevBackendGateway } from "./app";
 import { initializeUniversalTaskDatabase } from "./universalTaskBootstrap";
 import { createUniversalV3Execution } from "./universalV3Execution";
 import { createUniversalV3Intake } from "./universalV3Intake";
+import { assertCustodyPayload } from "./externalIntegrationPersistence";
 
 type Stores = Parameters<typeof createUniversalV3Execution>[0]["stores"];
 type Pin = { reference: string; sha256: string; byteCount: number };
@@ -59,19 +60,24 @@ it.each(["review without usage", "unknown"] as const)(
       const retained = new Map<string, Pin>();
       const stores = {
         custody: {
-          async put(input: {
-            reservationId: string;
-            accountId: string;
-            bytes: Uint8Array;
-            sha256: string;
-          }) {
-            expect(sha(input.bytes)).toBe(input.sha256);
-            bytes.set(input.accountId + input.reservationId, input.bytes);
+          async put(input: Parameters<Stores["custody"]["put"]>[0]) {
+            const { bytes: payload, ...rawPin } = input;
+            const pin = assertCustodyPayload(rawPin, payload);
+            bytes.set(pin.accountId + pin.reservationId, payload);
+            return { reference: pin.reservationId };
           },
-          async read(input: { reference: string; accountId: string; sha256: string }) {
+          async read(input: Parameters<Stores["custody"]["read"]>[0]) {
             const found = bytes.get(input.accountId + input.reference);
-            if (!found || sha(found) !== input.sha256)
-              throw Error("FIXTURE_PRIVATE_CUSTODY");
+            if (!found) throw Error("FIXTURE_PRIVATE_CUSTODY");
+            assertCustodyPayload(
+              {
+                accountId: input.accountId,
+                reservationId: input.reference,
+                sha256: input.sha256,
+                byteCount: input.byteCount,
+              },
+              found,
+            );
             return found;
           },
         },

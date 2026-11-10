@@ -420,9 +420,10 @@ function ordinaryV3Custody(
         byteCount: input.bytes.length,
       };
       await stores.custody.put({
-        ...pin,
         accountId: scope.accountId,
         reservationId: callId,
+        sha256: pin.sha256,
+        byteCount: pin.byteCount,
         bytes: input.bytes,
       });
       await stores.retainRaw(scope.accountId, callId, pin, {
