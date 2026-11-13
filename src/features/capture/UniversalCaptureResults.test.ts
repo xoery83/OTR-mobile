@@ -817,10 +817,36 @@ it("shows a new V3 batch as awaiting Analyze rather than a processing failure", 
   } as never);
   const html = renderToStaticMarkup(
     createElement(UniversalCaptureResults, {
-      model: {} as CaptureJobReadModel,
+      model: { batch: { batchId: "v3-awaiting" } } as CaptureJobReadModel,
       isCurrent: () => true,
     }),
   );
-  expect(html).toContain(t("capture.ai.v3.needsAction"));
+  expect(html).toContain(t("capture.activityStatus.waiting"));
   expect(html).not.toContain(t("capture.ai.unavailable"));
+});
+
+it("offline capability discovery waits rather than showing endless processing or enabling Analyze", () => {
+  const start = vi.fn(),
+    recover = vi.fn();
+  vi.mocked(useUniversalCapture).mockReturnValue({
+    localFirstSelected: null,
+    unavailable: true,
+    busy: false,
+    start,
+    recover,
+  } as never);
+  const html = renderToStaticMarkup(
+    createElement(UniversalCaptureResults, {
+      model: { batch: { batchId: "offline" } } as CaptureJobReadModel,
+      isCurrent: () => true,
+    }),
+  );
+  expect(html).toContain(t("capture.activityStatus.waiting"));
+  expect(html).not.toContain(t("capture.jobLoading"));
+  expect(state.buttons.some((button) => button.label === t("capture.ai.process"))).toBe(
+    false,
+  );
+  state.buttons.find((button) => button.label === t("capture.ai.check"))!.onPress();
+  expect(recover).toHaveBeenCalledOnce();
+  expect(start).not.toHaveBeenCalled();
 });

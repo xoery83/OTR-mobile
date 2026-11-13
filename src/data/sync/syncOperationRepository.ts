@@ -760,12 +760,18 @@ const syncDiagnosticSchema = z.object({
 export async function readSyncOperationDiagnostics(
   database: Pick<SyncQueueDatabase, "getAllAsync">,
   accountId: string,
+  operationIds?: readonly string[],
 ) {
+  if (operationIds?.length === 0) return [];
+  if (operationIds && operationIds.length > 96)
+    throw Error("SYNC_DIAGNOSTIC_SCOPE_LIMIT");
   const rows = await database.getAllAsync(
     `SELECT id,entity_type AS entityType,operation_type AS operationType,
       status,failure_category AS failureCategory,updated_at AS updatedAt
-     FROM sync_operations WHERE owner_user_id=? ORDER BY updated_at DESC,id LIMIT 51`,
+     FROM sync_operations WHERE owner_user_id=?${operationIds ? ` AND id IN (${operationIds.map(() => "?").join(",")})` : ""}
+     ORDER BY updated_at DESC,id${operationIds ? "" : " LIMIT 51"}`,
     accountId,
+    ...(operationIds ?? []),
   );
   return rows.map((row) => syncDiagnosticSchema.parse(row));
 }

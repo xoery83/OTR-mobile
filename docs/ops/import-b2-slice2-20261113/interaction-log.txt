@@ -1,0 +1,613 @@
+
+2026-11-13T08:08:32.201Z Submit one local text batch; Analyze and Save untouched
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+28 text Description: On this device: 1 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import results, Secondary Actions: Cancel
+30 text Description: Review suggestions against your originals. Plans are added only when you confirm., Secondary Actions: Cancel
+31 text Description: Waiting for processing status…, Secondary Actions: Cancel
+32 button Description: Analyze saved materials, Secondary Actions: Cancel
+33 button (disabled) Description: Check processing status, Secondary Actions: Cancel
+34 button Description: Show processing details, Secondary Actions: Cancel
+35 heading Description: Original materials, Secondary Actions: Cancel
+36 text Description: Submitted text, Secondary Actions: Cancel
+37 text Description: Saved locally, Secondary Actions: Cancel
+38 button Description: Active Imports, Secondary Actions: Cancel
+39 button Description: New Import, Secondary Actions: Cancel
+69 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+77 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:08:48.130Z Local submit settled
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+28 text Description: On this device: 1 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import progress, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Waiting to analyze, Secondary Actions: Cancel
+32 text Description: Waiting for network or processing conditions. Analyze starts only when you choose it., Secondary Actions: Cancel
+33 heading Description: Import results, Secondary Actions: Cancel
+34 button Description: Analyze saved materials, Secondary Actions: Cancel
+35 button Description: Check processing status, Secondary Actions: Cancel
+36 button Description: Show processing details, Secondary Actions: Cancel
+37 heading Description: Original materials, Secondary Actions: Cancel
+38 text Description: Submitted text, Secondary Actions: Cancel
+39 text Description: Saved locally, Secondary Actions: Cancel
+40 button Description: Active Imports, Secondary Actions: Cancel
+41 button Description: New Import, Secondary Actions: Cancel
+71 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+79 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:09:12.803Z Close Activity returns to original Trip; does not cancel
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+28 text Description: On this device: 1 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import progress, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Waiting to analyze, Secondary Actions: Cancel
+32 text Description: Waiting for network or processing conditions. Analyze starts only when you choose it., Secondary Actions: Cancel
+33 heading Description: Import results, Secondary Actions: Cancel
+34 button Description: Analyze saved materials, Secondary Actions: Cancel
+35 button Description: Check processing status, Secondary Actions: Cancel
+36 button Description: Show processing details, Secondary Actions: Cancel
+37 heading Description: Original materials, Secondary Actions: Cancel
+38 text Description: Submitted text, Secondary Actions: Cancel
+39 text Description: Saved locally, Secondary Actions: Cancel
+40 button Description: Active Imports, Secondary Actions: Cancel
+41 button Description: New Import, Secondary Actions: Cancel
+71 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+79 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:09:46.132Z Close observed back at original Trip
+22 button Description: Choose cover, Secondary Actions: Cancel
+23 heading Description: Import Phase A 13 Nov, Secondary Actions: Cancel
+24 text Description: Nov 14, 2026 – Nov 15, 2026, Secondary Actions: Cancel
+25 text Description: This Trip summary is saved here. Planning details and actions are not available on this device yet., Secondary Actions: Cancel
+26 heading Description: Preparation, Secondary Actions: Cancel
+27 text Description: 3, Secondary Actions: Cancel
+28 text Description: 1, Secondary Actions: Cancel
+29 text Description: 3, Secondary Actions: Cancel
+30 text Description: Plans, Secondary Actions: Cancel
+31 text Description: Flights, Secondary Actions: Cancel
+32 text Description: Stays, Secondary Actions: Cancel
+33 heading Description: Recently added, Secondary Actions: Cancel
+34 button Description: Harbour QA Hotel, Secondary Actions: Cancel
+35 element Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+36 button Description: NZ1, Secondary Actions: Cancel
+37 button Description: Open Day, Secondary Actions: Cancel
+38 heading Description: Trip setup, Secondary Actions: Cancel
+39 button (disabled) Description: Destination (optional), Not set, Secondary Actions: Cancel
+40 button Description: Trip currency, NZD · Change, Secondary Actions: Cancel
+41 button Description: Trip cover, Change cover, Secondary Actions: Cancel
+42 heading Description: More, Secondary Actions: Cancel
+43 button Description: People, Named people: 0, Secondary Actions: Cancel
+44 text Description: Includes the creator when listed. Names do not indicate account connections or invitations., Secondary Actions: Cancel
+45 button (selected) Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+46 button Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+47 button Description: Ledger, Secondary Actions: Cancel
+48 button Description: Updates, Secondary Actions: Cancel
+49 button Description: Add to this trip, Secondary Actions: Cancel
+79 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+87 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:10:55.457Z Reopen through existing Recent submissions / Active Imports entry
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Active Imports, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Imports saved to this account, Secondary Actions: Cancel
+26 heading Description: Active Imports, Secondary Actions: Cancel
+27 text Description: Imports saved to this account, Secondary Actions: Cancel
+28 button Description: Refresh, Secondary Actions: Cancel
+29 heading Description: Import · 1 materials, Secondary Actions: Cancel
+30 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+31 button Description: View · Import · 1 materials, Secondary Actions: Cancel
+32 heading Description: Import · 3 materials, Secondary Actions: Cancel
+33 text Description: Boardwalk.gif, Secondary Actions: Cancel
+34 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+35 text Description: Nov 13, 2026 at 20:50:23, Secondary Actions: Cancel
+36 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+37 heading Description: Import · 3 materials, Secondary Actions: Cancel
+38 text Description: Travel plans.txt, Secondary Actions: Cancel
+39 text Description: Travel details.pdf, Secondary Actions: Cancel
+40 text Description: Boardwalk.webp, Secondary Actions: Cancel
+41 text Description: Nov 13, 2026 at 14:59:05, Secondary Actions: Cancel
+42 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+43 heading Description: Import · 3 materials, Secondary Actions: Cancel
+44 text Description: Boardwalk.gif, Secondary Actions: Cancel
+45 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+46 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+47 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+48 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+49 button Description: Back to Capture, Secondary Actions: Cancel
+50 button Description: Hide, Secondary Actions: Cancel
+80 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+88 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:11:28.061Z History facts after read-only observation
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Active Imports, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Imports saved to this account, Secondary Actions: Cancel
+26 heading Description: Active Imports, Secondary Actions: Cancel
+27 text Description: Imports saved to this account, Secondary Actions: Cancel
+28 button Description: Refresh, Secondary Actions: Cancel
+29 heading Description: Import · 1 materials, Secondary Actions: Cancel
+30 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+31 text Description: Waiting to analyze, Secondary Actions: Cancel
+32 button Description: View · Import · 1 materials, Secondary Actions: Cancel
+33 heading Description: Import · 3 materials, Secondary Actions: Cancel
+34 text Description: Boardwalk.gif, Secondary Actions: Cancel
+35 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+36 text Description: Nov 13, 2026 at 20:50:23, Secondary Actions: Cancel
+37 text Description: Waiting to analyze, Secondary Actions: Cancel
+38 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+39 heading Description: Import · 3 materials, Secondary Actions: Cancel
+40 text Description: Travel plans.txt, Secondary Actions: Cancel
+41 text Description: Travel details.pdf, Secondary Actions: Cancel
+42 text Description: Boardwalk.webp, Secondary Actions: Cancel
+43 text Description: Nov 13, 2026 at 14:59:05, Secondary Actions: Cancel
+44 text Description: Recognition ready · checking save receipts, Secondary Actions: Cancel
+45 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+46 heading Description: Import · 3 materials, Secondary Actions: Cancel
+47 text Description: Boardwalk.gif, Secondary Actions: Cancel
+48 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+49 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+50 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+51 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+52 button Description: Back to Capture, Secondary Actions: Cancel
+53 button Description: Hide, Secondary Actions: Cancel
+83 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+91 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:12:46.107Z Open original B1 Files batch; read receipts only
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:59:05, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import results, Secondary Actions: Cancel
+30 text Description: Review suggestions against your originals. Plans are added only when you confirm., Secondary Actions: Cancel
+31 text Description: Waiting for processing status…, Secondary Actions: Cancel
+32 button Description: Analyze saved materials, Secondary Actions: Cancel
+33 button (disabled) Description: Check processing status, Secondary Actions: Cancel
+34 button Description: Show processing details, Secondary Actions: Cancel
+35 heading Description: Original materials, Secondary Actions: Cancel
+36 text Description: Travel plans.txt, Secondary Actions: Cancel
+37 text Description: Saved locally, Secondary Actions: Cancel
+38 text Description: Travel details.pdf, Secondary Actions: Cancel
+39 text Description: Saved locally, Secondary Actions: Cancel
+40 text Description: Boardwalk.webp, Secondary Actions: Cancel
+41 text Description: Saved locally, Secondary Actions: Cancel
+42 button Description: Active Imports, Secondary Actions: Cancel
+43 button Description: New Import, Secondary Actions: Cancel
+73 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+81 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:13:10.270Z Original B1 Files activity settled
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:59:05, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import progress, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Recognition ready · checking save receipts, Secondary Actions: Cancel
+32 text Description: Suggestions are not saved Items. Existing receipts are being checked without resubmitting., Secondary Actions: Cancel
+33 text Description: 0 of 5 suggestions have verified Item and Document saves., Secondary Actions: Cancel
+34 text Description: Harbour Hotel, Secondary Actions: Cancel
+35 text Description: 2026-11-14 – 2026-11-15, Secondary Actions: Cancel
+36 text Description: 15:00 – 10:00, Secondary Actions: Cancel
+37 text Description: 20 Harbour Road, Secondary Actions: Cancel
+38 text Description: Source documents: 1, Secondary Actions: Cancel
+39 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+40 button Description: Check these details, Secondary Actions: Cancel
+41 text Description: Boardwalk walk, Secondary Actions: Cancel
+42 text Description: 2026-11-14, Secondary Actions: Cancel
+43 text Description: 17:30, Secondary Actions: Cancel
+44 text Description: Fern Quay, Secondary Actions: Cancel
+45 text Description: Source documents: 1, Secondary Actions: Cancel
+46 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+47 button Description: Check these details, Secondary Actions: Cancel
+48 text Description: NZ1, Secondary Actions: Cancel
+49 text Description: 2026-12-17, Secondary Actions: Cancel
+50 text Description: AKL → CHC, Secondary Actions: Cancel
+51 text Description: Source documents: 1, Secondary Actions: Cancel
+52 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+53 button Description: Check these details, Secondary Actions: Cancel
+54 text Description: NZ2, Secondary Actions: Cancel
+55 text Description: 2026-12-20, Secondary Actions: Cancel
+56 text Description: CHC → AKL, Secondary Actions: Cancel
+57 text Description: Source documents: 1, Secondary Actions: Cancel
+58 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+59 button Description: Check these details, Secondary Actions: Cancel
+60 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+61 text Description: 2026-11-20, Secondary Actions: Cancel
+62 text Description: 10:30, Secondary Actions: Cancel
+63 text Description: Source documents: 1, Secondary Actions: Cancel
+64 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+65 button Description: Check these details, Secondary Actions: Cancel
+66 heading Description: Import results, Secondary Actions: Cancel
+67 button Description: Check processing status, Secondary Actions: Cancel
+68 button Description: Show processing details, Secondary Actions: Cancel
+69 heading Description: Original materials, Secondary Actions: Cancel
+70 text Description: Travel plans.txt, Secondary Actions: Cancel
+71 text Description: Saved locally, Secondary Actions: Cancel
+72 text Description: Travel details.pdf, Secondary Actions: Cancel
+73 text Description: Saved locally, Secondary Actions: Cancel
+74 text Description: Boardwalk.webp, Secondary Actions: Cancel
+75 text Description: Saved locally, Secondary Actions: Cancel
+76 button Description: Active Imports, Secondary Actions: Cancel
+77 button Description: New Import, Secondary Actions: Cancel
+107 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+115 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:15:44.703Z B1 read observation after existing backend wait
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:59:05, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import progress, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Recognition ready · waiting for development confirmation, Secondary Actions: Cancel
+32 text Description: Review the suggestions below. Nothing new is saved without the existing explicit confirmation., Secondary Actions: Cancel
+33 text Description: 4 of 5 suggestions have verified Item and Document saves., Secondary Actions: Cancel
+34 text Description: Harbour Hotel, Secondary Actions: Cancel
+35 text Description: 2026-11-14 – 2026-11-15, Secondary Actions: Cancel
+36 text Description: 15:00 – 10:00, Secondary Actions: Cancel
+37 text Description: 20 Harbour Road, Secondary Actions: Cancel
+38 text Description: Source documents: 1, Secondary Actions: Cancel
+39 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+40 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+41 button Description: Check processing status, Secondary Actions: Cancel
+42 text Description: Boardwalk walk, Secondary Actions: Cancel
+43 text Description: 2026-11-14, Secondary Actions: Cancel
+44 text Description: 17:30, Secondary Actions: Cancel
+45 text Description: Fern Quay, Secondary Actions: Cancel
+46 text Description: Source documents: 1, Secondary Actions: Cancel
+47 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+48 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+49 button Description: Check processing status, Secondary Actions: Cancel
+50 text Description: NZ1, Secondary Actions: Cancel
+51 text Description: 2026-12-17, Secondary Actions: Cancel
+52 text Description: AKL → CHC, Secondary Actions: Cancel
+53 text Description: Source documents: 1, Secondary Actions: Cancel
+54 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+55 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+56 button Description: Check processing status, Secondary Actions: Cancel
+57 text Description: NZ2, Secondary Actions: Cancel
+58 text Description: 2026-12-20, Secondary Actions: Cancel
+59 text Description: CHC → AKL, Secondary Actions: Cancel
+60 text Description: Source documents: 1, Secondary Actions: Cancel
+61 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+62 button Description: New item, Secondary Actions: Cancel
+63 button Description: Link to an existing item, Secondary Actions: Cancel
+64 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+65 text Description: 2026-11-20, Secondary Actions: Cancel
+66 text Description: 10:30, Secondary Actions: Cancel
+67 text Description: Source documents: 1, Secondary Actions: Cancel
+68 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+69 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+70 button Description: Check processing status, Secondary Actions: Cancel
+71 heading Description: Import results, Secondary Actions: Cancel
+72 button Description: Check processing status, Secondary Actions: Cancel
+73 button Description: Show processing details, Secondary Actions: Cancel
+74 heading Description: Original materials, Secondary Actions: Cancel
+75 text Description: Travel plans.txt, Secondary Actions: Cancel
+76 text Description: Saved locally, Secondary Actions: Cancel
+77 text Description: Travel details.pdf, Secondary Actions: Cancel
+78 text Description: Saved locally, Secondary Actions: Cancel
+79 text Description: Boardwalk.webp, Secondary Actions: Cancel
+80 text Description: Saved locally, Secondary Actions: Cancel
+81 button Description: Active Imports, Secondary Actions: Cancel
+82 button Description: New Import, Secondary Actions: Cancel
+112 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+120 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:18:19.081Z Original Photos batch read-only result
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import progress, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Recognition ready · checking save receipts, Secondary Actions: Cancel
+32 text Description: Suggestions are not saved Items. Existing receipts are being checked without resubmitting., Secondary Actions: Cancel
+33 text Description: 0 of 3 suggestions have verified Item and Document saves., Secondary Actions: Cancel
+34 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+35 text Description: 2026-11-20, Secondary Actions: Cancel
+36 text Description: 10:30, Secondary Actions: Cancel
+37 text Description: Source documents: 1, Secondary Actions: Cancel
+38 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+39 button Description: Check these details, Secondary Actions: Cancel
+40 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+41 text Description: 2026-11-20, Secondary Actions: Cancel
+42 text Description: 10:30, Secondary Actions: Cancel
+43 text Description: Source documents: 1, Secondary Actions: Cancel
+44 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+45 button Description: Check these details, Secondary Actions: Cancel
+46 text Description: Harbour QA Hotel, Secondary Actions: Cancel
+47 text Description: 2026-11-02 – 2026-11-03, Secondary Actions: Cancel
+48 text Description: Source documents: 1, Secondary Actions: Cancel
+49 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+50 button Description: Check these details, Secondary Actions: Cancel
+51 heading Description: Import results, Secondary Actions: Cancel
+52 button Description: Check processing status, Secondary Actions: Cancel
+53 button Description: Show processing details, Secondary Actions: Cancel
+54 heading Description: Original materials, Secondary Actions: Cancel
+55 text Description: Boardwalk.gif, Secondary Actions: Cancel
+56 text Description: Saved locally, Secondary Actions: Cancel
+57 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+58 text Description: Saved locally, Secondary Actions: Cancel
+59 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+60 text Description: Saved locally, Secondary Actions: Cancel
+61 button Description: Active Imports, Secondary Actions: Cancel
+62 button Description: New Import, Secondary Actions: Cancel
+92 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+100 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:19:40.120Z Photos receipt verification settled
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Import progress, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Completed, Secondary Actions: Cancel
+32 text Description: All suggestions have verified Items and Document associations., Secondary Actions: Cancel
+33 text Description: 3 of 3 suggestions have verified Item and Document saves., Secondary Actions: Cancel
+34 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+35 text Description: 2026-11-20, Secondary Actions: Cancel
+36 text Description: 10:30, Secondary Actions: Cancel
+37 text Description: Source documents: 1, Secondary Actions: Cancel
+38 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+39 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+40 button Description: Check processing status, Secondary Actions: Cancel
+41 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+42 text Description: 2026-11-20, Secondary Actions: Cancel
+43 text Description: 10:30, Secondary Actions: Cancel
+44 text Description: Source documents: 1, Secondary Actions: Cancel
+45 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+46 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+47 button Description: Check processing status, Secondary Actions: Cancel
+48 text Description: Harbour QA Hotel, Secondary Actions: Cancel
+49 text Description: 2026-11-02 – 2026-11-03, Secondary Actions: Cancel
+50 text Description: Source documents: 1, Secondary Actions: Cancel
+51 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+52 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+53 button Description: Check processing status, Secondary Actions: Cancel
+54 heading Description: Import results, Secondary Actions: Cancel
+55 button Description: Check processing status, Secondary Actions: Cancel
+56 button Description: Show processing details, Secondary Actions: Cancel
+57 heading Description: Original materials, Secondary Actions: Cancel
+58 text Description: Boardwalk.gif, Secondary Actions: Cancel
+59 text Description: Saved locally, Secondary Actions: Cancel
+60 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+61 text Description: Saved locally, Secondary Actions: Cancel
+62 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+63 text Description: Saved locally, Secondary Actions: Cancel
+64 button Description: Active Imports, Secondary Actions: Cancel
+65 button Description: New Import, Secondary Actions: Cancel
+95 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+103 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:26:38.974Z Synthetic observations rendered inside normal Activity; display-only, not real task outcomes
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+28 text Description: On this device: 1 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Activity, Secondary Actions: Cancel
+30 heading Description: SYNTHETIC OBSERVATIONS — DISPLAY ONLY. No Analyze or Save., Secondary Actions: Cancel
+31 heading Description: Analyzing travel information, Secondary Actions: Cancel
+32 text Description: The backend reports an active task. You can close this view and return through Active Imports., Secondary Actions: Cancel
+33 heading Description: Outcome not yet confirmed, Secondary Actions: Cancel
+34 text Description: Check the original task and receipts. Do not submit again; this is not a confirmed failure., Secondary Actions: Cancel
+35 heading Description: Recognition ready · waiting for development confirmation, Secondary Actions: Cancel
+36 text Description: Review the suggestions below. Nothing new is saved without the existing explicit confirmation., Secondary Actions: Cancel
+37 heading Description: Applying confirmed saves, Secondary Actions: Cancel
+38 text Description: Waiting for the original save operations and their receipts. No additional confirmation is needed., Secondary Actions: Cancel
+39 heading Description: Item saved · Document association pending, Secondary Actions: Cancel
+40 text Secondary Actions: Cancel, Description: The Item is preserved. Only the original Document association remains pending; it is not fully complete.
+41 heading Description: Needs your attention, Secondary Actions: Cancel
+42 text Description: A file cannot be analyzed, or a save was rejected or conflicted. Check its details below., Secondary Actions: Cancel
+43 text Description: Originals saved on this device., Secondary Actions: Cancel
+44 heading Description: Waiting to analyze, Secondary Actions: Cancel
+45 text Description: Waiting for network or processing conditions. Analyze starts only when you choose it., Secondary Actions: Cancel
+46 heading Description: Analysis, Secondary Actions: Cancel
+47 button Description: Analyze saved materials, Secondary Actions: Cancel
+48 button Description: Check processing status, Secondary Actions: Cancel
+49 button Description: Show processing details, Secondary Actions: Cancel
+50 heading Description: Original materials, Secondary Actions: Cancel
+51 text Description: Submitted text, Secondary Actions: Cancel
+52 text Description: Saved locally, Secondary Actions: Cancel
+53 button Description: Active Imports, Secondary Actions: Cancel
+54 button Description: New Import, Secondary Actions: Cancel
+84 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+92 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:33:50.954Z Final normal candidate cold launch
+22 heading Description: My Trips, Secondary Actions: Cancel
+23 heading Description: Upcoming, Secondary Actions: Cancel
+24 button Description: Open Import Phase A 13 Nov. Nov 14, 2026 – Nov 15, 2026., Help: This Trip summary is saved here. Planning details and actions are not available on this device yet., Secondary Actions: Cancel
+25 button Description: Start a Trip, Secondary Actions: Cancel
+55 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+63 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:35:41.181Z Final normal App: cold launch discovers retained Activity jobs
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Active Imports, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Imports saved to this account, Secondary Actions: Cancel
+26 heading Description: Active Imports, Secondary Actions: Cancel
+27 text Description: Imports saved to this account, Secondary Actions: Cancel
+28 button Description: Refresh, Secondary Actions: Cancel
+29 heading Description: Import · 1 materials, Secondary Actions: Cancel
+30 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+31 button Description: View · Import · 1 materials, Secondary Actions: Cancel
+32 heading Description: Import · 3 materials, Secondary Actions: Cancel
+33 text Description: Boardwalk.gif, Secondary Actions: Cancel
+34 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+35 text Description: Nov 13, 2026 at 20:50:23, Secondary Actions: Cancel
+36 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+37 heading Description: Import · 3 materials, Secondary Actions: Cancel
+38 text Description: Travel plans.txt, Secondary Actions: Cancel
+39 text Description: Travel details.pdf, Secondary Actions: Cancel
+40 text Description: Boardwalk.webp, Secondary Actions: Cancel
+41 text Description: Nov 13, 2026 at 14:59:05, Secondary Actions: Cancel
+42 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+43 heading Description: Import · 3 materials, Secondary Actions: Cancel
+44 text Description: Boardwalk.gif, Secondary Actions: Cancel
+45 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+46 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+47 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+48 button Description: View · Import · 3 materials, Secondary Actions: Cancel
+49 button Description: Back to Capture, Secondary Actions: Cancel
+50 button Description: Hide, Secondary Actions: Cancel
+80 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+88 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:35:51.183Z Final normal candidate reopens same 21:08:30 local Batch after cold launch
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+28 text Description: On this device: 1 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Activity, Secondary Actions: Cancel
+30 text Description: Reading saved intake…, Secondary Actions: Cancel
+31 button (disabled) Description: Check processing status, Secondary Actions: Cancel
+32 button Description: Show processing details, Secondary Actions: Cancel
+33 heading Description: Original materials, Secondary Actions: Cancel
+34 text Description: Submitted text, Secondary Actions: Cancel
+35 text Description: Saved locally, Secondary Actions: Cancel
+36 button Description: Active Imports, Secondary Actions: Cancel
+37 button Description: New Import, Secondary Actions: Cancel
+67 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+75 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:36:34.590Z Final normal candidate: original local Batch restored without any submission
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 21:08:30, Secondary Actions: Cancel
+28 text Description: On this device: 1 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Activity, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Waiting to analyze, Secondary Actions: Cancel
+32 text Description: Waiting for network or processing conditions. Analyze starts only when you choose it., Secondary Actions: Cancel
+33 heading Description: Analysis, Secondary Actions: Cancel
+34 button Description: Analyze saved materials, Secondary Actions: Cancel
+35 button Description: Check processing status, Secondary Actions: Cancel
+36 button Description: Show processing details, Secondary Actions: Cancel
+37 heading Description: Original materials, Secondary Actions: Cancel
+38 text Description: Submitted text, Secondary Actions: Cancel
+39 text Description: Saved locally, Secondary Actions: Cancel
+40 button Description: Active Imports, Secondary Actions: Cancel
+41 button Description: New Import, Secondary Actions: Cancel
+71 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+79 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:36:57.218Z Final candidate opens original Photos Batch from cold-discovered history; no Analyze or Save
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Activity, Secondary Actions: Cancel
+30 text Description: Reading saved intake…, Secondary Actions: Cancel
+31 button (disabled) Description: Check processing status, Secondary Actions: Cancel
+32 button Description: Show processing details, Secondary Actions: Cancel
+33 heading Description: Original materials, Secondary Actions: Cancel
+34 text Description: Boardwalk.gif, Secondary Actions: Cancel
+35 text Description: Saved locally, Secondary Actions: Cancel
+36 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+37 text Description: Saved locally, Secondary Actions: Cancel
+38 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+39 text Description: Saved locally, Secondary Actions: Cancel
+40 button Description: Active Imports, Secondary Actions: Cancel
+41 button Description: New Import, Secondary Actions: Cancel
+71 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+79 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:38:43.074Z Final candidate receipt observation progress
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import progress, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+25 text Description: Add to Import Phase A 13 Nov, Secondary Actions: Cancel
+26 text Description: Closing dismisses this view. Work may pause while the app is away., Secondary Actions: Cancel
+27 text Description: Nov 13, 2026 at 14:43:20, Secondary Actions: Cancel
+28 text Description: On this device: 3 saved · 0 not saved · 0 waiting, Secondary Actions: Cancel
+29 heading Description: Activity, Secondary Actions: Cancel
+30 text Description: Originals saved on this device., Secondary Actions: Cancel
+31 heading Description: Completed, Secondary Actions: Cancel
+32 text Description: All suggestions have verified Items and Document associations., Secondary Actions: Cancel
+33 text Description: 3 of 3 suggestions have verified Item and Document saves., Secondary Actions: Cancel
+34 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+35 text Description: 2026-11-20, Secondary Actions: Cancel
+36 text Description: 10:30, Secondary Actions: Cancel
+37 text Description: Source documents: 1, Secondary Actions: Cancel
+38 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+39 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+40 button Description: Check processing status, Secondary Actions: Cancel
+41 text Description: Fern Quay Boardwalk Walk, Secondary Actions: Cancel
+42 text Description: 2026-11-20, Secondary Actions: Cancel
+43 text Description: 10:30, Secondary Actions: Cancel
+44 text Description: Source documents: 1, Secondary Actions: Cancel
+45 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+46 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+47 button Description: Check processing status, Secondary Actions: Cancel
+48 text Description: Harbour QA Hotel, Secondary Actions: Cancel
+49 text Description: 2026-11-02 – 2026-11-03, Secondary Actions: Cancel
+50 text Description: Source documents: 1, Secondary Actions: Cancel
+51 text Secondary Actions: Cancel, Description: New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.
+52 text Description: Saved and verified. The documents are linked to this item., Secondary Actions: Cancel
+53 button Description: Check processing status, Secondary Actions: Cancel
+54 heading Description: Analysis, Secondary Actions: Cancel
+55 button Description: Check processing status, Secondary Actions: Cancel
+56 button Description: Show processing details, Secondary Actions: Cancel
+57 heading Description: Original materials, Secondary Actions: Cancel
+58 text Description: Boardwalk.gif, Secondary Actions: Cancel
+59 text Description: Saved locally, Secondary Actions: Cancel
+60 text Description: Boardwalk.jpeg, Secondary Actions: Cancel
+61 text Description: Saved locally, Secondary Actions: Cancel
+62 text Description: Harbour Hotel.png, Secondary Actions: Cancel
+63 text Description: Saved locally, Secondary Actions: Cancel
+64 button Description: Active Imports, Secondary Actions: Cancel
+65 button Description: New Import, Secondary Actions: Cancel
+95 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+103 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+
+2026-11-13T08:39:04.244Z Final normal candidate: close completed Activity; no cancel, Analyze or Save
+50 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+58 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar

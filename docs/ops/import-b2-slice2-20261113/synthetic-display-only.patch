@@ -1,0 +1,17 @@
+--- candidate
++++ temporary-simulator-display-only
+@@ -210,6 +210,14 @@
+   );
+   return (
+     <UiSection title={t("capture.activityStatus.activity")}>
++      {model.batch.batchId === "9583b5ad-225a-46de-81f7-039d85b4a888" ? <View>
++        <UiText accessibilityRole="header">SYNTHETIC OBSERVATIONS — DISPLAY ONLY. No Analyze or Save.</UiText>
++        {[
++          projectUniversalV3Activity({ state: "PROCESSING", taskId: "synthetic" }),
++          projectUniversalV3Activity({ state: "OUTCOME_UNKNOWN", taskId: "synthetic" }),
++          ...["UNCONFIRMED", "PENDING", "ITEM_VERIFIED_RELATION_PENDING", "REVIEW_REQUIRED"].map(observed => projectUniversalV3Activity({ state: "REVIEW_READY", taskId: "synthetic", candidates: [{ candidateId: "synthetic" }] } as any, { synthetic: observed } as any)),
++        ].map(({state}) => <UiSection key={state} title={t(`capture.activityStatus.${state}`)}><UiText>{t(`capture.activityHint.${state}`)}</UiText></UiSection>)}
++      </View> : null}
+       <UiText>{t("capture.activityStatus.local")}</UiText>
+       <UiText accessibilityRole="header" accessibilityLiveRegion="polite">
+         {t(`capture.activityStatus.${progress.state}`)}

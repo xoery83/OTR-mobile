@@ -1,4 +1,7 @@
-import { isPhotoImportMaterial, isV3PhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
+import {
+  isPhotoImportMaterial,
+  isV3PhotoImportMaterial,
+} from "@/domain/capture/photoImportRelevance";
 import {
   canPrepareMixedQaSourceProposals,
   prepareMixedQaSourceProposals,
@@ -91,7 +94,9 @@ export function CaptureProgress({
     error = true;
   }
   const hasUniversalReader = Boolean(isCurrent && model?.allInputsAccepted);
-  const canSelectV3 = hasUniversalReader && !!trip &&
+  const canSelectV3 =
+    hasUniversalReader &&
+    !!trip &&
     process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true";
   const showLegacyPhotoReview = !canSelectV3 || legacyPhotoScope === universalScope;
   const body = (
@@ -134,7 +139,9 @@ export function CaptureProgress({
               activity.counts,
             )}
           </UiText>
-          <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
+          {!canSelectV3 ? (
+            <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
+          ) : null}
           {!hasUniversalReader || (detailsOpen && model?.processingEvents?.length) ? (
             <UiText style={styles.secondary}>
               {t(
@@ -291,12 +298,18 @@ export function CaptureProgress({
                       : "capture.pending",
                 )}
               </UiText>
-              {showLegacyPhotoReview && photoRelevanceCopy && isCurrent && model && !reading && !error
+              {showLegacyPhotoReview &&
+              photoRelevanceCopy &&
+              isCurrent &&
+              model &&
+              !reading &&
+              !error
                 ? (() => {
                     const input = model.inputs.find((input) => input.id === item.inputId);
                     return input &&
                       (isPhotoImportMaterial(input) ||
-                        (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
+                        (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED ===
+                          "true" &&
                           isV3PhotoImportMaterial(input))) &&
                       input.state === "ACCEPTED" ? (
                       <UniversalPhotoRelevanceRow

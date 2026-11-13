@@ -1,4 +1,40 @@
 export const en = {
+  "capture.activityStatus.analysis": "Analysis",
+  "capture.activityStatus.activity": "Activity",
+  "capture.activityStatus.local": "Originals saved on this device.",
+  "capture.activityStatus.waiting": "Waiting to analyze",
+  "capture.activityStatus.analyzing": "Analyzing travel information",
+  "capture.activityStatus.uncertain": "Outcome not yet confirmed",
+  "capture.activityStatus.checking": "Recognition ready · checking save receipts",
+  "capture.activityStatus.confirmation":
+    "Recognition ready · waiting for development confirmation",
+  "capture.activityStatus.applying": "Applying confirmed saves",
+  "capture.activityStatus.association": "Item saved · Document association pending",
+  "capture.activityStatus.complete": "Completed",
+  "capture.activityStatus.attention": "Needs your attention",
+  "capture.activityStatus.empty": "Recognition complete · no items created",
+  "capture.activityStatus.counts":
+    "{saved} of {total} suggestions have verified Item and Document saves.",
+  "capture.activityHint.waiting":
+    "Waiting for network or processing conditions. Analyze starts only when you choose it.",
+  "capture.activityHint.analyzing":
+    "The backend reports an active task. You can close this view and return through Active Imports.",
+  "capture.activityHint.uncertain":
+    "Check the original task and receipts. Do not submit again; this is not a confirmed failure.",
+  "capture.activityHint.checking":
+    "Suggestions are not saved Items. Existing receipts are being checked without resubmitting.",
+  "capture.activityHint.confirmation":
+    "Review the suggestions below. Nothing new is saved without the existing explicit confirmation.",
+  "capture.activityHint.applying":
+    "Waiting for the original save operations and their receipts. No additional confirmation is needed.",
+  "capture.activityHint.association":
+    "The Item is preserved. Only the original Document association remains pending; it is not fully complete.",
+  "capture.activityHint.complete":
+    "All suggestions have verified Items and Document associations.",
+  "capture.activityHint.attention":
+    "A file cannot be analyzed, or a save was rejected or conflicted. Check its details below.",
+  "capture.activityHint.empty":
+    "No supported travel items were recognized. Your originals remain on this device.",
   "flightLookup.adopt": "Use {field}: {value}",
   "flightLookup.review": "Review suggestions before updating your form.",
   "flightLookup.budget": "Lookup allowance reached. You can continue manually.",
@@ -3188,6 +3224,38 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.activityStatus.analysis": "分析",
+  "capture.activityStatus.activity": "处理进度",
+  "capture.activityStatus.local": "原件已保存在本机。",
+  "capture.activityStatus.waiting": "等待分析",
+  "capture.activityStatus.analyzing": "正在分析旅行信息",
+  "capture.activityStatus.uncertain": "状态未确定，等待对账",
+  "capture.activityStatus.checking": "识别结果已就绪，正在核对保存回执",
+  "capture.activityStatus.confirmation": "识别结果已就绪，等待开发模式保存确认",
+  "capture.activityStatus.applying": "正在应用已确认的保存操作",
+  "capture.activityStatus.association": "项目已保存，文档关联待完成",
+  "capture.activityStatus.complete": "已完成",
+  "capture.activityStatus.attention": "需要你处理",
+  "capture.activityStatus.empty": "识别已完成，未创建项目",
+  "capture.activityStatus.counts":
+    "{total} 条建议中，{saved} 条已核实项目和文档关联保存。",
+  "capture.activityHint.waiting": "等待网络或处理条件就绪。仅在你选择分析后才会开始。",
+  "capture.activityHint.analyzing":
+    "后台报告任务正在处理。可关闭此界面，再从导入活动返回。",
+  "capture.activityHint.uncertain":
+    "查询原任务和回执，不要重复提交；这不代表已确认失败。",
+  "capture.activityHint.checking":
+    "建议尚不等于已保存项目。正在只读核对已有回执，不会重新提交。",
+  "capture.activityHint.confirmation":
+    "请审核下方建议。仍需现有明确确认，才会保存新内容。",
+  "capture.activityHint.applying": "等待原保存操作及正式回执，无需再次确认。",
+  "capture.activityHint.association":
+    "已保存项目会保留。仅原文档关联尚待完成，不能视为全部完成。",
+  "capture.activityHint.complete": "全部建议的项目和文档关联均已核实保存。",
+  "capture.activityHint.attention":
+    "文件无法分析，或保存被拒绝、发生冲突。请查看下方详情。",
+  "capture.activityHint.empty": "未识别到可支持的旅行项目，原件仍保留在本机。",
+
   "flightLookup.adopt": "使用{field}：{value}",
   "flightLookup.review": "请确认建议后再更新表单。",
   "flightLookup.budget": "查询额度已用完，你仍可手动填写。",

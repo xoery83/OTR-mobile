@@ -15,18 +15,26 @@ import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 
 type Candidate = z.infer<typeof universalV3Candidate>;
 type Review = Awaited<ReturnType<typeof openUniversalV3Review>>;
-type Result = Awaited<ReturnType<Review["check"]>>;
+type Result = Awaited<ReturnType<Review["check"]>> | "OUTCOME_UNKNOWN";
 export function UniversalV3Review({
   model,
   candidate,
   isCurrent,
+  activityReview,
+  activityStatus,
+  onSaveChanged,
 }: {
   model: CaptureJobReadModel;
   candidate: Candidate;
   isCurrent(): boolean;
+  activityReview?: Review;
+  activityStatus?: Result;
+  onSaveChanged?(status: Result): void;
 }) {
-  const [review, setReview] = useState<Review | null>(null);
-  const [status, setStatus] = useState<Result>("UNCONFIRMED");
+  const [ownReview, setReview] = useState<Review | null>(null);
+  const [ownStatus, setStatus] = useState<Result>("UNCONFIRMED");
+  const review = activityReview ?? ownReview;
+  const status = activityStatus ?? ownStatus;
   const [decision, setDecision] = useState<UniversalV3Decision | null>(null);
   const [mode, setMode] = useState<"LINK" | "UPDATE" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,6 +61,7 @@ export function UniversalV3Review({
     );
   const statusLabel = {
     UNCONFIRMED: "capture.ai.reviewable",
+    OUTCOME_UNKNOWN: "capture.ai.unknown",
     PENDING: "capture.ai.v3.pending",
     VERIFIED: "capture.ai.v3.verified",
     REVIEW_REQUIRED: "capture.ai.v3.changed",
@@ -86,6 +95,7 @@ export function UniversalV3Review({
         setReview(owner);
         setStatus(current);
         setDecision(null);
+        onSaveChanged?.(current);
       }
     } catch {
       if (isCurrent()) setUnavailable(true);
@@ -99,7 +109,10 @@ export function UniversalV3Review({
     setUnavailable(false);
     try {
       const result = await review.confirm(candidate, decision);
-      if (isCurrent()) setStatus(result);
+      if (isCurrent()) {
+        setStatus(result);
+        onSaveChanged?.(result);
+      }
     } catch {
       if (isCurrent()) setUnavailable(true);
     } finally {

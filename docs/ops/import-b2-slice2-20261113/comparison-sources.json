@@ -1,0 +1,68 @@
+[
+  {
+    "source": "docs/ops/import-b2-slice1-20261113/screenshots/A-empty-trip.png",
+    "sha256": "6b1ed8669e730789b4738a97b3b20f41cc41b1478556b4d118e85e51a6e290e1",
+    "crop": [
+      990,
+      1760,
+      2438,
+      2325
+    ],
+    "resizeWidth": 960
+  },
+  {
+    "source": "docs/ops/import-b2-slice1-20261113/screenshots/B-files-and-photos.png",
+    "sha256": "8f0f607401f5eaf7a64aeb1241ce70023ff0e2433f6af569c6ed80acb0730357",
+    "crop": [
+      990,
+      1570,
+      2438,
+      2325
+    ],
+    "resizeWidth": 960
+  },
+  {
+    "source": "docs/ops/import-b2-slice1-20261113/screenshots/C-mixed-text-files.png",
+    "sha256": "3920e44030c97ba641b11c9d58b869a8d7c193076f31e01988b524c91d690480",
+    "crop": [
+      990,
+      1570,
+      2438,
+      2325
+    ],
+    "resizeWidth": 960
+  },
+  {
+    "source": "docs/ops/import-b2-slice2-20261113/screenshots/11-final-cold-waiting.png",
+    "sha256": "e08dea08a4823bd19bc0981530d4d6c9e3214e2d64c2fb9a4ef2ae1e97989f60",
+    "crop": [
+      990,
+      890,
+      2438,
+      2325
+    ],
+    "resizeWidth": 960
+  },
+  {
+    "source": "docs/ops/import-b2-slice2-20261113/screenshots/06-b1-files-partial-confirmation.png",
+    "sha256": "65fc798216ce099f26788cfe903b72d96c5580bb2e5a5899d6ccfe7a345f91b7",
+    "crop": [
+      990,
+      314,
+      2438,
+      2325
+    ],
+    "resizeWidth": 960
+  },
+  {
+    "source": "docs/ops/import-b2-slice2-20261113/screenshots/12-final-cold-completed.png",
+    "sha256": "649637c0bf687d00318ea9da8f2e5fecad027941e52fbef92c3bdc229425d2ee",
+    "crop": [
+      990,
+      314,
+      2438,
+      2325
+    ],
+    "resizeWidth": 960
+  }
+]

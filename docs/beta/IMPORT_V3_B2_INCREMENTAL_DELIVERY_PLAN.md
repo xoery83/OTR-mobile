@@ -4,8 +4,8 @@
 
 This document updates the B2 recovery plan presented to Owner. Source inventory,
 October 14–23 approved UX and the October 21 Composer amendment remain in force.
-Owner subsequently authorized Slice 1 implementation only. Start with Slice 1;
-pause after each slice for actual screenshots/interaction acceptance.
+Owner accepted Slice 1 `5af027b` and authorized Slice 2 only. Slice 2 is now submitted
+for review; pause before Slice 3–6 for actual screenshot/interaction acceptance.
 
 ## Product baseline and precedence
 
@@ -38,10 +38,10 @@ Planning conclusions below are not new runtime acceptance.
 
 | User step | Current status and evidence | Remaining work / slice |
 | --- | --- | --- |
-| Entry and Composer | PARTIAL: normal My Trips/Trip/Day entry, horizontal tray, mixed input and retained in-process drafts exist. `CaptureComposer.tsx`, `CaptureContent.tsx`, `app/(tabs)/capture.tsx`. | Slice 1: entry/return consistency, visible draft actions and truthful availability. Keep Oct 21 compact picker menu. |
-| Unsubmitted draft recovery | PARTIAL: account/Trip-keyed JS maps and staging exist; process-death persistence is not established. `app/(tabs)/capture.tsx:38`, `captureStaging.ts`. | Slice 1: bounded feasibility check of existing local persistence and stable file references. Do not claim durable recovery from in-memory retention. |
+| Entry and Composer | Owner accepted Slice 1 `5af027b`: full App normal entries, compact tray, mixed input, Add/Clear/Close and return behavior. | Preserve accepted Slice 1; no reimplementation. |
+| Unsubmitted draft recovery | Slice 1 implemented account/Trip-scoped durable roster, stable original references and file revalidation; full App process-termination recovery passed. | Clipboard image tokens still require reselection after process death; no generic draft framework. |
 | Six formats and originals | IMPLEMENTED_AND_ALIGNED for recorded B1 Files/Photos cases. Camera/voice/clipboard are not all runtime verified. | Reuse B1 implementation; only targeted UX checks, no repeat full B1. |
-| Submit and Activity | PARTIAL: same Composer changes content, original batch reopens; technical counts do not yet form the complete user journey. `CaptureContent.tsx:451`, `CaptureProgress.tsx`. | Slice 2: distinguish locally retained, waiting, analyzing, review needed and save progress using existing facts. |
+| Submit and Activity | Slice 2 implemented: same sheet Submit, scoped reentry/cold discovery; V3 Task and original Core receipt/readback projection. Full App real batches plus labelled synthetic fault-state display; see Slice 2 report. | Owner Slice 2 review pending. Auto admission, full Results and full Activity/Updates remain Slice 3/4/6. |
 | Automatic deduplication / association | PARTIAL: B1 proved explicit N→1 LINK. Current `UniversalV3Review.tsx` offers targets and a title-based possible-match hint; that is not an authoritative automatic identity decision. | Slice 3: reuse verified identity matching; auto-associate only proven duplicates. Similar time/place/title alone is insufficient. Ambiguity remains Review. |
 | Product automatic admission | MISSING in current V3 UI path: `openUniversalV3Review().confirm()` plans and enqueues after an explicit decision. | Slice 3: first verify Core command authorization/provenance, then reuse that existing planning/enqueue path. Hiding Confirm is insufficient. |
 | Development submission control | IMPLEMENTED_BUT_UX_DIVERGENT: current candidate-by-candidate choice/Confirm is not the proposed single development submission control. | Slice 3: one confirmation for eligible outputs; genuine unresolved questions remain independently actionable. |

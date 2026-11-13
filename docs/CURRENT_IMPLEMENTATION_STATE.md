@@ -1,21 +1,36 @@
-## Import V3 B2 Slice 1 — Owner review checkpoint, 13 November 2026
+## Import V3 B2 Slice 2 — Owner review checkpoint, 13 November 2026
 
-Slice 1 only: compact Composer, Inline Add, confirmed Clear All, count/preview,
-scoped Close/reentry and persistent unsent drafts. Reuses B1 original storage;
-account/launch-Trip JSON holds stable digests, not Picker URIs or auth secrets.
-Restore verifies actual files. Hidden UI never clears the saved draft; last-valid
-roster covers interrupted replacement, and Clear All clears that fallback too.
-Full App simulator observed normal My Trips/Trip/Day entry, Files PDF and Photos
-GIF/JPEG/PNG, mixed text, software-keyboard Add, native preview, Close/reentry,
-process termination recovery and Clear All. Account namespace/forged-owner
-negatives are targeted tests, not a second real-account App login certification.
-Clipboard image tokens cannot survive process death: require reselection; Camera
-hardware and physical iPad acceptance remain unverified. No new Submit/Analyze,
-Core Save, Provider call, SQL/ACL change, Backend deployment or main merge/push.
-Existing B1 two batches/six inputs and six original hashes remain unchanged.
-Report/screenshots: `docs/ops/import-b2-slice1-20261113/README.md`.
-**STOP for Owner Slice 1 review. Do not start Slice 2–6.** Production automatic
-Import / Development confirmation is approved planning, not implemented here.
+Owner accepted Slice 1 `5af027b` and authorized Slice 2 only. Same Composer sheet
+now shows truthful Activity from existing V3 Task and Core receipt/readback facts.
+Originals saved, waiting, analyzing, development confirmation, applying, association
+pending, complete, attention and uncertainty are presentation labels, not stored
+states. Existing development Confirm/Queue/Save behavior is unchanged.
+
+Activity automatically checks original receipt IDs; pending observations poll only
+while visible, pause in background and invalidate on dismissal/account changes.
+V3 history reads its V3 endpoint; explicit legacy capability retains the old reader.
+Existing queue diagnostics gained an optional exact-ID read to avoid hiding old
+UNKNOWN behind the normal 51-row list cap. No new queue, service, SQL or permission.
+
+Full App simulator: one local-only text Submit transformed in place; Close returned
+to Trip; cold-launch history rediscovered the same Batch `9583b5ad…` (21:08:30).
+Existing B1 Files has4/5 suggestions verified, NZ2 still unconfirmed; Photos has3/3
+verified and correctly Completed. No original Analyze/Confirm/Save rerun. Fault
+states additionally have explicitly labelled synthetic-observation visual checks;
+the temporary display panel was removed from final installed candidate. Original
+Session/SQLite retained, physical iPad untouched. No Provider request, Backend/SQL
+change, merge or push. Local original hashes and19 completed Core ops/receipts held.
+
+Report, screenshots, state/copy map and actual-vs-synthetic evidence:
+`docs/ops/import-b2-slice2-20261113/README.md`. Targeted tests/UI guard pass; the same
+three unrelated whole-repo type errors remain. Physical and system-offline runtime
+acceptance are not claimed. Existing DEV receipt/graph observation can be slow;
+show checking/partial facts instead of fabricated completion.
+
+**STOP for Owner Slice 2 review. Do not start Slice 3–6.** Production auto admission,
+one development submission confirmation, full Results and Activity/Updates UX stay
+at their approved later slices. Slice 1 draft/original persistence remains accepted;
+see `docs/ops/import-b2-slice1-20261113/README.md`.
 
 ## Import V3 Phase B1 — final closure, 13 November 2026
 

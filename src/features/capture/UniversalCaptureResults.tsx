@@ -5,7 +5,7 @@ import {
   type P1AdmissionActions,
   type OpenAcceptedImportItem,
 } from "./useUniversalP1Admission";
-import { StyleSheet, View } from "react-native";
+import { AppState, StyleSheet, View } from "react-native";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type {
   UniversalTaskActivity,
@@ -18,8 +18,15 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { useUniversalCapture } from "./useUniversalCapture";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
+import { openUniversalV3Review } from "@/data/operations/universalV3Review";
+import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
+import {
+  projectUniversalV3Activity,
+  readV3UnknownCandidates,
+  type V3SaveObservation,
+} from "@/data/operations/universalV3Activity";
 import { AppIcon } from "@/components/AppIcon";
 
 const UniversalV3Review = lazy(() =>
@@ -48,47 +55,13 @@ export function UniversalCaptureResults({
     onLegacyPhotoReview?.(state.localFirstSelected === false);
   }, [onLegacyPhotoReview, state.localFirstSelected]);
   const admission = useUniversalP1Admission(model, isCurrent, state.result);
-  if (state.localFirstSelected) {
-    const processing = state.localFirst?.state === "PROCESSING";
-    const unknown = state.localFirst?.state === "OUTCOME_UNKNOWN";
-    const result = state.localFirst?.state === "REVIEW_READY" ? state.localFirst : null;
+  if (state.localFirstSelected === null) {
     return (
-      <UiSection title={t("capture.ai.title")}>
-        <UiText>{t("capture.ai.previewOnly")}</UiText>
-        {processing ? (
-          <UiText accessibilityLiveRegion="polite">
-            {t("capture.ai.task.PROCESSING")}
-          </UiText>
-        ) : null}
-        {unknown ? <UiText>{t("capture.ai.unknown")}</UiText> : null}
-        {state.formatUnavailable ? (
-          <UiText>{t("capture.ai.v3.formatUnavailable")}</UiText>
-        ) : null}
-        {state.localFirst?.state === "NEEDS_ACTION" && !state.unavailable ? (
-          <UiText>{t("capture.ai.v3.needsAction")}</UiText>
-        ) : null}
-        {state.unavailable ? (
-          <UiText>{t("capture.ai.unavailable")}</UiText>
-        ) : null}
-        {result?.candidates.map((candidate) => (
-          <Suspense key={candidate.candidateId} fallback={null}>
-            <UniversalV3Review
-              model={model}
-              candidate={candidate}
-              isCurrent={isCurrent}
-            />
-          </Suspense>
-        ))}
-        {result && !result.candidates.length ? (
-          <UiText>{t("capture.ai.noCandidates")}</UiText>
-        ) : null}
-        {!result && !processing && !unknown ? (
-          <UiButton
-            label={t("capture.ai.process")}
-            disabled={state.busy || !state.canStart}
-            onPress={state.start}
-          />
-        ) : null}
+      <UiSection title={t("capture.activityStatus.activity")}>
+        <UiText accessibilityLiveRegion="polite">
+          {t(state.unavailable ? "capture.activityStatus.waiting" : "capture.jobLoading")}
+        </UiText>
+        {state.unavailable ? <UiText>{t("capture.activityHint.waiting")}</UiText> : null}
         <UiButton
           label={t("capture.ai.check")}
           variant="secondary"
@@ -96,6 +69,38 @@ export function UniversalCaptureResults({
           onPress={state.recover}
         />
       </UiSection>
+    );
+  }
+  if (state.localFirstSelected) {
+    const processing = state.localFirst?.state === "PROCESSING";
+    const unknown = state.localFirst?.state === "OUTCOME_UNKNOWN";
+    const result = state.localFirst?.state === "REVIEW_READY" ? state.localFirst : null;
+    return (
+      <>
+        <UniversalV3Activity
+          key={model.batch.batchId}
+          model={model}
+          execution={state.localFirst}
+          unavailable={state.unavailable}
+          formatUnavailable={state.formatUnavailable}
+          isCurrent={isCurrent}
+        />
+        <UiSection title={t("capture.activityStatus.analysis")}>
+          {!result && !processing && !unknown ? (
+            <UiButton
+              label={t("capture.ai.process")}
+              disabled={state.busy || !state.canStart}
+              onPress={state.start}
+            />
+          ) : null}
+          <UiButton
+            label={t("capture.ai.check")}
+            variant="secondary"
+            disabled={state.busy}
+            onPress={state.recover}
+          />
+        </UiSection>
+      </>
     );
   }
   return (
@@ -110,6 +115,152 @@ export function UniversalCaptureResults({
     />
   );
 }
+// Read existing receipts while this sheet is open; never enqueue or dispatch here.
+export function UniversalV3Activity({
+  model,
+  execution,
+  unavailable,
+  formatUnavailable,
+  isCurrent,
+}: {
+  model: CaptureJobReadModel;
+  execution: UniversalV3ExecutionStatus | null;
+  unavailable: boolean;
+  formatUnavailable: boolean;
+  isCurrent(): boolean;
+}) {
+  const result = execution?.state === "REVIEW_READY" ? execution : null;
+  const [review, setReview] =
+    useState<Awaited<ReturnType<typeof openUniversalV3Review>>>();
+  const [observations, setObservations] = useState<Record<string, V3SaveObservation>>({});
+  const [readUnavailable, setReadUnavailable] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const latest = useRef(isCurrent);
+  useEffect(() => {
+    latest.current = isCurrent;
+  }, [isCurrent]);
+  useEffect(() => {
+    if (!result?.candidates.length) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let running = false;
+    const current = () => active && latest.current();
+    const read = async () => {
+      if (
+        !current() ||
+        running ||
+        AppState.currentState === "background" ||
+        AppState.currentState === "inactive"
+      )
+        return;
+      running = true;
+      try {
+        const unknown = await readV3UnknownCandidates(
+          model,
+          result.candidates.map((c) => c.candidateId),
+        );
+        if (!current()) return;
+        const owner = await openUniversalV3Review(model);
+        if (!current()) return;
+        setReview(owner);
+        const next: Record<string, V3SaveObservation> = {};
+        for (const candidate of result.candidates) {
+          if (!current()) return;
+          const observed = await owner.check(candidate);
+          next[candidate.candidateId] =
+            observed !== "VERIFIED" && unknown.has(candidate.candidateId)
+              ? "OUTCOME_UNKNOWN"
+              : observed;
+          if (!current()) return;
+          setObservations((previous) => ({
+            ...previous,
+            [candidate.candidateId]: next[candidate.candidateId],
+          }));
+        }
+        if (!current()) return;
+        setReview(owner);
+        setObservations(next);
+        setReadUnavailable(false);
+        if (
+          Object.values(next).some(
+            (s) =>
+              s === "PENDING" ||
+              s === "ITEM_VERIFIED_RELATION_PENDING" ||
+              s === "OUTCOME_UNKNOWN",
+          )
+        )
+          timer = setTimeout(() => void read(), 5000);
+      } catch {
+        if (current()) setReadUnavailable(true);
+      } finally {
+        running = false;
+      }
+    };
+    void read();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        clearTimeout(timer);
+        void read();
+      }
+    });
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      subscription.remove();
+    };
+    // Batch identity is fenced by the owning sheet key. Reopening reads original IDs only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result?.taskId, revision]);
+  const progress = projectUniversalV3Activity(
+    execution,
+    observations,
+    unavailable || readUnavailable,
+    formatUnavailable,
+  );
+  return (
+    <UiSection title={t("capture.activityStatus.activity")}>
+      <UiText>{t("capture.activityStatus.local")}</UiText>
+      <UiText accessibilityRole="header" accessibilityLiveRegion="polite">
+        {t(`capture.activityStatus.${progress.state}`)}
+      </UiText>
+      <UiText>{t(`capture.activityHint.${progress.state}`)}</UiText>
+      {result?.candidates.length ? (
+        <UiText>
+          {t("capture.activityStatus.counts", {
+            saved: progress.saved,
+            total: result.candidates.length,
+          })}
+        </UiText>
+      ) : null}
+      {readUnavailable ? (
+        <UiButton
+          label={t("capture.ai.check")}
+          variant="secondary"
+          onPress={() => setRevision((n) => n + 1)}
+        />
+      ) : null}
+      {result?.candidates.map((candidate) => (
+        <Suspense key={candidate.candidateId} fallback={null}>
+          <UniversalV3Review
+            model={model}
+            candidate={candidate}
+            isCurrent={isCurrent}
+            activityReview={review}
+            activityStatus={observations[candidate.candidateId]}
+            onSaveChanged={(status) => {
+              setObservations((previous) => ({
+                ...previous,
+                [candidate.candidateId]: status,
+              }));
+              setRevision((n) => n + 1);
+            }}
+          />
+        </Suspense>
+      ))}
+    </UiSection>
+  );
+}
+
 export function UniversalResultView({
   model,
   readTripTargets,
