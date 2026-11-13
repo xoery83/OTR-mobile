@@ -1,71 +1,39 @@
 # Auth Lane D — current handoff, 5 November 2026
 
-## Apple sign-in candidate, 13 November 2026
+## Apple sign-in / adopted Trip checkpoint, 14 November 2026
 
-Owner approved and registered `art.xoery.otr`, Team `3K49Z2Q5X7`. Native Apple
-SDK 57.0.2, nonce/ID-token Adapter, explicit Account linking, optional first-name
-suggestion, Settings and login entries are implemented in the Auth branch.
-122 focused tests, UI guard, scoped lint, isolated native prebuild and initial
-iOS JS export passed. Independent Review's unmount/confirmation finding is fixed
-with three regressions. Hosted DEV Apple Provider independently reads enabled.
-New-Team Release build, strict/deep signature verification, isolated iPhone 16
-Pro install and first launch/exact-PID alive readback passed. Owner confirmed
-first Apple login with Hide My Email and same-Account Session recovery after
-exact process cold restart (74426 → 74439), without another Apple authorization.
-Owner also confirmed normal logout, cancelled Apple sign-in remaining signed out,
-and same-Account relogin. Source `e013bf5d`, receipts in the ops packet. Separate
-fresh-Guest device and second Apple QA identity qualification are requested.
-Owner confirmed the wired iPad Air 5 is available with the same Apple identity.
-Nonempty Guest custody exposed the added optional name as a strict-schema and
-canonical-undefined compatibility gap. Both failures reproduced RED; the minimal
-local fix and 47 targeted tests plus independent Review pass. A new signed iPad
-build must carry this fix before the Guest Trip/P1 Adoption attempt.
-Signed iPad build `58bedc01` was installed in a new App container. Owner created
-the Guest Trip/P1 normally and confirmed cold recovery. Apple Adoption's first
-failure is the missing DEV client `EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED=true`
-build opt-in, not a Hosted receipt. The scoped build-config repair and private
-Apple-name projection from remembered-Account lists are ready for device update.
-Build `96762acc` now has the actual packaged DEV Adoption guard independently
-verified true using the standard ignored Auth-worktree public DEV environment.
-The in-place update retained the Guest container. Owner reached confirmation and
-submitted once, then received generic adoptionPending. Original attempt
-`7da7240f…` has a local PREPARED checkpoint, no local publication marker observed;
-Root2 diagnosed the closed policy, and Owner approved exact window `f29441e7…`.
-Software `237e4c66` fixes PREPARED cold recovery (69 focused tests + independent
-Review), verified in signed iPad UI with identical original checkpoint bytes.
-On 14 November NZDT, original Adoption `7da7240f…` was submitted exactly once via
-restored AgentDeviceRunner. Formal PUBLISHED Receipt `dd5c71a6…`, SHA `908b0584…`,
-was independently read and recomputed. Trip Owner/linked Person/P1 owner and Core
-APPLIED Receipt match the target Account. Native App process-cold relaunch kept
-the Account, Trip and P1 without Apple reauthorization. Root2 independently closed
-policy (xmin 67350), stopped the candidate, restored original healthy CID and
-released Writer; device claim is released. No further submit/window is needed.
+Production identity `art.xoery.otr`, Team `3K49Z2Q5X7`; transport remains Hosted
+DEV. Original Guest Adoption `7da7240f…` is PUBLISHED, Receipt SHA `908b0584…`.
+Its finite window is closed. Never replay that Adoption or replace its IDs.
 
-This is bounded publication/cold-readback PASS, not complete Native acceptance.
-Adopted Trip currently enters `LocalTripWorkspace.remoteSelected` summary mode:
-edit disabled, roster 0 named People, schedule incomplete-time fallback. Auth
-requested Native's existing canonical reader/metadata/People integration contract
-under `AUTH-APPLE-ADOPTED-NATIVE-READBACK-20261114-01`; no shared file edit or new
-Hosted request. Two distinct Apple users and explicit existing-Account linking
-remain unverified. Preserve the original published attempt; do not replay it.
-Supabase automatic same-email linking policy needs acceptance verification.
-New-bundle Google is unavailable until its own iOS Client exists.
-Evidence and continuation are in `docs/ops/auth-apple-native-20261113/`.
-Native composition `a50a9fd9` is installed and retains Account/Trip; People opens
-but Add stays disabled. Actual Backend lacks Parent Reader. Intermediate image
-`75521f3d…` is held: its old source omits running Import V3/Core capabilities.
-Root1 is recovering the complete approved source baseline; Root2 must also prove
-host disk capacity before any deployment. No new SQL or Adoption replay.
-Parent readiness metadata validation has 13 focused passing tests and independent
-Review. Root2 executed the fixed existing-Gateway probe: all three function
-fingerprints/ACLs and stored/Parent/finite-scope bindings PASS. This is not JWT,
-HTTP or Native acceptance. Complete Import-compatible source `f650ce2b` awaits
-Root2 capture-only image/capacity checks; Parent five-file source Review passed.
-Adopted-Trip Metadata consumer is locally implemented under Native scoped Writer
-handoff: verified Parent/Core/Owner + Snapshot V3, existing CAS/receipt-first
-queue and remote Details form. Native supplied SQLite 76 registry patch; local
-row-retention/cascade tests pass. Six files / 174 targeted tests, UI guard,
-scoped lint and independent Review PASS; native upgrade/save/cold-readback NOT_RUN.
+Shared DEV now runs source `f650ce2b`, image `f8862b0a…`, CID `5d0068f4…`:
+complete approved Import B2 `b797f9b3` source plus the existing Parent Reader
+narrow patch. Root2 independently verified Import/Core/Receipt, persistent Store,
+mounts and config preservation; ParentRead=1, zero SQL change, Writer released,
+old container retained for rollback. OCI label 624 alone was not complete source.
+
+Native data acceptance on source `864e4453`: normal Add Traveler created exactly
+one Person `7313cc83…`, formal Operation `22875a73…`; no Account inferred.
+Metadata Operation `0164a1da…` changed only Trip name, CAS0→1; Auckland and dates
+unchanged. Independent PG readback confirms Person, P1 and original Adoption.
+App cold relaunch retained the same Account, updated Trip, Person and original
+P1; normal Schedule selection showed `Apple Guest Walk` at23:24 on14 November.
+
+Final UI source `efb38d83`: top Edit formally qualifies in background, opens the
+existing editor and cancels without another Save; stale readonly notice removed.
+SQLite76 consumed Native's fixed registry patch, preserving rows and deletion
+semantics. 174 data-path tests, 68 scheduling tests, 105 final UI tests, UI guard,
+scoped lint and independent Reviews passed; TSC retains three unrelated baseline
+errors. Device claim released; no existing Import App/data reset, main merge/push.
+SQLite numbering still needs fresh canonical reconciliation before future main
+integration; this is the independent Auth App's schema, not unified-main proof.
+
+Remaining: normal Invite/Claim Native UX and Hosted authority are not certified.
+Current Native is synthetic preview; current server composition omits memberClaim
+options. Precise owning-port request `AUTH-C04-NORMAL-INVITE-PORT-20261114-01` sent;
+no new SQL, identity grant or old QA window reuse is authorized. Two distinct
+Apple users and explicit existing-Account linking remain unverified; new-bundle
+Google still needs its own iOS Client. Evidence: `docs/ops/auth-apple-native-20261113/`.
 
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 

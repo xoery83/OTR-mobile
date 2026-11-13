@@ -96,3 +96,19 @@ files. No new device build or Realtime subscription is required for this handoff
   Metadata confirmation table also has a local-container FK, so repository/UI
   relaxation alone is insufficient. SQLite owning contract/candidate requested;
   no fake local Create/container or shared-file change has been made.
+
+## Latest verified Apple adopted-Trip checkpoint — 14 November 2026
+
+- Parent Reader is deployed on the full Import-compatible image f8862b0a; Root2
+  has released Writer. No remaining Parent deployment dependency.
+- Native Person creation, formal receipt, Metadata CAS0→1 and unchanged original
+  P1/Adoption independently read back. Same-Account cold Trip/People/P1 recovery
+  and normal Schedule readback PASS. Data client864e4453; final top Edit/Cancel
+  clientefb38d83 PASS. SQLite76 local registration is consumed from Native;
+  future main integration must reconcile actual canonical numbering.
+- Invite is distinct: no real Invite was issued or accepted in this run. Native
+  still exposes only SYNTHETIC preview, while normal server composition does not
+  supply memberClaim options. Core owning-port request
+  AUTH-C04-NORMAL-INVITE-PORT-20261114-01 records the exact normal authority,
+  recipient-selection and existing TTL/cutoff dependencies; no new authority
+  was enabled and no old QA window was reused.

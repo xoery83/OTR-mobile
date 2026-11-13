@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_REVIEW_PASS_DEVICE_NOT_RUN",
+  "status": "NATIVE_OPEN_CANCEL_PASS",
   "nativeDtoPatchSHA256": "0a6a57b201289203c298bb62bb79dd31e9aa8024142ca4b9e3b04aca043b3fe7",
   "changes": [
     "Optional itinerary allows edit-only remote quick actions",
@@ -12,5 +12,6 @@
     "independentChangedCases": 3,
     "review": "SCOPED_NO_BLOCKER_REMOTE_METADATA_QUICK_EDIT"
   },
-  "nextDeviceStep": "Open existing original Trip -> top Edit -> Cancel; no repeated business Save"
+  "nextDeviceStep": "Open existing original Trip -> top Edit -> Cancel; no repeated business Save",
+  "installedClient": "efb38d83"
 }
