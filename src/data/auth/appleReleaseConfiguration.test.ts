@@ -1,8 +1,19 @@
 import { afterEach, expect, it, vi } from "vitest";
 import appConfig from "../../../app.config";
 import base from "../../../app.json";
+import eas from "../../../eas.json";
 
 afterEach(() => vi.unstubAllEnvs());
+it("enables the existing Guest Adoption UI only in the explicit DEV device QA profile", () => {
+  expect(eas.build["apple-device-qa"].env).toMatchObject({
+    EXPO_PUBLIC_OTR_SYNC_TRANSPORT: "dev",
+    EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED: "true",
+    EXPO_PUBLIC_OTR_DEV_SUPABASE_URL: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+  });
+  expect(eas.build.production.env).not.toHaveProperty(
+    "EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED",
+  );
+});
 it("preserves the existing QA Expo configuration unless production is explicitly selected", () => {
   vi.stubEnv("OTR_IOS_VARIANT", "");
   expect(appConfig({ config: base.expo } as never)).toBe(base.expo);

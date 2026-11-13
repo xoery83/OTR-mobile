@@ -20,6 +20,11 @@ Nonempty Guest custody exposed the added optional name as a strict-schema and
 canonical-undefined compatibility gap. Both failures reproduced RED; the minimal
 local fix and 47 targeted tests plus independent Review pass. A new signed iPad
 build must carry this fix before the Guest Trip/P1 Adoption attempt.
+Signed iPad build `58bedc01` was installed in a new App container. Owner created
+the Guest Trip/P1 normally and confirmed cold recovery. Apple Adoption's first
+failure is the missing DEV client `EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED=true`
+build opt-in, not a Hosted receipt. The scoped build-config repair and private
+Apple-name projection from remembered-Account lists are ready for device update.
 Existing GuestQA/native identities and data are preserved. Non-empty Guest
 Adoption and dual-Apple-user isolation remain NOT_RUN.
 Supabase automatic same-email linking policy needs acceptance verification.

@@ -60,6 +60,10 @@ describe("auth repository", () => {
     expect((await createAuthRepository(storage).readLocalSession())?.identity).toEqual(
       accountB,
     );
+    const remembered = await createAuthRepository(storage).listAccounts();
+    expect(
+      remembered.find((entry) => entry.userId === accountA.userId),
+    ).not.toHaveProperty("appleFirstSignInName");
   });
   const readonlyStorage = (storage: SecureSessionStorage): SecureSessionStorage => ({
     ...storage,
@@ -69,6 +73,24 @@ describe("auth repository", () => {
     deleteItem: async () => {
       throw new Error("READ_MUST_NOT_DELETE");
     },
+  });
+  it("keeps legacy Account-picker indexes from exposing Apple's private name suggestion", async () => {
+    const storage = createMemoryStorage();
+    await storage.setItem(
+      "otr.mobile.accounts.v2",
+      JSON.stringify({
+        activeUserId: accountB.userId,
+        accounts: [
+          { ...accountA, appleFirstSignInName: { givenName: "小明" } },
+          accountB,
+        ],
+      }),
+    );
+    const accounts = await createAuthRepository(readonlyStorage(storage)).listAccounts();
+    expect(accounts).toEqual([
+      { ...accountA, active: false },
+      { ...accountB, active: true },
+    ]);
   });
   it("observes an unchosen principal without selecting Guest or blocking formal sign-in", async () => {
     const storage = createMemoryStorage();

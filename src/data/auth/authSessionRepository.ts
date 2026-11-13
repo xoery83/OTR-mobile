@@ -79,7 +79,18 @@ export function createAuthRepository(
   }
 
   async function writeIndex(index: AccountIndex) {
-    await storage.setItem(accountIndexStorageKey, JSON.stringify(index));
+    await storage.setItem(
+      accountIndexStorageKey,
+      JSON.stringify({
+        ...index,
+        // Provider name suggestions belong only to the private Account Session.
+        accounts: index.accounts.map(({ userId, displayName, email }) => ({
+          userId,
+          displayName,
+          email,
+        })),
+      }),
+    );
   }
 
   async function readPrincipalIndex(): Promise<AccountIndex | null> {
@@ -205,9 +216,11 @@ export function createAuthRepository(
 
     async listAccounts() {
       const index = await readIndex();
-      return index.accounts.map((account) => ({
-        ...account,
-        active: account.userId === index.activeUserId,
+      return index.accounts.map(({ userId, displayName, email }) => ({
+        userId,
+        displayName,
+        email,
+        active: userId === index.activeUserId,
       }));
     },
 
