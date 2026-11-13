@@ -1,0 +1,440 @@
+[
+  {
+    "branch": "codex/native-downstream-20261030",
+    "head": "2d5d04ef207732e9015970b18663b4c24b5b8aa7",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "74e271ac415a4cbb44b9e71b5360a2fecb2b08fe",
+        "productFiles": [
+          "src/domain/trip/tripAuthorizedVersion.test.ts",
+          "src/domain/trip/tripAuthorizedVersion.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "d467914e72daecf218170ee62a8cae5ecbefe69f",
+        "productFiles": [
+          "backend/src/tripAuthorizedVersion.test.ts",
+          "src/domain/trip/tripAuthorizedVersion.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "5c372f1310c2cc33ab4929182c7877700b4a8ffb",
+        "productFiles": [
+          "src/data/api/tripAuthorizedVersionTransport.test.ts",
+          "src/data/api/tripAuthorizedVersionTransport.ts",
+          "src/data/bootstrap/defaultBootstrapDependencies.test.ts",
+          "src/data/bootstrap/defaultBootstrapDependencies.ts",
+          "src/data/repositories/tripCoreV2Repository.test.ts",
+          "src/data/sync/tripDownstreamCoordinator.test.ts",
+          "src/data/sync/tripDownstreamCoordinator.ts",
+          "src/features/day-feed/TripScreen.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "6570e4a0fa7810f9838573c76bfdeca7c1c7f15b",
+        "productFiles": [
+          "backend/src/tripAuthorizedVersionHttp.test.ts",
+          "backend/src/tripCoreV2Http.ts",
+          "backend/src/tripCoreV2PgRead.test.ts",
+          "backend/src/tripCoreV2PgRead.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "ce956750d656ddafc7f04e242d3e4fb51dc1f2d2",
+        "productFiles": [
+          "src/features/day-feed/ManualFlightForm.test.ts",
+          "src/features/day-feed/ManualFlightForm.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "5d3bf6890e9a5f7ef0d2e5a14c1c7e73638fa2a7",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "b6a4ad63b432329104b83659905eed53ca722417",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "9c15ee9d07fc384a65c2d8f7a7abf127754ca935",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "ec333dc975a82675dc01ba99a2f9506dbcaccbe6",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "478b95bc7cf249d6d2f4cd9b5d97deecf47067cf",
+        "productFiles": [
+          "backend/src/tripCoreV2PgStorage.test.ts",
+          "backend/src/tripCoreV2PgStorage.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "054739c4869d78df35be92619ecdccd0ffdf58d2",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "277299b0492d890539bb44a37046032c8502cd63",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "2d5d04ef207732e9015970b18663b4c24b5b8aa7",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-forms-p3-delivery",
+    "head": "e18b8e0544ebfaa936e97ebd0e8ef0841d5809ab",
+    "included": true,
+    "patches": []
+  },
+  {
+    "branch": "codex/native-p5-transport",
+    "head": "202d9f3171ad3075febaa425f72c15921ed415cb",
+    "included": false,
+    "patches": [
+      {
+        "status": "-",
+        "commit": "d1ae57cbb5a1e1985783b08dbece1723fd80a645",
+        "productFiles": [
+          "src/features/day-feed-lab/P5FidelityPreview.tsx",
+          "src/features/day-feed-lab/fixtures/p5-fidelity-v1.json",
+          "src/features/day-feed-lab/transportFidelityFixture.test.ts",
+          "src/features/day-feed-lab/transportFidelityFixture.ts",
+          "src/features/day-feed/P5Detail.tsx",
+          "src/features/day-feed/ScheduledTransportRow.test.ts",
+          "src/features/day-feed/ScheduledTransportRow.tsx",
+          "src/features/day-feed/coreScheduledTransportRenderer.tsx",
+          "src/features/day-feed/p5DetailRead.test.ts",
+          "src/features/day-feed/p5DetailRead.ts",
+          "src/features/day-feed/transportReadPresentation.ts",
+          "src/ui/catalogs.ts"
+        ]
+      },
+      {
+        "status": "-",
+        "commit": "202d9f3171ad3075febaa425f72c15921ed415cb",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-p3p4-accepted-edit-prep-20261104",
+    "head": "37725990d30f54b52a1f415b9c06462dd22064a4",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "4fc5bcba1d3e5299b43527e0ad7e4c41b35fa823",
+        "productFiles": [
+          "src/data/repositories/manualPlanRepository.ts",
+          "src/data/repositories/manualRentalRepository.test.ts",
+          "src/data/repositories/manualStayRepository.test.ts",
+          "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts",
+          "src/data/sync/tripNormalCoordinator.ts",
+          "src/data/sync/tripNormalSync.test.ts",
+          "src/data/sync/tripNormalSync.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "37725990d30f54b52a1f415b9c06462dd22064a4",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-p6-accepted-edit-20261104",
+    "head": "f8cb07651b327220f006ac9e75d175d6d5f3eacb",
+    "included": false,
+    "patches": [
+      {
+        "status": "-",
+        "commit": "6e09f01632c6bc3f565e2fea4ecc61624b8ef428",
+        "productFiles": [
+          "src/data/auth/guestLocalCurrency.test.ts",
+          "src/data/auth/guestLocalWorkspace.ts",
+          "src/data/repositories/guestTripCurrencyRepository.ts",
+          "src/data/repositories/tripPreparationSetupRepository.ts",
+          "src/features/day-feed/CreateTripDestinations.test.ts",
+          "src/features/day-feed/CreateTripDestinations.tsx",
+          "src/features/day-feed/LocalTripWorkspace.test.ts",
+          "src/features/day-feed/LocalTripWorkspace.tsx",
+          "src/features/day-feed/TodaysJourneyWidget.test.ts",
+          "src/features/day-feed/TodaysJourneyWidget.tsx",
+          "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+          "src/features/day-feed/TripScreen.tsx",
+          "src/features/ledger/CurrencySettingsScreen.test.ts",
+          "src/features/ledger/CurrencySettingsScreen.tsx"
+        ]
+      },
+      {
+        "status": "-",
+        "commit": "eefc342f7396fd4c178b721e4a71e5e239647a15",
+        "productFiles": [
+          "src/components/StartTripSheet.test.ts",
+          "src/components/StartTripSheet.tsx",
+          "src/features/day-feed/CreateTripV2Fields.test.ts",
+          "src/features/day-feed/CreateTripV2Fields.tsx",
+          "src/features/day-feed/TripCalendarRangeField.test.ts",
+          "src/features/day-feed/TripCalendarRangeField.tsx",
+          "src/features/day-feed/TripMetadataFields.tsx",
+          "src/ui/forms.placeholder.test.ts",
+          "src/ui/forms.tsx"
+        ]
+      },
+      {
+        "status": "-",
+        "commit": "f925f45a5cfeef2f5aaab2411ee9f94835a89ba5",
+        "productFiles": [
+          "src/data/auth/guestLocalPreparation.test.ts",
+          "src/data/auth/guestLocalWorkspace.ts",
+          "src/data/repositories/tripPreparationRepository.test.ts",
+          "src/data/repositories/tripPreparationRepository.ts",
+          "src/features/day-feed/LocalTripWorkspace.test.ts",
+          "src/features/day-feed/LocalTripWorkspace.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "84d732e7856b3239ee29f0ca66d51ee24c1a3144",
+        "productFiles": [
+          "src/data/repositories/manualPlanRepository.test.ts",
+          "src/data/repositories/manualPlanRepository.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "db16f255affaeaf007699acb23dacdf58ea2c435",
+        "productFiles": [
+          "src/data/auth/guestLocalJourneySnapshot.test.ts",
+          "src/data/auth/guestLocalWorkspace.ts",
+          "src/data/repositories/tripJourneySnapshotRepository.test.ts",
+          "src/data/repositories/tripJourneySnapshotRepository.ts",
+          "src/features/day-feed/JourneySnapshotWidget.test.ts",
+          "src/features/day-feed/JourneySnapshotWidget.tsx",
+          "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+          "src/features/day-feed/TripScreen.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "205f08e799a3683955a3c4d66aa40f37118de496",
+        "productFiles": [
+          "src/features/day-feed/P1PlanEditor.test.ts",
+          "src/features/day-feed/P1PlanEditor.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "0943ce4654c007fec01f7ef67e91045834b8484d",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "0e472add94bdc931e6d30d4cf9f3f2ad807a9ae2",
+        "productFiles": [
+          "src/data/repositories/manualActivityRepository.test.ts",
+          "src/data/repositories/manualPlanRepository.ts",
+          "src/data/sync/tripNormalCoordinator.acceptedP6.test.ts",
+          "src/data/sync/tripNormalCoordinator.ts",
+          "src/data/sync/tripNormalSync.test.ts",
+          "src/data/sync/tripNormalSync.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "ca4888d412ca7fee54acdba1addee42537e2350e",
+        "productFiles": [
+          "src/data/repositories/manualActivityRepository.test.ts",
+          "src/data/repositories/manualPlanRepository.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "354eed73e3929d00f804bf27aa12f0e0347360be",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "f8cb07651b327220f006ac9e75d175d6d5f3eacb",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-vn04-place-recovery-20261104",
+    "head": "faed8181cf36faa3c5c976d2c2561445c5ecbbb3",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "a7c81d0a93ee4413fcbb5daa008eb30bdc854da0",
+        "productFiles": [
+          "src/features/place-search/placeSearchSession.test.ts",
+          "src/features/place-search/placeSearchSession.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "7329c3442d67356cd3088d3bdc65e2569bc92e43",
+        "productFiles": [
+          "src/features/place-search/PlaceSearchSheet.test.ts",
+          "src/features/place-search/PlaceSearchSheet.tsx",
+          "src/features/place-search/placeSearchTripRegions.test.ts",
+          "src/features/place-search/placeSearchTripRegions.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "29189f091520f0806e7d1aea4efbaec71acceccc",
+        "productFiles": [
+          "src/features/place-search/PlaceSearchSheet.test.ts",
+          "src/features/place-search/PlaceSearchSheet.tsx",
+          "src/features/place-search/placeSearchTripRegions.test.ts",
+          "src/features/place-search/placeSearchTripRegions.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "85df5ed50e730561a6b2ee29f4ee39870176696a",
+        "productFiles": [
+          "src/features/place-search/PlaceSearchSheet.tsx",
+          "src/features/place-search/placeSearchSession.test.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "aae6113505fd622869c85c3488f647ea64b68b4c",
+        "productFiles": [
+          "src/features/place-search/PlaceSearchSheet.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "24d2434392b7e42fe86dfa2153b03d0dd02776a2",
+        "productFiles": []
+      },
+      {
+        "status": "+",
+        "commit": "faed8181cf36faa3c5c976d2c2561445c5ecbbb3",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-f02-account-trip-restore-20261104",
+    "head": "4f6b5b3db6b22c97d3fdb99bbbadf47fecbcee0f",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "5ff52046070ae0be54b507edb786cd814b641ecb",
+        "productFiles": [
+          "src/data/sync/tripDownstreamCoordinator.test.ts",
+          "src/data/sync/tripDownstreamCoordinator.ts",
+          "src/features/auth/accountTripRestorePresentation.test.ts",
+          "src/features/auth/accountTripRestorePresentation.ts",
+          "src/features/day-feed/LocalTripWorkspace.test.ts",
+          "src/features/day-feed/LocalTripWorkspace.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "91ff498dc23ae8e76dd31a2af3469dc5cc680f3e",
+        "productFiles": [
+          "src/features/day-feed/LocalTripWorkspace.test.ts",
+          "src/features/day-feed/LocalTripWorkspace.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "81bde5ecfd329b5cc65872b16ed5ca7124198225",
+        "productFiles": [
+          "src/features/day-feed/LocalTripWorkspace.test.ts",
+          "src/features/day-feed/LocalTripWorkspace.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "4f6b5b3db6b22c97d3fdb99bbbadf47fecbcee0f",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-guest-currency-summary-20261104",
+    "head": "2e2ffc8d9a400515d8b9dc08fb4364c6762004cd",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "001acce16e7a03844ef2210865b7ac17c8969302",
+        "productFiles": [
+          "src/features/day-feed/TripBasicEditor.test.ts",
+          "src/features/day-feed/TripBasicEditor.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "2e2ffc8d9a400515d8b9dc08fb4364c6762004cd",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-vn01-cancel-transition-20261104",
+    "head": "f9c30fc272d92e3f34d71094e22d326d4fe55fbe",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "9e633ce83283368b590474d7852da54995ee5d5f",
+        "productFiles": [
+          "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+          "src/features/day-feed/TripScreen.tsx"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "f9c30fc272d92e3f34d71094e22d326d4fe55fbe",
+        "productFiles": []
+      }
+    ]
+  },
+  {
+    "branch": "codex/native-dfc02-access-loss-caller-20261104",
+    "head": "43c480905c82e3c925be295b71ba0195f66d2012",
+    "included": false,
+    "patches": [
+      {
+        "status": "+",
+        "commit": "50aa8e76bd572045555cf859794f385592bef8c1",
+        "productFiles": [
+          "src/data/sync/tripDownstreamAccessLoss.test.ts",
+          "src/data/sync/tripDownstreamCoordinator.ts"
+        ]
+      },
+      {
+        "status": "+",
+        "commit": "43c480905c82e3c925be295b71ba0195f66d2012",
+        "productFiles": []
+      }
+    ]
+  }
+]

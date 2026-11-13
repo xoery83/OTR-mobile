@@ -1,0 +1,9 @@
+{
+  "source": "63b82873142452de459f7712949c47e45c9f2061",
+  "bundleSha256": "d9235b250fc2b7c8be6f232b4d773802bacc4210508a4b9566bdf37599f174c9",
+  "entry": "expo-router/entry",
+  "nativeShell": "existing complete B1/C1 simulator native shell; Apple native recompile NOT_RUN",
+  "temporaryEntry": false,
+  "privateDataCopied": false,
+  "sourceScopes": "normal DEV Account/Trip; no QA allowlist; no Analyze/Save"
+}
