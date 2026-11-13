@@ -20,5 +20,7 @@
     "sealedStages": 0,
     "terminalReceipts": 0
   },
-  "nextAction": "Prepare a new exact scoped Hosted QA window; preserve original attempt; no retries until effective authorization and closure are verified."
+  "nextAction": "Obtain exact one-use Hosted operational window approval, then Root2 verifies independent closure/fresh CAS and Auth executes original attempt once.",
+  "nativeRecovery": "PASS_237e4c66_ORIGINAL_TARGET_NORMAL_ACCOUNT_PAGE_CHECKPOINT_BYTES_UNCHANGED",
+  "windowManifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749"
 }

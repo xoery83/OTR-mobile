@@ -1,0 +1,104 @@
+{
+  "requestId": "AUTH-APPLE-ADOPTION-WINDOW-PREP-20261114-01",
+  "status": "OPS_CANDIDATE_PREPARED_EXECUTION_BINDING_PENDING",
+  "environment": "OTR Mobile DEV tuqigdxrvrerfewsxqgm",
+  "scope": {
+    "adoptionId": "7da7240f-4019-4a60-b3d7-350525ecddef",
+    "accountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+    "sourceGuestLocalId": "fc2fc618-d4b0-4dc1-8ed4-586226fd3528",
+    "tripId": "faa0ea2b-9729-49b6-8ab7-db924df05e4d",
+    "maxDurationSeconds": 1800
+  },
+  "preimage": {
+    "cid": "69f805359a15ee37052cd0427824f9a98e40bd330202ae37c0c0a76185475be2",
+    "image": "sha256:1f85595d88531fb6827f1e10a0bd5f440e52f8cc73051ec729bb06f5145392bc",
+    "healthy": true,
+    "networkMode": "host",
+    "configSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+    "dockerConfigSHA256": "e673b35c6edb0bb9439ed176c97c19586d917f018db69dda941a011a0504d0ab",
+    "dockerHostConfigSHA256": "e75893f8f7792719abc2c37a4d47c6686e9aa9ef318732c210dd5a2413e9c1c5",
+    "mountsSHA256": "9a0d647162609b90897a9a5a0d6bca1a9f746f852102f730efcf66fdfa57e278",
+    "configFileIdentity": {
+      "uid": 0,
+      "gid": 999,
+      "mode": "0440",
+      "device": 2049,
+      "inode": 1093070
+    },
+    "caddyFileSHA256": "2ea1ccdf194a8f26103bed98b4e5f95ddcd2b8b614c23807648d2fcee9003b4c",
+    "nftFileSHA256": "60dac93ffe0ea440fc4a8941a080b6fb8d2c8655d47baf856e97182a0d1ca29a",
+    "pg": {
+      "at": "2026-11-13T17:07:33.031821+00:00",
+      "grants": 0,
+      "helper": {
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "gatewayExecute": true,
+        "md5": "a4230045eab12b97d3cdfd31477ea770",
+        "owner": "postgres",
+        "securityDefiner": true,
+        "writerExecute": false
+      },
+      "policy": {
+        "enabled": false,
+        "version": "otr.auth.fileless-p1.unpriced/1",
+        "xmin": "33417"
+      },
+      "readOnly": true,
+      "receipts": 0,
+      "stages": 0
+    }
+  },
+  "runtimeDelta": {
+    "OTR_DEV_AUTH_GUEST_ADOPTION": "1",
+    "OTR_DEV_AUTH_GUEST_ADOPTION_SCOPE": {
+      "accountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+      "sourceGuestLocalId": "fc2fc618-d4b0-4dc1-8ed4-586226fd3528",
+      "expiresAt": "BIND_AT_EXECUTION_TO_CLOSE_RESERVE_START_MAX_1560_SECONDS_FROM_T"
+    },
+    "implementation": "Existing version3 loadDevGuestAdoptionRuntime; same image/config/mounts; preserve full baseline env except these two additions. Stop original before candidate takes same host port. Retain original by exact CID for restoration."
+  },
+  "close": {
+    "bundle": "/private/tmp/otr-apple-qa-policy-close.cjs",
+    "bundleSHA256": "a4cfdfd194a62f89317eba96b1cf5e6a6b1a1ca5980952b9e4fcea02071dfbaf",
+    "verifyReceipt": {
+      "mode": "verify",
+      "exitCode": 0,
+      "result": {
+        "status": "AUTH_QA_POLICY_CLOSED",
+        "closed": true
+      },
+      "bundleSHA256": "a4cfdfd194a62f89317eba96b1cf5e6a6b1a1ca5980952b9e4fcea02071dfbaf"
+    },
+    "helperDefinitionMD5": "a4230045eab12b97d3cdfd31477ea770",
+    "identity": "Existing Core Gateway via existing readonly config mount; no new credential or role",
+    "mechanism": "Existing systemd transient one-shot/timer mechanism, independent of foreground SSH. Per-execution service and absolute close timestamp must be frozen before arm. No reuse of PDF close service.",
+    "order": [
+      "Claim existing sole Writer and recheck exact original CID/config/PG xmin and closed baseline.",
+      "Stage hash-pinned closure bundle via existing protected artifacts and establish host-controlled negative-only job using same image and readonly Core config. Validate verify-only in its actual launch context.",
+      "Arm independent close job before positive SQL/runtime activation; read back unit command digest, close schedule and dependencies.",
+      "At close reserve begin: stop candidate by exact CID to free sole Core Gateway connection; keep existing Caddy/nft unchanged.",
+      "Run fixed Auth bundle close through standalone same-image host-network one-shot with readonly config and fixed closure bundle mount; use bounded timeout.",
+      "Run bundle verify as a separate invocation/connection and existing LinkedPG READ ONLY policy readback. Distinguish command sent from closed independently verified.",
+      "Restore exact original CID and verify health, same config/mount digests and absent adoption opt-in. Release Writer only after closed PG and stopped candidate proven."
+    ],
+    "deadline": "Bind T, closeReserveStart and hardEnd; hardEnd-T<=1800; reserveStart=hardEnd-240s; no new adoption mutation from reserveStart; no extension.",
+    "unknown": "Stop candidate by exact identity if known; retain artifacts and Writer/fences per existing contract; read-only reconciliation. No publication retry, terminal record fabrication or forced cleanup.",
+    "actualTimerTest": "REQUIRES_PROTECTED_EXECUTION; not performed. Test foreground disconnect with policy already false, candidate absent, no service stop, run negative-only close+independent verify before approving positive activation. Must use sole Writer and avoid Import window."
+  },
+  "requiredAuthFields": [
+    "Absolute T/closeReserveStart/hardEnd, chosen only after Native/Host/Writer readiness.",
+    "Exact approved activation SQL and inverse/readback SQL hashes; policy CAS version/xmin33417; metadata/control only; no role grants.",
+    "Readiness of same Apple session/target confirmation; no secrets in package; original checkpoint/inventorySHA/manifest identities unchanged.",
+    "Explicit legal same-attempt preflight/stage/publish/status recovery sequence and request idempotency bindings; UNKNOWN receipt-only rule.",
+    "Current signed build/source and Native evidence executor ready; permitted scope and terminal acceptance criteria."
+  ],
+  "checksStillRequiredBeforePositiveExecution": [
+    "Fresh CID/config/PG CAS and sole Writer at start.",
+    "Closure bundle staged and exact independent job launch/timeout verified; disconnect recovery evidence in real context.",
+    "Same image runtime clone deterministic-input preflight using existing installer; no candidate Host mutation done yet.",
+    "Auth supplies exact activation SQL and owner-approved operational scope."
+  ],
+  "noSharedStateChanges": true
+}

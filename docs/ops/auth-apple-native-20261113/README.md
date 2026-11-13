@@ -112,4 +112,8 @@ sending positive requests on mount. Publish still checks immutable preparation;
 Cancel uses the original journal and persists formal server proof before any
 refresh-aware credential revocation. Recorded cancellation UNKNOWN can resume
 its negative cleanup on cold entry. No synthetic publication marker is created.
-Focused tests and independent Review pass; signed-device verification follows.
+Repair `237e4c66` passed 69 focused tests and independent Review. Its signed
+iPad update restored the normal Account page to the original target without
+new Apple authorization; prepared checkpoint bytes remained identical. See
+`PREPARED_COLD_DEVICE_READBACK.json`. No Adoption was resubmitted. The exact
+finite Hosted window remains an unactivated candidate under `hosted-window-20261114/`.

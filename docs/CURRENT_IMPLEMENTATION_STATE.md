@@ -35,8 +35,12 @@ zero original grants, stages and terminal receipts. Existing close helper and
 current runtime config pins match; a new finite timer/window is not yet
 authorized or verified. AgentDeviceRunner is restored with its original Team
 and can read/operate the isolated iPad App, including the original Day Feed P1.
-PREPARED cold-reentry now has a minimal local recovery candidate (69 focused
-tests and independent Review pass); signed-device recovery remains pending.
+PREPARED cold-reentry repair `237e4c66` passed 69 focused tests, independent
+Review and signed iPad normal-Account-page recovery to the original target.
+The in-place update preserved exact prepared checkpoint bytes. No new Apple
+authorization or Adoption submission was made. One finite Hosted window packet
+`f29441e7…` has Root2 static alignment and independent Review; approval, actual
+negative closure drill/arm and fresh CAS remain required before activation.
 Preserve this attempt, avoid retries
 or new IDs, and use `ADOPTION_RESUME_CURSOR.json` in the Apple ops packet.
 Existing GuestQA/native identities and data are preserved. Non-empty Guest
