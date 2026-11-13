@@ -1,5 +1,8 @@
 import type * as SQLite from "expo-sqlite";
 import {
+  normalTripReadbackTrigger,
+  serverParentQueueSql,
+  serverParentQueueKind,
   cloudSourceP1QueueSql,
   cloudSourceP1Command,
   normalTripSyncScopeSchema,
@@ -246,6 +249,72 @@ export async function getNormalTripQueueActivity(
     } catch {
       /* Invalid owning Create does not authorize this Trip's queue. */
     }
+  }
+  const parentRows = await database.getAllAsync<Row>(
+    serverParentQueueSql,
+    scope.accountId,
+    scope.newTripsFrom,
+  );
+  const consideredReadbacks = new Set<string>();
+  for (const selected of parentRows) {
+    const kind = serverParentQueueKind(selected);
+    if (selected.failure_category === "AUTH" || !kind) continue;
+    let op = selected;
+    if (kind === "readback" || (kind === "metadata" && selected.status === "COMPLETED")) {
+      if (consideredReadbacks.has(selected.trip_id)) continue;
+      consideredReadbacks.add(selected.trip_id);
+      const prior = await database.getFirstAsync<Row>(
+        "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_type='TRIP_READBACK' AND operation_type='TRIP_NORMAL_READBACK' ORDER BY rowid LIMIT 1",
+        scope.accountId,
+        selected.trip_id,
+      );
+      if (!prior) {
+        actionableNow++;
+        continue;
+      }
+      if (
+        prior.failure_category === "AUTH" ||
+        ["FAILED", "CONFLICT"].includes(prior.status)
+      )
+        continue;
+      const trigger = await normalTripReadbackTrigger(
+        database,
+        scope.accountId,
+        selected.trip_id,
+      );
+      let same = false;
+      try {
+        same = JSON.parse(prior.payload_json).triggerVersion === trigger;
+      } catch {
+        /* Owning readback replaces malformed local read intent. */
+      }
+      if (same && prior.status === "COMPLETED") continue;
+      op = prior;
+      if (!same && prior.status !== "PROCESSING") {
+        actionableNow++;
+        continue;
+      }
+    }
+    if (op.dependency_operation_id) {
+      const dependency = await database.getFirstAsync<{ status: string }>(
+        "SELECT status FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=?",
+        op.dependency_operation_id,
+        scope.accountId,
+        op.trip_id,
+      );
+      if (dependency?.status !== "COMPLETED") continue;
+    }
+    const due =
+      op.status === "PROCESSING"
+        ? op.lease_expires_at
+          ? Date.parse(op.lease_expires_at)
+          : NaN
+        : op.next_attempt_at
+          ? Date.parse(op.next_attempt_at)
+          : now;
+    if (!Number.isFinite(due)) continue;
+    if (due <= now) actionableNow++;
+    else nextActionableAt = Math.min(nextActionableAt ?? Infinity, due);
   }
   const sourceRows = scope.manualOnly
     ? []

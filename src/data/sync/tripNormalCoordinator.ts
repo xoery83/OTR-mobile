@@ -16,7 +16,11 @@ import {
   createTripMetadataRepository,
   readServerParentMetadataEditBase,
 } from "../repositories/tripMetadataRepository";
-import { createNormalTripSyncWake, type NormalTripSyncScope } from "./tripNormalSync";
+import {
+  normalTripReadbackTrigger,
+  createNormalTripSyncWake,
+  type NormalTripSyncScope,
+} from "./tripNormalSync";
 import { createNativeTripCreateSyncRunner } from "./tripCreateCoordinator";
 import { createNativeTripMetadataSyncRunner } from "./tripMetadataCoordinator";
 import {
@@ -70,12 +74,8 @@ export function createNativeNormalTripSyncRunner(
       const local = await repository.getTrip(tripId);
       await assertAccountRequestContext(account, requireActiveUserId);
       if (local && local.serverId !== tripId) return;
-      const trigger = await database.getAllAsync<{
-        id: string;
-        status: string;
-        attempt_count: number;
-      }>(
-        "SELECT id,status,attempt_count FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND ((status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND')) OR (entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND' AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND attempt_count>0 AND failure_category IS NOT 'AUTH')) ORDER BY id",
+      const triggerVersion = await normalTripReadbackTrigger(
+        database,
         account.accountId,
         tripId,
       );
@@ -121,7 +121,7 @@ export function createNativeNormalTripSyncRunner(
               }),
             );
         },
-        JSON.stringify(trigger.map((row) => [row.id, row.status, row.attempt_count])),
+        triggerVersion,
         !coldReadbackSeen.has(coldKey),
       );
       coldReadbackSeen.add(coldKey);

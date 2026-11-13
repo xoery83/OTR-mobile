@@ -777,3 +777,85 @@ it("dispatches a server-parent Metadata operation with no local Create and keeps
   await f.run();
   expect(f.deps.runMetadata).not.toHaveBeenCalled();
 });
+
+it("dispatches the explicit server-parent Person unchanged through the owning runner", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    personId = randomUUID(),
+    parentId = randomUUID();
+  const request = {
+    version: 1,
+    operationId,
+    tripId: f.tripId,
+    personId,
+    tripCreateOperationId: parentId,
+    displayName: "Synthetic Person",
+    dataOwnership: "CLOUD_SHARED_AUTHORED",
+  };
+  const row = {
+    ...f.create,
+    id: operationId,
+    idempotency_key: operationId,
+    entity_id: personId,
+    entity_type: "TRIP_PERSON",
+    operation_type: "TRIP_PERSON_CLOUD_CREATE",
+    payload_json: JSON.stringify(request),
+  };
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockImplementation(async (query: string) =>
+      query.includes("op.operation_type='UPDATE_TRIP_METADATA'") ? [row] : [],
+    );
+  await f.run();
+  expect(f.deps.runPerson).toHaveBeenCalledExactlyOnceWith({
+    accountId: f.accountId,
+    tripId: f.tripId,
+    operationId,
+  });
+  expect(f.deps.runCreate).not.toHaveBeenCalled();
+  expect(row.payload_json).toBe(JSON.stringify(request));
+  row.entity_id = randomUUID();
+  f.deps.runPerson.mockClear();
+  await f.run();
+  expect(f.deps.runPerson).not.toHaveBeenCalled();
+});
+
+it("uses completed server-parent Metadata only as a readback anchor without repeating a business submission", async () => {
+  const f = fixture(),
+    operationId = randomUUID();
+  const before = {
+    name: "Adopted",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    destinations: [],
+  };
+  const row = {
+    ...f.create,
+    id: operationId,
+    idempotency_key: operationId,
+    operation_type: "UPDATE_TRIP_METADATA",
+    status: "COMPLETED",
+    payload_json: JSON.stringify({
+      formatVersion: 3,
+      operationId,
+      tripId: f.tripId,
+      expectedMetadataRevision: 0,
+      before,
+      after: { ...before, name: "Edited" },
+    }),
+  };
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockImplementation(async (query: string) =>
+      query.includes("op.operation_type='UPDATE_TRIP_METADATA'") ? [row] : [],
+    );
+  await f.run();
+  expect(f.deps.runCreate).not.toHaveBeenCalled();
+  expect(f.deps.runMetadata).not.toHaveBeenCalled();
+  expect(f.deps.runPerson).not.toHaveBeenCalled();
+  expect(f.deps.recoverTripReadback).toHaveBeenCalledExactlyOnceWith(
+    f.tripId,
+    operationId,
+  );
+});
