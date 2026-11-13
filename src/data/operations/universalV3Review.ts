@@ -88,14 +88,19 @@ export function universalV3ReviewFields(candidate: Candidate) {
       : candidate.kind === "P4"
         ? text(candidate, "pickup.place_label", "pickup.place")
         : candidate.kind === "P2" || candidate.kind === "P5"
-          ? text(candidate, "origin.place_label")
+          ? text(candidate, "origin.place_label", "origin.airport_code")
           : text(
               candidate,
               "place.authored_label",
               "activity.location",
               "activity.venue",
             );
-  const endPlace = text(candidate, "return.place", "destination.place_label");
+  const endPlace = text(
+    candidate,
+    "return.place",
+    "destination.place_label",
+    "destination.airport_code",
+  );
   return { title, start, end, startTime, endTime, place, endPlace };
 }
 

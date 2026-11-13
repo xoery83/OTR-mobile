@@ -18,6 +18,7 @@ import {
   openUniversalV3Review,
   planUniversalV3Review,
   projectUniversalV3SaveState,
+  universalV3ReviewFields,
 } from "./universalV3Review";
 
 const native = vi.hoisted(() => ({
@@ -575,4 +576,18 @@ it("keeps exact N-to-M document sets and never merges separate candidates", () =
   );
   expect((two.commands.at(-1)?.payload as any).add).toEqual([second]);
   expect(plan(candidate)).toEqual(one);
+});
+
+it("shows supported flight airport codes even without extracted place names", () => {
+  const f = fixture();
+  expect(
+    universalV3ReviewFields({
+      ...f.candidate,
+      kind: "P2",
+      fields: {
+        "origin.airport_code": "AKL",
+        "destination.airport_code": "LHR",
+      },
+    }),
+  ).toMatchObject({ place: "AKL", endPlace: "LHR" });
 });
