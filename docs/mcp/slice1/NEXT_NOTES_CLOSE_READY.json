@@ -1,0 +1,36 @@
+{
+  "status": "ROOT_CLOSED_RESTORE_ACTUAL_NO_CHANGE_PASS",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "rootPath": "/opt/otr/dev-backend/build/auth-consumer-write-qa-e389fb93736b401c9e9b5f1437e852dc",
+  "helpersSHA256": {
+    "close_current.py": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+    "config_cas.py": "0ba00b4575b0c828ea5b6bb05d879c8f32e2a71d9602ac27ceba4980f9e9ebee",
+    "deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "prepare_cas.py": "aac0c9940409a9eff40fe5f3e8d554ec984152f3cb74ad3511fc33249ed03a98",
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "slice1-qa-cases.json": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "closePlanSHA256": "6c1c1b3ad4455dded79d93fce196f15e79664481fcda37c9fb23f499e1a30e13",
+  "result": {
+    "result": {
+      "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+      "containerId": "aaf656c3742f4d6ec8c8bccfe467c26ec0a77db82530796f918f0f476cc4e6a2",
+      "image": "sha256:266ed7dfd6a2a50e62b116ea019fa99a3eb5cbc0d1fb29085c883782c3828b9e",
+      "finiteConfigAbsent": true,
+      "health": "healthy"
+    },
+    "deliveryTrace": {
+      "requestedAt": "2026-11-02T03:23:21.524291+00:00",
+      "readyAt": "2026-11-02T03:23:21.537946+00:00",
+      "acquiredAt": "2026-11-02T03:23:21.537991+00:00",
+      "mutationFinishedAt": "2026-11-02T03:23:21.652407+00:00",
+      "releasedAt": "2026-11-02T03:23:21.652457+00:00"
+    }
+  },
+  "clockStarted": false,
+  "timerArmed": false,
+  "qaKeysAdded": false,
+  "hostCredentialCopied": false,
+  "checkedAt": "2026-11-02T03:23:21.675786+00:00"
+}

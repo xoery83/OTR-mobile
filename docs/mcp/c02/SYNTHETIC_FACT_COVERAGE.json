@@ -1,0 +1,269 @@
+{
+  "basis": "CONTROLLED_EXPECTED_FACT_LEDGER_NOT_MODEL_OUTPUT_NOT_SAVED",
+  "inputs": {
+    "user-task.txt": "4d09978e054980e4cd08043b6396daf5af846672ec66e45b8f3d05f0a673cec4",
+    "confirmation.txt": "98830deeb079d4841b8472976cd89defd2c9d689e3c06e96c46613edff6e4bfe",
+    "follow-up.txt": "cb108bf2b04a04ca02298b680d7fcb084043b593062c3502c37fbc4872281798"
+  },
+  "facts": [
+    {
+      "field": "title",
+      "value": "Kowhai Bay QA Lodge",
+      "source": "confirmation.txt:Property",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "property_name",
+      "value": "Kowhai Bay QA Lodge",
+      "source": "confirmation.txt:Property",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "place",
+      "value": "Kowhai Bay QA Lodge",
+      "source": "confirmation.txt:Property",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "place_address",
+      "value": "18 Example Quay, Aster Bay, New Zealand (fictional)",
+      "source": "confirmation.txt:Address",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.start_date",
+      "value": "2026-12-10",
+      "source": "confirmation.txt:Stay",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.end_date",
+      "value": "2026-12-12",
+      "source": "confirmation.txt:Stay",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.start_time",
+      "value": "17:20",
+      "source": "confirmation.txt:planned arrival",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.end_time",
+      "value": "09:45",
+      "source": "confirmation.txt:planned departure",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.start_zone",
+      "value": "Pacific/Auckland",
+      "source": "confirmation.txt:local clocks",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.end_zone",
+      "value": "Pacific/Auckland",
+      "source": "confirmation.txt:local clocks",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "stay.permitted_checkin_from",
+      "value": "14:00",
+      "source": "confirmation.txt:Reception",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "stay.permitted_checkin_until",
+      "value": "20:00",
+      "source": "confirmation.txt:Reception",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "stay.permitted_checkout_by",
+      "value": "10:30",
+      "source": "confirmation.txt:Reception",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "rooms[0].category",
+      "value": "Family unit",
+      "source": "confirmation.txt:Rooms",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "rooms[0].quantity",
+      "value": 1,
+      "source": "confirmation.txt:Rooms",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "rooms[0].capacity",
+      "value": 4,
+      "source": "confirmation.txt:Rooms",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "rooms[1].category",
+      "value": "Studio",
+      "source": "confirmation.txt:Rooms",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "rooms[1].quantity",
+      "value": 1,
+      "source": "confirmation.txt:Rooms",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "rooms[1].capacity",
+      "value": 3,
+      "source": "confirmation.txt:Rooms;follow-up.txt:Studio",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "notes",
+      "value": "Use the east entrance; call reception if arriving after 20:00.",
+      "source": "confirmation.txt:Instructions",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "save_evidence": null
+    },
+    {
+      "field": "dates.end_date.pending_request",
+      "value": "2026-12-13",
+      "source": "follow-up.txt:requested checkout",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "rule": "Never overwrite confirmed 12 December without accepted amendment + user confirmation"
+    },
+    {
+      "field": "quiet_room_preference",
+      "value": "Quiet room requested, not confirmed",
+      "source": "follow-up.txt:quiet room",
+      "classification": "SUGGESTED_PENDING_CONFIRMATION",
+      "rule": "No confirmed room allocation inferred"
+    },
+    {
+      "field": "Booking.reference",
+      "value": "QA-C02-1103",
+      "source": "confirmation.txt:Reservation",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Booking.confirmation_status",
+      "value": "CONFIRMED_BY_FICTIONAL_SOURCE_NOT_OTR_BOOKING",
+      "source": "confirmation.txt:Reservation",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Booking.confirmation_issued",
+      "value": "2026-11-03",
+      "source": "confirmation.txt:issued",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Booking.guest_count",
+      "value": 7,
+      "source": "confirmation.txt:Guests",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Booking.lead_guest",
+      "value": "Alex Chen",
+      "source": "confirmation.txt:Guests",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Ledger.total",
+      "value": {
+        "minor": 120000,
+        "currency": "NZD"
+      },
+      "source": "confirmation.txt:total;follow-up.txt:duplicate",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Ledger.deposit",
+      "value": {
+        "minor": 30000,
+        "currency": "NZD",
+        "source_paid_claim": true
+      },
+      "source": "confirmation.txt:deposit",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Ledger.balance",
+      "value": {
+        "minor": 90000,
+        "currency": "NZD",
+        "source_paid_claim": false
+      },
+      "source": "confirmation.txt:balance",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "Document.Source",
+      "value": "two source files; SHA manifest beside acceptance",
+      "source": "all attachments",
+      "classification": "UNSUPPORTED_PRESERVED",
+      "preserved_in": "synthetic originals and this preview ledger; not admitted or linked in cloud"
+    },
+    {
+      "field": "entry_code",
+      "value": null,
+      "classification": "NOT_PRESENT_IN_SOURCE",
+      "rule": "No fabricated value or implicit Clear"
+    },
+    {
+      "field": "wifi_password",
+      "value": null,
+      "classification": "NOT_PRESENT_IN_SOURCE",
+      "rule": "No fabricated value or implicit Clear"
+    },
+    {
+      "field": "qualified_place",
+      "value": null,
+      "classification": "NOT_PRESENT_IN_SOURCE",
+      "rule": "No fabricated value or implicit Clear"
+    },
+    {
+      "field": "precise_source_instant",
+      "value": null,
+      "classification": "NOT_PRESENT_IN_SOURCE",
+      "rule": "No fabricated value or implicit Clear"
+    },
+    {
+      "field": "person_ids",
+      "value": null,
+      "classification": "NOT_PRESENT_IN_SOURCE",
+      "rule": "No fabricated value or implicit Clear"
+    }
+  ],
+  "supported_and_saved_count": 0
+}

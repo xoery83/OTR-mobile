@@ -1,0 +1,14 @@
+{
+  "status": "BASELINE_RUNTIME_BYTE_REPRODUCED_NEW_WRAPPER_CLOSED_SMOKE_PASS",
+  "previousRuntimeSHA256": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+  "newRuntimeSHA256": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
+  "authWrapperChanged": false,
+  "exports": [
+    "createReadRuntime",
+    "createWriteRuntime"
+  ],
+  "missingConfirmDenied": true,
+  "unauthenticatedStatus": 401,
+  "networkCalls": 0,
+  "activation": false
+}

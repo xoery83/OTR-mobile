@@ -1,0 +1,27 @@
+{
+  "event_id": "mcp-c02-s1-packet-20261103-handoff-001",
+  "package_id": "MCP-C02",
+  "agent_id": "MCP",
+  "lane": "B",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "received_at": "2026-11-02T21:31:47.141Z",
+  "last_reported_at": "2026-11-02T21:30:04.633013+00:00",
+  "acceptance_status": "UNCHANGED",
+  "reported_acceptance": null,
+  "acceptance_scope": null,
+  "source": {
+    "kind": "REGISTERED_THREAD",
+    "thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turn_id": "01a19ddd-32de-7060-a0a1-b125732fc450",
+    "message_id": "exec-015b3fbf-bc64-4f85-842c-a65bdccce81f",
+    "path": "docs/v32/sources/mcp-c02-s1-packet-20261103-handoff-001.json",
+    "sha256": "60adbca060eded9065ebedc1a021e79c044df24fabe4da668cc019ea4ca08349"
+  },
+  "dispatch_performed": false,
+  "ack_status": "AGENT_REPORTED",
+  "snapshot_version": "96461bef32744fd2",
+  "build": "b91a53d059fc9978",
+  "publication_version": 24,
+  "publication_status": "PUBLISHED",
+  "canonical_inbox": "data/event-inbox/v32.json"
+}

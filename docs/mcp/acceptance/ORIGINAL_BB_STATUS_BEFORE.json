@@ -1,0 +1,9 @@
+{
+  "version": "otr.mcp.status/1",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "operation_id": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+  "target": "ITEM",
+  "outcome": "UNKNOWN",
+  "current_revision": null,
+  "error_code": "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT"
+}

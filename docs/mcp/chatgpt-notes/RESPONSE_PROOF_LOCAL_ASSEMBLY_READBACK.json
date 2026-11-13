@@ -1,0 +1,75 @@
+{
+  "status": "LOCAL_ASSEMBLY_INDEPENDENTLY_VERIFIED_NOT_DEPLOYED",
+  "verifiedAt": "2026-11-02T07:36:17.165416+00:00",
+  "sdkCommit": "f522fc4c",
+  "sdkSHA256": "f3c5ecbb0625a057b5a9db8a277f5c6a42fb74a899448d59ab45ab97d26bb1c8",
+  "capture": {
+    "status": "LOCAL_CAPTURE_BUILD_ONLY_LOADER_CHANGED_NOT_DEPLOYED",
+    "builtAt": "2026-11-02T07:32:38.980637+00:00",
+    "captureSHA256": "c56788d7e51ac99aceb359fa37c26fcf8b2973e34a8e5fa9760462e38564cf04",
+    "previousCaptureSHA256": "e29be6ac4ff4d0813a6b1244f2f8d7d934077b92d14dac9605ca28e316e8c6bc",
+    "sourceCount": 352,
+    "changedInputs": [
+      "backend/src/mcpQaRuntime.ts"
+    ],
+    "other351InputsPreserved": true,
+    "dependencyInputCount": 186,
+    "dependencyPathsAndBytesUnchanged": true,
+    "singleCaptureBuild": true,
+    "loaderLint": "PASS_CORRECT_SNAPSHOT_CONTEXT",
+    "hostCalls": 0,
+    "activation": false
+  },
+  "runtime": {
+    "status": "LOCAL_FIXED_SDK_WRAPPER_ASSEMBLY_NOT_DEPLOYED",
+    "sdkCommit": "f522fc4c",
+    "sdkSHA256": "f3c5ecbb0625a057b5a9db8a277f5c6a42fb74a899448d59ab45ab97d26bb1c8",
+    "runtimeSHA256": "e6f305b646482576374231b2ba731fe6dfa87fc4f6ad35a82bd25590e8ee6908",
+    "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+    "sdkInputs": 51,
+    "changedSDKInputs": [
+      "mcp/server.ts"
+    ],
+    "other50SDKInputsPreserved": true,
+    "runtimeInputCount": 48,
+    "sdkBuilds": 0,
+    "runtimeBuilds": 1,
+    "hostCalls": 0,
+    "businessCalls": 0
+  },
+  "sourceReceiptSHA256": {
+    "CAPTURE_BUILD.json": "59fa27a2f07a0e58853ca9eb09caec4d0c6fbaf3aa82d1a3ffb16b9c9e6f99ba",
+    "RUNTIME_ASSEMBLY.json": "9477ed96484b94ae9ffe8aa14481e6996289adeb069258617413d5f6b3f8bd09",
+    "CAPTURE_SOURCE_MANIFEST.json": "47b5556a3db643c833b94703451ef42c618cd4d5824abf632fcb16902abfc6a6"
+  },
+  "independentChecks": {
+    "captureActualArtifactSHA256": "PASS",
+    "runtimeActualArtifactSHA256": "PASS",
+    "fixedSdkActualArtifactSHA256": "PASS",
+    "all352SourceHashes": "PASS",
+    "sourceSetEqualOldBaseline": "PASS",
+    "onlyChangedSource": "backend/src/mcpQaRuntime.ts",
+    "other351Preserved": "PASS",
+    "compiledClosedWrapperSmoke": {
+      "checks": 7,
+      "result": "PASS",
+      "network": "fetch explicitly denied by test"
+    }
+  },
+  "rootReportedNotIndependentlyRebuilt": {
+    "captureBuilds": 1,
+    "dependencyInputCount": 186,
+    "dependencyPathsAndBytesUnchanged": true,
+    "runtimeBuilds": 1,
+    "sdkBuilds": 0
+  },
+  "notTested": [
+    "New execution/collector caller hash pin",
+    "Hosted deployment/current-default preflight",
+    "Hosted log proof retention",
+    "Consumer confirmation/Apply/APPLIED/readback"
+  ],
+  "businessActivation": false,
+  "externalCalls": 0,
+  "mainMerge": false
+}

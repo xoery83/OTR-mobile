@@ -1,0 +1,23 @@
+{
+  "status": "LOCAL_SOURCE_BINDING_CONTRACT_PASS_NOT_AUTHORIZED",
+  "checks": [
+    "OLD_AUTH_SOURCE_REJECTED",
+    "OTHER_SOURCE_REJECTED",
+    "NOT_APPROVED_REJECTED",
+    "MISSING_MESSAGE_REJECTED",
+    "WRONG_CLIENT_REJECTED",
+    "MISSING_CLIENT_REJECTED",
+    "WRONG_OPERATION_REJECTED",
+    "WRONG_DIGEST_REJECTED",
+    "ROOT_SOURCE_FULL_CLIENT_WIRE_PURE_PLAN_PASS",
+    "EXPIRED_WINDOW_REJECTED"
+  ],
+  "checkCount": 10,
+  "fixture": "Actual V2 complete shape and existing QA config; Root source/message are explicitly synthetic; Docker metadata is synthetic without credentials",
+  "hostCalls": 0,
+  "casCalls": 0,
+  "databaseCalls": 0,
+  "clockStarted": false,
+  "actualOwnerApprovalForE389": false,
+  "oldFrozenFilesModified": false
+}

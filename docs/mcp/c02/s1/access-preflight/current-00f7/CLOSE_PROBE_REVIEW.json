@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_CLOSE_PROBE_METADATA_REBIND_NO_BLOCKER",
+  "reviewer": "/root/c02_s1_packet_review",
+  "reviewedAt": "2026-11-03T01:53:36.222625+00:00",
+  "candidateSHA256": "a3cbfe5876372361d32a6fe4c844228a6bd1d0681e3b2d858dc12eb19fcaa2b5",
+  "privateCandidateSHA256": "a3cbfe5876372361d32a6fe4c844228a6bd1d0681e3b2d858dc12eb19fcaa2b5",
+  "priorReviewedCandidateSHA256": "8ac5b145d9ab9db511f088515e3e73bceea33efc3ead57530ac37017b4137200",
+  "metadataSubstitutions": 5,
+  "exactForwardAndReverseComparison": true,
+  "syntaxParse": "PASS_NO_EXECUTION",
+  "supplementSHA256": "4b539bd29f50128a3570e4e9f1e091e786bed4df7f593b2bd6f3c68894c00743",
+  "currentDefault": {
+    "containerId": "00f7fcf61c2424caefeebf2d0f988cc8690cfcd6b64e21724cd9af38cf3c4667",
+    "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "configSHA256": "fa94477edad39a58dde0f6684c428c1c1569be33e6cac6840c47cc154d460b63"
+  },
+  "unchangedEvidence": [
+    "Env/mount/HostConfig hashes match prior readback",
+    "All4 nonCapture bundles match, including C02Host6c9b",
+    "QA config key set empty, healthy, PDF runtime disabled",
+    "All original close guard/pins/current-default/no-temporary-authority logic and Owner c231 Gate unchanged"
+  ],
+  "expectedRemotePlanSHA256": "5a0a22cd9510b485e8a3439e31af3c12c9fd3c8caab641d13346f6e088e60bb9",
+  "expectedRemoteReleaseOutputSHA256": "8ecf15d323b4171b2645d2b9b8e9b8392e8bd8afa5063c39f5306c5f1d777023",
+  "scope": "Current00f7 unchanged-default close probe metadata only. Prior11faa candidate is superseded and must not execute.",
+  "networkCalls": 0,
+  "hostCalls": 0,
+  "sqlCalls": 0,
+  "privilegedActions": 0,
+  "oldTestsRerun": false,
+  "executionPerformed": false,
+  "limits": "Actual current-default probe must be run/verified by Root. This source review introduces no temporary permissions and does not require DCR qualification; actual finite access still requires its separate DCR=false/close/Owner conditions. Not EXECUTION_QUALIFIED."
+}

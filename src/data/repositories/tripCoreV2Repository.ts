@@ -138,6 +138,10 @@ export type CoreAcceptedCertificate = {
   manifest_sha256: string;
   ordinary_order_version: number;
 };
+export type CoreAcceptedPeopleConnections = {
+  certificate: CoreAcceptedCertificate;
+  people: { personId: string; connected: boolean; isCurrentActor: boolean }[];
+};
 export type CoreAcceptedSnapshot = {
   graph: CoreGraph;
   actor: CoreActor;
@@ -430,6 +434,37 @@ export function createTripCoreV2Repository(
       let result: CoreAcceptedSnapshot | null = null;
       await database.withTransactionAsync(async () => {
         result = await acceptedWithinTransaction(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
+  }
+  // Public reader owns the non-reentrant Account gate and SQLite transaction.
+  async function readAcceptedPeopleConnections(
+    ctx: AccountRequestContext,
+  ): Promise<CoreAcceptedPeopleConnections | null> {
+    return withAccountApplyGate(async () => {
+      let result: CoreAcceptedPeopleConnections | null = null;
+      await database.withTransactionAsync(async () => {
+        const accepted = await acceptedWithinTransaction(ctx);
+        if (!accepted) return;
+        const bindings = await database.getAllAsync<{
+          person_id: string;
+          linked_account_id: string | null;
+        }>(
+          "SELECT person_id,linked_account_id FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? AND active=1 ORDER BY person_id",
+          ctx.accountId,
+          ctx.tripId,
+        );
+        result = {
+          certificate: accepted.certificate,
+          people: bindings.map((binding) => ({
+            personId: binding.person_id,
+            connected: binding.linked_account_id !== null,
+            isCurrentActor: binding.linked_account_id === ctx.accountId,
+          })),
+        };
+        await assertContext(ctx);
       });
       await assertContext(ctx);
       return result;
@@ -2514,6 +2549,7 @@ export function createTripCoreV2Repository(
     readGraph,
     manualReadSnapshot,
     acceptedSnapshot,
+    readAcceptedPeopleConnections,
     combinedSnapshot,
     readLocalCombinedWithinTransaction,
     commitLocal: localCommits.commit,

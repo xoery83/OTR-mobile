@@ -1,0 +1,113 @@
+heading "你说：" [level=4]
+    - generic: 确认保存本轮刚刚正式预览且已独立核验的唯一修改：同一合成QA Item 3616da44-0d35-4400-a739-01f1029565ea，Trip cc44a705-6f43-41e0-a2f9-16f334b2a6b2，原Operation 2777810c-24d9-4ecf-998c-9fc5dd00de34，expected_revision=2，preview_digest=fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c。现在执行一次APPLY，不重跑PREVIEW，不换ID、不自动重试写入。Notes完整内容必须精确为三行： Synthetic QA only. No Booking/Ticket. Slice1 Fresh Claude Notes QA verified. Slice1 Fresh ChatGPT Notes QA verified. 其他所有字段保持不变，无尾随换行、不新建Item。若UNKNOWN，只读查询该原Operation回执，禁止第二次APPLY。返回实际APPLY请求参数及原始正式回执JSON；仅在收到APPLIED后，再读取同一Item一次核对Revision及Notes。没有正式APPLIED不得宣称保存成功。
+    - button "复制消息":
+    - button "共享提示":
+    - button "查看版本":
+    - button "编辑消息":
+    - button "思考了 2m 7s"
+    - generic: 思考了 2m 7s
+    - heading "ChatGPT 说：" [level=4]
+    - generic: APPLY 已获正式确认
+    - paragraph:
+      - text: OTR DEV QA 返回
+      - code: "outcome: \"APPLIED\""
+      - text: ，指定修改已由服务器确认提交，Item Revision 从
+      - generic: 2 升至 3
+      - text: 。
+    - list:
+      - paragraph:
+        - text: Operation ID：
+        - code: 2777810c-24d9-4ecf-998c-9fc5dd00de34
+      - paragraph: Preview Digest：与指定值完全一致
+      - paragraph:
+        - text: APPLY 次数：
+        - generic: 1 次
+      - paragraph: 未重新 PREVIEW、未更换 ID、未创建 Item
+    - heading "1. 实际 APPLY 请求与正式回执" [level=2]
+    - paragraph: 以下来自本轮实际工具调用：
+    - generic: JSON
+    - button "启用自动换行":
+    - button "复制代码":
+    - code: "{ \"request\": { \"mode\": \"APPLY\", \"preview_digest\": \"fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c\", \"request_id\": \"2777810c-24d9-4ecf-998c-9fc5dd00de34\", \"trip_id\": \"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\", \"item_id\": \"3616da44-0d35-4400-a739-01f1029565ea\", \"expected_revision\": 2, \"change\": { \"kind\": \"TEXT\", \"notes\": \"Synthetic QA only. No Booking/Ticket.\\nSlice1 Fresh Claude Notes QA verified.\\nSlice1 Fresh ChatGPT Notes QA verified.\" } }, \"result\": { \"version\": \"otr.mcp.mutation/1\", \"trip_id\": \"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\", \"item_id\": \"3616da44-0d35-4400-a739-01f1029565ea\", \"operation_id\": \"2777810c-24d9-4ecf-998c-9fc5dd00de34\", \"current_revision\": 3, \"preview_digest\": \"fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c\", \"summary\": \"Update 3616da44-0d35-4400-a739-01f1029565ea at revision 2: {\\\"kind\\\":\\\"TEXT\\\",\\\"notes\\\":\\\"Synthetic QA only. No Booking/Ticket.\\\\nSlice1 Fresh Claude Notes QA verified.\\\\nSlice1 Fresh ChatGPT Notes QA verified.\\\"}\", \"query\": { \"trip_id\": \"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\", \"operation_id\": \"2777810c-24d9-4ecf-998c-9fc5dd00de34\", \"target\": \"ITEM\" }, \"outcome\": \"APPLIED\" } }"
+    - button:
+    - heading "2. 保存后独立读取核对" [level=2]
+    - generic: 回读验证通过
+    - paragraph:
+      - text: 收到
+      - code: APPLIED
+      - text: 后，已对同一个 Item 执行一次
+      - code: get_trip_item
+      - text: 。
+    - table:
+      - rowgroup:
+        - row "核验项 保存后结果":
+          - columnheader "核验项":
+            - paragraph: 核验项
+          - columnheader "保存后结果":
+            - paragraph: 保存后结果
+        - row "服务器状态 SERVER_CONFIRMED":
+          - cell "服务器状态":
+            - paragraph: 服务器状态
+          - cell "SERVER_CONFIRMED":
+            - paragraph:
+              - code: SERVER_CONFIRMED
+        - row "Item Revision 3":
+          - cell "Item Revision":
+            - paragraph: Item Revision
+          - cell "3":
+            - paragraph:
+              - generic: "3"
+        - row "Notes 精确匹配指定三行":
+          - cell "Notes":
+            - paragraph: Notes
+          - cell "精确匹配指定三行":
+            - paragraph: 精确匹配指定三行
+        - row "尾随换行 无":
+          - cell "尾随换行":
+            - paragraph: 尾随换行
+          - cell "无":
+            - paragraph: 无
+        - row "标题、日期、参与信息等 与保存前读取结果一致":
+          - cell "标题、日期、参与信息等":
+            - paragraph: 标题、日期、参与信息等
+          - cell "与保存前读取结果一致":
+            - paragraph: 与保存前读取结果一致
+        - row "新建 Item 无":
+          - cell "新建 Item":
+            - paragraph: 新建 Item
+          - cell "无":
+            - paragraph: 无
+    - paragraph:
+      - generic: 服务器实际保存的 Notes：
+    - generic: 纯文本
+    - button "启用自动换行":
+    - button "复制代码":
+    - code:
+      - generic: Synthetic QA only. No Booking/Ticket. Slice1 Fresh Claude Notes QA verified. Slice1 Fresh ChatGPT Notes QA verified.
+    - paragraph:
+      - generic: 最终结论：保存成功，并已通过独立回读核验。
+      - text: 本轮仅执行了一次 APPLY、一次保存后读取，没有再次写入。
+    - button "复制":
+    - button "评价回复":
+    - button "朗读":
+    - button "分享":
+    - button "重新生成回复":
+    - button "更多操作":
+    - generic: ChatGPT 可能会出错。请核查重要信息。
+    - button "滚动到底部":
+    - heading "最新一条回复" [level=4]
+    - status
+    - button "添加文件等内容":
+    - textbox "询问 ChatGPT":
+      - paragraph: 询问 ChatGPT
+    - button "选择 ChatGPT 模型":
+      - generic: 思考强度
+      - generic: 中
+    - button "听写":
+    - button "开始语音":
+- status
+- status: 回答已完成
+- status
+- status
+- status
+- status

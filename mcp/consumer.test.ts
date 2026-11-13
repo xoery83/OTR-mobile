@@ -3,6 +3,7 @@ import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/cli
 import { expect, it, vi } from "vitest";
 import { createMcpHandler } from "./server";
 import { loopbackServer } from "./http";
+import type { BackendMutation } from "./mutation";
 
 it.each([false, true])(
   "advertises provider-compatible OAuth policy (readOnly=%s) without dispatch",
@@ -135,8 +136,11 @@ it.each(["create_trip_item", "update_trip_item", "create_trip", "get_operation_s
     if (!address || typeof address === "string") throw Error("NO_ADDRESS");
     resource = `http://127.0.0.1:${address.port}/mcp`;
     const client = new Client({ name: "expiry-protocol-only", version: "1" });
+    const onUnauthorized = vi.fn(async () => {});
     try {
-      await client.connect(new StreamableHTTPClientTransport(new URL(resource)));
+      await client.connect(new StreamableHTTPClientTransport(new URL(resource), {
+        authProvider: { token: async () => "synthetic-test-token", onUnauthorized },
+      }));
       const create = {
         request_id: randomUUID(),
         trip_id: tripId,
@@ -209,9 +213,9 @@ it.each(["create_trip_item", "update_trip_item", "create_trip", "get_operation_s
           summary: "",
         });
         expect(JSON.stringify(result)).not.toContain("Private");
-        expect(backend).toHaveBeenCalledTimes(1);
       }
-      expect(backend).toHaveBeenCalled();
+      expect(backend).toHaveBeenCalledTimes(1);
+      expect(onUnauthorized).not.toHaveBeenCalled();
     } finally {
       vi.restoreAllMocks();
       await client.close();
@@ -221,3 +225,57 @@ it.each(["create_trip_item", "update_trip_item", "create_trip", "get_operation_s
     }
   },
 );
+
+it("a mixed read/write batch never challenges or replays its submitted write", async () => {
+  const accountId = randomUUID(), tripId = randomUUID();
+  const resource = "https://mcp.example.invalid/mcp";
+  const backend = vi.fn<BackendMutation>(async (request) =>
+    Response.json({}, { status: request.method === "GET" ? 404 : 503 }),
+  );
+  const handler = createMcpHandler({
+    resource,
+    authorize: async () => ({
+      accountId, clientId: "mixed-batch-test", resource,
+      scopes: ["otr.trips.read", "otr.trips.write"], expiresAt: Date.now() + 60000,
+      read: async () => new Response(null, { status: 401 }), backend,
+    }),
+    confirm: async () => true,
+  });
+  const { prepareTrip, mutationIdentity } = await import("./mutation");
+  const input = { request_id: randomUUID(), name: "Synthetic batch", destinations: [] };
+  const digest = mutationIdentity(accountId, prepareTrip(accountId, input)).preview_digest;
+  const onUnauthorized = vi.fn(async () => {});
+  const statuses: number[] = [], messages: unknown[] = [];
+  const transport = new StreamableHTTPClientTransport(new URL(resource), {
+    authProvider: { token: async () => "synthetic-test-token", onUnauthorized },
+    fetch: async (url, init) => {
+      const response = await handler(new Request(url, init));
+      statuses.push(response.status);
+      return response;
+    },
+  });
+  transport.onmessage = (message) => messages.push(message);
+  try {
+    await transport.start();
+    await transport.send([
+      { jsonrpc: "2.0", id: "read", method: "tools/call", params: {
+        name: "get_trip_item", arguments: { trip_id: tripId, item_id: randomUUID() },
+      } },
+      { jsonrpc: "2.0", id: "write", method: "tools/call", params: {
+        name: "create_trip", arguments: { ...input, mode: "APPLY", preview_digest: digest },
+      } },
+    ]);
+    expect(statuses).toEqual([200]);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(backend.mock.calls.map(([request]) => request.method)).toEqual(["GET", "POST"]);
+    expect(backend.mock.calls.filter(([request]) => request.method === "POST")).toHaveLength(1);
+    expect(messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "read", result: expect.objectContaining({ isError: true }) }),
+      expect.objectContaining({ id: "write", result: expect.objectContaining({
+        structuredContent: expect.objectContaining({
+          outcome: "UNKNOWN", operation_id: input.request_id, error_code: "QUERY_SAME_OPERATION",
+        }),
+      }) }),
+    ]));
+  } finally { await transport.close(); }
+});

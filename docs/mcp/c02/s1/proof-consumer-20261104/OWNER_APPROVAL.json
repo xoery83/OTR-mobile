@@ -1,0 +1,23 @@
+{
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source": "Direct human reply to immediately preceding exact request",
+  "ownerText": "批准",
+  "requestedPacketCommit": "57d34d94",
+  "gateSHA256": "3526947da5adcece8d7dfde7139e239cf8291a401b3520e068984dc5b3b15ac5",
+  "windowId": "b08a466d-29f3-48a8-9617-6c563646f417",
+  "observedAt": "2026-11-03T20:21:13.522359+00:00",
+  "approved": [
+    "Normal independent QA OTP",
+    "Original Read/Write Scope Consent",
+    "Existing finite OAuth/Issuer and bounded window",
+    "Same original a8c1 Preview and server hash check"
+  ],
+  "notApproved": [
+    "Save/Apply",
+    "Business mutations",
+    "Overlapping Auth window",
+    "Expanded Scope/role/SQL/Provider"
+  ],
+  "root2SourceReadbackRequired": true,
+  "clockStarted": false
+}

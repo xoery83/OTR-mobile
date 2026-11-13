@@ -1,0 +1,196 @@
+separator "今天 17:50":
+      - time: 今天 17:50
+    - heading "你说：" [level=4]
+    - generic: OTR DEV QA 已通过本轮正常 OTP 和既有 OAuth Consent 重新连接。现在只做原 UNKNOWN 的只读恢复，不允许任何保存、Apply 或重发。请读取当前 OTR Operating Guide，然后查询原 Trip cc44a705-6f43-41e0-a2f9-16f334b2a6b2 的 Operation a8c1e142-19c4-4d53-9d8e-fae4ad3ff616，并读取目标 Item a9dbe020-ebce-49fb-ab31-859977f328c6（如果当前合法可见）。返回本次工具真实完整状态 JSON、Revision 和目标读回结果，区分旧结果与本次新查询。UNKNOWN、404 或不可见都不得推断为未提交。不要调用任何 Create/Update/Apply，不使用新 ID，不读取真实 Nelson 或其他账户。若读取失败，只报告实际失败，不通过写入尝试恢复。
+    - button "复制消息":
+    - button "共享提示":
+    - button "编辑消息":
+    - button "思考了 59s"
+    - generic: 思考了 59s
+    - heading "ChatGPT 说：" [level=4]
+    - heading "OTR DEV QA — 原 UNKNOWN 只读恢复报告" [level=2]
+    - generic: UNKNOWN · 未确认提交状态
+    - paragraph: 本轮已通过重新连接的 OTR DEV QA，实际完成以下只读操作：
+    - list:
+      - paragraph: 读取当前 Operating Guide（OPERATING、FIELDS、CAPABILITIES）。
+      - paragraph: 查询指定的原 Operation 状态。
+      - paragraph: 尝试读取指定的目标 Item。
+    - paragraph:
+      - generic: 未调用任何 Create、Update、PREVIEW 或 APPLY。未使用新 ID，也未访问其他 Trip 或账户。
+    - heading "1. 本次 Operation 状态查询" [level=2]
+    - paragraph:
+      - text: 调用：
+      - code: get_operation_status
+    - generic: JSON
+    - button "启用自动换行":
+    - button "复制代码":
+    - code: "{ \"version\": \"otr.mcp.status/1\", \"trip_id\": \"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\", \"operation_id\": \"a8c1e142-19c4-4d53-9d8e-fae4ad3ff616\", \"target\": \"ITEM\", \"outcome\": \"UNKNOWN\", \"current_revision\": null, \"error_code\": \"NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT\" }"
+    - button:
+    - paragraph:
+      - text: 这是
+      - generic: 本轮新查询的真实返回
+      - text: ，不是复用上次结果。
+    - table:
+      - rowgroup:
+        - row "字段 本次结果":
+          - columnheader "字段":
+            - paragraph: 字段
+          - columnheader "本次结果":
+            - paragraph: 本次结果
+        - row "Operation ID a8c1e142-19c4-4d53-9d8e-fae4ad3ff616":
+          - cell "Operation ID":
+            - paragraph: Operation ID
+          - cell "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616":
+            - paragraph:
+              - code: a8c1e142-19c4-4d53-9d8e-fae4ad3ff616
+        - row "Outcome UNKNOWN":
+          - cell "Outcome":
+            - paragraph: Outcome
+          - cell "UNKNOWN":
+            - paragraph:
+              - code: UNKNOWN
+        - row "Current Revision null":
+          - cell "Current Revision":
+            - paragraph: Current Revision
+          - cell "null":
+            - paragraph:
+              - code: "null"
+        - row "Error Code NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT":
+          - cell "Error Code":
+            - paragraph: Error Code
+          - cell "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT":
+            - paragraph:
+              - code: NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT
+        - row "是否确认 APPLIED 否":
+          - cell "是否确认 APPLIED":
+            - paragraph: 是否确认 APPLIED
+          - cell "否":
+            - paragraph: 否
+        - row "是否确认未提交 否":
+          - cell "是否确认未提交":
+            - paragraph: 是否确认未提交
+          - cell "否":
+            - paragraph: 否
+    - heading "2. 本次目标 Item 读回" [level=2]
+    - paragraph:
+      - text: 调用：
+      - code: get_trip_item
+    - paragraph:
+      - text: 目标 Item ID：
+      - code: a9dbe020-ebce-49fb-ab31-859977f328c6
+    - paragraph: 工具调用失败，返回的底层错误 JSON 为：
+    - generic: JSON
+    - button "启用自动换行":
+    - button "复制代码":
+    - code: "{ \"version\": \"otr.mcp.read/1\", \"error\": { \"code\": \"NOT_VISIBLE\" } }"
+    - button:
+    - paragraph: 外层工具同时报告：
+    - paragraph:
+      - code: INVALID_ARGUMENT / RuntimeException
+    - paragraph:
+      - text: 这意味着当前连接无法合法读取该 Item，
+      - generic: 不能解释为 Item 不存在，也不能解释为保存没有发生
+      - text: 。
+    - paragraph: 由于目标不可见，本次没有获得 Item Revision，也无法核对其实际保存的日期、地址、Notes 或 Room ID。
+    - heading "3. 与上一轮的区别" [level=2]
+    - table:
+      - rowgroup:
+        - row "核对项 上轮 APPLY 后 本轮重新连接后":
+          - columnheader "核对项":
+            - paragraph: 核对项
+          - columnheader "上轮 APPLY 后":
+            - paragraph: 上轮 APPLY 后
+          - columnheader "本轮重新连接后":
+            - paragraph: 本轮重新连接后
+        - row "APPLY 返回 UNKNOWN 未调用":
+          - cell "APPLY 返回":
+            - paragraph: APPLY 返回
+          - cell "UNKNOWN":
+            - paragraph: UNKNOWN
+          - cell "未调用":
+            - paragraph: 未调用
+        - row "Operation 状态 UNKNOWN UNKNOWN":
+          - cell "Operation 状态":
+            - paragraph: Operation 状态
+          - cell "UNKNOWN":
+            - paragraph: UNKNOWN
+          - cell "UNKNOWN":
+            - paragraph: UNKNOWN
+        - row "Operation Revision null null":
+          - cell "Operation Revision":
+            - paragraph: Operation Revision
+          - cell "null":
+            - paragraph: "null"
+          - cell "null":
+            - paragraph: "null"
+        - row "目标 Item 读取 未执行 NOT_VISIBLE":
+          - cell "目标 Item 读取":
+            - paragraph: 目标 Item 读取
+          - cell "未执行":
+            - paragraph: 未执行
+          - cell "NOT_VISIBLE":
+            - paragraph: NOT_VISIBLE
+        - row "Item Revision 未取得 未取得":
+          - cell "Item Revision":
+            - paragraph: Item Revision
+          - cell "未取得":
+            - paragraph: 未取得
+          - cell "未取得":
+            - paragraph: 未取得
+        - row "是否能确认提交成功 否 否":
+          - cell "是否能确认提交成功":
+            - paragraph: 是否能确认提交成功
+          - cell "否":
+            - paragraph: 否
+          - cell "否":
+            - paragraph: 否
+        - row "是否能确认未提交 否 否":
+          - cell "是否能确认未提交":
+            - paragraph: 是否能确认未提交
+          - cell "否":
+            - paragraph: 否
+          - cell "否":
+            - paragraph: 否
+    - paragraph:
+      - text: 本轮新增的证据是：在当前重新连接的合法访问上下文中，目标 Item 读取返回了
+      - code: NOT_VISIBLE
+      - text: 。但它并没有解决原 Operation 的
+      - code: UNKNOWN
+      - text: 状态。
+    - heading "4. 最终结论" [level=2]
+    - paragraph: 原 UNKNOWN 尚未恢复为确定终态。
+    - paragraph: Operation 仍为 UNKNOWN，目标 Item 当前不可见，Revision 未取得。
+    - paragraph:
+      - text: 建议下一步由 OTR 后端针对
+      - generic: 同一 Operation ID 和同一 Item ID
+      - text: 核查原始事务、Receipt 持久化情况以及当前访问权限。重点区分：事务实际未提交、事务已提交但回执不可见、以及 Item 已存在但读取权限不满足。
+    - paragraph:
+      - text: 在得到权威结果之前，不应重发 APPLY、创建新 Operation，或启动原计划的
+      - code: 09:45 → 10:15
+      - text: 后续编辑。
+    - paragraph:
+      - generic: 本轮只读恢复到此结束，所有写入操作均未执行。
+    - button "复制":
+    - button "评价回复":
+    - button "朗读":
+    - button "分享":
+    - button "重新生成回复":
+    - button "更多操作":
+    - generic: ChatGPT 可能会出错。请核查重要信息。
+    - button "滚动到底部":
+    - heading "最新一条回复" [level=4]
+    - status
+    - button "添加文件等内容":
+    - textbox "询问 ChatGPT" [active]:
+      - paragraph: 询问 ChatGPT
+    - button "选择 ChatGPT 模型":
+      - generic: 思考强度
+      - generic: 中
+    - button "听写":
+    - button "开始语音":
+- status
+- status: 回答已完成
+- status
+- status
+- status
+- status

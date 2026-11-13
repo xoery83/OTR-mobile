@@ -1,0 +1,11 @@
+{
+  "gateSHA256": "4ab236c94c0cc34e775823b0160602a19c0f898dc7be8eaf0f3a2eec531f192d",
+  "gateCommit": "8580cffe",
+  "windowId": "acd60fd27aee40e8b6cf1aca727ed169",
+  "questionCall": "call_bc4a30bc35724c28bb767fdfa8b7234b",
+  "humanAnswer": "批准本轮有限 QA 连接并同步",
+  "notesApproved": false,
+  "confirmations": [],
+  "startsAt": null,
+  "deadline": null
+}

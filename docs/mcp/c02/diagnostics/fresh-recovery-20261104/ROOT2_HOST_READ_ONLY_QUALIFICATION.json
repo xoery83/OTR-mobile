@@ -1,0 +1,98 @@
+{
+  "observedAt": "2026-11-04T04:29:33.183342+00:00",
+  "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+  "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "healthy": "healthy",
+  "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa",
+  "mounts": [
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "Destination": "/run/otr/capture-custody.json",
+      "Mode": "",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/private/universal-custody-2d964c16-6bc6-423b-a827-740efa133dab",
+      "Destination": "/var/lib/otr/universal-custody",
+      "Mode": "rw",
+      "RW": true,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json",
+      "Destination": "/run/otr/universal-runtime.json",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/run/otr/universal-png-worker",
+      "Destination": "/run/otr/universal-png-worker",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json",
+      "Destination": "/run/otr/trip-create-runtime.json",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/env/universal-png-runtime.json",
+      "Destination": "/run/otr/universal-png-runtime.json",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/private/universal-png-stage-20261031",
+      "Destination": "/var/lib/otr/universal-png-stage",
+      "Mode": "rw",
+      "RW": true,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "Destination": "/run/otr/catalog-reader.json",
+      "Mode": "",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/opt/otr/dev-backend/private/capture-custody",
+      "Destination": "/var/lib/otr/capture-custody",
+      "Mode": "",
+      "RW": true,
+      "Propagation": "rprivate"
+    }
+  ],
+  "configurationFiles": 18,
+  "mountedFiles": 5,
+  "filesMatch623aTemplate": true,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+    "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb"
+  },
+  "bundlesMatch623aTemplate": true,
+  "activeProtectedTimers": "",
+  "finiteQaEnvironmentKeys": [],
+  "pdfFlag": "disabled",
+  "pngFlag": "disabled",
+  "lockAvailable": true
+}

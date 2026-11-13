@@ -1,0 +1,22 @@
+[
+  {
+    "level": "warn",
+    "timestamp": "2026-11-03T05:04:12.596Z",
+    "message": "  WARN  [Statsig] Caught error in _writeToCache Object"
+  },
+  {
+    "level": "error",
+    "timestamp": "2026-11-03T05:04:12.600Z",
+    "message": "Error: Minified React error #418; visit [URL redacted] for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at rR ([URL redacted])\n    at oK ([URL redacted])\n    at lw ([URL redacted])\n    at [URL redacted]\n    at lk ([URL redacted])\n    at lu ([URL redacted])\n    at lY ([URL redacted])\n    at lH ([URL redacted])\n    at lK ([URL redacted])\n    at [URL redacted]"
+  },
+  {
+    "level": "info",
+    "timestamp": "2026-11-03T05:04:12.601Z",
+    "message": "App connect OAuth callback request started Object"
+  },
+  {
+    "level": "info",
+    "timestamp": "2026-11-03T05:04:12.601Z",
+    "message": "App connect OAuth callback request completed Object"
+  }
+]

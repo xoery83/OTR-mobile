@@ -1,0 +1,23 @@
+{
+  "package": "MCP-C02",
+  "slice": "C02-S1",
+  "status": "CONSUMER_PREVIEW_REPORTED_SAVE_BLOCKED_CLOSED",
+  "consumerChat": "https://chatgpt.com/c/6aea3362-3100-83ec-99a8-adaf738f4a26",
+  "windowId": "e0d1c568-cbae-4b0c-a3a0-dec92e4ececf",
+  "catalog": "8_READ_2_WRITE",
+  "guideTripItemsRead": "PASS_WITH_RECORDED_RETRIES",
+  "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "itemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+  "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc",
+  "preview": "Consumer quoted original JSON; local canonical command, input/output and digest recomputation agree. Actual HTTP create tool200 corroborated; deployed logger omitted responseProof. NOT independent server hash proof.",
+  "save": "NOT_AUTHORIZED_NOT_SUBMITTED",
+  "edit": "NOT_RUN",
+  "native": "NOT_RUN",
+  "blocker": "DEPLOYED_LOGGER_STRIPS_RESPONSE_PROOF; close collector also omits proof",
+  "otherFailures": [
+    "Some item reads BACKEND_UNAVAILABLE, AUTH_REQUIRED; actual root cause not established",
+    "Materials review consumer-reported BACKEND_UNAVAILABLE; HTTP200 tool log alone is not success"
+  ],
+  "closed": "ROOT2_CLOSED_VERIFIED; Grant0; ownSessionCleanupPASS; no shared lock",
+  "next": "Review and integrate minimal hash-only logger/collector repair; qualify new default and exact finite access, re-preview unchanged original operation; show exact preview and ask Owner before Save. Never reuse closed window."
+}

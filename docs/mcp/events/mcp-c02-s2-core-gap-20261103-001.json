@@ -1,0 +1,40 @@
+{
+  "event_id": "mcp-c02-s2-core-gap-20261103-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:LOCAL_PREP",
+  "owner_slice_id": "C02-S2",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "BLOCKED",
+  "reported_event_type": "BLOCKED",
+  "created_at": "2026-11-02T21:30:04.633013+00:00",
+  "current_status": "CORE_SPARSE_ROOM_INTERFACE_ACKED_PENDING",
+  "commit": "5343f4f5",
+  "summary": "C02-S2 independent state; MCP-C02 remains IN_PROGRESS, no whole-package completion or global block.",
+  "evidence_paths": [
+    "docs/mcp/c02/SLICES.json",
+    "docs/mcp/c02/s2/CORE_INTERFACE_REQUEST.md"
+  ],
+  "completed": [
+    "Existing Core read/Authority/CAS/Receipt known",
+    "Core Writer ACK no sparse formal entry and minimal changed-leaf contract"
+  ],
+  "unfinished": [
+    "Owning interface implementation and local/Hosted/E2E qualification"
+  ],
+  "blocked_by": [
+    "Core owning sparse Stay/room provenance-preserving mutation interface"
+  ],
+  "next_action": "Consume that exact interface when delivered; no fake Notes/source/room replacement",
+  "acceptance": {
+    "local": "INTERFACE_ACKED_ONLY",
+    "hosted": "NOT_RUN",
+    "e2e": "NOT_RUN"
+  },
+  "hosted_operations": 0,
+  "new_receipts": [],
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED",
+  "supersedes_scope": "Earlier whole-C02 waiting description superseded by independent slices, prior evidence retained."
+}

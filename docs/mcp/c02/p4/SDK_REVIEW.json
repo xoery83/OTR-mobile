@@ -1,0 +1,36 @@
+{
+  "status": "NO_BLOCKER_LOCAL_STANDARD_SDK_RENTAL_SCALARS",
+  "reviewer": "/root/c02_s3_review",
+  "at": "2026-11-03T02:40:52.826340+00:00",
+  "scope": "New P4 standard SDK test and local coverage report only; no production implementation change. Existing details-only test used as a related focused regression.",
+  "reviewed_file_sha256": {
+    "mcp/mutation.test.ts": "bd975aa1c5d5459d2aef1a4b70bed0e304642b6b793488ef8518687710adc716",
+    "docs/mcp/c02/p4/LOCAL_FIELD_COVERAGE.md": "61617b7b4c6dd72b9ad46268cd45ea0c6ab3c55b90584e367b06a6f18b8c02ad"
+  },
+  "independent_checks": [
+    "P4 standard SDK + P4 details-only focused tests: 2 PASS; 52 unrelated tests skipped",
+    "MCP Typecheck PASS",
+    "Scoped Diff Check PASS"
+  ],
+  "authenticity": [
+    "Official MCP Client/StreamableHTTP transport calls the real Handler through in-process custom fetch; Backend fixture uses actual Core HTTP boundary and canonical Receipt generation.",
+    "The test creates one P4 with five scalar Rental fields, both pickup/return labels+addresses, civil schedule and Notes.",
+    "Unconfirmed Create/Edit stays NEEDS_CONFIRMATION; six single-leaf edits exercise response loss and same-operation Receipt recovery.",
+    "Explicit operation_id assertions and seven Receipt/POST counts bind Create plus six edits without retry POST.",
+    "Per-step exact remaining Rental row, both endpoint rows and root assertions preserve omitted facts; final strengthened field_state comparison catches both changed/deleted and extra unrelated state keys.",
+    "False and explicit null are checked distinctly; changed-field tampering is rejected by formal readback."
+  ],
+  "nonblocking_review_followup": "Before-key-only field_state coverage was strengthened to compare both maps excluding only the changed key. Final tail reviewed; no production behavior was changed.",
+  "report_boundary": "Coverage document accurately labels local SDK/Core/Receipt/scalar coverage, not blank-model understanding, P4 endpoint Edit, whole MCP-C02 or Consumer E2E.",
+  "not_run": [
+    "Old S1 tests",
+    "Whole-repository checks",
+    "Network/OAuth",
+    "Hosted",
+    "Independent Supabase",
+    "Native",
+    "Provider"
+  ],
+  "frozen_s1_artifacts": "NOT_TOUCHED_OR_REQUALIFIED_BY_THIS_REVIEW",
+  "write_authority_created": false
+}

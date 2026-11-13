@@ -1,0 +1,11 @@
+{
+  "status": "MCP_CAPTURE_REUSED_AFTER_ROOT_INDEPENDENT_HASH_CHECK",
+  "changedProductionFiles": [
+    "src/domain/trip/tripCoreV2Views.ts"
+  ],
+  "otherManifestInputsPreserved": 351,
+  "captureSHA256": "e29be6ac4ff4d0813a6b1244f2f8d7d934077b92d14dac9605ca28e316e8c6bc",
+  "sourceManifestSHA256": "80eac244b4e21bee78755939595d2208a2b017be6897692c3f5f3bc6a6d06f32",
+  "rootDuplicateCaptureBuilds": 0,
+  "sourcePath": "/private/tmp/otr-mcp-chatgpt-canedit-20261102"
+}

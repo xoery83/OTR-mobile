@@ -1,5 +1,19 @@
 # MCP Auth Contract — 31 October 2026
 
+Finite Claude QA now has actual fresh Read/Edit Consent, controlled P3 Create
+and original-ID Edit, formal independent receipts/readback and Native cold restore
+PASS. The R recovery Gate is consumed and fully closed before deadline; it does
+not provide an always-on consumer connection or production authority. Earlier
+failures and local expiry-projection limits remain recorded separately.
+
+Expiry during an already-authorized APPLY must not disclose a business result or
+imply that no commit occurred. The HTTP tool wrapper retains only caller-input
+derived operation/query identity with UNKNOWN, null revision and empty summary;
+batch review, duplicate identities and receipts are suppressed. The existing
+invalid-token challenge remains. No recovery read or POST occurs after expiry;
+a later valid grant may query the original operation, never replay it blindly.
+Initial authorization failure and expired PREVIEW/status reads remain closed.
+
 Current public qualification: **finite Synthetic QA Read OAuth PASS via official
 SDK**, including normal OTP/explicit Consent/code+S256, production token and active
 grant verification, own Trip/P3, foreign private denial, refresh and revoke denial.
@@ -32,7 +46,10 @@ Required Auth contracts:
 4. isGrantActive({accountId,clientId,tokenId,sessionId,resource,scopes,expiresAt},signal,{accessToken})
    checks current legitimate normal Account/client grant, disabled/revoked status
    and expiry. Missing/unknown returns closed; no hardcoded true production seam.
-5. bindBackend(grant,signal) binds that same Account to existing Backend read and
+5. bindBackend(grant,signal,evidence) receives the exact same frozen
+   `{accessToken}` evidence object used by isGrantActive, solely for Auth-owned
+   same-issuer current-grant rechecks. Existing two-argument callbacks remain
+   compatible. It binds that same Account to existing Backend read and
    mutation ports inside the trusted host; each query keeps owning ACL/CAS. Do not
    forward an MCP resource token to a separate audience or use a service role.
 
@@ -131,6 +148,50 @@ own any exact protected restriction delta; no RLS/GRANT or issuance is changed
 here. Those initial P0 activation blockers were resolved for finite Synthetic
 QA Read; general-account/Write and full Data/Storage qualification remain outside
 that result. The active test window is now independently closed.
+
+## Closed Read authentication diagnostics
+
+Reuse optional `McpOptions.log` with exported `McpLogEvent`. Its optional
+`authFailureSource` is limited to EXPIRED_BEFORE_BACKEND, EXPIRED_AFTER_BACKEND or
+BACKEND_401 for Read tool failures. It records the local observed failure only,
+not a causal diagnosis of consumer refresh/revocation. The public error code remains
+AUTH_REQUIRED; expiry checks and 60-second qualification are unchanged. No
+credential, token timestamp, Account/Trip/Item ID, path, arguments, response body
+or arbitrary exception enters this event. Logging failures cannot change replies.
+Auth owns optional ModulePort/host wiring; this source change activates no logger
+or DEV configuration and does not replay the closed consumer window.
+
+Bearer evidence stays request-scoped inside trusted Auth callbacks; it is never
+added to OAuthGrant, tool context, logging, or a Business/Core request. The
+authorizer projects only read/backend ports from the binding result, preserving
+verified identity/scopes and discarding unexpected callback fields. This change
+does not qualify fresh Write Consent or activate a Write grant.
+
+## Read expiry recovery (focused Slice1 repair)
+
+The 7cb5 consumer trace proves Core collection and Item both returned 200;
+the immutable grant expired during the second read and Auth POSTCHECK rejected it.
+That check remains mandatory. Token TTL, scopes, current-grant checks and ACL do
+not change. A successful Core read alone does not authorize an expired response.
+
+For a single JSON-RPC tools/call in the explicit read-tool registry (`list_trips`, `get_trip`, `list_trip_items`,
+`get_trip_item`, `get_trip_item_edit_base`), AUTH_REQUIRED must leave the handler
+as HTTP401 with the existing resource challenge plus `error="invalid_token"`.
+The client can refresh normally and repeat a read; the server never retries.
+HTTP200 tool-error metadata alone did not invoke the installed SDK's refresh
+callback. Other read errors, Guide/domain tools and Operation Status are unchanged.
+JSON-RPC batches retain their original result/status: a batch may already contain
+a committed or uncertain write and must not invite transport replay of that POST.
+
+Write/Preview tools are excluded from this conversion. In particular an expired
+or uncertain submission retains HTTP200 UNKNOWN and its original operation;
+it must never become a transport401 that automatically repeats a POST. This
+source repair requires local SDK qualification and later consumer validation;
+it does not reopen 7cb5 or describe a deployed consumer PASS.
+
+The [MCP authorization specification](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization#token-handling)
+requires HTTP401 for expired-token rejection. This repair changes that channel for
+single read calls, without replacing domain UNKNOWN with an unsafe write retry.
 
 ## C02 private confirmation provenance — Root2 execution approval
 

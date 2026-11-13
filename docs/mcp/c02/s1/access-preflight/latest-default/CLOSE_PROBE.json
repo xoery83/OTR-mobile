@@ -1,0 +1,43 @@
+{
+  "status": "SOFTWARE_DEFAULT_CLOSE_PROBE_PASS",
+  "requestedAt": "2026-11-02T23:43:40.846559+00:00",
+  "completedAt": "2026-11-02T23:43:41.199925+00:00",
+  "exitCode": 0,
+  "defaultUnchanged": true,
+  "containerId": "94eecf2f7fb1cf50b8c2d2a4d7a85cf4f2358e39733f7025335857d8149c55be",
+  "image": "sha256:bf00719ef724ae21bd0316b5a062554ac5310667b79a639b06370694c33e4f7f",
+  "configSHA256": "1bc26f8f27b0bba6092bc6b788c23fd0ba148a117f80cb601b075531862302d4",
+  "probeDirectory": "/opt/otr/dev-backend/build/auth-consumer-write-qa-d3662219ed1b4e12a8a6d3299ce7ffea",
+  "planSHA256": "7a50bc007237df530bfc86450c60ec8207e8ec1d9b870443fd3e44695b70eee9",
+  "scriptSHA256": "cee418c733de0bdfcc7e48552992b6a0689d4cadb498af1e5d391c3db6e8a014",
+  "closeReceipts": [
+    {
+      "result": {
+        "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+        "containerId": "94eecf2f7fb1cf50b8c2d2a4d7a85cf4f2358e39733f7025335857d8149c55be",
+        "image": "sha256:bf00719ef724ae21bd0316b5a062554ac5310667b79a639b06370694c33e4f7f",
+        "finiteConfigAbsent": true,
+        "health": "healthy"
+      },
+      "deliveryTrace": {
+        "requestedAt": "2026-11-02T23:43:40.954727+00:00",
+        "readyAt": "2026-11-02T23:43:40.969115+00:00",
+        "acquiredAt": "2026-11-02T23:43:40.969170+00:00",
+        "mutationFinishedAt": "2026-11-02T23:43:41.100751+00:00",
+        "releasedAt": "2026-11-02T23:43:41.100781+00:00"
+      }
+    },
+    {
+      "status": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+      "windowId": "d3662219ed1b4e12a8a6d3299ce7ffea",
+      "containerId": "94eecf2f7fb1cf50b8c2d2a4d7a85cf4f2358e39733f7025335857d8149c55be",
+      "issuerCleanup": "SEPARATE_MANDATORY_AUTH_CLOSE_RECEIPT"
+    }
+  ],
+  "issuerCleanup": "NOT_STARTED_NOT_REQUIRED_SOFTWARE_ONLY",
+  "authorityActivated": false,
+  "timerStarted": false,
+  "sqlCalls": 0,
+  "paidCalls": 0,
+  "stderrPresent": false
+}

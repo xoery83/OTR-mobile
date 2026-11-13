@@ -1,0 +1,24 @@
+{
+  "stage": "NELSON_DATE_EDIT_RUN_02_RECONCILIATION",
+  "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+  "outcome": "UNKNOWN",
+  "client_error_code": "QUERY_SAME_OPERATION",
+  "status_error_code": "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT",
+  "post_path": "Reached according to execute() outcome path; no durable wire trace or ownDatePostCount was preserved on failure. Do not call this NOT_SENT.",
+  "no_retry": true,
+  "original_run_01": "NELSON_DATE_EDIT_ATTEMPT_01.json",
+  "original_run_01_sha256": "bfdcf239b1ac49e015926d6ddfaf7c45d51f421df53b828229ff0ca9ab4e2bc1",
+  "run_02_raw_sha256": "40f66278dd435d247999ef979c82f8931847bdf3b8313b37c9ff8ac2debde49c",
+  "independent_cloud_readback": {
+    "observed_at": "2026-10-31T09:16:23.125255Z",
+    "current_revision": 1,
+    "current_start_local_date": "2026-12-11",
+    "exact_receipt_count": 0,
+    "interpretation": "Observed baseline only; not proof of NoCommit or no in-flight work."
+  },
+  "normal_session_cleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "receiver_active_lock_released": true,
+  "cleanup_journal_sha256": "8d1cef9ad1faad1f17f0bcaf8bbca39e884c77e23c3e4f0862a906a3d24a4b13",
+  "native_acceptance": "BLOCKED_DEVICE_AUTOMATION_NO_BEFORE_AFTER_PASS",
+  "owning_diagnosis": "Requested exact op/time Core/Host logs and formal in-flight/idempotency state; no broad audit or permission change."
+}

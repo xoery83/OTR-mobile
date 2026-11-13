@@ -1,0 +1,14 @@
+{
+  "status": "INDEPENDENT_CHATGPT_QA_BASELINE_READ_PASS_NO_BUSINESS_SUBMIT",
+  "observedAt": "2026-11-02T05:46:00.532371+00:00",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "revision": 2,
+  "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+  "receiptCount": 0,
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "baselinePrivateSHA256": "e7018262174b29f3eba3adebcaa336c31f76955c59eeb293b0f7322b3d2692db",
+  "otherChildrenCount": 11,
+  "businessPosts": 0,
+  "isApplyAuthorization": false
+}

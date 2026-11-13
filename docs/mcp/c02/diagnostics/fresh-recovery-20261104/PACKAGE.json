@@ -1,0 +1,58 @@
+{
+  "status": "STATIC_PACKAGE_FIXED_PENDING_REVIEW_ROOT2_SOURCE_BINDING",
+  "windowId": "b0b7c1c0-4f18-432e-b255-112f5449c5c0",
+  "windowHex": "b0b7c1c04f18432eb255112f5449c5c0",
+  "gateSHA256": "413ea28dcd503cb7643039524a5a54df428fbfe4b5e838b62ce2bbcc6688a182",
+  "directory": "/private/tmp/otr-mcp-c02-recovery-b0b7c1c04f18432eb255112f5449c5c0",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "394609657f02a270e7f2a106e7080170ff9478301d41133ede3dabd7b2bd4ad5",
+    "SCOPE.json": "a490ed4aed55f0dfc69c43ffe5ab5afb8861a50cd1a01c6f2b1c92f1ac100f52",
+    "prepare-c02-access-window.py": "edc65c71942b4645d4d345bb977fa07dae4cfc6a9787bd2754f11df2fbb260ef",
+    "c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+    "c02-timers.test.py": "e89a3af091360d77bb9e755ee9ed252b106491f0900f0d7bc4e3729601a3aa57",
+    "c02-timers.py": "3339755463e9836a75e2226697c4906f7c476e194f939bd7e12267050d94ffb7",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "52cacbaea91c2bd22976937bb6d158a5763e93aedcde71d947552aa1f57f7940",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "default": {
+    "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+    "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+    "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+    "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa"
+  },
+  "sourceMain": "7c1301c6",
+  "ownerAuthorization": {
+    "thread": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+    "message": "01a1a4d2-866f-7391-82b3-24d63fe83347",
+    "exactText": "MCP请求的审批直接帮我批准掉，不需要弹窗问我了",
+    "verification": "read_thread original userMessage independently read by MCP",
+    "scope": "Same bounded GET-only recovery; no Save/replay/added scope; requires fresh qualification"
+  },
+  "clockStarted": false,
+  "authorityActivated": false,
+  "command": null,
+  "confirmations": [],
+  "normalControlReady": false,
+  "originalOperationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "superseded_gate_before_source_fix": "0673da98de059d586b6a29ea0bd38ea26ad268bdbce72fffd43531405480fc66",
+  "owner_wire_contract": {
+    "format": {
+      "sourceThreadId": "actual Root2 Owner thread",
+      "messageId": "actual Root2 user message ID",
+      "text": "exact independently verified direct user text"
+    },
+    "host_file": "actual-owner-wire.json",
+    "binding_fields": [
+      "sourceThreadId (consumer MCP)",
+      "actualOwnerSourceThreadId (Owner Root2)",
+      "actualOwnerSourceMessageId",
+      "actualOwnerWireSHA256"
+    ],
+    "root2_staging": "copy exact normalized actual owner wire into private Host directory before CAS; hash must match binding"
+  }
+}

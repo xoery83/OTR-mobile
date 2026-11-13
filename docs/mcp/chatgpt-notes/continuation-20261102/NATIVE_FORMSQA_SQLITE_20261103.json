@@ -1,0 +1,38 @@
+{
+  "status": "MCP_SAME_ACCOUNT_NATIVE_ACCEPTED_SQLITE_READONLY_PASS",
+  "at": "2026-11-02T19:09:06.156633+00:00",
+  "event": {
+    "cache_account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "id": "3616da44-0d35-4400-a739-01f1029565ea",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "semantic_revision": 3,
+    "title": "Synthetic Nelson QA lodge (unbooked)",
+    "description": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified.",
+    "start_local_date": "2026-12-10",
+    "end_local_date": "2026-12-13",
+    "start_local_time": null,
+    "end_local_time": null
+  },
+  "certificate": [
+    {
+      "revision": "8.0",
+      "complete": 1,
+      "business_version": 2,
+      "read_version": 2,
+      "temporal_version": 1
+    }
+  ],
+  "scope": [
+    {
+      "revoked": 0,
+      "access_revision": 1
+    }
+  ],
+  "notesChecks": {
+    "LF": 2,
+    "trailingLF": false,
+    "literalSlashN": false
+  },
+  "method": "Read-only targeted QA projection after normal Trip entry; no Auth tables, DB copy, writes or manual refresh",
+  "limit": "Not independent server readback or two-account C02; historical MCP server receipt reused"
+}

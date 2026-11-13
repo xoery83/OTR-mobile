@@ -1,0 +1,20 @@
+{
+  "cid": "69f805359a15ee37052cd0427824f9a98e40bd330202ae37c0c0a76185475be2",
+  "flag": "OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED",
+  "flagPresent": false,
+  "flagEnabled": false,
+  "bundles": [
+    {
+      "path": "/app/server-capture.mjs",
+      "sha256": "cd7e627842c2206bbac44d37a5701161eb81f2e9ab637d6b190ffb1621366f33",
+      "exactFlagStringPresent": false
+    },
+    {
+      "path": "/app/server.mjs",
+      "sha256": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb",
+      "exactFlagStringPresent": false
+    }
+  ],
+  "conclusion": "Current deployed bundle does not establish support for this exact flag. Cannot claim implemented-but-unmounted or that env-only change enables reader.",
+  "writes": 0
+}

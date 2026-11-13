@@ -1,0 +1,132 @@
+{
+  "status": "PROPOSED_INDEPENDENT_FRESH_CASE_NOT_AUTHORIZED_FOR_WRITE",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "title": "Synthetic Nelson QA lodge (unbooked)",
+  "baselineObservedAt": "2026-11-01T18:22:41.812102+00:00",
+  "baselineRevision": 1,
+  "baselineRootSHA256": "59428faece06ffd448e50c5e923319823e94ea77e58dfeed2bbc38caeafd8ca0",
+  "preservedUnknownOperations": [
+    "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+    "9b077556-e0c3-46a9-8d97-2090504fa856"
+  ],
+  "historicalReplay": false,
+  "independentCaseNotUnknownRecovery": true,
+  "cases": [
+    {
+      "client": "Claude",
+      "status": "PROPOSED_NOT_APPROVED_NOT_SENT",
+      "beforeNotes": "Synthetic QA only. No Booking/Ticket.",
+      "afterNotes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+      "input": {
+        "request_id": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+        "expected_revision": 1,
+        "change": {
+          "kind": "TEXT",
+          "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified."
+        }
+      },
+      "command": {
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+        "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "command": "SET_ITEM_TEXT",
+        "target": {
+          "kind": "ITEM",
+          "id": "3616da44-0d35-4400-a739-01f1029565ea"
+        },
+        "baseVector": [
+          {
+            "kind": "ITEM",
+            "id": "3616da44-0d35-4400-a739-01f1029565ea",
+            "revision": 1
+          }
+        ],
+        "admission": {
+          "mode": "MANUAL",
+          "sourceIntentId": null,
+          "policyVersion": null
+        },
+        "payload": {
+          "description": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified."
+        }
+      },
+      "identity": {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+        "operation_id": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+        "current_revision": null,
+        "preview_digest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+        "summary": "Update 3616da44-0d35-4400-a739-01f1029565ea at revision 1: {\"kind\":\"TEXT\",\"notes\":\"Synthetic QA only. No Booking/Ticket.\\nSlice1 Fresh Claude Notes QA verified.\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+          "target": "ITEM"
+        }
+      }
+    },
+    {
+      "client": "ChatGPT",
+      "status": "PROPOSED_NOT_APPROVED_NOT_SENT",
+      "beforeNotes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+      "afterNotes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified.",
+      "input": {
+        "request_id": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+        "expected_revision": 2,
+        "change": {
+          "kind": "TEXT",
+          "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified."
+        }
+      },
+      "command": {
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+        "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "command": "SET_ITEM_TEXT",
+        "target": {
+          "kind": "ITEM",
+          "id": "3616da44-0d35-4400-a739-01f1029565ea"
+        },
+        "baseVector": [
+          {
+            "kind": "ITEM",
+            "id": "3616da44-0d35-4400-a739-01f1029565ea",
+            "revision": 2
+          }
+        ],
+        "admission": {
+          "mode": "MANUAL",
+          "sourceIntentId": null,
+          "policyVersion": null
+        },
+        "payload": {
+          "description": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified."
+        }
+      },
+      "identity": {
+        "version": "otr.mcp.mutation/1",
+        "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+        "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+        "operation_id": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+        "current_revision": null,
+        "preview_digest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+        "summary": "Update 3616da44-0d35-4400-a739-01f1029565ea at revision 2: {\"kind\":\"TEXT\",\"notes\":\"Synthetic QA only. No Booking/Ticket.\\nSlice1 Fresh Claude Notes QA verified.\\nSlice1 Fresh ChatGPT Notes QA verified.\"}",
+        "query": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "operation_id": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+          "target": "ITEM"
+        }
+      }
+    }
+  ],
+  "sequence": "Claude first; ChatGPT only after actual Claude PASS and full close. Fresh human Notes confirmation after real preview. No silent rebase.",
+  "confirmation": "Initially empty; proposed new target and operation require explicit finite Owner authorization. No prior confirmation reused."
+}

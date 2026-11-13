@@ -1,0 +1,97 @@
+{
+  "recoveryId": "MC-POWER-RECOVERY-20261104-01-MCP",
+  "status": "RECOVERED_LOCAL_STATIC_REVIEW_PASS_NO_EXECUTION_AUTHORITY",
+  "verifiedExactFiles": {
+    "c02-close.py": {
+      "sha256": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/c02-close.py"
+    },
+    "c02-timers.py": {
+      "sha256": "3339755463e9836a75e2226697c4906f7c476e194f939bd7e12267050d94ffb7",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/c02-timers.py"
+    },
+    "c02-host.mjs": {
+      "sha256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+      "path": "dist/mcp-c02-recovery/b0b7/c02-host.mjs"
+    },
+    "operators/deploy.py": {
+      "sha256": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/operators/deploy.py"
+    },
+    "operators/prepare_cas.py": {
+      "sha256": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/operators/prepare_cas.py"
+    },
+    "operators/config_cas.py": {
+      "sha256": "52cacbaea91c2bd22976937bb6d158a5763e93aedcde71d947552aa1f57f7940",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/operators/config_cas.py"
+    },
+    "operators/restore.py": {
+      "sha256": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/operators/restore.py"
+    },
+    "operators/universal_runtime_close.py": {
+      "sha256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/operators/universal_runtime_close.py"
+    },
+    "c02-normal-control.py": {
+      "sha256": "394609657f02a270e7f2a106e7080170ff9478301d41133ede3dabd7b2bd4ad5",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/c02-normal-control.py"
+    },
+    "prepare-c02-access-window.py": {
+      "sha256": "edc65c71942b4645d4d345bb977fa07dae4cfc6a9787bd2754f11df2fbb260ef",
+      "path": "docs/mcp/c02/controlled-replay-20261104/static/prepare-c02-access-window.py"
+    }
+  },
+  "candidateHost": {
+    "sha256": "68a54bb4eacbc0a74b7832e04751cc1ca5fcbcb82858141d143797175bcbe973",
+    "path": "dist/mcp-c02-recovery/candidate/c02-host.mjs"
+  },
+  "missingOriginals": [
+    "SCOPE.json",
+    "c02-timers.test.py",
+    "normal-control.mts"
+  ],
+  "historical72CasePassCurrentQualification": false,
+  "protectedActions": 0,
+  "oldWindowReusable": false,
+  "currentPersistentSourceHashes": {
+    "static/SCOPE.json": "511e2074decadb869a9d73cb4d54099ca94f683c89d20279977246055df8876e",
+    "static/c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "static/c02-normal-control.py": "c1988e3e6ae9e2ffcd680d5385e569b456142d0aec32f0267fd57ae185976262",
+    "static/c02-timers.py": "826cb2d61245dd505b2c77ec86aad8d7bd6517e247a51864952c68eb30587585",
+    "static/c02-timers.test.py": "4cd4851603a304e71314381052babae44c397d218200486d2a2ed8e95c89a047",
+    "static/issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "static/issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "static/issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "static/issuer-source/scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "static/issuer-source/scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "static/normal-control.mts": "7893b5ab1d667312d77eb2be22e4cd66557df0f955554453aaa7821099abe3b7",
+    "static/normal-control.test.mts": "fb9bd9f0a1b2e1a640c6a0ad0274c11701726bca695dcc35494b2238a9209137",
+    "static/operators/config_cas.py": "30a30ec9b4c16e2b4839b605f765c570de380c73d04d450decb2c7c104383a9f",
+    "static/operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "static/operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "static/operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "static/operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "static/prepare-c02-access-window.py": "793105a91f364ed4c635b7b7aedbde7dae62f59634019039c28e4623f849e030"
+  },
+  "actualOfflineChecks": {
+    "ownerIntentPhaseCases": 72,
+    "timerTests": 9,
+    "controlLifecycleTests": 12,
+    "targetedStrictTypescript": "PASS",
+    "pythonCompile": "PASS",
+    "actualEntryAndDirectOwningFilePins": 5
+  },
+  "qualification": "Affected source/offline checks only, not full packet review or Hosted/Consumer qualification",
+  "remaining": [
+    "Fresh Root2 current-version deployment/access/close qualification",
+    "New exact human same-ID replay approval covering possible first Create",
+    "Actual Consumer Apply and receipt/readback",
+    "Separate exact Edit preview and approval"
+  ],
+  "originalNormalControlSource": "NOT_RETAINED_AUTH_CONFIRMED; reconstructed replacement with NEW hash",
+  "recoveredExactFiles": 10,
+  "reviewReceipt": "FINAL_REVIEW.json",
+  "reviewedPackageSHA256": "f51e1c41391e259b575835802ec4bf3576d4ce06c07bf92fadb77d267206975a"
+}

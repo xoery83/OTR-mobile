@@ -1,0 +1,19 @@
+{
+  "source": "Visible DEV SQL Editor result",
+  "observed_at": "2026-11-02 23:02:36.217823+00",
+  "client": {
+    "id": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "deleted_at": null,
+    "client_name": "OTR DEV QA Read",
+    "client_type": "public",
+    "redirect_uris": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW,http://127.0.0.1:18764/callback",
+    "has_secret_hash": true,
+    "registration_type": "manual",
+    "token_endpoint_auth_method": "none"
+  },
+  "active_selected_consents": 0,
+  "unexpired_selected_authorizations": 0,
+  "sql": "-- MCP C02 read-only preflight for one existing QA client/account only.\nselect clock_timestamp() as observed_at,\n (select jsonb_build_object('id',id,'client_type',client_type,'registration_type',registration_type,'token_endpoint_auth_method',token_endpoint_auth_method,'redirect_uris',redirect_uris,'client_name',client_name,'deleted_at',deleted_at,'has_secret_hash',client_secret_hash is not null) from auth.oauth_clients where id='83504d3f-59d4-43fd-99b1-bebc54c40f7d'::uuid) as client835,\n (select count(*) from auth.oauth_consents where client_id='83504d3f-59d4-43fd-99b1-bebc54c40f7d'::uuid and user_id='1f3d7935-1bdc-4952-8d7f-0f72077368c1'::uuid and revoked_at is null) as active_selected_consents,\n (select count(*) from auth.oauth_authorizations where client_id='83504d3f-59d4-43fd-99b1-bebc54c40f7d'::uuid and user_id='1f3d7935-1bdc-4952-8d7f-0f72077368c1'::uuid and expires_at>clock_timestamp()) as unexpired_selected_authorizations;",
+  "sql_mutations": 0,
+  "secrets_selected": false
+}

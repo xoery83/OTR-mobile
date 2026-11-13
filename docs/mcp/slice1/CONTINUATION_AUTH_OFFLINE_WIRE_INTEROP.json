@@ -1,0 +1,1 @@
+{"status": "OFFLINE_ACTUAL_WIRE_INTEROP_PASS", "v1": "REJECTED_MISSING_CLIENT_ID", "v2": "VALIDATED_AND_PURE_PLAN_BUILT", "negativeCases": ["wrongClient", "wrongOperation", "wrongDigest", "unconfirmedOwner"], "externalIoDenied": true, "planExecuted": false, "newAuthority": false}

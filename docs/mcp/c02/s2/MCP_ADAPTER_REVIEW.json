@@ -1,0 +1,57 @@
+{
+  "status": "NO_BLOCKER_UNMOUNTED_SPARSE_STAY_ADAPTER",
+  "reviewer": "/root/c02_s3_review",
+  "at": "2026-11-03T17:47:59.902602+00:00",
+  "scope": "MCP sparse Stay mapper, internal preparation, default-closed executor compatibility gate, original full Base/payload/room-ID remapping, formal Receipt-first recovery, requested-value/full room-set readback and distinct NO_CHANGE result. No public/Hosted activation.",
+  "reviewed_sha256": {
+    "mcp/sparseStay.ts": "fd7e0f129cec8f661e5ea02e035781634831bb568a172fe4f8a191829f8bfc96",
+    "mcp/fieldAdapter.ts": "6525009fc0836030f50b8b478dfe403c792aee8d102eb3362bd53d6d698fc96f",
+    "mcp/mutation.ts": "3ee620ea1c9f18b348d085b1ffefd040a971af32dc00360338d979b70e03dacd",
+    "mcp/goldenReadback.ts": "8bf546013ef6ebb4271efb95d81aad15bd9b5bdfed577c8103e67c80dcd5ffce",
+    "mcp/guide.ts": "4e13369d0da699c14080e196d121fb0edb131580dfc004eaa84ae296d0b1250a",
+    "mcp/mutation.test.ts": "8e29418b377860a7bf9a70869ff865a01406d0cf003884266d809d3003eb71a5"
+  },
+  "owning_source": {
+    "main": "4c8d0fd9dc4d0210f02b6bfaace5ced0f59f454a",
+    "candidate": "5393cbaf77397c07d103b793035152d7e7a763fa",
+    "all_dependency_hashes_match": true,
+    "commands_and_mutation_equal_exact_main_bytes": true,
+    "core_131_gate_repeated": false,
+    "mcp_authored_core_changes": false
+  },
+  "independent_checks": [
+    "S2 precise selection: 16 tests PASS, 57 unrelated tests skipped",
+    "MCP Typecheck PASS",
+    "Scoped Diff Check PASS",
+    "No new S2 registration/export found in server/index; existing Guide still says existing-room edits unavailable"
+  ],
+  "finding_resolved": {
+    "issue": "REMOVE originally accepted any array omitting the target ID, including incomplete or foreign-parent room data, as independent absence proof.",
+    "fix": "Original full Base room-ID set is retained; executor remapping binds it to the fresh lawful record. Every nonhistorical sparse readback, including details-only and NO_CHANGE, requires the exact expected post-change ID set, unique rows and correct Item/Trip parents before checking requested values.",
+    "regressions": "NO_CHANGE/PATCH/ADD+REMOVE reject empty, foreign-parent, omitted and duplicate room proofs; tampered expected room IDs reject before POST."
+  },
+  "verified_boundaries": [
+    "Only canonical existing Core sparse DTO/SET_STAY_DETAILS is reused with MANUAL admission; target Item/Trip/family/revision and child identities are checked.",
+    "Omission is not clear; PATCH, explicit null, stable-ID ADD/REMOVE and room-count limits are distinct. No whole-room reconstruction is used.",
+    "sparseStaySupported defaults false and cannot be set by public input; enabled execution still requires original full Base marker and a legal fresh read. Missing marker, changed hidden state, wrong actor and payload/room-ID tampering reject.",
+    "Trusted confirmation and exact digest remain mandatory. Recovery checks the original formal Receipt before current-state/software gates; no duplicate mutation is needed after response loss.",
+    "NO_CHANGE requires the formal matching receipt and original base revision, checks current requested fields/room set, and returns its distinct NO_CHANGE_RECEIPT_AND_CURRENT_FIELDS_VERIFIED status without fabricating a mutation audit.",
+    "Historical receipts keep HISTORICAL_RECEIPT_VERIFIED_CURRENT_ADVANCED and do not claim current child values.",
+    "Legacy STAY room-preservation rejection stays intact; no public schema/tool/SDK entry or Host flag activates sparse Stay."
+  ],
+  "unresolved_blockers": [],
+  "evidence_limits": [
+    "Golden readback proves receipt/intent, requested values and room-set identities; it does not alone prove every untouched provenance leaf. Separate full before/after local assertions cover that preservation.",
+    "Existing deployed Backend remains unqualified until separately reviewed owning software integration; these internal tests opt in explicitly."
+  ],
+  "not_run": [
+    "Core131 full Gate",
+    "Hosted",
+    "Real PostgreSQL/Supabase",
+    "Consumer OAuth/Apply",
+    "Native",
+    "Historical UNKNOWN lookup/retry"
+  ],
+  "host_or_business_changes_by_reviewer": false,
+  "local_only": true
+}

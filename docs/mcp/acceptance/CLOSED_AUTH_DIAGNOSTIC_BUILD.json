@@ -1,0 +1,40 @@
+{
+  "status": "COMPILED_ONLY_NOT_DEPLOYED",
+  "mcpSource": "c41a4f0a",
+  "authCaller": "eff3f5db",
+  "authWrapper": "2f54b05c",
+  "authBuild": {
+    "status": "COMPILED_ONLY_NOT_DEPLOYED",
+    "mcpReviewedSource": "c41a4f0a",
+    "mcpSourceCommit": "c41a4f0a8c04e5a2f255243e2877d47e2cd89c76",
+    "sourcePinsSHA256": "2eb03a66835e5bac8fb94274177b10d894a7a2608975481e0be513824e63561c",
+    "sdkInputSHA256": "f8793862584d5305974af10c7e7a07d639f58bb0ea6d845689169b4f78e9eeb0",
+    "runtimeSHA256": "f9c339c49219eca3a8d0d9dd6f8e49b15507994968040b0af448b053cff1e34d",
+    "esbuildVersion": "0.28.2",
+    "mobileDependencyChanges": false,
+    "providerCalls": 0
+  },
+  "joinedBuild": {
+    "status": "COMPILED_ONLY_NOT_DEPLOYED",
+    "mcpReviewedSource": "c41a4f0a",
+    "mcpSourceCommit": "c41a4f0a8c04e5a2f255243e2877d47e2cd89c76",
+    "sourcePinsSHA256": "2eb03a66835e5bac8fb94274177b10d894a7a2608975481e0be513824e63561c",
+    "sdkInputSHA256": "28acca70906949aeef9d1d31d654d9b2f285ab12ffdaceaff189dbba94832ea7",
+    "runtimeSHA256": "34a99633db18d41fe3bc35d0d853e3cfa2f4c7787c0c2ca90700d9af11e82f5e",
+    "esbuildVersion": "0.28.2",
+    "mobileDependencyChanges": false,
+    "providerCalls": 0
+  },
+  "sdkInputDifferences": "All 478 changed lines were source-path comments; non-comment code matched",
+  "independentValidation": {
+    "compiledSmokeChecks": 4,
+    "networkBlocked": true,
+    "providerCalls": 0,
+    "authRuntimeTests": 20,
+    "rootTypecheck": "PASS",
+    "mcpRegressionTests": 57,
+    "independentReviews": "MCP provenance and Auth caller/wrapper NO_BLOCKER"
+  },
+  "actualDevArtifact": "Retained b518; no new logging activation claimed",
+  "consumerFailureCause": "UNPROVEN; no closed-window replay"
+}

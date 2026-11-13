@@ -1,0 +1,45 @@
+{
+  "status": "EXISTING_QUALIFIED_SDK_ARTIFACT_REUSED_NO_REBUILD",
+  "sourceCommit": "f522fc4c",
+  "recordedAt": "2026-11-02T07:31:52.993273+00:00",
+  "buildRecipe": [
+    "npm",
+    "--prefix",
+    "mcp",
+    "run",
+    "build"
+  ],
+  "buildWorkingDirectory": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical",
+  "expandedBuildWorkingDirectory": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/mcp",
+  "expandedBuildArgv": [
+    "esbuild",
+    "index.ts",
+    "internal.ts",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--outdir=../dist/mcp",
+    "--out-extension:.js=.mjs"
+  ],
+  "artifact": "/private/tmp/otr-mcp-response-proof-sdk-f522fc4c-20261102/index.mjs",
+  "artifactSHA256": "f3c5ecbb0625a057b5a9db8a277f5c6a42fb74a899448d59ab45ab97d26bb1c8",
+  "artifactSize": 2544402,
+  "originalBuildArtifact": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/dist/mcp/index.mjs",
+  "artifactBuildMtimeUTC": "2026-11-02T07:23:09.316885+00:00",
+  "manifest": "/private/tmp/otr-mcp-response-proof-sdk-f522fc4c-20261102/SDK_INPUTS_MANIFEST.json",
+  "manifestSHA256": "4121b7b33a39c99eacc4502fce33f57acb0706252d8eb98bd5f24e52c98b07f0",
+  "inputCount": 51,
+  "sourceSnapshot": "/private/tmp/otr-mcp-response-proof-sdk-f522fc4c-20261102/inputs",
+  "inputGraphProvenance": "Reuse previously accepted 51-input SDK graph; independently hash all current inputs; only server.ts differs, no dependency or entry change. Not a new esbuild metafile.",
+  "previousArtifactSHA256": "6fda006774c4b43d0fd339f5b2099c0815d3fe6a442cfc782370999d63b78fb4",
+  "changedInputsFromPrevious": [
+    "mcp/server.ts"
+  ],
+  "unchangedInputsFromPrevious": 50,
+  "testReceipt": "docs/mcp/chatgpt-notes/RESPONSE_PROOF_LOCAL_QUALIFICATION.json",
+  "newBuilds": 0,
+  "externalCalls": 0,
+  "protectedChanges": 0,
+  "hostedDeployment": "NOT_RUN"
+}

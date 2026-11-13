@@ -1,0 +1,37 @@
+{
+  "event_id": "mcp-c02-s1-b08a-authorized-20261104-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "slice": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "BLOCKED",
+  "actual_occurred_at": "2026-11-03T20:22:58.787962+00:00",
+  "current_status": "PREVIEW_ACCESS_AUTHORIZED_NOT_STARTED_SHARED_RUNTIME_SERIALIZATION",
+  "commit": "57d34d94",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/proof-consumer-20261104/OWNER_APPROVAL.json",
+    "docs/mcp/c02/s1/proof-consumer-20261104/ROOT2_READINESS.json",
+    "docs/mcp/ownership-v4/RESUME_CURSOR.json"
+  ],
+  "completed": [
+    "Owner approved exact b08a access/originalScopeConsent/Preview, notSave",
+    "13pins/independentReview/9timer PASS;4normalControlpinsPASS",
+    "Original consumerchat readonly available; no clock/session started"
+  ],
+  "unfinished": [
+    "OwnnormalControl/finitewindow after actual resource release",
+    "Server hash proof then exact OwnerSave; Create/Edit APPLIED/readback"
+  ],
+  "blockers": [
+    {
+      "type": "SHARED_RUNTIME_NO_OVERLAP",
+      "owner": "Root2/Auth current approved runtime window",
+      "return_trigger": "Auth independently closed/default restored/grant and session cleaned; Root2 notifies MCP to fresh preflight and start owncontrol"
+    }
+  ],
+  "next_action": "Resume approved unchanged b08a directly on return trigger; no reset/overlap/newScope or repeated approval",
+  "actual_resource_lock": "NONE_MCP",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING"
+}

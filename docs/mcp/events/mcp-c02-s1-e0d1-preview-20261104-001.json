@@ -1,0 +1,41 @@
+{
+  "event_id": "mcp-c02-s1-e0d1-preview-20261104-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "Lane B / MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "slice": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "BLOCKED",
+  "reported_at": "2026-11-03T19:31:22.569109+00:00",
+  "actual_occurred_at": "2026-11-03T19:27:45.264206Z",
+  "current_status": "CONSUMER_CONNECTION_PASS_PREVIEW_REPORTED_SAVE_BLOCKED_CLOSED",
+  "commit": "bbe9d7f6",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/corrected-consumer-20261104/actual/ACCEPTANCE.json",
+    "docs/mcp/c02/s1/corrected-consumer-20261104/actual/ROOT2_FINAL_RECEIPT.json",
+    "docs/mcp/c02/s1/corrected-consumer-20261104/actual/PREVIEW_LOCAL_RECOMPUTATION.json"
+  ],
+  "completed": [
+    "Normal OAuth/original Consent; real8R2W catalog",
+    "Fresh Chat autonomous Guide and QA Trip reads",
+    "Consumer Create Preview originala8c1; quoted JSON locally recomputes exact digest",
+    "Finite window fully closed; Grant0, ownSessioncleanupPASS, sharedlockreleased"
+  ],
+  "unfinished": [
+    "Independent server Preview hashes (deployed filter stripped proof)",
+    "Owner exact Save, Consumer Apply/APPLIED/readback",
+    "Same Item Edit and Native downstream"
+  ],
+  "blockers": [
+    {
+      "type": "MCP_DIAGNOSTIC_PROOF_FILTER_DEFECT",
+      "owner": "Lane B implementation; Root1 integration; Root2 Hosted deployment",
+      "request_id": "MCP-C02-S1-PREVIEW-PROOF-20261104-001"
+    }
+  ],
+  "next_action": "Complete fixed four-file repair review/integration; qualify latest closed Hosted candidate; request precise fresh access, same original operation Preview, exact Owner Save afterward. No expired-window reuse.",
+  "actual_resource_lock": "NONE",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING"
+}

@@ -1,0 +1,44 @@
+{
+  "status": "ACTUAL_OWNER_SOURCE_MECHANICALLY_BOUND_PENDING_INDEPENDENT_DELTA_REVIEW",
+  "recordedAt": "2026-11-04T20:41:01.404428+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "priorReviewedCandidate": "8eef37b775b20f8ddd9934870d0ae29e945a2912",
+  "priorReviewedPackageSHA256": "75ddd1ec2ce35116a4afd209e37285f3c1504a5a8d323cc02940e87052f51dac",
+  "newPackageSHA256": "99cd0ab34c901b7b7dd775a00a712490172f21176e4cad316e91a272470360f2",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "scopeSHA256": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "actualHumanSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turnId": "01a1a848-be9d-7211-998c-af765cb2ac8c",
+    "userMessageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+    "wireSHA256": "617bfc03181ee9c80695af3a1ac6d934853f01dd440ba9aa0e03a808f484bc27",
+    "wrapperSHA256": "10c9b06abad382475d100a17f90e751c5d38bcea2fc264e006d483a081a7ae18",
+    "answer": "批准本轮临时配置、连接及 Preview，不包含保存",
+    "sourceReadMethod": "Direct read_thread human userMessage, not parent paraphrase",
+    "sourceRelabeled": false
+  },
+  "actualDerivedSourceChanges": [
+    "c02-normal-control.py",
+    "operators/config_cas.py",
+    "prepare-c02-access-window.py"
+  ],
+  "staticDiffVerified": "Only exact repr-safe thread/message/stripped-original-text literal substitution in all3 guards; all other14 derived files byte-identical. Runtime guard logic unchanged.",
+  "localPureCases": 24,
+  "platformRecognizedExecutionApproval": false,
+  "platformStatus": "Root2 independent trusted-source and platform execution qualification still required. Human approval is verified, not assumed platform auto-approval.",
+  "unchanged": [
+    "Gate/scope/window/input facts and hashes",
+    "EMPTY command=null confirmations=[]",
+    "time caps and <=120sec original-launch rule",
+    "noSave/noEdit/noUNKNOWN scope"
+  ],
+  "clock": {
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null
+  },
+  "AuthOTPUIHostedConsumerBusiness": 0,
+  "next": "Parent assigns same independent reviewer source-only delta; Root2 independently verifies source/platform/currentdefault/close before live waiter and own normal login."
+}

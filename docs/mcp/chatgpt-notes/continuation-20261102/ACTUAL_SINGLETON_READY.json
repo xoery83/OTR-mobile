@@ -1,0 +1,12 @@
+{
+  "status": "EXACT_SINGLETON_INDEPENDENTLY_READY",
+  "checkedAt": "2026-11-02T09:19:04.270575+00:00",
+  "containerId": "e2b108600dd634933bfa7883faa97fdd91505d8a6ebfdc5b4f1b62ed41cf8a25",
+  "configSHA256": "5b75465ec53682a10d50cffe9d7e0223b2fba50656e69a35823864c9398974b6",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "previewDigest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+  "deadlineMs": 1793611609714,
+  "health200Protected401": true,
+  "timerActive": true,
+  "rootBusinessApply": 0
+}

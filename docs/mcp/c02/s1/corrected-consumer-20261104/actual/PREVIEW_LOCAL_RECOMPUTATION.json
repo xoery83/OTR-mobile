@@ -1,0 +1,184 @@
+{
+  "input": {
+    "mode": "PREVIEW",
+    "request_id": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item": {
+      "family": "P3",
+      "title": "Kowhai Bay QA Lodge",
+      "notes": "Use the east entrance; call reception if arriving after 20:00.",
+      "dates": {
+        "start_date": "2026-12-10",
+        "end_date": "2026-12-12",
+        "start_time": "17:20",
+        "end_time": "09:45",
+        "start_zone": "Pacific/Auckland",
+        "end_zone": "Pacific/Auckland"
+      },
+      "property_name": "Kowhai Bay QA Lodge",
+      "place": "Kowhai Bay QA Lodge",
+      "place_address": "18 Example Quay, Aster Bay, New Zealand",
+      "stay": {
+        "permitted_checkin_from": "14:00",
+        "permitted_checkin_until": "20:00",
+        "permitted_checkout_by": "10:30"
+      },
+      "rooms": [
+        {
+          "room_id": "e7bd8424-f0e9-4f13-9154-b7b90a86c201",
+          "category": "Family unit",
+          "quantity": 1,
+          "capacity": 4
+        },
+        {
+          "room_id": "b41def7e-213d-4c4e-bd7f-e24b1fc19ec7",
+          "category": "Studio",
+          "quantity": 1,
+          "capacity": 3
+        }
+      ]
+    }
+  },
+  "output": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+    "operation_id": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+    "current_revision": null,
+    "preview_digest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-12\",\"end_time\":\"09:45\",\"end_zone\":\"Pacific/Auckland\",\"start_date\":\"2026-12-10\",\"start_time\":\"17:20\",\"start_zone\":\"Pacific/Auckland\"},\"family\":\"P3\",\"notes\":\"Use the east entrance; call reception if arriving after 20:00.\",\"place\":\"Kowhai Bay QA Lodge\",\"place_address\":\"18 Example Quay, Aster Bay, New Zealand\",\"property_name\":\"Kowhai Bay QA Lodge\",\"rooms\":[{\"capacity\":4,\"category\":\"Family unit\",\"quantity\":1,\"room_id\":\"e7bd8424-f0e9-4f13-9154-b7b90a86c201\"},{\"capacity\":3,\"category\":\"Studio\",\"quantity\":1,\"room_id\":\"b41def7e-213d-4c4e-bd7f-e24b1fc19ec7\"}],\"stay\":{\"permitted_checkin_from\":\"14:00\",\"permitted_checkin_until\":\"20:00\",\"permitted_checkout_by\":\"10:30\"},\"title\":\"Kowhai Bay QA Lodge\"}",
+    "query": {
+      "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "operation_id": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+      "target": "ITEM"
+    },
+    "outcome": "PREVIEW"
+  },
+  "command": {
+    "contractVersion": 2,
+    "intentVersion": 2,
+    "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+    "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "command": "CREATE_ITEM",
+    "target": {
+      "kind": "ITEM",
+      "id": "a9dbe020-ebce-49fb-ab31-859977f328c6"
+    },
+    "baseVector": [
+      {
+        "kind": "ITEM",
+        "id": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+        "revision": null
+      }
+    ],
+    "admission": {
+      "mode": "MANUAL",
+      "sourceIntentId": null,
+      "policyVersion": null
+    },
+    "payload": {
+      "core": {
+        "title": "Kowhai Bay QA Lodge",
+        "description": "Use the east entrance; call reception if arriving after 20:00."
+      },
+      "participation": {
+        "mode": "SELF",
+        "people": [],
+        "selfPersonId": null
+      },
+      "acl": {
+        "visibility": "PRIVATE",
+        "people": []
+      },
+      "schedule": {
+        "start": {
+          "instant": null,
+          "local_date": "2026-12-10",
+          "local_time": "17:20",
+          "clock_precision": -1,
+          "quality": "ESTIMATED",
+          "basis": "DERIVED_CIVIL",
+          "zone_id": "Pacific/Auckland",
+          "supplied_offset_seconds": null,
+          "source_instant": null,
+          "source_instant_precision": null,
+          "civil_resolution": "PENDING",
+          "resolution_offset_seconds": null,
+          "interpretation_key": null,
+          "interpretation_input_sha256": null,
+          "provenance_refs": null
+        },
+        "end": {
+          "instant": null,
+          "local_date": "2026-12-12",
+          "local_time": "09:45",
+          "clock_precision": -1,
+          "quality": "ESTIMATED",
+          "basis": "DERIVED_CIVIL",
+          "zone_id": "Pacific/Auckland",
+          "supplied_offset_seconds": null,
+          "source_instant": null,
+          "source_instant_precision": null,
+          "civil_resolution": "PENDING",
+          "resolution_offset_seconds": null,
+          "interpretation_key": null,
+          "interpretation_input_sha256": null,
+          "provenance_refs": null
+        }
+      },
+      "place": {
+        "authored_label": "Kowhai Bay QA Lodge",
+        "authored_text": null,
+        "authored_address": "18 Example Quay, Aster Bay, New Zealand",
+        "accepted_address": null,
+        "accepted_latitude": null,
+        "accepted_longitude": null,
+        "accepted_place_id": null,
+        "spatial_provenance_refs": null,
+        "location_input_revision": null,
+        "authored_address_line1": null,
+        "authored_address_line2": null,
+        "authored_address_locality": null,
+        "authored_address_region": null,
+        "authored_address_postal_code": null,
+        "authored_address_country": null,
+        "accepted_address_line1": null,
+        "accepted_address_line2": null,
+        "accepted_address_locality": null,
+        "accepted_address_region": null,
+        "accepted_address_postal_code": null,
+        "accepted_address_country": null
+      },
+      "family": "P3",
+      "details": {
+        "property_name": "Kowhai Bay QA Lodge",
+        "permitted_checkin_from": "14:00",
+        "permitted_checkin_until": "20:00",
+        "permitted_checkout_by": "10:30"
+      },
+      "rooms": [
+        {
+          "room_id": "e7bd8424-f0e9-4f13-9154-b7b90a86c201",
+          "category": "Family unit",
+          "quantity": 1,
+          "capacity": 4
+        },
+        {
+          "room_id": "b41def7e-213d-4c4e-bd7f-e24b1fc19ec7",
+          "category": "Studio",
+          "quantity": 1,
+          "capacity": 3
+        }
+      ]
+    }
+  },
+  "proof": {
+    "inputSHA256": "d0092f662a03971a1ca24b0ed07961f50572a46abd112347242f62d72bf589f7",
+    "outputSHA256": "ff5d986caccc96d946588865d90672ed0b90c3f3b12fba7185b60038a1434c0f",
+    "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc",
+    "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+    "itemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+    "reportedDigestMatches": true,
+    "reportedOutputMatches": true
+  }
+}

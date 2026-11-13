@@ -1,0 +1,11 @@
+{
+  "status": "EXISTING_COMPILED_SDK_AND_WRAPPER_SMOKE_PASS",
+  "sdkChecks": 5,
+  "closedWrapperChecks": 7,
+  "networkCalls": 0,
+  "businessPostCalls": 0,
+  "defaultClosedOnly": true,
+  "sdkSHA256": "6fda006774c4b43d0fd339f5b2099c0815d3fe6a442cfc782370999d63b78fb4",
+  "runtimeSHA256": "26421003533f9a84431e5844cff2ffbbb1620b2dcf83b972b664de111784a010",
+  "hostedOrConsumerAcceptance": false
+}

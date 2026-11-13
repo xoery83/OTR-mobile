@@ -1,0 +1,36 @@
+{
+  "event_id": "mcp-chatgpt-8f4-20261102-blocked-owner-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+  "work_item_id": "WI-MCP-EDIT-PREP",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "BLOCKED",
+  "created_at": "2026-11-02T06:28:05.197952+00:00",
+  "expected_updated_at": null,
+  "current_status": "FINAL_BOUND_READY_AWAIT_EXACT_OWNER_AUTHORIZATION",
+  "commit": "7e5b7be6",
+  "summary": "Minimal canEdit software deployed default-closed and rollback verified; actual ChatGPT finite access/save requires new exact Owner approval.",
+  "evidence_paths": [
+    "docs/mcp/capability-consistency/ROOT_INDEPENDENT_READBACK.json",
+    "docs/mcp/chatgpt-notes/OWNER_GATE.md",
+    "docs/mcp/chatgpt-notes/ACTUAL_NO_CHANGE_RESTORE.json",
+    "docs/mcp/chatgpt-notes/INDEPENDENT_BINDING_REVIEW.json"
+  ],
+  "completed": [
+    "Local35 focused tests/typecheck/lint/build/uiGuard and final independent NO_BLOCKER.",
+    "Default-closed a58 software deployment/readback and same-ID restore verified.",
+    "Actual ChatGPT835/op277/CAS2/digestfc18 execution package mechanically bound to frozen e3dc Gate; final9+11 checks PASS."
+  ],
+  "unfinished": [
+    "Fresh Owner finite connection and exact-save approval.",
+    "ChatGPT consumer normal OAuth/Read/Preview/Confirm/one Apply/APPLIED/independent readback.",
+    "Separate Native downstream after actual APPLIED."
+  ],
+  "blocked_by": [],
+  "blocker": "Owner current direction expressly does not grant new issuer/Consent activation or protected Apply; old e389 consumed.",
+  "dependency_party": "Owner exact approval; Root only protected execution after approval.",
+  "next_action": "MCP asks once in its own chat for frozen8f4 exact connection/save approval, then executes consumer slice as Single DRI; no Root/Auth repeat question.",
+  "affected_node_ids": []
+}

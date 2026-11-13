@@ -1,6 +1,6 @@
-import { coreReadRecordSchema } from "../src/domain/trip/tripCoreV2Read";
 import { z } from "zod";
 import { tripDiscoverySummarySchema } from "../src/domain/trip/tripDiscoveryContract";
+import { coreReadRecordSchema } from "../src/domain/trip/tripCoreV2Read";
 
 export const uuid = z.uuid();
 export const date = z.iso.date();
@@ -43,6 +43,9 @@ const place = z.object({
   acceptedAddressLocality: z.string().optional(),
   acceptedAddressRegion: z.string().optional(),
   acceptedAddressCountry: z.string().optional(),
+  spatialProvenanceRefs: z.record(z.string(), z.string()).optional(),
+  locationInputRevision: z.number().int().nonnegative().optional(),
+  placeId: uuid.optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 });
@@ -74,6 +77,47 @@ const schedule = z.object({
   origin: endpoint.optional(),
   destination: endpoint.optional(),
 });
+const moneySummary = z.object({
+  minor: z.number().int().safe(),
+  currency: z.string(),
+  scale: z.number().int(),
+});
+const documentSummary = z.object({
+  id: uuid,
+  contentVersion: z.number().int(),
+  title: z.string(),
+  mediaType: z.string(),
+  sha256: z.string(),
+  byteSize: z.number().int(),
+  canOpenOriginal: z.boolean(),
+});
+const ticketAccess = z.discriminatedUnion("class", [
+  z.object({
+    class: z.literal("STATIC_ORIGINAL"),
+    documents: z.array(
+      z.object({
+        id: uuid,
+        contentVersion: z.number().int(),
+        sha256: z.string(),
+        deviceReadiness: z.string(),
+      }),
+    ),
+    canRequestDownload: z.boolean(),
+    canOpenOriginal: z.boolean(),
+  }),
+  z.object({
+    class: z.literal("EXTERNAL_DYNAMIC"),
+    providerUrl: z.string().optional(),
+    offlineExecutable: z.boolean(),
+  }),
+  z.object({ class: z.literal("CONFIRMATION_ONLY"), canOpenConfirmation: z.boolean() }),
+  z.object({
+    class: z.literal("APPLE_WALLET"),
+    canOpenOriginalPass: z.boolean(),
+    devicePassCapability: z.boolean(),
+  }),
+  z.object({ class: z.literal("UNKNOWN"), canOpenOriginal: z.boolean() }),
+]);
 const common = {
   itemId: uuid,
   tripId: uuid,
@@ -84,8 +128,86 @@ const common = {
   hidden: z.boolean(),
   visibility: z.string(),
   localState: z.literal("ACCEPTED"),
+  participation: z
+    .object({
+      mode: z.enum(["WHOLE_GROUP", "SELF", "SELECTED_MEMBERS"]),
+      personIds: z.array(uuid),
+      selfPersonId: uuid.optional(),
+      rosterHash: z.string().optional(),
+    })
+    .optional(),
   schedule,
   place: place.optional(),
+  bookingSummaries: z
+    .array(
+      z.object({
+        id: uuid,
+        revision: z.number().int().positive(),
+        title: z.string(),
+        commercialStatus: z.string(),
+        provider: z.string().optional(),
+        confirmationCode: z.string().optional(),
+        price: moneySummary.optional(),
+        due: moneySummary.optional(),
+      }),
+    )
+    .optional(),
+  documentSummaries: z.array(documentSummary).optional(),
+  entitlementSummaries: z
+    .array(
+      z.object({
+        id: uuid,
+        revision: z.number().int().positive(),
+        kind: z.string(),
+        title: z.string(),
+        status: z.string(),
+        accessClass: z.string(),
+        issuer: z.string().optional(),
+        quantity: z.number().optional(),
+        seat: z.string().optional(),
+        coach: z.string().optional(),
+        section: z.string().optional(),
+        cabin: z.string().optional(),
+        fareClass: z.string().optional(),
+        baggageAllowance: z.string().optional(),
+        validity: z
+          .object({
+            validFromDate: z.string().optional(),
+            validUntilDate: z.string().optional(),
+            validFromInstant: z.string().optional(),
+            validUntilInstant: z.string().optional(),
+            validityZoneId: z.string().optional(),
+            validityPrecision: z.number().optional(),
+          })
+          .optional(),
+        ticketAccess,
+      }),
+    )
+    .optional(),
+  instructionShortcuts: z
+    .array(
+      z.object({
+        entryId: uuid,
+        section: z.string(),
+        sensitivity: z.string(),
+        hasCurrentEntry: z.boolean(),
+      }),
+    )
+    .optional(),
+  expenseLinkIds: z.array(uuid).optional(),
+  capabilities: z
+    .object({
+      canEdit: z.boolean(),
+      canManageParticipation: z.boolean(),
+      canManageVisibility: z.boolean(),
+      canCancel: z.boolean(),
+      canHide: z.boolean(),
+      canRestore: z.boolean(),
+      canLinkBooking: z.boolean(),
+      canLinkEntitlement: z.boolean(),
+      canAttachDocument: z.boolean(),
+    })
+    .optional(),
 };
 export const itemSchema = z.discriminatedUnion("family", [
   z.object({
@@ -149,6 +271,7 @@ export const itemSchema = z.discriminatedUnion("family", [
     family: z.literal("P6"),
     details: z.object({
       sessionLabel: z.string().optional(),
+      category: z.string().optional(),
       admissionNote: z.string().optional(),
       entryPlace: place.optional(),
     }),
@@ -194,11 +317,6 @@ export const itemsOutput = z.object({
   snapshot: z.string(),
 });
 export const itemOutput = z.object({ ...envelope, item: itemSchema });
-export const envelopeValue = {
-  version: "otr.mcp.read/1",
-  state: "SERVER_CONFIRMED",
-} as const;
-
 export const itemEditBaseOutput = z.object({
   version: z.literal("otr.mcp.edit-base/1"),
   state: z.literal("SERVER_CONFIRMED"),
@@ -212,3 +330,7 @@ export const itemEditBaseOutput = z.object({
   }),
   evidence_visibility: z.literal("BACKEND_AUTHORIZED_REDACTED_NOT_PROOF_OF_ABSENCE"),
 });
+export const envelopeValue = {
+  version: "otr.mcp.read/1",
+  state: "SERVER_CONFIRMED",
+} as const;

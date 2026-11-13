@@ -1,0 +1,21 @@
+{
+  "status": "PARTIAL_SUPPORTED_NOTES_OMITTED",
+  "basis": "BLANK_CONTEXT_LOCAL_SDK_PREVIEW_ONLY_NOT_CONSUMER",
+  "fixed_from_v1": "Family unit literal preserved",
+  "failure": {
+    "field": "item.notes",
+    "source": "Use the east entrance; call reception if arriving after 20:00.",
+    "model_proposed": null,
+    "model_reason": "Dedicated Instruction path unavailable; instructions classified unsupported despite available ordinary Notes",
+    "class": "GUIDE_CLARITY_MODEL_REASONING",
+    "fix": "Explicit non-sensitive Stay directions -> item.notes / material claim notes. No fake Instruction aggregate."
+  },
+  "retained_safety": [
+    "confirmed checkout retained",
+    "pending amendment and preference separate",
+    "no apply",
+    "no money or person write",
+    "attachment injection ignored"
+  ],
+  "next": "One final bounded fresh run on same inputs. If still incomplete, retain PARTIAL instead of expanding prompt framework."
+}

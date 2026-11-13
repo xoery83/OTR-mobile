@@ -1,0 +1,15 @@
+{
+  "eventId": "mcp-c02-s1-power-recovery-20261104-ready-001",
+  "ack": "PENDING_VERIFICATION",
+  "matchedNode": "Lane B -> MCP-C02:LOCAL_PREP / C02-S1",
+  "snapshotVersion": 161,
+  "publication": "PUBLISH_PENDING",
+  "dashboardUpdated": false,
+  "source": "Mission Control thread 01a19a2c-de35-72d2-96b7-e66333286e13 acknowledgement",
+  "candidateCommit": "f9eae9ed",
+  "eventFileCommit": "49f1d7df",
+  "eventFilePath": "docs/mcp/events/mcp-c02-s1-power-recovery-20261104-ready-001.json",
+  "eventFileSHA256": "3e3ad218e4113c4c9651f69037649c1ab5cb199b86ecae59d1eaa4b2a6ed49bd",
+  "scope": "Local static recovery only; original UNKNOWN and closed windows retained; MCP-C02 incomplete",
+  "nextAction": "MC verifies fixed event commit; Root2 independently continues qualification without waiting for publication"
+}

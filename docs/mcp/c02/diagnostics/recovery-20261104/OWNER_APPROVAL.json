@@ -1,0 +1,14 @@
+{
+  "status": "OWNER_APPROVED_PENDING_FRESH_ROOT2_QUALIFICATION_SOURCE_BINDING",
+  "source_thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "observed_at": "2026-11-04T01:56:57.706166+00:00",
+  "question_call_id": "call_72bc1d5497d7474380e38359c1d17e09",
+  "answer": "批准本轮连接、原 Scope Consent 和只读恢复，不批准保存",
+  "package_commit": "ca434940",
+  "gate_sha256": "be1ea4aec28e5d416215ac93819c7ecf22e8dc347f34f80a7dd0739be879f0ee",
+  "window_id": "623a2797-978a-4e05-ac85-c7ec5a83e15b",
+  "command": null,
+  "confirmations": [],
+  "apply_authorized": false,
+  "clock_started": false
+}

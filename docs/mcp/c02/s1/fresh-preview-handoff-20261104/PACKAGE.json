@@ -1,0 +1,66 @@
+{
+  "requestId": "MCP-C02-S1-CONTROLLED-REPLAY-20261104-001",
+  "scopeRevision": "FRESH_USER_PREVIEW_ONLY_NO_UNKNOWN_REPLAY",
+  "primary": "MCP-C02 / C02-S1_FRESH_PREVIEW",
+  "status": "MECHANICAL_REBIND_PENDING_REVIEW_AND_ROOT2_WAITING",
+  "windowId": "c7fe4ac0-3f88-452c-9899-b686ec2f7d25",
+  "windowHex": "c7fe4ac03f88452c9899b686ec2f7d25",
+  "gateSHA256": "d74c7292cc155852132899249a4b21327749a75f5355c1b8c17594a12b0856d7",
+  "scopeSHA256": "c48f94c7622aae1d9eecf74316fe1080832ac48f79920e58a30ce2462ff75621",
+  "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6",
+  "templateCandidate": "82b89e1f",
+  "templatePackagePath": "docs/mcp/c02/s1/fresh-preview-20261104/PACKAGE.json",
+  "templatePackageSHA256": "0be7465ba2bd2881569fac83962420f86c3595e4d52c389486ab841d6a86f162",
+  "templateGate": "422e73564ed4d81c7070c9ef8d196d45e519f1bcfc72eb6b21afd319cdc7e41a",
+  "templateWindowId": "3586c569-3f51-4ce9-8699-5e98b3760c80",
+  "templateWindowHex": "3586c5693f514ce986995e98b3760c80",
+  "templateScopeSHA256": "1e18dc4a1438d1b25233ff4939d55f32179e32e4b9182f20c0ad6edd35c58bc9",
+  "generatedStaticDirectory": "dist/mcp-c02-fresh-c7fe4ac03f88452c9899b686ec2f7d25/static",
+  "hostSHA256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+  "softwareDeploymentNecessary": false,
+  "normalLoginPermittedBeforeActualRoot2Waiting": false,
+  "command": null,
+  "confirmations": [],
+  "clockStarted": false,
+  "authorityActivated": false,
+  "saveApproved": false,
+  "originalUnknownReplay": "FROZEN_NOT_REQUESTED",
+  "consumerInputs": {
+    "FRESH_CHAT_TASK.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/FRESH_CHAT_TASK.txt",
+      "sha256": "17db04bb474fdc99ed04031f5fdd8be958e1b5c5625779c6245e94e3dfbe9cce"
+    },
+    "MATERIAL_1.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_1.txt",
+      "sha256": "9e7850badbf63ed4b1219966eb0175704f0bda6166416fe54043440383d28f03"
+    },
+    "MATERIAL_2.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_2.txt",
+      "sha256": "363c991e08a5db1b1d5c63e94fdb87dcde545052c2f41855a934936691d543dc"
+    },
+    "INDEPENDENT_INTENT.json": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/INDEPENDENT_INTENT.json",
+      "sha256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6"
+    }
+  },
+  "staticFiles": {
+    "SCOPE.json": "c48f94c7622aae1d9eecf74316fe1080832ac48f79920e58a30ce2462ff75621",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "c02-normal-control.py": "0b7f43eb3064db236b04023aa09b51c1c54b09a8a154071af0c890a088d2db94",
+    "c02-timers.py": "8f013638d99a7e63f28e75763583c6cafc04637543e8e602485fc9e834fa5b5f",
+    "c02-timers.test.py": "c8d5e4b76aae52d16d7f9989eafc50f1ab8eb27b190138019e1c441be1a80cdf",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "issuer-source/scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "issuer-source/scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "normal-control.mts": "184abc907ed79c53b3751d4ca5aad124a917330f656909243d03897c8908a89f",
+    "operators/config_cas.py": "2ef105bf4f474ce920f73405d4031630e556e29db0437fbf888312608371bbb7",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "prepare-c02-access-window.py": "c4749a6dd841d84f32a23af80e7f9f1dbd085f746fcc8115e59361577b2184b1"
+  },
+  "mechanicalRebind": "Only fixed window/Gate/scope literals and consequent entry/timer byte pins; no behavior or authority expansion"
+}

@@ -1,0 +1,188 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "actualChildId": "/root/mcp_fresh_p3_qualification_20261105",
+  "recordedAt": "2026-11-04T22:19:27.395968+00:00",
+  "status": "C7D0_CLOSED_AFTER_CONTROLLED_ACTIVATION_CONSUMER_BLOCKED_NO_PREVIEW",
+  "windowId": "c7d0ee01-0f06-4a4a-9d09-0f6034a3cc3d",
+  "gateSHA256": "e602fbfaa1bad7a8554faadc3dd38b19ab6eedb6cbe5a7d465b07b27f1cea72a",
+  "packageSHA256": "d63fc9a71233a8e026463bd34dd9b3778bbfd6640bfc5942278756b0f8f359ff",
+  "originalT": "2026-11-04T22:00:48.708Z",
+  "normalCloseAt": "2026-11-04T22:28:48.708Z",
+  "hardExpiresAt": "2026-11-04T22:30:48.708Z",
+  "timeResetOrExtended": false,
+  "actualExecution": {
+    "fileReadyOnceBind": true,
+    "sameImageEMPTY_CAS": true,
+    "finiteIssuerBodyCAS": true,
+    "ConsoleOAuthHookSiteURL": true,
+    "identityFixRealWatcherLIVE": true,
+    "MCPNormalOwnQASession": true,
+    "browserOTPSent": false,
+    "browserConsentCompleted": false,
+    "consumerTaskSubmitted": false,
+    "RimuPreview": false,
+    "SaveApplyEdit": false,
+    "businessWrites": 0
+  },
+  "stopReason": {
+    "source": "MCP owning execution/parent report, own cleanup receipt confirms no browserOTP/Consent/task",
+    "action": "CUA access to Keychain OTR_QA_RESEND_API_KEY",
+    "autoReview": "REJECTED credentialsource not explicitly authorized; workaround prohibited",
+    "operationBodyExecuted": false,
+    "retryOrAlternateKeySourceOrDelegatedCredentialRead": false,
+    "doNotConfuse": "This is the actual browser credential-source approval block, not a new generic Gate refusal. Root2 did not fetch this key."
+  },
+  "actualClose": {
+    "closeMarkerAt": "2026-11-04T22:16:00.408053Z",
+    "existingIssuerWatcher": {
+      "status": "ISSUER_DENY_ALL_VERIFIED",
+      "windowId": "c7d0ee010f064a4a9d090f6034a3cc3d",
+      "observedAt": "2026-11-04T22:16:16.744809+00:00",
+      "issuerClosed": true
+    },
+    "runtimeClose": {
+      "status": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+      "windowId": "c7d0ee010f064a4a9d090f6034a3cc3d",
+      "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "issuerCleanup": "SEPARATE_MANDATORY_AUTH_CLOSE_RECEIPT",
+      "requestTrace": {
+        "status": "SANITIZED_REQUEST_TRACE_PRESERVED",
+        "records": 0,
+        "sha256": "5bc999e7a945b6b353eaa48d91cc61979f7528166abe91613a346419782dab31"
+      }
+    },
+    "independentIssuerAnd835": {
+      "issuer": {
+        "coreOpenTransactions": 0,
+        "issuerACL": [
+          "postgres=X/postgres",
+          "supabase_auth_admin=X/postgres"
+        ],
+        "issuerBodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+        "issuerDefinitionSHA256": "7e5825850329055cd1039c337344d38004edd6d17ea91c9039ba53e37f32f526",
+        "issuerOID": "67215",
+        "issuerOwner": "postgres",
+        "observedAt": "2026-11-04T22:16:53.923102+00:00",
+        "providerScopeRows": 0,
+        "sourceScopeRows": 0
+      },
+      "selectedExistingQAClient": {
+        "authorizationRLSActive": false,
+        "consentRLSActive": false,
+        "observedAt": "2026-11-04T22:16:53.928108+00:00",
+        "selectedActiveConsentCount": 0,
+        "selectedAuthorizationTotal": 0,
+        "selectedConsentTotal": 1,
+        "selectedUnexpiredAuthorizationCount": 0
+      }
+    },
+    "postcloseConsole": {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/c7d0/C7D0_CONSOLE_POST_CLOSE_RESTORED.json",
+      "sha256": "8467a033a94c2df22901e6b0358edf85d1463c4704277ce314810952aaf33ebb",
+      "actualStatus": "OAuthOFF/HookOFF/localhost/SaveDisabled observed after watch closed; DCR original565c + actual active86d9 false and no DCR change, no hidden API inference"
+    },
+    "ownSession": {
+      "path": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/OWN_SESSION_FINAL.json",
+      "sha256": "64ae9f31765251ff287328657b48de160365f077316045c09d4225c7d6660481",
+      "status": "OWN_SESSION_AND_SELECTED_GRANT_ABSENCE_VERIFIED",
+      "normalControlExit": 0,
+      "grant": "GRANT_ABSENT_VERIFIED by owncontrol; no invented DELETE204 or claim DELETE sent",
+      "cleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED / activeLockAbsent"
+    },
+    "timerDisarm": {
+      "status": "C02_OWN_TIMERS_DISARMED_AFTER_DEFAULT_CLOSED",
+      "units": [
+        "otr-mcp-c02-c7d0ee010f064a4a9d090f6034a3cc3d-normal.timer",
+        "otr-mcp-c02-c7d0ee010f064a4a9d090f6034a3cc3d-normal.service",
+        "otr-mcp-c02-c7d0ee010f064a4a9d090f6034a3cc3d-hard.timer",
+        "otr-mcp-c02-c7d0ee010f064a4a9d090f6034a3cc3d-hard.service"
+      ],
+      "stagedCASPlanArchivedNotDeleted": true,
+      "remoteAccessBindingInvalidated": true,
+      "containerChanged": false
+    },
+    "finalHost": {
+      "observedAt": "2026-11-04T22:18:33.850239+00:00",
+      "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+      "health": "healthy",
+      "activeProtectedTimers": [],
+      "executableCASPathAbsent": true,
+      "archivedCASPresent": true,
+      "remoteClosedBindingValidJSON": true,
+      "qaSelectorNames": [],
+      "mutations": 0
+    },
+    "restoredFullFingerprints": {
+      "observedAt": "2026-11-04T22:16:49.808405+00:00",
+      "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+      "health": "healthy",
+      "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+      "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa",
+      "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+      "mountsMatch": true,
+      "fileCount": 23,
+      "fileMismatches": [],
+      "bundles": {
+        "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb",
+        "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+        "mcp/c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+        "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+      },
+      "activeProtectedTimers": [
+        "otr-mcp-c02-c7d0ee010f064a4a9d090f6034a3cc3d-hard.timer",
+        "otr-mcp-c02-c7d0ee010f064a4a9d090f6034a3cc3d-normal.timer"
+      ],
+      "sharedLockAvailableAtSnapshot": true,
+      "finiteQaSelectorNames": [],
+      "importFlags": {
+        "OTR_DEV_UNIVERSAL_PDF_RUNTIME": "disabled",
+        "OTR_DEV_UNIVERSAL_PNG_RUNTIME": "disabled"
+      },
+      "http": [
+        {
+          "path": "/health",
+          "status": 200,
+          "expected": 200
+        },
+        {
+          "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+          "status": 401,
+          "expected": 401
+        }
+      ],
+      "mutations": 0
+    },
+    "finalLocal": {
+      "observedAt": "2026-11-04T22:18:27.238411+00:00",
+      "matchingLiveWaiterOrIssuerWatch": [],
+      "qaLockAbsent": true,
+      "resources": []
+    }
+  },
+  "evidencePins": {
+    "BOUND_CAS_PREPARATION.json": "b3ca358a980015bbf306b1a5402e49fbf67f200324ed43dac1dbda41221c483e",
+    "TIMER_ARM_RECEIPT.json": "31da4cd587a7839a17a47a783a735bc83317bb674f04b495849dfe5d3a2aaea0",
+    "ISSUER_WATCHER_START.json": "ea842b5b637d4e1e793d9f352d8b0ba2e53902eb082229a84c8311990b0298b2",
+    "ISSUER_INSTALL_RECEIPT.json": "14f96f4d4695c4c952e6071f873a5f7ea2fe3c12bb90f4ac0350e325ef3c3793",
+    "EMPTY_CAS_RECEIPT.json": "b152ec2339188e7c800ad8716bbbcbaa88e96d98713249b3060499adcb36cd7b",
+    "RUNTIME_CLOSE_RECEIPT.json": "b5bc11a5c3e0c0af6409e20fee86a1d68a0deff0ed53d26464e9e5a9bd47f229",
+    "ISSUER_WATCHER_RESULT.json": "1dd459a9eb3d65baf371ed513475c2305e25bac8ac1bdf06a011fb4892314a56",
+    "SELECTED_GRANT_CLOSURE_READBACK.json": "5c3d9b8adb798611a54e1d6126466aed986e786a8d676b4589ca49f095399671",
+    "TIMERS_DISARMED_RECEIPT.json": "79c12b05e7b45e752523cfc2e4b19a9145cce5f819501618489608063d80a4bd",
+    "FINAL_RELEASE_READBACK.json": "f36c4503c973adf9b06cd4352eaa9e7ebe9989535c5606cea3ed46f6e703a15c",
+    "FINAL_LOCAL_RESOURCE_READBACK.json": "43a9c3af0dce14a5aeb11528f93ac8f7eafe03e27014e8cae41bac211fcedddb"
+  },
+  "publicPins": {
+    "runtimeSafety": "c3ec00692414fe46e625fd0c49b69e2fe7527a15a6ec51a79d027989d8a95f9d",
+    "actualPreviewOnlyRelease": "4410745a98f22bed1e8c5a95f2f6a4932cf135b43c4897b5f45dde1ee9fd2dff",
+    "ConsoleActive": "86d9f66cd3672bf3a45b9781798ceca00bc19f33384b8970d5965f91e312ec6a"
+  },
+  "archivalLabelLimit": "Inherited disarm archival status literal says C7D0_CLOSED_WITHOUT_ACTIVATION_NOT_REUSABLE even though this window DID activate. Treat that legacy label only as closed/revoked/nonreusable, never as no-activation evidence. This final receipt and actual CAS/Issuer/Console receipts state real activation. Remote CAS is archived and activationPermitted=false; no runnable authority remains. No live scope or safety limitation results.",
+  "noReuse": "c7d0 is consumed closed. No reOTP/reset/extension/rebind/oldOwnerwire/plan reuse. c843/550ab remains closed unchanged. Frozen a8c1/f107/9b UNKNOWNs never queried/replayed/cloned or reidentified.",
+  "PreviewGoalComplete": false,
+  "remaining": "Owning MCP credential-source authorization/block handling is separate before any future actual workflow. No workaround or currentwindow retry. Do not deploy PG_PENDING c420 recovery/latestmain.",
+  "resources": [],
+  "git": "New public receipts uncommitted; no local Git slot held."
+}

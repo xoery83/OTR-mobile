@@ -1,0 +1,24 @@
+{
+  "event_id": "mcp-c02-p4-detail-readback-20261103-ready-001",
+  "package_id": "MCP-C02",
+  "agent_id": "MCP",
+  "lane": "B",
+  "execution_slice_id": "MCP-C02:LOCAL_PREP",
+  "received_at": "2026-11-02T22:14:38.676Z",
+  "last_reported_at": "2026-11-02T22:13:40.736570+00:00",
+  "acceptance_status": "PENDING_VERIFICATION",
+  "reported_acceptance": "READY_FOR_INTEGRATION",
+  "acceptance_scope": "仅e2eebf3c plate-only本地子范围及1项focused/独立Review声明；非完整P4 SDK、Consumer、Hosted、Provider或权限资格。",
+  "source": {
+    "kind": "REGISTERED_THREAD",
+    "thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turn_id": "01a19e47-2af5-7d33-960b-592214d04a6a",
+    "message_id": "exec-01693ee8-7160-4549-a42b-eb3a2c6be747",
+    "path": "docs/v32/sources/mcp-c02-p4-detail-readback-20261103-ready-001.json",
+    "sha256": "d25a396d10608eb38d31ef0c6e1d24f039679795c3efdded508862a0d708a276"
+  },
+  "dispatch_performed": false,
+  "ack_status": "PENDING_VERIFICATION",
+  "publication_status": "PUBLISH_PENDING",
+  "snapshot_binding": "NOT_YET_PUBLISHED"
+}

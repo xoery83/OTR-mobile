@@ -1,0 +1,20 @@
+{
+  "status": "PREPARED_REVIEWED_NOT_AUTHORIZED_FOR_DISPATCH",
+  "fixture": "mcp/fixtures/claude-original-bb-recovery.json",
+  "fixtureSha256": "2ed5ed11565e1ae8df81e38f807d307622a66845e398fa76071acd0364e23101",
+  "sourceFixtureSha256": "8448feb6efaabb8ef91ee3748fd080bd758d6f60389c023f3651a846ad63f405",
+  "priorActualPreviewSha256": "94a68ed50d26051779683d11a41ad095d60565c4b9b44c1d7f29a0ef225eac00",
+  "allowedWriteOperationIds": [
+    "bb0cb010-0cb4-432b-8995-670aaec95b3d"
+  ],
+  "independentReview": "NO_BLOCKER",
+  "fixturePinRegression": "PASS",
+  "mcpTypecheck": "PASS",
+  "scopedEslint": "PASS",
+  "contractFinding": "Single-item digest has no Session/time component; current grant and fresh trusted confirmation still required",
+  "authWriterGap": "Previous mandatory e9+bb confirmations must be narrowed to bb for an original-bb-only Gate; MCP did not modify Auth code",
+  "consumerActions": 0,
+  "otpRequests": 0,
+  "gateReopened": false,
+  "corePosts": 0
+}

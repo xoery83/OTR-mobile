@@ -1,0 +1,44 @@
+{
+  "status": "LOCAL_CANDIDATE_NOT_CLOUD_OR_CONSUMER_PASS",
+  "date": "2026-11-01",
+  "codeCheckpoint": "e67b648a",
+  "acceptedMainIntegrated": "4e1bedfc",
+  "defaultTaskAssistant": false,
+  "validation": {
+    "isolatedBeforeMergeTests": 85,
+    "joinedMcpMatchingTests": 236,
+    "scopedTypecheck": "PASS",
+    "rootTypecheck": "PASS_WITH_DECLARED_BROWSER_TYPES_AVAILABLE",
+    "scopedLint": "PASS",
+    "build": "PASS",
+    "uiGuard": "PASS",
+    "independentCodeReview": "NO_BLOCKER"
+  },
+  "effects": {
+    "sharedDevRequests": 0,
+    "oauthWindows": 0,
+    "providerCalls": 0,
+    "deviceActions": 0,
+    "realNelsonWrites": 0,
+    "oldUnknownRetries": 0,
+    "sharedMainWrites": 0
+  },
+  "remaining": [
+    "Owning safe field/provenance patch semantics",
+    "Auth roster and scoped AKA",
+    "Ledger authenticated reader/mutation adapter and owning links",
+    "Permanent Source/evidence associations",
+    "Fresh consumer task E2E and expanded Native downstream"
+  ],
+  "sourceSha256": {
+    "mcp/guide.ts": "d3e901ee248384bbb919c8713b339bcef62688f6ce469bfdc0b55eb4367c77fb",
+    "mcp/reconcile.ts": "ef609d4b08ef5f9deccf1cb5a34c231a092f672f0353dc74eaf9d4a674497729",
+    "mcp/fieldAdapter.ts": "7545a118d6c3f69e7ec601c76516864bf1343868b0ae4e9434b8ffac18ae5650",
+    "mcp/peopleExpenseAdapter.ts": "385f369fb3acd1e88cfa509ad44c09a0bffae6b071af4d079ac91da4944f210c",
+    "mcp/recoveryReview.ts": "c57dbb6f1a5a5b4cabc1f66cebbfc16fe89399a8d34cd9c0a15b1d69f8f4f47d",
+    "mcp/server.ts": "2e93fd5e5176a7273863e5995bee0be77a097d035ea444dd4668899752a6df4c",
+    "mcp/batch.ts": "e038814553a266d4cb236230b1841dde43916706c0c2e4d018f1326957b1c562",
+    "mcp/mutation.ts": "1ad26fab9ce583f5fed9e2155c5cda06998bbb0a1eebf06a1733fd57daa262ad",
+    "mcp/contract.ts": "530d233326459424599a62512cbbf7502e7b3fcaf7db8d526879471212ff8d0b"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "observed_at": "2026-11-03T18:15:43.970692+00:00",
+  "package": "MCP-C02",
+  "slice": "C02-S1",
+  "surface": "Existing installed OTR DEV QA connector in Codex; separate from fresh ChatGPT consumer browser",
+  "tool": "get_otr_operating_guide",
+  "arguments": {
+    "section": "CAPABILITIES"
+  },
+  "read_only": true,
+  "temporary_authority_changes": 0,
+  "business_operations": 0,
+  "actual_response": "tool call failed; Mcp error -32603 Internal error; isError=true",
+  "verdict": "READ_ONLY_TOOL_CALL_FAILED_LAYER_UNPROVEN",
+  "not_inferred": [
+    "Not proof of token expiry",
+    "Not proof of Gateway defect",
+    "Not Consumer discovery PASS",
+    "Not a new Owning Permission gap"
+  ],
+  "next": "Root2 current Hosted readonly qualification and Lane B consumer/session diagnosis; no permission bypass or old window reuse"
+}

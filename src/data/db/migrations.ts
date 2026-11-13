@@ -1,6 +1,7 @@
 import { captureV3PhotoDecisionsMigration } from "./migrations/captureV3PhotoDecisions";
 import { tripCoreLocalDocumentMigration } from "./migrations/tripCoreLocalDocument";
 import { captureFilePngPhotoDecisionsDefinition } from "./migrations/captureFilePngPhotoDecisions";
+import { serverParentMetadataConfirmationsSql } from "./migrations/serverParentMetadataConfirmations.candidate";
 import { capturePhotoImportDecisionsDefinition } from "./migrations/capturePhotoImportDecisions";
 import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
 import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
@@ -1739,4 +1740,5 @@ export const migrations: Migration[] = [
   { ...captureFilePngPhotoDecisionsDefinition, id: 76 },
   tripCoreLocalDocumentMigration,
   captureV3PhotoDecisionsMigration,
+  { id: 79, name: "server_parent_metadata_confirmations", sql: serverParentMetadataConfirmationsSql },
 ];

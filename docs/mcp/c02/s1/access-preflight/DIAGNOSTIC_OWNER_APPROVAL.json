@@ -1,0 +1,18 @@
+{
+  "status": "ACTUAL_OWNER_APPROVED_ROOT_INDEPENDENT_READBACK_VERIFIED_SOFTWARE_PENDING",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "sourceMessageId": "01a1a02d-d63f-7872-b930-c6d41d30641d",
+  "sourceQuestionId": "call_cd2ba5b334404986bb6af85fd624669c",
+  "answer": "\u6279\u51c6\u672c\u8f6e\u8bca\u65ad\u4e0e Preview\uff0c\u4e0d\u6279\u51c6\u4fdd\u5b58",
+  "gateSHA256": "d0f576f6356bf70cd2388c9c934e38ec4563addbc0ca7a8e7b970e8bfd0c19c6",
+  "ownerWirePath": "/private/tmp/otr-mcp-c02-diagnostic-owner-source.json",
+  "ownerWireSHA256": "ab10a89a1d267e91001bd75772f59b5a7efdae15117d35b2b7c6846c6ecc7fcb",
+  "windowId": "a2f8c128ba794de4bcf3c98d324ffc63",
+  "clockStarted": false,
+  "saveApproved": false,
+  "uniqueBlocker": "Root minimum default-closed C02 selector compatibility repair and fresh software/close qualification pending. C04 e930 closed; WriterFREE reported by Root. No T/D or Session.",
+  "sharedResourceHeldByMcp": false,
+  "rootSourceReadbackVerified": true,
+  "rootIndependentProofPath": "/private/tmp/otr-mcp-diagnostic-owner-source-root-20261103.json",
+  "rootIndependentProofSHA256": "99a1ca3148f71b4041855675e6494280bcad6ad2559470576f58b8eea319edd8"
+}

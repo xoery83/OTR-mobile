@@ -1,0 +1,40 @@
+{
+  "event_id": "mcp-c02-s1-current-default-20261103-ready-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "owner_slice_id": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "READY_FOR_INTEGRATION",
+  "reported_event_type": "READY_FOR_INTEGRATION",
+  "created_at": "2026-11-03T02:59:06.840044+00:00",
+  "current_status": "CURRENT_LIVE_DEFAULT_AND_CLOSE_PACKAGE_VERIFIED_ROOT_PROBE_PENDING",
+  "commit": "05db8696",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/access-preflight/current-3def/READBACK.json",
+    "docs/mcp/c02/s1/access-preflight/current-3def/HTTP_SMOKE.json",
+    "docs/mcp/c02/s1/access-preflight/current-3def/CLOSE_PROBE_REVIEW.json",
+    "docs/mcp/c02/s1/access-preflight/dcr-visible/OBSERVATION.json"
+  ],
+  "completed": [
+    "MCP directly read fixed live3def/b008/fbc2455bundles+23file hashes via existing safe SSH read port; no Host mutation or credentials output",
+    "Current runtime1febb explicit binding, QA keys absent, exact close candidatefbafb49c reviewed NO_BLOCKER",
+    "Public health200/Core401 and disabled unmounted MCP404 actual smoke; initial extra401 expectation corrected from frozen loader source",
+    "Owner source,DCRfalse visible UI,consumer materials already prepared"
+  ],
+  "unfinished": [
+    "Root actual same-default close/watchdog qualification outside Auth active window",
+    "Finite QA control/OAuth/Guide/Read/Preview; actual saves separate confirmation"
+  ],
+  "blocked_by": [
+    "Protected write/close execution belongs to Root; exact reviewed package submitted"
+  ],
+  "next_action": "Root runs one exact close entry fbafb49c under short CAS and releases; MCP verifies actual receipt and continues lawful own consumer flow. Continue independent P4 endpoint mapping while protected execution pending.",
+  "acceptance_scope": "Close execution package/source/read-only current compatibility only, not actual close PASS or finite access qualification",
+  "consumer": "NOT_RUN",
+  "clock_started": false,
+  "business_applies": 0,
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED"
+}

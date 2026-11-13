@@ -1,0 +1,24 @@
+{
+  "status": "LOCAL_GUIDE_MAPPING_REPAIR_QUALIFIED_NOT_DEPLOYED_NOT_CONSUMER_RETESTED",
+  "commit": "bfde2503",
+  "files": [
+    "mcp/guide.ts",
+    "mcp/guide.test.ts"
+  ],
+  "actualFailure": "Consumer would not equate DTO description with user-facing Notes; one ordinary clarification was required",
+  "fix": "Explicit read item.description and TEXT change.notes replacement mapping; retain original text for append",
+  "checks": {
+    "realSdkGuideTests": "2_PASS",
+    "scopedMcpTypecheck": "PASS",
+    "indexAndInternalBuild": "PASS_TMP_OUTPUT_ONLY",
+    "changedFilesLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "independentReview": {
+    "agent": "/root/mcp_independent_review",
+    "verdict": "NO_BLOCKER",
+    "scope": "Latest guide and guide.test diff; compared read outputs and prepareUpdate mapping",
+    "limits": "No deployment or consumer retest; Apply UNKNOWN unchanged"
+  },
+  "hostedSoftware": "Retains qualified SDK4908085d/7832 and Auth5b984996/runtime19b5. Existing SDK_CANDIDATE pins describe former hosted artifact, not this local repair."
+}

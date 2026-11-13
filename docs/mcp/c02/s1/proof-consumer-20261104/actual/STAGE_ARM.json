@@ -1,0 +1,34 @@
+{
+  "status": "STAGED_DUAL_TIMERS_ARMED_NO_AUTHORITY",
+  "root": "/opt/otr/dev-backend/build/auth-consumer-write-qa-b08a466d29f348a896176c563646f417",
+  "emptyPlanSHA256": "cce87d36710a5913aca98750edf1f870776dfd7b3cd0dc455b832f58326e208f",
+  "configSHA256": "918b89dfa999105ed27d3bf5bd5309dbd7be179626c2fe54e9e21b9299ae22c7",
+  "timers": {
+    "status": "C02_BOTH_ABSOLUTE_TIMERS_VERIFIED",
+    "timers": [
+      {
+        "unit": "otr-mcp-c02-b08a466d29f348a896176c563646f417-normal.timer",
+        "deadlineMs": 1793741859000,
+        "exec": [
+          "/usr/bin/python3",
+          "/opt/otr/dev-backend/build/auth-consumer-write-qa-b08a466d29f348a896176c563646f417/c02-close.py",
+          "/opt/otr/dev-backend/build/auth-consumer-write-qa-b08a466d29f348a896176c563646f417"
+        ]
+      },
+      {
+        "unit": "otr-mcp-c02-b08a466d29f348a896176c563646f417-hard.timer",
+        "deadlineMs": 1793741979000,
+        "exec": [
+          "/usr/bin/python3",
+          "/opt/otr/dev-backend/build/auth-consumer-write-qa-b08a466d29f348a896176c563646f417/c02-close.py",
+          "/opt/otr/dev-backend/build/auth-consumer-write-qa-b08a466d29f348a896176c563646f417"
+        ]
+      }
+    ],
+    "authorityActivated": false,
+    "issuerArmed": false
+  },
+  "startsAt": 1793740179542,
+  "normalCloseAt": 1793741859542,
+  "expiresAt": 1793741979542
+}

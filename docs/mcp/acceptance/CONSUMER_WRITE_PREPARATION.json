@@ -1,0 +1,19 @@
+{
+  "status": "MATERIALS_READY_OWNER_NOT_APPROVED_NO_WINDOW",
+  "authCandidate": "85fe2a338a51963e412caa7b6b1c886e116e4cfd",
+  "gateSha256": "6dade51e337f692012e107b357daaf3ed48bb82dfbcdc51a84bff8e1972fdb3d",
+  "frozenFileCount": 47,
+  "allFrozenHashesIndependentlyMatch": true,
+  "consumerFixture": "mcp/fixtures/claude-p3-write-smoke.json",
+  "consumerFixtureSha256": "8448feb6efaabb8ef91ee3748fd080bd758d6f60389c023f3651a846ad63f405",
+  "authCopiedFixtureMatches": true,
+  "nativeStatus": "BLOCKED_XCTEST_INITIALIZATION_BEFORE_AX",
+  "nativeAcceptance": "NOT_VERIFIED",
+  "defaultClosedDeployment": "CONSUMER_WRITE_DEFAULT_CLOSED_DEPLOYMENT.json",
+  "consumerBrowserPreflight": "NOT_STARTED_AWAIT_OWNER_AND_RESOURCE_HANDOFF",
+  "reconnect": false,
+  "otp": false,
+  "writeConsent": false,
+  "apply": false,
+  "readCReusable": false
+}

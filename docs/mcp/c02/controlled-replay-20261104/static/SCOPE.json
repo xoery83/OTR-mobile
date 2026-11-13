@@ -1,0 +1,18 @@
+{
+  "status": "DRAFT_LOCAL_NOT_EXECUTION_AUTHORITY",
+  "windowId": "c2d7c9bc03cb413ca7d082ccf8338f0c",
+  "runtimeWindowId": "c2d7c9bc-03cb-413c-a7d0-82ccf8338f0c",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "callback": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "maximumWindowSeconds": 1800,
+  "normalCloseLeadSeconds": 120,
+  "tokenMaxSeconds": 60,
+  "operations": "Original a8c1 same-ID identical canonical intent controlled replay only, possible first Create; subsequent Edit requires distinct exact human approval. NOT_AUTHORIZED.",
+  "confirmationsInitially": [],
+  "authorityActivated": false,
+  "clockStarted": false,
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb"
+}

@@ -1,0 +1,11 @@
+{
+  "status": "SOURCE_CLOSED_AND_APPROVED_HELPER_PRESERVED",
+  "observedAt": "2026-11-01T02:01:11.045651+00:00",
+  "proof": {
+    "approvedPostgresExecutePreserved": true,
+    "helperMD5": "a2945b7def0e9e5a19d4a66bd1e5a951",
+    "helperOID": "67145",
+    "pdfClosed": true,
+    "pngClosed": true
+  }
+}

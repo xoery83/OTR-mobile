@@ -1,0 +1,39 @@
+{
+  "event_id": "mcp-canedit-20261102-ready-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+  "work_item_id": "WI-MCP-EDIT-PREP",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "HANDOFF",
+  "reported_event_type": "READY_FOR_INTEGRATION",
+  "created_at": "2026-11-02T05:48:14.537197+00:00",
+  "expected_updated_at": null,
+  "current_status": "LOCAL_QUALIFIED_HOSTED_PENDING",
+  "commit": "ac44e091969a44eb7eaedc4654b6b1c5d2adfebc",
+  "summary": "canEdit formal object-management contract aligned locally; exact Core Writer patch plus MCP Guide/description; no permission enforcement change.",
+  "evidence_paths": [
+    "docs/mcp/capability-consistency/DIAGNOSIS.md",
+    "docs/mcp/capability-consistency/LOCAL_QUALIFICATION.json",
+    "docs/mcp/capability-consistency/INDEPENDENT_REVIEW.json",
+    "docs/mcp/capability-consistency/CHATGPT_BASELINE_READ.json"
+  ],
+  "completed": [
+    "Root formal Core Details canEdit=existing coreCanManage; Day and other flags unchanged.",
+    "MCP raw flag preservation and Guide/description distinctions.",
+    "35 focused tests, MCP tsc, lint, build, UI guard PASS; independent final-diff NO_BLOCKER.",
+    "Independent ChatGPT baseline same Item rev2/current Notes; original277 receipts0."
+  ],
+  "unfinished": [
+    "Current-default-compatible Hosted candidate and rollback/close plan.",
+    "Explicit finite access/save authorization; actual ChatGPT E2E.",
+    "Separate Native downstream after actual APPLIED."
+  ],
+  "blocked_by": [],
+  "dependencies": [
+    "Root only for protected image/config candidate and execution; exact Owner gate required before activation."
+  ],
+  "next_action": "Root prepare minimal current-default-compatible candidate; MCP presents one precise access/save Gate when reviewable, then owns consumer E2E.",
+  "affected_node_ids": []
+}

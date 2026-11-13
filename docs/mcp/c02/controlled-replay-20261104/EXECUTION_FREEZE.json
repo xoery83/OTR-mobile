@@ -1,0 +1,15 @@
+{
+  "requestId": "MCP-C02-S1-CONTROLLED-REPLAY-20261104-001",
+  "coordinationId": "MC-DELIVERY-ACCELERATION-20261104-01",
+  "status": "FROZEN_BY_OWNER_NO_ORIGINAL_UNKNOWN_REPLAY",
+  "frozenGateSHA256": "054c1b313ee744c08cdaf406068c484b6ce5aa566a8f5d78a6d7a024754ebfe2",
+  "frozenWindowId": "c2d7c9bc-03cb-413c-a7d0-82ccf8338f0c",
+  "candidateEvidencePreserved": "f9eae9ed",
+  "reviewEvidencePreserved": true,
+  "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "originalOutcome": "UNKNOWN",
+  "replayApprovalMayBeRequestedThisRound": false,
+  "executeOriginalOrMintReplacementIdForSameIntent": false,
+  "supersedingScope": "REQUEST_SCOPE_REVISION.json",
+  "authorityActivated": false
+}

@@ -1,0 +1,10 @@
+{
+  "status": "MCP_SLICE1_CONFIG_CAS_HEALTHY",
+  "phase": "EMPTY",
+  "containerId": "5c62e6f3c6e931859ef319f6bf675bb4e6d2f7b79f74eefa6c21bc530882c4f0",
+  "defaultContainerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+  "configSHA256": "c0d30a7cf48951f43dd7c917fe2b05392857b245bd3d8076b3d37638c6739b51",
+  "deadlineMs": 1793741979542,
+  "activeVerifiedAt": "2026-11-03T21:10:32.879314+00:00",
+  "source": "successful config_cas.py stdout tool receipt"
+}

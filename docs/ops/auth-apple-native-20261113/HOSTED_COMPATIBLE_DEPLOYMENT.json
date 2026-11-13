@@ -1,0 +1,21 @@
+{
+  "status": "HOSTED_COMPATIBLE_SOFTWARE_DEPLOYED_NATIVE_NOT_RUN",
+  "executionId": "e83e19113651453084a09e54d030970d",
+  "source": "f650ce2bec7f7e4cb790b48f360c65bcead15085",
+  "image": "sha256:f8862b0a70f797479fc6ec5e938f87b78a265bf626119d4dfe311ad5e97fdfa4",
+  "liveContainer": "5d0068f40a8227325a453431e60865795d98140e05bd627bcacf644ebfd74beb",
+  "parentReaderEnabled": true,
+  "importRuntimeStoreMountsPreserved": true,
+  "oldContainerRetainedStopped": true,
+  "writerReleased": true,
+  "sqlChanges": 0,
+  "providerCalls": 0,
+  "adoptionReplay": false,
+  "mainMergePush": false,
+  "artifactHashes": {
+    "IMAGE_QUALIFICATION.json": "fa02ca035cfaba522900aa85e0b5732d8c124f2a0115a6b993f4b6c02916adbe",
+    "PARENT_READINESS_RESULT.json": "0d722cb16072f1b161c18d988bf8b795dd4679dd9fb3e7ffcb9972aa0cf9a5fc",
+    "release-packet-corrected/switch.receipt": "d9e4e84253b98743818e34fb5b7bf67cc2bd77ebfdfd6187d70e73f5ac6191b9",
+    "release-packet-corrected/closure.json": "98af921ef47eae3816a45521f5fb74e5f51c42d1a78d0b4d156095d72f98e49c"
+  }
+}

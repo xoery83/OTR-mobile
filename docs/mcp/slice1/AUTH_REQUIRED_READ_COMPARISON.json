@@ -1,0 +1,110 @@
+{
+  "status": "FROZEN_EXISTING_FAILURE_ROOT_CAUSE_UNDETERMINED",
+  "captureKind": "UI-rendered tool transcript, not raw MCP HTTP/JWT evidence",
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "windowClosed": true,
+  "consumerChat": "https://claude.ai/chat/fdcbd75c-71a3-4f07-89f8-f0583d573df1",
+  "configuredIdentity": {
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+    "resource": "https://api-dev.xoery.art/mcp",
+    "identityEvidence": "Fixed QA plan, Auth normal Consent and independent SQL; not recovered per-request JWT claims."
+  },
+  "arguments": {
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "3616da44-0d35-4400-a739-01f1029565ea"
+  },
+  "observedSequence": [
+    "get_otr_operating_guide OPERATING",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item SUCCESS",
+    "get_otr_operating_guide FIELDS",
+    "get_otr_operating_guide CAPABILITIES",
+    "get_trip_item_edit_base AUTH_REQUIRED",
+    "update_trip_item PREVIEW permission pending, NOT_DISPATCHED"
+  ],
+  "success": {
+    "tool": "get_trip_item",
+    "response": {
+      "version": "otr.mcp.read/1",
+      "state": "SERVER_CONFIRMED",
+      "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+      "itemRevision": 1,
+      "family": "P3",
+      "description": "Synthetic QA only. No Booking/Ticket.",
+      "capabilities.canEdit": false
+    },
+    "httpStatus": null,
+    "serverRequestId": null,
+    "backendDiagnosticId": null
+  },
+  "failure": {
+    "tool": "get_trip_item_edit_base",
+    "responseText": "AUTH_REQUIRED",
+    "httpStatus": null,
+    "serverRequestId": null,
+    "backendDiagnosticId": null,
+    "tokenExp": null,
+    "tokenRemainingMs": null,
+    "grantActualStatusAtRequest": null,
+    "emittingLayer": "UNDETERMINED_FROM_UI"
+  },
+  "correlationLimit": "Window/chat/source line+SHA identify retained evidence only. They are not a request Correlation ID. Original request IDs/status/timing cannot be recovered after temporary-container deletion. Do not invent or infer them.",
+  "staticReaderDifference": {
+    "sourceEvidence": "Pinned SDK sources, not executed-stage proof",
+    "get_trip_item": [
+      "GET /v2/trips/{trip}/core/objects/ITEM/{item}"
+    ],
+    "get_trip_item_edit_base": [
+      "GET /v2/trips/{trip}/core/collection",
+      "validate actor/Trip/manifest hashes",
+      "GET /v2/trips/{trip}/core/objects/ITEM/{item}",
+      "require collection record revision == Item DTO revision"
+    ],
+    "scope": "Both MCP tools registered under otr.trips.read; no extra write scope in edit-base implementation. Backend ACL remains authoritative.",
+    "canEditFalse": "Read DTO projection; does not identify the AUTH_REQUIRED source or grant editing authority."
+  },
+  "deployedSoftware": {
+    "image": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66",
+    "runtimeSHA256": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+    "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+    "pinnedSources": {
+      "mcp/read.ts": "df1da9cca7eb654b58f699692cd80950e98220f715c269809ea9421b6cfd2e40",
+      "mcp/server.ts": "ff4c6de58720db7398db84fcd5a3bbad64eece7c025528e21611d85a727257e7",
+      "mcp/oauth.ts": "5227d88359e4e87b88b2f31e49bfef0512405a2e86f840921592155490130a87"
+    }
+  },
+  "evidence": {
+    "source": "docs/mcp/slice1/FRESH_CLAUDE_TOOL_TRANSCRIPT.txt",
+    "sourceSHA256": "2b0a50c8e16f060bc6e309ae3dbc2fda1f7f51fa45bc770a5cda7095eb85d36a",
+    "extract": "docs/mcp/slice1/AUTH_REQUIRED_READ_COMPARISON.txt",
+    "extractSHA256": "2d1be6b9be3ed08759df919f1b5de2f33ba4233a316d3fdd0f632b57f6c096c1",
+    "lineSpans": {
+      "successfulItemRead": [
+        71,
+        80
+      ],
+      "failedEditBaseRead": [
+        103,
+        111
+      ]
+    }
+  },
+  "operationBoundary": {
+    "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+    "state": "NOT_SUBMITTED",
+    "previewDispatched": false,
+    "applyAttempts": 0,
+    "historicalUnknownF107": "NO_RETRY"
+  },
+  "futureEvidencePlan": "Serial consumer ItemRead/EditBase, actual per-request SDK log and per-backend-read bounded stage diagnostics captured before close. Preserve opaque IDs, remaining-time/status/failure classes only; no credentials/private Source or invented cross-ID join.",
+  "verification": {
+    "localFocusedReadTests": 19,
+    "mcpTypecheck": "PASS",
+    "readTestLint": "PASS",
+    "diffCheck": "PASS",
+    "independentReview": "NO_BLOCKER; bounded static review, no independent test rerun",
+    "whatNewTestProves": "Same local private P3 read/edit-base actor path returns identical DTO/revision with collection then Item GET; no mutation. Not live failure reproduction."
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "verdict": "BLOCKED_SOURCE_GUARD_OMITTED_CAS_ENTRY",
+  "reviewer": "/root/fresh_gate_review",
+  "candidateCommit": "39977775890f84af7f90174e7bb7aad0783176ab",
+  "packageSHA256": "4de63863889c72311728e5e4b98dd1f27993e6e80b6f3d42f647c81c4d904171",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "findings": [
+    {
+      "priority": "P1",
+      "file": "docs/mcp/c02/s1/fresh-preview-gate-20261105/prepare_static.py",
+      "line": 17,
+      "generatedFile": "dist/mcp-c02-fresh-c843ff1cd8b7471db1ee77aef1bdad1e/static/operators/config_cas.py",
+      "generatedLines": "26-38,132",
+      "problem": "Owner-source rewrite/UNBOUND rejection only covers normal-control and binder, omits active config CAS authorization guard. CAS accepts previous generic Root2 preference with new Gate and rejects future exact source from defined binding process.",
+      "minimalFix": "Apply identical new-source fail-closed rewrite to operators/config_cas.py; include all three live validate_actual_owner guards in focused pending/old-source/future-source tests and final binding policy."
+    }
+  ],
+  "actualChecks": [
+    "Existing check_rebind.py PASS (14 source cases across only two entrypoints)",
+    "Pure AST-extracted CAS guard accepts old generic source under new Gate: reproduced, no I/O/network/protected action",
+    "17 source identities,4 input hashes, Gate/scope/EMPTY/time/newtimer pins checked by focused checker",
+    "Generated diff limited to declared rebinding and two source guards; omitted CAS third guard discovered through direct caller trace"
+  ],
+  "historicalBehaviorTestsRerun": false,
+  "AuthHostedBrowserConsumerActions": 0,
+  "remaining": "Fix exact omission and focused retest; then independent delta re-review before approval/execution. This review is not execution authorization."
+}

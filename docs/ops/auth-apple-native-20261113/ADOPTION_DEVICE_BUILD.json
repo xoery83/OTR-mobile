@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "96762acc",
+  "scope": "DEV_CLIENT_UI_ONLY",
+  "packagedGuard": "VERIFIED_TRUE_FROM_ACTUAL_HERMES_INPUT",
+  "hostedAuthorityChanged": false,
+  "standardMetroConfiguration": true,
+  "ignoredWorktreePublicEnvironment": true,
+  "bundleIdentifier": "art.xoery.otr",
+  "team": "3K49Z2Q5X7",
+  "strictSignature": "PASS",
+  "javascriptSHA256": "f9d116e12f771d6b39a50b4e37ae139ea1354fbfd5f4f0b28ac52bb5df9972f9",
+  "executableSHA256": "f06ddcecd819f455e3f75780b150ddb57eb6cf73a12bd0c62aa4572c110c4b28"
+}

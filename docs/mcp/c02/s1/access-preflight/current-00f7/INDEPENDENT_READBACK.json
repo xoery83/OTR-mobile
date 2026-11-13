@@ -1,0 +1,16 @@
+{
+  "status":"INDEPENDENT_DEFAULT_CLOSED_READBACK",
+  "project":"tuqigdxrvrerfewsxqgm",
+  "service":"otr-dev-backend",
+  "containerId":"00f7fcf61c2424caefeebf2d0f988cc8690cfcd6b64e21724cd9af38cf3c4667",
+  "image":"sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "captureSHA256":"2cb1c023f0e49a83b8204c04436821c106945bbaae2143e69b747d7f9e852436",
+  "continuousConfigSHA256":"d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+  "health":"healthy",
+  "protectedRoutesUnauthenticatedStatus":401,
+  "runtimeFenceActivated":false,
+  "providerCalls":0,
+  "retainedRollbackContainerId":"11faa644158812cc50e2c7dddbe0ff462502e0c165f78665d4b7f59abb7023ee",
+  "sharedLockReleasedAt":"2026-11-03T01:37:55.210450Z",
+  "remoteDeployPlan":"/opt/otr/dev-backend/build/import-qa-fence-defaultclosed-0a1cfbb9-20261103/deploy-plan.json"
+}

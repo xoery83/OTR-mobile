@@ -1,0 +1,11 @@
+{
+  "status": "DIRECT_MCP_HUMAN_ACCESS_APPROVAL_VERIFIED_NOT_STARTED",
+  "gateSHA256": "4ab236c94c0cc34e775823b0160602a19c0f898dc7be8eaf0f3a2eec531f192d",
+  "turnId": "01a19991-8e11-7e11-8e06-f82e4df004bd",
+  "messageId": "01a19992-7fad-7d73-92c8-2f131c937798",
+  "questionCallId": "call_bc4a30bc35724c28bb767fdfa8b7234b",
+  "answer": "批准本轮有限 QA 连接并同步",
+  "notesApproved": false,
+  "windowId": "acd60fd27aee40e8b6cf1aca727ed169",
+  "clockStarted": false
+}

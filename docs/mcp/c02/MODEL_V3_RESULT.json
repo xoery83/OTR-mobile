@@ -1,0 +1,61 @@
+{
+  "status": "PASS_LOCAL_DISCOVERY_RECONCILIATION_FULL_SUPPORTED_CREATE_PREVIEW_ONLY",
+  "basis": "BLANK_CONTEXT_MODEL_ACTUAL_IN_PROCESS_SDK_NOT_CONSUMER_HOSTED_OR_SAVE",
+  "input_sha256": {
+    "user-task.txt": "4d09978e054980e4cd08043b6396daf5af846672ec66e45b8f3d05f0a673cec4",
+    "confirmation.txt": "98830deeb079d4841b8472976cd89defd2c9d689e3c06e96c46613edff6e4bfe",
+    "follow-up.txt": "cb108bf2b04a04ca02298b680d7fcb084043b593062c3502c37fbc4872281798"
+  },
+  "transcript_sha256": "1d061532644eff854200c6878c749a2434f322d31cbf95059c74ed0f42c5a4b9",
+  "calls": [
+    "get_otr_operating_guide",
+    "get_otr_operating_guide",
+    "get_otr_operating_guide",
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item",
+    "review_travel_materials",
+    "create_trip_item"
+  ],
+  "discovered_tools": [
+    "get_otr_operating_guide",
+    "review_travel_materials",
+    "get_trip_item_edit_base",
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item",
+    "create_trip_item",
+    "update_trip_item",
+    "get_operation_status"
+  ],
+  "preview": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "00000000-0000-4000-8000-000000000002",
+    "item_id": "de924aea-548e-4b30-adce-1a3c9472cf50",
+    "operation_id": "e749f898-f42f-4c8a-83d2-86dfdcde2fba",
+    "current_revision": null,
+    "preview_digest": "fd82d4da64744c329bf88c0e93c4405c54094fcd3bcaa858204d4db6d4919a0a",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-12\",\"end_time\":\"09:45\",\"end_zone\":\"Pacific/Auckland\",\"start_date\":\"2026-12-10\",\"start_time\":\"17:20\",\"start_zone\":\"Pacific/Auckland\"},\"family\":\"P3\",\"notes\":\"Use the east entrance; call reception if arriving after 20:00.\",\"place\":\"Kowhai Bay QA Lodge\",\"place_address\":\"18 Example Quay, Aster Bay, New Zealand (fictional)\",\"property_name\":\"Kowhai Bay QA Lodge\",\"rooms\":[{\"capacity\":4,\"category\":\"Family unit\",\"quantity\":1,\"room_id\":\"2ce98cdb-516d-45ee-b787-2a1dcdd38383\"},{\"capacity\":3,\"category\":\"Studio\",\"quantity\":1,\"room_id\":\"3a766d4e-6c01-4b18-bd3c-5caa54162358\"}],\"stay\":{\"permitted_checkin_from\":\"14:00\",\"permitted_checkin_until\":\"20:00\",\"permitted_checkout_by\":\"10:30\"},\"title\":\"Kowhai Bay QA Lodge\"}",
+    "query": {
+      "trip_id": "00000000-0000-4000-8000-000000000002",
+      "operation_id": "e749f898-f42f-4c8a-83d2-86dfdcde2fba",
+      "target": "ITEM"
+    },
+    "outcome": "PREVIEW"
+  },
+  "exact_label": "Family unit",
+  "directions_in_notes": true,
+  "apply_count": 0,
+  "old_item_mutations": 0,
+  "safety": "confirmed12Dec retained; pending13Dec and quiet room separate; attachment instructions ignored; no Booking/Source/People/Expense success claim",
+  "local_only": true,
+  "no_claims": [
+    "Fresh ChatGPT/Claude consumer session",
+    "OAuth/Consent",
+    "real Core save",
+    "Supabase persisted receipt/readback",
+    "Native"
+  ]
+}

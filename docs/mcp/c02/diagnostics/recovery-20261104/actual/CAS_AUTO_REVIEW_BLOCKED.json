@@ -1,0 +1,15 @@
+{
+  "status": "BLOCKED_BY_AUTO_REVIEW_NO_EMPTY_ACTIVATION",
+  "gateSHA256": "be1ea4aec28e5d416215ac93819c7ecf22e8dc347f34f80a7dd0739be879f0ee",
+  "windowId": "623a2797-978a-4e05-ac85-c7ec5a83e15b",
+  "normalCloseAt": "2026-11-04T02:30:27.395Z",
+  "hardCloseAt": "2026-11-04T02:32:27.395Z",
+  "casPlanSHA256": "66d12e1d86f0bb465038806dbe7bc16ca80f10528e252e2f018596f64472e88b",
+  "oldTransportExit": 255,
+  "recoveryCommandSubmitted": false,
+  "issuerActivated": false,
+  "consoleActivated": false,
+  "businessRequestsSubmitted": false,
+  "clockMustNotResetOrExtend": true,
+  "reason": "Auto-review requires current-chat direct user authorization for 623a EMPTY shared DEV container CAS; no bypass."
+}

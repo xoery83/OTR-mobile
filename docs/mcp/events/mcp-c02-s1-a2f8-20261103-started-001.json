@@ -1,0 +1,36 @@
+{
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "field_slice": "S1 supported P3 Consumer discovery/Preview only",
+  "scope_kind": "SLICE_ONLY",
+  "event_type": "EXECUTION_UPDATE",
+  "created_at": "2026-11-03T08:12:09.175158+00:00",
+  "reported_at": "2026-11-03T08:12:09.175158+00:00",
+  "commit": "d52cf84d",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/access-preflight/A2F_E2E_ACCEPTANCE.json",
+    "docs/mcp/c02/s1/access-preflight/A2F_CONSUMER_BROWSER_FAILURE.json",
+    "docs/mcp/c02/s1/access-preflight/A2F_OWN_CONTROL_CLEANUP.json",
+    "docs/mcp/c02/s1/access-preflight/A2F_FINAL_DEFAULT_CLOSED.json"
+  ],
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED",
+  "event_id": "mcp-c02-s1-a2f8-20261103-started-001",
+  "transition": "STARTED",
+  "occurred_at": "2026-11-03T07:50:13.502Z",
+  "late_submission": true,
+  "current_status": "HISTORICAL_STARTED_NOW_ALREADY_CLOSED",
+  "event_note": "Register actual start after the fact; final closed event below is authoritative for current state. Never regress the package to active from this historical start.",
+  "completed": [
+    "Owner exactd0 approval independently verified; Root defaultclosed software/close/DCR/issuer qualification passed",
+    "Own real normalQA control READY; one immutable EMPTY binder within120s of realcontrol launch"
+  ],
+  "unfinished": [
+    "Consumer OAuth/refresh/Preview not reached"
+  ],
+  "blocked_by": [],
+  "next_action": "Read final same-window closed event mcp-c02-s1-a2f8-20261103-closed-001; no restart"
+}

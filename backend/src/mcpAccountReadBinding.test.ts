@@ -80,7 +80,7 @@ it("keeps owning discovery query and Core collection validation", async () => {
   expect((await binding.read(`/v2/trips/${trip}/core/collection`, q.signal)).status).toBe(
     400,
   );
-  expect(q.collection).toHaveBeenCalledWith(actor, trip, undefined);
+  expect(q.collection).toHaveBeenCalledWith(actor, trip, undefined, false);
   expect(q.command).not.toHaveBeenCalled();
 });
 

@@ -1,0 +1,105 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "status": "FRESH_CONSUMER_UI_READY_NOT_AUTHENTICATED_TO_OTR_NOT_EXECUTED",
+  "executionChildId": "/root/fresh_preview_execution",
+  "recordedAt": "2026-11-04T20:49:28.223678+00:00",
+  "observedAt": "2026-11-04T20:48:43.466Z",
+  "freshConsumerUIReady": true,
+  "actualObservation": {
+    "method": "cua current inventory -> createBrowserTab on selected Chrome1 -> AX loaded page + readonly DOM evaluation",
+    "browserId": "1",
+    "browserName": "Chrome",
+    "profileName": "Person 1",
+    "tabId": "1962067612",
+    "url": "https://chatgpt.com/",
+    "title": "ChatGPT",
+    "heading": "随时可以开始。",
+    "composer": {
+      "role": "textbox",
+      "label": "询问 ChatGPT",
+      "tag": "DIV",
+      "text": "",
+      "empty": true
+    },
+    "conversationMessageArticleCount": 0,
+    "AXLoggedInChatGPTShellObserved": true,
+    "initialLoadingCompleted": true,
+    "freshOrdinaryChatNotProject": true,
+    "userMessageOrMaterialSubmitted": false,
+    "historicalUnknownConversationUsedAsFresh": false,
+    "newTabMarkedHandoffForThisPendingWorkflow": true,
+    "screenshot": {
+      "path": "/private/tmp/otr-mcp-c843-fresh-chat-ready.png",
+      "sha256": "b57e18217121a72bcc49d0d97cec3beab1974b30e53e6c182bbc3a0e045c83cd",
+      "committed": false
+    }
+  },
+  "scope": {
+    "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+    "scopeSHA256": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+    "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+    "packagePath": "docs/mcp/c02/s1/fresh-preview-gate-20261105/PACKAGE.json",
+    "packageSHA256": "99cd0ab34c901b7b7dd775a00a712490172f21176e4cad316e91a272470360f2",
+    "command": null,
+    "confirmations": [],
+    "SaveApproved": false,
+    "EditOrApplyAllowed": false,
+    "UNKNOWNQueryReplayAllowed": false
+  },
+  "actualOwnerSource": {
+    "path": "docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_SOURCE.json",
+    "sha256": "4ecea4f64d2b896fc3c5f8ad18f1ed04acfd1e5bb1a20e7ed8cb4835b17e75fd",
+    "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "humanUserMessageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+    "wirePath": "docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_APPROVAL_WIRE.json",
+    "wireSHA256": "617bfc03181ee9c80695af3a1ac6d934853f01dd440ba9aa0e03a808f484bc27",
+    "wrapperPath": "docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_APPROVAL_WRAPPER.txt",
+    "wrapperSHA256": "10c9b06abad382475d100a17f90e751c5d38bcea2fc264e006d483a081a7ae18",
+    "sourceRelabeled": false,
+    "platformRecognizedExecutionApproval": "Root2 independently qualifies; not established by fresh UI receipt"
+  },
+  "normalControlPrepared": {
+    "command": [
+      "python3",
+      "dist/mcp-c02-fresh-c843ff1cd8b7471db1ee77aef1bdad1e-actual-owner-source-v1/static/c02-normal-control.py",
+      "<Root2-current-prelogin-binding-path-pending>",
+      "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f"
+    ],
+    "entrySHA256": "36decec51eb1cdabbf157361d2869ebaaacafaf32393a133992185dfa42c0ade",
+    "bindingPathKnown": false,
+    "CONTROL_LAUNCH_exists": false,
+    "status1_exists": false,
+    "started": false,
+    "ownQAAuthSessionStarted": false
+  },
+  "browserReceiver": {
+    "path": "dist/mcp-browser-qa-receiver/receiver.mjs",
+    "sha256": "fffcabc8fcba8a92b4429210a41c6608378fa6f2f88fe40ed12ade1a01254e51",
+    "actualCuaModuleImport": "PASS",
+    "export": "createAcceptedHostQaReceiver",
+    "exportType": "function",
+    "currentCuaHandle": "freshReceiverModule",
+    "leaseCreated": false,
+    "mailRead": false,
+    "credentialsRead": false,
+    "OTP": false,
+    "actualReceivingTest": "NOT_RUN"
+  },
+  "clock": {
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null
+  },
+  "actions": {
+    "newBlankChatTab": 1,
+    "snapshotAndReadonlyDOMOnly": true,
+    "loginOTP": 0,
+    "Consent": 0,
+    "ToolRefresh": 0,
+    "taskMaterialSubmission": 0,
+    "runtimeIssuerConsoleMutation": 0,
+    "businessWrite": 0
+  },
+  "observationLimit": "Actual fresh empty ChatGPT composer readiness only. No OTR OAuth/MCP discovery/Trip read/Preview/Save proof; page state may change and must remain current at execution.",
+  "next": "Root2 actual live WAITING/prelogin binding + final source/platform/current/close qualification, parent explicit release, then owning normal-control. Never start from this receipt alone."
+}

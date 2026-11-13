@@ -1,0 +1,16 @@
+{
+  "observedAtUtc": "2026-11-01T01:22:15.943Z",
+  "team": "xoery83",
+  "source": "Resend Settings Usage actual browser UI",
+  "transactionalPlan": "Free",
+  "dailyUsed": 0,
+  "dailyLimit": 100,
+  "monthlyUsed": 167,
+  "monthlyLimit": 3000,
+  "resetTimeShown": false,
+  "deliveryStatus": "NOT_TESTED",
+  "receivingApiStatus": "NOT_TESTED",
+  "otpSent": false,
+  "configurationChanged": false,
+  "screenshot": "RESEND_USAGE_PREFLIGHT.png"
+}

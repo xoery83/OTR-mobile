@@ -1,0 +1,54 @@
+{
+  "event_id": "mcp-c02-s1-679c-discovery-20261103-closed-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "field_slice": "S1 ChatGPT P3 supported Create Preview discovery",
+  "scope_kind": "SLICE_ONLY",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "BLOCKED",
+  "reported_event_type": "BLOCKED",
+  "created_at": "2026-11-03T06:04:03.588053+00:00",
+  "actual_consumer_window_closed_at": "2026-11-03T05:09:32.614Z",
+  "current_status": "CLOSED_CONSUMER_OAUTH_PASS_DISCOVERY_REFRESH_BLOCKED_NO_FORMAL_P3_PREVIEW",
+  "commit": "e609d85d",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/access-preflight/RENEWAL_CONSUMER_ACCEPTANCE_20261103.json",
+    "docs/mcp/c02/s1/access-preflight/CONSUMER_DISCOVERY_REVIEW.json",
+    "docs/mcp/c02/s1/access-preflight/REQUEST_TRACE_CLOSE_REVIEW.json",
+    "docs/mcp/c02/s1/access-preflight/consumer-679c/CONSUMER_ERROR.png",
+    "docs/mcp/c02/s1/CONSUMER_DISCOVERY_RECOVERY.md"
+  ],
+  "completed": [
+    "Actual existingClient835 normal browserOTP + explicit Owner OAuth ReadWriteScope Consent returned PrimaryConnected; not a Save approval",
+    "Grant204ACK + independent selected835 absent, ownSession local logout/refresh rejected; Root Console/Issuer/Host/timers closed and sharedWriter released",
+    "MCP-owned premature task-before-catalog qualification corrected; actual local SDK Notes7R1W vsC02 8R2W/P3-only/zeroBackendCalls PASS",
+    "Root confirmed request stdout lost after container removal; corrected false route-only zero-traffic inference",
+    "Future close wrapper captures bounded sanitized current-candidate logger summaries before unchanged Root restore; privacy/failure3+timer9/control checks and independentReviewPASS; not deployed"
+  ],
+  "unfinished": [
+    "Actual Consumer tool refresh/advertised C02 catalog: generic failure persists after real OAuth",
+    "No verified Guide/Trip/P3 formal Preview, Apply, APPLIED, independent Supabase or Native in this slice",
+    "Actual historical679c protocol response unavailable; cannot prove Client vs Server/Auth root cause"
+  ],
+  "blocked_by": [
+    {
+      "party": "Consumer/server discovery response evidence",
+      "detail": "ChatGPT cannot refresh oldNotes catalog, originalreply failed. Root raw MCP_QA_REQUEST lost; no justified new Owning interface or privilege expansion."
+    }
+  ],
+  "next_action": "Use fixed no-authority local catalog/close evidence preparation; qualify actual metadata response before any fresh consumer task or new protected window. Never replay closed679c or businessUNKNOWN IDs.",
+  "acceptance": {
+    "local": "QUALIFIED_DISCOVERY_PROFILE_AND_TRACE_REPAIR",
+    "hosted": "CLOSED;PROTOCOL_RESPONSE_UNVERIFIED",
+    "consumer_oauth": "PASS",
+    "consumer_p3_preview": "BLOCKED_NOT_OBTAINED",
+    "consumer_apply": "NOT_RUN_UNAPPROVED",
+    "supabase_readback": "NOT_RUN_NO_SUBMISSION",
+    "native": "NOT_RUN"
+  },
+  "scope_note": "MCP-C02 overall IN_PROGRESS; prior Notes PASS and independentP4 local56256e6f remain scoped. Historical3def/fbc close baseline is not currentDEV after Root Auth98f deployment. No activeMCP window/Grant/Session.",
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED"
+}

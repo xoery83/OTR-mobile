@@ -1,0 +1,55 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "status": "STATIC_INTERFACE_MAPPING_NOT_EXECUTION_READY",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "windowHex": "6d49f895887d437c9294d381bcd8005d",
+  "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+  "interface": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/FUTURE_ROOT2_WATCHER_EXECUTION_INTERFACE.json",
+    "sha256": "5379c7fe6433cb502bc991b6ba5ebc4d272b263aeb213a2d01341f0bfddffee1"
+  },
+  "Root2SelectsExecutionRoot": true,
+  "actualExecutionRoot": null,
+  "runtimePaths": {
+    "CONTROL_LAUNCH": "/private/tmp/otr-mcp-c02-access-6d49f895887d437c9294d381bcd8005d/CONTROL_LAUNCH.json",
+    "status1": "/private/tmp/otr-auth-consumer-control-c02-6d49f895887d437c9294d381bcd8005d/status-1.json",
+    "FINISH": "/private/tmp/otr-auth-consumer-control-c02-6d49f895887d437c9294d381bcd8005d/FINISH",
+    "REVOKE": "/private/tmp/otr-auth-consumer-control-c02-6d49f895887d437c9294d381bcd8005d/REVOKE",
+    "issuerPlan": "/private/tmp/otr-auth-mcp-slice1-6d49f895887d437c9294d381bcd8005d/issuer-plan.json",
+    "remoteDedicatedRoot": "/opt/otr/dev-backend/build/auth-consumer-write-qa-6d49f895887d437c9294d381bcd8005d"
+  },
+  "actualIssuerPlanSHA256": null,
+  "actualCASPlanSHA256": null,
+  "actualConfigSHA256": null,
+  "actualLIVEPath": null,
+  "actualLIVESHA256": null,
+  "currentBeforeImage": {
+    "status": "UNBOUND_REQUIRES_FRESH_ACTUAL_CURRENT_DEFAULT_CAS_AND_RESTORE",
+    "lastClosedReference": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/ROOT2_FINAL_EARLY_CLOSE_RECEIPT.json",
+    "lastClosedReferenceSHA256": "c9507111d7c87caa58591bf97a19f7796c5b987a07df6fa6c63bd61c8a915196",
+    "historicalSnapshotNotFutureRestorePointer": true,
+    "staleOnAcceptedImportDefaultSettingsChange": true
+  },
+  "OwnerSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "userMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+    "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+    "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc"
+  },
+  "clock": {
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null
+  },
+  "operator": "Root2 only for watcher/CAS/Timer/Issuer/Console/restore; MCP consumes actual readiness",
+  "prelogin": "All exact authority/current/source/close plus actually live bounded Root2 waiter before MCP one normal control; original launch<=120sec once",
+  "derivedRoot2Review": "PENDING_ROOT2_EXACT_NEW_WINDOW_SOURCE_AND_CURRENT_METADATA_DERIVATION",
+  "noAuthorityFromCandidateReview": true,
+  "MCP17BehaviorChanged": false,
+  "ownerSourcePlatformExecutionRecognition": false,
+  "credentialReadinessBeforeAnyOTPOrT": true,
+  "credentialSourceApproval": null,
+  "receiverModuleImportReadinessSufficient": false,
+  "futureArchivalLabel": "Root2 neutralCLOSED_NOT_REUSABLE, no falseWITHOUT_ACTIVATION claim"
+}

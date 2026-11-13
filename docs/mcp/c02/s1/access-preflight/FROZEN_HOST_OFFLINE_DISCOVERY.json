@@ -1,0 +1,32 @@
+{
+  "status": "FROZEN_HOST_OFFLINE_DISCOVERY_PASS",
+  "hostSHA256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+  "scope": "Local generated JWT/test JWKS/normal-user+Grant fixtures. Actual frozen createC02Host and SDK. No DEV network/Session/Grant activation.",
+  "anonymousStatus": 401,
+  "tools": [
+    "create_trip_item",
+    "get_operation_status",
+    "get_otr_operating_guide",
+    "get_trip",
+    "get_trip_item",
+    "get_trip_item_edit_base",
+    "list_trip_items",
+    "list_trips",
+    "review_travel_materials",
+    "update_trip_item"
+  ],
+  "revocationDenied": true,
+  "businessCalls": 0,
+  "fixtureAuthCalls": 15,
+  "loggerStatuses": [
+    401,
+    200,
+    202,
+    405,
+    200,
+    401
+  ],
+  "limits": "Not Hosted auth or ChatGPT acceptance. Does not identify lost679c refresh failure.",
+  "runnerPath": "docs/mcp/c02/s1/access-preflight/FROZEN_HOST_OFFLINE_DISCOVERY.mjs",
+  "runnerSHA256": "e5c5470ac713a396714c17b41002fbf31bcdf060008291b3326ee5911ddc550d"
+}

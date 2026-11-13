@@ -1,0 +1,50 @@
+{
+  "status": "ACTUAL_ADVANCE_HUMAN_CONTEXT_RECORDED_PENDING_INDEPENDENT_SINGLE_SCOPE_PLATFORM_MAPPING",
+  "recordedAt": "2026-11-04T22:28:20.916683+00:00",
+  "readMethod": "mcp__codex_app__read_thread direct human userMessage plus prior visible assistant messages; not parent paraphrase",
+  "actualSourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "actualSourceTurnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+  "actualHumanUserMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+  "originalText": "我提前批准你的审批。一会儿不用问我了\n",
+  "actualWire": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/ADVANCE_OWNER_WIRE.json",
+    "sha256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9"
+  },
+  "originalTextFile": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/ADVANCE_OWNER_TEXT.txt",
+    "sha256": "5d42b013912d183f14fcdc9e12ed013bad3c48d2c298dc9030d62b484bcc5b6d"
+  },
+  "priorVisibleContext": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/APPROVAL_CONTEXT_MESSAGES.json",
+    "sha256": "c90d41d497e7ffb3563346321069ba6495d5f60c5735b84a5439880b98a09f3f",
+    "contentAuthority": "Context only. Human source is the separate actual userMessage, not assistant text."
+  },
+  "singleProposedReferent": {
+    "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+    "runtimeId": "6d49f895-887d-437c-9294-d381bcd8005d",
+    "gatePath": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/OWNER_GATE.md",
+    "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+    "scopePath": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/SCOPE.json",
+    "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+    "credentialBoundaryPath": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/RECEIVER_CREDENTIAL_BOUNDARY.json",
+    "credentialBoundarySHA256": "93935d255facb01a4db0548a8ba278a510adfdab31e3e2904fee4262b97ed1c5",
+    "meaning": "One next QA Preview window and discussed exactKeychain browserreceiver source with accurate metadata/memory limitations; sameQAaccount/Trip/client and originalMCPscope only",
+    "SaveApproved": false,
+    "UNKNOWNAuthorized": false,
+    "futureRepeatedWindowsAuthorized": false
+  },
+  "notClaimed": [
+    "Human text literally contains GateHash or detailed selectors/limits",
+    "Human text is a send_user_message_question_reply wrapper",
+    "Assistant context itself grants authority",
+    "Oldc7d0/generic source can be reused",
+    "Current platform recognizes this mapped advance source",
+    "Credential read/OTP/T/runtime already permitted by this candidate"
+  ],
+  "scopeMapping": "Pending independent readback/context boundary judgment and Root2/platform qualification; do not fabricate a more precise human sentence or relabel provenance. New advance statement is the current source to assess, not an instruction to re-ask routinely.",
+  "actualExecutionSourceBound": false,
+  "platformRecognizedExecutionApproval": false,
+  "credentialRead": 0,
+  "T": null,
+  "next": "Independent unbound package mechanical+credentialwording+actualadvance-context Review, then predefined source-only binding and required finaldelta/platform/current qualification."
+}

@@ -1,0 +1,22 @@
+{
+  "status": "CONSUMER_READ_NOT_COMPLETED",
+  "gateCommit": "19253117",
+  "gateSHA256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "hardDeadline": "2026-10-31T14:26:14.232Z",
+  "furthestVisiblePage": "api-dev.xoery.art/oauth/consent email login page",
+  "qaEmailEntered": false,
+  "browserOtpSent": false,
+  "browserOtpReceived": false,
+  "consentSubmitted": false,
+  "actualToolCalls": 0,
+  "businessWrites": 0,
+  "lateConsentOrGrant": false,
+  "firstBlocker": "Focused own-flow browser.history lookup took1328.055 seconds and returned []; no further browser action could run before expiry. Execution-side wait, not a Backend Read failure.",
+  "recovery": "Expired own OAuth tab closed; no history lookup or A retry permitted.",
+  "independentCloseCommit": "13b79c98",
+  "independentCloseStatus": "A_INDEPENDENTLY_CLOSED",
+  "activeQaClientGrants": 0,
+  "normalControlCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "rawControllerAction": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+  "consumerPass": false
+}

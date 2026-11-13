@@ -1,0 +1,366 @@
+{
+  "events": [
+    {
+      "dockerTimestamp": "2026-11-02T09:13:04.425206206Z",
+      "durationMs": 416,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "cd5af09a-16a2-48df-8dd8-bc0f4da102d4",
+      "status": 401
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:04.797315320Z",
+      "durationMs": 1,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "bf229aec-36b5-42cd-93fc-1611a03e14a4",
+      "status": 401
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:08.716880070Z",
+      "durationMs": 1498,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "a9827a9a-e6e7-4c97-8f44-95c44fc11d78",
+      "status": 200,
+      "tool": "get_otr_operating_guide"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:14.833385763Z",
+      "durationMs": 1652,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "adb05e29-7edd-4365-aeac-4a34a5a8e28d",
+      "status": 200,
+      "tool": "get_otr_operating_guide"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:18.037618555Z",
+      "durationMs": 1526,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "1be336e6-7056-4769-ac9b-6d321876994a",
+      "status": 200,
+      "tool": "get_otr_operating_guide"
+    },
+    {
+      "diagnosticId": "d0d9ea50-d3e4-4d30-b760-070797e5d843",
+      "dockerTimestamp": "2026-11-02T09:13:25.387635487Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_WRITE_STAGE",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "d0d9ea50-d3e4-4d30-b760-070797e5d843",
+      "dockerTimestamp": "2026-11-02T09:13:26.093003482Z",
+      "elapsedMs": 707,
+      "event": "MCP_QA_WRITE_STAGE",
+      "stage": "CORE_BOUNDARY_ENTERED"
+    },
+    {
+      "diagnosticId": "d0d9ea50-d3e4-4d30-b760-070797e5d843",
+      "dockerTimestamp": "2026-11-02T09:13:32.612894274Z",
+      "elapsedMs": 7227,
+      "event": "MCP_QA_WRITE_STAGE",
+      "stage": "CORE_RETURNED"
+    },
+    {
+      "diagnosticId": "d0d9ea50-d3e4-4d30-b760-070797e5d843",
+      "dockerTimestamp": "2026-11-02T09:13:32.613215309Z",
+      "elapsedMs": 7227,
+      "event": "MCP_QA_WRITE_STAGE",
+      "stage": "POSTCHECK"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:34.068730853Z",
+      "durationMs": 10220,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "9fbdffae-3d92-4020-9d4b-bee6349a3105",
+      "status": 200
+    },
+    {
+      "diagnosticId": "94425f17-abd6-40be-a132-675f2a8807ab",
+      "dockerTimestamp": "2026-11-02T09:13:40.779339394Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 25222,
+      "resource": "DISCOVERY",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "94425f17-abd6-40be-a132-675f2a8807ab",
+      "dockerTimestamp": "2026-11-02T09:13:40.779627758Z",
+      "elapsedMs": 1,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 25221,
+      "resource": "DISCOVERY",
+      "stage": "OWNING_ENTERED"
+    },
+    {
+      "diagnosticId": "6d8ec256-8278-4420-ab07-bff58eb0de10",
+      "dockerTimestamp": "2026-11-02T09:13:41.286437734Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 24714,
+      "resource": "ITEM",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "6d8ec256-8278-4420-ab07-bff58eb0de10",
+      "dockerTimestamp": "2026-11-02T09:13:41.286542091Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 24714,
+      "resource": "ITEM",
+      "stage": "OWNING_ENTERED"
+    },
+    {
+      "diagnosticId": "a61bba48-933b-40db-bf2f-cad9a3257f81",
+      "dockerTimestamp": "2026-11-02T09:13:41.733705277Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 24268,
+      "resource": "COLLECTION",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "a61bba48-933b-40db-bf2f-cad9a3257f81",
+      "dockerTimestamp": "2026-11-02T09:13:41.733768556Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 24268,
+      "resource": "COLLECTION",
+      "stage": "OWNING_ENTERED"
+    },
+    {
+      "diagnosticId": "94425f17-abd6-40be-a132-675f2a8807ab",
+      "dockerTimestamp": "2026-11-02T09:13:41.950647042Z",
+      "elapsedMs": 1172,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 24050,
+      "resource": "DISCOVERY",
+      "stage": "OWNING_RETURNED"
+    },
+    {
+      "diagnosticId": "94425f17-abd6-40be-a132-675f2a8807ab",
+      "dockerTimestamp": "2026-11-02T09:13:41.951340852Z",
+      "elapsedMs": 1172,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 24050,
+      "resource": "DISCOVERY",
+      "stage": "POSTCHECK"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:41.956558480Z",
+      "durationMs": 2607,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "7b8be7dd-d577-4fbb-99d8-6ced00b4adb0",
+      "status": 200,
+      "tool": "get_trip"
+    },
+    {
+      "diagnosticId": "6d8ec256-8278-4420-ab07-bff58eb0de10",
+      "dockerTimestamp": "2026-11-02T09:13:46.680725881Z",
+      "elapsedMs": 5394,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 19320,
+      "resource": "ITEM",
+      "stage": "OWNING_RETURNED"
+    },
+    {
+      "diagnosticId": "6d8ec256-8278-4420-ab07-bff58eb0de10",
+      "dockerTimestamp": "2026-11-02T09:13:46.680920989Z",
+      "elapsedMs": 5394,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 19320,
+      "resource": "ITEM",
+      "stage": "POSTCHECK"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:46.697928048Z",
+      "durationMs": 6888,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "40712c3e-7ac1-4414-9d21-0cea0653acc8",
+      "status": 200,
+      "tool": "get_trip_item"
+    },
+    {
+      "diagnosticId": "a61bba48-933b-40db-bf2f-cad9a3257f81",
+      "dockerTimestamp": "2026-11-02T09:13:51.509698277Z",
+      "elapsedMs": 9776,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 14492,
+      "resource": "COLLECTION",
+      "stage": "OWNING_RETURNED"
+    },
+    {
+      "diagnosticId": "a61bba48-933b-40db-bf2f-cad9a3257f81",
+      "dockerTimestamp": "2026-11-02T09:13:51.509757609Z",
+      "elapsedMs": 9777,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 14491,
+      "resource": "COLLECTION",
+      "stage": "POSTCHECK"
+    },
+    {
+      "diagnosticId": "50aae696-1554-4328-ac91-703a96d3f3bc",
+      "dockerTimestamp": "2026-11-02T09:13:51.559346942Z",
+      "elapsedMs": 1,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 14441,
+      "resource": "ITEM",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "50aae696-1554-4328-ac91-703a96d3f3bc",
+      "dockerTimestamp": "2026-11-02T09:13:51.559517914Z",
+      "elapsedMs": 1,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 14441,
+      "resource": "ITEM",
+      "stage": "OWNING_ENTERED"
+    },
+    {
+      "diagnosticId": "50aae696-1554-4328-ac91-703a96d3f3bc",
+      "dockerTimestamp": "2026-11-02T09:13:57.386743168Z",
+      "elapsedMs": 5827,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 8615,
+      "resource": "ITEM",
+      "stage": "OWNING_RETURNED"
+    },
+    {
+      "diagnosticId": "50aae696-1554-4328-ac91-703a96d3f3bc",
+      "dockerTimestamp": "2026-11-02T09:13:57.386800265Z",
+      "elapsedMs": 5827,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 8615,
+      "resource": "ITEM",
+      "stage": "POSTCHECK"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:13:57.400582909Z",
+      "durationMs": 17174,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "fef00356-3986-44ec-8e61-f374452c541c",
+      "responseProof": {
+        "inputSHA256": "65734678ac84835c5a60c4eabf60a9333dc0dceb9101db8d0cc6037819fc6d9e",
+        "kind": "EDIT_BASE",
+        "outputSHA256": "7af1a1e5210fb623583f33aad3e54aa5c353e809fbf7b337976af304eb4b1bed",
+        "version": "otr.mcp.response-proof/1"
+      },
+      "status": 200,
+      "tool": "get_trip_item_edit_base"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:14:10.668245898Z",
+      "durationMs": 1,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "19f2e181-665c-41c4-9153-15511272d82c",
+      "status": 401
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:14:10.989327337Z",
+      "durationMs": 2,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "b9e2fd60-270c-4430-9a9a-cb010ad5ca76",
+      "status": 401
+    },
+    {
+      "diagnosticId": "042eed83-cb30-4fa8-90b3-ec01016ce9f7",
+      "dockerTimestamp": "2026-11-02T09:14:15.051520007Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 56949,
+      "resource": "COLLECTION",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "042eed83-cb30-4fa8-90b3-ec01016ce9f7",
+      "dockerTimestamp": "2026-11-02T09:14:15.051774478Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 56949,
+      "resource": "COLLECTION",
+      "stage": "OWNING_ENTERED"
+    },
+    {
+      "diagnosticId": "042eed83-cb30-4fa8-90b3-ec01016ce9f7",
+      "dockerTimestamp": "2026-11-02T09:14:20.298627428Z",
+      "elapsedMs": 5247,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 51702,
+      "resource": "COLLECTION",
+      "stage": "OWNING_RETURNED"
+    },
+    {
+      "diagnosticId": "042eed83-cb30-4fa8-90b3-ec01016ce9f7",
+      "dockerTimestamp": "2026-11-02T09:14:20.298713761Z",
+      "elapsedMs": 5247,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 51702,
+      "resource": "COLLECTION",
+      "stage": "POSTCHECK"
+    },
+    {
+      "diagnosticId": "3665436a-97a8-4d9b-975d-a870acac18c1",
+      "dockerTimestamp": "2026-11-02T09:14:20.322408194Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 51678,
+      "resource": "ITEM",
+      "stage": "PRECHECK"
+    },
+    {
+      "diagnosticId": "3665436a-97a8-4d9b-975d-a870acac18c1",
+      "dockerTimestamp": "2026-11-02T09:14:20.322736474Z",
+      "elapsedMs": 0,
+      "event": "MCP_QA_READ_STAGE",
+      "remainingMs": 51678,
+      "resource": "ITEM",
+      "stage": "OWNING_ENTERED"
+    },
+    {
+      "diagnosticId": "3665436a-97a8-4d9b-975d-a870acac18c1",
+      "dockerTimestamp": "2026-11-02T09:14:25.487579563Z",
+      "elapsedMs": 5165,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 46513,
+      "resource": "ITEM",
+      "stage": "OWNING_RETURNED"
+    },
+    {
+      "diagnosticId": "3665436a-97a8-4d9b-975d-a870acac18c1",
+      "dockerTimestamp": "2026-11-02T09:14:25.487659194Z",
+      "elapsedMs": 5165,
+      "event": "MCP_QA_READ_STAGE",
+      "owningResponseStatus": 200,
+      "remainingMs": 46513,
+      "resource": "ITEM",
+      "stage": "POSTCHECK"
+    },
+    {
+      "dockerTimestamp": "2026-11-02T09:14:25.493728660Z",
+      "durationMs": 12515,
+      "event": "MCP_QA_REQUEST",
+      "requestId": "85e8780f-2622-4ff5-8cca-5ac0405bb1be",
+      "responseProof": {
+        "inputSHA256": "778912cff391144dea8471c83eaf6f431d4649feb6ed0601d2449454dfcd198e",
+        "kind": "PREVIEW",
+        "outputSHA256": "9a4b0d6b97f90da81f6d5cf251cd6230aa858cb99763581bbd6c77cb929af54f",
+        "previewDigest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+        "version": "otr.mcp.response-proof/1"
+      },
+      "status": 200,
+      "tool": "update_trip_item"
+    }
+  ],
+  "evidence": "BOUNDED_TAIL_NOT_COMMIT_PROOF",
+  "status": "CAPTURED"
+}

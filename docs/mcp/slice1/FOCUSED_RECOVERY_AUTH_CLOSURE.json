@@ -1,0 +1,316 @@
+{
+  "status": "AUTH_CLOSED_VERIFIED_IMMUTABLE_EVIDENCE",
+  "authCommit": "9ee13125",
+  "evidence": {
+    "issuer-close-result.json": {
+      "path": "docs/ops/auth-mcp-fresh-20261102/focused-7cb5/issuer-close-result.json",
+      "sha256": "828d03c4d05058d75120abe02e49ebc0536aac37d5db421867711c6eefb19820",
+      "record": {
+        "status": "ISSUER_DENY_ALL_VERIFIED",
+        "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+        "observedAt": "2026-11-01T22:52:54.677295+00:00",
+        "issuerClosed": true
+      }
+    },
+    "final-hook-readonly.json": {
+      "path": "docs/ops/auth-mcp-fresh-20261102/focused-7cb5/final-hook-readonly.json",
+      "sha256": "486d8df3d968585bfe09db90d03c6f12773198ad8ddcbcbf6f30eae75c1a80bc",
+      "record": {
+        "status": "FINAL_DENYALL_ORIGINAL_ACL_VERIFIED",
+        "observedAt": "2026-11-01T22:54:53.690680+00:00",
+        "rows": [
+          {
+            "anon_denied": true,
+            "auth_admin_execute": true,
+            "authenticated_denied": true,
+            "body": "b0f7eae14599bd32cb9430a59832c837",
+            "exact_search_path": true,
+            "invoker": true,
+            "original_owner": true
+          }
+        ]
+      }
+    },
+    "normal-control-cleanup.json": {
+      "path": "docs/ops/auth-mcp-fresh-20261102/focused-7cb5/normal-control-cleanup.json",
+      "sha256": "1457b7b95fd8dd1bf2a3059806a783809b7bfc264769e2af49add34f0a778a51",
+      "record": {
+        "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+        "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+        "secretsRecorded": false,
+        "phase": "NORMAL_CONTROL_SESSION_CLEANUP_PASS",
+        "observedAt": "2026-11-01T22:52:56.939Z",
+        "status": 204,
+        "disposition": "ACKNOWLEDGED",
+        "result": {
+          "status": "PASS",
+          "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+          "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+          "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+          "runId": "b267ec41-5fbf-401b-a3c1-893288a21b06",
+          "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-H2Uy3N/run.json"
+        }
+      }
+    },
+    "root-close-readback.json": {
+      "path": "docs/ops/auth-mcp-fresh-20261102/focused-7cb5/root-close-readback.json",
+      "sha256": "6e056360d320f8687731dffffc9e3f498e5ca2109e88670b53f86f70f52e89c5",
+      "record": {
+        "status": "ROOT_CLOSED_SERVER_VERIFIED",
+        "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+        "checkedAt": "2026-11-01T22:51:44.022507+00:00",
+        "containerId": "a1d0993ea215c4bb6f1ca554c2f5536d1ce8c1925374a06d867c36d44c21effd",
+        "configSHA256": "9a88efaac354f37c8863f48d1ac8c5c9ecf5b3368a3bdbd6e7dade955d19caba",
+        "health": "healthy",
+        "bothQaKeysAbsent": true,
+        "defaultHostExact": true,
+        "all23FilesMatch": true,
+        "httpHealth200Protected401": true,
+        "timerInactive": true,
+        "helper": {
+          "result": {
+            "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+            "containerId": "a1d0993ea215c4bb6f1ca554c2f5536d1ce8c1925374a06d867c36d44c21effd",
+            "image": "sha256:1c5d8f83d57ca9d704cfc947e908c3fa6d90ff8fbf16327e775201bdced4c39b",
+            "finiteConfigAbsent": true,
+            "health": "healthy"
+          },
+          "deliveryTrace": {
+            "requestedAt": "2026-11-01T22:51:38.106300+00:00",
+            "readyAt": "2026-11-01T22:51:38.116532+00:00",
+            "acquiredAt": "2026-11-01T22:51:38.116583+00:00",
+            "mutationFinishedAt": "2026-11-01T22:51:43.892207+00:00",
+            "releasedAt": "2026-11-01T22:51:43.892248+00:00"
+          }
+        },
+        "mcpDiagnostics": {
+          "status": "CAPTURED",
+          "evidence": "BOUNDED_TAIL_NOT_COMMIT_PROOF",
+          "events": [
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:47:39.631143706Z",
+              "requestId": "44b624bb-0c74-4434-aaa0-1df9042451fc",
+              "durationMs": 1,
+              "status": 401
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:33.211507901Z",
+              "requestId": "2e557c49-8e9c-4259-8841-356c9059fbf8",
+              "durationMs": 1943,
+              "status": 400
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:35.139715160Z",
+              "requestId": "41532ff0-1262-4820-88ad-2f104f6bef80",
+              "durationMs": 1403,
+              "status": 200
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:36.992055312Z",
+              "requestId": "4bd2c9ea-2751-42a2-ae9e-8ec8c8dd32cb",
+              "durationMs": 1370,
+              "status": 202
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:38.919251918Z",
+              "requestId": "5593b1a6-ae5f-4b22-95d7-58274e9309df",
+              "durationMs": 1387,
+              "status": 200
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:42.027445714Z",
+              "requestId": "ee9cee4a-d73c-4c59-92f0-bf922b3ebbe4",
+              "durationMs": 1398,
+              "status": 400
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:44.028988824Z",
+              "requestId": "57b9a8be-f436-441c-a351-b053f5eca993",
+              "durationMs": 1417,
+              "status": 200
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:45.837273269Z",
+              "requestId": "7803bd79-ebfc-4cb3-9dbb-05d03906d4ab",
+              "durationMs": 1347,
+              "status": 202
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:47.675346939Z",
+              "requestId": "8460e614-27ab-4e79-8235-019381b99959",
+              "durationMs": 1376,
+              "status": 200
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:56.969284915Z",
+              "requestId": "4b38b7f3-1306-4bb8-8da8-35629d71aaed",
+              "durationMs": 1538,
+              "status": 400
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:49:59.024445564Z",
+              "requestId": "68d2a787-9975-4697-ae08-3c591eb8d055",
+              "durationMs": 1388,
+              "status": 202
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:01.046194461Z",
+              "diagnosticId": "130d5ae5-e242-452e-9f9c-240a8f94af22",
+              "elapsedMs": 0,
+              "resource": "ITEM",
+              "stage": "PRECHECK",
+              "remainingMs": 28956
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:01.046536377Z",
+              "diagnosticId": "130d5ae5-e242-452e-9f9c-240a8f94af22",
+              "elapsedMs": 2,
+              "resource": "ITEM",
+              "stage": "OWNING_ENTERED",
+              "remainingMs": 28954
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:08.008479016Z",
+              "diagnosticId": "130d5ae5-e242-452e-9f9c-240a8f94af22",
+              "elapsedMs": 6964,
+              "resource": "ITEM",
+              "stage": "OWNING_RETURNED",
+              "remainingMs": 21992,
+              "owningResponseStatus": 200
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:08.008638096Z",
+              "diagnosticId": "130d5ae5-e242-452e-9f9c-240a8f94af22",
+              "elapsedMs": 6964,
+              "resource": "ITEM",
+              "stage": "POSTCHECK",
+              "remainingMs": 21992,
+              "owningResponseStatus": 200
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:50:08.024389278Z",
+              "requestId": "63e785bc-49f8-42f1-864e-a2d59866ec03",
+              "durationMs": 8449,
+              "status": 200,
+              "tool": "get_trip_item"
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:19.957727392Z",
+              "diagnosticId": "aec59bb2-e35f-4aae-ad8f-690551b6f7f1",
+              "elapsedMs": 0,
+              "resource": "COLLECTION",
+              "stage": "PRECHECK",
+              "remainingMs": 10045
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:19.957771755Z",
+              "diagnosticId": "aec59bb2-e35f-4aae-ad8f-690551b6f7f1",
+              "elapsedMs": 0,
+              "resource": "COLLECTION",
+              "stage": "OWNING_ENTERED",
+              "remainingMs": 10045
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:28.840500907Z",
+              "diagnosticId": "aec59bb2-e35f-4aae-ad8f-690551b6f7f1",
+              "elapsedMs": 8885,
+              "resource": "COLLECTION",
+              "stage": "OWNING_RETURNED",
+              "remainingMs": 1160,
+              "owningResponseStatus": 200
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:28.840716014Z",
+              "diagnosticId": "aec59bb2-e35f-4aae-ad8f-690551b6f7f1",
+              "elapsedMs": 8885,
+              "resource": "COLLECTION",
+              "stage": "POSTCHECK",
+              "remainingMs": 1160,
+              "owningResponseStatus": 200
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:28.899040351Z",
+              "diagnosticId": "808824a5-692c-4184-933f-5c4812b0e0ae",
+              "elapsedMs": 0,
+              "resource": "ITEM",
+              "stage": "PRECHECK",
+              "remainingMs": 1102
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:28.899319227Z",
+              "diagnosticId": "808824a5-692c-4184-933f-5c4812b0e0ae",
+              "elapsedMs": 1,
+              "resource": "ITEM",
+              "stage": "OWNING_ENTERED",
+              "remainingMs": 1101
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:41.640025947Z",
+              "diagnosticId": "808824a5-692c-4184-933f-5c4812b0e0ae",
+              "elapsedMs": 12741,
+              "resource": "ITEM",
+              "stage": "OWNING_RETURNED",
+              "remainingMs": 0,
+              "owningResponseStatus": 200
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:41.640246644Z",
+              "diagnosticId": "808824a5-692c-4184-933f-5c4812b0e0ae",
+              "elapsedMs": 12742,
+              "resource": "ITEM",
+              "stage": "POSTCHECK",
+              "remainingMs": 0,
+              "owningResponseStatus": 200
+            },
+            {
+              "event": "MCP_QA_READ_STAGE",
+              "dockerTimestamp": "2026-11-01T22:50:41.640422406Z",
+              "diagnosticId": "808824a5-692c-4184-933f-5c4812b0e0ae",
+              "elapsedMs": 12742,
+              "resource": "ITEM",
+              "stage": "POSTCHECK",
+              "remainingMs": 0,
+              "owningResponseStatus": 200,
+              "failure": "EXPIRED"
+            },
+            {
+              "event": "MCP_QA_REQUEST",
+              "dockerTimestamp": "2026-11-01T22:50:41.648081769Z",
+              "requestId": "64bec1c5-13c5-4c9a-a247-a34917c3771d",
+              "durationMs": 23109,
+              "status": 200,
+              "tool": "get_trip_item_edit_base",
+              "errorCode": "AUTH_REQUIRED",
+              "authFailureSource": "BACKEND_401"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "noReopen": true
+}

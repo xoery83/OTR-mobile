@@ -1,0 +1,61 @@
+{
+  "status": "ROUND01_CLOSED_CONSUMER_NOT_RUN_TARGET_NOT_ACHIEVED",
+  "gate": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "T": "2026-11-01T09:51:29.824Z",
+  "hardDeadline": "2026-11-01T10:16:09.025Z",
+  "issuerDenyAllVerifiedAt": "2026-11-01T10:14:19Z",
+  "rootCloseEvidence": {
+    "status": "ROOT_FINITE_CLOSED_SERVER_VERIFIED",
+    "verifiedAt": "2026-11-01T10:17:15.664022+00:00",
+    "containerId": "9fd2b8283c82ac457d1c2aac1fd8bcaa828a57bdf1006b3670a2baf8ea7301f9",
+    "image": "sha256:ab77a13ce66f877b67541e8cad7dcd0f9b70ac229c81841bf26f21665b709431",
+    "configSHA256": "a6ba55fd09a187db3c9871e3d1bb6414d2f33c14b2d11bb5babf9fcacd223dc4",
+    "health": "healthy",
+    "bothQaKeysAbsent": true,
+    "defaultHostExact": true,
+    "all23FilesMatch": true,
+    "httpHealth200Protected401": true,
+    "timerInactive": true,
+    "notesConfirmationInstalled": false,
+    "businessSubmission": false,
+    "postcloseWrapperUnconfirmedRetained": true,
+    "noBlindReclose": true
+  },
+  "normalControlCleanup": {
+    "runId": "26973ef6-e300-477b-a9da-389fe95cca7c",
+    "scope": "REGISTERED_QA_HOST_SESSION",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "phase": "HOST_SESSION_CLEANUP",
+    "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "actionCompleted": false,
+    "actionOutcome": "UNCONFIRMED_QUERY_OWNING_RECEIPT",
+    "requestedAt": "2026-11-01T09:43:57.791Z",
+    "otpRequestAttempts": 1,
+    "secretsOrOtpRecorded": false,
+    "lockExists": false,
+    "journalPath": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-XFfFtQ/run.json"
+  },
+  "normalControlActionNotCompleted": true,
+  "notesApproval": false,
+  "newBusinessSubmissions": 0,
+  "consumer": {
+    "Claude": "BLOCKED_NOT_CONNECTED",
+    "ChatGPT": "NOT_RUN_FIRST_CLIENT_NOT_PASS",
+    "oauth": false,
+    "otp": false,
+    "consent": false,
+    "guide": false,
+    "preview": false,
+    "apply": false,
+    "newAppliedOperation": null
+  },
+  "actualFailures": [
+    "Docker OomKillDisable null-to-false representation interrupted first CAS before serving; corresponding close comparison also required compatibility repair. Repairs/tests/review retained.",
+    "After Root EMPTY healthy at10:04:11Z there was no Root blocker; Auth acknowledged not promptly enabling issuer/Console before remaining time was exhausted. No missing Owner approval or remaining console error."
+  ],
+  "noDeadlineExtension": true,
+  "noNewOperationIdentity": true,
+  "noHistoricalRetry": true,
+  "futureRequirement": "Explicit fresh finite window; reuse qualified software, close controls and same unsubmitted IDs. No rebuild or repeat architecture/protocol gate."
+}

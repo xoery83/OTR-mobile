@@ -1,0 +1,45 @@
+{
+  "observed_at": "2026-11-02T21:47:48.842444+00:00",
+  "canonical_inbox": "data/event-inbox/v32.json",
+  "events": [
+    {
+      "event_id": "mcp-c02-s1-packet-20261103-handoff-001",
+      "ack_status": "AGENT_REPORTED",
+      "snapshot_version": "96461bef32744fd2",
+      "publication_version": 24,
+      "inbox": "/Users/xoery/.codex/visualizations/2026/11/02/01a19a2c-de35-72d2-96b7-e66333286e13/otr-mission-control/data/event-inbox/mcp-c02-s1-packet-20261103-handoff-001.json",
+      "ack_sha256": "bdf784de17db3defca35e4c12c314a3c8a85bc9362e5cc38b27d7605df682d0b"
+    },
+    {
+      "event_id": "mcp-c02-s2-core-gap-20261103-001",
+      "ack_status": "AGENT_REPORTED",
+      "snapshot_version": "96461bef32744fd2",
+      "publication_version": 24,
+      "inbox": "/Users/xoery/.codex/visualizations/2026/11/02/01a19a2c-de35-72d2-96b7-e66333286e13/otr-mission-control/data/event-inbox/mcp-c02-s2-core-gap-20261103-001.json",
+      "ack_sha256": "f29bdd0a1ae0d9ca4717bb432fb3a0b95604245c276e1b0a5827cc79b227f051"
+    },
+    {
+      "event_id": "mcp-c02-s3-manual-place-20261103-local-pass-001",
+      "ack_status": "PENDING_VERIFICATION",
+      "snapshot_version": "96461bef32744fd2",
+      "publication_version": 24,
+      "inbox": "/Users/xoery/.codex/visualizations/2026/11/02/01a19a2c-de35-72d2-96b7-e66333286e13/otr-mission-control/data/event-inbox/mcp-c02-s3-manual-place-20261103-local-pass-001.json",
+      "ack_sha256": "d28d238cab5ee6a1be4ed633eba2be34f8b3b13860d34429fc6fbdab616aaac2"
+    }
+  ],
+  "scope": "Persistent intake/publication of reported states. No independent Hosted/Consumer acceptance implied; AGENT_REPORTED is not ACCEPTED.",
+  "previous_observation": {
+    "observed_at": "2026-11-02T17:52:54.790604+00:00",
+    "current_started_ack": "ACCEPTED",
+    "current_started_execution_state_version": 6,
+    "current_started_plan_version": 2,
+    "old_751_same_event_ack": "ACCEPTED",
+    "old_751_execution_state_version": 1,
+    "old_751_plan_version": 1,
+    "containing_local_snapshot_version": "dbb6d164191cee3b",
+    "containing_local_snapshot_commit": "97eea6b9c743bea1250bb9c25d15b48a380aafbc",
+    "publication_state": "BUILD_PREPARED_PUBLISH_UNCONFIRMED",
+    "website_update_confirmed": false,
+    "no_duplicate_old_pass": true
+  }
+}

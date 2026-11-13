@@ -1,0 +1,59 @@
+{
+  "status": "ACTIVE",
+  "windowId": "b08a466d29f348a896176c563646f417",
+  "gateSHA256": "3526947da5adcece8d7dfde7139e239cf8291a401b3520e068984dc5b3b15ac5",
+  "observedAt": "2026-11-03T21:14:11.603096+00:00",
+  "startsAt": "2026-11-03T21:09:39.542Z",
+  "normalCloseAt": "2026-11-03T21:37:39.542Z",
+  "expiresAt": "2026-11-03T21:39:39.542Z",
+  "runtime": {
+    "status": "MCP_SLICE1_CONFIG_CAS_HEALTHY",
+    "phase": "EMPTY",
+    "containerId": "5c62e6f3c6e931859ef319f6bf675bb4e6d2f7b79f74eefa6c21bc530882c4f0",
+    "defaultContainerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+    "configSHA256": "c0d30a7cf48951f43dd7c917fe2b05392857b245bd3d8076b3d37638c6739b51",
+    "deadlineMs": 1793741979542,
+    "activeVerifiedAt": "2026-11-03T21:10:32.879314+00:00",
+    "source": "successful config_cas.py stdout tool receipt"
+  },
+  "issuer": {
+    "status": "FINITE_ISSUER_INDEPENDENTLY_VERIFIED",
+    "bodyMD5": "d6dba4346137e3659e09a5a1a5afa497",
+    "verifiedAt": "2026-11-03T21:13:36.341599+00:00",
+    "expiresAt": "2026-11-03T21:39:39.542Z"
+  },
+  "console": {
+    "status": "CONSOLE_ACTIVE_VERIFIED_DCR_DISABLED",
+    "observedAt": "2026-11-03T21:14:02.658669+00:00",
+    "results": [
+      {
+        "resource": "server-active",
+        "activeVerified": true
+      },
+      {
+        "resource": "hook-active",
+        "activeVerified": true
+      }
+    ],
+    "expiresAt": "2026-11-03T21:39:39.542Z"
+  },
+  "liveReadback": {
+    "observedAt": "2026-11-03T21:14:11.603096+00:00",
+    "containerId": "5c62e6f3c6e931859ef319f6bf675bb4e6d2f7b79f74eefa6c21bc530882c4f0",
+    "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+    "configSHA256": "c0d30a7cf48951f43dd7c917fe2b05392857b245bd3d8076b3d37638c6739b51",
+    "health": "healthy",
+    "timers": {
+      "otr-mcp-c02-b08a466d29f348a896176c563646f417-normal.timer": "NextElapseUSecRealtime=Tue 2026-11-03 21:37:39 UTC\nActiveState=active",
+      "otr-mcp-c02-b08a466d29f348a896176c563646f417-hard.timer": "NextElapseUSecRealtime=Tue 2026-11-03 21:39:39 UTC\nActiveState=active"
+    },
+    "workers": {
+      "otr-universal-pdf-worker.service": "RuntimeMaxUSec=infinity\nMainPID=2229750\nActiveState=active",
+      "otr-universal-png-worker.service": "RuntimeMaxUSec=50min\nMainPID=0\nActiveState=failed"
+    }
+  },
+  "scope": "ORIGINAL_CONNECTION_CONSENT_PREVIEW_ONLY_NO_SAVE",
+  "command": null,
+  "confirmations": [],
+  "clockExtended": false
+}

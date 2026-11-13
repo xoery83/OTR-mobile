@@ -1,5 +1,10 @@
 # Nelson import — staged execution plan
 
+The 1 November Owner extension is in
+[AI task contract](MCP_AI_TASK_CONTRACT_PLAN.md): teach an ordinary consumer AI
+source reconciliation, field completion, People matching and Expense associations.
+The historical execution details below do not establish those added capabilities.
+
 31 October 2026. Owner's real travel plan is not modified in this stage.
 
 Implemented preview_trip_changes / apply_trip_changes accept at most12 explicit

@@ -1,0 +1,33 @@
+{
+  "windowId": "b08a466d29f348a896176c563646f417",
+  "runtimeWindowId": "b08a466d-29f3-48a8-9617-6c563646f417",
+  "gateSHA256": "3526947da5adcece8d7dfde7139e239cf8291a401b3520e068984dc5b3b15ac5",
+  "directory": "/private/tmp/otr-mcp-c02-consumer-b08a466d29f348a896176c563646f417",
+  "oldDirectory": "/private/tmp/otr-mcp-c02-consumer-e0d1c568cbae4b0ca3a0dec92e4ececf",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "dc4d853902b1c789ba2959bac0213e141828bb702db717799315b3c8b6173e00",
+    "SCOPE.json": "a892f69d88bd282ff0693b1ed7f67e19372ccb170338630e9842d28428b9dcaf",
+    "prepare-c02-access-window.py": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "c02-timers.test.py": "13caafafa1697b30946d0d315a1decb354f19918073f4eb0443cb2ac799afc49",
+    "c02-timers.py": "4c6fdf5b8744b6dee096eb4762b44f1cbca521eab4bf6ccbb36b94a78b0cdc12",
+    "c02-close.py": "ec14819fe76ffe92dd4ba5fe0e9f808e7fde3f545ad4edc923d8147547eb33a6",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "ae585f597c50f8677be3892e37d41d1bbec7a96caf06c1cc86cc2fa58a06fc4a",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "clockStarted": false,
+  "authorityActivated": false,
+  "businessSaveAuthorized": false,
+  "sourceMain": "7946800b02a0b63c0b1a8a748b2492bd04dc6367",
+  "deploymentReceiptCommit": "b589643f",
+  "protectedRoutes": [
+    [
+      "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items"
+    ]
+  ],
+  "originalOperationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616"
+}

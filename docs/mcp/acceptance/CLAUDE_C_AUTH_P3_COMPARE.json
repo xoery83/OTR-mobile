@@ -1,0 +1,14 @@
+{
+  "status": "INDEPENDENT_FULL_TYPED_P3_COMPARE_PASS",
+  "observedAt": "2026-10-31T17:39:22.751743+00:00",
+  "responseSHA256": "27d676f5c90d429f964f239e5fa9c7020866d09be9fc89c516fc39784ec03634",
+  "itemSHA256": "c2f9627883fc5a266bae2444ac230f8dbf99f8044afc119c39dfa5a536ce807b",
+  "baselineStatus": "INDEPENDENT_BACKEND_READ_PASS",
+  "baselineReceivedAt": "2026-10-31T13:43:04.090Z",
+  "baselineOwnSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "requestId": "222ad199-773f-48ee-aa46-ae7e9a16ab54",
+  "serverStatus": 200,
+  "serverDurationMs": 8293,
+  "firstP3Only": true,
+  "newBackendWrites": 0
+}

@@ -1,0 +1,52 @@
+{
+  "verdict": "BLOCKED_LOCAL_FINITE_WINDOW_RESPONSE_AND_CALLBACK_BOUNDARY",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-05T00:49:40.184209+00:00",
+  "candidateCommit": "b3795a95e43d22c4cfc5299709f836c0374c5d3f",
+  "packageSHA256": "43b2f509aa229cd19e5ad9597ec5d80c5e466d88dc8198bc62219b578fb586f7",
+  "gateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+  "scopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+  "findings": [
+    {
+      "priority": "P1",
+      "file": "scripts/mcp/c02-own-session-consent.mts",
+      "lines": "147,177-191,233-239",
+      "relatedFile": "scripts/mcp/c02-own-callback-pipe.mts:54-76,92-106",
+      "title": "A request started before normalClose may complete and hand off a callback after the immutable cutoff",
+      "actual": "current checks only before each request; createRequestBoundary fixed10000 lacks notAfter cap/check. Response/body and approve result/handoff have no current recheck. FIFO own5sec/30sec waits likewise have no qualified normalClose bound.",
+      "deterministicReproduction": "Pure installedSDK/mocktransport fixture: finite deadline=start+5000, valid original sameSession. On the only approvePOST the mock advances Date.now to deadline+1 and returns a valid whitelisted callback. approve resolves CALLBACK_HANDED_OFF_ONCE and handoff observes Date.now>normalClose. OnePOST, no external network/credentials.",
+      "minimalFix": "Bind request timeout/checks to remaining immutable notAfter, reject responses/body/admission after cutoff; recheck before sensitive callback handoff. Propagate same qualified cutoff to FIFO waits and actual write/read admission, so waiting cannot deliver after normalClose. Preserve at-most-onePOST and UNKNOWN_NO_RETRY after attempted POST; no retry or claim of NOT_SUBMITTED. Add focused slowGET/POST/deadline/FIFO late-delivery negatives."
+    }
+  ],
+  "actualIndependentChecks": [
+    "17 existing local tests PASS using installed SDK mocktransport and benignFIFO subprocess; no real Auth requests",
+    "19source/pin/input/3UNBOUND+oldsourceReject/EMPTY/Tnull/launchdisabled checks PASS",
+    "Connected installedSDK _setSession unexpired path validates user; expired refresh path and _useSession margin reviewed against hard outbound allowlist",
+    "Same-owner Session token pair retained; origin/path/method/Bearer/body guards reject token/OTP/verify/other authorization paths before wire, one actual consentPOST budget",
+    "Details account/client/callback/scope identity and canonicaldigest reread reviewed; resource treated as fixedIssuer contract rather than fictional details field",
+    "FIFO owner0700/0600/type/inode/nlink/nonblocking bounds and safeerror handling reviewed; late delivery lacks immutablewindow check as same finding",
+    "Ownhost Grant/sessioncleanup path unchanged; no browserSession/reservation/terminalbridge or UILoginPASS claimed",
+    "Extra deterministic mock reproduces callback after normalClose despite all17 existing tests passing"
+  ],
+  "activationSourceDeltaRequiredAfterFix": [
+    "Consume exact Root2 SDK source-flow compatibility artifact, not a paraphrase; keep original plain advance source/context unchanged without fake SDK-specific human text",
+    "Independently bind actual source in all3 guards and all19+SDK dependency pins; requalify current Auth/source and installedSDK bytes on drift",
+    "Remove unconditional SDK_SOURCE_CANDIDATE_NOT_LIVE_READY only as an explicitly reviewed activation-source delta after actual platform/currentdefault/close/livewaiter qualification",
+    "Verify actual SDK_WINDOW_RELEASE local relay against Root2 original release/hash/T+28/T+30 before use; no regenerated clock",
+    "Real callback FIFO browser consumption and consumer Guide/Trip/Preview still need actual E2E evidence; fixturePASS is local-only"
+  ],
+  "platformExecutionApproval": false,
+  "runtimeReady": false,
+  "SaveApproved": false,
+  "notExecuted": [
+    "Keychain",
+    "mailAPI",
+    "Auth",
+    "OTP",
+    "Browser",
+    "Hosted",
+    "Real OAuth approval"
+  ],
+  "historicalFullGateRerun": false,
+  "packageMutation": false
+}

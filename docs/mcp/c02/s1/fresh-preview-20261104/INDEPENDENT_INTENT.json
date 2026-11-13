@@ -1,0 +1,44 @@
+{
+  "title": "Rimu Cove QA Guesthouse",
+  "synthetic": true,
+  "noRealReservationOrPayment": true,
+  "confirmedFixture": {
+    "property": "Rimu Cove QA Guesthouse",
+    "address": "7 Fixture Crescent, Marama Cove, New Zealand",
+    "zone": "Pacific/Auckland",
+    "arrivalLocalDate": "2026-12-16",
+    "arrivalLocalTime": "18:10",
+    "departureLocalDate": "2026-12-19",
+    "departureLocalTime": "09:10",
+    "permittedCheckinFrom": "14:30",
+    "permittedCheckinUntil": "21:00",
+    "permittedCheckoutBy": "10:00",
+    "rooms": [
+      {
+        "category": "Twin cabin",
+        "quantity": 2,
+        "capacity": 2
+      },
+      {
+        "category": "Single pod",
+        "quantity": 1,
+        "capacity": 1
+      }
+    ],
+    "notes": "Use the courtyard gate; leave keys in the blue box on departure."
+  },
+  "pendingOnly": {
+    "departureLocalDate": "2026-12-20",
+    "request": "A quiet cabin if available",
+    "approved": false
+  },
+  "notRequested": [
+    "Booking",
+    "Ticket",
+    "Expense",
+    "Traveler assignment",
+    "Source admission",
+    "Save",
+    "Apply"
+  ]
+}

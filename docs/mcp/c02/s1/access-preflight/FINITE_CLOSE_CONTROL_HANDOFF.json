@@ -1,0 +1,117 @@
+{
+  "status": "SOURCE_PORTS_FIXED_ACTUAL_FINITE_INSTANCE_NOT_ARMED",
+  "recorded_at": "2026-11-03T03:14:26.632524+00:00",
+  "owner_authority": {
+    "gate_sha256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+    "source_binding": "/private/tmp/otr-mcp-c02-owner-source-binding-20261103/OWNER_SOURCE_BINDING.json",
+    "actual_answer": "\u6279\u51c6\u672c\u6b21\u6709\u9650\u8fde\u63a5\u4e0e Preview\uff0c\u4e0d\u5305\u542b\u4fdd\u5b58",
+    "allowed": "One finite existing QA OAuth connection and P3 Create Preview only; initial command=null,confirmations=[]",
+    "apply_or_save": "NOT_AUTHORIZED; separate actual Preview/Operation/Item/digest Owner confirmation required",
+    "software_approval_fe750": "FULFILLED_NOT_REUSED_AS_ACCESS_AUTHORITY"
+  },
+  "fixed_scope": {
+    "window": "e32551d418f54fcdb02d9783eb4c2f9c",
+    "client": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "actor": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "trip": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "resource": "https://api-dev.xoery.art/mcp",
+    "business_max_seconds": 1800,
+    "normal_close_lead_seconds": 120,
+    "mcp_token_max_seconds": 60,
+    "clock_started": false
+  },
+  "runtime_close": {
+    "source": "/private/tmp/otr-mcp-c02-s1-package-20261103/c02-close.py",
+    "source_sha256": "cee418c733de0bdfcc7e48552992b6a0689d4cadb498af1e5d391c3db6e8a014",
+    "business_host_directory": "/opt/otr/dev-backend/build/auth-consumer-write-qa-e32551d418f54fcdb02d9783eb4c2f9c",
+    "call": "python3 <business_host_directory>/c02-close.py <business_host_directory>",
+    "pointer_publisher": "/private/tmp/otr-mcp-c02-s1-package-20261103/operators/config_cas.py::publish_close_plan(g,directory,current_id,config_sha)",
+    "plan_constructor": "/private/tmp/otr-mcp-c02-s1-package-20261103/operators/prepare_cas.py::make_plan(request,current,default,template,now)",
+    "latest_default": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430 / Config b00829fc8f260bac9ab6f31b8e78899d287cd1685e1dfd8f7db1c9fead40480b",
+    "actual_unchanged_close": "PASS docs/mcp/c02/s1/access-preflight/current-3def/CLOSE_PROBE.json; fresh CAS still required"
+  },
+  "issuer_close": {
+    "source": "/private/tmp/otr-mcp-c02-s1-package-20261103/issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py",
+    "source_sha256": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "validation_api": "validate(plan,directory) -> deadline,closedSQL",
+    "close_api": "close_once(plan,directory,sql_callback)",
+    "watch_entry": "python3 /Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py /private/tmp/otr-auth-mcp-slice1-e32551d418f54fcdb02d9783eb4c2f9c <actual_issuer_plan_sha> --watch",
+    "watch_semantics": "Wait until expiresAt-120sec or local CLOSE sentinel; verifies preimage, sends existing close SQL at most once, then independently reads deny-all. UNKNOWN never blindly reapplies.",
+    "sql_callback": "universal_scope_close.SqlTransport(cli,linked_worktree,private_dir)",
+    "sql_callback_source": "/Users/xoery/.codex/worktrees/universal-photo-resume-integration-20261030/otr-mobile-canonical/scripts/import/universal_scope_close.py",
+    "sql_callback_cli": "/Users/xoery/.codex/worktrees/universal-photo-resume-integration-20261030/otr-mobile-canonical/node_modules/.bin/supabase",
+    "sql_callback_linked_worktree": "/Users/xoery/.codex/worktrees/universal-photo-resume-integration-20261030/otr-mobile-canonical",
+    "qualified_this_run": "READ_ONLY transport and current Hook deny-all metadata PASS; active issuer close not yet exercised",
+    "policy_marker_note": "Legacy530 in existing issuer-plan is SQL policy class only. Actual authority is new c231 human-source binding.",
+    "live_cli_source": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py",
+    "live_cli_source_sha256": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "cli_root_note": "Use verified identical full owning-tree CLI for --watch: ROOT resolves the existing renderer/import SqlTransport/CLI dependencies there. Frozen five-file snapshot is API/source proof only and lacks scripts/import; do not launch snapshot CLI.",
+    "live_cli_sql_transport_sha256": "ad65ae0c412e77525553d01e36b3fce1ee6ced2a75e003fc98e9213b459c08d4"
+  },
+  "normal_grant_close": {
+    "launcher": "/private/tmp/otr-mcp-c02-s1-package-20261103/c02-normal-control.py",
+    "entry": "/private/tmp/otr-mcp-c02-s1-package-20261103/normal-control.mts",
+    "entry_sha256": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "helper_and_dependency_pins_current": "ALL4_MATCHED_NOW; no helper execution",
+    "owner": "MCP own normal OTP/getUser process; no Session/Token transfer to Root/Auth",
+    "root": "/private/tmp/otr-auth-consumer-control-c02-e32551d418f54fcdb02d9783eb4c2f9c",
+    "REVOKE": "Create root/REVOKE once; process uses own live Session to GET grants, DELETE only835 once, independent GET verifies absent",
+    "FINISH": "Only after grant reconciled, create root/FINISH; existing helper finally logs out own Session and verifies refresh rejected",
+    "CANCEL": "Failure path; create root/CANCEL; finally attempts own selected-grant cleanup, helper Session cleanup. Missing evidence stays UNKNOWN.",
+    "limits": "35min own control setup/cleanup cap; normalControlStartedAt must come from CONTROL_LAUNCH.startedAt and bind <=120sec; does not extend30min business window",
+    "route_order": "Supabase OAuth/grant route must remain live until own Grant cleanup verified; do not disable server first",
+    "actual_new_session": "NOT_STARTED"
+  },
+  "time_binder": {
+    "source": "/private/tmp/otr-mcp-c02-s1-package-20261103/prepare-c02-access-window.py",
+    "source_sha256": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "usage": "python3 <source> <fixed SCOPE.json> <actual qualified source/runtime/control binding>",
+    "output": "One exclusive local active.sql/close.sql/issuer-plan/C02_EMPTY_CONFIG/newOwnerBinding; no network/authority",
+    "T_D": "Not emitted. One T/D maximum30min, normalClose=T+28min; no reset/extension."
+  },
+  "current_precise_gaps": [
+    "C02 launcher candidate and mandatory CAS-before-serve guard now implemented; final independent Review/Root install and actual two-unit arm proof remain. Neither source nor OS timer format readback is actual C02 arming.",
+    "No actual timed issuer-plan hash/T/D exists yet, so existing issuer --watch not launched; Root verifies frozen render and SQL callback for approved existing Hook closure, independent of runtime timer.",
+    "New normal QA control Session/grant cleanup has not run; MCP starts it only after close-control/resource readiness, then binds within120sec. No borrowed session.",
+    "Conflict-free slot outside Auth priority active shared configuration; fresh UI/console/DCR preimages rechecked before activation."
+  ],
+  "normal_close_order": [
+    "Stop consumer business; reconcile/revoke own selected Grant while route live",
+    "Issuer deny-all and runtime latest-default restore through independent fixed ports",
+    "Signal own control FINISH, verify logout/refresh rejection",
+    "Restore actual console preimage and independently verify disabled Hook/OAuth/siteURL/default/DCR/QA-key absence"
+  ],
+  "root_requested_action": "Lock-free verify these exact ports/launcher binding. Return READY prerequisites or exact unavailable port. Do not infer Apply authority or request repeated software approval. Root alone performs protected config/SQL and timer arm; MCP owns normal session, consumer and receipts.",
+  "runtime_timer_binding": {
+    "phase": "SPECIFIED_NOT_ARMED",
+    "normal_close_absolute_utc": "C02_EMPTY_CONFIG.plan.normalCloseAt; T+28min",
+    "hard_close_absolute_utc": "C02_EMPTY_CONFIG.plan.expiresAt; T+30min",
+    "unit_namespace": "otr-mcp-c02-e32551d418f54fcdb02d9783eb4c2f9c-{normal|hard}",
+    "exec_argv": [
+      "/usr/bin/python3",
+      "/opt/otr/dev-backend/build/auth-consumer-write-qa-e32551d418f54fcdb02d9783eb4c2f9c/c02-close.py",
+      "/opt/otr/dev-backend/build/auth-consumer-write-qa-e32551d418f54fcdb02d9783eb4c2f9c"
+    ],
+    "entry_sha256": "cee418c733de0bdfcc7e48552992b6a0689d4cadb498af1e5d391c3db6e8a014",
+    "binding": "Root existing accepted timer launcher; absolute UTC deadlines from the single immutable binder, no reset/relative extension",
+    "verification_before_authority": "Record both actual unit identities/ExecStart/deadline and armed state; prove exact close-current/deploy-plan pointers are published before service authority. Source schema/pure test or a timer template is not actual arming proof.",
+    "rollback": "If arming or publisher verification fails, install no issuer/temporary runtime; preserve current default and close control own normal Session as needed.",
+    "independence": "Runtime timer must not depend on consumer tab/SDK/Root chat staying active; independent issuer watcher uses its own fixed plan hash and current SQL close callback.",
+    "launcher_source": "scripts/mcp/c02-timers.py",
+    "launcher_sha256": "46201b36642bb43291679e80b36c3b2901b7bc3812d650d7b18787056aea89c0",
+    "candidate_cli": {
+      "arm": "python3 <business_host_directory>/c02-timers.py arm <exact_C02_EMPTY_CONFIG_SHA256>",
+      "verify": "python3 <business_host_directory>/c02-timers.py verify <exact_C02_EMPTY_CONFIG_SHA256>",
+      "disarm": "python3 <business_host_directory>/c02-timers.py disarm <exact_C02_EMPTY_CONFIG_SHA256>; requires current exact default closed, allowed after expiry"
+    },
+    "cas_guard": "Generated config_cas.py requires pinned timer launcher and exact original deadline/service/ExecStart/readback after publishing latest pointer and before any docker stop. No naked verified flag.",
+    "timer_precision": "Absolute deadlines floor binder milliseconds to UTC seconds, <=original deadline; no extension.",
+    "qualified": "LOCAL_TESTS_AND_HOST_READONLY_FORMAT_ONLY; actual installation/arm NOT_RUN"
+  },
+  "request_log_preservation": {
+    "status": "FOCUSED_LOCAL_FIX_REQUIRED_AFTER_ACTUAL679C_LOG_LOSS",
+    "before_restore": "Read only the exact finite candidate logs, current immutable window start; cap200lines and whitelist timestamp/requestId/status/duration/tool/error labels. No params, Token, URL, raw Source or unrelated logs persisted.",
+    "archive": "Private0600 mcp-request-trace-<fullCandidateId>.json in existing Root-owned window directory, exclusive write/no overwrite. Default-container probe skips.",
+    "failure": "Best-effort bounded5sec; any capture error yields unavailable receipt and still executes unchanged pinned restore. Never delay or widen authority to recover logs."
+  }
+}

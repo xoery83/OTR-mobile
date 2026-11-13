@@ -121,8 +121,7 @@ export function createGuestAdoptionRecovery(deps: {
     }
     let cancellationReceipt;
     if (cancellation !== null) {
-      if (publish === null) throw Error("GUEST_ADOPTION_RECOVERY_ORPHAN");
-      cancellationReceipt = await validateCancellation(JSON.parse(cancellation), prepared);
+      cancellationReceipt = await validateCancellation(JSON.parse(cancellation), prepared, publish === null);
       if (canonical(cancellationReceipt) !== cancellation)
         throw Error("GUEST_ADOPTION_RECOVERY_NONCANONICAL");
     }
@@ -139,7 +138,7 @@ export function createGuestAdoptionRecovery(deps: {
               : ("RESUME_PREFLIGHT" as const),
     };
   }
-  async function validateCancellation(input: unknown, prepared: Awaited<ReturnType<typeof checkedPreparation>>) {
+  async function validateCancellation(input: unknown, prepared: Awaited<ReturnType<typeof checkedPreparation>>, allowUnstaged = false) {
     const p = prepared.preparation;
     const receipt = await validateGuestAdoptionCancellationReceipt(input, {
       contractVersion: 1,
@@ -148,6 +147,7 @@ export function createGuestAdoptionRecovery(deps: {
       targetAccountId: p.targetAccountId,
       inventorySha256: p.inventorySha256,
     }, tripCoreSha256Hex);
+    if (allowUnstaged && receipt.preparationSha256 === null) return receipt;
     if (receipt.preparationSha256 !== prepared.preparationSha256 || !receipt.planSha256)
       throw Error("GUEST_ADOPTION_CANCELLATION_CHECKPOINT_MISMATCH");
     return receipt;
@@ -171,9 +171,9 @@ export function createGuestAdoptionRecovery(deps: {
     recordServerCancellation(adoptionId: string, targetAccountId: string, receipt: unknown) {
       return pinned(async () => {
         const prior = await read(adoptionId, targetAccountId);
-        if (!prior || prior.nextAction !== "QUERY_SERVER_STATUS")
+        if (!prior || prior.nextAction === "REMAIN_GUEST")
           throw Error("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
-        const checked = await validateCancellation(receipt, prior);
+        const checked = await validateCancellation(receipt, prior, prior.nextAction === "RESUME_PREFLIGHT");
         await immutable(adoptionId, "cancellation-receipt", canonical(checked));
         return read(adoptionId, targetAccountId);
       });
@@ -216,6 +216,16 @@ export function createGuestAdoptionRecovery(deps: {
           noteGuestPublicationRequested(scope.localId);
           throw error;
         }
+      });
+    },
+    inspectPreparedAttempts() {
+      return pinned(async () => {
+        const prepared = [];
+        for (const id of await deps.files.listAttempts()) {
+          const state = await read(id);
+          if (state?.nextAction === "RESUME_PREFLIGHT") prepared.push(state);
+        }
+        return prepared;
       });
     },
     read: (adoptionId: string, targetAccountId?: string) =>

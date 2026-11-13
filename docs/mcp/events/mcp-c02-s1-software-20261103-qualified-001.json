@@ -1,0 +1,46 @@
+{
+  "event_id": "mcp-c02-s1-software-20261103-qualified-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "owner_slice_id": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "HANDOFF",
+  "reported_event_type": "HANDOFF",
+  "created_at": "2026-11-02T22:53:49.240418+00:00",
+  "current_status": "SOFTWARE_DEFAULT_CLOSED_DEPLOY_AND_CLOSE_PASS_FINITE_ACCESS_PENDING",
+  "commit": "bade3230c3b1dc7d8230afd9de87ee29f2058bf3",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/software-release/MCP_VERIFIED.json",
+    "docs/mcp/c02/s1/software-release/INDEPENDENT_READBACK.json",
+    "docs/mcp/c02/s1/software-release/CLOSE_PROBE.json",
+    "docs/mcp/c02/s1/software-release/INDEPENDENT_CONTROLLER_REVIEW.json"
+  ],
+  "completed": [
+    "Actual fe750 fixed software deployment+independent readback and original close helper unchanged-default probe PASS",
+    "New default a96a/image0b468/configf3d937; Capture17d/Host6c9b exact, other bundles/Env/mounts preserved",
+    "Deployment7.23s and closeprobe0.15s resource locks released; old920f retained/stopped for software rollback only"
+  ],
+  "unfinished": [
+    "Fresh finite QA issuer/client/Grant/session/watchdog qualification and new access authority",
+    "Fresh consumer Preview-specific confirmation/Apply/APPLIED/Supabase/Native"
+  ],
+  "blocked_by": [
+    "No new finite QA access or business Apply authorization; software-only approval fulfilled"
+  ],
+  "next_action": "MCP binds future access package to new a96a/0b468/f3d937 default, performs bounded read-only current prerequisites; no repeat software deployment approval.",
+  "acceptance": {
+    "software_hosted": "DEPLOY_AND_UNCHANGED_CLOSE_PASS",
+    "consumer": "NOT_RUN",
+    "business_applied_receipts": [],
+    "native": "NOT_RUN"
+  },
+  "issuer_activated": false,
+  "timer_started": false,
+  "authority_changes": 0,
+  "paid_calls": 0,
+  "scope_note": "Software qualification only; no C02 Consumer E2E PASS, no package completion. S2 owning gap, S3/P4 local levels remain independent.",
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED"
+}

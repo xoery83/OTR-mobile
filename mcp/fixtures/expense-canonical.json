@@ -1,0 +1,42 @@
+{
+  "id": "00000000-0000-4000-8000-000000000020",
+  "journeyId": "00000000-0000-4000-8000-000000000002",
+  "creatorMemberId": "00000000-0000-4000-8000-000000000005",
+  "payerMemberId": "00000000-0000-4000-8000-000000000005",
+  "title": "QA stay",
+  "description": null,
+  "category": "stay",
+  "occurredAt": "2026-12-10T00:00:00Z",
+  "original": {
+    "minor": 140000,
+    "currency": "NZD",
+    "scale": 2
+  },
+  "businessStatus": "DRAFT",
+  "settlementParticipation": "INCLUDED",
+  "revision": 1,
+  "deletedAt": null,
+  "createdAt": "2026-11-01T00:00:00Z",
+  "updatedAt": "2026-11-01T00:00:00Z",
+  "participants": [
+    {
+      "memberId": "00000000-0000-4000-8000-000000000005",
+      "displayNameSnapshot": "QA",
+      "householdIdSnapshot": null
+    }
+  ],
+  "splits": [
+    {
+      "memberId": "00000000-0000-4000-8000-000000000005",
+      "method": "EXACT",
+      "originalMinor": 140000,
+      "settlementMinor": null,
+      "weightUnits": null,
+      "percentageUnits": null,
+      "roundingAdjustmentMinor": 0
+    }
+  ],
+  "valuation": null,
+  "paymentRecords": [],
+  "auditEvents": []
+}

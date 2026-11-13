@@ -1,0 +1,13 @@
+{
+  "basis": "LOCAL_SOURCE_ONLY_NOT_DEPLOYMENT",
+  "created_at": "2026-11-02T17:44:25.834571+00:00",
+  "sha256": {
+    "mcp/mutationContract.ts": "c0735fdd92c772df55cd6a3ce37b124ff4b75aaa76653e9047712a182799646f",
+    "mcp/mutation.ts": "8ef2e159f56b0b9d158ac71802394b05f7433f16e46402114f80789ba6c13a0f",
+    "mcp/reconcile.ts": "5fee61f681823851d47a6c1542aa8aa524798fbea05e7fc29ce8d56cfe8ed410",
+    "mcp/goldenReadback.ts": "66992780d568a97735d8a00e204d14cd52f645d0d8f5a2317fa938d84717356b",
+    "mcp/guide.ts": "103158e662c22cc7e172846132e53ead875ee39d612aca36d395ab4537090c44",
+    "mcp/server.ts": "2a73f7df9a205180ef4048d24be764c2ccf821ae573c8c1ae96d3f5227c8ac14",
+    "mcp/freshChatQa.ts": "fd1e28703abdb347da1215aee828c31a8e6cbbcebb5e12fa979e5a9827ffcb5d"
+  }
+}

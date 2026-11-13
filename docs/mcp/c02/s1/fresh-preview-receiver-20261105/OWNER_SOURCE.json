@@ -1,0 +1,32 @@
+{
+  "status": "ACTUAL_ADVANCE_HUMAN_SOURCE_BOUND_CONTEXT_REVIEWED_PLATFORM_PENDING",
+  "approvedExecutionGateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "actualOwnerSourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "actualOwnerSourceMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+  "actualOwnerText": "我提前批准你的审批。一会儿不用问我了\n",
+  "actualOwnerWireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+  "actualOwnerWirePath": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/ADVANCE_OWNER_WIRE.json",
+  "directHumanSourceVerified": true,
+  "platformRecognizedExecutionApproval": false,
+  "oldGenericPreferenceReusable": false,
+  "priorC7D0ApprovalReusable": false,
+  "credentialReadApproved": false,
+  "SaveApproved": false,
+  "sourceKind": "PLAIN_ADVANCE_HUMAN_TEXT_WITH_REVIEWED_SINGLE_SCOPE_CONTEXT",
+  "actualTurnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+  "contextMappingReview": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/REVIEW.json",
+    "sha256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220"
+  },
+  "context": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/APPROVAL_CONTEXT.json",
+    "sha256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc"
+  },
+  "rawText": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/ADVANCE_OWNER_TEXT.txt",
+    "sha256": "5d42b013912d183f14fcdc9e12ed013bad3c48d2c298dc9030d62b484bcc5b6d"
+  },
+  "humanContainsGateHash": false,
+  "questionReplyWrapper": false,
+  "sourceRelabeled": false
+}

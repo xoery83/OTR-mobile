@@ -1,5 +1,10 @@
 # Extended MCP tools — boundaries only
 
+Owner's 1 November direction now supplies a concrete task-led follow-up plan:
+[AI task contract](MCP_AI_TASK_CONTRACT_PLAN.md). People name reconciliation/AKA
+and Ledger Expense–Item links are planned delivery slices with explicit owning
+dependencies, not implemented capabilities or blanket activation authority.
+
 | Domain         | Later tools                                                             | Required owning contract                                                                           |
 | -------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Trip           | update_trip/archive_trip                                                | Metadata V3 CAS/receipt; lifecycle permissions                                                     |

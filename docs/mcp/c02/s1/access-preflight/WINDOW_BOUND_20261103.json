@@ -1,0 +1,22 @@
+{
+  "status": "OWN_NORMAL_CONTROL_READY_UNIQUE_WINDOW_BOUND_AUTHORITY_NOT_YET_ACTIVATED",
+  "plan": {
+    "gateSHA256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+    "windowId": "e32551d4-18f5-4fcd-b02d-9783eb4c2f9c",
+    "startsAt": 1793679613655,
+    "normalCloseAt": 1793681293655,
+    "expiresAt": 1793681413655,
+    "command": null
+  },
+  "configSHA256": "783ef1efd1897b02a82dcfa7117c2008b4b81af5848d17a0c8b5f16fe51d5c3c",
+  "issuerPlanSHA256": "15fd21eb15e55f2a81197bc7641cc00dd317e1cb8982a69b2367f4a184574a0e",
+  "ownControlLaunch": "2026-11-03T04:19:54.266407Z",
+  "ownControlReady": "2026-11-03T04:20:02.817Z",
+  "confirmationsEmpty": true,
+  "actualTimersArmed": false,
+  "consumerPromptSent": false,
+  "businessApplies": 0,
+  "deadlineCannotReset": true,
+  "rootProtectedExecution": "REQUESTED_SAME_BINDER",
+  "sessionOrTokensRecorded": false
+}

@@ -1,0 +1,47 @@
+{
+  "status": "CLOSED_VERIFIED_PREVIEW_ONLY_NO_SAVE",
+  "windowId": "e0d1c568cbae4b0ca3a0dec92e4ececf",
+  "gateSHA256": "b2dfa4046fa4beda20d7aa581238294e50010d01df542c54f5cdcaa89182b7c5",
+  "observedAt": "2026-11-03T19:27:45.264206+00:00",
+  "normalCloseAt": "2026-11-03T19:26:54.419Z",
+  "hardDeadline": "2026-11-03T19:28:54.419Z",
+  "runtimeRestoredAt": "2026-11-03T19:25:33.631040Z",
+  "consoleRestoredAt": "2026-11-03T19:26:42.431728+00:00",
+  "issuer": {
+    "status": "ISSUER_DENY_ALL_VERIFIED",
+    "windowId": "e0d1c568cbae4b0ca3a0dec92e4ececf",
+    "observedAt": "2026-11-03T19:25:37.135834+00:00",
+    "issuerClosed": true
+  },
+  "runtime": {
+    "status": "DEFAULT_RESTORED_FULL_FINGERPRINTS_TIMERS_DISARMED",
+    "observedAt": "2026-11-03T19:26:28.310698+00:00",
+    "containerId": "d5ed2ea737f4ef6221301eb17ec64f87f4bf6efec7f3f1bc8487c5b1fa3d9c15",
+    "image": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+    "configSHA256": "874777a26729b314eb2133a69483358dbc6f9032c3c3dc2b44035ef42600c971",
+    "health": "healthy",
+    "configFilesVerified": 18,
+    "mountedFilesVerified": 5,
+    "timers": {
+      "status": "C02_OWN_TIMERS_DISARMED_AFTER_DEFAULT_CLOSED",
+      "units": [
+        "otr-mcp-c02-e0d1c568cbae4b0ca3a0dec92e4ececf-normal.timer",
+        "otr-mcp-c02-e0d1c568cbae4b0ca3a0dec92e4ececf-normal.service",
+        "otr-mcp-c02-e0d1c568cbae4b0ca3a0dec92e4ececf-hard.timer",
+        "otr-mcp-c02-e0d1c568cbae4b0ca3a0dec92e4ececf-hard.service"
+      ]
+    },
+    "workers": {
+      "otr-universal-pdf-worker.service": "MainPID=2229750\nActiveState=active\nSubState=running",
+      "otr-universal-png-worker.service": "MainPID=2229773\nActiveState=active\nSubState=running"
+    },
+    "traceScope": "UNION_OF_BOUNDED_WHITELIST_SNAPSHOTS_NOT_ALL_HTTP"
+  },
+  "activeGrantCount": 0,
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "consumerOutcome": "OAuth and8read2write catalog and Create Preview reported; noSave/Apply. Materials review unavailable and some readerrors/latency recorded separately.",
+  "saveQualification": "NO_SERVER_RESPONSE_PROOF_NO_OWNER_SAVE_APPROVAL",
+  "originalPreviewOperationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "previewDigestConsumerReported": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc",
+  "clockExtended": false
+}

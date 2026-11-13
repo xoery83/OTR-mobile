@@ -1,0 +1,53 @@
+{
+  "status": "LOCAL_SDK_AUTH_RECOVERY_CONTRACT_PASS_NO_BLOCKER",
+  "sdk": "@modelcontextprotocol/client 2.4.0",
+  "handler": "actual createMcpHandler through loopback HTTP",
+  "tests": {
+    "command": "./node_modules/.bin/vitest run --config mcp/vitest.config.mts mcp/read.test.ts",
+    "passed": 18,
+    "http200ToolError": {
+      "challenge": "AUTH_REQUIRED + _meta mcp/www_authenticate",
+      "refreshCallbacks": 0,
+      "backendReads": 1,
+      "mutations": 0
+    },
+    "http401Ingress": {
+      "refreshCallbacks": 1,
+      "subsequentRead": "SUCCESS",
+      "mutations": 0
+    }
+  },
+  "checks": {
+    "mcpTypecheck": "PASS",
+    "eslintReadTest": "PASS",
+    "mcpBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "testSourceSHA256": "17742b5e405e40417467598f667c9ae648594610f47844d99ff40a00fd6aa109",
+  "limits": [
+    "Minimal AuthProvider callback fixture; not full OAuth or Claude refresh implementation.",
+    "Does not identify actual consumer failure phase or grant expiry/revocation.",
+    "No transport/HTTP/error semantic production change; no write replay or new window.",
+    "Initial npm test selected the whole MCP suite under restricted loopback and was stopped; it is not a successful full-suite run."
+  ],
+  "independentReview": {
+    "agent": "/root/mcp_independent_review",
+    "result": "NO_BLOCKER",
+    "method": "Bounded static review, two reads; reviewer did not rerun checks.",
+    "scope": "SDK callback/read behavior and honest fresh outcome/closure limits; minimal provider is not a real refresh-token flow."
+  },
+  "owningReadDiagnosticCandidate": {
+    "commit": "609184bb",
+    "source": "Auth direct handoff; commit identity/files independently inspected, tests not rerun by MCP",
+    "status": "LOCAL_READY_NOT_DEPLOYED",
+    "flag": "MCP_QA_READ_STAGE",
+    "reportedValidation": "87 focused/types/lint PASS; independent 72/72 and NO_BLOCKER",
+    "classifications": [
+      "before/after expiry",
+      "owning HTTP 401",
+      "cancellation",
+      "timeout"
+    ],
+    "limits": "No TTL/permissions/HTTP semantics/retry changes. Only future authorized deployment/window can collect actual evidence; cannot explain historical failure."
+  }
+}

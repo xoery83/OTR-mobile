@@ -1,0 +1,19 @@
+{
+  "eventId": "mcp-c02-s1-fresh-preview-20261104-ready-001",
+  "ack": "PENDING_VERIFICATION",
+  "matchedNode": "MCP-C02:LOCAL_PREP / C02-S1_FRESH_PREVIEW",
+  "snapshotVersion": 166,
+  "publication": "PUBLISHED_LOCAL_STATIC_SCOPE_ONLY",
+  "sourceCommit": "c28b77e3",
+  "source": "Mission Control acknowledgement from thread01a19a2c-de35-72d2-96b7-e66333286e13",
+  "doesNotUpgrade": [
+    "Consumer",
+    "OAuth",
+    "Hosted",
+    "Create",
+    "Edit",
+    "Native",
+    "MCP-C02 completion"
+  ],
+  "originalUnknown": "FROZEN"
+}

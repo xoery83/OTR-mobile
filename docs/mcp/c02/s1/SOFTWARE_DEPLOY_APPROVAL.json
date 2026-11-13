@@ -1,0 +1,31 @@
+{
+  "status": "FULFILLED_SOFTWARE_DEPLOY_AND_CLOSE_PASS",
+  "recorded_at": "2026-11-02T22:02:49.383568+00:00",
+  "source_thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_question_item_id": "[request_user_input_async,call_2dcb284cd3694f3caf38df2219b7ec40,0]",
+  "answer": "\u6279\u51c6\u672c\u6b21\u9ed8\u8ba4\u5173\u95ed\u8f6f\u4ef6\u90e8\u7f72\u53ca\u5173\u95ed\u9a8c\u8bc1",
+  "gate_sha256": "fe7508f4611c166b8f3935253517accf8bfdda7e50ab5705d09abbc0e1f54cd4",
+  "scope": "Fixed default-closed software deploy and unchanged-close validation only. No Issuer/OAuth/window/command confirmation/business Apply.",
+  "root_request_submitted": true,
+  "execution_receipt": "software-release/MCP_VERIFIED.json",
+  "authorization_note": "This record indexes the actual human reply; Root must independently verify that reply, not trust agent JSON as consent.",
+  "root_source_readback": {
+    "source_thread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+    "human_turn": "01a19e47",
+    "question_call": "call2dcb",
+    "at": "2026-11-02T22:16:27.953698+00:00",
+    "actual_stage": "NOT_STAGED_NOT_BUILT_NOT_DEPLOYED",
+    "reported_queue": "P1 Auth default-closed code-only main integration (no Hosted/SQL), then P2 C02 fixed software; no known image lock conflict",
+    "approval_sufficient": true,
+    "further_owner_reapproval_required_for_same_scope": false
+  },
+  "root_execution_update": {
+    "at": "2026-11-02T22:27:12.279105+00:00",
+    "stage": "PREBUILD_STARTED_OUTSIDE_LOCK",
+    "prior_main": "10094d52",
+    "host_preimage": "920f/180d/1efe/48b",
+    "artifacts": "Capture17d481 + Host6c9b722 only",
+    "business_activation": false,
+    "source": "Root direct progress message; actual build/deploy/close receipts pending"
+  }
+}

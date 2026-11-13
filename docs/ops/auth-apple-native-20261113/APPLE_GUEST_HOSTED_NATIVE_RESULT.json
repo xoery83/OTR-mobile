@@ -1,0 +1,22 @@
+{
+  "status": "SINGLE_ORIGINAL_APPLE_GUEST_PUBLICATION_AND_COLD_READBACK_PASS_NATIVE_DETAIL_GAPS",
+  "softwareCommit": "237e4c66",
+  "originalAttemptId": "7da7240f-4019-4a60-b3d7-350525ecddef",
+  "originalSessionTarget": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "submitCount": 1,
+  "providerReauthorization": false,
+  "coldRelaunch": "AGENT_DEVICE_RUNNER_OPEN_RELAUNCH_SUCCESS",
+  "coldAccountPage": "NORMAL_CURRENT_ACCOUNT_NO_ADOPTION_PANEL",
+  "coldTripTitle": "Apple Guest QA 20261113",
+  "coldP1Title": "Apple Guest Walk",
+  "receiptSHA256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1",
+  "nativeDetailGaps": [
+    "Trip summary fallback: edit unavailable",
+    "Roster display has 0 named People despite authoritative linked Owner Person",
+    "Schedule uses incomplete-time-information fallback"
+  ],
+  "fullTripPeopleUx": "NOT_ACCEPTED",
+  "hostedClosure": "ROOT2_INDEPENDENTLY_CLOSED_RESTORED_HEALTHY_WRITER_RELEASED",
+  "closurePolicyXmin": "67350",
+  "devicesClaimReleased": true
+}

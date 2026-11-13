@@ -48,6 +48,42 @@ async function fixture() {
 }
 
 describe("Guest verification in the existing secure Account slot", () => {
+  it("canonicalizes missing optional Apple name components while retaining explicit null", async () => {
+    const f = await fixture();
+    const appleSession = {
+      ...session(),
+      identity: {
+        ...session().identity,
+        appleFirstSignInName: {
+          givenName: "小明",
+          familyName: null,
+          middleName: undefined,
+        },
+      },
+    };
+    await f.repo.guestVerification.store(binding, appleSession);
+    const cold = await createAuthRepository(f.storage).guestVerification.read(binding);
+    expect(cold.status).toBe("SESSION");
+    if (cold.status !== "SESSION") throw Error("Expected retained Session");
+    expect(cold.session.identity?.appleFirstSignInName).toStrictEqual({
+      givenName: "小明",
+      familyName: null,
+    });
+  });
+  it("retains the optional first Apple name through Guest custody and a repository restart", async () => {
+    const f = await fixture();
+    const appleSession = {
+      ...session(),
+      identity: {
+        ...session().identity,
+        appleFirstSignInName: { givenName: "小明", familyName: "王" },
+      },
+    };
+    await f.repo.guestVerification.store(binding, appleSession);
+    const cold = await createAuthRepository(f.storage).guestVerification.read(binding);
+    expect(cold).toMatchObject({ status: "SESSION", session: appleSession });
+    expect(await f.repo.readLocalSession()).toBeNull();
+  });
   it("rejects a refreshed revocation credential belonging to another Account", async () => {
     const f = await fixture();
     await f.repo.guestVerification.store(binding, session());

@@ -1,0 +1,7 @@
+import {build} from '/Users/xoery/Project/otr-mobile/node_modules/esbuild/lib/main.js';
+import fs from 'node:fs';import path from 'node:path';import {createHash} from 'node:crypto';
+const lane='/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical',main='/private/tmp/otr-mcp-c02-diagnostic-deployment-20261104',out='/private/tmp/otr-mcp-c02-controlled-replay-20261104';
+const auth=['mcpAccountWriteBinding','mcpAccountReadBinding','mcpOAuthGrantVerifier','mcpConsentPage'];
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const r=await build({absWorkingDir:lane,entryPoints:['mcp/c02Host.ts'],bundle:true,platform:'node',target:'node24',format:'esm',write:false,metafile:true,outfile:out+'/c02-host.mjs',alias:{'@':lane+'/src'},plugins:[{name:'integrated-auth',setup(b){b.onResolve({filter:/^\.\.\/backend\/src\/mcp/},a=>auth.includes(path.basename(a.path))?{path:main+'/backend/src/'+path.basename(a.path)+'.ts'}:undefined)}}]});
+fs.writeFileSync(out+'/c02-host.mjs',r.outputFiles[0].contents);const d={sourceMain:'7c1301c6a2ac7bdfe22e3c00f31f747db2810977',hostSource:'7be57c86',hostSHA256:sha(r.outputFiles[0].contents),inputs:Object.fromEntries(Object.keys(r.metafile.inputs).map(p=>{const f=path.resolve(lane,p);return[f,sha(fs.readFileSync(f))]}))};fs.writeFileSync(out+'/BUILD_MANIFEST.json',JSON.stringify(d,null,2)+'\n');console.log(JSON.stringify({hostSHA256:d.hostSHA256,inputs:Object.keys(d.inputs).length}));

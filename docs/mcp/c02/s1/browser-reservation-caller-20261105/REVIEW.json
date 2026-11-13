@@ -1,0 +1,45 @@
+{
+  "verdict": "BLOCKED_LOCAL_PUBLICATION_RACE_DEFAULT_OFF_RETAINED",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-04T23:38:02.170869+00:00",
+  "candidateCommit": "f101971eb65ce3bb5331b4ce4111a40e06876c4b",
+  "candidateSHA256": "ff80da1807e441a7448dd08a541361eeb807a4e8cebbbd2ab103b3202a8a1a40",
+  "scope": "Only browser reservation caller, tests, inactive normal-control source and direct pinned Auth reservation port; no full repo audit",
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "scripts/mcp/c02-browser-reservation.mts",
+      "lines": "76-80,128-134,185-186",
+      "title": "Normal atomic publication exposes a transient multi-link file and permanently consumes the single attempt",
+      "actual": "writePrivate linkSync(temp,path) makes file nlink2 until unlinkSync(temp). Independent owner may poll in between. readPrivate rejects nlink2 after attempted=true; writes REJECTED ACK with null request hash. Browser reports ACK_IDENTITY_MISMATCH and cannot retry even though real owning port was never called. ACK publication has same transient nlink2 risk on browser reader.",
+      "deterministicReproduction": "In a pure local Node fixture, patch node:fs.linkSync via syncBuiltinESMExports, call original link, then invoke owner.poll synchronously only when REQUEST destination is published, before writePrivate returns to unlink temp. Real fixture port returns RESERVED_LOCK_RETAINED if called. Callback throws BROWSER_ACK_IDENTITY_MISMATCH; owner result REJECTED; calls0; second poll undefined. Temporary files removed after fixture; no network/credentials.",
+      "impact": "Fail-closed safety preserved, but valid interprocess schedule irreversibly aborts only attempt. Current16 tests omit the link/unlink interleaving.",
+      "minimalRequiredFix": "Make publication completion and consumption compatible for both request and ACK. Preserve no-replacement/symlink/multilink/owner/mode security and one owning attempt. Do not weaken nlink validation or retry/refund owning reservation; add deterministic request and ACK publication-interleaving regressions. Exact protocol choice belongs implementation child."
+    }
+  ],
+  "actualChecks": [
+    "Existing16 local fixtures PASS including independent subprocess callback success and bounded timeout",
+    "Pinned owning Auth source0d91a18f inspected: real synchronous port validates active same registered account/email/current timestamp, consumes its own attempt before durable reservation, returns RESERVED_LOCK_RETAINED only after reserve completes",
+    "Caller exact identity/time/hash/ACK and DEFAULT_OFF reviewed; missing/throwing port no success; request or uncertain ACK does not release owning lock",
+    "Inactive normal-control main unconditionally rejects LOCAL_SOURCE_CANDIDATE_NOT_LIVE_READY; enabled constant false; imports perform no live Auth reservation",
+    "Manual Owner OTP proposal explicitly remains narrowing proposal, same actor/recipient, no browser Keychain/API/resend; real terminal/session bridge missing is honestly retained",
+    "Deterministic extra publication race reproduced; initial expected error corrected to actual ACK_IDENTITY_MISMATCH without changing implementation"
+  ],
+  "owningInterfaceBlockersSeparate": [
+    "Auth trusted browser sender/session terminal observation and same-session verified-close consumer still absent; normal control FINISH/logout alone cannot prove browser sender terminal state",
+    "Source integration/pins/current resource release and precise narrowing/real Owner message qualifications still pending"
+  ],
+  "reviewIsRuntimeAuthority": false,
+  "fixed6d49PackageChanged": false,
+  "AuthHostReservationExecuted": false,
+  "notExecuted": [
+    "Keychain",
+    "mailAPI",
+    "Browser",
+    "OTP",
+    "Hosted",
+    "Real Auth port"
+  ],
+  "testsAreLocalFixturesOnly": true,
+  "remaining": "Fix narrow publication race and focused independent retest; keep defaultOFF/notlive and retained-lock boundaries. No old UNKNOWN/window or refused credential route is reopened."
+}

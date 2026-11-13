@@ -1,0 +1,29 @@
+{
+  "status": "OWN_CONTROL_READY_AND_FILE_BOUND_ONCE_NO_ACTIVATION_INFERRED",
+  "recordedAt": "2026-11-04T21:04:29.804783+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "execSession": 70851,
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "actualLaunchStartedAt": "2026-11-04T21:03:21.130263+00:00",
+  "actualReadyAt": "2026-11-04T21:03:36.768Z",
+  "T": "2026-11-04T21:03:42.327Z",
+  "normalCloseAt": "2026-11-04T21:31:42.327Z",
+  "hardExpiresAt": "2026-11-04T21:33:42.327Z",
+  "Root2BindResult": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/FILE_READY_BIND_RESULT.json",
+    "sha256": "19e7b9a4468d569f275dd9cee8ed6d0169c860286306b6db2d1d6639f2b36402",
+    "status": "C843_FILE_READY_BOUND_ONCE_NOT_ACTIVATED"
+  },
+  "boundByFileEvent": true,
+  "Root2RecordedActivation": {
+    "OAuth": false,
+    "Issuer": false,
+    "TimerArm": false,
+    "ContainerChanged": false
+  },
+  "consumerAuthentication": false,
+  "consumerTaskSubmitted": false,
+  "Save": 0,
+  "next": "Await parent actual activation/close eligibility readback before browser authentication; preserve originalclock/no repeated login."
+}

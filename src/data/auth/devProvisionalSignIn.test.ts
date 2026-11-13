@@ -8,6 +8,12 @@ vi.mock("./googleSignIn", () => ({
   }),
 }));
 
+vi.mock("./appleSignIn", () => ({
+  createAppleSignInAdapter: () => ({
+    capability: async () => ({ available: false, reason: "NATIVE_MODULE_MISSING" }),
+  }),
+}));
+
 vi.mock("./devSupabaseAuth", () => ({ verifySupabaseDevEmailOtp: vi.fn() }));
 
 describe("DEV provisional provider composition", () => {
@@ -38,8 +44,7 @@ describe("DEV provisional provider composition", () => {
         createDevProvisionalSignIn().verify({ provider }),
       ).resolves.toMatchObject({
         status: "UNAVAILABLE",
-        reason:
-          provider === "google" ? "NATIVE_MODULE_MISSING" : "CONFIGURATION_UNVERIFIED",
+        reason: "NATIVE_MODULE_MISSING",
       });
       expect(verifySupabaseDevEmailOtp).not.toHaveBeenCalled();
     },

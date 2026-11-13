@@ -1,0 +1,21 @@
+{
+  "status": "SIGNED_DEVICE_BUILD_PASS",
+  "bundleIdentifier": "art.xoery.otr",
+  "team": "3K49Z2Q5X7",
+  "applicationIdentifier": "3K49Z2Q5X7.art.xoery.otr",
+  "appleEntitlement": [
+    "Default"
+  ],
+  "appPath": "/private/tmp/otr-apple-device-derived/Build/Products/Release-iphoneos/OTRMobile.app",
+  "codeSignatureVerification": "PASS",
+  "sourceCommit": "e013bf5d",
+  "executableSHA256": "c6e150331ce2353c7c7c05fe6ed280cba804098608d0917770868833cf6b3af1",
+  "javascriptSHA256": "c1c7a1eb87a4f7dd975e2e9b32713ff181aabe2c9779c83b8a9d747d8b8fc990",
+  "deviceInstall": "PASS",
+  "firstLaunch": {
+    "result": "PASS_PROCESS_ALIVE",
+    "processId": 74426,
+    "nativeLoginUi": "AWAITING_OWNER_OBSERVATION"
+  },
+  "recordedAt": "2026-11-13T23:10:52.803374+13:00"
+}

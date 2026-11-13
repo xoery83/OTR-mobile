@@ -1,0 +1,12 @@
+{
+  "status": "LIVE_DOM_AND_NORMAL_CLICK_OBSERVED_NO_SCREENSHOT_RETAINED",
+  "source": "Actual CUA DOM snapshots before the same authorized button supplemental review, plus successful normal click tool result",
+  "clientDisplayName": "OTR DEV QA - Claude Read",
+  "actualWriteCopy": "读取旅行，并创建或编辑你有权修改的行程事项。每次保存仍需单独确认。此连接不提供账本记录或原始文件。",
+  "button": "允许读取和编辑旅行",
+  "successfulClickAt": "2026-11-01T03:53:08.249Z",
+  "currentGrantEvidence": "ORIGINAL_BB_AUTH_R_FRESH_WRITE_GRANT_READBACK.json",
+  "screenshot": "NOT_RETAINED_INITIAL_REVIEW_BLOCKED_COMBINED_CAPTURE_AND_CLICK",
+  "oldClientNameDoesNotDefineGrantedScope": true,
+  "noRecreatedScreenshot": true
+}

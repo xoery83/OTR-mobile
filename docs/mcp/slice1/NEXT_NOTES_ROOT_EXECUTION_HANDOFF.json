@@ -1,0 +1,125 @@
+{
+  "status": "ROOT_EXECUTION_HANDOFF_ONLY_NO_AUTHORITY_NO_CLOCK",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "soleProtectedExecutionThread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "authRole": [
+    "Existing code and operator handoff",
+    "Independent source and assembly Review",
+    "No protected issuer/Grant/console/Host execution in Auth chat for this next window"
+  ],
+  "entries": {
+    "normalSessionLibrary": {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/registered-qa-host-session.ts",
+      "sha256": "c57737e680e611307aeaa4e5514caa0796be4e32aeb02b11ff4e605a22da17b3"
+    },
+    "normalControlEntry": {
+      "path": "/private/tmp/otr-auth-consumer-b3-control-20261101.mts",
+      "sha256": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947"
+    },
+    "issuerRenderer": {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/render-mcp-write-qa-hook.py",
+      "sha256": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad"
+    },
+    "issuerCloseEntry": {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py",
+      "sha256": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c"
+    },
+    "sqlTransport": {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/import/universal_scope_close.py",
+      "sha256": "ad65ae0c412e77525553d01e36b3fce1ee6ced2a75e003fc98e9213b459c08d4"
+    },
+    "oldActivationReferenceOnly": {
+      "path": "/private/tmp/otr-auth-mcp-slice1-78c1610ecf5f43409106fb67ecd36489/activate.py",
+      "sha256": "ad95405701ceb1e6a88acf705aed60832db5e4d51e82e61653bf9a4d6af20a66"
+    }
+  },
+  "normalControl": {
+    "cwd": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical",
+    "argv": [
+      "node",
+      "--import",
+      "tsx",
+      "/private/tmp/otr-auth-consumer-b3-control-20261101.mts",
+      "/private/tmp/otr-auth-consumer-control-e389-root-owned",
+      "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141"
+    ],
+    "environmentNames": [
+      "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL",
+      "EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY",
+      "OTR_DEV_OTP_TEST=1",
+      "OTR_QA_RESEND_SCOPE=dedicated-qa-team",
+      "OTR_QA_DEV_BUSINESS_WINDOW=HELD"
+    ],
+    "credentialSource": "Existing OTR-QA-Inbound/resend Keychain item accessed only by normal helper; do not inspect SMTP key",
+    "sessionOwnership": "Root invokes normal OTP and verify; Session stays in this fresh process; never reuse Auth36280 or copy tokens",
+    "filesystemPrefix": "otr-auth-consumer-control- is an existing software path constraint, not approval provenance",
+    "metadata": "registeredHostQa.tripId is helper registration proof, not a mutation of that Trip",
+    "lock": "registered-native04/active.lock; do not delete foreign/concurrent lock",
+    "ready": "NORMAL_CONTROL_READY_SESSION_OWNED_IN_PROCESS",
+    "close": [
+      "Create REVOKE in own control directory",
+      "Wait GRANT_REVOKED_WITH_ROUTE_STILL_LIVE or independently proven absence",
+      "Create FINISH only after reconciliation",
+      "Require process exit plus PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+    ],
+    "boundedLifetimeMinutes": 35,
+    "deadlineConstraint": "Fixed QA D must leave cleanup time inside own control lifetime; do not derive a new 35 minutes from a later READY observation"
+  },
+  "issuer": {
+    "artifactDirectory": "/private/tmp/otr-auth-mcp-slice1-e389fb93736b401c9e9b5f1437e852dc",
+    "renderOnly": "Reuse render(client, fixedD, fixedT) and render_close; no authority until actual Root approval and ready close controls",
+    "softwareMarker": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801 is frozen software identity, NOT new execution Gate",
+    "planFields": [
+      "gateSHA256",
+      "windowId",
+      "clientId",
+      "startsAt",
+      "expiresAt",
+      "activeSQLSHA256",
+      "closeSQLSHA256",
+      "activeBodyMD5"
+    ],
+    "closeArgv": [
+      "python3",
+      "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py",
+      "<private-artifact-directory>",
+      "<actual-plan-SHA256>",
+      "--watch"
+    ],
+    "activation": "Old78c activate.py is reference ONLY; Root prepares minimal new Gate+nonce+new EMPTY receipt bindings. Validate frozen render/deadline/closed preimage, durable O_EXCL intent before SQL, single CAS, independent MD5 readback, UNKNOWN no reapply",
+    "finalReadback": "Reuse old78c final-read.py algorithm for deny-all body/original owner/invoker/search_path/expected ACL; new artifact directory only"
+  },
+  "console": {
+    "project": "tuqigdxrvrerfewsxqgm",
+    "execution": "Root uses own CUA browser binding/tab, not Auth tab/session handle",
+    "enableOrder": [
+      "Site URL https://api-dev.xoery.art",
+      "Existing otr_mcp_qa_access_token Hook ENABLED after finite policy READY",
+      "OAuth Server ON; DCR remains OFF"
+    ],
+    "restore": [
+      "OAuth Server OFF and save",
+      "Existing Hook DISABLED without deleting function",
+      "Site URL http://localhost:3000 and persisted readback",
+      "Close own temporary tab"
+    ],
+    "paths": [
+      "/auth/url-configuration",
+      "/auth/hooks",
+      "/auth/oauth-server"
+    ]
+  },
+  "beforeClock": [
+    "New exact Gate explicitly covers Root as sole protected executor, Root actual human origin, existing finite issuer body CAS/restore, console changes, normal own Session/Grant cleanup",
+    "New default/Root-only helper hashes/close binding and dispatchers actually READY",
+    "Final actual approval bytes including clientId and true Root source message pass actual validator plus pure plan with external IO disabled",
+    "Normal own control and consumer UI/receiver ready; then freeze T/D once <=30min and close at D-120s"
+  ],
+  "notAuthorized": [
+    "OTP send now",
+    "Session acquisition now",
+    "SQL or console changes now",
+    "Host stage or deployment now",
+    "Old78c approval/window reuse"
+  ]
+}

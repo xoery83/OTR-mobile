@@ -1,0 +1,13 @@
+{
+  "event_id": "mcp-c02-s1-b08a-preview-20261104-001",
+  "status": "PENDING_VERIFICATION",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "owner_slice_id": "C02-S1",
+  "execution_slice_id": null,
+  "snapshot": "8362c3f876fae221",
+  "build": "a147269cc80531ba",
+  "publishedVersion": 109,
+  "source": "Mission Control explicit response in thread01a19a2c-de35-72d2-96b7-e66333286e13, turn01a1a35c-a2aa-7fa0-bfd4-5de47979a80b",
+  "scope": "Original preview event persisted once; closure7bf4d16b and approvalbe4c19dd not independently verified by MC; no E2E upgrade"
+}

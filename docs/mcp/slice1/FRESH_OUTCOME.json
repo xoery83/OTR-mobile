@@ -1,0 +1,36 @@
+{
+  "status": "CLAUDE_BLOCKED_NO_SUBMISSION_CHATGPT_NOT_RUN",
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "gateSHA256": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "consumer": "Claude Sonnet 5.5 Medium",
+  "normalOtpConsent": "PASS",
+  "toolDiscovery": 8,
+  "guideSectionsRead": [
+    "OPERATING",
+    "FIELDS",
+    "CAPABILITIES"
+  ],
+  "guideNotesMapping": "ACTUAL_PASS_WITHOUT_FIELD_CLARIFICATION",
+  "tripAndItemReads": "PASS",
+  "editBase": "AUTH_REQUIRED",
+  "formalPreview": "NOT_DISPATCHED_PERMISSION_CARD_PENDING_AT_CLOSE_THEN_DENIED",
+  "actualPreviewDigest": null,
+  "notesApproval": false,
+  "applyAttempts": 0,
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "operationState": "NOT_SUBMITTED",
+  "appliedReceipt": null,
+  "chatGPT": "NOT_RUN_FIRST_CONSUMER_NOT_PASS",
+  "executionLimit": "EMPTY setup and issuer activation consumed the finite clock; MCP did not advance the pending Preview permission before close. No deadline reset/extension.",
+  "rootCause": "UNDETERMINED; do not infer token expiry or revocation from AUTH_REQUIRED. Temporary container was removed on close; later inaccessible logs are not zero-event evidence.",
+  "modelLimit": "Final model prose suggested direct confirmation as an alternative despite no server digest; this was not used or authorized. Trusted confirmation/CAS guards remain required.",
+  "readback": "FRESH_POSTCLOSE_READBACK.json; entire root unchanged at revision 1, both new receipts absent. Child collections not reread postclose.",
+  "evidence": {
+    "FRESH_CLAUDE_TOOL_TRANSCRIPT.txt": "2b0a50c8e16f060bc6e309ae3dbc2fda1f7f51fa45bc770a5cda7095eb85d36a",
+    "FRESH_CLAUDE_FINAL_STATE.txt": "22d74c69bab84b74f0af9316632d71f149dea0e2c5850c93de7dfba223e3bfdd",
+    "FRESH_POSTCLOSE_READBACK.json": "7b7a4ecb625279e369d0ab18c1a4a2d37f27a54514ec0febb2cc49b0150adfec",
+    "FRESH_CLOSURE.json": "9b637e916383a692347fdb4084794f10ce30fe95583f8daea77bf577a137d4af"
+  },
+  "historicalUnknown": "f107/9b retained independently; no replay or replacement",
+  "next": "Local auth recovery contract and finite ReadBinding diagnosis; no new activation requested."
+}

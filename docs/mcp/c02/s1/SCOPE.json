@@ -1,0 +1,18 @@
+{
+  "status": "DRAFT_LOCAL_NOT_EXECUTION_AUTHORITY",
+  "windowId": "e32551d418f54fcdb02d9783eb4c2f9c",
+  "runtimeWindowId": "e32551d4-18f5-4fcd-b02d-9783eb4c2f9c",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "callback": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "maximumWindowSeconds": 1800,
+  "normalCloseLeadSeconds": 120,
+  "tokenMaxSeconds": 60,
+  "operations": "One new PRIVATE/SELF P3 Create, then one SCHEDULE edit on that same new rev1 Item with formal Create receipt; no existing Item edits.",
+  "confirmationsInitially": [],
+  "authorityActivated": false,
+  "clockStarted": false,
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb"
+}

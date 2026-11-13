@@ -1,0 +1,34 @@
+{
+  "event_id": "mcp-chatgpt-751-native-handoff-20261102-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S4",
+  "work_item_id": "WI-MCP-001",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "HANDOFF",
+  "reported_event_type": "HANDOFF",
+  "created_at": "2026-11-02T10:20:23.456434+00:00",
+  "expected_updated_at": null,
+  "current_status": "CONSUMER_CLOUD_PASS_CLOSED_NATIVE_NOT_RUN_QA_DEVICE_SESSION_UNVERIFIED",
+  "commit": "6adc75f9",
+  "related_event_id": "mcp-chatgpt-p3-notes-751-20261102-001",
+  "summary": "Native independently returned NOT_RUN for same277/rev3; no verified normal QA device session, its Reader A/B did not cover this Trip. Preserve ChatGPT cloud PASS; no Native PASS claimed.",
+  "evidence_paths": [
+    "docs/mcp/chatgpt-notes/continuation-20261102/NATIVE_HANDOFF_RESULT.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/ACCEPTANCE.json"
+  ],
+  "completed": [
+    "Cloud Notes E2E PASS_CLOSED and Native precise target/receipt handoff.",
+    "Native independent result436cd65b received; no borrowed Session or replayed mutation."
+  ],
+  "unfinished": [
+    "Native normal QA device-session verification then legal read-only Pull/SQLite/DayFeed/Detail/cold validation."
+  ],
+  "blocked_by": [
+    "No verified device session normally logged into QAAccount1f3 for this target Trip."
+  ],
+  "dependency_party": "Native owning legal device/session conditions; no missing Notes Core/Auth API.",
+  "next_action": "Keep cloud scoped PASS unchanged; record Native NOT_RUN separately, arrange its authorized device QA as a separate owning work item.",
+  "affected_node_ids": []
+}

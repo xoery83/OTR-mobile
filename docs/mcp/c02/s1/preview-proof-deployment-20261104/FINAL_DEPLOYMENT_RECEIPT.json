@@ -1,0 +1,36 @@
+{
+  "status": "SERVER_VERIFIED_SOFTWARE_DEFAULT_CLOSED",
+  "requestId": "MCP-C02-S1-PREVIEW-PROOF-20261104-001",
+  "completedAt": "2026-11-03T19:53:55.606634+00:00",
+  "sourceMain": "7946800b02a0b63c0b1a8a748b2492bd04dc6367",
+  "approvedPackageCommit": "df0ee056",
+  "approvedPackageSHA256": "80d8568289410ac8721a8cc4f4694dfbaec7223b1c83d202b60d9ec527af7ef0",
+  "activeDefault": {
+    "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+    "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+    "configSHA256": "12ca750ded949aa58bf74e664b0e98c6b0ae15db8a3c0d03e929f645899ae4ba"
+  },
+  "retainedRollbackContainer": "0272263628c58f9710af75526968844542ad8611f048a992f2f0e60685536c2c",
+  "retainedRollbackImage": "sha256:5938c5678dfec5a920c9f902805105ec8d03507c82d5eaaba2e20ca69f52da83",
+  "rollbackExecuted": false,
+  "independentReadback": "INDEPENDENT_READBACK.json",
+  "postDeployCloseProbe": "POST_DEPLOY_CLOSE_PROBE.json",
+  "validation": {
+    "runtimeTests": 17,
+    "collectorTests": 4,
+    "timerCASTests": 9,
+    "isolatedHttpChecks": 4,
+    "configurationFiles": 18,
+    "mountedFiles": 5,
+    "postDeployNoChangeClose": "PASS"
+  },
+  "runtimeActivated": false,
+  "oauthIssuerTimerStarted": false,
+  "businessInvocations": 0,
+  "sqlCalls": 0,
+  "providerInvocations": 0,
+  "saveCalls": 0,
+  "consumerProof": "PENDING_SEPARATELY_AUTHORIZED_FINITE_WINDOW",
+  "futurePackageRequirement": "Bind ec148 collector through Timer/CAS/manifest against fresh current baseline. Historical window IDs/clocks are consumed; no authority inherited.",
+  "workerObservationScope": "08:46:33 NZDT only; PNG original 50min lifetime not extended."
+}

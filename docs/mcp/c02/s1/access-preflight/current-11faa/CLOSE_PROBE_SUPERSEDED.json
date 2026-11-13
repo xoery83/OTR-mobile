@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-11-03T01:38:42.831613+00:00",
+  "status": "DO_NOT_EXECUTE_CURRENT_DEFAULT_SUPERSEDED",
+  "candidate_sha256": "8ac5b145d9ab9db511f088515e3e73bceea33efc3ead57530ac37017b4137200",
+  "previous_default_cid": "11faa644158812cc50e2c7dddbe0ff462502e0c165f78665d4b7f59abb7023ee",
+  "root_new_default_report": {
+    "cid_prefix": "00f7fcf61c24",
+    "image_prefix": "sha256:fbc245d5ac98",
+    "capture_prefix": "2cb1c023",
+    "lock_released_at": "2026-11-03T01:37:55Z"
+  },
+  "complete_readback": "REQUESTED_NOT_RECEIVED",
+  "activation": false,
+  "business_applies": 0,
+  "next_action": "Bind exact new sanitized receipt and current-image close metadata; never run old11faa probe or restore historical defaults."
+}

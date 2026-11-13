@@ -1,0 +1,13 @@
+{
+  "status": "INDEPENDENT_EXACT_FRESH_GRANT_AND_WRITE_POLICY_PASS",
+  "observedAt": "2026-11-01T03:57:03.782294+00:00",
+  "rows": [
+    {
+      "exact_approved_write_hook": true,
+      "grant_after_activation": true,
+      "one_current_exact_qa_client_grant": true,
+      "within_hard_deadline": true
+    }
+  ],
+  "rawTokensRead": false
+}

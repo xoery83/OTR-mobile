@@ -1,0 +1,45 @@
+{
+  "verdict": "NO_BLOCKER_EXACT_HUMAN_SOURCE_BINDING_DELTA",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-04T20:43:12.156067+00:00",
+  "candidateCommit": "9c6da8a22ede6f0e136522f3f2de69cca319a9d1",
+  "priorReviewedCandidate": "8eef37b775b20f8ddd9934870d0ae29e945a2912",
+  "packageSHA256": "99cd0ab34c901b7b7dd775a00a712490172f21176e4cad316e91a272470360f2",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "scopeSHA256": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "actualHumanSource": {
+    "readMethod": "Reviewer direct read_thread, not parent paraphrase or saved readback only",
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turnId": "01a1a848-be9d-7211-998c-af765cb2ac8c",
+    "userMessageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+    "answer": "\u6279\u51c6\u672c\u8f6e\u4e34\u65f6\u914d\u7f6e\u3001\u8fde\u63a5\u53ca Preview\uff0c\u4e0d\u5305\u542b\u4fdd\u5b58",
+    "exactOriginalWrapperMatchesLocal": true,
+    "wireSHA256": "617bfc03181ee9c80695af3a1ac6d934853f01dd440ba9aa0e03a808f484bc27",
+    "sourceRelabeled": false
+  },
+  "actualIndependentChecks": [
+    "Direct tool read original human userMessage; exact complete wrapper string equals local OWNER_APPROVAL_WRAPPER.txt",
+    "All3 guard source changes equal only predefined repr-safe source thread/message/text substitutions; other14 derived files byte-identical",
+    "Gate/scope/window/input/task/EMPTY/confirmation/time fields unchanged from reviewed8eef37b7",
+    "24 pure owner-source cases across all3 actual entrypoints PASS; old/unbound/wrong-hash/Save/replay denied",
+    "Original question/reply wrapper, parsed reply and wire/source hashes internally consistent",
+    "OWNER_SOURCE_BINDING_RECEIPT SHA0447c52a939e9693625e31813f7ae64758b8c050c871c3d6ae30154024d0500a checked"
+  ],
+  "platformRecognizedExecutionApproval": false,
+  "SaveApproved": false,
+  "clockStarted": false,
+  "runtimeActivated": false,
+  "reviewIsPlatformOrHostedQualification": false,
+  "remaining": "Root2 independently checks trusted source/platform approval/current default CAS/close/readiness before actual execution. Human approval is Preview-only; Save/Edit and UNKNOWN actions remain excluded.",
+  "notExecuted": [
+    "OTP",
+    "Auth",
+    "Browser",
+    "Hosted",
+    "Consumer",
+    "Business Save"
+  ],
+  "historicalBehaviorTestsRerun": false,
+  "packageMutation": false
+}

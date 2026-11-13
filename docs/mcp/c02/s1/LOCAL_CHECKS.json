@@ -1,0 +1,17 @@
+{
+  "status": "LOCAL_SOFTWARE_ONLY_NOT_HOSTED_QUALIFIED",
+  "checks": {
+    "new_execution_boundary": "15_PASS",
+    "typecheck_repository": "PASS",
+    "typecheck_mcp": "PASS",
+    "eslint_changed_ts_js": "PASS",
+    "local_composite_build": "PASS_LATEST_IMPORT_CAPTURE_REPRODUCED",
+    "generated_publish_close_validator": "PASS_POSITIVE_AND_THREE_DRIFT_NEGATIVES",
+    "s3_final_narrow_selection": "4_PASS_46_SKIPPED",
+    "generated_control_pure_transitions": "PASS_EMPTY_CREATE_EDIT_AND_SIX_NEGATIVES"
+  },
+  "old_s1_model_or_72_regression_rerun": false,
+  "hosted_actions": 0,
+  "source_review": "AUTH_INCREMENTAL_REVIEW.json",
+  "remaining": "Fresh actual Host/CAS/default-close/timers/timed issuer and actual Owner source are protected qualification, not local proof."
+}

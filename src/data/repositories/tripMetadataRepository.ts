@@ -1,3 +1,5 @@
+import { createTripCoreV2Repository } from "./tripCoreV2Repository";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { createTripDeferredMetadataRepository } from "./tripDeferredMetadataRepository";
 import {
   readTripMetadataConfirmation,
@@ -34,7 +36,10 @@ import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
-import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "@/domain/trip/tripCreateWireContract";
+import {
+  structuredTripCreateResultSchema,
+  tripCreateWireRequestSchema as tripCreateRequestSchema,
+} from "@/domain/trip/tripCreateWireContract";
 import { type TripMetadataSyncTarget } from "@/domain/trip/tripMetadataContract";
 import {
   captureAccountScope,
@@ -47,6 +52,7 @@ type Database = Pick<
   SQLite.SQLiteDatabase,
   "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
 >;
+
 const json = (value: unknown) => canonicalCoreJson(value as Json);
 export function createTripMetadataRepository(
   database: Database,
@@ -55,6 +61,56 @@ export function createTripMetadataRepository(
   resolvePhoto?: typeof import("../files/tripPhotoFileStore").resolveRetainedTripPhoto,
 ) {
   const deferred = createTripDeferredMetadataRepository(database, account, clock);
+  async function requireServerParent(
+    scope: AccountScope,
+    tripId: string,
+    rawParent: unknown,
+  ) {
+    const parent = structuredTripCreateResultSchema.parse(rawParent);
+    const context = { ...scope, tripId };
+    const snapshot = await createTripCoreV2Repository(
+      database,
+      account,
+      tripCoreSha256Hex,
+    ).readAcceptedSnapshotWithinTransaction(context);
+    if (
+      parent.actorAccountId !== scope.accountId ||
+      parent.tripId !== tripId ||
+      !snapshot ||
+      snapshot.actor.personId !== parent.ownerPersonId ||
+      snapshot.certificate.epoch !== parent.coreEpoch
+    )
+      throw Error("TRIP_METADATA_PARENT_CONTEXT_REQUIRED");
+    const owner = await database.getFirstAsync(
+      "SELECT member_id FROM ledger_actor_context WHERE user_id=? AND journey_id=? AND member_id=? AND role='owner'",
+      scope.accountId,
+      tripId,
+      parent.ownerPersonId,
+    );
+    if (!owner) throw Error("TRIP_METADATA_PARENT_CONTEXT_REQUIRED");
+    await assertAccountRequestContext(scope, account);
+  }
+  async function enqueueMetadata(
+    request: TripMetadataWireUpdate,
+    scope: AccountScope,
+    dependency: string | null,
+  ) {
+    const now = clock();
+    await database.runAsync(
+      `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,dependency_operation_id,last_error_code,created_at,updated_at)
+       VALUES(?,?,'TRIP',?,'UPDATE_TRIP_METADATA',?,?,?,'DEPENDENCY_BLOCKED',0,?,'TRIP_METADATA_PORT_REQUIRED',?,?)`,
+      request.operationId,
+      request.tripId,
+      request.tripId,
+      request.operationId,
+      json(request),
+      scope.accountId,
+      dependency,
+      now,
+      now,
+    );
+  }
+
   return {
     ...deferred,
     async readMetadataEditBase(tripId: string) {
@@ -76,6 +132,7 @@ export function createTripMetadataRepository(
     async retainMetadataSnapshot(
       input: StructuredTripMetadataSnapshot,
       operationId: string,
+      serverParent?: unknown,
     ) {
       const snapshot = structuredTripMetadataSnapshotSchema.parse(input);
       coreUuid.parse(operationId);
@@ -103,6 +160,18 @@ export function createTripMetadataRepository(
             scope.accountId,
             snapshot.tripId,
           );
+          if (!local && serverParent !== undefined) {
+            await requireServerParent(scope, snapshot.tripId, serverParent);
+            await retainTripMetadataConfirmation(
+              database,
+              scope.accountId,
+              operationId,
+              "SNAPSHOT",
+              snapshot,
+            );
+            await assertAccountRequestContext(scope, account);
+            return;
+          }
           if (!local?.accepted_at || JSON.parse(local.payload_json).formatVersion !== 2)
             throw Error("TRIP_STRUCTURED_ACCEPTED_TRIP_REQUIRED");
           if (
@@ -170,6 +239,7 @@ export function createTripMetadataRepository(
       input: TripMetadataWireUpdate,
       cover?: TripCoverUpdate,
       destinationInput?: LocalTripDestinationsChange,
+      serverParent?: unknown,
     ) {
       const request = tripMetadataWireUpdateSchema.parse(input);
       if (
@@ -290,6 +360,37 @@ export function createTripMetadataRepository(
               scope.accountId,
               request.tripId,
             );
+            if (!row && serverParent !== undefined) {
+              if (
+                !("formatVersion" in request) ||
+                request.formatVersion !== 3 ||
+                cover ||
+                destinations
+              )
+                throw Error("TRIP_METADATA_PARENT_V3_REQUIRED");
+              await requireServerParent(scope, request.tripId, serverParent);
+              const confirmed = await readTripMetadataConfirmation(
+                database,
+                scope.accountId,
+                request.tripId,
+              );
+              const pending = await database.getFirstAsync(
+                "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' LIMIT 1",
+                scope.accountId,
+                request.tripId,
+              );
+              if (
+                !confirmed ||
+                pending ||
+                confirmed.metadataRevision !== request.expectedMetadataRevision ||
+                json(confirmed.metadata) !== json(request.before)
+              )
+                throw Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+              if (json(request.before) !== json(request.after))
+                await enqueueMetadata(request, scope, null);
+              await assertAccountRequestContext(scope, account);
+              return;
+            }
             if (!row) throw new Error("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
             if ("formatVersion" in request && !row.accepted_at)
               throw new Error("TRIP_METADATA_V2_ACCEPTED_TRIP_REQUIRED");
@@ -423,41 +524,29 @@ export function createTripMetadataRepository(
             const dependency =
               previous?.id ?? (row.accepted_at ? null : row.create_operation_id);
             const now = clock();
+            await enqueueMetadata(request, scope, dependency);
             await database.runAsync(
-              `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,dependency_operation_id,last_error_code,created_at,updated_at)
-             VALUES(?,?,'TRIP',?,'UPDATE_TRIP_METADATA',?,?,?,'DEPENDENCY_BLOCKED',0,?,'TRIP_METADATA_PORT_REQUIRED',?,?)`,
-            request.operationId,
-            request.tripId,
-            request.tripId,
-            request.operationId,
-            json(request),
-            scope.accountId,
-            dependency,
-            now,
-            now,
-          );
-          await database.runAsync(
-            "UPDATE local_trip_containers SET name=?,destination=?,start_date=?,end_date=?,updated_at=? WHERE account_id=? AND id=?",
-            request.after.name,
-            request.after.destination,
-            request.after.startDate,
-            request.after.endDate,
-            now,
-            scope.accountId,
-            request.tripId,
-          );
-          if (!row.accepted_at)
-            await database.runAsync(
-              `UPDATE ledger_journeys SET title=?,start_date=?,end_date=?,updated_at=? WHERE journey_id=?
-             AND EXISTS(SELECT 1 FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=? AND authority='LOCAL_CREATOR')`,
+              "UPDATE local_trip_containers SET name=?,destination=?,start_date=?,end_date=?,updated_at=? WHERE account_id=? AND id=?",
               request.after.name,
+              request.after.destination,
               request.after.startDate,
               request.after.endDate,
               now,
-              request.tripId,
               scope.accountId,
               request.tripId,
             );
+            if (!row.accepted_at)
+              await database.runAsync(
+                `UPDATE ledger_journeys SET title=?,start_date=?,end_date=?,updated_at=? WHERE journey_id=?
+             AND EXISTS(SELECT 1 FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=? AND authority='LOCAL_CREATOR')`,
+                request.after.name,
+                request.after.startDate,
+                request.after.endDate,
+                now,
+                request.tripId,
+                scope.accountId,
+                request.tripId,
+              );
             if (!row.accepted_at)
               await database.runAsync(
                 `UPDATE ledger_journeys SET title=?,start_date=?,end_date=?,updated_at=? WHERE journey_id=?
@@ -553,4 +642,69 @@ export function createTripMetadataRepository(
       });
     },
   };
+}
+
+async function serverParentMetadataAccess(
+  origin: import("../auth/accountRequestContext").AccountRequestContext,
+) {
+  const scope = Object.freeze({ ...origin });
+  const { requireAdoptedUserId } = await import("../auth/authRepository");
+  const account = async () => {
+    await assertAccountRequestContext(scope, requireAdoptedUserId);
+    return scope.accountId;
+  };
+  await account();
+  const { ensureJourneyLedgerActor } = await import("../sync/ledgerReportingCoordinator");
+  await ensureJourneyLedgerActor(scope.tripId, scope);
+  const { createTripCreateTransport } = await import("../sync/tripCreateTransport");
+  const parentReader = createTripCreateTransport(account);
+  if (!parentReader.parentReceipt) throw Error("TRIP_METADATA_PARENT_READER_CLOSED");
+  const parent = await parentReader.parentReceipt(scope);
+  await account();
+  if (!parent) throw Error("TRIP_METADATA_PARENT_CONTEXT_REQUIRED");
+  const { readInitializedDatabase } = await import("../db/database");
+  const database = await readInitializedDatabase();
+  await account();
+  return {
+    scope,
+    account,
+    parent,
+    repository: createTripMetadataRepository(database, account, () =>
+      new Date().toISOString(),
+    ),
+  };
+}
+
+export async function readServerParentMetadataEditBase(
+  origin: import("../auth/accountRequestContext").AccountRequestContext,
+) {
+  const access = await serverParentMetadataAccess(origin);
+  const { createTripMetadataTransport } = await import("../sync/tripMetadataTransport");
+  const snapshot = structuredTripMetadataSnapshotSchema.parse(
+    await createTripMetadataTransport(access.account).snapshot(
+      access.scope,
+      access.scope.tripId,
+      access.parent.operationId,
+      3,
+    ),
+  );
+  await access.account();
+  const { createUuid } = await import("@/domain/localId");
+  await access.repository.retainMetadataSnapshot(snapshot, createUuid(), access.parent);
+  const base = await access.repository.readMetadataEditBase(access.scope.tripId);
+  await access.account();
+  if (!base.confirmed || base.pendingOperationIds.length)
+    throw Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+  return { context: access.scope, snapshot: base.confirmed };
+}
+
+export async function saveServerParentTripMetadata(
+  origin: import("../auth/accountRequestContext").AccountRequestContext,
+  request: TripMetadataWireUpdate,
+) {
+  const frozen = tripMetadataWireUpdateSchema.parse(request);
+  if (frozen.tripId !== origin.tripId) throw Error("TRIP_METADATA_ACCOUNT_MISMATCH");
+  const access = await serverParentMetadataAccess(origin);
+  await access.repository.updateMetadata(frozen, undefined, undefined, access.parent);
+  await access.account();
 }

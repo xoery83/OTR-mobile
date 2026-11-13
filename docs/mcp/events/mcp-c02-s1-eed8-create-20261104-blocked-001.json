@@ -1,0 +1,30 @@
+{
+  "event_id": "mcp-c02-s1-eed8-create-20261104-blocked-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "slice": "C02-S1",
+  "event_type": "BLOCKED",
+  "actual_occurred_at": "2026-11-03T22:06:05.179978Z",
+  "current_status": "CONSUMER_SINGLE_APPLY_UNKNOWN_WINDOW_CLOSED",
+  "commit": "ed204b2d",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/verified-create-20261104/actual/ACCEPTANCE.json",
+    "docs/mcp/c02/s1/verified-create-20261104/actual/ROOT2_FINAL_RECEIPT.json"
+  ],
+  "completed": [
+    "Real Preview/explicit confirmation/single Apply",
+    "Same-ID query and independent DB readback",
+    "Full close verified"
+  ],
+  "unfinished": [
+    "APPLIED",
+    "Create/Edit E2E",
+    "Native"
+  ],
+  "blocker": "Failure layer unproven; Core safe diagnostics not preserved",
+  "dependency": "MCP close collector / Auth write binding diagnostic",
+  "next_action": "Minimal local diagnosis fixes/review; preserve original operation, no retry",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING"
+}

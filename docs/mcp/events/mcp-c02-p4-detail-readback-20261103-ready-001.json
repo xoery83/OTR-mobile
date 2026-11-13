@@ -1,0 +1,43 @@
+{
+  "event_id": "mcp-c02-p4-detail-readback-20261103-ready-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:LOCAL_PREP",
+  "field_slice": "P4 details-only formal readback",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "READY_FOR_INTEGRATION",
+  "reported_event_type": "READY_FOR_INTEGRATION",
+  "created_at": "2026-11-02T22:13:40.736570+00:00",
+  "current_status": "P4_PLATE_ONLY_LOCAL_CORE_RECEIPT_READBACK_PASS",
+  "commit": "e2eebf3c",
+  "evidence_paths": [
+    "docs/mcp/c02/p4/LOCAL_FIELD_COVERAGE.md",
+    "docs/mcp/c02/p4/REVIEW.json",
+    "mcp/goldenReadback.ts",
+    "mcp/mutation.test.ts"
+  ],
+  "completed": [
+    "Existing partial Rental details verified with original-ID formal Receipt recovery",
+    "MCP independent readback validates current child Item/Trip/value and rejects missing/wrong rows",
+    "Omitted SOURCE Supplier value/field_state and concrete pickup+return places preserved in local test",
+    "Independent NO_BLOCKER, focused test1 PASS, MCP typecheck/scoped lint PASS"
+  ],
+  "unfinished": [
+    "Full-field P4 SDK/Hosted/Consumer/Supabase/Native qualification NOT_RUN",
+    "Matched/source pickup-return edit remains guarded"
+  ],
+  "blocked_by": [],
+  "next_action": "Bounded full-field P4 SDK fixture then manual pickup-return full-Base adapter; no Provider or owning Core rewrite.",
+  "acceptance": {
+    "local": "CORE_RECEIPT_RECOVERY_READBACK_PASS_PLATE_ONLY",
+    "sdk": "NOT_RUN_FOR_P4",
+    "hosted": "NOT_RUN",
+    "consumer": "NOT_RUN",
+    "native": "NOT_RUN"
+  },
+  "hosted_operations": 0,
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED",
+  "scope_note": "Independent field coverage under existing MCP-C02; do not invent a new Capability or mark P4/MCP-C02 complete."
+}

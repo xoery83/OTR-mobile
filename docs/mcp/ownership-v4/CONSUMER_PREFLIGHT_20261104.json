@@ -1,0 +1,26 @@
+{
+  "package": "MCP-C02",
+  "slice": "C02-S1",
+  "observed_at": "2026-11-03T18:10:29.758999+00:00",
+  "method": "Existing user Chrome tab1962067352, cua getTab then full getAXState; no reload or clicks",
+  "url": "https://chatgpt.com/settings/plugins-settings/plugin_asdk_app_6ae59a2086a481918a9d9bef984507ef",
+  "visible_evidence": [
+    "OTR DEV QA",
+    "需要更新身份验证",
+    "重新连接",
+    "https://api-dev.xoery.art/mcp",
+    "支持的授权方式 OAuth",
+    "使用的授权方式 OAuth"
+  ],
+  "result": "PAGE_READ_PASS_CONNECTION_REAUTH_REQUIRED",
+  "not_proven": [
+    "Fresh consumer tool discovery",
+    "Gateway live read",
+    "OAuth qualification",
+    "Create/Edit Preview or Apply"
+  ],
+  "browser_mutations": 0,
+  "temporary_authority_changes": 0,
+  "business_operations": 0,
+  "next": "Root2 readonly current Hosted qualification, then exact unused finite access request if needed; no old windows reused"
+}

@@ -1,0 +1,23 @@
+{
+  "status": "INDEPENDENT_CONSUMER_PROJECTION_BACKEND_AND_SQL_RECEIPT_MATCH_PASS",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "operationId": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+  "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "revision": 2,
+  "dates": [
+    "2026-12-11",
+    "2026-12-13"
+  ],
+  "itemCount": 1,
+  "receiptCount": 1,
+  "noCreatedTargets": true,
+  "consumerItemProjectionRecursivelyMatchesNormalBackend": true,
+  "fullBackendObjectEqualityClaimed": false,
+  "plainCommandSha256": "56498bb7794b7ca4ccb9895f20ed9af8d66d52acf75ce3dbd2daf2e13ad51b2c",
+  "domainSeparatedIntentSha256": "32b3e6c49bb558367777af1cbb6cbe07d84f86b175fc04a69b8de1a911d67e0f",
+  "receiptSha256Recomputed": "f238b4812105e739a2c3bb948c7885a16deff8bb44defdd5f2a70d0667562330",
+  "committedAt": "2026-11-01T03:59:06.713618Z",
+  "normalBackendObservedAt": "2026-11-01T04:00:35.103Z",
+  "sqlObservedAt": "2026-11-01T04:00:14.516431+00:00",
+  "mcpBusinessPostOrCredentialReuse": false
+}

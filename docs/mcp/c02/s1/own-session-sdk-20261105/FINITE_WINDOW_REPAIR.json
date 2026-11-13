@@ -1,0 +1,43 @@
+{
+  "status": "LOCAL_FINITE_WINDOW_REPAIR_22_CASES_PASS_INDEPENDENT_RECHECK_PENDING",
+  "recordedAt": "2026-11-05T00:52:37.353012+00:00",
+  "review": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/REVIEW.json",
+    "sha256": "dc10938803c2627a4af83ba6728460c632185adc728bd49a91bd7e6cef163719"
+  },
+  "fix": [
+    "Network RequestBoundary timeout is min10sec/immutable normalClose remaining and uses current checker; response/body/SDK results rechecked after await",
+    "Original qualified normalClose passed into handoff callback and FIFO reader/writer; each loop and actual write/read/URLreturn admission checks immutable deadline",
+    "At/after cutoff a tried approve remains UNKNOWN_NO_RETRY, at mostonePOST, no NOT_SUBMITTED inference",
+    "No source scope/actor/Session authority change; Gate and Scope bytes unchanged; exact old43b2 target remains historical"
+  ],
+  "regression": [
+    "Slow details response crossing cutoff rejects preview",
+    "OnlyPOST response crossing cutoff yields UNKNOWN, callback0, POST1 and retryrejected",
+    "Abort-ignoring mocked transport cannot hold request past remaining finitewindow",
+    "Delayed FIFO reader crosses cutoff before any write and fails",
+    "Actual FIFO read completes after mocked cutoff: no callbackURLreturn"
+  ],
+  "validation": {
+    "testCases": 22,
+    "result": "PASS prior17+5new localcases",
+    "scopedTypecheck": "PASS",
+    "bundles": "PASS updated2localbundles",
+    "staticChecks": "PASS19pins/3UNBOUND/oldsourceReject/EMPTY/Tnull/launchdisabled",
+    "actualAPIOrBrowserOrAuth": false
+  },
+  "root2ScopeInterpretation": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_SOURCE_REVISION_BOUNDARY.json",
+    "sha256": "c1b087c8681f93d700bb3f336a3f28cb40a6f1c6bd51c1393dfe65191c8ed76e",
+    "status": "SCOPE_INTERPRETATION_ONLY_NOT_EXECUTION_APPROVAL",
+    "priorPackageTarget": "43b2f509aa229cd19e5ad9597ec5d80c5e466d88dc8198bc62219b578fb586f7",
+    "repairedPackageNeedsDeltaQualification": true
+  },
+  "newPackageSHA256": "b7fdde4f04eb135131366edd9584cb3500b3ba7072b1c7806b7bfe8de4ff5d1b",
+  "GateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+  "ScopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+  "T": null,
+  "platformExecutionApproval": false,
+  "runtimeReady": false,
+  "SaveApproved": false
+}

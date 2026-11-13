@@ -1,0 +1,49 @@
+{
+  "status": "CLOSE_AND_EXECUTION_PROPOSAL_NOT_ACTIVATED_NOT_FINAL_DEFAULT_BOUND",
+  "candidateImage": "sha256:4fcd7b590d955ce996323f78f6391b02cbd797806b40358a10175ac0626d0784",
+  "softwareDeployPlanSHA256": "88105c3c53dd36665f292c7e8f43e5c943af84cd56eb3b8d6df441e5559857be",
+  "currentActualDefault": {
+    "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+    "configSHA256": "0ebea28102b868a112bf410cc51fc8883cb249bc84cdfcc6f08ff1ce0e77fb66",
+    "image": "sha256:0ffd444c102405d3cb7844a40258dfa561d5b8b8af0add026233eb9580cf2d0a"
+  },
+  "candidateDeployed": false,
+  "issuerOrControlStarted": false,
+  "executionGuardSHA256": "2776777e4fe399d14a806f9b71708dcf9db772f96a51cabdf70567c91387dce2",
+  "approvalSourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "profile": "ChatGPT",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "redirectUri": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "expectedRevision": 2,
+  "previewDigest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+  "caseFixtureSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+  "tokenMaxSeconds": 60,
+  "windowMaxMinutes": 30,
+  "normalCloseSecondsBeforeExpiry": 120,
+  "unknownPolicy": "Read same receipt; no duplicate Apply or replacement ID",
+  "existingCloseHelpers": {
+    "close_current.py": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "softwareBuildLegacyGuardIsNotExecutionGuard": true,
+  "oldE389Consumed": true,
+  "blockedUntil": [
+    "ordinary software release CAS plus healthy actual new default readback",
+    "one fresh default-bound no-change close verification",
+    "MCP sole-chat exact finite access and matching Notes save human approval",
+    "actual approval bytes/clientId/profile/op/digest before clock",
+    "own normal control and actual Consumer UI READY before one fixed T/D"
+  ],
+  "actualConflicts": [
+    "current shared default/container/config/bundles drift",
+    "another actual release/authority lease on intersecting resource",
+    "QA account or original operation receipt/baseline changes"
+  ],
+  "newSQLOrRlsOrGrantOrScope": false,
+  "newProviderOrBudget": false
+}

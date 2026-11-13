@@ -1,0 +1,20 @@
+{
+  "status": "REAL_CONSUMER_FRESH_BASE_AND_PREVIEW_EXACT_MATCH",
+  "sourceChat": "https://claude.ai/chat/fdcbd75c-71a3-4f07-89f8-f0583d573df1",
+  "message": 14,
+  "rawDOMSHA256": "fe18c03d4cb479dd5fc1ddbb4b3fa64b4194cba2bc59facadba3686fa951b2ac",
+  "baseResponseLine": 340,
+  "previewResponseLine": 360,
+  "itemAndCompleteRecordEqualPriorVerifiedBase": true,
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "expectedRevision": 1,
+  "onlyChange": {
+    "kind": "TEXT",
+    "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified."
+  },
+  "consumerApplyCount": 0,
+  "applyHistory": "acd60=0;78c=0;e389=0; original1d6 NOT_SUBMITTED journal identity, not generic server state",
+  "genericStatusNotNoCommitProof": true,
+  "confirmationPendingRootInstallation": true
+}

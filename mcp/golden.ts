@@ -74,11 +74,12 @@ export async function runGolden(
       "FIXED_P5_INPUT_CHANGED",
     );
   }
+  const nativeReady = process.env.OTR_MCP_NATIVE_NELSON_READY === "1";
+  const nativeBlocked = process.env.OTR_MCP_NATIVE_NELSON_BLOCKED === "DEVICE_AUTOMATION";
   if (stage === "NELSON_DATE_EDIT")
-    assert.equal(
-      process.env.OTR_MCP_NATIVE_NELSON_READY,
-      "1",
-      "ACTUAL_NATIVE_CHECKPOINT_REQUIRED",
+    assert(
+      nativeReady !== nativeBlocked,
+      "ACTUAL_NATIVE_CHECKPOINT_OR_RECORDED_DEVICE_BLOCK_REQUIRED",
     );
   if (stage === "P3" || stage === "NELSON" || stage === "NELSON_RESUME")
     assert(process.stdin.isTTY, "GOLDEN_INTERACTIVE_TTY_REQUIRED");
@@ -254,8 +255,13 @@ export async function runGolden(
                     { flag: "wx", mode: 0o600 },
                   );
                 resumePostCounts.set(operationId, 1);
+                if (stage === "NELSON_DATE_EDIT") {
+                  facts.ownDatePostCount = 1;
+                  save();
+                }
               }
-              if (stage !== "P5_FIELDS") return backend(q, signal);
+              if (stage !== "P5_FIELDS" && stage !== "NELSON_DATE_EDIT")
+                return backend(q, signal);
               const at = Date.now();
               const trace = (status: number | null, error?: string) => {
                 const rows = (facts.httpTrace ??= []) as unknown[];
@@ -654,9 +660,13 @@ export async function runGolden(
           };
           const prepared = prepareUpdate(context.accountId, args);
           allowedResumePosts.set(fixture.date_edit_request_id, prepared);
-          facts.nativeCheckpoint = "ACTUAL_NATIVE_OWNER_READY_BEFORE_THIS_QA_ACTION";
+          facts.nativeCheckpoint = nativeReady
+            ? "ACTUAL_NATIVE_OWNER_READY_BEFORE_THIS_QA_ACTION"
+            : "BLOCKED_DEVICE_AUTOMATION_NO_NATIVE_BEFORE_OR_AFTER_PASS";
           facts.nelsonTripId = tripId;
           facts.itemId = itemId;
+          facts.ownDatePostCount = 0;
+          save();
           const edited = await approvedCall("update_trip_item", args);
           facts.edit = edited;
           save();
@@ -680,7 +690,9 @@ export async function runGolden(
           facts.readbackSha256 = digest(detail);
           facts.ownDatePostCount =
             resumePostCounts.get(fixture.date_edit_request_id) ?? 0;
-          facts.status = "NELSON_DATE_EDIT_CLOUD_PASS_NATIVE_AFTER_EDIT_PENDING";
+          facts.status = nativeReady
+            ? "NELSON_DATE_EDIT_CLOUD_PASS_NATIVE_AFTER_EDIT_PENDING"
+            : "NELSON_DATE_EDIT_CLOUD_PASS_NATIVE_BLOCKED";
           return;
         }
         if (stage === "NELSON_STATUS") {

@@ -1,0 +1,9 @@
+{
+  "windowId": "a2f8c128ba794de4bcf3c98d324ffc63",
+  "candidateId": "9998376476e861a656e635a0bc875b8a9e6677f6940ebdd824dbe3f73145da8e",
+  "since": "2026-11-03T07:50:13.502000+00:00",
+  "scope": "ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP",
+  "tailLimit": 200,
+  "tailMayBeTruncated": false,
+  "records": []
+}

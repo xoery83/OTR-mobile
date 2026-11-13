@@ -210,6 +210,43 @@ it("retries recovery initialization failure using the already prepared attempt",
   expect(m.checkpoint).toHaveBeenCalledOnce();
   expect(f.inventory.resumeGuestBeforePublication).not.toHaveBeenCalled();
 });
+it("resumes the original prepared UUID and does not freeze or send until confirmed", async () => {
+  const f = await setup();
+  const attempt = await prepareGuestTripP1Adoption(f.session, f.f.user.id, getAccountGeneration(), new AbortController().signal, { adoptionId: f.f.grant.adoptionId, cancel: vi.fn() });
+  expect(m.uuid).not.toHaveBeenCalled();
+  expect(m.freeze).not.toHaveBeenCalled();
+  expect(m.store).not.toHaveBeenCalled();
+  await attempt.publish();
+  expect(m.checkpoint).toHaveBeenCalledWith(f.inventory, { adoptionId: f.f.grant.adoptionId, targetAccountId: f.f.user.id });
+  expect(f.transport.publish).toHaveBeenCalledWith(expect.objectContaining({ adoptionId: f.f.grant.adoptionId }));
+});
+it("rejects a changed original checkpoint before credentials or server work", async () => {
+  const f = await setup();
+  const attempt = await prepareGuestTripP1Adoption(f.session, f.f.user.id, getAccountGeneration(), new AbortController().signal, { adoptionId: f.f.grant.adoptionId, cancel: vi.fn() });
+  m.checkpoint.mockRejectedValue(Error("GUEST_ADOPTION_RECOVERY_IMMUTABLE"));
+  await expect(attempt.publish()).rejects.toThrow("RECOVERY_IMMUTABLE");
+  expect(m.store).not.toHaveBeenCalled();
+  expect(f.events).toEqual([]);
+});
+it.each([true, false])("cancels a cold prepared attempt using original proof despite changed source: proof available %s", async (available) => {
+  const f = await setup(), cancel = vi.fn();
+  const attempt = await prepareGuestTripP1Adoption(f.session, f.f.user.id, getAccountGeneration(), new AbortController().signal, { adoptionId: f.f.grant.adoptionId, cancel });
+  m.checkpoint.mockRejectedValue(Error("SOURCE_CHANGED"));
+  await expect(attempt.publish()).rejects.toThrow("SOURCE_CHANGED");
+  if (!available) cancel.mockRejectedValue(Error("CANCEL_PROOF_UNKNOWN"));
+  if (available) {
+    await attempt.cancel();
+    expect(f.inventory.resumeGuestBeforePublication).toHaveBeenCalledOnce();
+  } else {
+    await expect(attempt.cancel()).rejects.toThrow("CANCEL_PROOF_UNKNOWN");
+    expect(f.inventory.resumeGuestBeforePublication).not.toHaveBeenCalled();
+  }
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(m.checkpoint).toHaveBeenCalledOnce();
+  expect(m.store).not.toHaveBeenCalled();
+  expect(f.transport.preflight).not.toHaveBeenCalled();
+  expect(f.transport.publish).not.toHaveBeenCalled();
+});
 it("can cancel a retained locally prepared attempt after recovery initialization fails", async () => {
   const f = await setup(),
     attempt = await f.prepare();

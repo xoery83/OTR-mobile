@@ -1,0 +1,24 @@
+{
+  "status": "FIXED_PARENT_PG_READINESS_PASS_NOT_HTTP_E2E",
+  "artifact": "/private/tmp/otr-auth-parent-readiness.cjs",
+  "artifactSHA256": "33c9b031cd434dd5a42a807e730cd148bbd6c9b9943d8f09a5639c241291281e",
+  "configurationSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+  "scope": "Fixed existing Apple Account/Trip/Create operation only; no JWT, no activation or DML; existing Reader takes FOR SHARE locks in ordinary transaction.",
+  "postgresReadOnly": false,
+  "businessReadOnly": true,
+  "hostedExecuted": true,
+  "validation": {
+    "metadataTests": 13,
+    "lint": true,
+    "bundle": true
+  },
+  "baselineSources": [
+    "docs/ops/people-add-traveler-20261031/parent-read-candidate/HOSTED_INSTALL_REAL_RECEIPT.json",
+    "supabase/migrations/20261013000500_trip_create_owning_port.sql:72",
+    "supabase/dev-forward/trip-create/20261017000100_trip_create_finite_contract.sql:68"
+  ],
+  "independentReview": {
+    "metadataTests": 13,
+    "result": "SCOPED_NO_BLOCKER_PARENT_READINESS_PROBE"
+  }
+}

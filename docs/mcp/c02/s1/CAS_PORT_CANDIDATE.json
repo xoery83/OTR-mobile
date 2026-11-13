@@ -1,0 +1,18 @@
+{
+  "status": "EXISTING_CAS_PORT_NARROW_C02_CANDIDATE_NOT_EXECUTED",
+  "original": {
+    "config_cas.py": "2776777e4fe399d14a806f9b71708dcf9db772f96a51cabdf70567c91387dce2",
+    "prepare_cas.py": "aac0c9940409a9eff40fe5f3e8d554ec984152f3cb74ad3511fc33249ed03a98"
+  },
+  "candidate": {
+    "config_cas.py": "fa75e23d43f8b365b784776667a40a1afb5ca1822d923dadcb966a36b9aa10ea",
+    "prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07"
+  },
+  "boundHostSHA256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+  "preserved": "Existing lock/CAS/EnvHash/Host/mount/file/bundle/rollback/pointer-before-serve logic; no Env or credentials copied to plans.",
+  "changes": "Only C02 config key/schema, actual new Owner Gate/source binding, EMPTY\u2192CREATE\u2192EDIT same-window, extra pinned Host bundle.",
+  "protectedActionsExecuted": 0,
+  "timerLauncherSHA256": "df79551ae5484838078c0245470f763713f1bdf9f709dba0f0820e56490fca8b",
+  "closeWrapperSHA256": "e2f45d0492a455d60edfcc87283049a4f096033a6d149dfcf777ed1debb52c81",
+  "timerGuard": "Pinned launcher verifies both exact absolute timer units after pointer publication and before any default stop; failure restores default pointer without serving candidate."
+}

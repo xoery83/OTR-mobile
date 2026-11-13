@@ -1,0 +1,36 @@
+{
+  "eventId": "mcp-c02-s1-fresh-preview-3586-20261104-blocked-001",
+  "agentId": "Lane B / MCP",
+  "packageId": "MCP-C02",
+  "capabilityId": "CAP-MCP-FAMILY-FIELDS",
+  "stepId": "C02-S1_FRESH_PREVIEW",
+  "eventType": "BLOCKED",
+  "occurredAt": "2026-11-04T08:06:03.197063Z",
+  "commit": "d147a2ea",
+  "status": "NO_WINDOW_STARTED_READINESS_HANDOFF_EXPIRED_OWN_SESSION_CLEANED",
+  "evidencePaths": [
+    "docs/mcp/c02/s1/fresh-preview-20261104/actual/NORMAL_CONTROL_READY.json",
+    "docs/mcp/c02/s1/fresh-preview-20261104/actual/NO_WINDOW_CLEANUP.json"
+  ],
+  "completed": [
+    "Root2 environment/DCR/closed/actual-source eligibility confirmed",
+    "One normal QA OTP/login CONTROL_READY",
+    "Owning Session local logout/refresh rejection PASS; active.lock absent"
+  ],
+  "notCompleted": [
+    "Window binding/activation",
+    "Consumer OAuth/Guide/Trip/Preview",
+    "Any Save/Apply/Receipt/Native result"
+  ],
+  "blocker": "120sec launch-to-binder handoff expired through chat scheduling; no clock reset permitted",
+  "dependencyOwner": "Root2 bounded prepositioned readiness-file binder; MCP owns login/consumer",
+  "nextAction": "Independent Root2 Grant/Consent/Authorization absence read, then prepare exact one-shot handoff before any next normal login; no repeated unchanged failure cadence",
+  "selectedGrantCleanup": "UNCONFIRMED_BY_CONTROL_PENDING_INDEPENDENT_ROOT2_READ",
+  "originalUnknownReplay": "FROZEN_NOT_REQUESTED",
+  "newCoreOperationCreated": false,
+  "clockStarted": false,
+  "issuerOrOAuthActivated": false,
+  "authorityBroadened": false,
+  "ackStatus": "SUBMITTED_NO_ACK",
+  "dashboardUpdated": false
+}

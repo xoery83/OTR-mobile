@@ -1,0 +1,75 @@
+{
+  "status": "ACTIVATION_SOURCE_BOUND_LOCAL_READY_FINAL_REVIEW_PENDING",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "recordedAt": "2026-11-05T00:04:50.334659+00:00",
+  "sourceFiles": {
+    "scripts/mcp/c02-own-session-consent.mts": "d072c8d35a70d5a4aec0803dbaf01e99e023f57a908c6c6f6d7ffb597c54f65e",
+    "scripts/mcp/c02-own-session-consent.test.mts": "ce6d7b018a242120d1a87ac0cf00e962d48bf20338ebc49b29989a3cbf474d06",
+    "scripts/mcp/c02-own-callback-pipe.mts": "70fe8d39559fe0f15e79a86783ce76a54c82ba839b7ad1edf5b36d2993c20081",
+    "scripts/mcp/c02-own-callback-pipe.test.mts": "567e27be382da70dc4e1d9c47052b9ba4c94df835b9a8753564e1e96b08503ed",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/normal-control.mts": "35f5dd1a5144ab72c8ae3c5ca75365643e68abc6ef34807ee93a7c92bab2f3d6",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/prepare_static.py": "da51645f7c6dc9730404acb48e2dc4dd9b549bc3369e42b77199143fb684afcc",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/check_static.py": "20069e782c2b45c81d37330663813c0ad6ebe57d8efe52b7f4a81193ec1d6ffc",
+    "scripts/mcp/c02-sdk-runtime-gate.test.mts": "864878bbdb465fb198de82e7f8258ca531a233560c06a65e78edc871fee22680"
+  },
+  "installedOfficialSDK": {
+    "node_modules/@supabase/supabase-js/package.json": "7fb2b72ae229cc489891f65915a11ba0528f14783ffaa95379d50bcef95f1d0c",
+    "node_modules/@supabase/auth-js/package.json": "96b5622989e0b0e5396209ce6a21d81222e582afc590b775994434131319bed3",
+    "node_modules/@supabase/auth-js/src/GoTrueClient.ts": "8b9180b10d021280a1da03fb8108d7d7730092465ddf192a855d8584f6a124eb",
+    "node_modules/@supabase/auth-js/src/lib/types.ts": "b8e384c743c7853ed9979b04e4c37ce24f0ac66125445cd979825dcf685afe3b",
+    "node_modules/@supabase/auth-js/src/lib/constants.ts": "2beb8ae7ea6ae2ca21bd3c68eb8fcc5af0e84fdbbebfade1d7cf34b9b96ee9cd"
+  },
+  "contractEvidence": [
+    "GoTrueClient._setSession unexpired path calls _getUser and saves same pair; expired path refreshes. Caller180sec guard plus hard deny/token prevents refresh on either path.",
+    "OAuth details/approve use _useSession with90secmargin; caller retains180sec guard on every outboundrequest and rechecks ownerpair before actions.",
+    "Official details fields authorization_id/redirect_uri/client/user/scope are reused; no fictionalresource field.",
+    "Only official approveAuthorization(skipBrowserRedirect:true), maxonewirePOST. Callback mustexact origin/path/code+state and passes only onepurposeFIFO in kernel/process memory.",
+    "No additionalbrowserSession or browserOTP/APIreceiver/reservation/terminalbridge. Original owninghost cleanup/revoke remains authority.",
+    "Every SDK request checks immutable qualified actual-window normalClose, not just Session expiry; source main requires Root2 actual release metadata/hash relay verified by operator before use. No new T or synthetic release created."
+  ],
+  "validation": {
+    "directedCases": 36,
+    "testCommand": "node --import tsx --test scripts/mcp/c02-own-session-consent.test.mts scripts/mcp/c02-own-callback-pipe.test.mts",
+    "result": "PASS installedSDK with local mocktransport and realtempFIFO subprocess fixtures",
+    "scopedTypecheck": "PASS NodeNext/ignoreConfig/noEmit",
+    "bundles": "PASS esbuild current19source localstatic; no Hosted image change",
+    "runtimeAuthorityOrBusinessReceipt": false,
+    "staticChecks": "PASS19pins/3actualsourceguards/UNBOUNDgenericwrongscopeSaveReject/EMPTY/Tnull/guardedentry",
+    "independentReview": "ACTIVATION_AND_ACTUAL_SOURCE_BINDING_FINAL_REVIEW_PENDING"
+  },
+  "package": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/PACKAGE.json",
+    "sha256": "91bbfc8c5fe565c3656d3991c1a0fa2a39aff154950ef022a1dbd794b473e014"
+  },
+  "publicationIndependentRepairReview": {
+    "path": "docs/mcp/c02/s1/browser-reservation-caller-20261105/REPAIR_REVIEW.json",
+    "sha256": "2a50748c7884c6efd215be506b5fee69470cc563fd3836cc2cc0c17bacd4d873",
+    "meaning": "Local caller reliability NO_BLOCKER only; caller remainsOFF and unused by SDK flow."
+  },
+  "root2ScopeRevisionArtifact": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_SOURCE_REVISION_BOUNDARY.json",
+    "sha256": "c1b087c8681f93d700bb3f336a3f28cb40a6f1c6bd51c1393dfe65191c8ed76e",
+    "status": "SCOPE_INTERPRETATION_ONLY_NOT_EXECUTION_APPROVAL",
+    "priorPackageTarget": "43b2f509aa229cd19e5ad9597ec5d80c5e466d88dc8198bc62219b578fb586f7",
+    "repairedPackageNeedsDeltaQualification": true
+  },
+  "actualRoot2CurrentMetadata": "NOT_REQUESTED_BY_CHILD",
+  "platformApproval": false,
+  "newT": null,
+  "saveApproved": false,
+  "browserUILogin": "NOT_RUN",
+  "chatgptCallbackAndTools": "NOT_RUN",
+  "knownLimit": "Actual Root2 producer/normal START binding/current/platform/release and consumercallback/Preview not run; source activation requires final independent Review. No currentReady flag synthesized.",
+  "finiteWindowRepair": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/FINITE_WINDOW_REPAIR.json",
+    "sha256": "9000468bf0db1ec72747109c6a8d1fa17e53f53eab64c749adbba23ef4eb68a3"
+  },
+  "activationSourceDelta": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/ACTIVATION_SOURCE_DELTA.json",
+    "sha256": "a57d04b06b26d59e3fd24800e182ef85a8a8453df6268008a767ea136cb4ba97"
+  },
+  "ownerBindingReceipt": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/OWNER_SOURCE_BINDING_RECEIPT.json",
+    "sha256": "28624a7de442f5e5a7fdbdff601cc6da0cee02a9c73c3765341189fdae4bdd3b"
+  }
+}

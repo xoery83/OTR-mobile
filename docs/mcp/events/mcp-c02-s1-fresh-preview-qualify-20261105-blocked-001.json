@@ -1,0 +1,376 @@
+{
+  "event_id": "mcp-c02-s1-fresh-preview-qualify-20261105-blocked-001",
+  "request_id": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "execution_child_id": "/root/fresh_preview_execution",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "owner_slice_id": "C02-S1_FRESH_PREVIEW",
+  "event_type": "BLOCKED",
+  "created_at": "2026-11-04T19:03:49.261256+00:00",
+  "current_status": "SOURCE_ACTIVATION_REVIEW_PASS_ROOT2_PRODUCER_PENDING",
+  "commit": "b0e66f3fdde7e9ca898801fd6aa1d169332102fb",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/fresh-preview-qualification-20261105/REQUEST.json",
+    "docs/mcp/c02/s1/fresh-preview-qualification-20261105/DCR_MINIMUM_REQUEST.json",
+    "docs/mcp/c02/s1/fresh-preview-qualification-20261105/TASKS.json",
+    "docs/mcp/ownership-v4/RESUME_CURSOR.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/PACKAGE.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_GATE.md",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/FOCUSED_CHECKS.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/REVIEW_REPAIR.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/FINAL_REVIEW.json",
+    "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/REPAIRED_FIXED_GATE_QUALIFICATION.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_SOURCE_BINDING_RECEIPT.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/actual/C843_BLOCKED_RESULT.json",
+    "docs/mcp/c02/s1/fresh-preview-gate-20261105/actual/ROOT2_FINAL_EARLY_CLOSE_RECEIPT.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/PACKAGE.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_GATE.md",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/FOCUSED_CHECKS.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/REVIEW.json",
+    "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/C7D0_FIXED_PACKAGE_QUALIFICATION.json",
+    "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-C7D0-INDEPENDENT-LOCAL-REVIEW-20261105/INDEPENDENT_REVIEW.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_SOURCE_BINDING_RECEIPT.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/SOURCE_BINDING_REVIEW.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/CONSUMER_UI_READY.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/PACKAGE.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/OWNER_GATE.md",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/FOCUSED_CHECKS.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/CREDENTIAL_BOUNDARY_REVIEW.json",
+    "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/ROOT2_FINAL_EARLY_CLOSE_RECEIPT.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/APPROVAL_CONTEXT.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/OWNER_SOURCE_BINDING_RECEIPT.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/RECEIVER_SOURCE_READY.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/BROWSER_RESERVE_ADMISSION_ASSESSMENT.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/SOURCE_BINDING_REVIEW.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/NONSECRET_KEYCHAIN_CONTEXT.json",
+    "docs/mcp/c02/s1/fresh-preview-receiver-20261105/TARGET_KEYCHAIN_METADATA_ONLY.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/CANDIDATE.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/PACKAGE.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/OWNER_GATE.md",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/SCOPE.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/ACTIVATION_SOURCE_REVIEW.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/CONSUMER_UI_READY.json"
+  ],
+  "completed": [
+    "Fixed local request/input/template pins verified",
+    "Root2 actual readonly qualification: software compatible, no deployment needed, current closed tuple verified",
+    "Existing noncommitting Console form path identified from retained Nov3 evidence",
+    "Root2 current untouched ConsoleDCRfalse observed; closed state restored",
+    "New exact runtimeGate/window fixed without clock; UNBOUND directOwner guard closes obsolete generic preference path; focused local checks PASS",
+    "Independent Review CAS guard omission fixed; all3 runtime source guards covered by21 pure local cases; Gate/scope/window/time unchanged",
+    "Independent exact3guard repair Review NO_BLOCKER at4e5111d0/503b1d49",
+    "Root2 repaired fixedGate qualified for exact approval only d3ab9d96",
+    "Actual direct MCP human exact noSave approval read via read_thread and source-only mechanically bound across3guards;24purechecks PASS",
+    "One actual normal QA login READY/filebinder<=120sec, no repeated login",
+    "Ownsession cleanup and Root2 independent fullsafeclose; effectiveDB0/defaulthealthy/Issuerdenyall/ConsoleOFF/timers0; GrantHTTP staysUNCONFIRMED",
+    "Root2 local watcheridentity exactdelta independently reviewed7e6ea/interface5379 returned; newwindow packet mechanical17source/21pure/EMPTY/time localPASS without behaviorchange",
+    "c7d0 MCPmechanicald5e8/Root2fixedf9fe/independent13Ops+17static1cdd verified; still no executionauthority",
+    "Actual newc7d0 human userMessage directly read, exactwrapper retained/all3 sourceguards literalbound/local24purePASS; platformrecognitionpending",
+    "Independent c7d0 exact human-source review5a36 NO_BLOCKER; actual freshordinaryblanktab1962067626/UI340f and receiverimport/function fixed with noOTP/lease",
+    "Actual c7d0 strictwatchLIVE/finiteIssuer/EMPTYCAS/Console activated thenfullyrestored with Root2c950 final/resources0",
+    "Own Session cleanup/GrantabsencePASS; browsercredentialsource rejected beforeOTP with no workaround",
+    "Newexplicit credential metadata/closure/selectorscope corrected per89da; localmechanical source checksPASS, independentReviewpending",
+    "Actual newadvancehuman originaltext/wire and priorvisiblecontext directly read and retained separately, no fabricatedGateHash/questionwrapper or executionbinding",
+    "Independent97d2 mechanical/credential/singleadvancecontext NO_BLOCKER; actualplainhumanwire bound in3guards/other14same/24purePASS, finalsourceReviewpending"
+  ],
+  "unfinished": [
+    "RuntimeEMPTY/OAuth/finiteIssuer/Console activation",
+    "Consumer OAuth/Consent/GuideReadRimuPreview",
+    "Create/Edit/Apply/APPLIED/independent business readback",
+    "Native/OwnerUX"
+  ],
+  "blocked_by": [
+    "FINAL_ACTUAL_ADVANCE_SOURCE_DELTA_REVIEW_ROOT2_CREDENTIAL_PLATFORM_CURRENTQUALIFICATION"
+  ],
+  "dependency_owner": "Root2 local ops repair + independent reviewer; MCP Consumer DRI",
+  "next_action": "Same reviewer exact source-only delta then Root2 actualsource/platform/credentialsource and currentclose qualification; no Owner duplicatequestion or indirectsource bypass.",
+  "primary_assignment_unchanged": true,
+  "business_applies": 0,
+  "clock_started": false,
+  "new_window": false,
+  "original_unknown_replay": "FROZEN_UNTOUCHED",
+  "ack_status": "UPDATED_LOCAL_NO_NEW_ACK",
+  "dashboard_updated": false,
+  "scope_note": "No business PASS, no readiness/website upgrade, no new protected authority. Stable event ID reused on retries.",
+  "updated_at": "2026-11-04T23:12:01.614474+00:00",
+  "prepared_runtime_identity": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "actual_clock_started": true,
+  "final_fixed_gate_receipts": {
+    "independentReview": {
+      "path": "docs/mcp/c02/s1/fresh-preview-gate-20261105/FINAL_REVIEW.json",
+      "sha256": "503b1d499c0cb80929dced3c25b34afbbd615070a86c8a53b739c58e1984b995",
+      "commit": "4e5111d00e278b047cc4cc7a1392eded19920061",
+      "verdict": "NO_BLOCKER_FOCUSED_THREE_ENTRY_OWNER_GUARD_REPAIR"
+    },
+    "Root2FinalQualification": {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/REPAIRED_FIXED_GATE_QUALIFICATION.json",
+      "sha256": "d3ab9d96e9b80e48d3af87c11efd0503c5f690df619b51c5f1451a4b304a3266",
+      "status": "REPAIRED_FIXED_GATE_QUALIFIED_FOR_EXACT_APPROVAL_NOT_EXECUTION"
+    }
+  },
+  "exact_approval_request": {
+    "parentSubmittedOnce": true,
+    "received": true,
+    "source": {
+      "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+      "turnId": "01a1a848-be9d-7211-998c-af765cb2ac8c",
+      "userMessageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+      "wireSHA256": "617bfc03181ee9c80695af3a1ac6d934853f01dd440ba9aa0e03a808f484bc27",
+      "wrapperSHA256": "10c9b06abad382475d100a17f90e751c5d38bcea2fc264e006d483a081a7ae18",
+      "answer": "批准本轮临时配置、连接及 Preview，不包含保存",
+      "sourceReadMethod": "Direct read_thread human userMessage, not parent paraphrase",
+      "sourceRelabeled": false
+    },
+    "businessSaveIncluded": false,
+    "platformRecognizedExecutionApproval": false,
+    "scopeStatus": "CONSUMED_C843_NOT_REUSABLE"
+  },
+  "T": "2026-11-04T21:03:42.327Z",
+  "normalCloseAt": "2026-11-04T21:31:42.327Z",
+  "hardExpiresAt": "2026-11-04T21:33:42.327Z",
+  "failure_classification": "BLOCKED_WATCHER_IDENTITY_PRE_ACTIVATION",
+  "current_round_result": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/C7D0_BLOCKED_RESULT.json",
+    "sha256": "b9c18e2ac924e6f0dc1f03a2e94f706af82e176c5228c1474e623fe5711eebf3",
+    "Root2Final": {
+      "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/ROOT2_FINAL_EARLY_CLOSE_RECEIPT.json",
+      "sourcePath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/c7d0/FINAL_EARLY_CLOSE_RECEIPT.json",
+      "sha256": "c9507111d7c87caa58591bf97a19f7796c5b987a07df6fa6c63bd61c8a915196",
+      "actualActivatedThenRestored": true,
+      "resources": [],
+      "archivalLabelLimit": "Inherited disarm archival status literal says C7D0_CLOSED_WITHOUT_ACTIVATION_NOT_REUSABLE even though this window DID activate. Treat that legacy label only as closed/revoked/nonreusable, never as no-activation evidence. This final receipt and actual CAS/Issuer/Console receipts state real activation. Remote CAS is archived and activationPermitted=false; no runnable authority remains. No live scope or safety limitation results."
+    }
+  },
+  "actual_clock_state": "BOUND_ONCE_THEN_CLOSED_NO_RESET",
+  "new_prepared_runtime_window": {
+    "id": "6d49f895-887d-437c-9294-d381bcd8005d",
+    "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+    "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+    "packagePath": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/PACKAGE.json",
+    "packageSHA256": "1067ea07cd79372ebb1fa5778ea042067a10843dce514b57f4ce73f585fd0bc4",
+    "status": "ADVANCE_SOURCE_BOUND_PENDING_FINAL_DELTA_REVIEW",
+    "OwnerSource": {
+      "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+      "turnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+      "userMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+      "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+      "exactText": "我提前批准你的审批。一会儿不用问我了\n",
+      "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+      "contextReviewSHA256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+      "humanContainsGateHash": false,
+      "questionReplyWrapper": false,
+      "sourceRelabeled": false,
+      "singleNextScopeOnly": true
+    },
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null,
+    "actualLIVEHash": null,
+    "authorityActivated": false,
+    "credentialSourceApproval": false,
+    "SaveApproved": false
+  },
+  "current_new_runtime_clock_started": false,
+  "current_new_runtime_owner_source": null,
+  "new_fixed_gate_receipts": {
+    "MCPMechanicalReview": {
+      "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/REVIEW.json",
+      "sha256": "d5e8b61363d46e86f4280d917f55b23c4993eda41cd79d654181e71948c84d7d",
+      "verdict": "NO_BLOCKER_MECHANICAL_NEW_PREVIEW_WINDOW_AND_OPS_INTERFACE"
+    },
+    "Root2FixedQualification": {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/C7D0_FIXED_PACKAGE_QUALIFICATION.json",
+      "sha256": "f9fe0ed80fc084f77e9bf1cef379a436cd551c08c0f51ecd206abcc57a3e2b1f",
+      "status": "FIXED_MCP_PACKAGE_QUALIFIED_FOR_EXACT_APPROVAL_LOCAL_OPS_DERIVED_NOT_EXECUTION_READY"
+    },
+    "Root2IndependentOpsReview": {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-C7D0-INDEPENDENT-LOCAL-REVIEW-20261105/INDEPENDENT_REVIEW.json",
+      "sha256": "1cdde4785885a1f16fc671fa6d14f53626224075b252aa9e00cb27324195764a",
+      "verdict": "NO_BLOCKER_EXACT_C7D0_LOCAL_MECHANICAL_PREPARATION_ONLY"
+    }
+  },
+  "new_exact_approval": {
+    "runtimeId": "6d49f895-887d-437c-9294-d381bcd8005d",
+    "GateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+    "parentAskedOnce": false,
+    "received": true,
+    "actualSource": {
+      "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+      "turnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+      "userMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+      "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+      "exactText": "我提前批准你的审批。一会儿不用问我了\n",
+      "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+      "contextReviewSHA256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+      "humanContainsGateHash": false,
+      "questionReplyWrapper": false,
+      "sourceRelabeled": false,
+      "singleNextScopeOnly": true
+    },
+    "credentialSourceApproved": false,
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null,
+    "SaveApproved": false,
+    "advanceHumanWire": {
+      "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/ADVANCE_OWNER_WIRE.json",
+      "sha256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9"
+    },
+    "approvalContext": {
+      "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/APPROVAL_CONTEXT.json",
+      "sha256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+      "status": "ACTUAL_ADVANCE_HUMAN_CONTEXT_RECORDED_PENDING_INDEPENDENT_SINGLE_SCOPE_PLATFORM_MAPPING",
+      "actualHumanStatementAvailable": true,
+      "executionSourceBound": false,
+      "platformRecognized": false
+    },
+    "scopeMappingReviewPending": false,
+    "executionSourceBound": true,
+    "platformRecognizedExecutionApproval": false,
+    "formalQuestionAsked": false,
+    "sourceContextReview": {
+      "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/REVIEW.json",
+      "sha256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+      "commit": "80130ead7ec7d294d4ba3395d92f1edab9d9dd12",
+      "verdict": "NO_BLOCKER_UNBOUND_MECHANICAL_CREDENTIAL_AND_SINGLE_ADVANCE_CONTEXT"
+    }
+  },
+  "new_actual_readiness_receipts": {
+    "independentSourceBindingReview": {
+      "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/SOURCE_BINDING_REVIEW.json",
+      "sha256": "5a36330de59f54eba0395e846a2b6bb7c5230e6eef3b2a19af3c9d4af933e5b0",
+      "verdict": "NO_BLOCKER_EXACT_C7D0_HUMAN_SOURCE_BINDING_DELTA"
+    },
+    "consumerUIReady": {
+      "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/CONSUMER_UI_READY.json",
+      "sha256": "340f10d4f8e46da4b30bab1dd5687901fb981dd86407745eaf3c6217bb500cf3",
+      "tabId": "1962067626",
+      "observedAt": "2026-11-04T21:53:32.691Z"
+    }
+  },
+  "updatedAt": "2026-11-05T01:18:55.438731+00:00",
+  "latestSourcePreflight": {
+    "status": "BLOCKED_SOURCE_LOOKUP_AND_BROWSER_RESERVATION_CALLER",
+    "sourceReview": "NO_BLOCKER_SOURCE_ONLY_8922a661",
+    "credentialSearch": "EXECUTED_PLATFORM_ALLOWED_OS_ERROR_NO_SECRET_RETURNED",
+    "credentialAttempts": 1,
+    "factoryConstructed": false,
+    "browserReservation": "NO_QUALIFIED_SEAM_IN_SCOPED_MCP_CALLER",
+    "evidence": [
+      {
+        "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/RECEIVER_SOURCE_READY.json",
+        "sha256": "02b9cc75a23fc103f03e6b981dc99436d96fb607583dc08d887a170fdece6a2a"
+      },
+      {
+        "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/BROWSER_RESERVE_ADMISSION_ASSESSMENT.json",
+        "sha256": "b5f1403fedb9476f33782bf20be32b11af3aa813ad5931b35ad80ac65bce572a"
+      },
+      {
+        "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/SOURCE_BINDING_REVIEW.json",
+        "sha256": "8922a661912511bbd3e796c57373e89962bfb6d756118d87352a02e7e56ed977"
+      }
+    ],
+    "T": null,
+    "SaveApproved": false,
+    "returnTrigger": "Parent/Auth exact nonsecret source-context finding plus minimal lawful MCP caller reservation seam; Root2 actual shared-resource release before future control/OTP"
+  },
+  "nonsecretSourceDiagnosis": {
+    "evidence": [
+      {
+        "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/NONSECRET_KEYCHAIN_CONTEXT.json",
+        "sha256": "7982a007ba7d5d69ea8bda66a76e4c702b8d183ccce626f2ef9b5999a71d780a"
+      },
+      {
+        "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/TARGET_KEYCHAIN_METADATA_ONLY.json",
+        "sha256": "85a4fcd1cdd7ecdb1893279c2d2f7aef1958358d96f9bd3f1f2e2a1208855199"
+      }
+    ],
+    "result": "Default known login Keychain observed; uid/username not obtained after module restriction. One exact-selector metadata-only query also exit44/parameter-invalid/notfound. No returned metadata; source cause UNKNOWN. Queries stopped.",
+    "approval": "Real advance approval and reviewed context retained; no new Owner approval missing for the fixed single proposed scope. This does not prove source/provider/platform readiness.",
+    "next": "Await exact Auth owning browser-reservation signature/receipt semantics, then minimal MCP caller adapter; parent coordinates source-context support. No further key queries.",
+    "newT": null,
+    "SaveApproved": false
+  },
+  "browserReservationCallerCandidate": {
+    "status": "LOCAL_DEFAULT_OFF_16_TESTS_AND_SCOPED_TYPECHECK_PASS_REVIEW_PENDING",
+    "evidence": [
+      {
+        "path": "docs/mcp/c02/s1/browser-reservation-caller-20261105/CANDIDATE.json",
+        "sha256": "ff80da1807e441a7448dd08a541361eeb807a4e8cebbbd2ab103b3202a8a1a40"
+      },
+      {
+        "path": "docs/mcp/c02/s1/browser-reservation-caller-20261105/BROWSER_SESSION_OWNER_ASSESSMENT.json",
+        "sha256": "64099c3d5c89069c599a1b58193d4276899b055833be317b8df56bd30899fbcd"
+      }
+    ],
+    "AuthCandidate": "47a3d2ee2da93cf25bc4ba699a90f082b0299cff",
+    "liveReady": false,
+    "actualCredentialSource": "NOT_READY",
+    "terminalProofPort": "MISSING_SAMESESSION_REFRESH_REJECTION_TRUSTED_RECEIPT",
+    "newT": null,
+    "SaveApproved": false
+  },
+  "manualBrowserOtpProposal": {
+    "mode": "MANUAL_OWNER_OTP",
+    "status": "OWNER_SELECTED_PARENT_SOURCE_MAPPING_AND_FIXED_SCOPE_NARROWING_PENDING",
+    "browserKeychainAndAPIReceiver": "STOPPED_NOT_RELABELED_PASS",
+    "proposal": {
+      "path": "docs/mcp/c02/s1/browser-reservation-caller-20261105/MANUAL_OWNER_OTP_SCOPE_DELTA_PROPOSAL.json",
+      "sha256": "d3ba94350836bb43d17a2bb8e778d602c6cc83e461c974f491f10b34ff9179a0"
+    },
+    "newT": null
+  },
+  "sameOwnerSdkSourceRevision": {
+    "status": "SOURCE_ACTIVATION_REVIEW_PASS_ROOT2_PRODUCER_PENDING",
+    "candidate": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/CANDIDATE.json",
+      "sha256": "2b7882261075707621ad34a50e8ee934e1b685a6dd367ee7635c0ea88a2dad38"
+    },
+    "package": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/PACKAGE.json",
+      "sha256": "91bbfc8c5fe565c3656d3991c1a0fa2a39aff154950ef022a1dbd794b473e014"
+    },
+    "gateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+    "scopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+    "T": null,
+    "platformApproval": false,
+    "browserOtp": "NOT_RUN",
+    "browserReceiver": "STOPPED_NOT_USED_HISTORICAL_FAILURE_UNCHANGED",
+    "browserReservation": "OFF_UNUSED_NO_TERMINAL_BRIDGE_NEEDED_FOR_SAME_OWNER_FLOW",
+    "consumerCallbackAndPreview": "NOT_RUN",
+    "SaveApproved": false,
+    "finiteWindowRepair": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/FINITE_WINDOW_REPAIR.json",
+      "sha256": "9000468bf0db1ec72747109c6a8d1fa17e53f53eab64c749adbba23ef4eb68a3",
+      "independentRecheck": "PENDING"
+    },
+    "sourceBinding": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/OWNER_SOURCE_BINDING_RECEIPT.json",
+      "sha256": "28624a7de442f5e5a7fdbdff601cc6da0cee02a9c73c3765341189fdae4bdd3b"
+    },
+    "activationDelta": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/ACTIVATION_SOURCE_DELTA.json",
+      "sha256": "a57d04b06b26d59e3fd24800e182ef85a8a8453df6268008a767ea136cb4ba97"
+    },
+    "Root2ProducerContract": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/ROOT2_SDK_RELEASE_CONTRACT.md",
+      "sha256": "94c6c4dcd8ee8119f6e768b5b3a692f0f57df4e2a2009ff25420dcbdc55be2b8",
+      "accepted": false
+    },
+    "finalLocalActivationReview": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/ACTIVATION_SOURCE_REVIEW.json",
+      "sha256": "81e91f96843b385ce6e4125771b73ac81b1e22447f5ad17d5f944bd23a030877",
+      "commit": "e67b678d4a813242774686e11619cf8be1112d62",
+      "verdict": "NO_BLOCKER_LOCAL"
+    },
+    "consumerUiPreparation": {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/CONSUMER_UI_READY.json",
+      "sha256": "da1bfb047efcb85f94c35950702a3760ee8b52d2cceed2e2317a51d17845caa5",
+      "observedAt": "2026-11-05T01:14:35.505Z",
+      "currentAgainBeforeLaunchRequired": true
+    }
+  }
+}

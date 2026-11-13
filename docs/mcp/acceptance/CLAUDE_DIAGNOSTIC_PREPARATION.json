@@ -1,0 +1,58 @@
+{
+  "status": "EXECUTED_INDEPENDENTLY_CLOSED_GATE_CONSUMED",
+  "candidate": "0c4651f6",
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+  "fixture": "mcp/fixtures/chatgpt-item-read-smoke.json",
+  "firstRead": "steps[2]",
+  "reusePriorTripAndList": true,
+  "independentBaseline": "docs/mcp/acceptance/CONSUMER_BACKEND_BASELINE.json",
+  "baselineItemSha256": "c2f9627883fc5a266bae2444ac230f8dbf99f8044afc119c39dfa5a536ce807b",
+  "refreshRead": "Same P3 once after >=60s, only if first succeeds and budget permits",
+  "foreignRead": "steps[3], after successful authentication",
+  "revokeProbe": "revoke_probe, after normal DELETE and fresh absence ACK",
+  "firstFailure": "Preserve raw error and only projected MCP_QA_REQUEST metadata; no retry/reconnect loop",
+  "cleanupReserveSeconds": 120,
+  "noActivationBefore": [
+    "Root Source/worker closed and fresh short CAS",
+    "actual consumer browser/receiver PREPARED",
+    "current pending-request binding proof before OTP",
+    "Auth READY"
+  ],
+  "oldB3Reusable": false,
+  "supersedesUnapprovedCandidate": "29f9c9ed / Gate84837c5e",
+  "fixtureSha256": "b9f817017a848e3079fcf2722dfa2b313ec93d1eb811376464bd3777369630f0",
+  "excludedLegacyFixtureFields": [
+    "client_id",
+    "steps[0]",
+    "steps[1]"
+  ],
+  "ownerApproval": {
+    "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+    "originalHumanAnswer": "批准此精确新 QA 窗口",
+    "sourceThread": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+    "sourceTurn": "01a192aa-b19b-7ef3-b369-b60415d63626",
+    "sourceMessage": "01a192e4-f7f5-77e0-94b0-3573bdfea85b",
+    "questionCallId": "call_80cb6c69f52d456a8dd1b721609b14ee",
+    "independentlyVerifiedOriginalHumanReply": true
+  },
+  "windowStarted": true,
+  "consumerPreparedAt": "2026-10-31T17:17:36Z",
+  "preflight": {
+    "singleConsumerBrowserWriter": "MCP",
+    "browser": "Chrome1",
+    "existingClaudeConnectionExpired": true,
+    "reconnectButtonVisible": true,
+    "receivingExactQaFilter": true,
+    "filteredRows": 15,
+    "oldOtpOpened": false,
+    "reconnectClicked": true,
+    "browserOtpSent": true,
+    "consentClicked": true,
+    "firstTool": "get_trip_item P3 only",
+    "receiverHandoff": "MCP_EXCLUSIVE_CONFIRMED",
+    "authReady": true
+  },
+  "outcomeReceipt": "CLAUDE_READ_C.json",
+  "fullClosureEvidence": "CLAUDE_C_AUTH_CLOSED.json",
+  "windowReusable": false
+}

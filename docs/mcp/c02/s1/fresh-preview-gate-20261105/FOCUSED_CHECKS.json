@@ -1,0 +1,34 @@
+{
+  "status": "PASS_FOCUSED_ACTUAL_SOURCE_BINDING_PENDING_INDEPENDENT_REVIEW",
+  "recordedAt": "2026-11-04T20:41:01.404428+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "scopeSHA256": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+  "sourcePinsMatching": 17,
+  "consumerInputsMatching": 4,
+  "ownerSourceGuardPureCases": 24,
+  "freshnessBoundaryCases": 2,
+  "EMPTYAccepted": true,
+  "CREATE_EDITRejected": true,
+  "normalClose1680Hard1800Token60": "PRESERVED_EXISTING_BINDING",
+  "pythonCompile": "PASS",
+  "generatorSHA256": "1f54ef3c4f0efd1c1bbbf013a6c1901cef167383087edfd8cb779f5e1c788ce0",
+  "checkerSHA256": "10f57b7430d47997ddc266a66aec9f5cf3f9daa61ec80625185df666e0a7e1ce",
+  "repeatedHistoricalBehaviorTests": false,
+  "actualOwnerSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "messageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+    "wireSHA256": "617bfc03181ee9c80695af3a1ac6d934853f01dd440ba9aa0e03a808f484bc27"
+  },
+  "actualT": null,
+  "AuthOTPNetworkHostedConsumer": 0,
+  "review": "PENDING_INDEPENDENT_OWNER_SOURCE_BINDING_DELTA_REVIEW",
+  "fixtureNote": "Exact real human wire verified through pure extracted guards only; negative/future fixtures remain in memory, no Auth/OTP/runtime.",
+  "actualGuardEntrypoints": [
+    "c02-normal-control.py",
+    "prepare-c02-access-window.py",
+    "operators/config_cas.py"
+  ],
+  "actualOwnerApprovalReadback": true,
+  "platformRecognizedExecutionApproval": false
+}

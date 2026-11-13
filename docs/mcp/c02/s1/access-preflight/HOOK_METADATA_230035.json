@@ -1,0 +1,198 @@
+{
+  "source": "Visible DEV SQL Editor result",
+  "observed_at": "2026-11-02 23:00:35.438278+00",
+  "hook": {
+    "acl": "{postgres=X/postgres,supabase_auth_admin=X/postgres}",
+    "owner": "postgres",
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "bodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+    "securityDefiner": false
+  },
+  "oauth_schema": [
+    {
+      "type": "uuid",
+      "table": "oauth_authorizations",
+      "column": "id"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "authorization_id"
+    },
+    {
+      "type": "uuid",
+      "table": "oauth_authorizations",
+      "column": "client_id"
+    },
+    {
+      "type": "uuid",
+      "table": "oauth_authorizations",
+      "column": "user_id"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "redirect_uri"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "scope"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "state"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "resource"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "code_challenge"
+    },
+    {
+      "type": "USER-DEFINED",
+      "table": "oauth_authorizations",
+      "column": "code_challenge_method"
+    },
+    {
+      "type": "USER-DEFINED",
+      "table": "oauth_authorizations",
+      "column": "response_type"
+    },
+    {
+      "type": "USER-DEFINED",
+      "table": "oauth_authorizations",
+      "column": "status"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "authorization_code"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_authorizations",
+      "column": "created_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_authorizations",
+      "column": "expires_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_authorizations",
+      "column": "approved_at"
+    },
+    {
+      "type": "text",
+      "table": "oauth_authorizations",
+      "column": "nonce"
+    },
+    {
+      "type": "uuid",
+      "table": "oauth_clients",
+      "column": "id"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "client_secret_hash"
+    },
+    {
+      "type": "USER-DEFINED",
+      "table": "oauth_clients",
+      "column": "registration_type"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "redirect_uris"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "grant_types"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "client_name"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "client_uri"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "logo_uri"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_clients",
+      "column": "created_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_clients",
+      "column": "updated_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_clients",
+      "column": "deleted_at"
+    },
+    {
+      "type": "USER-DEFINED",
+      "table": "oauth_clients",
+      "column": "client_type"
+    },
+    {
+      "type": "text",
+      "table": "oauth_clients",
+      "column": "token_endpoint_auth_method"
+    },
+    {
+      "type": "uuid",
+      "table": "oauth_consents",
+      "column": "id"
+    },
+    {
+      "type": "uuid",
+      "table": "oauth_consents",
+      "column": "user_id"
+    },
+    {
+      "type": "uuid",
+      "table": "oauth_consents",
+      "column": "client_id"
+    },
+    {
+      "type": "text",
+      "table": "oauth_consents",
+      "column": "scopes"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_consents",
+      "column": "granted_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "oauth_consents",
+      "column": "revoked_at"
+    }
+  ],
+  "sql": "-- MCP C02 read-only metadata; no credential or business rows.\nselect clock_timestamp() as observed_at,\n (select jsonb_build_object('owner',pg_catalog.pg_get_userbyid(p.proowner),'securityDefiner',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'bodyMD5',md5(p.prosrc)) from pg_catalog.pg_proc p where p.oid=to_regprocedure('public.otr_mcp_qa_access_token(jsonb)')) as hook,\n (select jsonb_agg(jsonb_build_object('table',table_name,'column',column_name,'type',data_type) order by table_name,ordinal_position) from information_schema.columns where table_schema='auth' and table_name in ('oauth_clients','oauth_authorizations','oauth_consents')) as oauth_schema;",
+  "sql_mutations": 0,
+  "credential_or_business_rows_selected": false
+}

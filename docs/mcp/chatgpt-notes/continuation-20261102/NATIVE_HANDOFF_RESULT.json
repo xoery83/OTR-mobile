@@ -1,0 +1,16 @@
+{
+  "status": "NOT_RUN",
+  "sourceThreadId": "01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "nativeCommit": "436cd65b",
+  "observedAt": "2026-11-02T10:18:20.884421+00:00",
+  "scope": "Same277/Item3616/rev3 Native downstream only",
+  "reason": "No verified device session normally logged into the approved QA Account; prior Hosted Reader A/B did not cover this Trip.",
+  "pull": "NOT_RUN",
+  "sqlite": "NOT_RUN",
+  "dayFeedDetail": "NOT_RUN",
+  "coldRecovery": "NOT_RUN",
+  "borrowedSession": false,
+  "replayedMutation": false,
+  "doesNotRegressConsumerCloudPASS": true,
+  "next": "Native establishes/verifies its own legitimate QA device session under its owning authorization, then read-only Pull/SQLite/DayFeed/Detail/cold check; no new MCP/Core interface requested."
+}

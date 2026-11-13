@@ -1,0 +1,11 @@
+{
+  "source": "Root owning-agent direct human verification notification",
+  "sourceThreadId": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "sourceQuestionCallId": "call_03f49fcefaab4d05b9185f1cb85495e4",
+  "answer": "在本聊天批准该精确保存",
+  "scope": "same e5cf Gate / 78c / original1d6 / CAS1 / digest1d5; no new scope or deadline",
+  "mcpIndependentReadOfThisRootHumanMessage": false,
+  "rootOwnVerification": true,
+  "supersedesCrossChatAutoReviewRejectionOnly": true,
+  "doesNotReopenExpiredWindow": true
+}

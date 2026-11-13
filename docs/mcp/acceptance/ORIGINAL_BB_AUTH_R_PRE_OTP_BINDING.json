@@ -1,0 +1,21 @@
+{
+  "status": "PRE_OTP_BINDING_PASS",
+  "observedAt": "2026-11-01T03:50:50.594939+00:00",
+  "authorizationIdMD5": "c21511a7cf00af674f494c0dc4e9ad29",
+  "rows": [
+    {
+      "account_unbound_or_exact_qa": true,
+      "challenge_shape": true,
+      "client_matches": true,
+      "created_in_window": true,
+      "pending": true,
+      "redirect_matches": true,
+      "resource_matches": true,
+      "s256": true,
+      "scopes_match": true,
+      "unexpired": true
+    }
+  ],
+  "noOtpAllowedWithoutPass": true,
+  "originalNonceRecorded": false
+}

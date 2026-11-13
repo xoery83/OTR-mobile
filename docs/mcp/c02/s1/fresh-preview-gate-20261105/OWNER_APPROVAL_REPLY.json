@@ -1,0 +1,5 @@
+{
+  "questionItemId": "[\"request_user_input_async\",\"call_56ad0ab131ce4538bc0732a51fafbb83\",0]",
+  "question": "是否批准新窗口 c843／Gate e7b8bf27… 的有限 ChatGPT QA 连接和 P3 Preview（不含保存）？\n\n修复包 8eef37b7、独立复审及 Root2 最终对账均已完成。仅原合成 QA 账号、Trip cc44…、ChatGPT Client 835…；正常 OTP 和原 Read/Write Scope Consent，读取 Guide、Trip／现有事项，生成独立 Rimu Cove QA Guesthouse 的单条住宿 Preview。\n\n本次明确包含由 Root2 短锁执行必要的同镜像共享 DEV 容器 EMPTY 配置替换、既有有限 Issuer 函数体切换、OAuth／Hook／SiteURL 临时设置及完整关闭恢复；DCR 必须保持关闭。不开新 Scope，不部署新软件。首次临时变更前固定计时，正常 28 分钟关闭、最迟 30 分钟，Token 最长 60 秒；失败或到期立即撤销并恢复届时实际默认版本。\n\n服务器始终 command=null、confirmations=[]。不允许任何 Save／Apply／Edit，不查询或重试历史 UNKNOWN，不访问真实 Nelson。实际 Preview 出来后，保存另请你确认。\n\n需要这次批准，是旧窗口已关闭，今天恢复工作不包含新的受保护临时配置与连接授权。完整方案：/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_GATE.md",
+  "answer": "批准本轮临时配置、连接及 Preview，不包含保存"
+}

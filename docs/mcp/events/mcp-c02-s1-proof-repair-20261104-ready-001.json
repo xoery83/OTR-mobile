@@ -1,0 +1,38 @@
+{
+  "event_id": "mcp-c02-s1-proof-repair-20261104-ready-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "slice": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "READY_FOR_INTEGRATION",
+  "actual_occurred_at": "2026-11-03T19:34:52.123355+00:00",
+  "current_status": "MINIMAL_PROOF_FILTER_REPAIR_LOCAL_PASS_REVIEW_NO_BLOCKER",
+  "commit": "1840374b",
+  "packet_commit": "00e20db7",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/preview-proof-repair-20261104/SOURCE_INTEGRATION_PACKET.md",
+    "docs/mcp/c02/s1/preview-proof-repair-20261104/VALIDATION.json",
+    "docs/mcp/c02/s1/preview-proof-repair-20261104/REVIEW.json"
+  ],
+  "completed": [
+    "Strict existing hash proof preservation runtime+close, no raw contents",
+    "41+4tests,Typecheck,CaptureBuild,lint,format PASS",
+    "Independent NO_BLOCKER; precise Root1 and Root2 requests delivered"
+  ],
+  "unfinished": [
+    "Source integration/deploy qualification",
+    "Consumer independently server-proven Preview and Owner Save",
+    "Create/Edit APPLIED, Cloud readback and Native"
+  ],
+  "blockers": [
+    {
+      "request_id": "MCP-C02-S1-PREVIEW-PROOF-20261104-001",
+      "owner": "Root1 Source Integration; Root2 Hosted qualification; precise Owner execution authority required"
+    }
+  ],
+  "next_action": "Integrate fixed candidate; qualify latest default closed deployment/restore package without opening runtime; obtain precise authority then same-operation Preview/OwnerConfirm/Apply",
+  "actual_resource_lock": "NONE",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING"
+}

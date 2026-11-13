@@ -1,0 +1,179 @@
+{
+  "sha256": "437f3a03231430f5f7a6d4e16dfd119a9f5b558d9fc7f803f5787b5f2bdfa573",
+  "trace": {
+    "windowId": "b0b7c1c04f18432eb255112f5449c5c0",
+    "candidateId": "e3988c76fbec69fde27bb868bd39ac14be6c17d83ef533adb359e7cc412a2e9f",
+    "since": "2026-11-04T04:38:06.366000+00:00",
+    "scope": "ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP",
+    "tailLimit": 200,
+    "tailMayBeTruncated": true,
+    "records": [
+      {
+        "timestamp": "2026-11-04T04:50:24.287547167Z",
+        "requestId": "12e7c539-0930-451f-a99f-f0c39dc698d7",
+        "status": 200,
+        "durationMs": 1744,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-04T04:50:31.330578070Z",
+        "requestId": "cc76b9af-53b2-4d33-b31f-55520ef203f8",
+        "status": 200,
+        "durationMs": 1377,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-04T04:50:31.943689733Z",
+        "requestId": "797fe170-005f-40e5-a98f-88b737948578",
+        "status": 200,
+        "durationMs": 1948,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-04T04:50:46.800577660Z",
+        "requestId": "8b76bc80-6451-45c8-9090-6a12e60bf214",
+        "status": 200,
+        "durationMs": 9512
+      },
+      {
+        "timestamp": "2026-11-04T04:51:00.728058622Z",
+        "requestId": "43654573-7bac-4bac-89f0-f424f2a3105e",
+        "status": 401,
+        "durationMs": 12700,
+        "tool": "get_trip_item",
+        "errorCode": "AUTH_REQUIRED"
+      },
+      {
+        "timestamp": "2026-11-04T04:51:01.011876833Z",
+        "requestId": "0a8fc23e-1474-47e4-b7a2-cc45088e8b3d",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-04T04:51:11.883002141Z",
+        "requestId": "ba6a2b32-8f07-4ec2-9b43-b019c0b5008d",
+        "status": 200,
+        "durationMs": 9076,
+        "tool": "get_trip_item",
+        "errorCode": "NOT_VISIBLE"
+      },
+      {
+        "timestamp": "2026-11-04T04:52:45.080064156Z",
+        "requestId": "6482b913-c46e-426b-ac0b-462d40259654",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-04T04:52:45.108541448Z",
+        "requestId": "74b69638-f8ed-4964-a3ee-04a11a6365ae",
+        "status": 401,
+        "durationMs": 3
+      },
+      {
+        "timestamp": "2026-11-04T04:52:45.366279304Z",
+        "requestId": "a88fdd27-e890-48f6-a4d0-9d590ebb0448",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-04T04:52:45.400345546Z",
+        "requestId": "e7205c5a-f1ff-43a9-a938-b654805a2c81",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-04T04:52:45.427142546Z",
+        "requestId": "ffd91636-0dcf-4df4-a6f1-97465f93016e",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-04T04:52:45.789327747Z",
+        "requestId": "cd035867-cd3a-4281-b070-e3571b37e564",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-04T04:52:48.756851598Z",
+        "requestId": "c3a62ad2-e38c-47f3-8957-8b87eb9b4129",
+        "status": 200,
+        "durationMs": 1315,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-04T04:52:49.965239525Z",
+        "requestId": "43538282-4f60-4577-bb3f-bb7ac4112270",
+        "status": 200,
+        "durationMs": 1296,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-04T04:52:51.286506672Z",
+        "requestId": "4f02de09-3a6f-4fcd-97f5-f262866c68c5",
+        "status": 200,
+        "durationMs": 1279,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-04T04:53:57.461716164Z",
+        "requestId": "e8fdde69-6165-4a50-883a-28cdb0304f76",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-04T04:53:57.746460102Z",
+        "requestId": "2aeb1ef2-ffd3-4fcb-943f-fb7b55ed92a3",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-04T04:54:01.554295513Z",
+        "requestId": "9976bbba-28e5-47fb-924c-a1fb738c8bd1",
+        "status": 200,
+        "durationMs": 1541,
+        "tool": "create_trip_item",
+        "responseProof": {
+          "version": "otr.mcp.response-proof/1",
+          "kind": "PREVIEW",
+          "inputSHA256": "d0092f662a03971a1ca24b0ed07961f50572a46abd112347242f62d72bf589f7",
+          "outputSHA256": "ff5d986caccc96d946588865d90672ed0b90c3f3b12fba7185b60038a1434c0f",
+          "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc"
+        }
+      }
+    ],
+    "coreRecords": [],
+    "writeStageRecords": [
+      {
+        "timestamp": "2026-11-04T04:50:38.711548235Z",
+        "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+        "method": "GET",
+        "stage": "PRECHECK",
+        "elapsedMs": 0
+      },
+      {
+        "timestamp": "2026-11-04T04:50:39.368829379Z",
+        "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+        "method": "GET",
+        "stage": "CORE_BOUNDARY_ENTERED",
+        "elapsedMs": 658
+      },
+      {
+        "timestamp": "2026-11-04T04:50:45.510678496Z",
+        "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+        "method": "GET",
+        "stage": "CORE_RETURNED",
+        "elapsedMs": 6800,
+        "coreStatus": 404
+      },
+      {
+        "timestamp": "2026-11-04T04:50:45.510777643Z",
+        "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+        "method": "GET",
+        "stage": "POSTCHECK",
+        "elapsedMs": 6800,
+        "coreStatus": 404
+      }
+    ],
+    "coreCorrelation": "CONTAINER_AND_WINDOW_ONLY_NOT_OPERATION_ATTRIBUTED"
+  }
+}

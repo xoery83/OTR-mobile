@@ -1,0 +1,29 @@
+{
+  "ack_status": "PENDING_VERIFICATION",
+  "event_id": "mcp-chatgpt-8f4-20261102-owner-approved-001",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+  "work_item_id": "WI-MCP-EDIT-PREP",
+  "received_at": "2026-11-02T06:34:39.799Z",
+  "source_event_sha256": "f821b7df4dd4f4174f504720d4a24114d0e0f8d4f33bfb287f560d706abe8857",
+  "reported_transition": "UNBLOCKED",
+  "reported_created_at": "2026-11-02T06:34:17.635501+00:00",
+  "supersedes_blocker_reason_of": "mcp-chatgpt-8f4-20261102-blocked-owner-001",
+  "reported_owner_authorization": {
+    "status": "REPORTED_GRANTED_NOT_INDEPENDENTLY_VERIFIED",
+    "human_message_id": "01a19af5-21b4-7732-a648-f00ce83997c4",
+    "scope": "Reported finite frozen 8f4/e3dc connection and fixed Notes save only"
+  },
+  "reported_execution": {
+    "readiness": "UI_READY",
+    "clock_started": false,
+    "oauth_executed": false,
+    "apply_executed": false,
+    "chatgpt_result": "NOT_RUN",
+    "native_result": "NOT_RUN"
+  },
+  "applied_to_execution_history": false,
+  "reference_published_snapshot_version": "738de012fdb02870",
+  "event_transition_published_snapshot_version": null,
+  "reason": "Idempotent receipt of the reported unblock only. Original BLOCKED event/ACK retained; no authority delegation, execution, new PASS or website transition is asserted by this ACK."
+}

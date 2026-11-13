@@ -1,0 +1,11 @@
+{
+  "gateCommit": "19253117",
+  "gateSha256": "b3e66e9df956cf230827e1074b4f8dfce1da532c8cc05d5cb2bbc3484a902a0e",
+  "directHumanReply": "同意",
+  "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "turnId": "01a19227-9b05-7dd2-8208-139e2efadda4",
+  "userMessageId": "01a19227-9e61-72b1-9607-7eb70e4dcc9d",
+  "authIndependentlyVerified": true,
+  "scope": "ChatGPT then independent closure then Claude; synthetic QA1f Read only; <=30min each from first temporary config; token<=60s; fresh resource CAS required.",
+  "notAuthorityFor": "Write, real Owner Nelson, Production, old-window reuse, or overriding a resource lease."
+}

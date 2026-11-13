@@ -1,0 +1,140 @@
+{
+  "status": "APPLE_AUTH_NONEMPTY_GUEST_PUBLICATION_AND_COLD_READBACK_PASS_NATIVE_DETAIL_GAPS",
+  "bundleIdentifier": "art.xoery.otr",
+  "appleTeamId": "3K49Z2Q5X7",
+  "ownerIdentifierRegistration": "CONFIRMED_IN_THIS_CHAT",
+  "devProviderReadback": {
+    "project": "tuqigdxrvrerfewsxqgm",
+    "appleEnabled": true,
+    "googleEnabled": true,
+    "clientAudience": "OWNER_CONFIGURED_NOT_INDEPENDENTLY_READ",
+    "manualLinking": "NOT_EXPOSED_BY_PUBLIC_SETTINGS"
+  },
+  "localValidation": {
+    "focusedTests": 122,
+    "testFiles": 12,
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "nativePrebuild": "PASS",
+    "appleEntitlement": [
+      "Default"
+    ],
+    "javascriptExport": "PASS_BEFORE_FINAL_LINK_READBACK_CHANGE",
+    "globalTypecheck": "THREE_EXISTING_UNRELATED_ERRORS_NO_APPLE_DIAGNOSTICS"
+  },
+  "independentReview": {
+    "result": "SCOPED_NO_BLOCKER_APPLE_SOFTWARE_CANDIDATE",
+    "fixedFinding": "Unmounted Settings confirmation cannot start Apple linking",
+    "regressionTests": 3
+  },
+  "nativeProject": "/private/tmp/otr-apple-native-preflight-5kr0r60w/ios",
+  "firstDeviceBuild": {
+    "result": "FAILED",
+    "firstFailure": "NEW_TEAM_HAS_NO_REGISTERED_DEVICES_OR_PROVISIONING_PROFILE"
+  },
+  "secondDeviceBuild": {
+    "result": "NATIVE_COMPILE_PASS_BUNDLE_FAILED",
+    "firstFailure": "Temporary linked project root mismatch in Expo Router entry resolution",
+    "minimalRepair": "Pin only the temporary .xcode.env.local PROJECT_ROOT and ENTRY_FILE to the single Auth source/dependency tree."
+  },
+  "physicalAcceptance": {
+    "firstAppleLogin": "OWNER_CONFIRMED_SUCCESS",
+    "repeatLogin": "OWNER_CONFIRMED_SAME_ACCOUNT",
+    "cancel": "OWNER_CONFIRMED_STILL_SIGNED_OUT",
+    "hideMyEmail": "OWNER_CONFIRMED_SELECTED",
+    "guestAdoption": "ORIGINAL_PUBLISHED_RECEIPT_AND_INDEPENDENT_PG_ACCOUNT_TRIP_P1_COLD_READBACK_PASS",
+    "logoutRelogin": "OWNER_CONFIRMED_PASS",
+    "coldSessionRestore": "OWNER_CONFIRMED_SAME_ACCOUNT_WITHOUT_REAUTH_AFTER_EXACT_PROCESS_RELAUNCH",
+    "twoAppleUsersIsolation": "NOT_RUN",
+    "explicitIdentityLink": "NOT_RUN",
+    "guestLocalTripP1": "OWNER_CONFIRMED_NATIVE_GUEST_CREATE_SAVE_AND_PROCESS_COLD_RESTORE"
+  },
+  "remaining": [
+    "Resolve Native adopted-Trip full detail/edit/People/time fallback through existing owning reader/Native integration; remoteSelected summary is not full Native acceptance.",
+    "Qualify a second real Apple QA identity for actual cross-Account/Trip isolation.",
+    "Verify Hosted manual identity linking and same-email automatic-linking behavior against the explicit-linking contract before acceptance.",
+    "New Google iOS Client is required for art.xoery.otr. Google is unavailable only in the new bundle until configured.",
+    "No claim that two same-Apple-identity devices prove two distinct Apple users isolation."
+  ],
+  "finalDeviceBuild": {
+    "result": "PASS",
+    "codeSignatureVerification": "PASS",
+    "receipt": "SIGNED_DEVICE_BUILD.json",
+    "softwareCommit": "e013bf5d"
+  },
+  "nativeInstallation": {
+    "result": "PASS",
+    "newBundlePreimage": "NO_EXISTING_ART_XOERY_OTR_APP",
+    "launch": "PASS_PROCESS_ALIVE",
+    "ownerAppleInteraction": "FIRST_LOGIN_CONFIRMED_SUCCESS",
+    "otherApps": "NO_UNINSTALL_OR_OVERWRITE_REQUESTED"
+  },
+  "guestCustodyRepair": {
+    "status": "LOCAL_REVIEW_AND_SIGNED_IPAD_BUILD_PASS",
+    "firstFailures": [
+      "GUEST_VERIFICATION_SESSION_INVALID",
+      "GUEST_VERIFICATION_STORAGE_UNAVAILABLE_FOR_OPTIONAL_UNDEFINED_NAME_KEYS"
+    ],
+    "minimalFix": "Allow only optional bounded Apple name components in the strict Session schema; omit only validated undefined keys before fingerprint, preserving null and all identity gates.",
+    "focusedTests": 47,
+    "testFiles": 2,
+    "independentRegressionTests": 2
+  },
+  "additionalDeviceQualification": {
+    "device": "wired iPad Air 5",
+    "ownerConfirmedAvailable": true,
+    "appleIdentity": "SAME_AS_IPHONE",
+    "intendedSlice": "Fresh local Guest Trip/P1 then Apple Adoption to the existing Account",
+    "secondDistinctAppleIdentity": "NOT_AVAILABLE_YET"
+  },
+  "guestAdoptionFirstFailure": {
+    "installedCommit": "58bedc01",
+    "message": "Complete local data checks before sign-in; data retained",
+    "source": "src/components/AccountManagementScreen.tsx onAuthenticated",
+    "rootCause": "DEV QA build omitted EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED=true; existing protected adoption confirmation panel was not selected.",
+    "repair": "Enable only the existing DEV client UI opt-in in apple-device-qa/local QA build; no Hosted policy or permission changes.",
+    "followup": "The intended flag remained compiled false despite shell env settings. Standard ignored Auth-worktree .env.local plus canonical Metro export produced a verified true branch. The corrected signed artifact was then installed without resetting the Guest container."
+  },
+  "pickerPrivacyRepair": {
+    "status": "LOCAL_REVIEW_AND_SIGNED_IPAD_BUILD_PASS",
+    "regression": "A Apple name suggestion was exposed by listAccounts while B was active.",
+    "repair": "Write/read remembered-Account index projection uses only userId/displayName/email; full suggestion remains in its private Session.",
+    "legacyIndexes": "READ_ONLY_PROJECTION_TEST_PASS"
+  },
+  "actualClientGuardVerification": {
+    "status": "PASS_FROM_ACTUAL_HERMES_INPUT",
+    "sourceCommit": "96762acc",
+    "record": "ADOPTION_DEVICE_BUILD.json",
+    "serverAuthorityChanged": false
+  },
+  "guestLocalIndependentReadback": "PASS_GUEST_LOCAL_SQLITE_READBACK_JSON",
+  "guestAdoptionCurrentFailure": {
+    "clientGuard": "VERIFIED_TRUE",
+    "ownerSawConfirmation": true,
+    "ownerSubmittedOnce": true,
+    "localCheckpoint": "PREPARED_ONLY_NO_LOCAL_PUBLICATION_MARKER",
+    "serverState": "RESOLVED_PUBLISHED_ORIGINAL_RECEIPT_AND_CLOSED_RUNTIME_VERIFIED",
+    "root2ReadOnlyRequest": "AUTH-APPLE-ADOPTION-DIAG-20261113-01",
+    "cursor": "ADOPTION_RESUME_CURSOR.json",
+    "readback": "HOSTED_READ_ONLY_DIAGNOSIS.json",
+    "status": "RESOLVED_BY_EXACT_APPROVED_RUNTIME_WINDOW"
+  },
+  "preparedColdRecovery": {
+    "sourceCommit": "237e4c66",
+    "focusedTests": 69,
+    "independentReview": "PASS_AFTER_TWO_COLD_CANCELLATION_FIXES",
+    "nativeNormalRoute": "PASS_ORIGINAL_TARGET_CONFIRMATION_NO_APPLE_REAUTH",
+    "checkpointUnchanged": true,
+    "adoptionSubmitted": false,
+    "record": "PREPARED_COLD_DEVICE_READBACK.json"
+  },
+  "hostedWindow": {
+    "status": "USED_ONCE_CLOSED_AND_ORIGINAL_DEV_RESTORED",
+    "manifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749",
+    "root2StaticAlignment": "PASS",
+    "standaloneCloseVerifyOnly": "PASS",
+    "actualDisconnectDrill": "PASS_AFTER_RECORDED_MINIMAL_REPAIRS",
+    "receiptSHA256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1",
+    "finalEvidence": "APPLE_GUEST_WINDOW_FINAL_RECEIPT.json"
+  }
+}

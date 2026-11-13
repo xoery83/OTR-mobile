@@ -1,0 +1,48 @@
+{
+  "requestId": "VISION-VM02-QUAL-20261104-001",
+  "observedAt": "2026-11-03T20:30:50Z",
+  "status": "NOT_READY_FOR_INDEPENDENT_VISION_FRESH_CONSUMER",
+  "scope": "Read-only qualification facts; no activation, Preview, Apply or shared credentials",
+  "sourceVsHosted": {
+    "visionSourceReported": "59dc124f",
+    "lastVerifiedMcpHostedSource": "7946800b02a0b63c0b1a8a748b2492bd04dc6367",
+    "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+    "baselineContainer": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+    "receiptCommit": "b589643f",
+    "limits": "Closed deployment receipt is not current active OAuth or proof that Vision source is deployed. Root2 reports Auth temporary runtime closing; fresh baseline receipt required."
+  },
+  "historicalConsumerEvidence": {
+    "window": "e0d1c568-cbae-4b0c-a3a0-dec92e4ececf",
+    "outcome": "Normal ChatGPT OAuth/Consent, refresh actual 8read2write catalog, fresh conversation autonomously read Guide and existing QA Trip/Items",
+    "scope": "Same synthetic account and sole approved Trip; read retries/errors occurred and are preserved",
+    "closed": "Grant0, own session cleanupPASS, Issuer/Console/default restored; no remaining consumer authority",
+    "receipt": "docs/mcp/c02/s1/corrected-consumer-20261104/actual/ROOT2_FINAL_RECEIPT.json",
+    "trace": "docs/mcp/c02/s1/corrected-consumer-20261104/actual/REQUEST_TRACE_INTERIM.json"
+  },
+  "syntheticIdentity": {
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "tripName": "MCP Synthetic Nelson QA 20261031",
+    "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "resource": "https://api-dev.xoery.art/mcp",
+    "credentialTransfer": "FORBIDDEN; no Session/Token/Secret included",
+    "normalAcquisition": "Existing Auth-owned registered QA OTP path and dedicated QA inbox; a new independent session via normal OTP and Consumer Consent under exact actor/client/trip/time qualification. No service role, no borrowed lane session. Do not launch while registered QA control is held by another lane."
+  },
+  "currentMcpAuthority": {
+    "window": "b08a466d-29f3-48a8-9617-6c563646f417",
+    "status": "OWNER_APPROVED_UNUSED_NO_CLOCK_NO_SESSION",
+    "scope": "MCP original-scope Consent and same-operation Preview only, no Save",
+    "visionDelegated": false,
+    "limits": "Not a Vision read-only grant; must not reuse or enlarge this authority. Actual profile exposes 8read2write, not read-only tool catalog. EMPTY command/confirmations prohibit business Save."
+  },
+  "missingForVision": [
+    "Explicit actor/client/Trip/consumer/read-only task scope and independent session/Consent qualification for V-M02",
+    "Root2 fresh current version, closed baseline, access policy and actual resource availability before any finite activation",
+    "Real fresh ChatGPT dialog and real Guide/read trace in Vision run; historical MCP evidence is readiness evidence only"
+  ],
+  "exitContract": "Revoke only that run's client grant while route is live, verify absence, clean its own session/logout/refresh rejection; Root2 restores exact fresh default/Issuer/Console and disarms own timers. Never reset consumed clock or retry UNKNOWN.",
+  "suggestedOwnerTask": "Read the currently authorized synthetic trip and summarize its existing accommodation items without creating or changing anything. Let the fresh consumer discover the Guide itself.",
+  "nextAction": "Keep V-M02 NOT_READY until explicit independent read-only qualification. Do not open a parallel Hosted window or transfer MCP session; MCP C02 remains primary and resumes after Auth close.",
+  "businessWrites": 0,
+  "newHostedWindows": 0
+}

@@ -1,6 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
-import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import {
+  Client,
+  StreamableHTTPClientTransport,
+  type AuthProvider,
+} from "@modelcontextprotocol/client";
 import { createDevBackendHandler, type DevBackendGateway } from "../backend/src/app";
 import { buildCoreActorCollection } from "../backend/src/tripCoreV2Collection";
 import type { CoreHttpConnection } from "../backend/src/tripCoreV2Http";
@@ -180,6 +184,8 @@ async function protocol(
   token = "a",
   clientName = "test-client",
   tokenLifetimeMs = 60000,
+  authProvider?: AuthProvider,
+  taskAssistant = false,
 ) {
   let handle: ReturnType<typeof createMcpHandler>;
   const server = loopbackServer((r) => handle(r));
@@ -190,6 +196,7 @@ async function protocol(
   const logs: unknown[] = [];
   handle = createMcpHandler({
     resource,
+    taskAssistant,
     log: (event) => logs.push(event),
     authorize: async (request) => {
       const credential =
@@ -214,7 +221,9 @@ async function protocol(
   });
   await client.connect(
     new StreamableHTTPClientTransport(new URL(resource), {
-      requestInit: { headers: { Authorization: `Bearer ${token}` } },
+      ...(authProvider
+        ? { authProvider }
+        : { requestInit: { headers: { Authorization: `Bearer ${token}` } } }),
     }),
   );
   return { client, resource, logs, f };
@@ -226,6 +235,86 @@ function structured(result: unknown): Record<string, unknown> {
   };
   return r.structuredContent ?? r.result ?? {};
 }
+it("Item capability projection does not replace the actual mutation authority", async () => {
+  const f = fixture(), id = f.ids[2];
+  f.graph.itinerary_events[2].visibility = "PRIVATE";
+  const read = await createReadTools(a, f.read()).get_trip_item({
+    trip_id: trip, item_id: id,
+  });
+  expect(read.item.capabilities).toEqual(projectCoreItem(f.graph, f.actor, id)!.capabilities);
+  const command = {
+    contractVersion: 2, intentVersion: 2, operationId: randomUUID(), tripId: trip,
+    command: "SET_ITEM_TEXT", target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { description: "Synthetic authorized Notes" },
+  };
+  const applied = applyCoreCommand(f.graph, command, f.actor, now);
+  expect(applied.graph.itinerary_events[2].description).toBe(command.payload.description);
+  expect(f.graph.itinerary_events[2].semantic_revision).toBe(1);
+  for (const actor of [{ ...f.actor, accountId: b }, { ...f.actor, active: false }])
+    expect(() => applyCoreCommand(f.graph, command, actor, now)).toThrow();
+  const shared = structuredClone(f.graph);
+  shared.itinerary_events[2].visibility = "GROUP";
+  const viewer = { ...f.actor, accountId: b, canManageShared: false };
+  expect(projectCoreItem(shared, viewer, id)).not.toBeNull();
+  expect(() => applyCoreCommand(shared, command, viewer, now)).toThrow("NOT_VISIBLE");
+});
+it("Phase4B edit base retains lawful raw address/identity/field state without undoing Backend evidence redaction", async () => {
+  const f = fixture(),
+    row = f.graph.itinerary_events[0];
+  row.authored_address_line2 = "Unit7";
+  row.authored_address_postal_code = "QA7000";
+  row.accepted_place_id = randomUUID();
+  row.field_state = {
+    ...(row.field_state as object),
+    "itinerary_events.title": {
+      state: "KNOWN",
+      origin: "SOURCE",
+      protected: false,
+      changed_revision: 1,
+      evidence_ref: "private-source-not-authorized",
+    },
+  };
+  const read = createReadTools(a, f.read());
+  const result = await read.get_trip_item_edit_base({ trip_id: trip, item_id: f.ids[0] });
+  const body = result.record.body as Record<string, unknown>;
+  expect(body).toMatchObject({
+    authored_address_line2: "Unit7",
+    authored_address_postal_code: "QA7000",
+    accepted_place_id: row.accepted_place_id,
+  });
+  expect(
+    (body.field_state as Record<string, unknown>)["itinerary_events.title"],
+  ).toMatchObject({ origin: "SOURCE", evidence_ref: null });
+  expect(result.evidence_visibility).toBe(
+    "BACKEND_AUTHORIZED_REDACTED_NOT_PROOF_OF_ABSENCE",
+  );
+  expect(JSON.stringify(result)).not.toContain("private-source-not-authorized");
+  await expect(
+    createReadTools(b, f.read("b")).get_trip_item_edit_base({
+      trip_id: trip,
+      item_id: f.ids[0],
+    }),
+  ).rejects.toThrow("NOT_VISIBLE");
+});
+it("P3 Item and edit-base reads share the same actor and preserve the same DTO", async () => {
+  const f = fixture();
+  f.graph.itinerary_events[2].visibility = "PRIVATE";
+  const read = createReadTools(a, f.read());
+  const args = { trip_id: trip, item_id: f.ids[2] };
+  const view = await read.get_trip_item(args);
+  const base = await read.get_trip_item_edit_base(args);
+  expect(view.item.family).toBe("P3");
+  expect(base.item).toEqual(view.item);
+  expect(base.record.revision).toBe(view.item.itemRevision);
+  expect(f.seen).toEqual([
+    `/v2/trips/${trip}/core/objects/ITEM/${f.ids[2]}`,
+    `/v2/trips/${trip}/core/collection`,
+    `/v2/trips/${trip}/core/objects/ITEM/${f.ids[2]}`,
+  ]);
+  expect(f.commands.mutate).not.toHaveBeenCalled();
+});
 it("real SDK HTTP discovery and four read-only tool calls use owning Backend boundaries", async () => {
   const p = await protocol();
   const tools = await p.client.listTools();
@@ -339,22 +428,32 @@ it.each(["BACKEND_401", "EXPIRED_AFTER_BACKEND"] as const)(
       return response;
     };
     const p = await protocol(f, "a", "test-client", 1000);
-    const result = await p.client.callTool({
-      name: "get_trip_item",
-      arguments: { trip_id: trip, item_id: f.ids[1] },
+    const response = await fetch(p.resource, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer a",
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "get_trip_item",
+          arguments: { trip_id: trip, item_id: f.ids[1] },
+        },
+      }),
     });
-    expect(result.isError).toBe(true);
-    expect(result.content).toEqual([{ type: "text", text: "AUTH_REQUIRED" }]);
-    expect(result._meta?.["mcp/www_authenticate"]).toEqual([
-      expect.stringContaining('error="invalid_token"'),
-    ]);
-    expect(JSON.stringify(result)).not.toContain(source);
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain('error="invalid_token"');
+    expect(await response.json()).toEqual({ error: "AUTH_REQUIRED" });
     const event = p.logs.find(
       (value) => (value as { tool?: string }).tool === "get_trip_item",
     );
     expect(event).toEqual({
       requestId: expect.any(String),
-      status: 200,
+      status: 401,
       durationMs: expect.any(Number),
       tool: "get_trip_item",
       errorCode: "AUTH_REQUIRED",
@@ -364,6 +463,75 @@ it.each(["BACKEND_401", "EXPIRED_AFTER_BACKEND"] as const)(
       expect(JSON.stringify(event)).not.toContain(secret);
   },
 );
+it.each([true, false])("SDK refreshes once for edit-base second-read rejection (recovers=%s)", async (recovers) => {
+  const f = fixture();
+  f.graph.itinerary_events[2].visibility = "PRIVATE";
+  const read = f.read;
+  const validate = f.gateway.validateAccessToken.bind(f.gateway);
+  f.gateway.validateAccessToken = vi.fn((token) =>
+    validate(token === "a-refreshed" ? "a" : token),
+  );
+  const backendRead = vi.fn(async (token: string, path: string, signal: AbortSignal) => {
+    const response = await read("a")(path, signal);
+    if (path.endsWith(`/ITEM/${f.ids[2]}`) && (token === "a" || !recovers)) {
+      // Model the observed Auth rejection after a successful owning Item read.
+      expect(response.status).toBe(200);
+      await response.body?.cancel();
+      return new Response(null, { status: 401 });
+    }
+    return response;
+  });
+  f.read = (token = "a") => (path, signal) => backendRead(token, path, signal);
+  let credential = "a";
+  const onUnauthorized = vi.fn(async ({ response }: { response: Response }) => {
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain('error="invalid_token"');
+    credential = "a-refreshed";
+  });
+  const p = await protocol(f, "a", "test-client", 60000, {
+    token: async () => credential,
+    onUnauthorized,
+  }, true);
+  const call = p.client.callTool({
+    name: "get_trip_item_edit_base",
+    arguments: { trip_id: trip, item_id: f.ids[2] },
+  });
+  if (recovers) {
+    const result = await call;
+    expect(result.isError).not.toBe(true);
+    expect(structured(result).item).toMatchObject({ itemId: f.ids[2], family: "P3" });
+  } else await expect(call).rejects.toThrow();
+  expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  expect(backendRead).toHaveBeenCalledTimes(4);
+  expect(f.seen).toEqual([
+    `/v2/trips/${trip}/core/collection`,
+    `/v2/trips/${trip}/core/objects/ITEM/${f.ids[2]}`,
+    `/v2/trips/${trip}/core/collection`,
+    `/v2/trips/${trip}/core/objects/ITEM/${f.ids[2]}`,
+  ]);
+  expect(f.commands.mutate).not.toHaveBeenCalled();
+});
+it("SDK refreshes once on ingress HTTP 401 before dispatching a read", async () => {
+  let credential = "a";
+  const onUnauthorized = vi.fn(async ({ response }: { response: Response }) => {
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain("Bearer");
+    credential = "a";
+  });
+  const p = await protocol(fixture(), "a", "test-client", 60000, {
+    token: async () => credential,
+    onUnauthorized,
+  });
+  credential = "invalid-after-connection";
+  const result = await p.client.callTool({
+    name: "get_trip_item",
+    arguments: { trip_id: trip, item_id: p.f.ids[1] },
+  });
+  expect(result.isError).not.toBe(true);
+  expect(structured(result).item).toMatchObject({ itemId: p.f.ids[1] });
+  expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  expect(p.f.commands.mutate).not.toHaveBeenCalled();
+});
 it("date overlap, inclusive single day, empty range, UUID pagination and snapshot drift", async () => {
   const f = fixture(),
     tools = createReadTools(a, f.read());

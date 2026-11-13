@@ -1,0 +1,14 @@
+{
+  "status": "INDEPENDENT_READBACK_NO_RECEIPT_OBSERVED_OPERATION_REMAINS_UNKNOWN",
+  "observedAt": "2026-11-01T17:55:39.886096+00:00",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "revision": 2,
+  "notes": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+  "entireRootEqualOriginalBaseline": true,
+  "allChildCollectionsEqualOriginalBaseline": true,
+  "receiptCount": 0,
+  "operationId": "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+  "noCommitEstablished": false,
+  "consumerPass": false,
+  "runnerExit": "RECEIPT_UNAVAILABLE_UNKNOWN_NOT_NO_COMMIT"
+}

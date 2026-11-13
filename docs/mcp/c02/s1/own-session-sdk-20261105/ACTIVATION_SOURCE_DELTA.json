@@ -1,0 +1,46 @@
+{
+  "status": "SDK_ACTIVATION_SOURCE_DELTA_LOCAL_READY_PENDING_FINAL_REVIEW",
+  "recordedAt": "2026-11-05T01:05:45.773629+00:00",
+  "baseCommit": "be598084",
+  "basePackageSHA256": "b7fdde4f04eb135131366edd9584cb3500b3ba7072b1c7806b7bfe8de4ff5d1b",
+  "baseDeadlineReview": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/FINITE_WINDOW_REPAIR_REVIEW.json",
+    "sha256": "d8a9c5434b94f9df4d7892aa5d0e4447c739a14ac3c7bde43c7d16370b2b675a"
+  },
+  "GateScopeBytesUnchanged": true,
+  "temporalGateCandidateStatusSuperseded": "OWNER_GATE Present candidate limits described the initial always-disabled/UNBOUND source snapshot. This explicit reviewed-next activation delta replaces only that state with original Python guard+pinned entry+real release guard. No protected permission/scope/time or execution authority changes.",
+  "entry": "Original Python wrapper validation and allpins reused in --validate-entry-only; Node must supply original privateRoot2STARTbinding/Gate, rechecks same immutable bytes and sourcePackageSHA. No qualifiedbool or direct unbound entry.",
+  "releaseProducerConsumer": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/ROOT2_SDK_RELEASE_CONTRACT.md",
+    "sha256": "94c6c4dcd8ee8119f6e768b5b3a692f0f57df4e2a2009ff25420dcbdc55be2b8",
+    "actualProducerAccepted": false,
+    "actualReceipt": null,
+    "method": "Root2 actual fixed published receipt; localrelay onlySHA, both read+hash+bindings+originalT verified; producer derives only from actualreceipt. No currentreceipt invented."
+  },
+  "earlyStop": "FINISH/REVOKE checked in SDK pre/post requests/results/handoff;25ms bounded parentAbort polling stops pending SDK; FIFO independently checks real stop markers everywait/read/write/return. POST tried then stopped staysUNKNOWN_NO_RETRY.",
+  "tests": {
+    "cases": 36,
+    "result": "PASS22prior+2earlystop+12runtimegate fixtures",
+    "scopedTypecheck": "PASS",
+    "sourceChecks": "PASS19pins/3actualsourceguards+unbound/old/scope/SaveReject/EMPTY/Tnull/guardedentry + synthetic validate-only noenv/noAuth",
+    "actualAuthAPIUI": false
+  },
+  "sourceFiles": {
+    "scripts/mcp/c02-own-session-consent.mts": "d072c8d35a70d5a4aec0803dbaf01e99e023f57a908c6c6f6d7ffb597c54f65e",
+    "scripts/mcp/c02-own-session-consent.test.mts": "ce6d7b018a242120d1a87ac0cf00e962d48bf20338ebc49b29989a3cbf474d06",
+    "scripts/mcp/c02-own-callback-pipe.mts": "70fe8d39559fe0f15e79a86783ce76a54c82ba839b7ad1edf5b36d2993c20081",
+    "scripts/mcp/c02-own-callback-pipe.test.mts": "567e27be382da70dc4e1d9c47052b9ba4c94df835b9a8753564e1e96b08503ed",
+    "scripts/mcp/c02-sdk-runtime-gate.test.mts": "864878bbdb465fb198de82e7f8258ca531a233560c06a65e78edc871fee22680",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/normal-control.mts": "35f5dd1a5144ab72c8ae3c5ca75365643e68abc6ef34807ee93a7c92bab2f3d6",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/prepare_static.py": "da51645f7c6dc9730404acb48e2dc4dd9b549bc3369e42b77199143fb684afcc",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/check_static.py": "20069e782c2b45c81d37330663813c0ad6ebe57d8efe52b7f4a81193ec1d6ffc"
+  },
+  "package": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/PACKAGE.json",
+    "sha256": "91bbfc8c5fe565c3656d3991c1a0fa2a39aff154950ef022a1dbd794b473e014"
+  },
+  "runtimeReady": false,
+  "platformApproved": false,
+  "startsAt": null,
+  "SaveApproved": false
+}

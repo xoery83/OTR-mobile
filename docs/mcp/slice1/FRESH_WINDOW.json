@@ -1,0 +1,19 @@
+{
+  "status": "CLOSED_CLAUDE_BLOCKED_NO_SUBMISSION",
+  "windowId": "80ddaf91230f4200b0b5c2dd25af8101",
+  "T": "2026-11-01T20:21:06.131Z",
+  "deadline": "2026-11-01T20:40:48.239Z",
+  "normalCloseAt": "2026-11-01T20:38:48.239Z",
+  "gateSHA256": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "notesApproval": false,
+  "confirmations": [],
+  "consumerSent": true,
+  "codeMarker530IsNotExecutionAuthority": true,
+  "otpConsentPassed": true,
+  "toolsDiscovered": 8,
+  "formalPreviewDispatched": false,
+  "applyAttempts": 0,
+  "operationState": "NOT_SUBMITTED",
+  "chatGPT": "NOT_RUN",
+  "closureEvidence": "FRESH_CLOSURE.json"
+}

@@ -1,0 +1,20 @@
+{
+  "status": "DRAFT_LOCAL_NOT_EXECUTION_AUTHORITY",
+  "windowId": "c7d0ee010f064a4a9d090f6034a3cc3d",
+  "runtimeWindowId": "c7d0ee01-0f06-4a4a-9d09-0f6034a3cc3d",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "callback": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+  "resource": "https://api-dev.xoery.art/mcp",
+  "maximumWindowSeconds": 1800,
+  "normalCloseLeadSeconds": 120,
+  "tokenMaxSeconds": 60,
+  "operations": "Fresh Guide/current synthetic Trip/Item reads and independently sourced Rimu Cove QA Guesthouse Preview only; no Save/Apply/original Operation recovery.",
+  "confirmationsInitially": [],
+  "authorityActivated": false,
+  "clockStarted": false,
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "requestScope": "FRESH_READ_PREVIEW_ONLY",
+  "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6"
+}

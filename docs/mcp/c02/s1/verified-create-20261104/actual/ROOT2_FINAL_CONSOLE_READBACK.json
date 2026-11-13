@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-11-03T22:05:56.875653+00:00",
+  "status": "READ_ONLY_CONSOLE_CHECK",
+  "results": [
+    {
+      "resource": "server-close",
+      "closedMatchesPreimage": true,
+      "differingPaths": []
+    },
+    {
+      "resource": "hook-close",
+      "closedMatchesPreimage": true,
+      "differingPaths": []
+    }
+  ],
+  "mutations": 0
+}

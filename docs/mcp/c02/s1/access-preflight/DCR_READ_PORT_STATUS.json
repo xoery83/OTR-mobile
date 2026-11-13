@@ -1,0 +1,12 @@
+{
+  "recorded_at": "2026-11-03T01:30:09.786865+00:00",
+  "status": "AUTH_HAS_NO_VERIFIED_CURRENT_DCR_READ_PORT_ROOT_CHECK_PENDING",
+  "source_thread": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "auth_statement": "No verified lawful port for current DCR boolean. Historical finite receipts do not prove current false. Existing Root/console Writer must inspect an already-authorized config read endpoint or actual UI value; no new permissions or Secret transmission.",
+  "decision": "No OTP/control/window/issuer/OAuth activation until actual false is established. Current disabled UI alone is insufficient.",
+  "root_request": "Check existing authorized read path or explicitly report BLOCKED_DCR_PREIMAGE_UNOBSERVABLE; execute independent reviewed current-image close probe separately.",
+  "owner_access_approval": "c2315ce8 remains received, not a save approval",
+  "consumer_materials": "Both fixed synthetic attachments uploaded and ordinary draft ready; not sent",
+  "business_applies": 0,
+  "clock_started": false
+}

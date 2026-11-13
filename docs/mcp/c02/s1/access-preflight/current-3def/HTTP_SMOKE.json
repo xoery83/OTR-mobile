@@ -1,0 +1,14 @@
+{
+  "status": "DEFAULT_CLOSED_HTTP_SMOKE_PASS",
+  "observedAt": "2026-11-03T02:58:04.829921+00:00",
+  "http": {
+    "/health": 200,
+    "/mcp": 404,
+    "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/collection": 401
+  },
+  "mcpClosedSemantics": "Current frozen loader returns undefined when all three MCP QA config keys are absent; public /mcp is unmounted404, not401. Authorized Core route remains401.",
+  "priorCheck": "Initial extra MCP401 assumption rejected with actual404; no configuration changed or repeated gate. Source confirmed in frozen mcpQaRuntime.candidate.ts.",
+  "credentialsSent": false,
+  "authenticatedBusinessReads": 0,
+  "writes": 0
+}

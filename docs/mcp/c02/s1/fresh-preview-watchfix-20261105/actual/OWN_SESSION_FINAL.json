@@ -1,0 +1,58 @@
+{
+  "status": "OWN_SESSION_AND_SELECTED_GRANT_ABSENCE_VERIFIED",
+  "recordedAt": "2026-11-04T22:15:28.980289+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "windowId": "c7d0ee01-0f06-4a4a-9d09-0f6034a3cc3d",
+  "gateSHA256": "e602fbfaa1bad7a8554faadc3dd38b19ab6eedb6cbe5a7d465b07b27f1cea72a",
+  "execSession": 37155,
+  "execExitCode": 0,
+  "FINISHRequestedAt": "2026-11-04T22:13:03.797347+00:00",
+  "FINISHOnce": true,
+  "journal": {
+    "path": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-XBL5Ki/run.json",
+    "sha256": "6d5d687018b59135ee92fb48f2aca418f978ee7d0774c5678646d18444aa4300",
+    "runId": "a61fd7ad-2d63-45b0-ac81-0f0d2981135b",
+    "requestedAt": "2026-11-04T22:00:34.326Z",
+    "owningStatus": "PASS",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED"
+  },
+  "activeLockPresent": false,
+  "controlStatuses": [
+    {
+      "phase": "CONTROL_READY",
+      "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "at": "2026-11-04T22:00:43.206Z",
+      "secretsRecorded": false
+    },
+    {
+      "phase": "GRANT_ABSENT_VERIFIED",
+      "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "at": "2026-11-04T22:13:04.304Z",
+      "secretsRecorded": false
+    },
+    {
+      "phase": "OWN_SESSION_CLEANUP_PASS",
+      "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "at": "2026-11-04T22:13:04.737Z",
+      "secretsRecorded": false
+    }
+  ],
+  "grantCleanup": "GRANT_ABSENT_VERIFIED_BY_OWN_NORMAL_CONTROL",
+  "grantHTTPStatusDetails": "No separate HTTP status capture; do not invent DELETE204 or claim a DELETE occurred",
+  "independentRoot2GrantReadback": "PENDING_SEPARATE_GLOBAL_CLOSE",
+  "browserOTPSent": false,
+  "browserLoginOrConsentCompleted": false,
+  "consumerTaskSubmitted": false,
+  "Preview": false,
+  "SaveApplyEdit": 0,
+  "UNKNOWNQueryReplay": 0,
+  "agentCreatedTabsClosed": [
+    "1962067626",
+    "1962067627"
+  ],
+  "userTabsUnchanged": true,
+  "sharedRuntimeClosure": "Root2 owned, not inferred from own Session cleanup"
+}

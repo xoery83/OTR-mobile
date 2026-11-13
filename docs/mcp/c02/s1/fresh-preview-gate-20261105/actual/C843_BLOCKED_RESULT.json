@@ -1,0 +1,77 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "recordedAt": "2026-11-04T21:10:52.976478+00:00",
+  "status": "BLOCKED_LOCAL_WATCHER_REPAIR_PENDING",
+  "failureClassification": "BLOCKED_WATCHER_IDENTITY_PRE_ACTIVATION",
+  "businessDRI": "Lane B / MCP",
+  "executionChildId": "/root/fresh_preview_execution",
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "windowState": "CONSUMED_CLOSED_NOT_REUSABLE",
+  "T": "2026-11-04T21:03:42.327Z",
+  "normalCloseAt": "2026-11-04T21:31:42.327Z",
+  "hardExpiresAt": "2026-11-04T21:33:42.327Z",
+  "TReset": false,
+  "Root2Final": {
+    "sourcePath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/C843_FINAL_EARLY_CLOSE_RECEIPT.json",
+    "copiedPath": "docs/mcp/c02/s1/fresh-preview-gate-20261105/actual/ROOT2_FINAL_EARLY_CLOSE_RECEIPT.json",
+    "sha256": "550ab03baa3f11c7e5492972111ab1aef985eb95a1649ecd5fecc254cd0cdfbb",
+    "status": "C843_CLOSED_WITHOUT_ACTIVATION_PREVIEW_NOT_RUN",
+    "recordedAt": "2026-11-04T21:09:03.389799+00:00"
+  },
+  "failure": {
+    "observedAt": "2026-11-04T21:08:33.517325+00:00",
+    "matchingLiveWaiterOrIssuerWatch": [],
+    "qaLockAbsent": true,
+    "failedStartCompoundAssertion": "identity.ppid==launcherPid AND identity.argv==spawnArgv AND identity.state[0] not Z/X",
+    "actualOperandsAtFailure": "NOT_CAPTURED_BY_V3_LAUNCHER; do not infer which operand failed or reconstruct missing ps values",
+    "actualFailure": "AssertionError at start_issuer_watch.py line25 after Popen; no LIVE marker, no runtime activation; no restart attempted"
+  },
+  "actualProgress": [
+    "Fresh ordinary empty ChatGPT page prepared and observed",
+    "Actual normal own QA login CONTROL_READY at21:03:36.768Z",
+    "Actual file-triggered binder T21:03:42.327Z, original launch21:03:21.130263Z",
+    "Dual close timers actually armed, then safely disarmed on close"
+  ],
+  "notCompleted": [
+    "RuntimeEMPTY/OAuth/finiteIssuer/Console activation",
+    "Consumer OAuth/Consent/GuideReadRimuPreview",
+    "Create/Edit/Apply/APPLIED/independent business readback",
+    "Native/OwnerUX"
+  ],
+  "counts": {
+    "consumerTaskSubmitted": 0,
+    "Preview": 0,
+    "SaveApplyEdit": 0,
+    "businessWrites": 0,
+    "UNKNOWNQueryReplayClone": 0,
+    "newCoreOperationOrItemIdentity": 0
+  },
+  "closure": {
+    "ownSession": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "GrantHTTP": "UNCONFIRMED_NO_HTTP_ACK_NO_RETRY",
+    "selectedActiveConsentCountIndependentRoot2": 0,
+    "selectedAuthorizationTotalIndependentRoot2": 0,
+    "selectedUnexpiredAuthorizationCountIndependentRoot2": 0,
+    "historicalRevokedConsentRetained": 1,
+    "Issuer": "DENY_ALL_NEVER_ACTIVATED",
+    "Console": "OFF_HOOKDISABLED_LOCALHOST_SAVEDISABLED",
+    "default": "UNCHANGED_HEALTHY6ff9_c826_cffee_configdb384",
+    "finalTimers": [],
+    "root2Resources": [],
+    "ownSessionLockAbsent": true,
+    "agentBlankTab": "CLOSED_1962067612",
+    "userQATab": "UNMODIFIED"
+  },
+  "singleReturnTrigger": {
+    "owner": "Root2 existing execution author and independent reviewer",
+    "needed": "Benign local child-process smoke with actual argv/ppid/state operands preserved, precise watcher diagnosis/minimum repair and independent Review; no new current runtime activation under consumedc843",
+    "afterReturn": "MCP parent assesses fixed local repair and prepares only necessary future qualified Preview execution; any new Gate/authority separately satisfied, no c843 reuse"
+  },
+  "limits": [
+    "Compound failed assertion does not identify which operand failed; no reconstruction from vanished process",
+    "Independent DB0 is not cleanup HTTP ACK",
+    "No business PASS or new approval inferred from fullsafeclose",
+    "Original UNKNOWNs remain unchanged/frozen"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "status": "POST_REVOKE_DURABLE_HTTP_LOG_NOT_RETAINED",
+  "probeObservedByConsumer": true,
+  "probeSingleAllowAt": "2026-11-01T01:53:11.172Z",
+  "probeAuthPromptNoItemObservedAt": "2026-11-01T01:53:23.435Z",
+  "readAttemptAfterClose": "FAILED_RAW_OUTPUT_SUPPRESSED",
+  "reason": "Existing approved restore_retained stops and removes only the temporary QA container before restoring43b2. Its disposable Docker log is unavailable after removal. Code lines82-95 require removal; no raw log was exported.",
+  "preRevokeProjectionPreserved": "W_DIAGNOSTIC_EVENTS_BEFORE_REVOKE.json",
+  "durableLive401Claimed": false,
+  "revokeVersusExpirySoleCausalityClaimed": false,
+  "noAdditionalProbeOrReconnection": true
+}

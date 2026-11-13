@@ -1,0 +1,8 @@
+{
+  "status": "EXISTING_FIX_CONFIRMED_RED_GREEN",
+  "red": "Same disarm validation input with only existing None guard removed raises TypeError",
+  "green": "Current validate(None) accepts only structural/pointer/restore-valid fixture; disarm test passes",
+  "arm_and_serve": "Pre-start/normal-close/expiry actual now values still rejected",
+  "note": "None guard was already present in current candidate before Root message; this is explicit retrospective RED reproduction, not a claim of first writing RED before implementation.",
+  "host_timer_calls": 0
+}

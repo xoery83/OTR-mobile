@@ -1,0 +1,22 @@
+{
+  "journals": [
+    {
+      "path": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-gNbFi1/run.json",
+      "runId": "1845d189-d1ac-43a3-9cbe-576feb74d151",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "secretsOrOtpRecorded": false,
+      "phase": "HOST_SESSION_CLEANUP",
+      "requestedAt": "2026-11-04T02:01:06.463Z",
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+      "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY"
+    },
+    {
+      "path": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-JQ5d2o/run.json",
+      "runId": "104c1986-9bcc-4584-8c00-56098507b05c",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "secretsOrOtpRecorded": false,
+      "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY"
+    }
+  ],
+  "activeLockExists": false
+}

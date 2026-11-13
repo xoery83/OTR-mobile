@@ -1,0 +1,27 @@
+{
+  "event_id": "mcp-chatgpt-p3-notes-751-20261102-001",
+  "ack_status": "ACCEPTED",
+  "execution_state_version": 1,
+  "plan_version": 1,
+  "package_id": "MCP-C02",
+  "capability_ids": [
+    "CAP-MCP-READ",
+    "CAP-MCP-CONSUMER-EDIT",
+    "CAP-MCP-P5-FACTS",
+    "CAP-MCP-TRIP-MAINTENANCE",
+    "CAP-MCP-CREATE-ITEMS",
+    "CAP-MCP-FAMILY-FIELDS",
+    "CAP-MCP-PREVIEW-CONFIRM"
+  ],
+  "execution_slice_id": "MCP-C02:ACCEPTANCE",
+  "source_commit": "9957ea27d73d5cc2fd234ac0da7f06d42e05cbe7",
+  "review_commit": "c5ce357764b1dc7d5ea37841328c963adddbd987",
+  "evidence_refs": [
+    "EV-MCP-CHATGPT-751-NOTES"
+  ],
+  "scope": "ChatGPT synthetic P3 Stay Notes only: original Operation 2777810c-24d9-4ecf-998c-9fc5dd00de34, one APPLIED, Revision 2→3, exact three Notes lines, unique independent Supabase receipt, other root/field_state and 11 child collections unchanged; canEdit=true derives from existing Core permissions; finite window closed. Native Pull/SQLite/Day Feed/cold NOT_RUN. Not full-field P1–P6, autonomous fresh-context discovery, all MCP, UX or Beta acceptance.",
+  "actual_started_at": null,
+  "dispatch_performed": false,
+  "snapshot_binding": "CONTAINING_PUBLISHED_SNAPSHOT",
+  "does_not_qualify_entire_package": true
+}

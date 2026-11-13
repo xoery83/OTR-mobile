@@ -1,0 +1,33 @@
+{
+  "recorded_at": "2026-11-03T01:22:22.102692+00:00",
+  "status": "MATERIALS_AND_TASK_DRAFT_READY_PROTECTED_PREFLIGHT_PENDING",
+  "gate_sha256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+  "browser_id": "4",
+  "tab_id": "1962067209",
+  "url": "https://chatgpt.com/",
+  "uploaded_files": {
+    "confirmation.txt": "98830deeb079d4841b8472976cd89defd2c9d689e3c06e96c46613edff6e4bfe",
+    "follow-up.txt": "cb108bf2b04a04ca02298b680d7fcb084043b593062c3502c37fbc4872281798"
+  },
+  "upload_evidence": "Both file buttons visible, progressbars hidden, Send enabled",
+  "task_draft_sha256": "2f78af9ec092b1b5e71c8e2be8f32538215a97483d94a6108e8e532e69a8a73d",
+  "prompt_sent": false,
+  "consumer_ui_ready": true,
+  "screenshot": "/private/tmp/otr-mcp-c02-attachments-ready-20261103.jpg",
+  "normal_control_started": false,
+  "clock_started": false,
+  "issuer_activated": false,
+  "business_applies": 0,
+  "pending": [
+    "Root independent actual Owner source binding",
+    "Current default/close/watchdog readiness receipt",
+    "DCR false proof"
+  ],
+  "latest_root_default_report": {
+    "cid": "11faa644158812cc50e2c7dddbe0ff462502e0c165f78665d4b7f59abb7023ee",
+    "image": "sha256:4c48e296c37c1ebab309980b31baff2d3e307b43cb05d9759b95e49989b7b4e0",
+    "released_at": "2026-11-03T01:19:50.910985Z",
+    "status": "ROOT_REPORTED_NOT_YET_BOUND_TO_MCP_CLOSE_PLAN",
+    "rule": "Never restore earlierc2 or94ee; new default reconciliation required before activation."
+  }
+}

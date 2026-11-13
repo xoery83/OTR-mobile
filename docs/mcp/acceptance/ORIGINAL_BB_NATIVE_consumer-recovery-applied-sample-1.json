@@ -1,0 +1,894 @@
+{
+  "success": true,
+  "data": {
+    "nodes": [
+      {
+        "label": "OTR iPad QA",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": false,
+        "index": 0,
+        "depth": 0,
+        "type": "Application",
+        "ref": "e1",
+        "kind": "application"
+      },
+      {
+        "label": "工具栏",
+        "parentIndex": 0,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 1,
+        "depth": 1,
+        "type": "Other",
+        "ref": "e2",
+        "kind": "other"
+      },
+      {
+        "label": "Open app menu",
+        "parentIndex": 1,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 2,
+        "depth": 2,
+        "type": "Other",
+        "ref": "e3",
+        "kind": "other"
+      },
+      {
+        "label": "Open app menu",
+        "parentIndex": 2,
+        "rect": {
+          "x": 0,
+          "y": 32,
+          "width": 1180,
+          "height": 54
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 3,
+        "depth": 3,
+        "identifier": "Dec 10–13, 2026",
+        "type": "NavigationBar",
+        "ref": "e4",
+        "kind": "navigation-bar"
+      },
+      {
+        "label": "Open app menu",
+        "parentIndex": 3,
+        "rect": {
+          "x": 14,
+          "y": 36,
+          "width": 36,
+          "height": 36
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 4,
+        "depth": 4,
+        "type": "Button",
+        "ref": "e5",
+        "kind": "button"
+      },
+      {
+        "label": "Dec 10–13, 2026",
+        "parentIndex": 3,
+        "rect": {
+          "x": 503,
+          "y": 31.5,
+          "width": 173.5,
+          "height": 45
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 5,
+        "depth": 4,
+        "type": "StaticText",
+        "ref": "e6",
+        "kind": "text"
+      },
+      {
+        "label": "Choose a date",
+        "parentIndex": 5,
+        "rect": {
+          "x": 503,
+          "y": 31.5,
+          "width": 173.5,
+          "height": 45
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 6,
+        "depth": 5,
+        "type": "Other",
+        "ref": "e7",
+        "kind": "other"
+      },
+      {
+        "label": "Choose a date",
+        "parentIndex": 6,
+        "rect": {
+          "x": 515.5,
+          "y": 32,
+          "width": 148.5,
+          "height": 44
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 7,
+        "depth": 6,
+        "value": "[REDACTED_INPUT]",
+        "type": "Button",
+        "ref": "e8",
+        "kind": "button"
+      },
+      {
+        "label": "Search",
+        "parentIndex": 3,
+        "rect": {
+          "x": 1130,
+          "y": 36,
+          "width": 36,
+          "height": 36
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 8,
+        "depth": 4,
+        "type": "Button",
+        "ref": "e9",
+        "kind": "button"
+      },
+      {
+        "label": "Home",
+        "parentIndex": 2,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 9,
+        "depth": 3,
+        "type": "Other",
+        "ref": "e10",
+        "kind": "other"
+      },
+      {
+        "label": "垂直滚动条, 2页",
+        "parentIndex": 9,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 10,
+        "depth": 4,
+        "type": "Other",
+        "ref": "e11",
+        "kind": "other"
+      },
+      {
+        "label": "Synthetic QA Lodge",
+        "parentIndex": 10,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 11,
+        "depth": 5,
+        "hiddenContentBelow": true,
+        "type": "ScrollView",
+        "ref": "e12",
+        "kind": "scroll-area"
+      },
+      {
+        "label": "Choose a date",
+        "parentIndex": 11,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 12,
+        "depth": 6,
+        "type": "Other",
+        "ref": "e13",
+        "kind": "other"
+      },
+      {
+        "label": "Choose a date",
+        "parentIndex": 12,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 86
+        },
+        "enabled": true,
+        "hittable": false,
+        "index": 13,
+        "depth": 7,
+        "type": "Other",
+        "ref": "e14",
+        "kind": "other"
+      },
+      {
+        "label": "Choose a date",
+        "parentIndex": 13,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1180,
+          "height": 86
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 14,
+        "depth": 8,
+        "type": "Other",
+        "ref": "e15",
+        "kind": "other"
+      },
+      {
+        "label": "Choose a date",
+        "parentIndex": 14,
+        "rect": {
+          "x": 482.5,
+          "y": 6,
+          "width": 215,
+          "height": 44
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 15,
+        "depth": 9,
+        "type": "Button",
+        "ref": "e16",
+        "kind": "button"
+      },
+      {
+        "label": "Day 1. Day 1. Dec 10, 2026. Header style: Weekday and day",
+        "parentIndex": 12,
+        "rect": {
+          "x": 0,
+          "y": 86,
+          "width": 1180,
+          "height": 98
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 16,
+        "depth": 7,
+        "type": "Other",
+        "ref": "e17",
+        "kind": "other"
+      },
+      {
+        "parentIndex": 16,
+        "rect": {
+          "x": 21,
+          "y": 86,
+          "width": 1138,
+          "height": 98
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 17,
+        "depth": 8,
+        "type": "Other",
+        "ref": "e18",
+        "kind": "other",
+        "inheritsLabel": true
+      },
+      {
+        "parentIndex": 17,
+        "rect": {
+          "x": 21,
+          "y": 106,
+          "width": 1138,
+          "height": 58
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 18,
+        "depth": 9,
+        "type": "Button",
+        "ref": "e19",
+        "kind": "button",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 184,
+          "height": 78.5,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 19,
+        "parentIndex": 12,
+        "label": "Synthetic QA Lodge",
+        "enabled": true,
+        "ref": "e20",
+        "kind": "other"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 201,
+          "height": 44,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 20,
+        "parentIndex": 19,
+        "label": "Synthetic QA Lodge",
+        "enabled": true,
+        "ref": "e21",
+        "kind": "button"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 262.5,
+          "height": 98,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 21,
+        "parentIndex": 12,
+        "label": "Day 2. Day 2. Dec 11, 2026. Header style: Weekday and day",
+        "enabled": true,
+        "ref": "e22",
+        "kind": "other"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 262.5,
+          "height": 98,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 22,
+        "parentIndex": 21,
+        "enabled": true,
+        "ref": "e23",
+        "kind": "other",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 282.5,
+          "height": 58,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 9,
+        "index": 23,
+        "parentIndex": 22,
+        "enabled": true,
+        "ref": "e24",
+        "kind": "button",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 360.5,
+          "height": 69.5,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 24,
+        "parentIndex": 12,
+        "label": "Synthetic Abel Tasman QA walk",
+        "enabled": true,
+        "ref": "e25",
+        "kind": "other"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 360.5,
+          "height": 69,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 25,
+        "parentIndex": 24,
+        "enabled": true,
+        "ref": "e26",
+        "kind": "button",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 430,
+          "height": 78.5,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 26,
+        "parentIndex": 12,
+        "label": "Consumer MCP QA Lodge",
+        "enabled": true,
+        "ref": "e27",
+        "kind": "other"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 447,
+          "height": 44,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 27,
+        "parentIndex": 26,
+        "label": "Consumer MCP QA Lodge",
+        "enabled": true,
+        "ref": "e28",
+        "kind": "button"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 508.5,
+          "height": 98,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 28,
+        "parentIndex": 12,
+        "label": "Day 3. Day 3. Dec 12, 2026. Header style: Weekday and day",
+        "enabled": true,
+        "ref": "e29",
+        "kind": "other"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 508.5,
+          "height": 98,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 29,
+        "parentIndex": 28,
+        "enabled": true,
+        "ref": "e30",
+        "kind": "other",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 528.5,
+          "height": 58,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 9,
+        "index": 30,
+        "parentIndex": 29,
+        "enabled": true,
+        "ref": "e31",
+        "kind": "button",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 606.5,
+          "height": 72.5,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 31,
+        "parentIndex": 12,
+        "label": "Synthetic Nelson QA gallery visit",
+        "enabled": true,
+        "ref": "e32",
+        "kind": "other"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 620.5,
+          "height": 44,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 32,
+        "parentIndex": 31,
+        "enabled": true,
+        "ref": "e33",
+        "kind": "button",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 679,
+          "height": 98,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 33,
+        "parentIndex": 12,
+        "label": "Day 4. Day 4. Dec 13, 2026. Header style: Weekday and day",
+        "enabled": true,
+        "ref": "e34",
+        "kind": "other"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 679,
+          "height": 98,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 34,
+        "parentIndex": 33,
+        "enabled": true,
+        "ref": "e35",
+        "kind": "other",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 699,
+          "height": 58,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 9,
+        "index": 35,
+        "parentIndex": 34,
+        "enabled": true,
+        "ref": "e36",
+        "kind": "button",
+        "inheritsLabel": true
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 777,
+          "height": 43,
+          "x": 0,
+          "width": 1180
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 36,
+        "parentIndex": 12,
+        "label": "Synthetic QA Lodge",
+        "enabled": true,
+        "ref": "e37",
+        "kind": "other"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 794,
+          "height": 26,
+          "x": 21,
+          "width": 1138
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 37,
+        "parentIndex": 36,
+        "label": "Synthetic QA Lodge",
+        "enabled": true,
+        "ref": "e38",
+        "kind": "button"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 172,
+          "height": 505,
+          "x": 1147,
+          "width": 30
+        },
+        "hittable": true,
+        "depth": 6,
+        "index": 38,
+        "value": "[REDACTED_INPUT]",
+        "parentIndex": 11,
+        "label": "垂直滚动条, 2页",
+        "enabled": true,
+        "ref": "e39",
+        "kind": "other"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 644,
+          "height": 30,
+          "x": 18,
+          "width": 1144
+        },
+        "hittable": true,
+        "depth": 6,
+        "index": 39,
+        "value": "[REDACTED_INPUT]",
+        "parentIndex": 11,
+        "label": "水平滚动条, 1页",
+        "enabled": true,
+        "ref": "e40",
+        "kind": "other"
+      },
+      {
+        "hittable": true,
+        "depth": 4,
+        "label": "Home",
+        "index": 40,
+        "parentIndex": 9,
+        "rect": {
+          "y": 721,
+          "height": 99,
+          "x": 0,
+          "width": 1180
+        },
+        "type": "Other",
+        "enabled": true,
+        "ref": "e41",
+        "kind": "other"
+      },
+      {
+        "hittable": true,
+        "depth": 5,
+        "label": "Home",
+        "index": 41,
+        "parentIndex": 40,
+        "rect": {
+          "y": 730,
+          "height": 61,
+          "x": 16,
+          "width": 1078
+        },
+        "type": "Other",
+        "enabled": true,
+        "ref": "e42",
+        "kind": "other"
+      },
+      {
+        "hittable": true,
+        "depth": 6,
+        "label": "Home",
+        "index": 42,
+        "parentIndex": 41,
+        "rect": {
+          "y": 734.5,
+          "height": 52,
+          "x": 20.5,
+          "width": 267.5
+        },
+        "type": "Button",
+        "enabled": true,
+        "ref": "e43",
+        "kind": "button"
+      },
+      {
+        "hittable": true,
+        "depth": 6,
+        "label": "Day",
+        "index": 43,
+        "parentIndex": 41,
+        "rect": {
+          "y": 734.5,
+          "height": 52,
+          "x": 288,
+          "width": 267
+        },
+        "type": "Button",
+        "selected": true,
+        "enabled": true,
+        "ref": "e44",
+        "kind": "button"
+      },
+      {
+        "hittable": true,
+        "depth": 6,
+        "label": "Ledger",
+        "index": 44,
+        "parentIndex": 41,
+        "rect": {
+          "y": 734.5,
+          "height": 52,
+          "x": 555,
+          "width": 267.5
+        },
+        "type": "Button",
+        "enabled": true,
+        "ref": "e45",
+        "kind": "button"
+      },
+      {
+        "hittable": true,
+        "depth": 6,
+        "label": "Updates",
+        "index": 45,
+        "parentIndex": 41,
+        "rect": {
+          "y": 734.5,
+          "height": 52,
+          "x": 822.5,
+          "width": 267
+        },
+        "type": "Button",
+        "enabled": true,
+        "ref": "e46",
+        "kind": "button"
+      },
+      {
+        "hittable": true,
+        "depth": 5,
+        "label": "Add to this trip",
+        "index": 46,
+        "parentIndex": 40,
+        "rect": {
+          "y": 730,
+          "height": 61,
+          "x": 1103,
+          "width": 61
+        },
+        "type": "Other",
+        "enabled": true,
+        "ref": "e47",
+        "kind": "other"
+      },
+      {
+        "hittable": true,
+        "depth": 6,
+        "label": "Add to this trip",
+        "index": 47,
+        "parentIndex": 46,
+        "rect": {
+          "y": 730.5,
+          "height": 60,
+          "x": 1103.5,
+          "width": 60
+        },
+        "type": "Button",
+        "enabled": true,
+        "ref": "e48",
+        "kind": "button"
+      },
+      {
+        "hittable": true,
+        "depth": 3,
+        "label": "工具栏",
+        "index": 48,
+        "parentIndex": 2,
+        "rect": {
+          "y": 0,
+          "height": 820,
+          "x": 0,
+          "width": 1180
+        },
+        "type": "Toolbar",
+        "identifier": "Toolbar",
+        "enabled": true,
+        "ref": "e49",
+        "kind": "toolbar"
+      }
+    ],
+    "truncated": false,
+    "appName": "com.xoery.otrmobile.ipadqa",
+    "appBundleId": "com.xoery.otrmobile.ipadqa",
+    "visibility": {
+      "partial": true,
+      "visibleNodeCount": 49,
+      "totalNodeCount": 49,
+      "reasons": [
+        "scroll-hidden-below"
+      ]
+    },
+    "keyboard": {
+      "kind": "absent"
+    },
+    "viewport": {
+      "width": 1180,
+      "height": 820
+    },
+    "presentedSurface": "unknown",
+    "snapshotQuality": {
+      "state": "healthy",
+      "backend": "tree",
+      "timing": {
+        "acquisitionMs": 315.52600860595703,
+        "presentationMs": 1.3390779495239258
+      }
+    },
+    "snapshotQualityNotes": [
+      {
+        "code": "regular-geometry-clipped",
+        "clippedNodeCount": 8,
+        "droppedNodeCount": 4
+      }
+    ],
+    "snapshotDiagnostics": {
+      "stats": {
+        "count": 85,
+        "p50Ms": 541,
+        "p95Ms": 655,
+        "maxMs": 663,
+        "slowThresholdMs": 1500,
+        "platform": "ios",
+        "backends": {
+          "xctest": 85
+        }
+      }
+    },
+    "refsGeneration": 752728
+  }
+}

@@ -12,6 +12,11 @@ import {
   type ConfirmChanges,
 } from "./mutation";
 import type { createReadTools } from "./read";
+import {
+  assistantChangesInput,
+  assistantApplyInput,
+  prepareAssistantChange,
+} from "./fieldAdapter";
 export function createBatchTools(
   context: {
     accountId: string;
@@ -19,17 +24,24 @@ export function createBatchTools(
     resource: string;
     signal?: AbortSignal;
     confirm?: ConfirmChanges;
+    assistant?: boolean;
   },
   mutations: ReturnType<typeof createMutationTools>,
   reads: ReturnType<typeof createReadTools>,
 ) {
   async function preview(raw: unknown) {
-    const q = previewChangesInput.parse(raw);
-    const operations = q.changes.map(({ kind, ...c }) =>
-      kind === "CREATE"
-        ? mutations.prepareCreate({ ...c, trip_id: q.trip_id })
-        : mutations.prepareUpdate({ ...c, trip_id: q.trip_id }),
+    const q = (context.assistant ? assistantChangesInput : previewChangesInput).parse(
+      raw,
     );
+    const operations = q.changes.map((change) => {
+      const { kind, ...c } = change;
+      return (
+        prepareAssistantChange(context.accountId, q.trip_id, change) ??
+        (kind === "CREATE"
+          ? mutations.prepareCreate({ ...c, trip_id: q.trip_id })
+          : mutations.prepareUpdate({ ...c, trip_id: q.trip_id }))
+      );
+    });
     const prepared: PreparedMutation[] = operations;
     const operationPreviews = await Promise.all(
       operations.map((p) => mutations.execute(p, "PREVIEW")),
@@ -44,7 +56,7 @@ export function createBatchTools(
       .filter((r) => r.error_code)
       .map((r) => `${r.error_code}:${r.operation_id}`);
     for (const c of q.changes)
-      if (c.kind === "CREATE") {
+      if (c.kind === "CREATE" || c.kind === "FIELD_CREATE") {
         warnings.push(
           `${c.item.dates.start_time || c.item.dates.end_time ? "AUTHORED_CIVIL_PENDING_NO_BOOKING" : "DATE_ONLY_NO_CLOCK_OR_BOOKING"}:${c.request_id}`,
         );
@@ -56,7 +68,7 @@ export function createBatchTools(
           warnings.push(`TRANSPORT_ARRIVAL_TIME_UNSPECIFIED:${c.request_id}`);
       }
     for (const c of q.changes) {
-      if (c.kind === "UPDATE") {
+      if (c.kind === "UPDATE" || c.kind === "FIELD_UPDATE") {
         const result = await reads.get_trip_item({
           trip_id: q.trip_id,
           item_id: c.item_id,
@@ -77,7 +89,7 @@ export function createBatchTools(
       for (const item of found.items)
         for (const c of q.changes)
           if (
-            c.kind === "CREATE" &&
+            (c.kind === "CREATE" || c.kind === "FIELD_CREATE") &&
             item.itemId !==
               mutationIdentity(context.accountId, operations[q.changes.indexOf(c)])
                 .item_id &&
@@ -121,7 +133,7 @@ export function createBatchTools(
       return (await preview(raw)).output;
     },
     async apply_trip_changes(raw: unknown) {
-      const q = applyChangesInput.parse(raw),
+      const q = (context.assistant ? assistantApplyInput : applyChangesInput).parse(raw),
         { preview_digest: expected, ...input } = q;
       const current = await preview(input);
       if (expected !== current.output.preview_digest)

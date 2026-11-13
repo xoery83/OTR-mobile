@@ -39,6 +39,23 @@ sequence without adding an OTR authority or business-write exception.
 
 ## Focused local evidence and remaining uncertainty
 
+Follow-up read-only qualification: the existing ChatGPT App management page shows
+Supported authentication = OAuth and Used authentication = OAuth, with the same
+App/version IDs. See `access-preflight/consumer-679c/CURRENT_AUTH_MODE.txt`.
+OpenAI's custom-server guide describes anonymous initialize/tools-list specifically
+for mixed authentication; it is not a universal OAuth-only requirement. Do not
+enable anonymous discovery on the basis of the generic refresh error. Auth's
+public-client token-endpoint `none` metadata does not establish mixed mode either.
+The new three-case ingress contrast verifies anonymous initialize/tools-list/call
+all return401 with the resource-metadata challenge and zero business calls; the
+existing authorized SDK catalog contrast remains PASS. Actual consumer request
+headers/status/correlation are still needed to establish the failure layer.
+
+Root integrated the reviewed close evidence scripts and required binder dependency
+on main `0b0d05bf`, with no Hosted activation. The private operators and fresh
+issuer/current-version qualification remain prerequisites; no historical baseline
+in this document is a valid new restore target.
+
 `c02Execution.test.ts` now exercises actual SDK tools/list against the real
 Handler plus existing C02 restriction, using isolated authorized fixtures. It
 compares Notes and C02 catalogs, checks exact write-tool sets and P3-only input,

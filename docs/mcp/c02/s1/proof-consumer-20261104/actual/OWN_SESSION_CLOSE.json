@@ -1,0 +1,16 @@
+{
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "secretsRecorded": false,
+  "phase": "NORMAL_CONTROL_SESSION_CLEANUP_PASS",
+  "observedAt": "2026-11-03T21:22:36.558Z",
+  "status": 204,
+  "disposition": "ACKNOWLEDGED",
+  "result": {
+    "status": "PASS",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "runId": "8813cad2-3c57-41a9-bb84-15fd9e4e1c03"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "requestId": "MCP-C02-S1-CONTROLLED-REPLAY-20261104-001",
+  "scopeRevision": "FRESH_USER_PREVIEW_ONLY_NO_UNKNOWN_REPLAY",
+  "windowId": "3586c569-3f51-4ce9-8699-5e98b3760c80",
+  "windowHex": "3586c5693f514ce986995e98b3760c80",
+  "gateSHA256": "422e73564ed4d81c7070c9ef8d196d45e519f1bcfc72eb6b21afd319cdc7e41a",
+  "status": "STATIC_FIXED_PENDING_INDEPENDENT_REVIEW_FRESH_ROOT2_CAS",
+  "softwareDeploymentNecessary": false,
+  "hostSHA256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+  "command": null,
+  "confirmations": [],
+  "clockStarted": false,
+  "authorityActivated": false,
+  "saveApproved": false,
+  "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6",
+  "scopeSHA256": "1e18dc4a1438d1b25233ff4939d55f32179e32e4b9182f20c0ad6edd35c58bc9",
+  "ownerSourceRequalificationRequired": true,
+  "staticFiles": {
+    "static/SCOPE.json": "1e18dc4a1438d1b25233ff4939d55f32179e32e4b9182f20c0ad6edd35c58bc9",
+    "static/c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "static/c02-normal-control.py": "c7064440c5ec1d55a12f3e0dd3d736cd8d37bfcad9ed54115b34791ff06c5260",
+    "static/c02-timers.py": "3ad4967baea6bb30ded5dd8c4bd43b4e3ecc1372c8a259efc62dcf6690d015be",
+    "static/c02-timers.test.py": "d7be74b1984a0573df7f617568463080e1b3f90fde95bfde7062268033cf055e",
+    "static/issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "static/issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "static/issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "static/issuer-source/scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "static/issuer-source/scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "static/normal-control.mts": "e82b2880f6d2bb123e24265490f0466b00fc32b9bb7eea82191611c8cb9f7d82",
+    "static/operators/config_cas.py": "ea39e75686368e1d1b92d90dd55d7747dd4e9cc356d4a1957b3d5591e3b6ce59",
+    "static/operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "static/operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "static/operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "static/operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "static/prepare-c02-access-window.py": "7ec4199e905c10a22356548612078588ea3c378db9970bedd7fae5a1ccc35eee"
+  },
+  "actualFocusedChecks": {
+    "freshSourcePhaseTimeCases": 61,
+    "newTimerGateBindingTests": 9,
+    "pythonCompile": "PASS",
+    "entryAndOwningDependencyPins": 5
+  },
+  "reusedReviewedChecks": {
+    "normalLifecycle": {
+      "candidate": "f9eae9ed",
+      "cases": 12,
+      "rerun": false,
+      "evidence": "Entire normal-control.mts identical except new fixed window literal"
+    },
+    "closeAndTimerLogic": "Close byte-identical; timer byte-identical except independent new Gate/window constants"
+  },
+  "phase": "EMPTY",
+  "allowedOperations": [
+    "Guide",
+    "Existing synthetic Trip/Item reads",
+    "New independent task Preview"
+  ],
+  "originalUnknownReplay": "FROZEN_NOT_REQUESTED",
+  "businessMutationsAllowed": false
+}

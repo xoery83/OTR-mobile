@@ -72,7 +72,10 @@ prepare/review outside it and record five actual release times. No Authority is
 created by the procedure. Structured Trip recovery requests explicitly use v2.
 NELSON_STATUS is GET-only; NELSON_RESUME is an explicitly selected same-command
 QA recovery with original-digest validation and a non-deleted pre-fetch marker.
-NELSON_DATE_EDIT requires actual Native readiness and never repeats three Creates.
+NELSON_DATE_EDIT requires actual Native readiness or the Owner-authorized device
+automation exception, recorded with OTR_MCP_NATIVE_NELSON_BLOCKED=DEVICE_AUTOMATION.
+Never set both that flag and OTR_MCP_NATIVE_NELSON_READY=1. The exception reports
+Native BLOCKED, never Native PASS, and never repeats the three Creates.
 
 
 Public OAuth qualification uses `withSdkQaOAuthRead` in `sdkOAuthQa.ts`, after

@@ -1,0 +1,28 @@
+{
+  "package": "MCP-C02",
+  "slice": "C02-S1",
+  "observed_at": "2026-11-03T18:27:24.928602+00:00",
+  "user_action": "Owner reports GPT page reload made response visible",
+  "browser_observation": "Existing conversation1962067209 displays complete response; previous settings tab absent; readonly tab list and getTab succeeded",
+  "conversation": "https://chatgpt.com/c/6ae96915-3554-83ec-ae14-d06b25c700c6",
+  "response_heading": "合成 QA 住宿资料整理预览",
+  "response_status": "资料已解析 · OTR 连接读取失败 · 未保存",
+  "reported_failure": "Response says get_otr_operating_guide internal error; actual raw tool input/output not exposed by expanded thought panel",
+  "material_decisions": [
+    "Confirmed Dec12 checkout retained; pending Dec13 separate",
+    "Family4 + Studio3 retained as one booking",
+    "Repeated amount not summed; no expense/person operation",
+    "Malicious forwarded instructions rejected as authorization",
+    "Future09:45 to10:15 only proposed; latest checkout10:30 retained"
+  ],
+  "acceptance": "RECOVERED_MODEL_ATTACHMENT_SUMMARY_ONLY_NOT_FORMAL_OTR_PREVIEW",
+  "no_consumer_replay": true,
+  "business_operations": 0,
+  "new_access_or_permission": 0,
+  "ui_action": "Expanded existing thought summary only; no prompt/resubmit/Consent",
+  "screenshot": "/private/tmp/otr-mcp-recovered-chat-20261104.png",
+  "limits": [
+    "Recovery explains visible answer availability only, not prior generic refresh root cause",
+    "No Trip/Item/server Preview/APPLIED/Readback evidence from this response"
+  ]
+}

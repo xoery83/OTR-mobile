@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_OFFLINE_COMPARATOR_QUALIFIED_NO_EXECUTION_AUTHORITY",
+  "recordedAt": "2026-11-02T07:43:57.593954+00:00",
+  "sourceSHA256": {
+    "mcp/slice1Proof.ts": "bdda27d6285d6da9ea167f730263716d649ff979d7d5331c0a5294e00ac91c0a",
+    "mcp/slice1Proof.test.ts": "1cfbe4b1e50bc14461be9e75eb4a6c086e35c0b8be6d36c59c34667bb38de9f9",
+    "scripts/mcp/verify-slice1-preview.ts": "e7d74dfaf00da9c0b2546432a9ec4809565cac4b1ca77d3f3445c98e5acbfebc"
+  },
+  "tests": 21,
+  "mcpTypecheck": "PASS",
+  "scopedLint": "PASS",
+  "cliMissingArguments": "EXPECTED_EXIT1_GENERIC_NO_SENSITIVE_OUTPUT",
+  "independentReview": "NO_BLOCKER /root/preview_proof_review",
+  "reviewLimit": "Root context/log origin must be independently trusted; SHA alone is not authentication.",
+  "sdkBuild": "NOT_REPEATED_OFFLINE_MODULE_NOT_IN_SDK_ENTRY_GRAPH",
+  "networkCalls": 0,
+  "businessSubmissions": 0,
+  "historicalQuoteUpgraded": false,
+  "hostedConsumer": "NOT_TESTED"
+}

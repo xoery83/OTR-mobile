@@ -1,9 +1,0 @@
-{
-  "status": "LOCAL_PASS_EXACT_REVIEWED_OPS_SOURCE_ONLY",
-  "source": "e609d85d",
-  "noHostedActivation": true,
-  "validation": "3 close privacy/failure tests +9timer tests +5 control self-check groups PASS; privileged/network calls0",
-  "extraRequiredDependency": "scripts/mcp/prepare-c02-window.py exact sourcee609, required by c02-control.test.py; omitted by minimal file manifest and now included",
-  "limits": "Root private pinned operators/issuer-source remain prerequisites. No fresh window, credentials, OAuth, Apply or Provider authority inferred. Old request logs unavailable; new safe trace prevents repeat loss.",
-  "review": "Existing REQUEST_TRACE_CLOSE_REVIEW plus Root exact-file/whitelist/close-path review; all extraction bytes unchanged"
-}

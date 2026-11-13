@@ -1,0 +1,13 @@
+{
+  "method": "mcp__codex_app__read_thread",
+  "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "turnId": "01a1a848-be9d-7211-998c-af765cb2ac8c",
+  "messageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+  "itemType": "userMessage",
+  "role": "human_user",
+  "toolResultError": false,
+  "wrapperPreserved": true,
+  "answer": "批准本轮临时配置、连接及 Preview，不包含保存",
+  "platformRecognizedExecutionApproval": "PENDING_ROOT2_INDEPENDENT_SOURCE_AND_PLATFORM_REVIEW",
+  "noRuntimeAuthorityInferredFromParentMessage": true
+}

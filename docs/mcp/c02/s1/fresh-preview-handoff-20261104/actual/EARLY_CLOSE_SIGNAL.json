@@ -1,0 +1,16 @@
+{
+  "status": "EARLY_CLOSE_NO_ACTIVATION_CAS_REQUEST_WITHDRAWN",
+  "at": "2026-11-04T09:26:49.060072+00:00",
+  "reason": "Exact runtimeCAS automaticapproval rejection; no directOwnerconfirmation received; dayclose existing bounded cleanup only",
+  "normalControlSignal": "FINISH",
+  "issuerCloseSignal": "CLOSE",
+  "CASExecuted": false,
+  "OAuthActivated": false,
+  "issuerActivated": false,
+  "containerChanged": false,
+  "normalCloseAt": "2026-11-04T09:34:11.617Z",
+  "hardExpiresAt": "2026-11-04T09:36:11.617Z",
+  "clockReset": false,
+  "approvalQuestion": "WITHDRAWN_NON_EXECUTABLE_AFTER_OWN_SESSION_CLOSE; no late reply may restart/reuse this window",
+  "cleanupActualVerification": "PENDING"
+}

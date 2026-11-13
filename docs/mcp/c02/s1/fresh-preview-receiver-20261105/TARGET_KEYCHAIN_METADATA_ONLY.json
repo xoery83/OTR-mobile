@@ -1,0 +1,42 @@
+{
+  "status": "STOP_TARGET_METADATA_NOT_FOUND",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "observedAt": "2026-11-04T23:27:36.434Z",
+  "method": "Existing child_process handle in same persistent CUA context; one exact target metadata-only query",
+  "argv": [
+    "find-generic-password",
+    "-s",
+    "OTR_QA_RESEND_API_KEY",
+    "-a",
+    "resend",
+    "-l",
+    "OTR-QA-Inbound"
+  ],
+  "requestedSelectorTripleUnchanged": true,
+  "gOrWPresent": false,
+  "exitStatus": 44,
+  "osErrorClassification": {
+    "itemNotFound": true,
+    "parameterInvalidAlsoReported": true
+  },
+  "returnedMetadata": {
+    "available": false,
+    "selectorTripleMatch": null,
+    "knownLoginPathMatch": null,
+    "reason": "Command failed; printed false placeholders are not evidence of actual mismatched attributes/path."
+  },
+  "rawAttributesOrBlobRecorded": false,
+  "secretValueRequested": false,
+  "successfulSecretReads": 0,
+  "comparison": "Historical READINESS metadata status0 differs from current44; current search failure does not prove global absence, wrong selectors or credential invalidity. Both original value request and this metadata-only request failed; cannot isolate returnData-specific cause.",
+  "credentialSourceReady": false,
+  "stop": "No variants, alternate Keychain, repeated value query, unlock, or further probing. Await precise source-context resolution.",
+  "operations": {
+    "targetMetadataQueries": 1,
+    "additionalCredentialValueQueries": 0,
+    "keyEnumeration": 0,
+    "API": 0,
+    "OTP": 0,
+    "T": null
+  }
+}

@@ -93,6 +93,7 @@ async function authRequest(
   options: DevAuthOptions,
   refreshing = false,
   accessToken?: string,
+  method: "POST" | "PUT" | "GET" = "POST",
 ) {
   const config = configuration(options);
   const controller = new AbortController();
@@ -111,7 +112,7 @@ async function authRequest(
   try {
     response = await Promise.race([
       config.fetchImplementation(`${config.url}/auth/v1${path}`, {
-        method: "POST",
+        method,
         redirect: "error",
         headers: {
           apikey: config.publishableKey,
@@ -163,9 +164,12 @@ async function authRequest(
               ? "invalid_code"
               : "temporary",
         response.status,
-        refreshing && path === "/token?grant_type=refresh_token" &&
-          [400, 401, 403].includes(response.status) && rejectedRefresh
-          ? "provider_refresh_rejected" : undefined,
+        refreshing &&
+          path === "/token?grant_type=refresh_token" &&
+          [400, 401, 403].includes(response.status) &&
+          rejectedRefresh
+          ? "provider_refresh_rejected"
+          : undefined,
       );
     }
     if (response.status === 204 || path === "/logout?scope=local") return null;
@@ -277,6 +281,91 @@ export async function authenticateSupabaseDevProvider(
   );
 }
 
+// Apple returns this optional name only on the first authorization. Preserve it
+// separately from user-confirmed Display Name and Travel Document Name.
+export async function saveSupabaseDevAppleName(
+  session: LocalSession,
+  name: {
+    givenName?: string | null;
+    familyName?: string | null;
+    middleName?: string | null;
+  },
+  options: DevAuthOptions = {},
+) {
+  if (!session.accessToken || !session.identity?.userId)
+    throw new Error("APPLE_SESSION_REQUIRED");
+  const fields = z
+    .object({
+      givenName: z.string().max(2000).nullable().optional(),
+      familyName: z.string().max(2000).nullable().optional(),
+      middleName: z.string().max(2000).nullable().optional(),
+    })
+    .parse(name);
+  const result = z
+    .object({ id: z.string() })
+    .parse(
+      await authRequest(
+        "/user",
+        { data: { apple_first_sign_in_name: fields } },
+        options,
+        false,
+        session.accessToken,
+        "PUT",
+      ),
+    );
+  if (result.id !== session.identity.userId) throw new Error("APPLE_ACCOUNT_MISMATCH");
+}
+
+// Caller must explicitly authorize linking while signed into this exact Account.
+export async function linkSupabaseDevAppleIdentity(
+  credential: { provider: "apple"; idToken: string; nonce: string },
+  current: LocalSession,
+  options: DevAuthOptions = {},
+) {
+  const accessToken = z.string().min(1).parse(current.accessToken);
+  const identity = current.identity;
+  if (!identity?.userId) throw new Error("APPLE_SESSION_REQUIRED");
+  const userSchema = z.object({
+    id: z.string(),
+    identities: z.array(z.object({ provider: z.string() })).optional(),
+  });
+  const before = userSchema.parse(
+    await authRequest("/user", null, options, false, accessToken, "GET"),
+  );
+  if (before.id !== identity.userId) throw new Error("APPLE_ACCOUNT_MISMATCH");
+  const fields = z
+    .object({
+      provider: z.literal("apple"),
+      idToken: z.string().min(1),
+      nonce: z.string().min(1),
+    })
+    .parse(credential);
+  const linked = sessionFromToken(
+    await authRequest(
+      "/token?grant_type=id_token",
+      {
+        provider: fields.provider,
+        id_token: fields.idToken,
+        nonce: fields.nonce,
+        link_identity: true,
+      },
+      options,
+      false,
+      accessToken,
+    ),
+    identity,
+  );
+  const after = userSchema.parse(
+    await authRequest("/user", null, options, false, linked.accessToken!, "GET"),
+  );
+  if (
+    after.id !== identity.userId ||
+    !after.identities?.some((entry) => entry.provider === "apple")
+  )
+    throw new Error("APPLE_LINK_READBACK_FAILED");
+  return linked;
+}
+
 export function signInToSupabaseDev(
   email: string,
   password: string,
@@ -342,6 +431,16 @@ function identityFromToken(
   fallback?: AccountIdentity,
 ) {
   const metadata = token.user?.user_metadata;
+  const appleName = z
+    .object({
+      givenName: z.string().max(2000).nullable().optional(),
+      familyName: z.string().max(2000).nullable().optional(),
+      middleName: z.string().max(2000).nullable().optional(),
+    })
+    .safeParse(metadata?.apple_first_sign_in_name);
+  const appleFirstSignInName = appleName.success
+    ? appleName.data
+    : fallback?.appleFirstSignInName;
   const displayName = [metadata?.display_name, metadata?.full_name, metadata?.name].find(
     (value): value is string => typeof value === "string" && Boolean(value.trim()),
   );
@@ -349,6 +448,7 @@ function identityFromToken(
     return {
       userId: token.user.id,
       email: token.user.email ?? null,
+      ...(appleFirstSignInName ? { appleFirstSignInName } : {}),
       displayName:
         displayName?.trim() ||
         token.user.email?.split("@")[0] ||

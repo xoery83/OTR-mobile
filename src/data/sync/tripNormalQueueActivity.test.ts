@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
+import { normalTripReadbackTrigger } from "./tripNormalSync";
 import { getNormalTripQueueActivity } from "./tripNormalQueueActivity";
 import { createTripNormalReadbackRepository } from "../repositories/tripNormalReadbackRepository";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
@@ -93,6 +94,7 @@ function fixture() {
   });
   return { sql, db, scope, tripId, createId, now, operation };
 }
+
 it("counts only owning V2 new Trip and honours retry backoff/claim lease", async () => {
   const f = fixture();
   expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
@@ -116,6 +118,7 @@ it("counts only owning V2 new Trip and honours retry backoff/claim lease", async
     nextActionableAt: f.now + 30000,
   });
 });
+
 it.each(["V1", "unknown", "old", "otherAccount"])(
   "does not wake %s retained history",
   async (kind) => {
@@ -138,6 +141,7 @@ it.each(["V1", "unknown", "old", "otherAccount"])(
     });
   },
 );
+
 it("explicit authored Person waits Create completion; legacy private Person never wakes", async () => {
   const f = fixture(),
     personId = randomUUID(),
@@ -167,6 +171,7 @@ it("explicit authored Person waits Create completion; legacy private Person neve
   });
   expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
 });
+
 it("one local readback continuation retains finite backoff, retries and does not repeat a completed trigger", async () => {
   const f = fixture();
   let now = f.now;
@@ -200,6 +205,7 @@ it("one local readback continuation retains finite backoff, retries and does not
       .get(),
   ).toMatchObject({ n: 1 });
 });
+
 it("cold request may refresh once; old Account generation cannot commit readback state", async () => {
   const f = fixture();
   const scope = await captureAccountRequestContext(
@@ -229,6 +235,7 @@ it("cold request may refresh once; old Account generation cannot commit readback
       .get(),
   ).toMatchObject({ status: "PROCESSING" });
 });
+
 it("AUTH-paused operations never schedule a timer retry", async () => {
   const f = fixture();
   f.sql.exec(
@@ -239,6 +246,7 @@ it("AUTH-paused operations never schedule a timer retry", async () => {
     nextActionableAt: null,
   });
 });
+
 it("a different trigger cannot steal a live read; one newer follow-up survives old completion", async () => {
   const f = fixture(),
     scope = await captureAccountRequestContext(f.tripId, async () => f.scope.accountId),
@@ -271,6 +279,7 @@ it("a different trigger cannot steal a live read; one newer follow-up survives o
   expect(await repo.run(scope, f.createId, next, "v2")).toBe(true);
   expect(next).toHaveBeenCalledTimes(1);
 });
+
 it("late old ACK cannot complete a newer claim after lease expiry", async () => {
   const f = fixture();
   let now = f.now;
@@ -536,37 +545,6 @@ it("P5 Create wakes existing normal scheduler without borrowing Import admission
   expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
 });
 
-const p6DispatchPayloads = {
-  SET_ITEM_TEXT: { title: "Updated activity" },
-  SET_ITEM_SCHEDULE: {
-    schedule: {
-      start: coreDateBoundary("2026-11-02"),
-      end: coreDateBoundary("2026-11-03"),
-    },
-  },
-  SET_ITEM_PLACE: {
-    place: Object.fromEntries(
-      Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
-    ),
-  },
-  SET_ITEM_PARTICIPATION: {
-    participation: coreDefaults("organizer").participation,
-  },
-  SET_ACTIVITY_DETAILS: {
-    details: { session_label: "Morning", admission_note: null },
-    entryPlace: null,
-  },
-  SET_TRANSPORT_DETAILS: { annotations: {} },
-  SET_RENTAL_DETAILS: { details: {}, places: {} },
-};
-const p6DispatchCommands = [
-  "SET_ITEM_TEXT",
-  "SET_ITEM_SCHEDULE",
-  "SET_ITEM_PLACE",
-  "SET_ITEM_PARTICIPATION",
-  "SET_ACTIVITY_DETAILS",
-];
-
 it.each(["P6", "P4", "P5"])(
   "P6 Activity details queue retains exact family and retry due time: %s",
   async (family) => {
@@ -756,6 +734,178 @@ it.each(["P2", "P5"])(
   },
 );
 
+it.each(["metadata", "person"])(
+  "schedules original server-parent %s with existing retry/lease/account rules",
+  async (kind) => {
+    const f = fixture();
+    f.sql
+      .prepare("DELETE FROM local_trip_containers WHERE account_id=?")
+      .run(f.scope.accountId);
+    const id = randomUUID(),
+      personId = randomUUID();
+    const metadata = {
+      name: "Adopted",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    };
+    const payload =
+      kind === "metadata"
+        ? {
+            formatVersion: 3,
+            operationId: id,
+            tripId: f.tripId,
+            expectedMetadataRevision: 0,
+            before: metadata,
+            after: { ...metadata, name: "Edited" },
+          }
+        : {
+            version: 1,
+            operationId: id,
+            tripId: f.tripId,
+            personId,
+            tripCreateOperationId: f.createId,
+            displayName: "Synthetic Person",
+            dataOwnership: "CLOUD_SHARED_AUTHORED",
+          };
+    f.operation(
+      id,
+      kind === "metadata" ? "UPDATE_TRIP_METADATA" : "TRIP_PERSON_CLOUD_CREATE",
+      kind === "metadata" ? "TRIP" : "TRIP_PERSON",
+      payload,
+      "PENDING",
+      kind === "metadata" ? f.tripId : personId,
+    );
+    expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(
+      1,
+    );
+    const later = f.now + 20000;
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='RETRYABLE',next_attempt_at=? WHERE id=?",
+      )
+      .run(new Date(later).toISOString(), id);
+    expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+      actionableNow: 0,
+      nextActionableAt: later,
+    });
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='PROCESSING',lease_expires_at=? WHERE id=?",
+      )
+      .run(new Date(later).toISOString(), id);
+    expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+      actionableNow: 0,
+      nextActionableAt: later,
+    });
+    for (const status of ["COMPLETED", "FAILED", "CONFLICT"]) {
+      f.sql.prepare("UPDATE sync_operations SET status=? WHERE id=?").run(status, id);
+      expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+        // A completed Metadata operation schedules only its missing readback, never another POST.
+        actionableNow: kind === "metadata" && status === "COMPLETED" ? 1 : 0,
+        nextActionableAt: null,
+      });
+    }
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL,failure_category='AUTH' WHERE id=?",
+      )
+      .run(id);
+    expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(
+      0,
+    );
+    f.sql.prepare("UPDATE sync_operations SET failure_category=NULL WHERE id=?").run(id);
+    expect(
+      (
+        await getNormalTripQueueActivity(
+          f.db,
+          { ...f.scope, accountId: randomUUID() },
+          f.now,
+        )
+      ).actionableNow,
+    ).toBe(0);
+    f.sql
+      .prepare("UPDATE sync_operations SET idempotency_key=? WHERE id=?")
+      .run(randomUUID(), id);
+    expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(
+      0,
+    );
+  },
+);
+
+it("recovers the completed-Metadata cold gap and durable readback retry without waking completed history forever", async () => {
+  const f = fixture();
+  f.sql
+    .prepare("DELETE FROM local_trip_containers WHERE account_id=?")
+    .run(f.scope.accountId);
+  const id = randomUUID();
+  const before = {
+    name: "Adopted",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    destinations: [],
+  };
+  f.operation(
+    id,
+    "UPDATE_TRIP_METADATA",
+    "TRIP",
+    {
+      formatVersion: 3,
+      operationId: id,
+      tripId: f.tripId,
+      expectedMetadataRevision: 0,
+      before,
+      after: { ...before, name: "Edited" },
+    },
+    "COMPLETED",
+  );
+  expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
+  const scope = await captureAccountRequestContext(
+    f.tripId,
+    async () => f.scope.accountId,
+  );
+  const trigger = await normalTripReadbackTrigger(f.db, f.scope.accountId, f.tripId);
+  const first = createTripNormalReadbackRepository(
+    f.db,
+    async () => f.scope.accountId,
+    () => f.now,
+  );
+  await expect(
+    first.run(
+      scope,
+      id,
+      async () => {
+        throw Error("simulated read loss");
+      },
+      trigger,
+    ),
+  ).rejects.toThrow();
+  expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+    actionableNow: 0,
+    nextActionableAt: f.now + 15000,
+  });
+  expect(
+    (await getNormalTripQueueActivity(f.db, f.scope, f.now + 15000)).actionableNow,
+  ).toBe(1);
+  const cold = createTripNormalReadbackRepository(
+    f.db,
+    async () => f.scope.accountId,
+    () => f.now + 15000,
+  );
+  const read = vi.fn(async () => {});
+  await cold.run(scope, id, read, trigger);
+  expect(read).toHaveBeenCalledOnce();
+  expect(await getNormalTripQueueActivity(f.db, f.scope, f.now + 15001)).toEqual({
+    actionableNow: 0,
+    nextActionableAt: null,
+  });
+  expect(
+    f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(id)!.status,
+  ).toBe("COMPLETED");
+});
+
 it.each(
   (["P1", "P2", "P3", "P4", "P5", "P6"] as const).flatMap((family) =>
     (["MANUAL", "IMPORT"] as const).map((admissionMode) => ({ family, admissionMode })),
@@ -880,3 +1030,35 @@ it.each(
     }
   },
 );
+
+const p6DispatchPayloads = {
+  SET_ITEM_TEXT: { title: "Updated activity" },
+  SET_ITEM_SCHEDULE: {
+    schedule: {
+      start: coreDateBoundary("2026-11-02"),
+      end: coreDateBoundary("2026-11-03"),
+    },
+  },
+  SET_ITEM_PLACE: {
+    place: Object.fromEntries(
+      Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+    ),
+  },
+  SET_ITEM_PARTICIPATION: {
+    participation: coreDefaults("organizer").participation,
+  },
+  SET_ACTIVITY_DETAILS: {
+    details: { session_label: "Morning", admission_note: null },
+    entryPlace: null,
+  },
+  SET_TRANSPORT_DETAILS: { annotations: {} },
+  SET_RENTAL_DETAILS: { details: {}, places: {} },
+};
+
+const p6DispatchCommands = [
+  "SET_ITEM_TEXT",
+  "SET_ITEM_SCHEDULE",
+  "SET_ITEM_PLACE",
+  "SET_ITEM_PARTICIPATION",
+  "SET_ACTIVITY_DETAILS",
+];

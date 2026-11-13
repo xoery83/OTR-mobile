@@ -1,0 +1,34 @@
+{
+  "event_id": "mcp-canedit-chatgpt-20261102-started-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+  "work_item_id": "WI-MCP-EDIT-PREP",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "STARTED",
+  "created_at": "2026-11-02T05:39:19.759023+00:00",
+  "expected_updated_at": null,
+  "summary": "Focused canEdit contract consistency investigation and independent ChatGPT Consumer Edit preparation; no new protected activation.",
+  "current_status": "IN_PROGRESS_LOCAL",
+  "commit": "a5ae12e69316061db0089f866258f401b13202ca",
+  "evidence_paths": [
+    "docs/mcp/capability-consistency/DIAGNOSIS.md"
+  ],
+  "completed": [
+    "Located fixed closedItemCapabilities in full Item projection; MCP passes raw flags unchanged.",
+    "Shared Core Writer confirmed conservative unevaluated default, actual mutation uses coreCanManage and independent Backend gate."
+  ],
+  "unfinished": [
+    "Core formal projection correction and MCP alignment.",
+    "ChatGPT normal OAuth/Preview/authorized Apply and independent readback.",
+    "Separate Native downstream qualification."
+  ],
+  "blocked_by": [],
+  "dependencies": [
+    "Root owns shared Core projection correction; future protected window needs explicit authorization."
+  ],
+  "next_action": "Complete minimal local contract correction, focused regression and independent review; prepare exact ChatGPT gate only after safe contract explanation.",
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED",
+  "affected_node_ids": []
+}

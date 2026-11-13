@@ -1,0 +1,26 @@
+{
+  "recorded_at": "2026-11-03T01:18:42.735488+00:00",
+  "status": "CHROME_RECOVERED_ATTACHMENT_UPLOAD_PERMISSION_BLOCKED",
+  "gate_sha256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+  "owner_answer": "批准本次有限连接与 Preview，不包含保存",
+  "question_call": "call_23c76f11c3cd43e5b34c55e4d490dfbb",
+  "browser_id": "1",
+  "consumer_tab": "1962067209",
+  "fresh_blank_chat_verified": true,
+  "composer_enabled": true,
+  "chooser_multiple": true,
+  "attempted_files": [
+    "docs/mcp/c02/synthetic/confirmation.txt",
+    "docs/mcp/c02/synthetic/follow-up.txt"
+  ],
+  "actual_failure": "Extension requires Allow access to file URLs; setFiles failed",
+  "files_upload_confirmed": false,
+  "prompts_sent": 0,
+  "browser_permission_changed": false,
+  "normal_otp_or_session_started": false,
+  "window_started": false,
+  "issuer_activated": false,
+  "business_applies": 0,
+  "root_notified": true,
+  "next_action": "User enables local file URL access for ChatGPT Chrome extension, then retry same two synthetic files. Independently verify actual latest default/DCR/watchdog and Owner source binding before activation."
+}

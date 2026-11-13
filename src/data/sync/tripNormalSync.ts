@@ -42,6 +42,77 @@ type Row = {
   claim_owner?: string | null;
   last_attempt_at?: string | null;
 };
+export const serverParentQueueSql = `SELECT op.* FROM sync_operations op
+ LEFT JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
+ WHERE op.owner_user_id=? AND op.created_at>=? AND trip.id IS NULL
+ AND ((op.entity_type='TRIP' AND op.operation_type='UPDATE_TRIP_METADATA')
+ OR (op.entity_type='TRIP_PERSON' AND op.operation_type='TRIP_PERSON_CLOUD_CREATE')
+ OR (op.entity_type='TRIP_READBACK' AND op.operation_type='TRIP_NORMAL_READBACK'))
+ AND (op.status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED','PROCESSING')
+ OR (op.operation_type='UPDATE_TRIP_METADATA' AND op.status='COMPLETED')) ORDER BY op.created_at,op.id`;
+export function serverParentQueueKind(
+  operation: Row,
+): "metadata" | "person" | "readback" | null {
+  if (operation.id !== operation.idempotency_key) return null;
+  try {
+    const raw = JSON.parse(operation.payload_json);
+    if (
+      operation.entity_type === "TRIP" &&
+      operation.operation_type === "UPDATE_TRIP_METADATA"
+    ) {
+      const wire = tripMetadataWireUpdateSchema.parse(raw);
+      return "formatVersion" in wire &&
+        wire.formatVersion === 3 &&
+        wire.operationId === operation.id &&
+        wire.tripId === operation.trip_id &&
+        operation.entity_id === operation.trip_id
+        ? "metadata"
+        : null;
+    }
+    if (
+      operation.entity_type === "TRIP_READBACK" &&
+      operation.operation_type === "TRIP_NORMAL_READBACK"
+    ) {
+      return raw.version === 1 &&
+        raw.tripId === operation.trip_id &&
+        operation.entity_id === operation.trip_id &&
+        z.uuid().safeParse(raw.createOperationId).success &&
+        typeof raw.triggerVersion === "string"
+        ? "readback"
+        : null;
+    }
+    if (
+      operation.entity_type === "TRIP_PERSON" &&
+      operation.operation_type === personCloudCreateKind
+    ) {
+      const person = personCloudCreateSchema.parse(raw);
+      return person.operationId === operation.id &&
+        person.tripId === operation.trip_id &&
+        person.personId === operation.entity_id
+        ? "person"
+        : null;
+    }
+  } catch {
+    /* Retain unsupported or malformed history without dispatch. */
+  }
+  return null;
+}
+export async function normalTripReadbackTrigger(
+  database: Pick<SQLite.SQLiteDatabase, "getAllAsync">,
+  accountId: string,
+  tripId: string,
+) {
+  const rows = await database.getAllAsync<{
+    id: string;
+    status: string;
+    attempt_count: number;
+  }>(
+    "SELECT id,status,attempt_count FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND ((status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND')) OR (entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND' AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND attempt_count>0 AND failure_category IS NOT 'AUTH')) ORDER BY id",
+    accountId,
+    tripId,
+  );
+  return JSON.stringify(rows.map((row) => [row.id, row.status, row.attempt_count]));
+}
 export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state FROM sync_operations op
        LEFT JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
        JOIN trip_core_pending_intents intent ON intent.queue_operation_id=op.id AND intent.account_id=op.owner_user_id AND intent.trip_id=op.trip_id
@@ -395,6 +466,49 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
       } catch {
         await guard(); // Security/account revocation remains a fatal fence, never a per-Trip fallback.
         if (!blockedTripIds.includes(row.trip_id)) blockedTripIds.push(row.trip_id);
+      }
+    }
+    // Reuse original explicit Metadata/Person operations without inventing local Create lineage.
+    const parentRows = await deps.database.getAllAsync<Row>(
+      serverParentQueueSql,
+      scope.accountId,
+      adopted.newTripsFrom,
+    );
+    await guard();
+    const recoveredParents = new Set<string>();
+    for (const operation of parentRows) {
+      const kind = serverParentQueueKind(operation);
+      if (!kind) continue;
+      try {
+        const target = {
+          accountId: scope.accountId,
+          tripId: operation.trip_id,
+          operationId: operation.id,
+        };
+        if (kind === "person") await deps.runPerson(target);
+        else if (kind === "metadata" && operation.status !== "COMPLETED")
+          await deps.runMetadata(target);
+        await guard();
+        runnerCalls++;
+        if (kind === "metadata" || kind === "readback") {
+          if (
+            operation.status !== "COMPLETED" ||
+            !recoveredParents.has(operation.trip_id)
+          ) {
+            const parentOperationId =
+              kind === "readback"
+                ? JSON.parse(operation.payload_json).createOperationId
+                : operation.id;
+            await deps.recoverTripReadback(operation.trip_id, parentOperationId);
+            recoveredParents.add(operation.trip_id);
+          }
+        }
+        await guard();
+        if (!tripIds.includes(operation.trip_id)) tripIds.push(operation.trip_id);
+      } catch {
+        await guard();
+        if (!blockedTripIds.includes(operation.trip_id))
+          blockedTripIds.push(operation.trip_id);
       }
     }
     // Authorized cloud-only Manual and reviewed Source commands reuse the exact existing queue.

@@ -1,0 +1,37 @@
+{
+  "event_id": "mcp-chatgpt-8f4-20261102-preview-window-closed-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+  "work_item_id": "WI-MCP-EDIT-PREP",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "BLOCKED",
+  "reported_event_type": "BLOCKED",
+  "created_at": "2026-11-02T07:13:52.127167+00:00",
+  "expected_updated_at": null,
+  "current_status": "CHATGPT_PREVIEW_VERIFIED_APPLY_NOT_EXECUTED_WINDOW_ENDED",
+  "commit": "09aaead9",
+  "summary": "Real ChatGPT OAuth/EditBase/Preview succeeded; raw visible quotation verified after normal close, no trusted singleton or Apply. Independent original-ID readback unchanged.",
+  "evidence_paths": [
+    "docs/mcp/chatgpt-notes/WINDOW_8F4_PREVIEW_READBACK.json",
+    "docs/mcp/chatgpt-notes/WINDOW_8F4_CONSUMER_QUOTED_RESULTS.json",
+    "docs/mcp/chatgpt-notes/WINDOW_8F4_ROOT_SERVER_CLOSE.json"
+  ],
+  "completed": [
+    "Real ChatGPT normal OAuth/Guide/Trip/P3/EditBase/Preview; canEdit true.",
+    "Independent Supabase original item rev2/Notes/root/11children unchanged, original277 receipts0.",
+    "Root server restored default and released short deployment lock."
+  ],
+  "unfinished": [
+    "Actual consumer Apply/APPLIED and resulting independent readback.",
+    "Native downstream after cloud APPLIED.",
+    "Final protected issuer/Grant/session cleanup receipt."
+  ],
+  "blocked_by": [
+    "Finite8f4 window ended before raw proof verification and trusted confirmation installation."
+  ],
+  "dependency_party": "Root final cleanup receipt; future protected execution requires valid exact window authority.",
+  "next_action": "Complete closure evidence and prepare same277 bounded continuation, no new operation or repeated historical UNKNOWN.",
+  "affected_node_ids": []
+}

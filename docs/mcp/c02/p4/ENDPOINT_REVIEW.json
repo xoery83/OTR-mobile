@@ -1,0 +1,54 @@
+{
+  "status": "NO_BLOCKER_LOCAL_MANUAL_RENTAL_ENDPOINT_ADAPTER",
+  "reviewer": "/root/c02_s3_review",
+  "at": "2026-11-03T04:14:01.919876+00:00",
+  "scope": "P4 RENTAL_PLACE reuse of existing Core SET_RENTAL_DETAILS, selected-role full manual place mapping, shared field single/batch dispatch, mandatory live Base guard, Receipt recovery, current endpoint readback, Guide/schema and local SDK tests. No Host execution or privilege activation reviewed.",
+  "reviewed_sha256": {
+    "mcp/structuredPlace.ts": "ae005671dada384a316b7a3eefd6e87939558ac4ff01d31378378d6363f4052f",
+    "mcp/fieldAdapter.ts": "10d3d332281613c5da86af9beb33fc81eb0fd18b352610a847c2cb5e85117c89",
+    "mcp/mutation.ts": "8d34a274f86cc64b9b86e4d1993ab814447c291d4334f535bce6db7b641262d5",
+    "mcp/goldenReadback.ts": "3b2316c6e4e25996caaf0c50a5468240de35e592ec9fb39e39848d5b4bef33ba",
+    "mcp/guide.ts": "1475f84de9a23abacaa817c62a12c64a767a4cb1e55c5326da36613262b0c25a",
+    "mcp/server.ts": "0701819356bafce0fb1742e3fffdf34f7a342bc1ff252851d56a8138f1cf71c4",
+    "mcp/mutation.test.ts": "8ee24118c099407297e7da61a20b93983def52ec5126e023980f850ab5f88822",
+    "docs/mcp/c02/p4/LOCAL_FIELD_COVERAGE.md": "92f7e02e68b49e3318371b7386f8aa8016b9ca77aabe29cc18dcae8fd40d8d75"
+  },
+  "independent_checks": [
+    "11 focused tests PASS (2 role Core/HTTP cases, 1 actual in-process standard SDK endpoint case, 8 shared structured-manual mapper regressions); 54 unrelated tests skipped",
+    "MCP Typecheck PASS",
+    "Scoped Diff Check PASS"
+  ],
+  "findings_resolved": [
+    {
+      "finding": "Readback previously used truthiness to skip both omitted and explicitly null role payloads, allowing unsupported whole-role clear to avoid current child verification.",
+      "fix": "Object.hasOwn distinguishes omission; explicit null fails INDEPENDENT_RENTAL_WHOLE_ROLE_CLEAR_UNSUPPORTED. Both role tests obtain a real local Core APPLIED clear Receipt and prove the readback verifier rejects that unsupported scope."
+    },
+    {
+      "finding": "Provider-ID negative fixture initially used a malformed UUID and could reject before matched-place policy.",
+      "fix": "Valid randomUUID now exercises the accepted/provider prohibition."
+    }
+  ],
+  "verified_boundaries": [
+    "Full Item/Trip/revision identity is validated; selected role must be PICKUP or RETURN with one existing correctly scoped row, and exactly one Rental details row.",
+    "Nine authored leaf patch schema is reused. Non-null accepted/provider/provenance data, source/evidence state and missing provenance for a non-null selected value reject.",
+    "Core payload contains details={} and only one complete selected role; opposite role including synthetic SOURCE provenance is omitted and preserved.",
+    "PREVIEW/APPLY re-read the lawful full Base, compare original DTO and full-record digest, remap the original role+patch and compare exact payload before POST.",
+    "Receipt-first recovery keeps original operation identity; tampered payload or unrevisioned full-record drift is rejected. Core remains final Authority/CAS.",
+    "Current readback requires exactly one matching selected role with exact Trip/Item identity and every expected place value; duplicate/wrong child proofs reject.",
+    "Whole selected group MANUAL/protected tracking reassertion is disclosed; this is not sparse provenance preservation.",
+    "Existing single/batch/failure preparation reuse the same field adapter. No new tool name, Auth/Core/SQL/Provider implementation or Hosted activation is introduced.",
+    "Coverage report labels local SDK/Core/Receipt evidence and leaves Hosted/Consumer/Supabase/Native NOT_RUN and MCP-C02 IN_PROGRESS."
+  ],
+  "unresolved_blockers": [],
+  "not_run": [
+    "Old S1 suites",
+    "Whole-repository audit",
+    "Network or Hosted operations",
+    "Consumer OAuth",
+    "Independent Supabase",
+    "Native",
+    "Provider"
+  ],
+  "s1_frozen_artifacts": "NOT_ACCESSED_OR_CHANGED_BY_THIS_REVIEW",
+  "local_only": true
+}

@@ -1,0 +1,30 @@
+{
+  "status": "AX_AND_QA_PROFILE_READONLY_PREFLIGHT_PASS",
+  "source": "Native unique Writer direct coordination acknowledgement",
+  "sourceThread": "01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "supersedesBlockerOnly": "CONSUMER_WRITE_NATIVE_PREFLIGHT.json",
+  "device": "00008103-00113914020B401E",
+  "ownerFingerprintAuthorizationReported": true,
+  "originalRunnerSingleRecoveryReported": true,
+  "axReadSecondsReported": 0.58,
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "existingTripOpenedReadOnly": true,
+  "visibleExistingContentReported": [
+    "Dec 10–13",
+    "Synthetic QA Lodge",
+    "QA walk",
+    "gallery"
+  ],
+  "currentQaIdentity": "QA_PROFILE_MATCHES_EXISTING_QA_ACCOUNT_REGISTRATION_REPORTED_BY_NATIVE",
+  "newItemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "consumerWrite": "NOT_TESTED",
+  "automaticDownstream": "NOT_TESTED",
+  "coldRestore": "NOT_TESTED",
+  "windowStarted": false,
+  "applyAuthorizedByThisRecord": false,
+  "profileObserved": "otr-qa-fde969f2-2dc5-4a33-83a1-268ac5fd6424 / masked Resend domain",
+  "tripName": "MCP Synthetic Nelson QA 20261031",
+  "normalAllTripsEntryObserved": true,
+  "existingQaItemCountReported": 3,
+  "deviceReadyForWindow": "FRESH_AX_AND_DAY_ENTRY_REQUIRED_BEFORE_WINDOW"
+}

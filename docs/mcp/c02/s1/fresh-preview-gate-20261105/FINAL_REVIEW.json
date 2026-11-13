@@ -1,0 +1,35 @@
+{
+  "verdict": "NO_BLOCKER_FOCUSED_THREE_ENTRY_OWNER_GUARD_REPAIR",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-04T20:16:00.298603+00:00",
+  "candidateCommit": "8eef37b775b20f8ddd9934870d0ae29e945a2912",
+  "packageSHA256": "75ddd1ec2ce35116a4afd209e37285f3c1504a5a8d323cc02940e87052f51dac",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "supersedesFindingForThisCandidateOnly": "REVIEW.json / BLOCKED_SOURCE_GUARD_OMITTED_CAS_ENTRY; original failure preserved",
+  "scope": "Exact repair to third active config_cas.py authorization entry; no broad or historical Gate rerun",
+  "actualIndependentChecks": [
+    "Focused checker PASS: all17 derived hashes and4 inputs,21 pure owner-source cases across exactly3 discovered entrypoints,120/121second freshness boundaries and EMPTY-only binding",
+    "All3 validate_actual_owner functions AST-identical",
+    "CAS source diff equals only obsolete-source literal replacement and explicit UNBOUND rejection",
+    "Gate/scope/window/inputs/task identity/command/confirmations/clock/T/deadlines/owner source unchanged from39977775",
+    "Old generic source and matching UNBOUND source rejected; in-memory future bound source accepted; wrong wire hash, Save and replay rejected"
+  ],
+  "fixedFinding": "The real CAS run entry now uses the same fail-closed current-exact-source guard as normal-control and binder. Previous generic approval can no longer satisfy it.",
+  "remainingConditions": [
+    "Actual direct current exact human source still null; no execution authority granted by this review",
+    "After actual approval, independently verify trusted source/provenance and mechanical binding of all3 guard literals plus consequent source/package hashes",
+    "Root2 must final-qualify actual current default/CAS/restore/close and resource compatibility before any normal login",
+    "Any accepted default/settings change invalidates current preimage; no blind historical restore"
+  ],
+  "notExecuted": [
+    "Auth",
+    "OTP",
+    "Browser",
+    "Hosted",
+    "Consumer",
+    "Business Save"
+  ],
+  "historicalBehaviorTestsRerun": false,
+  "packageMutation": false,
+  "note": "PACKAGE reviewStatus remains candidate-authored repair-pending metadata so reviewed package bytes/hash stay fixed; this separate independent receipt is the review result, not activation."
+}

@@ -1,0 +1,133 @@
+{
+  "status": "PARTIAL_FIELD_FIDELITY",
+  "basis": "BLANK_CONTEXT_LOCAL_SDK_PREVIEW_ONLY_NOT_CONSUMER",
+  "discovered_tools": [
+    {
+      "name": "get_otr_operating_guide",
+      "description": "Start here before organizing travel attachments. Read OPERATING, FIELDS and CAPABILITIES to learn OTR semantics, reconciliation, legal tools and recovery. Read-only; no business writes.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "review_travel_materials",
+      "description": "Read existing OTR Items and review source-linked candidate facts extracted by your client. Inventory, amendments, conflicts, field coverage and create/update suggestions only; no evidence Admission or writes. Read get_otr_operating_guide first. People/Expense review uses only currently authorized connected readers.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_trip_item_edit_base",
+      "description": "Read the complete lawful Item record and children/field_state from the existing verified Core collection, plus current Item DTO. Full Details canEdit is object-management eligibility, not runtime, Consent or command authorization; legacy closed projections are not a fresh permission result. Preserve returned flags and read the Operating Guide. Redacted evidence is not absent evidence. Do not modify this read base or assume any preservation mutation is available.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_trips",
+      "description": "List authorized server-confirmed Trips; UUID cursor order.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_trip",
+      "description": "Read authorized Trip basic information.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_trip_items",
+      "description": "List accepted P1–P6 Items by inclusive local-date overlap; UUID order, not Day Feed order.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_trip_item",
+      "description": "Read an authorized accepted Item, retaining its type and temporal semantics.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "create_trip_item",
+      "description": "Preview or create one Manual typed Item. Trusted user approval required for APPLY.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "update_trip_item",
+      "description": "Preview or edit text OR a supported complete civil schedule at an explicit revision; qualified/transport time edits need their owning adapter.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_operation_status",
+      "description": "Read owning exact operation receipt. UNKNOWN is not failed or absent.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      }
+    }
+  ],
+  "apply_calls": 0,
+  "preview_result": {
+    "version": "otr.mcp.mutation/1",
+    "trip_id": "00000000-0000-4000-8000-000000000002",
+    "item_id": "4930e227-3fa4-48fa-af4f-467b5026c13d",
+    "operation_id": "db621884-128a-4fb3-9f52-438227660012",
+    "current_revision": null,
+    "preview_digest": "c025f93ea8c08d940e0635f838b5c052594cf6d23edf99f932bc3c1bc0d9afbb",
+    "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-12\",\"end_time\":\"09:45\",\"end_zone\":\"Pacific/Auckland\",\"start_date\":\"2026-12-10\",\"start_time\":\"17:20\",\"start_zone\":\"Pacific/Auckland\"},\"family\":\"P3\",\"notes\":\"Use the east entrance; call reception if arriving after 20:00.\",\"place\":\"Kowhai Bay QA Lodge\",\"place_address\":\"18 Example Quay, Aster Bay, New Zealand (fictional)\",\"property_name\":\"Kowhai Bay QA Lodge\",\"rooms\":[{\"capacity\":4,\"category\":\"Family\",\"quantity\":1,\"room_id\":\"2cb43cec-e45f-46e8-93a2-c620cf1234c1\"},{\"capacity\":3,\"category\":\"Studio\",\"quantity\":1,\"room_id\":\"2cb43cec-e45f-46e8-93a2-c620cf1234c2\"}],\"stay\":{\"permitted_checkin_from\":\"14:00\",\"permitted_checkin_until\":\"20:00\",\"permitted_checkout_by\":\"10:30\"},\"title\":\"Kowhai Bay QA Lodge\"}",
+    "query": {
+      "trip_id": "00000000-0000-4000-8000-000000000002",
+      "operation_id": "db621884-128a-4fb3-9f52-438227660012",
+      "target": "ITEM"
+    },
+    "outcome": "PREVIEW"
+  },
+  "failure": {
+    "field": "item.rooms[0].category",
+    "source_literal": "Family unit",
+    "model_proposed": "Family",
+    "class": "MODEL_REASONING_GUIDE_CLARITY",
+    "fix": "Explicit literal-label preservation in Operating Guide; exact same three input files retained for fresh bounded retest."
+  },
+  "inputs": {
+    "user-task.txt": "4d09978e054980e4cd08043b6396daf5af846672ec66e45b8f3d05f0a673cec4",
+    "confirmation.txt": "98830deeb079d4841b8472976cd89defd2c9d689e3c06e96c46613edff6e4bfe",
+    "follow-up.txt": "cb108bf2b04a04ca02298b680d7fcb084043b593062c3502c37fbc4872281798"
+  }
+}

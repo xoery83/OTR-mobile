@@ -1,0 +1,19 @@
+{
+  "status": "ACTUAL_NORMAL_OWN_QA_CONTROL_READY_NO_CLOCK",
+  "windowId": "3586c5693f514ce986995e98b3760c80",
+  "gateSHA256": "422e73564ed4d81c7070c9ef8d196d45e519f1bcfc72eb6b21afd319cdc7e41a",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "normalControlStartedAt": "2026-11-04T08:04:03.197063+00:00",
+  "normalControlReadyAt": "2026-11-04T08:04:12.090Z",
+  "launchFreshnessHardLimit": "2026-11-04T08:06:03.197063Z",
+  "controlStatusPath": "/private/tmp/otr-auth-consumer-control-c02-3586c5693f514ce986995e98b3760c80/status-1.json",
+  "launchPath": "/private/tmp/otr-mcp-c02-access-3586c5693f514ce986995e98b3760c80/CONTROL_LAUNCH.json",
+  "actualControlSessionId": 41958,
+  "normalControlReady": true,
+  "clockStarted": false,
+  "authorityActivated": false,
+  "command": null,
+  "confirmations": [],
+  "secretsOrOtpRecorded": false
+}

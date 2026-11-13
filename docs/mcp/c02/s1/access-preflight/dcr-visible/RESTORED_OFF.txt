@@ -1,0 +1,170 @@
+- link "Skip to content":
+  - /url: "#main"
+  - generic: Skip to content
+- banner:
+  - link "Supabase Back to organization home":
+    - /url: /dashboard/org/qzlhqmtqjfoawktoaxrw
+    - img "Supabase"
+    - generic: Back to organization home
+  - link "xoery83's Org Free":
+    - /url: /dashboard/org/qzlhqmtqjfoawktoaxrw
+    - generic: xoery83's Org
+    - generic: Free
+  - button "Show organizations":
+  - link "OTR Development":
+    - /url: /dashboard/project/tuqigdxrvrerfewsxqgm
+    - generic "OTR Development"
+  - button "Show organization projects":
+  - button "Connect":
+    - generic: Connect
+  - button "Feedback":
+    - generic: Feedback
+  - button "Search...":
+    - paragraph: Search...
+    - generic: ⌘K
+  - button "Help":
+    - generic: Help
+  - button "Advisor Center":
+    - generic: Advisor Center
+  - button "SQL Editor":
+    - generic: SQL Editor
+  - button "AI Assistant":
+    - generic: AI Assistant
+  - button "xoery83":
+    - img "xoery83"
+- navigation:
+  - list:
+    - link "Project Overview":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm
+      - generic: Project Overview
+    - link "Table Editor":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/editor
+      - generic: Table Editor
+    - link "SQL Editor":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/sql
+      - generic: SQL Editor
+  - list:
+    - link "Database":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/database/schemas
+      - generic: Database
+    - link "Authentication":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/users
+      - generic: Authentication
+    - link "Storage":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/storage/files
+      - generic: Storage
+    - link "Edge Functions":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/functions
+      - generic: Edge Functions
+    - link "Compute New":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/compute
+      - generic: Compute
+      - generic: New
+    - link "Realtime":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/realtime/inspector
+      - generic: Realtime
+  - list:
+    - link "Advisors":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/advisors/health
+      - generic: Advisors
+    - link "Observability":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/observability
+      - generic: Observability
+    - link "Logs":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/logs
+      - generic: Logs
+    - link "Integrations":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/integrations
+      - generic: Integrations
+  - list:
+    - link "Project Settings":
+      - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/settings/general
+      - generic: Project Settings
+- button "Sidebar control":
+- main:
+  - heading "Authentication" [level=4]
+  - menu "Sidebar":
+    - list:
+      - generic: Manage
+      - link "Users":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/users
+        - menuitem "Users":
+          - generic: Users
+      - link "OAuth Apps":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/oauth-apps
+        - menuitem "OAuth Apps":
+          - generic: OAuth Apps
+      - generic: Notifications
+      - link "Emails":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/templates
+        - menuitem "Emails":
+          - generic: Emails
+      - generic: Configuration
+      - link "Policies":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/database/policies
+        - menuitem "Policies":
+          - generic "Policies":
+            - generic: Policies
+      - link "Sign In / Providers":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/providers
+        - menuitem "Sign In / Providers":
+          - generic: Sign In / Providers
+      - link "Passkeys Beta":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/passkeys
+        - menuitem "Passkeys Beta":
+          - generic: Passkeys
+          - generic: Beta
+      - link "OAuth Server Beta":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/oauth-server
+        - menuitem "OAuth Server Beta":
+          - generic: OAuth Server
+          - generic: Beta
+      - link "Sessions":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/sessions
+        - menuitem "Sessions":
+          - generic: Sessions
+      - link "Rate Limits":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/rate-limits
+        - menuitem "Rate Limits":
+          - generic: Rate Limits
+      - link "Multi-Factor":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/mfa
+        - menuitem "Multi-Factor":
+          - generic: Multi-Factor
+      - link "URL Configuration":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/url-configuration
+        - menuitem "URL Configuration":
+          - generic: URL Configuration
+      - link "Attack Protection":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/protection
+        - menuitem "Attack Protection":
+          - generic: Attack Protection
+      - link "Auth Hooks Beta":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/hooks
+        - menuitem "Auth Hooks Beta":
+          - generic: Auth Hooks
+          - generic: Beta
+      - link "Audit Logs":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/audit-logs
+        - menuitem "Audit Logs":
+          - generic: Audit Logs
+      - link "Performance":
+        - /url: /dashboard/project/tuqigdxrvrerfewsxqgm/auth/performance
+        - menuitem "Performance":
+          - generic: Performance
+  - separator [disabled]:
+  - main:
+    - heading "OAuth Server" [level=1]
+    - generic: Configure your project to act as an identity provider for third-party applications
+    - link "Docs":
+      - /url: https://supabase.com/docs/guides/auth/oauth-server
+      - generic: Docs
+    - switch "Enable the Supabase OAuth Server"
+    - checkbox
+    - generic: Enable the Supabase OAuth Server
+    - generic: Enable OAuth server functionality for your project to create and manage OAuth applications.
+    - button "Cancel":
+      - generic: Cancel
+    - button "Save changes" [disabled]:
+      - generic: Save changes
+- region "Notifications alt+T"

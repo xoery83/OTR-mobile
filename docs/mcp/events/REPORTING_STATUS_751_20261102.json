@@ -1,0 +1,59 @@
+{
+  "checkedAt": "2026-11-02T10:20:23.498716+00:00",
+  "events": [
+    {
+      "event_id": "mcp-chatgpt-8f4-20261102-owner-approved-001",
+      "sourceSHA256": "f821b7df4dd4f4174f504720d4a24114d0e0f8d4f33bfb287f560d706abe8857",
+      "status": "PENDING_VERIFICATION",
+      "event_transition_published_snapshot_version": null,
+      "capability_id": "CAP-MCP-CONSUMER-EDIT",
+      "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+      "work_item_id": "WI-MCP-EDIT-PREP",
+      "reference_published_snapshot_version": "738de012fdb02870"
+    },
+    {
+      "event_id": "mcp-chatgpt-8f4-20261102-preview-window-closed-001",
+      "sourceSHA256": "05cb6a52954698879d1785c069b6f3c6c4cc2b7a06453c8a1d2609f4b437aca8",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-chatgpt-response-proof-20261102-ready-001",
+      "sourceSHA256": "2652c4a89919a77fade3d0c5cc245d685d27757b6a872d04e73e412408772228",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-chatgpt-same277-proof-20261102-ready-001",
+      "sourceSHA256": "5b72cedf84deb7e1ec155b13244f85dfedf813a1f813f52abcb389985bc53fb8",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-response-proof-default-20261102-ready-001",
+      "sourceSHA256": "ea2255db28f0dafe46a6b8e9f2eaad2b695c5ff9ed3b7c95271a4b4a1079fcaa",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-chatgpt-751-20261102-owner-approved-001",
+      "sourceSHA256": "030643e88e60ae869cbce66434775f61192a88e2f26211b27bdc92edfabec082",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-chatgpt-p3-notes-751-20261102-001",
+      "sourceSHA256": "ef68440ff970ba7aab71362030fbfc73253f7959e8b232e00d19296ef4246730",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-chatgpt-751-native-handoff-20261102-001",
+      "sourceSHA256": "b30bd57a938291b2ffd8a99cdebf7e8ff46ad3cc7043e2435d3ecc4e6df699f1",
+      "status": "SUBMITTED",
+      "event_transition_published_snapshot_version": null
+    }
+  ],
+  "websiteUpdatedClaim": false,
+  "rule": "SUBMITTED is not ACK or website publication; only Mission Control owns snapshots."
+}

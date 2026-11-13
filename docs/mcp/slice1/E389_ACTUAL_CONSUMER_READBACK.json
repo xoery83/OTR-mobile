@@ -1,0 +1,60 @@
+{
+  "version": "otr.mcp.read/1",
+  "state": "SERVER_CONFIRMED",
+  "item": {
+    "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+    "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "itemRevision": 2,
+    "title": "Synthetic Nelson QA lodge (unbooked)",
+    "description": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+    "status": "planned",
+    "hidden": false,
+    "visibility": "PRIVATE",
+    "localState": "ACCEPTED",
+    "participation": {
+      "mode": "SELF",
+      "personIds": [],
+      "selfPersonId": "0fba6f2e-d0bd-4e65-8e41-decebe8c3154",
+      "rosterHash": "92bb566cab42ce5b9fdf69478dc1193835d9c293956a2ac334e2bc965c2a08b5"
+    },
+    "schedule": {
+      "shape": "STAY",
+      "start": {
+        "comparable": false,
+        "localDate": "2026-12-10",
+        "quality": "UNKNOWN",
+        "basis": "DERIVED_CIVIL",
+        "civilResolution": "PENDING"
+      },
+      "end": {
+        "comparable": false,
+        "localDate": "2026-12-13",
+        "quality": "UNKNOWN",
+        "basis": "DERIVED_CIVIL",
+        "civilResolution": "PENDING"
+      }
+    },
+    "bookingSummaries": [],
+    "documentSummaries": [],
+    "entitlementSummaries": [],
+    "instructionShortcuts": [],
+    "expenseLinkIds": [],
+    "capabilities": {
+      "canEdit": false,
+      "canManageParticipation": false,
+      "canManageVisibility": false,
+      "canCancel": false,
+      "canHide": false,
+      "canRestore": false,
+      "canLinkBooking": false,
+      "canLinkEntitlement": false,
+      "canAttachDocument": false
+    },
+    "family": "P3",
+    "details": {
+      "propertyName": "Synthetic QA Lodge",
+      "nights": 3,
+      "rooms": []
+    }
+  }
+}

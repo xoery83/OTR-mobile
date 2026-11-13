@@ -17,6 +17,11 @@ import {
   nativeTripAuthoredCloudTravelers,
 } from "@/data/sync/nativeTripQaScope";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import {
+  readServerParentMetadataEditBase,
+  saveServerParentTripMetadata,
+} from "@/data/repositories/tripMetadataRepository";
+import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type { StructuredTripMetadataSnapshot } from "@/domain/trip/tripStructuredDestinationContract";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
@@ -32,6 +37,7 @@ import { useTripPersonalCover } from "./useTripPersonalCover";
 import { isTripCoverAssetId, tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
+import { ServerParentTripPeople } from "@/features/people/ServerParentTripPeople";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
@@ -112,6 +118,7 @@ const knownDate = (value: string | null) => {
 };
 
 type Props = {
+  serverParentPeopleEnabled?: boolean;
   refreshKey?: number;
   widgetsForHome?: (
     tripId: string,
@@ -151,6 +158,7 @@ export function LocalTripWorkspace(props: Props) {
   );
 }
 function LocalTripContent({
+  serverParentPeopleEnabled = false,
   refreshKey = 0,
   tripId,
   mode = "LIST",
@@ -219,6 +227,27 @@ function LocalTripContent({
   const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
   const [destinationBusy, setDestinationBusy] = useState(false);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [remoteMetadataEditor, setRemoteMetadataEditor] = useState<Awaited<
+    ReturnType<typeof readServerParentMetadataEditBase>
+  > | null>(null);
+  const [remoteMetadataReady, setRemoteMetadataReady] = useState<Awaited<
+    ReturnType<typeof readServerParentMetadataEditBase>
+  > | null>(null);
+  const remoteMetadataQualified =
+    !!remoteSelected &&
+    remoteMetadataReady?.context.tripId === remoteSelected.id &&
+    remoteMetadataReady.context.generation === generation;
+  const editorTrip =
+    selected ??
+    (remoteMetadataEditor
+      ? {
+          id: remoteMetadataEditor.context.tripId,
+          ...remoteMetadataEditor.snapshot.metadata,
+          destinations: remoteMetadataEditor.snapshot.metadata.destinations.map(
+            (item, ordinal) => ({ ...item, ordinal }),
+          ),
+        }
+      : null);
   const [metadataBaseError, setMetadataBaseError] = useState(false);
   const metadataEditBase = useRef<StructuredTripMetadataSnapshot | null>(null);
   const deferredMetadataEditBase = useRef<
@@ -472,6 +501,9 @@ function LocalTripContent({
               (trip) => trip.id === tripId && trip.localStatus === null,
             ) ?? null)
           : null;
+      const cachedMetadata = cached
+        ? await repo.readMetadataEditBase(cached.id).catch(() => null)
+        : null;
       const localIds = new Set(list.map((trip) => trip.id));
       if (
         !alive.current ||
@@ -488,6 +520,7 @@ function LocalTripContent({
         loadedListScope.current === principalScope
       )
         throw Error("TRIP_DISCOVERY_CACHE_UNAVAILABLE");
+      setRemoteMetadataReady(null);
       loadedGuest.current = guestLocalId;
       loadedListScope.current = principalScope;
       if (isGuest) setSetup(guestCurrencySetup);
@@ -524,11 +557,42 @@ function LocalTripContent({
       } else setAccountRestore(null);
       setEligibleToday({});
       setSelected(local);
-      setRemoteSelected(cached);
+      setRemoteSelected(
+        cached && cachedMetadata?.confirmed
+          ? { ...cached, ...cachedMetadata.confirmed.metadata }
+          : cached,
+      );
       setStatus(
         discoveryReadFailed && !tripId && mode === "LIST" ? "UNAVAILABLE" : "READY",
       );
       onKnownTrip(local ? "LOCAL" : cached ? "CACHED" : "NONE");
+      // Optional online qualification never delays the already-rendered cached Trip.
+      if (cached && !isGuest && serverParentPeopleEnabled)
+        void (async () => {
+          try {
+            const { requireAdoptedUserId } = await import("@/data/auth/authRepository");
+            const scope = await captureAccountRequestContext(
+              cached.id,
+              requireAdoptedUserId,
+            );
+            const base = await readServerParentMetadataEditBase(scope);
+            if (
+              alive.current &&
+              captured === getAccountGeneration() &&
+              ticket === request.current &&
+              base.context.tripId === cached.id &&
+              base.context.accountId === qaAccountId
+            )
+              setRemoteMetadataReady(base);
+          } catch {
+            if (
+              alive.current &&
+              captured === getAccountGeneration() &&
+              ticket === request.current
+            )
+              setRemoteMetadataReady(null);
+          }
+        })();
       if (!tripId && list.length) {
         const possible = possibleTodayTrips(list, calendarDate(new Date()));
         if (possible.length) {
@@ -660,7 +724,7 @@ function LocalTripContent({
       setStatus("UNAVAILABLE");
       onKnownTrip("NONE");
     }
-  }, [tripId, mode, onKnownTrip, generation]);
+  }, [tripId, mode, onKnownTrip, generation, serverParentPeopleEnabled]);
   const restoreAccountId = accountRestore?.scope.accountId;
   useEffect(() => {
     if (!restoreAccountId || tripId || mode !== "LIST") return;
@@ -869,7 +933,37 @@ function LocalTripContent({
     if (alive.current && generation === getAccountGeneration()) await load();
   };
   const openTripEditor = useCallback(async () => {
-    if (!selected || !alive.current || generation !== getAccountGeneration()) return;
+    if (!alive.current || generation !== getAccountGeneration()) return;
+    if (!selected && remoteSelected && serverParentPeopleEnabled) {
+      const ticket = request.current;
+      try {
+        const { requireAdoptedUserId } = await import("@/data/auth/authRepository");
+        const scope = await captureAccountRequestContext(
+          remoteSelected.id,
+          requireAdoptedUserId,
+        );
+        const base = await readServerParentMetadataEditBase(scope);
+        if (
+          !alive.current ||
+          generation !== getAccountGeneration() ||
+          ticket !== request.current
+        )
+          return;
+        setRemoteMetadataEditor(base);
+        setMetadataBaseError(false);
+        setCoverOpen(true);
+      } catch {
+        if (
+          alive.current &&
+          generation === getAccountGeneration() &&
+          ticket === request.current
+        )
+          setMetadataBaseError(true);
+      }
+      return;
+    }
+    if (!selected) return;
+    setRemoteMetadataEditor(null);
     metadataEditBase.current = null;
     deferredMetadataEditBase.current = null;
     deferredMetadataActionId.current = null;
@@ -913,7 +1007,7 @@ function LocalTripContent({
       }
     }
     setCoverOpen(true);
-  }, [selected, generation]);
+  }, [selected, remoteSelected, serverParentPeopleEnabled, generation]);
 
   const leaveHome = useCallback(() => {
     if (!alive.current || generation !== getAccountGeneration()) return;
@@ -983,6 +1077,23 @@ function LocalTripContent({
     : undefined;
   useFocusEffect(
     useCallback(() => {
+      if (!selected && remoteSelected && remoteMetadataQualified && status === "READY") {
+        const owner = remoteSelected.id;
+        publishQuickActions(
+          {
+            tripName: remoteSelected.name,
+            tripId: owner,
+            generation,
+            owner: quickActionsOwner,
+            backToTrips: leaveHome,
+            editTrip: () => void openTripEditor(),
+          },
+          owner,
+          generation,
+          quickActionsOwner,
+        );
+        return () => publishQuickActions(null, owner, generation, quickActionsOwner);
+      }
       if (!selected || status !== "READY") return;
       const owner = selected.id;
       publishQuickActions(
@@ -1033,6 +1144,8 @@ function LocalTripContent({
       return () => publishQuickActions(null, owner, generation, quickActionsOwner);
     }, [
       selected,
+      remoteSelected,
+      remoteMetadataQualified,
       tripId,
       status,
       generation,
@@ -1085,7 +1198,10 @@ function LocalTripContent({
         }
       : undefined,
     onSetup: receiveSetup,
-    onEdit: selected && metadataEditable ? () => void openTripEditor() : undefined,
+    onEdit:
+      (selected && metadataEditable) || (remoteSelected && remoteMetadataQualified)
+        ? () => void openTripEditor()
+        : undefined,
     onCover: openPersonalCover,
     undated: lifecycle === "Undated",
     onImport: selected
@@ -1145,6 +1261,169 @@ function LocalTripContent({
         </Text>
       </View>
     );
+  const metadataEditor = editorTrip ? (
+    <Modal
+      visible={coverOpen}
+      presentationStyle="pageSheet"
+      allowSwipeDismissal={!editorSaving && !editorDirty && !editorFrozen}
+      onRequestClose={() => {
+        if (!editorBusy.current && !editorHandoff.current) {
+          if (editorDismiss.current) editorDismiss.current();
+          else setCoverOpen(false);
+        }
+      }}
+      animationType="slide"
+    >
+      <SafeAreaProvider style={styles.modal}>
+        {coverOpen ? (
+          <TripBasicEditor
+            trip={{
+              ...editorTrip,
+              selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
+            }}
+            guestLocal={guest === true}
+            readGuestRecoveryContext={() => {
+              if (
+                !selected ||
+                !alive.current ||
+                generation !== getAccountGeneration() ||
+                editorBusy.current
+              )
+                throw Error("GUEST_TRIP_EDIT_CONTEXT_CHANGED");
+              return JSON.parse(
+                JSON.stringify({
+                  tripId: selected.id,
+                  syncFormatVersion: selected.syncFormatVersion ?? null,
+                  metadataBase: metadataEditBase.current,
+                  deferredMetadataBase: deferredMetadataEditBase.current,
+                  deferredActionId: deferredMetadataActionId.current,
+                }),
+              ) as Json;
+            }}
+            onHandoffFrozenChange={(frozen) => {
+              editorHandoff.current = frozen;
+              setEditorFrozen(frozen);
+            }}
+            onClose={() => {
+              if (!editorBusy.current && !editorHandoff.current) setCoverOpen(false);
+            }}
+            registerDismiss={(handler) => {
+              editorDismiss.current = handler;
+            }}
+            onDirtyChange={setEditorDirty}
+            onSavingChange={(saving) => {
+              editorBusy.current = saving;
+              setEditorSaving(saving);
+            }}
+            setup={setup?.context.tripId === editorTrip.id ? setup : null}
+            currencyAvailable={guest === false && !!selected}
+            coverAvailable={guest === false && !!selected}
+            metadataEditable={metadataEditable || !!remoteMetadataEditor}
+            onSelectCover={selectCover}
+            onSaveMetadata={async (before, after, cover, operationId, destinations) => {
+              if (!alive.current || generation !== getAccountGeneration())
+                throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+              if (!selected && remoteMetadataEditor) {
+                const base = remoteMetadataEditor.snapshot;
+                await saveServerParentTripMetadata(remoteMetadataEditor.context, {
+                  formatVersion: 3,
+                  operationId,
+                  tripId: base.tripId,
+                  expectedMetadataRevision: base.metadataRevision,
+                  before: base.metadata,
+                  after: {
+                    ...after,
+                    destination: null,
+                    destinations: [
+                      ...(destinations?.after ?? base.metadata.destinations),
+                    ],
+                  },
+                });
+                if (!alive.current || generation !== getAccountGeneration()) return;
+                setCoverOpen(false);
+                void kickLocalTripSync()
+                  .then(() => load())
+                  .catch(() => undefined);
+                return;
+              }
+              if (!selected) throw Error("TRIP_METADATA_CONTEXT_CHANGED");
+              const repo = await readLocalTripRepository();
+              if (!alive.current || generation !== getAccountGeneration())
+                throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+              if (selected.syncFormatVersion === 2) {
+                const deferred = deferredMetadataEditBase.current;
+                const actionId = deferredMetadataActionId.current;
+                const base = metadataEditBase.current;
+                if (deferred && actionId) {
+                  await repo.deferMetadataUpdate({
+                    localActionVersion: 1,
+                    actionId,
+                    operationId,
+                    tripId: selected.id,
+                    before: deferred,
+                    after: {
+                      ...after,
+                      destination: null,
+                      destinations: [...(destinations?.after ?? deferred.destinations)],
+                    },
+                    ...(cover ? { cover } : {}),
+                  });
+                } else {
+                  if (!base || base.tripId !== selected.id)
+                    throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+                  await repo.updateMetadata(
+                    {
+                      formatVersion: 3,
+                      operationId,
+                      tripId: selected.id,
+                      expectedMetadataRevision: base.metadataRevision,
+                      before: base.metadata,
+                      after: {
+                        ...after,
+                        destination: null,
+                        destinations: [
+                          ...(destinations?.after ?? base.metadata.destinations),
+                        ],
+                      },
+                    },
+                    cover,
+                  );
+                }
+              } else {
+                await repo.updateMetadata(
+                  { operationId, tripId: selected.id, before, after },
+                  cover,
+                  destinations,
+                );
+              }
+              void kickLocalTripSync().catch(() => undefined);
+              const committed = await repo.getTrip(selected.id);
+              if (alive.current && generation === getAccountGeneration()) {
+                // Fence an older focus read that started before this local commit.
+                request.current++;
+                setSelected({
+                  ...selected,
+                  ...after,
+                  ...(committed ? { destinations: committed.destinations } : {}),
+                  ...(cover
+                    ? {
+                        selectedCoverAssetId: isTripCoverAssetId(cover.after)
+                          ? cover.after
+                          : null,
+                        selectedCoverAssetIdRaw: cover.after,
+                      }
+                    : {}),
+                });
+                setCoverOpen(false);
+                // The committed value is visible now; normal focus reads refresh later.
+              }
+            }}
+          />
+        ) : null}
+      </SafeAreaProvider>
+    </Modal>
+  ) : null;
+
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
@@ -1185,6 +1464,12 @@ function LocalTripContent({
       {error && !selected && !remoteSelected ? (
         <Text accessibilityRole="alert" style={styles.status}>
           {t("tripCreate.saveFailed")}
+        </Text>
+      ) : null}
+
+      {remoteSelected && metadataBaseError ? (
+        <Text accessibilityRole="alert" style={styles.status}>
+          {t("tripMetadata.confirmedBaseUnavailable")}
         </Text>
       ) : null}
       {selected ? (
@@ -1479,19 +1764,30 @@ function LocalTripContent({
               </SafeAreaProvider>
             </Modal>
           ) : null}
+          {metadataEditor}
         </>
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
+            onEdit={remoteMetadataQualified ? () => void openTripEditor() : undefined}
             canChooseCover={!!personalCover.selection}
             onChooseCover={openPersonalCover}
             onHeroHeight={onHomeHeroHeight}
             modules={
-              <TripMembersSummary
-                tripId={remoteSelected.id}
-                generation={generation}
-                setup={setup?.context.tripId === remoteSelected.id ? setup : null}
-              />
+              serverParentPeopleEnabled ? (
+                <ServerParentTripPeople
+                  tripId={remoteSelected.id}
+                  generation={generation}
+                  setup={setup?.context.tripId === remoteSelected.id ? setup : null}
+                  onSetup={receiveSetup}
+                />
+              ) : (
+                <TripMembersSummary
+                  tripId={remoteSelected.id}
+                  generation={generation}
+                  setup={setup?.context.tripId === remoteSelected.id ? setup : null}
+                />
+              )
             }
             widgets={pages}
             tripId={remoteSelected.id}
@@ -1499,7 +1795,7 @@ function LocalTripContent({
             title={remoteSelected.name}
             cover={tripCoverSource(displayCover ?? remoteSelected)}
             coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
-            notice={t("myTrips.cachedDetails")}
+            notice={remoteMetadataQualified ? undefined : t("myTrips.cachedDetails")}
             metadata={[
               ...(remoteStart && remoteEnd
                 ? [
@@ -1516,6 +1812,7 @@ function LocalTripContent({
               ...(remoteSelected.destination ? [remoteSelected.destination] : []),
             ]}
           />
+          {metadataEditor}
           {localOutcome?.tripId === remoteSelected.id &&
           localOutcome.generation === generation ? (
             <>

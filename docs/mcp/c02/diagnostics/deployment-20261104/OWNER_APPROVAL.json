@@ -1,0 +1,13 @@
+{
+  "status": "OWNER_APPROVED_EXECUTION_REQUIRES_ROOT2_SOURCE_BINDING_AND_FRESH_CAS",
+  "observed_at": "2026-11-04T01:45:52.253960+00:00",
+  "source_thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "question_call_id": "call_cc1840abce8e48d1aabcf35c3dc20e4b",
+  "answer": "批准本次默认关闭软件部署及必要回滚",
+  "gate_sha256": "202d3b3578f40ff2bddb44199c31f24f03fd8f8124393c56bfe2af4472051747",
+  "package_commit": "9695cd54",
+  "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "plan_sha256": "691b49b74eef67aa6971c65a661369b3cf93e8b4fbf190d88f125594914c6999",
+  "authority": "Default closed paired software deploy/necessary rollback only",
+  "oauth_window_apply_authorized": false
+}

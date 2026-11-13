@@ -1,0 +1,25 @@
+{
+  "event_id": "mcp-c02-p3-20261103-started-001",
+  "ack_status": "ACCEPTED",
+  "execution_state_version": 6,
+  "plan_version": 2,
+  "package_id": "MCP-C02",
+  "capability_ids": [
+    "CAP-MCP-READ",
+    "CAP-MCP-CONSUMER-EDIT",
+    "CAP-MCP-P5-FACTS",
+    "CAP-MCP-TRIP-MAINTENANCE",
+    "CAP-MCP-CREATE-ITEMS",
+    "CAP-MCP-FAMILY-FIELDS",
+    "CAP-MCP-PREVIEW-CONFIRM"
+  ],
+  "execution_slice_id": "MCP-C02:LOCAL_PREP",
+  "source_commit": "9957ea27d73d5cc2fd234ac0da7f06d42e05cbe7",
+  "review_commit": "97eea6b9c743bea1250bb9c25d15b48a380aafbc",
+  "evidence_refs": [],
+  "scope": "Reported actual start: MCP-C02 full-field P3 Create/Edit local field/adapter/fixture preparation. Prior Notes is historical; no new protected write authority.",
+  "actual_started_at": "2026-11-02T17:33:49.666340+00:00",
+  "dispatch_performed": false,
+  "snapshot_binding": "CONTAINING_PUBLISHED_SNAPSHOT",
+  "does_not_qualify_entire_package": true
+}

@@ -20,8 +20,9 @@ import { createUuid } from "@/domain/localId";
 import { createTripNormalReadbackRepository } from "../repositories/tripNormalReadbackRepository";
 import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { createTripMetadataTransport } from "./tripMetadataTransport";
-import { createTripMetadataRepository } from "../repositories/tripMetadataRepository";
+import { createTripMetadataRepository, readServerParentMetadataEditBase } from "../repositories/tripMetadataRepository";
 import {
+  normalTripReadbackTrigger,
   createNormalTripSyncWake,
   isManualAcceptedEditCommand,
   isManualInstructionEditCommand,
@@ -135,13 +136,9 @@ export function createNativeNormalTripSyncRunner(
     const recoverReadback = async (tripId: string, createOperationId: string) => {
       const local = await repository.getTrip(tripId);
       await assertAccountRequestContext(account, requireActiveUserId);
-      if (local?.serverId !== tripId) return;
-      const trigger = await database.getAllAsync<{
-        id: string;
-        status: string;
-        attempt_count: number;
-      }>(
-        "SELECT id,status,attempt_count FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND ((status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND')) OR (entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND' AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND attempt_count>0 AND failure_category IS NOT 'AUTH')) ORDER BY id",
+      if (local && local.serverId !== tripId) return;
+      const triggerVersion = await normalTripReadbackTrigger(
+        database,
         account.accountId,
         tripId,
       );
@@ -151,6 +148,11 @@ export function createNativeNormalTripSyncRunner(
         { ...account, tripId },
         createOperationId,
         async () => {
+          if (!local) {
+            await readServerParentMetadataEditBase({ ...account, tripId });
+            await assertAccountRequestContext(account, requireActiveUserId);
+            return;
+          }
           const snapshot = await createTripMetadataTransport(
             requireActiveUserId,
             {},
@@ -182,7 +184,7 @@ export function createNativeNormalTripSyncRunner(
               }),
             );
         },
-        JSON.stringify(trigger.map((row) => [row.id, row.status, row.attempt_count])),
+        triggerVersion,
         !coldReadbackSeen.has(coldKey),
       );
       coldReadbackSeen.add(coldKey);

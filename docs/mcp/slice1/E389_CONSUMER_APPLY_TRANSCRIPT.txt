@@ -1,0 +1,160 @@
+      - heading "您说：确认保存刚刚这份正式预览。只提交一次：原住宿 Item 3616da44-0d35-4400-a739-01f1029565ea，版本1，原追踪编号1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf，预览摘要1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1…" [level=3]
+      - paragraph: 确认保存刚刚这份正式预览。只提交一次：原住宿 Item 3616da44-0d35-4400-a739-01f1029565ea，版本1，原追踪编号1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf，预览摘要1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546。Notes 保留 Synthetic QA only. No Booking/Ticket.，仅追加一个换行和 Slice1 Fresh Claude Notes QA verified.，其他字段不变，不新建事项。使用同一编号、版本及正式预览确认提交一次；如果 UNKNOWN 或无正式回执，停止重提，只查询原操作，不换编号或再次保存。返回正式回执后读回同一 Item 对照。
+      - toolbar "消息操作":
+        - time: 1分钟前
+        - button "重试":
+          - generic: 
+        - button "编辑":
+          - generic: 
+        - button "复制":
+          - generic: 
+        - status
+      - status
+    - article "第 16 条消息，共 16 条":
+      - heading "Claude 已回复：保存只提交了一次，正式回执是 APPLIED，读回同一 Item 后确认 Notes 已按预期追加，其他字段没变。" [level=3]
+      - generic: 已使用 OTR DEV QA 集成
+      - button "已使用 OTR DEV QA 集成" [expanded]:
+        - generic: 
+      - status: 已使用 OTR DEV QA 集成
+      - generic: Checking how to apply the trip item update.
+      - generic "Update trip item":
+        - generic: Update trip item
+        - button "Update trip item" [expanded]:
+          - generic: 
+      - paragraph: Request
+      - code:
+        - generic: "{"
+        - generic: "\"change\": {"
+        - generic: "\"kind\": \"TEXT\","
+        - generic: "\"notes\": \"Synthetic QA only. No Booking/Ticket.\\nSlice1 Fresh Claude Notes QA verified.\""
+        - generic: "},"
+        - generic: "\"expected_revision\": 1,"
+        - generic: "\"item_id\": \"3616da44-0d35-4400-a739-01f1029565ea\","
+        - generic: "\"mode\": \"APPLY\","
+        - generic: "\"preview_digest\": \"1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546\","
+        - generic: "\"request_id\": \"1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf\","
+        - generic: "\"trip_id\": \"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\""
+        - generic: "}"
+      - paragraph: Response
+      - code:
+        - generic: "{\"version\":\"otr.mcp.mutation/1\",\"trip_id\":\"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\",\"item_id\":\"3616da44-0d35-4400-a739-01f1029565ea\",\"operation_id\":\"1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf\",\"current_revision\":2,\"preview_digest\":\"1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546\",\"summary\":\"Update 3616da44-0d35-4400-a739-01f1029565ea at revision 1: {\\\"kind\\\":\\\"TEXT\\\",\\\"notes\\\":\\\"Synthetic QA only. No Booking/Ticket.\\\\nSlice1 Fresh Claude Notes QA verified.\\\"}\",\"query\":{\"trip_id\":\"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\",\"operation_id\":\"1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf\",\"target\":\"ITEM\"},\"outcome\":\"APPLIED\"}"
+      - generic: Now read back the same item.
+      - generic "Get trip item":
+        - generic: Get trip item
+        - button "Get trip item" [expanded] [active]:
+          - generic: 
+      - paragraph: Request
+      - code:
+        - generic: "{"
+        - generic: "\"item_id\": \"3616da44-0d35-4400-a739-01f1029565ea\","
+        - generic: "\"trip_id\": \"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\""
+        - generic: "}"
+      - paragraph: Response
+      - code:
+        - generic: "{\"version\":\"otr.mcp.read/1\",\"state\":\"SERVER_CONFIRMED\",\"item\":{\"itemId\":\"3616da44-0d35-4400-a739-01f1029565ea\",\"tripId\":\"cc44a705-6f43-41e0-a2f9-16f334b2a6b2\",\"itemRevision\":2,\"title\":\"Synthetic Nelson QA lodge (unbooked)\",\"description\":\"Synthetic QA only. No Booking/Ticket.\\nSlice1 Fresh Claude Notes QA verified.\",\"status\":\"planned\",\"hidden\":false,\"visibility\":\"PRIVATE\",\"localState\":\"ACCEPTED\",\"participation\":{\"mode\":\"SELF\",\"personIds\":[],\"selfPersonId\":\"0fba6f2e-d0bd-4e65-8e41-decebe8c3154\",\"rosterHash\":\"92bb566cab42ce5b9fdf69478dc1193835d9c293956a2ac334e2bc965c2a08b5\"},\"schedule\":{\"shape\":\"STAY\",\"start\":{\"comparable\":false,\"localDate\":\"2026-12-10\",\"quality\":\"UNKNOWN\",\"basis\":\"DERIVED_CIVIL\",\"civilResolution\":\"PENDING\"},\"end\":{\"comparable\":false,\"localDate\":\"2026-12-13\",\"quality\":\"UNKNOWN\",\"basis\":\"DERIVED_CIVIL\",\"civilResolution\":\"PENDING\"}},\"bookingSummaries\":[],\"documentSummaries\":[],\"entitlementSummaries\":[],\"instructionShortcuts\":[],\"expenseLinkIds\":[],\"capabilities\":{\"canEdit\":false,\"canManageParticipation\":false,\"canManageVisibility\":false,\"canCancel\":false,\"canHide\":false,\"canRestore\":false,\"canLinkBooking\":false,\"canLinkEntitlement\":false,\"canAttachDocument\":false},\"family\":\"P3\",\"details\":{\"propertyName\":\"Synthetic QA Lodge\",\"nights\":3,\"rooms\":[]}}}"
+      - paragraph:
+        - text: 保存只提交了一次，正式回执是
+        - code: APPLIED
+        - text: ，读回同一 Item 后确认 Notes 已按预期追加，其他字段没变。
+      - paragraph:
+        - strong: 正式回执
+      - list:
+        - code: outcome
+        - text: ：
+        - code: APPLIED
+        - code: operation_id
+        - text: ：
+        - code: 1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf
+        - text: （原编号，未新建）
+        - text: Item：
+        - code: 3616da44-0d35-4400-a739-01f1029565ea
+        - text: ，提交时基于版本 1，回执里的
+        - code: current_revision
+        - text: 是 2
+        - code: preview_digest
+        - text: ：
+        - code: 1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546
+        - text: ，与你确认的预览一致
+        - listitem: 回执摘要：TEXT 类型的 notes 修改，内容与预览一致
+      - paragraph: 没有出现 UNKNOWN 或无回执的情况，所以没有重提，也没有额外查询原操作状态。
+      - paragraph:
+        - strong:
+          - text: 读回对照（
+          - code: get_trip_item
+          - text: ，
+          - code: SERVER_CONFIRMED
+          - text: ）
+      - table:
+        - rowgroup:
+          - row "项目 保存前（版本 1） 保存后（版本 2）":
+            - columnheader "项目"
+            - columnheader "保存前（版本 1）"
+            - columnheader "保存后（版本 2）"
+        - rowgroup:
+          - row "Notes Synthetic QA only. No Booking/Ticket. Synthetic QA only. No Booking/Ticket. 换行后接 Slice1 Fresh Claude Notes QA verified.":
+            - cell "Notes"
+            - cell "Synthetic QA only. No Booking/Ticket.":
+              - code: Synthetic QA only. No Booking/Ticket.
+            - cell "Synthetic QA only. No Booking/Ticket. 换行后接 Slice1 Fresh Claude Notes QA verified.":
+              - code: Synthetic QA only. No Booking/Ticket.
+              - text: 换行后接
+              - code: Slice1 Fresh Claude Notes QA verified.
+          - row "版本号 1 2":
+            - cell "版本号"
+            - cell "1"
+            - cell "2"
+          - row "标题 Synthetic Nelson QA lodge (unbooked) 相同":
+            - cell "标题"
+            - cell "Synthetic Nelson QA lodge (unbooked)"
+            - cell "相同"
+          - row "日期 2026-12-10 至 2026-12-13 相同":
+            - cell "日期"
+            - cell "2026-12-10 至 2026-12-13"
+            - cell "相同"
+          - row "状态 / 可见性 planned / PRIVATE 相同":
+            - cell "状态 / 可见性"
+            - cell "planned / PRIVATE"
+            - cell "相同"
+          - row "参与者 SELF，rosterHash 92bb…a08b5 相同":
+            - cell "参与者"
+            - cell "SELF，rosterHash 92bb…a08b5":
+              - text: SELF，
+              - code: rosterHash
+              - code: 92bb…a08b5
+            - cell "相同"
+          - row "住宿详情 Synthetic QA Lodge，3 晚，无房间 相同":
+            - cell "住宿详情"
+            - cell "Synthetic QA Lodge，3 晚，无房间":
+              - code: Synthetic QA Lodge
+              - text: ，3 晚，无房间
+            - cell "相同"
+      - paragraph: 读回的 Notes 原文保留完整，只在末尾多了一个换行和你指定的那句。标题、日期、地点、参与者等其他字段都没变，也没有新建事项。
+      - paragraph:
+        - text: 补充说明：读回里
+        - code: capabilities.canEdit
+        - text: 仍显示 false，但这次保存实际成功了，所以这个字段并不能代表是否能保存。我没有触碰此前结果不明的其他历史操作。
+      - group "建议操作":
+        - button "创建电子表格":
+          - generic: 
+          - text: 创建电子表格
+      - toolbar "消息操作":
+        - button "复制":
+          - generic: 
+        - status
+        - button "朗读":
+          - generic: 
+        - button "回复很好":
+          - generic: 
+        - button "回复不佳":
+          - generic: 
+        - button "重试":
+          - generic: 
+        - time: 现在
+  - status
+  - button "滚动到底部":
+    - generic: 
+  - status
+  - status
+  - status
+  - status
+  - generic: 输入消息…

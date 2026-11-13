@@ -1,0 +1,21 @@
+{
+  "status": "NO_BLOCKER_PRE_GATE_BINDING_TEMPLATE_SCOPE",
+  "entries": {
+    "prepare-empty-round.py": "83639ebb0b80b675524902f433d1e3332e2d9809826bc6cb7f7bfc319cac0d07",
+    "confirm-once.py": "82acf371feafa882666c83e5be67cd35d4e5b3fb43956e5ce025a6e3ddaaeadc",
+    "launch-own-control.py": "0cfe538dbfa001b960a41c98501775bbc9690666000540bc3264c99c296e11fc",
+    "preflight-actual-owner-wire.py": "836766ee1d02a4d81dd2a8c92a6708c3fdc23d06fb22dfe7cd0158ef9eac1ada",
+    "prepare-fixed-window.py": "4c481f3a624861a429459b7272de7119867e3dc06c557e50154bc9264730011c",
+    "activate-issuer.py": "c6f274e6498fa979f42560aee6820a824b672b6c3de41f5c2d6f28e902250fc7"
+  },
+  "profile": "ChatGPT",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "windowId": "8f485ea2a6b34606a82861569aa2126f",
+  "independentWrapperTests": 9,
+  "independentSourceChecks": 11,
+  "externalCalls": 0,
+  "sessionOrClockOrAuthorityActivated": false,
+  "scope": "profile/client/callback/op/CAS/digest/source/current default/close pins and actual prepare AST; no full guard or Auth/Core re-audit",
+  "testSideEffect": "unittest discovery imported test_source_binding and rewrote existing synthetic SOURCE_BINDING_TEST_RESULT.json; no execution intent or activation artifact. Zero local writes is NOT claimed.",
+  "finalGateBinding": "Must be mechanically rebound after frozen scope SHA and verified before asking Owner; actual human wire preflight required before clock"
+}

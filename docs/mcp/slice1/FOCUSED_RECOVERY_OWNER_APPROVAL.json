@@ -1,0 +1,18 @@
+{
+  "status": "OWNER_APPROVED_ACCESS_NOT_NOTES_PREPARING_NO_CLOCK",
+  "gateSHA256": "f93df0f8f6c37b74ca66930db9053b7ed8b0e7d5c3badbbaa10861a23b5f1d79",
+  "gateCommit": "b28598c4",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "questionCallId": "call_2740890e09bf43e59d26f24d9c25477f",
+  "ownerReply": "批准本轮有限 QA 连接并同步",
+  "recordedAt": "2026-11-01T22:29:43.609413+00:00",
+  "notesApproved": false,
+  "confirmations": [],
+  "clockStarted": false,
+  "otpSent": false,
+  "applyAttempts": 0,
+  "sourceHumanMessageIdVerifiedByRoot": "01a1993b-35b1-7902-830d-e222d780fc13",
+  "actualUiReady": true,
+  "nonsecretMemoryBridgeProbe": "PASS"
+}

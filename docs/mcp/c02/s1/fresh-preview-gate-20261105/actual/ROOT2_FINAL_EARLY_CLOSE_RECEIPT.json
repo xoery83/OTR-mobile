@@ -1,0 +1,156 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "actualChildId": "/root/mcp_fresh_p3_qualification_20261105",
+  "recordedAt": "2026-11-04T21:09:03.389799+00:00",
+  "status": "C843_CLOSED_WITHOUT_ACTIVATION_PREVIEW_NOT_RUN",
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "packageSHA256": "99cd0ab34c901b7b7dd775a00a712490172f21176e4cad316e91a272470360f2",
+  "originalT": "2026-11-04T21:03:42.327Z",
+  "normalCloseAt": "2026-11-04T21:31:42.327Z",
+  "hardExpiresAt": "2026-11-04T21:33:42.327Z",
+  "TReset": false,
+  "activation": {
+    "containerCAS": false,
+    "finiteIssuerInstalled": false,
+    "OAuthEnabled": false,
+    "ConsoleSettingWrite": false,
+    "consumerTaskSubmitted": false,
+    "Preview": false,
+    "SaveApplyEdit": false,
+    "businessWrites": 0
+  },
+  "actualSafeBoundary": "One real normal-control QA session reached READY and binder T; actual dual timers armed. Exact close watcher Popen identity assertion then failed, so no LIVE receipt/CAS/Issuer/Console activation. Initiated failure close, no watcher/control/business retry.",
+  "failure": {
+    "observedAt": "2026-11-04T21:08:33.517325+00:00",
+    "matchingLiveWaiterOrIssuerWatch": [],
+    "qaLockAbsent": true,
+    "failedStartCompoundAssertion": "identity.ppid==launcherPid AND identity.argv==spawnArgv AND identity.state[0] not Z/X",
+    "actualOperandsAtFailure": "NOT_CAPTURED_BY_V3_LAUNCHER; do not infer which operand failed or reconstruct missing ps values",
+    "actualFailure": "AssertionError at start_issuer_watch.py line25 after Popen; no LIVE marker, no runtime activation; no restart attempted"
+  },
+  "closeEvidence": {
+    "issuer": {
+      "status": "ISSUER_DENY_ALL_INDEPENDENT_READBACK_VERIFIED_NEVER_ACTIVATED",
+      "windowId": "c843ff1cd8b7471db1ee77aef1bdad1e",
+      "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+      "observedAt": "2026-11-04T21:05:56.869013+00:00",
+      "issuerClosed": true,
+      "issuerActivated": false,
+      "sqlWritePerformed": false,
+      "watcherStartFailed": true,
+      "watcherCloseHTTPOrSQLAck": "NOT_CLAIMED",
+      "proofPath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-fresh-c843-execution-20261105/ISSUER_GRANT_READBACK.json",
+      "proofSHA256": "7df691beb728351163726116484870217be7b33d5a4af499984436dabb192074"
+    },
+    "selectedClientIndependentDBReadback": {
+      "authorizationRLSActive": false,
+      "consentRLSActive": false,
+      "observedAt": "2026-11-04T21:07:01.771514+00:00",
+      "selectedActiveConsentCount": 0,
+      "selectedAuthorizationTotal": 0,
+      "selectedConsentTotal": 1,
+      "selectedUnexpiredAuthorizationCount": 0
+    },
+    "Console": {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/C843_CONSOLE_POST_CLOSE_RESTORED.json",
+      "sha256": "5f0a9a43949d218d4d23484bf0b33366cb5f1ce5052c7ee1d81cd2e1b9036461",
+      "scope": "Actual post-close OFF/HookDISABLED/localhost/SaveDisabled; DCR unchanged565c qualification, not raw freshAPI"
+    },
+    "ownSession": {
+      "path": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/fresh-preview-gate-20261105/actual/OWN_SESSION_FINAL.json",
+      "sha256": "0febf2bd256e33e30feaae1d27861829450933d949977e23d10d88e0c76b640d",
+      "ownCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+      "grantHTTP": "UNCONFIRMED_NO_HTTP_ACK_NO_RETRY; independent effective DB0 is separate evidence"
+    },
+    "timerDisarm": {
+      "status": "C02_OWN_TIMERS_DISARMED_AFTER_DEFAULT_CLOSED",
+      "units": [
+        "otr-mcp-c02-c843ff1cd8b7471db1ee77aef1bdad1e-normal.timer",
+        "otr-mcp-c02-c843ff1cd8b7471db1ee77aef1bdad1e-normal.service",
+        "otr-mcp-c02-c843ff1cd8b7471db1ee77aef1bdad1e-hard.timer",
+        "otr-mcp-c02-c843ff1cd8b7471db1ee77aef1bdad1e-hard.service"
+      ],
+      "stagedCASPlanArchivedNotDeleted": true,
+      "remoteAccessBindingInvalidated": true,
+      "containerChanged": false
+    },
+    "finalHost": {
+      "observedAt": "2026-11-04T21:08:08.336116+00:00",
+      "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+      "health": "healthy",
+      "activeProtectedTimers": [],
+      "executableCASPathAbsent": true,
+      "archivedCASPresent": true,
+      "remoteClosedBindingValidJSON": true,
+      "qaSelectorNames": [],
+      "mutations": 0
+    },
+    "finalHostFingerprintsBeforeDisarm": {
+      "observedAt": "2026-11-04T21:05:57.199294+00:00",
+      "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+      "health": "healthy",
+      "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+      "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa",
+      "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+      "mountsMatch": true,
+      "fileCount": 23,
+      "fileMismatches": [],
+      "bundles": {
+        "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb",
+        "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+        "mcp/c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+        "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+      },
+      "activeProtectedTimers": [
+        "otr-mcp-c02-c843ff1cd8b7471db1ee77aef1bdad1e-hard.timer",
+        "otr-mcp-c02-c843ff1cd8b7471db1ee77aef1bdad1e-normal.timer"
+      ],
+      "sharedLockAvailableAtSnapshot": true,
+      "finiteQaSelectorNames": [],
+      "importFlags": {
+        "OTR_DEV_UNIVERSAL_PDF_RUNTIME": "disabled",
+        "OTR_DEV_UNIVERSAL_PNG_RUNTIME": "disabled"
+      },
+      "http": [
+        {
+          "path": "/health",
+          "status": 200,
+          "expected": 200
+        },
+        {
+          "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+          "status": 401,
+          "expected": 401
+        }
+      ],
+      "mutations": 0
+    },
+    "finalLocal": {
+      "observedAt": "2026-11-04T21:08:33.517325+00:00",
+      "matchingLiveWaiterOrIssuerWatch": [],
+      "qaLockAbsent": true,
+      "failedStartCompoundAssertion": "identity.ppid==launcherPid AND identity.argv==spawnArgv AND identity.state[0] not Z/X",
+      "actualOperandsAtFailure": "NOT_CAPTURED_BY_V3_LAUNCHER; do not infer which operand failed or reconstruct missing ps values",
+      "actualFailure": "AssertionError at start_issuer_watch.py line25 after Popen; no LIVE marker, no runtime activation; no restart attempted"
+    }
+  },
+  "fixedEvidencePins": {
+    "BOUND_CAS_PREPARATION.json": "46b5b217ed417b38ca4d9dade33cc1c0423d2410e8b5508e119f62b071dc5f64",
+    "TIMER_ARM_RECEIPT.json": "2163e105b19eb6d61dcfcd30ee506ccaf547e43622dd582601a1f0c9f64f16d3",
+    "ISSUER_WATCHER_RESULT.json": "e87b529f7f58310e277351d89a7a64fcbb92f40885b8cd89fefc5f7e5109c694",
+    "SELECTED_GRANT_CLOSURE_READBACK.json": "8ac1cf87d88d6f5f339dd39aea2ea4825ebe699906fc953659e83fa22b9cf192",
+    "TIMERS_DISARMED_RECEIPT.json": "bef49303f9ff54a6f93313318d3d2872032c87112707c181a6785f965b53dcfb",
+    "FINAL_RELEASE_READBACK.json": "1fb7fb8131f9aa785a634c1541cdd7b8b1c6b9c53a4fef0ab7ad620d2bfe39ec",
+    "FINAL_LOCAL_RESOURCE_READBACK.json": "fd24035caba18ee0aebcff2001be67de3408d9c9888cbaafd162978277ff70fc"
+  },
+  "reusability": "This window/control/normalbinding/config/plan is consumed closed, never restart/reset/extend. Remote CAS archived and access binding invalidated; local bound directory and CLOSE retained as terminal evidence.",
+  "frozenUnknowns": "No query/replay/clone/replacement ID; original unknowns unchanged.",
+  "software": "Actual default6ff9/c826/cffee/configdb384 remains healthy, no new image/software deployed; never deploy PG_PENDING Import recovery c420 from latestmain.",
+  "PreviewGoalComplete": false,
+  "remaining": "Exact local watcher identity failure lacks recorded operand values; diagnose only in a separate lawful local repair scope with independent review, then any future actual Preview needs a newly qualified exact window/current/default/Owner path, not c843 reuse.",
+  "resources": [],
+  "git": "Public additions uncommitted; no Git index slot held."
+}

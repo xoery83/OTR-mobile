@@ -1,0 +1,28 @@
+{
+  "status": "BLOCKED_XCTEST_INITIALIZATION_BEFORE_AX",
+  "device": "00008103-00113914020B401E",
+  "bundle": "com.xoery.otrmobile.ipadqa",
+  "nativeSession": "native-consumer-observer-20261101",
+  "normalOpenSucceeded": true,
+  "bothCancelled": true,
+  "currentQaIdentity": "NOT_VERIFIED",
+  "tripVisibility": "NOT_VERIFIED",
+  "automaticDownstream": "NOT_VERIFIED",
+  "coldRestore": "NOT_VERIFIED",
+  "loginOrSessionChange": false,
+  "coreOrSqliteWrite": false,
+  "newSimulator": false,
+  "hostOrHubMutation": false,
+  "claimRelease": "Own observer session closed; no global claim/process absence assumed",
+  "source": "Native unique Writer direct coordination acknowledgement",
+  "readRequestTimeoutSeconds": [
+    15,
+    30
+  ],
+  "runnerState": "Installed, testmanagerd authorized and loaded; stalled enabling automation mode before proxy testCommand/listener or AX",
+  "screenObserved": false,
+  "touchIdCause": "NOT_ESTABLISHED",
+  "ownSessionClosed": true,
+  "closeEvidence": "Native close tool success/Closed; Device Automation own close event 09:07:56 ok7ms",
+  "globalClaimOrProcessAbsenceIndependentlyVerified": false
+}

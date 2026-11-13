@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
 import { AddTravelerSheet } from "./AddTravelerSheet";
+import {
+  bindTripPersonEditorDraft,
+  createTripPersonEditorDraft,
+} from "@/data/repositories/tripPersonEditorDraft";
 
 const state = vi.hoisted(() => ({
   values: [] as unknown[],
@@ -20,6 +24,7 @@ const state = vi.hoisted(() => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useRef: (value: unknown) => (state.refs[state.refCursor++] ??= { current: value }),
+  useLayoutEffect: (effect: () => void) => effect(),
   useEffect: (effect: () => void | (() => void)) => {
     if (!state.mounted) state.effects.push(effect);
   },
@@ -228,4 +233,221 @@ it("closing an unsubmitted form creates no Person or durable intent", () => {
   expect(props.onClose).toHaveBeenCalledOnce();
   expect(props.onSave).not.toHaveBeenCalled();
   expect(state.uuid).not.toHaveBeenCalled();
+});
+
+function persistedDraft() {
+  const context = {
+    accountId: randomUUID(),
+    tripId: randomUUID(),
+    generation: state.generation,
+  };
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: vi.fn(async (key: string) => values.get(key) ?? null),
+    setItem: vi.fn(async (key: string, value: string) => {
+      values.set(key, value);
+    }),
+    deleteItem: vi.fn(async (key: string) => {
+      values.delete(key);
+    }),
+  };
+  const reopen = () =>
+    bindTripPersonEditorDraft(
+      createTripPersonEditorDraft(storage, async () => context.accountId),
+      context,
+    );
+  return { context, values, storage, reopen };
+}
+
+it("restores an unsubmitted private draft and explicit Cancel discards only that draft", async () => {
+  const f = persistedDraft();
+  props.draft = f.reopen();
+  input();
+  await vi.waitFor(() => expect(input().editable).toBe(true));
+  input().onChangeText("本地同行人 e\u0301");
+  await vi.waitFor(() => expect(f.values.size).toBe(1));
+  unmount();
+  props = { ...props, draft: f.reopen(), onClose: vi.fn() };
+  input();
+  await vi.waitFor(() => expect(input().value).toBe("本地同行人 e\u0301"));
+  header().onLeft();
+  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
+  expect(f.values.size).toBe(0);
+  expect(props.onSave).not.toHaveBeenCalled();
+  expect(state.uuid).not.toHaveBeenCalled();
+});
+
+it("reopens an UNKNOWN attempt with the original Person/name/operation and no new UUIDs", async () => {
+  const f = persistedDraft();
+  props.draft = f.reopen();
+  vi.mocked(props.onSave).mockRejectedValueOnce(Error("LOCAL_QUEUE_REPLY_UNKNOWN"));
+  input();
+  await vi.waitFor(() => expect(input().editable).toBe(true));
+  input().onChangeText("Original traveler");
+  header().onRight();
+  await vi.waitFor(() => expect(header().rightLabel).toBe("people.retrySave"));
+  const original = vi.mocked(props.onSave).mock.calls[0][0];
+  header().onLeft();
+  expect(f.values.size).toBe(1);
+  unmount();
+  props = {
+    ...props,
+    draft: f.reopen(),
+    onClose: vi.fn(),
+    onSave: vi.fn(async () => {}),
+  };
+  input();
+  await vi.waitFor(() => expect(header().rightLabel).toBe("people.retrySave"));
+  expect(input().value).toBe(original.displayName);
+  expect(input().editable).toBe(false);
+  header().onRight();
+  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
+  expect(props.onSave).toHaveBeenCalledExactlyOnceWith(original);
+  expect(state.uuid).toHaveBeenCalledTimes(2);
+  expect(f.values.size).toBe(0);
+});
+
+it("does not enqueue a Person when private draft preparation fails", async () => {
+  const f = persistedDraft();
+  props.draft = f.reopen();
+  input();
+  await vi.waitFor(() => expect(input().editable).toBe(true));
+  input().onChangeText("Kept input");
+  await vi.waitFor(() => expect(f.values.size).toBe(1));
+  f.storage.setItem.mockRejectedValueOnce(Error("DRAFT_WRITE_UNKNOWN"));
+  header().onRight();
+  await vi.waitFor(() => expect(header().rightLabel).toBe("people.retrySave"));
+  expect(input().value).toBe("Kept input");
+  expect(props.onSave).not.toHaveBeenCalled();
+  expect(state.uuid).not.toHaveBeenCalled();
+});
+
+it("does not expose a foreign persisted draft or call the Person save", async () => {
+  const f = persistedDraft();
+  const port = f.reopen();
+  props.draft = {
+    ...port,
+    read: async () => ({
+      version: 1,
+      accountId: randomUUID(),
+      tripId: f.context.tripId,
+      displayName: "foreign private name",
+      attempt: null,
+    }),
+  };
+  input();
+  await vi.waitFor(() =>
+    expect(render().some((v) => v.props.children === "people.draftLoadFailed")).toBe(
+      true,
+    ),
+  );
+  expect(input().value).toBe("");
+  expect(input().editable).toBe(false);
+  expect(props.onSave).not.toHaveBeenCalled();
+});
+
+it("can close a pending private read and ignores its late response", async () => {
+  const f = persistedDraft();
+  let release!: (value: any) => void;
+  const pending = new Promise<any>((resolve) => {
+    release = resolve;
+  });
+  props.draft = { ...f.reopen(), read: () => pending };
+  input();
+  header().onLeft();
+  expect(props.onClose).toHaveBeenCalledOnce();
+  release({
+    version: 1,
+    accountId: f.context.accountId,
+    tripId: f.context.tripId,
+    displayName: "Late private name",
+    attempt: null,
+  });
+  await Promise.resolve();
+  expect(input().value).toBe("");
+  expect(props.onSave).not.toHaveBeenCalled();
+});
+
+it("recovers and cancels a draft-only editor without calling create or allocating IDs", async () => {
+  const f = persistedDraft();
+  props = { ...props, submissionEnabled: false, draft: f.reopen() };
+  input();
+  await vi.waitFor(() => expect(input().editable).toBe(true));
+  input().onChangeText("仅私有草稿 e\u0301");
+  await vi.waitFor(() => expect(f.values.size).toBe(1));
+  expect(header().rightDisabled).toBe(true);
+  header().onRight();
+  expect(props.onSave).not.toHaveBeenCalled();
+  expect(state.uuid).not.toHaveBeenCalled();
+  unmount();
+  props = { ...props, draft: f.reopen(), onClose: vi.fn() };
+  input();
+  await vi.waitFor(() => expect(input().value).toBe("仅私有草稿 e\u0301"));
+  header().onLeft();
+  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
+  expect(f.values.size).toBe(0);
+});
+it("fences an old enabled submit handler after the caller disables submission", () => {
+  input().onChangeText("Local name");
+  const old = header().onRight;
+  props = { ...props, submissionEnabled: false };
+  render();
+  old();
+  expect(props.onSave).not.toHaveBeenCalled();
+  expect(state.uuid).not.toHaveBeenCalled();
+});
+it("does not silently fall back to an unpersisted draft-only form without a draft port", () => {
+  props.submissionEnabled = false;
+  expect(input().editable).toBe(false);
+  expect(header().rightDisabled).toBe(true);
+});
+
+it("does not allocate or freeze an attempt when submission closes during draft preparation", async () => {
+  const f = persistedDraft();
+  const port = f.reopen();
+  let finish!: () => void;
+  let started!: () => void;
+  const prepared = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  let pause = false;
+  const retain = vi.fn(port.retainAttempt);
+  props.draft = {
+    ...port,
+    retainAttempt: retain,
+    saveName: async (name) => {
+      const result = await port.saveName(name);
+      if (pause) {
+        started();
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      }
+      return result;
+    },
+  };
+  input();
+  await vi.waitFor(() => expect(input().editable).toBe(true));
+  input().onChangeText("Prepared name");
+  await vi.waitFor(() => expect(f.values.size).toBe(1));
+  pause = true;
+  header().onRight();
+  await prepared;
+  props = { ...props, submissionEnabled: false };
+  render();
+  finish();
+  await vi.waitFor(() => expect(input().editable).toBe(true));
+  expect(state.uuid).not.toHaveBeenCalled();
+  expect(retain).not.toHaveBeenCalled();
+  expect(props.onSave).not.toHaveBeenCalled();
+  header().onLeft();
+  await vi.waitFor(() => expect(f.values.size).toBe(0));
+});
+it("disables a no-port editor and retained input callback when draft-only mode is selected", () => {
+  input().onChangeText("Original");
+  const old = input().onChangeText;
+  props = { ...props, submissionEnabled: false };
+  expect(input().editable).toBe(false);
+  old("Unpersisted new name");
+  expect(input().value).toBe("Original");
 });

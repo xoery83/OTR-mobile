@@ -1,0 +1,23 @@
+{
+  "status": "PRE_READY_UI_INPUT_NEWLINE_SENT_PREFIX_ONLY",
+  "occurredBeforeAuthenticated751Connection": true,
+  "consumerConversation": "https://chatgpt.com/c/6ae83483-f618-83ec-ac20-c42fb4cb8470",
+  "inputCause": "typeText translated first newline to Enter; only initial read/preview request prefix sent, remainder stayed in composer",
+  "actualDisplayedError": "Script error: The tool failed internally.",
+  "consumerReportedStages": {
+    "guide": "FAILED",
+    "operationStatus": "NOT_QUERIED",
+    "trip": "NOT_READ",
+    "item": "NOT_READ",
+    "editBase": "NOT_READ",
+    "preview": "NOT_RUN",
+    "apply": "NOT_RUN"
+  },
+  "correction": "Response completed; own residual draft cleared and empty verified; multiline input will use fill/paste only after READY.",
+  "rootWindowFileAbsentConfirmedAt": "2026-11-02T08:56:16.873581+00:00",
+  "privateEvidence": "/private/tmp/otr-mcp-chatgpt-751-ui-20261102/before-ready-guide-failure-dom.txt",
+  "evidenceSHA256": "9f58a4a72fa85b570361f1c332d138102f665309788b36f3a360b49737e9bb97",
+  "doesNotEstablishFreshReadOrPreview": true,
+  "newOperationIdCreated": false,
+  "consumerApplyCount": 0
+}

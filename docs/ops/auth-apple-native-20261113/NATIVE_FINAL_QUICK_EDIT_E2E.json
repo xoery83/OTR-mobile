@@ -1,0 +1,44 @@
+{
+  "status": "NATIVE_QUICK_EDIT_OPEN_CANCEL_PASS",
+  "clientSource": "efb38d83",
+  "dataWriteEvidenceSource": "864e4453",
+  "bundleId": "art.xoery.otr",
+  "teamId": "3K49Z2Q5X7",
+  "sqliteVersion": 76,
+  "normalSyncPackagedTrue": true,
+  "sameAccount": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "sameTrip": "faa0ea2b-9729-49b6-8ab7-db924df05e4d",
+  "observed": {
+    "topEditEnabledAfterFormalBackgroundQualification": true,
+    "obsoleteReadonlyNoticeAbsent": true,
+    "topEditOpenedExistingMetadataForm": true,
+    "unmodifiedFormSaveDisabled": true,
+    "cancelReturnedToSameTrip": true,
+    "noRepeatedBusinessSave": true,
+    "originalP1Visible": true,
+    "namedPeopleCount": 1
+  },
+  "runner": {
+    "stoppedGracefully": true,
+    "claimsReleased": 1,
+    "orphanClaims": 0,
+    "appDataReset": false
+  },
+  "tests": {
+    "localUiFiles": 3,
+    "passed": 105,
+    "independentChangedCases": 3,
+    "uiGuard": true,
+    "scopedLint": true,
+    "typecheck": "Three known pre-existing unrelated errors; no changed-file errors"
+  },
+  "invitation": "NOT_RUN: production Native interface is synthetic preview; standard Hosted member-claim composition remains closed. Request AUTH-C04-NORMAL-INVITE-PORT-20261114-01 sent to Core Owner.",
+  "mainMergePush": false,
+  "artifactHashes": {
+    "otr-apple-quick-edit-packaged-guard.json": "0bd91bbb322888711c87cc1518e6f677dbe771957af67baacd8ab6ba9aad425d",
+    "otr-apple-quick-edit-qualified.json": "162bc8a2f79cc2c67a59123602b696f6e50877440c1fdc96e263dc2a7db23a1e",
+    "otr-apple-quick-edit-editor.json": "5872ad1fbd8c986f28dd1266ef43af1a17bde9d45dd6523e1d895295497c4c3f",
+    "otr-apple-quick-edit-cancel.json": "3b49992e3ed4c074f6a015e3a0abaa76fbc3275103383fa6f9f812f747e1c935",
+    "otr-apple-final-runner-release.json": "580fc477e4b38be38f47ee9ed42bb5710b7f3a232e1c985ea6def1f7956511be"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "event_id": "mcp-c02-s1-software-deploy-20261103-owner-approved-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "owner_slice_id": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "HANDOFF",
+  "reported_event_type": "HANDOFF",
+  "created_at": "2026-11-02T22:02:49.383568+00:00",
+  "current_status": "OWNER_APPROVED_SOFTWARE_ONLY_ROOT_EXECUTION_REQUESTED_NOT_EXECUTED",
+  "commit": "32335143",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/SOFTWARE_DEPLOY_OWNER_GATE.md",
+    "docs/mcp/c02/s1/SOFTWARE_DEPLOY_APPROVAL.json",
+    "docs/mcp/c02/s1/ROOT_QUALIFICATION.json"
+  ],
+  "completed": [
+    "Actual Owner approval for fixed software-only Gate fe7508f4 received and exact Root request submitted; source/current tuple compatibility ACKed."
+  ],
+  "unfinished": [
+    "Root fresh-CAS deployment/readback/unchanged-close receipt",
+    "Later finite QA access authority and Consumer Preview-specific save approvals"
+  ],
+  "blocked_by": [],
+  "dependency_party": "Root protected shared-resource Writer only; independent MCP local S3 continues",
+  "next_action": "Root verify original human approval and fixed preimage; execute default-closed deploy/close scope or report precise drift.",
+  "hosted_operations_by_mcp": 0,
+  "new_business_receipts": [],
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED",
+  "scope_note": "New authorization-stage event, not a duplicate of original S1 packet handoff; no Consumer/Hosted E2E PASS."
+}

@@ -1,0 +1,52 @@
+{
+  "status": "DIRECT_OWNER_APPROVED_PREPARATION_NO_WINDOW",
+  "authCandidate": "ef91e112",
+  "gateSHA256": "deac94b128a36d0617888f54cc24550f205b7574e9cde4147e1523ac208231fc",
+  "frozenFileCount": 35,
+  "allFrozenHashesMatch": true,
+  "configurationVersion": 3,
+  "onlyPotentialWrite": {
+    "operationId": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+    "previewDigest": "ec151a254b010eba45d83e5dc0e9416d7aa356bd5b0cbdd27824afea7069b4e7",
+    "rawCommandSHA256": "56498bb7794b7ca4ccb9895f20ed9af8d66d52acf75ce3dbd2daf2e13ad51b2c",
+    "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "expectedRevision": 1,
+    "maximumNewlyAuthorizedApplyAttempts": 1,
+    "ifOriginalAlreadyApplied": "Readback only, noPOST",
+    "otherwise": "Fresh unchanged revision1/fields and no owning receipt plus fresh Consent/Confirm and explicit new Owner permission; existing Core atomic receipt/idempotency/CAS remain authority"
+  },
+  "fixtureCommit": "c7db8c37",
+  "fixtureSha256": "2ed5ed11565e1ae8df81e38f807d307622a66845e398fa76071acd0364e23101",
+  "qualifiedImage": "sha256:d3a5ece7d56eed75b6656763e8006a584f8f518a4cf8f156c69d8ff9b7330152",
+  "runtimeSHA256": "b8075ca9cfb345f7fc0d976778f8f365347c44cf444cacc7faa5c26d76806820",
+  "ownerApproval": {
+    "answer": "批准此精确窗口及一次原 ID 恢复提交",
+    "sourceThread": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+    "turnId": "01a1950c-a544-7163-af40-c75ab2263385",
+    "userMessageId": "01a1950c-a5bc-76d3-95ee-58304df03354",
+    "questionCall": "call_7c9a852b93af4402825714a892023c1f",
+    "independentlyRead": true
+  },
+  "reconnect": false,
+  "otp": false,
+  "apply": false,
+  "ordinaryMainIntegration": "MAY_PROCEED_WITH_UNIQUE_WRITER_IN_PARALLEL",
+  "consumerPagePreparedAt": "2026-11-01T03:01:29.534Z",
+  "claudeExistingConnection": "EXPIRED_RECONNECT_NOT_CLICKED",
+  "receiving": "EXACT_QA_FILTER_PREPARED_NO_MESSAGE_OPENED",
+  "resendUsage": {
+    "observedAtUtc": "2026-11-01T03:01:06.137Z",
+    "dailyUsed": 6,
+    "dailyLimit": 100,
+    "monthlyUsed": 173,
+    "monthlyLimit": 3000,
+    "source": "Actual AX and independently inspected screenshot, not number-flow textContent",
+    "resetTimeShown": false,
+    "deliveryTested": false,
+    "screenshot": "ORIGINAL_BB_RESEND_USAGE.png"
+  },
+  "nativePrepared": "ACK_PENDING",
+  "rootSourceCloseAndFreshCas": "AWAIT_AUTH_READY",
+  "windowStarted": false
+}

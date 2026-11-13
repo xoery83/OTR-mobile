@@ -1,0 +1,38 @@
+{
+  "status": "NORMAL_INVITE_INTEGRATION_PENDING",
+  "requestId": "AUTH-C04-NORMAL-INVITE-PORT-20261114-01",
+  "businessDri": "Auth",
+  "coreOwnerFinding": "Existing formal online execute/recover Port is reusable; ordinary product composition and recipient selection are not ready.",
+  "currentClient": "efb38d83",
+  "currentBackend": "f650ce2bec7f7e4cb790b48f360c65bcead15085",
+  "existingContracts": [
+    "src/data/api/memberClaimContracts.ts",
+    "src/data/repositories/memberClaimRepository.ts",
+    "backend/src/tripMemberClaimHttp.ts",
+    "backend/src/tripMemberClaimAuthority.ts",
+    "backend/src/tripMemberClaimPg.ts"
+  ],
+  "exactGaps": {
+    "runtime": "serverCapture omits memberClaim composition options; current route stays closed.",
+    "expiry": "Adapter requires inviteExpiresAt; approved AUTH-06 design leaves expiry default OPEN. Historical ten-minute QA expiry is not a product default.",
+    "recipient": "No existing Known Account Picker/query DTO was supplied; product users must not guess UUIDs. Identity source/query contract needs review."
+  },
+  "sourceOfTruth": [
+    "docs/auth/design-v1-20261018/02_INVITES.md",
+    "docs/people/design-v1-20261024/INTAKE_AND_GAPS.md"
+  ],
+  "constraints": [
+    "Reuse authenticateNormalAccount trusted server Actor; never trust caller Actor UUID",
+    "Preserve currentOrganizerAuthority; do not silently replace with Owner-only",
+    "No offline sensitive-operation queue or new identity system",
+    "UNKNOWN retains original command and operation; no blind retry",
+    "No new positive Authority, SQL or reuse of expired QA windows in this run"
+  ],
+  "nextPacket": [
+    "Approved recipient identity source and minimal DTO",
+    "Explicit applicable expiry/TTL strategy or separately approved finite QA scope",
+    "Fixed default-closed composition candidate and exact activation difference"
+  ],
+  "nativeInvitationEvidence": "NOT_RUN; SYNTHETIC preview is not Invite/Claim PASS",
+  "completedCurrentSlice": "People/Metadata original-Trip Native cloud and cold-recovery PASS; exact receipts in neighboring evidence files."
+}

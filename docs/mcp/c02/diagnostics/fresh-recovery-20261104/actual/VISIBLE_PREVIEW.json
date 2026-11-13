@@ -1,0 +1,15 @@
+{
+  "version": "otr.mcp.mutation/1",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "item_id": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+  "operation_id": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "current_revision": null,
+  "preview_digest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc",
+  "summary": "Create Manual Item (PRIVATE/SELF; no Booking/Ticket): {\"dates\":{\"end_date\":\"2026-12-12\",\"end_time\":\"09:45\",\"end_zone\":\"Pacific/Auckland\",\"start_date\":\"2026-12-10\",\"start_time\":\"17:20\",\"start_zone\":\"Pacific/Auckland\"},\"family\":\"P3\",\"notes\":\"Use the east entrance; call reception if arriving after 20:00.\",\"place\":\"Kowhai Bay QA Lodge\",\"place_address\":\"18 Example Quay, Aster Bay, New Zealand\",\"property_name\":\"Kowhai Bay QA Lodge\",\"rooms\":[{\"capacity\":4,\"category\":\"Family unit\",\"quantity\":1,\"room_id\":\"e7bd8424-f0e9-4f13-9154-b7b90a86c201\"},{\"capacity\":3,\"category\":\"Studio\",\"quantity\":1,\"room_id\":\"b41def7e-213d-4c4e-bd7f-e24b1fc19ec7\"}],\"stay\":{\"permitted_checkin_from\":\"14:00\",\"permitted_checkin_until\":\"20:00\",\"permitted_checkout_by\":\"10:30\"},\"title\":\"Kowhai Bay QA Lodge\"}",
+  "query": {
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "operation_id": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+    "target": "ITEM"
+  },
+  "outcome": "PREVIEW"
+}

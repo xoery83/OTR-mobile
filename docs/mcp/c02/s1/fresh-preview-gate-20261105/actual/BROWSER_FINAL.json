@@ -1,0 +1,13 @@
+{
+  "status": "UNUSED_FRESH_TAB_CLOSED",
+  "recordedAt": "2026-11-04T21:06:37.041703+00:00",
+  "browserId": "1",
+  "tabId": "1962067612",
+  "actualCUACloseSucceeded": true,
+  "taskSubmitted": false,
+  "OTPOrCredentialsReceived": false,
+  "browserLoginOrConsent": false,
+  "OTRToolRefresh": false,
+  "historicalUserQATabChanged": false,
+  "FreshUIReadyReceiptNowHistoricalOnly": true
+}

@@ -1,0 +1,21 @@
+{
+  "status": "DIRECT_CURRENT_CHAT_OWNER_AUTHORIZED_SAME_READONLY_MCP_REQUEST_PENDING_FRESH_PACKAGE",
+  "sourceThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "directUserText": "MCP请求的审批直接帮我批准掉，不需要弹窗问我了",
+  "recordedAt": "2026-11-04T04:30:44.196591+00:00",
+  "scope": "Next fresh bounded MCP original Account1f3/Tripcc44/Client8350 normal connection, original Scope Consent, GET original Operationa8c1/Itema9db and necessary unchanged Preview; exact EMPTY CAS, finite Issuer, Console activation and close/restore needed for that request.",
+  "command": null,
+  "confirmations": [],
+  "saveAuthorized": false,
+  "applyAuthorized": false,
+  "unknownReplayAuthorized": false,
+  "newScopeAuthorized": false,
+  "old623aMayRevive": false,
+  "maximumWindowMinutes": 30,
+  "maximumTokenSeconds": 60,
+  "dcrMustBeFalse": true,
+  "freshPackageGateAndPlanRequired": true,
+  "freshReadyAndCloseQualificationRequired": true,
+  "authorizationBeforeNormalControlOrClock": true,
+  "repeatOwnerPopupForSameScope": false
+}

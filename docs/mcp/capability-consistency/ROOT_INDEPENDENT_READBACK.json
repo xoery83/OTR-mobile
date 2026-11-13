@@ -1,0 +1,24 @@
+{
+  "status": "MCP_CANEDIT_SOFTWARE_DEFAULT_CLOSED_SERVER_VERIFIED",
+  "checkedAt": "2026-11-02T06:05:17.654974+00:00",
+  "containerId": "a58c00ca3082f01c0d506a159e7fedf1e9e73e743e4421dc6b617ace7f255931",
+  "configSHA256": "9bbafdee89b3f2a9dd5459fcc015aa9c720fe5d24225350822e62e3aaf981ba8",
+  "image": "sha256:4fcd7b590d955ce996323f78f6391b02cbd797806b40358a10175ac0626d0784",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "26421003533f9a84431e5844cff2ffbbb1620b2dcf83b972b664de111784a010",
+    "server-capture.mjs": "e29be6ac4ff4d0813a6b1244f2f8d7d934077b92d14dac9605ca28e316e8c6bc",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "all23FilesExact": true,
+  "hostExact": true,
+  "qaKeysAbsent": true,
+  "httpHealth200Protected401": true,
+  "retainedRollbackId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+  "retainedRollbackExact": true,
+  "deploymentLockReleased": true,
+  "authorityActivated": false,
+  "businessMutations": 0
+}

@@ -1,0 +1,128 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "scopeRevision": "FRESH_USER_PREVIEW_ONLY_NO_UNKNOWN_REPLAY",
+  "primary": "MCP-C02 / C02-S1_FRESH_PREVIEW",
+  "status": "OWNER_APPROVED_SOURCE_BINDING_PENDING_REVIEW",
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "windowHex": "c843ff1cd8b7471db1ee77aef1bdad1e",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "scopeSHA256": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+  "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6",
+  "templateCandidate": "82b89e1f",
+  "templatePackagePath": "docs/mcp/c02/s1/fresh-preview-20261104/PACKAGE.json",
+  "templatePackageSHA256": "0be7465ba2bd2881569fac83962420f86c3595e4d52c389486ab841d6a86f162",
+  "templateGate": "422e73564ed4d81c7070c9ef8d196d45e519f1bcfc72eb6b21afd319cdc7e41a",
+  "templateWindowId": "3586c569-3f51-4ce9-8699-5e98b3760c80",
+  "templateWindowHex": "3586c5693f514ce986995e98b3760c80",
+  "templateScopeSHA256": "1e18dc4a1438d1b25233ff4939d55f32179e32e4b9182f20c0ad6edd35c58bc9",
+  "generatedStaticDirectory": "dist/mcp-c02-fresh-c843ff1cd8b7471db1ee77aef1bdad1e-actual-owner-source-v1/static",
+  "hostSHA256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+  "softwareDeploymentNecessary": false,
+  "normalLoginPermittedBeforeActualRoot2Waiting": false,
+  "command": null,
+  "confirmations": [],
+  "clockStarted": false,
+  "authorityActivated": false,
+  "saveApproved": false,
+  "originalUnknownReplay": "FROZEN_NOT_REQUESTED",
+  "consumerInputs": {
+    "FRESH_CHAT_TASK.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/FRESH_CHAT_TASK.txt",
+      "sha256": "17db04bb474fdc99ed04031f5fdd8be958e1b5c5625779c6245e94e3dfbe9cce"
+    },
+    "MATERIAL_1.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_1.txt",
+      "sha256": "9e7850badbf63ed4b1219966eb0175704f0bda6166416fe54043440383d28f03"
+    },
+    "MATERIAL_2.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_2.txt",
+      "sha256": "363c991e08a5db1b1d5c63e94fdb87dcde545052c2f41855a934936691d543dc"
+    },
+    "INDEPENDENT_INTENT.json": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/INDEPENDENT_INTENT.json",
+      "sha256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6"
+    }
+  },
+  "staticFiles": {
+    "SCOPE.json": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "c02-normal-control.py": "36decec51eb1cdabbf157361d2869ebaaacafaf32393a133992185dfa42c0ade",
+    "c02-timers.py": "6cea00a6e93d9d1bccf72e89ff8e053f9745dc2e58edd3d084e39fbc68f5408d",
+    "c02-timers.test.py": "3abb721aab0d2eca98863f1b04cc994f2fd39cb0795015a237dd13c2d2437773",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "issuer-source/scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "issuer-source/scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "normal-control.mts": "b17689db84846e80d9555c827d660788178a399654735f51f3252deffdcc8c8f",
+    "operators/config_cas.py": "b42476be617c139b036dcd2bc2f26bfc81669cbcac61ca03b825db6caad8ed35",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "prepare-c02-access-window.py": "df6ee3f524d6c330121e6585e602205ad9304311c2e2aacf9d32edd77056d27c"
+  },
+  "startsAt": null,
+  "normalCloseAt": null,
+  "hardExpiresAt": null,
+  "sourceCandidate": "4d7d6b286e22449a3216f61278e953d1136de4f4",
+  "ownerSource": {
+    "path": "docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_SOURCE.json",
+    "sha256": "4ecea4f64d2b896fc3c5f8ad18f1ed04acfd1e5bb1a20e7ed8cb4835b17e75fd",
+    "status": "ACTUAL_HUMAN_APPROVAL_READBACK_VERIFIED_PENDING_PLATFORM_REVIEW"
+  },
+  "ownerSourceLiteralPins": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "messageId": "01a1a848-bf31-7f11-adc1-5470803d09ab",
+    "text": "<send_user_message_question_reply>\n[{\"questionItemId\":\"[\\\"request_user_input_async\\\",\\\"call_56ad0ab131ce4538bc0732a51fafbb83\\\",0]\",\"question\":\"\u662f\u5426\u6279\u51c6\u65b0\u7a97\u53e3 c843\uff0fGate e7b8bf27\u2026 \u7684\u6709\u9650 ChatGPT QA \u8fde\u63a5\u548c P3 Preview\uff08\u4e0d\u542b\u4fdd\u5b58\uff09\uff1f\\n\\n\u4fee\u590d\u5305 8eef37b7\u3001\u72ec\u7acb\u590d\u5ba1\u53ca Root2 \u6700\u7ec8\u5bf9\u8d26\u5747\u5df2\u5b8c\u6210\u3002\u4ec5\u539f\u5408\u6210 QA \u8d26\u53f7\u3001Trip cc44\u2026\u3001ChatGPT Client 835\u2026\uff1b\u6b63\u5e38 OTP \u548c\u539f Read/Write Scope Consent\uff0c\u8bfb\u53d6 Guide\u3001Trip\uff0f\u73b0\u6709\u4e8b\u9879\uff0c\u751f\u6210\u72ec\u7acb Rimu Cove QA Guesthouse \u7684\u5355\u6761\u4f4f\u5bbf Preview\u3002\\n\\n\u672c\u6b21\u660e\u786e\u5305\u542b\u7531 Root2 \u77ed\u9501\u6267\u884c\u5fc5\u8981\u7684\u540c\u955c\u50cf\u5171\u4eab DEV \u5bb9\u5668 EMPTY \u914d\u7f6e\u66ff\u6362\u3001\u65e2\u6709\u6709\u9650 Issuer \u51fd\u6570\u4f53\u5207\u6362\u3001OAuth\uff0fHook\uff0fSiteURL \u4e34\u65f6\u8bbe\u7f6e\u53ca\u5b8c\u6574\u5173\u95ed\u6062\u590d\uff1bDCR \u5fc5\u987b\u4fdd\u6301\u5173\u95ed\u3002\u4e0d\u5f00\u65b0 Scope\uff0c\u4e0d\u90e8\u7f72\u65b0\u8f6f\u4ef6\u3002\u9996\u6b21\u4e34\u65f6\u53d8\u66f4\u524d\u56fa\u5b9a\u8ba1\u65f6\uff0c\u6b63\u5e38 28 \u5206\u949f\u5173\u95ed\u3001\u6700\u8fdf 30 \u5206\u949f\uff0cToken \u6700\u957f 60 \u79d2\uff1b\u5931\u8d25\u6216\u5230\u671f\u7acb\u5373\u64a4\u9500\u5e76\u6062\u590d\u5c4a\u65f6\u5b9e\u9645\u9ed8\u8ba4\u7248\u672c\u3002\\n\\n\u670d\u52a1\u5668\u59cb\u7ec8 command=null\u3001confirmations=[]\u3002\u4e0d\u5141\u8bb8\u4efb\u4f55 Save\uff0fApply\uff0fEdit\uff0c\u4e0d\u67e5\u8be2\u6216\u91cd\u8bd5\u5386\u53f2 UNKNOWN\uff0c\u4e0d\u8bbf\u95ee\u771f\u5b9e Nelson\u3002\u5b9e\u9645 Preview \u51fa\u6765\u540e\uff0c\u4fdd\u5b58\u53e6\u8bf7\u4f60\u786e\u8ba4\u3002\\n\\n\u9700\u8981\u8fd9\u6b21\u6279\u51c6\uff0c\u662f\u65e7\u7a97\u53e3\u5df2\u5173\u95ed\uff0c\u4eca\u5929\u6062\u590d\u5de5\u4f5c\u4e0d\u5305\u542b\u65b0\u7684\u53d7\u4fdd\u62a4\u4e34\u65f6\u914d\u7f6e\u4e0e\u8fde\u63a5\u6388\u6743\u3002\u5b8c\u6574\u65b9\u6848\uff1a/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/fresh-preview-gate-20261105/OWNER_GATE.md\",\"answer\":\"\u6279\u51c6\u672c\u8f6e\u4e34\u65f6\u914d\u7f6e\u3001\u8fde\u63a5\u53ca Preview\uff0c\u4e0d\u5305\u542b\u4fdd\u5b58\"}]\n</send_user_message_question_reply>"
+  },
+  "root2Qualification": [
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/QUALIFIED_NEW_GATE_RETURN.json",
+      "sha256": "e9185369774319fe0c975e11efc55252b13ab18b10d5c966bbdaba6bf7efd2c2"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/DCR_CURRENT_DRAFT_OBSERVATION.json",
+      "sha256": "565c18d5fc4d125a552e0531aea8fcd3e6f34b8626b3d637184356cc127d0792"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/FUTURE_GATE_QUALIFIED_DELTA.json",
+      "sha256": "460cab7a7fb2e984db5948f492350db89f702175e0ad31320216ae778d390643"
+    }
+  ],
+  "currentQualificationIsExecutionAuthority": false,
+  "defaultStalenessRule": "Requalify actual current default on any accepted Import/default/settings change; current6ff9 is not an unconditional future restore target.",
+  "reviewStatus": "OWNER_SOURCE_BINDING_PENDING_INDEPENDENT_DELTA_REVIEW",
+  "mechanicalOwnerSourceBindingAllowed": {
+    "scope": "Actual human source thread/message/text/wire/receipt pins and consequent static/package hashes only",
+    "mustStayUnchanged": [
+      "OWNER_GATE.md hash",
+      "SCOPE.json hash",
+      "windowId",
+      "consumerInputs",
+      "EMPTY command=null confirmations=[]",
+      "time caps",
+      "noSave/noEdit/noUNKNOWN"
+    ],
+    "review": "Independent actual human source readback + focused pin/diff checks before normal login; no self-approved source"
+  },
+  "actualFocusedChecks": {
+    "path": "docs/mcp/c02/s1/fresh-preview-gate-20261105/FOCUSED_CHECKS.json",
+    "sha256": "d122a705a303ad22ba38d8f6ed28798d3ed469629d1bb69600a8fed2d48b0412"
+  },
+  "mechanicalRebind": "Fixed new window/Gate/scope and consequent pins; replace obsolete generic Owner-source literals with explicit UNBOUND pins and one fail-closed guard; no authority expansion",
+  "preparationFiles": {
+    "prepare_static.py": "1f54ef3c4f0efd1c1bbbf013a6c1901cef167383087edfd8cb779f5e1c788ce0",
+    "check_rebind.py": "10f57b7430d47997ddc266a66aec9f5cf3f9daa61ec80625185df666e0a7e1ce",
+    "OWNER_SOURCE.json": "4ecea4f64d2b896fc3c5f8ad18f1ed04acfd1e5bb1a20e7ed8cb4835b17e75fd"
+  },
+  "previousGeneratedStaticDirectory": "dist/mcp-c02-fresh-c843ff1cd8b7471db1ee77aef1bdad1e/static",
+  "priorUnboundPackageSHA256": "75ddd1ec2ce35116a4afd209e37285f3c1504a5a8d323cc02940e87052f51dac",
+  "previousUnboundGeneratedStaticDirectory": "dist/mcp-c02-fresh-c843ff1cd8b7471db1ee77aef1bdad1e-owner-guards-v2/static",
+  "ownerSourceBindingFiles": {
+    "OWNER_APPROVAL_WIRE.json": "617bfc03181ee9c80695af3a1ac6d934853f01dd440ba9aa0e03a808f484bc27",
+    "OWNER_APPROVAL_WRAPPER.txt": "10c9b06abad382475d100a17f90e751c5d38bcea2fc264e006d483a081a7ae18",
+    "OWNER_APPROVAL_REPLY.json": "6c6df615beb2cee7e75edd595eae62d527b9a1edb3753b99cc318439ec982909",
+    "OWNER_APPROVAL_READBACK.json": "4c2076427e99eed7eca52f52c2501648e605c21bdec6db4c7e64ff63f99cb039"
+  }
+}

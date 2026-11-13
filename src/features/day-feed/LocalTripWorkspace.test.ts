@@ -122,6 +122,12 @@ vi.mock("./TripMembersSheet", () => ({
     return null;
   },
 }));
+vi.mock("@/features/people/ServerParentTripPeople", () => ({
+  ServerParentTripPeople: (props: any) => {
+    state.nodes.push({ serverParentPeople: props });
+    return null;
+  },
+}));
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
@@ -165,6 +171,8 @@ const state = vi.hoisted(() => ({
   serial: 0,
   alert: vi.fn(),
   publish: vi.fn(),
+  parentMetadataRead: vi.fn(),
+  parentMetadataSave: vi.fn(),
   forceEffects: false,
   focused: true,
   focusReturned: false,
@@ -179,6 +187,11 @@ vi.mock("@/data/repositories/tripPersonCloudCreateRepository", async (original) 
     typeof import("@/data/repositories/tripPersonCloudCreateRepository")
   >()),
   saveAuthoredTripTraveler: state.saveTraveler,
+}));
+vi.mock("@/data/repositories/tripMetadataRepository", async (original) => ({
+  ...(await original<typeof import("@/data/repositories/tripMetadataRepository")>()),
+  readServerParentMetadataEditBase: state.parentMetadataRead,
+  saveServerParentTripMetadata: state.parentMetadataSave,
 }));
 vi.mock("./useTripPersonalCover", () => ({ useTripPersonalCover: () => state.personal }));
 vi.mock("react", async (original) => ({
@@ -284,6 +297,7 @@ vi.mock("@/data/auth/authRepository", () => ({
   clearLocalSession: vi.fn(),
   writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
+  requireAdoptedUserId: vi.fn(async () => "10000000-0000-4000-8000-000000000001"),
   readLocalSession: vi.fn(),
   readCommittedLocalSession: vi.fn(),
 }));
@@ -390,6 +404,7 @@ const flush = async () => {
 };
 let key: string | null;
 const props = {
+  serverParentPeopleEnabled: false,
   tripId: null as string | null,
   mode: "LIST" as "LIST" | "CREATE",
   onOpen: vi.fn(),
@@ -458,6 +473,8 @@ beforeEach(() => {
   state.refs = [];
   key = null;
   state.publish.mockReset();
+  state.parentMetadataRead.mockReset();
+  state.parentMetadataSave.mockReset().mockResolvedValue(undefined);
   state.alert.mockReset();
   state.forceEffects = false;
   state.focused = true;
@@ -477,12 +494,14 @@ beforeEach(() => {
   props.widgetsForHome.mockReturnValue([]);
   props.tripId = null;
   props.mode = "LIST";
+  props.serverParentPeopleEnabled = false;
   props.onOpen.mockReset();
   props.onKnownTrip.mockClear();
   props.onTripMetadataSaved.mockReset();
   props.onBackToTrips.mockClear();
   advanceAccountGeneration();
 });
+
 
 it("fences a deferred A save before mutation, clears stale account UI, and lets B save", async () => {
   const a = repository([trip("a-old", "Account A old trip")]),
@@ -621,6 +640,36 @@ it("opens a cached remote-only summary without local write controls and clears i
   expect(render()).not.toContain("Cached shared Trip");
 });
 
+it("mounts the scoped server-parent People adapter only for an explicitly enabled remote Trip", async () => {
+  const remote = {
+    id: "remote-people",
+    name: "Remote People",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    createdAt: null,
+    localStatus: null,
+    selectedCoverAssetId: null,
+    remoteListed: true,
+  };
+  state.repo.mockResolvedValue(repository());
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: null, trips: [remote] }),
+  });
+  props.tripId = remote.id;
+  props.serverParentPeopleEnabled = true;
+  render();
+  await flush();
+  render();
+  const adapter = state.nodes.find((node) => node.serverParentPeople)!.serverParentPeople;
+  expect(adapter.tripId).toBe(remote.id);
+  expect(adapter.generation).toBe(getAccountGeneration());
+  expect(adapter.setup).toBeNull();
+  props.serverParentPeopleEnabled = false;
+  render();
+  expect(state.nodes.some((node) => node.serverParentPeople)).toBe(false);
+});
+
 it("mounts trusted Photos only for the currently selected local Trip", async () => {
   state.repo.mockResolvedValue(
     repository([trip("local-a", "Local A"), trip("local-b", "Local B")]),
@@ -731,29 +780,6 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
   }
   expect(props.widgetsForHome).toHaveBeenLastCalledWith("undated", "Undated", null);
 });
-
-vi.mock("expo-router", () => ({
-  router: { push: vi.fn() },
-  useFocusEffect: (callback: () => void | (() => void)) => {
-    if (state.focused && (state.mount || state.forceEffects || state.focusReturned))
-      state.effects.push(callback);
-  },
-}));
-vi.mock("./TripViewContext", () => ({
-  useTripView: () => ({ publishQuickActions: state.publish, localOutcome: null }),
-}));
-vi.mock("@/components/SheetHeader", () => ({
-  SheetHeader: (p: any) => {
-    state.nodes.push({ label: p.leftLabel ?? "common.close", onPress: p.onLeft });
-    if (p.onRight)
-      state.nodes.push({
-        label: p.rightLabel,
-        onPress: p.onRight,
-        disabled: p.rightDisabled,
-      });
-    return null;
-  },
-}));
 
 it("the mounted local Quick Add opens the shared chooser with explicit Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
@@ -872,11 +898,6 @@ it("non-Creator Home opens the independent preference Gallery without metadata a
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
 });
 
-vi.mock("react-native-safe-area-context", () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  SafeAreaProvider: "div",
-  SafeAreaView: "div",
-}));
 it("normal Home Hero action opens the same Editor and saves through the owning metadata repository", async () => {
   const current = trip("local-a", "Original"),
     repo = repository([current]);
@@ -1088,6 +1109,7 @@ it("preserves additional names and stable intent IDs on retry without a count st
   await flush();
   expect(vi.mocked(repo.createTrip).mock.calls[1][0]).toEqual(first);
 });
+
 it("maps You nickname only to the lawful creator display field", async () => {
   const repo = repository();
   state.repo.mockResolvedValue(repo);
@@ -1105,6 +1127,7 @@ it("maps You nickname only to the lawful creator display field", async () => {
   );
   expect(vi.mocked(repo.createTrip).mock.calls[0][0].travelers).toBeUndefined();
 });
+
 it("clears private Traveler names and allocates new intent after account generation changes", async () => {
   const a = repository(),
     b = repository();
@@ -1146,6 +1169,7 @@ it("clears private Traveler names and allocates new intent after account generat
   expect(fresh.tripId).not.toBe(old.tripId);
   expect(fresh.travelers?.[0].personId).not.toBe(old.travelers?.[0].personId);
 });
+
 it("Close confirms meaningful new Trip edits and never submits a create", async () => {
   const repo = repository();
   state.repo.mockResolvedValue(repo);
@@ -1179,7 +1203,7 @@ it("Creator Close discards staged cover without an independent write and cannot 
   state.forceEffects = false;
   render();
   const host = state.nodes.find(
-    (node) => node.modal?.presentationStyle === "pageSheet",
+    (node) => node.modal?.presentationStyle === "pageSheet" && node.modal.visible,
   )!.modal;
   expect(host.allowSwipeDismissal).toBe(false);
   host.onRequestClose();
@@ -1203,7 +1227,7 @@ it("Creator Close discards staged cover without an independent write and cannot 
   render();
   expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
   expect(
-    state.nodes.find((node) => node.modal?.presentationStyle === "pageSheet")!.modal
+    state.nodes.find((node) => node.modal?.presentationStyle === "pageSheet" && node.modal.visible)!.modal
       .allowSwipeDismissal,
   ).toBe(false);
   pending.resolve();
@@ -1570,34 +1594,6 @@ it("submits ordered destination identities and creator nickname without flatteni
   ]);
 });
 
-const structuredFixture = () => {
-  const id = "10000000-0000-4000-8000-000000000002";
-  const destination = {
-    destinationId: "10000000-0000-4000-8000-000000000005",
-    displayLabel: "Tokyo",
-    source: "MANUAL" as const,
-  };
-  const current = {
-    ...trip(id, "Original"),
-    syncFormatVersion: 2 as const,
-    destinations: [{ ...destination, ordinal: 0 }],
-  };
-  const confirmed = {
-    formatVersion: 3 as const,
-    actorAccountId: "10000000-0000-4000-8000-000000000001",
-    tripId: id,
-    metadataRevision: 7,
-    metadata: {
-      name: "Original",
-      destination: null,
-      startDate: null,
-      endDate: null,
-      destinations: [destination],
-    },
-  };
-  return { current, confirmed };
-};
-
 it("captures the confirmed ordered-list baseline on opening, never rebases revision at Save", async () => {
   const { current, confirmed } = structuredFixture();
   const repo = repository([current]);
@@ -1848,6 +1844,7 @@ it("signed-out My Trips does not open account repositories or retain the previou
   expect(render()).not.toContain("Private Account A Trip");
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });
+
 it("a signed-out direct Trip route cannot read the previous account cache", async () => {
   vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
   props.tripId = "old-a";
@@ -1857,16 +1854,6 @@ it("a signed-out direct Trip route cannot read the previous account cache", asyn
   expect(state.discovery).not.toHaveBeenCalled();
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });
-
-vi.mock("@/data/auth/localTripAccess", async () => ({
-  readLocalTripPrincipal: vi.fn(async () => ({
-    kind: "ACCOUNT",
-    accountId: "test-account",
-  })),
-  ...(await import("@/data/repositories/tripRepository")),
-  ...(await import("@/data/repositories/tripDayFeedRepository")),
-  kickLocalTripSync: vi.fn(async () => {}),
-}));
 
 it("opens a genuine Guest principal without a formal Session and skips Account discovery and modules", async () => {
   vi.mocked(readLocalTripPrincipal).mockResolvedValue({
@@ -1990,28 +1977,6 @@ it("does not hide an initial Guest publication fence behind indefinite loading",
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });
 
-async function mountGuestCreateDraft() {
-  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
-    kind: "GUEST",
-    localId: "00000000-0000-4000-8000-000000000001",
-  });
-  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
-  state.repo.mockResolvedValue(repository());
-  props.mode = "CREATE";
-  render();
-  await flush();
-  state.forceEffects = true;
-  render();
-  state.forceEffects = false;
-  await flush();
-  render();
-  return state.nodes.find((node) => node.createFields)!.createFields;
-}
-const guestDraftScope = () => ({
-  kind: "GUEST" as const,
-  localId: "00000000-0000-4000-8000-000000000001",
-  generation: getAccountGeneration(),
-});
 it("freezes actual raw Trip Create fields and resumes the same operation after stale input/save/close callbacks", async () => {
   const fields = await mountGuestCreateDraft();
   fields.onName("  未保存旅程  ");
@@ -2055,6 +2020,7 @@ it("freezes actual raw Trip Create fields and resumes the same operation after s
   expect(JSON.parse(resumed.entries[0].canonicalText)).toEqual(snapshot);
   await resumed.resume();
 });
+
 it.each(["calendar", "name editor", "destination query"])(
   "blocks Guest Trip handoff while %s retains uncommitted child state",
   async (open) => {
@@ -2091,6 +2057,7 @@ it("collects the latest Trip Create keystroke before React renders and fences st
   expect(props.onBackToTrips).not.toHaveBeenCalled();
   await lease.resume();
 });
+
 it("rejects old Create field callbacks after an invalid-generation resume", async () => {
   const fields = await mountGuestCreateDraft();
   const lease = await guestTripDraftInventory.freeze(guestDraftScope());
@@ -2103,6 +2070,7 @@ it("rejects old Create field callbacks after an invalid-generation resume", asyn
   fields.onTravelers([]);
   expect(JSON.stringify(state.hooks)).toBe(previous);
 });
+
 it.each(["onQueryDirty", "onBusy"])(
   "blocks Create handoff synchronously on destination %s",
   async (callback) => {
@@ -2111,6 +2079,116 @@ it.each(["onQueryDirty", "onBusy"])(
     await expect(guestTripDraftInventory.freeze(guestDraftScope())).rejects.toThrow(
       "GUEST_TRIP_CREATE_DRAFT_NOT_READY",
     );
+  },
+);
+
+it.each(["success", "revoked", "switched"])(
+  "server-parent Details preserves formal CAS and stale-response isolation: %s",
+  async (mode) => {
+    const tripId = "20000000-0000-4000-8000-000000000001";
+    const repo = repository();
+    state.repo.mockResolvedValue(repo);
+    state.discovery.mockResolvedValue({
+      readMerged: async () => ({
+        cachedAt: null,
+        trips: [
+          {
+            id: tripId,
+            name: "Cached name",
+            destination: null,
+            startDate: null,
+            endDate: null,
+            createdAt: null,
+            localStatus: null,
+            selectedCoverAssetId: null,
+            remoteListed: true,
+          },
+        ],
+      }),
+    });
+    props.tripId = tripId;
+    props.serverParentPeopleEnabled = true;
+    const context = {
+      accountId: "10000000-0000-4000-8000-000000000001",
+      tripId,
+      generation: getAccountGeneration(),
+    };
+    const metadata = {
+      name: "Confirmed name",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    };
+    const base = {
+      context,
+      snapshot: {
+        formatVersion: 3,
+        actorAccountId: context.accountId,
+        tripId,
+        metadataRevision: 7,
+        metadata,
+      },
+    };
+    const held = deferred<typeof base>();
+    if (mode === "switched") state.parentMetadataRead.mockReturnValue(held.promise);
+    else if (mode === "revoked")
+      state.parentMetadataRead.mockRejectedValue(Error("REVOKED"));
+    else state.parentMetadataRead.mockResolvedValue(base);
+    render();
+    await vi.dynamicImportSettled();
+    await flush();
+    state.forceEffects = true;
+    render();
+    state.forceEffects = false;
+    await vi.dynamicImportSettled();
+    await flush();
+    render();
+    if (mode === "switched") {
+      advanceAccountGeneration();
+      state.discovery.mockResolvedValue({
+        readMerged: async () => ({ cachedAt: null, trips: [] }),
+      });
+      render();
+      held.resolve(base);
+      await flush();
+      const html = render();
+      expect(html).not.toContain("Confirmed name");
+      expect(state.parentMetadataSave).not.toHaveBeenCalled();
+      return;
+    }
+    if (mode === "revoked") {
+      expect(render()).toContain("myTrips.cachedDetails");
+      expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
+      expect(state.parentMetadataSave).not.toHaveBeenCalled();
+      return;
+    }
+    const actions = state.publish.mock.calls.find(
+      (call) => call[0]?.tripId === tripId,
+    )?.[0];
+    expect(actions?.editTrip).toBeTypeOf("function");
+    expect(actions?.itinerary).toBeUndefined();
+    expect(render()).not.toContain("myTrips.cachedDetails");
+    await button("tripHome.edit").onPress();
+    await vi.dynamicImportSettled();
+    await flush();
+    render();
+    input("tripCreate.name", "Updated remote");
+    render();
+    button("ui.save").onPress();
+    await flush();
+    expect(state.parentMetadataSave).toHaveBeenCalledWith(
+      context,
+      expect.objectContaining({
+        formatVersion: 3,
+        tripId,
+        expectedMetadataRevision: 7,
+        before: metadata,
+        after: { ...metadata, name: "Updated remote" },
+      }),
+    );
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
+    expect(repo.createTrip).not.toHaveBeenCalled();
   },
 );
 
@@ -2445,24 +2523,6 @@ it("F02 actual Account caller never shows first-Trip empty while cold history re
   expect(ready).not.toContain("myTrips.emptyTitle");
 });
 
-function normalRestoreList() {
-  state.realTripList = true;
-  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
-    kind: "ACCOUNT",
-    accountId: "10000000-0000-4000-8000-000000000001",
-  });
-  state.repo.mockResolvedValue(repository());
-}
-function emitRestore(status: "RESTORING" | "CONFIRMED" | "UNAVAILABLE") {
-  restore.observation = {
-    scope: {
-      accountId: "10000000-0000-4000-8000-000000000001",
-      generation: getAccountGeneration(),
-    },
-    status,
-  };
-  for (const listener of restore.listeners) listener(restore.observation);
-}
 it("F02 historical cachedAt and cache-only refresh cannot confirm a cold empty Account", async () => {
   normalRestoreList();
   state.discovery.mockResolvedValue({
@@ -2480,6 +2540,7 @@ it("F02 historical cachedAt and cache-only refresh cannot confirm a cold empty A
   await flush();
   expect(render()).toContain("myTrips.emptyTitle");
 });
+
 it("F02 cached Trips remain visible during unavailable/offline restore", async () => {
   normalRestoreList();
   state.repo.mockResolvedValue(repository([trip("cached", "Offline cached Trip")]));
@@ -2491,6 +2552,7 @@ it("F02 cached Trips remain visible during unavailable/offline restore", async (
   expect(html).not.toContain("myTrips.emptyTitle");
   expect(html).not.toContain("data-my-trips-skeleton");
 });
+
 it("F02 restore failure offers the existing retry and invokes account Downstream before reload", async () => {
   normalRestoreList();
   render();
@@ -2507,6 +2569,7 @@ it("F02 restore failure offers the existing retry and invokes account Downstream
   expect(restore.refresh).toHaveBeenCalledOnce();
   expect(render()).toContain("myTrips.emptyTitle");
 });
+
 it("F02 unresolved restore has a bounded wait and does not become first-Trip empty", async () => {
   vi.useFakeTimers();
   try {
@@ -2528,6 +2591,7 @@ it("F02 unresolved restore has a bounded wait and does not become first-Trip emp
     vi.useRealTimers();
   }
 });
+
 it("F02 old Account confirmation and cached list do not survive a generation switch", async () => {
   normalRestoreList();
   state.repo.mockResolvedValue(repository([trip("a", "Private Account A Trip")]));
@@ -2549,6 +2613,7 @@ it("F02 old Account confirmation and cached list do not survive a generation swi
   expect(next).not.toContain("myTrips.emptyTitle");
   expect(next).toContain("data-my-trips-skeleton");
 });
+
 it("F02 a confirmed network checkpoint cannot conceal a failed local discovery cache read", async () => {
   normalRestoreList();
   emitRestore("CONFIRMED");
@@ -2873,3 +2938,116 @@ it.each(["cancel", "failure", "generation"])(
     expect(props.onTripMetadataSaved).not.toHaveBeenCalled();
   },
 );
+
+vi.mock("expo-router", () => ({
+  router: { push: vi.fn() },
+  useFocusEffect: (callback: () => void | (() => void)) => {
+    if (state.focused && (state.mount || state.forceEffects || state.focusReturned))
+      state.effects.push(callback);
+  },
+}));
+
+vi.mock("./TripViewContext", () => ({
+  useTripView: () => ({ publishQuickActions: state.publish, localOutcome: null }),
+}));
+
+vi.mock("@/components/SheetHeader", () => ({
+  SheetHeader: (p: any) => {
+    state.nodes.push({ label: p.leftLabel ?? "common.close", onPress: p.onLeft });
+    if (p.onRight)
+      state.nodes.push({
+        label: p.rightLabel,
+        onPress: p.onRight,
+        disabled: p.rightDisabled,
+      });
+    return null;
+  },
+}));
+
+vi.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: "div",
+  SafeAreaView: "div",
+}));
+
+const structuredFixture = () => {
+  const id = "10000000-0000-4000-8000-000000000002";
+  const destination = {
+    destinationId: "10000000-0000-4000-8000-000000000005",
+    displayLabel: "Tokyo",
+    source: "MANUAL" as const,
+  };
+  const current = {
+    ...trip(id, "Original"),
+    syncFormatVersion: 2 as const,
+    destinations: [{ ...destination, ordinal: 0 }],
+  };
+  const confirmed = {
+    formatVersion: 3 as const,
+    actorAccountId: "10000000-0000-4000-8000-000000000001",
+    tripId: id,
+    metadataRevision: 7,
+    metadata: {
+      name: "Original",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [destination],
+    },
+  };
+  return { current, confirmed };
+};
+
+vi.mock("@/data/auth/localTripAccess", async () => ({
+  readLocalTripPrincipal: vi.fn(async () => ({
+    kind: "ACCOUNT",
+    accountId: "test-account",
+  })),
+  ...(await import("@/data/repositories/tripRepository")),
+  ...(await import("@/data/repositories/tripDayFeedRepository")),
+  kickLocalTripSync: vi.fn(async () => {}),
+}));
+
+async function mountGuestCreateDraft() {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  state.repo.mockResolvedValue(repository());
+  props.mode = "CREATE";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  await flush();
+  render();
+  return state.nodes.find((node) => node.createFields)!.createFields;
+}
+
+const guestDraftScope = () => ({
+  kind: "GUEST" as const,
+  localId: "00000000-0000-4000-8000-000000000001",
+  generation: getAccountGeneration(),
+});
+
+function normalRestoreList() {
+  state.realTripList = true;
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "ACCOUNT",
+    accountId: "10000000-0000-4000-8000-000000000001",
+  });
+  state.repo.mockResolvedValue(repository());
+}
+
+function emitRestore(status: "RESTORING" | "CONFIRMED" | "UNAVAILABLE") {
+  restore.observation = {
+    scope: {
+      accountId: "10000000-0000-4000-8000-000000000001",
+      generation: getAccountGeneration(),
+    },
+    status,
+  };
+  for (const listener of restore.listeners) listener(restore.observation);
+}

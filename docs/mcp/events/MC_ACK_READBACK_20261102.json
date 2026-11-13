@@ -1,0 +1,50 @@
+{
+  "id": "MC-ACK-READBACK-20261102-MCP-001",
+  "published_site_version": 5,
+  "build": "18bee14dc9e62686",
+  "snapshot_version": "738de012fdb02870",
+  "published_source_commit": "72fe76306a625c94ac8d488dec15c6225c9dcc22",
+  "events": [
+    {
+      "event_id": "mcp-claude-p3-notes-e389-20261102-001",
+      "status": "PENDING_VERIFICATION",
+      "capability_id": "CAP-MCP-CONSUMER-EDIT",
+      "step_id": "CAP-MCP-CONSUMER-EDIT-S4",
+      "work_item_id": "WI-MCP-001",
+      "audit_evidence_already_accepted": true,
+      "reference_published_snapshot_version": "738de012fdb02870",
+      "event_applied": false,
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-canedit-chatgpt-20261102-started-001",
+      "status": "PENDING_VERIFICATION",
+      "capability_id": "CAP-MCP-CONSUMER-EDIT",
+      "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+      "work_item_id": "WI-MCP-EDIT-PREP",
+      "original_received_at": "2026-11-02T05:42:51.230Z",
+      "source_event_sha256": "e260407156181b0a3db7beaa09cacbbf7125de58e06594ec924c2f3f6814a62e",
+      "duplicate_resubmission": true,
+      "event_applied": false,
+      "reference_published_snapshot_version": "738de012fdb02870",
+      "event_transition_published_snapshot_version": null
+    },
+    {
+      "event_id": "mcp-canedit-20261102-ready-001",
+      "status": "PENDING_VERIFICATION",
+      "capability_id": "CAP-MCP-CONSUMER-EDIT",
+      "step_id": "CAP-MCP-CONSUMER-EDIT-S1",
+      "work_item_id": "WI-MCP-EDIT-PREP",
+      "original_received_at": "2026-11-02T05:48:54.568Z",
+      "source_event_sha256": "12d7779bd2a6aa8bc9477fe025b6e1cb3a58ef340de69f5be8f751fb454ef7f7",
+      "duplicate_resubmission": true,
+      "event_applied": false,
+      "reference_published_snapshot_version": "738de012fdb02870",
+      "event_transition_published_snapshot_version": null
+    }
+  ],
+  "execution_history_unchanged": true,
+  "new_capabilities": 0,
+  "new_pass_events": 0,
+  "note": "snapshot_version identifies the existing audit publication, not an applied STARTED/HANDOFF/PASS transition. Null transition snapshot means no such event has been published. Pending intake is recorded locally in versioned inbox."
+}

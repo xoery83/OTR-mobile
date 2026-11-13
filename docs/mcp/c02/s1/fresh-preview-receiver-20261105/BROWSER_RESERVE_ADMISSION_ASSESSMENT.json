@@ -1,0 +1,86 @@
+{
+  "status": "BROWSER_RESERVE_ADMISSION_NOT_QUALIFIED_BY_SCOPED_EXISTING_CALLERS",
+  "recordedAt": "2026-11-04T23:23:48.877740+00:00",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "scope": "Only exact factory/caller/lock/cooldown source, no global Auth audit or execution",
+  "sources": [
+    {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/registered-qa-host-session.ts",
+      "sha256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d"
+    },
+    {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/resend-inbound-otp-native-relogin.ts",
+      "sha256": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce"
+    },
+    {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/member-claim-original-read.mts",
+      "sha256": "7a7f154e1258f272dcc4fb1bc9e5cd3d01956247680d746d95cd06b985d9a301"
+    }
+  ],
+  "facts": [
+    "createAcceptedHostQaReceiver accepts caller-provided reserve callback; raw factory/createChallenge does not itself acquire a registeredHost ownlease or prove caller identity.",
+    "withRegisteredQaHostSession acquires registered-native04/active.lock exclusively, then creates its own receiver. Its reserve validates last-request.json safe owner/mode and60sec cooldown, journals CHALLENGE_RESERVED and writes shared last-request.",
+    "RegisteredQaHostContext exposes accountId/tripId/readSession only, not a public browserchallenge reserve/admission API. Normal controller holds active.lock while action runs. Nesting the same full host helper would fail unresolved/concurrent-run guard.",
+    "Other exact caller member-claim-original-read uses its own fixed-case lock and LAST_CHALLENGE cooldown for its own host session, not a ready browser sibling-admission interface.",
+    "openRegisteredNativeReloginReceiver is tied to original Oct30 recovery proof/once reservation and6hr case window. It cannot be revived for Nov5 or borrowed as a browser admission.",
+    "The earlier proposed CUA reserve callback only assigned metadata in memory. It was never executed, and does not implement owning durable reservation/cooldown/ownlease admission. It must not be represented as qualified admission or used as a no-op replacement.",
+    "Host helper source can use environment credential before Keychain fallback. This source fact does not prove which path old successful runs used; no environment value was inspected and it is not permission to use a different source."
+  ],
+  "result": "No ready lawful browser sibling challenge admission under the live normalcontrol lease identified in these scoped existing callsites. Auth must confirm an existing legitimate seam/contract or minimum owning extension; MCP must not invent one or declare wholeAuth absent.",
+  "supportRequest": "Parent already issued one exact Auth support request for selectors and admission; child will not duplicate cross-Lane request.",
+  "mustNot": [
+    "No reserve no-op",
+    "No resetting/removing owncontrol lock",
+    "No sibling/nested hostSession or borrowedtoken",
+    "No reusing Oct30 recovery",
+    "No reading env/anotherKeychain source after this failure",
+    "No createChallenge/wait/API/OTP now"
+  ],
+  "operations": {
+    "sourceReadsOnly": true,
+    "credentialRead": 0,
+    "reserveOrLease": 0,
+    "API": 0,
+    "AuthSession": 0,
+    "runtime": 0
+  },
+  "authContract": {
+    "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-c04-sync-c02-native-consume-20261105/support/MCP_C02_KEYCHAIN_RESERVATION_CONTRACT.json",
+    "sha256": "fc7e65c0ab54a8c3ec857260f38ea6e4bf2305c8c71bec72a09522525109ca11"
+  },
+  "actualMcpControl": {
+    "path": "dist/mcp-c02-fresh-6d49f895887d437c9294d381bcd8005d-receiver-advance-bound/static/normal-control.mts",
+    "sha256": "1cf9cc63b49f40673a6c65cf16630d3250bd77c8580f4bc93f873748d2aa36df",
+    "context": "accountId/readSession only",
+    "controlChannel": "FINISH and REVOKE marker files; grant GET/DELETE only",
+    "browserReservationExportOrRPC": false
+  },
+  "keychainSyntaxReadOnlyCheck": {
+    "command": "/usr/bin/security help find-generic-password",
+    "actualApprovedReadArgv": [
+      "find-generic-password",
+      "-s",
+      "OTR_QA_RESEND_API_KEY",
+      "-a",
+      "resend",
+      "-l",
+      "OTR-QA-Inbound",
+      "-w"
+    ],
+    "result": "Local help documents -s service, -a account, -l label and -w stdout password; actual failed argv equals existing helper selectors. Help is not a credential query and does not isolate parameter/context/access/item-state cause."
+  },
+  "minimalCallerAdapterProposal": {
+    "status": "CONTRACT_PROPOSAL_ONLY_NOT_IMPLEMENTED",
+    "requirement": "Lease-owner process exposes one bounded browser-reservation request/ACK, exact email/requestedAt/window/scope, durable one-shot/cooldown reservation before UI send; no credential/session/OTP crosses channel.",
+    "existingSeam": "None in inspected generated normal-control/context; cannot call private Auth reserve closure.",
+    "owningSeamNeeded": "Auth confirmation of minimal context-level durable reservation seam, or approval of a narrowly scoped MCP owning caller adapter preserving existing lease/cooldown semantics. No no-op or duplicate wrapper.",
+    "testsWhenApproved": "Wrong email/window/owner, repeated challenge, cooldown, unsafe request file, failure before ACK and cleanup; pure local fixtures only."
+  },
+  "resourceConstraint": {
+    "reportedBy": "Parent forwarding Root2/Native report; not independently read live metadata",
+    "window": "14752 B readonly",
+    "T": "2026-11-04T23:11:59Z",
+    "D": "2026-11-04T23:41:59Z",
+    "rule": "Any future reserve/control/browserOTP/T needs actual release or proven legitimate isolation; no lock deletion, borrowed session or assumed concurrency."
+  }
+}

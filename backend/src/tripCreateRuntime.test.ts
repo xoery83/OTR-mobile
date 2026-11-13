@@ -6,6 +6,7 @@ const f = vi.hoisted(() => ({
   open: vi.fn(),
   pg: vi.fn(),
   storage: vi.fn(),
+  parentFactory: vi.fn(),
   create: vi.fn(),
   receipt: vi.fn(),
   core: vi.fn(),
@@ -25,7 +26,10 @@ vi.mock("./tripMetadataV2PgStorage", () => ({
   createTripMetadataV2PgStorage: f.metadata,
 }));
 vi.mock("./tripCoreV2PgHttpConnection", () => ({ createCorePgHttpConnection: f.core }));
-vi.mock("./tripCreatePgStorage", () => ({ createTripPgStorage: f.storage }));
+vi.mock("./tripCreatePgStorage", () => ({
+  createTripPgStorage: f.storage,
+  createTripParentReceiptPgReader: f.parentFactory,
+}));
 vi.mock("./tripPersonCloudCreatePg", () => ({
   createTripPersonCloudCreatePgPort: f.person,
 }));
@@ -97,7 +101,12 @@ it("keeps missing mount CLOSED without a connection or alternate credential", as
 });
 it("composes the existing exact dedicated port and preserves request/receipt identities", async () => {
   const v = fixture(),
-    runtime = await loadDevTripCreateRuntime(environment);
+    runtime = await loadDevTripCreateRuntime({
+      ...environment,
+      OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED: "1",
+    });
+  expect(f.parentFactory).not.toHaveBeenCalled();
+  expect(runtime!.tripCreatePort.parentReceipt).toBeUndefined();
   expect(f.pg).toHaveBeenCalledExactlyOnceWith(v.config.tripPg);
   expect(f.storage).toHaveBeenCalledExactlyOnceWith(v.connection);
   expect(
@@ -255,7 +264,12 @@ it("reuses the existing private Create mount for a disjoint normal runtime and e
     commands: { withLockedCommand: vi.fn() },
     readOperation: vi.fn(),
   });
-  const runtime = await loadDevTripCreateRuntime(environment);
+  const runtime = await loadDevTripCreateRuntime({
+    ...environment,
+    OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED: "1",
+  });
+  expect(f.parentFactory).not.toHaveBeenCalled();
+  expect(runtime!.tripCreatePort.parentReceipt).toBeUndefined();
   expect(runtime).toHaveProperty("coreConnection");
   expect(runtime).toHaveProperty("tripMetadataV2Port");
   expect(f.pg).toHaveBeenCalledTimes(3);

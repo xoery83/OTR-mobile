@@ -1,0 +1,51 @@
+{
+  "status": "AUTH_HANDOFF_HASHES_INDEPENDENTLY_VERIFIED_NOT_DEPLOYED",
+  "sourceHandoffSHA256": "94f3a500dbe4bdb98f4ebeed9e79881a8e7d81379ec4e7dfb8d650cf3252dc7d",
+  "handoff": {
+    "status": "READY_FOR_DEFAULT_CLOSED_ROOT_ASSEMBLY_NOT_DEPLOYED",
+    "sourceChanges": {
+      "backend/src/mcpAccountWriteBinding.ts": {
+        "expectedBeforeSHA256": "c12a43207f7f84a3dff53799a3a6b18ef73922bba393b75c1df46adb0e01f758",
+        "candidateSHA256": "e9ab356cf5d0b5bb4b4ebcbf1792ae4fe3c78134fdf16fff2f5c6feca4cf0eea"
+      },
+      "backend/src/mcpQaRuntime.ts": {
+        "expectedBeforeSHA256": "edaf6d8e812ae66947a0d5a9069caa37d88b1a8b034cc648dec91e9240429d46",
+        "candidateSHA256": "5216d70ea05a74fe275c40af89edb799f2151ab7f92692cca2cc2ebb590e05d5"
+      }
+    },
+    "fixedCommits": {
+      "stage": "f1de4b47",
+      "packaging": "c32db38b",
+      "freshFixture": "88fe07f7",
+      "mcpGuidePins": "58f7f4bb",
+      "mcpFreshFixture": "1ae2a1a9"
+    },
+    "runtime": {
+      "status": "DEFAULT_CLOSED_COMPILED_ONLY",
+      "profile": "SLICE1_NOTES_EDIT",
+      "sourceCount": 51,
+      "pinsSHA256": "9680ef5f6e356784891f1c5351f0f8e88d419169a52ef4db4a915ce0550d9520",
+      "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+      "runtimeSHA256": "a0560110a2a6419bb152f8bf423b13b27efbc5155574e303bb76ae299d844565",
+      "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+      "esbuildVersion": "0.28.2",
+      "providerCalls": 0,
+      "activation": false
+    },
+    "runtimeArtifact": "/private/tmp/otr-auth-mcp-slice1-recovery-build-20261102/runtime.mjs",
+    "caseAssetTransformation": {
+      "source": "backend/mcp/slice1-fresh-qa-cases.json",
+      "privateAssemblyDestination": "backend/mcp/slice1-qa-cases.json",
+      "expectedBeforeSHA256": "c87a647ed92806a85a910cf480512bdf8095570e3c453f610caa5bbb2ee7ce32",
+      "candidateSHA256": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+      "repoOriginalUnchanged": true
+    },
+    "preservation": [
+      "Use actual compatible Root assembly; do not copy full Auth or Root HEAD",
+      "No Profile AKA/Invite/Core/Photo source changes in this packet",
+      "Both QA keys absent, issuer/OAuth closed; no deployment/window/OTP authorized by this artifact",
+      "Historical f107/9b remain UNKNOWN; independent new proposal only"
+    ],
+    "newTargetWriteAuthority": false
+  }
+}

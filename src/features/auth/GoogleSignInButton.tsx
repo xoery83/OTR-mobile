@@ -10,6 +10,9 @@ export function GoogleSignInButton({
   disabled: boolean;
   onPress(): void;
 }) {
+  const { default: Constants } =
+    require("expo-constants") as typeof import("expo-constants");
+  if (Constants.expoConfig?.ios?.bundleIdentifier === "art.xoery.otr") return null;
   if (Platform.OS !== "ios" || !TurboModuleRegistry.get("RNGoogleSignin"))
     return (
       <UiButton

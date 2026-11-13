@@ -1,0 +1,8 @@
+{
+  "startsAt": "2026-11-02T08:57:36.011Z",
+  "expiresAt": "2026-11-02T09:26:49.714Z",
+  "normalCloseAt": "2026-11-02T09:24:49.714Z",
+  "issuerPlanSHA256": "34bd01d68c8477bc49b2ca50a2ec2343530f85c6a24c037dc47f09e0b3ca1f11",
+  "authorityActivated": false,
+  "resetAllowed": false
+}

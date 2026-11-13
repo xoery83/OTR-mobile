@@ -1,0 +1,12 @@
+{
+  "status": "EXISTING_AUTH_PORTS_FROZEN_NOT_ACTIVATED",
+  "snapshot": "/private/tmp/otr-mcp-c02-s1-package-20261103/issuer-source",
+  "sha256": {
+    "scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c"
+  },
+  "usage": "Frozen renderer and closer API only; Root supplies its authorized SQL transport. Do not run legacy activation wrappers or infer approval from the legacy SQL policy class."
+}

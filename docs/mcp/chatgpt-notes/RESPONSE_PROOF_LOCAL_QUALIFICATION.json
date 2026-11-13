@@ -1,0 +1,40 @@
+{
+  "status": "LOCAL_SDK_QUALIFIED_HOST_LOADER_COLLECTOR_PENDING",
+  "qualifiedAt": "2026-11-02T07:25:46.170899+00:00",
+  "baseCommit": "66b1803e",
+  "eventContract": "RESPONSE_PROOF_CONTRACT_V1.md",
+  "sourceSHA256": {
+    "mcp/server.ts": "6fb5f608cbaa071937d29bf54d40be23fbe55f453e3b13f77c9cd559c195672f",
+    "mcp/mutation.test.ts": "1a508f1d7f871dfeaf9f9ffd44f643416db0ea8f55837a45ec6caed837742226",
+    "docs/mcp/chatgpt-notes/RESPONSE_PROOF_CONTRACT_V1.md": "34f0dd9956a57ebffafb0423d6c2efb08ec63cac7586746c6a57c99803254008"
+  },
+  "checks": {
+    "affectedRegression": {
+      "command": "vitest run --config mcp/vitest.config.mts mcp/mutation.test.ts mcp/read.test.ts mcp/consumer.test.ts",
+      "files": 3,
+      "passed": 71,
+      "localLoopbackOnly": true,
+      "sandboxFirstAttempt": "listen EPERM 127.0.0.1; exited; authorized local rerun passed"
+    },
+    "finalFocusedAdditionalAPPLIEDNegative": {
+      "passed": 2,
+      "command": "vitest run --config mcp/vitest.config.mts mcp/mutation.test.ts -t 'Notes proof binds|Slice1 profile exposes'"
+    },
+    "typecheck": "PASS",
+    "build": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": {
+      "agent": "/root/preview_proof_review",
+      "result": "NO_BLOCKER",
+      "batchNegativeSuggestion": "ADDED_AND_PASS",
+      "hostedScope": "NOT_REVIEWED_NOT_TESTED"
+    }
+  },
+  "protectedDeployments": 0,
+  "businessSubmissions": 0,
+  "providerCalls": 0,
+  "hostedLoaderCollector": "PENDING_ROOT_ISOLATED_INCREMENT",
+  "consumerApply": "NOT_RUN_NO_ACTIVE_WINDOW",
+  "originalOperationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "historicalUnknownRetried": false
+}

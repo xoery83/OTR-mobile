@@ -1,0 +1,62 @@
+{
+  "observedAt": "2026-11-04T04:29:55.875861+00:00",
+  "status": "CONSOLE_READ_ONLY_DIFF_NO_PUSH",
+  "results": [
+    {
+      "template": "server-active",
+      "declaredDifferences": [
+        {
+          "path": [
+            "auth",
+            "oauth_server",
+            "allow_dynamic_registration"
+          ],
+          "class": "local_only",
+          "declared": true,
+          "local": false,
+          "remote": null
+        },
+        {
+          "path": [
+            "auth",
+            "oauth_server",
+            "authorization_url_path"
+          ],
+          "class": "local_only",
+          "declared": true,
+          "local": "/oauth/consent",
+          "remote": null
+        },
+        {
+          "path": [
+            "auth",
+            "oauth_server",
+            "enabled"
+          ],
+          "class": "update",
+          "declared": true,
+          "local": true,
+          "remote": false
+        },
+        {
+          "path": [
+            "auth",
+            "site_url"
+          ],
+          "class": "update",
+          "declared": true,
+          "local": "https://api-dev.xoery.art",
+          "remote": "http://localhost:3000"
+        }
+      ]
+    },
+    {
+      "template": "site-close",
+      "declaredDifferences": []
+    },
+    {
+      "template": "hook-close",
+      "declaredDifferences": []
+    }
+  ]
+}
