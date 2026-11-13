@@ -34,7 +34,7 @@ export function AccountAiUsageView({
   )
     return null;
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView keyboardShouldPersistTaps="handled" style={styles.screen} contentContainerStyle={styles.content}>
       <UiSection title={t("aiUsage.title")}>
         <UiText style={styles.hint}>{t("aiUsage.allowanceUnknown")}</UiText>
         {result.status === "UNAVAILABLE" ? (

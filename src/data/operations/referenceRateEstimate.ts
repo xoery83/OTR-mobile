@@ -21,6 +21,7 @@ export function eligibleExpenseQuote(
   expense: LedgerExpense,
   quotes: RateQuote[],
   currency: string,
+  now = new Date(),
 ) {
   return (
     quotes.find(
@@ -41,7 +42,7 @@ export function eligibleExpenseQuote(
           "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" &&
         quote.providerReference ===
           `https://api.frankfurter.dev/v2/providers/ecb/rate/${quote.quoteCurrency}/${quote.baseCurrency}?date=${quote.economicDate}` &&
-        Date.parse(quote.expiresAt) > Date.now(),
+        Date.parse(quote.expiresAt) > now.getTime(),
     ) ?? null
   );
 }
@@ -83,7 +84,7 @@ export function displayEstimate(
       age <= 30
     );
   };
-  const exact = eligibleExpenseQuote(expense, quotes, currency);
+  const exact = eligibleExpenseQuote(expense, quotes, currency, now);
   const quote =
     (exact && trusted(exact) ? exact : null) ??
     quotes

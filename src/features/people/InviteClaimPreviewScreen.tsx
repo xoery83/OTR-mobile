@@ -33,7 +33,7 @@ export function InviteClaimPreviewScreen({ preview }: { preview: InviteClaimPrev
     (p) => p.personId === state.selectedPersonId,
   );
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView keyboardShouldPersistTaps="handled" style={styles.screen} contentContainerStyle={styles.content}>
       <UiText accessibilityRole="alert" style={styles.hint}>
         {t("claimPreview.synthetic")}
       </UiText>

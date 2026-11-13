@@ -1715,7 +1715,7 @@ function LocalTripContent({
             title={remoteSelected.name}
             cover={tripCoverSource(displayCover ?? remoteSelected)}
             coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
-            notice={remoteMetadataQualified ? undefined : t("myTrips.cachedDetails")}
+            notice={remoteMetadataQualified ? undefined : t("tripHome.metadataEditUnavailable")}
             metadata={[
               ...(remoteStart && remoteEnd
                 ? [

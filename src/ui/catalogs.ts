@@ -1063,7 +1063,9 @@ export const en = {
   "myTrips.compactDetails": "{date} · {destination}",
   "myTrips.openCachedTrip": "Open {name} summary",
   "myTrips.cachedDetails":
-    "This Trip summary is saved here. Planning details and actions are not available on this device yet.",
+    "This device has a saved Trip summary. Open it to view available content.",
+  "tripHome.metadataEditUnavailable":
+    "Trip details aren't editable right now. Showing content saved on this device.",
   "createTripV2.customRequired":
     "Add this place as a custom destination to keep its name.",
   "createTripV2.startHint": "How would you like to get started?",
@@ -4357,7 +4359,8 @@ export const zhHans: Record<MessageKey, string> = {
   "tripHome.finance.openSpending": "打开消费",
   "myTrips.compactDetails": "{date} · {destination}",
   "myTrips.openCachedTrip": "打开{name}的摘要",
-  "myTrips.cachedDetails": "此设备已保存旅行摘要，详细安排和操作目前不可用。",
+  "myTrips.cachedDetails": "此设备已保存旅行摘要，打开后可查看当前可用内容。",
+  "tripHome.metadataEditUnavailable": "旅行资料暂不可编辑，当前显示此设备已保存的内容。",
   "createTripV2.customRequired": "请添加为自定义目的地以保留这个地点名称。",
   "createTripV2.startHint": "你想从哪一步开始？",
   "createTripV2.importHint": "从邮件、文件、照片或链接添加旅行安排。",
