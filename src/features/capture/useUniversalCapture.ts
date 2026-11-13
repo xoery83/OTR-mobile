@@ -6,7 +6,10 @@ import type {
 } from "@/data/api/universalImportContracts";
 import { universalBatchPreparedSchema } from "@/data/api/universalImportContracts";
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
-import { captureAccountRequestContext, type AccountRequestContext } from "@/data/auth/accountRequestContext";
+import {
+  captureAccountRequestContext,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { ApiClientError } from "@/data/api/client";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -25,6 +28,7 @@ export function useUniversalCapture(
   const [result, setResult] = useState<UniversalImportResult | null>(null);
   const [busy, setBusy] = useState(false),
     [unavailable, setUnavailable] = useState(false);
+  const [formatUnavailable, setFormatUnavailable] = useState(false);
   const [photoReviewRequired, setPhotoReviewRequired] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [canStart, setCanStart] = useState(true);
@@ -63,11 +67,15 @@ export function useUniversalCapture(
     model.assignedTripId,
   ]);
   const controller = useRef<AbortController | null>(null);
-  const localFirstTransport = useRef<{
-    context: AccountRequestContext;
-    transport: ReturnType<typeof createUniversalImportTransport>;
-    accountId(): Promise<string>;
-  } | false | null>(null);
+  const localFirstTransport = useRef<
+    | {
+        context: AccountRequestContext;
+        transport: ReturnType<typeof createUniversalImportTransport>;
+        accountId(): Promise<string>;
+      }
+    | false
+    | null
+  >(null);
   const localFirstState = useRef<UniversalV3ExecutionStatus | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const scopeCurrent = () =>
@@ -82,7 +90,8 @@ export function useUniversalCapture(
       controller.current?.abort();
     };
   }, []);
-  const retainedStartEnabled = process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true" &&
+  const retainedStartEnabled =
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true" &&
     process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED === "true" &&
     process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED === "true";
   async function run(execute: boolean) {
@@ -91,9 +100,11 @@ export function useUniversalCapture(
       if (execute && !executing.current && !deferredStart.current) {
         deferredStart.current = true;
         setStartPending(true);
-        if (retainedStartEnabled &&
-            (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" ||
-              localFirstTransport.current === false)) {
+        if (
+          retainedStartEnabled &&
+          (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" ||
+            localFirstTransport.current === false)
+        ) {
           controller.current?.abort();
         }
       }
@@ -108,8 +119,11 @@ export function useUniversalCapture(
     setAttempted(true);
     try {
       const trip = model.batch.context?.tripPrior?.id ?? model.assignedTripId;
-      if (trip && process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
-          localFirstTransport.current !== false) {
+      if (
+        trip &&
+        process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
+        localFirstTransport.current !== false
+      ) {
         const analysis = model.batch.batchId;
         if (!localFirstTransport.current) {
           const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
@@ -124,17 +138,23 @@ export function useUniversalCapture(
           if (!current() || context.accountId !== model.batch.accountId)
             throw Error("UNIVERSAL_CAPTURE_STALE");
           const transport = createUniversalImportTransport(accountId, {
-            baseUrl, signal: controller.current.signal,
-            assertCurrent: () => { if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE"); },
+            baseUrl,
+            signal: controller.current.signal,
+            assertCurrent: () => {
+              if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+            },
           });
-          const capability = await transport.localFirstCapability(context, analysis).catch((error) => {
-            if (error instanceof ApiClientError && error.status === 404)
-              return { localFirst: false, existing: null };
-            throw error;
-          });
+          const capability = await transport
+            .localFirstCapability(context, analysis)
+            .catch((error) => {
+              if (error instanceof ApiClientError && error.status === 404)
+                return { localFirst: false, existing: null };
+              throw error;
+            });
           if (!current()) return;
           localFirstTransport.current = capability.localFirst
-            ? { context, transport, accountId } : false;
+            ? { context, transport, accountId }
+            : false;
           setLocalFirstSelected(capability.localFirst);
           if (capability.localFirst) {
             localFirstState.current = capability.existing;
@@ -144,12 +164,20 @@ export function useUniversalCapture(
         const v3 = localFirstTransport.current;
         if (v3) {
           const stage = localFirstState.current?.state;
-          if (execute && stage !== "PROCESSING" && stage !== "REVIEW_READY" && stage !== "OUTCOME_UNKNOWN") {
+          if (
+            execute &&
+            stage !== "PROCESSING" &&
+            stage !== "REVIEW_READY" &&
+            stage !== "OUTCOME_UNKNOWN"
+          ) {
             if (!current()) return;
-            const { stageLocalFirstCapture } = await import("@/data/operations/universalV3Capture");
+            const { stageLocalFirstCapture } =
+              await import("@/data/operations/universalV3Capture");
             await stageLocalFirstCapture(v3.context, model, {
               ...v3,
-              assertCurrent: () => { if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE"); },
+              assertCurrent: () => {
+                if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+              },
             });
           }
           const state = await v3.transport.readLocalFirstExecution(v3.context, analysis);
@@ -233,7 +261,8 @@ export function useUniversalCapture(
                       pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1",
                       pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1",
                       startRetained: (input) => transport.prepareRetained(context, input),
-                      readMaterialIntake: (batchId) => transport.materialIntake(context, batchId),
+                      readMaterialIntake: (batchId) =>
+                        transport.materialIntake(context, batchId),
                     }),
                   );
                 },
@@ -327,6 +356,10 @@ export function useUniversalCapture(
         setUnavailable(next === null && !consumer.current.queued);
       }
     } catch (error) {
+      if (current())
+        setFormatUnavailable(
+          error instanceof Error && error.message === "UNIVERSAL_V3_FILE_FORMAT",
+        );
       let code = "";
       try {
         code =
@@ -410,7 +443,8 @@ export function useUniversalCapture(
   }, [model.assignedTripId]);
   useEffect(() => {
     const pending = () => {
-      if (localFirstTransport.current) return localFirstState.current?.state === "PROCESSING";
+      if (localFirstTransport.current)
+        return localFirstState.current?.state === "PROCESSING";
       const state = current() ? consumer.current?.activity?.state : activity?.state;
       if (state) return ["PENDING", "WAITING", "PROCESSING"].includes(state);
       // A QUEUED prepare receipt may bind the Task before activity is projected.
@@ -434,6 +468,7 @@ export function useUniversalCapture(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, activity?.state, queued, localFirst?.state]);
   return {
+    formatUnavailable,
     localFirst,
     localFirstSelected,
     activity,

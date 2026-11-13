@@ -186,6 +186,7 @@ export function createCaptureStaging(
         "image/heic",
         "image/heif",
         "image/webp",
+        "image/gif",
       ]);
       if (
         fresh.length > 10 ||

@@ -22,7 +22,11 @@ import { lazy, Suspense, useEffect } from "react";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 import { AppIcon } from "@/components/AppIcon";
 
-const UniversalV3Review = lazy(() => import("./UniversalV3Review").then(({ UniversalV3Review }) => ({ default: UniversalV3Review })));
+const UniversalV3Review = lazy(() =>
+  import("./UniversalV3Review").then(({ UniversalV3Review }) => ({
+    default: UniversalV3Review,
+  })),
+);
 
 export function UniversalCaptureResults({
   model,
@@ -51,22 +55,43 @@ export function UniversalCaptureResults({
     return (
       <UiSection title={t("capture.ai.title")}>
         <UiText>{t("capture.ai.previewOnly")}</UiText>
-        {processing ? <UiText accessibilityLiveRegion="polite">{t("capture.ai.task.PROCESSING")}</UiText> : null}
+        {processing ? (
+          <UiText accessibilityLiveRegion="polite">
+            {t("capture.ai.task.PROCESSING")}
+          </UiText>
+        ) : null}
         {unknown ? <UiText>{t("capture.ai.unknown")}</UiText> : null}
-        {state.unavailable || state.localFirst?.state === "NEEDS_ACTION"
-          ? <UiText>{t("capture.ai.unavailable")}</UiText> : null}
+        {state.formatUnavailable ? (
+          <UiText>{t("capture.ai.v3.formatUnavailable")}</UiText>
+        ) : null}
+        {state.unavailable || state.localFirst?.state === "NEEDS_ACTION" ? (
+          <UiText>{t("capture.ai.unavailable")}</UiText>
+        ) : null}
         {result?.candidates.map((candidate) => (
           <Suspense key={candidate.candidateId} fallback={null}>
-            <UniversalV3Review model={model} candidate={candidate} isCurrent={isCurrent} />
+            <UniversalV3Review
+              model={model}
+              candidate={candidate}
+              isCurrent={isCurrent}
+            />
           </Suspense>
         ))}
-        {result && !result.candidates.length ? <UiText>{t("capture.ai.noCandidates")}</UiText> : null}
-        {!result && !processing && !unknown ? (
-          <UiButton label={t("capture.ai.process")} disabled={state.busy || !state.canStart}
-            onPress={state.start} />
+        {result && !result.candidates.length ? (
+          <UiText>{t("capture.ai.noCandidates")}</UiText>
         ) : null}
-        <UiButton label={t("capture.ai.check")} variant="secondary"
-          disabled={state.busy} onPress={state.recover} />
+        {!result && !processing && !unknown ? (
+          <UiButton
+            label={t("capture.ai.process")}
+            disabled={state.busy || !state.canStart}
+            onPress={state.start}
+          />
+        ) : null}
+        <UiButton
+          label={t("capture.ai.check")}
+          variant="secondary"
+          disabled={state.busy}
+          onPress={state.recover}
+        />
       </UiSection>
     );
   }

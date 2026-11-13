@@ -232,14 +232,28 @@ export const en = {
   "capture.ai.v3.new": "New item",
   "capture.ai.v3.link": "Link to an existing item",
   "capture.ai.v3.update": "Update the title of an existing item",
+  "capture.ai.v3.formatUnavailable":
+    "This file’s contents do not match a supported format. Choose a TXT, PDF, PNG, JPEG, WebP or static GIF original.",
+  "capture.ai.v3.notSaved": "Additional extracted details, not saved: {details}",
+  "capture.ai.v3.flightSparse":
+    "Only the flight number and departure date can be saved with the current flight capability. Other flight details remain in Review.",
+  "capture.ai.v3.documents": "Source documents: {count}",
+  "capture.ai.v3.saveSupported":
+    "New item saves supported details. Link only attaches documents. Update changes only the title. Other details remain in Review and the originals.",
   "capture.ai.v3.confirm": "Confirm save",
-  "capture.ai.v3.unresolved": "Some suggestions need more details before they can be saved.",
-  "capture.ai.v3.pending": "Save is queued. Check the result to confirm the item and documents are linked.",
+  "capture.ai.v3.unresolved":
+    "Some suggestions need more details before they can be saved.",
+  "capture.ai.v3.pending":
+    "Save is queued. Check the result to confirm the item and documents are linked.",
   "capture.ai.v3.verified": "Saved and verified. The documents are linked to this item.",
-  "capture.ai.v3.changed": "The item or permissions changed. Check the current result before choosing again.",
-  "capture.ai.v3.itemVerifiedRelationPending": "The item is saved. Its document links are still pending.",
-  "capture.ai.v3.itemVerifiedRelationReview": "The item is saved. Check its document links before trying again.",
-  "capture.ai.v3.possibleMatch": "An existing item has the same title. Check whether it is the same item before saving.",
+  "capture.ai.v3.changed":
+    "The item or permissions changed. Check the current result before choosing again.",
+  "capture.ai.v3.itemVerifiedRelationPending":
+    "The item is saved. Its document links are still pending.",
+  "capture.ai.v3.itemVerifiedRelationReview":
+    "The item is saved. Check its document links before trying again.",
+  "capture.ai.v3.possibleMatch":
+    "An existing item has the same title. Check whether it is the same item before saving.",
   "capture.ai.process": "Analyze saved materials",
   "capture.ai.check": "Check processing status",
   "capture.ai.batchNote": "Batch observation",
@@ -3366,6 +3380,14 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.v3.new": "新建项目",
   "capture.ai.v3.link": "关联到已有项目",
   "capture.ai.v3.update": "更新已有项目的标题",
+  "capture.ai.v3.formatUnavailable":
+    "文件内容与支持的格式不符。请选择 TXT、PDF、PNG、JPEG、WebP 或静态 GIF 原文件。",
+  "capture.ai.v3.notSaved": "以下识别信息暂不保存：{details}",
+  "capture.ai.v3.flightSparse":
+    "当前航班能力仅能保存航班号和出发日期，其他航班信息保留在审核结果中。",
+  "capture.ai.v3.documents": "来源文件：{count} 份",
+  "capture.ai.v3.saveSupported":
+    "新建保存受支持信息；关联仅添加文件；更新仅修改标题。其他识别信息保留在审核结果和原文件中。",
   "capture.ai.v3.confirm": "确认保存",
   "capture.ai.v3.unresolved": "部分建议需要补充信息后才能保存。",
   "capture.ai.v3.pending": "保存已排队。请查询结果，确认项目和文档已关联。",

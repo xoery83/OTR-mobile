@@ -1,7 +1,10 @@
 import { z } from "zod";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import { coreDefaults, corePlaceSchema } from "../../domain/trip/tripCoreV2";
-import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
+import {
+  coreBoundarySchema,
+  coreDateBoundary,
+} from "../../domain/trip/tripCoreV2Temporal";
 import { coreCanManage } from "../../domain/trip/tripCoreV2Mutation";
 import {
   validateCoreCommand,
@@ -65,7 +68,56 @@ export function universalV3ReviewFields(candidate: Candidate) {
       "destination.local_date",
     ),
   );
-  return { title, start, end };
+  const startTime =
+    candidate.kind === "P3"
+      ? text(candidate, "check_in.time")
+      : candidate.kind === "P4"
+        ? text(candidate, "pickup.time")
+        : candidate.kind === "P2" || candidate.kind === "P5"
+          ? text(candidate, "origin.local_time")
+          : text(candidate, "schedule.start.local_time", "activity.time");
+  const endTime =
+    candidate.kind === "P3"
+      ? text(candidate, "check_out.time")
+      : candidate.kind === "P4"
+        ? text(candidate, "return.time")
+        : text(candidate, "schedule.end.local_time", "destination.local_time");
+  const place =
+    candidate.kind === "P3"
+      ? text(candidate, "property.address")
+      : candidate.kind === "P4"
+        ? text(candidate, "pickup.place_label", "pickup.place")
+        : candidate.kind === "P2" || candidate.kind === "P5"
+          ? text(candidate, "origin.place_label")
+          : text(
+              candidate,
+              "place.authored_label",
+              "activity.location",
+              "activity.venue",
+            );
+  const endPlace = text(candidate, "return.place", "destination.place_label");
+  return { title, start, end, startTime, endTime, place, endPlace };
+}
+
+// Preserve authored civil facts. No timezone or midnight is inferred.
+function boundary(day: string, clock?: string) {
+  const value = coreDateBoundary(day);
+  if (!clock) return value;
+  const precision = /^\d{2}:\d{2}$/.test(clock)
+    ? -1
+    : (clock.match(/\.(\d{1,6})$/)?.[1].length ?? 0);
+  return coreBoundarySchema.parse({
+    ...value,
+    local_time: clock,
+    clock_precision: precision,
+    quality: "ESTIMATED",
+  });
+}
+function place(label: string) {
+  return corePlaceSchema.parse({
+    ...Object.fromEntries(Object.keys(corePlaceSchema.shape).map((key) => [key, null])),
+    authored_label: label,
+  });
 }
 
 function transportPayload(candidate: Candidate) {
@@ -77,7 +129,7 @@ function transportPayload(candidate: Candidate) {
       return [
         role,
         {
-          time: coreDateBoundary(day),
+          time: boundary(day, text(candidate, `${role}.local_time`)),
           place: {
             ...Object.fromEntries(
               Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
@@ -167,7 +219,15 @@ export function planUniversalV3Review(input: {
   const enabled = (name: "CREATE_ITEM" | "CREATE_SPARSE_FLIGHT" | "SET_ITEM_TEXT") =>
     capabilities.enabledCommands.includes(name) &&
     capabilities.enabledFamilies.includes(candidate.kind);
-  const { title, start, end } = universalV3ReviewFields(candidate);
+  const {
+    title,
+    start,
+    end,
+    startTime,
+    endTime,
+    place: location,
+    endPlace,
+  } = universalV3ReviewFields(candidate);
   if (decision.action === "NEW") {
     const flight = candidate.kind === "P2";
     if (!actor.personId) throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
@@ -202,13 +262,86 @@ export function planUniversalV3Review(input: {
                 family: candidate.kind,
                 core: { title },
                 schedule: {
-                  start: coreDateBoundary(start),
-                  ...(end ? { end: coreDateBoundary(end) } : {}),
+                  start: boundary(start, startTime),
+                  ...(end ? { end: boundary(end, endTime) } : {}),
                 },
                 ...owned,
+                ...(candidate.kind === "P4"
+                  ? {
+                      ...(location || endPlace
+                        ? {
+                            places: {
+                              ...(location ? { pickup: place(location) } : {}),
+                              ...(endPlace ? { return: place(endPlace) } : {}),
+                            },
+                          }
+                        : {}),
+                      ...(text(candidate, "rental.company", "agency.name")
+                        ? {
+                            details: {
+                              supplier: text(candidate, "rental.company", "agency.name"),
+                              ...(text(candidate, "rental.category")
+                                ? {
+                                    reserved_category: text(candidate, "rental.category"),
+                                  }
+                                : {}),
+                            },
+                          }
+                        : {}),
+                    }
+                  : {
+                      ...(location ? { place: place(location) } : {}),
+                      ...(candidate.kind === "P3" && text(candidate, "property.name")
+                        ? { details: { property_name: text(candidate, "property.name") } }
+                        : {}),
+                      ...(text(candidate, "activity.description")
+                        ? {
+                            core: {
+                              title,
+                              description: text(candidate, "activity.description"),
+                            },
+                          }
+                        : {}),
+                    }),
               },
       }),
     );
+    if (flight && capabilities.enabledCommands.includes("SET_AUTHORED_FLIGHT_DETAILS")) {
+      const departure = date(text(candidate, "origin.local_date")) ?? start;
+      const arrival = date(text(candidate, "destination.local_date"));
+      commands.push(
+        validateCoreCommand({
+          ...base,
+          operationId: universalP1Identity(
+            candidate.candidateId,
+            "local-first",
+            "flight-details",
+          ),
+          command: "SET_AUTHORED_FLIGHT_DETAILS",
+          target: { kind: "ITEM", id: targetId },
+          baseVector: [{ kind: "ITEM", id: targetId, revision }],
+          payload: {
+            flightNumberLiteral:
+              text(candidate, "flight_number", "marketing_flight") ?? title,
+            origin: {
+              airportCode: text(candidate, "origin.airport_code") ?? null,
+              name: text(candidate, "origin.place_label") ?? null,
+              terminal: null,
+              time: boundary(departure, text(candidate, "origin.local_time")),
+            },
+            destination: {
+              airportCode: text(candidate, "destination.airport_code") ?? null,
+              name: text(candidate, "destination.place_label") ?? null,
+              terminal: null,
+              time: arrival
+                ? boundary(arrival, text(candidate, "destination.local_time"))
+                : { ...coreDateBoundary(departure), local_date: null },
+            },
+          },
+        }),
+      );
+      revision++;
+    }
   }
   if (decision.action === "UPDATE") {
     if (!title || candidate.kind === "P2" || !enabled("SET_ITEM_TEXT"))
@@ -354,9 +487,13 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
   );
   const accepted = await refresh();
   async function check(candidate: Candidate) {
-    const [item, link] = await Promise.all([
+    const [item, link, flight] = await Promise.all([
       core.pending(context, itemIntentId(candidate.candidateId)),
       core.pending(context, relationId(candidate.candidateId)),
+      core.pending(
+        context,
+        universalP1Identity(candidate.candidateId, "local-first", "flight-details"),
+      ),
     ]);
     const itemOperation = item.find(
       ({ command }) => command.operationId === itemIntentId(candidate.candidateId),
@@ -375,6 +512,16 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
           : receipt.outcome
         : null;
     };
+    const flightOperation = flight.find(
+      ({ command }) =>
+        command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
+        command.target.id === original.command.target.id,
+    );
+    if (flightOperation) {
+      const state = await outcome(flightOperation);
+      if (state === null) return "PENDING" as const;
+      if (state === "CONFLICT" || state === "REJECTED") return "REVIEW_REQUIRED" as const;
+    }
     const [itemOutcome, relationOutcome] = await Promise.all([
       outcome(itemOperation),
       outcome(linkOperation),
@@ -399,6 +546,8 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
       const supported = capabilities.enabledFamilies.includes(candidate.kind);
       const flight = candidate.kind === "P2";
       return {
+        flightDetails:
+          flight && capabilities.enabledCommands.includes("SET_AUTHORED_FLIGHT_DETAILS"),
         NEW: (() => {
           try {
             planUniversalV3Review({

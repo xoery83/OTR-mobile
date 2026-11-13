@@ -347,33 +347,232 @@ it.each(allFamilies)("incomplete %s NEW stays closed before queueing", async (ki
   expect(review.actions({ ...f.candidate, kind, fields: {} }).NEW).toBe(false);
 });
 
-it.each(allFamilies)("%s LINK uses an existing canonical Item without an Import receipt", (kind) => {
-  const f = fixture();
-  const candidate = { ...f.candidate, kind };
-  const graph = emptyCoreGraph();
-  const item = randomUUID();
-  graph.itinerary_events.push({ id: item, trip_id: f.actor.tripId, owner_account_id: f.actor.accountId,
-    experience_family: kind, semantic_revision: 4, visibility: "PRIVATE" } as never);
-  const plan = planUniversalV3Review({ model: f.model, candidate, snapshot: f.snapshot(graph),
-    capabilities: { ...f.capabilities, enabledFamilies: [kind] },
-    decision: { action: "LINK", itemId: item, revision: 4 } });
-  expect(plan.commands.map(command => command.command)).toEqual(["CREATE_DOCUMENT_METADATA", "RECONCILE_ITEM_DOCUMENTS"]);
-  expect(plan.targetId).toBe(item);
-  expect(plan.commands.at(-1)?.baseVector).toContainEqual({ kind: "ITEM", id: item, revision: 4 });
-});
+it.each(allFamilies)(
+  "%s LINK uses an existing canonical Item without an Import receipt",
+  (kind) => {
+    const f = fixture();
+    const candidate = { ...f.candidate, kind };
+    const graph = emptyCoreGraph();
+    const item = randomUUID();
+    graph.itinerary_events.push({
+      id: item,
+      trip_id: f.actor.tripId,
+      owner_account_id: f.actor.accountId,
+      experience_family: kind,
+      semantic_revision: 4,
+      visibility: "PRIVATE",
+    } as never);
+    const plan = planUniversalV3Review({
+      model: f.model,
+      candidate,
+      snapshot: f.snapshot(graph),
+      capabilities: { ...f.capabilities, enabledFamilies: [kind] },
+      decision: { action: "LINK", itemId: item, revision: 4 },
+    });
+    expect(plan.commands.map((command) => command.command)).toEqual([
+      "CREATE_DOCUMENT_METADATA",
+      "RECONCILE_ITEM_DOCUMENTS",
+    ]);
+    expect(plan.targetId).toBe(item);
+    expect(plan.commands.at(-1)?.baseVector).toContainEqual({
+      kind: "ITEM",
+      id: item,
+      revision: 4,
+    });
+  },
+);
 
 it("uses Core's open-ended P4 contract without inventing a return date", () => {
   const f = fixture();
-  const plan = planUniversalV3Review({ ...f, snapshot: f.snapshot(),
+  const plan = planUniversalV3Review({
+    ...f,
+    snapshot: f.snapshot(),
     candidate: { ...f.candidate, kind: "P4" },
-    capabilities: { ...f.capabilities, enabledFamilies: ["P4"] }, decision: { action: "NEW" } });
-  expect((plan.commands[0].payload as { schedule: { end?: unknown } }).schedule.end).toBeUndefined();
+    capabilities: { ...f.capabilities, enabledFamilies: ["P4"] },
+    decision: { action: "NEW" },
+  });
+  expect(
+    (plan.commands[0].payload as { schedule: { end?: unknown } }).schedule.end,
+  ).toBeUndefined();
 });
 it("does not invent missing P5 service facts", () => {
   const f = fixture();
-  expect(() => planUniversalV3Review({ ...f, snapshot: f.snapshot(),
-    candidate: { ...f.candidate, kind: "P5", subtype: "TRAIN", fields: { ...f.candidate.fields,
-      "origin.local_date": "2026-12-14", "destination.local_date": "2026-12-15",
-      "origin.place_label": "Auckland", "destination.place_label": "Wellington" } },
-    capabilities: { ...f.capabilities, enabledFamilies: ["P5"] }, decision: { action: "NEW" } })).toThrow();
+  expect(() =>
+    planUniversalV3Review({
+      ...f,
+      snapshot: f.snapshot(),
+      candidate: {
+        ...f.candidate,
+        kind: "P5",
+        subtype: "TRAIN",
+        fields: {
+          ...f.candidate.fields,
+          "origin.local_date": "2026-12-14",
+          "destination.local_date": "2026-12-15",
+          "origin.place_label": "Auckland",
+          "destination.place_label": "Wellington",
+        },
+      },
+      capabilities: { ...f.capabilities, enabledFamilies: ["P5"] },
+      decision: { action: "NEW" },
+    }),
+  ).toThrow();
+});
+
+it.each(["P1", "P3", "P4", "P5", "P6"] as const)(
+  "preserves %s authored dates, clocks and places without inventing an instant",
+  (kind) => {
+    const f = fixture();
+    const fields = {
+      "activity.name": "Museum",
+      "activity.date": "2026-12-14",
+      "activity.time": "10:35",
+      "activity.location": "Museum Square",
+      "activity.venue": "Museum Square",
+      "check_in.date": "2026-12-14",
+      "check_in.time": "10:35",
+      "check_out.date": "2026-12-15",
+      "check_out.time": "11:20",
+      "property.name": "Hotel",
+      "property.address": "Hotel Road",
+      "pickup.date": "2026-12-14",
+      "pickup.time": "10:35",
+      "pickup.place": "Rental Depot",
+      "return.date": "2026-12-15",
+      "return.time": "11:20",
+      "return.place": "Return Depot",
+      "rental.company": "Rental",
+      "origin.local_date": "2026-12-14",
+      "origin.local_time": "10:35",
+      "origin.place_label": "Station A",
+      "destination.local_date": "2026-12-15",
+      "destination.local_time": "11:20",
+      "destination.place_label": "Station B",
+      "operator.name": "Rail",
+      "service.number": "R1",
+      service: "Rail R1",
+    };
+    const result = planUniversalV3Review({
+      ...f,
+      snapshot: f.snapshot(),
+      candidate: {
+        ...f.candidate,
+        kind,
+        subtype: kind === "P5" ? "TRAIN" : "ACTIVITY",
+        fields,
+      },
+      capabilities: { ...f.capabilities, enabledFamilies: [kind] },
+      decision: { action: "NEW" },
+    });
+    const payload = result.commands[0].payload as any;
+    const time = kind === "P5" ? payload.endpoints.origin.time : payload.schedule.start;
+    expect(time).toMatchObject({
+      local_date: "2026-12-14",
+      local_time: "10:35",
+      instant: null,
+      clock_precision: -1,
+    });
+    if (kind === "P5")
+      expect(payload.endpoints.destination.time.local_time).toBe("11:20");
+    else if (kind === "P4")
+      expect(payload.places).toMatchObject({
+        pickup: { authored_label: "Rental Depot" },
+        return: { authored_label: "Return Depot" },
+      });
+    else
+      expect(payload.place.authored_label).toBe(
+        kind === "P3" ? "Hotel Road" : "Museum Square",
+      );
+  },
+);
+it("date-only facts remain genuinely date-only and malformed clocks are rejected", () => {
+  const f = fixture();
+  const plan = (fields: Record<string, string>) =>
+    planUniversalV3Review({
+      ...f,
+      snapshot: f.snapshot(),
+      candidate: { ...f.candidate, fields },
+      decision: { action: "NEW" },
+    });
+  expect(
+    (plan(f.candidate.fields).commands[0].payload as any).schedule.start.local_time,
+  ).toBeNull();
+  expect(() => plan({ ...f.candidate.fields, "activity.time": "25:30" })).toThrow();
+});
+
+it("preserves P2 flight facts through the existing authored command when enabled", () => {
+  const f = fixture();
+  const candidate = {
+    ...f.candidate,
+    kind: "P2" as const,
+    subtype: "FLIGHT",
+    fields: {
+      flight_number: "NZ502",
+      "origin.local_date": "2026-12-14",
+      "origin.local_time": "09:35",
+      "origin.airport_code": "AKL",
+      "origin.place_label": "Auckland Airport",
+      "destination.local_date": "2026-12-14",
+      "destination.local_time": "10:40",
+      "destination.airport_code": "WLG",
+      "destination.place_label": "Wellington Airport",
+    },
+  };
+  const result = planUniversalV3Review({
+    ...f,
+    candidate,
+    snapshot: f.snapshot(),
+    decision: { action: "NEW" },
+    capabilities: {
+      ...f.capabilities,
+      enabledFamilies: ["P2"],
+      enabledCommands: ["CREATE_SPARSE_FLIGHT", "SET_AUTHORED_FLIGHT_DETAILS"],
+    },
+  });
+  expect(result.commands[1]).toMatchObject({
+    command: "SET_AUTHORED_FLIGHT_DETAILS",
+    baseVector: [{ revision: 1 }],
+    payload: {
+      flightNumberLiteral: "NZ502",
+      origin: { airportCode: "AKL", time: { local_time: "09:35", instant: null } },
+      destination: { airportCode: "WLG", time: { local_time: "10:40", instant: null } },
+    },
+  });
+  expect(result.commands.at(-1)?.baseVector).toContainEqual({
+    kind: "ITEM",
+    id: result.targetId,
+    revision: 2,
+  });
+  const graph = result.commands.reduce(
+    (graph, command) => applyCoreCommand(graph, command, f.actor, stamp).graph,
+    emptyCoreGraph(),
+  );
+  expect(graph.itinerary_events).toHaveLength(1);
+  expect(graph.trip_item_document_links).toHaveLength(1);
+});
+it("keeps exact N-to-M document sets and never merges separate candidates", () => {
+  const f = fixture();
+  const secondSha = "b".repeat(64);
+  const second = localImportDocumentId(f.actor.accountId, f.actor.tripId, secondSha);
+  const model = {
+    ...f.model,
+    inputs: [...f.model.inputs, { ...f.model.inputs[0], contentSha256: secondSha }],
+  } as CaptureJobReadModel;
+  const candidate = { ...f.candidate, documentIds: [...f.candidate.documentIds, second] };
+  const plan = (candidate: typeof f.candidate) =>
+    planUniversalV3Review({
+      ...f,
+      model,
+      candidate,
+      snapshot: f.snapshot(),
+      decision: { action: "NEW" },
+    });
+  const one = plan(candidate),
+    two = plan({ ...candidate, candidateId: randomUUID(), documentIds: [second] });
+  expect(one.targetId).not.toBe(two.targetId);
+  expect((one.commands.at(-1)?.payload as any).add.sort()).toEqual(
+    [...candidate.documentIds].sort(),
+  );
+  expect((two.commands.at(-1)?.payload as any).add).toEqual([second]);
+  expect(plan(candidate)).toEqual(one);
 });

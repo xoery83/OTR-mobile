@@ -5,6 +5,7 @@ import {
 } from "../auth/accountRequestContext";
 import {
   universalV3Manifest,
+  universalV3MediaType,
   type UniversalV3Manifest,
 } from "../api/universalV3Contracts";
 import type { createUniversalImportTransport } from "../api/universalImportTransport";
@@ -57,8 +58,10 @@ export async function stageLocalFirstCapture(
       capture.byteCount !== input.contentByteCount
     )
       throw Error("UNIVERSAL_V3_CAPTURE_SCOPE");
-    const mediaType =
-      capture.kind === "TEXT" ? "text/plain" : capture.declaredContentType;
+    const mediaType = universalV3MediaType(
+      bytes,
+      capture.kind === "TEXT" ? "text/plain" : capture.declaredContentType,
+    );
     await current();
     await retainImportOriginal(context.accountId, capture.sha256, bytes);
     files.push(

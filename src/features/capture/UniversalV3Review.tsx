@@ -31,10 +31,21 @@ export function UniversalV3Review({
   const [mode, setMode] = useState<"LINK" | "UPDATE" | null>(null);
   const [busy, setBusy] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
-  const { title, start, end } = universalV3ReviewFields(candidate);
+  const { title, start, end, startTime, endTime, place, endPlace } =
+    universalV3ReviewFields(candidate);
   const family = manualItineraryTypes.find(({ id }) => candidate.kind === id);
   const targets = review?.targets(candidate) ?? [];
   const actions = review?.actions(candidate);
+  const unsaved = [
+    "room.type",
+    "guest.name",
+    "driver.name",
+    "activity.category",
+    "operating_flight",
+    "platform",
+  ].flatMap((key) =>
+    candidate.fields[key] === undefined ? [] : [String(candidate.fields[key])],
+  );
   const possibleMatch =
     title &&
     targets.some(
@@ -103,6 +114,28 @@ export function UniversalV3Review({
           {start}
           {end ? " – " + end : ""}
         </UiText>
+      ) : null}
+      {startTime ? (
+        <UiText>
+          {startTime}
+          {endTime ? " – " + endTime : ""}
+        </UiText>
+      ) : null}
+      {place ? (
+        <UiText>
+          {place}
+          {endPlace ? " → " + endPlace : ""}
+        </UiText>
+      ) : null}
+      <UiText>
+        {t("capture.ai.v3.documents", { count: candidate.documentIds.length })}
+      </UiText>
+      <UiText>{t("capture.ai.v3.saveSupported")}</UiText>
+      {unsaved.length ? (
+        <UiText>{t("capture.ai.v3.notSaved", { details: unsaved.join(" · ") })}</UiText>
+      ) : null}
+      {review && candidate.kind === "P2" && !actions?.flightDetails ? (
+        <UiText>{t("capture.ai.v3.flightSparse")}</UiText>
       ) : null}
       {unavailable ? <UiText>{t("capture.ai.v3.unresolved")}</UiText> : null}
       {status !== "UNCONFIRMED" ? (

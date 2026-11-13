@@ -34,7 +34,12 @@ it.each(["image/jpeg", "image/heic"] as const)(
     const getAccount = async () => accountId;
     const context = await captureAccountRequestContext(tripId, getAccount);
     const captures = ["image/png", secondType].map((declaredContentType, index) => {
-      const bytes = Uint8Array.of(index + 1, 2, 3);
+      const bytes =
+        declaredContentType === "image/png"
+          ? Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 1)
+          : declaredContentType === "image/jpeg"
+            ? Uint8Array.of(255, 216, 255, 1)
+            : Uint8Array.of(1, 2, 3);
       return {
         bytes,
         capture: {

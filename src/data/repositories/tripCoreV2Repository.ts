@@ -695,13 +695,18 @@ export function createTripCoreV2Repository(
   async function enqueueConfirmedItemDocuments(ctx: AccountRequestContext, inputs: readonly unknown[]) {
     const commands = inputs.map(validateCoreCommand);
     const link = commands.at(-1);
+    const flightDetails = commands[0]?.command === "CREATE_SPARSE_FLIGHT" &&
+      commands[1]?.command === "SET_AUTHORED_FLIGHT_DETAILS";
     if (
-      commands.length < 1 || commands.length > 7 ||
+      commands.length < 1 || commands.length > (flightDetails ? 8 : 7) ||
       new Set(commands.map((command) => command.operationId)).size !== commands.length ||
       link?.command !== "RECONCILE_ITEM_DOCUMENTS" ||
       commands.some((command) => command.tripId !== ctx.tripId || command.admission.mode !== "MANUAL") ||
       commands.slice(0, -1).some((command, index) =>
         command.command !== "CREATE_DOCUMENT_METADATA" &&
+        !(flightDetails && index === 1 && command.target.id === link.target.id &&
+          command.baseVector.length === 1 && command.baseVector[0].kind === "ITEM" &&
+          command.baseVector[0].id === link.target.id && command.baseVector[0].revision === 1) &&
         (index !== 0 || command.target.id !== link.target.id ||
           !["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "SET_ITEM_TEXT"].includes(command.command)))
     ) throw Error("CORE_REVIEWED_DOCUMENT_COMMANDS");

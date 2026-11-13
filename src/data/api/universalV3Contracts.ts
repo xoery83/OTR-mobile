@@ -9,6 +9,33 @@ const mimeTypes = [
   "image/webp",
   "image/gif",
 ] as const;
+// Detect supported originals from bytes, never from the filename.
+export function universalV3MediaType(bytes: Uint8Array, declared: string | null) {
+  const prefix = (values: number[], offset = 0) =>
+    values.every((value, i) => bytes[offset + i] === value);
+  let actual: (typeof mimeTypes)[number] | null = null;
+  if (prefix([137, 80, 78, 71, 13, 10, 26, 10])) actual = "image/png";
+  else if (prefix([255, 216, 255])) actual = "image/jpeg";
+  else if (prefix([82, 73, 70, 70]) && prefix([87, 69, 66, 80], 8)) actual = "image/webp";
+  else if (prefix([71, 73, 70, 56, 55, 97]) || prefix([71, 73, 70, 56, 57, 97]))
+    actual = "image/gif";
+  else if (prefix([37, 80, 68, 70, 45])) actual = "application/pdf";
+  else if (declared === "text/plain") {
+    const encoding = prefix([255, 254])
+      ? "utf-16le"
+      : prefix([254, 255])
+        ? "utf-16be"
+        : "utf-8";
+    try {
+      const value = new TextDecoder(encoding, { fatal: true }).decode(bytes);
+      if (value.trim() && !value.includes("\0")) actual = "text/plain";
+    } catch {
+      throw Error("UNIVERSAL_V3_FILE_FORMAT");
+    }
+  }
+  if (!actual || declared !== actual) throw Error("UNIVERSAL_V3_FILE_FORMAT");
+  return actual;
+}
 export const universalV3Families = ["P1", "P2", "P3", "P4", "P5", "P6"] as const;
 const file = z
   .strictObject({

@@ -2980,3 +2980,21 @@ it("retains the explicitly confirmed Item, Document and link operations across r
     .rejects.toThrow();
   expect((await cold.repo.pending(recovered)).map(({ command }) => command.operationId)).toEqual(fixed);
 });
+
+it("atomically retains authored Flight facts before its Documents without opening other command packets", async () => {
+ const f = fixture(); const context = await f.repo.captureContext(trip); const created = sparse();
+ const unknown = { ...coreDateBoundary("2026-12-14"), local_date: null };
+ const details = { ...created, operationId: randomUUID(), command: "SET_AUTHORED_FLIGHT_DETAILS",
+  baseVector: [{kind:"ITEM",id:item,revision:1}], payload:{flightNumberLiteral:"NZ5069",
+   origin:{airportCode:"AKL",name:"Auckland",terminal:null,time:coreDateBoundary("2026-12-14")},
+   destination:{airportCode:null,name:null,terminal:null,time:unknown}} };
+ const document = randomUUID();
+ const metadata = { ...created,operationId:randomUUID(),command:"CREATE_DOCUMENT_METADATA",target:{kind:"DOCUMENT",id:document},baseVector:[{kind:"DOCUMENT",id:document,revision:null}],payload:{title:"flight.pdf",media_type:"application/pdf",sha256:"a".repeat(64),byte_size:16} };
+ const link = { ...created,operationId:randomUUID(),command:"RECONCILE_ITEM_DOCUMENTS",baseVector:[{kind:"DOCUMENT",id:document,revision:1},{kind:"ITEM",id:item,revision:2}],payload:{add:[document],remove:[]} };
+ const commands=[created,details,metadata,link];
+ expect(await f.repo.enqueueConfirmedItemDocuments(context,commands)).toEqual(commands.map(c=>c.operationId));
+ expect(await f.repo.enqueueConfirmedItemDocuments(context,commands)).toHaveLength(4);
+ expect((await f.repo.pending(context))).toHaveLength(4);
+ await expect(f.repo.enqueueConfirmedItemDocuments(context,[created,{...details,target:{kind:"ITEM",id:randomUUID()}},metadata,link])).rejects.toThrow();
+ expect((await f.repo.pending(context))).toHaveLength(4);
+});
