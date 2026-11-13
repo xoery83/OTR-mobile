@@ -30,21 +30,24 @@ verified true using the standard ignored Auth-worktree public DEV environment.
 The in-place update retained the Guest container. Owner reached confirmation and
 submitted once, then received generic adoptionPending. Original attempt
 `7da7240f…` has a local PREPARED checkpoint, no local publication marker observed;
-Root2 independent read-only PG confirms policy disabled (xmin 33417), with
-zero original grants, stages and terminal receipts. Existing close helper and
-current runtime config pins match; a new finite timer/window is not yet
-authorized or verified. AgentDeviceRunner is restored with its original Team
-and can read/operate the isolated iPad App, including the original Day Feed P1.
-PREPARED cold-reentry repair `237e4c66` passed 69 focused tests, independent
-Review and signed iPad normal-Account-page recovery to the original target.
-The in-place update preserved exact prepared checkpoint bytes. No new Apple
-authorization or Adoption submission was made. One finite Hosted window packet
-`f29441e7…` has Root2 static alignment and independent Review; approval, actual
-negative closure drill/arm and fresh CAS remain required before activation.
-Preserve this attempt, avoid retries
-or new IDs, and use `ADOPTION_RESUME_CURSOR.json` in the Apple ops packet.
-Existing GuestQA/native identities and data are preserved. Non-empty Guest
-Adoption remains incomplete; dual-Apple-user isolation remains NOT_RUN.
+Root2 diagnosed the closed policy, and Owner approved exact window `f29441e7…`.
+Software `237e4c66` fixes PREPARED cold recovery (69 focused tests + independent
+Review), verified in signed iPad UI with identical original checkpoint bytes.
+On 14 November NZDT, original Adoption `7da7240f…` was submitted exactly once via
+restored AgentDeviceRunner. Formal PUBLISHED Receipt `dd5c71a6…`, SHA `908b0584…`,
+was independently read and recomputed. Trip Owner/linked Person/P1 owner and Core
+APPLIED Receipt match the target Account. Native App process-cold relaunch kept
+the Account, Trip and P1 without Apple reauthorization. Root2 independently closed
+policy (xmin 67350), stopped the candidate, restored original healthy CID and
+released Writer; device claim is released. No further submit/window is needed.
+
+This is bounded publication/cold-readback PASS, not complete Native acceptance.
+Adopted Trip currently enters `LocalTripWorkspace.remoteSelected` summary mode:
+edit disabled, roster 0 named People, schedule incomplete-time fallback. Auth
+requested Native's existing canonical reader/metadata/People integration contract
+under `AUTH-APPLE-ADOPTED-NATIVE-READBACK-20261114-01`; no shared file edit or new
+Hosted request. Two distinct Apple users and explicit existing-Account linking
+remain unverified. Preserve the original published attempt; do not replay it.
 Supabase automatic same-email linking policy needs acceptance verification.
 New-bundle Google is unavailable until its own iOS Client exists.
 Evidence and continuation are in `docs/ops/auth-apple-native-20261113/`.

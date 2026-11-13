@@ -1,0 +1,117 @@
+{
+  "status": "ORIGINAL_ADOPTION_PUBLISHED_AND_DEV_RESTORED_VERIFIED",
+  "manifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749",
+  "windowId": "c8d26837-3b39-4d9a-9e39-26594b746c16",
+  "times": {
+    "windowId": "c8d26837-3b39-4d9a-9e39-26594b746c16",
+    "T": 1794592044,
+    "reserve": 1794592704,
+    "hardEnd": 1794592944,
+    "TUTC": "2026-11-13T17:47:24Z",
+    "reserveUTC": "2026-11-13T17:58:24Z",
+    "hardEndUTC": "2026-11-13T18:02:24Z",
+    "scriptSHA256": "135b40d258f805cd9ae09dc008daf42fd1c9b2d3ce4a1631ce2277527d1469da",
+    "approvalManifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749"
+  },
+  "receipt": {
+    "receiptId": "dd5c71a6-8faa-49ad-be3b-d7120acc2d96",
+    "receiptSHA256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1",
+    "bindingAndHash": "PASS"
+  },
+  "independentReadback": {
+    "at": "2026-11-13T17:57:05.135231+00:00",
+    "coreReceipt": {
+      "operationId": "8334b964-5289-4dcb-b301-ec5ffd753208",
+      "outcome": "APPLIED",
+      "receiptSha256": "f4b849cd5ae2e63ca35959120f96f7b539d6924776fbe89a90061f15b0ba2e4d",
+      "result": {
+        "changed": [],
+        "created": [
+          {
+            "id": "6ef0baa9-5a03-48f0-9a90-bea5b0a2f7c5",
+            "kind": "ITEM"
+          }
+        ],
+        "custodyGrantId": null,
+        "replacement": null,
+        "retiredEdges": []
+      },
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "6ef0baa9-5a03-48f0-9a90-bea5b0a2f7c5",
+          "kind": "ITEM"
+        }
+      ]
+    },
+    "items": [
+      {
+        "creatorPerson": null,
+        "family": "P1",
+        "id": "6ef0baa9-5a03-48f0-9a90-bea5b0a2f7c5",
+        "ownerAccount": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+        "revision": 1
+      }
+    ],
+    "person": [
+      {
+        "account": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+        "id": "fd5cf89b-be7a-47be-8ac9-82c3bec49123",
+        "personId": null,
+        "role": "owner",
+        "status": "linked"
+      }
+    ],
+    "trip": {
+      "createdBy": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+      "id": "faa0ea2b-9729-49b6-8ab7-db924df05e4d"
+    }
+  },
+  "p1Identity": {
+    "family": "P1",
+    "itemId": "6ef0baa9-5a03-48f0-9a90-bea5b0a2f7c5",
+    "ownerAccount": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+    "participationMode": "WHOLE_GROUP",
+    "revision": 1,
+    "selfPersonId": null
+  },
+  "closurePG": {
+    "databaseName": "postgres",
+    "grants": 1,
+    "policy": {
+      "enabled": false,
+      "version": "otr.auth.fileless-p1.unpriced/1",
+      "xmin": "67350"
+    },
+    "stages": 1,
+    "terminalReceipts": 1,
+    "transactionReadOnly": "on"
+  },
+  "restored": {
+    "originalCID": "69f805359a15ee37052cd0427824f9a98e40bd330202ae37c0c0a76185475be2",
+    "healthy": true,
+    "candidateStopped": true,
+    "closed": true
+  },
+  "externalHealth": 200,
+  "service": {
+    "MainPID": "0",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "ActiveState": "inactive",
+    "SubState": "dead"
+  },
+  "writerReleasedIndependentlyObserved": true,
+  "implementationCorrections": [
+    "First negative drill script EACCES fixed by0:999/0440 and existing supplemental read group999. Subsequent verify/close and independent systemd drill passed.",
+    "One negative drill returned CLOSURE_UNCONFIRMED; subsequent safe diagnostic and fixed bundle systemd revalidation passed; no positive action before PASS.",
+    "Before armed initial mounts array digest rejected; corrected only canonical ordering after same-CID itemwise comparison. Original T/reserve/hardEnd not extended."
+  ],
+  "actualHostScriptSHA256": "b93f540d73a0d284a445a66aa14a8cf7ea1591b0a51e532889e73da96fa67bcc",
+  "limits": [
+    "Auth reports original App cold restore PASS; Native Trip detail/edit/schedule fallback remains an integration delta.",
+    "No claim of complete People/edit capability acceptance. Item creator ownership is owner_account_id; WHOLE_GROUP has self_person_id null.",
+    "Optional HTTP log projection approval timed out; formal PG receipt/hash and Host evidence provide acceptance."
+  ]
+}

@@ -8,19 +8,22 @@
     "faa0ea2b-9729-49b6-8ab7-db924df05e4d"
   ],
   "inventorySha256": "33dcae3e768ddae6ce37c19dc026b67dbdfaf02199516c3bfbafd99e9c5a513c",
-  "publishRequestedObserved": false,
-  "status": "PREPARED_HOSTED_POLICY_CLOSED_NO_SERVER_COMMIT",
+  "status": "PUBLISHED_AND_DEV_RESTORED_NATIVE_DETAIL_INTEGRATION_GAPS",
   "requestId": "AUTH-APPLE-ADOPTION-DIAG-20261113-01",
   "ownerInstruction": "No further routine clicks needed; Auth AgentDeviceRunner owns local UI. Apple system authorization may require Owner.",
   "serverState": {
     "observedBy": "ROOT2_READ_ONLY_PG",
     "policyEnabled": false,
-    "policyXmin": "33417",
-    "grants": 0,
-    "sealedStages": 0,
-    "terminalReceipts": 0
+    "policyXmin": "67350",
+    "grants": 1,
+    "sealedStages": 1,
+    "terminalReceipts": 1,
+    "outcome": "PUBLISHED",
+    "receiptId": "dd5c71a6-8faa-49ad-be3b-d7120acc2d96",
+    "receiptSHA256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1"
   },
-  "nextAction": "Obtain exact one-use Hosted operational window approval, then Root2 verifies independent closure/fresh CAS and Auth executes original attempt once.",
-  "nativeRecovery": "PASS_237e4c66_ORIGINAL_TARGET_NORMAL_ACCOUNT_PAGE_CHECKPOINT_BYTES_UNCHANGED",
-  "windowManifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749"
+  "nextAction": "Never replay this published attempt. Diagnose Native remoteSelected metadata/People/time fallback via existing Native owning read port; retain Account Session and data.",
+  "nativeRecovery": "REAL_APP_COLD_RELAUNCH_SAME_ACCOUNT_TRIP_P1_READBACK_PASS_SUMMARY_MODE",
+  "windowManifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749",
+  "publishRequestedObservedBeforeRecovery": false
 }

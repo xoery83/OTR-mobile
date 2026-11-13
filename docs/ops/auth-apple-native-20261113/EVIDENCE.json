@@ -1,5 +1,5 @@
 {
-  "status": "BASIC_APPLE_AUTH_AND_GUEST_LOCAL_PASS_ADOPTION_BLOCKED_BY_CLOSED_HOSTED_POLICY",
+  "status": "APPLE_AUTH_NONEMPTY_GUEST_PUBLICATION_AND_COLD_READBACK_PASS_NATIVE_DETAIL_GAPS",
   "bundleIdentifier": "art.xoery.otr",
   "appleTeamId": "3K49Z2Q5X7",
   "ownerIdentifierRegistration": "CONFIRMED_IN_THIS_CHAT",
@@ -42,7 +42,7 @@
     "repeatLogin": "OWNER_CONFIRMED_SAME_ACCOUNT",
     "cancel": "OWNER_CONFIRMED_STILL_SIGNED_OUT",
     "hideMyEmail": "OWNER_CONFIRMED_SELECTED",
-    "guestAdoption": "CONFIRMATION_PAGE_REACHED_SUBMITTED_ONCE_GENERIC_FAILURE_ORIGINAL_ATTEMPT_PRESERVED",
+    "guestAdoption": "ORIGINAL_PUBLISHED_RECEIPT_AND_INDEPENDENT_PG_ACCOUNT_TRIP_P1_COLD_READBACK_PASS",
     "logoutRelogin": "OWNER_CONFIRMED_PASS",
     "coldSessionRestore": "OWNER_CONFIRMED_SAME_ACCOUNT_WITHOUT_REAUTH_AFTER_EXACT_PROCESS_RELAUNCH",
     "twoAppleUsersIsolation": "NOT_RUN",
@@ -50,10 +50,11 @@
     "guestLocalTripP1": "OWNER_CONFIRMED_NATIVE_GUEST_CREATE_SAVE_AND_PROCESS_COLD_RESTORE"
   },
   "remaining": [
-    "Complete the preserved nonempty Guest Trip/P1 Apple Adoption under a fresh scoped Hosted QA window, with independent Receipt/readback and Native recovery.",
+    "Resolve Native adopted-Trip full detail/edit/People/time fallback through existing owning reader/Native integration; remoteSelected summary is not full Native acceptance.",
     "Qualify a second real Apple QA identity for actual cross-Account/Trip isolation.",
     "Verify Hosted manual identity linking and same-email automatic-linking behavior against the explicit-linking contract before acceptance.",
-    "New Google iOS Client is required for art.xoery.otr. Google is unavailable only in the new bundle until configured."
+    "New Google iOS Client is required for art.xoery.otr. Google is unavailable only in the new bundle until configured.",
+    "No claim that two same-Apple-identity devices prove two distinct Apple users isolation."
   ],
   "finalDeviceBuild": {
     "result": "PASS",
@@ -112,10 +113,11 @@
     "ownerSawConfirmation": true,
     "ownerSubmittedOnce": true,
     "localCheckpoint": "PREPARED_ONLY_NO_LOCAL_PUBLICATION_MARKER",
-    "serverState": "ROOT2_READ_ONLY_POLICY_DISABLED_ORIGINAL_GRANT_STAGE_RECEIPT_ZERO",
+    "serverState": "RESOLVED_PUBLISHED_ORIGINAL_RECEIPT_AND_CLOSED_RUNTIME_VERIFIED",
     "root2ReadOnlyRequest": "AUTH-APPLE-ADOPTION-DIAG-20261113-01",
     "cursor": "ADOPTION_RESUME_CURSOR.json",
-    "readback": "HOSTED_READ_ONLY_DIAGNOSIS.json"
+    "readback": "HOSTED_READ_ONLY_DIAGNOSIS.json",
+    "status": "RESOLVED_BY_EXACT_APPROVED_RUNTIME_WINDOW"
   },
   "preparedColdRecovery": {
     "sourceCommit": "237e4c66",
@@ -127,10 +129,12 @@
     "record": "PREPARED_COLD_DEVICE_READBACK.json"
   },
   "hostedWindow": {
-    "status": "PREPARED_REVIEWED_NOT_APPROVED_NOT_ACTIVATED",
+    "status": "USED_ONCE_CLOSED_AND_ORIGINAL_DEV_RESTORED",
     "manifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749",
     "root2StaticAlignment": "PASS",
     "standaloneCloseVerifyOnly": "PASS",
-    "actualDisconnectDrill": "NOT_RUN_PRECONDITION_AFTER_APPROVAL"
+    "actualDisconnectDrill": "PASS_AFTER_RECORDED_MINIMAL_REPAIRS",
+    "receiptSHA256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1",
+    "finalEvidence": "APPLE_GUEST_WINDOW_FINAL_RECEIPT.json"
   }
 }

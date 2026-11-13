@@ -117,3 +117,20 @@ iPad update restored the normal Account page to the original target without
 new Apple authorization; prepared checkpoint bytes remained identical. See
 `PREPARED_COLD_DEVICE_READBACK.json`. No Adoption was resubmitted. The exact
 finite Hosted window remains an unactivated candidate under `hosted-window-20261114/`.
+
+## Exact Hosted recovery result
+
+Owner approved packet `f29441e7…`, code `237e4c66`. The single original UI resume
+produced formal PUBLISHED Receipt `dd5c71a6…` / SHA `908b0584…`. Root2 independently
+read the linked Owner Person, Trip and P1/Core receipt; Auth recomputed the
+receipt domain hash and all original bindings. Same-App cold relaunch retained
+the Account, original Trip and P1 without another Apple authorization. Root2
+closed policy (xmin 67350), restored the original healthy service and independently
+proved Writer release; Auth released the device claim. See the final receipts.
+
+Full Native detail/edit/People acceptance remains pending. The actual restored
+Trip routes through the existing remoteSelected summary branch: edit disabled,
+zero named roster entries and incomplete-time fallback. Reuse Native's canonical
+reader/metadata integration; do not create a local Trip by copying Guest SQLite.
+Two devices with the same Apple identity do not prove two-user isolation. No
+replay of this now-published attempt is authorized or required.
