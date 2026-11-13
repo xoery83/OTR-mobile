@@ -71,10 +71,21 @@ files. No new device build or Realtime subscription is required for this handoff
   temporary single-function Writer handoff for `readServerParentPeopleContext`.
 - Minimal local consumer patch hydrates through that existing coordinator and
   rechecks opening Account before unchanged ParentReceipt/Core/Creator checks.
-  It does not enable the Parent Reader or create a Person/queue. Actual page
-  still has no production caller passing `serverParentPeopleEnabled` (default
-  false); Native owns that shared composition. Metadata edit requires confirmed
+  It does not enable the Hosted Parent Reader or create a Person/queue. Native
+  supplied the precise scope-first shared composition, consumed at `a50a9fd9`
+  after 65 tests, UI guard and independent Review. Same-App normal read-only QA
+  retains the Account/Trip and opens People with Add disabled. Root2 observed a
+  temporally correlated Create Receipt 404, no Actor/Trip log binding, and no
+  Ledger bootstrap in that interval; exact deployed Reader availability remains
+  under read-only diagnosis. Metadata edit requires confirmed
   server-parent Metadata consumption; no local `serverId` or permission is guessed.
-- Return trigger: Native supplies the approved composition/Reader capability,
-  then Auth verifies the same formal Account/Trip through normal read-only UI.
-  No replay of original Adoption or new Hosted write window is needed.
+- Native composition is delivered. Hosted Parent Reader is absent in both actual
+  running bundles. The rebuilt `cf95bd05` candidate is NOT deployable: its source
+  lacks the running Import V3/Core/document-metadata capability. Root1 must supply
+  the complete accepted source baseline; Auth retains the existing Parent patch.
+  Root2 also observed a 210 MB archive versus about 105 MB free host space. No
+  deploy, flag activation, permission change or original Adoption replay occurred.
+  See `auth-apple-native-20261113/BACKEND_COMPATIBILITY_BLOCKER.json`.
+- Return trigger: complete compatible image and Root2 capacity/readiness proof;
+  then verify People, invite, Details and schedule on the already migrated Trip.
+  IMPORT admission maps to PROVIDER origin; no origin enum change is needed.

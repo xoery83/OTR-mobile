@@ -1,0 +1,47 @@
+{
+  "status": "BLOCKED_BY_VERIFIED_SOURCE_BASELINE_MISMATCH",
+  "image": "sha256:75521f3ddf7304f6aab76d2d37c713fb675020a3aec74925e626697833f23839",
+  "declaredSource": "cf95bd0518601a303fd8381abb6965640e0eb37a",
+  "declaredBaseSource": "624f3c53ff9341ef71e0db4264293c827546619a",
+  "actualBaseImage": "sha256:1f85595d88531fb6827f1e10a0bd5f440e52f8cc73051ec729bb06f5145392bc",
+  "baseCaptureMarkers": {
+    "trip_core_command_receipts": true,
+    "CREATE_DOCUMENT_METADATA": true,
+    "RECONCILE_ITEM_DOCUMENTS": true,
+    "UNIVERSAL_IMPORT_LOCAL_FIRST_V3": true,
+    "universal_v3": true
+  },
+  "candidateCaptureMarkers": {
+    "trip_core_command_receipts": true,
+    "CREATE_DOCUMENT_METADATA": false,
+    "RECONCILE_ITEM_DOCUMENTS": true,
+    "UNIVERSAL_IMPORT_LOCAL_FIRST_V3": false,
+    "universal_v3": false
+  },
+  "directSourceEvidence": {
+    "contextBackendUniversalV3Files": "absent",
+    "serverCaptureUniversalV3LoaderReferences": "absent",
+    "tripCoreV2CreateDocumentMetadataToken": "absent"
+  },
+  "interpretation": "OCI base source label does not account for complete running bundle. Rebuilding only that tracked tree plus Parent Reader cannot currently be accepted as preserving actual Import/Core contract.",
+  "minimumRepairOwner": "Auth/Root1/Import source owner must provide actual deployed V3/Core/Receipt source overlay or authoritative complete compatible revision; reuse Parent patch on that source. Do not invent permissions/origins or deploy current candidate.",
+  "hostCapacity": {
+    "availableBytesLastObserved": 105250816,
+    "archiveBytes": 210093449,
+    "existingStageCannotFitArchive": true
+  },
+  "finalDeployment": false,
+  "admissionContract": "IMPORT is an admission mode mapped to PROVIDER field origin; do not add an IMPORT origin.",
+  "nextAction": "Root1 supplies complete accepted deployed source baseline; Auth overlays existing Parent Reader, verifies changed paths; Root2 builds and proves deployment capacity before publishing.",
+  "repairCandidate": {
+    "sourceRevision": "b797f9b3fe0a3ec5827afffedf46e1b9e711239c",
+    "candidate": "16a187adf9bb067ad3f48ff00cc237a62213e897",
+    "path": "/private/tmp/otr-auth-parent-compatible-20261114",
+    "tests": 233,
+    "files": 11,
+    "dualBackendBuild": true,
+    "root1Review": "IN_PROGRESS",
+    "root2Build": "IN_PROGRESS",
+    "deployed": false
+  }
+}

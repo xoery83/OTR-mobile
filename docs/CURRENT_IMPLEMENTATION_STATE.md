@@ -51,6 +51,13 @@ remain unverified. Preserve the original published attempt; do not replay it.
 Supabase automatic same-email linking policy needs acceptance verification.
 New-bundle Google is unavailable until its own iOS Client exists.
 Evidence and continuation are in `docs/ops/auth-apple-native-20261113/`.
+Native composition `a50a9fd9` is installed and retains Account/Trip; People opens
+but Add stays disabled. Actual Backend lacks Parent Reader. Intermediate image
+`75521f3d…` is held: its old source omits running Import V3/Core capabilities.
+Root1 is recovering the complete approved source baseline; Root2 must also prove
+host disk capacity before any deployment. No new SQL or Adoption replay.
+Parent readiness metadata validation has 12 focused passing tests; Hosted probe
+is not yet executed and does not constitute HTTP or Native acceptance.
 
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 
