@@ -2954,7 +2954,12 @@ it("retains the explicitly confirmed Item, Document and link operations across r
     command: "CREATE_DOCUMENT_METADATA",
     target: { kind: "DOCUMENT", id: document },
     baseVector: [{ kind: "DOCUMENT", id: document, revision: null }],
-    payload: { title: "original.pdf", media_type: "application/pdf", sha256: "a".repeat(64), byte_size: 16 },
+    payload: {
+      title: "original.pdf",
+      media_type: "application/pdf",
+      sha256: "a".repeat(64),
+      byte_size: 16,
+    },
   };
   const link = {
     ...created,
@@ -2968,33 +2973,113 @@ it("retains the explicitly confirmed Item, Document and link operations across r
   };
   const commands = [created, metadata, link];
   const fixed = commands.map(({ operationId }) => operationId);
-  expect(await initial.repo.enqueueConfirmedItemDocuments(context, commands)).toEqual(fixed);
+  expect(await initial.repo.enqueueConfirmedItemDocuments(context, commands)).toEqual(
+    fixed,
+  );
   initial.sql.close();
   const cold = fixture(path, false);
   const recovered = await cold.repo.captureContext(trip);
-  expect((await cold.repo.pending(recovered)).map(({ command }) => command.operationId)).toEqual(fixed);
-  expect(await cold.repo.enqueueConfirmedItemDocuments(recovered, commands)).toEqual(fixed);
-  expect(cold.sql.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count).toBe(3);
+  expect(
+    (await cold.repo.pending(recovered)).map(({ command }) => command.operationId),
+  ).toEqual(fixed);
+  expect(await cold.repo.enqueueConfirmedItemDocuments(recovered, commands)).toEqual(
+    fixed,
+  );
+  expect(
+    cold.sql.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count,
+  ).toBe(3);
   const changed = { ...link, payload: { add: [randomUUID()], remove: [] } };
-  await expect(cold.repo.enqueueConfirmedItemDocuments(recovered, [created, metadata, changed]))
-    .rejects.toThrow();
-  expect((await cold.repo.pending(recovered)).map(({ command }) => command.operationId)).toEqual(fixed);
+  await expect(
+    cold.repo.enqueueConfirmedItemDocuments(recovered, [created, metadata, changed]),
+  ).rejects.toThrow();
+  expect(
+    (await cold.repo.pending(recovered)).map(({ command }) => command.operationId),
+  ).toEqual(fixed);
 });
 
 it("atomically retains authored Flight facts before its Documents without opening other command packets", async () => {
- const f = fixture(); const context = await f.repo.captureContext(trip); const created = sparse();
- const unknown = { ...coreDateBoundary("2026-12-14"), local_date: null };
- const details = { ...created, operationId: randomUUID(), command: "SET_AUTHORED_FLIGHT_DETAILS",
-  baseVector: [{kind:"ITEM",id:item,revision:1}], payload:{flightNumberLiteral:"NZ5069",
-   origin:{airportCode:"AKL",name:"Auckland",terminal:null,time:coreDateBoundary("2026-12-14")},
-   destination:{airportCode:null,name:null,terminal:null,time:unknown}} };
- const document = randomUUID();
- const metadata = { ...created,operationId:randomUUID(),command:"CREATE_DOCUMENT_METADATA",target:{kind:"DOCUMENT",id:document},baseVector:[{kind:"DOCUMENT",id:document,revision:null}],payload:{title:"flight.pdf",media_type:"application/pdf",sha256:"a".repeat(64),byte_size:16} };
- const link = { ...created,operationId:randomUUID(),command:"RECONCILE_ITEM_DOCUMENTS",baseVector:[{kind:"DOCUMENT",id:document,revision:1},{kind:"ITEM",id:item,revision:2}],payload:{add:[document],remove:[]} };
- const commands=[created,details,metadata,link];
- expect(await f.repo.enqueueConfirmedItemDocuments(context,commands)).toEqual(commands.map(c=>c.operationId));
- expect(await f.repo.enqueueConfirmedItemDocuments(context,commands)).toHaveLength(4);
- expect((await f.repo.pending(context))).toHaveLength(4);
- await expect(f.repo.enqueueConfirmedItemDocuments(context,[created,{...details,target:{kind:"ITEM",id:randomUUID()}},metadata,link])).rejects.toThrow();
- expect((await f.repo.pending(context))).toHaveLength(4);
+  const f = fixture();
+  const context = await f.repo.captureContext(trip);
+  const created = sparse();
+  const unknown = { ...coreDateBoundary("2026-12-14"), local_date: null };
+  const details = {
+    ...created,
+    operationId: randomUUID(),
+    command: "SET_AUTHORED_FLIGHT_DETAILS",
+    baseVector: [{ kind: "ITEM", id: item, revision: 1 }],
+    payload: {
+      flightNumberLiteral: "NZ5069",
+      origin: {
+        airportCode: "AKL",
+        name: "Auckland",
+        terminal: null,
+        time: coreDateBoundary("2026-12-14"),
+      },
+      destination: { airportCode: null, name: null, terminal: null, time: unknown },
+    },
+  };
+  const document = randomUUID();
+  const metadata = {
+    ...created,
+    operationId: randomUUID(),
+    command: "CREATE_DOCUMENT_METADATA",
+    target: { kind: "DOCUMENT", id: document },
+    baseVector: [{ kind: "DOCUMENT", id: document, revision: null }],
+    payload: {
+      title: "flight.pdf",
+      media_type: "application/pdf",
+      sha256: "a".repeat(64),
+      byte_size: 16,
+    },
+  };
+  const link = {
+    ...created,
+    operationId: randomUUID(),
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    baseVector: [
+      { kind: "DOCUMENT", id: document, revision: 1 },
+      { kind: "ITEM", id: item, revision: 2 },
+    ],
+    payload: { add: [document], remove: [] },
+  };
+  const commands = [created, details, metadata, link];
+  expect(await f.repo.enqueueConfirmedItemDocuments(context, commands)).toEqual(
+    commands.map((c) => c.operationId),
+  );
+  expect(await f.repo.enqueueConfirmedItemDocuments(context, commands)).toHaveLength(4);
+  expect(await f.repo.pending(context)).toHaveLength(4);
+  await expect(
+    f.repo.enqueueConfirmedItemDocuments(context, [
+      created,
+      { ...details, target: { kind: "ITEM", id: randomUUID() } },
+      metadata,
+      link,
+    ]),
+  ).rejects.toThrow();
+  expect(await f.repo.pending(context)).toHaveLength(4);
+});
+
+it("reads an existing immutable receipt locally only for the same original intent and scope", async () => {
+  const f = await lostP1RecoveryFixture(false);
+  expect(await f.repo.retainedReceipt(f.ctx, f.command)).toBeNull();
+  if (f.receipt.projection !== "FULL") throw Error("FULL_REQUIRED");
+  await f.repo.applyReceipt(f.ctx, f.receipt.receipt);
+  expect(await f.repo.retainedReceipt(f.ctx, f.command)).toEqual(f.receipt.receipt);
+  await expect(
+    f.repo.retainedReceipt(f.ctx, {
+      ...f.command,
+      payload: {
+        ...(f.command.payload as Record<string, unknown>),
+        core: { title: "Different intent" },
+      },
+    } as never),
+  ).rejects.toThrow("SCOPE_MISMATCH");
+  expect(() =>
+    f.sql
+      .prepare(
+        "UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=? WHERE operation_id=?",
+      )
+      .run("a".repeat(64), f.command.operationId),
+  ).toThrow("CORE_RECEIPT_IMMUTABLE");
+  expect(await f.repo.retainedReceipt(f.ctx, f.command)).toEqual(f.receipt.receipt);
 });

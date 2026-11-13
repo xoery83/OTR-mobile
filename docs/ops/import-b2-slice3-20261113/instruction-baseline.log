@@ -1,0 +1,29 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/import-v3-local-first
+
+ ❯ src/data/sync/tripCoreV2SyncWorker.baseline.test.ts (54 tests | 1 failed | 52 skipped) 26ms
+   × uses actual P3 parent family instead of skipping its disabled capability for CORRECT_INSTRUCTION 11ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 52 skipped (54)
+   Start at  23:34:34
+   Duration  399ms (transform 175ms, setup 0ms, import 281ms, tests 26ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/sync/tripCoreV2SyncWorker.baseline.test.ts > uses actual P3 parent family instead of skipping its disabled capability for CORRECT_INSTRUCTION
+AssertionError: expected [Function] to throw error including 'CORE_FAMILY_CLOSED' but got 'CORE_INSTRUCTION_SYNC_CLOSED'
+
+Expected: "CORE_FAMILY_CLOSED"
+Received: "CORE_INSTRUCTION_SYNC_CLOSED"
+
+ ❯ src/data/sync/tripCoreV2SyncWorker.baseline.test.ts:626:49
+    624|       enabledFamilies: ["P1"],
+    625|     });
+    626|     await expect(f.openWorker.push(f.operation)).rejects.toThrow("CORE…
+       |                                                 ^
+    627|     expect(f.transport.submit).not.toHaveBeenCalled();
+    628|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

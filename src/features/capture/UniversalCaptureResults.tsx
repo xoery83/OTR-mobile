@@ -19,7 +19,6 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { useUniversalCapture } from "./useUniversalCapture";
 import { useEffect, useRef, useState } from "react";
-import { router, useNavigation } from "expo-router";
 import {
   readImportSubmission,
   updateImportSubmission,
@@ -27,7 +26,10 @@ import {
 } from "@/data/repositories/importSubmissionRepository";
 import type { V3AdmissionRow } from "@/data/operations/universalV3Review";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
-import { openUniversalV3Review } from "@/data/operations/universalV3Review";
+import {
+  openUniversalV3Review,
+  applyUniversalV3Batch,
+} from "@/data/operations/universalV3Review";
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
 import {
   projectUniversalV3Activity,
@@ -43,24 +45,27 @@ export function UniversalCaptureResults({
   onOpenAcceptedItem,
   originalsListedElsewhere = false,
   onLegacyPhotoReview,
+  onOpenReview,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   originalsListedElsewhere?: boolean;
   onLegacyPhotoReview?(enabled: boolean): void;
+  onOpenReview?(jobId: string): void;
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
+  const { localFirstSelected, busy, canStart, unavailable, localFirst, start } = state;
   const submittedStart = useRef(false);
   useEffect(() => {
     if (
       submittedStart.current ||
-      state.localFirstSelected !== true ||
-      state.busy ||
-      !state.canStart ||
-      state.unavailable ||
-      (state.localFirst && state.localFirst.state !== "WAITING_INPUT") ||
+      localFirstSelected !== true ||
+      busy ||
+      !canStart ||
+      unavailable ||
+      (localFirst && localFirst.state !== "WAITING_INPUT") ||
       !model.allInputsAccepted
     )
       return;
@@ -69,7 +74,7 @@ export function UniversalCaptureResults({
       .then((intent) => {
         if (!active || !isCurrent() || !intent || submittedStart.current) return;
         submittedStart.current = true;
-        state.start();
+        start();
       })
       .catch(() => undefined);
     return () => {
@@ -78,12 +83,12 @@ export function UniversalCaptureResults({
   }, [
     model,
     isCurrent,
-    state.localFirstSelected,
-    state.localFirst,
-    state.busy,
-    state.canStart,
-    state.unavailable,
-    state.start,
+    localFirstSelected,
+    localFirst,
+    busy,
+    canStart,
+    unavailable,
+    start,
   ]);
 
   useEffect(() => {
@@ -116,6 +121,7 @@ export function UniversalCaptureResults({
           key={model.batch.batchId}
           model={model}
           execution={state.localFirst}
+          onOpenReview={onOpenReview}
           unavailable={state.unavailable}
           formatUnavailable={state.formatUnavailable}
           isCurrent={isCurrent}
@@ -157,14 +163,15 @@ export function UniversalV3Activity({
   unavailable,
   formatUnavailable,
   isCurrent,
+  onOpenReview,
 }: {
   model: CaptureJobReadModel;
   execution: UniversalV3ExecutionStatus | null;
   unavailable: boolean;
   formatUnavailable: boolean;
   isCurrent(): boolean;
+  onOpenReview?(jobId: string): void;
 }) {
-  const navigation = useNavigation();
   const navigating = useRef(false);
   const [intent, setIntent] = useState<ImportSubmission | null>(null);
   const [rows, setRows] = useState<V3AdmissionRow[]>([]);
@@ -209,36 +216,7 @@ export function UniversalV3Activity({
         const plan = owner.batch(result.candidates);
         if (!current()) return;
         setRows(plan);
-        const next: Record<string, V3SaveObservation> = {};
-        for (const row of plan) {
-          const resolution = submitted?.resolutions[row.candidate.candidateId];
-          const candidate = resolution?.candidate ?? row.candidate;
-          if (!current()) return;
-          let observed = await owner.check(candidate);
-          const decision = resolution?.decision ?? row.decision;
-          if (
-            current() &&
-            submitted?.confirmed &&
-            decision &&
-            observed === "UNCONFIRMED" &&
-            !unknown.has(candidate.candidateId)
-          ) {
-            try {
-              observed = await owner.confirm(candidate, decision);
-            } catch {
-              observed = "REVIEW_REQUIRED";
-            }
-          }
-          next[candidate.candidateId] =
-            observed !== "VERIFIED" && unknown.has(candidate.candidateId)
-              ? "OUTCOME_UNKNOWN"
-              : observed;
-          if (!current()) return;
-          setObservations((previous) => ({
-            ...previous,
-            [candidate.candidateId]: next[candidate.candidateId],
-          }));
-        }
+        const next = await applyUniversalV3Batch(model, owner, plan, submitted, unknown);
         if (!current()) return;
         setReview(owner);
         setObservations(next);
@@ -253,7 +231,10 @@ export function UniversalV3Activity({
         )
           timer = setTimeout(() => void read(), 5000);
       } catch {
-        if (current()) setReadUnavailable(true);
+        if (current()) {
+          setReadUnavailable(true);
+          timer = setTimeout(() => void read(), 5000);
+        }
       } finally {
         running = false;
       }
@@ -284,20 +265,40 @@ export function UniversalV3Activity({
   );
   const progressState =
     progress.state === "confirmation" &&
-    displayRows.every(
-      (row) =>
-        row.disposition === "REVIEW" && !intent?.resolutions[row.candidate.candidateId],
-    )
+    (intent?.confirmed ||
+      displayRows.every(
+        (row) =>
+          row.disposition === "REVIEW" && !intent?.resolutions[row.candidate.candidateId],
+      ))
       ? "attention"
       : progress.state;
+  const semanticReview =
+    progressState === "attention" &&
+    rows.some(
+      (row) =>
+        row.disposition === "REVIEW" &&
+        observations[row.candidate.candidateId] === "UNCONFIRMED",
+    );
   return (
     <UiSection title={t("capture.activityStatus.activity")}>
       <UiText>{t("capture.activityStatus.local")}</UiText>
       <UiText accessibilityRole="header" accessibilityLiveRegion="polite">
-        {t(`capture.activityStatus.${progressState}`)}
+        {t(
+          semanticReview
+            ? "capture.admission.needsReview"
+            : `capture.activityStatus.${progressState}`,
+        )}
       </UiText>
-      <UiText>{t(`capture.activityHint.${progressState}`)}</UiText>
-      {result?.candidates.length ? (
+      <UiText>
+        {t(
+          semanticReview
+            ? "capture.admission.reviewHint"
+            : intent && progressState === "confirmation"
+              ? "capture.admission.confirmationHint"
+              : `capture.activityHint.${progressState}`,
+        )}
+      </UiText>
+      {result?.candidates.length && progress.state !== "checking" ? (
         <UiText>
           {t("capture.activityStatus.counts", {
             saved: progress.saved,
@@ -343,9 +344,12 @@ export function UniversalV3Activity({
           }}
         />
       ) : null}
-      {rows.some(
+      {onOpenReview &&
+      rows.some(
         (row) =>
-          row.disposition === "REVIEW" ||
+          (row.disposition === "REVIEW" &&
+            !intent?.resolutions[row.candidate.candidateId] &&
+            observations[row.candidate.candidateId] !== "VERIFIED") ||
           observations[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
           observations[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",
       ) ? (
@@ -355,11 +359,7 @@ export function UniversalV3Activity({
           onPress={() => {
             if (navigating.current || !isCurrent()) return;
             navigating.current = true;
-            navigation.setParams({ jobId: model.batch.jobId } as never);
-            router.push({
-              pathname: "/import-review",
-              params: { jobId: model.batch.jobId },
-            });
+            onOpenReview(model.batch.jobId);
           }}
         />
       ) : null}

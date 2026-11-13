@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AppState, ScrollView, StyleSheet, View } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
@@ -27,6 +27,7 @@ import {
   readImportSubmission,
   updateImportSubmission,
 } from "@/data/repositories/importSubmissionRepository";
+import { verifyUtf8TextFile } from "@/domain/capture/utf8TextFile";
 import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { V3SaveObservation } from "@/data/operations/universalV3Activity";
@@ -48,6 +49,10 @@ export function ImportExceptionReviewScreen() {
     Record<string, V3SaveObservation | "RESOLVED">
   >({});
   const [unavailable, setUnavailable] = useState(false);
+  const [originalUnavailable, setOriginalUnavailable] = useState(false);
+  const [originalText, setOriginalText] = useState<{ source: string; text: string }>();
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const alive = useRef(true),
     generation = useRef(getAccountGeneration());
@@ -57,7 +62,8 @@ export function ImportExceptionReviewScreen() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
-        if (!jobId || !current()) return;
+        if (!jobId) throw Error("IMPORT_REVIEW_CONTEXT");
+        if (!current()) return;
         const batch = await reopenDefaultCaptureJob(jobId);
         if (!batch || !current()) return;
         const trip = batch.batch.context.tripPrior?.id ?? batch.assignedTripId;
@@ -78,6 +84,7 @@ export function ImportExceptionReviewScreen() {
             observed === "UNCONFIRMED" && resolution ? "RESOLVED" : observed;
         }
         if (!current()) return;
+        setLoading(false);
         setModel(batch);
         setOwner(review);
         setRows(plan);
@@ -92,7 +99,11 @@ export function ImportExceptionReviewScreen() {
             if (AppState.currentState === "active") void load();
           }, 5000);
       } catch {
-        if (current()) setUnavailable(true);
+        if (current()) {
+          setUnavailable(true);
+          setLoading(false);
+          timer = setTimeout(() => void load(), 5000);
+        }
       }
     };
     void load();
@@ -100,7 +111,7 @@ export function ImportExceptionReviewScreen() {
       alive.current = false;
       clearTimeout(timer);
     };
-  }, [jobId]);
+  }, [jobId, refreshVersion]);
   const selected = rows.find((row) => row.candidate.candidateId === expanded);
   const amended = selected?.candidate;
   const validNew = amended && owner?.actions(amended).NEW;
@@ -110,12 +121,14 @@ export function ImportExceptionReviewScreen() {
     );
     setSource(row.candidate.documentIds[0]);
     setChoice(undefined);
+    setOriginalUnavailable(false);
     const facts = universalV3ReviewFields(row.candidate);
     setTitle(facts.title ?? "");
     setDay(facts.start ?? "");
   };
   const preview = async () => {
     if (!model || !source || !current()) return;
+    setOriginalUnavailable(false);
     const trip = model.batch.context.tripPrior?.id ?? model.assignedTripId;
     const file = model.inputs.find(
       (file) =>
@@ -133,6 +146,15 @@ export function ImportExceptionReviewScreen() {
         file.contentByteCount,
       );
       if (!bytes) throw Error("IMPORT_ORIGINAL_NOT_LOCAL");
+      if (file.kind === "TEXT" || file.declaredContentType === "text/plain") {
+        const text =
+          file.kind === "TEXT"
+            ? new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes)
+            : verifyUtf8TextFile(bytes, file.originalFilename, file.declaredContentType)
+                .text;
+        if (current()) setOriginalText({ source, text });
+        return;
+      }
       const { previewImportOriginal } = await import("@/native/importOriginalPreview");
       await previewImportOriginal(
         {
@@ -146,7 +168,7 @@ export function ImportExceptionReviewScreen() {
         current,
       );
     } catch {
-      if (current()) setUnavailable(true);
+      if (current()) setOriginalUnavailable(true);
     }
   };
   const chooseNew = () => setChoice(universalV3NewDecision);
@@ -179,12 +201,16 @@ export function ImportExceptionReviewScreen() {
     } catch {
       if (current()) setUnavailable(true);
     } finally {
-      if (current()) setBusy(false);
+      if (current()) {
+        setBusy(false);
+        setRefreshVersion((value) => value + 1);
+      }
     }
   };
   const exceptions = rows.filter(
     (row) =>
-      row.disposition === "REVIEW" ||
+      (row.disposition === "REVIEW" &&
+        statuses[row.candidate.candidateId] !== "VERIFIED") ||
       statuses[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
       statuses[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",
   );
@@ -193,6 +219,15 @@ export function ImportExceptionReviewScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
+          headerBackVisible: false,
+          headerLeft: () => (
+            <UiButton
+              variant="text"
+              label={t("common.back")}
+              icon={<AppIcon name="chevron.left" color={colors.accent} size={18} />}
+              onPress={() => router.back()}
+            />
+          ),
           headerTitle: () => <NavigationContextTitle title={t("common.review")} />,
         }}
       />
@@ -202,7 +237,9 @@ export function ImportExceptionReviewScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <UiText style={styles.heading}>
-          {t("capture.admission.reviewHeading", { count: exceptions.length })}
+          {loading
+            ? t("capture.jobLoading")
+            : t("capture.admission.reviewHeading", { count: exceptions.length })}
         </UiText>
         {unavailable ? (
           <UiText style={styles.body} accessibilityLiveRegion="polite">
@@ -213,6 +250,18 @@ export function ImportExceptionReviewScreen() {
           const id = row.candidate.candidateId,
             status = statuses[id],
             open = expanded === id;
+          const unsaved = [
+            "room.type",
+            "guest.name",
+            "driver.name",
+            "activity.category",
+            "operating_flight",
+            "platform",
+          ].flatMap((key) =>
+            row.candidate.fields[key] === undefined
+              ? []
+              : [String(row.candidate.fields[key])],
+          );
           return (
             <View key={id} style={styles.row}>
               <UiButton
@@ -276,9 +325,28 @@ export function ImportExceptionReviewScreen() {
                       onPress={() => void preview()}
                     />
                   </View>
+                  {originalText && originalText.source === source ? (
+                    <UiText selectable style={styles.body}>
+                      {originalText.text}
+                    </UiText>
+                  ) : null}
+                  {originalUnavailable ? (
+                    <UiText style={styles.body}>
+                      {t("importDocuments.originalUnavailable")}
+                    </UiText>
+                  ) : null}
                   <UiText style={styles.body}>{title}</UiText>
+                  {unsaved.length ? (
+                    <UiText style={styles.body}>
+                      {t("capture.ai.v3.notSaved", { details: unsaved.join(" · ") })}
+                    </UiText>
+                  ) : null}
                   <UiText style={styles.body}>{day}</UiText>
-                  {row.reason === "missing" ? <UiText style={styles.body}>{t("capture.admission.manualRequired")}</UiText> : null}
+                  {row.reason === "missing" ? (
+                    <UiText style={styles.body}>
+                      {t("capture.admission.manualRequired")}
+                    </UiText>
+                  ) : null}
                   <UiButton
                     variant="secondary"
                     disabled={!validNew || busy}
@@ -289,7 +357,9 @@ export function ImportExceptionReviewScreen() {
                     <UiChoiceChip
                       key={target.id}
                       label={t("capture.admission.link", { title: target.title })}
-                      selected={!!choice && "itemId" in choice && choice.itemId === target.id}
+                      selected={
+                        !!choice && "itemId" in choice && choice.itemId === target.id
+                      }
                       onPress={() => chooseLink(target)}
                     />
                   ))}

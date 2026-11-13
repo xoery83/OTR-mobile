@@ -137,6 +137,14 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="import-review"
+              options={{
+                presentation: "fullScreenModal",
+                headerShown: true,
+                animation: "slide_from_right",
+              }}
+            />
+            <Stack.Screen
               name="trip-home"
               options={{
                 headerShown: true,

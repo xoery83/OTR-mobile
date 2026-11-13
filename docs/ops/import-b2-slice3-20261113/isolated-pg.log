@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/import-v3-local-first
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:48:22
+   Duration  846ms (transform 104ms, setup 0ms, import 138ms, tests 652ms, environment 0ms)
+
+IMPORT forward, owning commands, independent readback and exact inverse PASS

@@ -28,7 +28,10 @@ export type UniversalV3Decision =
   | { action: "LINK"; itemId: string; revision: number }
   | { action: "UPDATE"; itemId: string; revision: number };
 
-export function universalV3LinkDecision(itemId: string, revision: number): UniversalV3Decision {
+export function universalV3LinkDecision(
+  itemId: string,
+  revision: number,
+): UniversalV3Decision {
   return { action: "LINK", itemId, revision };
 }
 
@@ -410,10 +413,7 @@ export function planUniversalV3Review(input: {
           target: { kind: "DOCUMENT", id },
           baseVector: [{ kind: "DOCUMENT", id, revision: null }],
           payload: {
-            title: (file.originalFilename?.trim() || mediaType).slice(
-              0,
-              256,
-            ),
+            title: (file.originalFilename?.trim() || mediaType).slice(0, 256),
             media_type: mediaType,
             byte_size: file.contentByteCount,
             sha256: file.contentSha256,
@@ -641,6 +641,71 @@ export function projectUniversalV3SaveState(input: {
     : ("PENDING" as const);
 }
 
+const applyingBatches = new Map<
+  string,
+  Promise<Record<string, import("./universalV3Activity").V3SaveObservation>>
+>();
+// Receiving a ready result hands the whole confirmed plan to the existing queue.
+// Dismissing Activity must not abort halfway through independently eligible rows.
+export function applyUniversalV3Batch(
+  model: CaptureJobReadModel,
+  owner: Awaited<ReturnType<typeof openUniversalV3Review>>,
+  rows: V3AdmissionRow[],
+  intent: import("../repositories/importSubmissionRepository").ImportSubmission | null,
+  unknown: ReadonlySet<string>,
+) {
+  const key = `${model.batch.accountId}:${model.batch.batchId}:${intent?.confirmed}:${JSON.stringify(intent?.resolutions ?? {})}`;
+  const existing = applyingBatches.get(key);
+  if (existing) return existing;
+  const work = (async () => {
+    const { getAccountGeneration } = await import("../auth/accountGeneration");
+    const generation = getAccountGeneration();
+    if (
+      intent &&
+      (intent.accountId !== model.batch.accountId ||
+        intent.batchId !== model.batch.batchId ||
+        intent.tripId !== (model.batch.context.tripPrior?.id ?? model.assignedTripId))
+    )
+      throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
+    const observations: Record<
+      string,
+      import("./universalV3Activity").V3SaveObservation
+    > = {};
+    for (const row of rows) {
+      if (generation !== getAccountGeneration())
+        throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
+      const resolution = intent?.resolutions[row.candidate.candidateId];
+      const candidate = resolution?.candidate ?? row.candidate;
+      let observed = await owner.check(candidate);
+      const decision = resolution?.decision ?? row.decision;
+      if (
+        intent?.confirmed &&
+        decision &&
+        observed === "UNCONFIRMED" &&
+        !unknown.has(candidate.candidateId)
+      ) {
+        try {
+          observed = await owner.confirm(candidate, decision);
+        } catch {
+          observed = "REVIEW_REQUIRED";
+        }
+      }
+      observations[candidate.candidateId] =
+        observed !== "VERIFIED" && unknown.has(candidate.candidateId)
+          ? "OUTCOME_UNKNOWN"
+          : observed;
+    }
+    return observations;
+  })();
+  applyingBatches.set(key, work);
+  void work
+    .finally(() => {
+      if (applyingBatches.get(key) === work) applyingBatches.delete(key);
+    })
+    .catch(() => undefined);
+  return work;
+}
+
 export async function openUniversalV3Review(
   model: CaptureJobReadModel,
   admissionMode: "MANUAL" | "IMPORT" = "MANUAL",
@@ -701,6 +766,11 @@ export async function openUniversalV3Review(
     if (!original) return "UNCONFIRMED" as const;
     const outcome = async (operation: typeof original | undefined) => {
       if (!operation) return undefined;
+      const retained =
+        admissionMode === "IMPORT"
+          ? await core.retainedReceipt(context, operation.command)
+          : null;
+      if (retained) return retained.outcome;
       const receipt = await transport.receipt(context, operation.command.operationId);
       return receipt
         ? receipt.projection === "FULL"
@@ -718,11 +788,13 @@ export async function openUniversalV3Review(
       if (state === null) return "PENDING" as const;
       if (state === "CONFLICT" || state === "REJECTED") return "REVIEW_REQUIRED" as const;
     }
-    const [itemOutcome, relationOutcome] = await Promise.all([
-      outcome(itemOperation),
-      outcome(linkOperation),
-    ]);
-    const verified = await refresh();
+    // The owning Core PG role has a single connection; parallel GETs self-collide.
+    const itemOutcome = await outcome(itemOperation);
+    const relationOutcome = await outcome(linkOperation);
+    const verified =
+      admissionMode === "IMPORT"
+        ? ((await core.acceptedSnapshot(context)) ?? accepted)
+        : await refresh();
     const target = original.command.target.id;
     return projectUniversalV3SaveState({
       itemOutcome,
@@ -798,7 +870,10 @@ export async function openUniversalV3Review(
         candidate,
         decision,
         admissionMode,
-        snapshot: await refresh(),
+        snapshot:
+          admissionMode === "IMPORT"
+            ? ((await core.acceptedSnapshot(context)) ?? accepted)
+            : await refresh(),
         capabilities,
       });
       if (!plan.commands.length) return "VERIFIED" as const;

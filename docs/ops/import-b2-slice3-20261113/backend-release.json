@@ -1,0 +1,13 @@
+{
+  "status": "ORDINARY_V3_INSTALLED",
+  "host": {
+    "status": "INDEPENDENT_HOST_V3",
+    "cid": "69f805359a15ee37052cd0427824f9a98e40bd330202ae37c0c0a76185475be2",
+    "image": "sha256:1f85595d88531fb6827f1e10a0bd5f440e52f8cc73051ec729bb06f5145392bc"
+  },
+  "decoder": null,
+  "providerCalls": 0,
+  "sqlWrites": 0,
+  "businessWindowOpened": false,
+  "ordinaryV3IngressEnabled": true
+}

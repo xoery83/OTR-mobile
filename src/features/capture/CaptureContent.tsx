@@ -36,6 +36,8 @@ export function CaptureContent({
   draftPersistenceError = false,
   onReopenJob,
   onOpenAcceptedItem,
+  onOpenReview,
+  embeddedComposer = false,
   accountId,
 }: {
   isCurrent: () => boolean;
@@ -49,6 +51,8 @@ export function CaptureContent({
   draftPersistenceError?: boolean;
   onReopenJob?: (id: string) => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
+  onOpenReview?(jobId: string): void;
+  embeddedComposer?: boolean;
   accountId?: string;
 }) {
   useUiLocale();
@@ -72,6 +76,7 @@ export function CaptureContent({
   const selectedTripName =
     draft.tripTarget === undefined ? invocationTripName : draft.tripTarget?.name;
   const submittedTripPrior = useRef<string | null>(null);
+  const [reviewJob, setReviewJob] = useState<string | null>(null);
   const [pasteSession] = useState(
     () => `import-paste:${Date.now()}:${++pasteInvocation}`,
   );
@@ -147,7 +152,10 @@ export function CaptureContent({
       const api = await import("@/data/operations/defaultCaptureSubmission");
       if (!stillCurrent()) return;
       const next = await api.reopenDefaultCaptureJob(id);
-      if (stillCurrent()) setModel(next);
+      if (stillCurrent()) {
+        setModel(next);
+        if (next && jobId !== id) onReopenJob?.(id);
+      }
     } catch {
       if (stillCurrent()) setReadError(true);
     } finally {
@@ -241,6 +249,8 @@ export function CaptureContent({
         if (current()) progress({ ...retained });
       }
       if (draftStaging && current() && retained.allInputsAccepted) staging.cancel();
+      if (current() && retained.allInputsAccepted && jobId !== retained.batch.jobId)
+        onReopenJob?.(retained.batch.jobId);
     } catch {
       if (current()) {
         setSubmitError(true);
@@ -338,6 +348,11 @@ export function CaptureContent({
     };
     return (
       <CaptureComposer
+        embedded={embeddedComposer}
+        visible={!reviewJob}
+        onDismiss={() => {
+          if (reviewJob && current()) onOpenReview?.(reviewJob);
+        }}
         snapshot={draft}
         maxAttachments={
           process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
@@ -579,6 +594,16 @@ export function CaptureContent({
                   onOpenAcceptedItem
                     ? (target) => {
                         if (current()) onOpenAcceptedItem(target);
+                      }
+                    : undefined
+                }
+                onOpenReview={
+                  onOpenReview
+                    ? (id) => {
+                        if (current()) {
+                          if (embeddedComposer) onOpenReview(id);
+                          else setReviewJob(id);
+                        }
                       }
                     : undefined
                 }

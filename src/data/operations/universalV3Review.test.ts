@@ -18,6 +18,7 @@ import { localImportDocumentId } from "../../domain/trip/universalImportIdentity
 import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository";
 import {
   openUniversalV3Review,
+  applyUniversalV3Batch,
   planUniversalV3Review,
   planUniversalV3Batch,
   projectUniversalV3SaveState,
@@ -31,6 +32,8 @@ const native = vi.hoisted(() => ({
   capabilities: vi.fn(),
   enqueue: vi.fn(),
   enqueueDocuments: vi.fn(),
+  pending: vi.fn(async (..._args: unknown[]) => [] as unknown[]),
+  receipt: vi.fn(),
 }));
 vi.mock("../auth/authRepository", () => ({ requireAdoptedUserId: native.account }));
 vi.mock("../auth/localTripAccess", () => ({
@@ -38,13 +41,13 @@ vi.mock("../auth/localTripAccess", () => ({
 }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: async () => ({}) }));
 vi.mock("../api/tripCoreV2Transport", () => ({
-  createCoreV2Transport: () => ({ capabilities: native.capabilities }),
+  createCoreV2Transport: () => ({ capabilities: native.capabilities, receipt: native.receipt }),
 }));
 vi.mock("../repositories/tripCoreV2Repository", () => ({
   createTripCoreV2Repository: () => ({
     refresh: async () => {},
     acceptedSnapshot: native.snapshot,
-    pending: async () => [],
+    pending: native.pending,
     enqueue: native.enqueue,
     enqueueConfirmedItemDocuments: native.enqueueDocuments,
   }),
@@ -70,7 +73,7 @@ function fixture() {
     documentIds: [localImportDocumentId(actor.accountId, actor.tripId, fileSha)],
   };
   const model = {
-    batch: { accountId: actor.accountId, context: { tripPrior: { id: actor.tripId } } },
+    batch: { accountId: actor.accountId, batchId: randomUUID(), jobId: randomUUID(), context: { tripPrior: { id: actor.tripId } } },
     inputs: [
       {
         kind: "DOCUMENT",
@@ -823,4 +826,51 @@ it("Slice 3 batch: stable supplier identity aggregates documents; conflicting fa
       capabilities,
     })[0],
   ).toMatchObject({ disposition: "REVIEW", reason: "conflict" });
+});
+
+it("Slice 3 confirmed batch continues every independent eligible row and never dispatches UNKNOWN",async()=>{
+ const f=fixture();const candidates=[f.candidate,{...f.candidate,candidateId:randomUUID()}, {...f.candidate,candidateId:randomUUID()}];
+ const check=vi.fn(async()=>"UNCONFIRMED" as const),confirm=vi.fn(async()=>"PENDING" as const);
+ const owner={check,confirm} as unknown as Awaited<ReturnType<typeof openUniversalV3Review>>;
+ const intent={version:1 as const,accountId:f.actor.accountId,tripId:f.actor.tripId,batchId:f.model.batch.batchId,confirmed:true,confirmBeforeSave:true,resolutions:{}};
+ const rows=candidates.map(candidate=>({candidate,members:[candidate.candidateId],disposition:"NEW" as const,decision:{action:"NEW" as const}}));
+ const first=applyUniversalV3Batch(f.model,owner,rows,intent,new Set([candidates[2].candidateId]));
+ expect(applyUniversalV3Batch(f.model,owner,rows,intent,new Set([candidates[2].candidateId]))).toBe(first);
+ const status=await first;
+ expect(confirm).toHaveBeenCalledTimes(2);expect(status[candidates[2].candidateId]).toBe("OUTCOME_UNKNOWN");
+});
+it("Slice 3 one failed plan cannot hold a separate eligible plan or broaden the original scope",async()=>{
+ const f=fixture();const second={...f.candidate,candidateId:randomUUID()};
+ const owner={check:vi.fn(async()=>"UNCONFIRMED" as const),confirm:vi.fn().mockRejectedValueOnce(Error("REVISION_CONFLICT")).mockResolvedValueOnce("PENDING")} as unknown as Awaited<ReturnType<typeof openUniversalV3Review>>;
+ const intent={version:1 as const,accountId:f.actor.accountId,tripId:f.actor.tripId,batchId:f.model.batch.batchId,confirmed:true,confirmBeforeSave:false,resolutions:{}};
+ const rows=[f.candidate,second].map(candidate=>({candidate,members:[candidate.candidateId],disposition:"NEW" as const,decision:{action:"NEW" as const}}));
+ expect(await applyUniversalV3Batch(f.model,owner,rows,intent,new Set())).toMatchObject({[f.candidate.candidateId]:"REVIEW_REQUIRED",[second.candidateId]:"PENDING"});
+ await expect(applyUniversalV3Batch(f.model,owner,rows,{...intent,tripId:randomUUID()},new Set())).rejects.toThrow("CONTEXT");
+});
+
+it("Slice 3 receipt readback uses one owning connection at a time", async()=>{
+ const f=fixture(),plan=planUniversalV3Review({...f,snapshot:f.snapshot(),decision:{action:"NEW"}});
+ const graph=plan.commands.reduce((graph,command)=>applyCoreCommand(graph,command,f.actor,stamp,true).graph,emptyCoreGraph());
+ native.account.mockResolvedValue(f.actor.accountId);native.getTrip.mockResolvedValue({syncFormatVersion:1});native.snapshot.mockResolvedValue(f.snapshot(graph));native.capabilities.mockResolvedValue(f.capabilities);
+ native.pending.mockImplementation(async(_context,id)=>plan.commands.filter(command=>command.operationId===id).map(command=>({command})));
+ let concurrent=0,maximum=0;
+ native.receipt.mockImplementation(async()=>{concurrent++;maximum=Math.max(maximum,concurrent);await new Promise(resolve=>setTimeout(resolve,2));concurrent--;return {projection:"FULL",receipt:{outcome:"APPLIED"}};});
+ try {expect(await (await openUniversalV3Review(f.model)).check(f.candidate)).toBe("VERIFIED");expect(maximum).toBe(1);}
+ finally {native.pending.mockReset().mockResolvedValue([]);native.receipt.mockReset();}
+});
+
+it("Slice 3 one original keeps identical metadata across different candidate types",()=>{
+ const f=fixture();const model={...f.model,inputs:f.model.inputs.map(file=>({...file,originalFilename:null}))};
+ const first=planUniversalV3Review({...f,model,snapshot:f.snapshot(),decision:{action:"NEW"}});
+ const second=planUniversalV3Review({...f,model,candidate:{...f.candidate,candidateId:randomUUID(),kind:"P3",subtype:"HOTEL",fields:{title:"Hotel","check_in.date":"2026-12-14","check_out.date":"2026-12-15"}},capabilities:{...f.capabilities,enabledFamilies:["P3"]},snapshot:f.snapshot(),decision:{action:"NEW"}});
+ expect(first.commands.find(c=>c.command==="CREATE_DOCUMENT_METADATA")).toEqual(second.commands.find(c=>c.command==="CREATE_DOCUMENT_METADATA"));
+});
+it("Slice 3 exact flight identity links a manually created Item without an Import Receipt",()=>{
+ const f=fixture();const candidate={...f.candidate,kind:"P2" as const,fields:{title:"AA1302",flight_number:"AA1302","origin.airport_code":"LAX","destination.airport_code":"SFO","origin.local_date":"2026-12-20","destination.local_date":"2026-12-20"}};
+ const capabilities:CoreCapabilities={...f.capabilities,enabledFamilies:["P2"],enabledAdmissionModes:["MANUAL","IMPORT"],enabledCommands:["CREATE_SPARSE_FLIGHT","SET_AUTHORED_FLIGHT_DETAILS","CREATE_DOCUMENT_METADATA","RECONCILE_ITEM_DOCUMENTS"]};
+ const manual=planUniversalV3Review({...f,candidate,capabilities,snapshot:f.snapshot(),decision:{action:"NEW"}});
+ const graph=manual.commands.reduce((graph,c)=>applyCoreCommand(graph,c,f.actor,stamp,true).graph,emptyCoreGraph());
+ const linked=planUniversalV3Batch({model:f.model,candidates:[{...candidate,candidateId:randomUUID()}],snapshot:f.snapshot(graph),capabilities});
+ expect(linked[0]).toMatchObject({disposition:"LINK",decision:{action:"LINK",itemId:manual.targetId}});
+ expect(graph.itinerary_events[0].field_state).toMatchObject({"itinerary_events.title":{origin:"MANUAL",protected:true}});
 });

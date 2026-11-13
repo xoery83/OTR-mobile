@@ -43,6 +43,7 @@ export function CaptureProgress({
   onActivity,
   onNewImport,
   onOpenAcceptedItem,
+  onOpenReview,
   isCurrent,
   photoRelevanceCopy,
 }: {
@@ -59,6 +60,7 @@ export function CaptureProgress({
   onActivity: () => void;
   onNewImport: () => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
+  onOpenReview?(jobId: string): void;
   isCurrent?: () => boolean;
   photoRelevanceCopy?: UniversalPhotoRelevanceCopy;
 }) {
@@ -187,6 +189,7 @@ export function CaptureProgress({
                 originalsListedElsewhere
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
+                onOpenReview={onOpenReview}
                 key={universalScope}
                 onLegacyPhotoReview={reportLegacyPhotoReview}
                 model={model}

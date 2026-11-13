@@ -55,7 +55,14 @@ vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 vi.mock("./useUniversalCapture", () => ({ useUniversalCapture: vi.fn() }));
 vi.mock("./useUniversalP1Admission", () => ({ useUniversalP1Admission: vi.fn() }));
-vi.mock("@/data/operations/universalV3Review", () => ({ openUniversalV3Review: h.open }));
+vi.mock("@/data/repositories/importSubmissionRepository", () => ({
+  readImportSubmission: async () => null,
+  updateImportSubmission: vi.fn(),
+}));
+vi.mock("@/data/operations/universalV3Review", async (original) => ({
+  ...(await original<typeof import("@/data/operations/universalV3Review")>()),
+  openUniversalV3Review: h.open,
+}));
 vi.mock("react-native", () => ({
   View: "div",
   StyleSheet: { create: (v: unknown) => v },
@@ -94,7 +101,12 @@ beforeEach(() => {
   h.slots = [];
   h.current = true;
   h.check.mockResolvedValue("VERIFIED");
-  h.open.mockResolvedValue({ check: h.check, confirm: h.confirm });
+  h.open.mockResolvedValue({
+    check: h.check,
+    confirm: h.confirm,
+    batch: (candidates: unknown[]) =>
+      candidates.map((candidate) => ({ candidate, disposition: "NEW" })),
+  });
   setUiLocale("en");
 });
 afterEach(() => {
@@ -105,7 +117,7 @@ it("reopen reads original receipts automatically and never invokes Confirm or di
   render();
   await vi.advanceTimersByTimeAsync(0);
   expect(render()).toContain(t("capture.activityStatus.complete"));
-  expect(h.open).toHaveBeenCalledExactlyOnceWith(model);
+  expect(h.open).toHaveBeenCalledExactlyOnceWith(model, "MANUAL");
   expect(h.check).toHaveBeenCalledExactlyOnceWith(execution.candidates[0]);
   await vi.advanceTimersByTimeAsync(15000);
   expect(h.check).toHaveBeenCalledOnce();
@@ -140,7 +152,7 @@ it("an invalidated account/sheet discards late results", async () => {
   );
   render();
   h.current = false;
-  resolve({ check: h.check });
+  resolve({ check: h.check, batch: () => [] });
   await vi.advanceTimersByTimeAsync(0);
   expect(h.check).not.toHaveBeenCalled();
 });

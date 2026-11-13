@@ -58,6 +58,8 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   }>();
   const navigation = useNavigation<{
     isFocused(): boolean;
+    getParent():
+      { getState(): { index: number; routes: { name: string }[] } } | undefined;
     setParams(params: {
       tripId?: string;
       jobId?: string;
@@ -193,7 +195,9 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
         visibleStaging?.hide();
         setAdmission(null);
         // Dependency cleanup must not erase a newer focused invocation.
-        if (!overlay && !navigation.isFocused())
+        const parent = navigation.getParent()?.getState();
+        const openingReview = parent?.routes[parent.index]?.name === "import-review";
+        if (!overlay && !navigation.isFocused() && !openingReview)
           navigation.setParams({
             tripId: undefined,
             jobId: undefined,
@@ -226,6 +230,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
         <CaptureContent
           key={`${generation}:${jobId ?? ""}${admission.tripPrior ? `:${admission.tripPrior}` : ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
+          embeddedComposer={overlay}
           isCurrent={isCurrent}
           draftStaging={admission.staging}
           draftPersistenceError={draftWarning}
@@ -243,6 +248,11 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             return Boolean(await readCaptureTripPrior(id, admission)) && isCurrent();
           }}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
+          onOpenReview={(id) => {
+            if (!isCurrent()) return;
+            navigation.setParams({ jobId: id });
+            router.push({ pathname: "/import-review", params: { jobId: id } });
+          }}
           onCancel={() => {
             const target = captureOriginPath(
               origin,

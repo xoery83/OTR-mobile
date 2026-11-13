@@ -44,6 +44,9 @@ type Props = {
     isCurrent: () => boolean,
   ): Promise<boolean>;
   onClose(): void;
+  visible?: boolean;
+  embedded?: boolean;
+  onDismiss?(): void;
   onFiles(): void;
   onPhotos(): void;
   onCamera?(): void;
@@ -72,6 +75,9 @@ export function CaptureComposer({
   renderImagePaste,
   onTripTarget,
   onClose,
+  visible = true,
+  embedded = false,
+  onDismiss,
   onFiles,
   onPhotos,
   onCamera,
@@ -238,525 +244,529 @@ export function CaptureComposer({
       ]}
     />
   );
-  return (
-    <Modal visible transparent animationType="slide" onRequestClose={close}>
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.viewport}>
-        <KeyboardAvoidingView
-          style={styles.keyboard}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+  const sheet = (
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.viewport}>
+      <KeyboardAvoidingView
+        style={styles.keyboard}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("common.close")}
+          style={StyleSheet.absoluteFill}
+          onPress={() => (menu ? setMenu(false) : close())}
+        />
+        <View
+          style={[
+            styles.sheet,
+            {
+              maxHeight: Math.max(44, height - insets.top - 16),
+              paddingBottom: keyboardVisible ? 0 : insets.bottom,
+            },
+          ]}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("common.close")}
-            style={StyleSheet.absoluteFill}
-            onPress={() => (menu ? setMenu(false) : close())}
+          <SheetHeader
+            category="composer"
+            safeTop={false}
+            title={header}
+            onLeft={close}
           />
-          <View
-            style={[
-              styles.sheet,
-              {
-                maxHeight: Math.max(44, height - insets.top - 16),
-                paddingBottom: keyboardVisible ? 0 : insets.bottom,
-              },
-            ]}
-          >
-            <SheetHeader
-              category="composer"
-              safeTop={false}
-              title={header}
-              onLeft={close}
-            />
-            {content != null ? (
-              <>
-                <UiText style={styles.context}>{context}</UiText>
-                {errorMessage ? (
-                  <UiText accessibilityRole="alert" style={styles.error}>
-                    {errorMessage}
-                  </UiText>
-                ) : null}
-                <View style={styles.contentViewport}>{content}</View>
-              </>
-            ) : page === "preview" ? (
+          {content != null ? (
+            <>
+              <UiText style={styles.context}>{context}</UiText>
+              {errorMessage ? (
+                <UiText accessibilityRole="alert" style={styles.error}>
+                  {errorMessage}
+                </UiText>
+              ) : null}
+              <View style={styles.contentViewport}>{content}</View>
+            </>
+          ) : page === "preview" ? (
+            <ScrollView
+              style={styles.body}
+              contentContainerStyle={styles.content}
+              keyboardShouldPersistTaps="handled"
+            >
+              <UiText selectable style={styles.bodyText}>
+                {preview}
+              </UiText>
+              <UiButton
+                variant="text"
+                label={t("common.back")}
+                onPress={() => setPage("composer")}
+              />
+            </ScrollView>
+          ) : page === "email" || page === "ai" ? (
+            <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+              <CaptureConnections page={page} onBack={() => setPage("composer")} />
+            </ScrollView>
+          ) : page === "context" ? (
+            <ScrollView
+              style={styles.body}
+              contentContainerStyle={styles.child}
+              keyboardShouldPersistTaps="handled"
+            >
+              {targetBusy ? (
+                <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                  {t("capture.checking")}
+                </UiText>
+              ) : null}
+              {targetError ? (
+                <UiText accessibilityRole="alert" style={styles.error}>
+                  {t("capture.connections.targetError")}
+                </UiText>
+              ) : null}
+              {trips.map((trip) => (
+                <Pressable
+                  key={trip.id}
+                  accessibilityRole="button"
+                  disabled={targetBusy}
+                  onPress={() => void chooseTrip(trip)}
+                  style={styles.tripRow}
+                >
+                  <UiText style={styles.bodyText}>{trip.name}</UiText>
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("capture.composer.contextTitle")}
+                disabled={voice.busy}
+                onPress={() => {
+                  setTargetBusy(true);
+                  setTargetError(false);
+                  setPage("context");
+                }}
+                style={styles.contextTarget}
+              >
+                <UiText style={styles.contextText} numberOfLines={1}>
+                  {context}
+                </UiText>
+                <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
+              </Pressable>
+              {typeof __DEV__ !== "undefined" && __DEV__ && onQaSample ? (
+                <UiButton
+                  variant="secondary"
+                  label={t("capture.composer.qaSample")}
+                  disabled={locked}
+                  onPress={() => {
+                    if (!locked) onQaSample();
+                  }}
+                />
+              ) : null}
               <ScrollView
                 style={styles.body}
                 contentContainerStyle={styles.content}
                 keyboardShouldPersistTaps="handled"
               >
-                <UiText selectable style={styles.bodyText}>
-                  {preview}
-                </UiText>
-                <UiButton
-                  variant="text"
-                  label={t("common.back")}
-                  onPress={() => setPage("composer")}
-                />
-              </ScrollView>
-            ) : page === "email" || page === "ai" ? (
-              <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-                <CaptureConnections page={page} onBack={() => setPage("composer")} />
-              </ScrollView>
-            ) : page === "context" ? (
-              <ScrollView
-                style={styles.body}
-                contentContainerStyle={styles.child}
-                keyboardShouldPersistTaps="handled"
-              >
-                {targetBusy ? (
-                  <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
-                    {t("capture.checking")}
-                  </UiText>
-                ) : null}
-                {targetError ? (
-                  <UiText accessibilityRole="alert" style={styles.error}>
-                    {t("capture.connections.targetError")}
-                  </UiText>
-                ) : null}
-                {trips.map((trip) => (
-                  <Pressable
-                    key={trip.id}
-                    accessibilityRole="button"
-                    disabled={targetBusy}
-                    onPress={() => void chooseTrip(trip)}
-                    style={styles.tripRow}
+                {snapshot.items.length ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.tray}
                   >
-                    <UiText style={styles.bodyText}>{trip.name}</UiText>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            ) : (
-              <>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("capture.composer.contextTitle")}
-                  disabled={voice.busy}
-                  onPress={() => {
-                    setTargetBusy(true);
-                    setTargetError(false);
-                    setPage("context");
-                  }}
-                  style={styles.contextTarget}
-                >
-                  <UiText style={styles.contextText} numberOfLines={1}>
-                    {context}
-                  </UiText>
-                  <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
-                </Pressable>
-                {typeof __DEV__ !== "undefined" && __DEV__ && onQaSample ? (
-                  <UiButton
-                    variant="secondary"
-                    label={t("capture.composer.qaSample")}
-                    disabled={locked}
-                    onPress={() => {
-                      if (!locked) onQaSample();
-                    }}
-                  />
-                ) : null}
-                <ScrollView
-                  style={styles.body}
-                  contentContainerStyle={styles.content}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {snapshot.items.length ? (
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      keyboardShouldPersistTaps="handled"
-                      contentContainerStyle={styles.tray}
-                    >
-                      {snapshot.items.map((item) => {
-                        const name =
-                          item.source === "magic_input"
-                            ? item.text
-                            : (item.name ?? t("capture.unnamed"));
-                        const photo =
-                          item.source !== "magic_input" &&
-                          item.typeHint?.startsWith("image/") &&
-                          (("previewUri" in item && item.previewUri) ||
-                            (item.temporaryUri &&
-                              !item.temporaryUri.startsWith("otr-capture-file://") &&
-                              item.temporaryUri));
-                        return (
-                          <View
-                            key={item.stagingId}
-                            style={[
-                              styles.tile,
-                              { width: Math.max(120, 88 * fontScale) },
-                            ]}
+                    {snapshot.items.map((item) => {
+                      const name =
+                        item.source === "magic_input"
+                          ? item.text
+                          : (item.name ?? t("capture.unnamed"));
+                      const photo =
+                        item.source !== "magic_input" &&
+                        item.typeHint?.startsWith("image/") &&
+                        (("previewUri" in item && item.previewUri) ||
+                          (item.temporaryUri &&
+                            !item.temporaryUri.startsWith("otr-capture-file://") &&
+                            item.temporaryUri));
+                      return (
+                        <View
+                          key={item.stagingId}
+                          style={[styles.tile, { width: Math.max(120, 88 * fontScale) }]}
+                        >
+                          <Pressable
+                            style={styles.preview}
+                            accessibilityRole="button"
+                            accessibilityLabel={t("capture.composer.preview", { name })}
+                            disabled={!onPreview || locked || previewBusy}
+                            onPress={() => void showPreview(item.stagingId)}
                           >
-                            <Pressable
-                              style={styles.preview}
-                              accessibilityRole="button"
-                              accessibilityLabel={t("capture.composer.preview", { name })}
-                              disabled={!onPreview || locked || previewBusy}
-                              onPress={() => void showPreview(item.stagingId)}
-                            >
-                              {photo ? (
-                                <Image
-                                  source={{ uri: photo }}
-                                  style={styles.thumbnail}
-                                  resizeMode="cover"
-                                  accessibilityLabel={name}
-                                />
-                              ) : (
-                                <View style={styles.fileContent}>
-                                  <AppIcon
-                                    name={
-                                      item.source === "magic_input"
-                                        ? "text.alignleft"
-                                        : item.typeHint?.startsWith("image/")
-                                          ? "photo"
-                                          : item.typeHint === "application/pdf"
-                                            ? "doc.richtext"
-                                            : "doc"
-                                    }
-                                    size={24}
-                                    color={colors.accent}
-                                  />
-                                  <UiText
-                                    numberOfLines={3}
-                                    style={styles.filename}
-                                    accessibilityLabel={name}
-                                  >
-                                    {name}
-                                  </UiText>
-                                </View>
-                              )}
-                            </Pressable>
-                            <View style={styles.remove}>
-                              <View pointerEvents="none" style={styles.removeDisc} />
-                              <OverlayDismissAction
-                                label={t("capture.remove", { name })}
-                                color={colors.mediaText}
-                                onPress={() => onRemove(item.stagingId)}
+                            {photo ? (
+                              <Image
+                                source={{ uri: photo }}
+                                style={styles.thumbnail}
+                                resizeMode="cover"
+                                accessibilityLabel={name}
                               />
-                            </View>
-                            {item.source !== "magic_input" &&
-                            item.availability === "unavailable" ? (
-                              <UiText style={styles.tileError}>
-                                {t("capture.unavailable")}
-                              </UiText>
-                            ) : null}
-                          </View>
-                        );
-                      })}
-                    </ScrollView>
-                  ) : (
-                    <View style={styles.instructions}>
-                      <View style={styles.instructionRow}>
-                        <View
-                          accessible={false}
-                          importantForAccessibility="no"
-                          style={styles.bullet}
-                        />
-                        <UiText style={styles.instruction}>
-                          {t("capture.composer.sourcesInstruction", {
-                            camera: "\uE000",
-                            photos: "\uE001",
-                            files: "\uE002",
-                          })
-                            .split(/([\uE000-\uE002])/)
-                            .map((part, index) => {
-                              const action =
-                                part === "\uE000"
-                                  ? {
-                                      label: t("capture.composer.camera"),
-                                      press: onCamera,
-                                    }
-                                  : part === "\uE001"
-                                    ? {
-                                        label: t("capture.composer.photos"),
-                                        press: onPhotos,
-                                      }
-                                    : part === "\uE002"
-                                      ? {
-                                          label: t("capture.composer.files"),
-                                          press: onFiles,
-                                        }
-                                      : null;
-                              return action ? (
+                            ) : (
+                              <View style={styles.fileContent}>
+                                <AppIcon
+                                  name={
+                                    item.source === "magic_input"
+                                      ? "text.alignleft"
+                                      : item.typeHint?.startsWith("image/")
+                                        ? "photo"
+                                        : item.typeHint === "application/pdf"
+                                          ? "doc.richtext"
+                                          : "doc"
+                                  }
+                                  size={24}
+                                  color={colors.accent}
+                                />
                                 <UiText
-                                  key={index}
-                                  accessibilityRole="link"
-                                  style={styles.link}
-                                  onPress={locked ? undefined : action.press}
-                                  accessibilityState={{
-                                    disabled: locked || !action.press,
-                                  }}
+                                  numberOfLines={3}
+                                  style={styles.filename}
+                                  accessibilityLabel={name}
                                 >
-                                  {action.label}
+                                  {name}
                                 </UiText>
-                              ) : (
-                                part
-                              );
-                            })}
-                        </UiText>
-                      </View>
-                      <View style={styles.instructionRow}>
-                        <View
-                          accessible={false}
-                          importantForAccessibility="no"
-                          style={styles.bullet}
-                        />
-                        <UiText
-                          style={[styles.instruction, styles.link]}
-                          accessibilityRole="link"
-                          onPress={voice.busy ? undefined : () => setPage("email")}
-                        >
-                          {t("capture.composer.emailInstruction")}
-                        </UiText>
-                      </View>
-                      <View style={styles.instructionRow}>
-                        <View
-                          accessible={false}
-                          importantForAccessibility="no"
-                          style={styles.bullet}
-                        />
-                        <UiText
-                          style={[styles.instruction, styles.link]}
-                          accessibilityRole="link"
-                          onPress={voice.busy ? undefined : () => setPage("ai")}
-                        >
-                          {t("capture.composer.aiInstruction")}
-                        </UiText>
-                      </View>
-                    </View>
-                  )}
-                  {snapshot.selecting ? (
-                    <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
-                      {t("capture.selecting")}
-                    </UiText>
-                  ) : null}
-                  {snapshot.error ? (
-                    <UiText accessibilityRole="alert" style={styles.error}>
-                      {t(
-                        snapshot.error === "camera_permission"
-                          ? "capture.composer.cameraPermission"
-                          : "capture.pickerError",
-                      )}
-                    </UiText>
-                  ) : null}
-                  {duplicate ? (
-                    <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
-                      {t("capture.composer.alreadyAdded")}
-                    </UiText>
-                  ) : null}
-                  {errorMessage ? (
-                    <UiText accessibilityRole="alert" style={styles.error}>
-                      {errorMessage}
-                    </UiText>
-                  ) : null}
-                  {previewError ? (
-                    <UiText accessibilityRole="alert" style={styles.error}>
-                      {t("capture.unavailable")}
-                    </UiText>
-                  ) : null}
-                  {overLimit ? (
-                    <UiText accessibilityRole="alert" style={styles.error}>
-                      {t("capture.composer.limit", { count: maxAttachments! })}
-                    </UiText>
-                  ) : null}
-                </ScrollView>
-                {count ? (
-                  <View style={styles.footer}>
-                    <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
-                      {t(count === 1 ? "capture.countOne" : "capture.countOther", {
-                        count,
-                      })}
-                    </UiText>
-                    <View style={styles.spacer} />
-                    <UiButton
-                      variant="text"
-                      label={t("capture.composer.clear")}
-                      disabled={locked || previewBusy}
-                      onPress={() =>
-                        Alert.alert(
-                          t("capture.composer.clear"),
-                          t("capture.composer.clearHint"),
-                          [
-                            { text: t("common.cancel"), style: "cancel" },
-                            {
-                              text: t("capture.composer.clear"),
-                              style: "destructive",
-                              onPress: onClear,
-                            },
-                          ],
-                        )
-                      }
-                    />
-                  </View>
-                ) : null}
-                <View
-                  style={[styles.composerShadow, keyboardVisible && { marginTop: 0 }]}
-                >
-                  <UiGlassSurface style={styles.composer}>
-                    {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
-                    <View style={styles.footer}>
-                      {snapshot.editorText.trim() ? (
-                        <UiButton
-                          variant="text"
-                          label={t("capture.composer.add")}
-                          disabled={locked || overLimit}
-                          onPress={onAddText}
-                        />
-                      ) : null}
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t("capture.composer.addAttachments")}
-                        accessibilityState={{ disabled: locked }}
-                        disabled={locked}
-                        style={styles.target}
-                        onPress={attachments}
-                      >
-                        <AppIcon name="plus" size={25} color={colors.textPrimary} />
-                      </Pressable>
-                      <View style={styles.spacer} />
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t(
-                          voice.busy ? "capture.voice.stop" : "capture.voice.start",
-                        )}
-                        accessibilityState={{
-                          disabled:
-                            snapshot.selecting ||
-                            voice.state.status === "starting" ||
-                            voice.state.status === "finishing",
-                        }}
-                        disabled={
-                          snapshot.selecting ||
-                          voice.state.status === "starting" ||
-                          voice.state.status === "finishing"
-                        }
-                        onPress={() =>
-                          voice.busy
-                            ? voice.stop()
-                            : voice.start(
-                                snapshot.editorText,
-                                locale === "zh-Hans" ? "zh-CN" : "en-US",
-                              )
-                        }
-                        style={styles.target}
-                      >
-                        <AppIcon
-                          name={voice.busy ? "stop.fill" : "mic"}
-                          size={22}
-                          color={snapshot.selecting ? colors.disabled : colors.accent}
-                        />
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t("capture.composer.submit")}
-                        accessibilityState={{ disabled: sendDisabled }}
-                        disabled={sendDisabled}
-                        onPress={onSubmit}
-                        style={[
-                          styles.target,
-                          styles.send,
-                          sendDisabled && styles.sendDisabled,
-                        ]}
-                      >
-                        <AppIcon
-                          name="arrow.up"
-                          size={23}
-                          color={sendDisabled ? colors.disabled : colors.onAccent}
-                        />
-                      </Pressable>
-                    </View>
-                  </UiGlassSurface>
-                </View>
-                {voice.state.status !== "idle" ? (
-                  <View style={styles.voiceStatus}>
-                    <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
-                      {t(
-                        voice.state.status === "error"
-                          ? `capture.voice.error.${voice.state.error ?? "failed"}`
-                          : `capture.voice.${voice.state.status}`,
-                      )}
-                    </UiText>
-                    {voice.state.status === "error" && voice.diagnostic ? (
-                      <UiText style={styles.secondary}>
-                        {t("capture.voice.diagnostic", {
-                          phase: voice.diagnostic.phase,
-                          domain: voice.diagnostic.domain,
-                          code: voice.diagnostic.code ?? "?",
-                        })}
+                              </View>
+                            )}
+                          </Pressable>
+                          <View style={styles.remove}>
+                            <View pointerEvents="none" style={styles.removeDisc} />
+                            <OverlayDismissAction
+                              label={t("capture.remove", { name })}
+                              color={colors.mediaText}
+                              onPress={() => onRemove(item.stagingId)}
+                            />
+                          </View>
+                          {item.source !== "magic_input" &&
+                          item.availability === "unavailable" ? (
+                            <UiText style={styles.tileError}>
+                              {t("capture.unavailable")}
+                            </UiText>
+                          ) : null}
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                ) : (
+                  <View style={styles.instructions}>
+                    <View style={styles.instructionRow}>
+                      <View
+                        accessible={false}
+                        importantForAccessibility="no"
+                        style={styles.bullet}
+                      />
+                      <UiText style={styles.instruction}>
+                        {t("capture.composer.sourcesInstruction", {
+                          camera: "\uE000",
+                          photos: "\uE001",
+                          files: "\uE002",
+                        })
+                          .split(/([\uE000-\uE002])/)
+                          .map((part, index) => {
+                            const action =
+                              part === "\uE000"
+                                ? {
+                                    label: t("capture.composer.camera"),
+                                    press: onCamera,
+                                  }
+                                : part === "\uE001"
+                                  ? {
+                                      label: t("capture.composer.photos"),
+                                      press: onPhotos,
+                                    }
+                                  : part === "\uE002"
+                                    ? {
+                                        label: t("capture.composer.files"),
+                                        press: onFiles,
+                                      }
+                                    : null;
+                            return action ? (
+                              <UiText
+                                key={index}
+                                accessibilityRole="link"
+                                style={styles.link}
+                                onPress={locked ? undefined : action.press}
+                                accessibilityState={{
+                                  disabled: locked || !action.press,
+                                }}
+                              >
+                                {action.label}
+                              </UiText>
+                            ) : (
+                              part
+                            );
+                          })}
                       </UiText>
-                    ) : null}
-                    {voice.busy ? (
+                    </View>
+                    <View style={styles.instructionRow}>
+                      <View
+                        accessible={false}
+                        importantForAccessibility="no"
+                        style={styles.bullet}
+                      />
+                      <UiText
+                        style={[styles.instruction, styles.link]}
+                        accessibilityRole="link"
+                        onPress={voice.busy ? undefined : () => setPage("email")}
+                      >
+                        {t("capture.composer.emailInstruction")}
+                      </UiText>
+                    </View>
+                    <View style={styles.instructionRow}>
+                      <View
+                        accessible={false}
+                        importantForAccessibility="no"
+                        style={styles.bullet}
+                      />
+                      <UiText
+                        style={[styles.instruction, styles.link]}
+                        accessibilityRole="link"
+                        onPress={voice.busy ? undefined : () => setPage("ai")}
+                      >
+                        {t("capture.composer.aiInstruction")}
+                      </UiText>
+                    </View>
+                  </View>
+                )}
+                {snapshot.selecting ? (
+                  <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                    {t("capture.selecting")}
+                  </UiText>
+                ) : null}
+                {snapshot.error ? (
+                  <UiText accessibilityRole="alert" style={styles.error}>
+                    {t(
+                      snapshot.error === "camera_permission"
+                        ? "capture.composer.cameraPermission"
+                        : "capture.pickerError",
+                    )}
+                  </UiText>
+                ) : null}
+                {duplicate ? (
+                  <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                    {t("capture.composer.alreadyAdded")}
+                  </UiText>
+                ) : null}
+                {errorMessage ? (
+                  <UiText accessibilityRole="alert" style={styles.error}>
+                    {errorMessage}
+                  </UiText>
+                ) : null}
+                {previewError ? (
+                  <UiText accessibilityRole="alert" style={styles.error}>
+                    {t("capture.unavailable")}
+                  </UiText>
+                ) : null}
+                {overLimit ? (
+                  <UiText accessibilityRole="alert" style={styles.error}>
+                    {t("capture.composer.limit", { count: maxAttachments! })}
+                  </UiText>
+                ) : null}
+              </ScrollView>
+              {count ? (
+                <View style={styles.footer}>
+                  <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                    {t(count === 1 ? "capture.countOne" : "capture.countOther", {
+                      count,
+                    })}
+                  </UiText>
+                  <View style={styles.spacer} />
+                  <UiButton
+                    variant="text"
+                    label={t("capture.composer.clear")}
+                    disabled={locked || previewBusy}
+                    onPress={() =>
+                      Alert.alert(
+                        t("capture.composer.clear"),
+                        t("capture.composer.clearHint"),
+                        [
+                          { text: t("common.cancel"), style: "cancel" },
+                          {
+                            text: t("capture.composer.clear"),
+                            style: "destructive",
+                            onPress: onClear,
+                          },
+                        ],
+                      )
+                    }
+                  />
+                </View>
+              ) : null}
+              <View style={[styles.composerShadow, keyboardVisible && { marginTop: 0 }]}>
+                <UiGlassSurface style={styles.composer}>
+                  {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
+                  <View style={styles.footer}>
+                    {snapshot.editorText.trim() ? (
                       <UiButton
                         variant="text"
-                        label={t("capture.voice.cancel")}
-                        onPress={voice.cancel}
+                        label={t("capture.composer.add")}
+                        disabled={locked || overLimit}
+                        onPress={onAddText}
                       />
                     ) : null}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("capture.composer.addAttachments")}
+                      accessibilityState={{ disabled: locked }}
+                      disabled={locked}
+                      style={styles.target}
+                      onPress={attachments}
+                    >
+                      <AppIcon name="plus" size={25} color={colors.textPrimary} />
+                    </Pressable>
+                    <View style={styles.spacer} />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t(
+                        voice.busy ? "capture.voice.stop" : "capture.voice.start",
+                      )}
+                      accessibilityState={{
+                        disabled:
+                          snapshot.selecting ||
+                          voice.state.status === "starting" ||
+                          voice.state.status === "finishing",
+                      }}
+                      disabled={
+                        snapshot.selecting ||
+                        voice.state.status === "starting" ||
+                        voice.state.status === "finishing"
+                      }
+                      onPress={() =>
+                        voice.busy
+                          ? voice.stop()
+                          : voice.start(
+                              snapshot.editorText,
+                              locale === "zh-Hans" ? "zh-CN" : "en-US",
+                            )
+                      }
+                      style={styles.target}
+                    >
+                      <AppIcon
+                        name={voice.busy ? "stop.fill" : "mic"}
+                        size={22}
+                        color={snapshot.selecting ? colors.disabled : colors.accent}
+                      />
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("capture.composer.submit")}
+                      accessibilityState={{ disabled: sendDisabled }}
+                      disabled={sendDisabled}
+                      onPress={onSubmit}
+                      style={[
+                        styles.target,
+                        styles.send,
+                        sendDisabled && styles.sendDisabled,
+                      ]}
+                    >
+                      <AppIcon
+                        name="arrow.up"
+                        size={23}
+                        color={sendDisabled ? colors.disabled : colors.onAccent}
+                      />
+                    </Pressable>
                   </View>
-                ) : null}
-              </>
-            )}
-          </View>
-          {menu && page === "composer" && content == null ? (
-            <UiGlassSurface
-              style={[styles.attachmentMenu, { bottom: insets.bottom + 60 }]}
-            >
-              {[
-                {
-                  icon: "camera" as const,
-                  label: t("capture.composer.camera"),
-                  press: onCamera,
-                },
-                {
-                  icon: "photo" as const,
-                  label: t("capture.composer.photos"),
-                  press: onPhotos,
-                },
-                {
-                  icon: "paperclip" as const,
-                  label: t("capture.composer.files"),
-                  press: onFiles,
-                },
-                {
-                  icon: "clock.arrow.circlepath" as const,
-                  label: t("capture.activity"),
-                  press: onActivity,
-                },
-                ...(onDocuments
-                  ? [
-                      {
-                        icon: "paperclip" as const,
-                        label: t("importDocuments.inbox"),
-                        press: () => onDocuments("PERSONAL_INBOX"),
-                      },
-                      ...(tripName
-                        ? [
-                            {
-                              icon: "paperclip" as const,
-                              label: t("importDocuments.trip"),
-                              press: () => onDocuments("TRIP"),
-                            },
-                          ]
-                        : []),
-                    ]
-                  : []),
-              ].map((item) => (
-                <Pressable
-                  key={item.label}
-                  accessibilityRole="button"
-                  disabled={!item.press || locked}
-                  onPress={() => {
-                    setMenu(false);
-                    item.press?.();
-                  }}
-                  style={styles.menuRow}
-                >
-                  <View style={styles.menuIcon}>
-                    <AppIcon name={item.icon} size={23} color={colors.textPrimary} />
-                  </View>
-                  <UiText style={styles.bodyText}>{item.label}</UiText>
-                </Pressable>
-              ))}
-            </UiGlassSurface>
-          ) : null}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+                </UiGlassSurface>
+              </View>
+              {voice.state.status !== "idle" ? (
+                <View style={styles.voiceStatus}>
+                  <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                    {t(
+                      voice.state.status === "error"
+                        ? `capture.voice.error.${voice.state.error ?? "failed"}`
+                        : `capture.voice.${voice.state.status}`,
+                    )}
+                  </UiText>
+                  {voice.state.status === "error" && voice.diagnostic ? (
+                    <UiText style={styles.secondary}>
+                      {t("capture.voice.diagnostic", {
+                        phase: voice.diagnostic.phase,
+                        domain: voice.diagnostic.domain,
+                        code: voice.diagnostic.code ?? "?",
+                      })}
+                    </UiText>
+                  ) : null}
+                  {voice.busy ? (
+                    <UiButton
+                      variant="text"
+                      label={t("capture.voice.cancel")}
+                      onPress={voice.cancel}
+                    />
+                  ) : null}
+                </View>
+              ) : null}
+            </>
+          )}
+        </View>
+        {menu && page === "composer" && content == null ? (
+          <UiGlassSurface style={[styles.attachmentMenu, { bottom: insets.bottom + 60 }]}>
+            {[
+              {
+                icon: "camera" as const,
+                label: t("capture.composer.camera"),
+                press: onCamera,
+              },
+              {
+                icon: "photo" as const,
+                label: t("capture.composer.photos"),
+                press: onPhotos,
+              },
+              {
+                icon: "paperclip" as const,
+                label: t("capture.composer.files"),
+                press: onFiles,
+              },
+              {
+                icon: "clock.arrow.circlepath" as const,
+                label: t("capture.activity"),
+                press: onActivity,
+              },
+              ...(onDocuments
+                ? [
+                    {
+                      icon: "paperclip" as const,
+                      label: t("importDocuments.inbox"),
+                      press: () => onDocuments("PERSONAL_INBOX"),
+                    },
+                    ...(tripName
+                      ? [
+                          {
+                            icon: "paperclip" as const,
+                            label: t("importDocuments.trip"),
+                            press: () => onDocuments("TRIP"),
+                          },
+                        ]
+                      : []),
+                  ]
+                : []),
+            ].map((item) => (
+              <Pressable
+                key={item.label}
+                accessibilityRole="button"
+                disabled={!item.press || locked}
+                onPress={() => {
+                  setMenu(false);
+                  item.press?.();
+                }}
+                style={styles.menuRow}
+              >
+                <View style={styles.menuIcon}>
+                  <AppIcon name={item.icon} size={23} color={colors.textPrimary} />
+                </View>
+                <UiText style={styles.bodyText}>{item.label}</UiText>
+              </Pressable>
+            ))}
+          </UiGlassSurface>
+        ) : null}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+  // The import-plans route already owns its native modal presentation.
+  if (embedded) return visible ? sheet : null;
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={close}
+      onDismiss={onDismiss}
+    >
+      {sheet}
     </Modal>
   );
 }

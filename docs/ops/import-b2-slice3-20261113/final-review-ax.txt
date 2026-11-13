@@ -1,0 +1,115 @@
+Window: "OTR Import B1", App: Device Hub.
+0 standard window OTR Import B1 – iPadOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selected) Description: ipad, Value: OTR Import B1
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR Forms QA
+27.0
+Simulator
+					8 row (selectable) Description: iphone.gen3, Value: OTR Vision iPhone · VISION-001
+27.0
+Simulator
+					9 row (selectable) Description: iphone.gen3, Value: Leon's iPhone16pro
+27.0.1
+iPhone 16 Pro
+					10 row (selectable) Description: ipad, Value: Yang的iPad
+27.2
+iPad Air (5th generation)
+					11 row (selectable) Description: ipad, Value: OTR Import Phase A
+27.2
+Simulator
+					12 row (selectable) Description: iphone.gen3, Value: OTR MT Correction 01 QA
+27.0
+Simulator
+					13 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+Simulator
+					15 row (selectable) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen3, Value: OTR Apple Local Model Probe 26.5
+Simulator
+			17 search text field (settable) Search
+				18 button Search
+			19 splitter (disabled, settable, float) 308
+			20 container
+				21 container
+					22 button Description: Back, Secondary Actions: Cancel
+					23 button Description: Review, Secondary Actions: Cancel
+					24 text Description: Needs your decision · 1, Secondary Actions: Cancel
+					25 button Description: Date needs checking, Secondary Actions: Cancel
+					26 text Description: Required travel information is missing. Check the source before continuing., Secondary Actions: Cancel
+					27 button (selected) Description: Source 1, Secondary Actions: Cancel
+					28 text Description: Submitted text, Secondary Actions: Cancel
+					29 text Description: Check the original document before choosing., Secondary Actions: Cancel
+					30 button Description: Open original, Secondary Actions: Cancel
+					31 text Description: Automatic mode: AA1302 LAX to SFO on 20 December 2026. Gallery visit on 16 December 2026., Secondary Actions: Cancel
+					32 text Description: Date needs checking, Secondary Actions: Cancel
+					33 text Secondary Actions: Cancel
+					34 text Secondary Actions: Cancel, Description: Missing facts can be entered in the normal item form, then this document can be linked. No missing facts will be invented.
+					35 button (disabled) Description: Create a separate item, Secondary Actions: Cancel
+					36 button Description: Link to Slice 3 Harbour walk, Secondary Actions: Cancel
+					37 button (disabled) Description: Use this decision, Secondary Actions: Cancel
+				38 button Description: Home, ID: app.grid.3x3
+				39 button Description: Screenshot, ID: camera.viewfinder
+				40 button Description: Record, Help: Record Screen, ID: record.circle
+				41 button Rotate Left
+		42 splitter (disabled, settable, float) 1406
+		43 container
+			44 scroll area Description: Appearance, ID: Inspector.com.apple.devicekit.inspector.appearance
+				45 container
+					46 pop up button Appearance, Value: Light
+					47 slider Liquid Glass, Value: 0.5, Secondary Actions: Increment, Decrement
+						48 value indicator 0.5
+					49 pop up button Color Filter, Value: None
+					50 slider Text Size, Value: 3, Secondary Actions: Increment, Decrement
+						51 value indicator 3
+					52 switch Reduce Motion, Value: off
+					53 switch Increase Contrast, Value: off
+					54 switch Show Borders, Value: off
+					55 switch Reduce Transparency, Value: off
+					56 switch VoiceOver, Value: off
+					57 switch Slow Animations, Value: off
+				58 pop up button Location, Value: None
+				59 container
+					60 slider Sound, Value: 0.6, Secondary Actions: Increment, Decrement
+						61 value indicator 0.6
+					62 pop up button Output, Value: System
+					63 pop up button Input, Value: System
+	64 toolbar
+		65 menu button Add, Help: Add Device, ID: plus
+		66 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		67 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		68 toggle button Description: Capture Keyboard, Value: off
+		69 toggle button (disabled) Description: Resize mode, Help: Enter resize mode, Value: off
+		70 Zoom
+			71 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			72 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 1
+			73 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 0, ID: 1.magnifyingglass
+			74 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		75 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		76 menu button More, Help: More Actions, ID: ellipsis
+		77 Inspector Category
+			78 radio button Description: Edit, Help: Settings, Value: 1, ID: slider.horizontal.3
+			79 radio button Description: text.document, Help: Reports, Value: 0
+			80 radio button Description: Info, Value: 0, ID: info
+	81 close button
+	82 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	83 minimize button
+	84 text OTR Import B1 iPadOS 27.0
+85 menu bar
+	86 Device Hub
+	87 File
+	88 Edit
+	89 View
+	90 Device
+	91 Controls
+	92 Window
+	93 Help

@@ -1,25 +1,39 @@
-## Import V3 B2 Slice 3 — limited Core compatibility approved, 13 November 2026
+## Import V3 B2 Slice 3 — finite admission delivered, 14 November 2026
 
-Owner accepted Slice 2 `e87cb6f` and authorized Slice 3 subject to explicit approval
-before Core business authorization/SQL changes. Bounded check found the actual gap:
-V3 emits MANUAL, which records AI facts as MANUAL/protected; ordinary Core PG rejects
-AUTO_SOURCE, source-free AUTO_SOURCE fails binding, and Document metadata/association
-contracts and Native enqueue remain MANUAL-only. No automatic confirm substitution.
-Four new isolated current-code tests reproduce the gap (no DEV/Provider access).
+Owner accepted Slice 2 `e87cb6f` and explicitly approved finite Source-free IMPORT
+Core compatibility. Candidate baseline `b797f9b` plus final Slice 3 follow-up commit;
+no main merge/push. Full report: `docs/ops/import-b2-slice3-20261113/README.md`.
 
-Exact one-time proposal: `docs/beta/IMPORT_V3_B2_SLICE3_CORE_COMPATIBILITY_DIFF.md`.
-Owner approved finite Source-free IMPORT admission using existing normal Core
-NEW/add-only Document LINK commands and ACL, existing PROVIDER field origin, no auto
-UPDATE and no Role/Grant/RLS expansion. Not a new Admission engine or operational Gate.
-Finite IMPORT Core/Native compatibility and Slice 3 UI are implemented locally.
-Owning PostgreSQL commands, Receipt/readback and exact inverse passed in the existing
-network-none PG fixture. 229 targeted tests pass, including P1–P6 automatic Wake on
-local/cloud Trips; UI guard passes. DEV installation and new Full App acceptance
-are still pending; no runtime screenshots or completed Slice 3 claim yet.
+Existing planner/Queue/Sync/Receipt now support finite IMPORT NEW, initial P2 facts,
+and add-only LOCAL_ONLY Document LINK. AI facts use existing PROVIDER provenance;
+MANUAL protection, ACL, versions, UNKNOWN original-ID reconciliation and legacy
+Source paths remain. No automatic UPDATE or new role/table/queue/service. Compatible
+Backend is actually deployed in DEV (image `sha256:1f85595d…`); six owning function
+changes installed and independently verified, OID/owner/ACL unchanged. Inverse is
+fixed but must not blindly downgrade readers after IMPORT receipts exist.
 
-**Next: implement approved finite compatibility and Slice 3 with isolated synthetic data.**
-Do not hide Confirm, fabricate manual provenance or reuse old AUTO_SOURCE proofs.
-Preserve Slice 1/2 and original B1/QA179; zero new DeepSeek. No main merge/push.
+Full App simulator uses a temporary synthetic Provider seam (not product code) and
+normal real DEV Core/Auth/Sync. New Trip `a6155477…`: development Batch `1e256ac9…`
+requires one Batch confirmation, then trustworthy NEWs save; two ambiguous Hotels
+require explicit NEW/LINK choices. 4 suggestions resolve to 3 Items, ABSTAIN creates
+none. Auto-mode Batch `8b3ca4ad…` submits without Confirm: P6 NEW and identity-based
+P2 LINK save; missing-date P1 stays Review, empty P4 ABSTAIN. Independent PG readback:
+4 total Items,2 Documents,5 unique links,12 APPLIED receipts; original B1 receipts and
+file hashes unchanged. Intermediate `5e1bf829…` retained unconfirmed because Metro
+cached development mode; no save, reset or retry of that intent. Build cache was
+fixed and final auto configuration verified in actual bundle. Zero real DeepSeek;
+physical iPad/QA179 untouched. Cold-process recovery and final screenshots are in
+this slice's report, not a claim of physical or system-offline acceptance.
+
+Checks:269 targeted plus21 Activity/Wake tests and isolated owning-PG forward/
+commands/readback/inverse pass. UI guard and changed-UI lint pass. Three unrelated
+baseline whole-repo type errors remain; known instruction-scope baseline failure is
+recorded separately. Normal DEV receipt/snapshot reads remain slow (tens of seconds);
+show checking/partial facts instead of a false saved count.
+
+**STOP after Slice 3 for Owner review. Do not start Slice 4–6.** Rich Results/navigation
+remain Slice 4; full field UPDATE editor remains B4. Historical Activity without a
+retained new submission intent remains read-only. No new DeepSeek or B1 replay.
 
 ## Import V3 B2 Slice 2 — Owner review checkpoint, 13 November 2026
 

@@ -1,0 +1,40 @@
+import {File,Paths} from "expo-file-system";
+import {universalP1Identity} from "../../domain/trip/universalImportIdentity";
+import {sha256} from "@noble/hashes/sha256";
+import {bytesToHex} from "@noble/hashes/utils";
+const originals=new Set(["3d2789c7-f234-49f5-9b8d-c5479c496209", "48181fe2-1355-4d79-b34f-39d95999f8d4", "9583b5ad-225a-46de-81f7-039d85b4a888", "dd7de7ff-d151-486f-a311-d3296f18811a"]);
+const file=new File(Paths.document,"slice3-synthetic-provider.json");
+function read(){return file.exists?JSON.parse(file.textSync()):{};}
+function write(value:any){file.create({overwrite:true});file.write(JSON.stringify(value));}
+export function fixtureTransport(real:any){
+ const record=(id:string)=>read()[id];
+ const execution=(id:string)=>{
+  const r=record(id);if(!r)return null;
+  if(r.missing.length)return {state:"WAITING_INPUT",missingFiles:r.missing};
+  const documents=r.manifest.files.map((f:any)=>f.documentId);
+  const candidate=(key:string,kind:string,fields:any)=>({candidateId:universalP1Identity(id,"slice3",key),kind,subtype:kind==="P2"?"FLIGHT":"ACTIVITY",fields,documentIds:documents});
+  const flight={title:"AA1302","flight_number":"AA1302","origin.airport_code":"LAX","destination.airport_code":"SFO","origin.local_date":"2026-12-20","destination.local_date":"2026-12-20","origin.local_time":"10:10","destination.local_time":"11:40"};
+  return {state:"REVIEW_READY",taskId:universalP1Identity(id,"slice3","task"),candidates:r.index===0?[
+   candidate("walk","P1",{title:"Slice 3 Harbour walk","activity.date":"2026-12-14"}),
+   candidate("flight","P2",flight),
+   candidate("hotel-a","P3",{title:"Slice 3 Hotel","check_in.date":"2026-12-14","check_out.date":"2026-12-15","room.type":"Double"}),
+   candidate("hotel-b","P3",{title:"Slice 3 Hotel","check_in.date":"2026-12-14","check_out.date":"2026-12-15","room.type":"Suite"}),
+   candidate("abstain","P6",{})
+  ]:[candidate("flight-link","P2",flight),candidate("activity","P6",{title:"Slice 3 Gallery visit","activity.date":"2026-12-16","activity.location":"Synthetic gallery"}),candidate("missing","P1",{title:"Date needs checking"}),candidate("abstain","P4",{})]};
+ };
+ return {...real,
+  localFirstCapability:async(c:any,id:string)=>originals.has(id)?real.localFirstCapability(c,id):({localFirst:true,existing:execution(id)}),
+  readLocalFirstExecution:async(c:any,id:string)=>originals.has(id)?real.readLocalFirstExecution(c,id):execution(id),
+  startLocalFirst:async(c:any,id:string,manifest:any)=>{
+   if(originals.has(id))throw Error("ORIGINAL_BATCH_READ_ONLY_IN_SLICE3");
+   const all=read();if(!all[id]){all[id]={index:Object.keys(all).length,accountId:c.accountId,manifest,missing:manifest.files.map((f:any)=>f.fileId),dispatches:0};write(all);}
+   return {analysisId:id,missingFiles:read()[id].missing};
+  },
+  uploadLocalFirst:async(c:any,id:string,fileId:string,bytes:Uint8Array)=>{
+   const all=read(),r=all[id];if(!r||r.accountId!==c.accountId)throw Error("FIXTURE_SCOPE");
+   const f=r.manifest.files.find((f:any)=>f.fileId===fileId);if(!f||f.length!==bytes.length||f.sha256!==bytesToHex(sha256(bytes)))throw Error("FIXTURE_INTEGRITY");
+   r.missing=r.missing.filter((f:string)=>f!==fileId);if(!r.missing.length&&r.dispatches===0)r.dispatches=1;write(all);
+  },
+  readLocalFirst:async(c:any,id:string)=>({analysisId:id,missingFiles:record(id)?.missing??[]})
+ };
+}
