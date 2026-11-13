@@ -64,7 +64,10 @@ export function UniversalCaptureResults({
         {state.formatUnavailable ? (
           <UiText>{t("capture.ai.v3.formatUnavailable")}</UiText>
         ) : null}
-        {state.unavailable || state.localFirst?.state === "NEEDS_ACTION" ? (
+        {state.localFirst?.state === "NEEDS_ACTION" && !state.unavailable ? (
+          <UiText>{t("capture.ai.v3.needsAction")}</UiText>
+        ) : null}
+        {state.unavailable ? (
           <UiText>{t("capture.ai.unavailable")}</UiText>
         ) : null}
         {result?.candidates.map((candidate) => (

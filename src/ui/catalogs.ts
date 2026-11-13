@@ -234,6 +234,7 @@ export const en = {
   "capture.ai.v3.update": "Update the title of an existing item",
   "capture.ai.v3.formatUnavailable":
     "This file’s contents do not match a supported format. Choose a TXT, PDF, PNG, JPEG, WebP or static GIF original.",
+  "capture.ai.v3.needsAction": "Choose Analyze to process your saved materials.",
   "capture.ai.v3.notSaved": "Additional extracted details, not saved: {details}",
   "capture.ai.v3.flightSparse":
     "Only the flight number and departure date can be saved with the current flight capability. Other flight details remain in Review.",
@@ -3382,6 +3383,7 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.v3.update": "更新已有项目的标题",
   "capture.ai.v3.formatUnavailable":
     "文件内容与支持的格式不符。请选择 TXT、PDF、PNG、JPEG、WebP 或静态 GIF 原文件。",
+  "capture.ai.v3.needsAction": "点击分析，处理已保存的材料。",
   "capture.ai.v3.notSaved": "以下识别信息暂不保存：{details}",
   "capture.ai.v3.flightSparse":
     "当前航班能力仅能保存航班号和出发日期，其他航班信息保留在审核结果中。",

@@ -2,7 +2,8 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
-import { UniversalResultView } from "./UniversalCaptureResults";
+import { UniversalResultView, UniversalCaptureResults } from "./UniversalCaptureResults";
+import { useUniversalCapture } from "./useUniversalCapture";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { setUiLocale, t } from "@/ui/locale";
@@ -12,6 +13,7 @@ const state = vi.hoisted(() => ({
   buttons: [] as { label: string; disabled?: boolean; onPress(): void }[],
 }));
 vi.mock("./useUniversalCapture", () => ({ useUniversalCapture: vi.fn() }));
+vi.mock("./useUniversalP1Admission", () => ({ useUniversalP1Admission: () => ({}) }));
 vi.mock("react-native", () => ({
   View: "div",
   Modal: "dialog",
@@ -801,4 +803,24 @@ it("keeps real result evidence names and unprocessed warnings when the parent li
   expect(html).toContain("Museum walk");
   expect(JSON.stringify(f.result)).toBe(before);
   expect(f.props.start).not.toHaveBeenCalled();
+});
+
+it("shows a new V3 batch as awaiting Analyze rather than a processing failure", () => {
+  vi.mocked(useUniversalCapture).mockReturnValue({
+    localFirstSelected: true,
+    localFirst: { state: "NEEDS_ACTION" },
+    unavailable: false,
+    busy: false,
+    canStart: true,
+    start: vi.fn(),
+    recover: vi.fn(),
+  } as never);
+  const html = renderToStaticMarkup(
+    createElement(UniversalCaptureResults, {
+      model: {} as CaptureJobReadModel,
+      isCurrent: () => true,
+    }),
+  );
+  expect(html).toContain(t("capture.ai.v3.needsAction"));
+  expect(html).not.toContain(t("capture.ai.unavailable"));
 });
