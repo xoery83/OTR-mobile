@@ -1,0 +1,35 @@
+{
+  "status": "METADATA_SERVER_ACCEPTED_INDEPENDENTLY_VERIFIED",
+  "operationId": "0164a1da-bd3c-4a8b-9126-31c6fcfc3673",
+  "actorAccountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "beforeRevision": 0,
+  "afterRevision": 1,
+  "changedFields": [
+    "name"
+  ],
+  "after": {
+    "destination": null,
+    "destinations": [
+      {
+        "destinationId": "f27905ea-7fc6-4cde-8cac-d35830c454db",
+        "displayLabel": "Auckland",
+        "source": "MANUAL"
+      }
+    ],
+    "endDate": "2026-11-20",
+    "name": "Apple Guest QA 20261113 Verified",
+    "startDate": "2026-11-12"
+  },
+  "personUnchanged": true,
+  "p1OwningReceiptFactProjectionUnchanged": true,
+  "p1SemanticRevision": 1,
+  "p1ComparisonLimit": "Compared all original receipt fact keys; normalized equivalent UTC timestamp spelling; legacy columns outside original receipt projection excluded.",
+  "adoptionOriginalPublishedReceipt": {
+    "adoptionId": "7da7240f-4019-4a60-b3d7-350525ecddef",
+    "outcome": "PUBLISHED",
+    "receiptId": "dd5c71a6-8faa-49ad-be3b-d7120acc2d96",
+    "receiptSHA256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1",
+    "recordedAt": "2026-11-13T17:54:09.669991+00:00"
+  },
+  "readOnly": true
+}

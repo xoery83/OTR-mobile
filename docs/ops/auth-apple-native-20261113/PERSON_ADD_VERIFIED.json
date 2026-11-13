@@ -1,0 +1,11 @@
+{
+  "status": "PERSON_ADD_SERVER_ACCEPTED_AND_INDEPENDENTLY_VERIFIED",
+  "personId": "7313cc83-d4c4-4fff-9f64-260970051f97",
+  "operationId": "22875a73-5ea2-43a5-9446-e3572cae5813",
+  "actorAccountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "acceptedAt": "2026-11-13T20:41:53.240722+00:00",
+  "tripOwnerBinding": true,
+  "personAccountBinding": "UNLINKED_NULL_AS_EXPECTED",
+  "cardinality": 1,
+  "readOnly": true
+}

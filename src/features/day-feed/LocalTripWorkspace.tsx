@@ -195,6 +195,13 @@ function LocalTripContent({
   const [remoteMetadataEditor, setRemoteMetadataEditor] = useState<Awaited<
     ReturnType<typeof readServerParentMetadataEditBase>
   > | null>(null);
+  const [remoteMetadataReady, setRemoteMetadataReady] = useState<Awaited<
+    ReturnType<typeof readServerParentMetadataEditBase>
+  > | null>(null);
+  const remoteMetadataQualified =
+    !!remoteSelected &&
+    remoteMetadataReady?.context.tripId === remoteSelected.id &&
+    remoteMetadataReady.context.generation === generation;
   const editorTrip =
     selected ??
     (remoteMetadataEditor
@@ -441,6 +448,7 @@ function LocalTripContent({
         ticket !== request.current
       )
         return;
+      setRemoteMetadataReady(null);
       loadedGuest.current = guestLocalId;
       setMetadataEditable(canEditMetadata);
       setTrips(list);
@@ -465,6 +473,33 @@ function LocalTripContent({
       );
       setStatus("READY");
       onKnownTrip(local ? "LOCAL" : cached ? "CACHED" : "NONE");
+      // Optional online qualification never delays the already-rendered cached Trip.
+      if (cached && !isGuest && serverParentPeopleEnabled)
+        void (async () => {
+          try {
+            const { requireAdoptedUserId } = await import("@/data/auth/authRepository");
+            const scope = await captureAccountRequestContext(
+              cached.id,
+              requireAdoptedUserId,
+            );
+            const base = await readServerParentMetadataEditBase(scope);
+            if (
+              alive.current &&
+              captured === getAccountGeneration() &&
+              ticket === request.current &&
+              base.context.tripId === cached.id &&
+              base.context.accountId === qaAccountId
+            )
+              setRemoteMetadataReady(base);
+          } catch {
+            if (
+              alive.current &&
+              captured === getAccountGeneration() &&
+              ticket === request.current
+            )
+              setRemoteMetadataReady(null);
+          }
+        })();
       if (!tripId && list.length) {
         const possible = possibleTodayTrips(list, calendarDate(new Date()));
         if (possible.length) {
@@ -535,7 +570,7 @@ function LocalTripContent({
       setStatus("UNAVAILABLE");
       onKnownTrip("NONE");
     }
-  }, [tripId, onKnownTrip, generation]);
+  }, [tripId, onKnownTrip, generation, serverParentPeopleEnabled]);
   useEffect(() => {
     void Promise.resolve().then(load);
     const sub = AppState.addEventListener("change", (state) => {
@@ -850,6 +885,23 @@ function LocalTripContent({
     : undefined;
   useFocusEffect(
     useCallback(() => {
+      if (!selected && remoteSelected && remoteMetadataQualified && status === "READY") {
+        const owner = remoteSelected.id;
+        publishQuickActions(
+          {
+            tripName: remoteSelected.name,
+            tripId: owner,
+            generation,
+            owner: quickActionsOwner,
+            backToTrips: leaveHome,
+            editTrip: () => void openTripEditor(),
+          },
+          owner,
+          generation,
+          quickActionsOwner,
+        );
+        return () => publishQuickActions(null, owner, generation, quickActionsOwner);
+      }
       if (!selected || status !== "READY") return;
       const owner = selected.id;
       publishQuickActions(
@@ -900,6 +952,8 @@ function LocalTripContent({
       return () => publishQuickActions(null, owner, generation, quickActionsOwner);
     }, [
       selected,
+      remoteSelected,
+      remoteMetadataQualified,
       tripId,
       status,
       generation,
@@ -953,7 +1007,7 @@ function LocalTripContent({
       : undefined,
     onSetup: receiveSetup,
     onEdit:
-      (selected && metadataEditable) || (remoteSelected && serverParentPeopleEnabled)
+      (selected && metadataEditable) || (remoteSelected && remoteMetadataQualified)
         ? () => void openTripEditor()
         : undefined,
     onCover: openPersonalCover,
@@ -1369,7 +1423,7 @@ function LocalTripContent({
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
-            onEdit={serverParentPeopleEnabled ? () => void openTripEditor() : undefined}
+            onEdit={remoteMetadataQualified ? () => void openTripEditor() : undefined}
             canChooseCover={!!personalCover.selection}
             onChooseCover={openPersonalCover}
             onHeroHeight={onHomeHeroHeight}
@@ -1395,7 +1449,7 @@ function LocalTripContent({
             title={remoteSelected.name}
             cover={tripCoverSource(displayCover ?? remoteSelected)}
             coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
-            notice={t("myTrips.cachedDetails")}
+            notice={remoteMetadataQualified ? undefined : t("myTrips.cachedDetails")}
             metadata={[
               ...(remoteStart && remoteEnd
                 ? [

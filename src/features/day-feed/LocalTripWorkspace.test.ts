@@ -2140,9 +2140,6 @@ it.each(["success", "revoked", "switched"])(
     });
     props.tripId = tripId;
     props.serverParentPeopleEnabled = true;
-    render();
-    await flush();
-    render();
     const context = {
       accountId: "10000000-0000-4000-8000-000000000001",
       tripId,
@@ -2170,7 +2167,12 @@ it.each(["success", "revoked", "switched"])(
     else if (mode === "revoked")
       state.parentMetadataRead.mockRejectedValue(Error("REVOKED"));
     else state.parentMetadataRead.mockResolvedValue(base);
-    await button("tripHome.edit").onPress();
+    render();
+    await vi.dynamicImportSettled();
+    await flush();
+    state.forceEffects = true;
+    render();
+    state.forceEffects = false;
     await vi.dynamicImportSettled();
     await flush();
     render();
@@ -2188,10 +2190,21 @@ it.each(["success", "revoked", "switched"])(
       return;
     }
     if (mode === "revoked") {
-      expect(render()).toContain("tripMetadata.confirmedBaseUnavailable");
+      expect(render()).toContain("myTrips.cachedDetails");
+      expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
       expect(state.parentMetadataSave).not.toHaveBeenCalled();
       return;
     }
+    const actions = state.publish.mock.calls.find(
+      (call) => call[0]?.tripId === tripId,
+    )?.[0];
+    expect(actions?.editTrip).toBeTypeOf("function");
+    expect(actions?.itinerary).toBeUndefined();
+    expect(render()).not.toContain("myTrips.cachedDetails");
+    await button("tripHome.edit").onPress();
+    await vi.dynamicImportSettled();
+    await flush();
+    render();
     input("tripCreate.name", "Updated remote");
     render();
     button("ui.save").onPress();
