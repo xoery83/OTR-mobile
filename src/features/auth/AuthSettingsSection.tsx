@@ -14,6 +14,7 @@ import type { UiColors } from "@/ui/palette";
 import { useThemedStyles } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
+import { AppleAccountConnection } from "./AppleAccountConnection";
 
 // Native Settings supplies the normal route callback only once local Profile is available.
 export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => void }) {
@@ -44,6 +45,7 @@ export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => v
   }
   return (
     <View style={styles.content}>
+      <AppleAccountConnection />
       <UiSection title={t("privateProfile.title")}>
         <UiButton
           label={t("privateProfile.title")}

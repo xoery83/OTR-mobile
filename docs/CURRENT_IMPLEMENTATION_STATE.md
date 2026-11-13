@@ -1,5 +1,20 @@
 # Auth Lane D — current handoff, 5 November 2026
 
+## Apple sign-in candidate, 13 November 2026
+
+Owner approved and registered `art.xoery.otr`, Team `3K49Z2Q5X7`. Native Apple
+SDK 57.0.2, nonce/ID-token Adapter, explicit Account linking, optional first-name
+suggestion, Settings and login entries are implemented in the Auth branch.
+122 focused tests, UI guard, scoped lint, isolated native prebuild and initial
+iOS JS export passed. Independent Review's unmount/confirmation finding is fixed
+with three regressions. Hosted DEV Apple Provider independently reads enabled.
+New-Team device signing build is running in isolated `/private/tmp` directories.
+Existing GuestQA/native identities and data are preserved. Actual Apple login,
+Guest Adoption, dual-Apple-user isolation and physical cold restore are NOT_RUN.
+Supabase automatic same-email linking policy needs acceptance verification.
+New-bundle Google is unavailable until its own iOS Client exists.
+Evidence and continuation are in `docs/ops/auth-apple-native-20261113/`.
+
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 
 **IN_PROGRESS — current checkpoint, 5 November.**

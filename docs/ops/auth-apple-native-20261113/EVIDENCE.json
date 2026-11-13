@@ -1,0 +1,56 @@
+{
+  "status": "SOFTWARE_CANDIDATE_DEVICE_BUILD_IN_PROGRESS",
+  "bundleIdentifier": "art.xoery.otr",
+  "appleTeamId": "3K49Z2Q5X7",
+  "ownerIdentifierRegistration": "CONFIRMED_IN_THIS_CHAT",
+  "devProviderReadback": {
+    "project": "tuqigdxrvrerfewsxqgm",
+    "appleEnabled": true,
+    "googleEnabled": true,
+    "clientAudience": "OWNER_CONFIGURED_NOT_INDEPENDENTLY_READ",
+    "manualLinking": "NOT_EXPOSED_BY_PUBLIC_SETTINGS"
+  },
+  "localValidation": {
+    "focusedTests": 122,
+    "testFiles": 12,
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "nativePrebuild": "PASS",
+    "appleEntitlement": [
+      "Default"
+    ],
+    "javascriptExport": "PASS_BEFORE_FINAL_LINK_READBACK_CHANGE",
+    "globalTypecheck": "THREE_EXISTING_UNRELATED_ERRORS_NO_APPLE_DIAGNOSTICS"
+  },
+  "independentReview": {
+    "result": "SCOPED_NO_BLOCKER_APPLE_SOFTWARE_CANDIDATE",
+    "fixedFinding": "Unmounted Settings confirmation cannot start Apple linking",
+    "regressionTests": 3
+  },
+  "nativeProject": "/private/tmp/otr-apple-native-preflight-5kr0r60w/ios",
+  "firstDeviceBuild": {
+    "result": "FAILED",
+    "firstFailure": "NEW_TEAM_HAS_NO_REGISTERED_DEVICES_OR_PROVISIONING_PROFILE"
+  },
+  "secondDeviceBuild": {
+    "result": "IN_PROGRESS",
+    "change": "Exact connected device target with automatic device registration; build only"
+  },
+  "physicalAcceptance": {
+    "firstAppleLogin": "NOT_RUN",
+    "repeatLogin": "NOT_RUN",
+    "cancel": "NOT_RUN",
+    "hideMyEmail": "NOT_RUN",
+    "guestAdoption": "NOT_RUN",
+    "logoutRelogin": "NOT_RUN",
+    "coldSessionRestore": "NOT_RUN",
+    "twoAppleUsersIsolation": "NOT_RUN",
+    "explicitIdentityLink": "NOT_RUN"
+  },
+  "remaining": [
+    "Complete signed build and verify final embedded Bundle ID, Team and entitlement.",
+    "Coordinate safe physical-device use and obtain normal interactive Apple QA consent.",
+    "Verify Hosted manual identity linking and same-email automatic-linking behavior against the explicit-linking contract before acceptance.",
+    "New Google iOS Client is required for art.xoery.otr. Google is hidden and unavailable only in the new bundle until configured."
+  ]
+}

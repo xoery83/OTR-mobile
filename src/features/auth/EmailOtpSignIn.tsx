@@ -16,6 +16,7 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { GoogleSignInButton } from "./GoogleSignInButton";
+import { AppleSignInButton } from "./AppleSignInButton";
 
 export function EmailOtpSignIn({
   onAuthenticated,
@@ -60,7 +61,10 @@ export function EmailOtpSignIn({
     }, [flow, onBusyChange]),
   );
 
-  async function submit(verify: boolean, provider: "email_otp" | "google" = "email_otp") {
+  async function submit(
+    verify: boolean,
+    provider: "email_otp" | "google" | "apple" = "email_otp",
+  ) {
     if (pending.current) return;
     pending.current = true;
     setBusy(true);
@@ -69,7 +73,7 @@ export function EmailOtpSignIn({
     try {
       if (process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT !== "dev")
         throw new Error("AUTH_PROVIDER_UNAVAILABLE");
-      if (provider === "google") {
+      if (provider === "google" || provider === "apple") {
         const result = await flow.verify({ provider });
         if (!alive.current || result.status === "CANCELLED") return;
         if (result.status === "UNAVAILABLE") {
@@ -98,7 +102,10 @@ export function EmailOtpSignIn({
         setCode("");
       }
     } catch (caught) {
-      if (caught instanceof Error && caught.message === "GOOGLE_SIGN_IN_CANCELLED")
+      if (
+        caught instanceof Error &&
+        ["GOOGLE_SIGN_IN_CANCELLED", "APPLE_SIGN_IN_CANCELLED"].includes(caught.message)
+      )
         return;
       if (alive.current) {
         Keyboard.dismiss();
@@ -143,7 +150,13 @@ export function EmailOtpSignIn({
         </UiText>
       ) : null}
       {!challenge ? (
-        <GoogleSignInButton disabled={busy} onPress={() => void submit(true, "google")} />
+        <>
+          <AppleSignInButton disabled={busy} onPress={() => void submit(true, "apple")} />
+          <GoogleSignInButton
+            disabled={busy}
+            onPress={() => void submit(true, "google")}
+          />
+        </>
       ) : null}
       {challenge ? (
         <>

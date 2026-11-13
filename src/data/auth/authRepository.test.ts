@@ -46,6 +46,21 @@ function jwt(payload: Record<string, unknown>) {
 }
 
 describe("auth repository", () => {
+  it("restores Apple's optional first-name suggestion within its own Account after repository recreation", async () => {
+    const storage = createMemoryStorage();
+    const appleIdentity = {
+      ...accountA,
+      email: "qa@privaterelay.appleid.com",
+      appleFirstSignInName: { givenName: "小明", familyName: "王" },
+    };
+    await createAuthRepository(storage).writeLocalSession(session(appleIdentity));
+    const cold = createAuthRepository(storage);
+    expect((await cold.readLocalSession())?.identity).toEqual(appleIdentity);
+    await cold.writeLocalSession(session(accountB));
+    expect((await createAuthRepository(storage).readLocalSession())?.identity).toEqual(
+      accountB,
+    );
+  });
   const readonlyStorage = (storage: SecureSessionStorage): SecureSessionStorage => ({
     ...storage,
     setItem: async () => {

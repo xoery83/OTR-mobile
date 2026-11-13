@@ -53,6 +53,7 @@ vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("./GoogleSignInButton", () => ({ GoogleSignInButton: "GoogleButton" }));
+vi.mock("./AppleSignInButton", () => ({ AppleSignInButton: "AppleButton" }));
 
 const props = { onAuthenticated: vi.fn(), onBusyChange: vi.fn(), onCancel: vi.fn() };
 type Node = { type: unknown; props: Record<string, any> };
