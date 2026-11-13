@@ -1261,7 +1261,8 @@ function LocalTripContent({
         </Text>
       </View>
     );
-  const metadataEditor = editorTrip ? (
+  // The retained local editor owns Guest cover/draft recovery; mount only one editor.
+  const metadataEditor = !selected && editorTrip ? (
     <Modal
       visible={coverOpen}
       presentationStyle="pageSheet"
