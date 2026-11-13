@@ -1,0 +1,36 @@
+{
+  "status": "LOCAL_REVIEW_PASS_NATIVE_NOT_RUN",
+  "scope": "Existing adopted Trip Metadata only; no local Create/container synthesized.",
+  "nativeWriterHandoff": {
+    "files": [
+      "LocalTripWorkspace.tsx",
+      "tripMetadataRepository.ts",
+      "tripNormalSync.ts",
+      "tripNormalCoordinator.ts"
+    ],
+    "registryPatchSHA256": "b4b07c84c279c7f7e751379017f9506efd77e4a0a9f71ed5e403facbc85d80b6",
+    "sqliteVersion": 76,
+    "registryAppliedLocally": true,
+    "deviceInstalled": false
+  },
+  "independentReview": "LOCAL_REVIEW_PASS; original operation snapshot regression independently passed",
+  "checks": {
+    "sqliteRowRetentionAndCascade": true,
+    "parentCoreOwnerScope": true,
+    "crossAccountRevokedNegatives": true,
+    "casReceiptColdReopen": true,
+    "requestMutationDuringParentAwait": true,
+    "uiSuccessRevokeGeneration": true,
+    "uiGuard": true,
+    "scopedLint": "PASS",
+    "typecheck": "Only three pre-existing unrelated diagnostics; no changed-file errors",
+    "targetedTests": {
+      "files": 6,
+      "passed": 174
+    }
+  },
+  "hostedMetadataRead": "NOT_RUN",
+  "nativeSaveColdRestore": "NOT_RUN",
+  "backendDeployment": "Root2 compatible f8862b0a image; not deployed yet",
+  "accountPurge": "No existing hard-purge owning port. Native confirmed logout/switch retain account-private cache; future hard purge must clear server-only confirmations."
+}

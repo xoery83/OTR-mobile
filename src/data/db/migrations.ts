@@ -1,3 +1,4 @@
+import { serverParentMetadataConfirmationsSql } from "./migrations/serverParentMetadataConfirmations.candidate";
 import { capturePhotoImportDecisionsDefinition } from "./migrations/capturePhotoImportDecisions";
 import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
 import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
@@ -1733,4 +1734,5 @@ export const migrations: Migration[] = [
   captureMixedInputsMigration,
   tripPersonCloudCreateMigration,
   { ...capturePhotoImportDecisionsDefinition, id: 75 },
+  { id: 76, name: "server_parent_metadata_confirmations", sql: serverParentMetadataConfirmationsSql },
 ];

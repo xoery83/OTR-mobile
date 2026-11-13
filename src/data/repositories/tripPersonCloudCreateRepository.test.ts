@@ -1,3 +1,7 @@
+import {
+  createTripMetadataRepository,
+  saveServerParentTripMetadata,
+} from "./tripMetadataRepository";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID, createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -38,7 +42,9 @@ import {
 } from "@/domain/trip/tripPersonCloudCreate";
 const parentRead = vi.hoisted(() => vi.fn());
 const ensureActor = vi.hoisted(() => vi.fn(async () => undefined));
-vi.mock("../sync/ledgerReportingCoordinator", () => ({ ensureJourneyLedgerActor: ensureActor }));
+vi.mock("../sync/ledgerReportingCoordinator", () => ({
+  ensureJourneyLedgerActor: ensureActor,
+}));
 vi.mock("../sync/tripCreateTransport", () => ({
   createTripCreateTransport: () => ({ parentReceipt: parentRead }),
 }));
@@ -305,27 +311,32 @@ it("qualifies only the original Owner through an owning parent read without crea
     ownerPersonId: f.parent.ownerPersonId,
   });
   expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
-  expect(ensureActor.mock.invocationCallOrder[0]).toBeLessThan(parentRead.mock.invocationCallOrder[0]);
+  expect(ensureActor.mock.invocationCallOrder[0]).toBeLessThan(
+    parentRead.mock.invocationCallOrder[0],
+  );
   expect(parentRead).toHaveBeenCalledWith(f.scope);
   expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
   expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
   expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
 });
 
-it.each(["failed", "account-switch"])("stops parent qualification when roster hydration is %s", async (kind) => {
-  const f = await serverParentFixture();
-  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
-  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
-  parentRead.mockResolvedValue(f.parent);
-  ensureActor.mockImplementation(async () => {
-    if (kind === "failed") throw Error("ROSTER_UNAVAILABLE");
-    f.switchAccount();
-  });
-  await expect(readServerParentPeopleContext(f.scope)).rejects.toThrow();
-  expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
-  expect(parentRead).not.toHaveBeenCalled();
-  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
-});
+it.each(["failed", "account-switch"])(
+  "stops parent qualification when roster hydration is %s",
+  async (kind) => {
+    const f = await serverParentFixture();
+    vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+    parentRead.mockResolvedValue(f.parent);
+    ensureActor.mockImplementation(async () => {
+      if (kind === "failed") throw Error("ROSTER_UNAVAILABLE");
+      f.switchAccount();
+    });
+    await expect(readServerParentPeopleContext(f.scope)).rejects.toThrow();
+    expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
+    expect(parentRead).not.toHaveBeenCalled();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  },
+);
 
 it.each(["missing", "closed", "generation"] as const)(
   "does not qualify an unavailable or stale parent reader: %s",
@@ -1009,4 +1020,202 @@ it("snapshots explicit confirmation before awaiting the Account apply gate", asy
       )
       .get(b.personId, personCloudCreateKind),
   ).toMatchObject({ n: 0 });
+});
+
+// Reuse the real server-parent/Core/SQLite fixture; no second provenance fixture.
+
+it("retains server-parent Metadata, queues the original CAS and recovers its receipt after reopen", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const metadata = {
+    name: f.parent.name,
+    destination: null,
+    destinations: [],
+    startDate: null,
+    endDate: null,
+  };
+  await repo.retainMetadataSnapshot(
+    {
+      formatVersion: 3,
+      actorAccountId: f.account,
+      tripId: f.trip,
+      metadataRevision: 0,
+      metadata,
+    },
+    randomUUID(),
+    f.parent,
+  );
+  const request = {
+    formatVersion: 3 as const,
+    operationId: randomUUID(),
+    tripId: f.trip,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Adopted edited" },
+  };
+  await repo.updateMetadata(request, undefined, undefined, f.parent);
+  await repo.updateMetadata(request, undefined, undefined, f.parent);
+  expect(
+    f.sql
+      .prepare("SELECT COUNT(*) AS n FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.n,
+  ).toBe(1);
+  expect(f.sql.prepare("SELECT COUNT(*) AS n FROM local_trip_containers").get()!.n).toBe(
+    0,
+  );
+  f.reopen();
+  await repo.acceptMetadataUpdate({
+    ...request,
+    actorAccountId: f.account,
+    resultMetadataRevision: 1,
+  });
+  expect((await repo.readMetadataEditBase(f.trip)).confirmed?.metadata.name).toBe(
+    "Adopted edited",
+  );
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.status,
+  ).toBe("COMPLETED");
+});
+
+it("does not accept a server-parent snapshot from another Account or revoked Core scope", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const snapshot = {
+    formatVersion: 3 as const,
+    actorAccountId: f.account,
+    tripId: f.trip,
+    metadataRevision: 0,
+    metadata: {
+      name: f.parent.name,
+      destination: null,
+      destinations: [],
+      startDate: null,
+      endDate: null,
+    },
+  };
+  await expect(
+    repo.retainMetadataSnapshot(snapshot, randomUUID(), {
+      ...f.parent,
+      actorAccountId: randomUUID(),
+    }),
+  ).rejects.toThrow();
+  f.sql
+    .prepare("UPDATE trip_core_scopes SET revoked=1 WHERE account_id=? AND trip_id=?")
+    .run(f.account, f.trip);
+  await expect(
+    repo.retainMetadataSnapshot(snapshot, randomUUID(), f.parent),
+  ).rejects.toThrow();
+  expect(
+    f.sql.prepare("SELECT COUNT(*) AS n FROM local_trip_metadata_confirmations").get()!.n,
+  ).toBe(0);
+});
+
+it("rejects unconfirmed server-parent CAS and changed Account without creating local lineage", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const metadata = {
+    name: f.parent.name,
+    destination: null,
+    destinations: [],
+    startDate: null,
+    endDate: null,
+  };
+  const request = {
+    formatVersion: 3 as const,
+    operationId: randomUUID(),
+    tripId: f.trip,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Must not save" },
+  };
+  await expect(
+    repo.updateMetadata(request, undefined, undefined, f.parent),
+  ).rejects.toThrow("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+  f.switchAccount();
+  await expect(
+    repo.updateMetadata(request, undefined, undefined, f.parent),
+  ).rejects.toThrow();
+  expect(
+    f.sql
+      .prepare("SELECT COUNT(*) AS n FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.n,
+  ).toBe(0);
+});
+
+it("freezes the original server-parent Metadata operation before asynchronous Parent reads", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const metadata = {
+    name: f.parent.name,
+    destination: null,
+    destinations: [],
+    startDate: null,
+    endDate: null,
+  };
+  await repo.retainMetadataSnapshot(
+    {
+      formatVersion: 3,
+      actorAccountId: f.account,
+      tripId: f.trip,
+      metadataRevision: 0,
+      metadata,
+    },
+    randomUUID(),
+    f.parent,
+  );
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  let release!: (value: typeof f.parent) => void, started!: () => void;
+  const requested = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  parentRead.mockImplementation(() => {
+    started();
+    return new Promise((resolve) => {
+      release = resolve;
+    });
+  });
+  const operationId = randomUUID();
+  const request = {
+    formatVersion: 3 as const,
+    operationId,
+    tripId: f.trip,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Original submitted edit" },
+  };
+  const task = saveServerParentTripMetadata(f.scope, request);
+  await requested;
+  request.operationId = randomUUID();
+  request.after.name = "Mutated during wait";
+  release(f.parent);
+  await task;
+  const stored = f.sql
+    .prepare(
+      "SELECT id,payload_json FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+    )
+    .all();
+  expect(stored).toHaveLength(1);
+  expect(stored[0].id).toBe(operationId);
+  expect(JSON.parse(stored[0].payload_json as string).after.name).toBe(
+    "Original submitted edit",
+  );
 });

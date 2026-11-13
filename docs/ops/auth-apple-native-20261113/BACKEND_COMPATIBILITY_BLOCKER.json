@@ -35,13 +35,15 @@
   "nextAction": "Root1 supplies complete accepted deployed source baseline; Auth overlays existing Parent Reader, verifies changed paths; Root2 builds and proves deployment capacity before publishing.",
   "repairCandidate": {
     "sourceRevision": "b797f9b3fe0a3ec5827afffedf46e1b9e711239c",
-    "candidate": "16a187adf9bb067ad3f48ff00cc237a62213e897",
+    "candidate": "f650ce2bec7f7e4cb790b48f360c65bcead15085",
     "path": "/private/tmp/otr-auth-parent-compatible-20261114",
     "tests": 233,
     "files": 11,
     "dualBackendBuild": true,
-    "root1Review": "IN_PROGRESS",
+    "root1Review": "PARENT_NARROW_DIFF_PASS",
     "root2Build": "IN_PROGRESS",
-    "deployed": false
+    "deployed": false,
+    "parentPgReadiness": "PASS",
+    "releaseShape": "Same as actual B2: capture bundle only; inherit ordinary server and runtime layers unchanged."
   }
 }

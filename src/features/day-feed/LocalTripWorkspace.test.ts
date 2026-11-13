@@ -143,6 +143,8 @@ const state = vi.hoisted(() => ({
   serial: 0,
   alert: vi.fn(),
   publish: vi.fn(),
+  parentMetadataRead: vi.fn(),
+  parentMetadataSave: vi.fn(),
   forceEffects: false,
   focused: true,
   foreground: null as null | ((state: string) => void),
@@ -155,6 +157,11 @@ vi.mock("@/data/repositories/tripPersonCloudCreateRepository", async (original) 
     typeof import("@/data/repositories/tripPersonCloudCreateRepository")
   >()),
   saveAuthoredTripTraveler: state.saveTraveler,
+}));
+vi.mock("@/data/repositories/tripMetadataRepository", async (original) => ({
+  ...(await original<typeof import("@/data/repositories/tripMetadataRepository")>()),
+  readServerParentMetadataEditBase: state.parentMetadataRead,
+  saveServerParentTripMetadata: state.parentMetadataSave,
 }));
 vi.mock("./useTripPersonalCover", () => ({ useTripPersonalCover: () => state.personal }));
 vi.mock("react", async (original) => ({
@@ -260,6 +267,7 @@ vi.mock("@/data/auth/authRepository", () => ({
   clearLocalSession: vi.fn(),
   writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
+  requireAdoptedUserId: vi.fn(async () => "10000000-0000-4000-8000-000000000001"),
   readLocalSession: vi.fn(),
   readCommittedLocalSession: vi.fn(),
 }));
@@ -419,6 +427,8 @@ beforeEach(() => {
   state.refs = [];
   key = null;
   state.publish.mockReset();
+  state.parentMetadataRead.mockReset();
+  state.parentMetadataSave.mockReset().mockResolvedValue(undefined);
   state.alert.mockReset();
   state.forceEffects = false;
   state.focused = true;
@@ -2101,5 +2111,102 @@ it.each(["onQueryDirty", "onBusy"])(
     await expect(guestTripDraftInventory.freeze(guestDraftScope())).rejects.toThrow(
       "GUEST_TRIP_CREATE_DRAFT_NOT_READY",
     );
+  },
+);
+
+it.each(["success", "revoked", "switched"])(
+  "server-parent Details preserves formal CAS and stale-response isolation: %s",
+  async (mode) => {
+    const tripId = "20000000-0000-4000-8000-000000000001";
+    const repo = repository();
+    state.repo.mockResolvedValue(repo);
+    state.discovery.mockResolvedValue({
+      readMerged: async () => ({
+        cachedAt: null,
+        trips: [
+          {
+            id: tripId,
+            name: "Cached name",
+            destination: null,
+            startDate: null,
+            endDate: null,
+            createdAt: null,
+            localStatus: null,
+            selectedCoverAssetId: null,
+            remoteListed: true,
+          },
+        ],
+      }),
+    });
+    props.tripId = tripId;
+    props.serverParentPeopleEnabled = true;
+    render();
+    await flush();
+    render();
+    const context = {
+      accountId: "10000000-0000-4000-8000-000000000001",
+      tripId,
+      generation: getAccountGeneration(),
+    };
+    const metadata = {
+      name: "Confirmed name",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    };
+    const base = {
+      context,
+      snapshot: {
+        formatVersion: 3,
+        actorAccountId: context.accountId,
+        tripId,
+        metadataRevision: 7,
+        metadata,
+      },
+    };
+    const held = deferred<typeof base>();
+    if (mode === "switched") state.parentMetadataRead.mockReturnValue(held.promise);
+    else if (mode === "revoked")
+      state.parentMetadataRead.mockRejectedValue(Error("REVOKED"));
+    else state.parentMetadataRead.mockResolvedValue(base);
+    await button("tripHome.edit").onPress();
+    await vi.dynamicImportSettled();
+    await flush();
+    render();
+    if (mode === "switched") {
+      advanceAccountGeneration();
+      state.discovery.mockResolvedValue({
+        readMerged: async () => ({ cachedAt: null, trips: [] }),
+      });
+      render();
+      held.resolve(base);
+      await flush();
+      const html = render();
+      expect(html).not.toContain("Confirmed name");
+      expect(state.parentMetadataSave).not.toHaveBeenCalled();
+      return;
+    }
+    if (mode === "revoked") {
+      expect(render()).toContain("tripMetadata.confirmedBaseUnavailable");
+      expect(state.parentMetadataSave).not.toHaveBeenCalled();
+      return;
+    }
+    input("tripCreate.name", "Updated remote");
+    render();
+    button("ui.save").onPress();
+    await flush();
+    expect(state.parentMetadataSave).toHaveBeenCalledWith(
+      context,
+      expect.objectContaining({
+        formatVersion: 3,
+        tripId,
+        expectedMetadataRevision: 7,
+        before: metadata,
+        after: { ...metadata, name: "Updated remote" },
+      }),
+    );
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
+    expect(repo.createTrip).not.toHaveBeenCalled();
   },
 );

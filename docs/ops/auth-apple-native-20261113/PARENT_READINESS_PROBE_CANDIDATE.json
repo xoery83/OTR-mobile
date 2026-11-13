@@ -1,12 +1,12 @@
 {
-  "status": "SCOPED_REVIEW_PASS_HOSTED_NOT_RUN",
+  "status": "FIXED_PARENT_PG_READINESS_PASS_NOT_HTTP_E2E",
   "artifact": "/private/tmp/otr-auth-parent-readiness.cjs",
   "artifactSHA256": "33c9b031cd434dd5a42a807e730cd148bbd6c9b9943d8f09a5639c241291281e",
   "configurationSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
   "scope": "Fixed existing Apple Account/Trip/Create operation only; no JWT, no activation or DML; existing Reader takes FOR SHARE locks in ordinary transaction.",
   "postgresReadOnly": false,
   "businessReadOnly": true,
-  "hostedExecuted": false,
+  "hostedExecuted": true,
   "validation": {
     "metadataTests": 13,
     "lint": true,

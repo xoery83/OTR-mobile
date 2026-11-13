@@ -56,8 +56,16 @@ but Add stays disabled. Actual Backend lacks Parent Reader. Intermediate image
 `75521f3d…` is held: its old source omits running Import V3/Core capabilities.
 Root1 is recovering the complete approved source baseline; Root2 must also prove
 host disk capacity before any deployment. No new SQL or Adoption replay.
-Parent readiness metadata validation has 12 focused passing tests; Hosted probe
-is not yet executed and does not constitute HTTP or Native acceptance.
+Parent readiness metadata validation has 13 focused passing tests and independent
+Review. Root2 executed the fixed existing-Gateway probe: all three function
+fingerprints/ACLs and stored/Parent/finite-scope bindings PASS. This is not JWT,
+HTTP or Native acceptance. Complete Import-compatible source `f650ce2b` awaits
+Root2 capture-only image/capacity checks; Parent five-file source Review passed.
+Adopted-Trip Metadata consumer is locally implemented under Native scoped Writer
+handoff: verified Parent/Core/Owner + Snapshot V3, existing CAS/receipt-first
+queue and remote Details form. Native supplied SQLite 76 registry patch; local
+row-retention/cascade tests pass. Six files / 174 targeted tests, UI guard,
+scoped lint and independent Review PASS; native upgrade/save/cold-readback NOT_RUN.
 
 Primary: **AUTH-C04 — Invite / Claim / Multi-member**.
 

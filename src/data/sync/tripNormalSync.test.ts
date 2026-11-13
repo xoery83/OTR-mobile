@@ -734,3 +734,46 @@ it.each([true, false])(
     }
   },
 );
+
+it("dispatches a server-parent Metadata operation with no local Create and keeps its original id", async () => {
+  const f = fixture();
+  const operationId = randomUUID();
+  const before = {
+    name: "Adopted",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    destinations: [],
+  };
+  const row = {
+    ...f.create,
+    id: operationId,
+    idempotency_key: operationId,
+    operation_type: "UPDATE_TRIP_METADATA",
+    payload_json: JSON.stringify({
+      formatVersion: 3,
+      operationId,
+      tripId: f.tripId,
+      expectedMetadataRevision: 0,
+      before,
+      after: { ...before, name: "Edited" },
+    }),
+  };
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockImplementation(async (query: string) =>
+      query.includes("op.operation_type='UPDATE_TRIP_METADATA'") ? [row] : [],
+    );
+  await f.run();
+  expect(f.deps.runCreate).not.toHaveBeenCalled();
+  expect(f.deps.runMetadata).toHaveBeenCalledExactlyOnceWith({
+    accountId: f.accountId,
+    tripId: f.tripId,
+    operationId,
+  });
+  expect(f.deps.recoverTripReadback).toHaveBeenCalledWith(f.tripId, operationId);
+  row.idempotency_key = randomUUID();
+  f.deps.runMetadata.mockClear();
+  await f.run();
+  expect(f.deps.runMetadata).not.toHaveBeenCalled();
+});

@@ -89,3 +89,10 @@ files. No new device build or Realtime subscription is required for this handoff
 - Return trigger: complete compatible image and Root2 capacity/readiness proof;
   then verify People, invite, Details and schedule on the already migrated Trip.
   IMPORT admission maps to PROVIDER origin; no origin enum change is needed.
+
+- Details has a separate proven Native gap: `canUpdateMetadata` and
+  `updateMetadata` require a local original Create; normal sync likewise selects
+  local Create parents. Native handed Auth four scoped consumer files. Existing
+  Metadata confirmation table also has a local-container FK, so repository/UI
+  relaxation alone is insufficient. SQLite owning contract/candidate requested;
+  no fake local Create/container or shared-file change has been made.

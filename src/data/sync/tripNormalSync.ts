@@ -286,6 +286,53 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         if (!blockedTripIds.includes(row.trip_id)) blockedTripIds.push(row.trip_id);
       }
     }
+    // Server-parent Metadata retains its original operation; never synthesize a Create.
+    const metadataRows = await deps.database.getAllAsync<Row>(
+      `SELECT op.* FROM sync_operations op LEFT JOIN local_trip_containers trip
+       ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
+       WHERE op.owner_user_id=? AND op.created_at>=? AND trip.id IS NULL
+       AND op.entity_type='TRIP' AND op.operation_type='UPDATE_TRIP_METADATA'
+       AND op.status NOT IN ('FAILED','CONFLICT') ORDER BY op.created_at,op.id`,
+      scope.accountId,
+      adopted.newTripsFrom,
+    );
+    await guard();
+    for (const operation of metadataRows) {
+      let wire;
+      try {
+        wire = tripMetadataWireUpdateSchema.safeParse(JSON.parse(operation.payload_json));
+      } catch {
+        continue;
+      }
+      if (
+        !wire.success ||
+        !("formatVersion" in wire.data) ||
+        wire.data.formatVersion !== 3 ||
+        wire.data.tripId !== operation.trip_id ||
+        wire.data.operationId !== operation.id ||
+        operation.entity_id !== operation.trip_id ||
+        operation.idempotency_key !== operation.id ||
+        operation.entity_type !== "TRIP" ||
+        operation.operation_type !== "UPDATE_TRIP_METADATA"
+      )
+        continue;
+      try {
+        await deps.runMetadata({
+          accountId: scope.accountId,
+          tripId: operation.trip_id,
+          operationId: operation.id,
+        });
+        await guard();
+        runnerCalls++;
+        await deps.recoverTripReadback(operation.trip_id, operation.id);
+        await guard();
+        if (!tripIds.includes(operation.trip_id)) tripIds.push(operation.trip_id);
+      } catch {
+        await guard();
+        if (!blockedTripIds.includes(operation.trip_id))
+          blockedTripIds.push(operation.trip_id);
+      }
+    }
     // A reviewed Source can target an authorized cloud Trip without a local Create operation.
     const sourceRows = adopted.manualOnly
       ? []

@@ -12,7 +12,10 @@ import { createUuid } from "@/domain/localId";
 import { createTripNormalReadbackRepository } from "../repositories/tripNormalReadbackRepository";
 import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { createTripMetadataTransport } from "./tripMetadataTransport";
-import { createTripMetadataRepository } from "../repositories/tripMetadataRepository";
+import {
+  createTripMetadataRepository,
+  readServerParentMetadataEditBase,
+} from "../repositories/tripMetadataRepository";
 import { createNormalTripSyncWake, type NormalTripSyncScope } from "./tripNormalSync";
 import { createNativeTripCreateSyncRunner } from "./tripCreateCoordinator";
 import { createNativeTripMetadataSyncRunner } from "./tripMetadataCoordinator";
@@ -66,7 +69,7 @@ export function createNativeNormalTripSyncRunner(
     const recoverReadback = async (tripId: string, createOperationId: string) => {
       const local = await repository.getTrip(tripId);
       await assertAccountRequestContext(account, requireActiveUserId);
-      if (local?.serverId !== tripId) return;
+      if (local && local.serverId !== tripId) return;
       const trigger = await database.getAllAsync<{
         id: string;
         status: string;
@@ -82,6 +85,11 @@ export function createNativeNormalTripSyncRunner(
         { ...account, tripId },
         createOperationId,
         async () => {
+          if (!local) {
+            await readServerParentMetadataEditBase({ ...account, tripId });
+            await assertAccountRequestContext(account, requireActiveUserId);
+            return;
+          }
           const snapshot = await createTripMetadataTransport(
             requireActiveUserId,
             {},
