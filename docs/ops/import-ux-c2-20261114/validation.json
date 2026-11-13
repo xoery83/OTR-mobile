@@ -1,0 +1,17 @@
+{
+  "targetedFiles": 7,
+  "targetedTestsPassed": 121,
+  "uiGuard": "PASS",
+  "scopedLint": "PASS",
+  "typecheck": "BASELINE_3_ERRORS",
+  "baselineErrors": [
+    "universalContinuationRuntime.ts:658 presentationTier",
+    "universalContinuationRuntime.ts:660 presentationTier",
+    "browser/auth-consent/main.tsx react-dom/client declarations"
+  ],
+  "newProviderCalls": 0,
+  "newCloudBusinessWrites": 0,
+  "sqlOrPermissionChanges": 0,
+  "coreMutationValidation": "ISOLATED_NOT_DEV_RECEIPT",
+  "physicalDevice": "NOT_RUN"
+}

@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { AppState, ScrollView, StyleSheet, View } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import {
+  AppState,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
-import { UiChoiceChip } from "@/ui/forms";
+import { UiChoiceChip, UiDatePicker, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -16,56 +25,58 @@ import { captureAccountRequestContext } from "@/data/auth/accountRequestContext"
 import { requireAdoptedUserId } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
+  completeUniversalV3RequiredFields,
   openUniversalV3Review,
+  universalV3MissingFields,
   universalV3ReviewFields,
+  universalV3ReviewStatus,
   type V3AdmissionRow,
   type UniversalV3Decision,
   universalV3NewDecision,
   universalV3LinkDecision,
 } from "@/data/operations/universalV3Review";
 import {
+  readV3UnknownCandidates,
+  type V3SaveObservation,
+} from "@/data/operations/universalV3Activity";
+import {
   readImportSubmission,
   updateImportSubmission,
+  type ImportSubmission,
 } from "@/data/repositories/importSubmissionRepository";
 import { verifyUtf8TextFile } from "@/domain/capture/utf8TextFile";
 import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
-import type { V3SaveObservation } from "@/data/operations/universalV3Activity";
+import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
+import { captureActivityTime } from "./CaptureActivity";
 
+type Owner = Awaited<ReturnType<typeof openUniversalV3Review>>;
+type Candidate = V3AdmissionRow["candidate"];
 export function ImportExceptionReviewScreen() {
   useUiLocale();
-  const styles = useThemedStyles(createStyles);
-  const colors = useUiTheme();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
   const [model, setModel] = useState<CaptureJobReadModel>();
-  const [owner, setOwner] = useState<Awaited<ReturnType<typeof openUniversalV3Review>>>();
+  const [owner, setOwner] = useState<Owner>();
   const [rows, setRows] = useState<V3AdmissionRow[]>([]);
-  const [expanded, setExpanded] = useState<string>();
-  const [source, setSource] = useState<string>();
-  const [choice, setChoice] = useState<UniversalV3Decision>();
-  const [title, setTitle] = useState("");
-  const [day, setDay] = useState("");
-  const [statuses, setStatuses] = useState<
-    Record<string, V3SaveObservation | "RESOLVED">
-  >({});
+  const [intent, setIntent] = useState<ImportSubmission | null>(null);
+  const [statuses, setStatuses] = useState<Record<string, V3SaveObservation>>({});
   const [unavailable, setUnavailable] = useState(false);
-  const [originalUnavailable, setOriginalUnavailable] = useState(false);
-  const [originalText, setOriginalText] = useState<{ source: string; text: string }>();
   const [refreshVersion, setRefreshVersion] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
   const alive = useRef(true),
     generation = useRef(getAccountGeneration());
   const current = () => alive.current && generation.current === getAccountGeneration();
   useEffect(() => {
     alive.current = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let active = true,
+      running = false,
+      timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
+      if (!active || !current() || running || AppState.currentState !== "active") return;
+      running = true;
       try {
         if (!jobId) throw Error("IMPORT_REVIEW_CONTEXT");
-        if (!current()) return;
         const batch = await reopenDefaultCaptureJob(jobId);
-        if (!batch || !current()) return;
+        if (!batch || !active || !current()) return;
         const trip = batch.batch.context.tripPrior?.id ?? batch.assignedTripId;
         if (!trip) throw Error("IMPORT_REVIEW_CONTEXT");
         const context = await captureAccountRequestContext(trip, requireAdoptedUserId);
@@ -73,72 +84,215 @@ export function ImportExceptionReviewScreen() {
           baseUrl: process.env.EXPO_PUBLIC_OTR_API_BASE_URL!,
         }).readLocalFirstExecution(context, batch.batch.batchId);
         if (state?.state !== "REVIEW_READY") throw Error("IMPORT_REVIEW_NOT_READY");
-        const intent = await readImportSubmission(batch);
-        const review = await openUniversalV3Review(batch, intent ? "IMPORT" : "MANUAL");
+        const submission = await readImportSubmission(batch);
+        const review = await openUniversalV3Review(
+          batch,
+          submission ? "IMPORT" : "MANUAL",
+        );
         const plan = review.batch(state.candidates);
-        const observations: Record<string, V3SaveObservation | "RESOLVED"> = {};
+        const unknown = await readV3UnknownCandidates(
+          batch,
+          plan.map((row) => row.candidate.candidateId),
+        );
+        const observations: Record<string, V3SaveObservation> = {};
         for (const row of plan) {
-          const resolution = intent?.resolutions[row.candidate.candidateId];
-          const observed = await review.check(resolution?.candidate ?? row.candidate);
-          observations[row.candidate.candidateId] =
-            observed === "UNCONFIRMED" && resolution ? "RESOLVED" : observed;
+          const id = row.candidate.candidateId;
+          const observed = await review.check(
+            submission?.resolutions[id]?.candidate ?? row.candidate,
+          );
+          observations[id] =
+            observed !== "VERIFIED" && unknown.has(id) ? "OUTCOME_UNKNOWN" : observed;
         }
-        if (!current()) return;
-        setLoading(false);
+        if (!active || !current()) return;
         setModel(batch);
         setOwner(review);
         setRows(plan);
-        setStatuses((previous) => ({ ...previous, ...observations }));
+        setIntent(submission);
+        setStatuses(observations);
         setUnavailable(false);
+        // Decision saved is not Review resolved. Continue only original-ID observation.
         if (
-          Object.values(observations).some(
-            (state) => state === "PENDING" || state === "ITEM_VERIFIED_RELATION_PENDING",
+          plan.some(
+            (row) =>
+              observations[row.candidate.candidateId] !== "VERIFIED" &&
+              submission?.resolutions[row.candidate.candidateId],
           )
         )
-          timer = setTimeout(() => {
-            if (AppState.currentState === "active") void load();
-          }, 5000);
+          timer = setTimeout(() => void load(), 5000);
       } catch {
-        if (current()) {
+        if (active && current()) {
           setUnavailable(true);
-          setLoading(false);
           timer = setTimeout(() => void load(), 5000);
         }
+      } finally {
+        running = false;
       }
     };
     void load();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        clearTimeout(timer);
+        void load();
+      }
+    });
     return () => {
+      active = false;
       alive.current = false;
       clearTimeout(timer);
+      subscription.remove();
     };
   }, [jobId, refreshVersion]);
-  const selected = rows.find((row) => row.candidate.candidateId === expanded);
-  const amended = selected?.candidate;
-  const validNew = amended && owner?.actions(amended).NEW;
+  const confirm = async (
+    candidate: Candidate,
+    decision: UniversalV3Decision,
+    manual: boolean,
+    durable: () => void,
+  ) => {
+    if (!model || !owner || !current()) return;
+    const id = candidate.candidateId;
+    let saved = false;
+    try {
+      const record = await updateImportSubmission(model, (prior) => ({
+        ...prior,
+        resolutions: {
+          ...prior.resolutions,
+          [id]: {
+            candidate,
+            decision: decision as Exclude<UniversalV3Decision, { action: "UPDATE" }>,
+            ...(manual ? { manual: true } : {}),
+          },
+        },
+      }));
+      saved = true;
+      if (!current()) return;
+      setIntent(record);
+      setUnavailable(false);
+      durable();
+      if (record.confirmed) {
+        const unknown = await readV3UnknownCandidates(model, [id]);
+        const status = unknown.has(id)
+          ? "OUTCOME_UNKNOWN"
+          : manual
+            ? await owner.confirm(candidate, decision, true)
+            : await owner.confirm(candidate, decision);
+        if (current()) setStatuses((previous) => ({ ...previous, [id]: status }));
+      }
+    } catch {
+      if (current()) setUnavailable(true);
+      if (!saved) throw Error("IMPORT_DECISION_NOT_SAVED");
+    } finally {
+      if (current()) setRefreshVersion((v) => v + 1);
+    }
+  };
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: false,
+          headerBackVisible: true,
+          headerTitle: () => <NavigationContextTitle title={t("common.review")} />,
+        }}
+      />
+      <ImportExceptionReviewContent
+        model={model}
+        owner={owner}
+        rows={rows}
+        statuses={statuses}
+        intent={intent}
+        unavailable={unavailable}
+        isCurrent={current}
+        onConfirm={confirm}
+      />
+    </>
+  );
+}
+
+// The normal route and isolated UI checks share this view; no separate Review engine.
+export function ImportExceptionReviewContent({
+  model,
+  owner,
+  rows,
+  statuses,
+  intent,
+  unavailable = false,
+  isCurrent,
+  onConfirm,
+}: {
+  model?: CaptureJobReadModel;
+  owner?: {
+    actions(candidate: Candidate, manual?: boolean): { NEW: boolean };
+    targets: Owner["targets"];
+  };
+  rows: V3AdmissionRow[];
+  statuses: Record<string, V3SaveObservation>;
+  intent: ImportSubmission | null;
+  unavailable?: boolean;
+  isCurrent(): boolean;
+  onConfirm(
+    candidate: Candidate,
+    decision: UniversalV3Decision,
+    manual: boolean,
+    durable: () => void,
+  ): Promise<void>;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles),
+    colors = useUiTheme();
+  const [expanded, setExpanded] = useState<string>();
+  const [source, setSource] = useState<string>();
+  const [values, setValues] = useState<Record<string, Record<string, string>>>({});
+  const [choices, setChoices] = useState<Record<string, UniversalV3Decision>>({});
+  const [calendar, setCalendar] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [originalUnavailable, setOriginalUnavailable] = useState(false);
+  const [originalText, setOriginalText] = useState<{ source: string; text: string }>();
+  const statusFor = (row: V3AdmissionRow) =>
+    universalV3ReviewStatus(
+      statuses[row.candidate.candidateId],
+      !!intent?.resolutions[row.candidate.candidateId],
+      !!intent?.confirmed,
+    );
+  const exceptions = rows.filter(
+    (row) =>
+      (row.disposition === "REVIEW" || statusFor(row) === "recheck") &&
+      statusFor(row) !== "resolved",
+  );
+  const resolved = rows.filter(
+    (row) => row.disposition === "REVIEW" && statusFor(row) === "resolved",
+  ).length;
+  const sourceFile = (id: string) =>
+    model?.inputs.find(
+      (file) =>
+        file.contentSha256 &&
+        localImportDocumentId(
+          model.batch.accountId,
+          model.batch.context.tripPrior?.id ?? model.assignedTripId!,
+          file.contentSha256,
+        ) === id,
+    );
+  const sourceName = (id: string) =>
+    sourceFile(id)?.originalFilename ?? t("capture.admission.textSource");
   const select = (row: V3AdmissionRow) => {
     setExpanded(
       expanded === row.candidate.candidateId ? undefined : row.candidate.candidateId,
     );
     setSource(row.candidate.documentIds[0]);
-    setChoice(undefined);
+    setCalendar(undefined);
     setOriginalUnavailable(false);
-    const facts = universalV3ReviewFields(row.candidate);
-    setTitle(facts.title ?? "");
-    setDay(facts.start ?? "");
+    setSaveError(false);
   };
   const preview = async () => {
-    if (!model || !source || !current()) return;
+    if (!model || !source || !isCurrent()) return;
+    const selectedSource = source;
     setOriginalUnavailable(false);
-    const trip = model.batch.context.tripPrior?.id ?? model.assignedTripId;
-    const file = model.inputs.find(
-      (file) =>
-        file.contentSha256 &&
-        trip &&
-        localImportDocumentId(model.batch.accountId, trip, file.contentSha256) === source,
-    );
-    if (!file?.contentSha256 || !file.contentByteCount) return;
+    const file = sourceFile(source);
     try {
-      if ((await requireAdoptedUserId()) !== model.batch.accountId || !current()) return;
+      if (!file?.contentSha256 || !file.contentByteCount)
+        throw Error("IMPORT_ORIGINAL_NOT_LOCAL");
+      if ((await requireAdoptedUserId()) !== model.batch.accountId || !isCurrent())
+        return;
       const { readImportOriginal } = await import("@/data/files/importOriginalFileStore");
       const bytes = await readImportOriginal(
         model.batch.accountId,
@@ -152,259 +306,436 @@ export function ImportExceptionReviewScreen() {
             ? new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes)
             : verifyUtf8TextFile(bytes, file.originalFilename, file.declaredContentType)
                 .text;
-        if (current()) setOriginalText({ source, text });
-        return;
-      }
-      const { previewImportOriginal } = await import("@/native/importOriginalPreview");
-      await previewImportOriginal(
-        {
-          bytes,
-          document: {
-            sha256: file.contentSha256,
-            byteCount: file.contentByteCount,
-            originalFilename: file.originalFilename,
+        if (isCurrent()) setOriginalText({ source: selectedSource, text });
+      } else {
+        const { previewImportOriginal } = await import("@/native/importOriginalPreview");
+        await previewImportOriginal(
+          {
+            bytes,
+            document: {
+              sha256: file.contentSha256,
+              byteCount: file.contentByteCount,
+              originalFilename: file.originalFilename,
+            },
           },
-        },
-        current,
-      );
+          isCurrent,
+        );
+      }
     } catch {
-      if (current()) setOriginalUnavailable(true);
+      if (isCurrent()) setOriginalUnavailable(true);
     }
   };
-  const chooseNew = () => setChoice(universalV3NewDecision);
-  const chooseLink = (target: { id: string; revision: number }) =>
-    setChoice(universalV3LinkDecision(target.id, target.revision));
-  const confirm = async () => {
-    if (!model || !owner || !selected || !amended || !choice || busy || !current())
-      return;
-    setBusy(true);
-    setUnavailable(false);
-    try {
-      const intent = await readImportSubmission(model);
-      if (!intent) throw Error("IMPORT_SUBMISSION_MISSING");
-      await updateImportSubmission(model, (record) => ({
-        ...record,
-        resolutions: {
-          ...record.resolutions,
-          [selected.candidate.candidateId]: {
-            candidate: amended,
-            decision: choice as Exclude<UniversalV3Decision, { action: "UPDATE" }>,
-          },
-        },
-      }));
-      const state = intent.confirmed ? await owner.confirm(amended, choice) : "RESOLVED";
-      if (current())
-        setStatuses((previous) => ({
-          ...previous,
-          [selected.candidate.candidateId]: state,
-        }));
-    } catch {
-      if (current()) setUnavailable(true);
-    } finally {
-      if (current()) {
-        setBusy(false);
-        setRefreshVersion((value) => value + 1);
-      }
-    }
-  };
-  const exceptions = rows.filter(
-    (row) =>
-      (row.disposition === "REVIEW" &&
-        statuses[row.candidate.candidateId] !== "VERIFIED") ||
-      statuses[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
-      statuses[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",
-  );
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerBackVisible: false,
-          headerLeft: () => (
-            <UiButton
-              variant="text"
-              label={t("common.back")}
-              icon={<AppIcon name="chevron.left" color={colors.accent} size={18} />}
-              onPress={() => router.back()}
-            />
-          ),
-          headerTitle: () => <NavigationContextTitle title={t("common.review")} />,
-        }}
-      />
-      <ScrollView
+    <SafeAreaView edges={["bottom", "left", "right"]} style={styles.screen}>
+      <KeyboardAvoidingView
         style={styles.screen}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <UiText style={styles.heading}>
-          {loading
-            ? t("capture.jobLoading")
-            : t("capture.admission.reviewHeading", { count: exceptions.length })}
-        </UiText>
-        {unavailable ? (
-          <UiText style={styles.body} accessibilityLiveRegion="polite">
-            {t("capture.admission.unavailable")}
+        <View style={styles.context}>
+          <UiText style={styles.contextTitle}>
+            {model?.inputs[0]?.originalFilename ??
+              (model?.batch.context.tripPrior
+                ? t("capture.review.tripBatch")
+                : t("capture.review.batch"))}
           </UiText>
-        ) : null}
-        {exceptions.map((row) => {
-          const id = row.candidate.candidateId,
-            status = statuses[id],
-            open = expanded === id;
-          const unsaved = [
-            "room.type",
-            "guest.name",
-            "driver.name",
-            "activity.category",
-            "operating_flight",
-            "platform",
-          ].flatMap((key) =>
-            row.candidate.fields[key] === undefined
-              ? []
-              : [String(row.candidate.fields[key])],
-          );
-          return (
-            <View key={id} style={styles.row}>
-              <UiButton
-                variant="text"
-                icon={<AppIcon name="doc.text" color={colors.textSecondary} size={20} />}
-                label={
-                  universalV3ReviewFields(row.candidate).title ?? t("capture.unnamed")
-                }
-                onPress={() => select(row)}
-              />
-              <UiText style={styles.body}>
-                {t(`capture.admission.${row.reason ?? "conflict"}`)}
-              </UiText>
-              {status && status !== "UNCONFIRMED" ? (
-                <UiText style={styles.body} accessibilityLiveRegion="polite">
-                  {t(
-                    status === "VERIFIED"
-                      ? "capture.ai.v3.verified"
-                      : status === "RESOLVED"
-                        ? "capture.admission.resolved"
-                        : status === "OUTCOME_UNKNOWN"
-                          ? "capture.ai.unknown"
-                          : status === "REVIEW_REQUIRED" ||
-                              status === "ITEM_VERIFIED_RELATION_REVIEW"
-                            ? "capture.ai.v3.changed"
-                            : "capture.ai.v3.pending",
-                  )}
-                </UiText>
-              ) : null}
-              {open && model && owner ? (
-                <>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {row.candidate.documentIds.map((id, index) => (
-                      <UiChoiceChip
-                        key={id}
-                        compact
-                        selected={source === id}
-                        label={t("capture.admission.source", { index: index + 1 })}
-                        onPress={() => setSource(id)}
-                      />
-                    ))}
-                  </ScrollView>
-                  <View style={styles.source}>
-                    <UiText style={styles.body}>
-                      {model.inputs.find(
-                        (file) =>
-                          file.contentSha256 &&
-                          localImportDocumentId(
-                            model.batch.accountId,
-                            model.batch.context.tripPrior?.id ?? model.assignedTripId!,
-                            file.contentSha256,
-                          ) === source,
-                      )?.originalFilename ?? t("capture.admission.textSource")}
-                    </UiText>
-                    <UiText style={styles.body}>
-                      {t("capture.admission.sourceNote")}
-                    </UiText>
-                    <UiButton
-                      variant="text"
-                      label={t("importDocuments.openOriginal")}
-                      onPress={() => void preview()}
-                    />
-                  </View>
-                  {originalText && originalText.source === source ? (
-                    <UiText selectable style={styles.body}>
-                      {originalText.text}
-                    </UiText>
-                  ) : null}
-                  {originalUnavailable ? (
-                    <UiText style={styles.body}>
-                      {t("importDocuments.originalUnavailable")}
-                    </UiText>
-                  ) : null}
-                  <UiText style={styles.body}>{title}</UiText>
-                  {unsaved.length ? (
-                    <UiText style={styles.body}>
-                      {t("capture.ai.v3.notSaved", { details: unsaved.join(" · ") })}
-                    </UiText>
-                  ) : null}
-                  <UiText style={styles.body}>{day}</UiText>
-                  {row.reason === "missing" ? (
-                    <UiText style={styles.body}>
-                      {t("capture.admission.manualRequired")}
-                    </UiText>
-                  ) : null}
-                  <UiButton
-                    variant="secondary"
-                    disabled={!validNew || busy}
-                    label={t("capture.admission.new")}
-                    onPress={chooseNew}
-                  />
-                  {owner.targets(row.candidate).map((target) => (
-                    <UiChoiceChip
-                      key={target.id}
-                      label={t("capture.admission.link", { title: target.title })}
-                      selected={
-                        !!choice && "itemId" in choice && choice.itemId === target.id
-                      }
-                      onPress={() => chooseLink(target)}
-                    />
-                  ))}
-                  {choice ? (
-                    <UiText style={styles.body}>
-                      {t(
-                        choice.action === "NEW"
-                          ? "capture.admission.willCreate"
-                          : "capture.admission.willLink",
-                      )}
-                    </UiText>
-                  ) : null}
-                  <UiButton
-                    label={t("capture.admission.resolve")}
-                    disabled={
-                      !choice ||
-                      busy ||
-                      (status !== "UNCONFIRMED" && status !== "RESOLVED")
+          {model ? (
+            <UiText style={styles.meta}>
+              {captureActivityTime(model.batch.createdAt)}
+            </UiText>
+          ) : null}
+          <UiText style={styles.remaining} accessibilityLiveRegion="polite">
+            {t("capture.review.remaining", { count: exceptions.length })}
+          </UiText>
+        </View>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        >
+          {!model ? <UiText style={styles.meta}>{t("capture.jobLoading")}</UiText> : null}
+          {unavailable ? (
+            <UiText style={styles.meta} accessibilityLiveRegion="polite">
+              {t("capture.review.offlineRead")}
+            </UiText>
+          ) : null}
+          {exceptions.map((row) => {
+            const id = row.candidate.candidateId,
+              open = expanded === id,
+              status = statusFor(row);
+            const saved = intent?.resolutions[id];
+            const original = row.candidate;
+            const candidate = saved?.candidate ?? original;
+            const missing = universalV3MissingFields(original);
+            const answers = values[id] ?? {};
+            let amended = candidate,
+              valid = true;
+            try {
+              amended = completeUniversalV3RequiredFields(original, {
+                ...Object.fromEntries(
+                  missing.map((field) => [
+                    field.key,
+                    String(saved?.candidate.fields[field.key] ?? ""),
+                  ]),
+                ),
+                ...answers,
+              });
+            } catch {
+              valid = false;
+            }
+            const manual =
+              !!saved?.manual || Object.values(answers).some((value) => !!value.trim());
+            const validNew = valid && owner?.actions(amended, manual).NEW;
+            const choice = choices[id] ?? saved?.decision;
+            const fields = universalV3ReviewFields(amended);
+            const family = manualItineraryTypes.find(
+              (type) => type.id === candidate.kind,
+            );
+            const decisionSaved = ["applying", "waiting", "confirmation"].includes(
+              status,
+            );
+            const editable = status === "unanswered" || status === "confirmation";
+            const question = t(`capture.review.question.${row.reason ?? "conflict"}`);
+            const targets = owner?.targets(candidate) ?? [];
+            return (
+              <View key={id} style={styles.row}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={[
+                    question,
+                    fields.title,
+                    status === "unanswered"
+                      ? t("capture.review.sources", {
+                          count: candidate.documentIds.length,
+                        })
+                      : t(`capture.review.status.${status}`),
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  accessibilityState={{ expanded: open, disabled: busy }}
+                  disabled={busy}
+                  style={styles.rowHeader}
+                  onPress={() => select(row)}
+                >
+                  <AppIcon
+                    name={
+                      decisionSaved
+                        ? "checkmark.circle.fill"
+                        : (family?.icon ?? "doc.text")
                     }
-                    onPress={() => void confirm()}
+                    size={24}
+                    color={decisionSaved ? colors.accent : colors.textSecondary}
                   />
-                </>
-              ) : null}
-            </View>
-          );
-        })}
-      </ScrollView>
-    </>
+                  <View style={styles.grow}>
+                    <UiText style={styles.question}>{question}</UiText>
+                    <UiText style={styles.meta}>
+                      {fields.title ?? t("capture.unnamed")}
+                    </UiText>
+                    <UiText
+                      style={status === "recheck" ? styles.warning : styles.meta}
+                      accessibilityLiveRegion="polite"
+                    >
+                      {status === "unanswered"
+                        ? t("capture.review.sources", {
+                            count: candidate.documentIds.length,
+                          })
+                        : t(`capture.review.status.${status}`)}
+                    </UiText>
+                  </View>
+                  <AppIcon
+                    name={open ? "chevron.up" : "chevron.down"}
+                    size={13}
+                    color={colors.textSecondary}
+                  />
+                </Pressable>
+                {open ? (
+                  <View style={styles.expanded}>
+                    <UiText style={styles.body}>
+                      {t(`capture.admission.${row.reason ?? "conflict"}`)}
+                    </UiText>
+                    <ScrollView
+                      horizontal
+                      keyboardShouldPersistTaps="handled"
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.tabs}
+                    >
+                      {candidate.documentIds.map((documentId) => (
+                        <UiChoiceChip
+                          compact
+                          key={documentId}
+                          label={sourceName(documentId)}
+                          selected={source === documentId}
+                          onPress={() => {
+                            setSource(documentId);
+                            setOriginalUnavailable(false);
+                          }}
+                        />
+                      ))}
+                    </ScrollView>
+                    <View style={styles.evidence}>
+                      <UiText style={styles.question}>
+                        {source ? sourceName(source) : t("capture.admission.textSource")}
+                      </UiText>
+                      <UiText style={styles.meta}>
+                        {t("capture.admission.sourceNote")}
+                      </UiText>
+                      {originalText && originalText.source === source ? (
+                        <UiText selectable style={styles.body}>
+                          {originalText.text}
+                        </UiText>
+                      ) : null}
+                      {originalUnavailable ? (
+                        <UiText style={styles.meta}>
+                          {t("importDocuments.originalUnavailable")}
+                        </UiText>
+                      ) : null}
+                      <UiButton
+                        variant="text"
+                        label={t("importDocuments.openOriginal")}
+                        onPress={() => void preview()}
+                      />
+                    </View>
+                    <UiText style={styles.meta}>
+                      {t("capture.review.interpretation")}
+                    </UiText>
+                    <UiText style={styles.body}>
+                      {[
+                        fields.title,
+                        fields.start,
+                        fields.startTime,
+                        fields.end,
+                        fields.place,
+                        fields.endPlace,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </UiText>
+                    {editable && missing.length ? (
+                      <>
+                        {missing.map((field) => (
+                          <View key={field.key} style={styles.field}>
+                            <UiText style={styles.meta}>{t(field.label)}</UiText>
+                            <UiTextInput
+                              accessibilityLabel={t(field.label)}
+                              value={
+                                answers[field.key] ??
+                                String(saved?.candidate.fields[field.key] ?? "")
+                              }
+                              editable={!busy}
+                              placeholder={
+                                field.kind === "date"
+                                  ? t("capture.review.dateFormat")
+                                  : undefined
+                              }
+                              autoCapitalize={
+                                field.kind === "date" ? "none" : "sentences"
+                              }
+                              onChangeText={(value) => {
+                                setValues((prior) => ({
+                                  ...prior,
+                                  [id]: { ...prior[id], [field.key]: value },
+                                }));
+                                setChoices((prior) => ({
+                                  ...prior,
+                                  [id]: universalV3NewDecision,
+                                }));
+                              }}
+                            />
+                            {field.kind === "date" ? (
+                              <UiButton
+                                variant="text"
+                                label={t("capture.review.chooseDate")}
+                                onPress={() =>
+                                  setCalendar(
+                                    calendar === field.key ? undefined : field.key,
+                                  )
+                                }
+                              />
+                            ) : null}
+                            {calendar === field.key ? (
+                              <UiDatePicker
+                                mode="date"
+                                display="inline"
+                                value={
+                                  new Date(
+                                    /^\d{4}-\d{2}-\d{2}$/.test(answers[field.key] ?? "")
+                                      ? answers[field.key] + "T12:00:00"
+                                      : Date.now(),
+                                  )
+                                }
+                                onChange={(_event, selectedDate) => {
+                                  if (selectedDate) {
+                                    const value = [
+                                      selectedDate.getFullYear(),
+                                      String(selectedDate.getMonth() + 1).padStart(
+                                        2,
+                                        "0",
+                                      ),
+                                      String(selectedDate.getDate()).padStart(2, "0"),
+                                    ].join("-");
+                                    setValues((prior) => ({
+                                      ...prior,
+                                      [id]: { ...prior[id], [field.key]: value },
+                                    }));
+                                    setChoices((prior) => ({
+                                      ...prior,
+                                      [id]: universalV3NewDecision,
+                                    }));
+                                    setCalendar(undefined);
+                                  }
+                                }}
+                              />
+                            ) : null}
+                          </View>
+                        ))}
+                        {!valid ? (
+                          <UiText style={styles.warning}>
+                            {t("capture.review.invalidDate")}
+                          </UiText>
+                        ) : null}
+                        <UiText style={styles.meta}>
+                          {t("capture.review.manualFacts")}
+                        </UiText>
+                      </>
+                    ) : null}
+                    {editable ? (
+                      <>
+                        <UiButton
+                          variant="secondary"
+                          label={t("capture.admission.new")}
+                          icon={
+                            choice?.action === "NEW" ? (
+                              <AppIcon
+                                name="checkmark.circle"
+                                color={colors.accent}
+                                size={20}
+                              />
+                            ) : undefined
+                          }
+                          disabled={!validNew || busy}
+                          onPress={() =>
+                            setChoices((prior) => ({
+                              ...prior,
+                              [id]: universalV3NewDecision,
+                            }))
+                          }
+                        />
+                        {targets.map((target) => (
+                          <UiChoiceChip
+                            key={target.id}
+                            label={t("capture.admission.link", { title: target.title })}
+                            selected={
+                              choice?.action === "LINK" && choice.itemId === target.id
+                            }
+                            onPress={() =>
+                              setChoices((prior) => ({
+                                ...prior,
+                                [id]: universalV3LinkDecision(target.id, target.revision),
+                              }))
+                            }
+                          />
+                        ))}
+                        {choice ? (
+                          <UiText style={styles.body}>
+                            {t(
+                              choice.action === "NEW"
+                                ? "capture.admission.willCreate"
+                                : "capture.admission.willLink",
+                            )}
+                          </UiText>
+                        ) : null}
+                        {saveError ? (
+                          <UiText style={styles.warning}>
+                            {t("capture.review.notSaved")}
+                          </UiText>
+                        ) : null}
+                        <UiButton
+                          label={t(busy ? "capture.review.saving" : "ui.confirm")}
+                          disabled={
+                            busy || !choice || (choice.action === "NEW" && !validNew)
+                          }
+                          onPress={() => {
+                            if (!choice || busy || !isCurrent()) return;
+                            setBusy(true);
+                            setSaveError(false);
+                            void onConfirm(
+                              amended,
+                              choice,
+                              manual && choice.action === "NEW",
+                              () => {
+                                if (isCurrent()) {
+                                  setExpanded(undefined);
+                                  setCalendar(undefined);
+                                }
+                              },
+                            )
+                              .catch(() => {
+                                if (isCurrent()) setSaveError(true);
+                              })
+                              .finally(() => {
+                                if (isCurrent()) setBusy(false);
+                              });
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <UiText style={styles.meta}>
+                        {t(`capture.review.status.${status}`)}
+                      </UiText>
+                    )}
+                  </View>
+                ) : null}
+              </View>
+            );
+          })}
+          {resolved ? (
+            <UiText style={styles.meta}>
+              {t("capture.review.resolvedCount", { count: resolved })}
+            </UiText>
+          ) : null}
+          {model && !exceptions.length ? (
+            <UiText style={styles.body}>{t("capture.review.none")}</UiText>
+          ) : null}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
-    content: { padding: visual.space.page },
-    body: { ...visual.type.meta, color: colors.textPrimary },
-    heading: { ...visual.type.section, color: colors.textPrimary },
+    context: {
+      padding: visual.space.page,
+      gap: visual.space.heading,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+      backgroundColor: colors.surface,
+    },
+    contextTitle: { ...visual.type.row, color: colors.textPrimary },
+    remaining: { ...visual.type.row, color: colors.textPrimary },
+    content: { paddingHorizontal: visual.space.page, paddingBottom: visual.space.page },
+    body: { ...visual.type.row, fontWeight: "400", color: colors.textPrimary },
+    meta: { ...visual.type.meta, color: colors.textSecondary },
+    question: { ...visual.type.row, color: colors.textPrimary },
+    warning: { ...visual.type.meta, color: colors.warning },
     row: {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.separator,
-      paddingVertical: visual.space.page,
+    },
+    rowHeader: {
+      minHeight: 64,
+      flexDirection: "row",
+      alignItems: "center",
       gap: visual.space.card,
+      paddingVertical: visual.space.card,
     },
-    source: {
-      backgroundColor: colors.surface,
-      padding: visual.space.card,
+    grow: { flex: 1, minWidth: 0 },
+    expanded: { gap: visual.space.card, paddingBottom: visual.space.page },
+    tabs: { gap: visual.space.heading, alignItems: "center" },
+    evidence: {
       gap: visual.space.heading,
+      padding: visual.space.card,
+      backgroundColor: colors.surface,
     },
+    field: { gap: visual.space.heading },
   });

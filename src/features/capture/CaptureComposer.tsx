@@ -259,19 +259,9 @@ export function CaptureComposer({
         <View
           style={[
             styles.sheet,
-            content != null && {
-              width: Math.min(width, 720),
-              alignSelf: "center",
-              borderTopLeftRadius: visual.radius.sheet,
-              borderTopRightRadius: visual.radius.sheet,
-            },
+            { width: Math.min(width, 720), alignSelf: "center" },
             {
-              maxHeight: Math.max(
-                44,
-                content != null
-                  ? Math.min(height * 0.9, height - insets.top - 16)
-                  : height - insets.top - 16,
-              ),
+              maxHeight: Math.max(44, Math.min(height * 0.9, height - insets.top - 16)),
               paddingBottom: keyboardVisible ? 0 : insets.bottom,
             },
           ]}
@@ -570,7 +560,7 @@ export function CaptureComposer({
                 ) : null}
               </ScrollView>
               {count ? (
-                <View style={styles.footer}>
+                <View style={[styles.footer, styles.countFooter]}>
                   <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
                     {t(count === 1 ? "capture.countOne" : "capture.countOther", {
                       count,
@@ -788,8 +778,8 @@ const createStyles = (c: UiColors) =>
     sheet: {
       flexShrink: 1,
       backgroundColor: c.surface,
-      borderTopLeftRadius: visual.radius.hero,
-      borderTopRightRadius: visual.radius.hero,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
       overflow: "hidden",
     },
     contextTarget: {
@@ -884,6 +874,7 @@ const createStyles = (c: UiColors) =>
       paddingVertical: 4,
       gap: 8,
     },
+    countFooter: { paddingHorizontal: visual.space.page },
     target: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
     spacer: { flex: 1 },
     send: { borderRadius: visual.radius.pill, backgroundColor: c.accent },

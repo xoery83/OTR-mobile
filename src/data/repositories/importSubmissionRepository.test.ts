@@ -163,3 +163,31 @@ it("serialized decisions cannot erase an earlier saved resolution", async () => 
   );
   expect(Object.keys((await readImportSubmission(m))!.resolutions)).toHaveLength(2);
 });
+
+it("UX-C2 authored completion survives reopen in the original scoped decision record", async () => {
+  const m = model(),
+    id = randomUUID();
+  await retainImportSubmission(m);
+  await updateImportSubmission(m, (prior) => ({
+    ...prior,
+    resolutions: {
+      [id]: {
+        candidate: {
+          candidateId: id,
+          kind: "P1",
+          subtype: "ACTIVITY",
+          fields: { title: "Museum", "schedule.start.local_date": "2026-12-18" },
+          documentIds: [randomUUID()],
+        },
+        decision: { action: "NEW" },
+        manual: true,
+      },
+    },
+  }));
+  const restored = await readImportSubmission(structuredClone(m));
+  expect(restored?.resolutions[id]).toMatchObject({
+    manual: true,
+    candidate: { candidateId: id, fields: { "schedule.start.local_date": "2026-12-18" } },
+  });
+  expect(restored?.confirmed).toBe(false);
+});

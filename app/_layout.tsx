@@ -139,7 +139,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="import-review"
               options={{
-                presentation: "fullScreenModal",
+                presentation: "card",
                 headerShown: true,
                 animation: "slide_from_right",
               }}

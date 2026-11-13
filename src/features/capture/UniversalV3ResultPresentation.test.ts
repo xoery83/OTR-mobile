@@ -127,3 +127,17 @@ it("rejected original operation opens only its recovery details, not semantic Re
   h.buttons.get(t("capture.ux.reconcile")).onPress();
   expect(reconcile).toHaveBeenCalledOnce();
 });
+it("UX-C2 Processing uses Close without cancelling work; recognized Results keep Done", () => {
+  const close = vi.fn();
+  renderToStaticMarkup(
+    createElement(UniversalV3ResultPresentation, {
+      ...base,
+      resultReady: false,
+      state: "analyzing",
+      onDone: close,
+    }),
+  );
+  expect(h.buttons.has(t("common.done"))).toBe(false);
+  h.buttons.get(t("common.close")).onPress();
+  expect(close).toHaveBeenCalledOnce();
+});

@@ -20,7 +20,14 @@ export const importSubmissionSchema = z.object({
   confirmBeforeSave: z.boolean(),
   confirmed: z.boolean(),
   resolutions: z
-    .record(z.uuid(), z.object({ candidate: universalV3Candidate, decision }))
+    .record(
+      z.uuid(),
+      z.object({
+        candidate: universalV3Candidate,
+        decision,
+        manual: z.boolean().optional(),
+      }),
+    )
     .default({}),
 });
 export type ImportSubmission = z.infer<typeof importSubmissionSchema>;
@@ -51,8 +58,12 @@ export async function readImportSubmission(
   let record: ImportSubmission | undefined;
   for (const candidate of [file, previous]) {
     if (!candidate.exists) continue;
-    try { record = importSubmissionSchema.parse(JSON.parse(candidate.textSync())); break; }
-    catch { /* A failed native replacement may retain the previous valid intent. */ }
+    try {
+      record = importSubmissionSchema.parse(JSON.parse(candidate.textSync()));
+      break;
+    } catch {
+      /* A failed native replacement may retain the previous valid intent. */
+    }
   }
   if (!record) throw Error("IMPORT_SUBMISSION_CORRUPT");
   if (
@@ -99,7 +110,8 @@ async function editImportSubmission(
   const pending = new File(directory, `${prior.batchId}.pending`);
   pending.create({ overwrite: true });
   pending.write(JSON.stringify(next));
-  if (file.exists) file.copySync(new File(directory, `${prior.batchId}.previous`), { overwrite: true });
+  if (file.exists)
+    file.copySync(new File(directory, `${prior.batchId}.previous`), { overwrite: true });
   pending.move(file, { overwrite: true });
   return next;
 }

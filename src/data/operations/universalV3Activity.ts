@@ -30,8 +30,8 @@ export function projectUniversalV3Activity(
   else if (execution?.state === "OUTCOME_UNKNOWN") state = "uncertain";
   else if (execution?.state === "REVIEW_READY") {
     if (!candidates.length) state = "empty";
-    else if (saved === candidates.length) state = "complete";
     else if (unavailable || states.includes("OUTCOME_UNKNOWN")) state = "uncertain";
+    else if (saved === candidates.length) state = "complete";
     else if (
       states.some((s) => s === "REVIEW_REQUIRED" || s === "ITEM_VERIFIED_RELATION_REVIEW")
     )

@@ -114,6 +114,88 @@ export function universalV3ReviewFields(candidate: Candidate) {
   return { title, start, end, startTime, endTime, place, endPlace };
 }
 
+// Only genuinely missing CREATE facts are editable here; existing facts are not overwritten.
+export function universalV3MissingFields(candidate: Candidate) {
+  const facts = universalV3ReviewFields(candidate);
+  const fields: {
+    key: string;
+    label:
+      | "capture.admission.title"
+      | "capture.admission.date"
+      | "capture.review.endDate"
+      | "capture.review.origin"
+      | "capture.review.destination"
+      | "capture.review.operator"
+      | "capture.review.serviceNumber"
+      | "capture.review.service";
+    kind: "date" | "text";
+  }[] = [];
+  if (!facts.title)
+    fields.push({ key: "title", label: "capture.admission.title", kind: "text" });
+  if (
+    candidate.kind === "P5" ? !date(text(candidate, "origin.local_date")) : !facts.start
+  )
+    fields.push({
+      key:
+        candidate.kind === "P2" || candidate.kind === "P5"
+          ? "origin.local_date"
+          : "schedule.start.local_date",
+      label: "capture.admission.date",
+      kind: "date",
+    });
+  if (candidate.kind === "P3" && !facts.end)
+    fields.push({
+      key: "schedule.end.local_date",
+      label: "capture.review.endDate",
+      kind: "date",
+    });
+  if (candidate.kind === "P5") {
+    if (!date(text(candidate, "destination.local_date")))
+      fields.push({
+        key: "destination.local_date",
+        label: "capture.review.endDate",
+        kind: "date",
+      });
+    for (const [key, label] of [
+      ["origin.place_label", "capture.review.origin"],
+      ["destination.place_label", "capture.review.destination"],
+      ["operator.name", "capture.review.operator"],
+      ["service.number", "capture.review.serviceNumber"],
+      ["service", "capture.review.service"],
+    ] as const)
+      if (!text(candidate, key, ...(key === "operator.name" ? ["operator"] : [])))
+        fields.push({ key, label, kind: "text" });
+  }
+  return fields;
+}
+export function completeUniversalV3RequiredFields(
+  candidate: Candidate,
+  values: Record<string, string>,
+) {
+  const fields = { ...candidate.fields };
+  for (const field of universalV3MissingFields(candidate)) {
+    const value = values[field.key]?.trim();
+    if (value)
+      fields[field.key] = field.kind === "date" ? z.iso.date().parse(value) : value;
+  }
+  return { ...candidate, fields };
+}
+// UI projection, not a persisted Review lifecycle. Only the owning read resolves a row.
+export function universalV3ReviewStatus(
+  observed: import("./universalV3Activity").V3SaveObservation | undefined,
+  decisionSaved: boolean,
+  confirmed: boolean,
+) {
+  if (observed === "VERIFIED") return "resolved" as const;
+  if (observed === "REVIEW_REQUIRED" || observed === "ITEM_VERIFIED_RELATION_REVIEW")
+    return "recheck" as const;
+  if (observed === "OUTCOME_UNKNOWN") return "unknown" as const;
+  if (observed === "PENDING" || observed === "ITEM_VERIFIED_RELATION_PENDING")
+    return "applying" as const;
+  if (decisionSaved) return confirmed ? ("waiting" as const) : ("confirmation" as const);
+  return "unanswered" as const;
+}
+
 // Preserve authored civil facts. No timezone or midnight is inferred.
 function boundary(day: string, clock?: string) {
   const value = coreDateBoundary(day);
@@ -685,7 +767,9 @@ export function applyUniversalV3Batch(
         !unknown.has(candidate.candidateId)
       ) {
         try {
-          observed = await owner.confirm(candidate, decision);
+          observed = resolution?.manual
+            ? await owner.confirm(candidate, decision, true)
+            : await owner.confirm(candidate, decision);
         } catch {
           observed = "REVIEW_REQUIRED";
         }
@@ -817,7 +901,7 @@ export async function openUniversalV3Review(
         capabilities,
       });
     },
-    actions(candidate: Candidate) {
+    actions(candidate: Candidate, manual = false) {
       const { title } = universalV3ReviewFields(candidate);
       const supported = capabilities.enabledFamilies.includes(candidate.kind);
       const flight = candidate.kind === "P2";
@@ -832,7 +916,7 @@ export async function openUniversalV3Review(
               snapshot: accepted,
               capabilities,
               decision: universalV3NewDecision,
-              admissionMode,
+              admissionMode: manual ? "MANUAL" : admissionMode,
             });
             return true;
           } catch {
@@ -887,14 +971,15 @@ export async function openUniversalV3Review(
       }
       return { snapshot: (await core.acceptedSnapshot(context)) ?? accepted, operations };
     },
-    async confirm(candidate: Candidate, decision: UniversalV3Decision) {
+    async confirm(candidate: Candidate, decision: UniversalV3Decision, manual = false) {
+      if (manual && decision.action !== "NEW") throw Error("UNIVERSAL_V3_REVIEW_CHANGED");
       const current = await check(candidate);
       if (current !== "UNCONFIRMED") return current;
       const plan = planUniversalV3Review({
         model,
         candidate,
         decision,
-        admissionMode,
+        admissionMode: manual ? "MANUAL" : admissionMode,
         snapshot:
           admissionMode === "IMPORT"
             ? ((await core.acceptedSnapshot(context)) ?? accepted)

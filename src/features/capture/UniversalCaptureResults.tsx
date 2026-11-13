@@ -329,7 +329,6 @@ export function UniversalV3Activity({
   const reviewCount = rows.filter(
     (row) =>
       (row.disposition === "REVIEW" &&
-        !intent?.resolutions[row.candidate.candidateId] &&
         observations[row.candidate.candidateId] !== "VERIFIED") ||
       observations[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
       observations[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",

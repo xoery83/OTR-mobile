@@ -352,7 +352,7 @@ export function UniversalV3ResultPresentation({
       {children}
       {onDone ? (
         <UiButton
-          label={t("common.done")}
+          label={t(resultReady ? "common.done" : "common.close")}
           onPress={() => {
             if (isCurrent()) onDone();
           }}

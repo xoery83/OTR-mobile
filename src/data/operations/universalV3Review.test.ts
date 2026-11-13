@@ -1089,3 +1089,152 @@ it("Slice 4 reads original reconciled operations by exact ID without enqueueing 
   expect(native.enqueue).not.toHaveBeenCalled();
   expect(native.enqueueDocuments).not.toHaveBeenCalled();
 });
+
+it("UX-C2 TYPE-05 completes only genuinely missing facts, then uses the existing MANUAL Core contract", async () => {
+  const { completeUniversalV3RequiredFields, universalV3MissingFields } =
+    await import("./universalV3Review");
+  const f = fixture();
+  const missing = { ...f.candidate, fields: { "activity.name": "Rail museum" } };
+  expect(universalV3MissingFields(missing).map((field) => field.key)).toEqual([
+    "schedule.start.local_date",
+  ]);
+  expect(() =>
+    completeUniversalV3RequiredFields(missing, {
+      "schedule.start.local_date": "2026-02-30",
+    }),
+  ).toThrow();
+  const completed = completeUniversalV3RequiredFields(missing, {
+    "schedule.start.local_date": "2026-12-18",
+    title: "Do not overwrite",
+    "schedule.start.local_time": "00:00",
+  });
+  expect(universalV3ReviewFields(completed)).toMatchObject({
+    title: "Rail museum",
+    start: "2026-12-18",
+    startTime: undefined,
+  });
+  const plan = planUniversalV3Review({
+    ...f,
+    candidate: completed,
+    snapshot: f.snapshot(),
+    decision: { action: "NEW" },
+    admissionMode: "MANUAL",
+  });
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    plan.commands[0],
+    f.actor,
+    stamp,
+  ).graph;
+  expect(graph.itinerary_events).toHaveLength(1);
+  expect(graph.itinerary_events[0]).toMatchObject({
+    title: "Rail museum",
+    start_local_date: "2026-12-18",
+    start_local_time: null,
+  });
+  expect(
+    Object.values(
+      graph.itinerary_events[0].field_state as Record<string, { origin: string }>,
+    ).every((field) => field.origin === "MANUAL"),
+  ).toBe(true);
+  expect(plan.commands[0].operationId).toBe(
+    planUniversalV3Review({
+      ...f,
+      candidate: completed,
+      snapshot: f.snapshot(),
+      decision: { action: "NEW" },
+    }).commands[0].operationId,
+  );
+});
+it("UX-C2 decision saved, offline waiting and UNKNOWN never resolve the owning Review", async () => {
+  const { universalV3ReviewStatus: status } = await import("./universalV3Review");
+  expect(status("UNCONFIRMED", true, false)).toBe("confirmation");
+  expect(status("UNCONFIRMED", true, true)).toBe("waiting");
+  expect(status("PENDING", true, true)).toBe("applying");
+  expect(status("ITEM_VERIFIED_RELATION_PENDING", true, true)).toBe("applying");
+  expect(status("OUTCOME_UNKNOWN", true, true)).toBe("unknown");
+  expect(status("REVIEW_REQUIRED", true, true)).toBe("recheck");
+  expect(status("VERIFIED", true, true)).toBe("resolved");
+});
+it("UX-C2 only a retained explicit manual completion selects MANUAL; automatic admission stays unchanged", async () => {
+  const f = fixture(),
+    check = vi.fn(async () => "UNCONFIRMED" as const),
+    confirm = vi.fn(async () => "PENDING" as const);
+  const owner = { check, confirm } as unknown as Awaited<
+    ReturnType<typeof openUniversalV3Review>
+  >;
+  const row = {
+    candidate: f.candidate,
+    members: [f.candidate.candidateId],
+    disposition: "REVIEW" as const,
+    reason: "missing" as const,
+  };
+  const intent = {
+    version: 1 as const,
+    accountId: f.actor.accountId,
+    tripId: f.actor.tripId,
+    batchId: f.model.batch.batchId,
+    confirmed: true,
+    confirmBeforeSave: true,
+    resolutions: {
+      [f.candidate.candidateId]: {
+        candidate: f.candidate,
+        decision: { action: "NEW" as const },
+        manual: true,
+      },
+    },
+  };
+  await applyUniversalV3Batch(f.model, owner, [row], intent, new Set());
+  expect(confirm).toHaveBeenCalledWith(f.candidate, { action: "NEW" }, true);
+  confirm.mockClear();
+  await applyUniversalV3Batch(
+    f.model,
+    owner,
+    [row],
+    intent,
+    new Set([f.candidate.candidateId]),
+  );
+  expect(confirm).not.toHaveBeenCalled();
+});
+it("UX-C2 actual Review owner uses MANUAL only for explicitly authored NEW and keeps the same operation IDs", async () => {
+  const f = fixture();
+  native.account.mockResolvedValue(f.actor.accountId);
+  native.getTrip.mockResolvedValue({ syncFormatVersion: 1 });
+  native.snapshot.mockResolvedValue(f.snapshot());
+  native.capabilities.mockResolvedValue({
+    ...f.capabilities,
+    enabledAdmissionModes: ["IMPORT", "MANUAL"],
+  });
+  native.pending.mockResolvedValue([]);
+  native.enqueueDocuments.mockClear();
+  const review = await openUniversalV3Review(f.model, "IMPORT");
+  expect(await review.confirm(f.candidate, { action: "NEW" }, true)).toBe("PENDING");
+  expect(native.enqueueDocuments).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.arrayContaining([
+      expect.objectContaining({
+        command: "CREATE_ITEM",
+        admission: expect.objectContaining({ mode: "MANUAL" }),
+      }),
+    ]),
+  );
+  await expect(
+    review.confirm(
+      f.candidate,
+      { action: "LINK", itemId: randomUUID(), revision: 1 },
+      true,
+    ),
+  ).rejects.toThrow("REVIEW_CHANGED");
+});
+it("UX-C2 P5 requires its actual transport endpoint dates rather than accepting a generic date as an origin", async () => {
+  const { universalV3MissingFields } = await import("./universalV3Review");
+  const f = fixture();
+  const keys = universalV3MissingFields({
+    ...f.candidate,
+    kind: "P5",
+    fields: { title: "Train", "schedule.start.local_date": "2026-12-18" },
+  }).map((field) => field.key);
+  expect(keys).toContain("origin.local_date");
+  expect(keys).toContain("destination.local_date");
+  expect(keys).toContain("origin.place_label");
+});

@@ -278,3 +278,11 @@ it("keeps authorized transport business facts separate from actual receipt clock
     )[0].businessDate,
   ).toBeUndefined();
 });
+it("UX-C2 partial receipt observations cannot complete a whole Batch; failed latest observation is not a complete read", () => {
+  expect(project(ready, { a: "VERIFIED" }).state).toBe("checking");
+  expect(project(ready, { a: "VERIFIED", b: "UNCONFIRMED" }).state).not.toBe("complete");
+  expect(
+    project(ready, { a: "VERIFIED", b: "ITEM_VERIFIED_RELATION_PENDING" }).state,
+  ).toBe("association");
+  expect(project(ready, { a: "VERIFIED", b: "VERIFIED" }, true).state).toBe("uncertain");
+});

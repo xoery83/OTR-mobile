@@ -1,31 +1,32 @@
-## Import V3 UX-C1 / persistent iPhone baseline — 14 November 2026
+## Import V3 UX-C2 — Owner review checkpoint, 14 November 2026
 
-Slice4 `d2c4d0c` business/data accepted; UX rejected by Owner. UX-C1 candidate
-simplifies Processing/Results/Return only; UX-C2 and Slice5/6 remain paused.
-Result rows use actual authorized Item business fields, separate receipt timestamps,
-unique objects/actions and nonzero business-type counts. Done independent of Review.
-No Admission/Queue/Core/SQL changes or new DeepSeek/Analyze/Save.
+Owner accepted UX-C1 `3227ead90` and authorized Review/Composer only. C2 uses the
+existing full-screen route with native Back, fixed Batch context/remaining count,
+neutral full-width issue rows, one accordion and one named-source evidence panel.
+Durable decision/application/UNKNOWN/recheck are distinct. Only owning VERIFIED
+reduces remaining; no auto-next or scroll-to-top. Native visible-content anchoring
+is used. Processing now says Close; Results keeps Done. Full-Batch candidate checks
+remain; failed fresh read cannot turn cached Receipt success into Completed.
 
-Primary persistent device: **OTR iPhone 16 Pro DEV**, UDID `89935253-B3B0-4851-ADCA-87AFED548C7E`,
-full App `com.xoery.otrmobile.uxc1iphone16`, normal DEV login; no copied sessions,
-SQLite, Keychain or originals. Standard entry, real DEV transport, DEV Batch confirm.
-Temporary Owner-approved read-only UI entry removed from final normal installed App.
-TripCover missing images fixed in bundle packaging (extra assets path);96 asset hashes
-verified and actual current/recommended cover photos visible. Preserve this device
-and original iPad; no uninstall/reset. Runbook documents asset-root requirement.
+TYPE-05 missing facts use existing inputs/native date picker. Explicitly authored
+NEW uses the existing MANUAL Core contract; ordinary automatic IMPORT unchanged.
+An optional manual fact in the existing local resolution preserves that authority
+across reopen; IDs/Queue/Receipt unchanged. No Core/SQL/ACL/RLS or Provider changes.
+Composer changes are local sheet/spacing/safe-area corrections, not a redesign.
 
-Authenticated sequential GETs verified3 real FULL receipts and2 unique saved objects
-(Created1/Linked1), actual Details→Back→same Results and Done. These are saved-result
-subset checks, not cross-device local Batch recovery. iPhone has no old private originals;
-local Batch discovery remains local-only. Synthetic Processing labelled explicitly.
-Earlier iPhone17 layout evidence is auxiliary, not primary16 acceptance. iPad real
-Batch/receipt/original/navigation evidence retained. Full previous-module E2E and
-physical-device acceptance are not claimed. Normal cloud Trip summaries still report
-planning actions unavailable on this device; do not mistake full binary for all-flow PASS.
+Primary iPhone16 full-App synthetic UI verified named sources/originals, date input,
+saved/applying5→owning isolated Core verified4, recheck/offline/UNKNOWN, keyboard,
+English/Chinese, Dark and larger text. Isolated Core result:1P1/2Documents/2links,
+exact date/time null; **not a DEV APPLIED Receipt**. No new Cloud Save or DeepSeek.
+iPad UI regression completed then original program/data retained/restored. iPhone
+final normal build has no temporary entry. Existing device queues/receipts/Batch
+hashes unchanged; new explicitly unsubmitted local layout draft retained.
 
-60 targeted tests and UI guard PASS; whole-repo3 baseline type errors remain.
-Report: `docs/ops/import-ux-c1-20261114/README.md`. No merge/push.
-**STOP for Owner UX-C1 review. No UX-C2 or Slice5/6 implementation.**
+121 targeted checks (7files), UI guard and scoped lint pass; whole-repo typecheck
+retains only3baseline errors. Report/screens: `docs/ops/import-ux-c2-20261114/README.md`.
+UX-C1 evidence remains `docs/ops/import-ux-c1-20261114/README.md`. Full App Trip/Day/
+Ledger integration defects and physical/real-Cloud TYPE-05 remain unverified here.
+**STOP for Owner UX-C2 review. No Slice5/6 or B4 expansion; no merge/push.**
 
 ## Import V3 B2 Slice 4 — Results & Return, 14 November 2026
 

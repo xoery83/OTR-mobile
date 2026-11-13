@@ -1,0 +1,44 @@
+import { CaptureComposer } from "@/features/capture/CaptureComposer";
+import { UniversalV3ResultPresentation } from "@/features/capture/UniversalV3ResultPresentation";
+// Temporary full-App UI verification only. Never imports an API writer or Provider.
+import { useEffect, useRef, useState } from "react";
+import { Stack } from "expo-router";
+import { View, Text, ScrollView } from "react-native";
+import { Directory, File, Paths } from "expo-file-system";
+import { sha256 } from "@noble/hashes/sha256";
+import { bytesToHex } from "@noble/hashes/utils";
+import { ImportExceptionReviewContent } from "@/features/capture/ImportExceptionReviewScreen";
+import { UiButton } from "@/ui/controls";
+import { useUiTheme } from "@/ui/theme";
+import { setUiLocale, t } from "@/ui/locale";
+import { requireAdoptedUserId } from "@/data/auth/authRepository";
+import { retainImportOriginal } from "@/data/files/importOriginalFileStore";
+import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
+import { coreClosedCapabilities } from "@/domain/trip/tripCoreV2Commands";
+import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
+import { planUniversalV3Review } from "@/data/operations/universalV3Review";
+const uid=(n:number)=>`00000000-0000-4000-8000-${String(n).padStart(12,"0")}`;
+export default function Verify(){
+ const colors=useUiTheme(),[ready,setReady]=useState<any>(),[controls,setControls]=useState(false),[statuses,setStatuses]=useState<any>({}),[intent,setIntent]=useState<any>({confirmed:true,resolutions:{}}),[offline,setOffline]=useState(false),[version,setVersion]=useState(0);
+ const [mode,setMode]=useState<string>();
+ const graph=useRef(emptyCoreGraph()),pending=useRef<any>(),events=useRef<any[]>([]);
+ const report=()=>{const f=new File(Paths.document,"ux-c2-isolated-core.json");f.create({overwrite:true});f.write(JSON.stringify({kind:"ISOLATED_CORE_NOT_DEV_RECEIPT",networkWrites:0,providerCalls:0,events:events.current,items:graph.current.itinerary_events,links:graph.current.trip_item_document_links,documents:graph.current.trip_operational_documents},null,2));};
+ useEffect(()=>{void(async()=>{const account=await requireAdoptedUserId(),trip=uid(6200),actor={accountId:account,tripId:trip,personId:uid(6201),personIds:[uid(6201)],active:true,canManageShared:false};
+ const texts=["Museum visit. Date not provided. Venue: Harbour Museum. Please choose the actual travel date.","Workshop and museum itinerary notes. Museum visit is one distinct activity; no date has been supplied."];
+ const inputs=[] as any[];for(let i=0;i<texts.length;i++){const bytes=new TextEncoder().encode(texts[i]),hash=bytesToHex(sha256(bytes));await retainImportOriginal(account,hash,bytes);inputs.push({id:uid(6210+i),kind:"TEXT",acquisitionSource:"files",originalFilename:i?"Workshop and museum.txt":"Museum itinerary.txt",declaredContentType:"text/plain",contentSha256:hash,contentByteCount:bytes.length,state:"ACCEPTED"});}
+ const docs=inputs.map(f=>localImportDocumentId(account,trip,f.contentSha256));const model={batch:{accountId:account,batchId:uid(6202),jobId:uid(6203),createdAt:"2026-11-14T00:00:00Z",context:{tripPrior:{id:trip}}},inputs};
+ const rows=[{kind:"P1",title:"Harbour Museum visit",reason:"missing"},{kind:"P3",title:"Harbour Hotel",reason:"ambiguous"},{kind:"P6",title:"City walking tour",reason:"conflict"},{kind:"P1",title:"Travel workshop",reason:"missing"},{kind:"P6",title:"Gallery booking",reason:"ambiguous"}].map((item,i)=>({candidate:{candidateId:uid(6220+i),kind:item.kind,subtype:item.kind==="P3"?"STAY":"ACTIVITY",fields:{title:item.title,...(item.reason!=="missing"?{"schedule.start.local_date":"2026-12-18"}:{}),...(item.kind==="P3"?{"schedule.end.local_date":"2026-12-20"}:{})},documentIds:docs},members:[uid(6220+i)],disposition:"REVIEW",reason:item.reason}));
+ const capabilities={...coreClosedCapabilities,activationState:"ENABLED",enabledFamilies:["P1","P3","P6"],enabledAdmissionModes:["MANUAL","IMPORT"],enabledCommands:["CREATE_ITEM","CREATE_DOCUMENT_METADATA","RECONCILE_ITEM_DOCUMENTS"]};
+ setReady({model,rows,actor,capabilities});})().catch(e=>setReady({error:String(e)}));},[]);
+ if(!ready||ready.error)return <Text>{ready?.error??"Loading isolated Review example"}</Text>;
+ const owner={actions:(candidate:any,manual=false)=>{try{planUniversalV3Review({model:ready.model,candidate,decision:{action:"NEW"},snapshot:{actor:ready.actor,graph:graph.current} as any,capabilities:ready.capabilities,admissionMode:manual?"MANUAL":"IMPORT"});return {NEW:true};}catch{return {NEW:false};}},targets:()=>[]};
+ const apply=()=>{if(!pending.current)return;for(const q of pending.current.commands){graph.current=applyCoreCommand(graph.current,q,ready.actor,"2026-11-14T00:05:00Z",q.admission.mode==="IMPORT").graph;}events.current.push({event:"OWNING_ISOLATED_CORE_APPLIED",candidateId:pending.current.id,commands:pending.current.commands.map((q:any)=>({operationId:q.operationId,command:q.command,mode:q.admission.mode}))});setStatuses((s:any)=>({...s,[pending.current.id]:"VERIFIED"}));report();pending.current=undefined;setVersion(v=>v+1);setControls(false);};
+ if(mode) return <><Stack.Screen options={{headerShown:false}}/><CaptureComposer embedded snapshot={{items:[],editorText:"",selecting:false,error:null}} count={0} duplicate={false} title={mode==="processing"?t("capture.progress.title"):t("capture.ux.resultsTitle")} contextLabel="Synthetic display · no Analyze / Save" onClose={()=>setMode(undefined)} onFiles={()=>{}} onPhotos={()=>{}} onRemove={()=>{}} onText={()=>{}} onAddText={()=>{}} onClear={()=>{}} onSubmit={()=>{}} onActivity={()=>{}} content={<ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{padding:20}}><UniversalV3ResultPresentation model={ready.model} resultReady={mode!=="processing"} state={mode==="processing"?"analyzing":"empty"} results={[]} operations={[]} reviewCount={0} abstainCount={0} isCurrent={()=>true} onReconcile={()=>{}} onDone={()=>setMode(undefined)}/></ScrollView>}/></>;
+ return <View style={{flex:1,backgroundColor:colors.background}}>
+ <Stack.Screen options={{headerShown:true,headerBackVisible:true,title:"Review · Synthetic",headerTransparent:false}} />
+ <Stack.Toolbar placement="right"><Stack.Toolbar.Button icon="ellipsis.circle" accessibilityLabel="Verification controls" onPress={()=>setControls(!controls)} /></Stack.Toolbar>
+ {controls?<View><UiButton label="Show Processing" onPress={()=>{setMode("processing");setControls(false);}}/><UiButton label="Show Results" onPress={()=>{setMode("results");setControls(false);}}/><UiButton label="Apply isolated Core plan" onPress={apply}/><UiButton label="Needs Recheck" onPress={()=>{setStatuses((s:any)=>({...s,[ready.rows[0].candidate.candidateId]:"REVIEW_REQUIRED"}));setControls(false);}}/><UiButton label="Offline waiting" onPress={()=>{setOffline(true);setStatuses({});setControls(false);}}/><UiButton label="Outcome UNKNOWN" onPress={()=>{setStatuses({[ready.rows[0].candidate.candidateId]:"OUTCOME_UNKNOWN"});setControls(false);}}/><UiButton label="English" onPress={()=>{setUiLocale("en");setVersion(v=>v+1);setControls(false);}}/><UiButton label="中文" onPress={()=>{setUiLocale("zh-Hans");setVersion(v=>v+1);setControls(false);}}/></View>:null}
+ <ImportExceptionReviewContent model={ready.model} rows={ready.rows} owner={owner as any} statuses={statuses} intent={intent} unavailable={offline} isCurrent={()=>true}
+ onConfirm={async(candidate,decision,manual,durable)=>{const planned=planUniversalV3Review({model:ready.model,candidate,decision,snapshot:{actor:ready.actor,graph:graph.current} as any,capabilities:ready.capabilities,admissionMode:manual?"MANUAL":"IMPORT"});pending.current={id:candidate.candidateId,commands:planned.commands};setIntent((v:any)=>({...v,resolutions:{...v.resolutions,[candidate.candidateId]:{candidate,decision,manual}}}));events.current.push({event:"LOCAL_SYNTHETIC_DECISION_SAVED",candidate,decision,manual});report();durable();setStatuses((s:any)=>({...s,[candidate.candidateId]:"PENDING"}));setControls(false);}} />
+ </View>;
+}
