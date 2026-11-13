@@ -1295,15 +1295,6 @@ export function LedgerStage6Screen({
                             <Text maxFontSizeMultiplier={2} style={styles.empty}>
                               {t("ledger.noExpenses")}
                             </Text>
-                            <Pressable
-                              accessibilityRole="button"
-                              onPress={openNewExpense}
-                              style={styles.primary}
-                            >
-                              <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
-                                {t("ledger.addExpense")}
-                              </Text>
-                            </Pressable>
                           </View>
                         ) : null}
                         {expenses.length ? (

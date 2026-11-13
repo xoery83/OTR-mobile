@@ -2082,7 +2082,7 @@ it.each(["onQueryDirty", "onBusy"])(
   },
 );
 
-it.each(["success", "revoked", "switched"])(
+it.each(["success", "cover", "revoked", "switched"])(
   "server-parent Details preserves formal CAS and stale-response isolation: %s",
   async (mode) => {
     const tripId = "20000000-0000-4000-8000-000000000001";
@@ -2169,10 +2169,35 @@ it.each(["success", "revoked", "switched"])(
     expect(actions?.editTrip).toBeTypeOf("function");
     expect(actions?.itinerary).toBeUndefined();
     expect(render()).not.toContain("myTrips.cachedDetails");
+    state.preparation.onSetup({
+      context,
+      currency: { state: "AVAILABLE", code: "NZD", scale: 2, permission: "OWNER", lock: "NOT_OBSERVED" },
+      members: { state: "UNKNOWN" }, invitations: "UNKNOWN", connections: "UNKNOWN",
+    });
+    state.personal.selection = { raw: null };
+    render();
+    const readsBeforeOpen = state.parentMetadataRead.mock.calls.length;
     await button("tripHome.edit").onPress();
     await vi.dynamicImportSettled();
     await flush();
     render();
+    expect(state.parentMetadataRead).toHaveBeenCalledTimes(readsBeforeOpen);
+    const currency = state.nodes.find((node) => node.label === "tripForm.currency")!;
+    expect(currency.disabled).toBe(false);
+    currency.onPress();
+    render();
+    expect(state.nodes.some((node) => node.currencyScreen?.journeyId === tripId)).toBe(true);
+    const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
+    if (mode === "cover") {
+      await picker.onSelect("wc-142191115");
+      render();
+      button("ui.save").onPress();
+      await flush();
+      expect(state.personal.select).toHaveBeenCalledWith("wc-142191115");
+      expect(state.parentMetadataSave).not.toHaveBeenCalled();
+      expect(repo.updateMetadata).not.toHaveBeenCalled();
+      return;
+    }
     input("tripCreate.name", "Updated remote");
     render();
     button("ui.save").onPress();

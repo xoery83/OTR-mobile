@@ -2,7 +2,7 @@ import { createP3SourceScanPort } from "@/native/p3FormScan";
 import { localInsertionTime } from "./localInsertionTime";
 import { readCommittedLocalSession } from "@/data/auth/authRepository";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
-import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
+import { dayFeedAppearanceDate, dayFeedPhaseColor, dayFeedPreviousColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
 import { useP1CivilMove } from "./useP1CivilMove";
 import { P1MeasuredMoveRegion } from "./useP1Move";
@@ -1821,13 +1821,7 @@ function TripContent({
                         empty={empty}
                         dayColor={phase(date)}
                         previousColor={
-                          date === dayFacts.startDate
-                            ? colors.tripIntroduction
-                            : phase(
-                                new Date(Date.parse(date + "T12:00:00Z") - 86400000)
-                                  .toISOString()
-                                  .slice(0, 10),
-                              )
+                          dayFeedPreviousColor(date, calendarDates ?? [], appearanceToday, colors)
                         }
                         onAdd={() => setInsertion({ date, startTime: null })}
                       />

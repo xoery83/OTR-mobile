@@ -935,6 +935,13 @@ function LocalTripContent({
   const openTripEditor = useCallback(async () => {
     if (!alive.current || generation !== getAccountGeneration()) return;
     if (!selected && remoteSelected && serverParentPeopleEnabled) {
+      // Reuse the qualified base; the owning save still checks the current revision and ACL.
+      if (remoteMetadataQualified && remoteMetadataReady) {
+        setRemoteMetadataEditor(remoteMetadataReady);
+        setMetadataBaseError(false);
+        setCoverOpen(true);
+        return;
+      }
       const ticket = request.current;
       try {
         const { requireAdoptedUserId } = await import("@/data/auth/authRepository");
@@ -1007,7 +1014,7 @@ function LocalTripContent({
       }
     }
     setCoverOpen(true);
-  }, [selected, remoteSelected, serverParentPeopleEnabled, generation]);
+  }, [selected, remoteSelected, remoteMetadataQualified, remoteMetadataReady, serverParentPeopleEnabled, generation]);
 
   const leaveHome = useCallback(() => {
     if (!alive.current || generation !== getAccountGeneration()) return;
@@ -1300,20 +1307,33 @@ function LocalTripContent({
               setEditorSaving(saving);
             }}
             setup={setup?.context.tripId === editorTrip.id ? setup : null}
-            currencyAvailable={false}
-            coverAvailable={false}
+            currencyAvailable={guest === false}
+            coverAvailable={!!personalCover.selection}
             metadataEditable={metadataEditable || !!remoteMetadataEditor}
             onSelectCover={selectCover}
             onSaveMetadata={async (before, after, cover, operationId, destinations) => {
               if (!alive.current || generation !== getAccountGeneration() || !remoteMetadataEditor)
                 throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
               const base = remoteMetadataEditor.snapshot;
-              await saveServerParentTripMetadata(remoteMetadataEditor.context, {
-                formatVersion: 3, operationId, tripId: base.tripId,
-                expectedMetadataRevision: base.metadataRevision,
-                before: base.metadata,
-                after: { ...after, destination: null, destinations: [...(destinations?.after ?? base.metadata.destinations)] },
-              });
+              const next = {
+                ...after,
+                destination: null,
+                destinations: [...(destinations?.after ?? base.metadata.destinations)],
+              };
+              if (
+                canonicalCoreJson(base.metadata as Json) !==
+                canonicalCoreJson(next as Json)
+              ) {
+                await saveServerParentTripMetadata(remoteMetadataEditor.context, {
+                  formatVersion: 3,
+                  operationId,
+                  tripId: base.tripId,
+                  expectedMetadataRevision: base.metadataRevision,
+                  before: base.metadata,
+                  after: next,
+                });
+              }
+              if (cover) await personalCover.select(cover.after);
               if (!alive.current || generation !== getAccountGeneration()) return;
               setCoverOpen(false);
               void kickLocalTripSync().then(() => load()).catch(() => undefined);
