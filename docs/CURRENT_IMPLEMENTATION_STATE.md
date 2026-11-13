@@ -1,3 +1,65 @@
+## Import V3 Phase B1 — full App / real Provider partial acceptance, 13 November 2026
+
+Actual checkout `/Users/xoery/Project/otr-mobile-import/import-v3-local-first`, branch
+`codex/import-v3-local-first`. Owner authorized B1, no automatic main merge/push,
+SQL/ACL/Core-contract changes or original QA179 operations. No shared DEV changes
+occurred. Latest report: `docs/ops/IMPORT_V3_PHASE_B1_20261113.md`.
+
+**Both authorized real DeepSeek calls have been used successfully. NO THIRD CALL.**
+Files Batch `48181fe2-1355-4d79-b34f-39d95999f8d4`, Task `8cc058e7-dfb2-8046-b192-50a3b181494d`;
+Photos Batch `3d2789c7-f234-49f5-9b8d-c5479c496209`, Task `7baec78d-cb17-883c-9326-d2134d9cb647`.
+Independent Host SQLite: one Attempt each, SUCCEEDED/PUBLISHED, total 3,086 tokens.
+Task-created→published 11.903s / 10.732s; exact Provider dollar cost unavailable.
+
+Committed source `9e60834` (byte checks/fields/existing P2 packet/system copy
+picker), `7dac1cd` (awaiting Analyze state), `df96cb2` (normal 60s Review read
+budget), `66e5706` (P2 airport-code display). No new queue/schema/service/command.
+Native Quick Look explicit Done fix is verified by Xcode Release build and actual
+JPEG/WebP/GIF open/close in the same full App; source is included in this checkpoint.
+
+Dedicated full OTR App in DeviceHub, not Harness: My Trips → Trip → Import accepts
+TXT/two-page PDF/WebP via Files and PNG/JPEG/static GIF via Photos. Same six hashes
+and Batch IDs survive App replacement/cold launch. Native open-in-place bookmarks
+failed Cocoa257; existing Expo system copy path works. Legacy lease path unchanged.
+No Owner click is needed. No original iPad Session/Keychain/queue was copied.
+
+Real UI NEW/LINK plus independent DEV READ ONLY confirms B1 delta: 5 canonical
+Items, 6 LOCAL_ONLY Documents, 6 associations, 18 APPLIED receipts. Total with prior
+Phase A: 7 Items/7 Documents/8 links/23 receipts. TXT→hotel+walk proves1→N;
+WebP/GIF/JPEG→one Nov20 10:30 boardwalk proves N→1 through explicit LINK. PNG
+Nov2–3 hotel remains distinct from TXT Nov14–15 hotel. No invented midnight.
+Normal Day Feed/Details/TXT original UI is verified. P4/P5/P6, ABSTAIN/conflicts
+are isolated tests only. App fetch-failure cold startup retained Trip/Day Feed/Item/three associations and
+local JPEG opening; this is not OS airplane mode. First cold WebP opening did not
+yield verified content. Physical iPad and OS-offline cold recovery remain unverified.
+
+Unique Save blocker: PDF→P2 Operation `b8d1a89e-7036-817c-9047-dab721cc3af4`, Item
+`d9ec2529-6516-857f-a31f-325083e68a9f`. Existing Item/authored details/PDFmetadata
+APPLIED; association returns503 and has no receipt. DO NOT re-Confirm or replace
+original operation. Read-only actual pg_proc shows `assert_trip_core_v2_aggregate`
+allows SPARSE/P2 TRANSPORT under MANUAL only for SET_AUTHORED_FLIGHT_DETAILS and
+SET_ITEM_PARTICIPATION, omitting RECONCILE_ITEM_DOCUMENTS. Association bumps Item
+revision, invoking that constraint. Pure mutation/collection validation pass;
+actual Backend already has the documentLink exception. Sanitized logs expose
+OTHER, so exact SQL exception is inferred from confirmed code/state, not observed.
+Minimal owning Core SQL adjustment is outside B1 approval; do not bypass ACL,
+fabricate services or remove authored fields. Preserve original queue and receipt.
+
+Evidence `/private/tmp/otr-b1-fullapp/`: provider-readback.json, independent-pg.json,
+six-format-local-recovery.json, link-assert-read.json, full-App screenshots. No
+credential output. Dedicated simulator `1B2252F4-4F90-4F93-9223-545269EAA06C`, Bundle
+`com.xoery.otrmobile.b1full20261113`. Re-read container-path.txt after installation.
+Final native host reuses existing Expo SceneDelegate and original B1 signing
+identity; no Session/Keychain copy. Normal JS bundle has committed60s/airportfix;
+temporary network-failure injection removed. Local fixture server stopped; dedicated
+B1 App stopped to avoid repeated known PDF-link failures. Preserve all original
+operations. Next is Owner review and a minimal owning Core SQL repair approval,
+not another Analyze. Do not include unrelated Root2 ops dirt.
+B1 is NOT complete; final status must name P2 association and any unverified tests.
+
+Targeted runs overlap:197,145,51,33,44,41 PASS; UI guard/changed-source lint passed.
+Known unrelated full typecheck errors3 unchanged. No repeated broad test cycle.
+
 ## Import V3 normal product path — Phase A, 13 November 2026
 
 Source `a28ad66` unifies Review planning, normal queue selection and automatic
