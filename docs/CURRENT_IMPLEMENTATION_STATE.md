@@ -1,3 +1,38 @@
+## Import V3 normal product path — Phase A, 13 November 2026
+
+Source `a28ad66` unifies Review planning, normal queue selection and automatic
+activity detection using the existing Core command schemas. Trip creation origin
+no longer selects a different P1–P6 list. General DEV account sync takes priority
+over stale Native QA configuration. P5 requires actual route and service facts.
+Existing Flight contracts, target ownership, version checks and receipts remain
+authoritative. The existing queue failure category is exposed to the Core worker
+so an UNKNOWN outcome checks its original receipt without another POST.
+
+An independent Device Hub iPad simulator used a fresh normal DEV password login
+and synthetic Review candidates through the existing Native Review, queue, sync
+and Backend. Trip `bdc65c02-2526-4990-9331-9c5359c73ec9` has one P3 hotel and one
+P1 plan, one shared LOCAL_ONLY Document, two active associations and five APPLIED
+Core receipts. Independent READ ONLY LinkedPG verified the objects and receipts.
+Cold launch read the same objects, associations, original file and Day Feed from
+SQLite before network refresh. The canonical Day Feed component displayed both
+items. The temporary test App is stopped. DeepSeek calls were zero. QA179 and its
+original queue were not accessed or changed during Phase A execution.
+
+Validation covered 381 passing checks in the combined run and two additional
+payload checks. Two existing Instruction checks were excluded from that run.
+UI guard and changed production-file ESLint passed. Full typecheck retains the
+three known errors in universalContinuationRuntime and browser React DOM types.
+The test fixture uses synthetic Review data and does not qualify file selection
+or Provider execution. Its eight production source files match the committed
+source after format normalization, with both raw hashes retained.
+
+Evidence is in
+[/private/tmp/otr-phase-a-simulator.pmj15xjm/PHASE_A_RECEIPT.json](/private/tmp/otr-phase-a-simulator.pmj15xjm/PHASE_A_RECEIPT.json).
+No main merge, remote push, Backend deployment or SQL/permission change was made.
+Await Owner review. Phase B covers field-level UPDATE UI, unsupported Flight
+updates and complete file/Provider acceptance. P5 suggestions lacking required
+facts remain unresolved. Broader shared-member authority requires Core ownership.
+
 ## Ordinary Import V3 on shared DEV — 10 November 2026
 
 Response custody fix `9c84ec8` is live on image `5ac7bbba` and Backend
