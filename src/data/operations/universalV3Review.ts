@@ -475,7 +475,10 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
     requireAdoptedUserId,
     tripCoreSha256Hex,
   );
-  const transport = createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex);
+  // Match the normal Core coordinator read budget; the generic 15 s budget is too short.
+  const transport = createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+    timeoutMs: 60_000,
+  });
   const refresh = async () => {
     await core.refresh(context, transport);
     const snapshot = await core.acceptedSnapshot(context);
