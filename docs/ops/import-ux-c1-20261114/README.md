@@ -86,3 +86,20 @@ Results→activity-filtered Updates→Review明确保留Slice6导航依赖。
 原因，**不宣称所有拒绝都已可一键修好**。不为此创建Save/Recovery engine。
 
 **停止等待Owner UX-C1审核；不启动UX-C2或Slice5/6。**
+
+## Owner交付状态补充
+
+**代码已提交，UX-C1产品验收仍为PARTIAL / 等待Owner审核，不记录整体UX PASS。**
+主设备iPhone16已验证正式回执结果子集、Details/Back/Done；中文/深色/大字号
+完整矩阵主要来自辅助设备，未冒充主设备全覆盖。iPhone无既有本地Batch历史，
+Results证据来自Owner批准的临时只读入口，最终正常主包已移除该入口。
+Trip摘要/Day路由/Ledger底部遮挡是后续确认的完整App集成缺陷，未由UX-C1解决。
+
+截图索引（均实际截图裁切，不重绘内容）：
+- `screenshots/report-iphone16-results.png`：主设备真实DEV回执结果子集。
+- `screenshots/report-iphone16-processing.png`：明确合成的Processing布局。
+- `screenshots/report-iphone16-details.png`：真实已保存对象Details。
+- `screenshots/report-ipad-before-after.png`：同iPad英文/浅色/字号3前后对照；
+  是记录时两版候选截图，非承诺最终版本逐像素相同。
+
+本轮不新增Analyze、Save、Provider调用。未开始UX-C2或Slice5/6。
