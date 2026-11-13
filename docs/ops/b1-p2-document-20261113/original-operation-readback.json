@@ -1,0 +1,1448 @@
+{
+  "at": "2026-11-13T05:29:42.504535+00:00",
+  "item": {
+    "accepted_address": null,
+    "accepted_address_country": null,
+    "accepted_address_line1": null,
+    "accepted_address_line2": null,
+    "accepted_address_locality": null,
+    "accepted_address_postal_code": null,
+    "accepted_address_region": null,
+    "accepted_latitude": null,
+    "accepted_longitude": null,
+    "accepted_place_id": null,
+    "activity_category": null,
+    "authored_address": null,
+    "authored_address_country": null,
+    "authored_address_line1": null,
+    "authored_address_line2": null,
+    "authored_address_locality": null,
+    "authored_address_postal_code": null,
+    "authored_address_region": null,
+    "authored_label": null,
+    "authored_text": null,
+    "booking_reference": null,
+    "business_contract_version": 2,
+    "candidate_address": null,
+    "candidate_confidence": null,
+    "candidate_error_code": null,
+    "candidate_input_revision": null,
+    "candidate_label": null,
+    "candidate_latitude": null,
+    "candidate_longitude": null,
+    "candidate_observed_at": null,
+    "candidate_place_id": null,
+    "candidate_provider": null,
+    "candidate_provider_place_id": null,
+    "candidate_state": null,
+    "confidence": null,
+    "created_at": "2026-11-13T02:31:10.40107+00:00",
+    "created_by": null,
+    "date_confidence": null,
+    "description": null,
+    "end_basis": null,
+    "end_civil_resolution": null,
+    "end_clock_precision": null,
+    "end_interpretation_input_sha256": null,
+    "end_interpretation_key": null,
+    "end_local_date": null,
+    "end_local_time": null,
+    "end_provenance_refs": null,
+    "end_quality": null,
+    "end_resolution_offset_seconds": null,
+    "end_source_instant": null,
+    "end_source_instant_precision": null,
+    "end_supplied_offset_seconds": null,
+    "end_zone_id": null,
+    "event_type": "flight",
+    "experience_family": "P2",
+    "field_state": {
+      "itinerary_events.planned_start": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_basis": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_events.start_civil_resolution": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_events.start_clock_precision": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_interpretation_input_sha256": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_interpretation_key": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_local_date": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_events.start_local_time": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_provenance_refs": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_quality": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_events.start_resolution_offset_seconds": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_source_instant": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_source_instant_precision": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_supplied_offset_seconds": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.start_zone_id": {
+        "changed_revision": 1,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_events.title": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.DESTINATION.authored_label": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.basis": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.DESTINATION.civil_resolution": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.DESTINATION.clock_precision": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.instant": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.interpretation_input_sha256": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.interpretation_key": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.local_date": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.local_time": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.provenance_refs": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.quality": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.DESTINATION.resolution_offset_seconds": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.source_instant": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.source_instant_precision": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.supplied_offset_seconds": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.DESTINATION.zone_id": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.authored_label": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.basis": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.ORIGIN.civil_resolution": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.ORIGIN.clock_precision": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.instant": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.interpretation_input_sha256": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.interpretation_key": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.local_date": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.ORIGIN.local_time": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.provenance_refs": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.quality": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "itinerary_transport_endpoints.ORIGIN.resolution_offset_seconds": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.source_instant": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.source_instant_precision": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.supplied_offset_seconds": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "itinerary_transport_endpoints.ORIGIN.zone_id": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "trip_endpoint_details.DESTINATION.airport_code": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "trip_endpoint_details.DESTINATION.terminal": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      },
+      "trip_endpoint_details.ORIGIN.airport_code": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "KNOWN"
+      },
+      "trip_endpoint_details.ORIGIN.terminal": {
+        "changed_revision": 2,
+        "evidence_ref": null,
+        "origin": "MANUAL",
+        "protected": true,
+        "state": "CLEARED"
+      }
+    },
+    "geocode_attempts": 0,
+    "geocode_error": null,
+    "geocoded_at": null,
+    "hidden_at": null,
+    "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+    "is_estimated_time": false,
+    "legacy_is_estimated_time": null,
+    "legacy_planned_end": null,
+    "legacy_planned_start": null,
+    "legacy_snapshot_at": null,
+    "location_confidence": null,
+    "location_input_revision": null,
+    "location_lat": null,
+    "location_lng": null,
+    "location_name": null,
+    "location_provider": null,
+    "location_provider_place_id": null,
+    "location_status": "none",
+    "location_text": null,
+    "manual_location": false,
+    "needs_review": false,
+    "order_index": null,
+    "owner_account_id": "00000000-0000-4000-8000-000000000001",
+    "participant_scope": "ASSIGNED",
+    "participants_confidence": null,
+    "participation_mode": "SELF",
+    "place_id": null,
+    "planned_end": null,
+    "planned_start": null,
+    "reservation_id": null,
+    "self_person_id": "845fbc38-3f45-4773-9825-10bcd82cdc18",
+    "semantic_revision": 3,
+    "source_text": null,
+    "spatial_provenance_refs": null,
+    "start_basis": null,
+    "start_civil_resolution": null,
+    "start_clock_precision": null,
+    "start_interpretation_input_sha256": null,
+    "start_interpretation_key": null,
+    "start_local_date": null,
+    "start_local_time": null,
+    "start_provenance_refs": null,
+    "start_quality": null,
+    "start_resolution_offset_seconds": null,
+    "start_source_instant": null,
+    "start_source_instant_precision": null,
+    "start_supplied_offset_seconds": null,
+    "start_zone_id": null,
+    "status": "planned",
+    "temporal_contract_version": 1,
+    "temporal_shape": "TRANSPORT",
+    "time_confidence": null,
+    "timing_label": null,
+    "timing_provenance_ref": null,
+    "title": "NZ1",
+    "trip_day_id": null,
+    "trip_id": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+    "updated_at": "2026-11-13T05:28:15.730067+00:00",
+    "url": null,
+    "visibility": "PRIVATE"
+  },
+  "linkCount": 1,
+  "readOnly": "on",
+  "receipt": {
+    "actor_account_id": "00000000-0000-4000-8000-000000000001",
+    "body": {
+      "actorAccountId": "00000000-0000-4000-8000-000000000001",
+      "audit": {
+        "after": [
+          {
+            "facts": {
+              "accepted_address": null,
+              "accepted_address_country": null,
+              "accepted_address_line1": null,
+              "accepted_address_line2": null,
+              "accepted_address_locality": null,
+              "accepted_address_postal_code": null,
+              "accepted_address_region": null,
+              "accepted_latitude": null,
+              "accepted_longitude": null,
+              "accepted_place_id": null,
+              "activity_category": null,
+              "authored_address": null,
+              "authored_address_country": null,
+              "authored_address_line1": null,
+              "authored_address_line2": null,
+              "authored_address_locality": null,
+              "authored_address_postal_code": null,
+              "authored_address_region": null,
+              "authored_label": null,
+              "authored_text": null,
+              "business_contract_version": 2,
+              "created_at": "2026-11-13T02:31:10.40107Z",
+              "description": null,
+              "end_basis": null,
+              "end_civil_resolution": null,
+              "end_clock_precision": null,
+              "end_interpretation_input_sha256": null,
+              "end_interpretation_key": null,
+              "end_local_date": null,
+              "end_local_time": null,
+              "end_provenance_refs": null,
+              "end_quality": null,
+              "end_resolution_offset_seconds": null,
+              "end_source_instant": null,
+              "end_source_instant_precision": null,
+              "end_supplied_offset_seconds": null,
+              "end_zone_id": null,
+              "event_type": "flight",
+              "experience_family": "P2",
+              "field_state": {
+                "itinerary_events.planned_start": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_basis": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_civil_resolution": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_clock_precision": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_interpretation_input_sha256": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_interpretation_key": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_local_date": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_local_time": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_provenance_refs": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_quality": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_resolution_offset_seconds": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_source_instant": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_source_instant_precision": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_supplied_offset_seconds": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_zone_id": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.title": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.authored_label": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.basis": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.civil_resolution": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.clock_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.interpretation_input_sha256": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.interpretation_key": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.local_date": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.local_time": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.provenance_refs": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.quality": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.resolution_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.source_instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.source_instant_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.supplied_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.zone_id": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.authored_label": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.basis": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.civil_resolution": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.clock_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.interpretation_input_sha256": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.interpretation_key": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.local_date": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.local_time": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.provenance_refs": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.quality": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.resolution_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.source_instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.source_instant_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.supplied_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.zone_id": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "trip_endpoint_details.DESTINATION.airport_code": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "trip_endpoint_details.DESTINATION.terminal": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "trip_endpoint_details.ORIGIN.airport_code": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "trip_endpoint_details.ORIGIN.terminal": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                }
+              },
+              "hidden_at": null,
+              "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+              "location_input_revision": null,
+              "order_index": null,
+              "owner_account_id": "00000000-0000-4000-8000-000000000001",
+              "participant_scope": "ASSIGNED",
+              "participation_mode": "SELF",
+              "planned_end": null,
+              "planned_start": null,
+              "reservation_id": null,
+              "self_person_id": "845fbc38-3f45-4773-9825-10bcd82cdc18",
+              "semantic_revision": 3,
+              "spatial_provenance_refs": null,
+              "start_basis": null,
+              "start_civil_resolution": null,
+              "start_clock_precision": null,
+              "start_interpretation_input_sha256": null,
+              "start_interpretation_key": null,
+              "start_local_date": null,
+              "start_local_time": null,
+              "start_provenance_refs": null,
+              "start_quality": null,
+              "start_resolution_offset_seconds": null,
+              "start_source_instant": null,
+              "start_source_instant_precision": null,
+              "start_supplied_offset_seconds": null,
+              "start_zone_id": null,
+              "status": "planned",
+              "temporal_contract_version": 1,
+              "temporal_shape": "TRANSPORT",
+              "timing_label": null,
+              "title": "NZ1",
+              "trip_day_id": null,
+              "trip_id": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+              "updated_at": "2026-11-13T05:28:15.730067Z",
+              "visibility": "PRIVATE"
+            },
+            "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+            "kind": "ITEM",
+            "revision": 3
+          }
+        ],
+        "authorizationRefs": [],
+        "before": [
+          {
+            "facts": {
+              "accepted_address": null,
+              "accepted_address_country": null,
+              "accepted_address_line1": null,
+              "accepted_address_line2": null,
+              "accepted_address_locality": null,
+              "accepted_address_postal_code": null,
+              "accepted_address_region": null,
+              "accepted_latitude": null,
+              "accepted_longitude": null,
+              "accepted_place_id": null,
+              "activity_category": null,
+              "authored_address": null,
+              "authored_address_country": null,
+              "authored_address_line1": null,
+              "authored_address_line2": null,
+              "authored_address_locality": null,
+              "authored_address_postal_code": null,
+              "authored_address_region": null,
+              "authored_label": null,
+              "authored_text": null,
+              "business_contract_version": 2,
+              "created_at": "2026-11-13T02:31:10.40107Z",
+              "description": null,
+              "end_basis": null,
+              "end_civil_resolution": null,
+              "end_clock_precision": null,
+              "end_interpretation_input_sha256": null,
+              "end_interpretation_key": null,
+              "end_local_date": null,
+              "end_local_time": null,
+              "end_provenance_refs": null,
+              "end_quality": null,
+              "end_resolution_offset_seconds": null,
+              "end_source_instant": null,
+              "end_source_instant_precision": null,
+              "end_supplied_offset_seconds": null,
+              "end_zone_id": null,
+              "event_type": "flight",
+              "experience_family": "P2",
+              "field_state": {
+                "itinerary_events.planned_start": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_basis": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_civil_resolution": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_clock_precision": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_interpretation_input_sha256": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_interpretation_key": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_local_date": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_local_time": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_provenance_refs": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_quality": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_events.start_resolution_offset_seconds": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_source_instant": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_source_instant_precision": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_supplied_offset_seconds": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.start_zone_id": {
+                  "changed_revision": 1,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_events.title": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.authored_label": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.basis": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.civil_resolution": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.clock_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.interpretation_input_sha256": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.interpretation_key": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.local_date": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.local_time": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.provenance_refs": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.quality": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.DESTINATION.resolution_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.source_instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.source_instant_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.supplied_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.DESTINATION.zone_id": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.authored_label": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.basis": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.civil_resolution": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.clock_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.interpretation_input_sha256": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.interpretation_key": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.local_date": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.local_time": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.provenance_refs": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.quality": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "itinerary_transport_endpoints.ORIGIN.resolution_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.source_instant": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.source_instant_precision": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.supplied_offset_seconds": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "itinerary_transport_endpoints.ORIGIN.zone_id": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "trip_endpoint_details.DESTINATION.airport_code": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "trip_endpoint_details.DESTINATION.terminal": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                },
+                "trip_endpoint_details.ORIGIN.airport_code": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "KNOWN"
+                },
+                "trip_endpoint_details.ORIGIN.terminal": {
+                  "changed_revision": 2,
+                  "evidence_ref": null,
+                  "origin": "MANUAL",
+                  "protected": true,
+                  "state": "CLEARED"
+                }
+              },
+              "hidden_at": null,
+              "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+              "location_input_revision": null,
+              "order_index": null,
+              "owner_account_id": "00000000-0000-4000-8000-000000000001",
+              "participant_scope": "ASSIGNED",
+              "participation_mode": "SELF",
+              "planned_end": null,
+              "planned_start": null,
+              "reservation_id": null,
+              "self_person_id": "845fbc38-3f45-4773-9825-10bcd82cdc18",
+              "semantic_revision": 2,
+              "spatial_provenance_refs": null,
+              "start_basis": null,
+              "start_civil_resolution": null,
+              "start_clock_precision": null,
+              "start_interpretation_input_sha256": null,
+              "start_interpretation_key": null,
+              "start_local_date": null,
+              "start_local_time": null,
+              "start_provenance_refs": null,
+              "start_quality": null,
+              "start_resolution_offset_seconds": null,
+              "start_source_instant": null,
+              "start_source_instant_precision": null,
+              "start_supplied_offset_seconds": null,
+              "start_zone_id": null,
+              "status": "planned",
+              "temporal_contract_version": 1,
+              "temporal_shape": "TRANSPORT",
+              "timing_label": null,
+              "title": "NZ1",
+              "trip_day_id": null,
+              "trip_id": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+              "updated_at": "2026-11-13T02:31:55.658369Z",
+              "visibility": "PRIVATE"
+            },
+            "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+            "kind": "ITEM",
+            "revision": 2
+          }
+        ],
+        "evidenceRefs": []
+      },
+      "command": "RECONCILE_ITEM_DOCUMENTS",
+      "commandVersion": 2,
+      "committedAt": "2026-11-13T05:28:15.730067Z",
+      "errorCode": null,
+      "intentSha256": "be9ffc978f8e5ddd12e2d14f1cac1b0980f7b51ad4b551202af66f111ea38d56",
+      "intentVersion": 2,
+      "operationId": "b8d1a89e-7036-817c-9047-dab721cc3af4",
+      "outcome": "APPLIED",
+      "receiptSha256": "0123e6ba0bfea35866049123215659f9533d0895c217c04143fa9d857fd01736",
+      "receiptVersion": 2,
+      "result": {
+        "changed": [
+          {
+            "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+            "kind": "ITEM"
+          }
+        ],
+        "created": [],
+        "custodyGrantId": null,
+        "replacement": null,
+        "retiredEdges": []
+      },
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 1,
+          "id": "672322fd-f958-8931-bebd-e2a75f36a085",
+          "kind": "DOCUMENT"
+        },
+        {
+          "baseRevision": 2,
+          "committedRevision": 3,
+          "id": "d9ec2529-6516-857f-a31f-325083e68a9f",
+          "kind": "ITEM"
+        }
+      ],
+      "tripId": "bdc65c02-2526-4990-9331-9c5359c73ec9"
+    },
+    "canonical_intent_text": "{\"admission\":{\"mode\":\"MANUAL\",\"policyVersion\":null,\"sourceIntentId\":null},\"baseVector\":[{\"id\":\"672322fd-f958-8931-bebd-e2a75f36a085\",\"kind\":\"DOCUMENT\",\"revision\":1},{\"id\":\"d9ec2529-6516-857f-a31f-325083e68a9f\",\"kind\":\"ITEM\",\"revision\":2}],\"command\":\"RECONCILE_ITEM_DOCUMENTS\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"b8d1a89e-7036-817c-9047-dab721cc3af4\",\"payload\":{\"add\":[\"672322fd-f958-8931-bebd-e2a75f36a085\"],\"remove\":[]},\"target\":{\"id\":\"d9ec2529-6516-857f-a31f-325083e68a9f\",\"kind\":\"ITEM\"},\"tripId\":\"bdc65c02-2526-4990-9331-9c5359c73ec9\"}",
+    "command_version": 2,
+    "committed_at": "2026-11-13T05:28:15.730067+00:00",
+    "id": "f3ab1a24-4823-47ad-8acf-2eec1a690330",
+    "intent_sha256": "be9ffc978f8e5ddd12e2d14f1cac1b0980f7b51ad4b551202af66f111ea38d56",
+    "intent_version": 2,
+    "operation_id": "b8d1a89e-7036-817c-9047-dab721cc3af4",
+    "outcome": "APPLIED",
+    "receipt_sha256": "0123e6ba0bfea35866049123215659f9533d0895c217c04143fa9d857fd01736",
+    "receipt_version": 2,
+    "trip_id": "bdc65c02-2526-4990-9331-9c5359c73ec9"
+  },
+  "receiptCount": 1,
+  "tripItemCount": 7
+}

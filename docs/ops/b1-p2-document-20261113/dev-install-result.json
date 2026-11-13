@@ -1,0 +1,35 @@
+{
+  "project": "tuqigdxrvrerfewsxqgm",
+  "sqlSHA256": "8126580d21ded839eb49664c819bfa05407aa0ae9f743b340ea27f5551c3f664",
+  "writer": {
+    "path": "/run/lock/otr-universal-finite-service.lock",
+    "device": 28,
+    "inode": 7,
+    "uid": 0,
+    "regular": true,
+    "links": 1
+  },
+  "startedAt": 1794547339.444053,
+  "providerCalls": 0,
+  "before": {
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+    "current_database": "postgres",
+    "current_user": "postgres",
+    "md5": "82eb172c0e6cab2a44995e36a5c3087e",
+    "oid": 65418,
+    "owner": "postgres",
+    "session_user": "postgres"
+  },
+  "sendDisposition": "ACKNOWLEDGED",
+  "after": {
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+    "current_database": "postgres",
+    "current_user": "postgres",
+    "md5": "3224ef85fb4e193bf5293f7ba86d03d1",
+    "oid": 65418,
+    "owner": "postgres",
+    "session_user": "postgres"
+  },
+  "verified": true,
+  "completedAt": 1794547354.5119581
+}

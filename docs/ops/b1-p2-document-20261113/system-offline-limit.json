@@ -1,0 +1,8 @@
+{
+  "status": "NOT_VERIFIED",
+  "checked": "simctl help, DeviceHub inspector, simulator Settings",
+  "independentRadioControlFoundInCheckedSurfaces": false,
+  "macAdministratorProbe": "sudo -n true: a password is required",
+  "systemNetworkChanged": false,
+  "appFetchFailureInjection": "VERIFIED separately; not system-level disconnection"
+}

@@ -1,3 +1,8 @@
+> Final closure update: the precise P2 SQL repair is deployed and the original association is APPLIED.
+> Final B1 delta: 5 Items / 6 Documents / 7 associations / 19 receipts.
+> WebP App-network-failure opening PASS; OS-level offline remains unverified.
+> See [final report](b1-p2-document-20261113/README.md). Earlier diagnosis below is historical.
+
 # Import V3 Phase B1 — full App / real Provider, partial acceptance
 
 13 November 2026. Dedicated DeviceHub full OTR App, not the Phase A Harness.

@@ -1,0 +1,5 @@
+{
+  "supabase/dev-forward/core-v2/20261113000100_sparse_p2_document_association.sql": "8126580d21ded839eb49664c819bfa05407aa0ae9f743b340ea27f5551c3f664",
+  "docs/ops/b1-p2-document-20261113/rollback.sql": "32155be57e9ea031825914dd571e07e3305f1230ed69029b62c056e5a6818853",
+  "scripts/trip/core-p2-document-association-acceptance.py": "666b1d723687596b8fb02414c0a632d51eb8e8a45e8c136a6e89e04502cb71bb"
+}

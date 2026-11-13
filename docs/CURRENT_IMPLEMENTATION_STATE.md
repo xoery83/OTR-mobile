@@ -1,64 +1,58 @@
-## Import V3 Phase B1 — full App / real Provider partial acceptance, 13 November 2026
+## Import V3 Phase B1 — final closure, 13 November 2026
 
-Actual checkout `/Users/xoery/Project/otr-mobile-import/import-v3-local-first`, branch
-`codex/import-v3-local-first`. Owner authorized B1, no automatic main merge/push,
-SQL/ACL/Core-contract changes or original QA179 operations. No shared DEV changes
-occurred. Latest report: `docs/ops/IMPORT_V3_PHASE_B1_20261113.md`.
+Actual checkout `/Users/xoery/Project/otr-mobile-import/import-v3-local-first`,
+branch `codex/import-v3-local-first`. Owner authorized the precise P2 SQL repair
+and original Operation recovery. No automatic main merge/push; no Production,
+RLS/ACL/Role/Grant changes. Final report: `docs/ops/b1-p2-document-20261113/README.md`.
 
-**Both authorized real DeepSeek calls have been used successfully. NO THIRD CALL.**
-Files Batch `48181fe2-1355-4d79-b34f-39d95999f8d4`, Task `8cc058e7-dfb2-8046-b192-50a3b181494d`;
-Photos Batch `3d2789c7-f234-49f5-9b8d-c5479c496209`, Task `7baec78d-cb17-883c-9326-d2134d9cb647`.
-Independent Host SQLite: one Attempt each, SUCCEEDED/PUBLISHED, total 3,086 tokens.
-Task-created→published 11.903s / 10.732s; exact Provider dollar cost unavailable.
+**Status PARTIAL: business Save closure PASS; system-level offline test unverified.**
+Both original authorized DeepSeek calls succeeded; cumulative3,086 tokens. This
+closure added ZERO Provider calls. Never Analyze again without a new explicit task.
+Original Files Batch `48181fe2-1355-4d79-b34f-39d95999f8d4` / Task `8cc058e7-dfb2-8046-b192-50a3b181494d`;
+Photos Batch `3d2789c7-f234-49f5-9b8d-c5479c496209` / Task `7baec78d-cb17-883c-9326-d2134d9cb647`.
 
-Committed source `9e60834` (byte checks/fields/existing P2 packet/system copy
-picker), `7dac1cd` (awaiting Analyze state), `df96cb2` (normal 60s Review read
-budget), `66e5706` (P2 airport-code display). No new queue/schema/service/command.
-Native Quick Look explicit Done fix is verified by Xcode Release build and actual
-JPEG/WebP/GIF open/close in the same full App; source is included in this checkpoint.
+P2 fix: `supabase/dev-forward/core-v2/20261113000100_sparse_p2_document_association.sql`
+adds only RECONCILE_ITEM_DOCUMENTS to existing authored Sparse P2 aggregate branch.
+24 isolated PostgreSQL cases PASS, including original failure, invalid identities,
+endpoints/services and inverse. DEV definition independently verified; OID65418,
+postgres Owner and ACL unchanged. MD5 now `3224ef85fb4e193bf5293f7ba86d03d1`.
+Precise inverse, fixed catalog fixture, actual deployment and readback are in the
+report directory. Existing Host Writer released; no extra framework or Gate.
 
-Dedicated full OTR App in DeviceHub, not Harness: My Trips → Trip → Import accepts
-TXT/two-page PDF/WebP via Files and PNG/JPEG/static GIF via Photos. Same six hashes
-and Batch IDs survive App replacement/cold launch. Native open-in-place bookmarks
-failed Cocoa257; existing Expo system copy path works. Legacy lease path unchanged.
-No Owner click is needed. No original iPad Session/Keychain/queue was copied.
+Original association `b8d1a89e-7036-817c-9047-dab721cc3af4` APPLIED through normal
+App Sync, same Item `d9ec2529-6516-857f-a31f-325083e68a9f`, revision2→3.
+Official Receipt SHA256 `0123e6ba0bfea35866049123215659f9533d0895c217c04143fa9d857fd01736`.
+Receipt count1, active link count1; original payload unchanged. Local queue is
+COMPLETED with no error/backoff. Full App Review shows Saved and verified.
+Do not re-Confirm, rebuild this operation or recreate the Item.
 
-Real UI NEW/LINK plus independent DEV READ ONLY confirms B1 delta: 5 canonical
-Items, 6 LOCAL_ONLY Documents, 6 associations, 18 APPLIED receipts. Total with prior
-Phase A: 7 Items/7 Documents/8 links/23 receipts. TXT→hotel+walk proves1→N;
-WebP/GIF/JPEG→one Nov20 10:30 boardwalk proves N→1 through explicit LINK. PNG
-Nov2–3 hotel remains distinct from TXT Nov14–15 hotel. No invented midnight.
-Normal Day Feed/Details/TXT original UI is verified. P4/P5/P6, ABSTAIN/conflicts
-are isolated tests only. App fetch-failure cold startup retained Trip/Day Feed/Item/three associations and
-local JPEG opening; this is not OS airplane mode. First cold WebP opening did not
-yield verified content. Physical iPad and OS-offline cold recovery remain unverified.
+B1 delta now5 Items /6 LOCAL_ONLY Documents /7 links /19 APPLIED receipts;
+with preserved Phase A:7 Items /7 Documents /9 links /24 receipts. All19 local
+B1 Core operations COMPLETED; all six original hashes unchanged. Full App real
+TXT/PDF/WebP Files and PNG/JPEG/static GIF Photos acceptance is retained. Real
+TXT→hotel+walk and WebP/GIF/JPEG→one canonical walk prove N→M; distinct hotel
+stays were not merged. P4/P5/P6/ABSTAIN/conflicts remain isolated coverage only.
 
-Unique Save blocker: PDF→P2 Operation `b8d1a89e-7036-817c-9047-dab721cc3af4`, Item
-`d9ec2529-6516-857f-a31f-325083e68a9f`. Existing Item/authored details/PDFmetadata
-APPLIED; association returns503 and has no receipt. DO NOT re-Confirm or replace
-original operation. Read-only actual pg_proc shows `assert_trip_core_v2_aggregate`
-allows SPARSE/P2 TRANSPORT under MANUAL only for SET_AUTHORED_FLIGHT_DETAILS and
-SET_ITEM_PARTICIPATION, omitting RECONCILE_ITEM_DOCUMENTS. Association bumps Item
-revision, invoking that constraint. Pure mutation/collection validation pass;
-actual Backend already has the documentLink exception. Sanitized logs expose
-OTHER, so exact SQL exception is inferred from confirmed code/state, not observed.
-Minimal owning Core SQL adjustment is outside B1 approval; do not bypass ACL,
-fabricate services or remove authored fields. Preserve original queue and receipt.
+Normal Day Feed visually shows all saved Items including NZ1 AKL→CHC on Dec17.
+Flight Details/Document association/PDF original, WebP and PNG original content
+were actually viewed after cold launch under explicit App fetch-failure injection.
+This is NOT OS airplane mode. Simulator Settings/checked simctl controls have no
+independent radio switch; `sudo -n true` requires a password. No Mac network setting
+was changed. System-level offline and physical iPad remain unverified. No extra
+network framework is authorized or needed; use an execution environment with the
+actual system control when available. Physical signing is a separate final test.
 
-Evidence `/private/tmp/otr-b1-fullapp/`: provider-readback.json, independent-pg.json,
-six-format-local-recovery.json, link-assert-read.json, full-App screenshots. No
-credential output. Dedicated simulator `1B2252F4-4F90-4F93-9223-545269EAA06C`, Bundle
-`com.xoery.otrmobile.b1full20261113`. Re-read container-path.txt after installation.
-Final native host reuses existing Expo SceneDelegate and original B1 signing
-identity; no Session/Keychain copy. Normal JS bundle has committed60s/airportfix;
-temporary network-failure injection removed. Local fixture server stopped; dedicated
-B1 App stopped to avoid repeated known PDF-link failures. Preserve all original
-operations. Next is Owner review and a minimal owning Core SQL repair approval,
-not another Analyze. Do not include unrelated Root2 ops dirt.
-B1 is NOT complete; final status must name P2 association and any unverified tests.
+Current product source commits retained:9e60834,7dac1cd,df96cb2,66e5706,6c8679c.
+Native Done open/close checks PASS. No new Native/UI change in this SQL closure.
+Normal final B1 package retains original test-host signing identity; no Session or
+Keychain copy. Temporary exact-target resume and fetch injection removed. Original
+QA179 was untouched. Dedicated simulator `1B2252F4-4F90-4F93-9223-545269EAA06C`,
+Bundle `com.xoery.otrmobile.b1full20261113`, evidence `/private/tmp/otr-b1-fullapp/`.
+Re-read container-path.txt after updates. Do not commit unrelated Root2 ops dirt.
 
-Targeted runs overlap:197,145,51,33,44,41 PASS; UI guard/changed-source lint passed.
-Known unrelated full typecheck errors3 unchanged. No repeated broad test cycle.
+Next: Owner review of B1 results; only system-level offline remains in this closure.
+B2/B3 UX/Delta and B4 field-level UPDATE stay at their existing approved checkpoints.
+Do not automatically expand into new formats, Core commands or model requests.
 
 ## Import V3 normal product path — Phase A, 13 November 2026
 
