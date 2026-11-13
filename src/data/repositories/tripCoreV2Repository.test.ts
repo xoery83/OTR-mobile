@@ -233,6 +233,52 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
       "Account changed",
     );
   });
+  it("versioned downstream derives its token from the exact applied collection", async () => {
+    const f = fixture();
+    const context = await f.repo.captureContext(trip);
+    const bundle = await collection();
+    const { refreshCoreDownstreamVersioned } =
+      await import("../sync/tripDownstreamCoordinator");
+    const { authorizedTripVersionFromCollection } =
+      await import("../../domain/trip/tripAuthorizedVersion");
+    const transport = { collection: vi.fn(async () => bundle) };
+    const expected = await authorizedTripVersionFromCollection(
+      bundle,
+      account,
+      trip,
+      hash,
+    );
+    const first = await refreshCoreDownstreamVersioned(f.repo, context, transport, hash);
+    expect(first).toEqual({ changed: true, version: expected.token });
+    expect((await f.repo.acceptedSnapshot(context))?.graph.itinerary_events[0].id).toBe(
+      item,
+    );
+    const again = await refreshCoreDownstreamVersioned(f.repo, context, transport, hash);
+    expect(again).toEqual({ changed: false, version: expected.token });
+    expect(transport.collection).toHaveBeenCalledTimes(2);
+  });
+  it("versioned downstream never returns a token for a rejected collection apply", async () => {
+    const f = fixture();
+    const context = await f.repo.captureContext(trip);
+    const bundle = await collection();
+    const { refreshCoreDownstreamVersioned } =
+      await import("../sync/tripDownstreamCoordinator");
+    const core = {
+      acceptedSnapshot: f.repo.acceptedSnapshot,
+      refresh: vi.fn(async () => {
+        throw Error("APPLY_FAILED");
+      }),
+    };
+    await expect(
+      refreshCoreDownstreamVersioned(
+        core,
+        context,
+        { collection: async () => bundle },
+        hash,
+      ),
+    ).rejects.toThrow("APPLY_FAILED");
+    expect(await f.repo.acceptedSnapshot(context)).toBeNull();
+  });
   it("pulls another client's P3 Create/Edit/Skip, survives SQLite reopen and preserves a competing local intent", async () => {
     const folder = mkdtempSync(join(tmpdir(), "otr-downstream-p3-"));
     folders.push(folder);

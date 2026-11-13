@@ -78,6 +78,155 @@ it("never rebinds an old invalidation to the next Account", async () => {
   expect(f.deps.pull).not.toHaveBeenCalled();
 });
 
+it("skips complete collections only for the same Actor-visible version", async () => {
+  const f = fixture();
+  const version = vi
+    .fn()
+    .mockResolvedValueOnce("visible-v1")
+    .mockResolvedValueOnce("visible-v1")
+    .mockResolvedValueOnce("visible-v2");
+  const pull = vi
+    .fn()
+    .mockResolvedValueOnce({ changed: true, version: "visible-v1" })
+    .mockResolvedValueOnce({ changed: true, version: "visible-v2" });
+  const read = createTripDownstreamCoordinator({ ...f.deps, version, pull });
+  await read.trip(f.first);
+  f.tick(15_001);
+  await read.trip(f.first);
+  f.tick(15_001);
+  await read.trip(f.first);
+  expect(version).toHaveBeenCalledTimes(3);
+  expect(pull).toHaveBeenCalledTimes(2);
+  expect(f.deps.notify).toHaveBeenCalledTimes(2);
+});
+
+it("does not advance a checked version before the collection applies", async () => {
+  const f = fixture();
+  const version = vi.fn(async () => "visible-v1");
+  const pull = vi.fn(async () => ({ changed: true, version: "visible-v1" }));
+  const read = createTripDownstreamCoordinator({ ...f.deps, version, pull });
+  pull.mockRejectedValueOnce(Error("APPLY_UNAVAILABLE"));
+  await expect(read.trip(f.first)).rejects.toThrow("APPLY_UNAVAILABLE");
+  f.tick(15_001);
+  await read.trip(f.first);
+  f.tick(15_001);
+  await read.trip(f.first);
+  expect(version).toHaveBeenCalledTimes(3);
+  expect(pull).toHaveBeenCalledTimes(2);
+  expect(f.deps.notify).toHaveBeenCalledOnce();
+});
+
+it("never pulls after a denied version check or an old Account response", async () => {
+  const f = fixture();
+  const version = vi.fn(async (_scope: AccountScope, _tripId: string) => "visible-v1");
+  const read = createTripDownstreamCoordinator({ ...f.deps, version });
+  version.mockRejectedValueOnce(Error("NOT_VISIBLE"));
+  await expect(read.trip(f.first)).rejects.toThrow("NOT_VISIBLE");
+  expect(f.deps.pull).not.toHaveBeenCalled();
+  f.tick(15_001);
+  let release!: (value: string) => void;
+  version.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const pending = read.trip(f.first);
+  const checked = expect(pending).rejects.toThrow();
+  await vi.waitFor(() => expect(version).toHaveBeenCalledTimes(2));
+  f.switchAccount();
+  release("old-account-version");
+  await checked;
+  expect(f.deps.pull).not.toHaveBeenCalled();
+  await read.trip(f.first);
+  expect(f.deps.pull).toHaveBeenCalledOnce();
+  expect(version.mock.calls[2][0].accountId).not.toEqual(
+    version.mock.calls[1][0].accountId,
+  );
+});
+
+it("caches applied collection V3 rather than an earlier version GET V2", async () => {
+  const f = fixture();
+  const version = vi
+    .fn()
+    .mockResolvedValueOnce("visible-v2")
+    .mockResolvedValueOnce("visible-v3");
+  const pull = vi.fn(async () => ({ changed: true, version: "visible-v3" }));
+  const read = createTripDownstreamCoordinator({ ...f.deps, version, pull });
+  await read.trip(f.first);
+  f.tick(15_001);
+  await read.trip(f.first);
+  expect(version).toHaveBeenCalledTimes(2);
+  expect(pull).toHaveBeenCalledOnce();
+});
+
+it("does not invent an applied token for a legacy boolean Pull result", async () => {
+  const f = fixture();
+  const version = vi.fn(async () => "visible-v1");
+  const read = createTripDownstreamCoordinator({ ...f.deps, version });
+  await read.trip(f.first);
+  f.tick(15_001);
+  await read.trip(f.first);
+  expect(f.deps.pull).toHaveBeenCalledTimes(2);
+});
+
+it("summary discovery does not download every historical Trip", async () => {
+  const f = fixture();
+  await f.read.discovery();
+  expect(f.deps.discover).toHaveBeenCalledOnce();
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
+it("a foreground target cannot be rebound to a new Account", async () => {
+  const f = fixture();
+  const expected = await f.deps.scope();
+  f.switchAccount();
+  await expect(f.read.trip(f.first, expected)).rejects.toThrow();
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
+it("Trip exit cannot let an in-flight collection restore its cleared token", async () => {
+  const f = fixture();
+  const version = vi.fn(async () => "visible-v3");
+  const pull = vi.fn(async () => ({ changed: true, version: "visible-v3" }));
+  let release!: (result: { changed: boolean; version: string }) => void;
+  pull.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const read = createTripDownstreamCoordinator({ ...f.deps, version, pull });
+  const pending = read.trip(f.first);
+  await vi.waitFor(() => expect(pull).toHaveBeenCalledOnce());
+  read.clearVersions();
+  release({ changed: true, version: "visible-v3" });
+  await pending;
+  f.tick(15_001);
+  await read.trip(f.first);
+  f.tick(15_001);
+  await read.trip(f.first);
+  expect(pull).toHaveBeenCalledTimes(2);
+});
+
+it("Trip exit during a version check stops the old Trip collection request", async () => {
+  const f = fixture();
+  let release!: (version: string) => void;
+  const version = vi.fn(
+    () =>
+      new Promise<string>((resolve) => {
+        release = resolve;
+      }),
+  );
+  const read = createTripDownstreamCoordinator({ ...f.deps, version });
+  const pending = read.trip(f.first);
+  await vi.waitFor(() => expect(version).toHaveBeenCalledOnce());
+  read.clearVersions();
+  release("old-trip-version");
+  await pending;
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
 it("coalesces duplicate Trip triggers and notifies only changed accepted content", async () => {
   const f = fixture();
   let release!: (changed: boolean) => void;
