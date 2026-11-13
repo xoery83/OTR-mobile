@@ -53,6 +53,7 @@ export type SyncOperation = {
   ownerUserId: string;
   status: SyncOperationStatus;
   attemptCount: number;
+  failureCategory?: SyncFailureCategory | null;
   nextAttemptAt: string | null;
   dependencyOperationId?: string | null;
   claimOwner?: string | null;
@@ -178,6 +179,7 @@ export function createSyncOperationRepository(
           owner_user_id AS ownerUserId,
           status,
           attempt_count AS attemptCount,
+          failure_category AS failureCategory,
           next_attempt_at AS nextAttemptAt,
           dependency_operation_id AS dependencyOperationId,
           claim_owner AS claimOwner,

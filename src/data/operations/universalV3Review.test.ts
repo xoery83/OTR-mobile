@@ -14,7 +14,11 @@ import {
 import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { localImportDocumentId } from "../../domain/trip/universalImportIdentity";
 import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository";
-import { openUniversalV3Review, planUniversalV3Review, projectUniversalV3SaveState } from "./universalV3Review";
+import {
+  openUniversalV3Review,
+  planUniversalV3Review,
+  projectUniversalV3SaveState,
+} from "./universalV3Review";
 
 const native = vi.hoisted(() => ({
   account: vi.fn(),
@@ -230,18 +234,29 @@ it.each(["P3", "P6"] as const)(
     expect(native.enqueueDocuments).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ accountId: f.actor.accountId, tripId: f.actor.tripId }),
       expect.arrayContaining([
-        expect.objectContaining({ command: "CREATE_ITEM", admission: expect.objectContaining({ mode: "MANUAL" }) }),
+        expect.objectContaining({
+          command: "CREATE_ITEM",
+          admission: expect.objectContaining({ mode: "MANUAL" }),
+        }),
         expect.objectContaining({ command: "RECONCILE_ITEM_DOCUMENTS" }),
       ]),
     );
   },
 );
 
-it.each(["closed", "no manual", "no create command", "no person", "wrong account", "different family", "legacy P1", "unsupported P5"] as const)(
+it.each([
+  "closed",
+  "no manual",
+  "no create command",
+  "no person",
+  "wrong account",
+  "different family",
+  "unsupported P5",
+] as const)(
   "rejects NEW before enqueue when the authoritative eligibility is %s",
   async (reason) => {
     const f = fixture();
-    const kind: "P1" | "P5" | "P6" = reason === "legacy P1" ? "P1" : reason === "unsupported P5" ? "P5" : "P6";
+    const kind: "P1" | "P5" | "P6" = reason === "unsupported P5" ? "P5" : "P6";
     const candidate = { ...f.candidate, kind };
     const actor = {
       ...f.actor,
@@ -267,3 +282,98 @@ it.each(["closed", "no manual", "no create command", "no person", "wrong account
     expect(native.enqueueDocuments).not.toHaveBeenCalled();
   },
 );
+
+const allFamilies = ["P1", "P2", "P3", "P4", "P5", "P6"] as const;
+it.each(allFamilies)(
+  "normal %s NEW is identical for cloud and locally-created Trips",
+  async (kind) => {
+    const f = fixture();
+    const candidate = {
+      ...f.candidate,
+      kind,
+      subtype: kind === "P5" ? "TRAIN" : "ACTIVITY",
+      fields: {
+        ...f.candidate.fields,
+        "check_out.date": "2026-12-15",
+        "origin.local_date": "2026-12-14",
+        "destination.local_date": "2026-12-15",
+        "origin.place_label": "Auckland",
+        "destination.place_label": "Wellington",
+        "operator.name": "Synthetic Rail",
+        "service.number": "R1",
+        service: "Rail R1",
+      },
+    };
+    native.account.mockResolvedValue(f.actor.accountId);
+    native.snapshot.mockResolvedValue(f.snapshot());
+    native.capabilities.mockResolvedValue({
+      ...f.capabilities,
+      enabledFamilies: [kind],
+      enabledCommands: [
+        "CREATE_ITEM",
+        "CREATE_SPARSE_FLIGHT",
+        "CREATE_DOCUMENT_METADATA",
+        "RECONCILE_ITEM_DOCUMENTS",
+      ],
+    });
+    for (const format of [undefined, 1, 2]) {
+      native.getTrip.mockResolvedValue(format ? { syncFormatVersion: format } : null);
+      const review = await openUniversalV3Review(f.model);
+      expect(review.actions(candidate).NEW).toBe(true);
+      const plan = planUniversalV3Review({
+        model: f.model,
+        candidate,
+        snapshot: f.snapshot(),
+        capabilities: await native.capabilities(),
+        decision: { action: "NEW" },
+      });
+      expect(plan.commands[0].command).toBe(
+        kind === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM",
+      );
+      expect(plan.commands.at(-1)?.command).toBe("RECONCILE_ITEM_DOCUMENTS");
+    }
+  },
+);
+it.each(allFamilies)("incomplete %s NEW stays closed before queueing", async (kind) => {
+  const f = fixture();
+  native.account.mockResolvedValue(f.actor.accountId);
+  native.snapshot.mockResolvedValue(f.snapshot());
+  native.capabilities.mockResolvedValue({
+    ...f.capabilities,
+    enabledFamilies: [kind],
+    enabledCommands: ["CREATE_ITEM", "CREATE_SPARSE_FLIGHT"],
+  });
+  const review = await openUniversalV3Review(f.model);
+  expect(review.actions({ ...f.candidate, kind, fields: {} }).NEW).toBe(false);
+});
+
+it.each(allFamilies)("%s LINK uses an existing canonical Item without an Import receipt", (kind) => {
+  const f = fixture();
+  const candidate = { ...f.candidate, kind };
+  const graph = emptyCoreGraph();
+  const item = randomUUID();
+  graph.itinerary_events.push({ id: item, trip_id: f.actor.tripId, owner_account_id: f.actor.accountId,
+    experience_family: kind, semantic_revision: 4, visibility: "PRIVATE" } as never);
+  const plan = planUniversalV3Review({ model: f.model, candidate, snapshot: f.snapshot(graph),
+    capabilities: { ...f.capabilities, enabledFamilies: [kind] },
+    decision: { action: "LINK", itemId: item, revision: 4 } });
+  expect(plan.commands.map(command => command.command)).toEqual(["CREATE_DOCUMENT_METADATA", "RECONCILE_ITEM_DOCUMENTS"]);
+  expect(plan.targetId).toBe(item);
+  expect(plan.commands.at(-1)?.baseVector).toContainEqual({ kind: "ITEM", id: item, revision: 4 });
+});
+
+it("uses Core's open-ended P4 contract without inventing a return date", () => {
+  const f = fixture();
+  const plan = planUniversalV3Review({ ...f, snapshot: f.snapshot(),
+    candidate: { ...f.candidate, kind: "P4" },
+    capabilities: { ...f.capabilities, enabledFamilies: ["P4"] }, decision: { action: "NEW" } });
+  expect((plan.commands[0].payload as { schedule: { end?: unknown } }).schedule.end).toBeUndefined();
+});
+it("does not invent missing P5 service facts", () => {
+  const f = fixture();
+  expect(() => planUniversalV3Review({ ...f, snapshot: f.snapshot(),
+    candidate: { ...f.candidate, kind: "P5", subtype: "TRAIN", fields: { ...f.candidate.fields,
+      "origin.local_date": "2026-12-14", "destination.local_date": "2026-12-15",
+      "origin.place_label": "Auckland", "destination.place_label": "Wellington" } },
+    capabilities: { ...f.capabilities, enabledFamilies: ["P5"] }, decision: { action: "NEW" } })).toThrow();
+});

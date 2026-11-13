@@ -2,6 +2,8 @@ import type * as SQLite from "expo-sqlite";
 import {
   cloudSourceP1QueueSql,
   cloudSourceP1Command,
+  normalManualQueueCommand,
+  cloudManualCreatePerson,
   normalTripSyncScopeSchema,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
@@ -15,6 +17,7 @@ import { retainedDeferredTripMetadataSchema } from "@/domain/trip/tripDeferredMe
 import {
   validateCoreCommand,
   isReviewedSourceCreate,
+  isNormalManualCoreCommand,
 } from "@/domain/trip/tripCoreV2Commands";
 import { readTripMetadataConfirmation } from "../repositories/tripMetadataConfirmation";
 import { createTripPersonRepository } from "../repositories/tripPersonRepository";
@@ -141,7 +144,9 @@ export async function getNormalTripQueueActivity(
             if (
               op.status === "DEPENDENCY_BLOCKED" &&
               op.last_error_code &&
-              op.last_error_code !== "DEPENDENCY_BLOCKED"
+              !["DEPENDENCY_BLOCKED", "CORE_DOCUMENT_DEPENDENCY_PENDING"].includes(
+                op.last_error_code,
+              )
             )
               continue;
             const c = validateCoreCommand(JSON.parse(op.payload_json));
@@ -149,7 +154,7 @@ export async function getNormalTripQueueActivity(
             if (
               c.tripId !== create.trip_id ||
               c.operationId !== op.id ||
-              c.target.kind !== "ITEM" ||
+              (c.target.kind !== "ITEM" && c.command !== "CREATE_DOCUMENT_METADATA") ||
               c.target.id !== op.entity_id ||
               (c.admission.mode !== "MANUAL" && !isReviewedSourceCreate(c))
             )
@@ -164,59 +169,14 @@ export async function getNormalTripQueueActivity(
             );
             const manual =
               isReviewedSourceCreate(c) ||
-              (c.admission.mode === "MANUAL" && c.command === "CREATE_SPARSE_FLIGHT") ||
-              (c.admission.mode === "MANUAL" &&
-                item?.experience_family === "P2" &&
-                ["SET_AUTHORED_FLIGHT_DETAILS", "SET_ITEM_PARTICIPATION"].includes(
-                  c.command,
-                )) ||
-              (c.command === "CREATE_ITEM"
-                ? ["P1", "P3", "P4", "P5", "P6"].includes(
-                    (c.payload as { family: string }).family,
-                  )
-                : item?.experience_family === "P1" &&
-                  [
-                    "SET_ITEM_TEXT",
-                    "SET_ITEM_SCHEDULE",
-                    "SET_ITEM_PLACE",
-                    "SET_ITEM_PARTICIPATION",
-                  ].includes(c.command)) ||
-              (item?.experience_family === "P3" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PLACE",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_STAY_DETAILS",
-                ].includes(c.command)) ||
-              (item?.experience_family === "P4" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_RENTAL_DETAILS",
-                ].includes(c.command)) ||
-              (item?.experience_family === "P5" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_TRANSPORT_DETAILS",
-                ].includes(c.command)) ||
-              (item?.experience_family === "P6" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PLACE",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_ACTIVITY_DETAILS",
-                ].includes(c.command));
+              isNormalManualCoreCommand(c, item?.experience_family);
             eligible =
               !!manual &&
-              p1SharedParticipantsReady(c, await roster.listTripPersons(create.trip_id));
+              (!!cloudManualCreatePerson(c) ||
+                p1SharedParticipantsReady(
+                  c,
+                  await roster.listTripPersons(create.trip_id),
+                ));
           }
           if (!eligible) continue;
           if (op.dependency_operation_id) {
@@ -247,28 +207,32 @@ export async function getNormalTripQueueActivity(
       /* Invalid owning Create does not authorize this Trip's queue. */
     }
   }
-  const sourceRows = scope.manualOnly
-    ? []
-    : await database.getAllAsync<Row>(
-        cloudSourceP1QueueSql,
-        scope.accountId,
-        scope.newTripsFrom,
-      );
+  const sourceRows = await database.getAllAsync<Row>(
+    cloudSourceP1QueueSql,
+    scope.accountId,
+    scope.newTripsFrom,
+  );
   for (const op of sourceRows) {
     if (op.failure_category === "AUTH") continue;
-    const command = cloudSourceP1Command(op);
+    const command =
+      normalManualQueueCommand(op) ??
+      (scope.manualOnly ? null : cloudSourceP1Command(op));
     if (!command) continue;
     if (
       op.status === "DEPENDENCY_BLOCKED" &&
       op.last_error_code &&
       ![
         "DEPENDENCY_BLOCKED",
+        "CORE_DOCUMENT_DEPENDENCY_PENDING",
         "CORE_SOURCE_EVIDENCE_PENDING",
         "CORE_SOURCE_FINALIZER_CLOSED",
       ].includes(op.last_error_code)
     )
       continue;
-    if (!p1SharedParticipantsReady(command, await roster.listTripPersons(op.trip_id)))
+    if (
+      !cloudManualCreatePerson(command) &&
+      !p1SharedParticipantsReady(command, await roster.listTripPersons(op.trip_id))
+    )
       continue;
     if (op.dependency_operation_id) {
       const parent = await database.getFirstAsync<{ status: string }>(

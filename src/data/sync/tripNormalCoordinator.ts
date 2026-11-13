@@ -4,7 +4,10 @@ import { createAccountProfileRepository } from "../auth/accountProfileRepository
 import { coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
 import { hasAcceptedManualCreate } from "../repositories/acceptedManualCreate";
-import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
+import {
+  isReviewedSourceCreate,
+  isNormalManualCreate,
+} from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
 import {
   createPersonCloudSyncWorker,
@@ -285,7 +288,7 @@ export function createNativeNormalTripSyncRunner(
                   throw Error("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
                 if (!instructionSubmissionEnabled())
                   throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
-              } else if (!local?.create_operation_id && createPerson) {
+              } else if (!local?.create_operation_id && isNormalManualCreate(command)) {
                 const snapshot = await core.acceptedSnapshot(context);
                 await assertAccountRequestContext(context, requireActiveUserId);
                 if (
@@ -293,7 +296,7 @@ export function createNativeNormalTripSyncRunner(
                   !snapshot.actor.active ||
                   snapshot.actor.accountId !== context.accountId ||
                   snapshot.actor.tripId !== context.tripId ||
-                  snapshot.actor.personId !== createPerson
+                  (createPerson !== null && snapshot.actor.personId !== createPerson)
                 )
                   throw Error("CORE_FRESH_ACCEPTED_CREATE_UNAVAILABLE");
               } else if (
@@ -399,7 +402,7 @@ export function createNativeNormalTripSyncRunner(
                 !isManualAcceptedEditCommand(command) &&
                 !isManualInstructionEditCommand(command) &&
                 !isManualLocalDocumentCommand(command) &&
-                !cloudManualCreatePerson(command)
+                !isNormalManualCreate(command)
               )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
@@ -426,7 +429,7 @@ export function createNativeNormalTripSyncRunner(
             )
           )
             return true;
-          if (family === "P3" || family === "P4" || family === "P6")
+          if (family !== "P2")
             return !!(await acceptedEditableItem(context, itemId, family));
           const graph = await core.readGraph(context);
           const item = graph.itinerary_events.find(

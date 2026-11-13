@@ -1110,7 +1110,7 @@ it("PROCESSING with attempt_count zero is original receipt recovery, never an un
 });
 
 it.each(["P3", "P6", "P1", "GROUP", "NOT_READY"])(
-  "selects only the retained, ready private SELF P3/P6 cloud-only create (%s)",
+  "selects a retained cloud-only create with resolved participant dependencies (%s)",
   async (variant) => {
     const f = fixture();
     const operationId = randomUUID();
@@ -1146,7 +1146,7 @@ it.each(["P3", "P6", "P1", "GROUP", "NOT_READY"])(
     }]);
     f.deps.participantsReady.mockResolvedValue(variant !== "NOT_READY");
     await f.run();
-    if (variant === "P3" || variant === "P6") {
+    if (variant !== "NOT_READY") {
       expect(f.deps.runP1).toHaveBeenCalledExactlyOnceWith({
         accountId: f.accountId, tripId: f.tripId, operationId,
       });

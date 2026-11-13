@@ -85,7 +85,6 @@ export function hasNativeTripQaScope() {
 // Normal Manual rollout is an environment gate, never an Account allowlist or Backend grant.
 export function isGeneralAccountCloudSyncEnabled() {
   return (
-    !hasNativeTripQaScope() &&
     process.env.EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED === "true" &&
     process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
     process.env.EXPO_PUBLIC_OTR_API_BASE_URL === "https://api-dev.xoery.art"
@@ -93,19 +92,18 @@ export function isGeneralAccountCloudSyncEnabled() {
 }
 
 function readConfiguration(accountId?: string | null) {
+  if (isGeneralAccountCloudSyncEnabled() && coreUuid.safeParse(accountId).success)
+    return {
+      ...sustainedConfiguration.parse({
+        version: 2,
+        accountId,
+        normal: { newTripsFrom: "1970-01-01T00:00:00.000Z" },
+        preserveLocalTripViews: true,
+      }),
+      manualOnly: true as const,
+    };
   const raw = process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE;
-  if (!raw)
-    return isGeneralAccountCloudSyncEnabled() && coreUuid.safeParse(accountId).success
-      ? {
-          ...sustainedConfiguration.parse({
-            version: 2,
-            accountId,
-            normal: { newTripsFrom: "1970-01-01T00:00:00.000Z" },
-            preserveLocalTripViews: true,
-          }),
-          manualOnly: true as const,
-        }
-      : null;
+  if (!raw) return null;
   try {
     const scope = configuration.parse(JSON.parse(raw));
     if (scope.version === 2 && accountId && scope.accountId !== accountId) {

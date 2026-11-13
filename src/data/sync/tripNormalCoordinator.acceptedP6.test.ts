@@ -171,11 +171,11 @@ it.each([
       value.graph.itinerary_events[0].hidden_at = "2026-11-04T00:00:00Z" as never;
     if (kind === "foreign") value.graph.itinerary_events[0].owner_account_id = tripId;
     if (kind === "revision") value.graph.itinerary_events[0].semantic_revision++;
-    if (kind === "other-family") value.graph.itinerary_events[0].experience_family = "P5";
+    if (kind === "other-family") value.graph.itinerary_events[0].experience_family = "P2";
     if (kind === "inactive") value.actor.active = false;
     if (kind === "uncertified") value.certificate = null as never;
     f.accepted.mockResolvedValue(value);
-    await expect(run()).rejects.toThrow("CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
+    await expect(run()).rejects.toThrow(kind === "other-family" ? "CORE_FAMILY_CLOSED" : "CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
     expect(f.submit).not.toHaveBeenCalled();
     expect(f.apply).not.toHaveBeenCalled();
   },
@@ -213,8 +213,8 @@ it("closed current normal profile forbids new POST before the local consumer gua
 
 it("a cloud summary row with no local Create identity cannot bypass the P6 POST gate", async () => {
   f.first.mockResolvedValue({ create_operation_id: null });
-  f.accepted.mockResolvedValue(snapshot("P5"));
-  await expect(run()).rejects.toThrow("CORE_FRESH_ACCEPTED_EDIT_UNAVAILABLE");
+  f.accepted.mockResolvedValue(snapshot("P2"));
+  await expect(run()).rejects.toThrow("CORE_FAMILY_CLOSED");
   expect(f.submit).not.toHaveBeenCalled();
 });
 

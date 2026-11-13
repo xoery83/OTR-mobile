@@ -741,3 +741,11 @@ it("leaves a reviewed relationship pending until the original Item and Document 
     command: "RECONCILE_ITEM_DOCUMENTS", operationId: op,
   }));
 });
+
+it("an UNKNOWN command reads its original receipt without repeating a POST", async () => {
+  const f = await fixture();
+  f.operation.failureCategory = "UNKNOWN";
+  await expect(f.worker.push(f.operation)).rejects.toThrow("CORE_OUTCOME_UNKNOWN");
+  expect(f.transport.receipt).toHaveBeenCalledOnce();
+  expect(f.transport.submit).not.toHaveBeenCalled();
+});

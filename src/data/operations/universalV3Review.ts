@@ -1,12 +1,13 @@
 import { z } from "zod";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
-import { coreDefaults } from "../../domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "../../domain/trip/tripCoreV2";
 import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { coreCanManage } from "../../domain/trip/tripCoreV2Mutation";
 import {
   validateCoreCommand,
   type CoreCapabilities,
   coreCapabilitiesSchema,
+  isNormalManualCoreCommand,
 } from "../../domain/trip/tripCoreV2Commands";
 import {
   localImportDocumentId,
@@ -66,6 +67,48 @@ export function universalV3ReviewFields(candidate: Candidate) {
   );
   return { title, start, end };
 }
+
+function transportPayload(candidate: Candidate) {
+  const endpoints = Object.fromEntries(
+    ["origin", "destination"].map((role) => {
+      const day = date(text(candidate, `${role}.local_date`));
+      const label = text(candidate, `${role}.place_label`);
+      if (!day || !label) throw Error("UNIVERSAL_V3_UNRESOLVED_FIELDS");
+      return [
+        role,
+        {
+          time: coreDateBoundary(day),
+          place: {
+            ...Object.fromEntries(
+              Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+            ),
+            authored_label: label,
+          },
+        },
+      ];
+    }),
+  );
+  const operator = text(candidate, "operator.name", "operator");
+  const number = text(candidate, "service.number");
+  const service = text(candidate, "service");
+  if (!operator || !number || !service) throw Error("UNIVERSAL_V3_UNRESOLVED_FIELDS");
+  return {
+    endpoints,
+    service: {
+      service_key: "primary",
+      transport_subtype: candidate.subtype,
+      attribution: "UNSPECIFIED",
+      operator_namespace: "NAME",
+      operator_issuer: "",
+      operator_value: operator,
+      operator_literal: operator,
+      service_number: number,
+      service_literal: service,
+      codeshare_operating_key: null,
+    },
+  };
+}
+
 const relationId = (candidateId: string) =>
   universalP1Identity(candidateId, "local-first", "link");
 const itemIntentId = (candidateId: string) =>
@@ -137,8 +180,7 @@ export function planUniversalV3Review(input: {
       !title ||
       !start ||
       !enabled(flight ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
-      candidate.kind === "P5" ||
-      ((candidate.kind === "P3" || candidate.kind === "P4") && (!end || end < start))
+      (candidate.kind === "P3" && (!end || end < start))
     )
       throw Error("UNIVERSAL_V3_UNRESOLVED_FIELDS");
     commands.push(
@@ -154,15 +196,17 @@ export function planUniversalV3Review(input: {
               departureDate: start,
               ...owned,
             }
-          : {
-              family: candidate.kind,
-              core: { title },
-              schedule: {
-                start: coreDateBoundary(start),
-                ...(end ? { end: coreDateBoundary(end) } : {}),
+          : candidate.kind === "P5"
+            ? { ...owned, family: "P5", core: { title }, ...transportPayload(candidate) }
+            : {
+                family: candidate.kind,
+                core: { title },
+                schedule: {
+                  start: coreDateBoundary(start),
+                  ...(end ? { end: coreDateBoundary(end) } : {}),
+                },
+                ...owned,
               },
-              ...owned,
-            },
       }),
     );
   }
@@ -247,6 +291,8 @@ export function planUniversalV3Review(input: {
         payload: { add, remove: [] },
       }),
     );
+  if (commands.some((command) => !isNormalManualCoreCommand(command)))
+    throw Error("UNIVERSAL_V3_CORE_UNAVAILABLE");
   return { targetId, commands };
 }
 
@@ -279,14 +325,12 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
     { readInitializedDatabase },
     { createTripCoreV2Repository },
     { tripCoreSha256Hex },
-    { readLocalTripRepository },
   ] = await Promise.all([
     import("../auth/authRepository"),
     import("../api/tripCoreV2Transport"),
     import("../db/database"),
     import("../repositories/tripCoreV2Repository"),
     import("../repositories/tripCoreSha256"),
-    import("../auth/localTripAccess"),
   ]);
   const trip = model.batch.context.tripPrior?.id ?? model.assignedTripId;
   if (!trip) throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
@@ -309,11 +353,6 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
     await transport.capabilities(context),
   );
   const accepted = await refresh();
-  const localCreate =
-    (await (await readLocalTripRepository()).getTrip(trip))?.syncFormatVersion === 2;
-  // Accepted Core identity and capabilities also cover these families on older local Trips.
-  const newOnTrip = (candidate: Candidate) =>
-    localCreate || candidate.kind === "P3" || candidate.kind === "P6";
   async function check(candidate: Candidate) {
     const [item, link] = await Promise.all([
       core.pending(context, itemIntentId(candidate.candidateId)),
@@ -356,30 +395,26 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
   }
   return {
     actions(candidate: Candidate) {
-      const { title, start, end } = universalV3ReviewFields(candidate);
+      const { title } = universalV3ReviewFields(candidate);
       const supported = capabilities.enabledFamilies.includes(candidate.kind);
       const flight = candidate.kind === "P2";
       return {
-        NEW:
-          newOnTrip(candidate) &&
-          accepted.actor.active &&
-          accepted.actor.accountId === context.accountId &&
-          accepted.actor.tripId === context.tripId &&
-          !!accepted.actor.personId &&
-          capabilities.activationState === "ENABLED" &&
-          capabilities.enabledAdmissionModes.includes("MANUAL") &&
-          !!title &&
-          !!start &&
-          candidate.kind !== "P5" &&
-          (!(candidate.kind === "P3" || candidate.kind === "P4") ||
-            (!!end && end >= start)) &&
-          supported &&
-          capabilities.enabledCommands.includes(
-            flight ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM",
-          ),
+        NEW: (() => {
+          try {
+            planUniversalV3Review({
+              model,
+              candidate,
+              snapshot: accepted,
+              capabilities,
+              decision: universalV3NewDecision,
+            });
+            return true;
+          } catch {
+            return false;
+          }
+        })(),
         UPDATE:
           !!title &&
-          (localCreate || ["P3", "P4", "P6"].includes(candidate.kind)) &&
           !flight &&
           supported &&
           capabilities.enabledCommands.includes("SET_ITEM_TEXT"),
@@ -401,13 +436,6 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
     },
     check,
     async confirm(candidate: Candidate, decision: UniversalV3Decision) {
-      if (
-        (decision.action === "NEW" && !newOnTrip(candidate)) ||
-        (decision.action === "UPDATE" &&
-          !localCreate &&
-          !["P3", "P4", "P6"].includes(candidate.kind))
-      )
-        throw Error("UNIVERSAL_V3_CORE_UNAVAILABLE");
       const current = await check(candidate);
       if (current !== "UNCONFIRMED") return current;
       const plan = planUniversalV3Review({

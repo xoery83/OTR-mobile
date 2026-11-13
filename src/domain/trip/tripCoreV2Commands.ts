@@ -556,3 +556,44 @@ export function isReviewedSourceCreate(command: CoreCommand): boolean {
         )))
   );
 }
+
+// Queue selection only. Core still checks live capabilities, ACL and revisions.
+export function isNormalManualCreate(command: CoreCommand) {
+  return (
+    command.admission.mode === "MANUAL" &&
+    (command.command === "CREATE_ITEM" || command.command === "CREATE_SPARSE_FLIGHT")
+  );
+}
+export function isNormalManualCoreCommand(command: CoreCommand, family?: string) {
+  if (command.admission.mode !== "MANUAL") return false;
+  if (isNormalManualCreate(command) || command.command === "CREATE_DOCUMENT_METADATA")
+    return true;
+  if (command.command === "RECONCILE_ITEM_DOCUMENTS") {
+    const payload = command.payload as { add: string[]; remove: string[] };
+    return (
+      payload.add.length > 0 &&
+      payload.add.length <= 5 &&
+      !payload.remove.length &&
+      payload.add.every((id) =>
+        command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id),
+      )
+    );
+  }
+  if (command.target.kind !== "ITEM") return false;
+  if (command.command === "SET_ITEM_PARTICIPATION") return true;
+  if (family === "P2") return command.command === "SET_AUTHORED_FLIGHT_DETAILS";
+  if (command.command === "SET_AUTHORED_FLIGHT_DETAILS") return family === undefined;
+  if (command.command === "SET_ITEM_TEXT") return true;
+  if (command.command === "SET_ITEM_SCHEDULE") return family !== "P5";
+  if (command.command === "SET_ITEM_PLACE") return family !== "P4" && family !== "P5";
+  const owner = {
+    SET_STAY_DETAILS: "P3",
+    SET_RENTAL_DETAILS: "P4",
+    SET_TRANSPORT_DETAILS: "P5",
+    SET_ACTIVITY_DETAILS: "P6",
+  } as const;
+  return (
+    command.command in owner &&
+    (family === undefined || owner[command.command as keyof typeof owner] === family)
+  );
+}

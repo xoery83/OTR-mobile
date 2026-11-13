@@ -896,7 +896,7 @@ it.each([a, trip, edit])(
     expect(state.confirm).not.toHaveBeenCalled();
   },
 );
-it("general DEV scope remains closed for Guest, unavailable Auth, Production or malformed QA config", async () => {
+it("general DEV scope rejects Guest and Production while ignoring stale QA configuration", async () => {
   vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "");
   vi.stubEnv("EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED", "true");
   state.principalKind = "GUEST";
@@ -909,6 +909,11 @@ it("general DEV scope remains closed for Guest, unavailable Auth, Production or 
   expect(await runNativeTripQaSync()).toBeNull();
   vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://api-dev.xoery.art");
   vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "{}");
-  expect(isGeneralAccountCloudSyncEnabled()).toBe(false);
-  expect(await runNativeTripQaSync()).toBeNull();
+  expect(isGeneralAccountCloudSyncEnabled()).toBe(true);
+  await runNativeTripQaSync();
+  expect(state.normalFactory).toHaveBeenCalledWith(
+    { accountId: a, newTripsFrom: "1970-01-01T00:00:00.000Z", manualOnly: true },
+    expect.any(Function),
+    false,
+  );
 });

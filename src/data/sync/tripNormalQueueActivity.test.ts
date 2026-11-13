@@ -755,3 +755,125 @@ it.each(["P2", "P5"])(
     ).toBe(family === "P2" ? 1 : 0);
   },
 );
+
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
+  "automatic activity schedules valid %s NEW and its original Document LINK on local and cloud Trips",
+  async (family) => {
+    const { createTripCoreV2Repository } =
+      await import("../repositories/tripCoreV2Repository");
+    const { planUniversalV3Review } = await import("../operations/universalV3Review");
+    const { coreClosedCapabilities } =
+      await import("../../domain/trip/tripCoreV2Commands");
+    const { createNormalTripSyncWake } = await import("./tripNormalSync");
+    const { createHash } = await import("node:crypto");
+    const { localImportDocumentId } =
+      await import("../../domain/trip/universalImportIdentity");
+    for (const cloud of [false, true]) {
+      const f = fixture(),
+        person = randomUUID(),
+        sha = "a".repeat(64);
+      f.sql
+        .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+        .run(f.createId);
+      if (cloud)
+        f.sql
+          .prepare("DELETE FROM local_trip_containers WHERE id=?")
+          .run(f.tripId);
+      const repo = createTripCoreV2Repository(
+        f.db,
+        async () => f.scope.accountId,
+        async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+      );
+      const context = await repo.captureContext(f.tripId);
+      const plan = planUniversalV3Review({
+        model: {
+          batch: {
+            accountId: f.scope.accountId,
+            context: { tripPrior: { id: f.tripId } },
+          },
+          inputs: [
+            {
+              kind: "DOCUMENT",
+              originalFilename: "phase-a.pdf",
+              declaredContentType: "application/pdf",
+              contentSha256: sha,
+              contentByteCount: 32,
+              state: "ACCEPTED",
+            },
+          ],
+        } as never,
+        candidate: {
+          candidateId: randomUUID(),
+          kind: family,
+          subtype: family === "P5" ? "TRAIN" : "ACTIVITY",
+          documentIds: [localImportDocumentId(f.scope.accountId, f.tripId, sha)],
+          fields: {
+            title: "Phase A",
+            "activity.date": "2026-12-14",
+            "check_out.date": "2026-12-15",
+            "origin.local_date": "2026-12-14",
+            "destination.local_date": "2026-12-15",
+            "origin.place_label": "Auckland",
+            "destination.place_label": "Wellington",
+            "operator.name": "Synthetic Rail",
+            "service.number": "R1",
+            service: "Rail R1",
+          },
+        },
+        decision: { action: "NEW" },
+        snapshot: {
+          actor: {
+            accountId: f.scope.accountId,
+            tripId: f.tripId,
+            personId: person,
+            personIds: [person],
+            active: true,
+            canManageShared: false,
+          },
+          graph: {
+            itinerary_events: [],
+            trip_item_document_links: [],
+            trip_operational_documents: [],
+          },
+        } as never,
+        capabilities: {
+          ...coreClosedCapabilities,
+          activationState: "ENABLED",
+          enabledFamilies: [family],
+          enabledAdmissionModes: ["MANUAL"],
+          enabledCommands: [
+            "CREATE_ITEM",
+            "CREATE_SPARSE_FLIGHT",
+            "CREATE_DOCUMENT_METADATA",
+            "RECONCILE_ITEM_DOCUMENTS",
+          ],
+        },
+      });
+      await repo.enqueueConfirmedItemDocuments(context, plan.commands);
+      const scope = { ...f.scope, manualOnly: true };
+      const activity = await getNormalTripQueueActivity(f.db, scope, f.now);
+      expect(activity.actionableNow).toBeGreaterThanOrEqual(plan.commands.length);
+      const run = vi.fn();
+      await createNormalTripSyncWake(
+        {
+          database: f.db,
+          account: async () => f.scope.accountId,
+          enabled: () => true,
+          deferred: { materializeDeferredMetadata: async () => 0 },
+          recoverP1Readback: async () => {},
+          recoverTripReadback: async () => {},
+          runCreate: async () => {},
+          runMetadata: async () => {},
+          runPerson: async () => {},
+          runP1: run,
+          isManualItem: async () => false,
+          participantsReady: async () => true,
+        },
+        scope,
+      )("AUTHENTICATED_ONLINE");
+      expect(run.mock.calls.map(([target]) => target.operationId)).toEqual(
+        plan.commands.map((c) => c.operationId),
+      );
+    }
+  },
+);

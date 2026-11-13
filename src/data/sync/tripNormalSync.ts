@@ -11,6 +11,8 @@ import type { CoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import {
   validateCoreCommand,
   isReviewedSourceCreate,
+  isNormalManualCoreCommand,
+  isNormalManualCreate,
 } from "@/domain/trip/tripCoreV2Commands";
 import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
 import {
@@ -49,7 +51,7 @@ export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state F
 export function cloudSourceP1Command(operation: Row): CoreCommand | null {
   return cloudCommand(operation, false);
 }
-export const acceptedEditFamilies = ["P3", "P4", "P6"] as const;
+export const acceptedEditFamilies = ["P1", "P2", "P3", "P4", "P5", "P6"] as const;
 export function isManualInstructionEditCommand(command: CoreCommand) {
   return (
     command.target.kind === "INSTRUCTION" &&
@@ -75,32 +77,41 @@ function cloudManualInstructionCommand(operation: Row): CoreCommand | null {
 
 export function isManualLocalDocumentCommand(command: CoreCommand) {
   if (command.admission.mode !== "MANUAL") return false;
-  if (command.command === "CREATE_DOCUMENT_METADATA") return command.target.kind === "DOCUMENT";
-  if (command.command !== "RECONCILE_ITEM_DOCUMENTS" || command.target.kind !== "ITEM") return false;
+  if (command.command === "CREATE_DOCUMENT_METADATA")
+    return command.target.kind === "DOCUMENT";
+  if (command.command !== "RECONCILE_ITEM_DOCUMENTS" || command.target.kind !== "ITEM")
+    return false;
   const payload = command.payload as { add: string[]; remove: string[] };
-  return payload.add.length > 0 && payload.add.length <= 5 && payload.remove.length === 0 &&
-    payload.add.every((id) => command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id));
+  return (
+    payload.add.length > 0 &&
+    payload.add.length <= 5 &&
+    payload.remove.length === 0 &&
+    payload.add.every((id) =>
+      command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id),
+    )
+  );
 }
 
-// The historical-Trip Review emits only private, self-owned P3/P6 creates.
+// Private SELF creates use the accepted Core Person on every Trip.
 export function cloudManualCreatePerson(command: CoreCommand): string | null {
   if (
-    command.command !== "CREATE_ITEM" ||
+    !isNormalManualCreate(command) ||
     command.target.kind !== "ITEM" ||
     command.admission.mode !== "MANUAL" ||
     command.baseVector.length !== 1
-  ) return null;
+  )
+    return null;
   const [base] = command.baseVector;
   if (base.kind !== "ITEM" || base.id !== command.target.id || base.revision !== null)
     return null;
-  const { family, participation, acl } = command.payload as {
-    family: string;
+  const { participation, acl } = command.payload as {
     participation: { mode: string; selfPersonId: string | null; people: unknown[] };
     acl: { visibility: string; people: unknown[] };
   };
-  return (family === "P3" || family === "P6") &&
-    participation.mode === "SELF" && participation.people.length === 0 &&
-    acl.visibility === "PRIVATE" && acl.people.length === 0
+  return participation.mode === "SELF" &&
+    participation.people.length === 0 &&
+    acl.visibility === "PRIVATE" &&
+    acl.people.length === 0
     ? participation.selfPersonId
     : null;
 }
@@ -110,18 +121,9 @@ export function isManualAcceptedEditCommand(
   family?: (typeof acceptedEditFamilies)[number],
 ) {
   return (
-    command.target.kind === "ITEM" &&
-    command.admission.mode === "MANUAL" &&
-    (["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE", "SET_ITEM_PARTICIPATION"].includes(
-      command.command,
-    ) ||
-      (family !== "P4" && command.command === "SET_ITEM_PLACE") ||
-      ((family === undefined || family === "P3") &&
-        command.command === "SET_STAY_DETAILS") ||
-      ((family === undefined || family === "P4") &&
-        command.command === "SET_RENTAL_DETAILS") ||
-      ((family === undefined || family === "P6") &&
-        command.command === "SET_ACTIVITY_DETAILS"))
+    !isNormalManualCreate(command) &&
+    !isManualLocalDocumentCommand(command) &&
+    isNormalManualCoreCommand(command, family)
   );
 }
 // Preserve the published P6-only helpers for existing consumers.
@@ -131,6 +133,9 @@ export function isManualP6EditCommand(command: CoreCommand) {
 export function cloudManualP6EditCommand(operation: Row): CoreCommand | null {
   const command = cloudCommand(operation, true);
   return command && isManualP6EditCommand(command) ? command : null;
+}
+export function normalManualQueueCommand(operation: Row) {
+  return cloudCommand(operation, true);
 }
 function cloudCommand(
   operation: Row,
@@ -146,11 +151,11 @@ function cloudCommand(
       command.operationId !== operation.id ||
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
-      (command.target.kind !== "ITEM" && !isManualLocalDocumentCommand(command) &&
+      (command.target.kind !== "ITEM" &&
+        !isManualLocalDocumentCommand(command) &&
         !(instruction && isManualInstructionEditCommand(command))) ||
       !(manual
-        ? isManualAcceptedEditCommand(command) || isManualLocalDocumentCommand(command) ||
-          !!cloudManualCreatePerson(command) ||
+        ? isNormalManualCoreCommand(command) ||
           (instruction && isManualInstructionEditCommand(command))
         : isReviewedSourceCreate(command))
     )
@@ -323,7 +328,8 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               command.operationId !== operation.id ||
               command.tripId !== row.trip_id ||
               command.target.id !== operation.entity_id ||
-              (command.target.kind !== "ITEM" && !isManualLocalDocumentCommand(command) &&
+              (command.target.kind !== "ITEM" &&
+                !isManualLocalDocumentCommand(command) &&
                 !(instruction && deps.instructionSubmissionEnabled?.())) ||
               (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command)) ||
               (adopted.manualOnly === true && command.admission.mode !== "MANUAL")
@@ -345,58 +351,23 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                       instructionScope.parentItemId,
                       "P3",
                     ))))) ||
-              isReviewedSourceCreate(command) || isManualLocalDocumentCommand(command) ||
-              (command.admission.mode === "MANUAL" &&
-                command.command === "CREATE_SPARSE_FLIGHT") ||
-              (command.admission.mode === "MANUAL" &&
-                ["SET_AUTHORED_FLIGHT_DETAILS", "SET_ITEM_PARTICIPATION"].includes(
-                  command.command,
-                ) &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P2"))) ||
-              (command.command === "CREATE_ITEM"
-                ? ["P1", "P3", "P4", "P5", "P6"].includes(
-                    (command.payload as { family: string }).family,
-                  )
-                : [
-                    "SET_ITEM_TEXT",
-                    "SET_ITEM_SCHEDULE",
-                    "SET_ITEM_PLACE",
-                    "SET_ITEM_PARTICIPATION",
-                  ].includes(command.command) &&
-                  (await deps.isManualItem(row.trip_id, command.target.id, "P1"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_SCHEDULE",
-                "SET_ITEM_PLACE",
-                "SET_ITEM_PARTICIPATION",
-                "SET_STAY_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P3"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_SCHEDULE",
-                "SET_ITEM_PARTICIPATION",
-                "SET_RENTAL_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P4"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_PARTICIPATION",
-                "SET_TRANSPORT_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P5"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_SCHEDULE",
-                "SET_ITEM_PLACE",
-                "SET_ITEM_PARTICIPATION",
-                "SET_ACTIVITY_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P6")));
+              isReviewedSourceCreate(command) ||
+              (isNormalManualCoreCommand(command) &&
+                (isNormalManualCreate(command) ||
+                  isManualLocalDocumentCommand(command) ||
+                  (
+                    await Promise.all(
+                      acceptedEditFamilies.map(
+                        async (family) =>
+                          isManualAcceptedEditCommand(command, family) &&
+                          (await deps.isManualItem(
+                            row.trip_id,
+                            command.target.id,
+                            family,
+                          )),
+                      ),
+                    )
+                  ).some(Boolean)));
             await guard();
             if (manual) {
               const ready =
@@ -450,8 +421,12 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             !(await deps.isManualItem(operation.trip_id, parent.parentItemId, "P3"))
           )
             continue;
-        } else if (manual && !recovering &&
-          !isManualLocalDocumentCommand(command) && !cloudManualCreatePerson(command)) {
+        } else if (
+          manual &&
+          !recovering &&
+          !isManualLocalDocumentCommand(command) &&
+          !isNormalManualCreate(command)
+        ) {
           let eligible = false;
           for (const family of acceptedEditFamilies) {
             if (

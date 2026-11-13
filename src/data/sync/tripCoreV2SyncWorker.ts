@@ -218,6 +218,8 @@ export function createCoreV2SyncWorker(
       }
       if (!result && sourceItem && intent.state === "APPLIED")
         throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
+      if (!result && operation.failureCategory === "UNKNOWN")
+        throw new Error("CORE_OUTCOME_UNKNOWN");
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
           await corePhase("CORE_CAPABILITIES_READ", () =>
