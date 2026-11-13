@@ -46,8 +46,25 @@ No client-side email/name matching or merge is performed.
 
 ## Acceptance limits
 
-Local tests and prebuild are software evidence. Signed build, actual Apple
-token validation, relay email, user cancellation, Guest Adoption, two distinct
+New-Team Release build and strict/deep signature verification passed. The
+independent App was installed on the paired iPhone 16 Pro after confirming no
+existing `art.xoery.otr` installation. First launch succeeded and the exact PID
+remained alive. The Owner has been asked to complete the first normal Apple QA
+authorization with Hide My Email. The Owner subsequently confirmed successful
+Apple login and choosing Hide My Email. An exact-process cold restart changed
+PID 74426 to 74439; the Owner confirmed the same Account remained signed in
+without another Apple authorization. These are Owner-observed physical results.
+See `SIGNED_DEVICE_BUILD.json` and `COLD_SESSION_RESTORE.json`.
+
+The first generic-device build needed a registered device/profile. Automatic
+device registration with the exact paired phone resolved that check. Native
+compilation then passed, but the temporary linked project's Expo Router entry
+had a different Metro root. Pinning `PROJECT_ROOT` and `ENTRY_FILE` only in the
+temporary `.xcode.env.local` fixed bundling. The final build reused one Auth
+source/dependency tree and passed without altering an existing QA native project.
+
+Local tests, prebuild, signed build and first launch are software/device evidence.
+Actual Apple token validation, relay email, user cancellation, Guest Adoption, two distinct
 Apple Accounts, logout and physical cold restore need their own receipts.
 
 Supabase documents automatic linking for matching verified emails. The public

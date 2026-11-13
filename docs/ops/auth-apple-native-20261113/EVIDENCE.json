@@ -1,5 +1,5 @@
 {
-  "status": "SOFTWARE_CANDIDATE_DEVICE_BUILD_IN_PROGRESS",
+  "status": "PHYSICAL_BASIC_APPLE_AUTH_PASS_REMAINING_ADOPTION_AND_SECOND_IDENTITY",
   "bundleIdentifier": "art.xoery.otr",
   "appleTeamId": "3K49Z2Q5X7",
   "ownerIdentifierRegistration": "CONFIRMED_IN_THIS_CHAT",
@@ -33,24 +33,56 @@
     "firstFailure": "NEW_TEAM_HAS_NO_REGISTERED_DEVICES_OR_PROVISIONING_PROFILE"
   },
   "secondDeviceBuild": {
-    "result": "IN_PROGRESS",
-    "change": "Exact connected device target with automatic device registration; build only"
+    "result": "NATIVE_COMPILE_PASS_BUNDLE_FAILED",
+    "firstFailure": "Temporary linked project root mismatch in Expo Router entry resolution",
+    "minimalRepair": "Pin only the temporary .xcode.env.local PROJECT_ROOT and ENTRY_FILE to the single Auth source/dependency tree."
   },
   "physicalAcceptance": {
-    "firstAppleLogin": "NOT_RUN",
-    "repeatLogin": "NOT_RUN",
-    "cancel": "NOT_RUN",
-    "hideMyEmail": "NOT_RUN",
+    "firstAppleLogin": "OWNER_CONFIRMED_SUCCESS",
+    "repeatLogin": "OWNER_CONFIRMED_SAME_ACCOUNT",
+    "cancel": "OWNER_CONFIRMED_STILL_SIGNED_OUT",
+    "hideMyEmail": "OWNER_CONFIRMED_SELECTED",
     "guestAdoption": "NOT_RUN",
-    "logoutRelogin": "NOT_RUN",
-    "coldSessionRestore": "NOT_RUN",
+    "logoutRelogin": "OWNER_CONFIRMED_PASS",
+    "coldSessionRestore": "OWNER_CONFIRMED_SAME_ACCOUNT_WITHOUT_REAUTH_AFTER_EXACT_PROCESS_RELAUNCH",
     "twoAppleUsersIsolation": "NOT_RUN",
     "explicitIdentityLink": "NOT_RUN"
   },
   "remaining": [
-    "Complete signed build and verify final embedded Bundle ID, Team and entitlement.",
-    "Coordinate safe physical-device use and obtain normal interactive Apple QA consent.",
+    "Qualify a separate, untouched App container/device for nonempty Guest Trip/P1 creation and formal Apple Adoption without resetting the tested Account.",
+    "Qualify a second real Apple QA identity for actual cross-Account/Trip isolation.",
     "Verify Hosted manual identity linking and same-email automatic-linking behavior against the explicit-linking contract before acceptance.",
-    "New Google iOS Client is required for art.xoery.otr. Google is hidden and unavailable only in the new bundle until configured."
-  ]
+    "New Google iOS Client is required for art.xoery.otr. Google is unavailable only in the new bundle until configured."
+  ],
+  "finalDeviceBuild": {
+    "result": "PASS",
+    "codeSignatureVerification": "PASS",
+    "receipt": "SIGNED_DEVICE_BUILD.json",
+    "softwareCommit": "e013bf5d"
+  },
+  "nativeInstallation": {
+    "result": "PASS",
+    "newBundlePreimage": "NO_EXISTING_ART_XOERY_OTR_APP",
+    "launch": "PASS_PROCESS_ALIVE",
+    "ownerAppleInteraction": "FIRST_LOGIN_CONFIRMED_SUCCESS",
+    "otherApps": "NO_UNINSTALL_OR_OVERWRITE_REQUESTED"
+  },
+  "guestCustodyRepair": {
+    "status": "LOCAL_AND_INDEPENDENT_REVIEW_PASS_AWAITING_NEW_NATIVE_BUILD",
+    "firstFailures": [
+      "GUEST_VERIFICATION_SESSION_INVALID",
+      "GUEST_VERIFICATION_STORAGE_UNAVAILABLE_FOR_OPTIONAL_UNDEFINED_NAME_KEYS"
+    ],
+    "minimalFix": "Allow only optional bounded Apple name components in the strict Session schema; omit only validated undefined keys before fingerprint, preserving null and all identity gates.",
+    "focusedTests": 47,
+    "testFiles": 2,
+    "independentRegressionTests": 2
+  },
+  "additionalDeviceQualification": {
+    "device": "wired iPad Air 5",
+    "ownerConfirmedAvailable": true,
+    "appleIdentity": "SAME_AS_IPHONE",
+    "intendedSlice": "Fresh local Guest Trip/P1 then Apple Adoption to the existing Account",
+    "secondDistinctAppleIdentity": "NOT_AVAILABLE_YET"
+  }
 }

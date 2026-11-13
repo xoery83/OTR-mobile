@@ -8,9 +8,20 @@ suggestion, Settings and login entries are implemented in the Auth branch.
 122 focused tests, UI guard, scoped lint, isolated native prebuild and initial
 iOS JS export passed. Independent Review's unmount/confirmation finding is fixed
 with three regressions. Hosted DEV Apple Provider independently reads enabled.
-New-Team device signing build is running in isolated `/private/tmp` directories.
-Existing GuestQA/native identities and data are preserved. Actual Apple login,
-Guest Adoption, dual-Apple-user isolation and physical cold restore are NOT_RUN.
+New-Team Release build, strict/deep signature verification, isolated iPhone 16
+Pro install and first launch/exact-PID alive readback passed. Owner confirmed
+first Apple login with Hide My Email and same-Account Session recovery after
+exact process cold restart (74426 → 74439), without another Apple authorization.
+Owner also confirmed normal logout, cancelled Apple sign-in remaining signed out,
+and same-Account relogin. Source `e013bf5d`, receipts in the ops packet. Separate
+fresh-Guest device and second Apple QA identity qualification are requested.
+Owner confirmed the wired iPad Air 5 is available with the same Apple identity.
+Nonempty Guest custody exposed the added optional name as a strict-schema and
+canonical-undefined compatibility gap. Both failures reproduced RED; the minimal
+local fix and 47 targeted tests plus independent Review pass. A new signed iPad
+build must carry this fix before the Guest Trip/P1 Adoption attempt.
+Existing GuestQA/native identities and data are preserved. Non-empty Guest
+Adoption and dual-Apple-user isolation remain NOT_RUN.
 Supabase automatic same-email linking policy needs acceptance verification.
 New-bundle Google is unavailable until its own iOS Client exists.
 Evidence and continuation are in `docs/ops/auth-apple-native-20261113/`.
