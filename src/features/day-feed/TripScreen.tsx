@@ -1573,6 +1573,7 @@ function TripContent({
       ) : null}
       {!today ? (
         <LocalTripWorkspace
+          serverParentPeopleEnabled={!guest}
           refreshKey={revision}
           onHomeHeroHeight={onHomeHeroHeight}
           tripId={requested || null}

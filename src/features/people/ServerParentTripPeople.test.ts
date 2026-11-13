@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
   effects: [] as (() => void)[],
   read: vi.fn(),
   save: vi.fn(),
+  roster: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -61,6 +62,9 @@ vi.mock("@/data/repositories/tripPersonCloudCreateRepository", () => ({
   readServerParentPeopleContext: state.read,
   saveServerParentTripTraveler: state.save,
 }));
+vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
+  readTripPreparationSetupRepository: async () => ({ read: state.roster }),
+}));
 vi.mock("@/features/day-feed/TripSetupRows", () => ({ TripMembersSummary: "Summary" }));
 
 let props: Parameters<typeof ServerParentTripPeople>[0];
@@ -87,8 +91,7 @@ function render() {
   return node.props;
 }
 async function settled() {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
   return render();
 }
 const owner = () =>
@@ -115,6 +118,8 @@ beforeEach(() => {
   state.effects = [];
   state.read.mockReset();
   state.save.mockReset();
+  state.roster.mockReset();
+  state.roster.mockImplementation(async () => props.setup);
   const current = setup();
   props = {
     tripId: current.context.tripId,
@@ -321,4 +326,29 @@ it("propagates save failure and keeps the current roster without confirmed local
     "PERSON_PARENT_CONTEXT_CHANGED",
   );
   expect(props.onSetup).not.toHaveBeenCalled();
+});
+
+it("hydrates an unknown roster from the scoped parent before enabling Add", async () => {
+  const restored = props.setup!;
+  const p = proof();
+  props = { ...props, setup: { ...restored, members: { state: "UNKNOWN" } } };
+  state.read.mockResolvedValue(p);
+  state.roster.mockResolvedValue(restored);
+  props.onSetup = vi.fn((value) => { props = { ...props, setup: value }; });
+  render();
+  await settled();
+  const ui = await settled();
+  expect(state.read).toHaveBeenCalledWith(restored.context);
+  expect(state.roster).toHaveBeenCalledWith(restored.context.tripId);
+  expect(ui.onAddTraveler).toBeTypeOf("function");
+  expect(state.save).not.toHaveBeenCalled();
+});
+
+it("keeps unknown roster read-only when the parent reader is closed", async () => {
+  props = { ...props, setup: { ...props.setup!, members: { state: "UNKNOWN" } } };
+  state.read.mockRejectedValue(Error("PERSON_PARENT_READER_CLOSED"));
+  render();
+  expect((await settled()).onAddTraveler).toBeUndefined();
+  expect(state.roster).not.toHaveBeenCalled();
+  expect(state.save).not.toHaveBeenCalled();
 });

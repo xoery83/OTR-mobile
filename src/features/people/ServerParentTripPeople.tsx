@@ -8,7 +8,7 @@ import {
 } from "react";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import type { AccountRequestContext } from "@/data/auth/accountRequestContext";
-import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { readTripPreparationSetupRepository, type TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import {
   readServerParentPeopleContext,
   saveServerParentTripTraveler,
@@ -19,7 +19,7 @@ import type { AddTravelerInput } from "./AddTravelerSheet";
 const sameContext = (a: AccountRequestContext, b: AccountRequestContext) =>
   a.accountId === b.accountId && a.tripId === b.tripId && a.generation === b.generation;
 
-// The caller keeps this unmounted until the owning parent reader is enabled.
+// Mounting permits a read-only qualification attempt. Only a verified proof enables Add.
 export function ServerParentTripPeople({
   tripId,
   generation,
@@ -71,24 +71,32 @@ export function ServerParentTripPeople({
       origin.generation === getAccountGeneration() &&
       !!latest.current.current &&
       sameContext(origin, latest.current.current.context) &&
-      latest.current.actorId === owner &&
+      (latest.current.actorId === null || latest.current.actorId === owner) &&
       latest.current.qualificationKey === key,
     [],
   );
   useEffect(() => {
     let cancelled = false;
-    const { accountId, tripId, generation, actorId } = qualificationKey;
-    if (accountId && tripId && generation !== undefined && actorId) {
+    const { accountId, tripId, generation } = qualificationKey;
+    if (accountId && tripId && generation !== undefined) {
       const origin = Object.freeze({ accountId, tripId, generation });
       void readServerParentPeopleContext(origin)
-        .then((proof) => {
+        .then(async (proof) => {
           if (
             !cancelled &&
-            isCurrent(origin, actorId, qualificationKey) &&
-            sameContext(proof.context, origin) &&
-            proof.ownerPersonId === actorId
+            isCurrent(origin, proof.ownerPersonId, qualificationKey) &&
+            sameContext(proof.context, origin)
           )
+          {
+            const restored = await (await readTripPreparationSetupRepository()).read(tripId);
+            const actors = restored.members.state === "AVAILABLE"
+              ? restored.members.people.filter((person) => person.isCurrentActor) : [];
+            if (cancelled || !isCurrent(origin, proof.ownerPersonId, qualificationKey) ||
+                !sameContext(restored.context, origin) || actors.length !== 1 ||
+                actors[0].personId !== proof.ownerPersonId) return;
+            if (restored !== latest.current.current) latest.current.onSetup(restored);
             setQualified({ ...proof, key: qualificationKey });
+          }
         })
         .catch(() => {
           // A missing/closed parent never enables authoring or removes the readable roster.

@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_TEST_AND_INDEPENDENT_REVIEW_PASS_READ_ONLY_QA_PENDING",
+  "nativePatchSHA256": "660513a0435fa80d66fd869f9d032848c3719092f9df34b925dbbaa674d003aa",
+  "hydrationCandidate": "57bae5ff",
+  "focusedTests": 65,
+  "nativeComponentTests": 16,
+  "independentReview": "SCOPED_NO_BLOCKER_NATIVE_PEOPLE_CALLER_CANDIDATE",
+  "uiGuard": "PASS",
+  "scopedLint": "PASS",
+  "sourceSHA256": {
+    "src/features/people/ServerParentTripPeople.tsx": "67e824aea58a5d930ddce53b058930115fb767b899692dda5375001c1b2b2e77",
+    "src/features/people/ServerParentTripPeople.test.ts": "3ff7f5ff1c5f697bc81d0bd742816f70dcad5e02a4fecd5778b8bb07f38d9421",
+    "src/features/day-feed/TripScreen.tsx": "638f840134fabfe2fe34f4d091aa08f2654ff6a9593b5bca2a1b6b51a6aae956"
+  },
+  "scope": "Read-only qualification may run for formal Account/Trip; Add only after exact Owner proof plus unique current Actor; no Add save in this QA",
+  "hostedChanges": false,
+  "adoptionReplay": false
+}
