@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T06:58:34.890007+00:00",
+  "simulator": "1B2252F4-4F90-4F93-9223-545269EAA06C",
+  "bundle": "com.xoery.otrmobile.b1full20261113",
+  "exitCode": 0,
+  "action": "Terminate process only; no uninstall, database, session, or queue reset"
+}

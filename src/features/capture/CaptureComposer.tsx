@@ -3,6 +3,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -54,6 +55,8 @@ type Props = {
   onSubmit(): void;
   onActivity(): void;
   onDocuments?(scope: "PERSONAL_INBOX" | "TRIP"): void;
+  maxAttachments?: number;
+  onPreview?(id: number): Promise<string | null>;
 };
 
 export function CaptureComposer({
@@ -75,9 +78,13 @@ export function CaptureComposer({
   onRemove,
   onText,
   onQaSample,
+  onAddText,
+  onClear,
   onSubmit,
   onActivity,
   onDocuments,
+  maxAttachments,
+  onPreview,
 }: Props) {
   const locale = useUiLocale();
   const voice = useImportDictation(onText);
@@ -87,7 +94,13 @@ export function CaptureComposer({
     styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets(),
     { height, fontScale } = useWindowDimensions();
-  const [page, setPage] = useState<"composer" | "email" | "ai" | "context">("composer");
+  const [page, setPage] = useState<"composer" | "email" | "ai" | "context" | "preview">(
+    "composer",
+  );
+  const [preview, setPreview] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState(false);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [inputHeight, setInputHeight] = useState(44);
   const [menu, setMenu] = useState(false);
   const targetEpoch = useRef(0);
   const [trips, setTrips] = useState<readonly { id: string; name: string }[]>([]);
@@ -143,9 +156,33 @@ export function CaptureComposer({
     }
   };
   // Keep the material names visible while the multiline editor owns the keyboard.
-  const inputLines = keyboardVisible && snapshot.items.length ? 2 : 6;
+  const inputLines = keyboardVisible && snapshot.items.length ? 3 : 6;
   const maxInputHeight = inputLines * 22 * Math.max(1, fontScale) + 20;
-  const sendDisabled = locked || !count;
+  const overLimit = maxAttachments !== undefined && count > maxAttachments;
+  const sendDisabled =
+    locked ||
+    !count ||
+    overLimit ||
+    previewBusy ||
+    snapshot.items.some(
+      (item) => item.source !== "magic_input" && item.availability === "unavailable",
+    );
+  const showPreview = async (id: number) => {
+    if (!onPreview || previewBusy || locked) return;
+    setPreviewBusy(true);
+    setPreviewError(false);
+    try {
+      const text = await onPreview(id);
+      if (text !== null) {
+        setPreview(text);
+        setPage("preview");
+      }
+    } catch {
+      setPreviewError(true);
+    } finally {
+      setPreviewBusy(false);
+    }
+  };
   const context =
     contextLabel ??
     (tripName
@@ -181,13 +218,24 @@ export function CaptureComposer({
       onChangeText={onText}
       editable={!locked}
       multiline
+      onContentSizeChange={({ nativeEvent }) =>
+        setInputHeight(nativeEvent.contentSize.height)
+      }
       placeholder={t(
         snapshot.items.length
           ? "capture.composer.messagePlaceholder"
           : "capture.composer.placeholder",
       )}
       accessibilityLabel={t("capture.composer.magic")}
-      style={[styles.input, { maxHeight: maxInputHeight }]}
+      style={[
+        styles.input,
+        {
+          height: snapshot.editorText
+            ? Math.min(maxInputHeight, Math.max(44, inputHeight))
+            : 44,
+          maxHeight: maxInputHeight,
+        },
+      ]}
     />
   );
   return (
@@ -228,6 +276,21 @@ export function CaptureComposer({
                 ) : null}
                 <View style={styles.contentViewport}>{content}</View>
               </>
+            ) : page === "preview" ? (
+              <ScrollView
+                style={styles.body}
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+              >
+                <UiText selectable style={styles.bodyText}>
+                  {preview}
+                </UiText>
+                <UiButton
+                  variant="text"
+                  label={t("common.back")}
+                  onPress={() => setPage("composer")}
+                />
+              </ScrollView>
             ) : page === "email" || page === "ai" ? (
               <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
                 <CaptureConnections page={page} onBack={() => setPage("composer")} />
@@ -320,7 +383,13 @@ export function CaptureComposer({
                               { width: Math.max(120, 88 * fontScale) },
                             ]}
                           >
-                            <View style={styles.preview}>
+                            <Pressable
+                              style={styles.preview}
+                              accessibilityRole="button"
+                              accessibilityLabel={t("capture.composer.preview", { name })}
+                              disabled={!onPreview || locked || previewBusy}
+                              onPress={() => void showPreview(item.stagingId)}
+                            >
                               {photo ? (
                                 <Image
                                   source={{ uri: photo }}
@@ -352,7 +421,7 @@ export function CaptureComposer({
                                   </UiText>
                                 </View>
                               )}
-                            </View>
+                            </Pressable>
                             <View style={styles.remove}>
                               <View pointerEvents="none" style={styles.removeDisc} />
                               <OverlayDismissAction
@@ -459,7 +528,11 @@ export function CaptureComposer({
                   ) : null}
                   {snapshot.error ? (
                     <UiText accessibilityRole="alert" style={styles.error}>
-                      {t("capture.pickerError")}
+                      {t(
+                        snapshot.error === "camera_permission"
+                          ? "capture.composer.cameraPermission"
+                          : "capture.pickerError",
+                      )}
                     </UiText>
                   ) : null}
                   {duplicate ? (
@@ -472,13 +545,60 @@ export function CaptureComposer({
                       {errorMessage}
                     </UiText>
                   ) : null}
+                  {previewError ? (
+                    <UiText accessibilityRole="alert" style={styles.error}>
+                      {t("capture.unavailable")}
+                    </UiText>
+                  ) : null}
+                  {overLimit ? (
+                    <UiText accessibilityRole="alert" style={styles.error}>
+                      {t("capture.composer.limit", { count: maxAttachments! })}
+                    </UiText>
+                  ) : null}
                 </ScrollView>
+                {count ? (
+                  <View style={styles.footer}>
+                    <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                      {t(count === 1 ? "capture.countOne" : "capture.countOther", {
+                        count,
+                      })}
+                    </UiText>
+                    <View style={styles.spacer} />
+                    <UiButton
+                      variant="text"
+                      label={t("capture.composer.clear")}
+                      disabled={locked || previewBusy}
+                      onPress={() =>
+                        Alert.alert(
+                          t("capture.composer.clear"),
+                          t("capture.composer.clearHint"),
+                          [
+                            { text: t("common.cancel"), style: "cancel" },
+                            {
+                              text: t("capture.composer.clear"),
+                              style: "destructive",
+                              onPress: onClear,
+                            },
+                          ],
+                        )
+                      }
+                    />
+                  </View>
+                ) : null}
                 <View
                   style={[styles.composerShadow, keyboardVisible && { marginTop: 0 }]}
                 >
                   <UiGlassSurface style={styles.composer}>
                     {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
                     <View style={styles.footer}>
+                      {snapshot.editorText.trim() ? (
+                        <UiButton
+                          variant="text"
+                          label={t("capture.composer.add")}
+                          disabled={locked || overLimit}
+                          onPress={onAddText}
+                        />
+                      ) : null}
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={t("capture.composer.addAttachments")}

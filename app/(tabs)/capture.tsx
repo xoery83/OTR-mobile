@@ -75,12 +75,15 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   const retained = overlay ? overlayRetained : tabRetained;
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
+  const [draftWarning, setDraftWarning] = useState(false);
   useFocusEffect(
     useCallback(() => {
       let active = true;
       let visibleStaging: ReturnType<typeof createCaptureStaging> | null = null;
+      let stopSaving: (() => void) | undefined;
       setAdmission(null);
       setChecked(null);
+      setDraftWarning(false);
       void withAccountApplyGate(readLocalSession)
         .then(async (session) => {
           if (!active || getAccountGeneration() !== generation) return;
@@ -110,10 +113,67 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             let staging = retained.current.drafts.get(owner.tripPrior);
             if (staging) staging.resume(owner, lease);
             else {
-              staging = createCaptureStaging(pickCaptureMaterial, lease, owner);
+              const draftFiles =
+                process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
+                  ? await import("@/data/repositories/captureDraftRepository")
+                  : null;
+              if (!lease()) return;
+              staging = createCaptureStaging(
+                async (source, current) => {
+                  const selections = await pickCaptureMaterial(source, current);
+                  if (!draftFiles) return selections;
+                  const retainedSelections = [];
+                  try {
+                    for (const selection of selections) {
+                      if (!current?.()) break;
+                      retainedSelections.push(
+                        await draftFiles.retainCaptureDraftSelection(
+                          accountId,
+                          selection,
+                        ),
+                      );
+                    }
+                    return retainedSelections;
+                  } catch (error) {
+                    selections.forEach((selection) => selection.release?.());
+                    throw error;
+                  }
+                },
+                lease,
+                owner,
+              );
+              if (draftFiles) {
+                try {
+                  const saved = await draftFiles.readCaptureDraft(owner);
+                  if (!lease()) return;
+                  if (
+                    saved?.tripTarget &&
+                    !(await readCaptureTripPrior(saved.tripTarget.id, next))
+                  ) {
+                    setDraftWarning(true);
+                  } else if (saved) staging.restore(saved);
+                } catch {
+                  if (lease()) setDraftWarning(true);
+                }
+              }
+              if (!lease()) return;
               retained.current.drafts.set(owner.tripPrior, staging);
             }
             visibleStaging = staging;
+            if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true") {
+              const draftFiles =
+                await import("@/data/repositories/captureDraftRepository");
+              if (!lease()) return;
+              const currentStaging = staging;
+              stopSaving = staging.subscribe(() => {
+                if (!lease() || !currentStaging.isVisible()) return;
+                try {
+                  draftFiles.saveCaptureDraft(owner, currentStaging.getDraftSnapshot());
+                } catch {
+                  setDraftWarning(true);
+                }
+              });
+            }
             setAdmission({
               ...next,
               staging,
@@ -128,6 +188,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
           if (active) setChecked(generation);
         });
       return () => {
+        stopSaving?.();
         active = false;
         visibleStaging?.hide();
         setAdmission(null);
@@ -167,6 +228,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
           jobId={typeof jobId === "string" ? jobId : undefined}
           isCurrent={isCurrent}
           draftStaging={admission.staging}
+          draftPersistenceError={draftWarning}
           accountId={admission.accountId}
           tripName={admission.tripName}
           tripPrior={admission.tripPrior}

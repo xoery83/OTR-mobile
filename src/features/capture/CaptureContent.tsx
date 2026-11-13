@@ -33,6 +33,7 @@ export function CaptureContent({
   onCancel,
   jobId,
   draftStaging,
+  draftPersistenceError = false,
   onReopenJob,
   onOpenAcceptedItem,
   accountId,
@@ -45,6 +46,7 @@ export function CaptureContent({
   onCancel: () => void;
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
+  draftPersistenceError?: boolean;
   onReopenJob?: (id: string) => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   accountId?: string;
@@ -327,6 +329,36 @@ export function CaptureContent({
     return (
       <CaptureComposer
         snapshot={draft}
+        maxAttachments={
+          process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
+            ? 5
+            : undefined
+        }
+        onPreview={
+          accountId
+            ? async (id) => {
+                if (!current()) return null;
+                const item = staging
+                  .getDraftSnapshot()
+                  .items.find((item) => item.stagingId === id);
+                if (!item) return null;
+                const { readCaptureDraftPreview } =
+                  await import("@/data/repositories/captureDraftRepository");
+                if (!current()) return null;
+                const original = await readCaptureDraftPreview(accountId, item);
+                if (!current()) return null;
+                if ("text" in original) return original.text ?? "";
+                const { previewImportOriginal } =
+                  await import("@/native/importOriginalPreview");
+                await previewImportOriginal(
+                  original,
+                  current,
+                  item.source === "magic_input" ? "" : (item.name ?? ""),
+                );
+                return null;
+              }
+            : undefined
+        }
         onQaSample={
           universalQaFixture(
             accountId,
@@ -441,7 +473,9 @@ export function CaptureContent({
                       ? "capture.composer.paste.limit"
                       : "capture.composer.paste.failed",
                 )
-              : undefined
+              : draftPersistenceError
+                ? t("capture.composer.draftWarning")
+                : undefined
         }
         duplicate={duplicate}
         title={

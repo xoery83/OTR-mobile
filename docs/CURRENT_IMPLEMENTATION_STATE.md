@@ -1,3 +1,22 @@
+## Import V3 B2 Slice 1 — Owner review checkpoint, 13 November 2026
+
+Slice 1 only: compact Composer, Inline Add, confirmed Clear All, count/preview,
+scoped Close/reentry and persistent unsent drafts. Reuses B1 original storage;
+account/launch-Trip JSON holds stable digests, not Picker URIs or auth secrets.
+Restore verifies actual files. Hidden UI never clears the saved draft; last-valid
+roster covers interrupted replacement, and Clear All clears that fallback too.
+Full App simulator observed normal My Trips/Trip/Day entry, Files PDF and Photos
+GIF/JPEG/PNG, mixed text, software-keyboard Add, native preview, Close/reentry,
+process termination recovery and Clear All. Account namespace/forged-owner
+negatives are targeted tests, not a second real-account App login certification.
+Clipboard image tokens cannot survive process death: require reselection; Camera
+hardware and physical iPad acceptance remain unverified. No new Submit/Analyze,
+Core Save, Provider call, SQL/ACL change, Backend deployment or main merge/push.
+Existing B1 two batches/six inputs and six original hashes remain unchanged.
+Report/screenshots: `docs/ops/import-b2-slice1-20261113/README.md`.
+**STOP for Owner Slice 1 review. Do not start Slice 2–6.** Production automatic
+Import / Development confirmation is approved planning, not implemented here.
+
 ## Import V3 Phase B1 — final closure, 13 November 2026
 
 Actual checkout `/Users/xoery/Project/otr-mobile-import/import-v3-local-first`,

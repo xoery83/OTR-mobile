@@ -456,7 +456,7 @@ it("Camera permission denial keeps previously selected Files intact and never la
   expect(staging.getSnapshot()).toMatchObject({
     items: prior,
     selecting: false,
-    error: "picker",
+    error: "camera_permission",
   });
   expect(native.camera).not.toHaveBeenCalled();
 });

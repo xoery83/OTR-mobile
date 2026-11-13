@@ -62,6 +62,11 @@ export function hasImportOriginal(account: string, sha: string, length: number) 
   return file.exists && file.size === length;
 }
 
+// Rebuilt from stable identity after container replacement; never persist this URI.
+export function importOriginalUri(account: string, sha: string) {
+  return localFile(account, sha).file.uri;
+}
+
 export async function readImportOriginal(account: string, sha: string, length: number) {
   if (!Number.isSafeInteger(length) || length < 1 || length > 12 * 1024 * 1024)
     throw Error("IMPORT_ORIGINAL_INTEGRITY");

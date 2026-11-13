@@ -568,7 +568,14 @@ export const en = {
   "capture.composer.add": "Add",
   "capture.composer.alreadyAdded": "Already added",
   "capture.composer.submit": "Submit Batch",
-  "capture.composer.clear": "Clear",
+  "capture.composer.clear": "Clear All",
+  "capture.composer.preview": "Preview {name}",
+  "capture.composer.cameraPermission":
+    "Camera access is off. Allow access in Settings, or choose Photos or Files.",
+  "capture.composer.limit":
+    "Choose up to {count} inputs. Remove an input before submitting.",
+  "capture.composer.draftWarning":
+    "This draft could not be restored or saved on this device. Keep Import open or select the files again.",
   "capture.composer.clearHint":
     "Remove this unsubmitted draft? Original files and saved submissions stay unchanged.",
   "capture.composer.textSubmitUnavailable":
@@ -3677,6 +3684,12 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.composer.alreadyAdded": "已添加",
   "capture.composer.submit": "提交批次",
   "capture.composer.clear": "清空全部",
+  "capture.composer.preview": "预览{name}",
+  "capture.composer.cameraPermission":
+    "相机访问已关闭，请在设置中允许访问，或选择照片、文件。",
+  "capture.composer.limit": "每次最多{count}项，请移除部分内容后提交。",
+  "capture.composer.draftWarning":
+    "此草稿无法在本机恢复或保存，请保持导入页面打开，或重新选择文件。",
   "capture.composer.clearHint": "清除此未提交草稿？原始文件和已保存的提交不会改变。",
   "capture.composer.textSubmitUnavailable": "文字可保留在此草稿中，暂不支持提交文字。",
   "capture.composer.forward": "邮件转发",

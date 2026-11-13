@@ -1,0 +1,268 @@
+Observed Device Hub actions and relevant full App accessibility states.
+System device inventory omitted; screenshots accompany this record.
+
+2026-11-13T06:55:43.824Z Inline Add staged text; keyboard hidden
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.gif, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.gif, Secondary Actions: Cancel
+28 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+29 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+30 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+31 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+32 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+33 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 4 selected items, Secondary Actions: Cancel
+36 Group Description: Magic Input Add a message (optional)…, Secondary Actions: Cancel
+
+2026-11-13T06:55:59.411Z Unadded editor text counts once
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.gif, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.gif, Secondary Actions: Cancel
+28 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+29 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+30 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+31 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+32 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+33 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 5 selected items, Secondary Actions: Cancel
+36 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+
+2026-11-13T06:56:10.295Z Close returns to originating Trip Home
+
+2026-11-13T06:56:34.639Z Trip Home restored without Quick Add reappearing
+23 heading Description: Import Phase A 13 Nov, Secondary Actions: Cancel
+26 heading Description: Preparation, Secondary Actions: Cancel
+33 heading Description: Recently added, Secondary Actions: Cancel
+37 button Description: Open Day, Secondary Actions: Cancel
+38 heading Description: Trip setup, Secondary Actions: Cancel
+42 heading Description: More, Secondary Actions: Cancel
+45 button (selected) Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+46 button Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+49 button Description: Add to this trip, Secondary Actions: Cancel
+
+2026-11-13T06:56:48.261Z Day Feed origin
+22 button Description: Day 1. Tomorrow. Saturday · Nov 14, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+27 button Description: Day 2. Sunday. Nov 15, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+31 button Description: Day 7. Friday. Nov 20, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+33 button Description: Day 34. Thursday. Dec 17, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+35 button Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+36 button (selected) Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+39 button Description: Add to this trip, Secondary Actions: Cancel
+
+2026-11-13T06:56:58.542Z Day Quick Add
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Add to this trip, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+
+2026-11-13T06:57:09.109Z Day opens same Trip draft
+
+2026-11-13T06:57:33.106Z Day reentry preserves tray and unadded text
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.gif, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.gif, Secondary Actions: Cancel
+28 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+29 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+30 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+31 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+32 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+33 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 5 selected items, Secondary Actions: Cancel
+36 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+38 button Description: Add attachments, Secondary Actions: Cancel
+40 button Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T06:57:42.031Z Draft original preview opens without submission
+
+2026-11-13T06:58:14.380Z Original viewer returns to same Composer
+
+Process terminated; SpringBoard
+
+2026-11-13T06:58:55.057Z Cold launch after process termination
+
+2026-11-13T06:59:15.172Z Cold launch shows normal My Trips
+22 heading Description: My Trips, Secondary Actions: Cancel
+23 heading Description: Upcoming, Secondary Actions: Cancel
+24 button Description: Open Import Phase A 13 Nov. Nov 14, 2026 – Nov 15, 2026., Help: This Trip summary is saved here. Planning details and actions are not available on this device yet., Secondary Actions: Cancel
+25 button Description: Start a Trip, Secondary Actions: Cancel
+
+2026-11-13T06:59:22.958Z Cold launch Trip Home
+22 heading Description: My Trips, Secondary Actions: Cancel
+23 heading Description: Upcoming, Secondary Actions: Cancel
+24 button Description: Open Import Phase A 13 Nov. Nov 14, 2026 – Nov 15, 2026., Help: This Trip summary is saved here. Planning details and actions are not available on this device yet., Secondary Actions: Cancel
+25 button Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+28 button Description: Add to this trip, Secondary Actions: Cancel
+30 heading Description: Import Phase A 13 Nov, Secondary Actions: Cancel
+33 heading Description: Preparation, Secondary Actions: Cancel
+40 heading Description: Recently added, Secondary Actions: Cancel
+44 button Description: Open Day, Secondary Actions: Cancel
+45 heading Description: Trip setup, Secondary Actions: Cancel
+49 heading Description: More, Secondary Actions: Cancel
+52 button (selected) Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+53 button Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+56 button Description: Add to this trip, Secondary Actions: Cancel
+
+2026-11-13T06:59:30.810Z Cold launch Quick Add
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Add to this trip, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+
+2026-11-13T06:59:43.573Z Restoring persisted Trip draft
+
+2026-11-13T07:00:15.949Z Process-death recovery: same three originals, staged text, and unadded editor; five selected
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.gif, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.gif, Secondary Actions: Cancel
+28 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+29 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+30 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+31 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+32 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+33 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 5 selected items, Secondary Actions: Cancel
+36 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+38 button Description: Add attachments, Secondary Actions: Cancel
+40 button Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T07:00:41.603Z Cancel Clear All keeps the five inputs
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.gif, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.gif, Secondary Actions: Cancel
+28 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+29 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+30 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+31 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+32 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+33 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 5 selected items, Secondary Actions: Cancel
+36 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+38 button Description: Add attachments, Secondary Actions: Cancel
+40 button Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T07:00:56.263Z Remove one attachment only; other inputs remain
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+28 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+29 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+30 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+31 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+32 button Description: Clear All, Secondary Actions: Cancel
+33 text Description: 4 selected items, Secondary Actions: Cancel
+34 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+36 button Description: Add attachments, Secondary Actions: Cancel
+38 button Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T07:16:32.321Z Files PDF appended without submitting
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+28 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+29 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+30 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+31 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+32 button Description: Preview Travel details.pdf, Secondary Actions: Cancel
+33 button Description: Remove Travel details.pdf, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 5 selected items, Secondary Actions: Cancel
+36 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+38 button Description: Add attachments, Secondary Actions: Cancel
+40 button Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T07:19:52.017Z Final candidate launch
+
+2026-11-13T07:20:54.494Z Final launch My Trips
+22 heading Description: My Trips, Secondary Actions: Cancel
+23 heading Description: Upcoming, Secondary Actions: Cancel
+24 button Description: Open Import Phase A 13 Nov. Nov 14, 2026 – Nov 15, 2026., Help: This Trip summary is saved here. Planning details and actions are not available on this device yet., Secondary Actions: Cancel
+25 button Description: Start a Trip, Secondary Actions: Cancel
+
+2026-11-13T07:21:06.950Z Final Trip Home
+22 heading Description: My Trips, Secondary Actions: Cancel
+23 heading Description: Upcoming, Secondary Actions: Cancel
+24 button Description: Open Import Phase A 13 Nov. Nov 14, 2026 – Nov 15, 2026., Help: This Trip summary is saved here. Planning details and actions are not available on this device yet., Secondary Actions: Cancel
+25 button Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+28 button Description: Add to this trip, Secondary Actions: Cancel
+30 heading Description: Import Phase A 13 Nov, Secondary Actions: Cancel
+33 heading Description: Preparation, Secondary Actions: Cancel
+40 heading Description: Recently added, Secondary Actions: Cancel
+44 button Description: Open Day, Secondary Actions: Cancel
+45 heading Description: Trip setup, Secondary Actions: Cancel
+49 heading Description: More, Secondary Actions: Cancel
+52 button (selected) Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+53 button Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+56 button Description: Add to this trip, Secondary Actions: Cancel
+
+2026-11-13T07:21:19.485Z Final Day Feed entry
+22 button Description: Day 1. Tomorrow. Saturday · Nov 14, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+26 button Description: Day 2. Sunday. Nov 15, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+29 button Description: Day 7. Friday. Nov 20, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+31 button Description: Day 34. Thursday. Dec 17, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+32 button Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+33 button (selected) Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+36 button Description: Add to this trip, Secondary Actions: Cancel
+
+2026-11-13T07:21:33.033Z Final Day Quick Add
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Add to this trip, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+
+2026-11-13T07:21:45.850Z Final roster hydration
+
+2026-11-13T07:22:38.478Z Final candidate restores PDF, images and text
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 button Description: Preview Boardwalk.jpeg, Secondary Actions: Cancel
+27 button Description: Remove Boardwalk.jpeg, Secondary Actions: Cancel
+28 button Description: Preview Harbour Hotel.png, Secondary Actions: Cancel
+29 button Description: Remove Harbour Hotel.png, Secondary Actions: Cancel
+30 button Description: Preview Trip draft with three originals, Secondary Actions: Cancel
+31 button Description: Remove Trip draft with three originals, Secondary Actions: Cancel
+32 button Description: Preview Travel details.pdf, Secondary Actions: Cancel
+33 button Description: Remove Travel details.pdf, Secondary Actions: Cancel
+34 button Description: Clear All, Secondary Actions: Cancel
+35 text Description: 5 selected items, Secondary Actions: Cancel
+36 Group (settable) Description: Magic Input, Value: I added text stays once, Secondary Actions: Cancel
+38 button Description: Add attachments, Secondary Actions: Cancel
+40 button Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T07:23:05.112Z Confirmed Clear All leaves Capture open and empty
+
+2026-11-13T07:23:41.877Z Final Clear All: empty Capture remains open
+22 button Description: Close, Secondary Actions: Cancel
+23 heading Description: Import Travel Plans, Secondary Actions: Cancel
+24 button Description: Close, Secondary Actions: Cancel
+26 text Description: Add from Camera, Photos or Files, Help: 3 links found, swipe to move to the first link., Secondary Actions: Cancel
+32 Group Description: Magic Input Tell us or paste your plans here…, Secondary Actions: Cancel
+33 button Description: Add attachments, Secondary Actions: Cancel
+35 button (disabled) Description: Submit Batch, Secondary Actions: Cancel
+
+2026-11-13T07:23:47.973Z Final Close back to Day origin
+
+2026-11-13T07:25:15.729Z Close restored Day Feed, no Quick Add or duplicate sheet
+22 button Description: Day 1. Tomorrow. Saturday · Nov 14, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+27 button Description: Day 2. Sunday. Nov 15, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+31 button Description: Day 7. Friday. Nov 20, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+33 button Description: Day 34. Thursday. Dec 17, 2026. Header style: Standard date, Help: Double-tap to use Weekday and day., Secondary Actions: Cancel
+35 button Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+36 button (selected) Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+39 button Description: Add to this trip, Secondary Actions: Cancel

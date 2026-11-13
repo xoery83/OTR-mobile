@@ -9,6 +9,7 @@ export type CaptureSelection = Readonly<{
   name: string | null;
   typeHint: string | null;
   size?: number;
+  draftOriginal?: Readonly<{ sha256: string; byteCount: number }>;
   // Session-only native lease; never serialized into a submission or Source.
   release?: () => void;
   width?: number;
@@ -41,7 +42,7 @@ export type StagedCapturePaste = Readonly<{
   name: null;
   typeHint: string;
   size: number;
-  availability: "unverified";
+  availability: "unverified" | "unavailable";
 }>;
 export type CaptureDraftItem = StagedCaptureItem | StagedCaptureText | StagedCapturePaste;
 export type CaptureTripTarget = Readonly<{ id: string; name: string }> | null;
@@ -51,7 +52,7 @@ export type CaptureDraftSnapshot = Readonly<{
   items: readonly CaptureDraftItem[];
   editorText: string;
   selecting: boolean;
-  error: "picker" | null;
+  error: "picker" | "camera_permission" | null;
 }>;
 const emptyCaptureDraft: CaptureDraftSnapshot = Object.freeze({
   items: Object.freeze([]),
@@ -62,7 +63,7 @@ const emptyCaptureDraft: CaptureDraftSnapshot = Object.freeze({
 export type CaptureStagingSnapshot = Readonly<{
   items: readonly StagedCaptureItem[];
   selecting: boolean;
-  error: "picker" | null;
+  error: "picker" | "camera_permission" | null;
 }>;
 export const emptyCaptureStaging: CaptureStagingSnapshot = Object.freeze({
   items: Object.freeze([]),
@@ -143,6 +144,29 @@ export function createCaptureStaging(
     publish(emptyCaptureStaging);
   }
   return {
+    isVisible: current,
+    restore(draft: CaptureDraftSnapshot) {
+      if (!draftOwner || !current() || draftSnapshot.items.length || editorText)
+        return false;
+      editorText = draft.editorText;
+      tripTarget = draft.tripTarget;
+      texts = draft.items.filter(
+        (item): item is StagedCaptureText => item.source === "magic_input",
+      );
+      pasted = draft.items.filter(
+        (item): item is StagedCapturePaste => item.source === "clipboard",
+      );
+      sequence = Math.max(0, ...draft.items.map((item) => item.stagingId));
+      publish({
+        items: draft.items.filter(
+          (item): item is StagedCaptureItem =>
+            item.source !== "magic_input" && item.source !== "clipboard",
+        ),
+        selecting: false,
+        error: null,
+      });
+      return true;
+    },
     getDraftSnapshot: () => (draftOwner && current() ? draftSnapshot : emptyCaptureDraft),
     resume(requestedOwner: CaptureDraftOwner, freshLease: () => boolean) {
       if (
@@ -322,9 +346,17 @@ export function createCaptureStaging(
         const added = items.length - snapshot.items.length;
         publish({ items, selecting: false, error: null });
         return { added, duplicates };
-      } catch {
+      } catch (error) {
         if (current() && request === epoch)
-          publish({ ...snapshot, selecting: false, error: "picker" });
+          publish({
+            ...snapshot,
+            selecting: false,
+            error:
+              error instanceof Error &&
+              error.message === "CAPTURE_CAMERA_PERMISSION_DENIED"
+                ? "camera_permission"
+                : "picker",
+          });
       }
     },
     remove(stagingId: number) {

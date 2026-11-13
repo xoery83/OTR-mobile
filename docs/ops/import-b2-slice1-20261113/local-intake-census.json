@@ -1,0 +1,5 @@
+{
+  "capture_submission_batches": 2,
+  "capture_submission_inputs": 6,
+  "scope": "Read-only local baseline; no Submit/Analyze/Save actions in Slice 1"
+}
