@@ -240,3 +240,41 @@ it("a sibling association receipt cannot hide an original unsettled operation", 
     }),
   ).toMatchObject([{ action: "linked", state: "saving" }]);
 });
+it("keeps authorized transport business facts separate from actual receipt clocks", () => {
+  const { snapshot, operation } = resultFixture();
+  snapshot.graph.itinerary_transport_endpoints.push(
+    {
+      event_id: "one",
+      trip_id: "trip",
+      role: "ORIGIN",
+      local_date: "2026-12-20",
+      local_time: "10:10",
+      authored_label: "LAX",
+    } as never,
+    {
+      event_id: "one",
+      trip_id: "trip",
+      role: "DESTINATION",
+      authored_label: "SFO",
+    } as never,
+  );
+  const [item] = projectUniversalV3Results(
+    snapshot,
+    [operation("a", "one", "RECONCILE_ITEM_DOCUMENTS")],
+    { a: "VERIFIED" },
+  );
+  expect(item.businessDate).toBe("2026-12-20");
+  expect(item.businessTime).toBe("10:10");
+  expect(item.place).toBe("LAX → SFO");
+  expect(item.recordedAt).toBe("2026-11-14T00:00:00Z");
+  snapshot.graph.itinerary_transport_endpoints.forEach((endpoint) => {
+    endpoint.trip_id = "other-trip";
+  });
+  expect(
+    projectUniversalV3Results(
+      snapshot,
+      [operation("a", "one", "RECONCILE_ITEM_DOCUMENTS")],
+      { a: "VERIFIED" },
+    )[0].businessDate,
+  ).toBeUndefined();
+});

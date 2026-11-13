@@ -234,6 +234,7 @@ function TripContent({
     viewMode?: string;
     view?: string;
     homeQaScenario?: string;
+    importJobId?: string;
   }>();
   const [guest, setGuest] = useState(false);
   const [dayTripFacts, setDayTripFacts] = useState<{
@@ -1529,7 +1530,7 @@ function TripContent({
       // Native Stack falls back to the route name when a custom title renders null.
       title: moveActive ? "" : headerTitle,
       headerTransparent: true,
-      headerShown: !dayActive || (!readingOnly && !moveActive),
+      headerShown: !!params.importJobId || !dayActive || (!readingOnly && !moveActive),
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: {
         backgroundColor:
@@ -1588,6 +1589,7 @@ function TripContent({
     });
   }, [
     navigation,
+    params.importJobId,
     today,
     headerTitle,
     styles.navTitle,

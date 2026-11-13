@@ -733,7 +733,7 @@ it("shows per-image controls only when the actual analysis route resolves to leg
   };
   const render = () => renderToStaticMarkup(createElement(CaptureProgress, props));
   const unresolved = render();
-  expect(unresolved).toContain("retained.jpg");
+  expect(unresolved).not.toContain("retained.jpg");
   expect(unresolved).not.toContain("Local photo controls");
   state.universalViews.at(-1).onLegacyPhotoReview(true);
   expect(render()).toContain("Local photo controls");

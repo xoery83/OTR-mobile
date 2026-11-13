@@ -110,6 +110,9 @@ export type V3SavedResult = {
   state: "complete" | "association" | "unknown" | "saving" | "failed" | "review";
   documentIds: string[];
   recordedAt?: string;
+  businessDate?: string;
+  businessTime?: string;
+  place?: string;
 };
 // A batch's original commands/receipts identify outcomes; a replanned candidate is not a saved object.
 export function projectUniversalV3Results(
@@ -138,6 +141,30 @@ export function projectUniversalV3Results(
   for (const [itemId, group] of groups) {
     const item = snapshot.graph.itinerary_events.find((item) => item.id === itemId);
     if (!item || !coreCanRead(snapshot.graph, snapshot.actor, "ITEM", item)) continue;
+    const origin = snapshot.graph.itinerary_transport_endpoints.find(
+      (endpoint) =>
+        endpoint.event_id === itemId &&
+        endpoint.trip_id === snapshot.actor.tripId &&
+        endpoint.role === "ORIGIN",
+    );
+    const destination = snapshot.graph.itinerary_transport_endpoints.find(
+      (endpoint) =>
+        endpoint.event_id === itemId &&
+        endpoint.trip_id === snapshot.actor.tripId &&
+        endpoint.role === "DESTINATION",
+    );
+    const text = (...values: unknown[]) =>
+      values.find((value): value is string => typeof value === "string" && !!value);
+    const route = [
+      text(origin?.authored_label, origin?.accepted_address, origin?.authored_text),
+      text(
+        destination?.authored_label,
+        destination?.accepted_address,
+        destination?.authored_text,
+      ),
+    ]
+      .filter(Boolean)
+      .join(" → ");
     const receipts = group.flatMap((row) => (row.receipt ? [row.receipt] : []));
     const successful = group.filter(
       (row) => row.receipt && ["APPLIED", "NO_CHANGE"].includes(row.receipt.outcome),
@@ -194,6 +221,9 @@ export function projectUniversalV3Results(
             ),
           ),
       recordedAt,
+      businessDate: text(item.start_local_date, origin?.local_date),
+      businessTime: text(item.start_local_time, origin?.local_time),
+      place: text(item.authored_label, item.accepted_address, item.authored_text, route),
     });
   }
   return results.sort(

@@ -99,7 +99,7 @@ export function CaptureComposer({
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets(),
-    { height, fontScale } = useWindowDimensions();
+    { height, width, fontScale } = useWindowDimensions();
   const [page, setPage] = useState<"composer" | "email" | "ai" | "context" | "preview">(
     "composer",
   );
@@ -259,8 +259,19 @@ export function CaptureComposer({
         <View
           style={[
             styles.sheet,
+            content != null && {
+              width: Math.min(width, 720),
+              alignSelf: "center",
+              borderTopLeftRadius: visual.radius.sheet,
+              borderTopRightRadius: visual.radius.sheet,
+            },
             {
-              maxHeight: Math.max(44, height - insets.top - 16),
+              maxHeight: Math.max(
+                44,
+                content != null
+                  ? Math.min(height * 0.9, height - insets.top - 16)
+                  : height - insets.top - 16,
+              ),
               paddingBottom: keyboardVisible ? 0 : insets.bottom,
             },
           ]}

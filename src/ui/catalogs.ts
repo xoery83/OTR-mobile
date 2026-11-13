@@ -1,4 +1,22 @@
 export const en = {
+  "capture.ux.finishedReview": "Processing finished · {count} need review",
+  "capture.ux.summary": "{created} created · {linked} linked · {updated} updated",
+  "capture.ux.submitted": "Import submitted",
+  "capture.ux.originalsSaved": "{count} originals saved on this device",
+  "capture.ux.recognitionReady": "Travel information recognized",
+  "capture.ux.savedResults": "Saved to your trip",
+  "capture.ux.recorded": "Recorded {time}",
+  "capture.ux.failed":
+    "Some saves could not be completed. Other saved results are retained.",
+  "capture.ux.saveDetails": "View save recovery details",
+  "capture.ux.recoveryHint":
+    "This is the original save operation. Its recorded rejection is retained; checking does not resend it. No automatic retry is available for a rejected operation.",
+  "capture.ux.originalOperation": "Original operation: {id}",
+  "capture.ux.reconcile": "Check original operation",
+  "capture.ux.history": "View processing history",
+  "capture.ux.hideHistory": "Hide processing history",
+  "capture.ux.resultsTitle": "Import results",
+
   "capture.activityStatus.analysis": "Analysis",
   "capture.activityStatus.activity": "Activity",
   "capture.activityStatus.local": "Originals saved on this device.",
@@ -3280,6 +3298,23 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.ux.finishedReview": "处理结束 · {count} 项待审核",
+  "capture.ux.summary": "新增 {created} 项 · 关联 {linked} 项 · 更新 {updated} 项",
+  "capture.ux.submitted": "已提交导入",
+  "capture.ux.originalsSaved": "{count} 份原件已保存到本机",
+  "capture.ux.recognitionReady": "旅行信息已识别",
+  "capture.ux.savedResults": "已保存到旅行",
+  "capture.ux.recorded": "记录于 {time}",
+  "capture.ux.failed": "部分保存未能完成，其他已保存结果仍然保留。",
+  "capture.ux.saveDetails": "查看保存恢复详情",
+  "capture.ux.recoveryHint":
+    "这是原保存操作，已保留正式拒绝记录；核对状态不会重新发送。已拒绝的操作无法自动重试。",
+  "capture.ux.originalOperation": "原操作：{id}",
+  "capture.ux.reconcile": "核对原操作",
+  "capture.ux.history": "查看处理历史",
+  "capture.ux.hideHistory": "收起处理历史",
+  "capture.ux.resultsTitle": "导入结果",
+
   "capture.activityStatus.analysis": "分析",
   "capture.activityStatus.activity": "处理进度",
   "capture.activityStatus.local": "原件已保存在本机。",

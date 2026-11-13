@@ -81,3 +81,28 @@ The last two commands should list the physical iPhone as an available and connec
 Keep standard Xcode simulator signing enabled (`CODE_SIGNING_ALLOWED=YES`, or omit the override). Do not build the main App with `CODE_SIGNING_ALLOWED=NO` and expect a later plain ad-hoc signature to restore simulator identity. The working original OTR App embeds its existing `application-identifier` in Mach-O `__TEXT,__entitlements`; `codesign -d --entitlements` alone does not inspect that section.
 
 Before a replacement preview, compare the generated `OTRMobile.app-Simulated.xcent` and executable identity against the preserved working App. Preserve the same application identifier and existing entitlements; do not add access groups or change the team to work around an unreadable account. A build/signature check is not a Keychain or Place Search Native PASS. Use normal App launch with retained account/data and keep the original App restore artifact.
+
+## Import UX primary simulator baseline 2026-11-14
+
+Owner selected a persistent **iPhone 16 Pro Simulator** as the main Import UX
+runtime; existing iPad remains an auxiliary regression device. Keep its sessions,
+SQLite, originals and queue. New simulator login uses the ordinary DEV Auth path;
+never copy those stores from another device. The iPhone16 DEV app is a full App,
+using standard Expo Router entry, real DEV transport/Provider wiring and all product
+modules/assets. A per-slice read-only verification entry, if explicitly approved,
+is a test seam rather than an alternative App/environment; remove it from the final
+normal build. Historical local Batch discovery is not cloud history synchronization.
+
+When embedding a Release JS bundle into an existing compatible full native App,
+copy the **contents of `export:embed --assets-dest` directly into the App bundle
+root**, not into another `assets` folder. React Native resolves the exported asset
+relative paths next to the JS bundle. An extra folder made Trip Cover JPEGs exist
+at the wrong path while the UI silently used its suitcase fallback. Check exported
+paths/bytes against the installed App before signing, then actually open the cover
+picker and Trip cover. This correction does not migrate user files or preferences.
+Retain the existing native identity and SecureStore checks above; a copy/hash check
+alone is not runtime UX acceptance.
+
+Current device/build evidence and limits are recorded in
+`docs/ops/import-ux-c1-20261114/README.md`; do not infer that all earlier product
+flows were re-tested merely because their code/assets are included.

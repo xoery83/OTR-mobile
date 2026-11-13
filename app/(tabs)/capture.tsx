@@ -1,3 +1,4 @@
+import { useIsFocused } from "expo-router";
 import {
   listCaptureTripPriors,
   readCaptureTripPrior,
@@ -79,6 +80,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
     }): void;
   }>();
   useUiLocale();
+  const focused = useIsFocused();
   const styles = useThemedStyles(createStyles);
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
@@ -239,6 +241,8 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
       return false;
     }
   };
+  // An unfocused transparent overlay must not leak stale admission copy behind its destination.
+  if (overlay && !focused) return <></>;
   return (
     <SafeAreaView
       edges={["bottom", "left", "right"]}

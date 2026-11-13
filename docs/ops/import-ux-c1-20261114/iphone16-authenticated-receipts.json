@@ -1,0 +1,54 @@
+{
+  "actor": "00000000-0000-4000-8000-000000000001",
+  "trip": "a6155477-182d-4f35-a5d3-10f3d85c1b36",
+  "originalsCopied": false,
+  "sqliteCopied": false,
+  "sessionCopied": false,
+  "method": "existing authenticated Core GET",
+  "receipts": [
+    {
+      "id": "4a311549-99e6-837f-92a6-59b1aff72645",
+      "hash": "29b91b1eda8754618d567135ced336de845d2aaf21a1448cae60ab2b746fbbf3",
+      "outcome": "APPLIED"
+    },
+    {
+      "id": "b7ed282d-c7ab-8252-9ecb-e6d97589107a",
+      "hash": "7841b3149a84a8392ea74f43e7137384c79fbc1e9e27324f1fd73b671e2404e7",
+      "outcome": "APPLIED"
+    },
+    {
+      "id": "fa11d6fe-2e3c-87af-ab7f-c896f684488c",
+      "hash": "6a4a5325d1ecfd87dbcfdde1b533b5f7087147c4b33e46e23d69acfdedd6f308",
+      "outcome": "APPLIED"
+    }
+  ],
+  "results": [
+    {
+      "itemId": "a845b83a-d37e-83de-a561-937579d52698",
+      "title": "Slice 3 Gallery visit",
+      "family": "P6",
+      "action": "created",
+      "state": "complete",
+      "documentIds": [
+        "0f745d34-1eeb-8b9b-b49d-22da03e0f40a"
+      ],
+      "recordedAt": "2026-11-13T11:25:59.889847Z",
+      "businessDate": "2026-12-16",
+      "place": "Synthetic gallery"
+    },
+    {
+      "itemId": "6f0027f2-9a12-8806-a650-e5008535b433",
+      "title": "AA1302",
+      "family": "P2",
+      "action": "linked",
+      "state": "complete",
+      "documentIds": [
+        "0f745d34-1eeb-8b9b-b49d-22da03e0f40a"
+      ],
+      "recordedAt": "2026-11-13T11:24:25.964017Z",
+      "businessDate": "2026-12-20",
+      "businessTime": "10:10:00"
+    }
+  ],
+  "hashesMatchIndependentPgReadback": true
+}

@@ -1,3 +1,32 @@
+## Import V3 UX-C1 / persistent iPhone baseline — 14 November 2026
+
+Slice4 `d2c4d0c` business/data accepted; UX rejected by Owner. UX-C1 candidate
+simplifies Processing/Results/Return only; UX-C2 and Slice5/6 remain paused.
+Result rows use actual authorized Item business fields, separate receipt timestamps,
+unique objects/actions and nonzero business-type counts. Done independent of Review.
+No Admission/Queue/Core/SQL changes or new DeepSeek/Analyze/Save.
+
+Primary persistent device: **OTR iPhone 16 Pro DEV**, UDID `89935253-B3B0-4851-ADCA-87AFED548C7E`,
+full App `com.xoery.otrmobile.uxc1iphone16`, normal DEV login; no copied sessions,
+SQLite, Keychain or originals. Standard entry, real DEV transport, DEV Batch confirm.
+Temporary Owner-approved read-only UI entry removed from final normal installed App.
+TripCover missing images fixed in bundle packaging (extra assets path);96 asset hashes
+verified and actual current/recommended cover photos visible. Preserve this device
+and original iPad; no uninstall/reset. Runbook documents asset-root requirement.
+
+Authenticated sequential GETs verified3 real FULL receipts and2 unique saved objects
+(Created1/Linked1), actual Details→Back→same Results and Done. These are saved-result
+subset checks, not cross-device local Batch recovery. iPhone has no old private originals;
+local Batch discovery remains local-only. Synthetic Processing labelled explicitly.
+Earlier iPhone17 layout evidence is auxiliary, not primary16 acceptance. iPad real
+Batch/receipt/original/navigation evidence retained. Full previous-module E2E and
+physical-device acceptance are not claimed. Normal cloud Trip summaries still report
+planning actions unavailable on this device; do not mistake full binary for all-flow PASS.
+
+60 targeted tests and UI guard PASS; whole-repo3 baseline type errors remain.
+Report: `docs/ops/import-ux-c1-20261114/README.md`. No merge/push.
+**STOP for Owner UX-C1 review. No UX-C2 or Slice5/6 implementation.**
+
 ## Import V3 B2 Slice 4 — Results & Return, 14 November 2026
 
 Owner accepted Slice 3 `72c020e`; Slice 4 local candidate adds receipt/accepted-Item

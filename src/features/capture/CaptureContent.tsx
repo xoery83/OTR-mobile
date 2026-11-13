@@ -105,6 +105,7 @@ export function CaptureContent({
   >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
+  const [resultsJob, setResultsJob] = useState<string>();
   const [resultDocument, setResultDocument] = useState<{
     tripId: string;
     itemId: string;
@@ -525,7 +526,13 @@ export function CaptureContent({
                   : "importDocuments.inbox",
               )
             : accountId && (activity || attempted || reopening || model)
-              ? t(activity ? "capture.progress.activeImports" : "capture.progress.title")
+              ? t(
+                  activity
+                    ? "capture.progress.activeImports"
+                    : model?.batch.jobId === resultsJob
+                      ? "capture.ux.resultsTitle"
+                      : "capture.progress.title",
+                )
               : undefined
         }
         contextLabel={
@@ -624,6 +631,10 @@ export function CaptureContent({
                         if (current()) onOpenAcceptedItem(target);
                       }
                     : undefined
+                }
+                onDone={hide}
+                onResultsReady={(ready) =>
+                  setResultsJob(ready ? model?.batch.jobId : undefined)
                 }
                 activityPositionsRef={positionsRef}
                 onReturnToTrip={onReturnToTrip}

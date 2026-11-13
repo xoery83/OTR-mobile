@@ -67,6 +67,7 @@ vi.mock("@/data/operations/universalV3Review", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   View: "div",
+  Pressable: "button",
   StyleSheet: { create: (v: unknown) => v },
   AppState: { currentState: "active", addEventListener: () => ({ remove: vi.fn() }) },
 }));
@@ -80,11 +81,14 @@ vi.mock("@/ui/controls", () => ({
 }));
 const model = {
   batch: {
+    createdAt: "2026-11-14T00:00:00Z",
+    accountId: "actor",
     batchId: "batch-a",
     jobId: "original-job",
     context: { tripPrior: { id: "original-trip" } },
   },
-} as CaptureJobReadModel;
+  inputs: [],
+} as unknown as CaptureJobReadModel;
 const execution = {
   state: "REVIEW_READY",
   taskId: "original-task",
@@ -191,6 +195,6 @@ it("return navigation uses the Batch Trip/job identity and ignores invalidated c
   expect(go).toHaveBeenCalledWith("day", "original-trip", "original-job");
   go.mockClear();
   h.current = false;
-  h.buttons.get(t("capture.results.home")).onPress();
+  h.buttons.get(t("capture.results.day")).onPress();
   expect(go).not.toHaveBeenCalled();
 });
