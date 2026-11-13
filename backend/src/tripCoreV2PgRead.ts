@@ -2,6 +2,7 @@ import { readReviewedP1Gate, readCoreGate, type CoreGateMode } from "./tripSusta
 import { isReviewedP1Gate, normalManualCapabilities } from "./tripNormalP1Policy";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import { authorizedTripVersionFromCollection } from "../../src/domain/trip/tripAuthorizedVersion";
 import {
   coreClosedCapabilities,
   coreCapabilitiesSchema,
@@ -307,6 +308,20 @@ export function createCorePgReader(
       localDocumentMetadata = false,
     ) {
       return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion, localDocumentMetadata)).collection;
+    },
+    async authorizedVersion(
+      actorAccountId: string,
+      tripId: string,
+      ordinaryOrderVersion?: 1,
+      localDocumentMetadata = false,
+    ) {
+      const { collection } = await snapshot(actorAccountId, tripId, ordinaryOrderVersion, localDocumentMetadata);
+      return authorizedTripVersionFromCollection(
+        collection,
+        actorAccountId,
+        tripId,
+        hash,
+      );
     },
     async item(actorAccountId: string, tripId: string, itemId: string) {
       coreUuid.parse(itemId);

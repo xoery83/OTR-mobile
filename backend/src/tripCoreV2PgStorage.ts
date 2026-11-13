@@ -388,30 +388,65 @@ export function withCorePgStorageTransaction<T>(
   });
 }
 
+// Internal only; these IDs are not an authorized private-channel message.
+export type CoreCommittedChange = Readonly<{
+  actorAccountId: string;
+  tripId: string;
+  operationId: string;
+}>;
 // The normal single-command port retains its public behavior and owns one transaction.
 export function createCorePgStorage(
   connection: CorePgConnection,
   hash: ImportHash,
   admission?: CorePgAdmission,
   gateMode?: CoreGateMode,
+  onCommitted?: (change: CoreCommittedChange) => void | Promise<void>,
 ): CoreCommandStorage {
   return {
     async withLockedCommand(scope, work) {
       coreUuid.parse(scope.actorAccountId);
       coreUuid.parse(scope.tripId);
       coreUuid.parse(scope.operationId);
-      return withCorePgStorageTransaction(
+      let applied = false;
+      const result = await withCorePgStorageTransaction(
         connection,
         hash,
         // Single-command rejection receipts keep their established catch/commit behavior.
         ({ lease }) =>
           createCorePgStorageOnLease(lease, hash, admission, gateMode).withLockedCommand(
             scope,
-            work,
+            onCommitted
+              ? (tx) =>
+                  work({
+                    ...tx,
+                    async commit(...args) {
+                      const id = await tx.commit(...args);
+                      if (args[1].outcome === "APPLIED") applied = true;
+                      return id;
+                    },
+                  })
+              : work,
           ),
         admission,
         gateMode,
       );
+      if (applied && onCommitted) {
+        // A hint must neither hold the single PG lease nor invalidate its durable receipt.
+        try {
+          void Promise.resolve(
+            onCommitted(
+              Object.freeze({
+                actorAccountId: scope.actorAccountId,
+                tripId: scope.tripId,
+                operationId: scope.operationId,
+              }),
+            ),
+          ).catch(() => undefined);
+        } catch {
+          // Existing lawful Pull recovers a lost hint.
+        }
+      }
+      return result;
     },
   };
 }

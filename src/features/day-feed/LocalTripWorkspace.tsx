@@ -1282,25 +1282,8 @@ function LocalTripContent({
               ...editorTrip,
               selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
             }}
-            guestLocal={guest === true}
-            readGuestRecoveryContext={() => {
-              if (
-                !selected ||
-                !alive.current ||
-                generation !== getAccountGeneration() ||
-                editorBusy.current
-              )
-                throw Error("GUEST_TRIP_EDIT_CONTEXT_CHANGED");
-              return JSON.parse(
-                JSON.stringify({
-                  tripId: selected.id,
-                  syncFormatVersion: selected.syncFormatVersion ?? null,
-                  metadataBase: metadataEditBase.current,
-                  deferredMetadataBase: deferredMetadataEditBase.current,
-                  deferredActionId: deferredMetadataActionId.current,
-                }),
-              ) as Json;
-            }}
+            guestLocal={false}
+            
             onHandoffFrozenChange={(frozen) => {
               editorHandoff.current = frozen;
               setEditorFrozen(frozen);
@@ -1317,107 +1300,23 @@ function LocalTripContent({
               setEditorSaving(saving);
             }}
             setup={setup?.context.tripId === editorTrip.id ? setup : null}
-            currencyAvailable={guest === false && !!selected}
-            coverAvailable={guest === false && !!selected}
+            currencyAvailable={false}
+            coverAvailable={false}
             metadataEditable={metadataEditable || !!remoteMetadataEditor}
             onSelectCover={selectCover}
             onSaveMetadata={async (before, after, cover, operationId, destinations) => {
-              if (!alive.current || generation !== getAccountGeneration())
+              if (!alive.current || generation !== getAccountGeneration() || !remoteMetadataEditor)
                 throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-              if (!selected && remoteMetadataEditor) {
-                const base = remoteMetadataEditor.snapshot;
-                await saveServerParentTripMetadata(remoteMetadataEditor.context, {
-                  formatVersion: 3,
-                  operationId,
-                  tripId: base.tripId,
-                  expectedMetadataRevision: base.metadataRevision,
-                  before: base.metadata,
-                  after: {
-                    ...after,
-                    destination: null,
-                    destinations: [
-                      ...(destinations?.after ?? base.metadata.destinations),
-                    ],
-                  },
-                });
-                if (!alive.current || generation !== getAccountGeneration()) return;
-                setCoverOpen(false);
-                void kickLocalTripSync()
-                  .then(() => load())
-                  .catch(() => undefined);
-                return;
-              }
-              if (!selected) throw Error("TRIP_METADATA_CONTEXT_CHANGED");
-              const repo = await readLocalTripRepository();
-              if (!alive.current || generation !== getAccountGeneration())
-                throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-              if (selected.syncFormatVersion === 2) {
-                const deferred = deferredMetadataEditBase.current;
-                const actionId = deferredMetadataActionId.current;
-                const base = metadataEditBase.current;
-                if (deferred && actionId) {
-                  await repo.deferMetadataUpdate({
-                    localActionVersion: 1,
-                    actionId,
-                    operationId,
-                    tripId: selected.id,
-                    before: deferred,
-                    after: {
-                      ...after,
-                      destination: null,
-                      destinations: [...(destinations?.after ?? deferred.destinations)],
-                    },
-                    ...(cover ? { cover } : {}),
-                  });
-                } else {
-                  if (!base || base.tripId !== selected.id)
-                    throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
-                  await repo.updateMetadata(
-                    {
-                      formatVersion: 3,
-                      operationId,
-                      tripId: selected.id,
-                      expectedMetadataRevision: base.metadataRevision,
-                      before: base.metadata,
-                      after: {
-                        ...after,
-                        destination: null,
-                        destinations: [
-                          ...(destinations?.after ?? base.metadata.destinations),
-                        ],
-                      },
-                    },
-                    cover,
-                  );
-                }
-              } else {
-                await repo.updateMetadata(
-                  { operationId, tripId: selected.id, before, after },
-                  cover,
-                  destinations,
-                );
-              }
-              void kickLocalTripSync().catch(() => undefined);
-              const committed = await repo.getTrip(selected.id);
-              if (alive.current && generation === getAccountGeneration()) {
-                // Fence an older focus read that started before this local commit.
-                request.current++;
-                setSelected({
-                  ...selected,
-                  ...after,
-                  ...(committed ? { destinations: committed.destinations } : {}),
-                  ...(cover
-                    ? {
-                        selectedCoverAssetId: isTripCoverAssetId(cover.after)
-                          ? cover.after
-                          : null,
-                        selectedCoverAssetIdRaw: cover.after,
-                      }
-                    : {}),
-                });
-                setCoverOpen(false);
-                // The committed value is visible now; normal focus reads refresh later.
-              }
+              const base = remoteMetadataEditor.snapshot;
+              await saveServerParentTripMetadata(remoteMetadataEditor.context, {
+                formatVersion: 3, operationId, tripId: base.tripId,
+                expectedMetadataRevision: base.metadataRevision,
+                before: base.metadata,
+                after: { ...after, destination: null, destinations: [...(destinations?.after ?? base.metadata.destinations)] },
+              });
+              if (!alive.current || generation !== getAccountGeneration()) return;
+              setCoverOpen(false);
+              void kickLocalTripSync().then(() => load()).catch(() => undefined);
             }}
           />
         ) : null}

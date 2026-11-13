@@ -18,6 +18,7 @@ import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
 import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
+import { coreReceiptSchema } from "../../src/domain/trip/tripCoreV2Receipt";
 const actor = randomUUID(),
   trip = randomUUID(),
   id = randomUUID(),
@@ -957,3 +958,170 @@ it("Slice 3 contract: ordinary Core PG rejects AUTO_SOURCE despite valid ordinar
     false,
   );
 });
+it("notifies a fresh APPLIED command only after COMMIT and lease release, with IDs only", async () => {
+  const f = await manualSparseFixture();
+  let held = false;
+  const notify = vi.fn((change) => {
+    expect(held).toBe(false);
+    expect(f.queries.at(-1)?.sql).toBe("COMMIT");
+    expect(Object.isFrozen(change)).toBe(true);
+  });
+  const storage = createCorePgStorage(
+    {
+      async withLease(work) {
+        held = true;
+        try {
+          return await work(f.lease);
+        } finally {
+          held = false;
+        }
+      },
+    },
+    hash,
+    undefined,
+    undefined,
+    notify,
+  );
+  const receipt = coreReceiptSchema.parse(f.receipt);
+  const result = await storage.withLockedCommand(
+    { actorAccountId: actor, tripId: trip, operationId: operation, baseVector: [] },
+    (tx) => tx.commit(null, receipt, JSON.stringify(command())),
+  );
+  expect(result).toEqual(expect.any(String));
+  expect(notify).toHaveBeenCalledExactlyOnceWith({
+    actorAccountId: actor,
+    tripId: trip,
+    operationId: operation,
+  });
+});
+
+it.each(["NO_CHANGE", "REJECTED", "CONFLICT"] as const)(
+  "does not notify a newly persisted %s receipt",
+  async (outcome) => {
+    const f = await manualSparseFixture(),
+      notify = vi.fn();
+    const { receiptSha256: _hash, ...prior } = f.receipt;
+    const body = {
+      ...prior,
+      outcome,
+      targetVector: [],
+      result: {
+        created: [],
+        changed: [],
+        retiredEdges: [],
+        replacement: null,
+        custodyGrantId: null,
+      },
+    };
+    const receipt = coreReceiptSchema.parse({
+      ...body,
+      receiptSha256: await coreHashValue("otr-trip-core-receipt-v2", body, hash),
+    });
+    const storage = createCorePgStorage(
+      { withLease: (work) => work(f.lease) },
+      hash,
+      undefined,
+      undefined,
+      notify,
+    );
+    await storage.withLockedCommand(
+      { actorAccountId: actor, tripId: trip, operationId: operation, baseVector: [] },
+      (tx) => tx.commit(null, receipt, JSON.stringify(command())),
+    );
+    expect(f.queries.at(-1)?.sql).toBe("COMMIT");
+    expect(notify).not.toHaveBeenCalled();
+  },
+);
+
+it("does not notify a replay that returns an existing APPLIED receipt", async () => {
+  const f = await manualSparseFixture(),
+    notify = vi.fn(),
+    query = f.lease.query;
+  f.lease.query = (sql, params) =>
+    sql.startsWith("SELECT id,body FROM public.trip_core_command_receipts")
+      ? Promise.resolve({ rows: [{ id: randomUUID(), body: f.receipt }] })
+      : query(sql, params);
+  const storage = createCorePgStorage(
+    { withLease: (work) => work(f.lease) },
+    hash,
+    undefined,
+    undefined,
+    notify,
+  );
+  const result = await executeCoreCommandV2(storage, actor, trip, command(), hash);
+  expect(result.projection === "FULL" ? result.receipt.outcome : result.outcome).toBe(
+    "APPLIED",
+  );
+  expect(notify).not.toHaveBeenCalled();
+  expect(f.queries.some((q) => q.sql.startsWith("INSERT"))).toBe(false);
+});
+
+it.each(["ROLLBACK", "COMMIT_UNKNOWN", "LEASE_RELEASE_UNKNOWN"])(
+  "does not notify before a confirmed transaction return: %s",
+  async (failure) => {
+    const f = await manualSparseFixture(),
+      notify = vi.fn(),
+      query = f.lease.query;
+    f.lease.query = async (sql, params) => {
+      if (failure === "COMMIT_UNKNOWN" && sql === "COMMIT") throw Error(failure);
+      return query(sql, params);
+    };
+    const storage = createCorePgStorage(
+      {
+        async withLease(work) {
+          const result = await work(f.lease);
+          if (failure === "LEASE_RELEASE_UNKNOWN") throw Error(failure);
+          return result;
+        },
+      },
+      hash,
+      undefined,
+      undefined,
+      notify,
+    );
+    await expect(
+      storage.withLockedCommand(
+        { actorAccountId: actor, tripId: trip, operationId: operation, baseVector: [] },
+        async (tx) => {
+          const result = await tx.commit(
+            null,
+            coreReceiptSchema.parse(f.receipt),
+            JSON.stringify(command()),
+          );
+          if (failure === "ROLLBACK") throw Error(failure);
+          return result;
+        },
+      ),
+    ).rejects.toThrow(failure);
+    expect(notify).not.toHaveBeenCalled();
+  },
+);
+
+it.each(["throw", "reject", "pending"])(
+  "observer %s cannot turn a committed mutation into failure or hold its response",
+  async (failure) => {
+    const f = await manualSparseFixture();
+    const notify = vi.fn(() => {
+      if (failure === "throw") throw Error("HINT_FAILED");
+      return failure === "reject"
+        ? Promise.reject(Error("HINT_FAILED"))
+        : new Promise<void>(() => {});
+    });
+    const storage = createCorePgStorage(
+      { withLease: (work) => work(f.lease) },
+      hash,
+      undefined,
+      undefined,
+      notify,
+    );
+    await expect(
+      storage.withLockedCommand(
+        { actorAccountId: actor, tripId: trip, operationId: operation, baseVector: [] },
+        (tx) =>
+          tx.commit(null, coreReceiptSchema.parse(f.receipt), JSON.stringify(command())),
+      ),
+    ).resolves.toEqual(expect.any(String));
+    expect(notify).toHaveBeenCalledOnce();
+    expect(f.queries.at(-1)?.sql).toBe("COMMIT");
+  },
+);

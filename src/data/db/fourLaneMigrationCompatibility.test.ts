@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
+import { isKnownGuestSqliteSchema } from "../auth/guestSqliteSchema";
 import { migrations } from "./migrations";
 import { runMigrations, type MigrationDatabase } from "./migrationRunner";
 import { serverParentMetadataConfirmationsSql } from "./migrations/serverParentMetadataConfirmations.candidate";
@@ -48,6 +49,9 @@ it.each(["fresh", "import78", "auth76"])("preserves both lane stores across %s u
     // Parent proof can now be server-only, without manufacturing a local Create.
     db.exec("INSERT INTO local_trip_metadata_confirmations VALUES('A','server-trip','remote-proof','SNAPSHOT',2,'{}','{}')");
     expect(db.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(await isKnownGuestSqliteSchema(adapter(),79)).toBe(true);
+    db.exec("UPDATE schema_migrations SET name='unknown' WHERE id=76");
+    expect(await isKnownGuestSqliteSchema(adapter(),79)).toBe(false);
     expect(() => db.exec("UPDATE local_trip_containers SET id='other'")).toThrow("TRIP_METADATA_PARENT_IDENTITY_IMMUTABLE");
   } finally { db.close(); rmSync(dir,{recursive:true,force:true}); }
 });

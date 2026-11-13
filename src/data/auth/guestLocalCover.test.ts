@@ -148,7 +148,7 @@ it("uses current-schema Guest repositories for photo/personal cover, retains IDs
   await workspace.trips.createTrip(input);
   expect(
     f.sql().prepare("SELECT MAX(id) AS version FROM schema_migrations").get(),
-  ).toEqual({ version: 75 });
+  ).toEqual({ version: 79 });
   const beforeQueue = f.sql().prepare("SELECT * FROM sync_operations ORDER BY id").all();
   const photo = await workspace.photos.addTripPhoto(
     input.tripId,
