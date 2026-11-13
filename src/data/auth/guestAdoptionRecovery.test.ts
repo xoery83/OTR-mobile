@@ -213,6 +213,18 @@ function preparation(sourceGuestLocalId: string): GuestAdoptionPreparation {
   };
 }
 
+it("finds only immutable PREPARED attempts after restart without marking publication", async () => {
+  const f = fixture(), p = preparation(f.scope.localId);
+  await f.open().prepare(p);
+  const reopened = f.open();
+  const pending = await reopened.inspectPreparedAttempts();
+  expect(pending.map((v) => v.preparation.adoptionId)).toEqual([p.adoptionId]);
+  expect(await reopened.inspectPublicationRequests()).toEqual([]);
+  expect(existsSync(f.path(p.adoptionId, "publish-requested"))).toBe(false);
+  await reopened.requestPublication(p.adoptionId, p.targetAccountId, pending[0].preparationSha256);
+  expect(await f.open().inspectPreparedAttempts()).toEqual([]);
+});
+
 it("retains exact unsaved Unicode draft and target through a real disk close/reopen without Session or business writes", async () => {
   const f = fixture(),
     input = preparation(f.scope.localId);
@@ -246,26 +258,28 @@ it("requires authoritative server status after durable publish intent, including
   expect(existsSync(f.path(input.adoptionId, "cancelled"))).toBe(false);
 });
 
-it("retains the publication hold across cold cancellation recovery until receipt and credential revocation are verified", async () => {
+it.each(["published-request", "prepared-staged", "prepared-unstaged"])("retains original cancellation proof across cold credential recovery: %s", async (mode) => {
   const f = fixture(), input = preparation(f.scope.localId), journal = f.open();
   const prepared = (await journal.prepare(input))!;
-  await journal.requestPublication(input.adoptionId, input.targetAccountId, prepared.preparationSha256);
+  if (mode === "published-request") await journal.requestPublication(input.adoptionId, input.targetAccountId, prepared.preparationSha256);
   const body = {
     contractVersion: 1, schemaId: "otr.auth.guest-adoption-receipt/1",
     adoptionId: input.adoptionId, sourceGuestLocalId: input.sourceGuestLocalId,
     targetAccountId: input.targetAccountId, inventorySha256: input.inventorySha256,
     receiptId: randomUUID(), grantId: randomUUID(), policyVersion: "unit",
     recordedAt: new Date().toISOString(), outcome: "CANCELLED",
-    preparationSha256: prepared.preparationSha256, planSha256: "b".repeat(64),
+    preparationSha256: mode === "prepared-unstaged" ? null : prepared.preparationSha256,
+    planSha256: mode === "prepared-unstaged" ? null : "b".repeat(64),
   };
   const sign = (value: typeof body) => ({ ...value, receiptSha256: hash("otr-auth-guest-adoption-receipt-v1\n" + canonical(value)) });
-  await expect(journal.recordServerCancellation(input.adoptionId, input.targetAccountId, sign({ ...body, preparationSha256: "c".repeat(64) }))).rejects.toThrow("CHECKPOINT_MISMATCH");
+  await expect(journal.recordServerCancellation(input.adoptionId, input.targetAccountId, sign({ ...body, preparationSha256: "c".repeat(64), planSha256: "b".repeat(64) }))).rejects.toThrow("CHECKPOINT_MISMATCH");
   await expect(journal.recordServerCancellation(input.adoptionId, input.targetAccountId, { ...sign(body), receiptSha256: "d".repeat(64) })).rejects.toThrow();
   await journal.recordServerCancellation(input.adoptionId, input.targetAccountId, sign(body));
-  expect((await f.open().inspectPublicationRequests())).toHaveLength(1);
+  expect((await f.open().inspectPublicationRequests())).toHaveLength(mode === "published-request" ? 1 : 0);
+  expect(existsSync(f.path(input.adoptionId, "publish-requested"))).toBe(mode === "published-request");
   vi.mocked(guestVerificationSession.readForLocalCache).mockResolvedValue({ status: "REVOCATION_PENDING" });
   await expect(f.open().finishServerCancellation(input.adoptionId, input.targetAccountId)).rejects.toThrow("REVOCATION_PENDING");
-  expect((await f.open().read(input.adoptionId))?.nextAction).toBe("QUERY_SERVER_STATUS");
+  expect((await f.open().read(input.adoptionId))?.nextAction).toBe(mode === "published-request" ? "QUERY_SERVER_STATUS" : "RESUME_PREFLIGHT");
   vi.mocked(guestVerificationSession.readForLocalCache).mockResolvedValue({ status: "REVOKED" });
   await f.open().finishServerCancellation(input.adoptionId, input.targetAccountId);
   expect(await f.open().inspectPublicationRequests()).toEqual([]);

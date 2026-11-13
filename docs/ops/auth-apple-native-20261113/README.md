@@ -24,6 +24,22 @@ is supplied. Existing Google configuration and QA behavior are preserved.
 
 ## Authentication and names
 
+For the isolated local DEV build, use the standard ignored Auth-worktree
+`.env.local` for the existing public DEV URL/key/transport and
+`EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED=true`. Do not change an existing QA
+worktree's environment. Shell-only values were insufficient in the observed
+Xcode/Metro pipeline. The repaired native build was accepted for installation
+only after its actual pre-Hermes JavaScript showed both DEV and Adoption
+conditions true in AccountManagementScreen's existing confirmation handoff.
+The canonical Metro config is retained. EAS QA configuration contains the
+equivalent values, but an EAS cloud build has not been run.
+
+The Guest's new native App container has independent SQLite evidence of the
+requested Trip and P1 title. Its Trip `accepted_at` and Item reconciled revision
+were null. The QA SQLite snapshot was used only for read-only verification in
+a private temporary directory, never to populate another App or implement
+Adoption. See `GUEST_LOCAL_SQLITE_READBACK.json`.
+
 Native Apple receives a SHA-256 digest of a fresh cryptographically random nonce.
 The existing Supabase ID-token exchange receives the original nonce. Native
 tokens and provider diagnostics are never logged. Results remain provisional
@@ -49,9 +65,7 @@ No client-side email/name matching or merge is performed.
 New-Team Release build and strict/deep signature verification passed. The
 independent App was installed on the paired iPhone 16 Pro after confirming no
 existing `art.xoery.otr` installation. First launch succeeded and the exact PID
-remained alive. The Owner has been asked to complete the first normal Apple QA
-authorization with Hide My Email. The Owner subsequently confirmed successful
-Apple login and choosing Hide My Email. An exact-process cold restart changed
+remained alive. The Owner confirmed successful first Apple login and choosing Hide My Email. An exact-process cold restart changed
 PID 74426 to 74439; the Owner confirmed the same Account remained signed in
 without another Apple authorization. These are Owner-observed physical results.
 See `SIGNED_DEVICE_BUILD.json` and `COLD_SESSION_RESTORE.json`.
@@ -64,8 +78,9 @@ temporary `.xcode.env.local` fixed bundling. The final build reused one Auth
 source/dependency tree and passed without altering an existing QA native project.
 
 Local tests, prebuild, signed build and first launch are software/device evidence.
-Actual Apple token validation, relay email, user cancellation, Guest Adoption, two distinct
-Apple Accounts, logout and physical cold restore need their own receipts.
+Owner-observed first/repeat login, Hide My Email, cancellation, logout and cold
+Session recovery have separate receipts. Nonempty Guest Adoption, two distinct
+Apple Accounts and explicit existing-Account linking remain incomplete.
 
 Supabase documents automatic linking for matching verified emails. The public
 settings response does not establish its current policy or manual-linking
@@ -78,3 +93,23 @@ Sources
 - https://docs.expo.dev/versions/v57.0.0/sdk/apple-authentication/
 - https://supabase.com/docs/guides/auth/social-sign-in/auth-apple
 - https://supabase.com/docs/guides/auth/auth-identity-linking
+
+## Current Guest continuation
+
+Root2 independently read the original Attempt's grant/stage/terminal Receipt counts
+as zero and the DEV policy disabled (xmin 33417). See
+`HOSTED_READ_ONLY_DIAGNOSIS.json`. Existing close helper and runtime config match
+current pins. A new finite operational window and independent timer still need
+precise approval and actual verification before any positive activation.
+
+AgentDeviceRunner now reads and navigates the isolated iPad App using its original
+Runner Team, after Owner trusted the developer certificate. It independently saw
+the original Trip and P1 in Day Feed. No login or Adoption was submitted.
+
+Cold re-entry showed the PREPARED attempt was omitted by publication-only recovery.
+The minimal correction restores its verified original binding/custody without
+sending positive requests on mount. Publish still checks immutable preparation;
+Cancel uses the original journal and persists formal server proof before any
+refresh-aware credential revocation. Recorded cancellation UNKNOWN can resume
+its negative cleanup on cold entry. No synthetic publication marker is created.
+Focused tests and independent Review pass; signed-device verification follows.

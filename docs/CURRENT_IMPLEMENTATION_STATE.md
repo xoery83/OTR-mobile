@@ -25,8 +25,22 @@ the Guest Trip/P1 normally and confirmed cold recovery. Apple Adoption's first
 failure is the missing DEV client `EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED=true`
 build opt-in, not a Hosted receipt. The scoped build-config repair and private
 Apple-name projection from remembered-Account lists are ready for device update.
+Build `96762acc` now has the actual packaged DEV Adoption guard independently
+verified true using the standard ignored Auth-worktree public DEV environment.
+The in-place update retained the Guest container. Owner reached confirmation and
+submitted once, then received generic adoptionPending. Original attempt
+`7da7240f…` has a local PREPARED checkpoint, no local publication marker observed;
+Root2 independent read-only PG confirms policy disabled (xmin 33417), with
+zero original grants, stages and terminal receipts. Existing close helper and
+current runtime config pins match; a new finite timer/window is not yet
+authorized or verified. AgentDeviceRunner is restored with its original Team
+and can read/operate the isolated iPad App, including the original Day Feed P1.
+PREPARED cold-reentry now has a minimal local recovery candidate (69 focused
+tests and independent Review pass); signed-device recovery remains pending.
+Preserve this attempt, avoid retries
+or new IDs, and use `ADOPTION_RESUME_CURSOR.json` in the Apple ops packet.
 Existing GuestQA/native identities and data are preserved. Non-empty Guest
-Adoption and dual-Apple-user isolation remain NOT_RUN.
+Adoption remains incomplete; dual-Apple-user isolation remains NOT_RUN.
 Supabase automatic same-email linking policy needs acceptance verification.
 New-bundle Google is unavailable until its own iOS Client exists.
 Evidence and continuation are in `docs/ops/auth-apple-native-20261113/`.

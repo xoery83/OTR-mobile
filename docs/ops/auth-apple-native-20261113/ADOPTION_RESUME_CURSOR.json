@@ -1,0 +1,24 @@
+{
+  "schemaId": "otr.auth.guest-adoption-recovery/3",
+  "sourceGuestLocalId": "fc2fc618-d4b0-4dc1-8ed4-586226fd3528",
+  "adoptionId": "7da7240f-4019-4a60-b3d7-350525ecddef",
+  "targetAccountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "checkpoint": "PREPARED",
+  "tripIds": [
+    "faa0ea2b-9729-49b6-8ab7-db924df05e4d"
+  ],
+  "inventorySha256": "33dcae3e768ddae6ce37c19dc026b67dbdfaf02199516c3bfbafd99e9c5a513c",
+  "publishRequestedObserved": false,
+  "status": "PREPARED_HOSTED_POLICY_CLOSED_NO_SERVER_COMMIT",
+  "requestId": "AUTH-APPLE-ADOPTION-DIAG-20261113-01",
+  "ownerInstruction": "No further routine clicks needed; Auth AgentDeviceRunner owns local UI. Apple system authorization may require Owner.",
+  "serverState": {
+    "observedBy": "ROOT2_READ_ONLY_PG",
+    "policyEnabled": false,
+    "policyXmin": "33417",
+    "grants": 0,
+    "sealedStages": 0,
+    "terminalReceipts": 0
+  },
+  "nextAction": "Prepare a new exact scoped Hosted QA window; preserve original attempt; no retries until effective authorization and closure are verified."
+}
