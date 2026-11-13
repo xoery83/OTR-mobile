@@ -37,6 +37,8 @@ import {
   type PersonCloudCreateReceipt,
 } from "@/domain/trip/tripPersonCloudCreate";
 const parentRead = vi.hoisted(() => vi.fn());
+const ensureActor = vi.hoisted(() => vi.fn(async () => undefined));
+vi.mock("../sync/ledgerReportingCoordinator", () => ({ ensureJourneyLedgerActor: ensureActor }));
 vi.mock("../sync/tripCreateTransport", () => ({
   createTripCreateTransport: () => ({ parentReceipt: parentRead }),
 }));
@@ -53,6 +55,7 @@ afterEach(() => {
   vi.mocked(requireAdoptedUserId).mockReset();
   vi.mocked(readInitializedDatabase).mockReset();
   parentRead.mockReset();
+  ensureActor.mockReset().mockResolvedValue(undefined);
   handles.splice(0).forEach((db) => db.close());
   folders.splice(0).forEach((p) => rmSync(p, { recursive: true }));
 });
@@ -301,10 +304,27 @@ it("qualifies only the original Owner through an owning parent read without crea
     context: f.scope,
     ownerPersonId: f.parent.ownerPersonId,
   });
+  expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
+  expect(ensureActor.mock.invocationCallOrder[0]).toBeLessThan(parentRead.mock.invocationCallOrder[0]);
   expect(parentRead).toHaveBeenCalledWith(f.scope);
   expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
   expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
   expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+});
+
+it.each(["failed", "account-switch"])("stops parent qualification when roster hydration is %s", async (kind) => {
+  const f = await serverParentFixture();
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  parentRead.mockResolvedValue(f.parent);
+  ensureActor.mockImplementation(async () => {
+    if (kind === "failed") throw Error("ROSTER_UNAVAILABLE");
+    f.switchAccount();
+  });
+  await expect(readServerParentPeopleContext(f.scope)).rejects.toThrow();
+  expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
+  expect(parentRead).not.toHaveBeenCalled();
+  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
 });
 
 it.each(["missing", "closed", "generation"] as const)(

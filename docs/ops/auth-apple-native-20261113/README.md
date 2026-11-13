@@ -79,7 +79,7 @@ source/dependency tree and passed without altering an existing QA native project
 
 Local tests, prebuild, signed build and first launch are software/device evidence.
 Owner-observed first/repeat login, Hide My Email, cancellation, logout and cold
-Session recovery have separate receipts. Nonempty Guest Adoption, two distinct
+Session recovery have separate receipts. Nonempty Guest publication/cold readback is now verified below. Two distinct
 Apple Accounts and explicit existing-Account linking remain incomplete.
 
 Supabase documents automatic linking for matching verified emails. The public
@@ -116,7 +116,8 @@ Repair `237e4c66` passed 69 focused tests and independent Review. Its signed
 iPad update restored the normal Account page to the original target without
 new Apple authorization; prepared checkpoint bytes remained identical. See
 `PREPARED_COLD_DEVICE_READBACK.json`. No Adoption was resubmitted. The exact
-finite Hosted window remains an unactivated candidate under `hosted-window-20261114/`.
+finite Hosted window was subsequently approved, used once and closed below;
+its immutable approval packet is under `hosted-window-20261114/`.
 
 ## Exact Hosted recovery result
 

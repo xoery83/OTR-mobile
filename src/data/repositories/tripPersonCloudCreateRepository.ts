@@ -92,6 +92,9 @@ export async function readServerParentPeopleContext(origin: AccountRequestContex
     return scope.accountId;
   };
   await account();
+  const { ensureJourneyLedgerActor } = await import("../sync/ledgerReportingCoordinator");
+  await ensureJourneyLedgerActor(scope.tripId, scope);
+  await account();
   const { createTripCreateTransport } = await import("../sync/tripCreateTransport");
   const transport = createTripCreateTransport(account);
   if (!transport.parentReceipt) throw Error("PERSON_PARENT_READER_CLOSED");

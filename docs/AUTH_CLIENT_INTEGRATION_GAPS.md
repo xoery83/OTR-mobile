@@ -57,3 +57,24 @@ files. No new device build or Realtime subscription is required for this handoff
   auth-c04-20261103/after-fix-fresh-invite-qa/actual-1bf81/. Member Read is blocked
   by the exact Core read qualification above; revoke and Native cold restore
   remain NOT_RUN. Further protected SQL requires its own fixed approval.
+
+## Apple adopted-Trip actual readback — 14 November 2026
+
+- Software `237e4c66`, evidence `1c8d9091`: one original nonempty Guest/P1
+  Adoption formally PUBLISHED, independently verified Owner/Person/P1, same-App
+  Account/Trip/P1 cold readback. Exact Hosted window closed and baseline restored.
+- Native observed `remoteSelected` summary/edit-disabled and incomplete-time
+  fallback. “0 named” does not prove a missing member when Display Name is empty.
+  `restoreGuestAdoption` installs Discovery/Core, not a fabricated local Trip or
+  Ledger capability. Native identified normal `ensureJourneyLedgerActor` /
+  `revalidateJourneyLedger` as owning Actor/roster hydration, and approved Auth's
+  temporary single-function Writer handoff for `readServerParentPeopleContext`.
+- Minimal local consumer patch hydrates through that existing coordinator and
+  rechecks opening Account before unchanged ParentReceipt/Core/Creator checks.
+  It does not enable the Parent Reader or create a Person/queue. Actual page
+  still has no production caller passing `serverParentPeopleEnabled` (default
+  false); Native owns that shared composition. Metadata edit requires confirmed
+  server-parent Metadata consumption; no local `serverId` or permission is guessed.
+- Return trigger: Native supplies the approved composition/Reader capability,
+  then Auth verifies the same formal Account/Trip through normal read-only UI.
+  No replay of original Adoption or new Hosted write window is needed.
