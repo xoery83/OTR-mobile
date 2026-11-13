@@ -1,3 +1,21 @@
+## Import V3 B2 Slice 4 — Results & Return, 14 November 2026
+
+Owner accepted Slice 3 `72c020e`; Slice 4 local candidate adds receipt/accepted-Item
+based Created/Linked/Updated groups, separate Review/ABSTAIN/failure/association/
+UNKNOWN presentation and normal Details/original/Day/Trip return. Exact reconciled
+operation IDs are read through existing owner; no Queue/Save/Admission changes.
+Full App simulator reuses Slice 3 synthetic-Provider Batches and real DEV receipts:
+Created 1 + Linked 1 + Review 1 + ABSTAIN 1; Details/original/Day and same-job return
+verified. In-place cold process recovery preserves same results. Independent PG:
+4 Items,2 Documents,5 links,12 receipts unchanged; all31 local receipt hashes and
+synthetic dispatch counts unchanged. Zero new DeepSeek/Analyze/Save/SQL/deployment.
+101 targeted tests and UI guard pass; existing three whole-repo type errors remain.
+Physical iPad, new real Provider E2E and pixel-perfect process-death scroll recovery
+are not claimed. Normal readback remains slow; checking is shown until facts arrive.
+Report: `docs/ops/import-b2-slice4-20261114/README.md`. No merge/push.
+
+**STOP for Owner Slice 4 review. Slice 5/6 remain unstarted.**
+
 ## Import V3 B2 Slice 3 — finite admission delivered, 14 November 2026
 
 Owner accepted Slice 2 `e87cb6f` and explicitly approved finite Source-free IMPORT

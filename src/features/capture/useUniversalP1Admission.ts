@@ -7,7 +7,7 @@ import type { UniversalItemSourceReview } from "@/domain/trip/universalP1SourceR
 export type P1AdmissionStatus =
   "SYNC_PENDING" | "SERVER_ACCEPTED" | "OWNING_ADMISSION_PENDING" | "UNAVAILABLE";
 export type OpenAcceptedImportItem = (
-  target: Readonly<{ tripId: string; itemId: string }>,
+  target: Readonly<{ tripId: string; itemId: string; family?: string; jobId?: string }>,
 ) => void;
 export type P1AdmissionActions = {
   enabled: boolean;

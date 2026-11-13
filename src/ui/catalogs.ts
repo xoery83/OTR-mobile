@@ -271,32 +271,63 @@ export const en = {
   "capture.ai.v3.formatUnavailable":
     "This file’s contents do not match a supported format. Choose a TXT, PDF, PNG, JPEG, WebP or static GIF original.",
   "capture.ai.v3.needsAction": "Choose Analyze to process your saved materials.",
+  "capture.results.group": "{label} · {count}",
+  "capture.results.reviewCount": "Needs Review · {count}",
+  "capture.results.created": "Created",
+  "capture.results.linked": "Linked",
+  "capture.results.updated": "Updated",
+  "capture.results.noNew": "No saved items to show yet.",
+  "capture.results.notCreated": "Not created · {count}. Originals retained.",
+  "capture.results.failed": "A save operation failed. Open Review to inspect it.",
+  "capture.results.review": "Needs Review",
+  "capture.results.unknown":
+    "Outcome not yet confirmed. The original operation is being checked.",
+  "capture.results.association": "Item saved · Document association pending",
+  "capture.results.saving": "Saving · awaiting the original receipt",
+  "capture.results.complete": "Saved",
+  "capture.results.pendingItem": "{title} · {state}",
+  "capture.results.document": "Document · {name}",
+  "capture.results.back": "Back to Results",
+  "capture.results.day": "Open Day Feed",
+  "capture.results.home": "Return to Trip Home",
+  "capture.results.item": "Trip Item",
   "capture.ai.v3.notSaved": "Additional extracted details, not saved: {details}",
   "capture.ai.v3.flightSparse":
     "Only the flight number and departure date can be saved with the current flight capability. Other flight details remain in Review.",
   "capture.ai.v3.documents": "Source documents: {count}",
-  "capture.admission.confirmationHint": "Confirm this batch once to save eligible suggestions. Ambiguities remain in Review.",
+  "capture.admission.confirmationHint":
+    "Confirm this batch once to save eligible suggestions. Ambiguities remain in Review.",
   "capture.admission.confirmBatch": "Confirm batch save",
   "capture.admission.needsReview": "Needs your review",
-  "capture.admission.reviewHint": "Some suggestions need a decision about identity or missing or conflicting facts. Other eligible suggestions can continue.",
+  "capture.admission.reviewHint":
+    "Some suggestions need a decision about identity or missing or conflicting facts. Other eligible suggestions can continue.",
   "capture.admission.openReview": "Review decisions",
-  "capture.admission.abstain": "Some documents did not contain enough travel information to create an item.",
+  "capture.admission.abstain":
+    "Some documents did not contain enough travel information to create an item.",
   "capture.admission.reviewHeading": "Needs your decision · {count}",
-  "capture.admission.unavailable": "Could not verify the current state. Return to Activity to check the original request; do not submit it again.",
-  "capture.admission.missing": "Required travel information is missing. Check the source before continuing.",
-  "capture.admission.ambiguous": "This may refer to an existing item. Choose whether to create or link.",
-  "capture.admission.conflict": "The information differs from an existing item or another source. Existing fields will not be overwritten.",
-  "capture.admission.unsupported": "Some information cannot yet be saved by the current item contract.",
-  "capture.admission.resolved": "Decision retained. Return to Activity for the batch save confirmation.",
+  "capture.admission.unavailable":
+    "Could not verify the current state. Return to Activity to check the original request; do not submit it again.",
+  "capture.admission.missing":
+    "Required travel information is missing. Check the source before continuing.",
+  "capture.admission.ambiguous":
+    "This may refer to an existing item. Choose whether to create or link.",
+  "capture.admission.conflict":
+    "The information differs from an existing item or another source. Existing fields will not be overwritten.",
+  "capture.admission.unsupported":
+    "Some information cannot yet be saved by the current item contract.",
+  "capture.admission.resolved":
+    "Decision retained. Return to Activity for the batch save confirmation.",
   "capture.admission.source": "Source {index}",
   "capture.admission.textSource": "Submitted text",
   "capture.admission.sourceNote": "Check the original document before choosing.",
   "capture.admission.new": "Create a separate item",
   "capture.admission.link": "Link to {title}",
   "capture.admission.willCreate": "Creates a new item and links these documents.",
-  "capture.admission.willLink": "Links documents only. Existing item fields stay unchanged.",
+  "capture.admission.willLink":
+    "Links documents only. Existing item fields stay unchanged.",
   "capture.admission.resolve": "Use this decision",
-  "capture.admission.manualRequired": "Missing facts can be entered in the normal item form, then this document can be linked. No missing facts will be invented.",
+  "capture.admission.manualRequired":
+    "Missing facts can be entered in the normal item form, then this document can be linked. No missing facts will be invented.",
   "capture.admission.title": "Title",
   "capture.admission.date": "Start date (YYYY-MM-DD)",
 
@@ -3484,18 +3515,40 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.v3.formatUnavailable":
     "文件内容与支持的格式不符。请选择 TXT、PDF、PNG、JPEG、WebP 或静态 GIF 原文件。",
   "capture.ai.v3.needsAction": "点击分析，处理已保存的材料。",
+  "capture.results.group": "{label} · {count}",
+  "capture.results.reviewCount": "需要审核 · {count} 项",
+  "capture.results.created": "已新建",
+  "capture.results.linked": "已关联",
+  "capture.results.updated": "已更新",
+  "capture.results.noNew": "暂时没有可展示的已保存条目。",
+  "capture.results.notCreated": "未创建 · {count} 个候选，原件已保留。",
+  "capture.results.failed": "一项保存操作失败，请进入审核查看原操作。",
+  "capture.results.review": "需要审核",
+  "capture.results.unknown": "结果尚未确定，正在核对原操作。",
+  "capture.results.association": "条目已保存，资料关联待完成",
+  "capture.results.saving": "正在保存，等待原操作回执",
+  "capture.results.complete": "已保存",
+  "capture.results.pendingItem": "{title} · {state}",
+  "capture.results.document": "资料 · {name}",
+  "capture.results.back": "返回导入结果",
+  "capture.results.day": "打开每日行程",
+  "capture.results.home": "返回旅行首页",
+  "capture.results.item": "旅行条目",
   "capture.ai.v3.notSaved": "以下识别信息暂不保存：{details}",
   "capture.ai.v3.flightSparse":
     "当前航班能力仅能保存航班号和出发日期，其他航班信息保留在审核结果中。",
   "capture.ai.v3.documents": "来源文件：{count} 份",
-  "capture.admission.confirmationHint": "确认此批次一次即可保存合格建议，有歧义的内容仍需审核。",
+  "capture.admission.confirmationHint":
+    "确认此批次一次即可保存合格建议，有歧义的内容仍需审核。",
   "capture.admission.confirmBatch": "确认保存此批次",
   "capture.admission.needsReview": "需要你审核",
-  "capture.admission.reviewHint": "部分建议存在身份歧义、缺失事实或信息冲突，需要你决定。其他合格建议可继续处理。",
+  "capture.admission.reviewHint":
+    "部分建议存在身份歧义、缺失事实或信息冲突，需要你决定。其他合格建议可继续处理。",
   "capture.admission.openReview": "处理待审核事项",
   "capture.admission.abstain": "部分文件没有足够的旅行信息，未创建条目。",
   "capture.admission.reviewHeading": "需要你决定 · {count} 项",
-  "capture.admission.unavailable": "暂时无法核实状态。请返回处理进度核对原请求，不要重复提交。",
+  "capture.admission.unavailable":
+    "暂时无法核实状态。请返回处理进度核对原请求，不要重复提交。",
   "capture.admission.missing": "缺少必要的旅行信息，请核对来源后继续。",
   "capture.admission.ambiguous": "这可能是已有条目，请决定新建还是关联。",
   "capture.admission.conflict": "信息与已有条目或其他来源冲突，不会覆盖已有字段。",
@@ -3509,7 +3562,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.admission.willCreate": "将新建条目并关联这些文件。",
   "capture.admission.willLink": "仅关联文件，不修改已有条目字段。",
   "capture.admission.resolve": "采用此选择",
-  "capture.admission.manualRequired": "可在正常条目表单中补充事实后，再关联此文件。不会编造缺失信息。",
+  "capture.admission.manualRequired":
+    "可在正常条目表单中补充事实后，再关联此文件。不会编造缺失信息。",
   "capture.admission.title": "标题",
   "capture.admission.date": "开始日期（YYYY-MM-DD）",
 

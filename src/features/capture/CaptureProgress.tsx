@@ -12,7 +12,7 @@ import {
   type UniversalPhotoRelevanceCopy,
 } from "./UniversalPhotoRelevanceRow";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { lazy, Suspense, useCallback, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import { UiButton, UiText } from "@/ui/controls";
@@ -44,6 +44,9 @@ export function CaptureProgress({
   onNewImport,
   onOpenAcceptedItem,
   onOpenReview,
+  onOpenDocument,
+  onReturnToTrip,
+  activityPositionsRef,
   isCurrent,
   photoRelevanceCopy,
 }: {
@@ -61,6 +64,9 @@ export function CaptureProgress({
   onNewImport: () => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   onOpenReview?(jobId: string): void;
+  onOpenDocument?(itemId: string, documentId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  activityPositionsRef?: { current: Record<string, number> };
   isCurrent?: () => boolean;
   photoRelevanceCopy?: UniversalPhotoRelevanceCopy;
 }) {
@@ -80,6 +86,15 @@ export function CaptureProgress({
   const qaPreparing = useRef(false);
   const scroll = useRef<ScrollView>(null);
   const position = useRef({ y: 0, height: 0, contentHeight: 0 });
+  const restoring = useRef(false);
+  const positionKey = model?.batch.jobId;
+  useLayoutEffect(() => {
+    position.current.y =
+      positionKey && activityPositionsRef
+        ? (activityPositionsRef.current[positionKey] ?? 0)
+        : 0;
+    restoring.current = position.current.y > 0;
+  }, [positionKey, activityPositionsRef]);
   const page = (direction: number) => {
     const p = position.current;
     p.y = Math.max(
@@ -109,9 +124,27 @@ export function CaptureProgress({
       }}
       onContentSizeChange={(_width, height) => {
         position.current.contentHeight = height;
+        if (restoring.current) {
+          scroll.current?.scrollTo({
+            y: Math.min(
+              position.current.y,
+              Math.max(0, height - position.current.height),
+            ),
+            animated: false,
+          });
+          if (height >= position.current.y + position.current.height)
+            restoring.current = false;
+        }
+      }}
+      onScrollBeginDrag={() => {
+        restoring.current = false;
       }}
       onScroll={({ nativeEvent }) => {
-        position.current.y = nativeEvent.contentOffset.y;
+        if (!restoring.current) {
+          position.current.y = nativeEvent.contentOffset.y;
+          if (positionKey && activityPositionsRef)
+            activityPositionsRef.current[positionKey] = position.current.y;
+        }
       }}
       scrollEventThrottle={16}
       keyboardShouldPersistTaps="handled"
@@ -190,6 +223,9 @@ export function CaptureProgress({
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
                 onOpenReview={onOpenReview}
+                onOpenDocument={onOpenDocument}
+                onReturnToTrip={onReturnToTrip}
+                processingDetails={detailsOpen}
                 key={universalScope}
                 onLegacyPhotoReview={reportLegacyPhotoReview}
                 model={model}

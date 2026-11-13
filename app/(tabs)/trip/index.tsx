@@ -4,13 +4,21 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { TripScreen } from "@/features/day-feed/TripScreen";
+import { UiButton } from "@/ui/controls";
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { TripSearchEntry } from "@/features/trip-search/TripSearchEntry";
 import { NavigationContentFrame } from "@/components/navigationChrome";
 export default function TripRoute() {
-  const params = useLocalSearchParams<{ tripId?: string; view?: string }>();
+  useUiLocale();
+  const params = useLocalSearchParams<{
+    tripId?: string;
+    view?: string;
+    importJobId?: string;
+  }>();
   const selectedTrip =
     !!params.tripId && !["trips", "create"].includes(params.view ?? "");
   const home = selectedTrip && params.view !== "day";
@@ -38,6 +46,18 @@ export default function TripRoute() {
         />
       ) : null}
       <NavigationContentFrame underlapHeader={home || day}>
+        {params.importJobId ? (
+          <UiButton
+            variant="text"
+            label={t("capture.results.back")}
+            onPress={() =>
+              router.push({
+                pathname: "/import-plans",
+                params: { tripId: params.tripId, jobId: params.importJobId },
+              })
+            }
+          />
+        ) : null}
         <TripScreen contentFrameManaged={!home && !day} />
       </NavigationContentFrame>
     </>

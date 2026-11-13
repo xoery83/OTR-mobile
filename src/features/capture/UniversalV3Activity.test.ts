@@ -4,6 +4,7 @@ import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { UniversalV3Activity } from "./UniversalCaptureResults";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
+import { emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
 import { setUiLocale, t } from "@/ui/locale";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const h = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ const h = vi.hoisted(() => ({
   confirm: vi.fn(),
   current: true,
   children: [] as any[],
+  buttons: new Map<string, any>(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -71,15 +73,24 @@ vi.mock("react-native", () => ({
 vi.mock("@/ui/controls", () => ({
   UiText: (p: any) => createElement("span", {}, p.children),
   UiSection: (p: any) => createElement("section", {}, p.title, p.children),
-  UiButton: (p: any) => createElement("button", {}, p.label),
+  UiButton: (p: any) => {
+    h.buttons.set(p.label, p);
+    return createElement("button", {}, p.label);
+  },
 }));
-const model = { batch: { batchId: "batch-a" } } as CaptureJobReadModel;
+const model = {
+  batch: {
+    batchId: "batch-a",
+    jobId: "original-job",
+    context: { tripPrior: { id: "original-trip" } },
+  },
+} as CaptureJobReadModel;
 const execution = {
   state: "REVIEW_READY",
   taskId: "original-task",
   candidates: [{ candidateId: "a" }],
 } as Extract<UniversalV3ExecutionStatus, { state: "REVIEW_READY" }>;
-function render() {
+function render(extra: Partial<Parameters<typeof UniversalV3Activity>[0]> = {}) {
   h.cursor = 0;
   h.effects = [];
   h.children = [];
@@ -90,6 +101,7 @@ function render() {
       unavailable: false,
       formatUnavailable: false,
       isCurrent: () => h.current,
+      ...extra,
     }),
   );
   h.effects.forEach((run) => run());
@@ -102,6 +114,10 @@ beforeEach(() => {
   h.current = true;
   h.check.mockResolvedValue("VERIFIED");
   h.open.mockResolvedValue({
+    resultOperations: async () => ({
+      snapshot: { actor: { active: true }, graph: emptyCoreGraph() },
+      operations: [],
+    }),
     check: h.check,
     confirm: h.confirm,
     batch: (candidates: unknown[]) =>
@@ -164,8 +180,17 @@ it.each(["en", "zh-Hans"] as const)(
     expect(render()).toContain(t("capture.activityStatus.checking"));
     await vi.advanceTimersByTimeAsync(0);
     expect(render()).toContain(t("capture.activityStatus.complete"));
-    expect(render()).toContain(
-      t("capture.activityStatus.counts", { saved: 1, total: 1 }),
-    );
+    expect(render()).toContain(t("capture.results.noNew"));
   },
 );
+
+it("return navigation uses the Batch Trip/job identity and ignores invalidated clicks", async () => {
+  const go = vi.fn();
+  render({ onReturnToTrip: go });
+  h.buttons.get(t("capture.results.day")).onPress();
+  expect(go).toHaveBeenCalledWith("day", "original-trip", "original-job");
+  go.mockClear();
+  h.current = false;
+  h.buttons.get(t("capture.results.home")).onPress();
+  expect(go).not.toHaveBeenCalled();
+});

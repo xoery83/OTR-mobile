@@ -14,11 +14,12 @@ export function LocalItemImportOriginals(props: {
   itemId: string;
   generation: number;
   revision?: number;
+  documentId?: string;
 }) {
   const { tripId, itemId, generation, revision } = props;
   return (
     <ItemOriginals
-      key={`${tripId}:${itemId}:${generation}:${revision ?? ""}`}
+      key={`${tripId}:${itemId}:${generation}:${revision ?? ""}:${props.documentId ?? ""}`}
       {...props}
     />
   );
@@ -28,6 +29,7 @@ function ItemOriginals({
   tripId,
   itemId,
   generation,
+  documentId,
 }: Parameters<typeof LocalItemImportOriginals>[0]) {
   useUiLocale();
   const current = useRef<symbol | null>(null);
@@ -57,7 +59,11 @@ function ItemOriginals({
           setReader(scoped);
           const preview = isImportOriginalPreviewAvailable();
           setDocuments(
-            available.filter(({ mediaType }) => mediaType === "text/plain" || preview),
+            available.filter(
+              ({ id, mediaType }) =>
+                (!documentId || id === documentId) &&
+                (mediaType === "text/plain" || preview),
+            ),
           );
         } catch {
           if (active()) setDocuments([]);
@@ -71,7 +77,7 @@ function ItemOriginals({
         setOpening(false);
         setFailed(false);
       };
-    }, [tripId, itemId, generation]),
+    }, [tripId, itemId, generation, documentId]),
   );
 
   async function open(document: Document) {

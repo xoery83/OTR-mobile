@@ -2,7 +2,7 @@ import {
   listCaptureTripPriors,
   readCaptureTripPrior,
 } from "@/features/capture/captureTripPrior";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
@@ -39,6 +39,7 @@ type RetainedDrafts = {
   current: {
     accountId: string;
     drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
+    activityPositions: Record<string, number>;
   } | null;
 };
 const overlayRetained: RetainedDrafts = { current: null };
@@ -58,8 +59,18 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   }>();
   const navigation = useNavigation<{
     isFocused(): boolean;
+    getState?(): {
+      index: number;
+      routes: { name: string; params?: { importJobId?: string } }[];
+    };
     getParent():
-      { getState(): { index: number; routes: { name: string }[] } } | undefined;
+      | {
+          getState(): {
+            index: number;
+            routes: { name: string; params?: { importJobId?: string } }[];
+          };
+        }
+      | undefined;
     setParams(params: {
       tripId?: string;
       jobId?: string;
@@ -78,6 +89,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
   const [draftWarning, setDraftWarning] = useState(false);
+  const activityPositionsRef = useRef<Record<string, number>>({});
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -110,8 +122,9 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             };
             if (retained.current?.accountId !== accountId) {
               retained.current?.drafts.forEach((draft) => draft.cancel());
-              retained.current = { accountId, drafts: new Map() };
+              retained.current = { accountId, drafts: new Map(), activityPositions: {} };
             }
+            activityPositionsRef.current = retained.current.activityPositions;
             let staging = retained.current.drafts.get(owner.tripPrior);
             if (staging) staging.resume(owner, lease);
             else {
@@ -192,11 +205,16 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
       return () => {
         stopSaving?.();
         active = false;
-        visibleStaging?.hide();
-        setAdmission(null);
         // Dependency cleanup must not erase a newer focused invocation.
-        const parent = navigation.getParent()?.getState();
-        const openingReview = parent?.routes[parent.index]?.name === "import-review";
+        const parent = navigation.getParent()?.getState() ?? navigation.getState?.();
+        const destination = parent?.routes[parent.index];
+        const openingReview =
+          destination?.name === "import-review" ||
+          typeof destination?.params?.importJobId === "string";
+        if (!openingReview) {
+          visibleStaging?.hide();
+          setAdmission(null);
+        }
         if (!overlay && !navigation.isFocused() && !openingReview)
           navigation.setParams({
             tripId: undefined,
@@ -231,6 +249,25 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
           key={`${generation}:${jobId ?? ""}${admission.tripPrior ? `:${admission.tripPrior}` : ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
           embeddedComposer={overlay}
+          activityPositionsRef={activityPositionsRef}
+          onOpenAcceptedItem={(target) => {
+            if (!isCurrent() || !target.family || !/^P[1-6]$/.test(target.family)) return;
+            router.push({
+              pathname: `/p${target.family.slice(1)}-detail`,
+              params: {
+                tripId: target.tripId,
+                itemId: target.itemId,
+                importJobId: target.jobId ?? jobId,
+              },
+            } as never);
+          }}
+          onReturnToTrip={(view, resultTripId, resultJobId) => {
+            if (isCurrent())
+              router.push({
+                pathname: "/trip-home",
+                params: { tripId: resultTripId, view, importJobId: resultJobId },
+              });
+          }}
           isCurrent={isCurrent}
           draftStaging={admission.staging}
           draftPersistenceError={draftWarning}

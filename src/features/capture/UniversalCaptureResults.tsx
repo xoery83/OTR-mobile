@@ -35,7 +35,12 @@ import {
   projectUniversalV3Activity,
   readV3UnknownCandidates,
   type V3SaveObservation,
+  projectUniversalV3Results,
+  type V3SavedResult,
+  type V3ResultOperation,
 } from "@/data/operations/universalV3Activity";
+import { captureActivityTime } from "./CaptureActivity";
+import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
 import { AppIcon } from "@/components/AppIcon";
 
 export function UniversalCaptureResults({
@@ -46,6 +51,9 @@ export function UniversalCaptureResults({
   originalsListedElsewhere = false,
   onLegacyPhotoReview,
   onOpenReview,
+  onOpenDocument,
+  onReturnToTrip,
+  processingDetails = false,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
@@ -53,6 +61,9 @@ export function UniversalCaptureResults({
   originalsListedElsewhere?: boolean;
   onLegacyPhotoReview?(enabled: boolean): void;
   onOpenReview?(jobId: string): void;
+  onOpenDocument?(itemId: string, documentId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  processingDetails?: boolean;
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
@@ -122,25 +133,30 @@ export function UniversalCaptureResults({
           model={model}
           execution={state.localFirst}
           onOpenReview={onOpenReview}
+          onOpenAcceptedItem={onOpenAcceptedItem}
+          onOpenDocument={onOpenDocument}
+          onReturnToTrip={onReturnToTrip}
           unavailable={state.unavailable}
           formatUnavailable={state.formatUnavailable}
           isCurrent={isCurrent}
         />
-        <UiSection title={t("capture.activityStatus.analysis")}>
-          {!result && !processing && !unknown ? (
+        {!result || processingDetails ? (
+          <UiSection title={t("capture.activityStatus.analysis")}>
+            {!result && !processing && !unknown ? (
+              <UiButton
+                label={t("capture.ai.process")}
+                disabled={state.busy || !state.canStart}
+                onPress={state.start}
+              />
+            ) : null}
             <UiButton
-              label={t("capture.ai.process")}
-              disabled={state.busy || !state.canStart}
-              onPress={state.start}
+              label={t("capture.ai.check")}
+              variant="secondary"
+              disabled={state.busy}
+              onPress={state.recover}
             />
-          ) : null}
-          <UiButton
-            label={t("capture.ai.check")}
-            variant="secondary"
-            disabled={state.busy}
-            onPress={state.recover}
-          />
-        </UiSection>
+          </UiSection>
+        ) : null}
       </>
     );
   }
@@ -164,18 +180,27 @@ export function UniversalV3Activity({
   formatUnavailable,
   isCurrent,
   onOpenReview,
+  onOpenDocument,
+  onReturnToTrip,
+  onOpenAcceptedItem,
 }: {
   model: CaptureJobReadModel;
   execution: UniversalV3ExecutionStatus | null;
+  onOpenAcceptedItem?: OpenAcceptedImportItem;
   unavailable: boolean;
   formatUnavailable: boolean;
   isCurrent(): boolean;
   onOpenReview?(jobId: string): void;
+  onOpenDocument?(itemId: string, documentId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  processingDetails?: boolean;
 }) {
   const navigating = useRef(false);
   const [intent, setIntent] = useState<ImportSubmission | null>(null);
   const [rows, setRows] = useState<V3AdmissionRow[]>([]);
   const [confirming, setConfirming] = useState(false);
+  const [savedResults, setSavedResults] = useState<V3SavedResult[]>([]);
+  const [resultOperations, setResultOperations] = useState<V3ResultOperation[]>([]);
   const result = execution?.state === "REVIEW_READY" ? execution : null;
   const [review, setReview] =
     useState<Awaited<ReturnType<typeof openUniversalV3Review>>>();
@@ -219,6 +244,18 @@ export function UniversalV3Activity({
         const next = await applyUniversalV3Batch(model, owner, plan, submitted, unknown);
         if (!current()) return;
         setReview(owner);
+        const facts = await owner.resultOperations(
+          plan.map(
+            (row) =>
+              submitted?.resolutions[row.candidate.candidateId]?.candidate ??
+              row.candidate,
+          ),
+        );
+        if (!current()) return;
+        setSavedResults(
+          projectUniversalV3Results(facts.snapshot, facts.operations, next),
+        );
+        setResultOperations(facts.operations);
         setObservations(next);
         setReadUnavailable(false);
         if (
@@ -298,13 +335,118 @@ export function UniversalV3Activity({
               : `capture.activityHint.${progressState}`,
         )}
       </UiText>
-      {result?.candidates.length && progress.state !== "checking" ? (
-        <UiText>
-          {t("capture.activityStatus.counts", {
-            saved: progress.saved,
-            total: rows.length ? displayRows.length : result.candidates.length,
-          })}
-        </UiText>
+      {result && progress.state !== "checking" ? (
+        <>
+          {savedResults.length
+            ? (["created", "linked", "updated"] as const).map((action) => {
+                const objects = savedResults.filter((item) => item.action === action);
+                return objects.length ? (
+                  <UiSection
+                    key={action}
+                    title={t("capture.results.group", {
+                      label: t(`capture.results.${action}`),
+                      count: objects.length,
+                    })}
+                  >
+                    {objects.map((item) => (
+                      <View key={item.itemId}>
+                        <UiButton
+                          variant="text"
+                          label={item.title}
+                          disabled={!onOpenAcceptedItem}
+                          onPress={() => {
+                            if (isCurrent())
+                              onOpenAcceptedItem?.({
+                                tripId:
+                                  model.batch.context.tripPrior?.id ??
+                                  model.assignedTripId!,
+                                itemId: item.itemId,
+                                family: item.family,
+                                jobId: model.batch.jobId,
+                              });
+                          }}
+                        />
+                        <UiText>
+                          {t(
+                            manualItineraryTypes.find((type) => type.id === item.family)
+                              ?.labelKey ?? "capture.results.item",
+                          )}
+                        </UiText>
+                        {item.recordedAt ? (
+                          <UiText>{captureActivityTime(item.recordedAt)}</UiText>
+                        ) : null}
+                        {item.state !== "complete" ? (
+                          <UiText>{t(`capture.results.${item.state}`)}</UiText>
+                        ) : null}
+                        {onOpenDocument
+                          ? model.inputs
+                              .filter(
+                                (file) =>
+                                  file.captureId &&
+                                  file.contentSha256 &&
+                                  item.documentIds.includes(
+                                    localImportDocumentId(
+                                      model.batch.accountId,
+                                      model.batch.context.tripPrior?.id ??
+                                        model.assignedTripId!,
+                                      file.contentSha256,
+                                    ),
+                                  ),
+                              )
+                              .map((file) => (
+                                <UiButton
+                                  key={file.id}
+                                  variant="text"
+                                  label={t("capture.results.document", {
+                                    name:
+                                      file.originalFilename ??
+                                      t("capture.ai.submittedText"),
+                                  })}
+                                  onPress={() => {
+                                    if (isCurrent())
+                                      onOpenDocument(
+                                        item.itemId,
+                                        localImportDocumentId(
+                                          model.batch.accountId,
+                                          model.batch.context.tripPrior?.id ??
+                                            model.assignedTripId!,
+                                          file.contentSha256!,
+                                        ),
+                                      );
+                                  }}
+                                />
+                              ))
+                          : null}
+                      </View>
+                    ))}
+                  </UiSection>
+                ) : null;
+              })
+            : null}
+          {savedResults
+            .filter((item) => !item.action)
+            .map((item) => (
+              <UiText key={item.itemId}>
+                {t("capture.results.pendingItem", {
+                  title: item.title,
+                  state: t(`capture.results.${item.state}`),
+                })}
+              </UiText>
+            ))}
+          {!savedResults.some((item) => item.action) ? (
+            <UiText>{t("capture.results.noNew")}</UiText>
+          ) : null}
+          {resultOperations.some((row) => row.receipt?.outcome === "REJECTED") ? (
+            <UiText>{t("capture.results.failed")}</UiText>
+          ) : null}
+          {rows.some((row) => row.disposition === "ABSTAIN") ? (
+            <UiText>
+              {t("capture.results.notCreated", {
+                count: rows.filter((row) => row.disposition === "ABSTAIN").length,
+              })}
+            </UiText>
+          ) : null}
+        </>
       ) : null}
       {readUnavailable ? (
         <UiButton
@@ -354,7 +496,17 @@ export function UniversalV3Activity({
           observations[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",
       ) ? (
         <UiButton
-          label={t("capture.admission.openReview")}
+          label={t("capture.results.reviewCount", {
+            count: rows.filter(
+              (row) =>
+                (row.disposition === "REVIEW" &&
+                  !intent?.resolutions[row.candidate.candidateId] &&
+                  observations[row.candidate.candidateId] !== "VERIFIED") ||
+                observations[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
+                observations[row.candidate.candidateId] ===
+                  "ITEM_VERIFIED_RELATION_REVIEW",
+            ).length,
+          })}
           variant="secondary"
           onPress={() => {
             if (navigating.current || !isCurrent()) return;
@@ -363,8 +515,33 @@ export function UniversalV3Activity({
           }}
         />
       ) : null}
-      {rows.some((row) => row.disposition === "ABSTAIN") ? (
-        <UiText>{t("capture.admission.abstain")}</UiText>
+      {onReturnToTrip && result ? (
+        <View>
+          <UiButton
+            variant="secondary"
+            label={t("capture.results.day")}
+            onPress={() => {
+              if (isCurrent())
+                onReturnToTrip(
+                  "day",
+                  model.batch.context.tripPrior?.id ?? model.assignedTripId!,
+                  model.batch.jobId,
+                );
+            }}
+          />
+          <UiButton
+            variant="text"
+            label={t("capture.results.home")}
+            onPress={() => {
+              if (isCurrent())
+                onReturnToTrip(
+                  "home",
+                  model.batch.context.tripPrior?.id ?? model.assignedTripId!,
+                  model.batch.jobId,
+                );
+            }}
+          />
+        </View>
       ) : null}
     </UiSection>
   );
@@ -541,6 +718,7 @@ export function UniversalResultView({
                       onOpenAcceptedItem({
                         tripId: result.tripId,
                         itemId: accepted.itemId,
+                        family: candidate.kind,
                       });
                   }}
                 />

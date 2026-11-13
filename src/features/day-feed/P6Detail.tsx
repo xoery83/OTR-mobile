@@ -30,6 +30,7 @@ export function P6Detail() {
   useUiLocale();
   const params = useLocalSearchParams<{
     tripId?: string;
+    importJobId?: string;
     itemId?: string;
     occurrence?: string;
     date?: string;
@@ -128,7 +129,7 @@ export function P6Detail() {
           headerShown: true,
           title: "",
           headerTitle: "",
-          headerBackVisible: true,
+          headerBackVisible: !params.importJobId,
           headerBackButtonDisplayMode: "minimal",
           headerTransparent: true,
           headerTintColor: colors.accent,
@@ -136,6 +137,15 @@ export function P6Detail() {
           headerShadowVisible: false,
         }}
       />
+      {params.importJobId ? (
+        <Stack.Toolbar placement="left">
+          <Stack.Toolbar.Button
+            icon="chevron.left"
+            accessibilityLabel={t("common.back")}
+            onPress={() => router.back()}
+          />
+        </Stack.Toolbar>
+      ) : null}
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
           icon="square.and.pencil"

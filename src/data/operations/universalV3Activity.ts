@@ -1,3 +1,4 @@
+import { coreCanRead } from "@/domain/trip/tripCoreV2Mutation";
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
 import type { openUniversalV3Review } from "@/data/operations/universalV3Review";
 
@@ -92,5 +93,112 @@ export async function readV3UnknownCandidates(
           ),
       ),
     ),
+  );
+}
+
+export type V3ResultOperation = {
+  candidateId: string;
+  documentIds: string[];
+  command: import("@/domain/trip/tripCoreV2Commands").CoreCommand;
+  receipt: import("@/domain/trip/tripCoreV2Receipt").CoreReceipt | null;
+};
+export type V3SavedResult = {
+  itemId: string;
+  title: string;
+  family: string;
+  action?: "created" | "linked" | "updated";
+  state: "complete" | "association" | "unknown" | "saving" | "failed" | "review";
+  documentIds: string[];
+  recordedAt?: string;
+};
+// A batch's original commands/receipts identify outcomes; a replanned candidate is not a saved object.
+export function projectUniversalV3Results(
+  snapshot: import("../repositories/tripCoreV2Repository").CoreAcceptedSnapshot,
+  operations: readonly V3ResultOperation[],
+  observations: Readonly<Record<string, V3SaveObservation>>,
+): V3SavedResult[] {
+  const groups = new Map<string, V3ResultOperation[]>();
+  for (const operation of operations) {
+    if (
+      operation.command.tripId !== snapshot.actor.tripId ||
+      operation.command.target.kind !== "ITEM"
+    )
+      continue;
+    if (
+      operation.receipt &&
+      (operation.receipt.tripId !== snapshot.actor.tripId ||
+        operation.receipt.actorAccountId !== snapshot.actor.accountId ||
+        operation.receipt.operationId !== operation.command.operationId)
+    )
+      continue;
+    const id = operation.command.target.id;
+    groups.set(id, [...(groups.get(id) ?? []), operation]);
+  }
+  const results: V3SavedResult[] = [];
+  for (const [itemId, group] of groups) {
+    const item = snapshot.graph.itinerary_events.find((item) => item.id === itemId);
+    if (!item || !coreCanRead(snapshot.graph, snapshot.actor, "ITEM", item)) continue;
+    const receipts = group.flatMap((row) => (row.receipt ? [row.receipt] : []));
+    const successful = group.filter(
+      (row) => row.receipt && ["APPLIED", "NO_CHANGE"].includes(row.receipt.outcome),
+    );
+    const created = successful.some((row) =>
+      row.receipt!.result.created.some((ref) => ref.kind === "ITEM" && ref.id === itemId),
+    );
+    const updated = successful.some(
+      (row) =>
+        row.command.command === "SET_ITEM_TEXT" &&
+        row.receipt!.result.changed.some(
+          (ref) => ref.kind === "ITEM" && ref.id === itemId,
+        ),
+    );
+    const documentIds = [...new Set(group.flatMap((row) => row.documentIds))].sort();
+    const associated = documentIds.every((documentId) =>
+      snapshot.graph.trip_item_document_links.some(
+        (edge) =>
+          edge.active && edge.item_id === itemId && edge.document_id === documentId,
+      ),
+    );
+    const linked =
+      associated &&
+      successful.some((row) => row.command.command === "RECONCILE_ITEM_DOCUMENTS");
+    const states = group.map((row) => observations[row.candidateId]);
+    const state: V3SavedResult["state"] = receipts.some((r) => r.outcome === "REJECTED")
+      ? "failed"
+      : receipts.some((r) => r.outcome === "CONFLICT")
+        ? "review"
+        : states.includes("OUTCOME_UNKNOWN")
+          ? "unknown"
+          : !associated || !linked
+            ? created || updated
+              ? "association"
+              : "saving"
+            : group.some((row) => !row.receipt)
+              ? "saving"
+              : "complete";
+    const recordedAt = successful
+      .map((row) => row.receipt!.committedAt)
+      .sort()
+      .at(-1);
+    results.push({
+      itemId,
+      title: String(item.title),
+      family: String(item.experience_family),
+      action: created ? "created" : updated ? "updated" : linked ? "linked" : undefined,
+      state,
+      documentIds: associated
+        ? documentIds
+        : documentIds.filter((id) =>
+            snapshot.graph.trip_item_document_links.some(
+              (edge) => edge.active && edge.item_id === itemId && edge.document_id === id,
+            ),
+          ),
+      recordedAt,
+    });
+  }
+  return results.sort(
+    (a, b) =>
+      (b.recordedAt ?? "").localeCompare(a.recordedAt ?? "") ||
+      a.itemId.localeCompare(b.itemId),
   );
 }

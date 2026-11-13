@@ -1,3 +1,5 @@
+import { LocalItemImportOriginals } from "@/features/day-feed/LocalItemImportOriginals";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { ImportDocumentsPanel } from "@/features/documents/ImportDocumentsPanel";
 import type { ImportDocumentScope } from "@/data/repositories/importDocumentsRepository";
 import { universalQaFixture } from "@/data/operations/universalQaFixture";
@@ -37,6 +39,8 @@ export function CaptureContent({
   onReopenJob,
   onOpenAcceptedItem,
   onOpenReview,
+  onReturnToTrip,
+  activityPositionsRef,
   embeddedComposer = false,
   accountId,
 }: {
@@ -52,6 +56,8 @@ export function CaptureContent({
   onReopenJob?: (id: string) => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   onOpenReview?(jobId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  activityPositionsRef?: { current: Record<string, number> };
   embeddedComposer?: boolean;
   accountId?: string;
 }) {
@@ -99,6 +105,13 @@ export function CaptureContent({
   >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
+  const [resultDocument, setResultDocument] = useState<{
+    tripId: string;
+    itemId: string;
+    documentId: string;
+  }>();
+  const localPositions = useRef<Record<string, number>>({});
+  const positionsRef = activityPositionsRef ?? localPositions;
   const [documents, setDocuments] = useState<{
     scope: ImportDocumentScope;
     captureId?: string;
@@ -142,6 +155,7 @@ export function CaptureContent({
     session.current = null;
     recoveryActions.current.clear();
     setDocuments(null);
+    setResultDocument(undefined);
     setActivity(false);
     setModel(null);
     setReopening(true);
@@ -531,7 +545,21 @@ export function CaptureContent({
         }
         content={
           accountId ? (
-            documents ? (
+            resultDocument ? (
+              <>
+                <UiButton
+                  label={t("capture.results.back")}
+                  variant="text"
+                  onPress={() => {
+                    if (current()) setResultDocument(undefined);
+                  }}
+                />
+                <LocalItemImportOriginals
+                  {...resultDocument}
+                  generation={getAccountGeneration()}
+                />
+              </>
+            ) : documents ? (
               <>
                 <UiButton
                   label={t("capture.activityReturn")}
@@ -597,6 +625,14 @@ export function CaptureContent({
                       }
                     : undefined
                 }
+                activityPositionsRef={positionsRef}
+                onReturnToTrip={onReturnToTrip}
+                onOpenDocument={(itemId, documentId) => {
+                  const tripId =
+                    model?.batch.context.tripPrior?.id ?? model?.assignedTripId;
+                  if (current() && tripId)
+                    setResultDocument({ tripId, itemId, documentId });
+                }}
                 onOpenReview={
                   onOpenReview
                     ? (id) => {
@@ -640,6 +676,7 @@ export function CaptureContent({
                   (scope === "TRIP" && !selectedTripPrior)
                 )
                   return;
+                setResultDocument(undefined);
                 setDocuments({ scope });
               }
             : undefined

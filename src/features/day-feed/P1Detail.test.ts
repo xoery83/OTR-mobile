@@ -9,6 +9,9 @@ const state = vi.hoisted(() => ({
   hooks: [] as unknown[],
   cursor: 0,
   generation: 5,
+  importJobId: undefined as string | undefined,
+  back: vi.fn(),
+  returnAction: null as null | (() => void),
   focus: null as null | (() => () => void),
   principal: vi.fn(),
   read: vi.fn(),
@@ -42,15 +45,19 @@ vi.mock("react-native", () => ({
 const tripId = "b15408f3-5bda-4a09-a95c-37b9f475871f";
 const itemId = "ba095b25-e4ee-4b4c-8bf8-065065df6bce";
 vi.mock("expo-router", () => ({
-  router: { push: vi.fn(), back: vi.fn() },
-  useLocalSearchParams: () => ({ tripId, itemId }),
+  router: { push: vi.fn(), back: state.back },
+  useLocalSearchParams: () => ({ tripId, itemId, importJobId: state.importJobId }),
   useFocusEffect: (callback: () => () => void) => {
     state.focus = callback;
   },
   Stack: {
     Screen: () => null,
     Toolbar: Object.assign((p: any) => createElement("div", null, p.children), {
-      Button: () => null,
+      Button: (p: any) => {
+        if (p.accessibilityLabel !== "Back") return null;
+        state.returnAction = p.onPress;
+        return createElement("button", null, p.accessibilityLabel);
+      },
     }),
   },
 }));
@@ -119,6 +126,8 @@ function record() {
   };
 }
 beforeEach(() => {
+  state.importJobId = undefined;
+  state.returnAction = null;
   state.hooks = [];
   state.cursor = 0;
   state.generation = 5;
@@ -214,4 +223,12 @@ it("keeps principal recovery errors unavailable rather than treating them as Gue
   expect(html).not.toContain("Guest saved plan");
   expect(html).toContain(t("dayFeed.unavailable"));
   expect(state.read).not.toHaveBeenCalled();
+});
+
+it("Import Results gets an explicit native return action without changing normal detail entry", () => {
+  state.importJobId = "original-job";
+  expect(render()).toContain("Back");
+  expect(state.returnAction).toBeTypeOf("function");
+  state.returnAction!();
+  expect(state.back).toHaveBeenCalled();
 });

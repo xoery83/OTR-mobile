@@ -862,6 +862,31 @@ export async function openUniversalV3Review(
         }));
     },
     check,
+    async resultOperations(candidates: Candidate[]) {
+      const operations: import("./universalV3Activity").V3ResultOperation[] = [];
+      const identities = new Map(
+        candidates.flatMap((candidate) =>
+          [
+            itemIntentId(candidate.candidateId),
+            relationId(candidate.candidateId),
+            universalP1Identity(candidate.candidateId, "local-first", "flight-details"),
+          ].map((id) => [id, candidate] as const),
+        ),
+      );
+      for (const [id, candidate] of identities) {
+        const operation = (await core.pending(context, id)).find(
+          (row) => row.command.operationId === id,
+        );
+        if (!operation || operation.command.target.kind !== "ITEM") continue;
+        operations.push({
+          candidateId: candidate.candidateId,
+          documentIds: candidate.documentIds,
+          command: operation.command,
+          receipt: await core.retainedReceipt(context, operation.command),
+        });
+      }
+      return { snapshot: (await core.acceptedSnapshot(context)) ?? accepted, operations };
+    },
     async confirm(candidate: Candidate, decision: UniversalV3Decision) {
       const current = await check(candidate);
       if (current !== "UNCONFIRMED") return current;
