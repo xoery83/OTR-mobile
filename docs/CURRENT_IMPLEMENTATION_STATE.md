@@ -1,3 +1,26 @@
+## Import V3 B2 Slice 3 — limited Core compatibility approved, 13 November 2026
+
+Owner accepted Slice 2 `e87cb6f` and authorized Slice 3 subject to explicit approval
+before Core business authorization/SQL changes. Bounded check found the actual gap:
+V3 emits MANUAL, which records AI facts as MANUAL/protected; ordinary Core PG rejects
+AUTO_SOURCE, source-free AUTO_SOURCE fails binding, and Document metadata/association
+contracts and Native enqueue remain MANUAL-only. No automatic confirm substitution.
+Four new isolated current-code tests reproduce the gap (no DEV/Provider access).
+
+Exact one-time proposal: `docs/beta/IMPORT_V3_B2_SLICE3_CORE_COMPATIBILITY_DIFF.md`.
+Owner approved finite Source-free IMPORT admission using existing normal Core
+NEW/add-only Document LINK commands and ACL, existing PROVIDER field origin, no auto
+UPDATE and no Role/Grant/RLS expansion. Not a new Admission engine or operational Gate.
+Finite IMPORT Core/Native compatibility and Slice 3 UI are implemented locally.
+Owning PostgreSQL commands, Receipt/readback and exact inverse passed in the existing
+network-none PG fixture. 229 targeted tests pass, including P1–P6 automatic Wake on
+local/cloud Trips; UI guard passes. DEV installation and new Full App acceptance
+are still pending; no runtime screenshots or completed Slice 3 claim yet.
+
+**Next: implement approved finite compatibility and Slice 3 with isolated synthetic data.**
+Do not hide Confirm, fabricate manual provenance or reuse old AUTO_SOURCE proofs.
+Preserve Slice 1/2 and original B1/QA179; zero new DeepSeek. No main merge/push.
+
 ## Import V3 B2 Slice 2 — Owner review checkpoint, 13 November 2026
 
 Owner accepted Slice 1 `5af027b` and authorized Slice 2 only. Same Composer sheet

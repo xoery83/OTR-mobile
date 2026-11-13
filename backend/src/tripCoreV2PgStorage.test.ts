@@ -910,3 +910,50 @@ it("selects manual compatibility before scope only for a sustained manual transa
   expect(f.queries[marker].params).toEqual(["MANUAL"]);
   expect(f.queries.some((q) => q.sql.includes("trip_sustained_import_p1_capabilities"))).toBe(false);
 });
+
+it("Slice 3 contract: ordinary Core PG rejects AUTO_SOURCE despite valid ordinary edit capability", async () => {
+  const f = fixture(),
+    query = f.lease.query;
+  f.lease.query = async (sql, params = []) =>
+    sql.includes("FROM public.trip_core_activation_gate WHERE singleton")
+      ? {
+          rows: [
+            {
+              runtime_enabled: true,
+              enabled_commands: [...normalP1Commands],
+              enabled_families: ["P1"],
+              enabled_admission_modes: ["MANUAL"],
+            },
+          ],
+        }
+      : query(sql, params);
+  const c = validateCoreCommand({
+    ...command(),
+    command: "CREATE_ITEM",
+    admission: {
+      mode: "AUTO_SOURCE",
+      sourceIntentId: randomUUID(),
+      policyVersion: "otr.trip.auto-admit/1",
+    },
+    payload: {
+      family: "P1",
+      core: { title: "Synthetic automatic suggestion" },
+      schedule: { start: coreDateBoundary("2026-12-14") },
+      ...coreDefaults("member"),
+    },
+  });
+  await expect(
+    f.storage.withLockedCommand(
+      {
+        actorAccountId: actor,
+        tripId: trip,
+        operationId: operation,
+        baseVector: c.baseVector,
+      },
+      (tx) => tx.verifyAdmission(c, "a".repeat(64), emptyCoreGraph()),
+    ),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(
+    false,
+  );
+});

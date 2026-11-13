@@ -252,6 +252,7 @@ export async function coreHttpBoundary(
       // Older v2 clients reject unknown command enums; this only narrows the DTO.
       const response = reply(200, {
         ...capabilities,
+        enabledAdmissionModes: capabilities.enabledAdmissionModes.filter(mode => mode !== "IMPORT" || request.headers.get("X-OTR-Core-Import") === "1"),
         enabledCommands: capabilities.enabledCommands.filter(
           (command) =>
             (command !== "SET_AUTHORED_FLIGHT_DETAILS" ||
@@ -260,7 +261,7 @@ export async function coreHttpBoundary(
               request.headers.get("X-OTR-Core-Local-Document") === "1"),
         ),
       });
-      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight, X-OTR-Core-Local-Document");
+      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight, X-OTR-Core-Local-Document, X-OTR-Core-Import");
       return response;
     }
     if (path === "commands" && request.method === "POST") {

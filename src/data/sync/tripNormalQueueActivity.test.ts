@@ -756,9 +756,13 @@ it.each(["P2", "P5"])(
   },
 );
 
-it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
-  "automatic activity schedules valid %s NEW and its original Document LINK on local and cloud Trips",
-  async (family) => {
+it.each(
+  (["P1", "P2", "P3", "P4", "P5", "P6"] as const).flatMap((family) =>
+    (["MANUAL", "IMPORT"] as const).map((admissionMode) => ({ family, admissionMode })),
+  ),
+)(
+  "automatic activity schedules valid $family $admissionMode NEW and its original Document LINK on local and cloud Trips",
+  async ({ family, admissionMode }) => {
     const { createTripCoreV2Repository } =
       await import("../repositories/tripCoreV2Repository");
     const { planUniversalV3Review } = await import("../operations/universalV3Review");
@@ -776,9 +780,7 @@ it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
         .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
         .run(f.createId);
       if (cloud)
-        f.sql
-          .prepare("DELETE FROM local_trip_containers WHERE id=?")
-          .run(f.tripId);
+        f.sql.prepare("DELETE FROM local_trip_containers WHERE id=?").run(f.tripId);
       const repo = createTripCoreV2Repository(
         f.db,
         async () => f.scope.accountId,
@@ -821,6 +823,7 @@ it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
           },
         },
         decision: { action: "NEW" },
+        admissionMode,
         snapshot: {
           actor: {
             accountId: f.scope.accountId,
@@ -840,7 +843,7 @@ it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
           ...coreClosedCapabilities,
           activationState: "ENABLED",
           enabledFamilies: [family],
-          enabledAdmissionModes: ["MANUAL"],
+          enabledAdmissionModes: ["MANUAL", "IMPORT"],
           enabledCommands: [
             "CREATE_ITEM",
             "CREATE_SPARSE_FLIGHT",

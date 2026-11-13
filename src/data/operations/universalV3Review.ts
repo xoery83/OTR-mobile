@@ -11,6 +11,7 @@ import {
   type CoreCapabilities,
   coreCapabilitiesSchema,
   isNormalManualCoreCommand,
+  isNormalImportCoreCommand,
 } from "../../domain/trip/tripCoreV2Commands";
 import {
   localImportDocumentId,
@@ -23,7 +24,13 @@ import { type CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository"
 type Candidate = z.infer<typeof universalV3Candidate>;
 export const universalV3NewDecision = { action: "NEW" } as const;
 export type UniversalV3Decision =
-  { action: "NEW" } | { action: "LINK" | "UPDATE"; itemId: string; revision: number };
+  | { action: "NEW" }
+  | { action: "LINK"; itemId: string; revision: number }
+  | { action: "UPDATE"; itemId: string; revision: number };
+
+export function universalV3LinkDecision(itemId: string, revision: number): UniversalV3Decision {
+  return { action: "LINK", itemId, revision };
+}
 
 const text = (candidate: Candidate, ...keys: string[]) =>
   keys
@@ -176,15 +183,19 @@ export function planUniversalV3Review(input: {
   decision: UniversalV3Decision;
   snapshot: CoreAcceptedSnapshot;
   capabilities: CoreCapabilities;
+  admissionMode?: "MANUAL" | "IMPORT";
 }) {
   const { model, candidate, decision, snapshot, capabilities } = input;
+  const mode = input.admissionMode ?? "MANUAL";
+  if (mode === "IMPORT" && decision.action === "UPDATE")
+    throw Error("UNIVERSAL_V3_REVIEW_CHANGED");
   const { actor, graph } = snapshot;
   if (
     actor.accountId !== model.batch.accountId ||
     !actor.active ||
     actor.tripId !== (model.batch.context.tripPrior?.id ?? model.assignedTripId) ||
     capabilities.activationState !== "ENABLED" ||
-    !capabilities.enabledAdmissionModes.includes("MANUAL")
+    !capabilities.enabledAdmissionModes.includes(mode)
   )
     throw Error("UNIVERSAL_V3_CORE_UNAVAILABLE");
   const ids = [...new Set(candidate.documentIds)].sort();
@@ -200,7 +211,7 @@ export function planUniversalV3Review(input: {
     contractVersion: 2,
     intentVersion: 2,
     tripId: actor.tripId,
-    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    admission: { mode, sourceIntentId: null, policyVersion: null },
   };
   const selected =
     decision.action === "NEW"
@@ -379,6 +390,7 @@ export function planUniversalV3Review(input: {
     )
       continue;
     const mediaType = file.kind === "TEXT" ? "text/plain" : file.declaredContentType;
+    if (!mediaType) throw Error("UNIVERSAL_V3_DOCUMENT_SCOPE");
     const document = graph.trip_operational_documents.find((row) => row.id === id);
     if (document) {
       if (
@@ -398,7 +410,7 @@ export function planUniversalV3Review(input: {
           target: { kind: "DOCUMENT", id },
           baseVector: [{ kind: "DOCUMENT", id, revision: null }],
           payload: {
-            title: (file.originalFilename?.trim() || input.candidate.subtype).slice(
+            title: (file.originalFilename?.trim() || mediaType).slice(
               0,
               256,
             ),
@@ -429,9 +441,182 @@ export function planUniversalV3Review(input: {
         payload: { add, remove: [] },
       }),
     );
-  if (commands.some((command) => !isNormalManualCoreCommand(command)))
+  if (
+    commands.some(
+      (command) =>
+        !isNormalManualCoreCommand(command) && !isNormalImportCoreCommand(command),
+    )
+  )
     throw Error("UNIVERSAL_V3_CORE_UNAVAILABLE");
   return { targetId, commands };
+}
+
+export type V3AdmissionRow = {
+  candidate: Candidate;
+  members: string[];
+  disposition: "NEW" | "LINK" | "REVIEW" | "ABSTAIN";
+  decision?: UniversalV3Decision;
+  reason?: "missing" | "ambiguous" | "conflict" | "unsupported";
+};
+const normalizeIdentity = (value: string) =>
+  value.trim().toUpperCase().replace(/\s+/g, "");
+function importIdentity(candidate: Candidate) {
+  const reference = text(
+    candidate,
+    "confirmation_code",
+    "booking.reference",
+    "booking.confirmation_code",
+  );
+  const provider = text(
+    candidate,
+    "provider",
+    "booking.provider",
+    "property.name",
+    "rental.company",
+    "operator.name",
+  );
+  if (reference && provider)
+    return `booking:${candidate.kind}:${normalizeIdentity(provider)}:${normalizeIdentity(reference)}`;
+  const number = text(candidate, "flight_number", "marketing_flight");
+  const origin = text(candidate, "origin.airport_code");
+  const destination = text(candidate, "destination.airport_code");
+  const day = date(text(candidate, "origin.local_date"));
+  return candidate.kind === "P2" && number && origin && destination && day
+    ? `flight:${normalizeIdentity(number)}:${normalizeIdentity(origin)}:${normalizeIdentity(destination)}:${day}`
+    : undefined;
+}
+
+// Business identity is a supplier reference or complete flight tuple, never proximity.
+export function planUniversalV3Batch(input: {
+  model: CaptureJobReadModel;
+  candidates: Candidate[];
+  snapshot: CoreAcceptedSnapshot;
+  capabilities: CoreCapabilities;
+}): V3AdmissionRow[] {
+  const {
+    snapshot: { graph, actor },
+  } = input;
+  const grouped = new Map<string, Candidate[]>();
+  for (const candidate of [...input.candidates].sort((a, b) =>
+    a.candidateId.localeCompare(b.candidateId),
+  )) {
+    const key = importIdentity(candidate) ?? candidate.candidateId;
+    grouped.set(key, [...(grouped.get(key) ?? []), candidate]);
+  }
+  return [...grouped.values()].map((group) => {
+    const fields: Candidate["fields"] = {};
+    let conflicting = false;
+    for (const candidate of group)
+      for (const [key, value] of Object.entries(candidate.fields)) {
+        if (
+          fields[key] !== undefined &&
+          JSON.stringify(fields[key]) !== JSON.stringify(value)
+        )
+          conflicting = true;
+        else fields[key] = value;
+      }
+    const candidate = {
+      ...group[0],
+      fields,
+      documentIds: [...new Set(group.flatMap((c) => c.documentIds))].sort(),
+    };
+    const row = { candidate, members: group.map((c) => c.candidateId) };
+    if (!Object.values(fields).some((value) => value !== null && value !== ""))
+      return { ...row, disposition: "ABSTAIN" };
+    if (conflicting) return { ...row, disposition: "REVIEW", reason: "conflict" };
+    const identity = importIdentity(candidate);
+    const accessible = graph.itinerary_events.filter(
+      (item) =>
+        item.experience_family === candidate.kind &&
+        item.owner_account_id === actor.accountId &&
+        coreCanManage(graph, actor, "ITEM", item),
+    );
+    const matches = accessible.filter((item) => {
+      if (!identity) return false;
+      if (identity.startsWith("booking:"))
+        return graph.trip_booking_item_links.some(
+          (link) =>
+            link.active &&
+            link.item_id === item.id &&
+            graph.itinerary_reservations.some(
+              (booking) =>
+                booking.id === link.booking_id &&
+                !booking.hidden_at &&
+                booking.commercial_status === "ACTIVE" &&
+                booking.provider &&
+                booking.confirmation_code &&
+                identity ===
+                  `booking:${candidate.kind}:${normalizeIdentity(String(booking.provider))}:${normalizeIdentity(String(booking.confirmation_code))}`,
+            ),
+        );
+      const flight = graph.trip_flight_intents.find((f) => f.event_id === item.id);
+      const endpoints = graph.itinerary_transport_endpoints.filter(
+        (e) => e.event_id === item.id,
+      );
+      const origin = endpoints.find((e) => e.role === "ORIGIN");
+      const destination = endpoints.find((e) => e.role === "DESTINATION");
+      return (
+        !!flight &&
+        !!origin &&
+        !!destination &&
+        identity ===
+          `flight:${normalizeIdentity(String(flight.flight_number_literal))}:${normalizeIdentity(String(graph.trip_endpoint_details.find((e) => e.event_id === item.id && e.role === "ORIGIN")?.airport_code ?? ""))}:${normalizeIdentity(String(graph.trip_endpoint_details.find((e) => e.event_id === item.id && e.role === "DESTINATION")?.airport_code ?? ""))}:${origin.local_date}`
+      );
+    });
+    const { title, start } = universalV3ReviewFields(candidate);
+    const near =
+      !identity &&
+      title &&
+      accessible.some(
+        (item) =>
+          String(item.title).trim().toLocaleLowerCase() === title.toLocaleLowerCase() &&
+          (!start || !item.start_local_date || item.start_local_date === start),
+      );
+    const duplicate =
+      !identity &&
+      input.candidates.some(
+        (other) =>
+          other.candidateId !== candidate.candidateId &&
+          other.kind === candidate.kind &&
+          universalV3ReviewFields(other).title?.toLocaleLowerCase() ===
+            title?.toLocaleLowerCase() &&
+          (!start ||
+            !universalV3ReviewFields(other).start ||
+            universalV3ReviewFields(other).start === start),
+      );
+    if (matches.length > 1 || near || duplicate)
+      return { ...row, disposition: "REVIEW", reason: "ambiguous" };
+    if (matches.length === 1) {
+      const facts = universalV3ReviewFields(candidate),
+        item = matches[0];
+      if (
+        (facts.start && item.start_local_date && facts.start !== item.start_local_date) ||
+        (facts.end && item.end_local_date && facts.end !== item.end_local_date) ||
+        (facts.startTime &&
+          item.start_local_time &&
+          facts.startTime !== item.start_local_time) ||
+        (facts.endTime && item.end_local_time && facts.endTime !== item.end_local_time)
+      )
+        return { ...row, disposition: "REVIEW", reason: "conflict" };
+    }
+    const decision: UniversalV3Decision = matches.length
+      ? {
+          action: "LINK",
+          itemId: String(matches[0].id),
+          revision: Number(matches[0].semantic_revision),
+        }
+      : universalV3NewDecision;
+    try {
+      planUniversalV3Review({ ...input, candidate, decision, admissionMode: "IMPORT" });
+      return { ...row, disposition: decision.action as "NEW" | "LINK", decision };
+    } catch (error) {
+      return {
+        ...row,
+        disposition: "REVIEW",
+        reason: String(error).includes("UNRESOLVED") ? "missing" : "unsupported",
+      };
+    }
+  });
 }
 
 type Outcome = "APPLIED" | "NO_CHANGE" | "CONFLICT" | "REJECTED";
@@ -456,7 +641,10 @@ export function projectUniversalV3SaveState(input: {
     : ("PENDING" as const);
 }
 
-export async function openUniversalV3Review(model: CaptureJobReadModel) {
+export async function openUniversalV3Review(
+  model: CaptureJobReadModel,
+  admissionMode: "MANUAL" | "IMPORT" = "MANUAL",
+) {
   const [
     { requireAdoptedUserId },
     { createCoreV2Transport },
@@ -549,6 +737,14 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
     });
   }
   return {
+    batch(candidates: Candidate[]) {
+      return planUniversalV3Batch({
+        model,
+        candidates,
+        snapshot: accepted,
+        capabilities,
+      });
+    },
     actions(candidate: Candidate) {
       const { title } = universalV3ReviewFields(candidate);
       const supported = capabilities.enabledFamilies.includes(candidate.kind);
@@ -564,6 +760,7 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
               snapshot: accepted,
               capabilities,
               decision: universalV3NewDecision,
+              admissionMode,
             });
             return true;
           } catch {
@@ -571,6 +768,7 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
           }
         })(),
         UPDATE:
+          admissionMode === "MANUAL" &&
           !!title &&
           !flight &&
           supported &&
@@ -599,6 +797,7 @@ export async function openUniversalV3Review(model: CaptureJobReadModel) {
         model,
         candidate,
         decision,
+        admissionMode,
         snapshot: await refresh(),
         capabilities,
       });

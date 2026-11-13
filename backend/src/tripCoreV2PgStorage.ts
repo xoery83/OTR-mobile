@@ -25,7 +25,7 @@ import {
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { coreLifecycleGraphHash } from "../../src/domain/trip/tripCoreV2Lifecycle";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
-import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
+import { validateCoreCommand, isNormalImportCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import type {
   CoreCommand,
@@ -588,7 +588,7 @@ function createCorePgStorageOnLease(
                 !command.admission.sourceIntentId ||
                 command.admission.policyVersion !== null
               : normal
-                ? command.admission.mode !== "MANUAL" ||
+                ? (command.admission.mode !== "MANUAL" && !(manual!.importEnabled && isNormalImportCoreCommand(command))) ||
                   (!localMetadata && !documentLink && !manual!.families.includes(String(finiteFamily))) ||
                   !(manual!.commands as readonly string[]).includes(command.command) ||
                   (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
@@ -651,7 +651,7 @@ function createCorePgStorageOnLease(
               );
               if (
                 created.command !== "CREATE_SPARSE_FLIGHT" ||
-                created.admission.mode !== "MANUAL" ||
+                created.admission.mode !== (command.admission.mode === "IMPORT" ? "IMPORT" : "MANUAL") ||
                 created.target.id !== command.target.id ||
                 created.tripId !== actor.tripId
               )
@@ -758,7 +758,7 @@ function createCorePgStorageOnLease(
           };
           if (
             requiresTemporalAuthority(command.payload) ||
-            command.admission.mode !== "MANUAL" ||
+            !["MANUAL", "IMPORT"].includes(command.admission.mode) ||
             command.baseVector.some((v) => v.kind === "SOURCE") ||
             [
               "CREATE_DOCUMENT",

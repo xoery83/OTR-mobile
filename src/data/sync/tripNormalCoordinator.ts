@@ -7,6 +7,7 @@ import { hasAcceptedManualCreate } from "../repositories/acceptedManualCreate";
 import {
   isReviewedSourceCreate,
   isNormalManualCreate,
+  isNormalImportCoreCommand,
 } from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
 import {
@@ -402,7 +403,7 @@ export function createNativeNormalTripSyncRunner(
                 !isManualAcceptedEditCommand(command) &&
                 !isManualInstructionEditCommand(command) &&
                 !isManualLocalDocumentCommand(command) &&
-                !isNormalManualCreate(command)
+                !isNormalManualCreate(command) && !isNormalImportCoreCommand(command)
               )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.

@@ -115,7 +115,7 @@ export async function executeCoreCommandV2(
       tripId,
       operationId: command.operationId,
       baseVector: command.baseVector,
-      ...(command.admission.mode === "MANUAL" ? { manualCompatibility: "MANUAL" as const } : {}),
+      ...(["MANUAL", "IMPORT"].includes(command.admission.mode) ? { manualCompatibility: "MANUAL" as const } : {}),
     },
     async (tx) => {
       if (tx.actor.accountId !== actorAccountId || tx.actor.tripId !== tripId)

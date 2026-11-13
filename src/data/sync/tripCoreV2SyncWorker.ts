@@ -235,7 +235,7 @@ export function createCoreV2SyncWorker(
           !capabilities.enabledAdmissionModes.includes(command.admission.mode)
         )
           throw new SyncDependencyError("CORE_CAPABILITY_CLOSED");
-        if (command.admission.mode !== "MANUAL" && !capabilities.sourceEvidenceAvailable)
+        if (["REVIEWED_SOURCE", "AUTO_SOURCE"].includes(command.admission.mode) && !capabilities.sourceEvidenceAvailable)
           throw new SyncDependencyError("CORE_SOURCE_EVIDENCE_CLOSED");
         const isInstruction = command.target.kind === "INSTRUCTION";
         let instructionFamily: string | undefined;
@@ -306,7 +306,7 @@ export function createCoreV2SyncWorker(
           )
             throw new SyncDependencyError("CORE_FAMILY_CLOSED");
         }
-        if (command.command === "RECONCILE_ITEM_DOCUMENTS" && command.admission.mode === "MANUAL") {
+        if (command.command === "RECONCILE_ITEM_DOCUMENTS" && ["MANUAL", "IMPORT"].includes(command.admission.mode)) {
           const ready = async () => {
             const state = await repository.acceptedSnapshot(context);
             return !!state && command.baseVector.every((base) => {

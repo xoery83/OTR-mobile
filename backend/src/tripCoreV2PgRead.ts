@@ -270,7 +270,7 @@ export function createCorePgReader(
                     ? ["REVIEWED_SOURCE"]
                     : reviewed
                       ? ["MANUAL", "REVIEWED_SOURCE"]
-                      : ["MANUAL"],
+                      : normal && manual!.importEnabled ? ["MANUAL", "IMPORT"] : ["MANUAL"],
                 sourceEvidenceAvailable: !!reviewed,
               })
             : coreClosedCapabilities;

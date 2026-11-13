@@ -230,6 +230,16 @@ export function CaptureContent({
       const retained = submitPrior
         ? await owner.submit(selected, progress, submitPrior)
         : await owner.submit(selected, progress);
+      if (
+        retained.allInputsAccepted &&
+        (retained.batch.context.tripPrior?.id ?? retained.assignedTripId) &&
+        process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
+      ) {
+        const { retainImportSubmission } =
+          await import("@/data/repositories/importSubmissionRepository");
+        await retainImportSubmission(retained);
+        if (current()) progress({ ...retained });
+      }
       if (draftStaging && current() && retained.allInputsAccepted) staging.cancel();
     } catch {
       if (current()) {

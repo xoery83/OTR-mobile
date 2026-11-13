@@ -18,7 +18,14 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { useUniversalCapture } from "./useUniversalCapture";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { router, useNavigation } from "expo-router";
+import {
+  readImportSubmission,
+  updateImportSubmission,
+  type ImportSubmission,
+} from "@/data/repositories/importSubmissionRepository";
+import type { V3AdmissionRow } from "@/data/operations/universalV3Review";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 import { openUniversalV3Review } from "@/data/operations/universalV3Review";
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
@@ -28,12 +35,6 @@ import {
   type V3SaveObservation,
 } from "@/data/operations/universalV3Activity";
 import { AppIcon } from "@/components/AppIcon";
-
-const UniversalV3Review = lazy(() =>
-  import("./UniversalV3Review").then(({ UniversalV3Review }) => ({
-    default: UniversalV3Review,
-  })),
-);
 
 export function UniversalCaptureResults({
   model,
@@ -51,6 +52,40 @@ export function UniversalCaptureResults({
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
+  const submittedStart = useRef(false);
+  useEffect(() => {
+    if (
+      submittedStart.current ||
+      state.localFirstSelected !== true ||
+      state.busy ||
+      !state.canStart ||
+      state.unavailable ||
+      (state.localFirst && state.localFirst.state !== "WAITING_INPUT") ||
+      !model.allInputsAccepted
+    )
+      return;
+    let active = true;
+    void readImportSubmission(model)
+      .then((intent) => {
+        if (!active || !isCurrent() || !intent || submittedStart.current) return;
+        submittedStart.current = true;
+        state.start();
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [
+    model,
+    isCurrent,
+    state.localFirstSelected,
+    state.localFirst,
+    state.busy,
+    state.canStart,
+    state.unavailable,
+    state.start,
+  ]);
+
   useEffect(() => {
     onLegacyPhotoReview?.(state.localFirstSelected === false);
   }, [onLegacyPhotoReview, state.localFirstSelected]);
@@ -115,7 +150,7 @@ export function UniversalCaptureResults({
     />
   );
 }
-// Read existing receipts while this sheet is open; never enqueue or dispatch here.
+// Only a retained Submit intent permits admission; historical Activity remains read-only.
 export function UniversalV3Activity({
   model,
   execution,
@@ -129,6 +164,11 @@ export function UniversalV3Activity({
   formatUnavailable: boolean;
   isCurrent(): boolean;
 }) {
+  const navigation = useNavigation();
+  const navigating = useRef(false);
+  const [intent, setIntent] = useState<ImportSubmission | null>(null);
+  const [rows, setRows] = useState<V3AdmissionRow[]>([]);
+  const [confirming, setConfirming] = useState(false);
   const result = execution?.state === "REVIEW_READY" ? execution : null;
   const [review, setReview] =
     useState<Awaited<ReturnType<typeof openUniversalV3Review>>>();
@@ -160,13 +200,35 @@ export function UniversalV3Activity({
           result.candidates.map((c) => c.candidateId),
         );
         if (!current()) return;
-        const owner = await openUniversalV3Review(model);
+        const submitted = await readImportSubmission(model);
+        if (!current()) return;
+        setIntent(submitted);
+        const owner = await openUniversalV3Review(model, submitted ? "IMPORT" : "MANUAL");
         if (!current()) return;
         setReview(owner);
+        const plan = owner.batch(result.candidates);
+        if (!current()) return;
+        setRows(plan);
         const next: Record<string, V3SaveObservation> = {};
-        for (const candidate of result.candidates) {
+        for (const row of plan) {
+          const resolution = submitted?.resolutions[row.candidate.candidateId];
+          const candidate = resolution?.candidate ?? row.candidate;
           if (!current()) return;
-          const observed = await owner.check(candidate);
+          let observed = await owner.check(candidate);
+          const decision = resolution?.decision ?? row.decision;
+          if (
+            current() &&
+            submitted?.confirmed &&
+            decision &&
+            observed === "UNCONFIRMED" &&
+            !unknown.has(candidate.candidateId)
+          ) {
+            try {
+              observed = await owner.confirm(candidate, decision);
+            } catch {
+              observed = "REVIEW_REQUIRED";
+            }
+          }
           next[candidate.candidateId] =
             observed !== "VERIFIED" && unknown.has(candidate.candidateId)
               ? "OUTCOME_UNKNOWN"
@@ -211,24 +273,35 @@ export function UniversalV3Activity({
     // Batch identity is fenced by the owning sheet key. Reopening reads original IDs only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result?.taskId, revision]);
+  const displayRows = rows.filter((row) => row.disposition !== "ABSTAIN");
   const progress = projectUniversalV3Activity(
-    execution,
+    result && rows.length
+      ? { ...result, candidates: displayRows.map((row) => row.candidate) }
+      : execution,
     observations,
     unavailable || readUnavailable,
     formatUnavailable,
   );
+  const progressState =
+    progress.state === "confirmation" &&
+    displayRows.every(
+      (row) =>
+        row.disposition === "REVIEW" && !intent?.resolutions[row.candidate.candidateId],
+    )
+      ? "attention"
+      : progress.state;
   return (
     <UiSection title={t("capture.activityStatus.activity")}>
       <UiText>{t("capture.activityStatus.local")}</UiText>
       <UiText accessibilityRole="header" accessibilityLiveRegion="polite">
-        {t(`capture.activityStatus.${progress.state}`)}
+        {t(`capture.activityStatus.${progressState}`)}
       </UiText>
-      <UiText>{t(`capture.activityHint.${progress.state}`)}</UiText>
+      <UiText>{t(`capture.activityHint.${progressState}`)}</UiText>
       {result?.candidates.length ? (
         <UiText>
           {t("capture.activityStatus.counts", {
             saved: progress.saved,
-            total: result.candidates.length,
+            total: rows.length ? displayRows.length : result.candidates.length,
           })}
         </UiText>
       ) : null}
@@ -239,24 +312,60 @@ export function UniversalV3Activity({
           onPress={() => setRevision((n) => n + 1)}
         />
       ) : null}
-      {result?.candidates.map((candidate) => (
-        <Suspense key={candidate.candidateId} fallback={null}>
-          <UniversalV3Review
-            model={model}
-            candidate={candidate}
-            isCurrent={isCurrent}
-            activityReview={review}
-            activityStatus={observations[candidate.candidateId]}
-            onSaveChanged={(status) => {
-              setObservations((previous) => ({
-                ...previous,
-                [candidate.candidateId]: status,
-              }));
-              setRevision((n) => n + 1);
-            }}
-          />
-        </Suspense>
-      ))}
+
+      {intent &&
+      !intent.confirmed &&
+      rows.some(
+        (row) => row.decision || intent.resolutions[row.candidate.candidateId],
+      ) ? (
+        <UiButton
+          label={t("capture.admission.confirmBatch")}
+          disabled={confirming || !review}
+          onPress={() => {
+            if (confirming || !isCurrent()) return;
+            setConfirming(true);
+            void updateImportSubmission(model, (record) => ({
+              ...record,
+              confirmed: true,
+            }))
+              .then((record) => {
+                if (isCurrent()) {
+                  setIntent(record);
+                  setRevision((n) => n + 1);
+                }
+              })
+              .catch(() => {
+                if (isCurrent()) setReadUnavailable(true);
+              })
+              .finally(() => {
+                if (isCurrent()) setConfirming(false);
+              });
+          }}
+        />
+      ) : null}
+      {rows.some(
+        (row) =>
+          row.disposition === "REVIEW" ||
+          observations[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
+          observations[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",
+      ) ? (
+        <UiButton
+          label={t("capture.admission.openReview")}
+          variant="secondary"
+          onPress={() => {
+            if (navigating.current || !isCurrent()) return;
+            navigating.current = true;
+            navigation.setParams({ jobId: model.batch.jobId } as never);
+            router.push({
+              pathname: "/import-review",
+              params: { jobId: model.batch.jobId },
+            });
+          }}
+        />
+      ) : null}
+      {rows.some((row) => row.disposition === "ABSTAIN") ? (
+        <UiText>{t("capture.admission.abstain")}</UiText>
+      ) : null}
     </UiSection>
   );
 }

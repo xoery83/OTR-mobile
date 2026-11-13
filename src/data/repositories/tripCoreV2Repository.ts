@@ -29,6 +29,7 @@ import {
 } from "../../domain/trip/tripCoreV2";
 import {
   validateCoreCommand,
+  isNormalImportCoreCommand,
   isReviewedSourceCreate,
 } from "../../domain/trip/tripCoreV2Commands";
 import {
@@ -701,7 +702,7 @@ export function createTripCoreV2Repository(
       commands.length < 1 || commands.length > (flightDetails ? 8 : 7) ||
       new Set(commands.map((command) => command.operationId)).size !== commands.length ||
       link?.command !== "RECONCILE_ITEM_DOCUMENTS" ||
-      commands.some((command) => command.tripId !== ctx.tripId || command.admission.mode !== "MANUAL") ||
+      commands.some((command) => command.tripId !== ctx.tripId || (command.admission.mode !== "MANUAL" && !isNormalImportCoreCommand(command))) ||
       commands.slice(0, -1).some((command, index) =>
         command.command !== "CREATE_DOCUMENT_METADATA" &&
         !(flightDetails && index === 1 && command.target.id === link.target.id &&
@@ -2186,7 +2187,7 @@ export function createTripCoreV2Repository(
         (committed && !committed.has(intent.command.operationId)) ||
         intent.state === "CONFLICT" ||
         intent.state === "REVIEW" ||
-        intent.command.admission.mode !== "MANUAL"
+        (intent.command.admission.mode !== "MANUAL" && !isNormalImportCoreCommand(intent.command))
       )
         continue;
       try {
@@ -2195,7 +2196,7 @@ export function createTripCoreV2Repository(
           intent.command,
           actor,
           intent.created_at,
-          false,
+          intent.command.admission.mode === "IMPORT",
           undefined,
           true,
         );

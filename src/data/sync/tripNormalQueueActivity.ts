@@ -18,6 +18,7 @@ import {
   validateCoreCommand,
   isReviewedSourceCreate,
   isNormalManualCoreCommand,
+  isNormalImportCoreCommand,
 } from "@/domain/trip/tripCoreV2Commands";
 import { readTripMetadataConfirmation } from "../repositories/tripMetadataConfirmation";
 import { createTripPersonRepository } from "../repositories/tripPersonRepository";
@@ -150,13 +151,13 @@ export async function getNormalTripQueueActivity(
             )
               continue;
             const c = validateCoreCommand(JSON.parse(op.payload_json));
-            if (scope.manualOnly && c.admission.mode !== "MANUAL") continue;
+            if (scope.manualOnly && !["MANUAL", "IMPORT"].includes(c.admission.mode)) continue;
             if (
               c.tripId !== create.trip_id ||
               c.operationId !== op.id ||
               (c.target.kind !== "ITEM" && c.command !== "CREATE_DOCUMENT_METADATA") ||
               c.target.id !== op.entity_id ||
-              (c.admission.mode !== "MANUAL" && !isReviewedSourceCreate(c))
+              (c.admission.mode !== "MANUAL" && !isNormalImportCoreCommand(c) && !isReviewedSourceCreate(c))
             )
               continue;
             const item = await database.getFirstAsync<{
@@ -168,7 +169,7 @@ export async function getNormalTripQueueActivity(
               c.target.id,
             );
             const manual =
-              isReviewedSourceCreate(c) ||
+              isReviewedSourceCreate(c) || isNormalImportCoreCommand(c) ||
               isNormalManualCoreCommand(c, item?.experience_family);
             eligible =
               !!manual &&

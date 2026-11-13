@@ -12,6 +12,7 @@ import {
   validateCoreCommand,
   isReviewedSourceCreate,
   isNormalManualCoreCommand,
+  isNormalImportCoreCommand,
   isNormalManualCreate,
 } from "@/domain/trip/tripCoreV2Commands";
 import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
@@ -76,7 +77,7 @@ function cloudManualInstructionCommand(operation: Row): CoreCommand | null {
 }
 
 export function isManualLocalDocumentCommand(command: CoreCommand) {
-  if (command.admission.mode !== "MANUAL") return false;
+  if (!["MANUAL", "IMPORT"].includes(command.admission.mode)) return false;
   if (command.command === "CREATE_DOCUMENT_METADATA")
     return command.target.kind === "DOCUMENT";
   if (command.command !== "RECONCILE_ITEM_DOCUMENTS" || command.target.kind !== "ITEM")
@@ -95,9 +96,13 @@ export function isManualLocalDocumentCommand(command: CoreCommand) {
 // Private SELF creates use the accepted Core Person on every Trip.
 export function cloudManualCreatePerson(command: CoreCommand): string | null {
   if (
-    !isNormalManualCreate(command) ||
+    !(
+      isNormalManualCreate(command) ||
+      (isNormalImportCoreCommand(command) &&
+        ["CREATE_ITEM", "CREATE_SPARSE_FLIGHT"].includes(command.command))
+    ) ||
     command.target.kind !== "ITEM" ||
-    command.admission.mode !== "MANUAL" ||
+    !["MANUAL", "IMPORT"].includes(command.admission.mode) ||
     command.baseVector.length !== 1
   )
     return null;
@@ -156,6 +161,7 @@ function cloudCommand(
         !(instruction && isManualInstructionEditCommand(command))) ||
       !(manual
         ? isNormalManualCoreCommand(command) ||
+          isNormalImportCoreCommand(command) ||
           (instruction && isManualInstructionEditCommand(command))
         : isReviewedSourceCreate(command))
     )
@@ -331,8 +337,11 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               (command.target.kind !== "ITEM" &&
                 !isManualLocalDocumentCommand(command) &&
                 !(instruction && deps.instructionSubmissionEnabled?.())) ||
-              (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command)) ||
-              (adopted.manualOnly === true && command.admission.mode !== "MANUAL")
+              (command.admission.mode !== "MANUAL" &&
+                !isNormalImportCoreCommand(command) &&
+                !isReviewedSourceCreate(command)) ||
+              (adopted.manualOnly === true &&
+                !["MANUAL", "IMPORT"].includes(command.admission.mode))
             )
               continue;
             const instructionScope =
@@ -352,6 +361,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                       "P3",
                     ))))) ||
               isReviewedSourceCreate(command) ||
+              isNormalImportCoreCommand(command) ||
               (isNormalManualCoreCommand(command) &&
                 (isNormalManualCreate(command) ||
                   isManualLocalDocumentCommand(command) ||
@@ -425,7 +435,8 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
           manual &&
           !recovering &&
           !isManualLocalDocumentCommand(command) &&
-          !isNormalManualCreate(command)
+          !isNormalManualCreate(command) &&
+          !isNormalImportCoreCommand(command)
         ) {
           let eligible = false;
           for (const family of acceptedEditFamilies) {

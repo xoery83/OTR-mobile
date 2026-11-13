@@ -4,6 +4,8 @@ import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
 import {
   coreClosedCapabilities,
+  validateCoreCommand,
+  isNormalManualCoreCommand,
   type CoreCapabilities,
 } from "../../domain/trip/tripCoreV2Commands";
 import {
@@ -17,6 +19,7 @@ import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository"
 import {
   openUniversalV3Review,
   planUniversalV3Review,
+  planUniversalV3Batch,
   projectUniversalV3SaveState,
   universalV3ReviewFields,
 } from "./universalV3Review";
@@ -590,4 +593,234 @@ it("shows supported flight airport codes even without extracted place names", ()
       },
     }),
   ).toMatchObject({ place: "AKL", endPlace: "LHR" });
+});
+
+it("Slice 3 contract: unreviewed V3 NEW would be recorded as protected MANUAL facts", () => {
+  const f = fixture();
+  const plan = planUniversalV3Review({
+    ...f,
+    snapshot: f.snapshot(),
+    decision: { action: "NEW" },
+  });
+  const create = plan.commands[0];
+  expect(create.admission).toEqual({
+    mode: "MANUAL",
+    sourceIntentId: null,
+    policyVersion: null,
+  });
+  const applied = applyCoreCommand(emptyCoreGraph(), create, f.actor, stamp).graph;
+  expect(applied.itinerary_events[0].field_state).toMatchObject({
+    "itinerary_events.title": { origin: "MANUAL", protected: true },
+  });
+});
+it("Slice 3 contract: source-free AUTO_SOURCE is rejected rather than silently admitted", () => {
+  const f = fixture();
+  const plan = planUniversalV3Review({
+    ...f,
+    snapshot: f.snapshot(),
+    decision: { action: "NEW" },
+  });
+  const admission = {
+    mode: "AUTO_SOURCE",
+    sourceIntentId: null,
+    policyVersion: "otr.trip.auto-admit/1",
+  };
+  expect(() => validateCoreCommand({ ...plan.commands[0], admission })).toThrow(
+    "INVALID_ADMISSION_BINDING",
+  );
+  const sourceBound = validateCoreCommand({
+    ...plan.commands[0],
+    admission: { ...admission, sourceIntentId: randomUUID() },
+  });
+  expect(isNormalManualCoreCommand(sourceBound)).toBe(false);
+  expect(() => applyCoreCommand(emptyCoreGraph(), sourceBound, f.actor, stamp)).toThrow(
+    "INVALID_PROVENANCE",
+  );
+  expect(() =>
+    validateCoreCommand({
+      ...plan.commands[1],
+      admission: { ...admission, sourceIntentId: randomUUID() },
+    }),
+  ).toThrow("INVALID_PROVENANCE");
+});
+it("Slice 3 contract: IMPORT accepts only the newly approved finite commands", () => {
+  const f = fixture();
+  const plan = planUniversalV3Review({
+    ...f,
+    snapshot: f.snapshot(),
+    decision: { action: "NEW" },
+  });
+  expect(() =>
+    validateCoreCommand({
+      ...plan.commands[0],
+      admission: { mode: "IMPORT", sourceIntentId: null, policyVersion: null },
+    }),
+  ).not.toThrow();
+});
+
+it.each(allFamilies)(
+  "Slice 3 IMPORT %s NEW uses existing commands with non-manual provenance",
+  (kind) => {
+    const f = fixture();
+    const candidate = {
+      ...f.candidate,
+      kind,
+      subtype: kind === "P5" ? "TRAIN" : "ACTIVITY",
+      fields: {
+        title: kind === "P2" ? "NZ1" : "Synthetic trip object",
+        "schedule.start.local_date": "2026-12-14",
+        "schedule.end.local_date": "2026-12-15",
+        "check_out.date": "2026-12-15",
+        "origin.local_date": "2026-12-14",
+        "destination.local_date": "2026-12-15",
+        "origin.place_label": "Auckland",
+        "destination.place_label": "Wellington",
+        "operator.name": "Synthetic Rail",
+        "service.number": "R1",
+        service: "Rail R1",
+      },
+    };
+    const capabilities: CoreCapabilities = {
+      ...f.capabilities,
+      enabledFamilies: [...allFamilies],
+      enabledAdmissionModes: ["MANUAL", "IMPORT"],
+      enabledCommands: [
+        "CREATE_ITEM",
+        "CREATE_SPARSE_FLIGHT",
+        "CREATE_DOCUMENT_METADATA",
+        "RECONCILE_ITEM_DOCUMENTS",
+      ],
+    };
+    const plan = planUniversalV3Review({
+      ...f,
+      candidate,
+      capabilities,
+      snapshot: f.snapshot(),
+      decision: { action: "NEW" },
+      admissionMode: "IMPORT",
+    });
+    const graph = plan.commands.reduce(
+      (g, c) => applyCoreCommand(g, c, f.actor, stamp, true).graph,
+      emptyCoreGraph(),
+    );
+    expect(plan.commands.every((c) => c.admission.mode === "IMPORT")).toBe(true);
+    expect(graph.itinerary_events[0].field_state).toMatchObject({
+      "itinerary_events.title": { origin: "PROVIDER", protected: false },
+    });
+    expect(graph.trip_item_document_links).toHaveLength(1);
+  },
+);
+it("Slice 3 IMPORT links evidence without overwriting an explicitly edited manual field", () => {
+  const f = fixture(),
+    target = randomUUID();
+  const before = applyCoreCommand(
+    emptyCoreGraph(),
+    f.existing(target),
+    f.actor,
+    stamp,
+  ).graph;
+  const plan = planUniversalV3Review({
+    ...f,
+    snapshot: f.snapshot(before),
+    capabilities: { ...f.capabilities, enabledAdmissionModes: ["MANUAL", "IMPORT"] },
+    decision: { action: "LINK", itemId: target, revision: 1 },
+    admissionMode: "IMPORT",
+  });
+  const graph = plan.commands.reduce(
+    (g, c) => applyCoreCommand(g, c, f.actor, stamp, true).graph,
+    before,
+  );
+  expect(graph.itinerary_events[0].title).toBe("Previously entered title");
+  expect(graph.itinerary_events[0].field_state).toEqual(
+    before.itinerary_events[0].field_state,
+  );
+  expect(graph.trip_item_document_links).toHaveLength(1);
+  expect(() =>
+    validateCoreCommand({
+      ...plan.commands.at(-1)!,
+      command: "SET_ITEM_TEXT",
+      baseVector: [{ kind: "ITEM", id: target, revision: 2 }],
+      payload: { title: "Silent replacement" },
+    }),
+  ).toThrow("SCOPE_NOT_AUTHORIZED");
+});
+
+it("Slice 3 batch: complete NEW, missing facts, ABSTAIN and title ambiguity remain distinct", () => {
+  const f = fixture(),
+    capabilities = {
+      ...f.capabilities,
+      enabledAdmissionModes: [
+        "MANUAL",
+        "IMPORT",
+      ] as CoreCapabilities["enabledAdmissionModes"],
+    };
+  const plan = (candidates: import("zod").z.infer<typeof import("../api/universalV3Contracts").universalV3Candidate>[], graph = emptyCoreGraph()) =>
+    planUniversalV3Batch({
+      model: f.model,
+      candidates,
+      snapshot: f.snapshot(graph),
+      capabilities,
+    });
+  expect(plan([f.candidate])[0].disposition).toBe("NEW");
+  expect(
+    plan([{ ...f.candidate, fields: { "activity.name": "No date" } }])[0],
+  ).toMatchObject({ disposition: "REVIEW", reason: "missing" });
+  expect(plan([{ ...f.candidate, fields: {} }])[0].disposition).toBe("ABSTAIN");
+  const existing = validateCoreCommand(f.existing(randomUUID()));
+  const graph = applyCoreCommand(emptyCoreGraph(), existing, f.actor, stamp, true).graph;
+  expect(
+    plan(
+      [
+        {
+          ...f.candidate,
+          fields: { ...f.candidate.fields, "activity.name": "Previously entered title", "activity.date": "2026-12-15" },
+        },
+      ],
+      graph,
+    )[0],
+  ).toMatchObject({ disposition: "REVIEW", reason: "ambiguous" });
+  expect(
+    plan([{ ...f.candidate, candidateId: randomUUID() }, f.candidate]).every(
+      (row) => row.disposition === "REVIEW",
+    ),
+  ).toBe(true);
+});
+it("Slice 3 batch: stable supplier identity aggregates documents; conflicting facts require Review", () => {
+  const f = fixture(),
+    capabilities = {
+      ...f.capabilities,
+      enabledAdmissionModes: [
+        "MANUAL",
+        "IMPORT",
+      ] as CoreCapabilities["enabledAdmissionModes"],
+    };
+  const first = {
+    ...f.candidate,
+    fields: {
+      ...f.candidate.fields,
+      confirmation_code: "ABC123",
+      provider: "Example museum",
+    },
+  };
+  const second = { ...first, candidateId: randomUUID() };
+  const plan = planUniversalV3Batch({
+    model: f.model,
+    candidates: [first, second],
+    snapshot: f.snapshot(),
+    capabilities,
+  });
+  expect(plan).toHaveLength(1);
+  expect(plan[0].members).toHaveLength(2);
+  expect(plan[0].disposition).toBe("NEW");
+  expect(
+    planUniversalV3Batch({
+      model: f.model,
+      candidates: [
+        first,
+        { ...second, fields: { ...second.fields, "activity.date": "2026-12-16" } },
+      ],
+      snapshot: f.snapshot(),
+      capabilities,
+    })[0],
+  ).toMatchObject({ disposition: "REVIEW", reason: "conflict" });
 });

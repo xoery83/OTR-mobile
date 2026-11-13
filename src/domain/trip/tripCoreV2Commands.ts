@@ -406,7 +406,7 @@ export const coreCommandSchema = z.strictObject({
   target: typedId,
   baseVector: z.array(coreVectorEntrySchema).min(1).max(32),
   admission: z.strictObject({
-    mode: z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE"]),
+    mode: z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE", "IMPORT"]),
     sourceIntentId: f.coreUuid.nullable(),
     policyVersion: z.literal("otr.trip.auto-admit/1").nullable(),
   }),
@@ -457,16 +457,17 @@ export function validateCoreCommand(input: unknown): CoreCommand {
   const a = q.admission;
   if (
     (q.command === "SET_AUTHORED_FLIGHT_DETAILS" || q.command === "CREATE_DOCUMENT_METADATA") &&
-    a.mode !== "MANUAL"
+    a.mode !== "MANUAL" && a.mode !== "IMPORT"
   )
     throw new Error("INVALID_PROVENANCE");
   if (
-    a.mode === "MANUAL"
+    (a.mode === "MANUAL" || a.mode === "IMPORT")
       ? a.sourceIntentId !== null || a.policyVersion !== null
       : a.sourceIntentId === null ||
         (a.mode === "AUTO_SOURCE" ? a.policyVersion === null : a.policyVersion !== null)
   )
     throw new Error("INVALID_ADMISSION_BINDING");
+  if (a.mode === "IMPORT" && !isNormalImportCoreCommand({ ...q, payload })) throw new Error("SCOPE_NOT_AUTHORIZED");
   if (
     ["QUALIFY_FLIGHT", "REPLACE_FLIGHT_SERVICE", "UPDATE_FLIGHT_FACTS"].includes(
       q.command,
@@ -505,7 +506,7 @@ export const coreCapabilitiesSchema = z
     enabledCommands: z.array(z.enum(commands)).max(commands.length),
     enabledFamilies: z.array(z.enum(["P1", "P2", "P3", "P4", "P5", "P6"])).max(6),
     enabledAdmissionModes: z
-      .array(z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE"]))
+      .array(z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE", "IMPORT"]))
       .max(3),
     maximumRequestBytes: z.literal(32768),
     maximumAffectedRoots: z.literal(32),
@@ -596,4 +597,18 @@ export function isNormalManualCoreCommand(command: CoreCommand, family?: string)
     command.command in owner &&
     (family === undefined || owner[command.command as keyof typeof owner] === family)
   );
+}
+
+// Same ordinary ACL and queue. Import may create or add links, never edit an existing Item.
+export function isNormalImportCoreCommand(command: CoreCommand) {
+  if (command.admission.mode !== "IMPORT") return false;
+  if (["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "CREATE_DOCUMENT_METADATA"].includes(command.command))
+    return command.baseVector.length === 1 && command.baseVector[0].revision === null;
+  if (command.command === "SET_AUTHORED_FLIGHT_DETAILS")
+    return command.target.kind === "ITEM" && command.baseVector.length === 1 && command.baseVector[0].revision === 1;
+  if (command.command !== "RECONCILE_ITEM_DOCUMENTS") return false;
+  const payload = command.payload as { add: string[]; remove: string[] };
+  return payload.add.length > 0 && payload.add.length <= 5 && payload.remove.length === 0 &&
+    command.baseVector.every(b => b.kind === "ITEM" || b.kind === "DOCUMENT") &&
+    payload.add.every(id => command.baseVector.some(b => b.kind === "DOCUMENT" && b.id === id));
 }

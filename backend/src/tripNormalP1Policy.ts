@@ -36,6 +36,9 @@ const localDocumentCommands = ["CREATE_DOCUMENT_METADATA", "RECONCILE_ITEM_DOCUM
 
 export function normalManualCapabilities(gate: Record<string, unknown> | undefined) {
   const configured = gate?.enabled_commands;
+  const importEnabled = JSON.stringify(gate?.enabled_admission_modes) === '["MANUAL","IMPORT"]';
+  if (importEnabled) gate = { ...gate, enabled_admission_modes: ["MANUAL"] };
+
   if (!gate || !Array.isArray(configured)) return null;
   const localDocuments = localDocumentCommands.every((name) => configured.includes(name));
   if (localDocuments) {
@@ -45,7 +48,7 @@ export function normalManualCapabilities(gate: Record<string, unknown> | undefin
     };
   }
   const documents = localDocuments ? localDocumentCommands : [];
-  if (isNormalP1Gate(gate)) return { commands: [...normalP1Commands, ...documents], families: ["P1"] };
+  if (isNormalP1Gate(gate)) return { commands: [...normalP1Commands, ...documents], families: ["P1"], ...(importEnabled ? { importEnabled: true } : {}) };
   const rental = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4"]';
   const transport = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P5"]';
   const activity = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P6"]';
@@ -84,7 +87,7 @@ export function normalManualCapabilities(gate: Record<string, unknown> | undefin
     !commands.every((name) => (gate.enabled_commands as unknown[]).includes(name))
   )
     return null;
-  return { commands: [...commands, ...documents], families };
+  return { commands: [...commands, ...documents], families, ...(importEnabled ? { importEnabled: true } : {}) };
 }
 
 // Additive owning Import qualification; Manual permission never enables this mode.

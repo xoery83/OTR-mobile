@@ -578,3 +578,29 @@ it.each([false, true])(
     }
   },
 );
+
+it("negotiates finite IMPORT only with a compatible client, without binding a QA release", async () => {
+  const produced = {
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["CREATE_ITEM"],
+    enabledFamilies: ["P1"],
+    enabledAdmissionModes: ["MANUAL", "IMPORT"],
+  };
+  const connection = {
+    read: { capabilities: async () => produced },
+    hash,
+  } as unknown as CoreHttpConnection;
+  for (const support of [undefined, "true", "1"]) {
+    const response = await coreHttpBoundary(
+      request("capabilities", undefined, support ? { "X-OTR-Core-Import": support } : {}),
+      actor,
+      async () => true,
+      connection,
+    );
+    expect(response.status).toBe(200);
+    expect((await response.json()).enabledAdmissionModes).toEqual(
+      support === "1" ? ["MANUAL", "IMPORT"] : ["MANUAL"],
+    );
+  }
+});
