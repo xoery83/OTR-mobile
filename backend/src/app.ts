@@ -3140,6 +3140,30 @@ export function createDevBackendHandler({
                     "BACKEND_UNAVAILABLE",
                     "The backend is unavailable.",
                   );
+      const cause = error instanceof Error ? error.cause : null;
+      if (
+        normalized.status === 503 &&
+        cause &&
+        typeof cause === "object" &&
+        "stage" in cause &&
+        ["expense_replay", "expense_causal_base", "expense_execute"].includes(
+          String(cause.stage),
+        )
+      ) {
+        const code = "databaseCode" in cause ? cause.databaseCode : null;
+        console.error(
+          JSON.stringify({
+            level: "error",
+            event: "expense_backend_failure",
+            requestId,
+            stage: cause.stage,
+            databaseCode:
+              typeof code === "string" && /^(?:[A-Z0-9]{5}|PGRST[0-9]{3})$/.test(code)
+                ? code
+                : null,
+          }),
+        );
+      }
       response = json(normalized.status, {
         error: {
           code: normalized.code,

@@ -3530,6 +3530,19 @@ it("keeps structured Trip pending until current independent readback and authore
   expect((await f.repo.listTrips()).find((t) => t.id === tripId)?.syncStatus).toBe(
     "SYNCED",
   );
+  expect(
+    f.sql
+      .prepare("SELECT title,settlement_currency FROM ledger_journeys WHERE journey_id=?")
+      .get(tripId),
+  ).toMatchObject({ title: "Newer edit", settlement_currency: "NZD" });
+  await f.repo.retainMetadataSnapshot(
+    { formatVersion: 3, actorAccountId: accountA, tripId, metadataRevision: 0, metadata },
+    randomUUID(),
+  );
+  expect(
+    f.sql.prepare("SELECT title FROM ledger_journeys WHERE journey_id=?").get(tripId)
+      ?.title,
+  ).toBe("Newer edit");
 });
 
 it("explicit rollout enrolls only never-dispatched V1 Trip, preserving Trip/operation/Item and destination identities", async () => {

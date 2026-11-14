@@ -634,3 +634,22 @@ it.each([true, false])(
     expect(result.conflicts[0].changedGroups).toEqual(proof ? [] : ["DESCRIPTIVE"]);
   },
 );
+
+it.each(["42501", "PGRST202", "secret unsafe value"])(
+  "keeps only safe RPC diagnostics for %s without changing business rejection",
+  async (code) => {
+    const client = {
+      rpc: vi.fn(async () => ({
+        data: null,
+        error: { code, message: "private database values" },
+      })),
+    } as unknown as SupabaseClient;
+    await expect(execute(client)).rejects.toMatchObject({
+      message: "Supabase Dev financial evidence operation failed.",
+      cause: {
+        stage: "expense_replay",
+        databaseCode: code === "secret unsafe value" ? null : code,
+      },
+    });
+  },
+);

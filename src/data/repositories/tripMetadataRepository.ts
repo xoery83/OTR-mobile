@@ -200,6 +200,17 @@ export function createTripMetadataRepository(
               scope.accountId,
               snapshot.tripId,
             );
+            // Parent metadata is not a Ledger change-stream event; refresh its display fields here.
+            await database.runAsync(
+              `UPDATE ledger_journeys SET title=?,start_date=?,end_date=? WHERE journey_id=?
+               AND EXISTS(SELECT 1 FROM ledger_actor_context WHERE journey_id=? AND user_id=?)`,
+              snapshot.metadata.name,
+              snapshot.metadata.startDate,
+              snapshot.metadata.endDate,
+              snapshot.tripId,
+              snapshot.tripId,
+              scope.accountId,
+            );
           }
           await retainTripMetadataConfirmation(
             database,

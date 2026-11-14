@@ -2562,6 +2562,36 @@ describe("Expense consistency v2 HTTP contract", () => {
       entity: { businessStatus: "DELETED" },
     });
   });
+  it("logs safe Expense RPC stage/code with the request ID and keeps private details out of HTTP", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.executeExpenseCommand).mockRejectedValue(
+      new Error("private DB detail", {
+        cause: { stage: "expense_execute", databaseCode: "42501", secret: "never log" },
+      }),
+    );
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const response = await createDevBackendHandler({ gateway })(
+        request("commands", { envelope, auditReason: null }),
+      );
+      const body = await response.json();
+      expect(response.status).toBe(503);
+      expect(body.error.code).toBe("BACKEND_UNAVAILABLE");
+      const diagnostic = JSON.parse(logged.mock.calls[0][0]);
+      expect(diagnostic).toEqual({
+        level: "error",
+        event: "expense_backend_failure",
+        requestId: body.error.requestId,
+        stage: "expense_execute",
+        databaseCode: "42501",
+      });
+      expect(JSON.stringify([body, logged.mock.calls])).not.toMatch(
+        /private DB detail|never log|secret/,
+      );
+    } finally {
+      logged.mockRestore();
+    }
+  });
   it("rejects a key mismatch before gateway mutation", async () => {
     const { gateway } = createGateway();
     const response = await createDevBackendHandler({ gateway })(
