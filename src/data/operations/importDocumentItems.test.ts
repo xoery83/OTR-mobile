@@ -9,6 +9,11 @@ import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { UniversalImportResult } from "../api/universalImportContracts";
 import type { ImportDocument } from "../repositories/importDocumentsRepository";
 import { readImportDocumentItems } from "./importDocumentItems";
+vi.mock("expo/fetch", () => ({
+  fetch: () => {
+    throw Error("Unexpected Native HTTP in pure Document unit test");
+  },
+}));
 async function fixture() {
   const account = randomUUID(),
     trip = randomUUID(),

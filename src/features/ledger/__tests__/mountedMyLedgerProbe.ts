@@ -31,7 +31,7 @@ export function createMountedMyLedgerProbe(generation: () => number) {
       getAccountGeneration: generation,
       subscribeAccountGeneration: () => () => {},
     },
-    "@/data/sync/ledgerOperationalSync": {
+    "@/data/operations/ledgerActivity": {
       subscribeLedgerOperationalSyncCompletion: (f: typeof listener) => (
         (listener = f),
         () => {}
