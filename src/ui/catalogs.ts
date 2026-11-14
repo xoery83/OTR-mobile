@@ -188,9 +188,9 @@ export const en = {
     "The original could not be opened. The document and its links are retained.",
 
   "documents.searchTitle": "Search documents",
-  "documents.sameImportResults": "Results from this Import",
+  "documents.sameImportResults": "From the same import",
   "documents.resultsExplanation":
-    "These results are identified by this Batch’s original operations and receipts, separately from document links.",
+    "These saved results come from the same import and may use other files. Direct document links are listed separately.",
   "documents.resultsUnavailable":
     "Saved results could not be verified here. Existing document links remain available.",
   "documents.noVerifiedResults":

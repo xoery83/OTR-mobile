@@ -1,4 +1,4 @@
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore, useRef, useEffect } from "react";
 import { View } from "react-native";
 import {
   Stack,
@@ -45,6 +45,13 @@ export default function DocumentDetailScreen() {
     getAccountGeneration,
   );
   const focused = useIsFocused();
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [entryGeneration, setEntryGeneration] = useState(generation);
   const [entry, setEntry] = useState<DocumentListEntry | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -106,8 +113,9 @@ export default function DocumentDetailScreen() {
       };
     }, [generation, id, tripId, params.origin, params.captureId]),
   );
-  const current = () =>
+  const scopeVisible =
     focused && entryGeneration === generation && generation === getAccountGeneration();
+  const current = () => mounted.current && scopeVisible;
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack.Screen
@@ -117,7 +125,7 @@ export default function DocumentDetailScreen() {
           headerBackVisible: true,
         }}
       />
-      {!current() ? null : entry?.origin === "CORE" && tripId ? (
+      {!scopeVisible ? null : entry?.origin === "CORE" && tripId ? (
         <CoreDocumentDetail
           key={`${generation}:${tripId}:${id}:${params.jobId ?? ""}`}
           entry={entry}

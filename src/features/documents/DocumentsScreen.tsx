@@ -6,7 +6,14 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useNetworkState } from "expo-network";
 import PagerView from "react-native-pager-view";
 import {
@@ -404,6 +411,7 @@ function DocumentDirectory({
   onScrollOffset(offset: number, distance: number, dragging: boolean): void;
   searchOnly?: boolean;
 }) {
+  const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const [rows, setRows] = useState<DocumentListEntry[]>([]),
@@ -770,6 +778,7 @@ function DocumentDirectory({
         horizontal
         keyboardShouldPersistTaps="handled"
         showsHorizontalScrollIndicator={false}
+        key={fontScale}
         style={styles.filters}
         contentContainerStyle={styles.filterContent}
       >
