@@ -153,6 +153,7 @@ export function ImportActivityList({
             {statuses.map((value) => (
               <UiChoiceChip
                 key={value}
+                compact
                 label={
                   value === "ALL" || value === "COMPLETED"
                     ? t(`activity.status.${value}`)
@@ -218,7 +219,9 @@ export function ImportActivityList({
             >
               <View style={styles.icon}>
                 <AppIcon name={icon} color={colors.textSecondary} size={24} />
-                <AppIcon name={badge} color={colors.textSecondary} size={14} />
+                <View style={styles.badge}>
+                  <AppIcon name={badge} color={colors.textSecondary} size={12} />
+                </View>
               </View>
               <View style={styles.copy}>
                 <UiText style={styles.title}>{title}</UiText>
@@ -300,7 +303,14 @@ const createStyles = (colors: UiColors) =>
       borderBottomColor: colors.separator,
       minHeight: 72,
     },
-    icon: { alignItems: "center", gap: 4 },
+    icon: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
+    badge: {
+      position: "absolute",
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.background,
+      borderRadius: visual.radius.pill,
+    },
     copy: { flex: 1, gap: 4 },
     title: { color: colors.textPrimary, ...visual.type.row },
     meta: { color: colors.textSecondary, ...visual.type.meta },

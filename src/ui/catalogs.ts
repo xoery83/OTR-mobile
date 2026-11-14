@@ -1,4 +1,6 @@
 export const en = {
+  "updates.importOutcome": "{status} · {count} saved",
+  "updates.localHistory": "Recent on this device",
   "updates.markRead": "Mark read",
   "updates.batchScope": "This batch · Show all updates",
   "updates.relatedActivity": "View updates for this batch",
@@ -3529,6 +3531,8 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "updates.importOutcome": "{status} · 已保存 {count} 项",
+  "updates.localHistory": "本机近期记录",
   "updates.markRead": "标为已读",
   "updates.batchScope": "当前批次 · 查看全部动态",
   "updates.relatedActivity": "查看此批次的动态",

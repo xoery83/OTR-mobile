@@ -147,11 +147,14 @@ export function projectUniversalImportUpdates(
   return [...updates.values()]
     .map((card) => ({
       ...card,
-      unread: readVersions[card.batchId] !== importUpdateReadVersion(card),
+      unread:
+        (card.state === "RESULTS_READY" || card.state === "FAILED") &&
+        readVersions[card.batchId] !== importUpdateReadVersion(card),
     }))
     .sort(
       (a, b) =>
-        Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id),
+        Date.parse(b.submittedAt ?? b.updatedAt) -
+          Date.parse(a.submittedAt ?? a.updatedAt) || a.id.localeCompare(b.id),
     );
 }
 

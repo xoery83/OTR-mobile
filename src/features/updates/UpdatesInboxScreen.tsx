@@ -7,7 +7,14 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
@@ -67,6 +74,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       : undefined;
   const importMark = useRef<(() => Promise<void>) | null>(null);
   const [importUnread, setImportUnread] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [importCount, setImportCount] = useState<number | null>(null);
   const bindImportRead = useCallback(
     (count: number, mark: () => Promise<void>, total?: number | null) => {
@@ -281,17 +289,22 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
           {categories.map((value) => (
             <UiChoiceChip
               key={value}
+              compact
               label={t(`updates.category.${value}`)}
               selected={category === value}
               onPress={() => setCategory(value)}
             />
           ))}
         </ScrollView>
-        <UiChoiceChip
-          label={t("updates.unreadOnly")}
-          selected={unreadOnly}
-          onPress={() => setUnreadOnly((value) => !value)}
-        />
+        <View style={styles.unreadControl}>
+          <UiText style={styles.secondary}>{t("updates.unreadOnly")}</UiText>
+          <Switch
+            accessibilityLabel={t("updates.unreadOnly")}
+            value={unreadOnly}
+            onValueChange={setUnreadOnly}
+            trackColor={{ true: colors.accent }}
+          />
+        </View>
         <UiTextInput
           accessibilityLabel={t("updates.search")}
           placeholder={t("updates.search")}
@@ -305,6 +318,16 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         style={styles.list}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => {
+              void load();
+              setRefreshKey((value) => value + 1);
+            }}
+            tintColor={colors.accent}
+          />
+        }
       >
         <ImportUpdatesSection
           filter={filter}
@@ -317,6 +340,42 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             if (active.current && generation === getAccountGeneration())
               router.push({ pathname: "/documents", params: { scope: "ACTIVITY" } });
           }}
+          refreshKey={refreshKey}
+          otherRows={intakeCards.map((card) => ({
+            batchId: card.batchId,
+            at: card.createdAt,
+            attention: card.sourceState === "ACTION_REQUIRED",
+            content: (
+              <Pressable
+                key={card.notificationId}
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled: loading || busy || card.sourceState === "UNAVAILABLE",
+                }}
+                disabled={loading || busy || card.sourceState === "UNAVAILABLE"}
+                onPress={() => void open(card)}
+                style={styles.row}
+              >
+                <AppIcon
+                  name="tray"
+                  color={card.unread ? colors.accent : colors.textSecondary}
+                  size={18}
+                />
+                <View style={styles.rowCopy}>
+                  <UiText
+                    style={[styles.summary, card.unread && styles.unread]}
+                    numberOfLines={2}
+                  >
+                    {updatesCardTitle(card)}
+                  </UiText>
+                  <UiText style={styles.secondary}>{t("updates.personalCapture")}</UiText>
+                  <UiText style={styles.secondary}>
+                    {updatesNoticeTime(card.createdAt)}
+                  </UiText>
+                </View>
+              </Pressable>
+            ),
+          }))}
           onReadControls={bindImportRead}
           onOpen={(jobId, originGeneration, destination) => {
             if (
@@ -336,7 +395,6 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             });
           }}
         />
-        <UiText style={styles.secondary}>{t("updates.coverage")}</UiText>
         {loading ? (
           <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
             {t("common.loading")}
@@ -360,36 +418,6 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             )}
           </UiText>
         ) : null}
-        {intakeCards.map((card) => (
-          <Pressable
-            key={card.notificationId}
-            accessibilityRole="button"
-            accessibilityState={{
-              disabled: loading || busy || card.sourceState === "UNAVAILABLE",
-            }}
-            disabled={loading || busy || card.sourceState === "UNAVAILABLE"}
-            onPress={() => void open(card)}
-            style={styles.row}
-          >
-            <AppIcon
-              name="tray"
-              color={card.unread ? colors.accent : colors.textSecondary}
-              size={18}
-            />
-            <View style={styles.rowCopy}>
-              <UiText
-                style={[styles.summary, card.unread && styles.unread]}
-                numberOfLines={2}
-              >
-                {updatesCardTitle(card)}
-              </UiText>
-              <UiText style={styles.secondary}>{t("updates.personalCapture")}</UiText>
-              <UiText style={styles.secondary}>
-                {updatesNoticeTime(card.createdAt)}
-              </UiText>
-            </View>
-          </Pressable>
-        ))}
         {page?.next ? (
           <UiButton
             label={t("updates.loadMore")}
@@ -398,12 +426,17 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             onPress={() => void load(true, page.next!)}
           />
         ) : null}
-        <UiButton
-          label={t("updates.refresh")}
-          variant="text"
-          disabled={loading || busy}
-          onPress={() => void load()}
-        />
+        {failed ? (
+          <UiButton
+            label={t("updates.refresh")}
+            variant="text"
+            disabled={loading || busy}
+            onPress={() => {
+              void load();
+              setRefreshKey((value) => value + 1);
+            }}
+          />
+        ) : null}
       </ScrollView>
       <View style={styles.footer}>
         <UiButton
@@ -433,6 +466,12 @@ const createStyles = (c: UiColors) =>
     root: { flex: 1, backgroundColor: c.background },
     filters: { padding: visual.space.page, gap: visual.space.heading },
     categories: { gap: visual.space.heading },
+    unreadControl: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: 44,
+    },
     list: { flex: 1, backgroundColor: c.background },
     content: { paddingHorizontal: visual.space.page, gap: visual.space.card },
     secondary: { ...visual.type.meta, color: c.textSecondary },

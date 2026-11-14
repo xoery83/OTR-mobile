@@ -363,7 +363,7 @@ it("adds only same-Account Batch display metadata without changing event time or
       [older.batchId]: { ...older.activity, updatedAt: "2026-10-28T00:00:30Z" },
     },
   );
-  expect(sorted.map((card) => card.batchId)).toEqual([f.batchId, older.batchId]);
+  expect(sorted.map((card) => card.batchId)).toEqual([older.batchId, f.batchId]);
   expect(source.list).not.toHaveBeenCalled();
   expect(source.read).not.toHaveBeenCalled();
   f.job.batch.inputs = [{ originalFilename: null, kind: "TEXT" }] as never;
@@ -501,6 +501,7 @@ it("V3 Updated feed distinguishes completed, ABSTAIN, Review, failure, waiting a
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].attention).toBe(state === "attention" ? "REVIEW" : undefined);
+    expect(rows[0].unread).toBe(!["waiting", "uncertain", "association"].includes(state));
     expect(rows[0].state).toBe(
       state === "uncertain"
         ? "UNKNOWN"
