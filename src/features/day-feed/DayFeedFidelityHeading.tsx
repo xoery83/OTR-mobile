@@ -23,7 +23,7 @@ export function DayFeedFidelityHeading({
   onCycleStyle,
 }: {
   date: string;
-  start: string;
+  start: string | null;
   today: string;
   empty: boolean;
   onAdd?(): void;
@@ -73,7 +73,10 @@ export function DayFeedFidelityHeading({
             ? t("dayHeader.accessibility", {
                 title,
                 subtitle,
-                day: t("fidelity.dayOrdinal", { day: ordinal }),
+                day:
+                  ordinal === null
+                    ? subtitle
+                    : t("fidelity.dayOrdinal", { day: ordinal }),
                 style: t(`dayHeader.style${styleMode}`),
               })
             : undefined
@@ -89,7 +92,9 @@ export function DayFeedFidelityHeading({
       >
         <View
           accessible={!onCycleStyle}
-          accessibilityLabel={t("fidelity.dayOrdinal", { day: ordinal })}
+          accessibilityLabel={
+            ordinal === null ? subtitle : t("fidelity.dayOrdinal", { day: ordinal })
+          }
           style={[
             styles.badge,
             isToday && styles.todayBadge,

@@ -26,7 +26,7 @@ export function dayHeaderPresentation({
   destination = unresolvedDayHeaderDestination,
 }: {
   date: string;
-  start: string;
+  start: string | null;
   today: string;
   style?: DayHeaderStyle;
   destination?: DayHeaderDestination;
@@ -44,6 +44,17 @@ export function dayHeaderPresentation({
   const label = destination.label?.trim() || null;
   const standardTitle = relative ?? weekday;
   const standardSubtitle = relative ? weekdayDate : shortDate;
+  // An undated Trip has real calendar days, but no authoritative trip-day ordinal.
+  if (!start)
+    return {
+      ordinal: null,
+      delta,
+      title: (style === "C" || style === "D") && label ? label : standardTitle,
+      subtitle:
+        (style === "C" || style === "D") && label ? weekdayDate : standardSubtitle,
+      badgeTop: formatUiDate(at, { month: "short", timeZone: "UTC" }),
+      badgeBottom: formatUiNumber(at.getUTCDate()),
+    };
   const title =
     style === "B"
       ? (relative ?? day)

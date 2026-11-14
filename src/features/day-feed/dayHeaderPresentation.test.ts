@@ -97,3 +97,19 @@ it("retains authorized route text and localizes the surrounding complete message
     badgeBottom: "27",
   });
 });
+
+it.each(["A", "B", "C", "D"] as const)(
+  "keeps the calendar header for undated Trips without inventing a Day ordinal (%s)",
+  (style) => {
+    expect(dayHeaderPresentation({ ...base, start: null, style })).toMatchObject({
+      ordinal: null,
+      title: "Today",
+      subtitle: "Tuesday · Oct 27, 2026",
+      badgeTop: "Oct",
+      badgeBottom: "27",
+    });
+    expect(
+      dayHeaderPresentation({ ...base, date: "2026-10-29", start: null, style }).title,
+    ).toBe("Thursday");
+  },
+);

@@ -133,3 +133,21 @@ it("keeps a past empty day quiet and a future empty day actionable", () => {
   );
   expect(future).toContain("Add itinerary");
 });
+
+it("retains the native gradient and calendar badge without a fabricated ordinal for an undated Trip", () => {
+  const html = renderToStaticMarkup(
+    createElement(DayFeedFidelityHeading, { ...props, start: null }),
+  );
+  expect(html).toContain("Today");
+  expect(html).toContain("Jan");
+  expect(html).toContain("16");
+  expect(html).not.toContain("NaN");
+  expect(html).not.toContain("Day 1");
+  expect(
+    state.nodes.some(
+      (node) =>
+        Array.isArray(node.style) &&
+        node.style.some((style: any) => style?.experimental_backgroundImage),
+    ),
+  ).toBe(true);
+});

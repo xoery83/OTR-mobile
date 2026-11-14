@@ -1804,30 +1804,28 @@ function TripContent({
                   : colors.background,
               },
               showTimeUnspecified: false,
-              renderDayHeading: dayFacts?.startDate
-                ? (date, empty) => (
-                    <P1MeasuredMoveRegion
-                      regionKey={`day:${date}`}
-                      date={date}
-                      register={move.register}
-                      unregister={move.unregister}
-                    >
-                      <TripDayHeading
-                        tripId={requested}
-                        destinationRead={headerDestinationRead}
-                        date={date}
-                        start={dayFacts.startDate!}
-                        today={appearanceToday ?? ""}
-                        empty={empty}
-                        dayColor={phase(date)}
-                        previousColor={
-                          dayFeedPreviousColor(date, calendarDates ?? [], appearanceToday, colors)
-                        }
-                        onAdd={() => setInsertion({ date, startTime: null })}
-                      />
-                    </P1MeasuredMoveRegion>
-                  )
-                : undefined,
+              renderDayHeading: (date, empty) => (
+                <P1MeasuredMoveRegion
+                  regionKey={`day:${date}`}
+                  date={date}
+                  register={move.register}
+                  unregister={move.unregister}
+                >
+                  <TripDayHeading
+                    tripId={requested}
+                    destinationRead={headerDestinationRead}
+                    date={date}
+                    start={dayFacts?.startDate ?? null}
+                    today={appearanceToday ?? ""}
+                    empty={empty}
+                    dayColor={phase(date)}
+                    previousColor={
+                      dayFeedPreviousColor(date, calendarDates ?? [], appearanceToday, colors)
+                    }
+                    onAdd={() => setInsertion({ date, startTime: null })}
+                  />
+                </P1MeasuredMoveRegion>
+              ),
               wrapDayRow: (date, content) => (
                 <View
                   style={{
