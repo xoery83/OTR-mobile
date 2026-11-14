@@ -10,11 +10,11 @@ Slice5 implementation is submitted for Owner review, product `90d42294`. Two bou
 
 All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
-## Documents Slice5 finite gate completed — Owner review pending
+## Documents Slice5 — INTEGRATED, ACCEPTED SLICE SCOPE
 
-Product `07c3200b` fixes two presentation defects found after1342: non-drag scroll events did not collapse chrome, and forced source-header expansion shifted return position. Current full signed iPhone App actually verifies filter-only collapse, native Export with matching950-byte PDF/hash, cursor paging30→32 unique records, stable return position, and independent row/File Information clicks.1169 staged product files match final source. Final owning41/3 tests, lint and UI guard177 pass. No Main merge/push, Provider/Save/SQL/sharedDEV mutation or Slice6.
+Owner Conditional GO authorizes normal Main merge/push. Merge commit `779fc958ebfbd514cf025eb08b45d08906964d3e` retains product `07c3200b` and report `04d6c2f3`; remote push must be independently verified. Product `07c3200b` fixes two presentation defects found after1342: non-drag scroll events did not collapse chrome, and forced source-header expansion shifted return position. Current full signed iPhone App actually verifies filter-only collapse, native Export with matching950-byte PDF/hash, cursor paging30→32 unique records, stable return position, and independent row/File Information clicks.1169 staged product files match final source. Final owning41/3 tests, lint and UI guard177 pass. No Provider/Save/SQL/sharedDEV mutation. Slice6 starts separately after this merge.
 
-32 labelled private local TXT captures prepared through existing Repository intake remain as pagination test data; no direct SQLite write or fake Core Receipt. Original iPad retains0302 and its data. Full physical-device/current07 iPad/role matrix is not claimed. Formal Rename/Share/Add-Move/SafeRemove remain distinct owning-command backlog, not Cloud Sync deferral. Documents overall PARTIAL; bounded Slice5 local/read UX is GO for Owner review, no environment Merge Waiver needed. Current report: `docs/ops/documents-slice5-completion-20261114/FINAL_SLICE5_GATE_REPORT.md`; expanded `DOCUMENT_OWNING_CAPABILITY_BACKLOG.md` and Blueprint matrix retain remaining gaps.
+32 labelled private local TXT captures prepared through existing Repository intake remain as pagination test data; no direct SQLite write or fake Core Receipt. Original iPad retains0302 and its data. Full physical-device/current07 iPad/role matrix is not claimed. Formal Rename/Share/Add-Move/SafeRemove remain distinct owning-command backlog, not Cloud Sync deferral. Documents overall PARTIAL; bounded Slice5 local/read UX is accepted for Main integration, no environment Merge Waiver needed. Current report: `docs/ops/documents-slice5-completion-20261114/FINAL_SLICE5_GATE_REPORT.md`; expanded `DOCUMENT_OWNING_CAPABILITY_BACKLOG.md` and Blueprint matrix retain remaining gaps.
 
 AUTH-C04 uses independent Auth/Root1/Native writers; Root1 isolated Reader candidate5868350 is not DEV installed or Golden Slice PASS. No shared Backend/SQL/Sync mutation without separate authorization.
 
@@ -55,7 +55,7 @@ Still deferred: Invite/Claim full Native, private profile cloud editor, Version/
 
 ## Next execution
 
-Wait for Owner review of the Slice5 final finite gate. Known limits: no physical-device acceptance, search uses authorized local indexes and TEXT≤64KiB, no invented Share/Move owning writes, no cross-device originals. Real B1 14:43 Batch projects Created hotel/Linked walk;20:50 history is not verified and is not replayed. Do not resume Recovery, Merge/Push Main or start Slice6 without the relevant Owner approval.
+Slice5 accepted scope is integrated; next approved task is Slice6 Activity/Updates from latest Main. Known limits: no physical-device acceptance, search uses authorized local indexes and TEXT≤64KiB, no invented Share/Move owning writes, no cross-device originals. Real B1 14:43 Batch projects Created hotel/Linked walk;20:50 history is not verified and is not replayed. Do not resume Recovery, Merge/Push Main or start Slice6 without the relevant Owner approval.
 
 ## Latest runtime / Owner Header correction
 

@@ -1,3 +1,9 @@
+## Current execution override — 14 November 2026, Slice5 integration
+
+Slice5 **INTEGRATED — ACCEPTED SLICE SCOPE**, product07c3200b/report04d6c2f3, Main merge779fc95 (verify final remote receipt). Documents overall **PARTIAL — OWNING COMMANDS OUTSTANDING**: Rename, Share/MakePrivate, Add/MoveTrip, SafeRemove are formal Core/Document backlog, NOT Cloud SyncDeferred. Cloud Sync remains explicitly deferred. [Integration receipt](../ops/documents-slice5-completion-20261114/MAIN_INTEGRATION_RECEIPT.md) and [owning backlog](../ops/documents-slice5-completion-20261114/DOCUMENT_OWNING_CAPABILITY_BACKLOG.md).
+
+Next approved: fresh `codex/import-v3-slice6-activity` from pushed Main; two bounded previews under Oct23 Activity/Updates design, same existing Batch/Queue/Receipt. AuthC04 continues independently; its default-closed DEV execution is not Invite/Claim GoldenSlicePASS. No historical QA recovery, Cloud Sync or new Provider request is implied. The older execution overrides below are historical.
+
 ## Independent Native Forms Lane — Owner authorization 25 October 2026
 
 P3 only, independent Worktree and one reusable Forms QA. Code6242fe71+5a6176db;26tests and independentReview PASS. [Native receipt/scope and exact shared deltas](../ops/native-forms-p3-20261025/README.md). No main integration, AD5 or Universal modification. LOCAL_PASS is scoped synthetic fixture only; fullP3 CLOUD_PENDING/BLOCKED_BY_OWNING_INTERFACE.
