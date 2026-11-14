@@ -10,9 +10,13 @@ Slice5 implementation is submitted for Owner review, product `90d42294`. Two bou
 
 All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
-## Documents UX correction in progress
+## Documents Slice5 current completion candidate
 
-Owner requested top-right full-screen search, filter-only scrolling and original-opening diagnosis plus full blueprint comparison. Product cc706aa1 implements reused full-screen search and exact-content local original re-selection. Native Release rebuilt/in-place installed; normal directory and full-screen query verified. Targeted87 checks and UI guard175 pass, lint passes, only3 Main type errors. Original iPhone B1 bytes are absent by Local-First design; no private data copied. Actual JPEG Files re-selection, private exact-byte retention and native viewer content now PASS; PDF re-selection and final filter-only scroll transition remain NOT_VERIFIED. Baseline9 private files unchanged, Documents9/links14/queue13 unchanged; one selected public JPEG deliberately added. Do not mark full UX PASS. See docs/ops/documents-ux-correction-20261114/README.md and gap matrix. No Provider, Save, SQL, Main push or Slice6. AUTH-C04 runs independently in its Auth branch with Root1/Core and Native read-only interfaces; no shared Backend/SQL/Sync mutation without MC coordination and separate authorization.
+Product `0302d534` (parent `dd9304de`) adds standalone native Document Detail, real default Batch outcomes separate from direct Item links, compact authorized Item rows, More/File Information, verified local export, relation facets, actual cursor paging, and distinct denied/offline-unknown/failure UI. Full Release Native iPhone and original iPad rebuilt/installed in place. Targeted90/90, scoped lint/UI guard177 pass; exactly3 unchanged Main type errors. Final iPhone PDF original genuinely opens after exact-file recovery and rebuild. Baseline private files9/9 and30/30 unchanged; CoreDocs9/links14/queues13 and33 unchanged. No Provider/Save/SQL/shared DEV mutation.
+
+Status **PARTIAL / Merge NO_GO**: actual filter-only scroll transition remains unverified because DeviceHub coordinate input reports noWindowsAvailable; helper PASS is not Native PASS. Final Native export/multi-page directory evidence remains missing. Older dd9304 actual A→Batch→B→Back and Item→Back are explicitly versioned, not promoted to0302 runtime PASS. Rename/Sharing/Add-Move/SafeRemove owning-command gaps remain independently unavailable. Evidence: `docs/ops/documents-slice5-completion-20261114/README.md`; updated Blueprint matrix remains authoritative. No Main merge/push or Slice6.
+
+AUTH-C04 uses independent Auth/Root1/Native writers; Root1 isolated Reader candidate5868350 is not DEV installed or Golden Slice PASS. No shared Backend/SQL/Sync mutation without separate authorization.
 
 ## Restored and actually checked
 

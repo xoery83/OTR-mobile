@@ -1,0 +1,43 @@
+{
+  "source": "0302d5340a2eeb97da59406bb623f8f877efb3b8",
+  "devices": {
+    "iphone": {
+      "bundle": "com.xoery.otrmobile.uxc1iphone16",
+      "preservedBaselineFiles": 9,
+      "changedFiles": [],
+      "counts": {
+        "capture_submission_batches": 0,
+        "capture_submission_inputs": 0,
+        "local_capture_inbox": 0,
+        "trip_core_trip_operational_documents": 9,
+        "trip_core_trip_item_document_links": 14,
+        "sync_operations": 13
+      },
+      "queue": [
+        [
+          "COMPLETED",
+          13
+        ]
+      ]
+    },
+    "ipad": {
+      "bundle": "com.xoery.otrmobile.b1full20261113",
+      "preservedBaselineFiles": 30,
+      "changedFiles": [],
+      "counts": {
+        "capture_submission_batches": 7,
+        "capture_submission_inputs": 13,
+        "local_capture_inbox": 13,
+        "trip_core_trip_operational_documents": 9,
+        "trip_core_trip_item_document_links": 14,
+        "sync_operations": 33
+      },
+      "queue": [
+        [
+          "COMPLETED",
+          33
+        ]
+      ]
+    }
+  }
+}
