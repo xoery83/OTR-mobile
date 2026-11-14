@@ -1,0 +1,11 @@
+{
+  "source": "07c3200b1bccf4cce386b508c162b6e39e4359e4",
+  "filesCompared": 1169,
+  "mismatches": [],
+  "fixturePreparationCodePresent": false,
+  "hashes": {
+    "OTRDEV": "a1279aeecb68ce3be3a2605ad96d6f56dbe410253ffe46ec82cb29c70e618ea7",
+    "main.jsbundle": "e626b877953f93e742e630974698de3d8f0d9184ae87cae78e4d6bb734b8674b",
+    "Info.plist": "791ad43c40eb92d6be220a2a649a5334fba60a29d8dfc8b96e4e0ed7597f9d5f"
+  }
+}

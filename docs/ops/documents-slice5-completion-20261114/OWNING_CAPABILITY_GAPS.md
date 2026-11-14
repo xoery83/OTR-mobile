@@ -1,3 +1,5 @@
+> Expanded authoritative backlog: [DOCUMENT_OWNING_CAPABILITY_BACKLOG.md](DOCUMENT_OWNING_CAPABILITY_BACKLOG.md), including approved rules, permission/Receipt and cross-lane dependencies.
+
 # Document 写入能力缺口（独立于 Slice5 只读 UX）
 
 2026-11-14。未改 Core/SQL/ACL、未添加 Document Writer。

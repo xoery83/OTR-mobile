@@ -1,3 +1,5 @@
+> Superseded current gate: [FINAL_SLICE5_GATE_REPORT.md](FINAL_SLICE5_GATE_REPORT.md). Product07c3200b closes the three finite Native gaps; historical PARTIAL/environment-blocked statements below remain versioned evidence, not the latest verdict. Formal owning commands remain missing.
+
 # Slice5 Documents completion — 2026-11-14
 
 Product candidate: `0302d5340a2eeb97da59406bb623f8f877efb3b8` (on `codex/import-v3-slice5-documents`). Source parent `dd9304de`; neither merged nor pushed. Documentation may advance HEAD without changing this product tree.

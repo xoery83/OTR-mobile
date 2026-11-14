@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/import-v3-slice5-documents
+
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  21:39:41
+   Duration  385ms (transform 409ms, setup 40ms, import 557ms, tests 60ms, environment 0ms)
+

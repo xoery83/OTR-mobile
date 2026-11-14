@@ -10,13 +10,11 @@ Slice5 implementation is submitted for Owner review, product `90d42294`. Two bou
 
 All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
-## Documents Slice5 current completion candidate
+## Documents Slice5 finite gate completed — Owner review pending
 
-Product `0302d534` (parent `dd9304de`) adds standalone native Document Detail, real default Batch outcomes separate from direct Item links, compact authorized Item rows, More/File Information, verified local export, relation facets, actual cursor paging, and distinct denied/offline-unknown/failure UI. Full Release Native iPhone and original iPad rebuilt/installed in place. Targeted90/90, scoped lint/UI guard177 pass; exactly3 unchanged Main type errors. Final iPhone PDF original genuinely opens after exact-file recovery and rebuild. Baseline private files9/9 and30/30 unchanged; CoreDocs9/links14/queues13 and33 unchanged. No Provider/Save/SQL/shared DEV mutation.
+Product `07c3200b` fixes two presentation defects found after1342: non-drag scroll events did not collapse chrome, and forced source-header expansion shifted return position. Current full signed iPhone App actually verifies filter-only collapse, native Export with matching950-byte PDF/hash, cursor paging30→32 unique records, stable return position, and independent row/File Information clicks.1169 staged product files match final source. Final owning41/3 tests, lint and UI guard177 pass. No Main merge/push, Provider/Save/SQL/sharedDEV mutation or Slice6.
 
-Status **PARTIAL / Merge NO_GO**: actual filter-only scroll transition remains unverified because DeviceHub coordinate input reports noWindowsAvailable; helper PASS is not Native PASS. Final Native export/multi-page directory evidence remains missing. Older dd9304 actual A→Batch→B→Back and Item→Back are explicitly versioned, not promoted to0302 runtime PASS. Rename/Sharing/Add-Move/SafeRemove owning-command gaps remain independently unavailable. Evidence: `docs/ops/documents-slice5-completion-20261114/README.md`; updated Blueprint matrix remains authoritative. No Main merge/push or Slice6.
-
-Local-only follow-up product `1342ee57`: Document row and File Information are separate accessible buttons (no nested swallowing). Scoped41/3, lint/UI guard177 pass. Full iPhone Release rebuilt with original Xcode signing; normal Account/Chinese/Trip restored after diagnosing an incorrect unsigned build.1169 staged source files match; original9 private hashes and9Docs/14links/13completed queue retained. Actual toolbar/gesture validation remains DeviceHub ENVIRONMENT BLOCKED, not UI PASS; no parallel local metadata writer invented. See completion report follow-up. iPad retains0302, not claimed1342 runtime. Cloud Sync excluded; formal Rename/Sharing/Add-Move/SafeRemove still need owning commands, independently of storage.
+32 labelled private local TXT captures prepared through existing Repository intake remain as pagination test data; no direct SQLite write or fake Core Receipt. Original iPad retains0302 and its data. Full physical-device/current07 iPad/role matrix is not claimed. Formal Rename/Share/Add-Move/SafeRemove remain distinct owning-command backlog, not Cloud Sync deferral. Documents overall PARTIAL; bounded Slice5 local/read UX is GO for Owner review, no environment Merge Waiver needed. Current report: `docs/ops/documents-slice5-completion-20261114/FINAL_SLICE5_GATE_REPORT.md`; expanded `DOCUMENT_OWNING_CAPABILITY_BACKLOG.md` and Blueprint matrix retain remaining gaps.
 
 AUTH-C04 uses independent Auth/Root1/Native writers; Root1 isolated Reader candidate5868350 is not DEV installed or Golden Slice PASS. No shared Backend/SQL/Sync mutation without separate authorization.
 
@@ -57,7 +55,7 @@ Still deferred: Invite/Claim full Native, private profile cloud editor, Version/
 
 ## Next execution
 
-Wait for Owner review of the Slice5 preview packages. Known limits: no physical/complete swipe gesture acceptance, search uses authorized local indexes and TEXT≤64KiB, no invented Share/Move owning writes, no cross-device originals. Real B1 14:43 Batch projects Created hotel/Linked walk;20:50 history is not verified and is not replayed. Do not resume Recovery, Merge/Push Main or start Slice6 without the relevant Owner approval.
+Wait for Owner review of the Slice5 final finite gate. Known limits: no physical-device acceptance, search uses authorized local indexes and TEXT≤64KiB, no invented Share/Move owning writes, no cross-device originals. Real B1 14:43 Batch projects Created hotel/Linked walk;20:50 history is not verified and is not replayed. Do not resume Recovery, Merge/Push Main or start Slice6 without the relevant Owner approval.
 
 ## Latest runtime / Owner Header correction
 

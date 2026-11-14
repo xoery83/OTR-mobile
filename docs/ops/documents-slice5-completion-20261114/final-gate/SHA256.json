@@ -1,0 +1,15 @@
+{
+  "screenshots/slice5-final-core-info.png": "da2180c73af70cc70360579bbec84a977e427476e41600693a2fc413d37907ff",
+  "screenshots/slice5-final-native-export.png": "71095e5c22da4209fc21f3e5a2ede82de7c5ceacd031a2c28eed2e0b0a8cfabf",
+  "screenshots/slice5-final-pagination-after-info-return.png": "7dd642aa4303cc27a5a6cc7da42dfeba9bbe18addc1d18da69c1adc86f5ee93d",
+  "screenshots/slice5-final-pagination-before-detail.png": "cb85bd7de9d4613e3072122db30014fa65a943dcc452c67bcb6506f120281389",
+  "screenshots/slice5-final-pdf-content.png": "8c1a57fc42a9532f5b53e96c7c5aa504f0c9501a7dfdc979254e2a5946cfe4fa",
+  "slice5-final-export-proof.json": "d6b49fb556e339e320efa032140a72d93123ad5e388a4dc620c6fdc7d0269041",
+  "slice5-gate-final-artifact.json": "8322d3a5e0bc119241f4da6e186e835dd699dc9606e5ce378966554b3c5e2bec",
+  "slice5-gate-final-preservation.json": "213a7ac436ee57cfbfbeea1a8b976a1cf3cd76b31de0fb57fcdf881b713d3564",
+  "slice5-gate-lint-final.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "slice5-gate-pagination-dataset.json": "d63d0b5bc56d6605aea0b07ee787867d68800ecc29ca1177b77b2c83cfe510e3",
+  "slice5-gate-scroll-regression.json": "c1dae00c1e2be5c33ea857f17fed4010ea8ec54bf79af9a3688b7cb9d4107fbf",
+  "slice5-gate-targeted-final.txt": "5715fdd7909ebcd9634edb956fd84dd4d7589e4d6a6d9a9b514d360e8bd16e41",
+  "slice5-gate-ui-final.txt": "c9303712f24d93b842ce792d064daef175bc64b1dbf0e1df5e98715b82039e7d"
+}
