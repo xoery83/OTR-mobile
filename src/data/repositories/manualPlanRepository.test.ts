@@ -696,6 +696,7 @@ async function acceptedPlanFixture(
   withPerson = false,
   family: "P1" | "P3" | "P4" = "P1",
   fileBacked = false,
+  sourceTemporalProof = false,
 ) {
   const f = await fixture(true, fileBacked);
   const repo =
@@ -802,6 +803,22 @@ async function acceptedPlanFixture(
       .run(request.operationId);
     personId = request.personId;
   }
+  if (sourceTemporalProof)
+    Object.assign(graph.itinerary_events[0], {
+      start_local_time: "10:00:30",
+      start_clock_precision: 0,
+      start_quality: "EXACT",
+      start_basis: "DERIVED_CIVIL",
+      start_zone_id: "Pacific/Auckland",
+      start_supplied_offset_seconds: 46800,
+      start_source_instant: null,
+      start_source_instant_precision: null,
+      start_civil_resolution: "UNIQUE",
+      start_resolution_offset_seconds: 46800,
+      start_interpretation_key: "test-immutable-existing-interpretation",
+      start_interpretation_input_sha256: "a".repeat(64),
+      planned_start: "2026-10-19T21:00:30Z",
+    });
   const bundle = await buildCoreActorCollection(
     graph,
     snapshot.actor,
@@ -1734,3 +1751,82 @@ it("persists reviewed P1 Apple city through original SQLite Save and Day Reader 
     expect(count(f.sql)).toBe(pendingBefore);
   }
 });
+
+it("opens a same-Creator accepted P1 on a device without Create history and queues a normal revision-bound text edit", async () => {
+  const f = await acceptedPlanFixture();
+  forgetSyntheticItemHistory(f);
+  const repo = f.repo(),
+    draft = await repo.read(f.tripId, f.itemId, f.revision);
+  await expect(repo.read(f.tripId, f.itemId, f.revision + 1)).rejects.toThrow(
+    "MANUAL_PLAN_CONFLICT",
+  );
+  await repo.save(draft, { ...draft.fields, title: "Owner-authored correction" });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending).toHaveLength(1);
+  expect(pending[0].command).toMatchObject({
+    command: "SET_ITEM_TEXT",
+    admission: { mode: "MANUAL" },
+    baseVector: [{ id: f.itemId, revision: f.revision }],
+    payload: { title: "Owner-authored correction" },
+  });
+  expect(pending[0].command.payload).not.toHaveProperty("schedule");
+  expect(pending[0].command.payload).not.toHaveProperty("place");
+});
+
+function forgetSyntheticItemHistory(f: Awaited<ReturnType<typeof acceptedPlanFixture>>) {
+  // Only this synthetic fixture loses local command history, as on another device.
+  const triggers = f.sql
+    .prepare(
+      "SELECT name,sql FROM sqlite_master WHERE type='trigger' AND tbl_name IN ('trip_core_pending_intents','trip_core_trip_core_command_receipts')",
+    )
+    .all() as { name: string; sql: string }[];
+  for (const trigger of triggers) f.sql.exec(`DROP TRIGGER "${trigger.name}"`);
+  f.sql
+    .prepare(
+      "DELETE FROM trip_core_trip_core_command_receipts WHERE account_id=? AND trip_id=?",
+    )
+    .run(f.originalAccount, f.tripId);
+  f.sql
+    .prepare("DELETE FROM trip_core_pending_intents WHERE account_id=? AND trip_id=?")
+    .run(f.originalAccount, f.tripId);
+  f.sql
+    .prepare(
+      "DELETE FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_id=?",
+    )
+    .run(f.originalAccount, f.tripId, f.itemId);
+  for (const trigger of triggers) f.sql.exec(trigger.sql);
+}
+
+it.each(["TEXT", "TIME"] as const)(
+  "fresh accepted P1 retains Source temporal proof during %s edit",
+  async (change) => {
+    const f = await acceptedPlanFixture(false, false, "P1", false, true);
+    forgetSyntheticItemHistory(f);
+    const context = await f.core.captureContext(f.tripId);
+    const before = (await f.core.combinedSnapshot(context))!.graph.itinerary_events.find(
+      (i) => i.id === f.itemId,
+    )!;
+    const repo = f.repo(),
+      draft = await repo.read(f.tripId, f.itemId, f.revision);
+    if (change === "TIME") {
+      const queued = count(f.sql);
+      await expect(
+        repo.save(draft, { ...draft.fields, startDate: "2026-10-21" }),
+      ).rejects.toThrow("MANUAL_PLAN_TEMPORAL_AUTHORITY_REQUIRED");
+      expect(count(f.sql)).toBe(queued);
+    } else {
+      await repo.save(draft, { ...draft.fields, title: "Explicit text correction" });
+      const pending = await f.core.pending(context);
+      expect(pending).toHaveLength(1);
+      expect(pending[0].command.command).toBe("SET_ITEM_TEXT");
+    }
+    const after = (await f.core.combinedSnapshot(context))!.graph.itinerary_events.find(
+      (i) => i.id === f.itemId,
+    )!;
+    const temporal = (row: typeof before) =>
+      Object.fromEntries(
+        Object.entries(row).filter(([key]) => /^(start_|end_|planned_)/.test(key)),
+      );
+    expect(temporal(after)).toEqual(temporal(before));
+  },
+);

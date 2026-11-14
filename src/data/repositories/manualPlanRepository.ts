@@ -426,7 +426,7 @@ export function createManualItemRepository(
     return snapshot;
   }
   async function freshAcceptedItem(context: AccountRequestContext, itemId: string) {
-    if (!["P3", "P4", "P6"].includes(family)) return false;
+    if (!["P1", "P3", "P4", "P6"].includes(family)) return false;
     if ((await core.pending(context)).some((p) => p.command.target.id === itemId))
       return false;
     // Missing proof is not fresh history: orphaned or malformed Create records remain denied.
@@ -1058,7 +1058,7 @@ export function createManualItemRepository(
             // This consumer cannot re-author Source temporal proof; never erase it to pass MANUAL.
             if (
               state.freshAcceptedEdit &&
-              ["P3", "P4"].includes(family) &&
+              ["P1", "P3", "P4"].includes(family) &&
               [coreStoredBoundary(row!, "start"), coreStoredBoundary(row!, "end")].some(
                 (boundary) =>
                   boundary.source_instant !== null ||
