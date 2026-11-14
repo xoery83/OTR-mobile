@@ -153,6 +153,15 @@ export const en = {
   "documents.all": "All",
   "documents.offline": "Offline",
   "documents.fileInfo": "File information",
+  "documents.locateOriginal": "Locate original file",
+  "documents.originalMissingHelp":
+    "This device has the document details, but no original file. Select the original “{name}” to open it here. Nothing is re-analyzed or saved as a new item.",
+  "documents.originalMismatch":
+    "The selected file could not be restored. Choose one original with the same contents; the document and its links have not changed.",
+  "documents.originalOpenFailed":
+    "The original could not be opened. The document and its links are retained.",
+
+  "documents.searchTitle": "Search documents",
   "documents.sameImportResults": "Results from this Import",
   "documents.resultsExplanation":
     "These results are identified by this Batch’s original operations and receipts, separately from document links.",
@@ -3600,6 +3609,14 @@ export const zhHans: Record<MessageKey, string> = {
   "documents.all": "全部",
   "documents.offline": "离线",
   "documents.fileInfo": "文件信息",
+  "documents.locateOriginal": "选择本机原件",
+  "documents.originalMissingHelp":
+    "此设备有文档信息，但未保留原件。请选择原文件“{name}”以恢复查看，不会重新分析或创建条目。",
+  "documents.originalMismatch":
+    "无法恢复所选文件。请选择内容一致的单份原件；文档及关联均未改变。",
+  "documents.originalOpenFailed": "原件暂时无法打开，文档及关联仍保留。",
+
+  "documents.searchTitle": "搜索文档",
   "documents.sameImportResults": "此次导入的结果",
   "documents.resultsExplanation":
     "这些结果根据本批次原操作和正式回执识别，与文档关联分开显示。",

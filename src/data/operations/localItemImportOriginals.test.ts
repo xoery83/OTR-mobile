@@ -16,6 +16,8 @@ const h = vi.hoisted(() => ({
   retained: vi.fn(),
   task: vi.fn(),
   pending: vi.fn(),
+  pickedBytes: new Uint8Array(),
+  closePicked: vi.fn(),
 }));
 vi.mock("../auth/accountGeneration", () => ({
   getAccountGeneration: () => h.generation,
@@ -24,7 +26,10 @@ vi.mock("../auth/authRepository", () => ({
   requireAdoptedUserId: async () => h.accountId,
 }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: async () => ({}) }));
-vi.mock("../repositories/tripCoreSha256", () => ({ tripCoreSha256Hex: vi.fn() }));
+vi.mock("../repositories/tripCoreSha256", () => ({
+  tripCoreSha256Hex: async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex"),
+}));
 vi.mock("../repositories/tripCoreV2Repository", () => ({
   createTripCoreV2Repository: () => ({
     captureContext: async (tripId: string) => ({
@@ -53,10 +58,25 @@ vi.mock("./defaultCaptureSubmission", () => ({
     reopen: async (id: string) => h.jobs.find((job) => job.batch.jobId === id),
   }),
 }));
+vi.mock("../../native/captureUriReader", () => ({
+  openCaptureUriReader: async () => {
+    let read = false;
+    return {
+      sizeHint: h.pickedBytes.length,
+      read: async () => {
+        if (read) return null;
+        read = true;
+        return h.pickedBytes;
+      },
+      close: h.closePicked,
+    };
+  },
+}));
 vi.mock("expo-crypto", () => ({ randomUUID }));
 vi.mock("expo-file-system", () => ({
   Paths: { document: "app-private" },
   Directory: class {
+    create() {}
     path: string;
     constructor(...parts: string[]) {
       this.path = parts.join("/");
@@ -66,6 +86,24 @@ vi.mock("expo-file-system", () => ({
     path: string;
     constructor(directory: { path: string }, name: string) {
       this.path = directory.path + "/" + name;
+    }
+    get uri() {
+      return this.path;
+    }
+    create() {
+      h.files.set(this.path, new Uint8Array());
+    }
+    write(bytes: Uint8Array) {
+      h.files.set(this.path, new Uint8Array(bytes));
+    }
+    delete() {
+      h.files.delete(this.path);
+    }
+    async move(target: { path: string }) {
+      const bytes = h.files.get(this.path)!;
+      h.files.delete(this.path);
+      this.path = target.path;
+      h.files.set(this.path, bytes);
     }
     get exists() {
       return h.files.has(this.path);
@@ -96,15 +134,15 @@ beforeEach(() => {
   h.files.clear();
   h.jobs = [];
   h.retained.mockReset();
-  h.task
-    .mockReset()
-    .mockResolvedValue({
-      localFirst: true,
-      existing: { state: "REVIEW_READY", candidates: [] },
-    });
+  h.task.mockReset().mockResolvedValue({
+    localFirst: true,
+    existing: { state: "REVIEW_READY", candidates: [] },
+  });
   h.pending.mockReset().mockResolvedValue([]);
   vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://otr.test.invalid");
   h.read.mockReset();
+  h.closePicked.mockReset();
+  h.pickedBytes = bytes;
   const graph = emptyCoreGraph();
   graph.itinerary_events.push({
     id: item,
@@ -407,4 +445,30 @@ it("refuses mismatched Batch identity before querying task results and rejects a
     return { localFirst: false };
   });
   await expect(scoped.batchResults(jobId, batchId)).rejects.toThrow("Account changed");
+});
+
+it("reacquires only the exact original locally, retaining document/link/operation identity", async () => {
+  const before = JSON.stringify(h.snapshot);
+  const scoped = await localItemImportOriginals(trip, undefined, 4);
+  expect((await scoped.metadata())[0].localAvailable).toBe(false);
+  await scoped.restoreOriginalFromUri(id, "file:///selected-original");
+  expect(h.closePicked).toHaveBeenCalledOnce();
+  expect((await scoped.metadata())[0].localAvailable).toBe(true);
+  expect((await scoped.original(id))?.bytes).toEqual(bytes);
+  expect(JSON.stringify(h.snapshot)).toBe(before);
+  expect([...h.files.keys()]).toEqual([path]);
+  expect(h.task).not.toHaveBeenCalled();
+});
+it("wrong bytes or a different Account cannot restore/replace a Document original", async () => {
+  const scoped = await localItemImportOriginals(trip, undefined, 4);
+  h.pickedBytes = new Uint8Array(bytes.length);
+  await expect(scoped.restoreOriginalFromUri(id, "file:///wrong-file")).rejects.toThrow(
+    "IMPORT_ORIGINAL_MISMATCH",
+  );
+  expect(h.files.size).toBe(0);
+  h.accountId = member;
+  await expect(
+    scoped.restoreOriginalFromUri(id, "file:///other-account"),
+  ).rejects.toThrow();
+  expect(h.files.size).toBe(0);
 });

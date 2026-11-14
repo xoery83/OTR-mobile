@@ -285,6 +285,7 @@ export function newUiDebt(
 // automatically, so adding a child cannot silently restore baseline debt.
 export const representativeRoots = [
   "app/documents.tsx",
+  "app/document-search.tsx",
   "src/features/documents/ImportDocuments.tsx",
   "app/(tabs)/capture.tsx",
   "app/search.tsx",

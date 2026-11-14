@@ -166,3 +166,16 @@ export function filterDocumentSearch(
     return true;
   });
 }
+
+// Layout/inset changes must not reopen chrome during the same upward gesture.
+export function documentChromeAfterScroll(
+  collapsed: boolean,
+  offset: number,
+  distance: number,
+  dragging: boolean,
+) {
+  if (!dragging) return collapsed;
+  if (distance > 6) return true;
+  if (distance < -6 && offset <= 0) return false;
+  return collapsed;
+}

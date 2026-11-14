@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
   documentFormat,
+  documentChromeAfterScroll,
   searchDocumentRows,
   mergeDocumentRows,
   filterDocumentSearch,
@@ -89,4 +90,12 @@ it("combines actual privacy, storage, recorded source and date facts with keywor
   expect(filterDocumentSearch([doc], { source: "files" })).toEqual([]);
   expect(filterDocumentSearch([doc], { storage: "UNAVAILABLE" })).toEqual([]);
   expect(filterDocumentSearch([doc], { from: new Date(2027, 0, 1) })).toEqual([]);
+});
+
+it("collapses on a small real upward scroll and ignores layout/inset offset resets", () => {
+  expect(documentChromeAfterScroll(false, 9, 9, true)).toBe(true);
+  expect(documentChromeAfterScroll(true, 0, 0, false)).toBe(true);
+  expect(documentChromeAfterScroll(true, 0, 0, true)).toBe(true);
+  expect(documentChromeAfterScroll(true, -9, -9, true)).toBe(false);
+  expect(documentChromeAfterScroll(true, 30, -15, true)).toBe(true);
 });

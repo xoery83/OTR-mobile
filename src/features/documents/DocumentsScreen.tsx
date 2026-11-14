@@ -46,6 +46,7 @@ import {
   documentFormat,
   documentFormatLabel,
   filterDocumentRows,
+  documentChromeAfterScroll,
   searchDocumentRows,
   mergeDocumentRows,
   filterDocumentSearch,
@@ -84,18 +85,35 @@ const icons = {
   FILE: "doc",
 } as const;
 
-export default function DocumentsScreen() {
+export default function DocumentsScreen({
+  searchOnly = false,
+}: { searchOnly?: boolean } = {}) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  return <DocumentsWorkspace key={generation} generation={generation} />;
+  return (
+    <DocumentsWorkspace
+      key={generation}
+      generation={generation}
+      searchOnly={searchOnly}
+    />
+  );
 }
-function DocumentsWorkspace({ generation }: { generation: number }) {
+function DocumentsWorkspace({
+  generation,
+  searchOnly,
+}: {
+  generation: number;
+  searchOnly: boolean;
+}) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
-  const params = useLocalSearchParams<{ tripId?: string }>();
+  const params = useLocalSearchParams<{
+    tripId?: string;
+    scope?: "TRIP" | "PERSONAL_INBOX";
+  }>();
   const { workingTrip, switchTrip } = useTripView();
   const tripId =
     typeof params.tripId === "string" && params.tripId
@@ -108,7 +126,13 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
   }, [focused]);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
-  const [tab, setTab] = useState<Tab>(tripId ? "TRIP" : "PERSONAL_INBOX");
+  const [tab, setTab] = useState<Tab>(
+    params.scope === "PERSONAL_INBOX"
+      ? "PERSONAL_INBOX"
+      : tripId
+        ? "TRIP"
+        : "PERSONAL_INBOX",
+  );
   const pager = useRef<PagerView>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [tripName, setTripName] = useState<string | null>(null);
@@ -167,30 +191,41 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
       });
   };
   return (
-    <View style={styles.body}>
+    <SafeAreaView edges={collapsed && !searchOnly ? ["top"] : []} style={styles.body}>
       <Stack.Screen
         options={{
-          headerShown: true,
-          headerBackVisible: false,
-          title: t("tripHome.documents"),
-          headerTitle: () =>
-            collapsed ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => (tab === "TRIP" ? void pickTrip() : setCollapsed(false))}
-              >
-                <NavigationContextTitle
-                  title={t(tabKey[tab])}
-                  subtitle={tab === "TRIP" ? tripName : null}
-                />
-              </Pressable>
-            ) : (
-              <NavigationContextTitle title={t("tripHome.documents")} />
-            ),
+          headerShown: searchOnly || !collapsed,
+          headerBackVisible: searchOnly,
+          title: t(searchOnly ? "documents.searchTitle" : "tripHome.documents"),
+          headerTitle: () => (
+            <NavigationContextTitle
+              title={t(searchOnly ? "documents.searchTitle" : "tripHome.documents")}
+            />
+          ),
         }}
       />
-      <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar />
-      {!collapsed ? (
+      {!searchOnly ? <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar /> : null}
+      {!searchOnly && tab !== "ACTIVITY" ? (
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button
+            icon="magnifyingglass"
+            tintColor={colors.accent}
+            separateBackground
+            accessibilityLabel={t("documents.searchTitle")}
+            onPress={() => {
+              if (active())
+                router.push({
+                  pathname: "/document-search",
+                  params: {
+                    ...(tripId ? { tripId } : {}),
+                    scope: tab === "PERSONAL_INBOX" ? "PERSONAL_INBOX" : "TRIP",
+                  },
+                });
+            }}
+          />
+        </Stack.Toolbar>
+      ) : null}
+      {!searchOnly && !collapsed ? (
         <View style={styles.tabs}>
           {tabs.map((name, index) => (
             <Pressable
@@ -232,6 +267,18 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
             onPress={() => router.push("/account")}
           />
         </View>
+      ) : searchOnly ? (
+        <DocumentDirectory
+          accountId={accountId}
+          tripId={tripId}
+          generation={generation}
+          scope={tab === "PERSONAL_INBOX" ? "PERSONAL_INBOX" : "TRIP"}
+          visible={focused}
+          isCurrent={active}
+          onOpenJob={openJob}
+          searchOnly
+          onScrollOffset={() => {}}
+        />
       ) : (
         <PagerView
           ref={pager}
@@ -288,11 +335,11 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
                       visible={focused && tab === name}
                       isCurrent={() => active() && tab === name}
                       onOpenJob={openJob}
-                      onScrollOffset={(offset) => {
-                        if (tab === name) {
-                          if (offset > 144) setCollapsed(true);
-                          else if (offset <= 0) setCollapsed(false);
-                        }
+                      onScrollOffset={(offset, distance, dragging) => {
+                        if (tab === name)
+                          setCollapsed((value) =>
+                            documentChromeAfterScroll(value, offset, distance, dragging),
+                          );
                       }}
                     />
                   )}
@@ -341,7 +388,7 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 function DocumentDirectory({
@@ -353,6 +400,7 @@ function DocumentDirectory({
   visible,
   onOpenJob,
   onScrollOffset,
+  searchOnly = false,
 }: {
   accountId: string;
   tripId: string | null;
@@ -361,7 +409,8 @@ function DocumentDirectory({
   isCurrent(): boolean;
   visible: boolean;
   onOpenJob(id: string): void;
-  onScrollOffset(offset: number): void;
+  onScrollOffset(offset: number, distance: number, dragging: boolean): void;
+  searchOnly?: boolean;
 }) {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -372,8 +421,8 @@ function DocumentDirectory({
     [limit, setLimit] = useState(30),
     [refresh, setRefresh] = useState(0);
   const [selected, setSelected] = useState<DocumentListEntry | null>(null);
-  const [searching, setSearching] = useState(false),
-    [query, setQuery] = useState("");
+  const searching = searchOnly;
+  const [query, setQuery] = useState("");
   const [facets, setFacets] = useState<DocumentSearchFilters>({});
   const [filtering, setFiltering] = useState(false);
   const [searchScope, setSearchScope] = useState<"TRIP" | "PERSONAL_INBOX" | "ALL">(
@@ -385,6 +434,7 @@ function DocumentDirectory({
   }, [isCurrent]);
   const alive = useRef(true);
   const scrollOffset = useRef(0);
+  const dragStart = useRef<number | null>(null);
   const list = useRef<ScrollView>(null);
   const active = useCallback(
     () => alive.current && generation === getAccountGeneration() && current.current(),
@@ -511,7 +561,10 @@ function DocumentDirectory({
   );
   if (selected) {
     const selectedTrip = selected.tripId ?? tripId;
-    const back = () => setSelected(null);
+    const back = () => {
+      setSelected(null);
+      setRefresh((value) => value + 1);
+    };
     return selected.origin === "CORE" && selectedTrip ? (
       <CoreDocumentDetail
         key={`${selectedTrip}:${selected.id}`}
@@ -560,67 +613,50 @@ function DocumentDirectory({
   const filtered = groups.map((group) => group[0]);
   return (
     <View style={styles.body}>
-      <View style={styles.search}>
-        {!searching ? (
+      {searchOnly ? (
+        <View style={styles.search}>
+          <UiTextInput
+            accessibilityLabel={t("documents.search")}
+            placeholder={t("documents.search")}
+            value={query}
+            onChangeText={setQuery}
+            autoCorrect={false}
+            clearButtonMode="while-editing"
+            returnKeyType="search"
+          />
+          <ScrollView
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContent}
+          >
+            {(["TRIP", "PERSONAL_INBOX", "ALL"] as const)
+              .filter((choice) => choice !== "TRIP" || tripId)
+              .map((choice) => (
+                <UiChoiceChip
+                  key={choice}
+                  label={t(
+                    choice === "TRIP"
+                      ? "documents.searchTrip"
+                      : choice === "ALL"
+                        ? "documents.searchAll"
+                        : "documents.searchInbox",
+                  )}
+                  selected={searchScope === choice}
+                  onPress={() => {
+                    setSearchScope(choice);
+                    setLimit(30);
+                  }}
+                />
+              ))}
+          </ScrollView>
           <UiButton
             variant="text"
-            label={t("documents.search")}
-            onPress={() => setSearching(true)}
+            label={t("documents.searchFilters")}
+            onPress={() => setFiltering(true)}
           />
-        ) : (
-          <>
-            <UiTextInput
-              accessibilityLabel={t("documents.search")}
-              placeholder={t("documents.search")}
-              value={query}
-              onChangeText={setQuery}
-              autoCorrect={false}
-              clearButtonMode="while-editing"
-              returnKeyType="search"
-            />
-            <ScrollView
-              horizontal
-              keyboardShouldPersistTaps="handled"
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterContent}
-            >
-              {(["TRIP", "PERSONAL_INBOX", "ALL"] as const)
-                .filter((choice) => choice !== "TRIP" || tripId)
-                .map((choice) => (
-                  <UiChoiceChip
-                    key={choice}
-                    label={t(
-                      choice === "TRIP"
-                        ? "documents.searchTrip"
-                        : choice === "ALL"
-                          ? "documents.searchAll"
-                          : "documents.searchInbox",
-                    )}
-                    selected={searchScope === choice}
-                    onPress={() => {
-                      setSearchScope(choice);
-                      setLimit(30);
-                    }}
-                  />
-                ))}
-            </ScrollView>
-            <UiText style={styles.meta}>{t("documents.searchHint")}</UiText>
-            <UiButton
-              variant="text"
-              label={t("documents.searchFilters")}
-              onPress={() => setFiltering(true)}
-            />
-            <UiButton
-              variant="text"
-              label={t("common.cancel")}
-              onPress={() => {
-                setSearching(false);
-                setQuery("");
-              }}
-            />
-          </>
-        )}
-      </View>
+        </View>
+      ) : null}
       <Modal
         visible={filtering && visible}
         presentationStyle="pageSheet"
@@ -747,9 +783,21 @@ function DocumentDirectory({
         onLayout={() =>
           list.current?.scrollTo({ y: scrollOffset.current, animated: false })
         }
+        alwaysBounceVertical
+        onScrollBeginDrag={(event) => {
+          dragStart.current = event.nativeEvent.contentOffset.y;
+        }}
+        onScrollEndDrag={() => {
+          dragStart.current = null;
+        }}
+        onScrollToTop={() => onScrollOffset(0, -10, true)}
         onScroll={(event) => {
           scrollOffset.current = event.nativeEvent.contentOffset.y;
-          onScrollOffset(scrollOffset.current);
+          onScrollOffset(
+            scrollOffset.current,
+            dragStart.current === null ? 0 : scrollOffset.current - dragStart.current,
+            dragStart.current !== null,
+          );
         }}
         scrollEventThrottle={32}
       >
@@ -776,7 +824,10 @@ function DocumentDirectory({
               accessibilityRole="button"
               accessibilityLabel={entry.title}
               onPress={() => {
-                if (active()) setSelected(entry);
+                if (active()) {
+                  onScrollOffset(0, -10, true);
+                  setSelected(entry);
+                }
               }}
             >
               <View style={styles.icon}>
@@ -839,7 +890,10 @@ function DocumentDirectory({
                 accessibilityLabel={t("documents.fileInfo")}
                 style={styles.more}
                 onPress={() => {
-                  if (active()) setSelected(entry);
+                  if (active()) {
+                    onScrollOffset(0, -10, true);
+                    setSelected(entry);
+                  }
                 }}
               >
                 <AppIcon name="ellipsis" size={20} color={colors.textSecondary} />

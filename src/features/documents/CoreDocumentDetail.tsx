@@ -51,6 +51,8 @@ export function CoreDocumentDetail({
   const [text, setText] = useState<string | null>(null),
     [originalError, setOriginalError] = useState(false);
   const [opening, setOpening] = useState(false);
+  const [available, setAvailable] = useState(entry.localAvailable);
+  const [restoreError, setRestoreError] = useState(false);
   const current = useRef(isCurrent);
   useEffect(() => {
     current.current = isCurrent;
@@ -80,6 +82,10 @@ export function CoreDocumentDetail({
       void (async () => {
         const reader = await localItemImportOriginals(tripId, undefined, generation);
         const docs = await reader.metadata();
+        if (valid() && document)
+          setAvailable(
+            docs.find((row) => row.id === document.id)?.localAvailable === true,
+          );
         const ids = document
           ? [document.id]
           : (batch?.documents ?? []).map((row) => row.id);
@@ -125,13 +131,25 @@ export function CoreDocumentDetail({
     if (pages.length > 1) setPages(pages.slice(0, -1));
     else onBack();
   };
-  async function openOriginal() {
+  async function openOriginal(locate = false) {
     if (!document || opening || !current.current()) return;
     setOpening(true);
     setOriginalError(false);
     setText(null);
+    setRestoreError(false);
+    let restoring = locate;
     try {
       const reader = await localItemImportOriginals(tripId, undefined, generation);
+      if (locate) {
+        const { pickCaptureMaterial } = await import("@/native/capturePicker");
+        const selected = await pickCaptureMaterial("files", () => current.current());
+        if (!current.current() || !selected.length) return;
+        if (selected.length !== 1) throw Error("IMPORT_ORIGINAL_MISMATCH");
+        await reader.restoreOriginalFromUri(document.id, selected[0].temporaryUri);
+        if (!current.current()) return;
+        setAvailable(true);
+        restoring = false;
+      }
       const original = await reader.original(document.id);
       if (!current.current()) return;
       if (!original) throw Error("IMPORT_ORIGINAL_UNAVAILABLE");
@@ -142,7 +160,10 @@ export function CoreDocumentDetail({
         await previewImportOriginal(original, () => current.current());
       }
     } catch {
-      if (current.current()) setOriginalError(true);
+      if (current.current()) {
+        setOriginalError(true);
+        setRestoreError(restoring);
+      }
     } finally {
       if (current.current()) setOpening(false);
     }
@@ -335,13 +356,24 @@ export function CoreDocumentDetail({
         {document && document.canOpenOriginal !== false ? (
           <>
             <UiButton
-              label={t("importDocuments.openOriginal")}
+              label={t(
+                available ? "importDocuments.openOriginal" : "documents.locateOriginal",
+              )}
               disabled={opening}
-              onPress={() => void openOriginal()}
+              onPress={() => void openOriginal(!available)}
             />
+            {!available ? (
+              <UiText style={styles.meta}>
+                {t("documents.originalMissingHelp", { name: document.title })}
+              </UiText>
+            ) : null}
             {originalError ? (
               <UiText style={styles.title} accessibilityRole="alert">
-                {t("importDocuments.originalUnavailable")}
+                {t(
+                  restoreError
+                    ? "documents.originalMismatch"
+                    : "documents.originalOpenFailed",
+                )}
               </UiText>
             ) : null}
             {text !== null ? (

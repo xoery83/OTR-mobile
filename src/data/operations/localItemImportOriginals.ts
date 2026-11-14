@@ -4,7 +4,11 @@ import {
   assertAccountRequestContext,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
-import { hasImportOriginal, readImportOriginal } from "../files/importOriginalFileStore";
+import {
+  hasImportOriginal,
+  readImportOriginal,
+  retainImportOriginal,
+} from "../files/importOriginalFileStore";
 import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository";
 
 function localItemImportDocuments(
@@ -330,6 +334,24 @@ export async function localItemImportOriginals(
           Object.fromEntries([...unknown].map((id) => [id, "OUTCOME_UNKNOWN" as const])),
         ),
       };
+    },
+    async restoreOriginalFromUri(id: string, uri: string | null) {
+      const document = (await documents()).find((row) => row.id === id);
+      if (!document) throw Error("IMPORT_ORIGINAL_UNAVAILABLE");
+      const { openCaptureUriReader } = await import("../../native/captureUriReader");
+      const { readCapturePayload } = await import("../files/capturePayloadReader");
+      const payload = await readCapturePayload(
+        "FILE",
+        { reader: await openCaptureUriReader(uri) },
+        tripCoreSha256Hex,
+      );
+      if (payload.byteCount !== document.byteCount || payload.sha256 !== document.sha256)
+        throw Error("IMPORT_ORIGINAL_MISMATCH");
+      const current = (await documents()).find((row) => row.id === id);
+      if (current?.sha256 !== document.sha256 || current.byteCount !== document.byteCount)
+        throw Error("IMPORT_ORIGINAL_SCOPE_CHANGED");
+      await retainImportOriginal(scope.accountId, document.sha256, payload.bytes);
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
     },
     async original(id: string) {
       const document = (await documents()).find((entry) => entry.id === id);
