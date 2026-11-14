@@ -1,0 +1,176 @@
+[
+  {
+    "file": "src/components/LocalOperationsDiagnostics.tsx",
+    "line": 8,
+    "module": "@/data/sync/transportSelection",
+    "typeOnly": false
+  },
+  {
+    "file": "src/components/NativeTripQaDiagnostics.tsx",
+    "line": 11,
+    "module": "@/data/sync/nativeTripQaScope",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/auth/EmailOtpSignIn.tsx",
+    "line": 7,
+    "module": "@/data/auth/devSupabaseAuth",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/capture/CaptureActivity.tsx",
+    "line": 2,
+    "module": "@/data/api/universalImportContracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/ImportExceptionReviewScreen.tsx",
+    "line": 23,
+    "module": "@/data/api/universalImportTransport",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/capture/UniversalCaptureResults.tsx",
+    "line": 10,
+    "module": "@/data/api/universalImportContracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/UniversalCaptureResults.tsx",
+    "line": 33,
+    "module": "@/data/api/universalV3Contracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/UniversalP1SourceReviewForm.tsx",
+    "line": 3,
+    "module": "@/data/api/universalImportContracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/UniversalV3Review.tsx",
+    "line": 5,
+    "module": "@/data/api/universalV3Contracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/captureTripPrior.ts",
+    "line": 1,
+    "module": "@/data/api/client",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/capture/useUniversalCapture.ts",
+    "line": 3,
+    "module": "@/data/api/universalImportContracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/useUniversalCapture.ts",
+    "line": 7,
+    "module": "@/data/api/universalImportContracts",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/capture/useUniversalCapture.ts",
+    "line": 8,
+    "module": "@/data/api/universalV3Contracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/capture/useUniversalCapture.ts",
+    "line": 14,
+    "module": "@/data/api/client",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/capture/useUniversalCapture.ts",
+    "line": 16,
+    "module": "@/data/api/universalImportTransport",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/capture/useUniversalP1Admission.ts",
+    "line": 4,
+    "module": "@/data/api/universalImportContracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "line": 6,
+    "module": "@/data/sync/tripDownstreamCoordinator",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "line": 14,
+    "module": "@/data/sync/nativeTripQaScope",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/day-feed/TripScreen.tsx",
+    "line": 18,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/day-feed/TripScreen.tsx",
+    "line": 114,
+    "module": "@/data/sync/tripDownstreamCoordinator",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/day-feed/useDetailCloudRefresh.ts",
+    "line": 5,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/day-feed/useTripPreparationWidget.tsx",
+    "line": 1,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/ledger/LedgerExpenseDetailScreen.tsx",
+    "line": 30,
+    "module": "@/data/api/ledgerMutationContracts",
+    "typeOnly": true
+  },
+  {
+    "file": "src/features/ledger/LedgerStage6Screen.tsx",
+    "line": 7,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/ledger/LedgerStage6Screen.tsx",
+    "line": 18,
+    "module": "@/data/api/client",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/ledger/LedgerStage6Screen.tsx",
+    "line": 21,
+    "module": "@/data/sync/ledgerFxSnapshotCoordinator",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/ledger/MyLedgerScreen.tsx",
+    "line": 1,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/ledger/TripHomeFinanceWidget.tsx",
+    "line": 13,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": false
+  },
+  {
+    "file": "src/features/ledger/__tests__/mountedMyLedgerProbe.ts",
+    "line": 5,
+    "module": "@/data/sync/ledgerOperationalSync",
+    "typeOnly": true
+  }
+]

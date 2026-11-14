@@ -1,0 +1,21 @@
+{
+  "productSource": "5c28077e",
+  "testSource": "8bd49f26 (committed fixture maintenance; same product bytes)",
+  "files": 905,
+  "counts": {
+    "passed": 11912,
+    "failed": 34,
+    "pending": 161
+  },
+  "importFailedFiles": [
+    "src/features/capture/captureLifecycle.test.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts",
+    "backend/src/captureFlightCoreV2.sql.test.ts",
+    "backend/src/universalMixedBTaskReservation.test.ts"
+  ],
+  "original216": {
+    "failed": 34,
+    "passed": 182
+  },
+  "singleRun": "Full final run: 11806 passed / 47 failed / 161 pending; latest merged results are not a new full-suite PASS."
+}

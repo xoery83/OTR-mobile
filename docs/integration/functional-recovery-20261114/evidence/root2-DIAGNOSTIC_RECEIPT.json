@@ -1,0 +1,43 @@
+{
+  "status": "READ_ONLY_DIAGNOSIS_COMPLETE_ORIGINAL_EXCEPTION_NOT_RECORDED",
+  "requestId": "1984cc0a-d2b0-4cfb-ad66-de31c3325e64",
+  "httpStatus": 503,
+  "durationMs": 1805,
+  "image": "sha256:f8862b0a70f797479fc6ec5e938f87b78a265bf626119d4dfe311ad5e97fdfa4",
+  "sourceCommit": "f650ce2bec7f7e4cb790b48f360c65bcead15085",
+  "runtimeHealthy": true,
+  "originalExceptionAvailable": false,
+  "expenseReceiptPresent": false,
+  "expenseCountSnapshot": 0,
+  "safeToRetryProven": false,
+  "p1NewAndEdit": "APPLIED revisions1->2",
+  "serverTripTitle": "Recovery Account Edited",
+  "serverLedgerBootstrapTitleSource": "public.trips.name",
+  "directDependencies": {
+    "actorProfileExists": true,
+    "ledgerSettings": {
+      "created_at": "2026-11-14T00:19:00.731412+00:00",
+      "journey_id": "285ffde2-a74c-4876-993e-b763cb457632",
+      "rate_stale_after_hours": 72,
+      "revision": 1,
+      "settlement_currency": "NZD",
+      "settlement_scale": 2,
+      "updated_at": "2026-11-14T00:19:00.731412+00:00",
+      "updated_by": "00000000-0000-4000-8000-000000000001",
+      "valuation_policy": "REFERENCE_RATE"
+    },
+    "members": [
+      {
+        "actorMatches": true,
+        "id": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+        "role": "owner",
+        "status": "linked"
+      }
+    ],
+    "replayServiceExecutable": true
+  },
+  "minimumNextAction": "In owning Expense RPC catch retain sanitized stage+SQLSTATE and requestId correlation; do not resubmit original operation to reproduce. Native should refresh ordinary Ledger bootstrap/projection for title.",
+  "writes": 0,
+  "providerCalls": 0,
+  "deploymentPerformed": false
+}

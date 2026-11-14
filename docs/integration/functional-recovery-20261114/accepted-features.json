@@ -1,0 +1,964 @@
+[
+  {
+    "id": "AU01",
+    "module": "Auth / Offline launch",
+    "expected": "有效本机会话离线可进入；失败只暂停同步，不清队列",
+    "roles": "Guest / Account",
+    "config": "SecureStore + 同一原生身份",
+    "lastConfirmedCommit": "8336e4bc",
+    "evidence": "docs/ux/ACCOUNT_SWITCHING_FOUNDATION_ACCEPTANCE.md",
+    "paths": [
+      "src/data/auth/authRepository.ts",
+      "src/data/bootstrap/bootstrapApplication.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "8336e4bc4c85895e18fc498ec8ad465de6237216",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "AU02",
+    "module": "Email OTP",
+    "expected": "正常邮箱登录；取消/错误不激活错误账户",
+    "roles": "Account",
+    "config": "DEV Auth / 正常邮箱",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/features/auth/EmailOtpSignIn.tsx",
+      "src/data/auth/devSupabaseAuth.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "AU03",
+    "module": "Google",
+    "expected": "合法 Bundle Client + nonce；缺配置不借用其他身份",
+    "roles": "Account",
+    "config": "原 Google iOS Client / OtrGoogleSignIn",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/data/auth/googleSignIn.ts",
+      "src/features/auth/GoogleSignInButton.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "AU04",
+    "module": "Apple",
+    "expected": "原生 Apple 授权、nonce、正常账户交换；不按邮箱合并",
+    "roles": "Account",
+    "config": "模块、entitlement、合法 App ID、系统 Apple Account",
+    "lastConfirmedCommit": "e013bf5d",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/data/auth/appleSignIn.ts",
+      "src/features/auth/AppleSignInButton.tsx",
+      "app.config.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "AU05",
+    "module": "Account switching",
+    "expected": "明确切换；A→B→A 旧请求隔离；保留各账户队列",
+    "roles": "Account",
+    "config": "正常已记住会话",
+    "lastConfirmedCommit": "8336e4bc",
+    "evidence": "docs/ux/GLOBAL_MENU_ACCOUNT_SWITCHING_ACCEPTANCE.md",
+    "paths": [
+      "src/components/AccountManagementScreen.tsx",
+      "src/data/auth/accountSwitchCoordinator.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "04ae6809b7210ea249d7ca9dc0016ceca5cc8eb9",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "AU06",
+    "module": "Guest Adoption",
+    "expected": "原 Guest PREPARED/PUBLISHED、原 ID 恢复；不复制凭据",
+    "roles": "Guest → Account",
+    "config": "DEV Adoption 配置 + owning Backend",
+    "lastConfirmedCommit": "237e4c66",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/data/auth/guestAdoptionRecovery.ts",
+      "src/components/AccountManagementScreen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "AU07",
+    "module": "Profile / identity",
+    "expected": "既有显示名与身份分离；账号链接必须显式确认",
+    "roles": "Account",
+    "config": "正常 Auth；未接入的私有云配置不冒充完成",
+    "lastConfirmedCommit": "efb38d83",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/data/auth/accountProfileRepository.ts",
+      "src/features/auth/AppleAccountConnection.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "TR01",
+    "module": "My Trips / Create",
+    "expected": "正常创建旅行、发现当前有权旅行；无固定 QA 身份",
+    "roles": "Guest / Account",
+    "config": "普通 DEV transport、NORMAL_CLOUD_SYNC",
+    "lastConfirmedCommit": "efb38d83",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/features/day-feed/LocalTripWorkspace.tsx",
+      "src/data/repositories/tripRepository.ts",
+      "backend/src/tripCreate.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "TR02",
+    "module": "Trip metadata edit",
+    "expected": "名称、目的地、日期；原 CAS / Receipt；合法已确认 base 不重复在线读取",
+    "roles": "有编辑权的 Actor",
+    "config": "owning Parent / 本地 Trip + 版本",
+    "lastConfirmedCommit": "efb38d83",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/features/day-feed/TripBasicEditor.tsx",
+      "src/features/day-feed/LocalTripWorkspace.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "TR03",
+    "module": "Trip Cover",
+    "expected": "内置图与本地照片；自动选择、取消、原 Account/Trip 持久化",
+    "roles": "有权读取 Trip 的本地 Actor",
+    "config": "既有 Personal Cover / 文件权限",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/beta/visual-acceptance/OTR_TRIP_HOME_VISUAL_ACCEPTANCE_REPORT_2026-10-14.md",
+    "paths": [
+      "src/features/day-feed/TripCoverPicker.tsx",
+      "src/data/repositories/tripPersonalCoverRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a0a81f7039853738c6f1401210bfb506e35a66b9",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "TR04",
+    "module": "Currency",
+    "expected": "Owner 可通过既有流程更改；Member 只读；Finalized 仍锁定",
+    "roles": "Guest / Owner / Member",
+    "config": "Ledger Actor / 结算锁 / 预览",
+    "lastConfirmedCommit": "91e40d04",
+    "evidence": "docs/ledger/CURRENCY_FX_DOMAIN_AUDIT.md",
+    "paths": [
+      "src/features/ledger/CurrencySettingsScreen.tsx",
+      "src/data/repositories/ledgerCurrencyRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "aaaa51304e02fd03ba71e4e15af8027340820b7b",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "TR05",
+    "module": "People / Travelers",
+    "expected": "已接通的名单、命名旅客、本人昵称权限不退回旧快照",
+    "roles": "Account / 合法管理者",
+    "config": "Person / Parent owning 端口",
+    "lastConfirmedCommit": "efb38d83",
+    "evidence": "docs/ops/auth-apple-native-20261113/README.md",
+    "paths": [
+      "src/features/people/ServerParentTripPeople.tsx",
+      "src/data/repositories/tripPersonCloudCreateRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "DY01",
+    "module": "Trip Home / navigation",
+    "expected": "真实 Hero、业务 widgets、原页面返回；Summary 不假称所有详情不可用",
+    "roles": "Guest / Account",
+    "config": "当前 Trip + 正常 Reader",
+    "lastConfirmedCommit": "eb2b0c5f",
+    "evidence": "docs/beta/visual-acceptance/OTR_TRIP_HOME_VISUAL_ACCEPTANCE_REPORT_2026-10-14.md",
+    "paths": [
+      "src/features/trip/TripHomeFrame.tsx",
+      "src/features/day-feed/TripScreen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a0a81f7039853738c6f1401210bfb506e35a66b9",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "DY02",
+    "module": "Day Feed",
+    "expected": "真实日期/时间/地点/类型；Today/Tomorrow；背景连续；Focus/Details 返回",
+    "roles": "有 Trip 读取权",
+    "config": "正常 Core / 本地投影",
+    "lastConfirmedCommit": "3def75e9",
+    "evidence": "docs/beta/visual-acceptance/OTR_TRIPS_COMPACT_READABLE_NATIVE_ACCEPTANCE_2026-10-14.md",
+    "paths": [
+      "src/features/day-feed/DayFeed.tsx",
+      "src/features/day-feed/WindowedDayList.tsx",
+      "src/features/day-feed/DayFeedFidelityHeading.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "02ae20435f8ea3570b95208ce4c299cbc490eaf9",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "DY03",
+    "module": "Details / Immersive",
+    "expected": "原对象身份、字段和可用操作；Back 返回原上下文",
+    "roles": "合法读者 / 编辑者",
+    "config": "Core ownership / 协议",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/FOUR_LANE_DELIVERY_MATRIX.md",
+    "paths": [
+      "src/features/day-feed/P1Detail.tsx",
+      "src/features/day-feed/P2Detail.tsx",
+      "src/features/day-feed/P3Detail.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DY04",
+    "module": "Search / Places",
+    "expected": "有权结果；native Place matching；不可用结果不伪造坐标",
+    "roles": "Guest / Account",
+    "config": "PlaceSearch 原生模块 / Core Reader",
+    "lastConfirmedCommit": "faed8181",
+    "evidence": "docs/beta/visual-acceptance/OTR_TRIPS_SHELL_VISUAL_ACCEPTANCE_REPORT_2026-10-14.md",
+    "paths": [
+      "src/features/trip-search/TripSearchScreen.tsx",
+      "src/features/place-search/PlaceSearchSheet.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "d6a63ef747e1d73b7fef45b130838c6aaa392ae3",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "P1",
+    "module": "P1 Plan",
+    "expected": "现有 NEW / Edit / LINK / Document 关联；只保存 Core 已支持字段；缺失事实不伪造",
+    "roles": "Owner / Member 按真实 Item ACL；Guest 仅已批准本地能力",
+    "config": "Core capability / MANUAL 或 IMPORT / target revision",
+    "lastConfirmedCommit": "a28ad66d",
+    "evidence": "docs/integration/four-lane-20261114/FOUR_LANE_DELIVERY_MATRIX.md",
+    "paths": [
+      "src/features/day-feed/P1Detail.tsx",
+      "src/domain/trip/tripCoreV2Mutation.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "P2",
+    "module": "P2 Flight",
+    "expected": "现有 NEW / Edit / LINK / Document 关联；只保存 Core 已支持字段；缺失事实不伪造",
+    "roles": "Owner / Member 按真实 Item ACL；Guest 仅已批准本地能力",
+    "config": "Core capability / MANUAL 或 IMPORT / target revision",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ops/b1-p2-document-20261113/README.md",
+    "paths": [
+      "src/features/day-feed/P2Detail.tsx",
+      "src/domain/trip/tripCoreV2Mutation.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a4d5b5085a39048fb31c29a00b9f2b0eef9c35a7",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "P3",
+    "module": "P3 Stay",
+    "expected": "现有 NEW / Edit / LINK / Document 关联；只保存 Core 已支持字段；缺失事实不伪造",
+    "roles": "Owner / Member 按真实 Item ACL；Guest 仅已批准本地能力",
+    "config": "Core capability / MANUAL 或 IMPORT / target revision",
+    "lastConfirmedCommit": "a28ad66d",
+    "evidence": "docs/integration/four-lane-20261114/FOUR_LANE_DELIVERY_MATRIX.md",
+    "paths": [
+      "src/features/day-feed/P3Detail.tsx",
+      "src/domain/trip/tripCoreV2Mutation.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "P4",
+    "module": "P4 Rental",
+    "expected": "现有 NEW / Edit / LINK / Document 关联；只保存 Core 已支持字段；缺失事实不伪造",
+    "roles": "Owner / Member 按真实 Item ACL；Guest 仅已批准本地能力",
+    "config": "Core capability / MANUAL 或 IMPORT / target revision",
+    "lastConfirmedCommit": "a28ad66d",
+    "evidence": "docs/integration/four-lane-20261114/FOUR_LANE_DELIVERY_MATRIX.md",
+    "paths": [
+      "src/features/day-feed/P4Detail.tsx",
+      "src/domain/trip/tripCoreV2Mutation.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "P5",
+    "module": "P5 Transport",
+    "expected": "现有 NEW / Edit / LINK / Document 关联；只保存 Core 已支持字段；缺失事实不伪造",
+    "roles": "Owner / Member 按真实 Item ACL；Guest 仅已批准本地能力",
+    "config": "Core capability / MANUAL 或 IMPORT / target revision",
+    "lastConfirmedCommit": "a28ad66d",
+    "evidence": "docs/integration/four-lane-20261114/FOUR_LANE_DELIVERY_MATRIX.md",
+    "paths": [
+      "src/features/day-feed/P5Detail.tsx",
+      "src/domain/trip/tripCoreV2Mutation.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "P6",
+    "module": "P6 Activity",
+    "expected": "现有 NEW / Edit / LINK / Document 关联；只保存 Core 已支持字段；缺失事实不伪造",
+    "roles": "Owner / Member 按真实 Item ACL；Guest 仅已批准本地能力",
+    "config": "Core capability / MANUAL 或 IMPORT / target revision",
+    "lastConfirmedCommit": "a28ad66d",
+    "evidence": "docs/integration/four-lane-20261114/FOUR_LANE_DELIVERY_MATRIX.md",
+    "paths": [
+      "src/features/day-feed/P6Detail.tsx",
+      "src/domain/trip/tripCoreV2Mutation.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM01",
+    "module": "Capture / six formats",
+    "expected": "TXT/PDF/PNG/JPEG/WebP/静态 GIF；≤5；Photos 多选；原件持久保存",
+    "roles": "合法 Trip Actor",
+    "config": "LocalFirst + installed file/image modules",
+    "lastConfirmedCommit": "9e608340",
+    "evidence": "docs/ops/b1-p2-document-20261113/README.md",
+    "paths": [
+      "src/native/capturePicker.ts",
+      "src/features/capture/CaptureComposer.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a4d5b5085a39048fb31c29a00b9f2b0eef9c35a7",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM02",
+    "module": "Composer / draft",
+    "expected": "紧凑菜单；Inline Add、未 Add 文字一次提交；Close/冷恢复；Account/Trip 隔离",
+    "roles": "Guest / Account",
+    "config": "现有私有原件 / draft repository",
+    "lastConfirmedCommit": "5af027b",
+    "evidence": "docs/beta/IMPORT_V3_B2_INCREMENTAL_DELIVERY_PLAN.md",
+    "paths": [
+      "src/features/capture/CaptureComposer.tsx",
+      "src/data/repositories/captureDraftRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "e87cb6ff7abf5080c177638c9a1938dd4623e3cd",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM03",
+    "module": "Analyze / durable Task",
+    "expected": "真实 DeepSeek 单 Attempt；持久 START_DURABLE；UNKNOWN 原 ID 查询，不自动重发",
+    "roles": "正常编辑 Actor",
+    "config": "Backend Key / 正常 ACL；无 CP14/QA scope 前置",
+    "lastConfirmedCommit": "c452b45",
+    "evidence": "docs/ops/b1-p2-document-20261113/README.md",
+    "paths": [
+      "backend/src/universalV3Execution.ts",
+      "src/features/capture/useUniversalCapture.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a4d5b5085a39048fb31c29a00b9f2b0eef9c35a7",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM04",
+    "module": "Auto / DEV confirm",
+    "expected": "正式可信 NEW/LINK 自动；开发一次 Batch Confirm；同一 Queue/Receipt",
+    "roles": "合法 Core Actor",
+    "config": "DEV confirm 显式配置 / owning IMPORT",
+    "lastConfirmedCommit": "72c020e",
+    "evidence": "docs/ops/import-ux-c2-20261114/README.md",
+    "paths": [
+      "src/data/operations/universalV3Review.ts",
+      "src/data/repositories/importSubmissionRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "43215a47af3ace9781ced508ef05b8cb9bfec88c",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM05",
+    "module": "Exception Review",
+    "expected": "歧义/缺失/冲突才 Review；TYPE05；ABSTAIN；不覆盖手工字段",
+    "roles": "合法 Core Actor",
+    "config": "已支持字段 / Item target CAS",
+    "lastConfirmedCommit": "72c020e",
+    "evidence": "docs/ops/import-ux-c2-20261114/README.md",
+    "paths": [
+      "src/features/capture/ImportExceptionReviewScreen.tsx",
+      "src/data/operations/universalV3Review.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "43215a47af3ace9781ced508ef05b8cb9bfec88c",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM06",
+    "module": "Activity / Results",
+    "expected": "同 Batch 恢复；正式对象去重；Created/Linked 与候选分离；UNKNOWN 非失败",
+    "roles": "Batch Actor",
+    "config": "真实 Task/Queue/Receipt",
+    "lastConfirmedCommit": "3227ead90",
+    "evidence": "docs/ops/import-ux-c2-20261114/README.md",
+    "paths": [
+      "src/features/capture/CaptureProgress.tsx",
+      "src/features/capture/UniversalCaptureResults.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "43215a47af3ace9781ced508ef05b8cb9bfec88c",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "IM07",
+    "module": "Documents / N→M",
+    "expected": "LOCAL_ONLY metadata + add-only Item 关联；关联待完成不重复创建 Item",
+    "roles": "合法 Document / Item Actor",
+    "config": "RLS / ACL / 原关联 Operation",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ops/b1-p2-document-20261113/README.md",
+    "paths": [
+      "src/features/documents/ImportDocumentsPanel.tsx",
+      "src/data/repositories/importDocumentsRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a4d5b5085a39048fb31c29a00b9f2b0eef9c35a7",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "IM08",
+    "module": "Import Sync / Cold",
+    "expected": "原任务、原件、Receipt、SQLite 冷恢复；跨设备无本机文件要如实说明",
+    "roles": "原 Account / Trip",
+    "config": "既有本地 Store；不复制 iPad 数据",
+    "lastConfirmedCommit": "3f8fb25",
+    "evidence": "docs/ops/b1-p2-document-20261113/README.md",
+    "paths": [
+      "src/data/sync/tripNormalSync.ts",
+      "src/data/sync/tripNormalQueueActivity.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a4d5b5085a39048fb31c29a00b9f2b0eef9c35a7",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "LE01",
+    "module": "Ledger spending",
+    "expected": "Mine/Group、真实金额、分析/搜索、唯一正常添加入口",
+    "roles": "Owner / Member / Read-only",
+    "config": "Ledger Actor 与 Journey",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/LEDGER_UI_UX_POLISH_ENTRY_PART2_ACCEPTANCE.md",
+    "paths": [
+      "src/features/ledger/LedgerStage6Screen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "79ea54e3eb75e308ffaf76c97ce2f3e3c9b0b6c5",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE02",
+    "module": "Expense CRUD",
+    "expected": "合法新建/编辑/删除及冲突；原 Operation / 本地先写 / Sync",
+    "roles": "按 Expense ACL",
+    "config": "Ledger mutation / Receipt",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/LEDGER_2_0_STAGE_10_ACCEPTANCE.md",
+    "paths": [
+      "src/features/ledger/LedgerExpenseEntryScreen.tsx",
+      "src/features/ledger/LedgerExpenseDetailScreen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a9e756e2a2f6d7139ecc96bc7ab1f0d08386e970",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE03",
+    "module": "Receipt / attachments",
+    "expected": "真实原件、OCR 显式调用、恢复；不因审计触发付费扫描",
+    "roles": "合法 Ledger Actor",
+    "config": "文件权限 / 既有 OCR 配置",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/LEDGER_2_0_STAGE_9_ACCEPTANCE.md",
+    "paths": [
+      "src/components/ReceiptCaptureScreen.tsx",
+      "src/data/files/receiptFileStore.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a6fc9f34de7970e4f388518d80832d8746f0ef1b",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE04",
+    "module": "FX / rates",
+    "expected": "展示估算不修改 Expense；真实有效期/币对；更改使用正式预览",
+    "roles": "Owner / Member",
+    "config": "既有费率与锁；不发明汇率",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/CURRENCY_FX_DOMAIN_AUDIT.md",
+    "paths": [
+      "src/data/operations/referenceRateEstimate.ts",
+      "src/features/ledger/ExpenseFxDetails.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "aaaa51304e02fd03ba71e4e15af8027340820b7b",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE05",
+    "module": "Settlement preview",
+    "expected": "Overview / 个人预览 / 历史 / 读回；角色与结算锁保持",
+    "roles": "Owner / Member",
+    "config": "原 Ledger snapshot",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/SETTLEMENT_2_0_PHASE_6_ACCEPTANCE.md",
+    "paths": [
+      "src/features/ledger/SettlementReadinessScreen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "f699509053f6de1d5147ed7846362dfdda55951c",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE06",
+    "module": "Settlement finalization",
+    "expected": "既有显式确认与幂等；本轮禁止正式 Confirm",
+    "roles": "Owner 按合同",
+    "config": "版本、权限、原 Receipt",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/SETTLEMENT_FINAL_VERSION_REVISION_ACCEPTANCE.md",
+    "paths": [
+      "src/data/repositories/ledgerSettlementRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "2749e87f7651b117d94191bfb15b4a2e04f34cb1",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE07",
+    "module": "Personal payments / Review",
+    "expected": "既有本人决定、FX、可见性及 UNKNOWN",
+    "roles": "本人 / 有权限成员",
+    "config": "原 Payment 与 Review owning 合同",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/PERSONAL_PAYMENT_FX_SLICE_D_ACCEPTANCE.md",
+    "paths": [
+      "src/features/ledger/PersonalSettlementReviewScreen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a65525733374337ccfcaf54a932423f86fa39297",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "LE08",
+    "module": "Export / history",
+    "expected": "原财务数据导出与历史，不在审计中确认新结算",
+    "roles": "合法读者",
+    "config": "现有 export 文件机制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/ledger/LEDGER_2_0_STAGE_10_ACCEPTANCE.md",
+    "paths": [
+      "src/data/files/settlementExportFileStore.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "a9e756e2a2f6d7139ecc96bc7ab1f0d08386e970",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "SY01",
+    "module": "Queue / Wake / idempotence",
+    "expected": "原 Operation、Receipt、UNKNOWN；自动唤醒，关联等待 Item",
+    "roles": "所有已批准本地 Principal",
+    "config": "原 Queue / account generation",
+    "lastConfirmedCommit": "a28ad66d",
+    "evidence": "docs/integration/four-lane-20261114/SHARED_CONFLICT_RESOLUTION.md",
+    "paths": [
+      "src/data/sync/tripNormalCoordinator.ts",
+      "src/data/sync/tripNormalQueueActivity.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "SY02",
+    "module": "Downstream / access loss",
+    "expected": "普通 pull、discovery、前台更新、撤权不复活；version 源不冒充启用",
+    "roles": "Account",
+    "config": "正常 Reader / Account generation",
+    "lastConfirmedCommit": "63b82873",
+    "evidence": "docs/integration/four-lane-20261114/SHARED_CONFLICT_RESOLUTION.md",
+    "paths": [
+      "src/data/sync/tripDownstreamCoordinator.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "SY03",
+    "module": "SQLite / offline",
+    "expected": "75→76/77/78→79；两种真实76历史；保留原 ID/Queue/FK；离线恢复",
+    "roles": "Guest / Account",
+    "config": "同一私有持久库 / Keychain 身份",
+    "lastConfirmedCommit": "133196d2",
+    "evidence": "docs/integration/four-lane-20261114/SHARED_CONFLICT_RESOLUTION.md",
+    "paths": [
+      "src/data/db/fourLaneMigrationCompatibility.test.ts",
+      "src/data/auth/guestSqliteSchema.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "PH01",
+    "module": "Local Photos",
+    "expected": "原本地照片、封面选择、取消/保留；不自动云同步",
+    "roles": "有权 Trip Actor",
+    "config": "私有文件库 / Photo permission",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/beta/visual-acceptance/OTR_TRIP_PHOTOS_NATIVE_ACCEPTANCE_REPORT_2026-10-14.md",
+    "paths": [
+      "src/features/day-feed/LocalTripPhotos.tsx",
+      "src/data/repositories/tripPhotoRepository.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "2ffe48fd5052c6a0f8bafb8296617436d3666066",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "UP01",
+    "module": "Updates",
+    "expected": "既有合法通知/Needs Attention/返回；未完成 Slice6 不冒充实现",
+    "roles": "Account",
+    "config": "owning Reader / account scope",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/beta/IMPORT_V3_B2_INCREMENTAL_DELIVERY_PLAN.md",
+    "paths": [
+      "src/features/updates/UpdatesInboxScreen.tsx"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "e87cb6ff7abf5080c177638c9a1938dd4623e3cd",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "MC01",
+    "module": "MCP discovery / read",
+    "expected": "SDK guide、能力、Trip/Item read，权限不足关闭",
+    "roles": "获授权 Consumer",
+    "config": "既有 OAuth/Scope/ports；默认关闭",
+    "lastConfirmedCommit": "2be99d7a",
+    "evidence": "docs/mcp/phase4b/ACCEPTANCE.md",
+    "paths": [
+      "mcp/server.ts",
+      "mcp/read.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "7e8fc8577f2cde1f8fcaacf9f1e36d2a472a3b6e",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "MC02",
+    "module": "MCP writes / batch",
+    "expected": "已支持字段 Preview/Confirm/Apply、CAS、原 Receipt 与 UNKNOWN",
+    "roles": "获授权 Consumer",
+    "config": "显式用户确认 / owning Core",
+    "lastConfirmedCommit": "2be99d7a",
+    "evidence": "docs/mcp/phase4b/ACCEPTANCE.md",
+    "paths": [
+      "mcp/mutation.ts",
+      "mcp/batch.ts",
+      "mcp/fieldAdapter.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "7e8fc8577f2cde1f8fcaacf9f1e36d2a472a3b6e",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "MC03",
+    "module": "MCP people / expense",
+    "expected": "已通过的本地 Adapter；无 owning port 不暴露真实能力",
+    "roles": "获授权 Consumer",
+    "config": "真实端口；本轮不得新授权",
+    "lastConfirmedCommit": "2be99d7a",
+    "evidence": "docs/mcp/phase4b/ACCEPTANCE.md",
+    "paths": [
+      "mcp/peopleExpenseAdapter.ts",
+      "mcp/domainAdapter.ts"
+    ],
+    "scope": "ACCEPTED",
+    "confidence": "HISTORICAL_ACCEPTANCE",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "7e8fc8577f2cde1f8fcaacf9f1e36d2a472a3b6e",
+    "historicalWorkingShaKnown": true
+  },
+  {
+    "id": "DF01",
+    "module": "Invite / Claim full Native",
+    "expected": "正常邀请/Claim owning 组合尚未正式验收；Preview 不是产品完成",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "src/features/people/InviteClaimPreviewScreen.tsx"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF02",
+    "module": "Private profile cloud editor",
+    "expected": "源码明确 unmounted local-draft candidate；不得恢复为云写入",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "src/features/auth/AccountPrivateProfileScreen.tsx"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF03",
+    "module": "Version / Realtime activation",
+    "expected": "只验收源码与可选组合；运行依赖未注入，不自动开启",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "src/data/sync/tripDownstreamCoordinator.ts"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF04",
+    "module": "MCP complete Hosted Consumer",
+    "expected": "本地384项与有限模型理解不等于真实Consumer全链",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "mcp/oauth.ts"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF05",
+    "module": "Import Slice5/6 / full UPDATE",
+    "expected": "Owner 尚未授权下一 Slice / 完整字段编辑",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "docs/beta/IMPORT_V3_B2_INCREMENTAL_DELIVERY_PLAN.md"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF06",
+    "module": "Document Cloud Sync",
+    "expected": "Owner 明确 LOCAL_ONLY，跨设备无原件是产品边界",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "src/features/documents/ImportDocumentsPanel.tsx"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF07",
+    "module": "Flexible / TTR activation",
+    "expected": "只恢复已批准的本地展示/几何与选择；未验收 owning Runtime 不开启",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "src/features/day-feed/flexibleSnapshot.ts"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  },
+  {
+    "id": "DF08",
+    "module": "P2 formal manual opt-in",
+    "expected": "须核实已验收启用范围；不能将完整表单源码等同已安装 owning 权限",
+    "roles": "按原合同",
+    "config": "保持原已批准限制",
+    "lastConfirmedCommit": "UNKNOWN",
+    "evidence": "docs/integration/four-lane-20261114/DEFERRED_CAPABILITIES.md",
+    "paths": [
+      "src/data/sync/nativeTripQaScope.ts"
+    ],
+    "scope": "DEFERRED_OR_EVIDENCE_GAP",
+    "confidence": "EXPLICIT_LIMIT_OR_UNKNOWN",
+    "missingSourcePaths": [],
+    "acceptanceRecordCommit": "5a5ca4473fa4f5a584a94e1842d1ad748f23abfe",
+    "historicalWorkingShaKnown": false
+  }
+]

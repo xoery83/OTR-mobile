@@ -1,0 +1,30 @@
+{
+  "source": "8bd49f26037733e44a67a5c8f84aa1a52cbeccc9",
+  "sourceFilesCompared": 1159,
+  "sourceMismatches": [],
+  "fullNativeBuild": true,
+  "scheme": "OTRDEV",
+  "configuration": "Release",
+  "bundleId": "com.xoery.otrmobile.uxc1iphone16",
+  "simulatedEntitlements": {
+    "application-identifier": "U9D5C58Z94.com.xoery.otrmobile",
+    "com.apple.developer.applesignin": [
+      "Default"
+    ]
+  },
+  "binarySHA256": "0e9cf720bbdf042eaa8c2945b98b729562998ca74fbf3ebe227cbc0e0818cc5a",
+  "bundleSHA256": "613cba56e7dab2804ce6988b1e5c7ad45afcd49f7d4af35cbb93e2a8fb3eff5e",
+  "nativeModules": [
+    "ExpoAppleAuthentication",
+    "OtrGoogleSignIn"
+  ],
+  "buildInputOverrides": {
+    "name": "OTR DEV",
+    "bundleId": "com.xoery.otrmobile.uxc1iphone16",
+    "applicationIdentifier": "retained U9D5C58Z94.com.xoery.otrmobile"
+  },
+  "installedOverExistingApp": true,
+  "privateDataCopied": false,
+  "sourceMissing": [],
+  "comparisonScope": "tracked app/src/modules/plugins/assets/app.config.ts excluding tests; intentional app.json name/Bundle override recorded separately"
+}

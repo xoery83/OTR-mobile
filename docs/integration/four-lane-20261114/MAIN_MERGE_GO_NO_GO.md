@@ -1,6 +1,8 @@
 # MAIN_MERGE_GO_NO_GO
 
-**GO — 固定源码候选可提交Owner批准合入Main。未执行正式Main Merge/Push。**
+**HOLD — Owner 暂停 Main Merge/Push；原 GO 已撤回，等待完整原生 App 与实际回归修复验证。**
+
+2026-11-14：实际截图发现 Apple 原生构建缺失、云端 Trip 编辑/币种/Cover 接线、Day Feed 背景过渡和 Ledger 重复按钮问题。此前只读页面可达检查不足以证明这些能力完整。以下为原候选历史证据，不构成当前 GO。
 
 产品代码固定：`63b82873142452de459f7712949c47e45c9f2061`；本目录随后证据提交只增加兼容测试/文档，正式审批以最终报告Commit为准。分支 `codex/four-lane-integration-20261114`，基线实际GitHub main `ec282ce65858f9a9857011b225ed08fce8c8d360`（收尾只读确认未变）。
 

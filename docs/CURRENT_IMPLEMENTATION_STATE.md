@@ -1,39 +1,54 @@
 # Current Implementation State — 14 November 2026 NZDT
 
-## Current checkpoint
+## Active checkpoint
 
-Four-lane Main integration candidate complete, **waiting Owner Main Merge/Push approval**.
-Active worktree: `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20261114`; branch `codex/four-lane-integration-20261114`.
-Product code checkpoint `63b82873142452de459f7712949c47e45c9f2061`. Actual GitHub main remains`ec282ce6`; local old main`5648818e` is not the release baseline. No shared DEV/Production operation or Provider call in this checkpoint.
+**Full Functional Recovery IN PROGRESS / Main Merge and Push HOLD.** Owner withdrew the four-lane GO after discovering missing Native configuration and functional regressions. Test Suite PASS must not be treated as Product Functional Integrity PASS. Do not merge or push until recovery evidence supports GO and Owner approves.
 
-## Fixed inputs and integration
+Active worktree `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20261114`, branch `codex/four-lane-integration-20261114`. Integrated base `5a5ca447`; product recovery checkpoints `8297ab8e`, `95345e4d`, latest product `5c28077e`, fixture maintenance `8bd49f26`. Main last independently observed `ec282ce6`; old local main `5648818e` is stale. No Main merge/push or Production operation in this stage.
 
-- Import`43215a47`: V3/Phase A/B1/B2 1–4/UX-C1/C2 continuous 31 commits above actual main.
-- Auth latest evidence`5d2e6d6c`, product`efb38d83`; existing Parent compatible Backend source`f650ce2b`/image`f8862b0a` is earlier real DEV evidence, not a new deployment here.
-- Native primary`2d5d04ef`, accepted side branches compared by content; recover Version reader/transport, optional commit observer and existing downstream composition. Actual runtime version polling/private subscriptions remain unmounted; original access-loss and discovery guards retained.
-- MCP`2be99d7a`: latest owning source/Guide/Phase4B evidence integrated; default-off and existing authorization preserved. Local SDK is not full OAuth/Consumer/Hosted acceptance.
-- No new Task/Queue/Save/Receipt/permission framework. No new remote SQL/RLS/ACL/Grant. Original four worktrees and uncommitted operations changes left intact.
+## Restored and actually checked
 
-## Compatibility
+- Full Expo/CocoaPods/Xcode **Release Native build**, not a JS replacement in the old shell. DEV includes Apple entitlement/module plus existing Google/Places/file/SQLite native modules. Existing iPhone Bundle and simulator application identifier retained. Full build/staging comparison:1159 non-test product files, no mismatch; actual binary/bundle hashes in recovery manifest.
+- Apple button reaches system Apple authorization. **Complete Apple login remains BLOCKED** because Simulator has no Apple Account. Historical physical Auth receipts do not count as this build's login E2E.
+- Trip edit reuses already-qualified same Trip/generation metadata; Currency uses owning Ledger permission screen; Cover uses existing Personal Cover. Cover-only save does not fabricate Parent metadata command.
+- Day Feed gradient derives its predecessor from actual displayed dates. Duplicate Ledger empty-state Add Expense removed; normal shell + remains.
+- Guest Native workspace is lazy during Account bootstrap; two keyboard tap policies restored; FX quote classification uses caller's existing injected clock. Cached summary copy no longer claims all details are unavailable.
+- Fresh independent Guest Simulator: actual Trip create/edit, NZD→USD, Coast Cover, P1 local create/edit and cold launch. **Guest P1 has local pending intents, not cloud APPLIED.** Guest Ledger currently requires Account; do not impersonate Guest as Account to remove that boundary.
+- Normal synthetic DEV Account: new Trip `285ffde2-a74c-4876-993e-b763cb457632`; Item `442f1586-fe38-47ea-98da-61e9242a6729`. P1 NEW `57f18c5d…` / EDIT `c079c504…` have actual APPLIED Receipts, revision1→2. Root2 independently confirmed PostgreSQL rows/receipts and Trip rename `98b7e374…`. Full App cold launch restores edited Trip/P1 without login.
+- Found and fixed stale Trip→Ledger title projection: verified Parent metadata snapshot now refreshes only Ledger display title/dates, preserving financial fields/account scope and rejecting old snapshots. `888a1b4b` full Native build installed; cold launch + actual Ledger shows **Recovery Account Edited**.
 
-Local SQLite migration79 integrates server-parent Metadata after Import76/77/78, preserves both genuine76 histories, queued IDs and proof rows. Guest known-layout support explicitly understands79 without accepting unknown records. Fresh/Import78/Auth76 disk upgrades/reopen pass. Keep compatible Reader if considering a downgrade.
+## Actual remaining runtime defect
 
-Parent Receipt and IMPORT/PROVIDER/LOCAL_ONLY/add-only link remain compatible. Existing V3 SQL/P2 association/IMPORT owning definitions are retained, not reinstalled. Sync/Wake selects both Parent and Import work on the existing queue. Trip local and remote Editors never mount together.
+Normal synthetic NZD1 Expense `ledger-operation_mwfnz7vm_g0z2dtlug3` returned503/BACKEND_UNAVAILABLE (request `1984cc0a-d2b0-4cfb-ad66-de31c3325e64`). Original local row/operation retained; no new operation or manual resubmit. Root2's independent PG read found no Expense/receipt at that instant, **not proof of retry safety**. Existing deployed Backend is healthy `f8862b0a` / source `f650ce2b`. Its generic error path discarded the original exception, and the bounded log window has no original error. Direct Actor/member/settings/replay-function prerequisites exist.
 
-## Verification and honest limits
+Minimal source diagnostic patch in `888a1b4b` retains only allowlisted RPC stage/database code, correlated by existing requestId; no raw DB text/values/token, no permission or HTTP contract change.84 relevant checks pass. **Backend patch not deployed in this audit**; no invented SQL root cause, no blind replay. Current runtime defect remains unresolved.
 
-MCP384, Native120, downstream176, relevant Guest142 and shared226 targeted checks pass (overlapping scopes; do not add counts). Standard Backend/capture/MCP/iOS JS builds and UI guard/scoped lint pass. Actual compiled standard Backend local smoke: health200/MCP404 with fake credentials and outbound blocked; no actual DEV credentials used.
+## Test health — explicit limits
 
-Complete iPhone16 Pro persistent App: normal Session, Trip Cover, actual Day Feed, Hotel Details/Back, normal Composer/original draft, Ledger/Settlement and cold launch verified read-only. Final candidate is installed in the existing bundle; SQLite79/Queue0. No temporary route, no Session/SQLite/private-original copying, no new Analyze/Save. Existing Native shell reused; no new Apple Native binary/physical/Consumer acceptance. Old iPad data untouched.
+Initial905 files:11993 tests,11616PASS/216FAIL/161 original Pending. Original216 clustered into173 infrastructure,31 historical assertion/fixture,2 product bugs,10 pending investigation; every failed case remains in `failure-root-causes.json`.
 
-Whole repo typecheck retains only3pre-existing errors: universalContinuationRuntime.ts:658/660 presentationTier and browser/auth-consent/main.tsx ReactDOM declaration. No new errors.
+Latest **per-file merged evidence**, not a new single-run full PASS:11912PASS/34FAIL/161Pending;4 files still fail during import. Original216:182 now pass,34 remain (old Day Feed rendering harness32, architecture boundary2). No tests/assertions deleted, no new skip or enlarged timeout.10 new failures under full parallel load passed with the same timeout at lower concurrency. Native presentation port maintenance reopened75 assertions; do not count their mocks as actual Native/Provider verification.
 
-## Authoritative handoff
+MCP separate config384PASS. UI guard/scoped lint pass. Whole-repo typecheck remains exactly3 pre-existing issues (universalContinuationRuntime.ts658/660; browser/auth-consent/main.tsx react-dom/client declaration), no new errors. Full Native build succeeds. These facts do not establish whole-product integrity.
 
-Six reports under `docs/integration/four-lane-20261114/`: FOUR_LANE_DELIVERY_MATRIX, INTEGRATION_COMMIT_PLAN, SHARED_CONFLICT_RESOLUTION, DEFERRED_CAPABILITIES, UNIFIED_REGRESSION_RESULT, MAIN_MERGE_GO_NO_GO. Prior UX-C2 details: `docs/ops/import-ux-c2-20261114/README.md`. Auth physical evidence: `docs/ops/auth-apple-native-20261113/`. MCP freeze: `docs/mcp/phase4b/`.
+## Evidence and compatibility
 
-Still deferred: normal Invite/Claim and multi-user cases, new-bundle Google, version/private Realtime activation, full MCP Consumer/Expense owning ports, Import Slice5/6/B4, cross-device local originals/history, original root2 uncommitted operations patches. Legacy cached Trip Metadata has a separate qualification/wording gap; do not manufacture Parent receipts.
+Six required reports under `docs/integration/functional-recovery-20261114/`: ACCEPTED_FEATURE_BASELINE, FUNCTIONAL_RESTRICTION_AUDIT, FUNCTIONAL_RECOVERY_MATRIX, AUTOMATED_E2E_RESULTS, NATIVE_BUILD_VERIFICATION, RECOVERY_GO_NO_GO. Includes54 groups (46accepted,8deferred/evidence gaps), current PASS/FAIL/BLOCKED dimensions, original failure mapping, raw compressed test evidence, Root2 independent readback and actual screenshots. Prior `four-lane-20261114/MAIN_MERGE_GO_NO_GO.md` is explicitly superseded/HOLD.
 
-## Next approved boundary
+SQLite79 retained; both legitimate76 histories and Import76–78/Auth79 ordering preserved. Original selected8 tables and9 private files remained intact after rebuild; latest9 file hashes remain unchanged. New synthetic Trip/P1/Expense were deliberately added via normal UI, so do not claim the full database/queue hash stayed unchanged. Original iPad and QA179 were not cleared or replayed; original worktrees and dirty ops patches untouched.
 
-Submit fixed candidate to Owner. **Do not Merge/Push Main or deploy without the corresponding approval.** No historical QA176/QA179 recovery, clearing, Provider replay or Production work. Do not repeat the full branch census or stable business tests. After approval, integrate from current remote main and open subsequent short-lived branches.
+Still deferred: Invite/Claim full Native, private profile cloud editor, Version/private Realtime activation, full Hosted MCP Consumer/owning ports, Import Slice5/6/full UPDATE, Document Cloud Sync. Source presence is not permission to activate these.
+
+## Next execution
+
+Continue the original recovery candidate: close remaining Node native/historical fixture problems without weakening assertions; verify accepted roles/CRUD/cold/offline/cross-module paths with real evidence. Preserve actual Expense uncertainty; use owning diagnostics and existing legal deployment boundary before any controlled further runtime work. Apple/full OAuth and unavailable multi-identity/device conditions stay explicitly BLOCKED.
+
+No Production, SQL/RLS/ACL/GRANT expansion, original B1/QA179 Analyze/Save, paid Provider call, data clearing, automatic Main merge/push or new framework. Do not repeat the423-branch inventory or stable B1 E2E.
+
+## Latest runtime / Owner Header correction
+
+P3/P4/P5/P6 NEW now independently PG APPLIED/rev1 on the same synthetic Trip; P5 EDIT c72eb532… has client formalReceipt/rev2. All five P1/P3/P4/P5/P6 objects survive normal cold launch and display in Day Feed. No duplicate Item, no Provider call. P5 first draft refused before command persistence, exact original error remains unproven.
+
+Owner correctly found Day Header/background regression for undated Trips. The startDate condition suppressed canonical header/gradient. `5c28077e` reuses the same header with nullable start: real month/date, no invented Trip ordinal; dated Trip behavior unchanged. FullNative Release rebuilt and inplace installed, both paths actually viewed. New data container85802C81…; original9private hashes retained.
+
+Current failure categories refined173 infrastructure/31 historical fixtures/2 confirmed product/10 pending;182 of216 fixed,34 remain. Latestmerged11912PASS/34FAIL/161existingPending,4import failures. This is NOT whole-suite/ProductPASS. Full test/restriction/product matrices stay in recovery directory; Expense503 and unexecuted roles/CRUD remain real work. Main HOLD.

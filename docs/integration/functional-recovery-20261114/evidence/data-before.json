@@ -1,0 +1,47 @@
+{
+  "tables": {
+    "schema_migrations": {
+      "count": 79,
+      "sha256": "c585682feb55d8ada59b263d1bccba14787bec074c1f349920bb7e99d0cbb008"
+    },
+    "trip_source_review_drafts": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "trip_core_trip_booking_document_links": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "trip_core_trip_entitlement_document_links": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "trip_core_trip_item_document_links": {
+      "count": 14,
+      "sha256": "6125a57ed5893abd7f3f71afd4697bfb6d1447e81656a7dd11bb9adc7bef9a8b"
+    },
+    "trip_core_trip_document_visibility_people": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "trip_core_device_document_state": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "trip_core_trip_operational_documents": {
+      "count": 9,
+      "sha256": "8019f9c48a9583413c4eca2389ddc4d9bb622419e2c6cc859b4d0e9642508bd4"
+    }
+  },
+  "files": {
+    "Documents/ux-c1-verified-receipts.json": "91c1ee757859682756cd3474dc72f6c243337e919ff9a044c98c31a094553238",
+    "Documents/ux-c2-isolated-core.json": "3883bf0d753fd3ec1fe0e3778449631ee094a5bea73ce24085512b3cd78aeabb",
+    "Documents/ux-c1-read-diagnostic.json": "c668a292558373ab095c3af6c45bbf91bf670ab839d77f4ab8f1d8728dcc506e",
+    "Documents/import-originals/00000000-0000-4000-8000-000000000001/1f91119f205cf8d6ae4d6e9c3fcec02af245d67d039afdefe34e71532d49efba": "1f91119f205cf8d6ae4d6e9c3fcec02af245d67d039afdefe34e71532d49efba",
+    "Documents/import-originals/00000000-0000-4000-8000-000000000001/ba78921b7ce50bc6154cc68aa17f81cc98a1abe682314cd563e293050c321ccc": "ba78921b7ce50bc6154cc68aa17f81cc98a1abe682314cd563e293050c321ccc",
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/bdc65c02-2526-4990-9331-9c5359c73ec9.json": "b761d5424af1d22991b4b3f1f61709f96d31d117eababe4861386d0aea4fef20",
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/a6155477-182d-4f35-a5d3-10f3d85c1b36.json": "97763b99336360479df4f7df06bcb5d34f252ab5468488096194043afd772585",
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/a6155477-182d-4f35-a5d3-10f3d85c1b36.previous": "81149312bac859e7d74df11426231e28277ba3ca9950f0f133cae460b0039ef9",
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/bdc65c02-2526-4990-9331-9c5359c73ec9.previous": "b761d5424af1d22991b4b3f1f61709f96d31d117eababe4861386d0aea4fef20"
+  }
+}
