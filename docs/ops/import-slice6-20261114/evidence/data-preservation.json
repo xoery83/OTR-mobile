@@ -1,0 +1,38 @@
+{
+  "iphone": {
+    "originalFiles": 9,
+    "mismatches": [],
+    "counts": {
+      "capture_submission_batches": 25,
+      "capture_submission_inputs": 25,
+      "local_capture_inbox": 56,
+      "trip_core_trip_operational_documents": 9,
+      "trip_core_trip_item_document_links": 14,
+      "sync_operations": 13
+    },
+    "queueStates": [
+      [
+        "COMPLETED",
+        13
+      ]
+    ]
+  },
+  "ipad": {
+    "originalFiles": 30,
+    "mismatches": [],
+    "counts": {
+      "capture_submission_batches": 7,
+      "capture_submission_inputs": 13,
+      "local_capture_inbox": 13,
+      "trip_core_trip_operational_documents": 9,
+      "trip_core_trip_item_document_links": 14,
+      "sync_operations": 33
+    },
+    "queueStates": [
+      [
+        "COMPLETED",
+        33
+      ]
+    ]
+  }
+}
