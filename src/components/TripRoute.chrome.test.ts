@@ -54,8 +54,9 @@ it("My Trips and Create retain the default Frame's sole inset ownership", () => 
 it("Home still uses its existing immersive view and independent native edit action", () => {
   route.params = { tripId: "actual", view: "home" };
   const [, search, container] = children();
-  expect(container.type).toBe("View");
-  expect(container.props.children.props.contentFrameManaged).toBeUndefined();
+  expect(container.type).toBe("Frame");
+  expect(container.props.underlapHeader).toBe(true);
+  expect(container.props.children.props.contentFrameManaged).toBe(false);
   expect(search.props.showUnavailableTripEdit).toBe(true);
 });
 

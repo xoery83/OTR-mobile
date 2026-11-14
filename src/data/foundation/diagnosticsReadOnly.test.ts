@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import { createElement } from "react";
-import { createRequire } from "node:module";
+import Module, { createRequire } from "node:module";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createMigratedDatabaseOpener } from "@/data/db/databaseConnection";
 import { migrations } from "@/data/db/migrations";
@@ -22,19 +22,22 @@ const h = vi.hoisted(() => ({
   focus: null as (() => () => void) | null,
   queries: [] as string[],
 }));
-vi.mock("expo-secure-store", () => ({
-  getItemAsync: async (key: string) => h.store.get(key) ?? null,
-  setItemAsync: async (key: string, value: string) => {
-    h.set(key, value);
-    if (!h.writable) throw new Error("SECURE_WRITE_FORBIDDEN");
-    h.store.set(key, value);
-  },
-  deleteItemAsync: async (key: string) => {
-    h.delete(key);
-    if (!h.writable) throw new Error("SECURE_DELETE_FORBIDDEN");
-    h.store.delete(key);
-  },
-}));
+function secureStoreForTest() {
+  return {
+    getItemAsync: async (key: string) => h.store.get(key) ?? null,
+    setItemAsync: async (key: string, value: string) => {
+      h.set(key, value);
+      if (!h.writable) throw new Error("SECURE_WRITE_FORBIDDEN");
+      h.store.set(key, value);
+    },
+    deleteItemAsync: async (key: string) => {
+      h.delete(key);
+      if (!h.writable) throw new Error("SECURE_DELETE_FORBIDDEN");
+      h.store.delete(key);
+    },
+  };
+}
+vi.mock("expo-secure-store", secureStoreForTest);
 vi.mock("@/data/db/database", () => ({
   openDatabase: () => {
     h.diagnosticOpen();
@@ -88,6 +91,16 @@ const session = { identity, accessToken: null, refreshToken: null, expiresAt: nu
 const legacyKey = "otr.mobile.session.v1";
 const indexKey = "otr.mobile.accounts.v2";
 beforeEach(() => {
+  // The owning Auth adapter deliberately loads SecureStore through Metro's require path.
+  const modules = Module as unknown as {
+    _load(request: string, ...args: unknown[]): unknown;
+  };
+  const originalLoad = modules._load;
+  vi.spyOn(modules, "_load").mockImplementation((request, ...args) =>
+    request === "expo-secure-store"
+      ? secureStoreForTest()
+      : originalLoad.call(modules, request, ...args),
+  );
   vi.stubGlobal("__DEV__", true);
   h.store.clear();
   h.writable = false;
@@ -135,6 +148,7 @@ beforeEach(() => {
 let startup: () => Promise<void>;
 afterEach(() => {
   sql.close();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -160,12 +174,18 @@ it("F1 normal Auth adopts v1 unchanged; subsequent diagnostics read v2 without S
   h.store.set(legacyKey, JSON.stringify(session));
   h.writable = true;
   expect((await readLocalSession())?.identity).toEqual(identity);
-  expect(h.set).toHaveBeenCalledTimes(2);
+  expect(h.set.mock.calls.map(([key]) => key).sort()).toEqual(
+    [indexKey, `otr.mobile.session.v2.${identity.userId}`, "otr.mobile.launch.v1"].sort(),
+  );
+  expect(JSON.parse(h.store.get("otr.mobile.launch.v1")!)).toEqual({
+    version: 1,
+    kind: "SIGNED_OUT",
+  });
   expect(h.delete).toHaveBeenCalledOnce();
   h.writable = false;
   h.set.mockClear();
   h.delete.mockClear();
-  expect((await readFoundationDiagnostics()).schemaVersion).toBe(57);
+  expect((await readFoundationDiagnostics()).schemaVersion).toBe(79);
   expect((await readDefaultLocalOperations()).coverage.sync).toBe("AVAILABLE");
   expect(h.set).not.toHaveBeenCalled();
   expect(h.delete).not.toHaveBeenCalled();

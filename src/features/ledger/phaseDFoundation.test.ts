@@ -233,3 +233,5 @@ it("localizes receipt validation and late-generated operation feedback", () => {
     ),
   ).toContain("2 笔金额仍为预估");
 });
+
+vi.mock("expo-symbols", () => ({ SymbolView: "i" }));

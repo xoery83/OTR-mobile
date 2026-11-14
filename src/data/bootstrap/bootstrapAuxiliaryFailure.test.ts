@@ -11,11 +11,17 @@ const m = vi.hoisted(() => ({
   generation: 1,
 }));
 vi.mock("@/data/auth/authRepository", () => ({
+  readLocalAuthSnapshot: vi.fn(),
+  clearLocalSession: vi.fn(() => { throw Error("UNEXPECTED_SESSION_CLEAR"); }),
   readLocalSession: async () => ({ identity: { userId: "A" } }),
   requireActiveUserId: async () => "A",
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => m.generation,
+  subscribeAccountGeneration: () => () => {},
+}));
+vi.mock("@/data/auth/sessionAccessToken", () => ({
+  sessionAccessToken: async () => ({ userId: "A", token: "synthetic-test-session" }),
 }));
 vi.mock("@/data/db/database", () => ({ openDatabase: vi.fn() }));
 vi.mock("@/data/sync/transportSelection", () => ({ getSyncTransportMode: () => "dev" }));

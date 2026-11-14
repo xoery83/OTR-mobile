@@ -6,7 +6,10 @@ import { itemsForLocalDate, validateCalendarDate } from "@/domain/trip/dayReadMo
 import { composeDayStream } from "@/features/day-feed/composition";
 import { flightPresentation } from "@/features/day-feed/presentation";
 
-vi.mock("expo-router", () => ({ Redirect: "redirect" }));
+vi.mock("expo-router", () => ({
+  Redirect: "redirect",
+  useLocalSearchParams: () => ({}),
+}));
 
 const fixtureCatalog = getDl1FixtureCatalog();
 it("has five deterministic, separate synthetic projections and globally stable row identities", () => {

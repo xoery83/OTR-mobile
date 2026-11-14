@@ -627,7 +627,7 @@ it("opens a cached remote-only summary without local write controls and clears i
   await flush();
   const summary = render();
   expect(summary).toContain("Cached shared Trip");
-  expect(summary).toContain("myTrips.cachedDetails");
+  expect(summary).toContain("tripHome.metadataEditUnavailable");
   expect(summary).not.toContain("data-trip-photos");
   expect(summary).not.toContain("tripCreate.addItem");
   expect(summary).not.toContain("myTrips.chooseCover");
@@ -2158,7 +2158,7 @@ it.each(["success", "cover", "revoked", "switched"])(
       return;
     }
     if (mode === "revoked") {
-      expect(render()).toContain("myTrips.cachedDetails");
+      expect(render()).toContain("tripHome.metadataEditUnavailable");
       expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
       expect(state.parentMetadataSave).not.toHaveBeenCalled();
       return;
@@ -2168,7 +2168,7 @@ it.each(["success", "cover", "revoked", "switched"])(
     )?.[0];
     expect(actions?.editTrip).toBeTypeOf("function");
     expect(actions?.itinerary).toBeUndefined();
-    expect(render()).not.toContain("myTrips.cachedDetails");
+    expect(render()).not.toContain("tripHome.metadataEditUnavailable");
     state.preparation.onSetup({
       context,
       currency: { state: "AVAILABLE", code: "NZD", scale: 2, permission: "OWNER", lock: "NOT_OBSERVED" },

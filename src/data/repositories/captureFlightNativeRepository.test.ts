@@ -275,7 +275,7 @@ it("refuses to relabel extracted PDF text as an original Source", async () => {
   ).rejects.toThrow("NATIVE_FLIGHT_SOURCE_ADMISSION_REQUIRED");
 });
 it("unknown native Candidate fields stay unknown and only accepted collections can feed Day", async () => {
-  const f = await fixture(),
+  const f = await fixture(79),
     batch = await admittedPdfBatch(f);
   const result = await f
     .native()

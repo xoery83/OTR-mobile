@@ -730,6 +730,7 @@ it.each([
       expect(onOpenAcceptedItem).toHaveBeenCalledExactlyOnceWith({
         tripId: f.result.tripId,
         itemId,
+        family: "P1",
       });
       current = false;
       button.onPress();
@@ -815,9 +816,82 @@ it("shows a new V3 batch as awaiting Analyze rather than a processing failure", 
     start: vi.fn(),
     recover: vi.fn(),
   } as never);
+  const input = {
+    id: randomUUID(),
+    itemKey: randomUUID(),
+    ordinal: 0,
+    acquisitionSource: "files" as const,
+    kind: "FILE" as const,
+    originalFilename: "sample.txt",
+    declaredContentType: "text/plain",
+    continuesFromInputId: null,
+  };
+  const accountId = randomUUID(),
+    batchId = randomUUID(),
+    createdAt = "2026-11-14T00:00:00Z";
+  const model: CaptureJobReadModel = {
+    batch: {
+      formatVersion: 2,
+      manifestVersion: 2,
+      accountId,
+      batchId,
+      jobId: randomUUID(),
+      submissionKey: randomUUID(),
+      createdAt,
+      inputs: [input],
+      context: {
+        id: randomUUID(),
+        version: 1,
+        accountId,
+        batchId,
+        observedAt: createdAt,
+        clock: "DEVICE_WALL",
+        entrySurface: "CAPTURE",
+        tripPrior: null,
+      },
+    },
+    inputs: [
+      {
+        ...input,
+        revision: 1,
+        contentSha256: null,
+        contentByteCount: null,
+        state: "PENDING",
+        pendingReason: "READ",
+        failureCode: null,
+        captureId: null,
+        payloadId: null,
+        captureRevision: null,
+        acceptedAt: null,
+        continuedIn: [],
+        continuesFromJobId: null,
+      },
+    ],
+    counts: { selected: 1, accepted: 0, failed: 0, pending: 1 },
+    allInputsAccepted: false,
+    intakeSettled: false,
+    processing: {
+      capability: "NOT_INSTALLED",
+      assessedInputs: null,
+      totalInputs: null,
+      currentPassComplete: null,
+    },
+    results: { admittedCreates: 0, admittedUpdates: 0, currentAttention: null },
+    availableActions: {
+      canHide: true,
+      canReopen: true,
+      canAddMore: true,
+      canResumeAcceptedLocalWork: false,
+      canReviewNow: false,
+      canOpenCurrentReview: false,
+      canRetryKnownFailedItem: false,
+      reacquireInputIds: [],
+      unavailableReasons: ["PROCESSING_NOT_INSTALLED"],
+    },
+  };
   const html = renderToStaticMarkup(
     createElement(UniversalCaptureResults, {
-      model: { batch: { batchId: "v3-awaiting" } } as CaptureJobReadModel,
+      model,
       isCurrent: () => true,
     }),
   );
@@ -837,8 +911,9 @@ it("offline capability discovery waits rather than showing endless processing or
   } as never);
   const html = renderToStaticMarkup(
     createElement(UniversalCaptureResults, {
-      model: { batch: { batchId: "offline" } } as CaptureJobReadModel,
+      model: { batch: { batchId: "offline", context: {} } } as CaptureJobReadModel,
       isCurrent: () => true,
+      processingDetails: true,
     }),
   );
   expect(html).toContain(t("capture.activityStatus.waiting"));
@@ -850,3 +925,19 @@ it("offline capability discovery waits rather than showing endless processing or
   expect(recover).toHaveBeenCalledOnce();
   expect(start).not.toHaveBeenCalled();
 });
+
+vi.mock("@/data/operations/universalV3Review", () => ({
+  openUniversalV3Review: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_V3_WRITE_PATH");
+  }),
+  applyUniversalV3Batch: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_V3_WRITE_PATH");
+  }),
+}));
+
+vi.mock("@/data/repositories/importSubmissionRepository", () => ({
+  readImportSubmission: vi.fn(async () => null),
+  updateImportSubmission: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_SUBMISSION_WRITE");
+  }),
+}));

@@ -14,9 +14,12 @@ it("enables the existing Guest Adoption UI only in the explicit DEV device QA pr
     "EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED",
   );
 });
-it("preserves the existing QA Expo configuration unless production is explicitly selected", () => {
+it("adds Apple to DEV while preserving its existing identity and Google config", () => {
   vi.stubEnv("OTR_IOS_VARIANT", "");
-  expect(appConfig({ config: base.expo } as never)).toBe(base.expo);
+  const result = appConfig({ config: base.expo } as never);
+  expect(result.ios).toMatchObject({ ...base.expo.ios, usesAppleSignIn: true });
+  expect(result.plugins).toContain("expo-apple-authentication");
+  expect(result.plugins).toEqual(expect.arrayContaining(base.expo.plugins));
 });
 it("isolates the production Bundle ID and Team without mutating the QA config", () => {
   vi.stubEnv("OTR_IOS_VARIANT", "production");

@@ -22,7 +22,7 @@ const summary = (id: string) => ({
 it("authenticates before listing, validates a bounded cursor and keeps a missing port closed", async () => {
   const gateway = {
     validateAccessToken: vi.fn(async (token: string) =>
-      token === "valid" ? { id: actor } : null,
+      token === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" } : null,
     ),
     discoverTrips: vi.fn(async () => ({ trips: [summary(ids[0])], nextCursor: null })),
   } as unknown as DevBackendGateway;

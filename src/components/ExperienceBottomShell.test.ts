@@ -241,7 +241,7 @@ it("My Trips keeps only the real Start Trip action without redundant left naviga
   let sheet = startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
   expect(sheet.props.visible).toBe(true);
   sheet.props.onImport();
-  expect(state.navigate).toHaveBeenCalledWith("/capture");
+  expect(state.push).toHaveBeenCalledWith(expect.objectContaining({ pathname: "/import-plans", params: expect.objectContaining({ origin: "TRIPS" }) }));
   sheet.props.onCreate();
   expect(state.setParams).not.toHaveBeenCalled();
   const closed = ExperienceBottomShell({ visible: true, pathname: "/trip" });

@@ -20,6 +20,7 @@ for (const name of ["SUPABASE_PROJECT_ID", "SUPABASE_PROJECT_REF"]) {
 export default defineConfig({
   test: {
     environment: "node",
+    setupFiles: ["./test-runtime-setup.ts"],
     include: ["src/**/*.test.ts", "backend/**/*.test.ts"],
   },
   resolve: {

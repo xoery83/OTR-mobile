@@ -201,7 +201,8 @@ describe("production/test root isolation", () => {
         platform: "node",
         target: "node24",
         format: "esm",
-        alias: { "@": "./src" },
+        alias: { "@": "./src", "expo-crypto": "./backend/src/headlessExpoCrypto.ts" },
+        external: ["./src/data/auth/guestLocalWorkspace.ts", "react-native", "expo-*"],
         outfile: join(dir, "server.mjs"),
         metafile: true,
       });

@@ -623,7 +623,9 @@ it.each(["APPEND_INSTRUCTION", "CORRECT_INSTRUCTION"] as const)(
       enabledAdmissionModes: ["MANUAL"],
       enabledFamilies: ["P1"],
     });
-    await expect(f.openWorker.push(f.operation)).rejects.toThrow("CORE_FAMILY_CLOSED");
+    await expect(f.openWorker.push(f.operation)).rejects.toThrow(
+      name === "CORRECT_INSTRUCTION" ? "CORE_INSTRUCTION_SYNC_CLOSED" : "CORE_FAMILY_CLOSED",
+    );
     expect(f.transport.submit).not.toHaveBeenCalled();
   },
 );

@@ -129,16 +129,41 @@ it("seals deterministic proposed pins with existing schemas/request/profile/wake
   expect(JSON.stringify(a)).not.toContain("Booked a room");
   expect(a.runtimePublic).not.toHaveProperty("bearer");
 });
-it("keeps a legal BOM original unchanged and refuses when frozen preflight is not READY", async () => {
+it("keeps a BOM-only original unchanged and refuses when frozen preflight is not READY", async () => {
   const f = fixture(),
     i = f.receipt.inputs[0],
-    bytes = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), f.originals.get(i.inputId)!]);
+    bytes = Buffer.from([0xef, 0xbb, 0xbf]);
   f.originals.set(i.inputId, bytes);
   i.byteCount = bytes.length;
   i.sha256 = hash(bytes);
   await expect(
     buildUniversalExecutionProposal(f.receipt, f.ids, f.facts, f.originals),
   ).rejects.toThrow("ORIGINAL_PREFLIGHT_NOT_READY");
+  expect(f.originals.get(i.inputId)).toEqual(bytes);
+});
+it("accepts valid BOM text while retaining its exact original bytes and digest", async () => {
+  const f = fixture(),
+    i = f.receipt.inputs[0];
+  const bytes = Buffer.concat([
+    Buffer.from([0xef, 0xbb, 0xbf]),
+    f.originals.get(i.inputId)!,
+  ]);
+  f.originals.set(i.inputId, bytes);
+  i.byteCount = bytes.length;
+  i.sha256 = hash(bytes);
+  const proposal = await buildUniversalExecutionProposal(
+    f.receipt,
+    f.ids,
+    f.facts,
+    f.originals,
+  );
+  expect(proposal.task.input_pins).toContainEqual(
+    expect.objectContaining({
+      input_id: i.inputId,
+      payload_sha256: hash(bytes),
+      byte_count: bytes.length,
+    }),
+  );
   expect(f.originals.get(i.inputId)).toEqual(bytes);
 });
 it.each(["bytes", "actor", "profile", "ordinal", "ids", "facts", "window"])(

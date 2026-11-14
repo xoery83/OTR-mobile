@@ -23,7 +23,7 @@ const token = async () => ({ token: "valid", userId: actor });
 it("negotiates v2 CLOSED through the actual authenticated API and HTTP handler", async () => {
   const handler = createDevBackendHandler({
     gateway: {
-      validateAccessToken: async (t: string) => (t === "valid" ? { id: actor } : null),
+      validateAccessToken: async (t: string) => (t === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" } : null),
       canReadTrip: async () => true,
     } as unknown as DevBackendGateway,
   });
@@ -349,7 +349,7 @@ it("sends only the validated operation capability context; Manual URL is unchang
   const handler = createDevBackendHandler({
     gateway: {
       validateAccessToken: async (value: string) =>
-        value === "valid" ? { id: actor } : null,
+        value === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" } : null,
       canReadTrip: async () => true,
     } as unknown as DevBackendGateway,
     coreConnection: runtime.coreConnection,
