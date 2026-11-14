@@ -2176,6 +2176,15 @@ it.each(["success", "cover", "revoked", "switched"])(
     });
     state.personal.selection = { raw: null };
     render();
+    if (mode === "success") {
+      const refresh = deferred<typeof base>();
+      state.parentMetadataRead.mockReturnValueOnce(refresh.promise);
+      state.forceEffects = true; render(); state.forceEffects = false;
+      await flush();
+      expect(render()).not.toContain("tripHome.metadataEditUnavailable");
+      expect(state.publish.mock.calls.at(-1)?.[0]?.editTrip).toBeTypeOf("function");
+      refresh.resolve(base); await vi.dynamicImportSettled(); await flush(); render();
+    }
     const readsBeforeOpen = state.parentMetadataRead.mock.calls.length;
     await button("tripHome.edit").onPress();
     await vi.dynamicImportSettled();

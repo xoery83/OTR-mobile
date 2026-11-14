@@ -653,3 +653,30 @@ it.each(["42501", "PGRST202", "secret unsafe value"])(
     });
   },
 );
+
+it("prepares an unnamed participant by stable identity without rewriting the frozen CREATE intent or key", async () => {
+  const mocked = service();
+  const input = command();
+  input.envelope.observedServerRevision = 0;
+  input.envelope.boundExecutionRevision = 0;
+  input.envelope.patchOrIntent = {
+    type: "CREATE",
+    expense: {
+      ...base,
+      businessStatus: "RATE_REQUIRED",
+      participants: [{ ...base.participants[0], displayNameSnapshot: "" }],
+    },
+  };
+  const before = JSON.stringify(input);
+  await execute(mocked.client, input);
+  expect(JSON.stringify(input)).toBe(before);
+  const prepared = args(mocked.rpc);
+  expect(prepared.envelope_value).toEqual(input.envelope);
+  expect(prepared.response_body_value).toMatchObject({
+    entity: {
+      participants: [{ ...base.participants[0], displayNameSnapshot: memberId }],
+      original: base.original,
+      splits: base.splits,
+    },
+  });
+});

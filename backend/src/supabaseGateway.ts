@@ -2685,7 +2685,13 @@ function buildLedgerExpenseCreateResponse(
     deletedAt: null,
     createdAt: now,
     updatedAt: now,
-    participants: input.participants,
+    // Unnamed People remain identified by their real member ID, never an invented name.
+    participants: input.participants.map((participant) => ({
+      ...participant,
+      displayNameSnapshot: participant.displayNameSnapshot.trim()
+        ? participant.displayNameSnapshot
+        : participant.memberId,
+    })),
     splits: input.splits,
     valuation,
     paymentRecords: [],

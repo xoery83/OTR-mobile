@@ -298,3 +298,8 @@ export async function readDefaultLocalOperations() {
   ]);
   return readLocalOperations(await readInitializedDatabase(), requireAdoptedUserId);
 }
+
+export async function readNativeTripQaDiagnostic() {
+  return (await import("../sync/nativeTripQaScope")).readNativeTripQaDiagnostic();
+}
+export { readLastApiFailure } from "../api/client";

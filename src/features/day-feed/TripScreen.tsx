@@ -15,7 +15,7 @@ import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import { TripDayHeading } from "./TripDayHeading";
 import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import {
   DayFeedIntroduction,
   DayFeedShellTitle,
@@ -114,7 +114,7 @@ import type { TodayEntry } from "./MyTripsList";
 import {
   observeForegroundTrip,
   refreshTripFromCloud,
-} from "@/data/sync/tripDownstreamCoordinator";
+} from "@/data/operations/tripReadActivity";
 import {
   resolvedWorkspaceKind,
   type WorkspaceKind,

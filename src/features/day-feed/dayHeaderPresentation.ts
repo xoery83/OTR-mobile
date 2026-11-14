@@ -44,16 +44,18 @@ export function dayHeaderPresentation({
   const label = destination.label?.trim() || null;
   const standardTitle = relative ?? weekday;
   const standardSubtitle = relative ? weekdayDate : shortDate;
-  // An undated Trip has real calendar days, but no authoritative trip-day ordinal.
-  if (!start)
+  // Undated and pre-start days have calendar dates, not a positive Trip-day ordinal.
+  if (!start || ordinal < 1)
     return {
       ordinal: null,
       delta,
-      title: (style === "C" || style === "D") && label ? label : standardTitle,
+      title: !start && (style === "C" || style === "D") && label ? label : standardTitle,
       subtitle:
-        (style === "C" || style === "D") && label ? weekdayDate : standardSubtitle,
+        !start && (style === "C" || style === "D") && label
+          ? weekdayDate
+          : standardSubtitle,
       badgeTop: formatUiDate(at, { month: "short", timeZone: "UTC" }),
-      badgeBottom: formatUiNumber(at.getUTCDate()),
+      badgeBottom: formatUiNumber(at.getUTCDate()).padStart(2, "0"),
     };
   const title =
     style === "B"

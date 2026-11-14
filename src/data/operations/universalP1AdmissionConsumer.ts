@@ -507,3 +507,65 @@ export async function readUniversalAcceptedItems(
   current();
   return accepted;
 }
+
+export async function openDefaultUniversalP1Admission(isCurrent: () => boolean) {
+  const [
+    { readInitializedDatabase },
+    { requireAdoptedUserId },
+    { createTripCoreV2Repository },
+    { tripCoreSha256Hex },
+    { createCoreV2Transport },
+    { createReviewedSourceOperationSync },
+  ] = await Promise.all([
+    import("../db/database"),
+    import("../auth/authRepository"),
+    import("../repositories/tripCoreV2Repository"),
+    import("../repositories/tripCoreSha256"),
+    import("../api/tripCoreV2Transport"),
+    import("../sync/tripCoreV2SyncWorker"),
+  ]);
+  const database = await readInitializedDatabase();
+  const core = createTripCoreV2Repository(
+    database,
+    requireAdoptedUserId,
+    tripCoreSha256Hex,
+  );
+  const transport = createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+    timeoutMs: 90000,
+  });
+  return createUniversalP1AdmissionConsumer({
+    getAccountId: requireAdoptedUserId,
+    isCurrent,
+    core,
+    transport,
+    sync: createReviewedSourceOperationSync(
+      database,
+      core,
+      transport,
+      requireAdoptedUserId,
+      tripCoreSha256Hex,
+    ),
+  });
+}
+export async function readDefaultUniversalAcceptedItems(
+  model: Parameters<typeof readUniversalAcceptedItems>[0],
+  result: Parameters<typeof readUniversalAcceptedItems>[1],
+  observers: Pick<
+    Parameters<typeof readUniversalAcceptedItems>[2],
+    "isCurrent" | "onAccepted" | "onRecoveryState"
+  >,
+) {
+  const [{ requireAdoptedUserId }, { tripCoreSha256Hex }, { createCoreV2Transport }] =
+    await Promise.all([
+      import("../auth/authRepository"),
+      import("../repositories/tripCoreSha256"),
+      import("../api/tripCoreV2Transport"),
+    ]);
+  return readUniversalAcceptedItems(model, result, {
+    ...observers,
+    getAccountId: requireAdoptedUserId,
+    transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+      timeoutMs: 90000,
+    }),
+  });
+}

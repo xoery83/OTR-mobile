@@ -7,7 +7,7 @@ import {
   readTripDiscoveryReadObservation,
   subscribeTripDiscoveryReadObservation,
   refreshAccountTripReads,
-} from "@/data/sync/tripDownstreamCoordinator";
+} from "@/data/operations/tripReadActivity";
 import { readGuestTripCurrencyRepository } from "@/data/repositories/guestTripCurrencyRepository";
 import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
 import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
@@ -15,7 +15,7 @@ import {
   filterNativeTripQaList,
   nativeTripQaCreateFormat,
   nativeTripAuthoredCloudTravelers,
-} from "@/data/sync/nativeTripQaScope";
+} from "@/data/operations/tripReadActivity";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import {
   readServerParentMetadataEditBase,
@@ -520,7 +520,12 @@ function LocalTripContent({
         loadedListScope.current === principalScope
       )
         throw Error("TRIP_DISCOVERY_CACHE_UNAVAILABLE");
-      setRemoteMetadataReady(null);
+      setRemoteMetadataReady((previous) =>
+        cached && previous?.context.tripId === cached.id &&
+        previous.context.accountId === qaAccountId &&
+        previous.context.generation === captured ? previous : null,
+      );
+      setMetadataBaseError(false);
       loadedGuest.current = guestLocalId;
       loadedListScope.current = principalScope;
       if (isGuest) setSetup(guestCurrencySetup);
@@ -583,14 +588,14 @@ function LocalTripContent({
               base.context.tripId === cached.id &&
               base.context.accountId === qaAccountId
             )
-              setRemoteMetadataReady(base);
+              { setRemoteMetadataReady(base); setMetadataBaseError(false); }
           } catch {
             if (
               alive.current &&
               captured === getAccountGeneration() &&
               ticket === request.current
             )
-              setRemoteMetadataReady(null);
+              { setRemoteMetadataReady(null); setMetadataBaseError(true); }
           }
         })();
       if (!tripId && list.length) {
@@ -1715,7 +1720,7 @@ function LocalTripContent({
             title={remoteSelected.name}
             cover={tripCoverSource(displayCover ?? remoteSelected)}
             coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
-            notice={remoteMetadataQualified ? undefined : t("tripHome.metadataEditUnavailable")}
+            notice={remoteMetadataQualified ? undefined : t(serverParentPeopleEnabled && !metadataBaseError ? "dayFeed.loading" : "tripHome.metadataEditUnavailable")}
             metadata={[
               ...(remoteStart && remoteEnd
                 ? [

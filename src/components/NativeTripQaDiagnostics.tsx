@@ -8,7 +8,7 @@ import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import { readNativeTripQaDiagnostic } from "@/data/sync/nativeTripQaScope";
+import { readNativeTripQaDiagnostic } from "@/data/operations/localOperations";
 
 export function NativeTripQaDiagnostics() {
   useUiLocale();

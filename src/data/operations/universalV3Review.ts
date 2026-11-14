@@ -994,3 +994,15 @@ export async function openUniversalV3Review(
     },
   };
 }
+
+export async function readUniversalV3ReviewExecution(model: CaptureJobReadModel) {
+  const trip = model.batch.context.tripPrior?.id ?? model.assignedTripId;
+  if (!trip) throw Error("IMPORT_REVIEW_CONTEXT");
+  const { requireAdoptedUserId } = await import("../auth/authRepository");
+  const { openUniversalCaptureBackend } = await import("./universalCaptureConsumer");
+  const context = await captureAccountRequestContext(trip, requireAdoptedUserId);
+  return openUniversalCaptureBackend(requireAdoptedUserId).readLocalFirstExecution(
+    context,
+    model.batch.batchId,
+  );
+}

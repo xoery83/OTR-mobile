@@ -10,7 +10,7 @@ import {
   readTripHomeLedgerRepository,
   type TripHomeLedgerSnapshot,
 } from "@/data/repositories/tripHomeLedgerRepository";
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
 import { UiButton, UiText } from "@/ui/controls";
 import { categoryLabel } from "@/ui/domainLabels";

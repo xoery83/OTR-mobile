@@ -113,3 +113,82 @@ it.each(["A", "B", "C", "D"] as const)(
     ).toBe("Thursday");
   },
 );
+
+it.each(["A", "B", "C", "D"] as const)(
+  "uses calendar dates before Trip start, preserving positive day numbers and relative titles (%s)",
+  (style) => {
+    for (const [date, start, day] of [
+      ["2026-11-02", "2026-11-14", "02"],
+      ["2026-11-13", "2026-11-14", "13"],
+      ["2026-10-31", "2026-11-01", "31"],
+      ["2026-12-31", "2027-01-01", "31"],
+    ]) {
+      const result = dayHeaderPresentation({ date, start, today: "2026-11-14", style });
+      expect(result.ordinal).toBeNull();
+      expect(result.badgeBottom).toBe(day);
+      expect(result.badgeTop).not.toBeNull();
+      expect(result.title + result.subtitle).not.toMatch(/Day -|Day 0|NaN/);
+    }
+    expect(
+      dayHeaderPresentation({
+        date: "2026-11-14",
+        start: "2026-11-14",
+        today: "2026-11-14",
+        style,
+      }).ordinal,
+    ).toBe(1);
+    expect(
+      dayHeaderPresentation({
+        date: "2026-11-15",
+        start: "2026-11-14",
+        today: "2026-11-14",
+        style,
+      }).ordinal,
+    ).toBe(2);
+    expect(
+      dayHeaderPresentation({
+        date: "2026-11-02",
+        start: "2026-11-14",
+        today: "2026-11-02",
+        style,
+      }).title,
+    ).toBe("Today");
+    expect(
+      dayHeaderPresentation({
+        date: "2026-11-02",
+        start: "2026-11-14",
+        today: "2026-11-01",
+        style,
+      }).title,
+    ).toBe("Tomorrow");
+  },
+);
+
+it.each(["B", "C", "D"] as const)(
+  "keeps pre-start weekday and relative titles even with a destination (%s)",
+  (style) => {
+    const input = {
+      date: "2026-11-02",
+      start: "2026-11-14",
+      today: "2026-11-14",
+      style,
+      destination,
+    };
+    expect(dayHeaderPresentation(input)).toMatchObject({
+      title: "Monday",
+      subtitle: "Nov 2, 2026",
+      badgeTop: "Nov",
+      badgeBottom: "02",
+    });
+    expect(dayHeaderPresentation({ ...input, today: "2026-11-02" }).title).toBe("Today");
+    expect(dayHeaderPresentation({ ...input, today: "2026-11-01" }).title).toBe(
+      "Tomorrow",
+    );
+    setUiLocale("zh-Hans");
+    expect(dayHeaderPresentation(input)).toMatchObject({
+      title: "星期一",
+      badgeTop: "11月",
+      badgeBottom: "02",
+    });
+  },
+);

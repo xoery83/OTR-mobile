@@ -61,14 +61,17 @@ vi.mock("@/data/api/universalImportTransport", () => ({
 vi.mock("@/data/operations/universalV3Capture", () => ({
   stageLocalFirstCapture: h.stageV3,
 }));
-vi.mock("@/data/operations/universalCaptureConsumer", () => ({
+vi.mock("@/data/operations/universalCaptureConsumer", async (original) => ({
+  ...(await original<typeof import("@/data/operations/universalCaptureConsumer")>()),
   createUniversalCaptureConsumer: (options: any) => {
     h.options = options;
     return {
       get activity() {
         return h.consumer.activity;
       },
-      get queued() { return h.consumer.queued; },
+      get queued() {
+        return h.consumer.queued;
+      },
       canDispatch: true,
       recover: h.recover,
       start: h.start,
@@ -99,7 +102,11 @@ function Harness(batchId = "batch-a", current = () => true, assignedTripId?: str
       allInputsAccepted: true,
       assignedTripId,
       inputs: [],
-      batch: { accountId: "qa", batchId, context: { tripPrior: assignedTripId ? null : { id: "trip" } } },
+      batch: {
+        accountId: "qa",
+        batchId,
+        context: { tripPrior: assignedTripId ? null : { id: "trip" } },
+      },
     } as unknown as CaptureJobReadModel,
     current,
   );
@@ -159,9 +166,13 @@ it("polls passively while the queued receipt has no activity, and stops on resul
 it("passes back the owning Task prepare receipt, including unconfirmed transport outcome", async () => {
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED", "true");
   const receipt = { status: "QUEUED", context: { taskId: "owning-task" } };
-  const prepare = vi.fn().mockResolvedValueOnce(receipt).mockRejectedValueOnce(Error("lost response"));
+  const prepare = vi
+    .fn()
+    .mockResolvedValueOnce(receipt)
+    .mockRejectedValueOnce(Error("lost response"));
   h.transport.mockReturnValueOnce({ prepare });
-  h.sourcePrepare.mockImplementationOnce((_context, _model, options) => options.prepareTask({}))
+  h.sourcePrepare
+    .mockImplementationOnce((_context, _model, options) => options.prepareTask({}))
     .mockImplementationOnce((_context, _model, options) => options.prepareTask({}));
   Harness();
   await vi.advanceTimersByTimeAsync(0);
@@ -377,10 +388,14 @@ it("discards in-flight recovery when the same Batch retained Journey changes", a
   expect(Harness("batch-a", () => true, "trip-b").result).toBeNull();
 });
 
-
 it("retained read-only attribution never offers or queues Analyze", async () => {
   let finish!: (value: null) => void;
-  h.recover.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+  h.recover.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
   const reading = Harness("batch-a", () => true, "retained-trip");
   await vi.advanceTimersByTimeAsync(0);
   const active = Harness("batch-a", () => true, "retained-trip");
@@ -420,29 +435,39 @@ it("clears an earlier photo prompt when a real result is recovered", async () =>
   expect(h.start).toHaveBeenCalledOnce();
 });
 
-it.each([false, true])("restores the existing PNG continuation only under its existing build option (%s)", async (enabled) => {
-  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED", enabled ? "true" : "false");
-  let visible = true;
-  Harness("batch-a", () => visible);
-  await vi.advanceTimersByTimeAsync(0);
-  const context = { accountId: "qa", tripId: "trip" }, job = { batch: "same-job" };
-  await h.options.prepareSources(context, job);
-  expect(h.sourcePrepare).toHaveBeenCalledOnce();
-  const options = h.sourcePrepare.mock.calls[0][2];
-  if (!enabled) {
-    expect(options).not.toHaveProperty("pendingPngProfile");
-    expect(options).not.toHaveProperty("preparePngOriginal");
-    return;
-  }
-  const port = { existing: "Source port" }, input = { existing: "original binding" };
-  h.pngTransport.mockReturnValue(port);
-  await options.preparePngOriginal(context, input);
-  expect(h.pngPrepare).toHaveBeenCalledExactlyOnceWith(context, input, expect.objectContaining({ port, hash: h.hash }));
-  visible = false;
-  await expect(options.preparePngOriginal(context, input)).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
-  expect(h.pngPrepare).toHaveBeenCalledOnce();
-});
-
+it.each([false, true])(
+  "restores the existing PNG continuation only under its existing build option (%s)",
+  async (enabled) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED", enabled ? "true" : "false");
+    let visible = true;
+    Harness("batch-a", () => visible);
+    await vi.advanceTimersByTimeAsync(0);
+    const context = { accountId: "qa", tripId: "trip" },
+      job = { batch: "same-job" };
+    await h.options.prepareSources(context, job);
+    expect(h.sourcePrepare).toHaveBeenCalledOnce();
+    const options = h.sourcePrepare.mock.calls[0][2];
+    if (!enabled) {
+      expect(options).not.toHaveProperty("pendingPngProfile");
+      expect(options).not.toHaveProperty("preparePngOriginal");
+      return;
+    }
+    const port = { existing: "Source port" },
+      input = { existing: "original binding" };
+    h.pngTransport.mockReturnValue(port);
+    await options.preparePngOriginal(context, input);
+    expect(h.pngPrepare).toHaveBeenCalledExactlyOnceWith(
+      context,
+      input,
+      expect.objectContaining({ port, hash: h.hash }),
+    );
+    visible = false;
+    await expect(options.preparePngOriginal(context, input)).rejects.toThrow(
+      "UNIVERSAL_CAPTURE_STALE",
+    );
+    expect(h.pngPrepare).toHaveBeenCalledOnce();
+  },
+);
 
 it("honors an explicit V3 Analyze once when tapped during the passive status read", async () => {
   for (const flag of ["LOCAL_FIRST", "CONTINUOUS", "PDF", "PNG"])
@@ -454,10 +479,17 @@ it("honors an explicit V3 Analyze once when tapped during the passive status rea
   const post = vi.fn();
   const read = vi.fn();
   h.transport.mockImplementationOnce((_account, options: { signal: AbortSignal }) => {
-    read.mockImplementationOnce(() => new Promise((resolve, reject) => {
-      finishRead = () => resolve(null);
-      options.signal.addEventListener("abort", () => reject(Error("REQUEST_CANCELED")), { once: true });
-    }));
+    read.mockImplementationOnce(
+      () =>
+        new Promise((resolve, reject) => {
+          finishRead = () => resolve(null);
+          options.signal.addEventListener(
+            "abort",
+            () => reject(Error("REQUEST_CANCELED")),
+            { once: true },
+          );
+        }),
+    );
     read.mockResolvedValueOnce({ state: "PROCESSING", taskId: "task" });
     return {
       localFirstCapability: async () => ({ localFirst: true, existing: null }),

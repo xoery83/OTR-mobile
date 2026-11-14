@@ -26,6 +26,11 @@ vi.mock("../../src/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("../../src/features/day-feed/useMinuteClock", () => ({
   useMinuteClock: () => ({ instant: "2026-01-01T00:00:00Z" }),
 }));
+vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaProvider: "div",
+  SafeAreaView: "div",
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
 vi.mock("react-native", async () => {
   const { createElement } = await import("react");

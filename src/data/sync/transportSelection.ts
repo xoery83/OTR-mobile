@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { getSyncTransportMode } from "../operations/transportMode";
+export { getSyncTransportMode } from "../operations/transportMode";
 
 import {
   createDevExpenseTransport,
@@ -6,12 +7,6 @@ import {
 } from "./devCreateTransports";
 import { createFakeExpenseTransport } from "./fakeExpenseTransport";
 import { createFakeItineraryTransport } from "./fakeItineraryTransport";
-
-const transportModeSchema = z.enum(["fake", "dev"]);
-
-export function getSyncTransportMode() {
-  return transportModeSchema.parse(process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT ?? "fake");
-}
 
 export const fakeExpenseTransport = createFakeExpenseTransport();
 export const fakeItineraryTransport = createFakeItineraryTransport();

@@ -4,16 +4,21 @@ import type {
   UniversalTaskActivity,
   UniversalImportResult,
 } from "@/data/api/universalImportContracts";
-import { universalBatchPreparedSchema } from "@/data/api/universalImportContracts";
+
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
 import {
   captureAccountRequestContext,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import { ApiClientError } from "@/data/api/client";
+
 import { readLocalSession } from "@/data/auth/authRepository";
-import { createUniversalImportTransport } from "@/data/api/universalImportTransport";
+import {
+  openUniversalCaptureBackend,
+  isCaptureRequestError,
+  parsePreparedUniversalBatch,
+  type UniversalCaptureBackend,
+} from "@/data/operations/universalCaptureConsumer";
 import { createUniversalCaptureConsumer } from "@/data/operations/universalCaptureConsumer";
 
 export function useUniversalCapture(
@@ -70,7 +75,7 @@ export function useUniversalCapture(
   const localFirstTransport = useRef<
     | {
         context: AccountRequestContext;
-        transport: ReturnType<typeof createUniversalImportTransport>;
+        transport: UniversalCaptureBackend;
         accountId(): Promise<string>;
       }
     | false
@@ -137,8 +142,7 @@ export function useUniversalCapture(
           const context = await captureAccountRequestContext(trip, accountId);
           if (!current() || context.accountId !== model.batch.accountId)
             throw Error("UNIVERSAL_CAPTURE_STALE");
-          const transport = createUniversalImportTransport(accountId, {
-            baseUrl,
+          const transport = openUniversalCaptureBackend(accountId, {
             signal: controller.current.signal,
             assertCurrent: () => {
               if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
@@ -147,7 +151,7 @@ export function useUniversalCapture(
           const capability = await transport
             .localFirstCapability(context, analysis)
             .catch((error) => {
-              if (error instanceof ApiClientError && error.status === 404)
+              if (isCaptureRequestError(error) && error.status === 404)
                 return { localFirst: false, existing: null };
               throw error;
             });
@@ -197,8 +201,7 @@ export function useUniversalCapture(
           if (!id) throw Error("UNIVERSAL_ACCOUNT_UNAVAILABLE");
           return id;
         };
-        const transport = createUniversalImportTransport(getAccountId, {
-          baseUrl,
+        const transport = openUniversalCaptureBackend(getAccountId, {
           signal: controller.current.signal,
           assertCurrent: () => {
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
@@ -251,7 +254,7 @@ export function useUniversalCapture(
                 startRetained: async (context, job) => {
                   const { prepareDefaultUniversalCaptureSources } =
                     await import("@/data/operations/defaultUniversalOriginalSource");
-                  return universalBatchPreparedSchema.parse(
+                  return parsePreparedUniversalBatch(
                     await prepareDefaultUniversalCaptureSources(context, job, {
                       baseUrl,
                       getAccountId,
@@ -295,8 +298,8 @@ export function useUniversalCapture(
                       if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
                       const { prepareAdmittedPngOriginal } =
                         await import("@/data/operations/universalPngOriginalPreparation");
-                      const { createSourcePngPreparationTransport } =
-                        await import("@/data/api/sourcePngPreparationTransport");
+                      const { openUniversalPngSourceBackend } =
+                        await import("@/data/operations/universalCaptureConsumer");
                       const { captureStorageDependencies } =
                         await import("@/data/repositories/defaultLocalCaptureInboxRepository");
                       const assertCurrent = () => {
@@ -308,8 +311,7 @@ export function useUniversalCapture(
                         hash: captureStorageDependencies.sha256,
                         assertCurrent,
                         signal: controller.current?.signal,
-                        port: createSourcePngPreparationTransport(getAccountId, {
-                          baseUrl,
+                        port: await openUniversalPngSourceBackend(getAccountId, {
                           signal: controller.current?.signal,
                           assertRequestCurrent: assertCurrent,
                         }),
@@ -327,7 +329,7 @@ export function useUniversalCapture(
                       } catch (error) {
                         if (
                           !current() ||
-                          (error instanceof ApiClientError &&
+                          (isCaptureRequestError(error) &&
                             error.status !== undefined &&
                             [400, 401, 403, 404, 405, 413, 422].includes(error.status))
                         )
@@ -362,12 +364,11 @@ export function useUniversalCapture(
         );
       let code = "";
       try {
-        code =
-          error instanceof ApiClientError
-            ? (error.code ?? "")
-            : error instanceof Error
-              ? error.message
-              : "";
+        code = isCaptureRequestError(error)
+          ? (error.code ?? "")
+          : error instanceof Error
+            ? error.message
+            : "";
       } catch {
         // Error metadata must not interrupt recovery.
       }
@@ -405,7 +406,7 @@ export function useUniversalCapture(
         setUnavailable(
           !needsPhotoReview &&
             !(
-              error instanceof ApiClientError &&
+              isCaptureRequestError(error) &&
               error.status === 404 &&
               error.code === "TASK_NOT_FOUND"
             ),

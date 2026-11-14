@@ -16,7 +16,17 @@ vi.mock("@/features/day-feed/FlexibleBlockRow", () => ({
 }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/ui/controls", () => ({ UiButton: () => null }));
-vi.mock("react-native", () => ({ Text: () => null, View: () => null }));
+vi.mock("expo-symbols", () => ({ SymbolView: () => null }));
+vi.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
+vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaProvider: "div",
+  SafeAreaView: "div",
+}));
+vi.mock("react-native", () => ({
+  Text: () => null,
+  View: () => null,
+  StyleSheet: { create: (s: unknown) => s },
+}));
 vi.mock("./StayFixtureRow", () => ({ stayRenderer: () => () => null }));
 vi.mock("./FlexibleSnapshotFixtureRow", () => ({
   FlexibleSnapshotFixtureRow: () => null,

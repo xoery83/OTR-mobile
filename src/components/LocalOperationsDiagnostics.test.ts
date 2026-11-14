@@ -17,7 +17,7 @@ const state = vi.hoisted(() => ({
   enabled: [] as boolean[],
   buttons: [] as Record<string, any>[],
 }));
-vi.mock("@/data/sync/transportSelection", () => ({
+vi.mock("@/data/operations/transportMode", () => ({
   getSyncTransportMode: () => state.mode,
 }));
 vi.mock("@/hooks/useLocalOperations", () => ({

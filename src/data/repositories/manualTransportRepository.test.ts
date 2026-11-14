@@ -688,47 +688,59 @@ it.each([
   "mode",
   "stale",
   "account",
-] as const)(
-  "denies accepted P5 with changed %s without new intents",
-  async (kind) => {
-    const f = await acceptedTransportFixture(kind === "owner"),
-      before = count(f.sql);
-    if (kind === "receipt")
-      f.sql.exec("DROP TRIGGER trip_core_receipt_immutable");
-    if (["hash", "mode"].includes(kind))
-      f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
-    if (kind === "receipt")
-      f.sql
-        .prepare(
-          "UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=?",
-        )
-        .run("0".repeat(64));
-    if (kind === "payload")
-      f.sql
-        .prepare(
-          "UPDATE sync_operations SET payload_json='{}' WHERE entity_type='TRIP_CORE_V2'",
-        )
-        .run();
-    if (kind === "hash")
-      f.sql
-        .prepare("UPDATE trip_core_pending_intents SET intent_sha256=?")
-        .run("0".repeat(64));
-    if (kind === "queue")
-      f.sql
-        .prepare(
-          "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_CORE_V2'",
-        )
-        .run();
-    if (kind === "mode")
-      f.sql
-        .prepare(
-          "UPDATE trip_core_pending_intents SET canonical_intent_text=json_set(canonical_intent_text,'$.admission.mode','REVIEWED_SOURCE')",
-        )
-        .run();
-    if (kind === "account") f.switchAccount();
-    await expect(
-      f.repo().read(f.tripId, f.itemId, kind === "stale" ? 99 : 1),
-    ).rejects.toThrow();
-    expect(count(f.sql)).toBe(before);
-  },
-);
+] as const)("denies accepted P5 with changed %s without new intents", async (kind) => {
+  const f = await acceptedTransportFixture(kind === "owner"),
+    before = count(f.sql);
+  if (kind === "receipt") f.sql.exec("DROP TRIGGER trip_core_receipt_immutable");
+  if (["hash", "mode"].includes(kind))
+    f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+  if (kind === "receipt")
+    f.sql
+      .prepare("UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=?")
+      .run("0".repeat(64));
+  if (kind === "payload")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET payload_json='{}' WHERE entity_type='TRIP_CORE_V2'",
+      )
+      .run();
+  if (kind === "hash")
+    f.sql
+      .prepare("UPDATE trip_core_pending_intents SET intent_sha256=?")
+      .run("0".repeat(64));
+  if (kind === "queue")
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_CORE_V2'",
+      )
+      .run();
+  if (kind === "mode")
+    f.sql
+      .prepare(
+        "UPDATE trip_core_pending_intents SET canonical_intent_text=json_set(canonical_intent_text,'$.admission.mode','REVIEWED_SOURCE')",
+      )
+      .run();
+  if (kind === "account") f.switchAccount();
+  await expect(
+    f.repo().read(f.tripId, f.itemId, kind === "stale" ? 99 : 1),
+  ).rejects.toThrow();
+  expect(count(f.sql)).toBe(before);
+});
+
+it("rejects a stale new draft without persisting a command and permits a fresh draft after reread", async () => {
+  const f = await fixture(),
+    repo = f.repo();
+  const stale = await repo.createDraft(f.tripId);
+  const concurrent = await repo.createDraft(f.tripId);
+  await repo.save(concurrent, inputFor(concurrent.fields));
+  const before = count(f.sql);
+  await expect(repo.save(stale, inputFor(stale.fields))).rejects.toThrow(
+    "MANUAL_TRANSPORT_CONFLICT",
+  );
+  expect(count(f.sql)).toBe(before);
+  const fresh = await repo.createDraft(f.tripId);
+  const saved = await repo.save(fresh, inputFor(fresh.fields));
+  expect(saved.localStatus).toBe("PENDING");
+  expect(saved.itemId).toBe(fresh.itemId);
+  expect(Number(count(f.sql))).toBeGreaterThan(Number(before));
+});

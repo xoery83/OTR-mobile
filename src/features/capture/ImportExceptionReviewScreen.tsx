@@ -20,11 +20,11 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { reopenDefaultCaptureJob } from "@/data/operations/defaultCaptureSubmission";
-import { createUniversalImportTransport } from "@/data/api/universalImportTransport";
-import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
+
 import { requireAdoptedUserId } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
+  readUniversalV3ReviewExecution,
   completeUniversalV3RequiredFields,
   openUniversalV3Review,
   universalV3MissingFields,
@@ -77,12 +77,7 @@ export function ImportExceptionReviewScreen() {
         if (!jobId) throw Error("IMPORT_REVIEW_CONTEXT");
         const batch = await reopenDefaultCaptureJob(jobId);
         if (!batch || !active || !current()) return;
-        const trip = batch.batch.context.tripPrior?.id ?? batch.assignedTripId;
-        if (!trip) throw Error("IMPORT_REVIEW_CONTEXT");
-        const context = await captureAccountRequestContext(trip, requireAdoptedUserId);
-        const state = await createUniversalImportTransport(requireAdoptedUserId, {
-          baseUrl: process.env.EXPO_PUBLIC_OTR_API_BASE_URL!,
-        }).readLocalFirstExecution(context, batch.batch.batchId);
+        const state = await readUniversalV3ReviewExecution(batch);
         if (state?.state !== "REVIEW_READY") throw Error("IMPORT_REVIEW_NOT_READY");
         const submission = await readImportSubmission(batch);
         const review = await openUniversalV3Review(
