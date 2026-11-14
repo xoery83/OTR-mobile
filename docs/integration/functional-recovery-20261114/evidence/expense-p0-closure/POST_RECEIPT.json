@@ -1,0 +1,17 @@
+{
+  "status": "POST_NO_COMMITTED_RESULT_OBSERVED",
+  "observedAt": "2026-11-14T03:11:18.693963+00:00",
+  "executionId": "49144d1ea43f472981c156c5d52722f6",
+  "operation": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+  "key": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+  "innerKey": "v2-40066d7abb60a31cf938970591e57e97",
+  "serverExpenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+  "receiptCount": 0,
+  "expenseCount": 0,
+  "participantsCount": 0,
+  "splitsCount": 0,
+  "readOnly": true,
+  "businessRpcExecuted": false,
+  "recoveryAttempted": false,
+  "rawSHA256": "818da15f6c12fefe742a9d1b20ac79c0b75db0aff4131caa30e6080c84f2c169"
+}

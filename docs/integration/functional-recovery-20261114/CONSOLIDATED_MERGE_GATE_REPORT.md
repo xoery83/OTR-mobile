@@ -1,14 +1,14 @@
 # Consolidated Merge Gate Report — 2026-11-14
 
-**Candidate: `08ad06c9d7391027a27798695e4027ab7f38e491`. Decision: NO_GO.**
+**Candidate: `08ad06c9d7391027a27798695e4027ab7f38e491`. Decision: GO recommendation for Main Merge readiness; Owner merge/push authorization still required.**
 
-Main remains `ec282ce65858f9a9857011b225ed08fce8c8d360`. No merge/push, shared DEV mutation, Production operation, Provider request or Settlement Confirm was performed in this closure. This supplements the six existing recovery reports; it does not reopen the 423-branch inventory or require the deferred Beta scope.
+Main remains `ec282ce65858f9a9857011b225ed08fce8c8d360`. No merge/push, Production operation, Provider request or Settlement Confirm was performed. The Owner subsequently approved and completed the exact DEV deployment plus original Expense recovery below. This supplements the six existing recovery reports; it does not reopen the 423-branch inventory or require the deferred Beta scope.
 
 ## 1. Actual fixes and boundaries
 
 | Owner item | Classification and result | Evidence / limit |
 |---|---|---|
-| Expense 503 | **PRODUCT DEFECT: isolated cause and minimal repair verified; live closure BLOCKED on DEV deployment authorization.** | Actual original request + actual DEV SQL reproduced `23514 expense_participants_display_name_snapshot_check`. Original Person/Profile names are both empty; date-only input is not the cause. |
+| Expense 503 | **PRODUCT DEFECT CLOSED: actual DEV APPLIED Receipt, independent PG verification and client cold recovery PASS.** | Actual original request + actual DEV SQL reproduced `23514 expense_participants_display_name_snapshot_check`. Original Person/Profile names are both empty; date-only input is not the cause. |
 | Old Trip edit/read-only | **REGRESSION: same-scope qualification was cleared during every refresh; repaired.** | Preserve only same Actor/Trip/generation qualified metadata while rereading; real rejection still clears it. Actual original Trip opens editor, Currency chooser and Cover chooser after cold launch; cancel leaves data unchanged. |
 | Accepted P1 without local CREATE history | **PRODUCT DEFECT: pre-existing client-only history restriction; repaired under existing Core contract.** | Core owning `coreCanManage`, version and MANUAL text edit already support it. Add P1 to existing certified fresh-item path; keep foreign/stale/pending/malformed history denial and Source temporal protection. 75 owning checks PASS; final Native edit button and form verified; original Item title/rev2 unchanged, zero pending Item commands after cancel. |
 | Architecture boundary | **Closed in targeted tests.** | AST checks distinguish runtime imports/reexports/require/dynamic imports from erased types/comments. Runtime UI wiring moved into existing data operations; no direct DB/API/Sync runtime dependencies in presentation. Full-run confirmation below. |
@@ -18,7 +18,7 @@ Main remains `ec282ce65858f9a9857011b225ed08fce8c8d360`. No merge/push, shared D
 
 Expense repair changes only the **prepared canonical participant display snapshot** when the original snapshot is empty: retain the real stable member ID rather than invent a human name. Preserve nonempty names, original wire bytes, Expense/Operation/idempotency IDs, amount, splits and all permissions. The original request SHA256 remains `b621dda8276925a29b12286a0645f8d0eb1e9664eef2e93c87472e5555b7c585`.
 
-Isolated PG using actual DEV function definitions: first execute APPLIED; repeated original execute and normal replay return the same Receipt; one Expense, one typed Receipt; money/splits unchanged. Fixture container was network-none and removed. **This is not a DEV APPLIED Receipt.** See [isolated root cause](evidence/merge-closure/ISOLATED_ORIGINAL_REQUEST_RESULT.json) and [canonical-only repair](evidence/merge-closure/ISOLATED_CANONICAL_IDENTITY_FIX.json).
+Isolated PG using actual DEV function definitions: first execute APPLIED; repeated original execute and normal replay return the same Receipt; one Expense, one typed Receipt; money/splits unchanged. Fixture container was network-none and removed. **That isolated fixture is not the DEV receipt; the later actual authorized DEV receipt is recorded in section6.** See [isolated root cause](evidence/merge-closure/ISOLATED_ORIGINAL_REQUEST_RESULT.json) and [canonical-only repair](evidence/merge-closure/ISOLATED_CANONICAL_IDENTITY_FIX.json).
 
 ## 2. Changes from the previous candidate
 
@@ -82,13 +82,13 @@ Actual UI checks on the original Trip:
 
 The existing recovery matrix remains the role/CRUD record: actual synthetic Account P1 NEW/EDIT plus P3/P4/P5/P6 NEW have prior formal receipts/readback; P5 EDIT/cold projection exists. Fresh independent Guest Trip/currency/Cover/P1 local cold paths passed previously. This closure does **not** promote unexecuted Member, full Guest Adoption, external Google/OTP or current-device P2 manual operations to PASS. Revoked/foreign/Account A→B→A behavior remains covered by owning isolated tests. Backend IMPORT/Parent Reader and MCP default-off contracts are preserved, not reactivated or redeployed.
 
-## 5. One necessary DEV execution decision
+## 5. Owner-approved exact DEV execution — completed
 
-**Request, not executed:** deploy the minimal Expense/backend diagnostic fix using the existing DEV Writer and standard Host/Docker mechanism, reconcile the **original** operation, then independently read back and cold-verify.
+**Owner approved request49144d… in this chat. Executed successfully:** fixed-image release using the existing Writer/CAS/Host helper, original-operation normal Sync recovery, independent PG readback and client cold recovery. The following fixed scope is retained as its audit record.
 
 - Exact DEV project: `tuqigdxrvrerfewsxqgm`; Host `root@178.105.151.143`, API `https://api-dev.xoery.art`, Docker service `otr-dev-backend`. Fresh read-only preimage confirms current CID `5d0068f40a8227325a453431e60865795d98140e05bd627bcacf644ebfd74beb`, healthy f886 image, existing Parent Reader=1 / V3 active. No credentials returned.
 - Request **`49144d1ea43f472981c156c5d52722f6`**, SHA256 **`1cda374cdb8f8886212a5a63568ac84f305e31441deccf6d8b61905f96386695`**. [Exact request](evidence/merge-closure/EXECUTION_REQUEST.json), [plan](evidence/merge-closure/deploy-plan.json), [existing Host helper](/private/tmp/otr-main-recovery-release-20261114/packet/release.py), [local check](evidence/merge-closure/local-release-check.json). Canonical executable packet remains `/private/tmp/otr-main-recovery-release-20261114/packet`; copied evidence files are not alternate execution paths.
-- Existing Writer `/run/lock/otr-universal-finite-service.lock`, fresh identity device28/inode7. Existing operational `backend_closed_release.py` + exact Host helper reused, not replaced by a new executor. A private local Git-object staging copy makes the actual candidate commit available to its source-pin check; no original worktree changed. `check` returned **ALL_FIXED_INPUTS_MATCH**; `stage`/`release` were not called. Execution must still acquire the Writer/CAS and reject drift.
+- Existing Writer `/run/lock/otr-universal-finite-service.lock`, fresh identity device28/inode7. Existing operational `backend_closed_release.py` + exact Host helper reused, not replaced by a new executor. A private local Git-object staging copy makes the actual candidate commit available to its source-pin check; no original worktree changed. `check` returned **ALL_FIXED_INPUTS_MATCH**; approved `stage`, `release` and final read-only `reconcile` succeeded. Writer/CAS and artifact/Host preimages matched; the Writer was independently confirmed released.
 - Keep current Parent Reader=1, V3 environment, routes, mounts and Task Store. **Do not set `parentReceiptRead=true` again**: it is a one-time 0→1 plan operation, not the already-active state. Preserve ordinary V3 instead. No old PDF-only whitelist/window/Platform reference is added.
 - Candidate image `otr-dev-backend:merge-recovery-08ad06c9-amd64`, actual ID **`sha256:427428016a5736ebb9f374d5f86772e7675e6ce0020290ee452e516490db1bdc`**, linux/amd64.
 - Runtime base/rollback image **`sha256:f8862b0a70f797479fc6ec5e938f87b78a265bf626119d4dfe311ad5e97fdfa4`**. Local build uses that retained runtime and replaces only the two standard, self-contained Backend bundles; Backend bundles are byte-identical between 34aa0d9c and 08ad06c9; the latter only adds the mobile P1 consumer fix. Initial local arm64 check image is **not** a DEV artifact. No new build/execution framework.
@@ -98,13 +98,37 @@ The existing recovery matrix remains the role/CRUD record: actual synthetic Acco
 - On UNKNOWN: stop mutating and reconcile original IDs read-only; no blind retry or financial reset. Preserve any committed Receipt. Independently verify Receipt/Expense/participants/amount/splits and uniqueness, then client cold recovery.
 - On backend health/compatibility failure: restore original image/config/volumes/routes with existing Writer; verify health and retained data. Do not reverse financial rows or delete the operation.
 
-This specific shared DEV authorization is required by the Owner's Main Merge Closure boundary. The prior local/isolation authorization is not a substitute. No short artificial approval window or separate gate is proposed.
+This exact authorization was granted by Owner, then executed without an additional window or approval layer. It did not authorize Main merge/push.
 
-## 6. Verdict / remaining boundary
+## 6. Final Expense P0 execution receipt
 
-**NO_GO until the live Expense P0 closure is complete.** Local canonical repair and tests do not replace the required formal DEV Receipt, independent PostgreSQL readback and client cold evidence. Historical render assertions and missing immutable fixture remain explicit test/evidence debt; they are not hidden behind a PASS count. Full Apple login and other external identity conditions remain ENVIRONMENT BLOCKED.
+| Required result | Actual evidence |
+|---|---|
+| DEV image / health | **427428016a5736ebb9f374d5f86772e7675e6ce0020290ee452e516490db1bdc**, CID `467cfd4eef1cfd832f4dde70873bf5ff9a9fedcd2487c1483e4281e680ce2269`; healthy, `ORDINARY_V3_INSTALLED`, final `INDEPENDENT_HOST_V3`. |
+| PRE remote state | Independent READ ONLY16:07:56NZDT: original/inner key receipts0, reserved server Expense0, participants/splits0. |
+| Recovery mechanism | Full App Settings → System Health → Check again; existing Data Health reactivated the single SERVER/RETRYABLE original operation and normal Sync submitted it. No raw SQLite edit, replacement operation, queue reset or new Expense. Cold launch alone preserved the existing backoff; no claim that it forced a retry. |
+| Formal result | Original operation/command `ledger-operation_mwfnz7vm_g0z2dtlug3`; original key `ledger-idempotency_mwfnz7vm_umzru4w06b`; **CREATE / APPLIED / intentSequence1 / canonicalRevision1**. Client queue **COMPLETED**. |
+| Independent PG | POST2 READ ONLY16:18:49NZDT **SERVER_VERIFIED_PASS**. Reserved Expense UUID globally unique1; typed original-key Receipt1(status200), legal inner CREATE Receipt1(status201). Those are two layers of one operation, not two Expenses. |
+| Money / identity / splits | **100 minor NZD, scale2 = NZ$1.00**. Original payer/creator/member, participants and splits match. Only the already-approved empty display snapshot → real member UUID fallback differs; no invented human name, membership or permission. Dates, valuation and settlement participation preserved. |
+| Immutable request | Frozen wire SHA `b621dda8276925a29b12286a0645f8d0eb1e9664eef2e93c87472e5555b7c585` unchanged. Independent SQL/jsonb payload hash `49a60e4988956418ae8ed10642f61b166200977d2dcb56d8a3dd5d93ce533984` matches outer and inner ledgers. |
+| Cold recovery | Full App cold launch → same Trip → Ledger → same Expense: NZ$1.00, prior pending/BACKEND_UNAVAILABLE notice absent. Same APPLIED Receipt1, identical cached canonical state, original wire unchanged; account queue13COMPLETED, zero pending, no added operation. Nine private originals unchanged. |
+| Preservation / rollback | Environment, mounts, Caddy and runtime hashes equal approved preimage; Parent Reader1 and V3 retained, no repeated0→1 activation. Task Store identity retained. **No rollback.** Original CID5d0068… preserved as rollback target. Final image remains427428…; Writer released. No SQL/schema/RLS/ACL/Grant/Production/Provider/Settlement Confirm change. |
 
-Approved deferred scope unchanged: Import Slice5/6/full UPDATE, Document Cloud Sync, Hosted MCP Consumer, Version/Realtime activation, Flexible/TTR activation and P2 formal manual opt-in. No new product limitation, SQL migration or infrastructure was added. No verifiable per-Agent Credits usage source is available in this session; no estimate is presented as actual cost.
+Evidence: [PRE](evidence/expense-p0-closure/PRE_RECEIPT.json), [POST2](evidence/expense-p0-closure/POST2_RECEIPT.json), [client Receipt](evidence/expense-p0-closure/CLIENT_APPLIED.json), [cold readback](evidence/expense-p0-closure/CLIENT_COLD_RECOVERY.json), [Host closure](evidence/expense-p0-closure/closure.json), [final Host readback](evidence/expense-p0-closure/final-host-reconciliation.json), [preservation](evidence/expense-p0-closure/preservation.json), [normal Sync screenshot](evidence/expense-p0-closure/normal-sync-completed.png), [cold Expense screenshot](evidence/expense-p0-closure/expense-cold-restored.png).
+
+### Other existing Backend capabilities — bounded compatibility
+
+Actual post-release requests include Trip list/create-result reads200, Parent metadata200, Core reads200, My Ledger200, Ledger/personal-payment changes200 and original Expense command200. Anonymous Auth adoption/Core/Import Intake probes remain401; no model request was made. Existing Source08ad06c9 regression evidence is reused: full suite11964PASS/24historicalFAIL/162conditionalPending; MCP203PASS; architecture5PASS; same3Main TypeScript baseline errors. No business code or fixed image changed during this execution.
+
+**Explicit observation, not hidden PASS:** the bounded post-release log contains Settlement Review4×503 and9×200. Prior retained-container bounded sample contains31×200. The exact cause of the four read failures is unassigned; normalized logs lack Trip identity, so do not claim each request recovered or assert a regression. The old/new runtime's `calculateSettlementPreview`, `calculatePersonalSettlementReview` and `buildPersonalSettlementStatement` functions match exactly; SQL/environment were not changed. Record as a read-availability **EVIDENCE GAP / Beta follow-up**, not a completed Settlement E2E, not a new Expense recovery gate. No Settlement Confirm was executed. See [observations](evidence/expense-p0-closure/COMPATIBILITY_OBSERVATIONS.json) and [code comparison](evidence/expense-p0-closure/settlement-read-code-comparison.json).
+
+## 7. Reassessed Main Merge recommendation
+
+**GO recommendation for the approved Main integration scope, source candidate08ad06c9.** All confirmed P0 product defects and runtime architecture violations are closed. The Expense now has real DEV/PG/client cold evidence. No new unresolved test/type failure was introduced; historical assertion/fixture debt remains visible. This recommendation does not claim full Beta functional acceptance or cause attribution for the Settlement read-availability observation.
+
+**Main Merge/Push is still NOT executed or authorized by this Expense approval.** Any later merge follows Owner's existing latest-Main/difference check. No new broad Recovery, architecture audit or repeat E2E is proposed.
+
+Remaining explicit boundaries:24Main-reproducible historical render assertions, the absent pinned QA158 file, three Main type errors, full Apple/external login environment evidence and the above Settlement-read observation. Approved deferred scope unchanged: Import Slice5/6/full UPDATE, Document Cloud Sync, Hosted MCP Consumer, Version/Realtime activation, Flexible/TTR activation and P2 formal manual opt-in. No verifiable per-Agent Credits usage source is available; no estimate is represented as actual usage.
 
 ## Code location index
 
@@ -114,4 +138,4 @@ Approved deferred scope unchanged: Import Slice5/6/full UPDATE, Document Cloud S
 - `backend/src/supabaseGateway.ts:buildLedgerExpenseCreateResponse`: prepared-only canonical participant fallback.
 - `src/domain/architectureBoundary.test.ts`: AST runtime edge scanner; tiny existing operations ports own moved wiring.
 
-Source candidate is frozen at 08ad06c9. Subsequent receipt/documentation-only commits, if any, do not represent another tested product version. No Main Merge GO is issued by this report.
+Source candidate is frozen at 08ad06c9. Subsequent receipt/documentation-only commits, if any, do not represent another tested product version. The recommendation is GO for Owner review, not permission to execute Main merge/push.

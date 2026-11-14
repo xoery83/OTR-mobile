@@ -1,0 +1,20 @@
+{
+  "result": {
+    "status": "DEV_ORDINARY_V3_DEPLOYED",
+    "containerId": "467cfd4eef1cfd832f4dde70873bf5ff9a9fedcd2487c1483e4281e680ce2269",
+    "retainedContainerId": "5d0068f40a8227325a453431e60865795d98140e05bd627bcacf644ebfd74beb",
+    "image": "sha256:427428016a5736ebb9f374d5f86772e7675e6ce0020290ee452e516490db1bdc",
+    "health": "healthy",
+    "environmentSHA256": "31da5d43c881e16191dbd7e838034a2c78af45e8fad292d29e7e4c026f387d1c",
+    "mountsSHA256": "3bd363e3bdeaacc04277b2b6c18d4376f6a0fa6303c0fa7ace6729f90566af22",
+    "caddySHA256": "649a694591b342a6f786109d0acf369081dbd9f00e8e05ac4f2756403abbd26b",
+    "runtimeSHA256": "4c7a6f2717ae386db724207d4001ca75a6b3df7187061c739b2320c297bc1774"
+  },
+  "deliveryTrace": {
+    "requestedAt": "UNKNOWN",
+    "readyAt": "UNKNOWN",
+    "acquiredAt": "2026-11-14T03:09:52.091496+00:00",
+    "mutationFinishedAt": "2026-11-14T03:10:09.846947+00:00",
+    "releasedAt": "2026-11-14T03:10:09.846984+00:00"
+  }
+}
