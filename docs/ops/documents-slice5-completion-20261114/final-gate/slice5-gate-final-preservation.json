@@ -1,0 +1,26 @@
+{
+  "iphone": {
+    "baselineFileCount": 9,
+    "changedOrMissingBaselineFiles": [],
+    "counts": {
+      "capture_submission_batches": 0,
+      "capture_submission_inputs": 0,
+      "local_capture_inbox": 32,
+      "trip_core_trip_operational_documents": 9,
+      "trip_core_trip_item_document_links": 14,
+      "sync_operations": 13
+    }
+  },
+  "ipad": {
+    "baselineFileCount": 30,
+    "changedOrMissingBaselineFiles": [],
+    "counts": {
+      "capture_submission_batches": 7,
+      "capture_submission_inputs": 13,
+      "local_capture_inbox": 13,
+      "trip_core_trip_operational_documents": 9,
+      "trip_core_trip_item_document_links": 14,
+      "sync_operations": 33
+    }
+  }
+}

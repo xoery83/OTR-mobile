@@ -2,9 +2,21 @@
 
 ## Active checkpoint
 
-**Main Merge/Push PASS — Owner-authorized four-lane integration complete.** Independent merge `532b32aa` preserves accepted source `08ad06c9` exactly; post-source changes are evidence/docs only. Final receipt: `docs/integration/functional-recovery-20261114/MAIN_INTEGRATION_RECEIPT.md`. Normal non-force push and independent remote verification completed at `20775143`; subsequent receipt status update is documentation-only. Original dirty local Main remains untouched; new work must start from refreshed GitHub Main. Settlement intermittent read503 remains an explicitly unresolved Beta follow-up, not comprehensive PASS. Main Merge GO is not Beta Release GO.
+Owner authorized **Import V3 Slice5 Documents only** after completed four-lane Main Merge/Push. Fresh fetched GitHub Main is `431a893b3ecba5b6eb9c6557bd81bc6e8d4e6cc8`, containing accepted source `08ad06c9`; no new remote divergence. New branch `codex/import-v3-slice5-documents`, independent worktree `/Users/xoery/Project/otr-mobile-import/import-v3-slice5-documents`. Old Import branch is historical reference only; no wholesale cherry-pick. Main remains untouched.
 
-Active worktree `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20261114`, branch `codex/four-lane-integration-20261114`. Integrated base `5a5ca447`; product recovery checkpoints `8297ab8e`, `95345e4d`, latest candidate `08ad06c9`, including product fixes `65b0cf65` and test-port maintenance `34aa0d9c`. Main last independently observed `ec282ce6`; old local main `5648818e` is stale. No Main merge/push or Production operation. Owner-approved DEV Expense deployment/recovery is complete.
+Bounded gap and two-preview plan: `docs/ops/import-slice5-20261114/PLAN.md`. Preview1 adds normal Documents entry, scoped Trip Docs/Inbox, compact metadata lists and typed filters, reusing Core accepted snapshot and original store plus legacy Capture reader. iPhone has9existing Core Documents and0legacy Capture rows; old list alone would incorrectly look empty. Metadata survives absent original bytes; only explicit open reads/verifies bytes. No Source Proof, new storage/queue/receipt/SQL or Cloud Sync.
+
+Slice5 implementation is submitted for Owner review, product `90d42294`. Two bounded preview packages: normal scoped Documents/Inbox/compact lists, then information-first Detail, ACL-checked direct links, real Batch→other originals, separate formal Receipt outcomes and local scoped search. Existing readers/viewer/Receipt projection reused; no SQL/Core/Queue/Sync contract change or Cloud Sync. Complete Release Native iPhone/iPad installations pass with1,787 source files matched. Final targeted84 checks pass; UI guard174 and lint pass; exactly3 unchanged Main TypeScript errors. Actual dark/larger-text defects were found, fixed and reverified. Private hashes9/9 on iPhone and30/30 on original iPad unchanged; Documents9/links14, queues13/33 COMPLETED unchanged. Details and screenshots: `docs/ops/import-slice5-20261114/README.md`, machine evidence `verification.json`. Owner UX acceptance and Main integration remain pending. No DeepSeek/repeated Save, shared DEV/Production mutation or Slice6 execution.
+
+All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
+
+## Documents Slice5 finite gate completed — Owner review pending
+
+Product `07c3200b` fixes two presentation defects found after1342: non-drag scroll events did not collapse chrome, and forced source-header expansion shifted return position. Current full signed iPhone App actually verifies filter-only collapse, native Export with matching950-byte PDF/hash, cursor paging30→32 unique records, stable return position, and independent row/File Information clicks.1169 staged product files match final source. Final owning41/3 tests, lint and UI guard177 pass. No Main merge/push, Provider/Save/SQL/sharedDEV mutation or Slice6.
+
+32 labelled private local TXT captures prepared through existing Repository intake remain as pagination test data; no direct SQLite write or fake Core Receipt. Original iPad retains0302 and its data. Full physical-device/current07 iPad/role matrix is not claimed. Formal Rename/Share/Add-Move/SafeRemove remain distinct owning-command backlog, not Cloud Sync deferral. Documents overall PARTIAL; bounded Slice5 local/read UX is GO for Owner review, no environment Merge Waiver needed. Current report: `docs/ops/documents-slice5-completion-20261114/FINAL_SLICE5_GATE_REPORT.md`; expanded `DOCUMENT_OWNING_CAPABILITY_BACKLOG.md` and Blueprint matrix retain remaining gaps.
+
+AUTH-C04 uses independent Auth/Root1/Native writers; Root1 isolated Reader candidate5868350 is not DEV installed or Golden Slice PASS. No shared Backend/SQL/Sync mutation without separate authorization.
 
 ## Restored and actually checked
 
@@ -39,11 +51,11 @@ Six required reports under `docs/integration/functional-recovery-20261114/`: ACC
 
 SQLite79 retained; both legitimate76 histories and Import76–78/Auth79 ordering preserved. Original selected8 tables and9 private files remained intact after rebuild; latest9 file hashes remain unchanged. New synthetic Trip/P1/Expense were deliberately added via normal UI, so do not claim the full database/queue hash stayed unchanged. Original iPad and QA179 were not cleared or replayed; original worktrees and dirty ops patches untouched.
 
-Still deferred: Invite/Claim full Native, private profile cloud editor, Version/private Realtime activation, full Hosted MCP Consumer/owning ports, Import Slice5/6/full UPDATE, Document Cloud Sync. Source presence is not permission to activate these.
+Still deferred: Invite/Claim full Native, private profile cloud editor, Version/private Realtime activation, full Hosted MCP Consumer/owning ports, Import Slice6/full UPDATE (Slice5 now submitted separately), Document Cloud Sync. Source presence is not permission to activate these.
 
 ## Next execution
 
-Expense P0 complete. Review `CONSOLIDATED_MERGE_GATE_REPORT.md` final execution receipt and GO recommendation; wait for Owner Main Merge/Push authorization. Preserve source08ad06c9 and same-version evidence; do not repeat stable E2E or initiate another Recovery. Historical render/QA158 fixture/type debt, external login evidence, Settlement read-availability observation and approved deferred Beta features remain explicitly separated from confirmed merge regressions.
+Wait for Owner review of the Slice5 final finite gate. Known limits: no physical-device acceptance, search uses authorized local indexes and TEXT≤64KiB, no invented Share/Move owning writes, no cross-device originals. Real B1 14:43 Batch projects Created hotel/Linked walk;20:50 history is not verified and is not replayed. Do not resume Recovery, Merge/Push Main or start Slice6 without the relevant Owner approval.
 
 ## Latest runtime / Owner Header correction
 

@@ -86,3 +86,44 @@ export async function previewImportOriginal(
     unsubscribe();
   }
 }
+
+// Explicit export reuses the verified original; temporary sharing bytes are always removed.
+export async function shareImportOriginal(
+  original: {
+    document: Pick<ImportDocument, "sha256" | "byteCount" | "originalFilename">;
+    bytes: Uint8Array;
+  },
+  isCurrent: () => boolean,
+) {
+  const { bytes, document } = original;
+  if (!isCurrent()) return;
+  if (
+    !bytes.length ||
+    bytes.length > 50 * 1024 * 1024 ||
+    bytes.length !== document.byteCount ||
+    bytesToHex(sha256(bytes)) !== document.sha256
+  )
+    throw Error("IMPORT_ORIGINAL_INTEGRITY");
+  const [{ File, Directory, Paths }, sharing] = await Promise.all([
+    import("expo-file-system"),
+    import("expo-sharing"),
+  ]);
+  if (!isCurrent() || !(await sharing.isAvailableAsync()))
+    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
+  const directory = new Directory(Paths.cache, `document-export-${randomUUID()}`);
+  const name = (
+    document.originalFilename && ![".", ".."].includes(document.originalFilename)
+      ? document.originalFilename
+      : "original"
+  ).replace(/[/\\\x00-\x1f]/g, "_");
+  const file = new File(directory, name);
+  try {
+    directory.create({ intermediates: true });
+    if (!isCurrent()) return;
+    file.write(bytes);
+    if (isCurrent()) await sharing.shareAsync(file.uri);
+  } finally {
+    if (file.exists) file.delete();
+    if (directory.exists) directory.delete();
+  }
+}

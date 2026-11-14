@@ -1,0 +1,7 @@
+{
+  "case": "positive retained scroll offset without live dragging callback",
+  "results": {
+    "1342ee57": false,
+    "ed00cdd3": true
+  }
+}

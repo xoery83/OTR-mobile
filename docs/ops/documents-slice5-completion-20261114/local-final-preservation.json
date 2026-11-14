@@ -1,0 +1,16 @@
+{
+  "source": "1342ee5714451d059acc142d39877fc3a9d98804",
+  "baselineFiles": 9,
+  "changedFiles": [],
+  "counts": {
+    "trip_core_trip_operational_documents": 9,
+    "trip_core_trip_item_document_links": 14,
+    "sync_operations": 13
+  },
+  "queue": [
+    [
+      "COMPLETED",
+      13
+    ]
+  ]
+}

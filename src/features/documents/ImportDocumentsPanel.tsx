@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { t } from "@/ui/locale";
+import { DocumentActions } from "./CoreDocumentDetail";
+import { UiText } from "@/ui/controls";
+import { t, formatUiDate } from "@/ui/locale";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type {
@@ -14,6 +16,9 @@ type Props = {
   tripId: string | null;
   scope: ImportDocumentScope;
   captureId?: string;
+  showHistoricalLinks?: boolean;
+  detailActions?: boolean;
+  informationInitially?: boolean;
   isCurrent(): boolean;
   onOpenDocument(captureId: string): void;
   onOpenActivity(jobId: string): void;
@@ -36,7 +41,9 @@ export function ImportDocumentsPanel(props: Props) {
 function ScopedDocuments(props: Props) {
   const [linkedItems, setLinkedItems] = useState<number | null>(null);
   const [linksUnavailable, setLinksUnavailable] = useState(false);
-  const [linksLoading, setLinksLoading] = useState(props.scope === "TRIP");
+  const [linksLoading, setLinksLoading] = useState(
+    props.scope === "TRIP" && props.showHistoricalLinks !== false,
+  );
   const [linksRetry, setLinksRetry] = useState(0);
   const [documents, setDocuments] = useState<ImportDocument[]>([]);
   const inventory = useRef(documents);
@@ -220,7 +227,13 @@ function ScopedDocuments(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
   useEffect(() => {
-    if (!document || props.scope !== "TRIP" || !visible) return;
+    if (
+      !document ||
+      props.scope !== "TRIP" ||
+      !visible ||
+      props.showHistoricalLinks === false
+    )
+      return;
     let canceled = false;
     void (async () => {
       setLinksLoading(true);
@@ -251,10 +264,11 @@ function ScopedDocuments(props: Props) {
     // Parent scope remounts on Account/Trip/Capture identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document, visible, linksRetry]);
-  if (props.captureId && document)
-    return (
+  if (props.captureId && document) {
+    const detail = (
       <ImportDocumentDetail
         document={document}
+        localOnly={props.showHistoricalLinks === false}
         linkedItems={linkedItems}
         linksUnavailable={linksUnavailable}
         linksLoading={linksLoading}
@@ -273,6 +287,73 @@ function ScopedDocuments(props: Props) {
         onOpenActivity={props.onOpenActivity}
       />
     );
+    if (!props.detailActions) return detail;
+    return (
+      <>
+        <DocumentActions
+          available={document.localAvailable === true}
+          informationInitially={props.informationInitially}
+          isCurrent={current}
+          onExport={() => {
+            if (!current() || opening) return;
+            setOpening(true);
+            setError(false);
+            void (async () => {
+              const { context, repository } = await reader();
+              const retained = await repository.original(
+                context,
+                props.scope,
+                document.captureId,
+              );
+              if (current())
+                await (
+                  await import("@/native/importOriginalPreview")
+                ).shareImportOriginal(retained, current);
+            })()
+              .catch(() => {
+                if (current()) setError(true);
+              })
+              .finally(() => {
+                if (scopeCurrent()) setOpening(false);
+              });
+          }}
+        >
+          <UiText>{document.originalFilename ?? t("capture.ai.submittedText")}</UiText>
+          {document.acquisitionSource ? (
+            <UiText>
+              {t("documents.sourceMetadata", {
+                source: t(
+                  document.acquisitionSource === "files"
+                    ? "documents.sourceFiles"
+                    : document.acquisitionSource === "photos"
+                      ? "documents.sourcePhotos"
+                      : document.acquisitionSource === "camera"
+                        ? "documents.sourceCamera"
+                        : document.acquisitionSource === "clipboard"
+                          ? "documents.sourcePaste"
+                          : "documents.sourceText",
+                ),
+              })}
+            </UiText>
+          ) : null}
+          <UiText>
+            {t("documents.acquiredAt", {
+              date: formatUiDate(new Date(document.recordedAt)),
+            })}
+          </UiText>
+          <UiText>
+            {t(
+              document.localAvailable
+                ? "documents.originalLocal"
+                : "documents.originalUnavailable",
+            )}
+          </UiText>
+          <UiText>{t("importDocuments.private")}</UiText>
+        </DocumentActions>
+        {detail}
+      </>
+    );
+  }
   return (
     <ImportDocumentsList
       documents={documents}

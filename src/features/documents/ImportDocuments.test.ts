@@ -6,6 +6,7 @@ import { ImportDocumentsList, ImportDocumentDetail } from "./ImportDocuments";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
 import { setUiLocale, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const ui = vi.hoisted(() => ({
   previewAvailable: false,

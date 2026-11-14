@@ -1,0 +1,27 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/import-v3-slice5-documents
+
+ ❯ src/domain/architectureBoundary.test.ts (5 tests | 1 failed) 7661ms
+     × keeps UI and domain modules away from direct data infrastructure 6187ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/domain/architectureBoundary.test.ts > foundation architecture boundaries > keeps UI and domain modules away from direct data infrastructure
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/domain/architectureBoundary.test.ts:90:3
+     88|
+     89| describe("foundation architecture boundaries", () => {
+     90|   it("keeps UI and domain modules away from direct data infrastructure…
+       |   ^
+     91|     const directories = [
+     92|       join(projectRoot, "app"),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  18:20:25
+   Duration  8.17s (transform 89ms, setup 24ms, import 304ms, tests 7.66s, environment 0ms)
+

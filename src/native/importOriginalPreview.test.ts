@@ -3,6 +3,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
 import {
   previewImportOriginal,
+  shareImportOriginal,
   isImportOriginalPreviewAvailable,
 } from "./importOriginalPreview";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
@@ -161,4 +162,72 @@ it("does not log bridge diagnostics in ordinary versioned preview", async () => 
   } finally {
     info.mockRestore();
   }
+});
+
+const exported = vi.hoisted(() => ({
+  files: new Map<string, Uint8Array>(),
+  share: vi.fn(),
+  available: vi.fn(async () => true),
+  removed: vi.fn(),
+}));
+vi.mock("expo-sharing", () => ({
+  isAvailableAsync: exported.available,
+  shareAsync: exported.share,
+}));
+vi.mock("expo-file-system", () => ({
+  Paths: { cache: "cache" },
+  Directory: class {
+    uri: string;
+    exists = false;
+    constructor(...parts: string[]) {
+      this.uri = parts.join("/");
+    }
+    create() {
+      this.exists = true;
+    }
+    delete() {
+      this.exists = false;
+      exported.removed();
+    }
+  },
+  File: class {
+    uri: string;
+    constructor(directory: { uri: string }, name: string) {
+      this.uri = directory.uri + "/" + name;
+    }
+    get exists() {
+      return exported.files.has(this.uri);
+    }
+    write(bytes: Uint8Array) {
+      exported.files.set(this.uri, bytes);
+    }
+    delete() {
+      exported.files.delete(this.uri);
+    }
+  },
+}));
+it("exports verified bytes through the system share sheet and removes only its temporary copy", async () => {
+  const named = {
+    ...original,
+    document: { ...original.document, originalFilename: "flight.pdf" },
+  };
+  exported.share.mockImplementationOnce(async (uri: string) => {
+    expect(exported.files.get(uri)).toEqual(bytes);
+    expect(uri.endsWith("/flight.pdf")).toBe(true);
+  });
+  await shareImportOriginal(named, () => true);
+  expect(exported.share).toHaveBeenCalledOnce();
+  expect(exported.files.size).toBe(0);
+  expect(exported.removed).toHaveBeenCalledOnce();
+  await expect(
+    shareImportOriginal({ ...named, bytes: new Uint8Array([1]) }, () => true),
+  ).rejects.toThrow("IMPORT_ORIGINAL_INTEGRITY");
+  await shareImportOriginal(named, () => false);
+  expect(exported.share).toHaveBeenCalledOnce();
+});
+it("failed sharing still cleans up the temporary copy without deleting the original", async () => {
+  exported.share.mockRejectedValueOnce(Error("SHARE_FAILED"));
+  await expect(shareImportOriginal(original, () => true)).rejects.toThrow("SHARE_FAILED");
+  expect(exported.files.size).toBe(0);
+  expect(bytes[0]).toBe(37);
 });
